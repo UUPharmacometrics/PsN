@@ -536,6 +536,8 @@ my $err = tool::sir::save_restart_information(
 	parameter_hash => $parameter_hash,
 	nm_version  => 'default',
 	done  => 1,
+	adjust_blocks => 1,
+	check_cholesky_reparameterization => 0,
 	recenter  => 0,
 	copy_data => 0,
 	boxcox => 0,
@@ -569,6 +571,8 @@ my $recoversir =tool::sir->new ( models				     => [model->create_dummy_model ],
 is($recoversir->nm_version,'default','recovery info 1');
 is($recoversir->done,1,'recovery info 2');
 is($recoversir->recenter,0,'recovery info 3');
+is($recoversir->adjust_blocks,1,'recovery info 3.5');
+is($recoversir->check_cholesky_reparameterization,0,'recovery info 3.6');
 is($recoversir->copy_data,0,'recovery info 4');
 is($recoversir->boxcox,0,'recovery info 5');
 is($recoversir->with_replacement,1,'recovery info 6');
@@ -606,6 +610,8 @@ $recoversir =tool::sir->new ( models				     => [model->create_dummy_model ],
 is($recoversir->nm_version,'nm73','add_iterations info 1');
 is($recoversir->done,0,'add_iterations info 2');
 is($recoversir->recenter,1,'add_iterations info 3');
+is($recoversir->adjust_blocks,0,'add_iterations info 3.5');
+is($recoversir->check_cholesky_reparameterization,1,'add_iterations info 3.6');
 is($recoversir->copy_data,1,'add_iterations info 4');
 is($recoversir->boxcox,1,'add_iterations info 5');
 is($recoversir->with_replacement,0,'add_iterations info 6');
@@ -662,6 +668,48 @@ my $ref = tool::sir::setup_variancevec_from_rse(rse_theta => $rsetheta,
 
 my $covmatrix = tool::sir::setup_covmatrix_from_variancevec(variance => $ref);
 is (tool::sir::check_matrix_posdef(matrix => $covmatrix),0,'rse covmatrix from neg covariance is posdef');
+
+my $arr = tool::sir::setup_auto_cholesky_block_posdef_check(
+	param=>['theta','theta','theta','theta','theta','theta','theta',
+			'theta','theta','theta','theta','theta'],
+	labels =>['SD_A01','SD_A02','COR_A0201',
+			  'SD_B1','SD_B2','SD_B3','COR_B31','COR_B32',
+			  'SD_C1','SD_C2',
+			  'SD_D1','COR_D21',
+	],
+	fix_theta_labels => ['SD_D2','COR_B21']);
+
+is(scalar(@{$arr}),3,'setup auto chol block count');
+is($arr->[0]->{'size'},2,'setup auto chol block size 1');
+is_deeply($arr->[0]->{'indices'},[0,2,1],
+		  'setup auto chol block indices 1');
+is($arr->[1]->{'size'},3,'setup auto chol block size 2');
+is_deeply($arr->[1]->{'indices'},[3,-2,4,6,7,5],
+		  'setup auto chol block indices 2');
+is($arr->[2]->{'size'},2,'setup auto chol block size 3');
+is_deeply($arr->[2]->{'indices'},[10,11,-1],
+	'setup auto chol block indices 3');
+
+my @aok = (0.3,1.2,0.5);
+my @abad=(0.3,1.2,1);
+my @bok =(1,2,3,0.1,0.02); #fix 0.1
+my @bbad=(1,2,3,0.9,0.9); #fix 0.01
+my @dok=(3,0.6); #fix 2
+my @dbad=(3,-1); #fix 2
+
+is(tool::sir::check_auto_cholesky_blocks_posdef(hash_array => $arr,
+												fix_xvec => [2,0.1],
+												xvec => [@aok,@bok,1,1,@dok]),1,'auto chol accept 1');
+
+is(tool::sir::check_auto_cholesky_blocks_posdef(hash_array => $arr,
+												fix_xvec => [2,0.1],
+												xvec => [@abad,@bok,1,1,@dok]),0,'auto chol accept 2');
+is(tool::sir::check_auto_cholesky_blocks_posdef(hash_array => $arr,
+												fix_xvec => [2,0.01],
+												xvec => [@aok,@bbad,1,1,@dok]),0,'auto chol accept 3');
+is(tool::sir::check_auto_cholesky_blocks_posdef(hash_array => $arr,
+												fix_xvec => [2,0.1],
+												xvec => [@aok,@bok,1,1,@dbad]),0,'auto chol accept 4');
 
 remove_test_dir($tempdir);
 

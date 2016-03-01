@@ -111,14 +111,19 @@ cmp_ok($covar->[4]->[4],'==',eval(1.75502E-04),'covar element 5,5');
 
 random_set_seed_from_phrase("hej pa dig");
 my ($gotsamples,$dirt) = tool::sir::sample_multivariate_normal(samples=>$nsamples,
-													   covmatrix => $covar,
-													   lower_bound => $hash->{'lower_bounds'},
-													   upper_bound => $hash->{'upper_bounds'},
-													   param => $hash->{'param'},
-													   coords => $hash->{'coords'},
-													   inflation => [],
-													   block_number => $hash->{'block_number'},
-													   mu => $mu
+															   check_cholesky_reparameterization => 0,
+															   fix_theta_labels => [],
+															   fix_theta_values => [],
+															   labels => [],
+															   covmatrix => $covar,
+															   lower_bound => $hash->{'lower_bounds'},
+															   upper_bound => $hash->{'upper_bounds'},
+															   param => $hash->{'param'},
+															   coords => $hash->{'coords'},
+															   inflation => [],
+															   block_number => $hash->{'block_number'},
+															   mu => $mu,
+															   adjust_blocks => 0
 	);
 
 
@@ -398,6 +403,10 @@ $nsamples=3;
 
 #random_set_seed_from_phrase("hej pa dig");
 my ($gotsamples,$dirt) = tool::sir::sample_multivariate_normal(samples=>$nsamples,
+															   check_cholesky_reparameterization => 0,
+															   fix_theta_labels => [],
+															   fix_theta_values => [],
+															   labels => [],
 													   covmatrix => $covar,
 													   lower_bound => $hash->{'lower_bounds'},
 													   upper_bound => $hash->{'upper_bounds'},
@@ -405,7 +414,8 @@ my ($gotsamples,$dirt) = tool::sir::sample_multivariate_normal(samples=>$nsample
 													   coords => $hash->{'coords'},
 													   inflation => [],
 													   block_number => $hash->{'block_number'},
-													   mu => $mu
+															   mu => $mu,
+															   adjust_blocks => 0
 	);
 
 

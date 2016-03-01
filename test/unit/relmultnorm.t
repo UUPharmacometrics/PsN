@@ -60,6 +60,12 @@ cmp_ok($icm->element(5,3),'==',-1.03606E+02,'inverse element 5,3');
 cmp_ok($icm->element(5,5),'==',5.96396E+03,'inverse element 5,5');
 
 my $hash = output::get_nonmem_parameters(output => $output);
+
+my $arr = tool::sir::setup_block_posdef_check(block_number => $hash->{'block_number'},
+											  coords => $hash->{'coords'});
+is(scalar(@{$arr}),0,'setup block posdef count 3');
+
+
 my $thetas = $hash->{'values'};
 
 cmp_ok($hash->{'values'}->[0],'==',5.55363E-03,' theta 1');
@@ -111,6 +117,10 @@ cmp_ok($covar->[4]->[4],'==',eval(1.75502E-04),'covar element 5,5');
 
 random_set_seed_from_phrase("hej pa dig");
 my ($gotsamples,$dirt) = tool::sir::sample_multivariate_normal(samples=>$nsamples,
+															   check_cholesky_reparameterization => 0,
+															   fix_theta_labels => [],
+															   fix_theta_values => [],
+															   labels => [],
 													   covmatrix => $covar,
 													   lower_bound => $hash->{'lower_bounds'},
 													   upper_bound => $hash->{'upper_bounds'},
@@ -118,7 +128,8 @@ my ($gotsamples,$dirt) = tool::sir::sample_multivariate_normal(samples=>$nsample
 													   coords => $hash->{'coords'},
 													   inflation => [],
 													   block_number => $hash->{'block_number'},
-													   mu => $mu
+															   mu => $mu,
+															   adjust_blocks => 0,
 	);
 
 #print "\nxvec [".join(' ',@{$gotsamples->[2]})."]\n";
@@ -270,7 +281,13 @@ $dir = $includes::testfiledir . "/";
 $file = 'mox_sir.lst';
 $output= output->new (filename => $dir . $file);
 
+$hash = output::get_nonmem_parameters(output => $output);
 my $icm = tool::sir::get_nonmem_inverse_covmatrix(output => $output);
+
+my $arr = tool::sir::setup_block_posdef_check(block_number => $hash->{'block_number'},
+											  coords => $hash->{'coords'});
+is(scalar(@{$arr}),0,'setup block posdef count 2');
+
 
 cmp_ok($icm->element(1,1),'==',eval(4.05821E-01),'inverse element 1,1');
 cmp_ok($icm->element(3,1),'==',5.71808E+00,'inverse element 3,1');
@@ -290,7 +307,6 @@ cmp_ok($icm->element(5,8),'==',-4.85426E+02,'inverse element 5,8');
 cmp_ok($icm->element(8,7),'==',-2.94627E+00,'inverse element 8,7');
 cmp_ok($icm->element(8,8),'==',6.84766E+02,'inverse element 8,8');
 
-$hash = output::get_nonmem_parameters(output => $output);
 
 my $params = $hash->{'values'};
 
@@ -382,6 +398,12 @@ $output= output->new(filename => $dir . $file);
 
 $hash = output::get_nonmem_parameters(output => $output);
 
+my $arr = tool::sir::setup_block_posdef_check(block_number => $hash->{'block_number'},
+											  coords => $hash->{'coords'});
+is(scalar(@{$arr}),1,'setup block posdef count');
+is($arr->[0]->{'size'},2,'setup block posdef size');
+is_deeply($arr->[0]->{'indices'},[6,7,8],'setup block posdef indices');
+
 $params = $hash->{'values'};
 
 #cmp_ok($hash->{'values'}->[0],'==',3.28661E+01,' theta 1');
@@ -399,6 +421,10 @@ $nsamples=3;
 
 #random_set_seed_from_phrase("hej pa dig");
 my ($gotsamples,$dirt) = tool::sir::sample_multivariate_normal(samples=>$nsamples,
+															   check_cholesky_reparameterization => 0,
+															   fix_theta_labels => [],
+															   fix_theta_values => [],
+															   labels => [],
 													   covmatrix => $covar,
 													   lower_bound => $hash->{'lower_bounds'},
 													   upper_bound => $hash->{'upper_bounds'},
@@ -406,7 +432,9 @@ my ($gotsamples,$dirt) = tool::sir::sample_multivariate_normal(samples=>$nsample
 													   coords => $hash->{'coords'},
 													   inflation => [],
 													   block_number => $hash->{'block_number'},
-													   mu => $mu
+															   mu => $mu,
+															   adjust_blocks => 0,
+
 	);
 
 
@@ -474,5 +502,95 @@ my $ok_resamples = tool::sir::do_resampling(times_sampled => \@times_sampledarr,
 is($ok_resamples,3,'do_resampling ok resamples 2');
 is_deeply(\@times_sampledarr,[1,1,1],'do_resampling times_sampled 2');
 is(($sampleorder[0]+$sampleorder[1]+$sampleorder[2]),6,'do_resampling sampleorder 2');
+
+
+my $arr = tool::sir::setup_block_posdef_check(block_number => [0,0,1,2,2,2,2,2,3,3,3,4,4],
+											  coords => ['1','2','1,1','2,2','3,2','3,3','4,3','4,4','5,5','6,5','6,6','7,7','8,8']);
+is(scalar(@{$arr}),2,'setup block posdef count 4');
+is($arr->[0]->{'size'},3,'setup block posdef size 4');
+is($arr->[1]->{'size'},2,'setup block posdef size 5');
+is_deeply($arr->[0]->{'indices'},[3,4,5,-1,6,7],'setup block posdef indices 4');
+is_deeply($arr->[1]->{'indices'},[8,9,10],'setup block posdef indices 5');
+
+my $orig_xv = [1,1,3,0.1,1,0.2,0.3,3,4,1,3];
+my $xvec = [1,1,3,0.1,1,0.2,0.3,3,4,1,3];
+my $hash_arr = [{'size' => 3, 'indices' => [2,3,4,5,6,7]},{'size' => 2, 'indices' => [8,9,10]}];
+my ($accept,$adjusted) = tool::sir::check_blocks_posdef(xvec => $xvec,
+														hash_array => $hash_arr,
+														adjust_blocks => 0);
+is($accept,1,'check blocks posdef accept 1');
+is($adjusted,0,'check blocks posdef adjusted 1');
+is_deeply($xvec,$orig_xv,'post xvec 1');
+
+($accept,$adjusted) = tool::sir::check_blocks_posdef(xvec => $xvec,
+													 hash_array => $hash_arr,
+													 adjust_blocks => 1);
+is($accept,1,'check blocks posdef accept 2');
+is($adjusted,0,'check blocks posdef adjusted 2');
+is_deeply($xvec,$orig_xv,'post xvec 2');
+
+$orig_xv = [1,1,3,0.1,1,0.2,0.3,3,1,1,1];
+$xvec = [1,1,3,0.1,1,0.2,0.3,3,1,1,1];
+
+($accept,$adjusted) = tool::sir::check_blocks_posdef(xvec => $xvec,
+													 hash_array => $hash_arr,
+													 adjust_blocks => 0);
+is($accept,0,'check blocks posdef accept 3');
+is($adjusted,0,'check blocks posdef adjusted 3');
+is_deeply($xvec,$orig_xv,'post xvec 3');
+
+($accept,$adjusted) = tool::sir::check_blocks_posdef(xvec => $xvec,
+													 hash_array => $hash_arr,
+													 adjust_blocks => 1);
+is($accept,1,'check blocks posdef accept 4');
+is($adjusted,1,'check blocks posdef adjusted 4');
+cmp_float_array($xvec,[1,1,3,0.1,1,0.2,0.3,3,1,0.999999999,1],'post xvec 4');
+
+
+$xvec = [1,1,1,3,0.1,1,0.1,3,1,0.1,1];
+$orig_xv = [1,1,1,3,0.1,1,0.1,3,1,0.1,1];
+
+$hash_arr = [{'size' => 3, 'indices' => [3,4,5,-1,6,7]},{'size' => 2, 'indices' => [8,9,10]}];
+
+($accept,$adjusted) = tool::sir::check_blocks_posdef(xvec => $xvec,
+													 hash_array => $hash_arr,
+													 adjust_blocks => 0);
+is($accept,1,'check blocks posdef accept 5');
+is($adjusted,0,'check blocks posdef adjusted 5');
+is_deeply($xvec,$orig_xv,'post xvec 5');
+
+$xvec =    [1,1,1,3,0.1,3,3,3,1,0.1,1];
+$orig_xv = [1,1,1,3,0.1,3,3,3,1,0.1,1];
+
+($accept,$adjusted) = tool::sir::check_blocks_posdef(xvec => $xvec,
+													 hash_array => $hash_arr,
+													 adjust_blocks => 0);
+is($accept,0,'check blocks posdef accept 6');
+is($adjusted,0,'check blocks posdef adjusted 6');
+is_deeply($xvec,$orig_xv,'post xvec 6');
+
+($accept,$adjusted) = tool::sir::check_blocks_posdef(xvec => $xvec,
+													 hash_array => $hash_arr,
+													 adjust_blocks => 1);
+is($accept,0,'check blocks posdef accept 7');
+is($adjusted,1,'check blocks posdef adjusted 7');
+cmp_float_array($xvec,[1,1,1,3.00000092e+00,9.99722453e-02,3.00083310e+00,2.99916736e+00,3.00083218e+00,1,0.1,1],'post xvec 7');
+
+
+$xvec =    [1,1,1,3,0.00000001,3,3,3,1,0.1,1];
+$orig_xv =    [1,1,1,3,0.00000001,3,3,3,1,0.1,1];
+($accept,$adjusted) = tool::sir::check_blocks_posdef(xvec => $xvec,
+													 hash_array => $hash_arr,
+													 adjust_blocks => 0);
+is($accept,0,'check blocks posdef accept 8');
+is($adjusted,0,'check blocks posdef adjusted 8');
+is_deeply($xvec,$orig_xv,'post xvec 8');
+
+($accept,$adjusted) = tool::sir::check_blocks_posdef(xvec => $xvec,
+													 hash_array => $hash_arr,
+													 adjust_blocks => 1);
+is($accept,1,'check blocks posdef accept 9');
+is($adjusted,1,'check blocks posdef adjusted 9');
+is_deeply($xvec,[1,1,1,3,9.99999999833334e-09,3.0000000005,2.9999999995,3.0000000005,1,0.1,1],'post xvec 9');
 
 done_testing();

@@ -31,6 +31,8 @@ has 'recover' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'add_iterations' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'copy_data' => ( is => 'rw', isa => 'Bool', default => 1 );
 has 'recenter' => ( is => 'rw', isa => 'Bool', default => 1 );
+has 'adjust_blocks' => ( is => 'rw', isa => 'Bool', default => 0 );
+has 'check_cholesky_reparameterization' => ( is => 'rw', isa => 'Bool', default => 1 );
 has 'center_rawresults_vector' => ( is => 'rw', isa => 'ArrayRef',default => sub { [] } );
 has 'boxcox' => ( is => 'rw', isa => 'Bool', default => 1 );
 has 'negative_dofv' => ( is => 'rw', isa => 'ArrayRef', default => sub { [] } );
@@ -125,6 +127,32 @@ sub BUILD
 										 model => $self ->models()->[0]));
 	}
 
+	if($self->check_cholesky_reparameterization){
+		#look for tags . If found print message otherwise unset
+		my @code;
+		my $prob = $self ->models()->[0]->problems->[0];
+		if (defined $prob->pks and scalar(@{$prob->pks})>0 ) {
+			@code = @{$prob->pks->[0]->code};
+		} elsif (defined $prob->preds and scalar(@{$prob->preds})>0) {
+			@code = @{$prob->preds->[0]->code};
+		}
+		my $found=0;
+		my $tag = 'Cholesky reparameterize start, DO NOT EDIT THIS LINE';
+		foreach my $line (@code){
+			if ($line =~ /$tag/){
+				$found=1;
+				last;
+			}
+		}
+		if ($found){
+			ui->print(category=>'sir',
+					  message => "Found Cholesky reparameterization tag in model code, ".
+					  "will check reparameterized blocks posdef during sampling");#FIXME option unset
+		}else{
+			$self->check_cholesky_reparameterization(0);
+		}
+	}
+	
 	for my $accessor ('logfile','raw_results_file','raw_nonp_file'){
 		my @new_files=();
 		my @old_files = @{$self->$accessor};
@@ -709,7 +737,22 @@ sub modelfit_setup
 		$resampled_params_arr = $rawres_resampled_params_arr;
 	}
 
-
+	my $fix_theta_labels = [];
+	my $fix_theta_values = [];
+	if ($self->check_cholesky_reparameterization){
+		if (defined $output->problems->[0]->input_problem->thetas){
+			foreach my $record (@{$output->problems->[0]->input_problem->thetas}){
+				foreach my $opt (@{$record->options}){
+					next unless ($opt->fix);
+					if (defined $opt->label and length($opt->label)>0){
+						push(@{$fix_theta_values},$opt->init);
+						push(@{$fix_theta_labels},$opt->label);
+					}# else cannot be SD or COR 
+				}
+			}
+		}
+	}
+	
 	for (my $iteration=$first_iteration;$iteration<=$self->max_iteration(); $iteration++){
 		if (defined $resampled_params_arr){
 			#we have resampled_params_arr, either from first iteration or rawresinput, on original scale
@@ -804,17 +847,23 @@ sub modelfit_setup
 			$self->problems_per_file(1);
 		}
 		my $sampled_params_arr;
-		my ($vectorsamples,$boxcox_samples) = sample_multivariate_normal(samples=>$current_samples,
-																		 covmatrix => $covmatrix,
-																		 inflation => $inflation,
-																		 lower_bound => $self->parameter_hash->{'lower_bounds'},
-																		 upper_bound => $self->parameter_hash->{'upper_bounds'},
-																		 param => $self->parameter_hash->{'param'},
-																		 coords => $self->parameter_hash->{'coords'},
-																		 block_number => $self->parameter_hash->{'block_number'},
-																		 mu => $muvector,
-																		 lambda => $lambda,
-																		 delta => $delta);
+		my ($vectorsamples,$boxcox_samples) = sample_multivariate_normal(
+			check_cholesky_reparameterization => $self->check_cholesky_reparameterization,
+			fix_theta_labels => $fix_theta_labels,
+			fix_theta_values => $fix_theta_values,
+			samples=>$current_samples,
+			labels => $self->parameter_hash->{'labels'},
+			covmatrix => $covmatrix,
+			inflation => $inflation,
+			adjust_blocks => $self->adjust_blocks,
+			lower_bound => $self->parameter_hash->{'lower_bounds'},
+			upper_bound => $self->parameter_hash->{'upper_bounds'},
+			param => $self->parameter_hash->{'param'},
+			coords => $self->parameter_hash->{'coords'},
+			block_number => $self->parameter_hash->{'block_number'},
+			mu => $muvector,
+			lambda => $lambda,
+			delta => $delta);
 		
 		$sampled_params_arr = create_sampled_params_arr(samples_array => $vectorsamples,
 														labels_hash => $self->parameter_hash,
@@ -905,6 +954,8 @@ sub modelfit_setup
 									  model_filename => $model->filename,
 									  cap_resampling => $self->cap_resampling,
 									  done  => 0,
+									  adjust_blocks  => $self->adjust_blocks,
+									  check_cholesky_reparameterization => $self->check_cholesky_reparameterization,
 									  recenter  => $self->recenter,
 									  copy_data => $self->copy_data,
 									  boxcox => $self->boxcox,
@@ -956,6 +1007,8 @@ sub load_restart_information
 	my $done;
 	my $iteration;
 	my $recenter;
+	my $adjust_blocks;
+	my $check_cholesky_reparameterization,
 	my $copy_data;
 	my $boxcox;
 	my $with_replacement;
@@ -993,6 +1046,8 @@ sub load_restart_information
 					  "be set as in original run, even if set differently on new commandline.\n");
 			$self->done($done);
 			$self->recenter($recenter);
+			$self->adjust_blocks($adjust_blocks);
+			$self->check_cholesky_reparameterization($check_cholesky_reparameterization);
 			$self->copy_data($copy_data);
 			$self->boxcox($boxcox);
 			$self->with_replacement($with_replacement);
@@ -1072,6 +1127,8 @@ sub save_restart_information
 							  model_filename => { isa => 'Str', optional => 0 },
 							  done  => { isa => 'Bool', optional => 0 },
 							  recenter  => { isa => 'Bool', optional => 0 },
+							  adjust_blocks  => { isa => 'Bool', optional => 0 },
+							  check_cholesky_reparameterization  => { isa => 'Bool', optional => 0 },
 							  copy_data => { isa => 'Bool', optional => 0 },
 							  boxcox => { isa => 'Bool', optional => 0 },
 							  with_replacement => { isa => 'Bool', optional => 0 },
@@ -1099,6 +1156,8 @@ sub save_restart_information
 	my $done = $parm{'done'};
 	my $iteration = $parm{'iteration'};
 	my $recenter = $parm{'recenter'};
+	my $adjust_blocks = $parm{'adjust_blocks'};
+	my $check_cholesky_reparameterization = $parm{'check_cholesky_reparameterization'};
 	my $cap_resampling = $parm{'cap_resampling'};
 	my $copy_data = $parm{'copy_data'};
 	my $boxcox = $parm{'boxcox'};
@@ -1119,7 +1178,7 @@ sub save_restart_information
 
 	#local name
 
-	my @dumper_names = qw(*parameter_hash *center_rawresults_vector *negative_dofv *intermediate_raw_results_files *samples *resamples *attempted_samples *successful_samples *actual_resamples *seed_array with_replacement mceta problems_per_file *minimum_ofv reference_ofv done iteration recenter copy_data boxcox nm_version model_filename cap_resampling);
+	my @dumper_names = qw(*parameter_hash *center_rawresults_vector *negative_dofv *intermediate_raw_results_files *samples *resamples *attempted_samples *successful_samples *actual_resamples *seed_array with_replacement mceta problems_per_file *minimum_ofv reference_ofv done iteration recenter copy_data boxcox nm_version model_filename cap_resampling adjust_blocks check_cholesky_reparameterization);
 
 
 	open(FH, '>'.$recovery_filename) or return -1; #die "Could not open file $recovery_filename for writing.\n";
@@ -1128,7 +1187,7 @@ sub save_restart_information
 		 $samples,$resamples,$attempted_samples,$successful_samples,$actual_resamples,$seed_array,
 		 $with_replacement,$mceta,
 		 $problems_per_file,$minimum_ofv,$reference_ofv,$done,$iteration,$recenter,$copy_data,$boxcox,$nm_version,
-		$model_filename, $cap_resampling],
+		$model_filename, $cap_resampling, $adjust_blocks, $check_cholesky_reparameterization],
 		\@dumper_names
 		);
 	close FH;
@@ -1608,15 +1667,308 @@ sub get_determinant_factor
 
 }
 
+sub check_auto_cholesky_blocks_posdef{
+	#static, no shift
+	my %parm = validated_hash(\@_,
+							  xvec => { isa => 'ArrayRef', optional => 0 },
+							  hash_array => {isa => 'ArrayRef', optional => 0},
+							  fix_xvec => { isa => 'ArrayRef', optional => 0 },
+		);
 
+	my $xvec = $parm{'xvec'};
+	my $hash_array = $parm{'hash_array'};
+	my $fix_xvec = $parm{'fix_xvec'};
+
+	my $minEigen=0.000000001;
+	my $accept = 1;
+
+	sub thepos{
+		my $r=shift; #0 based row
+		my $c=shift; #0 based col
+		return round(($r*($r+1)/2)+($c+1)-1);
+	}
+	
+	foreach my $hashref (@{$hash_array}){
+		my $size = $hashref->{'size'};
+		my $mat = [];
+		my @sdvalues = ();
+		my $pos;
+		my $cor;
+		for (my $row=0; $row< $size; $row++){
+			push(@{$mat},[(0) x $size]);
+			$pos = $hashref->{'indices'}->[thepos($row,$row)];
+#			print "pos is $pos\n";
+			if ($pos >= 0){
+				push(@sdvalues,$xvec->[$pos]);
+			}else{
+#				print "pos is $pos, index ".abs($pos+1)."\n";
+				push(@sdvalues,$fix_xvec->[abs($pos+1)]);
+			}
+		}
+#		print "sd ".join(' ',@sdvalues)."\n";
+		for (my $row=0; $row < $size; $row++){
+			for (my $col=0; $col < $row; $col++){
+				$pos = $hashref->{'indices'}->[thepos($row,$col)];
+				if ($pos >= 0){
+					$cor = $xvec->[$pos];
+				}else{
+					$cor = $fix_xvec->[abs($pos+1)];
+				}
+				$mat->[$row]->[$col] = $cor*$sdvalues[$row]*$sdvalues[$col]; #covar
+				$mat->[$col]->[$row] = $mat->[$row]->[$col];
+			}
+			$mat->[$row]->[$row] = ($sdvalues[$row])**2; #sd
+		}
+
+		(my $eigenvalues, my $Q) = linear_algebra::eigenvalue_decomposition($mat);
+#		for (my $row=0; $row< $size; $row++){
+#			print join(' ',@{$mat->[$row]})."\n";
+#		}
+#		print "\n";
+		if (linear_algebra::min($eigenvalues) < $minEigen){
+			$accept = 0;
+			last;
+		}
+	}
+	return $accept;
+}
+
+sub setup_auto_cholesky_block_posdef_check
+{
+	my %parm = validated_hash(\@_,
+							  labels => { isa => 'ArrayRef', optional => 0 },
+							  fix_theta_labels => { isa => 'ArrayRef', optional => 0 },
+							  param => { isa => 'ArrayRef', optional => 0 },
+		);
+	my $labels = $parm{'labels'};
+	my $fix_theta_labels = $parm{'fix_theta_labels'};
+	my $param = $parm{'param'};
+	
+	my $dim = scalar(@{$labels});
+
+	#one row at a time, sd first , then corr if any
+	#each time find sd, push a row
+
+	#FIXME option to turn off check
+	#FIXME auto-detect in pk/pred code
+	
+	my %sdcorr_matrices;
+	my %sdcorr_fix;
+	my %dimension;
+	my $thisid = '';
+	my $row;
+	my $col;
+	for (my $i=0; $i< $dim; $i++){
+		last unless ($param->[$i] eq 'theta');
+
+		if($labels->[$i] =~ /^SD_([A-Z]+)(\d?\d)$/){
+			$thisid = $1;
+			$row=$2;
+			$row =~ s/^0//;
+			$sdcorr_matrices{$thisid}->{'sd'}->{$row} = $i;
+			if ((not defined $dimension{$thisid}) or
+				($dimension{$thisid} < $row)){
+				$dimension{$thisid} = $row;
+			}
+		}elsif($labels->[$i] =~ /^COR_([A-Z]+)(\d?\d)(\d?\d)$/){
+			$thisid = $1;
+			$row=$2;
+			$col=$3;
+			$row =~ s/^0//;
+			$col =~ s/^0//;
+			$sdcorr_matrices{$thisid}->{'corr'}->{$row}->{$col} = $i;
+#			print "block $thisid, CORR $row $col\n";
+			if ((not defined $dimension{$thisid}) or
+				($dimension{$thisid} < $row)){
+				$dimension{$thisid} = $row;
+			}
+		}
+	}
+	for (my $i=0; $i< scalar(@{$fix_theta_labels}); $i++){
+		if($fix_theta_labels->[$i] =~ /^SD_([A-Z]+)(\d?\d)$/){
+			$thisid = $1;
+			$row=$2;
+			$row =~ s/^0//;
+			$sdcorr_fix{$thisid}->{'sd'}->{$row} = $i;
+			if ((not defined $dimension{$thisid}) or
+				($dimension{$thisid} < $row)){
+				$dimension{$thisid} = $row;
+			}
+		}elsif($fix_theta_labels->[$i] =~ /^COR_([A-Z]+)(\d?\d)(\d?\d)$/){
+			$thisid = $1;
+			$row=$2;
+			$col=$3;
+			$row =~ s/^0//;
+			$col =~ s/^0//;
+			$sdcorr_fix{$thisid}->{'corr'}->{$row}->{$col} = $i;
+			if ((not defined $dimension{$thisid}) or
+				($dimension{$thisid} < $row)){
+				$dimension{$thisid} = $row;
+			}
+		}
+	}
+
+	my @finals;
+	my $ind;
+	foreach my $id (sort {lc($a) cmp lc($b)} keys %dimension){
+		if ((not defined $sdcorr_fix{$id}->{'corr'}) and
+			(not defined $sdcorr_matrices{$id}->{'corr'})){
+			#only store if have corr
+			next;
+		}
+		push(@finals,{'size'=> $dimension{$id}, 'indices'=> []});
+		for (my $row=1; $row <= $dimension{$id}; $row++){
+			for (my $col=1; $col<$row; $col++){
+				if (defined $sdcorr_matrices{$id}->{'corr'}->{$row}->{$col}){
+					$ind = $sdcorr_matrices{$id}->{'corr'}->{$row}->{$col};
+				}elsif(defined $sdcorr_fix{$id}->{'corr'}->{$row}->{$col}){
+					$ind = (-1+(-1*($sdcorr_fix{$id}->{'corr'}->{$row}->{$col})));
+				}else{
+					croak("Failed setup of cholesky reparameterization check for block $id, no CORR $row $col");
+				}
+				push(@{$finals[-1]->{'indices'}},$ind);
+			}
+			if (defined $sdcorr_matrices{$id}->{'sd'}->{$row}){
+				$ind = $sdcorr_matrices{$id}->{'sd'}->{$row};
+			}elsif(defined $sdcorr_fix{$id}->{'sd'}->{$row}){
+				$ind = (-1+(-1*($sdcorr_fix{$id}->{'sd'}->{$row})));
+			}else{
+				croak("Failed setup of cholesky reparameterization check for block $id, no SD $row");
+			}
+			push(@{$finals[-1]->{'indices'}},$ind);
+		}
+	}
+	return \@finals;
+}
+
+sub setup_block_posdef_check
+{
+	my %parm = validated_hash(\@_,
+							  block_number => { isa => 'ArrayRef', optional => 0 },
+							  coords => { isa => 'ArrayRef', optional => 0 },
+		);
+	my $block_number = $parm{'block_number'};
+	my $coords = $parm{'coords'};
+	
+	my $dim = scalar(@{$coords});
+
+	unless ($dim>0){
+		croak("Input error setup_block_posdef_check: coords has dimension $dim");
+	}
+	unless (scalar(@{$block_number})==$dim){
+		croak("Input error setup_block_posdef_check: sim $dim block_number has dimension ".scalar(@{$block_number}));
+	}
+
+	my @blockarrays=();
+
+	my @thisarray=();
+	my $any_offdiag=0;
+	my $blockstart=0;
+	my $prev_localrow = 0;
+	my $prev_localcol = 0;
+	my $prev_globalrow = 0;
+	my $prev_globalcol = 0;
+	
+	for (my $i=0; $i< $dim; $i++){
+		#does this i belong to a block?
+		if ($block_number->[$i] == 0){
+			#not block
+			next;
+		}else{
+			#this is part of block
+			my ($row,$col) = split(',',$coords->[$i]);
+			#should be defined, otherwise complain
+			unless ((defined $row) and (defined $col)){
+				croak("bug in setup_block_posdef split, coords ".$coords->[$i]);
+			}
+			if (scalar(@thisarray)==0){
+				#this is first i of a block, should be diag, otherwise complain
+				unless ($row == $col){
+					croak("bug in setup_block_posdef first element, coords ".$coords->[$i]);
+				}
+				$prev_localcol = 1;
+				$prev_localrow = 1;
+				$blockstart = $row;
+			}else{
+				#if not first, then check if offdiag
+				if ($row != $col){
+					$any_offdiag = 1;
+				}
+				unless ($prev_localrow > 0 and ($prev_globalrow > 0)){
+					croak("bug setup_block_posdef, prev_localrow $prev_localrow coords ".$coords->[$i]);
+				}
+				unless ($prev_localcol > 0 and ($prev_globalcol > 0)){
+					croak("bug setup_block_posdef, prev_localcol $prev_localcol coords ".$coords->[$i]);
+				}
+				#is this the next expected entry, or do we pad with zeros for band matrix?
+				my $this_localrow=$row-$blockstart+1;
+				my $this_localcol=$col-$blockstart+1;
+
+				my $expected_localcol;
+				my $expected_localrow;
+				if ($prev_localcol == $prev_localrow){
+					$expected_localcol = 1;
+					$expected_localrow = $prev_localrow+1;
+				}else{
+					$expected_localcol = $prev_localcol+1;
+					$expected_localrow = $prev_localrow;
+				}
+				unless ($this_localrow == $expected_localrow){
+					croak("bug setup_block_posdef this_localrow $this_localrow expected $expected_localrow coords ".$coords->[$i]);
+				}
+
+				#loop from first expected up to one before the one we actually have
+				#and add any we do not have, can be empty loop
+				for (my $j=$expected_localcol; $j< $this_localcol; $j++){
+					push(@thisarray,-1);
+				}
+				$prev_localcol = $this_localcol;
+				$prev_localrow = $this_localrow;
+			}
+			#finally add the one we have
+			$prev_globalcol = $col;
+			$prev_globalrow = $row;
+			push(@thisarray,$i);
+
+			#if this is last i of a block
+			if ( ($i==($dim-1)) or 
+				 ($block_number->[$i] != $block_number->[$i+1])){
+				unless ($prev_localrow == $prev_localcol){
+					croak("last item in block but not diagonal $prev_localrow , $prev_localcol coords ".$coords->[$i]);
+				}
+				
+				#only add block if have any offdiag
+				if ($any_offdiag){
+					push(@blockarrays,{'size' => $prev_localrow, 'indices'=> [@thisarray]});
+				}
+				#reset stuff
+				$any_offdiag = 0;
+				$prev_localrow = 0;
+				$prev_localcol = 0;
+				$prev_globalrow = 0;
+				$prev_globalcol = 0;
+				@thisarray = ();
+			}
+
+		}
+	}
+
+	return \@blockarrays;
+	
+}
 
 sub sample_multivariate_normal
 {
 	my %parm = validated_hash(\@_,
 							  samples => { isa => 'Int', optional => 0 },
+							  adjust_blocks => { isa => 'Bool', optional => 0},
+							  check_cholesky_reparameterization => { isa => 'Bool', optional => 0},
+							  fix_theta_labels => { isa => 'ArrayRef', optional => 0 },
+							  fix_theta_values => { isa => 'ArrayRef', optional => 0 },
 #							  multivariate_normal  => { isa => 'Bool', optional => 1, default => 1},
 							  covmatrix => { isa => 'ArrayRef[ArrayRef]', optional => 0 }, #required for multnorm
 #							  bootstrap_samples => { isa => 'ArrayRef', optional => 1 }, #required for uniform
+							  labels => { isa => 'ArrayRef', optional => 0 },
 							  lower_bound => { isa => 'ArrayRef', optional => 0 },
 							  upper_bound => { isa => 'ArrayRef', optional => 0 },
 							  param => { isa => 'ArrayRef', optional => 0 },
@@ -1629,9 +1981,14 @@ sub sample_multivariate_normal
 							  delta => { isa => 'ArrayRef', optional => 1 }, #not allowed for uniform?
 		);
 	my $samples = $parm{'samples'};
+	my $adjust_blocks = $parm{'adjust_blocks'};
+	my $check_cholesky_reparameterization = $parm{'check_cholesky_reparameterization'};
 #	my $multivariate_normal = $parm{'multivariate_normal'};
 	my $covmatrix = $parm{'covmatrix'};
 #	my $bootstrap_samples = $parm{'bootstrap_samples'};
+	my $labels = $parm{'labels'};
+	my $fix_theta_labels = $parm{'fix_theta_labels'};
+	my $fix_theta_values = $parm{'fix_theta_values'};
 	my $lower_bound = $parm{'lower_bound'};
 	my $upper_bound = $parm{'upper_bound'};
 	my $param = $parm{'param'};
@@ -1721,108 +2078,34 @@ sub sample_multivariate_normal
 		#TODO rawres_hash_array-> array of vectors in plain format
 #	}
 	
+	my $block_check_array = setup_block_posdef_check(block_number => $block_number,
+													  coords => $coords);
 
-
-
-	my $check_sigma_posdef=0;
-	my $check_omega_posdef=0;
-	my @sigma_hashes=();
-	my @omega_hashes=();
-	my @row_index=();
-	my @col_index=();
-	for (my $i=0; $i< $dim; $i++){
-		if ($param->[$i] eq 'omega' or $param->[$i] eq 'sigma'){
-			my ($row,$col) = split(',',$coords->[$i]);
-			push(@row_index,($row-1));
-			push(@col_index,($col-1));
-			unless ($row == $col){
-				$check_sigma_posdef=1 if ($param->[$i] eq 'sigma');
-				$check_omega_posdef=1 if ($param->[$i] eq 'omega');
-			}
-		}else{
-			push(@row_index,-1);
-			push(@col_index,-1);
-		} 
+	my $cholesky_block_array;
+	if ($check_cholesky_reparameterization){
+		$cholesky_block_array = setup_auto_cholesky_block_posdef_check(
+			param=> $param,
+			labels => $labels,
+			fix_theta_labels => $fix_theta_labels);
 	}
-	#handle different blocks
-	#if block_number changes AND the new number is nonzero then we have the 0,0 index of a new block
-	#loop here to reset indices so that start at 0 for each block
-	if ($check_sigma_posdef){
-		my $prev_block_number=0;
-		my $offset=0;
-		my $index=0;
-		for (my $i=0; $i< $dim; $i++){
-			if ($param->[$i] eq 'sigma'){
-				if ($block_number->[$i] > 0){
-					if ($block_number->[$i] == $prev_block_number){
-						#add to existing block, keep same offset
-						if (($row_index[$i]-$offset+1) > $sigma_hashes[$index]->{'size'}){
-							$sigma_hashes[$index]->{'size'} = ($row_index[$i]-$offset+1);
-						}
-						if ($row_index[$i] != $col_index[$i]){
-							$sigma_hashes[$index]->{'offdiag'}=1;
-						}
-					}else{
-						push(@sigma_hashes,{});
-						$index = scalar(@sigma_hashes)-1;
-						#new block, change offset
-						$offset = $row_index[$i];
-						$sigma_hashes[$index]->{'block_number'}=$block_number->[$i];
-						$sigma_hashes[$index]->{'offset'}=$offset;
-						$sigma_hashes[$index]->{'offdiag'}=0;
-						$sigma_hashes[$index]->{'size'}=1;
-					}
-					$row_index[$i] = $row_index[$i] -$offset;
-					$col_index[$i] = $col_index[$i] -$offset;
-				}else{
-					$offset=0; #unnecessary?
-				}
-				$prev_block_number=$block_number->[$i];
-			}
-		}
-	}
-	if ($check_omega_posdef){
-		my $prev_block_number=0;
-		my $offset=0;
-		my $index=0;
-		for (my $i=0; $i< $dim; $i++){
-			if ($param->[$i] eq 'omega'){
-				if ($block_number->[$i] > 0){
-					if ($block_number->[$i] == $prev_block_number){
-						#add to existing block, keep same offset
-						if (($row_index[$i]-$offset+1) > $omega_hashes[$index]->{'size'}){
-							$omega_hashes[$index]->{'size'} = ($row_index[$i]-$offset+1);
-						}
-						if ($row_index[$i] != $col_index[$i]){
-							$omega_hashes[$index]->{'offdiag'}=1;
-						}
-					}else{
-						push(@omega_hashes,{});
-						$index = scalar(@omega_hashes)-1;
-						#new block, change offset
-						$offset = $row_index[$i];
-						$omega_hashes[$index]->{'block_number'}=$block_number->[$i];
-						$omega_hashes[$index]->{'offset'}=$offset;
-						$omega_hashes[$index]->{'offdiag'}=0;
-						$omega_hashes[$index]->{'size'}=1;
-					}
-					$row_index[$i] = $row_index[$i] -$offset;
-					$col_index[$i] = $col_index[$i] -$offset;
-				}else{
-					$offset=0; #unnecessary?
-				}
-				$prev_block_number=$block_number->[$i];
-			}
-		}
-	}
-
-
+	
+	my %rejections;
+	$rejections{'lower_bound'}=[(0) x $dim];
+	$rejections{'upper_bound'}=[(0) x $dim];
+	$rejections{'block'}=0;
+	$rejections{'reparameterized_block'}=0;
+	$rejections{'boxcox'}=[(0) x $dim];
+	$rejections{'zero'}=[(0) x $dim];
+	
 	my @samples_array=();
 	my @boxcox_samples_array=();
 	my $counter=0;
 	my $max_iter=1000;
+	my $half_iter = 500;
 	my $discarded=0;
-
+	my $adjusted = 0;
+	my $this_adjusted=0;
+	my $discarded_adjusted = 0;
 	for (my $j=0; $j<$max_iter; $j++){
 		#we will probably discard some samples, generate twice needed amount to start with
 		my @candidate_samples;
@@ -1841,6 +2124,7 @@ sub sample_multivariate_normal
 												  inverse => 1);
 				for (my $i=0; $i< $dim; $i++){
 					unless (usable_number($xvec->[$i])){
+						$rejections{'boxcox'}->[$i]=$rejections{'boxcox'}->[$i]+1;
 						$accept=0;
 						last;
 					}
@@ -1855,13 +2139,16 @@ sub sample_multivariate_normal
 
 			for (my $i=0; $i< $dim; $i++){
 				if ($xvec->[$i] <= $lower_bound->[$i]){
+					$rejections{'lower_bound'}->[$i]=$rejections{'lower_bound'}->[$i]+1;
 					$accept=0;
 					last;
 				}elsif($xvec->[$i] >= $upper_bound->[$i]){
+					$rejections{'upper_bound'}->[$i]=$rejections{'upper_bound'}->[$i]+1;
 					$accept=0;
 					last;
 				}elsif($xvec->[$i] == 0){
-					#unlikely, but must handle 
+					#unlikely, but must handle
+					$rejections{'zero'}->[$i]=$rejections{'zero'}->[$i]+1;
 					$accept=0;
 					last;
 				}
@@ -1870,73 +2157,26 @@ sub sample_multivariate_normal
 				$discarded++;
 				next ;
 			}
-			if ($check_sigma_posdef){
-				foreach my $ref (@sigma_hashes){
-					next unless ($ref->{'offdiag'}==1);
-					my $size = $ref->{'size'};
-					my $mat = [];
-					for (my $k=0; $k< $size; $k++){
-						push(@{$mat},[(0) x $size]);
-					}
-					my $num = $ref->{'block_number'};
-					for (my $i=0; $i< $dim; $i++){
-						if (($param->[$i] eq 'sigma') and ($block_number->[$i] == $num)){
-							my $row=$row_index[$i];
-							my $col=$col_index[$i];
-							$mat->[$row]->[$col]=$xvec->[$i];
-							$mat->[$col]->[$row]=$xvec->[$i];
-						}
-					}
-					#if get numerical error on cholesky then do not accept
-					my $err = linear_algebra::cholesky($mat);
-					if ($err == 1){
-						$accept = 0;
-						last;
-					}
-				}
-			}
+			($accept,$this_adjusted) = check_blocks_posdef(xvec => $xvec,
+														   hash_array => $block_check_array,
+														   adjust_blocks => $adjust_blocks);
 			unless ($accept){
+				$rejections{'block'}++;
 				$discarded++;
+				$discarded_adjusted++ if ($this_adjusted);
 				next ;
 			}
-			if ($check_omega_posdef){
-				foreach my $ref (@omega_hashes){
-					next unless ($ref->{'offdiag'}==1);
-#					foreach my $key(keys %{$ref}){
-#						print "$key ".$ref->{$key}."\n";
-#					}
-					my $size = $ref->{'size'};
-					my $mat = [];
-					for (my $k=0; $k< $size; $k++){
-						push(@{$mat},[(0) x $size]);
-					}
-					my $num = $ref->{'block_number'};
-					for (my $i=0; $i< $dim; $i++){
-						if (($param->[$i] eq 'omega') and ($block_number->[$i] == $num)){
-							my $row=$row_index[$i];
-							my $col=$col_index[$i];
-							$mat->[$row]->[$col]=$xvec->[$i];
-							$mat->[$col]->[$row]=$xvec->[$i];
-						}
-					}
-#					for (my $i=0; $i< $size; $i++){
-#						print join(' ',@{$mat->[$i]})."\n";
-#					}
-					#if get numerical error on cholesky then do not accept
-					my $err = linear_algebra::cholesky($mat);
-					if ($err == 1){
-						$accept = 0;
-#						print "cholesky skip\n";
-						last;
-					}else{
-#						print "cholesky accept\n";
-					}
-				}
+			if ($check_cholesky_reparameterization){
+				$accept = check_auto_cholesky_blocks_posdef(hash_array =>$cholesky_block_array, 
+															xvec => $xvec,
+															fix_xvec => $fix_theta_values);
 			}
 			unless ($accept){
-				$discarded++;
+				$rejections{'reparameterized_block'}++;
 				next ;
 			}
+
+			$adjusted++ if ($this_adjusted);
 			push(@samples_array,$xvec);
 			push(@boxcox_samples_array,$candidate_samples[$cand]) if ($transform);
 			$counter++;
@@ -1948,14 +2188,127 @@ sub sample_multivariate_normal
 					  message => "Only have $counter accepted parameter vectors within the boundaries ".
 					  "after generating ".(2*($j+1)*$samples)." candidates, drawing more candidates\n");
 		}
+		if (($j==$half_iter) and (not $adjust_blocks)){
+			ui->print(category=> 'sir',
+					  message => "Turning on automatic adjustment of OMEGA/SIGMA blocks to increase acceptance rate\n");
+			$adjust_blocks = 1;
+		}
 	}
-	
+
+#	if(1 or (not $counter == $samples)){
+	if(not $counter == $samples){
+		print "Sample rejection summary:\n";
+		print "Label            BoxCox    LowerBound UpperBound Zero\n";
+		for (my $i=0; $i< $dim; $i++){
+			my $line=sprintf("%13s %7i %11i %11i %5i\n",
+							 $labels->[$i],$rejections{'boxcox'}->[$i],
+							 $rejections{'lower_bound'}->[$i],
+							 $rejections{'upper_bound'}->[$i],
+							 $rejections{'zero'}->[$i]);
+			print $line;
+		}
+		print "blocks nonposdef rejections: ".$rejections{'block'}."\n";
+		if ($check_cholesky_reparameterization){
+			print "cholesky reparameterized blocks nonposdef rejections: ".
+				$rejections{'reparameterized_block'}."\n";
+		}
+	}
 	unless ($counter == $samples){
-		croak("Failed to generate $samples accepted parameter vectors within the boundaries even after generating ".(2*$max_iter*$samples)." candidates, only have $counter accepted.");
+		ui->print(category => 'sir',message=>"Failed to generate $samples accepted parameter vectors within the boundaries even after generating ".
+				  (2*$max_iter*$samples)." candidates, only have $counter accepted.\n".
+				  "See summary of causes of rejections above.\n");
+		croak("Cannot proceed with sir\n");
 	}
-	ui->print(category => 'sir',message=> "Redrew $discarded samples that did not fulfill boundary conditions.\n");
+	my $extra = '';
+	if ($adjusted > 0){
+		$extra = "and adjusted $adjusted samples to make blocks positive definite\n";
+	}
+	ui->print(category => 'sir',message=> "Redrew $discarded samples that did not fulfill boundary conditions\n".
+			  "$extra");
 	return (\@samples_array,\@boxcox_samples_array);
 
+}
+
+sub check_blocks_posdef{
+	#static, no shift
+	my %parm = validated_hash(\@_,
+							  xvec => { isa => 'ArrayRef', optional => 0 },
+							  hash_array => {isa => 'ArrayRef', optional => 0},
+							  adjust_blocks => {isa => 'Bool', optional => 0},
+		);
+
+	my $xvec = $parm{'xvec'};
+	my $hash_array = $parm{'hash_array'};
+	my $adjust_blocks = $parm{'adjust_blocks'};
+
+	my $minEigen=0.000000001;
+	my $accept = 1;
+	my $adjusted = 0;
+
+	foreach my $hashref (@{$hash_array}){
+		my $size = $hashref->{'size'};
+		my $mat = [];
+		my @xvec_i=();
+		for (my $row=0; $row< $size; $row++){
+			push(@{$mat},[(0) x $size]);
+		}
+		my $row=0;
+		my $col=0;
+		my $band_matrix = 0;
+		foreach my $index (@{$hashref->{'indices'}}){
+			if ($index >= 0){
+				$mat->[$row]->[$col] = $xvec->[$index];
+				$mat->[$col]->[$row] = $xvec->[$index];
+			}else{
+				#already 0
+				$band_matrix = 1;
+			}
+			$col++;
+			if($col>$row){
+				$row++;
+				$col=0;
+			}
+		}
+		(my $eigenvalues, my $Q) = linear_algebra::eigenvalue_decomposition($mat);
+
+		if (linear_algebra::min($eigenvalues) < $minEigen){
+			if ($adjust_blocks){
+				my ($newmat,$change) = linear_algebra::spdarise(matrix => $mat,
+																eigenvalues => $eigenvalues, 
+																Q => $Q, 
+																minEigen => $minEigen);
+				$row=0;
+				$col=0;
+				foreach my $index (@{$hashref->{'indices'}}){
+					if ($index >= 0){
+						$xvec->[$index] = $newmat->[$row]->[$col];
+					}else{
+						#need to verify that 0 is ok
+						$newmat->[$row]->[$col] = 0;
+						$newmat->[$col]->[$row] = 0;
+					}
+					$col++;
+					if($col>$row){
+						$row++;
+						$col=0;
+					}
+				}
+				$adjusted = 1;
+				#if band matrix we need to check that setting 0 was ok
+				if ($band_matrix){
+					($eigenvalues, $Q) = linear_algebra::eigenvalue_decomposition($newmat);
+					if (linear_algebra::min($eigenvalues) < $minEigen){
+						$accept = 0;
+					}
+				}
+			}else{
+				$accept = 0;
+				last;
+			}
+		}
+		last unless ($accept);
+	}
+	return ($accept,$adjusted);
 }
 
 sub tweak_inits_sampling{
@@ -2239,6 +2592,8 @@ sub modelfit_analyze
 							  model_filename => $self->models->[0]->filename,
 							  done  => 1,
 							  recenter  => $self->recenter,
+							  adjust_blocks  => $self->adjust_blocks,
+							  check_cholesky_reparameterization => $self->check_cholesky_reparameterization,
 							  copy_data => $self->copy_data,
 							  boxcox => $self->boxcox,
 							  center_rawresults_vector => $self->center_rawresults_vector, 
