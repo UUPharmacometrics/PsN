@@ -191,8 +191,23 @@ When set, all these options must be set \emph{before} the first
 By default the value of the covariate function for a parameter is a  product of individual functions of the included covariates, and the typical value (TV) of the parameter is multiplied with the product. With option -logit the user can specify a list of parameters which should be treated as logit transformations, i.e. the value of the covariate function is a sum of individual functions, the sum should be added to the typical value of the parameter, and the value of each individual covariate function should be 0, not 1, when the corresponding THETA is 0. The thetas in a linear or hockey-stick relation on a logit parameter will be given lower and upper boundaries -20 and 20 by default. Important note: When a parameter is a logit transformation, the power and exponential covariate relations are not appropriate to add on this parameter. 
 \nextopt
 \optconfig{time\_varying}{list of covariates}
-Handle time-varying covariates when computing median and mean of covariates. Requires that W is defined in \$ERROR/\$PRED,
-where W refers to the "Uppsala way" of encoding residual error, see below.
+Handle time-varying covariates when computing median and mean of covariates.
+
+The information content of an observation
+is directly proportional to the derivative of IPRED with
+respect to the ETA on parameter
+and inversely proportional to the residual error magnitude.
+
+For each individual and parameter
+we compute a weighted average of the covariate
+observations, where the weight is
+the derivative of IPRED with
+respect to the ETA on the parameter evaluated at the EBE for that ETA
+divided by the residual error magnitude at that observation.
+
+Option -time\_varying requires that the residual error is
+encoded the "Uppsala way", using a parameter W for residual error magnitude
+in \$ERROR/\$PRED, see below.
 
 Assume an ID has the following observations: a,b,c,d
 
@@ -200,23 +215,29 @@ Corresponding covariate values: A,B,C,D
 
 Corresponding residual error magnitudes (W): Wa,Wb,Wc,Wd
 
-Corresponding absolute partial derivatives for ETA(1): Ga, Gb, Gc, Gd
+Corresponding absolute partial derivatives of IPRED with respect
+to the ETA on parameter PAR evaluated at EBE for ETA: Ga, Gb, Gc, Gd
 
-Average covariate value for this individual  AVCOV(ind) will be
+The weighted average covariate value for this individual and parameter PAR
+will be
 
-(A*Ga/Wa + B*Gb/Wb + C* Gc/Wc + D* Gd/Wd)/
+AVCOV(ind,PAR) = (A*Ga/Wa + B*Gb/Wb + C* Gc/Wc + D* Gd/Wd)/
 (Ga/Wa + Gb/Wb + Gc/Wc + Gd/Wd)
 
-The median/mean for this covariate with respect to the parameter which ETA(1) is on is the median/mean of AVCOV over all individuals.
-For non-influential covariates all partial derivatives (Ga etc) will be zero, and then
-the median/mean will be also be 0. In this case scm will stop with an error message "computed median 0 of time-varying...",
+The median/mean for this covariate with respect to parameter PAR
+is the median/mean of AVCOV(ind,PAR) over all individuals.
+
+If all partial derivatives (Ga etc) are zero, the information content is zero
+and then the median/mean will be also be 0.
+In this case scm will stop with an error message "computed median 0 of time-varying...",
 and the user will have to restart the scm without that particular parameter-covariate relation.
 
 The derivatives needed for computing the new medians and means will be taken from an estimation of the input model without any included relations, even if included\_relations is defined in the config file. This is because the medians are needed to add the included relations to the model.\\
 
 \input{inputs/uppsala_way.tex}
 
-If a truly time-varying continuous covariate is not listed with option -time\_varying, scm uses the following procedure:
+If a truly time-varying continuous
+covariate is not listed with option -time\_varying, scm uses the following procedure:
 the median for each individual is computed, 
 skipping missing\_data\_token, and then the median of these medians is used. The mean is computed using the same principle.
 For categorical time-varying covariates, the following procedure is used:
