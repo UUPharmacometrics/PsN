@@ -122,6 +122,7 @@ my ($gotsamples,$dirt) = tool::sir::sample_multivariate_normal(samples=>$nsample
 															   coords => $hash->{'coords'},
 															   inflation => [],
 															   block_number => $hash->{'block_number'},
+															   choleskyform => $hash->{'choleskyform'},
 															   mu => $mu,
 															   adjust_blocks => 0
 	);
@@ -414,6 +415,7 @@ my ($gotsamples,$dirt) = tool::sir::sample_multivariate_normal(samples=>$nsample
 													   coords => $hash->{'coords'},
 													   inflation => [],
 													   block_number => $hash->{'block_number'},
+															   choleskyform => $hash->{'choleskyform'},
 															   mu => $mu,
 															   adjust_blocks => 0
 	);

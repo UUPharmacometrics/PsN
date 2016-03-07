@@ -3327,6 +3327,7 @@ sub set_estimated_parameters_hash
 		$hash{'coords'}=[];
 		$hash{'coordinate_strings'}=[];
 		$hash{'sdcorrform'}=[]; #0 is default varcov, 1 is SDCORR
+		$hash{'choleskyform'}=[]; #0 is default varcov, 1 is CHOL
 		$hash{'block_number'}=[];
 		$hash{'lower_bounds'}=[];
 		$hash{'upper_bounds'}=[];
@@ -3347,6 +3348,7 @@ sub set_estimated_parameters_hash
 			foreach my $record (@records){
 				my $block_sd=0;
 				my $block_corr=0;
+				my $block_chol=0;
 				if  ($record->same() or $record->fix() or $record->prior()) {
 					next;
 				}
@@ -3358,6 +3360,7 @@ sub set_estimated_parameters_hash
 					$block_number = $block_count;
 					$block_sd = 1 if ($record->sd());
 					$block_corr = 1 if ($record->corr());
+					$block_chol = 1 if ($record->chol());
 				}else{
 					$block_number = 0;
 				}
@@ -3366,6 +3369,7 @@ sub set_estimated_parameters_hash
 						next;
 					}
 					my $off_diagonal=0;
+					my $opt_chol = 0;
 					if ($param eq 'theta'){
 						my $lobnd = $option ->lobnd();
 						$lobnd = -1000000 unless (defined $lobnd);
@@ -3375,6 +3379,9 @@ sub set_estimated_parameters_hash
 						push(@{$hash{'upper_bounds'}},$upbnd);
 						push(@{$hash{'sdcorrform'}},0);
 					}else{
+						if ($option->chol() or $block_chol){
+							$opt_chol = 1;
+						}
 						if ($option -> on_diagonal()){
 							push(@{$hash{'lower_bounds'}},0);
 							push(@{$hash{'upper_bounds'}},1000000);
@@ -3405,6 +3412,7 @@ sub set_estimated_parameters_hash
 					if (defined $option ->label()) {
 						$name = $option ->label();
 					}
+					push(@{$hash{'choleskyform'}},$opt_chol);
                     push(@{$hash{'off_diagonal'}}, $off_diagonal);
                     push(@{$hash{'inits'}}, $option->init);
 					push(@{$hash{'labels'}},$name);

@@ -1,5 +1,5 @@
 \input{inputs/format_header.tex}
-\guidetitle{SIR user guide}{2016-01-11}
+\guidetitle{SIR user guide}{2016-03-07}
 \usepackage{amsmath}
 
 \begin{document}
@@ -376,9 +376,16 @@ The sampling is done on the original scale.
 
 \noindent If a vector (on the original scale) does not fulfill the constraints from \$THETA boundaries
 and positive definiteness of \$OMEGA and
-\$SIGMA blocks (as judged by a PsN-implemented Cholesky decomposition) 
+\$SIGMA blocks (as judged by a PsN-implemented eigenvalue decomposition) 
 then that vector is 
-discarded and a new one is drawn.
+discarded and a new one is drawn. If sir detects an automatic Cholesky reparameterization
+by the update\_inits program, sir will also check the validitiy of the back-transformed \$OMEGA or \$SIGMA.
+
+\noindent If the rejection rate is very high, sir will after while stop discarding samples with non-positive definite
+\$OMEGA or \$SIGMA blocks, and instead adjust the blocks by
+keeping the eigenvectors but inflating the too-low eigenvalues to just large enough.
+This adjustment is not done for automatically Cholesky reparameterized blocks.
+
 \item[\underline{Step 2}] 
 Calculate each vector $x$’s probability 
 given the covariance matrix based on the formula for the probability 
@@ -508,6 +515,13 @@ or, if -no-boxcox was set on commandline, a file untransformed\_covmatrix\_itera
 \item A file summary\_iterations.csv with, for each iteration, 
 the requested samples, attempted samples, successful samples, requested resamples,
 actual resamples, requested samples-resamples ratio, actual samples-resamples ratio, count negative delta-ofv and minimum iteration sample ofv.
+\item A file sample\_rejection\_summary.txt which contains a summary of the causes of sample rejections
+for the most recent iteration.
+If sir terminates due to failure to generate enough samples that fulfill boundary conditions, this file
+is important for diagnosing what went wrong.
+Note: Each sample rejection is only recorded once in the summary file.
+Only the first encountered boundary violation will be counted even if additional
+elements further down the list are also outside their respective boundaries.
 \end{itemize}
 
 \subsection{Basic diagnostic plots}

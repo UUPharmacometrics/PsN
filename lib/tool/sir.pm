@@ -137,7 +137,7 @@ sub BUILD
 			@code = @{$prob->preds->[0]->code};
 		}
 		my $found=0;
-		my $tag = 'Cholesky reparameterize start, DO NOT EDIT THIS LINE';
+		my $tag = 'Cholesky reparameterize start';
 		foreach my $line (@code){
 			if ($line =~ /$tag/){
 				$found=1;
@@ -861,6 +861,7 @@ sub modelfit_setup
 			param => $self->parameter_hash->{'param'},
 			coords => $self->parameter_hash->{'coords'},
 			block_number => $self->parameter_hash->{'block_number'},
+			choleskyform => $self->parameter_hash->{'choleskyform'},
 			mu => $muvector,
 			lambda => $lambda,
 			delta => $delta);
@@ -1074,7 +1075,7 @@ sub load_restart_information
 			$self->resamples(\@new_resamples);
 
 		}
-		$self->parameter_hash(\%parameter_hash);
+		
 		$self->iteration($iteration);
 		$self->reference_ofv($reference_ofv);
 		$self->negative_dofv(\@negative_dofv);
@@ -1090,6 +1091,10 @@ sub load_restart_information
 
 		my $model = model -> new ( filename                    => $self->directory.$model_filename,
 								   ignore_missing_output_files => 1 );
+		unless (defined $parameter_hash{'choleskyform'}){
+			$parameter_hash{'choleskyform'} = $model->problems->[0]->get_estimated_attributes(attribute => 'choleskyform');
+		}
+		$self->parameter_hash(\%parameter_hash);
 		unless ($self->copy_data){
 			$model->relative_data_path(0);
 		}
@@ -1845,9 +1850,11 @@ sub setup_block_posdef_check
 {
 	my %parm = validated_hash(\@_,
 							  block_number => { isa => 'ArrayRef', optional => 0 },
+							  choleskyform =>{isa => 'ArrayRef', optional => 0},
 							  coords => { isa => 'ArrayRef', optional => 0 },
 		);
 	my $block_number = $parm{'block_number'};
+	my $choleskyform = $parm{'choleskyform'};
 	my $coords = $parm{'coords'};
 	
 	my $dim = scalar(@{$coords});
@@ -1870,9 +1877,9 @@ sub setup_block_posdef_check
 	my $prev_globalcol = 0;
 	
 	for (my $i=0; $i< $dim; $i++){
-		#does this i belong to a block?
-		if ($block_number->[$i] == 0){
-			#not block
+		#does this i belong to a block we should care about?
+		if (($block_number->[$i] == 0) or ($choleskyform->[$i] == 1)){
+			#not interesting block
 			next;
 		}else{
 			#this is part of block
@@ -1973,6 +1980,7 @@ sub sample_multivariate_normal
 							  upper_bound => { isa => 'ArrayRef', optional => 0 },
 							  param => { isa => 'ArrayRef', optional => 0 },
 							  block_number => { isa => 'ArrayRef', optional => 0 },
+							  choleskyform => { isa => 'ArrayRef', optional => 0 },
 							  coords => { isa => 'ArrayRef', optional => 0 },
 							  mu => { isa => 'Math::MatrixReal', optional => 0 }, #required for multnorm							  
 							  inflation => { isa => 'ArrayRef', optional => 0 }, #required for multnorm
@@ -1993,6 +2001,7 @@ sub sample_multivariate_normal
 	my $upper_bound = $parm{'upper_bound'};
 	my $param = $parm{'param'};
 	my $block_number = $parm{'block_number'};
+	my $choleskyform = $parm{'choleskyform'};
 	my $coords = $parm{'coords'};
 	my $mu = $parm{'mu'};
 	my $inflation = $parm{'inflation'};
@@ -2079,7 +2088,8 @@ sub sample_multivariate_normal
 #	}
 	
 	my $block_check_array = setup_block_posdef_check(block_number => $block_number,
-													  coords => $coords);
+													 choleskyform => $choleskyform,
+													 coords => $coords);
 
 	my $cholesky_block_array;
 	if ($check_cholesky_reparameterization){
@@ -2195,28 +2205,18 @@ sub sample_multivariate_normal
 		}
 	}
 
-#	if(1 or (not $counter == $samples)){
-	if(not $counter == $samples){
-		print "Sample rejection summary:\n";
-		print "Label            BoxCox    LowerBound UpperBound Zero\n";
-		for (my $i=0; $i< $dim; $i++){
-			my $line=sprintf("%13s %7i %11i %11i %5i\n",
-							 $labels->[$i],$rejections{'boxcox'}->[$i],
-							 $rejections{'lower_bound'}->[$i],
-							 $rejections{'upper_bound'}->[$i],
-							 $rejections{'zero'}->[$i]);
-			print $line;
-		}
-		print "blocks nonposdef rejections: ".$rejections{'block'}."\n";
-		if ($check_cholesky_reparameterization){
-			print "cholesky reparameterized blocks nonposdef rejections: ".
-				$rejections{'reparameterized_block'}."\n";
-		}
-	}
+	my $fname = 'sample_rejection_summary.txt';
+	print_rejections(rejections => \%rejections,
+					 labels => $labels,
+					 file => $fname,
+					 dim => $dim,
+					 check_cholesky_reparameterization => $check_cholesky_reparameterization);
+	
 	unless ($counter == $samples){
-		ui->print(category => 'sir',message=>"Failed to generate $samples accepted parameter vectors within the boundaries even after generating ".
+		ui->print(category => 'sir',message=>"Failed to generate $samples accepted parameter vectors within the boundaries ".
+				  "even after generating ".
 				  (2*$max_iter*$samples)." candidates, only have $counter accepted.\n".
-				  "See summary of causes of rejections above.\n");
+				  "See summary of causes of rejections in file $fname.\n");
 		croak("Cannot proceed with sir\n");
 	}
 	my $extra = '';
@@ -2226,7 +2226,42 @@ sub sample_multivariate_normal
 	ui->print(category => 'sir',message=> "Redrew $discarded samples that did not fulfill boundary conditions\n".
 			  "$extra");
 	return (\@samples_array,\@boxcox_samples_array);
+	
+}
 
+sub print_rejections{
+	my %parm = validated_hash(\@_,
+							  rejections => {isa => 'HashRef', optional => 0},
+							  labels => {isa => 'ArrayRef', optional => 0},
+							  file => {isa => 'Str', optional => 0},
+							  dim => {isa => 'Int', optional => 0},
+							  check_cholesky_reparameterization => {isa => 'Bool', optional => 0},
+		);
+
+	my $rejections = $parm{'rejections'};
+	my $labels = $parm{'labels'};
+	my $file = $parm{'file'};
+	my $dim = $parm{'dim'};
+	my $check_cholesky_reparameterization = $parm{'check_cholesky_reparameterization'};
+	
+	open ( RES, ">" .$file); #overwrite
+	print RES "Sample rejection summary:\n";
+	print RES "BoxCox LowerBound UpperBound Zero  Label\n";
+	for (my $i=0; $i< $dim; $i++){
+		my $line=sprintf("%6i %10i %9i %5i  ",
+						 $rejections->{'boxcox'}->[$i],
+						 $rejections->{'lower_bound'}->[$i],
+						 $rejections->{'upper_bound'}->[$i],
+						 $rejections->{'zero'}->[$i]).
+						 $labels->[$i]."\n";
+		print RES $line;
+	}
+	print RES "OMEGA/SIGMA blocks nonposdef rejections: ".$rejections->{'block'}."\n";
+	if ($check_cholesky_reparameterization){
+		print RES "Cholesky reparameterized blocks nonposdef rejections: ".
+			$rejections->{'reparameterized_block'}."\n";
+	}
+	close RES;
 }
 
 sub check_blocks_posdef{

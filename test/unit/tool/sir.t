@@ -611,7 +611,7 @@ is($recoversir->nm_version,'nm73','add_iterations info 1');
 is($recoversir->done,0,'add_iterations info 2');
 is($recoversir->recenter,1,'add_iterations info 3');
 is($recoversir->adjust_blocks,0,'add_iterations info 3.5');
-is($recoversir->check_cholesky_reparameterization,1,'add_iterations info 3.6');
+is($recoversir->check_cholesky_reparameterization,0,'add_iterations info 3.6');
 is($recoversir->copy_data,1,'add_iterations info 4');
 is($recoversir->boxcox,1,'add_iterations info 5');
 is($recoversir->with_replacement,0,'add_iterations info 6');

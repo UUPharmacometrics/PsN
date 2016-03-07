@@ -14,7 +14,9 @@ use model::problem;
 my $modeldir = $includes::testfiledir;
 my $model = model->new(filename => "$modeldir/pheno.mod");
 my $problem = $model->problems->[0];
-
+is_deeply($problem->get_estimated_attributes(attribute => 'choleskyform'),
+		  [0,0,0,0,0],
+		  'get estimated attributes choleskyform');
 # Test get_filled_omega method
 my $full_omega = $problem->get_filled_omega_matrix(start_eta => 1);
 
@@ -30,6 +32,13 @@ cmp_ok($omega_mat->[0]->[0],'==',0.4000, "get_matrix 0,0");
 cmp_ok($omega_mat->[1]->[1],'==',0.2500, "get_matrix 1,1");
 cmp_ok($omega_mat->[0]->[1],'==',0, "get_matrix 0,1");
 cmp_ok($omega_mat->[1]->[0],'==',0, "get_matrix 1,0");
+
+
+$problem->add_records(type => 'omega',record_strings =>['BLOCK(2) 0.02 CHOLESK ','0.001 0.5']);
+$problem->reset_estimated_parameters_hash();
+is_deeply($problem->get_estimated_attributes(attribute => 'choleskyform'),
+		  [0,0,0,0,1,1,1,0],
+		  'get estimated attributes choleskyform 2');
 
 #crash tests repara
 

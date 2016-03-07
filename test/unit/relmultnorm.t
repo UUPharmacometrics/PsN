@@ -62,6 +62,7 @@ cmp_ok($icm->element(5,5),'==',5.96396E+03,'inverse element 5,5');
 my $hash = output::get_nonmem_parameters(output => $output);
 
 my $arr = tool::sir::setup_block_posdef_check(block_number => $hash->{'block_number'},
+											  choleskyform => $hash->{'choleskyform'},
 											  coords => $hash->{'coords'});
 is(scalar(@{$arr}),0,'setup block posdef count 3');
 
@@ -128,6 +129,7 @@ my ($gotsamples,$dirt) = tool::sir::sample_multivariate_normal(samples=>$nsample
 													   coords => $hash->{'coords'},
 													   inflation => [],
 													   block_number => $hash->{'block_number'},
+													   choleskyform => $hash->{'choleskyform'},
 															   mu => $mu,
 															   adjust_blocks => 0,
 	);
@@ -285,6 +287,7 @@ $hash = output::get_nonmem_parameters(output => $output);
 my $icm = tool::sir::get_nonmem_inverse_covmatrix(output => $output);
 
 my $arr = tool::sir::setup_block_posdef_check(block_number => $hash->{'block_number'},
+											  choleskyform => $hash->{'choleskyform'},
 											  coords => $hash->{'coords'});
 is(scalar(@{$arr}),0,'setup block posdef count 2');
 
@@ -399,6 +402,7 @@ $output= output->new(filename => $dir . $file);
 $hash = output::get_nonmem_parameters(output => $output);
 
 my $arr = tool::sir::setup_block_posdef_check(block_number => $hash->{'block_number'},
+											  choleskyform => $hash->{'choleskyform'},
 											  coords => $hash->{'coords'});
 is(scalar(@{$arr}),1,'setup block posdef count');
 is($arr->[0]->{'size'},2,'setup block posdef size');
@@ -432,6 +436,7 @@ my ($gotsamples,$dirt) = tool::sir::sample_multivariate_normal(samples=>$nsample
 													   coords => $hash->{'coords'},
 													   inflation => [],
 													   block_number => $hash->{'block_number'},
+													   choleskyform => $hash->{'choleskyform'},
 															   mu => $mu,
 															   adjust_blocks => 0,
 
@@ -505,12 +510,20 @@ is(($sampleorder[0]+$sampleorder[1]+$sampleorder[2]),6,'do_resampling sampleorde
 
 
 my $arr = tool::sir::setup_block_posdef_check(block_number => [0,0,1,2,2,2,2,2,3,3,3,4,4],
+											  choleskyform => [0,0,0,0,0,0,0,0,0,0,0,0,0],
 											  coords => ['1','2','1,1','2,2','3,2','3,3','4,3','4,4','5,5','6,5','6,6','7,7','8,8']);
 is(scalar(@{$arr}),2,'setup block posdef count 4');
 is($arr->[0]->{'size'},3,'setup block posdef size 4');
 is($arr->[1]->{'size'},2,'setup block posdef size 5');
 is_deeply($arr->[0]->{'indices'},[3,4,5,-1,6,7],'setup block posdef indices 4');
 is_deeply($arr->[1]->{'indices'},[8,9,10],'setup block posdef indices 5');
+
+$arr = tool::sir::setup_block_posdef_check(   block_number => [0,0,1,2,2,2,2,2,3,3,3,4,4],
+											  choleskyform => [0,0,0,0,0,0,0,0,1,1,1,0,0],
+											  coords => ['1','2','1,1','2,2','3,2','3,3','4,3','4,4','5,5','6,5','6,6','7,7','8,8']);
+is(scalar(@{$arr}),1,'setup block posdef count 5');
+is($arr->[0]->{'size'},3,'setup block posdef size 6');
+is_deeply($arr->[0]->{'indices'},[3,4,5,-1,6,7],'setup block posdef indices 5');
 
 my $orig_xv = [1,1,3,0.1,1,0.2,0.3,3,4,1,3];
 my $xvec = [1,1,3,0.1,1,0.2,0.3,3,4,1,3];
