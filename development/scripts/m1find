@@ -81,7 +81,7 @@ my @m1_zipfiles = ();
 my $basedir = getcwd();
 
 foreach my $dir (@ARGV){
-	$dir = readpipe("readlink -f $dir");
+	$dir = readpipe("readlink -f '$dir'");
 	chomp $dir;
 
 	if (not (-e $dir)) {
@@ -194,7 +194,7 @@ foreach my $line (@lines) {
 
     if ($do_remove) {
         print("Removing $line\n");
-        system("rm -rf $line");
+        system("rm -rf '$line'");
         print $logfh "$line\n";
 
     } elsif ($do_zip) {
