@@ -488,6 +488,7 @@ sub string_cholesky_block
 							  theta_count => { isa => 'Int', optional => 0 },
 							  record_index => { isa => 'Int', optional => 0 },
 							  testing => { isa => 'Bool', default => 0 },
+							  bounded_theta => { isa => 'Bool', default => 1 },
 							  fix => { isa => 'Bool', default => 0 },
 							  correlation_cutoff => { isa => 'Num', default=> 0,optional => 1 },
 							  correlation_limit => { isa => 'Num', default=> 0.9,optional => 1 },
@@ -496,6 +497,7 @@ sub string_cholesky_block
     my $theta_count = $parm{'theta_count'};
 	my $record_index = $parm{'record_index'};
 	my $testing = $parm{'testing'};
+	my $bounded_theta = $parm{'bounded_theta'};
 	my $fix = $parm{'fix'};
 	my $correlation_cutoff = $parm{'correlation_cutoff'};
 	my $correlation_limit = $parm{'correlation_limit'};
@@ -539,30 +541,72 @@ sub string_cholesky_block
 		push(@corr_names,[('') x $dimension]);
 		push(@{$stringmatrix},[('')x $dimension]);
 		my $init = sqrt($value_matrix->[$i]->[$i]); #sqrt of variance
+		if (not $bounded_theta){
+			$init = log($init);
+		}
 		if ($testing){
-			push(@theta_inits,"$sdparam=$init;");
+			if ($bounded_theta){
+				push(@theta_inits,"$sdparam=$init;");
+			}else{
+				push(@theta_inits,"$sdparam=exp($init);");
+			}
 		}else{
 			my $formatted = sprintf("%.8G",$init); 
-			push(@theta_inits,'(0,'.$formatted.')'.$FIX.' ; '.$sdparam);
+			if (($formatted == 0) and (not $fix)){
+				$formatted = '0.000001';
+			}
 			$theta_count++;
-			push(@code,$sdparam.'=THETA('.$theta_count.')');
+			if ($bounded_theta){
+				push(@theta_inits,'(0,'.$formatted.')'.$FIX.' ; '.$sdparam);
+				push(@code,$sdparam.'=THETA('.$theta_count.')');
+			}else{
+				push(@theta_inits,$formatted.$FIX.' ; log '.$sdparam);
+				push(@code,$sdparam.'=EXP(THETA('.$theta_count.'))');
+			}
 		}
 		for (my $j=0; $j< $i; $j++){
 			my $rho = $par.'COR'.$sepd.$letter.$indices[$i].$indices[$j];
 			$corr_names[$i]->[$j]=$rho;
 			my $init = ($value_matrix->[$i]->[$j])/(sqrt($value_matrix->[$i]->[$i])*sqrt($value_matrix->[$j]->[$j]));
 			$warnings++ if (abs($init)> $correlation_limit);
+			my $below_cutoff = 0;
+			if (abs($init)<= $correlation_cutoff){
+				$below_cutoff = 1;
+			}
+			if (not $bounded_theta){
+				$init = math::logit((($init+1)/2));
+			}
 			if ($testing){
-				push(@theta_inits,"$rho=$init;");
+				if ($bounded_theta){
+					push(@theta_inits,"$rho=$init;");
+				}else{
+					push(@theta_inits,"$rho=exp($init)*2/(exp($init)+1) -1;");
+				}
 			}else{
-				if (abs($init)<= $correlation_cutoff){
-					push(@theta_inits,'0 FIX ; '.$rho.' ; initial '.$init.' <= '.$correlation_cutoff.' cutoff ');
+				if ($below_cutoff){
+					if ($bounded_theta){
+						push(@theta_inits,'0 FIX ; '.$rho.' ; initial '.$init.' <= '.$correlation_cutoff.' cutoff ');
+					}else{
+						#logit 0.5 is 0
+						push(@theta_inits,'0 FIX ; logit ('.$rho.'+1)/2 ; initial <= cutoff ');
+					}
 				}else{
 					my $formatted = sprintf("%.8G",$init); 
-					push(@theta_inits,'(-1,'.$formatted.',1)'.$FIX.' ; '.$rho); #ok bound if FIX?
+					if (($formatted == 0) and (not $fix)){
+						$formatted = '0.000001';
+					}
+ 					if ($bounded_theta){
+						push(@theta_inits,'(-1,'.$formatted.',1)'.$FIX.' ; '.$rho); #ok bound if FIX?
+					}else{
+						push(@theta_inits,$formatted.$FIX.' ; logit ('.$rho.'+1)/2');
+					}
 				}
 				$theta_count++;
-				push(@code,$rho.'=THETA('.$theta_count.')');
+				if ($bounded_theta){
+					push(@code,$rho.'=THETA('.$theta_count.')');
+				}else{
+					push(@code,$rho.'=EXP(THETA('.$theta_count.'))*2/(EXP(THETA('.$theta_count.'))+1) -1');
+				}
 			}
 		}
 	}
@@ -663,6 +707,7 @@ sub string_cholesky_diagonal
 							  theta_count => { isa => 'Int', optional => 0 },
 							  record_index => { isa => 'Int', optional => 0 },
 							  testing => { isa => 'Bool', default => 0 },
+							  bounded_theta => { isa => 'Bool', default => 1 },
 							  reparameterize_fix => { isa => 'Bool', default => 0 },
 		);
 	my $value_matrix = $parm{'value_matrix'};
@@ -670,6 +715,7 @@ sub string_cholesky_diagonal
     my $theta_count = $parm{'theta_count'};
 	my $record_index = $parm{'record_index'};
 	my $testing = $parm{'testing'};
+	my $bounded_theta = $parm{'bounded_theta'};
 	my $reparameterize_fix = $parm{'reparameterize_fix'};
 	
 	my $letter=record_index_to_letter(index=>$record_index);
@@ -714,13 +760,28 @@ sub string_cholesky_diagonal
 		my $sdparam = $par.'SD'.$sepd.$letter.$indices[$i];
 		push(@{$stringarray},$sdparam);
 		my $init = sqrt($value_matrix->[$i]); #sqrt of variance
+		if (not $bounded_theta){
+			$init = log($init);
+		}
 		if ($testing){
-			push(@theta_inits,"$sdparam=$init;");
+			if ($bounded_theta){
+				push(@theta_inits,"$sdparam=$init;");
+			}else{
+				push(@theta_inits,"$sdparam=exp($init);");
+			}
 		}else{
-			my $formatted = sprintf("%.8G",$init); 
-			push(@theta_inits,'(0,'.$formatted.')'.$FIX[$i].' ; '.$sdparam);
+			my $formatted = sprintf("%.8G",$init);
+			if (($formatted == 0) and (length($FIX[$i])==0)){
+				$formatted = '0.000001';
+			}
 			$theta_count++;
-			push(@code,$sdparam.'=THETA('.$theta_count.')');
+			if ($bounded_theta){
+				push(@theta_inits,'(0,'.$formatted.')'.$FIX[$i].' ; '.$sdparam);
+				push(@code,$sdparam.'=THETA('.$theta_count.')');
+			}else{
+				push(@theta_inits,$formatted.$FIX[$i].' ; log '.$sdparam);
+				push(@code,$sdparam.'=EXP(THETA('.$theta_count.'))');
+			}
 		}
 	}
 	return ($stringarray,\@theta_inits,\@code);
@@ -735,7 +796,7 @@ sub get_inverse_parameter_list
 		);
 	my $code = $parm{'code'};
 
-
+	my $bounded_theta;
 	my %etaparams;
 	my %epsparams;
 	my %thetaparams;
@@ -746,8 +807,29 @@ sub get_inverse_parameter_list
 		}elsif ($line =~ /^\s*EPS_(\d+)\s*=/){
 			$epsparams{$1}=1;
 		}elsif ($line =~ /^\s*(SD|COR)_([A-Z]+)\d+\s*=THETA\((\d+)\)/){
+			#bounded
 			$thetaparams{$3}=1;
 			$record_indices{record_index_to_letter(letter => $2)}=1;
+			if (defined $bounded_theta){
+				if ($bounded_theta == 0){
+					#have found mix of bounded and unbounded
+					$bounded_theta = -1;
+				}
+			}else{
+				$bounded_theta = 1;
+			}
+		}elsif ($line =~ /^\s*(SD|COR)_([A-Z]+)\d+\s*=EXP\(THETA\((\d+)\)/){
+			#unbounded 
+			$thetaparams{$3}=1;
+			$record_indices{record_index_to_letter(letter => $2)}=1;
+			if (defined $bounded_theta){
+				if ($bounded_theta == 1){
+					#have found mix of bounded and unbounded
+					$bounded_theta = -1;
+				}
+			}else{
+				$bounded_theta = 0;
+			}
 		}
 
 	}
@@ -756,7 +838,7 @@ sub get_inverse_parameter_list
 	my @thetalist = (sort {$a <=> $b} keys %thetaparams);
 	my @recordlist = (sort {$a <=> $b} keys %record_indices);
 
-	return {'ETA' => \@etalist, 'EPS' => \@epslist, 'THETA' => \@thetalist, 'RECORD' => \@recordlist};
+	return {'ETA' => \@etalist, 'EPS' => \@epslist, 'THETA' => \@thetalist, 'RECORD' => \@recordlist, 'bounded_theta' => $bounded_theta};
 
 }
 sub substitute_etas

@@ -49,11 +49,26 @@ foreach my $input ('omega','sigma','omega,diagonal',
 	$model->problems->[0]->cholesky_reparameterize(what => $input);
 }
 $model = model->new(filename => "$modeldir/pheno.mod");
-$model->problems->[0]->cholesky_reparameterize(what => 'all');
+$model->problems->[0]->cholesky_reparameterize(what => 'all',
+											   bounded_theta => 0);
+my $start_theta_record_index = $model->problems->[0]->find_start_theta_record_index(theta_number => 3);
+is($start_theta_record_index,2,'pheno start_theta_record_index unbounded'); 
+my ($corhash,$sdhash,$esthash) = $model->problems->[0]->get_SD_COR_values(start_theta_record_index => $start_theta_record_index,
+																		  bounded_theta => 0,
+																		  theta_record_count => 3);
+cmp_relative($sdhash->{'A'}->{1},sqrt(0.4),7,'SD A 1 unbounded');
+cmp_relative($sdhash->{'A'}->{2},sqrt(0.25),7,'SD A 2 unbounded');
+cmp_relative($sdhash->{'B'}->{1},sqrt(0.04),7,'SD B 1 unbounded');
+is(($esthash->{'A'} == 1),1,'pheno any est unbounded');
+is(($esthash->{'B'} == 1),1,'pheno any est unbounded');
+
+$model = model->new(filename => "$modeldir/pheno.mod");
+$model->problems->[0]->cholesky_reparameterize(what => 'all', bounded_theta => 1);
 my $start_theta_record_index = $model->problems->[0]->find_start_theta_record_index(theta_number => 3);
 is($start_theta_record_index,2,'pheno start_theta_record_index'); 
 my ($corhash,$sdhash,$esthash) = $model->problems->[0]->get_SD_COR_values(start_theta_record_index => $start_theta_record_index,
-																 theta_record_count => 3);
+																		  bounded_theta => 1,
+																		  theta_record_count => 3);
 cmp_relative($sdhash->{'A'}->{1},sqrt(0.4),7,'SD A 1');
 cmp_relative($sdhash->{'A'}->{2},sqrt(0.25),7,'SD A 2');
 cmp_relative($sdhash->{'B'}->{1},sqrt(0.04),7,'SD B 1');
@@ -64,12 +79,28 @@ is(($esthash->{'B'} == 1),1,'pheno any est');
 #0.0750   
 #0.0467  0.0564  ; IIV (CL-V) 
 $model = model->new(filename => "$modeldir/mox1.mod");
-$model->problems->[0]->cholesky_reparameterize(what => 'o1');
+$model->problems->[0]->cholesky_reparameterize(what => 'o1',
+											   bounded_theta => 0);
+is($model->problems->[0]->record_count(record_name => 'theta'),7,'mox 1 theta count after cholesky repara 01 unbounded');
+my $start_theta_record_index = $model->problems->[0]->find_start_theta_record_index(theta_number => 5);
+is($start_theta_record_index,4,'mox start_theta_record_index unbounded'); 
+my ($corhash,$sdhash,$esthash) = $model->problems->[0]->get_SD_COR_values(start_theta_record_index => $start_theta_record_index,
+																		  bounded_theta => 0,
+																		  theta_record_count => 3);
+cmp_relative($sdhash->{'A'}->{1},sqrt(0.0750),6,'mox SD A 1 unbounded');
+cmp_relative($sdhash->{'A'}->{2},sqrt(0.0564),6,'mox SD A 2 unbounded');
+cmp_relative($corhash->{'A'}->{'2,1'},0.0467/(sqrt(0.0564)*sqrt(0.075)),7,'mox COR A 2,1 unbounded');
+is(($esthash->{'A'} == 1),1,'mox any est unbounded');
+
+
+$model = model->new(filename => "$modeldir/mox1.mod");
+$model->problems->[0]->cholesky_reparameterize(what => 'o1', bounded_theta=> 1);
 is($model->problems->[0]->record_count(record_name => 'theta'),7,'mox 1 theta count after cholesky repara 01');
 my $start_theta_record_index = $model->problems->[0]->find_start_theta_record_index(theta_number => 5);
 is($start_theta_record_index,4,'mox start_theta_record_index'); 
 my ($corhash,$sdhash,$esthash) = $model->problems->[0]->get_SD_COR_values(start_theta_record_index => $start_theta_record_index,
-																 theta_record_count => 3);
+																		  bounded_theta => 1,
+																		  theta_record_count => 3);
 cmp_relative($sdhash->{'A'}->{1},sqrt(0.0750),7,'mox SD A 1');
 cmp_relative($sdhash->{'A'}->{2},sqrt(0.0564),7,'mox SD A 2');
 cmp_relative($corhash->{'A'}->{'2,1'},0.0467/(sqrt(0.0564)*sqrt(0.075)),7,'mox COR A 2,1');

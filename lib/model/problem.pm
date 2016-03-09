@@ -2,6 +2,7 @@ package model::problem;
 
 use include_modules;
 use linear_algebra;
+use math qw(inverse_logit);
 
 my @print_order_omega_before_pk = ('sizes','problem','input','bind','data','abbreviated','msfi','contr','subroutine','prior','thetap','thetapv','omegap','omegapd','sigmap','sigmapd','model','tol','infn','omega','anneal','pk','level','aesinitial','aes','des','error','pred','mix','theta','thetai','thetar','sigma','etas','phis','simulation','estimation','covariance','nonparametric','table','scatter');
 my @print_order_psn_record_order = ('sizes','problem','input','bind','data','abbreviated','msfi','contr','subroutine','prior','thetap','thetapv','omegap','omegapd','sigmap','sigmapd','model','tol','infn','pk','level','aesinitial','aes','des','error','pred','mix','theta','thetai','thetar','omega','anneal','sigma','etas','phis','simulation','estimation','covariance','nonparametric','table','scatter');
@@ -1918,8 +1919,13 @@ sub inverse_cholesky_reparameterize
 		push(@errors, "Found no record letters for SD/COR in Cholesky PK/PRED code");
 		return(\@errors);
 	}
+	if (defined $hashref->{'bounded_theta'} and $hashref->{'bounded_theta'} == -1 ){
+		push(@errors, "Found a mix of transformed and untransformed THETA in Cholesky PK/PRED code");
+		return(\@errors);
+	}
 	my $start_theta = $self->find_start_theta_record_index(theta_number => $hashref->{'THETA'}->[0]);
 	my ($corhash,$sdhash,$esthash) = $self->get_SD_COR_values(start_theta_record_index => $start_theta,
+															  bounded_theta => $hashref->{'bounded_theta'},
 															  theta_record_count => scalar(@{$hashref->{'THETA'}}));
 	my $vectorhash = SD_COR_to_cov_vectors(cor_hash => $corhash,
 										   sd_hash => $sdhash);
@@ -2037,9 +2043,11 @@ sub get_SD_COR_values
 	my $self = shift;
 	my %parm = validated_hash(\@_,
 							  start_theta_record_index => {isa => 'Int', optional => 0},
+							  bounded_theta => {isa => 'Bool', optional => 0},
 							  theta_record_count => {isa => 'Int', optional => 0},
 		);
 	my $start_theta_record_index = $parm{'start_theta_record_index'};
+	my $bounded_theta = $parm{'bounded_theta'};
 	my $theta_record_count = $parm{'theta_record_count'};
 
 	my %COR;
@@ -2050,13 +2058,19 @@ sub get_SD_COR_values
 		my $label = $self->thetas->[$index]->options->[0]->label;
 		my $value = $self->thetas->[$index]->options->[0]->init;
 		my $is_fix = $self->thetas->[$index]->options->[0]->fix;
-		if ($label =~ /^(SD|COR)_([A-Z]+)(\d+)/ ){
-			my $type = $1;
-			my $letter = $2;
-			my $place = $3; # 0 padding if dim > 9 
+		if ($label =~ /^(logit \(||log )(SD|COR)_([A-Z]+)(\d+)/ ){
+			unless ((length($1)==0) == $bounded_theta){ 
+				croak("error inverse cholesky, input bounded_theta is $bounded_theta but label is $label in get_SD_COR_values");
+			}
+			my $type = $2;
+			my $letter = $3;
+			my $place = $4; # 0 padding if dim > 9 
 			$anyest{$letter} = 1 if (not $is_fix);
 			if ($type eq 'COR'){
-#				print $label."\n";
+				#				print $label."\n";
+				unless ($bounded_theta){
+					$value = 2*(math::inverse_logit($value))-1;
+				}
 				if (length($place)==2){
 					#no padding
 					$COR{$letter}->{substr($place,0,1).','.substr($place,1,1)} = $value;
@@ -2068,6 +2082,9 @@ sub get_SD_COR_values
 					$COR{$letter}->{$row.','.$col} = $value;
 				}
 			}elsif($type eq 'SD'){
+				unless ($bounded_theta){
+					$value = exp($value);
+				}
 				$place =~ s/^0//;
 				$SD{$letter}->{$place} = $value;
 			}else{
@@ -2165,11 +2182,13 @@ sub cholesky_reparameterize
 	my $self = shift;
 	my %parm = validated_hash(\@_,
 							  what => {isa => 'Str', optional => 0},
+							  bounded_theta => {isa => 'Bool', default => 1},
 							  correlation_cutoff => { isa => 'Num', default=> 0,optional => 1 },
 							  correlation_limit => { isa => 'Num', default=> 0.9,optional => 1 },
 
 		);
 	my $what = $parm{'what'};
+	my $bounded_theta = $parm{'bounded_theta'};
 	my $correlation_cutoff = $parm{'correlation_cutoff'};
 	my $correlation_limit = $parm{'correlation_limit'};
 
@@ -2282,6 +2301,7 @@ sub cholesky_reparameterize
 						value_matrix=>$record->get_matrix,
 						record_index=>$record_index,
 						theta_count=>$theta_count,
+						bounded_theta => $bounded_theta,
 						correlation_cutoff => ($record->fix ? 0 : $correlation_cutoff),
 						correlation_limit => $correlation_limit,
 						testing=>0,
@@ -2300,6 +2320,7 @@ sub cholesky_reparameterize
 					value_matrix=>$record->get_vector,
 					record_index=>$record_index,
 					theta_count=>$theta_count,
+					bounded_theta => $bounded_theta,
 					testing=>0,
 					reparameterize_fix => $reparameterize_fix,
 					fix_vector=>\@fix_vector);

@@ -42,6 +42,7 @@ my %optional_options = (
 	"ignore_missing_parameters" => undef,
 	"update_fix" => undef,
 	"cholesky:s" => undef,
+	"bounded_theta!" => undef,
 	"correlation_cutoff:f" => undef,
 	"comment:s" => undef,
 	"degree:f" => undef,
@@ -186,10 +187,21 @@ $help_text{-cholesky} = <<'EOF';
   Examples using record list input, cannot be combined with category input:
 	-cholesky=o2,o5,s1               Reparameterize $OMEGA record number 2 and 5, $SIGMA record number 1
 
-	See also related option -correlation_cutoff.
+	See also related options -correlation_cutoff and -bounded_theta.
 
 	Correct handling of priors encoded using $OMEGA/$SIGMA is not implemented, priors must 
 	be encoded using special records $OMEGAPD etc.
+EOF
+
+$help_text{-bounded_theta} = <<'EOF';
+-bounded_theta
+
+Default set. Ignored unless option -cholesky is set. 
+If the option is set, then the standard deviations and correlations will be equal to bounded untransformed THETAs.
+If the option is unset with -no-bounded_theta, the THETAs introduced during Cholesky reparameterization
+will be unbounded (natural logarithm of standard deviation, logit of shifted and scaled correlation),
+and transformations will be used to restrict standard deviations to positive values
+and correlations between -1 and 1.
 EOF
 
 $help_text{-fix_thetas} = <<'EOF';
@@ -509,7 +521,10 @@ if (defined $options{'from_model'}) {
 $model_copy -> filename( $outfile );
 
 if ( $options{'cholesky'} ){
-
+	unless (length($options{'cholesky'}) > 0){
+		die ("Option -cholesky must have a value");
+	}
+	
 	if ($options{'cholesky'} eq 'inverse'){
 		ui->print(category => 'all',
 				  message => "Doing inverse Cholesky reparameterization\n");
@@ -525,6 +540,8 @@ if ( $options{'cholesky'} ){
 	}else{
 		ui->print(category => 'all',
 				  message => "Doing Cholesky reparameterization\n");
+		$bounded_theta = 1;
+		$bounded_theta = $options{'bounded_theta'} if (defined $options{'bounded_theta'});
 		my $cutoff = 0;
 		if ($options{'correlation_cutoff'}){
 			if ($options{'correlation_cutoff'} < 0){
@@ -538,6 +555,7 @@ if ( $options{'cholesky'} ){
 		my $warnings = 0;
 		foreach my $problem (@{$model_copy->problems}){
 			$warnings += $problem->cholesky_reparameterize(what => $options{'cholesky'},
+														   bounded_theta => $bounded_theta,
 														   correlation_cutoff => $cutoff, #if lower then set 0 FIX
 														   correlation_limit => 0.9, #if higher then warn
 				);

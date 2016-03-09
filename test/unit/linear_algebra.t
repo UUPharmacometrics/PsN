@@ -198,7 +198,13 @@ my $omega = [[1,0.2,0.1,0.1],
 			 [0.1,0.05,3,0.3],
 			 [0.1,0.2,0.3,4] ];
 
-my ($strings,$inits,$code,$warnings)=linear_algebra::string_cholesky_block(value_matrix=>$omega,record_index=>0,theta_count=>1,testing=>1,fix=>0);
+
+my ($strings,$inits,$code,$warnings)=linear_algebra::string_cholesky_block(value_matrix=>$omega,
+																		   record_index=>0,
+																		   theta_count=>1,
+																		   bounded_theta => 0,
+																		   testing=>1,
+																		   fix=>0);
 #print "\n";
 
 #for (my $i=0; $i<scalar(@{$params}); $i++){
@@ -209,6 +215,48 @@ my ($SD_A1,$SD_A2,$SD_A3,$SD_A4,$SD_A5);
 my ($COR_A21,$COR_A31,$COR_A41,$COR_A51,$COR_A32,$COR_A42,$COR_A52);
 my ($COR_A43,$COR_A53,$COR_A54);
 my ($CH_A22,$CH_A32,$CH_A42,$CH_A52,$CH_A33,$CH_A43,$CH_A53,$CH_A44,$CH_A54,$CH_A55);
+
+
+
+eval(join(' ',@{$inits}));
+#print (join("\n",@{$code}))."\n";
+#exit;
+eval(join(' ',@{$code}));
+
+my @matrix=();
+for(my $i=0;$i<scalar(@{$strings});$i++){
+	push(@matrix,[ (0) x scalar(@{$strings})]);
+}
+for(my $i=0;$i<scalar(@{$strings});$i++){
+	for (my $j=0; $j<=$i; $j++){
+		my $value = eval($strings->[$j]->[$i]);
+		$matrix[$i]->[$j]=$value;
+	}
+#	print join(' ',@{$matrix[$i]})."\n";
+}
+
+for(my $i=0;$i<scalar(@{$strings});$i++){
+	for (my $j=0; $j<=$i; $j++){
+		my $sum=0;
+		for (my $k=0;$k<scalar(@{$strings});$k++){
+			$sum = $sum+$matrix[$i]->[$k]*$matrix[$j]->[$k];
+		}
+		cmp_relative($sum,$omega->[$i]->[$j],12,"unbounded cholesky product element $i,$j is ".$omega->[$i]->[$j]);
+	}
+#	print join(' ',@{$matrix[$i]})."\n";
+}
+
+
+my ($strings,$inits,$code,$warnings)=linear_algebra::string_cholesky_block(value_matrix=>$omega,
+																		   record_index=>0,
+																		   theta_count=>1,
+																		   testing=>1,
+																		   fix=>0);
+#print "\n";
+
+#for (my $i=0; $i<scalar(@{$params}); $i++){
+#	print 'my '.$params->[$i]." ".$inits->[$i]."\n";
+#}
 
 
 
@@ -252,9 +300,26 @@ my $omega6 = [
 my ($strings,$inits,$code,$warnings)=linear_algebra::string_cholesky_block(
 	value_matrix=>$omega6,
 	record_index=>2,
+	bounded_theta => 0,
 	theta_count=>1,
 	testing=>0,
 	fix=>0);
+
+is($inits->[0],'0.000001 ; log SD_C1','string cholesky init block 1'); 
+is($inits->[1],'0.80471896 ; log SD_C2','string cholesky init block 2');
+is($inits->[2],'0.17936477 ; logit (COR_C21+1)/2','string cholesky init block 3');
+
+my ($strings,$inits,$code,$warnings)=linear_algebra::string_cholesky_block(
+	value_matrix=>$omega6,
+	record_index=>2,
+	bounded_theta => 1,
+	theta_count=>1,
+	testing=>0,
+	fix=>0);
+
+is($inits->[0],'(0,1) ; SD_C1','string cholesky init block 1');
+is($inits->[1],'(0,2.236068) ; SD_C2','string cholesky init block 2');
+is($inits->[2],'(-1,0.089442719,1) ; COR_C21','string cholesky init block 3');
 
 if (0){
 	print join("\n",@{$code})."\n\n";
@@ -388,12 +453,57 @@ is_deeply($hashref->{'ETA'},[1,2,3],"get inverse parameter list ETA");
 is_deeply($hashref->{'EPS'},[],"get inverse parameter list EPS");
 is_deeply($hashref->{'THETA'},[3,4,5,6,7,8],"get inverse parameter list THETA");
 is_deeply($hashref->{'RECORD'},[0],"get inverse parameter list RECORD");
+is($hashref->{'bounded_theta'},1,'get inverse parameter list bounded theta');
 
+my $hashref = linear_algebra::get_inverse_parameter_list(code => [
+															 'SD_A1=EXP(THETA(3))',
+															 'SD_A2=EXP(THETA(4))',
+															 'COR_A21=EXP(THETA(5))*2/(EXP(THETA(5))+1) -1',
+															 'SD_A3=EXP(THETA(6))',
+															 'COR_A31=EXP(THETA(7))*2/(EXP(THETA(7))+1) -1',
+															 'COR_A32=EXP(THETA(8))*2/(EXP(THETA(8))+1) -1',
+															 ';Comments below show CH variables for 1st column, too simple to need new variables',
+															 ';CH_A11=1',
+															 ';CH_A21=COR_A21',
+															 ';CH_A31=COR_A31',
+															 'CH_A22=SQRT(1-(COR_A21**2))',
+															 'CH_A32=(COR_A32-COR_A21*COR_A31)/CH_A22',
+															 'CH_A33=SQRT(1-(COR_A31**2+CH_A32**2))',
+															 'ETA_1=ETA(1)*SD_A1',
+															 'ETA_2=ETA(1)*COR_A21*SD_A2+ETA(2)*CH_A22*SD_A2',
+															 'ETA_3=ETA(1)*COR_A31*SD_A3+ETA(2)*CH_A32*SD_A3+ETA(3)*CH_A33*SD_A3']);
+
+is_deeply($hashref->{'ETA'},[1,2,3],"unbounded get inverse parameter list ETA");
+is_deeply($hashref->{'EPS'},[],"unbounded get inverse parameter list EPS");
+is_deeply($hashref->{'THETA'},[3,4,5,6,7,8],"unbounded get inverse parameter list THETA");
+is_deeply($hashref->{'RECORD'},[0],"unbounded get inverse parameter list RECORD");
+is($hashref->{'bounded_theta'},0,'unbounded get inverse parameter list bounded theta');
+
+my $hashref = linear_algebra::get_inverse_parameter_list(code => [
+															 'SD_A1=THETA(3)',
+															 'SD_A2=EXP(THETA(4))',
+															 'COR_A21=EXP(THETA(5))*2/(EXP(THETA(5))+1) -1',
+															 'SD_A3=EXP(THETA(6))',
+															 'COR_A31=EXP(THETA(7))*2/(EXP(THETA(7))+1) -1',
+															 'COR_A32=EXP(THETA(8))*2/(EXP(THETA(8))+1) -1',
+															 ';Comments below show CH variables for 1st column, too simple to need new variables',
+															 ';CH_A11=1',
+															 ';CH_A21=COR_A21',
+															 ';CH_A31=COR_A31',
+															 'CH_A22=SQRT(1-(COR_A21**2))',
+															 'CH_A32=(COR_A32-COR_A21*COR_A31)/CH_A22',
+															 'CH_A33=SQRT(1-(COR_A31**2+CH_A32**2))',
+															 'ETA_1=ETA(1)*SD_A1',
+															 'ETA_2=ETA(1)*COR_A21*SD_A2+ETA(2)*CH_A22*SD_A2',
+															 'ETA_3=ETA(1)*COR_A31*SD_A3+ETA(2)*CH_A32*SD_A3+ETA(3)*CH_A33*SD_A3']);
+
+is($hashref->{'bounded_theta'},-1,'mix unbounded get inverse parameter list bounded theta');
 
 my ($strings,$inits,$code)=linear_algebra::string_cholesky_diagonal(
 	value_matrix=>[4,9,16],
 	record_index=>3,
 	theta_count=>0,
+	bounded_theta => 1,
 	testing=>0,
 	fix_vector=>[1,0,1]);
 is($strings->[0],undef,'string cholesky diag 1');
@@ -404,6 +514,23 @@ is($inits->[0],'(0,3) ; SD_D2','string cholesky init diag 2');
 
 
 is($code->[0],'SD_D2=THETA(1)','string cholesky code diag 2');
+
+my ($strings,$inits,$code)=linear_algebra::string_cholesky_diagonal(
+	value_matrix=>[4,9,16],
+	record_index=>3,
+	theta_count=>0,
+	bounded_theta => 0,
+	testing=>0,
+	fix_vector=>[1,0,1]);
+is($strings->[0],undef,'unbounded string cholesky diag 1');
+is($strings->[1],'SD_D2','unbounded string cholesky diag 2');
+is($strings->[2],undef,'unbounded string cholesky diag 3');
+
+is($inits->[0],'1.0986123 ; log SD_D2','unbounded string cholesky init diag 2');
+
+
+is($code->[0],'SD_D2=EXP(THETA(1))','unbounded string cholesky code diag 2');
+
 
 my @Amatrix =([1,9,1],[2,3,0],[1,2,3],[0,1,0]);
 

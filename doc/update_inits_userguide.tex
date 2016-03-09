@@ -116,7 +116,7 @@ is the ``index'' of the \$OMEGA/\$SIGMA record and the two numbers are the row a
 A set of variables for the Cholesky factors will be defined in the code, and these will be named
 CH\_<letter><number><number> analogously to the correlation variables.
 Using the new variables, the original ETAs and EPSs will be replaced with linear combinations of new, uncorrelated
-ETAs/EPSs with variance 1. Example:
+ETAs/EPSs with variance 1. Example (option -bounded\_theta is set as per default):
 
 \begin{verbatim}
 SD_A1=THETA(5)
@@ -162,7 +162,17 @@ otherwise the inversion will fail.
 
 The option is called -cholesky, and it takes either a so-called record category input, a record list input,
 or the inverse argument.
- 
+
+It is possible to set option -no-bounded\_theta. Then transformations will be used to avoid boundaries on the new THETAs. Then
+a standard deviation will be, for example,
+\begin{verbatim}
+SD_A1=EXP(THETA(5))
+\end{verbatim}
+which is always positive, and a correlation
+\begin{verbatim}
+COR_A21=EXP(THETA(7))*2/(EXP(THETA(7))+1) -1
+\end{verbatim}
+which is constrained between -1 and 1. %always start with EXP for regexp for inverse
 \subsubsection*{Examples using record list input}
 Record list input cannot be combined with category input.\\
 \begin{tabular}{ll}
@@ -238,7 +248,7 @@ Similarly, if we have a matrix that is \emph{close} to singular, as in
 \]
 ,
 then we will get division by a very small number in one of the CH factors,
-which will give a very large multiplier for an ETA, which can lead to problems.
+which will give a very large multiplier for an ETA, which can lead to numerical problems.
 
 \section{Input and options}
 
@@ -282,6 +292,14 @@ Default 0. Ignored unless option -cholesky is set. Value range 0-1.
 If, during cholesky reparameterization, the absolute value of a correlation 
 in a block \$OMEGA or \$SIGMA is lower than or equal to this cutoff, then set
 the \$THETA for estimation of this correlation to 0 FIX.
+\nextopt
+\optname{bounded\_theta}
+Default set. Ignored unless option -cholesky is set. 
+If the option is set, then the standard deviations and correlations will be equal to bounded untransformed THETAs.
+If the option is unset with -no-bounded\_theta, the THETAs introduced during Cholesky reparameterization
+will be unbounded (natural logarithm of standard deviation, logit of shifted and scaled correlation),
+and transformations will be used to restrict standard deviations to positive values
+and correlations between -1 and 1.
 \nextopt
 \optdefault{comment}{text}
 If the option is used, a new line with <comment> will be inserted 

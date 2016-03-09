@@ -9,8 +9,29 @@ use include_modules;
 
 require Exporter;
 our @ISA = qw(Exporter);
-our %EXPORT_TAGS = ('all' => [ qw(round eps inf ceil usable_number to_precision convert_float_string) ]);
+our %EXPORT_TAGS = ('all' => [ qw(round eps inf ceil usable_number to_precision convert_float_string logit inverse_logit) ]);
 our @EXPORT_OK = ( @{ $EXPORT_TAGS{'all'} } );
+
+sub logit
+{
+    my ($number) = pos_validated_list(\@_,
+									  { isa => 'Num' },
+    );
+	if (($number >0) and ($number < 1)){
+		return log($number/(1-$number));
+	}else{
+		return undef;
+	}
+}
+
+sub inverse_logit
+{
+    my ($number) = pos_validated_list(\@_,
+									  { isa => 'Num' },
+		);
+	return (exp($number)/(exp($number)+1));
+
+}
 
 sub round
 {
