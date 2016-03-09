@@ -5,7 +5,7 @@ use MooseX::Params::Validate;
 
 has 'option_string' => ( is => 'rw', isa => 'Maybe[Str]', clearer => 'clear_option_string' );
 has 'name' => ( is => 'rw', isa => 'Str' );
-has 'value' => ( is => 'rw', isa => 'Maybe[Str]' );
+has 'value' => ( is => 'rw', isa => 'Maybe[Str]', clearer => 'clear_option_value' );
 
 sub BUILD
 {
