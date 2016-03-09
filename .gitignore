@@ -11,6 +11,9 @@ doc/*.log
 doc/*.pdf
 doc/*.bbl
 doc/*.blg
+doc/*.bcf
+doc/*-blx.bib
+doc/*.xml
 doc/ddmore/*.aux
 doc/ddmore/*.log
 doc/ddmore/*.pdf

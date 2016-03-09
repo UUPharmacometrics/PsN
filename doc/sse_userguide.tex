@@ -102,9 +102,7 @@ or psn\_options -h on the commandline.
 \subsection{Auto-generated R-plots from PsN}
 \newcommand{\rplotsconditions}{
 Parametric power estimation (PPE) allows to generate data for full power versus sample size curve(s) 
-based on a SSE with full and reduced models performed with a single sample size. The procedure is described in 
-\emph{Accelerating Monte-Carlo Power Studies through Parametric Power Estimation}, 
-PAGE 23 (2014) Abstr 3263, Ueckert S, Karlsson MO, Hooker AC. 
+based on a SSE with full and reduced models performed with a single sample size. The procedure is described in \cite{Ueckert}. 
 
 The default sse template will perform all required PPE calculations in R and output the resulting power curve(s). 
 For the template to work, the R libraries ggplot2 and plyr need to be installed. Furthermore, it is recommended 
@@ -250,5 +248,7 @@ If a run neither minimizes nor terminates, but gets into an infinite loop, it wo
 In sse\_results.csv no individual parameter estimates are reported. Mean, median, sd and other measures are the means etc. over the simulated datasets.
 
 The OFV values are treated differently. By default, the OFV value obtained when estimating parameters using the input model is used as the reference for each simulated dataset, and the OFV values obtained when estimating the alternative models are compared with this reference. There are two alternative methods. The first is to set the option -no-estimate\_simulation without setting -ref\_ofv. In this case the OFV-values from the first alternative model are used as references. The second alternative is to set -no-estimate\_simulation together with -ref\_ofv=X, and then X is used as the reference OFV value for all alternative models.
+
+\references
 
 \end{document}

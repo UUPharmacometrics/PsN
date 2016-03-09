@@ -29,11 +29,8 @@ When -tbs is set, PsN will make the following changes to the model file before r
 \end{enumerate}
 \nextopt
 \optname{dtbs}
-Default not set. Invokes Dynamic Transform Both Sides method, see 
+Default not set. Invokes Dynamic Transform Both Sides method, see \cite{Dosne2012} 
  
-Dosne AG, Keizer RJ, Bergstrand M, Karlsson MO. \emph{A strategy for residual error modeling incorporating both scedasticity of variance and distribution shape}. 
-PAGE 21 (2012) Abstr 2527.
-
 The model code is modified the same way as with -tbs, see above, except that the W definition is changed using a new ZETA parameter:
 \begin{enumerate}
 \item A new parameter ZETA will be defined, to be used in the error model. The THETA for this parameter will be automatically added.

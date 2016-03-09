@@ -10,9 +10,7 @@
 
 \section{Overview}
 
-The boot\_scm program is an implementation of the method presented in
-\emph{The bootstrap of Stepwise Covariate Modeling using linear approximations},
-PAGE 20 (2011) Abstr 2161, R Keizer.
+The boot\_scm program is an implementation of the method presented in \cite{Keizer2}.
 The program depends heavily on the scm program, and all scm options except base\_ofv
 apply also to boot\_scm. Please refer to scm\_userguide.pdf for help on scm options.
 Examples
@@ -110,5 +108,7 @@ possibly pre-processed, model. It lists the ofvs of the final models from the sc
 The file covariate\_inclusion.csv has one row per bootstrapped dataset. There is one column per parameter-covariate-state combination possible given 
 the test\_relations and valid\_states settings in the configuration file, excluding state 1 (which means 'not included'). 
 For each bootstrapped dataset the value in the column is 1 if the relation is included in the final model, and 0 otherwise.
+
+\references
 
 \end{document}

@@ -12,7 +12,8 @@
 \usepackage{longtable}
 \usepackage{alltt}
 \usepackage{ifthen}
-\usepackage{cite}
+\usepackage[backend=biber, defernumbers]{biblatex}
+\addbibresource{PsN.bib}
 % Reduce the size of the underscore
 \usepackage{relsize}
 \renewcommand{\_}{\textscale{.7}{\textunderscore}}
@@ -25,6 +26,10 @@
 \newcommand{\guidetitle}[2]{
 \title{#1\\ \vspace{2 mm} {\large PsN \psnversion}}
 \date{Revised #2}
+}
+
+\newcommand{\references}{
+    \printbibliography
 }
 
 \newcommand{\doctitle}[2]{

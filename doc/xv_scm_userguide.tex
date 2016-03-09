@@ -7,12 +7,7 @@
 
 
 \section{Overview}
-The xv\_scm program is an implementation of the method described in 
-\emph{Evaluation of Stepwise Covariate Model Building Combined with Cross-Validation},
-PAGE 20 (2011) Abstr 2111, T Katsube, and 
-\emph{Characterization of Stepwise Covariate Model Building Combined with Cross-Validation},
-PAGE 21 (2012) Abstr 2482, T Katsube. 
-
+The xv\_scm program is an implementation of the method described in \cite{Katsube1} and \cite{Katsube2} 
 
 The xv\_scm program
 depends heavily on the scm program, and all scm options apply also to xv\_scm except that options search\_direction, gof, p\_value, p\_forward, p\_backward and update\_derivatives are ignored,
@@ -66,5 +61,6 @@ If the linearization method is used (option -linearize to scm), then a predictio
 \section{Output}
 The files xv\_ofv\_results.csv,  xv\_relation\_rank\_order.csv and xv\_percent\_inclusion\_by\_level.csv contain results and summaries of the runs.
 
+\references
 
 \end{document}

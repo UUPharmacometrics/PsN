@@ -191,13 +191,13 @@ main:
 .PHONY : clean
 
 clean:
-	@-rm -rf $(DOCUMENTS) nmoutput2so nmoutput2so.zip PsN-Source psn_test_package.zip development/completion_files doc/*.aux doc/*.log doc/*.pdf doc/inputs/*eps-converted-to.pdf doc/inputs/version.tex PsN-*.tar.gz PsN-*.zip
+	@-rm -rf $(DOCUMENTS) nmoutput2so nmoutput2so.zip PsN-Source psn_test_package.zip development/completion_files doc/*.bbl doc/*.bcf doc/*.blg doc/*-blx.bib doc/*.xml doc/*.aux doc/*.log doc/*.pdf doc/inputs/*eps-converted-to.pdf doc/inputs/version.tex PsN-*.tar.gz PsN-*.zip
 
 version:
 	@cd doc; sed -n 's/.*\$version\s*=\s*.\([0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*\).;/\\newcommand\{\\psnversion\}\{\1\}/p' ../lib/PsN.pm >inputs/version.tex
 
 doc/%.pdf: version doc/%.tex
-	@ cd doc; pdflatex $*.tex >/dev/null; bibtex $* >/dev/null; pdflatex $*.tex >/dev/null; pdflatex $*.tex >/dev/null
+	@ cd doc; pdflatex $*.tex >/dev/null; biber $* >/dev/null; pdflatex $*.tex >/dev/null; pdflatex $*.tex >/dev/null
 
 doc: $(PDFFILES) 
 
