@@ -22,7 +22,17 @@ sub BUILD
 		}
 	}
 }
+sub remove_drop_column_names
+{
+	my $self = shift;
+	foreach my $option (@{$self->options}) {
+		if ($option->name eq 'DROP' or $option->name eq 'SKIP' or $option->value eq 'SKIP' or $option->value eq 'DROP') {
+			$option->name('DROP');
+			$option->clear_option_value;
+		}
+	}
 
+}
 sub get_nonskipped_columns
 {
 	my $self = shift;
