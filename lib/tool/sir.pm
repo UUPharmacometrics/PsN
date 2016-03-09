@@ -740,8 +740,14 @@ sub modelfit_setup
 	my $fix_theta_labels = [];
 	my $fix_theta_values = [];
 	if ($self->check_cholesky_reparameterization){
-		if (defined $output->problems->[0]->input_problem->thetas){
-			foreach my $record (@{$output->problems->[0]->input_problem->thetas}){
+		my $pr;
+		if (defined $output and defined $output->problems->[0]->input_problem){
+			$pr = $output->problems->[0]->input_problem;
+		}else{
+			$pr = $model->problems->[0];
+		}
+		if (defined $pr->thetas){
+			foreach my $record (@{$pr->thetas}){
 				foreach my $opt (@{$record->options}){
 					next unless ($opt->fix);
 					if (defined $opt->label and length($opt->label)>0){
@@ -1695,20 +1701,26 @@ sub check_auto_cholesky_blocks_posdef{
 	
 	foreach my $hashref (@{$hash_array}){
 		my $size = $hashref->{'size'};
+		my $bounded = $hashref->{'bounded'};
 		my $mat = [];
 		my @sdvalues = ();
 		my $pos;
 		my $cor;
+		my $value;
 		for (my $row=0; $row< $size; $row++){
 			push(@{$mat},[(0) x $size]);
 			$pos = $hashref->{'indices'}->[thepos($row,$row)];
-#			print "pos is $pos\n";
+			#			print "pos is $pos\n";
 			if ($pos >= 0){
-				push(@sdvalues,$xvec->[$pos]);
+				$value = $xvec->[$pos];
 			}else{
 #				print "pos is $pos, index ".abs($pos+1)."\n";
-				push(@sdvalues,$fix_xvec->[abs($pos+1)]);
+				$value = $fix_xvec->[abs($pos+1)];
 			}
+			unless ($bounded){
+				$value = exp($bounded);
+			}
+			push(@sdvalues,$value);
 		}
 #		print "sd ".join(' ',@sdvalues)."\n";
 		for (my $row=0; $row < $size; $row++){
@@ -1718,6 +1730,9 @@ sub check_auto_cholesky_blocks_posdef{
 					$cor = $xvec->[$pos];
 				}else{
 					$cor = $fix_xvec->[abs($pos+1)];
+				}
+				unless ($bounded){
+					$cor = 2*(math::inverse_logit($cor))-1;
 				}
 				$mat->[$row]->[$col] = $cor*$sdvalues[$row]*$sdvalues[$col]; #covar
 				$mat->[$col]->[$row] = $mat->[$row]->[$col];
@@ -1763,22 +1778,25 @@ sub setup_auto_cholesky_block_posdef_check
 	my $thisid = '';
 	my $row;
 	my $col;
+	my $transform;
 	for (my $i=0; $i< $dim; $i++){
 		last unless ($param->[$i] eq 'theta');
-
-		if($labels->[$i] =~ /^SD_([A-Z]+)(\d?\d)$/){
-			$thisid = $1;
-			$row=$2;
+		$transform = undef;
+		if($labels->[$i] =~ /^(|log )SD_([A-Z]+)(\d?\d)$/){
+			$transform = $1;
+			$thisid = $2;
+			$row=$3;
 			$row =~ s/^0//;
 			$sdcorr_matrices{$thisid}->{'sd'}->{$row} = $i;
 			if ((not defined $dimension{$thisid}) or
 				($dimension{$thisid} < $row)){
 				$dimension{$thisid} = $row;
 			}
-		}elsif($labels->[$i] =~ /^COR_([A-Z]+)(\d?\d)(\d?\d)$/){
-			$thisid = $1;
-			$row=$2;
-			$col=$3;
+		}elsif($labels->[$i] =~ /^(|logit \()COR_([A-Z]+)(\d?\d)(\d?\d)\b/){
+			$transform = $1;
+			$thisid = $2;
+			$row=$3;
+			$col=$4;
 			$row =~ s/^0//;
 			$col =~ s/^0//;
 			$sdcorr_matrices{$thisid}->{'corr'}->{$row}->{$col} = $i;
@@ -1788,21 +1806,34 @@ sub setup_auto_cholesky_block_posdef_check
 				$dimension{$thisid} = $row;
 			}
 		}
+		if (defined $transform){
+			if (defined $sdcorr_matrices{$thisid}->{'bounded'}){
+				unless ($sdcorr_matrices{$thisid}->{'bounded'} == (length($transform)==0)){
+					#ambigous
+					$sdcorr_matrices{$thisid}->{'bounded'} = -1;
+				}
+			}else{
+				$sdcorr_matrices{$thisid}->{'bounded'} = (length($transform)==0)? 1 : 0;
+			}
+		}
 	}
 	for (my $i=0; $i< scalar(@{$fix_theta_labels}); $i++){
-		if($fix_theta_labels->[$i] =~ /^SD_([A-Z]+)(\d?\d)$/){
-			$thisid = $1;
-			$row=$2;
+		$transform = undef;
+		if($fix_theta_labels->[$i] =~ /^(|log )SD_([A-Z]+)(\d?\d)$/){
+			$transform = $1;
+			$thisid = $2;
+			$row=$3;
 			$row =~ s/^0//;
 			$sdcorr_fix{$thisid}->{'sd'}->{$row} = $i;
 			if ((not defined $dimension{$thisid}) or
 				($dimension{$thisid} < $row)){
 				$dimension{$thisid} = $row;
 			}
-		}elsif($fix_theta_labels->[$i] =~ /^COR_([A-Z]+)(\d?\d)(\d?\d)$/){
-			$thisid = $1;
-			$row=$2;
-			$col=$3;
+		}elsif($fix_theta_labels->[$i] =~ /^(|logit \()COR_([A-Z]+)(\d?\d)(\d?\d)\b/){
+			$transform = $1;
+			$thisid = $2;
+			$row=$3;
+			$col=$4;
 			$row =~ s/^0//;
 			$col =~ s/^0//;
 			$sdcorr_fix{$thisid}->{'corr'}->{$row}->{$col} = $i;
@@ -1811,17 +1842,35 @@ sub setup_auto_cholesky_block_posdef_check
 				$dimension{$thisid} = $row;
 			}
 		}
+		if (defined $transform){
+			if (defined $sdcorr_matrices{$thisid}->{'bounded'}){
+				unless ($sdcorr_matrices{$thisid}->{'bounded'} == (length($transform)==0)){
+					#ambigous
+					$sdcorr_matrices{$thisid}->{'bounded'} = -1;
+				}
+			}else{
+				$sdcorr_matrices{$thisid}->{'bounded'} = (length($transform)==0) ? 1 : 0;
+			}
+		}
 	}
 
 	my @finals;
 	my $ind;
 	foreach my $id (sort {lc($a) cmp lc($b)} keys %dimension){
+		if ((not defined $sdcorr_matrices{$id}->{'bounded'}) or
+			($sdcorr_matrices{$id}->{'bounded'} == -1)){
+			next; #if ambigous
+		}
 		if ((not defined $sdcorr_fix{$id}->{'corr'}) and
 			(not defined $sdcorr_matrices{$id}->{'corr'})){
-			#only store if have corr
+			#if no off-diagonal
 			next;
 		}
-		push(@finals,{'size'=> $dimension{$id}, 'indices'=> []});
+		if ((not defined $sdcorr_matrices{$id}->{'sd'}) and
+			(not defined $sdcorr_matrices{$id}->{'corr'})){
+			next; #if none estimated
+		}
+		push(@finals,{'size'=> $dimension{$id}, 'indices'=> [], 'bounded' => $sdcorr_matrices{$id}->{'bounded'}});
 		for (my $row=1; $row <= $dimension{$id}; $row++){
 			for (my $col=1; $col<$row; $col++){
 				if (defined $sdcorr_matrices{$id}->{'corr'}->{$row}->{$col}){

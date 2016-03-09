@@ -675,18 +675,21 @@ my $arr = tool::sir::setup_auto_cholesky_block_posdef_check(
 	labels =>['SD_A01','SD_A02','COR_A0201',
 			  'SD_B1','SD_B2','SD_B3','COR_B31','COR_B32',
 			  'SD_C1','SD_C2',
-			  'SD_D1','COR_D21',
+			  'log SD_D1','logit (COR_D21+1)/2',
 	],
-	fix_theta_labels => ['SD_D2','COR_B21']);
+	fix_theta_labels => ['log SD_D2','COR_B21']);
 
 is(scalar(@{$arr}),3,'setup auto chol block count');
 is($arr->[0]->{'size'},2,'setup auto chol block size 1');
+is($arr->[0]->{'bounded'},1,'setup auto chol block bounded 1');
 is_deeply($arr->[0]->{'indices'},[0,2,1],
 		  'setup auto chol block indices 1');
 is($arr->[1]->{'size'},3,'setup auto chol block size 2');
+is($arr->[1]->{'bounded'},1,'setup auto chol block bounded 2');
 is_deeply($arr->[1]->{'indices'},[3,-2,4,6,7,5],
 		  'setup auto chol block indices 2');
 is($arr->[2]->{'size'},2,'setup auto chol block size 3');
+is($arr->[2]->{'bounded'},0,'setup auto chol block bounded 3');
 is_deeply($arr->[2]->{'indices'},[10,11,-1],
 	'setup auto chol block indices 3');
 
@@ -694,21 +697,21 @@ my @aok = (0.3,1.2,0.5);
 my @abad=(0.3,1.2,1);
 my @bok =(1,2,3,0.1,0.02); #fix 0.1
 my @bbad=(1,2,3,0.9,0.9); #fix 0.01
-my @dok=(3,0.6); #fix 2
-my @dbad=(3,-1); #fix 2
+my @dok=(log(3),0.6); #fix log 2
+my @dbad=(log(3),-100); #fix log 2
 
 is(tool::sir::check_auto_cholesky_blocks_posdef(hash_array => $arr,
-												fix_xvec => [2,0.1],
+												fix_xvec => [log(2),0.1],
 												xvec => [@aok,@bok,1,1,@dok]),1,'auto chol accept 1');
 
 is(tool::sir::check_auto_cholesky_blocks_posdef(hash_array => $arr,
-												fix_xvec => [2,0.1],
+												fix_xvec => [log(2),0.1],
 												xvec => [@abad,@bok,1,1,@dok]),0,'auto chol accept 2');
 is(tool::sir::check_auto_cholesky_blocks_posdef(hash_array => $arr,
-												fix_xvec => [2,0.01],
+												fix_xvec => [log(2),0.01],
 												xvec => [@aok,@bbad,1,1,@dok]),0,'auto chol accept 3');
 is(tool::sir::check_auto_cholesky_blocks_posdef(hash_array => $arr,
-												fix_xvec => [2,0.1],
+												fix_xvec => [log(2),0.1],
 												xvec => [@aok,@bok,1,1,@dbad]),0,'auto chol accept 4');
 
 remove_test_dir($tempdir);
