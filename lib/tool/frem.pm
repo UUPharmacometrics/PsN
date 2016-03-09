@@ -1927,7 +1927,11 @@ sub do_frem_dataset
 									   option_name => 'IGNORE',
 									   option_value => '('.$fremtype.'.GT.0)',
 									   fuzzy_match => 1);
-	
+
+		foreach my $input (@{$data_check_model->problems->[0]->inputs}){
+			$input->remove_drop_column_names;
+		}
+
 		foreach my $item (@{$self->extra_input_items()}){
 			$data_check_model -> add_option(problem_numbers => [1],
 											record_name => 'input',
@@ -2046,6 +2050,11 @@ sub prepare_model2
 #		}
 		
 		#INPUT changes
+		#remove names of DROP items, in case have special meaning like DATE=DROP
+		foreach my $input (@{$frem_model->problems->[0]->inputs}){
+			$input->remove_drop_column_names;
+		}
+		
 		foreach my $item (@{$self->extra_input_items}){
 			#mdv and fremtype
 			$frem_model -> add_option(problem_numbers => [1],
@@ -2314,6 +2323,7 @@ sub prepare_model5
 		#do cholesky
 		my $warnings = 
 			$frem_model->problems->[0]->cholesky_reparameterize(what => 'o'.$start_omega_record,
+																bounded_theta => 0,
 																correlation_cutoff => 0,
 																correlation_limit => 0.9, #if higher then warn
 			);
@@ -2354,7 +2364,7 @@ sub prepare_model5
 		}
 		
 		$frem_model-> check_and_set_sizes(LTH => 1); #set LTH if too many thetas. TODO make dependent on nm_version
-	
+		$frem_model->set_option(record_name => 'estimation', option_name =>'MCETA', option_value => '100',fuzzy_match => 1);
 		$frem_model->_write();
 	}
 }
