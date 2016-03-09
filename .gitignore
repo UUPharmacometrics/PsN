@@ -9,6 +9,8 @@ bin/update
 doc/*.aux
 doc/*.log
 doc/*.pdf
+doc/*.bbl
+doc/*.blg
 doc/ddmore/*.aux
 doc/ddmore/*.log
 doc/ddmore/*.pdf

@@ -192,13 +192,7 @@ PsN will rerun the input (full) model if the lst-file of the input model (run1.l
 If the model file has the extension .mod and the lst-file is present then PsN will simply read the estimates from that file. Similar for the base model.
 The program creates N (N=number of samples), datasets of size M (M=sample\_size) by shuffling the values in the randomization column between individuals. The program creates N new NONMEM modelfiles which are identical to the original modelfile with the exception that each uses a different randomized dataset and that the initial parameter estimates are the final estimates from the base model run. The model parameters are estimated with each dataset.
 
-
-\begin{thebibliography}{99}
-\bibitem{Wahlby}  U .Wählby U, E. N. Jonsson and M. O. Karlsson, 
-\emph{Assessment of Actual Significance levels for Covariate Effects in NONMEM}, 
-J PKPD 28(3):231-252. 
-\bibitem{Deng} C. Deng, E. L. Plan and M. O. Karlsson, {\em Influence of clinical trial design to detect drug effect in systems with within subject variability}, PAGE 24 (2015) Abstr 3549 \mbox{www.page-meeting.org/?abstract=3549} 
-\end{thebibliography}
-
+\bibliography{PsN}{}
+\bibliographystyle{plain}
 
 \end{document}

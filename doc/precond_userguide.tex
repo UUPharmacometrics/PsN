@@ -1,5 +1,5 @@
 \input{inputs/format_header.tex}
-\guidetitle{PRECOND\footnote{Yasunori Aoki, Rikard Nordgren, and Andrew C. Hooker: Preconditioning of Nonlinear Mixed Models for Stabilisation of Variance-Covariance Matrix Computations, {\it The AAPS Journal}, DOI: 10.1208/s12248-016-9866-5}  user guide}{2016-02-03}
+\guidetitle{PRECOND user guide}{2016-03-09}
 \usepackage{color}
 \usepackage{amsmath}
 \usepackage{tikz}
@@ -12,7 +12,7 @@
 
 \section{Introduction}
 
-In order to increase the numerical stability of the variance covariance matrix computation, the precond script creates and runs a linearly re-parameterised model of the original model that is less sensitive to rounding errors.  We refer to this process as preconditioning and the created model as the preconditioned model.  Through numerical experiments\cite{Page} using published nonlinear mixed effect models, it has been found that the preconditioning can reduce the computational environment dependency, increase the chance of successful covariance computation, and unveil un-identifiability of the model parameters.
+In order to increase the numerical stability of the variance covariance matrix computation, the precond script creates and runs a linearly re-parameterised model of the original model that is less sensitive to rounding errors.  We refer to this process as preconditioning and the created model as the preconditioned model.  Through numerical experiments\cite{Aoki} using published nonlinear mixed effect models, it has been found that the preconditioning can reduce the computational environment dependency, increase the chance of successful covariance computation, and unveil un-identifiability of the model parameters.
 
 Preconditioning will automatically first run the model normally and if the covariance step fails get the R-matrix from that run using that to precondition the model. Obtained R-matrix is decomposed using eigendecomposition and used to linearly re-parameterise the model in a way that the R-matrix of the preconditioned model is close to an identity matrix.  This will reduce the influence of the rounding error for the computation of R matrix and often avoid the R-matrix appearing to be non-positive semi-definite.  The precond script will initiate the modelfit of the preconditioned model and then convert back the obtained estimated parameter and covariance matrix to the parameter scale of the original model.
 
@@ -219,9 +219,8 @@ Below is a simple diagram of the internal automated precond workflow. Some autom
 \end{tikzpicture}
 
 
-\begin{thebibliography}{99}
-    \bibitem{Page} Yasunori Aoki, Rikard Nordgren and Andrew C. Hooker, {\em Preconditioning of Nonlinear Mixed Effect models for Stabilization of the Covariance Matrix Computation}, 2015, PAGE. Abstracts of the Annual Meeting of the Population Approach Group in Europe, \mbox{www.page-meeting.org/?abstract=3583} 
-\end{thebibliography}
+\bibliography{PsN}{}
+\bibliographystyle{plain}
 
 
 \end{document}
