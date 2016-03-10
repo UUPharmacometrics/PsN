@@ -13,6 +13,7 @@ LIBFILES= ui.pm \
 	OSspecific.pm \
 	binning.pm \
 	array.pm \
+	citations.pm \
 	table.pm \
 	nmtable.pm \
 	nmtablefile.pm \
@@ -216,6 +217,7 @@ release: main completion rel_dir $(RELFILES) $(PDFFILES)
 	@ cp doc/*.pdf PsN-Source/doc
 	@ cp doc/*.scm PsN-Source/doc
 	@ cp doc/*.xls PsN-Source/doc
+	@ cp doc/PsN.bib PsN-Source/lib
 	@ cd PsN-Source/doc/; zip -q PsN_pdf_documentation *.pdf *.xls *.scm
 	@ cd PsN-Source/doc/; tar -czf PsN_pdf_documentation.tar.gz *.pdf *.xls *.scm
 	@ chmod -R a+r PsN-Source/test/test_files

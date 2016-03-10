@@ -57,6 +57,7 @@ Changes and bug fixes from PsN 4.4.8 to n.n.n
 
 - New option -zip to automatically zip and remove the m1 folder.
   PsN can also seamlessly handle zipped m1 folders for subsequent runs using the same run directory.
+- New option -citations to print a list of references for each tool in BibTeX format.
 - The option -degree used for tweak_inits can now take degrees greater than 1.
 - Faster -help, -h, -version and some option error checking.
 - Bug fix: Detection of non-unique parameter labels when reading a raw results file.

@@ -11,6 +11,7 @@ use OSspecific;
 use PsN;
 use log;
 use ui;
+use citations;
 
 ## Configure the command line parsing
 Getopt::Long::config("auto_abbrev");
@@ -19,6 +20,7 @@ Getopt::Long::config("auto_abbrev");
 		  "accepted_ofv_difference:f",
 		  "add_retries!",
 		  "check_nmtran!",
+          "citations!",
 		  "clean:i",
 		  "compress!",
 		  "condition_number_limit:f",
@@ -1361,6 +1363,12 @@ $help_hash{-zip} = <<'EOF';
     PsN will automatically unzip the m1 folders if needed.
 EOF
 
+$help_hash{-citations} = <<'EOF';
+    -citations
+    Print a list of references for this tool.
+    The list will be in BibTeX format.
+EOF
+
     $help_hash{'-h'} = $help_hash{'-?'};
 
 
@@ -1380,6 +1388,10 @@ EOF
     exit;
   }
 
+ if ($options{'citations'}) {
+     citations::print_citations();
+     exit;
+ }
 
   my $help;
 my $indentation = '    ';
