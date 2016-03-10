@@ -9,11 +9,11 @@ use includes; #file with paths to PsN packages
 
 use citations;
 
-my $references = citations::_scan_bib_file(filename => '../test_files/simple.bib', keyword => 'keyw');
+my $references = citations::_scan_bib_file(filename => "$includes::testfiledir/simple.bib", keyword => 'keyw');
 is ($references->[1], "    item1,\n", "citations itemname");
 is (scalar @$references, 5, "citations: number of rows captured");
 
-my $references = citations::_scan_bib_file(filename => '../test_files/simple.bib', keyword => 'none');
+my $references = citations::_scan_bib_file(filename => "$includes::testfiledir/simple.bib", keyword => 'none');
 is (scalar @$references, 10, "citations: none, number of rows captured");
 
 done_testing();
