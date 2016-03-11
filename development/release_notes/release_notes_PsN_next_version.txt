@@ -129,7 +129,8 @@ Changes and bug fixes from PsN 4.4.8 to n.n.n
    ___update_inits___
 
 - The option -degree can now take degrees greater than 1.
-- New functionality for automatic Cholesky reparameterization of OMEGA and SIGMA, and inverse
+- New functionality for automatic Cholesky reparameterization of OMEGA and SIGMA, and inverse or reparameterization,
+  with and without bounded thetas.
 - Not required to have model or lst-file to read parameter values from, can update other model properties anyway
 - Do not update based_on tag if output and input models are the same
 
