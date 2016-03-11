@@ -28,6 +28,14 @@ test/test_files/pheno5.ext
 test/test_files/pheno5.phi
 test/test_files/mox2.lst
 development/completion_files
+development/scripts/doc/*.aux
+development/scripts/doc/*.log
+development/scripts/doc/*.pdf
+development/scripts/doc/*.bbl
+development/scripts/doc/*.blg
+development/scripts/doc/*.bcf
+development/scripts/doc/*-blx.bib
+development/scripts/doc/*.xml
 test/test_files/pheno.ext
 test/test_files/pheno.phi
 test/test_files/phenomsf

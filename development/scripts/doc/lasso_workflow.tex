@@ -1,0 +1,67 @@
+\input{inputs/format_header.tex}
+\setlength{\evensidemargin}{0pt}
+\setlength{\oddsidemargin}{0pt}
+
+\guidetitle{lasso workflow}{2015-11-10}
+
+\begin{document}
+
+\maketitle
+
+\section{Example command}
+All on one line. Before running with many samples, run with -samples=1 to check 
+that everything works!!!
+\begin{verbatim}
+workflow -true_model=true.mod -base_model=base.mod -seed=7654
+-external_dataset=large_data.dat -samples=1
+\end{verbatim}
+\section{Input}
+
+
+\begin{description}
+\item[-true\_model] The true model with all covariate effects, on log scale. 
+\$DATA has the  small (20 individuals) template data set.
+\item[-base\_model] The base model with no covariate effects. \$DATA has the 
+small (20 individuals) template data set.
+\item[-seed] A random seed
+\item[-external\_dataset] A large dataset created by simulation from the true
+model. This dataset must contain simulated observations (it cannot be the
+template dataset)
+\item[-samples] The number of small simulated datasets to run the lasso:s
+with
+\end{description}
+
+\section{What the script does automatically}
+\begin{enumerate}
+\item The program will first simulate 'samples' small data sets using sse,
+and then re-estimate the true and base models on each of the simulated data sets
+\item Make 'samples' copies of the base model, set \$DATA to simulated 
+data set $i$ from step 1, and update initial estimates to final estimates 
+from re-estimation in step1
+\item For each model from step 2, run
+\begin{enumerate}
+\item Adjusted adaptive lasso
+\item Adaptive lasso (regular lasso is first iteration of this procedure)
+\end{enumerate}
+The options 
+\begin{verbatim}
+-retries=5 -picky -no-normalize -stop_t=4 -log_scale 
+-relations=CL:COV1-2,COV2-2,COV3-2,COV4-2,COV5-2,COV6-2,
+COV7-2,COV8-2,COV9-2,COV10-2
+\end{verbatim}
+will be set autmatically.
+Coefficients from all samples and lasso variants will be collected in 
+file final\_lasso\_coefficients.csv
+\item For the three final models (aalasso, alasso, lasso) from step 3, create
+evaluation model where \$DATA is set to external data set, \$EST is set to
+MAXEVAL=0, and lasso coefficients are set to final coefficients. 
+In total will get 3 times 'samples' evaluation models.
+\item Make 'samples' copies of true model from step 1
+set \$DATA to external data set, set MAXEVAL=0
+update initial estimates to final estimates 
+from re-estimation in step1. Will make 'samples' additional evaluation models.
+\item Run all 4 times 'samples' evaluation models. Compare ofv and absolute 
+prediction errors in file evaluation\_ofv.csv
+\end{enumerate}
+
+\end{document}

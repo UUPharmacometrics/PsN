@@ -1,0 +1,165 @@
+\documentclass[a4wide,12pt]{article}
+%\setlength{\marginparwidth}{0pt}%35
+%\setlength{\marginparsep}{0pt}%?
+%\setlength{\evensidemargin}{0pt}
+%\setlength{\oddsidemargin}{0pt}
+\usepackage{lmodern}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{textcomp}
+\usepackage{verbatim}
+\usepackage{enumitem}
+\usepackage{longtable}
+\usepackage{alltt}
+\usepackage{ifthen}
+%\usepackage[backend=biber, maxbibnames=99, defernumbers]{biblatex}
+%\addbibresource{PsN.bib}
+% Reduce the size of the underscore
+\usepackage{relsize}
+\renewcommand{\_}{\textscale{.7}{\textunderscore}}
+
+\newcommand{\revisiondate}[1]{
+\date{#1}
+}
+\newcommand{\guidetitle}[2]{
+\title{#1\\ }
+\date{Revised #2}
+}
+
+
+\newcommand{\doctitle}[2]{
+\title{#1}
+\date{#2}
+}
+
+\guidetitle{m1find user guide}{2016-03-11}
+
+\begin{document}
+
+\maketitle
+\newcommand{\guidetoolname}{m1find}
+
+
+\section{Introduction}
+\subsection{What is the m1 subfolder}
+All PsN programs (except execute) that run NONMEM will create a m1 subfolder in
+the main run directory. The m1 subfolder contains intermediate files,
+such as bootstrapped data sets and lst-files from individual NONMEM runs, before
+results are summarized. When a run is finished, the m1 folder is not cleaned
+away by PsN, even though the contents are usually not needed.
+%, because \emph{sometimes} the contents are still needed.
+
+In most situations,
+the m1 contents are just a nuisance, and the collected m1 subfolders
+are a great burden to our file storage and backup system. The more files on
+the system, the higher risk of file system or backup failure
+and very long recovery times before we can work normally again.
+About a third of all files on our system is old m1 folders, 
+and if all
+m1 folders were removed, we would not have a backup problem anymore.
+In a few situations the m1 folders needs to be zipped and kept,
+and those situations
+are listed below.
+
+\subsection{m1find}
+The program m1find is a simple method to remove or zip m1 folders. 
+The names of all removed folders are logged in a file in the user's home directory,
+and can be easily retrived from backup by the system administrator in case the
+user realizes the folder is still needed.
+
+\section{What to do with m1}
+\subsection{When to keep m1 untouched}
+The \emph{only} situation when m1 should be kept untouched is when it is part of a job that
+is running on the cluster \emph{now}, i.e. something that shows
+up in squeue. This is at most 20 m1 folders per user, unless you have many
+models running in the lowprio queue.
+
+{\bf All} other m1 subfolders should be zipped or, preferably, removed, and m1find can do it for you.
+
+\subsection{When to zip m1}
+\begin{itemize}
+\item you are not done with binning in a vpc, then m1 contains files needed to redo the binning
+\item you want to use -add\_retries in sse on previously simulated datasets \emph{and} simulated data sets take a
+long time to regenerate. If data sets are quick to generate, then remove m1.
+\item you have an interrupted bootstrap, where some but not all samples have lst-file in m1.
+\emph{Note:} if you have a complete raw\_results file for
+bootstrap you should remove m1, because you can recompute percentiles etc with different exclusion criteria (estimation\_terminated
+and such options) using only the raw\_results file.
+\end{itemize}
+PsN will automatically unzip a zipped m1 folder if you are restarting a run in
+an existing PsN run directory, 
+so you do not have to unzip anything manually for example if you run sse with -add\_retries,
+or redo the binning of a vpc.
+
+\subsection{When to remove m1}
+\begin{itemize}
+\item Always except in cases listed above
+\end{itemize}
+
+
+\section{How to use m1find}
+
+The command structure is\\
+m1find ``what to do'' ``where'',\\
+for example\\
+m1find remove course\_work
+
+
+\subsubsection*{where}
+``where'' is the name of one or more directories, for example course\_work, Project\_1 or bootstrap\_dir2. Multiple directories
+are listed with a space in between. A single dot (.) means the current working directory.
+Unix wildcards can be used to easily input multiple directory names, for example sse* which will match
+all directories in the current working directory that start with sse.
+The program will find all m1 directories \emph{anywhere inside} the given directories,
+it can search through multiple directory levels. See examples further down.
+
+\subsubsection*{what to do}
+``what to do'' is either list, zip, remove or ask.
+\begin{description}
+\item[list] All m1 directories anywhere inside the given folder(s) will be found and listed on screen.
+         No zipping or removing will take place. 
+\item[zip] All m1 directories anywhere inside the given folder(s) will be found and listed on screen.
+         The user will then have the option to zip and remove all.
+\item[remove] All m1 directories and m1.zip files anywhere inside the given folder(s) will be found and listed on screen.
+         The user will have the option to remove all.
+         All removed files will be logged in the file removed\_by\_m1find in your home directory.
+\item[ask] All m1 directories anywhere inside the given folder(s) will be found and presented one by one.
+         The user has the option to zip,remove or skip each directory separately.
+\end{description}
+
+\subsubsection*{Do not disturb other cluster users}
+If you know you have many m1 subfolders you should start an interactive session before running m1find,
+to reduce the load on the login node.
+\begin{verbatim}
+srun --pty bash
+\end{verbatim}
+
+\subsection{Examples}
+
+\subsubsection*{List all my m1 folders}
+Use cd to go to your home directory and then run
+\begin{verbatim}
+m1find list .
+\end{verbatim}
+
+
+\subsubsection*{Remove all m1 in project folder ProjectA}
+
+\begin{verbatim}
+m1find remove path/to/ProjectA
+\end{verbatim}
+Remember that names of all removed m1 will be stored in a file in your home directory.
+
+\subsubsection*{Keep a few m1 folders in a project directory}
+I have 30 bootstrap folders in my project folder, where bootstrap\_dir 1-28 are done and
+bootstrap\_dir29 and bootstrap\_dir30 are running now:
+Remove all m1 in bootstrap\_dir with number starting with 1 (1, 10-19):
+\begin{verbatim}
+m1find remove bootstrap_dir1*
+\end{verbatim}
+Interactively go through all remaining m1, (want to remove all except m1 in bootstrap\_dir29 and bootstrap\_dir30): 
+\begin{verbatim}
+m1find ask bootstrap_dir*
+\end{verbatim}
+
+\end{document}
