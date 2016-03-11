@@ -2018,6 +2018,7 @@ sub sample_multivariate_normal
 	my %parm = validated_hash(\@_,
 							  samples => { isa => 'Int', optional => 0 },
 							  adjust_blocks => { isa => 'Bool', optional => 0},
+							  print_summary => { isa => 'Bool', default => 1},
 							  check_cholesky_reparameterization => { isa => 'Bool', optional => 0},
 							  fix_theta_labels => { isa => 'ArrayRef', optional => 0 },
 							  fix_theta_values => { isa => 'ArrayRef', optional => 0 },
@@ -2039,6 +2040,7 @@ sub sample_multivariate_normal
 		);
 	my $samples = $parm{'samples'};
 	my $adjust_blocks = $parm{'adjust_blocks'};
+	my $print_summary = $parm{'print_summary'};
 	my $check_cholesky_reparameterization = $parm{'check_cholesky_reparameterization'};
 #	my $multivariate_normal = $parm{'multivariate_normal'};
 	my $covmatrix = $parm{'covmatrix'};
@@ -2259,7 +2261,7 @@ sub sample_multivariate_normal
 					 labels => $labels,
 					 file => $fname,
 					 dim => $dim,
-					 check_cholesky_reparameterization => $check_cholesky_reparameterization);
+					 check_cholesky_reparameterization => $check_cholesky_reparameterization) if ($print_summary); 
 	
 	unless ($counter == $samples){
 		ui->print(category => 'sir',message=>"Failed to generate $samples accepted parameter vectors within the boundaries ".

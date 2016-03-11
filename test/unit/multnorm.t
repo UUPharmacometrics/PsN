@@ -111,6 +111,7 @@ cmp_ok($covar->[4]->[4],'==',eval(1.75502E-04),'covar element 5,5');
 
 random_set_seed_from_phrase("hej pa dig");
 my ($gotsamples,$dirt) = tool::sir::sample_multivariate_normal(samples=>$nsamples,
+															   print_summary => 0,
 															   check_cholesky_reparameterization => 0,
 															   fix_theta_labels => [],
 															   fix_theta_values => [],
@@ -404,6 +405,7 @@ $nsamples=3;
 
 #random_set_seed_from_phrase("hej pa dig");
 my ($gotsamples,$dirt) = tool::sir::sample_multivariate_normal(samples=>$nsamples,
+															   print_summary => 0,
 															   check_cholesky_reparameterization => 0,
 															   fix_theta_labels => [],
 															   fix_theta_values => [],
