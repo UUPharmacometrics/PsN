@@ -1679,11 +1679,13 @@ sub modelfit_analyze
         $self->cleanup();
         if (eval("require Archive::Zip")) {
             my $simulation_table = "nca_simulation.1.npctab.dta";
-            my $zip = Archive::Zip->new();
-			$zip->addFile($simulation_table);
-			if ($zip->writeToFileNamed($simulation_table . ".zip") == 0) {
-                unlink($simulation_table);
-			}
+            if (-e $simulation_table) {
+                my $zip = Archive::Zip->new();
+                $zip->addFile($simulation_table);
+                if ($zip->writeToFileNamed($simulation_table . ".zip") == 0) {
+                    unlink($simulation_table);
+                }
+            }
         }
 
 		return;
