@@ -1732,7 +1732,7 @@ sub check_auto_cholesky_blocks_posdef{
 					$cor = $fix_xvec->[abs($pos+1)];
 				}
 				unless ($bounded){
-					$cor = 2*(math::inverse_logit($cor))-1;
+					$cor = math::unbounded2correlation($cor);
 				}
 				$mat->[$row]->[$col] = $cor*$sdvalues[$row]*$sdvalues[$col]; #covar
 				$mat->[$col]->[$row] = $mat->[$row]->[$col];

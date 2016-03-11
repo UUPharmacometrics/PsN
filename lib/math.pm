@@ -9,7 +9,7 @@ use include_modules;
 
 require Exporter;
 our @ISA = qw(Exporter);
-our %EXPORT_TAGS = ('all' => [ qw(round eps inf ceil usable_number to_precision convert_float_string logit inverse_logit) ]);
+our %EXPORT_TAGS = ('all' => [ qw(round eps inf ceil usable_number to_precision convert_float_string logit inverse_logit correlation2unbounded unbounded2correlation) ]);
 our @EXPORT_OK = ( @{ $EXPORT_TAGS{'all'} } );
 
 sub logit
@@ -31,6 +31,23 @@ sub inverse_logit
 		);
 	return (exp($number)/(exp($number)+1));
 
+}
+
+sub correlation2unbounded
+{
+    my ($number) = pos_validated_list(\@_,
+									  { isa => 'Num' },
+		);
+	
+	return logit(($number+1)/2); #undef if out of range
+}
+
+sub unbounded2correlation
+{
+    my ($number) = pos_validated_list(\@_,
+									  { isa => 'Num' },
+		);
+	return 2*(inverse_logit($number))-1;
 }
 
 sub round

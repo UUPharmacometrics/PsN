@@ -574,7 +574,7 @@ sub string_cholesky_block
 				$below_cutoff = 1;
 			}
 			if (not $bounded_theta){
-				$init = math::logit((($init+1)/2));
+				$init = math::correlation2unbounded($init);
 			}
 			if ($testing){
 				if ($bounded_theta){

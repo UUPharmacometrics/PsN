@@ -2,7 +2,7 @@ package model::problem;
 
 use include_modules;
 use linear_algebra;
-use math qw(inverse_logit);
+use math qw(unbounded2correlation);
 
 my @print_order_omega_before_pk = ('sizes','problem','input','bind','data','abbreviated','msfi','contr','subroutine','prior','thetap','thetapv','omegap','omegapd','sigmap','sigmapd','model','tol','infn','omega','anneal','pk','level','aesinitial','aes','des','error','pred','mix','theta','thetai','thetar','sigma','etas','phis','simulation','estimation','covariance','nonparametric','table','scatter');
 my @print_order_psn_record_order = ('sizes','problem','input','bind','data','abbreviated','msfi','contr','subroutine','prior','thetap','thetapv','omegap','omegapd','sigmap','sigmapd','model','tol','infn','pk','level','aesinitial','aes','des','error','pred','mix','theta','thetai','thetar','omega','anneal','sigma','etas','phis','simulation','estimation','covariance','nonparametric','table','scatter');
@@ -2069,7 +2069,7 @@ sub get_SD_COR_values
 			if ($type eq 'COR'){
 				#				print $label."\n";
 				unless ($bounded_theta){
-					$value = 2*(math::inverse_logit($value))-1;
+					$value = math::unbounded2correlation($value);
 				}
 				if (length($place)==2){
 					#no padding
