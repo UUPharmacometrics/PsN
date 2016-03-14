@@ -32,7 +32,7 @@
 \date{#2}
 }
 
-\guidetitle{m1find user guide}{2016-03-11}
+\guidetitle{m1find user guide}{2016-03-14}
 
 \begin{document}
 
@@ -128,11 +128,14 @@ it can search through multiple directory levels. See examples further down.
 \end{description}
 
 \subsubsection*{Do not disturb other cluster users}
-If you know you have many m1 subfolders you should start an interactive session before running m1find,
+To be on the safe side, always
+start an interactive slurm session before running m1find,
 to reduce the load on the login node.
 \begin{verbatim}
 srun --pty bash
 \end{verbatim}
+
+\noindent After you are done with m1find, end the session with command \verb|exit|.
 
 \subsection{Examples}
 
