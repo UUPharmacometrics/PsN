@@ -1685,6 +1685,8 @@ sub modelfit_analyze
                 if ($zip->writeToFileNamed($simulation_table . ".zip") == 0) {
                     unlink($simulation_table);
                 }
+            } else {
+                print("No simulation data file was created. Please check the NONMEM messages.\n");
             }
         }
 
