@@ -122,7 +122,7 @@ my $model_dir = $includes::testfiledir;
 #do not copy lst and ext here
 copy_test_files($tempdir,["pheno5.mod", "pheno5.dta","vpc/orig.tab","vpc/sim.tab","vpc/simNID.tab"]);
 chdir($tempdir);
-my $command = get_command('vpc') . " -samples=20 pheno5.mod -sim_table=sim.tab -orig_table=orig.tab -auto_bin=2 -directory=dir1 -seed=12345 -min_point=5";
+my $command = get_command('vpc') . " -no-zip -samples=20 pheno5.mod -sim_table=sim.tab -orig_table=orig.tab -auto_bin=2 -directory=dir1 -seed=12345 -min_point=5";
 system $command;
 
 my $newmatrix = get_dv_matrix('dir1');
@@ -142,7 +142,7 @@ for (my $i = 0; $i < 2; $i++){
 rmtree(['dir1']);
 
 #use irep option and dummy model
-my $command = get_command('vpc') . " -samples=20 -irep=NID -sim_table=simNID.tab -orig_table=orig.tab -auto_bin=2 -directory=dir2 -seed=12345 -min_point=5";
+my $command = get_command('vpc') . " -no-zip -samples=20 -irep=NID -sim_table=simNID.tab -orig_table=orig.tab -auto_bin=2 -directory=dir2 -seed=12345 -min_point=5";
 system $command;
 
 my $newmatrix = get_dv_matrix('dir2');
@@ -164,7 +164,7 @@ rmtree(['dir2']);
 
 
 #split simulation over multiple tabs
-$command = get_command('vpc') . " -samples=20 pheno5.mod -auto_bin=2 -directory=dir3 -seed=12345 -min_point=5 -n_sim=2";
+$command = get_command('vpc') . " -no-zip -samples=20 pheno5.mod -auto_bin=2 -directory=dir3 -seed=12345 -min_point=5 -n_sim=2";
 system $command;
 
 $newmatrix = get_dv_matrix('dir3');
