@@ -43,7 +43,7 @@ common_options::setup( \%options, 'simeval' ); #get defaults,
 my %help_text;
 
 $help_text{Pre_help_message} = <<'EOF';
-Normalised prediction distribution errors
+Simulation evaluation model diagnostics
 EOF
 $help_text{Description} = <<'EOF';      
 The simeval program computes normalised prediction distribution errors for

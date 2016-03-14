@@ -244,15 +244,16 @@ cmp_ok(abs($mean_matrix->[1]->[4]-(-0.204386/3)),'<',$diff,'mean ETA2 ind 5');
 
 
 
-@file_array=($filedir.'original_iwres.dta',$filedir.'iwres-1.dta',$filedir.'iwres-2.dta',$filedir.'iwres-3.dta');
+#@file_array=($filedir.'original_iwres.dta',$filedir.'iwres-1.dta',$filedir.'iwres-2.dta',$filedir.'iwres-3.dta');
+@file_array=($filedir.'iwres_cwres.tab',$filedir.'iwres-1.dta',$filedir.'iwres-2.dta',$filedir.'iwres-3.dta');
 #my $ok = simeval_util::read_table_files(\@file_array,\@headers,$est_matrix,$mean_matrix,1);
 #is ($ok, 0, "read_table_files iwres return status");
 
-my $headers_array = [['IWRES'],['ID','MDV']];
-my $mean_matrix_array = [[],undef];
-my $values_matrix_array = [[],[]];
-my $filter_all_zero_array = [0,0];
-my $init_only_array = [0,1];
+my $headers_array = [['IWRES'],['ID','MDV'],['CWRES']];
+my $mean_matrix_array = [[],undef,[]];
+my $values_matrix_array = [[],[],[]];
+my $filter_all_zero_array = [0,0,0];
+my $init_only_array = [0,1,0];
 
 my $ok = simeval_util::get_nmtabledata(filenames => \@file_array,
 									header_strings_array => $headers_array,
@@ -262,6 +263,20 @@ my $ok = simeval_util::get_nmtabledata(filenames => \@file_array,
 									init_only_array => $init_only_array);
 
 is ($ok, 0, "get_nmtabledata iwres return status");
+
+my $est_matrix = $values_matrix_array->[2];
+my $mean_matrix = $mean_matrix_array->[2];
+cmp_ok($est_matrix->[0]->[1]->[0],'==',-1.2010E-01,'cwres rec 2 original');
+cmp_ok($est_matrix->[0]->[26]->[0],'==',2.5276E-01,'cwres rec 27 original');
+cmp_ok($est_matrix->[0]->[69]->[0],'==',-1.5425,'cwres rec 70 original');
+cmp_ok($est_matrix->[0]->[19]->[1],'==',-4.3275E-01,'cwres rec 20 sim1');
+cmp_ok($est_matrix->[0]->[55]->[1],'==',1.4761,'cwres rec 56 sim1');
+cmp_ok(abs(-0.16708 - $est_matrix->[0]->[11]->[2]),'<',0.0000005,'cwres rec 12  sim2');
+cmp_ok($est_matrix->[0]->[35]->[2],'==',-1.2924,'cwres rec 36 sim2');
+cmp_ok($est_matrix->[0]->[41]->[3],'==',-1.2364,'cwres rec 42 sim3');
+cmp_ok($est_matrix->[0]->[69]->[3],'==',-8.4463E-01,'cwres rec 70  sim3');
+
+
 
 my $est_matrix = $values_matrix_array->[0];
 my $mean_matrix = $mean_matrix_array->[0];
@@ -309,7 +324,8 @@ cmp_ok(abs($decorr->[0]->[57]->[0]-(0.248672597279443)),'<',$diff,'decorr iwres 
 cmp_ok(abs($decorr->[0]->[62]->[0]-(0.177695160276012)),'<',$diff,'decorr iwres orig obs 63');
 cmp_ok(abs($decorr->[0]->[69]->[0]-(-1.781701458701277)),'<',$diff,'decorr iwres orig obs 70');
 
-@file_array=($filedir.'original_iwres.dta',$filedir.'iwres-two.dta',$filedir.'iwres-3.dta');
+#@file_array=($filedir.'original_iwres.dta',$filedir.'iwres-two.dta',$filedir.'iwres-3.dta');
+@file_array=($filedir.'iwres_cwres.tab',$filedir.'iwres-two.dta',$filedir.'iwres-3.dta');
 my $headers_array = [['IWRES'],['ID','MDV']];
 my $mean_matrix_array = [[],undef];
 my $values_matrix_array = [[],[]];
