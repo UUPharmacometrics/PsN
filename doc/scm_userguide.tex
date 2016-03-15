@@ -1,5 +1,5 @@
 \input{inputs/format_header.tex}
-\guidetitle{SCM user guide}{2015-11-26}
+\guidetitle{SCM user guide}{2016-03-15}
 
 \begin{document}
 
@@ -195,14 +195,14 @@ Handle time-varying covariates when computing median and mean of covariates.
 
 The information content of an observation
 is directly proportional to the derivative of IPRED with
-respect to the ETA on parameter
+respect to the ETA on the parameter evaluated at the EBE for that ETA,
 and inversely proportional to the residual error magnitude.
 
 For each individual and parameter
 we compute a weighted average of the covariate
 observations, where the weight is
 the derivative of IPRED with
-respect to the ETA on the parameter evaluated at the EBE for that ETA
+respect to the ETA on the parameter
 divided by the residual error magnitude at that observation.
 
 Option -time\_varying requires that the residual error is
