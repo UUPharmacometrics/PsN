@@ -719,17 +719,19 @@ sub compress_m1
     my $self = shift;
 
     my $dir = $self->directory;
-    my $zip = Archive::Zip->new();
-    $zip->addTree("${dir}m1", "m1");
-    map { $_->desiredCompressionLevel(9) } $zip->members(); 
-    if ($zip->writeToFileNamed("${dir}m1.zip") == 0) {
-        if (-e "${dir}m1.zip") {
-            rmtree(["${dir}m1"]);
-        }
-    } else {
-        # in case of zip fail and zip file was created. Remove it
-        if (-e "${dir}m1.zip") {
-            unlink "${dir}m1.zip";
+    if (-d "${dir}m1") {
+        my $zip = Archive::Zip->new();
+        $zip->addTree("${dir}m1", "m1");
+        map { $_->desiredCompressionLevel(9) } $zip->members(); 
+        if ($zip->writeToFileNamed("${dir}m1.zip") == 0) {
+            if (-e "${dir}m1.zip") {
+                rmtree(["${dir}m1"]);
+            }
+        } else {
+            # in case of zip fail and zip file was created. Remove it
+            if (-e "${dir}m1.zip") {
+                unlink "${dir}m1.zip";
+            }
         }
     }
 }
