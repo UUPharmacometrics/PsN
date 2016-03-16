@@ -163,16 +163,16 @@ if ($command eq "list") {
 }
 
 if (($command eq "zip") or ($command eq "remove")) {
-    print "$_\n" for @lines;
-    my $read_line;
-    my $summary_text;
-    if ($command eq "zip") {
-        $summary_text = "Found " . $num_m1dirs . " m1 directories";
-    } else {
-        $summary_text = get_summary($num_m1dirs, $num_zipfiles, $num_nmrun);
-    }
-
 	if ($interactive){
+		my $read_line;
+		my $summary_text;
+		print "$_\n" for @lines ;
+		if ($command eq "zip") {
+			$summary_text = "Found " . $num_m1dirs . " m1 directories";
+		} else {
+			$summary_text = get_summary($num_m1dirs, $num_zipfiles, $num_nmrun);
+		}
+
 		while (1) {
 			print $summary_text, " Do you want to ", $command, " them all? [y|n]: ";
 			$read_line = <STDIN>;

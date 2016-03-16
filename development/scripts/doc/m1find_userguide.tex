@@ -32,7 +32,10 @@
 \date{#2}
 }
 
-\guidetitle{m1find user guide}{2016-03-14}
+\newcommand{\optname}[1]{\item{{\bfseries\texttt-#1}\newline}}
+\newcommand{\optdefault}[2]{\item{{\bfseries\texttt-#1}{\mbox{ = \it #2}}\newline}}
+
+\guidetitle{m1find user guide}{2016-03-16}
 
 \begin{document}
 
@@ -164,5 +167,17 @@ Interactively go through all remaining m1, (want to remove all except m1 in boot
 \begin{verbatim}
 m1find ask bootstrap_dir*
 \end{verbatim}
+
+
+\section{Additional options}
+\begin{description}
+\optname{no-interactive} Skip confirmation question before removing or zipping.
+\optname{nm\_run} Find NM\_run directories. Will be ignored with 'zip'.
+\optname{no-findm1} Only for use with -nm\_run: Skip search for m1 and m1.zip
+\optdefault{logdir}{directory} Default user's home directory. The directory to write
+log file removed\_by\_m1find  
+\optname{h} Print help text and exit.
+\optname{help} Print help text and exit.
+\end{description}
 
 \end{document}
