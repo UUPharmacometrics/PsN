@@ -78,7 +78,7 @@ my $res = GetOptions('h' => \$h,
 					 'help' => \$help,
 					 'interactive!' => \$interactive,
 					 'nm_run!' => \$nm_run,
-					 'findm1!' => \$findm1,
+					 'm1!' => \$findm1,
 					 'logdir=s' => \$logdir);
 exit unless $res;
 
@@ -238,7 +238,7 @@ foreach my $line (@lines) {
     }
 
     if ($do_remove) {
-        print("Removing $line\n");
+        print("Removing $line\n") if ($interactive);
         system("rm -rf '$line'");
         print $logfh "$line\n";
 
@@ -271,4 +271,7 @@ foreach my $line (@lines) {
 
 if ($command eq "remove" or $command eq "ask") {
     close $logfh;
+}
+if ($command eq "remove" and (not $interactive)) {
+	print "Removed files have been logged in $logfile\n";
 }
