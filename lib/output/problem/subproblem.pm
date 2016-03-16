@@ -2870,7 +2870,7 @@ sub parse_additional_table
 							  covariance_step_run => { isa => 'Bool', optional => 0 },
 							  have_omegas => { isa => 'Bool', optional => 0 },
 							  have_sigmas => { isa => 'Bool', optional => 0 },
-							  method_string => { isa => 'Str', optional => 0 },
+							  method_string => { isa => 'Maybe[Str]', optional => 0 },
 							  keep_labels_hash => { isa => 'Maybe[HashRef]', optional => 1 },
 							  type => { isa => 'Str', optional => 0 },
 							  tableref => { isa => 'Maybe[ArrayRef]', optional => 0 }
