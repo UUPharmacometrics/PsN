@@ -35,7 +35,7 @@
 \newcommand{\optname}[1]{\item{{\bfseries\texttt-#1}\newline}}
 \newcommand{\optdefault}[2]{\item{{\bfseries\texttt-#1}{\mbox{ = \it #2}}\newline}}
 
-\guidetitle{m1find user guide}{2016-03-16}
+\guidetitle{m1find user guide}{2016-03-17}
 
 \begin{document}
 
@@ -64,8 +64,15 @@ In a few situations the m1 folders needs to be zipped and kept,
 and those situations
 are listed below.
 
+\subsection{What is the NM\_run subfolder}
+The NM\_run subfolder is a temporary folder where intermediate NONMEM output is created.
+These folders are automatically removed by PsN except when you have changed the -clean setting or
+when NONMEM or PsN crashes.
+In the last case the contents of NM\_run may be used to diagnose what went wrong.
+NM\_run subfolders should always be removed when the contents are not used for debugging.
+
 \subsection{m1find}
-The program m1find is a simple method to remove or zip m1 folders. 
+The program m1find is a simple method to remove or zip m1 folders and/or to remove NM\_run folders. 
 The names of all removed folders are logged in a file in the user's home directory,
 and can be easily retrived from backup by the system administrator in case the
 user realizes the folder is still needed.
@@ -82,6 +89,7 @@ models running in the lowprio queue.
 \subsection{When to zip m1}
 \begin{itemize}
 \item you are not done with binning in a vpc, then m1 contains files needed to redo the binning
+\item you have run a lasso and you are not done analyzing the output models saved in m1  
 \item you want to use -add\_retries in sse on previously simulated datasets \emph{and} simulated data sets take a
 long time to regenerate. If data sets are quick to generate, then remove m1.
 \item you have an interrupted bootstrap, where some but not all samples have lst-file in m1.
@@ -99,6 +107,11 @@ or redo the binning of a vpc.
 \item Always except in cases listed above
 \end{itemize}
 
+\section{What to do with NM\_run}
+\subsection{When to keep NM\_run}
+When NONMEM (nmfe) is running in there now, or you are investigating the causes of a NONMEM/PsN crash.
+\subsection{When to remove NM\_run}
+All other cases. NM\_run folders will never be zipped by m1find.
 
 \section{How to use m1find}
 
@@ -113,21 +126,23 @@ m1find remove course\_work
 are listed with a space in between. A single dot (.) means the current working directory.
 Unix wildcards can be used to easily input multiple directory names, for example sse* which will match
 all directories in the current working directory that start with sse.
-The program will find all m1 directories \emph{anywhere inside} the given directories,
+The program will find all m1/NM\_run/m1.zip \emph{anywhere inside} the given directories,
 it can search through multiple directory levels. See examples further down.
 
 \subsubsection*{what to do}
 ``what to do'' is either list, zip, remove or ask.
 \begin{description}
-\item[list] All m1 directories anywhere inside the given folder(s) will be found and listed on screen.
-         No zipping or removing will take place. 
-\item[zip] All m1 directories anywhere inside the given folder(s) will be found and listed on screen.
-         The user will then have the option to zip and remove all.
-\item[remove] All m1 directories and m1.zip files anywhere inside the given folder(s) will be found and listed on screen.
+\item[list] All m1 and NM\_run directories and m1.zip files anywhere inside the given folder(s) will be found
+  and listed on screen. No zipping or removing will take place. 
+\item[remove] All m1 and NM\_run directories and m1.zip files anywhere inside the given folder(s) will be found and listed on screen.
          The user will have the option to remove all.
          All removed files will be logged in the file removed\_by\_m1find in your home directory.
-\item[ask] All m1 directories anywhere inside the given folder(s) will be found and presented one by one.
-         The user has the option to zip,remove or skip each directory separately.
+\item[zip] All m1 directories anywhere inside the given folder(s) will be found and listed on screen.
+  The user will then have the option to zip all. Note that m1.zip files and NM\_run directories
+  will be ignored with ``zip''.
+\item[ask] All m1 and NM\_run directories and m1.zip files anywhere inside the given folder(s)
+  will be found and presented one by one.
+  The user has the option to remove, skip or, if it is a m1 directory, zip each item separately.
 \end{description}
 
 \subsubsection*{Do not disturb other cluster users}
@@ -142,38 +157,56 @@ srun --pty bash
 
 \subsection{Examples}
 
-\subsubsection*{List all my m1 folders}
+\subsubsection*{List all my m1/NM\_run folders and m1.zip files}
 Use cd to go to your home directory and then run
 \begin{verbatim}
 m1find list .
 \end{verbatim}
 
 
-\subsubsection*{Remove all m1 in project folder ProjectA}
+\subsubsection*{Remove all m1 and NM\_run in project folder ProjectA}
 
 \begin{verbatim}
 m1find remove path/to/ProjectA
 \end{verbatim}
-Remember that names of all removed m1 will be stored in a file in your home directory.
+Remember that names of all removed m1 and NM\_run will be stored in a file in your home directory.
 
-\subsubsection*{Keep a few m1 folders in a project directory}
+\subsubsection*{Remove all NM\_run in project folder ProjectB (ignoring m1 and m1.zip)}
+
+\begin{verbatim}
+m1find remove path/to/ProjectB -no-m1
+\end{verbatim}
+Note the - at the beginning of -no-m1. If you skip it
+then no-m1 will be interpreted as the name of a directory you want to go through. Remember that names of all removed NM\_run will be stored in a file in your home directory.
+
+\subsubsection*{Keep a few m1 and NM\_run folders in a project directory}
 I have 30 bootstrap folders in my project folder, where bootstrap\_dir 1-28 are done and
 bootstrap\_dir29 and bootstrap\_dir30 are running now:
-Remove all m1 in bootstrap\_dir with number starting with 1 (1, 10-19):
+Remove all m1 and NM\_run in bootstrap\_dir with number starting with 1 (1, 10-19):
 \begin{verbatim}
 m1find remove bootstrap_dir1*
 \end{verbatim}
-Interactively go through all remaining m1, (want to remove all except m1 in bootstrap\_dir29 and bootstrap\_dir30): 
+Interactively go through all remaining m1/NM\_run, (want to remove all except
+m1 and NM\_run in bootstrap\_dir29 and bootstrap\_dir30): 
 \begin{verbatim}
 m1find ask bootstrap_dir*
 \end{verbatim}
 
+\subsubsection*{Remove all m1 and NM\_run in ProjectA, except m1 with lasso results, and then zip all m1 with lasso results}
+
+\begin{verbatim}
+m1find remove path/to/ProjectA -skip_lasso_m1
+m1find zip path/to/ProjectA
+\end{verbatim}
+Remember that names of all removed m1 and NM\_run will be stored in a file in your home directory.
 
 \section{Additional options}
 \begin{description}
 \optname{no-interactive} Skip confirmation question before removing or zipping.
-\optname{nm\_run} Find NM\_run directories. Will be ignored with 'zip'.
-\optname{no-m1} Only for use with -nm\_run: Skip search for m1 and m1.zip
+\optname{no-nm\_run} Skip all NM\_run directories. Do not set together with -no-m1, because then there is nothing to do for m1find. 
+\optname{no-m1} Skip all m1 and m1.zip. Do not set together with -no-nm\_run or with ``zip'',
+because then there is nothing to do for m1find. 
+\optname{skip\_lasso\_m1} Skip m1 directories that contain output models from a lasso.
 \optdefault{logdir}{directory} Default user's home directory. The directory to write
 log file removed\_by\_m1find  
 \optname{h} Print help text and exit.
