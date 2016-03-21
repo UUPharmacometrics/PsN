@@ -401,7 +401,8 @@ sub sum
 
 	my $theSum = 0;
 
-	foreach my $val (@$ref) {
+	my @sorted = sort {abs($a) <=> abs($b)} (@$ref); 
+	foreach my $val (@sorted) {
 		$theSum += $val;
 	}
 

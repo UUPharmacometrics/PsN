@@ -12,7 +12,7 @@ use OSspecific;
 use Moose;
 use MooseX::Params::Validate;
 use math qw(round ceil);
-
+use array qw(sum);
 extends 'tool';
 
 has 'samples_hash' => ( is => 'rw', isa => 'HashRef', default => sub { {} } );
@@ -44,6 +44,8 @@ has 'reduced_model' => ( is => 'rw', isa => 'model' );
 has 'full_model' => ( is => 'rw', isa => 'model' );
 has 'logfile' => ( is => 'rw', isa => 'ArrayRef[Str]', default => sub { ['mcmp.log'] } );
 has 'results_file' => ( is => 'rw', isa => 'Str', default => 'mcmp_results.csv' );
+has 'ofv_full' => ( is => 'rw', isa => 'Num' );
+has 'ofv_reduced' => ( is => 'rw', isa => 'Num' );
 
 sub BUILD
 {
@@ -820,8 +822,14 @@ sub read_data
 			$full_file = $self->full_model()->directory().'full.phi';
 		}
 	}
+	
 	unless ( -e $full_file ){
 		croak("File $full_file \nwith iofv output for full model does not exist.");
+	}
+	if ((defined $self->full_model) and
+		$self->full_model->is_run ){
+		my $num = $self->full_model->outputs->[0]->get_single_value(attribute => 'ofv');
+		$self->ofv_full($num) if (defined $num);
 	}
     
 	if (defined $self->table_reduced()){
@@ -836,6 +844,11 @@ sub read_data
 
 	unless ( -e $reduced_file ){
 		croak("File $reduced_file \nwith iofv output for reduced model does not exist.");
+	}
+	if ((defined $self->reduced_model) and
+		$self->reduced_model->is_run ){
+		my $num = $self->reduced_model->outputs->[0]->get_single_value(attribute => 'ofv');
+		$self->ofv_reduced($num) if (defined $num);
 	}
     
 	if (defined $self->stratify_on) {
@@ -867,6 +880,9 @@ sub read_data
 		$line_i++;
 	}
 	close(FH);
+	unless (defined $self->ofv_reduced){
+		$self->ofv_reduced(sum(\@delta_ofv));
+	}
 	if (defined $self->stratify_on()){
 		if ($line_i != $n_individuals){
 			croak("The number of individuals in reduced.phi ($line_i) and strata.tab ($n_individuals) are not the same.\nCheck the files manually.\n".
@@ -885,6 +901,7 @@ sub read_data
 	
 	$line_i=0;
 	open(FH, $full_file ) or croak("Could not open full file.");
+	my @full_iofv=();
 	while (<FH>){
 		next unless (/^\s*[0-9]/);
 		#split on space, take the last value
@@ -897,8 +914,14 @@ sub read_data
 			push(@{$strata_ofv{0}},($delta_ofv[$line_i] - $arr[-1]));
 		}
 		$line_i++;
+		push(@full_iofv,$arr[-1]) unless (defined $self->ofv_full);
 	}
 	close(FH);
+
+	unless (defined $self->ofv_full){
+		$self->ofv_full(sum(\@full_iofv));
+	}
+
 	if ($line_i != $n_individuals){
 		croak("The number of individuals in $reduced_file and ".
 			  "$full_file are not the same.");
@@ -962,8 +985,14 @@ sub create_R_plots_code{
 		);
 	my $rplot = $parm{'rplot'};
 
+	my $ofv_full= 'NA';
+	$ofv_full = $self->ofv_full if (defined $self->ofv_full);
+	my $ofv_reduced= 'NA';
+	$ofv_reduced = $self->ofv_reduced if (defined $self->ofv_reduced);
 	$rplot->add_preamble(code => [
-							 'sig.level <- '.$self->significance_level.' #option -significance_level'
+							 'sig.level <- '.$self->significance_level.' #option -significance_level',
+							 'ofv.full <- '.$ofv_full,
+							 'ofv.reduced <- '.$ofv_reduced,
 						 ]);
 
 }
