@@ -66,6 +66,7 @@ has 'full_rawres_header' => ( is => 'rw', isa => 'ArrayRef' );
 
 has 'minimum_ofv' => ( is => 'rw', isa => 'ArrayRef', default => sub { [] });
 has 'reference_ofv' => ( is => 'rw', isa => 'Num');
+has 'subjects' => ( is => 'rw', isa => 'Int');
 has 'pdf_vector' => ( is => 'rw', isa => 'ArrayRef' );
 has 'intermediate_raw_results_files' => ( is => 'rw', isa => 'ArrayRef', default => sub{[]} );
 
@@ -543,6 +544,9 @@ sub modelfit_setup
 		}else{
 			croak("No ofv from input model result files");
 		}
+		if (defined $output->nind() and scalar(@{$output->nind()})>0){
+			$self->subjects($output->nind()->[0]);
+		}
 		$self->parameter_hash(output::get_nonmem_parameters(output => $output));
 
 		if ($check_output_and_model_match ){
@@ -958,6 +962,7 @@ sub modelfit_setup
 			save_restart_information( parameter_hash => $self->parameter_hash,
 									  center_rawresults_vector => $self->center_rawresults_vector,
 									  nm_version  => $self->nm_version,
+									  subjects => $self->subjects,
 									  model_filename => $model->filename,
 									  cap_resampling => $self->cap_resampling,
 									  done  => 0,
@@ -1011,6 +1016,7 @@ sub load_restart_information
 	my %parameter_hash;
 
 	my $nm_version;
+	my $subjects;
 	my $done;
 	my $iteration;
 	my $recenter;
@@ -1082,6 +1088,7 @@ sub load_restart_information
 
 		}
 		
+		$self->subjects($subjects);
 		$self->iteration($iteration);
 		$self->reference_ofv($reference_ofv);
 		$self->negative_dofv(\@negative_dofv);
@@ -1144,6 +1151,7 @@ sub save_restart_information
 							  boxcox => { isa => 'Bool', optional => 0 },
 							  with_replacement => { isa => 'Bool', optional => 0 },
 							  iteration  => { isa => 'Int', optional => 0 },
+							  subjects  => { isa => 'Int', optional => 0 },
 							  cap_resampling  => { isa => 'Int', optional => 0 },
 							  mceta  => { isa => 'Int', optional => 0 },
 							  problems_per_file  => { isa => 'Int', optional => 0 },
@@ -1165,6 +1173,7 @@ sub save_restart_information
 	my $nm_version = $parm{'nm_version'};
 	my $model_filename = $parm{'model_filename'};
 	my $done = $parm{'done'};
+	my $subjects = $parm{'subjects'};
 	my $iteration = $parm{'iteration'};
 	my $recenter = $parm{'recenter'};
 	my $adjust_blocks = $parm{'adjust_blocks'};
@@ -1189,7 +1198,7 @@ sub save_restart_information
 
 	#local name
 
-	my @dumper_names = qw(*parameter_hash *center_rawresults_vector *negative_dofv *intermediate_raw_results_files *samples *resamples *attempted_samples *successful_samples *actual_resamples *seed_array with_replacement mceta problems_per_file *minimum_ofv reference_ofv done iteration recenter copy_data boxcox nm_version model_filename cap_resampling adjust_blocks check_cholesky_reparameterization);
+	my @dumper_names = qw(*parameter_hash *center_rawresults_vector *negative_dofv *intermediate_raw_results_files *samples *resamples *attempted_samples *successful_samples *actual_resamples *seed_array with_replacement mceta problems_per_file *minimum_ofv reference_ofv done iteration recenter copy_data boxcox nm_version model_filename cap_resampling adjust_blocks check_cholesky_reparameterization subjects);
 
 
 	open(FH, '>'.$recovery_filename) or return -1; #die "Could not open file $recovery_filename for writing.\n";
@@ -1198,7 +1207,7 @@ sub save_restart_information
 		 $samples,$resamples,$attempted_samples,$successful_samples,$actual_resamples,$seed_array,
 		 $with_replacement,$mceta,
 		 $problems_per_file,$minimum_ofv,$reference_ofv,$done,$iteration,$recenter,$copy_data,$boxcox,$nm_version,
-		$model_filename, $cap_resampling, $adjust_blocks, $check_cholesky_reparameterization],
+		$model_filename, $cap_resampling, $adjust_blocks, $check_cholesky_reparameterization, $subjects],
 		\@dumper_names
 		);
 	close FH;
@@ -2677,6 +2686,7 @@ sub modelfit_analyze
 							  nm_version  => $self->nm_version,
 							  model_filename => $self->models->[0]->filename,
 							  done  => 1,
+							  subjects => $self->subjects,
 							  recenter  => $self->recenter,
 							  adjust_blocks  => $self->adjust_blocks,
 							  check_cholesky_reparameterization => $self->check_cholesky_reparameterization,
@@ -3283,7 +3293,12 @@ sub create_R_plots_code{
 	my $rplot = $parm{'rplot'};
 
 	my @cols=();
-	my $paramcount = 0;
+	my %count;
+	$count{'param'}=0;
+	$count{'theta'}=0;
+	$count{'omega'}=0;
+	$count{'sigma'}=0;
+
 
 	my $maxresamplestring = 'MAX.RESAMPLE <- 1    # maximum resamples for single sample. 1 if without replacement';
 	if ($self->with_replacement){
@@ -3295,17 +3310,24 @@ sub create_R_plots_code{
 	#we should not filter out off-diagonals like in sse. Verified. 
 
 	if (defined $labelref){
-		$paramcount = scalar(@{$labelref});
+		$count{'param'} = scalar(@{$labelref});
 		#cannot use raw_results_header, has only placeholders for sigma etc
 		my $headerref = $self->full_rawres_header; #ref of array of strings, no quotes
 #		print join(' ',@{$headerref})."\n";
 		@cols = @{get_array_positions(target => $headerref,keys => $labelref)};
+		foreach my $par ('theta','omega','sigma'){
+			my $ref = $self->models->[0]->problems->[0]->get_estimated_attributes(parameter => $par,
+																				  attribute => 'labels');
+			$count{$par} = scalar(@{$ref}) if (defined $ref);
+		}
 	}
 
 
 	my $colstring = 'COL.ESTIMATED.PARAMS <-  c('.join(',',@cols).')   #column numbers in raw_results for parameters';
-	my $paramstring = 'N.ESTIMATED.PARAMS <- '.$paramcount;
+	my $paramstring = 'N.ESTIMATED.PARAMS <- '.$count{'param'};
 	my $cistring = 'CI <- 95';
+	my $subjectstring = 'model.subjects <- NA';
+	$subjectstring = 'model.subjects <- '.$self->subjects if (defined $self->subjects) ;
 
 	$rplot->add_preamble(code => [
 							 '#sir-specific preamble',
@@ -3317,6 +3339,10 @@ sub create_R_plots_code{
 							 $maxresamplestring,
 							 $colstring,
 							 $paramstring,
+							 'N.ESTIMATED.THETAS <- '.$count{'theta'},
+							 'N.ESTIMATED.OMEGAS <- '.$count{'omega'},
+							 'N.ESTIMATED.SIGMAS <- '.$count{'sigma'},
+							 $subjectstring,
 							 $cistring,
 						 ]);
 

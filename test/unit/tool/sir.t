@@ -557,6 +557,7 @@ my $err = tool::sir::save_restart_information(
 	actual_resamples => [50,50],
 	intermediate_raw_results_files => ['rawres1.csv','rawres2.csv'],
 	model_filename => 'pheno.mod',
+	subjects => 59,
 	seed_array => \@in);
 	
 chdir($tempdir); #back up
@@ -573,6 +574,7 @@ is($recoversir->done,1,'recovery info 2');
 is($recoversir->recenter,0,'recovery info 3');
 is($recoversir->adjust_blocks,1,'recovery info 3.5');
 is($recoversir->check_cholesky_reparameterization,0,'recovery info 3.6');
+is($recoversir->subjects,59,'recovery info 3.7');
 is($recoversir->copy_data,0,'recovery info 4');
 is($recoversir->boxcox,0,'recovery info 5');
 is($recoversir->with_replacement,1,'recovery info 6');
@@ -612,6 +614,7 @@ is($recoversir->done,0,'add_iterations info 2');
 is($recoversir->recenter,1,'add_iterations info 3');
 is($recoversir->adjust_blocks,0,'add_iterations info 3.5');
 is($recoversir->check_cholesky_reparameterization,0,'add_iterations info 3.6');
+is($recoversir->subjects,59,'add_iterations info 3.7');
 is($recoversir->copy_data,1,'add_iterations info 4');
 is($recoversir->boxcox,1,'add_iterations info 5');
 is($recoversir->with_replacement,0,'add_iterations info 6');

@@ -1,5 +1,4 @@
 
-
 #############################################################################################################
 ### Diagnostics for SIR
 ### Author: AG Dosne
@@ -18,7 +17,7 @@
 ###     - a plot of the number of resampled values in the bin with the highest proportion as the number of samples increases, iteration by iteration (all parameters together)
 ### COMMENTS ################################################################################################
 
-pkg1 <- c("ggplot2","dplyr","plyr","reshape","tidyr","gridExtra","gplots","RColorBrewer")  # check that you have all the packages installed
+pkg1 <- c("ggplot2","dplyr","plyr","reshape","tidyr","gridExtra","gplots","RColorBrewer","MCMCpack","stats4")  # check that you have all the packages installed
 pkg2 <- paste0("package:",pkg1)
 lapply(pkg1, require, character.only = TRUE)                                               # important to load plyr after dplyr even if get warning
 theme_set(theme_bw(base_size=20))
@@ -76,6 +75,7 @@ paramCI_all$ITERATION     <- factor(paramCI_all$ITERATION,levels=seq(0,length(AL
 
 ### dOFV distributions
 
+set.seed(123)
 RESAMPLES             <- ALL.RESAMPLES[length(ALL.RESAMPLES)]
 QUANT                 <- seq(0,(RESAMPLES-1)/RESAMPLES,length.out=RESAMPLES-1)                                                                                               # quantiles (at each point except last to avoid +Inf for ref chisquare) 
 dOFV_ref              <- data.frame("ITERATION"=0,"DISTRIBUTION"="REF","dOFV"=qchisq(QUANT,df=N.ESTIMATED.PARAMS),"QUANT"=QUANT,"TYPE"="SIR")                                    # dOFV distribution of reference chisquare distribution
@@ -166,9 +166,8 @@ plot.cor <- function (cov,asym,final_est,title) {
 }
 
 ### Number of resamples per bin
-if(rplots.level>1) {
 
-set.seed(123)
+if(rplots.level>1) {
 N1                  <- 10                                     # number of bins for simulated parameters
 N2                  <- 5                                      # number of bins for resampled parameters
 resamp              <- ddply(rawres[rawres$resamples!=0,], .(ITERATION), summarize, "sample.id"=sample.id, "ORDER"=findInterval(sample_order,seq(0,unique(NRESAMP),length.out=(N2+1)),all.inside=T)) # need to resample because need to track order of sampling
@@ -201,11 +200,55 @@ max_bin2               <- left_join(max_bin2,max_bin[,c("ITERATION","Parameter",
 resamp_prop_max        <- left_join(resamp_prop,max_bin2)
 resamp_prop_max$IDBIN  <- ifelse(resamp_prop_max$BIN==resamp_prop_max$MAXBIN,1,0) 
 resamp_prop_max$MAXBIN <- paste("INIT BIN",resamp_prop_max$MAXBIN)
-}  
+
+### Calculate N for OMEGA distributions
+
+dat      <- filter(rawres, ITERATION==LASTIT & resamples==1)
+omega.col<- COL.ESTIMATED.PARAMS[seq((N.ESTIMATED.THETAS+1),(N.ESTIMATED.THETAS+N.ESTIMATED.OMEGAS))]                                                                            # column index of the variances we want to estimate the df of 
+parnames <- names(dat)[omega.col]                                                                         # names of the variances  
+var      <- filter(final_est,Parameter %in% parnames)                                                     # MLE estimates
+mdat     <- melt(dat[,omega.col]) 
+
+full.df.est <- function (x) {  # function for the fitting
+  x   <- as.data.frame(x)
+  nLL <- function(df,s) { # easier if defined inside full.df.est so same environment (else does not find "x")
+    ylist <- lapply(x[,2],as.matrix)
+    if(df>=1)
+      nLL <- -sum(log(unlist(lapply(ylist,diwish, S=as.matrix(s), v=df))))
+    if(df<1) nLL <- NA
+    return(nLL)
+  }
+  fit <- try(mle(nLL,start=list(df=model.subjects,s=model.subjects*mean(x[,2]))), silent=TRUE) # test if the fit returns an error
+  if ('try-error' %in% class(fit)) db <- rep(NA,7)
+  else {
+    fit  <- mle(nLL,start=list(df=90,s=90*mean(x[,2])))
+    db   <- data.frame(nrow(x),fit@details$par[1],fit@details$par[2],
+                       sqrt(diag(fit@vcov))[1],sqrt(diag(fit@vcov))[2],
+                       fit@min,fit@details$convergence)}
+  # names(db) <- c("nobs","df","s","se_df","se_s","nLL","convergence")  
+  return(db)
+} # end of full.df.est function
+
+fit     <- matrix(0,ncol=7,nrow=length(levels(mdat$variable)),dimnames=list(levels(mdat$variable),c("nobs","df","s","se_df","se_s","nLL","convergence") ))
+for (i in seq(length(levels(mdat$variable)))) {
+  fit[i,] <- as.matrix(full.df.est(filter(mdat,variable==levels(mdat$variable)[i])),nrow=1)
+}
+
+fit_db          <- as.data.frame(fit)
+fit_db$variable <- levels(mdat$variable)
+mdat            <- join(mdat,fit_db)
+
+simdat          <- matrix(NA,nrow=nrow(mdat)) # Simulate data from inverse Wishart from estimated df and s
+for (i in seq(nrow(mdat))) {
+  if(is.na(mdat$df[i])==FALSE) simdat[i,] <- riwish(v=mdat$df[i],S=as.matrix(mdat$s[i]))
+}
+mdat$simdat <- as.numeric(simdat)
+
+} # end of rplots.level >1
+
 #############################################################################################################
 ### Do plots
 #############################################################################################################
-
 
 #############################################################################################################
 ### dOFV distributions
@@ -236,7 +279,7 @@ qdOFV_all <- ggplot(dOFV_all,aes(x=QUANT,color=ITERATION)) +
 #   geom_text(data=df_est, aes(x = perc,y=1.1*perc_value,label=df),show.legend=FALSE) +
   geom_text(data=df_est, aes(x = 0.7,y=order*qchisq(0.95,df=N.ESTIMATED.PARAMS)/(2*nrow(df_est)),label=paste(df," (",TYPE2,ITERATION,")",sep="")),show.legend=FALSE,hjust=0,size=5) +
   annotate("text",x = 0.7,y=(nrow(df_est)+1)*qchisq(0.95,df=N.ESTIMATED.PARAMS)/(2*nrow(df_est)),label="Estimated df",hjust=0,fontface="italic",size=5) +
-  annotate("text",x = 0,y=1.8*qchisq(0.95,df=N.ESTIMATED.PARAMS),label=warn,hjust=0,fontface="italic",size=4,color="red") +
+  annotate("text",x = 0,y=2*qchisq(0.95,df=N.ESTIMATED.PARAMS),label=warn,hjust=0,fontface="italic",size=4,color="red") +
   coord_cartesian(ylim=c(0,2*qchisq(0.95,df=N.ESTIMATED.PARAMS))) +
   theme(legend.position="bottom",legend.box="horizontal") + labs(title="All dOFV distributions") +
   guides(colour = guide_legend(order = 1,title.position="top",nrow=1), linetype = guide_legend(order = 2,title.position="top",nrow=1))
@@ -272,6 +315,7 @@ cor.final <- plot.cor(cov.final,asym.final,final_est,title="SIR")
 #############################################################################################################
 ### Parameter bin plots by iteration
 #############################################################################################################
+
 if(rplots.level>1) {
 
 mM_ratio   <-  vector('list', LASTIT)
@@ -313,7 +357,18 @@ all_maxbin.cur  <- ggplot(filter(resamp_prop_max,IDBIN==1 & ITERATION==i),aes(x=
 all_maxbin[[i]] <- all_maxbin.cur
 
 }
-}
+
+#############################################################################################################
+### Inverse Wishart fit for OMEGAs
+#############################################################################################################
+
+invWish <- ggplot(mdat, aes(x=value)) +
+  geom_histogram() +
+  geom_density(aes(x=simdat,color=interaction(variable,as.factor(round(df,0)),sep=":"))) +
+  facet_wrap(~variable, scales="free") +
+  guides(color=guide_legend(title="Parameter:Estimated N"))
+
+} # end of r.plots.level>1
 
 #############################################################################################################
 ### Output plots
@@ -333,6 +388,7 @@ if(rplots.level>1) {
   print(mM_ratio)
   print(m2_maxbin)
   print(all_maxbin)
+  print(invWish)
   dev.off()
 }
 
