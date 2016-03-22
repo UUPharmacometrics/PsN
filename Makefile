@@ -229,9 +229,11 @@ release: main completion rel_dir $(RELFILES) $(PDFFILES)
 
 # Release the nmoutput2so separately
 nmoutput2so: version
-	@ cd doc; pdflatex nmoutput2so_userguide.tex >/dev/null; pdflatex nmoutput2so_userguide.tex >/dev/null
+	@ cd doc; pdflatex nmoutput2so_userguide.tex >/dev/null; pdflatex nmoutput2so_userguide.tex >/dev/null; biber nmoutput2so_userguide >/dev/null; pdflatex nmoutput2so_userguide.tex >/dev/null
 	@ mkdir nmoutput2so
 	@ mkdir nmoutput2so/bin
+	@ mkdir nmoutput2so/doc
+	@ cp doc/nmoutput2so_userguide.pdf nmoutput2so/doc
 	@ cp bin/nmoutput2so nmoutput2so/bin
 	@ cp -r lib/ nmoutput2so
 	@ rm -r nmoutput2so/lib/tool
