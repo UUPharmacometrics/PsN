@@ -31,6 +31,7 @@ has 'verbose' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'external_tables' => ( is => 'rw', isa => 'Bool', default => 0 );   # For now a bool to specify if external tables should be created
 has 'labels_hash' => ( is => 'rw', isa => 'HashRef' );  # List of labels on sd/corr scale etc. Intended for external use i.e. bootstrap
 has 'extra_output' => ( is => 'rw', isa => 'Maybe[ArrayRef]' );
+has 'include_fixed_params' => ( is => 'rw', isa => 'Bool', default => 0 );  # If set includes all fixed parameters. If unset skips FIX parameters without label
 has '_idv' => ( is => 'rw', isa => 'Str' );                         # The name of the idv column
 has '_document' => ( is => 'rw', isa => 'Ref' );                    # The XML document 
 has '_duplicate_blocknames' => ( is => 'rw', isa => 'HashRef' );    # Contains those blocknames which will have duplicates with next number for block
@@ -218,9 +219,15 @@ sub _parse_lst_file
             }
 
             foreach my $option (@options) {
-                if ($option->fix and defined $option->label) {
+                if ($option->fix and defined $option->label or ($self->include_fixed_params and $option->fix)) {
                     push @est_values, $option->init;
-                    push @all_labels, $option->label;
+                    my $label;
+                    if ($option->label eq "") {
+                        $label = $option->coordinate_string;
+                    } else {
+                        $label = $option->label;
+                    }
+                    push @all_labels, $label;
                     push @all_inits, $option->init;
                     push @all_types, _get_columnType(param => lc(substr($option->coordinate_string, 0, 5)), sdcorrform => ($option->sd or $option->corr), off_diagonal => (not $option->on_diagonal));
                 }

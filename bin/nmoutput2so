@@ -41,6 +41,7 @@ my %optional_options = (
     'rundir:s' => undef,
     'extra_output:s' => undef,
     'compress!' => undef,
+    'include_fixed_params!' => undef,
 );
 
 
@@ -250,6 +251,12 @@ $help_text{-compress} = <<'EOF';
     Set to automatically gzip compress the output SO file
 EOF
 
+$help_text{-include_fixed_params} = <<'EOF';
+    -include_fixed_params
+
+    Set to include estimates of all fixed parameters
+EOF
+
 common_options::online_help('nmoutput2so', \%options, \%help_text, \%required_options, \%optional_options);
 
 require output;
@@ -328,6 +335,7 @@ foreach my $lst_file (@files) {
         max_replicates => $options{'max_replicates'},
         external_tables => $options{'external_tables'},
         extra_output => $extra_output_columns,
+        include_fixed_params => $options{'include_fixed_params'},
     );
     $first_labels_hash = $nm_parser->labels_hash if not defined $first_labels_hash;
 }
