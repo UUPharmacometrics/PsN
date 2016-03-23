@@ -173,9 +173,14 @@ if (scalar(@lines) == 0) {
 }
 
 if ($command eq "list") {
-    print "$_\n" for @lines;
-    print get_summary($num_m1dirs, $num_zipfiles,$num_nmrun), "\n";
-    die "Did not zip or remove anything. Exiting\n";
+	if ($interactive){
+		print "$_\n" for @lines;
+		print get_summary($num_m1dirs, $num_zipfiles,$num_nmrun), "\n";
+		die "Did not zip or remove anything. Exiting\n";
+	}else{
+		print "$logdir: ".get_summary($num_m1dirs, $num_zipfiles,$num_nmrun), "\n";
+		exit;
+	}
 }
 
 if (($command eq "zip") or ($command eq "remove")) {
