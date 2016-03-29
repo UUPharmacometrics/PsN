@@ -193,7 +193,11 @@ sub get_or_set_fix
 	unless (($type eq 'thetas') or ($type eq 'omegas') or ($type eq 'sigmas')){
 		croak("unknown type $type");
 	}
-	$stop_record = scalar(@{$model->problems->[0]->$type}) unless (defined $stop_record);
+	if (defined $model->problems->[0]->$type){ 
+		$stop_record = scalar(@{$model->problems->[0]->$type}) unless (defined $stop_record);
+	}else{
+		$stop_record = 0;
+	}
 	if ($type eq 'thetas'){
 		my $index=0;
 		for (my $i=0; $i<$stop_record ; $i++){
@@ -2063,6 +2067,8 @@ sub prepare_model2
 			#we do not have to add for example binary-ized categoricals, they enter in DV col for special fremtype
 		}
 
+		$frem_model->check_and_set_sizes('PD' => 1);
+		
 		#SIGMA changes
 		foreach my $record (@{$frem_model-> problems -> [0]->sigmas}){
 			if ($record->type eq 'BLOCK'){
@@ -2087,12 +2093,13 @@ sub prepare_model2
 
 		#THETA changes
 		#FIX all existing
-		for (my $i=0; $i< scalar(@{$frem_model->problems->[0]->thetas}); $i++){
-			for (my $j=0; $j< scalar(@{$frem_model->problems->[0]->thetas->[$i]->options}); $j++){
-				$frem_model->problems->[0]->thetas->[$i]->options->[$j]->fix(1);
+		if (defined $frem_model->problems->[0]->thetas){
+			for (my $i=0; $i< scalar(@{$frem_model->problems->[0]->thetas}); $i++){
+				for (my $j=0; $j< scalar(@{$frem_model->problems->[0]->thetas->[$i]->options}); $j++){
+					$frem_model->problems->[0]->thetas->[$i]->options->[$j]->fix(1);
+				}
 			}
 		}
-
 		
 		my @theta_strings =();
 		my @covariate_thetanumbers = ();
@@ -2313,9 +2320,11 @@ sub prepare_model5
 
 		#THETA changes
 		#FIX all existing
-		for (my $i=0; $i< scalar(@{$frem_model->problems->[0]->thetas}); $i++){
-			for (my $j=0; $j< scalar(@{$frem_model->problems->[0]->thetas->[$i]->options}); $j++){
-				$frem_model->problems->[0]->thetas->[$i]->options->[$j]->fix(1);
+		if (defined $frem_model->problems->[0]->thetas){
+			for (my $i=0; $i< scalar(@{$frem_model->problems->[0]->thetas}); $i++){
+				for (my $j=0; $j< scalar(@{$frem_model->problems->[0]->thetas->[$i]->options}); $j++){
+					$frem_model->problems->[0]->thetas->[$i]->options->[$j]->fix(1);
+				}
 			}
 		}
 		my $dimension = $frem_model->problems->[0]->omegas->[$start_omega_record-1]->size;
