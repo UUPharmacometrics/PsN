@@ -290,9 +290,13 @@ sub check_and_set_sizes
 	#TODO add more options to check here
 	my %parm = validated_hash(\@_,
 							  LTH => { isa => 'Bool', default => 0 },
+							  PD => { isa => 'Bool', default => 0 },
 		);
 	my $LTH = $parm{'LTH'};
+	my $PD = $parm{'PD'};
+
 	my $max_theta = 100;
+	my $max_input_items = 50;
 
 	if ($LTH){
 		my $theta_count = 0;
@@ -323,6 +327,42 @@ sub check_and_set_sizes
 
 	}
 
+	if ($PD){
+
+		my $maxpd = $max_input_items;
+		my $pd_value = $self->get_option_value( record_name => 'sizes',
+												option_name => 'PD',
+												fuzzy_match => 0);
+
+		if (defined $pd_value and (length($pd_value) > 0)  and (abs($pd_value) > $maxpd)){
+			$maxpd=abs($pd_value);
+		}
+
+		my $item_count = 0;
+		foreach my $prob (@{$self->problems}){
+			my $count = 0;
+			foreach my $input (@{$prob->inputs}){
+				$count += scalar(@{$input->get_nonskipped_columns});
+			}
+			$item_count = $count if ($count > $item_count);
+		}
+		$item_count += 10; #seems that exact count was not enough. "cannot append items"
+		if ($item_count > $maxpd){
+			if (defined $self->problems->[0]->sizess() 
+				and scalar(@{$self ->problems->[0]->sizess()})>0){
+				$self -> set_option(record_name => 'sizes',
+									record_number => 1,
+									option_name => 'PD',
+									option_value => '-'.$item_count,
+									fuzzy_match => 0);
+
+			}else{
+				$self -> add_records( type => 'sizes',
+									  record_strings => [ " PD=-".$item_count ] );
+			}
+		}
+	}
+	
 }
 sub create_maxeval_zero_models_array
 {
