@@ -39,6 +39,7 @@ sub get_summary
     my $num_m1dirs = shift;
     my $num_zipfiles = shift;
 	my $num_nmrun = shift;
+	my $num_xvdata = shift;
 	
     my $summary_text = '';
 
@@ -65,6 +66,11 @@ sub get_summary
         $summary_text .= $num_nmrun . " NM_run";
     }
 
+	if ($num_xvdata > 0) {
+        $summary_text .= " and " if (length($summary_text)>0); 
+        $summary_text .= $num_xvdata . " xv_data";
+    }
+
     return "Found $summary_text.";
 }
 
@@ -74,6 +80,7 @@ my $interactive = 1;
 my $nm_run = 1;
 my $findm1 = 1;
 my $skip_lasso = 0;
+my $xvdata = undef;
 my $logdir = $ENV{'HOME'};
 
 my $res = GetOptions('h' => \$h, 
@@ -81,6 +88,7 @@ my $res = GetOptions('h' => \$h,
 					 'interactive!' => \$interactive,
 					 'nm_run!' => \$nm_run,
 					 'm1!' => \$findm1,
+					 'xv_data!' => \$xvdata,
 					 'skip_lasso_m1!' => \$skip_lasso,
 					 'logdir=s' => \$logdir);
 exit unless $res;
@@ -92,6 +100,14 @@ if ($help or $h) {
 if (scalar(@ARGV) < 2) {
     print "Too few arguments\n\n";
     usage();
+}
+
+unless (defined $xvdata){
+	if ($skip_lasso){
+		$xvdata = 1;
+	}else{
+		$xvdata = 0;
+	}
 }
 
 my $command = shift(@ARGV);
@@ -109,6 +125,7 @@ my $logfile = $logdir. '/removed_by_m1find';
 my @m1_directories=();
 my @m1_zipfiles = ();
 my @nmrun_directories = ();
+my @xvdata_directories = ();
 my $basedir = getcwd();
 
 foreach my $dir (@ARGV){
@@ -128,6 +145,7 @@ foreach my $dir (@ARGV){
 	my $find_output_m1 = "";
 	my $find_output_m1zip = "";
 	my $find_output_nmrun = "";
+	my $find_output_xvdata = "";
 
 	if ($findm1){
 		$find_output_m1 = readpipe("find $dir -name 'm1' -type d -prune 2>/dev/null");
@@ -139,11 +157,15 @@ foreach my $dir (@ARGV){
 		if ($nm_run){
 			$find_output_nmrun = readpipe("find $dir -name 'NM_run*' -type d -prune | sed '/NM_run[1-9][0-9]*\$/!d' 2>/dev/null");
 		}
+		if ($xvdata){
+			$find_output_xvdata = readpipe("find $dir -name 'xv_data' -type d -prune 2>/dev/null");
+		}
 	}
 
 	push(@m1_directories,(split /\n/, $find_output_m1));
 	push(@m1_zipfiles,(split /\n/, $find_output_m1zip));
 	push(@nmrun_directories,(split /\n/, $find_output_nmrun));
+	push(@xvdata_directories,(split /\n/, $find_output_xvdata));
 }
 
 if ($skip_lasso){
@@ -162,23 +184,25 @@ if ($skip_lasso){
 my $num_m1dirs = scalar(@m1_directories);
 my $num_zipfiles = scalar(@m1_zipfiles);
 my $num_nmrun = scalar(@nmrun_directories);
-my @lines = (@m1_directories, @m1_zipfiles, @nmrun_directories);
+my $num_xvdata = scalar(@xvdata_directories);
+my @lines = (@m1_directories, @m1_zipfiles, @nmrun_directories, @xvdata_directories);
 
 if (scalar(@lines) == 0) {
-    if ($command ne "zip") {
-        die "Did not find any m1 directories or m1.zip files. Exiting.\n";
-    } else {
-        die "Did not find any m1 directories. Exiting.\n";
-    }
+	if ($interactive){
+		die "Did not find any directories or files matching search criteria. Exiting\n";
+	}else{
+		print "$logdir: Found 0.\n";
+		exit;
+	}
 }
 
 if ($command eq "list") {
 	if ($interactive){
 		print "$_\n" for @lines;
-		print get_summary($num_m1dirs, $num_zipfiles,$num_nmrun), "\n";
+		print get_summary($num_m1dirs, $num_zipfiles,$num_nmrun,$num_xvdata), "\n";
 		die "Did not zip or remove anything. Exiting\n";
 	}else{
-		print "$logdir: ".get_summary($num_m1dirs, $num_zipfiles,$num_nmrun), "\n";
+		print "$logdir: ".get_summary($num_m1dirs, $num_zipfiles,$num_nmrun,$num_xvdata), "\n";
 		exit;
 	}
 }
@@ -192,7 +216,7 @@ if (($command eq "zip") or ($command eq "remove")) {
 		if ($command eq "zip") {
 			$summary_text = "Found " . $num_m1dirs . " m1 directories";
 		} else {
-			$summary_text = get_summary($num_m1dirs, $num_zipfiles, $num_nmrun);
+			$summary_text = get_summary($num_m1dirs, $num_zipfiles, $num_nmrun, $num_xvdata);
 		}
 
 		while (1) {
@@ -208,7 +232,7 @@ if (($command eq "zip") or ($command eq "remove")) {
 	}
 } else {
 	#$command eq 'ask'
-    print get_summary($num_m1dirs, $num_zipfiles, $num_nmrun), "\n";
+    print get_summary($num_m1dirs, $num_zipfiles, $num_nmrun,$num_xvdata), "\n";
 }
 
 my $logfh;
@@ -239,7 +263,7 @@ foreach my $line (@lines) {
         }
         my $question = "[r(emove)|";
 		my $zip_allowed = 0;
-        if (($line !~ /zip$/) and ($line !~ /NM_run\d+$/)) {
+        if (($line !~ /zip$/) and ($line !~ /NM_run\d+$/) and ($line !~ /xv_data$/)) {
 			#we do not zip m1.zip or NM_run
             $question .= "z(ip)|";
 			$zip_allowed = 1;
