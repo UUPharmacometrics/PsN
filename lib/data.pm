@@ -431,6 +431,12 @@ sub frem_compute_covariate_properties
 
 	my $results={};
 
+	if (0){
+		print "\n".join(',',@{$filtered_data->header})."\n";
+		print "evid $evid_index mdv $mdv_index \n";
+		print "evid ".$filtered_data->header->[$evid_index]."\n" if (defined $evid_index);
+		print "mdv ".$filtered_data->header->[$mdv_index]."\n" if (defined $mdv_index);
+	}
 	unless (defined $first_timevar_type){
 		unless (scalar(@{$invariant_covariates}) == scalar(@{$cov_indices})){
 			croak("cov names count and cov indices count are different");
@@ -564,6 +570,7 @@ sub add_frem_lines
 																  first_timevar_type => $first_timevar_type);
 		push(@invariant_matrix,$invariants);
 		push(@timevar_matrix,$timevar);
+#		die;
 	}
 	$self->_write;
 

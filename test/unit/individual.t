@@ -96,13 +96,51 @@ my @arr = split(',',$ind->subject_data->[2]);
 cmp_float_array(\@arr,$ans->[1], "add_frem_lines 7");
 
 
+#no obs at all
+$ind = data::individual->new(idcolumn => 1, subject_data => [   '1,0,1,0,70,1,35,0', 
+																'1,34,1,10,70,1,35,0',
+																'1,21,1,20,70,1,35,0']);
+
+is_deeply($ind->factor_list(column => 4,mdv_evid_indices =>[2]),[],'factor list no observations');
+
+my ($ref1,$ref2) = $ind->add_frem_lines(type_index => 7,
+										N_parameter_blocks => 1,
+										mdv_index => 2,
+										dv_index => 1,
+										cov_indices => [4,6],
+										is_log => [0,1],
+										first_timevar_type => 2);
+is_deeply($ref1,[-99,-99],'invariant values missing obs');
+is(scalar(@{$ind->subject_data}),3,"add_frem_lines no obs");
+
+
+
+$ind = data::individual->new(idcolumn => 1, subject_data => [  '1,0,1,0,70,1,0,0', 
+															 '1,34,0,10,-99,2,0,0',
+															 '1,21,0,20,70,3,35,0']);
+
+is_deeply($ind->factor_list(column => 5,mdv_evid_indices =>[2]),[-99,70],'baseline factor 4');
+is_deeply($ind->factor_list(column => 5,mdv_evid_indices =>[0]),[],'baseline factor 5');
+
+($ref1,$ref2) = $ind->add_frem_lines(type_index => 7,
+										N_parameter_blocks => 1,
+										mdv_index => 2,
+										dv_index => 1,
+										cov_indices => [4,5],
+										is_log => [0,0],
+										first_timevar_type => 2);
+is_deeply($ref1,[-99,2],'invariant values one missing obs');
+is(scalar(@{$ind->subject_data}),4,"add_frem_lines one missing obs");
+is($ind->subject_data->[1],'1,2,0,10,-99,2,0,200' , "add_frem_lines one missing obs a");
+is($ind->subject_data->[2],'1,34,0,10,-99,2,0,0' , "add_frem_lines one missing obs b");
+
+
+
 
 $ind = data::individual->new(idcolumn => 1, subject_data => ['1,0,1,0,70,1,0', 
 															 '1,34,0,10,-99,2,0',
 															 '1,21,0,20,70,3,35']);
 
-is_deeply($ind->factor_list(column => 5,mdv_evid_indices =>[2]),[-99,70],'baseline factor 4');
-is_deeply($ind->factor_list(column => 5,mdv_evid_indices =>[0]),[],'baseline factor 5');
 
 my $indices = [4,5,6];
 $ind->append_bivariate_columns(categorical_indices => [4,5,6],

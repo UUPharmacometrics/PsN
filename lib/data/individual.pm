@@ -213,49 +213,52 @@ sub add_frem_lines
 	}
 
 	my %occasions = {};
-	for ( my $i = 0; $i <= $#data; $i++ ) {
+	my $lastline = scalar(@data)-1;
+	for ( my $i = 0; $i <= $lastline; $i++ ) {
 		my @data_row = split( /,/ , $data[$i] );
 		my $not_obs=0;
 		foreach my $index (@check_index){ #check that MDV and EVID are 0
 			$not_obs = 1 unless ($data_row[$index] == 0);
 		}
-		unless ($done_invariant or $not_obs){
-			#first loop over invariate covariates
-			for (my $pos=0; $pos < $first_timevar_type; $pos++){
-				my $cov_index = $cov_indices->[$pos];
-				my @row = @data_row; #copy
-				if ($is_log->[$pos] and ($row[$cov_index] != $missing_data_token )){
-					$row[$dv_index] = log($row[$cov_index]); 
-				}else{
-					$row[$dv_index] = $row[$cov_index]; #set DV column to whatever cov value
-				}
-				push(@invariant_values,$row[$dv_index]);
-				if ($row[$cov_index] == $missing_data_token){
-					#cov value is missing
-					$row[$mdv_index]=1 if (defined $mdv_index);
-					$row[$evid_index]=2 if (defined $evid_index) ;
-				}else{
-					#cov value not missing
-					$row[$mdv_index]=0 if (defined $mdv_index);
-					$row[$evid_index]=0 if (defined $evid_index) ;
-				}
-
-				for (my $k= 0; $k<$N_parameter_blocks; $k++){
-					#add one line per parameter block
-					$row[$type_index] = ((100*($pos+1))+$k)  ; #fremtype value
-					if ($format_data){
-						format_array(\@row);
+		unless ($done_invariant){
+			unless ($not_obs) {
+				#first loop over invariate covariates
+				for (my $pos=0; $pos < $first_timevar_type; $pos++){
+					my $cov_index = $cov_indices->[$pos];
+					my @row = @data_row; #copy
+					if ($row[$cov_index] == $missing_data_token) {
+						#cov value is missing, do not add new data row
+						push(@invariant_values,$missing_data_token);
+					}else{
+						#not missing
+						if ($is_log->[$pos] ){
+							$row[$dv_index] = log($row[$cov_index]); #if log 0 here then crash
+						}else{
+							$row[$dv_index] = $row[$cov_index]; #set DV column to whatever cov value
+						}
+						push(@invariant_values,$row[$dv_index]);
+						$row[$mdv_index]=0 if (defined $mdv_index);
+						$row[$evid_index]=0 if (defined $evid_index) ;
+						
+						for (my $k= 0; $k<$N_parameter_blocks; $k++){
+							#add one line per parameter block
+							$row[$type_index] = ((100*($pos+1))+$k)  ; #fremtype value
+							if ($format_data){
+								format_array(\@row);
+							}
+							push(@newlines,join( ',', @row));
+						}
 					}
-					push(@newlines,join( ',', @row));
 				}
-			}
-			$done_invariant = 1;
+				$done_invariant = 1;
+		    }
+
 		}
 
 		my $occ = $data_row[$occ_index] if (defined $occ_index);
-		unless (($n_var < 1) or defined $occasions{$occ} or $not_obs){
+		unless (($n_var < 1) or (defined $occasions{$occ}) or $not_obs){
 			#no timevar at all OR
-			#have not already handled this occasion OR this is not observation
+			#have already handled this occasion OR this is not observation
 			#found new occasion, loop over time-varying
 			$occasions{$occ}=1;
 			for (my $pos= $first_timevar_type; $pos < scalar(@{$cov_indices}) ;$pos++){
@@ -296,9 +299,12 @@ sub add_frem_lines
 			push(@timevar_values, array::median($timevar_matrix[$cov]));
 		}
 	}
-	unless ($done_invariant){
-		print "error in add_frem_lines, found no observation line to use for invariant cov\n";
+	unless ($done_invariant){ # no observation at all for this individual
+		for (my $pos=0; $pos < $first_timevar_type; $pos++){
+			push(@invariant_values,$missing_data_token);
+		}
 	}
+
 
 	$self->subject_data(\@newlines); #replace old data
 
