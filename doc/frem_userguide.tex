@@ -1,5 +1,6 @@
 \input{inputs/format_header.tex}
-\guidetitle{FREM userguide}{2016-02-26}
+\usepackage{amsmath}
+\guidetitle{FREM userguide}{2016-04-01}
 
 
 \begin{document}
@@ -65,10 +66,10 @@ If any covariate listed with option -log is not in the list -covariates there wi
 There must be no covariate listed with both log and -categorical.
 \nextopt
 \optdefault{ordered}{?} 
-{\Large \texttt{??? Should there be special case for ordered categorical?}}
+{\Large \texttt{TODO special case for ordered categorical}}
 \optdefault{categorical}{list}
 Optional, default empty.
-A comma-separated list of categorical covariates. These will be automatically transformed from
+A comma-separated list of non-ordered categorical covariates. These will be automatically transformed from
 one covariate with Y categories into Y-1 bivariate covariates, if Y>2. Missing values are not counted as a category.
 The -categorical list must be a subset of the -covariate list.
 If any covariate listed with option -categorical is not in the list -covariates there will be an error message.
@@ -321,14 +322,15 @@ Create a new data set.
           Y-1 new variables.
 \item Then loop over each individual: 
 \begin{enumerate}
-	\item Copy first observation line for individual. i.e. first line where MDV/EVID ==0. 
-Loop over each covariate: Add one % N\_parameter\_blocks
+	\item Copy first observation line for individual. i.e. first line where MDV/EVID ==0. If no such line then just skip this individual.
+Loop over each covariate:
+If covariate value for this individual is missing for first observation, then skip this
+covariate line for this individual. Otherwise add one % N\_parameter\_blocks
 new line %(s)
 just before first observation line for individual. 
 On each copied line, set value in DV column to covariate value, or ln(value) if this covariate is listed with option -log,
 and FREMTYPE to a unique type-value for this covariate. % and parameter block. 
-If MDV column present then MDV=0 if have covariate value, MDV=1 if value is missing. 
-Else if EVID present then EVID=0 if non-missing covariate value, otherwise EVID=2. 
+If MDV column present then MDV=0, else if EVID present then EVID=0.% if non-missing covariate value, otherwise EVID=2. 
 Store non-missing covariate values in array, one array per covariate, to be able to compute medians and 
 variance-covariance matrix later to be used as initial estimates in \$THETA and \$OMEGA. 
 %	\item Loop over each occasion (if OCC defined). 
@@ -526,6 +528,82 @@ Setting option -cholesky will often fail with NONMEM versions older than NM7.3, 
 %the m1 directory, open model\_3.ext and carefully add a small value to the diagonal elements of the problematic omega block,
 %save the edited model\_3.ext in m1, and restart frem. The program will then read the omega block from model\_3.ext
 %without running model 3 and then use that block instead.
+
+\section{Computing SE of correlations}
+We use the so-called delta method for computing the uncertainty of correlations based on uncertainty of covariances.
+% see output get_eta_eps_correlations
+
+\[
+\begin{split}
+\hat{corr_{A,B}}&=g(\Phi)\\
+&=g\left(\phi_1,\phi_2,\phi_3\right)\\
+&=g\left(\hat{cov_{A,B}},\hat{var_{A}},\hat{var_{B}}\right)\\
+&=\frac{\hat{cov_{A,B}}}{\sqrt{\hat{var_{A}}}\cdot \sqrt{\hat{var_{B}}}}\\
+&=\hat{cov_{A,B}}\cdot \hat{var_{A}}^{-0.5} \cdot \hat{var_{B}}^{-0.5}
+\end{split}
+\]
+
+\[
+\begin{split}
+var\left(\hat{corr_{A,B}}\right)&=\sum_{i=1}^{3}\sum_{j=1}^{3} \frac{\partial g(\Phi)}{\partial \phi_{i}} \cdot \frac{\partial g(\Phi)}{\partial \phi_{j}}\cdot cov\left(\phi_{i},\phi_{j} \right)
+\end{split}
+\]
+
+\[
+\begin{split}
+\frac{\partial g(\Phi)}{\partial \phi_1}&=\frac{\partial g(\Phi)}{\partial \hat{cov_{A,B}}} =\hat{var_{A}}^{-0.5} \cdot \hat{var_{B}}^{-0.5}\\
+\frac{\partial g(\Phi)}{\partial \phi_2}&=\frac{\partial g(\Phi)}{\partial \hat{var_{A}}} = -0.5 \cdot \hat{cov_{A,B}}\cdot \hat{var_{A}}^{-1.5} \cdot \hat{var_{B}}^{-0.5}\\
+\frac{\partial g(\Phi)}{\partial \phi_3}&=\frac{\partial g(\Phi)}{\partial \hat{var_{B}}} = -0.5 \cdot \hat{cov_{A,B}}\cdot \hat{var_{A}}^{-0.5} \cdot \hat{var_{B}}^{-1.5}
+\end{split}
+\]
+
+\[
+\begin{split}
+&var\left(\hat{corr_{A,B}}\right)=\\
+=&\hat{var_{A}}^{-1} \cdot \hat{var_{B}}^{-1}\cdot var\left(\hat{cov_{A,B}} \right)+\\
+& 0.25 \cdot \hat{cov_{A,B}}^2\cdot \hat{var_{A}}^{-3} \cdot \hat{var_{B}}^{-1}\cdot var\left(\hat{var_{A}} \right)+\\
+& 0.25 \cdot \hat{cov_{A,B}}^2\cdot \hat{var_{A}}^{-1} \cdot \hat{var_{B}}^{-3}\cdot var\left(\hat{var_{B}} \right)+\\
+& - \hat{var_{A}}^{-0.5} \cdot \hat{var_{B}}^{-0.5} \cdot \hat{cov_{A,B}}\cdot \hat{var_{A}}^{-1.5} \cdot \hat{var_{B}}^{-0.5} \cdot cov\left(\hat{cov_{A,B}},\hat{var_{A}}\right)+\\
+& - \hat{var_{A}}^{-0.5} \cdot \hat{var_{B}}^{-0.5} \cdot \hat{cov_{A,B}}\cdot \hat{var_{A}}^{-0.5} \cdot \hat{var_{B}}^{-1.5} \cdot cov\left(\hat{cov_{A,B}},\hat{var_{B}}\right)+\\
+& 0.5 \cdot \hat{cov_{A,B}}\cdot \hat{var_{A}}^{-1.5} \cdot \hat{var_{B}}^{-0.5}\cdot \hat{cov_{A,B}}\cdot \hat{var_{A}}^{-0.5} \cdot \hat{var_{B}}^{-1.5}\cdot cov\left(\hat{var_{A}},\hat{var_{B}}\right)\\
+=&\hat{var_{A}}^{-1} \cdot \hat{var_{B}}^{-1}\cdot var\left(\hat{cov_{A,B}} \right)+\\
+& 0.25 \cdot \hat{cov_{A,B}}^2\cdot \hat{var_{A}}^{-3} \cdot \hat{var_{B}}^{-1}\cdot var\left(\hat{var_{A}} \right)+\\
+& 0.25 \cdot \hat{cov_{A,B}}^2\cdot \hat{var_{A}}^{-1} \cdot \hat{var_{B}}^{-3}\cdot var\left(\hat{var_{B}} \right)+\\
+& - \hat{cov_{A,B}} \cdot \hat{var_{A}}^{-2} \cdot \hat{var_{B}}^{-1} \cdot cov\left(\hat{cov_{A,B}},\hat{var_{A}}\right)+\\
+& - \hat{cov_{A,B}} \cdot \hat{var_{A}}^{-1} \cdot \hat{var_{B}}^{-2} \cdot cov\left(\hat{cov_{A,B}},\hat{var_{B}}\right)+\\
+& 0.5 \cdot \hat{cov_{A,B}}^2\cdot \hat{var_{A}}^{-2} \cdot \hat{var_{B}}^{-2}\cdot cov\left(\hat{var_{A}},\hat{var_{B}}\right)\\
+=&\hat{var_{A}}^{-1} \cdot \hat{var_{B}}^{-1}\cdot var\left(\hat{cov_{A,B}} \right)+0.5 \cdot \hat{cov_{A,B}}^2\cdot \hat{var_{A}}^{-1} \cdot \hat{var_{B}}^{-1}\cdot \\
+&\left(0.5 \left ( \hat{var_{A}}^{-2}\cdot var\left(\hat{var_{A}} \right)+\hat{var_{B}}^{-2}\cdot var\left(\hat{var_{B}} \right)    \right) +  \hat{var_{A}}^{-1} \cdot \hat{var_{B}}^{-1}\cdot cov\left(\hat{var_{A}},\hat{var_{B}}\right) \right)+\\
+& - \hat{cov_{A,B}} \cdot \hat{var_{A}}^{-1} \cdot \hat{var_{B}}^{-1}\left(\hat{var_{A}}^{-1} \cdot cov\left(\hat{cov_{A,B}},\hat{var_{A}}\right)+\hat{var_{B}}^{-1}\cdot cov\left(\hat{cov_{A,B}},\hat{var_{B}}\right) \right) 
+\end{split}
+\]
+
+\[
+\begin{split}
+&var\left(corr_{ETA-A,ETA-B}\right)=\\
+& OM_{(A,A)}^{-1} \cdot OM_{(B,B)}^{-1}\cdot var_{OM(A,B)}+0.5 \cdot OM_{(A,B)}^2\cdot OM_{(A,A)}^{-1} \cdot OM_{(B,B)}^{-1}\cdot \\
+&\left(0.5 \left ( OM_{(A,A)}^{-2}\cdot var_{OM(A,A)}+OM_{(B,B)}^{-2}\cdot var_{OM(B,B)}    \right) +  OM_{(A,A)}^{-1} \cdot OM_{(B,B)}^{-1}\cdot cov_{OM(A,A),OM(B,B)} \right)+\\
+& - OM_{(A,B)} \cdot OM_{(A,A)}^{-1} \cdot OM_{(B,B)}^{-1}\left(OM_{(A,A)}^{-1} \cdot cov_{OM(A,B),OM(A,A)}+OM_{(B,B)}^{-1}\cdot cov_{OM(A,B),OM(B,B)} \right) =\\
+& OM_{(A,A)}^{-1} \cdot OM_{(B,B)}^{-1}\cdot [ \\
+& var_{OM(A,B)}+0.5 \cdot OM_{(A,B)}^2\cdot \\
+&\left(0.5 \left ( OM_{(A,A)}^{-2}\cdot var_{OM(A,A)}+OM_{(B,B)}^{-2}\cdot var_{OM(B,B)}    \right) +  OM_{(A,A)}^{-1} \cdot OM_{(B,B)}^{-1}\cdot cov_{OM(A,A),OM(B,B)} \right)+\\
+& - OM_{(A,B)} \left(OM_{(A,A)}^{-1} \cdot cov_{OM(A,B),OM(A,A)}+OM_{(B,B)}^{-1}\cdot cov_{OM(A,B),OM(B,B)} \right) ]=\\
+& \frac{1}{OM_{(A,A)}\cdot OM_{(B,B)}}\cdot [ var_{OM(A,B)} +\\
+& +0.5 \cdot OM_{(A,B)}^2\cdot
+\left(0.5 \left ( \frac{var_{OM(A,A)}}{OM_{(A,A)}^{2}}  +\frac{var_{OM(B,B)}}{OM_{(B,B)}^{2}}    \right) +  \frac{cov_{OM(A,A),OM(B,B)}}{OM_{(A,A)} \cdot OM_{(B,B)}} \right)+\\
+& - OM_{(A,B)} \left(\frac{cov_{OM(A,B),OM(A,A)}}{OM_{(A,A)}}+ \frac{cov_{OM(A,B),OM(B,B)}}{OM_{(B,B)}} \right) ]\\
+\end{split}
+\]
+
+\[
+\begin{split}
+var\left(corr_{ETA-A,ETA-B}\right)&=\frac{1}{OM_{(A,A)}\cdot OM_{(B,B)}}\cdot \{\\
+ var_{OM(A,B)} + OM_{(A,B)} [ & \frac{OM_{(A,B)}}{2}\cdot
+\left[0.5 \left ( \frac{var_{OM(A,A)}}{OM_{(A,A)}^{2}}  +\frac{var_{OM(B,B)}}{OM_{(B,B)}^{2}}    \right) +  \frac{cov_{OM(A,A),OM(B,B)}}{OM_{(A,A)} \cdot OM_{(B,B)}} \right]\\
+& - \left(\frac{cov_{OM(A,B),OM(A,A)}}{OM_{(A,A)}}+ \frac{cov_{OM(A,B),OM(B,B)}}{OM_{(B,B)}} \right)]\}\\
+\end{split}
+\]
+
 
 \section{Creating FREM vpc model}
 Needs to be revised.

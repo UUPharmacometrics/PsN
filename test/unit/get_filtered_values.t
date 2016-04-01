@@ -141,4 +141,82 @@ is_deeply($valuesref, [ 0.000395, 0.0799, 0.156, 0.0349, 0.00339 ], 'pheno allow
 $valuesref = $outobj->get_filtered_values(allow_sdcorrform => 0, category => 'se');
 is_deeply($valuesref, [ 0.000395, 0.0799, 0.156, 0.0349, 0.00339 ], 'pheno do not allow sdcorr no ext');
 
+
+$outfile = $includes::testfiledir . '/mox_sir_block2.lst';
+$outobj = output -> new ('filename' => $outfile);
+my ($correl,$labels,$uncert,$err) = $outobj->get_eta_eps_correlations(num_to_sd_rescale => {});
+is_deeply($labels,['ETA1','ETA2','ETA3'],'correlations labels');
+
+is_deeply($correl,[[1,undef,undef],
+				   [undef,1,0.136766/sqrt(1.24558*0.218255)],
+				   [undef,0.136766/sqrt(1.24558*0.218255),1]],'correlation values');
+
+my $init_problem = $outobj->problems->[0]->input_problem;
+
+
+my ($correlations,$coefficients,$covariances) = output::correlations_coefficients_covariances(
+	size => 3,
+	coordinate_strings => $init_problem->get_estimated_attributes(attribute => 'coordinate_strings'),
+	param_vector => $init_problem->get_estimated_attributes(attribute => 'param'),
+	parameter => 'omega',
+	coords => $init_problem->get_estimated_attributes(attribute => 'coords'),
+	off_diagonal => $init_problem->get_estimated_attributes(attribute => 'off_diagonal'),
+	diagonal_estimates => {1 => 0.409882,2 => 1.24558, 3 => 0.218255},
+	diagonal_position => {1 => 0,2 => 1, 3 => 2},
+	rescale_sd => {3 => 1},
+	estimates => $outobj->get_filtered_values (category => 'estimate'));
+
+is_deeply($correlations,[[1,undef,undef],
+						 [undef,1,0.136766/sqrt(1.24558*0.218255)],
+						 [undef,0.136766/sqrt(1.24558*0.218255),1]],'correlation values');
+
+is_deeply($covariances,[[0.409882,undef,undef],
+						[undef,1.24558,0.136766],
+						[undef,0.136766,0.218255]],'covariances values');
+
+is_deeply($coefficients,[[1,undef,undef],
+						 [undef,1,0.136766/0.218255],
+						 [undef,0.136766/0.218255,1]],'coefficients values');
+
+my ($correlations,$coefficients,$covariances) = output::correlations_coefficients_covariances(
+	size => 3,
+	coordinate_strings => $init_problem->get_estimated_attributes(attribute => 'coordinate_strings'),
+	param_vector => $init_problem->get_estimated_attributes(attribute => 'param'),
+	parameter => 'omega',
+	coords => $init_problem->get_estimated_attributes(attribute => 'coords'),
+	off_diagonal => $init_problem->get_estimated_attributes(attribute => 'off_diagonal'),
+	diagonal_estimates => {1 => 0.409882,2 => 1.24558, 3 => 0.218255},
+	diagonal_position => {1 => 0,2 => 1, 3 => 2},
+	rescale_sd => {2 => 4},
+	estimates => $outobj->get_filtered_values (category => 'estimate'));
+
+is_deeply($correlations,[[1,undef,undef],
+						 [undef,1,0.136766/sqrt(1.24558*0.218255)],
+						 [undef,0.136766/sqrt(1.24558*0.218255),1]],'correlation values');
+
+is_deeply($covariances,[[0.409882,undef,undef],
+						[undef,1.24558*16,0.136766*4],
+						[undef,0.136766*4,0.218255]],'covariances values');
+
+is_deeply($coefficients,[[1,undef,undef],
+						 [undef,1,0.136766/(4*1.24558)],
+						 [undef,0.136766/(4*1.24558),1]],'coefficients values');
+
+my ($correlations,$coefficients,$covariances) = output::correlations_coefficients_covariances(
+	size => 3,
+	coordinate_strings => $init_problem->get_estimated_attributes(attribute => 'coordinate_strings'),
+	param_vector => $init_problem->get_estimated_attributes(attribute => 'param'),
+	parameter => 'omega',
+	coords => $init_problem->get_estimated_attributes(attribute => 'coords'),
+	off_diagonal => $init_problem->get_estimated_attributes(attribute => 'off_diagonal'),
+	diagonal_estimates => {1 => 0.409882,2 => 1.24558, 3 => 0.218255},
+	diagonal_position => {1 => 0,2 => 1, 3 => 2},
+	rescale_sd => {},
+	estimates => $outobj->get_filtered_values (category => 'estimate'));
+
+is_deeply($coefficients,[[1,undef,undef],
+						 [undef,1,undef],
+						 [undef,undef,1]],'coefficients values');
+
+#todo uncert
 done_testing;

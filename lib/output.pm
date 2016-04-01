@@ -1552,6 +1552,220 @@ sub ofvpath
 	return \@ofvpath;
 }
 
+sub get_eta_eps_correlations
+{
+	my $self = shift;
+	my %parm = validated_hash(\@_,
+							  problem_index => { isa => 'Int', optional => 1, default => 0 },
+							  subproblem_index => { isa => 'Int', optional => 1, default => 0 },
+							  num_to_sd_rescale => { isa => 'HashRef', optional => 0},
+							  type  => { isa => 'Str', optional => 1, default => 'eta' },
+		);
+	my $problem_index=$parm{'problem_index'};
+	my $subproblem_index=$parm{'subproblem_index'};
+	my $num_to_sd_rescale=$parm{'num_to_sd_rescale'};
+	my $type=$parm{'type'};
+
+	my $error='';
+
+	my $parameter;
+	if ($type eq 'eta'){
+		$parameter = 'omega';
+	}elsif($type eq 'eps'){
+		$parameter = 'sigma';
+	}else{
+		$error = "illegal type $type";
+		return (undef,undef,undef,$error);
+	}
+
+	if (not $self->have_output){
+		$error = "Trying get_eta_eps_correlations but output object is empty, output file\n".$self->full_name."\n";
+	}elsif (not $self -> parsed_successfully ){
+		$error = "Trying get_eta_eps_correlations but unable to read everything from outputfile, parser error message:\n".
+			$self -> parsing_error_message();
+	}elsif (not $self-> get_single_value(attribute => 'covariance_step_run')){
+		$error = "Trying get_eta_eps_correlations but the covariance step was not run";
+	}
+	return (undef,undef,undef,$error) if (length($error)>0);
+
+
+	#first compute correlations only.
+	#find all estimated diagonal omega or sigma
+	my $init_problem = $self->problems->[$problem_index]->input_problem;
+
+	my @coordinate_strings = @{$init_problem->get_estimated_attributes(parameter => 'all',
+																	   attribute => 'coordinate_strings')};
+	my @coords = @{$init_problem->get_estimated_attributes(parameter => 'all',
+														   attribute => 'coords')};
+	my @off_diagonal = @{$init_problem->get_estimated_attributes(parameter => 'all',
+																 attribute => 'off_diagonal')};
+	my @labels = @{$init_problem->get_estimated_attributes(parameter => 'all',
+														   attribute => 'labels')};
+	my @param = @{$init_problem->get_estimated_attributes(parameter => 'all',
+														   attribute => 'param')};
+	
+	my @estimates = @{$self->get_filtered_values (problem_index => $problem_index,
+												  subproblem_index => $subproblem_index,
+												  parameter => 'all',
+												  category => 'estimate')};
+	my @diagonal_i = ();
+	my @diagonal_coords = ();
+	my @out_labels = ();
+	my %diagonal_estimates;
+	my %diagonal_position;
+	for (my $i=0; $i< scalar(@coordinate_strings); $i++){
+		if (($param[$i] eq $parameter) and ($off_diagonal[$i] == 0)){
+			if ($coords[$i] =~ /^(\d+),/){
+				my $num = $1;
+				push(@diagonal_coords,$num);
+				$diagonal_estimates{$num} = $estimates[$i];
+				$diagonal_position{$num} = scalar(@diagonal_i);
+				if ($coordinate_strings[$i] eq $labels[$i]){
+					push(@out_labels,uc($type).$num);
+				}else{
+					push(@out_labels,$labels[$i]);
+				}
+			}else{
+				croak("regexp ".$coords[$i]);
+			}
+			push(@diagonal_i,$i);
+		}else{
+			push(@diagonal_coords,0); #placeholder
+		}
+	}
+
+	my $size =scalar(@diagonal_i);
+
+	my ($correlations,$coefficients,$covariances) = correlations_coefficients_covariances(
+		size => $size,
+		coordinate_strings => \@coordinate_strings,
+		param_vector => \@param,
+		parameter => $parameter,
+		rescale_sd => $num_to_sd_rescale, 
+		coords => \@coords,
+		off_diagonal => \@off_diagonal,
+		diagonal_estimates => \%diagonal_estimates,
+		diagonal_position => \%diagonal_position,
+		estimates => \@estimates);
+
+	return ($correlations,\@out_labels,undef,$error); #FIXME, remove
+	
+	my $lower_covar;
+	my $covar;
+	if (not $self-> get_single_value(attribute => 'covariance_step_successful')){
+		$error = "Trying get_eta_eps_correlations but the covariance step was not successful";
+	}elsif ($self-> get_single_value(attribute => 'covariance_step_warnings')){
+		$error = "Doing get_eta_eps_correlations but there were covariance step warnings in the lst-file";
+	}else{
+		$lower_covar  = $self -> get_single_value(attribute => 'covariance_matrix');
+		if (not defined $lower_covar){
+			$error = "Trying get_eta_eps_correlations but the covariance matrix is undefined. Parsing error? Output file is\n".
+				$self->full_name."\n";
+		}else{
+			$covar = output::problem::subproblem::make_square( $lower_covar);
+		}
+	}
+	
+	return ($correlations,\@out_labels,undef,$error) if (length($error)>0);
+	#TODO uncert enligt frem_userguide
+	#tests in get_estimated_attributes.t
+}
+
+sub correlations_coefficients_covariances
+{
+	my %parm = validated_hash(\@_,
+							  size => { isa => 'Int', optional => 0 },
+							  coordinate_strings => { isa => 'ArrayRef', optional => 0 },
+							  param_vector => { isa => 'ArrayRef', optional => 0 },
+							  coords => { isa => 'ArrayRef', optional => 0 },
+							  off_diagonal => { isa => 'ArrayRef', optional => 0 },
+							  estimates => { isa => 'ArrayRef', optional => 0 },
+							  rescale_sd => { isa => 'HashRef', optional => 0 },
+							  diagonal_estimates => { isa => 'HashRef', optional => 0 },
+							  diagonal_position => { isa => 'HashRef', optional => 0 },
+							  parameter => { isa => 'Str', optional => 0 },
+		);
+	my $size=$parm{'size'};
+	my $coordinate_strings=$parm{'coordinate_strings'};
+	my $param_vector=$parm{'param_vector'};
+	my $coords=$parm{'coords'};
+	my $off_diagonal=$parm{'off_diagonal'};
+	my $estimates=$parm{'estimates'};
+	my $rescale_sd=$parm{'rescale_sd'};
+	my $diagonal_estimates=$parm{'diagonal_estimates'};
+	my $diagonal_position=$parm{'diagonal_position'};
+	my $parameter=$parm{'parameter'};
+
+	
+	my @correlations = ();
+	my @coefficients = ();
+	my @covariances = ();
+	for (my $j=0; $j < $size; $j++){
+		push(@correlations,[]);
+		for (my $k=0; $k < $size; $k++){
+			push (@{$correlations[$j]},undef);
+			push (@{$coefficients[$j]},undef);
+			push (@{$covariances[$j]},undef);
+		}
+		$correlations[$j]->[$j]=1; 
+		$coefficients[$j]->[$j]=1; 
+	}
+	foreach my $key (keys %{$diagonal_estimates}){
+		my $pos = $diagonal_position->{$key};
+		if (defined $rescale_sd->{$key}){
+			$covariances[$pos]->[$pos] = $diagonal_estimates->{$key}*($rescale_sd->{$key})**2;
+		}else{
+			$covariances[$pos]->[$pos] = $diagonal_estimates->{$key};
+		}
+	}
+
+	for (my $i=0; $i< scalar(@{$coordinate_strings}); $i++){
+		if (($param_vector->[$i] eq $parameter) and ($off_diagonal->[$i] == 1)){
+			if ($coords->[$i] =~ /^(\d+),(\d+)$/){
+				my $left = $1;
+				my $right = $2;
+				unless ((defined $diagonal_estimates->{$left}) and (defined $diagonal_estimates->{$right}) and
+						($diagonal_estimates->{$left} > 0) and ($diagonal_estimates->{$right} > 0)){
+					croak("error diagonal estimates left $left ".$diagonal_estimates->{$left}.
+						  " right $right ".$diagonal_estimates->{$right});
+				}
+				my $a = $diagonal_position->{$left};
+				my $b = $diagonal_position->{$right};
+
+				my $corr = $estimates->[$i]/sqrt($diagonal_estimates->{$left}*$diagonal_estimates->{$right});
+				$correlations[$a]->[$b] = $corr;
+				$correlations[$b]->[$a] = $corr;
+
+				if ((defined $rescale_sd->{$left}) and (defined $rescale_sd->{$right})){
+					#both cov. no coeff
+					$covariances[$a]->[$b] = $estimates->[$i]*$rescale_sd->{$left}*$rescale_sd->{$right};
+					$covariances[$b]->[$a] = $estimates->[$i]*$rescale_sd->{$left}*$rescale_sd->{$right};
+				} elsif ((not defined $rescale_sd->{$left}) and (not defined $rescale_sd->{$right})){
+					#both parameter. no coeff
+					$covariances[$a]->[$b] = $estimates->[$i];
+					$covariances[$b]->[$a] = $estimates->[$i];
+				}else{
+					#one cov, one par. do coeff
+					my $rescale;
+					my $coeff;
+					if (defined $rescale_sd->{$left}){
+						$rescale = $rescale_sd->{$left};
+						$coeff = $estimates->[$i]/($rescale*$diagonal_estimates->{$left});
+					}else{
+						$rescale = $rescale_sd->{$right};
+						$coeff = $estimates->[$i]/($rescale*$diagonal_estimates->{$right});
+					}
+					$covariances[$a]->[$b] = $rescale*$estimates->[$i];
+					$covariances[$b]->[$a] = $rescale*$estimates->[$i];
+					$coefficients[$a]->[$b] = $coeff;
+					$coefficients[$b]->[$a] = $coeff;
+				}
+			}
+		}
+	}
+	return (\@correlations,\@coefficients,\@covariances);
+}
+
 sub get_filtered_values
 {
 	my $self = shift;
@@ -1578,7 +1792,7 @@ sub get_filtered_values
 	}
 
 	unless ($category eq 'estimate' or $category eq 'se' or $category eq 'cvse' or $category eq 'c'){
-		croak("Illegal value $category of option category in output::get_values");
+		croak("Illegal value $category of option category in output::get_filtered_values");
 	}
 
 	unless (defined $self->problems and scalar(@{$self->problems})>$problem_index){
