@@ -46,7 +46,11 @@ sub parse
     for (my $row = 0; $row < scalar(@rows); $row++) {
         my @values = $rows[$row]->getChildrenByTagName('*');
         for (my $col = 0; $col < scalar(@values); $col++) {
-            push @{$self->columns->[$col]}, $values[$col]->textContent;
+            if ($values[$col]->nodeName eq "NA") {
+                push @{$self->columns->[$col]}, undef;
+            } else {
+                push @{$self->columns->[$col]}, $values[$col]->textContent;
+            }
         }
     }
 }
@@ -83,11 +87,16 @@ sub xml
                 my $column_type = $self->columnType->[$col];
                 my $element;
                 $element = $self->columns->[$col]->[$row];
-                my $value = XML::LibXML::Element->new("ct:" . $value_type);
-                if ($value_type eq "Real") {
-                    $value->appendTextNode(math::convert_float_string($element));
+                my $value;
+                if (not defined $element) {
+                    $value = XML::LibXML::Element->new("ct:NA");
                 } else {
-                    $value->appendTextNode($element);
+                    $value = XML::LibXML::Element->new("ct:" . $value_type);
+                    if ($value_type eq "Real") {
+                        $value->appendTextNode(math::convert_float_string($element));
+                    } else {
+                        $value->appendTextNode($element);
+                    }
                 }
                 $row_xml->appendChild($value);
             }

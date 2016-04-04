@@ -127,12 +127,14 @@ sub create
         relative_standard_errors => { isa => 'ArrayRef', optional => 1 },
         correlation_matrix => { isa => 'ArrayRef[ArrayRef]', optional => 1 },
         covariance_matrix => { isa => 'ArrayRef[ArrayRef]', optional => 1 },
+        fixed => { isa => 'ArrayRef[Bool]', optional => 1 },
     );
     my @labels = defined $parm{'labels'} ? @{$parm{'labels'}} : ();
     my @standard_errors = defined $parm{'standard_errors'} ? @{$parm{'standard_errors'}}: ();
     my @relative_standard_errors = defined $parm{'relative_standard_errors'} ? @{$parm{'relative_standard_errors'}} : ();
     my $correlation_matrix = $parm{'correlation_matrix'};
     my $covariance_matrix = $parm{'covariance_matrix'};
+    my $fixed = $parm{'fixed'};
 
     if (scalar(@labels) > 0) {
         my $se_table = so::table->new(name => 'StandardError');
@@ -143,10 +145,21 @@ sub create
         $rse_table->parameter_table(name => 'RSE', labels => \@labels, values => \@relative_standard_errors);
         $self->RelativeStandardError($rse_table);        
 
-        my $cor = so::matrix->new(name => 'CorrelationMatrix', RowNames => \@labels, ColumnNames => \@labels, MatrixRow => $correlation_matrix);
+        my @matrix_labels;
+        if (defined $fixed) {
+            for (my $i = 0; $i < scalar(@$fixed); $i++) {
+                if (not $fixed->[$i]) {
+                    push @matrix_labels, $labels[$i];
+                }
+            }
+        } else {
+            @matrix_labels = @labels;
+        }
+
+        my $cor = so::matrix->new(name => 'CorrelationMatrix', RowNames => \@matrix_labels, ColumnNames => \@matrix_labels, MatrixRow => $correlation_matrix);
         $self->CorrelationMatrix($cor);
 
-        my $cov = so::matrix->new(name => 'CovarianceMatrix', RowNames => \@labels, ColumnNames => \@labels, MatrixRow => $covariance_matrix);
+        my $cov = so::matrix->new(name => 'CovarianceMatrix', RowNames => \@matrix_labels, ColumnNames => \@matrix_labels, MatrixRow => $covariance_matrix);
         $self->CovarianceMatrix($cov);
     }
 }

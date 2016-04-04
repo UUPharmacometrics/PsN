@@ -157,29 +157,9 @@ sub _parse_lst_file
                 $is_evaluation = 1;
             }
 
-            my @est_values = @{$outobj->get_filtered_values(
-                problem_index => $problems,
-                subproblem_index => $sub_problems,
-                parameter => 'all',
-                category => 'estimate',
-                allow_sdcorrform => 1,
-            )};
-
-            my @se_values = @{$outobj->get_filtered_values(
-                problem_index => $problems,
-                subproblem_index => $sub_problems,
-                parameter => 'all',
-                category => 'se',
-                allow_sdcorrform => 1,
-            )};
-
             my @filtered_labels = @{$model->problems->[$problems]->get_estimated_attributes(parameter => 'all', attribute => 'labels')};
             my @filtered_inits = @{$model->problems->[$problems]->get_estimated_attributes(parameter => 'all', attribute => 'inits')};
-            my @filtered_types = _get_parameter_columnTypes(problem => $model->problems->[$problems]);
-
-            my @all_labels = @filtered_labels; #will add fix with label here
-            my @all_inits = @filtered_inits;
-            my @all_types = @filtered_types;
+            my @all_types = _get_parameter_columnTypes(problem => $model->problems->[$problems]);
 
             # Get name of the IDV (TIME) column
             my $input = $model->problems->[$problems]->inputs->[0];
@@ -200,7 +180,26 @@ sub _parse_lst_file
                 }
             }
 
-            # Handling parameters that are FIX but have a label
+            my @all_labels;
+            my @all_inits;
+            my @est_values;
+            my @se_values;
+            my @fixed;
+
+            my $init_hash = $model->get_hash_values_to_labels();
+            for my $param ('theta', 'omega', 'sigma') {
+                my $labels = $model->labels(parameter_type => $param);
+                my $values = $model->get_values_to_labels(category => $param, label_model => $model, output_object => $outobj);
+                my $ses = $model->get_values_to_labels(category => 'se' . $param, label_model => $model, output_object => $outobj);
+                push @all_labels, @{$labels->[0]};
+                push @est_values, @{$values->[0]->[0]};
+                foreach my $label (@{$labels->[0]}) {
+                    push @all_inits, $init_hash->[0]->{$param}->{$label};
+                }
+                push @se_values, @{$ses->[0]->[0]};
+            }
+
+            # Remove parameters that are FIX but have a label
             my @records;
             if (defined $model->problems->[$problems]->thetas) {
                 push @records, @{$model->problems->[$problems]->thetas};
@@ -219,23 +218,64 @@ sub _parse_lst_file
             }
 
             foreach my $option (@options) {
-                if ($option->fix and defined $option->label or ($self->include_fixed_params and $option->fix)) {
-                    push @est_values, $option->init;
+                if ($option->fix and not defined $option->label and not $self->include_fixed_params) {
                     my $label;
                     if ($option->label eq "") {
                         $label = $option->coordinate_string;
                     } else {
                         $label = $option->label;
                     }
-                    push @all_labels, $label;
-                    push @all_inits, $option->init;
-                    push @all_types, _get_columnType(param => lc(substr($option->coordinate_string, 0, 5)), sdcorrform => ($option->sd or $option->corr), off_diagonal => (not $option->on_diagonal));
+
+                    for (my $i = 0; $i < scalar(@all_labels); $i++) {
+                        if ($all_labels[$i] eq $label) {
+                            splice @all_labels, $i, 1;
+                            splice @all_inits, $i, 1;
+                            splice @est_values, $i, 1;
+                            splice @se_values, $i, 1;
+                            last;
+                        }
+                    }
                 }
                 if ($option->sd or $option->corr) {     # Save labels for parameters on sd/corr scale
                     if (grep { $_ eq $option->label } @all_labels) {
                         push @on_sd_scale, $option->label;
                     }
                 }
+            }
+
+            # Change to sd/corr form
+            my $omega_sdcorrform = $outobj->access_any(attribute => 'sdcorrform_omegacoordval');
+            my $sigma_sdcorrform = $outobj->access_any(attribute => 'sdcorrform_sigmacoordval');
+            my %sdcorrform = (%{$omega_sdcorrform->[0]->[0]}, %{$sigma_sdcorrform->[0]->[0]});
+            my $seomega_sdcorrform = $outobj->access_any(attribute => 'sdcorrform_seomegacoordval');
+            my $sesigma_sdcorrform = $outobj->access_any(attribute => 'sdcorrform_sesigmacoordval');
+            my %sesdcorrform = (%{$seomega_sdcorrform->[0]->[0]}, %{$sesigma_sdcorrform->[0]->[0]});
+
+            # Get columnTypes
+            for my $option (@options) {
+                my $label;
+                if ($option->label eq "") {
+                    $label = $option->coordinate_string;
+                } else {
+                    $label = $option->label;
+                }
+                my $index;
+                my $found;
+                for ($index = 0; $index < scalar(@all_labels); $index++) {
+                    if ($all_labels[$index] eq $label) {
+                        $found = 1;
+                        last; 
+                    }
+                }
+                next if not $found;
+                $all_types[$index] = _get_columnType(param => lc(substr($option->coordinate_string, 0, 5)), sdcorrform => ($option->sd or $option->corr), off_diagonal => (not $option->on_diagonal));
+                if ($option->sd or $option->corr) {
+                    $est_values[$index] = $sdcorrform{$option->coordinate_string};
+                    if (defined $sesdcorrform{$option->coordinate_string}) {
+                        $se_values[$index] = $sesdcorrform{$option->coordinate_string}; 
+                    }
+                }
+                push @fixed, $option->fix;
             }
 
             $self->labels_hash({ labels => \@all_labels, on_sd_scale => \@on_sd_scale, column_types => \@all_types });
@@ -269,7 +309,7 @@ sub _parse_lst_file
 
                 if ($covariance_step_successful) {
                     for (my $i = 0; $i < scalar(@se_values); $i++) {
-                        if ($est_values[$i] == 0) {
+                        if ($est_values[$i] == 0 or not defined $se_values[$i]) {
                             push @rel_se, undef;
                         } else { 
                             push @rel_se, 100 * $se_values[$i] / abs($est_values[$i]);
@@ -299,11 +339,12 @@ sub _parse_lst_file
                         }
                     }
                     $self->_so_block->Estimation->PrecisionPopulationEstimates->MLE->create(
-                        labels => \@filtered_labels,
+                        labels => \@all_labels,
                         standard_errors => \@se_values,
                         relative_standard_errors => \@rel_se,
                         correlation_matrix => $correlation_matrix,
                         covariance_matrix => $covariance_matrix,
+                        fixed => \@fixed,
                     );
                 }
 

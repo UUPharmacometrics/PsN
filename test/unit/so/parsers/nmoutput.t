@@ -245,7 +245,7 @@ SKIP: {
     is_deeply($so->SOBlock->[0]->Estimation->PrecisionPopulationEstimates->MLE->StandardError->columnId, [ 'Parameter', 'SE' ], "Pheno: StandardError names");
     is_deeply($so->SOBlock->[0]->Estimation->PrecisionPopulationEstimates->MLE->StandardError->columnType, [ ('undefined') x 2 ], "Pheno: StandardError column types");
     is_deeply($so->SOBlock->[0]->Estimation->PrecisionPopulationEstimates->MLE->StandardError->valueType, [ 'string', 'real' ], "Pheno: StandardError value types");
-    is_deeply($so->SOBlock->[0]->Estimation->PrecisionPopulationEstimates->MLE->StandardError->columns, [ [ 'CL', 'V', 'IVCL', 'IVV', 'SIGMA_1_1_' ], [ 0.000395, 0.0799, 0.156, 0.0349, 0.00339 ]  ], "Pheno: StandardError columns");
+    is_deeply($so->SOBlock->[0]->Estimation->PrecisionPopulationEstimates->MLE->StandardError->columns, [ [ 'CL', 'V', 'IVCL', 'IVV', 'SIGMA_1_1_' ], [ 0.000395, 0.0799, 0.156, 0.0349, 0.00339 ] ], "Pheno: StandardError columns");
 
     is_deeply($so->SOBlock->[0]->Estimation->PrecisionPopulationEstimates->MLE->RelativeStandardError->columnId, [ 'Parameter', 'RSE' ], "Pheno: RelativeStandardError names");
     is_deeply($so->SOBlock->[0]->Estimation->PrecisionPopulationEstimates->MLE->RelativeStandardError->columnType, [ ('undefined') x 2 ], "Pheno: RelativeStandardError column types");
@@ -399,13 +399,13 @@ SKIP: {
     is_deeply($so->SOBlock->[0]->Estimation->PopulationEstimates->MLE->columnId, [ 'THCL', 'THV1', 'THQ', 'THV2', 'SDADD','SDPROP','CLCLCR_COV','V1KG_COV','OMCL','OMV1','SIGMA' ], "Nock: PopulationEstimates names");
     is_deeply($so->SOBlock->[0]->Estimation->PopulationEstimates->MLE->columnType, [ ('structParameter') x 8, ('varParameter_var') x 3 ], "Nock: PopulationEstimates column types");
     is_deeply($so->SOBlock->[0]->Estimation->PopulationEstimates->MLE->valueType, [ ('real') x 11 ], "Nock: PopulationEstimates value types");
-    is_deeply($so->SOBlock->[0]->Estimation->PopulationEstimates->MLE->columns, [ [6.80426E+00], [2.13669E+01], [7.02052E-01], [2.89742E+01], [1.23705E-02], [1.92477E-01], [1.38350E+00], [9.92102E-01], [1.88014E-02], ["0.0"], ["1.0"] ], "Nock: PopulationEstimates columns");
+    is_deeply($so->SOBlock->[0]->Estimation->PopulationEstimates->MLE->columns, [ [6.80426E+00], [2.13669E+01], [7.02052E-01], [2.89742E+01], [1.23705E-02], [1.92477E-01], [1.38350E+00], [9.92102E-01], [1.88014E-02], ["0"], ["1"] ], "Nock: PopulationEstimates columns");
 
     is_deeply($so->SOBlock->[0]->Estimation->PrecisionPopulationEstimates->MLE->StandardError->columnId, [ 'Parameter', 'SE' ], "Nock: StandardError names");
     is_deeply($so->SOBlock->[0]->Estimation->PrecisionPopulationEstimates->MLE->StandardError->columnType, [ ('undefined') x 2 ], "Nock: StandardError column types");
     is_deeply($so->SOBlock->[0]->Estimation->PrecisionPopulationEstimates->MLE->StandardError->valueType, [ 'string', 'real' ], "Nock: StandardError value types");
-    is_deeply($so->SOBlock->[0]->Estimation->PrecisionPopulationEstimates->MLE->StandardError->columns, [ ['THCL', 'THV1', 'THQ', 'THV2', 'SDADD','SDPROP','CLCLCR_COV','V1KG_COV','OMCL'], 
-														   [2.18242E-01, 6.24475E-01, 3.87137E-02, 1.92971E+00, 2.10896E-03, 1.29605E-02, 2.50889E-01, 3.82189E-01,6.06153E-03 ]  ], 
+    is_deeply($so->SOBlock->[0]->Estimation->PrecisionPopulationEstimates->MLE->StandardError->columns, [ ['THCL', 'THV1', 'THQ', 'THV2', 'SDADD','SDPROP','CLCLCR_COV','V1KG_COV','OMCL', 'OMV1', 'SIGMA'], 
+														   [2.18242E-01, 6.24475E-01, 3.87137E-02, 1.92971E+00, 2.10896E-03, 1.29605E-02, 2.50889E-01, 3.82189E-01,6.06153E-03, undef, undef ]  ], 
 			  "Nock: StandardError columns");
 
     is_deeply($so->SOBlock->[0]->Estimation->PrecisionPopulationEstimates->MLE->CovarianceMatrix->RowNames, [ 'THCL', 'THV1', 'THQ', 'THV2', 'SDADD','SDPROP','CLCLCR_COV','V1KG_COV','OMCL' ], "Nock Covariance matrix RowNames");
@@ -450,12 +450,12 @@ SKIP: {
     is (scalar(@{$so->SOBlock}), 1, "warfarin SAEM: number of SOBlocks");
     is ($so->SOBlock->[0]->blkId, 'warfarin_ddmore', "warfarin SAEM: name of SOBlock");
 
-    is_deeply($so->SOBlock->[0]->Estimation->PopulationEstimates->MLE->columnId, [ 'POP_CL','POP_V','POP_KA','POP_TLAG','RUV_PROP','RUV_ADD','PPV_CL','CORR_PPV_CL_V','PPV_V','PPV_KA','PPV_TLAG','BETA_CL_WT','BETA_V_WT' ], "warfarin SAEM: PopulationEstimates names");
-    is_deeply($so->SOBlock->[0]->Estimation->PopulationEstimates->MLE->columnType, [ ('structParameter') x 6, 'varParameter_stdev', 'varParameter_corr', ('varParameter_stdev') x 3, ('structParameter') x 2 ], "warfarin SAEM: PopulationEstimates column types");
+    is_deeply($so->SOBlock->[0]->Estimation->PopulationEstimates->MLE->columnId, [ 'POP_CL','POP_V','POP_KA','POP_TLAG','RUV_PROP','RUV_ADD','BETA_CL_WT', 'BETA_V_WT', 'PPV_CL','CORR_PPV_CL_V','PPV_V','PPV_KA','PPV_TLAG' ], "warfarin SAEM: PopulationEstimates names");
+    is_deeply($so->SOBlock->[0]->Estimation->PopulationEstimates->MLE->columnType, [ ('structParameter') x 8, 'varParameter_stdev', 'varParameter_corr', ('varParameter_stdev') x 3 ], "warfarin SAEM: PopulationEstimates column types");
     is_deeply($so->SOBlock->[0]->Estimation->PopulationEstimates->MLE->valueType, [ ('real') x 13 ], "warfarin SAEM: PopulationEstimates value types");
     is_deeply($so->SOBlock->[0]->Estimation->PopulationEstimates->MLE->columns, [ [1.32779E-01], [8.14751E+00], [  1.78924E+00 ], [8.74897E-01], [  1.06388E-01], 
-																 [ -1.35376E-15], [2.62728E-01],[  2.34500E-01], 
-																 [  1.36931E-01], [9.93333E-01 ], [3.13633E-01],[7.50000E-01], ["1.0"]], "warfarin SAEM: PopulationEstimates columns");
+																 [ -1.35376E-15], [7.50000E-01], [1], [2.62728E-01], [ 2.34500E-01], 
+																 [  1.36931E-01], [9.93333E-01 ], [3.13633E-01] ], "warfarin SAEM: PopulationEstimates columns");
 
 
     remove_test_dir($tempdir);
@@ -485,13 +485,13 @@ SKIP: {
     is_deeply($so->SOBlock->[0]->Estimation->PopulationEstimates->MLE->columnType, [ ('structParameter') x 5, 'varParameter_var' ], "DelBene: PopulationEstimates column types");
     is_deeply($so->SOBlock->[0]->Estimation->PopulationEstimates->MLE->valueType, [ ('real') x 6 ], "DelBene: PopulationEstimates value types");
     is_deeply($so->SOBlock->[0]->Estimation->PopulationEstimates->MLE->columns, 
-			  [ [2.89324E-02 ],[ 7.37283E-02],[  8.20023E-02],[  2.15178E+03 ],[ 1.09068E-01], ["1.0"] ], "DelBene: PopulationEstimates columns");
+			  [ [2.89324E-02 ],[ 7.37283E-02],[  8.20023E-02],[  2.15178E+03 ],[ 1.09068E-01], ["1"] ], "DelBene: PopulationEstimates columns");
 
     is_deeply($so->SOBlock->[0]->Estimation->PrecisionPopulationEstimates->MLE->StandardError->columnId, [ 'Parameter', 'SE' ], "DelBene: StandardError names");
     is_deeply($so->SOBlock->[0]->Estimation->PrecisionPopulationEstimates->MLE->StandardError->columnType, [ ('undefined') x 2 ], "DelBene: StandardError column types");
     is_deeply($so->SOBlock->[0]->Estimation->PrecisionPopulationEstimates->MLE->StandardError->valueType, [ 'string', 'real' ], "DelBene: StandardError value types");
-    is_deeply($so->SOBlock->[0]->Estimation->PrecisionPopulationEstimates->MLE->StandardError->columns, [ ['LAMBDA0','K1','K2','N0','CV'], 
-														   [4.28999E-04, 6.31929E-04, 2.30774E-03, 3.73786E+01, 1.28301E-02 ]  ], 
+    is_deeply($so->SOBlock->[0]->Estimation->PrecisionPopulationEstimates->MLE->StandardError->columns, [ ['LAMBDA0','K1','K2','N0','CV', 'SIGMA_RES_W'], 
+														   [4.28999E-04, 6.31929E-04, 2.30774E-03, 3.73786E+01, 1.28301E-02, undef ]  ], 
 			  "DelBene: StandardError columns");
 
     is_deeply($so->SOBlock->[0]->Estimation->PrecisionPopulationEstimates->MLE->CovarianceMatrix->RowNames, [ 'LAMBDA0', 'K1', 'K2', 'N0', 'CV' ], "Delbene: Covariance matrix RowNames");
@@ -542,14 +542,14 @@ SKIP: {
     is_deeply($so->SOBlock->[0]->Estimation->PopulationEstimates->MLE->columnType, [ ('structParameter') x 6, ('varParameter_var') x 2 ], "Simeoni: PopulationEstimates column types");
     is_deeply($so->SOBlock->[0]->Estimation->PopulationEstimates->MLE->valueType, [ ('real') x 8 ], "Simeoni: PopulationEstimates value types");
     is_deeply($so->SOBlock->[0]->Estimation->PopulationEstimates->MLE->columns, 
-			  [ [2.98716E-01],[7.74151E-01],[7.86758E-01],[7.14701E-01],[4.21873E-02],[1.00394E-01], ["0.0"], ["1.0"] ], 
+			  [ [2.98716E-01],[7.74151E-01],[7.86758E-01],[7.14701E-01],[4.21873E-02],[1.00394E-01], ["0"], ["1"] ], 
 			  "Simeoni: PopulationEstimates columns");
 
     is_deeply($so->SOBlock->[0]->Estimation->PrecisionPopulationEstimates->MLE->StandardError->columnId, [ 'Parameter', 'SE' ], "Simeoni: StandardError names");
     is_deeply($so->SOBlock->[0]->Estimation->PrecisionPopulationEstimates->MLE->StandardError->columnType, [ ('undefined') x 2 ], "Simeoni: StandardError column types");
     is_deeply($so->SOBlock->[0]->Estimation->PrecisionPopulationEstimates->MLE->StandardError->valueType, [ 'string', 'real' ], "Simeoni: StandardError value types");
-    is_deeply($so->SOBlock->[0]->Estimation->PrecisionPopulationEstimates->MLE->StandardError->columns, [ ['POP_LAMBDA0','LAMBDA1','K1','K2','W0','CV'], 
-														   [ 1.77204E-02,2.00100E-02,1.33069E-01,4.72133E-02,8.84125E-03, 1.29423E-02 ]  ], 
+    is_deeply($so->SOBlock->[0]->Estimation->PrecisionPopulationEstimates->MLE->StandardError->columns, [ ['POP_LAMBDA0','LAMBDA1','K1','K2','W0','CV','OMEGA_LAMBDA0', 'SIGMA_RES_W'], 
+														   [ 1.77204E-02,2.00100E-02,1.33069E-01,4.72133E-02,8.84125E-03, 1.29423E-02, undef, undef ]  ], 
 			  "Simeoni: StandardError columns");
 
     is_deeply($so->SOBlock->[0]->Estimation->PrecisionPopulationEstimates->MLE->CovarianceMatrix->RowNames, [ 'POP_LAMBDA0', 'LAMBDA1', 'K1', 'K2', 'W0', 'CV' ], "Simeoni Covariance matrix RowNames");
