@@ -1,5 +1,5 @@
 \input{inputs/format_header.tex}
-\guidetitle{nmoutput2so user guide}{2016-01-20}
+\guidetitle{nmoutput2so user guide}{2016-04-04}
 
 \begin{document}
 
@@ -209,8 +209,8 @@ The following entries will be populated:
                 \begin{itemize}
                     \item CovarianceMatrix - If the covariance step was successful. Results will be taken from the .cov file if present otherwise from the .lst file.
                     \item CorrelationMatrix - If the covariance step was successful. Results will be taken from the .cor file if present otherwise from the .lst file.
-                    \item StandardError - Results will be taken from the .ext file if present otherwise the .lst file. Parameters that are fixed will not be included
-                    \item RelativeStandardError - Results will be taken from the .ext file if present otherwise the .lst file. The RSE is calculated has the ratio between the standard error and the estimated value of the parameter and expressed as a percentage. Parameters that are fixed will not be included.
+                    \item StandardError - Results will be taken from the .ext file if present otherwise the .lst file. Parameters that are fixed will get standard error NA.
+                    \item RelativeStandardError - Results will be taken from the .ext file if present otherwise the .lst file. The RSE is calculated has the ratio between the standard error and the estimated value of the parameter and expressed as a percentage. Parameters that are fixed will have relative standard error set to NA.
                     \item ConditionNumber - Calculated from the eigenvalues in the .lst file if PRINT=E was present in the \$COV of the control stream.
                 \end{itemize}
                 \item Bootstrap
