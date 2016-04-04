@@ -93,9 +93,12 @@ sub read_nmtable
         my $header_row = <$fh>;
         if ($header_row =~ /^TABLE NO./) {   #Header row is actually new table row
             $table_row = $header_row;
-            $self->add_table($table);
+            $self->add_table($table); #previously read table
             next TABLE;
-        }
+        }elsif (not defined $header_row){ #table row without header row following
+			$self->add_table($table);
+			last TABLE;
+		}
         $table->set_header(header => $header_row);
 
         my $row;

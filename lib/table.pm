@@ -7,7 +7,7 @@ use Moose;
 use MooseX::Params::Validate;
 
 has 'columns' => ( is => 'rw', isa => 'ArrayRef[ArrayRef]', default => sub { [] } );
-has 'header' => ( is => 'rw', isa => 'HashRef[Str]' );
+has 'header' => ( is => 'rw', isa => 'HashRef[Str]' , default => sub { {} });
 has 'delimiter' => ( is => 'rw', isa => 'Str', default => '\s+');   # Delimiter of elements on a row
 has 'skip_leading_whitespace' => ( is => 'rw', isa => 'Bool', default => 1 );
 has 'header_array' => ( is => 'rw', isa => 'ArrayRef', default => sub { [] } );

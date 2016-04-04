@@ -12,12 +12,27 @@ use nmtablefile;
 my $dir = $includes::testfiledir;
 
 # parse nmtable
+my $t = nmtablefile->new(filename => "$dir/output/special_mod/only_table_line.ext", is_ext_file => 1);
+is (scalar(@{$t->tables}), 1, "nmtablefile number of tables");
+is ($t->tables->[0]->table_number, 1, "nmtablefile table_number");
+is ($t->tables->[0]->method, "Objective Function Evaluation by Importance/MAP Sampling (No Prior)", "nmtablefile method");
+is ($t->tables->[0]->goal_function, "FINAL VALUE OF OBJECTIVE FUNCTION", "nmtablefile goal function");
+is ($t->tables->[0]->problem, "1", "nmtablefile problem ");
+is ($t->tables->[0]->subproblem, "0", "nmtablefile subproblem");
+is ($t->tables->[0]->superproblem1, "0", "nmtablefile superproblem1");
+is ($t->tables->[0]->iteration1, "0", "nmtablefile iteration1");
+is ($t->tables->[0]->superproblem2, "0", "nmtablefile superproblem2");
+is ($t->tables->[0]->iteration2, "0", "nmtablefile iteration2");
+is_deeply ($t->tables->[0]->header,{},"nmtablefile header"); 
+is_deeply ($t->tables->[0]->get_header,[],"nmtablefile header array"); 
+
+# parse nmtable
 my $t = nmtablefile->new(filename => "$dir/output/nm73/pheno5.ext");
 is (scalar(@{$t->tables}), 1, "nmtablefile number of tables");
 is ($t->tables->[0]->table_number, 1, "nmtablefile table_number");
 is ($t->tables->[0]->method, "First Order", "nmtablefile method");
 is ($t->tables->[0]->goal_function, "MINIMUM VALUE OF OBJECTIVE FUNCTION", "nmtablefile goal function");
-is ($t->tables->[0]->problem, "1", "nmtablefile goal function");
+is ($t->tables->[0]->problem, "1", "nmtablefile problem ");
 is ($t->tables->[0]->subproblem, "0", "nmtablefile subproblem");
 is ($t->tables->[0]->superproblem1, "0", "nmtablefile superproblem1");
 is ($t->tables->[0]->iteration1, "0", "nmtablefile iteration1");
@@ -103,7 +118,7 @@ is ($t->tables->[2]->method, "Objective Function Evaluation by Importance Sampli
 is ($t->tables->[0]->goal_function, "", "nmtablefile anneal1 function");
 is ($t->tables->[1]->goal_function,  "FINAL VALUE OF LIKELIHOOD FUNCTION", "nmtablefile sdtab anneal2 function");
 is ($t->tables->[2]->goal_function, "FINAL VALUE OF OBJECTIVE FUNCTION" , "nmtablefile sdtab anneal3 function");
-is ($t->tables->[0]->header, undef , "nmtablefile anneal0 header");
+is_deeply ($t->tables->[0]->header, {} , "nmtablefile anneal0 header");
 is ($t->tables->[1]->header->{"ITERATION"}, 0 , "nmtablefile anneal1 header");
 is ($t->tables->[1]->header->{"THETA4"}, 4 , "nmtablefile anneal1 header");
 is ($t->tables->[1]->header->{"SAEMOBJ"}, 16 , "nmtablefile anneal1 header");
