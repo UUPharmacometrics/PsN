@@ -1,5 +1,5 @@
 \input{inputs/format_header.tex}
-\guidetitle{VPC and NPC user guide}{2015-11-04}
+\guidetitle{VPC and NPC user guide}{2016-04-04}
 
 \begin{document}
 
@@ -123,8 +123,8 @@ is optional, by default not set. If set, NOPREDICTION will be added to the \$SIM
 \optdefault{orig\_table}{filename}
 is optional, only allowed when -sim\_table is also used. Give tablefile with original data as input directly instead of letting the program generate them. The file must have a header, the first column must be ID and the file must be space separated.
 \nextopt
-\optdefault{sim\_table}{filename}
-is optional, only allowed when -orig\_table is also used. Give file with simulated data as input directly instead of letting the program generate them.  The file must have a header, the first column must be ID and the file must be space separated. 
+\optdefault{sim\_table}{filename or comma-separated list of filenames}
+is optional, only allowed when -orig\_table is also used. Give file(s) with simulated data as input directly instead of letting the program generate them.  The file must have a header, the first column must be ID and the file must be space separated. 
 Either each simulation dataset must have a new header, as when the file is generated with \$TABLE in NONMEM with NSUBS>0, or option -irep must be used.
 \nextopt
 \optdefault{irep}{variable}

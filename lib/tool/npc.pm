@@ -77,7 +77,7 @@ has 'samples' => ( is => 'rw', isa => 'Int' );
 has 'extra_table_parameters' => ( is => 'rw', isa => 'ArrayRef[Str]' );
 has 'dv' => ( is => 'rw', isa => 'Str', default => 'DV' );
 has 'orig_table' => ( is => 'rw', isa => 'Str' );
-has 'sim_table' => ( is => 'rw', isa => 'Str' );
+has 'sim_table' => ( is => 'rw', isa => 'ArrayRef', default => sub { [] } );
 has 'keep_estimation' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'dv_table_name' => ( is => 'rw', isa => 'Str' );
 has 'n_simulation_models' => ( is => 'rw', isa => 'Int', default => 1 );
@@ -128,13 +128,14 @@ sub BUILD
         }
 	}
 
-	if ((defined $self->sim_table) || (defined $self->orig_table)) {
-		unless ((defined $self->sim_table) && (defined $self->orig_table)) {
+	
+	if ((scalar(@{$self->sim_table})>0) || (defined $self->orig_table)) {
+		unless ((scalar(@{$self->sim_table})>0) && (defined $self->orig_table)) {
 			croak("Options -sim_table and -orig_table can only " .
 				  "be used together, not individually\n");
 		}
-		unless ( -e $self->sim_table ) {
-			croak("Simulation data table file " . $self->sim_table . " could not be found.");
+		unless ( -e $self->sim_table->[0] ) {
+			croak("Simulation data table file " . $self->sim_table->[0] . " could not be found.");
 		}
 		unless ( -e $self->orig_table ) {
 			croak("Original data table file " . $self->orig_table . " could not be found.");
@@ -2420,8 +2421,8 @@ sub get_data_matrix
 	my $dv_index;
 	my $censor_index;
 	my $irep_index;
-	if (defined $self->sim_table){
-		$n_model_sims=1;
+	if (scalar(@{$self-> sim_table})>0){
+		$n_model_sims=scalar(@{$self-> sim_table()});
 	}else{
 		@model_sims = @{$self-> simulation_models()};
 		$n_model_sims=scalar(@model_sims);
@@ -2433,10 +2434,8 @@ sub get_data_matrix
 		my $sim_file;
 		
 		#error if sim_table and n_simulation_models > 1
-		if (defined $self->sim_table){
-			croak("cannot use option n_simulation_models with sim_table") 
-				unless ($self->n_simulation_models() == 1);
-			$sim_file = $self->sim_table;
+		if (scalar(@{$self->sim_table})>0){
+			$sim_file = $self->sim_table->[$sim_i];
 		} else {
 			#dv_table_name is for cwres as indpendent variable NM version < 7
 			#will break if multiple simulation models
@@ -2483,7 +2482,7 @@ sub get_data_matrix
 					unless (defined $dv_index){
 						croak("Could not find column with header for dependent variable ".$self->dv." in $sim_file\n");
 					}
-					if (defined $self->sim_table and $found_stratify_on){
+					if ((scalar(@{$self->sim_table})>0) and $found_stratify_on and ($sim_i==0)){
 						ui->print(category => 'all',
 								  message => "\nWarning: stratification will only be based on the value of the ".
 								  "stratification variable in observed data. The stratification variable is ".
@@ -2511,7 +2510,7 @@ sub get_data_matrix
 							croak("Could not find column with header MDV in $sim_file\n");
 						}
 					}
-					if (defined $self->sim_table and (defined $self->irep)){
+					if ((scalar(@{$self->sim_table})>0) and (defined $self->irep)){
 						for (my $i=0; $i<scalar(@header);$i++){
 							if ($header[$i] eq $self->irep){
 								$irep_index = $i;

@@ -293,7 +293,6 @@ $help_text{-sim_table} = <<'EOF';
       Use an already created tablefile with simulated data,
       instead of letting the program run the simulations.
       This option can only be used together with -orig_table.
-      A modelfile must still be given as program argument, but it will not be run.
 EOF
 
 $help_text{-tte} = <<'EOF';
@@ -335,7 +334,6 @@ $help_text{-orig_table} = <<'EOF';
       Use an already created tablefile with original data,
       instead of letting the program create it.
       This option can only be used together with -sim_table.
-      A modelfile must still be given as program argument, but it will not be run.
 EOF
 
 $help_text{-levels} = <<'EOF';
@@ -611,11 +609,19 @@ if (defined $options{'refstrat'} and (not defined $options{'stratify_on'})) {
 
 if ((defined $options{'sim_table'}) && (defined $options{'orig_table'})) {
   #case when only one is defined will be caught in new
-  #make paths global 
-  my ($dir, $fil) = OSspecific::absolute_path('',$options{'sim_table'});
-  $options{'sim_table'} = $dir.$fil;
-  my ($dir, $fil) = OSspecific::absolute_path('',$options{'orig_table'});
-  $options{'orig_table'} = $dir.$fil;
+	#make paths global
+	my @simtables = ();
+	my @tmp = split(',',$options{'sim_table'});
+	foreach my $item (@tmp){
+		my ($dir, $fil) = OSspecific::absolute_path('',$item);
+		push(@simtables,$dir.$fil);
+	}
+	unless (scalar(@simtables)>0){
+		die("failed to parse option sim_table ".$options{'sim_table'});
+	}
+	$options{'sim_table'} = \@simtables;
+	my ($dir, $fil) = OSspecific::absolute_path('',$options{'orig_table'});
+	$options{'orig_table'} = $dir.$fil;
 
 }
 if (defined $options{'sim_model'}) {
