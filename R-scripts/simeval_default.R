@@ -179,6 +179,69 @@ if (require("PEIP")){
 
 dev.off()
 
+#new pdf for vpc:s DV vs PRED, CWRES vs idv
+library(xpose4)
+
+n.vpc <- length(vpctab.filenames)
+pdf(file='PsN_simeval_vpc_plots.pdf',width=10,height=7,title='simeval VPC plots')
+for(j in 1:n.vpc){  
+	  plots<-xpose.VPC(vpc.info=vpc.result.files[j],vpctab=vpctab.filenames[j])
+	  print(plots) 
+}
+dev.off()
+
+
+#new pdf for CWRES,IWRES
+pdf.filename <- paste0('PsN_residual_plots.pdf')
+pdf.title <- paste0('residual diagnostic plots run ',xpose.runno)
+pdf(file=pdf.filename,width=10,height=7,title=pdf.title)
+
+n.residuals <- length(residual.files)
+variance <- c(1:n.residuals)
+mymean <- c(1:n.residuals)
+p_mean_not_0 <- c(1:n.residuals)
+p_var_not_1 <- c(1:n.residuals)
+
+#npde
+for(j in 1:n.residuals){  
+	  RESIDUAL <- read.csv(residual.files[j])
+	  residual_npde <- RESIDUAL$NPDE
+	  residual_npde <- residual_npde[!is.na(residual_npde)]
+
+  	  variance[j] <- var(residual_npde)
+  	  mymean[j] <- mean(residual_npde)
+  	  p_mean_not_0[j] <- wilcox.test(residual_npde)$p.value
+  	  p_var_not_1[j]  <- ks.test(residual_npde,pnorm,mean=mymean[j],sd=1)$p.value
+
+	  len <- length(residual_npde)
+	  H=hist(residual_npde,plot=FALSE)
+	  x=seq(-3,3,length=100)
+	  dx <- min(diff(H$breaks))
+	  dy=len*dx*dnorm(x)
+	  dy1=len*dx*H$density
+	  max_npde<-max(H$density)
+	  max_npde_index<-which(H$density == max_npde)
+	  ylimit=max(c(max(dy1),max(dy)))
+	  xlimit_min=min(x,min(residual_npde))
+	  xlimit_max=max(x,max(residual_npde))
+	  hist(residual_npde,main=paste0("Histogram of ",residual.names[j]," NPDE"),xlab=paste0(residual.names[j]," NPDE"),ylim=c(0,ylimit),xlim=c(xlimit_min,xlimit_max))
+	  lines(x,dy, col="red")
+}
+
+#table
+
+plot.new()
+
+mydataframe<-data.frame('NPDE' = residual.names, mean = format(mymean,digits=5),'p-value (H_0: mean==0)'=format(p_mean_not_0,digits=3),variance=format(variance,digits=5),'p-value (H_0: var==1)'=format(p_var_not_1,digits=3),check.names=FALSE)
+
+if(packageVersion("gridExtra") < "2.0.0"){
+  grid.table(mydataframe,show.rownames=FALSE) 
+} else {
+  grid.table(mydataframe,rows=NULL)  
+}
+
+dev.off()
+
 #new pdf for OFV
 pdf.filename <- paste0('PsN_OFV_plots.pdf')
 pdf.title <- paste0('ofv diagnostic plots run ',xpose.runno)
@@ -297,6 +360,8 @@ legend("topleft", col=c('green', 'red'), leg.txt, lty=c(1,1),box.lwd = 0,bg = "w
 title("iOFV RES")
 
 
+if(rplots.level>1) {
+
 # KLD iOFV
 all.iOFV_sim <- read.csv(all.iofv.file)
 iOFV_obs <- all.iOFV_sim$ORIGINAL
@@ -342,8 +407,12 @@ abline(v=quantile(KLD_sim,c(0.025, 0.975), na.rm=T)[1],lwd=2, lty=3, col="green"
 abline(v=quantile(KLD_sim, c(0.025, 0.975), na.rm=T)[2],lwd=2, lty=3, col="green")
 leg.txt <- c("KLDobs","median KLDsim","5th and 95th KLDsim")
 legend("topright", col=c('red', 'green', 'green','green'), leg.txt, lty=c(1,4,3,3),box.lwd = 0,box.col = "white",bg = "white", lwd=2, cex=1)
+} #end if rplots.level > 1
 
 dev.off()
+
+
+
 
 # clear workspace and console and previous graphs
 #cat("\014")

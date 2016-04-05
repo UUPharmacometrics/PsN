@@ -1,5 +1,5 @@
 \input{inputs/format_header.tex}
-\guidetitle{SIMEVAL user guide}{2016-01-22}
+\guidetitle{SIMEVAL user guide}{2016-04-05}
 
 \begin{document}
 
@@ -24,10 +24,11 @@ model parameters that are re-estimated for each simulated data set)
 \item[iOFV] individual
 \item[EBE] parameter
 \item[IWRES] residual
+\item[CWRES] residual
 \end{description}
-\item Provide reference distributions for ”observed” OFV, iOFV, EBE and IWRES
+\item Provide reference distributions for ”observed” OFV, iOFV, EBE, CWRES and IWRES
 \end{enumerate}
-The program computes normalized prediction distribution errors for EBE:s and IWRES 
+The program computes normalized prediction distribution errors for EBE:s, CWRES and IWRES 
 using the procedure described in \cite{Comets}, with example use in \cite{Keizer} and \cite{Largajolli}.
 It also performs OFV diagnostics. Diagnostics plots are created via the -rplots option, see section 
 Auto-generated R-plots from PsN.
@@ -66,6 +67,12 @@ Default not set. By default, simulated datasets will be run with MAXEVAL=0 (or e
 \optdefault{gls\_data\_file}{filename}
 Default gls\_data.dta. A file with input data for the gls program is always generated. This option changes the name of that file. After this file is created, the gls program can be run with option \mbox{-gls\_model} and -ind\_shrinkage with minimum runtime, see gls\_userguide.pdf 
 \nextopt
+\optdefault{extra\_variables}{comma-separated list}
+Default empty. A comma-separated list of extra variables to add to \$TABLE of simulation models.
+\nextopt
+\optdefault{idv}{variable}
+Default TIME. Independent variable for DV vs idv plot.
+\nextopt
 %\optdefault{iov}{list}
 %TODO: list of iov etas, to be treated from all other etas assumed to be iiv. 
 %\nextopt
@@ -76,18 +83,31 @@ For a complete list see common\_options.pdf,
 or psn\_options -h on the commandline.
 \input{inputs/basic_options.tex}
 
-\subsection{Auto-generated R-plots from PsN}
-\newcommand{\rplotsconditions}{The default simeval template 
-requires that library PerformanceAnalytics is installed.
+\subsection{Diagnostic plots}
+\newcommand{\rplotsconditions}{
+See section Output, subsections Basic and Extended diagnostic plots,
+for descriptions of the default simeval plots.
+The default simeval template 
+requires that libraries gridExtra, PEIP and PerformanceAnalytics are installed.
 If the conditions are not fulfilled then no pdf will be generated,
 see the .Rout file in the main run directory for error messages.}
 \input{inputs/rplots_section_body.tex}
 
-%\subsubsection*{Basic plots}
 
 \section{Output}
 
-\subsubsection*{Main output}
+\subsection{Basic diagnostic plots}
+Basic diagnostic rplots will be generated 
+if option -rplots is set >0.
+
+%\subsubsection{dOFV plot}
+
+\subsection{Extended diagnostic plots}
+Extended diagnostic plots will be generated
+if option -rplots is set >1.
+
+
+\subsection{Numeric output}
 \begin{description}
 \item[ebe\_npde.csv] NPDE of EBE. One row per subject. Columns: ID,
 standardized observed EBE (a scalar) where 
@@ -134,12 +154,12 @@ input model with order number of copy indicated in filename. In each copy set un
 seed in \$SIM and set
 NSUB so that sum of simulations is equal to 'samples', remove old \$TABLE if present, 
 if option reminimize is not set then set MAXEVAL=0, and
-add \$TABLE IWRES ID NOPRINT ONEHEADER NOAPPEND FILE=iwres-$\langle$ordernum$\rangle$.dta. 
+add \$TABLE ID DV MDV CWRES IPRED IWRES NOPRINT ONEHEADER NOAPPEND FILE=sim\_res\_table-$\langle$ordernum$\rangle$.dta. 
 \item In 'original' input model:
 Remove \$SIM if present.
 Add \$TABLE $\langle$all undropped items in
-\$INPUT$\rangle$ IPRED PRED IWRES NOPRINT ONEHEADER NOAPPEND FILE=orig\_pred.dta.
-Add \$TABLE IWRES ID MDV NOPRINT ONEHEADER NOAPPEND FILE=original\_iwres.dta. 
+\$INPUT$\rangle$ IPRED PRED NOPRINT ONEHEADER NOAPPEND FILE=orig\_pred.dta.
+Add \$TABLE ID DV MDV CWRES IPRED PRED IWRES NOPRINT ONEHEADER NOAPPEND FILE=original\_res\_table.dta. 
 \item run modified original input model and 'n\_simulation\_models' sim models.
 \item Read all iwres\_$\langle$order number$\rangle$.dta files,
 storing IWRES values per data point. Compute, per data point, ISHR\_ij=1-sd(IWRES\_ij).
@@ -147,10 +167,11 @@ Open orig\_pred.dta, append ISHR column with
 computed values,
 and print to gls\_input.dta. Print also shrinkage column to new file ind\_iwres\_shrinkage.dta. File gls\_input.dta
 can be used as input when running gls program, see gls\_userguide.pdf. 
-\item Compute npde for IWRES according to \cite{Comets}.
+\item Compute npde for IWRES, CWRES according to \cite{Comets}.
 \item Read ETA values from 
 phi-files for original and simulated data, and compute npde for EBE:s according to \cite{Comets}.
 Perform computations for IIV, and also for IOV for different occasions, separately. 
+\item Run basic vpc:s for DV vs PRED and CWRES vs TIME (or idv).
 \end{enumerate}
 
 \subsection{Handling of zero-valued EBE:s}
@@ -171,7 +192,6 @@ If is IWRES defined then IWRES will be read per observation (as checked with MDV
 and npde:s computed for each observation.
 The file summary\_iwres.csv contains columns with ID,MDV,IWRES,npde\_IWRES,
 where IWRES and npde-columns will be empty if MDV-column not 0.
-Currently there is no rplots code that utilizes the iwres output from simeval.
 
 \references
 

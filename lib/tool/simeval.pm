@@ -22,6 +22,7 @@ has 'have_CDF' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'reminimize' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'gls_data_file' => ( is => 'rw', isa => 'Str', default => 'gls_data.dta' );
 has 'have_iwres' => ( is => 'rw', isa => 'Bool', default => 0 );
+has 'have_ipred' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'have_nwpri' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'have_tnpri' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'probnum' => ( is => 'rw', isa => 'Int', default => 1 );
@@ -31,15 +32,24 @@ has 'iiv_eta' => ( is => 'rw', isa => 'ArrayRef[Str]', default => sub { [] } );
 has 'iov_eta' => ( is => 'rw', isa => 'ArrayRef', default => sub { [] } );
 has 'occasions' => ( is => 'rw', isa => 'Int',default => 0 );
 has 'all_eta_files' => ( is => 'rw', isa => 'ArrayRef[Str]', default => sub { [] } );
-has 'all_iwres_files' => ( is => 'rw', isa => 'ArrayRef[Str]', default => sub { [] } );
+has 'all_table_files' => ( is => 'rw', isa => 'ArrayRef[Str]', default => sub { [] } );
 has 'missing' => ( is => 'rw', isa => 'Int',default => -99 );
 has 'n_simulation_models' => ( is => 'rw', isa => 'Int');
+has 'extra_variables' => ( is => 'rw', isa => 'ArrayRef', default => sub { [] } );
+has 'idv' => ( is => 'rw', isa => 'Str', default => 'TIME' );
+has 'vpctab_filenames' => ( is => 'rw', isa => 'ArrayRef', default => sub { [] } );
+has 'vpc_result_files' => ( is => 'rw', isa => 'ArrayRef', default => sub { [] } );
+has 'vpc_names' => ( is => 'rw', isa => 'ArrayRef', default => sub { [] } );
+has 'mdv' => ( is => 'rw', isa => 'Str', default => '' );
+
 
 our $iofv_file = 'summary_iofv.csv';
 our $iwres_file = 'summary_iwres.csv';
+our $cwres_file = 'summary_cwres.csv';
 our $ebe_npde_file = 'ebe_npde.csv';
 our $all_iofv_file = 'raw_all_iofv.csv';
 our $all_iwres_file = 'raw_all_iwres.csv';
+our $all_cwres_file = 'raw_all_iwres.csv';
 
 sub BUILD
 {
@@ -74,10 +84,14 @@ sub BUILD
 			foreach my $line (@extra_code){
 				if ($line =~ /^\s*IWRES\s*=/){
 					$self->have_iwres(1);
-					last;
+					last if ($self->have_ipred);
+				}
+				if ($line =~ /^\s*IPRED\s*=/){
+					$self->have_ipred(1);
+					last if ($self->have_iwres);
 				}
 			}
-			last if ($self->have_iwres);
+			last if ($self->have_iwres and $self->have_ipred);
 		}
 	}
 
@@ -101,7 +115,7 @@ sub modelfit_setup
 	$self->probnum(2) if ($self->have_tnpri());
 
 	my @table_header;
-	my @all_iwres_files;
+	my @all_table_files;
 	my @orig_table_names;
 
 	my $newthetanum=$model->nthetas(problem_number => $self->probnum())+1;
@@ -165,15 +179,35 @@ sub modelfit_setup
 			  " but no headers were found in \$model_number-INPUT" );
 	}
 
-	$oprob -> add_records( type           => 'table',
-						   record_strings => [ join( ' ', @table_header ).
-											   ' IPRED PRED NOPRINT NOAPPEND ONEHEADER FILE=orig_pred.dta']);
-	if ($self->have_iwres){
-		$oprob -> add_records( type           => 'table',
-							   record_strings => ['IWRES ID MDV NOPRINT NOAPPEND ONEHEADER FILE=original_iwres.dta']);
-		
-		push( @all_iwres_files, $self->directory . 'm' . $model_number . '/original_iwres.dta' );
+	#logic for use of MDV column as basis for finding which rows are observations
+	#request MDV in $TABLE if no $PRED record or if there is a $PRED record and 
+	#MDV is in the input
+	#if there is a $PRED but no MDV in input then all rows will be observations
+
+	if (scalar @{$orig_model ->record( record_name => 'pred' )} < 1) {
+		$self->mdv('MDV');
+	} else {
+		if ($orig_model ->is_option_set(record => 'input', name => 'MDV')) {
+			$self->mdv('MDV'); #MDV in input
+		}
 	}
+
+	my $ipred = '';
+	$ipred = ' IPRED' if $self->have_ipred;
+	$oprob -> add_records( type           => 'table',
+						   record_strings => [ join( ' ', @table_header ).$ipred.
+											   ' PRED NOPRINT NOAPPEND ONEHEADER FILE=orig_pred.dta']);
+	my $tablestring = 'ID DV '.$self->mdv.' '.$self->idv.' CWRES'.$ipred.' PRED';
+	if ($self->have_iwres){
+		$tablestring .= ' IWRES';
+	}
+	$tablestring .= ' '.join(' ',@{$self->extra_variables});
+	$tablestring .= ' NOPRINT NOAPPEND ONEHEADER FILE=original_res_table.dta';
+	$oprob -> add_records( type           => 'table',
+						   record_strings => [$tablestring]);
+		
+	push( @all_table_files, $self->directory . 'm' . $model_number . '/original_res_table.dta' );
+
 	my $ref = $oprob->get_eta_sets(header_strings => 1);
 	$self->iiv_eta($ref->{'iiv'});
 	$self->iov_eta($ref->{'iov'});
@@ -282,11 +316,17 @@ sub modelfit_setup
 			}
 
 			# set $TABLE record
+			my $tablestring = 'ID DV '.$self->mdv.' CWRES'.$ipred;
 			if ($self->have_iwres){
-				$sim_model -> add_records( type           => 'table',
-										   problem_numbers => [($self->probnum())],
-										   record_strings => ['IWRES ID NOPRINT NOAPPEND ONEHEADER FILE=dummy']);
+				$tablestring .= ' IWRES';
 			}
+			$tablestring .= ' '.join(' ',@{$self->extra_variables});
+			$tablestring .= ' NOPRINT NOAPPEND ONEHEADER FILE=dummy';
+
+			$sim_model -> add_records( type           => 'table',
+									   problem_numbers => [($self->probnum())],
+									   record_strings => [$tablestring]);
+
 			unless ($self->reminimize()){
 				$sim_model -> set_maxeval_zero(print_warning => 1,
 											   last_est_complete => $self->last_est_complete(),
@@ -336,20 +376,18 @@ sub modelfit_setup
 		$prob -> set_records( type => 'simulation',
 							  record_strings => \@new_record );
 
-		if ($self->have_iwres){
-			my $iwres_file = "iwres-$sim_no.dta";
-			$prob -> remove_option( record_name  => 'table',
-									option_name  => 'FILE',
-									fuzzy_match => 1,
-									record_number => 1);
-
-			$prob -> add_option(record_name  => 'table',
-								record_number  => 1,
+		my $tab_file = "sim_res_table-$sim_no.dta";
+		$prob -> remove_option( record_name  => 'table',
 								option_name  => 'FILE',
-								option_value => $iwres_file );   
+								fuzzy_match => 1,
+								record_number => 1);
 
-			push( @all_iwres_files, $self->directory . 'm' . $model_number . '/' . $iwres_file );
-		}
+		$prob -> add_option(record_name  => 'table',
+							record_number  => 1,
+							option_name  => 'FILE',
+							option_value => $tab_file );   
+
+		push( @all_table_files, $self->directory . 'm' . $model_number . '/' . $tab_file );
 
 		$sim_model -> _write();
 		push( @orig_and_sim_models, $sim_model );
@@ -357,7 +395,7 @@ sub modelfit_setup
 	} #end loop over number of simulations
 
 	$self->all_eta_files(\@all_eta_files);
-	$self->all_iwres_files(\@all_iwres_files);
+	$self->all_table_files(\@all_table_files);
 
 	my $run_sim = tool::modelfit -> new( 
 		%{common_options::restore_options(@common_options::tool_options)},
@@ -410,23 +448,47 @@ sub modelfit_analyze
 		croak("Running simulations failed. Check output in ".$self->tools->[0]->directory);
 	}
 
+	my $have_mdv = 0;
+	my $commaMDV = '';
+	if (length($self->mdv)>0){
+		$have_mdv = 1 ;
+		$commaMDV= ',MDV';
+	}
+	
 	for (my $loop=0; $loop<1; $loop++){
-		last unless ($self->have_iwres);
-		unless (-e $self->all_iwres_files->[0]) {
+		unless (-e $self->all_table_files->[0]) {
 			ui->print(category=> 'all',
-					  message => "\nError iwres: original iwres file not found, iwres results cannot be computed\n");
+					  message => "\nError residuals: original residuals table file not found, residual results cannot be computed\n");
 			last;
 		}
 		my @found_files = ();
-		foreach my $file (@{$self->all_iwres_files}) {
+		foreach my $file (@{$self->all_table_files}) {
 			push(@found_files,$file) if (-e $file);
 		}
 		
-		my $headers_array = [['IWRES'],['ID','MDV']];
-		my $mean_matrix_array = [[],undef];
+		my $headers_array = [['ID'],['CWRES']];
+		if ($have_mdv){
+			push(@{$headers_array->[0]},'MDV');
+		}
+		my @table_headers = ('CWRES');
+		my @all_file_names = ($all_cwres_file);
+		my @summary_file_names = ($cwres_file);
+		my $mean_matrix_array = [undef,[]];
 		my $values_matrix_array = [[],[]];
 		my $filter_all_zero_array = [0,0];
-		my $init_only_array = [0,1];
+		my $init_only_array = [1,0];
+
+		if ($self->have_iwres){
+			push(@table_headers,'IWRES');
+			push(@all_file_names,$all_iwres_file);
+			push(@summary_file_names,$iwres_file);
+			push(@{$headers_array},['IWRES']);
+			push(@{$mean_matrix_array},[]);
+			push(@{$values_matrix_array},[]);
+			push(@{$filter_all_zero_array},0);
+			push(@{$init_only_array},0);
+		}
+
 
 		my $ret = simeval_util::get_nmtabledata(filenames => \@found_files,
 											 header_strings_array => $headers_array,
@@ -437,131 +499,169 @@ sub modelfit_analyze
 
 		unless ($ret ==0){
 			ui->print(category=> 'all',
-					  message =>"\nError in get_nmtabledata for iwres: $ret. iwres results cannot be computed\n");
+					  message =>"\nError in get_nmtabledata for residuals: $ret. residuals results cannot be computed\n");
 			last;
 		}
 
-		my @extra_headers=('ID','MDV');
-		my @headers = ('IWRES');
-		my $id_mdv_matrix = $values_matrix_array->[1];
-		my $est_matrix = $values_matrix_array->[0];
-		my $mean_matrix = $mean_matrix_array->[0];
-		my $decorr = [];
-		my $stdev = [];
-		my $npde = [];
-		my $pde = [];
-
-		my $npd = [];
-		my $pd = [];
-
-		($ret,$errmess) = simeval_util::decorrelation($est_matrix,$mean_matrix,$decorr,$stdev);
-		unless ($ret ==0){
-			ui->print(category=> 'all',
-					  message =>"\nError in decorrelation for iwres: $ret. iwres results cannot be computed\n".$errmess);
-			last;
-		}
-
-		open(ORI, ">$all_iwres_file") || die("Couldn't open $all_iwres_file : $!");
-		my @head = ('ID','MDV','ORIGINAL');
-		for (my $j=1; $j<scalar(@{$est_matrix->[0]->[0]});$j++){
-			push(@head,'sample.'.$j);
-		}
-		print ORI join(',',@head)."\n";
-		for (my $i=0; $i<scalar(@{$est_matrix->[0]});$i++){
-			print ORI $id_mdv_matrix->[0]->[$i]->[0].','.$id_mdv_matrix->[1]->[$i]->[0];
-			if ($id_mdv_matrix->[1]->[$i]->[0] == 0){
-					#not missing DV
-				for (my $j=0; $j<scalar(@{$est_matrix->[0]->[0]});$j++){
-					print ORI ','.formatfloat($est_matrix->[0]->[$i]->[$j]);
-				}
-			}else{
-				for (my $j=0; $j<scalar(@{$est_matrix->[0]->[0]});$j++){
-					print ORI ',';
-				}
+		for (my $k=0; $k< scalar(@table_headers); $k++){
+			#we will never get to IWRES unless have IWRES
+		
+			my @extra_headers=('ID');
+			if ($have_mdv){
+				push(@extra_headers,'MDV');
 			}
-			print ORI "\n";
-		}
-		close ORI;
 
+			my @headers = ($table_headers[$k]);
+			my $all_file_name = $all_file_names[$k];
+			my $summary_file_name = $summary_file_names[$k];
+			my $id_mdv_matrix = $values_matrix_array->[0];
+			my $est_matrix = $values_matrix_array->[($k+1)]; #+1 for ID MDV
+			my $mean_matrix = $mean_matrix_array->[($k+1)]; #+1 for ID MDV
+			my $decorr = [];
+			my $stdev = [];
+			my $npde = [];
+			my $pde = [];
 
-		#append to datafile, also print to own file
-		my $fname = 'm'.$model_number.'/orig_pred.dta'; 
-		if (-e $fname){
-			my @tmp = utils::file::slurp_file($fname);
-			my $first=1;
-			open(EBE_NPDE, '>'.$self->gls_data_file()) || die("Couldn't open ".$self->gls_data_file()." : $!");
-			open(DAT, ">ind_iwres_shrinkage.dta") || die("Couldn't open ind_iwres_shrinkage.dta : $!");
-			chomp $tmp[1];
-			print EBE_NPDE $tmp[1]."       ISHR\n";
-			print DAT "ISHR\n";
-			#index 0 is TABLE NO
-			#index 1 is header, start reading numbers at 2. $stdev start at 0
-			for (my $i=2; $i<scalar(@tmp); $i++){
-				chomp $tmp[$i];
-				my $shr;
-				if ($stdev->[$i-2] > 0){
-					$shr = formatfloat(1-($stdev->[$i-2]));
-				}else{
-					$shr = "'".$self->missing."'";
-				}
-				print EBE_NPDE $tmp[$i]." ".$shr."\n";
-				print DAT $shr."\n";
-			}
-			close (EBE_NPDE);
-			close (DAT);
-		}else{
-			print "\nError: $fname does not exist\n";
-		}
+			my $npd = [];
+			my $pd = [];
 
-		if ($self->have_CDF()){
-			$ret = simeval_util::npde_comp($decorr,$pde,$npde);
+			($ret,$errmess) = simeval_util::decorrelation($est_matrix,$mean_matrix,$decorr,$stdev);
 			unless ($ret ==0){
 				ui->print(category=> 'all',
-						  message => "\nError in npde_comp for iwres: $ret. iwres results cannot be computed\n");
-				last;
-			}
-			open(DAT, ">$iwres_file") || die("Couldn't open $iwres_file : $!");
-			print DAT "ID,MDV,ORIGINAL,NPDE\n";
-			for (my $i=0; $i<scalar(@{$npde->[0]});$i++){
-				print DAT $id_mdv_matrix->[0]->[$i]->[0].','.$id_mdv_matrix->[1]->[$i]->[0];
-				if ($id_mdv_matrix->[1]->[$i]->[0] == 0){
-					#not missing DV
-					print DAT ','.formatfloat($est_matrix->[0]->[$i]->[0]).','.formatfloat($npde->[0]->[$i])."\n";
-				}else{
-					print DAT ',,'."\n";
-				}
-			}
-			close (DAT);
-
-			$ret = simeval_util::npde_comp($est_matrix,$pd,$npd);
-			unless ($ret ==0){
-				ui->print(category=> 'all',
-						  message => "\nError in npde_comp for iwres: $ret. iwres results pd and npd cannot be computed\n");
+						  message =>"\nError in decorrelation for ".$table_headers[$k].": $ret. ".
+						  $table_headers[$k]." results cannot be computed\n".$errmess);
 				last;
 			}
 
-			open(DAT, ">iwres_npd.csv") || die("Couldn't open iwres_npd.csv : $!");
-			print DAT "ID,MDV,NPD\n";
-			for (my $i=0; $i<scalar(@{$npd->[0]});$i++){
-				print DAT $id_mdv_matrix->[0]->[$i]->[0].','.$id_mdv_matrix->[1]->[$i]->[0].','.formatfloat($npd->[0]->[$i])."\n";
+			open(ORI, ">$all_file_name") || die("Couldn't open $all_file_name : $!");
+			my @head = ('ID');
+			if ($have_mdv){
+				push(@head,'MDV');
 			}
-			close (DAT);
+			push(@head,'ORIGINAL');
 
-		}
+			for (my $j=1; $j<scalar(@{$est_matrix->[0]->[0]});$j++){
+				push(@head,'sample.'.$j);
+			}
+			print ORI join(',',@head)."\n";
+			for (my $i=0; $i<scalar(@{$est_matrix->[0]});$i++){
+				print ORI $id_mdv_matrix->[0]->[$i]->[0];
+				if ($have_mdv){
+					print ORI ','.$id_mdv_matrix->[1]->[$i]->[0];
+				}
+				
+				if ((not $have_mdv) or ($id_mdv_matrix->[1]->[$i]->[0] == 0)){
+					#not missing DV
+					for (my $j=0; $j<scalar(@{$est_matrix->[0]->[0]});$j++){
+						print ORI ','.formatfloat($est_matrix->[0]->[$i]->[$j]);
+					}
+				}else{
+					for (my $j=0; $j<scalar(@{$est_matrix->[0]->[0]});$j++){
+						print ORI ',';
+					}
+				}
+				print ORI "\n";
+			}
+			close ORI;
 
-		open(ORI, ">decorrelated_original_iwres.csv") || 
-			die("Couldn't open decorrelated_original_iwres.csv : $!");
-		print ORI "ID,MDV,IWRES_STAR\n";
-#		open(ORI2, ">raw_original_iwres.csv") || 	die("Couldn't open raw_original_iwres.csv : $!");
-#		print ORI2 "ID,MDV,IWRES\n";
-		for (my $i=0; $i<scalar(@{$decorr->[0]});$i++){
-			print ORI $id_mdv_matrix->[0]->[$i]->[0].','.$id_mdv_matrix->[1]->[$i]->[0].','.
-				formatfloat($decorr->[0]->[$i]->[0])."\n";
+			if ($table_headers[$k] eq 'IWRES'){
+				#append to datafile, also print to own file
+				my $fname = 'm'.$model_number.'/orig_pred.dta'; 
+				if (-e $fname){
+					my @tmp = utils::file::slurp_file($fname);
+					my $first=1;
+					open(EBE_NPDE, '>'.$self->gls_data_file()) || die("Couldn't open ".$self->gls_data_file()." : $!");
+					open(DAT, ">ind_iwres_shrinkage.dta") || die("Couldn't open ind_iwres_shrinkage.dta : $!");
+					chomp $tmp[1];
+					print EBE_NPDE $tmp[1]."       ISHR\n";
+					print DAT "ISHR\n";
+					#index 0 is TABLE NO
+					#index 1 is header, start reading numbers at 2. $stdev start at 0
+					for (my $i=2; $i<scalar(@tmp); $i++){
+						chomp $tmp[$i];
+						my $shr;
+						if ($stdev->[$i-2] > 0){
+							$shr = formatfloat(1-($stdev->[$i-2]));
+						}else{
+							$shr = "'".$self->missing."'";
+						}
+						print EBE_NPDE $tmp[$i]." ".$shr."\n";
+						print DAT $shr."\n";
+					}
+					close (EBE_NPDE);
+					close (DAT);
+				}else{
+					print "\nError: $fname does not exist\n";
+				}
+			}
+
+			if ($self->have_CDF()){
+				$ret = simeval_util::npde_comp($decorr,$pde,$npde);
+				unless ($ret ==0){
+					ui->print(category=> 'all',
+							  message => "\nError in npde_comp for ".$table_headers[$k].": $ret. ".
+							  $table_headers[$k]." results cannot be computed\n");
+					last;
+				}
+				open(DAT, ">$summary_file_name") || die("Couldn't open $summary_file_name : $!");
+				print DAT "ID$commaMDV".",ORIGINAL,NPDE\n";
+
+				for (my $i=0; $i<scalar(@{$npde->[0]});$i++){
+					print DAT $id_mdv_matrix->[0]->[$i]->[0];
+					if ($have_mdv){
+						print DAT ','.$id_mdv_matrix->[1]->[$i]->[0];
+					}
+				
+					if ((not $have_mdv) or ($id_mdv_matrix->[1]->[$i]->[0] == 0)){
+						#not missing DV
+						print DAT ','.formatfloat($est_matrix->[0]->[$i]->[0]).','.formatfloat($npde->[0]->[$i])."\n";
+					}else{
+						print DAT ',,'."\n";
+					}
+				}
+				close (DAT);
+
+				$ret = simeval_util::npde_comp($est_matrix,$pd,$npd);
+				unless ($ret ==0){
+					ui->print(category=> 'all',
+							  message => "\nError in npde_comp for ".$table_headers[$k].": $ret. ".$table_headers[$k].
+							  " results pd and npd cannot be computed\n");
+					last;
+				}
+
+				my $npdname = lc($table_headers[$k]).'_npc.csv';
+				open(DAT, ">$npdname") || die("Couldn't open $npdname : $!");
+				print DAT "ID$commaMDV".",NPD\n";
+
+				for (my $i=0; $i<scalar(@{$npd->[0]});$i++){
+					print DAT $id_mdv_matrix->[0]->[$i]->[0];
+					if ($have_mdv){
+						print DAT ','.$id_mdv_matrix->[1]->[$i]->[0];
+					}
+					print DAT ','.formatfloat($npd->[0]->[$i])."\n";
+				}
+				close (DAT);
+				
+			}
+
+			my $decorrname = 'decorrelated_original_'.lc($table_headers[$k]).'.csv';
+
+			open(ORI, ">$decorrname") || die("Couldn't open $decorrname : $!");
+			print ORI "ID$commaMDV".','.$table_headers[$k]."_STAR\n";
+#		open(ORI2, ">raw_original_res_table.csv") || 	die("Couldn't open raw_original_res_table.csv : $!");
+#		print ORI2 "ID,MDV,".$table_headers[$k]."\n";
+			for (my $i=0; $i<scalar(@{$decorr->[0]});$i++){
+				print ORI $id_mdv_matrix->[0]->[$i]->[0];
+				if ($have_mdv){
+					print ORI ','.$id_mdv_matrix->[1]->[$i]->[0];
+				}
+				print ORI ','.formatfloat($decorr->[0]->[$i]->[0])."\n";
 #			print ORI2 $id_mdv_matrix->[0]->[$i]->[0].','.$id_mdv_matrix->[1]->[$i]->[0].','.
 #				formatfloat($est_matrix->[0]->[$i]->[0])."\n";
-		}
-		close ORI;
-#		close ORI2;
+			}
+			close ORI;
+			#		close ORI2;
+		} #end loop over table headers CWRES, IWRES ...
 		last; #must have last here, we do not want to loop
 	}
 
@@ -1081,6 +1181,13 @@ sub create_R_plots_code{
 	my $outlying = 'outlying_criteria <- '.-(Statistics::Distributions::udistr(1/($succ))).
 		'  # for successful samples='.$succ;
 
+	my @residual_files = ($cwres_file);
+	my @residual_names = ('CWRES');
+	if ($self->have_iwres){
+		push(@residual_files,$iwres_file);
+		push(@residual_names,'IWRES');
+	}
+	
 	$rplot->add_preamble(code => [
 							 '#simeval-specific preamble',
 							 'samples   <-'.$self->samples,
@@ -1089,14 +1196,19 @@ sub create_R_plots_code{
 							 'n.subjects   <-'.$self->subjects,
 							 "ebe.npde.file <- '".$ebe_npde_file."'",
 							 "iofv.file <- '".$iofv_file."'",
-							 "iwres.file <- '".$iwres_file."'",
+							 "residual.files <- c('".join("','",@residual_files)."')",
+							 "residual.names <- c('".join("','",@residual_names)."')",
 							 "all.iofv.file <- '".$all_iofv_file."'",
-							 "all.iwres.file <- '".$all_iwres_file."'",
+#							 "all.iwres.file <- '".$all_iwres_file."'",
+#							 "all.cwres.file <- '".$all_cwres_file."'",
 							 'occasions   <-'.$self->occasions,
 							 "all.eta.names <-  c('".join("','",@all_eta)."')",
 							 'all.eta.numbers <-  c('.join(',',@all_eta_numbers).')',
 							 $iiv_eta,
-							 $iov_eta
+							 $iov_eta,
+							 "vpctab.filenames <-  c('".join("','",@{$self->vpctab_filenames})."')",
+							 "vpc.result.files <-  c('".join("','",@{$self->vpc_result_files})."')",
+							 "vpc.names <-  c('".join("','",@{$self->vpc_names})."')",
 						 ]);
 
 }

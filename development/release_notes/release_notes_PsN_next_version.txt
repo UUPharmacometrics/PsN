@@ -96,8 +96,8 @@ Changes and bug fixes from PsN 4.4.8 to n.n.n
 
    ___vpc/npc___
 
-- Bug fix: 
-
+- Option -sim_table may now be either a single file name or a comma-separated list
+  of file names.
 
    ___frem___
 
@@ -125,6 +125,10 @@ Changes and bug fixes from PsN 4.4.8 to n.n.n
 - New rplots template 
 
 - New option -n_simulation_models, allowing more than one sample per NONMEM control stream
+
+- Computation of npde for IWRES and CWRES.
+
+- vpc plots of DV vs PRED and CWRES vs idv (TIME).
 
    ___update_inits___
 

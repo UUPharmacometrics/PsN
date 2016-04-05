@@ -340,6 +340,12 @@ sub check_simeval
 		$options->{'samples'}=300;
 	}
 
+	my @var = ();
+	if (defined $options->{'extra_variables'}){
+		@var = split(/,/,$options->{'extra_variables'}) ;
+	}
+	$options->{'extra_variables'}= \@var;
+
 	if (defined $options->{'n_simulation_models'}){
 		unless ($options->{'n_simulation_models'} > 0){
 			$error .= "n_simulation_models must be larger than 0\n";
