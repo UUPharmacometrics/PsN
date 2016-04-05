@@ -3,11 +3,6 @@ PsN can automatically generate R plots to visualize results for
 \guidetoolname, using a default template found in the R-scripts subdirectory of the installation directory.
 The user can also create a custom template, see more details in section 
 ``Auto-generated R-plots from PsN'' in common\_options.pdf.
-When option \mbox{-rplots} is 0 or positive, 
-the R script will be generated and saved in the main
-run directory. 
-If R is configured in psn.conf or command 'R' is available and option -rplots is positive 
-the script will also be run and a number of pdf-format plots be created.
 
 \rplotsconditions
 
@@ -18,26 +13,10 @@ the script will also be run and a number of pdf-format plots be created.
 -rplots=1 means basic plots are generated\\													  
 -rplots=2 means basic and extended plots are generated\\													  
 \nextopt
-\optdefault{template\_file\_rplots}{file}
-When the rplots feature is used, the default template file PsN will look for is 
-\guidetoolname\_default.R. 
-The user can choose a different template file
-by setting option -template\_file\_rplots to a different file name. 
-PsN will look for the file in the 'template\_directory\_rplots' directory, see the help text 
-for that option.
-\nextopt
-\optdefault{template\_directory\_rplots}{path}
-PsN can look for the rplots template file in a number of places. 
-PsN looks in the following places in the order they are listed:
-\begin{enumerate}
-\item template\_directory\_rplots from command-line, if set 
-\item calling directory (where PsN run is started from)
-\item template\_directory\_rplots set in psn.conf 
-\item R-scripts subdirectory of the PsN installation directory
-\end{enumerate}
-\nextopt
 \end{optionlist}
 
 \subsubsection*{Troubleshooting}
 If no pdf was generated even if a template file is available and the appropriate options
 were set, check the .Rout-file in the main run directory for error messages.
+If no .Rout-file exists then check that R is properly installed,
+and that either command 'R' is available or that R is configured in psn.conf.
