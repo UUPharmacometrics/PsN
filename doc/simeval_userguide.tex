@@ -100,11 +100,64 @@ see the .Rout file in the main run directory for error messages.}
 Basic diagnostic rplots will be generated 
 if option -rplots is set >0.
 
-%\subsubsection{dOFV plot}
+\subsubsection{Population and individual OFV}
+\noindent The file PsN\_OFV\_plots.pdf contains
+\begin{enumerate}
+\item A posterior predictive check of population OFV. The plot shows
+observed OFV and the
+distribution of OFV based on simulated data.
+%This is a global model diagnostic
+%that can identify major model misspecification but not which part of the model
+%that is inadequate.
+\item A histogram of npde of individual OFV, together with the expected
+normal distribution. If there is no model misspecification, the npde should
+be normally distributed with mean 0 and variance 1.
+\item PPC of individual OFV for outlier individuals, i.e.
+individuals where observed OFV is above entire
+distribution of simulated individual OFV. If no outliers found then there will be no individual OFV PPC plots.
+\item individual OFV residuals.
+%IDs with positive iOFV RES indicate worse fit than those with negative.
+% Exceeding +3SD (above dotted line) are outliers.
+\end{enumerate}
+
+\subsubsection{EBE npde}
+\noindent The file PsN\_ebe\_npde\_plots.pdf contains
+\begin{enumerate}
+\item A table with mean and variance of npde of each EBE. If there is no model
+misspecification the npde should have mean 0 variance 1.
+\item A correlation chart with histograms of individual EBE npde and their
+correlations. The expectation is no correlations, high correlations indicate model misspecification.
+\item A table of individuals that are outliers with respect to EBE npde.
+\end{enumerate}
+
+\subsubsection{GOF vpc:s}
+\noindent The file PsN\_simeval\_vpc\_plots.pdf contains
+\begin{enumerate}
+\item A vpc of observations vs population predictions, with automatic binning.
+\item A vpc of conditional weighted residuals vs the independent variable (idv), default TIME.
+\end{enumerate}
+
+
+\subsubsection{Residuals}
+\noindent The file PsN\_residual\_plots.pdf contains
+\begin{enumerate}
+\item A histogram of npde of IWRES, together with the expected
+normal distribution. If there is no model misspecification, the npde should
+be normally distributed with mean 0 and variance 1.
+\item A histogram of npde of CWRES, together with the expected
+normal distribution. 
+\item A table with mean and variance of IWRES npde and CWRES npde.
+\end{enumerate}
+
 
 \subsection{Extended diagnostic plots}
 Extended diagnostic plots will be generated
 if option -rplots is set >1.
+In file PsN\_OFV\_plots.pdf will be added
+\begin{enumerate}
+\item KLD iOFV
+\end{enumerate}
+
 
 
 \subsection{Numeric output}
@@ -116,6 +169,7 @@ $ebe_{standardized}= \\
 \left(\overline{ebe}_{obs} - mean (\overline{ebe}_{sim})\right)^T$,\\ 
 NPDE:s for each EBE
 \item[summary\_iwres.csv] NPDE of IWRES. One row per data record. Columns: ID, MDV, observed IWRES, NPDE for IWRES.
+\item[summary\_cwres.csv] NPDE of CWRES. One row per data record. Columns: ID, MDV, observed CWRES, NPDE for CWRES.
 \item[summary\_iofv.csv] One row per subject. Columns: ID, observed iOFV,
 mean of iOFV for evaluation of simulated data,
 standard deviation of iOFV for evaluation of simulated data,
