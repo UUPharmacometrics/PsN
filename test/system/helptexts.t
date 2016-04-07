@@ -20,7 +20,7 @@ data_stats => ['global'],
 simeval => ['estimate_input'],
 execute => ['tbs'],
 extended_grid => ['id_column'],
-frem => ['estimate','check'],
+frem => ['cholesky','check'],
 gls => ['samples'],
 lasso => ['relations'],
 linearize => ['error'],
@@ -59,7 +59,7 @@ foreach my $prog (sort {$a <=> $b} keys %programs){
 		next;
 	}
 
-	my $command = get_command($prog).' -help > text.txt';
+	my $command = get_command_without_args($prog).' -help > text.txt';
 	print "Running $command\n";
 	my $rc = system($command);
 	$rc = $rc >> 8;
@@ -74,7 +74,7 @@ foreach my $prog (sort {$a <=> $b} keys %programs){
 	}
 	unlink('text.txt'); 
 
-	$command = get_command($prog).' -h > text.txt';
+	$command = get_command_without_args($prog).' -h > text.txt';
 	print "Running $command\n";
 	my $rc = system($command);
 	$rc = $rc >> 8;
@@ -88,7 +88,7 @@ foreach my $prog (sort {$a <=> $b} keys %programs){
 	unlink('text.txt'); 
 
 	foreach my $opt (@{$programs{$prog}}){
-		$command = get_command($prog).' -h '.$opt.' > text.txt';
+		$command = get_command_without_args($prog).' -h '.$opt.' > text.txt';
 		print "Running $command\n";
 		my $rc = system($command);
 		$rc = $rc >> 8;

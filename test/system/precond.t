@@ -10,9 +10,8 @@ use includes; #file with paths to PsN packages and $path variable definition
 use PsN;
 
 SKIP: {
-    PsN::set_nonmem_info("default");
-    print $PsN::nm_major_version, ".", $PsN::nm_minor_version . "\n";
-    skip "too old NONMEM version for precond" if ($PsN::nm_major_version < 7 or ($PsN::nm_major_version == 7 and $PsN::nm_minor_version < 2));
+	my ($major,$minor) = get_major_minor_nm_version();
+    skip $major.".".$minor." is a too old NONMEM version for precond" if ($major < 7 or ($major == 7 and $minor < 2));
 
     our $tempdir = create_test_dir('system_precond');
     my $model_dir = $includes::testfiledir;

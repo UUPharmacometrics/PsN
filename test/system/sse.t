@@ -15,8 +15,6 @@ use File::Copy 'cp';
 
 #in psn.conf must set output_style = SPLUS, otherwise tests will fail. fix by setting here.
 
-#tnpri is NM version dependent due to msfi file, 730 or 72.
-PsN::set_nonmem_info('default');
 my $model_dir = $includes::testfiledir;
 
 

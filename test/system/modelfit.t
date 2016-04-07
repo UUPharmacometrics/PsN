@@ -49,7 +49,7 @@ copy_test_files($tempdir,["phenomaxeval10.mod","phenomaxeval0.mod", "pheno.dta",
 chdir($tempdir);
 
 #figure out if we are running nmqual or nmfe, which decides control stream extension
-my %options = ();
+my %options = %{get_psn_options()};
 common_options::setup( \%options, 'execute' ); #
 our $modext = 'mod';
 our $lstext = 'lst'; 

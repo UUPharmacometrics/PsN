@@ -65,7 +65,7 @@ foreach my $file (@extra_files){
 }
 chdir($tempdir);
 foreach my $cfile (@config_files) {
-	my $command = 'scm '.$cfile.' ';
+	my $command = get_command('scm').' '.$cfile.' ';
 	my $rc = system($command);
 	$rc = $rc >> 8;
 	ok ($rc == 0, "scm $cfile crash test");
