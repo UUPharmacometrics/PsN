@@ -114,6 +114,8 @@ Changes and bug fixes from PsN 4.4.8 to n.n.n
 
 - More robust filtering on IGNORE/ACCEPT
 
+- Bug fix: Use common options, e.g. -nm_version, set on command-line.
+
    ___simeval___ (was ebe_npde)
 
 - Renamed from ebe_npde to simeval

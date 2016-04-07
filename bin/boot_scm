@@ -307,8 +307,9 @@ my $dummy_prob = model::problem -> new ( ignore_missing_files=> 1,
 my $dummy_model = model -> new (filename => 'dummy_for_mcmp',
 								problems => [$dummy_prob],
 								ignore_missing_files => 1);
-my $dummy_tool = tool -> new(models => [$dummy_model],
-							 directory => $main_directory);
+my $dummy_tool = tool -> new( %{common_options::restore_options(@common_options::tool_options)},
+							  models => [$dummy_model],
+							  directory => $main_directory);
 $dummy_tool -> print_options(cmd_line => $cmd_line,
 							 toolname => 'boot_scm',
 							 local_options => [keys %optional_options],
