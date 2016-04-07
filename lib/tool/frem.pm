@@ -2067,7 +2067,6 @@ sub prepare_model2
 			#we do not have to add for example binary-ized categoricals, they enter in DV col for special fremtype
 		}
 
-		$frem_model->check_and_set_sizes('PD' => 1);
 		
 		#SIGMA changes
 		foreach my $record (@{$frem_model-> problems -> [0]->sigmas}){
@@ -2138,6 +2137,7 @@ sub prepare_model2
 													   type => 'covariance' );
 		}
 		
+		$frem_model->check_and_set_sizes('all' => 1);
 		$frem_model->_write();
 
 	}

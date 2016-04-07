@@ -18,6 +18,52 @@ my $modeldir = $includes::testfiledir;
 my $model = model->new(filename => "$modeldir/scm/pheno_ignore.mod", ignore_missing_data => 1);
 
 is($model->need_data_filtering,1,'need data filtering 1');
+# 2 theta 2 omega 1 sigma default METH
+is($model->get_option_value(record_name => 'sizes',option_name => 'LTH',fuzzy_match => 0),undef,'input SIZES LTH');
+is($model->get_option_value(record_name => 'sizes',option_name => 'LVR',fuzzy_match => 0),undef,'input SIZES LVR');
+is($model->get_option_value(record_name => 'sizes',option_name => 'LVR2',fuzzy_match => 0),undef,'input SIZES LVR2');
+is($model->get_option_value(record_name => 'sizes',option_name => 'PD',fuzzy_match => 0),undef,'input SIZES PD');
+for (my $i=0; $i< 20; $i++){
+	$model->add_records(type => 'omega',
+						problem_numbers => [1],
+						record_strings => [(1+$i/10).' ; extra'.$i]);
+	$model->add_records(type => 'theta',
+						problem_numbers => [1],
+						record_strings => [(1+$i/10).' ; extra'.$i.'1',
+										   (1+$i/10).' ; extra'.$i.'2',
+										   (1+$i/10).' ; extra'.$i.'3',
+										   (1+$i/10).' ; extra'.$i.'4',
+										   (1+$i/10).' ; extra'.$i.'5']);
+}
+$model->check_and_set_sizes('all' => 1);
+is($model->get_option_value(record_name => 'sizes',option_name => 'LTH',fuzzy_match => 0),102,'next SIZES LTH');
+is($model->get_option_value(record_name => 'sizes',option_name => 'LVR',fuzzy_match => 0),undef,'next SIZES LVR');
+is($model->get_option_value(record_name => 'sizes',option_name => 'LVR2',fuzzy_match => 0),undef,'next SIZES LVR2');
+is($model->get_option_value(record_name => 'sizes',option_name => 'PD',fuzzy_match => 0),undef,'next SIZES PD');
+$model -> add_option(record_name => 'estimation',
+					 record_number => 1,
+					 option_name => 'METHOD',
+					 option_value => 'COND');
+$model -> add_option(record_name => 'estimation',
+					 record_number => 1,
+					 option_name => 'LAPLACE');
+
+$model->check_and_set_sizes('all' => 1);
+is($model->get_option_value(record_name => 'sizes',option_name => 'LTH',fuzzy_match => 0),102,'next 2 SIZES LTH');
+is($model->get_option_value(record_name => 'sizes',option_name => 'LVR',fuzzy_match => 0),undef,'next 2 SIZES LVR');
+is($model->get_option_value(record_name => 'sizes',option_name => 'LVR2',fuzzy_match => 0),22,'next 2 SIZES LVR2');
+is($model->get_option_value(record_name => 'sizes',option_name => 'PD',fuzzy_match => 0),undef,'next 2 SIZES PD');
+
+$model->add_records(type => 'omega',
+					problem_numbers => [1],
+					record_strings => ['1 ','1 ','1 ','1 ','1 ','1 ','1 ','1 ','1 ','1 ']); #10
+$model->check_and_set_sizes('all' => 1);
+is($model->get_option_value(record_name => 'sizes',option_name => 'LTH',fuzzy_match => 0),102,'next 3 SIZES LTH');
+is($model->get_option_value(record_name => 'sizes',option_name => 'LVR',fuzzy_match => 0),33,'next 3 SIZES LVR');
+is($model->get_option_value(record_name => 'sizes',option_name => 'LVR2',fuzzy_match => 0),32,'next 3 SIZES LVR2');
+is($model->get_option_value(record_name => 'sizes',option_name => 'PD',fuzzy_match => 0),undef,'next 3 SIZES PD');
+
+
 
 $model = model->new(filename => "$modeldir/warfarin_saem_noest.mod", ignore_missing_data => 1);
 

@@ -287,78 +287,81 @@ sub BUILD
 sub check_and_set_sizes
 {
 	my $self = shift;
-	#TODO add more options to check here
 	my %parm = validated_hash(\@_,
+							  LVR => { isa => 'Bool', default => 0 },
+							  LVR2 => { isa => 'Bool', default => 0 },
 							  LTH => { isa => 'Bool', default => 0 },
 							  PD => { isa => 'Bool', default => 0 },
+							  all => { isa => 'Bool', default => 0 },
 		);
-	my $LTH = $parm{'LTH'};
-	my $PD = $parm{'PD'};
 
-	my $max_theta = 100;
-	my $max_input_items = 50;
+	my %check=();
+	$check{'LVR'} = ($parm{'LVR'} or $parm{'all'});
+	$check{'LVR2'} = ($parm{'LVR2'} or $parm{'all'});
+	$check{'LTH'} = ($parm{'LTH'} or $parm{'all'});
+	$check{'PD'} = ($parm{'PD'} or $parm{'all'});
 
-	if ($LTH){
-		my $theta_count = 0;
-		foreach my $prob (@{$self->problems}){
-			my $count = $prob->record_count(record_name=>'theta');
-			$theta_count = $count if ($count > $theta_count);
+	my %max_allowed=(); #NONMEM defaults
+	$max_allowed{'LVR'}=30;
+	$max_allowed{'LVR2'}=20;
+	$max_allowed{'LTH'}=100;
+	$max_allowed{'PD'}=50;
+	
+	foreach my $option (keys %max_allowed){
+		#check if other value than default set in $SIZES
+		my $set_value = $self->get_option_value(record_name => 'sizes',
+												option_name => $option,
+												fuzzy_match => 0);
+		if (defined $set_value and (length($set_value) > 0) ){
+			$max_allowed{$option} = abs($set_value); #can set negative in SIZES
 		}
-		my $set_lth = $self->get_option_value(record_name => 'sizes',
-											  option_name => 'LTH',
-											  fuzzy_match => 0);
-		if (defined $set_lth and (length($set_lth) > 0) ){
-			$max_theta = $set_lth;
-		}
-
-		if ($theta_count > $max_theta){
-			if (defined $self->problems->[0]->sizess and scalar(@{$self->problems->[0]->sizess})>0){
-				$self->problems->[0]->remove_option( record_name => 'sizes',
-													 record_number => 0,
-													 option_name => 'LTH',
-													 fuzzy_match => 0 );
-			}
-			$self->problems->[0]->add_option(record_name => 'sizes',
-											 record_number => 1,
-											 option_name => 'LTH',
-											 option_value => $theta_count,
-											 add_record => 1); #add if not already there
-		}
-
 	}
 
-	if ($PD){
-
-		my $maxpd = $max_input_items;
-		my $pd_value = $self->get_option_value( record_name => 'sizes',
-												option_name => 'PD',
-												fuzzy_match => 0);
-
-		if (defined $pd_value and (length($pd_value) > 0)  and (abs($pd_value) > $maxpd)){
-			$maxpd=abs($pd_value);
+	my %count_in_model = ();
+	foreach my $option (keys %max_allowed){
+		$count_in_model{$option}=0;
+	}
+	
+	foreach my $prob (@{$self->problems}){
+		#LVR 
+		my $eta_plus_eps = ($prob->nomegas(with_correlations => 0,with_same => 1)+
+							$prob->nsigmas(with_correlations => 0,with_same => 1));
+		$count_in_model{'LVR'} = $eta_plus_eps if ($eta_plus_eps > $count_in_model{'LVR'});
+		#LTH
+		my $thetacount = $prob->record_count(record_name=>'theta');
+		$count_in_model{'LTH'} = $thetacount if ($thetacount > $count_in_model{'LTH'});
+		#PD
+		my $pdcount = 0;
+		foreach my $input (@{$prob->inputs}){
+			$pdcount += scalar(@{$input->get_nonskipped_columns});
 		}
-
-		my $item_count = 0;
-		foreach my $prob (@{$self->problems}){
-			my $count = 0;
-			foreach my $input (@{$prob->inputs}){
-				$count += scalar(@{$input->get_nonskipped_columns});
-			}
-			$item_count = $count if ($count > $item_count);
+		$pdcount += 10; #seems that exact count was not enough. "cannot append items"
+		$count_in_model{'PD'} = $pdcount if ($pdcount > $count_in_model{'PD'});
+		#LVR2
+		if ($prob->is_option_set ( name           => 'LAPLACE', 
+								   record         => 'estimation', 
+								   record_number => 0, #this means all records
+								   fuzzy_match    => 1 )){
+			my $laplace_eta = $prob->nomegas(with_correlations => 0,with_same => 1);
+			$count_in_model{'LVR2'} = $laplace_eta if ($laplace_eta > $count_in_model{'LVR2'});
 		}
-		$item_count += 10; #seems that exact count was not enough. "cannot append items"
-		if ($item_count > $maxpd){
-			if (defined $self->problems->[0]->sizess() 
-				and scalar(@{$self ->problems->[0]->sizess()})>0){
+	}
+
+	foreach my $option (keys %check){
+		next unless ($check{$option});
+		if ($count_in_model{$option} > $max_allowed{$option}){
+			my $neg = '';
+			$neg = '-' if ($option eq 'PD');
+			if (defined $self->problems->[0]->sizess() and scalar(@{$self ->problems->[0]->sizess()})>0){
 				$self -> set_option(record_name => 'sizes',
 									record_number => 1,
-									option_name => 'PD',
-									option_value => '-'.$item_count,
+									option_name => $option,
+									option_value => $neg.$count_in_model{$option},
 									fuzzy_match => 0);
 
 			}else{
 				$self -> add_records( type => 'sizes',
-									  record_strings => [ " PD=-".$item_count ] );
+									  record_strings => [ ' '.$option.'='.$neg.$count_in_model{$option}] );
 			}
 		}
 	}
