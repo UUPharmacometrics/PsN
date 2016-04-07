@@ -73,6 +73,7 @@ Changes and bug fixes from PsN 4.4.8 to n.n.n
   with iteration results will not be appended to the lst-file by the nmfe script. If PsN
   option -handle_crashes or -handle_msfo is set, PsN will parse OUTPUT if the lst-file appears
   to not have had OUTPUT appended, and initiate a crash restart if it appears to be useful.
+- All scripts can print help texts without having nm_version properly defined in psn.conf
 
    ___lasso___
 
