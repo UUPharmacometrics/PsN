@@ -11,7 +11,7 @@ use includes; #file with paths to PsN packages
 use model;
 use PsN;			# Need to set PsN version as this is a global variable
 $PsN::nm_major_version = 7;
-my $ver = $PsN::nm_major_version;
+$PsN::nm_minor_version = 1;
 
 my $modeldir = $includes::testfiledir;
 
@@ -35,7 +35,18 @@ for (my $i=0; $i< 20; $i++){
 										   (1+$i/10).' ; extra'.$i.'4',
 										   (1+$i/10).' ; extra'.$i.'5']);
 }
-$model->check_and_set_sizes('all' => 1);
+my $message = $model->check_and_set_sizes('LTH' => 1);
+is($message,' Need LTH set to at least 102.','set error message');
+is($model->get_option_value(record_name => 'sizes',option_name => 'LTH',fuzzy_match => 0),undef,'nm7.1 next SIZES LTH');
+is($model->get_option_value(record_name => 'sizes',option_name => 'LVR',fuzzy_match => 0),undef,'nm7.1 next SIZES LVR');
+is($model->get_option_value(record_name => 'sizes',option_name => 'LVR2',fuzzy_match => 0),undef,'nm7.1 next SIZES LVR2');
+is($model->get_option_value(record_name => 'sizes',option_name => 'PD',fuzzy_match => 0),undef,'nm7.1 next SIZES PD');
+
+#change to version that support $SIZES
+$PsN::nm_major_version = 7;
+$PsN::nm_minor_version = 2;
+$message = $model->check_and_set_sizes('all' => 1);
+is($message,'','set error message 2');
 is($model->get_option_value(record_name => 'sizes',option_name => 'LTH',fuzzy_match => 0),102,'next SIZES LTH');
 is($model->get_option_value(record_name => 'sizes',option_name => 'LVR',fuzzy_match => 0),undef,'next SIZES LVR');
 is($model->get_option_value(record_name => 'sizes',option_name => 'LVR2',fuzzy_match => 0),undef,'next SIZES LVR2');
@@ -57,7 +68,7 @@ is($model->get_option_value(record_name => 'sizes',option_name => 'PD',fuzzy_mat
 $model->add_records(type => 'omega',
 					problem_numbers => [1],
 					record_strings => ['1 ','1 ','1 ','1 ','1 ','1 ','1 ','1 ','1 ','1 ']); #10
-$model->check_and_set_sizes('all' => 1);
+$model->check_and_set_sizes('LVR' => 1,'LVR2'=> 1, 'PD' => 1);
 is($model->get_option_value(record_name => 'sizes',option_name => 'LTH',fuzzy_match => 0),102,'next 3 SIZES LTH');
 is($model->get_option_value(record_name => 'sizes',option_name => 'LVR',fuzzy_match => 0),33,'next 3 SIZES LVR');
 is($model->get_option_value(record_name => 'sizes',option_name => 'LVR2',fuzzy_match => 0),32,'next 3 SIZES LVR2');

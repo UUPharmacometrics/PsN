@@ -2137,7 +2137,11 @@ sub prepare_model2
 													   type => 'covariance' );
 		}
 		
-		$frem_model->check_and_set_sizes('all' => 1);
+		my $message = $frem_model->check_and_set_sizes('all' => 1);
+		if (length($message)>0){
+			ui -> print( category => 'all', message =>  $message.' However this NONMEM version does not support $SIZES. '.
+						 'There may be NMtran errors when running the model');
+		}
 		$frem_model->_write();
 
 	}
@@ -2372,7 +2376,12 @@ sub prepare_model5
 			$row++;
 		}
 		
-		$frem_model-> check_and_set_sizes(LTH => 1); #set LTH if too many thetas. TODO make dependent on nm_version
+		my $message = $frem_model-> check_and_set_sizes(LTH => 1); #set LTH if too many thetas. 
+		if (length($message)>0){
+			ui -> print( category => 'all', message =>  $message.' However this NONMEM version does not support $SIZES. '.
+						 'There may be NMtran errors when running the model');
+		}
+		
 		$frem_model->set_option(record_name => 'estimation', option_name =>'MCETA', option_value => '100',fuzzy_match => 1);
 		$frem_model->_write();
 	}

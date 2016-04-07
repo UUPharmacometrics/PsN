@@ -295,13 +295,22 @@ sub check_and_set_sizes
 							  all => { isa => 'Bool', default => 0 },
 		);
 
+
 	my %check=();
 	$check{'LVR'} = ($parm{'LVR'} or $parm{'all'});
 	$check{'LVR2'} = ($parm{'LVR2'} or $parm{'all'});
 	$check{'LTH'} = ($parm{'LTH'} or $parm{'all'});
 	$check{'PD'} = ($parm{'PD'} or $parm{'all'});
 
-	my %max_allowed=(); #NONMEM defaults
+	my $can_set_sizes = 1;
+	my $need_set_sizes = 0;
+	my $error = '';
+	
+	if (($PsN::nm_major_version == 5) or ($PsN::nm_major_version == 6) or ($PsN::nm_major_version == 7 and ($PsN::nm_minor_version < 2))) {
+		$can_set_sizes = 0;
+	}
+	
+	my %max_allowed=(); #NONMEM defaults #FIXME set per NM version
 	$max_allowed{'LVR'}=30;
 	$max_allowed{'LVR2'}=20;
 	$max_allowed{'LTH'}=100;
@@ -350,6 +359,11 @@ sub check_and_set_sizes
 	foreach my $option (keys %check){
 		next unless ($check{$option});
 		if ($count_in_model{$option} > $max_allowed{$option}){
+			$need_set_sizes = 1;
+			unless ($can_set_sizes){
+				$error .= " Need $option set to at least ".$count_in_model{$option}.'.';
+				next;
+			}
 			my $neg = '';
 			$neg = '-' if ($option eq 'PD');
 			if (defined $self->problems->[0]->sizess() and scalar(@{$self ->problems->[0]->sizess()})>0){
@@ -365,7 +379,7 @@ sub check_and_set_sizes
 			}
 		}
 	}
-	
+	return $error;
 }
 sub create_maxeval_zero_models_array
 {
