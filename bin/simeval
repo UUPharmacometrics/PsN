@@ -197,7 +197,8 @@ my @array = ();
 for (my $i=1; $i< $len; $i++){
 	push(@array,$simeval->all_table_files->[$i]);
 }
-my $vpc = tool::npc->new( models	     => [ $model ],
+my $vpc = tool::npc->new( eval( $common_options::parameters ),
+						  models	     => [ $model ],
 						  directory => $simeval->directory.'/vpc_dv_vs_pred',
 						  samples => $options{'samples'},
 						  orig_table => $simeval->all_table_files->[0],
@@ -207,10 +208,8 @@ my $vpc = tool::npc->new( models	     => [ $model ],
 						  top_tool => 1,
 						  levels             => [],
 						  is_vpc             => 1,
-#						  template_directory_rplots => $simeval->template_directory_rplots,
-#						  template_file_rplots => 'vpc_default.R',
 						  directory_name_prefix => 'vpc',
-					   zip => 0,
+						  zip => 0,
 						  rplots => -1);
 
 $vpc-> print_options (cmd_line => 'vpc internal',
@@ -224,7 +223,8 @@ push(@{$simeval->vpctab_filenames},$vpc->vpctab_filename);
 push(@{$simeval->vpc_result_files},$vpc->directory.$vpc->results_file);
 push(@{$simeval->vpc_names},'DV vs PRED');
 
-$vpc = tool::npc->new( models	     => [ $model ],
+$vpc = tool::npc->new( eval( $common_options::parameters ),
+					   models	     => [ $model ],
 					   directory => $simeval->directory.'/vpc_cwres_vs_idv',
 					   samples => $options{'samples'},
 					   orig_table => $simeval->all_table_files->[0],
@@ -234,8 +234,6 @@ $vpc = tool::npc->new( models	     => [ $model ],
 					   top_tool => 1,
 					   auto_bin_mode		=> 'auto',
 					   is_vpc             => 1,
-#					   template_directory_rplots => $simeval->template_directory_rplots,
-#					   template_file_rplots => 'vpc_default.R',
 					   directory_name_prefix => 'vpc',
 					   levels             => [],
 					   zip => 0,
