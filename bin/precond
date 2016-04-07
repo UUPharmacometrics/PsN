@@ -52,7 +52,6 @@ my $res = GetOptions( \%options,
 
 exit unless $res;
 
-common_options::setup( \%options, 'precond' ); #calls set_globals etc, initiates random sequence
 
 my %help_text;
 
@@ -214,6 +213,7 @@ $help_text{-copy_data} = <<'EOF';
 EOF
 
 common_options::online_help('precond', \%options, \%help_text, \%required_options, \%optional_options);
+common_options::setup( \%options, 'precond' ); #calls set_globals etc, initiates random sequence
 
 my $model_filename = $ARGV[0];
 

@@ -55,7 +55,6 @@ if (defined $options{'simdata'}){
 	$options{'simdata'} = $dir.$file;
 }
 
-common_options::setup( \%options, 'mcmp' ); #calls set_globals etc, initiates random sequence
 
 
 my %help_text;
@@ -275,6 +274,7 @@ $help_text{Post_help_message} = <<'EOF';
 EOF
 
 common_options::online_help( 'mcmp', \%options, \%help_text, \%required_options, \%optional_options);
+common_options::setup( \%options, 'mcmp' ); #calls set_globals etc, initiates random sequence
 
 ## Check that we do not have a model file
 if ( scalar(@ARGV) > 0 ) {

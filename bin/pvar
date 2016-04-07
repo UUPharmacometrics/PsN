@@ -40,7 +40,6 @@ my $res = GetOptions( \%options,
 
 exit unless $res;
 
-common_options::setup( \%options, 'pvar' ); #calls set_globals etc, initiates random sequence
 
 my %help_text;
 
@@ -82,6 +81,7 @@ $help_text{-models} = <<'EOF';
 EOF
 
 common_options::online_help('pvar', \%options, \%help_text, \%required_options, \%optional_options);
+common_options::setup( \%options, 'pvar' ); #calls set_globals etc, initiates random sequence
 
 if (not defined $options{'samples'}) {
 	$options{'samples'} = 100;

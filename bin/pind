@@ -42,7 +42,6 @@ if (defined $options{'njd'}){
 }
 
 
-common_options::setup( \%options, 'pind' ); #calls set_globals etc, initiates random sequence
 
 my %help_text;
 
@@ -116,6 +115,7 @@ $help_text{Post_help_message} = <<'EOF';
 EOF
 
 common_options::online_help( 'pind', \%options, \%help_text, \%required_options, \%optional_options);
+common_options::setup( \%options, 'pind' ); #calls set_globals etc, initiates random sequence
 
 ## Check that we do have a model file
 if ( scalar(@ARGV) < 1 ) {

@@ -63,7 +63,6 @@ my $res = GetOptions( \%options,
 					  keys(%optional_options) );
 
 exit unless $res;
-common_options::setup( \%options, 'update_inits' ); #calls set_globals etc, initiates random sequence, sets nm_version
 #print "seed ".$options{'seed'}."\n";
 #print "nm_vesrion ".$options{'nm_version'}."\n";
 
@@ -348,6 +347,7 @@ EOF
 
 
 common_options::online_help('update_inits', \%options, \%help_text, \%required_options, \%optional_options);
+common_options::setup( \%options, 'update_inits' ); #calls set_globals etc, initiates random sequence, sets nm_version
 
 if ( scalar( @ARGV ) < 1 ){
   die "A model file must be specified. Use 'update_inits -h' for help.\n";

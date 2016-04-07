@@ -40,7 +40,6 @@ my $res = GetOptions( \%options,
 					  keys(%optional_options) );
 exit unless $res;
 
-common_options::setup( \%options, 'mimp' ); #calls set_globals etc, initiates random sequence
 
 
 my %help_text;
@@ -156,7 +155,8 @@ EOF
     Also see 'psn_options -h' for a description of common options.
 EOF
 
-	common_options::online_help( 'mimp', \%options, \%help_text, \%required_options, \%optional_options);
+common_options::online_help( 'mimp', \%options, \%help_text, \%required_options, \%optional_options);
+common_options::setup( \%options, 'mimp' ); #calls set_globals etc, initiates random sequence
 
 unless ( defined $options{'base_model'} ){
 	print "base_model must be given\n" ;

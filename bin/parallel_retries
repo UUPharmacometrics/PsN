@@ -46,7 +46,6 @@ my $res = GetOptions( \%options,
 exit unless $res;
 
 
-common_options::setup( \%options, 'parallel_retries' ); #calls set_globals etc, initiates random sequence
 
 
 my %help_text;
@@ -168,6 +167,7 @@ EOF
 
 
 common_options::online_help('parallel_retries', \%options,\%help_text, \%required_options, \%optional_options);
+common_options::setup( \%options, 'parallel_retries' ); #calls set_globals etc, initiates random sequence
 
 unless (defined $options{'degree'}){
 	my %hash = %{common_options::restore_options(@common_options::tool_options)};

@@ -44,7 +44,6 @@ my $res = GetOptions( \%options,
 	keys(%optional_options) );
 exit unless $res;
 
-common_options::setup(\%options, 'execute'); #calls set_globals etc, initiates random sequence
 
 my $eval_string = common_options::model_parameters(\%options);
 
@@ -123,6 +122,7 @@ stop run number
 EOF
 
 common_options::online_help('runrecord', \%options, \%help_text, \%required_options, \%optional_options);
+common_options::setup(\%options, 'execute'); #calls set_globals etc, initiates random sequence
 
 if( not defined $options{'to'} ){
 	print "The option -to must be specified. Please use runrecord -h to see the available options.\n" ;

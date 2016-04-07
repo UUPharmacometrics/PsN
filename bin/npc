@@ -61,7 +61,6 @@ if (defined $options{'msfo_file'}){
   }
 }
 
-common_options::setup( \%options, 'npc' ); #calls set_globals etc, initiates random sequence
 
 my %help_text;
 
@@ -308,6 +307,7 @@ $help_text{-n_simulation_models} = <<'EOF';
 EOF
 
 common_options::online_help( 'npc', \%options, \%help_text, \%required_options, \%optional_options);
+common_options::setup( \%options, 'npc' ); #calls set_globals etc, initiates random sequence
 
 ## Check that we do have a model file
 my $dummymodel=0;

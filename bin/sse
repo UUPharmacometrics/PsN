@@ -45,7 +45,6 @@ my $res = GetOptions( \%options,
 		      keys(%optional_options) );
 exit unless $res;
 
-common_options::setup( \%options, 'sse' ); #calls set_globals etc, initiates random sequence
 
 
 my %help_text;
@@ -245,6 +244,7 @@ $help_text{-random_estimation_inits} = <<'EOF';
 EOF
 
 common_options::online_help( 'sse', \%options, \%help_text, \%required_options, \%optional_options);
+common_options::setup( \%options, 'sse' ); #calls set_globals etc, initiates random sequence
 
 ## Check that we do have a model file
 if ( scalar(@ARGV) < 1 ) {
