@@ -3822,7 +3822,7 @@ sub _create_models
 	return \@new_models ,\@step_relations;
 }
 
-sub create_code
+sub old_create_code
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
@@ -3984,6 +3984,172 @@ sub create_code
 	@inits = @{$new_inits};
 	%bounds = %{$new_bounds};
 	@code = @{$new_code};
+
+	return \@code ,$end_theta ,\@inits ,\%bounds;
+}
+
+sub create_code
+{
+	my $self = shift;
+	my %parm = validated_hash(\@_,
+		state => { isa => 'Int', optional => 1 },
+		start_theta => { isa => 'Int', optional => 1 },
+		model_number => { isa => 'Int', optional => 1 },
+		parameter => { isa => 'Str', optional => 1 },
+		covariate => { isa => 'Str', optional => 1 },
+		continuous => { isa => 'Bool', optional => 1 },
+		statistics => { isa => 'HashRef', optional => 1 },
+		missing_data_token => { isa => 'Str', optional => 1 },
+		sum_covariates => { isa => 'Bool', default => 0, optional => 1 },
+		code => { isa => 'ArrayRef[Str]', optional => 1 },
+		inits => { isa => 'ArrayRef', optional => 1 },
+		bounds => { isa => 'HashRef', optional => 1 }
+	);
+	my $state = $parm{'state'};
+	my $start_theta = $parm{'start_theta'};
+	my $model_number = $parm{'model_number'};
+	my $parameter = $parm{'parameter'};
+	my $covariate = $parm{'covariate'};
+	my $continuous = $parm{'continuous'};
+	my %statistics = defined $parm{'statistics'} ? %{$parm{'statistics'}} : ();
+	my $missing_data_token = $parm{'missing_data_token'};
+	my $sum_covariates = $parm{'sum_covariates'};
+	my @code = defined $parm{'code'} ? @{$parm{'code'}} : ();
+	my @inits = defined $parm{'inits'} ? @{$parm{'inits'}} : ();
+	my %bounds = defined $parm{'bounds'} ? %{$parm{'bounds'}} : ();
+
+	my $new_code = [];
+	my $new_inits = [];
+	my $new_bounds = {};
+	my $codetype= $state;
+	my $typestring;
+	
+	if ( scalar @code == 1){
+		if( $code[0] eq 'none' ) {
+			$codetype = 1;
+			$typestring = 'none';
+		}elsif( $code[0] eq 'linear' ) {
+			$codetype = 2;
+			if ($continuous){
+				$typestring = 'linear';
+			}else{
+				$typestring = 'categorical';
+			}
+		}elsif( $code[0] eq 'hockey-stick' ) {
+			$codetype = 3;
+			$typestring = 'hockey-stick';
+		}elsif( $code[0] eq 'exponential' ) {
+			$codetype = 4;
+			$typestring = 'exponential';
+		}elsif( $code[0] eq 'power' ) {
+			$codetype = 5;
+			$typestring = 'power';
+		}elsif ( $code[0] ne '' ){
+			$typestring = 'user';
+		}
+	}elsif ( scalar @code > 1){
+		$typestring = 'user';
+	}
+	unless (defined $typestring){
+		if ( $codetype == 1 ) {
+			$typestring = 'none';
+		} elsif ( $codetype == 2 ) {
+			if ($continuous){
+				$typestring = 'linear';
+			}else{
+				$typestring = 'categorical';
+			}
+		} elsif ( $codetype == 3 ) {
+			$typestring = 'hockey-stick';
+		} elsif ( $codetype == 4 ) {
+			$typestring = 'exponential';
+		} elsif ( $codetype == 5 ) {
+			$typestring = 'power';
+		} else {
+			croak("State $codetype cannot be used when not defined in the [code] section.\n" );
+		}
+	}
+	unless ($typestring eq 'user'){
+		@code=();
+	}
+
+	if (not $continuous){
+		if (($typestring eq 'hockey-stick') or ($typestring eq 'power') or ($typestring eq 'exponential')){
+			croak("The $typestring parameterization is not defined for categorical covariates");
+		} 
+	}
+
+	if ($typestring eq 'power'){
+		if ($statistics{'min'} < 0){
+			ui -> print( category => 'scm',
+						 message  => "Warning: Creating power code for $covariate which has minimum < 0. ".
+						 "Covariate function value ".
+						 "may be negative or imaginary for observations where $covariate is < 0, which would lead to ".
+						 "errors.",newline => 1);
+		}
+	}
+	if ($sum_covariates and (($typestring eq 'power') or ($typestring eq 'exponential'))){
+		ui->print(category => 'scm',
+				  message => "Warning: The $typestring relation is inappropriate on ".
+				  "logit parameters.",newline => 1) ;
+	}
+	
+	#only format if first level recursion
+	if ($self->step_number() == 1){
+		for (my $i=0; $i< scalar(@inits);$i++){
+			$inits[$i] = $self->format_inits_bounds(string => $inits[$i],
+				statistics => \%statistics,
+				continuous => $continuous,
+				is_bound => 0)
+			if (defined $inits[$i]);
+		}
+		if ( defined $bounds{'lower'}){
+			for (my $i=0; $i< 25;$i++){
+				if (defined $bounds{'lower'}[$i] ){
+					$bounds{'lower'}[$i] = $self->format_inits_bounds(string => $bounds{'lower'}[$i],
+						statistics => \%statistics,
+						continuous => $continuous,
+						is_bound => 1);
+				}
+			}
+		}
+		if ( defined $bounds{'upper'}){
+			for (my $i=0; $i< 25;$i++){
+				if (defined $bounds{'upper'}[$i] ){
+					$bounds{'upper'}[$i] = $self->format_inits_bounds(string => $bounds{'upper'}[$i],
+						statistics => \%statistics,
+						continuous => $continuous,
+						is_bound => 1); 
+				}
+			}
+		}
+	}
+
+	my ($nexttheta,$fraction) = get_covariate_code(statistics => \%statistics,
+												   type => $typestring,
+												   sum_covariates => $sum_covariates, 
+												   linearize =>$self->linearize,
+												   missing_data_token => $missing_data_token,
+												   parameter => $parameter,
+												   covariate => $covariate,
+												   code => \@code,
+												   theta_number =>$start_theta);
+
+	my ($max,$min,$median,$mean) = format_max_min_median_mean(statistics => \%statistics);
+
+	get_covariate_theta_bounds_inits(bounds => \%bounds,
+									 max => $max,
+									 min => $min, 
+									 median => $median, 
+									 type => $typestring,
+									 inits => \@inits,
+									 global_init => $self->global_init,
+									 ntheta => ($nexttheta-$start_theta),
+									 linearize => $self->linearize,
+									 fraction => $fraction,
+									 sum_covariates => $sum_covariates);
+
+	my $end_theta = $nexttheta -1;
 
 	return \@code ,$end_theta ,\@inits ,\%bounds;
 }
@@ -4578,7 +4744,7 @@ sub format_inits_bounds
 	return $value;
 }
 
-sub create_linear_code
+sub old_create_linear_code
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
@@ -4629,6 +4795,7 @@ sub create_linear_code
 	$max =~ s/\s*//;
 	my $offset = '1';
 	$offset = '0' if ($sum_covariates);
+
 	if ( $continuous ) {
 		if ( scalar @code < 1 or ( scalar @code == 1 and $code[0] eq '' )
 				or ( scalar @code == 1 and $code[0] eq 'linear' )) {
@@ -4637,13 +4804,15 @@ sub create_linear_code
 				$code[1] = "$comment   $parameter$covariate = $offset\n";
 				$code[2] = $comment."ELSE\n";
 				my $sign = '-';
-				if ( $median < 0 ) { $sign = '+'; $median = -$median; }
-				$code[3] = "$comment   $parameter$covariate = ( $offset + THETA(".$theta_number++.")*($covariate $sign $median))\n";
+				$sign = '+' if ( $median < 0 );
+				$code[3] = "$comment   $parameter$covariate = ( $offset + THETA(".$theta_number++.
+					")*($covariate $sign ".abs($median)."))\n";
 				$code[4] = $comment."ENDIF\n";
 			} else {
 				my $sign = '-';
-				if ( $median < 0 ) { $sign = '+'; $median = -$median; }
-				$code[0] = "$comment$parameter$covariate = ( $offset + THETA(".$theta_number++.")*($covariate $sign $median))\n";
+				$sign = '+' if ( $median < 0 );
+				$code[0] = "$comment$parameter$covariate = ( $offset + THETA(".$theta_number++.
+					")*($covariate $sign ".abs($median)."))\n";
 			}
 		} else {
 			#state has been redefined
@@ -4659,48 +4828,16 @@ sub create_linear_code
 		}
 		# Boundaries
 
-		unless ( defined $bounds{'upper'} and defined $bounds{'upper'}[0] ) {
-			if ($sum_covariates){
-				$bounds{'upper'}[0] = 20;
-			}else{
-				my $upper_bound;
-				if ( $median-$min == 0 ) {
-					my $mes="median($median)-min($min)".
-					" for column $covariate is zero. Cannot calculate an upper boundary.";
-					carp($mes );
-					$upper_bound=100000;
-				} else{
-					$upper_bound     = 1/($median-$min);
-				}
-				my ($big,$small) = split('\.',$upper_bound);
-				$small           = substr($small,0,3);
-				$upper_bound     = $big.'.'.$small;
-				$upper_bound     = '0' if eval($upper_bound) == 0;
-				$bounds{'upper'}[0] = $upper_bound;
-			}
-		}
-		unless ( defined $bounds{'lower'} and defined $bounds{'lower'}[0] ) {
-			if ($sum_covariates){
-				$bounds{'lower'}[0] = -20;
-			}else{
-				my $lower_bound; 
-				if ( $median-$max == 0 ) {
-					my $mes = "median($median)-max($min)".
-					" for column $covariate is zero. Cannot calculate a lower boundary.";
-					carp($mes );
-					$lower_bound=-100000;
-				}else{
-					$lower_bound     = 1/($median - $max);
-				}
-				my ($big,$small)    = split('\.',$lower_bound);
-				$small           = substr($small,0,3);
-				$lower_bound     = $big.'.'.$small;
-				$lower_bound     = '0' if eval($lower_bound) == 0;
-				$bounds{'lower'}[0] = $lower_bound;
-			}
-		}
-
-		## Boundaries:
+		get_covariate_theta_bounds_inits(bounds => \%bounds,
+										 max => $max, 
+										 min => $min, 
+										 median => $median,
+										 type => 'linear',
+										 global_init => $self->global_init,
+										 inits => \@inits,
+										 linearize => $self->linearize,
+										 ntheta => 1,
+										 sum_covariates => $sum_covariates);
 
 	} else {
 		#categorical
@@ -4838,18 +4975,14 @@ sub create_linear_code
 		unless ( defined $inits[$i] ){
 			my $fraction = $self -> global_init;
 			my $tmp;
-			if( ( abs($bounds{'upper'}[$i]) >= 1000000 or 
-					not defined $bounds{'upper'}[$i] ) and
-				( abs($bounds{'lower'}[$i]) >= 1000000 or
-					not defined $bounds{'lower'}[$i] ) ) {
+			if( ( abs($bounds{'upper'}[$i]) >= 1000000 or not defined $bounds{'upper'}[$i] ) and
+				( abs($bounds{'lower'}[$i]) >= 1000000 or not defined $bounds{'lower'}[$i] ) ) {
 				$tmp = $fraction*100;
 			} else {
 				if ( abs($bounds{'upper'}[$i]) < abs($bounds{'lower'}[$i]) ) {
-					$tmp = $bounds{'upper'}[$i] == 0 ? $bounds{'lower'}[$i]*$fraction :
-					$bounds{'upper'}[$i]*$fraction;
+					$tmp = $bounds{'upper'}[$i] == 0 ? $bounds{'lower'}[$i]*$fraction : $bounds{'upper'}[$i]*$fraction;
 				} else {
-					$tmp = $bounds{'lower'}[$i] == 0 ? $bounds{'upper'}[$i]*$fraction :
-					$bounds{'lower'}[$i]*$fraction;
+					$tmp = $bounds{'lower'}[$i] == 0 ? $bounds{'upper'}[$i]*$fraction : $bounds{'lower'}[$i]*$fraction;
 				}
 			}
 			$inits[$i] = $tmp;
@@ -4862,7 +4995,400 @@ sub create_linear_code
 	return \@code ,$end_theta ,\@inits ,\%bounds;
 }
 
-sub create_hockey_stick_code
+sub format_max_min_median_mean
+{
+	my %parm = validated_hash(\@_,
+							  statistics => { isa => 'HashRef', optional => 0 },
+		);
+	my $statistics = $parm{'statistics'};
+
+	my $median = $statistics->{'median'};
+	if (defined $median){
+		$median = sprintf "%6.2f", $median;
+		$median =~ s/^\s*//;
+	}else{
+		$median = '';
+	}
+	my $min = $statistics->{'min'};
+	if (defined $min){
+		$min = sprintf "%6.2f", $min;
+		$min =~ s/^\s*//;
+	}else{
+		$min='';
+	}
+	my $max = $statistics->{'max'};
+	if (defined $max){
+		$max = sprintf "%6.2f", $max;
+		$max =~ s/^\s*//;
+	}else{
+		$max = '';
+	}
+	my $mean = $statistics->{'mean'};
+	if (defined $mean){
+		$mean = sprintf "%6.2f", $mean;
+		$mean =~ s/^\s*//;
+	}else{
+		$mean='';
+	}
+	
+	return ($max,$min,$median,$mean);
+}
+
+sub get_covariate_code
+{
+	my %parm = validated_hash(\@_,
+		code => { isa => 'ArrayRef', optional => 0 },
+		statistics => { isa => 'HashRef', optional => 0 },
+		type => { isa => 'Str', optional => 0 },
+		sum_covariates => { isa => 'Bool', optional => 0 },
+		linearize => { isa => 'Bool', optional => 0 },
+		missing_data_token => { isa => 'Str', optional => 0 },
+		parameter => { isa => 'Str', optional => 0 },
+		covariate => { isa => 'Str', optional => 0 },
+		theta_number => { isa => 'Int', optional => 0 },
+	);
+	my $statistics = $parm{'statistics'};
+	my $type = $parm{'type'};
+	my $sum_covariates = $parm{'sum_covariates'};
+	my $linearize = $parm{'linearize'};
+	my $missing_data_token = $parm{'missing_data_token'};
+	my $parameter = $parm{'parameter'};
+	my $covariate = $parm{'covariate'};
+	my $theta_number = $parm{'theta_number'};
+	my $code = $parm{'code'};
+	
+	my $offset = '1';
+	$offset = '0' if ($sum_covariates);
+
+	my ($max,$min,$median,$mean) = format_max_min_median_mean(statistics => $statistics);
+	my $have_missing_data = 0;
+	$have_missing_data = 1 if $statistics->{'have_missing_data'};
+	my $fraction;
+	
+	my $comment = '';
+
+	if ( scalar @{$code} < 1 or ( scalar @{$code} == 1 and $code->[0] eq '' ) ) {
+		croak("Input code is empty but type is 'user'.") if ($type eq 'user');
+	} else {
+		croak("Input code is defined but type is $type.") unless ($type eq 'user');
+	}
+	
+	if ($type eq 'none'){
+		$code->[0] = "   $parameter$covariate = $offset\n";
+	}elsif ($type eq 'user'){
+		my %unique_thetas;
+		# count the thetas.
+		for ( @{$code} ) {
+			if (/mean/ and (not defined $mean or length($mean)==0)){
+				croak("The mean is undefined for $covariate and cannot ".
+					  "be used in user-written code.");
+			}
+			if (/median/ and (not defined $median or length($median)==0)){
+				croak("The median is undefined for $covariate and cannot ".
+					  "be used in user-written code.");
+			}
+
+			s/median/$median/g;
+			s/mean/$mean/g;
+			s/maximum/$max/g;
+			s/minimum/$min/g;
+			my $copy = $_;
+			while ($copy =~ s/THETA\((\d+)\)//){
+				unless ($unique_thetas{$1} == 1){
+					$unique_thetas{$1} = 1;
+					$theta_number++;
+				}
+			}
+		}
+	}elsif ($type eq 'linear'){
+		if( $have_missing_data ) {
+			$code->[0] = $comment."IF($covariate.EQ.$missing_data_token) THEN\n";
+			$code->[1] = "$comment   $parameter$covariate = $offset\n";
+			$code->[2] = $comment."ELSE\n";
+			my $sign = '-';
+			$sign = '+' if ( $median < 0 );
+			$code->[3] = "$comment   $parameter$covariate = ( $offset + THETA(".$theta_number++.
+				")*($covariate $sign ".abs($median)."))\n";
+			$code->[4] = $comment."ENDIF\n";
+		} else {
+			my $sign = '-';
+			$sign = '+' if ( $median < 0 );
+			$code->[0] = "$comment$parameter$covariate = ( $offset + THETA(".$theta_number++.
+				")*($covariate $sign ".abs($median)."))\n";
+		}
+	}elsif ($type eq 'categorical'){
+		my %factors = %{$statistics->{'factors'}};
+		my @sorted = sort {$factors{$b}<=>$factors{$a}} keys(%factors); #most common first
+		my $numlvs = scalar @sorted;
+		$numlvs = $numlvs -1 if $have_missing_data;
+		my $sum_values=0;
+		if ($linearize){
+			if ($numlvs > 2){
+				croak("linearize option does not yet work with categorical covariates with more than two categories");
+			}else{
+				foreach my $key (@sorted){
+					$sum_values += $factors{$key} unless ($have_missing_data and ( $missing_data_token eq $key ));
+				}
+			}
+		}
+		my $first_non_missing = 1;
+		my $missing_line;
+		#initiate COMMON parameter if linearize and have missing data
+		if ($linearize and $have_missing_data){
+			push @{$code}, $comment."$parameter$covariate"."_COMMON=0  ";
+		}
+		for ( my $i = 0; $i <= $#sorted; $i++ ) {
+			if ( $have_missing_data and ( $missing_data_token eq $sorted[$i] 
+										  or $missing_data_token == $sorted[$i]) ) {
+				if ($linearize){
+					$missing_line = $comment."IF($covariate.EQ.$sorted[$i]) $parameter$covariate = $offset  ; Missing data\n";
+				}else{
+					push @{$code}, $comment."IF($covariate.EQ.$sorted[$i]) $parameter$covariate = $offset  ; Missing data\n";
+				}
+			} else {
+				if ( $first_non_missing ) {
+					if ($linearize){
+						$fraction=$factors{$sorted[$i]}/$sum_values;
+						$fraction = sprintf("%.6G",$fraction);
+						push @{$code}, $comment."; Frequency of most common case is ".$factors{$sorted[$i]}.
+							"/".$sum_values."=$fraction";
+						push @{$code}, $comment."IF($covariate.EQ.$sorted[$i]) $parameter$covariate".
+							"_COMMON=1; Most common case, indicator variable is 1";
+					}else{
+						push @{$code}, $comment."IF($covariate.EQ.$sorted[$i]) $parameter$covariate".
+							" = $offset  ; Most common\n";
+					}
+					$first_non_missing = 0;
+				} else {
+					if ($linearize){
+						push @{$code}, $comment."IF($covariate.EQ.$sorted[$i]) $parameter$covariate".
+							"_COMMON=0";
+						push @{$code}, $comment."$parameter$covariate = ($offset + THETA(".$theta_number++.
+							")*($fraction-$parameter$covariate"."_COMMON)) \n";
+						#comment for experiment
+						if (defined $missing_line){
+							push @{$code},$missing_line;
+						}
+					}else{
+						push @{$code}, $comment."IF($covariate.EQ.$sorted[$i]) $parameter$covariate".
+							" = ( $offset + THETA(".$theta_number++."))\n";
+					}
+				}
+			}
+		}
+
+	}elsif ($type eq 'hockey-stick'){
+		my $sign = '-';
+		$sign = '+' if ( $median < 0 );
+		$code->[0] = "IF($covariate.LE.$median) $parameter$covariate = ( $offset + THETA(".
+			$theta_number++.")*($covariate $sign ".abs($median)."))\n";
+		$code->[1] = "IF($covariate.GT.$median) $parameter$covariate ".
+			"= ( $offset + THETA(".$theta_number++.")*($covariate $sign ".abs($median)."))\n";
+		if ( $have_missing_data ) {
+			$code->[2] = "IF($covariate.EQ.$missing_data_token)   ".
+				"$parameter$covariate = $offset\n";
+		}
+	}elsif ($type eq 'power'){
+		ui -> print( category => 'scm',
+					 message  => "Warning: Creating power code for $covariate which has minimum < 0. ".
+					 "Covariate function value ".
+					 "may be negative or imaginary for observations where $covariate is < 0, which would lead to ".
+					 "errors.", newline => 1) if ($min < 0);
+		
+		ui->print(category => 'scm',
+				  message => "Warning: The exponential relation is inappropriate on ".
+				  "logit parameters.",newline => 1) if ($sum_covariates);
+		my $sign = '';
+		$sign = '-' if ( $median < 0 );
+		if ( $have_missing_data ) {
+			$code->[0] = "IF($covariate.EQ.$missing_data_token) THEN\n".
+				"   $parameter$covariate = $offset\n".
+				"ELSE\n".
+				"   $parameter$covariate = (($sign$covariate/".abs($median).")**THETA(".$theta_number++."))\n".
+				"ENDIF\n";
+		}else{
+			$code->[0] = "   $parameter$covariate = (($sign$covariate/".abs($median).")**THETA(".$theta_number++."))\n";
+		}
+
+	}elsif ($type eq 'exponential'){
+		ui->print(category => 'scm',
+				  message => "Warning: The exponential relation is inappropriate on ".
+				  "logit parameters.",newline => 1) if ($sum_covariates);
+		
+		my $sign = '-';
+		$sign = '+' if ( $median < 0 );
+		if ( $have_missing_data ) {
+			$code->[0] = "IF($covariate.EQ.$missing_data_token) THEN\n".
+				"   $parameter$covariate = $offset\n".
+				"ELSE\n".
+				"   $parameter$covariate = EXP(THETA(".$theta_number++.")*($covariate $sign ".abs($median)."))\n".
+				"ENDIF\n";
+		}else{
+			$code->[0] = "   $parameter$covariate = EXP(THETA(".$theta_number++.")*($covariate $sign ".abs($median)."))\n";
+		}
+
+	}else{
+		croak("unknown get_code type $type");
+	}
+
+	return $theta_number,$fraction;
+}
+
+sub get_covariate_theta_bounds_inits
+{
+	my %parm = validated_hash(\@_,
+							  bounds => { isa => 'HashRef', optional => 0 },
+							  inits => { isa => 'ArrayRef', optional => 0 },
+							  max => { isa => 'Num', optional => 0 },
+							  min => { isa => 'Num', optional => 0 },
+							  median => { isa => 'Num', optional => 0 },
+							  fraction => { isa => 'Maybe[Num]', optional => 1 },
+							  ntheta => { isa => 'Int', optional => 0 },
+							  type => { isa => 'Str', optional => 0 },
+							  sum_covariates => { isa => 'Bool', optional => 0 },
+							  linearize => {isa => 'Bool', optional => 0},
+							  global_init => {isa => 'Num', optional => 0},
+	);
+	my $max = $parm{'max'};
+	my $min = $parm{'min'};
+	my $median = $parm{'median'};
+	my $fraction = $parm{'fraction'};
+	my $ntheta = $parm{'ntheta'};
+	my $type = $parm{'type'};
+	my $sum_covariates = $parm{'sum_covariates'};
+	my $bounds = $parm{'bounds'};
+	my $linearize = $parm{'linearize'};
+	my $inits = $parm{'inits'};
+	my $global_init = $parm{'global_init'};
+	
+	if ($linearize and ($type eq 'categorical') and (not defined $fraction)){
+		croak("must define fraction if linearize and categorical");
+	}
+	
+	unless ( defined $bounds->{'upper'} and defined $bounds->{'upper'}[0] ) {
+		if ($sum_covariates){
+			for ( my $i = 0; $i < $ntheta; $i++ ) {
+				$bounds->{'upper'}[$i] = 20;
+			}
+		}elsif ($type eq 'linear'){
+			my $upper_bound;
+			if ( $median-$min == 0 ) {
+				$upper_bound=100000;
+			} else{
+				$upper_bound     = 1/($median-$min);
+				$upper_bound = sprintf("%.3f",$upper_bound);
+				$upper_bound     = '0' if eval($upper_bound) == 0;
+			}
+			$bounds->{'upper'}[0] = $upper_bound;
+		}elsif ($type eq 'categorical'){
+			for ( my $i = 0; $i < $ntheta; $i++ ) {
+				if ($linearize and ($fraction != 1)){
+					my $bound = 1/(1-$fraction);
+					$bound = sprintf("%.3f",$bound);
+					$bound     = '0' if eval($bound) == 0;
+					$bounds->{'upper'}[$i] = $bound;
+				}else{
+					$bounds->{'upper'}[$i] = 5;
+				}
+			}
+		}elsif ($type eq 'hockey-stick'){
+			if ($median == $min){
+				croak("the median and min are equal ($min) for covariate, cannot use hockey-stick parameterization.")
+			}
+			my $upper_bound     = 1/($median-$min);
+			$upper_bound = sprintf("%.3f",$upper_bound);
+			$upper_bound     = '0' if eval($upper_bound) == 0;
+			$bounds->{'upper'}[0] = $upper_bound;
+			$bounds->{'upper'}[1] = 100000;
+		}elsif ($type eq 'power'){
+			$bounds->{'upper'}[0] = 100000;
+		}elsif ($type eq 'exponential'){
+			$bounds->{'upper'}[0] = 100000;
+		}elsif ($type eq 'user'){
+			for ( my $i = 0; $i < $ntheta; $i++ ) {
+				$bounds->{'upper'}[$i] = 100000;
+			}
+		}elsif ($type eq 'none'){
+			$bounds->{'upper'}=[];
+		}else{
+			croak("unknown type $type");
+		}
+	}
+			
+	unless ( defined $bounds->{'lower'} and defined $bounds->{'lower'}[0] ) {
+		if ($sum_covariates){
+			for ( my $i = 0; $i < $ntheta; $i++ ) {
+				$bounds->{'lower'}[$i] = -20;
+			}
+		}elsif ($type eq 'linear'){
+			my $lower_bound; 
+			if ( $median-$max == 0 ) {
+				$lower_bound=-100000;
+			}else{
+				$lower_bound     = 1/($median - $max);
+				$lower_bound = sprintf("%.3f",$lower_bound);
+				$lower_bound     = '0' if eval($lower_bound) == 0;
+			}
+			$bounds->{'lower'}[0] = $lower_bound;
+		}elsif ($type eq 'categorical'){
+			for ( my $i = 0; $i < $ntheta; $i++ ) {
+				if ($linearize and ($fraction != 1)){
+					my $bound = (-1/$fraction);
+					$bound = sprintf("%.3f",$bound);
+					$bound     = '0' if eval($bound) == 0;
+					$bounds->{'lower'}[$i] = $bound;
+				}else{
+					$bounds->{'lower'}[$i] = -1;
+				}
+			}
+		}elsif ($type eq 'hockey-stick'){
+			$bounds->{'lower'}[0] = -100000;
+			if ($median == $max){
+				croak("the median and max are equal ($max) for covariate, cannot use hockey-stick parameterization.") ;
+			}
+			my $lower_bound     = 1/($median - $max);
+			$lower_bound = sprintf("%.3f",$lower_bound);
+			$lower_bound     = '0' if eval($lower_bound) == 0;
+			$bounds->{'lower'}[1] = $lower_bound;
+		}elsif ($type eq 'power'){
+			$bounds->{'lower'}[0] = -100000;
+		}elsif ($type eq 'exponential'){
+			$bounds->{'lower'}[0] = -100000;
+		}elsif ($type eq 'user'){
+			for ( my $i = 0; $i < $ntheta; $i++ ) {
+				$bounds->{'lower'}[$i] = -100000;
+			}
+		}elsif ($type eq 'none'){
+			$bounds->{'lower'}=[];
+		}else{
+			croak("unknown type $type");
+		}
+	}
+
+	for ( my $i = 0; $i < $ntheta; $i++ ) {
+		unless ( defined $inits->[$i] ){
+			my $tmp;
+			if (($type eq 'power') or ($type eq 'exponential') or ($type eq 'user')){
+				$tmp = $global_init;
+			}elsif( ( abs($bounds->{'upper'}[$i]) >= 100000 or not defined $bounds->{'upper'}[$i] ) and
+					( abs($bounds->{'lower'}[$i]) >= 100000 or not defined $bounds->{'lower'}[$i] ) ) {
+				$tmp = 100*$global_init;
+			} else {
+				if ( abs($bounds->{'upper'}[$i]) <= abs($bounds->{'lower'}[$i]) ) {
+					$tmp = $bounds->{'upper'}[$i] == 0 ? $bounds->{'lower'}[$i]*$global_init : $bounds->{'upper'}[$i]*$global_init;
+				} else {
+					$tmp = $bounds->{'lower'}[$i] == 0 ? $bounds->{'upper'}[$i]*$global_init : $bounds->{'lower'}[$i]*$global_init;
+				}
+			}
+			$inits->[$i] = $tmp;
+		}
+	}
+
+
+}
+
+
+sub old_create_hockey_stick_code
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
@@ -5431,7 +5957,7 @@ sub read_config_file
 	}
 }
 
-sub create_exponential_code
+sub old_create_exponential_code
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
@@ -5524,7 +6050,7 @@ sub create_exponential_code
 	return \@code ,$end_theta ,\@inits ,\%bounds;
 }
 
-sub create_power_code
+sub old_create_power_code
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
@@ -5570,7 +6096,7 @@ sub create_power_code
 	$max =~ s/\s*//;
 	my $offset = '1';
 	ui->print(category => 'scm',
-		message => "Warning: The exponential relation is inappropriate on ".
+		message => "Warning: The power relation is inappropriate on ".
 		"logit parameters.",newline => 1) if ($sum_covariates);
 
 	if ( $continuous ) {
@@ -5626,7 +6152,7 @@ sub create_power_code
 	return \@code ,$end_theta ,\@inits ,\%bounds;
 }
 
-sub create_user_code
+sub old_create_user_code
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
@@ -5718,7 +6244,7 @@ sub create_user_code
 	return \@code ,$end_theta ,\@inits ,\%bounds;
 }
 
-sub create_state1_code
+sub old_create_state1_code
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,

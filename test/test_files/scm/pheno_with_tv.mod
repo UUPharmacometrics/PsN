@@ -7,7 +7,6 @@ $PK
       CL    = TVCL*EXP(ETA(1))
 
       TVV   = THETA(2)
-TVV   = THETA(2)
       V     = TVV*EXP(ETA(2))
 
       S1    = V

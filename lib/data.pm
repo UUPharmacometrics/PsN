@@ -3173,8 +3173,8 @@ sub scm_calculate_continuous_statistics
 	$mean = $self -> mean(column => $column_number );
 
 
-	$median = sprintf("%6.2f", $median );
-	$mean = sprintf("%6.2f", $mean );
+	$median = sprintf("%.2f", $median );
+	$mean = sprintf("%.2f", $mean );
 
 	return $median ,$min ,$max ,$mean;
 }

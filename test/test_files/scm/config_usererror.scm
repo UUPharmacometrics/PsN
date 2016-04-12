@@ -22,6 +22,6 @@ CL=WGT,CVD1
 V=WGT,CVD1
 
 [valid_states]
-continuous = 1,2,4
+continuous = 1,2
 categorical = 1,2
 
