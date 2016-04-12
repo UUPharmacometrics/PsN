@@ -111,6 +111,12 @@ Changes and bug fixes from PsN 4.4.8 to n.n.n
 
 - More robust filtering on IGNORE/ACCEPT
 
+- Bug fix computation of covariate theta bounds for linear and hockey-stick
+  parameterization when median of covariate is negative.
+
+- Redesign of covariate code generation and computation of covariate theta
+  bounds and initial values.
+
    ___boot_scm___
 
 - More robust filtering on IGNORE/ACCEPT
