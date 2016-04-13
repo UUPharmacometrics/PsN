@@ -10,7 +10,7 @@ use includes; #file with paths to PsN packages and $path variable definition
 use PsN;
 
 SKIP: {
-	my ($major,$minor) = get_major_minor_nm_version();
+	my ($major,$minor,$dirt) = get_major_minor_nm_version();
     skip $major.".".$minor." is a too old NONMEM version for precond" if ($major < 7 or ($major == 7 and $minor < 2));
 
     our $tempdir = create_test_dir('system_precond');

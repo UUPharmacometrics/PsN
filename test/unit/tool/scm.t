@@ -23,6 +23,8 @@ our $file_dir = $includes::testfiledir;
 use File::Spec;
 open STDERR, '>', File::Spec->devnull();		# Silence STDERR
 
+my ($dirt1,$dirt2,$nmvers) = get_major_minor_nm_version;
+
 sub get_stats
 {
 	open( STAT, '<'."$dir/covariate_statistics.txt" );
@@ -118,6 +120,7 @@ $models_array = [ model -> new ( filename  => $scm_file_dir.'/pheno_missing.mod'
 my %options;
 $options{'nmfe'}=1;
 $options{'directory'}=$dir;
+$options{'nm_version'}=$nmvers;
 common_options::setup( \%options, 'scm' ); 
 
 $scm = tool::scm ->  new ( nmfe =>1,

@@ -16,9 +16,6 @@ use File::Spec;
 
 #in psn.conf must set output_style = SPLUS, otherwise tests will fail. fix by setting here.
 
-#tnpri is NM version dependent due to msfi file, 730 or 72.
-PsN::set_nonmem_info('default');
-our $nm_version = $PsN::nm_major_version * 100 + $PsN::nm_minor_version * 10;
 
 open STDERR, '>', File::Spec->devnull();	# Silence STDERR
 

@@ -12,7 +12,9 @@ my @readpipe_list;
 use nonmemrun;
 use model;
 
-my $nonmemrun = nonmemrun->new(nm_version => 'default');
+my ($dirt1,$dirt2,$nmvers) = get_major_minor_nm_version;
+
+my $nonmemrun = nonmemrun->new(nm_version => $nmvers);
 
 my $cmd = $nonmemrun->create_command;
 
@@ -21,7 +23,7 @@ like($cmd, qr/\s+psn.mod\s+psn.lst\s+/, "psn files");
 like($cmd, qr/\s+-background/, "background");
 
 my $nonmemrun = nonmemrun->new(
-	nm_version => 'default',
+	nm_version => $nmvers,
 	nmfe_options => 'my opts',
 );
 

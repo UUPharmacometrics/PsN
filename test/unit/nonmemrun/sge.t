@@ -18,8 +18,9 @@ BEGIN
 use nonmemrun::sge;
 use model;
 
+my ($dirt1,$dirt2,$nmvers) = get_major_minor_nm_version;
 my $model = model->new(filename => $includes::testfiledir . "/pheno5.mod");
-my $nonmemrun = nonmemrun::sge->new(nm_version => 'default', model => $model);
+my $nonmemrun = nonmemrun::sge->new(nm_version => $nmvers, model => $model);
 
 $nonmemrun->submit;
 
@@ -48,7 +49,7 @@ unlike($cmd, $re_prependflags, "no prepended flags");
 
 @readpipe_list = ();
 my $nonmemrun = nonmemrun::sge->new(
-	nm_version => 'default',
+	nm_version => $nmvers,
   model => $model,
 	resource => 'myresource',
 	queue => 'myqueue',

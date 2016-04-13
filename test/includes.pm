@@ -83,7 +83,7 @@ sub get_major_minor_nm_version
 		$version = $options->{'nm_version'};
 	}
 	PsN::set_nonmem_info($version);
-	return ($PsN::nm_major_version,$PsN::nm_minor_version);
+	return ($PsN::nm_major_version,$PsN::nm_minor_version,$version);
 	
 }
 

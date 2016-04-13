@@ -21,11 +21,13 @@ use model;
 
 open STDERR, '>', File::Spec->devnull();	# Silence STDERR
 
+my ($dirt1,$dirt2,$nmvers) = get_major_minor_nm_version;
+
 my $temp_dir = create_test_dir('unit_nonmemrun_lsf');
 chdir $temp_dir;
 
 my $model = model->new(filename => $includes::testfiledir . "/pheno5.mod");
-my $nonmemrun = nonmemrun::lsf->new(nm_version => 'default', model => $model, lsf_sleep => 0);
+my $nonmemrun = nonmemrun::lsf->new(nm_version => $nmvers, model => $model, lsf_sleep => 0);
 
 $nonmemrun->submit;
 
@@ -51,7 +53,7 @@ like($cmd, qr/\Absub\s+/, "command name");
 
 @readpipe_list = ();
 my $nonmemrun = nonmemrun::lsf->new(
-	nm_version => 'default',
+	nm_version => $nmvers,
   model => $model,
 	lsf_sleep => 0,
 	lsf_options => 'myopt optA',

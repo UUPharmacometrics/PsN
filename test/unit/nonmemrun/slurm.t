@@ -19,13 +19,14 @@ BEGIN
 use nonmemrun::slurm;
 use model;
 
+my ($dirt1,$dirt2,$nmvers) = get_major_minor_nm_version;
 my $model = model->new(filename => $includes::testfiledir . "/pheno5.mod");
 
 #temporarily unset uppmax if set
 my $old_uppmax = $PsN::config -> {'default_options'} -> {'uppmax'};
 $PsN::config -> {'default_options'} -> {'uppmax'} = 0;
 
-my $nonmemrun = nonmemrun::slurm->new(nm_version => 'default', model => $model);
+my $nonmemrun = nonmemrun::slurm->new(nm_version => $nmvers, model => $model);
 $nonmemrun->submit;
 
 #reset uppmax
@@ -61,7 +62,7 @@ unlike($cmd, $re_prependflags, "no prepended flags");
 
 @readpipe_list = ();
 my $nonmemrun = nonmemrun::slurm->new(
-	nm_version => 'default',
+	nm_version => $nmvers,
 	model => $model,
 	account => 'myaccount',
 	max_runtime => '12:00:00',
