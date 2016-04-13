@@ -213,6 +213,7 @@ release: main completion rel_dir $(RELFILES) $(PDFFILES)
 	@ cp -r test/system PsN-Source/test
 	@ cp -r test/test_files PsN-Source/test
 	@ cp test/includes.pm PsN-Source/test
+	@ cp test/runsystem PsN-Source/test
 	@ mkdir -p PsN-Source/doc
 	@ cp doc/*.pdf PsN-Source/doc
 	@ cp doc/*.scm PsN-Source/doc
