@@ -1039,6 +1039,44 @@ is($frac,undef,'fraction user');
 is($num,4,'theta number user');
 is_deeply($coderef,['PARCOV = 1 + THETA(1)*1.50 + THETA(2)*COV'], 'get_covariate_code user');
 
+is(tool::scm::get_typestring(state => 1, continuous => 1, code => []),
+   'none','get_typestring 1');
+is(tool::scm::get_typestring(state => 2, continuous => 1, code => []),
+   'linear','get_typestring 2');
+is(tool::scm::get_typestring(state => 2, continuous => 0, code => []),
+   'categorical','get_typestring 3');
+is(tool::scm::get_typestring(state => 3, continuous => 1, code => []),
+   'hockey-stick','get_typestring 4');
+is(tool::scm::get_typestring(state => 4, continuous => 1, code => []),
+   'exponential','get_typestring 5');
+is(tool::scm::get_typestring(state => 5, continuous => 1, code => []),
+   'power','get_typestring 6');
+is(tool::scm::get_typestring(state => 6, continuous => 1, code => ['hejsan']),
+   'user','get_typestring 7');
+is(tool::scm::get_typestring(state => 2, continuous => 1, code => ['none']),
+   'none','get_typestring 8');
+is(tool::scm::get_typestring(state => 3, continuous => 1, code => ['linear']),
+   'linear','get_typestring 9');
+is(tool::scm::get_typestring(state => 4, continuous => 0, code => ['linear']),
+   'categorical','get_typestring 10');
+is(tool::scm::get_typestring(state => 5, continuous => 1, code => ['hockey-stick']),
+   'hockey-stick','get_typestring 11');
+is(tool::scm::get_typestring(state => 3, continuous => 1, code => ['exponential']),
+   'exponential','get_typestring 12');
 
+my @code=('power');
+#my $code=['power'];
+is(tool::scm::get_typestring(state => 2, continuous => 1, code => \@code),
+   'power','get_typestring 13');
+is_deeply(\@code,[''],'reset code after found type');
+
+my @code=('power','hejsan');
+is(tool::scm::get_typestring(state => 2, continuous => 1, code => \@code),
+   'user','get_typestring 14');
+is_deeply(\@code,['power','hejsan'],'no reset user code ');
+
+dies_ok { tool::scm::get_typestring(state => 3,continuous => 0, code => []) } "categorical hockestick";
+dies_ok { tool::scm::get_typestring(state => 4,continuous => 0, code => []) } "categorical exponential";
+dies_ok { tool::scm::get_typestring(state => 5,continuous => 0, code => []) } "categorical power";
 
 done_testing();
