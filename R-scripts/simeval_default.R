@@ -370,7 +370,7 @@ iOFV_max <- array(0,c(n.subjects,1))
 iOFV_kernel <- array(0,c(100,samples))
 iOFV_kernel_average <-array(0,c(100,1))
 KLD_sim <-array(0,c(samples,1))
-for (i in 1:n.subjects){      
+for (i in 1:samples){      
   iOFV_sim <- all.iOFV_sim[paste('sample.',i,sep='')]
   iOFV_min[i]<-min(iOFV_sim)
   iOFV_max[i]<-max(iOFV_sim)
