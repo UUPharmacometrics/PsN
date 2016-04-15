@@ -110,6 +110,10 @@ my $xv =  tool::xv_step -> new( eval( $common_options::parameters ),
 																	 directory => undef} },
 								post_analyze => \&harvest_ofv,
     );
+$xv-> print_options (cmd_line => $cmd_line,
+					 toolname => 'crossval',
+					 local_options => [keys %optional_options],
+					 common_options => \@common_options::tool_options);
 
 $xv -> run;
 
