@@ -1,5 +1,5 @@
 \input{inputs/format_header.tex}
-\guidetitle{CDD user guide}{2015-02-23}
+\guidetitle{CDD user guide}{2016-04-13}
 
 
 \begin{document}
@@ -59,8 +59,11 @@ See common\_options.pdf for details.
 \nextopt
 \end{optionlist}
 
-\subsection{Auto-generated R-plots from PsN}
-\newcommand{\rplotsconditions}{The default cdd template 
+\subsection{cdd rplots}
+\newcommand{\rplotsconditions}{
+If option -rplots is set $>=1$, a plot with Covariance ratios
+vs Cook scores for each case, e.g. ID, will be generated. 
+The default cdd rplots template 
 requires no special R libraries.
 If no pdf is generated,
 see the .Rout file in the main run directory for error messages.}

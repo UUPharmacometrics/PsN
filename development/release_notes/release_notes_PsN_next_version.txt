@@ -89,11 +89,19 @@ Changes and bug fixes from PsN 4.4.8 to n.n.n
 
    ___bootstrap___
 
-- Bug fix: Summary calculations in bootstrap_results.csv were wrong if original model was skipped
+- Updated rplots template.
+- Bug fix: Summary calculations in bootstrap_results.csv were wrong if original model was filtered
+  out as a result of any of the -skip options.
 - Bug fix: Summary calculations in bootstrap_results.csv were missing if original model was not
-  estimated or had no .lst-file when using -no-run_base_model
-- Bug fix: Summary calculations for standard errors were wrong if only a subset of non-skipped samples
-  had successful covariance steps.	
+  estimated or had no .lst-file when using option -no-run_base_model
+- Bug fix: Summary calculations for standard errors were wrong if only a subset of non-skipped
+  samples had successful covariance steps.
+- Bug fix: If option -dofv is used then set delta-ofv undefined instead of equal to evaluation ofv
+  if original sample had undefined ofv.
+- Bug fix: More robust search for ID in IGNORE statements to warn about renumbering of individuals
+  during bootstrapping of data sets.
+- Bug fix: Filter out crashed runs (ofv and estimates NA) when doing summary calculations when
+  those runs have not already been filtered out by any -skip option.
 
    ___vpc/npc___
 
@@ -121,7 +129,9 @@ Changes and bug fixes from PsN 4.4.8 to n.n.n
 
 - More robust filtering on IGNORE/ACCEPT
 
-- Bug fix: Use common options, e.g. -nm_version, set on command-line.
+- Bug fix: Use common options, e.g. -nm_version, that are set on command-line.
+
+- Bug fix: If valid states not set in scm config file then use default set of valid states.
 
    ___simeval___ (was ebe_npde)
 
@@ -170,11 +180,15 @@ Changes and bug fixes from PsN 4.4.8 to n.n.n
 
    ___benchmark___
 
-- New tool
+- A new tool for systematic comparisons of ofv, parameter estimates and
+  run times across different combinations of NONMEM record settings,
+  THETA initial estimates and NONMEM/compiler versions. See details
+  in benchmark_userguide.pdf.
 
    ___psn___
 
-- The option -nm_versions now also print the path to the psn.conf that was used.
+- The option -nm_versions now also print the path to the psn.conf that was used,
+  and, if defined in psn.conf, a description of each NM version.
 
    ___nmoutput2so___
 
@@ -186,6 +200,10 @@ Changes and bug fixes from PsN 4.4.8 to n.n.n
 - Add description to TimeStamp explaining that unit is hours.
 - Add more PsN result files to RawResults. Also set specific oids for easier retrieval
 
-   ___se_of_eta___
+   ___crossval___
+
+- The crossval script now prints version_and_option_info.txt to the run directory.
+
+___se_of_eta___
 
 - Program is removed, because the program output is given by NONMEM in phi-file.
