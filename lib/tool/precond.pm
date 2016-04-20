@@ -81,7 +81,7 @@ sub modelfit_setup
             croak("\n\nmodel " . $self->precond_model->filename . " could not be run\n");
         }
         if (not $base_model->outputs->[0]->covariance_step_run->[0]) {
-            croak("\nCovariance step of the preconditioned model did not run (most likely the parameter estimation had failed).   See .lst file at $self->directory/base_modelfit/NM_run1/psn.lst for the reason.\n\n  One common issue is due to the boundaries of the parameters, see PRECOND user guide section 4.2 for workaround.  Otherwise, update the initial estimates with the final estimate update_inits ",$self->precond_model->filename,". If the model is very instable try with MAXEVAL=0 after update_inits (not recommended as it will make precond ignore the issues on parameter estimation).\n\n");
+            croak("\nCovariance step of the original model did not run (most likely the parameter estimation had failed).\n\nSee .lst file at ",$self->directory."m1/",utils::file::replace_extension($self->precond_model->filename, 'lst')," for the reason.\n\nPrecond cannot help if the parameter estimation of the original model fails in a way that the NONMEM terminates before proceeding to the covariance step.");
         }
 		if ($base_model->outputs->[0]->problems->[0]->subproblems->[0]->s_matrix_unobtainable) {
             print "\n\nS matrix was unobtainable, precond is intended to stablise covariance step by reducing the R-matrix related computational issues, hence most unlikely to remedy this issues with S matrix.\n";
@@ -857,7 +857,7 @@ sub convert_reparametrized_cov
 		 my $foldername=(split(/\//, $directory))[-1];
 		 my $filename=$model->filename;
 
-        open(my $fh, '<', $cov_filename) or croak("\nCovariance step of the preconditioned model did not run (most likely the parameter estimation had failed).   See .lst file at $foldername/repara_modelfit/NM_run1/psn.lst for the reason.\n\n  One common issue is due to the boundaries of the parameters, see PRECOND user guide section 4.2 for workaround.  Otherwise, update the initial estimates with the final estimate update_inits ",$filename,". If the model is very instable try with MAXEVAL=0 after update_inits (not recommended as it will make precond ignore the issues on parameter estimation).\n\n");
+        open(my $fh, '<', $cov_filename) or croak("\nCovariance step of the preconditioned model did not run (most likely the parameter estimation had failed).\n\nSee .lst file at $foldername/",utils::file::replace_extension($cov_filename, 'lst')," for the reason.\n\n  One common issue is due to the boundaries of the parameters, see PRECOND user guide section 4.2 for workaround.  Otherwise, update the initial estimates with the final estimate update_inits ",$filename,". If the model is very instable try with MAXEVAL=0 after update_inits (not recommended as it will make precond ignore the issues on parameter estimation).\n\n");
 
         while (my $tline = <$fh>) {
             chomp $tline;
@@ -1011,9 +1011,16 @@ sub read_precond_matrix
     my $self = shift;
     my $filename = shift;
 
-    open(my $fh, '<', $filename)
-        or die "Cannot find the R-matrix file.\nSpecify the R-matrix or the modelfit directory using -pre option\n";
+if (defined $self->precond_matrix) {
+	open(my $fh, '<', $filename)
+	        or die "Cannot find the R-matrix file.\nSpecify the R-matrix or the modelfit directory using -pre option\n";
 
+}
+	
+	open(my $fh, '<', $filename)
+		        or die "\nCovariance step of the original model did not run (most likely the parameter estimation had failed).\n\nSee .lst file at ",$self->directory."m1/",utils::file::replace_extension($self->base_model->filename, 'lst')," for the reason.\n\n  Precond cannot help if the parameter estimation of the original model fails in a way that the NONMEM terminates before proceeding to the covariance step.\n\n";
+
+    
     my @precond_matrix = _read_matrix($fh);
 
     $self->precond_matrix(\@precond_matrix);
