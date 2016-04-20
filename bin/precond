@@ -43,6 +43,7 @@ my %optional_options = (
 	"eigen_comp_only!" => undef,
     "notalways!" => undef,
     "copy_data!" => undef,
+	 "always!" => undef,
 );
 
 my $res = GetOptions( \%options,
