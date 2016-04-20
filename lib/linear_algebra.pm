@@ -1092,7 +1092,7 @@ sub spdarise
     
     for (my $index1 = 0; $index1 < scalar(@{$matrix}); $index1++) {
         for (my $index2 = 0; $index2 < scalar(@{$matrix}); $index2++) {
-            @tempA->[$index1]->[$index2] = $Q->[$index1]->[$index2] * $eigenvalues->[$index2];        
+            $tempA[$index1]->[$index2] = $Q->[$index1]->[$index2] * $eigenvalues->[$index2];        
 		}
     }
     my $fNormDiff=0;
@@ -1101,7 +1101,7 @@ sub spdarise
 			$posdefmatrix[$index1]->[$index2] =0;
 			for (my $index3 = 0; $index3 < scalar(@{$matrix}); $index3++) {
 				$posdefmatrix[$index1]->[$index2] =
-					$posdefmatrix[$index1]->[$index2] +  @tempA->[$index1]->[$index3]*$Q->[$index2]->[$index3] ;
+					$posdefmatrix[$index1]->[$index2] +  $tempA[$index1]->[$index3]*$Q->[$index2]->[$index3] ;
 			}
 			$fNormDiff=$fNormDiff+($posdefmatrix[$index1]->[$index2]-$matrix->[$index1]->[$index2])*($posdefmatrix[$index1]->[$index2]-$matrix->[$index1]->[$index2]) ;
         }
