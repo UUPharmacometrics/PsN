@@ -203,6 +203,12 @@ $help_text{-notalways} = <<'EOF';
       Continue onto preconditioning only if the covariance step of the original model fails. 
 EOF
 
+$help_text{-always} = <<'EOF';
+    -always
+
+      Always do preconditioning. This is the default. 
+EOF
+
 $help_text{-copy_data} = <<'EOF';
     -copy_data
     Set by default. Disable with -no-copy_data. By default PsN will copy
