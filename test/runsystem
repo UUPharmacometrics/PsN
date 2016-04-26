@@ -36,5 +36,5 @@ if ($nm_versions[0] eq "all") {
 
 foreach my $nmversion (@nm_versions) {
     print "=== Running system tests for NONMEM version: $nmversion ===\n";
-    system("prove system -r -Q -m @prove_args :: -nm_version=$nmversion");
+    system("prove system -r @prove_args :: -nm_version=$nmversion -silent");
 }
