@@ -15,9 +15,8 @@ use tool::lasso;
 use common_options;
 
 our $modeldir = $includes::testfiledir;
+my ($d1,$d2,$d3)= get_major_minor_nm_version;
 
-#use File::Spec;
-#open STDERR, '>', File::Spec->devnull();		# Silence STDERR
 
 dies_ok { tool::lasso::check_name(parameter => 'CL',covariate=>'APGR',factor => '2',version => 5) } "check name too long v 5";
 dies_ok { tool::lasso::check_name(parameter => 'V',covariate=>'HEJSAN',H => 'H',version => 6) } "check name too long v 6";
@@ -272,12 +271,12 @@ is($parameter_covariate_form->{'V'}{'APGR'}{'Htheta'},14,'parcovform pheno 15');
 
 
 $model = model->new(filename => "$modeldir/mox1.mod", ignore_missing_data => 1);
-my $dataobj = data->new(filename => "$modeldir/mox_simulated.csv",
+$dataobj = data->new(filename => "$modeldir/mox_simulated.csv",
 						idcolumn => 1,
 						missing_data_token => '-99',
 						ignoresign => '@');
 
-my ($parameter_covariate_form,$statistics) = 
+($parameter_covariate_form,$statistics) = 
 	tool::lasso::setup_covariates(relations => 'CL:AGE-3,SEX-1,,V:AGE-2,ACE-1,DIG-1,WT-2',
 								  data => $dataobj,
 								  model => $model);
@@ -366,7 +365,7 @@ is($refm->problems->[0]->thetas->[1]->options->[0]->init,$finalhash{'theta'}->{'
 is($refm->problems->[0]->thetas->[2]->options->[0]->init,$finalhash{'theta'}->{'TVKA'},'setup_optimal_model init 3');
 is($refm->problems->[0]->thetas->[3]->options->[0]->init,$finalhash{'theta'}->{'LAG'},'setup_optimal_model init 4');
 
-my $sd =sprintf("%.5f",$statistics->{'AGE'}{3}{'sd'});
+$sd =sprintf("%.5f",$statistics->{'AGE'}{3}{'sd'});
 my $init = exp(1-($abssum/0.1))*$finalhash{'theta'}->{'TH5 CLAGE'}/($sd);
 cmp_float($refm->problems->[0]->thetas->[4]->options->[0]->init,$init,'setup_optimal_model init 5'); #CLAGE
 

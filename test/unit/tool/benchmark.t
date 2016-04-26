@@ -12,6 +12,7 @@ use includes; #file with paths to PsN packages
 use tool::benchmark;
 
 
+my ($d1,$d2,$d3)= get_major_minor_nm_version;
 my $modeldir = $includes::testfiledir;
 
 my $model = model->new(filename => "$modeldir/pheno.mod", ignore_missing_data => 1);
@@ -128,7 +129,7 @@ cmp_ok($modellists->[3]->[3]->problems->[0]->thetas->[0]->options->[0]->init,'==
 cmp_ok($modellists->[3]->[7]->problems->[0]->thetas->[0]->options->[0]->init,'==',1,"theta mod th init 8");
 
 
-my $model = model::create_dummy_model();
+$model = model::create_dummy_model();
 
 dies_ok {tool::benchmark::get_modified_filename(model=>$model,option=>'FAST')} " no extension";
 
@@ -148,7 +149,7 @@ is(tool::benchmark::get_modified_filename(model=>$model,replicate=>1),'run1.FAST
 
 
 
-my $ref = tool::benchmark::parse_record_options(
+$ref = tool::benchmark::parse_record_options(
 	record_options => 'estimation:none,FAST');
 
 is_deeply($ref,[{'estimation' => ['none','FAST']}],"parse_record_options 1");

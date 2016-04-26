@@ -33,10 +33,10 @@ for (my $df=1; $df<=10; $df++){
 }
 
 $hashref = tool::mcmp::get_df_table();
-print "\n";
-for (my $df=1; $df<=20; $df++){
-	print '$df_table{'.$df.'}=[('.join(',',@{$hashref->{$df}}).')];'."\n";
-}
-print "\n";
+#print "\n";
+#for (my $df=1; $df<=20; $df++){
+#	print '$df_table{'.$df.'}=[('.join(',',@{$hashref->{$df}}).')];'."\n";
+#}
+#print "\n";
 
 done_testing();

@@ -10,7 +10,10 @@ use includes; #file with paths to PsN packages
 
 use tool::frem;
 use model;
+use ui;
 
+my ($d1,$d2,$d3)= get_major_minor_nm_version;
+ui->silent(1);
 
 our $tempdir = create_test_dir('unit_frem');
 chdir($tempdir);
@@ -43,7 +46,7 @@ is_deeply(tool::frem::get_eta_mapping(problem => $model->problems->[0],
 my ($corr,$message) = tool::frem::get_correlation_matrix_from_phi(start_eta_1 => 1,
 																  end_eta_1 => 3,
 																  model => $model);
-my $ans=[[0.6389949068,0.9566914852,0.1573687298],
+$ans=[[0.6389949068,0.9566914852,0.1573687298],
 		 [0.9566914852, 0.996786336,0.0799357334 ],
 		 [0.1573687298, 0.0799357334, 0.4438842175]];
 
@@ -68,7 +71,7 @@ is (length($message),0,'no error get_correlation_matrix 2');
 																  model => $model);
 is ($message," Input error end_eta_1, start 2, end eta 2: 3,2, 3",'input error get_correlation_matrix');
 
-my $model = model->new(filename => "$modeldir/mox1.mod", 
+$model = model->new(filename => "$modeldir/mox1.mod", 
 					   ignore_missing_data => 1);
 my ($arr,$need) = tool::frem::get_new_omega_order(model=> $model,skip_omegas=>[3,4,5,6]);
 is($need,1,'get new omega order 1');
@@ -93,8 +96,8 @@ is_deeply(tool::frem::get_parameters_to_etas(model => $model,
 											 etas => [3]),['KA'],'get_parameters_to_etas 2');
 		  
 $model->update_inits(from_output => $model->outputs->[0]);
-
-my ($block,$message) = tool::frem::get_filled_omega_block(model => $model,
+my $block;
+($block,$message) = tool::frem::get_filled_omega_block(model => $model,
 														  start_etas => [1,3],
 														  end_etas => [2,3]);
 
@@ -135,8 +138,8 @@ is($etanum_to_parameterhash->{1},'CL',"get_CTV_parameters etanum_to_parameterhas
 is($etanum_to_parameterhash->{2},'V',"get_CTV_parameters etanum_to_parameterhash 2");
 is($etanum_to_parameterhash->{3},'KA',"get_CTV_parameters etanum_to_parameterhash 3");
 
-my $bov_parameters = ['PHI','KA'];
-my ($ctv_parameters,$etanum_to_parameterhash) =  tool::frem::get_CTV_parameters(model=> $model,
+$bov_parameters = ['PHI','KA'];
+($ctv_parameters,$etanum_to_parameterhash) =  tool::frem::get_CTV_parameters(model=> $model,
 																				bov_parameters => $bov_parameters);
 is_deeply($ctv_parameters,['CL','KA','PHI','V'],"get_CTV_parameters ctvparams"); 
 is(scalar(keys(%{$etanum_to_parameterhash})),3,"get_CTV_parameters length hash keys");
@@ -222,7 +225,8 @@ is_deeply($full->[2],[sqrt(3)*sqrt(2)*0.01,sqrt(4)*sqrt(2)*0.01 ,2,0.4,0.2],"cre
 is_deeply($full->[3],[sqrt(3)*sqrt(4)*0.01,sqrt(4)*sqrt(4)*0.01 ,0.4,4,0.1],"create full_block 3");
 is_deeply($full->[4],[sqrt(3)*sqrt(5)*0.01,sqrt(4)*sqrt(5)*0.01 ,0.2,0.1,5],"create full_block 4");
 
-my ($filtered_data_model,$filter_table_header,$extra_input_items,$message) = 
+my ($filtered_data_model,$filter_table_header,$extra_input_items); 
+($filtered_data_model,$filter_table_header,$extra_input_items,$message) = 
 	tool::frem::create_data2_model( model => $model,
 									filename => 'filterdata.mod',
 									filtered_datafile => 'filtertype0.dta',
@@ -281,7 +285,7 @@ is_deeply($reg,['WT','CLCR'],'get regular cov');
 $model = model->new(filename => "$modeldir/mox1.mod", 
 					ignore_missing_data => 1);
 
-my @code = @{$model->problems->[0]->pks->[0]->code};
+@code = @{$model->problems->[0]->pks->[0]->code};
 is ($code[9],'   KPCL  = VIS3*ETA(4)+VIS8*ETA(5)'."\n",' pk before renumbering line 9');
 is ($code[10],'   KPKA  = VIS3*ETA(6)+VIS8*ETA(7)'."\n",' pk before renumbering line 10');
 is ($code[17],'   CL    = TVCL*EXP(ETA(1)+KPCL)'."\n",' pk before renumbering line 17');
@@ -310,7 +314,7 @@ is($model->problems->[0]->omegas->[1]->same,1,'reordered model record 2 same');
 is($model->problems->[0]->omegas->[2]->same,0,'reordered model record 3 not same');
 is($model->problems->[0]->omegas->[3]->same,1,'reordered model record 4 same');
 
-my @code = @{$model->problems->[0]->pks->[0]->code};
+@code = @{$model->problems->[0]->pks->[0]->code};
 is ($code[9],'   KPCL  = VIS3*ETA(1)+VIS8*ETA(2)'."\n",' pk renumbered line 9');
 is ($code[10],'   KPKA  = VIS3*ETA(3)+VIS8*ETA(4)'."\n",' pk renumbered line 10');
 is ($code[17],'   CL    = TVCL*EXP(ETA(5)+KPCL)'."\n",' pk renumbered line 17');
@@ -321,14 +325,14 @@ $model = model->new(filename => "$modeldir/pheno.mod",
 					ignore_missing_data => 1);
 
 
-my $input_model_fix_omegas = tool::frem::get_or_set_fix(model => $model,
+$input_model_fix_omegas = tool::frem::get_or_set_fix(model => $model,
 														type => 'omegas');
 ($new_omega_order,$need_to_move_omegas)=tool::frem::get_new_omega_order(model =>$model,
 																		   skip_omegas => []);
 is($need_to_move_omegas,0,'need to move 0');
 is_deeply($new_omega_order,[1],'new order 0');
 
-my ($skip_etas,$fix_omegas,$parameter_etanumbers) = 
+($skip_etas,$fix_omegas,$parameter_etanumbers) = 
 	tool::frem::put_skipped_omegas_first(model => $model,
 										 new_omega_order => $new_omega_order,
 										 need_to_move => $need_to_move_omegas,
@@ -360,7 +364,7 @@ my $model2 = model->new(filename => "$modeldir/frem/model_2.mod",
 					   ignore_missing_data => 1);
 
 
-my $ans = $output->perfect_individual_count();
+$ans = $output->perfect_individual_count();
 
 my $true = {1=>countN(8.12648E-02,1.29305E-02),
 			2=>countN(2.85876E+00,7.23777E-01),
@@ -403,7 +407,7 @@ my $matrix = [[1,2,3,4,5],
 			  [4,8,11,13,14],
 			  [5,9,12,14,15]];
 
-my $ans = tool::frem::reorder_covmatrix(matrix => $matrix,
+$ans = tool::frem::reorder_covmatrix(matrix => $matrix,
 										original_strings => ['A','B','C','D','E'],
 										reordered_strings => ['A','C','D','B','E']);
 
@@ -416,7 +420,7 @@ my $reor = [
 ];
 is_deeply($ans,$reor,'reorder covmatrix 1');
 
-my $ans = tool::frem::reorder_covmatrix(matrix => $matrix,
+$ans = tool::frem::reorder_covmatrix(matrix => $matrix,
 										original_strings => ['A','B','C','D','E'],
 										reordered_strings => ['A','B','C','D','E']);
 is_deeply($ans,$matrix,'reorder covmatrix 2');
@@ -467,8 +471,7 @@ cmp_float($guess_hash->{'OMEGA(3,3)'},(25**2+25*25)/16,'variance guess 4');
 cmp_float($guess_hash->{'OMEGA(4,3)'},(2**2+25*20)/16,'variance guess 5');
 cmp_float($guess_hash->{'OMEGA(4,4)'},(20**2+20*20)/25,'variance guess 6');
 
-open STDERR, '>', File::Spec->devnull();	# Silence STDERR
-my $ans = tool::frem::join_covmats(full_strings => $fullstr,
+$ans = tool::frem::join_covmats(full_strings => $fullstr,
 								   rse_guess_hash => {'OM11'=> 0.11,'OM21'=> 0.22,'OM22'=> 0.33,'OM31'=> 0.44,
 												  'OM32'=> 0.55,'OM33'=> 0.66,'OM41'=> 0.77,'OM42'=> 0.88,'OM43'=> 0.99,'OM44'=> 0.951},
 								   variance_guess_hash => {'OM11'=> 0.1,'OM21'=> 0.2,'OM22'=> 0.3,

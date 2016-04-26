@@ -14,6 +14,9 @@ use file;
 use tool::scm::config_file;
 use tool::scm;
 use common_options;
+use ui;
+
+ui->silent(1);
 
 our $tempdir = create_test_dir('unit_scm');
 our $dir = "$tempdir/scm_test";
@@ -21,7 +24,6 @@ our $scm_file_dir = $includes::testfiledir . '/scm';
 our $file_dir = $includes::testfiledir;
 
 use File::Spec;
-open STDERR, '>', File::Spec->devnull();		# Silence STDERR
 
 my ($dirt1,$dirt2,$nmvers) = get_major_minor_nm_version;
 
@@ -200,7 +202,7 @@ is_deeply($bounds->{'lower'},[sprintf("%6.3f",-1/2.37)],'lower linear bound neg 
 is_deeply($bounds->{'upper'},[sprintf("%5.3f",1/2.52)],'upper linear bound neg median');
 is_deeply($inits,[sprintf("%6.3f",1/2.52)*0.001],'linear inits');
 
-my $bounds = {};
+$bounds = {};
 $inits=[];
 tool::scm::get_covariate_theta_bounds_inits(bounds => $bounds,
 											max => 9, 
@@ -1073,7 +1075,7 @@ is(tool::scm::get_typestring(state => 2, continuous => 1, code => \@code),
    'power','get_typestring 13');
 is_deeply(\@code,[''],'reset code after found type');
 
-my @code=('power','hejsan');
+@code=('power','hejsan');
 is(tool::scm::get_typestring(state => 2, continuous => 1, code => \@code),
    'user','get_typestring 14');
 is_deeply(\@code,['power','hejsan'],'no reset user code ');

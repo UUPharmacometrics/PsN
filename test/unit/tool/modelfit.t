@@ -12,9 +12,9 @@ use includes; #file with paths to PsN packages
 use tool::modelfit;
 use math;
 use output;
+use ui;
 
-
-open STDERR, '>', File::Spec->devnull();	# Silence STDERR
+ui->silent(1);
 
 our $output_files = $includes::testfiledir . '/output/';
 my $modeldir = $includes::testfiledir;
@@ -195,7 +195,7 @@ cmp_ok($ref->[0],'eq','NMtran could not be initiated (the NMtran output file FDA
 cmp_ok($ref->[2],'==',0,'restart possible nmtran init local');
 cmp_ok($ref->[3],'==',1,'store error nmtran init ');
 
-my $ref = tool::modelfit::diagnose_lst_errors(missing => 1, 
+$ref = tool::modelfit::diagnose_lst_errors(missing => 1, 
 							  run_no => 0,
 							  have_stats_runs => 0,
 							  modext  => 'mod',
@@ -209,7 +209,7 @@ cmp_ok($ref->[3],'==',1,'store error nmtran init ');
 
 
 copy_test_files($dir,["modelfit/diagnose_lst_errors/FMSG", "modelfit/diagnose_lst_errors/locfile.set", "modelfit/diagnose_lst_errors/psn.lst"]);
-my $ref = tool::modelfit::diagnose_lst_errors(missing => 0, 
+$ref = tool::modelfit::diagnose_lst_errors(missing => 0, 
 							  run_no => 0,
 							  have_stats_runs => 0,
 							  modext  => 'mod',
@@ -287,8 +287,8 @@ cmp_ok($ref->[3],'==',1,'store error NONMEM fail ');
 
 remove_test_dir($tempdir);
 
-our $tempdir = create_test_dir('unit_modelfit');
-our $dir = "$tempdir/move_retry";
+$tempdir = create_test_dir('unit_modelfit');
+$dir = "$tempdir/move_retry";
 mkdir($dir);
 my @files =("pheno5.mod","pheno5.lst","pheno5.ext","pheno5.phi");
 copy_test_files($dir,\@files);
@@ -303,7 +303,7 @@ ok(-e 'pheno5-1.lst', "move retry lst");
 ok(-e 'pheno5-1.ext', "move retry ext");
 ok(-e 'pheno5-1.phi', "move retry phi");
 
-my ($mess,$file1,$file2) = tool::modelfit::move_retry_files(retry => 0,
+($mess,$file1,$file2) = tool::modelfit::move_retry_files(retry => 0,
 															crash => 2,
 															filenames => \@files,
 															nm_major_version => 7);
@@ -437,7 +437,7 @@ cmp_ok($local_min,'==',0,'local min worse than prev run but accepted ok');
 
 
 #too estimation step not run
-my $ref = tool::modelfit::retries_decide_what_to_do( estimation_step_run => 0,
+$ref = tool::modelfit::retries_decide_what_to_do( estimation_step_run => 0,
 										   minimization_successful => 0,
 										   local_minimum => 0,
 										   hessian_error => 1,

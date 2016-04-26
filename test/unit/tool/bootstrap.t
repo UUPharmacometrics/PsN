@@ -444,9 +444,9 @@ cmp_float_matrix($bootstrap->result_parameters->{'standard_error_confidence_inte
 
 remove_test_dir($tempdir);
 
-our $tempdir = create_test_dir("unit_bootstrap");
+$tempdir = create_test_dir("unit_bootstrap");
 
-my $bootstrap = tool::bootstrap->new(directory => $tempdir, skip_estimate_near_boundary => 1, models => [ $model ]);
+$bootstrap = tool::bootstrap->new(directory => $tempdir, skip_estimate_near_boundary => 1, models => [ $model ]);
 cp("$test_files/bootstrap/missing_original_model/raw_results_pheno.csv", "$tempdir/raw_results.csv");
 cp("$test_files/bootstrap/missing_original_model/raw_results_structure", $tempdir);
 
@@ -479,9 +479,9 @@ cmp_float_array($bootstrap->result_parameters->{'bias'}[0][0], [ ('NA') x 19 ], 
 
 
 remove_test_dir($tempdir);
-our $tempdir = create_test_dir("unit_bootstrap");
+$tempdir = create_test_dir("unit_bootstrap");
 
-my $bootstrap = tool::bootstrap->new(directory => $tempdir, skip_estimate_near_boundary => 1, models => [ $model ]);
+$bootstrap = tool::bootstrap->new(directory => $tempdir, skip_estimate_near_boundary => 1, models => [ $model ]);
 cp("$test_files/bootstrap/skipped_original_model/raw_results_pheno.csv", "$tempdir/raw_results.csv");
 cp("$test_files/bootstrap/skipped_original_model/raw_results_structure", $tempdir);
 
@@ -536,9 +536,9 @@ cmp_float_array($bootstrap->result_parameters->{'medians'}[0][0],
 
 remove_test_dir($tempdir);
 
-our $tempdir = create_test_dir("unit_bootstrap");
+$tempdir = create_test_dir("unit_bootstrap");
 
-my $bootstrap = tool::bootstrap->new(directory => $tempdir, skip_minimization_terminated => 0, models => [ $model ]);
+$bootstrap = tool::bootstrap->new(directory => $tempdir, skip_minimization_terminated => 0, models => [ $model ]);
 cp("$test_files/bootstrap/somecrash/raw_results_pheno.csv", "$tempdir/raw_results.csv");
 cp("$test_files/bootstrap/somecrash/raw_results_structure", $tempdir);
 
@@ -551,7 +551,7 @@ cmp_float_array($bootstrap->result_parameters->{'medians'}[0][0],
 
 remove_test_dir($tempdir);
 
-our $tempdir = create_test_dir("unit_bootstrap");
+$tempdir = create_test_dir("unit_bootstrap");
 $model = model->new(
     filename => "$test_files/mox_sir_block2.mod",
     ignore_missing_files => 1,
@@ -559,7 +559,7 @@ $model = model->new(
     ignore_missing_data => 1,
 	);
 
-my $bootstrap = tool::bootstrap->new(directory => $tempdir, 
+$bootstrap = tool::bootstrap->new(directory => $tempdir, 
 	skip_minimization_terminated => 1, 
 	skip_covariance_step_terminated => 0,
 	skip_with_covstep_warnings => 0,
@@ -605,8 +605,8 @@ cmp_float_array($bootstrap->result_parameters->{'diagnostic_means'}[0][0],
 
 remove_test_dir($tempdir);
 
-our $tempdir = create_test_dir("unit_bootstrap");
-my $bootstrap = tool::bootstrap->new(directory => $tempdir, 
+$tempdir = create_test_dir("unit_bootstrap");
+$bootstrap = tool::bootstrap->new(directory => $tempdir, 
 	skip_minimization_terminated => 0, 
 	skip_covariance_step_terminated => 0,
 	skip_with_covstep_warnings => 0,
