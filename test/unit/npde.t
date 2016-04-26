@@ -62,13 +62,13 @@ cmp_ok($est_matrix->[0]->[4]->[2],'==',14.846316011886847,'objv ind 5 sim 2  ');
 cmp_ok($est_matrix->[0]->[2]->[3],'==',11.088612997217446,'objv ind 3 sim 3');
 cmp_ok($est_matrix->[0]->[4]->[3],'==',8.4664237311178105,'objv ind 5 sim 3');
 
-my $est_matrix = $values_matrix_array->[2];
+$est_matrix = $values_matrix_array->[2];
 cmp_ok($est_matrix->[0]->[0]->[0],'==',1,'ID ind 1 original');
 cmp_ok($est_matrix->[0]->[3]->[0],'==',4,'ID ind 4 original');
 
 
 #is ($ok, 0, "read_table_files return status");
-my $est_matrix = $values_matrix_array->[0];
+$est_matrix = $values_matrix_array->[0];
 #this is stored in ebe_npde.m in matlab/old/
 cmp_ok($est_matrix->[0]->[0]->[0],'==',-5.50879E-02,'ETA1 ind 1 original');
 cmp_ok($est_matrix->[0]->[1]->[0],'==',-3.34657E-01,'ETA1 ind 2 original');
@@ -193,14 +193,14 @@ if(0){
 }
 
 
-my @file_array=($filedir.'original.phi',$filedir.'sim-two.phi',$filedir.'sim-3.phi');
-my $headers_array = [['ETA(1)','ETA(2)'],['OBJ'],['ID']];
-my $mean_matrix_array = [[],[],undef];
-my $values_matrix_array = [[],[],[]];
-my $filter_all_zero_array = [1,0,0];
-my $init_only_array = [0,0,1];
+@file_array=($filedir.'original.phi',$filedir.'sim-two.phi',$filedir.'sim-3.phi');
+$headers_array = [['ETA(1)','ETA(2)'],['OBJ'],['ID']];
+$mean_matrix_array = [[],[],undef];
+$values_matrix_array = [[],[],[]];
+$filter_all_zero_array = [1,0,0];
+$init_only_array = [0,0,1];
 
-my $ok = simeval_util::get_nmtabledata(filenames => \@file_array,
+$ok = simeval_util::get_nmtabledata(filenames => \@file_array,
 									header_strings_array => $headers_array,
 									values_matrix_array => $values_matrix_array,
 									mean_matrix_array => $mean_matrix_array,
@@ -217,8 +217,8 @@ my $ok = simeval_util::get_nmtabledata(filenames => \@file_array,
 
 is ($ok, 0, "get_nmtabledata multi return status");
 #is ($ok, 0, "read_table_files return status");
-my $est_matrix = $values_matrix_array->[0];
-my $mean_matrix = $mean_matrix_array->[0];
+$est_matrix = $values_matrix_array->[0];
+$mean_matrix = $mean_matrix_array->[0];
 
 #this is stored in ebe_npde.m in matlab/old/
 cmp_ok($est_matrix->[0]->[0]->[0],'==',-5.50879E-02,'ETA1 ind 1 original');
@@ -234,7 +234,7 @@ cmp_ok($est_matrix->[0]->[1]->[3],'==',-4.66493E-02,'ETA1 ind 2 sim 3');
 cmp_ok($est_matrix->[1]->[2]->[3],'==',-1.60687E-01,'ETA2 ind 3 sim 3');
 cmp_ok($est_matrix->[1]->[4]->[3],'==',9.17580E-02,'ETA2 ind 5 sim 3');
 
-my $diff = 1E-10;
+$diff = 1E-10;
 cmp_ok(abs($mean_matrix->[0]->[0]-(-0.4060175/3)),'<',$diff,'mean ETA1 ind 1');
 cmp_ok(abs($mean_matrix->[0]->[2]-(-0.1616416/3)),'<',$diff,'mean ETA1 ind 3');
 cmp_ok(abs($mean_matrix->[0]->[4]-0.272154/3),'<',$diff,'mean ETA1 ind 5');
@@ -249,13 +249,13 @@ cmp_ok(abs($mean_matrix->[1]->[4]-(-0.204386/3)),'<',$diff,'mean ETA2 ind 5');
 #my $ok = simeval_util::read_table_files(\@file_array,\@headers,$est_matrix,$mean_matrix,1);
 #is ($ok, 0, "read_table_files iwres return status");
 
-my $headers_array = [['IWRES'],['ID','MDV'],['CWRES']];
-my $mean_matrix_array = [[],undef,[]];
-my $values_matrix_array = [[],[],[]];
-my $filter_all_zero_array = [0,0,0];
-my $init_only_array = [0,1,0];
+$headers_array = [['IWRES'],['ID','MDV'],['CWRES']];
+$mean_matrix_array = [[],undef,[]];
+$values_matrix_array = [[],[],[]];
+$filter_all_zero_array = [0,0,0];
+$init_only_array = [0,1,0];
 
-my $ok = simeval_util::get_nmtabledata(filenames => \@file_array,
+$ok = simeval_util::get_nmtabledata(filenames => \@file_array,
 									header_strings_array => $headers_array,
 									values_matrix_array => $values_matrix_array,
 									mean_matrix_array => $mean_matrix_array,
@@ -264,8 +264,8 @@ my $ok = simeval_util::get_nmtabledata(filenames => \@file_array,
 
 is ($ok, 0, "get_nmtabledata iwres return status");
 
-my $est_matrix = $values_matrix_array->[2];
-my $mean_matrix = $mean_matrix_array->[2];
+$est_matrix = $values_matrix_array->[2];
+$mean_matrix = $mean_matrix_array->[2];
 cmp_ok($est_matrix->[0]->[1]->[0],'==',-1.2010E-01,'cwres rec 2 original');
 cmp_ok($est_matrix->[0]->[26]->[0],'==',2.5276E-01,'cwres rec 27 original');
 cmp_ok($est_matrix->[0]->[69]->[0],'==',-1.5425,'cwres rec 70 original');
@@ -278,8 +278,8 @@ cmp_ok($est_matrix->[0]->[69]->[3],'==',-8.4463E-01,'cwres rec 70  sim3');
 
 
 
-my $est_matrix = $values_matrix_array->[0];
-my $mean_matrix = $mean_matrix_array->[0];
+$est_matrix = $values_matrix_array->[0];
+$mean_matrix = $mean_matrix_array->[0];
 cmp_ok($est_matrix->[0]->[1]->[0],'==',-8.2625E-03,'iwres rec 2 original');
 cmp_ok($est_matrix->[0]->[26]->[0],'==',-0.00096254,'iwres rec 27 original');
 cmp_ok($est_matrix->[0]->[69]->[0],'==',-1.0819E-01,'iwres rec 70 original');
@@ -326,13 +326,13 @@ cmp_ok(abs($decorr->[0]->[69]->[0]-(-1.781701458701277)),'<',$diff,'decorr iwres
 
 #@file_array=($filedir.'original_iwres.dta',$filedir.'iwres-two.dta',$filedir.'iwres-3.dta');
 @file_array=($filedir.'iwres_cwres.tab',$filedir.'iwres-two.dta',$filedir.'iwres-3.dta');
-my $headers_array = [['IWRES'],['ID','MDV']];
-my $mean_matrix_array = [[],undef];
-my $values_matrix_array = [[],[]];
-my $filter_all_zero_array = [0,0];
-my $init_only_array = [0,1];
+$headers_array = [['IWRES'],['ID','MDV']];
+$mean_matrix_array = [[],undef];
+$values_matrix_array = [[],[]];
+$filter_all_zero_array = [0,0];
+$init_only_array = [0,1];
 
-my $ok = simeval_util::get_nmtabledata(filenames => \@file_array,
+$ok = simeval_util::get_nmtabledata(filenames => \@file_array,
 									header_strings_array => $headers_array,
 									values_matrix_array => $values_matrix_array,
 									mean_matrix_array => $mean_matrix_array,
@@ -341,8 +341,8 @@ my $ok = simeval_util::get_nmtabledata(filenames => \@file_array,
 
 
 is ($ok, 0, "get_nmtabledata iwres multi return status");
-my $est_matrix = $values_matrix_array->[0];
-my $mean_matrix = $mean_matrix_array->[0];
+$est_matrix = $values_matrix_array->[0];
+$mean_matrix = $mean_matrix_array->[0];
 
 
 cmp_ok($est_matrix->[0]->[1]->[0],'==',-8.2625E-03,'iwres rec 2 original');
@@ -356,7 +356,7 @@ cmp_ok($est_matrix->[0]->[41]->[3],'==',-0.027903,'iwres rec 42 sim3');
 cmp_ok($est_matrix->[0]->[69]->[3],'==',-0.00014352,'iwres rec 70  sim3');
 
 
-my $est_matrix = $values_matrix_array->[1];
+$est_matrix = $values_matrix_array->[1];
 
 cmp_ok($est_matrix->[0]->[0]->[0],'==',1,'id rec 1 original');
 cmp_ok($est_matrix->[0]->[39]->[0],'==',3,'id rec 40 original');

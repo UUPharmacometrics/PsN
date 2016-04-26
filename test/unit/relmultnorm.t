@@ -233,7 +233,7 @@ $times_sampled[$sample_index]++;
 $wghash = tool::sir::compute_weights(pdf_array => $pdf,
 									 dofv_array => [9.8,8.1,9.5]);
 
-my @times_sampled = (0) x $nsamples;
+@times_sampled = (0) x $nsamples;
 
 for (my $k=0; $k< 100; $k++){
 	my $sample_index = tool::sir::weighted_sample(cdf => $wghash->{'cdf'});
@@ -285,9 +285,9 @@ $file = 'mox_sir.lst';
 $output= output->new (filename => $dir . $file);
 
 $hash = output::get_nonmem_parameters(output => $output);
-my $icm = tool::sir::get_nonmem_inverse_covmatrix(output => $output);
+$icm = tool::sir::get_nonmem_inverse_covmatrix(output => $output);
 
-my $arr = tool::sir::setup_block_posdef_check(block_number => $hash->{'block_number'},
+$arr = tool::sir::setup_block_posdef_check(block_number => $hash->{'block_number'},
 											  choleskyform => $hash->{'choleskyform'},
 											  coords => $hash->{'coords'});
 is(scalar(@{$arr}),0,'setup block posdef count 2');
@@ -381,7 +381,7 @@ cmp_ok($covar->[7]->[7],'==',1.69362E-03,'covar element 8,8');
 cmp_ok($covar->[6]->[3],'==',2.75131E-03,'covar element 7,4');
 cmp_ok($covar->[4]->[6],'==',-3.05686E-04,'covar element 5,7');
 
-my $inflated = tool::sir::inflate_covmatrix(matrix => $covar,
+$inflated = tool::sir::inflate_covmatrix(matrix => $covar,
 							 inflation => [2,2,2,2,2,2,2,2]);
 
 cmp_float($inflated->[0]->[0],eval(2*6.10693E+00),'inflated covar element 1,1');
@@ -402,7 +402,7 @@ $output= output->new(filename => $dir . $file);
 
 $hash = output::get_nonmem_parameters(output => $output);
 
-my $arr = tool::sir::setup_block_posdef_check(block_number => $hash->{'block_number'},
+$arr = tool::sir::setup_block_posdef_check(block_number => $hash->{'block_number'},
 											  choleskyform => $hash->{'choleskyform'},
 											  coords => $hash->{'coords'});
 is(scalar(@{$arr}),1,'setup block posdef count');
@@ -425,7 +425,7 @@ cmp_ok($covar->[8]->[7],'==',eval(2.52026E-03),'covar element 9,8');
 $nsamples=3;
 
 #random_set_seed_from_phrase("hej pa dig");
-my ($gotsamples,$dirt) = tool::sir::sample_multivariate_normal(samples=>$nsamples,
+($gotsamples,$dirt) = tool::sir::sample_multivariate_normal(samples=>$nsamples,
 															   print_summary => 0,
 															   check_cholesky_reparameterization => 0,
 															   fix_theta_labels => [],
@@ -460,7 +460,7 @@ $num=tool::sir::get_determinant_factor(inverse_covmatrix => $icm,
 cmp_float($num,0.078944983399181, "determinant factor with inflation 3");
 
 
-my $mu = Math::MatrixReal->new_from_rows([[1,2,3]]);
+$mu = Math::MatrixReal->new_from_rows([[1,2,3]]);
 
 $pdf=tool::sir::mvnpdf(inverse_covmatrix => $icm,
 						  mu => $mu,
@@ -501,7 +501,7 @@ $wghash = tool::sir::compute_weights(pdf_array => $pdf,
 
 @times_sampledarr=(0,0,0);
 @sampleorder=(0,0,0);
-my $ok_resamples = tool::sir::do_resampling(times_sampled => \@times_sampledarr,
+$ok_resamples = tool::sir::do_resampling(times_sampled => \@times_sampledarr,
 											sample_order => \@sampleorder,
 											with_replacement => 0,
 											wghash => $wghash,
@@ -511,7 +511,7 @@ is_deeply(\@times_sampledarr,[1,1,1],'do_resampling times_sampled 2');
 is(($sampleorder[0]+$sampleorder[1]+$sampleorder[2]),6,'do_resampling sampleorder 2');
 
 
-my $arr = tool::sir::setup_block_posdef_check(block_number => [0,0,1,2,2,2,2,2,3,3,3,4,4],
+$arr = tool::sir::setup_block_posdef_check(block_number => [0,0,1,2,2,2,2,2,3,3,3,4,4],
 											  choleskyform => [0,0,0,0,0,0,0,0,0,0,0,0,0],
 											  coords => ['1','2','1,1','2,2','3,2','3,3','4,3','4,4','5,5','6,5','6,6','7,7','8,8']);
 is(scalar(@{$arr}),2,'setup block posdef count 4');
@@ -528,7 +528,7 @@ is($arr->[0]->{'size'},3,'setup block posdef size 6');
 is_deeply($arr->[0]->{'indices'},[3,4,5,-1,6,7],'setup block posdef indices 5');
 
 my $orig_xv = [1,1,3,0.1,1,0.2,0.3,3,4,1,3];
-my $xvec = [1,1,3,0.1,1,0.2,0.3,3,4,1,3];
+$xvec = [1,1,3,0.1,1,0.2,0.3,3,4,1,3];
 my $hash_arr = [{'size' => 3, 'indices' => [2,3,4,5,6,7]},{'size' => 2, 'indices' => [8,9,10]}];
 my ($accept,$adjusted) = tool::sir::check_blocks_posdef(xvec => $xvec,
 														hash_array => $hash_arr,

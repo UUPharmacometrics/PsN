@@ -84,14 +84,14 @@ is ($index_order_ref->[8],12,'mox_sir_block2.cor index order 8');
 
 $file = $includes::testfiledir.'/output/nm73/anneal2_V7_30_beta.cor';
 my @tmp = utils::file::slurp_file($file);
-my @lines=();
+@lines=();
 my $store=0;
 foreach my $line (@tmp){
 	$store = 1 if ($line =~ /^TABLE NO.     2:/);
 	push(@lines,$line) if ($store);
 }
 
-my ($success,$matrix_array_ref,$index_order_ref,$header_labels_ref) = 
+($success,$matrix_array_ref,$index_order_ref,$header_labels_ref) = 
 	output::problem::subproblem::parse_additional_table (covariance_step_run => 1,
 														 have_omegas => 1,
 														 have_sigmas => 1,
@@ -120,8 +120,8 @@ is ($matrix_array_ref->[44],eval(6.99733E-01),'anneal2_V7_30_beta.cor element (9
 is ($index_order_ref->[8],5,'anneal2_V7_30_beta.cor index order 8');
 
 $file = $includes::testfiledir.'/mox_sir.cov';
-my @lines = utils::file::slurp_file($file);
-my ($success,$matrix_array_ref,$index_order_ref,$header_labels_ref) = 
+@lines = utils::file::slurp_file($file);
+($success,$matrix_array_ref,$index_order_ref,$header_labels_ref) = 
 	output::problem::subproblem::parse_additional_table (covariance_step_run => 1,
 														 have_omegas => 1,
 														 have_sigmas => 1,
