@@ -8,6 +8,9 @@ use lib "$Bin/../../.."; #location of includes.pm
 use includes; #file with paths to PsN packages
 use data;
 use Config;
+use ui;
+
+ui->silent(1);
 
 SKIP: {
     eval { require XML::LibXML };
@@ -15,7 +18,7 @@ SKIP: {
 
     require so::parsers::nmoutput;
 
-    open STDERR, '>', File::Spec->devnull();	# Silence STDERR
+#    open STDERR, '>', File::Spec->devnull();	# Do not silence stderr! use silent instead
     sub get_xml
     {
         my $filename = shift;
