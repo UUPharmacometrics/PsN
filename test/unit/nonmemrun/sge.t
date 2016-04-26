@@ -48,7 +48,7 @@ unlike($cmd, qr/\s+-l\s+/, "no resource");
 unlike($cmd, $re_prependflags, "no prepended flags");
 
 @readpipe_list = ();
-my $nonmemrun = nonmemrun::sge->new(
+$nonmemrun = nonmemrun::sge->new(
 	nm_version => $nmvers,
   model => $model,
 	resource => 'myresource',
@@ -57,7 +57,7 @@ my $nonmemrun = nonmemrun::sge->new(
 );
 $nonmemrun->submit;
 
-my $cmd = $readpipe_list[0];
+$cmd = $readpipe_list[0];
 
 like($cmd, $re_resource, "resource");
 like($cmd, $re_queue, "queue");

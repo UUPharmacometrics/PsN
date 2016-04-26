@@ -50,6 +50,7 @@ my @is_ok = ('6','1.000','0','0.000','+10e+03','1.0E+01','-1.0E+01','0.000E-00',
 
 
 foreach my $number (@not_ok) {
+	no warnings qw(uninitialized);
 	is(usable_number($number),0,"not usable number $number");
 }
 foreach my $number (@is_ok) {

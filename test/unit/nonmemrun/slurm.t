@@ -61,7 +61,7 @@ unlike($cmd, qr/\s+--mail-type\s+/, "no mailtype");
 unlike($cmd, $re_prependflags, "no prepended flags");
 
 @readpipe_list = ();
-my $nonmemrun = nonmemrun::slurm->new(
+$nonmemrun = nonmemrun::slurm->new(
 	nm_version => $nmvers,
 	model => $model,
 	account => 'myaccount',
@@ -73,7 +73,7 @@ my $nonmemrun = nonmemrun::slurm->new(
 );
 $nonmemrun->submit;
 
-my $cmd = $readpipe_list[0];
+$cmd = $readpipe_list[0];
 
 like($cmd, $re_account, "account");
 like($cmd, $re_maxruntime, "maxruntime");

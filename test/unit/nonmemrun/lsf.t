@@ -6,6 +6,9 @@ use Test::More tests => 14;
 use FindBin qw($Bin);
 use lib "$Bin/../.."; #location of includes.pm
 use includes; #file with paths to PsN packages
+use ui;
+
+ui->silent(1);
 
 my @readpipe_list;
 
@@ -19,7 +22,6 @@ use File::Spec;
 use nonmemrun::lsf;
 use model;
 
-open STDERR, '>', File::Spec->devnull();	# Silence STDERR
 
 my ($dirt1,$dirt2,$nmvers) = get_major_minor_nm_version;
 
@@ -52,7 +54,7 @@ unlike_file_row($jobscript, qr/\s+-R\s+/, "no resources");
 like($cmd, qr/\Absub\s+/, "command name");
 
 @readpipe_list = ();
-my $nonmemrun = nonmemrun::lsf->new(
+$nonmemrun = nonmemrun::lsf->new(
 	nm_version => $nmvers,
   model => $model,
 	lsf_sleep => 0,
@@ -64,7 +66,7 @@ my $nonmemrun = nonmemrun::lsf->new(
 );
 $nonmemrun->submit;
 
-my $cmd = $readpipe_list[0];
+$cmd = $readpipe_list[0];
 
 like($cmd, qr/myopt optA/, "lsf_options");
 like_file_row($jobscript, qr/\A#BSUB\s+-q\s+myqueue\Z/, "queue");

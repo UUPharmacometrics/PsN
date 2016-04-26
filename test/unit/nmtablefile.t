@@ -27,7 +27,7 @@ is_deeply ($t->tables->[0]->header,{},"nmtablefile header");
 is_deeply ($t->tables->[0]->get_header,[],"nmtablefile header array"); 
 
 # parse nmtable
-my $t = nmtablefile->new(filename => "$dir/output/nm73/pheno5.ext");
+$t = nmtablefile->new(filename => "$dir/output/nm73/pheno5.ext");
 is (scalar(@{$t->tables}), 1, "nmtablefile number of tables");
 is ($t->tables->[0]->table_number, 1, "nmtablefile table_number");
 is ($t->tables->[0]->method, "First Order", "nmtablefile method");
@@ -74,7 +74,7 @@ is_deeply ($t->tables->[0]->columns, [ [ '-1000000000', '-1000000004' ],
         [ '51.680929191096922', '0.0000000000000000' ]
     ], "nmtablefile is_ext_file columns");
 
-my $t = nmtablefile->new(filename => "$dir/sdtab");
+$t = nmtablefile->new(filename => "$dir/sdtab");
 is (scalar(@{$t->tables}), 2, "nmtablefile stdtab number of tables");
 is ($t->tables->[0]->table_number, 2, "nmtablefile sdtab table_number");
 is ($t->tables->[0]->method, undef, "nmtablefile sdtab method");
@@ -108,7 +108,7 @@ is_deeply ($t->tables->[1]->columns, [ [ '5.9000E+01', '5.9000E+01' ],
                                   [ '3.0093E+01', '2.9844E+01' ],
                                   [ '4.0432E+01', '4.0089E+01' ] ], "nmtable sdtab 2 column");
  
-my $t = nmtablefile->new(filename => "$dir/output/nm73/anneal2_V7_30_beta.ext");
+$t = nmtablefile->new(filename => "$dir/output/nm73/anneal2_V7_30_beta.ext");
 is (scalar(@{$t->tables}), 3, "nmtablefile anneal number of tables");
 is_deeply ($t->table_lookup,{0 => 0, 1=> 1, 2=> 2},'nmtable table index 2');
 is_deeply ($t->problem_lookup->{1},{0 => 2},'nmtable problem index 2');
@@ -129,7 +129,7 @@ is_deeply ($t->tables->[0]->columns, [], "nmtablefile anneal0 columns");
 is ($t->tables->[1]->columns->[2]->[0], "6.29253E+00", "nmtablefile anneal1 columns");
 is ($t->tables->[2]->columns->[3]->[1], "1.05572E+00", "nmtablefile anneal1 columns");
 
-my $t = nmtablefile->new(filename => "$dir/output/multPROB/multEST/withSIM/multprobmix_nm730.ext", is_ext_file => 1);
+$t = nmtablefile->new(filename => "$dir/output/multPROB/multEST/withSIM/multprobmix_nm730.ext", is_ext_file => 1);
 is (scalar(@{$t->tables}), 13, "nmtablefile multprob number of tables 2");
 is_deeply ($t->table_lookup,{1 => 0, 2=> 1, 3=> 2,4 =>3,5 =>4,6 =>5,7 =>6,8 =>7,9 =>8, 10=>9, 11=>10,12 =>11,13 => 12},'nmtable table index 3');
 is_deeply ($t->problem_lookup->{1},{0 => 0},'nmtable problem index 3');
@@ -145,19 +145,19 @@ is($t->get_table(number => 11)->method,'First Order','get table number');
 is($t->get_table(problem => 5,subproblem => 3)->method,'First Order Conditional Estimation','get table prob subprob');
 is($t->get_table(number => 20),undef,'get table undef');
 
-my $t = nmtablefile->new(filename => "$dir/output/multPROB/multEST/withSIM/multprobmix_nm710.ext", is_ext_file => 1);
+$t = nmtablefile->new(filename => "$dir/output/multPROB/multEST/withSIM/multprobmix_nm710.ext", is_ext_file => 1);
 is($t->get_table(index => -2)->method,'First Order','get table index nm710');
 is($t->get_table(number => 7)->method,'First Order Conditional Estimation','get table number nm710');
 
-my $t = nmtablefile->new(filename => "$dir/output/multPROB/multEST/withSIM/multprobmix_nm712.ext", is_ext_file => 1);
+$t = nmtablefile->new(filename => "$dir/output/multPROB/multEST/withSIM/multprobmix_nm712.ext", is_ext_file => 1);
 is($t->get_table(index => -1)->method,'First Order Conditional Estimation (Evaluation)','get table index nm712');
 is($t->get_table(number => 9)->method,'First Order (Evaluation)','get table number nm712');
 
-my $t = nmtablefile->new(filename => "$dir/output/multPROB/multEST/withSIM/multprobmix_nm720.ext", is_ext_file => 1);
+$t = nmtablefile->new(filename => "$dir/output/multPROB/multEST/withSIM/multprobmix_nm720.ext", is_ext_file => 1);
 is($t->get_table(index => -2)->method,'First Order Conditional Estimation','get table index nm720');
 is($t->get_table(problem => 5, subproblem => 1)->method,'First Order Conditional Estimation','get table number nm720');
 
-my $t = nmtablefile->new(filename => "$dir/output/special_mod/minimterm_cov_unconditional.ext", is_ext_file => 1);
+$t = nmtablefile->new(filename => "$dir/output/special_mod/minimterm_cov_unconditional.ext", is_ext_file => 1);
 my $table = $t->get_table(index => 0); 
 is_deeply($table->get_iteration_lookup(),
 		  {'est' =>0 ,'se' => 1,'eigen' =>2 ,'matrix'=>3, 'sd'=>4,'sdse'=>5,'extra'=>6},'get iteration lookup');

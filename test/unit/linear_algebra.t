@@ -29,54 +29,54 @@ close $fh;
 my $A = linear_algebra::read_from_file(filename => "testfile");
 is_deeply($A, [[1, 2, 3, 4, 5], [2, 3, 1, 4, 99]], "read_from_file comma separated");
 
-open my $fh, ">", "testfile_space";
+open  $fh, ">", "testfile_space";
 print $fh "1.23 2e14    5\n";
 print $fh "1 2  1.56789\n";
 print $fh "1   1 1";
 close $fh;
-open my $fh, "<", "testfile_space";
-my $A = linear_algebra::read_from_file(filehandle => $fh, separator => '\s+');
+open  $fh, "<", "testfile_space";
+$A = linear_algebra::read_from_file(filehandle => $fh, separator => '\s+');
 is_deeply($A, [[1.23, 2e14, 5], [1, 2, 1.56789], [1, 1, 1]], "read_from_file space separated");
 close $fh;
 
 remove_test_dir($testdir);
 
 #pad_matrix
-my @A = ([1, 2, 4], [3, 5 ,7], [8, 4, 1]);
+@A = ([1, 2, 4], [3, 5 ,7], [8, 4, 1]);
 linear_algebra::pad_matrix(\@A, 5);
 
 is(scalar(@A), 5, "pad_matrix num rows");
-is_deeply(@A[0], [1, 2, 4, 0, 0], "pad_matrix row 1");
-is_deeply(@A[1], [3, 5, 7, 0, 0], "pad_matrix row 2");
-is_deeply(@A[2], [8, 4, 1, 0, 0], "pad_matrix row 3");
-is_deeply(@A[3], [0, 0, 0, 1, 0], "pad_matrix row 4");
-is_deeply(@A[4], [0, 0, 0, 0, 1], "pad_matrix row 5");
+is_deeply($A[0], [1, 2, 4, 0, 0], "pad_matrix row 1");
+is_deeply($A[1], [3, 5, 7, 0, 0], "pad_matrix row 2");
+is_deeply($A[2], [8, 4, 1, 0, 0], "pad_matrix row 3");
+is_deeply($A[3], [0, 0, 0, 1, 0], "pad_matrix row 4");
+is_deeply($A[4], [0, 0, 0, 0, 1], "pad_matrix row 5");
 
 #reduce_matrix
-my @A = ([1, 3, 5, 7], [8, 6, 4, 2], [1, 2, 3, 4], [6, 7, 9, 1]);
+@A = ([1, 3, 5, 7], [8, 6, 4, 2], [1, 2, 3, 4], [6, 7, 9, 1]);
 
 linear_algebra::reduce_matrix(\@A, 4);
 is(scalar(@A), 4, "reduce_matrix don't reduce");
-is_deeply(@A[0], [1, 3, 5, 7], "reduce_matrix don't reduce row 0");
-is_deeply(@A[3], [6, 7, 9, 1], "reduce_matrix don't reduce row 3");
+is_deeply($A[0], [1, 3, 5, 7], "reduce_matrix don't reduce row 0");
+is_deeply($A[3], [6, 7, 9, 1], "reduce_matrix don't reduce row 3");
 
 linear_algebra::reduce_matrix(\@A, 2);
 
 is(scalar(@A), 2, "reduce_matrix num rows");
-is_deeply(@A[0], [1, 3], "reduce_matrix row 0");
-is_deeply(@A[1], [8, 6], "reduce_matrix row 1");
+is_deeply($A[0], [1, 3], "reduce_matrix row 0");
+is_deeply($A[1], [8, 6], "reduce_matrix row 1");
 
 #put_ones_on_diagonal_of_zero_lines
-my @A = ([1, 2, 3, 4], [0, 0, 0, 0], [9, 8, 7, 6], [0, 0, 0, 0]);
+@A = ([1, 2, 3, 4], [0, 0, 0, 0], [9, 8, 7, 6], [0, 0, 0, 0]);
 linear_algebra::put_ones_on_diagonal_of_zero_lines(\@A);
 
-is_deeply(@A[0], [1, 2, 3, 4], "put_ones_on... row 1");
-is_deeply(@A[1], [0, 1, 0, 0], "put_ones_on... row 2");
-is_deeply(@A[2], [9, 8, 7, 6], "put_ones_on... row 3");
-is_deeply(@A[3], [0, 0, 0, 1], "put_ones_on... row 4");
+is_deeply($A[0], [1, 2, 3, 4], "put_ones_on... row 1");
+is_deeply($A[1], [0, 1, 0, 0], "put_ones_on... row 2");
+is_deeply($A[2], [9, 8, 7, 6], "put_ones_on... row 3");
+is_deeply($A[3], [0, 0, 0, 1], "put_ones_on... row 4");
 
 #triangular_symmetric_to_full
-my @A = (1, 5, 3, 7, 8, 2);
+@A = (1, 5, 3, 7, 8, 2);
 my $res = linear_algebra::triangular_symmetric_to_full(\@A);
 
 is_deeply($res->[0], [1, 5, 7], "triangular_symmetric_to_full row 1");
@@ -84,29 +84,29 @@ is_deeply($res->[1], [5, 3, 8], "triangular_symmetric_to_full row 2");
 is_deeply($res->[2], [7, 8, 2], "triangular_symmetric_to_full row 3");
 
 #Transpose
-my @A = ([1, 2, 3], [4, 5, 6], [7, 8, 9]);
+@A = ([1, 2, 3], [4, 5, 6], [7, 8, 9]);
 linear_algebra::transpose(\@A);
 
-is_deeply(@A[0], [1, 4, 7], "transpose row 1");
-is_deeply(@A[1], [2, 5, 8], "transpose row 2");
-is_deeply(@A[2], [3, 6, 9], "transpose row 3");
+is_deeply($A[0], [1, 4, 7], "transpose row 1");
+is_deeply($A[1], [2, 5, 8], "transpose row 2");
+is_deeply($A[2], [3, 6, 9], "transpose row 3");
 
 # is_symmetric
-my @A = ([1, 2], [2, 3]);
+@A = ([1, 2], [2, 3]);
 ok(linear_algebra::is_symmetric(\@A), "is_symmetric matrix 1");
 @A = ([1, 2], [3, 2]);
 ok(!linear_algebra::is_symmetric(\@A), "is_symmetric matrix 2");
 
 #LU_factorization
-my $A = [[2, 3], [1, 2]];
+$A = [[2, 3], [1, 2]];
 linear_algebra::LU_factorization($A);
 is_deeply($A, [[2, 3], [0.5, 0.5]], "lu matrix A");
 
-my @B = ([8, 4, 1], [5, 5, 2], [4, 2, 2]);
+@B = ([8, 4, 1], [5, 5, 2], [4, 2, 2]);
 linear_algebra::LU_factorization(\@B);
 is_deeply(\@B, [[8, 4, 1], [0.625, 2.5, 1.375], [0.5, 0, 1.5]], "lu matrix B");
 
-my $C = [[8, 7, 6, 5], [4, 3, 2, 1], [4, 3, 3, 1], [4, 3, 2, 0]];
+$C = [[8, 7, 6, 5], [4, 3, 2, 1], [4, 3, 3, 1], [4, 3, 2, 0]];
 linear_algebra::LU_factorization($C);
 is_deeply($C, [[8, 7, 6, 5], [0.5, -0.5, -1, -1.5], [0.5, 1, 1, 0], [0.5, 1, 0, -1]], "lu matrix C");
 
@@ -151,15 +151,15 @@ cmp_float_matrix($vecs,
         ], "eigenvecs");
 
 
-my $A = [[9,8,7], [8, 5, 3], [7, 3, 7]];
-(my $eigen, my $vecs) = linear_algebra::eigenvalue_decomposition($A);
+$A = [[9,8,7], [8, 5, 3], [7, 3, 7]];
+($eigen, $vecs) = linear_algebra::eigenvalue_decomposition($A);
 cmp_float_array($eigen, [ 19.609194939332617,  -1.903857409809233,   3.294662470476631 ], "eigen simple matrix");
 cmp_float_matrix($vecs, [[ 0.706547465982442, -0.684965411383339, -0.177800628576624],
        [ 0.491463745176441,  0.655722706583517, -0.573141447853785],
        [ 0.509169977012525,  0.317569074815606,  0.79993488311851 ]], "eigenvectors simple matrix");
 
-my $A = [[1, 2], [2, 3]];
-(my $eigen, my $vecs) = linear_algebra::eigenvalue_decomposition($A);
+$A = [[1, 2], [2, 3]];
+($eigen, $vecs) = linear_algebra::eigenvalue_decomposition($A);
 cmp_float_array($eigen, [-0.23606797749979,  4.23606797749979], "eigen 2x2 matrix");
 cmp_float_matrix($vecs, [[0.85065080835204 , 0.525731112119133], [ -0.525731112119133, 0.85065080835204 ]], "eigenvecs 2x2 matrix");
 
@@ -179,9 +179,9 @@ cmp_float($result->[2]->[0], 0.045454545454545, 'invert_symmetric (3,1)');
 cmp_float($result->[2]->[1], -0.136363636363636, 'invert_symmetric (3,2)');
 cmp_float($result->[2]->[2], 0.318181818181818, 'invert_symmetric (3,3)');
 
-my @matrix = ([3,1,0], [1,5,0], [0,0,0]);
-my $result = [];
-my $err = linear_algebra::invert_symmetric(\@matrix,$result);
+@matrix = ([3,1,0], [1,5,0], [0,0,0]);
+$result = [];
+$err = linear_algebra::invert_symmetric(\@matrix,$result);
 
 is ($err,1,'invert_symmetric numerr');
 
@@ -223,7 +223,7 @@ eval(join(' ',@{$inits}));
 #exit;
 eval(join(' ',@{$code}));
 
-my @matrix=();
+@matrix=();
 for(my $i=0;$i<scalar(@{$strings});$i++){
 	push(@matrix,[ (0) x scalar(@{$strings})]);
 }
@@ -247,7 +247,7 @@ for(my $i=0;$i<scalar(@{$strings});$i++){
 }
 
 
-my ($strings,$inits,$code,$warnings)=linear_algebra::string_cholesky_block(value_matrix=>$omega,
+($strings,$inits,$code,$warnings)=linear_algebra::string_cholesky_block(value_matrix=>$omega,
 																		   record_index=>0,
 																		   theta_count=>1,
 																		   testing=>1,
@@ -265,7 +265,7 @@ eval(join(' ',@{$inits}));
 #exit;
 eval(join(' ',@{$code}));
 
-my @matrix=();
+@matrix=();
 for(my $i=0;$i<scalar(@{$strings});$i++){
 	push(@matrix,[ (0) x scalar(@{$strings})]);
 }
@@ -297,7 +297,7 @@ my $omega6 = [
 	[-0.2,0.2,-0.1,0.3,0.4,2] 
 ];
 
-my ($strings,$inits,$code,$warnings)=linear_algebra::string_cholesky_block(
+($strings,$inits,$code,$warnings)=linear_algebra::string_cholesky_block(
 	value_matrix=>$omega6,
 	record_index=>2,
 	bounded_theta => 0,
@@ -309,7 +309,7 @@ is($inits->[0],'0.000001 ; log SD_C1','string cholesky init block 1');
 is($inits->[1],'0.80471896 ; log SD_C2','string cholesky init block 2');
 is($inits->[2],'0.17936477 ; logit (COR_C21+1)/2','string cholesky init block 3');
 
-my ($strings,$inits,$code,$warnings)=linear_algebra::string_cholesky_block(
+($strings,$inits,$code,$warnings)=linear_algebra::string_cholesky_block(
 	value_matrix=>$omega6,
 	record_index=>2,
 	bounded_theta => 1,
@@ -331,7 +331,9 @@ if (0){
 		print "\n";
 	}
 }
-my ($count,$code,$etalist)=linear_algebra::eta_cholesky_code(
+my $count;
+my $etalist;
+($count,$code,$etalist)=linear_algebra::eta_cholesky_code(
 	stringmatrix=> $strings,
 	eta_count=> 5,
 	diagonal => 0);
@@ -354,7 +356,7 @@ my ($COR_C21,$COR_C31,$COR_C41,$COR_C51,$COR_C61,$COR_C32,$COR_C42,$COR_C52,$COR
 my ($COR_C43,$COR_C53,$COR_C63,$COR_C54,$COR_C64,$COR_C65);
 my ($CH_C22,$CH_C32,$CH_C42,$CH_C52,$CH_C62,$CH_C33,$CH_C43,$CH_C53,$CH_C63,$CH_C44,$CH_C54,$CH_C64,$CH_C55,$CH_C65,$CH_C66);
 
-my ($strings,$inits,$code,$warnings)=linear_algebra::string_cholesky_block(
+($strings,$inits,$code,$warnings)=linear_algebra::string_cholesky_block(
 	value_matrix=>$omega6,
 	record_index=>2,
 	theta_count=>1,
@@ -363,7 +365,7 @@ my ($strings,$inits,$code,$warnings)=linear_algebra::string_cholesky_block(
 eval(join(' ',@{$inits}));
 eval(join(' ',@{$code}));
 
-my @matrix=();
+@matrix=();
 for(my $i=0;$i<scalar(@{$strings});$i++){
 	push(@matrix,[ (0) x scalar(@{$strings})]);
 }
@@ -387,7 +389,7 @@ for(my $i=0;$i<scalar(@{$strings});$i++){
 
 
 
-my ($count,$code,$etalist)=linear_algebra::eta_cholesky_code(
+($count,$code,$etalist)=linear_algebra::eta_cholesky_code(
 	stringmatrix=> ['SD_C1','SD_C2','SD_C3'],
 	eta_count=> 5,
 	diagonal => 1);
@@ -455,7 +457,7 @@ is_deeply($hashref->{'THETA'},[3,4,5,6,7,8],"get inverse parameter list THETA");
 is_deeply($hashref->{'RECORD'},[0],"get inverse parameter list RECORD");
 is($hashref->{'bounded_theta'},1,'get inverse parameter list bounded theta');
 
-my $hashref = linear_algebra::get_inverse_parameter_list(code => [
+$hashref = linear_algebra::get_inverse_parameter_list(code => [
 															 'SD_A1=EXP(THETA(3))',
 															 'SD_A2=EXP(THETA(4))',
 															 'COR_A21=EXP(THETA(5))*2/(EXP(THETA(5))+1) -1',
@@ -479,7 +481,7 @@ is_deeply($hashref->{'THETA'},[3,4,5,6,7,8],"unbounded get inverse parameter lis
 is_deeply($hashref->{'RECORD'},[0],"unbounded get inverse parameter list RECORD");
 is($hashref->{'bounded_theta'},0,'unbounded get inverse parameter list bounded theta');
 
-my $hashref = linear_algebra::get_inverse_parameter_list(code => [
+$hashref = linear_algebra::get_inverse_parameter_list(code => [
 															 'SD_A1=THETA(3)',
 															 'SD_A2=EXP(THETA(4))',
 															 'COR_A21=EXP(THETA(5))*2/(EXP(THETA(5))+1) -1',
@@ -499,7 +501,7 @@ my $hashref = linear_algebra::get_inverse_parameter_list(code => [
 
 is($hashref->{'bounded_theta'},-1,'mix unbounded get inverse parameter list bounded theta');
 
-my ($strings,$inits,$code)=linear_algebra::string_cholesky_diagonal(
+($strings,$inits,$code)=linear_algebra::string_cholesky_diagonal(
 	value_matrix=>[4,9,16],
 	record_index=>3,
 	theta_count=>0,
@@ -515,7 +517,7 @@ is($inits->[0],'(0,3) ; SD_D2','string cholesky init diag 2');
 
 is($code->[0],'SD_D2=THETA(1)','string cholesky code diag 2');
 
-my ($strings,$inits,$code)=linear_algebra::string_cholesky_diagonal(
+($strings,$inits,$code)=linear_algebra::string_cholesky_diagonal(
 	value_matrix=>[4,9,16],
 	record_index=>3,
 	theta_count=>0,
@@ -537,7 +539,7 @@ my @Amatrix =([1,9,1],[2,3,0],[1,2,3],[0,1,0]);
 is(linear_algebra::full_rank(\@Amatrix),1,"full rank nice");
 
 my $cov=[];
-my $err = linear_algebra::row_cov(\@Amatrix,$cov);
+$err = linear_algebra::row_cov(\@Amatrix,$cov);
 
 cmp_relative($cov->[0]->[0],0.666666666666667,7,"row_cov  1 ");
 cmp_relative($cov->[0]->[1],0.666666666666667,7,"row_cov  2 ");
@@ -559,12 +561,12 @@ is($corr->[0]->[1],$corr->[1]->[0],"corr symm 1");
 is($corr->[0]->[2],$corr->[2]->[0],"corr symm 2");
 is($corr->[1]->[2],$corr->[2]->[1],"corr symm 3");
 
-my @Amatrix =([1,9,1],[2,3,0],[1,2,3],[0,1,0]);
+@Amatrix =([1,9,1],[2,3,0],[1,2,3],[0,1,0]);
 
-my $cov=[];
+$cov=[];
 my $median=[];
 my $mean=[];
-my $err = linear_algebra::row_cov_median_mean(\@Amatrix,$cov,$median,$mean,'-99');
+$err = linear_algebra::row_cov_median_mean(\@Amatrix,$cov,$median,$mean,'-99');
 
 cmp_relative($cov->[0]->[0],0.666666666666667,7,"row_cov_median  1 ");
 cmp_relative($cov->[0]->[1],0.666666666666667,7,"row_cov_median  2 ");
@@ -580,7 +582,7 @@ is($cov->[1]->[2],$cov->[2]->[1],"row_cov_median symm 3");
 
 
 
-my @Amatrix =([1,2,3,4,5],
+@Amatrix =([1,2,3,4,5],
 			  [9,3,4,1,1],
 			  [1,0,-3,0,1]);
 
@@ -588,40 +590,40 @@ is(linear_algebra::full_rank(\@Amatrix),0,"full rank wide");
 my $Rmat=[];
 my $err1 = linear_algebra::QR_factorize(\@Amatrix,$Rmat);
 
-cmp_relative($Rmat->[0]->[0],8,7.416198487095664,"qr element 1");
-cmp_relative($Rmat->[1]->[0],8,4.854239009735343,"qr element 2");
-cmp_relative($Rmat->[1]->[01],8,9.188926141631764,"qr element 3");
-cmp_relative($Rmat->[2]->[0],8,-0.404519917477945,"qr element 4");
-cmp_relative($Rmat->[2]->[1],8,-0.003957332533002,"qr element 5");
-cmp_relative($Rmat->[2]->[2],8,3.291860868245021,"qr element 6");
+cmp_relative($Rmat->[0]->[0],7.416198487095664,8,"qr element 1");
+cmp_relative($Rmat->[1]->[0],4.854239009735343,8,"qr element 2");
+cmp_relative($Rmat->[1]->[01],9.188926141631764,8,"qr element 3");
+cmp_relative($Rmat->[2]->[0],-0.404519917477945,8,"qr element 4");
+cmp_relative($Rmat->[2]->[1],-0.003957332533002,8,"qr element 5");
+cmp_relative($Rmat->[2]->[2],3.291860868245021,8,"qr element 6");
 
 is($err1,0,"qr factorize ok");
 my @singular = ([1,2,3,4,5],
 			  [0,1,-5,7,2],
 			  [1,3,-2,11,7]);
 $Rmat=[];
-my $err1 = linear_algebra::QR_factorize(\@singular,$Rmat);
-cmp_relative($Rmat->[0]->[0],8,7.416198487095664,"singular qr element 1");
+$err1 = linear_algebra::QR_factorize(\@singular,$Rmat);
+cmp_relative($Rmat->[0]->[0],7.416198487095664,8,"singular qr element 1");
 
 is($err1,1,"qr factorize singular");
 
-my @A =([1,0,0],[0,-0.1,0],[0,0,1]);
+@A =([1,0,0],[0,-0.1,0],[0,0,1]);
 
 
 my ($pos,$diff) = linear_algebra::get_symmetric_posdef(\@A);
 	
 cmp_float_matrix($pos,[[1,0,0],[0,0.0000000001,0],[0,0,1]],'ensure diagonal posdef');
 
-my @A =([1,0.1,0.2],[0.1,1,0.3],[0.2,0.3,1]);
+@A =([1,0.1,0.2],[0.1,1,0.3],[0.2,0.3,1]);
 ($pos,$diff) = linear_algebra::spdarise(matrix=>\@A);
 
 cmp_float_matrix($pos,\@A,'spdarise posdef matrix');
 is(abs($diff)<1E-20,1,'spdarise posdef diff');
 
-my @Amatrix =([1,2,1,0],[9,3,2,1],[1,0,3,0]);
+@Amatrix =([1,2,1,0],[9,3,2,1],[1,0,3,0]);
 
-my $cov=[];
-my $err = linear_algebra::column_cov(\@Amatrix,$cov);
+$cov=[];
+$err = linear_algebra::column_cov(\@Amatrix,$cov);
 
 cmp_relative($cov->[0]->[0],0.666666666666667,7,"col_cov  1 ");
 cmp_relative($cov->[0]->[1],0.666666666666667,7,"col_cov  2 ");

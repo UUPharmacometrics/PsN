@@ -226,7 +226,7 @@ $times_sampled[$sample_index]++;
 $wghash = tool::sir::compute_weights(pdf_array => $pdf,
 									 dofv_array => [9.8,8.1,9.5]);
 
-my @times_sampled = (0) x $nsamples;
+@times_sampled = (0) x $nsamples;
 
 for (my $k=0; $k< 100; $k++){
 	my $sample_index = tool::sir::weighted_sample(cdf => $wghash->{'cdf'});
@@ -279,7 +279,7 @@ $dir = $includes::testfiledir . "/";
 $file = 'mox_sir.lst';
 $output= output->new (filename => $dir . $file);
 
-my $icm = tool::sir::get_nonmem_inverse_covmatrix(output => $output);
+$icm = tool::sir::get_nonmem_inverse_covmatrix(output => $output);
 
 cmp_ok($icm->element(1,1),'==',eval(4.05821E-01),'inverse element 1,1');
 cmp_ok($icm->element(3,1),'==',5.71808E+00,'inverse element 3,1');
@@ -404,7 +404,7 @@ cmp_ok($covar->[8]->[7],'==',eval(2.52026E-03),'covar element 9,8');
 $nsamples=3;
 
 #random_set_seed_from_phrase("hej pa dig");
-my ($gotsamples,$dirt) = tool::sir::sample_multivariate_normal(samples=>$nsamples,
+($gotsamples,$dirt) = tool::sir::sample_multivariate_normal(samples=>$nsamples,
 															   print_summary => 0,
 															   check_cholesky_reparameterization => 0,
 															   fix_theta_labels => [],
@@ -438,7 +438,7 @@ $num=tool::sir::get_determinant_factor(inverse_covmatrix => $icm,
 cmp_float($num,0.078944983399181, "determinant factor with inflation 3");
 
 
-my $mu = Math::MatrixReal->new_from_rows([[1,2,3]]);
+$mu = Math::MatrixReal->new_from_rows([[1,2,3]]);
 
 $pdf=tool::sir::mvnpdf(inverse_covmatrix => $icm,
 						  mu => $mu,

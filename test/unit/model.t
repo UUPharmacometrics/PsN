@@ -168,13 +168,13 @@ is_deeply($hashref->{'sigma'},[24],'method get_rawres_parameter_indices 2, sigma
 
 #get_rawres_params method
 #here $model must still refer to pheno.mod, otherwise test will fail
-
-my ($arr,$hashref) = model::get_rawres_params(filename => $modeldir.'/rawres_for_get_rawres_params.csv',
-											  string_filter => ['method.eq.bootstrap'],
-											  filter => ['significant_digits.gt.4'],
-											  require_numeric_ofv => 1,
-											  offset => 1,
-											  model => $model);
+my $arr;
+($arr,$hashref) = model::get_rawres_params(filename => $modeldir.'/rawres_for_get_rawres_params.csv',
+										   string_filter => ['method.eq.bootstrap'],
+										   filter => ['significant_digits.gt.4'],
+										   require_numeric_ofv => 1,
+										   offset => 1,
+										   model => $model);
 is (scalar(@{$arr}),3,'method get_rawres_params, number of lines returned ');
 is($arr->[0]->{'theta'}->{'CL'},1.1,'method get_rawres_params, theta 0');
 is($arr->[0]->{'theta'}->{'V'},1.2,'method get_rawres_params, theta 0');

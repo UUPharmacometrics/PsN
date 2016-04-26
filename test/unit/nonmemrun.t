@@ -22,12 +22,12 @@ like($cmd, qr/nmfe/, "nmfe name");
 like($cmd, qr/\s+psn.mod\s+psn.lst\s+/, "psn files");
 like($cmd, qr/\s+-background/, "background");
 
-my $nonmemrun = nonmemrun->new(
+$nonmemrun = nonmemrun->new(
 	nm_version => $nmvers,
 	nmfe_options => 'my opts',
 );
 
-my $cmd = $nonmemrun->create_command;
+$cmd = $nonmemrun->create_command;
 
 like($cmd, qr/\s+my opts/, "nmfe_options");
 
