@@ -32,27 +32,27 @@ my $testdir = create_test_dir("utils_file_test");
 chdir $testdir;
 
 open my $fh, ">", "ksrfile.tmp";
-print $fh "Row1\xARow2\xA";
+print $fh "Row1\xA"."Row2\xA";
 close $fh;
 my @a = utils::file::slurp_file("ksrfile.tmp");
 is_deeply(\@a, [ "Row1\xA", "Row2\xA" ], "slurp_file unix");
 
-open my $fh, ">", "ksrfile.tmp";
-print $fh "Row1\xARow2\xD\xA";
+open $fh, ">", "ksrfile.tmp";
+print $fh "Row1\xA"."Row2"."\xD"."\xA";
 close $fh;
-my @a = utils::file::slurp_file("ksrfile.tmp");
+@a = utils::file::slurp_file("ksrfile.tmp");
 is_deeply(\@a, [ "Row1\xA", "Row2\xA" ], "slurp_file unix with CRs");
 
-open my $fh, ">", "ksrfile.tmp";
-print $fh "Row1\xD\xARow2\xD\xA";
+open $fh, ">", "ksrfile.tmp";
+print $fh "Row1\xD"."\xA"."Row2\xD"."\xA";
 close $fh;
-my @a = utils::file::slurp_file("ksrfile.tmp");
+@a = utils::file::slurp_file("ksrfile.tmp");
 is_deeply(\@a, [ "Row1\xA", "Row2\xA" ], "slurp_file windows");
 
-open my $fh, ">", "ksrfile.tmp";
-print $fh "R\xDow1\xD\xARo\rw2\xD\xA";
+open $fh, ">", "ksrfile.tmp";
+print $fh "R\xD"."ow1"."\xD"."\xA"."Ro"."\rw2"."\xD"."\xA";
 close $fh;
-my @a = utils::file::slurp_file("ksrfile.tmp");
+@a = utils::file::slurp_file("ksrfile.tmp");
 is_deeply(\@a, [ "Row1\xA", "Row2\xA" ], "slurp_file windows extra CRs");
 
 unlink "ksrfile.tmp";
