@@ -178,7 +178,7 @@ is_deeply($coefficients,[[1,undef,undef],
 						 [undef,1,0.136766/0.218255],
 						 [undef,0.136766/0.218255,1]],'coefficients values');
 
-my ($correlations,$coefficients,$covariances) = output::correlations_coefficients_covariances(
+($correlations,$coefficients,$covariances) = output::correlations_coefficients_covariances(
 	size => 3,
 	coordinate_strings => $init_problem->get_estimated_attributes(attribute => 'coordinate_strings'),
 	param_vector => $init_problem->get_estimated_attributes(attribute => 'param'),
@@ -202,7 +202,7 @@ is_deeply($coefficients,[[1,undef,undef],
 						 [undef,1,0.136766/(4*1.24558)],
 						 [undef,0.136766/(4*1.24558),1]],'coefficients values');
 
-my ($correlations,$coefficients,$covariances) = output::correlations_coefficients_covariances(
+($correlations,$coefficients,$covariances) = output::correlations_coefficients_covariances(
 	size => 3,
 	coordinate_strings => $init_problem->get_estimated_attributes(attribute => 'coordinate_strings'),
 	param_vector => $init_problem->get_estimated_attributes(attribute => 'param'),

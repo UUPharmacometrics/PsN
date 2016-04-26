@@ -22,7 +22,7 @@ $tag->nodOFV(1);
 is_deeply ($tag->format, [ ";; 1. Based on: 001 [nodOFV]" ], "Based on nodOFV");
 
 # Census style Based on
-my $tag = model::annotation::tag->new();
+$tag = model::annotation::tag->new();
 $tag->parse(rows => [ ';;;C Parent= 001' ]);
 is ($tag->number, '1', "Census Based on tag number");
 is ($tag->name, 'Based on', "Census Based on tag name");
@@ -34,7 +34,7 @@ $tag->census_style(0);
 is_deeply ($tag->format, [ ";; 1. Based on: 001" ], "Census Based on reformat");
 
 # Census style nodOFV
-my $tag = model::annotation::tag->new();
+$tag = model::annotation::tag->new();
 $tag->parse(rows => [ ';;;C parent =' ]);
 is ($tag->number, '1', "Census Based nodOFV on tag number");
 is ($tag->name, 'Based on', "Census Based nodOFV on tag name");
@@ -45,7 +45,7 @@ is_deeply ($tag->format, [ ";;;C parent = 0" ], "Census Based on nodOFV format")
 
 
 # Parse and format Description
-my $tag = model::annotation::tag->new();
+$tag = model::annotation::tag->new();
 $tag->parse(rows => [ ';; 2. Description: This is a model' ]);
 is ($tag->number, '2', "Description tag number");
 is ($tag->name, 'Description', "Description tag name");
@@ -54,7 +54,7 @@ is_deeply ($tag->content, [ " This is a model" ], "Description content");
 is_deeply ($tag->format, [ ";; 2. Description: This is a model" ], "Description format");
 
 # Parse format and change Description
-my $tag = model::annotation::tag->new();
+$tag = model::annotation::tag->new();
 $tag->parse(rows => [ ';; 3. Label: My row 1', ';;  My row 2' ]);
 is ($tag->number, '3', "Label tag number");
 is ($tag->name, 'Label', "Label tag name");
@@ -68,7 +68,7 @@ $tag->content([ "", "New row" ]);
 is_deeply ($tag->format, [ ";; 3. Label:", ";; New row" ], "Label new row");
 
 #set_tag
-my $tag = model::annotation::tag->new();
+$tag = model::annotation::tag->new();
 $tag->set_tag(name => 'Based on', content => [ '28' ]);
 is ($tag->number, '1', "set_tag Based on number");
 is ($tag->name, 'Based on', "set_tag Based on tag name");

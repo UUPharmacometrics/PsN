@@ -2,7 +2,6 @@
 
 use strict;
 use warnings;
-
 use Test::More;
 use Test::Exception;
 use FindBin qw($Bin);
@@ -54,7 +53,7 @@ cmp_float_array($vector,[0,0],'inverse shift_and_box_cox array lambda with undef
 
 
 
-my ($vector,$delta)=boxcox::sort_and_shift_to_positive([1,3,0.5,0.2],1);
+($vector,$delta)=boxcox::sort_and_shift_to_positive([1,3,0.5,0.2],1);
 
 is($delta,0,'delta 2');
 is_deeply($vector,[0.2,0.5,1,3],'sorted and shifted 2');
@@ -130,13 +129,15 @@ my @V=(1.55158,1.3027,1.61882,1.13856,1.37955,1.59477,1.62951,1.59514,1.09566,
 
 my @flat=(0.9,0.9,0.9,0.9,0.9,0.9,0.9,0.9,0.9,0.9,0.9,0.9,0.9,0.9,0.9,0.9,0.9,0.9);
 
-my ($lambda,$delta,$numerr)=boxcox::get_lambda_delta(\@flat,3,1);
+my $lambda;
+my $numerr;
+($lambda,$delta,$numerr)=boxcox::get_lambda_delta(\@flat,3,1);
 is($numerr,0,"numerical error get_lambda_delta");
 
 #print "lam $lambda del $delta \n";
 random_set_seed_from_phrase('12345');
 
-my $N=100;
+$N=100;
 my @normal=random_normal($N,0,0.2); #n mean sd
 
 foreach my $lambda (-2,-0.5,-0.2,-0.1,0,0.2,1.5){
@@ -149,7 +150,8 @@ foreach my $lambda (-2,-0.5,-0.2,-0.1,0,0.2,1.5){
 
 	#print "values ".join(' ',@{$vector})."\n";
 	my ($found,$delta,$numerr2)=boxcox::get_lambda_delta($vector,3,1);
-	my ($own_r,$dirt,$numerr3) = boxcox::r_of_lambda($parvec,$yvec,$found);
+	my ($own_r,$numerr3);
+	($own_r,$dirt,$numerr3) = boxcox::r_of_lambda($parvec,$yvec,$found);
 
 #	print "found $own_r nominal $lambda_r\n";
 	cmp_ok($own_r,'>=',$lambda_r,"get lambda $lambda");
@@ -162,7 +164,8 @@ $extra{'type'}='second_degree';
 $extra{'a'}=-1;
 $extra{'b'}=-2;
 $extra{'c'}=15;
-my ($x,$numerr) = boxcox::secant_method_maximize(10,0.005,30,[15,0,-2],\%extra);
+my $x;
+($x,$numerr) = boxcox::secant_method_maximize(10,0.005,30,[15,0,-2],\%extra);
 
 cmp_float($x,-1,"second order 1");
 cmp_ok($numerr,'==',0,"numerr second degree");
@@ -214,7 +217,7 @@ $matrix = [[[1,0],[2,0]],$arr];
 is($small,0,'get smallest index 3');
 is($best,1,'get  best index 3');
 
-%extra;
+%extra=();
 $extra{'type'}='second_degree';
 $extra{'a'}=-1;
 $extra{'b'}=2;
@@ -245,7 +248,7 @@ is((boxcox::turn([20,0.3],[19,1],[0.1,3]) > 0),1," convex ");
 is((boxcox::turn([20,0.3],[1,1],[0.7,3]) < 0),1," concave ");
 is((boxcox::turn([2,1],[3,2],[4,3]) == 0),1," straight ");
 
-%extra;
+%extra=();
 $extra{'type'}='second_degree';
 $extra{'a'}=-7;
 $extra{'b'}=-8;
@@ -256,14 +259,14 @@ my $opt = boxcox::direct_search_maximize(1.5,6,30,\%extra);
 cmp_relative($opt->[0],10+16/7,6,"direct 2nd y");
 cmp_relative($opt->[1],-4/7,1,"direct 2nd x");
 
-%extra;
+%extra=();
 $extra{'type'}='second_degree';
 $extra{'a'}=-1;
 $extra{'b'}=2;
 $extra{'c'}=5;
 
 #
-my $opt = boxcox::direct_search_maximize(4.5,6,20,\%extra);
+$opt = boxcox::direct_search_maximize(4.5,6,20,\%extra);
 cmp_float($opt->[0],6,"direct 2nd y");
 cmp_float($opt->[1],1,"direct 2nd x");
 

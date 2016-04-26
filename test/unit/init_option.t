@@ -9,8 +9,9 @@ use includes; #file with paths to PsN packages
 
 use model::problem::record::theta_option;
 use model::problem::init_record;
-use PsN;			# Need to set PsN version as this is a global variable
 
+
+my ($d1,$d2,$d3)= get_major_minor_nm_version;
 # Test new and read option
 my $option1 = model::problem::record::init_option->new(option_string => '0.01',
 													   on_diagonal => 1);
@@ -29,7 +30,7 @@ my $range = $option1->get_range(degree=> 0.5);
 cmp_float($range->[0],(0.01-0.5*0.01), "Option1->range lower");
 cmp_float($range->[1],(0.01+0.5*0.01), "Option1->range upper");
 
-my $range = $option1->get_range(degree => 3);
+$range = $option1->get_range(degree => 3);
 cmp_float($range->[0], 1e-10, "Option1->range degree=3 lower");
 cmp_float($range->[1], (0.01 + 3 * 0.01), "Option1->range degree=3 upper");
 
@@ -47,7 +48,7 @@ cmp_float($range->[1],(-0.009+0.9*0.009), "Option4->range upper");
 
 $PsN::nm_major_version = 6; #affects formatting in init_option.pm
 
-my $option1 = model::problem::record::theta_option->new(option_string => '(-1.679,0,2472000)');
+$option1 = model::problem::record::theta_option->new(option_string => '(-1.679,0,2472000)');
 is($option1->on_diagonal,undef,'theta undef on_diagonal');
 
 my ($succ,$err,$new_value) = $option1->check_and_set_init(new_value => -0.25395343214);

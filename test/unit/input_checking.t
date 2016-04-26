@@ -12,8 +12,11 @@ use input_checking;
 use Config;
 use Env qw(PATH);
 use model;
+use ui;
 
-open STDERR, '>', File::Spec->devnull();	# Silence STDERR
+ui->silent(1);
+#use File::Spec;
+#open STDERR, '>', File::Spec->devnull();       # Do not Silence STDERR, use silent
 my $modeldir = $includes::testfiledir;
 
 my $model = model->create_dummy_model;
@@ -59,7 +62,7 @@ dies_ok { input_checking::check_options(tool => 'frem',
 										options => \%options, 
 										model => $model) } "frem croak skip_omegas too high";
 
-my $model = model->new(filename => $includes::testfiledir."/mox1.mod", ignore_missing_data => 1);
+$model = model->new(filename => $includes::testfiledir."/mox1.mod", ignore_missing_data => 1);
 %options=();
 $options{'covariates'}='WT';
 input_checking::check_options(tool => 'frem', options => \%options, model => $model); 
