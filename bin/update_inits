@@ -57,6 +57,7 @@ my %optional_options = (
 	"sigdig:i" => undef,
 	"fix_thetas" => undef,
  	"unfix_thetas" => undef,
+ 	"silent" => undef,
 	);
 
 my $res = GetOptions( \%options,
@@ -217,6 +218,14 @@ $help_text{-unfix_thetas} = <<'EOF';
 	Default not set
 
 	If set, update_inits will remove FIX, if present, from all THETAs that are not part of a prior.
+EOF
+
+$help_text{-silent} = <<'EOF';
+-silent
+
+	Default not set
+
+	If set, do not print any information messages.
 EOF
 
 $help_text{-from_model} = <<'EOF';
