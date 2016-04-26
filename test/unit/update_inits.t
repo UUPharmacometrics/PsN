@@ -12,8 +12,7 @@ use model::problem::table;
 use model::problem::problem;
 use model;
 
-open STDERR, '>', File::Spec->devnull();	# Silence STDERR
-
+my ($d1,$d2,$d3)= get_major_minor_nm_version;
 our $tempdir = create_test_dir('unit_updateinits');
 my $modeldir = $includes::testfiledir;
 
@@ -105,14 +104,14 @@ is ($arr[1],';added comment'."\n",'problem add comment');
 $prob = model::problem::problem->new(record_arr => ['$PROBLEM DESCRIPTION']);
 
 $prob->add_comment(new_comment => 'added comment');
-my $ref = $prob -> _format_record;
-my @arr = split("\n",$ref->[0],2);
+$ref = $prob -> _format_record;
+@arr = split("\n",$ref->[0],2);
 is ($arr[1],';added comment'."\n",'problem add comment');
 
 
 my $model = model->new(filename => "$modeldir/mox1.mod");
 
-my $ref = $model-> get_hash_values_to_labels;
+$ref = $model-> get_hash_values_to_labels;
 
 #arr over problems, hash omega sigma theta
 is ($ref->[0]->{'theta'}->{'TVCL'},26.1,'TVCL');
@@ -177,7 +176,7 @@ $model -> update_inits( from_hash => \%hash,
 						ensure_posdef => 0,
 						ignore_missing_parameters => 1 );
 
-my $updated = $model-> get_hash_values_to_labels;
+$updated = $model-> get_hash_values_to_labels;
 
 is(eval($updated->[0]->{'theta'}->{'TVCL'}),eval(1),'updated hash 2 TVCL');
 is(eval($updated->[0]->{'theta'}->{'TVV'}),eval(2),'updated hash 2 TVV');
@@ -187,19 +186,19 @@ is(eval($updated->[0]->{'theta'}->{'LAG'}),eval(4),'updated hash 2 LAG');
 
 chdir($tempdir);
 my @command_line = (
-	get_command("update_inits") . " pheno.mod -out=run1.mod",
-	get_command("update_inits") . " pheno.mod -out=run2.mod -comment=\"new comment\"",
-	get_command("update_inits") . " mox1.mod -out=run3.mod -sigdig=3",
-	get_command("update") . " mox1.mod -out=run4.mod -add_tags",
-	get_command("update") . " pheno.mod -out=run5.mod -add_prior=1,1",
-	get_command("update") . " run3.mod -out=run6.mod -cholesky=omega",
-	get_command("update") . " run6.mod -out=run7.mod -cholesky=inverse -sigdig=3",
-    get_command("update_inits") . " run2.mod -out=run8.mod",
-    get_command("update_inits") . " run8.mod",
+	get_command("update_inits") . " -silent pheno.mod -out=run1.mod",
+	get_command("update_inits") . "  -silent pheno.mod -out=run2.mod -comment=\"new comment\"",
+	get_command("update_inits") . " -silent mox1.mod -out=run3.mod -sigdig=3",
+	get_command("update") . " -silent mox1.mod -out=run4.mod -add_tags",
+	get_command("update") . " -silent pheno.mod -out=run5.mod -add_prior=1,1",
+	get_command("update") . " -silent run3.mod -out=run6.mod -cholesky=omega",
+	get_command("update") . " -silent run6.mod -out=run7.mod -cholesky=inverse -sigdig=3",
+    get_command("update_inits") . " -silent run2.mod -out=run8.mod",
+    get_command("update_inits") . " -silent run8.mod",
 );
 foreach my $i (0..$#command_line) {
 	my $command= $command_line[$i];
-	print "Running $command\n";
+#	print "Running $command\n";
 	my $rc = system($command);
 	$rc = $rc >> 8;
 	ok ($rc == 0, "$command, should run ok");
