@@ -164,9 +164,10 @@ is_deeply ($up1,[10,15,19],'get_lower_and_upper_limits 1b');
 is_deeply ($low1,[7,4,2],'get_lower_and_upper_limits 2a');
 is_deeply ($up1,[6,9,20],'get_lower_and_upper_limits 2b');
 
-my ($low1,$up1,$low2,$high2)= tool::npc::get_npc_indices('ci' => $c_i,
-														 'no_sim' => 17,
-														 'pred_intervals' => \@pred_int);
+my ($low2,$high2);
+($low1,$up1,$low2,$high2)= tool::npc::get_npc_indices('ci' => $c_i,
+													  'no_sim' => 17,
+													  'pred_intervals' => \@pred_int);
 
 # 0 50 90
 is_deeply ($low1,[8,4,1],'get_npc_indices lower_index 2');
@@ -217,8 +218,8 @@ my $resvalanswer2 = [[3,100,' ',0,100,0,0,' ',0,100],
 my $statswarnanswer = [0,0,0,0,0,0];
 
 my $statswarnanswer2 = [0,0,0,0,0,0];
-
-my ($result_values,$realpos,$stats_warnings,$alert) = tool::npc::subset_npc_analyze(strata_index => 0,
+my ($result_values,$realpos,$stats_warnings);
+($result_values,$realpos,$stats_warnings,$alert) = tool::npc::subset_npc_analyze(strata_index => 0,
 													   pred_intervals => \@pred_int,
 													   censored => 0,
 													   ci  => $c_i,
@@ -269,7 +270,7 @@ is_deeply($stats_warnings,$statswarnanswer2,'subset_npc_analyze statswarn 3');
 
 
 #use two bins three strata, first stratum is refstrat
-my $no_sim=20;
+$no_sim=20;
 my $ref_n_bins=2;
 my $reference_mean_limit_singlesim;
 for (my $i=0; $i<$ref_n_bins; $i++){

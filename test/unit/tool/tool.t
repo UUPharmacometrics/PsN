@@ -91,7 +91,7 @@ is(substr($dir,0,-1),$tempdir.'updir','tool get_rundir 6');
 
 
 # compress_m1
-my $dir = "$tempdir/bootstrap_dir1";
+$dir = "$tempdir/bootstrap_dir1";
 mkdir($dir);
 mkdir("$dir/m1");
 my $m1_zip = "$dir/m1.zip";
@@ -159,7 +159,7 @@ mkdir($dir);
 mkdir($m1_dir);
 copy_test_files($dir, ["bootstrap/bootstrap_dir1/command.txt"]);
 copy_test_files("$dir/m1", ["bootstrap/bootstrap_dir1/m1/bs_pr1_1.cor"]);
-open my $fh, ">", $m1_zip; 
+open $fh, ">", $m1_zip; 
 close $fh;
 $tool->uncompress_m1();
 ok (-e $m1_dir, "uncompress_m1 (non-empty, empty) m1 still exists");
@@ -192,7 +192,7 @@ dies_ok { $tool->uncompress_m1() } "uncompress_m1 (non-empty, non-empty) dies";
 rmtree([$dir]);
 mkdir($dir);
 copy_test_files($dir, ["bootstrap/bootstrap_dir1/command.txt"]);
-open my $fh, ">", $m1_zip; 
+open $fh, ">", $m1_zip; 
 close $fh;
 $tool->uncompress_m1();
 ok (-e "$dir/command.txt", "uncompress_m1 (non-existing, empty) command.txt still exists");
@@ -214,7 +214,7 @@ copy_test_files($dir, ["bootstrap/bootstrap_dir1/command.txt"]);
 copy_test_files("$dir/m1", ["bootstrap/bootstrap_dir1/m1/bs_pr1_1.cor"]);
 
 $tool->compress_m1();
-my $tool = tool->new(models => [ $model ], directory => $dir);
+$tool = tool->new(models => [ $model ], directory => $dir);
 
 ok (not (-e "$dir/m1.zip"), "tool->new m1.zip was removed");
 ok (-e "$dir/m1", "tool->new m1 folder was created");

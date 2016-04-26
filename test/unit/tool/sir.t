@@ -19,6 +19,7 @@ use File::Copy 'cp';
 
 
 
+my ($d1,$d2,$d3)= get_major_minor_nm_version;
 our $tempdir = create_test_dir('unit_sir');
 chdir($tempdir);
 
@@ -295,14 +296,14 @@ is_deeply($covar,[[3,0.1,0.2],[0.1,8,0.3],[0.2,0.3,2]],'covar not destryed ');
 is_deeply($mu,[1,2,3],'mu not destoryed');
 is_deeply($xvectors,[[0,0,0],[1,2,3],	[4,4,4],	[0.1, -0.6, 8]],'xvectors not destoryed');
 
-my $file = 'moxo.lst';
-my $output = output->new(filename => $dir . $file);
+$file = 'moxo.lst';
+$output = output->new(filename => $dir . $file);
 
 
 # matlab test code in moxonidine.m
 my $moxo_covar = tool::sir::get_nonmem_covmatrix(output => $output);
 
-my $ref=[
+$ref=[
 [0.873778,2.19014,0.13887,-2.98453E-005,-0.000785758,0.000235191,-0.00137167,0.148541,-0.00103326,0.0297615,0.0050723],
 [2.19014,15.5223,0.622217,-0.0026337,0.000931442,-0.00686826,-0.0108224,0.212108,0.00116257,0.150677,0.0227413],
 [0.13887,0.622217,0.887891,0.00247469,-0.000142814,-0.000284542,0.00131662,0.601221,-0.00019056,0.0850608,-0.00630654],
@@ -317,10 +318,10 @@ my $ref=[
 ];
 is_deeply($moxo_covar,$ref,'covariance matrix');
 
-my $mu = [26.6826,110.274,4.49576,0.240133,0.0750256,0.0467377,0.056338,2.81718,0.0146954,0.506077,0.109295];
+$mu = [26.6826,110.274,4.49576,0.240133,0.0750256,0.0467377,0.056338,2.81718,0.0146954,0.506077,0.109295];
 
 
-my $xvectors=[
+$xvectors=[
 [26.623,113.055,4.3679,0.247502,0.0796516,0.0395443,0.0568655,2.84291,0.0105876,0.385506,0.131366],
 [26.9504,110.441,5.24368,0.240122,0.0686938,0.041067,0.0517129,2.0173,0.0121147,0.942027,0.100209],
 [27.2189,106.401,6.39645,0.240122,0.0948644,0.0533097,0.0616498,4.31796,0.00736211,0.947794,0.110911],
@@ -360,7 +361,7 @@ for (my $i=0; $i< scalar(@{$results}); $i++){
 }
 
 
-my $ref = tool::format_covmatrix(matrix => [[1,2,3],[4,5,6],[7,8,9]], 
+$ref = tool::format_covmatrix(matrix => [[1,2,3],[4,5,6],[7,8,9]], 
 											header => ['anna','bertil','cecilia'], 
 											comma => 1, 
 											print_labels => 1);
@@ -374,7 +375,7 @@ $ref = tool::format_covmatrix(matrix => [[1,2,3],[4,5,6],[7,8,9]],
 
 is_deeply($ref,['1,2,3'."\n",'4,5,6'."\n",'7,8,9'."\n"], "format covmatrix comma no labels");
 
-my $ref = tool::format_covmatrix(matrix => [[1,2,3],[4,5,6],[7,8,9]], 
+$ref = tool::format_covmatrix(matrix => [[1,2,3],[4,5,6],[7,8,9]], 
 											header => ['anna','bertil','cecilia'], 
 											comma => 0, 
 											print_labels => 1);
@@ -387,7 +388,7 @@ like($ref->[2],'/^ bertil  \s+4\.0000000E\+0+\s+5\.0000000E\+0+\s+6\.0000000E\+0
 like($ref->[3],'/^ cecilia \s+7\.0000000E\+0+\s+8\.0000000E\+0+\s+9\.0000000E\+0+/', "format covmatrix space with labels 3");
 
 
-my $ref = tool::format_covmatrix(matrix => [[1,2,3],[4,5,6],[7,8,9]], 
+$ref = tool::format_covmatrix(matrix => [[1,2,3],[4,5,6],[7,8,9]], 
 											header => ['anna','bertil','cecilia'], 
 											comma => 0, 
 											print_labels => 0);
@@ -400,7 +401,7 @@ like($ref->[2],'/^\s+7\.0000000E\+0+\s+8.0000000E\+0+\s+9\.0000000E\+0+/', "form
 
 #mox_sir_blcok2
 
-my @resampled_params_arr =(
+@resampled_params_arr =(
 {'theta'=> {'THETA1' => 1.0,'THETA2' => 1.0,'THETA3'=> 1.0, 'THETA4' => 1.0,'THETA5' => 1.0}, 
  'omega'=> {'OMEGA(1,1)' => 1.0,'OMEGA(2,2)' => 1.0,'OMEGA(3,2)' => 0.1,'OMEGA(3,3)' => 1.0 },
  'sigma'=> {}},
@@ -476,15 +477,15 @@ cmp_float(tool::sir::get_offdiagonal_variance(type=> 1, covariance => 0.03, rse_
 dies_ok{tool::sir::setup_variancevec_from_rse(rse_theta => '20,30,40,30,10',
 											 rse_omega=> '0',
 											 rse_sigma=> '10',
-											 parameter_hash => $parameter_hash)}, 'illegal setup_variancevec 1';
+											 parameter_hash => $parameter_hash)};#, 'illegal setup_variancevec 1';
 dies_ok{tool::sir::setup_variancevec_from_rse(rse_theta => '20,30,40,30,10',
 											 rse_omega=> '1,2,3,4',
 											 rse_sigma=> '10',
-											 parameter_hash => $parameter_hash)}, 'illegal setup_variancevec 2';
+											 parameter_hash => $parameter_hash)};#, 'illegal setup_variancevec 2';
 dies_ok{tool::sir::setup_variancevec_from_rse(rse_theta => '20,40,30,10',
 											 rse_omega=> '1,2,3',
 											 rse_sigma=> '10',
-											 parameter_hash => $parameter_hash)}, 'illegal setup_variancevec 3';
+											 parameter_hash => $parameter_hash)};#, 'illegal setup_variancevec 3';
 
 my $cov = tool::sir::setup_covmatrix_from_variancevec(variance => [1,2,3]);
 is_deeply($cov->[0],[1,0,0],'covmatrix from variancevec 0');
@@ -505,7 +506,7 @@ my $Amatrix = tool::sir::tweak_inits_sampling(sampled_params_arr => \@resampled_
 #	print join("\t",@{$Amatrix->[$i]})."\n";
 #}
 
-my $Amatrix = tool::sir::tweak_inits_sampling(sampled_params_arr => [],
+$Amatrix = tool::sir::tweak_inits_sampling(sampled_params_arr => [],
 											  parameter_hash => $parameter_hash,
 											  model => $model,
 											  degree => 0.1,
@@ -532,7 +533,7 @@ my @seed_array=(23,23);
 random_set_seed(@seed_array);
 
 my @in = random_get_seed;
-my $err = tool::sir::save_restart_information(
+$err = tool::sir::save_restart_information(
 	parameter_hash => $parameter_hash,
 	nm_version  => 'default',
 	done  => 1,
@@ -659,12 +660,12 @@ is_deeply($hashref->{'raw'}->[4],[3,3,3],'augment rawres 4');
 
 
 my $outobj = output->new(filename => $dir.'for_cv_matrix.lst');
-my $parameter_hash = output::get_nonmem_parameters(output => $outobj);
+$parameter_hash = output::get_nonmem_parameters(output => $outobj);
 my $rsetheta ='3,3,30,10,10,3,3,50,10,30,10,10,10,10,10,10,10,10,50,10,10,10';
 my $rseomega ='5,5,10,5,5,20,30,10,10,10,30,30,10,30,30';
 my $rsesigma ='5,5,5,5';
 	
-my $ref = tool::sir::setup_variancevec_from_rse(rse_theta => $rsetheta,
+$ref = tool::sir::setup_variancevec_from_rse(rse_theta => $rsetheta,
 	rse_omega=> $rseomega,
 	rse_sigma=> $rsesigma,
 	parameter_hash => $parameter_hash);

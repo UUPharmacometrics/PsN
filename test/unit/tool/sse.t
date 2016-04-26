@@ -17,7 +17,6 @@ use File::Spec;
 #in psn.conf must set output_style = SPLUS, otherwise tests will fail. fix by setting here.
 
 
-open STDERR, '>', File::Spec->devnull();	# Silence STDERR
 
 sub is_array{
     my $facit=shift;
@@ -143,7 +142,7 @@ SKIP: {
 	my $resultsfile = 'sse_test/sse_results_recompute1.csv';
 
 	unlink($resultsfile);
-	my $command = get_command("sse") . " -samples=5 pheno.mod  -recompute=sse_test/raw_results_pheno.csv";
+	my $command = get_command("sse") . " -samples=5 pheno.mod  -recompute=sse_test/raw_results_pheno.csv -silent";
 
 	system $command;
 
@@ -163,7 +162,7 @@ SKIP: {
 	chdir($dir);
 
 	unlink($resultsfile);
-	$command= get_command("sse") . " -samples=5 moxonidine.mod -recompute=sse_test/raw_results_moxonidine.csv";
+	$command= get_command("sse") . " -samples=5 moxonidine.mod -recompute=sse_test/raw_results_moxonidine.csv -silent";
 
 	system $command;
 
