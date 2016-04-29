@@ -48,10 +48,10 @@ sub modelfit_setup
         my $nm_output = $tool_options{'nm_output'};
         my $rmt_added = 0;
         if (not defined $nm_output or $nm_output eq "") {
-            $nm_output = "rmt";
+            $nm_output = "rmt,cov";
             $rmt_added = 1;
-        } elsif (not $nm_output =~ /rmt/) {
-            $nm_output .= ',rmt';
+        } elsif (not $nm_output =~ /rmt,cov/) {
+            $nm_output .= ',rmt,cov';
             $rmt_added = 1;
         }
 
@@ -157,6 +157,7 @@ sub modelfit_analyze
     my $cov_matrix = convert_reparametrized_cov(
         cov_filename => $cov_filename,
         model => $self->precond_model,
+        repara_model => $self->_repara_model,
         precond_matrix => $self->precond_matrix,
         output_filename => $result_cov,
 		directory => $self->directory
@@ -243,7 +244,7 @@ sub modelfit_analyze
 					if(($ofv_original-$ofv_precond<0)){
 						print "\nWarning: parameter estimation seems to be unstable (the ofvs of the original model and preconditioned model differ by ", int(($ofv_original-$ofv_precond)*100)/100, " (in theory they should be the same), try 'update_inits ", $self->base_model->filename,"' and re-run preconditioning.  If the model is very instable try with MAXEVAL=0 after update_inits (not recommended as it will make precond ignore the issues on parameter estimation).";
 					}else{
-						print "\nWarning: precond has found a set of parameters with lower ofv than the original model, hence the parameters found by the original model is not at the maximum likelihood. try 'update_inits $self->base_model->filename -from_model", $foldername,"/updated_model.mod' and re-run precond.";
+						print "\nWarning: precond has found a set of parameters with lower ofv than the original model, hence the parameters found by the original model is not at the maximum likelihood.\n\nTry 'update_inits ",$self->base_model->filename," -from_model ", $foldername,"/updated_model.mod' and re-run precond.\n";
 					}
 				}
 			}
@@ -285,7 +286,10 @@ sub modelfit_analyze
 				$modelfit->raw_results->[0]->[$se_pos + $i] = sqrt($cov_matrix->[$i]->[$i]);
 			}
 			
+          
+            
 			if (defined $self->base_model){
+                
 				  my $filename = $self->base_model->filename;
 				    $filename =~ s/\.mod$/.cov/;
 				    my $cov_filename = 'm1/' . $filename;
@@ -293,8 +297,8 @@ sub modelfit_analyze
 
 				    my @cov_lines;
 
+                print "$cov_filename";
 				    if (-e $cov_filename) {
-
 				        open(my $fh, '<', $cov_filename);
 				        while (my $tline = <$fh>) {
 				            chomp $tline;
@@ -350,14 +354,16 @@ sub modelfit_analyze
 				            }
 				        }
 				
-					if ($isEstimable){
+            
+					if ($isEstimable) {
 						my $standardErrorConsistent=1;
 						my $maxchange=0;
 				
 						for (my $i = 0; $i < @$new_theta; $i++) {
-							if ($originalCov[$i]->[$i]!=0){
-								my $change=((abs(sqrt($cov_matrix->[$i]->[$i])-sqrt($originalCov[$i]->[$i]))/abs(sqrt($cov_matrix->[$i]->[$i])+sqrt($originalCov[$i]->[$i])))*200);
-								if( sqrt($cov_matrix->[$i]->[$i])/sqrt($originalCov[$i]->[$i])>2){
+
+                            if ($originalCov[$i]->[$i]!=0){
+                                my $change=((abs(sqrt($cov_matrix->[$i]->[$i])-sqrt($originalCov[$i]->[$i]))/abs(sqrt($cov_matrix->[$i]->[$i])+sqrt($originalCov[$i]->[$i])))*200);
+                                if( sqrt($cov_matrix->[$i]->[$i])/sqrt($originalCov[$i]->[$i])>2){
 									print "\nWarning: standard error of THETA(",$i+1,") has grown more than twice after preconditioning, non-estimability of THETA(",$i+1,") is suspected. Repeat preconditioning using -pre=",$foldername," option to see if the standard error grows more.";
 									$standardErrorConsistent=0;
 								}elsif($change>10){
@@ -380,10 +386,11 @@ sub modelfit_analyze
 			
             #	print "\n\n  preconditioning successful \n";
 		}
-		if (!$isEstimable){
-			#$modelfit->raw_results->[0]->[$ofv_pos]="NaN";
-			print "If a parameter is non-estimable, the variance-covariance matrix in theory does not exist, hence it is correct for NONMEM and precond to ''fail'' covariance step.";
+		
 		}
+		if (!$isEstimable){
+					#$modelfit->raw_results->[0]->[$ofv_pos]="NaN";
+					print "\n\n  If a parameter is non-estimable, the variance-covariance matrix in theory does not exist, hence it is correct for NONMEM and precond to ''fail'' covariance step.\n";
 		}
 
         $modelfit->print_raw_results;
@@ -724,6 +731,7 @@ sub convert_reparametrized_cov
     my %parm = validated_hash(\@_,
         cov_filename => { isa => 'Str' },
         model => { isa => 'model' },
+        repara_model => { isa => 'model' },
         precond_matrix => { isa => 'ArrayRef[ArrayRef]' },
         output_filename => { isa => 'Str' },
         directory => { isa => 'Str' },
@@ -731,6 +739,7 @@ sub convert_reparametrized_cov
     );
     my $cov_filename = $parm{'cov_filename'};
     my $model = $parm{'model'};
+    my $repara_model = $parm{'repara_model'};
     my @precond_matrix = @{$parm{'precond_matrix'}};
     my $output_filename = $parm{'output_filename'};
     my $directory = $parm{'directory'};
@@ -779,8 +788,6 @@ sub convert_reparametrized_cov
 
                 my @new_line;
                 $max_column = scalar(@header_labels) ; #store full matrix
-				#some values in line_values will be undef
-				no warnings qw(uninitialized); 
                 for (my $j = 0; $j < $max_column; $j++) {
                     my $i = $j + 1; #must permute omega-sigma
                     if (defined $line_values[$i] and ($line_values[$i] eq 'NaN')) {
@@ -950,10 +957,11 @@ sub convert_reparametrized_cov
 
         $foldername=(split(/\//, $directory))[-1];
 
-		if ($model->outputs->[0]->problems->[0]->subproblems->[0]->s_matrix_unobtainable) {
-			print "\nS matrix was unobtainable, precond is intended to stablise covariance step by reducing the R-matrix related computational issues, hence cannot remedy this issues with S matrix.\n";
+#		if ($repara_model->outputs->[0]->problems->[0]->subproblems->[0]->s_matrix_unobtainable) {
+#			print "\nS matrix was unobtainable, precond is intended to stablise covariance step by reducing the R-matrix related computational issues, hence cannot remedy this issues with S matrix.\n";
 	
-		}elsif (int(log($maxEigen/$minEigen) / log(10)) < 3 and $negaCounter > 0) {
+#		}else
+		if (int(log($maxEigen/$minEigen) / log(10)) < 3 and $negaCounter > 0) {
             print "\nCovariance step of the preconditioned model failed \n\nThe estimated parameter is mostlikely at the saddle of the likelihood surface. \n try -pre=$foldername -perturb option\n\n";
         } elsif($negaCounter > 0) {
             print "\nCovariance step of the preconditioned model failed \n\ntry -pre=$foldername option\n\n";
