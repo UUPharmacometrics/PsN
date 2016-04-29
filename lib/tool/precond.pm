@@ -337,7 +337,7 @@ sub modelfit_analyze
 				                $max_column = scalar(@header_labels) ; #store full matrix
 				                for (my $j = 0; $j < $max_column; $j++) {
 				                    my $i = $j + 1; #must permute omega-sigma
-				                    if ($line_values[$i] eq 'NaN') {
+				                    if ((not defined $line_values[$i]) or $line_values[$i] eq 'NaN') {
 				                        push(@new_line, undef);
 				                        $originalCov[$rowCount][$j]=undef;
 				                    } else {
@@ -355,9 +355,9 @@ sub modelfit_analyze
 						my $maxchange=0;
 				
 						for (my $i = 0; $i < @$new_theta; $i++) {
-							if (@originalCov->[$i]->[$i]!=0){
-								my $change=((abs(sqrt($cov_matrix->[$i]->[$i])-sqrt(@originalCov->[$i]->[$i]))/abs(sqrt($cov_matrix->[$i]->[$i])+sqrt(@originalCov->[$i]->[$i])))*200);
-								if( sqrt($cov_matrix->[$i]->[$i])/sqrt(@originalCov->[$i]->[$i])>2){
+							if ($originalCov[$i]->[$i]!=0){
+								my $change=((abs(sqrt($cov_matrix->[$i]->[$i])-sqrt($originalCov[$i]->[$i]))/abs(sqrt($cov_matrix->[$i]->[$i])+sqrt($originalCov[$i]->[$i])))*200);
+								if( sqrt($cov_matrix->[$i]->[$i])/sqrt($originalCov[$i]->[$i])>2){
 									print "\nWarning: standard error of THETA(",$i+1,") has grown more than twice after preconditioning, non-estimability of THETA(",$i+1,") is suspected. Repeat preconditioning using -pre=",$foldername," option to see if the standard error grows more.";
 									$standardErrorConsistent=0;
 								}elsif($change>10){
@@ -502,7 +502,7 @@ sub create_reparametrized_model
     my @negaEigenIndex = @{$parm{'negaEigenIndex'}};
 	my $directory = $parm{'directory'};
 
-	my $model = $model->copy(
+	$model = $model->copy(
 		output_same_directory => 1,
 		filename => $filename,
 		copy_datafile => 0,
@@ -779,9 +779,11 @@ sub convert_reparametrized_cov
 
                 my @new_line;
                 $max_column = scalar(@header_labels) ; #store full matrix
+				#some values in line_values will be undef
+				no warnings qw(uninitialized); 
                 for (my $j = 0; $j < $max_column; $j++) {
                     my $i = $j + 1; #must permute omega-sigma
-                    if ($line_values[$i] eq 'NaN') {
+                    if (defined $line_values[$i] and ($line_values[$i] eq 'NaN')) {
                         push(@new_line, undef);
                         $reparaCov[$rowCount][$j]=undef;
                     } else {
@@ -828,7 +830,7 @@ sub convert_reparametrized_cov
             $line =~ s/^\s*//; #get rid of leading spaces
             my @line_values = split /\s+/, $line;
             for (my $j = 0; $j < $model->nthetas; $j++) {
-                @line_values[$j + 1] = $varcovMatrix[$i][$j];
+                $line_values[$j + 1] = $varcovMatrix[$i][$j];
             }
             $line_values[0] = $line_values[0] . (" " x (12 - length($line_values[0]) ) ); 
             for my $i (1..@line_values - 1) {
@@ -946,7 +948,7 @@ sub convert_reparametrized_cov
         print "Condition number of the R-matrix : 10^" . int(log($maxEigen/$minEigen)/log(10)) . "\n";
         print("Number of negative eigenvalues : $negaCounter\n");
 
-        my $foldername=(split(/\//, $directory))[-1];
+        $foldername=(split(/\//, $directory))[-1];
 
 		if ($model->outputs->[0]->problems->[0]->subproblems->[0]->s_matrix_unobtainable) {
 			print "\nS matrix was unobtainable, precond is intended to stablise covariance step by reducing the R-matrix related computational issues, hence cannot remedy this issues with S matrix.\n";
