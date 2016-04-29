@@ -392,7 +392,7 @@ sub _parse_lst_file
 
                 $self->_so_block->Estimation->OFMeasures->Deviance($ofv);
 
-                if (not defined $ofv) {
+                if (not defined $ofv and defined $minimization_message) {
                     $self->_so_block->TaskInformation->add_message(
                         type => 'ERROR',
                         toolname => $self->toolname,

@@ -7,7 +7,7 @@ use MooseX::Params::Validate;
 use include_modules;
 use XML::LibXML;
 
-has 'Deviance' => ( is => 'rw', isa => 'Str' );
+has 'Deviance' => ( is => 'rw', isa => 'Maybe[Str]' );
 
 sub parse
 {
