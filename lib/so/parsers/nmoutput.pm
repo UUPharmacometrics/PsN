@@ -191,12 +191,12 @@ sub _parse_lst_file
                 my $labels = $model->labels(parameter_type => $param);
                 my $values = $model->get_values_to_labels(category => $param, label_model => $model, output_object => $outobj);
                 my $ses = $model->get_values_to_labels(category => 'se' . $param, label_model => $model, output_object => $outobj);
-                push @all_labels, @{$labels->[0]};
-                push @est_values, @{$values->[0]->[0]};
-                foreach my $label (@{$labels->[0]}) {
-                    push @all_inits, $init_hash->[0]->{$param}->{$label};
+                push @all_labels, @{$labels->[$problems]};
+                push @est_values, @{$values->[$problems]->[0]};
+                foreach my $label (@{$labels->[$problems]}) {
+                    push @all_inits, $init_hash->[$problems]->{$param}->{$label};
                 }
-                push @se_values, @{$ses->[0]->[0]};
+                push @se_values, @{$ses->[$problems]->[0]};
             }
 
             # Remove parameters that are FIX but have a label
@@ -322,6 +322,7 @@ sub _parse_lst_file
                     subproblem_index => $sub_problems);
 
                 my $undefs = grep { not defined $_ } @est_values;
+
                 if ($undefs != scalar(@est_values)) {   # Check that not all in list are undef. Should possibly have been done earlier
                     $self->_so_block->Estimation->PopulationEstimates->create_MLE(labels => \@all_labels, values => \@est_values, types => \@all_types);
                 }
