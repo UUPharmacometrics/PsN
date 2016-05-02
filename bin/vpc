@@ -638,7 +638,9 @@ my @max_no_bins;
 if (defined $options{'auto_bin'}) {
 	# Check forbidden options
 	if (defined $options{'bin_by_count'} or defined $options{'no_of_bins'} or defined $options{'bin_array'} or defined $options{'single_bin_size'} or defined $options{'overlap'}) {
-		die "The options -bin_by_count, -no_of_bins, -bin_array, -single_bin_size and -overlap cannot be used in conjunction with -auto_bin\n";
+		ui->print(category => 'all',
+				  message => "The options -bin_by_count, -no_of_bins, -bin_array, -single_bin_size and -overlap cannot be used in conjunction with -auto_bin\n");
+		die;
 	}
 
 	# Check the different options
@@ -671,7 +673,9 @@ if (defined $options{'auto_bin'}) {
 }
 
 if (defined $options{'min_points_in_bin'} and not defined $auto_bin_mode) {
-	die "The option -min_points_in_bin can only be used in conjunction with the -auto_bin option\n";
+	ui->print(category => 'all',
+			  message => "The option -min_points_in_bin can only be used in conjunction with the -auto_bin option\n");
+	die;
 }
 
 require model;
