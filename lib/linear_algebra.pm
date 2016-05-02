@@ -1155,7 +1155,7 @@ sub eigenvalue_decomposition
             if ($eigenValMatrix[$maxInd1][$maxInd2] > 0) {
                 $theta = pi / 4;
             } else {
-                $theta = -pi / 4;
+                $theta = -(pi) / 4;
             }
         } else {
             $theta = (atan(2 * $eigenValMatrix[$maxInd1][$maxInd2] / ($eigenValMatrix[$maxInd2][$maxInd2] - $eigenValMatrix[$maxInd1][$maxInd1]))) / 2;

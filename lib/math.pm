@@ -122,7 +122,7 @@ sub usable_number
     );
 
 	my $ok = 0;
-	if ($number =~ /^\s*([+-]?)(?=\d|\.\d)\d*(\.\d*)?([Ee]([+-]?\d+))?\s*$/) {
+	if ((defined $number) and $number =~ /^\s*([+-]?)(?=\d|\.\d)\d*(\.\d*)?([Ee]([+-]?\d+))?\s*$/) {
 		$ok = 1;
 		#special check for Windows where types of NaN can string evaluate to 0
 		if ($number =~ /^\s*0\s*$/){
@@ -170,12 +170,12 @@ sub convert_float_string
         $decimal = 0;
     }
 
-    my $sign;
+    my $sign='';
     if ($integer =~ /^[-+]/) {
         $sign = substr($integer, 0, 1);
     }
     $integer =~ s/^[-+]//;
-    if ($sign eq "+") {
+    if ((defined $sign) and $sign eq "+") {
         $sign = "";
     }
 
