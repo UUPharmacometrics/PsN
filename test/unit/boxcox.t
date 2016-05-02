@@ -9,12 +9,19 @@ use lib "$Bin/.."; #location of includes.pm
 use includes; #file with paths to PsN packages
 use Math::Random;
 use boxcox;
+use math qw(usable_number);
+
+my $stat =boxcox::get_quantile_data(5);
+is(usable_number($stat->[2]),1,'middle quant usable number is true');
+cmp_ok($stat->[2],'==',0,'middle quantile odd number is 0');
+cmp_float_array($stat,[-1.2816,-0.52440,0,0.52440,1.2816],'quantile vector N=5');
 
 my $N=6;
 
-my $stat =boxcox::get_quantile_data($N);
+$stat =boxcox::get_quantile_data($N);
 
-cmp_float_array($stat,[-1.3830,-0.67449,-0.21043,0.21043,0.67449,1.3830],'quantile vector');
+cmp_float_array($stat,[-1.3830,-0.67449,-0.21043,0.21043,0.67449,1.3830],'quantile vector N=6');
+
 
 
 my ($vector,$delta)=boxcox::sort_and_shift_to_positive([3,1,-2,-4,5],1);

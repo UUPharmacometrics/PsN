@@ -714,6 +714,10 @@ sub get_quantile_data
 		my $y=($i-0.5)/$number;
 #		my $val = qnorm($y);
 		my $val = udistr((1-$y));
+		#on 32bit windows have seen that udistr(0.5), which should be simply 0, returns NaN
+		if ((2*$i -1) == $number){
+			$val = 0;
+		}
 #		if ($cdf){
 #			$val = qnorm($y);
 #		}else{
