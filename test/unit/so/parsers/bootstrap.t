@@ -7,6 +7,8 @@ use FindBin qw($Bin);
 use lib "$Bin/../../.."; #location of includes.pm
 use includes; #file with paths to PsN packages
 use data;
+use ui;
+ui->silent(1);
 
 SKIP: {
     eval { require XML::LibXML };
