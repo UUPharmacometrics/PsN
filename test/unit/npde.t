@@ -266,6 +266,7 @@ is ($ok, 0, "get_nmtabledata iwres return status");
 
 $est_matrix = $values_matrix_array->[2];
 $mean_matrix = $mean_matrix_array->[2];
+# tablecolum individual simulation
 cmp_ok($est_matrix->[0]->[1]->[0],'==',-1.2010E-01,'cwres rec 2 original');
 cmp_ok($est_matrix->[0]->[26]->[0],'==',2.5276E-01,'cwres rec 27 original');
 cmp_ok($est_matrix->[0]->[69]->[0],'==',-1.5425,'cwres rec 70 original');

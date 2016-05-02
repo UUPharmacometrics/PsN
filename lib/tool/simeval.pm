@@ -49,7 +49,7 @@ our $cwres_file = 'summary_cwres.csv';
 our $ebe_npde_file = 'ebe_npde.csv';
 our $all_iofv_file = 'raw_all_iofv.csv';
 our $all_iwres_file = 'raw_all_iwres.csv';
-our $all_cwres_file = 'raw_all_iwres.csv';
+our $all_cwres_file = 'raw_all_cwres.csv';
 
 sub BUILD
 {
@@ -434,6 +434,41 @@ sub formatfloat
 	}
 	return $string;
 }
+sub formatnpde
+{
+	my $val = shift;
+	my $string;
+	if ($val == -99){
+		$string = '';
+	}else{
+		#have 5 sigdig
+		if (($val >= 1) or ($val <= -1)){
+			$string = sprintf("%.4f",$val);
+		}else{
+			$string = sprintf("%.5f",$val);
+		}
+	}
+	return $string;
+}
+sub formatinteger
+{
+	my $val = shift;
+	my $string;
+	if ($val == -99){
+		$string = '';
+	}else{
+		$string = sprintf("%i",$val);
+	}
+	return $string;
+}
+sub formattime
+{
+	my $val = shift;
+	my $string;
+	$string = sprintf("%7.1f",$val);
+
+	return $string;
+}
 
 sub modelfit_analyze
 {
@@ -443,26 +478,87 @@ sub modelfit_analyze
 		);
 	my $model_number = $parm{'model_number'};
 
-	my $errmess;
 	unless (defined $self->tools->[0]->raw_results){
 		croak("Running simulations failed. Check output in ".$self->tools->[0]->directory);
 	}
 
+
+	
 	my $have_mdv = 0;
-	my $commaMDV = '';
 	if (length($self->mdv)>0){
 		$have_mdv = 1 ;
+	}
+
+	my ($succ_samp,$subjects) = simeval_analyze(have_mdv => $have_mdv,
+												have_iwres => $self->have_iwres,
+												gls_data_file => $self->gls_data_file,
+												simeval_all_table_files => $self->all_table_files,
+												simeval_all_eta_files => $self->all_eta_files,
+												missing_value => $self->missing,
+												have_CDF => $self->have_CDF,
+												iiv_eta => $self->iiv_eta,
+												iov_eta => $self->iov_eta,
+												occasions => $self->occasions,
+												m1dir => 'm'.$model_number.'/',
+		);
+	$self->successful_samples($succ_samp);
+	$self->subjects($subjects);
+}
+
+sub simeval_analyze
+{ #input filenames are relative working directory, or absolute
+	my %parm = validated_hash(\@_,
+							  have_mdv => { isa => 'Bool', optional => 0 },
+							  have_iwres => { isa => 'Bool', optional => 0 },
+							  gls_data_file => { isa => 'Str', optional => 0 },
+							  simeval_all_table_files => { isa => 'ArrayRef', optional => 0 },
+							  simeval_all_eta_files => { isa => 'ArrayRef', optional => 0 },
+							  missing_value => { isa => 'Int', optional => 0 },
+							  have_CDF => { isa => 'Bool', optional => 0 },
+							  iiv_eta => { isa => 'ArrayRef', optional => 0 },
+							  iov_eta => { isa => 'ArrayRef', optional => 0 },
+							  occasions => { isa => 'Int', optional => 0 },
+							  m1dir => { isa => 'Str', optional => 0},
+							  testing => { isa => 'Bool', optional => 1, default => 0 },
+							  write_auto => { isa => 'Bool', optional => 1, default => 0 },
+		);
+	my $have_mdv = $parm{'have_mdv'};
+	my $have_iwres = $parm{'have_iwres'};
+	my $gls_data_file = $parm{'gls_data_file'};
+	my $simeval_all_table_files = $parm{'simeval_all_table_files'};
+	my $simeval_all_eta_files = $parm{'simeval_all_eta_files'};
+	my $missing_value = $parm{'missing_value'};
+	my $have_CDF = $parm{'have_CDF'};
+	my $iiv_eta = $parm{'iiv_eta'};
+	my $iov_eta = $parm{'iov_eta'};
+	my $occasions = $parm{'occasions'};
+	my $m1dir = $parm{'m1dir'};
+	my $testing = $parm{'testing'};
+	my $write_auto = $parm{'write_auto'};
+	
+	my $errmess;
+	my $ret_subjects;
+	my $ret_successful_samples;
+
+	my $commaMDV = '';
+	if ($have_mdv){
 		$commaMDV= ',MDV';
 	}
-	
+
+	my $time_array = [];
+	if ($write_auto and (-e $simeval_all_table_files->[0])) {
+		my $tablef = nmtablefile->new(filename => $simeval_all_table_files->[0]);
+		my $index = $tablef->tables->[0]->header->{'TIME'};
+		$time_array = $tablef->tables->[0]->columns->[$index];
+	}
 	for (my $loop=0; $loop<1; $loop++){
-		unless (-e $self->all_table_files->[0]) {
+		unless (-e $simeval_all_table_files->[0]) {
 			ui->print(category=> 'all',
 					  message => "\nError residuals: original residuals table file not found, residual results cannot be computed\n");
 			last;
 		}
 		my @found_files = ();
-		foreach my $file (@{$self->all_table_files}) {
+		foreach my $file (@{$simeval_all_table_files}) {
 			push(@found_files,$file) if (-e $file);
 		}
 		
@@ -478,7 +574,7 @@ sub modelfit_analyze
 		my $filter_all_zero_array = [0,0];
 		my $init_only_array = [1,0];
 
-		if ($self->have_iwres){
+		if ($have_iwres){
 			push(@table_headers,'IWRES');
 			push(@all_file_names,$all_iwres_file);
 			push(@summary_file_names,$iwres_file);
@@ -521,18 +617,41 @@ sub modelfit_analyze
 			my $stdev = [];
 			my $npde = [];
 			my $pde = [];
-
 			my $npd = [];
 			my $pd = [];
 
-			($ret,$errmess) = simeval_util::decorrelation($est_matrix,$mean_matrix,$decorr,$stdev);
-			unless ($ret ==0){
-				ui->print(category=> 'all',
-						  message =>"\nError in decorrelation for ".$table_headers[$k].": $ret. ".
-						  $table_headers[$k]." results cannot be computed\n".$errmess);
-				last;
-			}
 
+			if ($write_auto){
+				my $origname = 'auto_orig_'.$table_headers[$k].'.tab';
+				my $simname = 'auto_sim_'.$table_headers[$k].'.tab';
+				open(ORI, ">$origname") || die("Couldn't open $origname : $!");
+				print ORI "ID TIME ".$table_headers[$k]."\n";
+				for (my $i=0; $i<scalar(@{$est_matrix->[0]});$i++){
+					if ((not $have_mdv) or ($id_mdv_matrix->[1]->[$i]->[0] == 0)){
+						#not missing DV
+						#ID TIME DV
+						print ORI formatinteger($id_mdv_matrix->[0]->[$i]->[0]).' '.
+							formattime($time_array->[$i]).' '.
+							$est_matrix->[0]->[$i]->[0]."\n"; 
+					}
+				}
+				close ORI;
+				open(SIM, ">$simname") || die("Couldn't open $simname : $!");
+				print SIM "ID TIME ".$table_headers[$k]."\n";
+				for (my $j=1; $j<scalar(@{$est_matrix->[0]->[0]});$j++){ #loop sim
+					for (my $i=0; $i<scalar(@{$est_matrix->[0]});$i++){ #loop records
+						if ((not $have_mdv) or ($id_mdv_matrix->[1]->[$i]->[0] == 0)){
+							#not missing DV
+							#ID TIME DV
+							print SIM formatinteger($id_mdv_matrix->[0]->[$i]->[0]).' '.
+								formattime($time_array->[$i]).' '.
+								$est_matrix->[0]->[$i]->[$j]."\n";
+						} 
+					}
+				}
+				close SIM;
+			}
+			
 			open(ORI, ">$all_file_name") || die("Couldn't open $all_file_name : $!");
 			my @head = ('ID');
 			if ($have_mdv){
@@ -564,13 +683,23 @@ sub modelfit_analyze
 			}
 			close ORI;
 
-			if ($table_headers[$k] eq 'IWRES'){
+			my $original_outlier=[];
+			($ret,$errmess) = simeval_util::decorrelation_and_npde_records_by_id($est_matrix,$mean_matrix,$id_mdv_matrix,$have_mdv,$npde,$original_outlier);
+
+			unless ($ret ==0){
+				ui->print(category=> 'all',
+						  message =>"\nError in decorrelation and npde for ".$table_headers[$k].": $ret. ".
+						  $table_headers[$k]." results cannot be computed\n".$errmess);
+				last;
+			}
+
+			if (0 and ($table_headers[$k] eq 'IWRES')){ #FIXME, need to compute stdev
 				#append to datafile, also print to own file
-				my $fname = 'm'.$model_number.'/orig_pred.dta'; 
+				my $fname = $m1dir.'orig_pred.dta'; 
 				if (-e $fname){
 					my @tmp = utils::file::slurp_file($fname);
 					my $first=1;
-					open(EBE_NPDE, '>'.$self->gls_data_file()) || die("Couldn't open ".$self->gls_data_file()." : $!");
+					open(EBE_NPDE, '>'.$gls_data_file) || die("Couldn't open ".$gls_data_file." : $!");
 					open(DAT, ">ind_iwres_shrinkage.dta") || die("Couldn't open ind_iwres_shrinkage.dta : $!");
 					chomp $tmp[1];
 					print EBE_NPDE $tmp[1]."       ISHR\n";
@@ -583,7 +712,7 @@ sub modelfit_analyze
 						if ($stdev->[$i-2] > 0){
 							$shr = formatfloat(1-($stdev->[$i-2]));
 						}else{
-							$shr = "'".$self->missing."'";
+							$shr = "'".$missing_value."'";
 						}
 						print EBE_NPDE $tmp[$i]." ".$shr."\n";
 						print DAT $shr."\n";
@@ -595,84 +724,82 @@ sub modelfit_analyze
 				}
 			}
 
-			if ($self->have_CDF()){
-				$ret = simeval_util::npde_comp($decorr,$pde,$npde);
-				unless ($ret ==0){
-					ui->print(category=> 'all',
-							  message => "\nError in npde_comp for ".$table_headers[$k].": $ret. ".
-							  $table_headers[$k]." results cannot be computed\n");
-					last;
-				}
+			if ($have_CDF){
 				open(DAT, ">$summary_file_name") || die("Couldn't open $summary_file_name : $!");
-				print DAT "ID$commaMDV".",ORIGINAL,NPDE\n";
+				print DAT "ID$commaMDV".",ORIGINAL,NPDE,OUTLIER\n";
 
-				for (my $i=0; $i<scalar(@{$npde->[0]});$i++){
-					print DAT $id_mdv_matrix->[0]->[$i]->[0];
+				my $obs_index;
+				for (my $record_index=0; $record_index<scalar(@{$id_mdv_matrix->[0]});$record_index++){
+					print DAT $id_mdv_matrix->[0]->[$record_index]->[0];
 					if ($have_mdv){
-						print DAT ','.$id_mdv_matrix->[1]->[$i]->[0];
+						print DAT ','.$id_mdv_matrix->[1]->[$record_index]->[0];
 					}
 				
-					if ((not $have_mdv) or ($id_mdv_matrix->[1]->[$i]->[0] == 0)){
-						#not missing DV
-						print DAT ','.formatfloat($est_matrix->[0]->[$i]->[0]).','.formatfloat($npde->[0]->[$i])."\n";
+					if ((not $have_mdv) or ($id_mdv_matrix->[1]->[$record_index]->[0] == 0)){
+						print DAT ','.formatfloat($est_matrix->[0]->[$record_index]->[0]).
+							','.formatnpde($npde->[$record_index]).','.$original_outlier->[$record_index]."\n";
 					}else{
-						print DAT ',,'."\n";
+						print DAT ',,,'."\n";
 					}
 				}
 				close (DAT);
 
-				$ret = simeval_util::npde_comp($est_matrix,$pd,$npd);
-				unless ($ret ==0){
-					ui->print(category=> 'all',
-							  message => "\nError in npde_comp for ".$table_headers[$k].": $ret. ".$table_headers[$k].
-							  " results pd and npd cannot be computed\n");
-					last;
+
+				if (0){
+					$ret = simeval_util::npde_comp($est_matrix,$pd,$npd);
+					unless ($ret ==0){
+						ui->print(category=> 'all',
+								  message => "\nError in npde_comp for ".$table_headers[$k].": $ret. ".$table_headers[$k].
+								  " results pd and npd cannot be computed\n");
+						last;
+					}
+					my $npdname = lc($table_headers[$k]).'_npd.csv';
+					open(DAT, ">$npdname") || die("Couldn't open $npdname : $!");
+					print DAT "ID$commaMDV".",NPD\n";
+					
+					for (my $i=0; $i<scalar(@{$npd->[0]});$i++){
+						print DAT $id_mdv_matrix->[0]->[$i]->[0];
+						if ($have_mdv){
+							print DAT ','.$id_mdv_matrix->[1]->[$i]->[0];
+						}
+						print DAT ','.formatfloat($npd->[0]->[$i])."\n";
+					}
+					close (DAT);
 				}
+			}
 
-				my $npdname = lc($table_headers[$k]).'_npc.csv';
-				open(DAT, ">$npdname") || die("Couldn't open $npdname : $!");
-				print DAT "ID$commaMDV".",NPD\n";
+			if (0){
+				#no not have decorrelated
+				my $decorrname = 'decorrelated_original_'.lc($table_headers[$k]).'.csv';
 
-				for (my $i=0; $i<scalar(@{$npd->[0]});$i++){
-					print DAT $id_mdv_matrix->[0]->[$i]->[0];
+				open(ORI, ">$decorrname") || die("Couldn't open $decorrname : $!");
+				print ORI "ID$commaMDV".','.$table_headers[$k]."_STAR\n";
+				#		open(ORI2, ">raw_original_res_table.csv") || 	die("Couldn't open raw_original_res_table.csv : $!");
+				#		print ORI2 "ID,MDV,".$table_headers[$k]."\n";
+				for (my $i=0; $i<scalar(@{$decorr->[0]});$i++){
+					print ORI $id_mdv_matrix->[0]->[$i]->[0];
 					if ($have_mdv){
-						print DAT ','.$id_mdv_matrix->[1]->[$i]->[0];
+						print ORI ','.$id_mdv_matrix->[1]->[$i]->[0];
 					}
-					print DAT ','.formatfloat($npd->[0]->[$i])."\n";
+					print ORI ','.formatfloat($decorr->[0]->[$i]->[0])."\n";
+					#			print ORI2 $id_mdv_matrix->[0]->[$i]->[0].','.$id_mdv_matrix->[1]->[$i]->[0].','.
+					#				formatfloat($est_matrix->[0]->[$i]->[0])."\n";
 				}
-				close (DAT);
-				
+				close ORI;
 			}
-
-			my $decorrname = 'decorrelated_original_'.lc($table_headers[$k]).'.csv';
-
-			open(ORI, ">$decorrname") || die("Couldn't open $decorrname : $!");
-			print ORI "ID$commaMDV".','.$table_headers[$k]."_STAR\n";
-#		open(ORI2, ">raw_original_res_table.csv") || 	die("Couldn't open raw_original_res_table.csv : $!");
-#		print ORI2 "ID,MDV,".$table_headers[$k]."\n";
-			for (my $i=0; $i<scalar(@{$decorr->[0]});$i++){
-				print ORI $id_mdv_matrix->[0]->[$i]->[0];
-				if ($have_mdv){
-					print ORI ','.$id_mdv_matrix->[1]->[$i]->[0];
-				}
-				print ORI ','.formatfloat($decorr->[0]->[$i]->[0])."\n";
-#			print ORI2 $id_mdv_matrix->[0]->[$i]->[0].','.$id_mdv_matrix->[1]->[$i]->[0].','.
-#				formatfloat($est_matrix->[0]->[$i]->[0])."\n";
-			}
-			close ORI;
 			#		close ORI2;
 		} #end loop over table headers CWRES, IWRES ...
 		last; #must have last here, we do not want to loop
 	}
 
 	for (my $loop=0; $loop<1; $loop++){
-		unless (-e $self->all_eta_files->[0]){
+		unless (-e $simeval_all_eta_files->[0]){
 			ui->print(category=> 'all',
 					  message => "\nError ebe: original eta file not found, ebe results cannot be computed\n");
 			last;
 		}
 		my @found_files=();
-		foreach my $file (@{$self->all_eta_files}){
+		foreach my $file (@{$simeval_all_eta_files}){
 			push(@found_files,$file) if (-e $file);
 		}
 		my $headers_array = [['ID'],['OBJ']];
@@ -684,11 +811,11 @@ sub modelfit_analyze
 		my @extra_headers=('ID');
 		my @etatypes=();
 		my $have_iiv=0;
-		if (scalar(@{$self->iiv_eta})>0){
+		if (scalar(@{$iiv_eta})>0){
 			push(@etatypes,'iiv');
 			$have_iiv=1;
 		}
-		for (my $i=1; $i<=$self->occasions; $i++){
+		for (my $i=1; $i<=$occasions; $i++){
 			push(@etatypes,'occasion_'.$i);
 		}
 
@@ -698,9 +825,9 @@ sub modelfit_analyze
 			#my ($iivref,$iovref)
 			my @eta_headers;
 			if ($ti==0 and $have_iiv){
-				@eta_headers = @{$self->iiv_eta};
+				@eta_headers = @{$iiv_eta};
 			}else{
-				@eta_headers = @{$self->iov_eta()->[($ti-$have_iiv)]};
+				@eta_headers = @{$iov_eta->[($ti-$have_iiv)]};
 			}
 			push(@all_eta_headers,@eta_headers);
 			push(@{$headers_array},\@eta_headers);
@@ -729,7 +856,6 @@ sub modelfit_analyze
 		my $dummy_matrix=[];
 		my $est_matrix= $values_matrix_array->[1];
 		my $mean_matrix= $mean_matrix_array->[1];
-		my $mean_matrix=[];
 		my $decorr = [];
 		my $stdev =[];
 		my $npde = [];
@@ -739,8 +865,32 @@ sub modelfit_analyze
 		my $pd=[];
 
 		#number of samples for which have OBJ
-		$self->successful_samples(scalar(@{$est_matrix->[0]->[0]})-1); # -1 for original 
+		$ret_successful_samples = scalar(@{$est_matrix->[0]->[0]})-1; # -1 for original 
 
+		if ($write_auto){
+			my $origname = 'auto_orig_IOFV.tab';
+			my $simname = 'auto_sim_IOFV.tab';
+
+			open(ORI, ">$origname") || die("Couldn't open $origname : $!");
+			print ORI "ID TIME IOFV\n";
+			for (my $i=0; $i<scalar(@{$est_matrix->[0]});$i++){
+				print ORI formatinteger($id_matrix->[0]->[$i]->[0]).
+					' 1.0 '.$est_matrix->[0]->[$i]->[0]."\n";
+			}
+			close ORI;
+
+			open(SIM, ">$simname") || die("Couldn't open $simname : $!");
+			print SIM "ID TIME IOFV\n";
+
+			for (my $j=1; $j<scalar(@{$est_matrix->[0]->[0]});$j++){
+				for (my $i=0; $i<scalar(@{$est_matrix->[0]});$i++){
+					print SIM formatinteger($id_matrix->[0]->[$i]->[0]).
+						' 1.0 '.$est_matrix->[0]->[$i]->[$j]."\n";
+				} 
+			}
+			close SIM;
+
+		}
 		open(ORI, ">$all_iofv_file") || die("Couldn't open $all_iofv_file : $!");
 		my @head = ('ID','ORIGINAL');
 		for (my $j=1; $j<scalar(@{$est_matrix->[0]->[0]});$j++){
@@ -790,7 +940,7 @@ sub modelfit_analyze
 				formatfloat($mean_matrix->[0]->[$i]).','.formatfloat($stdev->[$i]).','.
 				formatfloat(($decorr->[0]->[$i]->[0])**2).',';
 			if ($ret == 0){
-				print ORI formatfloat($npde->[0]->[$i]);
+				print ORI formatnpde($npde->[0]->[$i]);
 			}
 			print ORI "\n";
 		}
@@ -812,17 +962,17 @@ sub modelfit_analyze
 				die("Couldn't open iofv_pde.csv : $!");
 			print DAT "ID,OFV_PDE\n";
 			for (my $i=0; $i<scalar(@{$pde->[0]});$i++){
-				print DAT $id_matrix->[0]->[$i]->[0].','.formatfloat($pde->[0]->[$i])."\n";
+				print DAT $id_matrix->[0]->[$i]->[0].','.formatnpde($pde->[0]->[$i])."\n";
 			}
 			close (DAT);
 		}
 
-		if ($self->have_CDF()){
+		if ($have_CDF){
 			if (0){
 				open(DAT, ">iofv_npde.csv") || 	die("Couldn't open iofv_npde.csv : $!");
 				print DAT "ID,IOFV_NPDE\n";
 				for (my $i=0; $i<scalar(@{$npde->[0]});$i++){
-					print DAT $id_matrix->[0]->[$i]->[0].','.formatfloat($npde->[0]->[$i])."\n";
+					print DAT $id_matrix->[0]->[$i]->[0].','.formatnpde($npde->[0]->[$i])."\n";
 				}
 				close (DAT);
 			}
@@ -835,13 +985,14 @@ sub modelfit_analyze
 				open(DAT, ">iofv_npd.csv") || die("Couldn't open iofv_npd.csv : $!");
 				print DAT "ID,OFV_NPD\n";
 				for (my $i=0; $i<scalar(@{$npd->[0]});$i++){
-					print DAT $id_matrix->[0]->[$i]->[0].','.formatfloat($npd->[0]->[$i])."\n";
+					print DAT $id_matrix->[0]->[$i]->[0].','.formatnpde($npd->[0]->[$i])."\n";
 				}
 				close (DAT);
 			}
 		}
 
-		$self->subjects(scalar(@{$id_matrix->[0]}));
+		$ret_subjects = scalar(@{$id_matrix->[0]});
+		
 		my @all_npde=(); #[ind]->[eta]
 		my @standardized=();
 		for (my $ti=0; $ti< scalar(@etatypes); $ti++){
@@ -858,6 +1009,35 @@ sub modelfit_analyze
 			my $npd = [];
 			my $pd=[];
 
+			if ($write_auto and ($ti == 0)){
+				my $origname = 'auto_orig_EBE.tab';
+				my $simname = 'auto_sim_EBE.tab';
+				my $maxebe = scalar(@{$est_matrix});
+				open(ORI, ">$origname") || die("Couldn't open $origname : $!");
+				print ORI "ID TIME EBE\n";
+				for (my $i=0; $i<scalar(@{$est_matrix->[0]});$i++){
+					for (my $k=0; $k<$maxebe; $k++){
+						print ORI formatinteger($id_matrix->[0]->[$i]->[0]).
+							' '.($k+1).'.0 '.($est_matrix->[$k]->[$i]->[0])."\n";
+					}
+				}
+				close ORI;
+				open(SIM, ">$simname") || die("Couldn't open $simname : $!");
+				print SIM "ID TIME EBE\n";
+
+				for (my $j=1; $j<scalar(@{$est_matrix->[0]->[0]});$j++){
+					for (my $i=0; $i<scalar(@{$est_matrix->[0]});$i++){
+						for (my $k=0; $k<$maxebe; $k++){
+							print SIM formatinteger($id_matrix->[0]->[$i]->[0]).
+								' '.($k+1).'.0 '.($est_matrix->[$k]->[$i]->[$j])."\n";
+						}
+					} 
+				}
+				close SIM;
+
+			}
+
+			
 			open(ORI, ">raw_original_$type"."_ebe.csv") || die("Couldn't open raw_original_$type"."_ebe.csv : $!");
 			print ORI "ID,".join(',',@eta_headers)."\n";
 			for (my $i=0; $i<scalar(@{$est_matrix->[0]});$i++){
@@ -887,7 +1067,7 @@ sub modelfit_analyze
 				my $sd=0;
 				for (my $j=0; $j<scalar(@{$decorr});$j++){
 					print ORI ','.formatfloat($decorr->[$j]->[$i]->[0]);
-					$sd += ($decorr->[$j]->[$i]->[0])**2 unless ($decorr->[$j]->[$i]->[0] == $self->missing)  ;
+					$sd += ($decorr->[$j]->[$i]->[0])**2 unless ($decorr->[$j]->[$i]->[0] == $missing_value)  ;
 				}
 				$standardized[$i] += $sd;
 				print ORI "\n";
@@ -904,13 +1084,13 @@ sub modelfit_analyze
 			for (my $i=0; $i<scalar(@{$pde->[0]});$i++){
 				print DAT $id_matrix->[0]->[$i]->[0];
 				for (my $j=0; $j<scalar(@{$pde});$j++){
-					print DAT ','.formatfloat($pde->[$j]->[$i]);
+					print DAT ','.formatnpde($pde->[$j]->[$i]);
 				}
 				print DAT "\n";
 			}
 			close (DAT);
 			
-			if ($self->have_CDF()){
+			if ($have_CDF){
 				for (my $i=0; $i<scalar(@all_npde);$i++){ #loop id
 					for (my $j=0; $j<scalar(@{$npde});$j++){ #loop eta
 						push(@{$all_npde[$i]},$npde->[$j]->[$i]);
@@ -929,7 +1109,7 @@ sub modelfit_analyze
 				for (my $i=0; $i<scalar(@{$npd->[0]});$i++){
 					print DAT $id_matrix->[0]->[$i]->[0];
 					for (my $j=0; $j<scalar(@{$npd});$j++){
-						print DAT ','.formatfloat($npd->[$j]->[$i]);
+						print DAT ','.formatnpde($npd->[$j]->[$i]);
 					}
 					print DAT "\n";
 				}
@@ -937,13 +1117,13 @@ sub modelfit_analyze
 
 			}
 		}#end loop etatypes
-		if ($self->have_CDF()){
+		if ($have_CDF){
 			open(DAT, ">$ebe_npde_file") || die("Couldn't open $ebe_npde_file : $!");
 			print DAT "ID,STAND_EBE,".join(',',@all_eta_headers)."\n";
 			for (my $i=0; $i<scalar(@all_npde);$i++){
 				print DAT $id_matrix->[0]->[$i]->[0].','.formatfloat($standardized[$i]);
 				for (my $j=0; $j<scalar(@{$all_npde[$i]});$j++){
-					print DAT ','.formatfloat($all_npde[$i]->[$j]);
+					print DAT ','.formatnpde($all_npde[$i]->[$j]);
 				}
 				print DAT "\n";
 			}
@@ -952,7 +1132,7 @@ sub modelfit_analyze
 		}
 		last; #must break while here
 	}
-
+	return ($ret_successful_samples,$ret_subjects);
 }
 
 sub _modelfit_raw_results_callback
