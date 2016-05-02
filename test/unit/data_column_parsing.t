@@ -186,9 +186,9 @@ for (my $si=0; $si<scalar(@edge_values); $si++){
 exit;
 
 #data generating code for leading separators
-my $tail = "6,5,4,3,2,1,0,";
+$tail = "6,5,4,3,2,1,0,";
 
-my $filename = 'test_leading_separators.dta';
+$filename = 'test_leading_separators.dta';
 unlink ($filename);
 open my $fh, '>', $filename;
 

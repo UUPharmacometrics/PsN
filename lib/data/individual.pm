@@ -212,7 +212,7 @@ sub add_frem_lines
 		push(@timevar_matrix, []);
 	}
 
-	my %occasions = {};
+	my %occasions = ();
 	my $lastline = scalar(@data)-1;
 	for ( my $i = 0; $i <= $lastline; $i++ ) {
 		my @data_row = split( /,/ , $data[$i] );

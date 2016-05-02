@@ -139,7 +139,7 @@ is_deeply ($eta_matrix->[5],['1.29845E-05','-1.44714E-05','1.98524E-05','8.67448
 is_deeply ($eta_matrix->[73],['8.98237E-06','-1.58557E-05','-6.15118E-05','9.96136E-05'],"eta matrix start_eta 4 n_eta 4 row index 73");
 
 # full_name
-my $data = data->new(filename => $phifile,
+$data = data->new(filename => $phifile,
 	ignoresign => '@',
 	parse_header => 1,
 );
@@ -158,7 +158,7 @@ if ($^O =~ /Win/) {
 }
 
 # New
-my $filename = "$tempdir/test.dta";
+$filename = "$tempdir/test.dta";
 open my $fh, '>', $filename;
 print $fh "C,ID,SMTH,TEST\n";
 print $fh ",0,1,-99\n";
@@ -173,10 +173,16 @@ print $fh ",1,10,5\n";
 print $fh ",2,3,7\n";
 close $fh;
 
-my $data = data->new(filename => $filename, 
-					 directory => $tempdir,
-					 ignoresign => '@', 
-					 parse_header => 1);
+$data = data->new(filename => $filename, 
+				  directory => $tempdir,
+				  ignoresign => '@', 
+				  parse_header => 1,
+				  missing_data_token => '-99');
+
+my $factors = $data ->factors(column => 4,ignore_missing =>1);
+is(data::_have_non_unique_values($factors),1,'non-unique values in data yes');
+$factors = $data ->factors(column => 2,ignore_missing =>1);
+is(data::_have_non_unique_values($factors),0,'non-unique values in data ID');
 
 my $statistics = $data->lasso_get_categorical_statistics(column_number => 4,
 														 missing_data_token => '-99');
@@ -255,10 +261,13 @@ is ($data->median(column_head => 'TEST'),5.5 , "data->median with column name");
 
 #range
 is ($data->range(column => 3), 9, "data->range of small data set column 1");
+is ($data->range(column => 3), 9, "data->range of small data set column 1 again");
 is ($data->range(column => 4), 4, "data->range of small data set column 2");
+is ($data->range(column => 4), 4, "data->range of small data set column 2 again");
 dies_ok { $data->range(column => 10) } "data->range for non existing column";
 is ($data->range(column_head => 'TEST'), 4, "data->range with column name");
-
+is ($data->range(column_head => 'TEST'), 4, "data->range with column name again");
+is($data->column_head_indices->{'TEST'},4,'column head indices start at 1');
 
 #column_to_array
 is_deeply($data->column_to_array(column => 2), [1,2,3,10,10,10,10,10,10,3] , "data->column_to_array of small data set column 1");
@@ -268,7 +277,7 @@ dies_ok { $data->column_to_array(column => 1, filter => [0, 0, 0]) } "data->colu
 
 #merge
 my $filename_merge = "$tempdir/test_merge.dta";
-open my $fh, '>', $filename_merge;
+open $fh, '>', $filename_merge;
 print $fh "C,ID,SMTH,TEST\n";
 print $fh ",1,10,5\n";
 print $fh ",1,20,6\n";
@@ -291,7 +300,7 @@ is ($copy->idcolumn, 2, "copied data idcol");
 
 #data set parsing
 my $filename_spec = "$tempdir/test_spec.dta";
-open my $fh, '>', $filename_spec;
+open $fh, '>', $filename_spec;
 print $fh "BACK,SMTH,ID\n";
 print $fh "1, 0, 1\n";
 print $fh ", 0, 1\n";
@@ -303,8 +312,8 @@ is_deeply ($data_spec->individuals->[0]->subject_data, ['1,0,1', ',0,1', ',,1'],
 
 
 # New
-my $filename = "$tempdir/test.dta";
-open my $fh, '>', $filename;
+$filename = "$tempdir/test.dta";
+open $fh, '>', $filename;
 print $fh "ID,A,SMTH,TEST\n";
 print $fh "0,-99,1.0,-99\n";
 print $fh "0,-99,2.0,-99\n";
@@ -319,7 +328,7 @@ print $fh "2,1,3.0,7\n";
 print $fh "3,1,3.0,7\n";
 close $fh;
 
-my $data = data->new(filename => $filename, 
+$data = data->new(filename => $filename, 
 					 directory => $tempdir,
 					 ignoresign => '@', 
 					 parse_header => 1);
@@ -341,12 +350,12 @@ is_deeply($new_categorical,['A','SMTH_9','SMTH_3','TEST'],'new categorical basel
 
 
 
-my $data = data->new(filename => $filename, 
+$data = data->new(filename => $filename, 
 					 directory => $tempdir,
 					 ignoresign => '@', 
 					 parse_header => 1);
 
-my ($mapping,$new_indices,$new_categorical,$warn) = $data->append_binary_columns(indices => [1,2,3],
+($mapping,$new_indices,$new_categorical,$warn) = $data->append_binary_columns(indices => [1,2,3],
 																		   baseline_only => 0); 
 
 is_deeply($mapping->[0],[],'mapping 0 only two nonmiss');
@@ -365,7 +374,7 @@ $data = data->new(filename => $filename,
 					 ignoresign => '@', 
 					 parse_header => 1);
 
-my ($mapping,$new_indices,$new_categorical,$warn) = $data->append_binary_columns(indices => [1,2,3],
+($mapping,$new_indices,$new_categorical,$warn) = $data->append_binary_columns(indices => [1,2,3],
 																		   baseline_only => 0,
 																		   start_header => ['ID','F','G','H']); 
 is_deeply($data->header,['ID','F','G','H','G_9','G_3','G_2','H_7','H_51'],'new header after append 2');

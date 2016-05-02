@@ -71,7 +71,7 @@ is($model->datafiles(absolute_path => 0)->[0],'pheno.dta',' datafilename bare');
 
 #need OSspecific to make tests platform independend
 my $datarec = model::problem::data->new(record_arr => ['$DATA "'.$tempdir.'subdir space/file.csv" ']);
-my ($dir,$file)=OSspecific::absolute_path($tempdir.'subdir space','file');
+($dir,$file)=OSspecific::absolute_path($tempdir.'subdir space','file');
 is($datarec ->get_directory,$dir,'data record dir double quotes space');
 is($datarec ->get_filename,'file.csv','data record filename double quotes space');
 
@@ -135,11 +135,11 @@ my ($homedir,$dirt) = OSspecific::absolute_path(getcwd(),'file');
 $datarec->set_filename(filename=> 'new.csv');
 is($datarec ->get_directory,$homedir,'data record dir after change');
 is($datarec ->get_filename,'new.csv','data record filename after change');
-my ($dir,$dirt) = OSspecific::absolute_path($homedir.'sub','file');
+($dir,$dirt) = OSspecific::absolute_path($homedir.'sub','file');
 $datarec->set_filename(filename=> $homedir.'sub/new2.csv');
 is($datarec ->get_directory,$dir,'data record dir after change 2');
 is($datarec ->get_filename,'new2.csv','data record filename after change 2');
-my ($dir,$dirt) = OSspecific::absolute_path($homedir.'other','file');
+($dir,$dirt) = OSspecific::absolute_path($homedir.'other','file');
 $datarec->set_filename(filename=> $homedir.'sub/../other/new3.csv');
 is($datarec ->get_directory,$dir,'data record dir after change 3');
 is($datarec ->get_filename,'new3.csv','data record filename after change 3');
@@ -215,7 +215,7 @@ for( my $i=0; $i<scalar(@inputs); $i++){
 
 my $dummy_prob = model::problem->new(ignore_missing_files=> 1,
 									 prob_arr       => ['$PROB','$INPUT C PAT=ID','$DATA dummy.txt']);
-my $model = model->new(filename => 'dummy', problems => [$dummy_prob], ignore_missing_files => 1);
+$model = model->new(filename => 'dummy', problems => [$dummy_prob], ignore_missing_files => 1);
 dies_ok {$model->idcolumn(problem_number=>1)} "PAT=ID in \$INPUT";
 
 
@@ -262,7 +262,7 @@ my @datafiletests = (
 	{ filename => '9_lead_posneg.csv', input => 'PNEG ID TIME AMT WGT APGR DV', idcolumn => 2,data => ''},
 );
 my $problem;
-my $model;
+
 
 foreach my $test_hash (@datafiletests) {
 	$problem = model::problem->new(ignore_missing_files => 1, 

@@ -454,7 +454,7 @@ sub frem_compute_covariate_properties
 											   unique_in_individual => 1,
 											   ignore_missing => 1)};
 
-		if ( $strata{'Non-unique values found'} eq '1' ) {
+		if ( _have_non_unique_values(\%strata)) {
 			ui -> print( category => 'all',
 						 message => "\nWarning: Individuals were found to have multiple values in the $covariate column,".
 						 " but the frem script will just use the first value for the individual.\n");
@@ -676,6 +676,16 @@ sub cdd_create_datasets{
 	return $new_datas, $skip_ids, $skip_keys, $skip_values, $remainders, $pr_bins;
 }
 
+sub _have_non_unique_values
+{
+	my $factors = shift;
+	if ( defined $factors->{'Non-unique values found'} and ($factors->{'Non-unique values found'} eq '1' )) {
+		return 1;
+	}else{
+		return 0;
+	}
+}
+
 sub _case_deletion
 {
 	my $self = shift;
@@ -709,7 +719,7 @@ sub _case_deletion
 	my @header = @{$self->header()};
 
 	my %factors = %{$self -> factors( column => $case_column )};
-	if ( $factors{'Non-unique values found'} eq '1' ) {
+	if ( _have_non_unique_values(\%factors) ) {
 		croak("Individuals were found to have multiple values in column number $case_column. ".
 			  "Column $case_column cannot be used for case deletion." );
 	}
@@ -728,7 +738,7 @@ sub _case_deletion
 		$binsize[ $k++ ]++;
 		$k = 0 if( $k >= $bins );
 	}
-	$self->_fisher_yates_shuffle( array => \@ftrs ) if( $selection eq 'random' );
+	$self->_fisher_yates_shuffle( array => \@ftrs ) if( defined $selection and ($selection eq 'random') );
 	for ( $k = 0; $k < $bins; $k++ ) {
 		for ( $j = 0; $j < $binsize[ $k ]; $j++ ) {
 			push( @{$skipped_keys[ $k ]}, @{$factors{ $ftrs[ $i ] }} );
@@ -856,7 +866,7 @@ sub add_randomized_columns
 		push(@xcolumn_names,'X'.$cov);
 		my %strata = %{$self->factors( column_head => $cov, return_occurences => 1 )};
 		my @values;
-		if ( $strata{'Non-unique values found'} eq '1' ) {
+		if ( _have_non_unique_values(\%strata)) {
 			ui->print( category => 'all',
 				message => "Warning: Individuals were found to have multiple values ".
 				"in the $cov column. When randomizing this column to create X$cov ".
@@ -880,7 +890,7 @@ sub add_randomized_columns
 				for(my $i = 0; $i <= $#{$ifactors}; $i++ ) {
 					# data is stored in strings. We need to split them into an array.
 					my @data_row = split( /,/, $ifactors->[$i] );
-					if ( $data_row[$column - 1] == $self->missing_data_token ) {
+					if ( (defined $self->missing_data_token)  and $data_row[$column - 1] == $self->missing_data_token ) {
 						next;
 					}
 					$individual_sum += $data_row[$column - 1];
@@ -1018,7 +1028,7 @@ sub factors
 			  join(', ', keys(%{$self->column_head_indices})));
 	  } else {
 	    $column = $self->column_head_indices->{$column_head};
-	    carp("$column_head is in column number $column");
+	    debugmessage(3,"$column_head is in column number $column");
 	  }
 	}
 
@@ -1212,6 +1222,7 @@ sub max
 	  my @data_row = split( /,/ , $first_id->subject_data ->[0] );
 
 	  unless ( defined $column  && defined( $data_row[$column-1] ) ) {
+		no warnings qw(uninitialized);
 	    unless (defined($column_head) && defined($self->column_head_indices->{$column_head})) {
 	      die "Error in data->max: unknown column: \"$column_head\" or invalid column number: \"$column\"\n";
 	    } else {
@@ -1258,6 +1269,7 @@ sub median
 	my @data_row = split( /,/ , $first_id->subject_data ->[0] );
 
 	unless ( defined $column  && defined( $data_row[$column-1] ) ) {
+		no warnings qw(uninitialized);
 	  unless(defined($column_head) && defined($self->column_head_indices->{$column_head})){
 	    die "Error in data->median: unknown column: \"$column_head\" or invalid column number: \"$column\"\n";
 	  } else {
@@ -1336,6 +1348,7 @@ sub mean
 	my @data_row = split(/,/, $first_id->subject_data ->[0]);
 
 	unless ( defined $column  && defined( $data_row[$column-1] ) ) {
+		no warnings qw(uninitialized);
 		unless (defined($column_head) && defined($self->column_head_indices->{$column_head})) {
 			die "Error in data->mean: unknown column: \"$column_head\" or invalid column number: \"$column\"\n";
 		} else {
@@ -1541,7 +1554,7 @@ sub min
 	my $column_head = $parm{'column_head'};
 	my $return_value;
 
-	my $tmp_column = $self->column_head_indices->{$column_head};
+	my $tmp_column = $self->column_head_indices->{$column_head} if (defined $column_head);
 
 	# The if-statement below used to be a cache of allready calculated
 	# means. But since individuals can be accessed in so many ways, we
@@ -1555,6 +1568,7 @@ sub min
 	my @data_row = split(/,/, $first_id->subject_data->[0]);
 
 	unless (defined $column && defined($data_row[$column-1])) {
+		no warnings qw(uninitialized);
 		unless (defined($column_head) && defined($self->column_head_indices->{$column_head})) {
 			die "Error in data->min: unknown column: \"$column_head\" or invalid column number: \"$column\"\n";
 		} else {
@@ -1602,20 +1616,27 @@ sub range
 	my $column_head = $parm{'column_head'};
 	my $return_value;
 
-	my $tmp_column;
-	if (defined $self->column_head_indices and defined $self->column_head_indices->{$column_head}) {
-		$tmp_column = $self->column_head_indices->{$column_head};
-	}
-	if (defined $tmp_column and defined $self->_range->[$tmp_column]) {
-		$return_value = $self->_range->[$tmp_column];
-	} else {
-		if (defined $column) {
+	if (defined $column) {
+		if (defined $self->_range->[$column]) {
+			$return_value = $self->_range->[$column];
+		}else{
 			$return_value = $self->max(column => $column) - $self->min(column => $column);
-		} else {
-			$return_value = $self->max(column_head => $column_head) - $self->min(column_head => $column_head);
+			$self->_range->[$column] = $return_value;
 		}
-		$self->_range->[$column] = $return_value;
-
+	}elsif (defined $column_head){
+		if (defined $self->column_head_indices and defined $self->column_head_indices->{$column_head}) {
+			my $tmp_column = $self->column_head_indices->{$column_head};
+			if (defined $self->_range->[$tmp_column]) {
+				$return_value = $self->_range->[$tmp_column];
+			}else{
+				$return_value = $self->max(column_head => $column_head) - $self->min(column_head => $column_head);
+				$self->_range->[$tmp_column] = $return_value;
+			}
+		}else{
+			croak("No column with column_head $column_head in data->range");
+		}
+	}else{
+		croak("Both column and column_head undefined in data->range");
 	}
 
 	return $return_value;
@@ -1671,13 +1692,13 @@ sub resample
 	  my %strata;
 	  if( $stratify_on =~ /\D/ ) {
 	    %strata = %{$self->factors( column_head => $stratify_on )};
-	    if ( $strata{'Non-unique values found'} eq '1' ) {
+	    if ( _have_non_unique_values(\%strata) ) {
 	      croak("At least one individual was found to have multiple values in the $stratify_on column. ".
 			    "The column $stratify_on cannot be used for stratification of the resampling." );
 	    }
 	  } else {
 	    %strata = %{$self->factors( column => $stratify_on )};
-	    if ( $strata{'Non-unique values found'} eq '1' ) {
+	    if (  _have_non_unique_values(\%strata) ) {
 	      croak("At least one individual was found to have multiple values in column number $stratify_on. ".
 			    "Column $stratify_on cannot be used for stratification of the resampling." );
 	    }
@@ -1851,14 +1872,14 @@ sub subsets
 		my %strata;
 		if( $stratify_on =~ /^[0-9]+$/ ){
 			%strata = %{$work_data->factors( column => $stratify_on )};
-			if ( $strata{'Non-unique values found'} eq '1' ) {
+			if (  _have_non_unique_values(\%strata) ) {
 				croak("Individuals were found to have multiple values in column".
 					" number $stratify_on. ".
 					"Column $stratify_on cannot be used for stratification of the subsets." );
 			}
 		} else {
 			%strata = %{$work_data->factors( column_head => $stratify_on )};
-			if ( $strata{'Non-unique values found'} eq '1' ) {
+			if (  _have_non_unique_values(\%strata) ) {
 				croak("Individuals were found to have multiple values in".
 					" the $stratify_on column. ".
 					"The column $stratify_on cannot be used for stratification of the subsets." );
@@ -2001,7 +2022,8 @@ sub split_vertically
 	}
 
 	my @ind_data = @{$individuals[0]->subject_data};
-	my $ncol = scalar(split(/,/, $ind_data[0]));
+	my @firstline = split(/,/, $ind_data[0]);
+	my $ncol = scalar(@firstline);
 	if (($split_index < 0) || ($split_index >= $ncol)) {
 		croak("illegal split_index $split_index in data->split_vertically, have $ncol columns");
 	}
@@ -2162,6 +2184,7 @@ sub _randomize_data
 			push(@new_individuals,$individual->copy());
 		}
 		for (my $j=0; $j < scalar(@stratified_data); $j++){
+			no warnings qw (numeric);
 			my @shuffled_indices = @{$stratified_data[$j]};
 			$self-> _fisher_yates_shuffle(array => \@shuffled_indices);
 			for (my $k=0; $k< scalar(@shuffled_indices); $k++){
@@ -2175,8 +2198,8 @@ sub _randomize_data
 					$individual_is_changed = 0;
 				}elsif (scalar(@{$rand_values->[$base_index]}) == scalar(@{$rand_values->[$rand_index]})){
 					my $found_diff=0;
-					for (my $tmp=0; $tmp < scalar(@{$rand_values->[$base_index]}); $tmp++){
-						if ($rand_values->[$base_index]->[$tmp] != $rand_values->[$rand_index]->[$tmp]){
+					for (my $tmp=0; $tmp < scalar(@{$rand_values->[$base_index]}); $tmp++){ 
+						if ($rand_values->[$base_index]->[$tmp] != $rand_values->[$rand_index]->[$tmp]){#warning non-numeric
 							$found_diff=1;
 							last;
 						}
@@ -2488,7 +2511,7 @@ sub _fisher_yates_shuffle
 	my @array = defined $parm{'array'} ? @{$parm{'array'}} : ();
 
 	my $arr_ref = $parm{'array'};
-	carp("Array of zero length received" )
+	debugmessage(3,"Array of zero length received" )
 	if ( scalar @{$arr_ref} < 1 );
 	my $i;
 	for ($i = @$arr_ref; --$i;) {
@@ -2546,10 +2569,12 @@ sub _read_header
 	print "\nWarning: Found no data lines in ".$self->filename().
 		". This can happen e.g.\nif you have a data file in old MacOSX format and run on unix/linux,\n".
 		"in which case the workaround is to run mac2unix on " . $self->filename . "\n" unless $found_data;
-	
-	chomp($hdrstring = pop(@data)); #last value of array
-#	print "headerstring $hdrstring\n";
-	@header = split(/\,\s*|\s+/, $hdrstring);
+
+	$hdrstring = pop(@data); #last value of array
+	chomp($hdrstring) if (defined $hdrstring); 
+	#	print "headerstring $hdrstring\n";
+	@header = ();
+	@header = split(/\,\s*|\s+/, $hdrstring) if (defined $hdrstring);
 	if ($self->parse_header or not defined $self->idcolumn) {
 		if (not $self->parse_header and not defined $self->idcolumn) {
 			print "No id column specified for data->_read_header: trying to parse the header anyway\n";
@@ -2559,7 +2584,7 @@ sub _read_header
 		for (my $i = 1; $i <= scalar @header; $i++) {
 			if ($header[$i - 1] eq 'CONT') {
 				if (defined $self->cont_column and not $i == $self->cont_column) {
-					carp("The supplied columns for the CONT data item (".
+					debugmessage(3,"The supplied columns for the CONT data item (".
 						$self->cont_column . ") does not match the column where the CONT ".
 						"header was found ($i), using $i");
 				}
@@ -2572,7 +2597,7 @@ sub _read_header
 		for (my $i = 1; $i <= scalar @header; $i++) {
 			if ($header[$i - 1] eq 'ID') {
 				if (defined $self->idcolumn and not $i == $self->idcolumn) {
-					carp("The supplied columns for the ID data item (" .
+					debugmessage(3,"The supplied columns for the ID data item (" .
 						$self->idcolumn . ") does not match the column where the ID ".
 						"header was found ($i), using $i");
 				}
@@ -2688,10 +2713,12 @@ sub _read_individuals
 			#If we have not found first individual to read then skip to next line in file
 
 			# Check if column miss data at some row (This adds about 30% of init time)
-			my $mdt = $self->missing_data_token;
-			for ( my $i = 0; $i <= $#{$full_row}; $i++ ) {			# FIXME: Gives a warning. Should change to eq below
-				$self->found_missing_data->{$i+1} = 1
-				if ( $full_row->[$i] == $mdt ); # == is slower but safer than eq
+			my $mdt = $self->missing_data_token; #use regexp on whole line?
+			if (defined $mdt){
+				for ( my $i = 0; $i <= $#{$full_row}; $i++ ) {			
+					$self->found_missing_data->{$i+1} = 1
+						if (($full_row->[$i] ne '') and ($full_row->[$i] ne '.')  and ($full_row->[$i] == $mdt) ); # == is slower but safer than eq
+				}
 			}
 			if ( $new_ID != $old_ID ) {
 				my @subject_data = @init_data;
@@ -3084,7 +3111,7 @@ sub scm_calculate_categorical_statistics
 									unique_in_individual => 1,
 									ignore_missing => 1)};
 	
-	if ( $strata{'Non-unique values found'} eq '1' ) {
+	if (  _have_non_unique_values(\%strata) ) {
 		if ($linearize){
 			ui -> print( category => 'all',
 				message => "\nWarning: Individuals were found to have multiple values ".
@@ -3144,7 +3171,7 @@ sub scm_calculate_continuous_statistics
 									unique_in_individual => 1,
 									ignore_missing => 1)};
 	
-	if ( $strata{'Non-unique values found'} eq '1' ) {
+	if (  _have_non_unique_values(\%strata)) {
 		my $found=0;
 		foreach my $tv (@time_varying){
 			$found =1 if ($tv eq $covariate);
