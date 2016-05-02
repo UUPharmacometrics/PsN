@@ -790,7 +790,8 @@ sub convert_reparametrized_cov
                 $max_column = scalar(@header_labels) ; #store full matrix
                 for (my $j = 0; $j < $max_column; $j++) {
                     my $i = $j + 1; #must permute omega-sigma
-                    if (defined $line_values[$i] and ($line_values[$i] eq 'NaN')) {
+                    if ((not defined $line_values[$i]) or
+						(defined $line_values[$i] and ($line_values[$i] eq 'NaN'))) {
                         push(@new_line, undef);
                         $reparaCov[$rowCount][$j]=undef;
                     } else {
