@@ -9,7 +9,7 @@ our ($dev,$version,$lib_dir,$config_file,$config);
 #the version line is extracted in Makefile using regular expression
 # /\$version\s*=\s*.[0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*.;/
 # so be careful when you edit!!!
-$version = '4.5.23';
+$version = '4.5.24';
 
 # The following line will be changed by make
 $dev = 1;
@@ -30,19 +30,19 @@ our $out_miss_data;
 our $output_header;
 our $factorize_strings;
 
-our $warnings_enabled;
+our $warnings_enabled=0;
 our @nm7_extensions = ('.ext','.cov','.cor','.coi','.phi','.phm', '.shk','.grd','.xml','.cnv','.smt','.rmt',
 					   '.imp','.npd','.npe','.npi','.fgh','.log.xml','.cpu','.shm','.agh');
 
 # Default disable all warnings except those coming from Getopt
 # Enable all warnings if $warnings_enabled is set
-$SIG{__WARN__} = sub {
-        my $package = caller;
-        my $message = shift;
-        if ($warnings_enabled or $package =~ /Getopt::Long/i) {
-                warn $message;
-        }
-};
+#$SIG{__WARN__} = sub {
+#        my $package = caller;
+#        my $message = shift;
+#        if ($warnings_enabled or $package =~ /Getopt::Long/i) {
+#                warn $message;
+#        }
+#};
 
 if( -e home() . "/psn.conf" ){
 	$config_file = home() . "/psn.conf";
@@ -150,17 +150,19 @@ sub find_nmfe_from_system_path
 	}elsif(length($string) < 1){
 		1; #deal with error elsewhere
 	}else{
-		my $command = "which $string"; #unix
+		my $command = "which $string".' 2>/dev/null'; #unix, keep stdout and redirect stderr to /dev/null
 		if ($Config{osname} eq 'MSWin32'){
 			#where does nor work on XP, use this loop
-			$command = 'for %i in ('.$string.','.$string.'.bat,'.$string.'.exe) do @echo.   %~$PATH:i';
+			# keep stdout but redirect stderr to nul
+			$command = 'for %i in ('.$string.','.$string.'.bat,'.$string.'.exe) do @echo.   %~$PATH:i 2>nul';
 		}
 		my @outp = readpipe($command);
 		foreach my $line (@outp){
 			next unless (defined $line);
 			chomp($line);
 			$line =~ s/^\s*//;
-			if (-e $line){
+			$line =~ s/\s*$//;
+			if ((length($line)>0) and -e $line){
 				$result = $line;
 				last;
 			} 
