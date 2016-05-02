@@ -6,7 +6,7 @@ use strict;
 use include_modules;
 use MooseX::Params::Validate;
 use nmtablefile;
-use array qw(any_nonzero);
+use array qw(any_nonzero max min);
 
 our $missing=-99;
 #	$ret = simeval_util::read_table_files(\@found_files,\@eta_headers,$est_matrix,$mean_matrix,1);
@@ -156,7 +156,131 @@ sub add_columns_ids_samples{
 }
 
 
+sub decorrelation_and_npde_records_by_id{
+	my ($estimate_matrix,$mean_matrix,$id_mdv_matrix,$have_mdv,$npde_vector,$original_outlier) = 
+		pos_validated_list(\@_,
+						   { isa => 'ArrayRef' },
+						   { isa => 'ArrayRef' },
+						   { isa => 'ArrayRef' },
+						   { isa => 'Bool' },
+						   { isa => 'ArrayRef' },
+						   { isa => 'ArrayRef' },
+		);
+	#this is for things like iwres and cwres, mulitple per ID
+	#$estimate_matrix
+	# reference to array  [over records][over samples/files]
+	# $mean_matrix 
+	#reference to mean array  [over records]
+	# $id_mdv_matrix ref.  ID is [0]->[over recrods]->[0]
+	#                ref.  MDV is [1]->[over recrods]->[0]
+	# $have_mdv Bool, false if no mdv recrods
+	
+	# $npde_vector reference to empty array to put npde [over records] 
 
+	my $input_error = 2;
+    my $numerical_error = 1;
+	my $message = '';
+	my $result = 0;
+	
+	my $nresponse = scalar(@{$estimate_matrix});
+	unless ($nresponse>0){
+		$result = $input_error;
+		$message .= "number of response variables (columns in estimate matrix) is 0\n";
+	}
+	my $datarecords = scalar(@{$estimate_matrix->[0]});
+	unless ($datarecords>0){
+		$result = $input_error;
+		$message .= "number of datarecords (rows in estimate matrix) is 0\n";
+	}
+	unless (scalar(@{$id_mdv_matrix->[0]}) == $datarecords){
+		$result = $input_error;
+		$message .= "number of datarecords in id_array ".scalar(@{$id_mdv_matrix->[0]}).
+			" is different from estimate matrix $datarecords\n";
+	}
+	if ($have_mdv){
+		unless (scalar(@{$id_mdv_matrix->[1]}) == $datarecords){
+			$result = $input_error;
+			$message .= "number of datarecords in mdv_array ".scalar(@{$id_mdv_matrix->[1]}).
+				" is different from estimate matrix $datarecords\n";
+		}
+	}
+
+	my $samples = scalar(@{$estimate_matrix->[0]->[0]})-1; #-1 for original
+	unless ($samples > 1){
+		$result = $input_error;
+		$message .= "number of samples (3rd dim in estimate matrix) is not > 1\n";
+	}
+
+	return ($result,$message) if ($result);
+
+	#can have varying number of obs per id !!
+
+	my $local_estimate_matrix =[];
+	my $local_mean_matrix =[];
+	my $local_stdev_arr=[];
+	my $local_decorr=[];
+	my $local_mdv=[];
+	my $previous_id=-99;
+	my $nobs = 0;
+	for (my $i=0;$i<$datarecords;$i++){
+		if ($i==0 or ($previous_id != $id_mdv_matrix->[0]->[$i]->[0])){
+			#new id.
+			$local_estimate_matrix =[];
+			$local_mean_matrix =[];
+			$local_stdev_arr=[];
+			$local_decorr=[];
+			$local_mdv=[];
+			$nobs = 0;
+		} #else same id
+
+		$previous_id = $id_mdv_matrix->[0]->[$i]->[0];
+		if ((not $have_mdv) or ($id_mdv_matrix->[1]->[$i]->[0] == 0)){
+			#this record is an observation
+			$local_estimate_matrix->[$nobs]->[0]=$estimate_matrix->[0]->[$i];
+			my @arr = @{$estimate_matrix->[0]->[$i]}[1 .. $samples];
+			my $max = max(\@arr); 
+			my $min = min(\@arr);
+			if (($estimate_matrix->[0]->[$i]->[0] > $max) or
+				($estimate_matrix->[0]->[$i]->[0] < $min)){
+				push(@{$original_outlier},1);
+			}else{
+				push(@{$original_outlier},0);
+			}
+			$local_mean_matrix->[$nobs][0] = $mean_matrix->[0][$i];
+			$nobs++;
+			push(@{$local_mdv},0);
+		}else{
+			push(@{$local_mdv},1);
+			push(@{$original_outlier},0);
+		}
+		if (($i == ($datarecords-1)) or ($id_mdv_matrix->[0]->[$i+1]->[0] != $id_mdv_matrix->[0]->[$i]->[0] )){
+			#this is last record, observation or not, of this id
+			if ($nobs > 0){
+				($result,$message) = decorrelation($local_estimate_matrix,$local_mean_matrix,$local_decorr,$local_stdev_arr);
+				return ($result,$message.' in decorr per id') if ($result);
+				my $pde_matrix =[];
+				my $npde_matrix = [];
+				($result,$message) = npde_comp($local_decorr,$pde_matrix,$npde_matrix);
+				return ($result,$message.' in decorr per id') if ($result);
+				my $k=0;
+				foreach my $mdv (@{$local_mdv}){
+					if ($mdv == 0){
+						push(@{$npde_vector},$npde_matrix->[$k]->[0]);
+						$k++;
+					}else{
+						push(@{$npde_vector},$missing);
+					}
+				}
+			}else{
+				foreach my $mdv (@{$local_mdv}){
+					push(@{$npde_vector},$missing);
+				}
+			}
+		}
+	}
+	return (0,$message);
+
+}
 sub decorrelation{
 	#has unit tests
 	my ($estimate_matrix,$mean_matrix,$decorrelated_estmatrix,$stdev_arr) = pos_validated_list(\@_,
@@ -196,7 +320,7 @@ sub decorrelation{
 		$result = $input_error;
 		$message .= "number of samples (3rd dim in estimate matrix) is not > 1\n";
 	}
-
+#	print "parm $nparm id $individuals samples $samples\n";
 	return ($result,$message) if ($result);
 	
 	if ($nparm == 1){
@@ -398,6 +522,7 @@ sub npde_comp{
 	return 0;
 
 }
+
 
 
 1;
