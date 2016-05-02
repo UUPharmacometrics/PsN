@@ -54,7 +54,7 @@ xv_scm => ['groups']
 our $tempdir = create_test_dir('system_help');
 
 chdir($tempdir);
-foreach my $prog (sort {$a <=> $b} keys %programs){
+foreach my $prog (sort {lc($a) cmp lc($b)} keys %programs){
 	if (($prog eq 'nmoutput2so') and (not eval('require XML::LibXML'))){
 		next;
 	}
@@ -76,7 +76,7 @@ foreach my $prog (sort {$a <=> $b} keys %programs){
 
 	$command = get_command_without_args($prog).' -h > text.txt';
 	print "Running $command\n";
-	my $rc = system($command);
+	$rc = system($command);
 	$rc = $rc >> 8;
 	ok ($rc == 0, "$command, should run ok");
 	unless ($Config{osname} eq 'MSWin32'){

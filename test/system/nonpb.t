@@ -25,7 +25,7 @@ my  $rc = system($command1);
 $rc = $rc >> 8;
 
 ok ($rc == 0, "nonpb that should run ok");
-my  $rc = system($command2);
+$rc = system($command2);
 $rc = $rc >> 8;
 
 ok ($rc == 0, "nonpb that should run ok");
