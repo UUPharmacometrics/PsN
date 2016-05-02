@@ -50,7 +50,8 @@ sub submit
 	} else {
 		open(JOBFILE, "JobId") or croak("Couldn't open torque JobId file for reading: $!");
 		while (<JOBFILE>) {
-			if (/(\d+.[0-9A-Za-z\-\.]*)/) {
+#			if (/(\d+.[0-9A-Za-z\-\.]*)/) {
+			if (/^\s*(\d+)\./) {
 				$jobId = $1;
 			}
 		}
@@ -67,10 +68,10 @@ sub monitor
 	my $self = shift;
 	my $jobId = $self->job_id;
 
-	carp("Checking Torque queue for $jobId");
+	debugmessage(3,"Checking Torque queue for $jobId");
 	my $response = `qstat $jobId 2>&1`;
 
-	carp("Result: (OUT+ERR) $response");
+	debugmessage(3,"Result: (OUT+ERR) $response");
 	if($response =~ /Unknown Job Id/ ){ # regexp to find finished jobs.
 		# The job is completed by default
 		return $jobId; # Return the jobId found.
