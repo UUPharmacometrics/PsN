@@ -10,6 +10,9 @@ use includes; #file with paths to PsN packages
 use linear_algebra;
 use model;
 use model::problem;
+use ui;
+
+ui->silent(1);
 
 my $modeldir = $includes::testfiledir;
 my $model = model->new(filename => "$modeldir/pheno.mod");
@@ -64,9 +67,9 @@ is(($esthash->{'B'} == 1),1,'pheno any est unbounded');
 
 $model = model->new(filename => "$modeldir/pheno.mod");
 $model->problems->[0]->cholesky_reparameterize(what => 'all', bounded_theta => 1);
-my $start_theta_record_index = $model->problems->[0]->find_start_theta_record_index(theta_number => 3);
+$start_theta_record_index = $model->problems->[0]->find_start_theta_record_index(theta_number => 3);
 is($start_theta_record_index,2,'pheno start_theta_record_index'); 
-my ($corhash,$sdhash,$esthash) = $model->problems->[0]->get_SD_COR_values(start_theta_record_index => $start_theta_record_index,
+($corhash,$sdhash,$esthash) = $model->problems->[0]->get_SD_COR_values(start_theta_record_index => $start_theta_record_index,
 																		  bounded_theta => 1,
 																		  theta_record_count => 3);
 cmp_relative($sdhash->{'A'}->{1},sqrt(0.4),7,'SD A 1');
@@ -82,9 +85,9 @@ $model = model->new(filename => "$modeldir/mox1.mod");
 $model->problems->[0]->cholesky_reparameterize(what => 'o1',
 											   bounded_theta => 0);
 is($model->problems->[0]->record_count(record_name => 'theta'),7,'mox 1 theta count after cholesky repara 01 unbounded');
-my $start_theta_record_index = $model->problems->[0]->find_start_theta_record_index(theta_number => 5);
+$start_theta_record_index = $model->problems->[0]->find_start_theta_record_index(theta_number => 5);
 is($start_theta_record_index,4,'mox start_theta_record_index unbounded'); 
-my ($corhash,$sdhash,$esthash) = $model->problems->[0]->get_SD_COR_values(start_theta_record_index => $start_theta_record_index,
+($corhash,$sdhash,$esthash) = $model->problems->[0]->get_SD_COR_values(start_theta_record_index => $start_theta_record_index,
 																		  bounded_theta => 0,
 																		  theta_record_count => 3);
 cmp_relative($sdhash->{'A'}->{1},sqrt(0.0750),6,'mox SD A 1 unbounded');
@@ -96,9 +99,9 @@ is(($esthash->{'A'} == 1),1,'mox any est unbounded');
 $model = model->new(filename => "$modeldir/mox1.mod");
 $model->problems->[0]->cholesky_reparameterize(what => 'o1', bounded_theta=> 1);
 is($model->problems->[0]->record_count(record_name => 'theta'),7,'mox 1 theta count after cholesky repara 01');
-my $start_theta_record_index = $model->problems->[0]->find_start_theta_record_index(theta_number => 5);
+$start_theta_record_index = $model->problems->[0]->find_start_theta_record_index(theta_number => 5);
 is($start_theta_record_index,4,'mox start_theta_record_index'); 
-my ($corhash,$sdhash,$esthash) = $model->problems->[0]->get_SD_COR_values(start_theta_record_index => $start_theta_record_index,
+($corhash,$sdhash,$esthash) = $model->problems->[0]->get_SD_COR_values(start_theta_record_index => $start_theta_record_index,
 																		  bounded_theta => 1,
 																		  theta_record_count => 3);
 cmp_relative($sdhash->{'A'}->{1},sqrt(0.0750),7,'mox SD A 1');
@@ -248,13 +251,13 @@ $omega_mat = $problem->get_record_matrix(type => 'omega',
 cmp_ok($omega_mat->[0]->[0],'==',0.506, "get_record_matrix row 0,0");
 
 # find_table
-my $model = model->new(filename => "$modeldir/pheno.mod");
-my $problem = $model->problems->[0];
+$model = model->new(filename => "$modeldir/pheno.mod");
+$problem = $model->problems->[0];
 
 ok ($problem->find_table(columns => [ 'ID', 'TVCL' ]), "find_table 1");
 ok (!$problem->find_table(columns => [ 'ID', 'RED' ]), "find_table 1");
 
-my $model = model->new(filename => "$modeldir/nonposdef.mod");
+$model = model->new(filename => "$modeldir/nonposdef.mod");
 $omega_mat = $model->problems->[0]->get_record_matrix(type => 'omega',
 													  record_number => 1);
 cmp_ok($omega_mat->[0]->[0],'==',0.3, "get_record_matrix row 0,0");
@@ -281,11 +284,11 @@ cmp_ok($omega_mat->[0]->[1],'==',0.3, "get_record_matrix row 0,1 after posdef");
 $omega_mat = $model->problems->[0]->get_record_matrix(type => 'omega',
 													  record_number => 1);
 cmp_ok($omega_mat->[0]->[0],'==',0.3, "get_record_matrix row 0,0 after posdef");
-my $sigma_mat = $model->problems->[0]->get_record_matrix(type => 'sigma',
+$sigma_mat = $model->problems->[0]->get_record_matrix(type => 'sigma',
 														 record_number => 1);
 cmp_ok($sigma_mat->[0]->[0],'==',1, "get_record_matrix row 0,0 after posdef");
 
-my $model = model->new(filename => "$modeldir/nonposdef.mod");
+$model = model->new(filename => "$modeldir/nonposdef.mod");
 $model->problems->[0]->ensure_posdef(inflate_diagonal => 0);
 $omega_mat = $model->problems->[0]->get_record_matrix(type => 'omega',
 													  record_number => 2);
@@ -322,14 +325,14 @@ my $newc= model::problem::reformat_code(code => \@code,
 
 
 # ensure_unique_labels
-my $model = model->new(filename => "$modeldir/model/pheno_not_unique_labels.mod", ignore_missing_data => 1);
+$model = model->new(filename => "$modeldir/model/pheno_not_unique_labels.mod", ignore_missing_data => 1);
 is ($model->problems->[0]->thetas->[0]->options->[0]->label, "CL", "ensure_unique_labels THETA1");
 is ($model->problems->[0]->thetas->[1]->options->[0]->label, "V", "ensure_unique_labels THETA2");
 is ($model->problems->[0]->omegas->[0]->options->[0]->label, "CL_", "ensure_unique_labels OMEGA1");
 is ($model->problems->[0]->omegas->[0]->options->[1]->label, "CL__", "ensure_unique_labels OMEGA2");
 
 
-my $model = model->new(filename => $includes::testfiledir."/mox1.mod", ignore_missing_data => 1);
+$model = model->new(filename => $includes::testfiledir."/mox1.mod", ignore_missing_data => 1);
 my $ref = $model->problems->[0]->get_eta_sets(header_strings => 1);
 is_deeply($ref->{'iiv'},['ETA(1)','ETA(2)','ETA(3)'],"get eta headers iiv");
 is(scalar(@{$ref->{'iov'}}),2,"get eta headers two occasions");
@@ -450,11 +453,11 @@ is($code->[1],$ans->[1],'renumber etas 2');
 is($code->[2],$ans->[2],'renumber etas 3');
 is($code->[3],$ans->[3],'renumber etas 4');
 
-my $code = ['CL=THETA(2)*EXP(ETA(2))',
+$code = ['CL=THETA(2)*EXP(ETA(2))',
 			'V=TVV+ETA(33)',
 			'KA=THETA(4)*EXP(1+ETA(4))',
 			'Y=ETA(5)+ETA(6)'];
-my $ans = ['CL=THETA(2)*EXP((ETA(2)*ASD_ETA_2))',
+$ans = ['CL=THETA(2)*EXP((ETA(2)*ASD_ETA_2))',
 			'V=TVV+ETA(33)',
 			'KA=THETA(4)*EXP(1+(ETA(4)*ASD_ETA_4))',
 			'Y=(ETA(5)*ASD_ETA_5)+(ETA(6)*ASD_ETA_6)'];
@@ -481,7 +484,7 @@ is($code->[1],$orig->[1],'subst etas 2 i');
 is($code->[2],$orig->[2],'subst etas 3 i');
 is($code->[3],$orig->[3],'subst etas 4 i');
 
-my $model = model->new(filename => $includes::testfiledir."/mox1.mod", ignore_missing_data => 1);
+$model = model->new(filename => $includes::testfiledir."/mox1.mod", ignore_missing_data => 1);
 
 model::problem::rescale_etas(problem => $model->problems->[0],
 							 use_pred =>0,

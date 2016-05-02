@@ -76,7 +76,7 @@ sub eta_shrinkage
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		 model => { ' model', optional => 1 },
+		 model => { isa => 'model', optional => 1 },
 		 probnum => { isa => 'Num', optional => 1 },
 		 directory => { isa => 'Str', optional => 1 },
 		 eta_filename => { isa => 'Maybe[Str]', optional => 1 }
@@ -172,7 +172,7 @@ sub iwres_shrinkage
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		 model => { ' model', optional => 1 },
+		 model => { isa => 'model', optional => 1 },
 		 probnum => { isa => 'Int', optional => 1 },
 		 directory => { isa => 'Str', optional => 1 },
 		 iwres_filename => { isa => 'Maybe[Str]', optional => 1 }
@@ -214,13 +214,13 @@ sub iwres_shrinkage
 					$iwres_shrinkage[0] = undef;
 				}			  
 			} elsif ( @{$ofv -> [$probnum-1]} < 1 ) {
-				carp("There seems to be a problem with the results from ".
+				debugmessage(0,"There seems to be a problem with the results from ".
 						$model -> filename().". Cannot compute shrinkage." );
 			} else {
 				my $mes =  "\n". $model -> full_name ."\nCall to output->ofv indicates that results ".
 					"exists in multiple subproblems.PsN can not yet compute iwres_shrinkage".
 					" on the subproblem level" ;
-				carp($mes);
+				debugmessage(0,$mes);
 			}
 		}
 	}

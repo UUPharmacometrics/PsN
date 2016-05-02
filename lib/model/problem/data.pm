@@ -119,7 +119,7 @@ sub format_filename
 	}
 
 	if (length($string)> 80){
-		carp("datafile string too long, more than 80,\n $string");
+		debugmessage(3,"datafile string too long, more than 80,\n $string");
 	}
 
 	return $string;
@@ -150,7 +150,7 @@ sub _format_record
 		#that should copy data if too long
 		#TODO fix not implemented yet
 #		croak("This is a bug: datafile string too long, more than 80,\n $filestring"); #croak useful during development 
-		carp("datafile string too long, more than 80,\n $filestring");
+		debugmessage(1,"datafile string too long, more than 80,\n $filestring");
 	}
 
 	my $line =0;

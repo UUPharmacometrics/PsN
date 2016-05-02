@@ -103,15 +103,19 @@ sub _read_options
                     # If we only have one theta, send the whole row to option
                     #comment will be label/unit
                     #FIXED are attached to init
+					my $comstr = '';
+					if (defined $comment and length($comment)>0){
+						$comstr = ';'.$comment;
+					}
                     push(@{$self->options},
                         model::problem::record::theta_option ->
-                        new (option_string => $line.';'.$comment,
+                        new (option_string => $line.$comstr,
                             coordinate_string => 'THETA'.$global_index));
                     $global_index++;
                 } else {
                     # If we have more than one theta, send one theta at a time to option
                     #add comment to global comment
-                    push(@{$self->comment}, ';'.$comment."\n" ) if ($comment =~ /[^\s]+/);
+                    push(@{$self->comment}, ';'.$comment."\n" ) if (defined $comment and (length($comment) >0));
                     for my $li (@row) {
                         push(@{$self->options},
                             model::problem::record::theta_option ->

@@ -38,7 +38,7 @@ sub BUILD
   }
 
   if( $self->cwres and not $self->mirror_from_lst ) {
-    carp('MSFO computation method cannot be used with cwres. mirror_from_lst enabled' );
+    debugmessage(3,'MSFO computation method cannot be used with cwres. mirror_from_lst enabled' );
     $self->mirror_from_lst(1);
   }
 
@@ -53,7 +53,7 @@ sub BUILD
 
     my $table_file_names = $base_model -> table_names( problem_numbers => [1] );    
 
-    for( my $i; $i < @{$table_file_names -> [0]}; $i++ ){
+    for( my $i=0; $i < @{$table_file_names -> [0]}; $i++ ){
       $table_file_names -> [0] -> [$i] =~ s/(.*)(\d+)(.*)/$1$2sim$3/;
     }
     
@@ -98,7 +98,7 @@ sub BUILD
 
       my $table_file_names = $base_model -> table_names( problem_numbers => [1] );    
 
-      for( my $i; $i < @{$table_file_names -> [0]}; $i++ ){
+      for( my $i=0; $i < @{$table_file_names -> [0]}; $i++ ){
 				$table_file_names -> [0] -> [$i] =~ s/(.*)(\d+)(.*)/$1$2sim$3/;
       }
       
@@ -197,7 +197,7 @@ sub BUILD
 
     my $table_file_names = $base_model -> table_names( problem_numbers => [2] );
 
-    for( my $i; $i < @{$table_file_names -> [0]}; $i++ ){
+    for( my $i=0; $i < @{$table_file_names -> [0]}; $i++ ){
       $table_file_names -> [0] -> [$i] =~ s/(.*)(\d+)(.*)/$1$2sim$3/;
     }
     

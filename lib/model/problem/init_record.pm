@@ -19,6 +19,16 @@ has 'chol' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'corr' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'n_previous_rows' => ( is => 'rw', isa => 'Maybe[Int]', default => 0 );
 
+sub is_block
+{
+    my $self = shift;
+
+	if (defined $self->type and $self->type eq 'BLOCK'){
+		return 1;
+	}else{
+		return 0;
+	}
+}
 sub get_estimated_coordinate_strings
 {
     my $self = shift;
@@ -60,7 +70,7 @@ sub set_1_fix
 		}else{
 			$opt->init('0');
 		}
-		$opt->fix(1) unless ($self->type eq 'BLOCK');
+		$opt->fix(1) unless ($self->is_block);
 	}
 	$self->fix(1);
 
@@ -99,7 +109,7 @@ sub set_vector
 sub get_vector
 {
     my $self = shift;
-	croak("cannot do get_vector on init_record that is type BLOCK") if ($self->type eq 'BLOCK');
+	croak("cannot do get_vector on init_record that is type BLOCK") if ($self->is_block);
 	croak("cannot do get_vector on init_record that is SAME") if ($self->same);
 
 	my @vector=();
@@ -112,7 +122,7 @@ sub get_vector
 sub get_matrix
 {
     my $self = shift;
-	croak("cannot do get_matrix on init_record that is not type BLOCK") unless ($self->type eq 'BLOCK');
+	croak("cannot do get_matrix on init_record that is not type BLOCK") unless ($self->is_block);
 	croak("cannot do get_matrix on init_record that is SAME") if ($self->same);
 	
 	my @matrix=();
@@ -143,7 +153,7 @@ sub set_matrix
 
 	my $matrix = $parm{'matrix'};
 
-	croak("cannot do set_matrix on init_record that is not type BLOCK") unless ($self->type eq 'BLOCK');
+	croak("cannot do set_matrix on init_record that is not type BLOCK") unless ($self->is_block);
 	croak("cannot do set_matrix on init_record that is SAME") if ($self->same);
 
 	my $index = 0;
@@ -200,7 +210,7 @@ sub set_random_inits
 		$bound_record = $self;
 	}
 	my $do_cholesky=0;
-	if ($self->type eq 'BLOCK' and (defined $self->size) and $self->size > 1){
+	if ($self->is_block and (defined $self->size) and $self->size > 1){
 		$do_cholesky=1;
 	}
 	my $nopt = scalar(@{$bound_record->options});
@@ -221,7 +231,7 @@ sub set_random_inits
 			my $option = $bound_record->options->[$j];
 			if ($option->fix ){
 				#this can happen if diagonal omega/sigma, there options are fix/unfix individually
-				if ($self->type eq 'BLOCK'){
+				if ($self->is_block){
 					#print "";
 				}
 				$col++;
@@ -464,22 +474,22 @@ sub _read_options
 									push( @corrs  , $corr );
 									push( @chols  , $chol );
 									push( @comments, $comment );
-								} elsif ($fixed and ($self->type ne 'BLOCK')){
+								} elsif ($fixed and (not $self->is_block)){
 									my $mes = "parsing error: FIX in \n$whole_row".
 										"could not be coupled to an initial value.";
 									$mes .=" Please check the parentheses." if ($#digits == 0 and ($whole_row =~ /[\(\)]/));
 									croak($mes );
-								} elsif ($sd and ($self->type ne 'BLOCK')){
+								} elsif ($sd and (not $self->is_block)){
 									my $mes = "parsing error: STANDARD/SD in \n$whole_row".
 										"could not be coupled to an initial value.";
 									$mes .=" Please check the parentheses." if ($#digits == 0 and ($whole_row =~ /[\(\)]/));
 									croak($mes );
-								} elsif ($corr and ($self->type ne 'BLOCK')){
+								} elsif ($corr and (not $self->is_block)){
 									my $mes = "parsing error: CORRELATION in \n$whole_row".
 										"could not be coupled to an initial value.";
 									$mes .=" Please check the parentheses." if ($#digits == 0 and ($whole_row =~ /[\(\)]/));
 									croak($mes );
-								} elsif ($chol and ($self->type ne 'BLOCK')){
+								} elsif ($chol and (not $self->is_block)){
 									my $mes = "parsing error: CHOLESKY in \n$whole_row".
 										"could not be coupled to an initial value.";
 									$mes .=" Please check the parentheses." if ($#digits == 0 and ($whole_row =~ /[\(\)]/));
@@ -493,20 +503,25 @@ sub _read_options
 		} #end foreach line in recordarr
 	} #end if defined record arr
 
-	if ( $self->type eq 'BLOCK' ) {
+	if ( $self->is_block ) {
 		$self -> fix(1)  if ($any_fixed);
 		$self -> sd(1)   if ($any_sd);
 		$self -> corr(1) if ($any_corr);
 		$self -> chol(1) if ($any_chol);
 	}
 
-
+	unless (defined $self->n_previous_rows()){
+		$self->n_previous_rows(0);
+	}
 	my $global_row= $self->n_previous_rows()+1;
 	my $global_column= $self->n_previous_rows()+1;
 	my $row = 1;
 	for ( my $i = 0; $i <= $#digits; $i++ ) {
-		my $com_str = $comments[$i] =~ /\w/ ? ';'.$comments[$i] : '';
-		if ( $self->type eq 'BLOCK' ) {
+		my $com_str = '';
+		if (defined $comments[$i] and ($comments[$i] =~ /\w/)){
+			$com_str = ';'.$comments[$i];
+		}
+		if ( $self->is_block ) {
 			if ( $i+1 == $row*($row+1)/2 ) {
 				$self -> _add_option( option_string => $digits[$i].$com_str,
 									  on_diagonal   => 1,

@@ -63,7 +63,7 @@ $range = $option8->get_range(degree=> 0.5);
 cmp_float($range->[0],(-1+ (1e-10)), "Option8->range lower");
 cmp_float($range->[1],(-0.9 + 0.5*0.9), "Option8->range upper");
 
-my $range = $option1->get_range(degree => 2);
+$range = $option1->get_range(degree => 2);
 cmp_float($range->[0], 1e-10, "get_range degree=2 option1 lower");
 cmp_float($range->[1], (0.0105 + 2 * 0.0105), "get_range degree=2 option1 upper");
 

@@ -187,7 +187,7 @@ sub _read_options
 				croak("Failed parsing of record string: " . $self->record_arr->[$i] . " ");
 			}
 
-			if( length( $comment ) > 0 ) {
+			if( (defined $comment) and length( $comment ) > 0 ) {
 				# This is a comment at the end of a line.
 				push(@{$self->comment}, ' ' . $1 . "\n");
 				push(@{$self->print_order}, $order);
@@ -280,7 +280,10 @@ sub _format_record
 
 		# Print the record name (with indentation)
 		if( $i == 0 ){
-			push( @formatted , "\$".$fname . ' ' x (10 - length($fname)) );
+			my $spaces = '';
+			my $count = 10 - length($fname);
+			$spaces =  ' ' x ($count) if ($count >0);
+			push( @formatted , "\$".$fname . $spaces );
 		}
 
 		# Check that we have not processed all options.

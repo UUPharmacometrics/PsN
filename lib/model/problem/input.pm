@@ -13,7 +13,8 @@ sub BUILD
 	# Check if there are any reserved words containing lower case. Starting with NONMEM 7.2 this is allowed but PsN does not support it
 	foreach my $option (@{$self->options}) {
 		foreach my $string ($option->name, $option->value) {
-			if ($string =~ /ID|L1|L2|DV|MDV|RAW_|MRG_|RPT_|TIME|DATE|DAT1|DAT2|DAT3|DROP|SKIP|EVID|AMT|RATE|SS|II|ADDL|CMT|PCMT|CALL|CONT/i) {
+			if ((defined $string) and 
+				($string =~ /ID|L1|L2|DV|MDV|RAW_|MRG_|RPT_|TIME|DATE|DAT1|DAT2|DAT3|DROP|SKIP|EVID|AMT|RATE|SS|II|ADDL|CMT|PCMT|CALL|CONT/i)) {
 				if ($string =~ /[a-z]/) {
 					croak("\$INPUT contains a NONMEM reserved word \"$string\" containing lowercase letters. This is not yet supported by PsN." .
 						" Please use all uppercase letters.");
@@ -26,7 +27,7 @@ sub remove_drop_column_names
 {
 	my $self = shift;
 	foreach my $option (@{$self->options}) {
-		if ($option->name eq 'DROP' or $option->name eq 'SKIP' or $option->value eq 'SKIP' or $option->value eq 'DROP') {
+		if ($option->name eq 'DROP' or $option->name eq 'SKIP' or (defined $option->value and ($option->value eq 'SKIP' or $option->value eq 'DROP'))) {
 			$option->name('DROP');
 			$option->clear_option_value;
 		}
@@ -40,7 +41,7 @@ sub get_nonskipped_columns
 	my @option_list = ();
 
 	foreach my $option (@{$self->options}) {
-		if ($option->name ne 'DROP' && $option->name ne 'SKIP' && $option->value ne 'SKIP' && $option->value ne 'DROP') {
+		if ($option->name ne 'DROP' && $option->name ne 'SKIP' && ((not defined $option->value) or ($option->value ne 'SKIP' && $option->value ne 'DROP'))) {
 			push @option_list, $option->name; 
 		}
 	}
@@ -63,12 +64,13 @@ sub get_filter_table_names
 	#my @reserved = qw(ID L1 L2 DV MDV RAW_ MRG_ RPT_ TIME DATE DAT1 DAT2 DAT3 EVID AMT RATE SS II ADDL CMT PCMT CALL CONT);
 
 	foreach my $option (@{$self->options}) {
-		if ($option->name ne 'DROP' && $option->name ne 'SKIP' && $option->value ne 'SKIP' && $option->value ne 'DROP') {
+		if ($option->name ne 'DROP' && $option->name ne 'SKIP' and
+			((not defined $option->value) or ($option->value ne 'SKIP' and $option->value ne 'DROP'))) {
 			unless (defined $first_undropped){
 				$first_undropped =  $option->name;
 			}
 			unless ($time_in_input){
-				if (($option->name eq 'TIME') or ($option->value eq 'TIME')){
+				if (($option->name eq 'TIME') or (defined $option->value and ($option->value eq 'TIME'))){
 					$time_in_input=1;
 				}
 			}
@@ -76,7 +78,7 @@ sub get_filter_table_names
 		unless ($datx_in_input){
 			#regardless if drop or not
 			foreach my $col ('DATE','DAT1','DAT2','DAT3') {
-				if (($option->name eq $col) or ($option->value eq $col)){
+				if (($option->name eq $col) or ((defined $option->value) and $option->value eq $col)){
 					$datx_in_input=1;
 					last;
 				}
@@ -88,7 +90,8 @@ sub get_filter_table_names
 	}
 	#FIXME what about synonyms? do we want reserved label or synonym here?
 	foreach my $option (@{$self->options}) {
-		if ($option->name ne 'DROP' && $option->name ne 'SKIP' && $option->value ne 'SKIP' && $option->value ne 'DROP') {
+		if ($option->name ne 'DROP' and $option->name ne 'SKIP' and
+			((not defined $option->value) or ($option->value ne 'SKIP' && $option->value ne 'DROP'))) {
 			push (@filter_table_names, $option->name); 
 		}else{
 			push (@filter_table_names,$first_undropped);

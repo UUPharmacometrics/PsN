@@ -191,7 +191,7 @@ sub BUILD
 			$prob->ensure_unique_labels();
 		}
 	}
-	if ($self->maxevals > 0) {
+	if (defined $self->maxevals and ($self->maxevals > 0)) {
 		if ( defined $self->problems ) {
 			my $n_prob = scalar(@{$self->problems});
 			for (my $probnum = 1; $probnum <= $n_prob; $probnum++) {
@@ -220,7 +220,7 @@ sub BUILD
 	}
 
 	if ( defined $self->extra_files ) {
-		for( my $i; $i < scalar @{$self->extra_files}; $i++ ) {
+		for( my $i=0; $i < scalar @{$self->extra_files}; $i++ ) {
 			my ( $dir, $file ) = OSspecific::absolute_path( $self->directory, $self->extra_files->[$i]);
 			$self->extra_files->[$i] = $dir . $file;
 		}
@@ -244,7 +244,7 @@ sub BUILD
 	# $PROBLEMS. Also it needs to know wheter an lst file exists
 	# or not.
 
-	if( $self->mirror_plots > 0 ){
+	if( defined $self->mirror_plots and ($self->mirror_plots > 0 )){
 		my $mirror_plot_module = model::mirror_plot_module -> new( base_model => $self, 
 																   nr_of_mirrors => $self->mirror_plots,
 																   cwres => $self->cwres,
@@ -254,7 +254,7 @@ sub BUILD
 		push( @{$self -> {'mirror_plot_modules'}}, $mirror_plot_module );    #FIXME: Should have had an accessor. Fix with Moose
 	}
 
-	if ($self->iofv > 0) {
+	if (defined $self->iofv and ($self->iofv > 0)) {
 		my $iofv_module = model::iofv_module -> new( base_model => $self);
 		$self->iofv_modules([]) unless defined $self->iofv_modules;
 		push( @{$self->iofv_modules}, $iofv_module );
@@ -262,7 +262,7 @@ sub BUILD
 	
 	unless ($self->is_dummy){
 		#simple checks to detect garbage input, for example missing $DATA in first $PROB
-		unless (defined $self -> problems->[0]->datas
+		unless (defined $self -> problems and defined $self -> problems->[0] and defined $self -> problems->[0]->datas
 				and scalar(@{$self -> problems->[0]->datas})>0){
 			croak("\nCorrupt model ".$self->filename().": no \$DATA record in first \$PROBLEM\n");
 		}
@@ -1038,7 +1038,7 @@ sub idcolumns
 
 	foreach my $prob ( @{$col_ref} ) {
 	  foreach my $inst ( @{$prob} ) {
-		  croak("ID column was not defined in problem ").(scalar(@column_numbers)+1) unless (defined $inst);
+		  croak("ID column was not defined in problem ".(scalar(@column_numbers)+1)) unless (defined $inst);
 		  push( @column_numbers, $inst );
 	  }
 	}
@@ -1421,8 +1421,8 @@ sub get_coordslabels
 		    next if ($option->prior() and (not $with_priors));
 		    my $coord = $option -> coordinate_string();
 		    my $label = $coord;
-		    if (defined $option -> label()){
-		      $label = $option -> label();
+		    if (defined $option -> label() and length($option -> label())>0){
+				$label = $option -> label();
 		    }
 		    unless (defined $coord){
 		      croak("Error undefined coordinate string" );
@@ -1430,7 +1430,7 @@ sub get_coordslabels
 		    $hash{$coord} = $label; #if not label defined then this will be coord-coord
 		  }
 		} else {
-		  carp("no options defined in record ".ref($record) );
+		  debugmessage(3,"no options defined in record ".ref($record) );
 		}
 	      }
 	    }
@@ -1457,7 +1457,6 @@ sub get_rawres_parameter_indices
 	my $directory = $parm{'directory'};
 	my $model_number = $parm{'model_number'};
 
-	my $structure;
 	my $full_name;
 	if (defined $filename){
 		if (defined $directory){
@@ -1475,7 +1474,7 @@ sub get_rawres_parameter_indices
 		croak ("neither filename, rawres_filename or directory defined as input to model::get_rawres_structure");
 	}
 	unless (-e $full_name){
-		carp("$full_name in get_rawres_structure does not exist");
+		debugmessage(3,"$full_name in get_rawres_structure does not exist");
 		return undef;
 	}
 #	print "full name is $full_name\n";
@@ -2799,11 +2798,11 @@ sub get_option_value
 	if ( defined $self->problems ) {
 	    @problems = @{$self->problems};
 	} else {
-	    carp("No problems defined in model" );
+	    debugmessage(3,"No problems defined in model" );
 	    return $fail;
 	}
 	unless( defined $problems[$problem_index] ){
-	    carp("model -> get_option_value: No problem with ".
+	    debugmessage(3,"model -> get_option_value: No problem with ".
 			     "index $problem_index defined in model" );
 	    return $fail;
 	}
@@ -2811,7 +2810,7 @@ sub get_option_value
 	if ( defined $problems[$problem_index] -> $accessor ) {
 	    @records = @{$problems[$problem_index] -> $accessor};
 	} else {
-	    carp("model -> get_option_value: No record $record_name defined" .
+	    debugmessage(3,"model -> get_option_value: No record $record_name defined" .
 			     " in problem with index $problem_index." );
 	    return $fail;
 	}
@@ -2823,7 +2822,7 @@ sub get_option_value
 	  if ((lc($record_index) eq 'all') || $record_index==$ri){
 	      my @val_arr = ();
 	      unless ((defined $records[$ri]) &&( defined $records[$ri] -> options )){
-		  carp("model -> get_option_value: No options for record index ".
+		  debugmessage(3,"model -> get_option_value: No options for record index ".
 				   "$record_index defined in problem." );
 		  if (lc($record_index) eq 'all'){
 		      if (lc($option_index) eq 'all'){
@@ -3174,7 +3173,7 @@ sub flip_comments
 	#return model object for copy
 
 	if (-e $new_file_name and $write){
-		carp("overwriting existing flip_file\n");
+		debugmessage(3,"overwriting existing flip_file\n");
 		unlink($new_file_name);
 	}
 	#need to read fresh from disk, make sure no PsN rearrangements
@@ -3347,7 +3346,7 @@ sub update_inits
 	}
 	my %allparams;
 	if ( defined $from_output ) {
-		carp("using output object specified as argument\n");
+		debugmessage(3,"using output object specified as argument\n");
 	} elsif ( defined $from_hash ) {
 		$from_output = undef;
 		%allparams = %{$from_hash};
@@ -3462,7 +3461,12 @@ sub update_inits
 							#if there is no label for the coord, get_coordslabels stores the coordinate string 
 							#as the hash value. Always defined.
 							my $name = $intermediate{$coord}; #this is either coordinate string or label
-							$namesvalues{$name} = $fromval{$coord}; 
+							if (defined $name){
+								$namesvalues{$name} = $fromval{$coord};
+							}#else{ #FIXME
+							# here we get omegas that are not estimated
+							#	print STDERR "coord is $coord fromval is ".$fromval{$coord}."\n";
+							#}
 						}
 					}else {
 						%namesvalues = %{$from_coordval[$i]->[0]};
@@ -3491,7 +3495,7 @@ sub update_inits
 				unless (defined $record -> options()){
 					croak("$param record has no values");
 				}
-				if ($record->type eq 'BLOCK' and $record->fix){
+				if ($record->is_block and $record->fix){
 					$blockfix = 1;
 				}
 				foreach my $option (@{$record -> options()}) {
@@ -3527,7 +3531,7 @@ sub update_inits
 									($option->init() == 0 and (defined $option->on_diagonal) and (not $option->on_diagonal()))
 								){
 								my $mes = "update_inits: No match for $param $name found in $from_string";
-								carp($mes);
+								debugmessage(3,$mes);
 								ui -> print( category => 'all',
 											 message  => $mes."\n");
 							}
@@ -3632,7 +3636,7 @@ sub _write
 	my ($writedir,$file) = OSspecific::absolute_path('',$filename);
 	
 	if (-e $filename and not $overwrite) {
-		carp("Trying to overwrite existing file $filename\n");
+		debugmessage(3,"Trying to overwrite existing file $filename\n");
 	}
 
 	my @formatted;
@@ -3674,6 +3678,7 @@ sub _write
 	
 	# Open a file and print the formatted problems.
 	# TODO Add some errorchecking.
+	no warnings qw(closed);
 	open( FILE, '>'. $filename );
 	for ( @formatted ) {
 		chomp;
@@ -3721,7 +3726,7 @@ sub is_option_set
 		croak("No problems defined in model" );
 	}
 	unless( defined $problems[$problem_number - 1] ){
-		carp("model -> is_option_set: No problem number $problem_number defined in model" );
+		debugmessage(3,"model -> is_option_set: No problem number $problem_number defined in model" );
 		return 0; # No option can be set if no problem exists.
 	}
 
@@ -4300,7 +4305,7 @@ sub is_estimation
 
 		# If none of the above is true, we are estimating.
 	} else {
-		carp('Problem nr. $problem_number not defined. Assuming estimation' );
+		debugmessage(3,"Problem nr. $problem_number not defined. Assuming estimation" );
 	}
 
 	return $is_est;
@@ -4733,7 +4738,7 @@ sub set_all_omegas_to_zero
 	my $fixed = 0;
 
 	foreach my $omega (@{$self->problems->[0]->omegas}) {
-		if ($omega->type eq 'BLOCK' and not $omega->same) {
+		if ($omega->is_block and not $omega->same) {
 			$omega->fix(1);
 			$fixed = 1;
 		} else {

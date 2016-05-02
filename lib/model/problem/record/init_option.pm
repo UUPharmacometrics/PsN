@@ -5,7 +5,6 @@ use include_modules;
 use Math::Random;
 use Moose;
 use MooseX::Params::Validate;
-
 extends 'model::problem::record::option';
 
 has 'init' => ( is => 'rw', isa => 'Str' );
@@ -84,7 +83,7 @@ sub check_and_set_init
 	if ( defined $new_value ) {
 	  $success = 1;
 	  my $original=$new_value;
-	  if (($PsN::nm_major_version == 5) or ($PsN::nm_major_version == 6)){
+	  if (defined $PsN::nm_major_version and (($PsN::nm_major_version == 5) or ($PsN::nm_major_version == 6))){
 	    if ( (($new_value < 0.000001)and ($new_value > 0) )
 			   or
 			   (($new_value > -0.00001)and ($new_value < 0) )
@@ -95,7 +94,7 @@ sub check_and_set_init
 			}else{ 
 				$new_value = "-0.00001";
 			}
-			carp($original." is too small, setting $new_value instead ");
+			debugmessage(3,$original." is too small, setting $new_value instead ");
 			$error_code[1] = 1;
 	    } else {
 			#still NM6, but absolute value large enough

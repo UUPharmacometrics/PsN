@@ -25,10 +25,12 @@ my $r = $record->_format_record;
 my @str = split /\s+/, $$r[0];
 is ($str[0], '$INIT_RECORD', "record->_format_record");
 is ($str[1], '2', "record->_format_record");
+is($record->is_block,0, 'anonymous record is_block');
 
 random_set_seed_from_phrase('12345');
 
 $record = model::problem::omega->new(record_arr => ['BLOCK(2) 0.02','0 0.01 FIX']);
+is($record->is_block,1, 'anonymous record is_block yes');
 is ($record->options->[0]->init,0.02,'record 1 init 0');
 is ($record->options->[1]->init,0,'record 1 init 1');
 is ($record->options->[2]->init,0.01,'record 1 init 2');
@@ -53,6 +55,8 @@ $record->unfix();
 is ($record->fix,0,'record unfix');
 
 $record = model::problem::sigma->new(record_arr => ['DIAGONAL(2) 0.02','0.01']);
+is($record->is_block,0, 'diagonal sigma record is_block');
+
 is_deeply($record->get_estimated_coordinate_strings,['SIGMA(1,1)','SIGMA(2,2)'],
 		  'estimated coordinate strings 2');
 is_deeply($record->get_estimated_coordinate_strings(only_eta_eps => 1),[1,2],
@@ -155,14 +159,14 @@ $record = model::problem::init_record->new(record_arr => ['BLOCK(1) 28 FIXED']);
 is ($record->options->[0]->init, 28, 'record 4 init');
 is ($record->fix, 1, 'record 4 fix');
 my $a = $record->_format_record;
-my @str = split /\s+/, $$a[0];
+@str = split /\s+/, $$a[0];
 is ($str[2], 'FIX', "_format_record 4");
 is ($str[3], 28, "_format record 4");
 
 
-my $record = model::problem::theta->new(record_arr => ['2 ; Malta', '; Corse']);
+$record = model::problem::theta->new(record_arr => ['2 ; Malta', '; Corse']);
 is ($record->comment->[0], "; Corse\n", "init_record full line comment");
-my $r = $record->_format_record;
+$r = $record->_format_record;
 is ($r->[1], "; Corse\n", "init_record full line comment after _format_record");
 
 $record = model::problem::omega->new(record_arr => ['$OMEGA','(0.01642,FIXED) 0.112 FIXED  (FIXED, 1.0724 )',

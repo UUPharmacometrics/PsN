@@ -203,7 +203,7 @@ sub BUILD
 
 		$self->update_prior_information();
 
-		if (defined $self -> estimations() and (not ($PsN::nm_major_version == 5 or $PsN::nm_major_version == 6))){
+		if (defined $self -> estimations() and ((not defined $PsN::nm_major_version) or (not ($PsN::nm_major_version == 5 or $PsN::nm_major_version == 6)))){
 			my $default_format='s1PE12.5';
 			my $reset_file = 0;
 			my $reset_nolabel = 0;
@@ -396,7 +396,7 @@ sub add_prior_distribution
 		last if ($set_prior_etas >= $neta);
 		my @record_strings;
 		my $block = 0;
-		if ($record->type() eq 'BLOCK'){
+		if ($record->is_block ){
 			$block = 1;
 			if ($record->same()){
 				@record_strings = ('BLOCK SAME');
@@ -650,8 +650,8 @@ sub _init_attr
 								if ( $attribute eq 'init' ) {
 									push( @diagnostics,
 										  $option -> check_and_set_init( new_value => $num_val{$num} ) );
-								} elsif( $attribute eq 'fix' and defined $record -> size() 
-										 and ($record-> type() eq 'BLOCK') ){
+								} elsif( $attribute eq 'fix' and (defined $record -> size() )
+										 and $record->is_block ){
 									# size() tells us this MIGHT be a block and we must fix on record level.
 									#check type also
 									$record -> fix( $num_val{$num} );
@@ -664,8 +664,7 @@ sub _init_attr
 						if ( $attribute eq 'init' ) {
 							push( @diagnostics,
 								  $option -> check_and_set_init( new_value => shift( @new_values ) ) );
-						} elsif( $attribute eq 'fix' and defined $record -> size()
-								 and ($record-> type() eq 'BLOCK')){
+						} elsif( $attribute eq 'fix' and defined $record -> size() and $record-> is_block){
 							# size() tells us this MIGHT a block and we must fix on record level.Check type also
 							$record -> fix( shift( @new_values ) );
 						} else {
@@ -678,7 +677,7 @@ sub _init_attr
 					$prev_size = scalar @{$record -> options};
 				} else {
 					my $size = $record -> size;
-					if( (defined $size) and ($record->type eq 'BLOCK') ) {
+					if( (defined $size) and $record->is_block ) {
 						$prev_size = ($size*($size+1))/2;
 					} else {
 						$prev_size = scalar @{$record -> options};
@@ -731,7 +730,7 @@ sub _init_attr
 				if ( $attribute eq 'init' ) {
 					$option -> check_and_set_init( new_value => $num_val{$num} );
 				} elsif( $attribute eq 'fix' and defined $new_record -> size()
-						 and ($new_record-> type() eq 'BLOCK')){
+						 and $new_record->is_block){
 
 					# size() tells us this is MIGHT be a block and we must fix on
 					# record level. This will never happen, as we can't
@@ -780,7 +779,7 @@ sub _init_attr
 						push( @prev_values, $option -> $attribute );
 					}
 				} else {
-					carp("Trying to get attribute $attribute, ".
+					debugmessage(3,"Trying to get attribute $attribute, ".
 						 "but no options defined in record ".ref($record) );
 				}
 				$prev_size = $record -> size unless ( $record -> same );
@@ -800,7 +799,7 @@ sub _init_attr
 			}
 			@parameter_values = @part_vals;
 		} else {
-			carp("Model::problem -> _init_attr: parameter_numbers undefined, using all." );
+			debugmessage(3,"Model::problem -> _init_attr: parameter_numbers undefined, using all." );
 		}
 		
 		# }}} Retrieve values
@@ -888,7 +887,7 @@ sub indexes
 		}
 		@indexes = @part_indexes;
 	} else {
-		carp("Model::problem -> indexes: parameter_numbers undefined, using all." );
+		debugmessage(3,"Model::problem -> indexes: parameter_numbers undefined, using all." );
 	}
 
 	return \@indexes;
@@ -979,7 +978,7 @@ sub _option_val_pos
 	if( defined $self->$accessor ) {
 		@records = @{$self->$accessor} ;
 	} else {
-		carp("No records of type $accessor" );
+		debugmessage(3,"No records of type $accessor" );
 		@records = ();
 	}
 	my @options = ();
@@ -1122,7 +1121,7 @@ sub _read_table_files
 	if ( defined $table_name_ref and scalar @{$table_name_ref} >= 0 ) {
 		$self->table_files([]);
 		foreach my $table_name ( @{$table_name_ref} ) {
-			carp("Creating new table_file object from $table_name" );
+			debugmessage(3,"Creating new table_file object from $table_name" );
 			my $new_table = data -> new( directory            => $self->directory,
 										 filename             => $table_name,
 										 ignoresign => '@',
@@ -1192,7 +1191,7 @@ sub remove_option
 				fuzzy_match => $fuzzy_match );
 		}
 	} else {
-		carp("No records of type $accessor" );
+		debugmessage(3,"No records of type $accessor" );
 	}
 }
 
@@ -1239,7 +1238,7 @@ sub add_option
 			$self -> add_records( type => $record_name,
 					record_strings => ["$option_name=$option_value"] );
 		} else {
-			carp("No records of type $accessor and add_option set not to add one" );
+			debugmessage(3,"No records of type $accessor and add_option set not to add one" );
 		}
 	}
 }
@@ -1290,7 +1289,7 @@ sub add_marginals_code
 		$record_ref -> [0] -> verbatim_last( $last_code );
 		last; # Only insert the code in the first record found (of the ones specified above)
 	} else {
-		carp("No \$ERROR record was found. Can't add verbatim code".
+		debugmessage(3,"No \$ERROR record was found. Can't add verbatim code".
 				" to access nonparametric marginals" );
 	}
 }
@@ -1316,6 +1315,7 @@ sub nomegas
 
 		my $size = $omega -> size;
 		my $type = $omega -> type;
+		my $is_block = $omega->is_block;
 		if ($omega->same()){
 			croak("First \$OMEGA cannot be SAME")
 				unless (defined $prev);
@@ -1328,7 +1328,7 @@ sub nomegas
 
 			#Kajsa: size also for diagonal matrix! Added type check below.
 
-			if( $with_correlations and ($type eq 'BLOCK')){
+			if( $with_correlations and $is_block){
 				$nomegas += ($size*($size+1))/2; 
 				$prev = ($size*($size+1))/2;
 			} else {
@@ -1559,6 +1559,7 @@ sub nsigmas
 	foreach my $sigma ( @{$self->sigmas} ) {
 		my $size = $sigma -> size;
 		my $type = $sigma -> type;
+		my $is_block = $sigma -> is_block;
 		if ($sigma->same() and (defined $prev) ) {
 			$nsigmas += $prev if $with_same;
 		} elsif( defined $size ) {
@@ -1568,7 +1569,7 @@ sub nsigmas
 			# then the arithmetic sum: (n*(n+1))/2
 			#Kajsa: size also for diagonal matrix! Added check below.
 
-			if( $with_correlations and ($type eq 'BLOCK')){
+			if( $with_correlations and $is_block){
 				$nsigmas += ($size*($size+1))/2;
 				$prev = ($size*($size+1))/2;
 			} else {
@@ -1590,10 +1591,10 @@ sub eta_shrinkage
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		 model => { 'model', optional => 1 },
-		 probnum => { isa => 'Num', optional => 1 },
-		 eta_filename => { isa => 'Maybe[Str]', optional => 1 },
-		 directory => { isa => 'Str', optional => 1 }
+							  model => { isa => 'model', optional => 1 },
+							  probnum => { isa => 'Num', optional => 1 },
+							  eta_filename => { isa => 'Maybe[Str]', optional => 1 },
+							  directory => { isa => 'Str', optional => 1 }
 	);
 	my $model = $parm{'model'};
 	my $probnum = $parm{'probnum'};
@@ -1613,7 +1614,7 @@ sub iwres_shrinkage
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		model => { 'model', optional => 1 },
+		model => { isa => 'model', optional => 1 },
 		iwres_filename => { isa => 'Maybe[Str]', optional => 1 },
 		probnum => { isa => 'Num', optional => 1 },
 		directory => { isa => 'Str', optional => 1 }
@@ -1762,7 +1763,7 @@ sub _read_records
 					croak("Record $record_name is not valid" );
 				}
 
-				unless ($found_records{$record_type} == 1){
+				unless (defined $found_records{$record_type} and ($found_records{$record_type} == 1)){
 					push(@local_print_order,$record_type);
 					$found_records{$record_type}=1;
 				}
@@ -2291,9 +2292,9 @@ sub cholesky_reparameterize
 				if ($done_previous){ #we do not care about use_list or not here, determined only by logic
 					$do_same=1;	#but compute no new matrix
 				}#else do nothing, just increase counters below
-			}elsif ($record->type eq 'BLOCK'){
+			}elsif ($record->is_block){
 				if (
-					($use_list and ($record_list{$record_index}==1)) or
+					($use_list and (defined $record_list{$record_index} and $record_list{$record_index}==1)) or
 					((not $use_list) and (not $record->fix)) or
 					((not $use_list) and ($record->fix) and $reparameterize_fix )) 
 				{
@@ -2310,7 +2311,7 @@ sub cholesky_reparameterize
 					$previous_diagonal=0;
 				}#else do nothing, just increase counters below
 			}elsif ( #this is diagonal
-				($use_list and ($record_list{$record_index}==1) ) or
+				($use_list and (defined $record_list{$record_index} and $record_list{$record_index}==1) ) or
 				((not $use_list) and $reparameterize_diagonal)) {
 				my @fix_vector = ();
 				foreach my $opt (@{$record->options}){
@@ -2331,7 +2332,7 @@ sub cholesky_reparameterize
 			if ($done_this){
 				push(@new_code,@{$code});
 				push(@inits,@{$init});
-				$warnings += $warn;
+				$warnings += $warn if (defined $warn);
 				$done_previous=1;
 				$theta_count += scalar(@{$init});
 				$record->set_1_fix();
@@ -2421,7 +2422,7 @@ sub reformat_code
 		my @terms = split(/\+/,$line);
 		my $newline = $indent.$terms[0];
 		for (my $i=1; $i<scalar(@terms); $i++){
-			if ( (length($newline)+1+$terms[$i]) > $max_length){
+			if ( (length($newline)+1+length($terms[$i])) > $max_length){
 				push(@formatted,$newline.'+        &');
 				$newline = $indent.$indent.$terms[$i];
 			}else{
@@ -2832,7 +2833,7 @@ sub ensure_posdef
 		foreach my $record (@records){
 			$recno++;
 			next if (defined $record_number and ($recno != $record_number));
-			next unless ($record -> type() eq 'BLOCK');
+			next unless ($record -> is_block);
 			if  ($record->same() or $record->fix() or $record->prior()){
 				next;
 			}
@@ -2898,7 +2899,7 @@ sub update_prior_information
 		my $nwpri=0;
 		foreach my $rec (@{$self -> priors()}){
 			unless ((defined $rec) &&( defined $rec -> options )){
-				carp("No options for rec \$PRIOR" );
+				debugmessage(3,"No options for rec \$PRIOR" );
 			}
 			foreach my $option ( @{$rec -> options} ) {
 				if ((defined $option) and 
@@ -3296,14 +3297,14 @@ sub _normalize_record_name
 
 
 
-	if ($unsupported_records{uc($record_name)} > 0){
+	if (defined $unsupported_records{uc($record_name)} and ($unsupported_records{uc($record_name)} > 0)){
 		croak("\nPsN does not yet support record \$".$record_name." in the control stream, but adding support is on the todo-list.\n");
 	}
 	my $uc_short_type = _get_uc_short_type($record_name);
 
 	$normalized_name = $abbreviations{$uc_short_type};
 
-	unless (length($normalized_name)>0){
+	unless ((defined $normalized_name) and length($normalized_name)>0){
 		croak("\nPsN does not support record \$".$record_name." in the control stream\n");
 	}
 
@@ -3376,7 +3377,7 @@ sub set_estimated_parameters_hash
 				unless (defined $record -> options()) {
 					croak("$param record has no values in get_estimated_parameters");
 				}
-				if (($param ne 'theta') and ($record->type eq 'BLOCK')){
+				if (($param ne 'theta') and $record->is_block){
 					$block_count++;
 					$block_number = $block_count;
 					$block_sd = 1 if ($record->sd());
@@ -3584,7 +3585,7 @@ sub is_option_set
 	if ( defined $self -> $accessor ) {
 		@records = @{$self -> $accessor};
 	} else {
-		carp("problem -> is_option_set: No record $record defined");
+		debugmessage(3,"problem -> is_option_set: No record $record defined");
 		return 0;
 	}
 
@@ -3602,13 +3603,13 @@ sub is_option_set
 
 	foreach my $inst (@record_numbers){
 		unless(defined $records[$inst - 1] ){
-			carp("problem -> is_option_set: No record number $inst defined in problem." );
+			debugmessage(3,"problem -> is_option_set: No record number $inst defined in problem." );
 			next;
 		}
 		if ( defined $records[$inst - 1] -> options ) {
 			@options = @{$records[$inst - 1] -> options};
 		} else {
-			carp("No option defined in record: $record in problem." );
+			debugmessage(3,"No option defined in record: $record in problem." );
 			next;
 		}
 		foreach my $option ( @options ) {

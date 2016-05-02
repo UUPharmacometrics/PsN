@@ -20,7 +20,7 @@ is ($record->options->[1]->lobnd, 1, "empty init lobnd");
 is ($record->options->[1]->init, '', "empty init");
 is ($record->options->[1]->upbnd, 10, "empty init upbnd");
 
-my $record = model::problem::theta->new(record_arr => ['(28 FIXED); hej', ' ( .2 4 ) (.1 +2E+00 10 ) ; (-4,) ;hej',
+$record = model::problem::theta->new(record_arr => ['(28 FIXED); hej', ' ( .2 4 ) (.1 +2E+00 10 ) ; (-4,) ;hej',
 													   '$THETA (0,3) 2 FIXED (0,.6,1) 10 (-INF,-2.7,0) (37 FIXED)']);
 
 is ($record->options->[0]->init, 28, "0 init space");
