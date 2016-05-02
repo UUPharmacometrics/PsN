@@ -146,7 +146,7 @@ sub BUILD
 			$self->error eq 'user');
 	}
 
-	if ($self->error eq 'user') {
+	if (defined $self->error and ($self->error eq 'user')) {
 		unless ( defined $self -> error_code() )  {
 			croak("You need to specify \'error_code'\ either as argument or in the config file ".
 				"when option -error=user is set." );
@@ -317,7 +317,10 @@ sub BUILD
 
 				my $covariate_test = 0;
 				foreach my $specified_cov ( @continuous, @categorical ) {
-					$covariate_test = 1 and last if( $cov eq $specified_cov );
+					if( $cov eq $specified_cov ){
+						$covariate_test = 1;
+						last ;
+					}
 				}
 				push( @not_found, $cov ) unless ( $covariate_test );
 			}
@@ -1061,9 +1064,9 @@ sub _raw_results_callback
 						}
 						push(@arr,join('-',@string_arr));
 						$saem = 1 if ($string_arr[$#string_arr] eq 'SAEM' or 
-							(index('SAEM',$string_arr[$#string_arr]==0)));
+							(index('SAEM',$string_arr[$#string_arr])==0));
 						$bayes = 1 if ($string_arr[$#string_arr] eq 'BAYES' or 
-							(index('BAYES',$string_arr[$#string_arr]==0)));
+							(index('BAYES',$string_arr[$#string_arr])==0));
 					}
 					$res = \@arr;
 				}elsif ( $param eq 'nburn_set' ) {
@@ -1250,23 +1253,24 @@ sub _raw_results_callback
 			#in struct need to change length theta start of all later 
 			#then need to change length setheta and start of all later 
 			#will assume theta is before setheta
+			my ($start,$sethstart,$len,$thstart);
 			foreach my $mod (sort({$a <=> $b} keys %{$self->raw_line_structure})){
-				my ($thstart,$len) = split(',',$self->raw_line_structure -> {$mod}->{'theta'});
+				($thstart,$len) = split(',',$self->raw_line_structure -> {$mod}->{'theta'});
 				my $extra1 = scalar(@{$param_names{'theta'}})+scalar(@rel_header)-$len;
 				$self->raw_line_structure -> {$mod}->{'theta'} = ($thstart).','.($len+$extra1);
 				foreach my $st (sort({$a <=> $b} keys %start_category_hash)){
 					next unless ($st > $thstart);
 					my $category = $start_category_hash{$st};
-					my ($start,$len) = split(',',$self->raw_line_structure -> {$mod}->{$category});
+					($start,$len) = split(',',$self->raw_line_structure -> {$mod}->{$category});
 					$self->raw_line_structure -> {$mod}->{$category} = ($start+$extra1).','.$len;
 				}
-				my ($sethstart,$len) = split(',',$self->raw_line_structure -> {$mod}->{'setheta'});
+				($sethstart,$len) = split(',',$self->raw_line_structure -> {$mod}->{'setheta'});
 				my $extra2 = scalar(@{$param_names{'theta'}})+scalar(@rel_header)-$len;
 				$self->raw_line_structure -> {$mod}->{'setheta'} = ($sethstart).','.($len+$extra2);
 				foreach my $st (sort({$a <=> $b} keys %start_category_hash)){
 					next unless (($st+$extra1) > $sethstart);
 					my $category = $start_category_hash{$st};
-					my ($start,$len) = split(',',$self->raw_line_structure -> {$mod}->{$category});
+					($start,$len) = split(',',$self->raw_line_structure -> {$mod}->{$category});
 					$self->raw_line_structure -> {$mod}->{$category} = ($start+$extra2).','.$len;
 				}
 			}
@@ -1350,7 +1354,7 @@ sub modelfit_setup
 			}
 		}
 		my $fname = 'base_model_with_included_relations' . $stepname . '.mod';
-		if (($self->max_steps == 0) and ($self->step_number == 1) and scalar(keys %{$self->test_relations}) == 0 and $self->linearize) {
+		if ((defined $self->max_steps and $self->max_steps == 0) and ($self->step_number == 1) and scalar(keys %{$self->test_relations}) == 0 and $self->linearize) {
 			$fname = $self->basename . '.mod';
 		}
 
@@ -1522,7 +1526,7 @@ sub linearize_setup
 	my $original_model = $parm{'original_model'};
 
 	my $linearize_only=0;
-	if (($self->max_steps() == 0) and ($self->step_number()==1) and 
+	if ((defined $self->max_steps() and $self->max_steps() == 0) and ($self->step_number()==1) and 
 		scalar(keys %{$self->test_relations()}) == 0){
 		$linearize_only = 1;
 		my $base = $original_model->filename();
@@ -2026,7 +2030,7 @@ sub linearize_setup
 		$derivatives_model ->_write(); #so that changes are reflected on disk
 
 		#3.2, 3.3
-		my @code; 
+		@code =(); 
 		@code = @{$original_model->get_code(record => 'pk')};
 		unless ( $#code > 0 ) {
 			@code = @{$original_model->get_code(record => 'pred')};
@@ -2196,8 +2200,8 @@ sub linearize_setup
 				}
 			}
 		}
-		my $sum_count=1;
-		my $sum_string='BSUM'.$sum_count;
+		$sum_count=1;
+		$sum_string='BSUM'.$sum_count;
 		my $base_string='BASE_TERMS='.$sum_string;
 		$sum_string .= '=';
 		for (my $i=1;$i<=$base_count;$i++){
@@ -2217,7 +2221,7 @@ sub linearize_setup
 		push(@pred_block,$sum_string);
 		push(@pred_block,$base_string);
 
-		my $sum_string='IPRED=OPRED+BASE_TERMS';
+		$sum_string='IPRED=OPRED+BASE_TERMS';
 		$sum_string .='+COV_TERMS' if ($cov_count>0);
 		push(@pred_block,$sum_string);
 		#3.9
@@ -2432,7 +2436,7 @@ sub linearize_setup
 	if ($self->step_number()==1 or $self->update_derivatives()){
 		my $derivatives_ofv;
 		my $ofvname = 'ofv';
-		my $derivatives_name;
+		my $derivatives_name = '';
 		my $reused=0;
 		#set name of datafile before creating it so that will not read data here
 		$original_model -> ignore_missing_data(1);
@@ -2587,7 +2591,7 @@ sub modelfit_analyze
 	my $model_number = $parm{'model_number'};
 
 	return if ($self->return_after_derivatives_done());
-	return if (($self->max_steps() == 0) and ($self->step_number()==1) and 
+	return if ((defined $self->max_steps() and $self->max_steps() == 0) and ($self->step_number()==1) and 
 		scalar(keys %{$self->test_relations}) == 0
 			and $self->linearize);
 
@@ -2759,22 +2763,22 @@ sub modelfit_analyze
 	$self -> resulting_model($temp_res_mod);
 	# Print a short summary of the step (All logging should be kept in a log-method in the future)
 	open( LOG, ">>".$self -> short_logfile -> [$model_number-1] );
-	print LOG $short_log_text;
+	print LOG $short_log_text if (defined $short_log_text);
 	close( LOG );
 
-	my %return_section;
-	$return_section{'name'} = 'relation.chosen.in.step';
-	$return_section{'values'} = [];
-	$return_section{'labels'} = [];
+	my %return_section1;
+	$return_section1{'name'} = 'relation.chosen.in.step';
+	$return_section1{'values'} = [];
+	$return_section1{'labels'} = [];
 	if ( defined $chosen_parameter and defined  $chosen_covariate ) {
-		$return_section{'values'}[0][0] = $chosen_parameter.$chosen_covariate;
+		$return_section1{'values'}[0][0] = $chosen_parameter.$chosen_covariate;
 		my $task = $self -> search_direction eq 'forward' ? 'Adding' : 'Removing';
 		ui -> print( category => 'scm',
 			message  => "$task $chosen_covariate on $chosen_parameter state $chosen_state" )
 		unless $self -> parent_threads > 1;
 	}
 	push( @{$self -> results->[$model_number-1]{'own'}},
-		\%return_section );
+		\%return_section1 );
 
 	my $final_model;
 	if ( defined $self -> resulting_model ) {
@@ -2960,7 +2964,7 @@ sub modelfit_analyze
 		}
 
 		if ( defined $prep_models ) {
-			carp(" have called internal scm " .scalar @{$prep_models} );
+			debugmessage(3," have called internal scm " .scalar @{$prep_models} );
 
 			# Enclose $prep_models in array ref to reflect the
 			# per-tool level, even though a modelfit does not
@@ -2970,7 +2974,7 @@ sub modelfit_analyze
 			# Push the results of the internal scm on the results attribute:
 			#push( @{$self -> results->[$model_number-1]{'subtools'}}, $returns );
 		} else {
-			carp(" no prep_models defined from internal scm " );
+			debugmessage(3," no prep_models defined from internal scm " );
 		}
 
 		# set final model to this steps' best model if the internal scm returned 'basic_model'.
@@ -3028,17 +3032,17 @@ sub modelfit_analyze
 		# Leave base_criteria_values as they are
 	}
 
-	my %return_section;
-	$return_section{'name'} = 'base.criteria.values';
-	$return_section{'values'} = $self -> base_criteria_values;
-	$return_section{'labels'} = undef;
-	push( @{$self -> results->[$model_number-1]{'own'}},\%return_section );
+	my %return_section2;
+	$return_section2{'name'} = 'base.criteria.values';
+	$return_section2{'values'} = $self -> base_criteria_values;
+	$return_section2{'labels'} = undef;
+	push( @{$self -> results->[$model_number-1]{'own'}},\%return_section2 );
 
-	my %return_section;
-	$return_section{'name'} = 'included.relations';
-	$return_section{'values'} = $self -> included_relations;
-	$return_section{'labels'} = undef;
-	push( @{$self -> results->[$model_number-1]{'own'}},\%return_section );
+	my %return_section3;
+	$return_section3{'name'} = 'included.relations';
+	$return_section3{'values'} = $self -> included_relations;
+	$return_section3{'labels'} = undef;
+	push( @{$self -> results->[$model_number-1]{'own'}},\%return_section3 );
 
 
 	# This loop tries to minimize the data written to disc.
@@ -3046,13 +3050,13 @@ sub modelfit_analyze
 		$self -> prepared_models->[$model_number-1]{'own'}[$i] -> {'outputs'} = undef; #FIXME
 	}
 
-	my %return_section;
-	$return_section{'name'} = 'final.model';
-	$return_section{'values'}[0][0] = $final_model;
-	$return_section{'labels'} = undef;
-	push( @{$self -> results->[$model_number-1]{'own'}},\%return_section );
+	my %return_section4;
+	$return_section4{'name'} = 'final.model';
+	$return_section4{'values'}[0][0] = $final_model;
+	$return_section4{'labels'} = undef;
+	push( @{$self -> results->[$model_number-1]{'own'}},\%return_section4 );
 
-	carp("Finished in modelfit_analyze!" );
+	debugmessage(3,"Finished in modelfit_analyze!" );
 }
 
 sub gof_ofv
@@ -3140,14 +3144,18 @@ sub gof_ofv
 		}
 
 		push ( @ofv_drops, $test_val );
-		my $log_text = sprintf("%-8s",$step_relations[$i]{'parameter'}.
-			$step_relations[$i]{'covariate'}.'-'.
-			$step_relations[$i]{'state'}).
-		sprintf("%12s","$ofvname  ").
-		sprintf("%12.5f",$base_ofv).
-		$ofv.
-		$test_val. '  >'.
-		sprintf("%10.5f",$change); 
+		my $log_text;
+		if (1){
+			no warnings qw(uninitialized);
+			$log_text = sprintf("%-8s",$step_relations[$i]{'parameter'}.
+								$step_relations[$i]{'covariate'}.'-'.
+								$step_relations[$i]{'state'}).
+								sprintf("%12s","$ofvname  ").
+								sprintf("%12.5f",$base_ofv).
+								$ofv.
+								$test_val. '  >'.
+								sprintf("%10.5f",$change);
+		}
 		print LOG $log_text;
 		# Significant ?
 		if( defined $ofvs[$i] and $test_val > $change ){
@@ -3593,7 +3601,7 @@ sub _create_models
 
 				#only one unless $parallel_states
 				for (my $si=0; $si<= $#new_states; $si++){
-					$state = @new_states[$si];
+					$state = $new_states[$si];
 
 					# Only one problem and one sub problem
 					push( @{$return_section{'values'}[0][0]}, "$parameter$covariate-$state" );
@@ -3754,7 +3762,7 @@ sub _create_models
 	} else {
 		ui -> print( category => 'scm',
 			message  => "Recreating models from previously run step" );
-		carp("Creating applicant model from file on disk" );
+		debugmessage(3,"Creating applicant model from file on disk" );
 		if ( not -e $self -> directory."/m$model_number/done.log" ) {
 			croak("No file ".$self -> directory.
 				"/m$model_number/done.log seem to exist although the existance".
@@ -4094,8 +4102,11 @@ sub add_code
 		}
 		if ( $relationarea ) {
 			$found_REL = $i;
-			carp($parameter . "COV has already been added to the code" );
-			$found_correct_REL = 1 and last if ( /$parameter$covariate/ );
+			debugmessage(3,$parameter . "COV has already been added to the code" );
+			if ( /$parameter$covariate/ ){
+				$found_correct_REL = 1; 
+				last ;
+			}
 			if ($sum_covariates){
 				@row = split(/\)\+\(/);
 			}else{
@@ -4273,8 +4284,11 @@ sub add_code_linearize
 		}
 		if ( $relationarea ) {
 			$found_REL = $i;
-			carp("GZ_".$parameter . " has already been added to the code" );
-			$found_correct_REL = 1 and last if ( /$parameter$covariate/ );
+			debugmessage(3,"GZ_".$parameter . " has already been added to the code" );
+			if ( /$parameter$covariate/ ){
+				$found_correct_REL = 1;
+				last ;
+			}
 			if ($sum_covariates){
 				@row = split(/\)\+\(/);
 			}else{
@@ -4414,7 +4428,8 @@ sub add_code_gfunc
 			$applicant_model -> filename . "\n" );
 	}
 
-	push(@code,';;;SCM-LINEARIZE_CONSTANTS'."\n") unless ($self->directory_name_prefix eq 'linearize');
+	push(@code,';;;SCM-LINEARIZE_CONSTANTS'."\n") unless ((defined $self->directory_name_prefix) and
+														  $self->directory_name_prefix eq 'linearize');
 	foreach my $parameter (keys %parameter_G){
 		push(@code,'OGZ_'.$parameter.'='.$parameter_G{$parameter}."\n");
 		if ($parameter_relation{$parameter} eq 'exponential'){
@@ -4698,7 +4713,7 @@ sub get_covariate_code
 			s/minimum/$min/g;
 			my $copy = $_;
 			while ($copy =~ s/THETA\((\d+)\)//){
-				unless ($unique_thetas{$1} == 1){
+				unless (defined $unique_thetas{$1} and $unique_thetas{$1} == 1){
 					$unique_thetas{$1} = 1;
 					$theta_number++;
 				}
@@ -5022,9 +5037,11 @@ sub write_log
 	open( LOG, ">>$logfile" );
 
 	if ( defined $chosen and (not $final)) {
-		print LOG "Parameter-covariate relation chosen in this $direction step: ",
-		"$chosen_parameter-$chosen_covariate-$chosen_state\n";
-		print LOG sprintf("%-23s",'CRITERION'),uc( $criterion ),"\n" if (length($criterion)>0);
+		if (defined $chosen_parameter or (defined $chosen_covariate) or (defined $chosen_state)){
+			print LOG "Parameter-covariate relation chosen in this $direction step: ",
+			"$chosen_parameter-$chosen_covariate-$chosen_state\n";
+			print LOG sprintf("%-23s",'CRITERION'),uc( $criterion ),"\n" if (length($criterion)>0);
+		}
 		my @names = sort keys %test_log;
 		foreach my $name ( @names ) {
 			my $val = $test_log{$name};
@@ -5038,7 +5055,7 @@ sub write_log
 			}
 		}
 	}
-	if (defined $included_relations and scalar %{$included_relations} > 0 ) {
+	if (defined $included_relations and (scalar (keys %{$included_relations}) > 0 )) {
 		if ($final){
 			print LOG "Relations included after final step:\n";	    
 		}else{
@@ -5088,7 +5105,7 @@ sub drop_undrop_covariates
 			$used = 1 if ( $cov eq $used_cov );
 		}
 		if ( $used ) {
-			carp("undropping $cov" );
+			debugmessage(3,"undropping $cov" );
 			$applicant_model -> _option_val_pos ( problem_numbers  => [1],
 				instance_numbers => [[1]],
 				name             => $cov,
@@ -5096,7 +5113,7 @@ sub drop_undrop_covariates
 				new_values       => [['']],
 				exact_match      => 1 );
 		} else {
-			carp("dropping $cov" );
+			debugmessage(3,"dropping $cov" );
 			$applicant_model -> _option_val_pos ( problem_numbers  => [1],
 				instance_numbers => [[1]],
 				name             => $cov,
@@ -5399,14 +5416,14 @@ sub read_config_file
 			$self -> logfile([$config_file -> logfile]);
 		} elsif( $config_option eq 'valid_states' and defined $config_file -> valid_states ){
 			if( not defined $config_file -> valid_states -> {'continuous'} ) {
-				carp("The valid_states section is defined in the configuration file but ".
+				debugmessage(3,"The valid_states section is defined in the configuration file but ".
 					"no states were defined for continuous covariates. Assuming the default valid states: ".
 					join( ', ',@{$self -> valid_states -> {'continuous'}}) );
 			} else {
 				$self -> valid_states -> {'continuous'} = $config_file -> valid_states -> {'continuous'};
 			}
 			if( not defined $config_file -> valid_states -> {'categorical'} ) {
-				carp("The valid_states section is defined in the configuration file but ".
+				debugmessage(3,"The valid_states section is defined in the configuration file but ".
 					"no states were defined for categorical covariates. Assuming the default valid states: ".
 					join( ', ',@{$self -> valid_states -> {'categorical'}}) );
 			} else {
@@ -5456,7 +5473,7 @@ sub preprocess_data
 	my $timevarfile = '_time_varying.dta';
 	my %parmcovhash;
 	my %parmetahash;
-	my $run_mess;
+	my $run_mess = '';
 	my @filter_table_header;
 
 	my $only_filter = 0;

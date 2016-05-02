@@ -107,7 +107,7 @@ sub BUILD
 				}elsif( $list[0] eq 'SCALAR' ){
 					$valid_hash_options{$key} = 'SCALAR';
 				} else {
-					carp("Type specification of $key is weird\n" );
+					debugmessage(1,"Type specification of $key is weird\n" );
 				}
 			} else {
 				$valid_hash_options{$key} = 'SCALAR';
@@ -238,7 +238,7 @@ sub _check_various
 					foreach my $covariate( @{$parmcov{$parameter}} ){
 						if( ($parm eq '*' or $cov eq '*') ) {
 
-							if( length( $slave ) > 0 ){
+							if( defined $slave and length( $slave ) > 0 ){
 								unless( exists $self -> relations -> {$parameter} and 
 									exists $self -> relations -> {$parameter} -> {$covariate} and 
 									exists $self -> relations -> {$parameter} -> {$covariate} -> {$master} and 
@@ -255,7 +255,7 @@ sub _check_various
 								}
 							}
 						} else {
-							if( length( $slave ) > 0 ){
+							if( defined $slave and length( $slave ) > 0 ){
 								@{$self -> relations -> {$parameter} -> {$covariate} -> {$master} -> {$state} -> {$slave}} = @bounds;
 							} else {
 								@{$self -> relations -> {$parameter} -> {$covariate} -> {$master} -> {$state}} = @bounds;
@@ -287,7 +287,7 @@ sub _check_included_relations
 	if( defined $self -> included_relations ){
 		foreach my $parameter ( keys %{$self -> included_relations} ){
 			my $new_parameter_hash;
-			foreach(my $i; $i < scalar @{$self -> included_relations -> {$parameter}}; $i++ ){
+			for (my $i=0; $i < scalar @{$self -> included_relations -> {$parameter}}; $i++ ){
 				my $cov_state = @{$self -> included_relations -> {$parameter}}[$i];
 				if( $cov_state =~ /^\s*(\w+)-(\d+)\s*$/ ){
 					$new_parameter_hash -> {$1} -> {'state'} = $2;
@@ -376,7 +376,7 @@ sub parse_config
 		config_tiny => { isa => 'ext::Config::Tiny', optional => 1 }
 	);
 	my $config_tiny = $parm{'config_tiny'};
-
+	no warnings qw(uninitialized);
 	foreach my $section ( keys %{$config_tiny} ) {
 		if( $self -> valid_hash_options->{$section} eq 'ARRAY' ){
 			foreach my $left_side( keys %{$config_tiny -> {$section}} ){
@@ -439,7 +439,7 @@ sub parse_config
 
 					$self -> $option($config_tiny -> {$section} -> {$option});
 
-				} elsif( $self -> valid_array_options-{$option} ) {
+				} elsif( $self -> valid_array_options->{$option} ) {
 					my $value = $config_tiny -> { $section } -> {$option};
 					$value =~ s/\s*//g;
 					my @arr = split( /,/ , $value );
