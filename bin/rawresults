@@ -23,6 +23,7 @@ use File::Copy qw/cp mv/;
 use File::Path 'rmtree';
 # More PsN dependencies included with require further down
 
+#FIXME handle psn.conf without default nm_version
 
 my %options;
 
@@ -31,7 +32,9 @@ my %optional_options = (
 	"path:s" => undef,
 	"outfile:s" => undef,
     "help" => undef,
-	"h" => undef
+	"h" => undef,
+ 	"silent" => undef,
+	"nm_version:s" => undef,
 );
 
 my $res = GetOptions( \%options,
@@ -62,6 +65,12 @@ EOF
 $help_text{-outfile} = <<'EOF';
     -outfile='string'
     Name of output file.
+EOF
+$help_text{-nm_version} = <<'EOF';
+    Name of nm_version. Only needed if no default version defined in psn.conf
+EOF
+$help_text{-silent} = <<'EOF';
+    Suppress PsN log messages.
 EOF
 $help_text{Post_help_message} = <<'EOF';
 EOF
@@ -138,9 +147,9 @@ if (not $sse){
 	}
 }
 
-my $modelfit = tool::modelfit -> new(
-	directory_name_prefix => 'rawresults',
-	models => \@models_array);  
+my $modelfit = tool::modelfit -> new(eval( $common_options::parameters ),
+									 directory_name_prefix => 'rawresults',
+									 models => \@models_array);  
 
 $modelfit->raw_results([]);
 $modelfit->raw_nonp_results([]);
