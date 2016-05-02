@@ -297,7 +297,7 @@ sub modelfit_post_subtool_analyze
 									"modelfit_post_subtool_analyze", level => 1);
 			for(my $j = $self->n_model_thetas(); $j<scalar(@{$init_val}); $j++){ #leave original model thetas intact
 				my $value = $init_val -> [$j];
-				if (abs($value) <= $self->cutoff())
+				if ((defined $self->cutoff) and (abs($value) <= $self->cutoff()))
 				{
 					$pred_mod->initial_values(parameter_type => 'theta',
 											  parameter_numbers => [[$j+1]],

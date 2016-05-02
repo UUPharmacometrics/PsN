@@ -107,7 +107,8 @@ sub xv_step_post_subtool_analyze
 		model_number => { isa => 'Maybe[Int]', optional => 1 }
 	);
 	my $model_number = $parm{'model_number'};
-
+	$model_number=0 unless (defined $model_number); #FIXME! do not call without model number
+	
 	trace(tool => "xv", message => "xv_step_post_subtool_analyze\n", level => 1);
 	my $subtools = undef;
 	if( scalar @{$self -> subtools} > 1 ){
