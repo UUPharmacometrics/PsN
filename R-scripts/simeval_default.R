@@ -240,6 +240,20 @@ if(packageVersion("gridExtra") < "2.0.0"){
   grid.table(mydataframe,rows=NULL)  
 }
 
+plot.new()
+outlierframe <- read.csv("residual_outliers.csv")
+if(length(outlierframe$ID)<1){
+    outlierframe <- data.frame('1' = c(' '))
+    colnames(outlierframe) <- c("No residual outliers detected")
+}
+
+  if(packageVersion("gridExtra") < "2.0.0"){
+    grid.table(outlierframe,show.rownames=FALSE) 
+  } else {
+    grid.table(outlierframe,rows=NULL)  
+  }
+
+
 dev.off()
 
 #new pdf for OFV

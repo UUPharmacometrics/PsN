@@ -534,7 +534,7 @@ sub simeval_analyze
 	my $occasions = $parm{'occasions'};
 	my $m1dir = $parm{'m1dir'};
 	my $testing = $parm{'testing'};
-	my $write_auto = $parm{'write_auto'};
+	my $write_auto = $parm{'write_auto'}; #only turn on for debugging
 	
 	my $errmess;
 	my $ret_subjects;
@@ -552,7 +552,12 @@ sub simeval_analyze
 		$time_array = $tablef->tables->[0]->columns->[$index];
 	}
 	for (my $loop=0; $loop<1; $loop++){
-		unless (-e $simeval_all_table_files->[0]) {
+		my $original_nmtable;
+		my @iwres_outlier_array=();
+		my @cwres_outlier_array=();
+		if (-e $simeval_all_table_files->[0]) {
+			$original_nmtable = nmtablefile->new(filename => $simeval_all_table_files->[0]);
+		}else{
 			ui->print(category=> 'all',
 					  message => "\nError residuals: original residuals table file not found, residual results cannot be computed\n");
 			last;
@@ -692,7 +697,11 @@ sub simeval_analyze
 						  $table_headers[$k]." results cannot be computed\n".$errmess);
 				last;
 			}
-
+			if ($table_headers[$k] eq 'IWRES'){
+				@iwres_outlier_array= @{$original_outlier};
+			}elsif ($table_headers[$k] eq 'CWRES'){
+				@cwres_outlier_array= @{$original_outlier};
+			}
 			if (0 and ($table_headers[$k] eq 'IWRES')){ #FIXME, need to compute stdev
 				#append to datafile, also print to own file
 				my $fname = $m1dir.'orig_pred.dta'; 
@@ -789,6 +798,44 @@ sub simeval_analyze
 			}
 			#		close ORI2;
 		} #end loop over table headers CWRES, IWRES ...
+
+		my $fname = 'residual_outliers.csv';
+		open(ORI, ">$fname") || die("Couldn't open $fname : $!");
+		my $iwr='';
+		my $outiwr= '';
+		$iwr = ',IWRES' if ($have_iwres);
+		$outiwr = ',OUTLIER.IWRES' if ($have_iwres);
+		print ORI "ID,TIME,DV,PRED$iwr".",CWRES$outiwr".",OUTLIER.CWRES\n";
+
+		my $id_index = $original_nmtable->tables->[0]->header->{'ID'};
+		my $time_index = $original_nmtable->tables->[0]->header->{'TIME'};
+		my $dv_index = $original_nmtable->tables->[0]->header->{'DV'};
+		my $pred_index = $original_nmtable->tables->[0]->header->{'PRED'};
+		my $cwres_index = $original_nmtable->tables->[0]->header->{'CWRES'};
+		my $iwres_index = $original_nmtable->tables->[0]->header->{'IWRES'} if ($have_iwres);
+#		$time_array = $original_nmtable->tables->[0]->columns->[$index];
+#				@cwres_outlier_array= @{$original_outlier};
+#				@iwres_outlier_array= @{$original_outlier};
+
+		#formatinteger($id_mdv_m
+		my $origiwres='';
+		my $outline='';
+		for (my $record=0; $record < scalar(@{$original_nmtable->tables->[0]->columns->[$id_index]}); $record++){
+			next unless (($cwres_outlier_array[$record]==1) or ($have_iwres and $iwres_outlier_array[$record]==1));
+			if ($have_iwres){
+				$origiwres = ','.$original_nmtable->tables->[0]->columns->[$iwres_index]->[$record];
+				$outline = ','.$iwres_outlier_array[$record];
+			}
+			print ORI formatinteger($original_nmtable->tables->[0]->columns->[$id_index]->[$record]).
+				','.$original_nmtable->tables->[0]->columns->[$time_index]->[$record].
+				','.$original_nmtable->tables->[0]->columns->[$dv_index]->[$record].
+				','.$original_nmtable->tables->[0]->columns->[$pred_index]->[$record].
+				$origiwres.
+				','.$original_nmtable->tables->[0]->columns->[$cwres_index]->[$record].
+				$outline.
+				','.$cwres_outlier_array[$record]."\n";
+		}
+		close ORI;
 		last; #must have last here, we do not want to loop
 	}
 
@@ -1060,36 +1107,38 @@ sub simeval_analyze
 				last;
 			}
 
-			open(ORI, ">decorrelated_original_$type"."_ebe.csv") || die("Couldn't open decorrelated_original_$type"."_ebe.csv : $!");
-			print ORI "ID,".join(',',@eta_headers)."\n";
-			for (my $i=0; $i<scalar(@{$decorr->[0]});$i++){
-				print ORI $id_matrix->[0]->[$i]->[0];
-				my $sd=0;
-				for (my $j=0; $j<scalar(@{$decorr});$j++){
-					print ORI ','.formatfloat($decorr->[$j]->[$i]->[0]);
-					$sd += ($decorr->[$j]->[$i]->[0])**2 unless ($decorr->[$j]->[$i]->[0] == $missing_value)  ;
+			if (0){
+				open(ORI, ">decorrelated_original_$type"."_ebe.csv") || die("Couldn't open decorrelated_original_$type"."_ebe.csv : $!");
+				print ORI "ID,".join(',',@eta_headers)."\n";
+				for (my $i=0; $i<scalar(@{$decorr->[0]});$i++){
+					print ORI $id_matrix->[0]->[$i]->[0];
+					my $sd=0;
+					for (my $j=0; $j<scalar(@{$decorr});$j++){
+						print ORI ','.formatfloat($decorr->[$j]->[$i]->[0]);
+						$sd += ($decorr->[$j]->[$i]->[0])**2 unless ($decorr->[$j]->[$i]->[0] == $missing_value)  ;
+					}
+					$standardized[$i] += $sd;
+					print ORI "\n";
 				}
-				$standardized[$i] += $sd;
-				print ORI "\n";
+				close ORI;
 			}
-			close ORI;
-			
 			$ret = simeval_util::npde_comp($decorr,$pde,$npde);
 			unless ($ret ==0){
 				print "\nError in npde_comp for eta: $ret. ebe results cannot be computed\n";
 				last;
 			}
-			open(DAT, ">ebe_pde_$type".".csv") || die("Couldn't open ebe_pde_$type".".csv : $!");
-			print DAT "ID,".join(',',@eta_headers)."\n";
-			for (my $i=0; $i<scalar(@{$pde->[0]});$i++){
-				print DAT $id_matrix->[0]->[$i]->[0];
-				for (my $j=0; $j<scalar(@{$pde});$j++){
-					print DAT ','.formatnpde($pde->[$j]->[$i]);
+			if (0){
+				open(DAT, ">ebe_pde_$type".".csv") || die("Couldn't open ebe_pde_$type".".csv : $!");
+				print DAT "ID,".join(',',@eta_headers)."\n";
+				for (my $i=0; $i<scalar(@{$pde->[0]});$i++){
+					print DAT $id_matrix->[0]->[$i]->[0];
+					for (my $j=0; $j<scalar(@{$pde});$j++){
+						print DAT ','.formatnpde($pde->[$j]->[$i]);
+					}
+					print DAT "\n";
 				}
-				print DAT "\n";
+				close (DAT);
 			}
-			close (DAT);
-			
 			if ($have_CDF){
 				for (my $i=0; $i<scalar(@all_npde);$i++){ #loop id
 					for (my $j=0; $j<scalar(@{$npde});$j++){ #loop eta
@@ -1098,23 +1147,23 @@ sub simeval_analyze
 				}
 
 
-
-				$ret = simeval_util::npde_comp($est_matrix,$pd,$npd);
-				unless ($ret ==0){
-					print "\nError in npde_comp for ebe: $ret. ebe results cannot be computed\n";
-					last;
-				}
-				open(DAT, ">ebe_npd_$type".".csv") || die("Couldn't open ebe_npd_$type".".csv : $!");
-				print DAT "ID,".join(',',@eta_headers)."\n";
-				for (my $i=0; $i<scalar(@{$npd->[0]});$i++){
-					print DAT $id_matrix->[0]->[$i]->[0];
-					for (my $j=0; $j<scalar(@{$npd});$j++){
-						print DAT ','.formatnpde($npd->[$j]->[$i]);
+				if (0){
+					$ret = simeval_util::npde_comp($est_matrix,$pd,$npd);
+					unless ($ret ==0){
+						print "\nError in npde_comp for ebe: $ret. ebe results cannot be computed\n";
+						last;
 					}
-					print DAT "\n";
+					open(DAT, ">ebe_npd_$type".".csv") || die("Couldn't open ebe_npd_$type".".csv : $!");
+					print DAT "ID,".join(',',@eta_headers)."\n";
+					for (my $i=0; $i<scalar(@{$npd->[0]});$i++){
+						print DAT $id_matrix->[0]->[$i]->[0];
+						for (my $j=0; $j<scalar(@{$npd});$j++){
+							print DAT ','.formatnpde($npd->[$j]->[$i]);
+						}
+						print DAT "\n";
+					}
+					close (DAT);
 				}
-				close (DAT);
-
 			}
 		}#end loop etatypes
 		if ($have_CDF){

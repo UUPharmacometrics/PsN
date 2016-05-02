@@ -1,5 +1,5 @@
 \input{inputs/format_header.tex}
-\guidetitle{SIMEVAL user guide}{2016-04-05}
+\guidetitle{SIMEVAL user guide}{2016-05-02}
 
 \begin{document}
 
@@ -147,6 +147,7 @@ be normally distributed with mean 0 and variance 1.
 \item A histogram of npde of CWRES, together with the expected
 normal distribution. 
 \item A table with mean and variance of IWRES npde and CWRES npde.
+\item A table with ID, TIME, DV and PRED for data records where IWRES or CWRES lies outside the simulated distribution.
 \end{enumerate}
 
 
@@ -168,26 +169,30 @@ $ebe_{standardized}= \\
 \left(\overline{ebe}_{obs} - mean (\overline{ebe}_{sim})\right)\left((cov(\overline{ebe}_{sim})\right)^{-1}
 \left(\overline{ebe}_{obs} - mean (\overline{ebe}_{sim})\right)^T$,\\ 
 NPDE:s for each EBE
-\item[summary\_iwres.csv] NPDE of IWRES. One row per data record. Columns: ID, MDV, observed IWRES, NPDE for IWRES.
-\item[summary\_cwres.csv] NPDE of CWRES. One row per data record. Columns: ID, MDV, observed CWRES, NPDE for CWRES.
+\item[summary\_iwres.csv] NPDE of IWRES. One row per data record. Columns: ID, MDV, observed IWRES, NPDE for IWRES, OUTLIER (true or false)
+\item[summary\_cwres.csv] NPDE of CWRES. One row per data record. Columns: ID, MDV, observed CWRES, NPDE for CWRES, OUTLIER (true or false)
 \item[summary\_iofv.csv] One row per subject. Columns: ID, observed iOFV,
 mean of iOFV for evaluation of simulated data,
 standard deviation of iOFV for evaluation of simulated data,
 standardized observed iOFV where
 $iOFV_{standardized}=\frac{(iOFV_{observed} - mean (iOFV_{simulated}))^2}{variance(iOFV_{simulated})}$, NPDE of iOFV
-\item[raw\_all\_iofv.csv] One row per subject. Columns: ID, observed iOFV, sample.1 iOFV, sample.2 iOFV, etc. 
 \item[raw\_results\_<model>.csv] e.g. raw\_results\_run1.csv with ofv for evaluation of simulated data
+\item[residual\_outliers.csv] A table with ID, TIME, DV, PRED, IWRES and CWRES for records
+where observed IWRES or CWRES is outside the simulated distribution.
 \end{description}
 
 \subsubsection*{Additional output}
 \begin{description}
-\item[decorrelated\_original\_ebe.csv] One row per individual. Columns: ID, decorrelated observed EBE:s
-\item[decorrelated\_original\_iwres.csv] One row per data record. Columns: ID, MDV, decorrelated observed IWRES
-\item[raw\_original\_ebe.csv]  One row per individual. Columns: ID, observed EBE:s
-%\item[raw\_original\_iwres.csv] One row per data record. Columns: ID, MDV, observed IWRES %skip, in summary
-\item[ebe\_pde.csv] One row per individual. Columns: ID, PDE of EBE:s
-\item[ebe\_npd.csv] One row per individual. Columns: ID, NPD of EBE:s (normalized PD, not decorrelated)
-\item[iwres\_npd.csv]  One row per data record. Columns: ID, MDV, NPD of IWRES (normalized pd, not decorrelated)
+%\item[decorrelated\_original\_ebe.csv] One row per individual. Columns: ID, decorrelated observed EBE:s
+%\item[decorrelated\_original\_iwres.csv] One row per data record. Columns: ID, MDV, decorrelated observed IWRES
+\item[raw\_original\_iiv\_ebe.csv]  One row per individual. Columns: ID, observed EBE:s
+\item[raw\_original\_iov\_ebe.csv]  One row per individual. Columns: ID, observed EBE:s
+\item[raw\_all\_iwres.csv] One row per data record. Columns: ID, MDV, observed IWRES %skip, in summary
+\item[raw\_all\_cwres.csv] One row per data record. Columns: ID, MDV, observed IWRES %skip, in summary
+\item[raw\_all\_iofv.csv] One row per subject. Columns: ID, observed iOFV, sample.1 iOFV, sample.2 iOFV, etc. 
+%\item[ebe\_pde.csv] One row per individual. Columns: ID, PDE of EBE:s
+%\item[ebe\_npd.csv] One row per individual. Columns: ID, NPD of EBE:s (normalized PD, not decorrelated)
+%\item[iwres\_npd.csv]  One row per data record. Columns: ID, MDV, NPD of IWRES (normalized pd, not decorrelated)
 \end{description}
 
 \section{Algorithm overview}
