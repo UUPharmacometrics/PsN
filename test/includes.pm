@@ -6,10 +6,11 @@ use Cwd;
 use Test::More;
 use File::Path 'rmtree';
 use File::Copy 'cp';
+use Config;
 
 require Exporter;
 our @ISA = qw(Exporter);
-our @EXPORT = qw(get_major_minor_nm_version get_command get_command_without_args get_psn_options cmp_float cmp_float_matrix cmp_float_array create_test_dir remove_test_dir copy_test_files like_file_row unlike_file_row is_array do_course_tests cmp_relative);
+our @EXPORT = qw(get_major_minor_nm_version get_command get_command_without_args get_psn_options cmp_float cmp_float_matrix cmp_float_array create_test_dir remove_test_dir copy_test_files like_file_row unlike_file_row do_course_tests cmp_relative redirect_stderr);
 
 # Set this variable to something else if you are testing on a cluster
 my $tempdir = File::Spec->tmpdir;
@@ -48,6 +49,16 @@ our $version = '';
 if (not $PsN::dev) {
 	$version = '-' . $PsN::version;
 }
+
+sub redirect_stderr
+{
+	my $redirectstderr = ' 2> /dev/null ';
+	if ($Config{osname} eq 'MSWin32'){
+		$redirectstderr = ' 2> nul ';
+	}
+	return $redirectstderr;
+}
+
 
 sub get_command_without_args
 {
