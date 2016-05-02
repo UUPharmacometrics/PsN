@@ -44,8 +44,18 @@ my @facit_outlier_cwres=(0) x 70;
 $facit_outlier_cwres[13]=1;
 $facit_outlier_cwres[43]=1;
 
+my $bound1= -(Statistics::Distributions::udistr(1/20));
+my $bound2= -(Statistics::Distributions::udistr(19/20));
+
+#ignore ties that are handled special way in R npde
 foreach my $val (@{$facit_npde_iwres}){
-	push(@{$facit_npde_iwres_rounded},tool::simeval::formatnpde($val));
+	if ($val == -1.9599640){
+		push(@{$facit_npde_iwres_rounded},$bound1);
+	}elsif($val == 1.9599640){
+		push(@{$facit_npde_iwres_rounded},$bound2);
+	}else{
+		push(@{$facit_npde_iwres_rounded},tool::simeval::formatnpde($val));
+	}
 }
 
 my $facit_npde_cwres = [-0.2533471,0.3853205,-1.9599640,1.0364334,0.6744898,0.1256613,0.0000000,-1.6448536,1.9599640,
@@ -54,7 +64,13 @@ my $facit_npde_cwres = [-0.2533471,0.3853205,-1.9599640,1.0364334,0.6744898,0.12
 my $facit_npde_cwres_rounded= [];#[-0.25335,0.38532,-1.96,1.0364,0.67449,0.12566,0,-1.6449,1.96,-0.38532,1.6449,-0.25335,-0.12566,-1.6449];
 
 foreach my $val (@{$facit_npde_cwres}){
-	push(@{$facit_npde_cwres_rounded},tool::simeval::formatnpde($val));
+	if ($val == -1.9599640){
+		push(@{$facit_npde_cwres_rounded},$bound1);
+	}elsif($val == 1.9599640){
+		push(@{$facit_npde_cwres_rounded},$bound2);
+	}else{
+		push(@{$facit_npde_cwres_rounded},tool::simeval::formatnpde($val));
+	}
 }
 
 
@@ -76,8 +92,6 @@ foreach my $val (@{$facit_npde_ebe}){
 my $prev_succ;
 my $prev_subj;
 
-my $bound1= -(Statistics::Distributions::udistr(1/20));
-my $bound2= -(Statistics::Distributions::udistr(19/20));
 #my $bound3= -(Statistics::Distributions::udistr(279/280));
 foreach my $type ('split','merged'){
 	chdir($tempdir);
