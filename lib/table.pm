@@ -101,7 +101,8 @@ sub _split_row
         $row =~ s/^\s+//;
     }
 
-    my @array = split "\Q" . $self->delimiter . "\E", $row;
+#    my @array = split "\Q" . $self->delimiter . "\E", $row; #warning
+    my @array = split "\Q" . $self->delimiter , $row; # no warning
 
     return @array;
 }

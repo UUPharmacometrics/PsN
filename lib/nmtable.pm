@@ -51,12 +51,14 @@ sub _parse_method_string
     my $self = shift;
     my $string = shift;
 
-    if ($string =~ /\s*(.*):\s*Goal Function=(.*)/) {
-        $self->method($1);
-        $self->goal_function($2);
-    } elsif ($string !~ /:/) {
-        $self->method($string);
-    }
+	if (defined $string){
+		if ($string =~ /\s*(.*):\s*Goal Function=(.*)/) {
+			$self->method($1);
+			$self->goal_function($2);
+		} elsif ($string !~ /:/) {
+			$self->method($string);
+		}
+	}
 }
 
 sub get_iteration_lookup
@@ -199,7 +201,7 @@ sub _get_value{
 	my $val = shift;
 	my $no_value = 10000000000;
 	my $answer= eval($val);
-	if(($answer == $no_value) or (not math::usable_number($val))){
+	if((not defined $answer) or ($answer == $no_value) or (not math::usable_number($val))){
 		$answer = undef;
 	}
 	return $answer;

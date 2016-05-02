@@ -28,4 +28,21 @@ is_deeply($t->columns, [ [ '50', '100', '' ], [ '28', '3.14', '2' ], [ '34', 'co
 is_deeply($t->get_column(name => "CL"), [ '50', '100', '' ], "get_column using name");
 is_deeply($t->get_column(index => 2), [ '34', 'cov', '3' ], "get_column using index");
 
+$t = table->new(delimiter => ',', skip_leading_whitespace => 0);
+my @arr = $t->_split_row(' A,B,C');
+is_deeply(\@arr,[' A','B','C'],'split with delimiter comma');
+$t = table->new();
+@arr = $t->_split_row(' A,B,C');
+is_deeply(\@arr,['A,B,C'],'split with default delimiter ');
+$t = table->new(delimiter => '\t');
+@arr = $t->_split_row(" A B\t C");
+is_deeply(\@arr,['A B',' C'],'split with delimiter tab');
+@arr = $t->_split_row(" A B\t\t C");
+is_deeply(\@arr,['A B','',' C'],'split with delimiter tab 2');
+$t = table->new(delimiter => '\t+');
+@arr = $t->_split_row(" A B\t\t C");
+is_deeply(\@arr,['A B',' C'],'split with delimiter tab 3');
+$t = table->new(delimiter => 'B');
+@arr = $t->_split_row(" A B\t\t C");
+is_deeply(\@arr,['A ',"\t\t C"],'split with delimiter B');
 done_testing();

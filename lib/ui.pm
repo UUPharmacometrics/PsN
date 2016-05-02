@@ -162,7 +162,7 @@ sub print
 					close LOG;
 				}
 			} else {
-				print STDERR ( $text );
+				print STDERR ( $text ); #FIXME
 			}
 		}
 	}
