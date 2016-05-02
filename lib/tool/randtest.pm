@@ -148,7 +148,6 @@ sub modelfit_setup
 
 	}
 
-	my $base_mod_ofv;
 	if (defined $self->base_model and $self->base_model->is_run){
 		$base_mod_ofv=$self->base_model->outputs->[0]->get_single_value(attribute=> 'ofv'); 
 	}
@@ -413,10 +412,9 @@ sub _modelfit_raw_results_callback
 	# Use the  raw_results file.
 	my ($dir,$file) = 
 	OSspecific::absolute_path( $self ->directory(),
-		$self -> raw_results_file()->[$model_number-1] );
-	my ($dir,$nonp_file) = 
-	OSspecific::absolute_path( $self ->directory(),
-		$self -> raw_nonp_file()->[$model_number-1] );
+							   $self -> raw_results_file()->[$model_number-1] );
+	my ($dir2,$nonp_file) = OSspecific::absolute_path( $self ->directory(),
+													  $self -> raw_nonp_file()->[$model_number-1] );
 	my $orig_mod = $self ->models()->[$model_number-1];
 	my $base_mod_ofv;
 	my $base_mod;
@@ -430,7 +428,7 @@ sub _modelfit_raw_results_callback
 		my $mh_ref   = shift;
 		my %max_hash = %{$mh_ref};
 		$modelfit -> raw_results_file([$dir.$file] );
-		$modelfit -> raw_nonp_file( [$dir.$nonp_file] );
+		$modelfit -> raw_nonp_file( [$dir2.$nonp_file] );
 
 		# The prepare_raw_results in the modelfit will fix the
 		# raw_results for each rand sample model, we must add
@@ -461,9 +459,9 @@ sub _modelfit_raw_results_callback
 		if ( defined $base_mod_ofv ) {
 			my ($start,$len) = split(',',$self->raw_line_structure() -> {1}->{'problem'});
 			my $probindex = $start;
-			my ($start,$len) = split(',',$self->raw_line_structure() -> {1}->{'subproblem'});
+			($start,$len) = split(',',$self->raw_line_structure() -> {1}->{'subproblem'});
 			my $subindex = $start;
-			my ($start,$len) = split(',',$self->raw_line_structure() -> {1}->{'ofv'});
+			($start,$len) = split(',',$self->raw_line_structure() -> {1}->{'ofv'});
 			my $ofvindex=$start;
 			croak("could not find ofv in raw results header") unless (defined $ofvindex);
 

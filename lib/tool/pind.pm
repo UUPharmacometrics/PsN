@@ -136,7 +136,7 @@ sub modelfit_setup
   
   #1.3 add $NONPARAMETIC UNCONDITIONAL
 
-  my $record_ref = $copy -> record(record_name => 'nonparametric' );
+  $record_ref = $copy -> record(record_name => 'nonparametric' );
   if ( scalar(@{$record_ref}) > 0 ){ 
     $copy -> set_option(record_name => 'nonparametric',
 			option_name => 'UNCONDITIONAL',
@@ -811,7 +811,7 @@ sub alt_get_jd_vector_eta_matrix
 
   open( FILE, $self->directory . "/jd_dir/NM_run1/etatab.est" ) or 
       croak("Could not find etatab.est.");
-  my $dirt = <FILE>; #skip first line, header
+  $dirt = <FILE>; #skip first line, header
   while (my $line = <FILE>){
     chomp $line;
     my @row=split(' ',$line);
@@ -876,7 +876,7 @@ sub setup_ind_ofv_models
 				if ( scalar(@{$record_ref}) > 0 ){ 
 					my $code_block;
 					foreach my $line (@{$copy->get_code(record => 'pk')}) {
-						my $new_line;
+						my $new_line = '';
 						while( $line =~ /(.*[^A-Z]+)ETA\((\d+)\)(.*)/g ){
 							my $eta_index = $2-1; #does conversion work here??
 							$line = $3;
@@ -892,7 +892,7 @@ sub setup_ind_ofv_models
 				if ( scalar(@{$record_ref}) > 0 ){ 
 					my $code_block;
 					foreach my $line (@{$copy->get_code(record => 'pred')}) {
-						my $new_line;
+						my $new_line = '';
 						#ok empty set []???
 						while( $line =~ /(.*[^A-Z]+)ETA\((\d+)\)(.*)/g ){
 							my $eta_index = $2-1; #does conversion work here??
@@ -907,7 +907,7 @@ sub setup_ind_ofv_models
 				if ( scalar(@{$record_ref}) > 0 ){ 
 					my $code_block;
 					foreach my $line (@{$copy->get_code(record => 'error')}) {
-						my $new_line;
+						my $new_line = '';
 						while( $line =~ /(.*[^A-Z]+)ETA\((\d+)\)(.*)/g ){
 							my $eta_index = $2-1; #does conversion work here??
 							$line = $3;
@@ -1118,7 +1118,7 @@ sub create_LxP_matrix_sum_LP_vector_P_values_matrix
 
   #extra verification, variant of row verification P_values
   my $ofv_array = $self->get_raw_ofv_vector(number_of_individuals => $number_of_individuals);
-  my $id=0;
+  $id=0;
   foreach my $row (@{$ind_ofv_matrix}){
     my $vec = $self->scale_exp_half_neg_vector(vector => $row, factor=>1);
     my $colnum=0;

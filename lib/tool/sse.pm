@@ -9,6 +9,8 @@ use Math::Random;
 use Config;
 use Moose;
 use MooseX::Params::Validate;
+use math qw(usable_number);
+use array qw(median);
 
 extends 'tool';
 
@@ -65,7 +67,7 @@ sub BUILD
 			my $tnpri=0;
 			foreach my $rec (@{$self -> models->[0]-> problems->[0] -> priors()}){
 				unless ((defined $rec) &&( defined $rec -> options )){
-					carp("No options for rec \$PRIOR");
+					debugmessage(3,"No options for rec \$PRIOR");
 				}
 				foreach my $option ( @{$rec -> options} ) {
 					if ((defined $option) and 
@@ -545,7 +547,7 @@ sub modelfit_setup
 							}
 						}
 					}
-					if ($self-have_tnpri() or $self->have_nwpri()){
+					if ($self->have_tnpri() or $self->have_nwpri()){
 						$est_original -> remove_option( record_name  => 'prior',
 														problem_numbers => [(1)],
 														option_name  => 'PLEV',
@@ -673,7 +675,7 @@ sub modelfit_setup
 				if( scalar(@{$sim_record}) > 0 ){
 					my @new_record;
 					foreach my $sim_line ( @{$sim_record -> [0]} ){
-						my $new_line;
+						my $new_line = '';
 						while( $sim_line =~ /([^()]*)(\([^()]+\))(.*)/g ){
 							my $head = $1;
 							my $old_seed = $2;
@@ -1235,7 +1237,7 @@ sub modelfit_setup
 						$alt_est_models[($sim_no-1)] -> set_file( record => 'msfi',new_name => $last_name,
 																  problem_number => 2);
 					} else {
-						"Error, could not change filename in MSFI record\n";
+						ui->print(category => 'all', message => "Error, could not change filename in MSFI record\n");
 					}
 					$alt_est_models[($sim_no-1)] 
 						-> set_option( record_name  => 'table',
@@ -1288,9 +1290,9 @@ sub modelfit_setup
 		open( DONE, $self -> directory."/m$model_number/done" );
 		my @rows = <DONE>;
 		close( DONE );
-		my ( $junk, $junk, $stored_filename1, $junk,
-			 $stored_filename2, $junk ) = split(' ',$rows[0],6);
-		my ( $stored_samples, $junk ) = split(' ',$rows[1],2);
+		my ( $junk, $junk2, $stored_filename1, $junk3,
+			 $stored_filename2, $junk4 ) = split(' ',$rows[0],6);
+		my ( $stored_samples, $junk5 ) = split(' ',$rows[1],2);
 		@seed = split(' ',$rows[2]);
 		shift( @seed ); # get rid of 'seed'-word
 		# Reinitiate the model objects
@@ -1936,7 +1938,7 @@ sub prepare_results
 			  push( @{$values[5]}, $skew );
 			  push( @{$values[6]}, $kurt );
 
-			  my $median = $self -> median( use_runs => \@runs_kept,
+			  my $median = $self -> get_median( use_runs => \@runs_kept,
 											column_index => $col,
 											start_row_index => $model_index*$samples, 
 											end_row_index => $model_index*$samples+$samples-1 );
@@ -1983,8 +1985,12 @@ sub prepare_results
 
 				  my $label_index=$skipnum+1;
 				  foreach my $zval (@z_list){
-					  if( $measure ne 'ofv' ){
-						  push( @{$values[$label_index]},($relative_bias_percent+$zval*$rse));
+					  if( $measure ne 'ofv'){
+						  if (usable_number($relative_bias_percent) and usable_number($zval) and usable_number($rse)){
+							  push( @{$values[$label_index]},($relative_bias_percent+$zval*$rse));
+						  }else{
+							  push( @{$values[$label_index]},undef);
+						  }
 					  } else {
 						  push( @{$values[$label_index]}, ' ' );
 					  }
@@ -2116,6 +2122,7 @@ sub prepare_results
 		  } #end loop over samples
 
 		  if ($nr_terminated > 0){
+			  no warnings qw(uninitialized);
 			  push( @{$values_below[$model_index-$start_index]}, ($delta_sum / $nr_terminated) );
 			  foreach my $limit( @ofv_limits ){
 				  push( @{$values_below[$model_index-$start_index]}, ($nr_below{$limit} / $nr_terminated)*100 . "%" );
@@ -2306,7 +2313,7 @@ sub compute_bias
 	return $absolute_bias ,$relative_absolute_bias_percent ,$relative_bias_percent;
 }
 
-sub median
+sub get_median
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
@@ -2329,20 +2336,15 @@ sub median
 
 	for (my $i=$start_row_index; $i<=$end_row_index; $i++){
 		if ($use_runs[$i-$start_row_index]){
-			if (defined $self->raw_results->[$i][$column_index]){
+			if (usable_number($self->raw_results->[$i][$column_index])){
 				push( @temp, $self->raw_results->[$i][$column_index] );
-			}else{
 			}
 		}
 	}
 
-	@temp = sort({$a <=> $b} @temp);
-	if( scalar( @temp ) % 2 ){
-		$median = $temp[$#temp/2];
-	} else {
-		$median = ($temp[@temp/2]+$temp[(@temp-2)/2]) / 2;
+	if (scalar(@temp)>0){
+		$median = median(\@temp);
 	}
-
 	return $median;
 }
 

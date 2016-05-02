@@ -1214,13 +1214,13 @@ sub xv_step_analyze
 
 	trace(tool => "lasso", message => "xv_step_analyze\n", level => 1);
 	#self here will be xv_step object
-	sub print_log {
-		my $filename = shift;
-		my $message  = shift;
-		open(LOG, ">>$filename") or die "Can not create logfile: $filename\n$!";
-		print LOG $message;
-		close LOG;
-	}
+#	sub print_log {
+#		my $filename = shift;
+#		my $message  = shift;
+#		open(LOG, ">>$filename") or die "Can not create logfile: $filename\n$!";
+#		print LOG $message;
+#		close LOG;
+#	}
 
 	$retur = 1;
 

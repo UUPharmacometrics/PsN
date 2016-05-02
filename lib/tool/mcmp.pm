@@ -420,7 +420,9 @@ sub modelfit_setup
 												  record_strings => \@table_strings);
 			push(@extra_output,$self->table_strata());
 		}
-		$self->table_strata($self -> reduced_model()->directory().'reduced.'.$self->table_strata());
+		my $tempstr = '';
+		$tempstr = $self->table_strata() if (defined $self->table_strata());
+		$self->table_strata($self -> reduced_model()->directory().'reduced.'.$tempstr);
 		if ($PsN::nm_major_version < 7){
 			push(@extra_output,'iotab1');
 		}else{
@@ -598,8 +600,6 @@ sub modelfit_analyze
 	unless (defined $self->start_size()){
 		$self->start_size(3*$self->increment());
 	}
-
-	my $n_consecutive=0;
 
 	my @indices;
 	my $converged = 0;    
@@ -850,7 +850,8 @@ sub read_data
 		my $num = $self->reduced_model->outputs->[0]->get_single_value(attribute => 'ofv');
 		$self->ofv_reduced($num) if (defined $num);
 	}
-    
+
+	my @delta_ofv = ();
 	if (defined $self->stratify_on) {
 		unless (-e $self->table_strata) {
 			croak("File " . $self->table_strata . " \nwith stratification data does not exist.");
@@ -866,9 +867,9 @@ sub read_data
 		foreach my $key (keys %index_to_strata_hash){
 			$strata_to_index_hash{$index_to_strata_hash{$key}}=$key;
 		}
+		@delta_ofv = (0) x $n_individuals;
 	}
 	
-	my @delta_ofv = (0) x $n_individuals;
 
 	my $line_i=0;
 	open(FH, $reduced_file ) or croak("Could not open reduced file.");

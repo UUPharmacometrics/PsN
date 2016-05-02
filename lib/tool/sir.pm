@@ -261,7 +261,8 @@ sub setup_variancevec_from_rse
 	$rse{'sigma'} = $parm{'rse_sigma'};
 	my $parameter_hash = $parm{'parameter_hash'};
 	my $type = $parm{'type'};
-
+	no warnings qw(uninitialized);
+	
 	#param => $self->parameter_hash->{'param'},
 	#coords => $self->parameter_hash->{'coords'},
 	#'values'
@@ -834,6 +835,7 @@ sub modelfit_setup
 													   lambda=>$lambda,
 													   delta=>$delta);
 				if (1){
+					no warnings qw(uninitialized);
 					open ( RES, ">" . $self->directory().'delta_lambda_iteration'.($iteration-1).'.csv' );
 					print RES "parameter,delta,lambda,original.estimate,transformed.estimate\n";
 					for (my $k=0; $k< scalar(@{$delta}); $k++){
@@ -907,7 +909,7 @@ sub modelfit_setup
 			%subargs = %{$self -> subtool_arguments()};
 		}
 		
-		my $message = "Running iteration ".$self->iteration()." evaluation models";
+		$message = "Running iteration ".$self->iteration()." evaluation models";
 		
 		my $iteration_evaluation = 
 			tool::modelfit ->new( %{common_options::restore_options(@common_options::tool_options)},
@@ -2772,11 +2774,11 @@ sub _modelfit_raw_results_callback
 
 		my ($start,$len) = split(',',$modelfit->raw_line_structure() -> {$structure}->{'model'});
 		my $modelindex = $start;
-		my ($start,$len) = split(',',$modelfit->raw_line_structure() -> {$structure}->{'problem'});
+		($start,$len) = split(',',$modelfit->raw_line_structure() -> {$structure}->{'problem'});
 		my $probindex = $start;
-		my ($start,$len) = split(',',$modelfit->raw_line_structure() -> {$structure}->{'subproblem'});
+		($start,$len) = split(',',$modelfit->raw_line_structure() -> {$structure}->{'subproblem'});
 		my $subindex = $start;
-		my ($start,$len) = split(',',$modelfit->raw_line_structure() -> {$structure}->{'ofv'});
+		($start,$len) = split(',',$modelfit->raw_line_structure() -> {$structure}->{'ofv'});
 		my $ofvindex=$start;
 		croak("could not find ofv in raw results header") unless (defined $ofvindex);
 

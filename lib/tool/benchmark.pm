@@ -167,7 +167,7 @@ sub parse_theta_inits
 
 		my %defined;
 		foreach my $opt (@opts){
-			if ($defined{$opt} ==1){
+			if (defined $defined{$opt} and ($defined{$opt} ==1)){
 				croak("duplicate setting of $opt in $item");
 			}
 			$defined{$opt} =1;
@@ -217,7 +217,7 @@ sub parse_record_options
 
 		my %defined;
 		foreach my $opt (@opts){
-			if ($defined{$opt} ==1){
+			if ((defined $defined{$opt}) and $defined{$opt} ==1){
 				croak("duplicate setting of $opt in $item");
 			}
 			$defined{$opt} =1;
@@ -535,7 +535,7 @@ sub get_modified_filename
 	#this regex must be the same as used in modelfit.pm, for consistency
 	$basename =~ s/\.([^.]+)$//; #last dot and extension
 	my $extension = $1;
-	if (length($extension)<1){
+	unless (defined $extension and (length($extension)>0)){
 		croak("cannot handle model filename ".$model->filename." without extension");
 	}
 	if ($clean){

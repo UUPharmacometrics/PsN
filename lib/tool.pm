@@ -576,7 +576,7 @@ sub print_results
 				$_ = $val;
 				my $nodot = /.*\..*/ ? 0 : 1;
 				$_ =~ s/\.//g;
-				if ( /.*\D+.*/ or $nodot) { #non-digit or no decimal point
+				if ( ($val =~ /^\d+\.\d+\.\d+$/) or /.*\D+.*/ or $nodot) { #version number or non-digit or no decimal point
 					return sprintf("%14s", $val) . ',';
 				} else {
 					return sprintf("%14.7g", $val) . ','; #7 value digits
@@ -637,7 +637,7 @@ sub print_results
 
 		if ( defined $self->results and (not $skip_print)) {
 			my @all_results = @{$self->results};
-
+			no warnings qw(uninitialized); #local
 			for ( my $i = 0; $i <= $#all_results; $i++ ) {
 				if ( defined $all_results[$i]{'own'} ) {
 					my @my_results = @{$all_results[$i]{'own'}};
@@ -703,7 +703,7 @@ sub print_results
 		}
 		close( RES );
 	} else {
-		carp("No subtools defined".
+		debugmessage(3,"No subtools defined".
 			", using default printing routine" );
 	}
 
@@ -1000,13 +1000,13 @@ sub run
 			if ( defined $prep_models ) {
 				push ( @tool_models, $prep_models );
 			} else {
-				carp("inside " . ref($self) . " but no prep_models defined from $tool 1");
+				debugmessage(3,"inside " . ref($self) . " but no prep_models defined from $tool 1");
 			}
 			$self -> post_subtool_analyze;
 		}
 		
 	} else {
-		carp("No tool object to run from tool object." );
+		debugmessage(3,"No tool object to run from tool object." );
 	}
 	
 	$self->results->[0]{'subtools'} = \@tool_results;
@@ -1099,7 +1099,7 @@ sub harvest_output
 	}
 
 	if ( $search_subtools ) {
-		carp("\n\nSearching subtools, which is a very untested functionality!!\n\n" );
+		debugmessage(3,"\n\nSearching subtools, which is a very untested functionality!!\n\n" );
 
 	} else {
 
@@ -1150,7 +1150,7 @@ sub harvest_output
 	} elsif ( defined $self->prepared_models ) {
 		@models = @{$self->prepared_models};
 	} else {
-		carp("Trying @accessors, but no prepared models available" );
+		debugmessage(3,"Trying @accessors, but no prepared models available" );
 		return {};
 	}
 
@@ -1295,10 +1295,12 @@ sub create_raw_results_rows
 						last unless ($PsN::nm_major_version >= 7);
 					}
 					push(@arr,join('-',@string_arr));
-					$saem = 1 if ($string_arr[$#string_arr] eq 'SAEM' or 
-						(index('SAEM',$string_arr[$#string_arr]==0)));
-					$bayes = 1 if ($string_arr[$#string_arr] eq 'BAYES' or 
-						(index('BAYES',$string_arr[$#string_arr]==0)));
+					if(defined $string_arr[$#string_arr]){
+						$saem = 1 if ( $string_arr[$#string_arr] eq 'SAEM' or 
+									   (index('SAEM',$string_arr[$#string_arr])==0));
+						$bayes = 1 if ($string_arr[$#string_arr] eq 'BAYES' or 
+									   (index('BAYES',$string_arr[$#string_arr])==0));
+					}
 				}
 				$res = \@arr;
 			}elsif ( $category eq 'nburn_set' ) {
@@ -1443,9 +1445,10 @@ sub create_raw_results_rows
 								if( ref $res -> [$j] eq 'ARRAY' ){
 									if( defined $res -> [$j][$k] ) {
 										if ( ref $res -> [$j][$k] eq 'ARRAY' ) {
+											#FIXME count can be negative, probably error in max_hash
+											my $undefcount = $max_hash->{$category} - scalar(@{$res -> [$j][$k]});
 											push( @{$return_array_ref -> [$row]}, @{$res -> [$j][$k]} );
-											push( @{$return_array_ref -> [$row]},
-												(undef) x ($max_hash -> {$category} - scalar @{$res -> [$j][$k]})  );
+											push( @{$return_array_ref -> [$row]},(undef) x $undefcount  ) if ($undefcount >0);
 										} else {
 											push( @{$return_array_ref -> [$row]}, $res -> [$j][$k] );
 										}
@@ -1540,7 +1543,7 @@ sub create_raw_results_rows
 			# Get the values for the category
 			my $return_array_ref = \@nonp_return_rows;
 			my $model_row = 0; # Need to mask previous definition of model_row
-
+			no warnings qw(uninitialized);
 			if( defined $res ) {
 				for( my $j = 0; $j < $np; $j++ ) {
 					my $ns = $probs[$j]; # #subprobs
@@ -1616,7 +1619,7 @@ sub _prepare_model
 	my $model_number = $parm{'model_number'};
 
 	my ($newdir, $newfile) = OSspecific::absolute_path( $self->directory .  '/m'.$model_number, '' );
-	carp("Making directory\t\t" . $newdir );
+	debugmessage(3,"Making directory\t\t" . $newdir );
 	mkdir( $newdir );
 	trace(tool => 'tool',message => "Created directory $newdir ", level => 1);
 	if (defined $self -> models()) {

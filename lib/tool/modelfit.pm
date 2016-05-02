@@ -780,7 +780,7 @@ sub run
 							
 							#leave if error message,
 							unlink( <$work_dir/*> )  ; 
-							unless( rmdir( $work_dir ) ){ carp("Unable to remove $work_dir directory: $! ." )};
+							unless( rmdir( $work_dir ) ){ debugmessage(3,"Unable to remove $work_dir directory: $! ." )};
 							trace(tool => 'modelfit', message => "clean level is >=3, removed $work_dir", level => 2);
 						}
 					} else {
@@ -1780,7 +1780,7 @@ sub diagnose_lst_errors
 			#do not do this for high run numbers (we do not want 100 prints for e.g. a bootstrap)
 			my $fname = 'FMSG'; 
 			$fname = $nmtran_error_file if (-e $nmtran_error_file);
-			open( FILE, "$fname" ) ||	carp(" Could not open $fname for reading" );
+			open( FILE, "$fname" ) ||	debugmessage(3," Could not open $fname for reading" );
 			my @lines = <FILE>;
 			close( FILE );
 			$failure_mess .= ". Contents of FMSG:\n";
@@ -2044,7 +2044,7 @@ sub significant_digits_accepted
 
 	my $accept = 0;
 	$accept = 1 if ((not $run_results -> [$try] -> {'minimization_successful'}) and
-					($significant_digits_accept > 0) and
+					(defined $significant_digits_accept and ($significant_digits_accept > 0)) and
 					(defined $run_results -> [$try] -> {'significant_digits'}) and
 					($run_results -> [$try] -> {'significant_digits'} >= $significant_digits_accept));
 
@@ -2347,6 +2347,7 @@ sub restart_needed
 	my $handle_hessian_npd = $parm{'handle_hessian_npd'};
 	my $tweak_inits = $parm{'tweak_inits'};
 	my $maxevals = $parm{'maxevals'};
+	$maxevals = 0 unless (defined $maxevals);
 	my $picky = $parm{'picky'};
 	my @cutoff_thetas = defined $parm{'cutoff_thetas'} ? @{$parm{'cutoff_thetas'}} : ();
 	my $significant_digits_accept = $parm{'significant_digits_accept'};
@@ -2499,21 +2500,21 @@ sub restart_needed
 
 	$queue_info_ref -> {'raw_results'} -> [${$tries}] = $raw_results_row;
 	$queue_info_ref -> {'raw_nonp_results'} -> [${$tries}] = $nonp_row;
-
+	no warnings qw(uninitialized);
 	# write intermediate raw results, append to existing file
 	open( INTERMED, '>>'.'intermediate_raw_results.csv' );
 	foreach my $row ( @{$raw_results_row} ){
 		next unless (defined $row);
 		print INTERMED 'try '.(${$tries}+1).',';
-		print INTERMED join( ',', @{$row} ), "\n";
+		print INTERMED join( ',', @{$row} )."\n";
 	}
 	close( INTERMED );
 	if (defined $nonp_row and scalar(@{$nonp_row})>0){
 		open( INTERMEDNONP, '>>intermediate_nonp_results.csv' );
 		foreach my $row ( @{$nonp_row} ){
 			next unless (defined $row);
-			print INTERMED 'try '.(${$tries}+1).',';
-			print INTERMEDNONP join( ',', @{$row} ), "\n";
+			print INTERMEDNONP 'try '.(${$tries}+1).',';
+			print INTERMEDNONP join( ',', @{$row} )."\n";
 		}
 		close( INTERMEDNONP );
 	}
@@ -2567,7 +2568,7 @@ sub restart_needed
 
 		if($model_crashed){
 			#not if handle maxevals exceeded
-			carp("Restarting crashed run " . $output_file->full_name . "\n" . $output_file->parsing_error_message);
+			debugmessage(1,"Restarting crashed run " . $output_file->full_name . "\n" . $output_file->parsing_error_message);
 			update_crash_number(modext => $self->modext,
 								queue_info => $queue_info_ref,
 								retry => ${$tries},
@@ -3549,7 +3550,7 @@ sub calculate_raw_results_width
 
 					my $max_sigmas = 0;
 					foreach my $prob( @{$model -> nsigmas(with_correlations => 1 )} ) {
-						if( $prob > $max_sigmas ){
+						if( defined $prob and ($prob > $max_sigmas) ){
 							$max_sigmas = $prob;
 						}
 					}
@@ -3583,7 +3584,7 @@ sub calculate_raw_results_width
 					if( ref($numpar) eq 'ARRAY' ){
 						my $max = 0;
 						foreach my $prob ( @{$numpar} ){
-							if( $prob > $max ){
+							if( defined $prob and ($prob > $max) ){
 								$max = $prob;
 							}
 						}

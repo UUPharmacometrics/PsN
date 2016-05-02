@@ -418,7 +418,7 @@ sub setup_original_jd_model
 	}
 
 	#3.3 add $NONPARAMETIC UNCONDITIONAL
-	my $record_ref = $new_model -> record(record_name => 'nonparametric' );
+	$record_ref = $new_model -> record(record_name => 'nonparametric' );
 	if ( scalar(@{$record_ref}) > 0 ){ 
 		$new_model -> set_option(record_name => 'nonparametric',
 			option_name => 'UNCONDITIONAL',

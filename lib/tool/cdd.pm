@@ -71,7 +71,7 @@ sub llp_setup
 	my @subm_threads;
 	if (ref($self->threads) eq 'ARRAY') {
 		@subm_threads = @{$self->threads};
-		unshift(@subm_threads);
+#		unshift(@subm_threads); #useless
 	} else {
 		@subm_threads = ($self->threads);
 	}
@@ -226,15 +226,15 @@ sub modelfit_analyze
 				open( LOG, ">>".$self -> logfile->[$model_number-1] );
 				my $mes;
 				if( defined $cook_score[$i] ) {
-					$mes = "Negative squared cook-score ",$cook_score[$i][0][0][0];
+					$mes = "Negative squared cook-score ".$cook_score[$i][0][0][0];
 				} else {
 					$mes = "Undefined squared cook-score";
 				}
-				$mes .= "; can't take the square root.\n",
-				"The cook-score for model $model_number and cdd bin $i was set to zero\n";
+				$mes .= "; can't take the square root.\n".
+					"The cook-score for model $model_number and cdd bin $i was set to zero\n";
 				print LOG $mes;
 				close( LOG );
-				carp($mes );
+				debugmessage(1,$mes );
 
 				$cook_score[$i] = 0;
 			}
@@ -549,7 +549,7 @@ sub modelfit_analyze
 	}
 
 	# Jackknife bias
-
+	no warnings qw(uninitialized);
 	for( my $i = 0; $i <= $#bias_num; $i++ ) {
 
 		next if( not defined $bias[$i] );
@@ -1049,7 +1049,7 @@ sub general_setup
 		# Create a checkpoint. Log the samples and individuals.
 		open( DONE, ">".$self -> directory."/m$model_number/done" ) ;
 		print DONE "Sampling from ",$model->datafiles()->[0], " performed\n";
-		print DONE "$pr_bins bins\n";
+		print DONE "$pr_bins bins\n" if (defined $pr_bins);
 		print DONE "Skipped individuals:\n";
 		for( my $k = 0; $k < scalar @{$skip_ids}; $k++ ) {
 			print DONE join(',',@{$skip_ids -> [$k]}),"\n";
@@ -1090,8 +1090,8 @@ sub general_setup
 		open( DONE, $self -> directory."/m$model_number/done" );
 		my @rows = <DONE>;
 		close( DONE );
-		my ( $junk, $junk, $stored_filename, $junk ) = split(' ',$rows[0],4);
-		my ( $stored_bins, $junk ) = split(' ',$rows[1],2);
+		my ( $junk, $junk1, $stored_filename, $junk2 ) = split(' ',$rows[0],4);
+		my ( $stored_bins, $junk3 ) = split(' ',$rows[1],2);
 		my ( @stored_ids, @stored_keys, @stored_values );
 		for ( my $k = 3; $k < 3+$stored_bins; $k++ ) {
 			chomp($rows[$k]);
@@ -1303,7 +1303,7 @@ sub update_raw_results
 	my $cook_scores;
 	my $cov_ratios;
 	my $outside_n_sd;
-
+	no warnings qw(uninitialized closed);
 
 	my ($dir,$file) =
 	OSspecific::absolute_path( $self -> directory,

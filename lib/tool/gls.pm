@@ -62,7 +62,7 @@ sub BUILD
 			my $tnpri=0;
 			foreach my $rec (@{$self -> models->[0]-> problems->[0] -> priors()}){
 				unless ((defined $rec) &&( defined $rec -> options )){
-					carp("No options for rec \$PRIOR" );
+					debugmessage(3,"No options for rec \$PRIOR" );
 				}
 				foreach my $option ( @{$rec -> options} ) {
 					if ((defined $option) and 

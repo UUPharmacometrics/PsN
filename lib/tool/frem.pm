@@ -215,7 +215,7 @@ sub get_or_set_fix
 	}else{
 		for (my $i=0; $i< $stop_record; $i++){
 			push(@input_model_fix,[]) if (defined $set_array);
-			if ($model->problems->[0]->$type->[$i]->type eq 'BLOCK'){
+			if ($model->problems->[0]->$type->[$i]->is_block){
 				if (defined $set_array){
 					if (scalar(@{$set_array}) > $i){
 						$model->problems->[0]->$type->[$i]->fix($set_array->[$i]->[0]) unless
@@ -430,7 +430,7 @@ sub put_skipped_omegas_first
 		my $i = $new_omega_order->[$k]-1; #old index
 		my $size = scalar(@{$etas_per_omega->[$i]});
 
-		if (($model->problems->[0]->omegas->[$i]->type eq 'BLOCK') or
+		if ( $model->problems->[0]->omegas->[$i]->is_block or
 			($k < ($start_omega_record-1))){ #	$start_omega_record = scalar(@{$skip_omegas})+1;
 			my $formatted = $model->problems->[0]->omegas->[$i]->_format_record();
 			my @lines =();
@@ -985,13 +985,13 @@ sub get_omega_lines
 	push(@record_lines,'BLOCK('.$size.') ');
 	my $form = '  %.6G';
 	for (my $row=0; $row< $size; $row++){
-		my $line;
+		my $line = '';
 		for (my $col=0; $col<=$row; $col++){
 			my $str= sprintf("$form",$new_omega->[$row][$col]); 
 			$line = $line.' '.$str;
 		}
 		my $comment ='';
-		$comment = '; '.$labels->[$row] if (defined $labels and scalar(@{$labels}) > $row);
+		$comment = '; '.$labels->[$row] if (defined $labels and scalar(@{$labels}) > $row and (defined $labels->[$row]));
 		push(@record_lines,$line.$comment);
 	}
 	return \@record_lines;
@@ -1026,7 +1026,7 @@ sub set_model2_omega_blocks
 															with_same => 1);
 	
 	for (my $i=0; $i < scalar(@{$model -> problems -> [0]-> omegas}); $i++){
-		if ($model -> problems -> [0]-> omegas->[$i]->type eq 'BLOCK'){
+		if ($model -> problems -> [0]-> omegas->[$i]->is_block){
 			$model -> problems -> [0]-> omegas->[$i]->fix(1) unless ($model -> problems -> [0]-> omegas->[$i]->same);
 		}else{
 			for (my $j=0; $j< scalar(@{$model -> problems -> [0]-> omegas->[$i]->options}); $j++){
@@ -1476,7 +1476,7 @@ sub old_set_model2_omega_blocks
 	for (my $i=0; $i< ($start_omega_record-1);$i++){
 		#if start_omega_record is 1 we will push nothing
 		push(@omega_records,$model-> problems -> [0]->omegas->[$i]);
-		if ($omega_records[$i]->type eq 'BLOCK'){
+		if ($omega_records[$i]->is_block){
 			$omega_records[$i]->fix(1) unless ($omega_records[$i]->same);
 		}else{
 			for (my $j=0; $j< scalar(@{$omega_records[$i]->options}); $j++){
@@ -1532,7 +1532,7 @@ sub get_parameter_blocks
 	my @eta_to = ();
 	
 	for (my $i=($start_omega_record-1); $i < scalar(@{$model-> problems -> [0]->omegas()}); $i++){
-		if ($model->problems->[0]->omegas->[$i]->type eq 'BLOCK'){
+		if ($model->problems->[0]->omegas->[$i]->is_block){
 			my $formatted = $model->problems->[0]->omegas->[$i]->_format_record();
 			my @lines =();
 			for (my $j=0; $j < scalar(@{$formatted}); $j++){
@@ -2070,7 +2070,7 @@ sub prepare_model2
 		
 		#SIGMA changes
 		foreach my $record (@{$frem_model-> problems -> [0]->sigmas}){
-			if ($record->type eq 'BLOCK'){
+			if ($record->is_block){
 				$record->fix(1) unless ($record->same);
 			}else{
 				for (my $j=0; $j< scalar(@{$record->options}); $j++){
@@ -2302,7 +2302,7 @@ sub prepare_model5
 
 		#SIGMA fix all existing
 		foreach my $record (@{$frem_model-> problems -> [0]->sigmas}){
-			if ($record->type eq 'BLOCK'){
+			if ($record->is_block){
 				$record->fix(1) unless ($record->same);
 			}else{
 				for (my $j=0; $j< scalar(@{$record->options}); $j++){
@@ -2313,7 +2313,7 @@ sub prepare_model5
 		#OMEGA fix all before $start_omega
 		for (my $i=0; $i<($start_omega_record-1); $i++){
 			my $record = $frem_model-> problems -> [0]->omegas->[$i];
-			if ($record->type eq 'BLOCK'){
+			if ($record->is_block){
 				$record->fix(1) unless ($record->same);
 			}else{
 				for (my $j=0; $j< scalar(@{$record->options}); $j++){
