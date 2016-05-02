@@ -74,6 +74,8 @@ Changes and bug fixes from PsN 4.4.8 to n.n.n
   option -handle_crashes or -handle_msfo is set, PsN will parse OUTPUT if the lst-file appears
   to not have had OUTPUT appended, and initiate a crash restart if it appears to be useful.
 - All scripts can print help texts without having nm_version properly defined in psn.conf
+- Bug fix: torque job submission regexp only take job ID number part of qsub response, not whole string
+- Bug fix: Clean up in all code to get rid of Perl warnings about uninitialized variables.
 
    ___lasso___
 
@@ -102,6 +104,7 @@ Changes and bug fixes from PsN 4.4.8 to n.n.n
   during bootstrapping of data sets.
 - Bug fix: Filter out crashed runs (ofv and estimates NA) when doing summary calculations when
   those runs have not already been filtered out by any -skip option.
+- Bug fix: On 32bit windows udistr(0.5), which should be 0, is wrong. Set special case for udistr(0.5).
 
    ___vpc/npc___
 
@@ -123,7 +126,7 @@ Changes and bug fixes from PsN 4.4.8 to n.n.n
   parameterization when median of covariate is negative.
 
 - Redesign of covariate code generation and computation of covariate theta
-  bounds and initial values.
+  bounds and initial values, new tests.
 
    ___boot_scm___
 
@@ -136,17 +139,11 @@ Changes and bug fixes from PsN 4.4.8 to n.n.n
    ___simeval___ (was ebe_npde)
 
 - Renamed from ebe_npde to simeval
-
 - Separate decorrelation of iiv etas, ans iov etas per occasion
-
 - New output files
-
 - New rplots template 
-
 - New option -n_simulation_models, allowing more than one sample per NONMEM control stream
-
 - Computation of npde for IWRES and CWRES.
-
 - vpc plots of DV vs PRED and CWRES vs idv (TIME).
 
    ___update_inits___
@@ -156,6 +153,7 @@ Changes and bug fixes from PsN 4.4.8 to n.n.n
   with and without bounded thetas.
 - Not required to have model or lst-file to read parameter values from, can update other model properties anyway
 - Do not update based_on tag if output and input models are the same
+- New option -silent, to suppress all log messages.
 
    ___execute___
 	 
