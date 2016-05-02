@@ -102,10 +102,11 @@ sub BUILD
 
 	$self -> _read_subproblems() if ( $self -> parsed_successfully() and not $self -> finished_parsing() );
 
-	my $mes = $self -> parsing_error_message();
+	my $mes = '';
+	$mes = $self -> parsing_error_message() if (defined $self -> parsing_error_message());
 	if( defined $self -> subproblems() ) {
 	  foreach my $subp ( @{$self -> subproblems()} ) {
-	    $mes .= $subp -> parsing_error_message();
+	    $mes .= $subp -> parsing_error_message() if (defined $subp -> parsing_error_message());
 	    $self->parsed_successfully($self -> parsed_successfully() * $subp -> parsed_successfully());
 	  }
 	}
@@ -150,11 +151,11 @@ sub access_any
 	my @parameter_numbers = defined $parm{'parameter_numbers'} ? @{$parm{'parameter_numbers'}} : ();
 
 	unless( scalar(@subproblems) > 0 ) {
-		carp("subproblems undefined, using all." );
+		debugmessage(3,"subproblems undefined, using all." );
 	  if( defined $self->subproblems ) {
 	    @subproblems = (1 .. scalar @{$self->subproblems});
 	  } else {
-	    carp("No subproblems defined in this problem." );
+	    debugmessage(3,"No subproblems defined in this problem." );
 	    @subproblems = ();
 	  }
 	}
@@ -163,8 +164,8 @@ sub access_any
 
 	foreach my $i ( @subproblems ) {
 	  if ( defined $own_subproblems[$i - 1] ) {
-	    carp("subproblems: $i" );
-	    carp("Attribute: " . $own_subproblems[$i - 1] -> $attribute );
+	    debugmessage(3,"subproblems: $i" );
+	    debugmessage(3,"Attribute: " . $own_subproblems[$i - 1] -> $attribute ) if (defined $own_subproblems[$i - 1] -> $attribute);
 	    my $meth_ret = $own_subproblems[$i - 1] -> $attribute;
 
 	    # Test if the returned value is an array (with hashes we
@@ -245,7 +246,7 @@ sub store_NM7_output
 			my @tmp = utils::file::slurp_file($filename);
 			unless (scalar (@tmp) > 0) {
 				my $mes = "Empty file ".$filename;
-				carp($mes);
+				debugmessage(3,$mes);
 			}
 			my $prev_num = 0;
 			my $prev_string;
@@ -301,7 +302,7 @@ sub store_NM7_output
 
 		} else {
 			my $mes = "Could not find NM7 output file $filename ";
-			carp($mes) unless $self->ignore_missing_files;
+			debugmessage(3,$mes) unless $self->ignore_missing_files;
 		}
 	}
 
@@ -331,7 +332,7 @@ sub _read_nrecs
 
 	while ( $_ = @{$self->lstfile}[$start_pos++] ) {
 		if ( /$nobs_exp/ or ($start_pos + 1) == scalar @{$self->lstfile} ) {
-			carp($errmess."$!" );
+			debugmessage(3,$errmess."$!" );
 			$self -> parsing_error( message => $errmess."$!" );
 			return;
 		}
@@ -350,7 +351,7 @@ sub _read_nrecs
 	if ( $success ) {
 		$self->lstfile_pos($start_pos);
 	} else {
-		carp($errmess."$!" );
+		debugmessage(3,$errmess."$!" );
 		$self -> parsing_error( message => $errmess."$!" );
 	}
 }
@@ -367,7 +368,7 @@ sub _read_nobs
 
 	while ( $_ = @{$self->lstfile}[$start_pos++] ) {
 		if ( /$nind_exp/ or ($start_pos + 1) == scalar @{$self->lstfile} ) {
-			carp($errmess."$!" );
+			debugmessage(3,$errmess."$!" );
 			$self -> parsing_error( message => $errmess."$!" );
 			return;
 		}
@@ -381,7 +382,7 @@ sub _read_nobs
 	if ( $success ) {
 		$self->lstfile_pos($start_pos);
 	} else {
-		carp($errmess."$!" );
+		debugmessage(3,$errmess."$!" );
 		$self -> parsing_error( message => $errmess."$!" );
 	}
 }
@@ -400,7 +401,7 @@ sub _read_nind
   	if ( /^0LENGTH OF THETA/ or
        /^0MODEL SPECIFICATION FILE INPUT/ or
        ($start_pos + 1) == scalar @{$self->lstfile} ) {
-    	carp($errmess."$!" );
+    	debugmessage(3,$errmess."$!" );
     	$self -> parsing_error( message => $errmess."$!" );
     	return;
  		}
@@ -413,7 +414,7 @@ sub _read_nind
 	if ( $success ) {
   	$self->lstfile_pos($start_pos);
 	} else {
-  	carp($errmess."$!" );
+  	debugmessage(3,$errmess."$!" );
 		$self -> parsing_error( message => $errmess."$!" );
 	}
 }
@@ -437,7 +438,7 @@ sub _read_eststep
 				} else {
 					# unless we have msfi this should not happen, raise error
 					my $errmess = "Found $_ while searching for the simulation/estimation step indicators\n";
-					carp($errmess . "$!" );
+					debugmessage(3,$errmess . "$!" );
 					$self -> parsing_error( message => $errmess . "$!" );
 					return; 
 				}
@@ -463,7 +464,7 @@ sub _read_eststep
 			unless( $success ) {
 				# This should not happen, raise error
 				my $errmess = "Found $_ while searching for the simulation/estimation step indicators\n";
-				carp($errmess."$!" );
+				debugmessage(3,$errmess."$!" );
 				$self -> parsing_error( message => $errmess."$!" );
 			}
 			return;
@@ -472,7 +473,7 @@ sub _read_eststep
 		if ( ($start_pos + 1) == scalar @{$self->lstfile} ) {
 			#EOF This should not happen, raise error
 			my $errmess = "Reached end of file while searching for the simulation/estimation step indicators\n";
-			carp($errmess."$!" );
+			debugmessage(3,$errmess."$!" );
 			$self -> parsing_error( message => $errmess."$!" );
 			return;
 		}
@@ -496,7 +497,7 @@ sub _read_eststep
 	}
 
 	unless ( $success ) {
-		carp("rewinding to first position..." );
+		debugmessage(3,"rewinding to first position..." );
 	} else {
 		$self->lstfile_pos($start_pos);
 	}
@@ -519,7 +520,7 @@ sub _read_prior
     if( /^ PROBLEM NO\.:\s+\d/ or /^0MINIMIZATION/ ) {
       # This should not happen, raise error
       my $errmess = "Found $_ while searching for the (optional) user defined prior indicator\n";
-      carp($errmess."$!" );
+      debugmessage(3,$errmess."$!" );
       $self -> parsing_error( message => $errmess."$!" );
       return;
     }
@@ -527,7 +528,7 @@ sub _read_prior
     if ( ($start_pos + 1) == scalar @{$self->lstfile} ) {
       #EOF This should not happen, raise error
       my $errmess = "Reached end of file while  searching for the (optional) user defined prior indicator\n";
-      carp($errmess."$!" );
+      debugmessage(3,$errmess."$!" );
       $self -> parsing_error( message => $errmess."$!" );
       return;
     }
@@ -540,7 +541,7 @@ sub _read_prior
   }
 
   unless ( $success ) {
-    carp("rewinding to first position..." );
+    debugmessage(3,"rewinding to first position..." );
   } else {
     $self->lstfile_pos = $start_pos;
   }
@@ -625,7 +626,7 @@ sub _read_nonpstep
 		if ( ($start_pos + 1) == scalar @{$self->lstfile} ) {
 			#EOF This should not happen, raise error
 			my $errmess = "Reached end of file while  searching for the (optional) nonparametric step indicator\n";
-			carp($errmess."$!" );
+			debugmessage(3,$errmess."$!" );
 			$self -> parsing_error( message => $errmess."$!" );
 			return;
 		}
@@ -639,7 +640,7 @@ sub _read_nonpstep
 	}
 
 	unless ( $success ) {
-  	carp("rewinding to first position..." );
+  	debugmessage(3,"rewinding to first position..." );
 	} else {
   	$self->lstfile_pos($start_pos);
 	}
@@ -672,7 +673,7 @@ sub _read_covstep
 	}
 
 	unless ( $success ) {
-		carp("rewinding to first position..." );
+		debugmessage(3,"rewinding to first position..." );
 	} else {
 		$self->lstfile_pos($start_pos);
 	}
@@ -703,7 +704,7 @@ sub _read_arbitrary
 	if ( $success ) {
 		$self->lstfile_pos($start_pos);
 	} else {
-		carp("rewinding to first position..." );
+		debugmessage(3,"rewinding to first position..." );
 	}
 
 }
@@ -839,11 +840,11 @@ sub _read_subproblems
 				if ($self->nm_major_version >= 7) {
 					if ($last_method_number == $self->n_previous_meth()) {
 						$no_meth = 1;
-						carp("No METH: found in subproblem " . ($subproblem_index + 1) . " in lst-file" ) 
+						debugmessage(3,"No METH: found in subproblem " . ($subproblem_index + 1) . " in lst-file" ) 
 						unless ($self -> {'ignore_missing_files'} or (not $self -> estimation_step_initiated())
 								or ((not $self -> estimation_step_run()) and $self->simulation_step_run()  )); 
 					}
-					if ($last_method_string =~ /(Stochastic|Importance|Iterative|MCMC)/) {
+					if ((defined $last_method_string) and $last_method_string =~ /(Stochastic|Importance|Iterative|MCMC)/) {
 						$classical_method = 0;
 					}
 				}
@@ -866,7 +867,7 @@ sub _read_subproblems
 
 					$ext_table = $self->ext_file->get_table(number => $last_method_number);
 					if (not defined $ext_table){
-						carp("table $last_method_number not found in raw output" ); 
+						debugmessage(3,"table $last_method_number not found in raw output" ); 
 					} else {
 						# retrieve table and check that strings match
 						if ((defined $last_method_string) and length($last_method_string)>0){ 
@@ -921,7 +922,7 @@ sub _read_subproblems
 
 				$self->last_method_number($last_method_number); #to be used by output.pm to set n_previous_meth
 				@subproblem_lstfile = undef;
-				%subprob = undef;
+				undef %subprob;
 
 				$subprob_method_number = 0;
 				$sum_estimation_time = 0;
@@ -1244,7 +1245,7 @@ sub _read_block_structures
 	  if ( ($start_pos + 1) == scalar @{$self->lstfile} ) {
 	    #EOF This should not happen, raise error
 	    my $errmess = "Reached end of file while parsing block structures\n";
-	    carp($errmess."$!" );
+	    debugmessage(3,$errmess."$!" );
 	    $self -> parsing_error( message => $errmess."$!" );
 	    return;
 	  }
@@ -1324,7 +1325,7 @@ sub _read_block_structures
 	}
 
 	unless ( $success ) {
-	  carp($errmess." 2 $!" );
+	  debugmessage(3,$errmess." 2 $!" );
 	  $self -> parsing_error( message => $errmess." 2 $!" );
 	} else {
 	  $self->lstfile_pos($start_pos);

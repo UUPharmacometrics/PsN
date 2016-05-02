@@ -311,6 +311,7 @@ sub _read_covmatrix
 	my $keep_headers_array = $self->input_problem->get_estimated_attributes(attribute=>'coordinate_strings');
 
 	while ( $_ = @{$self->lstfile}[ $start_pos++ ] ) {
+		no warnings qw(uninitialized);
 		if (/        T MATRIX/) {
 			while ( $_ = @{$self->lstfile}[ $start_pos++ ] ) {
 				if (/^\s+TH\s+\d+\s*$/ or /^\s+TH\s+\d+\s+\|/) { # Read matrix and get out of inner while loop
@@ -432,7 +433,7 @@ sub _read_eigen
 		if ( /EIGENVALUES OF COR MATRIX OF ESTIMATE/ ) {
 			$eig_area = 1;
 			$start_pos = $start_pos + 4 ; # Jump forward to the index numbers
-			carp("Found the eigenvalue area" );
+			debugmessage(3,"Found the eigenvalue area" );
 		  INNER: while ( $_ = @{$self->lstfile}[ $start_pos++ ] ) { # Get rid of indexes
 			  last INNER if ( not /^\s+\d/ );
 		  }
@@ -654,7 +655,7 @@ sub _read_iteration_path
 					if( $ofvpath eq '**' ) {
 						my $ofvpath = $eval_path - $cumulative_evals;
 						$cumulative_evals = $eval_path;
-						carp("Calculated eval_path = $ofvpath" );
+						debugmessage(3,"Calculated eval_path = $ofvpath" );
 						$self->ofvpath([]) unless defined $self->ofvpath;
 						push(@{$self->ofvpath}, $ofvpath );
 					}
@@ -761,7 +762,7 @@ sub _read_iteration_path
 			$self -> parsing_error( message =>$mes  );
 			return;
 		}
-		carp("rewinding to first position..." );
+		debugmessage(3,"rewinding to first position..." );
 	} else {
 		$self->lstfile_pos($start_pos);
 		if ($self->classical_method() and $estprint) {
@@ -798,7 +799,7 @@ sub _scan_to_meth
 	my $objt_has_meth = 0;
 	my $read_terminated_by_obj = 1;
 
-	if ($self->method_string =~ /Objective Function Evaluation by Importance Sampling/ ) {
+	if ((defined $self->method_string) and $self->method_string =~ /Objective Function Evaluation by Importance Sampling/ ) {
 		$check_next_to_last_method = 1;
 	}
 
@@ -892,7 +893,7 @@ sub _scan_to_meth
 					if ( $start_pos > $#{$self->lstfile} ) { #we found end of file
 						#EOF This should not happen, raise error
 						my $errmess = "Reached end of file while scanning for termination message of next to last #METH\n";
-						carp($errmess."$!" );
+						debugmessage(3,$errmess."$!" );
 						$self -> parsing_error( message => $errmess."$!" );
 						return; #not enough to break inner loop, must return
 					}
@@ -910,7 +911,7 @@ sub _scan_to_meth
 	    if( $start_pos > $#{$self->lstfile} ) { #we found end of file
 			#EOF This should not happen, raise error
 			my $errmess = "Reached end of file while scanning for #METH\n";
-			carp($errmess."$!" );
+			debugmessage(3,$errmess."$!" );
 			$self -> parsing_error( message => $errmess."$!" );
 			last;
 	    }
@@ -973,7 +974,7 @@ sub _read_npomegas
 			if ( /^(\+|\s{2,})/) {
 				next if /ET/;
 				@T = split(' ',$_);
-				shift @T if $T[0] eq '+';
+				shift @T if (defined $T[0] and ($T[0] eq '+'));
 				for  $i (0..(@T-1)){
 					if($T[$i] ne '.........') {
 						$T[$i] = eval($T[$i]);
@@ -988,7 +989,7 @@ sub _read_npomegas
 	$self->npetabars([@npetabar]);
 	$self->npomegas([@npomega]);
 	unless ( $success ) {
-		carp("rewinding to first position..." );
+		debugmessage(3,"rewinding to first position..." );
 	} else {
 		$self->lstfile_pos($start_pos);
 	}
@@ -1285,7 +1286,7 @@ sub _read_sethomsi
 	}
 
 	unless ( $success ) {
-		carp("No standard errors for thetas, sigmas or omegas." );
+		debugmessage(3,"No standard errors for thetas, sigmas or omegas." );
 	} else {
 		$self->lstfile_pos($start_pos);
 	}
@@ -1501,7 +1502,7 @@ sub _read_term
 		}	    
 
 		if ( /MINIMUM VALUE OF OBJECTIVE FUNCTION/ ) {
-			carp("Hmmm, reached the OFV area" );
+			debugmessage(3,"Hmmm, reached the OFV area" );
 			last;
 		}
 		if ( /$obj_exp/ ) {
@@ -1509,12 +1510,12 @@ sub _read_term
 		}
 	}
 	if ($success) {
-		carp("Found a minimization statement" );
+		debugmessage(3,"Found a minimization statement" );
 		$self -> _read_minimization_message();
 		$self -> _read_eval()                 if ($self -> parsed_successfully() and $self->classical_method());
 		$self -> _read_significant_digits()   if ($self -> parsed_successfully() and $self->classical_method());
 	} else {
-		carp("No minimization/termination statement found" ); #Back to starting line
+		debugmessage(3,"No minimization/termination statement found" ); #Back to starting line
 		$self -> parsing_error( message => "Error in reading minim/term statement!\n$!" );
 		return;
 	}
@@ -1554,7 +1555,7 @@ sub _read_minimization_message
 	  if ( /^1/ or /MINIMUM VALUE OF OBJECTIVE FUNCTION/ or /^\s*\#OBJT:/ ) {
 	    # This is ok. We would expect to end up here probably
 	    # catching the '1' above
-	    carp("Found minimization area and reached ".$_ );
+	    debugmessage(3,"Found minimization area and reached ".$_ );
 	    $success = 1;
 	    last;
 	  }
@@ -1647,7 +1648,7 @@ sub _read_minimization_message
 	push( @{$self->minimization_message}, @storemess );		# minimization_message is default set to empty array.
 
 	unless ( $success ) {
-	  carp("No minimization message found" );
+	  debugmessage(3,"No minimization message found" );
 	}
 }
 
@@ -1896,7 +1897,7 @@ sub _read_thomsi
 	$self->sdcorrform_sigmacoordval(\%sdcorrform_sigmacoordval);
 
 	unless ( $success ) {
-	  carp("No thetas, omegas or sigmas found" );
+	  debugmessage(3,"No thetas, omegas or sigmas found" );
 	} else {
 	  $self->lstfile_pos($start_pos - 1);
 	}
@@ -2429,7 +2430,7 @@ sub get_NM7_table_numbers
 	$not_found = 1;
 
 	if (scalar(@{$line_array}) < 1 ) {
-	  carp("empty line_array input to get_NM7_table_numbers");
+	  debugmessage(3,"empty line_array input to get_NM7_table_numbers");
 	} else {
 	  foreach my $line (@{$line_array}) {
 	    if ($line =~ /^\s*TABLE NO.\s+(\d+):/) {
@@ -2466,6 +2467,7 @@ sub get_column_index_order
 
 	@index_order = ();
 	my @sigma_order = ();
+	no warnings qw(uninitialized);
 	for (my $i = 1; $i < scalar(@{$header_label}); $i++) {
 	  if (defined $keep_labels_hash and not ($keep_labels_hash->{$header_label->[$i]} == 1) ) {
 	    next;
@@ -2513,7 +2515,7 @@ sub permute_and_clean_rows
 				my $templine = $line;
 				$templine =~ s/^\s*//; #get rid of leading spaces
 				my ($label,$rest) = split (/\s+/,$templine,2);
-				
+				no warnings qw(uninitialized);
 				unless (defined $keep_labels_hash and not ($keep_labels_hash->{$label} == 1)) {
 					if ($label =~ /SIGMA/ ) {
 						push (@sigma_array,$line) if $have_sigmas;
@@ -2550,7 +2552,7 @@ sub get_NM7_table_method
 	$not_found = 1;
 	$method_string = '';
 	if (scalar(@{$line_array}) < 1 ) {
-	  carp("empty line_array input to get_NM7_table_method");
+	  debugmessage(3,"empty line_array input to get_NM7_table_method");
 	} else {
 	  foreach my $line (@{$line_array}){
 	    if ($line =~ /^\s*TABLE NO.\s+(\d+):\s*([^:]+)/ ) {
@@ -2586,10 +2588,10 @@ sub get_NM7_tables
 	@not_found_array = ();
 	@tableline_array = ();
 	if (scalar(@{$table_numbers}) < 1 ) {
-	  carp("empty table number input to get_NM7_tables");
+	  debugmessage(3,"empty table number input to get_NM7_tables");
 	  unshift(@not_found_array, 1);
 	} elsif (scalar(@{$line_array}) < 1 ) {
-	  carp("empty line_array input to get_NM7_tables " );
+	  debugmessage(3,"empty line_array input to get_NM7_tables " );
 	  @not_found_array = 1 x scalar(@{$table_numbers});
 	} else {
 	  @tableline_array = ();
@@ -2692,7 +2694,7 @@ sub not_used_get_NM7_tables_all_types
 			$self->get_NM7_tables('line_array' => $cov_array,
 								  'table_numbers' => $table_numbers);
 	    for (my $i= 0; $i < $number_count; $i++) { 
-			carp("did not find table " . $table_numbers->[$i] . " in cov_file array" )
+			debugmessage(3,"did not find table " . $table_numbers->[$i] . " in cov_file array" )
 				if ($not_found->[$i]);
 	    }
 	    if (($number_count == 1) && ($not_found->[0] == 0)) {
@@ -2714,7 +2716,7 @@ sub not_used_get_NM7_tables_all_types
 		($cor_ref,$not_found) = 
 			$self->get_NM7_tables('line_array' => $cor_array, 'table_numbers' => $table_numbers);
 	    for (my $i = 0; $i < $number_count; $i++) { 
-			carp("did not find table ".$table_numbers->[$i]." in cor_file array" )
+			debugmessage(3,"did not find table ".$table_numbers->[$i]." in cor_file array" )
 				if ($not_found->[$i]); 
 	    }
 	    if (($number_count == 1) && (not $not_found->[0])) {
@@ -2738,7 +2740,7 @@ sub not_used_get_NM7_tables_all_types
 			$self->get_NM7_tables('line_array' => $coi_array,
 								  'table_numbers' => $table_numbers);
 	    for (my $i = 0; $i < $number_count; $i++){ 
-			carp("did not find table ".$table_numbers->[$i]." in coi_file array" )
+			debugmessage(3,"did not find table ".$table_numbers->[$i]." in coi_file array" )
 				if ($not_found->[$i]); 
 	    }
 	    if (($number_count == 1) && (not $not_found->[0])) {
@@ -2759,7 +2761,7 @@ sub not_used_get_NM7_tables_all_types
 		($phi_ref,$not_found) = 
 			$self->get_NM7_tables('line_array' => $phi_array, 'table_numbers' => $table_numbers);
 		for (my $i = 0; $i < $number_count; $i++) { 
-			carp("did not find table ".$table_numbers->[$i]." in phi_file array" )
+			debugmessage(3,"did not find table ".$table_numbers->[$i]." in phi_file array" )
 				if ($not_found->[$i]); 
 		}
 	    if (($number_count == 1) && (not $not_found->[0])) {
@@ -2787,7 +2789,7 @@ sub _get_value{
 	my $val = $parm{'val'};
 	my $no_value = 10000000000;
 	my $answer= eval($val);
-	if(($answer == $no_value) or (not math::usable_number($val))){
+	if((not defined $answer) or ($answer == $no_value) or (not math::usable_number($val))){
 		$answer = undef;
 	}
 	return $answer;
@@ -3264,7 +3266,7 @@ sub _read_matrixoestimates
 
 		chomp;				# Get rid of line-feed
 		my @row = split;
-		shift( @row ) if ( $row[0] eq '+' );	   # Get rid of +-sign
+		shift( @row ) if ( (defined $row[0]) and $row[0] eq '+' );	   # Get rid of +-sign
 
 		next if ( $#row < 0 );			   # Blank row
 
