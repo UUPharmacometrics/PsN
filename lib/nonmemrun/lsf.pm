@@ -47,7 +47,9 @@ sub submit
 
   close(SUB);
 
-  my $submitstring = 'bsub ' . $self->lsf_options . ' < lsf_jobscript 2>&1'; 
+	my $opt = '';
+	$opt = $self->lsf_options if (defined $self->lsf_options);
+	my $submitstring = 'bsub ' .$opt. ' < lsf_jobscript 2>&1'; 
 
 	#TODO add loop here to handle transient user id errors etc by retrying a few times
   my $lsf_out = readpipe("$submitstring");

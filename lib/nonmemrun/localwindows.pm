@@ -26,7 +26,10 @@ sub submit
 	}
 
 	system("echo $command > nmqualcommand") if ($self->nmqual);
-	Win32::Process::Create($proc, $self->full_path_runscript, $command, 0, $Win32::Process::NORMAL_PRIORITY_CLASS, '.') || die ErrorReport();
+	if (1){
+		no warnings qw(uninitialized);
+		Win32::Process::Create($proc, $self->full_path_runscript, $command, 0, $Win32::Process::NORMAL_PRIORITY_CLASS, '.') || die ErrorReport();
+	}
 	$self->windows_process($proc);
 
 	my $pid = $proc->GetProcessID();

@@ -68,9 +68,9 @@ sub monitor
 
   my $response = `$script -l $jobId 2>&1`;
 
-  carp("$response");
+  debugmessage(3,"$response");
   if ($response =~ /Job State:\s+Completed/) {  # regexp to find finished jobs.
-		carp("Returning $jobId");
+		debugmessage(3,"Returning $jobId");
 		$self->retrieve(jobId => $jobId, run_no => $self->run_no);
 		return $jobId; # Return the jobId found.
   }
