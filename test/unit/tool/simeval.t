@@ -37,6 +37,12 @@ my $facit_npde_iwres = [-0.3853205,0.6744898,-1.9599640,0.6744898,0.6744898,0.38
 						-0.5244005,1.6448536,0.2533471,1.0364334,-1.6448536];
 
 my $facit_npde_iwres_rounded=[];# = [-0.38532,0.67449,-1.96,0.67449,0.67449,0.38532,1.2816,-1.6449,1.2816,-0.5244,1.6449,0.25335,1.0364,-1.6449];
+my @facit_outlier_iwres=(0) x 70;
+$facit_outlier_iwres[13]=1;
+$facit_outlier_iwres[19]=1;
+my @facit_outlier_cwres=(0) x 70;
+$facit_outlier_cwres[13]=1;
+$facit_outlier_cwres[43]=1;
 
 foreach my $val (@{$facit_npde_iwres}){
 	push(@{$facit_npde_iwres_rounded},tool::simeval::formatnpde($val));
@@ -121,14 +127,20 @@ foreach my $type ('split','merged'){
 	open $fh, '<', $filename;
 	@ans=();
 	my $i=0;
+	my $j=-1;
 	my $tol=4;
 	foreach my $line (<$fh>) {
 		next if ($line =~ /^ID/);
 		chomp $line;
 		my @val = split(',',$line);
-		next unless ($val[1] == 0);
+		$j++;
+		unless ($val[1] == 0){
+			is(0,$facit_outlier_iwres[$j],"outlier iwres $j");
+			next;
+		}
 		push(@ans,$val[3]);
 		cmp_float($val[3],$facit_npde_iwres_rounded->[$i],"iwres item $i ".$val[3].' outlier '.$val[4]." bounds $bound1 $bound2");
+		is($val[4],$facit_outlier_iwres[$j],"outlier iwres $j");
 		$i++;
 	}
 	close $fh;
@@ -138,15 +150,21 @@ foreach my $type ('split','merged'){
 	open $fh, '<', $filename;
 	@ans=();
 	$i=0;
-
+	$j=-1;
+	
 	foreach my $line (<$fh>) {
 		next if ($line =~ /^ID/);
 		chomp $line;
 		my @val = split(',',$line);
-		next unless ($val[1] == 0);
+		$j++;
+		unless ($val[1] == 0){
+			is(0,$facit_outlier_cwres[$j],"outlier cwres $j");
+			next;
+		}
 #		$val[3] =~ s/0*$//;
 		push(@ans,$val[3]);
 		cmp_float($val[3],$facit_npde_cwres_rounded->[$i],"cwres item $i ".$val[3].' outlier '.$val[4]." bounds $bound1 $bound2");
+		is($val[4],$facit_outlier_cwres[$j],"outlier cwres $j");
 		$i++;
 	}
 	close $fh;
