@@ -1,5 +1,5 @@
 \input{inputs/format_header.tex}
-\guidetitle{SIR user guide}{2016-03-21}
+\guidetitle{SIR user guide}{2016-04-26}
 \usepackage{amsmath}
 
 \begin{document}
@@ -565,6 +565,18 @@ around the expected proportion.
 \item[Purpose] Support determination of whether the SIR procedure has converged, i.e. whether SIR results are final.
 \item[Description] These 2 plots show the number of resampled parameters (on the y-axis) that belong to “sample bin X” over different parts of the parameter space defined by the resampled parameters (on the x-axis). The resampled parameter space is divided into 5 equally sized “resample” bins ordered by resampling order. For each parameter, the focus is only on the sample bin with the highest proportion identified in the previous plot (“sample bin X”) as this is the limiting factor for SIR to converge. The first plot looks at the exhaustion of samples separately for each parameter and the second plot at the exhaustion of samples over all parameters. In the first plot, the horizontal dotted line corresponds to the observed number of resamples in resample bin X divided by 5 (mbinX/5) and the grey shaded area corresponds to stochastic noise, computed as the CI95\% around the number of resamples. In the second plot, the blue line corresponds to a smooth of the number of parameters resampled over all parameters.
 \item[Interpretation] Only 1 type of trend needs to be detected in this plot. If the number of resampled vectors decreases over the resample bins (diagonal downward trend), it means that there were not enough samples in the SIR procedure to fully correct the proposal uncertainty. Further SIR iterations should thus be performed.
+\end{description}
+
+\subsubsection{Estimation of degrees of freedom for IIVs }
+\begin{description}
+\item[Purpose] Calculate the uncertainty to use for IIV parameters when they are used as priors (equivalent degrees of freedom in
+inverse Wishart distributions) 
+\item[Description] This plot shows the distribution of the resampled IIVs (histograms) and the fitted inverse Wishart distributions (colored lines).
+The estimated degrees of freedom is displayed in the legend.
+\item[Interpretation] In theory, the maximum degree of freedom is the total number of individuals in the dataset. An IIV with a degree of freedom
+equal to the total number of individuals in the dataset is an IIV for which perfect information is available (individual Empirical Bayes Estimates
+have very low standard errors). An IIV with a degree of freedom much lower than the total number of individuals is an IIV with imperfect
+information (individual Empirical Bayes Estimates have very high standard errors).
 \end{description}
 
 \section{Known problems}
