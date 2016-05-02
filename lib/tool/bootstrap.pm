@@ -263,6 +263,7 @@ sub calculate_means
 	my $model_number = $parm{'model_number'};
 	my @parameter_names = defined $parm{'parameter_names'} ? @{$parm{'parameter_names'}} : ();
 	#FIXME jackknife estimates
+	no warnings qw(uninitialized numeric);
 
 	my @means=();
 	# Loop the parameters
@@ -285,13 +286,14 @@ sub calculate_means
 		$self->result_parameters->{'means'} -> [$model_number-1][0][$l] = $mean;
         my $bias;
         my $estimated_value = $self->bootstrap_estimates->[$model_number - 1][0][$l];
-        if (defined $estimated_value and (defined $mean)) {
+        if (defined $estimated_value and (defined $mean) and (length($mean)>0) and (length($estimated_value)>0)) {
 		    $bias = $mean - $estimated_value;
         }
 		$self->result_parameters->{'bias'} -> [$model_number-1][0][$l] = $bias;
-		if ( $self->bootstrap_estimates -> [$model_number-1][0][$l] != 0 and
-			$bias/$self->bootstrap_estimates -> [$model_number-1][0][$l]
-			> $self -> large_bias_limit() ) {
+		if ( length($self->bootstrap_estimates -> [$model_number-1][0][$l])>0 and 
+			 $self->bootstrap_estimates -> [$model_number-1][0][$l] != 0 and
+			 $bias/$self->bootstrap_estimates -> [$model_number-1][0][$l]
+			 > $self -> large_bias_limit() ) {
 			$self->result_parameters->{'large_bias'} -> [$model_number-1][0][$l] = 1;
 		} else {
 			$self->result_parameters->{'large_bias'} -> [$model_number-1][0][$l] = 0;
@@ -328,8 +330,11 @@ sub calculate_bca_confidence_intervals
 		unless ( $nvalues == 0 ) {
 			if ( ($num_less_than_orig / $nvalues ) == 0 ) {
 				$z0 = -100;
-			} elsif ( ($num_less_than_orig / $nvalues ) == 1 ) {
+			} elsif ( $num_less_than_orig == $nvalues  ) {
 				$z0 = 100;
+			} elsif ( (2*$num_less_than_orig) == $nvalues  ) {
+				#on 32bit windows have seen that udistr(0.5), which should be simply 0, returns NaN
+				$z0 = 0;
 			} else {
 				$z0 = udistr( 1 - ($num_less_than_orig / $nvalues ) );
 			}
@@ -371,6 +376,10 @@ sub calculate_bca_confidence_intervals
 				$denom = -100;
 			} elsif ( $position == 100 ) {
 				$denom = 100;
+			} elsif ( $position == 50 ) {
+				#on 32bit windows have seen that udistr(0.5), which should be simply 0, returns NaN
+				#				$denom = $z0 + udistr( 1 - $position/100 );
+				$denom = $z0;
 			} else {
 				$denom = $z0 + udistr( 1 - $position/100 );
 			}
@@ -390,6 +399,7 @@ sub calculate_bca_confidence_intervals
 	}
 	my ( @bootstrap_array, @jackknife_array, @new_alphas, @z0, @acc );
 	# Loop the estimates of the first (original) model
+	no warnings qw(numeric);
 	for ( my $l = 0; $l < scalar @{$self -> bootstrap_estimates->[$model_number-1][0]}; $l++ ) {
 		my ( @unsorted_array1, @unsorted_array2 );
 		# Loop the bootstrap samples from 1 to get rid of original model
@@ -437,6 +447,7 @@ sub calculate_bca_confidence_intervals
 			$limits[$lim_idx].'%');
 	}
 	# Check the intervals
+	no warnings qw(uninitialized);
 	for ( my $lim_idx = 0; $lim_idx <= $limnum; $lim_idx++ ) {
 		my @within_ci;
 		for ( my $l = 0; $l <= $#bootstrap_array; $l++ ) {
@@ -445,7 +456,7 @@ sub calculate_bca_confidence_intervals
 			my $upper_limit = $self->result_parameters->{'bca_confidence_intervals'} ->
 			[$model_number-1][($limnum*2+1)-$lim_idx][$l];
 			if ( $self -> bca_confidence_intervals_check < $upper_limit and
-				$self -> bca_confidence_intervals_check > $lower_limit ) {
+				 $self -> bca_confidence_intervals_check > $lower_limit ) {
 				push( @within_ci , 1 );
 			} else {
 				push( @within_ci , 0 );
@@ -574,6 +585,7 @@ sub calculate_standard_error_confidence_intervals
 	);
 	my $model_number = $parm{'model_number'};
 	my @parameter_names = defined $parm{'parameter_names'} ? @{$parm{'parameter_names'}} : ();
+	no warnings qw(uninitialized numeric);
 
 	# Sort the limits from the inside out
 	my @limits = sort { $b <=> $a } keys %{$self -> confidence_limits()};
@@ -627,6 +639,8 @@ sub calculate_percentile_confidence_intervals
 	my $model_number = $parm{'model_number'};
 	my @parameter_names = defined $parm{'parameter_names'} ? @{$parm{'parameter_names'}} : ();
 
+	no warnings qw(uninitialized numeric);
+
 	# Sort the limits from the inside out
 	my @limits = sort { $b <=> $a } keys %{$self -> confidence_limits};
 	foreach my $limit ( @limits ) {
@@ -639,7 +653,7 @@ sub calculate_percentile_confidence_intervals
 				my $val = $self -> bootstrap_estimates->[$model_number-1][$k][$l];
 				# get rid of undefined values (these were probably deleted
 				# when the bootstrap_estimates was created
-				push( @parameter_array, $val ) if( defined $val );
+				push( @parameter_array, $val ) if( defined $val and length($val)>0);
 			}
 			my @sorted = sort {$a <=> $b} @parameter_array;
 			for my $side ( 'lower', 'upper' ) {
@@ -963,6 +977,7 @@ sub general_setup
 						"for this run (".$samples.")" );
 				}
 			}
+			no warnings qw (uninitialized);
 			while( my ( $strata, $samples ) = each %stored_subjects ) {
 				if ( $self->subjects()->{$strata} != $samples ) {
 					$self->subjects()->{$strata} = $samples;
@@ -1249,9 +1264,8 @@ sub _modelfit_raw_results_callback
 	my ($dir,$file) = 
 	OSspecific::absolute_path( $self ->directory(),
 		$self -> raw_results_file()->[$model_number-1] );
-	my ($dir,$nonp_file) = 
-	OSspecific::absolute_path( $self ->directory(),
-		$self -> raw_nonp_file()->[$model_number-1] );
+	my ($dir2,$nonp_file) = OSspecific::absolute_path( $self ->directory(),
+													  $self -> raw_nonp_file()->[$model_number-1] );
 	my $orig_mod = $self ->models()->[$model_number-1];
 	my $type = $self -> type();
 	$subroutine = sub {
@@ -1259,7 +1273,7 @@ sub _modelfit_raw_results_callback
 		my $mh_ref   = shift;
 		my %max_hash = %{$mh_ref};
 		$modelfit -> raw_results_file([$dir.$file] );
-		$modelfit -> raw_nonp_file( [$dir.$nonp_file] );
+		$modelfit -> raw_nonp_file( [$dir2.$nonp_file] );
 
 		# The prepare_raw_results in the modelfit will fix the
 		# raw_results for each bootstrap sample model, we must add
@@ -1420,14 +1434,14 @@ sub _jackknife_raw_results_callback
 	my ($dir,$file) =
 	OSspecific::absolute_path( $self ->directory(),
 		$self -> raw_results_file()->[$model_number-1] );
-	my ($dir,$nonp_file) =
+	my ($dir2,$nonp_file) =
 	OSspecific::absolute_path( $self ->directory(),
 		$self -> raw_nonp_file()->[$model_number-1] );
 	$subroutine = sub {
 		my $jackknife = shift;
 		my $modelfit  = shift;
 		$modelfit -> raw_results_file( [$dir.$file] );
-		$modelfit -> raw_nonp_file( [$dir.$nonp_file] );
+		$modelfit -> raw_nonp_file( [$dir2.$nonp_file] );
 		$modelfit -> raw_results_append( 1 );
 		my ( @new_header, %param_names );
 		unless (defined $modelfit -> raw_results()){
@@ -1533,7 +1547,8 @@ sub prepare_results
 		my ($start,$length) = split(',', $rawres_structure{$self -> diagnostic_parameters() -> [$i]});
 		$diag_idx{$self -> diagnostic_parameters() -> [$i]} = $start;
 	}
-	my ($start_check,$l) = split(',', $rawres_structure{'theta'});
+	my $start_check;
+	($start_check,$l) = split(',', $rawres_structure{'theta'});
 
 	# ---------------------  Get data from raw_results  -------------------------
 
@@ -2014,15 +2029,15 @@ sub _adjust_rawres_structure
 
         my @a = split /,/, $pair;
         $a[0] -= $dec;
-
         return $a[0] . "," . $a[1];
     }
 
-    my $bs_sample_ind = $struct->{'bs_sample'};
-    my $dofv_ind = $struct->{'deltaofv'};
+    my $bs_sample_ind = getind($struct->{'bs_sample'});
+    my $dofv_ind = getind($struct->{'deltaofv'});
 
     foreach my $header (keys %$struct) {
-        my $dec;
+        next if ($header eq 'line_numbers');
+		my $dec;
         if (getind($struct->{$header}) > $dofv_ind) {
             $dec = 2;
         } elsif (getind($struct->{$header}) > $bs_sample_ind) {
