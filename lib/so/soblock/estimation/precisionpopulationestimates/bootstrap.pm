@@ -33,7 +33,7 @@ sub parse
         $self->AsymptoticCI($table);
     }
 
-    (my $prec) = $xpc->findnodes('x:StandardError', $node);
+    ($prec) = $xpc->findnodes('x:StandardError', $node);
     if (defined $prec) {
         my $table = so::table->new();
         $table->parse($prec);

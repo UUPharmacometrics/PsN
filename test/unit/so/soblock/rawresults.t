@@ -22,7 +22,7 @@ SKIP: {
     is ($xml, undef, "Empty RawResults");
 
     #add_datafile
-    my $rr = so::soblock::rawresults->new();
+    $rr = so::soblock::rawresults->new();
     my $name = "dir/sdtab28";
     if ($Config{osname} eq 'MSWin32') {
         $name = "dir\\sdtab28";

@@ -20,13 +20,13 @@ SKIP: {
     is ($xml, undef, "Empty TaskInformation");
 
     # Only runtime
-    my $ti = so::soblock::taskinformation->new();
+    $ti = so::soblock::taskinformation->new();
     $ti->RunTime(28);
-    my $xml = $ti->xml();
+    $xml = $ti->xml();
     is ($xml->toString(), "<TaskInformation><RunTime>28</RunTime></TaskInformation>", "TaskInformation with only runtime");
 
     # add_message
-    my $ti = so::soblock::taskinformation->new();
+    $ti = so::soblock::taskinformation->new();
     $ti->add_message(
         type => "ERROR",
         toolname => "PsN",

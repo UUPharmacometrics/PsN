@@ -220,7 +220,7 @@ sub _parse_lst_file
             foreach my $option (@options) {
                 if ($option->fix and not defined $option->label and not $self->include_fixed_params) {
                     my $label;
-                    if ($option->label eq "") {
+                    if (not defined($option->label) or $option->label eq "") {
                         $label = $option->coordinate_string;
                     } else {
                         $label = $option->label;
@@ -254,7 +254,7 @@ sub _parse_lst_file
             # Get columnTypes
             for my $option (@options) {
                 my $label;
-                if ($option->label eq "") {
+                if (not defined($option->label) or $option->label eq "") {
                     $label = $option->coordinate_string;
                 } else {
                     $label = $option->label;
@@ -550,7 +550,7 @@ sub _create_predictions
     my $doc = $self->_document;
 
     my $id = $sdtab->column_to_array(column => "ID");
-    my $id = [ map { int($_) } @$id ];
+    $id = [ map { int($_) } @$id ];
     my $time = $sdtab->column_to_array(column => $self->_idv);
     my $pred = $sdtab->column_to_array(column => "PRED");
     my $ipred = $sdtab->column_to_array(column => "IPRED");
@@ -593,7 +593,7 @@ sub _create_residuals
     my $doc = $self->_document;
 
     my $id = $sdtab->column_to_array(column => "ID");
-    my $id = [ map { int($_) } @$id ];
+    $id = [ map { int($_) } @$id ];
     my $time = $sdtab->column_to_array(column => $self->_idv);
 
     my @values = ( $id, $time );
@@ -688,7 +688,7 @@ sub _create_eta_table
         push @results, [];
     }
 
-    my $prev_id, my $prev_occ;
+    my $prev_id = math::inf(), my $prev_occ = math::inf();
     for (my $i = 0; $i < scalar(@$id); $i++) {
         if ($id->[$i] != $prev_id or (defined $occ and $occ->[$i] != $prev_occ)) {
             $prev_id = $id->[$i];
@@ -817,7 +817,7 @@ sub _create_individual_estimates
     );
     $self->_so_block->Estimation->IndividualEstimates->Estimates->Median($table);
 
-    my $table = so::table->new(
+    $table = so::table->new(
         name => "Mean",
         columnId => \@columnId,
         columnType => \@columnType,
@@ -873,7 +873,7 @@ sub _create_individual_estimates
             );
             $self->_so_block->Estimation->IndividualEstimates->RandomEffects->EffectMedian($table);
 
-            my $table = so::table->new(
+            $table = so::table->new(
                 name => "EffectMean",
                 columnId => \@columnId,
                 columnType => \@columnType,

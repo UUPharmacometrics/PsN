@@ -121,12 +121,12 @@ sub _create_bootstrap
                 my $row = <$fh>;
                 my @a = split /,/, $row;
                 my $percentile = shift @a;
-                $percentile =~ s/^"\s*(.*)%"/\1/;
+                $percentile =~ s/^"\s*(.*)%"/$1/;
                 shift @a;
                 my $value;
                 for (my $col = 0; $col < scalar(@parameters); $col++) {
                     $value = shift @a;
-                    $value =~ s/^\s*(.*)/\1/;
+                    $value =~ s/^\s*(.*)/$1/;
                     if ($value ne 'NA') {
                         push @{$column[$col]}, $value;
                     }
@@ -195,14 +195,14 @@ sub _create_bootstrap
     );
     $self->_precision_bootstrap->StandardError($se_table);
 
-    (my $used_parameters, my $adjusted_means) = $self->filter(parameters => \@parameters, values => $means);
+    ($used_parameters, my $adjusted_means) = $self->filter(parameters => \@parameters, values => $means);
     my $columnTypes = $self->get_column_types(parameters => $used_parameters);
     my $mean_table = so::table->new(name => "Mean", columnId => $used_parameters);
     $mean_table->single_row(values => $adjusted_means, types => $columnTypes);
     $self->_bootstrap->Mean($mean_table);
 
-    (my $used_parameters, my $adjusted_medians) = $self->filter(parameters => \@parameters, values => $medians);
-    my $columnTypes = $self->get_column_types(parameters => $used_parameters);
+    ($used_parameters, my $adjusted_medians) = $self->filter(parameters => \@parameters, values => $medians);
+    $columnTypes = $self->get_column_types(parameters => $used_parameters);
     my $median_table = so::table->new(name => "Median", columnId => $used_parameters);
     $median_table->single_row(values => $adjusted_medians, types => $columnTypes);
     $self->_bootstrap->Median($median_table);
@@ -267,7 +267,7 @@ sub _read_line
     my @data_row;
     for (my $col = 0; $col < scalar(@parameters); $col++) {
         $value = shift @a;
-        $value =~ s/^\s*(.*)/\1/;
+        $value =~ s/^\s*(.*)/$1/;
         if ($value ne 'NA') {
             push @data_row, $value;
         }

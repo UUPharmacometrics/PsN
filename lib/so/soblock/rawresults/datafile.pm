@@ -18,7 +18,7 @@ sub parse
 
     my $xpc = so::xml::get_xpc();
 
-    my $node = $xpc->findnodes('ds:ExternalFile', $node);
+    $node = $xpc->findnodes('ds:ExternalFile', $node);
 
     my $oid = $node->getAttribute('oid');
     $self->oid($oid);

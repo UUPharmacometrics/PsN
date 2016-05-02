@@ -65,11 +65,11 @@ SKIP: {
     test_number_of_children($xpc, '/x:SO/x:SOBlock/*', 1, "missing lst file nothing more than TaskInformation");
 
 # non existing multiple lst file
-    my $so = so->new();
+    $so = so->new();
     so::parsers::nmoutput->new(so => $so, lst_file => "this_file_is_missing.lst");
     so::parsers::nmoutput->new(so => $so, lst_file => "this_too.lst");
     $so->write();
-    my $xpc = get_xml("this_file_is_missing.SO.xml");
+    $xpc = get_xml("this_file_is_missing.SO.xml");
     (my $node1, my $node2) = $xpc->findnodes('/x:SO/x:SOBlock/x:TaskInformation/x:Message[@type="ERROR"]');
     ok (defined $node1, "multiple non existing lst files 1");
     ok (defined $node2, "multiple non existing lst files 2");
@@ -77,64 +77,64 @@ SKIP: {
     test_number_of_children($xpc, '/x:SO/x:SOBlock/*', 2, "multiple non existing lst files nothing more than TaskInformation");
 
 # missingdata.lst
-    my $so = so->new();
+    $so = so->new();
     so::parsers::nmoutput->new(so => $so, lst_file => "data_missing.lst");
     $so->write();
-    my $xpc = get_xml("data_missing.SO.xml");
-    (my $node) = $xpc->findnodes('/x:SO/x:SOBlock/x:TaskInformation/x:Message[@type="ERROR"]');
+    $xpc = get_xml("data_missing.SO.xml");
+    ($node) = $xpc->findnodes('/x:SO/x:SOBlock/x:TaskInformation/x:Message[@type="ERROR"]');
     ok (defined $node, "data_missing.lst");
     test_number_of_children($xpc, '/x:SO/x:SOBlock/*', 2, "data_missing.lst nothing more than TaskInformation+RawResults"); 
 
 # missingmodel.lst
-    my $so = so->new();
+    $so = so->new();
     so::parsers::nmoutput->new(so => $so, lst_file => "missingmodel.lst");
     $so->write();
-    my $xpc = get_xml("missingmodel.SO.xml");
-    (my $node) = $xpc->findnodes('/x:SO/x:SOBlock/x:TaskInformation/x:Message[@type="ERROR"]');
+    $xpc = get_xml("missingmodel.SO.xml");
+    ($node) = $xpc->findnodes('/x:SO/x:SOBlock/x:TaskInformation/x:Message[@type="ERROR"]');
     ok (defined $node, "missingmodel.lst");
     test_number_of_children($xpc, '/x:SO/x:SOBlock/*', 2, "missingmodel.lst nothing more than TaskInformation+RawResults"); 
 
 # psnmissingdata.out
-    my $so = so->new();
+    $so = so->new();
     so::parsers::nmoutput->new(so => $so, lst_file => "psnmissingdata.out");
     $so->write();
-    my $xpc = get_xml("psnmissingdata.SO.xml");
-    (my $node) = $xpc->findnodes('/x:SO/x:SOBlock/x:TaskInformation/x:Message[@type="ERROR"]');
+    $xpc = get_xml("psnmissingdata.SO.xml");
+    ($node) = $xpc->findnodes('/x:SO/x:SOBlock/x:TaskInformation/x:Message[@type="ERROR"]');
     ok (defined $node, "psnmissingdata.out");
     test_number_of_children($xpc, '/x:SO/x:SOBlock/*', 2, "psnmissingdata.out nothing more than TaskInformation");
 
 # psnmissingmodel.out
-    my $so = so->new();
+    $so = so->new();
     so::parsers::nmoutput->new(so => $so, lst_file => "psnmissingmodel.out");
     $so->write();
-    my $xpc = get_xml("psnmissingmodel.SO.xml");
-    (my $node) = $xpc->findnodes('/x:SO/x:SOBlock/x:TaskInformation/x:Message[@type="ERROR"]');
+    $xpc = get_xml("psnmissingmodel.SO.xml");
+    ($node) = $xpc->findnodes('/x:SO/x:SOBlock/x:TaskInformation/x:Message[@type="ERROR"]');
     ok (defined $node, "psnmissingmodel.out");
     test_number_of_children($xpc, '/x:SO/x:SOBlock/*', 2, "psnmissingmodel.out nothing more than TaskInformation");
 
 # add info message
-    my $so = so->new(message => "Testing");
+    $so = so->new(message => "Testing");
     so::parsers::nmoutput->new(so => $so, lst_file => "missingmodel.lst");
     $so->write();
-    my $xpc = get_xml("missingmodel.SO.xml");
+    $xpc = get_xml("missingmodel.SO.xml");
     my @nodes = $xpc->findnodes('/x:SO/x:SOBlock/x:TaskInformation/x:Message[@type="INFORMATION"]');
     is (scalar(@nodes), 2, "information message");  # 2 for counting the version message
 
 # set toolname
-    my $so = so->new();
+    $so = so->new();
     so::parsers::nmoutput->new(so => $so, lst_file => "missingmodel.lst", toolname => "MyTool");
     $so->write();
-    my $xpc = get_xml("missingmodel.SO.xml");
-    (my $node) = $xpc->findnodes('/x:SO/x:SOBlock/x:TaskInformation/x:Message[@type="ERROR"]/x:Toolname');
+    $xpc = get_xml("missingmodel.SO.xml");
+    ($node) = $xpc->findnodes('/x:SO/x:SOBlock/x:TaskInformation/x:Message[@type="ERROR"]/x:Toolname');
     is ($node->textContent, "MyTool", "Toolname");
 
 # normal model pheno.lst
-    my $so = so->new();
+    $so = so->new();
     so::parsers::nmoutput->new(so => $so, lst_file => "pheno.lst");
     $so->write();
-    my $xpc = get_xml("pheno.SO.xml");
+    $xpc = get_xml("pheno.SO.xml");
 
-    my @nodes = $xpc->findnodes('/x:SO/x:SOBlock/x:Estimation/*');
+    @nodes = $xpc->findnodes('/x:SO/x:SOBlock/x:Estimation/*');
     my %hash;
     my %results_hash = (
         PopulationEstimates => 1,
@@ -152,14 +152,14 @@ SKIP: {
     is_deeply(\%hash, \%results_hash, "pheno.lst has all elements under Estimation");
 
 # exclude_elements
-    my $so = so->new(exclude_elements => [ 'Estimation/PopulationEstimates', 'Estimation/OFMeasures' ]);
+    $so = so->new(exclude_elements => [ 'Estimation/PopulationEstimates', 'Estimation/OFMeasures' ]);
     so::parsers::nmoutput->new(so => $so, lst_file => "pheno.lst");
     $so->write();
-    my $xpc = get_xml("pheno.SO.xml");
+    $xpc = get_xml("pheno.SO.xml");
 
-    my @nodes = $xpc->findnodes('/x:SO/x:SOBlock/x:Estimation/*');
-    my %hash;
-    my %results_hash = (
+    @nodes = $xpc->findnodes('/x:SO/x:SOBlock/x:Estimation/*');
+    undef %hash;
+    %results_hash = (
         PrecisionPopulationEstimates => 1,
         IndividualEstimates => 1,
         Predictions => 1,
@@ -173,14 +173,14 @@ SKIP: {
     is_deeply(\%hash, \%results_hash, "pheno.lst with exclution has all elements under Estimation");
 
 # only_include_elements
-    my $so = so->new(only_include_elements => [ 'Estimation/PopulationEstimates', 'Estimation/OFMeasures' ]);
+    $so = so->new(only_include_elements => [ 'Estimation/PopulationEstimates', 'Estimation/OFMeasures' ]);
     so::parsers::nmoutput->new(so => $so, lst_file => "pheno.lst");
     $so->write();
-    my $xpc = get_xml("pheno.SO.xml");
+    $xpc = get_xml("pheno.SO.xml");
 
-    my @nodes = $xpc->findnodes('/x:SO/x:SOBlock/x:Estimation/*');
-    my %hash;
-    my %results_hash = (
+    @nodes = $xpc->findnodes('/x:SO/x:SOBlock/x:Estimation/*');
+    undef %hash;
+    %results_hash = (
         PopulationEstimates => 1,
         OFMeasures => 1,
     );
@@ -192,15 +192,15 @@ SKIP: {
     is_deeply(\%hash, \%results_hash, "pheno.lst with only_include_elements has all elements under Estimation");
 
 # no-use_tables
-    my $so = so->new();
+    $so = so->new();
     so::parsers::nmoutput->new(so => $so, lst_file => "pheno.lst", use_tables => 0);
     
     $so->write();
-    my $xpc = get_xml("pheno.SO.xml");
+    $xpc = get_xml("pheno.SO.xml");
 
-    my @nodes = $xpc->findnodes('/x:SO/x:SOBlock/x:Estimation/*');
-    my %hash;
-    my %results_hash = (
+    @nodes = $xpc->findnodes('/x:SO/x:SOBlock/x:Estimation/*');
+    undef %hash;
+    %results_hash = (
         PopulationEstimates => 1,
         PrecisionPopulationEstimates => 1,
         OFMeasures => 1,
@@ -219,22 +219,22 @@ SKIP: {
     is_deeply($eta_table, [ [ 1, 1, 2, 2 ], [ 1, 2, 1, 2], [ 23, 23, 24, 24 ], [ 7, 7, 9, 9 ] ], "create_eta_table 2");
 
 # option pharmml
-    my $so = so->new(PharmMLRef => 'test.xml');
+    $so = so->new(PharmMLRef => 'test.xml');
     so::parsers::nmoutput->new(so => $so, lst_file => "pheno.lst");
     $so->write();
-    my $xpc = get_xml("pheno.SO.xml");
-    (my $node) = $xpc->findnodes('/x:SO/x:PharmMLRef[@name]');
+    $xpc = get_xml("pheno.SO.xml");
+    ($node) = $xpc->findnodes('/x:SO/x:PharmMLRef[@name]');
     ok (defined $node, "PharmMLRef");
 
-    my $so = so->new();
+    $so = so->new();
     so::parsers::nmoutput->new(so => $so, lst_file => "pheno.lst");
     $so->write();
-    my $xpc = get_xml("pheno.SO.xml");
-    (my $node) = $xpc->findnodes('/x:SO/x:PharmMLRef[@name]');
+    $xpc = get_xml("pheno.SO.xml");
+    ($node) = $xpc->findnodes('/x:SO/x:PharmMLRef[@name]');
     ok (!defined $node, "PharmMLRef");
 
 # Using so.pm
-    my $so = so->new();
+    $so = so->new();
     so::parsers::nmoutput->new(so => $so, lst_file => "pheno.lst", use_tables => 0);
 
     is (scalar(@{$so->SOBlock}), 1, "Pheno: number of SOBlocks");
@@ -280,7 +280,7 @@ SKIP: {
 
 
     unlink "pheno.SO.xml";
-    my $so = so->new();
+    $so = so->new();
     so::parsers::nmoutput->new(so => $so, lst_file => "pheno.lst", use_tables => 1);
 
 
@@ -343,14 +343,14 @@ SKIP: {
 
 # pheno.lst without sdtab
     unlink("sdtab");
-    my $so = so->new(); 
+    $so = so->new(); 
     so::parsers::nmoutput->new(so => $so, lst_file => "pheno.lst");
     $so->write();
-    my $xpc = get_xml("pheno.SO.xml");
+    $xpc = get_xml("pheno.SO.xml");
 
-    my @nodes = $xpc->findnodes('/x:SO/x:SOBlock/x:Estimation/*');
-    my %hash;
-    my %results_hash = (
+    @nodes = $xpc->findnodes('/x:SO/x:SOBlock/x:Estimation/*');
+    undef %hash;
+    %results_hash = (
         PopulationEstimates => 1,
         PrecisionPopulationEstimates => 1,
         IndividualEstimates => 1,
@@ -365,14 +365,14 @@ SKIP: {
 
 # pheno.lst without sdtab and patab
     unlink("patab");
-    my $so = so->new();
+    $so = so->new();
     so::parsers::nmoutput->new(so => $so, lst_file => "pheno.lst");
     $so->write();
-    my $xpc = get_xml("pheno.SO.xml");
+    $xpc = get_xml("pheno.SO.xml");
 
-    my @nodes = $xpc->findnodes('/x:SO/x:SOBlock/x:Estimation/*');
-    my %hash;
-    my %results_hash = (
+    @nodes = $xpc->findnodes('/x:SO/x:SOBlock/x:Estimation/*');
+    undef %hash;
+    %results_hash = (
         PopulationEstimates => 1,
         PrecisionPopulationEstimates => 1,
         OFMeasures => 1,
@@ -386,14 +386,14 @@ SKIP: {
 
     remove_test_dir($tempdir);
 
-    our $tempdir = create_test_dir('unit_standardised_output');
+    $tempdir = create_test_dir('unit_standardised_output');
     copy_test_files($tempdir,
         [ "SO/Nock/Nock_2013_Carboplatin_PK_MONOLIX.cor","SO/Nock/Nock_2013_Carboplatin_PK_MONOLIX.cov",
 		  "SO/Nock/Nock_2013_Carboplatin_PK_MONOLIX.lst","SO/Nock/Nock_2013_Carboplatin_PK_MONOLIX.ext"  ]);
 
     chdir $tempdir;
 
-    my $so = so->new();
+    $so = so->new();
     so::parsers::nmoutput->new(so => $so, lst_file => "Nock_2013_Carboplatin_PK_MONOLIX.lst", use_tables => 0);
 
     is (scalar(@{$so->SOBlock}), 1, "Nock: number of SOBlocks");
@@ -441,13 +441,13 @@ SKIP: {
 
     remove_test_dir($tempdir);
 
-    our $tempdir = create_test_dir('unit_standardised_output');
+    $tempdir = create_test_dir('unit_standardised_output');
     copy_test_files($tempdir,
         [ "output/onePROB/oneEST/noSIM/warfarin_ddmore.lst","output/onePROB/oneEST/noSIM/warfarin_ddmore.ext"  ]);
 
     chdir $tempdir;
 
-    my $so = so->new();
+    $so = so->new();
     so::parsers::nmoutput->new(so => $so, lst_file => "warfarin_ddmore.lst", use_tables => 0);
 
     is (scalar(@{$so->SOBlock}), 1, "warfarin SAEM: number of SOBlocks");
@@ -463,7 +463,7 @@ SKIP: {
 
     remove_test_dir($tempdir);
 
-    our $tempdir = create_test_dir('unit_standardised_output');
+    $tempdir = create_test_dir('unit_standardised_output');
     copy_test_files($tempdir,
         [ "SO/DelBene/DelBene_2009_oncology_in_vitro_EPS_in_OBS.lst",
 		  "SO/DelBene/DelBene_2009_oncology_in_vitro_EPS_in_OBS.ext",
@@ -476,7 +476,7 @@ SKIP: {
 
     chdir $tempdir;
 
-    my $so = so->new();
+    $so = so->new();
     so::parsers::nmoutput->new(so => $so, lst_file => "DelBene_2009_oncology_in_vitro_EPS_in_OBS.lst", use_tables => 1);
 
     is (scalar(@{$so->SOBlock}), 1, "DelBene: number of SOBlocks");
@@ -522,7 +522,7 @@ SKIP: {
 
     remove_test_dir($tempdir);
 
-    our $tempdir = create_test_dir('unit_standardised_output');
+    $tempdir = create_test_dir('unit_standardised_output');
     copy_test_files($tempdir,
         ["SO/Simeoni/Simeoni_2004_oncology_TGI_ETA.lst",
 		 "SO/Simeoni/Simeoni_2004_oncology_TGI_ETA.ext",
@@ -534,7 +534,7 @@ SKIP: {
 
     chdir $tempdir;
 
-    my $so = so->new();
+    $so = so->new();
     so::parsers::nmoutput->new(so => $so, lst_file => "Simeoni_2004_oncology_TGI_ETA.lst", use_tables => 1);
 
     is (scalar(@{$so->SOBlock}), 1, "Simeoni: number of SOBlocks");
@@ -591,7 +591,7 @@ SKIP: {
     remove_test_dir($tempdir);
 
 
-    our $tempdir = create_test_dir('unit_standardised_output');
+    $tempdir = create_test_dir('unit_standardised_output');
     copy_test_files($tempdir,
         ["SO/BOV/run3.lst",
 		 "SO/BOV/patab",
@@ -599,7 +599,7 @@ SKIP: {
 
     chdir $tempdir;
 
-    my $so = so->new();
+    $so = so->new();
     so::parsers::nmoutput->new(so => $so, lst_file => "run3.lst", use_tables => 1);
 
     is_deeply($so->SOBlock->[0]->Estimation->IndividualEstimates->Estimates->Mean->columnId, [ 'ID', 'OCC', 'CL', 'V', 'KA', 'TL' ], "BOV: Individual Estimates Mean columnId");

@@ -199,7 +199,7 @@ sub _get_toolname
 
     my $tool;
 
-	my $command;
+	my $command = "";
     if (-e $directory . '/version_and_option_info.txt') {
 		open(COM, $directory . '/version_and_option_info.txt') or return $tool;
 		while (<COM>) {

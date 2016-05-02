@@ -68,9 +68,9 @@ SKIP: {
          ], "Bootstrap precision estimates columns");
 
     # bootstrap with omegas on sd and corr form without model
-    my $so = so->new();
+    $so = so->new();
     so::parsers::bootstrap->new(so => $so, bootstrap_results => 'bootstrap_results_sdcorr.csv');
-    my $percentiles = $so->SOBlock->[0]->Estimation->PrecisionPopulationEstimates->Bootstrap->PercentilesCI;
+    $percentiles = $so->SOBlock->[0]->Estimation->PrecisionPopulationEstimates->Bootstrap->PercentilesCI;
     is_deeply($percentiles->columns, [ [ '2.5', '5', '95', '97.5' ], 
             [ 0.005660052, 0.00570095, 0.007192636, 0.007342812 ],
             [ 1.19874, 1.21128, 1.411374, 1.43194 ],
@@ -79,17 +79,17 @@ SKIP: {
             [ 0.05865366, 0.06483184, 0.157961, 0.170973 ],
             [ 0.009947088, 0.01072602, 0.0233814, 0.02432164 ] ], "bootstrap pheno sd/corr percentiles columns");
 
-    my $mean = $so->SOBlock->[0]->Estimation->PopulationEstimates->Bootstrap->Mean;
+    $mean = $so->SOBlock->[0]->Estimation->PopulationEstimates->Bootstrap->Mean;
     is_deeply($mean->columns, [ [ 0.006366352 ], [ 1.311643 ], [ 0.268831 ], [ 0.1311976 ], [ 0.1104773 ], [ 0.01641997 ] ], "bootstrap pheno sd/corr mean columns");
-    my $median = $so->SOBlock->[0]->Estimation->PopulationEstimates->Bootstrap->Median;
+    $median = $so->SOBlock->[0]->Estimation->PopulationEstimates->Bootstrap->Median;
     is_deeply($median->columns, [ [ 0.00635686 ], [ 1.30753], [ 0.256321 ], [ 0.125554 ], [ 0.108852], [ 0.016365 ] ], "bootstrap pheno sd/corr median columns");
 
     # bootstrap with omegas on sd and corr form with model
     # This will currently give the same result as var/cov above
-    my $so = so->new();
+    $so = so->new();
     my $nmparser = so::parsers::nmoutput->new(so => $so, lst_file => 'pheno_sdcorr.lst');
     so::parsers::bootstrap->new(so => $so, bootstrap_results => 'bootstrap_results_sdcorr.csv', labels_hash => $nmparser->labels_hash);
-    my $percentiles = $so->SOBlock->[0]->Estimation->PrecisionPopulationEstimates->Bootstrap->PercentilesCI;
+    $percentiles = $so->SOBlock->[0]->Estimation->PrecisionPopulationEstimates->Bootstrap->PercentilesCI;
     is_deeply($percentiles->columns, [ [ '2.5', '5', '95', '97.5' ], 
             [ 0.005660052, 0.00570095, 0.007192636, 0.007342812 ],
             [ 1.19874, 1.21128, 1.411374, 1.43194 ],
@@ -98,13 +98,13 @@ SKIP: {
             [ 0.05865366, 0.06483184, 0.157961, 0.170973 ],
             [ 0.009947088, 0.01072602, 0.0233814, 0.02432164 ] ], "bootstrap pheno sd/corr percentiles columns");
 
-    my $mean = $so->SOBlock->[0]->Estimation->PopulationEstimates->Bootstrap->Mean;
+    $mean = $so->SOBlock->[0]->Estimation->PopulationEstimates->Bootstrap->Mean;
     is_deeply($mean->columns, [ [ 0.006366352 ], [ 1.311643 ], [ 0.268831 ], [ 0.1311976 ], [ 0.1104773 ], [ 0.01641997 ] ], "bootstrap pheno sd/corr mean columns");
-    my $median = $so->SOBlock->[0]->Estimation->PopulationEstimates->Bootstrap->Median;
+    $median = $so->SOBlock->[0]->Estimation->PopulationEstimates->Bootstrap->Median;
     is_deeply($median->columns, [ [ 0.00635686 ], [ 1.30753], [ 0.256321 ], [ 0.125554 ], [ 0.108852], [ 0.016365 ] ], "bootstrap pheno sd/corr median columns");
 
     # non-existing bootstrap file
-    my $so = so->new();
+    $so = so->new();
     so::parsers::bootstrap->new(so => $so, bootstrap_results => 'nofile.csv');
     is ($so->SOBlock->[0]->Estimation->PrecisionPopulationEstimates->Bootstrap->PercentilesCI, undef, "Bootstrap with non-existing file");
     is($so->SOBlock->[0]->TaskInformation->Message->[0]->type, "ERROR", "Bootstrap with non-existing file get error");
