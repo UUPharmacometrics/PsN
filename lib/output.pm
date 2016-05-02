@@ -96,7 +96,7 @@ sub BUILD
 	# be left on disk in an effort to preserve memory. The file
 	# will be read if needed.
 
-	carp("Initiating new\tNM::output object from file " . $self->filename );
+	debugmessage(3,"Initiating new\tNM::output object from file " . $self->filename );
 
 	if ( defined $self->filename and $self->filename ne '' ) {
 		my $name;
@@ -255,7 +255,7 @@ sub access_any
 	my @own_problems;
 	if( defined $self->problems ) {
 		unless( scalar(@problems) > 0 ){
-			carp("Problems undefined, using all" );
+			debugmessage(3,"Problems undefined, using all" );
 			@problems = (1 .. scalar @{$self->problems});
 		}
 		@own_problems = @{$self->problems};
@@ -266,7 +266,7 @@ sub access_any
 	foreach my $i ( @problems ) {
 		if ( defined $own_problems[$i - 1] ) {
 			if (( defined( $own_problems[$i - 1] -> can( $attribute ) ) ) and (not $attribute eq 'estimation_step_run')) {
-				carp("method $attribute defined on the problem level" );
+				debugmessage(3,"method $attribute defined on the problem level" );
 				my $meth_ret = $own_problems[$i - 1] -> $attribute;
 				if ( ref($meth_ret) eq "HASH" ) {
 					push( @return_value, $meth_ret ) if defined $meth_ret;
@@ -288,7 +288,7 @@ sub access_any
 					push( @return_value, $meth_ret ) if defined $meth_ret;
 				}
 			} else {
-				carp("method $attribute defined on the subproblem level" );
+				debugmessage(3,"method $attribute defined on the subproblem level" );
 				my $problem_ret = $own_problems[$i - 1] -> access_any(
 					attribute         => $attribute,
 					subproblems       => \@subproblems,
@@ -523,7 +523,8 @@ sub near_bounds
 	sub test_sigdig {
 		my ( $number, $goal, $sigdig, $zerolim ) = @_;
 		$number = &FormatSigFigs($number, $sigdig );
-		my $test;
+		my $test=0;
+		no warnings qw(numeric); #sometimes number is '' FIXME
 		if ( $goal == 0 ) {
 			$test = abs($number) < $zerolim ? 1 : 0;
 		} else {
@@ -3329,7 +3330,7 @@ sub _read_problems
 	}
 
 	unless( $success ) {
-		carp('Could not find a PROBLEM NO statement in "' .
+		debugmessage(1,'Could not find a PROBLEM NO statement in "' .
 			 $self -> full_name . '"' . "\n" ) unless $self->ignore_missing_files;
 		$self->parsing_error( message => 'Output file seems interrupted, could not find a PROBLEM NO statement in "' . 
 							  $self->full_name . '"' . "\n" );
