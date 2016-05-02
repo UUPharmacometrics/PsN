@@ -158,8 +158,8 @@ sub setup
 			if (scalar(@{$labels->[0]})>0){
 				$labelstring = "'".join("','",@{$labels->[0]})."'";
 				my @temp= ('FALSE') x scalar(@{$fixed->[0]}) ;
-				for (my$i=0; $i< scalar(@{$fixed->[0]}); $i++){
-					$temp[$i] = 'TRUE' if ($fixed->[0]->[$i] >0);
+				for (my $i=0; $i< scalar(@{$fixed->[0]}); $i++){
+					$temp[$i] = 'TRUE' if (defined $fixed->[0]->[$i] and ($fixed->[0]->[$i] >0));
 				}
 				$fixstring = join(',',@temp);
 			}
@@ -222,9 +222,9 @@ sub get_preamble()
 		 "#Created $theDate at $theTime");
 	
 	push(@arr,'');
-	push(@arr,@{$self->standard_preamble});
+	push(@arr,@{$self->standard_preamble}) if (scalar(@{$self->standard_preamble})>0);
 	push(@arr,'');
-	push(@arr,@{$self->extra_preamble}); #generic per tool
+	push(@arr,@{$self->extra_preamble}) if (scalar(@{$self->extra_preamble})>0); #generic per tool
 	push(@arr,"\n"."setwd(working.directory)",
 		 "\n############################################################################",
 		 "#END OF AUTO-GENERATED PREAMBLE",
@@ -268,6 +268,7 @@ sub print_R_script
 	}
 
 	open ( SCRIPT, ">" . $self->filename ); #local filename
+	no warnings qw(uninitialized);
 	print SCRIPT join("\n",@{$self->get_preamble})."\n";
 	print SCRIPT "\n";
 	print SCRIPT join("\n",@printcode)."\n";
