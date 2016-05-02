@@ -246,7 +246,7 @@ sub BUILD
 					my $tnpri = 0;
 					foreach my $rec (@{$self->models->[0]->problems->[0]->priors()}) {
 						unless ((defined $rec) &&( defined $rec->options )) {
-							carp("No options for rec \$PRIOR" );
+							debugmessage(3,"No options for rec \$PRIOR" );
 						}
 						foreach my $option ( @{$rec->options} ) {
 							if ((defined $option) and 
@@ -308,7 +308,10 @@ sub BUILD
 	push (@check_cols, $self->stratify_on) 
 		if ((defined $self->stratify_on) && ('STRT' ne $self->stratify_on));
 	foreach my $col (@check_cols) {
-		my $var_text = ($col eq $self->stratify_on) ? 'stratification' : 'independent';
+		my $var_text = 'independent';
+		if ((defined $self->stratify_on) and ($col eq $self->stratify_on)){
+			$var_text =  'stratification';
+		}
 		if ($col =~ /^(IPRED|IWRES|IRES|RES|WRES|DV|CWRES)$/) {
 			croak("It is not allowed to use $col as the $var_text ".
 				  "variable, since it it is dependent and hence differs between ".
@@ -606,7 +609,7 @@ sub BUILD
 		#done looking for fflag
 
 		my @needed_variables = ();
-		push (@needed_variables, 'STRT') if ($self->stratify_on eq 'STRT');
+		push (@needed_variables, 'STRT') if (defined $self->stratify_on and ($self->stratify_on eq 'STRT'));
 
 		push (@needed_variables, 'IPRED') if (($self->dv =~ /^(CWRES)$/) and ($PsN::nm_major_version < 7));
 		
@@ -695,7 +698,7 @@ sub BUILD
 		my $np_record = $self->models->[0]->record(record_name => 'nonparametric');
 
 		if ( scalar (@{$self->models->[0]->record(record_name => 'table')}) > 0 ) {
-			carp('Tool will delete existing $TABLE records in the modelfile.');
+			debugmessage(3,'Tool will delete existing $TABLE records in the modelfile.');
 		}
 		if (defined $self->msfo_file) {
 			if (defined $self->lst_file) {
@@ -939,7 +942,7 @@ sub modelfit_setup
 				my $tnpri = 0;
 				foreach my $rec (@{$model_simulation->problems->[0]->priors()}){
 					unless ((defined $rec) &&( defined $rec -> options )) {
-						carp("No options for rec \$PRIOR" );
+						debugmessage(3,"No options for rec \$PRIOR" );
 					}
 					foreach my $option ( @{$rec -> options} ) {
 						if ((defined $option) and 
@@ -1554,7 +1557,7 @@ sub modelfit_setup
 			my $set_seeds=0;
 			#Simply look for numbers. Since got rid of NSUBPROBS this is ok.
 			foreach my $sim_line ( @{$short_record -> [0]} ){
-				my $new_line;
+				my $new_line = '';
 				while ( $sim_line =~ /(\D*)(\d+)(\D.*)/g ){
 					my $seed = random_uniform_integer(1,0,2147483560 );
 					$new_line .= "$1$seed";
@@ -1605,7 +1608,7 @@ sub modelfit_setup
 	}
 	$model_orig -> remove_records(type => 'simulation');
 
-	if ($self-have_tnpri() or $self->have_nwpri()){
+	if ($self->have_tnpri() or $self->have_nwpri()){
 		$model_orig -> remove_option( record_name  => 'prior',
 									  problem_numbers => [(1)],
 									  option_name  => 'PLEV',
@@ -1703,8 +1706,8 @@ sub modelfit_analyze
 
 	#FIXME make static
 	$self->get_data_matrix; #creates global @data_matrix and global censor_data_matrix
-
-	my $no_sim= (split(/,/,$self->data_matrix->[0])) - 1;
+	my @firstobsline = split(/,/,$self->data_matrix->[0]);
+	my $no_sim= scalar(@firstobsline) - 1;
 	unless ($no_sim == $self->samples) {
 		croak("Number of simulated datasets in matrix file $no_sim is\n".
 			  "different from number ${\$self->samples} in input (option -samples).");
@@ -2198,7 +2201,10 @@ sub get_data_matrix
 	my $self = shift;
 
 	my $signal_file = $self->directory . "/m1/" . $self->dv . "_matrix_saved";
-	my $censor_signal_file = $self->directory . "/m1/" . $self->censor() . "_matrix_saved";
+	my $censor_signal_file;
+	if (defined $self->censor()){
+		$censor_signal_file = $self->directory . "/m1/" . $self->censor() . "_matrix_saved";
+	}
 	my $matrix_saved = ( -e $signal_file ) ? 1 : 0;
 	if ((defined $self->censor()) and $matrix_saved){
 		croak("inconsistent saved data, " . $self->dv . " matrix saved but not ".
@@ -2246,7 +2252,10 @@ sub get_data_matrix
 		while (my $row = <MATRIX>){
 			chomp $row;
 			push (@matrix,$row);
-			$nsim= (split(/,/,$row)) -1 if ($nsim==0);
+			if ($nsim==0){
+				my @obsline = split(/,/,$row);
+				$nsim= scalar(@obsline) -1 ;
+			}
 		}
 		close(MATRIX);
 		#check that found correct number of columns in matrix
@@ -2263,7 +2272,10 @@ sub get_data_matrix
 			while (my $row = <MATRIX>){
 				chomp $row;
 				push (@censor_matrix,$row);
-				$nsim= (split(/,/,$row)) -1 if ($nsim==0);
+				if ($nsim==0){
+					my @obsline = split(/,/,$row);
+					$nsim= scalar(@obsline) -1 ;
+				}
 			}
 			close(MATRIX);
 			#check that found correct number of columns in matrix
@@ -2599,13 +2611,15 @@ sub get_data_matrix
 
 
 	#check simulations read
-	my $no_read_sim= (split(/,/,$matrix[0])) -1;
+	my @obsline = split(/,/,$matrix[0]);
+	my $no_read_sim= scalar(@obsline) -1;
 	unless ($no_sim == $no_read_sim){
 		croak("Number of read simulated datasets $no_read_sim is\n".
 			  "different from expected number $no_sim.");
 	}
 	if (defined $self->censor()){
-		my $no_read_cens= (split(/,/,$censor_matrix[0])) -1;
+		my @censline = split(/,/,$censor_matrix[0]);
+		my $no_read_cens= scalar(@censline) -1;
 		unless ($no_sim == $no_read_cens){
 			croak("Number of read simulated censor datasets $no_read_cens is\n".
 				  "different from expected number $no_sim.");
@@ -2795,19 +2809,19 @@ sub get_tte_data
 				next;
 			} else {
 				@values{@names}=@row;
-				if(@values{"ID"} != $old_id){
+				if($values{"ID"} != $old_id){
 					$counter = 0;
 					$sim_id++;
 				}
-				$old_id = @values{"ID"};
-				if(@values{$self->tte()}==0){ # non-events
+				$old_id = $values{"ID"};
+				if($values{$self->tte()}==0){ # non-events
 					next;
 					#print "zero\n"
 				} else { # events
 					$counter++;
-					@values{"counter"} = $counter;
-					@values{"simID"} = $sim_id;
-					@values{"simNumber"} = $sim_num;
+					$values{"counter"} = $counter;
+					$values{"simID"} = $sim_id;
+					$values{"simNumber"} = $sim_num;
 				}
 			}
 
@@ -2834,13 +2848,13 @@ sub get_tte_data
 		unless ($self->clean() > 2){
 			my $zip = Archive::Zip->new();
 			my $file_member = $zip->addFile($sim_data_full);
-			if ( $zip->writeToFileNamed($sim_data_full.'.zip') == 'AZ_OK' ) {
+			if ( $zip->writeToFileNamed($sim_data_full.'.zip') == 0 ) {
 				unlink($sim_data_full) if ($remove_after_zip==1);
 			}
 		}
 		my $zip = Archive::Zip->new();
 		my $file_member = $zip->addFile($sim_data);
-		if ( $zip->writeToFileNamed($sim_data.'.zip') == 'AZ_OK' ) {
+		if ( $zip->writeToFileNamed($sim_data.'.zip') == 0 ) {
 			unlink($sim_data) if ($remove_after_zip==1);
 			$done_zip=1;
 			if (length($tabno)>0){
@@ -2875,10 +2889,12 @@ sub cleanup
 	my $modf = $self->directory; 
 
 	my $index = 1;
-	while (-d $self->searchdir."/NM_run$index"){
-		unlink $self->searchdir."/NM_run$index"."/npctab-1.dta";
-		unlink $self->searchdir."/NM_run$index"."/npctab.dta";
-		$index++;
+	if (defined $self->searchdir){
+		while (-d $self->searchdir."/NM_run$index"){
+			unlink $self->searchdir."/NM_run$index"."/npctab-1.dta";
+			unlink $self->searchdir."/NM_run$index"."/npctab.dta";
+			$index++;
+		}
 	}
 	if (defined $self->tte()){
 		my $index = 1;
@@ -2905,7 +2921,7 @@ sub create_binned_data
 
 	my $no_of_strata = scalar(@{$self->strata_matrix});
 
-    if (($self->bin_by_count eq '0' or $self->bin_by_count eq '1') and scalar(@{$self->bin_array}) > 0) {
+    if ((defined $self->bin_by_count) and scalar(@{$self->bin_array}) > 0) {
         my $no_arrays = scalar(@{$self->bin_array});
         if ($no_arrays != 1 and $no_arrays != $no_of_strata) {
             croak("The number of bin arrays requested (" . $no_arrays .
@@ -2936,7 +2952,7 @@ sub create_binned_data
 
 		my ($bin_floors, $bin_ceilings);
 
-		if ($self->bin_by_count eq '1') {
+		if (defined $self->bin_by_count and $self->bin_by_count eq '1') {
 			if (defined $self->overlap_percent) {
 				($bin_floors, $bin_ceilings) = get_bin_boundaries_overlap_count(
 					'data_column'		 => \@bin_array,
@@ -2964,7 +2980,7 @@ sub create_binned_data
 					'single_bin_size'	=> $self->single_bin_size,
 					'list_counts' 		=> $list_boundaries);
 			}
-		} elsif ($self->bin_by_count eq '0') {
+		} elsif (defined $self->bin_by_count and $self->bin_by_count eq '0') {
 			if (defined $self->overlap_percent) {
 				($bin_floors, $bin_ceilings) = get_bin_boundaries_overlap_value(
 					'data_column'		 => \@bin_array,
@@ -2988,9 +3004,9 @@ sub create_binned_data
 					'single_bin_size'	=> $self->single_bin_size,
 					'list_boundaries'	=> $list_boundaries);
 			}
-		} elsif ($self->auto_bin_mode eq 'auto') {
+		} elsif (defined $self->auto_bin_mode and ($self->auto_bin_mode eq 'auto')) {
 			$bin_ceilings = binning::bin_auto(\@bin_array, $self->min_points_in_bin, $self->strata_labels->[$strat_ind]);
-		} elsif ($self->auto_bin_mode eq 'minmax') {
+		} elsif (defined $self->auto_bin_mode and ($self->auto_bin_mode eq 'minmax')) {
             my $min;
             my $max;
             # If only one min_no_bins and max_no_bins use that value for all stratas
@@ -3732,7 +3748,10 @@ sub vpc_analyze
 	my $NA = -99;
 	my $c_i=$self->confidence_interval();
 	my $warn_about_missing_data=0;
-
+	my $mirrorcount = 0;
+	$mirrorcount = $self->mirrors if (defined $self->mirrors);
+	
+	
 	$self->create_binned_data();
 	#check here that same n-bins for all strata
 	my $ref_n_bins = 0;
@@ -4073,9 +4092,9 @@ sub vpc_analyze
 			my @sim_count_below_lloq=(0) x $no_sim;
 			my @sim_count_above_uloq=(0) x $no_sim;
 			my @sim_count_missing=(0) x $no_sim;
-			my @mirror_count_below_lloq = (0) x $self->mirrors;
-			my @mirror_count_above_uloq = (0) x $self->mirrors;
-			my @mirror_count_missing = (0) x $self->mirrors;
+			my @mirror_count_below_lloq = (0) x $mirrorcount;
+			my @mirror_count_above_uloq = (0) x $mirrorcount;
+			my @mirror_count_missing = (0) x $mirrorcount;
 			my $median_fraction_sim_below_lloq;
 			my $median_fraction_sim_above_uloq;      
 			my $median_fraction_sim_missing;      
@@ -4095,7 +4114,7 @@ sub vpc_analyze
 			my @mirror_category_count;
 			my @sim_category_count;
 			for (my $i=0; $i<$no_categories; $i++){
-				push(@mirror_category_count,[(0) x $self->mirrors]);
+				push(@mirror_category_count,[(0) x $mirrorcount]);
 				push(@sim_category_count,[(0) x $no_sim]);
 			}
 			#endof variables for categorized
@@ -4190,7 +4209,7 @@ sub vpc_analyze
 				#startof categorized. Only count if censor != 1
 				if ($self->categorized){
 					for (my $categ=0; $categ < scalar(@{$self->levels}); $categ++){
-						last if ($orig_cens == 1); #count nothing if dropout
+						last if (defined $orig_cens and ($orig_cens == 1)); #count nothing if dropout
 						my $lev=$self->levels->[$categ];
 						if ($orig_value <= $lev){
 							$real_category_count[$categ]=$real_category_count[$categ]+1;
@@ -4201,7 +4220,7 @@ sub vpc_analyze
 						}
 					}
 					foreach (my $j=0; $j<$no_sim;$j++){
-						next if ( $censor[$j]== 1); #count nothing if dropout
+						next if (defined $censor[$j] and ($censor[$j]== 1)); #count nothing if dropout
 						my $val=$tmp[$j];
 						for (my $categ=0;$categ<scalar(@{$self->levels});$categ++){
 							my $lev=$self->levels->[$categ];
@@ -4214,7 +4233,7 @@ sub vpc_analyze
 							}
 						}
 					}
-					foreach (my $j=0; $j<$self->mirrors;$j++){
+					foreach (my $j=0; $j<$mirrorcount;$j++){
 						next if ( $censor[($self->mirror_set->[$j])]== 1); #count nothing if dropout
 						my $val=$tmp[($self->mirror_set->[$j])];
 						for (my $categ=0;$categ<scalar(@{$self->levels});$categ++){
@@ -4292,7 +4311,7 @@ sub vpc_analyze
 				}
 			}else{
 				push(@censored_result_row_values,'','','','');
-				foreach my $ii (1..($self->mirrors)){
+				foreach my $ii (1..($mirrorcount)){
 					push(@censored_result_row_values,'');
 				}
 			}
@@ -4335,7 +4354,7 @@ sub vpc_analyze
 				}
 			}else{
 				push(@censored_result_row_values,'','','','');
-				foreach my $ii (1..($self->mirrors)){
+				foreach my $ii (1..($mirrorcount)){
 
 					push(@censored_result_row_values,'');
 				}
@@ -4364,7 +4383,7 @@ sub vpc_analyze
 				push(@censored_result_row_values,$median_fraction_sim_missing,$missing_ci_from,$missing_ci_to);
 			}else{
 				push(@censored_result_row_values,'','','','');
-				foreach my $ii (1..($self->mirrors)){
+				foreach my $ii (1..($mirrorcount)){
 					push(@censored_result_row_values,'');
 				}
 			}
@@ -4374,7 +4393,7 @@ sub vpc_analyze
 			
 			#categorized
 			#HERE
-			my $tmpmedian = median($self->binned_idv->[$strat_ind]->[$bin_index]);
+			$tmpmedian = median($self->binned_idv->[$strat_ind]->[$bin_index]);
 			my @categorized_result_row_values=
 				($st_cens,$self->bin_ceilings->[$strat_ind]->[$bin_index],$tmpmedian,$max_bin_observations);
 			if ($self->categorized){
@@ -4644,7 +4663,7 @@ sub vpc_analyze
 			#HERE1
 			my @result_row_values;
 			#new median idv
-			my $tmpmedian = median($self->binned_idv->[$strat_ind]->[$bin_index]);
+			$tmpmedian = median($self->binned_idv->[$strat_ind]->[$bin_index]);
 			@result_row_values=($st,$self->bin_ceilings->[$strat_ind]->[$bin_index],$tmpmedian,$max_bin_observations);
 			#old without median
 			#@result_row_values=($st,$self->bin_ceilings->[$strat_ind]->[$bin_index],$max_bin_observations);
@@ -4662,7 +4681,7 @@ sub vpc_analyze
 					}
 					push (@result_row_values,$nn);
 
-					for my $mi (0 .. ($self->mirrors-1)){
+					for my $mi (0 .. ($mirrorcount-1)){
 						$nn = $limit_mirrors[$i]->[$mi];
 						$nn = '' unless (defined $nn);
 						if ((defined $self->lloq) && (defined $nn && $self->lloq > $nn)){
@@ -4717,7 +4736,7 @@ sub vpc_analyze
 						push (@result_row_values,'');
 					}
 
-					for my $mi (0 .. ($self->mirrors-1)){
+					for my $mi (0 .. ($mirrorcount-1)){
 						if (defined $limit_mirrors[$i]->[$mi]){
 							push (@result_row_values,$limit_mirrors[$i]->[$mi]);
 						}else{
@@ -5182,7 +5201,7 @@ sub get_lower_and_upper_limits
 				$alert = 1;
 			} elsif (($upper < scalar(@sorted)) && 
 					 (($upper_limit[$i] == $sorted[$upper -1]) ||
-					  ($upper_limit[$i] == $sorted[$upper +1]))) {
+					  (($upper < scalar(@sorted)-1) and  $upper_limit[$i] == $sorted[$upper +1]))) {
 				$alert = 1;
 			}
 		}
@@ -5502,7 +5521,7 @@ sub subset_npc_analyze
 		if ($count_max[0] > 0){
 			$realperc = 100*$upper_count[$i]->[0]/$count_max[0] ;
 		}
-		my @perc_arr =();
+		@perc_arr =();
 		for (my $j=1; $j<= $no_sim; $j++){
 			if ($count_max[$j] > 0){
 				push(@perc_arr, 100*$upper_count[$i]->[$j]/$count_max[$j]);

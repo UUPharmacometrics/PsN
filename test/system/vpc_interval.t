@@ -142,19 +142,19 @@ for (my $i = 0; $i < 2; $i++){
 rmtree(['dir1']);
 
 #use irep option and dummy model
-my $command = get_command('vpc') . " -no-zip -samples=20 -irep=NID -sim_table=simNID.tab -orig_table=orig.tab -auto_bin=2 -directory=dir2 -seed=12345 -min_point=5";
+$command = get_command('vpc') . " -no-zip -samples=20 -irep=NID -sim_table=simNID.tab -orig_table=orig.tab -auto_bin=2 -directory=dir2 -seed=12345 -min_point=5";
 system $command;
 
-my $newmatrix = get_dv_matrix('dir2');
+$newmatrix = get_dv_matrix('dir2');
 
 is (scalar(@{$newmatrix}),scalar(@{$truematrix}),"DV matrices, equal num rows");
-my $num = scalar(@{$newmatrix});
+$num = scalar(@{$newmatrix});
 
 for (my $i = 0; $i < $num; $i++) {
 	is_array ($newmatrix->[$i],$truematrix->[$i],"DV matrix row index $i");
 }
 
-my $stats = get_stats('dir2');
+$stats = get_stats('dir2');
 for (my $i = 0; $i < 2; $i++){
 	is_array ($stats->[$i],$truestats->[$i],"stats row index $i");
 }

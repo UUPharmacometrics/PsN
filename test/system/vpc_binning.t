@@ -46,22 +46,6 @@ sub compare_bins
 my $model_dir = $includes::testfiledir;
 
 my @a;
-our $dir1 = "$tempdir/vpc_test1";
-
-# Commands that should return error
-my @command_line = (get_command('vpc') ." -samples=20 $model_dir/pheno.mod -min_points_in_bin=28 -bin_array=10,20,30 -directory=$dir1",       # Min points in bin without -auto_bin
-					get_command('vpc') . " -samples=20 $model_dir/pheno.mod -auto_bin=20 -bin_array=10,20,30 -directory=$dir1",     # Mixing auto_bin with bin_array
-					get_command('vpc') . " -samples=20 $model_dir/pheno.mod -auto_bin=auto -bin_by_count=0 -directory=$dir1",       # Mixing auto_bin with bin_by_count
-                 ); 
-my $rc;
-
-foreach my $i (0..$#command_line) {
-	$rc = system($command_line[$i]);
-	$rc = $rc >> 8;
-	ok ($rc != 0, "Command that should return error: $command_line[$i]");
-}
-
-rmtree([$dir1]);
 
 # Commands that should store bins in vpc_bins.txt
 my @results = ([-8.888, 16.5, 42.65, 68.15, 93, 127.9, 148.4, 204.8, 390.1888],
@@ -72,7 +56,7 @@ my @results = ([-8.888, 16.5, 42.65, 68.15, 93, 127.9, 148.4, 204.8, 390.1888],
                [49.6,98.2,146.8,195.4,244,292.6,341.2,389.8],
               );
 
-@command_line = (get_command('vpc') . " -samples=20 $model_dir/pheno.mod -auto_bin=auto -directory=$dir",       # The automatic option (same as default below)
+my @command_line = (get_command('vpc') . " -samples=20 $model_dir/pheno.mod -auto_bin=auto -directory=$dir",       # The automatic option (same as default below)
 				 get_command('vpc') . " -samples=20 $model_dir/pheno.mod -auto_bin=10 -directory=$dir",         # Pre-defined number of bins
 				 get_command('vpc') . " -samples=20 $model_dir/pheno.mod -auto_bin=4,7 -directory=$dir",        # Search in a range
 				 get_command('vpc') . " -samples=20 $model_dir/pheno.mod -directory=$dir",                       # Auto find number of bins. Default behaviour
@@ -98,6 +82,26 @@ foreach my $i (0..$#command_line) {
 
 	ok ($is_equal, "Testing: $command_line[$i]");
 }
+
+our $dir1 = "$tempdir/vpc_test1";
+
+# Commands that should return error
+my $redirect = redirect_stderr();
+@command_line = (get_command('vpc') ." -samples=20 $model_dir/pheno.mod -min_points_in_bin=28 -bin_array=10,20,30 -directory=$dir1".$redirect,       
+				 # Min points in bin without -auto_bin
+				 get_command('vpc') . " -samples=20 $model_dir/pheno.mod -auto_bin=20 -bin_array=10,20,30 -directory=$dir1".$redirect,     
+				 # Mixing auto_bin with bin_array
+				 get_command('vpc') . " -samples=20 $model_dir/pheno.mod -auto_bin=auto -bin_by_count=0 -directory=$dir1".$redirect,       
+				 # Mixing auto_bin with bin_by_count
+                 ); 
+my $rc;
+foreach my $i (0..$#command_line) {
+	$rc = system($command_line[$i]);
+	$rc = $rc >> 8;
+	ok ($rc != 0, "Command that should return error: $command_line[$i]");
+}
+
+rmtree([$dir1]);
 
 remove_test_dir($tempdir);
 
