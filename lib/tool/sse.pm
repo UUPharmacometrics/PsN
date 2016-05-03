@@ -1829,10 +1829,14 @@ sub prepare_results
 		  my $length=0;
 		  
 		  for( my $sample_index=0; $sample_index<$samples; $sample_index++ ){
-			  my ($s, $l) = split(/,/, $self->raw_line_structure 
-								  -> {1+$model_index*$samples + $sample_index} -> {$measure});
-			  
 			  my $skip = 0;
+			  my ($s, $l);
+			  if (defined $self->raw_line_structure-> {1+$model_index*$samples + $sample_index} -> {$measure}){
+				  ($s, $l) = split(/,/, $self->raw_line_structure-> {1+$model_index*$samples + $sample_index} -> {$measure});
+			  }else{
+				  $skip=1;
+			  }
+				  
 			  if( defined $s and $start != 0 and $s != $start ){
 				  croak("Internal structure corrupted at $model_index, ".
 						"$samples, $_, $measure, this is a bug" );
