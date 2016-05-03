@@ -4671,10 +4671,11 @@ sub vpc_analyze
 			#separate loop for censored data, otherwise too messy.
 
 			if ($self->detection_censored and (not $self->predcorr)){
+				no warnings qw(numeric);
 				for (my $i=0; $i<$no_perc_limits; $i++){
 					my $nn = $limit_real[$i];
 					$nn = '' unless (defined $nn);
-					if ((defined $self->lloq) && (defined $nn && $self->lloq > $nn)){
+					if ((defined $self->lloq) && (defined $nn && $self->lloq > $nn)){ #numeric warning here
 						$nn='';
 					} elsif ((defined $self->uloq) && (defined $nn && $self->uloq < $nn)){
 						$nn='';
@@ -4705,7 +4706,7 @@ sub vpc_analyze
 					} elsif ((defined $self->uloq) && $self->uloq < $limit[$i]){
 						push (@npc_display_after_censoring,0);
 						push (@npc_display_after_censoring,0)
-							if (($perc_limit[$i]==50) or ($perc_limit[$i] eq $meantext) or ($perc_limit[$i] eq $deltameantext));
+							if (($perc_limit[$i]==50) or ($perc_limit[$i] eq $meantext) or ($perc_limit[$i] eq $deltameantext)); #numeric warning here
 					}else {
 						push (@npc_display_after_censoring,1);
 						push (@npc_display_after_censoring,1)
