@@ -1,5 +1,5 @@
 \input{inputs/format_header.tex}
-\guidetitle{SIR user guide}{2016-04-26}
+\guidetitle{SIR user guide}{2016-05-04}
 \usepackage{amsmath}
 
 \begin{document}
@@ -543,6 +543,22 @@ of all model parameters over all iterations of the SIR procedure (on the x-axis)
 \item[Interpretation] Final median and outer percentiles of a parameter’s CI can be read off this plot. Be \emph{very} 
 careful when looking at trends over iterations (stabilization/increase/decrease), as the number of resamples from which the CI are computed can be very variable. The outer bounds of wide CI (such as the default 95\% here) 
 can vary a lot because of random noise, so this pot should in general not be used to diagnose SIR convergence.
+\end{description}
+\subsubsection{RSE - correlation plots for proposal and SIR}
+\begin{description}
+\item[Purpose] Visualize parameter uncertainty before and after SIR in terms of
+the relative standard errors (RSE) of each parameter, asymmetry in the confidence intervals (CI) and correlations
+between parameter uncertainties.
+\item[Description] This plot shows the variance-covariance matrix of parameter uncertainty obtained before SIR (i.e. from the proposal)
+and after SIR. The numbers on the diagonal are RSE in \%. Their color corresponds to the degree of asymmetry in the obtained confidence
+interval as measured by the asymmetry factor, calculated as the distance between the upper bound and the median of the CI divided by the
+distance between the lower bound and the median of the CI. For example, high asymmetry factors (greater than 2 or lower than 0.5)
+correspond to CI for which one of the sides (distance between median and CI bound) is twice the length of the other. The numbers
+in the off-diagonals correspond to the correlations between parameters, and the color code indicates the correlation level.
+\item[Interpretation] This plot is primarily a visualization tool to better understand the uncertainty of
+the proposal and of SIR. However, if the RSE of the proposal appear very low, or the correlations very high, it is advised to make sure
+that the proposal was not too restrictive by looking carefully at the other diagnostics (dOFV below chi-square, trends in spatial and/or
+temporal trend plots).
 \end{description}
 
 
