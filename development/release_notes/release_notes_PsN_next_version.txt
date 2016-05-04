@@ -34,7 +34,7 @@ the PsN website http://psn.sourceforge.net/
 Dependencies 
 ************************
 
-- It is recommended to use Xpose version 4.5.3 for the -cwres functionality 
+- It is recommended to use Xpose version 4.5.3 or later for the -cwres functionality 
   and the default execute, vpc and bootstrap R plots.
 
 ************************
@@ -75,16 +75,9 @@ Changes and bug fixes from PsN 4.4.8 to n.n.n
   to not have had OUTPUT appended, and initiate a crash restart if it appears to be useful.
 - All scripts can print help texts without having nm_version properly defined in psn.conf
 - Bug fix: torque job submission regexp only take job ID number part of qsub response, not whole string
-- Bug fix: Clean up in all code to get rid of Perl warnings about uninitialized variables.
-
-   ___lasso___
-
-- Refactoring, new unit tests.
-- Bug fix: Centering of categorical covariates and covariates with piece-wise 
-  linear relations in final model.
-- More documentation.
-- New options -adaptive, -adjusted, -al_coefficients, -log_scale, -normalize, -run_final_model
-- Removed option -lst_file (check)
+- Bug fix: Clean up in all code to get rid of Perl warnings about uninitialized variables,
+  numeric comparisons of non-numeric variables, etc.
+- Refactored reading of NONMEM installation information from psn.conf
 
    ___sumo___
 
@@ -111,16 +104,15 @@ Changes and bug fixes from PsN 4.4.8 to n.n.n
 - Option -sim_table may now be either a single file name or a comma-separated list
   of file names.
 
+- More documentation for Xpose plotting
+
    ___frem___
 
-- Complete rewrite of program.
-
-- New tests
-
+- Program has been completely rewritten. See frem_userguide.pdf for documentation.
 
    ___scm___
 
-- More robust filtering on IGNORE/ACCEPT
+- Refactored code for filtering data on IGNORE/ACCEPT
 
 - Bug fix computation of covariate theta bounds for linear and hockey-stick
   parameterization when median of covariate is negative.
@@ -128,9 +120,12 @@ Changes and bug fixes from PsN 4.4.8 to n.n.n
 - Redesign of covariate code generation and computation of covariate theta
   bounds and initial values, new tests.
 
+- Bug fix setting user-selected ofv changes for forward and backward searches
+  when option -gof=ofv is used. See scm_userguide.pfv for examples.
+
    ___boot_scm___
 
-- More robust filtering on IGNORE/ACCEPT
+- Refactored code for filtering data on IGNORE/ACCEPT
 
 - Bug fix: Use common options, e.g. -nm_version, that are set on command-line.
 
@@ -138,10 +133,9 @@ Changes and bug fixes from PsN 4.4.8 to n.n.n
 
    ___simeval___ (was ebe_npde)
 
-- Renamed from ebe_npde to simeval
+- Renamed script from ebe_npde to simeval
 - Separate decorrelation of iiv etas, ans iov etas per occasion
-- New output files
-- New rplots template 
+- New output files, including diagnostic plots. See simeval_userguide.pdf
 - New option -n_simulation_models, allowing more than one sample per NONMEM control stream
 - Computation of npde for IWRES and CWRES.
 - vpc plots of DV vs PRED and CWRES vs idv (TIME).
@@ -160,11 +154,11 @@ Changes and bug fixes from PsN 4.4.8 to n.n.n
 
    ___sir___
 	
-- New options -auto_rawres,-boxcox
-- Recentering, stats for local minima
-- more output
-- Algorithm changes, boxcox is new
-- Resume/Restart functionality
+- Major redesign, see sir_userguide.pdf
+- Now sir runs an iterative procedure with optional Box-Cox transformation,
+  detection and handling of local minima, sampling and resampling adjustment to failed samples. 
+- More alternatives for proposal density when covariance matrix unavailable
+- Extended resume/restart functionality
 - Automatic rplots with diagnostic graphs
 - Defaults for -samples and -resamples
 
@@ -202,6 +196,18 @@ Changes and bug fixes from PsN 4.4.8 to n.n.n
 
 - The crossval script now prints version_and_option_info.txt to the run directory.
 
+   ___lasso___
+
+- Refactoring of lasso model code generation.
+- Bug fix: Computations of summary statistics for categorical covariates, centering of categorical
+  covariates and covariates with piece-wise linear relations in final model.
+- More documentation.
+- New options -adaptive, -adjusted, -al_coefficients, -log_scale, -normalize, -run_final_model. See
+  lasso_usesrguide.pdf
+- Removed option -lst_file
+
 ___se_of_eta___
 
 - Program is removed, because the program output is given by NONMEM in phi-file.
+
+#git log until 2015-09-30
