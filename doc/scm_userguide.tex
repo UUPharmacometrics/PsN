@@ -1,5 +1,5 @@
 \input{inputs/format_header.tex}
-\guidetitle{SCM user guide}{2016-03-15}
+\guidetitle{SCM user guide}{2016-05-03}
 
 \begin{document}
 
@@ -151,6 +151,7 @@ set with '=1' in the configuration file to be turned on, for example parallel\_s
 \begin{optionlist}
 \optdefault{gof}{goodness-of-fit criterium}
 Default is 'p\_value', other alternative is 'ofv'. Option decides which goodness-of-fit criterium should be used for deciding which model is better when comparing. 
+If -gof=ofv is used then the user will probably want to use [ofv\_forward] and/or [ofv\_backward] in the configuration file, see below.
 \nextopt
 \optdefault{global\_init}{x}
 Default is 0.001. With global\_init option the initial estimates of parameters in covariate function parameterizations are set to global\_init. If using inits section in configuration file individual initial values are used instead of one global. 
@@ -445,14 +446,14 @@ The left hand side is of the form “PARAMETER:COVARIATE-STATE”. Both PARAMETE
 
 It is possible to use the variables maximum, minimum, mean and median in the inits and bounds sections. See more details in the \verb|[code]| help. 
 
-\subsection{[ofv\_changes]}
-This section will only be used if option -gof is set to 'ofv'. It will not
+\subsection{[ofv\_forward] and [ofv\_backward]}
+These sections will only be used if option -gof is set to 'ofv'. It will not
 be used if option -gof is 'p\_value' (the default). Here the user can set
 the change in ofv required for significance
 for each change in degrees of freedom.
 Example:
 \begin{verbatim}
-[ofv_changes]
+[ofv_forward]
 1=3.84
 2=5.99
 3=7.81
@@ -467,8 +468,22 @@ Example:
 is the ofv-changes for p-value=0.05. It is important to list values for all
 possible degrees-of-freedom changes in the chosen parameter-covariate relations.
 With categorical covariates with many categories the number can be large.
-The ofv changes can also be set separately for forward and backward searches
-using \verb|ofv_forward| and \verb|ofv_backward|.
+The ofv changes can be set for backward searches
+using \verb|ofv_backward|. Example (for p-value=0.01 in backward search):
+\begin{verbatim}
+[ofv_backward]
+1=6.63
+2=9.21
+3=11.34
+4=13.28
+5=15.09
+6=16.81
+7=18.48
+8=20.09
+9=21.67
+10=23.21
+\end{verbatim}
+
 
 \section{Resuming a crashed/interrupted scm}
 \begin{enumerate}
