@@ -1,6 +1,6 @@
 
 **Logging
-git log --no-merges --pretty=format:"%s" --since="2015-09-06" --until="2015-10-01" 
+git log --no-merges --name-only --pretty=format:"%s" --since="2015-09-06" --until="2015-10-01" 
 
 **Tagging:
 git tag -a v4.5.23 -m 'cluster version 4.5.23'
