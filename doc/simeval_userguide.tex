@@ -1,5 +1,5 @@
 \input{inputs/format_header.tex}
-\guidetitle{SIMEVAL user guide}{2016-05-02}
+\guidetitle{SIMEVAL user guide}{2016-05-03}
 
 \begin{document}
 
@@ -37,6 +37,8 @@ Example call
 \begin{verbatim}
 simeval run1.mod -rplots=1
 \end{verbatim}
+Note: If any IDs in the data set do not have any observation records, then those IDs must be
+IGNOREd in \$DATA, otherwise simeval will not produce all output.
 
 \section{Input and options}
 
@@ -194,6 +196,10 @@ where observed IWRES or CWRES is outside the simulated distribution.
 %\item[ebe\_npd.csv] One row per individual. Columns: ID, NPD of EBE:s (normalized PD, not decorrelated)
 %\item[iwres\_npd.csv]  One row per data record. Columns: ID, MDV, NPD of IWRES (normalized pd, not decorrelated)
 \end{description}
+
+\section{Known problems}
+If any IDs in the data set do not have any observation records, then those IDs must be
+IGNOREd in \$DATA, otherwise simeval will not produce all output.
 
 \section{Algorithm overview}
 
