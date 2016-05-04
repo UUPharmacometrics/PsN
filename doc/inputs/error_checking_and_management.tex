@@ -29,6 +29,11 @@ This functionality is useful on clusters where there is a hard run time limit fo
 
 If option -handle\_msfo was \emph{not} set, or if no lst-file or other sign that nmfe even started are found,
 PsN will simply try to run the same control stream again. Initial parameter estimates are not changed.  
+
+Note: If a NONMEM run is intentionally killed, e.g. with scancel on slurm, and PsN was started
+with -handle\_crashes set, then PsN will try to restart that run. To prevent PsN restarting
+an intentionally killed NONMEM run, the user must either make sure -handle\_crashes is not set
+or kill the main PsN process before killing the NONMEM run.
 \nextopt
 \optdefault{crash\_restarts}{'integer'}
 Default 4. The number of times PsN will restart a crashed run. Initial estimates are not tweaked in a crash restart, see option

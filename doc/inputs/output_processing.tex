@@ -35,7 +35,9 @@ Default 0. This command creates a set of simulations from a model file that can 
 Default not used. Can only be used in combination with -mirror\_plots=XX where XX is an integer representing the number of simulations to perform.  These commands create a set of simulations from a model file and output file that can then be read into Xpose 4 for mirror plotting.  The -mirror\_from\_lst option reads from the *.lst file of a NONMEM run to get final parameter estimates for the simulations. 
 \nextopt
 \optname{prepend\_model\_file\_name}
-Default not used. Table files by default have generic names, e.g. patab. If multiple models are run, files will be overwritten when multiple files with the same name are copied back to the same directory. This options prevents this by prepending the model file name, without extension, thus making the file names unique. 
+Default not used. Table files have the name defined by FILE in \$TABLE. 
+This option will prepend the model file name, without extension, to
+the name set with FILE.
 \nextopt
 \optname{standardised\_output}
 Default not used. If this option is used a DDMoRe standardised output (SO 0.2) xml file will be created for each run. Note that the file format is still under development and that this option should be considered experimental. See the \mbox{nmoutput2so\_userguide.pdf} for more information.
