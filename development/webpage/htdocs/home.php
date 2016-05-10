@@ -64,6 +64,8 @@ Version 4.4.8 was released September 7th 2015.
 The focus of this release is bug fixes and extensions of the test suite. Several of the bugs have been in PsN since version 3.7.6, some are even older. There are only minor new features.
 The complete list of new features and bugfixes in 4.4.8 is found  
 <a href="pdfdocs/release_notes_PsN_4_4_8.txt" target="_blank">here</a></dt>.
+</p><p>The list of bugs in 4.4.8 that were known at release of 4.6.0 is found
+<a href="pdfdocs/bug_list_PsN_4_4_8_at_next_release.txt" target="_blank">here</a>
 </p>
 
 <h3>PsN 4.4.0</h3>
