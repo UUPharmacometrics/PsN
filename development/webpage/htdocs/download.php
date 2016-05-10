@@ -45,6 +45,19 @@ PsN is distributed  as a gzipped tarball and zipped file.</p>
 		</tr>
     <tr>
         <td style="text-align:center;"> 
+            PsN 4.4.8
+        </td>
+	<td rowspan="2" width="70%">Please see the <a href="pdfdocs/release_notes_PsN_4_4_8.txt">change log</a> for details. </td>
+        <td rowspan="2">2015-04-20</td>
+    </tr>
+    <tr>
+        <td style="text-align:center;">
+            <a href="http://sourceforge.net/projects/psn/files/PsN-4.4.8.zip/download" target="_blank">.zip</a>
+            <a href="http://sourceforge.net/projects/psn/files/PsN-4.4.8.tar.gz/download" target="_blank">.tar.gz</a>
+        </td>
+      </tr>
+    <tr>
+        <td style="text-align:center;"> 
             PsN 4.4.0
         </td>
 	<td rowspan="2" width="70%">Please see the <a href="pdfdocs/release_notes_PsN_4_4_0.txt">change log</a> for details. </td>
@@ -317,7 +330,7 @@ the NONMEM runs to SGE, Slurm, LSF, ud and torque. See documentation
 The PsN test suite has been run on slurm and locally.
 </p>
 
-<p><strong>Platforms:</strong> PsN-4.4.8 is tested on the systems listed below.</p>
+<p><strong>Platforms:</strong> PsN-4.6.0 is tested on the systems listed below.</p>
 <table>
   <tr>
     <th>Platform</th>
@@ -328,10 +341,10 @@ The PsN test suite has been run on slurm and locally.
   </tr>
   <tr>
     <th>Microsoft Windows</th>
-    <td>XP 32-bit</td>
-    <td>ActiveState Perl 5.16.3</td>
-    <td>7.1.0, 7.1.2, 7.2.0</td>
-    <td>gfortran 4.6.0</td>
+    <td>10 64-bit</td>
+    <td>Strawberry Perl 5.22.1</td>
+    <td>7.2.0, 7.3.0</td>
+    <td>gfortran 4.9.2</td>
   </tr>
   <tr>
     <th>Microsoft Windows</th>
@@ -355,10 +368,17 @@ The PsN test suite has been run on slurm and locally.
     <td>gfortran 4.7.3</td>
   </tr>
   <tr>
+    <th>Microsoft Windows</th>
+    <td>XP 32-bit</td>
+    <td>ActiveState Perl 5.16.3</td>
+    <td>7.1.0, 7.1.2, 7.2.0</td>
+    <td>gfortran 4.6.0</td>
+  </tr>
+  <tr>
     <th>Mac</th>
     <td>OS X 10.6.6</td>
     <td>ActiveState Perl 5.16.3</td>
-    <td>7.2.0, 7.3.0</td>
+    <td>7.3.0</td>
     <td>gfortran 4.6.2</td>
   </tr>
   <tr>
@@ -370,10 +390,10 @@ The PsN test suite has been run on slurm and locally.
   </tr>
   <tr>
     <th >Linux</th>
-    <td >Ubuntu 14.10</td>
-    <td >5.20.1</td>
+    <td >Ubuntu 15.10</td>
+    <td >5.20.2</td>
     <td>7.2.0, 7.3.0</td>
-    <td>gfortran 4.9.1</td>
+    <td>gfortran 5.2.1</td>
   </tr>
   <tr>
     <th >Linux</th>
@@ -388,6 +408,13 @@ The PsN test suite has been run on slurm and locally.
     <td >5.10.1</td>
     <td>7.2.0, 7.3.0</td>
     <td>gfortran 4.4.7</td>
+  </tr>
+  <tr>
+    <th >Linux</th>
+    <td >Scientific Linux 6.3</td>
+    <td >5.10.1</td>
+    <td>7.3.0</td>
+    <td>gfortran 5.1.1</td>
   </tr>
   <tr>
     <th >Linux</th>

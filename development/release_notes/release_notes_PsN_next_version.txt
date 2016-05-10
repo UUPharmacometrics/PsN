@@ -1,17 +1,18 @@
 This PsN version has been tested on the following systems:
 
-Windows 10 64-bit with Strawberry Perl 5.22.1 , gfortran 4.8.1 and NONMEM 7.2.0 and 7.3.0
+Windows 10 64-bit with Strawberry Perl 5.22.1 , gfortran 4.9.2 and NONMEM 7.2.0 and 7.3.0
 Windows 7 64-bit with ActivePerl 5.20.1 (32 bit), gfortran 4.8.1 and NONMEM 7.3.0
 Windows 7 64-bit with ActivePerl 5.16.3 (32 bit), gfortran 4.6.0 and NONMEM 7.3.0
 Windows 7 64-bit with Strawberry Perl 5.18.2, gfortran 4.7.3 and NONMEM 7.2.0 and 7.3.0
 Windows XP 32-bit with ActivePerl 5.16.3, gfortran 4.6.0 and NONMEM 7.1.0, 7.1.2 and 7.2.0
-MacOS X 10.10.3 with Perl 5.18.2, gfortran 4.8.0 and NONMEM 7.3.0
-MacOS X 10.6.6 with ActiveState Perl 5.16.3, gfortran 4.6.2 and NONMEM 7.2.0 and 7.3.0
+****  MacOS X 10.10.3 with Perl 5.18.2, gfortran 4.8.0 and NONMEM 7.3.0 ***************************
+MacOS X 10.6.6 with ActiveState Perl 5.16.3, gfortran 4.6.2 and NONMEM 7.3.0
 MacOS X 10.6.6 with ActiveState Perl 5.16.3, ifort 12.0.0 and NONMEM 7.2.0 and 7.3.0
-Ubuntu Linux 14.10 with Perl 5.20.1, gfortran 4.9.1 and NONMEM 7.2.0 and 7.3.0
+Ubuntu Linux 15.10 with Perl 5.20.2, gfortran 5.2.1 and NONMEM 7.2.0 and 7.3.0
 Fedora 20 with Perl 5.18.2, gfortran 4.8.2 and NONMEM 7.2.0
 Scientific Linux 6.3 with Perl 5.10.1, gfortran 4.4.7 and NONMEM 7.2.0 and 7.3.0
-CentOS 6.5 with Perl 5.10.1, gfortran 4.4.7 and NONMEM 7.1.0 and 7.3.0
+Scientific Linux 6.3 with Perl 5.10.1, gfortran 5.1.1 and NONMEM 7.3.0
+CentOS 6.5 with Perl 5.10.1, gfortran 4.4.7 and NONMEM 7.1.0, 7.1.2 and 7.3.0
 
 
 ************************

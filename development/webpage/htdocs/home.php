@@ -33,10 +33,17 @@
     as well as development libraries for method developers. You can read more about the different parts of PsN under <a href="docs.php">Documentation</a>.</p>
 <h3>Latest news</h3>
  <p>
-Version 4.4.8 was released September 7th 2015, and is available <a href="download.php">here</a>.
+Version 4.6.0 is planned for release May 23rd 2016, and will be available <a href="download.php">here</a>.
 </p>
  <p>
-The focus of this release is bug fixes and extensions of the test suite. Several of the bugs have been in PsN since version 3.7.6, some are even older. There are only minor new features.
+New features in this version include major redesign and extension to <strong>sir</strong>,
+a tool for fast and robust assessment of parameter uncertainty with automatically generated visual diagnostics of convergence and parameter
+confidence intervals, <strong>simeval</strong>, a tool for simulation-evaluation diagnostics for outlier detection, and <strong>benchmark</strong>, a tool for simple
+comparisons of estimation results and approximate run times across combinations of NONMEM options, Fortran compiler and NONMEM versions.
+</p>
+<p>
+The complete list of new features and bugfixes in 4.6.0 is found  
+<a href="pdfdocs/release_notes_PsN_4_6_0.txt" target="_blank">here</a></dt>.
 </p>
 
  <li>Installation on Windows: Users who install PsN for the first time need to make sure they install a Perl version where
@@ -49,6 +56,16 @@ the needed extra modules are available, see instructions on
 
 <div style="text-align:left;"><a style="font-size:small;color:gray;" href="#" id="show_older_changes">Click here to show change notes for older versions</a></div>
 <div id="older_changes" style="display:none;">  
+<h3>PsN 4.4.8</h3>
+<p>
+Version 4.4.8 was released September 7th 2015.
+</p>
+ <p>
+The focus of this release is bug fixes and extensions of the test suite. Several of the bugs have been in PsN since version 3.7.6, some are even older. There are only minor new features.
+The complete list of new features and bugfixes in 4.4.8 is found  
+<a href="pdfdocs/release_notes_PsN_4_4_8.txt" target="_blank">here</a></dt>.
+</p>
+
 <h3>PsN 4.4.0</h3>
 <p>
 Version 4.4.0 was released April 20th 2015.
