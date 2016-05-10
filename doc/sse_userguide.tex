@@ -1,5 +1,5 @@
 \input{inputs/format_header.tex}
-\guidetitle{SSE user guide}{2016-05-05}
+\guidetitle{SSE user guide}{2016-05-10}
 
 \begin{document}
 
@@ -183,6 +183,11 @@ Items under the OFV statistics heading by default refer to likelihood ratio test
 
 
 \section{Known problems}
+The program will use the wrong simulated data for reestimation if the simulation model file has more than one
+\$INPUT statement,
+the table file with simulated data used for reestimation will only include the items from the last \$INPUT.
+Note: It works fine to split \$INPUT over several lines, as long as the text \$INPUT only appears once.
+
 The simulated datasets are \$TABLE output from NONMEM, and NONMEM formats and rounds off values when printing tables. This leads to two known problems.
 
 \begin{enumerate}
