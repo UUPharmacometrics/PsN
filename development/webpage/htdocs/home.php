@@ -1616,7 +1616,7 @@ encountered unfixed bugs and how to work around them.</li>
 <h3>More information</h3>
 <p>
 Perl-speaks-NONMEM is copyright <br>
-&copy;2013-2015 by Mats Karlsson, Andrew Hooker, Rikard Nordgren and Kajsa Harling.<br>
+&copy;2013-2016 by Mats Karlsson, Andrew Hooker, Rikard Nordgren and Kajsa Harling.<br>
 &copy;2008-2012 by Mats Karlsson, Niclas Jonsson, Andrew Hooker and Kajsa Harling.<br>
 &copy;2006-2007 by Lars Lindbom.<br>
 &copy;2000-2005 by Lars Lindbom and Niclas Jonsson.<br>
