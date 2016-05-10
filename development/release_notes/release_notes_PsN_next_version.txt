@@ -181,7 +181,8 @@ Changes and bug fixes from PsN 4.4.8 to 4.6.0
 
 - Print ofv of full and reduced models to rplots preamble. If lst of either model 
   is not available, the sum of iofv computed from phi-files is used.
-
+- Bug fix: Automatically ensure that phi-file is copied back to m1, even if
+  user did not request it via -nm_output. 
    ___scm___
 
 - Refactored code for filtering data on IGNORE/ACCEPT

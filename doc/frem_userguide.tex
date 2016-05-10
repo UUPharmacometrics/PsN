@@ -1,6 +1,6 @@
 \input{inputs/format_header.tex}
 \usepackage{amsmath}
-\guidetitle{FREM userguide}{2016-04-01}
+\guidetitle{FREM userguide}{2016-05-05}
 
 
 \begin{document}
@@ -28,12 +28,10 @@ frem run1.mod -covariates=SEX,DGRP,WGT
 %frem run1.mod -invariant=SEX,DGRP
 
 \section{Output}
-
-{\Large \texttt{More text here. Start with main default files}}
-
-The main run directory will contain the frem\_vpc model and frem\_vpc dataset, if option -vpc was set.
-The m1 subdirectory of the frem run directory will contain all other generated models, 
-lst-files for the estimated models, and the frem dataset. 
+The final\_models subdirectory of the main run directory 
+will contain the final frem models and their output.
+The m1 subdirectory of the frem run directory will contain intermediate models and output, 
+and the frem dataset. 
 
 \section{Input and options}
 A model file is required on the command-line.
@@ -65,8 +63,8 @@ The -log list must be a subset of the -covariate list.
 If any covariate listed with option -log is not in the list -covariates there will be an error message.
 There must be no covariate listed with both log and -categorical.
 \nextopt
-\optdefault{ordered}{?} 
-{\Large \texttt{TODO special case for ordered categorical}}
+%\optdefault{ordered}{?} 
+%{\Large \texttt{TODO special case for ordered categorical}}
 \optdefault{categorical}{list}
 Optional, default empty.
 A comma-separated list of non-ordered categorical covariates. These will be automatically transformed from
@@ -109,6 +107,8 @@ Default not used. Rescale covariate ETAs in Model 2 to SD close to 1.
 \optname{run\_sir}
 Default set. Disable with -no-run\_sir. If covariance step of Model 4 fails, run sir
 to obtain standard errors of parameters.
+If covariance step of Model 4 is successful, sir will not be run even if option
+-run\_sir is set.
 \nextopt
 \optdefault{rse}{number}
 Default 30 \%.
@@ -117,15 +117,15 @@ this is the guess of relative standard error that will be used for parameters fo
 information that can be used to guess the variance needed for 
 a proposal density for a sir run with Model 4.
 \nextopt
-\optname{vpc}
-{\Large \texttt{Later}}
-Default not set. If set then script will create a frem model that can be run with the vpc script (in a separate call to the vpc pscript).  
-\nextopt
+%\optname{vpc}
+%{\Large \texttt{Later}}
+%Default not set. If set then script will create a frem model that can be run with the vpc script (in a separate call to the vpc pscript).  
+%\nextopt
 \optname{check}
 Default not set. Run evaluation with frem records ignored after frem data set generation, to check ofv is the same.
 \nextopt
-\optdefault{rplots}{level}
-{\Large \texttt{Later}}
+%\optdefault{rplots}{level}
+%{\Large \texttt{Later}}
 
 %\optdefault{dv}{name}
 %Default is DV. The name of the dependent variable. This must be the name used in \$INPUT,
@@ -528,6 +528,11 @@ Setting option -cholesky will often fail with NONMEM versions older than NM7.3, 
 %the m1 directory, open model\_3.ext and carefully add a small value to the diagonal elements of the problematic omega block,
 %save the edited model\_3.ext in m1, and restart frem. The program will then read the omega block from model\_3.ext
 %without running model 3 and then use that block instead.
+
+
+\references
+
+\end{document} 
 
 \section{Computing SE of correlations}
 We use the so-called delta method for computing the uncertainty of correlations based on uncertainty of covariances.

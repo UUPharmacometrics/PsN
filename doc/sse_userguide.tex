@@ -1,5 +1,5 @@
 \input{inputs/format_header.tex}
-\guidetitle{SSE user guide}{2015-05-18}
+\guidetitle{SSE user guide}{2016-05-05}
 
 \begin{document}
 
@@ -188,7 +188,7 @@ The simulated datasets are \$TABLE output from NONMEM, and NONMEM formats and ro
 \begin{enumerate}
 	\item In NONMEM6 1013201 is rounded to 1013200 (five significant digits), and if this makes a significant change to the model estimation, for example if the value is a covariate, then the sse results will be wrong. In NONMEM7 it is possible to set the FORMAT or RFORMAT option in \$TABLE to make sure no important information is lost. With NONMEM6 the user must make sure the rounding to five significant digits does not harm the results. PsN cannot detect this problem.
 
-	\item A column of integers in the input dataset, e.g. OCC for occasion, will be formatted as a floating point number in table output. When the table output is used as input in the estimation step of sse, statements like IF (OCC .EQ. 1) will not work, because to NONMEM 1 is not equal to 1.000000e00. As a workaround the user must write code that will work both for integers and floating point numbers, for example (IF OCC .GT. 0 AND OCC .LT. 2). Alternatively, the user can set the RFORMAT option in the estimation models, see NONMEM help files. 
+	\item A column of integers in the input dataset, e.g. OCC for occasion, will be formatted as a floating point number in table output. When the table output is used as input in the estimation step of sse, statements like IF (OCC .EQ. 1) will not work, because to NONMEM 1 is not equal to 1.000000e00. As a workaround the user must write code that will work both for integers and floating point numbers, for example (IF OCC .GT. 0 AND OCC .LT. 2). Later versions of NONMEM support ID.EQN.1, which will be true both for 1 and 1.000e00.
 \end{enumerate}
 
 \section{Recovering a crashed/stopped sse}

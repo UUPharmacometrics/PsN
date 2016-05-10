@@ -1,5 +1,5 @@
 \input{inputs/format_header.tex}
-\guidetitle{PsN configuration}{2015-11-25}
+\guidetitle{PsN configuration}{2016-05-10}
 \begin{document}
 
 \maketitle
@@ -103,8 +103,21 @@ Some examples:
 ;7_2=c:\nm7_2,7.2
 \end{verbatim}
 By default, PsN will use the NONMEM installation identified by the name 'default'. To use other installations with PsN, use the "-nm\_version" command line option, for example -nm\_version=vi\_big
+
+It is optional to add a comma and a description of the NONMEM installation after
+the version
+number. Example:
+\begin{verbatim}
+[nm_versions]
+;with NONMEM7.2 
+7_1=/opt/NONMEM/nm71,7.1,NM 7.1 using gfortran 4.4.7
+7_2=/opt/NONMEM/nm72,7.2,NM 7.2 using gfortran 5.1.1
+\end{verbatim}
+
 To check which versions are defined in psn.conf without opening the file, use the command 
 psn -nm\_versions
+This command will also show the optional description text after the version number.
+
 If the user wants to invoke nmfe using a wrapper, or use a modifed nmfe script with a different name, the name of the alternative script 
 including the full path can be set under [nm\_versions] instead of the installation directory. PsN will check that the file exists and is executable. 
 Using a wrapper is useful e.g. when environment variable changes are needed prior to nmfe execution.

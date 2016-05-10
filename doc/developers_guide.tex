@@ -1,5 +1,5 @@
 \input{inputs/format_header.tex}
-\guidetitle{Developer's guide}{2015-11-03}
+\guidetitle{Developer's guide}{2016-05-05}
 \usepackage{hyperref}
 
 \begin{document}
@@ -85,6 +85,11 @@ prove -r unit
 and the system tests can be run with
 \begin{verbatim}
 prove -r system
+\end{verbatim}
+
+To suppress PsN log messages during system tests, use option -silent:
+\begin{verbatim}
+prove -r system :: -silent
 \end{verbatim}
 
 Tests can be run from any directory by specifying a path:
