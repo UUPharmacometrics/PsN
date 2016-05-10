@@ -1,5 +1,5 @@
 \input{inputs/format_header.tex}
-\guidetitle{RANDTEST user guide}{2015-10-08}
+\guidetitle{RANDTEST user guide}{2016-05-10}
 
 \begin{document}
 
@@ -148,6 +148,9 @@ There are vertical lines for delta-ofv of the extended model on the original dat
 and also for the
 nominal and empirical delta-ofv cutoff for p=0.05 with degrees of freedom equal to the number of extra THETAs in
 the full model.
+Note: Generation of basic diagnostic plots will fail if there are some samples
+with undefined ofv \emph{and} the Xpose version is less than 4.5.3.9001.
+Therefore the script will skip the basic plots if Xpose version is less than 4.5.3.9001, and instead generate the extended plots.
 
 \subsection{Extended plots}
 The extended plots will be generated if -rplots>1, and start on the
@@ -182,6 +185,9 @@ the modified deltaOFV (mod.deltaOFV).
 
 
 \section{Known bugs and problems}
+Generation of basic diagnostic plots will fail if there are some samples
+with undefined ofv \emph{and} the Xpose version is less than 4.5.3.9001.
+The script will skip the basic plots if Xpose version is less than 4.5.3.9001, and instead generate the extended plots.
 
 It is recommented to remove all \$TABLE from the modelfile, otherwise there will be much extra output produced. For the same reason it is recommended to remove PRINT options from \$ESTIMATION. 
 The results of two runs will be different even if the seed is the same if the lst-file of the input model and base modle are present at the start of one run but not the other. Running the input model changes the state of the random number generator, and therefore the datasets will be different depending on if the input model is run or not before generating the  new datasets.

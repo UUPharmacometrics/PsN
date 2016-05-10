@@ -7,8 +7,13 @@ library(grid)
 library(xpose4) 
 pdf(file=pdf.filename,title=pdf.title)
 
-#xpose4 built-in, need library(xpose4)
-print(randtest.hist(raw.results.file,df=length(extra.thetas),p.val=pvalue)) 
+#xpose4 built-in, need library(xpose4). Must be version >= 4.5.3.9001 to handle NA in delta-ofv
+if(packageVersion("xpose4")<"4.5.3.9001"){
+		warning("xpose4 version must be 4.5.3.9001 or later for randtest plot, using extended plots instead")
+		rplots.level <- 2
+}else{							 
+		print(randtest.hist(raw.results.file,df=length(extra.thetas),p.val=pvalue)) 
+}
 
 if (rplots.level > 1){
 # required packages
