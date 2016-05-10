@@ -12,7 +12,8 @@ require Exporter;
 our @ISA = qw(Exporter);
 our @EXPORT = qw(get_major_minor_nm_version get_command get_command_without_args get_psn_options cmp_float cmp_float_matrix cmp_float_array create_test_dir remove_test_dir copy_test_files like_file_row unlike_file_row do_course_tests cmp_relative redirect_stderr);
 
-# Set this variable to something else if you are testing on a cluster
+# Change the $tempdir variable to the full path of an existing empty folder if you are testing on a Mac
+# Change the $tempdir variable to the full path of an existing empty folder accessible from all nodes if you are testing on a cluster
 my $tempdir = File::Spec->tmpdir;
 
 # Setup an include path to the lib directory
