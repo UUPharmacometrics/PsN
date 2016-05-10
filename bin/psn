@@ -19,6 +19,7 @@ my %options;
 
 my %required_options = ();
 my %optional_options = ( 
+			 'benchmark' => '',
 			 'boot_scm' => '',
 			 'bootstrap' => '',
 			 'cdd' => '',
@@ -84,6 +85,11 @@ $help_text{-help} = <<'EOF';
       -help
       
       With -help psn will print this, more descriptive, list of scripts and exit.
+EOF
+
+$help_text{-benchmark} = <<'EOF';
+    benchmark - Combinatoric benchmarking of NONMEM control stream settings
+	See benchmark_userguide.pdf for details.
 EOF
 
 $help_text{-bootstrap} = <<'EOF';
