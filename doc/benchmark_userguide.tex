@@ -1,5 +1,5 @@
 \input{inputs/format_header.tex}
-\guidetitle{BENCHMARK user guide}{2016-04-13}
+\guidetitle{BENCHMARK user guide}{2016-05-10}
 
 
 \begin{document}
@@ -125,9 +125,11 @@ and the rplots processing being performed for all models as a single group.
 %in the same raw\_results file
 %is greater than this threshold, these models will be flagged in an extra column in the raw\_results file.
 %\nextopt
-%\optdefault{reference\_input}{list}
-%Or something. Prerun lst files as reference, one per input model, or only one if -merge
-%\nextopt
+\optdefault{reference\_lst}{list}
+Add the results from one or more pre-existing .lst files to all raw\_results.
+Saves time if reference results already available, e.g. when comparing results
+from old NONMEM versions to a newly installed version.
+\nextopt
 \optname{copy\_data}
 Default set. Disable with -no-copy\_data. By default, PsN will copy the datafile into NM\_run1 and set a local path in psn.mod, the actual modelfile run with NONMEM. If -no-copy\_data is set, PsN will not copy the data to NM\_run1 and instead set a global path to the datafile in psn.mod.
 \nextopt
