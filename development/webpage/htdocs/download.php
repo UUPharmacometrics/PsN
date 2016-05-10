@@ -376,6 +376,13 @@ The PsN test suite has been run on slurm and locally.
   </tr>
   <tr>
     <th>Mac</th>
+    <td>OS X 10.11.4</td>
+    <td>Perl 5.18.2</td>
+    <td>7.3.0</td>
+    <td>gfortran 5.2.0</td>
+  </tr>
+  <tr>
+    <th>Mac</th>
     <td>OS X 10.6.6</td>
     <td>ActiveState Perl 5.16.3</td>
     <td>7.3.0</td>

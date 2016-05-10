@@ -5,7 +5,7 @@ Windows 7 64-bit with ActivePerl 5.20.1 (32 bit), gfortran 4.8.1 and NONMEM 7.3.
 Windows 7 64-bit with ActivePerl 5.16.3 (32 bit), gfortran 4.6.0 and NONMEM 7.3.0
 Windows 7 64-bit with Strawberry Perl 5.18.2, gfortran 4.7.3 and NONMEM 7.2.0 and 7.3.0
 Windows XP 32-bit with ActivePerl 5.16.3, gfortran 4.6.0 and NONMEM 7.1.0, 7.1.2 and 7.2.0
-****  MacOS X 10.10.3 with Perl 5.18.2, gfortran 4.8.0 and NONMEM 7.3.0 ***************************
+MacOS X 10.11.4 with Perl 5.18.2, gfortran 5.2.0 and NONMEM 7.3.0
 MacOS X 10.6.6 with ActiveState Perl 5.16.3, gfortran 4.6.2 and NONMEM 7.3.0
 MacOS X 10.6.6 with ActiveState Perl 5.16.3, ifort 12.0.0 and NONMEM 7.2.0 and 7.3.0
 Ubuntu Linux 15.10 with Perl 5.20.2, gfortran 5.2.1 and NONMEM 7.2.0 and 7.3.0
@@ -364,11 +364,4 @@ ___se_of_eta___
 
 - Program is removed, because the program output is given by NONMEM in phi-file.
 
-#TODO update testing info. Svetlana!
-#TODO Rikard check nmoutput2so, precond, nca
-#git log all.
-# 6:05 timmar jobb
-#TODO ask sebastian about mcmp rplots
-#TODO which Xpose version to handle undefs in delta-ofv for randtest?
-# TODO grep spdarise, use eigenvalue decomposition and increase of non-positive eigenvalues to
-small and positive to make symmetric matrix positive definite.
+
