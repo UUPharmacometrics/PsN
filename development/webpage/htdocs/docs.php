@@ -38,6 +38,9 @@
     <dt><a href="pdfdocs/randtest_userguide.pdf" target="_blank"><strong>randtest</strong></a></dt>
     <dd>Randomization testing.</dd>
 
+    <dt><a href="pdfdocs/benchmark_userguide.pdf" target="_blank"><strong>benchmark</strong></a></dt>
+    <dd>Benchmarking of NONMEM settings.</dd>
+
     <dt><strong>rawresults</strong></dt>
     <dd>Create a rawresults file from a set of list files.</dd>
 
