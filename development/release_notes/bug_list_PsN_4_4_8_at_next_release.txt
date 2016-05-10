@@ -1,0 +1,53 @@
+This is a list of the known bugs in PsN 4.4.8 at the time of the next public 
+release (4.6.0 May 2016)
+
+* sse will use the wrong simulated data for reestimation if the simulation model file has more than one $INPUT statement. The table file with simulated data used for reestimation will only include the items from the last $INPUT. Note: It works fine to split $INPUT over several lines, as long as the text $INPUT only appears once.
+
+* bug in bootstrap when the original model was filtered out as a result of any of the -skip options, for example -skip_estimate_near_boundary. The results in bootstrap_results.csv will be wrong. The workaround is to either use the -summarize option with a different setting of -skip options, or do the calculations of the results manually from the raw_results file.
+
+* summary calculations for standard errors in bootstrap results are wrong if only a subset of samples remaining after filtering have successful covariance steps (missing se:s from failed covariance steps will be counted as zeros in the summary calculations, instead of skipped)
+
+* If bootstrap has been run with option -dofv, then recalculation of bootstrap results with option -summarize at a later time will give wrong results, the wrong columns of the raw_results file are used.
+
+* bug in scm when median of a covariate is negative, upper and lower bounds of THETA would be wrong, resulting in an NMtran error
+
+* mcmp and ebe_npde will fail if -nm_output option does not include the phi-file.
+
+* bug in randtest results when some samples have an undefined ofv, change in ofv will be set equal to minus input model ofv
+
+* bug in bootstrap -dofv results when some samples have an undefined ofv, delta-ofv will be set equal to minus input model ofv
+
+* bug in rplots functionality when the input model has no $OMEGA or no $SIGMA, no output pdf generated
+
+* bug in parsing of job ID on torque, PsN will crash with -run_on_torque.
+
+* boot_scm will ignore setting of -nm_version from commandline. The script will use nm_version from scm config file, or from psn.conf if not set in scm config file.
+
+* bug in bootstrap input checking that ID column is not used in PK/PRED/ERROR code: PsN will warn erroneously if ID or ID synonym is used in a comment which is the same line as actual code. If comment is put on a line of its own the warning will not be triggered.
+
+* bug in PsN output parsing: The line
+    NO. OF SIG. DIGITS IN FINAL EST.: NaN
+    in a lst-file will make PsN crash. No workaround.
+
+* bug in system test script modelfit.t when nmqual=1 is set in psn.conf. A number of tests in modelfit.t will fail, because the test script expects the .mod control stream extension in the NM_run subfolder while the extension is .ctl when PsN is run with nmqual.
+
+* bug in computing bootstrap results if some runs have terminated in a way that ofv and estimates are undefined (NA in raw_results) and option -no-skip_minimization_terminated was set. In this case the samples with NA will not be filtered out, instead the NA values will be mistaken for 0:s so that the computations of mean, SEs etc will be wrong.
+
+* bug in bootstrap input checking that ID column is not used in IGNORE or ACCEPT statements. The input checking will only detect IGNORE or ACCEPT on ID column if an equal sign is used in the statement, as in IGNORE=(ID.EQ.3). If the equal sign is skipped, as in IGNORE(ID.EQ.5), then the input checking will not detect it.
+
+* bug in script psn_clean for options -level=2 and -restart. The program should, but does not, in NM_run remove numbered retry files with extensions .ctl, .phm, .shk, .grd, .xml, .cnv, .smt, .rmt, .imp, .npd, .npe, .npi, .fgh, .log.xml, .cpu, .shm, .agh
+
+* There is an error in the scm config file examples config_template_standard.scm and config_template_backward.scm included in the documentation. They refer to an option base_criteria_values which has been removed. Instead the command-line option -base_ofv should be used. The example files on http://psn.sourceforge.net/docs.php are updated and correct.
+
+* sumo will crash if run with a lst-file where all parameter are FIXED
+
+* sumo will crash if run with a lst-file where the model used $MSFI, i.e. $THETA $OMEGA and $SIGMA are not present.
+
+* The parameter labels in a raw results file used as input to PsN must be unique. If two parameters have the same label in a raw results file that PsN uses in e.g. sir, vpc or sse, PsN will crash during reading of the raw results file.
+
+* Data values with more than five significant digits in sse
+The simulated datasets used in sse are \$TABLE output from NONMEM, and NONMEM rounds off values when printing tables. In NONMEM 6 1013201 is rounded to 1013200 (five significant digits), and if this makes a significant change to the model estimation, for example if the value is a covariate, then the sse results will be wrong. In NONMEM7 it is possible to set the FORMAT option in $TABLE to make sure no important information is lost. With NONMEM 6 the user must make sure the rounding to five significant digits does not harm the results.
+
+* Lower case user defined and reserved words
+Starting with NONMEM 7.2 lower case user defined and reserved words are supported. This is not supported
+by PsN. For example in $INPUT all reserved words have to be upper case.
