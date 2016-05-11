@@ -1,0 +1,16 @@
+Dear PsN users,
+
+PsN 4.6.0 is now available for download from http://psn.sourceforge.net.
+
+New features include 
+
+* Further advancement of sir, a tool for obtaining parameter uncertainty faster than with a bootstrap and more accurately than based on the covariance step. The program runs a fully automated five-step procedure with flexible handling of assymetric parameter distributions and produces a range of diagnostic plots with detailed description of purpose and interpretation.
+
+* simeval, a new tool for simulation-evaluation based identification of outliers.
+
+* benchmark, a new tool for simple comparison of ofv, run times and parameter estimates across NONMEM versions and/or alternative settings of NONMEM control stream options. The program will generate and run control streams for all possible combinations of the options the user has listed.
+
+The complete list of new features and bug fixes is found on http://psn.sourceforge.net/pdfdocs/release_notes_PsN_4_6_0.txt
+
+Best regards,
+The PsN development team
