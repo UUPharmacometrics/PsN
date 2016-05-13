@@ -1,5 +1,5 @@
 \input{inputs/format_header.tex}
-\guidetitle{PRECOND user guide}{2016-03-09}
+\guidetitle{PRECOND user guide}{2016-05-13}
 \usepackage{color}
 \usepackage{amsmath}
 \usepackage{tikz}
@@ -38,8 +38,8 @@ The only required argument is a model file.
 \optname{perturb}
 After the model is preconditioned the initial estimate is perturbed to the direction of the eigenvector that is corresponding negative eigenvalue of the R-matrix.  This will increase the chance of finding the final parameter estimate that is not at the saddle point so that the R-matrix of the preconditioned model will be a positive semi-definite matrix.
 \nextopt
-\optdefault{notalways}{}
-Continue onto preconditioning only if the covariance step of the original model fails.  (without this option, precond script will always continue onto preconditioning to improve the the accuracy of the covariance matrix computation and also to potentially unveil the non-estimability of the model parameters)  Note that in the previous version there was an option called {\bf -always}, now this setting is default hence {\bf -always} option was replaced by {\bf -notalways}.
+\optname{notalways}
+Continue onto preconditioning only if the covariance step of the original model fails.  (without this option, precond script will always continue onto preconditioning to improve the the accuracy of the covariance matrix computation and also to potentially unveil the non-estimability of the model parameters)  Note that the previously available option {\bf -always} was replaced by {\bf -notalways} as to always precondition is now the default. The {\bf -always} option is still kept as a dummy option for backwards compatibility.
 \nextopt
 \optdefault{pre}{precond\_dir1}
 With this option the user can also specify a directory.  If the modelfit directory is specified then the R-matrix is automatically extracted.  If precond directory is specified then we can precondition the already preconditioned model.  This will allow us to iteratively precondition deeply ill-conditioned model.  In order for the iterative preconditioning to work properly, ``precMatrix" file should be unmodified and available in the specified precond directory.
@@ -191,7 +191,7 @@ CL     = ABS(THETA(1))*EXP(ETA(1)).\\
 
 \section{Description}
 
-Below is a simple diagram of the internal automated precond workflow. Some automatic minor modifications of the model will be made before precond will do its first run to make sure that the R-matrix will be created.
+Below is a simple diagram of the internal automated precond workflow for when -notalways is in use. By default the preconditioning will not be skipped. Some automatic minor modifications of the model will be made before precond will do its first run to make sure that the R-matrix will be created.
 
 \tikzstyle{decision} = [diamond, draw, fill=blue!20, 
     text width=8em, text badly centered, node distance=4cm, inner sep=0pt]

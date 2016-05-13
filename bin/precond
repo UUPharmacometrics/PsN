@@ -200,7 +200,7 @@ EOF
 $help_text{-notalways} = <<'EOF';
     -notalways
 
-      Continue onto preconditioning only if the covariance step of the original model fails. 
+    Continue onto preconditioning only if the covariance step of the original model fails.  (without this option, precond script will always continue onto preconditioning to improve the the accuracy of the covariance matrix computation and also to potentially unveil the non-estimability of the model parameters)  Note that the previously available option -always was replaced by -notalways as to always precondition is now the default. The -always option is still kept as a dummy option for backwards compatibility.
 EOF
 
 $help_text{-always} = <<'EOF';
