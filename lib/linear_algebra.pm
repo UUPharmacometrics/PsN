@@ -1744,6 +1744,101 @@ sub lower_triangular_UTU_multiply
     }
     return 0;
 }
+sub conditional_covariance
+{
+    my %parm = validated_hash(\@_,
+							  varcov => { isa => 'ArrayRef', optional => 0 },
+							  cov_index_first => { isa => 'Int', optional => 0 },
+							  cov_index_last => { isa => 'Int', optional => 0 },
+							  par_index => { isa => 'Int', optional => 0 },
+	);
+	my $varcov = $parm{'varcov'};
+	my $cov_index_first = $parm{'cov_index_first'};
+	my $cov_index_last = $parm{'cov_index_last'};
+	my $par_index = $parm{'par_index'};
+
+	my $size = scalar(@{$varcov});
+	my $error = 0;
+	if (($par_index >= $size) or ($cov_index_first >= $size) or ($cov_index_last >= $size)){
+		print "par_index $par_index or cov_index_first $cov_index_first or ".
+			"cov_index_last $cov_index_last outside size $size\n";
+		$error =1;
+	}
+	if (($par_index >= $cov_index_first) or ($cov_index_first > $cov_index_last) or ($par_index >= $cov_index_last)){
+		print "par_index $par_index or cov_index_first $cov_index_first or ".
+			"cov_index_last $cov_index_last in wrong order\n";
+		$error =1;
+	}
+	return ($error,[],[]) if ($error > 0);
+
+	my @varcov_copy=();
+	my @parcov_vector=();
+	my @cov_copy=();
+	for (my $i=0; $i<$size; $i++){
+		if (($i == $par_index) or (($i >= $cov_index_first) and ($i <= $cov_index_last))){
+			push(@varcov_copy,[]);
+			push(@cov_copy,[]) if ($i>$par_index);
+			for (my $j=0; $j<$size; $j++){
+				if (($j == $par_index) or (($j >= $cov_index_first) and ($j <= $cov_index_last))){
+					push(@{$varcov_copy[-1]},$varcov->[$i]->[$j]);
+					if ($j>$par_index){
+						push(@{$cov_copy[-1]},$varcov->[$i]->[$j]);
+						if ($i == $par_index){
+							push(@parcov_vector,$varcov->[$i]->[$j]);
+						}
+					}
+				}
+			}
+		}
+	}
+
+	my $result = [];
+	$error = frem_conditional_omega_block(\@varcov_copy,1,$result);
+	return ($error,[],[]) if ($error > 0);
+	my ($error2,$coefficients) = frem_conditional_coefficients(matrix =>\@cov_copy,
+															   vector => \@parcov_vector);
+
+	return ($error2,$result,$coefficients);
+	
+}
+
+sub frem_conditional_coefficients
+{
+    my %parm = validated_hash(\@_,
+							  matrix => { isa => 'ArrayRef', optional => 0 },
+							  vector => { isa => 'ArrayRef', optional => 0 },
+	);
+	my $matrix = $parm{'matrix'};
+	my $vector = $parm{'vector'};
+
+	my @coefficients = ();
+
+	my $size = scalar(@{$matrix});
+	my $size2 = scalar(@{$vector});
+	my $error = 0;
+	if (($size2 != $size) or (scalar(@{$matrix->[0]}) != $size)){
+		print "matrix size $size not square or vector size $size2 not equal\n";
+		$error =1;
+		return ($error,[]);
+	}
+
+    my $refInv = [];
+    $error=invert_symmetric($matrix,$refInv);
+    if ($error > 0){
+		print "invert_symmetric error $error in frem_conditional_coefficients\n";
+		return ($error,[]) ;
+    }
+	#now multiply vector with refInv 
+	for (my $i=0; $i< $size; $i++){
+		my $num = 0;
+		for (my $j=0; $j< $size; $j++){
+			$num += $vector->[$j]*($refInv->[$i]->[$j]);
+		}
+		push(@coefficients,$num);
+	}
+	return (0,\@coefficients);
+}
+
 
 sub frem_conditional_omega_block
 {
