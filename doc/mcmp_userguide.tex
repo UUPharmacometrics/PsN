@@ -1,5 +1,5 @@
 \input{inputs/format_header.tex}
-\guidetitle{MCMP user guide}{2015-09-16}
+\guidetitle{MCMP user guide}{2016-10-13}
 
 
 \begin{document}
@@ -101,8 +101,8 @@ or psn\_options -h on the commandline.
 
 \subsection{Auto-generated R-plots from PsN}
 \newcommand{\rplotsconditions}{The default mcmp template 
-requires the R library ggplot2.
-If the package is not installed then no pdf will be generated,
+requires the R libraries ggplot2 and plyr.
+If the packages are not installed no pdf will be generated,
 see the .Rout file in the main run directory for error messages.}
 \input{inputs/rplots_section_body.tex}
 
@@ -115,10 +115,23 @@ required for 80\% power.
 \subsubsection*{Extended plots}
 Extended mcmp rplots will be generated in file PsN\_mcmp\_plots.pdf if option -rplots is set >1,
 and the general rplots conditions fulfilled, see above.
-The first extended plot is the the mcmp-generated power curves for
+
+The first extended plot shows a power versus sample size
+parametric power estimation (PPE) curve 
+together with the mcmp-generated power curve for
+the signficance level chosen with option -significance\_level, with a mark at the sample size 
+required for 80\% power.
+Parametric power estimation allows to generate data for full power
+versus sample size curve(s) 
+based on simulation and reestimation
+with full and reduced models performed with a single sample size.
+The procedure is described in \cite{Ueckert}. 
+
+The second extended plot is the the mcmp-generated power curves for
 each of the significance levels, with a mark of the sample size 
 required for 80\% power.
-The second extended plot is a histogram of the individual full-reduced delta-ofv. 
+
+The third extended plot is a histogram of the individual full-reduced delta-ofv. 
 
 \section{Output}
 The output from each mcmp is mcmp\_results.csv which contains a table with header 

@@ -41,75 +41,82 @@ library(ggplot2)
             panel.grid.major=element_line(color="gray95"))
     
          
-    # If significance level 20 was used
-    if(sig.level==20){
-        # Define the smallest sample size to reach >= 80 % power with (and put the info in a dataframe, for plotting reasons)
-        vline = data.frame(x=rawres$total_X[which(rawres$power.at.20.>=80)[1]], 
-                           xend=rawres$total_X[which(rawres$power.at.20.>=80)[1]],
-                           y=80, yend=25)
-        
-        # Default plot
-        print(PLoT1+geom_point(data=rawres, aes(x=total_X, y=power.at.20.), size=2.2)+
-            geom_segment(data=vline, aes(x=x, xend=xend, y=y, yend=yend), linetype=2, colour='red', size=0.7))
+
+    if(sig.level %in% c(0.1,1,5,10,15,20)){
+      column_name <- sprintf("power.at.%i.", sig.level)
+      vline <-  data.frame(x=rawres$total_X[which(rawres[,column_name]>=80)[1]], 
+                         xend=rawres$total_X[which(rawres[,column_name]>=80)[1]],
+                         y=80, yend=25)
+      default_plot <- PLoT1+
+        geom_point(data=rawres, 
+                   aes_string("total_X", column_name), 
+                   size=2.2)+
+        geom_segment(data=vline, aes(x=x, xend=xend, y=y, yend=yend), 
+                     linetype=2, colour='red', size=0.7)
+      print(default_plot)
     }
-    # If significance level 15 was used
-    if(sig.level==15){
-        # Define the smallest sample size to reach >= 80 % power with (and put the info in a dataframe, for plotting reasons)
-        vline = data.frame(x=rawres$total_X[which(rawres$power.at.15.>=80)[1]], 
-                           xend=rawres$total_X[which(rawres$power.at.15.>=80)[1]],
-                           y=80, yend=25)
-        
-        # Default plot
-        print(PLoT1+geom_point(data=rawres, aes(x=total_X, y=power.at.15.), size=2.2)+
-            geom_segment(data=vline, aes(x=x, xend=xend, y=y, yend=yend), linetype=2, colour='red', size=0.7))
-    }
-    # If significance level 10 was used
-    if(sig.level==10){
-        # Define the smallest sample size to reach >= 80 % power with (and put the info in a dataframe, for plotting reasons)
-        vline = data.frame(x=rawres$total_X[which(rawres$power.at.10.>=80)[1]], 
-                           xend=rawres$total_X[which(rawres$power.at.10.>=80)[1]],
-                           y=80, yend=25)
-        
-        # Default plot
-        print(PLoT1+geom_point(data=rawres, aes(x=total_X, y=power.at.10.), size=2.2)+
-            geom_segment(data=vline, aes(x=x, xend=xend, y=y, yend=yend), linetype=2, colour='red', size=0.7))
-    }
-    # If significance level 5 was used
-    if(sig.level==5){
-        # Define the smallest sample size to reach >= 80 % power with (and put the info in a dataframe, for plotting reasons)
-        vline = data.frame(x=rawres$total_X[which(rawres$power.at.5.>=80)[1]], 
-                           xend=rawres$total_X[which(rawres$power.at.5.>=80)[1]],
-                           y=80, yend=25)
-        
-        # Default plot
-        print(PLoT1+geom_point(data=rawres, aes(x=total_X, y=power.at.5.), size=2.2)+
-            geom_segment(data=vline, aes(x=x, xend=xend, y=y, yend=yend), linetype=2, colour='red', size=0.7))
-    }
-    # If significance level 1 was used
-    if(sig.level==1){
-        # Define the smallest sample size to reach >= 80 % power with (and put the info in a dataframe, for plotting reasons)
-        vline = data.frame(x=rawres$total_X[which(rawres$power.at.1.>=80)[1]], 
-                           xend=rawres$total_X[which(rawres$power.at.1.>=80)[1]],
-                           y=80, yend=25)
-        
-        # Default plot
-        print(PLoT1+geom_point(data=rawres, aes(x=total_X, y=power.at.1.))+
-          geom_segment(data=vline, aes(x=x, xend=xend, y=y, yend=yend), linetype=2, colour='red', size=0.7) )
-    }
-    # If significance level 0.1 was used
-    if(sig.level==0.1){
-        # Define the smallest sample size to reach >= 80 % power with (and put the info in a dataframe, for plotting reasons)
-        vline = data.frame(x=rawres$total_X[which(rawres$power.at.0.1.>=80)[1]], 
-                           xend=rawres$total_X[which(rawres$power.at.0.1.>=80)[1]],
-                           y=80, yend=25)
-        
-        # Default plot
-        print(PLoT1+geom_point(data=rawres, aes(x=total_X, y=power.at.0.1.)) +
-          geom_segment(data=vline, aes(x=x, xend=xend, y=y, yend=yend), linetype=2, colour='red', size=0.7))
-    }
-    
     
     if (rplots.level > 1){
+      
+      # for rplots>1 a PPE based curve will be included in the output
+      
+      #parametric power estimation function
+      alpha <- sig.level/100
+      ppe <- function(dofvs, df=1){
+        dofvs <- dofvs[dofvs>0]
+        opt.fun<-function(ncp)-sum(dchisq(dofvs,df,ncp,log=T))
+        init <- mean(dofvs)-df
+        fit <- optim(par=init, fn=opt.fun, lower=0, method="L-BFGS-B")
+        ncp <- fit$par
+        power <- pchisq(qchisq(1-alpha,df=df,ncp=0),df=df,ncp=ncp,lower.tail=F)
+        return(list(power=power, ncp=ncp))
+      }
+      
+      ppe_subjects <- function(dofvs, ncp=NULL, df=1, n.subjects, pred.n.subjects){
+        if(is.null(ncp)){
+          ppe.fit <- ppe(dofvs, df)
+          ncp <- ppe.fit$ncp
+        }
+        ncps <- ncp/n.subjects*pred.n.subjects  
+        power <- pchisq(qchisq(1-alpha,df=df,ncp=0),df=df,ncp=ncps,lower.tail=F)
+        return(power)
+      }
+      
+      df <- NULL
+      n_subjects <- NULL
+      # find degrees of freedom 
+      if(file.exists('version_and_option_info.txt')){
+        options <- readLines('version_and_option_info.txt')
+        df_line <- options[grepl("-df=\\d+", options)]
+        df <- as.numeric(sub("-df=(\\d+)", "\\1", df_line))
+      }
+      # find number of subjects
+      if(file.exists("m1/full.phi")){
+        full_ofv <-  read.table('m1/full.phi', skip=1, header=T)
+        n_subjects <- length(full_ofv$ID)
+      }
+      else if(file.exists("m1.zip")){
+        full_ofv <-  read.table(unz("m1.zip",'m1/full.phi'), skip=1, header=T)
+        n_subjects <- length(full_ofv$ID)
+      }
+      
+      if(!is.null(df) ||!is.null(n_subjects)){
+        ncp <- ofv.reduced-ofv.full
+        ppe_power <- ppe_subjects(ncp = ncp, df=1, n.subjects = n_subjects, pred.n.subjects = rawres$total_X)
+        ppe_power_curves <- data.frame(subjects=rawres$total_X, power=ppe_power*100, method="PPE")
+        p <- PLoT1+
+          geom_point(data=transform(rawres, method="MCMP"), 
+                     aes_string("total_X", column_name, color="method"), 
+                     size=2.2) + 
+          geom_line(data=ppe_power_curves, 
+                    aes(subjects, power, color=method), 
+                    size=1.2)+
+          scale_color_manual("Method", values = c(MCMP="black", PPE="darkblue"))+
+          ggtitle("MCMP- versus PPE-based power curve")+
+          theme(legend.position=c(1,0), legend.justification=c(1,0),
+                legend.text=element_text(size=12))
+        print(p) 
+      }
       
       
       # Rearrange the rawres file (without having to use the package reshape2)
@@ -147,4 +154,5 @@ library(ggplot2)
     
 
     dev.off()
+
 
