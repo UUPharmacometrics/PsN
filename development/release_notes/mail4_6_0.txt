@@ -4,7 +4,7 @@ PsN 4.6.0 is now available for download from http://psn.sourceforge.net.
 
 New features include 
 
-* Further advancement of sir, a tool for obtaining parameter uncertainty faster than with a bootstrap and more accurately than based on the covariance step. The program runs a fully automated five-step procedure with flexible handling of assymetric parameter distributions and produces a range of diagnostic plots with detailed description of purpose and interpretation.
+* Further advancement of sir, a tool for obtaining parameter uncertainty faster than with a bootstrap and more accurately than based on the covariance step. The program runs a fully automated iterative procedure and produces easy to use results, as well as diagnostic plots to support their visualization and interpretation.
 
 * simeval, a new tool for simulation-evaluation based identification of outliers.
 
