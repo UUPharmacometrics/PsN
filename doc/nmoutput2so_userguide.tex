@@ -1,12 +1,12 @@
 \input{inputs/format_header.tex}
-\guidetitle{nmoutput2so user guide}{2016-04-04}
+\guidetitle{nmoutput2so user guide}{2016-05-13}
 
 \begin{document}
 
 \maketitle
 
 \section{Introduction}
-The nmoutput2so script creates and populates a DDMoRe Standardized Output 
+The nmoutput2so script creates and populates a DDMoRe Standard Output 
 \cite{Terranova}
 xml file given the output from one or more NONMEM runs. 
 It is necessary that the format of the model file and other files follow a set of requirements (see below) for this to work. The Perl module XML::LibXML is required by nmoutput2so, but not PsN in general. Make sure that it is installed before using nmoutput2so (If you are using ActivePerl on Windows please read the section on installation below). See the PsN installation guide for intructions.
@@ -43,7 +43,7 @@ For example:
 Set a comma separated list of simple XPaths relative the SOBlock. These elements will be the only ones used.
 For example: 
 \begin{verbatim}
--only_include_elements=Estimation/OFMeasures
+-only_include_elements=Estimation/Predictions
 \end{verbatim}
 \nextopt
 \optname{message}
@@ -83,8 +83,7 @@ in which case the columns will be put in a separate SimulatedProfiles element.
 Set to print information, such as all errors and warnings, during conversion to stdout.
 \nextopt
 \optname{external\_tables}
-This option will probably change its format.
-Set to use external tables for the simulations
+Set to create external table files for the simulation results
 \nextopt
 \optname{include\_fixed\_params}
 Set to include estimates of all fixed parameters.
@@ -101,13 +100,14 @@ Do not use! Only for internal use by the PsN connector.
 
 \subsection{Requirements on the model file}
 \begin{itemize}
-    \item All NONMEM parameters (THETAs, OMEGAs and SIGMAs) must have labels. A label is a one word (and only one word) comment on the same line as the definition of the initial estimate of the parameter. This means that all block definitions must be written on different rows. Example:
+    \item It is recommended that all NONMEM parameters (THETAs, OMEGAs and SIGMAs) have labels. A label is a one word (and only one word) comment on the same line as the definition of the initial estimate of the parameter. This means that all block definitions must be written on different rows. Example:
         \begin{verbatim}
 $OMEGA BLOCK(2)
  1.2     ; PPV_CL
  0.01    ; CORR_CL_V
  0.1     ; PPV_V
         \end{verbatim}
+        Paramaters without labels will get a mangled name i.e. THETA(1) becomes THETA\_1\_
     \item To be able to populate the Residuals and the Predictions entries (or SimulatedProfiles for simulations) an sdtab table must be specified. The names but not the order of the columns is important. ID and TIME must be in the table. Other columns are optional. The example below shows an sdtab with all columns. The name of the file must start with "sdtab" Example:
         \begin{verbatim}
 $TABLE ID TIME MDV DV PRED IPRED RES IRES WRES IWRES CWRES NOAPPEND FILE=sdtab2
@@ -176,6 +176,7 @@ ETA_BOV_TL = ETA(OCC_ETA_BOV_TL)
     \item PopulationParameters for simulations are assumed to be fixed for all individuals and occations thus not supporting \$PRIOR
     \item All parameters in a bootstrap will be on the var/cov scale regardless of the scale used in the model.
     \item Parameters with no labels will not generate any warnings for bootstrap when given on the sd/corr scale.
+    \item Only the first \$PROBLEM will be added to the SO
 \end{itemize}
 
 \section{Output}

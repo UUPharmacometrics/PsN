@@ -113,16 +113,16 @@ EOF
 $help_text{-exclude_elements} = <<'EOF';
     -exclude_elements 
 
-    A comma separated list of paths to elements to exclude
+    A comma separated list of XPaths to elements to exclude
     For example Estimation/PopulationEstimates
 EOF
 
 $help_text{-only_include_elements} = <<'EOF';
     -only_include_elements 
 
-    A comma separated list of paths to the elements to include
+    A comma separated list of XPaths to the elements to include
     No other elements than those listed will be included.
-    For example Estimation/PopulationEstimates
+    For example Estimation/Predictions
 EOF
 
 $help_text{-message} = <<'EOF';
@@ -183,7 +183,7 @@ $help_text{-external_tables} = <<'EOF';
     -external_tables
 
     This option will probably change its format.
-    Set to use external tables for the simulations
+    Set to create external table files for the simulation results
 EOF
 
 $help_text{-bootstrap_results} = <<'EOF';
