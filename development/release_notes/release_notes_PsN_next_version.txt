@@ -184,6 +184,7 @@ Changes and bug fixes from PsN 4.4.8 to 4.6.0
   is not available, the sum of iofv computed from phi-files is used.
 - Bug fix: Automatically ensure that phi-file is copied back to m1, even if
   user did not request it via -nm_output. 
+
    ___scm___
 
 - Refactored code for filtering data on IGNORE/ACCEPT
@@ -291,6 +292,7 @@ Changes and bug fixes from PsN 4.4.8 to 4.6.0
 - Cleanup of error messages and information about unidentifiability
 - Option -always is changed to dummy option. Functionality is always on, the option is 
   only kept for backwards compatibility.
+- New option -notalways to only precondition after a failed covariance step.
 - Bug fix handling of case when S matrix is unobtainable.
 
    ___benchmark___
