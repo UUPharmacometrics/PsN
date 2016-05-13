@@ -9,7 +9,7 @@ our ($dev,$version,$lib_dir,$config_file,$config);
 #the version line is extracted in Makefile using regular expression
 # /\$version\s*=\s*.[0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*.;/
 # so be careful when you edit!!!
-$version = '4.5.26';
+$version = '4.6.0';
 
 # The following line will be changed by make
 $dev = 1;
@@ -36,13 +36,13 @@ our @nm7_extensions = ('.ext','.cov','.cor','.coi','.phi','.phm', '.shk','.grd',
 
 # Default disable all warnings except those coming from Getopt
 # Enable all warnings if $warnings_enabled is set
-#$SIG{__WARN__} = sub {
-#        my $package = caller;
-#        my $message = shift;
-#        if ($warnings_enabled or $package =~ /Getopt::Long/i) {
-#                warn $message;
-#        }
-#};
+$SIG{__WARN__} = sub {
+        my $package = caller;
+        my $message = shift;
+        if ($warnings_enabled or $package =~ /Getopt::Long/i) {
+                warn $message;
+        }
+};
 
 if( -e home() . "/psn.conf" ){
 	$config_file = home() . "/psn.conf";
