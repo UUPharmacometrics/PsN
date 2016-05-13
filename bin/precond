@@ -83,7 +83,8 @@ EOF
 $help_text{-cov} = <<'EOF';
     -cov
 
-      Explicitly set the covariance matrix to use. If this option is used only the post processing step will be done.
+      Explicitly set the covariance matrix to use.
+      If this option is used only the post processing step will be done.
 EOF
 
 $help_text{-cholesky} = <<'EOF';
@@ -127,7 +128,8 @@ EOF
 $help_text{-output_model} = <<'EOF';
     -output_model=filename
 
-      Set the name of the output model. If this option is set the model will be created but not run
+      Set the name of the output model. If this option is
+      set the model will be created but not run
 EOF
 
 $help_text{-offset_rawres} = <<'EOF';
@@ -200,7 +202,15 @@ EOF
 $help_text{-notalways} = <<'EOF';
     -notalways
 
-    Continue onto preconditioning only if the covariance step of the original model fails.  (without this option, precond script will always continue onto preconditioning to improve the the accuracy of the covariance matrix computation and also to potentially unveil the non-estimability of the model parameters)  Note that the previously available option -always was replaced by -notalways as to always precondition is now the default. The -always option is still kept as a dummy option for backwards compatibility.
+    Continue onto preconditioning only if the covariance step of
+    the original model fails.  (without this option, precond
+    script will always continue onto preconditioning to improve
+    the the accuracy of the covariance matrix computation and also to
+    potentially unveil the non-estimability of the model parameters)
+    Note that the previously available option -always was replaced
+    by -notalways as to always precondition is now the default.
+    The -always option is still kept as a dummy option for
+    backwards compatibility.
 EOF
 
 $help_text{-always} = <<'EOF';
