@@ -1,5 +1,5 @@
 \input{inputs/format_header.tex}
-\guidetitle{RUNRECORD user guide}{2015-05-11}
+\guidetitle{RUNRECORD user guide}{2016-05-13}
 
 \begin{document}
 
@@ -168,9 +168,13 @@ The txt file can just be opened in Excel using the standard File-$>$Open procedu
 	\item Select Data-$>$Get External Data-$>$Import Text File
 	\item Select the AArunInfo.txt file, press Next, select Semicolon as delimeter and press Finish.
 	\item In the Import Data dialog, select Properties:
-	\item Make sure the following options are slected/de-selected:
-	\item Press OK twice, and the data is in the spreadsheet, e.g.:
-	\item Format the information as desired, e.g.:
+	\item Under\\
+    {\bf If the number of rows in the data range changes upon refresh}\\
+    make sure that\\
+    ``Overwrite existing cells with new data, clear unused cells''\\
+    is selected and the other alternatives are deselected. 
+	\item Press OK twice, and the data is in the spreadsheet.
+	\item Format the information as desired.
 	\item There is an External Data toolbar that is handy when new runs are to be added to the run record:
 By pressing the red exclamation mark, the contents of the spreadsheet is updated to include the current information of the AArunInfo.txt file. So, if the runrecord script has been run to include more NONMEM runs in the AArunInfo.txt file, it is just to open the Excel spreadsheet and press the red exclamation mark to include the new information.
 	\item There seems to be one bug in the Refresh Data procedure in the previous bullet - line heights are reset to the default:
