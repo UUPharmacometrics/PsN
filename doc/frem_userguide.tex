@@ -1,6 +1,6 @@
 \input{inputs/format_header.tex}
 \usepackage{amsmath}
-\guidetitle{FREM userguide}{2016-05-05}
+\guidetitle{FREM userguide}{2016-05-16}
 
 
 \begin{document}
@@ -331,7 +331,7 @@ just before first observation line for individual.
 On each copied line, set value in DV column to covariate value, or ln(value) if this covariate is listed with option -log,
 and FREMTYPE to a unique type-value for this covariate. % and parameter block. 
 If MDV column present then MDV=0, else if EVID present then EVID=0.% if non-missing covariate value, otherwise EVID=2. 
-Store non-missing covariate values in array, one array per covariate, to be able to compute medians and 
+Store non-missing covariate values in array, one array per covariate, to be able to compute means and %medians and 
 variance-covariance matrix later to be used as initial estimates in \$THETA and \$OMEGA. 
 %	\item Loop over each occasion (if OCC defined). 
 %Copy first line observation line for this occasion. 
@@ -353,8 +353,9 @@ variance-covariance matrix later to be used as initial estimates in \$THETA and 
 \item[] (end loop over individuals)
 \end{enumerate}
 
-	\item Compute medians of %invariant and time-varying
-    covariates. Warn if any median has absolute value less than $10^{-2}$ since additive error will be inappropriate for that covariate.
+	\item Compute means of %medians of %invariant and time-varying
+    covariates. Warn if any mean %median
+    has absolute value less than $10^{-2}$ since additive error will be inappropriate for that covariate.
     Also compute variance-covariance matrix %of invariant covariates, and of medians (over occasions) for time-varying. Two separate variance-covariance matrices.
     If missing values then just skip.
 \end{enumerate}
