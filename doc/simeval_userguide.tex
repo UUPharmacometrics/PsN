@@ -1,5 +1,5 @@
 \input{inputs/format_header.tex}
-\guidetitle{SIMEVAL user guide}{2016-05-03}
+\guidetitle{SIMEVAL user guide}{2016-05-16}
 
 \begin{document}
 
@@ -9,28 +9,28 @@
 
 \section{Overview}
 
-The simeval program is a tool for simulation-evaluation based diagnostics.
+The simeval program is a tool for simulation-evaluation based diagnostics that aims to identify model misspecification and outliers.
 %based on objective functiuon value (OFV), individual function value (iOFV)
 %and empirical Bayes estimates (EBEs). 
 The principle is 
 \begin{enumerate}
-\item Simulate N data sets from final model
+\item Simulate N data sets from final estimates of the model
 \item Apply final model to each data set
-(evaluate given the model parameters used for simulation or evaluate with
-model parameters that are re-estimated for each simulated data set)
+(simple evaluation given the population final parameter estimates or full estimation with
+population parameters that are re-estimated for each simulated data set)
 \item Extract output for diagnostics
 \begin{description}
-\item[OFV] population
-\item[iOFV] individual
-\item[EBE] parameter
-\item[IWRES] residual
-\item[CWRES] residual
+\item[pOFV] population objective function value
+\item[iOFV] individual objective function value
+\item[EBE] parameter individual estimates (empirical bayesian estimates)
+\item[IWRES] individual weighted residual
+\item[CWRES] conditional weighted residual
 \end{description}
-\item Provide reference distributions for ”observed” OFV, iOFV, EBE, CWRES and IWRES
+\item Provide reference distributions for ”observed” pOFV, iOFV, EBE, CWRES and IWRES (calculated on the real dataset)
 \end{enumerate}
-The program computes normalized prediction distribution errors for EBE:s, CWRES and IWRES 
+The program computes normalized prediction distribution errors for iOFV, EBE, CWRES and IWRES 
 using the procedure described in \cite{Comets}, with example use in \cite{Keizer} and \cite{Largajolli}.
-It also performs OFV diagnostics. Diagnostics plots are created via the -rplots option, see section 
+It also performs further diagnostics based on posterior predictive check (PPC) principle that are later on introduced in the section Output. Diagnostics plots are created via the -rplots option, see section 
 Auto-generated R-plots from PsN.
 
 Example call
@@ -64,7 +64,7 @@ By setting this option to a number N greater than 1, the 'samples' simulations a
 will be split equally between N model files, which can be run in parallel.
 \nextopt
 \optname{reminimize}
-Default not set. By default, simulated datasets will be run with MAXEVAL=0 (or equivalent for non-classical estimation methods). If option -reminimize is set then \$EST will be the same as in the input model. 
+Default not set. By default, simulated datasets will be run with MAXEVAL=0 (or equivalent for non-classical estimation methods). If option -reminimize is set then \$EST will be the same as in the input model. We advise the user to use together with MAXEVAL=0 the MCETA option in order to avoid local minima at the individual level.
 \nextopt
 \optdefault{gls\_data\_file}{filename}
 Default gls\_data.dta. A file with input data for the gls program is always generated. This option changes the name of that file. After this file is created, the gls program can be run with option \mbox{-gls\_model} and -ind\_shrinkage with minimum runtime, see gls\_userguide.pdf 
@@ -82,7 +82,7 @@ Default TIME. Independent variable for DV vs idv plot.
 
 \subsection{Some important common PsN options}
 For a complete list see common\_options.pdf, 
-or psn\_options -h on the commandline.
+or psn\_options -h on the command line.
 \input{inputs/basic_options.tex}
 
 \subsection{Diagnostic plots}
@@ -106,20 +106,21 @@ if option -rplots is set >0.
 \noindent The file PsN\_OFV\_plots.pdf contains
 \begin{enumerate}
 \item A posterior predictive check of population OFV. The plot shows
-observed OFV and the
-distribution of OFV based on simulated data.
-%This is a global model diagnostic
-%that can identify major model misspecification but not which part of the model
-%that is inadequate.
-\item A histogram of npde of individual OFV, together with the expected
-normal distribution. If there is no model misspecification, the npde should
+observed pOFV (pOFVobs) and the reference
+distribution of pOFV based on simulated data (pOFVsim). If the pOFVobs stands outside the pOFVsim distribution the diagnostic is picking up a misspecification. Note that 
+this is a global model diagnostic
+that can identify major model misspecification but not which part of the model
+is inadequate.
+\item A histogram of npde of individual OFV (iOFV), together with the expected
+normal distribution. If there is no model misspecification, the npde iOFV should
 be normally distributed with mean 0 and variance 1.
 \item PPC of individual OFV for outlier individuals, i.e.
-individuals where observed OFV is above entire
-distribution of simulated individual OFV. If no outliers found then there will be no individual OFV PPC plots.
-\item individual OFV residuals.
-%IDs with positive iOFV RES indicate worse fit than those with negative.
-% Exceeding +3SD (above dotted line) are outliers.
+individuals where observed OFV (iOFVobs) is above entire
+distribution of its corresponding simulated individual OFV. If no outliers are found then there will be no individual OFV PPC plots.
+\item individual OFV residuals are calculated in the following way:
+$RES_{iOFVjk}=\frac{(iOFVobs_{j} - iOFVsim(k)_{j})}{std(iOFVsim(k)_{j})}$
+where k=1,...,N and N is the number of simulations and where j=1,...,L and L is the number of subjects. 
+Misspecification in the model can be detected if the distribution of $RES_{IOFVj}$ is not uniformly split above and below the zero line. Positive $RES_{IOFVj}$ indicate worse fit of the observed with respect to the simulated reference distribution. Potential outliers can be detected for those IDs with $RES_{IOFVj}$ exceeding the +3SD line. 
 \end{enumerate}
 
 \subsubsection{EBE npde}
@@ -128,8 +129,10 @@ distribution of simulated individual OFV. If no outliers found then there will b
 \item A table with mean and variance of npde of each EBE. If there is no model
 misspecification the npde should have mean 0 variance 1.
 \item A correlation chart with histograms of individual EBE npde and their
-correlations. The expectation is no correlations, high correlations indicate model misspecification.
-\item A table of individuals that are outliers with respect to EBE npde.
+correlations. The expectation around the EBE npde is no correlations, high correlations indicate model misspecification in the omega matrix declaration.
+\item A table of the individuals that are outliers with respect to their set of EBE npde and consequently also with respect to their set of EBE. The criteria to define an outlier individual with respect to its EBE is based on the calculation of the following robust multivariate distance for each individual:
+$(d_{j})^2=\frac{(EBEnpde_{j} - E[EBEnpde])^2}{var(EBEnpde)}$
+where j=1,...,L and L is the number of subjects. Note that the mean and the variance of the EBE npde is known a priori as they follow N(0,1) and this makes the calculation of the distance robust as no estimation is needed. The multivariate distance of each individual follows a chi-squared distribution and this allows us to determine outlier individuals and discern them from simply the extreme ones in the distribution.
 \end{enumerate}
 
 \subsubsection{GOF vpc:s}
@@ -147,9 +150,10 @@ correlations. The expectation is no correlations, high correlations indicate mod
 normal distribution. If there is no model misspecification, the npde should
 be normally distributed with mean 0 and variance 1.
 \item A histogram of npde of CWRES, together with the expected
-normal distribution. 
+normal distribution. If there is no model misspecification, the npde should
+be normally distributed with mean 0 and variance 1.
 \item A table with mean and variance of IWRES npde and CWRES npde.
-\item A table with ID, TIME, DV and PRED for data records where IWRES or CWRES lies outside the simulated distribution.
+\item A table with ID, TIME, DV and PRED for data records where IWRES or CWRES calculated on the observed data lies outside the simulated distribution.
 \end{enumerate}
 
 
@@ -158,7 +162,8 @@ Extended diagnostic plots will be generated
 if option -rplots is set >1.
 In file PsN\_OFV\_plots.pdf will be added
 \begin{enumerate}
-\item KLD iOFV
+\item KLD of the individual OFV distribution in the observed dataset (iOFVobs) with respect to the average distribution of the iOFV simulated distribution (iOFVsim). The KLD is a measure of the divergence between two distributions (the iOFVobs and the average iOFVsim). In particular in this exercise we are looking if the same divergence calculated in the observed is reproduced using the simulated dataset. The reference distribution of KLD is constructed by calculating the KLD between each simulated dataset iOFV distribution and the average distribution of the iOFV simulated. If it is not reproduced the same level of divergence a misspecification in the model is present or there are outliers that are driving the difference. 
+
 \end{enumerate}
 
 
