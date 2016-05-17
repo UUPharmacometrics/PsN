@@ -471,15 +471,15 @@ sub _get_columnType
     } else {
         if ($sdcorrform) {
             if ($off_diagonal) {
-                $column_type = 'varParameter_corr';
+                $column_type = 'varParameter correlation';
             } else {
-                $column_type = 'varParameter_stdev';
+                $column_type = 'varParameter stdev';
             }
         } else {
             if ($off_diagonal) {
-                $column_type = 'varParameter_cov';
+                $column_type = 'varParameter covariance';
             } else {
-                $column_type = 'varParameter_var';
+                $column_type = 'varParameter variance';
             }
         }
     }

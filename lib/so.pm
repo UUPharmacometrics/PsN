@@ -96,7 +96,7 @@ sub write
     $SO->setAttribute('xmlns:ct' => "http://www.pharmml.org/pharmml/0.8/CommonTypes");
     $SO->setAttribute('xsi:schemaLocation' => "http://www.pharmml.org/so/" . $self->version . "/StandardisedOutput");
     $SO->setAttribute('implementedBy' => "MJS");
-    $SO->setAttribute('writtenVersion' => $self->version);
+    $SO->setAttribute('writtenVersion' => "0.3.1");
     $SO->setAttribute('id' => "i1");
 
     if (defined $self->PharmMLRef) {
