@@ -1,6 +1,6 @@
 \input{inputs/format_header.tex}
 \usepackage{amsmath}
-\guidetitle{FREM userguide}{2016-05-05}
+\guidetitle{FREM userguide}{2016-05-19}
 
 
 \begin{document}
@@ -516,6 +516,95 @@ Described above in workflow
 %into one large full block. Initial values for the new covariances are computed from
 %phi-file from estimation of Model 2.
 %Set MAXEVAL=0.
+
+\section{Postprocessing}
+
+\subsection*{Missing data}
+
+\begin{enumerate}
+\item Run frem with option -no-run\_sir and -missing\_data set to missing data identifier.
+\item After frem has finished, use the EBE:s (from the phi-file of model\_4.mod in the final\_models subdirectory of frem)
+as the values for the missing covariates. These values should be entered in a modified copy of the frem\_dataset.
+\item Run sir with model\_4 and modified dataset to get uncertainty, perhaps only one iteration is needed
+the covariance step of model\_4 was successful.
+\item postprocess using separate perl and R code
+\end{enumerate}
+
+%The standard deviation of $x=TV_{par}\cdot e^{\eta}$, where $TV_{par}$ is constant and $\eta$ is normally distributed
+%with mean $\mu$ and variance $\sigma^2$, is
+%\[
+%sd[x] = TV_{par}\cdot e^{\mu+0.5\sigma^2}\cdot \sqrt{e^{\sigma^2}-1}
+%\]
+%, and the $CV$ in \% is
+%\[
+%CV_{x}=\frac{sd[x]}{TV_{par}}= e^{\mu+0.5\sigma^2}\cdot\sqrt{e^{\sigma^2}-1}\cdot 100\%
+%\]
+
+%We have $\mu=0$.
+
+\subsection*{Conditional multi-variate normal}
+
+We have a multivariate normally distributed vector
+\[
+\bar{\eta} = \left(
+\begin{array}{c}
+\bar{\eta}_{par} \\
+\bar{\eta}_{cov}\\
+\end{array}
+\right)
+\]
+with sizes
+\[
+\left(
+\begin{array}{c}
+n_{par} \times 1 \\
+n_{cov} \times 1\\
+\end{array}
+\right)
+\]
+where $n_{par}$ is the number of parameters and $n_{cov}$ is the number of covariates related to those parameters.
+
+The partitioned mean vector is
+\[
+\bar{\mu} = \left(
+\begin{array}{c}
+\bar{\mu}_{par} \\
+\bar{\mu}_{cov}\\
+\end{array}
+\right)
+\]
+and the partitioned covariance matrix is 
+\[
+\Sigma=\left(
+\begin{array}{cc}
+\Sigma_{par,par} & \Sigma_{par,cov}\\
+\Sigma_{cov,par} & \Sigma_{cov,cov}\\
+\end{array}
+\right)
+\]
+with sizes
+\[
+\left(
+\begin{array}{cc}
+n_{par} \times n_{par} & n_{par} \times n_{cov}\\
+n_{cov} \times n_{par} & n_{cov} \times n_{cov}\\
+\end{array}
+\right)
+\]
+
+In frem $\bar{\eta}_{cov}$ are the observed values of the covariates.
+
+The distribution of $\bar{\eta}_{par}$ conditional on $\bar{\eta}_{cov}= \bar{a}_{cov}$,
+where $\bar{a}_{cov}$ is known,
+is
+multivariate normal with mean
+\[
+\tilde{\mu}_{par}=\bar{\mu}_{par}+\Sigma_{par,cov}\Sigma_{cov,cov}^{-1}\left(\bar{a}_{cov}-\bar{\mu}_{cov}\right)
+\]
+and covariance matrix
+\[
+\tilde{\Sigma}_{par,par}=\Sigma_{par,par}-\Sigma_{par,cov}\Sigma_{cov,cov}^{-1}\Sigma_{cov,par}
+\]
 
 
 

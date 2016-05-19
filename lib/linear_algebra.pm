@@ -1749,8 +1749,9 @@ sub conditional_covariance_coefficients
 	#has unit tests
     my %parm = validated_hash(\@_,
 							  varcov => { isa => 'ArrayRef', optional => 0 },
-							  cov_index_first => { isa => 'Int', optional => 0 },
-							  cov_index_last => { isa => 'Int', optional => 0 },
+							  cov_index_first => { isa => 'Int', optional => 1 },
+							  cov_index_last => { isa => 'Int', optional => 1 },
+							  cov_index_array => { isa => 'ArrayRef', optional => 1 },
 							  par_index_first => { isa => 'Int', optional => 0 },
 							  par_index_last => { isa => 'Int', optional => 1 },
 							  rescaling => { isa => 'ArrayRef', optional => 1, default => [] },
@@ -1758,10 +1759,32 @@ sub conditional_covariance_coefficients
 	my $varcov = $parm{'varcov'};
 	my $cov_index_first = $parm{'cov_index_first'};
 	my $cov_index_last = $parm{'cov_index_last'};
+	my $cov_index_array = $parm{'cov_index_array'};
 	my $par_index_first = $parm{'par_index_first'};
 	my $par_index_last = $parm{'par_index_last'};
 	my $rescaling = $parm{'rescaling'};
 
+	if (defined $cov_index_array){
+		if (defined $cov_index_first or defined $cov_index_last){
+			croak('cannot set cov_index_first/last when have cov_index_array ');
+		}
+		$cov_index_first=$cov_index_array->[0];
+		$cov_index_last=$cov_index_array->[-1];
+		for (my $i=1; $i<scalar(@{$cov_index_array}); $i++){
+			unless ($cov_index_array->[$i] > $cov_index_array->[$i-1]){
+				croak('cov index array not sorted');
+			}
+		}
+	}else{
+		unless (defined $cov_index_first and defined $cov_index_last){
+			croak('must set cov_index_first/last when not have cov_index_array ');
+		}
+		unless (defined $cov_index_first <= $cov_index_last){
+			croak('cov_index_first must not be greater than last');
+		}
+		$cov_index_array = [$cov_index_first .. $cov_index_last]
+	}
+	
 	unless (defined $par_index_last){
 		$par_index_last = $par_index_first;
 	}
@@ -1800,12 +1823,15 @@ sub conditional_covariance_coefficients
 	}
 	return ($error,[],[]) if ($error > 0);
 
+	my @indices = (($par_index_first .. $par_index_last),@{$cov_index_array},);
+	
 	my @varcov_copy=();
 	my @parcov_vectors=();
 	my @cov_copy=();
 	my @local_rescale = ();
-	for (my $i=0; $i<$size; $i++){
-		if ((($i >= $par_index_first) and ($i <= $par_index_last))  or (($i >= $cov_index_first) and ($i <= $cov_index_last))){
+#	for (my $i=0; $i<$size; $i++){
+	foreach my $i (@indices){
+#		if ((($i >= $par_index_first) and ($i <= $par_index_last))  or (($i >= $cov_index_first) and ($i <= $cov_index_last))){
 			push(@varcov_copy,[]);
 			push(@local_rescale,$rescaling->[$i]) if ($dim_rescale > 0);
 			if (($i >= $cov_index_first) and ($i <= $cov_index_last)){
@@ -1815,8 +1841,9 @@ sub conditional_covariance_coefficients
 				# i is parameter
 				push(@parcov_vectors,[]);
 			}
-			for (my $j=0; $j<$size; $j++){
-				if ((($j >= $par_index_first) and ($j <= $par_index_last)) or (($j >= $cov_index_first) and ($j <= $cov_index_last))){
+#			for (my $j=0; $j<$size; $j++){
+			foreach my $j (@indices){
+#				if ((($j >= $par_index_first) and ($j <= $par_index_last)) or (($j >= $cov_index_first) and ($j <= $cov_index_last))){
 					push(@{$varcov_copy[-1]},$varcov->[$i]->[$j]);
 					if ($j> $par_index_last){
 						# j is covariate
@@ -1828,9 +1855,9 @@ sub conditional_covariance_coefficients
 							push(@{$parcov_vectors[-1]},$varcov->[$i]->[$j]);
 						}
 					}
-				}
+#				}
 			}
-		}
+#		}
 	}
 
 	my $newcovar;

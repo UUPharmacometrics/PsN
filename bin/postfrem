@@ -566,7 +566,12 @@ for (my $k=0;$k<=scalar(@{$sampled_params_arr}); $k++){
 			#		$varheader .= ',CONDVAR.par.'.$labels[$i].'.given.cov.'.$labels[$j];
 			$variancevec .= ','.$cond_covar->[$i]->[$i];
 			push(@{$variance_arrays{$labels[$i]}->{$labels[$j]}},$cond_covar->[$i]->[$i]);
-			push(@{$coeff_arrays{$labels[$i]}->{$labels[$j]}},$coeff->[$i]->[0]);
+			if ($k==0){
+				push(@{$coeff_arrays{$labels[$i]}->{$labels[$j]}},$coeff->[$i]->[0]);
+				#push the parameterization
+				my $str = sprintf("%.3E",$coeff->[$i]->[0]).'*('.$covnames[$covindex].'-'.sprintf("%.4g",$cov_means[$covindex]).')';
+				push(@{$coeff_arrays{$labels[$i]}->{$labels[$j]}},$str);
+			}
 		}
 	}
 	#all covariates
@@ -581,8 +586,19 @@ for (my $k=0;$k<=scalar(@{$sampled_params_arr}); $k++){
 		#	$varheader .= ',CONDVAR.par.'.$labels[$i].'.given.allcov';
 		$variancevec .= ','.$cond_covar->[$i]->[$i];
 		push(@{$variance_arrays{$labels[$i]}->{'all'}},$cond_covar->[$i]->[$i]);
-		push(@{$coeff_arrays{$labels[$i]}->{'all'}},join(',',@{$coeff->[$i]})); # a string
-
+		if ($k==0){
+			push(@{$coeff_arrays{$labels[$i]}->{'all'}},join(',',@{$coeff->[$i]})); # a string
+			#push the parameterization
+			my $str = '';
+			for (my $covindex=0; $covindex<($size-$npar); $covindex++){
+				#sign!!!
+				if (($covindex >0) and ($coeff->[$i]->[$covindex] > 0)){
+					$str .= '+'
+				}
+				$str .= sprintf("%.3E",$coeff->[$i]->[$covindex]).'*('.$covnames[$covindex].'-'.sprintf("%.4g",$cov_means[$covindex]).')';
+			}
+			push(@{$coeff_arrays{$labels[$i]}->{'all'}},$str);
+		}
 #		my $idvec = "$k";
 		for (my $l=0; $l<$id_count; $l++){
 			#	$idheader .= ',RATIO.id.'.$id_covariate_vectors->[$l]->[0];
@@ -626,8 +642,14 @@ for (my $k=0;$k<=scalar(@{$sampled_params_arr}); $k++){
 close( RATIOFILE );
 close( VARFILE );
 
-my @probs = (0.05,0.10,0.5,0.90,0.95);
+#my @probs = (0.05,0.10,0.5,0.90,0.95);
+my @probs = (0.05,0.95);
 my $header = 'ID';
+
+for (my $j=0;$j<($size-$npar); $j++){ #foreach covariate
+	$header .= ',cov.'.$covnames[$j];
+}
+
 
 for (my $i=0;$i<$npar; $i++){
 	$header .= ','.$parnames[$i].'.observed';
@@ -645,6 +667,10 @@ for (my $l=0; $l<$id_count; $l++){
 	#push(@{$id_ratio_arrays{$par}->{$id_covariate_vectors->[$l]->[0]}},exp($num));
 	my $idnum = $id_covariate_vectors->[$l]->[0];
 	my $idline = $idnum;
+	for (my $j=0;$j<($size-$npar); $j++){ #foreach covariate
+		$idline .= ','.$id_covariate_vectors->[$l]->[$j+1]; #+1 since 0 is idnum
+	}
+
 	for (my $i=0;$i<$npar; $i++){
 		my $par = $labels[$i];
 		my $observed = shift(@{$id_ratio_arrays{$par}->{$idnum}});
@@ -667,17 +693,19 @@ close($parfh);
 sub get_cv{
 	my $var=shift;
 	my $est = shift;
-	return 100*(exp(0.5*$var)*sqrt(exp($var)-1))/$est; #SD/est
+#	return 100*(exp(0.5*$var)*sqrt(exp($var)-1))/$est; #SD/est
+	return 100*(exp(0.5*$var)*sqrt(exp($var)-1)); #SD
 #	return 100*(exp($var)*(exp($var)-1))/$est; #variance over est
 }
 
 
 @probs = (0.05,0.95);
-$header = 'par.conditionedOn,observed.var,var.5th,var.95th,observed.cv.perc,cv.5th,cv.95th';
+$header = 'par.conditionedOn,observed.sd,sd.5th,sd.95th';
 foreach my $cov (@covnames){
 	$header .= ',coeff.'.$cov;
 }
-$name = 'variance_coefficients_summary.csv';
+$header .= ',parameterization';
+$name = 'sd_coefficients_summary.csv';
 $parfh;
 open($parfh,'>',$name) or die "cannot open < $name: $!";
 print {$parfh} "$header\n";
@@ -687,24 +715,22 @@ for (my $i=0;$i<$npar; $i++){
 	for (my $k=0; $k<scalar(@types); $k++){
 		my $type = $types[$k];
 		my $observed = shift(@{$variance_arrays{$par}->{$type}});
-		my $line = $par.'.'.$type.','.$observed;
+		my $line = $par.'.'.$type.','.sqrt($observed);
 		my @sorted = (sort {$a <=> $b} @{$variance_arrays{$par}->{$type}});
 		my $quantref = quantile(probs => \@probs, numbers=> \@sorted);
-		$line .= ','.$quantref->[0];
-		$line .= ','.$quantref->[1];
-		$line .= ','.get_cv($observed,$tvpar[$i]);
-		$line .= ','.get_cv($quantref->[0],$tvpar[$i]);
-		$line .= ','.get_cv($quantref->[1],$tvpar[$i]);
+		$line .= ','.sqrt($quantref->[0]);
+		$line .= ','.sqrt($quantref->[1]);
 
 		if ($type eq 'none'){
-			$line .= ',' x scalar(@covnames); 
+			$line .= ',' x (1+scalar(@covnames)); 
 		}elsif($type eq 'all'){
 			#				push(@{$coeff_arrays{$labels[$i]}->{'all'}},join(',',@{$coeff->[$i]})); # a string
-			$line .= ','.$coeff_arrays{$par}->{'all'}->[0];
+			$line .= ','.$coeff_arrays{$par}->{'all'}->[0].','.$coeff_arrays{$par}->{'all'}->[1];
 		}else{
 			$line .= ','x $k ; #1 or more
 			$line .= $coeff_arrays{$par}->{$type}->[0];
 			$line .= ','x (scalar(@covnames)-$k) ;
+			$line .= ','.$coeff_arrays{$par}->{$type}->[1];
 		}
 			
 		print {$parfh} "$line\n";
