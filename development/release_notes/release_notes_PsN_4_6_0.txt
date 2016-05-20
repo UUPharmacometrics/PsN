@@ -1,0 +1,371 @@
+This PsN version has been tested on the following systems:
+
+Windows 10 64-bit with Strawberry Perl 5.22.1 , gfortran 4.9.2 and NONMEM 7.2.0 and 7.3.0
+Windows 7 64-bit with ActivePerl 5.20.1 (32 bit), gfortran 4.8.1 and NONMEM 7.3.0
+Windows 7 64-bit with ActivePerl 5.16.3 (32 bit), gfortran 4.6.0 and NONMEM 7.3.0
+Windows 7 64-bit with Strawberry Perl 5.18.2, gfortran 4.7.3 and NONMEM 7.2.0 and 7.3.0
+Windows XP 32-bit with ActivePerl 5.16.3, gfortran 4.6.0 and NONMEM 7.1.0, 7.1.2 and 7.2.0
+MacOS X 10.11.4 with Perl 5.18.2, gfortran 5.2.0 and NONMEM 7.3.0
+MacOS X 10.6.6 with ActiveState Perl 5.16.3, gfortran 4.6.2 and NONMEM 7.3.0
+MacOS X 10.6.6 with ActiveState Perl 5.16.3, ifort 12.0.0 and NONMEM 7.2.0 and 7.3.0
+Ubuntu Linux 15.10 with Perl 5.20.2, gfortran 5.2.1 and NONMEM 7.2.0 and 7.3.0
+Fedora 20 with Perl 5.18.2, gfortran 4.8.2 and NONMEM 7.2.0
+Scientific Linux 6.3 with Perl 5.10.1, gfortran 4.4.7 and NONMEM 7.2.0 and 7.3.0
+Scientific Linux 6.3 with Perl 5.10.1, gfortran 5.1.1 and NONMEM 7.3.0
+CentOS 6.5 with Perl 5.10.1, gfortran 4.4.7 and NONMEM 7.1.0, 7.1.2 and 7.3.0
+
+
+************************
+Installation
+************************
+
+Follow the installation instructions on
+http://psn.sourceforge.net/install.php
+
+************************
+Documentation
+************************
+All documentation is found in the doc subdirectory of the PsN 
+installation directory. During installation it is also possible 
+to have all documentation copied to a user-specified directory.
+
+All documentation can also be downloaded from
+the PsN website http://psn.sourceforge.net/
+
+************************
+Dependencies 
+************************
+
+- It is recommended to use Xpose version 4.5.3 or later for the -cwres functionality 
+  and the default execute, vpc and bootstrap R plots.
+
+- Each userguide lists the R packages required to obtain the diagnostic R plots.
+************************
+Known issues 
+************************
+
+- Windows users need to be careful to choose 
+  a Perl version where the extra modules needed for PsN are available. 
+  For new Perl installations the PsN team recommends Strawberry Perl
+  See the instructions on http://psn.sourceforge.net/install.php
+
+- Installation problem on some Windows systems where 
+  perl 'system' command does not work. Make sure perl module File::Copy::Recursive
+  is installed *before* (re)running the installation script setup.pl
+
+*********************************************
+Changes and bug fixes from PsN 4.4.8 to 4.6.0
+*********************************************
+
+   ___General___
+
+- Bug fix: Detection of non-unique parameter labels when reading a raw results file.
+- Bug fix: Clean up in all code to get rid of Perl warnings about uninitialized variables,
+  numeric comparisons of non-numeric variables, deprecated functionality, and similar.
+- Refactored reading of NONMEM installation information from psn.conf
+- Bug fix: Rereading of raw_results file from disk: Replace NA entries with undef so
+  that reanalysis correctly detects missing values.
+- Check that $THETA records do not contain unmatched parentheses, which would
+  trigger an NMtran error.
+- Refactored PsN's internal debug message handling.
+
+   ___common_options___
+
+- New option -zip to automatically zip the m1 subdirectory.
+  If PsN is started using option -directory, and the run directory contains a zipped 
+  m1, PsN will automatically unzip m1 before continuing the run, even if option -zip
+  is not set.
+- New option -citations to print a list of references for each tool in BibTeX format.
+- The option -degree used for tweak_inits can now take degrees greater than 1.
+- Faster -help, -h, -version and some option error checking.
+- Now -help and -h can be run without valid NONMEM version defined in psn.conf.
+- Inside NM_run subdirectories, the selected (re)try files will be moved,
+  instead of copied, to psn.mod, psn.lst etc. This is to save disk I/O.
+  This means that the numbered (re)try files for the selected run will
+  not be left in NM_run.
+- Documentation updates for threads option.
+- Remove .RData file after running an R script via rplots option.
+- Bug fix rplots option when model has no $OMEGA and/or no $SIGMA.
+- Refactored and modified procedure for submission and polling. 
+  Always check lowest run number first during polling. Add sleep 
+  10000 microseconds after each monitor call except the first one, to slow down polling.
+  Documentation in psn_configuration.pdf (job_polling_interval in psn.conf) 
+- If a NONMEM run crashes, file PRDERR will be kept in NM_run, to facilitate
+  debugging.
+
+   ___NONMEM output parsing___
+
+- If a NONMEM run is automatically killed, for example due to a job time limit on a cluster, 
+  the file OUTPUT with iteration results will not be appended to the lst-file by the nmfe 
+  script. If PsN option -handle_crashes or -handle_msfo is set, PsN will parse OUTPUT if 
+  the lst-file appears to not have had OUTPUT appended, and initiate a crash restart if 
+  OUTPUT contains iteration information from a started but not completed NONMEM run.
+- Skip reading of phi-files during regular output parsing. 
+- Documentation (in common_options) on why PsN does not use NONMEM-computed shrinkage.
+- Refactored parsing of ext-files.
+- Refactored handling of time stamps in lst-file.
+- Bug fix: Reading of NONMEM lst-file when there were no unfixed parameters in the model,
+  or when $MSFI was used, i.e. no $THETA/$OMEGA/$SIGMA in the model file.
+- Bug fix: handling of NONMEM termination message when no parameters to estimate but 
+  maxeval > 0. 
+- Bug fix: Reading signification digits from lst-files with SIG. DIGITS: NaN
+
+   ___Cluster/Grid___
+
+- Bug fix: torque job submission regexp only take job ID number part of qsub response, not 
+  entire string
+- If, after the monitor command indicates that the cluster job is done, the NM_run subdirectory
+  has no sign of NMtran even starting, not even any stderr output, this can be a sign of 
+  file sync problems. PsN will initiate a crash restart in this situation if option 
+  -handle_crashes is set and -crash_restarts>0.  
+- Updated submit bash script on slurm: use local file names when checking that input control
+  stream exists. Use printenv | sed in bash script to print job hostname to file in NM_run.
+
+   ___Test scripts___
+
+- Adapt test scripts to NMQual, if option -nmqual set in psn.conf.
+- Refactored tests to not trigger Perl warnings.
+- Changed test scripts to not create new run directory with same name as a directory that
+  was just removed.
+- All test scripts can be run using -nm_version passed on via prove :: -nm_version
+
+   ___psn_clean___
+
+- Bug fix handle .ctl extension of control stream in NM_run when option nmqual is used instead
+  of nmfe.
+- Cleanup of additional output files for NM7.3.
+- New option -rdata, on per default for levels 2-4. Cleanup of .RData file in main run directory.
+
+   ___sumo___
+
+- Updated userguide.
+
+   ___bootstrap___
+
+- Updated rplots for diagnostic output.
+- Documentation with instructions on how to use covmat script to obtain an empirical covariance matrix
+  based on a bootstrap raw results file.
+- Bug fix: Summary calculations in bootstrap_results.csv were wrong if original model was filtered
+  out as a result of any of the -skip options.
+- Bug fix: Summary calculations in bootstrap_results.csv were missing if original model was not
+  estimated or had no .lst-file when using option -no-run_base_model
+- Bug fix: Summary calculations for standard errors were wrong if only a subset of non-skipped
+  samples had successful covariance steps.
+- Bug fix: If option -dofv is used then set delta-ofv undefined if original model or sample had
+  undefined ofv.
+- Bug fix: option -summarize after bootstrap run with option -dofv.
+- Bug fix: More robust search for ID in IGNORE statements to warn about renumbering of individuals
+  during bootstrapping of data sets.
+- Bug fix: Filter out crashed runs (ofv and estimates NA) when doing summary calculations when
+  those runs have not already been filtered out by any -skip option. Before the bug fix 
+  estimates from such runs were included as zeros in summary computations.
+- Bug fix: On 32bit windows udistr(0.5), which should be 0, is wrong. Set special case for udistr(0.5).
+- Bug fix: Detecting IGNORE or ACCEPT on ID when alternative NONMEM syntax without equal sign, e.g.
+  IGNORE(ID.EQ.5), is used.
+- Bug fix: Skip end-of-line comments when checking code for usage of ID 
+
+   ___vpc/npc___
+
+- Option -sim_table may now be either a single file or a comma-separated list
+  of files.
+- New option -in_filter, to be used in combination with -rawres_input to filter out 
+  certain lines from the rawres file.
+- More documentation for Xpose plotting and stratification.
+- Better error handling when zipping a large table file.
+- Updated error messages.
+
+   ___frem___
+
+- Program has been completely rewritten. See frem_userguide.pdf for documentation.
+
+   ___mcmp___
+
+- Print ofv of full and reduced models to rplots preamble. If lst of either model 
+  is not available, the sum of iofv computed from phi-files is used.
+- Output: A parametric power estimation curve will be included
+  in the extended rplots.  
+- Bug fix: Automatically ensure that phi-file is copied back to m1, even if
+  user did not request it via -nm_output. 
+
+   ___scm___
+
+- Refactored code for filtering data on IGNORE/ACCEPT
+- Refactored code for file path handling
+- Bug fix computation of covariate theta bounds for linear and hockey-stick
+  parameterization when median of covariate is negative.
+- Refactored covariate code generation and computation of covariate theta
+  bounds and initial values, new tests.
+- Bug fix setting user-selected ofv changes for forward and backward searches
+  when option -gof=ofv is used. See scm_userguide.pdf for examples.
+- Documentation on why user must encode priors with prior-specific records $THETAP etc.
+- Documentation updated for option -time_varying, and how means and medians are computed
+  when option -time_varying is not set.
+- Updated config file examples to use -base_ofv instead of -base_criteria_values.
+
+   ___boot_scm___
+
+- Refactored code for filtering data on IGNORE/ACCEPT
+- Bug fix: Use common options, e.g. -nm_version, that are set on command-line.
+- Bug fix: If valid states not set in scm config file then use default set of valid states.
+
+   ___ebe_npde___ 
+
+- Renamed script to simeval. See below.
+
+   ___simeval___ (was ebe_npde)
+
+- New output files, including diagnostic R plots. Some intermediate output files removed.
+  See details in simeval_userguide.pdf
+- Refactored output computations.
+- Computation of npde for IWRES and CWRES.
+- Separate decorrelation of iiv ebe:s, and iov ebe:s per occasion
+- New option -n_simulation_models, allowing more than one sample per NONMEM control stream
+- New option -idv, default TIME.
+- New option -extra_variables, to append columns to NONMEM tables for evaluation of 
+  original and simulated data.
+- Additional default columns in table output: PRED, IPRED if defined, idv, DV, MDV if available
+- simeval will automatically create vpc plots of DV vs PRED and CWRES vs idv (TIME).
+- Bug-fix: Ensure that phi-files are copied back to m1 even if -nm_output does not include
+  phi. 
+
+   ___update_inits___
+
+- The option -degree can now take degrees greater than 1.
+- New functionality for automatic Cholesky reparameterization of OMEGA and SIGMA, and automatic 
+  inverse reparameterization. Reparameterization can be done with or without bounded thetas.
+- update_inits no longer requires a source (model or lst-file) to read parameter estimates
+  from, it is possible to update other model properties anyway.
+- Do not update tag based_on if output and input models are the same
+- New option -silent, to suppress all log messages.
+- Refactored code for file path handling 
+- Bug fix alias update for update_inits. Script update is now an identical copy of update_inits. 
+
+   ___execute___
+	 
+- Refactored input checking.
+
+   ___parallel_retries___
+
+- new options -keep_table_files and -keep_nm_output to keep output from not chosen 
+  retry models in main rundirectory even if option -clean >= 2.
+
+   ___nca___
+
+- Cleanup table files in NM_run subdirectories.
+- Automatically zip table files. Note: Latest ncappc R package handles zipped table files.
+- Print warning if no simulation table file was generated.
+
+   ___covmat___
+
+- New option -require_numeric_ofv, only use parameter vectors where ofv column has a value.
+- Changed ordering of columns in output matrix, use same order as NONMEM.
+
+   ___sir___
+	
+- Major redesign of procedure, see sir_userguide.pdf for a complete description.
+  Now sir runs an iterative procedure with Box-Cox transformation for more efficient
+  sampling of assymetric distributions, recentering when input model found to
+  be in local minimum, and adjustment of sampling and resampling to compensate for failed samples. 
+- More alternatives for proposal density when covariance matrix unavailable: Automatic creation
+  of proposal density based on guesses of parameter rse:s or parameter variances, or based on
+  a raw_results file that will be automatically extended to full rank if the number of 
+  parameter vectors is too small. 
+- Extended resume/restart functionality
+- Automatic rplots with basic and extended diagnostic graphs
+- Default settings for -samples and -resamples
+- New option -cap_resampling for resampling with limited replacement.
+- Individual inflation theta, omega and sigma per parameter using options -theta_inflation etc.
+  Removed old option -inflation.
+- New format for raw_results file: First line is always center vector, which can be different
+  from input model if input model was at local minimum. New column resampling order. 
+- Refactored code for checking that sampled parameter vectors have positive definite
+  $OMEGA and $SIGMA blocks. 
+- Automatic detection of Cholesky reparameterized $OMEGA/$SIGMA blocks and checks that
+  sampled parameter vectors give positive definite inverse parameterized blocks.
+- Print summary of causes of sample rejections (based on boundary violations, non-positive 
+  definite $OMEGA/$SIGMA blocks etc) to file.
+- If many samples are rejected, sir can modify sampled parameter vectors to force 
+  non-positive definite $OMEGA/$SIGMA blocks to positive definite. See details in
+  sir_userguide.pdf. 
+
+   ___precond___
+
+- New option -copy_data. Used in the same way as for execute 
+- Cleanup of error messages and information about unidentifiability
+- Option -always is changed to dummy option. Functionality is always on, the option is 
+  only kept for backwards compatibility.
+- New option -notalways to only precondition after a failed covariance step.
+- Bug fix handling of case when S matrix is unobtainable.
+
+   ___benchmark___
+
+- A new tool for systematic comparisons of ofv, parameter estimates and
+  run times across different combinations of NONMEM record settings,
+  THETA initial estimates and NONMEM/compiler versions. See details
+  in benchmark_userguide.pdf.
+
+   ___psn___
+
+- The option -nm_versions now also print the path to the psn.conf that was used,
+  and, if defined in psn.conf, a description of each NM version.
+
+   ___nmoutput2so___
+
+- Bug fix: misspelling of Parameter in SE and RSE table
+- Bug fix: Don't create covariance_step_warnings and covariance_step_successful warnings if 
+  $COV not specified
+- Bug fix: Don't give message minimization_successful after simulation
+- Add Bootstrap/PrecisionEstimates. Currently with one single alpha.
+- Add bootstrap parameters not on var/cov scale. Also add a warning listing these parameters.
+- Add description to TimeStamp explaining that unit is hours.
+- Add more PsN result files to RawResults. Also set specific oids for easier retrieval
+
+   ___crossval___
+
+- The crossval script now prints version_and_option_info.txt to the run directory.
+- Bug fix setting of run subdirectory names to non-default to avoid rapid removal and recreation
+  of subdirectories with identical names, as this increases the risk of file sync problems on
+  a cluster/grid.
+
+   ___randtest___
+
+- New rplots template for diagnostic plots.
+- Bug fix: If estimation of a sample fails then set delta-ofv for that sample to undef and
+  exclude it from diagnostic plots.
+- Handle restart of partially complete randtest with some samples already run, only start 
+  remaining samples.
+
+   ___lasso___
+
+- Refactoring of lasso model code generation and computation of lasso coefficients.
+- Bug fix: Computations of summary statistics for categorical covariates, centering of categorical
+  covariates and covariates with piece-wise linear relations in final model.
+- New option -log_scale. Include covariates on log scale instead of normal scale. Effect is
+  added to LNTV instead of multiplied with TV. 
+- New option -no-normalize, to turn off normalization of covariates by their standard deviation.
+  By default normalization is performed.
+- New option -adaptive, to run additional lasso iterations with coefficients modified by
+  lasso coefficient from previous iteration.
+- New option -external_data, to create model for external evaluation of adaptive lasso results.
+- New option -adjusted, to run adjusted adaptive lasso where coefficients in first iteration
+  of adaptive lasso are computed from standard errors of full model.
+- New option -al_coefficients, for use in combination with -adjusted. Input lasso coefficients
+  on command-line instead of running covariance step of full model to obtain them. 
+- New output file lasso_coefficients.csv with lasso coefficients and convergence information.
+- Added lasso coefficients to raw_results file.
+- New option -run_final_model, default not set. Decides whether final model on normal 
+  scale should be run.
+- Removed option -lst_file
+- Bug fix setting of run subdirectory names to non-default to avoid rapid removal and recreation
+  of subdirectories with identical names, as this increases the risk of file sync problems on
+  a cluster/grid.
+
+__rawresults___
+
+- New option -silent.  
+
+___se_of_eta___
+
+- Program is removed, because the program output is given by NONMEM in phi-file.
+
+
