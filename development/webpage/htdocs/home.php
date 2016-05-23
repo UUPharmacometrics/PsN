@@ -33,7 +33,7 @@
     as well as development libraries for method developers. You can read more about the different parts of PsN under <a href="docs.php">Documentation</a>.</p>
 <h3>Latest news</h3>
  <p>
-Version 4.6.0 is planned for release May 23rd 2016, and will be available <a href="download.php">here</a>.
+Version 4.6.0 was released May 23rd 2016, and is available <a href="download.php">here</a>.
 </p>
  <p>
 New features in this version include major redesign and extension to <strong>sir</strong>,

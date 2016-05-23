@@ -21,15 +21,15 @@ PsN is distributed  as a gzipped tarball and zipped file.</p>
     </tr>
     <tr>
         <td style="text-align:center;"> 
-            PsN 4.4.8
+            PsN 4.6.0
         </td>
-	<td rowspan="2" width="70%">Please see the <a href="pdfdocs/release_notes_PsN_4_4_8.txt">change log</a> for details. </td>
-        <td rowspan="2">2015-09-07</td>
+	<td rowspan="2" width="70%">Please see the <a href="pdfdocs/release_notes_PsN_4_6_0.txt">change log</a> for details. </td>
+        <td rowspan="2">2016-05-23</td>
     </tr>
     <tr>
         <td style="text-align:center;">
-            <a href="http://sourceforge.net/projects/psn/files/PsN-4.4.8.zip/download" target="_blank">.zip</a>
-            <a href="http://sourceforge.net/projects/psn/files/PsN-4.4.8.tar.gz/download" target="_blank">.tar.gz</a>
+            <a href="http://sourceforge.net/projects/psn/files/PsN-4.6.0.zip/download" target="_blank">.zip</a>
+            <a href="http://sourceforge.net/projects/psn/files/PsN-4.6.0.tar.gz/download" target="_blank">.tar.gz</a>
         </td>
       </tr>
    </tbody>
