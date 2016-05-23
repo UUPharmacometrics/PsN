@@ -322,10 +322,10 @@ sub get_column_types
     for my $p (@$parameters) {
         if (exists $hash{$p}) {
             my $column_type = $hash{$p};
-            if ($column_type =~ /^varParameter_stdev/) {
-                push @column_types, "varParameter_var";
-            } elsif ($column_type =~ /^varParameter_corr/) {
-                push @column_types, "varParameter_cov";
+            if ($column_type =~ /^varParameter stdev/) {
+                push @column_types, "varParameter varance";
+            } elsif ($column_type =~ /^varParameter correlation/) {
+                push @column_types, "varParameter covariance";
             } else {
                 push @column_types, $column_type;
             }   
