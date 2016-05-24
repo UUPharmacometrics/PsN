@@ -28,7 +28,7 @@ use MooseX::Params::Validate;
 # More PsN dependencies included with require further down
 
 #FIXME these should be options or read from file
-my $minimum = 50; #change to 1000 later
+my $minimum = 500; #change to 1000 later
 my @covnames = (); #from model, first lines in FREM CODE BEGIN BSV_covname =
 my @parnames = ();
 my @tvpar = ();
@@ -48,33 +48,6 @@ if (1){
 	$categorytext{'SEX'}=['male','female'];
 	$categorydiff{'SEX'}=1; #other minus reference
 	@parnames=('GAM','KINH','HB50','FPG_BASELINE','EC50_FPG','PBO_FPG'); #hamren linearized
-	@tvpar=(0.743,
-			1.05,
-			8.25,
-			8.2,
-			1.48,
-			0.164
-		);
-#$THETA  (0.4,0.743,1.5) ; 8 Exponent for FPG on HBA1C
-#	IF(SEX.EQ.1) TKIN = THETA(12)/24                    ;12 Kin males
-#IF(SEX.EQ.2) TKIN = THETA(20)/24                    ;20 kin females
- #              KINH = TKIN*EXP(ETA(2))               
-#$THETA  (0.1,1.11,2) ; 12 KINH male
-#$THETA  (0.1,1.02,2) ; 20 Kinh female
-	#IF(SEX.EQ.2 or 1)  THB50 = THETA(15)*(1+THETA(21)*(AGE-55))
-#$THETA  (0.01,8.25,20) ; 15 HB50 male
-#$THETA  0 FIX ; 21 HB50 age	
-#$THETA  (0.01,8.25,20) ; 15 HB50 male
-	#$THETA  0 FIX ; 21 HB50 age
-	#FPG baseline
-#               BASE = THETA(1) * EXP(ETA(6))            ;1 BASELINE (start value at visit 1)
-#$THETA  (6,8.2,10) ; 1 BASE FPG
-#IF(PRET.EQ.1)  BASE = THETA(9) * EXP(ETA(6))            ;9 BASELINE for drug-naive patients
-#IF(SEX.EQ.1)   EC50 = THETA(4)* EXP(ETA(7))             ;4 EC50 for males
-#IF(SEX.EQ.2)   EC50 = THETA(4)*(1+THETA(7))*EXP(ETA(7)) ;7 EC50 for females
-#$THETA  (0.2,1.48,4) ; 4 EC50 FPG
-#$THETA  (0.01,0.164,1) ; 6 pbo effect FPG
-
 	
 	@cov_means=(57.1553398058,
 				88.9502427184,
@@ -124,23 +97,23 @@ my @labels=(@parnames,@covnames);
 
 
 #log-normal distribution of parameters !! Tv_par*exp(...)
-my @par_divide_cv =();
-@par_divide_cv =(1,
-				 1
-	);
+#my @par_divide_cv =();
+#@par_divide_cv =(1,
+#				 1
+#	);
 
 
 my $cmd_line = $0 . " " . join( " ", @ARGV );
 
 my %options;
 
-my %required_options = ("model:s" => undef,
-						'npar:i' => undef,
-						'rawres_input:s' => undef,
-						'frem_dataset:s' => undef,
+my %required_options = ('sir_directory:s' => undef,
+						'frem_directory:s' => undef,
 	);
 my %optional_options = ('offset_rawres:i' => undef,
-			'in_filter:s' => undef,
+						'npar:i' => undef,
+						"model:s" => undef,
+						'in_filter:s' => undef,
 	);
 
 my $res = GetOptions( \%options,
@@ -150,8 +123,18 @@ my $res = GetOptions( \%options,
 
 exit unless $res;
 
+if( not defined $options{'frem_directory'} or (not -d $options{'frem_directory'}))  {
+	die "must set -frem_directory\n";
+}
+if( not defined $options{'sir_directory'} or (not -d $options{'sir_directory'}))  {
+	die "must set -sir_directory\n";
+}
 
-
+$options{'rawres_input'}=$options{'sir_directory'}.'/raw_results_model_4.csv';
+$options{'model'}=$options{'frem_directory'}.'/final_models/model_4.mod';
+$options{'frem_dataset'} = $options{'frem_directory'}.'/frem_dataset.dta';
+$options{'in_filter'}='resamples.gt.0';
+my $npar = scalar(@parnames);
 
 my %help_text;
 
@@ -233,7 +216,6 @@ if( not defined $options{'rawres_input'})  {
 if( not defined $options{'frem_dataset'})  {
   die "must set -frem_dataset\n";
 }
-my $npar = $options{'npar'};
 
 
 my $model = model -> new ( eval( $eval_string ),
@@ -396,7 +378,6 @@ chdir($main_directory); #created by tool::get_rundir
 
 my $omegaindex = scalar(@{$model->problems->[0]->omegas})-1;
 my $size = $model->problems->[0]->omegas->[$omegaindex]->size;
-my $npar = $options{'npar'};
 unless (defined $npar and ($npar < $size) and ($npar == scalar(@parnames))){
 	croak("npar $npar is not defined and smaller than size $size");
 }
