@@ -635,4 +635,176 @@ is($cov->[0]->[1],$cov->[1]->[0],"col_cov symm 1");
 is($cov->[0]->[2],$cov->[2]->[0],"col_cov symm 2");
 is($cov->[1]->[2],$cov->[2]->[1],"col_cov symm 3");
 
+my $covariance = [[2,1,0.5,0.5,0.8],
+			   [1,5,0.9,0.7,1],
+			   [0.5,0.9,4,0.2,0.3],
+			   [0.5,0.7,0.2,3,0.1],
+			   [0.8,1,0.3,0.1,5]];
+
+#facit from matlab
+my $par_index_first=0;
+my $cov_index_first = 3;
+my $cov_index_last = 4;
+my $coeff1 =[0.161440960640427, 0.156771180787191];
+my $cov1 = [1.793862575050033];
+
+my $ans1;
+my $ans2;
+($err,$ans1,$ans2) = linear_algebra::conditional_covariance_coefficients(varcov => $covariance,
+																		 par_index_first => $par_index_first,
+																		 cov_index_first => $cov_index_first,
+																		 cov_index_last => $cov_index_last);
+is($err,0,'conditional_covariance_coefficients 1 return status');
+cmp_float_array($ans1->[0],$cov1,'conditional_covariance_coefficients 1 covariance');
+cmp_float_array($ans2->[0],$coeff1,'conditional_covariance_coefficients 1 coefficients');
+
+$par_index_first=1;
+$cov_index_first = 2;
+$cov_index_last = 4;
+my $coeff2 = [0.200531074585728,   0.213841551544486,   0.183691304493967];
+my $cov2 =[4.486141642297738];
+($err,$ans1,$ans2) = linear_algebra::conditional_covariance_coefficients(varcov => $covariance,
+																		 par_index_first => $par_index_first,
+																		 cov_index_first => $cov_index_first,
+																		 cov_index_last => $cov_index_last);
+is($err,0,'conditional_covariance_coefficients 2 return status');
+cmp_float_array($ans1->[0],$cov2,'conditional_covariance_coefficients 2 covariance');
+cmp_float_array($ans2->[0],$coeff2,'conditional_covariance_coefficients 2 coefficients');
+
+
+$par_index_first=0;
+$cov_index_first = 2;
+$cov_index_last = 3;
+my $coeff3 = [0.117056856187291,   0.158862876254181];
+my $cov3 = [1.862040133779264];
+($err,$ans1,$ans2) = linear_algebra::conditional_covariance_coefficients(varcov => $covariance,
+																		 par_index_first => $par_index_first,
+																		 cov_index_first => $cov_index_first,
+																		 cov_index_last => $cov_index_last);
+is($err,0,'conditional_covariance_coefficients 3 return status');
+cmp_float_array($ans1->[0],$cov3,'conditional_covariance_coefficients 3 covariance');
+cmp_float_array($ans2->[0],$coeff3,'conditional_covariance_coefficients 3 coefficients');
+
+$par_index_first=1;
+$cov_index_first = 3;
+$cov_index_last = 3;
+my $coeff4 = [0.233333333333333];
+my $cov4 = [ 4.836666666666667];
+  
+($err,$ans1,$ans2) = linear_algebra::conditional_covariance_coefficients(varcov => $covariance,
+																		 par_index_first => $par_index_first,
+																		 cov_index_first => $cov_index_first,
+																		 cov_index_last => $cov_index_last);
+is($err,0,'conditional_covariance_coefficients 4 return status');
+cmp_float_array($ans1->[0],$cov4,'conditional_covariance_coefficients 4 covariance');
+cmp_float_array($ans2->[0],$coeff4,'conditional_covariance_coefficients 4 coefficients');
+
+
+$par_index_first=0;
+my $par_index_last=1;
+$cov_index_first = 2;
+$cov_index_last = 4;
+my $coeff5 = [[0.105979630936775,   0.154583039225572,   0.150549561359282],
+			  [0.200531074585728 ,  0.213841551544486,   0.183691304493967]];
+
+
+my $cov5 =[[   1.749279015831401,   0.645860643339720],
+		   [0.645860643339720 ,  4.486141642297738]];
+#covar, coeff
+($err,$ans1,$ans2) = linear_algebra::conditional_covariance_coefficients(varcov => $covariance,
+																		 par_index_first => $par_index_first,
+																		 par_index_last => $par_index_last,
+																		 cov_index_first => $cov_index_first,
+																		 cov_index_last => $cov_index_last);
+is($err,0,'conditional_covariance_coefficients 5 return status');
+cmp_float_array($ans1->[0],$cov5->[0],'conditional_covariance_coefficients 5 covariance 0');
+cmp_float_array($ans2->[0],$coeff5->[0],'conditional_covariance_coefficients 5 coefficients 0');
+cmp_float_array($ans1->[1],$cov5->[1],'conditional_covariance_coefficients 5 covariance 1');
+cmp_float_array($ans2->[1],$coeff5->[1],'conditional_covariance_coefficients 5 coefficients 1');
+
+
+
+$par_index_first=0;
+$par_index_last=1;
+$cov_index_first = 3;
+$cov_index_last = 3;
+my $coeff6 =  [[0.166666666666667],
+			   [0.233333333333333]];
+
+my $cov6 =  [[1.916666666666667 ,  0.883333333333333],
+			 [ 0.883333333333333 ,  4.836666666666667]];
+
+($err,$ans1,$ans2) = linear_algebra::conditional_covariance_coefficients(varcov => $covariance,
+																		 par_index_first => $par_index_first,
+																		 par_index_last => $par_index_last,
+																		 cov_index_first => $cov_index_first,
+																		 cov_index_last => $cov_index_last);
+is($err,0,'conditional_covariance_coefficients 6 return status');
+cmp_float_array($ans1->[0],$cov6->[0],'conditional_covariance_coefficients 6 covariance 0');
+cmp_float_array($ans2->[0],$coeff6->[0],'conditional_covariance_coefficients 6 coefficients 0');
+cmp_float_array($ans1->[1],$cov6->[1],'conditional_covariance_coefficients 6 covariance 1');
+cmp_float_array($ans2->[1],$coeff6->[1],'conditional_covariance_coefficients 6 coefficients 1');
+
+
+my @scaling = (1,1,1.2,1.5,1.3);
+
+$par_index_first=0;
+$par_index_last=1;
+$cov_index_first = 2;
+$cov_index_last = 4;
+my $coeff7 =[[  0.088316359113979,   0.103055359483715 ,  0.115807354891755],
+			 [ 0.167109228821440 ,  0.142561034362991 ,  0.141301003456897]];
+
+
+my $cov7 =[[ 1.749279015831401 ,  0.645860643339720],
+		   [0.645860643339720 ,  4.486141642297738]];
+
+($err,$ans1,$ans2) = linear_algebra::conditional_covariance_coefficients(varcov => $covariance,
+																		 rescaling => \@scaling,
+																		 par_index_first => $par_index_first,
+																		 par_index_last => $par_index_last,
+																		 cov_index_first => $cov_index_first,
+																		 cov_index_last => $cov_index_last);
+is($err,0,'conditional_covariance_coefficients 7 return status');
+cmp_float_array($ans1->[0],$cov7->[0],'conditional_covariance_coefficients 7 covariance 0');
+cmp_float_array($ans2->[0],$coeff7->[0],'conditional_covariance_coefficients 7 coefficients 0');
+cmp_float_array($ans1->[1],$cov7->[1],'conditional_covariance_coefficients 7 covariance 1');
+cmp_float_array($ans2->[1],$coeff7->[1],'conditional_covariance_coefficients 7 coefficients 1');
+
+$par_index_first=0;
+$par_index_last=1;
+$cov_index_first = 3;
+$cov_index_last = 4;
+my $coeff8 =[[ 0.107627307093618 ,  0.120593215990147],
+			 [   0.151211919057149,   0.150356648021758]];
+my $cov8 =[[ 1.793862575050033 ,  0.730220146764510],
+		   [0.730220146764510 ,  4.645763842561708]];
+
+($err,$ans1,$ans2) = linear_algebra::conditional_covariance_coefficients(varcov => $covariance,
+																		 rescaling => \@scaling,
+																		 par_index_first => $par_index_first,
+																		 par_index_last => $par_index_last,
+																		 cov_index_first => $cov_index_first,
+																		 cov_index_last => $cov_index_last);
+is($err,0,'conditional_covariance_coefficients 8 return status');
+cmp_float_array($ans1->[0],$cov8->[0],'conditional_covariance_coefficients 8 covariance 0');
+cmp_float_array($ans2->[0],$coeff8->[0],'conditional_covariance_coefficients 8 coefficients 0');
+cmp_float_array($ans1->[1],$cov8->[1],'conditional_covariance_coefficients 8 covariance 1');
+cmp_float_array($ans2->[1],$coeff8->[1],'conditional_covariance_coefficients 8 coefficients 1');
+
+($err,$ans1,$ans2) = linear_algebra::conditional_covariance_coefficients(varcov => $covariance,
+																		 rescaling => [1,2,1,1,1],
+																		 par_index_first => $par_index_first,
+																		 par_index_last => $par_index_last,
+																		 cov_index_first => $cov_index_first,
+																		 cov_index_last => $cov_index_last);
+is($err,1,'conditional_covariance_coefficients 9 return status');
+($err,$ans1,$ans2) = linear_algebra::conditional_covariance_coefficients(varcov => $covariance,
+																		 rescaling => \@scaling,
+																		 par_index_first => $par_index_last,
+																		 par_index_last => $par_index_first,
+																		 cov_index_first => $cov_index_first,
+																		 cov_index_last => $cov_index_last);
+is($err,1,'conditional_covariance_coefficients 10 return status');
+
 done_testing();

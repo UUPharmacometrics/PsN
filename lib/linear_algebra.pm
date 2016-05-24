@@ -1680,7 +1680,7 @@ sub invert_symmetric
     #input is full symmetric positive definite matrix 
     #this matrix will be overwritten
 	#and reference to empty result matrix
-    #verified with matlab
+    #have unit tests
 
     my $matrixref = shift;
 	my $result = shift;
@@ -1744,53 +1744,181 @@ sub lower_triangular_UTU_multiply
     }
     return 0;
 }
-
-sub frem_conditional_omega_block
+sub conditional_covariance_coefficients
 {
-    #input is lower triangle, including diagonal, of symmetric positive definite matrix 
-    #in *column format*, A->[col][row]
-    #this matrix will be overwritten
-    #input is also number of leading interesting etas
-    #and reference to empty result matrix which will hold symmetric conditional omega block
-    #verified with matlab
+	#has unit tests
+    my %parm = validated_hash(\@_,
+							  varcov => { isa => 'ArrayRef', optional => 0 },
+							  cov_index_first => { isa => 'Int', optional => 1 },
+							  cov_index_last => { isa => 'Int', optional => 1 },
+							  cov_index_array => { isa => 'ArrayRef', optional => 1 },
+							  par_index_first => { isa => 'Int', optional => 0 },
+							  par_index_last => { isa => 'Int', optional => 1 },
+							  rescaling => { isa => 'ArrayRef', optional => 1, default => [] },
+	);
+	my $varcov = $parm{'varcov'};
+	my $cov_index_first = $parm{'cov_index_first'};
+	my $cov_index_last = $parm{'cov_index_last'};
+	my $cov_index_array = $parm{'cov_index_array'};
+	my $par_index_first = $parm{'par_index_first'};
+	my $par_index_last = $parm{'par_index_last'};
+	my $rescaling = $parm{'rescaling'};
 
-    my $omegaref = shift;
-    my $n_eta = shift;
-    my $result = shift;
+	if (defined $cov_index_array){
+		if (defined $cov_index_first or defined $cov_index_last){
+			croak('cannot set cov_index_first/last when have cov_index_array ');
+		}
+		$cov_index_first=$cov_index_array->[0];
+		$cov_index_last=$cov_index_array->[-1];
+		for (my $i=1; $i<scalar(@{$cov_index_array}); $i++){
+			unless ($cov_index_array->[$i] > $cov_index_array->[$i-1]){
+				croak('cov index array not sorted');
+			}
+		}
+	}else{
+		unless (defined $cov_index_first and defined $cov_index_last){
+			croak('must set cov_index_first/last when not have cov_index_array ');
+		}
+		unless (defined $cov_index_first <= $cov_index_last){
+			croak('cov_index_first must not be greater than last');
+		}
+		$cov_index_array = [$cov_index_first .. $cov_index_last]
+	}
+	
+	unless (defined $par_index_last){
+		$par_index_last = $par_index_first;
+	}
+	
+	my $size = scalar(@{$varcov});
+	my $error = 0;
+	if (($par_index_first >= $size) or ($par_index_last >= $size) or ($cov_index_first >= $size) or ($cov_index_last >= $size)){
+		print "par_index_first $par_index_first or par_index_last $par_index_last or cov_index_first $cov_index_first or ".
+			"cov_index_last $cov_index_last outside size $size\n";
+		$error =1;
+	}
+	if (($par_index_first >= $cov_index_first) or ($cov_index_first > $cov_index_last) or ($par_index_first >= $cov_index_last)){
+		print "par_index_first $par_index_first or cov_index_first $cov_index_first or ".
+			"cov_index_last $cov_index_last in wrong order\n";
+		$error =1;
+	}
+	if (($par_index_last >= $cov_index_first) or ($par_index_last < $par_index_first)){
+		print "par_index_first $par_index_first or cov_index_first $cov_index_first or ".
+			"par_index_last $par_index_last in wrong order\n";
+		$error =1;
+	}
+	my $dim_rescale = scalar(@{$rescaling});
+	if ($dim_rescale > 0) {
+		if ($dim_rescale != $size){
+			print "dim rescale $dim_rescale not equal to size $size\n";
+			$error = 1;
+		}else{
+			for (my $i=0; $i<= $par_index_last; $i++){
+				unless ($rescaling->[$i] == 1){
+					print "rescaling not 1 for parameter index $i: ".$rescaling->[$i]."\n";
+					$error=1;
+					last;
+				}
+			}
+		}
+	}
+	return ($error,[],[]) if ($error > 0);
 
-    my $err=cholesky($omegaref);
+	my @indices = (($par_index_first .. $par_index_last),@{$cov_index_array},);
+	
+	my @varcov_copy=();
+	my @parcov_vectors=();
+	my @cov_copy=();
+	my @local_rescale = ();
+#	for (my $i=0; $i<$size; $i++){
+	foreach my $i (@indices){
+#		if ((($i >= $par_index_first) and ($i <= $par_index_last))  or (($i >= $cov_index_first) and ($i <= $cov_index_last))){
+			push(@varcov_copy,[]);
+			push(@local_rescale,$rescaling->[$i]) if ($dim_rescale > 0);
+			if (($i >= $cov_index_first) and ($i <= $cov_index_last)){
+				# i is covariate
+				push(@cov_copy,[]);
+			}else{
+				# i is parameter
+				push(@parcov_vectors,[]);
+			}
+#			for (my $j=0; $j<$size; $j++){
+			foreach my $j (@indices){
+#				if ((($j >= $par_index_first) and ($j <= $par_index_last)) or (($j >= $cov_index_first) and ($j <= $cov_index_last))){
+					push(@{$varcov_copy[-1]},$varcov->[$i]->[$j]);
+					if ($j> $par_index_last){
+						# j is covariate
+						if ($i >= $cov_index_first){
+							# i is covariate
+							push(@{$cov_copy[-1]},$varcov->[$i]->[$j]);
+						}else{
+							#i is parameter
+							push(@{$parcov_vectors[-1]},$varcov->[$i]->[$j]);
+						}
+					}
+#				}
+			}
+#		}
+	}
+
+	my $newcovar;
+	($error,$newcovar) = frem_conditional_variance(matrix => \@varcov_copy,npar =>($par_index_last-$par_index_first)+1);
+	return ($error,[],[]) if ($error > 0);
+	my ($error2,$coefficients) = frem_conditional_coefficients(matrix =>\@cov_copy,
+															   vectors => \@parcov_vectors,
+															   scaling => \@local_rescale);
+
+	return ($error2,$newcovar,$coefficients);
+	
+}
+
+sub frem_conditional_variance
+{
+    my %parm = validated_hash(\@_,
+							  matrix => { isa => 'ArrayRef', optional => 0 },
+							  npar => { isa => 'Int', optional => 0 },
+	);
+	my $matrix = $parm{'matrix'};
+	my $npar = $parm{'npar'};
+
+	my $result = [];
+
+    my $err=cholesky($matrix);
     if ($err > 0){
 		print "cholesky error $err in frem\n";
-		return $err ;
+		return ($err,[]) ;
     }
     my $refInv = [];
-    $err = lower_triangular_identity_solve($omegaref,$n_eta,$refInv);
+    $err = lower_triangular_identity_solve($matrix,$npar,$refInv);
+
     if ($err > 0){
 		print "lower triang error $err in frem\n";
-		return $err ;
+		return ($err,[]) ;
     }
 
+    #refInv is lower triangular matrix
+    #in *column format*, R->[col][row]
+    #refInv is upper triangular matrix
+    #in *row format*, R->[row][col]
 
+	#QR takes input as [col][row]
     my $Rmat=[];
     $err = QR_factorize($refInv,$Rmat);
     if ($err > 0){
 		print "QR error in frem\n";
-		return $err ;
+		return ($err,[]) ;
     }
-
 
     my $refRInv = [];
     $err = upper_triangular_identity_solve($Rmat,$refRInv);
     if ($err > 0){
 		print "upper triang error in frem\n";
-		return $err ;
+		return ($err,[]) ;
     }
-    return $err if ($err > 0);
 
     $err = upper_triangular_UUT_multiply($refRInv,$result);
     if ($err > 0){
 		print "multiply error in frem\n";
-		return $err ;
+		return ($err,[]) ;
     }
 
     #fill in full matrix to avoid sorrows outside this function 
@@ -1801,43 +1929,74 @@ sub frem_conditional_omega_block
 		}
     }
 
-    return 0;
-
+    return (0,$result);
+	
 }
 
-if (0){
-    my @Amatrix=();
-    push(@Amatrix,[9.6900000e-02,6.7600000e-02,7.0400000e-02,-9.3500000e-01,1.9500000e+00,3.4300000e+00,-8.9000000e-03,-4.2900000e-02,3.6100000e-02,7.7700000e-03]);
-    push(@Amatrix,[0,6.0600000e-02,-4.2100000e-03,-4.1300000e-01,2.5300000e+00,2.4500000e+00,-3.6600000e-02,-1.9100000e-02,1.3600000e-02,-7.8100000e-03]);
-    push(@Amatrix,[0,0,2.3400000e+00,9.7000000e-01,-4.0800000e-01,-2.2500000e+00,-6.9700000e-02,-2.2500000e-01,-9.0900000e-02,7.2200000e-03]);
-    push(@Amatrix,[0,0,0,6.0500000e+01,-1.7000000e+01,-7.9500000e+01,-3.5900000e-01,9.3000000e-01,-2.4200000e-01,-1.1400000e-01]);
-    push(@Amatrix,[0,0,0,0,2.4800000e+02,2.3500000e+02,-3.1300000e+00,-2.6600000e-01,-4.0300000e-01,-1.6000000e+00]);
-    push(@Amatrix,[0,0,0,0,0,4.7100000e+02,-2.0100000e+00,-2.1000000e+00,1.4100000e+00,-1.0600000e+00]);
-    push(@Amatrix,[0,0,0,0,0,0,1.6200000e-01,-4.5400000e-03,2.0200000e-02,3.0700000e-02]);
-    push(@Amatrix,[0,0,0,0,0,0,0,2.4900000e-01,-5.5100000e-02,1.8800000e-02]);
-    push(@Amatrix,[0,0,0,0,0,0,0,0,2.3200000e-01,2.0500000e-02]);
-    push(@Amatrix,[0,0,0,0,0,0,0,0,0,2.2800000e-01]);
-    
-    my $b = [1,2,3,4,5,6,7,8,9,10];
+sub frem_conditional_coefficients
+{
+    my %parm = validated_hash(\@_,
+							  matrix => { isa => 'ArrayRef', optional => 0 },
+							  vectors => { isa => 'ArrayRef', optional => 0 },
+							  scaling => { isa => 'ArrayRef', optional => 0 },
+	);
+	my $matrix = $parm{'matrix'};
+	my $vectors = $parm{'vectors'};
+	my $scaling = $parm{'scaling'};
+	
+	my @coefficients = ();
 
-    my $result = [];
-    my $err = frem_conditional_omega_block(\@Amatrix,3,$result);
-    
-    if (0){
-	my $Rmat=[];
-	my $err1 = QR_factorize(\@Amatrix,$Rmat);
-	my $err2 = upper_triangular_transpose_solve($Rmat,$b);
-    }
-
-    for (my $row=0; $row<3; $row++){
-	for (my $col=0; $col<3; $col++){
-	    printf("  %.4f",$result->[$col][$row]); #matlab format
+	my $size = scalar(@{$matrix});
+	my $size2 = scalar(@{$vectors->[0]});
+	my $error = 0;
+	if (($size2 != $size) or (scalar(@{$matrix->[0]}) != $size)){
+		print "matrix size $size not square or vector size $size2 not equal\n";
+		for (my $k=0; $k< scalar(@{$vectors}); $k++){
+			print join(' ',@{$vectors->[$k]})."\n";
+		}
+		
+		$error =1;
+		return ($error,[]);
 	}
-	print "\n";
-    }
-    print "\n";
+	my $dim_scaling = scalar(@{$scaling});
+	if ($dim_scaling>0){
+		unless ($dim_scaling == ($size +scalar(@{$vectors}))){
+			print "scaling dim $dim_scaling but size $size and vectors ".scalar(@{$vectors})."\n";
+			$error =1;
+			return ($error,[]);
+		}  
+	}
 
+    my $refInv = [];
+    $error=invert_symmetric($matrix,$refInv);
+    if ($error > 0){
+		print "invert_symmetric error $error in frem_conditional_coefficients\n";
+		return ($error,[]) ;
+    }
+	#now multiply all vectors with refInv
+	my $veccount = scalar(@{$vectors});
+	for (my $k=0; $k< $veccount; $k++){
+		push(@coefficients,[]);
+		for (my $i=0; $i< $size; $i++){
+			my $num = 0;
+			for (my $j=0; $j< $size; $j++){
+				my $thescale = 1;
+				if ($dim_scaling>0){
+					#					$left *= $scaling[$k]*scaling[$veccount+$j];
+					#					$right *= 1/($scaling[$veccount+$i]*scaling[$veccount+$j]);
+					#scaling j cancels out
+					$thescale = $scaling->[$k]/($scaling->[$veccount+$i]);
+				}
+				$num += ($vectors->[$k]->[$j])*($refInv->[$i]->[$j])*$thescale;
+			}
+			push(@{$coefficients[-1]},$num);
+		}
+	}
+	return (0,\@coefficients);
 }
+
+
+
 
 
 1;

@@ -27,7 +27,7 @@ my $indentation = '     ';
 my $smallnum = 0.0000001;
 
 has 'skip_omegas' => ( is => 'rw', isa => 'ArrayRef', default => sub { [] } );
-has 'run_sir' => ( is => 'rw', isa => 'Bool', default=> 1);
+has 'run_sir' => ( is => 'rw', isa => 'Bool', default=> 0);
 has 'skip_etas' => ( is => 'rw', isa => 'Int', default=> 0);
 has 'rse' => ( is => 'rw', isa => 'Num', default=> 30);
 has 'start_omega_record' => ( is => 'rw', isa => 'Int', default=> 1);
@@ -2722,8 +2722,8 @@ sub modelfit_setup
 						  message => 'Starting sir');
 				ui->category('sir');
 				my %options;
-				$options{'samples'}=2000;
-				$options{'resamples'}=1000;
+#				$options{'samples'}=2000;
+#				$options{'resamples'}=1000;
 				$options{'problems_per_file'}=25;
 				$options{'covmat_input'} = $self->directory.$proposal_filename;
 				input_checking::check_options(tool => 'sir', options => \%options, model => $sir_model);
