@@ -155,7 +155,7 @@ EOF
 $help_text{-run_sir} = <<'EOF';
       -run_sir
 
-      Default set. Disable with -no-run_sir. If covariance step of Model 4 fails, run sir
+      Default not set. If set and covariance step of Model 4 fails, run sir
       to obtain standard errors of parameters.
 EOF
 
