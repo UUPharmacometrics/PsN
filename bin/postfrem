@@ -24,41 +24,19 @@ use File::Path 'rmtree';
 use tool;
 use tool::frem;
 use linear_algebra;
-use array qw(quantile);
+use array qw(quantile unique);
+use math qw(round);
 use MooseX::Params::Validate;
 # More PsN dependencies included with require further down
 
-#FIXME these should be options or read from file
-my $minimum = 500; #change to 1000 later
-my @covnames = (); #from model, first lines in FREM CODE BEGIN BSV_covname =
-my @parnames = ();
-my @tvpar = ();
-my @cov_means = (); #ncov last THETA fix from model
-my @cov_reference = ();
-my @cov_rescale = ();
-my @cov_units=();
-my @categorical =();
+my $minimum = 100; 
+
 my %categorytext=();
-my %categorydiff=();
+$categorytext{'SEX'}={1=>'male',2=>'female'}; #hamren
+my %units = ('AGE'=> 'years','WGT'=>'kg','WT'=>'kg','LBW'=>'kg','CRCO'=> 'ml/min','CLCR'=> 'ml/min','NEUY'=> 'mg'); #hamren
+#my %units = ('AGE'=> 'years','WGT'=>'kg','LBW'=>'kg'); #temp
 
-$categorytext{'SEX'}=['male','female'];
-$categorydiff{'SEX'}=1; #other minus reference
-#ACE, NYHA
-my %units = ('AGE'=> 'years','WGT'=>'kg','LBW'=>'kg','CRCO'=> 'ml/min','SEX' => '');
-
-
-#numbers from model, very beginning of PK/PRED BSV_x=ETA(n)*number
-#npar 1 in beginning
-
-
-
-
-#log-normal distribution of parameters !! Tv_par*exp(...)
-#my @par_divide_cv =();
-#@par_divide_cv =(1,
-#				 1
-#	);
-
+#FIXME optional input units and categorytexts
 
 my $cmd_line = $0 . " " . join( " ", @ARGV );
 
@@ -68,8 +46,6 @@ my %required_options = ('sir_directory:s' => undef,
 						'frem_directory:s' => undef,
 	);
 my %optional_options = ('offset_rawres:i' => undef,
-						'npar:i' => undef,
-						"model:s" => undef,
 						'in_filter:s' => undef,
 	);
 
@@ -107,33 +83,10 @@ EOF
 $help_text{Examples} = <<'EOF';
 postfrem -model=model_4.mod rawres_input=raw_results_model_4.mod -in_filter=resamples.gt.0
 EOF
-$help_text{-rawres_input} = <<'EOF';
-      -rawres_input=filename
-
-      required. from sir. If have covmatrix from model 4 in frem can run sir
-with -samples=1000, resamples=50 and then have no in_filter (just sample from covmatrix).
-A bit slow since do MAXEVAL=0 for all samples and not use it for anything, but already implemented
-so good enough for now. 
-If use final output from sir then make sure use in_filter for resamples.
-
-EOF
-$help_text{-frem_dataset} = <<'EOF';
-      -frem_dataset=filename
-
-      required. from frem
-EOF
 $help_text{-offset_rawres} = <<'EOF';
       -offset_rawres=N
 
       Default is 1, i.e. first line is minimum. Do not set to 0.
-EOF
-$help_text{-model} = <<'EOF';
-    -model
-    Required. Model used as sir input.
-EOF
-$help_text{-npar} = <<'EOF';
-    -npar
-    Required. Number of parameter etas in last omega block. Then comes covars
 EOF
 $help_text{-in_filter} = <<'EOF';
       -in_filter=comma-separated list of conditions
@@ -178,182 +131,40 @@ my $model = model -> new ( eval( $eval_string ),
 			  filename                    => $options{'model'},
 			  ignore_missing_output_files => 1 );
 
-my $omegaindex = scalar(@{$model->problems->[0]->omegas})-1;
-my $size = $model->problems->[0]->omegas->[$omegaindex]->size;
-my @code = @{$model->get_code(record => 'pk')};
-unless ($#code > 0) {
-	@code = @{$model->get_code(record => 'pred')};
-}
-if ( $#code <= 0 ) {
-	croak("Neither PK or PRED defined in post-processing model");
-}
 
-my ($covn,$resc) = tool::frem::get_post_processing_data(code => \@code,
-														size => $size);
-@cov_rescale = @{$resc};
-@covnames = @{$covn};
-my %allthetas=();
-if (defined $model -> problems->[0]->thetas) {
-	my @records = @{$model -> problems->[0]-> thetas};
-	foreach my $record (@records){
-		foreach my $option (@{$record -> options()}) {
-			if (defined $option ->label()) {
-				$allthetas{$option ->label()} = $option->init;
-#				print $option ->label()." ".$option->init;
-			}#all frem cov thetas have label
-		}
-	}
-}
+my ($covn,$resc,$omegaindex,$parn,$size,$means) = tool::frem::get_post_processing_data(model => $model);
 
-foreach my $c (@{$covn}){
-	push(@cov_means,$allthetas{'TV_'.$c});
-}
+my @tvpar = ();
+my @cov_reference = ();
+my @cov_units=();
+
+my @cov_rescale = @{$resc};
+my @covnames = @{$covn};
+my @parnames = @{$parn};
+my @cov_means = @{$means};
+my $npar = scalar(@parnames);
+
+my ($cov_5th,$cov_95th,$id_covariate_vectors,$categorical,$categoryinfo) = 
+	tool::frem::read_covdata(covnames => \@covnames,
+							 filename => $options{'frem_dataset'});
+
+
 for (my $i=0; $i<scalar(@covnames); $i++){
 	my $cn = $covnames[$i];
-	push(@cov_units,$units{$cn});
-	if ($cn eq 'SEX'){
-		push(@categorical,1);
-		push(@cov_reference,1); #male
+	if ($categorical->[$i]){
+		push(@cov_reference,$categoryinfo->{$cn}->{'reference'}); 
+		push(@cov_units,'');
 	}else{
-		push(@categorical,0);
-		push(@cov_reference,$cov_means[$i]); 
+		push(@cov_reference,$cov_means[$i]);
+		if (defined $units{$cn}){
+			push(@cov_units,$units{$cn});
+		}else{
+			push(@cov_units,'');
+		}
 	}
 }
 
-my $npar = $size - scalar(@covnames);
-
-my $row=1;
-my $col=1;
-foreach my $opt (@{$model->problems->[0]->omegas->[$omegaindex]->options}){
-	if ($row == $col){
-		my $lab = $opt->label;
-		$lab =~ s/^\s*(\d+)\s*//;
-		$lab =~ s/\s*$//;
-		$lab =~ s/\s+/_/g;
-		push(@parnames,$lab);
-		$col=1;
-		$row++;
-	}else{
-		$col++;
-	}
-	last if (scalar(@parnames)==$npar);
-}
-if (0){
-	print join(' ',@covnames)."\n";
-	print join(' ',@cov_rescale)."\n";
-	print join(' ',@cov_means)."\n";
-	print join(' ',@cov_reference)."\n";
-	print join(' ',@cov_units)."\n";
-	print join(' ',@categorical)."\n";
-	print join(' ',@parnames)."\n";
-}
 my @labels=(@parnames,@covnames);
-
-
-unless (defined $npar and ($npar < $size) and ($npar == scalar(@parnames))){
-	croak("npar $npar is not defined and smaller than size $size");
-}
-    
-#TODO read covnames, cov_means, cov_rescale
-
-sub read_covdata
-{
-    my %parm = validated_hash(\@_,
-							  covnames => { isa => 'ArrayRef', optional => 0 },
-							  filename => { isa => 'Str', optional => 0 },
-							  dv => { isa => 'Str', default => 'DV' },
-	);
-	my $covnames = $parm{'covnames'};
-	my $filename = $parm{'filename'};
-	my $dv = $parm{'dv'};
-
-	my %fremtype_to_cov=();
-	my %cov_arrays=();
-	my %id_arrays=();
-
-	
-	for (my $i=0; $i< scalar(@{$covnames}); $i++){
-		my $fremtype = ($i+1)*100;
-		$fremtype_to_cov{$fremtype}=$covnames->[$i];
-		$cov_arrays{$covnames->[$i]} = [];
-	}
-	
-    open my $fh, '<', $filename;
-	my $frem_index=-1;
-	my $dv_index=-1;
-	my $id_index=-1;
-    my $header_row = <$fh>;
-	chomp($header_row);
-	my @fields = split(',',$header_row);
-	for (my $i=0; $i< scalar(@fields); $i++){
-		if($fields[$i] eq $dv){
-			$dv_index = $i;
-		}elsif($fields[$i] eq 'FREMTYPE'){
-			$frem_index = $i;
-		}elsif($fields[$i] eq 'ID'){
-			$id_index = $i;
-		}
-		last if (($frem_index >= 0) and ($dv_index >=0) and ($id_index >=0));
-	}
-	croak("could not find DV and FREMTYPE and ID") unless (($frem_index >= 0) and ($dv_index >=0) and ($id_index >=0));
-	my $row; 
-	while (1) {
-		$row = <$fh>;
-		last unless (defined $row);
-		chomp ($row);
-		@fields = split(',',$row);
-		if ($fields[$frem_index] > 0){
-			my $cov = $fremtype_to_cov{$fields[$frem_index]};
-			push(@{$cov_arrays{$cov}},$fields[$dv_index]);
-			my $id = $fields[$id_index];
-			unless (exists $id_arrays{$id}){
-				$id_arrays{$id}={};
-			}
-			if (exists $id_arrays{$id}->{$cov}){
-				croak("redefinition of $cov for id $id");
-			}else{
-				$id_arrays{$id}->{$cov} = $fields[$dv_index];
-			}
-		}
-	}
-	close $fh;
-	for (my $i=1; $i< scalar(@{$covnames}); $i++){
-		unless (scalar(@{$cov_arrays{$covnames->[$i]}}) == scalar(@{$cov_arrays{$covnames->[$i-1]}})){
-			croak("unequal length $i and $i-1");
-		}
-		unless (scalar(@{$cov_arrays{$covnames->[$i]}}) > 0){
-			croak("legth $i not larger than 0");
-		}
-	}
-
-	my @id_covariate_vectors = ();
-	foreach my $idnum (sort {$a <=> $b} keys %id_arrays){
-		push(@id_covariate_vectors,[$idnum]);
-		for (my $i=0; $i< scalar(@{$covnames}); $i++){
-			if (defined $id_arrays{$idnum}->{$covnames->[$i]}){
-				push(@{$id_covariate_vectors[-1]},$id_arrays{$idnum}->{$covnames->[$i]});
-			}else{
-				croak("id $idnum undefined covariate ".$covnames->[$i]);
-			}
-		}
-	}
-	
-	my @perc_5th=();
-	my @perc_95th=();
-	for (my $i=0; $i< scalar(@{$covnames}); $i++){
-		my @sorted = (sort {$a <=> $b} @{$cov_arrays{$covnames->[$i]}}); #sort ascending
-		my $quantref = array::quantile(probs => [0.05,0.95], numbers=> \@sorted);
-		push(@perc_5th,$quantref->[0]);
-		push(@perc_95th,$quantref->[1]);
-	}
-
-	return(\@perc_5th,\@perc_95th,\@id_covariate_vectors);
-}
-
-my ($cov_5th,$cov_95th,$id_covariate_vectors) = read_covdata(covnames => \@covnames,
-															 filename => $options{'frem_dataset'});
-
-
 
 
 my $sampled_params_arr;
@@ -468,11 +279,17 @@ for (my $i=0; $i< scalar(@parnames); $i++){
 close FILE1;
 
 open( FILE2, '>covdata.csv' );
-print FILE2 'covname,perc5th,mean,perc95th,reference,unit,category.reference,category.other'."\n";
+print FILE2 'covname,perc5th,mean,perc95th,reference,is.categorical,unit,category.reference,category.other'."\n";
 for (my $i=0; $i< scalar(@covnames); $i++){
-	my $string = $covnames[$i].','.$cov_5th->[$i].','.$cov_means[$i].','.$cov_95th->[$i].','.$cov_reference[$i].','.$cov_units[$i].',';
-	if ($categorical[$i]){
-		$string .= $categorytext{$covnames[$i]}->[0].','.$categorytext{$covnames[$i]}->[1];
+	my $string = $covnames[$i].','.$cov_5th->[$i].','.$cov_means[$i].','.$cov_95th->[$i].','.$cov_reference[$i].','.$categorical->[$i].','.$cov_units[$i].',';
+	if ($categorical->[$i]){
+		my $ref = $categoryinfo->{$covnames[$i]}->{'reference'};
+		my $other = $categoryinfo->{$covnames[$i]}->{'other'};
+		if (defined $categorytext{$covnames[$i]}){
+			$string .= $categorytext{$covnames[$i]}->{$ref}.','.$categorytext{$covnames[$i]}->{$other};
+		}else{
+			$string .= $ref.','.$other;
+		}
 	}else{
 		$string .= ',';
 	}
@@ -514,7 +331,7 @@ for (my $i=0;$i<$npar; $i++){
 for (my $j=$npar;$j<$size; $j++){
 	my $covindex  = $j-$npar;
 	for (my $i=0;$i<$npar; $i++){
-		if ($categorical[$covindex]){
+		if ($categorical->[$covindex]){
 #			$ratioheader .= ',RATIO.par.'.$labels[$i].'.given.reference.'.$labels[$j];
 			$ratioheader .= ',RATIO.par.'.$labels[$i].'.given.other.'.$labels[$j];
 		}else{
@@ -561,10 +378,10 @@ for (my $k=0;$k<=scalar(@{$sampled_params_arr}); $k++){
 		croak("cond covar coeff failed") if ($error != 0);
 		my $covindex  = $j-$npar;
 		for (my $i=0;$i<$npar; $i++){
-			if ($categorical[$covindex]){
+			if ($categorical->[$covindex]){
 #				$ratioheader .= ',RATIO.par.'.$labels[$i].'.given.other.'.$labels[$j];
 #				$ratiovec .= ',1';
-				$ratiovec .= ','.exp(($categorydiff{$labels[$j]})*($coeff->[$i]->[0]));
+				$ratiovec .= ','.exp(($categoryinfo->{$labels[$j]}->{'diff'})*($coeff->[$i]->[0]));
 			}else{
 			#		$ratioheader .= ',RATIO.par.'.$labels[$i].'.given.cov5th.'.$labels[$j];
 			#		$ratioheader .= ',RATIO.par.'.$labels[$i].'.given.cov95th.'.$labels[$j];

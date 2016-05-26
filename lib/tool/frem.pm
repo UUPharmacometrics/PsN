@@ -176,15 +176,139 @@ sub BUILD
 	
 }
 
+sub read_covdata
+{
+    my %parm = validated_hash(\@_,
+							  covnames => { isa => 'ArrayRef', optional => 0 },
+							  filename => { isa => 'Str', optional => 0 },
+							  dv => { isa => 'Str', default => 'DV' },
+	);
+	my $covnames = $parm{'covnames'};
+	my $filename = $parm{'filename'};
+	my $dv = $parm{'dv'};
+
+	my %fremtype_to_cov=();
+	my %cov_arrays=();
+	my %id_arrays=();
+
+	
+	for (my $i=0; $i< scalar(@{$covnames}); $i++){
+		my $fremtype = ($i+1)*100;
+		$fremtype_to_cov{$fremtype}=$covnames->[$i];
+		$cov_arrays{$covnames->[$i]} = [];
+	}
+	
+    open my $fh, '<', $filename;
+	my $frem_index=-1;
+	my $dv_index=-1;
+	my $id_index=-1;
+    my $header_row = <$fh>;
+	chomp($header_row);
+	my @fields = split(',',$header_row);
+	for (my $i=0; $i< scalar(@fields); $i++){
+		if($fields[$i] eq $dv){
+			$dv_index = $i;
+		}elsif($fields[$i] eq 'FREMTYPE'){
+			$frem_index = $i;
+		}elsif($fields[$i] eq 'ID'){
+			$id_index = $i;
+		}
+		last if (($frem_index >= 0) and ($dv_index >=0) and ($id_index >=0));
+	}
+	croak("could not find DV and FREMTYPE and ID") unless (($frem_index >= 0) and ($dv_index >=0) and ($id_index >=0));
+	my $row; 
+	while (1) {
+		$row = <$fh>;
+		last unless (defined $row);
+		chomp ($row);
+		@fields = split(',',$row);
+		if ($fields[$frem_index] > 0){
+			my $cov = $fremtype_to_cov{$fields[$frem_index]};
+			push(@{$cov_arrays{$cov}},$fields[$dv_index]);
+			my $id = $fields[$id_index];
+			unless (exists $id_arrays{$id}){
+				$id_arrays{$id}={};
+			}
+			if (exists $id_arrays{$id}->{$cov}){
+				croak("redefinition of $cov for id $id");
+			}else{
+				$id_arrays{$id}->{$cov} = $fields[$dv_index];
+			}
+		}
+	}
+	close $fh;
+	for (my $i=0; $i< scalar(@{$covnames}); $i++){
+		unless (scalar(@{$cov_arrays{$covnames->[$i]}}) > 0){
+			croak("legth $i not larger than 0");
+		}
+	}
+
+	my %categoryinfo=();
+	my @perc_5th=();
+	my @perc_95th=();
+	my @categorical=();
+	for (my $i=0; $i< scalar(@{$covnames}); $i++){
+		my @sorted = (sort {$a <=> $b} @{$cov_arrays{$covnames->[$i]}}); #sort ascending
+		my $quantref = array::quantile(probs => [0.05,0.5,0.95], numbers=> \@sorted);
+		push(@perc_5th,$quantref->[0]);
+		push(@perc_95th,$quantref->[2]);
+		my $unique = array::unique(\@sorted);
+		if (scalar(@{$unique})==2){
+			push(@categorical,1);
+			my $ref = $unique->[0];
+			my $other = $unique->[1];
+			#median is either equal to a category, or mean of the two categories if exactly equal numbers
+			if ($quantref->[1] == $unique->[1]){
+				$ref = $unique->[1];
+				$other = $unique->[0];
+			}
+			#diff is other minus reference
+			$categoryinfo{$covnames->[$i]}={'reference' => $ref,'other' => $other, 'diff' => ($other-$ref)};
+		}else{
+			push(@categorical,0);
+		}
+	}
+
+	my @id_covariate_vectors = ();
+	foreach my $idnum (sort {$a <=> $b} keys %id_arrays){
+		push(@id_covariate_vectors,[$idnum]);
+		for (my $i=0; $i< scalar(@{$covnames}); $i++){
+			if (defined $id_arrays{$idnum}->{$covnames->[$i]}){
+				push(@{$id_covariate_vectors[-1]},$id_arrays{$idnum}->{$covnames->[$i]});
+			}else{
+				croak("id $idnum undefined covariate ".$covnames->[$i]);
+			}
+		}
+	}
+	
+	for (my $i=1; $i< scalar(@{$covnames}); $i++){
+		unless (scalar(@{$cov_arrays{$covnames->[$i]}}) == scalar(@{$cov_arrays{$covnames->[$i-1]}})){
+			croak("unequal length $i and $i-1");
+		}
+	}
+
+	return(\@perc_5th,\@perc_95th,\@id_covariate_vectors,\@categorical,\%categoryinfo);
+}
+
 sub get_post_processing_data
 {
 	my %parm = validated_hash(\@_,
-							  code => { isa => 'ArrayRef', optional => 0 },
-							  size => { isa => 'Int', optional => 0 },
+							  model => { isa => 'model', optional => 0 },
 	);
-	my $code = $parm{'code'};
-	my $size = $parm{'size'};
 
+	my $model = $parm{'model'};
+
+	my $omegaindex = scalar(@{$model->problems->[0]->omegas})-1;
+	my $size = $model->problems->[0]->omegas->[$omegaindex]->size;
+	my $code = $model->get_code(record => 'pk');
+	unless (scalar(@{$code}) > 0) {
+		$code = $model->get_code(record => 'pred');
+	}
+	if ( scalar(@{$code}) <= 0 ) {
+		croak("Neither PK or PRED defined in post-processing model");
+	}
+
+	
 	#get $ncov from code
 	my $starttag = ';;;FREM CODE BEGIN';
 	my $endtag=';;;FREM CODE END';
@@ -213,10 +337,50 @@ sub get_post_processing_data
 			}
 		}
 	}
-	return(\@covnames,\@rescaling);
-	#$npar = $size-$ncov
-	# get reference_cov from last ncov thetas
-	# find categorical, find reference or hardcode
+
+	my %allthetas=();
+	if (defined $model -> problems->[0]->thetas) {
+		my @records = @{$model -> problems->[0]-> thetas};
+		foreach my $record (@records){
+			foreach my $option (@{$record -> options()}) {
+				if (defined $option ->label()) {
+					$allthetas{$option ->label()} = $option->init;
+					#				print $option ->label()." ".$option->init;
+				}#all frem cov thetas have label
+			}
+		}
+	}
+
+	my @cov_means = ();
+	foreach my $cn (@covnames){
+		push(@cov_means,$allthetas{'TV_'.$cn});
+	}
+
+	my $npar = $size - scalar(@covnames);
+
+	my $row=1;
+	my $col=1;
+	my @parnames=();
+	foreach my $opt (@{$model->problems->[0]->omegas->[$omegaindex]->options}){
+		if ($row == $col){
+			my $lab = $opt->label;
+			unless (defined $lab and length($lab)>0){
+				$lab = 'PAR'.(scalar(@parnames)+1);
+			}
+			$lab =~ s/^\s*(\d+)\s*//;
+			$lab =~ s/\s*$//;
+			$lab =~ s/\s+/_/g;
+			push(@parnames,$lab);
+			$col=1;
+			$row++;
+		}else{
+			$col++;
+		}
+		last if (scalar(@parnames)==$npar);
+	}
+
+	return(\@covnames,\@rescaling,$omegaindex,\@parnames,$size,\@cov_means);
+
 	
 }
 

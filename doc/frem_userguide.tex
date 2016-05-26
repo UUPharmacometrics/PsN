@@ -1,6 +1,6 @@
 \input{inputs/format_header.tex}
 \usepackage{amsmath}
-\guidetitle{FREM userguide}{2016-05-25}
+\guidetitle{FREM userguide}{2016-05-26}
 
 \begin{document}
 \newcommand{\guidetoolname}{frem}
@@ -558,9 +558,9 @@ postfrem -frem_dir=frem_base_lin4 -sir_dir=frem_base_lin4/sir_dir1
 Output is generated in a folder named postfrem1 (or other number).
 The script currently assumes that sir was run with input model final\_models/model\_4.mod inside the
 frem run directory. If sir was run with model\_7.mod or some other model then the script will not work.
-Also, in the script it is currently assumed that
-the only categorical covariate is SEX, that male is encoded with
-1 and female with 2, and that male is the most common category.
+Also, in the script it is currently assumed that SEX equal to 1 is male and equal to 2 is female.
+Units for continuous covariates are hardcoded as
+AGE:years, WGT:kg, LBW:kg and CRCO: ml/min.
 
 The post-processing script does the following:
 \begin{enumerate}
