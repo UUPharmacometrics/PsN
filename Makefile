@@ -208,6 +208,7 @@ release: main completion rel_dir $(RELFILES) $(PDFFILES)
 	@ mkdir -p PsN-Source/development
 	@ mkdir -p PsN-Source/development/completion_files
 	@ cp development/completion_files/* PsN-Source/development/completion_files
+	@ cp ../rplotsRepo/code/frem/*.R PsN-Source/lib/R-scripts/.
 	@ mkdir -p PsN-Source/test
 	@ cp -r test/unit PsN-Source/test
 	@ cp -r test/system PsN-Source/test
