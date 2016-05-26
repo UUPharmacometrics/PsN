@@ -22,6 +22,7 @@ use File::Copy qw/cp mv/;
 use File::Glob;
 use File::Path 'rmtree';
 use tool;
+use tool::frem;
 use linear_algebra;
 use array qw(quantile);
 use MooseX::Params::Validate;
@@ -39,55 +40,11 @@ my @cov_units=();
 my @categorical =();
 my %categorytext=();
 my %categorydiff=();
-#TODO parse out scaling from model
-if (1){
-	#Hamren
-	@covnames=('AGE','WGT','LBW','CRCO','SEX'); #Hamren linearized
-	@cov_units=('years','kg','kg','ml/min','');
-	@categorical=(0,0,0,0,1);
-	$categorytext{'SEX'}=['male','female'];
-	$categorydiff{'SEX'}=1; #other minus reference
-	@parnames=('GAM','KINH','HB50','FPG_BASELINE','EC50_FPG','PBO_FPG'); #hamren linearized
-	
-	@cov_means=(57.1553398058,
-				88.9502427184,
-				58.4322815534,
-				69.5191747573,
-				1.41262135922 );
-	@cov_reference = @cov_means;
-	$cov_reference[4] = 1; #SEX, male
-	@cov_rescale =(
-		10.2318688078,
-		17.738664519,
-		11.2023916302,
-		20.6542819724,
-		0.492904320263);
 
-}else{
-	#moxpd
-	@covnames=('AGE','WT','NEUY','CLCR','SEX','ACE','NYHA'); #mox_pd frem 11
-	@parnames=('BASE','SLOPE'); #moxpd frem 11
-	@cov_means =(65.5773195876,
-				 78.4742268041,
-				 2761.89690722,
-				 67.6082474227,
-				 1.24742268041,
-				 0.59793814433,
-				 2.54639175258);
-	@cov_reference = @cov_means;
-	$cov_reference[1] = 70; #WT
-	$cov_reference[4] = 1; #SEX
-	$cov_reference[5] = 1; #ACE
-	$cov_reference[6] = 3; #NYHA
-	@cov_rescale = (7.78330886624,
-				   15.8482995825,
-				   1815.19644532,
-				   23.2031592232,
-				   0.433756071885,
-				   0.492861411691,
-				   0.500429368907);
-}
-my @labels=(@parnames,@covnames);
+$categorytext{'SEX'}=['male','female'];
+$categorydiff{'SEX'}=1; #other minus reference
+#ACE, NYHA
+my %units = ('AGE'=> 'years','WGT'=>'kg','LBW'=>'kg','CRCO'=> 'ml/min','SEX' => '');
 
 
 #numbers from model, very beginning of PK/PRED BSV_x=ETA(n)*number
@@ -134,7 +91,6 @@ $options{'rawres_input'}=$options{'sir_directory'}.'/raw_results_model_4.csv';
 $options{'model'}=$options{'frem_directory'}.'/final_models/model_4.mod';
 $options{'frem_dataset'} = $options{'frem_directory'}.'/frem_dataset.dta';
 $options{'in_filter'}='resamples.gt.0';
-my $npar = scalar(@parnames);
 
 my %help_text;
 
@@ -221,6 +177,82 @@ if( not defined $options{'frem_dataset'})  {
 my $model = model -> new ( eval( $eval_string ),
 			  filename                    => $options{'model'},
 			  ignore_missing_output_files => 1 );
+
+my $omegaindex = scalar(@{$model->problems->[0]->omegas})-1;
+my $size = $model->problems->[0]->omegas->[$omegaindex]->size;
+my @code = @{$model->get_code(record => 'pk')};
+unless ($#code > 0) {
+	@code = @{$model->get_code(record => 'pred')};
+}
+if ( $#code <= 0 ) {
+	croak("Neither PK or PRED defined in post-processing model");
+}
+
+my ($covn,$resc) = tool::frem::get_post_processing_data(code => \@code,
+														size => $size);
+@cov_rescale = @{$resc};
+@covnames = @{$covn};
+my %allthetas=();
+if (defined $model -> problems->[0]->thetas) {
+	my @records = @{$model -> problems->[0]-> thetas};
+	foreach my $record (@records){
+		foreach my $option (@{$record -> options()}) {
+			if (defined $option ->label()) {
+				$allthetas{$option ->label()} = $option->init;
+#				print $option ->label()." ".$option->init;
+			}#all frem cov thetas have label
+		}
+	}
+}
+
+foreach my $c (@{$covn}){
+	push(@cov_means,$allthetas{'TV_'.$c});
+}
+for (my $i=0; $i<scalar(@covnames); $i++){
+	my $cn = $covnames[$i];
+	push(@cov_units,$units{$cn});
+	if ($cn eq 'SEX'){
+		push(@categorical,1);
+		push(@cov_reference,1); #male
+	}else{
+		push(@categorical,0);
+		push(@cov_reference,$cov_means[$i]); 
+	}
+}
+
+my $npar = $size - scalar(@covnames);
+
+my $row=1;
+my $col=1;
+foreach my $opt (@{$model->problems->[0]->omegas->[$omegaindex]->options}){
+	if ($row == $col){
+		my $lab = $opt->label;
+		$lab =~ s/^\s*(\d+)\s*//;
+		$lab =~ s/\s*$//;
+		$lab =~ s/\s+/_/g;
+		push(@parnames,$lab);
+		$col=1;
+		$row++;
+	}else{
+		$col++;
+	}
+	last if (scalar(@parnames)==$npar);
+}
+if (0){
+	print join(' ',@covnames)."\n";
+	print join(' ',@cov_rescale)."\n";
+	print join(' ',@cov_means)."\n";
+	print join(' ',@cov_reference)."\n";
+	print join(' ',@cov_units)."\n";
+	print join(' ',@categorical)."\n";
+	print join(' ',@parnames)."\n";
+}
+my @labels=(@parnames,@covnames);
+
+
+unless (defined $npar and ($npar < $size) and ($npar == scalar(@parnames))){
+	croak("npar $npar is not defined and smaller than size $size");
+}
     
 #TODO read covnames, cov_means, cov_rescale
 
@@ -376,11 +408,6 @@ chdir($main_directory); #created by tool::get_rundir
 
 
 
-my $omegaindex = scalar(@{$model->problems->[0]->omegas})-1;
-my $size = $model->problems->[0]->omegas->[$omegaindex]->size;
-unless (defined $npar and ($npar < $size) and ($npar == scalar(@parnames))){
-	croak("npar $npar is not defined and smaller than size $size");
-}
 
 my $index=0;
 unless (scalar(@labels)==$size){
@@ -687,7 +714,7 @@ foreach my $cov (@covnames){
 }
 $header .= ',parameterization';
 $name = 'sd_coefficients_summary.csv';
-$parfh;
+
 open($parfh,'>',$name) or die "cannot open < $name: $!";
 print {$parfh} "$header\n";
 my @types =('none',@covnames,'all');
@@ -719,3 +746,32 @@ for (my $i=0;$i<$npar; $i++){
 }
 close($parfh);
 
+#cp ID ratio and projectFun
+my $localdir='/home/kajsa/kod-psn/rplotsRepo/code/frem';
+unless (-d $localdir){
+	$localdir=$PsN::lib_dir.'/R-scripts';
+}
+cp($localdir.'/ID_ratio_function.R','.');
+cp($localdir.'/parameter_ratio_function.R','.');
+$name = 'rplotfrem.R';
+$parfh;
+open($parfh,'>',$name) or die "cannot open < $name: $!";
+my $code = <<'EOF';
+inTable_frem <- read.csv('frem_ratio.csv',header = T, as.is = T)
+frem_id <- read.csv('frem_id_ratios.csv', header = T, as.is = T)
+covdata <- read.csv('covdata.csv',header = T, as.is = T)
+pardata <- read.csv('pardata.csv',header = T, as.is = T)
+# Use ID_ratio function
+source("ID_ratio_function.R")
+ID_ratio(frem_id,covdata,pardata)
+#ID_ratio(frem_id,covdata,pardata,"svg") #this requires library(svglite), not on cluster
+#ID_ratio(frem_id,covdata,pardata,"jpg") 
+# Use Ratios function
+source("parameter_ratio_function.R")
+parameter_ratio(inTable_frem,covdata,pardata)
+#parameter_ratio(inTable_frem,covdata,pardata,"pdf")
+EOF
+print {$parfh} $code."\n";
+close($parfh);
+
+system("R CMD BATCH $name");

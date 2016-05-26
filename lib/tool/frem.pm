@@ -176,6 +176,50 @@ sub BUILD
 	
 }
 
+sub get_post_processing_data
+{
+	my %parm = validated_hash(\@_,
+							  code => { isa => 'ArrayRef', optional => 0 },
+							  size => { isa => 'Int', optional => 0 },
+	);
+	my $code = $parm{'code'};
+	my $size = $parm{'size'};
+
+	#get $ncov from code
+	my $starttag = ';;;FREM CODE BEGIN';
+	my $endtag=';;;FREM CODE END';
+	my @covnames=();
+	my @covetas=();
+	my @rescaling=();
+	my $foundstart=0;
+	for (my $i=0; $i < scalar(@{$code}); $i++){
+		if ($code->[$i] =~ /^$starttag/){
+			$foundstart=1;
+			next;
+		}elsif($code->[$i] =~ /^$endtag/){
+			last;
+		}elsif($foundstart){
+			if ($code->[$i] =~ /^\s*BSV_(.+) = ETA\((\d+)\)\*?(\d*\.?\d*)/){
+				my $cov = $1;
+				my $etanum = $2;
+				my $rescale = $3;
+				push(@covnames,$cov);
+				push(@covetas,$etanum);
+				if (length($rescale)>0){
+					push(@rescaling,$rescale);
+				}else{
+					push(@rescaling,1);
+				}
+			}
+		}
+	}
+	return(\@covnames,\@rescaling);
+	#$npar = $size-$ncov
+	# get reference_cov from last ncov thetas
+	# find categorical, find reference or hardcode
+	
+}
+
 sub get_or_set_fix
 {
 	my %parm = validated_hash(\@_,
