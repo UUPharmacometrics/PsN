@@ -537,11 +537,12 @@ sub _read_iteration_path
 	    if( /$method_exp/ ) {
 			my $string = $1;
 			$string =~ s/\s*$//; #remove trailing spaces
-			unless (($string =~ $self->method_string) or ($string eq $self->method_string)) {
-				croak("Error in read_iteration_path: METH in subprob has string\n"."$string ".
-					  "instead of expected\n" . $self->method_string);
+			if (length($string)>0){
+				unless (($string =~ $self->method_string) or ($string eq $self->method_string)) {
+					croak("Error in read_iteration_path: METH in subprob has string\n"."$string ".
+						  "instead of expected\n" . $self->method_string);
+				}
 			}
-
 			if ($string eq 'Chain Method Processing') {
 				$read_terminated_by_obj = 0;
 			} else {
@@ -819,9 +820,11 @@ sub _scan_to_meth
 				if ($string =~ /\(Evaluation\)/) {
 					$self->estimation_step_run(0);
 				}
-				unless (($string =~ $self->method_string) or ($string eq $self->method_string) or ($self->method_string =~ $string  )) {
-					croak("METH number $method_counter in subprob has string\n"."$string ".
-						  "instead of expected\n".$self->method_string);
+				if (length($string)>0){
+					unless (($string =~ $self->method_string) or ($string eq $self->method_string) or ($self->method_string =~ $string  )) {
+						croak("METH number $method_counter in subprob has string\n"."$string ".
+							  "instead of expected\n".$self->method_string);
+					}
 				}
 				$start_pos = $start_pos - 1; #undo ++ in loop head, leave directly at #METH line
 				last;

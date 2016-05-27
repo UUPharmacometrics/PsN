@@ -36,13 +36,13 @@ our @nm7_extensions = ('.ext','.cov','.cor','.coi','.phi','.phm', '.shk','.grd',
 
 # Default disable all warnings except those coming from Getopt
 # Enable all warnings if $warnings_enabled is set
-$SIG{__WARN__} = sub {
-        my $package = caller;
-        my $message = shift;
-        if ($warnings_enabled or $package =~ /Getopt::Long/i) {
-                warn $message;
-        }
-};
+#$SIG{__WARN__} = sub {
+#        my $package = caller;
+#        my $message = shift;
+#        if ($warnings_enabled or $package =~ /Getopt::Long/i) {
+#                warn $message;
+#        }
+#};
 
 if( -e home() . "/psn.conf" ){
 	$config_file = home() . "/psn.conf";

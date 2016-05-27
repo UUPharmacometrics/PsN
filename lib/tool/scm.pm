@@ -830,6 +830,7 @@ sub _raw_results_callback
 		unshift(@diagnostic_params,('model','problem','subproblem'));
 		push(@diagnostic_params,'ofv');
 		foreach my $param (@diagnostic_params){
+			no warnings qw(uninitialized);
 			my ($start,$len) = split(',',$modelfit->raw_line_structure->{'1'}->{$param});
 			push(@diagnostic_indices,$start) unless ($len == 0);
 		}
@@ -1255,6 +1256,7 @@ sub _raw_results_callback
 			#will assume theta is before setheta
 			my ($start,$sethstart,$len,$thstart);
 			foreach my $mod (sort({$a <=> $b} keys %{$self->raw_line_structure})){
+				no warnings qw(numeric uninitialized);
 				($thstart,$len) = split(',',$self->raw_line_structure -> {$mod}->{'theta'});
 				my $extra1 = scalar(@{$param_names{'theta'}})+scalar(@rel_header)-$len;
 				$self->raw_line_structure -> {$mod}->{'theta'} = ($thstart).','.($len+$extra1);
@@ -3155,14 +3157,14 @@ sub gof_ofv
 								$ofv.
 								$test_val. '  >'.
 								sprintf("%10.5f",$change);
-		}
-		print LOG $log_text;
-		# Significant ?
-		if( defined $ofvs[$i] and $test_val > $change ){
-			my $yes_text = sprintf("%12s",'YES!  ');
-			$log_text = $log_text.$yes_text;
-			print LOG $yes_text;
-			$drop_sign{$i} = 1;
+			print LOG $log_text;
+			# Significant ?
+			if( defined $ofvs[$i] and $test_val > $change ){
+				my $yes_text = sprintf("%12s",'YES!  ');
+				$log_text = $log_text.$yes_text;
+				print LOG $yes_text;
+				$drop_sign{$i} = 1;
+			}
 		}
 		print LOG "\n";
 		push( @log_texts, $log_text."\n" );

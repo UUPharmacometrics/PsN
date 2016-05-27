@@ -9,7 +9,7 @@ use includes; #file with paths to PsN packages
 
 SKIP: {
     eval { require XML::LibXML };
-    skip "XML::LibXML not installed" if $@;
+    skip "XML::LibXML not installed",4 if $@;
 
     require so;
     require so::xml;

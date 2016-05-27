@@ -14,7 +14,7 @@ ui->silent(1);
 
 SKIP: {
     eval { require XML::LibXML };
-    skip "XML::LibXML not installed" if $@;
+    skip "XML::LibXML not installed",50 if $@;
 
     require so::parsers::nmoutput;
 
@@ -332,7 +332,7 @@ SKIP: {
     );
 
     SKIP: {
-        skip "Windows" if $Config{osname} eq 'MSWin32'; # Skip for now due to different scientific formats eg E+001 and E+01
+        skip "Windows",1 if $Config{osname} eq 'MSWin32'; # Skip for now due to different scientific formats eg E+001 and E+01
 
         foreach my $colname (@{$sdtab_out->header}) {
             my $col = $sdtab->column_to_array(column => $colname); 

@@ -12,7 +12,7 @@ use so::parsers::psn;
 
 SKIP: {
     eval { require File::Copy::Recursive };
-    skip "File::Copy::Recursive not installed" if $@;
+    skip "File::Copy::Recursive not installed",23 if $@;
 
 
 	our $tempdir = create_test_dir('so_parser_psn');

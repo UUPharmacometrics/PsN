@@ -12,7 +12,7 @@ ui->silent(1);
 
 SKIP: {
     eval { require XML::LibXML };
-    skip "XML::LibXML not installed" if $@;
+    skip "XML::LibXML not installed",28 if $@;
 
     require so::parsers::bootstrap;
     require so::parsers::nmoutput;
