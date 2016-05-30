@@ -1,5 +1,5 @@
 \input{inputs/format_header.tex}
-\guidetitle{Bootstrap user guide}{2016-04-13}
+\guidetitle{Bootstrap user guide}{2016-05-30}
 \begin{document}
 
 
@@ -226,6 +226,11 @@ PsN renumbers the individuals during bootstrapping. Therefore ACCEPT/IGNORE stat
 There is an input check for this, but it is recommended to not rely on this check. Also, model code that relies on ID numbers will also lead to
 errors.
 
+The dataset is not filtered on IGNORE/ACCEPT statements before bootstrapping,
+and all IGNORE/ACCEPT are left in the control stream, so some bootstrap
+datasets may in practice be smaller than 'sample\_size' after NONMEM applies
+IGNORE/ACCEPT. 
+
 The results of two runs will be different even if the seed is the same if the lst-file of the base model is present at the start of one run but not the other. Running the base model changes the state of the random number generator, and therefore the bootstrapped datasets will be different depending on if the base model is run or not before generating the  new datasets. 
 
 \section{Technical overview of algorithm}
@@ -233,7 +238,9 @@ The results of two runs will be different even if the seed is the same if the ls
 PsN will rerun the base model if the lst-file of the input model (run1.lst if the input model file is called run1.mod) is not present in the same directory as the model file 
 and the user has not set -no-run\_base\_model. If the lst-file is present then PsN will simply read the estimates from that file.
 
-The program creates N (N=number of samples), datasets of size M (M=sample\_size) by randomly drawing individuals with replacement from the original dataset. The program creates N new NONMEM modelfiles which are identical to the original modelfile with the exception that each uses a different  bootstrapped dataset and, 
+The program creates N (N=number of samples), datasets of size M (M=sample\_size) by randomly drawing individuals with replacement from the original dataset.
+The original dataset is not filtered on IGNORE/ACCEPT before bootstrapping.
+The program creates N new NONMEM modelfiles which are identical to the original modelfile with the exception that each uses a different  bootstrapped dataset and, 
 unless the user has set -no-update\_inits,
 that the initial parameter estimates are the final estimates from the original run. 
 The model parameters are estimated with each dataset, including the original, resulting in N+1 estimates for each parameter.
