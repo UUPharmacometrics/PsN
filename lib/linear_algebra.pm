@@ -1764,6 +1764,8 @@ sub conditional_covariance_coefficients
 	my $par_index_last = $parm{'par_index_last'};
 	my $rescaling = $parm{'rescaling'};
 
+	my $error = 0;
+
 	if (defined $cov_index_array){
 		if (defined $cov_index_first or defined $cov_index_last){
 			croak('cannot set cov_index_first/last when have cov_index_array ');
@@ -1772,25 +1774,28 @@ sub conditional_covariance_coefficients
 		$cov_index_last=$cov_index_array->[-1];
 		for (my $i=1; $i<scalar(@{$cov_index_array}); $i++){
 			unless ($cov_index_array->[$i] > $cov_index_array->[$i-1]){
-				croak('cov index array not sorted');
+				print "cov index array not sorted\n";
+				$error=1;
 			}
 		}
 	}else{
 		unless (defined $cov_index_first and defined $cov_index_last){
-			croak('must set cov_index_first/last when not have cov_index_array ');
+			print "must set cov_index_first/last when not have cov_index_array\n";
+			$error=1;
 		}
 		unless (defined $cov_index_first <= $cov_index_last){
-			croak('cov_index_first must not be greater than last');
+			print "cov_index_first must not be greater than last\n";
+			$error=1;
 		}
 		$cov_index_array = [$cov_index_first .. $cov_index_last]
 	}
+	return ($error,[],[]) if ($error > 0);
 	
 	unless (defined $par_index_last){
 		$par_index_last = $par_index_first;
 	}
 	
 	my $size = scalar(@{$varcov});
-	my $error = 0;
 	if (($par_index_first >= $size) or ($par_index_last >= $size) or ($cov_index_first >= $size) or ($cov_index_last >= $size)){
 		print "par_index_first $par_index_first or par_index_last $par_index_last or cov_index_first $cov_index_first or ".
 			"cov_index_last $cov_index_last outside size $size\n";

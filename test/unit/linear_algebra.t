@@ -658,6 +658,20 @@ is($err,0,'conditional_covariance_coefficients 1 return status');
 cmp_float_array($ans1->[0],$cov1,'conditional_covariance_coefficients 1 covariance');
 cmp_float_array($ans2->[0],$coeff1,'conditional_covariance_coefficients 1 coefficients');
 
+($err,$ans1,$ans2) = linear_algebra::conditional_covariance_coefficients(varcov => $covariance,
+																		 par_index_first => $par_index_first,
+																		 cov_index_array => [$cov_index_first,$cov_index_last]);
+	
+is($err,0,'conditional_covariance_coefficients 1b return status');
+cmp_float_array($ans1->[0],$cov1,'conditional_covariance_coefficients 1b covariance');
+cmp_float_array($ans2->[0],$coeff1,'conditional_covariance_coefficients 1b coefficients');
+
+($err,$ans1,$ans2) = linear_algebra::conditional_covariance_coefficients(varcov => $covariance,
+																		 par_index_first => $par_index_first,
+																		 cov_index_array => [$cov_index_last,$cov_index_first]);
+	
+is($err,1,'conditional_covariance_coefficients 1c return status');
+
 $par_index_first=1;
 $cov_index_first = 2;
 $cov_index_last = 4;
