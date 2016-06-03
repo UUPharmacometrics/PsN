@@ -519,11 +519,18 @@ sub modelfit_analyze
 					for ( my $j = 0; $j < scalar @{$est->[$i][0][0]} ; $j++ ) {
 						next unless (defined $coordslabels{($names->[0][0][$j])}); #only defined if param in model
 						if ( defined $orig_est->[0][0][$j] and $orig_est->[0][0][$j] != 0 ) {
-							print $param." ".$orig_est->[0][0][$j]." ".$est->[$i][0][0][$j]."\n" if ($print_debug);
-							push( @values, ($est->[$i][0][0][$j]-$orig_est->[0][0][$j])/$orig_est->[0][0][$j]*100);
-							if( substr($param,0,2) ne 'se' ) {
-								$bias[$k] += $est->[$i][0][0][$j];
-								$bias_num[$k++]++;
+							if (defined $est->[$i][0][0][$j]){
+								print $param." ".$orig_est->[0][0][$j]." ".$est->[$i][0][0][$j]."\n" if ($print_debug);
+								push( @values, ($est->[$i][0][0][$j]-$orig_est->[0][0][$j])/$orig_est->[0][0][$j]*100);
+								if( substr($param,0,2) ne 'se' ) {
+									$bias[$k] += $est->[$i][0][0][$j];
+									$bias_num[$k++]++;
+								}
+							}else{
+								push( @values, 'NA' );
+								if( substr($param,0,2) ne 'se' ) {
+									$k++;
+								}		  
 							}
 						} else {
 							push( @values, 'INF' );
@@ -1432,6 +1439,7 @@ sub std
 	if ( defined $data_matrix[0] ) {
 		my $n = scalar @{$data_matrix[0]};
 		for( my $i = 0; $i <= $#data_matrix; $i++ ) {
+			$sum[$i]=0;
 			for( my $j = 0; $j < $n; $j++ ) {
 				$sum[$i] = $sum[$i]+$data_matrix[$i][$j];
 				$pow_2_sum[$i] += $data_matrix[$i][$j]*$data_matrix[$i][$j];
