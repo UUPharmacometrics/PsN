@@ -2886,20 +2886,7 @@ sub compute_cwres
 	my $model = $queue_info_ref->{'model'};
 
 	#check in PsN config, or try R --version
-	my $Rexec;
-	if ( defined $PsN::config -> {'_'} -> {'R'} ) {
-		$Rexec = $PsN::config -> {'_'} -> {'R'};
-	}else{
-		my $null = '/dev/null';
-		if ($Config{osname} eq 'MSWin32'){
-			$null = 'NUL';
-		}
-		my $rc = system('R --version >'.$null.' 2>&1');
-		$rc = $rc >> 8;
-		if ($rc == 0){
-			$Rexec = 'R';
-		}
-	}
+	my $Rexec = PsN::get_R_exec();
 
 	if (defined $Rexec and length($Rexec)>0){
 		my $probs = $model->problems();

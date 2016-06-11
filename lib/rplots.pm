@@ -190,19 +190,8 @@ sub set_R_executable
 {
 	my $self = shift;
 	#check in PsN config, or try R --version
-	if ( defined $PsN::config -> {'_'} -> {'R'} ) {
-		$self->_R_executable($PsN::config -> {'_'} -> {'R'});
-	}else{
-		my $null = '/dev/null';
-		if ($Config{osname} eq 'MSWin32'){
-			$null = 'NUL';
-		}
-		my $rc = system('R --version >'.$null.' 2>&1');
-		$rc = $rc >> 8;
-		if ($rc == 0){
-			$self->_R_executable('R');
-		}
-	}
+	my $R = PsN::get_R_exec();
+	$self->_R_executable($R) if (defined $R);
 }
 
 sub get_preamble()

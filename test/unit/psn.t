@@ -12,6 +12,18 @@ use PsN;
 use Config;
 use Env qw(PATH);
 
+#R version
+
+ SKIP: {
+	 skip "R not in path",1 unless ($PATH =~ /:\/usr\/bin:/ and -x '/usr/bin/R');
+	 $PsN::config->{'_'}->{'R'} = undef;
+	 is(PsN::get_R_exec,'R','get_R_exec in path');
+}
+
+
+$PsN::config->{'_'}->{'R'} = "/path/to/R";
+my $Rexec = PsN::get_R_exec();
+is($Rexec,"/path/to/R",'get_R_exec config');
 
 # get_nmversion_info
 $PsN::config->{'nm_versions'}->{nm73} = "/opt/NONMEM/nm73,7.3";

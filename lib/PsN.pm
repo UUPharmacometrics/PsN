@@ -140,6 +140,28 @@ sub set_nonmem_info
     }
 }
 
+sub get_R_exec
+{
+	import(); #read config if not done already
+
+	my $rexec;
+	#check in PsN config, or try R --version
+	if ( defined $config -> {'_'} -> {'R'} ) {
+		$rexec = $config -> {'_'} -> {'R'};
+	}else{
+		my $null = '/dev/null';
+		if ($Config{osname} eq 'MSWin32'){
+			$null = 'NUL';
+		}
+		my $rc = system('R --version >'.$null.' 2>&1');
+		$rc = $rc >> 8;
+		if ($rc == 0){
+			$rexec = 'R';
+		}
+	}
+	return $rexec;
+}
+
 sub find_nmfe_from_system_path
 {
 	my $string = shift;
