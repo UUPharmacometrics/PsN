@@ -19,6 +19,7 @@ Getopt::Long::config("auto_abbrev");
 @tool_options = ( "abort_on_fail",
 		  "accepted_ofv_difference:f",
 		  "add_retries!",
+		  "always_datafile_in_nmrun!",
 		  "check_nmtran!",
           "citations!",
 		  "clean:i",
@@ -1014,6 +1015,21 @@ EOF
     that stats-runs.csv exists, and check again if retries are needed based on 
     the existing tries in the NM_run directory. This makes it possible to restart
     a run using different settings for retries (e.g. -retries, -min_retries, -picky).
+EOF
+    $help_hash{-always_datafile_in_nmrun} = <<'EOF';
+    -always_datafile_in_nmrun
+
+    Not set by default.
+    By default, PsN will often not copy the datafile to the NM_run 
+    subdirectories, but instead include the path to the datafile in $DATA in
+    the control stream copy inside NM_run. This is the case in for example
+    the bootstrap and randtest programs.
+    If -always_datafile_in_nmrun is set, then PsN will always copy
+    the datafile to NM_run and set the datafile name without path
+    in $DATA. This behaviour may be useful when running on 
+    a grid where only the contents of NM_run are available to NONMEM at 
+    runtime. Option -always_datafile_in_nmrun will override -no-copy_data, 
+    if -no-copy_data is set.
 EOF
 
     $help_hash{-silent} = <<'EOF';

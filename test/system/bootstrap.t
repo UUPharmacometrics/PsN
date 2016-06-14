@@ -3,7 +3,7 @@
 use strict;
 use warnings;
 use File::Path 'rmtree';
-use Test::More tests=>4;
+use Test::More;
 use FindBin qw($Bin);
 use lib "$Bin/.."; #location of includes.pm
 use includes; #file with paths to PsN packages and $path variable definition
@@ -17,12 +17,13 @@ chdir($tempdir);
 my $command = get_command('execute') . " pheno5.mod ";
 my $rc = system($command);
 
-$command = get_command('bootstrap') . " pheno5.mod -samples=10 -bca -seed=12345 -dir=boot1 -no-skip_minim ";
+$command = get_command('bootstrap') . " pheno5.mod -samples=10 -bca -seed=12345 -dir=boot1 -no-skip_minim -clean=1 -always_datafile_in_nmrun";
 
 $rc = system($command);
 $rc = $rc >> 8;
 
 ok ($rc == 0, "bootstrap 1 that should run ok");
+ok (-e 'boot1/modelfit_dir1/NM_run1/bs_pr1_1.dta','always datafile in nmrun yes');
 
 $command = get_command('bootstrap') . " pheno5.mod -samples=10 -seed=12345 -dir=boot1 -dofv ";
 

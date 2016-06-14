@@ -23,6 +23,7 @@ has 'models' => ( is => 'rw', isa => 'ArrayRef[model]' );
 has 'tools' => ( is => 'rw', isa => 'ArrayRef[tool]' );
 has 'first_callback' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'adaptive' => ( is => 'rw', isa => 'Bool', default => 0 );
+has 'always_datafile_in_nmrun' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'raw_line_structure' => ( is => 'rw', isa => 'Ref' );
 has 'check_nmtran' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'last_est_complete' => ( is => 'rw', isa => 'Bool', default => 0 );

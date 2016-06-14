@@ -3007,7 +3007,7 @@ sub copy_model_and_input
 
 			$candidate_model =  model -> new (outputfile                  => 'psn.lst',
 											  filename                    => 'psn.'.$self->modext,
-											  copy_datafile => $self->copy_data,
+											  copy_datafile => ($self->copy_data or $self->always_datafile_in_nmrun),
 											  ignore_missing_output_files => 1,
 											  ignore_missing_data => 1);
 			
@@ -3072,7 +3072,7 @@ sub copy_model_and_input
 		#TODO mark the model as failed even before NMrun if data is missing, so do not waste nm call
 
 		$candidate_model = $model -> copy( filename => 'psn.'.$self->modext,
-										   copy_datafile => $self->copy_data,
+										   copy_datafile => ($self->copy_data or $self->always_datafile_in_nmrun),
 										   copy_output => 0,
 										   write_copy => 0);
 		

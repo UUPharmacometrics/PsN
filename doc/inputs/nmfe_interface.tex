@@ -18,6 +18,20 @@ Only relevant together with option -parafile. Appends â€œ[nodes]=option\_valueâ€
 \optdefault{extra\_files}{comma-separated list of filenames}
 Default not used. If you need extra files in the directory where NONMEM is run you specify them in the comma separated -extra\_files list. It could for example be fortran subroutines you need compiled with NONMEM, or a file with initial estimates for the NONMEM7 CHAIN command, a defaults.pnm file (NONMEM 7.2 or later), or a file set in \$ETAS with option FILE. 
 \nextopt
+\optname{always\_datafile\_in\_nmrun}
+Default not set.
+By default, PsN will often not copy the datafile to the NM\_run 
+subdirectories, but instead include the path to the datafile in \$DATA in
+the control stream copy inside NM\_run. This is the case in for example
+the bootstrap and randtest programs, or when option -no-copy\_data is set
+in the tools that accept that option.
+If -always\_datafile\_in\_nmrun is set, then PsN will always copy
+the datafile to NM\_run and set the datafile name without path
+in \$DATA. This behaviour may be useful when running on 
+a grid where only the contents of NM\_run are available to NONMEM at 
+runtime. Option -always\_datafile\_in\_nmrun will override -no-copy\_data, 
+if -no-copy\_data is set.
+\nextopt
 \optname{nmfe}
 Default set.
 Invoke NONMEM via the nmfe script (or a custom wrapper) from within PsN. 
