@@ -17,9 +17,96 @@ ui->silent(1);
 
 our $tempdir = create_test_dir('unit_frem');
 chdir($tempdir);
+
+my ($labels,$thetas,$code) = tool::frem::get_pred_error_code(covariates => ['AGE','SEX','WT'],
+															 maxeta => 3,
+															 rescale => 0,
+															 invariant_covmatrix => [],
+															 invariant_mean => [54.4, 0, 89.5],
+															 estimate_mean => [0,0,0],
+															 ntheta => 5,
+															 N_parameter_blocks => 1,
+															 epsnum => 2,
+															 indent => ' ');
+is_deeply($labels,['BSV_AGE','BSV_SEX','BSV_WT'],'get_pred_error_code eta labels');
+is_deeply($thetas,[' 54.4 FIX ; TV_AGE',' 0 FIX ; TV_SEX',' 89.5 FIX ; TV_WT'],'get_pred_error_code thetastrings');
+my @errcode =(
+	';;;FREM CODE BEGIN COMPACT',
+	';;;DO NOT MODIFY',
+	' IF (FREMTYPE.EQ.100) THEN',
+	';   AGE',
+	'    Y = THETA(6) + ETA(4) + EPS(2)',
+	'    IPRED = THETA(6) + ETA(4)',
+	' END IF',
+	' IF (FREMTYPE.EQ.200) THEN',
+	';   SEX',
+	'    Y = THETA(7) + ETA(5) + EPS(2)',
+	'    IPRED = THETA(7) + ETA(5)',
+	' END IF',
+	' IF (FREMTYPE.EQ.300) THEN',
+	';   WT',
+	'    Y = THETA(8) + ETA(6) + EPS(2)',
+	'    IPRED = THETA(8) + ETA(6)',
+	' END IF',
+	';;;FREM CODE END COMPACT'
+);
+is_deeply($code,\@errcode,'get_pred_error_code code');
+
+($labels,$thetas,$code) = tool::frem::get_pred_error_code(covariates => ['AGE','SEX','WT'],
+															 maxeta => 3,
+															 rescale => 1,
+															 invariant_covmatrix => [[9,2,1],[2,4,0],[1,0,2]],
+															 invariant_mean => [54.4, 0, 89.5],
+															 estimate_mean => [1,1,0],
+															 ntheta => 5,
+															 N_parameter_blocks => 1,
+															 epsnum => 2,
+															 indent => ' ');
+is_deeply($labels,['BSV_AGE','BSV_SEX','BSV_WT'],'get_pred_error_code eta labels 2');
+is_deeply($thetas,[' 54.4 ; TV_AGE',' 0.001 ; TV_SEX',' 89.5 FIX ; TV_WT'],'get_pred_error_code thetastrings 2'); 
+@errcode =(
+	';;;FREM CODE BEGIN COMPACT',
+	';;;DO NOT MODIFY',
+	' IF (FREMTYPE.EQ.100) THEN',
+	';   AGE',
+	'    Y = THETA(6) + ETA(4)*3 + EPS(2)',
+	'    IPRED = THETA(6) + ETA(4)*3',
+	' END IF',
+	' IF (FREMTYPE.EQ.200) THEN',
+	';   SEX',
+	'    Y = THETA(7) + ETA(5)*2 + EPS(2)',
+	'    IPRED = THETA(7) + ETA(5)*2',
+	' END IF',
+	' IF (FREMTYPE.EQ.300) THEN',
+	';   WT',
+	'    Y = THETA(8) + ETA(6)*1.41421356237 + EPS(2)',
+	'    IPRED = THETA(8) + ETA(6)*1.41421356237',
+	' END IF',
+	';;;FREM CODE END COMPACT'
+);
+is_deeply($code,\@errcode,'get_pred_error_code code 2');
+
+
+
+
+
+
+
+
 my $modeldir = $includes::testfiledir;
-my $model = model->new(filename => "$modeldir/frem/model_4.mod", 
+my $model = model->new(filename => "$modeldir/frem/mox_imp_4.mod", 
 					   ignore_missing_data => 1);
+
+my ($diag,$offdiag) = tool::frem::get_phi_coltypes(model => $model);
+is($diag,'PHI','phi diag coltype classic');
+is($offdiag,'PHC','phi offdiag coltype classic');
+
+$model = model->new(filename => "$modeldir/frem/model_4.mod", 
+					   ignore_missing_data => 1);
+
+($diag,$offdiag) = tool::frem::get_phi_coltypes(model => $model);
+is($diag,'ETA','phi diag coltype classic');
+is($offdiag,'ETC','phi offdiag coltype classic');
 
 my ($covnames,$rescaling,$omegaindex,$parnames,$size,$cov_means)=tool::frem::get_post_processing_data(model => $model);
 is_deeply($covnames,['WT','SEX'],'frem post covnames 1');
@@ -37,7 +124,18 @@ is_deeply($rescaling,[10.2318688078,17.738664519,11.2023916302,20.6542819724,0.4
 is($omegaindex,3,'frem post omegaindex 2');
 is_deeply($parnames,['GAM','KINH','HB50','FPG_BASELINE','EC50_FPG','PBO_FPG'],'frem post parnames 2');
 is($size,11,'frem post size 2');
-is_deeply($cov_means,[57.1553398058,88.9502427184,58.4322815534,69.5191747573,1.41262135922 ],'frem post covmeans 2');
+is_deeply($cov_means,[57.1553398058,88.9502427184,58.4322815534,69.5191747573,1.41262135922],'frem post covmeans 2');
+
+my $compact_model = model->new(filename => "$modeldir/frem/compact.mod", 
+							   ignore_missing_data => 1);
+
+($covnames,$rescaling,$omegaindex,$parnames,$size,$cov_means)=tool::frem::get_post_processing_data(model => $compact_model);
+is_deeply($covnames,['AGE','SEX'],'frem post covnames 3');
+is_deeply($rescaling,[7.82226906804,0.404756978659],'frem post rescale 3');
+is($omegaindex,0,'frem post omegaindex 3');
+is_deeply($parnames,['PAR1','PAR2','KA'],'frem post parnames 3');
+is($size,5,'frem post size 3');
+is_deeply($cov_means,[65.1756756757,1.2027027027],'frem post covmeans 3');
 
 
 $model = model->new(filename => "$modeldir/mox_no_bov.mod", 
@@ -85,6 +183,24 @@ $ans=[[0.6389949068,0.1573687298],
 
 cmp_float_matrix($corr,$ans,'get_correlation_matrix_from_phi 2');
 is (length($message),0,'no error get_correlation_matrix 2');
+
+my $imp_model = model->new(filename => "$modeldir/frem/mox_imp_4.mod", 
+						   ignore_missing_data => 1);
+($corr,$message) = tool::frem::get_correlation_matrix_from_phi(start_eta_1 => 2,
+															   end_eta_1 => 3,
+															   start_eta_2 => 5,
+															   end_eta_2 => 5,
+															   model => $imp_model);
+
+$ans=[[0.1989847636,0.5241788523,0.5297193498],
+	  [0.5241788523,1.3696569641,0.2012698903],
+	  [0.5297193498,0.2012698903,0.8842831035 ]];
+
+
+cmp_float_matrix($corr,$ans,'get_correlation_matrix_from_phi 3, importance sampling two est');
+is (length($message),0,'no error get_correlation_matrix 3');
+
+
 
 ($corr,$message) = tool::frem::get_correlation_matrix_from_phi(start_eta_1 => 1,
 																  end_eta_1 => 3,

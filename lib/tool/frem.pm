@@ -26,12 +26,14 @@ my $bov_variance_init = 0.1; #FIXME
 my $indentation = '     ';
 my $smallnum = 0.0000001;
 
+has 'deriv2_nocommon_maxeta'  => ( is => 'rw', isa => 'Int', default=> 60);
 has 'skip_omegas' => ( is => 'rw', isa => 'ArrayRef', default => sub { [] } );
 has 'run_sir' => ( is => 'rw', isa => 'Bool', default=> 0);
 has 'skip_etas' => ( is => 'rw', isa => 'Int', default=> 0);
 has 'rse' => ( is => 'rw', isa => 'Num', default=> 30);
 has 'start_omega_record' => ( is => 'rw', isa => 'Int', default=> 1);
 has 'estimate' => ( is => 'rw', isa => 'Int', default => 3 );
+has 'mceta' => ( is => 'rw', isa => 'Int', default => 0 );
 has 'occasionlist' => ( is => 'rw', isa => 'ArrayRef', default => sub { [] } );
 has 'extra_input_items' => ( is => 'rw', isa => 'ArrayRef', default => sub { [] } );
 has 'invariant_median' => ( is => 'rw', isa => 'ArrayRef', default => sub { [] } );
@@ -57,7 +59,8 @@ has 'regular' => ( is => 'rw', isa => 'ArrayRef', default => sub { [] } );
 has 'logfile' => ( is => 'rw', isa => 'ArrayRef', default => sub { ['frem.log'] } );
 has 'results_file' => ( is => 'rw', isa => 'Str', default => 'frem_results.csv' );
 has 'use_pred' => ( is => 'rw', isa => 'Bool', default => 1 );
-has 'estimate_regular_final_model' => ( is => 'rw', isa => 'Bool', default => 1 );
+has 'estimate_regular_final_model' => ( is => 'rw', isa => 'Bool', default => 1 ); #no commandline option currently
+has 'estimate_means' => ( is => 'rw', isa => 'Bool', default => 0 ); 
 has 'cholesky' => ( is => 'rw', isa => 'Bool', default => 0 );
 
 
@@ -165,7 +168,11 @@ sub BUILD
 		croak("Neither PK or PRED defined in model");
 	}
 	$self->use_pred($use_pred);
-	
+
+	unless ( defined $self->models->[0]-> problems->[0]-> estimations
+			 and scalar (@{$self->models->[0]-> problems->[0]->estimations}) > 0 ){
+		croak("No \$EST in model");
+	}
 	$self->input_model_fix_thetas(get_or_set_fix(model => $self->models->[0],
 												 type => 'thetas'));
 	$self->input_model_fix_omegas(get_or_set_fix(model => $self->models->[0],
@@ -173,6 +180,29 @@ sub BUILD
 	$self->input_model_fix_sigmas(get_or_set_fix(model => $self->models->[0],
 												 type => 'sigmas'));
 
+	
+}
+
+sub get_phi_coltypes
+{
+    my %parm = validated_hash(\@_,
+							  model => { isa => 'model', optional => 0 },
+	);
+	my $model = $parm{'model'};
+
+	my $is_classical = $model->problems->[0]->estimations->[-1]->is_classical;
+
+	my $diagonal;
+	my $offdiagonal;
+	
+	if ($is_classical){
+		$diagonal = 'ETA';
+		$offdiagonal = 'ETC';
+	}else{
+		$diagonal = 'PHI';
+		$offdiagonal = 'PHC';
+	}
+	return ($diagonal,$offdiagonal);
 	
 }
 
@@ -300,12 +330,31 @@ sub get_post_processing_data
 
 	my $omegaindex = scalar(@{$model->problems->[0]->omegas})-1;
 	my $size = $model->problems->[0]->omegas->[$omegaindex]->size;
-	my $code = $model->get_code(record => 'pk');
+	my $code = $model->get_code(record => 'error');
 	unless (scalar(@{$code}) > 0) {
 		$code = $model->get_code(record => 'pred');
 	}
 	if ( scalar(@{$code}) <= 0 ) {
-		croak("Neither PK or PRED defined in post-processing model");
+		croak("Neither ERROR or PRED defined in post-processing model");
+	}
+
+	#figure out if old frem code or new
+	my $compact_frem=0;
+	my $newtag=';;;FREM CODE END COMPACT';
+	for (my $i=0; $i < scalar(@{$code}); $i++){
+		if ($code->[$i] =~ /^$newtag/){
+			$compact_frem=1;
+			last;
+		}
+	}
+	unless ($compact_frem){
+		$code = $model->get_code(record => 'pk');
+		unless (scalar(@{$code}) > 0) {
+			$code = $model->get_code(record => 'pred');
+		}
+		if ( scalar(@{$code}) <= 0 ) {
+			croak("Neither PK or PRED defined in post-processing model");
+		}
 	}
 
 	
@@ -320,40 +369,62 @@ sub get_post_processing_data
 		if ($code->[$i] =~ /^$starttag/){
 			$foundstart=1;
 			next;
-		}elsif($code->[$i] =~ /^$endtag/){
+		}elsif($foundstart and ($code->[$i] =~ /^$endtag/)){
 			last;
 		}elsif($foundstart){
-			if ($code->[$i] =~ /^\s*BSV_(.+) = ETA\((\d+)\)\*?(\d*\.?\d*)/){
-				my $cov = $1;
-				my $etanum = $2;
-				my $rescale = $3;
-				push(@covnames,$cov);
-				push(@covetas,$etanum);
-				if (length($rescale)>0){
-					push(@rescaling,$rescale);
-				}else{
-					push(@rescaling,1);
+			if ($compact_frem){
+				if ($code->[$i] =~ /^\s*IF \(FREMTYPE\.EQ\.(\d+)\) THEN/){
+					my $fremtype = $1;
+					my $cov;
+					my $etanum;
+					my $rescale='';
+					if ($code->[$i+1] =~ /^\s*;\s*(\w+)/){
+						$cov = $1;
+					}else{
+						croak("error parsing FREM code, was it modified?\n".$code->[$i+1]);
+					}
+					if ($code->[$i+2] =~ /^\s*Y = THETA\((\d+)\) \+ ETA\((\d+)\)\*?(\d*\.?\d*)/){
+						$etanum = $2;
+						$rescale = $3;
+					}else{
+						croak("error parsing FREM code, was it modified?\n".$code->[$i+2]);
+					}
+					push(@covnames,$cov);
+					push(@covetas,$etanum);
+					if (length($rescale)>0){
+						push(@rescaling,$rescale);
+					}else{
+						push(@rescaling,1);
+					}
+				}
+			}else{
+				if ($code->[$i] =~ /^\s*BSV_(.+) = ETA\((\d+)\)\*?(\d*\.?\d*)/){
+					my $cov = $1;
+					my $etanum = $2;
+					my $rescale = $3;
+					push(@covnames,$cov);
+					push(@covetas,$etanum);
+					if (length($rescale)>0){
+						push(@rescaling,$rescale);
+					}else{
+						push(@rescaling,1);
+					}
 				}
 			}
 		}
 	}
-
-	my %allthetas=();
-	if (defined $model -> problems->[0]->thetas) {
-		my @records = @{$model -> problems->[0]-> thetas};
-		foreach my $record (@records){
-			foreach my $option (@{$record -> options()}) {
-				if (defined $option ->label()) {
-					$allthetas{$option ->label()} = $option->init;
-					#				print $option ->label()." ".$option->init;
-				}#all frem cov thetas have label
-			}
-		}
+	unless ($foundstart){
+		croak("Did not find FREM tags in model code");
 	}
-
+	
+	my $thetavalues = $model ->get_hash_values_to_labels(category => 'theta'); 
+	
 	my @cov_means = ();
 	foreach my $cn (@covnames){
-		push(@cov_means,$allthetas{'TV_'.$cn});
+		unless (defined $thetavalues->[0]->{'theta'}->{'TV_'.$cn}){
+			croak("could not find theta value for TV_".$cn);
+		}
+		push(@cov_means,$thetavalues->[0]->{'theta'}->{'TV_'.$cn}); 
 	}
 
 	my $npar = $size - scalar(@covnames);
@@ -739,7 +810,7 @@ sub get_filled_omega_block
 	my %parm = validated_hash(\@_,
 							  model => { isa => 'model', optional => 0 },
 							  problem_index  => { isa => 'Int', default => 0 },
-							  table_index  => { isa => 'Int', default => 0 },
+							  table_index  => { isa => 'Int', default => -1 },
 							  start_etas => { isa => 'ArrayRef', optional => 0 },
 							  end_etas => { isa => 'ArrayRef', optional => 0 },
 	);
@@ -866,7 +937,7 @@ sub get_correlation_matrix_from_phi
 	my %parm = validated_hash(\@_,
 							  model => { isa => 'model', optional => 0 },
 							  problem_index  => { isa => 'Int', default => 0 },
-							  table_index  => { isa => 'Int', default => 0 },
+							  table_index  => { isa => 'Int', default => -1 },
 							  start_eta_1 => { isa => 'Int', optional => 0 },
 							  end_eta_1 => { isa => 'Int', optional => 0 },
 							  start_eta_2 => { isa => 'Maybe[Int]', optional => 1 },
@@ -909,13 +980,14 @@ sub get_correlation_matrix_from_phi
 	my @matrix = ();
 	my $covariance = [];
 	my $sdcorr = [];
-	
+	my ($diagonal,$offdiagonal) = get_phi_coltypes(model => $model);
+
 	for (my $i = $start_eta_1; $i <= $end_eta_1; $i++){
-		push(@matrix,$nmtablefile->tables->[$table_index]->get_column(name=> 'ETA('.$i.')'));
+		push(@matrix,$nmtablefile->tables->[$table_index]->get_column(name=> $diagonal.'('.$i.')'));
 	}
 	if (defined $start_eta_2 and defined $end_eta_2){
 		for (my $i = $start_eta_2; $i <= $end_eta_2; $i++){
-			push(@matrix,$nmtablefile->tables->[$table_index]->get_column(name=> 'ETA('.$i.')'));
+			push(@matrix,$nmtablefile->tables->[$table_index]->get_column(name=> $diagonal.'('.$i.')'));
 		}
 	}
 	$error = linear_algebra::column_cov(\@matrix,$covariance);
@@ -1844,12 +1916,12 @@ sub do_model1
 	my $output;
 	my $frem_model;
 
-	if (-e $self -> directory().'m1/'.$name_model){
+	if (-e $self -> directory().'intermediate_models/'.$name_model){
 		$frem_model = model->new( %{common_options::restore_options(@common_options::model_options)},
-								  filename                    => 'm1/'.$name_model,
+								  filename                    => 'intermediate_models/'.$name_model,
 								  ignore_missing_output_files => 1 );
 	}else{
-		$frem_model = $model ->  copy( filename    => $self -> directory().'m1/'.$name_model,
+		$frem_model = $model ->  copy( filename    => $self -> directory().'intermediate_models/'.$name_model,
 									   output_same_directory => 1,
 									   write_copy => 1,
 									   copy_datafile   => 0,
@@ -1953,14 +2025,14 @@ sub do_filter_dataset_and_append_binary
 
 	my ($filtered_data_model,$data_set_headers,$extra_input_items,$message) = 
 		create_data2_model(model=>$model,
-						   filename => $self -> directory().'m1/filter_data_model.mod',
+						   filename => $self -> directory().'intermediate_models/filter_data_model.mod',
 						   filtered_datafile => $filtered_datafile,
 						   dv => $self->dv,
 						   covariates => $self->covariates);
 	
 	$self->extra_input_items($extra_input_items);
 	
-	unless (-e $self -> directory().'m1/'.$filtered_datafile){
+	unless (-e $self -> directory().'intermediate_models/'.$filtered_datafile){
 		$filtered_data_model -> _write();
 		my $rundir = $self -> directory().'/create_fremdata_dir';
 		rmtree([ "$rundir" ]) if (-e $rundir);
@@ -2121,7 +2193,7 @@ sub do_frem_dataset
 
 	if ($do_check){
 		my $name_check_model = 'check_data.mod';
-		my $data_check_model = $model ->  copy( filename    => $self -> directory().'m1/'.$name_check_model,
+		my $data_check_model = $model ->  copy( filename    => $self -> directory().'intermediate_models/'.$name_check_model,
 												output_same_directory => 1,
 												write_copy => 0,
 												copy_datafile   => 0,
@@ -2195,6 +2267,89 @@ sub get_covrecord
 	return $covrecordref;
 }
 
+sub get_pred_error_code
+{
+	my %parm = validated_hash(\@_,
+							  covariates => { isa => 'ArrayRef', optional => 0 },
+							  maxeta => {isa => 'Int', optional => 0},
+							  rescale => { isa => 'Bool', optional => 0 },
+							  invariant_covmatrix => { isa => 'ArrayRef', optional => 0 },
+							  invariant_mean => { isa => 'ArrayRef', optional => 0 },
+							  estimate_mean => { isa => 'ArrayRef', optional => 0 },
+							  ntheta => {isa => 'Int', optional => 0},
+							  N_parameter_blocks => {isa => 'Int', optional => 0},
+							  epsnum => {isa => 'Int', optional => 0},
+							  indent => {isa => 'Str', optional => 0},
+		);
+	my $covariates = $parm{'covariates'};
+	my $maxeta = $parm{'maxeta'};
+	my $rescale = $parm{'rescale'};
+	my $invariant_covmatrix = $parm{'invariant_covmatrix'};
+	my $invariant_mean = $parm{'invariant_mean'};
+	my $estimate_mean = $parm{'estimate_mean'};
+	my $ntheta = $parm{'ntheta'};
+	my $N_parameter_blocks = $parm{'N_parameter_blocks'};
+	my $epsnum = $parm{'epsnum'};
+	my $indent = $parm{'indent'};
+	
+	my @eta_labels=();
+	my @eta_strings=();
+	
+	for (my $j=0; $j< scalar(@{$covariates}); $j++){
+		my $label = 'BSV_'.$covariates->[$j];
+		my $sd = '';
+		if ($rescale){
+			$sd = '*'.sprintf("%.12G",sqrt($invariant_covmatrix->[$j][$j]));
+		}
+		push(@eta_strings,['ETA('.($maxeta+1+$j).')'.$sd]); 
+		push (@eta_labels, $label);
+	}
+
+	my $newtheta = 0;
+
+	my @theta_record_strings =();
+	my @theta_strings = ();
+	for (my $i=0; $i< scalar(@{$covariates}); $i++){
+		my $thetalabel = 'TV_'.$covariates->[$i];
+		my $val=$invariant_mean->[$i];
+		my $fixed = '';
+		if ($estimate_mean->[$i]){
+			$val=0.001 if ($val==0);
+		}else{
+			# #can be 0 since FIXed
+			$fixed = ' FIX';
+		}
+		push(@theta_record_strings,' '.sprintf("%.12G",$val).$fixed.' ; '.$thetalabel);
+		$newtheta++;
+		my $num = ($ntheta+$newtheta);
+		push(@theta_strings,'THETA('.$num.')');
+	}
+
+	my @pred_error_code = (';;;FREM CODE BEGIN COMPACT',';;;DO NOT MODIFY');
+
+	for (my $i=0; $i< scalar(@{$covariates}); $i++){
+		for (my $j=0; $j< $N_parameter_blocks; $j++){
+			my $comment = ';'.$indent.'  '.$covariates->[$i];
+			my $ipred = $theta_strings[$i].' + '.$eta_strings[$i]->[$j];
+			if ($N_parameter_blocks > 1){
+				$comment .= ' occasion '.($j+1);
+			}
+			my $num = 100*($i+1)+$j;
+			push(@pred_error_code,$indent.'IF ('.$fremtype.'.EQ.'.$num.') THEN' );
+			push(@pred_error_code,$comment);
+			push(@pred_error_code,$indent.'   Y = '.$ipred.' + EPS('.$epsnum.')' );
+			push(@pred_error_code,$indent.'   IPRED = '.$ipred );
+			push(@pred_error_code,$indent.'END IF' );
+		}
+	}
+	push(@pred_error_code,';;;FREM CODE END COMPACT' );
+
+	
+	return (\@eta_labels,\@theta_record_strings, \@pred_error_code);
+	
+}
+
+
 sub prepare_model2
 {
 	my $self = shift;
@@ -2216,25 +2371,28 @@ sub prepare_model2
 												   with_same => 1);
 	
 	my $ntheta = $model ->nthetas(problem_number => 1);
-	my $newtheta = 0;
 	my $epsnum = 1 + $model->problems()->[0]->nsigmas(with_correlations => 0,
 													  with_same => 1);
-	my @pk_pred_code =();
-	my @labels = ();
-	for (my $j=0; $j< scalar(@{$self->covariates}); $j++){
-		my $label = 'BSV_'.$self->covariates->[$j];
-		my $sd = '';
-		if ($self->rescale){
-			$sd = '*'.sprintf("%.12G",sqrt($self->invariant_covmatrix()->[$j][$j]));
-		}
-		push(@pk_pred_code,$indentation.$label.' = ETA('.($maxeta+1+$j).')'.$sd); 
-		push (@labels, $label);
-	}
+
+
+	my @estimate_mean = ($self->estimate_means) x scalar(@{$self->covariates});
+
+	my ($etalabels,$theta_strings,$pred_error_code) = tool::frem::get_pred_error_code(covariates => $self->covariates,
+																					  maxeta => $maxeta,
+																					  rescale => $self->rescale,
+																					  invariant_covmatrix => $self->invariant_covmatrix(),
+																					  invariant_mean => $self->invariant_mean(),
+																					  estimate_mean => \@estimate_mean,
+																					  ntheta => $ntheta,
+																					  N_parameter_blocks => 1,
+																					  epsnum => $epsnum,
+																					  indent => $indentation);
+
 	
-	unless (-e $self -> directory().'m1/'.$name_model){
+	unless (-e $self -> directory().'intermediate_models/'.$name_model){
 		# input model  inits have already been updated
 		#omegas have been reordered
-		$frem_model = $model ->  copy( filename    => $self -> directory().'m1/'.$name_model,
+		$frem_model = $model ->  copy( filename    => $self -> directory().'intermediate_models/'.$name_model,
 									   output_same_directory => 1,
 									   write_copy => 0,
 									   copy_datafile   => 0,
@@ -2296,7 +2454,7 @@ sub prepare_model2
 								skip_etas => $skip_etas,
 								rescale => $self->rescale,
 								covariate_covmatrix => $self->invariant_covmatrix,
-								covariate_labels => \@labels);
+								covariate_labels => $etalabels);
 
 		#THETA changes
 		#FIX all existing
@@ -2308,30 +2466,21 @@ sub prepare_model2
 			}
 		}
 		
-		my @theta_strings =();
-		my @covariate_thetanumbers = ();
-		for (my $i=0; $i< scalar(@{$self->covariates}); $i++){
-			my $val=$self->invariant_mean->[$i]; 
-			#$val=0.001 if ($val==0); #can be 0 since FIXed
-			my $label = 'TV_'.$self->covariates->[$i];
-			push(@theta_strings,' '.sprintf("%.12G",$val).' FIX ; '.$label);
-			$newtheta++;
-			my $num = ($ntheta+$newtheta);
-			push(@covariate_thetanumbers,$num);
-			push(@pk_pred_code,$indentation.$label.'=THETA('.$num.')');
-		}
-		
 		$frem_model->add_records(type => 'theta',
 								 problem_numbers => [1],
-								 record_strings => \@theta_strings);
-		
-		add_pk_pred_error_code(model=>$frem_model,
-							   pk_pred_code => \@pk_pred_code,
+								 record_strings => $theta_strings);
+
+		add_pred_error_code(model=>$frem_model,
+							pred_error_code => $pred_error_code,
+							use_pred => $self->use_pred);
+							
+#		add_pk_pred_error_code(model=>$frem_model,
+#							   pk_pred_code => \@pk_pred_code,
 #							   N_parameter_blocks => $N_parameter_blocks,
-							   N_parameter_blocks => 1,
-							   covariates => $self->covariates,
-							   epsnum => $epsnum,
-							   use_pred => $self->use_pred);
+#							   N_parameter_blocks => 1,
+#							   covariates => $self->covariates,
+#							   epsnum => $epsnum,
+#							   use_pred => $self->use_pred);
 
 #		if (0 ){
 #			model::problem::rescale_etas(problem => $frem_model->problems->[0],
@@ -2344,12 +2493,42 @@ sub prepare_model2
 			$frem_model->problems->[0] -> add_records( record_strings => ['PRINT=R UNCONDITIONAL'], 
 													   type => 'covariance' );
 		}
-		
+
+		my $totaletas = $frem_model->problems()->[0]->nomegas(with_correlations => 0,
+															  with_same => 1);
+		if ($totaletas > $self->deriv2_nocommon_maxeta){
+			if (defined $frem_model->problems()->[0]->abbreviateds and scalar(@{$frem_model->problems()->[0]->abbreviateds})>0){
+				unless ($frem_model->problems()->[0]->is_option_set(name => 'DERIV2',
+																	record => 'abbreviated',
+																	fuzzy_match => 1)){
+					$frem_model->set_option(option_name => 'DERIV2',
+											record_name => 'abbreviated',
+											option_value => 'NOCOMMON',
+											problem_numbers => [1],
+											fuzzy_match => 1);
+				}
+			}else{
+				$frem_model->problems->[0] -> set_records( record_strings => ['DERIV2=NOCOMMON'], 
+														   type => 'abbreviated' );
+			}
+		}
+
 		my $message = $frem_model->check_and_set_sizes('all' => 1);
 		if (length($message)>0){
 			ui -> print( category => 'all', message =>  $message.' However this NONMEM version does not support $SIZES. '.
 						 'There may be NMtran errors when running the model');
 		}
+		
+		if ($frem_model->problems->[0]->estimations->[-1]->is_classical){
+			$frem_model->problems->[0]->estimations->[-1]->remove_option(name => 'NONINFETA', fuzzy_match => 1);
+			$frem_model->problems->[0]->estimations->[-1]->_add_option(option_string => 'NONINFETA=1');
+		}
+		if ($self->mceta > 0){
+			#input checking that mceta ok NM version and est method
+			$frem_model->problems->[0]->estimations->[-1]->remove_option(name => 'MCETA', fuzzy_match => 1);
+			$frem_model->problems->[0]->estimations->[-1]->_add_option(option_string => 'MCETA='.$self->mceta);
+		}
+		
 		$frem_model->_write();
 
 	}
@@ -2383,9 +2562,9 @@ sub prepare_model3
 			$covrecordref->[$i] =~ s/\s*$//; #get rid of newlines
 		}
 	}	
-	unless (-e $self -> directory().'m1/'.$name_model){
+	unless (-e $self -> directory().'intermediate_models/'.$name_model){
 		# input model  inits have already been updated
-		$frem_model = $model ->  copy( filename    => $self -> directory().'m1/'.$name_model,
+		$frem_model = $model ->  copy( filename    => $self -> directory().'intermediate_models/'.$name_model,
 									   output_same_directory => 1,
 									   write_copy => 0,
 									   copy_datafile   => 0,
@@ -2496,13 +2675,13 @@ sub prepare_model5
 	my $name_model = 'model_'.$modnum.'.mod';
 	my $frem_model;
 	
-	unless (-e $self -> directory().'m1/'.$name_model){
+	unless (-e $self -> directory().'intermediate_models/'.$name_model){
 		#read model 4 from disk, then copy it
 		my $model = model->new( %{common_options::restore_options(@common_options::model_options)},
 								filename                    => 'final_models/model_4.mod',
 								ignore_missing_output_files => 1 );
 
-		$frem_model = $model ->  copy( filename    => $self -> directory().'m1/'.$name_model,
+		$frem_model = $model ->  copy( filename    => $self -> directory().'intermediate_models/'.$name_model,
 									   output_same_directory => 1,
 									   write_copy => 0,
 									   copy_datafile   => 0,
@@ -2589,8 +2768,7 @@ sub prepare_model5
 			ui -> print( category => 'all', message =>  $message.' However this NONMEM version does not support $SIZES. '.
 						 'There may be NMtran errors when running the model');
 		}
-		
-		$frem_model->set_option(record_name => 'estimation', option_name =>'MCETA', option_value => '100',fuzzy_match => 1);
+#		$frem_model->set_option(record_name => 'estimation', option_name =>'MCETA', option_value => '100',fuzzy_match => 1);
 		$frem_model->_write();
 	}
 }
@@ -2702,7 +2880,7 @@ sub run_unless_run
 	my %parm = validated_hash(\@_,
 							  numbers => { isa => 'ArrayRef', optional => 0 },
 							  final => { isa => 'Bool', default => 0 },
-							  subdirectory => {isa => 'Str', default => 'm1'}
+							  subdirectory => {isa => 'Str', default => 'intermediate_models'}
 	);
 	my $numbers = $parm{'numbers'};
 	my $final = $parm{'final'};
@@ -2774,6 +2952,11 @@ sub modelfit_setup
 	my $frem_model4;
 	my $frem_model5;
 	my $frem_model7;
+
+	my $inter = $self -> directory().'intermediate_models'; 
+	unless (-d $inter){
+		mkdir($inter);
+	}
 	
 	#this runs input model, if necessary, and updates inits
 	my ($frem_model1,$output_model1)=  $self-> do_model1(model => $model);
@@ -3222,14 +3405,14 @@ sub do_model_vpc1
 	my @vpc1_table_params =();
 
 	my $done = 0;
-	if (-e $self -> directory().'m1/'.$name_model){
+	if (-e $self -> directory().'intermediate_models/'.$name_model){
 		$frem_vpc_model = model->new( %{common_options::restore_options(@common_options::model_options)},
-									  filename                    => 'm1/'.$name_model,
+									  filename                    => 'intermediate_models/'.$name_model,
 									  ignore_missing_output_files => 1 );
 		$done = 1;
 	}else{	
 		#input Model 3 is updated
-		$frem_vpc_model = $model ->  copy( filename    => $self -> directory().'m1/'.$name_model,
+		$frem_vpc_model = $model ->  copy( filename    => $self -> directory().'intermediate_models/'.$name_model,
 										   output_same_directory => 1,
 										   copy_datafile   => 0,
 										   write_copy => 0,
@@ -3362,7 +3545,7 @@ sub do_model_vpc2
 
 	if (-e $self -> directory().$name_model){
 		$frem_vpc_model = model->new( %{common_options::restore_options(@common_options::model_options)},
-									  filename                    => 'm1/'.$name_model,
+									  filename                    => 'intermediate_models/'.$name_model,
 									  ignore_missing_output_files => 1 );
 	}else{	
 		$frem_vpc_model = $frem_model1 ->  copy( filename    => $self -> directory().$name_model,
@@ -3374,7 +3557,7 @@ sub do_model_vpc2
 		#DATA changes
 		$frem_vpc_model->problems->[0]->datas->[0]->options([]);
 		$frem_vpc_model->datafiles(problem_numbers => [1],
-								   new_names => [$self -> directory().'m1/'.$joindata]);
+								   new_names => [$self -> directory().'intermediate_models/'.$joindata]);
 		$frem_vpc_model->relative_data_path(1);
 		$frem_vpc_model->problems->[0]->datas->[0]->ignoresign('@');
 
@@ -3510,9 +3693,31 @@ sub do_model_vpc2
 
 }
 
-
-sub	add_pk_pred_error_code
+sub	add_pred_error_code
 {
+	my %parm = validated_hash(\@_,
+							  model => { isa => 'model', optional => 0 },
+							  pred_error_code => { isa => 'ArrayRef', optional => 0 },
+							  use_pred => { isa => 'Bool', optional => 0 },
+		);
+	my $model = $parm{'model'}; 
+	my $pred_error_code = $parm{'pred_error_code'};
+	my $use_pred = $parm{'use_pred'};
+
+    my @code;
+	if ($use_pred){
+		@code = @{$model->get_code(record => 'pred')};
+		push(@code,@{$pred_error_code});
+		$model->set_code(record => 'pred', code => \@code);
+	}else{
+		@code = @{$model->get_code(record => 'error')};
+		push(@code,@{$pred_error_code});
+		$model->set_code(record => 'error', code => \@code);
+	}
+
+}
+sub	add_pk_pred_error_code
+{ #not used
 	my %parm = validated_hash(\@_,
 							  model => { isa => 'model', optional => 0 },
 							  pk_pred_code => { isa => 'ArrayRef', optional => 0 },
@@ -3633,9 +3838,9 @@ sub olddo_model1
 	my @leading_omega_records = ();
 	my $frem_model;
 
-	if (-e $self -> directory().'m1/'.$name_model){
+	if (-e $self -> directory().'intermediate_models/'.$name_model){
 		$frem_model = model->new( %{common_options::restore_options(@common_options::model_options)},
-								  filename                    => 'm1/'.$name_model,
+								  filename                    => 'intermediate_models/'.$name_model,
 								  ignore_missing_output_files => 1 );
 
 		if (scalar(@{$self->covariates}) > 0){
@@ -3648,9 +3853,9 @@ sub olddo_model1
 		}
 
 	}else{	
-		#here we use original data file. It has been copied before to m1
+		#here we use original data file. It has been copied before to intermediate_models
 		# input model 0 inits have already been updated
-		$frem_model = $model ->  copy( filename    => $self -> directory().'m1/'.$name_model,
+		$frem_model = $model ->  copy( filename    => $self -> directory().'intermediate_models/'.$name_model,
 									   output_same_directory => 1,
 									   write_copy => 0,
 									   copy_datafile   => 0,

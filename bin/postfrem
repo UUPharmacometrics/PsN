@@ -131,7 +131,16 @@ my $model = model -> new ( eval( $eval_string ),
 			  filename                    => $options{'model'},
 			  ignore_missing_output_files => 1 );
 
-
+my ($center_params_arr,$href2) = model::get_rawres_params(filename => $options{'rawres_input'},
+														  filter => [],
+														  offset => 0,
+														  only_first_match => 1,
+														  model => $model);
+if (defined $center_params_arr and scalar(@{$center_params_arr} == 1)){
+	$model -> update_inits(from_hash => $center_params_arr->[0]);		
+}else{
+	croak("error reading center estimates from sir raw results file");
+}
 my ($covn,$resc,$omegaindex,$parn,$size,$means) = tool::frem::get_post_processing_data(model => $model);
 
 my @tvpar = ();
@@ -209,10 +218,6 @@ if (defined $sampled_params_arr) {
 }
 
 
-my ($center_params_arr,$href2) = model::get_rawres_params(filename => $options{'rawres_input'},
-						   filter => [],
-						   offset => 0,
-						   model => $model);
 
 
 chdir($main_directory); #created by tool::get_rundir

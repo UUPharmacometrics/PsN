@@ -29,8 +29,11 @@ my %optional_options = (
 #	'vpc!' => undef,
 	'check!' => undef,
 	'rescale!' => undef,
-	'estimate_regular_final_model!' => undef,
+#	'estimate_regular_final_model!' => undef,
+	'estimate_means!' => undef,
 	'categorical:s' => undef,
+	'deriv2_nocommon_maxeta:i' => undef,
+	"mceta:i"=>'',
 	'log:s' => undef,
 	'rse:f' => undef,
 	'run_sir!' => undef,
@@ -120,11 +123,27 @@ information that can be used to guess the variance needed for
 a proposal density for a sir run with Model 4.
 EOF
 
-$help_text{-estimate_regular_final_model} = <<'EOF';
-    -estimate_regular_final_model
+$help_text{-deriv2_nocommon_maxeta} = <<'EOF';
+    -deriv2_nocommon_maxeta=N
 
-Default set. If set then script will estimate the final regular parameterization frem model, 
-otherwise the model will be created but not estimated.
+Default 60. If the number of ETAs in model 2 is larger than this number then 
+$ABBREVIATED DERIV2=NOCOMMON
+will be set in the control stream.
+EOF
+
+#$help_text{-estimate_regular_final_model} = <<'EOF';
+#    -estimate_regular_final_model
+#
+#Default set. If set then script will estimate the final regular parameterization frem model, 
+#otherwise the model will be created but not estimated.
+#EOF
+
+$help_text{-estimate_means} = <<'EOF';
+    -estimate_means
+
+Default not set. If set then script will estimate the mean values of the covariates, instead 
+of using fixed values equal to the mean values in the data. This option is intended for the 
+case when there are missing covariate observations.
 EOF
 
 $help_text{-cholesky} = <<'EOF';
@@ -140,6 +159,14 @@ EOF
 #can be run with the vpc script (in a separate call to the vpc
 #script).
 #EOF
+
+$help_text{-mceta} = <<'EOF';      
+      -mceta=N
+
+      Default not set.
+      Only allowed when NM7.3 or later and the last estimation method accepts MCETA. 
+      Set MCETA=N in last $ESTIMATION.
+EOF
 
 $help_text{-check} = <<'EOF';
       -check
@@ -199,12 +226,15 @@ my $frem = tool::frem->new( eval( $common_options::parameters ),
 							top_tool           => 1,
 							covariates => $options{'covariates'},
 							categorical => $options{'categorical'},
-							estimate_regular_final_model => $options{'estimate_regular_final_model'},
+#							estimate_regular_final_model => $options{'estimate_regular_final_model'},
+							estimate_means => $options{'estimate_means'},
 							cholesky => $options{'cholesky'},
+							deriv2_nocommon_maxeta => $options{'deriv2_nocommon_maxeta'},
 							log => $options{'log'},
 							rse => $options{'rse'},
 							skip_omegas => $options{'skip_omegas'}, 
 							check => $options{'check'}, 
+							mceta => $options{'mceta'},
 							rescale => $options{'rescale'}, 
 							vpc => $options{'vpc'}, 
 							run_sir => $options{'run_sir'}, 

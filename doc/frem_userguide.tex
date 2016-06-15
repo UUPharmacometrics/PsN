@@ -1,6 +1,6 @@
 \input{inputs/format_header.tex}
 \usepackage{amsmath}
-\guidetitle{FREM userguide}{2016-05-26}
+\guidetitle{FREM userguide}{2016-06-15}
 
 \begin{document}
 \newcommand{\guidetoolname}{frem}
@@ -93,11 +93,18 @@ can be combined into a single large block.
 Default not set.
 If set then script will create and run Model 5 and Model 6, see below.
 \nextopt
-\optname{estimate\_regular\_final\_model}
-Default set.
+%\optname{estimate\_regular\_final\_model}
+%Default set.
+%If set then script will estimate
+%the final regular parameterization frem model, otherwise the model will be
+%created but not estimated.
+%\nextopt
+\optname{estimate\_means}
+Default not set.
 If set then script will estimate
-the final regular parameterization frem model, otherwise the model will be
-created but not estimated.
+the mean values of the covariates, instead of using fixed values equal to the mean values in the data.
+This option is intended for the case when there are missing covariate observations. If there are no missing
+covariate observations for categorical covariates then there will be numerical difficulties.
 \nextopt
 \optname{rescale}
 Default not used. Rescale covariate ETAs in Model 2 to SD close to 1.
@@ -120,6 +127,17 @@ a proposal density for a sir run with Model 4.
 %{\Large \texttt{Later}}
 %Default not set. If set then script will create a frem model that can be run with the vpc script (in a separate call to the vpc pscript).  
 %\nextopt
+\optdefault{deriv2\_nocommon\_maxeta}{number}
+Default 60.
+If the number of ETAs in model 2 is larger than this number then \\
+\$ABBREVIATED DERIV2=NOCOMMON\\
+will be set in the control stream.
+\nextopt
+\optdefault{mceta}{number}
+Default not set.
+If NM7.3 or later is used, and the last estimation record accepts MCETA option, set MCETA to this value
+in last \$EST of Model 2 and later.
+\nextopt
 \optname{check}
 Default not set. Run evaluation with frem records ignored after frem data set generation, to check ofv is the same.
 \nextopt
@@ -148,6 +166,8 @@ or psn\_options -h on the commandline.
     \item All input model ETAs that are not to have covariance with covariate ETAs estimated must
     belong to a skipped omega record (either explicitly set with option -skip\_omegas or
     automatically skipped since it is a BOV ETA).
+    \item There must be only a single \$PROBLEM.
+    \item There may be more than one \$ESTIMATION, but frem will only handle output from the last estimation step.
     \item The input model code must not include covariates that are listed with 
     -covariates.
 %    \item Only if option -vpc is set: All model parameters (for example CL, V, KA) with ETA number > skip\_etas must be defined using \\
@@ -241,7 +261,7 @@ were not FIX in input model (Model 1) and correlations that are not exactly 0.
 Model 6 is the (unestimated) Cholesky parameterization FREM model.
 \item Only if option -cholesky is set:
 Estimate Model 6, include \$COV step.
-\item Only if option -estimate\_regular\_final\_model is set:
+\item %Only if option -estimate\_regular\_final\_model is set:
 Estimate Model 4 (FREM regular model), include \$COV step.
 Estimation is done in parallel with Model 6, if estimation of Model 6 was requested.
 %\item If option -vpc is set, the script will also 
@@ -427,24 +447,49 @@ Loop over all covariates, j=1...N\_covariates, %with inner loop over k=1...N\_pa
 add lines\\
 %\$THETA init\_j ; TVcov\_j\_k\\
 \$THETA init\_j FIX ; TVcov\_j\\
+or, if option -estimate\_means was set\\
+\$THETA init\_j ; TVcov\_j\\
 where init\_j is mean of covariate j computed during creation of new data set, cov\_j is the name of covariate
 j. %and k is the order number of the parameter block.
 %If mean is exactly zero set init to a very small positive value. 
 Store the mapping between the theta label and the theta number.%TVcovname – THETA(n\_theta+j). 
 %TODO: Possibly set boundaries to max and min for covariate, in that case need to find that during generation of dataset 2.
-\subsection{PK/PRED changes at beginning}
-In \$PK or \$PRED, whichever is present:
-At the very beginning (unless have FREM-ANCHOR similar to scm- anchor) the following code: \\
+\subsection{ERROR/PRED changes}
+In \$ERROR or \$PRED, whichever is present:
+At the end append the following code: \\
 Loop over covariates j=1...N\_covariates, %parameter blocks k=1...N\_parameter\_blocks,
-add lines
+add lines (if option -rescale is \emph{not} set)
+
+\begin{verbatim}
+IF (FREMTYPE .EQ. j*100) THEN
+; <cov_j>
+  Y = THETA(orig_thetas+j) + ETA(orig_etas+j) +EPS(epsnum)
+  IPRED = THETA(orig_thetas+j) + ETA(orig_etas+j)
+END IF
+\end{verbatim}
+
+If option -rescale is set then 
+\begin{verbatim}
+ETA(orig_etas+j)
+\end{verbatim}
+is replaced with
+\begin{verbatim}
+ETA(orig_etas+j)*(sd of baseline covariate)
+\end{verbatim}
+
+
+%\emph{Alternative:} Do not loop over N \_parameter\_blocks, insert code only once for each covariate
+
+(do not define a case for FREMTYPE=0, original obs. Leave original code as it is for that)
+
 
 %\noindent BSV\_$<$cov\_j$>$\_k = ETA(orig\_etas+(j-1)*N\_parameter\_blocks +k)\\
 %\noindent TV\_$<$cov\_j$>$\_k = THETA(orig\_thetas+(j-1)*N\_parameter\_blocks +k)
-\noindent TV\_$<$cov\_j$>$ = THETA(orig\_thetas+j)\\
-\noindent if option -rescale is \emph{not} set:\\
-\noindent BSV\_$<$cov\_j$>$ = ETA(orig\_etas+j)\\
-\noindent or if option -rescale \emph{is} set:\\
-\noindent BSV\_$<$cov\_j$>$ = ETA(orig\_etas+j)*\emph{sd of baseline covariate}
+%\noindent TV\_$<$cov\_j$>$ = THETA(orig\_thetas+j)\\
+%\noindent if option -rescale is \emph{not} set:\\
+%\noindent BSV\_$<$cov\_j$>$ = ETA(orig\_etas+j)\\
+%\noindent or if option -rescale \emph{is} set:\\
+%\noindent BSV\_$<$cov\_j$>$ = ETA(orig\_etas+j)*\emph{sd of baseline covariate}
 
 %\noindent Loop over parameters\_bov, initialize BOV PK (provided there are any time-varying cov)
 %\noindent BOV$<$parameter$>$=0
@@ -467,40 +512,24 @@ add lines
 %$<$par$>$ = TV$<$par$>$ (expression containing ETA or (0) as BOV placeholder)
 %Add BOV$<$parameter$>$ at appropriate place in $<$par$>$=TV$<$par$>$... expression.
 
-\subsection{PRED or ERROR changes at end}
-In \$PRED or \$ERROR, whichever is present:
-At the very end\\
-Loop over covariates, j=1...N\_covariates %, parameter blocks k=1...N\_parameter\_blocks
-%\begin{verbatim}
-%Y_<cov_j>_k = TV_<cov_j>_k + BSV_<cov_j>_k
-%\end{verbatim}
-\begin{verbatim}
-Y_<cov_j> = TV_<cov_j> + BSV_<cov_j>
-\end{verbatim}
 
 
 %Loop over time-varying covariates, j=(N\_invariant+1)...(N\_invariant+N\_time-var), use THETA-covname mapping, add lines
 %\begin{verbatim}
 %Y<j> = THETA(cov) + BOV<cov>
 %\end{verbatim}
-Loop over covariates j=1...N\_covariates %, parameter blocks k=1...N\_parameter\_blocks
+%Loop over covariates j=1...N\_covariates %, parameter blocks k=1...N\_parameter\_blocks
 %\begin{verbatim}
 %IF (FREMTYPE .EQ.((j-1)*N_parameter_blocks +k)) THEN
 %Y=Y_<cov_j>_k+EPS(epsnum)
 %IPRED=Y_<cov_j>_k
 %END IF
 %\end{verbatim}
-\begin{verbatim}
-IF (FREMTYPE .EQ. j) THEN
-Y=Y_<cov_j>+EPS(epsnum)
-IPRED=Y_<cov_j
-END IF
-\end{verbatim}
 
-%\emph{Alternative:} Do not loop over N \_parameter\_blocks, insert code only once for each covariate
-
-(do not define a case for FREMTYPE=0, original obs. Leave original code as it is for that)
-
+\subsection{\$ESTIMATION changes}
+If the last estimation method is classical, set option NONINFETA=1 in the last estimation record.
+If option -mceta=N is set with $N>0$ and the NONMEM version is 7.3 or later and
+the last estimation record accepts MCETA, then set option MCETA=N in the last estimation record.
 \subsection{\$COV changes}
 If there was no \$COV record in Model 1, add
 \begin{verbatim}
@@ -958,10 +987,7 @@ BOV<covariate> = ETA(offset+N_invariant+(k-1)*(bov_parameters+N_timevar)+bov_par
 END IF
 \end{verbatim}
 
-\subsection{PK or PRED changes at beginning B}
-Same as Model 2.
-
-\subsection{PRED or ERROR changes at end}
+\subsection{PRED or ERROR changes}
 Same as Model 2.
 
 \section{Initial values off-diagonal OMEGA}
