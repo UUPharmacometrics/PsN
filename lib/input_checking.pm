@@ -17,6 +17,7 @@ sub check_options
 							  rawres_input => {isa => 'Bool', default => 0},
 							  copy_data => {isa => 'Bool', default => 0},
 							  msfi => {isa => 'Bool', default => 0},
+							  mceta => {isa => 'Bool', default => 0},
 							  single_prob_or_tnpri => {isa => 'Bool', default => 0},
 							  tool => {isa => 'Str', optional => 0},
 							  model => {isa=> 'model',optional => 1},
@@ -34,6 +35,7 @@ sub check_options
 
 	if ($tool eq 'frem'){
 		$msfi = 1; #redundant???
+		$mceta = 1;
 		$error .= check_frem(options => $options, model => $model);
 	}
 	if ($tool eq 'execute'){
@@ -45,6 +47,7 @@ sub check_options
 	if ($tool eq 'sir'){
 		$rawres_input = 1;
 		$copy_data = 1;
+		$mceta = 1;
 		$error .= check_sir(options => $options, model => $model);
 	}
 
@@ -63,6 +66,9 @@ sub check_options
 	}
 	if ($msfi and (defined $model)){
 		$error .= check_msfi(model => $model, options => $options);
+	}
+	if ($mceta and (defined $model)){
+		$error .= check_mceta(model => $model, options => $options);
 	}
 	if ($single_prob_or_tnpri and (defined $model)){
 		#check_msfi must be run before check tnpri
@@ -119,6 +125,32 @@ sub check_single_prob_or_tnpri
 		unless( scalar(@{$est_record}) > 0 ){
 			$error .=  "The input model must have a \$EST record\n";
 		}
+	}
+	return $error;
+}
+
+sub check_mceta
+{
+	my %parm = validated_hash(\@_,
+							  options => {isa => 'HashRef', optional => 0},
+							  model =>  {isa => 'model', optional => 0},
+		);
+	my $options = $parm{'options'};
+	my $model = $parm{'model'};
+
+	my $error = '';
+
+	if (defined $options->{'mceta'} and $options->{'mceta'} > 0) {
+		if (($PsN::nm_major_version == 5) or ($PsN::nm_major_version == 6) or 
+			($PsN::nm_major_version == 7 and ($PsN::nm_minor_version < 3))) {
+			#			$error .= "Cannot set -mceta for NONMEM version ".$PsN::nm_major_version.'.'.$PsN::nm_minor_version;
+			$options->{'mceta'} = 0;
+		}else{
+			unless (defined $model->problems->[0]->estimations and 
+					$model->problems->[0]->estimations->[-1]->accepts_mceta){
+				$options->{'mceta'} = 0;
+			}
+		} 
 	}
 	return $error;
 }
