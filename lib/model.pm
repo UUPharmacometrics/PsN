@@ -1323,34 +1323,34 @@ sub get_values_to_labels
 	my @from_coordval = @{$valref};
 
 	for ( my $i = 0; $i <= $#coordinates; $i++ ) {
-	  #loop over problems
-	  if (defined $from_coordval[$i] and defined $coordinates[$i]) {
-	    my @prob_values = ();
-	    my @coords = @{$coordinates[$i]};
-	    foreach my $hashref (@{$from_coordval[$i]}) {
-	      #loop subprobs
-	      if (defined $hashref){
-		my @values =();
-		my %coordval = %{$hashref};
-		foreach my $coord (@coords){
-		  if (defined $coordval{$coord}){
-		    push (@values,$coordval{$coord});
-		  }else {
-		    # only not stored are undefs/NA
-		    ui -> print( category => 'all',
-						 message  => "undefined value from labels(), bug!\n") unless (defined $coord);
-		    push (@values,undef);
-		  }
+		#loop over problems
+		if (defined $from_coordval[$i] and defined $coordinates[$i]) {
+			my @prob_values = ();
+			my @coords = @{$coordinates[$i]};
+			foreach my $hashref (@{$from_coordval[$i]}) {
+				#loop subprobs
+				if (defined $hashref){
+					my @values =();
+					my %coordval = %{$hashref};
+					foreach my $coord (@coords){
+						if (defined $coordval{$coord}){
+							push (@values,$coordval{$coord});
+						}else {
+							# only not stored are undefs/NA
+							ui -> print( category => 'all',
+										 message  => "undefined value from labels(), bug!\n") unless (defined $coord);
+							push (@values,undef);
+						}
+					}
+					push (@prob_values,\@values);
+				}else{
+					push (@prob_values,undef);
+				}
+			}
+			push (@out_values,\@prob_values);
+		}else {
+			push (@out_values,undef);
 		}
-		push (@prob_values,\@values);
-	      }else{
-		push (@prob_values,undef);
-	      }
-	    }
-	    push (@out_values,\@prob_values);
-	  }else {
-	    push (@out_values,undef);
-	  }
 	}
 
 	return \@out_values;
@@ -1501,6 +1501,7 @@ sub get_rawres_params
 							  string_filter => { isa => 'Maybe[ArrayRef[Str]]', optional => 1 },
 							  extra_columns => { isa => 'Maybe[ArrayRef[Str]]', optional => 1 },
 							  require_numeric_ofv => { isa => 'Bool', default => 0, optional => 1 },
+							  only_first_match => { isa => 'Bool', default => 0, optional => 1 },
 							  offset => { isa => 'Int', optional => 0 },
 							  rawres_structure_filename => { isa => 'Maybe[Str]', optional => 1 },
 							  rawres_model_number => { isa => 'Maybe[Int]', optional => 1, default => 1 }
@@ -1514,6 +1515,7 @@ sub get_rawres_params
 	my $offset = $parm{'offset'};
 	my $rawres_structure_filename = $parm{'rawres_structure_filename'};
 	my $rawres_model_number = $parm{'rawres_model_number'};
+	my $only_first_match = $parm{'only_first_match'};
 
 	my @allparams;
 	my $extra_count = scalar(@extra_columns);
@@ -1801,6 +1803,7 @@ sub get_rawres_params
 			}
 		}
 		push (@allparams,\%allpar);
+		last if $only_first_match;
 	}  
 
 	return (\@allparams,\%labels_hash);
