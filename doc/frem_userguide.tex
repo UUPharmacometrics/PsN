@@ -1,6 +1,6 @@
 \input{inputs/format_header.tex}
 \usepackage{amsmath}
-\guidetitle{FREM userguide}{2016-06-15}
+\guidetitle{FREM userguide}{2016-06-17}
 
 \begin{document}
 \newcommand{\guidetoolname}{frem}
@@ -100,11 +100,15 @@ If set then script will create and run Model 5 and Model 6, see below.
 %created but not estimated.
 %\nextopt
 \optname{estimate\_means}
-Default not set.
-If set then script will estimate
-the mean values of the covariates, instead of using fixed values equal to the mean values in the data.
-This option is intended for the case when there are missing covariate observations. If there are no missing
-covariate observations for categorical covariates then there will be numerical difficulties.
+Default set.
+By default frem will estimate
+the mean values of the covariates which have any missing observations in the FREM dataset.
+Note that the FREM dataset contains covariate observations only from the first original data
+observation record for each individual.
+If no covariate observations are missing in the frem dataset then the mean
+will not be estimated,
+even if option -estimate\_means is set.
+If -no-estimate\_means is set, frem will not estimate any means even if there are missing observations.
 \nextopt
 \optname{rescale}
 Default not used. Rescale covariate ETAs in Model 2 to SD close to 1.
@@ -443,13 +447,16 @@ Add\\
 
 \subsection{THETA changes}
 FIX all \$THETAs from Model 1.
-Loop over all covariates, j=1...N\_covariates, %with inner loop over k=1...N\_parameter\_blocks,
-add lines\\
-%\$THETA init\_j ; TVcov\_j\_k\\
-\$THETA init\_j FIX ; TVcov\_j\\
-or, if option -estimate\_means was set\\
+Loop over all covariates, j=1...N\_covariates. %with inner loop over k=1...N\_parameter\_blocks,
+If option -estimate\_means was set (the default)
+and any frem dataset observations of covariate j are missing add lines\\
 \$THETA init\_j ; TVcov\_j\\
-where init\_j is mean of covariate j computed during creation of new data set, cov\_j is the name of covariate
+%\$THETA init\_j ; TVcov\_j\_k\\
+or else , if either no covariate j observation is missing or
+-no-estimate\_means was set, add \\
+\$THETA init\_j FIX ; TVcov\_j\\
+where init\_j is mean of covariate j computed during creation
+of new data set, cov\_j is the name of covariate
 j. %and k is the order number of the parameter block.
 %If mean is exactly zero set init to a very small positive value. 
 Store the mapping between the theta label and the theta number.%TVcovname – THETA(n\_theta+j). 

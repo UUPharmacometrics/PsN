@@ -51,12 +51,36 @@ is($resultref->{'occasionlist'}->[0],3,'frem occasion 1');
 is($resultref->{'occasionlist'}->[1],8,'frem occasion 2');
 is($resultref->{'invariant_median'}->[0],1,'frem median SEX');
 is($resultref->{'invariant_median'}->[1],8,'frem median DGRP');
+cmp_float_array($resultref->{'invariant_mean'},[1.20270270,8],'frem median SEX, DGRP');
 cmp_float($resultref->{'invariant_covmatrix'}->[0]->[0],0.163828211773417,'frem inv covmatrix 1,1');
 cmp_float($resultref->{'invariant_covmatrix'}->[0]->[1],-0.013698630136986,'frem inv covmatrix 1,2');
 cmp_float($resultref->{'invariant_covmatrix'}->[1]->[0],-0.013698630136986,'frem inv covmatrix 2,1');
 cmp_float($resultref->{'invariant_covmatrix'}->[1]->[1],0.657534246575342,'frem inv covmatrix 2,2');
 is($resultref->{'timevar_median'}->[0],77.5,'frem median WT');
 cmp_float($resultref->{'timevar_covmatrix'}->[0]->[0],241.6312939651981,'frem var covmatrix 1,1');
+is_deeply($resultref->{'have_missing_covariates'},[0,0],'frem missing covariates 1');
+
+$filtered_data->missing_data_token(9);
+	
+$resultref = data::frem_compute_covariate_properties(filtered_data => $filtered_data,
+													 invariant_covariates => ['SEX','DGRP'],
+													 directory => $filtered_data->directory,
+													 data2name => 'findme2.dta', #ends up in tempdir
+													 evid_index => 31,
+													 mdv_index => undef,
+													 dv_index => 30,
+													 type_index => 33,
+													 N_parameter_blocks => 1,
+													 cov_indices => [12,3], #SEX DGRP 
+													 is_log => [0,0]);
+
+
+is_deeply($resultref->{'invariant_median'},[1,8],'frem median SEX, DGRP');
+cmp_float_array($resultref->{'invariant_mean'},[1.20270270,7.52],'frem median SEX, DGRP');
+
+cmp_float($resultref->{'invariant_covmatrix'}->[0]->[0],0.163828211773417,'frem inv covmatrix 1,1');
+is_deeply($resultref->{'have_missing_covariates'},[0,1],'frem missing covariates 2');
+
 
 remove_test_dir($tempdir);
 

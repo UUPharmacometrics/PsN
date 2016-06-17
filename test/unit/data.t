@@ -181,8 +181,10 @@ $data = data->new(filename => $filename,
 
 my $factors = $data ->factors(column => 4,ignore_missing =>1);
 is(data::_have_non_unique_values($factors),1,'non-unique values in data yes');
+is(data::_have_missing_values(factors=>$factors, missing_data_token => -99),1,'mising values in data yes');
 $factors = $data ->factors(column => 2,ignore_missing =>1);
 is(data::_have_non_unique_values($factors),0,'non-unique values in data ID');
+is(data::_have_missing_values(factors=>$factors, missing_data_token => -99),0,'mising values in data no');
 
 my $statistics = $data->lasso_get_categorical_statistics(column_number => 4,
 														 missing_data_token => '-99');

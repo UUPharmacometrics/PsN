@@ -431,6 +431,7 @@ sub frem_compute_covariate_properties
 
 	my $results={};
 
+	
 	if (0){
 		print "\n".join(',',@{$filtered_data->header})."\n";
 		print "evid $evid_index mdv $mdv_index \n";
@@ -453,7 +454,6 @@ sub frem_compute_covariate_properties
 											   verbose => 0,
 											   unique_in_individual => 1,
 											   ignore_missing => 1)};
-
 		if ( _have_non_unique_values(\%strata)) {
 			ui -> print( category => 'all',
 						 message => "\nWarning: Individuals were found to have multiple values in the $covariate column,".
@@ -482,15 +482,17 @@ sub frem_compute_covariate_properties
 	my $timevar_matrix; #array of arrays of arrays
 
 	#this writes new data to disk
-	($invariant_matrix,$timevar_matrix) = $filtered_data->add_frem_lines( occ_index => $occ_index,
-																		  evid_index => $evid_index,
-																		  mdv_index => $mdv_index,
-																		  dv_index => $dv_index,
-																		  type_index => $type_index,
-																		  cov_indices => $cov_indices,
-																		  is_log => $is_log,
-																		  N_parameter_blocks => $N_parameter_blocks,
-																		  first_timevar_type => $first_timevar_type);
+	#only missing invariant for now!
+	($invariant_matrix,$timevar_matrix,$results->{'have_missing_covariates'}) = 
+		$filtered_data->add_frem_lines( occ_index => $occ_index,
+										evid_index => $evid_index,
+										mdv_index => $mdv_index,
+										dv_index => $dv_index,
+										type_index => $type_index,
+										cov_indices => $cov_indices,
+										is_log => $is_log,
+										N_parameter_blocks => $N_parameter_blocks,
+										first_timevar_type => $first_timevar_type);
 
 	$results->{'invariant_median'}= [];
 	$results->{'invariant_mean'}= [];
@@ -557,6 +559,7 @@ sub add_frem_lines
 	croak("No individuals defined in data object based on ".
 		$self->full_name ) unless ( defined $first_id );
 
+	my @missing_invariants= (0) x ($first_timevar_type);
 	foreach my $individual ( @{$self->individuals()} ) {
 		my ($invariants,$timevar) =  $individual->add_frem_lines( occ_index => $occ_index,
 																  evid_index => $evid_index,
@@ -568,13 +571,18 @@ sub add_frem_lines
 																  cov_indices => $cov_indices,
 																  is_log => $is_log,
 																  first_timevar_type => $first_timevar_type);
+		for (my $pos=0; $pos < $first_timevar_type; $pos++){
+			next if ($missing_invariants[$pos] > 0);
+			if ($invariants->[$pos] == $self->missing_data_token()){
+				$missing_invariants[$pos] =1;
+			}
+		}
 		push(@invariant_matrix,$invariants);
 		push(@timevar_matrix,$timevar);
-#		die;
 	}
 	$self->_write;
 
-	return \@invariant_matrix ,\@timevar_matrix;
+	return \@invariant_matrix ,\@timevar_matrix, \@missing_invariants;
 }
 
 sub bootstrap_create_datasets
@@ -684,6 +692,26 @@ sub _have_non_unique_values
 	}else{
 		return 0;
 	}
+}
+
+sub _have_missing_values
+{
+	my %parm = validated_hash(\@_,
+		factors => { isa => 'HashRef', optional => 0 },
+		missing_data_token => { isa => 'Num', optional => 0 },
+	);
+	my $factors = $parm{'factors'};
+	my $missing_data_token = $parm{'missing_data_token'};
+
+	my $have_missing = 0;
+	foreach my $key (keys %{$factors}){
+		next if ($key eq 'Non-unique values found');
+		if ($key == $missing_data_token){
+			$have_missing = 1;
+			last;
+		}
+	}
+	return $have_missing;
 }
 
 sub _case_deletion

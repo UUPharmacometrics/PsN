@@ -60,7 +60,8 @@ has 'logfile' => ( is => 'rw', isa => 'ArrayRef', default => sub { ['frem.log'] 
 has 'results_file' => ( is => 'rw', isa => 'Str', default => 'frem_results.csv' );
 has 'use_pred' => ( is => 'rw', isa => 'Bool', default => 1 );
 has 'estimate_regular_final_model' => ( is => 'rw', isa => 'Bool', default => 1 ); #no commandline option currently
-has 'estimate_means' => ( is => 'rw', isa => 'Bool', default => 0 ); 
+has 'estimate_means' => ( is => 'rw', isa => 'Bool', default => 1 ); 
+has 'have_missing_covariates' => ( is => 'rw', isa => 'ArrayRef', default => sub { [] } );
 has 'cholesky' => ( is => 'rw', isa => 'Bool', default => 0 );
 
 
@@ -2163,6 +2164,7 @@ sub do_frem_dataset
 
 	
 	if (defined $resultref){
+		$self->have_missing_covariates($resultref->{'have_missing_covariates'}) if (defined $resultref->{'have_missing_covariates'});
 		$self->occasionlist($resultref->{'occasionlist'}) if (defined $resultref->{'occasionlist'});
 		if (0){
 			if (defined $resultref->{'invariant_median'}){
@@ -2374,9 +2376,16 @@ sub prepare_model2
 	my $epsnum = 1 + $model->problems()->[0]->nsigmas(with_correlations => 0,
 													  with_same => 1);
 
-
-	my @estimate_mean = ($self->estimate_means) x scalar(@{$self->covariates});
-
+	my @estimate_mean = ();
+	if ($self->estimate_means){
+		if (scalar(@{$self->have_missing_covariates}) == scalar(@{$self->covariates})){
+			@estimate_mean = @{$self->have_missing_covariates};
+		}else{
+			croak("No information about missing covariate values, this is a bug");
+		}
+	}else{
+		@estimate_mean = (0) x scalar(@{$self->covariates});
+	}
 	my ($etalabels,$theta_strings,$pred_error_code) = tool::frem::get_pred_error_code(covariates => $self->covariates,
 																					  maxeta => $maxeta,
 																					  rescale => $self->rescale,

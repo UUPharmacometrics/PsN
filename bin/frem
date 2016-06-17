@@ -141,9 +141,12 @@ EOF
 $help_text{-estimate_means} = <<'EOF';
     -estimate_means
 
-Default not set. If set then script will estimate the mean values of the covariates, instead 
-of using fixed values equal to the mean values in the data. This option is intended for the 
-case when there are missing covariate observations.
+Default set. By default frem will estimate the mean values of the covariates which have any 
+missing observations in the FREM dataset. Note that the FREM dataset contains covariate 
+observations only from the first original data observation record for each individual.
+If no covariate observations are missing in the frem dataset then the mean will not be estimated,
+even if option -estimate_means is set. If -no-estimate_means is set, frem will not estimate 
+any means even if there are missing observations.
 EOF
 
 $help_text{-cholesky} = <<'EOF';
