@@ -15,7 +15,7 @@ sub read_answers
 	$answer_hashes[$index]->{near_bounds_names}=['CRCL_on_CL']; 
 	$answer_hashes[$index]->{near_bounds_values}=[7.70E-03];
 	$answer_hashes[$index]->{near_bounds_bounds}=[0];
-    $answer_hashes[$index]->{answers}->{0}->{0}->{'raw_invcovmatrix'} = [
+    $answer_hashes[$index]->{answers}->{0}->{0}->{'inverse_covariance_matrix'} = [
 		3.88E+00,
 		-4.64E+01,  1.46E+03,
 		1.52E+00, -4.87E+01,  2.38E+01,
@@ -55,7 +55,18 @@ sub read_answers
 	$answer_hashes[$index]->{answers}->{0}->{0}->{'sethetas'}=[2.01673E-01,1.80612E-01,8.08876E-02,6.94340E-02];
 	$answer_hashes[$index]->{answers}->{0}->{0}->{'seomegas'}=[2.33550E-01,2.57089E-01,2.93394E-01,0.00000E+00,0.00000E+00,6.04961E-02,0.00000E+00,0.00000E+00,0.00000E+00,0.00000E+00];
 	$answer_hashes[$index]->{answers}->{0}->{0}->{'sesigmas'}=[6.99733E-01];
-
+    $answer_hashes[$index]->{answers}->{0}->{0}->{'inverse_covariance_matrix'} = [
+1.25982E+02,
+-1.07192E+02, 1.28773E+02,
+-1.83990E+01, 4.17044E+01, 1.86580E+02,
+2.60395E+01,-4.62596E+01,-4.33652E+01, 2.50708E+02,
+4.74787E+01,-2.77234E+01, 6.88630E+00,-1.12831E+00,  1.82517E+02,
+-9.92714E+01, 6.74708E+01,-2.14940E+01,-1.38941E+01, -2.72373E+02, 4.81376E+02,
+ 2.69450E+01,-1.89793E+01, 2.01481E+01, 1.11231E+01,  1.16686E+02,-2.26952E+02, 1.30232E+02,
+ 1.92439E+01,-2.08502E+01,-1.59014E+01, 8.05100E+01,   1.10721E+01,-3.83871E+01, 3.89958E+01, 3.72392E+02  ,
+ 4.87254E-01,-3.85159E-01, 3.02192E+00,-9.68817E-01,-1.02911E-01, -1.33592E+00,1.96125E+00,1.14959E+01,2.52324E+00
+		];
+	
 	$index++;
 	$answer_hashes[$index]={};
 	$answer_hashes[$index]->{file}='multPROB/multEST/withSIM/max100_max100_V7_10_g_reg.lst';
@@ -1038,7 +1049,7 @@ sub read_answers
     $answer_hashes[$index]->{file} = 'special_mod/two_digit_cov_index.lst';
     $answer_hashes[$index]->{parsed_successfully} = 1;
     $answer_hashes[$index]->{answers} = {};
-    $answer_hashes[$index]->{answers}->{0}->{0}->{'raw_invcovmatrix'} = [
+    $answer_hashes[$index]->{answers}->{0}->{0}->{'inverse_covariance_matrix'} = [
 		3.08E+08,
 		-1.07E+08,3.75E+07,
 		-5.30E+07,1.85E+07,9.12E+06,

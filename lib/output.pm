@@ -1882,8 +1882,9 @@ sub get_single_value
 		} else {
 			1;
 		}
-	} elsif ( ($attribute eq 't_matrix') or
-			  ($attribute eq 'raw_invcovmatrix') 
+	} elsif ( ($attribute eq 't_matrix') 
+#or
+#			  ($attribute eq 'raw_invcovmatrix') 
 		) {
 		$arr = $self->access_any(attribute => $attribute,
 								 problems => [($problem_index + 1)],

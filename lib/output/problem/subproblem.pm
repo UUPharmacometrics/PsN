@@ -2,7 +2,6 @@ package output::problem::subproblem;
 
 use include_modules;
 use Config;
-use ext::Math::MatrixReal;
 use ui;
 use array;
 use Moose;
@@ -57,7 +56,6 @@ has 'raw_cormatrix' => ( is => 'rw', isa => 'ArrayRef' );
 has 'r_matrix' => ( is => 'rw', isa => 'ArrayRef' );
 has 'correlation_matrix' => ( is => 'rw', isa => 'ArrayRef' );
 has 'raw_covmatrix' => ( is => 'rw', isa => 'ArrayRef' );
-has 'raw_invcovmatrix' => ( is => 'rw', isa => 'ArrayRef' );
 has 'raw_omegas' => ( is => 'rw', isa => 'ArrayRef' );
 has 'raw_seomegas' => ( is => 'rw', isa => 'ArrayRef' );
 has 'raw_sesigmas' => ( is => 'rw', isa => 'ArrayRef' );
@@ -101,7 +99,7 @@ has 'omega_block_structure_type' => ( is => 'rw', isa => 'Str' );
 has 'sigma_block_structure_type' => ( is => 'rw', isa => 'Str' );
 has 'omega_block_sets' => ( is => 'rw', isa => 'HashRef' );
 has 'sigma_block_sets' => ( is => 'rw', isa => 'HashRef' );
-has 'inverse_covariance_matrix' => ( is => 'rw', isa => 'Math::MatrixReal', clearer => 'clear_inverse_covariance_matrix' );
+has 'inverse_covariance_matrix' => ( is => 'rw', isa => 'ArrayRef');
 has 't_matrix' => ( is => 'rw', isa => 'ArrayRef' );
 has 'estimated_thetas' => ( is => 'rw', isa => 'ArrayRef', default => sub { [] } );
 has 'estimated_omegas' => ( is => 'rw', isa => 'ArrayRef', default => sub { [] } );
@@ -309,7 +307,8 @@ sub _read_covmatrix
 	# }}}
 
 	my $keep_headers_array = $self->input_problem->get_estimated_attributes(attribute=>'coordinate_strings');
-
+	my $raw_invcovmatrix;
+	
 	while ( $_ = @{$self->lstfile}[ $start_pos++ ] ) {
 		no warnings qw(uninitialized);
 		if (/        T MATRIX/) {
@@ -372,11 +371,9 @@ sub _read_covmatrix
 		if (/    INVERSE COVARIANCE MATRIX OF ESTIMATE/) {
 			while( $_ = @{$self->lstfile}[ $start_pos++ ] ) {
 				if (/^\s+TH\s+\d+\s*$/ or /^\s+TH\s+\d+\s+\|/) { # Read matrix and get out of inner while loop
-					my $temp_matrix;
-					( $start_pos, $temp_matrix, $i_success, $dummyheaders ) = _read_matrixoestimates( pos => $start_pos - 1,
+					( $start_pos, $raw_invcovmatrix, $i_success, $dummyheaders ) = _read_matrixoestimates( pos => $start_pos - 1,
 																									  lstfile => $self->lstfile,
 																									  keep_headers_array => $keep_headers_array );
-					$self->raw_invcovmatrix($temp_matrix);
 					last;
 				}
 			}
@@ -392,9 +389,10 @@ sub _read_covmatrix
 	unless (defined $self->covariance_matrix and scalar(@{$self->covariance_matrix})>0){
 		#only store if not already read from NM7 additional output
 		$self->covariance_matrix([]);
-		$self->raw_covmatrix([]) unless defined $self->raw_covmatrix;
-		foreach my $element ( @{$self->raw_covmatrix} ) {
-			push( @{$self->covariance_matrix}, eval($element) ) unless ( $element eq '.........' );
+		if ( defined $self->raw_covmatrix ) {
+			foreach my $element ( @{$self->raw_covmatrix} ) {
+				push( @{$self->covariance_matrix}, eval($element) ) unless ( $element eq '.........' );
+			}
 		}
 	}
 
@@ -407,12 +405,12 @@ sub _read_covmatrix
 		}
 	}
 
-	unless (defined $self->inverse_covariance_matrix){
+	unless (defined $self->inverse_covariance_matrix and scalar(@{$self->inverse_covariance_matrix})>0){
 		#only store if not already read from NM7 additional output
-		if ( defined $self->raw_invcovmatrix ) {
-			my $matrix_ref = make_square( clear_dots( $self->raw_invcovmatrix ));
-			if (scalar(@{$matrix_ref}) > 0) {
-				$self->inverse_covariance_matrix(Math::MatrixReal->new_from_cols($matrix_ref));
+		$self->inverse_covariance_matrix([]);
+		if ( defined $raw_invcovmatrix ) {
+			foreach my $element ( @{$raw_invcovmatrix} ) {
+				push( @{$self->inverse_covariance_matrix}, eval($element) ) unless ( $element eq '.........' );
 			}
 		}
 	}
@@ -2946,11 +2944,7 @@ sub parse_additional_table
 			my @line_values = split /\s+/,$line;
 			my $max_column;
 			my @new_line;
-			if ($type eq 'coi') {
-				$max_column = scalar(@index_order) ; #store full matrix
-			} else {
-				$max_column = $row_index; #store lower triangular matrix
-			}
+			$max_column = $row_index; #store lower triangular matrix
 			for (my $j = 0; $j < $max_column; $j++) {
 				my $i = $index_order[$j]; #must permute omega-sigma
 				if ($line_values[$i] eq 'NaN') {
@@ -2959,11 +2953,8 @@ sub parse_additional_table
 					push(@new_line, eval($line_values[$i]));
 				}
 			}
-			if ($type eq 'coi')  {
-				push(@matrix_array, \@new_line); #square matrix
-			} else {
-				push(@matrix_array, @new_line); #linear array
-			}
+			push(@matrix_array, @new_line); #linear array
+
 			$success = 1;
 	    }
 	}
@@ -3014,7 +3005,12 @@ sub parse_NM7_additional
 			$self->correlation_matrix([]);
 			push( @{$self->correlation_matrix}, @{$matrix_array_ref});
 		} elsif ($type eq 'coi') {
-			$self->inverse_covariance_matrix(Math::MatrixReal -> new_from_cols($matrix_array_ref));
+			$self->inverse_covariance_matrix([]);
+			print join (' ',@{$matrix_array_ref})."\n";
+			foreach my $element ( @{$matrix_array_ref} ) {
+				push( @{$self->inverse_covariance_matrix}, eval($element) ) 
+					unless ( $element eq '.........' );
+			}
 		} 
 		$hash{$type}=1; #success
 	}

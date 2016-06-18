@@ -2656,13 +2656,13 @@ sub get_nonmem_inverse_covmatrix
 					 " likely to give errors in the SIR sampling");
 	}
 	
-	my $icm  = $output -> get_single_value(attribute => 'inverse_covariance_matrix');
+	my $lower_icm  = $output -> get_single_value(attribute => 'inverse_covariance_matrix');
 
-	unless (defined $icm){
+	unless (defined $lower_icm){
 		croak("Trying get_nonmem_inverse_covmatrix but the matrix is undefined. Parsing error? Output file is\n".
 			  $output->full_name."\n");
 	}
-
+	my $icm = Math::MatrixReal -> new_from_cols(output::problem::subproblem::make_square( $lower_icm));
 	return $icm;
 }
 

@@ -106,7 +106,7 @@ for (my $i=0; $i< scalar(@answer_hashes); $i++){
 														subproblem_index=> $subprob, 
 														attribute=>$attr),
 							 $answer_hashes[$i]->{answers}->{$prob}->{$subprob}->{$attr},"$fname $attr prob $prob subprob $subprob");
-				}elsif ($attr =~ /^(raw_invcovmatrix|covariance_matrix|correlation_matrix|t_matrix)/){
+				}elsif ($attr =~ /^(inverse_covariance_matrix|covariance_matrix|correlation_matrix|t_matrix)/){
 					my $ref = $outobj->get_single_value(problem_index => $prob,subproblem_index=> $subprob, attribute=>$attr);
 					cmp_float_array($ref, $answer_hashes[$i]->{answers}->{$prob}->{$subprob}->{$attr},"$fname $attr prob $prob subprob $subprob");
 				}elsif ($attr =~ /^condition_number/){
