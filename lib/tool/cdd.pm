@@ -9,6 +9,8 @@ use Math::Random;
 use ext::Math::MatrixReal;
 use Moose;
 use MooseX::Params::Validate;
+use linear_algebra;
+use math qw(usable_number);
 
 extends 'tool';
 
@@ -133,6 +135,7 @@ sub modelfit_analyze
 
 	# ------------  Cook-scores and Covariance-Ratios  ----------
 
+	
 	# {{{ Cook-scores and Covariance-Ratios
 
 	# ----------------------  Cook-score  -----------------------
@@ -581,6 +584,71 @@ sub modelfit_analyze
 	# experimental: to save memory
 	$self -> prepared_models->[$model_number-1]{'own'} = undef;
 }
+
+sub cook_scores_and_cov_ratios
+{
+	#static
+	my %parm = validated_hash(\@_,
+							  original => { isa => 'output', optional => 0 },
+							  cdd_outputs => { isa => 'ArrayRef', optional => 0 },
+							  problem_index => { isa => 'Int', optional => 1, default => 0 },
+	);
+	my $original = $parm{'original'};
+	my $cdd_outputs = $parm{'cdd_outputs'};
+	my $problem_index = $parm{'problem_index'};
+	
+	unless ($original->have_output and 
+			$original -> parsed_successfully and 
+			$original-> get_single_value(attribute => 'covariance_step_run', problem_index => $problem_index) and
+			$original-> get_single_value(attribute => 'covariance_step_successful', problem_index => $problem_index)){
+		ui->print(category => 'cdd',
+				  message => "Cannot compute Cook scores and cov-ratios, no covariance step from input model");
+		return ([],[],[]);
+	}
+
+	my $standard_errors = $original->get_filtered_values(category => 'se', problem_index => $problem_index);
+	my $estimates = $original->get_filtered_values(category => 'estimate', problem_index => $problem_index);
+	my $npar = scalar(@{$estimates});
+	my $invcovmat = $original->get_single_value(attribute => 'inverse_covariance_matrix', 
+												problem_index => $problem_index);
+	my ($err,$orig_cholesky) = linear_algebra::cholesky_of_vector_matrix($invcovmat); 
+	my $sqrt_inv_determinant= linear_algebra::diagonal_product($orig_cholesky); 
+
+	my @all_cook=(0); #original
+	my @cov_ratios = (1); #original
+	my @orig = (0) x $npar;
+	my @parameter_cook = (\@orig);
+
+	foreach my $outobj (@{$cdd_outputs}){
+		my $cook=undef;
+		my $ratio=undef;
+		my @param = (undef) x $npar;
+		my $err;
+		my $array;
+		if ($outobj->have_output and $outobj -> parsed_successfully and 
+			defined ($outobj -> get_single_value(attribute => 'ofv', problem_index => $problem_index))){
+			
+			my $sample_est = $outobj->get_filtered_values(category => 'estimate', problem_index => $problem_index);
+			if (usable_number($sample_est->[0])){
+				#individual cook all params
+				($err,$array) = linear_algebra::cook_score_parameters($standard_errors,$sample_est,$estimates);
+				@param = @{$array};
+				($err,$cook) = linear_algebra::cook_score_all($orig_cholesky,$sample_est,$estimates);
+				if ($outobj->get_single_value(attribute =>'covariance_step_successful',problem_index => $problem_index)){
+					#if covstep successful for sample then
+					my $covmat=$outobj->get_single_value(attribute=>'covariance_matrix',problem_index => $problem_index);
+					my $root_det = linear_algebra::sqrt_determinant_vector_covmatrix($covmat);
+					$ratio = $root_det * $sqrt_inv_determinant if (defined $root_det);
+				}
+			}
+		}
+		push(@all_cook,$cook);
+		push(@cov_ratios,$ratio);
+		push(@parameter_cook,\@param);
+	}
+	return (\@all_cook,\@cov_ratios,\@parameter_cook);
+}
+
 
 sub relative_estimates
 {

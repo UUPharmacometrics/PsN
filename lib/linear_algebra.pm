@@ -425,6 +425,99 @@ sub QR_factorize
     return $singular;
 } 
 
+sub cholesky_of_vector_matrix
+{
+    #input is triangular, including diagonal, of symmetric positive definite matrix
+	#as a single vector
+	#output is square cholesky factor matrix with 0 on other half
+
+	my $Aref=shift;
+    my $input_error = 2;
+    my $numerical_error = 1;
+
+	my $copy = triangular_symmetric_to_full($Aref);
+	my $err = cholesky_transpose($copy);
+	return ($err,$copy);
+}
+
+sub cook_score_parameters
+{
+	my $standard_errors = shift;
+	my $estimate_1 = shift;
+	my $estimate_2 = shift;
+
+	my $ncol = scalar(@{$standard_errors});
+	return (2,[]) unless (
+		($ncol > 0) and
+		($ncol == scalar(@{$estimate_1})) and 
+		($ncol == scalar(@{$estimate_2})));
+
+	my @scores=();
+	for (my $i=0; $i< $ncol; $i++){
+		push(@scores,abs($estimate_1->[$i] - $estimate_2->[$i])/$standard_errors->[$i]);
+	}	
+	return (0,\@scores);
+
+}
+sub cook_score_all
+{
+	my $cholesky = shift;
+	my $estimate_1 = shift;
+	my $estimate_2 = shift;
+
+    my $input_error = 2;
+    my $numerical_error = 1;
+
+	my $ncol = scalar(@{$cholesky});
+	return ($input_error,0) unless (
+		($ncol > 0) and
+		($ncol == scalar(@{$cholesky->[0]})) and
+		($ncol == scalar(@{$estimate_1})) and 
+		($ncol == scalar(@{$estimate_2})));
+
+	my @diff=();
+	for (my $i=0; $i< $ncol; $i++){
+		push(@diff,($estimate_1->[$i] - $estimate_2->[$i]));
+	}	
+	my $sum_squares = 0;
+	for (my $i=0; $i< $ncol; $i++){
+		my $scalar_product=0;
+		for (my $j=$i; $j<$ncol; $j++){
+			$scalar_product += ($diff[$j] * $cholesky->[$j]->[$i]);
+		}
+		$sum_squares += ($scalar_product)**2;
+	}
+	return (0,sqrt($sum_squares));
+}
+
+sub sqrt_determinant_vector_covmatrix
+{
+	my $Aref = shift;
+	my ($err,$copy) = cholesky_of_vector_matrix($Aref);
+	return ($err,undef) unless ($err==0);
+	return (0,diagonal_product($copy));
+}
+
+sub diagonal_product
+{
+	#the determinant of triangular matrix is product of diagonal elements
+	#hence square root of determinant of positive definite matrix is product of cholesky factor diagonal
+	my $matrix = shift;
+	my $ncol = scalar(@{$matrix});
+	
+	my @arr=();
+	for (my $i=0; $i< $ncol; $i++){
+		push(@arr,$matrix->[$i]->[$i]); #pick out diagonal elements; 
+	}
+	my @sorted = sort { $a <=> $b } @arr; #sort ascending
+
+	my $product = $sorted[0];
+	for (my $i=1; $i< $ncol; $i++){
+		$product = $product*$sorted[$i];
+	}
+	return $product;
+}
+
 sub cholesky_transpose
 {
     #input is lower triangle, including diagonal, of symmetric positive definite matrix 
