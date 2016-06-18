@@ -3006,7 +3006,7 @@ sub parse_NM7_additional
 			push( @{$self->correlation_matrix}, @{$matrix_array_ref});
 		} elsif ($type eq 'coi') {
 			$self->inverse_covariance_matrix([]);
-			print join (' ',@{$matrix_array_ref})."\n";
+#			print join (' ',@{$matrix_array_ref})."\n";
 			foreach my $element ( @{$matrix_array_ref} ) {
 				push( @{$self->inverse_covariance_matrix}, eval($element) ) 
 					unless ( $element eq '.........' );
