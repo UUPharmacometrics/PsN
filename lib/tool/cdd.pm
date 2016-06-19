@@ -136,238 +136,37 @@ sub modelfit_analyze
 	# ------------  Cook-scores and Covariance-Ratios  ----------
 
 	
-	# {{{ Cook-scores and Covariance-Ratios
 
-	# ----------------------  Cook-score  -----------------------
-
-	# {{{ Cook-score
-
-	my ( @cook_score, @cov_ratio );
 	my $do_pca = 1;
-	if( $self -> models -> [$model_number-1] ->
-		outputs -> [0] -> get_single_value(attribute=> 'covariance_step_successful')) {
+	ui -> print( category => 'cdd',
+				 message  => "Calculating diagnostics" );
 
-		ui -> print( category => 'cdd',
-			message  => "Calculating diagnostics" );
-		my @orig_ests;
-		my @changes;
-
-		#get the estimated theta names from self outputs, model 0 subprob 0 
-		my %est_names;
-		my $ref = $self -> models -> [$model_number-1] ->
-		outputs -> [0] -> get_single_value(attribute=> 'est_thetanames');
-		$est_names{'theta'} = $ref if (defined $ref);
-		$ref = $self -> models -> [$model_number-1] ->
-		outputs -> [0] -> get_single_value(attribute=> 'est_omeganames');
-		$est_names{'omega'} = $ref if (defined $ref);
-		$ref = $self -> models -> [$model_number-1] ->
-		outputs -> [0] -> get_single_value(attribute=> 'est_sigmanames');
-		$est_names{'sigma'} = $ref if (defined $ref);
-
-		#when loop over prepared models $i, get thetacoordval, select values from 
-		#hash with estimated  names
-
-		# Calculate the changes
-		foreach my $param ('theta','omega','sigma' ) {
-			my $attr = $param.'coordval';
-			my $orig_est = $self -> models -> [$model_number-1] -> 
-			outputs -> [0] -> get_single_value(attribute=> $attr);
-			next unless ( defined $est_names{$param});
-
-			my %original;
-			%original = %{$orig_est} if (defined $orig_est);
-			next unless (%original); #if empty hash then skip
-
-			for ( my $i=0; $i<scalar @{$self -> prepared_models->[$model_number-1]{'own'}}; $i++ ) {
-				my $est = $self -> prepared_models->[$model_number-1]{'own'}->[$i]->
-				outputs -> [0] -> get_single_value(attribute=> $attr);
-				if ( defined $est and %{$est}) {
-					my %casedeleted = %{$est};
-					foreach my $name (@{$est_names{$param}}){
-						if (defined $casedeleted{$name} and $original{$name}){
-							push( @{$changes[$i]}, $original{$name}-$casedeleted{$name});
-						}
-					}
-				}	# if $est undefined do nothing
-			}		  
-		}
-
-		my $inverse_covariance_matrix  = $self -> models -> [$model_number-1]->outputs -> [0] -> inverse_covariance_matrix(problems=>[1],subproblems => [1]); 
-		# Equation: sqrt((orig_est-est(i))'*inv_cov_matrix*(orig_est-est(i)))
-
-
-		for ( my $i = 0; $i <= $#changes; $i++ ) {
-			if( defined $changes[$i] and
-				scalar @{$changes[$i]} > 0 and 
-				defined $inverse_covariance_matrix
-					and defined $inverse_covariance_matrix->[0]
-					and defined $inverse_covariance_matrix->[0]->[0]) {
-				my $vec_changes = Math::MatrixReal ->
-				new_from_cols( [$changes[$i]] );
-				$cook_score[$i] = ($inverse_covariance_matrix->[0]->[0])*$vec_changes;
-				$cook_score[$i] = ~$vec_changes*$cook_score[$i];
-			} else {
-				$do_pca = 0;
-				$cook_score[$i] = undef;
-			}
-
-			my $nl = $i == $#changes ? "" : "\r"; 
-			ui -> print( category => 'cdd',
-				message  => ui -> status_bar( sofar => $i+1,
-					goal  => $#changes+1 ).$nl,
-				wrap     => 0,
-				newline  => 0 );
-		}
-
-		# Calculate the square root 
-		# The matrixreal object holds a 1x1 matrix in the first position of its array.
-		for ( my $i = 0; $i <= $#cook_score; $i++ ) {
-			if( defined $cook_score[$i] and 
-				$cook_score[$i][0][0][0] >= 0 ) {
-				$cook_score[$i] = sqrt($cook_score[$i][0][0][0]);
-			} else {
-				open( LOG, ">>".$self -> logfile->[$model_number-1] );
-				my $mes;
-				if( defined $cook_score[$i] ) {
-					$mes = "Negative squared cook-score ".$cook_score[$i][0][0][0];
-				} else {
-					$mes = "Undefined squared cook-score";
-				}
-				$mes .= "; can't take the square root.\n".
-					"The cook-score for model $model_number and cdd bin $i was set to zero\n";
-				print LOG $mes;
-				close( LOG );
-				debugmessage(1,$mes );
-
-				$cook_score[$i] = 0;
-			}
-		}
-	}
-
-	$self -> cook_scores(\@cook_score);
-	$do_pca = 0 if (scalar(@cook_score)==0);
+	my ($cook_scores,$cov_ratios,$parameter_cook_scores) = 
+		cook_scores_and_cov_ratios(original => $self->models->[$model_number-1]->outputs -> [0],
+								   cdd_models => $self -> prepared_models->[$model_number-1]{'own'});
+	
+	$self -> cook_scores($cook_scores);
+	$self -> covariance_ratios($cov_ratios);
+	$do_pca = 0 if (scalar(@{$cook_scores})==0);
 
 	ui -> print( category => 'cdd',
-		message  => " ... done." );
-
-	# }}} Cook-score
-
-	# -------------------  Covariance Ratio  --------------------
-
-	# {{{ Covariance Ratio
-
-	if( $self -> models -> [$model_number-1] ->
-		outputs -> [0] -> get_single_value(attribute=> 'covariance_step_successful')) {
-
-		# {{{ sub clear dots
-
-		sub clear_dots {
-			my $m_ref = shift;
-			my @matrix = @{$m_ref};
-			# get rid of '........'
-			my @clear;
-			foreach ( @matrix ) {
-				push( @clear, $_ ) unless ( $_ eq '.........' );
-			}
-			return \@clear;
-		}
-
-		# }}}
-
-		# {{{ sub make square
-
-		sub make_square {
-			my $m_ref = shift;
-			my @matrix = @{$m_ref};
-			# Make the matrix square:
-			my $elements = scalar @matrix; # = M*(M+1)/2
-			my $M = -0.5 + sqrt( 0.25 + 2 * $elements );
-			my @square;
-			for ( my $m = 1; $m <= $M; $m++ ) {
-				for ( my $n = 1; $n <= $m; $n++ ) {
-					push( @{$square[$m-1]}, $matrix[($m-1)*$m/2 + $n - 1] );
-					unless ( $m == $n ) {
-						push( @{$square[$n-1]}, $matrix[($m-1)*$m/2 + $n - 1] );
-					}
-				}
-			}
-			return \@square;
-		}
-
-		# }}}
-
-		ui -> print( category => 'cdd',
-			message  => "Calculating the covariance-ratios" );
-
-		# Equation: sqrt(det(cov_matrix(i))/det(cov_matrix(orig)))
-		my $cov_linear  = $self -> models -> [$model_number-1] ->
-		outputs -> [0] ->  raw_covmatrix(problems=>[1],subproblems => [1]);
-		my $orig_det;
-		if( defined $cov_linear and defined $cov_linear->[0] and defined $cov_linear->[0]->[0]) {
-			my $orig_cov = Math::MatrixReal ->
-			new_from_cols( make_square( clear_dots( $cov_linear->[0]->[0] ) ) );
-			$orig_det = $orig_cov -> det();
-		}
-		# AUTOLOAD: raw_covmatrix
-
-		my $output_harvest = $self -> harvest_output( accessors => ['raw_covmatrix'],
-			search_output => 1 );
-
-		my $est_cov = defined $output_harvest -> {'raw_covmatrix'} ? $output_harvest -> {'raw_covmatrix'} -> [$model_number-1]{'own'} : [];
-
-		my $mods = scalar @{$est_cov};
-		for ( my $i = 0; $i < scalar @{$est_cov}; $i++ ) {
-			if ( $orig_det != 0 and defined $est_cov->[$i][0][0] ) {
-				my $cov = Math::MatrixReal ->
-				new_from_cols( make_square( clear_dots( $est_cov->[$i][0][0] ) ) );
-				my $ratio = $cov -> det() / $orig_det;
-				if( $ratio > 0 ) {
-					push( @cov_ratio, sqrt( $ratio ) );
-				} else {
-					open( LOG, ">>".$self -> logfile->[$model_number-1] );
-					print LOG "Negative covariance ratio ",$ratio,
-					"; can't take the square root.\n",
-					"The covariance ratio for model $model_number and cdd bin $i was set to one (1)\n";
-					close( LOG );
-					push( @cov_ratio, 1 );
-				}	      
-			} else {
-				open( LOG, ">>".$self -> logfile->[$model_number-1] );
-				print LOG "The determinant of the cov-matrix of the original run was zero\n",
-				"or the determinant of cdd bin $i was undefined\n",
-				"The covariance ratio for model $model_number and cdd bin $i was set to one (1)\n";
-				close( LOG );
-				push( @cov_ratio, 1 );
-			}
-
-			my $nl = $i == $mods-1 ? "" : "\r"; 
-			ui -> print( category => 'cdd',
-				message  => ui -> status_bar( sofar => $i+1,
-					goal  => $mods ).$nl,
-				wrap     => 0,
-				newline  => 0 );
-		}
-	}
-
-	$self -> covariance_ratios(\@cov_ratio);
-
-	ui -> print( category => 'cdd',
-		message  => " ... done." );
-
-	# }}} Covariance Ratio
+				 message  => " ... done." );
 
 	# -  Perform a PCA on the cook-score:covariance-ratio data --
 
 	# {{{ PCA
 
+	for (my $i=0; $i< scalar(@{$cov_ratios}); $i++){
+		#replace undef cov ratio with 0, determinant of covmatrix 0 when covstep failed
+		$cov_ratios->[$i]=0 unless (defined $cov_ratios->[$i]); 
+	}
 	my ( @outside_n_sd, $eig_ref, $eig_vec_ref, $proj_ref, $std_ref );
 
 	if( $self -> models -> [$model_number-1] ->
 		outputs -> [0] -> get_single_value(attribute=> 'covariance_step_successful')
 			and $do_pca){
-
 		( $eig_ref, $eig_vec_ref, $proj_ref, $std_ref ) =
-		$self -> pca( data_matrix => [\@cook_score,\@cov_ratio] );
+		$self -> pca( data_matrix => [$cook_scores,$cov_ratios] );
 		my @projections = @{$proj_ref};
 		my @standard_deviation = @{$std_ref};
 
@@ -409,8 +208,8 @@ sub modelfit_analyze
 	$covariance_return_section{'labels'} = [[],['cook.scores','covariance.ratios','outside.n.sd']];
 
 	my @res_array;
-	for( my $i = 0; $i <= $#cov_ratio; $i ++ ){
-		push( @res_array , [$cook_score[$i],$cov_ratio[$i],$outside_n_sd[$i]] );
+	for( my $i = 0; $i < scalar(@{$cov_ratios}); $i ++ ){
+		push( @res_array , [$cook_scores->[$i],$cov_ratios->[$i],$outside_n_sd[$i]] );
 	}
 
 	$covariance_return_section{'values'} = \@res_array;
@@ -588,13 +387,15 @@ sub modelfit_analyze
 sub cook_scores_and_cov_ratios
 {
 	#static
+	#compute relative changes in percent of ofv, estimates and se:s
+	#fixme do a rawres callback instead, add determinant of covmatrix and cook score there.
 	my %parm = validated_hash(\@_,
 							  original => { isa => 'output', optional => 0 },
-							  cdd_outputs => { isa => 'ArrayRef', optional => 0 },
+							  cdd_models => { isa => 'ArrayRef', optional => 0 },
 							  problem_index => { isa => 'Int', optional => 1, default => 0 },
 	);
 	my $original = $parm{'original'};
-	my $cdd_outputs = $parm{'cdd_outputs'};
+	my $cdd_models = $parm{'cdd_models'};
 	my $problem_index = $parm{'problem_index'};
 	
 	unless ($original->have_output and 
@@ -614,18 +415,18 @@ sub cook_scores_and_cov_ratios
 	my ($err,$orig_cholesky) = linear_algebra::cholesky_of_vector_matrix($invcovmat); 
 	my $sqrt_inv_determinant= linear_algebra::diagonal_product($orig_cholesky); 
 
-	my @all_cook=(0); #original
-	my @cov_ratios = (1); #original
-	my @orig = (0) x $npar;
-	my @parameter_cook = (\@orig);
+	my @all_cook=(); 
+	my @cov_ratios = (); 
+	my @parameter_cook = ();
 
-	foreach my $outobj (@{$cdd_outputs}){
+	foreach my $model (@{$cdd_models}){
 		my $cook=undef;
 		my $ratio=undef;
 		my @param = (undef) x $npar;
 		my $err;
 		my $array;
-		if ($outobj->have_output and $outobj -> parsed_successfully and 
+		my $outobj = $model->outputs->[0] if (defined $model->outputs);
+		if (defined $outobj and $outobj->have_output and $outobj -> parsed_successfully and 
 			defined ($outobj -> get_single_value(attribute => 'ofv', problem_index => $problem_index))){
 			
 			my $sample_est = $outobj->get_filtered_values(category => 'estimate', problem_index => $problem_index);
@@ -959,6 +760,7 @@ sub general_setup
 		ui -> print( category => 'cdd',
 			message => 'Executing base model.' );
 
+		tool::add_to_nmoutput(run => $orig_fit, extensions => ['phi','ext','cov','coi']);		
 		$orig_fit -> run;
 
 		# }}} orig run
@@ -1269,6 +1071,7 @@ sub general_setup
 			%subargs ) );
 
 	# }}} sub tools
+	tool::add_to_nmoutput(run => $self->tools->[-1], extensions => ['ext','cov','coi']);		
 
 	open( SKIP, ">".$self -> directory."skipped_values".$model_number.".csv" ) ;
 	for( my $k = 0; $k < scalar @{$skip_values}; $k++ ) {
