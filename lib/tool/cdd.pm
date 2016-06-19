@@ -16,7 +16,10 @@ extends 'tool';
 
 has 'case_column' => ( is => 'rw', required => 1, isa => 'Int' );
 has 'bins' => ( is => 'rw', isa => 'Int' );
-has 'cook_scores' => ( is => 'rw', isa => 'ArrayRef' );
+has 'actual_bins' => ( is => 'rw', isa => 'Int' );
+has 'cook_scores' => ( is => 'rw', isa => 'ArrayRef', default => sub { [] } );
+has 'parameter_cook_scores' => ( is => 'rw', isa => 'ArrayRef', default => sub { [] } );
+has 'labels_parameter_cook_scores' => ( is => 'rw', isa => 'ArrayRef', default => sub { [] } );
 has 'cdd_id' => ( is => 'rw', isa => 'Str' );
 has 'covariance_ratios' => ( is => 'rw', isa => 'ArrayRef' );
 has 'outside_n_sd' => ( is => 'rw', isa => 'ArrayRef', default => sub { [] } );
@@ -141,14 +144,29 @@ sub modelfit_analyze
 	ui -> print( category => 'cdd',
 				 message  => "Calculating diagnostics" );
 
-	my ($cook_scores,$cov_ratios,$parameter_cook_scores) = 
+	my $problem_index = 0;
+	my $b = $self->bins;
+	$b=$self->actual_bins unless (defined $b);
+	my ($cook_scores,$cov_ratios,$parameter_cook_scores,$relative_changes,$bias, $relative_bias) = 
 		cook_scores_and_cov_ratios(original => $self->models->[$model_number-1]->outputs -> [0],
-								   cdd_models => $self -> prepared_models->[$model_number-1]{'own'});
+								   cdd_models => $self -> prepared_models->[$model_number-1]{'own'},
+								   problem_index => $problem_index,
+								   bins => $b);
 	
 	$self -> cook_scores($cook_scores);
+	$self -> parameter_cook_scores($parameter_cook_scores);
 	$self -> covariance_ratios($cov_ratios);
 	$do_pca = 0 if (scalar(@{$cook_scores})==0);
 
+	my @relative_changes_labels = ('ofv');
+	my $labelsref = $self->models->[$model_number-1]->problems->[$problem_index]->get_estimated_attributes(attribute => 'labels');
+	push(@relative_changes_labels,@{$labelsref}); #estimates
+	my @labels_parameter_cook_scores = ();
+	foreach my $lab (@{$labelsref}){
+		push(@relative_changes_labels,'se'.$lab);
+		push(@labels_parameter_cook_scores,'"cook.par.'.$lab.'"');
+	}
+	$self->labels_parameter_cook_scores(\@labels_parameter_cook_scores);
 	ui -> print( category => 'cdd',
 				 message  => " ... done." );
 
@@ -160,13 +178,13 @@ sub modelfit_analyze
 		#replace undef cov ratio with 0, determinant of covmatrix 0 when covstep failed
 		$cov_ratios->[$i]=0 unless (defined $cov_ratios->[$i]); 
 	}
-	my ( @outside_n_sd, $eig_ref, $eig_vec_ref, $proj_ref, $std_ref );
+	my @outside_n_sd;
 
 	if( $self -> models -> [$model_number-1] ->
 		outputs -> [0] -> get_single_value(attribute=> 'covariance_step_successful')
 			and $do_pca){
-		( $eig_ref, $eig_vec_ref, $proj_ref, $std_ref ) =
-		$self -> pca( data_matrix => [$cook_scores,$cov_ratios] );
+		my ( $eig_ref, $eig_vec_ref, $proj_ref, $std_ref ) =
+			$self -> pca( data_matrix => [$cook_scores,$cov_ratios] );
 		my @projections = @{$proj_ref};
 		my @standard_deviation = @{$std_ref};
 
@@ -216,167 +234,22 @@ sub modelfit_analyze
 
 	push( @{$self -> results->[$model_number-1]{'own'}},\%covariance_return_section );
 
-	# }}}
-
-	# ---------  Relative estimate change and Jackknife bias  ----------
-
-	# {{{ Relative change of the parameter estimates
-
-	my $output_harvest = $self -> harvest_output( accessors => ['ofv', 'thetas', 'omegas', 'sigmas','sethetas', 'seomegas', 'sesigmas'],
-		search_output => 1 );
 
 	my %return_section;
 	$return_section{'name'} = 'relative.changes.percent';
 	$return_section{'labels'} = [[],[]];
+	push( @{$return_section{'labels'} -> [1]},@relative_changes_labels); #including ofv and se
 
 	my %bias_return_section;
 	$bias_return_section{'name'} = 'Jackknife.bias.estimate';
 	$bias_return_section{'labels'} = [['bias','relative.bias'],[]];
+	push(@{$bias_return_section{'labels'} -> [1]},@{$labelsref}); #only estimates
+	
+	$bias_return_section{'values'} = [$bias,$relative_bias];
 
-	my $print_debug=0;
-	my ( @bias, @bias_num, @b_orig, @rel_bias );
-	my $k = 0;
-
-
-	my $coordslabelsref = $self -> models -> [$model_number-1] 
-	-> get_coordslabels( parameter_type => 'omega' );
-	my %coordslabels;
-	if (defined $coordslabelsref ->[0]){
-		%coordslabels = %{$coordslabelsref->[0]};
-	}else{
-		croak("failed to call get_coordslabels for omega from cdd");
-	}
-	$coordslabelsref = $self -> models -> [$model_number-1] 
-	-> get_coordslabels( parameter_type => 'sigma' );
-	if (defined $coordslabelsref ->[0]){
-		my %tmp = %{$coordslabelsref->[0]};
-		foreach my $key (keys %tmp) {
-			$coordslabels{$key} = $tmp{$key};
-		}
-	}else{
-		croak("failed to call get_coordslabels for sigma from cdd");
-	}
-	$coordslabelsref = $self -> models -> [$model_number-1] 
-	-> get_coordslabels( parameter_type => 'theta' );
-	if (defined $coordslabelsref ->[0]){
-		my %tmp = %{$coordslabelsref->[0]};
-		foreach my $key (keys %tmp){
-			$coordslabels{$key} = $tmp{$key};
-		}
-	}else{
-		croak("failed to call get_coordslabels for theta from cdd");
-	}
-
-
-	foreach my $param ( 'thetas', 'omegas', 'sigmas' ) {
-		print $param."\n" if ($print_debug);
-		my $orig_est = $self -> models -> [$model_number-1] -> outputs -> [0] -> $param;
-		my $access = $param;
-		$access =~ s/s$//;
-		$access .= 'names';
-		my $names = $self -> models -> [$model_number-1] -> outputs -> [0] -> $access;
-		if ( defined $orig_est->[0][0] ) {
-			for ( my $j = 0; $j < scalar @{$orig_est->[0][0]}; $j++ ) {
-				next unless (defined $coordslabels{($names->[0][0][$j])}); #only defined if param in model
-				$b_orig[$k++] = $orig_est->[0][0][$j];
-				print $b_orig[$k++]." " if ($print_debug);
-			}
-			print "\n" if ($print_debug);
-		}
-	}
-
-	my @rel_ests;	
-
-	for ( my $i = 0; $i < scalar @{$output_harvest -> {'ofv'} -> [$model_number-1]{'own'}}; $i++ ) {
-		#loop $i over case deleted datasets
-		my @values;
-		my $k = 0;
-		foreach my $param ( 'ofv', 'thetas', 'omegas', 'sigmas',
-			'sethetas', 'seomegas', 'sesigmas',) {
-
-			my $orig_est = $self -> models -> [$model_number-1] -> outputs -> [0] -> $param;
-			my $est = defined $output_harvest -> {$param} ? $output_harvest -> {$param} -> [$model_number-1]{'own'} : [];
-			if ( $param eq 'ofv' ) {
-				if ( defined $orig_est->[0][0] and $orig_est->[0][0] != 0 ) {
-					push( @values, ($est->[$i][0][0]-$orig_est->[0][0])/$orig_est->[0][0]*100 );
-				} else {
-					push( @values, 'INF' );
-				}
-				if( $i == 0 ){
-					my $name = $param;
-					$name = 'DIC' 
-					if (defined $self -> models -> [$model_number-1] -> outputs -> [0]
-						->get_single_value(attribute => 'dic'));
-
-					push( @{$return_section{'labels'} -> [1]}, $name );
-				}
-			} else {
-				my $access = $param;
-				$access =~ s/^se//;
-				$access =~ s/s$//;
-				$access = $access.'names';
-				my $names = $self -> models -> [$model_number-1] -> outputs -> [0] -> $access;
-				my @in_rel_ests;
-				if( defined $est->[$i][0][0] ){
-					for ( my $j = 0; $j < scalar @{$est->[$i][0][0]} ; $j++ ) {
-						next unless (defined $coordslabels{($names->[0][0][$j])}); #only defined if param in model
-						if ( defined $orig_est->[0][0][$j] and $orig_est->[0][0][$j] != 0 ) {
-							if (defined $est->[$i][0][0][$j]){
-								print $param." ".$orig_est->[0][0][$j]." ".$est->[$i][0][0][$j]."\n" if ($print_debug);
-								push( @values, ($est->[$i][0][0][$j]-$orig_est->[0][0][$j])/$orig_est->[0][0][$j]*100);
-								if( substr($param,0,2) ne 'se' ) {
-									$bias[$k] += $est->[$i][0][0][$j];
-									$bias_num[$k++]++;
-								}
-							}else{
-								push( @values, 'NA' );
-								if( substr($param,0,2) ne 'se' ) {
-									$k++;
-								}		  
-							}
-						} else {
-							push( @values, 'INF' );
-							if( substr($param,0,2) ne 'se' ) {
-								$k++;
-							}		  
-						}
-						if( $i == 0 ){
-							if( substr($param,0,2) eq 'se' ) {
-								push( @{$return_section{'labels'} -> [1]}, 'se'.$coordslabels{($names->[0][0][$j])} );
-							} else {
-								my $lbl = $coordslabels{($names->[0][0][$j])} ;
-								push( @{$bias_return_section{'labels'} -> [1]}, $lbl );
-								push( @{$return_section{'labels'} -> [1]}, $lbl );
-							}
-						}
-					}
-				}
-			}
-
-		}
-		push( @rel_ests, \@values );
-	}
-
-	# Jackknife bias
-	no warnings qw(uninitialized);
-	for( my $i = 0; $i <= $#bias_num; $i++ ) {
-
-		next if( not defined $bias[$i] );
-		$bias[$i] = ($self->bins-1)*
-		($bias[$i]/$bias_num[$i]-$b_orig[$i]);
-		if( defined $b_orig[$i] and $b_orig[$i] != 0 ) {
-			$rel_bias[$i] = $bias[$i]/$b_orig[$i]*100;
-		} else {
-			$rel_bias[$i] = undef;
-		}
-	}
-	$bias_return_section{'values'} = [\@bias,\@rel_bias];
-
-	$return_section{'values'} = \@rel_ests ;
+	$return_section{'values'} = $relative_changes ;
 	push( @{$self -> results->[$model_number-1]{'own'}},\%return_section );
 	push( @{$self -> results->[$model_number-1]{'own'}},\%bias_return_section );
-
-	# }}} Relative change of the parameter estimates
 
 	$self -> update_raw_results(model_number => $model_number);
 
@@ -393,10 +266,12 @@ sub cook_scores_and_cov_ratios
 							  original => { isa => 'output', optional => 0 },
 							  cdd_models => { isa => 'ArrayRef', optional => 0 },
 							  problem_index => { isa => 'Int', optional => 1, default => 0 },
+							  bins => { isa => 'Int', optional => 0 },
 	);
 	my $original = $parm{'original'};
 	my $cdd_models = $parm{'cdd_models'};
 	my $problem_index = $parm{'problem_index'};
+	my $bins = $parm{'bins'};
 	
 	unless ($original->have_output and 
 			$original -> parsed_successfully and 
@@ -404,11 +279,20 @@ sub cook_scores_and_cov_ratios
 			$original-> get_single_value(attribute => 'covariance_step_successful', problem_index => $problem_index)){
 		ui->print(category => 'cdd',
 				  message => "Cannot compute Cook scores and cov-ratios, no covariance step from input model");
-		return ([],[],[]);
+		return ([],[],[],[],[],[]);
 	}
 
 	my $standard_errors = $original->get_filtered_values(category => 'se', problem_index => $problem_index);
 	my $estimates = $original->get_filtered_values(category => 'estimate', problem_index => $problem_index);
+	my $orig_ofv = $original->get_single_value(attribute => 'ofv',problem_index => $problem_index);
+
+	unless (defined $estimates and defined $standard_errors and 
+			usable_number($estimates->[0]) and usable_number($standard_errors->[0])){
+		ui->print(category => 'cdd',
+				  message => "Cannot compute Cook scores and cov-ratios, no estimates from input model");
+		return ([],[],[],[],[],[]);
+	}
+
 	my $npar = scalar(@{$estimates});
 	my $invcovmat = $original->get_single_value(attribute => 'inverse_covariance_matrix', 
 												problem_index => $problem_index);
@@ -418,36 +302,64 @@ sub cook_scores_and_cov_ratios
 	my @all_cook=(); 
 	my @cov_ratios = (); 
 	my @parameter_cook = ();
+	my @all_relative_changes = ();
 
+	my @sum_estimates = (0) x $npar;
+	my $count_estimates = 0;
+	
 	foreach my $model (@{$cdd_models}){
 		my $cook=undef;
 		my $ratio=undef;
 		my @param = (undef) x $npar;
+		my @relative_changes = ('') x (2*$npar +1); #ofv, par, se_par
 		my $err;
 		my $array;
 		my $outobj = $model->outputs->[0] if (defined $model->outputs);
-		if (defined $outobj and $outobj->have_output and $outobj -> parsed_successfully and 
-			defined ($outobj -> get_single_value(attribute => 'ofv', problem_index => $problem_index))){
-			
-			my $sample_est = $outobj->get_filtered_values(category => 'estimate', problem_index => $problem_index);
-			if (usable_number($sample_est->[0])){
-				#individual cook all params
-				($err,$array) = linear_algebra::cook_score_parameters($standard_errors,$sample_est,$estimates);
-				@param = @{$array};
-				($err,$cook) = linear_algebra::cook_score_all($orig_cholesky,$sample_est,$estimates);
-				if ($outobj->get_single_value(attribute =>'covariance_step_successful',problem_index => $problem_index)){
-					#if covstep successful for sample then
-					my $covmat=$outobj->get_single_value(attribute=>'covariance_matrix',problem_index => $problem_index);
-					my $root_det = linear_algebra::sqrt_determinant_vector_covmatrix($covmat);
-					$ratio = $root_det * $sqrt_inv_determinant if (defined $root_det);
+		if (defined $outobj and $outobj->have_output and $outobj -> parsed_successfully){
+			my $sample_ofv = $outobj -> get_single_value(attribute => 'ofv', problem_index => $problem_index);
+			if (defined $sample_ofv){
+
+				$relative_changes[0] = 100*($sample_ofv-$orig_ofv)/$orig_ofv;
+				my $sample_est = $outobj->get_filtered_values(category => 'estimate', problem_index => $problem_index);
+				if (usable_number($sample_est->[0])){
+					#individual cook all params
+					($err,$array) = linear_algebra::cook_score_parameters($standard_errors,$sample_est,$estimates);
+					$count_estimates++;
+					for (my $j=0; $j<$npar; $j++){
+						$sum_estimates[$j] += $sample_est->[$j]; #for bias
+						$relative_changes[$j+1] = 100*($sample_est->[$j] - $estimates->[$j])/($estimates->[$j]);
+					}
+					@param = @{$array};
+					($err,$cook) = linear_algebra::cook_score_all($orig_cholesky,$sample_est,$estimates);
+					if ($outobj->get_single_value(attribute =>'covariance_step_successful',problem_index => $problem_index)){
+						#if covstep successful for sample then
+						my $sample_se = $outobj->get_filtered_values(category => 'se', problem_index => $problem_index);
+						for (my $j=0; $j<$npar; $j++){
+							$relative_changes[$j+1+$npar] = 100*($sample_se->[$j] - $standard_errors->[$j])/($standard_errors->[$j]);
+						}
+						my $covmat=$outobj->get_single_value(attribute=>'covariance_matrix',problem_index => $problem_index);
+						my $root_det = linear_algebra::sqrt_determinant_vector_covmatrix($covmat);
+						$ratio = $root_det * $sqrt_inv_determinant if (defined $root_det);
+					}
 				}
 			}
 		}
 		push(@all_cook,$cook);
 		push(@cov_ratios,$ratio);
 		push(@parameter_cook,\@param);
+		push(@all_relative_changes,\@relative_changes);
 	}
-	return (\@all_cook,\@cov_ratios,\@parameter_cook);
+
+	my @bias=();
+	my @rel_bias=();
+	if ($count_estimates >0){
+		for (my $j=0; $j<$npar; $j++){
+			my $bias=($bins-1)*(($sum_estimates[$j]/$count_estimates)-$estimates->[$j]);
+			push(@bias,$bias);
+			push(@rel_bias,100*$bias/$estimates->[$j]);
+		}
+	}
+	return (\@all_cook,\@cov_ratios,\@parameter_cook,\@all_relative_changes,\@bias,\@rel_bias);
 }
 
 
@@ -887,11 +799,12 @@ sub general_setup
 									  idcolumn => $idcol->[0][0],  #number not index
 									  missing_data_token => $self->missing_data_token);
 
-
+		
 
 
 
 		my $ndatas = scalar @{$new_datas};
+		$self->actual_bins($ndatas);
 		for ( my $j = 1; $j <= $ndatas; $j++ ) {
 			my @datasets = ( $new_datas -> [$j-1], $remainders -> [$j-1] );
 			my @names = ('cdd_'.$j,'rem_'.$j);
@@ -991,6 +904,7 @@ sub general_setup
 		$skip_values = \@stored_values;
 		shift( @seed ); # get rid of 'seed'-word
 
+		$self->actual_bins($stored_bins);
 		for ( my $j = 1; $j <= $stored_bins; $j++ ) {
 			my @names = ( 'cdd_'.$j, 'rem_'.$j );
 			foreach my $i ( 0, 1 ) {
@@ -1178,25 +1092,23 @@ sub update_raw_results
 	);
 	my $model_number = $parm{'model_number'};
 
-	my $cook_scores;
-	my $cov_ratios;
-	my $outside_n_sd;
-	no warnings qw(uninitialized closed);
+	no warnings qw(closed);
 
 	my ($dir,$file) =
-	OSspecific::absolute_path( $self -> directory,
-		$self -> raw_results_file->[$model_number-1] );
+	OSspecific::absolute_path( $self -> directory,$self -> raw_results_file->[$model_number-1] );
 	open( RRES, $dir.$file );
 	my @rres = <RRES>;
 	close( RRES );
 	open( RRES, '>',$dir.$file );
 
 	chomp( $rres[0] );
-	print RRES $rres[0] . ",cook.scores,cov.ratios,outside.n.sd\n";
+	print RRES $rres[0] . ",cook.scores,cov.ratios,outside.n.sd,".
+		join(',',@{$self->labels_parameter_cook_scores})."\n";
+	my @origparameter = (0) x scalar(@{$self->labels_parameter_cook_scores});
 	chomp( $rres[1] );
 	my @tmp = split(',',$rres[1]);
 	my $cols = scalar(@tmp);
-	print RRES $rres[1] . ",0,1,0\n";
+	print RRES $rres[1] . ",0,1,0,".join(',',@origparameter)."\n"; #original model
 
 	foreach my $mod (sort({$a <=> $b} keys %{$self->raw_line_structure})){
 		$self->raw_line_structure -> {$mod}->{'cook.scores'} = $cols.',1';
@@ -1207,13 +1119,22 @@ sub update_raw_results
 	$self->raw_line_structure -> write( $dir.'raw_results_structure' );
 
 	my @new_rres;
+	my $length = scalar(@{$self -> cook_scores});
 	for( my $i = 2 ; $i <= $#rres; $i ++ ) {
 		my $row_str = $rres[$i];
 		chomp( $row_str );
-		$row_str .= sprintf( ",%.5f,%.5f,%1f\n" ,
-			$self -> cook_scores -> [$i-2],
-			$self -> covariance_ratios -> [$i-2],
-			$self -> outside_n_sd -> [$i-2] );
+		if (($i-2) < $length){
+			$row_str .= sprintf( ",%.5f,%.5f,%1f" ,
+								 $self -> cook_scores -> [$i-2],
+								 $self -> covariance_ratios -> [$i-2],
+								 $self -> outside_n_sd -> [$i-2] );
+			foreach my $val (@{$self->parameter_cook_scores-> [$i-2]} ){
+				$row_str .= sprintf( ",%.5f",$val);
+			}
+		}else{
+			$row_str .= ',' x (3+scalar(@{$self->labels_parameter_cook_scores}));
+		}
+		$row_str .= "\n";
 		print RRES $row_str;
 	}
 	close( RRES );
