@@ -1429,33 +1429,33 @@ sub upper_triangular_identity_solve
     my $ncol= scalar(@{$Aref});
 
     for (my $j=0;$j< $ncol;$j++){
-	my $nrow = scalar(@{$Aref->[$j]});
-#	print "nrow $nrow ncol $ncol\n";
-	return $input_error unless ($nrow > $j);
+		my $nrow = scalar(@{$Aref->[$j]});
+		#	print "nrow $nrow ncol $ncol\n";
+		return $input_error unless ($nrow > $j);
     }
 
     #create identity matrix as right hand. Will be overwritten with solution
     for (my $i=0; $i<$ncol; $i++){
-	push(@{$solution},[(0) x $ncol]);
-	$solution->[$i][$i]=1;
+		push(@{$solution},[(0) x $ncol]);
+		$solution->[$i][$i]=1;
     }
     for (my $i=0;$i<$ncol; $i++){
-	if ($i>0){
-	    return $numerical_error if ($Aref->[$i][$i] == 0);
-	    $solution->[$i][$i]=$solution->[$i][$i]/$Aref->[$i][$i];
-	    for (my $k=0; $k<$i;$k++){
-		$solution->[$i][$k]=-$solution->[$i][$i]*$Aref->[$i][$k];
-	    }
-	}
-	for (my $j=($i-1);$j>0;$j--){
-	    return $numerical_error if ($Aref->[$j][$j] == 0);
-	    $solution->[$i][$j]=$solution->[$i][$j]/$Aref->[$j][$j];
-	    for (my $k=0; $k<$j; $k++){
-		$solution->[$i][$k]=$solution->[$i][$k]-$solution->[$i][$j]*$Aref->[$j][$k];
-	    }
-	}
-	return $numerical_error if ($Aref->[0][0] == 0);
-	$solution->[$i][0]=$solution->[$i][0]/$Aref->[0][0];
+		if ($i>0){
+			return $numerical_error if ($Aref->[$i][$i] == 0);
+			$solution->[$i][$i]=$solution->[$i][$i]/$Aref->[$i][$i];
+			for (my $k=0; $k<$i;$k++){
+				$solution->[$i][$k]=-$solution->[$i][$i]*$Aref->[$i][$k];
+			}
+		}
+		for (my $j=($i-1);$j>0;$j--){
+			return $numerical_error if ($Aref->[$j][$j] == 0);
+			$solution->[$i][$j]=$solution->[$i][$j]/$Aref->[$j][$j];
+			for (my $k=0; $k<$j; $k++){
+				$solution->[$i][$k]=$solution->[$i][$k]-$solution->[$i][$j]*$Aref->[$j][$k];
+			}
+		}
+		return $numerical_error if ($Aref->[0][0] == 0);
+		$solution->[$i][0]=$solution->[$i][0]/$Aref->[0][0];
     }
     return 0;
 }
@@ -1592,6 +1592,106 @@ sub covar2sdcorr
 	}
 	return 0;
 }
+
+sub jackknife_inv_cholesky_mean_det
+{
+
+    my $Aref=shift;
+    my $inv_cholesky = shift;
+    my $mean = shift;
+    my $stderr = shift;
+    my $full_cov = shift;
+
+    my $input_error = 2;
+    my $numerical_error = 1;
+	my $debug=0;
+    my $temprow= scalar(@{$Aref});
+    return ($input_error,undef) if ($temprow < 2);
+    my $ncol = scalar(@{$Aref->[0]});
+    for (my $row=1; $row< $temprow; $row++){
+		return ($input_error,undef) if (scalar(@{$Aref->[$row]})>0 and scalar(@{$Aref->[$row]}) != $ncol);
+    }
+
+    my @sum = (0) x $ncol;
+    @{$mean} = (0) x $ncol;
+    @{$stderr} = (0) x $ncol;
+	for (my $col=0; $col< $ncol; $col++){
+		my @line = (0) x $ncol;
+		push(@{$full_cov},\@line);
+	}
+	my @centered = ();
+
+	my $nrow=0;
+	for (my $row=0; $row< $temprow; $row++){
+		next unless (scalar(@{$Aref->[$row]})>0);
+		$nrow++;
+		for (my $col=0; $col< $ncol; $col++){
+			$sum[$col] = $sum[$col] + $Aref->[$row][$col];
+		}
+	}	
+    return ($input_error,undef) if ($nrow < 2);
+	for (my $col=0; $col< $ncol; $col++){
+		$mean->[$col]=$sum[$col]/$nrow;
+	}
+
+	my $normfactor = sqrt(($nrow-1)/$nrow); #jackknife
+	if ($debug){
+		#regular
+		$normfactor = 1/sqrt(($nrow-1)); #varcov
+	}
+	
+	for (my $col=0; $col< $ncol; $col++){
+		push(@centered,[]); #column format
+		my $sum_squared_errors=0;
+		for (my $row=0; $row< $temprow; $row++){
+			next unless (scalar(@{$Aref->[$row]})>0);
+			push(@{$centered[-1]},($Aref->[$row][$col]-$mean->[$col]));
+			$sum_squared_errors += ($Aref->[$row][$col]-$mean->[$col])**2;
+		}
+		$stderr->[$col]=sqrt($sum_squared_errors)*$normfactor;
+		$full_cov->[$col]->[$col]=$sum_squared_errors*($normfactor**2);
+	}	
+	for (my $col1=0; $col1< $ncol; $col1++){
+		for(my $col2=0; $col2<$col1; $col2++){
+			my $sum_squared_errors=0;
+			for (my $row=0; $row< $nrow; $row++){
+				$sum_squared_errors += ($centered[$col1]->[$row])*($centered[$col2]->[$row]);
+			}
+			$full_cov->[$col1]->[$col2]=$sum_squared_errors*($normfactor**2);
+			$full_cov->[$col2]->[$col1]=$full_cov->[$col1]->[$col2];
+		}
+	}
+
+	my $Rmat=[];
+			
+	my $err = QR_factorize(\@centered,$Rmat);
+	return ($err,undef) unless($err == 0);
+
+
+	my $det = abs(diagonal_product($Rmat))*($normfactor**$ncol);
+	return ($numerical_error,undef) unless ($det > 0);
+	my $inv_determinant = 1/$det; 
+
+	#inverse R
+    my $refRInv = [];
+    $err = upper_triangular_identity_solve($Rmat,$refRInv);
+	return ($err,undef) unless($err == 0);
+	
+	#refRInv is lower triang in row format. we want form for linear_algebra::cook_score_all(
+#	for (my $i=0; $i< $ncol; $i++){
+#		for (my $j=$i; $j<$ncol; $j++){
+#			$scalar_product += ($diff[$j] * $cholesky->[$j]->[$i]); #lower triang
+	for (my $row=0; $row< $ncol; $row++){
+		my @line =(0) x $ncol;
+		push(@{$inv_cholesky},\@line);
+		for (my $col=0; $col<= $row; $col++){
+			$inv_cholesky->[$row]->[$col]= ($refRInv->[$row]->[$col])/$normfactor;
+		}
+	}
+	
+	return (0,$inv_determinant);
+}
+
 sub row_cov
 {
     #input is reference to values matrix 
@@ -1609,7 +1709,7 @@ sub row_cov
     return $input_error if ($nrow < 2);
     my $ncol = scalar(@{$Aref->[0]});
     for (my $row=1; $row< $nrow; $row++){
-	return $input_error if (scalar(@{$Aref->[$row]}) != $ncol);
+		return $input_error if (scalar(@{$Aref->[$row]}) != $ncol);
     }
 
     my @sum = (0) x $ncol;
@@ -1617,40 +1717,39 @@ sub row_cov
 
     #initialize square result matrix
     for (my $i=0; $i<$ncol; $i++){
-	push(@{$varcov},[(0) x $ncol]);
+		push(@{$varcov},[(0) x $ncol]);
     }
 
     for (my $col=0; $col< $ncol; $col++){
+		for (my $row=0; $row< $nrow; $row++){
+			$sum[$col] = $sum[$col] + $Aref->[$row][$col];
+		}
+		$mean[$col]=$sum[$col]/$nrow;
+		print "mean $col is ".$mean[$col]."\n" if $debug;
+		#variance
+		my $sum_errors_pow2=0;
+		for (my $row=0; $row< $nrow; $row++){
+			$sum_errors_pow2 = $sum_errors_pow2 + ($Aref->[$row][$col] - $mean[$col])**2;
+		}
+		unless ( $sum_errors_pow2 == 0 ){
+			#if sum is 0 then assume all estimates 0, just ignore
+			$varcov->[$col][$col]= $sum_errors_pow2/($nrow-1);
+			print "variance $col is ".$varcov->[$col][$col]."\n" if $debug;
+		}
 
-	for (my $row=0; $row< $nrow; $row++){
-	    $sum[$col] = $sum[$col] + $Aref->[$row][$col];
-	}
-	$mean[$col]=$sum[$col]/$nrow;
-	print "mean $col is ".$mean[$col]."\n" if $debug;
-	#variance
-	my $sum_errors_pow2=0;
-	for (my $row=0; $row< $nrow; $row++){
-	    $sum_errors_pow2 = $sum_errors_pow2 + ($Aref->[$row][$col] - $mean[$col])**2;
-	}
-	unless ( $sum_errors_pow2 == 0 ){
-	    #if sum is 0 then assume all estimates 0, just ignore
-	    $varcov->[$col][$col]= $sum_errors_pow2/($nrow-1);
-	    print "variance $col is ".$varcov->[$col][$col]."\n" if $debug;
-	}
-
-	#covariance
-	#here $j is always smaller than $col, meaning that mean is already computed 
-	for (my $j=0; $j< $col; $j++){
-	    my $sum_errors_prod=0;
-	    for (my $i=0; $i< $nrow; $i++){
-		$sum_errors_prod = $sum_errors_prod + ($Aref->[$i][$col] - $mean[$col])*($Aref->[$i][$j] - $mean[$j]);
-	    }
-	    unless( $sum_errors_prod == 0 ){
-		#if sum is 0 then assume all estimates 0, just ignore
-		$varcov->[$j][$col]= $sum_errors_prod/($nrow-1);
-		$varcov->[$col][$j]=$varcov->[$j][$col]; 
-	    }
-	}
+		#covariance
+		#here $j is always smaller than $col, meaning that mean is already computed 
+		for (my $j=0; $j< $col; $j++){
+			my $sum_errors_prod=0;
+			for (my $i=0; $i< $nrow; $i++){
+				$sum_errors_prod = $sum_errors_prod + ($Aref->[$i][$col] - $mean[$col])*($Aref->[$i][$j] - $mean[$j]);
+			}
+			unless( $sum_errors_prod == 0 ){
+				#if sum is 0 then assume all estimates 0, just ignore
+				$varcov->[$j][$col]= $sum_errors_prod/($nrow-1);
+				$varcov->[$col][$j]=$varcov->[$j][$col]; 
+			}
+		}
 
     }
 
