@@ -34,7 +34,7 @@ has 'selection_method' => ( is => 'rw', isa => 'Str' );
 has 'logfile' => ( is => 'rw', isa => 'ArrayRef[Str]', default => sub { ['cdd.log'] } );
 has 'results_file' => ( is => 'rw', isa => 'Str', default => 'cdd_results.csv' );
 has 'prediction_models' => ( is => 'rw', isa => 'ArrayRef', default => sub { [] } );
-has 'cross_validate' => ( is => 'rw', isa => 'Bool', default => 1 );
+has 'cross_validate' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'outside_n_sd_check' => ( is => 'rw', isa => 'Num', default => 2 );
 
 sub BUILD
@@ -162,14 +162,6 @@ sub modelfit_analyze
 	$self -> jackknife_cook_scores($jackknife_cook_scores);
 	$self -> jackknife_parameter_cook_scores($jackknife_parameter_cook_scores);
 	$self -> covariance_ratios($cov_ratios);
-	if(	defined $jackknife_full_cov and scalar(@{$jackknife_full_cov})>0){
-		#FIXME use format covmatrix, reorder lines
-		open( COV, ">".$self -> directory.'/jackknife.cov' );
-		foreach my $line (@{$jackknife_full_cov}){
-			print COV join(',',@{$line})."\n";
-		}
-		close(COV);
-	}
 	$do_pca = 0 unless (scalar(@{$cook_scores})>0 and usable_number($cook_scores->[0]));
 
 	my @relative_changes_labels = ('ofv');
@@ -186,6 +178,20 @@ sub modelfit_analyze
 	$self->labels_parameter_cook_scores(\@labels_parameter_cook_scores);
 	ui -> print( category => 'cdd',
 				 message  => " ... done." );
+
+	if(	defined $jackknife_full_cov and scalar(@{$jackknife_full_cov})>0){
+		#FIXME use format covmatrix, reorder lines
+		my $formatted = tool::format_covmatrix(matrix => $jackknife_full_cov, 
+											   header => $labelsref, 
+											   comma => 1, 
+											   print_labels => 1);
+		
+		open( COV, ">".$self -> directory.'/jackknife.cov' );
+		foreach my $line (@{$formatted}){
+			print COV $line;
+		}
+		close(COV);
+	}
 
 	# -  Perform a PCA on the cook-score:covariance-ratio data --
 
@@ -259,7 +265,7 @@ sub modelfit_analyze
 
 	my %bias_return_section;
 	$bias_return_section{'name'} = 'Jackknife.bias.estimate';
-	$bias_return_section{'labels'} = [['bias','relative.bias'],[]];
+	$bias_return_section{'labels'} = [['bias','relative.bias.percent'],[]];
 	push(@{$bias_return_section{'labels'} -> [1]},@{$labelsref}); #only estimates
 	
 	$bias_return_section{'values'} = [$bias,$relative_bias];
@@ -339,7 +345,7 @@ sub cook_scores_and_cov_ratios
 	my $problem_index = $parm{'problem_index'};
 	my $bins = $parm{'bins'};
 
-	my $minimum_success=0.9;
+	my $minimum_success=1; #require all successful
 
 	my $original_standard_errors=undef;
 	my $original_estimates=undef;
@@ -388,7 +394,7 @@ sub cook_scores_and_cov_ratios
 	my $jackknife_inverse_cholesky=undef;
 	my $jackknife_sqrt_inv_determinant =undef;
 	my $jackknife_full_cov=undef;
-	if (($successful_estimates > 2) and $successful_estimates >= scalar(@{$sample_ofvs})*$minimum_success){
+	if ($successful_estimates >= scalar(@{$sample_ofvs})*$minimum_success){
 		$jackknife_means=[];
 		$jackknife_standard_errors=[];
 		$jackknife_inverse_cholesky=[];
@@ -617,7 +623,6 @@ sub modelfit_post_fork_analyze
 
 	my @modelfit_results = @{$self->results};
 
-	ui -> print(category => 'cdd', message => "Soon done");
 }
 
 sub modelfit_results

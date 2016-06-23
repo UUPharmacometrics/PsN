@@ -1,5 +1,5 @@
 \input{inputs/format_header.tex}
-\guidetitle{CDD user guide}{2016-04-13}
+\guidetitle{CDD user guide}{2016-06-23}
 
 
 \begin{document}
@@ -25,7 +25,6 @@ A model file is required on the command-line.
 \begin{optionlist}
 \optdefault{case\_column}{name|number}
 The column on which the case-deletion is done. You can either use the name of the column as specified in the \mbox{\$INPUT} record in the model file or you can use the column number in the \mbox{\$INPUT} record. Numbering starts with 1.
-
 \nextopt
 \end{optionlist}
 
@@ -36,13 +35,14 @@ The column on which the case-deletion is done. You can either use the name of th
 Sets the number of databins, or cdd datasets, to use. If the number of unique values, or factors, in the case column is higher than N then one or more factors will be deleted in each cdd dataset. Specifying N as higher than the number of factors will have no effect. N is then reset to the number of factors. Default value = Number of unique values in the case column. 
 \nextopt
 \optname{xv}
-Default true. Run the cross-validation step (-xv) or not (-no-xv). 
+Default false. Run the cross-validation step (-xv) or not (-no-xv). 
 \nextopt
 \optdefault{selection\_method}{random | consecutive}
 Default consecutive. Specifies whether the factors selected for exclusion should be drawn randomly or consecutively from the datafile. 
 \nextopt
 \optdefault{outside\_n\_sd\_check}{X}
-Default 2. Mark the runs with CS-CR outside X standard deviations of the PCA. 
+Default 2. Mark the runs with Cook score - Covariance ratio outside X standard deviations of
+the principal component analysis (PCA). 
 \nextopt
 \end{optionlist}
 
@@ -69,6 +69,68 @@ If no pdf is generated,
 see the .Rout file in the main run directory for error messages.}
 \input{inputs/rplots_section_body.tex}
 
+\section{Output}
+
+Below, $P_{orig}$ denotes the vector of estimated parameters (theta, omega and sigma)
+on the original dataset, $p_{orig,j}$ is the $j$th element of $P_{orig}$,
+$P_{i}$ denotes the vector of estimated parameters (theta, omega and sigma)
+on the dataset with case $i$ excluded, $p_{i,j}$ is the $j$th element of $P_{i}$,
+$cov(Y)$ is the covariance matrix of $Y$,
+$se(y)$ is the standard error of $y$,
+$N$ is the number of cases in the dataset,
+and
+$det(Y)$ is the determinant of $Y$.
+
+\[
+p_{(\cdot),j}=\frac{1}{N}\sum_{i=1}^{N}p_{i,j} 
+\]
+is the mean of $p_{i,j}$ over all case deleted datasets, 
+\[
+cov^{jackknife}_{j,k} = \frac{N-1}{N}\sum_{i=1}^{N}\left(p_{i,j}-p_{(\cdot),j}\right)\left(p_{i,k}-p_{(\cdot),k}\right)
+\]
+is the jackknife estimate of the covariance between $p_{orig,j}$ and $p_{orig,k}$, and this is used
+to compute the full matrix
+$cov^{jackknife}(P_{orig})$. If any case deleted dataset fails to give parameter estimates $P_{i}$ then
+jackknife estimates of the covariances will not be computed.
+
+\subsubsection*{Raw results file}
+The standard PsN raw results file has a set of columns with cdd-specific results appended
+for each case deleted dataset $i$:
+\begin{description}
+\item[cook.scores] $\sqrt{\left(P_{i}-P_{orig}\right)^Tcov(P_{orig})^{-1}\left(P_{i}-P_{orig}\right)}$\\
+Only computed if $cov(P_{orig})$ is available.
+\item[jackknife.cook.scores] $\sqrt{\left(P_{i}-P_{orig}\right)^Tcov^{jackknife}(P_{orig})^{-1}\left(P_{i}-P_{orig}\right)}$
+\item[cov.ratios] \[\sqrt{\frac{det(cov(P_{i}))}{det(cov(P_{orig}))}}\]
+Only computed if $cov(P_{orig})$ is available.
+Set to 0 if $cov(P_{i})$ not available or numerically singular.
+\item[outside.n.sd] 1 or 0, only relevant if both Cook scores and Cov ratios available.
+1 if Cook score - Covariance ratio is outside 'outside\_n\_sd\_check' standard deviations of the PCA. 
+\item[cook.par.<param j>] Individual Cook score for parameter <param j>,
+\[\frac{abs\left(p_{i,j}-p_{orig,j}\right)}{se(p_{orig,j})} \]
+\item[jack.cook.par.<param j>] Individual jackknife approximated Cook score for parameter <param j>,
+\[\frac{abs\left(p_{i,j}-p_{orig,j}\right)}{\sqrt{cov^{jackknife}_{j,j}}}\]
+\end{description}
+
+If the cross-validation was requested with option -xv, there are $N$ extra rows in the raw results file.
+Each line is the result from evaluation of the model on the remainder data using parameter values from
+estimation of the corresponding case-deleted dataset.
+
+\subsubsection*{jackknife.cov}
+The file jackknife.cov contains $cov^{jackknife}(P_{orig})$. It is comma separated and has the same number of columns
+as the number of estimated (not FIXED) parameters. The column order is theta, omega, sigma, and the
+column/row labels are the parameter labels from the model file, if any.
+
+\subsubsection*{cdd\_results.csv}
+The Diagnostics section of
+cdd\_results.csv contains the same computed cook.scores, jackknife.cook.scores, cov.ratios and
+outside.n.sd as the raw results file.
+
+The section relative.changes.percent lists, for each case deleted dataset, the relative change in percent
+for ofv, estimates and standard errors.
+
+The section Jackknife.bias.estimate
+has two rows. The jackknife bias of parameter $j$ is \[bias=\left(N-1\right)\left(p_{(\cdot),j}-p_{orig,j}\right) \]
+and the relative bias in percent is \[100\cdot\frac{bias}{p_{orig,j}}\].
 
 \section{Known bugs/issues}
 

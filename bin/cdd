@@ -117,7 +117,7 @@ $help_text{-xv} = <<'EOF';
       -xv|-no-xv
 
       Turns the cross-validation feature on (-xv) or off (-no-xv). The
-      default behaviour is to run the cross-validation step.
+      default behaviour is to not run the cross-validation step.
 EOF
 
 
