@@ -19,6 +19,7 @@ has 'case_column' => ( is => 'rw', required => 1, isa => 'Int' );
 has 'bins' => ( is => 'rw', isa => 'Int' );
 has 'actual_bins' => ( is => 'rw', isa => 'Int' );
 has 'cook_scores' => ( is => 'rw', isa => 'ArrayRef', default => sub { [] } );
+has 'delta_ofv' => ( is => 'rw', isa => 'ArrayRef', default => sub { [] } );
 has 'parameter_cook_scores' => ( is => 'rw', isa => 'ArrayRef', default => sub { [] } );
 has 'jackknife_cook_scores' => ( is => 'rw', isa => 'ArrayRef', default => sub { [] } );
 has 'jackknife_parameter_cook_scores' => ( is => 'rw', isa => 'ArrayRef', default => sub { [] } );
@@ -151,12 +152,17 @@ sub modelfit_analyze
 	my $b = $self->bins;
 	$b=$self->actual_bins unless (defined $b);
 	my ($cook_scores,$cov_ratios,$parameter_cook_scores,$relative_changes,$bias, $relative_bias,
-		$jackknife_cook_scores,$jackknife_parameter_cook_scores,$jackknife_full_cov) = 
+		$jackknife_cook_scores,$jackknife_parameter_cook_scores,$jackknife_full_cov,$sample_ofvs) = 
 			cook_scores_and_cov_ratios(original => $self->models->[$model_number-1]->outputs -> [0],
 									   cdd_models => $self -> prepared_models->[$model_number-1]{'own'},
 									   problem_index => $problem_index,
 									   bins => $b);
-	
+
+	my ($delta_ofvs,$message) = get_delta_ofv(output => $self->models->[$model_number-1]->outputs -> [0],
+											  problem_index => $problem_index,
+											  sample_ofv => $sample_ofvs,
+											  skipped_keys => $self->skipped_keys) if (scalar(@{$sample_ofvs})>0);
+	$self ->delta_ofv($delta_ofvs) if (defined $delta_ofvs);
 	$self -> cook_scores($cook_scores);
 	$self -> parameter_cook_scores($parameter_cook_scores);
 	$self -> jackknife_cook_scores($jackknife_cook_scores);
@@ -329,6 +335,62 @@ sub get_ofv_estimates_se
 	return (\@ofv,\@estimates,\@se,\@root_cov_det,$successful_estimates);
 }
 
+
+sub get_delta_ofv
+{
+	my %parm = validated_hash(\@_,
+							  output => { isa => 'output', optional => 0 },
+							  problem_index  => { isa => 'Int', default => 0 },
+							  table_index  => { isa => 'Int', default => -1 },
+							  skipped_keys => { isa => 'ArrayRef', optional => 0 },
+							  sample_ofv => { isa => 'ArrayRef', optional => 0 },
+	);
+	my $output = $parm{'output'};
+	my $problem_index = $parm{'problem_index'};
+	my $table_index = $parm{'table_index'};
+	my $skipped_keys = $parm{'skipped_keys'};
+	my $sample_ofv = $parm{'sample_ofv'};
+	
+	my $error = 0;
+	my $message = '';
+
+	my $filename = $output->problems->[$problem_index]->full_name_NM7_file(file_type => 'phi');
+	my $orig_ofv = $output->get_single_value(attribute => 'ofv',problem_index => $problem_index);
+
+	unless (length($filename)> 0){
+		$error = 2;
+		$message .= 'Empty phi file name';
+	}
+	unless (-e $filename){
+		$error = 2;
+		$message .= ' File '.$filename.' does not exist';
+	}
+
+	return([],$message) unless ($error == 0);
+	
+	my $nmtablefile = nmtablefile->new(filename => $filename);
+	my @sorted_iofv = ();
+	my $iofv = $nmtablefile->tables->[$table_index]->get_column(name=> 'OBJ');
+
+	for (my $i=0; $i < scalar(@{$skipped_keys}); $i++){
+		my $sum=0;
+		#usually each case is just one key, but can be many
+		foreach my $key (@{$skipped_keys->[$i]}){
+			$sum += $iofv->[$key];
+		}
+		push(@sorted_iofv,$sum);
+	}
+	my @delta_ofv=();
+	for (my $i=0; $i < scalar(@sorted_iofv); $i++){
+		if (defined $sample_ofv->[$i]){
+			push(@delta_ofv,($orig_ofv-$sorted_iofv[$i]-$sample_ofv->[$i]));
+		}else{
+			push(@delta_ofv,undef);
+		}
+	}
+	return (\@delta_ofv,'');
+}
+
 sub cook_scores_and_cov_ratios
 {
 	#static
@@ -383,7 +445,7 @@ sub cook_scores_and_cov_ratios
 	unless (defined $orig_ofv and defined $original_estimates and usable_number($original_estimates->[0])){
 		ui->print(category => 'cdd',
 				  message => "Cannot compute Cook scores and cov-ratios, no estimates or ofv from input model");
-		return ([],[],[],[],[],[],[],[],[]);
+		return ([],[],[],[],[],[],[],[],[],[]);
 	}
 
 	my ($sample_ofvs,$sample_estimates,$sample_ses,$sample_root_det,$successful_estimates) = 
@@ -410,7 +472,7 @@ sub cook_scores_and_cov_ratios
 			ui->print(category => 'cdd',
 					  message => "No covariance step of input model and too many cdd samples failed. ".
 					  "Cannot compute Cook scores and cov-ratios");
-			return ([],[],[],[],[],[],[],[],[]);
+			return ([],[],[],[],[],[],[],[],[],[]);
 		}
 	}
 	my $npar = scalar(@{$original_estimates});
@@ -490,7 +552,7 @@ sub cook_scores_and_cov_ratios
 		}
 	}
 	return (\@original_cook,\@original_cov_ratios,\@original_parameter_cook,\@all_relative_changes,\@all_bias,
-			\@rel_bias,\@jackknife_cook,\@jackknife_parameter_cook,$jackknife_full_cov);
+			\@rel_bias,\@jackknife_cook,\@jackknife_parameter_cook,$jackknife_full_cov,$sample_ofvs);
 }
 
 
@@ -1074,6 +1136,7 @@ sub general_setup
 	push( @skipped_keys,   $skip_keys );
 	push( @skipped_values, $skip_values );
 
+	$self->skipped_keys($skip_keys);
 	# Use only the first half (the case-deleted) of the data sets.
 	$self -> prepared_models->[$model_number-1]{'own'} = $new_models[0];
 
@@ -1232,19 +1295,20 @@ sub update_raw_results
 	open( RRES, '>',$dir.$file );
 
 	chomp( $rres[0] );
-	print RRES $rres[0] . ",cook.scores,jackknife.cook.scores,cov.ratios,outside.n.sd,".
+	print RRES $rres[0] . ",cook.scores,jackknife.cook.scores,cov.ratios,outside.n.sd,delta.ofv,".
 		join(',',@{$self->labels_parameter_cook_scores})."\n";
 	my @origparameter = (0) x scalar(@{$self->labels_parameter_cook_scores});
 	chomp( $rres[1] );
 	my @tmp = split(',',$rres[1]);
 	my $cols = scalar(@tmp);
-	print RRES $rres[1] . ",0,0,1,0,".join(',',@origparameter)."\n"; #original model
+	print RRES $rres[1] . ",0,0,1,0,0,".join(',',@origparameter)."\n"; #original model
 
 	foreach my $mod (sort({$a <=> $b} keys %{$self->raw_line_structure})){
 		$self->raw_line_structure -> {$mod}->{'cook.scores'} = $cols.',1';
 		$self->raw_line_structure -> {$mod}->{'jackknife.cook.scores'} = ($cols+1).',1';
 		$self->raw_line_structure -> {$mod}->{'cov.ratios'} = ($cols+2).',1';
 		$self->raw_line_structure -> {$mod}->{'outside.n.sd'} = ($cols+3).',1';
+		$self->raw_line_structure -> {$mod}->{'delta.ofv'} = ($cols+3).',1';
 	}
 
 	$self->raw_line_structure -> write( $dir.'raw_results_structure' );
@@ -1272,7 +1336,8 @@ sub update_raw_results
 		chomp( $row_str );
 		if (($i-2) < $length){
 			$row_str .= format_score($self -> cook_scores -> [$i-2]).format_score($self -> jackknife_cook_scores -> [$i-2]).
-				format_score($self -> covariance_ratios -> [$i-2]).format_count($self -> outside_n_sd -> [$i-2]);
+				format_score($self -> covariance_ratios -> [$i-2]).format_count($self -> outside_n_sd -> [$i-2]).
+				format_score($self -> delta_ofv -> [$i-2]);
 			foreach my $val (@{$self->parameter_cook_scores-> [$i-2]} ){
 				$row_str .= format_score($val);
 			}
@@ -1280,7 +1345,7 @@ sub update_raw_results
 				$row_str .= format_score($val);
 			}
 		}else{
-			$row_str .= ',' x (3+scalar(@{$self->labels_parameter_cook_scores}));
+			$row_str .= ',' x (5+2*scalar(@{$self->labels_parameter_cook_scores}));
 		}
 		$row_str .= "\n";
 		print RRES $row_str;

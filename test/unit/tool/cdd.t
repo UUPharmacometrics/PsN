@@ -148,7 +148,8 @@ for (my $i=0; $i < scalar(@localc_bias); $i++){
 	push(@rel_bias,100*$localc_bias[$i]/$origval[$i+1]);
 }
 
-my ($cook_scores,$cov_ratios,$parameter_cook_scores, $rel_changes,$bias, $rel_bias,$jackknife_cook,$jackknife_parameter_cook,$full_jackknife_cov) = 
+my ($cook_scores,$cov_ratios,$parameter_cook_scores, $rel_changes,$bias, $rel_bias,
+	$jackknife_cook,$jackknife_parameter_cook,$full_jackknife_cov,$sample_ofvs) = 
 	tool::cdd::cook_scores_and_cov_ratios(original => $orig_outobj,
 	cdd_models => \@cdd_models,
 	bins => 10);
