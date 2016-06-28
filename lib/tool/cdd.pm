@@ -1297,13 +1297,15 @@ sub update_raw_results
 	);
 	my $model_number = $parm{'model_number'};
 
-	no warnings qw(closed);
 
 	my ($dir,$file) =
 	OSspecific::absolute_path( $self -> directory,$self -> raw_results_file->[$model_number-1] );
+	return unless (-e $dir.$file );
+
 	open( RRES, $dir.$file );
 	my @rres = <RRES>;
 	close( RRES );
+	return if (scalar(@rres)<1);
 	open( RRES, '>',$dir.$file );
 
 	chomp( $rres[0] );
