@@ -120,19 +120,19 @@ sub modelfit_analyze
 									   $self -> raw_results_file->[$model_number-1] );
 		my $xv_threads = ref( $self -> threads ) eq 'ARRAY' ? $self -> threads -> [1]:$self -> threads;
 		my $mod_eval = tool::modelfit->new( %{common_options::restore_options(@common_options::tool_options)},
-				 copy_data  => 0,  #do not copy models to NM_run, use rel path to m1
-				 models           => $self -> prediction_models->[$model_number-1]{'own'},
-				 base_directory   => $self -> directory,
-				 nmtran_skip_model => 2,
-				 directory        => $self -> directory.'evaluation_dir'.$model_number, 
-				 threads          => $xv_threads,
-				 _raw_results_callback => $self -> _modelfit_raw_results_callback( model_number => $model_number,
-																				   cross_validation_set => 1 ),
-				 parent_tool_id   => $self -> tool_id,
-				 logfile	    => undef,
-				 raw_results      => undef,
-				 prepared_models  => undef,
-				 top_tool         => 0);
+											copy_data  => 0,  #do not copy models to NM_run, use rel path to m1
+											models           => $self -> prediction_models->[$model_number-1]{'own'},
+											base_directory   => $self -> directory,
+											nmtran_skip_model => 2,
+#											directory        => $self -> directory.'evaluation_dir'.$model_number, 
+											threads          => $xv_threads,
+											_raw_results_callback => $self -> _modelfit_raw_results_callback( model_number => $model_number,
+																											  cross_validation_set => 1 ),
+											parent_tool_id   => $self -> tool_id,
+											logfile	    => undef,
+											raw_results      => undef,
+											prepared_models  => undef,
+											top_tool         => 0);
 		print "Running xv runs\n";
 		$mod_eval -> run;
 
@@ -1058,8 +1058,14 @@ sub general_setup
 			print SKIP join(',',@{$skip_keys -> [$k]}),"\n";
 		}
 		close( SKIP );
+		open( SKIP, ">".$self -> directory."skipped_values".$model_number.".csv" ) ;
+		for( my $k = 0; $k < scalar @{$skip_values}; $k++ ) {
+			print SKIP join(',',@{$skip_values -> [$k]}),"\n";
+		}
+		close( SKIP );
 
 		# }}} create new
+		$self->skipped_keys($skip_keys);
 
 	} else {
 
@@ -1067,35 +1073,50 @@ sub general_setup
 
 		# {{{ resume
 
+		#need stored_bins and skipped_keys
+		
 		ui -> print( category => 'cdd',
 			message  => "Recreating models from a previous run" );
 		open( DONE, $self -> directory."/m$model_number/done" );
 		my @rows = <DONE>;
 		close( DONE );
-		my ( $junk, $junk1, $stored_filename, $junk2 ) = split(' ',$rows[0],4);
-		my ( $stored_bins, $junk3 ) = split(' ',$rows[1],2);
-		my ( @stored_ids, @stored_keys, @stored_values );
-		for ( my $k = 3; $k < 3+$stored_bins; $k++ ) {
-			chomp($rows[$k]);
-			my @bin_ids = split(',', $rows[$k] );
-			push( @stored_ids, \@bin_ids );
+		my ( $junk, $junk1, $stored_filename, $junk2 ) = split(' ',$rows[0],4); #sampling from data performed
+		my ( $stored_bins, $junk3 );
+		my $start;
+		if ($rows[1] =~ / bins/){
+			( $stored_bins, $junk3 ) = split(' ',$rows[1],2);
+			$start=3;
+			while (not ($rows[$start] =~ /^Skipped keys/)){
+				$start++;
+			}
+		}else{
+			my $count=0;
+			while (not ($rows[(2+$count)] =~ /^Skipped keys/)){
+				$count++;
+			}
+			$start=2+$count;
+			$stored_bins=$count;
 		}
-		for ( my $k = 4+$stored_bins; $k < 4+2*$stored_bins; $k++ ) {
-			chomp($rows[$k]);
-			my @bin_keys = split(',', $rows[$k] );
+		my (@stored_keys);
+		unless ($rows[$start] =~ /^Skipped keys/){
+			croak("bug in reading restart information: start is $start, line is ".$rows[$start]);
+		}
+		$start++;
+		while (not ($rows[$start] =~ /^Skipped values/)){
+			chomp($rows[$start]);
+			my @bin_keys = split(',', $rows[$start] );
 			push( @stored_keys, \@bin_keys );
+			$start++;
 		}
-		for ( my $k = 5+2*$stored_bins; $k < 5+3*$stored_bins; $k++ ) {
-			chomp($rows[$k]);
-			my @bin_values = split(',', $rows[$k] );
-			push( @stored_values, \@bin_values );
+		$self->skipped_keys(\@stored_keys);
+		while (not ($rows[$start] =~ /^seed/)){
+			$start++;
 		}
-		@seed = split(' ',$rows[5+3*$stored_bins]);
-		$skip_ids    = \@stored_ids;
-		$skip_keys   = \@stored_keys;
-		$skip_values = \@stored_values;
+		@seed = split(' ',$rows[$start]);
 		shift( @seed ); # get rid of 'seed'-word
+		random_set_seed( @seed );
 
+#		print "stored bins is $stored_bins\n";
 		$self->actual_bins($stored_bins);
 		for ( my $j = 1; $j <= $stored_bins; $j++ ) {
 			my @names = ( 'cdd_'.$j, 'rem_'.$j );
@@ -1123,7 +1144,6 @@ sub general_setup
 		}
 		ui -> print( category => 'cdd',
 			message  => " ... done." );
-		random_set_seed( @seed );
 		ui -> print( category => 'cdd',
 			message  => "Using $stored_bins previously sampled case-deletion sets ".
 			"from $stored_filename" )
@@ -1132,11 +1152,7 @@ sub general_setup
 		# }}} resume
 
 	}
-	push( @skipped_ids,    $skip_ids );
-	push( @skipped_keys,   $skip_keys );
-	push( @skipped_values, $skip_values );
 
-	$self->skipped_keys($skip_keys);
 	# Use only the first half (the case-deleted) of the data sets.
 	$self -> prepared_models->[$model_number-1]{'own'} = $new_models[0];
 
@@ -1158,6 +1174,7 @@ sub general_setup
 	if ( defined $self -> subtool_arguments ) {
 		%subargs = %{$self -> subtool_arguments};
 	}
+	$subargs{'resume'}=$done; #do not rerun models that have lst-file in m1
 	$self->tools([]) unless (defined $self->tools);
 	push( @{$self -> tools},
 		$class ->new( %{common_options::restore_options(@common_options::tool_options)},
@@ -1165,7 +1182,7 @@ sub general_setup
 			 copy_data            => 0, #use relative data path to m1
 			threads               => $subm_threads,
 			nmtran_skip_model => 2,
-			directory             => $self -> directory.'/'.$subdir.'_dir'.$model_number,
+#			directory             => $self -> directory.'/'.$subdir.'_dir'.$model_number,
 			_raw_results_callback => $self ->
 			_modelfit_raw_results_callback( model_number => $model_number ),
 			subtools              => \@subtools,
@@ -1180,11 +1197,6 @@ sub general_setup
 	# }}} sub tools
 	tool::add_to_nmoutput(run => $self->tools->[-1], extensions => ['ext','cov','coi']);		
 
-	open( SKIP, ">".$self -> directory."skipped_values".$model_number.".csv" ) ;
-	for( my $k = 0; $k < scalar @{$skip_values}; $k++ ) {
-		print SKIP join(',',@{$skip_values -> [$k]}),"\n";
-	}
-	close( SKIP );
 }
 
 
@@ -1295,7 +1307,7 @@ sub update_raw_results
 	open( RRES, '>',$dir.$file );
 
 	chomp( $rres[0] );
-	print RRES $rres[0] . ",cook.scores,jackknife.cook.scores,cov.ratios,outside.n.sd,delta.ofv,".
+	print RRES $rres[0] . ",cook.scores,jackknife.cook.scores,cov.ratios,outside.n.sd,cdd.delta.ofv,".
 		join(',',@{$self->labels_parameter_cook_scores})."\n";
 	my @origparameter = (0) x scalar(@{$self->labels_parameter_cook_scores});
 	chomp( $rres[1] );
@@ -1308,7 +1320,7 @@ sub update_raw_results
 		$self->raw_line_structure -> {$mod}->{'jackknife.cook.scores'} = ($cols+1).',1';
 		$self->raw_line_structure -> {$mod}->{'cov.ratios'} = ($cols+2).',1';
 		$self->raw_line_structure -> {$mod}->{'outside.n.sd'} = ($cols+3).',1';
-		$self->raw_line_structure -> {$mod}->{'delta.ofv'} = ($cols+3).',1';
+		$self->raw_line_structure -> {$mod}->{'cdd.delta.ofv'} = ($cols+4).',1';
 	}
 
 	$self->raw_line_structure -> write( $dir.'raw_results_structure' );

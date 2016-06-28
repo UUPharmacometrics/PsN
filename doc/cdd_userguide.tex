@@ -1,5 +1,5 @@
 \input{inputs/format_header.tex}
-\guidetitle{CDD user guide}{2016-06-23}
+\guidetitle{CDD user guide}{2016-06-28}
 
 
 \begin{document}
@@ -105,6 +105,12 @@ Only computed if $cov(P_{orig})$ is available.
 Set to 0 if $cov(P_{i})$ not available or numerically singular.
 \item[outside.n.sd] 1 or 0, only relevant if both Cook scores and Cov ratios available.
 1 if Cook score - Covariance ratio is outside 'outside\_n\_sd\_check' standard deviations of the PCA. 
+\item[cdd.delta.ofv] This value is computed for each case deleted dataset i and
+contains the difference $OFV_{cdd-i,orig} - OFV_{cdd-i,est}$,
+where $OFV_{cdd-i,orig}$ is the sum of individual OFV (iOFV) for the individuals in case deleted dataset $i$ (cdd-i) 
+from an estimation where all subjects are included and
+$OFV_{cdd-i,est}$ is the OFV from an estimation where only the subjects in cdd-i are included. 
+This value is always positive.
 \item[cook.par.<param j>] Individual Cook score for parameter <param j>,
 \[\frac{abs\left(p_{i,j}-p_{orig,j}\right)}{se(p_{orig,j})} \]
 \item[jack.cook.par.<param j>] Individual jackknife approximated Cook score for parameter <param j>,
