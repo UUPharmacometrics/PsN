@@ -831,6 +831,26 @@ sub alt_get_jd_vector_eta_matrix
 	return \@jd_vector ,\@eta_matrix;
 }
 
+sub substitute_etas
+{
+    my %parm = validated_hash(\@_,
+							  code => { isa => 'ArrayRef', optional => 0 },
+							  eta_list => { isa => 'ArrayRef', optional => 0 },
+							  value_list => { isa => 'ArrayRef', optional => 0 },
+		);
+	my $code = $parm{'code'};
+	my $eta_list = $parm{'eta_list'};
+	my $value_list = $parm{'value_list'};
+
+	for (my $i=0; $i<scalar(@{$eta_list}); $i++){
+		my $num = $eta_list->[$i];
+		my $value = sprintf("%12.6E",$value_list->[$i]);
+		foreach (@{$code}){
+				s/\bETA\($num\)/$value/g;
+		}
+	}
+}
+
 sub setup_ind_ofv_models
 {
 	my $self = shift;
@@ -844,142 +864,106 @@ sub setup_ind_ofv_models
 	my $eta_matrix = $parm{'eta_matrix'};
 	my @new_ofv_models;
 
-  #this is sec 2.2 with 2.2.1-2.2.6 (not 2.2.7 )in URS individual probability script
-  #run command is the main run in bin/pind script
-  #input scalar number_of_individuals scalar number_of_etas
-  #input ref to matrix $eta_matrix
-  #output is array of models to run
+	#this is sec 2.2 with 2.2.1-2.2.6 (not 2.2.7 )in URS individual probability script
+	#run command is the main run in bin/pind script
+	#input scalar number_of_individuals scalar number_of_etas
+	#input ref to matrix $eta_matrix
+	#output is array of models to run
 
-  foreach my $id( 0..($number_of_individuals-1) ){
+	my @eta_list = (1 .. $number_of_etas);
+	foreach my $id( 0..($number_of_individuals-1) ){
       
-	  my $copy = $self->jd_model->copy( filename => 'ofv_model_'.($id+1).'.mod',
-										directory => 'm2',
-										copy_datafile => 0,
-										copy_output => 0,
-										write_copy => 0);
-	  
-      my $number_of_omegas = $copy -> nomegas -> [0];
+		my $copy = $self->jd_model->copy( filename => 'ofv_model_'.($id+1).'.mod',
+										  directory => 'm2',
+										  copy_datafile => 0,
+										  copy_output => 0,
+										  write_copy => 0);
+		
+		my $number_of_omegas = $copy -> nomegas -> [0];
 
-      #2.2.1 replace each ETAX with the value for that ETAX from nptab-file
-      #do formatting to ensure ok if using high precision
-      # look for ETA(N) in $PK, $PRED, $ERROR and replace ETA(N) with correct number
+		#2.2.1 replace each ETAX with the value for that ETAX from nptab-file
+		#do formatting to ensure ok if using high precision
+		# look for ETA(N) in $PK, $PRED, $ERROR and replace ETA(N) with correct number
 
-      unless (scalar(@{$eta_matrix->[$id]}) == $number_of_etas){
-				croak("Error create_and_run_ind_ofv_models: wrong number of etas ind ($id+1)");
-      }
+		unless (scalar(@{$eta_matrix->[$id]}) == $number_of_etas){
+			croak("Error create_and_run_ind_ofv_models: wrong number of etas ind ($id+1)");
+		}
 
-      #the regular expression here cannot handle case where line starts with ETA(X) 
-      #without even a leading space. Think that case can never occur, since
-      #no assignment done to ETAs in PK/PRED/ERROR
-			if ($self->ind_param eq 'eta') {
-				my $record_ref = $copy -> record(record_name => 'pk' );
-				if ( scalar(@{$record_ref}) > 0 ){ 
-					my $code_block;
-					foreach my $line (@{$copy->get_code(record => 'pk')}) {
-						my $new_line = '';
-						while( $line =~ /(.*[^A-Z]+)ETA\((\d+)\)(.*)/g ){
-							my $eta_index = $2-1; #does conversion work here??
-							$line = $3;
-							my $etastring = sprintf "(%12.6E)",$eta_matrix->[$id]->[$eta_index];
-							$new_line .= $1.$etastring; 
-						}
-						push(@{$code_block},$new_line.$line );
-					}
-					$copy->set_code(record => 'pk', code => $code_block);
+		if ($self->ind_param eq 'eta') {
+			foreach my $coderec ('error','des','pk','pred'){ #never any ETAs in $MIX
+				my $acc = $coderec.'s';
+				if (defined $copy->problems->[0]->$acc and 
+					scalar(@{$copy->problems->[0]->$acc})>0 ) {
+					my @code = @{$copy->problems->[0]->$acc->[0]->code};
+					substitute_etas(code => \@code,
+									eta_list => \@eta_list,
+									value_list => $eta_matrix->[$id]);
+					$copy->problems->[0]-> set_records( type => $coderec,	
+														record_strings => \@code );
+					#			print join(' ',@code);
 				}
-
-				$record_ref = $copy -> record(record_name => 'pred' );
-				if ( scalar(@{$record_ref}) > 0 ){ 
-					my $code_block;
-					foreach my $line (@{$copy->get_code(record => 'pred')}) {
-						my $new_line = '';
-						#ok empty set []???
-						while( $line =~ /(.*[^A-Z]+)ETA\((\d+)\)(.*)/g ){
-							my $eta_index = $2-1; #does conversion work here??
-							$line = $3;
-							$new_line .= $1. "$eta_matrix->[$id]->[$eta_index]";
-						}
-						push(@{$code_block},$new_line.$line );
-					}
-					$copy->set_code(record => 'pred', code => $code_block );
-				}
-				$record_ref = $copy -> record(record_name => 'error' );
-				if ( scalar(@{$record_ref}) > 0 ){ 
-					my $code_block;
-					foreach my $line (@{$copy->get_code(record => 'error')}) {
-						my $new_line = '';
-						while( $line =~ /(.*[^A-Z]+)ETA\((\d+)\)(.*)/g ){
-							my $eta_index = $2-1; #does conversion work here??
-							$line = $3;
-							$new_line .= $1. "$eta_matrix->[$id]->[$eta_index]";
-						}
-						push(@{$code_block}, $new_line.$line);
-					}
-					$copy->set_records(type => 'error', record_strings => $code_block);
-				}
-			} else {
-				#fix thetas to new values
-
-				my @theta_inits;
-				for (my $j; $j<$number_of_etas; $j++){
-					push(@theta_inits,$eta_matrix->[$id]->[$j]);
-				}
-				$copy -> initial_values( parameter_type => 'theta',
-					parameter_numbers => [[1..$number_of_etas]], 
-					new_values => [\@theta_inits]) ;
-
 			}
 
-      #Temporary for Paul 2008-09-26
-      #Add IGNORE(ID.GT.X) to $DATA
-      if (defined $self->ignore_individuals_above && $self->ignore_individuals_above > 0) {
-				my $ignore_string='(ID.GT.'.$self->ignore_individuals_above.')';
-				$copy -> add_option( record_name => 'data',
-			     option_name => 'IGNORE',
-			     option_value => $ignore_string );
-      }
+		} else {
+			#fix thetas to new values
+			
+			my @theta_inits;
+			for (my $j; $j<$number_of_etas; $j++){
+				push(@theta_inits,$eta_matrix->[$id]->[$j]);
+			}
+			$copy -> initial_values( parameter_type => 'theta',
+									 parameter_numbers => [[1..$number_of_etas]], 
+									 new_values => [\@theta_inits]) ;
+			
+		}
 
-      #2.2.2 Add DATA=(ID) to $CONTR
-      $copy -> add_records( type => 'contr',
-			    record_strings => ['DATA=(ID)'] );
-      
-      #2.2.3 Add custom CONTR routine, that prints individual ofv-values to fort.80, to $SUBROUTINE
-      #first check if have $SUBROUTINE
-      my $record_ref = $copy -> record(record_name => 'subroutine' );
-			if ( scalar(@{$record_ref}) > 0 ){ 
-				$copy -> add_option( record_name => 'subroutine',
-					option_name => 'CONTR',
-					option_value => 'iofvcont.f' );
-			} else {
-				$copy -> add_records( type => 'subroutine',
-					record_strings => ['CONTR=iofvcont.f'] );
-      }
-      
-      $copy -> extra_output( ['fort.80'] );
- 
-      #2.2.4 fix omegas to 0
-      #values are already fixed from previous model, but we'll do it again
-      #inc case code above is ever changed
-      $copy -> initial_values( parameter_type => 'omega',
-			       parameter_numbers => [[1 .. $number_of_omegas]],
-			       new_values => [[(0) x $number_of_omegas]] );
-      $copy -> fixed( parameter_type => 'omega',
-		      new_values => [[(1) x $number_of_omegas ]] );
+		#Temporary for Paul 2008-09-26
+		#Add IGNORE(ID.GT.X) to $DATA
+		if (defined $self->ignore_individuals_above && $self->ignore_individuals_above > 0) {
+			my $ignore_string='(ID.GT.'.$self->ignore_individuals_above.')';
+			$copy -> add_option( record_name => 'data',
+								 option_name => 'IGNORE',
+								 option_value => $ignore_string );
+		}
 
-      #2.2.5 remove $TABLE and $NONPARAMETRIC 
-      $copy -> remove_records( type => 'table' );
-      $copy -> remove_records( type => 'nonparametric' );
+		#2.2.2 Add DATA=(ID) to $CONTR
+		$copy -> add_records( type => 'contr',
+							  record_strings => ['DATA=(ID)'] );
+		
+		#2.2.3 Add custom CONTR routine, that prints individual ofv-values to fort.80, to $SUBROUTINE
+		#first check if have $SUBROUTINE
+		my $record_ref = $copy -> record(record_name => 'subroutine' );
+		if ( scalar(@{$record_ref}) > 0 ){ 
+			$copy -> add_option( record_name => 'subroutine',
+								 option_name => 'CONTR',
+								 option_value => 'iofvcont.f' );
+		} else {
+			$copy -> add_records( type => 'subroutine',
+								  record_strings => ['CONTR=iofvcont.f'] );
+		}
+		
+		$copy -> extra_output( ['fort.80'] );
+		
+		#2.2.4 fix omegas to 0
+		#values are already fixed from previous model, but we'll do it again
+		#inc case code above is ever changed
+		$copy -> initial_values( parameter_type => 'omega',
+								 parameter_numbers => [[1 .. $number_of_omegas]],
+								 new_values => [[(0) x $number_of_omegas]] );
+		$copy -> fixed( parameter_type => 'omega',
+						new_values => [[(1) x $number_of_omegas ]] );
 
-      #2.2.6 set MAXEVALS=0 (might be done already)
-      #can we assume there is an estimation record????
-      $copy -> set_option(record_name => 'estimation',
-			  option_name => 'MAXEVALS',
-			  fuzzy_match => 1,
-			  option_value => '0');
-      
-      $copy -> _write;
-      
-      push( @new_ofv_models, $copy );
+		#2.2.5 remove $TABLE and $NONPARAMETRIC 
+		$copy -> remove_records( type => 'table' );
+		$copy -> remove_records( type => 'nonparametric' );
+
+		#2.2.6 set MAXEVALS=0 (might be done already)
+		#can we assume there is an estimation record????
+		$copy -> set_maxeval_zero(need_ofv => 1);
+		
+		$copy -> _write;
+		
+		push( @new_ofv_models, $copy );
     }
     
 	return \@new_ofv_models;
