@@ -1416,6 +1416,17 @@ sub create_R_plots_code{
 		push(@residual_files,$iwres_file);
 		push(@residual_names,'IWRES');
 	}
+
+	my @vpctabs=();
+	foreach my $filename (@{$self->vpctab_filenames}){
+		push(@vpctabs,rplots::double_backslashes(string => $filename));
+	}
+	my @vpcresults=();
+		
+	foreach my $filename (@{$self->vpc_result_files}){
+		push(@vpcresults,rplots::double_backslashes(string => $filename));
+	}
+
 	
 	$rplot->add_preamble(code => [
 							 '#simeval-specific preamble',
@@ -1435,8 +1446,8 @@ sub create_R_plots_code{
 							 'all.eta.numbers <-  c('.join(',',@all_eta_numbers).')',
 							 $iiv_eta,
 							 $iov_eta,
-							 "vpctab.filenames <-  c('".join("','",@{$self->vpctab_filenames})."')",
-							 "vpc.result.files <-  c('".join("','",@{$self->vpc_result_files})."')",
+							 "vpctab.filenames <-  c('".join("','",@vpctabs)."')",
+							 "vpc.result.files <-  c('".join("','",@vpcresults)."')",
 							 "vpc.names <-  c('".join("','",@{$self->vpc_names})."')",
 						 ]);
 

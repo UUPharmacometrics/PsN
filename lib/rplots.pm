@@ -116,14 +116,10 @@ sub setup
 	}
 
 	my $workingdirectory = $self->directory;
-
-	if ($Config{osname} eq 'MSWin32'){
-		#replace \ in path with /
-		$workingdirectory =~ s/\\/\//g;
-		$dir =~ s/\\/\//g;
-	}
-
-
+	#Replace single backslash with double, assume windows, but do not change if already double
+	$workingdirectory = double_backslashes(string => $workingdirectory);
+	$dir = double_backslashes(string => $dir);
+	
 
 	my @arr =(
 		 'rplots.level <- '.$levelstring,
@@ -183,6 +179,18 @@ sub setup
 
 	$self->standard_preamble(\@arr);
 
+
+}
+
+sub double_backslashes{
+	my %parm = validated_hash(\@_,
+							  string => { isa => 'Str', optional => 0 }
+		);
+	my $string = $parm{'string'};
+
+	#lookbehind and lookahead. Replace single backslash with double, but do not change if already double
+	$string =~ s/(?<!\\)\\(?!\\)/\\/g;
+	return $string;
 
 }
 
