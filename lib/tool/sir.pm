@@ -1912,10 +1912,12 @@ sub setup_block_posdef_check
 							  block_number => { isa => 'ArrayRef', optional => 0 },
 							  choleskyform =>{isa => 'ArrayRef', optional => 0},
 							  coords => { isa => 'ArrayRef', optional => 0 },
+							  param => { isa => 'ArrayRef', optional => 0 },
 		);
 	my $block_number = $parm{'block_number'};
 	my $choleskyform = $parm{'choleskyform'};
 	my $coords = $parm{'coords'};
+	my $param = $parm{'param'};
 	
 	my $dim = scalar(@{$coords});
 
@@ -1924,6 +1926,9 @@ sub setup_block_posdef_check
 	}
 	unless (scalar(@{$block_number})==$dim){
 		croak("Input error setup_block_posdef_check: sim $dim block_number has dimension ".scalar(@{$block_number}));
+	}
+	unless (scalar(@{$param})==$dim){
+		croak("Input error setup_block_posdef_check: sim $dim param has dimension ".scalar(@{$param}));
 	}
 
 	my @blockarrays=();
@@ -1999,7 +2004,9 @@ sub setup_block_posdef_check
 
 			#if this is last i of a block
 			if ( ($i==($dim-1)) or 
-				 ($block_number->[$i] != $block_number->[$i+1])){
+				 ($block_number->[$i] != $block_number->[$i+1]) or
+				 ($param->[$i] ne $param->[$i+1])
+				){
 				unless ($prev_localrow == $prev_localcol){
 					croak("last item in block but not diagonal $prev_localrow , $prev_localcol coords ".$coords->[$i]);
 				}
@@ -2151,7 +2158,8 @@ sub sample_multivariate_normal
 	
 	my $block_check_array = setup_block_posdef_check(block_number => $block_number,
 													 choleskyform => $choleskyform,
-													 coords => $coords);
+													 coords => $coords,
+													 param => $param);
 
 	my $cholesky_block_array;
 	if ($check_cholesky_reparameterization){

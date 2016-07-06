@@ -63,7 +63,8 @@ my $hash = output::get_nonmem_parameters(output => $output);
 
 my $arr = tool::sir::setup_block_posdef_check(block_number => $hash->{'block_number'},
 											  choleskyform => $hash->{'choleskyform'},
-											  coords => $hash->{'coords'});
+											  coords => $hash->{'coords'},
+											  param => $hash->{'param'});
 is(scalar(@{$arr}),0,'setup block posdef count 3');
 
 
@@ -280,6 +281,23 @@ my $matlab_base = 4.465034382516543e+06;
 cmp_ok(abs($base-$matlab_base),'<',0.00000001,'base diff to matlab');
 
 
+#HERE
+
+$arr = tool::sir::setup_block_posdef_check(block_number => [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,0],
+										   choleskyform => [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+										   coords => ['1','2','3','4','7','8','9','11','12','1,1','2,2','3,3','4,4','5,5','6,6','8,8',
+													  '9,8','9,9','1,1','2,1','2,2','3,3'],
+										   param => ['theta','theta','theta','theta','theta','theta','theta','theta','theta','omega',
+													 'omega','omega','omega','omega','omega','omega','omega','omega','sigma','sigma',
+													 'sigma','sigma']);
+
+is(scalar(@{$arr}),2,'setup block posdef count 2b');
+is($arr->[0]->{'size'},2,'setup block posdef size 2b 1');
+is_deeply($arr->[0]->{'indices'},[15,16,17],'setup block posdef indices 2b 1');
+is($arr->[1]->{'size'},2,'setup block posdef size 2b 2');
+is_deeply($arr->[1]->{'indices'},[18,19,20],'setup block posdef indices 2b 2');
+
+
 $dir = $includes::testfiledir . "/";
 $file = 'mox_sir.lst';
 $output= output->new (filename => $dir . $file);
@@ -288,8 +306,9 @@ $hash = output::get_nonmem_parameters(output => $output);
 $icm = tool::sir::get_nonmem_inverse_covmatrix(output => $output);
 
 $arr = tool::sir::setup_block_posdef_check(block_number => $hash->{'block_number'},
-											  choleskyform => $hash->{'choleskyform'},
-											  coords => $hash->{'coords'});
+										   choleskyform => $hash->{'choleskyform'},
+										   coords => $hash->{'coords'},
+										   param => $hash->{'param'});
 is(scalar(@{$arr}),0,'setup block posdef count 2');
 
 
@@ -404,7 +423,8 @@ $hash = output::get_nonmem_parameters(output => $output);
 
 $arr = tool::sir::setup_block_posdef_check(block_number => $hash->{'block_number'},
 											  choleskyform => $hash->{'choleskyform'},
-											  coords => $hash->{'coords'});
+											  coords => $hash->{'coords'},
+										   param => $hash->{'param'});
 is(scalar(@{$arr}),1,'setup block posdef count');
 is($arr->[0]->{'size'},2,'setup block posdef size');
 is_deeply($arr->[0]->{'indices'},[6,7,8],'setup block posdef indices');
@@ -513,7 +533,9 @@ is(($sampleorder[0]+$sampleorder[1]+$sampleorder[2]),6,'do_resampling sampleorde
 
 $arr = tool::sir::setup_block_posdef_check(block_number => [0,0,1,2,2,2,2,2,3,3,3,4,4],
 											  choleskyform => [0,0,0,0,0,0,0,0,0,0,0,0,0],
-											  coords => ['1','2','1,1','2,2','3,2','3,3','4,3','4,4','5,5','6,5','6,6','7,7','8,8']);
+											  coords => ['1','2','1,1','2,2','3,2','3,3','4,3','4,4','5,5','6,5','6,6','7,7','8,8'],
+											  param => ['theta','theta','omega','omega','omega','omega','omega','omega','omega','omega','omega','omega','omega'],
+);
 is(scalar(@{$arr}),2,'setup block posdef count 4');
 is($arr->[0]->{'size'},3,'setup block posdef size 4');
 is($arr->[1]->{'size'},2,'setup block posdef size 5');
@@ -522,7 +544,8 @@ is_deeply($arr->[1]->{'indices'},[8,9,10],'setup block posdef indices 5');
 
 $arr = tool::sir::setup_block_posdef_check(   block_number => [0,0,1,2,2,2,2,2,3,3,3,4,4],
 											  choleskyform => [0,0,0,0,0,0,0,0,1,1,1,0,0],
-											  coords => ['1','2','1,1','2,2','3,2','3,3','4,3','4,4','5,5','6,5','6,6','7,7','8,8']);
+											  coords => ['1','2','1,1','2,2','3,2','3,3','4,3','4,4','5,5','6,5','6,6','7,7','8,8'],
+											  param => ['theta','theta','omega','omega','omega','omega','omega','omega','omega','omega','omega','omega','omega']);
 is(scalar(@{$arr}),1,'setup block posdef count 5');
 is($arr->[0]->{'size'},3,'setup block posdef size 6');
 is_deeply($arr->[0]->{'indices'},[3,4,5,-1,6,7],'setup block posdef indices 5');

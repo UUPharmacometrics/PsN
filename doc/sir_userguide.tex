@@ -1,5 +1,5 @@
 \input{inputs/format_header.tex}
-\guidetitle{SIR user guide}{2016-05-10}
+\guidetitle{SIR user guide}{2016-07-06}
 \usepackage{amsmath}
 
 \begin{document}
@@ -185,6 +185,7 @@ before the parameter vectors
 are sampled from the truncated multivariate normal distribution.
 The weights will also be computed based the inflated covariance matrix. 
 Inflation is not used in any but the first iteration.
+Inflation is always performed so that correlations in the covariance matrix are unchanged.
 \nextopt
 \optdefault{omega\_inflation}{X}
 Either a positive vector with length equal to the number of \emph{estimated} (not FIX) 
