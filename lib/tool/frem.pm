@@ -357,7 +357,7 @@ sub get_post_processing_data
 			croak("Neither PK or PRED defined in post-processing model");
 		}
 	}
-
+#FIXME handle mu-modeling, read rescale from cov-comment
 	
 	#get $ncov from code
 	my $starttag = ';;;FREM CODE BEGIN';
