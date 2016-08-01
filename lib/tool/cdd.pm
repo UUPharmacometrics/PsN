@@ -1309,7 +1309,7 @@ sub update_raw_results
 	open( RRES, '>',$dir.$file );
 
 	chomp( $rres[0] );
-	print RRES $rres[0] . ",cook.scores,jackknife.cook.scores,cov.ratios,outside.n.sd,cdd.delta.ofv,".
+	print RRES $rres[0] . ',"cook.scores","jackknife.cook.scores","cov.ratios","outside.n.sd","cdd.delta.ofv",'.
 		join(',',@{$self->labels_parameter_cook_scores})."\n";
 	my @origparameter = (0) x scalar(@{$self->labels_parameter_cook_scores});
 	chomp( $rres[1] );
