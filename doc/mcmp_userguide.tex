@@ -15,8 +15,10 @@ and aims to provide a fast and accurate prediction of the power and sample size
 relationship without any need for adjustment of the significance criterion.
 The principle of the method is as follows:
 \begin{enumerate}
-\item a large dataset (e.g. 1000 individuals) is simulated with a full model, or a separate simulation model if model misspecification will be taken into account.
-\item the full and reduced models are re-estimated with this data set
+\item a large dataset (e.g. 1000 individuals) is simulated with a full model, or a separate simulation model if model misspecification will be taken into account. Note: PsN will run the simulation, and attempt to automatically convert the full model to a simulation model if
+the full model is to be used for simulation, but the simulated data set will have the same size as the data set given in
+\$DATA of the simulation/full model. No individuals will be added by PsN. 
+\item the full and reduced models are re-estimated with the simulated data set
 \item $iOFV$:s are extracted from the NONMEM .phi-files, and for each subject the difference in $iOFV$ between the full and reduced model is computed ($\Delta iOFV$)
 \item $\Delta iOFV$:s are sampled according to the design for which power is to be calculated and a starting sample size (N)
 \item the $\Delta iOFV$ sum for each sample is calculated ($\sum_i{\Delta iOFV}$) 
@@ -25,10 +27,6 @@ The principle of the method is as follows:
 is taken as the power for sample size N, 
 \item steps 4-7 are repeated with increasing N to provide the power at all sample sizes of interest.
 \end{enumerate}
-
-\noindent NB: The user must ensure that there are enough subjects in the data set used as input for the simulation in step 1. PsN will not
-add subjects to the given data.
-
 
 \section{Input and options}
 
