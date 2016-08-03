@@ -2099,7 +2099,7 @@ sub prepare_results
 				  my ($s, $l) = split(/,/, $self->raw_line_structure -> {1+ $sample} -> {'ofv'});
 				  if( $s ne '' and ($s != 0)){
 					  $org_ofv = $self -> raw_results -> [$sample][$start];
-					  next if ($org_ofv == 0);
+					  next if ((not defined $org_ofv) or ($org_ofv == 0));
 				  }else {
 					  next; #sample
 				  }
