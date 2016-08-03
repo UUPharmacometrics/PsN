@@ -1550,12 +1550,12 @@ sub nsigmas
 		 with_correlations => { isa => 'Bool', default => 0, optional => 1 },
 		 with_same => { isa => 'Bool', default => 1, optional => 1 }
 	);
-	my $nsigmas;
+	my $nsigmas=0;
 	my $with_correlations = $parm{'with_correlations'};
 	my $with_same = $parm{'with_same'};
 
 	my $prev = undef;
-	$self->sigmas([]) unless defined $self->sigmas;
+	return 0 unless defined $self->sigmas;
 	foreach my $sigma ( @{$self->sigmas} ) {
 		my $size = $sigma -> size;
 		my $type = $sigma -> type;

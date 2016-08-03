@@ -17,6 +17,9 @@ my $modeldir = $includes::testfiledir;
 
 my $model = model->new(filename => "$modeldir/scm/pheno_ignore.mod", ignore_missing_data => 1);
 
+is_deeply($model->nomegas(problem_numbers => [1], with_correlations => 1),[2],'nomegas 1');
+is_deeply($model->nsigmas(problem_numbers => [1], with_correlations => 1),[1],'nsigmas 1');
+
 is($model->need_data_filtering,1,'need data filtering 1');
 # 2 theta 2 omega 1 sigma default METH
 is($model->get_option_value(record_name => 'sizes',option_name => 'LTH',fuzzy_match => 0),undef,'input SIZES LTH');
@@ -74,7 +77,8 @@ is($model->get_option_value(record_name => 'sizes',option_name => 'LVR',fuzzy_ma
 is($model->get_option_value(record_name => 'sizes',option_name => 'LVR2',fuzzy_match => 0),32,'next 3 SIZES LVR2');
 is($model->get_option_value(record_name => 'sizes',option_name => 'PD',fuzzy_match => 0),undef,'next 3 SIZES PD');
 
-
+$model->remove_records(type => 'sigma',problem_numbers => [1]);
+is_deeply($model->nsigmas(problem_numbers => [1], with_correlations => 1),[0],'nsigmas 2');
 
 $model = model->new(filename => "$modeldir/warfarin_saem_noest.mod", ignore_missing_data => 1);
 
