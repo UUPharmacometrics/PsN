@@ -1,5 +1,5 @@
 \input{inputs/format_header.tex}
-\guidetitle{MCMP user guide}{2016-10-16}
+\guidetitle{MCMP user guide}{2016-08-03}
 
 
 \begin{document}
@@ -26,12 +26,16 @@ is taken as the power for sample size N,
 \item steps 4-7 are repeated with increasing N to provide the power at all sample sizes of interest.
 \end{enumerate}
 
-Example\\
-\begin{verbatim}
-mcmp -full_model=mod1.mod -stratify_on=DOSE -reduced_model=mod2.mod -seed=123
-\end{verbatim}
+\noindent NB: The user must ensure that there are enough subjects in the data set used as input for the simulation in step 1. PsN will not
+add subjects to the given data.
+
 
 \section{Input and options}
+
+\noindent Example command
+\begin{verbatim}
+mcmp -simulation_model=sim.mod -full_model=mod1.mod -reduced_model=mod2.mod 
+\end{verbatim}
 
 \subsection{Mcmp-specific input}
 \begin{optionlist}
