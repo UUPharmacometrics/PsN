@@ -2,7 +2,7 @@
 \setlength{\evensidemargin}{0pt}
 \setlength{\oddsidemargin}{0pt}
 
-\guidetitle{update\_inits user guide}{2016-04-25}
+\guidetitle{update\_inits user guide}{2016-08-04}
 
 \begin{document}
 
@@ -33,19 +33,184 @@ The command \verb|update| can be used as a synonym to \verb|update_inits|.
 update_inits run1.mod run1abc.lst -output_model=run2.mod
 \end{verbatim}
 Note: Option -output\_model can be abbreviated to -out.
-\item Modify file run33.mod and copy original to run33.mod.org. This assumes that run33.lst exists.
-\begin{verbatim}
-update_inits run33.mod
-\end{verbatim}
 \item Update a copy of run22.mod and call the new file run23.mod. This assumes that run22.lst exists.
 \begin{verbatim}
 update_inits run22.mod -out=run23.mod
+\end{verbatim}
+\item Use parameter estimates from a raw results file instead of a lst-file:
+\begin{verbatim}
+update run3.mod -rawres_input=retries.csv -in_filter=model.eq.7 -out=run4.mod
 \end{verbatim}
 \item Use parameters estimates from a model file instead of a lst-file:
 \begin{verbatim}
 update run3.mod -from_model=run4.mod -out=run6.mod
 \end{verbatim}
 \end{itemize}
+
+\section{Input and options}
+
+\subsection{Required input}
+The name of a model file (control stream file) is required on the command-line.
+
+\subsection{Optional input}
+\begin{itemize}
+\item The name of the lst-file to read final estimates from is optional. It is given directly on 
+the command-line \emph{after the model file} without an option name.
+Cannot be used together with option -from\_model or -rawres\_input. 
+If neither a lst-file, -rawres\_input or -from\_model is given, 
+update\_inits will search for a lst-file with the same file stem as the model file, 
+but with extension lst.
+\end{itemize}
+\begin{optionlist}
+\optdefault{output\_model}{filename}
+The name of the model file to create. If this options is omitted, a copy of
+the original model file with extension .org is created, and 
+the original file is modified.
+\nextopt
+\optname{ignore\_missing\_parameters}
+Default not set. If set, update\_inits will not require 
+a 1-to-1 matching of parameter names and indexes between the model to update and the source
+of new estimates (lst-file or other model file).
+\nextopt
+\optdefault{from\_model}{filename}
+The name of a model file to copy initial estimates from. 
+Cannot be used together with a named lst-file on the command-line or -rawres\_input.
+\nextopt
+\optdefault{rawres\_input}{filename}
+The name of a raw results file to read parameter estimates from. 
+Cannot be used together with a named lst-file on the command-line or -from\_model.
+The first line in the file after -offset\_rawres that passes the in\_filter criteria
+will be used when updating initial estimates.
+\optdefault{offset\_rawres}{N}
+Only relevant in combination with rawres\_input. Default 0.
+The number of lines to skip in the input raw results file
+before reading final parameter estimates.
+\optdefault{in\_filter}{list of conditions}
+Only relevant in combination with rawres\_input. Default not used.
+The parameter estimates lines in the file can be filtered on values 
+in the different columns. When specifying which column(s) the filtering 
+should be based on, the exact column name must be used, 
+e.g. minimization\_successful. Filtering can only be based on columns 
+with numeric values. The allowed relations are .gt. (greater than), 
+.lt. (less than) and .eq. (equal to). Conditions are separated with commas. 
+    
+Example: -in\_filter=model.eq.2
+\optdefault{cholesky}{<categories>|<record list>|inverse}
+Default not set.
+If set, update\_inits will use cholesky reparameterization to replace the requested
+\$SIGMA and \$OMEGA with FIXED identity matrices and a set of THETAs for estimation
+of standard deviations and (for blocks only) correlations, OR, if -cholesky=inverse is set,
+back-transformation of a previously reparameterized model will be performed. See details and
+examples in section Cholesky reparameterization.
+\nextopt
+\optdefault{correlation\_cutoff}{number}
+Default 0. Ignored unless option -cholesky is set. Value range 0-1.
+If, during cholesky reparameterization, the absolute value of a correlation 
+in a block \$OMEGA or \$SIGMA is lower than or equal to this cutoff, then set
+the \$THETA for estimation of this correlation to 0 FIX.
+\nextopt
+\optname{bounded\_theta}
+Default set. Ignored unless option -cholesky is set. 
+If the option is set, then the standard deviations and correlations will be equal to bounded untransformed THETAs.
+If the option is unset with -no-bounded\_theta, the THETAs introduced during Cholesky reparameterization
+will be unbounded (natural logarithm of standard deviation, logit of shifted and scaled correlation),
+and transformations will be used to restrict standard deviations to positive values
+and correlations between -1 and 1.
+\nextopt
+\optdefault{comment}{text}
+If the option is used, a new line with <comment> will be inserted 
+directly following the \$PROBLEM row.
+The comment text must be enclosed with quotes (double quotes on Windows) 
+if it contains spaces.
+\nextopt
+\optdefault{degree}{fraction}
+Default not set. 
+After updating the initial estimates in the output file, randomly
+perturb them by degree=X, i.e. change estimate to a value
+randomly chosen in the range estimate +/- estimate*X while
+respecting upper and lower boundaries, if set.
+Degree is set to 0.1 when tweak\_inits is set in execute.
+\nextopt
+\optname{add\_tags}
+Add all runrecord tags. update\_inits will not check if any tags 
+are already present.
+\nextopt
+\optname{ensure\_posdef}
+By default not set. 
+NONMEM sometimes prints OMEGA or SIGMA matrices
+in the lst-file which are not positive definite, and the 
+ensure\_posdef option offers a way to fix this.
+If option is set then PsN will make a cholesky decomposition of
+each OMEGA and SIGMA block to check positive definiteness, and,if the cholesky fails,
+inflate the diagonal elements of the block with 5\% before updating the model.
+\nextopt
+\optname{flip\_comments}
+Default not set. Between each pair of tag lines
+\begin{verbatim}
+;Sim_start
+\end{verbatim}
+and
+\begin{verbatim}
+;Sim_end
+\end{verbatim}
+remove the first ; on each line that has ; as the first non-blank
+character, and prepend with ; at each line that does not
+have a ; as the first non-blank character.
+This processing will be done as the very first step, which means lines
+that are commented out by this procedure will not be updated in the following steps.
+\nextopt
+\optdefault{add\_prior}{df1,df2,...}
+Default not used. Add \$PRIOR NWPRI based on output object. Will automatically read
+estimates and covariances from output and use them to define the 
+prior. df should be the degrees of freedom, a comma-separated list
+with one integer per omega block.
+This feature is highly experimental, and you must check \$PRIOR 
+in the new model file manually before using it.
+Option -add\_prior cannot be used together with option -from\_model. 
+Also note that the informative record names \$THETAP, \$THETAPV etc are used,
+so the resulting model can only be run with a NONMEM version that 
+supports this.
+\nextopt
+\optdefault{seed}{string}
+The random seed for pertubation if option -degree is set.
+\nextopt
+\optdefault{nm\_version}{string}
+Default is 'default'. The formatting of the initial estimates will depend on the
+major version number of NONMEM (e.g. 6 or 7) set in psn.conf for the
+NM version chosen.
+\nextopt
+\optdefault{based\_on}{integer}
+If the -based\_on option is used, update\_inits will set 
+the runrecord 'Based on' tag (if present, or if option -add\_tags is used) 
+to that number. 
+If -based\_on is not used, update\_inits will by default try to extract 
+a run number from the original model file name and use that instead.
+If a number cannot be extracted then nothing will be set. 
+\nextopt
+\optdefault{renumber}{new number}
+See details in section Renumbering.
+Set option -renumber=0 to prevent automatic renumbering.
+\nextopt
+\optname{update\_fix}
+Default false. If set, update\_inits will update parameters that are FIX in the model.
+\nextopt
+\optname{fix\_thetas}
+Default false. If set, update\_inits will set all THETAs that are not part of a prior to FIX.
+\nextopt
+\optname{unfix\_thetas}
+Default false. If set, update\_inits will remove FIX, if set, from all THETAs that are not part of a prior.
+\nextopt
+\optname{silent}
+Default not set. If set, all log messages from PsN are suppressed.
+\nextopt
+\optdefault{sigdig}{integer}
+Default not set.
+Only has effect with NONMEM7 and later and if set to a number <15. 
+Print parameter
+estimates with this many significant digits in the new model file,
+with either scientific or decimal notation depending on which is more compact.
+\nextopt
+\end{optionlist}
 
 \section{Renumbering}
 \subsubsection*{Input run number for 'Based on' tag}
@@ -250,150 +415,5 @@ Similarly, if we have a matrix that is \emph{close} to singular, as in
 then we will get division by a very small number in one of the CH factors,
 which will give a very large multiplier for an ETA, which can lead to numerical problems.
 
-\section{Input and options}
-
-\subsection{Required input}
-The name of a model file (control stream file) is required on the command-line.
-
-\subsection{Optional input}
-\begin{itemize}
-\item The name of the lst-file to read final estimates from. It is given directly on 
-the command-line \emph{after the model file} without an option name.
-Cannot be used together with option -from\_model. 
-If neither a lst-file or -from\_model is given, 
-update\_inits will search for a lst-file with the same file stem as the model file, 
-but with extension lst.
-\end{itemize}
-\begin{optionlist}
-\optdefault{output\_model}{filename}
-The name of the model file to create. If this options is omitted, a copy of
-the original model file with extension .org is created, and 
-the original file is modified.
-\nextopt
-\optname{ignore\_missing\_parameters}
-Default not set. If set, update\_inits will not require 
-a 1-to-1 matching of parameter names and indexes between the model to update and the source
-of new estimates (lst-file or other model file).
-\nextopt
-\optdefault{from\_model}{filename}
-The name of a model file to copy initial estimates from. 
-Cannot be used together with a named lst-file on the command-line.
-\nextopt
-\optdefault{cholesky}{<categories>|<record list>|inverse}
-Default not set.
-If set, update\_inits will use cholesky reparameterization to replace the requested
-\$SIGMA and \$OMEGA with FIXED identity matrices and a set of THETAs for estimation
-of standard deviations and (for blocks only) correlations, OR, if -cholesky=inverse is set,
-back-transformation of a previously reparameterized model will be performed. See details and
-examples in section Cholesky reparameterization.
-\nextopt
-\optdefault{correlation\_cutoff}{number}
-Default 0. Ignored unless option -cholesky is set. Value range 0-1.
-If, during cholesky reparameterization, the absolute value of a correlation 
-in a block \$OMEGA or \$SIGMA is lower than or equal to this cutoff, then set
-the \$THETA for estimation of this correlation to 0 FIX.
-\nextopt
-\optname{bounded\_theta}
-Default set. Ignored unless option -cholesky is set. 
-If the option is set, then the standard deviations and correlations will be equal to bounded untransformed THETAs.
-If the option is unset with -no-bounded\_theta, the THETAs introduced during Cholesky reparameterization
-will be unbounded (natural logarithm of standard deviation, logit of shifted and scaled correlation),
-and transformations will be used to restrict standard deviations to positive values
-and correlations between -1 and 1.
-\nextopt
-\optdefault{comment}{text}
-If the option is used, a new line with <comment> will be inserted 
-directly following the \$PROBLEM row.
-The comment text must be enclosed with quotes (double quotes on Windows) 
-if it contains spaces.
-\nextopt
-\optdefault{degree}{fraction}
-Default not set. 
-After updating the initial estimates in the output file, randomly
-perturb them by degree=X, i.e. change estimate to a value
-randomly chosen in the range estimate +/- estimate*X while
-respecting upper and lower boundaries, if set.
-Degree is set to 0.1 when tweak\_inits is set in execute.
-\nextopt
-\optname{add\_tags}
-Add all runrecord tags. update\_inits will not check if any tags 
-are already present.
-\nextopt
-\optname{ensure\_posdef}
-By default not set. 
-NONMEM sometimes prints OMEGA or SIGMA matrices
-in the lst-file which are not positive definite, and the 
-ensure\_posdef option offers a way to fix this.
-If option is set then PsN will make a cholesky decomposition of
-each OMEGA and SIGMA block to check positive definiteness, and,if the cholesky fails,
-inflate the diagonal elements of the block with 5\% before updating the model.
-\nextopt
-\optname{flip\_comments}
-Default not set. Between each pair of tag lines
-\begin{verbatim}
-;Sim_start
-\end{verbatim}
-and
-\begin{verbatim}
-;Sim_end
-\end{verbatim}
-remove the first ; on each line that has ; as the first non-blank
-character, and prepend with ; at each line that does not
-have a ; as the first non-blank character.
-This processing will be done as the very first step, which means lines
-that are commented out by this procedure will not be updated in the following steps.
-\nextopt
-\optdefault{add\_prior}{df1,df2,...}
-Default not used. Add \$PRIOR NWPRI based on output object. Will automatically read
-estimates and covariances from output and use them to define the 
-prior. df should be the degrees of freedom, a comma-separated list
-with one integer per omega block.
-This feature is highly experimental, and you must check \$PRIOR 
-in the new model file manually before using it.
-Option -add\_prior cannot be used together with option -from\_model. 
-Also note that the informative record names \$THETAP, \$THETAPV etc are used,
-so the resulting model can only be run with a NONMEM version that 
-supports this.
-\nextopt
-\optdefault{seed}{string}
-The random seed for pertubation if option -degree is set.
-\nextopt
-\optdefault{nm\_version}{string}
-Default is 'default'. The formatting of the initial estimates will depend on the
-major version number of NONMEM (e.g. 6 or 7) set in psn.conf for the
-NM version chosen.
-\nextopt
-\optdefault{based\_on}{integer}
-If the -based\_on option is used, update\_inits will set 
-the runrecord 'Based on' tag (if present, or if option -add\_tags is used) 
-to that number. 
-If -based\_on is not used, update\_inits will by default try to extract 
-a run number from the original model file name and use that instead.
-If a number cannot be extracted then nothing will be set. 
-\nextopt
-\optdefault{renumber}{new number}
-See details in section Renumbering.
-Set option -renumber=0 to prevent automatic renumbering.
-\nextopt
-\optname{update\_fix}
-Default false. If set, update\_inits will update parameters that are FIX in the model.
-\nextopt
-\optname{fix\_thetas}
-Default false. If set, update\_inits will set all THETAs that are not part of a prior to FIX.
-\nextopt
-\optname{unfix\_thetas}
-Default false. If set, update\_inits will remove FIX, if set, from all THETAs that are not part of a prior.
-\nextopt
-\optname{silent}
-Default not set. If set, all log messages from PsN are suppressed.
-\nextopt
-\optdefault{sigdig}{integer}
-Default not set.
-Only has effect with NONMEM7 and later and if set to a number <15. 
-Print parameter
-estimates with this many significant digits in the new model file,
-with either scientific or decimal notation depending on which is more compact.
-\nextopt
-\end{optionlist}
 
 \end{document}

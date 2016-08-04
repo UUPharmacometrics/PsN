@@ -58,6 +58,9 @@ my %optional_options = (
 	"fix_thetas" => undef,
  	"unfix_thetas" => undef,
  	"silent" => undef,
+	'rawres_input:s' => undef,
+	'offset_rawres:i' => undef,
+	'in_filter:s' => undef
 	);
 
 my $res = GetOptions( \%options,
@@ -125,6 +128,34 @@ $help_text{-output_model} = <<'EOF';
     The name of the model file to create. If this options is omitted, a copy of
 	the original model file with extension .org is created, and the original 
 	file is modified.
+EOF
+
+$help_text{-rawres_input} = <<'EOF';
+      -rawres_input=filename
+
+      The name of a raw results file to read parameter estimates from. 
+      The first line in the file after offset_rawres that passes the in_filter criteria
+      will be used when updating initial estimates.
+EOF
+$help_text{-offset_rawres} = <<'EOF';
+      -offset_rawres=N
+
+      Only relevant in combination with rawres_input. Default 0.
+      The number of result lines to skip in the input raw results file
+      before reading final parameter estimates.
+EOF
+$help_text{-in_filter} = <<'EOF';
+      -in_filter=comma-separated list of conditions
+
+      Only relevant in combination with rawres_input. Default not used.
+      The parameter estimates lines in the file can be filtered on values 
+      in the different columns. When specifying which column(s) the filtering 
+      should be based on, the exact column name must be used, 
+      e.g. minimization_successful. Filtering can only be based on columns 
+      with numeric values. The allowed relations are .gt. (greater than), 
+      .lt. (less than) and .eq. (equal to). Conditions are separated with commas. 
+    
+      Example: -in_filter=model.eq.2
 EOF
 
 $help_text{-ignore_missing_parameters} = <<'EOF';
@@ -234,7 +265,7 @@ $help_text{-from_model} = <<'EOF';
 	Default not used
 
     The name of a model file to copy initial estimates from, instead of a lst-file. 
-	Cannot be used together with a named lst-file on the command-line.
+	Cannot be used together with a named lst-file or rawres_input on the command-line.
 EOF
 
 $help_text{-comment} = <<'EOF';
@@ -397,17 +428,19 @@ if (defined $options{'renumber'}) {
 	}  
 }
 
+my $sources=0;
+$sources++ if ($ARGV[1]);
+$sources++ if (defined $options{'from_model'});
+$sources++ if (defined $options{'rawres_input'});
 
-if( $ARGV[1] && $options{'from_model'}){
-	die "Ambiguous input: Cannot specify both lst-file and from_model.\n";
+if( $sources > 1){
+	die "Ambiguous input: Can only specify one of lst-file, rawres_input or from_model.\n";
 }
 
 if( $options{'add_prior'})  {
 	push(@record_list,'PRI');
 	die "Cannot specify both -add_prior and -from_model.\n" if($options{'from_model'});
 }
-
-
 
 my $ignore_missing_files=1;
 $ignore_missing_files = 0 unless ( $ARGV[1] );
@@ -439,6 +472,47 @@ if ($mismatch){
 			  " does not match previous \$EST MSFO. Check results carefully.\n");
 }
 
+my $rawres_params_arr;
+if( defined $options{'rawres_input'})  {
+	die "No such file: ".$options{'rawres_input'}."\n" unless (-e $options{'rawres_input'});
+	my $offset=0;
+	$offset = $options{'offset_rawres'} if (defined $options{'offset_rawres'});
+	my @in_filter=();
+	my $have_filter=0;
+	if ( defined $options{'in_filter'} ){
+		$have_filter=1;
+		#split string, assume comma separated
+		foreach my $filt (split(/,/,$options{'in_filter'})){
+			if ($filt =~ /.\.(gt|lt|eq)\.\d+\.?\d*/){
+				push(@in_filter,$filt);
+			}else{
+				die "Input filter $filt does not fulfill the format rules.\n";
+			}
+		}
+		if (scalar(@in_filter)<1){
+			die "Error: Option in_filter used, but list of conditions could not be parsed.\n";
+		}	
+	}
+
+	my $href;
+	($rawres_params_arr,$href) = model::get_rawres_params(filename => $options{'rawres_input'},
+														  filter => \@in_filter,
+														  offset => $offset,
+														  only_first_match => 1,
+														  model => $model_copy);
+	
+	unless (defined $rawres_params_arr and scalar(@{$rawres_params_arr} == 1)){
+		my $message = "error reading estimates from rawres file, no lines found";
+		if ($offset > 0){
+			$message .= " after offset"
+		}
+		if ($have_filter){
+			$message .= " that match filter"
+		}
+		die $message."\n";
+	}
+}
+
 my $outfile;
 my $output;
 
@@ -451,6 +525,9 @@ if ( $options{'output_model'} ){
 	$outfile = $ARGV[0];
 }
 
+
+my $check = 0;
+$check = $options{'ensure_posdef'} if (defined $options{'ensure_posdef'});
 
 if (defined $options{'from_model'}) {
 	die "No such file: ".$options{'from_model'}."\n" unless (-e $options{'from_model'});
@@ -471,8 +548,9 @@ if (defined $options{'from_model'}) {
 				  scalar(@{$model_copy->problems}).' $PROBLEM:s');
 	}
 
-	my $check = 0;
-	$check = $options{'ensure_posdef'} if (defined $options{'ensure_posdef'});
+	ui->print(category => 'all',
+			  message => "Updating initial estimates\n");
+
 	for (my $i=0; $i< scalar(@{$model_copy->problems}); $i++){
 		if ($i >= scalar(@{$array})){
 			last;
@@ -484,6 +562,31 @@ if (defined $options{'from_model'}) {
 									 update_fix => $update_fix);
 	}
 
+}elsif(defined $rawres_params_arr and scalar(@{$rawres_params_arr} == 1)){
+	my $nprob = scalar(@{$model_copy->problems});
+	my $use_prob=0;
+	if ( $nprob > 1){
+		for (my $i=0; $i< scalar(@{$model_copy->problems}); $i++){
+			if (defined $model_copy->problems->[$i] and
+				defined $model_copy->problems->[$i]->thetas and
+				scalar(@{$model_copy->problems->[$i]->thetas})>0){
+				$use_prob = ($i+1);
+			}
+		}
+		$use_prob=$nprob if ($use_prob ==0);
+		ui->print(category => 'all',
+				  message => "\n".$ARGV[0]." has $nprob PROBLEMs, but will only ".
+				  "update initial estimates in PROBLEM number $use_prob.");
+	}else{
+		$use_prob=1;
+	}
+	ui->print(category => 'all',
+			  message => "Updating initial estimates\n");
+	$model_copy -> update_inits(from_hash => $rawres_params_arr->[0],
+								problem_number => $use_prob,
+								ensure_posdef => $check,
+								ignore_missing_parameters => $ignore_missing_parameters,
+								update_fix => $update_fix);
 } else { 
 	my $update_inits=0;
 	if( $ARGV[1] ){
@@ -519,8 +622,6 @@ if (defined $options{'from_model'}) {
 		ui->print(category => 'all',
 				  message => "Updating initial estimates\n");
 
-		my $check = 0;
-		$check = $options{'ensure_posdef'} if (defined $options{'ensure_posdef'});
 		$model_copy -> update_inits( from_output => $output,
 									 ensure_posdef => $check,
 									 ignore_missing_parameters => $ignore_missing_parameters,
