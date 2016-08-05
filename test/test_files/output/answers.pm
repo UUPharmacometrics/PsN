@@ -32,6 +32,12 @@ sub read_answers
 		-2.15E+00,  2.98E+01, -2.55E+01, -5.19E+02, -2.32E+02, -1.43E+03,  2.86E+02,  4.29E+00, -2.12E+02, -2.26E+02, 3.67E+02,  8.08E-01, -3.14E+02,  5.57E+01
 		];
 
+	$index++;
+	$answer_hashes[$index]={};
+	$answer_hashes[$index]->{file}='nm74/final_forward.lst';
+	$answer_hashes[$index]->{parsed_successfully}=1;
+	$answer_hashes[$index]->{answers}={};
+	$answer_hashes[$index]->{answers}->{0}->{0}->{'eigens'}=[2.62E-01 , 4.47E-01,  8.58E-01,  1.06E+00 , 1.38E+00 , 2.00E+00];
 
     $index++;
 	$answer_hashes[$index]={};

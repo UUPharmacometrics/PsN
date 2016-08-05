@@ -101,7 +101,7 @@ for (my $i=0; $i< scalar(@answer_hashes); $i++){
 	foreach my $prob (keys %{$answer_hashes[$i]->{answers}}){
 		foreach my $subprob (keys %{$answer_hashes[$i]->{answers}->{$prob}}){
 			foreach my $attr (keys %{$answer_hashes[$i]->{answers}->{$prob}->{$subprob}}){
-				if ($attr =~ /^(sethetas|seomegas|sesigmas|thetas|omegas|sigmas|sdcorrform_|est_thetanames|est_sigmanames|est_omeganames)/){
+				if ($attr =~ /^(sethetas|seomegas|sesigmas|thetas|omegas|sigmas|sdcorrform_|est_thetanames|est_sigmanames|est_omeganames|eigens)/){
 					cmp_float_array($outobj->get_single_value(problem_index => $prob, 
 														subproblem_index=> $subprob, 
 														attribute=>$attr),
