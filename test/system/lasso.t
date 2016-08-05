@@ -19,7 +19,7 @@ my @commands =
 	(
 	 get_command('lasso') . " $model_dir/pheno.mod -relations=CL:WGT-2,APGR-3,,V:APGR-1 -adaptive -start_t=0 -stop_t=1.5 -seed=790  ",
 	 get_command('lasso') . " $model_dir/pheno_cond.mod -relations=CL:WGT-2,,V:WGT-2 -adaptive -adjusted -start_t=0.5 -stop_t=1.5 -seed=790743 ",
-	 get_command('lasso') . " $model_dir/mox1.mod -relations=CL:AGE-3,SEX-1,,V:AGE-2,DIG-1,WT-2 -stratify_on=SEX -seed=790743 -retries=2 -start_t=0.1 -step_t=0.05 -stop_t=0.15  ",
+	 get_command('lasso') . " $model_dir/mox1.mod -relations=CL:SEX-1,,V:AGE-2,WT-2 -stratify_on=SEX -seed=790743 -retries=2 -start_t=0.1 -step_t=0.05 -stop_t=0.15  ",
 	);
 
 for (my $i=0; $i<scalar(@commands); $i++){
