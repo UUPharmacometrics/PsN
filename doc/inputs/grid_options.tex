@@ -6,7 +6,7 @@ Default not used.
 Default empty. Maps to -q in qsub. 
 \nextopt
 \optname{torque\_prepend\_flags}
-Default empty. Only valid with -run\_on\_torque. The - signs must be included in the string. The flags/options will be prepended to standard '-N jobname -q torque\_queue' where jobname is 'psn:'$\langle$modelfile$\rangle$ and torque\_queue is read from psn.conf or set on the commandline. If multiple options are given using -torque\_prepend\_flags on the commandline, they must be separated by spaces (as in qsub) and the whole list enclosed by quotes. If torque\_prepend\_flags is set in psn.conf, there should be no quotes. 
+Default empty. Only valid with -run\_on\_torque. The - signs must be included in the string. The flags/options will be prepended to standard '-N jobname -d path\_to\_rundir -q torque\_queue' where jobname is 'psn:'$\langle$modelfile$\rangle$ and torque\_queue is read from psn.conf or set on the commandline. If multiple options are given using -torque\_prepend\_flags on the commandline, they must be separated by spaces (as in qsub) and the whole list enclosed by quotes. If torque\_prepend\_flags is set in psn.conf, there should be no quotes. 
 \nextopt
 \optname{run\_on\_lsf}
 Default not used. PsN connects with Platform Load Sharing Facility (LsF). PsN submits nmfe directly with bsub. 

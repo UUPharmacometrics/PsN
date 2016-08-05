@@ -3,6 +3,7 @@ package nonmemrun::torque;
 use include_modules;
 use Moose;
 use MooseX::Params::Validate;
+use Cwd;
 
 extends 'nonmemrun';
 
@@ -24,10 +25,11 @@ sub submit
 	$self->pre_compile_cleanup;
 
 	my $command = $self->create_command;
+	my $cwd = getcwd();
 
-  open(JOBSCRIPT, ">JobScript") or croak("Couldn't open Torque JobScript file for writing: $!");
-  print JOBSCRIPT $command;
-  close(JOBSCRIPT);
+	open(JOBSCRIPT, ">JobScript") or croak("Couldn't open Torque JobScript file for writing: $!");
+	print JOBSCRIPT $command;
+	close(JOBSCRIPT);
 
   my $jobname= "psn:" . $self->model->filename;
   $jobname =~ s/\ /_/g;
@@ -40,7 +42,9 @@ sub submit
   $queue_string = ' -q ' . $PsN::config->{'_'}->{'torque_queue'} . ' ' 
       if ($PsN::config->{'_'}->{'torque_queue'});
   $queue_string = ' -q ' . $self->torque_queue . ' ' if (defined $self->torque_queue);
-  if (system('qsub ' . $prepend . ' -N ' . $jobname . $queue_string . ' JobScript > JobId')) {
+	
+	system('echo qsub ' . $prepend . ' -N ' . $jobname .' -d ' . $cwd . $queue_string . ' JobScript > qsubcommand');
+  if (system('qsub ' . $prepend . ' -N ' . $jobname .' -d ' . $cwd . $queue_string . ' JobScript > JobId')) {
 	  my $error = "$!";
 	  print "Torque submit failed.\nSystem error message: $error";
 	  chomp($error);

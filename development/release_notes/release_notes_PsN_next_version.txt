@@ -70,6 +70,9 @@ Changes and bug fixes from PsN 4.6.0 to n.n.n
 
    ___Cluster/Grid___
 
+- When -run_on_torque is set, PsN will now add -d <full path to NM_run subdirectory>
+  to the qsub command. The qsub command will be saved to file qsubcommand in the
+  NM_run subdirectory, for easier debugging.
 
    ___Test scripts___
 
