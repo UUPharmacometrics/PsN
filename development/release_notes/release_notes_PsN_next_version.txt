@@ -74,8 +74,22 @@ Changes and bug fixes from PsN 4.6.0 to n.n.n
    ___Test scripts___
 
 
-   ___psn_clean___
+   ___runrecord___
 
+- Option -to is no longer required. The default value is the highest run number found in
+  an uninterrupted sequence of files <root>1.<mod_ext>, <root>2.<mod_ext>,... etc.
+
+New features implemented by William S. Denney of Human Predictions:
+- Output to .csv using a sufficient part of RFC 4180 [https://tools.ietf.org/html/rfc4180]
+  to handle commas and quotes (optionally, not by default).
+- Optionally output to .csvy files (.csv files with a YAML header; readable by the rio R
+  library).  Columns can now have attributes like parameter type
+  ('theta', 'omega', ...).
+- Automatically detect if the output file has the extension "csv" or "csvy" and output to
+  the csv/csvy format if yes and another output format has not been specifically requested.
+- Automatically detect max_lvl (optionally, by default)
+- Give a header column name to the child run headers to more easily distinguish them from
+  empty column headers (which now should not exist) (optionally, by default).
 
    ___sumo___
 
@@ -108,6 +122,7 @@ Changes and bug fixes from PsN 4.6.0 to n.n.n
 
    ___update_inits___
 
+-  New options -rawres_input, -in_filter, -offset_rawres to read parameter estimates from a raw results file.
 
    ___parallel_retries___
 

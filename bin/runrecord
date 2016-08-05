@@ -24,18 +24,21 @@ Getopt::Long::config("auto_abbrev");
 my %options;
 ## Declare the options
 
-my %required_options = ("to:i" => undef );
+my %required_options = ();
 my %optional_options = (
-	"from:i" => undef, 
-	"root:s" => undef,
-	"res_file:s" => undef,
-	"mod_ext:s" => undef,
-	"out_ext:s"=> undef,
-	"sep:s" => undef,
-	"rsep:s" => undef,
-	"var:s" => undef,
-	"rse:s" => undef,
-	"max_lvl:i" => undef
+	"to:i" => undef,
+    "from:i" => undef,
+    "root:s" => undef,
+    "res_file:s" => undef,
+    "res_format:s" => undef,
+    "mod_ext:s" => undef,
+    "out_ext:s"=> undef,
+    "sep:s" => undef,
+    "rsep:s" => undef,
+    "var:s" => undef,
+    "rse:s" => undef,
+    "max_lvl:i" => undef,
+    "child_col:s" => undef
 );
 
 my $res = GetOptions( \%options,
@@ -50,7 +53,7 @@ my $eval_string = common_options::model_parameters(\%options);
 my %help_text;
 
 $help_text{Pre_help_message} = <<'EOF';
-    Perl script for creation of run records 
+    Perl script for creation of run records
 EOF
 $help_text{Post_help_message} = <<'EOF';
 EOF
@@ -85,28 +88,43 @@ $help_text{-root} = <<'EOF';
 EOF
 $help_text{-res_file} = <<'EOF';
     -res_file
-Name of the results file
+Name of the results file. Default is AAruninfo.txt
+EOF
+$help_text{-res_format} = <<'EOF';
+    -res_format
+The output format for the results file, either txt, csv or yaml.  
+By default this is detected from the extension of -res_file, 
+where .csv gives csv-format with a text header, .csvy gives csv-format with 
+a yaml header and all others give text format with a text header.
 EOF
 $help_text{-mod_ext} = <<'EOF';
     -mod_ext
-model file extension
+NONMEM model file extension
 EOF
 $help_text{-out_ext} = <<'EOF';
     -out_ext
-ouput file extension
+NONMEM output file extension
 EOF
 $help_text{-sep} = <<'EOF';
     -sep
-separator between fields in output file
+Separator between fields in runrecord output file. This option may
+only be set if -res_format is txt, otherwise the -sep option will be ignored 
+and the separator is , (comma). The default is ; for text format.
 EOF
 $help_text{-rsep} = <<'EOF';
     -rsep
-separator between comment rows read from the model file
-This is pasted between rows -within fields- in the output file
+Separator between comment rows read from the model file, this is pasted 
+between rows -within fields- in the output file *if* -res_format is txt.
+This option may only be set if -res_format is txt, otherwise the -rsep option 
+will be ignored and rsep is emtpy. The default is empty separator for text format.
 EOF
 $help_text{-max_lvl} = <<'EOF';
     -max_lvl
-Max number of model children levels
+Max number of model children levels. Default is automatic detection.
+EOF
+$help_text{-child_col} = <<'EOF';
+    -child_col
+Name of the run child columns (default: 'Run Child')
 EOF
 $help_text{-var} = <<'EOF';
     -var
@@ -118,42 +136,87 @@ Whether standard errors should be reported as relative SEs or not. The default i
 EOF
 $help_text{-to} = <<'EOF';
     -to
-stop run number
+The highest run number to process. Default is the highest run number found in an 
+uninterrupted sequence of files <root>1.<mod_ext>, <root>2.<mod_ext>,... etc.
 EOF
 
 common_options::online_help('runrecord', \%options, \%help_text, \%required_options, \%optional_options);
 common_options::setup(\%options, 'execute'); #calls set_globals etc, initiates random sequence
 
-if( not defined $options{'to'} ){
-	print "The option -to must be specified. Please use runrecord -h to see the available options.\n" ;
-	exit;
-}
 
-my $root      = "run";
-my $mod_ext   = "mod";
-my $res_file  = "AAruninfo.txt";
-my $out_ext   = "lst";
-my $sep       = ";";
-my $rsep      = "";
-my $max_lvl   = 14;
-my $var       = "no";
-my $rse       = "yes";
-my $from      = 1;
-my $h         = 0;
+my $root       = "run";
+my $mod_ext    = "mod";
+my $res_file   = "AAruninfo.txt";
+my $res_format = "txt";
+my $sep        = ";";
+my $rsep       = "";
+my $out_ext    = "lst";
+my $max_lvl    = 'auto';
+my $child_col  = 'Run Child';
+my $var        = "no";
+my $rse        = "yes";
+my $from       = 1;
+my $h          = 0;
 
-$root    = $options{'h'}                   if( defined $options{'h'} );
-$root    = $options{'root'}                if( defined $options{'root'} );
-$res_file= $options{'res_file'}            if( defined $options{'res_file'} );
-$mod_ext = $options{'mod_ext'}             if( defined $options{'mod_ext'} );
-$out_ext = $options{'out_ext'}             if( defined $options{'out_ext'} );
-$sep     = $options{'sep'}                 if( defined $options{'sep'} );
-$rsep    = $options{'rsep'}                if( defined $options{'rsep'} );
-$max_lvl = $options{'max_lvl'}             if( defined $options{'max_lvl'} );
-$var     = $options{'var'}                 if( defined $options{'var'} );
-$rse     = $options{'rse'}                 if( defined $options{'rse'} );
-$from    = $options{'from'}                if( defined $options{'from'} );
+$root      = $options{'h'}                   if( defined $options{'h'} );
+$root      = $options{'root'}                if( defined $options{'root'} );
+$res_file  = $options{'res_file'}            if( defined $options{'res_file'} );
+$res_format= lc($options{'res_format'})      if( defined $options{'res_format'} );
+$mod_ext   = $options{'mod_ext'}             if( defined $options{'mod_ext'} );
+$out_ext   = $options{'out_ext'}             if( defined $options{'out_ext'} );
+$sep       = $options{'sep'}                 if( defined $options{'sep'} );
+$rsep      = $options{'rsep'}                if( defined $options{'rsep'} );
+$max_lvl   = $options{'max_lvl'}             if( defined $options{'max_lvl'} );
+$var       = $options{'var'}                 if( defined $options{'var'} );
+$rse       = $options{'rse'}                 if( defined $options{'rse'} );
+$from      = $options{'from'}                if( defined $options{'from'} );
 
 my $to = $options{'to'};
+
+if( not defined $options{'to'} ){
+	my @fileset = glob "${root}*.${mod_ext}";
+    $to = $from;
+	my $maybe = $from+1;
+    while (grep( /^${root}${maybe}\.$mod_ext$/, @fileset)) {
+        $maybe = $maybe + 1;
+    }
+	$to = $maybe-1;
+}
+
+if (defined($options{'res_format'})) {
+	$res_format == 'txt' if ($res_format eq 'text');
+	unless (($res_format eq 'csv') or
+			($res_format eq 'csvy') or
+			($res_format eq 'txt')){
+		die ("Unknown res_format ".$options{'res_format'});
+	}
+}else{
+	## Get the file extension
+	my ($res_ext) = $res_file =~ /\.([^.]+)$/;
+    if (lc($res_ext) eq 'csv') {
+        $res_format = 'csv';
+    }elsif (lc($res_ext) eq 'csvy') {
+        $res_format = 'csvy';
+    }
+	#default res_format is txt
+}
+
+## Make corrections for .csv and .csvy files (if required)
+if (($res_format eq 'csvy') or ($res_format eq 'csv')){
+	$sep = ","; #ignore sep set with option
+    $rsep = ""; #ignore rsep set with option
+	if( defined $options{'sep'} and ($options{'sep'} ne ',') ){
+		print "Warning: res_format is $res_format, therefore the separator is , and -sep=".$options{'sep'}." is ignored\n";
+	}
+	if( defined $options{'rsep'} and ($options{'rsep'} ne '') ){
+		print "Warning: res_format is $res_format, therefore rsep is empty and -rsep=".$options{'rsep'}." is ignored\n";
+	}
+} 
+
+my $desc_type  = "text";
+if ($res_format eq 'csvy') {
+	$desc_type = 'yaml';
+}
 
 # Store results in info
 my %info;
@@ -174,141 +237,142 @@ $parameter_names{'cvsesigmas'} = [];
 require model;
 
 for( my $run = $from; $run <= $to; $run++ ){
-	next unless( -e $root.$run.".".$mod_ext and -e $root.$run.".".$out_ext);
-	$info{$run}{'Run'} = $run;
-	my $model;
-	my $output;
+    next unless( -e $root.$run.".".$mod_ext and -e $root.$run.".".$out_ext);
+    $info{$run}{'Run'} = $run;
+    my $model;
+    my $output;
 
-	$model = model -> new(eval( $eval_string ),
-		filename=>$root.$run.".".$mod_ext,
-		ignore_missing_output_files => 1,
-		ignore_missing_data => 1);
+    $model = model -> new(eval( $eval_string ),
+                          filename=>$root.$run.".".$mod_ext,
+                          ignore_missing_output_files => 1,
+                          ignore_missing_data => 1);
 
-	my @outputs = defined $model -> outputs() ? @{$model -> outputs()} : ();
-	my $have_output = 0;
-	if( scalar @outputs > 0 and defined $outputs[0] ) {
-		$output = $outputs[0];
-		$have_output =1 if ($output -> parsed_successfully());
-	}
+    my @outputs = defined $model -> outputs() ? @{$model -> outputs()} : ();
+    my $have_output = 0;
+    if( scalar @outputs > 0 and defined $outputs[0] ) {
+        $output = $outputs[0];
+        $have_output =1 if ($output -> parsed_successfully());
+    }
 
+    ## This section creates the parameter names over which the parameter estimates are going to be reported.
+    my $paramnames;
 
-	## This section creates the parameter names over which the parameter estimates are going to be reported.
-	my $paramnames;
+    foreach my $param ('theta','omega','sigma','setheta','seomega','sesigma') {
 
-	foreach my $param ('theta','omega','sigma','setheta','seomega','sesigma') {
+        my $params;
+        #must have PsN-3.1.19 or later for get_values_to_labels on cvse* and c*
 
-		my $params;
-		#must have PsN-3.1.19 or later for get_values_to_labels on cvse* and c*
+        if ($have_output){
+            #get_values_to_labels only works on defined output and if successful parsing
+            if($param =~/^omega/ and $var eq 'no') {
+                $params     = $model -> get_values_to_labels(category => 'comega');
+            } elsif($param =~/^sigma/ and $var eq 'no') {
+                $params     = $model -> get_values_to_labels(category => 'csigma');
+            } elsif($param =~/^setheta/ and $rse eq 'yes') {
+                $params     = $model -> get_values_to_labels(category => 'cvsetheta');
+            } elsif($param =~/^seomega/ and $rse eq 'yes') {
+                $params     = $model -> get_values_to_labels(category => 'cvseomega');
+            } elsif($param =~/^sesigma/ and $rse eq 'yes') {
+                $params     = $model -> get_values_to_labels(category => 'cvsesigma');
+            } else {
+                $params     = $model -> get_values_to_labels(category => $param);
+            }
+        }
 
-		if ($have_output){
-			#get_values_to_labels only works on defined output and if successful parsing 
-			if($param =~/^omega/ and $var eq 'no') {
-				$params     = $model -> get_values_to_labels(category => 'comega');
-			} elsif($param =~/^sigma/ and $var eq 'no') {
-				$params     = $model -> get_values_to_labels(category => 'csigma');
-			} elsif($param =~/^setheta/ and $rse eq 'yes') {
-				$params     = $model -> get_values_to_labels(category => 'cvsetheta');
-			} elsif($param =~/^seomega/ and $rse eq 'yes') {
-				$params     = $model -> get_values_to_labels(category => 'cvseomega');
-			} elsif($param =~/^sesigma/ and $rse eq 'yes') {
-				$params     = $model -> get_values_to_labels(category => 'cvsesigma');
-			} else {
-				$params     = $model -> get_values_to_labels(category => $param);
-			}
-		}
+        unless($param =~/^se/) {
+            $paramnames = $model -> labels(parameter_type => $param);
 
-		unless($param =~/^se/) {
-			$paramnames = $model -> labels(parameter_type => $param);
+            ## Remove trailing spaces in parameter names
+            my @tmp;
+            foreach my $p (@{$paramnames->[0]}) {
+                $p =~s/\s+$//;
+                push @tmp,$p;
+            }
+            @{$paramnames->[0]} = @tmp;
 
-			## Remove trailing spaces in parameter names
-			my @tmp;
-			foreach my $p (@{$paramnames->[0]}) {
-				$p =~s/\s+$//;
-				push @tmp,$p;
-			}
-			@{$paramnames->[0]} = @tmp;
+        } else {
 
-		}  else {
+            $paramnames = $model -> labels(parameter_type => 'theta') if $param =~/setheta/;
+            $paramnames = $model -> labels(parameter_type => 'omega') if $param =~/seomega/;
+            $paramnames = $model -> labels(parameter_type => 'sigma') if $param =~/sesigma/;
 
-			$paramnames = $model -> labels(parameter_type => 'theta') if $param =~/setheta/;
-			$paramnames = $model -> labels(parameter_type => 'omega') if $param =~/seomega/;
-			$paramnames = $model -> labels(parameter_type => 'sigma') if $param =~/sesigma/;      
+            if($param =~/^se/) {
+                ## Prepend se after having removed trailing spaces
+                my @tmp;
+                foreach my $p (@{$paramnames->[0]}) {
+                    $p =~s/\s+$//;
+                    push @tmp,"se".$p;
+                }
+                @{$paramnames->[0]} = @tmp;
+            }
 
-			if($param =~/^se/) {
-				## Prepend se after having removed trailing spaces
-				my @tmp;
-				foreach my $p (@{$paramnames->[0]}) {
-					$p =~s/\s+$//;
-					push @tmp,"se".$p;
-				}
-				@{$paramnames->[0]} = @tmp;
-			} 
+        }
 
-		}
+        ## Extract the values of interest.
+        my %tmp = ();
+        if (defined $params and
+            defined $params -> [0] and
+            defined $params -> [0] -> [0] ) {
+            for ( my $i = 0; $i < scalar @{$params -> [0] -> [0]}; $i++ ){
+                $tmp{$paramnames->[0]->[$i]} = $params -> [0] -> [0] -> [$i];
+                my $seen = 0;
 
-		## Extraxt the values of interest.
-		my %tmp = ();
-		if ( defined $params and defined $params -> [0] and defined $params -> [0] -> [0] ) {
-			for ( my $i = 0; $i < scalar @{$params -> [0] -> [0]}; $i++ ){
-				$tmp{$paramnames->[0]->[$i]} = $params -> [0] -> [0] -> [$i];
-				my $seen = 0;
+                for( my $j = 0; $j < scalar @{$parameter_names{$param}}; $j++ ) {
+                    $seen = 1 if($paramnames->[0]->[$i] eq $parameter_names{$param}->[$j]);
+                }
+                push(@{$parameter_names{$param}} ,$paramnames->[0]->[$i]) unless($seen);
+            }
+        }
+        $info{$run}{$param} = \%tmp;
+    }
 
-				for( my $j = 0; $j < scalar @{$parameter_names{$param}}; $j++ ) {
-					$seen = 1 if($paramnames->[0]->[$i] eq $parameter_names{$param}->[$j]);
-				}
-				push(@{$parameter_names{$param}} ,$paramnames->[0]->[$i]) unless($seen);
-			}
-		}
-		$info{$run}{$param} = \%tmp;
-	}
+    ## Extract information from the model object.
+    my @problems = defined $model -> problems() ? @{$model -> problems()} : ();
+    if( scalar @problems > 0 and defined $problems[0] ) {
+        my $problem = $problems[0];
+        my $datafiles = $model->datafiles(problem_numbers =>[1]); #first problem
+        $info{$run}{'Datafile'} = $datafiles->[0] if (defined $datafiles);
 
-	## Extract information from the model object.
-	my @problems = defined $model -> problems() ? @{$model -> problems()} : ();
-	if( scalar @problems > 0 and defined $problems[0] ) {
-		my $problem = $problems[0];
-		my $datafiles = $model->datafiles(problem_numbers =>[1]); #first problem
-		$info{$run}{'Datafile'} = $datafiles->[0] if (defined $datafiles);
+        ## Extract the extimation settings
+        my @estimation_records = defined $problem -> estimations() ?
+            @{$problem -> estimations()} : ();
+        if( scalar @estimation_records > 0 ) {
+            for(my $i = 0; $i <= $#estimation_records; $i++ ) {
+                my $method = "";
+                my $meth_options = "";
+                foreach my $option ( defined $estimation_records[$i] -> options() ?
+                                     @{$estimation_records[$i] -> options()} : ()) {
+                    next if( defined $option -> name() and $option -> name() eq "MSFO");
+                    next if( defined $option -> name() and $option -> name() eq "FILE");
+                    next if( defined $option -> name() and $option -> name() eq "PRINT");
+                    next if( defined $option -> name() and $option -> name() eq "NOABORT");
+                    if( defined $option -> name() and $option -> name() eq "METHOD") {
+                        $method = $option -> value();
+                        $method = "FO" if $option -> value() eq "0";
+                        $method = "FOCE" if $option -> value() eq "1";
+                    } else {
+                        $meth_options = $meth_options." ".$option->name();
+                        if( defined $option->value() and $option->value() ne "" ) {
+                            $meth_options = $meth_options."=".$option->value();
+                        }
+                    }
+                }
+                $info{$run}{$method." options"} = $meth_options;
+            }
+        }
 
-		## Extract the extimation settings
-		my @estimation_records = defined $problem -> estimations() ?
-		@{$problem -> estimations()} : ();
-		if( scalar @estimation_records > 0 ) {
-			for(my $i = 0; $i <= $#estimation_records; $i++ ) {
-				my $method = "";
-				my $meth_options = "";
-				foreach my $option ( defined $estimation_records[$i] -> options() ?
-					@{$estimation_records[$i] -> options()} : ()) {
-					next if( defined $option -> name() and $option -> name() eq "MSFO");
-					next if( defined $option -> name() and $option -> name() eq "FILE");
-					next if( defined $option -> name() and $option -> name() eq "PRINT");
-					next if( defined $option -> name() and $option -> name() eq "NOABORT");
-					if( defined $option -> name() and $option -> name() eq "METHOD") {
-						$method = $option -> value();
-						$method = "FO" if $option -> value() eq "0";
-						$method = "FOCE" if $option -> value() eq "1";
-					} else {
-						$meth_options = $meth_options." ".$option->name();
-						if( defined $option->value() and $option->value() ne "" ) {
-							$meth_options = $meth_options."=".$option->value();
-						}
-					}
-				}
-				$info{$run}{$method." options"} = $meth_options;
-			}
-		}
+        my @documentation = ();
+        foreach my $rec ('sizess', 'problems', 'inputs') {
+            if (defined $problem->$rec and (scalar($problem->$rec->[0]->comment) > 0)) {
+                foreach my $line (@{$problem->$rec->[0]->comment}) {
+                    chomp $line;
+                    $line =~ s/\n//g;
+                    push(@documentation,$line)
+                }
+            }
+        }
 
-		my @documentation = ();
-		foreach my $rec ('sizess', 'problems', 'inputs') {
-			if (defined $problem->$rec and (scalar($problem->$rec->[0]->comment) > 0)) {
-				foreach my $line (@{$problem->$rec->[0]->comment}) {
-					chomp $line;
-					$line =~ s/\n//g;
-					push(@documentation,$line) 
-				}
-			}
-		}
-
-		# Process the documentation comments
+        # Process the documentation comments
         my @tags = (
             [ 'Description', 'Description' ],
             [ 'Label', 'Label' ],
@@ -340,157 +404,254 @@ for( my $run = $from; $run <= $to; $run++ ){
             $info{$run}{'Based on'} = 0;
         }
 
-		## Extract information from the output object
-		my @outputs = defined $model -> outputs() ? @{$model -> outputs()} : ();
-		if( scalar @outputs > 0 and defined $outputs[0] ) {
+        ## Extract information from the output object
+        my @outputs = defined $model -> outputs() ? @{$model -> outputs()} : ();
+        if( scalar @outputs > 0 and defined $outputs[0] ) {
 
-			my $output = $outputs[0];
+            my $output = $outputs[0];
 
-			## Loop over each lst file and extract the elapsed estimation
-			## and covariance times. This is an ugly hack and should be
-			## replaced my an accessor e.g. $output -> est_time();
-			my $my_lst = $output -> filename();
-			open LST, $my_lst || die "Couldn't open $my_lst\n";
-			while(<LST>) {
+            ## Loop over each lst file and extract the elapsed estimation
+            ## and covariance times. This is an ugly hack and should be
+            ## replaced my an accessor e.g. $output -> est_time();
+            my $my_lst = $output -> filename();
+            open LST, $my_lst || die "Couldn't open $my_lst\n";
+            while (<LST>) {
 
-				## Find the elapsed estimation time inseconds and convert it to minutes
-				if(/Elapsed estimation time in seconds:/) {
-					chomp;
-					s/\s+//;
-					$info{$run}{est_time} += sprintf "%6.2f",(split ":")[1]/60;
-				}
+                ## Find the elapsed estimation time inseconds and convert it to minutes
+                if(/Elapsed estimation time in seconds:/) {
+                    chomp;
+                    s/\s+//;
+                    $info{$run}{est_time} += sprintf "%6.2f",(split ":")[1]/60;
+                }
+                
+                ## Find the elapsed estimation time inseconds and convert it to minutes
+                if(/Elapsed covariance time in seconds:/) {
+                    chomp;
+                    s/\s+//;
+                    $info{$run}{cov_time} = sprintf "%6.2f",(split ":")[1]/60;
+                }
+            }
+            close LST;
 
-				## Find the elapsed estimation time inseconds and convert it to minutes
-				if(/Elapsed covariance time in seconds:/) {
-					chomp;
-					s/\s+//;
-					$info{$run}{cov_time} = sprintf "%6.2f",(split ":")[1]/60;
-				}
-			}
-			close LST;
-
-			## Extract information from the output object using accessors.
-			my @problems = defined $output -> problems() ? @{$output -> problems()} : ();
-			if( scalar @problems > 0 and defined $problems[0] ) {
-				my $problem = $problems[0];
-				$info{$run}{'Nobs'} = $problem -> nobs();
-				$info{$run}{'Nind'} = $problem -> nind();
-
-				my @subproblems = defined $problem -> subproblems() ? @{$problem -> subproblems()} : ();
-				if( scalar @subproblems > 0 and defined $subproblems[0] ) {
-					my $subproblem = $subproblems[0];
-					$info{$run}{'OFV'} = $subproblem -> ofv();
-					$info{$run}{'Condition Number'} = $subproblem -> condition_number();
-					$info{$run}{'Minimization Status'} = $subproblem -> minimization_successful()? "Successful":"Failed";
-					$info{$run}{'Covariance Step Status'} = $subproblem -> covariance_step_successful()? "Successful":"Failed";
-				}
-			}
-		}
-	}
+            ## Extract information from the output object using accessors.
+            my @problems = defined $output -> problems() ? @{$output -> problems()} : ();
+            if( scalar @problems > 0 and defined $problems[0] ) {
+                my $problem = $problems[0];
+                $info{$run}{'Nobs'} = $problem -> nobs();
+                $info{$run}{'Nind'} = $problem -> nind();
+                
+                my @subproblems = defined $problem -> subproblems() ? @{$problem -> subproblems()} : ();
+                if( scalar @subproblems > 0 and defined $subproblems[0] ) {
+                    my $subproblem = $subproblems[0];
+                    $info{$run}{'OFV'} = $subproblem -> ofv();
+                    $info{$run}{'Condition Number'} =
+                        $subproblem -> condition_number();
+                    $info{$run}{'Minimization Status'} =
+                        $subproblem -> minimization_successful()? "Successful":"Failed";
+                    $info{$run}{'Covariance Step Status'} =
+                        $subproblem -> covariance_step_successful()? "Successful":"Failed";
+                }
+            }
+        }
+    }
 }
 
 # Calulate the delta OFV, set relations to children, gather parameter names
 my %parents = ();
 for( my $run = $from; $run <= $to; $run++ ){
-	if ( not defined $info{$run}{'Based on'} or
-		$info{$run}{'Based on'} eq ""       or 
-		$info{$run}{'Based on'} == 0        or 
-		$info{$run}{no_dOFV}==1 or
-		not defined $info{$info{$run}{'Based on'}}) {
+    if ( not defined $info{$run}{'Based on'} or
+         $info{$run}{'Based on'} eq ""       or
+         $info{$run}{'Based on'} == 0        or
+         $info{$run}{no_dOFV}==1 or
+         not defined $info{$info{$run}{'Based on'}}) {
 
-		$parents{$run} = $info{$run};
-	} else {
-		$info{$info{$run}{'Based on'}}{'children'}{$run} = $info{$run};
-		$info{$run}{'dOFV'} = $info{$run}{'OFV'} - $info{$info{$run}{'Based on'}}{'OFV'};
-	}
+        $parents{$run} = $info{$run};
+    } else {
+        $info{$info{$run}{'Based on'}}{'children'}{$run} = $info{$run};
+        $info{$run}{'dOFV'} = $info{$run}{'OFV'} - $info{$info{$run}{'Based on'}}{'OFV'};
+    }
 }
 
+my @items = (
+    "Run", "Based on", "OFV", "dOFV", "Condition Number", "Minimization Status",
+    "Covariance Step Status", "Label", "Description", "Structural Model", "Covariate Model",
+    "IIV", "IOV", "RSV", "Estimation", "Datafile", "Nobs", "Nind", "est_time", "cov_time",
+    "FO options", "FOCE options", "ITS options", "SAEM options", "IMP options", "BAYES options");
 
-my @items = ("Run","Based on","OFV","dOFV","Condition Number","Minimization Status",
-	"Covariance Step Status","Label","Description","Structural Model","Covariate Model",
-	"IIV","IOV","RSV","Estimation","Datafile","Nobs","Nind","est_time","cov_time",
-	"FO options","FOCE options","ITS options","SAEM options","IMP options",
-	"BAYES options");
+if (defined($max_lvl)) {
+    if ($max_lvl eq 'auto') {
+        $max_lvl = detect_levels(\%parents);
+    }
+}
+my $lvl = $max_lvl;
+if ($lvl == 0) {
+    $lvl = 1;
+}
+my @header = ($items[0],
+              ($child_col) x ($lvl - 1),
+              @items[1..$#items]);
+foreach my $headertype ('theta', 'omega', 'sigma',
+                        'setheta', 'seomega', 'sesigma') {
+    if (scalar(@{$parameter_names{$headertype}})) {
+        push(@header, @{$parameter_names{$headertype}});
+    }
+}
+my @body = traverse_runs(\%parents, 0, $max_lvl);
+
+my $filecontents = '';
+if ($res_format eq 'csv' or ($res_format eq 'csvy')) {
+    ## Convert to .csv format if requested.
+    $filecontents = join(",", as_csv(@header))."\n";
+    for my $row (@body) {
+        $filecontents .= join(",", as_csv(@{$row}))."\n";
+    }
+} else {
+    $filecontents = join($sep, @header)."\n";
+    for my $row (@body) {
+        $filecontents .= join($sep, @{$row})."\n";
+    }
+}
 
 ## Print the collected information
 open RC,"> $res_file";
-
-## Output some information regarding the generation of the run record info
-my $now = localtime;
-print RC "The run record information was generated: $now\n";
-if($var eq 'no') {
-	print RC "Omegas and sigmas are reported as standard deviations.\n";
-} else {
-	print RC "Omegas and sigmas are reported as variances.\n";
-}
-if($rse eq 'yes') {
-	print RC "Standard errors are reported as relative standard errors (SEs for omegas and sigmas as relative to their variance estimates).\n";
-} else {
-	print RC "Standard errors are reported as they were reported in the NONMEM output files.\n";
-}
-
-print RC "\n";
-
-my $lvl = $max_lvl;
-$lvl = 1 if $max_lvl == 0;
-if (0){
-	my $body = $items[0].$sep x $lvl.join($sep,@items[1..$#items]).
-	$sep.join($sep,@{$parameter_names{'theta'}}).
-	$sep.join($sep,@{$parameter_names{'omega'}}).
-	$sep.join($sep,@{$parameter_names{'sigma'}}).
-	$sep.join($sep,@{$parameter_names{'setheta'}}).
-	$sep.join($sep,@{$parameter_names{'seomega'}}).
-	$sep.join($sep,@{$parameter_names{'sesigma'}})."\n";
-}
-my $body = $items[0].$sep x $lvl.join($sep,@items[1..$#items]).
-$sep.join($sep,@{$parameter_names{'theta'}});
-$body = $body.$sep.join($sep,@{$parameter_names{'omega'}}) 
-if (scalar(@{$parameter_names{'omega'}}) > 0);
-$body = $body.$sep.join($sep,@{$parameter_names{'sigma'}})
-if (scalar(@{$parameter_names{'sigma'}}) > 0);
-$body = $body.$sep.join($sep,@{$parameter_names{'setheta'}});
-$body = $body.$sep.join($sep,@{$parameter_names{'seomega'}})
-if (scalar(@{$parameter_names{'seomega'}}) > 0);
-$body = $body.$sep.join($sep,@{$parameter_names{'sesigma'}})
-if (scalar(@{$parameter_names{'sesigma'}}) > 0);
-$body = $body."\n";
-
+print RC
+    encode('UTF-8', describe_file($var, $rse, $desc_type)).
+    encode('UTF-8', $filecontents);
+close(RC);
 
 sub traverse_runs {
-	my $hash_ref = shift;
-	my $indentation = shift;
-	my $max_lvl = shift;
-	$indentation = 0 if $max_lvl == 0;
-	my %info = %{$hash_ref};
-	my @runs = sort { $a <=> $b } keys %info;
-	my $str = "";
-	foreach my $run ( @runs ) {
-		$str = $str.$sep x $indentation;
-		my $itemnum=0;
-		foreach my $item (@items) {
-			$itemnum++;
-			$str = $str.$info{$run}{$item};
-			$str = $str.$sep x ($max_lvl-$indentation-1) if($itemnum == 1);
-			$str = $str.$sep;
-		}
-		$itemnum=0;
-		foreach my $param ('theta','omega','sigma','setheta','seomega','sesigma') {
-			foreach my $name (@{$parameter_names{$param}}) {
-				$itemnum++;
-				$str = $str.$info{$run}{$param}{$name};
-				$str = $str.$sep;
-			}
-		}
-		$str = $str."\n";
-		if( defined $info{$run}{'children'} ) {
-			$str = $str.traverse_runs($info{$run}{'children'},$indentation+1,$max_lvl);
-		}
-	}
-	$str
+    my ($hash_ref, $indentation, $max_lvl) = @_;
+    $indentation = 0 if $max_lvl == 0;
+    my %info = %{$hash_ref};
+    my @runs = sort { $a <=> $b } keys %info;
+    my @allrows;
+    foreach my $run (@runs) {
+        my @currentrow = ('') x $indentation;
+        my $itemnum=0;
+        foreach my $item (@items) {
+            $itemnum++;
+            push(@currentrow, $info{$run}{$item});
+            if ($itemnum == 1) {
+                push(@currentrow, ('') x ($max_lvl-$indentation-1));
+            }
+        }
+        $itemnum=0;
+        foreach my $param ('theta', 'omega', 'sigma', 'setheta',
+                           'seomega', 'sesigma') {
+            foreach my $name (@{$parameter_names{$param}}) {
+                $itemnum++;
+                push(@currentrow, $info{$run}{$param}{$name});
+            }
+        }
+        push(@allrows, \@currentrow);
+        if( defined $info{$run}{'children'} ) {
+            push(@allrows,
+                 traverse_runs($info{$run}{'children'},
+                               $indentation+1,
+                               $max_lvl));
+        }
+    }
+    return (@allrows);
 }
 
-$body = encode('UTF-8',$body.traverse_runs(\%parents,0,$max_lvl));
-my $byte_count = length $body;
-print RC $body;
+sub detect_levels
+{
+    my ($hash_ref, $current) = @_;
+    if (not defined($current)) {
+        $current = 1;
+    }
+    my %info = %{$hash_ref};
+    my $ret = $current;
+    my $deepest = $current;
+    foreach my $run (sort { $a <=> $b } keys %info) {
+        if (defined($info{$run}{'children'})) {
+            $deepest = detect_levels($info{$run}{'children'}, $current + 1);
+        }
+        if ($deepest > $ret) {
+            $ret = $deepest;
+        }
+    }
+    return $ret;
+}
 
-close(RC)
+## Convert a string into a .csv file ready cell.
+sub as_csv_helper
+{
+    my $string = shift;
+    my $mustquote = 0;
+    if ($string =~ /,/) {
+        ## There is a comma in the string, so it must be quoted
+        $mustquote = 1;
+    } elsif ($string =~ /\"/) {
+        $mustquote = 1;
+    }
+    if ($mustquote) {
+        $string =~ s/\"/\"\"/g;
+        $string = "\"$string\"";
+    }
+
+    return($string);
+}
+
+## Convert an array into .csv file ready cells.
+sub as_csv
+{
+    my @data = @_;
+    my @result = map {as_csv_helper($_)} @data;
+    return @result;
+}
+
+## Output some information regarding the generation of the run record
+## info
+sub describe_file
+{
+    my ($isvar, $isrse, $outtype) = @_;
+    if ($outtype eq 'yaml') {
+        eval {
+            require YAML::Tiny;
+            YAML::Tiny->import();
+            1;
+        } or do {
+            print STDERR "WARNING: requested YAML header, but cannot load the YAML::Tiny library.\n".
+                "  Converting header to text.\n";
+            $outtype = "text";
+        }
+    }
+    my $now = localtime;
+    my %filedef = ('name' => "RunRecord generated by Perl-speaks-NONMEM",
+                   'generationtime' => $now,
+                   'omega_sigma_type' => 'variances',
+                   'relative_standard_error' => $isrse);
+    if ($var eq 'no') {
+        $filedef{'omega_sigma_type'} = "standard deviations";
+    }
+    
+    my $ret;
+    if ($outtype eq 'yaml') {
+        $filedef{'runrecord_options'} =>
+            ("from"    => $from,
+             "to"      => $to,
+             "root"    => $root,
+             "mod_ext" => $mod_ext,
+             "out_ext" => $out_ext);
+        $filedef{'fields'} = [];
+        foreach my $fieldtype (keys %parameter_names) {
+            foreach my $fieldname (@{$parameter_names{$fieldtype}}) {
+                push (@{$filedef{'fields'}}, {'name' => $fieldname,
+                                              'type' => 'number',
+                                              'parameter_type' => $fieldtype});
+            }
+        }
+        $ret = YAML::Tiny->new(\%filedef)->write_string()."---\n";
+    } else {
+        $ret = "The run record information was generated: $now\n".
+            "Omegas and sigmas are reported as ".$filedef{'omega_sigma_type'}.
+            ".\n";
+        if ($isrse eq 'yes') {
+            $ret .= "Standard errors are reported as relative standard errors (SEs for omegas and sigmas as relative to their variance estimates).\n";
+        } else {
+            $ret .= "Standard errors are reported as they were reported in the NONMEM output files.\n";
+        }
+    }
+    return $ret;
+}

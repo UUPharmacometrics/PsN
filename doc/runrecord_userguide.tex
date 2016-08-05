@@ -1,5 +1,5 @@
 \input{inputs/format_header.tex}
-\guidetitle{RUNRECORD user guide}{2016-05-13}
+\guidetitle{RUNRECORD user guide}{2016-08-05}
 
 \begin{document}
 
@@ -116,11 +116,13 @@ Each initial parameter estimate can optionally have an associated label. This is
 
 \section{Running runrecord}
 
-In the simplest form, runrecord is run in the following way:
+In the simplest form, runrecord is run in the following way in a folder that contains run results:
 \begin{verbatim}
-runrecord -to=10
+runrecord
 \end{verbatim}
-This will make runrecord to extract information from runs 1-10 and put it in a file called AArunInfo.txt. 
+This will make runrecord extract information from run 1 to N, where N is the highest run number found in an uninterrupted sequence
+of files run1.mod, run2.mod,... etc,
+and put it in a file called AArunInfo.txt. 
 
 The behavior of run record can be influenced by options:
 
@@ -128,35 +130,51 @@ The behavior of run record can be influenced by options:
 \optdefault{from}{N}
 Run number to start processing from. Default is 1. 
 \nextopt
-\optdefault{to}{N}
-The highest run number to process. Mandatory. 
-\nextopt
 \optdefault{root}{string}
 "root" name of the model files. Defaults to “run”, e.g. run1.mod 
+\nextopt
+\optdefault{mod\_ext}{string}
+NONMEM model file extension. Defaults to “mod”, e.g. run1.mod. 
+\nextopt
+\optdefault{to}{N}
+The highest run number to process. Default is the highest run number found in an uninterrupted sequence of files
+<root>1.<mod\_ext>, <root>2.<mod\_ext>,... etc.
+Example: If root=run and mod\_ext=mod, and files present are run1.mod, run2.mod, run3.mod and run6.mod,
+then the default value of to is 3.
 \nextopt
 \optdefault{res\_file}{file name}
 The name of the results file. The default is “AAruninfo.txt”. 
 \nextopt
-\optdefault{mod\_ext}{string}
-Model file extension. Defaults to “mod”, e.g. run1.mod. 
-\nextopt
+\optdefault{res\_format}{format}
+The output format for the results file, either txt (text), csv or yaml.  
+By default this is detected from the extension of res\_file, 
+where .csv gives csv-format with a text header, .csvy gives csv-format with 
+a yaml header and all others give text format with a text header.
 \optdefault{out\_ext}{string}
-Ouput file extension. Defaults to “lst”, e.g. run1.lst. 
+NONMEM output file extension. Defaults to “lst”, e.g. run1.lst. 
 \nextopt
 \optdefault{sep}{sign}
-Separator between fields in the AAruninfo.txt file. Defaults to “;”. 
+Separator between fields in runrecord output file. This option may
+only be set if res\_format is txt, otherwise the -sep option will be ignored 
+and the separator is , (comma). The default is ; (semicolon) for text format.
 \nextopt
 \optdefault{rsep}{sign}
-Separator between comment rows read from the model file. This is pasted between rows -within fields- in the output file. 
+Separator between comment rows read from the model file, this is pasted 
+between rows -within fields- in the output file \emph{if} res\_format is txt.
+This option may only be set if res\_format is txt, otherwise the rsep option 
+will be ignored and the separator is emtpy. The default is empty separator for text format.
 \nextopt
 \optdefault{max\_lvl}{N}
-Max number of model children levels. 
+Max number of model children levels (default is automatic detection). 
 \nextopt
 \optdefault{var}{yes or no}
 Whether omegas and sigmas should be reported as variances or sd. Default is 'no'. 
 \nextopt
 \optdefault{rse}{yes or no}
 Whether standard errors should be reported as relative SEs or not. The default is 'yes'. 
+\nextopt
+\optdefault{child\_col}{text}
+Name of the run child columns (default: 'Run Child')
 \nextopt
 \end{optionlist}
 
