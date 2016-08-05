@@ -67,7 +67,9 @@ Changes and bug fixes from PsN 4.6.0 to n.n.n
 
    ___NONMEM output parsing___
 
-
+- Bug fix: Handle error message "0ERROR IN READING FILE : FCON" in
+  eigenvalue section of lst-file.
+  
    ___Cluster/Grid___
 
 - When -run_on_torque is set, PsN will now add -d <full path to NM_run subdirectory>
