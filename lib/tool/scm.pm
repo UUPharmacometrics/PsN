@@ -12,7 +12,7 @@ use Moose;
 use MooseX::Params::Validate;
 use math;
 use utils::file;
-
+use array qw(get_positions);
 extends 'tool';
 
 use tool::scm::config_file;
@@ -286,18 +286,28 @@ sub BUILD
 		my @categorical = defined $self -> categorical_covariates() ? @{$self -> categorical_covariates()} : ();
 
 		my @not_found = ();
+		my @nonskipped = ();
+		foreach my $input (@{$self -> models->[0] ->problems->[0]->inputs}){
+			next unless (defined $input);
+			push(@nonskipped,@{$input->get_nonskipped_columns});
+		}
 		foreach my $cov ( @continuous, @categorical ) {
 			#check if reserved words
 			if (($cov eq 'PAR') or ($cov eq 'COV')){
 				croak("PAR and COV are reserved words in scm and must not be ".
-					"used as name for a covariate.");
+					  "used as name for a covariate.");
 			}
-			push( @not_found, $cov )
-			unless ( $self -> models->[0] -> is_option_set( record => 'input',
-					name => $cov ) );
+		}
+		my @covs = ( @continuous, @categorical );
+		my $positions = get_positions(target => \@nonskipped,
+									  keys => \@covs);
+		for (my $i=0; $i< scalar(@covs); $i++){
+			unless (defined $positions->[$i]){
+				push( @not_found, $covs[$i] );
+			}
 		}
 		if ( scalar @not_found ){
-			croak("Covariate(s) [ ". join(',', @not_found). " ] specified is not defined in " . 
+			croak("Covariate(s) [ ". join(',', @not_found). " ] either DROPPED or not defined in " . 
 				$self ->  models->[0] -> filename );
 		}
 	}
