@@ -745,12 +745,12 @@ sub modelfit_setup
 						}
 
 						@initscode=('IF (ICALL.EQ.4.AND.NEWIND.EQ.0) THEN',
-									"  OPEN(50,FILE='../../m1/mc-1.inits')",
-									"  WRITE (50,*) '".join(' ',@thetalab)."'",
-									'  WRITE (50,2) '.join(',',@thetacoords),
-									"  WRITE (50,*) '".join(' ',@omegalab)."'",
-									'  WRITE (50,2) '.join(',',@omegacoords),
-									'  CLOSE (50)',
+									"  OPEN(51,FILE='../../m1/mc-1.inits')",
+									"  WRITE (51,*) '".join(' ',@thetalab)."'",
+									'  WRITE (51,2) '.join(',',@thetacoords),
+									"  WRITE (51,*) '".join(' ',@omegalab)."'",
+									'  WRITE (51,2) '.join(',',@omegacoords),
+									'  CLOSE (51)',
 									'ENDIF');
 						my @code; 
 						@code = @{$sim_model->get_code(record => 'pk')};
@@ -878,7 +878,7 @@ sub modelfit_setup
 					}
 					my $string = 'mc-'.$sim_no.'.inits';
 					foreach my $line (@{$coderef}){
-						if (($line =~ /^  OPEN\(50,FILE=/) and ($line =~ /mc-1.inits/)){
+						if (($line =~ /^  OPEN\(51,FILE=/) and ($line =~ /mc-1.inits/)){
 							$line =~ s/mc-1.inits/$string/;
 							last;
 						}

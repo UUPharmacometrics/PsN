@@ -210,18 +210,18 @@ sub modelfit_setup
 
   push( @{$problem}, 
 	'IF (ICALL.EQ.3) THEN',
-	'  OPEN(50,FILE=\'jdtab.est\')',
-	'  WRITE (50,*) \'JD\'',
+	'  OPEN(51,FILE=\'jdtab.est\')',
+	'  WRITE (51,*) \'JD\'',
 	'  DO WHILE(DATA)',
-	'    IF (NEWIND.LE.1) WRITE (50,*) JD',
+	'    IF (NEWIND.LE.1) WRITE (51,*) JD',
 	'  ENDDO',                                
 	'ENDIF' );
   push( @{$problem}, 
 	'IF (ICALL.EQ.3) THEN',
-	'  OPEN(50,FILE=\'etatab.est\')',
-	"  WRITE (50,*) \'$eta_header\'",
+	'  OPEN(51,FILE=\'etatab.est\')',
+	"  WRITE (51,*) \'$eta_header\'",
 	'  DO WHILE(DATA)',
-	'    IF (NEWIND.LE.1) WRITE (50,*) ETA',
+	'    IF (NEWIND.LE.1) WRITE (51,*) ETA',
 	'  ENDDO',                                
 	'ENDIF' );
     

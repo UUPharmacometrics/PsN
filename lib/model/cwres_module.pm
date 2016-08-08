@@ -126,7 +126,7 @@ sub BUILD
 			push( @{$code},
 				  ('"      IF (ICALL.EQ.0) THEN',
 				   '"C     open files here, if necessary',
-				   '"         OPEN(50,FILE=\'cwtab'.$self -> sdno().$mirror_name.'.est\')') );
+				   '"         OPEN(51,FILE=\'cwtab'.$self -> sdno().$mirror_name.'.est\')') );
 
 			push( @{$code},
 				  # fortan code
@@ -135,23 +135,23 @@ sub BUILD
 				   '"         MODE=0',
 				   '"         CALL PASS(MODE)',
 				   '"         MODE=1',
-				   '"         WRITE (50,*) \'ETAS\'',
+				   '"         WRITE (51,*) \'ETAS\'',
 				   '" 20      CALL PASS(MODE)',
 				   '"         IF (MODE.EQ.0) GO TO 30',
 				   '"         IF (NEWIND.NE.2) THEN',
 				   '"            CALL GETETA(ETA)',
-				   '"            WRITE (50,97) (ETA(I),I=1,NETA)',
+				   '"            WRITE (51,97) (ETA(I),I=1,NETA)',
 				   '"         ENDIF',
 				   '"         GO TO 20',
 				   '" 30      CONTINUE',
-				   '"         WRITE (50,*) \'THETAS\'',
-				   '"         WRITE (50,99) (THETAF(J),J=1,NTH)',
-				   '"         WRITE (50,*) \'OMEGAS\'',
+				   '"         WRITE (51,*) \'THETAS\'',
+				   '"         WRITE (51,99) (THETAF(J),J=1,NTH)',
+				   '"         WRITE (51,*) \'OMEGAS\'',
 				   '"         DO 7000 I=1,NETA',
-				   '" 7000       WRITE (50,99) (OMEGAF(I,J),J=1,NETA)',
-				   '"            WRITE (50,*) \'SIGMAS\'',
+				   '" 7000       WRITE (51,99) (OMEGAF(I,J),J=1,NETA)',
+				   '"            WRITE (51,*) \'SIGMAS\'',
 				   '"            DO 7999 I=1,NEPS',
-				   '" 7999          WRITE (50,99) (SIGMAF(I,J),J=1,NEPS)',
+				   '" 7999          WRITE (51,99) (SIGMAF(I,J),J=1,NEPS)',
 				   '"            ENDIF',
 				   '" 99         FORMAT (20E15.7)',
 				   '" 98         FORMAT (2I8)',
@@ -180,17 +180,17 @@ sub BUILD
 		
 		push( @{$code}, 
 			  'IF (ICALL.EQ.3) THEN',
-			  '  OPEN(50,FILE=\'cwtab'.$self -> sdno().$mirror_name.'.est\')',
-			  '  WRITE (50,*) \'ETAS\'',
+			  '  OPEN(51,FILE=\'cwtab'.$self -> sdno().$mirror_name.'.est\')',
+			  '  WRITE (51,*) \'ETAS\'',
 			  '  DO WHILE(DATA)',
-			  '    IF (NEWIND.LE.1) WRITE (50,*) ETA',
+			  '    IF (NEWIND.LE.1) WRITE (51,*) ETA',
 			  '  ENDDO',                                
-			  '  WRITE (50,*) \'THETAS\'',
-			  '  WRITE (50,*) THETA',
-			  '  WRITE (50,*) \'OMEGAS\'',
-			  '  WRITE (50,*) OMEGA(BLOCK)',
-			  '  WRITE (50,*) \'SIGMAS\'',
-			  '  WRITE (50,*) SIGMA(BLOCK)',
+			  '  WRITE (51,*) \'THETAS\'',
+			  '  WRITE (51,*) THETA',
+			  '  WRITE (51,*) \'OMEGAS\'',
+			  '  WRITE (51,*) OMEGA(BLOCK)',
+			  '  WRITE (51,*) \'SIGMAS\'',
+			  '  WRITE (51,*) SIGMA(BLOCK)',
 			  'ENDIF' );
 	}
 
@@ -297,7 +297,7 @@ EOF
 			print INFN "      DATA NTH,NETA,NEPS/$ntheta,$neta,$neps/\n";
 
 		print INFN "      IF (ICALL.EQ.0) THEN\nC     open files here, if necessary\n";
-		print INFN "      OPEN(50,FILE='cwtab".$self -> sdno().$mirror_name.".est')\n";
+		print INFN "      OPEN(51,FILE='cwtab".$self -> sdno().$mirror_name.".est')\n";
 
 print INFN << "EOF";
 		ENDIF
@@ -305,23 +305,23 @@ print INFN << "EOF";
 			MODE=0
 			CALL PASS(MODE)
 			MODE=1
-			WRITE (50,*) 'ETAS'
+			WRITE (51,*) 'ETAS'
 			20      CALL PASS(MODE)
 			IF (MODE.EQ.0) GO TO 30
 			IF (NEWIND.NE.2) THEN
             CALL GETETA(ETA)
-            WRITE (50,97) (ETA(I),I=1,NETA)
+            WRITE (51,97) (ETA(I),I=1,NETA)
 			ENDIF
 			GO TO 20
 			30      CONTINUE
-			WRITE (50,*) 'THETAS'
-			WRITE (50,99) (THETAF(J),J=1,NTH)
-			WRITE (50,*) 'OMEGAS'
+			WRITE (51,*) 'THETAS'
+			WRITE (51,99) (THETAF(J),J=1,NTH)
+			WRITE (51,*) 'OMEGAS'
 			DO 7000 I=1,NETA
-			7000       WRITE (50,99) (OMEGAF(I,J),J=1,NETA)
-            WRITE (50,*) 'SIGMAS'
+			7000       WRITE (51,99) (OMEGAF(I,J),J=1,NETA)
+            WRITE (51,*) 'SIGMAS'
             DO 7999 I=1,NEPS
-			7999          WRITE (50,99) (SIGMAF(I,J),J=1,NEPS)
+			7999          WRITE (51,99) (SIGMAF(I,J),J=1,NEPS)
             ENDIF
 			99         FORMAT (20E15.7)
 			98         FORMAT (2I8)
