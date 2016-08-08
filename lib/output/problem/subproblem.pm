@@ -438,7 +438,7 @@ sub _read_eigen
 		}
 		if ( $eig_area ) {
 			$start_pos-- and last if (/^[a-df-zA-DF-Z]/); #Rewind one step
-			last if ( /^\s*\*/ or /^1/ or /^\s*#/ or /^0ERROR/);
+			last if ( /^\s*\*/ or /^1/ or /^\s*#/ or /^0ERROR/ or /^0PROGRAM/);
 			push( @eigens, split );
 		}
 		$start_pos-- and last if ( /^ PROBLEM.*SUBPROBLEM/ or /^ PROBLEM NO\.:\s+\d/ );
