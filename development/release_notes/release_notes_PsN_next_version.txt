@@ -59,7 +59,7 @@ Changes and bug fixes from PsN 4.6.0 to n.n.n
 
    ___General___
 
-- Bug fix:
+- Bug fix: Some generated paths for the Rplots script were illegal R strings causing R to crash
 
    ___common_options___
 

@@ -189,7 +189,7 @@ sub double_backslashes{
 	my $string = $parm{'string'};
 
 	#lookbehind and lookahead. Replace single backslash with double, but do not change if already double
-	$string =~ s/(?<!\\)\\(?!\\)/\\/g;
+	$string =~ s/(?<!\\)\\(?!\\)/\\\\/g;
 	return $string;
 
 }
