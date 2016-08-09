@@ -102,7 +102,7 @@ sub modelfit_analyze
 
 	open my $output_file, '>', "result.csv";
 
-	print $output_file "Type,Model number,Model name,", join(',', @{$self->parameters}), "\n";; 
+	print $output_file "Type,Model number,Model name,", join(',', @{$self->parameters}), ",OFV\n";; 
 
 	for my $model_number (0 .. scalar(@{$self->pvar_models} - 1)) {
 		$epv_array = $self->_get_epv($model_number);
@@ -111,9 +111,14 @@ sub modelfit_analyze
 			$upv_array[$i] = $pv_array->[$i] - $epv_array->[$i];
 		}
 		my $model_name = $self->pvar_models->[$model_number]->filename;
-		print $output_file "EPV,", "$model_number,$model_name,", join(',', @$epv_array), "\n";
-		print $output_file "UPV,", "$model_number,$model_name,", join(',', @upv_array), "\n";
-		print $output_file "PV,", "$model_number,$model_name,", join(',', @$pv_array), "\n";
+        my $output = $self->pvar_models->[$model_number]->outputs->[0];
+        my $ofv;
+        if (defined $output) {
+            $ofv = $output->access_any(attribute=>'ofv')->[0]->[0];
+        }
+		print $output_file "EPV,", "$model_number,$model_name,", join(',', @$epv_array), ",$ofv\n";
+		print $output_file "UPV,", "$model_number,$model_name,", join(',', @upv_array), ",$ofv\n";
+		print $output_file "PV,", "$model_number,$model_name,", join(',', @$pv_array), ",$ofv\n";
 	}
 
 	close $output_file;

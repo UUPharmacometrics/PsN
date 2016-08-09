@@ -155,5 +155,7 @@ New features implemented by William S. Denney of Human Predictions:
    ___nmoutput2so___
 
 
-   ___crossval___
+   ___pvar___
+
+- Add OFV column to results.csv
 

@@ -51,16 +51,16 @@ The pvar script can be run for all the intermediate models of an scm run. For th
 The result.csv is formatted as follows:
 
 The first row is the header explaining the columns.
-The first column is the type of variability (EPV for explained, UPV for unexplained and PV for total). The second column is the number of the model starting with zero. They will come in the order of the scmlog or in the order specified on the command line when using the models option. The third column is the name of the model. The following columns are the variances for the parameters.
+The first column is the type of variability (EPV for explained, UPV for unexplained and PV for total). The second column is the number of the model starting with zero. They will come in the order of the scmlog or in the order specified on the command line when using the models option. The third column is the name of the model. The following columns until the last column are the variances for the parameters. The last column is the OFV for this model.
 
 \begin{verbatim}
-Type,Model number,Model name,CL,V
-EPV,0,run101.mod,1.64942442067797e-06,0.0620681720338984
-UPV,0,run101.mod,7.1337349188431e-06,0.538948190857009
-PV,0,run101.mod,8.78315933952107e-06,0.601016362890907
-EPV,1,run103.mod,1.5230948760263e-05,0.0468773796610169
-UPV,1,run103.mod,1.75795164007126e-06,0.387259333476643
-PV,1,run103.mod,1.69889004003343e-05,0.43413671313766
+Type,Model number,Model name,CL,V,OFV
+EPV,0,run101.mod,1.64942442067797e-06,0.0620681720338984,527.08
+UPV,0,run101.mod,7.1337349188431e-06,0.538948190857009,527.08
+PV,0,run101.mod,8.78315933952107e-06,0.601016362890907,527.08
+EPV,1,run103.mod,1.5230948760263e-05,0.0468773796610169,591.443
+UPV,1,run103.mod,1.75795164007126e-06,0.387259333476643,591.443
+PV,1,run103.mod,1.69889004003343e-05,0.43413671313766,591.443
 \end{verbatim}
 
 \subsection{Auto-generated R-plots from PsN}
