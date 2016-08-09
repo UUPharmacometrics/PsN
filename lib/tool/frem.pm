@@ -3319,11 +3319,25 @@ sub create_data2_model
 		}
 	}
 	my $add_mdv=0;
+	my @code;
+	my $use_pred = 0;
 	unless (defined $evid_index or defined $mdv_index){
-		push(@filter_table_header,'MDV');
-		$mdv_index = $#filter_table_header;
-		push(@{$extra_input_items},'MDV');
-		$add_mdv=1;
+		@code = @{$filtered_data_model->get_code(record => 'pk')};
+		unless ( $#code > 0 ) {
+			@code = @{$filtered_data_model->get_code(record => 'pred')};
+			$use_pred = 1;
+		}
+		if ( $#code <= 0 ) {
+			croak("Neither PK or PRED defined in model 0");
+		}
+
+		#if $PRED it means all rows are observations. Otherwise let nonmem add MDV
+		if (not $use_pred){
+			push(@filter_table_header,'MDV');
+			$mdv_index = $#filter_table_header;
+			push(@{$extra_input_items},'MDV');
+			$add_mdv=1;
+		}
 	}
 	if (defined $type_index){
 		croak($fremtype." already defined in input model, not allowed.");
@@ -3346,22 +3360,13 @@ sub create_data2_model
 
 	my $message;
 	if ($add_mdv){
-		#cannot have dummy model, NONMEM cannot append MDV
+		#cannot have dummy model, NONMEM cannot append MDV for dummy $PRED so must keep $PK
 		foreach my $remove_rec ('simulation','covariance','table','scatter','estimation'){
 			$filtered_data_model -> remove_records(type => $remove_rec);
 		}
-		my @code;
-		@code = @{$filtered_data_model->get_code(record => 'pk')};
-		my $use_pred = 0;
-		unless ( $#code > 0 ) {
-			@code = @{$filtered_data_model->get_code(record => 'pred')};
-			$use_pred = 1;
-		}
-		if ( $#code <= 0 ) {
-			croak("Neither PK or PRED defined in model 0");
-		}
 		push(@code,$fremtype.'=0');
 		if ($use_pred ) {
+			croak("no add_mdv when PRED in model");
 			$filtered_data_model->set_code(record => 'pred', code => \@code);
 		} else {
 			$filtered_data_model->set_code(record => 'pk', code => \@code);

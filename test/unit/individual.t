@@ -43,6 +43,27 @@ is_deeply($ind2->subject_data, ['1,0.0000e0,1.0000e0,8', '1,1.0000e0,0.0000e0,9'
 
 
 #add_frem_lines
+
+#no mdv
+#ID DOSE TIME DV WT FREMTYPE
+$ind = data::individual->new(idcolumn => 1, subject_data => ['1,4.02,0,0.74,79.6,0',
+															 '1,0,0.25,2.84,0,0',
+															 '1,0,0.57,6.57,0,0',
+															 '1,0,1.12,10.5,0,0',
+															 '1,0,2.02,9.66,0,0']);
+
+is_deeply($ind->factor_list(column => 5,mdv_evid_indices =>[]),[79.6,0],'baseline factor nomdv');
+$ind->add_frem_lines(type_index => 5,
+					 N_parameter_blocks => 1,
+					 dv_index => 3,
+					 cov_indices => [4],
+					 is_log => [0],
+					 first_timevar_type => 1);
+
+is($ind->subject_data->[0],'1,4.02,0,79.6,79.6,100', "add_frem_lines 0 nomdv ");
+is($ind->subject_data->[1],'1,4.02,0,0.74,79.6,0', "add_frem_lines 1 nomdv");
+is($ind->subject_data->[2],'1,0,0.25,2.84,0,0', "add_frem_lines 2 nomdv ");
+
 #ID DV MDV TIME WGT DUM AGE FREMTYPE 
 $ind = data::individual->new(idcolumn => 1, subject_data => ['1,0,1,0,70,1,35,0', 
 																'1,34,0,10,70,1,35,0',

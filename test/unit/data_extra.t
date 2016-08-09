@@ -23,16 +23,44 @@ use File::Spec qw(catfile);
 #test for data class subroutine for frem dataset generation
 #TODO add checks of contents of findme.dta (data2name file)
 # -time_var=WT -occ=VISI -param=PHI,LAG -invar=SEX,DGRP -vpc -no-check $model_dir/mox_no_bov.mod -dir=$dir",
+ui->silent(1);
 my $tempdir = create_test_dir('unit_data_extra');
 
 cp($includes::testfiledir.'/frem_filtered_data.dta',$tempdir);
+cp($includes::testfiledir.'/frem_filtered_nomdv.dta',$tempdir);
+
+
+my $filtered_data_nomdv = data->new(filename => $tempdir.'frem_filtered_nomdv.dta',
+							  ignoresign => '@', 
+							  idcolumn => 1,
+							  missing_data_token => -99);
+
+
+my $resultref = data::frem_compute_covariate_properties(filtered_data => $filtered_data_nomdv,
+													 invariant_covariates => ['WT'],
+													 directory => $filtered_data_nomdv->directory,
+													 data2name => 'findme3.dta', #ends up in tempdir
+													 evid_index => undef,
+													 mdv_index => undef,
+													 dv_index => 3,
+													 type_index => 5,
+													 N_parameter_blocks => 1,
+													 cov_indices => [4], #WT
+													 is_log => [0]);
+
+is_deeply($resultref->{'invariant_median'},[70.5],'frem median WT');
+cmp_float_array($resultref->{'invariant_mean'},[6.95833333e+01],'frem mean WT');
+
+cmp_float($resultref->{'invariant_covmatrix'}->[0]->[0],90.308787878788,'frem inv covmatrix nomdv 1,1');
+is_deeply($resultref->{'have_missing_covariates'},[0],'frem missing covariates nomdv');
+
 
 my $filtered_data = data->new(filename => $tempdir.'frem_filtered_data.dta',
 							  ignoresign => '@', 
 							  idcolumn => 1,
 							  missing_data_token => -99);
 
-my $resultref = data::frem_compute_covariate_properties(filtered_data => $filtered_data,
+$resultref = data::frem_compute_covariate_properties(filtered_data => $filtered_data,
 														invariant_covariates => ['SEX','DGRP'],
 														occ_index => 1,
 														directory => $filtered_data->directory,

@@ -200,9 +200,7 @@ sub add_frem_lines
 	my @check_index = ();
 	push(@check_index, $mdv_index) if (defined $mdv_index);
 	push(@check_index, $evid_index) if (defined $evid_index);
-	unless (scalar(@check_index)>0){
-		croak("both evid and mdv indices undefined in add_frem_lines");
-	}
+	#if both mdv and evid undefined it means all rows are observations
 
 	my $done_invariant = 0;
 	$done_invariant = 1 if ($first_timevar_type == 0); #no time invariant at all
