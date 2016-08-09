@@ -510,7 +510,7 @@ require model;
 							$zero_mess = acknowledge( 'Zero gradients found '.$outobj -> zero_gradients -> [$problems][$sub_problems].' times', 'WARNING');
 						}
 					}else{
-						$zero_mess = acknowledge( 'Gradient information not read', '-');
+						$zero_mess = acknowledge('Zero gradient information not read', '-');
 					}
 					
 					if (defined $outobj -> final_zero_gradients -> [$problems][$sub_problems]){
@@ -520,7 +520,7 @@ require model;
 							$final_zero_mess = acknowledge( 'Final zero gradients', 'ERROR');
 						}
 					}else{
-						$final_zero_mess = acknowledge( 'Gradient information not read', '-');
+						$final_zero_mess = acknowledge('Final zero gradient information not read', '-');
 					}
 					
 					if (defined $outobj -> hessian_reset -> [$problems][$sub_problems]){

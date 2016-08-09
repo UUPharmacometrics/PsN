@@ -98,6 +98,7 @@ New features implemented by William S. Denney of Human Predictions:
 
    ___sumo___
 
+- Bug fix: The message stating that there is no gradient information after an SAEM run was duplicated
 
    ___bootstrap___
 
