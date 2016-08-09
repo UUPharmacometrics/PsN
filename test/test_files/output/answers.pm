@@ -39,6 +39,14 @@ sub read_answers
 	$answer_hashes[$index]->{answers}={};
 	$answer_hashes[$index]->{answers}->{0}->{0}->{'eigens'}=[2.62E-01 , 4.47E-01,  8.58E-01,  1.06E+00 , 1.38E+00 , 2.00E+00];
 
+	$index++;
+	$answer_hashes[$index]={};
+	$answer_hashes[$index]->{file}='special_mod/interrupted_at_eigen.lst';
+	$answer_hashes[$index]->{parsed_successfully}=1;
+	$answer_hashes[$index]->{answers}={};
+	$answer_hashes[$index]->{answers}->{0}->{0}->{'minimization_successful'}=0;
+	$answer_hashes[$index]->{answers}->{0}->{0}->{'thetas'}=[4.75E+00, -3.91E+00 ,-3.30E+00, -3.30E+00, 3.00E-01, -1.00E+00 , 0.00E+00, -2.00E+00, 0.00E+00, -2.00E+00,  0.00E+00 ,  0.00E+00 , 0.00E+00 , 0.00E+00,  0.00E+00];
+
     $index++;
 	$answer_hashes[$index]={};
 	$answer_hashes[$index]->{file}='nm73/anneal2_V7_30_beta.lst';
