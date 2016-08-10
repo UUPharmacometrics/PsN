@@ -74,8 +74,7 @@ The column THETA contains the theta estimates as reported in the NONMEM output f
 
 The square roots of the estimates of the diagonal elements of the OMEGA and SIGMA matrices in the NONMEM output file are reported in the OMEGA and SIGMA columns (except when -ci is used, see below). The off-diagonal estimates are reported as the corresponding correlations, i.e. 
 $\frac{cov(om1,om2)}{\sqrt{var(om1)*var(om2)}}$. 
-The numbers in parentheses after the OMEGA and SIGMA columns are the relative SEs of the \emph{variance} and \emph{covariance} estimates, as taken from the NONMEM output file
-(but see option -ci and -sd\_rse below).
+The numbers in parentheses after the OMEGA and SIGMA columns are the relative SEs of the estimates. By default these are on the approximate standard deviation/correlation scale, see option -ci and -sd\_rse below for more information.
 Relative standard errors are not displayed unless NONMEM reports the standard errors in the output file, i.e. when the covariance step has been requested and has terminated successfully.
 
 If the user has set labels for the parameters in the control stream, those labels are used instead of the

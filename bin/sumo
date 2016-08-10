@@ -578,7 +578,11 @@ require model;
 									my @found_cv = @{$f_cv -> [$problems][$sub_problems]};
 									$large_se_mess = acknowledge( 'Large relative standard errors found', 'WARNING');
 									for ( my $i = 0; $i <= $#large_standard_errors; $i++ ) {
-										push @large_ses, sprintf( "\t%-20s%10g", $large_standard_errors[$i], $found_cv[$i] );
+                                        if ($options{'sd_rse'}) {
+										    push @large_ses, sprintf("\t%-20s%10g", $large_standard_errors[$i], $found_cv[$i] / 2);
+                                        } else {
+										    push @large_ses, sprintf("\t%-20s%10g", $large_standard_errors[$i], $found_cv[$i]);
+                                        }
 									}
 								}
 							}
