@@ -345,20 +345,15 @@ sub high_correlations
 						my @names = @{$init_problem->get_estimated_attributes(parameter => 'all',
 																			  attribute => 'labels')};
 						my $idx = 0;
-#						print join(';',@names).", count".scalar(@names)."\n";
 						for ( my $row = 1; $row <= scalar(@names); $row++ ) {
 							for ( my $col = 1; $col <= $row; $col++ ) {
 								if ( ( $row != $col ) and abs($correlation_matrix->[$idx]) > $limit) {
-#									print "row $row col $col, ".$names[$row-1]." - ".$names[$col-1]."\n".join(';',@names)."\n";
 									push( @sub_high_names_array, $names[$row-1]." - ".$names[$col-1] );
 									push( @sub_high_values_array, $correlation_matrix -> [$idx] );
 								}
-								#print $correlation_matrix->[$idx].' ';
 								$idx++;
 							}
-							#print "\n";
 						}
-						#print "\n";
 					}
 				}
 				push(@prob_high_names_array,\@sub_high_names_array);
