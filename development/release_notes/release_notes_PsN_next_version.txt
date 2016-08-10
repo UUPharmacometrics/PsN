@@ -157,5 +157,5 @@ New features implemented by William S. Denney of Human Predictions:
 
    ___pvar___
 
-- Add OFV column to results.csv
+- Add OFV and run number columns to results.csv
 
