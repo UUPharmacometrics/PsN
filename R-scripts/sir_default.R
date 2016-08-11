@@ -1,4 +1,5 @@
 
+
 #############################################################################################################
 ### Diagnostics for SIR
 ### Author: AG Dosne
@@ -202,12 +203,16 @@ resamp_prop_max$IDBIN  <- ifelse(resamp_prop_max$BIN==resamp_prop_max$MAXBIN,1,0
 resamp_prop_max$MAXBIN <- paste("INIT BIN",resamp_prop_max$MAXBIN)
 
 ### Calculate N for OMEGA distributions
-
+if (N.ESTIMATED.OMEGAS >= 1) { 
 dat      <- filter(rawres, ITERATION==LASTIT & resamples==1)
 omega.col<- COL.ESTIMATED.PARAMS[seq((N.ESTIMATED.THETAS+1),(N.ESTIMATED.THETAS+N.ESTIMATED.OMEGAS))]                                                                            # column index of the variances we want to estimate the df of 
 parnames <- names(dat)[omega.col]                                                                         # names of the variances  
 var      <- filter(final_est,Parameter %in% parnames)                                                     # MLE estimates
-mdat     <- melt(dat[,omega.col]) 
+mdat     <- melt(dat[,omega.col,drop=FALSE]) 
+se       <- ddply(mdat,.(variable),summarize,"se"=sd(value))
+se$MLE   <- var$value
+se$df_norm  <- 2*(se$MLE/se$se)**2+1
+mdat     <- join(mdat,se)
 
 full.df.est <- function (x) {  # function for the fitting
   x   <- as.data.frame(x)
@@ -218,10 +223,10 @@ full.df.est <- function (x) {  # function for the fitting
     if(df<1) nLL <- NA
     return(nLL)
   }
-  fit <- try(mle(nLL,start=list(df=model.subjects,s=model.subjects*mean(x[,2]))), silent=TRUE) # test if the fit returns an error
+  fit <- try(mle(nLL,start=list(df=x$df_norm[1],s=x$df_norm[1]*mean(x[,2]))), silent=TRUE) # test if the fit returns an error
   if ('try-error' %in% class(fit)) db <- rep(NA,7)
   else {
-    fit  <- mle(nLL,start=list(df=90,s=90*mean(x[,2])))
+    fit  <- mle(nLL,start=list(df=x$df_norm[1],s=x$df_norm[1]*mean(x[,2])))
     db   <- data.frame(nrow(x),fit@details$par[1],fit@details$par[2],
                        sqrt(diag(fit@vcov))[1],sqrt(diag(fit@vcov))[2],
                        fit@min,fit@details$convergence)}
@@ -243,7 +248,7 @@ for (i in seq(nrow(mdat))) {
   if(is.na(mdat$df[i])==FALSE) simdat[i,] <- riwish(v=mdat$df[i],S=as.matrix(mdat$s[i]))
 }
 mdat$simdat <- as.numeric(simdat)
-
+} # end of estimated.omega >= 1
 } # end of rplots.level >1
 
 #############################################################################################################
@@ -362,12 +367,16 @@ all_maxbin[[i]] <- all_maxbin.cur
 ### Inverse Wishart fit for OMEGAs
 #############################################################################################################
 
-invWish <- ggplot(mdat, aes(x=value)) +
-  geom_histogram() +
+if (N.ESTIMATED.OMEGAS >= 1) { 
+invWish <- ggplot(mdat,aes(x=value)) +
+  geom_histogram(aes(y=..density..)) +
+  geom_hline(aes(yintercept=0,linetype=interaction(variable,as.factor(round(df_norm,0)),sep=":"),color=NA)) + # dummy to output df_norm
   geom_density(aes(x=simdat,color=interaction(variable,as.factor(round(df,0)),sep=":"))) +
   facet_wrap(~variable, scales="free") +
-  guides(color=guide_legend(title="Parameter:Estimated N"))
-
+  scale_linetype_manual(values=c(0,0)) +
+  theme(legend.position="bottom") +
+  guides(color=guide_legend(title="Estimated N based on inverse Wishart distribution"),linetype=guide_legend(title="Calculated N based on normal distribution (not plotted)"))
+} # end of estimated.omegas >=1
 } # end of r.plots.level>1
 
 #############################################################################################################
@@ -388,10 +397,11 @@ if(rplots.level>1) {
   print(mM_ratio)
   print(m2_maxbin)
   print(all_maxbin)
-  print(invWish)
+  if (N.ESTIMATED.OMEGAS >= 1) { print(invWish) }
   dev.off()
 }
 
 ### END
 #############################################################################################################
+
 
