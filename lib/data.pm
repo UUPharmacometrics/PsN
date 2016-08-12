@@ -457,7 +457,7 @@ sub frem_compute_covariate_properties
 		if ( _have_non_unique_values(\%strata)) {
 			ui -> print( category => 'all',
 						 message => "\nWarning: Individuals were found to have multiple values in the $covariate column,".
-						 " but the frem script will just use the first value for the individual.\n");
+						 " but the frem script will only use the value in the individual's first observation record.\n");
 		}
 	}
 

@@ -25,10 +25,12 @@ my $smallcorrelation = 0.01; #FIXME
 my $bov_variance_init = 0.1; #FIXME
 my $indentation = '     ';
 my $smallnum = 0.0000001;
+my $small_correlation = 0.01;
 
 has 'deriv2_nocommon_maxeta'  => ( is => 'rw', isa => 'Int', default=> 60);
 has 'skip_omegas' => ( is => 'rw', isa => 'ArrayRef', default => sub { [] } );
 has 'run_sir' => ( is => 'rw', isa => 'Bool', default=> 0);
+has 'mu' => ( is => 'rw', isa => 'Bool', default=> 0);
 has 'skip_etas' => ( is => 'rw', isa => 'Int', default=> 0);
 has 'rse' => ( is => 'rw', isa => 'Num', default=> 30);
 has 'start_omega_record' => ( is => 'rw', isa => 'Int', default=> 1);
@@ -384,11 +386,27 @@ sub get_post_processing_data
 					}else{
 						croak("error parsing FREM code, was it modified?\n".$code->[$i+1]);
 					}
-					if ($code->[$i+2] =~ /^\s*Y = THETA\((\d+)\) \+ ETA\((\d+)\)\*?(\d*\.?\d*)/){
-						$etanum = $2;
-						$rescale = $3;
+					if ($code->[$i+1] =~ /^\s*;\s*$cov\s+(\d+\.?\d*)/ ){
+						#rescale printed on comment line -> might have mu modelling
+						$rescale = $1;
+						if ($code->[$i+2] =~ /^\s*Y = THETA\((\d+)\) \+ ETA\((\d+)\)/){
+							#no mu
+							$etanum = $2;
+						}elsif ($code->[$i+2] =~ /^\s*Y = COV(\d+) \+ EPS\(/){
+							#mu
+							$etanum = $1;
+						}else{
+							croak("error parsing FREM code, was it modified?\n".$code->[$i+2]);
+						}
+
 					}else{
-						croak("error parsing FREM code, was it modified?\n".$code->[$i+2]);
+						#cannot have mu modelling, older format
+						if ($code->[$i+2] =~ /^\s*Y = THETA\((\d+)\) \+ ETA\((\d+)\)\*?(\d*\.?\d*)/){
+							$etanum = $2;
+							$rescale = $3;
+						}else{
+							croak("error parsing FREM code, was it modified?\n".$code->[$i+2]);
+						}
 					}
 					push(@covnames,$cov);
 					push(@covetas,$etanum);
@@ -868,6 +886,7 @@ sub get_filled_omega_block
 	my @mergematrix = ();
 
 	#local coords
+	my $have_corrmatrix=0;
 	($corrmatrix,$message) = get_correlation_matrix_from_phi(start_eta_1 => $start_eta_1,
 															 end_eta_1 => $end_eta_top, #can be from multiple blocks here, or end_eta_1
 															 start_eta_2 => $start_eta_2,
@@ -875,7 +894,7 @@ sub get_filled_omega_block
 															 problem_index => $problem_index,
 															 table_index => $table_index,
 															 model => $model);
-	return([],$message) unless (length($message) == 0);
+	$have_corrmatrix=1 if (length($message) == 0);
 
 	@sd = (0) x ($total_size);
 	for (my $i=0; $i<($total_size); $i++){
@@ -914,11 +933,17 @@ sub get_filled_omega_block
 		}
 		for (my $j = ($i+1); $j < $total_size; $j++){
 			next unless ($mergematrix[$i]->[$j] == 0);
-			if (($j >= $sizes[0]) and ($j < $top_size)){
-				$mergematrix[$i]->[$j] = $smallnum;
-			}else{
+
+			unless (($j >= $sizes[0]) and ($j < $top_size)){
+			#if (($j >= $sizes[0]) and ($j < $top_size)){
+			#	$mergematrix[$i]->[$j] = $smallnum; #FIXME correlation 1%?
+			#}else{
 				#compute new
-				$mergematrix[$i]->[$j] = ($corrmatrix->[$i][$j])*($sd[$i])*($sd[$j]);
+				if ((not $have_corrmatrix) or $corrmatrix->[$i][$j] == 0){
+					$mergematrix[$i]->[$j] = ($small_correlation)*($sd[$i])*($sd[$j]);
+				}else{
+					$mergematrix[$i]->[$j] = ($corrmatrix->[$i][$j])*($sd[$i])*($sd[$j]);
+				}
 			}
 		}
 	}
@@ -926,9 +951,12 @@ sub get_filled_omega_block
 	#foreach my $line (@mergematrix){
 	#	print join("\t",@{$line})."\n";
 	#}
-
+	my $newmatrix = replace_0_correlation(old_matrix => \@mergematrix,
+										  is_covariance => 1,
+										  low_correlation => $small_correlation);
+	my $rounded = round_off_omega(omega => $newmatrix);
 	#get posdef is necessary, pheno will crash without it
-	my ($posdefmatrix,$diff)=linear_algebra::get_symmetric_posdef(\@mergematrix);
+	my ($posdefmatrix,$diff)=linear_algebra::get_symmetric_posdef($rounded);
 	
 	return($posdefmatrix,'');	
 }
@@ -989,6 +1017,12 @@ sub get_correlation_matrix_from_phi
 	if (defined $start_eta_2 and defined $end_eta_2){
 		for (my $i = $start_eta_2; $i <= $end_eta_2; $i++){
 			push(@matrix,$nmtablefile->tables->[$table_index]->get_column(name=> $diagonal.'('.$i.')'));
+		}
+	}
+
+	for (my $i=0; $i< scalar(@matrix); $i++){
+		unless (array::any_nonzero($matrix[$i])){
+			return([],"$diagonal column in phi-file only zeros");
 		}
 	}
 	$error = linear_algebra::column_cov(\@matrix,$covariance);
@@ -1247,6 +1281,64 @@ sub get_start_numbers
 	return $start_omega_record;
 }
 
+sub replace_0_correlation
+{
+	my %parm = validated_hash(\@_,
+							  old_matrix => { isa => 'ArrayRef', optional => 0 },
+							  low_correlation => { isa => 'Num', optional => 0 },
+							  is_covariance => { isa => 'Bool', optional => 0 },
+		);
+	my $old_matrix = $parm{'old_matrix'};
+	my $low_correlation = $parm{'low_correlation'};
+	my $is_covariance = $parm{'is_covariance'};
+	
+	my @new_matrix = ();
+	my $size = scalar(@{$old_matrix});
+	
+	for (my $i=0; $i<($size); $i++){
+		push(@new_matrix,[(0) x $size]);
+	}
+	
+	for (my $row=0; $row< $size; $row++){
+		for (my $col=0; $col<=$row; $col++){
+			my $number = $old_matrix->[$row][$col];
+			if (($number == 0) and (abs($low_correlation) > 0) and ($col < $row)){
+				if ($is_covariance){
+					$number = $low_correlation *(sqrt($old_matrix->[$row][$row]))*(sqrt($old_matrix->[$col][$col])) ;
+				}else{
+					$number = $low_correlation;
+				}
+			}
+			$new_matrix[$row][$col] = $number;
+			$new_matrix[$col][$row] = $number;
+		}
+	}
+	
+	return \@new_matrix;
+
+}
+
+sub round_off_omega
+{
+	my %parm = validated_hash(\@_,
+							  omega => { isa => 'ArrayRef', optional => 0 },
+		);
+	my $omega = $parm{'omega'};
+	my $size = scalar(@{$omega});
+	return () if ($size < 1);
+	my @new_lines=();
+	
+	my $form = '%.6G';
+	for (my $row=0; $row< $size; $row++){
+		push(@new_lines,[]);
+		for (my $col=0; $col<$size; $col++){
+			my $str= sprintf("$form",$omega->[$row][$col]); 
+			push(@{$new_lines[-1]},$str);
+		}
+	}
+	return \@new_lines;
+}
+
 sub get_omega_lines
 {
 	my %parm = validated_hash(\@_,
@@ -1316,19 +1408,26 @@ sub set_model2_omega_blocks
 		}
 	}
 
-	my $omega_lines;
+	#FIXME update covariate_covmatrix if any correlations exactly 0. then set to correlation 1%, i.e. 0.01. adjust covariance
+	
+	my $matrix;
 	if ($rescale){
 		my $sdcorr = [];
 		my $err = linear_algebra::covar2sdcorr($covariate_covmatrix,$sdcorr);
 		for (my $row=0; $row< scalar(@{$sdcorr}); $row++){
 			$sdcorr->[$row][$row]=1;
 		}
-		$omega_lines = get_omega_lines(new_omega => $sdcorr,
-									   labels => $covariate_labels);
+
+		$matrix = replace_0_correlation(old_matrix => $sdcorr,
+										is_covariance => 0,
+										low_correlation => $small_correlation);
 	}else{
-		$omega_lines = get_omega_lines(new_omega => $covariate_covmatrix,
-									   labels => $covariate_labels);
+		$matrix = replace_0_correlation(old_matrix => $covariate_covmatrix,
+										is_covariance => 1,
+										low_correlation => $small_correlation);
 	}
+	my $omega_lines = get_omega_lines(new_omega => $matrix,
+									  labels => $covariate_labels);
 	push(@{$model -> problems -> [0]-> omegas},model::problem::omega->new(record_arr => $omega_lines, 
 																		  n_previous_rows => $n_previous_rows));
 	
@@ -2028,6 +2127,7 @@ sub do_filter_dataset_and_append_binary
 		create_data2_model(model=>$model,
 						   filename => $self -> directory().'intermediate_models/filter_data_model.mod',
 						   filtered_datafile => $filtered_datafile,
+						   use_pred => $self->use_pred,
 						   dv => $self->dv,
 						   covariates => $self->covariates);
 	
@@ -2269,12 +2369,14 @@ sub get_covrecord
 	return $covrecordref;
 }
 
-sub get_pred_error_code
+sub get_pred_error_pk_code
 {
 	my %parm = validated_hash(\@_,
 							  covariates => { isa => 'ArrayRef', optional => 0 },
 							  maxeta => {isa => 'Int', optional => 0},
 							  rescale => { isa => 'Bool', optional => 0 },
+							  mu => { isa => 'Bool', optional => 0 },
+							  use_pred => { isa => 'Bool', optional => 0 },
 							  invariant_covmatrix => { isa => 'ArrayRef', optional => 0 },
 							  invariant_mean => { isa => 'ArrayRef', optional => 0 },
 							  estimate_mean => { isa => 'ArrayRef', optional => 0 },
@@ -2286,6 +2388,8 @@ sub get_pred_error_code
 	my $covariates = $parm{'covariates'};
 	my $maxeta = $parm{'maxeta'};
 	my $rescale = $parm{'rescale'};
+	my $mu = $parm{'mu'};
+	my $use_pred = $parm{'use_pred'};
 	my $invariant_covmatrix = $parm{'invariant_covmatrix'};
 	my $invariant_mean = $parm{'invariant_mean'};
 	my $estimate_mean = $parm{'estimate_mean'};
@@ -2294,14 +2398,22 @@ sub get_pred_error_code
 	my $epsnum = $parm{'epsnum'};
 	my $indent = $parm{'indent'};
 	
+	my @pkcode=();
+	my @pred_error_code = (';;;FREM CODE BEGIN COMPACT',';;;DO NOT MODIFY');
+
 	my @eta_labels=();
 	my @eta_strings=();
+	my @rescale_strings=();
 	
 	for (my $j=0; $j< scalar(@{$covariates}); $j++){
 		my $label = 'BSV_'.$covariates->[$j];
 		my $sd = '';
 		if ($rescale){
-			$sd = '*'.sprintf("%.12G",sqrt($invariant_covmatrix->[$j][$j]));
+			my $number = sprintf("%.12G",sqrt($invariant_covmatrix->[$j][$j]));
+			$sd = '*'.$number;
+			push(@rescale_strings,$number);
+		}else{
+			push(@rescale_strings,'1');
 		}
 		push(@eta_strings,['ETA('.($maxeta+1+$j).')'.$sd]); 
 		push (@eta_labels, $label);
@@ -2327,12 +2439,30 @@ sub get_pred_error_code
 		push(@theta_strings,'THETA('.$num.')');
 	}
 
-	my @pred_error_code = (';;;FREM CODE BEGIN COMPACT',';;;DO NOT MODIFY');
+	if ($mu){
+		#PK/PRED changes for mu modelling
+		my @mucode=();
+		for (my $j=0; $j< scalar(@{$covariates}); $j++){
+			my $etanum = ($maxeta+1+$j);
+			push(@mucode,$indent.'MU_'.$etanum.' = '.$theta_strings[$j]);
+			push(@mucode,$indent.'COV'.$etanum.' = MU_'.$etanum.' + '.$eta_strings[$j]->[0]);
+		}
+		if ($use_pred){
+			push(@pred_error_code,@mucode);
+		}else{
+			push(@pkcode,@mucode);
+		}		 
+	}
 
 	for (my $i=0; $i< scalar(@{$covariates}); $i++){
 		for (my $j=0; $j< $N_parameter_blocks; $j++){
-			my $comment = ';'.$indent.'  '.$covariates->[$i];
-			my $ipred = $theta_strings[$i].' + '.$eta_strings[$i]->[$j];
+			my $comment = ';'.$indent.'  '.$covariates->[$i].'  '.$rescale_strings[$i];
+			my $ipred;
+			if ($mu){ #no iov handled
+				$ipred = 'COV'.($maxeta+1+$i);
+			}else{
+				$ipred = $theta_strings[$i].' + '.$eta_strings[$i]->[$j];
+			}
 			if ($N_parameter_blocks > 1){
 				$comment .= ' occasion '.($j+1);
 			}
@@ -2347,7 +2477,7 @@ sub get_pred_error_code
 	push(@pred_error_code,';;;FREM CODE END COMPACT' );
 
 	
-	return (\@eta_labels,\@theta_record_strings, \@pred_error_code);
+	return (\@eta_labels,\@theta_record_strings, \@pred_error_code,\@pkcode);
 	
 }
 
@@ -2386,9 +2516,11 @@ sub prepare_model2
 	}else{
 		@estimate_mean = (0) x scalar(@{$self->covariates});
 	}
-	my ($etalabels,$theta_strings,$pred_error_code) = tool::frem::get_pred_error_code(covariates => $self->covariates,
+	my ($etalabels,$theta_strings,$pred_error_code,$pk_code) = get_pred_error_pk_code(covariates => $self->covariates,
 																					  maxeta => $maxeta,
 																					  rescale => $self->rescale,
+																					  mu => $self->mu,
+																					  use_pred => $self->use_pred,
 																					  invariant_covmatrix => $self->invariant_covmatrix(),
 																					  invariant_mean => $self->invariant_mean(),
 																					  estimate_mean => \@estimate_mean,
@@ -2481,6 +2613,8 @@ sub prepare_model2
 
 		add_pred_error_code(model=>$frem_model,
 							pred_error_code => $pred_error_code,
+							pk_code => $pk_code,
+							mu => $self->mu,
 							use_pred => $self->use_pred);
 							
 #		add_pk_pred_error_code(model=>$frem_model,
@@ -2987,6 +3121,14 @@ sub modelfit_setup
 	my ($new_omega_order,$need_to_move_omegas)=get_new_omega_order(model =>$frem_model1,
 																   skip_omegas => $self->skip_omegas);
 
+	if ($need_to_move_omegas and $self->mu){
+		ui->print(category => 'all',
+				  message => "\n##########################################################################".
+				  "\nWarning: -skip_omegas option (see userguide) will result in renumbering\n".
+				  " of some ETAs, but MU variables will not be renumbered.\n".
+				  "##########################################################################\n\n");
+	}
+	
 	my ($skip_etas,$fix_omegas,$parameter_etanumbers) = 
 		put_skipped_omegas_first(model => $frem_model1,
 								 start_omega_record =>$self->start_omega_record,
@@ -3239,6 +3381,7 @@ sub create_data2_model
 	my %parm = validated_hash(\@_,
 							  model => { isa => 'Ref', optional => 0 },
 							  filename => { isa => 'Str', optional => 0 },
+							  use_pred => { isa => 'Bool', optional => 0 },
 							  filtered_datafile => { isa => 'Str', optional => 0 },
 							  bov_parameters => { isa => 'Int', default => 0 },
 							  dv  => { isa => 'Str', optional => 0 },
@@ -3249,6 +3392,7 @@ sub create_data2_model
 
 	my $model = $parm{'model'};
 	my $filename = $parm{'filename'};
+	my $use_pred = $parm{'use_pred'};
 	my $filtered_datafile = $parm{'filtered_datafile'};
 	my $bov_parameters = $parm{'bov_parameters'};
 	my $dv = $parm{'dv'};
@@ -3320,16 +3464,8 @@ sub create_data2_model
 	}
 	my $add_mdv=0;
 	my @code;
-	my $use_pred = 0;
+
 	unless (defined $evid_index or defined $mdv_index){
-		@code = @{$filtered_data_model->get_code(record => 'pk')};
-		unless ( $#code > 0 ) {
-			@code = @{$filtered_data_model->get_code(record => 'pred')};
-			$use_pred = 1;
-		}
-		if ( $#code <= 0 ) {
-			croak("Neither PK or PRED defined in model 0");
-		}
 
 		#if $PRED it means all rows are observations. Otherwise let nonmem add MDV
 		if (not $use_pred){
@@ -3364,11 +3500,13 @@ sub create_data2_model
 		foreach my $remove_rec ('simulation','covariance','table','scatter','estimation'){
 			$filtered_data_model -> remove_records(type => $remove_rec);
 		}
-		push(@code,$fremtype.'=0');
+		
 		if ($use_pred ) {
 			croak("no add_mdv when PRED in model");
 			$filtered_data_model->set_code(record => 'pred', code => \@code);
 		} else {
+			@code = @{$model->get_code(record => 'pk')};
+			push(@code,$fremtype.'=0');
 			$filtered_data_model->set_code(record => 'pk', code => \@code);
 		}
 		
@@ -3712,12 +3850,32 @@ sub	add_pred_error_code
 	my %parm = validated_hash(\@_,
 							  model => { isa => 'model', optional => 0 },
 							  pred_error_code => { isa => 'ArrayRef', optional => 0 },
+							  pk_code => { isa => 'ArrayRef', optional => 0 },
 							  use_pred => { isa => 'Bool', optional => 0 },
+							  mu => { isa => 'Bool', optional => 0 },
 		);
 	my $model = $parm{'model'}; 
 	my $pred_error_code = $parm{'pred_error_code'};
+	my $pk_code = $parm{'pk_code'};
 	my $use_pred = $parm{'use_pred'};
+	my $mu = $parm{'mu'};
 
+	if ($mu){
+		if ($use_pred){
+			if (scalar(@{$pk_code})>0){
+				croak("pk code should be empty when use_pred is set. this is a bug");
+			}
+		}else{
+			if (scalar(@{$pk_code})==0){
+				croak("pk code should be defined when use_pred is false. this is a bug");
+			}
+		}
+	}else{
+		if (scalar(@{$pk_code})>0){
+			croak("pk code should be empty when mu not set. this is a bug");
+		}
+	}
+	
     my @code;
 	if ($use_pred){
 		@code = @{$model->get_code(record => 'pred')};
@@ -3727,6 +3885,11 @@ sub	add_pred_error_code
 		@code = @{$model->get_code(record => 'error')};
 		push(@code,@{$pred_error_code});
 		$model->set_code(record => 'error', code => \@code);
+		if ($mu){
+			my @pk = @{$model->get_code(record => 'pk')};
+			push(@pk,@{$pk_code});
+			$model->set_code(record => 'pk', code => \@pk);
+		}
 	}
 
 }

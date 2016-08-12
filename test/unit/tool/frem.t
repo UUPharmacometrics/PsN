@@ -18,73 +18,197 @@ ui->silent(1);
 our $tempdir = create_test_dir('unit_frem');
 chdir($tempdir);
 
-my ($labels,$thetas,$code) = tool::frem::get_pred_error_code(covariates => ['AGE','SEX','WT'],
-															 maxeta => 3,
-															 rescale => 0,
-															 invariant_covmatrix => [],
-															 invariant_mean => [54.4, 0, 89.5],
-															 estimate_mean => [0,0,0],
-															 ntheta => 5,
-															 N_parameter_blocks => 1,
-															 epsnum => 2,
-															 indent => ' ');
-is_deeply($labels,['BSV_AGE','BSV_SEX','BSV_WT'],'get_pred_error_code eta labels');
-is_deeply($thetas,[' 54.4 FIX ; TV_AGE',' 0 FIX ; TV_SEX',' 89.5 FIX ; TV_WT'],'get_pred_error_code thetastrings');
+my @old =([4,0,2],
+		  [0,1,0],
+		  [2,0,5]);
+my @ans =([4,0.2,2],
+		  [0.2,1,0.1*sqrt(5)],
+		  [2,0.1*sqrt(5),5]);
+
+my $newmatrix = tool::frem::replace_0_correlation(old_matrix => \@old,
+									  is_covariance => 1,
+									  low_correlation => 0.1);
+is_deeply($newmatrix,\@ans,'replace 0 correlation covariance');
+
+@old =([1,0,0.2],
+	   [0,1,0],
+	   [0.2,0,1]);
+@ans =([1,0.1,0.2],
+	   [0.1,1,0.1],
+	   [0.2,0.1,1]);
+
+
+$newmatrix = tool::frem::replace_0_correlation(old_matrix => \@old,
+									  is_covariance => 0,
+									  low_correlation => 0.1);
+is_deeply($newmatrix,\@ans,'replace 0 correlation correlation');
+
+
+my ($labels,$thetas,$code,$pkcode) = tool::frem::get_pred_error_pk_code(covariates => ['AGE','SEX','WT'],
+																		maxeta => 3,
+																		rescale => 0,
+																		mu => 0,
+																		use_pred => 0,
+																		invariant_covmatrix => [],
+																		invariant_mean => [54.4, 0, 89.5],
+																		estimate_mean => [0,0,0],
+																		ntheta => 5,
+																		N_parameter_blocks => 1,
+																		epsnum => 2,
+																		indent => ' ');
+is_deeply($pkcode,[],'get_pred_error_pk_code eta pkcode');
+is_deeply($labels,['BSV_AGE','BSV_SEX','BSV_WT'],'get_pred_error_pk_code eta labels');
+is_deeply($thetas,[' 54.4 FIX ; TV_AGE',' 0 FIX ; TV_SEX',' 89.5 FIX ; TV_WT'],'get_pred_error_pk_code thetastrings');
 my @errcode =(
 	';;;FREM CODE BEGIN COMPACT',
 	';;;DO NOT MODIFY',
 	' IF (FREMTYPE.EQ.100) THEN',
-	';   AGE',
+	';   AGE  1',
 	'    Y = THETA(6) + ETA(4) + EPS(2)',
 	'    IPRED = THETA(6) + ETA(4)',
 	' END IF',
 	' IF (FREMTYPE.EQ.200) THEN',
-	';   SEX',
+	';   SEX  1',
 	'    Y = THETA(7) + ETA(5) + EPS(2)',
 	'    IPRED = THETA(7) + ETA(5)',
 	' END IF',
 	' IF (FREMTYPE.EQ.300) THEN',
-	';   WT',
+	';   WT  1',
 	'    Y = THETA(8) + ETA(6) + EPS(2)',
 	'    IPRED = THETA(8) + ETA(6)',
 	' END IF',
 	';;;FREM CODE END COMPACT'
 );
-is_deeply($code,\@errcode,'get_pred_error_code code');
+is_deeply($code,\@errcode,'get_pred_error_pk_code code');
 
-($labels,$thetas,$code) = tool::frem::get_pred_error_code(covariates => ['AGE','SEX','WT'],
-															 maxeta => 3,
-															 rescale => 1,
-															 invariant_covmatrix => [[9,2,1],[2,4,0],[1,0,2]],
-															 invariant_mean => [54.4, 0, 89.5],
-															 estimate_mean => [1,1,0],
-															 ntheta => 5,
-															 N_parameter_blocks => 1,
-															 epsnum => 2,
-															 indent => ' ');
-is_deeply($labels,['BSV_AGE','BSV_SEX','BSV_WT'],'get_pred_error_code eta labels 2');
-is_deeply($thetas,[' 54.4 ; TV_AGE',' 0.001 ; TV_SEX',' 89.5 FIX ; TV_WT'],'get_pred_error_code thetastrings 2'); 
+
+($labels,$thetas,$code,$pkcode) = tool::frem::get_pred_error_pk_code(covariates => ['AGE','SEX','WT'],
+																		maxeta => 3,
+																		rescale => 0,
+																		mu => 1,
+																		use_pred => 0,
+																		invariant_covmatrix => [],
+																		invariant_mean => [54.4, 0, 89.5],
+																		estimate_mean => [0,0,0],
+																		ntheta => 5,
+																		N_parameter_blocks => 1,
+																		epsnum => 2,
+																	 indent => ' ');
+my @mucode=(
+	' MU_4 = THETA(6)',
+	' COV4 = MU_4 + ETA(4)',
+	' MU_5 = THETA(7)',
+	' COV5 = MU_5 + ETA(5)',
+	' MU_6 = THETA(8)',
+	' COV6 = MU_6 + ETA(6)',
+	);
+is_deeply($pkcode,\@mucode,'get_pred_error_pk_code eta pkcode mu pk');
+is_deeply($labels,['BSV_AGE','BSV_SEX','BSV_WT'],'get_pred_error_pk_code eta labels mu pk');
+is_deeply($thetas,[' 54.4 FIX ; TV_AGE',' 0 FIX ; TV_SEX',' 89.5 FIX ; TV_WT'],'get_pred_error_pk_code thetastrings mu pk');
 @errcode =(
 	';;;FREM CODE BEGIN COMPACT',
 	';;;DO NOT MODIFY',
 	' IF (FREMTYPE.EQ.100) THEN',
-	';   AGE',
+	';   AGE  1',
+	'    Y = COV4 + EPS(2)',
+	'    IPRED = COV4',
+	' END IF',
+	' IF (FREMTYPE.EQ.200) THEN',
+	';   SEX  1',
+	'    Y = COV5 + EPS(2)',
+	'    IPRED = COV5',
+	' END IF',
+	' IF (FREMTYPE.EQ.300) THEN',
+	';   WT  1',
+	'    Y = COV6 + EPS(2)',
+	'    IPRED = COV6',
+	' END IF',
+	';;;FREM CODE END COMPACT'
+);
+is_deeply($code,\@errcode,'get_pred_error_pk_code code mu pk');
+
+
+
+
+($labels,$thetas,$code,$pkcode) = tool::frem::get_pred_error_pk_code(covariates => ['AGE','SEX','WT'],
+																	 maxeta => 3,
+																	 rescale => 1,
+																	 mu => 0,
+																	 use_pred => 0,
+																	 invariant_covmatrix => [[9,2,1],[2,4,0],[1,0,2]],
+																	 invariant_mean => [54.4, 0, 89.5],
+																	 estimate_mean => [1,1,0],
+																	 ntheta => 5,
+																	 N_parameter_blocks => 1,
+																	 epsnum => 2,
+																	 indent => ' ');
+is_deeply($pkcode,[],'get_pred_error_pk_code eta pkcode 2');
+is_deeply($labels,['BSV_AGE','BSV_SEX','BSV_WT'],'get_pred_error_pk_code eta labels 2');
+is_deeply($thetas,[' 54.4 ; TV_AGE',' 0.001 ; TV_SEX',' 89.5 FIX ; TV_WT'],'get_pred_error_pk_code thetastrings 2'); 
+@errcode =(
+	';;;FREM CODE BEGIN COMPACT',
+	';;;DO NOT MODIFY',
+	' IF (FREMTYPE.EQ.100) THEN',
+	';   AGE  3',
 	'    Y = THETA(6) + ETA(4)*3 + EPS(2)',
 	'    IPRED = THETA(6) + ETA(4)*3',
 	' END IF',
 	' IF (FREMTYPE.EQ.200) THEN',
-	';   SEX',
+	';   SEX  2',
 	'    Y = THETA(7) + ETA(5)*2 + EPS(2)',
 	'    IPRED = THETA(7) + ETA(5)*2',
 	' END IF',
 	' IF (FREMTYPE.EQ.300) THEN',
-	';   WT',
+	';   WT  1.41421356237',
 	'    Y = THETA(8) + ETA(6)*1.41421356237 + EPS(2)',
 	'    IPRED = THETA(8) + ETA(6)*1.41421356237',
 	' END IF',
 	';;;FREM CODE END COMPACT'
 );
-is_deeply($code,\@errcode,'get_pred_error_code code 2');
+is_deeply($code,\@errcode,'get_pred_error_pk_code code 2');
+
+($labels,$thetas,$code,$pkcode) = tool::frem::get_pred_error_pk_code(covariates => ['AGE','SEX','WT'],
+																	 maxeta => 3,
+																	 rescale => 1,
+																	 mu => 1,
+																	 use_pred => 1,
+																	 invariant_covmatrix => [[9,2,1],[2,4,0],[1,0,2]],
+																	 invariant_mean => [54.4, 0, 89.5],
+																	 estimate_mean => [1,1,0],
+																	 ntheta => 5,
+																	 N_parameter_blocks => 1,
+																	 epsnum => 2,
+																	 indent => ' ');
+is_deeply($pkcode,[],'get_pred_error_pk_code eta pkcode mu pred rescale');
+is_deeply($labels,['BSV_AGE','BSV_SEX','BSV_WT'],'get_pred_error_pk_code eta labels mu pred rescale');
+is_deeply($thetas,[' 54.4 ; TV_AGE',' 0.001 ; TV_SEX',' 89.5 FIX ; TV_WT'],'get_pred_error_pk_code thetastrings mu pred rescale'); 
+@errcode =(
+	';;;FREM CODE BEGIN COMPACT',
+	';;;DO NOT MODIFY',
+	' MU_4 = THETA(6)',
+	' COV4 = MU_4 + ETA(4)*3',
+	' MU_5 = THETA(7)',
+	' COV5 = MU_5 + ETA(5)*2',
+	' MU_6 = THETA(8)',
+	' COV6 = MU_6 + ETA(6)*1.41421356237',
+	' IF (FREMTYPE.EQ.100) THEN',
+	';   AGE  3',
+	'    Y = COV4 + EPS(2)',
+	'    IPRED = COV4',
+	' END IF',
+	' IF (FREMTYPE.EQ.200) THEN',
+	';   SEX  2',
+	'    Y = COV5 + EPS(2)',
+	'    IPRED = COV5',
+	' END IF',
+	' IF (FREMTYPE.EQ.300) THEN',
+	';   WT  1.41421356237',
+	'    Y = COV6 + EPS(2)',
+	'    IPRED = COV6',
+	' END IF',
+	';;;FREM CODE END COMPACT'
+);
+is_deeply($code,\@errcode,'get_pred_error_pk_code code mu pred rescale');
 
 
 
@@ -240,9 +364,9 @@ my $block;
 														  end_etas => [2,3]);
 
 
-$ans=[[4.08636E-01,sqrt(4.08636E-01)*sqrt(1.10186)*0.7853246843,sqrt(4.08636E-01)*sqrt(2.07708E-01)*0.0428450599],
-	  [sqrt(4.08636E-01)*sqrt(1.10186)*0.7853246843,1.10186E+00, -2.37832958e-03],
-	  [sqrt(4.08636E-01)*sqrt(2.07708E-01)*0.0428450599,-2.37832958e-03, 2.07708E-01]];
+$ans=[[4.08636E-01,5.26964000e-01,1.24823000e-02],
+	  [5.26964000e-01,1.10186E+00,-2.37833000e-03],
+	  [1.24823000e-02,-2.37833000e-03, 2.07708E-01]];
 
 cmp_float_matrix($block,$ans,'get_filled_omega_block 1');
 
@@ -250,9 +374,12 @@ cmp_float_matrix($block,$ans,'get_filled_omega_block 1');
 														  start_etas => [1,2,3],
 														  end_etas => [1,2,3]);
 
-$ans=[[4.08636E-01,1E-07,sqrt(4.08636E-01)*sqrt(2.07708E-01)*0.0428450599],
-	  [1E-07,1.10186E+00, -2.37832958e-03],
-	  [sqrt(4.08636E-01)*sqrt(2.07708E-01)*0.0428450599,-2.37832958e-03, 2.07708E-01]];
+#$ans=[[4.08636E-01,1E-07,sqrt(4.08636E-01)*sqrt(2.07708E-01)*0.0428450599],
+#	  [1E-07,1.10186E+00, -2.37832958e-03],
+#	  [sqrt(4.08636E-01)*sqrt(2.07708E-01)*0.0428450599,-2.37832958e-03, 2.07708E-01]];
+$ans=[[4.08636E-01,6.71014000e-03,1.24823000e-02],
+	  [6.71014000e-03,1.10186E+00, -2.37833000e-03],
+	  [1.24823000e-02,-2.37833000e-03, 2.07708E-01]];
 
 cmp_float_matrix($block,$ans,'get_filled_omega_block 2');
 
@@ -368,6 +495,7 @@ my ($filtered_data_model,$filter_table_header,$extra_input_items);
 	tool::frem::create_data2_model( model => $model,
 									filename => 'filterdata.mod',
 									filtered_datafile => 'filtertype0.dta',
+									use_pred => 0,
 									bov_parameters => scalar(@{$bov_parameters}), 
 									dv  => 'DV',
 									time_varying  => $time_varying,
@@ -375,7 +503,7 @@ my ($filtered_data_model,$filter_table_header,$extra_input_items);
 									occasion  => 'VISI');
 
 my $formatted = $filtered_data_model->problems->[0]->tables->[0]->_format_record;
-my @ans = qw (ID VISI XAT2 DGRP DOSE FLAG ONO XIME DVO NEUY SCR AGE SEX NYHA WT COMP ACE DIG DIU NUMB TAD TIME VIDD CLCR AMT SS II VID CMT CONO DV EVID OVID FREMTYPE NOAPPEND);
+@ans = qw (ID VISI XAT2 DGRP DOSE FLAG ONO XIME DVO NEUY SCR AGE SEX NYHA WT COMP ACE DIG DIU NUMB TAD TIME VIDD CLCR AMT SS II VID CMT CONO DV EVID OVID FREMTYPE NOAPPEND);
 for (my $i=0; $i<scalar(@ans); $i++){
 	is($filtered_data_model->problems->[0]->tables->[0]->options->[$i]->name, $ans[$i], 'table record options '.$i);
 }

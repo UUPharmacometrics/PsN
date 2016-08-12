@@ -109,8 +109,15 @@ New features implemented by William S. Denney of Human Predictions:
 
 
    ___frem___
-
-
+-  will, if a covariate-covariate correlation is exactly 0, set intial omega estimate corresponding to 1% correlation in Model 2. Similarly in Model3, if correlation from phi-file exactly 0, or parameter-parameter covariance has to be added to create full block, then set initial estimate as 1% correlation
+-  handle PRED-models without EVID/MDV column, i.e. all data records are observations.
+-  handle model 2 phi file ETA all 0
+-  new option -mu, i.e. use mu-modelling for added covariates. Not set by default.
+-  new option -estimate_means to true. When option -estimate_means is set, only covariates which have missing observations in the frem dataset will have the mean estimated. If -no-estimate_means is set, no means will be estimated regardless of missing observations.
+-  rearranged control stream changes. Now all frem code is put last in $PRED/$ERROR and no new variables are defined (this is needed for very large numbers of covariates). New option -estimate_means, default not set. If set then estimate covariate means instead of setting FIX to mean from observed data, new option -mceta, default not set. Set MCETA=N in last $ESTIMATION. New option -deriv2_nocommon_maxeta. Default 60. Set $ABBREVIATED DERIV2=NOCOMMON if number of ETAs is larger than this number.
+-  put intermediate models in subdir intermediate_models instead of in m1. Handle PHI in addition to ETA in phi-file (non-classical methods), and multiple $EST (only results from last est are used).
+-  set NONINFETA=1 in last estimation if it is a classical method.
+-  new postprocessing script postfrem 
    ___mcmp___
 
 

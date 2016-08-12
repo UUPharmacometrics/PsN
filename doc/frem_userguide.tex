@@ -1,6 +1,6 @@
 \input{inputs/format_header.tex}
 \usepackage{amsmath}
-\guidetitle{FREM userguide}{2016-07-06}
+\guidetitle{FREM userguide}{2016-08-12}
 
 \begin{document}
 \newcommand{\guidetoolname}{frem}
@@ -88,6 +88,11 @@ then these records will be excluded from the full parameter-covariate covariance
 The omega records will be reordered and ETAs renumbered so that all non-skipped
 omegas/ETAs are last in the model, so that the covariate omega and non-skipped parameter omega
 can be combined into a single large block.
+
+Note: Pre-existing mu-modelling is not compatible with reordering of skipped omegas,
+because frem will then renumber ETAs but not MU variables,
+so if mu-modelling is used then the user must ensure that omegas are already ordered
+so that any skipped omegas come first.
 \nextopt
 \optname{cholesky}
 Default not set.
@@ -114,12 +119,14 @@ If -no-estimate\_means is set, frem will not estimate any means even if there ar
 Default not used. Rescale covariate ETAs in Model 2 to SD close to 1.
 % in order to facilitate estimation.
 \nextopt
-%\optname{mu}
-%Default not used. Use mu-referencing for covariate THETAs and ETAs.
-%This option is not compatible with reordering of skipped omegas,
-%so if -mu is set then the user must ensure that omegas are already ordered
-%so that any skipped omegas come first.
-%\nextopt
+\optname{mu}
+Default not used. If set then use mu-modelling for frem-added covariate
+THETAs and ETAs.
+Pre-existing mu-modelling is not compatible with reordering of skipped omegas,
+because frem will then renumber ETAs but not MU variables,
+so if mu-modelling is used then the user must ensure that omegas are already ordered
+so that any skipped omegas come first.
+\nextopt
 \optname{run\_sir}
 Default not set. If set and covariance step of Model 4 fails, run sir
 to obtain standard errors of parameters.
@@ -240,9 +247,12 @@ THETA and OMEGA and SIGMA for PK parameters are FIXED in this model.
 %according to section below.
 Model 3 is a copy of Model 2, but all non-skipped Model 1 omega plus covariate omega are combined
 into single large block. For covariances between parameter omegas that did
-not have covariance in Model 1, set very very small init $10^{-7}$.
+not have covariance in Model 1, set %very very small init $10^{-7}$.
+an initial estimate corresponding to 1\% correlation.
 Initial values for covariances between parameter-covariate ETAs are computed from
-phi-file from estimation of Model 2. Finally, ensure that omega block is positive definite.
+phi-file from estimation of Model 2. If any such covariance is exactly 0 then set
+an initial estimate corresponding to 1\% correlation.
+Finally, ensure that omega block is positive definite.
 Set MAXEVAL=0 and remove \$COV.
 \item Evaluate Model 3 to get more accurate phi-file ETAs.
 \item Recompute correlations
@@ -331,7 +341,10 @@ The input model, input dataset.
 \section{FREM Dataset}
 Create a new data set.
 \begin{enumerate} 
-	\item In input dataset: Find EVID and/or MDV columns. If neither found then MDV will be added. Find DV column.
+	\item In input dataset: Find EVID and/or MDV columns. If neither found and the model
+    has a \$PK record then MDV will be added via a NONMEM evaluation step.
+    Otherwise, i.e. if neither EVID or MDV found and the model
+    has a \$PRED record then all data records are considered observations. Find DV column.
     For each covariate  determine a unique %(set of N\_parameter\_blocks)
     FREMTYPE value %(s)
     > 0.
@@ -340,7 +353,7 @@ Create a new data set.
     the original model with MAXEVAL=0 METHOD=ZERO and without \$COV.
 	\item Run the filter model where FREMTYPE=0 to filter the original data on any IGNORE/ACCEPT and to get a new data file
     from \$TABLE where the column headers are the same as in \$INPUT but a FREMTYPE column is added with only zeros as values.
-    Also add MDV if not EVID or MDV in data set. In the dummy model columns that are DROPped or SKIPped are replaced with an undropped column so that the filtered data set has the same number of columns as the original data set.
+    Also add MDV if needed. In the dummy model columns that are DROPped or SKIPped are replaced with an undropped column so that the filtered data set has the same number of columns as the original data set.
     \item In filtered data set,
     find each column listed with -categorical and count the number of categories Y for baseline values.
     A warning is printed if there are individuals who have some covariate values that are different from the
@@ -351,7 +364,7 @@ Create a new data set.
           Y-1 new variables.
 \item Then loop over each individual: 
 \begin{enumerate}
-	\item Copy first observation line for individual. i.e. first line where MDV/EVID ==0. If no such line then just skip this individual.
+	\item Copy first observation line for individual. i.e. first data record where MDV/EVID ==0. If no such line then just skip this individual.
 Loop over each covariate:
 If covariate value for this individual is missing for first observation, then skip this
 covariate line for this individual. Otherwise add one % N\_parameter\_blocks
@@ -443,6 +456,10 @@ a full BLOCK(N\_covariates) where initials is, if option -rescale is \emph{not} 
 variance-covariance matrix of covariates computed during creation of dataset, or, if
 option -rescale \emph{is} set, the correlation matrix of covariates computed during
 creation of dataset.
+
+If any covariate-covariate correlation is exactly 0 in the data set, change the initial
+value in the block to 1\% correlation, or the covariance corresponding to 1\% correlation,
+to avoid NONMEM error messages.
 %Renumber existing parameter BSV ETA:s accordingly in \$PK/\$PRED.
 
 \subsection{SIGMA changes}

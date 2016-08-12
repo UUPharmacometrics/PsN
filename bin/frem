@@ -37,6 +37,7 @@ my %optional_options = (
 	'log:s' => undef,
 	'rse:f' => undef,
 	'run_sir!' => undef,
+	'mu' => undef,
 	'cholesky!' => undef,
 #	'skip_etas:i' => undef
 	'skip_omegas:s' => undef
@@ -82,6 +83,13 @@ $help_text{-help} = <<'EOF';
       -help
       
       With -help frem will print this, longer, help message.
+EOF
+
+$help_text{-mu} = <<'EOF';
+      -mu
+
+Default not used. If set then use mu-modelling for frem-added covariate
+THETAs and ETAs.
 EOF
 
 $help_text{-covariates} = <<'EOF';
@@ -235,6 +243,7 @@ my $frem = tool::frem->new( eval( $common_options::parameters ),
 							deriv2_nocommon_maxeta => $options{'deriv2_nocommon_maxeta'},
 							log => $options{'log'},
 							rse => $options{'rse'},
+							mu => $options{'mu'},
 							skip_omegas => $options{'skip_omegas'}, 
 							check => $options{'check'}, 
 							mceta => $options{'mceta'},
