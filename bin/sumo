@@ -36,9 +36,7 @@ my %optional_options = (
     'near_bound_sign_digits:i'    => undef,
     'near_zero_boundary_limit:f'  => undef,
     'sign_digits_off_diagonals:i' => undef,
-    'large_theta_cv_limit:f'      => undef,
-    'large_omega_cv_limit:f'      => undef,
-    'large_sigma_cv_limit:f'      => undef);
+);
 
 
 my $res = GetOptions( \%options,
@@ -62,9 +60,6 @@ $defaults{'condition_number_limit'}    = 1000;
 $defaults{'near_bound_sign_digits'}    = 2;
 $defaults{'near_zero_boundary_limit'}  = 0.001;
 $defaults{'sign_digits_off_diagonals'} = 2;
-$defaults{'large_theta_cv_limit'}      = 0.30;
-$defaults{'large_omega_cv_limit'}      = 0.50;
-$defaults{'large_sigma_cv_limit'}      = 0.30;
 
 foreach my $opt ( keys(%optional_options) ){
   $opt =~ s/[!:|].*//g; #get rid of :s |? :i etcetera
@@ -266,33 +261,6 @@ $help_text{-sign_digits_off_diagonals} = <<'EOF';
     significant digits.
 EOF
 
-$help_text{-large_theta_cv_limit} = <<'EOF';
-    -large_theta_cv_limit='number'
-
-    Default 0.30
-
-    When the CV (SE/estimate) for a parameter estimates is greater
-    than this a warning will be issued.
-EOF
-
-$help_text{-large_sigma_cv_limit} = <<'EOF';
-    -large_sigma_cv_limit='number'
-
-    Default 0.30
-
-    When the CV (SE/estimate) for a parameter estimates is greater
-    than this a warning will be issued.
-EOF
-
-$help_text{-large_omega_cv_limit} = <<'EOF';
-    -large_omega_cv_limit='number'
-
-    Default 0.50
-
-    When the CV (SE/estimate) for a parameter estimates is greater
-    than this a warning will be issued.
-EOF
-
 $help_text{-ci} = $help_text{-confidence_interval};
 
 delete $optional_options{'ci'};     # Remove to get online_help right
@@ -481,7 +449,6 @@ require model;
 				my @near_bound_parameters;
 				my $cov_mess;
 				my $large_se_mess;
-				my @large_ses;
 				my $cond_mess;
 				my $corr_mess;
 				my @large_corrs;
@@ -564,30 +531,7 @@ require model;
 							}else {
 								$cov_mess = acknowledge( 'Covariance step', 'WARNING');
 							}
-
-							my ( $l_se, $f_cv ) =
-								$outobj -> large_standard_errors( theta_cv_limit => $options{'large_theta_cv_limit'},
-																  omega_cv_limit => $options{'large_omega_cv_limit'},
-																  sigma_cv_limit => $options{'large_sigma_cv_limit'} );
-
-							if ( defined $l_se -> [$problems] and defined $l_se -> [$problems][$sub_problems] ) {
-								my @large_standard_errors = @{$l_se -> [$problems][$sub_problems]};
-								if ( $#large_standard_errors < 0 ) {
-									$large_se_mess = acknowledge( 'No large relative standard errors found', 'OK');
-								} else {
-									my @found_cv = @{$f_cv -> [$problems][$sub_problems]};
-									$large_se_mess = acknowledge( 'Large relative standard errors found', 'WARNING');
-									for ( my $i = 0; $i <= $#large_standard_errors; $i++ ) {
-                                        if ($options{'sd_rse'}) {
-										    push @large_ses, sprintf("\t%-20s%10g", $large_standard_errors[$i], $found_cv[$i] / 2);
-                                        } else {
-										    push @large_ses, sprintf("\t%-20s%10g", $large_standard_errors[$i], $found_cv[$i]);
-                                        }
-									}
-								}
-							}
 						}
-						
 
 						if(defined $condno) {
 							if ( $condno < $options{'condition_number_limit'} ) {
@@ -824,12 +768,7 @@ require model;
 					if(defined $cov_mess) {
 						print $cov_mess,"\n";
 						print $large_se_mess,"\n";
-						unless(scalar @large_ses == 0) {
-							for(@large_ses) {
-								print "$_\n";
-							}
-						}
-						
+
 						if(defined $condno) {
 							print $cond_mess,"\n";
 						}

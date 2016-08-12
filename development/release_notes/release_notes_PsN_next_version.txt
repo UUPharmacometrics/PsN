@@ -99,8 +99,7 @@ New features implemented by William S. Denney of Human Predictions:
    ___sumo___
 
 - Bug fix: The message stating that there is no gradient information after an SAEM run was duplicated
-- Bug fix: The large relative standard errors warning always printed results on var/cov scale regardless
-  of -sd_rse option.
+- The checks for large relative standard errors were removed together with the options to set the limits.
 
    ___bootstrap___
 

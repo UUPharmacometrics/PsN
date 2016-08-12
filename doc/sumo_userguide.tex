@@ -34,11 +34,6 @@ Hessian not reset                                               [    OK   ]
 Parameter(s) near boundary                                      [    WARNING   ]   
 OMEGA(2,2)	0.000112	0
 Covariance step                                                 [    OK   ]   
-Large standard errors found                                     [    WARNING   ]   
-OMEGA(1,1)	1.08589
-OMEGA(2,2)	1.01786
-OMEGA(3,2)	0.848024
-OMEGA(3,3)	0.548035
 Large condition number                                          [    WARNING   ]   
 Correlations                                                    [    OK   ]
 
@@ -104,15 +99,6 @@ Default 0.9. The cut-off for issuing a warning for high correlations between the
 \nextopt
 \optname{csv}
 Default not set. Produce output in which the columns of the parameters estimates and standard errors are comma separated. This option can be used if you wish to import the sumo output into a spreadsheet programs, such as MS Excel. (Something like this is probably what you would want to do in that case: sumo -csv run1.lst > sumooutput.csv) 
-\nextopt
-\optdefault{large\_omega\_cv\_limit}{'number'}
-Default 0.5. When the CV (SE/estimate) for a parameter estimates is greater than this a warning will be issued. 
-\nextopt
-\optdefault{large\_sigma\_cv\_limit}{'number'}
-Default 0.3. When the CV (SE/estimate) for a parameter estimates is greater than this a warning will be issued. 
-\nextopt
-\optdefault{large\_theta\_cv\_limit}{'number'}
-Default 0.3. When the CV (SE/estimate) for a parameter estimates is greater than this a warning will be issued. 
 \nextopt
 \optdefault{max\_problem\_num}{'integer'}
 Default 1. The default is for sumo to report the results for the first \$PROBLEM only. Set this option larger than 1 to report results for additional problems. 
