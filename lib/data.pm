@@ -1067,7 +1067,9 @@ sub factors
 		if ( scalar @ifactors > 1 and $unique_in_individual ) {
 			#do not set non-unique if only two and one of them is missing data
 			unless (scalar @ifactors == 2 and $ignore_missing and 
-					($ifactors[0] == $self->missing_data_token ||
+					($ifactors[0] eq '.' ||
+					 $ifactors[1] eq '.' ||
+					 $ifactors[0] == $self->missing_data_token ||
 					 $ifactors[1] == $self->missing_data_token)){ 
 				%factors = ( 'Non-unique values found' => 1 );
 				print "Individual ".$individual->idnumber." factors ".join(',',@ifactors)."\n" if ($verbose);
@@ -1260,7 +1262,7 @@ sub max
 	  foreach my $individual ( @{$self->individuals()} ) {
 	    my $ifactors = $individual->factors( 'column' => $column );
 	    foreach ( keys %{$ifactors} ) {
-	      next if ( $_ == $self->missing_data_token );
+	      next if (($_ eq '.') or ( $_ == $self->missing_data_token) );
 	      if ( defined ($return_value) ) {
 					$return_value = $_ > $return_value ? $_ : $return_value;
 	      } else {
@@ -1321,7 +1323,7 @@ sub median
 			
 			for (my $i = 0; $i <= $#{$ifactors}; $i++ ) {
 				my @data_row = split( /,/ , $ifactors->[$i] );
-				next if ( $data_row[$column-1] == $self->missing_data_token );
+				next if ( ($data_row[$column-1] eq '.') or ($data_row[$column-1] == $self->missing_data_token) );
 				push(@individual_array, $data_row[$column-1]);
 			}
 		}
@@ -1400,7 +1402,7 @@ sub mean
 			# array.
 
 			my @data_row = split( /,/, $ifactors->[$i] );
-			if ( $data_row[$column - 1] == $self->missing_data_token ) {
+			if ( ($data_row[$column - 1] eq '.') or ($data_row[$column - 1] == $self->missing_data_token) ) {
 				next;
 			}
 
@@ -1606,7 +1608,7 @@ sub min
 	foreach my $individual (@{$self->individuals}) {
 		my $ifactors = $individual->factors('column' => $column);
 		foreach (keys %{$ifactors}) {
-			next if ($_ == $self->missing_data_token);
+			next if (($_ eq '.') or ($_ == $self->missing_data_token));
 			if (defined ($return_value)) {
 				$return_value = $_ < $return_value ? $_ : $return_value;
 			} else {
