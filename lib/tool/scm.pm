@@ -1815,10 +1815,11 @@ sub linearize_setup
 		my $table_highprec=1;
 		my $table_lowprec=0;
 
-		push(@tablestrings,'MDV');
-		push(@inputstrings,'MDV');
-		$table_highprec++;
-
+		if ( should_add_mdv(model => $derivatives_model) ){
+			push(@tablestrings,'MDV');
+			push(@inputstrings,'MDV');
+			$table_highprec++;
+		}
 		#1.10
 
 		if ($self->foce()){
@@ -3075,6 +3076,32 @@ sub modelfit_analyze
 	push( @{$self -> results->[$model_number-1]{'own'}},\%return_section4 );
 
 	debugmessage(3,"Finished in modelfit_analyze!" );
+}
+
+sub should_add_mdv
+{ 
+	my %parm = validated_hash(\@_,
+							  model => { isa => 'model', optional => 0 },
+		);
+	my $model = $parm{'model'};
+	
+	my $add_mdv=0;
+	if ( defined $model->problems->[0] -> preds and scalar(@{$model->problems->[0] -> preds})>0){
+		if( defined $model->problems()->[0] -> inputs and 
+			defined $model->problems()->[0] -> inputs -> [0] -> options ) {
+			my ($arr,$time_added) = $model->problems()->[0] -> inputs -> [0]->get_filter_table_names; 
+			croak ("found no undropped data column in \$INPUT ") unless (defined $arr);
+			for (my $i=0; $i< scalar(@{$arr}); $i++){
+				if($arr->[$i] eq 'MDV'){
+					$add_mdv=1;
+					last;
+				}
+			}
+		}
+	}else{
+		$add_mdv=1;
+	}
+	return $add_mdv;
 }
 
 sub gof_ofv
@@ -5512,6 +5539,7 @@ sub preprocess_data
 		$filtered_data_model -> remove_records(type => $remove_rec);
 	}
 
+	my $use_mdv = should_add_mdv(model=> $filtered_data_model);
 
 	if (defined $time_varying and scalar(@{$time_varying}>0)){
 
@@ -5670,6 +5698,8 @@ sub preprocess_data
 
 
 		my $com = defined $comresno ? $comresno + 1 : 1;
+		my $mdvstring= 'ID '; #placeholder so that positions are the same
+		$mdvstring='MDV ' if ($use_mdv);
 		foreach my $par ( keys %parmcovhash ){
 			my @tablestrings =();
 			push( @{$coderef},"\"  COM($com)=".'ABS(G('.$parmetahash{$par}.',1))/W' );
@@ -5683,7 +5713,7 @@ sub preprocess_data
 			}
 			$filtered_data_model -> 
 			add_records( type           => 'table',
-				record_strings => [ 'MDV ID '.join( ' ', @tablestrings ).
+				record_strings => [ $mdvstring.'ID '.join( ' ', @tablestrings ).
 					' NOAPPEND NOPRINT ONEHEADER FILE='.$par.$timevarfile]);
 		}
 
@@ -5816,7 +5846,11 @@ sub preprocess_data
 			my $ratsum=0;
 			foreach (@lines){
 				chomp;
-				next unless (/^\s*0/); #only use lines with mdv=0
+				if ($use_mdv){
+					next unless (/^\s*0/); #only use lines with mdv=0
+				}else{
+					next if (/^\s*(ID|TAB)/);
+				}
 				my @vals=split;
 				#items in @vals are
 				# MDV ID $parRATIO (array over) $par$covNUM
