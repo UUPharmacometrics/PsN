@@ -601,9 +601,15 @@ sub BUILD
 						$self -> relations->{$par}{$cov}{'code'}{$state} = [];
 					}
 					$self -> relations->{$par}{$cov}{'inits'}{$state} = [] unless
-					( defined $self -> relations->{$par}{$cov}{'inits'}{$state} );
+						( defined $self -> relations->{$par}{$cov}{'inits'}{$state} );
 					$self -> relations->{$par}{$cov}{'bounds'}{$state} = {} unless
-					( defined $self -> relations->{$par}{$cov}{'bounds'}{$state} );
+						( defined $self -> relations->{$par}{$cov}{'bounds'}{$state} );
+					unless (defined $self -> covariate_statistics->{$cov}){
+						ui->print(category=> 'all',
+								  message => "\nError covariate statistics for :$cov:, not stored.\n".
+								  "Have stored :".join(':',keys %{$self -> covariate_statistics}).":\n");
+					}
+					
 					my %local_statistics = %{$self -> covariate_statistics->{$cov}};
 					if (defined $self->medians->{$par.'_'.$cov}){
 						$local_statistics{'median'} = $self->medians->{$par.'_'.$cov};
