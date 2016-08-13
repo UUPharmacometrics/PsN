@@ -386,6 +386,7 @@ cmp_float($inflated->[1]->[2],3*sqrt(2)*sqrt(7),'inflated covar element 2,3');
 cmp_float($inflated->[2]->[2],9*sqrt(7)*sqrt(7),'inflated covar element 3,3');
 
 
+
 $covar = tool::sir::get_nonmem_covmatrix(output => $output);
 
 cmp_ok($covar->[0]->[0],'==',6.10693E+00,'covar element 1,1');
@@ -629,5 +630,19 @@ is_deeply($xvec,$orig_xv,'post xvec 8');
 is($accept,1,'check blocks posdef accept 9');
 is($adjusted,1,'check blocks posdef adjusted 9');
 is_deeply($xvec,[1,1,1,3,9.99999999833334e-09,3.0000000005,2.9999999995,3.0000000005,1,0.1,1],'post xvec 9');
+
+
+$covar = [[3,2,1],[2,8,3],[1,3,9]];
+tool::sir::inflate_covmatrix_diagonal(matrix => $covar,
+									  inflation => [5,2,7]);
+cmp_float($covar->[0]->[0],3*5,'inflateddiagonal covar element 1,1');
+cmp_float($covar->[1]->[0],2,'inflateddiagonal covar element 2,1');
+cmp_float($covar->[2]->[0],1,'inflateddiagonal covar element 3,1');
+cmp_float($covar->[0]->[1],2,'inflateddiagonal covar element 1,2');
+cmp_float($covar->[1]->[1],8*2,'inflateddiagonal covar element 2,2');
+cmp_float($covar->[2]->[1],3,'inflateddiagonal covar element 3,2');
+cmp_float($covar->[0]->[2],1,'inflateddiagonal covar element 1,3');
+cmp_float($covar->[1]->[2],3,'inflateddiagonal covar element 2,3');
+cmp_float($covar->[2]->[2],9*7,'inflateddiagonal covar element 3,3');
 
 done_testing();

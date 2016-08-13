@@ -72,7 +72,7 @@ has 'intermediate_raw_results_files' => ( is => 'rw', isa => 'ArrayRef', default
 
 our $relativepdf = 1;
 our $recovery_filename = 'restart_information_do_not_edit.pl'; #this must be copied to bin also
-
+our $inflate_only_diagonal = 1;
 
 sub BUILD
 {
@@ -846,7 +846,15 @@ sub modelfit_setup
 				}
 			}
 		}#end if have resampled params. otherwise should have covmatrix from covmat input or $COV
-			
+
+		if (scalar(@{$inflation})>0 and $inflate_only_diagonal){
+			#this modifies covmatrix in place, then we discard inflation that is built in
+			inflate_covmatrix_diagonal(matrix => $covmatrix,
+									   inflation => $inflation);
+			$inflation=[];
+		}
+
+		
 		my $mat = new Math::MatrixReal(1,1);
 		my $muvector = $mat->new_from_rows( [$mu_values] );
 		my $current_samples = update_attempted_samples(samples=>$self->samples,
@@ -2599,6 +2607,33 @@ sub inflate_covmatrix
 		}
 	}
 	return \@copy;
+}
+
+sub inflate_covmatrix_diagonal
+{
+	my %parm = validated_hash(\@_,
+							  matrix => { isa => 'ArrayRef[ArrayRef]', optional => 0 },
+							  inflation => { isa => 'ArrayRef', optional => 0 }
+		);
+	my $matrix = $parm{'matrix'};
+	my $inflation = $parm{'inflation'};
+
+	my $dim = scalar(@{$matrix});
+	unless ($dim > 0){
+		croak("Input error inflate_covmatrix_diagonal: dimension is 0 ");
+	}
+	unless (scalar(@{$matrix->[0]})==$dim){
+		croak("Input error inflate_covmatrix_diagonal: covmatrix is not square ");
+	}
+	unless (scalar(@{$inflation}) == $dim){
+		croak("Input error inflate_covmatrix_diagonal: inflation must have length equal to matrix dim $dim");
+	}
+
+	for (my $i=0;$i< $dim; $i++){
+		my $val = $inflation->[$i];
+		croak("Input error inflate_covmatrix_diagonal: inflation must be positive") unless ($val > 0);
+		$matrix->[$i]->[$i] = $val*($matrix->[$i]->[$i]);
+	}
 }
 
 sub get_nonmem_covmatrix

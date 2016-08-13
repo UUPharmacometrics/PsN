@@ -1,5 +1,5 @@
 \input{inputs/format_header.tex}
-\guidetitle{SIR user guide}{2016-07-06}
+\guidetitle{SIR user guide}{2016-08-13}
 \usepackage{amsmath}
 
 \begin{document}
@@ -185,7 +185,9 @@ before the parameter vectors
 are sampled from the truncated multivariate normal distribution.
 The weights will also be computed based the inflated covariance matrix. 
 Inflation is not used in any but the first iteration.
-Inflation is always performed so that correlations in the covariance matrix are unchanged.
+%Inflation is always performed so that correlations in the covariance matrix are unchanged.
+Only diagonal elements of the covariance matrix are inflated. Off-diagonals (covariances)
+are unchanged. This means that correlations will decrease.
 \nextopt
 \optdefault{omega\_inflation}{X}
 Either a positive vector with length equal to the number of \emph{estimated} (not FIX) 
@@ -200,7 +202,8 @@ If given, the variance
 of each estimated \$OMEGA element
 will in the first iteration be inflated with the factor from the inflation vector
 before the parameter vectors
-are sampled from the truncated multivariate normal distribution. Inflation for off-diagonal
+are sampled from the truncated multivariate normal distribution. Inflation for
+the variance of off-diagonal
 omega elements will be automatically computed based on inflation for diagonals so that the correlation is unchanged.
 For example, the variance of OM(2,1) will be inflated by 
 \[
@@ -384,7 +387,7 @@ by the update\_inits program, sir will also check the validitiy of the back-tran
 
 \noindent If the rejection rate is very high, sir will after while stop discarding samples with non-positive definite
 \$OMEGA or \$SIGMA blocks, and instead adjust the blocks by
-keeping the eigenvectors but inflating the too-low eigenvalues to just large enough.
+keeping the eigenvectors but increasing the too-low eigenvalues to just large enough.
 This adjustment is not done for automatically Cholesky reparameterized blocks.
 
 \item[\underline{Step 2}] 
