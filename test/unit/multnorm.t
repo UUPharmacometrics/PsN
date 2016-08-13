@@ -72,14 +72,6 @@ my ($gotsamples,$dirt) = tool::sir::sample_multivariate_normal(samples=>$nsample
 #print "\nxvec [".join(' ',@{$gotsamples->[2]})."]\n";
 #print "\labels ".join(' ',@{$hash->{'labels'}})."\n";
 
-my $sampled_params_arr = tool::sir::create_sampled_params_arr(samples_array => $gotsamples,
-															  labels_hash => $hash,
-															  user_labels => 1);
-
-
-my $sampled_params_arr2 = tool::sir::create_sampled_params_arr(samples_array => $gotsamples,
-															  labels_hash => $hash,
-															  user_labels => 0);
 
 
 my $pdf=tool::sir::mvnpdf(inverse_covmatrix => $icm,
@@ -166,55 +158,12 @@ cmp_ok($times_sampled[0],'==',39,'times sampled 0');
 cmp_ok($times_sampled[1],'==',46,'times sampled 1');
 cmp_ok($times_sampled[2],'==',15,'times sampled 2');
 
-#my $statshash = tool::sir::empirical_statistics(samples_array => $gotsamples,
-#												sample_counts => \@times_sampled);
-
-
-my $xvec = $icm->new_from_rows( [$gotsamples->[0]] );
-#print $xvec;
-#exit;
-my $diff=$mu->shadow(); #zeros matrix same size as $mu
-$diff->subtract($xvec,$mu); #now $diff is $xvec - $mu
-#print $diff;
-
-my $matlab_invdeterminant =1.952310799901186e+17;
-my $invdeterminant = $icm->det();
-
-my $determinant=1/$invdeterminant;
-my $matlab_determinant =5.122135266836687e-18;
-
-my $k=5;
-
-my $product_left = $diff->multiply($icm);
-my $product=$product_left->multiply(~$diff); #~ is transpose
-my $exponent=-0.5 * $product->element(1,1);
-
-my $matlab_exponent= -2.267944479995964;
-
-#print "\nexponent $exponent\n";
-my $base=tool::sir::get_determinant_factor(inverse_covmatrix => $icm,
-										   k => $k,
-										   inflation => 1);
-
-#print "\nbase $base\n";
-my $matlab_base = 4.465034382516543e+06;
 
 
 $dir = $includes::testfiledir . "/";
 $file = 'mox_sir.lst';
 $output= output->new (filename => $dir . $file);
 
-$icm = tool::sir::get_nonmem_inverse_covmatrix(output => $output);
-
-
-$hash = output::get_nonmem_parameters(output => $output);
-
-my $params = $hash->{'values'};
-
-
-$mu = $mat->new_from_rows( [$params] );
-
-#print $mu;
 
 
 #my $nsamples=3;
@@ -238,54 +187,11 @@ cmp_ok($covar->[6]->[3],'==',2.75131E-03,'covar element 7,4 after inflation not 
 cmp_ok($covar->[4]->[6],'==',-3.05686E-04,'covar element 5,7 after inflation not changed');
 
 
-$dir = $includes::testfiledir . "/";
-$file='mox_sir_block2.lst';
-$output= output->new(filename => $dir . $file);
-
-$hash = output::get_nonmem_parameters(output => $output);
-
-$params = $hash->{'values'};
-
-#cmp_ok($hash->{'values'}->[0],'==',3.28661E+01,' theta 1');
-
-$mu = $mat->new_from_rows( [$params] );
-
-#print $mu;
-$covar = tool::sir::get_nonmem_covmatrix(output => $output);
-
 
 $nsamples=3;
 
-#random_set_seed_from_phrase("hej pa dig");
-($gotsamples,$dirt) = tool::sir::sample_multivariate_normal(samples=>$nsamples,
-															   print_summary => 0,
-															   check_cholesky_reparameterization => 0,
-															   fix_theta_labels => [],
-															   fix_theta_values => [],
-															   labels => [],
-													   covmatrix => $covar,
-													   lower_bound => $hash->{'lower_bounds'},
-													   upper_bound => $hash->{'upper_bounds'},
-													   param => $hash->{'param'},
-													   coords => $hash->{'coords'},
-													   inflation => [],
-													   block_number => $hash->{'block_number'},
-															   choleskyform => $hash->{'choleskyform'},
-															   mu => $mu,
-															   adjust_blocks => 0
-	);
-
 
 $icm = Math::MatrixReal->new_from_rows([[3,1,0.1],[1,5,0.3],[0.1,0.3,3]]);
-
-my $num=tool::sir::get_determinant_factor(inverse_covmatrix => $icm,
-										  k => 3,
-										  inflation => 1);
-
-
-$num=tool::sir::get_determinant_factor(inverse_covmatrix => $icm,
-										  k => 3,
-										  inflation => 3);
 
 
 
