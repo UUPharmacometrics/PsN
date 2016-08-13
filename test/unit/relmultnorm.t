@@ -281,7 +281,6 @@ my $matlab_base = 4.465034382516543e+06;
 cmp_ok(abs($base-$matlab_base),'<',0.00000001,'base diff to matlab');
 
 
-#HERE
 
 $arr = tool::sir::setup_block_posdef_check(block_number => [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,0],
 										   choleskyform => [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
