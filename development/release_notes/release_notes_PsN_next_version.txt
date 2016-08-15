@@ -109,6 +109,7 @@ New features implemented by William S. Denney of Human Predictions:
 
 
    ___frem___
+
 -  will, if a covariate-covariate correlation is exactly 0, set intial omega estimate corresponding to 1% correlation in Model 2. Similarly in Model3, if correlation from phi-file exactly 0, or parameter-parameter covariance has to be added to create full block, then set initial estimate as 1% correlation
 -  handle PRED-models without EVID/MDV column, i.e. all data records are observations.
 -  handle model 2 phi file ETA all 0
@@ -118,6 +119,8 @@ New features implemented by William S. Denney of Human Predictions:
 -  put intermediate models in subdir intermediate_models instead of in m1. Handle PHI in addition to ETA in phi-file (non-classical methods), and multiple $EST (only results from last est are used).
 -  set NONINFETA=1 in last estimation if it is a classical method.
 -  new postprocessing script postfrem 
+- Rescale option is now default on.
+   
    ___mcmp___
 
 

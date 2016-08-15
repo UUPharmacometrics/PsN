@@ -185,11 +185,14 @@ $help_text{-check} = <<'EOF';
 Default not set. Run evaluation with frem records ignored after frem data set 
 generation, to check ofv is the same.
 EOF
+
 $help_text{-rescale} = <<'EOF';
       -rescale
 
-      Default not used. Rescale covariates in frem dataset to sd=1.
+      Rescale covariates in frem dataset to sd=1.
+      This option is set by default
 EOF
+
 $help_text{-run_sir} = <<'EOF';
       -run_sir
 
@@ -204,6 +207,8 @@ EOF
 common_options::online_help( 'frem', \%options, \%help_text, \%required_options, \%optional_options);
 common_options::setup( \%options, 'frem' ); #get defaults, 
 #calls set_globals etc, initiates random sequence
+
+$options{'rescale'} = 1 if not defined $options{'rescale'};
 
 ## Check that we do have a model file
 if ( scalar(@ARGV) < 1 ) {
