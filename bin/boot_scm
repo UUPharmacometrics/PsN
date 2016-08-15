@@ -201,6 +201,10 @@ if( -e $options{'config_file'} ){
 #calls get_defaults, set_globals etc, initiates random sequence, store tool_options
 common_options::setup( \%options, 'boot_scm' ); 
 
+if (defined $options{'directory'} and -e $options{'directory'}) {
+    die "boot_scm cannot resume a previous run. Please change your -directory.\n";
+}
+
 if ($config_file->linearize){
 	die "Option -second_order is currently broken" 
 		if $config_file->second_order();

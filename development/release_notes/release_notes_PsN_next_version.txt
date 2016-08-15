@@ -96,6 +96,7 @@ New features implemented by William S. Denney of Human Predictions:
 - Give a header column name to the child run headers to more easily distinguish them from
   empty column headers (which now should not exist) (optionally, by default).
 
+
    ___sumo___
 
 - Bug fix: The message stating that there is no gradient information after an SAEM run was duplicated
@@ -120,15 +121,23 @@ New features implemented by William S. Denney of Human Predictions:
 -  set NONINFETA=1 in last estimation if it is a classical method.
 -  new postprocessing script postfrem 
 - Rescale option is now default on.
-   
+
    ___mcmp___
 
 
    ___scm___
 
+- Disallow restarts in existing directory as this operation did not work
 
 
    ___boot_scm___
+
+- Disallow restarts in existing directory as this operation did not work
+
+
+   ___xv_scm___
+
+- Disallow restarts in existing directory as this operation did not work
 
 
    ___ebe_npde___ 
@@ -140,6 +149,7 @@ New features implemented by William S. Denney of Human Predictions:
    ___update_inits___
 
 -  New options -rawres_input, -in_filter, -offset_rawres to read parameter estimates from a raw results file.
+
 
    ___parallel_retries___
 

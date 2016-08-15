@@ -271,6 +271,10 @@ if( -e $options{'config_file'} ){
 #calls get_defaults, set_globals etc, initiates random sequence, store tool_options
 common_options::setup( \%options, 'xv_scm' ); 
 
+if (defined $options{'directory'} and -e $options{'directory'}) {
+    die "xv_scm cannot resume a previous run. Please change your -directory.\n";
+}
+
 $config_file->gof('p_value');
 $config_file->p_value(1);
 $config_file->search_direction('forward');

@@ -13,7 +13,8 @@ where N will start at 1 and
 be increased by one each time you run the script. The directory option sets the directory in which PsN 
 will run NONMEM and where PsN-generated output files will be stored. 
 You do not have to create the directory,  it will be done for you. If you set
--directory to a the name of a directory that already exists, PsN will run in the existing directory.
+-directory to a the name of a directory that already exists, PsN will run in the existing directory, except
+for scm, boot\_scm and xv\_scm that cannot be started in an existing directory.
 \nextopt
 \optdefault{seed}{'string'}
 You can set your own random seed to make PsN runs reproducible.
