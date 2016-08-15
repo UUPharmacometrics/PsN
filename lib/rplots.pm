@@ -4,6 +4,7 @@ use Config;
 use include_modules;
 use Cwd;
 use File::Copy 'cp';
+use File::Spec;
 use Moose;
 use MooseX::Params::Validate;
 use PsN;
@@ -120,6 +121,11 @@ sub setup
 	$workingdirectory = double_backslashes(string => $workingdirectory);
 	$dir = double_backslashes(string => $dir);
 	
+    (my $volume, my $directory, my $file) = File::Spec->splitpath(__FILE__);    # Get the path to the Rscripts directory
+    my $rscripts_path = $volume . $directory . "R-scripts/";
+    if (not (-d $rscripts_path)) {    # This might be the development version of PsN that has a different path
+        $rscripts_path = $volume . $directory . "../R-scripts/";
+    }
 
 	my @arr =(
 		 'rplots.level <- '.$levelstring,
@@ -134,7 +140,8 @@ sub setup
 		 "subset.variable<-".$subsetstring,
 		 "mod.suffix <- '".$modSuffix."'",
 		 "mod.prefix <- '".$modPrefix."'",
-		 "tab.suffix <- '".$tabSuffix."'"
+		 "tab.suffix <- '".$tabSuffix."'",
+         "rscripts.directory <- '$rscripts_path'",
 		);
 	if (-e $self->directory.$self->tool_results_file){
 		push(@arr,
