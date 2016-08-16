@@ -67,7 +67,7 @@ pvar_parameter_plot <- function(csv_file_directory,plot_title,units) {
     # save plots in the tiff files
     # if we have only 1 to 3 parameters
     if (length(parameter_names) == 1) {
-      mplot <- do.call(grid.arrange,p)
+      mplot <- do.call(arrangeGrob,p)
       plot_list[[nr]] <- mplot
     } else {
       # save the legend (call function)
@@ -75,24 +75,24 @@ pvar_parameter_plot <- function(csv_file_directory,plot_title,units) {
       # remove the legend from each graf
       p[[i]] <- p[[i]] + theme(legend.position="none")
       if (i %% 4 == 0) {
-        mplot <- grid.arrange(p[[i-3]],p[[i-2]],p[[i-1]],p[[i]],ncol=2)
-        plot_final <- grid.arrange(mplot,legend,ncol=2,widths=c(6,1))
+        mplot <- arrangeGrob(p[[i-3]],p[[i-2]],p[[i-1]],p[[i]],ncol=2)
+        plot_final <- arrangeGrob(mplot,legend,ncol=2,widths=c(6,1))
         plot_list[[nr]] <- plot_final
         nr <- nr + 1
         left <- length(parameter_names) - i
       } 
       if (left == 3 || ((length(parameter_names) == 3) && (i == 3))){
-        mplot <- grid.arrange(p[[i-2]],p[[i-1]],p[[i]],ncol=2)
-        plot_final <- grid.arrange(mplot,legend,ncol=2,widths=c(6,1))
+        mplot <- arrangeGrob(p[[i-2]],p[[i-1]],p[[i]],ncol=2)
+        plot_final <- arrangeGrob(mplot,legend,ncol=2,widths=c(6,1))
         plot_list[[nr]] <- plot_final
       }
       if (left == 2 || ((length(parameter_names) == 2) && (i == 2))){
-        mplot <- grid.arrange(p[[i-1]],p[[i]],ncol=2)
-        plot_final <- grid.arrange(mplot,legend,ncol=2,nrow=2,widths=c(6,1))
+        mplot <- arrangeGrob(p[[i-1]],p[[i]],ncol=2)
+        plot_final <- arrangeGrob(mplot,legend,ncol=2,nrow=2,widths=c(6,1))
         plot_list[[nr]] <- plot_final
       }
       if (left == 1){
-        plot_final <- grid.arrange(p[[i]],legend,ncol=3,nrow=2,widths=c(3,1,3))
+        plot_final <- arrangeGrob(p[[i]],legend,ncol=3,nrow=2,widths=c(3,1,3))
         plot_list[[nr]] <- plot_final
       }
       

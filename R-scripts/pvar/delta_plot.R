@@ -111,21 +111,21 @@ delta_plot <- function(csv_file_directory,parameter,EPV,UPV,PV,page_title,page_u
       }  
       #---------------------------------------------------------------------
       if (length(type) == 1) {
-        plot_full[[j]] <- do.call(grid.arrange,p)
-        plot_full[[j]] <- grid.arrange(plot_full[[j]],top=textGrob((paste(page_title[j]," ",page_units[j])),gp=gpar(fontsize=20)))
+        plot_full[[j]] <- do.call(arrangeGrob,p)
+        plot_full[[j]] <- arrangeGrob(plot_full[[j]],top=textGrob((paste(page_title[j]," ",page_units[j])),gp=gpar(fontsize=20)))
       } 
         # save the legend (call function)
         legend <- get_legend(p[[i]])
-        legend <- grid.arrange(legend,ncol=2,widths=c(6,1))
+        legend <- arrangeGrob(legend,ncol=2,widths=c(6,1))
         # remove the legend from each graf
         p[[i]] <- p[[i]] + theme(legend.position="none")
         if ((length(type) == 2) && (i == 2)) {
-          plot_p <- grid.arrange(p[[i-1]],p[[i]],ncol=1,nrow=2)
-          plot_full[[j]] <- grid.arrange(plot_p,legend,nrow=1,ncol=2,widths=c(2,1),top=textGrob((paste(page_title[j]," ",page_units[j])),gp=gpar(fontsize=20)))
+          plot_p <- arrangeGrob(p[[i-1]],p[[i]],ncol=1,nrow=2)
+          plot_full[[j]] <- arrangeGrob(plot_p,legend,nrow=1,ncol=2,widths=c(2,1),top=textGrob((paste(page_title[j]," ",page_units[j])),gp=gpar(fontsize=20)))
         } else if (length(type) == 3 && (i == 3)) {
           p[[4]] <- legend
-          plot_full[[j]] <- do.call(grid.arrange,p)
-          plot_full[[j]] <- grid.arrange(plot_full[[j]],top=textGrob((paste(page_title[j]," ",page_units[j])),gp=gpar(fontsize=20)))
+          plot_full[[j]] <- do.call(arrangeGrob,p)
+          plot_full[[j]] <- arrangeGrob(plot_full[[j]],top=textGrob((paste(page_title[j]," ",page_units[j])),gp=gpar(fontsize=20)))
         }
     }
   }
