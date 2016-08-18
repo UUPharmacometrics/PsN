@@ -870,4 +870,29 @@ my $orig_est = [3.49590E+00,  6.27891E+00,  1.05572E+00 , 1.52839E+00 ,  8.07614
 is ($err,0,"no error cook score parameters");
 cmp_float_array($cook,[3.49590E+00/2.01673E-01,  6.27891E+00/1.80612E-01 ,  1.05572E+00/8.08876E-02 , 1.52839E+00/6.94340E-02 ,  8.07614E-01/2.33550E-01 , 6.74746E-01/2.57089E-01 , 9.41826E-01/2.93394E-01,  2.28296E-01/6.04961E-02, 2.64841E+00/6.99733E-01 ],'parameter cook scores');
 
+$cov=[[4,2,1],[2,9,2],[1,2,1]];
+
+my ($modified,$maxcorr,$indices) = linear_algebra::cap_correlation($cov,undef);
+cmp_float_array($cov->[0],[4,2,1],'capped cov 0 1');
+cmp_float_array($cov->[1],[2,9,2],'capped cov 0 2');
+cmp_float_array($cov->[2],[1,2,1],'capped cov 0 3');
+cmp_float($maxcorr,2/3,'maxcorr after mod 0');
+is($modified,0,'modified after cap 0');
+is_deeply($indices,[2,1],'indices maxcorr 0');
+
+($modified,$maxcorr,$indices) = linear_algebra::cap_correlation($cov,0.9);
+cmp_float_array($cov->[0],[4,2,1],'capped cov 1 1');
+cmp_float_array($cov->[1],[2,9,2],'capped cov 1 2');
+cmp_float_array($cov->[2],[1,2,1],'capped cov 1 3');
+cmp_float($maxcorr,2/3,'maxcorr after mod 1');
+is($modified,0,'modified after cap 1');
+is_deeply($indices,[2,1],'indices maxcorr 1');
+
+($modified,$maxcorr,$indices) = linear_algebra::cap_correlation($cov,0.5);
+cmp_float_array($cov->[0],[4,2,1],'capped cov 2 1');
+cmp_float_array($cov->[1],[2,9,1.5],'capped cov 2 2');
+cmp_float_array($cov->[2],[1,1.5,1],'capped cov 2 3');
+cmp_float($maxcorr,0.5,'maxcorr after mod 2');
+is($modified,1,'modified after cap 2');
+is_deeply($indices,[2,0],'indices maxcorr 2');
 done_testing();

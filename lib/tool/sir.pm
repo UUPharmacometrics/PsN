@@ -39,6 +39,7 @@ has 'negative_dofv' => ( is => 'rw', isa => 'ArrayRef', default => sub { [] } );
 has 'recompute' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'with_replacement' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'cap_resampling' => ( is => 'rw', isa => 'Int', default => 1 );
+has 'cap_correlation' => ( is => 'rw', isa => 'Num');
 has 'samples' => ( is => 'rw', required => 1, isa => 'ArrayRef' ); #default in bin script
 has 'resamples' => ( is => 'rw', required => 1, isa => 'ArrayRef' ); #default in bin script
 has 'attempted_samples' => ( is => 'rw', isa => 'ArrayRef',default => sub { [] } );
@@ -793,8 +794,6 @@ sub modelfit_setup
 		}
 		$self->iteration($iteration);
 
-		my $message = "Sampling from the truncated multivariate normal distribution";
-		ui -> print( category => 'sir',	 message => $message);
 		my $mu_values= $self->parameter_hash->{'values'};
 		my $lambda = [];
 		my $delta = [];
@@ -854,7 +853,35 @@ sub modelfit_setup
 			$inflation=[];
 		}
 
+		my ($modified,$maxcorr,$max_indices) = linear_algebra::cap_correlation($covmatrix,$self->cap_correlation);
+		if ($modified < 0){
+			my @thelines=();
+			foreach my $line (@{$covmatrix}){
+				push(@thelines,join("\t",@{$line}));
+			}
+			croak("Input error cap_correlation, cap is ".$self->cap_correlation.
+				  " and covmatrix is \n".join("\n",@thelines)."\n");
+		}
+		if ($modified > 0){
+			my $message = "Capped $modified off-diagonal(s) of proposal so that abs(correlation) <= ".
+				$self->cap_correlation;
+			ui -> print( category => 'sir',	 message => $message);
+		}
+
+		if (abs($maxcorr) > 0.9){
+			my $message = 
+				"\nThe correlation between ".$self->parameter_hash->{'labels'}->[$max_indices->[0]].
+				" and ".$self->parameter_hash->{'labels'}->[$max_indices->[1]]." in the proposal exceeds 0.9. This\n".
+				"might lead to an underestimation of parameter uncertainty if the true\n".
+				"correlation is less than 0.9, or if it is nonlinear. It is advised to\n".
+				"set the –cap_correlation option, which caps correlations to a user-chosen\n".
+				"value to avoid this.\n";
+			ui -> print( category => 'sir',	 message => $message);
+		}
 		
+		my $message = "Sampling from the truncated multivariate normal distribution";
+		ui -> print( category => 'sir',	 message => $message);
+
 		my $mat = new Math::MatrixReal(1,1);
 		my $muvector = $mat->new_from_rows( [$mu_values] );
 		my $current_samples = update_attempted_samples(samples=>$self->samples,
@@ -975,6 +1002,7 @@ sub modelfit_setup
 									  subjects => $self->subjects,
 									  model_filename => $model->filename,
 									  cap_resampling => $self->cap_resampling,
+									  cap_correlation => $self->cap_correlation,
 									  done  => 0,
 									  adjust_blocks  => $self->adjust_blocks,
 									  check_cholesky_reparameterization => $self->check_cholesky_reparameterization,
@@ -1036,6 +1064,7 @@ sub load_restart_information
 	my $boxcox;
 	my $with_replacement;
 	my $cap_resampling;
+	my $cap_correlation;
 	my $mceta;
 	my $problems_per_file;
 	my $reference_ofv;
@@ -1075,6 +1104,7 @@ sub load_restart_information
 			$self->boxcox($boxcox);
 			$self->with_replacement($with_replacement);
 			$self->cap_resampling($cap_resampling);
+			$self->cap_correlation($cap_correlation) if (defined $cap_correlation);
 			$self->mceta($mceta);
 			$self->problems_per_file($problems_per_file);
 			$self->samples(\@samples);
@@ -1163,6 +1193,7 @@ sub save_restart_information
 							  iteration  => { isa => 'Int', optional => 0 },
 							  subjects  => { isa => 'Int', optional => 0 },
 							  cap_resampling  => { isa => 'Int', optional => 0 },
+							  cap_correlation  => { isa => 'Maybe[Num]', optional => 1 },
 							  mceta  => { isa => 'Int', optional => 0 },
 							  problems_per_file  => { isa => 'Int', optional => 0 },
 							  reference_ofv  => { isa => 'Num', optional => 0 },
@@ -1189,6 +1220,7 @@ sub save_restart_information
 	my $adjust_blocks = $parm{'adjust_blocks'};
 	my $check_cholesky_reparameterization = $parm{'check_cholesky_reparameterization'};
 	my $cap_resampling = $parm{'cap_resampling'};
+	my $cap_correlation = $parm{'cap_correlation'};
 	my $copy_data = $parm{'copy_data'};
 	my $boxcox = $parm{'boxcox'};
 	my $negative_dofv = $parm{'negative_dofv'};
@@ -1208,7 +1240,7 @@ sub save_restart_information
 
 	#local name
 
-	my @dumper_names = qw(*parameter_hash *center_rawresults_vector *negative_dofv *intermediate_raw_results_files *samples *resamples *attempted_samples *successful_samples *actual_resamples *seed_array with_replacement mceta problems_per_file *minimum_ofv reference_ofv done iteration recenter copy_data boxcox nm_version model_filename cap_resampling adjust_blocks check_cholesky_reparameterization subjects);
+	my @dumper_names = qw(*parameter_hash *center_rawresults_vector *negative_dofv *intermediate_raw_results_files *samples *resamples *attempted_samples *successful_samples *actual_resamples *seed_array with_replacement mceta problems_per_file *minimum_ofv reference_ofv done iteration recenter copy_data boxcox nm_version model_filename cap_resampling cap_correlation adjust_blocks check_cholesky_reparameterization subjects);
 
 
 	open(FH, '>'.$recovery_filename) or return -1; #die "Could not open file $recovery_filename for writing.\n";
@@ -1217,7 +1249,7 @@ sub save_restart_information
 		 $samples,$resamples,$attempted_samples,$successful_samples,$actual_resamples,$seed_array,
 		 $with_replacement,$mceta,
 		 $problems_per_file,$minimum_ofv,$reference_ofv,$done,$iteration,$recenter,$copy_data,$boxcox,$nm_version,
-		$model_filename, $cap_resampling, $adjust_blocks, $check_cholesky_reparameterization, $subjects],
+		$model_filename, $cap_resampling, $cap_correlation, $adjust_blocks, $check_cholesky_reparameterization, $subjects],
 		\@dumper_names
 		);
 	close FH;
@@ -2740,6 +2772,7 @@ sub modelfit_analyze
 							  center_rawresults_vector => $self->center_rawresults_vector, 
 							  with_replacement => $self->with_replacement,
 							  cap_resampling => $self->cap_resampling,
+							  cap_correlation => $self->cap_correlation,
 							  iteration  => $self->iteration,
 							  mceta  => $self->mceta,
 							  problems_per_file  => $self->problems_per_file,

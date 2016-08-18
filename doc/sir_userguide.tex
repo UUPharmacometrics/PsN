@@ -1,5 +1,5 @@
 \input{inputs/format_header.tex}
-\guidetitle{SIR user guide}{2016-08-13}
+\guidetitle{SIR user guide}{2016-08-18}
 \usepackage{amsmath}
 
 \begin{document}
@@ -261,6 +261,11 @@ be an error message.
 \optdefault{rse\_sigma}{X}
 See help text for rse\_omega.
 \nextopt
+\optdefault{cap\_correlation}{X}
+Default not set. If set to a number between 0 and 1, at every iteration 
+ensure that no absolute value of a correlation in the proposal exceeds 
+this number. If some do, they will be changed to X (or –X if negative).
+\nextopt
 \optdefault{problems\_per\_file}{N}
 Optional, default 100. The number of \$PROBLEM per model file when evaluating the parameter vectors
 on the original data (running
@@ -362,9 +367,6 @@ or by default the .cov-file of the input model run.
 \item[\underline{Step 1}] 
 Simulate 'samples item $i$' parameter vectors from the 
 covariance matrix, using Perl function Math::Random::random\_multivariate\_normal.
-If this is iteration 1, $i==1$, 
-the covariance matrix is inflated before sampling 
-if either of options -theta\_inflation, -omega\_inflation or -sigma\_inflation is set. 
 
 \noindent If there was a previous iteration, i.e $i>1$ or option -rawres\_input or -auto\_rawres was used, 
 the covariance matrix used in this step is the
@@ -378,7 +380,13 @@ then the samples are back-transformed for boundary checks and evaluation.
 the .cov-file given by NONMEM or given via option -covmat\_input.
 The sampling is done on the original scale. 
 
-\noindent If a vector (on the original scale) does not fulfill the constraints from \$THETA boundaries
+\noindent If this is iteration 1, $i==1$, 
+the covariance matrix is inflated before sampling 
+if either of options -theta\_inflation, -omega\_inflation or -sigma\_inflation is set.
+
+\noindent If -cap\_correlation is set, the correlations are capped before sampling.
+
+\noindent If a sampled vector (on the original scale) does not fulfill the constraints from \$THETA boundaries
 and positive definiteness of \$OMEGA and
 \$SIGMA blocks (as judged by a PsN-implemented eigenvalue decomposition) 
 then that vector is 

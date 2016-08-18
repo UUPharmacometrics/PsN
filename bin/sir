@@ -29,6 +29,7 @@ my %optional_options = (
 	"covmat_input:s"=>'',
 	'rawres_input:s' => undef,
 	'auto_rawres:f' => undef,
+	'cap_correlation:f' => undef,
 	'offset_rawres:i' => undef,
 	'problems_per_file:i' => undef,
 	'in_filter:s' => undef,
@@ -115,6 +116,13 @@ EOF
 
       Only allowed when NM7.3 or later and
       a classical estimation method is used. Set MCETA=N in $ESTIMATION.
+EOF
+$help_text{-cap_correlation} = <<'EOF';      
+      -cap_correlation=X
+
+      Default not set. If set to a number between 0 and 1, at every iteration 
+      ensure that no absolute value of a correlation in the proposal exceeds 
+      this number. If some do, they will be changed to X (or –X if negative).
 EOF
 
 $help_text{-rawres_input} = <<'EOF';
@@ -377,6 +385,7 @@ my $sir =
 					 top_tool => 1,
 					 models				     => [ $model ],
 					 cap_resampling		 => $options{'cap_resampling'},
+					 cap_correlation		 => $options{'cap_correlation'},
 					 samples				     => $options{'samples'},
 					 resamples				     => $options{'resamples'},
 					 mceta				     => $options{'mceta'},

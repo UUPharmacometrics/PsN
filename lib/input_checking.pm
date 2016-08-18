@@ -267,6 +267,11 @@ sub check_sir
 
 	my $error = '';
 
+	if ( defined $options->{'cap_correlation'}){
+		if (($options->{'cap_correlation'} < 0) or ($options->{'cap_correlation'} > 1)) {
+			$error .= "Option -cap_correlation must be in the range 0 to 1\n";
+		}
+	}
 	if ( defined $options->{'add_iterations'} and ($options->{'add_iterations'}) ){
 		unless ((defined $options->{'directory'}) && (-d $options->{'directory'})) {
 			$error .= "Cannot set option -add_iterations unless -directory is set to existing sir run directory\n";

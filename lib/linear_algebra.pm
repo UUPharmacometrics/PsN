@@ -1558,6 +1558,54 @@ sub column_cov
     return 0;
 }
 
+sub cap_correlation
+{
+    my $varcov=shift;
+    my $capcorr = shift;
+
+    my $input_error = -2;
+    my $numerical_error = -1;
+
+	if (defined $capcorr){
+		return ($input_error,undef,[]) if (($capcorr > 1) or ($capcorr < 0));
+	}
+	
+    my $nrow= scalar(@{$varcov});
+    return ($input_error,undef,[]) if ($nrow < 1);
+
+	my $modified=0;
+	my $max_correlation=0;
+	my @sd =();
+	my @indices=(0,0);
+    for (my $row=0; $row< $nrow; $row++){
+		return ($input_error,undef,[]) if (scalar(@{$varcov->[$row]}) != $nrow);
+		if ($varcov->[$row]->[$row] <= 0){
+			return ($input_error,undef,[]) ;
+		}else{
+			push(@sd,sqrt($varcov->[$row]->[$row]));
+		}
+    }
+    for (my $row=0; $row< $nrow; $row++){
+		for (my $col=0; $col< $row; $col++){
+			my $corr = $varcov->[$row]->[$col]/($sd[$row]*$sd[$col]);
+			if ((defined $capcorr) and (abs($corr) > $capcorr)){
+				$modified++;
+				my $sign = 1;
+				$sign = -1 if ($corr < 0);
+				$varcov->[$row]->[$col] = $sign*($sd[$row]*$sd[$col])*$capcorr;
+				$varcov->[$col]->[$row] = $varcov->[$row]->[$col];
+				$corr = $sign*$capcorr;
+			}
+			if (abs($corr) > abs($max_correlation)){
+				$max_correlation = $corr;
+				$indices[0]=$row;
+				$indices[1]=$col;
+			}
+		}
+	}
+	return ($modified,$max_correlation,\@indices);
+
+}
 sub covar2sdcorr
 {
     my $varcov=shift;
