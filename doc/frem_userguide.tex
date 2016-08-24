@@ -1,6 +1,6 @@
 \input{inputs/format_header.tex}
 \usepackage{amsmath}
-\guidetitle{FREM userguide}{2016-08-12}
+\guidetitle{FREM userguide}{2016-08-24}
 
 \begin{document}
 \newcommand{\guidetoolname}{frem}
@@ -116,7 +116,7 @@ even if option -estimate\_means is set.
 If -no-estimate\_means is set, frem will not estimate any means even if there are missing observations.
 \nextopt
 \optname{rescale}
-Rescale covariate ETAs in Model 2 to SD close to 1. This option is set by default.
+Rescale covariate ETAs in Model 2 to SD close to 1. This option is set by default, and can be unset with -no-rescale.
 % in order to facilitate estimation.
 \nextopt
 \optname{mu}
@@ -452,10 +452,10 @@ FIX all \$OMEGAs from Model 1.
 
 %After each of the 'N\_parameter\_blocks' \$OMEGA for non-skipped ETAs, insert  
 Insert
-a full BLOCK(N\_covariates) where initials is, if option -rescale is \emph{not} set,
-variance-covariance matrix of covariates computed during creation of dataset, or, if
-option -rescale \emph{is} set, the correlation matrix of covariates computed during
-creation of dataset.
+a full BLOCK(N\_covariates) where initials is,
+if option -rescale is set (the default), the correlation matrix of covariates computed during
+creation of dataset, or if option -rescale is unset (using -no-rescale),
+the variance-covariance matrix of covariates computed during creation of dataset.
 
 If any covariate-covariate correlation is exactly 0 in the data set, change the initial
 value in the block to 1\% correlation, or the covariance corresponding to 1\% correlation,
@@ -489,23 +489,32 @@ These changes are only made if option -mu is set.
 In \$PK or \$PRED, whichever is present:
 At the end append the following code: \\
 Loop over covariates j=1...N\_covariates. %parameter blocks k=1...N\_parameter\_blocks,
-Add lines, if option -rescale is \emph{not} set,
-\begin{verbatim}
-MU_<orig_etas+j> = THETA(orig_thetas+j)
-COV<orig_etas+j> = MU_<orig_etas+j> + ETA(orig_etas+j)
-\end{verbatim}
-or, if option -rescale is set:
+Add lines, if option -rescale is set (the default):
 \begin{verbatim}
 MU_<orig_etas+j> = THETA(orig_thetas+j)
 COV<orig_etas+j> = MU_<orig_etas+j> + ETA(orig_etas+j)*(sd of baseline covariate)
 \end{verbatim}
-
+or, if option -rescale is unset,
+\begin{verbatim}
+MU_<orig_etas+j> = THETA(orig_thetas+j)
+COV<orig_etas+j> = MU_<orig_etas+j> + ETA(orig_etas+j)
+\end{verbatim}
+or, 
 \subsection{ERROR/PRED changes}
 In \$ERROR or \$PRED, whichever is present:
 At the end, after -mu changes if applicable, append the following code: \\
 Loop over covariates j=1...N\_covariates, %parameter blocks k=1...N\_parameter\_blocks,
 add lines\\
-Case 1: option -mu is not set and option -rescale is not set:\\
+Case 1: option -mu is not set and option -rescale is set (the default):\\
+\begin{verbatim}
+IF (FREMTYPE .EQ. j*100) THEN
+; <cov_j> <sd of baseline covariate>
+  Y = THETA(orig_thetas+j) + ETA(orig_etas+j)*(sd of baseline covariate) +EPS(epsnum)
+  IPRED = THETA(orig_thetas+j) + ETA(orig_etas+j)*(sd of baseline covariate)
+END IF
+\end{verbatim}
+
+\noindent Case 2: option -mu is not set and option -rescale is unset:\\
 \begin{verbatim}
 IF (FREMTYPE .EQ. j*100) THEN
 ; <cov_j> 1
@@ -514,14 +523,6 @@ IF (FREMTYPE .EQ. j*100) THEN
 END IF
 \end{verbatim}
 
-\noindent Case 2: option -mu is not set and option -rescale is set:\\
-\begin{verbatim}
-IF (FREMTYPE .EQ. j*100) THEN
-; <cov_j> <sd of baseline covariate>
-  Y = THETA(orig_thetas+j) + ETA(orig_etas+j)*(sd of baseline covariate) +EPS(epsnum)
-  IPRED = THETA(orig_thetas+j) + ETA(orig_etas+j)*(sd of baseline covariate)
-END IF
-\end{verbatim}
 
 \noindent Case 3: option -mu is set, option -rescale is either set or not set:\\
 \begin{verbatim}
@@ -531,7 +532,7 @@ IF (FREMTYPE .EQ. j*100) THEN
   IPRED = COV<orig_etas+j>
 END IF
 \end{verbatim}
-where $rescaling$ is 1 if option -rescale is not set, otherwise it is the sd of baseline covariate.
+where $rescaling$ is the sd of baseline covariate if option -rescale is set (the default), otherwise $rescaling$ is 1.
 
 %\emph{Alternative:} Do not loop over N \_parameter\_blocks, insert code only once for each covariate
 
@@ -1082,7 +1083,7 @@ invR=inv(R(1:k,1:k));
 result2=invR*invR' 
 
 \subsection{Rescaling of ETAs}
-Only if option -rescale is set:
+Only if option -rescale is set (the default):
 For each non-skipped \$OMEGA and new \$OMEGA for covariates:
 \begin{enumerate}
 \item Find the ETA numbers for this \$OMEGA.

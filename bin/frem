@@ -190,7 +190,7 @@ $help_text{-rescale} = <<'EOF';
       -rescale
 
       Rescale covariates in frem dataset to sd=1.
-      This option is set by default
+      This option is set by default, but can be unset with -no-rescale
 EOF
 
 $help_text{-run_sir} = <<'EOF';
@@ -208,7 +208,6 @@ common_options::online_help( 'frem', \%options, \%help_text, \%required_options,
 common_options::setup( \%options, 'frem' ); #get defaults, 
 #calls set_globals etc, initiates random sequence
 
-$options{'rescale'} = 1 if not defined $options{'rescale'};
 
 ## Check that we do have a model file
 if ( scalar(@ARGV) < 1 ) {

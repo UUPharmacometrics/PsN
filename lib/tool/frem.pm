@@ -47,7 +47,7 @@ has 'input_model_fix_thetas' => ( is => 'rw', isa => 'ArrayRef', default => sub 
 has 'input_model_fix_omegas' => ( is => 'rw', isa => 'ArrayRef', default => sub { [] } );
 has 'input_model_fix_sigmas' => ( is => 'rw', isa => 'ArrayRef', default => sub { [] } );
 has 'check' => ( is => 'rw', isa => 'Bool', default => 0 );
-has 'rescale' => ( is => 'rw', isa => 'Bool', default => 0 );
+has 'rescale' => ( is => 'rw', isa => 'Bool', default => 1 );
 has 'rescale_data' => ( is => 'rw', isa => 'Bool', default => 1 );
 has 'vpc' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'dv' => ( is => 'rw', isa => 'Str', default => 'DV' );
