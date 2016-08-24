@@ -1,5 +1,3 @@
-
-
 #############################################################################################################
 ### Diagnostics for SIR
 ### Author: AG Dosne
@@ -51,6 +49,7 @@ parnames            <- names(rawres)[COL.ESTIMATED.PARAMS]
 
 ### Create SIR specification file
 
+LASTIT             <- length(ALL.RESAMPLES)                  # last iteration
 summary_it         <- read.csv("summary_iterations.csv")
 sir_spec           <- data.frame("ITERATION"=summary_it$iteration,"NSAMP"=summary_it$successful.samples,"NRESAMP"=summary_it$actual.resamples) 
 sir_spec           <- filter(sir_spec, ITERATION != 0) # ITERATION=0 only used with rawres input to estimate mutlivariate normal
@@ -81,7 +80,7 @@ RESAMPLES             <- ALL.RESAMPLES[length(ALL.RESAMPLES)]
 QUANT                 <- seq(0,(RESAMPLES-1)/RESAMPLES,length.out=RESAMPLES-1)                                                                                               # quantiles (at each point except last to avoid +Inf for ref chisquare) 
 dOFV_ref              <- data.frame("ITERATION"=0,"DISTRIBUTION"="REF","dOFV"=qchisq(QUANT,df=N.ESTIMATED.PARAMS),"QUANT"=QUANT,"TYPE"="SIR")                                    # dOFV distribution of reference chisquare distribution
 dOFV_cov              <- ddply(rawres,.(ITERATION), summarise, "dOFV"=quantile(deltaofv,probs=QUANT,na.rm=TRUE), "QUANT"=QUANT,"TYPE"=rep("PROPOSAL",length(QUANT)))              # dOFV distribution of original covariance matrix
-dOFV_cov$DISTRIBUTION <- factor(dOFV_cov$ITERATION,levels=levels(rawres$DISTRIBUTION)) # cannot do it in one step because a single cov is attributed to 2 distributinos (pre and post SIR)
+dOFV_cov$DISTRIBUTION <- factor(dOFV_cov$ITERATION,levels=c("REF",paste(seq(LASTIT+1)))) # cannot do it in one step because a single cov is attributed to 2 distributinos (pre and post SIR)
 dOFV_cov              <- dOFV_cov[,c(names(dOFV_ref))]
 dOFV_sir              <- ddply(filter(rawres,resamples==1),.(ITERATION,DISTRIBUTION), summarise, "dOFV"=quantile(deltaofv,probs=QUANT,na.rm=TRUE), "QUANT"=QUANT,"TYPE"=rep("SIR",length(QUANT)))  # dOFV distribution of SIR with SAMPLES
 
@@ -90,7 +89,7 @@ dOFV_all$TYPE         <- factor(dOFV_all$TYPE,levels=c("PROPOSAL","SIR"))
 dOFV_all$ITERATION    <- factor(dOFV_all$ITERATION,levels=seq(0,length(ALL.RESAMPLES)),labels=c("REF",seq(length(ALL.RESAMPLES)))) 
 
 # Calculate df for all distributions
-df_est                <- ddply(dOFV_all,.(ITERATION,DISTRIBUTION,TYPE), summarise, "df"=round(mean(dOFV),1))  # get df for eac hdistribution
+df_est                <- ddply(dOFV_all,.(ITERATION,DISTRIBUTION,TYPE), summarise, "df"=round(mean(dOFV),1))  # get df for each distribution
 df_est$perc           <- seq(0.1,0.9,length.out=nrow(df_est))  
 df_est$order          <- rank(df_est$df,ties.method="first")                                             # set x and y for plotting
 df_est2               <- ddply(dOFV_all,.(ITERATION,DISTRIBUTION), summarise, "perc_value"=quantile(dOFV,probs=df_est$perc,na.rm=TRUE),"perc"=df_est$perc)
@@ -120,7 +119,6 @@ qdOFV_sir_noise$ITERATION    <- factor(qdOFV_sir_noise$ITERATION,levels=seq(0,le
 
 ### Covmat visualization (Only for proposal and final) 
 
-LASTIT       <- length(ALL.RESAMPLES)                  # last iteration
 cov.proposal <- var(filter(rawres,ITERATION==1)[,COL.ESTIMATED.PARAMS ])
 cov.final    <- var(filter(rawres,ITERATION==LASTIT & resamples==1)[,COL.ESTIMATED.PARAMS ])
 
@@ -247,7 +245,11 @@ simdat          <- matrix(NA,nrow=nrow(mdat)) # Simulate data from inverse Wisha
 for (i in seq(nrow(mdat))) {
   if(is.na(mdat$df[i])==FALSE) simdat[i,] <- riwish(v=mdat$df[i],S=as.matrix(mdat$s[i]))
 }
-mdat$simdat <- as.numeric(simdat)
+mdat$simdat      <- as.numeric(simdat)
+mdat$LEGEND_NORM <- paste(mdat$variable,round(mdat$df_norm,0),sep=":")    # for plotting
+mdat$LEGEND_NORM <- factor(mdat$LEGEND_NORM,levels=unique(mdat$LEGEND_NORM))
+mdat$LEGEND_WISH <- paste(mdat$variable,round(mdat$df,0),sep=":")    
+mdat$LEGEND_WISH <- factor(mdat$LEGEND_WISH,levels=unique(mdat$LEGEND_WISH))
 } # end of estimated.omega >= 1
 } # end of rplots.level >1
 
@@ -270,7 +272,7 @@ colITER <- gg_color_hue(length(levels(dOFV_all$ITERATION)))     # default ggplot
 colITER <- c("darkgrey",colITER[-1])                            # replace the first by black for reference dOFV distribution
 
 warn <- ""  # print warning if proposal < chi-square > 25% of the time
-msg  <- "The proposal is not entirely above the reference chi-square.\n It is advised to restart SIR with an inflated proposal (e.g. -inflation=1.5)"
+msg  <- "The proposal is not entirely above the reference chi-square.\n It is advised to restart SIR with an inflated proposal (e.g. -theta_inflation=1.5 -omega_inflation=1.5 -sigma_inflation=1.5)"
 test <- sum(filter(dOFV_all,ITERATION==1 & TYPE=="PROPOSAL")$dOFV<filter(dOFV_all,ITERATION=="REF")$dOFV)/length(filter(dOFV_all,ITERATION=="REF")$dOFV)>0.25
 warn <- ifelse(test==TRUE,msg,warn)
 
@@ -369,11 +371,12 @@ all_maxbin[[i]] <- all_maxbin.cur
 
 if (N.ESTIMATED.OMEGAS >= 1) { 
 invWish <- ggplot(mdat,aes(x=value)) +
-  geom_histogram(aes(y=..density..)) +
-  geom_hline(aes(yintercept=0,linetype=interaction(variable,as.factor(round(df_norm,0)),sep=":"),color=NA)) + # dummy to output df_norm
-  geom_density(aes(x=simdat,color=interaction(variable,as.factor(round(df,0)),sep=":"))) +
+  geom_histogram(aes(y=..density..),fill="lightgrey",color="black") +
+  geom_hline(aes(yintercept=0,linetype=LEGEND_NORM)) + # dummy to output df_norm
+  geom_density(aes(x=simdat,color=LEGEND_WISH,sep=":"),size=1) +
   facet_wrap(~variable, scales="free") +
-  scale_linetype_manual(values=c(0,0)) +
+  scale_linetype_manual(values=rep(0,N.ESTIMATED.OMEGAS)) +
+  scale_color_discrete(drop=F) +
   theme(legend.position="bottom") +
   guides(color=guide_legend(title="Estimated N based on inverse Wishart distribution"),linetype=guide_legend(title="Calculated N based on normal distribution (not plotted)"))
 } # end of estimated.omegas >=1
@@ -403,5 +406,6 @@ if(rplots.level>1) {
 
 ### END
 #############################################################################################################
+
 
 

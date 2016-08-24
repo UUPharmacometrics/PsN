@@ -872,27 +872,31 @@ cmp_float_array($cook,[3.49590E+00/2.01673E-01,  6.27891E+00/1.80612E-01 ,  1.05
 
 $cov=[[4,2,1],[2,9,2],[1,2,1]];
 
-my ($modified,$maxcorr,$indices) = linear_algebra::cap_correlation($cov,undef);
+my ($modified,$maxcorr,$indices,$cap_indices) = linear_algebra::cap_correlation($cov,undef);
 cmp_float_array($cov->[0],[4,2,1],'capped cov 0 1');
 cmp_float_array($cov->[1],[2,9,2],'capped cov 0 2');
 cmp_float_array($cov->[2],[1,2,1],'capped cov 0 3');
 cmp_float($maxcorr,2/3,'maxcorr after mod 0');
 is($modified,0,'modified after cap 0');
 is_deeply($indices,[2,1],'indices maxcorr 0');
+is_deeply($cap_indices,[],'cap indices maxcorr 0');
 
-($modified,$maxcorr,$indices) = linear_algebra::cap_correlation($cov,0.9);
+($modified,$maxcorr,$indices,$cap_indices) = linear_algebra::cap_correlation($cov,0.9);
 cmp_float_array($cov->[0],[4,2,1],'capped cov 1 1');
 cmp_float_array($cov->[1],[2,9,2],'capped cov 1 2');
 cmp_float_array($cov->[2],[1,2,1],'capped cov 1 3');
 cmp_float($maxcorr,2/3,'maxcorr after mod 1');
 is($modified,0,'modified after cap 1');
 is_deeply($indices,[2,1],'indices maxcorr 1');
+is_deeply($cap_indices,[],'cap indices maxcorr 1');
 
-($modified,$maxcorr,$indices) = linear_algebra::cap_correlation($cov,0.5);
+($modified,$maxcorr,$indices,$cap_indices) = linear_algebra::cap_correlation($cov,0.5);
 cmp_float_array($cov->[0],[4,2,1],'capped cov 2 1');
 cmp_float_array($cov->[1],[2,9,1.5],'capped cov 2 2');
 cmp_float_array($cov->[2],[1,1.5,1],'capped cov 2 3');
 cmp_float($maxcorr,0.5,'maxcorr after mod 2');
 is($modified,1,'modified after cap 2');
 is_deeply($indices,[2,0],'indices maxcorr 2');
+is_deeply($cap_indices->[0],[2,1,2/3],'cap indices maxcorr 2');
+is(scalar(@{$cap_indices}),1,'capped indices count');
 done_testing();

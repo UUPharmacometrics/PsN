@@ -39,7 +39,7 @@ has 'negative_dofv' => ( is => 'rw', isa => 'ArrayRef', default => sub { [] } );
 has 'recompute' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'with_replacement' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'cap_resampling' => ( is => 'rw', isa => 'Int', default => 1 );
-has 'cap_correlation' => ( is => 'rw', isa => 'Num');
+has 'cap_correlation' => ( is => 'rw', isa => 'Num', default => 0.8);
 has 'samples' => ( is => 'rw', required => 1, isa => 'ArrayRef' ); #default in bin script
 has 'resamples' => ( is => 'rw', required => 1, isa => 'ArrayRef' ); #default in bin script
 has 'attempted_samples' => ( is => 'rw', isa => 'ArrayRef',default => sub { [] } );
@@ -853,7 +853,7 @@ sub modelfit_setup
 			$inflation=[];
 		}
 
-		my ($modified,$maxcorr,$max_indices) = linear_algebra::cap_correlation($covmatrix,$self->cap_correlation);
+		my ($modified,$maxcorr,$max_indices,$cap_indices) = linear_algebra::cap_correlation($covmatrix,$self->cap_correlation);
 		if ($modified < 0){
 			my @thelines=();
 			foreach my $line (@{$covmatrix}){
@@ -862,20 +862,26 @@ sub modelfit_setup
 			croak("Input error cap_correlation, cap is ".$self->cap_correlation.
 				  " and covmatrix is \n".join("\n",@thelines)."\n");
 		}
+		my $warn_correlations=0.8;
 		if ($modified > 0){
 			my $message = "Capped $modified off-diagonal(s) of proposal so that abs(correlation) <= ".
-				$self->cap_correlation;
+				$self->cap_correlation." between\n";
+			for (my $i=0; $i<scalar(@{$cap_indices}); $i++){
+				$message .= $self->parameter_hash->{'labels'}->[$cap_indices->[$i]->[0]].
+					" and ".$self->parameter_hash->{'labels'}->[$cap_indices->[$i]->[1]].
+					" (original correlation ".sprintf("%4.2f",$cap_indices->[$i]->[2]).")\n";
+			}
+			$message .= "If possible, reparameterize your model to avoid correlations. If it is not ".
+				"possible, it is recommended to increase the number of samples (e.g. double) ".
+				"without changing the number of resamples to avoid the exhaustion of good samples.";
 			ui -> print( category => 'sir',	 message => $message);
-		}
-
-		if (abs($maxcorr) > 0.9){
+		}elsif (abs($maxcorr) > $warn_correlations){
 			my $message = 
 				"\nThe correlation between ".$self->parameter_hash->{'labels'}->[$max_indices->[0]].
-				" and ".$self->parameter_hash->{'labels'}->[$max_indices->[1]]." in the proposal exceeds 0.9. This\n".
+				" and ".$self->parameter_hash->{'labels'}->[$max_indices->[1]]." in the proposal exceeds $warn_correlations. This\n".
 				"might lead to an underestimation of parameter uncertainty if the true\n".
-				"correlation is less than 0.9, or if it is nonlinear. It is advised to\n".
-				"set the –cap_correlation option, which caps correlations to a user-chosen\n".
-				"value to avoid this.\n";
+				"correlation is less than $warn_correlations, or if it is nonlinear. It is advised to\n".
+				"reparameterize the model if possible.\n";
 			ui -> print( category => 'sir',	 message => $message);
 		}
 		

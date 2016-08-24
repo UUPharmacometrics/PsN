@@ -120,9 +120,11 @@ EOF
 $help_text{-cap_correlation} = <<'EOF';      
       -cap_correlation=X
 
-      Default not set. If set to a number between 0 and 1, at every iteration 
+      Default 0.8. If set to a number between 0 and 1, at every iteration 
       ensure that no absolute value of a correlation in the proposal exceeds 
       this number. If some do, they will be changed to X (or –X if negative).
+      To turn off this feature, set -cap_correlation=1, which in practice
+      means no capping.
 EOF
 
 $help_text{-rawres_input} = <<'EOF';

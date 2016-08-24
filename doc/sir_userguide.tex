@@ -1,5 +1,5 @@
 \input{inputs/format_header.tex}
-\guidetitle{SIR user guide}{2016-08-18}
+\guidetitle{SIR user guide}{2016-08-24}
 \usepackage{amsmath}
 
 \begin{document}
@@ -262,9 +262,11 @@ be an error message.
 See help text for rse\_omega.
 \nextopt
 \optdefault{cap\_correlation}{X}
-Default not set. If set to a number between 0 and 1, at every iteration 
+Default 0.8. If set to a number between 0 and 1, at every iteration 
 ensure that no absolute value of a correlation in the proposal exceeds 
 this number. If some do, they will be changed to X (or –X if negative).
+To turn off this feature, set -cap\_correlation=1, which in practice
+means no capping.
 \nextopt
 \optdefault{problems\_per\_file}{N}
 Optional, default 100. The number of \$PROBLEM per model file when evaluating the parameter vectors

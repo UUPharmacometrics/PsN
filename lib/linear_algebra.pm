@@ -1577,6 +1577,7 @@ sub cap_correlation
 	my $max_correlation=0;
 	my @sd =();
 	my @indices=(0,0);
+	my @cap_indices=();
     for (my $row=0; $row< $nrow; $row++){
 		return ($input_error,undef,[]) if (scalar(@{$varcov->[$row]}) != $nrow);
 		if ($varcov->[$row]->[$row] <= 0){
@@ -1590,6 +1591,7 @@ sub cap_correlation
 			my $corr = $varcov->[$row]->[$col]/($sd[$row]*$sd[$col]);
 			if ((defined $capcorr) and (abs($corr) > $capcorr)){
 				$modified++;
+				push(@cap_indices,[$row,$col,$corr]);
 				my $sign = 1;
 				$sign = -1 if ($corr < 0);
 				$varcov->[$row]->[$col] = $sign*($sd[$row]*$sd[$col])*$capcorr;
@@ -1603,7 +1605,7 @@ sub cap_correlation
 			}
 		}
 	}
-	return ($modified,$max_correlation,\@indices);
+	return ($modified,$max_correlation,\@indices,\@cap_indices);
 
 }
 sub covar2sdcorr
