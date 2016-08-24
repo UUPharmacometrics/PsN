@@ -712,7 +712,18 @@ Left censored data: The value in the column “Real left censored” is the frac
 Right censored data: Analogous to Left censored data. Instead of the fraction of non-missing observations below lloq, the fraction above uloq is considered. If -lloq or -censor is used but not -uloq, then 'NA' is displayed.
 Missing data (input option -censor): Analogous to Left censored data, but instead of the fraction of non-missing observations below lloq, the fraction of missing observations out of the total M is considered. If -lloq or -uloq is used but not -censor, then 'NA' is displayed.
 
-When using -lloq and/or -uloq the regular results sections of vpc\_results.csv are censored. Anywhere where the value in the “Y\% real” column is below lloq or above uloq the value is replaced with 'NA'. In the “NPC results” section for the bin, columns “points below PI (count/\%)” the values are replaced with 'NA' in row “X\% PI” if the value in column “Z\% sim”, where Z=50-(X/2), in the regular VPC section is below lloq. The values in columns “points above PI (count/\%)” are replaced with 'NA' in row “X\% PI” if the value in column “Q\% sim”, where Q=50+(X/2), in the regular VPC section is below lloq.
+When using -lloq and/or -uloq the 
+regular results sections of vpc\_results.csv are censored.
+Anywhere where the value in the “Y\% real” column is below lloq or above uloq the value is replaced with 'NA'. In the “NPC results” section for the bin, columns “points below PI (count/\%)” the values are replaced with 'NA' in row “X\% PI” if the value in column “Z\% sim”, where Z=50-(X/2), in the regular VPC section is below lloq. The values in columns “points above PI (count/\%)” are replaced with 'NA' in row “X\% PI” if the value in column “Q\% sim”, where Q=50+(X/2), in the regular VPC section is below lloq.
+
+Note however that the observed values outside the
+limits of quantification are informative when computing e.g. the median.
+For example, if there are 40 BQL observations 
+and 60 observations above the limit,
+then the median is known, even if the exact DV of the
+40 BQL observations are unknown. If however there are 60 BQL values and
+40 known values, the median value will be 'NA',
+since it is unknown (below BQL somewhere).
 
 	\item In the case of categorical data, i.e. when option -levels is used, results are presented in the section Categorical data. The value in the column “Real xx”, where xx defines the dependent value boundaries of the category, is the fraction of the at most M original dataset observations in the bin that falls within these boundaries. The fraction of observations within the boundaries is also calculated for each simulated dataset separately, i.e. at most N times (exclude dataset where non-missing observations is 0). The value in the “Sim xx” column is the median of the at most N calculated fractions of simulated observations. The values in the “CC\% CI for xx from/to” columns is the CC\% CI based on the at most N values.
 \end{enumerate}

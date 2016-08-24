@@ -602,11 +602,14 @@ around the expected proportion.
 \item[Purpose] Calculate the uncertainty to use for IIV parameters when they are used as priors (equivalent degrees of freedom in
 inverse Wishart distributions) 
 \item[Description] This plot shows the distribution of the resampled IIVs (histograms) and the fitted inverse Wishart distributions (colored lines).
-The estimated degrees of freedom is displayed in the legend.
-\item[Interpretation] In theory, the maximum degree of freedom is the total number of individuals in the dataset. An IIV with a degree of freedom
-equal to the total number of individuals in the dataset is an IIV for which perfect information is available (individual Empirical Bayes Estimates
-have very low standard errors). An IIV with a degree of freedom much lower than the total number of individuals is an IIV with imperfect
-information (individual Empirical Bayes Estimates have very high standard errors).
+The corresponding number of individuals using the inverse Wishart distribution and using the Normal distribution
+are displayed in the legend. 
+\item[Interpretation] In theory, the maximum degree of freedom is the total number of individuals in the dataset.
+An IIV with a degree of freedom equal to the total number of individuals in the dataset is an IIV for which perfect
+information is available (individual Empirical Bayes Estimates have very low standard errors). An IIV with a degree
+of freedom much lower than the total number of individuals is an IIV with imperfect information (individual Empirical
+Bayes Estimates have very high standard errors). When available, the number of individuals based on the Wishart
+distribution is expected to be a better estimate than the number of individuals based on the Normal distribution.
 \end{description}
 
 \section{Known problems}
