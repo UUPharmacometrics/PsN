@@ -28,19 +28,6 @@ LIBFILES= ui.pm \
 	matlab/bca.m \
 	matlab/histograms.m \
 	matlab/profiles.m \
-	R-scripts/simeval_default.R \
-	R-scripts/sse_default.R \
-	R-scripts/sir_default.R \
-	R-scripts/llp_default.R \
-	R-scripts/cdd_default.R \
-	R-scripts/mcmp_default.R \
-	R-scripts/randtest_default.R \
-	R-scripts/vpc_default.R \
-	R-scripts/execute_default.R \
-	R-scripts/bootstrap_default.R \
-	R-scripts/pvar_default.R \
-	R-scripts/nca_default.R \
-	R-scripts/required_packages.R \
 	status_bar.pm \
 	nonmemrun.pm \
 	nonmemrun/localunix.pm \
@@ -210,9 +197,10 @@ release: main completion rel_dir $(RELFILES) $(PDFFILES)
 	@ cp development/completion_files/* PsN-Source/development/completion_files
 	@ cp ../rplotsRepo/code/frem/*.R PsN-Source/lib/R-scripts/.
 	@ mkdir -p PsN-Source/test
-	@ cp -r test/unit PsN-Source/test
-	@ cp -r test/system PsN-Source/test
-	@ cp -r test/test_files PsN-Source/test
+	@ cp -ar test/unit PsN-Source/test
+	@ cp -ar test/system PsN-Source/test
+	@ cp -ar test/test_files PsN-Source/test
+	@ cp -ar R-scripts PsN-Source/lib
 	@ cp test/includes.pm PsN-Source/test
 	@ cp test/runsystem PsN-Source/test
 	@ mkdir -p PsN-Source/doc
@@ -296,9 +284,6 @@ PsN-Source/setup.pl: bin/setup.pl
 
 PsN-Source/lib/matlab/% : matlab/%
 	@ cp matlab/$* $@
-
-PsN-Source/lib/R-scripts/% : R-scripts/%
-	@ cp R-scripts/$* $@
 
 PsN-Source/%: %
 	@ cp -ar $* $@
