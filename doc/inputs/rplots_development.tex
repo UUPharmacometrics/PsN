@@ -1,0 +1,21 @@
+In the R-scripts folder there is one main template file per PsN tool
+that supports the rplots option.
+The template files have names
+toolname\_default.R, for example bootstrap\_default.R and randtest\_default.R.
+Each template file shall be as concise as possible. All
+R function definitions shall be in a subfolder of the R-scripts folder, and the
+subfolder shall be named after the PsN tool, for example pvar.
+
+\begin{description}
+\item[TODO]
+  Do a simple clean-up of each template file toolname\_default.R so that already existing
+  R function definitions, if any, are moved
+  to new files in subfolders with correct names, and the template file instead sources the
+  new files, in the same way as pvar\_default.R
+\item[TODO] Do more extensive clean-up of each template file, rewriting scripts to easily testable functions that return
+  data frames etc, plus functions that return plot objects. Like pvar.
+\item[TODO] Delete TODO items from the documentation when they are done.
+\end{description}
+
+
+
