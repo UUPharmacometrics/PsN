@@ -1,0 +1,45 @@
+VPC run info
+"","          Date","  observations","   simulations","     Modelfile","Simulation model","Independent variable","Dependent variable","   PsN version","NONMEM version",
+"",     2016-8-25,           155,           100,       unknown,auto-generated,          PRED,            DV,        v4.6.7,       default,
+
+VPC results  
+Continuous data
+155 observations out of 155
+"","        < PRED","            <=","    median.idv","    no. of obs","     mean real","      mean sim","95%CI for mean from","95%CI for mean to","      50% real","       50% sim","95%CI for 50% from","95%CI for 50% to","      30% real","       30% sim","95%CI for 30% from","95%CI for 30% to","      70% real","       70% sim","95%CI for 70% from","95%CI for 70% to","      10% real","       10% sim","95%CI for 10% from","95%CI for 10% to","      90% real","       90% sim","95%CI for 90% from","95%CI for 90% to","       5% real","        5% sim","95%CI for 5% from","95%CI for 5% to","      95% real","       95% sim","95%CI for 95% from","95%CI for 95% to","     2.5% real","      2.5% sim","95%CI for 2.5% from","95%CI for 2.5% to","    97.5% real","     97.5% sim","95%CI for 97.5% from","95%CI for 97.5% to","PI 40% False pos (%)","PI 40% False neg (%)","PI 80% False pos (%)","PI 80% False neg (%)","PI 90% False pos (%)","PI 90% False neg (%)","PI 95% False pos (%)","PI 95% False neg (%)",
+"first interval is closed",      6.524488,       26.7795,    1.9075E+01,            95,      22.98947,      19.86134,      17.71765,      21.83474,    2.2100E+01,        18.279,    1.6121E+01,    2.0339E+01,    1.8800E+01,    1.4265E+01,    1.2790E+01,    1.6134E+01,    2.5600E+01,    2.3128E+01,    2.0203E+01,    2.6145E+01,    1.4200E+01,    9.5837E+00,    7.8039E+00,    1.1234E+01,    3.4200E+01,    3.2189E+01,    2.7947E+01,    3.8845E+01,    1.3000E+01,    7.7035E+00,    6.2896E+00,    9.7529E+00,    3.6800E+01,    3.7438E+01,    3.0910E+01,    4.2921E+01,    1.2700E+01,    6.2720E+00,    4.5850E+00,    8.4705E+00,    3.8200E+01,    4.2725E+01,    3.4312E+01,    5.1495E+01,      13.68421,      23.15789,      6.315789,      7.368421,      4.210526,      5.263158,             0,      2.105263,
+"",       26.7795,        52.981,       31.5685,            50,        29.764,      34.95961,      30.28642,      38.64576,         29.25,       32.1585,       28.1435,       37.4525,    2.5200E+01,    2.6244E+01,    2.2577E+01,    3.0752E+01,    3.3000E+01,    3.9337E+01,    3.3010E+01,    4.5127E+01,    2.0300E+01,    1.9337E+01,    1.5256E+01,    2.3544E+01,    3.7900E+01,    5.3777E+01,    4.2006E+01,    6.4510E+01,    1.6900E+01,    1.6429E+01,    1.3175E+01,    2.1142E+01,    4.0200E+01,    6.3217E+01,    4.7247E+01,    7.8041E+01,    1.3300E+01,    1.4283E+01,    1.0934E+01,    2.0255E+01,    5.8700E+01,    7.0944E+01,    4.9272E+01,    1.0720E+02,             4,            18,             2,             2,             2,             2,             0,             2,
+"",        52.981,      120.6639,        77.192,            10,         29.21,      81.25029,       52.4102,      112.4925,         28.15,       73.6365,       47.8505,        110.66,    2.6600E+01,    5.6576E+01,    4.2109E+01,    9.6144E+01,    3.4900E+01,    9.6128E+01,    5.5094E+01,    1.3559E+02,    2.1200E+01,    4.0016E+01,    2.8385E+01,    8.3153E+01,    3.8100E+01,    1.3533E+02,    6.8774E+01,    2.0251E+02,    1.3900E+01,    3.3718E+01,    2.0825E+01,    6.2577E+01,    4.1700E+01,    1.5361E+02,    7.6085E+01,    2.2410E+02,    1.3900E+01,    2.9776E+01,    2.0825E+01,    6.2577E+01,    4.1700E+01,    1.7637E+02,    7.6085E+01,    2.2410E+02,             0,             0,             0,            10,            10,            40,            20,            30,
+
+Diagnostics VPC  
+""," False pos (%)"," False neg (%)",
+"       PI 40% ",      9.677419,            20,
+"       PI 80% ",      4.516129,      5.806452,
+"       PI 90% ",      3.870968,      6.451613,
+"       PI 95% ",      1.290323,      3.870968,
+
+NPC results  
+bin 2: 95 observations
+"","points below PI (count)","points below PI (%)","outside CI for below PI","95% CI below: from (%)","95% CI below: to (%)","points above PI (count)","points above PI (%)","outside CI for above PI","95% CI above: from (%)","95% CI above: to (%)",
+"         0% PI",            23,      24.21053,             *,      37.89474,      63.15789,            72,      75.78947,             *,      36.84211,      62.10526,
+"        40% PI",             9,      9.473684,             *,      21.05263,            40,            51,      53.68421,             *,      17.89474,      41.05263,
+"        80% PI",             0,             0,             *,      3.157895,      18.94737,            13,      13.68421,              ,      4.210526,      18.94737,
+"        90% PI",             0,             0,             *,      1.052632,      12.63158,             7,      7.368421,              ,      1.052632,      10.52632,
+"        95% PI",             0,             0,              ,             0,      5.263158,             2,      2.105263,              ,             0,      5.263158,
+
+NPC results  
+bin 3: 50 observations
+"","points below PI (count)","points below PI (%)","outside CI for below PI","95% CI below: from (%)","95% CI below: to (%)","points above PI (count)","points above PI (%)","outside CI for above PI","95% CI above: from (%)","95% CI above: to (%)",
+"         0% PI",            32,            64,              ,            34,            66,            18,            36,              ,            34,            66,
+"        40% PI",            20,            40,              ,            16,            44,             7,            14,              ,            14,            46,
+"        80% PI",             5,            10,              ,             0,            22,             1,             2,              ,             2,            20,
+"        90% PI",             3,             6,              ,             0,            14,             0,             0,              ,             0,            16,
+"        95% PI",             3,             6,              ,             0,             8,             0,             0,              ,             0,             8,
+
+NPC results  
+bin 4: 10 observations
+"","points below PI (count)","points below PI (%)","outside CI for below PI","95% CI below: from (%)","95% CI below: to (%)","points above PI (count)","points above PI (%)","outside CI for above PI","95% CI above: from (%)","95% CI above: to (%)",
+"         0% PI",            10,           100,             *,            10,            90,             0,             0,             *,            10,            90,
+"        40% PI",            10,           100,             *,             0,            80,             0,             0,              ,             0,            70,
+"        80% PI",            10,           100,             *,             0,            40,             0,             0,              ,             0,            40,
+"        90% PI",             9,            90,             *,             0,            30,             0,             0,              ,             0,            30,
+"        95% PI",             7,            70,             *,             0,            20,             0,             0,              ,             0,            20,
