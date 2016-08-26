@@ -82,27 +82,10 @@ library(ggplot2)
         return(power)
       }
       
-      df <- NULL
-      n_subjects <- NULL
-      # find degrees of freedom 
-      if(file.exists('version_and_option_info.txt')){
-        options <- readLines('version_and_option_info.txt')
-        df_line <- options[grepl("-df=\\d+", options)]
-        df <- as.numeric(sub("-df=(\\d+)", "\\1", df_line))
-      }
-      # find number of subjects
-      if(file.exists("m1/full.phi")){
-        full_ofv <-  read.table('m1/full.phi', skip=1, header=T)
-        n_subjects <- length(full_ofv$ID)
-      }
-      else if(file.exists("m1.zip")){
-        full_ofv <-  read.table(unz("m1.zip",'m1/full.phi'), skip=1, header=T)
-        n_subjects <- length(full_ofv$ID)
-      }
       
-      if(!is.null(df) ||!is.null(n_subjects)){
+      if(!is.null(degrees.of.freedom) ||!is.null(n.individuals)){
         ncp <- ofv.reduced-ofv.full
-        ppe_power <- ppe_subjects(ncp = ncp, df=1, n.subjects = n_subjects, pred.n.subjects = rawres$total_X)
+        ppe_power <- ppe_subjects(ncp = ncp, df=1, n.subjects = n.individuals, pred.n.subjects = rawres$total_X)
         ppe_power_curves <- data.frame(subjects=rawres$total_X, power=ppe_power*100, method="PPE")
         p <- PLoT1+
           geom_point(data=transform(rawres, method="MCMP"), 

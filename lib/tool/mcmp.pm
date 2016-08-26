@@ -992,6 +992,8 @@ sub create_R_plots_code{
 	$ofv_reduced = $self->ofv_reduced if (defined $self->ofv_reduced);
 	$rplot->add_preamble(code => [
 							 'sig.level <- '.$self->significance_level.' #option -significance_level',
+							 'degrees.of.freedom <- '.$self->df.' #option -df',
+							 'n.individuals   <-'.$self->n_individuals,
 							 'ofv.full <- '.$ofv_full,
 							 'ofv.reduced <- '.$ofv_reduced,
 						 ]);
