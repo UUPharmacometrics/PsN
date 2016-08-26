@@ -35,7 +35,7 @@ my $toolobject = tool::llp->new(directory => 'rundir',
 								template_file_rplots => $toolname.'_default.R',
 								models	     => [ $model ]);
 
-$toolobject -> raw_results_file([$toolobject ->directory.'raw_results_run3.csv']),
+$toolobject -> raw_results_file([$toolobject ->directory.'raw_results_run3.csv']);
 $toolobject -> create_R_script(tool_name => $toolname); 
 
 

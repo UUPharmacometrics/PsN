@@ -33,7 +33,7 @@ my $toolobject = tool::cdd->new(directory => 'rundir',
 								case_column => 1,
 								models	     => [ $model ]);
 
-$toolobject -> raw_results_file([$toolobject ->directory.'raw_results_run3.csv']),
+$toolobject -> raw_results_file([$toolobject ->directory.'raw_results_run3.csv']);
 $toolobject -> create_R_script(tool_name => $toolname); 
 
 
