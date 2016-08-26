@@ -99,7 +99,18 @@ sub get_major_minor_nm_version
 	
 }
 
+sub get_template_directory_rplots
+{
+	require PsN;
+	my $template_dir = $PsN::lib_dir.'/R-scripts';
+	unless (-d $template_dir){
+		#development directory structure
+		$template_dir = $PsN::lib_dir.'/../R-scripts';
+	}
+	return $template_dir;
+}
 
+	
 sub get_command
 {
 	my $command_name = shift;

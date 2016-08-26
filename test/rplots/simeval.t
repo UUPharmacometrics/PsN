@@ -15,7 +15,7 @@ use PsN;
 our $toolname = 'simeval';
 our $tempdir = create_test_dir('rplots_'.$toolname);
 
-my $input_dir = $includes::testfiledir.'/rplots/'.$toolname;
+my $input_dir = $includes::testfiledir.'/rplots/'.$toolname.'/run1';
 #my $input_dir = '/home/kajsa/kod-psn/devel/rplotstest'.'/rplots/'.$toolname;
 
 unless (File::Copy::Recursive::dircopy($input_dir, $tempdir)) {
@@ -25,32 +25,27 @@ unless (File::Copy::Recursive::dircopy($input_dir, $tempdir)) {
 chdir($tempdir);
 my $model = model->new(filename => "run1.mod", ignore_missing_data => 1);
 
-my $template_dir = $PsN::lib_dir.'/R-scripts';
-unless (-d $template_dir){
-	#development directory structure
-	$template_dir = $PsN::lib_dir.'/../R-scripts';
-}
-my $simeval = tool::simeval->new(directory => 'rundir',
+my $template_dir = includes::get_template_directory_rplots();
+my $toolobject = tool::simeval->new(directory => 'rundir',
 								 rplots => 2,
-								 top_tool => 1,
 								 template_directory_rplots =>$template_dir,
-								 template_file_rplots => 'simeval_default.R',
+								 template_file_rplots => $toolname.'_default.R',
 								 models	     => [ $model ],
 								 samples            => 100);
-$simeval->iiv_eta(['ETA(1)','ETA(2)']);
-$simeval->occasions(0);
-$simeval->successful_samples(100);
-$simeval->have_iwres(1);
-$simeval->subjects(59);
-push(@{$simeval->vpctab_filenames},$simeval->directory.'vpc_dv_vs_pred/vpctab1');
-push(@{$simeval->vpc_result_files},$simeval->directory.'vpc_dv_vs_pred/vpc_results.csv');
-push(@{$simeval->vpc_names},'DV vs PRED');
+$toolobject->iiv_eta(['ETA(1)','ETA(2)']);
+$toolobject->occasions(0);
+$toolobject->successful_samples(100);
+$toolobject->have_iwres(1);
+$toolobject->subjects(59);
+push(@{$toolobject->vpctab_filenames},$toolobject->directory.'vpc_dv_vs_pred/vpctab1');
+push(@{$toolobject->vpc_result_files},$toolobject->directory.'vpc_dv_vs_pred/vpc_results.csv');
+push(@{$toolobject->vpc_names},'DV vs PRED');
 
-push(@{$simeval->vpctab_filenames},$simeval->directory.'vpc_cwres_vs_idv/vpctab1');
-push(@{$simeval->vpc_result_files},$simeval->directory.'vpc_cwres_vs_idv/vpc_results.csv');
-push(@{$simeval->vpc_names},'CWRES vs '.$simeval->idv);
+push(@{$toolobject->vpctab_filenames},$toolobject->directory.'vpc_cwres_vs_idv/vpctab1');
+push(@{$toolobject->vpc_result_files},$toolobject->directory.'vpc_cwres_vs_idv/vpc_results.csv');
+push(@{$toolobject->vpc_names},'CWRES vs '.$toolobject->idv);
 
-$simeval -> create_R_script(tool_name => 'simeval'); 
+$toolobject -> create_R_script(tool_name => $toolname); 
 
 
 ok (-e 'rundir/PsN_ebe_npde_plots.pdf','pdf 1 exists. Check that 3 plots in '.$tempdir.'rundir/PsN_ebe_npde_plots.pdf'); 

@@ -12,7 +12,7 @@ require File::Copy::Recursive;
 our $toolname = 'bootstrap';
 our $tempdir = create_test_dir('rplots_'.$toolname);
 
-my $input_dir = $includes::testfiledir.'/rplots/'.$toolname;
+my $input_dir = $includes::testfiledir.'/rplots/'.$toolname.'/run1';
 
 unless (File::Copy::Recursive::dircopy($input_dir, $tempdir)) {
 	die " Could not copy contents of $input_dir to $tempdir : $!\n";
