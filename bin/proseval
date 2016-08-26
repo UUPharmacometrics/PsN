@@ -1,0 +1,105 @@
+#!/usr/bin/perl
+
+use FindBin qw($Bin);
+use lib "$Bin/../lib";
+
+# Don't edit the line below, it must look exactly like this.
+# Everything above this line will be replaced #
+
+use PsN;
+use strict;
+use ui;
+use Getopt::Long;
+use common_options;
+# More PsN dependencies included with require further down
+
+my $cmd_line = $0 . " " . join( " ", @ARGV );
+
+## Configure the command line parsing
+Getopt::Long::config("auto_abbrev");
+
+## Declare the options
+my %options;
+
+my %required_options = (
+);
+my %optional_options = (
+);
+
+my $res = GetOptions( \%options, 
+		      @common_options::get_opt_strings,
+		      keys(%required_options),
+		      keys(%optional_options) );
+
+exit unless $res;
+
+
+
+my %help_text;
+$help_text{Pre_help_message} = <<'EOF';  
+Perform a prospective evaluation.
+EOF
+$help_text{Description} = <<'EOF';
+Prospective evaluation
+EOF
+$help_text{Examples} = <<'EOF';
+      proseval run89.mod
+EOF
+
+$help_text{Options} = <<'EOF';
+      A model file is required as argument
+EOF
+
+
+common_options::online_help('proseval',\%options, \%help_text, \%required_options, \%optional_options);
+common_options::setup( \%options, 'proseval' ); #calls set_globals etc, initiates random sequence
+
+## Check that we do have a model file
+if (scalar(@ARGV) < 1) {
+  print "A model file must be specified. Use 'proseval -h' for help.\n";
+  exit;
+}
+
+if (scalar(@ARGV) > 1) {
+  print "proseval can only handle one modelfile. Use 'proseval -h' for help.\n";
+  exit;
+}
+
+require model;
+require tool::proseval;
+
+my $eval_string = common_options::model_parameters(\%options);
+
+my $model = model->new(eval($eval_string),
+    filename                    => @ARGV[0],
+    ignore_missing_output_files => 1
+);
+
+unless ( $model -> is_run){
+	#we will only run this model if not done already, path length matters only if we run
+	unless ($model->copy_data_setting_ok(copy_data => $options{'copy_data'})){
+		die("Cannot set -no-copy_data, absolute data file path is too long.");
+	} 
+	if (defined $options{'copy_data'} and (not $options{'copy_data'})){
+		$model->relative_data_path(0);
+	}
+}
+
+
+my $tool = tool::proseval->new(eval( $common_options::parameters),
+    top_tool => 1,
+    models => [ $model ],
+);
+
+$tool->print_options(
+    cmd_line => $cmd_line,
+    toolname => 'proseval',
+    local_options => [keys %optional_options],
+    common_options => \@common_options::tool_options
+);
+
+
+$tool->run();
+$tool->print_results();
+
+ui->print(category => 'proseval', message  => "\nproseval done.\n");
