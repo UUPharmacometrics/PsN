@@ -5,7 +5,7 @@ use warnings;
 use File::Path 'rmtree';
 use Test::More;
 use FindBin qw($Bin);
-use lib "$Bin/.."; #location of includes.pm
+use lib "$Bin/../.."; #location of includes.pm
 use includes; #file with paths to PsN packages and $path variable definition
 require File::Copy::Recursive;
 use model;
@@ -15,7 +15,7 @@ use PsN;
 our $toolname = 'simeval';
 our $tempdir = create_test_dir('rplots_'.$toolname);
 
-my $input_dir = $includes::testfiledir.'/rplots/'.$toolname.'/run1';
+my $input_dir = $includes::rplots_testfiledir.'/'.$toolname.'/run1';
 #my $input_dir = '/home/kajsa/kod-psn/devel/rplotstest'.'/rplots/'.$toolname;
 
 unless (File::Copy::Recursive::dircopy($input_dir, $tempdir)) {
@@ -37,6 +37,7 @@ $toolobject->occasions(0);
 $toolobject->successful_samples(100);
 $toolobject->have_iwres(1);
 $toolobject->subjects(59);
+$toolobject -> raw_results_file([$toolobject ->directory.'raw_results_run1.csv']);
 push(@{$toolobject->vpctab_filenames},$toolobject->directory.'vpc_dv_vs_pred/vpctab1');
 push(@{$toolobject->vpc_result_files},$toolobject->directory.'vpc_dv_vs_pred/vpc_results.csv');
 push(@{$toolobject->vpc_names},'DV vs PRED');
@@ -48,10 +49,13 @@ push(@{$toolobject->vpc_names},'CWRES vs '.$toolobject->idv);
 $toolobject -> create_R_script(tool_name => $toolname); 
 
 
-ok (-e 'rundir/PsN_ebe_npde_plots.pdf','pdf 1 exists. Check that 3 plots in '.$tempdir.'rundir/PsN_ebe_npde_plots.pdf'); 
-ok (-e 'rundir/PsN_OFV_plots.pdf','pdf 2 exists. Check that 4 plots in '.$tempdir.'rundir/PsN_OFV_plots.pdf'); 
-ok (-e 'rundir/PsN_residual_plots.pdf','pdf 3 exists. Check that 4 plots/tables in '.$tempdir.'rundir/PsN_residual_plots.pdf'); 
-ok (-e 'rundir/PsN_simeval_vpc_plots.pdf','pdf 4 exists. Check that 2 plots in '.$tempdir.'rundir/PsN_simeval_vpc_plots.pdf'); 
+
+my %pdf_files_pages=($tempdir.'rundir/PsN_ebe_npde_plots.pdf' => 3,
+					 $tempdir.'rundir/PsN_OFV_plots.pdf' => 4,
+					 $tempdir.'rundir/PsN_residual_plots.pdf' => 4,
+					 $tempdir.'rundir/PsN_simeval_vpc_plots.pdf' => 2);
+
+includes::test_pdf_pages(\%pdf_files_pages);
 
 
 

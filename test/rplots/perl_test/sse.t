@@ -5,7 +5,7 @@ use warnings;
 use File::Path 'rmtree';
 use Test::More;
 use FindBin qw($Bin);
-use lib "$Bin/.."; #location of includes.pm
+use lib "$Bin/../.."; #location of includes.pm
 use includes; #file with paths to PsN packages and $path variable definition
 require File::Copy::Recursive;
 use model;
@@ -15,7 +15,7 @@ use PsN;
 our $toolname = 'sse';
 our $tempdir = create_test_dir('rplots_'.$toolname);
 
-my $input_dir = $includes::testfiledir.'/rplots/'.$toolname.'/run3';
+my $input_dir = $includes::rplots_testfiledir.'/'.$toolname.'/run3';
 #my $input_dir = '/home/kajsa/kod-psn/devel/rplotstest'.'/rplots/'.$toolname.'/run3';
 
 unless (File::Copy::Recursive::dircopy($input_dir, $tempdir)) {
@@ -41,7 +41,9 @@ $toolobject -> raw_results_file([$toolobject ->directory.'raw_results_run3.csv']
 $toolobject -> create_R_script(tool_name => $toolname); 
 
 
-ok (-e 'rundir/PsN_sse_plots.pdf','pdf 1 exists. Check that 1 plot in '.$tempdir.'rundir/PsN_sse_plots.pdf');
+my %pdf_files_pages=($tempdir.'rundir/PsN_sse_plots.pdf' => 1);
+
+includes::test_pdf_pages(\%pdf_files_pages);
 
 
 done_testing();

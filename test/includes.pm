@@ -41,6 +41,7 @@ if ($path eq '') {
 }
 
 our $testfiledir = Cwd::abs_path($volume . $directory . 'test_files');
+our $rplots_testfiledir = $volume.(File::Spec->catdir($directory,'rplots','test_files'));
 
 use OSspecific;
 use PsN;
@@ -252,6 +253,41 @@ sub remove_test_dir
 	my $dir = shift;
 	chdir $tempdir;		# Move out of test directories
 	rmtree([$dir]);
+}
+sub is_windows
+{
+	return ($Config{osname} eq 'MSWin32');
+}
+
+sub test_pdf_pages
+{
+	my $pdf_files_pages = shift;
+	my $no_pdf_files_list = shift;
+	foreach my $file (sort { lc($a) cmp lc($b) } keys %{$pdf_files_pages}){
+		ok (-e $file,"pdf $file exists, check that page count is ".$pdf_files_pages->{$file});
+	  SKIP: {
+		  skip "no pdfinfo",1 if (is_windows);
+		  is(pdf_page_count($file),$pdf_files_pages->{$file},"page count is ".$pdf_files_pages->{$file});
+		}
+	}
+	if (defined $no_pdf_files_list){
+		foreach my $file (@{$no_pdf_files_list}){
+			ok ((not -e $file),"No $file created");
+		}
+	}
+}
+
+sub pdf_page_count
+{
+	my $filename = shift;
+
+	my $count = undef;
+	my $command = "pdfinfo $filename ".' 2>/dev/null'." | grep ^Pages"; #unix, keep stdout and redirect stderr to /dev/null
+	my @outp = readpipe($command);
+	if ($outp[0] =~ /^Pages:\s*(\d+)/){
+		$count = $1;
+	}
+	return $count;
 }
 
 sub copy_test_files

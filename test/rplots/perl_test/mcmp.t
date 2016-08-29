@@ -5,7 +5,7 @@ use warnings;
 use File::Path 'rmtree';
 use Test::More;
 use FindBin qw($Bin);
-use lib "$Bin/.."; #location of includes.pm
+use lib "$Bin/../.."; #location of includes.pm
 use includes; #file with paths to PsN packages and $path variable definition
 require File::Copy::Recursive;
 use model;
@@ -15,7 +15,7 @@ use PsN;
 our $toolname = 'mcmp';
 our $tempdir = create_test_dir('rplots_'.$toolname);
 
-my $input_dir = $includes::testfiledir.'/rplots/'.$toolname.'/run1';
+my $input_dir = $includes::rplots_testfiledir.'/'.$toolname.'/run1';
 #my $input_dir = '/home/kajsa/kod-psn/devel/rplotstest'.'/rplots/'.$toolname.'/run1';
 
 unless (File::Copy::Recursive::dircopy($input_dir, $tempdir)) {
@@ -33,6 +33,8 @@ my $toolobject = tool::mcmp->new(directory => 'rundir',
 								 full_model => $model,
 								 reduced_model => $model,
 								 models	     => [ $model ]);
+
+$toolobject -> raw_results_file([$toolobject ->directory.'raw_results_run1.csv']);
 $toolobject->significance_level(5);
 $toolobject->ofv_full(6941.405);
 $toolobject->ofv_reduced(7449.681);
@@ -42,7 +44,9 @@ $toolobject->df(1);
 $toolobject -> create_R_script(tool_name => $toolname); 
 
 
-ok (-e 'rundir/PsN_mcmp_plots.pdf','pdf 1 exists. Check that 4 plots in '.$tempdir.'rundir/PsN_mcmp_plots.pdf'); 
+my %pdf_files_pages=($tempdir.'rundir/PsN_mcmp_plots.pdf' => 4);
+
+includes::test_pdf_pages(\%pdf_files_pages);
 
 
 done_testing();
