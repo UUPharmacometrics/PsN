@@ -378,6 +378,11 @@ if ($config_file->linearize){
 my $direction = $config_file -> search_direction;
 die "You need to specify a search direction (forward/backward/both)\n" unless (defined $direction );
 my $eval_string = common_options::model_parameters(\%options);
+
+if (not defined $config_file->model) {
+    die "Error: No model specified\n";
+}
+
 my $models_array = [ model -> new ( eval $eval_string,
 									filename           => $config_file -> model) ] ;
 
