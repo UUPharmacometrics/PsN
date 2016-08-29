@@ -15,5 +15,5 @@ continuous = 1,2,3,4,5
 categorical = 1,2
 
 [included_relations]
-CL=WGT-1,APGR-2,CV1-3,CV2-4,CV3-5
+CL=WGT-1,APGR-2
 V=CVD1-2
