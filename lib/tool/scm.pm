@@ -1480,7 +1480,7 @@ sub modelfit_setup
 			}
 
 		}else{
-			print "Warning: could not retrieve OFV from base model.\n";
+			ui->print(category => 'scm', message => "Warning: could not retrieve OFV from base model. This probably means that the base model run did not terminate ok and that other problems will arise later in this scm run\n");
 		}
 		if (defined $self->xv_pred_data) {
 			$self->run_xv_pred_step(estimation_model => $start_model,
@@ -3526,7 +3526,6 @@ sub gof_pval
 		\%l_text );
 }
 
-
 sub _create_models
 {
 	my $self = shift;
@@ -3947,6 +3946,7 @@ sub get_typestring
 	
 	return $typestring;
 }
+
 sub create_code
 {
 	my $self = shift;
@@ -4658,7 +4658,6 @@ sub format_inits_bounds
 	return $value;
 }
 
-
 sub format_max_min_median_mean
 {
 	my %parm = validated_hash(\@_,
@@ -5050,8 +5049,6 @@ sub get_covariate_theta_bounds_inits
 
 
 }
-
-
 
 sub write_log
 {
@@ -5481,8 +5478,6 @@ sub read_config_file
 		}
 	}
 }
-
-
 
 sub preprocess_data
 {
@@ -5935,6 +5930,7 @@ sub preprocess_data
 
 	return $filtered_data_model;
 }
+
 sub create_R_plots_code{
 	my $self = shift;
 	my %parm = validated_hash(\@_,
