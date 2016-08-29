@@ -116,6 +116,7 @@ sub modelfit_analyze
         if (defined $output) {
             $ofv = $output->access_any(attribute=>'ofv')->[0]->[0];
         }
+        $ofv = 'NA' unless defined $ofv;
         my $run_number = "";
         if ($model_name =~ /run(\d+)/) {
             $run_number = $1;
