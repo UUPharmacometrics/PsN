@@ -48,6 +48,7 @@ my %required_options = ('frem_directory:s' => undef,
 	);
 my %optional_options = ('offset_rawres:i' => undef,
 						'in_filter:s' => undef,
+						'output_format:s' => undef,
 						'sir_directory:s' => undef,
 	);
 
@@ -68,8 +69,13 @@ if( defined $options{'sir_directory'} and (-d $options{'sir_directory'}))  {
 	$options{'rawres_input'}=$options{'sir_directory'}.'/raw_results_model_4.csv';
 	$options{'in_filter'}='resamples.gt.0';
 }
-
-
+if (defined $options{'output_format'}){
+	unless ($options{'output_format'} =~ /^(pdf|png|svg|jpg)$/){
+		die "Unsupported output format ".$options{'output_format'}."\n";
+	}
+}else{
+	$options{'output_format'}="pdf";
+}
 my %help_text;
 
 $help_text{Pre_help_message} = <<'EOF';
@@ -89,6 +95,12 @@ $help_text{-offset_rawres} = <<'EOF';
       -offset_rawres=N
 
       Default is 1, i.e. first line is minimum. Do not set to 0.
+EOF
+$help_text{-output_format} = <<'EOF';
+      -output_format=format
+
+      Default is pdf. Supported formats are pdf, png, svg and jpg.
+      svg requires library(svglite).
 EOF
 $help_text{-in_filter} = <<'EOF';
       -in_filter=comma-separated list of conditions
@@ -641,6 +653,8 @@ cp($localdir.'/parameter_ratio_function.R','.');
 $name = 'rplotfrem.R';
 $parfh;
 open($parfh,'>',$name) or die "cannot open < $name: $!";
+
+print {$parfh} 'output.format <-"'.$options{'output_format'}.'"'."\n";
 my $code = <<'EOF';
 inTable_frem <- read.csv('frem_ratio.csv',header = T, as.is = T)
 frem_id <- read.csv('frem_id_ratios.csv', header = T, as.is = T)
@@ -648,13 +662,10 @@ covdata <- read.csv('covdata.csv',header = T, as.is = T)
 pardata <- read.csv('pardata.csv',header = T, as.is = T)
 # Use ID_ratio function
 source("ID_ratio_function.R")
-ID_ratio(frem_id,covdata,pardata)
-#ID_ratio(frem_id,covdata,pardata,"svg") #this requires library(svglite), not on cluster
-#ID_ratio(frem_id,covdata,pardata,"jpg") 
+ID_ratio(frem_id,covdata,pardata,output.format)
 # Use Ratios function
 source("parameter_ratio_function.R")
-parameter_ratio(inTable_frem,covdata,pardata)
-#parameter_ratio(inTable_frem,covdata,pardata,"pdf")
+parameter_ratio(inTable_frem,covdata,pardata,output.format)
 EOF
 print {$parfh} $code."\n";
 close($parfh);
