@@ -11,6 +11,7 @@ use Math::Random;
 use PsN;
 use Config;
 use Env qw(PATH);
+use Cwd;
 
 #R version
 
@@ -87,5 +88,23 @@ SKIP: {
 	}
 
 }
+
+
+our $tempdir = create_test_dir('unit_psn');
+chdir($tempdir);
+$tempdir = Cwd::getcwd;
+mkdir('lib');
+chdir('lib');
+my $absdir = Cwd::getcwd;
+
+is(PsN::get_Rscripts_dir($absdir),undef,'no rscripts dir');
+mkdir($tempdir.'/R-scripts');
+is(PsN::get_Rscripts_dir($absdir),Cwd::abs_path($tempdir.'/R-scripts'),' rscripts dir beside lib');
+
+mkdir('R-scripts');
+is(PsN::get_Rscripts_dir($absdir),Cwd::abs_path($absdir.'/R-scripts'),' rscripts dir in lib');
+
+
+remove_test_dir($tempdir);
 
 done_testing();

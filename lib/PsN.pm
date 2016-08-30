@@ -5,7 +5,7 @@ use Cwd;
 use Config;
 use strict;
 
-our ($dev,$version,$lib_dir,$config_file,$config);
+our ($dev,$version,$lib_dir,$config_file,$config,$Rscripts_dir);
 #the version line is extracted in Makefile using regular expression
 # /\$version\s*=\s*.[0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*.;/
 # so be careful when you edit!!!
@@ -16,6 +16,9 @@ $dev = 1;
 
 my ($volume, $directory, $file) = File::Spec->splitpath(__FILE__);
 $lib_dir = Cwd::abs_path($volume . $directory);
+$Rscripts_dir = get_Rscripts_dir($lib_dir);
+
+	
 $config_file = $lib_dir . '/psn.conf';
 
 use ext::Config::Tiny;
@@ -46,6 +49,19 @@ our @nm7_extensions = ('.ext','.cov','.cor','.coi','.phi','.phm', '.shk','.grd',
 
 if( -e home() . "/psn.conf" ){
 	$config_file = home() . "/psn.conf";
+}
+
+sub get_Rscripts_dir{
+	my $lib = shift;
+	my $rdir = $lib.'/R-scripts';
+	unless (-d $rdir){
+		$rdir = $lib.'/../R-scripts';
+	}
+	if (-d $rdir){
+		return Cwd::abs_path($rdir);
+	}else{
+		return undef;
+	}
 }
 
 sub import

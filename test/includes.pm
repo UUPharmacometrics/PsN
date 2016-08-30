@@ -103,12 +103,7 @@ sub get_major_minor_nm_version
 sub get_template_directory_rplots
 {
 	require PsN;
-	my $template_dir = $PsN::lib_dir.'/R-scripts';
-	unless (-d $template_dir){
-		#development directory structure
-		$template_dir = $PsN::lib_dir.'/../R-scripts';
-	}
-	return $template_dir;
+	return $PsN::Rscripts_dir;
 }
 
 	
@@ -267,7 +262,7 @@ sub test_pdf_pages
 		ok (-e $file,"pdf $file exists, check that page count is ".$pdf_files_pages->{$file});
 	  SKIP: {
 		  skip "no pdfinfo",1 if (is_windows);
-		  is(pdf_page_count($file),$pdf_files_pages->{$file},"page count is ".$pdf_files_pages->{$file});
+		  is(pdf_page_count($file),$pdf_files_pages->{$file},"auto-check page count is ".$pdf_files_pages->{$file});
 		}
 	}
 	if (defined $no_pdf_files_list){
