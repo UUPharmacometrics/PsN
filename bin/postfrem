@@ -29,6 +29,7 @@ use linear_algebra;
 use array qw(quantile unique);
 use math qw(round);
 use MooseX::Params::Validate;
+use rplots;
 # More PsN dependencies included with require further down
 
 my $minimum = 100; 
@@ -340,24 +341,25 @@ foreach my $par (@parnames){
 }
 
 
+my $idcovdata = 'id_covdata.csv';
+my $pardatafile = 'pardata.csv';
+my $covdatafile = 'covdata.csv';
 
-
-
-open (my $idfh, '>','id_covdata.csv') or die ("cannot open < id_covdata.csv: $!");
+open (my $idfh, '>',$idcovdata) or die ("cannot open < ".$idcovdata.": $!");
 print $idfh 'ID,'.join(',',@covnames)."\n";
 for (my $l=0; $l< $id_count; $l++){
 	print $idfh join(',',@{$id_covariate_vectors->[$l]})."\n";
 }
 close $idfh;
 
-open( FILE1, '>pardata.csv' );
+open( FILE1, '>'.$pardatafile );
 print FILE1 'parname'."\n";
 for (my $i=0; $i< scalar(@parnames); $i++){
 	print FILE1 $parnames[$i]."\n";
 }
 close FILE1;
 
-open( FILE2, '>covdata.csv' );
+open( FILE2, '>'.$covdatafile );
 print FILE2 'covname,perc5th,mean,perc95th,reference,is.categorical,unit,category.reference,category.other'."\n";
 for (my $i=0; $i< scalar(@covnames); $i++){
 	my $string = $covnames[$i].','.$cov_5th->[$i].','.$cov_means[$i].','.$cov_95th->[$i].','.$cov_reference[$i].','.$categorical->[$i].','.$cov_units[$i].',';
@@ -420,8 +422,8 @@ for (my $j=$npar;$j<$size; $j++){
 	}
 }
 
-
-open( RATIOFILE, '>frem_ratio.csv' );
+my $fremratio = 'frem_ratio.csv';
+open( RATIOFILE, '>'.$fremratio );
 print RATIOFILE "$ratioheader\n";
 open( VARFILE, '>frem_condvar.csv' );
 print VARFILE "$varheader\n";
@@ -562,9 +564,9 @@ for (my $i=0;$i<$npar; $i++){
 		$header .= ','.$parnames[$i].'.'.($probs[$l]*100).'th';
 	}
 }
-my $name = 'frem_id_ratios.csv';
+my $idratiosfile = 'frem_id_ratios.csv';
 my $parfh;
-open($parfh,'>',$name) or die "cannot open < $name: $!";
+open($parfh,'>',$idratiosfile) or die "cannot open < $idratiosfile: $!";
 print {$parfh} "$header\n";
 
 for (my $l=0; $l<$id_count; $l++){
@@ -610,7 +612,7 @@ foreach my $cov (@covnames){
 	$header .= ',coeff.'.$cov;
 }
 $header .= ',parameterization';
-$name = 'sd_coefficients_summary.csv';
+my $name = 'sd_coefficients_summary.csv';
 
 open($parfh,'>',$name) or die "cannot open < $name: $!";
 print {$parfh} "$header\n";
@@ -643,31 +645,34 @@ for (my $i=0;$i<$npar; $i++){
 }
 close($parfh);
 
-#cp ID ratio and projectFun
-my $localdir='/home/kajsa/kod-psn/rplotsRepo/code/frem';
-unless (-d $localdir){
-	$localdir=$PsN::lib_dir.'/R-scripts';
-}
-cp($localdir.'/ID_ratio_function.R','.');
-cp($localdir.'/parameter_ratio_function.R','.');
-$name = 'rplotfrem.R';
-$parfh;
-open($parfh,'>',$name) or die "cannot open < $name: $!";
 
-print {$parfh} 'output.format <-"'.$options{'output_format'}.'"'."\n";
-my $code = <<'EOF';
-inTable_frem <- read.csv('frem_ratio.csv',header = T, as.is = T)
-frem_id <- read.csv('frem_id_ratios.csv', header = T, as.is = T)
-covdata <- read.csv('covdata.csv',header = T, as.is = T)
-pardata <- read.csv('pardata.csv',header = T, as.is = T)
-# Use ID_ratio function
-source("ID_ratio_function.R")
-ID_ratio(frem_id,covdata,pardata,output.format)
-# Use Ratios function
-source("parameter_ratio_function.R")
-parameter_ratio(inTable_frem,covdata,pardata,output.format)
-EOF
-print {$parfh} $code."\n";
-close($parfh);
 
-system("R CMD BATCH $name");
+my @templatecode = (
+	"source(file.path(rscripts.directory,'frem','ID_ratio_function.R',".'fsep = .Platform$file.sep))',
+	"source(file.path(rscripts.directory,'frem','parameter_ratio_function.R',".'fsep = .Platform$file.sep))',
+	"inTable_frem <- read.csv(frem.ratio,header = T, as.is = T)",
+	"frem_id <- read.csv(idfile, header = T, as.is = T)",
+	"covdata <- read.csv(covdatafile,header = T, as.is = T)",
+	"pardata <- read.csv(pardatafile,header = T, as.is = T)",
+	"ID_ratio(frem_id,covdata,pardata,output.format)",
+	"parameter_ratio(inTable_frem,covdata,pardata,output.format)",
+	);
+
+
+my $rplot = rplots->new(toolname => 'frem', 
+						directory => $main_directory,
+						level => 1,
+						raw_results_file => 'dummy',
+						plotcode => \@templatecode,
+						model => $model);
+
+$rplot->pdf_title('frem plots');
+$rplot->add_preamble(code => [
+						 "output.format <-'".$options{'output_format'}."'",
+						 "covdatafile <- '".$covdatafile."'",
+						 "pardatafile <- '".$pardatafile."'",
+						 "idfile <- '".$idratiosfile."'",
+						 "frem.ratio <- '".$fremratio."'",
+					 ]);
+
+$rplot->make_plots;

@@ -3769,6 +3769,27 @@ sub get_eta_sets
 			'iov_omega_numbers' => \@iov_omega_numbers};
 }
 
+sub find_data_column
+{
+    # Find the number of a column in the dataset by searching $INPUT
+    # Return -1 if not found
+
+    my $self = shift;
+	my %parm = validated_hash(\@_,
+		column_name => { isa => 'Str', optional => 0 }
+	);
+	my $column_name = $parm{'column_name'};
+
+    my $counter = 0;
+    foreach my $opt (@{$self->inputs->[0]->options()}) {
+        if ($opt->name() eq $column_name) {
+            return $counter;
+        }
+        $counter++;
+    }
+
+    return -1;
+}
 
 no Moose;
 __PACKAGE__->meta->make_immutable;

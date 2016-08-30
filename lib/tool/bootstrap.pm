@@ -1930,7 +1930,7 @@ sub create_R_scripts
 {
 	my $self = shift;
 
-	unless( -e $PsN::lib_dir . '/R-scripts/bootstrap.R' ){
+	unless( -e $PsN::Rscripts_dir . '/bootstrap.R' ){
 		ui -> print( message => 'Bootstrap R-script are not installed, no R-script will be generated.' ,
 			newline =>1);
 		return;
@@ -1940,7 +1940,7 @@ sub create_R_scripts
 	OSspecific::absolute_path( $self ->directory(),
 		$self -> raw_results_file()->[0] );
 
-	open( FILE, $PsN::lib_dir . '/R-scripts/bootstrap.R');
+	open( FILE, $PsN::Rscripts_dir . '/bootstrap.R');
 	my @script = <FILE>;
 	close( FILE );
 	foreach (@script){

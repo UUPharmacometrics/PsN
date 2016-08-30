@@ -283,7 +283,7 @@ sub get_defaults
 	  my ($dir,$file) = OSspecific::absolute_path($options -> {'template_directory_rplots'},'file');
 	  $options -> {'template_directory_rplots'} = $dir;
   }else{
-	  $options -> {'template_directory_rplots'} = $PsN::lib_dir . '/R-scripts';
+	  $options -> {'template_directory_rplots'} = $PsN::Rscripts_dir;
   }
   
   if ($warn_R_template ){

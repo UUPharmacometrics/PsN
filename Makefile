@@ -156,6 +156,7 @@ LIBFILES= ui.pm \
 	tool/scm.pm \
 	tool/precond.pm \
 	tool/pvar.pm \
+	tool/proseval.pm \
 	utils/file.pm \
 
 BINFILES=$(wildcard bin/*)

@@ -14,7 +14,7 @@ use OSspecific;
 has 'directory' => (is => 'rw', isa => 'Str', required => 1 );
 has 'level' => ( is => 'rw', isa => 'Int', required => 1 );
 has 'toolname' => (is => 'rw', isa => 'Str', required => 1);
-has 'raw_results_file' => (is => 'rw', isa => 'Str', required => 1);
+has 'raw_results_file' => (is => 'rw', isa => 'Str');
 has 'tool_results_file' => (is => 'rw', isa => 'Str');
 has 'filename' => (is => 'rw', isa => 'Str');
 has '_R_executable' => (is => 'rw', isa => 'Str' );
@@ -30,7 +30,7 @@ our $preambleline = '#WHEN THIS FILE IS USED AS A TEMPLATE THIS LINE MUST LOOK E
 sub BUILD
 {
 	my $self = shift;
-	my $params = shift; #model argument used in tool rplots->new
+	my $params = shift; 
 	$self->set_R_executable();
 	$self->setup(model => $params->{'model'});
 }
@@ -47,10 +47,11 @@ sub setup
 		$self->filename('PsN_'.$self->toolname.'_plots.R');
 	}
 
-	my ( $ldir, $rawname ) = OSspecific::absolute_path('', $self->raw_results_file);
-	$self->raw_results_file($rawname);
-
-	my ($dir, $modelfile) = OSspecific::absolute_path($model-> directory,
+	if (defined $self->raw_results_file){
+		my ( $ldir, $rawname ) = OSspecific::absolute_path('', $self->raw_results_file);
+		$self->raw_results_file($rawname);
+	}
+	my ($modeldir, $modelfile) = OSspecific::absolute_path($model-> directory,
 												 $model-> filename );
 
 	#figure out table suffix and xpose runno
@@ -117,15 +118,11 @@ sub setup
 	}
 
 	my $workingdirectory = $self->directory;
+    my $rscripts_path = $PsN::Rscripts_dir;
 	#Replace single backslash with double, assume windows, but do not change if already double
 	$workingdirectory = double_backslashes(string => $workingdirectory);
-	$dir = double_backslashes(string => $dir);
-	
-    (my $volume, my $directory, my $file) = File::Spec->splitpath(__FILE__);    # Get the path to the Rscripts directory
-    my $rscripts_path = $volume . $directory . "R-scripts/";
-    if (not (-d $rscripts_path)) {    # This might be the development version of PsN that has a different path
-        $rscripts_path = $volume . $directory . "../R-scripts/";
-    }
+	$modeldir = double_backslashes(string => $modeldir);
+	$rscripts_path = double_backslashes(string =>$rscripts_path);
 
 	my @arr =(
 		 'rplots.level <- '.$levelstring,
@@ -134,18 +131,21 @@ sub setup
 		 "pdf.filename <- paste0('PsN_',toolname,'_plots.pdf')",
 		 "pdf.title <- '".$self->pdf_title."'",
 		 "working.directory<-'".$workingdirectory."'",
-		 "raw.results.file <- '".$self->raw_results_file."'",
-		 "model.directory<-'".$dir."'",
+		 "model.directory<-'".$modeldir."'",
 		 "model.filename<-'".$modelfile."'",
 		 "subset.variable<-".$subsetstring,
 		 "mod.suffix <- '".$modSuffix."'",
 		 "mod.prefix <- '".$modPrefix."'",
 		 "tab.suffix <- '".$tabSuffix."'",
-         "rscripts.directory <- '$rscripts_path'",
+         "rscripts.directory <- '".$rscripts_path."'",
 		);
-	if (-e $self->directory.$self->tool_results_file){
+	if (defined $self->tool_results_file and (-e $self->directory.$self->tool_results_file)){
 		push(@arr,
 			 "tool.results.file <- '".$self->tool_results_file."'");
+	}
+	if (defined $self->raw_results_file and (-e $self->directory.$self->raw_results_file)){
+		push(@arr,
+			 "raw.results.file <- '".$self->raw_results_file."'");
 	}
 
 	#parameter names and numbers, fixed

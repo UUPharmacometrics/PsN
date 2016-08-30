@@ -107,7 +107,7 @@ my @utilities = (
 	'data_stats', 'update_inits', 'update', 'npc', 'vpc',
 	'pind','nonpb','extended_grid','psn','psn_options','psn_clean',
 	'runrecord','mcmp','lasso','mimp','xv_scm','parallel_retries',
-	'boot_scm','gls','simeval','frem','randtest','linearize', 'crossval', 'pvar', 'nca', 'vpctable','sir','rawresults',
+	'boot_scm','gls','simeval','frem','randtest','linearize', 'crossval', 'pvar', 'nca', 'proseval', 'vpctable','sir','rawresults',
 	'precond','covmat','nmoutput2so', 'benchmark','postfrem'
 	);
 
