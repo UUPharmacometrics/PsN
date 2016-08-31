@@ -1,4 +1,3 @@
-skipped.id.file <- paste0(working.directory, 'skipped_individuals1.csv')
 source(paste0(rscripts.directory, "/cdd/pdf.cdd.R"))
 source(paste0(rscripts.directory,"/cdd/create.data.full.R"))
 source(paste0(rscripts.directory,"/cdd/create.data.R"))
