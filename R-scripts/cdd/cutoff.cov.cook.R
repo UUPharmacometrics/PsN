@@ -21,6 +21,8 @@ cutoff.cov.cook <- function(raw.results.file,skipped.id.file,cutoff_cook,cutoff_
   
   # create tables
   library(gridExtra)
+  # rotate column names
+  rotate = ttheme_default(colhead=list(fg_params=list(rot=90)))
 
 # -------------------------------------------  cutoff_cook -------------------------------------
   # Detect cook score which are bigger than cutoff_cook
@@ -42,9 +44,6 @@ cutoff.cov.cook <- function(raw.results.file,skipped.id.file,cutoff_cook,cutoff_
       cook_outliers_data <- data.frame(C = c("Don't have cook scores bigger than cutoff."))
       names(cook_outliers_data) <- NULL
     }
-    
-    # rotate column names
-    rotate = ttheme_default(colhead=list(fg_params=list(rot=90)))
     
     # draw a table
     plot.table(cook_outliers_data,rotate)
