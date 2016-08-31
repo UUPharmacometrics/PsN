@@ -974,11 +974,6 @@ sub run
 	#even if there is never any forking over tools, there is code in pre_fork_setup that we keep.
 	$self->pre_fork_setup;
 
-	if (scalar(@{$self->models})>1){
-#		croak("Cannot have more than one input model in tools other than modelfit"); #or benchmark!
-	}
-      
-
 	#this tells the tool which model it is working on. In practice this is always the same
 	$self -> model_number(1);
 	# This is only for backwards compatibility, otherwise we should not need to reset the seed.
