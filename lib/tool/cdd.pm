@@ -29,6 +29,7 @@ has 'covariance_ratios' => ( is => 'rw', isa => 'ArrayRef' );
 has 'outside_n_sd' => ( is => 'rw', isa => 'ArrayRef', default => sub { [] } );
 has 'bca_mode' => ( is => 'rw', isa => 'Bool', default => 0);
 has 'skipped_ids' => ( is => 'rw', isa => 'ArrayRef' );
+has 'skipped_individuals_filename' => ( is => 'rw', isa => 'Str' );
 has 'skipped_keys' => ( is => 'rw', isa => 'ArrayRef' );
 has 'skipped_values' => ( is => 'rw', isa => 'ArrayRef' );
 has 'selection_method' => ( is => 'rw', isa => 'Str' );
@@ -1047,8 +1048,8 @@ sub general_setup
 		@seed = random_get_seed;
 		print DONE "seed: @seed\n";
 		close( DONE );
-
-		open( SKIP, ">".$self -> directory."skipped_individuals".$model_number.".csv" ) ;
+		$self->skipped_individuals_filename("skipped_individuals".$model_number.".csv");
+		open( SKIP, ">".$self -> directory.$self->skipped_individuals_filename ) ;
 		for( my $k = 0; $k < scalar @{$skip_ids}; $k++ ) {
 			print SKIP join(',',@{$skip_ids -> [$k]}),"\n";
 		}
@@ -1489,7 +1490,8 @@ sub create_R_plots_code{
 	my $case_column_name = $self->models->[0]->problems->[0]->inputs->[0]->options->[($self->case_column)-1]->name;
 	$rplot->pdf_title('Case-deletion diagnostics');
 	$rplot->add_preamble(code => [
-							 "case.column.name   <-'".$case_column_name."'"
+							 "case.column.name   <-'".$case_column_name."'",
+							 "skipped.id.file <-'".$self->skipped_individuals_filename."'"
 						 ]);
 
 }
