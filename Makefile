@@ -202,7 +202,6 @@ release: main completion rel_dir $(RELFILES) $(PDFFILES)
 	@ cp -ar test/rplots PsN-Source/test
 	@ cp -ar test/test_files PsN-Source/test
 	@ cp -ar R-scripts PsN-Source/lib
-	@ cp ../rplotsRepo/code/frem/*.R PsN-Source/lib/R-scripts/.
 	@ cp test/includes.pm PsN-Source/test
 	@ cp test/runsystem PsN-Source/test
 	@ mkdir -p PsN-Source/doc

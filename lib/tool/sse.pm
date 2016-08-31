@@ -2079,8 +2079,14 @@ sub prepare_results
 		  my $org_ofv;
 		  
 		  foreach my $sample( 0..($samples-1) ){
-			  
-			  my ($s, $l) = split(/,/, $self->raw_line_structure -> {1+$model_index*$samples + $sample} -> {'ofv'});
+              my $ofv =  $self->raw_line_structure -> {1+$model_index*$samples + $sample} -> {'ofv'};
+              my $s;
+              my $l;
+              if (defined $ofv) {
+			      ($s, $l) = split(/,/, $ofv);
+              } else {
+                  $s = '';
+              }
 			  if( $s ne '' and $start != 0 and $s != $start ){
 				  croak("$ofvname: Internal structure corrupted at ".
 						"$model_index, $samples, $sample, this is a bug" );
