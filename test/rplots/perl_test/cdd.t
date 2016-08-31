@@ -34,6 +34,7 @@ my $toolobject = tool::cdd->new(directory => 'rundir',
 								models	     => [ $model ]);
 
 $toolobject -> raw_results_file([$toolobject ->directory.'raw_results_run3.csv']);
+$toolobject -> skipped_individuals_filename('skipped_individuals1.csv');
 $toolobject -> create_R_script(tool_name => $toolname); 
 
 
