@@ -113,7 +113,7 @@ my @utilities = (
 
 my @win_modules = ('Moose', 'MooseX::Params::Validate', 'Math::Random');
 my @nix_modules = ('Moose', 'MooseX::Params::Validate', 'Math::Random', 'Storable');
-my @recommended_modules = ('Archive::Zip','Statistics::Distributions');
+my @recommended_modules = ('Archive::Zip','Statistics::Distributions','YAML::Tiny');
 
 my @modules;
 
