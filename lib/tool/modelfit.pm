@@ -3676,19 +3676,43 @@ sub create_sub_dir
 	return $tmp_dir;
 }
 
-sub create_R_plots_code{
+sub create_R_plots_code
+{
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-							  rplot => { isa => 'rplots', optional => 0 }
-		);
+        rplot => { isa => 'rplots', optional => 0 }
+    );
 	my $rplot = $parm{'rplot'};
 	#only to be used from execute, single model
 	#TODO update inits add xpose tables, partially interactive
 
-	$rplot->add_preamble(code => [
-							 "pdf.filename <- paste0(mod.prefix,xpose.runno,'_plots.pdf')",
-						 ]);
+	$rplot->add_preamble(code => [ "pdf.filename <- paste0(mod.prefix,xpose.runno,'_plots.pdf')", ]);
 
+    # Find a table with residuals. Needed for the OFV_i vs #OBS_i plot
+    my $res_table_file = '';
+    my $tables = $self->models->[0]->problems->[0]->tables;
+    if (defined $tables) {
+        my $found = 0;
+        my $filename;
+        for my $table (@{$self->models->[0]->problems->[0]->tables}) {
+            for my $option (@{$table->options}) {
+                if ($option->name eq 'RES' or $option->name eq 'WRES' or $option->name eq 'CWRES') {
+                    $found = 1;
+                }
+                if ($option->name eq 'FILE') {
+                    $filename = $option->value;
+                }
+            }
+            if ($found and defined $filename) {
+                $res_table_file = $filename;
+            } else {
+                $found = 0;
+                $filename = undef;
+            }
+        }
+    }
+
+    $rplot->add_preamble(code => [ "res.table <- '$res_table_file'" ] );
 }
 
 no Moose;
