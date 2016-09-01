@@ -799,7 +799,9 @@ sub _read_subproblems
 		#new if clause here to handle case if above line was also last in lst-file, make sure add subprob then
 		if( /$subprob_exp/ or $self->lstfile_pos > $#{$self->lstfile} ) {
 			if ($found_new_meth){
-				if (not $self->nm_version_710){
+				if ($self->nm_version_710){
+					#this is either simply excess #METH or a failed run. Hard to tell.
+				}else{
 					#we have found a #METH without the OBJT, and this is not NM7.1.0 which prints excess #METH
 					#this is probably a failed run of some sort, NONMEM crashed before printing OBJT
 					#but there could be a table to read in ext-file, so try to get correct table number
@@ -833,6 +835,7 @@ sub _read_subproblems
 					}
 				} else {
 					# whole file is one subprob
+					$subproblem_index = 0;
 					@subproblem_lstfile = @{$self->lstfile}[0 .. $self->lstfile_pos - 1];
 				}
 				#for NM7
