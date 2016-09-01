@@ -1453,10 +1453,11 @@ $help .= "\n".$command."\n";
 
       } else { 
           $help .= common_options::print_help($command,$required_options, $optional_options);
-
-          $help .= "\n$indentation"."Options enclosed by [ ] are optional.\n"; 
-          $help .= "$indentation"."Exclamation mark, !, after the option name means option can be disabled\n".
-			  "$indentation"."using '-no-option', for example -no-handle_crashes.\n"; 
+		  unless ($command eq 'psn'){
+			  $help .= "\n$indentation"."Options enclosed by [ ] are optional.\n"; 
+			  $help .= "$indentation"."Exclamation mark, !, after the option name means option can be disabled\n".
+				  "$indentation"."using '-no-option', for example -no-handle_crashes.\n";
+		  }
           $help .= "$indentation"."Use '$command -help' for a longer description.\n"; 
           $help .= format_help_text(\%help_hash,$indentation,'Post_help_message');
       } 
