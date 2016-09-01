@@ -11,7 +11,7 @@ use PsN;
 
 SKIP: {
 	my ($major,$minor,$dirt) = get_major_minor_nm_version();
-    skip $major.".".$minor." is a too old NONMEM version for precond" if ($major < 7 or ($major == 7 and $minor < 2));
+    skip $major.".".$minor." is a too old NONMEM version for precond",1 if ($major < 7 or ($major == 7 and $minor < 2));
 
     our $tempdir = create_test_dir('system_precond');
     my $model_dir = $includes::testfiledir;
