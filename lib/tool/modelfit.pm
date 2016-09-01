@@ -3699,7 +3699,7 @@ sub create_R_plots_code
                 if ($option->name eq 'RES' or $option->name eq 'WRES' or $option->name eq 'CWRES') {
                     $found = 1;
                 }
-                if ($option->name eq 'FILE') {
+                if ($option->name =~ 'FIL|FILE') {
                     $filename = $option->value;
                 }
             }
