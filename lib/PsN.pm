@@ -178,6 +178,70 @@ sub get_R_exec
 	return $rexec;
 }
 
+sub get_default_psn_installation_info
+{
+	my $command = 'psn installation_info 2>/dev/null'; #unix, keep stdout and redirect stderr to /dev/null
+	if ($Config{osname} eq 'MSWin32'){
+		# keep stdout but redirect stderr to nul
+		$command = 'psn installation_info 2>nul';
+	}
+	my @outp = readpipe($command);
+	my $current_config_file;
+	my $current_lib_dir;
+	my $current_base_lib_dir;
+	my $current_bin_dir;
+	my $current_version;
+	eval(join(' ',@outp));
+	if (defined $current_lib_dir){
+		my ($volume, $directory, $file) = File::Spec->splitpath($current_lib_dir,1); #no file is true, i.e. only directory
+		my @directories = File::Spec->splitdir($directory);
+		my $last = pop(@directories);
+		$current_base_lib_dir = $volume.File::Spec->catdir(@directories);
+	}
+	return {'config_file'=> $current_config_file,'lib_dir' => $current_lib_dir, 'base_lib_dir' => $current_base_lib_dir,
+			'bin_dir' =>$current_bin_dir, 'version' =>$current_version};
+}
+
+sub get_new_installation_defaults
+{
+	my $new_version = shift;
+	my $default_installation = shift;
+	
+	my $name_safe_version = $new_version;
+	$name_safe_version =~ s/\./_/g;
+
+	my $base_lib_dir =  $Config{sitelib};
+	my %hash=('bin_dir' => $Config{bin});
+
+	if (defined $default_installation->{'bin_dir'} and 
+		length($default_installation->{'bin_dir'})>0 and
+		-d $default_installation->{'bin_dir'}){
+		$hash{'bin_dir'} = $default_installation->{'bin_dir'};
+	}
+	if (defined $default_installation->{'base_lib_dir'} and 
+		length($default_installation->{'base_lib_dir'})>0 and
+		-d $default_installation->{'base_lib_dir'}){
+		$base_lib_dir = $default_installation->{'base_lib_dir'};
+	}
+	$hash{'base_lib_dir'} = $base_lib_dir;
+	my ($volume, $directory, $file) = File::Spec->splitpath($base_lib_dir,1); #no file is true, i.e. only directory
+	$hash{'lib_dir'} = $volume.File::Spec->catdir($directory,'PsN_'.$name_safe_version);
+	if (defined $default_installation->{'config_file'} and
+		length($default_installation->{'config_file'})>0 and
+		-e $default_installation->{'config_file'}){
+		$hash{'old_config_file'} = $default_installation->{'config_file'};
+	}else{
+		$hash{'old_config_file'} = undef;
+	}
+	if (defined $default_installation->{'version'} and
+		length($default_installation->{'version'})>0){
+		$hash{'old_default_version'} = $default_installation->{'version'};
+	}else{
+		$hash{'old_default_version'} = undef;
+	}
+	return \%hash;
+}
+
 sub find_nmfe_from_system_path
 {
 	my $string = shift;

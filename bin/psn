@@ -67,6 +67,21 @@ my $res = GetOptions(\%options,
 		      keys(%optional_options));
 exit unless $res;
 
+if (scalar(@ARGV)>0){
+	if ($ARGV[0] eq 'installation_info'){
+		#		print '$current_config_file='.$PsN::lib_dir. '/psn.conf'."';\n";
+		#do we want to risk user specific on cluster?
+		print '$current_config_file='."'".$PsN::config_file."';\n"; 
+		print '$current_lib_dir='."'".$PsN::lib_dir."';\n";
+		my ($volume, $directory, $file) = File::Spec->splitpath(__FILE__);
+		print '$current_bin_dir='."'".File::Spec->catdir($volume.$directory)."';\n";
+		print '$current_version='."'".$PsN::version."';\n";
+		exit;
+	}else{
+		print "Unknown argument ".$ARGV[0].". Did you forget the - before the option name?\n";
+		exit;
+	}
+}
 my %help_text;
 
 $help_text{Pre_help_message} = <<'EOF';
