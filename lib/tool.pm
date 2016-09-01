@@ -710,6 +710,12 @@ sub print_results
 
 	$self->create_R_script() if ($self->top_tool);
 
+    if ($self->clean > 3) {
+        my $m1_path = $self->directory . 'm1';
+        unlink(<$m1_path/*>);
+        rmdir($m1_path);
+    }
+
     if ($self->zip) {
         $self->compress_m1();
     }
@@ -1019,6 +1025,7 @@ sub run
 	chdir($return_dir);
 	trace(tool => 'tool',message => "Changed directory to ".$return_dir, level => 1);
 
+    # Remove all NM_run and m folders for non-top_tools
 	if( $self->clean >= 3 and not $self->top_tool ) {
 		my $top_dir = $self->directory;
 		foreach my $dir ( <$top_dir/m*> ){
