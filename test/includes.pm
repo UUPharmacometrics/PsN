@@ -261,7 +261,7 @@ sub test_pdf_pages
 	foreach my $file (sort { lc($a) cmp lc($b) } keys %{$pdf_files_pages}){
 		ok (-e $file,"pdf $file exists, check that page count is ".$pdf_files_pages->{$file});
 	  SKIP: {
-		  skip "no pdfinfo",1 if (is_windows);
+		  skip "Cannot check pdf page count automatically",1 if (is_windows);
 		  is(pdf_page_count($file),$pdf_files_pages->{$file},"auto-check page count is ".$pdf_files_pages->{$file});
 		}
 	}

@@ -1,5 +1,5 @@
 \input{inputs/format_header.tex}
-\guidetitle{NCA user guide}{2016-05-13}
+\guidetitle{NCA user guide}{2016-09-01}
 
 \newcommand{\guidetoolname}{nca}
 
@@ -10,9 +10,6 @@
 \section{Introduction}
 The nca script prepares input for the ncappc R package for non-compartmental analysis \cite{Chayan}. 
 To be able to create the plots the user must install the ncappc package from CRAN.
-It is recommended to use PsN's rplots functionality with a custom R template file, 
-see section Auto-generated R-plots from PsN, 
-to create the plots.
 \section{Running NCA}
 Example:
 
@@ -109,26 +106,6 @@ For more information about the details of the simulation see the relevant sectio
 
 \section{Output}
 Two modified modelfiles are created, one for generating original data table output and one for generating simulated data table output. The model parameters will never be reestimated. Unless an lst- or msfo-file is given as input or an lst-file is found by replacing .mod with .lst in the modelfile name, the initial parameter estimates from the modelfile will be used for the simulations. The two modified models are run using PsN.
-
-\subsection{Auto-generated R-plots from PsN}
-\newcommand{\rplotsconditions}{The default nca template 
-requires that R libraries
-ggplot2, gridExtra and ncappc are installed.
-If the conditions are not fulfilled then no pdf will be generated,
-see the .Rout file in the main run directory for error messages.
-Please note that the default template only creates a very basic plot, while
-there is a large set of functions available in the ncappc package,
-so it is recommended to create a custom template for your project.}
-\input{inputs/rplots_section_body.tex}
-
-\subsubsection*{Basic plot}
-Basic rplot will be generated if option -rplots is set > 0,
-and the general rplots conditions fulfilled, see above.
-The ncappc R package has many functions and it is difficult
-to create a default template suitable for all cases. 
-The current template will only generate a very basic dv.plot. If you are
-working with nca the recommendation is to customize the
-template to fit your specific needs.
 
 \references
 

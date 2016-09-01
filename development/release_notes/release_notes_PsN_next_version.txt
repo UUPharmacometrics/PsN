@@ -57,6 +57,10 @@ Known issues
 Changes and bug fixes from PsN 4.6.0 to n.n.n
 *********************************************
 
+A new recommended but not required Perl library for runrecord: YAML::Tiny 
+
+
+
    ___General___
 
 - Bug fix: Some generated paths for the Rplots script were illegal R strings causing R to crash
@@ -89,7 +93,8 @@ New features implemented by William S. Denney of Human Predictions:
   to handle commas and quotes (optionally, not by default).
 - Optionally output to .csvy files (.csv files with a YAML header; readable by the rio R
   library).  Columns can now have attributes like parameter type
-  ('theta', 'omega', ...).
+  ('theta', 'omega', ...). The YAML header requires the YAML::Tiny Perl library,
+  if it is not installed the header will have text format.
 - Automatically detect if the output file has the extension "csv" or "csvy" and output to
   the csv/csvy format if yes and another output format has not been specifically requested.
 - Automatically detect max_lvl (optionally, by default)
@@ -128,9 +133,14 @@ New features implemented by William S. Denney of Human Predictions:
    ___scm___
 
 - Disallow restarts in existing directory as this operation did not work
+- scm will treat . (dot) in covariate column of data set as missing value 
+- bug fix option time-varying: handle PRED models without MDV in $INPUT
+
+   ___linearize___
+- bug fix option time-varying: handle PRED models without MDV in $INPUT
 
 
-   ___boot_scm___
+___boot_scm___
 
 - Disallow restarts in existing directory as this operation did not work
 
@@ -163,7 +173,10 @@ New features implemented by William S. Denney of Human Predictions:
 
    ___sir___
 	
-
+- new option -cap_correlation, default 0.8. If set to a number between 0 and 1, at every iteration ensure that no absolute value of a correlation in the proposal exceeds this number.
+- message suggesting reparameterization if any correlations exceed 0.8 (before or after capping)
+- updated R template
+- changed inflation principle, covariances are not inflated meaning that correlations are in practice decreased 
 
    ___nmoutput2so___
 

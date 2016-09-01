@@ -21,6 +21,12 @@ categorical = 1,2
 ;V=WGT-2
 
 [code]
-V:APGR-2=VAPGR=(THETA(1)*(APGR-mean))
+V:APGR-2=VAPGR=(1+THETA(1)*(APGR-mean))
+[inits]
+V:APGR-2=0.0002
+[lower_bounds]
+V:APGR-2=-0.5
+[upper_bounds]
+V:APGR-2=0.167
 
 

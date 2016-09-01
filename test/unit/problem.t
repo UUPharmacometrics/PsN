@@ -500,5 +500,13 @@ is($model->problems->[0]->thetas->[5]->options->[0]->fix,1,'theta fix 2');
 cmp_float($model->problems->[0]->thetas->[6]->options->[0]->init,sqrt(2.82),'theta init 3');
 is($model->problems->[0]->thetas->[6]->options->[0]->fix,1,'theta fix 3');
 
+#Test find_data_column
+
+$model = model->new(filename => $includes::testfiledir."/pheno.mod", ignore_missing_data => 1);
+$problem = $model->problems->[0];
+is ($problem->find_data_column(column_name => 'ID'), 0, "find_data_column ID"); 
+is ($problem->find_data_column(column_name => 'AMT'), 2, "find_data_column AMT"); 
+is ($problem->find_data_column(column_name => 'DV'), 5, "find_data_column DV"); 
+is ($problem->find_data_column(column_name => 'NOEX'), -1, "find_data_column non existing column"); 
 
 done_testing();

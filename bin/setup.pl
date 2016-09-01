@@ -51,9 +51,14 @@ if (running_on_windows()) {
 	get_windows_version();
 }
 
-$default_sitelib = $Config{sitelib};
-$default_bin = $Config{bin};
+#NEW
+my $default_installation = PsN::get_default_psn_installation_info();
+my $new_defaults = PsN::get_new_installation_defaults($version,$default_installation);
+
+$default_sitelib = $new_defaults->{'base_lib_dir'};
+$default_bin = $new_defaults->{'bin_dir'};
 $default_perlpath = $Config{perlpath};
+
 if (running_on_windows()) {
 	#"trying to find the perl binary via system command\n";
 	my $wherebin;
@@ -92,13 +97,13 @@ if (running_on_windows()) {
 	}elsif(length($local_perlpath)>0 and -x $local_perlpath and (not -d $local_perlpath)) {
 		$default_perlpath = $local_perlpath;
 	}else{
-			$default_perlpath = undef;
-		}
+		$default_perlpath = undef;
 	}
-	unless (defined $default_perlpath and defined $default_bin and defined $default_sitelib) {
-		print "\nWarning: There is something unusual with your Perl installation and configuration.\n".
+}
+unless (defined $default_perlpath and defined $default_bin and defined $default_sitelib) {
+	print "\nWarning: There is something unusual with your Perl installation and configuration.\n".
 		"Will try to install anyway, but there may be problems.\n";
-	}
+}
 
 my $name_safe_version = $version;
 $name_safe_version =~ s/\./_/g;
@@ -113,7 +118,7 @@ my @utilities = (
 
 my @win_modules = ('Moose', 'MooseX::Params::Validate', 'Math::Random');
 my @nix_modules = ('Moose', 'MooseX::Params::Validate', 'Math::Random', 'Storable');
-my @recommended_modules = ('Archive::Zip','Statistics::Distributions');
+my @recommended_modules = ('Archive::Zip','Statistics::Distributions','YAML::Tiny');
 
 my @modules;
 

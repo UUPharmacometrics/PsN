@@ -534,6 +534,7 @@ sub _read_iteration_path
 	    $_ = @{$self->lstfile}[ $start_pos ];
 	    if( /$method_exp/ ) {
 			my $string = $1;
+			chomp($string);
 			$string =~ s/\s*$//; #remove trailing spaces
 			if (length($string)>0){
 				unless (($string =~ $self->method_string) or ($string eq $self->method_string)) {
@@ -807,6 +808,7 @@ sub _scan_to_meth
 			$objt_has_meth = 1;
 			$method_counter++;
 			my $string = $1;
+			chomp($string);
 			$string =~ s/\s*$//; #remove trailing spaces
 			if ($string eq 'Chain Method Processing') {
 				$read_terminated_by_obj = 0;

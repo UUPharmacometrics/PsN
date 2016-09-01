@@ -1,5 +1,5 @@
 \input{inputs/format_header.tex}
-\guidetitle{RUNRECORD user guide}{2016-08-05}
+\guidetitle{RUNRECORD user guide}{2016-08-31}
 
 \begin{document}
 
@@ -150,6 +150,8 @@ The output format for the results file, either txt (text), csv or yaml.
 By default this is detected from the extension of res\_file, 
 where .csv gives csv-format with a text header, .csvy gives csv-format with 
 a yaml header and all others give text format with a text header.
+The yaml header requires the YAML::Tiny Perl library,
+if it is not installed the header will have text format.
 \optdefault{out\_ext}{string}
 NONMEM output file extension. Defaults to “lst”, e.g. run1.lst. 
 \nextopt
