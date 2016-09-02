@@ -1191,7 +1191,6 @@ sub create_raw_results_rows
 	#note that local variable hash raw_line_structure is different from attribute raw_line_structure
 	#do this also for unsuccessful models
 	unless( $model -> outputs -> [0] -> parsed ){
-		$model -> outputs -> [0] -> abort_on_fail(0);
 		$model -> outputs -> [0] -> _read_problems;
 	}
 	my $data_stored = 0;

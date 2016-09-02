@@ -2443,7 +2443,6 @@ sub restart_needed
 
 	my ( $output_file );
 	$output_file = $candidate_model -> outputs -> [0];
-	$output_file -> abort_on_fail($self->abort_on_fail);
 	$output_file -> _read_problems;
 	my $evaluation_probnum = $output_file->get_estimation_evaluation_problem_number(); #if neg then no est step run
 
