@@ -116,6 +116,7 @@ has 'burn_in_convergence' => ( is => 'rw', isa => 'Bool' );
 has 'covariance_matrix' => ( is => 'rw', isa => 'ArrayRef' );
 has 'burn_in_iterations' => ( is => 'rw', isa => 'Int' );
 has 'iterations_interrupted' => ( is => 'rw', isa => 'Bool', default => 0 );
+has 'simulation_error_message' => ( is => 'rw', isa => 'Maybe[Str]' );
 
 	
 sub BUILD
@@ -127,10 +128,10 @@ sub BUILD
 	$self->have_omegas(1) if (defined $self->input_problem()->omegas() and scalar(@{$self->input_problem()->omegas()}) > 0);
 	$self->final_gradients([]);
 
-
+	
 	while (1) {
 		#we will always break out of this loop, use as simple way of finishing parsing early. Cannot return because of dia code
-		$self -> _read_simulation;
+		$self->simulation_error_message($self -> _read_simulation);
 		if ($self->nm_major_version < 7) {
 			if( $self -> estimation_step_run()) {
 				$self -> _read_iteration_path;
@@ -536,7 +537,7 @@ sub _read_iteration_path
 			my $string = $1;
 			chomp($string);
 			$string =~ s/\s*$//; #remove trailing spaces
-			if (length($string)>0){
+			if (length($string)>0 and (defined $self->method_string)){
 				unless (($string =~ $self->method_string) or ($string eq $self->method_string)) {
 					croak("Error in read_iteration_path: METH in subprob has string\n"."$string ".
 						  "instead of expected\n" . $self->method_string);
@@ -820,7 +821,7 @@ sub _scan_to_meth
 				if ($string =~ /\(Evaluation\)/) {
 					$self->estimation_step_run(0);
 				}
-				if (length($string)>0){
+				if (length($string)>0 and (defined $self->method_string)){
 					unless (($string =~ $self->method_string) or ($string eq $self->method_string) or ($self->method_string =~ $string  )) {
 						croak("METH number $method_counter in subprob has string\n"."$string ".
 							  "instead of expected\n".$self->method_string);
@@ -1003,19 +1004,29 @@ sub _read_ofv
 	my $self = shift;
 
 	my $start_pos = $self->lstfile_pos;
-
+	my $found_negative_parameter;
+	
 	while ( $_ = @{$self->lstfile}[ $start_pos++ ] ) {
 		if ( / PROBLEM NO\.:\s*\d+\n/ ) {
 			$self -> parsing_error( message => "Error in reading the OFV!\nNext problem found" );
 			return;
+		} elsif (/^\s*(ERROR IN TRANS2 ROUTINE: .+ IS NEGATIVE)/) {
+			$found_negative_parameter = $1;
+			chomp $found_negative_parameter;
 		} elsif (/^\s*0PROGRAM TERMINATED BY OBJ/) {
 			# This is an error message which terminates NONMEM. 
 			$self -> finished_parsing(1);
 			$self -> _read_minimization_message();
 			return;
 		} elsif ( $start_pos >= scalar @{$self->lstfile} ) {
-			$self -> parsing_error( message => "Error in reading the OFV!\nEOF found\n" );
-			return;
+			if (defined $found_negative_parameter and length($found_negative_parameter)>0){
+				$self -> finished_parsing(1);
+				push( @{$self->minimization_message}, "Error in reading the OFV!\n$found_negative_parameter\n"); 
+				return;
+			}else{
+				$self -> parsing_error( message => "Error in reading the OFV!\nEOF found\n" );
+				return;
+			}
 		}
 
 		if ( /^\s\#OBJV:/  || /^\s\*{50}\s+/ ) {
@@ -1346,14 +1357,15 @@ sub _read_simulation
 
 	# The simulation step is optional.
 	my $start_pos = $self->lstfile_pos;
+	my $error_message;
 	while ( $_ = @{$self->lstfile}[ $start_pos ++ ] ) {
 		if ( /MINIMUM VALUE OF OBJECTIVE FUNCTION/ ) {
 			last;
-		}
-		if ( /^\s*MONITORING OF SEARCH:/) {
+		}elsif ( /^\s*MONITORING OF SEARCH:/) {
 			last;
-		}
-		if ( /\s*SIMULATION STEP PERFORMED/ ) {
+		}elsif ( /^\s*ERROR IN/) {
+			$error_message = $_;
+		}elsif ( /\s*SIMULATION STEP PERFORMED/ ) {
 			$self->simulationstep(1);
 			last;
 		}
@@ -1361,7 +1373,9 @@ sub _read_simulation
       
 	if ( $self->simulationstep ) {
 		$self->lstfile_pos($start_pos);
-	} 
+	}
+	$error_message =~ s/\s*$// if (defined $error_message);
+	return $error_message;
 }
 
 sub _read_term

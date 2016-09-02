@@ -24,7 +24,6 @@ has 'nonmem_version' => ( is => 'rw', isa => 'Num' );
 has 'ignore_missing_files' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'tablenames' => ( is => 'rw', isa => 'ArrayRef[Str]' );
 has 'target' => ( is => 'rw', isa => 'Str', default => 'mem' );
-has 'abort_on_fail' => ( is => 'rw', isa => 'Bool', default => 1 );
 has 'parsed_successfully' => ( is => 'rw', isa => 'Bool', default => 1 );
 has 'msfo_has_terminated' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'runtime' => ( is => 'rw', isa => 'Str' );
@@ -139,6 +138,58 @@ sub add_problem
 
 }
 
+sub nonmem_run_failed
+{
+	my $self = shift;
+	my $failed = 0;
+	my $reason = '';
+	
+	while (1){
+		if (not $self->parsed_successfully){
+			$failed = 1;
+			$reason = 'lst-file not parsed successfully'; #FIXME nmtran error etc
+			last;
+		}
+#		if ($self->iterations_interrupted){
+#			$failed = 1;
+#			last;
+#		}
+		my $prob_number = $self->get_estimation_evaluation_problem_number;
+		if ($self->get_estimation_evaluation_problem_number >0){
+			#check that ofv defined and numeric. otherwise we have failure
+			my $ofv = $self-> get_single_value(attribute => 'ofv',
+											   problem_index=> ($prob_number-1));
+			unless (defined $ofv){
+				$failed = 1;
+				$reason = 'The estimation ofv is undefined';
+			}
+		}else{
+			#check if have maxeval0 and undef ofv
+			if ((not defined $self->problems->[(-$prob_number-1)]->subproblems) or
+				(scalar(@{$self->problems->[(-$prob_number-1)]->subproblems})==0)){
+				$failed = 1;
+				$reason = 'No subproblems';
+			}elsif ($self->problems->[(-$prob_number-1)]->subproblems->[0]->estimation_step_initiated()){
+				my $ofv = $self-> get_single_value(attribute => 'ofv',
+												   problem_index=> (-$prob_number-1));
+				unless (defined $ofv){
+					$failed = 1;
+					$reason = 'The evaluation ofv is undefined';
+				}
+			}elsif(defined $self->problems->[(-$prob_number-1)]->subproblems->[0]->simulation_error_message){
+				if (length($self->problems->[(-$prob_number-1)]->subproblems->[0]->simulation_error_message)>0){
+					$failed =1;
+					$reason = 'Simulation error message: '.
+						$self->problems->[(-$prob_number-1)]->subproblems->[0]->simulation_error_message;
+				}
+			}
+		}
+		last;
+	}
+	
+	return ($failed,$reason);
+}
+
 sub copy
 {
 	my $self = shift;
@@ -178,6 +229,7 @@ sub get_estimation_evaluation_problem_number
 					last;
 				}
 			}
+			my $found_evaluation=0;
 			unless ($estimation_step_run){
 				#no hit in above loop
 				for (my $i=0; $i<scalar(@{$self->problems}); $i++){
@@ -185,13 +237,24 @@ sub get_estimation_evaluation_problem_number
 						and (defined $self->problems->[$i]->subproblems->[0])
 						and $self->problems->[$i]->subproblems->[0]->estimation_step_initiated() ){
 						$evaluation_probnum = -($i+1); #number not index, negative since not run
+						$found_evaluation = 1;
 						last;
+					}
+				}
+				unless ($found_evaluation){
+					#make sure we return a prob that has subproblems, ie not $PRIOR TNPRI
+					for (my $i=0; $i<scalar(@{$self->problems}); $i++){
+						if ((defined $self->problems->[$i]) and (defined $self->problems->[$i]->subproblems)
+							and (defined $self->problems->[$i]->subproblems->[0])){
+							$evaluation_probnum = -($i+1); #number not index, negative since not run
+							last;
+						}
 					}
 				}
 			}
 		}
 	} 
-
+	
 	return $evaluation_probnum;
 }
 
@@ -3297,7 +3360,8 @@ sub _read_problems
 											 directory	    	  => $self -> directory(),
 											 n_previous_meth      => $n_previous_meth,
 											 ext_file             => $ext_file,
-#											 table_number         => $tbln,
+											 #											 table_number         => $tbln,
+											 problem_index        => $problem_index,
 											 input_problem        => $self->lst_model->problems->[$problem_index]});
 					
 					my $mes = $self->parsing_error_message();

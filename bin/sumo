@@ -312,8 +312,12 @@ require model;
 			print $outobj -> parsing_error_message();
 			next OUTFILE;
 		}
-
 		print "-----------------------------------------------------------------------\n";	
+		my ($failed,$reason) = $outobj ->nonmem_run_failed;
+		if ( $failed){
+			print "\nThe NONMEM run failed: $reason\n";
+		}
+
 
 
 		#Use accessors to retrieve data
@@ -463,9 +467,11 @@ require model;
 					}else {
 						$minim_mess = acknowledge( 'Estimation step omitted', '-');
 					}
-
+					
 					if ( $outobj -> rounding_errors -> [$problems][$sub_problems] eq '0' ) {
-						$round_mess = acknowledge( 'No rounding errors', 'OK');
+						unless ($failed){
+							$round_mess = acknowledge( 'No rounding errors', 'OK');
+						}
 					} else {
 						$round_mess = acknowledge( 'Rounding errors', 'ERROR');
 					}
@@ -515,7 +521,9 @@ require model;
 							
 						}
 						if ( $#near_bound_parameters < 0 ) {
-							$near_bound_mess = acknowledge( 'No parameter near boundary', 'OK');
+							unless ($failed){
+								$near_bound_mess = acknowledge( 'No parameter near boundary', 'OK');
+							}
 						} else {
 							$near_bound_mess = acknowledge( 'Parameter(s) / ETA-/EPS-correlation(s) near boundary', 'WARNING');
 

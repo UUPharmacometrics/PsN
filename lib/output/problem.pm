@@ -23,7 +23,7 @@ my $simulation_exp = '^ SIMULATION STEP PERFORMED';
 has 'ext_file' => ( is => 'rw', isa => 'Maybe[nmtablefile]' );
 has 'table_numbers_hash' => ( is => 'rw', isa => 'HashRef' );
 has 'table_strings_hash' => ( is => 'rw', isa => 'HashRef' );
-has 'subproblems' => ( is => 'rw', isa => 'ArrayRef[output::problem::subproblem]' );
+has 'subproblems' => ( is => 'rw', isa => 'ArrayRef', default => sub { [] } );
 has 'nm_output_files' => ( is => 'rw', isa => 'HashRef' );
 has 'filename_root' => ( is => 'rw', isa => 'Str' );
 has 'directory' => ( is => 'rw', isa => 'Str' );
@@ -81,6 +81,7 @@ has 'estimation_step_initiated' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'last_method_number' => ( is => 'rw', isa => 'Int' );
 has 'tables_step_error' => ( is => 'rw', isa => 'Maybe[Str]', default => undef );
 has 'iterations_interrupted' => ( is => 'rw', isa => 'Bool', default => 0 );
+has 'problem_index' => ( is => 'rw', isa => 'Int' );
 
 
 sub BUILD
@@ -1132,7 +1133,9 @@ sub _scan_to_subproblems
 		if ( $start_pos > $#{$self->lstfile} ) { #we found end of file
 			if ($found_endtime) {
 				#run did not crash since nmfe printed end time, but nothing to parse
-				$self -> parsing_error( message => "nmfe finished before printing any run output.\n" );
+				unless ($self->problem_index > 0){
+					$self -> parsing_error( message => "nmfe finished before printing any run output.\n" );
+				}
 				$self -> finished_parsing(1);
 				return;
 			} else {

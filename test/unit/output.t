@@ -42,6 +42,9 @@ for (my $i=0; $i< scalar(@answer_hashes); $i++){
 	cmp_ok($outobj->parsed_successfully,'==',$answer_hashes[$i]->{parsed_successfully}, "output file $outfile parsed successfully");
 	unless( $outobj -> parsed_successfully ){
 		cmp_ok(length($outobj->parsing_error_message),'>',5,'error message exists');
+		my ($fail,$reason) = $outobj->nonmem_run_failed();
+		is($fail,1,'not parsed successfully means nonmem run failed'); 
+		cmp_ok($reason,'eq','lst-file not parsed successfully',"$fname nonmem fail reason");
 		if(defined $answer_hashes[$i]->{iterations_interrupted}){
 			cmp_ok($outobj->iterations_interrupted,'==',$answer_hashes[$i]->{iterations_interrupted}, 
 				   "output file $outfile iterations interrupted");
@@ -49,6 +52,13 @@ for (my $i=0; $i< scalar(@answer_hashes); $i++){
 	    next;
 	}
 
+	my ($fail,$reason) = $outobj->nonmem_run_failed();
+	if(defined $answer_hashes[$i]->{nonmem_run_failed}){
+		cmp_ok($fail,'==',$answer_hashes[$i]->{nonmem_run_failed},"$fname nonmem_run_failed");
+		cmp_ok($reason,'eq',$answer_hashes[$i]->{nonmem_run_fail_reason},"$fname nonmem fail reason") if ($fail);
+	}else{
+		cmp_ok($fail,'==',0,"$fname nonmem_run_failed");
+	}
 	if(defined $answer_hashes[$i]->{estimation_evaluation_problem_number}){
 		cmp_ok($outobj->get_estimation_evaluation_problem_number(),'==',
 			   $answer_hashes[$i]->{estimation_evaluation_problem_number},"$fname estimation_evaluation_problem_number");
