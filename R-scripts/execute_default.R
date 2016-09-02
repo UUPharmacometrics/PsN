@@ -1,3 +1,6 @@
+source(paste0(rscripts.directory,"/common/file_existence_in_directory.R")) # the function for checking if the file exists in the directory
+source(paste0(rscripts.directory,"/execute/data.obj.obsi.R")) 
+source(paste0(rscripts.directory,"/execute/plot.obj.obsi.R"))
 
 library(xpose4)
 
@@ -48,6 +51,23 @@ if (rplots.level > 1){
     }
   }
   
+  #check if files exist
+  if (res.table != '') {
+    file_1_exists <- file_existence_in_directory(directory=model.directory,file_name=paste0(mod.prefix,xpose.runno,".phi"))
+    file_2_exists <- file_existence_in_directory(directory=model.directory,file_name=res.table)
+    
+    if ((file_1_exists == TRUE) && (file_2_exists == TRUE)) {
+      # calculate data
+      list_out <- data.obj.obsi(obj.data.dir=paste0(model.directory,mod.prefix,xpose.runno,".phi"),
+                                obsi.data.dir=paste0(model.directory,res.table))
+      OBJ_data <- list_out$OBJ_data
+      OBSi_vector <- list_out$OBSi_vector
+      OBJ_vector <- list_out$OBJ_vector
+      
+      # plot data
+      plot.obj.obsi(OBJ_data,OBSi_vector,OBJ_vector)
+    }
+  }
 }
 
 dev.off()
