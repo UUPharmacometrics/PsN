@@ -1,11 +1,33 @@
 package model::problem::estimation;
 
+use include_modules;
 use Moose;
 use MooseX::Params::Validate;
 
 extends 'model::problem::record';
 
-sub get_method{
+sub BUILD
+{
+    my $self = shift;
+
+    # Warn if FORMAT|DELIM has a comma as separator
+    # as this would not work well with the PsN parser
+    if (defined $self->options) {
+        for my $option (@{$self->options}) {
+            if ($option->name =~ /FORMAT|FORMA|FORM|FOR|DELIM|DELI|DEL/) {
+                if ($option->value =~ /^,/) {
+                    warn_once("est_format_comma", "*** Warning ***\n" .
+                       "The delimeter for FORMAT in \$ESTIMATION was set to \",\" (comma).\n" .
+                       "PsN will not be able to parse any results files most probably\n" .
+                       "causing a crash or undefined behaviour.\n\n");
+                }
+            }
+        }
+    }
+}
+
+sub get_method
+{
 	my $self = shift;
 
 	my $method='0'; #this is the default, FO
@@ -18,7 +40,8 @@ sub get_method{
 	return $method;
 }
 
-sub accepts_mceta{
+sub accepts_mceta
+{
 	my $self = shift;
 
 	my $method=$self->get_method;
@@ -41,7 +64,8 @@ sub accepts_mceta{
 	return $accepts_mceta;
 }
 
-sub is_classical{
+sub is_classical
+{
 	my $self = shift;
 
 	my $method=$self->get_method;
@@ -61,7 +85,8 @@ sub is_classical{
 	return $classical;
 }
 
-sub renumber_msfo{
+sub renumber_msfo
+{
 	my $self = shift;
 	my %parm = validated_hash(\@_,
 		numberstring => { isa => 'Str', optional => 0 }
@@ -77,7 +102,6 @@ sub renumber_msfo{
 			$opt->value($line);
 		}
 	}
-
 }
 
 no Moose;
