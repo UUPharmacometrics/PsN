@@ -5007,9 +5007,9 @@ sub get_covariate_theta_bounds_inits
 			$lower_bound     = '0' if eval($lower_bound) == 0;
 			$bounds->{'lower'}[1] = $lower_bound;
 		}elsif ($type eq 'power'){
-			$bounds->{'lower'}[0] = -100000;
+			$bounds->{'lower'}[0] = -100;
 		}elsif ($type eq 'exponential'){
-			$bounds->{'lower'}[0] = -100000;
+			$bounds->{'lower'}[0] = -100;
 		}elsif ($type eq 'user'){
 			for ( my $i = 0; $i < $ntheta; $i++ ) {
 				$bounds->{'lower'}[$i] = -100000;

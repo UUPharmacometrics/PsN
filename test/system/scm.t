@@ -2,7 +2,7 @@
 
 use strict;
 use warnings;
-use Test::More tests=>11;
+use Test::More;
 use Test::Exception;
 use File::Path 'rmtree';
 use FindBin qw($Bin);
@@ -24,7 +24,6 @@ config_nohead.scm
 config_ignore.scm
 config_included.scm
 config_logit.scm
-config_normal_sum.scm
 config_only_categorical.scm
 config_state5.scm
 config_time_varying.scm

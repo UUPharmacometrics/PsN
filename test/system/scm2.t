@@ -2,7 +2,7 @@
 
 use strict;
 use warnings;
-use Test::More tests=>11;
+use Test::More;
 use Test::Exception;
 use File::Path 'rmtree';
 use FindBin qw($Bin);
@@ -21,15 +21,15 @@ our $scm_file_dir = $includes::testfiledir . '/scm';
 our $file_dir = $includes::testfiledir;
 
 my @config_files = qw (
-config_alternative_parameterizations.scm
-config_centering_bivariate.scm
 config_different_parameterizations_different_covariates.scm
-config_emax.scm
-config_foce_backward.scm
 config_foce_prop.scm
 config_foce_prop_upd.scm
-config_foce.scm
 config_foce_upd.scm
+config_alternative_parameterizations.scm
+config_centering_bivariate.scm
+config_emax.scm
+config_foce_backward.scm
+config_foce.scm
 config_grouping_categorical.scm
 config_hockey.scm
 );

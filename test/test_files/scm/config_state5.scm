@@ -8,14 +8,13 @@ retries=3
 
 continuous_covariates=WGT,APGR,CV1
 ;,CV2,CV3
-categorical_covariates=CVD1
+
 ;,CVD2,CVD3
 
 [test_relations]
-CL=WGT,CVD1,APGR
-V=WGT,CVD1
+CL=WGT,APGR
 
 [valid_states]
 continuous = 1,5
-categorical = 1
+
 
