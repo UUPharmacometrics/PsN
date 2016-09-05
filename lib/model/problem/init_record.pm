@@ -554,11 +554,10 @@ sub _read_options
 	}
 
 	if ($any_chol or $any_sd or $any_corr){
-		ui -> print( category => 'all',
-					 message  => "Warning:\n Found STANDARD/CORRELATION/CHOLESKY in \$$parameter.\n".
+		warn_once('std_corr_param', "*** Warning ***\n Found STANDARD/CORRELATION/CHOLESKY in \$$parameter.\n".
 					 "This is not yet supported by PsN. Errors will be introduced when\n".
 					 "updating initial estimates to final estimates from previous run\n".
-					 "and sumo output will be wrong.\n");
+					 "and sumo output will be wrong.\n\n");
 	}
 }
 
