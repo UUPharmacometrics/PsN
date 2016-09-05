@@ -2654,13 +2654,6 @@ sub modelfit_analyze
 			}
 			$crash_name = $type -> {'values'}[0] if ( $type -> {'name'} eq 'filename' );
 		}
-		if ( $crash == 2 and $self -> abort_on_fail ) {
-			die "The execution of the modelfile ",
-			$crash_name," failed (picky==1), aborting SCM, sorry\n";
-		} elsif ( $crash == 1 and $self -> abort_on_fail ) {
-			die "The execution of the modelfile ",
-			$crash_name," failed (picky==0), aborting SCM, sorry\n";
-		}
 	}
 
 	my %return_section;
