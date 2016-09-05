@@ -111,10 +111,13 @@ sub get_command
 {
 	my $command_name = shift;
 
-    my $args;
+    my $args='';
     if ($command_name ne "data_stats" and $command_name ne "nmoutput2so" and $command_name ne "sumo" and $command_name ne "runrecord" and
         $command_name ne "covmat" and $command_name ne "psn" and $command_name ne "psn_clean" and $command_name ne "psn_options") {
         $args = ' ' . join(' ', @ARGV);
+		if ($command_name ne "boot_scm"){
+			$args .= ' -abort_on_fail ';
+		}
     }
     my $command_line = $path . $command_name . $version . $args;
 
