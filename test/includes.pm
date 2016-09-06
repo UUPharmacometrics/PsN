@@ -115,7 +115,7 @@ sub get_command
     if ($command_name ne "data_stats" and $command_name ne "nmoutput2so" and $command_name ne "sumo" and $command_name ne "runrecord" and
         $command_name ne "covmat" and $command_name ne "psn" and $command_name ne "psn_clean" and $command_name ne "psn_options") {
         $args = ' ' . join(' ', @ARGV);
-		if ($command_name ne "boot_scm"){
+		if ($command_name ne "boot_scm" and $command_name ne "update_inits" and $command_name ne "update" ){
 			$args .= ' -abort_on_fail ';
 		}
     }
