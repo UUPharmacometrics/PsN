@@ -1811,7 +1811,7 @@ sub diagnose_lst_errors
 				$failure_mess = "It seems like Fortran compilation by NMQual failed. Cannot start NONMEM.\n".
 					"Go to the NM_run".($run_no+1)." subdirectory and run psn.".$modext." with NMQual to diagnose the problem.";
 			}else{
-				$failure_mess = "It seems like Fortran compilation by the NONMEM's nmfe script failed. Cannot start NONMEM.\n".
+				$failure_mess = "It seems like Fortran compilation by NONMEM's nmfe script failed. Cannot start NONMEM.\n".
 					"Go to the NM_run".($run_no+1)." subdirectory and run psn.".$modext." with NONMEM's nmfe script to diagnose the problem.";
 			}
 		}
