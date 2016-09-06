@@ -16,7 +16,7 @@ use citations;
 ## Configure the command line parsing
 Getopt::Long::config("auto_abbrev");
 
-@tool_options = ( "abort_on_fail",
+@tool_options = ( "abort_on_fail!",
 		  "accepted_ofv_difference:f",
 		  "add_retries!",
 		  "always_datafile_in_nmrun!",
