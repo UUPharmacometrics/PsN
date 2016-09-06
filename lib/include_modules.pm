@@ -1,6 +1,7 @@
 package include_modules;
 use Moose::Util::TypeConstraints;
 use ext::Carp;
+use ui;
 require Exporter;
 our @ISA = qw(Exporter);
 our @EXPORT = qw(cluck longmess shortmess carp croak debugmessage warn_once);
@@ -10,7 +11,7 @@ sub debugmessage{
 	my $messagelevel=shift;
 	my $message = shift;
 	if ($messagelevel <= $debuglevel){
-		carp($message);
+		ui->print(category => 'all', message => $message);
 	} 
 }
 
@@ -24,7 +25,7 @@ sub warn_once
 
     if (not exists $one_time_warnings{$type}) {
         $one_time_warnings{$type}++;
-        warn($message);
+        ui->print(category => 'all', message => $message);
     }
 }
 
