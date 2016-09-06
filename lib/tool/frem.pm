@@ -2663,8 +2663,7 @@ sub prepare_model2
 		}
 		
 		if ($frem_model->problems->[0]->estimations->[-1]->is_classical){
-#			if ((($PsN::nm_major_version == 7) and ($PsN::nm_minor_version > 2)) or ($PsN::nm_major_version > 7)){
-			if ((($PsN::nm_major_version == 7) and ($PsN::nm_minor_version != 2)) or ($PsN::nm_major_version > 7)){
+			if ((($PsN::nm_major_version == 7) and ($PsN::nm_minor_version > 2)) or ($PsN::nm_major_version > 7)){
 				$frem_model->problems->[0]->estimations->[-1]->remove_option(name => 'NONINFETA', fuzzy_match => 1);
 				$frem_model->problems->[0]->estimations->[-1]->_add_option(option_string => 'NONINFETA=1');
 			}
