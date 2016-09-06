@@ -379,6 +379,8 @@ sub run
 	my $cwd = getcwd();
 	my $started_all_models = 0;
 	my $started_all_models_print = 0;
+	my $do_abort = 0;
+	my $failed_run_message = '';
 	chdir($self->directory);
     trace(tool => 'modelfit', message => "Changed directory to " . $self->directory, level => 1);
 
@@ -727,7 +729,13 @@ sub run
 
 				if ($self->abort_on_fail) {
 					my $tries = \$queue_info{$run}->{'tries'};
-					if ($queue_info{$run}->{'run_results'}->[${$tries}]->{'failed'}) {
+					if (defined $queue_info{$run}->{'run_results'}->[${$tries}]->{'failed'} or
+						defined $queue_info{$run}->{'run_results'}->[${$tries}]->{'nonmem_run_failed'}) {
+						$do_abort = 1;
+						$failed_run_message = 'run in NM_run'.($run+1).' failed';
+						if (defined $queue_info{$run}->{'run_results'}->[${$tries}]->{'nonmem_run_failed'}) {
+							$failed_run_message .= ': '.$queue_info{$run}->{'run_results'}->[${$tries}]->{'nonmem_run_failed'};
+						}
 						$do_restart = 0;
 						@queue = ();
 					}
@@ -850,6 +858,10 @@ sub run
 		}
 	}
 
+	if ($do_abort){
+		croak("abort_on_fail is set and ".$failed_run_message.". Aborting");
+	}
+	
 	return \@results;
 }
 
@@ -987,7 +999,7 @@ sub select_best_model
 	my $candidate_model = $queue_info_ref -> {'candidate_model'};
 	if (-e 'stats-runs.csv'){
 		trace(tool => 'modelfit', message => "Have previously copied best model to psn.".$self->modext, level => 2);
-		if ( $run_results -> [0] -> {'failed'} ){
+		if ( defined $run_results -> [0] -> {'failed'} ){
 			my @raw_row = [($run_no+1,'1','1','run failed: '.($run_results -> [0] -> {'failed'}))];
 			$self->raw_results([]) unless defined $self->raw_results;
 			push( @{$self->raw_results}, @raw_row );
@@ -1016,7 +1028,7 @@ sub select_best_model
 		print STAT "Selected $selected\n";
 		close( STAT );
 
-		if ( $run_results -> [$selected-1] -> {'failed'} ){
+		if ( defined $run_results -> [$selected-1] -> {'failed'} ){
 			my @raw_row = [($run_no+1,'1','1','run failed: '.($run_results -> [$selected-1] -> {'failed'}))];
 			$self->raw_results([]) unless defined $self->raw_results;
 			push( @{$self->raw_results}, @raw_row );
@@ -1799,7 +1811,7 @@ sub diagnose_lst_errors
 				$failure_mess = "It seems like Fortran compilation by NMQual failed. Cannot start NONMEM.\n".
 					"Go to the NM_run".($run_no+1)." subdirectory and run psn.".$modext." with NMQual to diagnose the problem.";
 			}else{
-				$failure_mess = "It seems like Fortran compilation by the NONMEM's nmfe script failed. Cannot start NONMEM.\n".
+				$failure_mess = "It seems like Fortran compilation by NONMEM's nmfe script failed. Cannot start NONMEM.\n".
 					"Go to the NM_run".($run_no+1)." subdirectory and run psn.".$modext." with NONMEM's nmfe script to diagnose the problem.";
 			}
 		}
@@ -2443,7 +2455,6 @@ sub restart_needed
 
 	my ( $output_file );
 	$output_file = $candidate_model -> outputs -> [0];
-	$output_file -> abort_on_fail($self->abort_on_fail);
 	$output_file -> _read_problems;
 	my $evaluation_probnum = $output_file->get_estimation_evaluation_problem_number(); #if neg then no est step run
 
@@ -2735,6 +2746,10 @@ sub restart_needed
 
 	}
 
+	my ($failed,$reason) = $output_file->nonmem_run_failed;
+	if ($failed){
+		$run_results -> [${$tries}] -> {'nonmem_run_failed'} = $reason;
+	}
 	$output_file -> flush;
 	return $marked_for_rerun;
 

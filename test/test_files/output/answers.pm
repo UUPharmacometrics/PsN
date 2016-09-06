@@ -11,6 +11,7 @@ sub read_answers
     $answer_hashes[$index]->{file} = 'special_mod/special_inverse.lst';
     $answer_hashes[$index]->{runtime} = '0:00:28';
     $answer_hashes[$index]->{parsed_successfully} = 1;
+    $answer_hashes[$index]->{nonmem_run_failed} = 0;
     $answer_hashes[$index]->{answers} = {};
 	$answer_hashes[$index]->{near_bounds_names}=['CRCL_on_CL']; 
 	$answer_hashes[$index]->{near_bounds_values}=[7.70E-03];
@@ -52,6 +53,7 @@ sub read_answers
 	$answer_hashes[$index]->{file}='nm73/anneal2_V7_30_beta.lst';
 	$answer_hashes[$index]->{runtime}='0:01:37';
 	$answer_hashes[$index]->{parsed_successfully}=1;
+    $answer_hashes[$index]->{nonmem_run_failed} = 0;
 	$answer_hashes[$index]->{estimation_evaluation_problem_number}=1;
 	$answer_hashes[$index]->{problem_count}=1;
 	$answer_hashes[$index]->{subproblem_count}=[1];
@@ -87,6 +89,7 @@ sub read_answers
 	$answer_hashes[$index]->{runtime} = '0:00:54';
 	$answer_hashes[$index]->{parsed_successfully}=1;
 	$answer_hashes[$index]->{estimation_evaluation_problem_number}=1;
+    $answer_hashes[$index]->{nonmem_run_failed} = 0;
 	$answer_hashes[$index]->{problem_count}=2;
 	$answer_hashes[$index]->{subproblem_count}=[3,2];
 	$answer_hashes[$index]->{answers}={};
@@ -420,8 +423,9 @@ sub read_answers
 	$answer_hashes[$index]={};
 	$answer_hashes[$index]->{file}='msfi/sim_noest_Vvi_20.lst';
 	$answer_hashes[$index]->{answers}={};
+    $answer_hashes[$index]->{nonmem_run_failed} = 0; 
 	$answer_hashes[$index]->{parsed_successfully}=1;
-	$answer_hashes[$index]->{estimation_evaluation_problem_number}=-1;
+	$answer_hashes[$index]->{estimation_evaluation_problem_number}=-2;
 	$answer_hashes[$index]->{problem_count}=2;
 	$answer_hashes[$index]->{subproblem_count}=[0,1];
 	$answer_hashes[$index]->{answers}->{1}->{0}->{'covariance_step_run'}=0;
@@ -775,6 +779,8 @@ sub read_answers
 	$answer_hashes[$index]->{file}='special_mod/objv_infinity.lst';
 	$answer_hashes[$index]->{answers}={};
 	$answer_hashes[$index]->{parsed_successfully}=1;
+    $answer_hashes[$index]->{nonmem_run_failed} = 1;
+    $answer_hashes[$index]->{nonmem_run_fail_reason} = 'The estimation ofv is undefined';
 	$answer_hashes[$index]->{estimation_evaluation_problem_number}=1;
 	$answer_hashes[$index]->{answers}->{0}->{0}->{'ofv'}=undef;
 	$answer_hashes[$index]->{answers}->{0}->{0}->{'covariance_step_run'}=0;
@@ -956,6 +962,7 @@ sub read_answers
 	$answer_hashes[$index]->{file}='multPROB/noEST/withSIM/sim_noest_V7_30.lst';
 	$answer_hashes[$index]->{answers}={};
 	$answer_hashes[$index]->{parsed_successfully}=1;
+    $answer_hashes[$index]->{nonmem_run_failed} = 0;
 	$answer_hashes[$index]->{estimation_evaluation_problem_number}=-2;
 	$answer_hashes[$index]->{answers}->{0}->{0}->{'minimization_successful'}=0;
 	$answer_hashes[$index]->{answers}->{1}->{0}->{'minimization_successful'}=0;
@@ -1264,6 +1271,109 @@ sub read_answers
 	$answer_hashes[$index]->{answers}->{4}->{2}->{'ofv'}=-705.52435339164538;
 	$answer_hashes[$index]->{answers}->{5}->{0}->{'ofv'}=-569.40859691303922;
 	$answer_hashes[$index]->{answers}->{6}->{0}->{'ofv'}=-551.47787398117805;
+
+	$index++;
+
+	$answer_hashes[$index]->{file}='onePROB/oneEST/noSIM/nm710_fail_negV.lst';
+	$answer_hashes[$index]->{answers}={};
+	$answer_hashes[$index]->{parsed_successfully}=1;
+    $answer_hashes[$index]->{nonmem_run_failed} = 1;
+    $answer_hashes[$index]->{nonmem_run_fail_reason} = 'The estimation ofv is undefined';
+	
+	$index++;
+
+	$answer_hashes[$index]->{file}='special_mod/two_prob_second_fail.lst';
+	$answer_hashes[$index]->{answers}={};
+	$answer_hashes[$index]->{parsed_successfully}=1;
+    $answer_hashes[$index]->{nonmem_run_failed} =0;
+	
+	$index++;
+
+	$answer_hashes[$index]->{file}='onePROB/noEST/withSIM/noeval_fail_nm73.lst';
+	$answer_hashes[$index]->{answers}={};
+	$answer_hashes[$index]->{parsed_successfully}=1;
+    $answer_hashes[$index]->{nonmem_run_failed} = 1;
+    $answer_hashes[$index]->{nonmem_run_fail_reason} = 'Simulation error message:  ERROR IN TRANS2 ROUTINE: CL IS NEGATIVE';
+	
+	$index++;
+
+	$answer_hashes[$index]->{file}='onePROB/noEST/withSIM/noeval_nm710.lst';
+	$answer_hashes[$index]->{answers}={};
+	$answer_hashes[$index]->{parsed_successfully}=1;
+    $answer_hashes[$index]->{nonmem_run_failed} = 0;
+
+	$index++;
+
+	$answer_hashes[$index]->{file}='onePROB/noEST/withSIM/noeval_nm712.lst';
+	$answer_hashes[$index]->{answers}={};
+	$answer_hashes[$index]->{parsed_successfully}=1;
+    $answer_hashes[$index]->{nonmem_run_failed} = 0;
+
+	$index++;
+
+	$answer_hashes[$index]->{file}='onePROB/noEST/withSIM/noeval_nm72.lst';
+	$answer_hashes[$index]->{answers}={};
+	$answer_hashes[$index]->{parsed_successfully}=1;
+    $answer_hashes[$index]->{nonmem_run_failed} = 0;
+
+	$index++;
+
+	$answer_hashes[$index]->{file}='onePROB/noEST/withSIM/noeval_nm73.lst';
+	$answer_hashes[$index]->{answers}={};
+	$answer_hashes[$index]->{parsed_successfully}=1;
+    $answer_hashes[$index]->{nonmem_run_failed} = 0;
+
+	$index++;
+
+	$answer_hashes[$index]->{file}='onePROB/noEST/withSIM/witheval_fail_nm710.lst';
+	$answer_hashes[$index]->{answers}={};
+	$answer_hashes[$index]->{parsed_successfully}=1;
+    $answer_hashes[$index]->{nonmem_run_failed} = 1;
+    $answer_hashes[$index]->{nonmem_run_fail_reason} = 'The evaluation ofv is undefined';
+
+	$index++;
+
+	$answer_hashes[$index]->{file}='onePROB/noEST/withSIM/witheval_fail_nm712.lst';
+	$answer_hashes[$index]->{answers}={};
+	$answer_hashes[$index]->{parsed_successfully}=1;
+    $answer_hashes[$index]->{nonmem_run_failed} = 1;
+    $answer_hashes[$index]->{nonmem_run_fail_reason} = 'The evaluation ofv is undefined';
+
+	$index++;
+
+	$answer_hashes[$index]->{file}='onePROB/noEST/withSIM/witheval_fail_nm73.lst';
+	$answer_hashes[$index]->{answers}={};
+	$answer_hashes[$index]->{parsed_successfully}=1;
+    $answer_hashes[$index]->{nonmem_run_failed} = 1;
+    $answer_hashes[$index]->{nonmem_run_fail_reason} = 'The evaluation ofv is undefined';
+
+	$index++;
+
+	$answer_hashes[$index]->{file}='onePROB/noEST/withSIM/witheval_nm710.lst';
+	$answer_hashes[$index]->{answers}={};
+	$answer_hashes[$index]->{parsed_successfully}=1;
+    $answer_hashes[$index]->{nonmem_run_failed} = 0;
+
+	$index++;
+
+	$answer_hashes[$index]->{file}='onePROB/noEST/withSIM/witheval_nm712.lst';
+	$answer_hashes[$index]->{answers}={};
+	$answer_hashes[$index]->{parsed_successfully}=1;
+    $answer_hashes[$index]->{nonmem_run_failed} = 0;
+
+	$index++;
+
+	$answer_hashes[$index]->{file}='onePROB/noEST/withSIM/witheval_nm72.lst';
+	$answer_hashes[$index]->{answers}={};
+	$answer_hashes[$index]->{parsed_successfully}=1;
+    $answer_hashes[$index]->{nonmem_run_failed} = 0;
+
+	$index++;
+
+	$answer_hashes[$index]->{file}='onePROB/noEST/withSIM/witheval_nm73.lst';
+	$answer_hashes[$index]->{answers}={};
+	$answer_hashes[$index]->{parsed_successfully}=1;
+    $answer_hashes[$index]->{nonmem_run_failed} = 0;
 
 	$index++;
 

@@ -217,8 +217,8 @@ sub _format_option
 	  if (defined $number_format and $number_format < 15 and (not ($PsN::nm_major_version == 5 or $PsN::nm_major_version == 6))){
 	    my $form = '%.'.$number_format.'G';
 	    $formatted = sprintf("$form",$formatted);
-		$formatted =~ s/e/E/;
 	  }
+	  $formatted =~ s/e/E/;     # The default stringification of floats always use lowercase e. NONMEM 7.1 and earlier need uppercase.
 
 	  unless ($is_block) {
 		  if ( $self -> fix() ) {

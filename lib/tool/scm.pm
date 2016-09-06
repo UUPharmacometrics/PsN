@@ -2654,13 +2654,6 @@ sub modelfit_analyze
 			}
 			$crash_name = $type -> {'values'}[0] if ( $type -> {'name'} eq 'filename' );
 		}
-		if ( $crash == 2 and $self -> abort_on_fail ) {
-			die "The execution of the modelfile ",
-			$crash_name," failed (picky==1), aborting SCM, sorry\n";
-		} elsif ( $crash == 1 and $self -> abort_on_fail ) {
-			die "The execution of the modelfile ",
-			$crash_name," failed (picky==0), aborting SCM, sorry\n";
-		}
 	}
 
 	my %return_section;
@@ -5014,9 +5007,9 @@ sub get_covariate_theta_bounds_inits
 			$lower_bound     = '0' if eval($lower_bound) == 0;
 			$bounds->{'lower'}[1] = $lower_bound;
 		}elsif ($type eq 'power'){
-			$bounds->{'lower'}[0] = -100000;
+			$bounds->{'lower'}[0] = -100;
 		}elsif ($type eq 'exponential'){
-			$bounds->{'lower'}[0] = -100000;
+			$bounds->{'lower'}[0] = -100;
 		}elsif ($type eq 'user'){
 			for ( my $i = 0; $i < $ntheta; $i++ ) {
 				$bounds->{'lower'}[$i] = -100000;

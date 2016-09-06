@@ -26,6 +26,7 @@ my $binary_dir;
 my $library_dir;
 my $perl_binary;
 my $old_psn_config_file;
+my $old_default_psn_config_file;
 my $copy_cmd;
 my $copy_recursive_cmd;
 my $relative_lib_path=0;
@@ -58,6 +59,8 @@ my $new_defaults = PsN::get_new_installation_defaults($version,$default_installa
 $default_sitelib = $new_defaults->{'base_lib_dir'};
 $default_bin = $new_defaults->{'bin_dir'};
 $default_perlpath = $Config{perlpath};
+my $old_default_psn_config_file = $new_defaults->{'old_config_file'};
+my $old_default_psn_version = $new_defaults->{'version'};
 
 if (running_on_windows()) {
 	#"trying to find the perl binary via system command\n";
@@ -863,6 +866,10 @@ if (confirm()) {
 
 my $overwrite = 0;
 my $old_version = 'X_X_X';
+if (defined $old_default_psn_version){
+	$old_version = $old_default_psn_version;
+	$old_version =~ s/\./_/g;
+}
 my $keep_conf = 0;
 
 unless (mkpath("$library_dir/PsN_$name_safe_version")) {
@@ -952,9 +959,14 @@ foreach my $file (@utilities) {
 
 		my $tmp = $old_version;
 		$tmp =~ s/\./\_/g;
-		$old_psn_config_file = File::Spec->catfile($library_dir, "PsN_$tmp", "psn.conf");
-		$old_psn_config_file = undef unless (-e $old_psn_config_file);
-		
+		if (defined $old_default_psn_config_file and -e $old_default_psn_config_file){
+			$old_psn_config_file = $old_default_psn_config_file;
+		}else{
+			$old_psn_config_file = File::Spec->catfile($library_dir, "PsN_$tmp", "psn.conf");
+			unless (-e $old_psn_config_file){
+				$old_psn_config_file = undef ;
+			}
+		}
 		if ($old_version eq $version) {
 			if (not $confirmed) {
 				print("\nThis version ($version) looks like an older installed\n",

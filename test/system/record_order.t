@@ -23,7 +23,7 @@ copy_test_files($tempdir,["pheno.dta","illegal_order.mod"]);
 
 #test illegal record order crashes
 chdir($tempdir);
-my $command = get_command('execute') . " illegal_order.mod -dir=test1 -silent";
+my $command = get_command('execute') . " -no-abort_on_fail illegal_order.mod -dir=test1 -silent";
 print "Running $command\n";
 my $rc = system($command);
 $rc = $rc >> 8;

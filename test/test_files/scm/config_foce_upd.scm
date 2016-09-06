@@ -2,11 +2,9 @@ model=pheno_with_cov.mod
 linearize=1
 search_direction=forward
 p_forward=0.05
-abort_on_fail=0
-retries=3
 update_derivatives=1
 
-continuous_covariates=WGT,APGR,CV1,CV2,CV3
+continuous_covariates=WGT,APGR
 categorical_covariates=CVD1,CVD2,CVD3
 
 [test_relations]
@@ -16,6 +14,6 @@ CL=WGT,CVD1
 V=WGT,CVD1
 
 [valid_states]
-continuous = 1,2,4
+continuous = 1,2
 categorical = 1,2
 

@@ -1,13 +1,8 @@
 model=pheno_with_cov_foce_prop.mod
-foce=1
 linearize=1
 search_direction=forward
 p_forward=0.05
 p_backward=0.01
-abort_on_fail=0
-retries=3
-error=prop
-epsilon=0
 update_derivatives=1
 
 continuous_covariates=WGT,APGR,CV1,CV2,CV3

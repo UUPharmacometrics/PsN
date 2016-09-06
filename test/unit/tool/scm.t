@@ -301,7 +301,7 @@ tool::scm::get_covariate_theta_bounds_inits(bounds => $bounds,
 									  linearize => 0,
 									  sum_covariates => 0);
 
-is_deeply($bounds->{'lower'},[-100000],'lower bound neg median power');
+is_deeply($bounds->{'lower'},[-100],'lower bound neg median power');
 is_deeply($bounds->{'upper'},[100000],'upper bound neg median power');
 is_deeply($inits,[0.001],'power inits');
 
@@ -318,7 +318,7 @@ tool::scm::get_covariate_theta_bounds_inits(bounds => $bounds,
 									  linearize => 0,
 									  sum_covariates => 0);
 
-is_deeply($bounds->{'lower'},[-100000],'lower bound neg median exponential');
+is_deeply($bounds->{'lower'},[-100],'lower bound neg median exponential');
 is_deeply($bounds->{'upper'},[100000],'upper bound neg median exponential');
 is_deeply($inits,[0.001],'exponential inits');
 

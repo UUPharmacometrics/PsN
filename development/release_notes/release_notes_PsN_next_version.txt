@@ -67,12 +67,19 @@ A new recommended but not required Perl library for runrecord: YAML::Tiny
 
    ___common_options___
 
-- New option
+- Option -abort_on_fail has a new meaning and function. The option is intended for the system tests.
+  If set, PsN will exit with an error if NONMEM crashes, or an estimation/evaluation fails to
+  produce an ofv, or a simulation gives a typical error message in the lst-file.
 
    ___NONMEM output parsing___
 
 - Bug fix: Handle error message "0ERROR IN READING FILE : FCON" in
   eigenvalue section of lst-file.
+- Bug fix: If the execution of a $PROBLEM stops before any output is produced, consider the
+  NONMEM run failed only if it is the first $PROBLEM. For example, if the first $PROBLEM is
+  an estimation and the second a simulation, and the estimation completes but the simulation
+  is not initiated due to e.g. poor estimation results, then PsN will no longer treat the run
+  as crashed.
   
    ___Cluster/Grid___
 
@@ -106,6 +113,9 @@ New features implemented by William S. Denney of Human Predictions:
 
 - Bug fix: The message stating that there is no gradient information after an SAEM run was duplicated
 - The checks for large relative standard errors were removed together with the options to set the limits.
+- A new message when the NONMEM run failed, i.e. estimations/evaluation failed to produce an ofv,
+  or when simulation had special error message in lst-file.
+- Do not print message about rounding errors or parameter near boundary if the NONMEM run failed.
 
    ___bootstrap___
 
@@ -123,7 +133,7 @@ New features implemented by William S. Denney of Human Predictions:
 -  new option -estimate_means to true. When option -estimate_means is set, only covariates which have missing observations in the frem dataset will have the mean estimated. If -no-estimate_means is set, no means will be estimated regardless of missing observations.
 -  rearranged control stream changes. Now all frem code is put last in $PRED/$ERROR and no new variables are defined (this is needed for very large numbers of covariates). New option -estimate_means, default not set. If set then estimate covariate means instead of setting FIX to mean from observed data, new option -mceta, default not set. Set MCETA=N in last $ESTIMATION. New option -deriv2_nocommon_maxeta. Default 60. Set $ABBREVIATED DERIV2=NOCOMMON if number of ETAs is larger than this number.
 -  put intermediate models in subdir intermediate_models instead of in m1. Handle PHI in addition to ETA in phi-file (non-classical methods), and multiple $EST (only results from last est are used).
--  set NONINFETA=1 in last estimation if it is a classical method.
+-  set NONINFETA=1 in last estimation if it is a classical method and NM-version > 7.2.
 -  new postprocessing script postfrem 
 - Rescale option is now default on.
 
@@ -135,6 +145,10 @@ New features implemented by William S. Denney of Human Predictions:
 - Disallow restarts in existing directory as this operation did not work
 - scm will treat . (dot) in covariate column of data set as missing value 
 - bug fix option time-varying: handle PRED models without MDV in $INPUT
+
+- Change the default lower bounds for the THETA in power and exponential
+  parameterizations from -100000 to -100.
+- Removed special use of common option -abort_on_fail.
 
    ___linearize___
 - bug fix option time-varying: handle PRED models without MDV in $INPUT
@@ -153,7 +167,7 @@ ___boot_scm___
    ___ebe_npde___ 
 
 
-   ___simeval___ (was ebe_npde)
+   ___simeval___
 
 
    ___update_inits___
@@ -185,3 +199,6 @@ ___boot_scm___
 
 - Add OFV and run number columns to results.csv
 
+   ___rplots___
+
+- Major redesign

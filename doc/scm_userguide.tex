@@ -1,5 +1,5 @@
 \input{inputs/format_header.tex}
-\guidetitle{SCM user guide}{2016-05-03}
+\guidetitle{SCM user guide}{2016-09-06}
 
 \begin{document}
 
@@ -432,14 +432,25 @@ Redefining existing states is useful when wanting to test different valid states
 \end{verbatim}
 Then in state 4 the covariate WGT will always be added as a power relation instead of exponential (the default for state 4). The shortcuts are 'none' for not included, 'linear', 'hockey-stick', 'exponential' and 'power'. The shortcut definitions must be written without quotes, in lower case and be spelled exactly as listed. 
 
-\subsection{[inits]}
-The inits and bounds sections lets you set initial estimates for thetas introduced in the code and their corresponding bounds. The default bounds are set so that covariate functions cannot reach negative values, which is appropriate e.g. for parameters V and CL. For parameters that should be allowed both negative and positive values the user may wish to change the boundaries. The inits and bounds sections have very similar syntax, only inits will be shown here:
+\subsection{[inits] [upper\_bounds] [lower\_bounds]}
+The inits and bounds sections lets you set initial estimates for thetas introduced in the code and their corresponding bounds. The default bounds are set so that covariate functions cannot reach negative values, which is appropriate e.g. for parameters V and CL. For parameters that should be allowed both negative and positive values the user may wish to change the boundaries. The inits and bounds sections have very similar syntax.
 
 \begin{verbatim}
 [inits]
 V:SMOK-2=0.01
 CL:*-2=0.01
-*:AGE-3=0.03,0.03
+\end{verbatim}
+
+\begin{verbatim}
+[lower_bounds]
+V:SMOK-2=1/(median-maximum)
+CL:*-2=-200
+\end{verbatim}
+
+\begin{verbatim}
+[upper_bounds]
+V:SMOK-2=1/(median-minimum)
+CL:*-2=200
 \end{verbatim}
 
 The left hand side is of the form “PARAMETER:COVARIATE-STATE”. Both PARAMETER and COVARIATE can be an asterisk (*), which is a wildcard and is the same as repeating the line for each parameter and/or covariate. The STATE can be any one of 2-5 or a new state defined by the user in the code section. For the “inits” section the right hand side is a comma separated list of initial values for theta parameters put into the abbreviated code corresponding to the combination. Unless the states are redefined using the code option, for continuous variables the list for state 2 should be one value, for state 3 two values and for states 4 and 5 one value. For categorical covariates where STATE can only be 2 it is the number of categories that decides the number of initial values. The lower\_bounds and upper\_bounds sections follows the same rules and corresponds to the bounds for the theta parameters put into the abbreviated code. If you specify too few or too many values, those you exclude will be replaced by defaults and the extraneous will be ignored. 

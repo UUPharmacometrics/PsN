@@ -177,6 +177,7 @@ ETA_BOV_TL = ETA(OCC_ETA_BOV_TL)
     \item All parameters in a bootstrap will be on the var/cov scale regardless of the scale used in the model.
     \item Parameters with no labels will not generate any warnings for bootstrap when given on the sd/corr scale.
     \item Only the first \$PROBLEM will be added to the SO
+    \item When using between occasion variability, which transalate to \$OMEGA BLOCK SAME in NONMEM, the OMEGAs for the SAME BLOCKs will be added to the PopulationParameters. These omegas will have their generic names (i.e. OMEGA\_2\_2)
 \end{itemize}
 
 \section{Output}

@@ -1,5 +1,5 @@
 \input{inputs/format_header.tex}
-\guidetitle{LINEARIZE user guide}{2016-05-05}
+\guidetitle{LINEARIZE user guide}{2016-09-06}
 
 
 \begin{document}
@@ -15,7 +15,10 @@ individual predictions and derivatives necessary for further estimation of exten
 linearize runX.mod
 \end{verbatim}
 
-\noindent The linearization was developed with the aim to facilitate the development of nonlinear mixed effects models by establishing a 
+\noindent There are a few addtional options that are intended only for research and method exploration.
+It is recommended to not use them.
+
+The linearization was developed with the aim to facilitate the development of nonlinear mixed effects models by establishing a 
 diagnostic method for evaluation of stochastic model components. A full description of the methodology and it's performance is presented in
 \cite{Svensson}. The online supplementary 
 material includes a comprehensive code example. 
@@ -47,8 +50,7 @@ it is recommended to implement these in the nonlinear version of the model and r
 \item Select a base model with an acceptable structural component and potentially the most influential stochastic parameters included.
 \item If investigating additional ETAs, include in base model but with OMEGA fixed to small value (i.e. 0.00001 FIX) to get derivatives in output dataset.
 \item Run PsN command: linearize runX.mod.
-\item Check OFV agreement. Disagreement indicates local minima in MAP estimation (solve by log-transformation to get additive error or use MCETA option
-      in \$ESTIMATION).
+\item Check OFV agreement. Disagreement indicates local minima in MAP estimation (solve by log-transformation to get additive error or set MCETA=1000 in \$ESTIMATION).
 \item Add extensions to the linearized model manually and evaluate.
 \item When decided which extension to include, implement in standard nonlinear format and reestimate.
 \end{enumerate}
@@ -58,6 +60,8 @@ it is recommended to implement these in the nonlinear version of the model and r
 A model file (the nonlinear base model) is required on the command-line.
 
 \subsection{Optional input}
+These option are intended only for research and method exploration.
+It is recommended to not use them.
 \begin{optionlist}
 \optname{epsilon}
 Linearize with respect to epsilon, set by default. Disable with -no-epsilon.
@@ -71,7 +75,7 @@ The error model must be defined in a particular way when this option is used,
 see the scm userguide for details.
 \nextopt
 \optname{foce}
-Set by default. Do not unset this option.
+Set by default. 
 \nextopt
 \end{optionlist}
 

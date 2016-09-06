@@ -16,7 +16,7 @@ use citations;
 ## Configure the command line parsing
 Getopt::Long::config("auto_abbrev");
 
-@tool_options = ( "abort_on_fail",
+@tool_options = ( "abort_on_fail!",
 		  "accepted_ofv_difference:f",
 		  "add_retries!",
 		  "always_datafile_in_nmrun!",
@@ -1000,10 +1000,9 @@ EOF
     $help_hash{-abort_on_fail} = <<'EOF';
     -abort_on_fail
     If the -abort_on_fail option is set and one of the NONMEM runs
-    fails, PsN will stop scheduling more runs and try to stop
-    those that are currently running. A run is considered failed if it
-    fails to produce a list file which PsN can read. This can occur
-    if a nonmem run crashes or gets killed.
+    fails, PsN will stop with an error message. This option
+    is mostly for the system tests, where it is known beforehand that no
+    NONMEM runs should fail if there are no bugs in PsN.
 EOF
     $help_hash{-add_retries} = <<'EOF';
     -add_retries

@@ -11,8 +11,6 @@ p_forward=0.05
 continuous_covariates=WGT,APGR
 categorical_covariates=CVD1
 
-logit=CL
-
 ;;Let's assume that we want the following
 ;;         	Start at	To be tested
 ;; CL-WGT	none		linear (since CL is a logit we only want to test linear inclusion)

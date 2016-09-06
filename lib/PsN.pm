@@ -9,7 +9,7 @@ our ($dev,$version,$lib_dir,$config_file,$config,$Rscripts_dir);
 #the version line is extracted in Makefile using regular expression
 # /\$version\s*=\s*.[0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*.;/
 # so be careful when you edit!!!
-$version = '4.6.8';
+$version = '4.6.9';
 
 # The following line will be changed by make
 $dev = 1;
@@ -197,6 +197,14 @@ sub get_default_psn_installation_info
 		my @directories = File::Spec->splitdir($directory);
 		my $last = pop(@directories);
 		$current_base_lib_dir = $volume.File::Spec->catdir(@directories);
+	}
+	if (defined $current_config_file){
+		unless (-e $current_config_file){
+			$current_config_file = "\\".$current_config_file; #special case \\ path on windows
+			unless (-e $current_config_file){
+				$current_config_file = undef;
+			}
+		}
 	}
 	return {'config_file'=> $current_config_file,'lib_dir' => $current_lib_dir, 'base_lib_dir' => $current_base_lib_dir,
 			'bin_dir' =>$current_bin_dir, 'version' =>$current_version};
