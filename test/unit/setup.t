@@ -1,3 +1,4 @@
+#!/usr/bin/perl
 use Test::More;
 use Test::Exception;
 use FindBin qw($Bin);
@@ -7,26 +8,43 @@ use PsN (); #as in setup.pl
 use Config;
 
 
+my $dirsep = '/';
+my $internal_libdir = $PsN::lib_dir;
+if ($Config{osname} eq 'MSWin32'){
+	$dirsep = "\\";
+	$internal_libdir =~s/\//\\/g;
+}
+
 my $default_installation = PsN::get_default_psn_installation_info();
-is($default_installation->{'config_file'},$PsN::config_file,'default version config file '.$PsN::config_file);
+
+
+is($default_installation->{'config_file'},$PsN::config_file,'default version config file '.$PsN::config_file); #here missing leading slash
+is((-d $default_installation->{'lib_dir'}),1,'default version lib dir exists: '.$default_installation->{'lib_dir'});
 is($default_installation->{'lib_dir'},$PsN::lib_dir,'default version lib dir '.$PsN::lib_dir);
+is((defined $default_installation->{'base_lib_dir'}),1,'default version base_lib_dir is defined: '.$default_installation->{'base_lib_dir'});
+is((length($default_installation->{'base_lib_dir'})>0),1,'default version base_lib_dir positive length: '.$default_installation->{'base_lib_dir'});
+is((-d $default_installation->{'base_lib_dir'}),1,'default version base_lib_dir exists: '.$default_installation->{'base_lib_dir'});
+is((index($internal_libdir,$default_installation->{'base_lib_dir'})==0 ),1,'default version base_lib_dir: '.$default_installation->{'base_lib_dir'}.' is substring of: '.$internal_libdir);
+
+
+
 is((defined $default_installation->{'bin_dir'} and (length($default_installation->{'bin_dir'})>0)),1,'default version bin dir '.$default_installation->{'bin_dir'});
-is((index($PsN::lib_dir,$default_installation->{'base_lib_dir'})==0 and (length($default_installation->{'base_lib_dir'})>0)),1,'default version base lib dir '.$default_installation->{'base_lib_dir'});
+is((-d $default_installation->{'bin_dir'}),1,'default version bin_dir exists: '.$default_installation->{'base_lib_dir'});
 is($default_installation->{'version'},$PsN::version,'default version number '.$PsN::version);
 
 my $new_defaults = PsN::get_new_installation_defaults('10.2.4',$default_installation);
-is($new_defaults->{'old_config_file'},$PsN::config_file,'old config file is '.$PsN::config_file);
-is($new_defaults->{'lib_dir'},$default_installation->{'base_lib_dir'}.'/PsN_10_2_4','new lib dir '.$new_defaults->{'lib_dir'});
-is($new_defaults->{'base_lib_dir'},$default_installation->{'base_lib_dir'},'new base lib dir '.$new_defaults->{'base_lib_dir'});
-is($new_defaults->{'bin_dir'},$default_installation->{'bin_dir'},'new bin dir '.$new_defaults->{'bin_dir'});
-is($new_defaults->{'old_default_version'},$PsN::version,'old default version number '.$PsN::version);
+is($new_defaults->{'old_config_file'},$PsN::config_file,'get_new_installation_defaults: old config file is '.$PsN::config_file); #here got undef because missing double backslash
+is($new_defaults->{'lib_dir'},$default_installation->{'base_lib_dir'}.$dirsep.'PsN_10_2_4','get_new_installation_defaults: new lib dir '.$new_defaults->{'lib_dir'}); 
+is($new_defaults->{'base_lib_dir'},$default_installation->{'base_lib_dir'},'get_new_installation_defaults: new base lib dir '.$new_defaults->{'base_lib_dir'});
+is($new_defaults->{'bin_dir'},$default_installation->{'bin_dir'},'get_new_installation_defaults: new bin dir '.$new_defaults->{'bin_dir'});
+is($new_defaults->{'old_default_version'},$PsN::version,'get_new_installation_defaults: old default version number '.$PsN::version);
 
 my $undefined;
 my $older_install = {'config_file'=> $undefined,'lib_dir' => $undefined, 'base_lib_dir' => $undefined,
 					 'bin_dir' =>$undefined, 'version' =>$undefined};
 $new_defaults = PsN::get_new_installation_defaults('10.2.4',$older_install);
 is($new_defaults->{'old_config_file'},undef,'old config file is undef');
-is($new_defaults->{'lib_dir'},$Config{sitelib}.'/PsN_10_2_4','novel lib dir '.$new_defaults->{'lib_dir'});
+is($new_defaults->{'lib_dir'},$Config{sitelib}.$dirsep.'PsN_10_2_4','novel lib dir '.$new_defaults->{'lib_dir'});
 is($new_defaults->{'base_lib_dir'},$Config{sitelib},'novel base lib dir '.$new_defaults->{'base_lib_dir'});
 is($new_defaults->{'bin_dir'},$Config{bin},'novel bin dir '.$new_defaults->{'bin_dir'});
 is($new_defaults->{'old_default_version'},undef,'old default version number undef');

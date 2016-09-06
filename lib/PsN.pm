@@ -198,6 +198,14 @@ sub get_default_psn_installation_info
 		my $last = pop(@directories);
 		$current_base_lib_dir = $volume.File::Spec->catdir(@directories);
 	}
+	if (defined $current_config_file){
+		unless (-e $current_config_file){
+			$current_config_file = "\\".$current_config_file; #special case \\ path on windows
+			unless (-e $current_config_file){
+				$current_config_file = undef;
+			}
+		}
+	}
 	return {'config_file'=> $current_config_file,'lib_dir' => $current_lib_dir, 'base_lib_dir' => $current_base_lib_dir,
 			'bin_dir' =>$current_bin_dir, 'version' =>$current_version};
 }
