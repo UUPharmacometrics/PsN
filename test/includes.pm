@@ -116,7 +116,7 @@ sub get_command
         $command_name ne "covmat" and $command_name ne "psn" and $command_name ne "psn_clean" and $command_name ne "psn_options") {
         $args = ' ' . join(' ', @ARGV);
 		if ($command_name ne "boot_scm" and $command_name ne "update_inits" and $command_name ne "update" and 
-			$command_name ne "xv_scm" and $command_name ne "frem" and $command_name ne "sse"  and $command_name ne "vpc" ){
+			$command_name ne "xv_scm" and $command_name ne "frem" and $command_name ne "sse"  and $command_name ne "vpc" and $command_name ne "rawresults" ){
 			$args .= ' -abort_on_fail ';
 		}
     }
