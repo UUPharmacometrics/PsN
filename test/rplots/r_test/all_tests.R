@@ -1,3 +1,6 @@
 library(testthat)
 test_file("cdd/test_cdd_1.R")
 test_file("cdd/test_cdd_2.R")
+test_file("simeval/test_ebe_npde.R")
+test_file("simeval/test_cwres_iwres.R")
+test_file("simeval/test_ofv.R")
