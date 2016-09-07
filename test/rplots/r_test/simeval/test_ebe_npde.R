@@ -145,9 +145,9 @@ test_that("If function data.for.plots works as expected",{
 
 #.....................................   (5) Test plot_1   .................................    
 list_plot_1 <- plot_1(ebenpde_tmp,theor_distance,emp_distance_sort,index_emp_distance,
-                 out_distance,n.subjects,outlying_criteria=1,do_outlier_plot=TRUE,model.filename)
+                 out_distance,n.subjects,outlying_criteria=1,do_outlier_plot=FALSE,model.filename)
 a_list_plot_1 <- plot_1(ebenpde_tmp,theor_distance,emp_distance_sort,index_emp_distance,
-                 out_distance,n.subjects,outlying_criteria=-1,do_outlier_plot=TRUE,model.filename)
+                 out_distance,n.subjects,outlying_criteria=-1,do_outlier_plot=FALSE,model.filename)
 b_list_plot_1 <- plot_1(ebenpde_tmp,theor_distance,emp_distance_sort,index_emp_distance,
                         out_distance,n.subjects,outlying_criteria=2,do_outlier_plot=FALSE,model.filename)
 c_list_plot_1 <- plot_1(ebenpde_tmp_a,theor_distance_a,emp_distance_sort_a,index_emp_distance_a,
@@ -228,16 +228,16 @@ test_that("If function plot_1 works as expected",{
 #..................................... (6) Test plot_2  ......................................
 list_plot_2 <- plot_2(ebenpde_tmp,emp_distance_sort,theor_distance,index_emp_distance,
                  noutlier,flag,n.subjects,n.eta=2,outlying_criteria=1,
-                 outlier_id_row,do_outlier_plot=TRUE,model.filename)
+                 outlier_id_row,do_outlier_plot=FALSE,model.filename)
 a_list_plot_2 <- plot_2(ebenpde_tmp,emp_distance_sort,theor_distance,index_emp_distance,
                       a_noutlier,a_flag,n.subjects,n.eta=2,outlying_criteria=1,
-                      a_outlier_id_row,do_outlier_plot=TRUE,model.filename)
+                      a_outlier_id_row,do_outlier_plot=FALSE,model.filename)
 b_list_plot_2 <- plot_2(ebenpde_tmp,emp_distance_sort,theor_distance,index_emp_distance,
                         b_noutlier,b_flag,n.subjects,n.eta=2,outlying_criteria=2,
                         b_outlier_id_row,do_outlier_plot=FALSE,model.filename)
 c_list_plot_2 <- plot_2(ebenpde_tmp_a,emp_distance_sort_a,theor_distance_a,index_emp_distance_a,
                         c_noutlier,c_flag,n.subjects_a,n.eta=3,outlying_criteria=-3,
-                        c_outlier_id_row,do_outlier_plot=TRUE,model.filename)
+                        c_outlier_id_row,do_outlier_plot=FALSE,model.filename)
 # unlist information
 vector_theor_dist <- round(list_plot_2$vector_theor_dist,6)
 noutlier <- list_plot_2$noutlier
