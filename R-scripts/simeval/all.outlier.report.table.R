@@ -1,5 +1,4 @@
-all.outlier.report.table <- function(report.file.name,
-                               all.iofv.file,n.subjects,samples,ofv_outlier_criteria,
+all.outlier.report.table <- function(all.iofv.file,n.subjects,samples,ofv_outlier_criteria,
                                ebe.npde.file,n.eta,outlying_criteria,
                                residual.outliers.file) {
 
