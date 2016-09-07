@@ -23,7 +23,7 @@ find_r_files_in_subdir <- function(toolname,topdir) {
   common.files <- dir(path=common.folder.directory)
   common_directory_and_file <- c()
   for (i in 1:length(common.files)) {
-    common_directory_and_file[i][i] <- paste0(common.folder.directory,"/",common.files[i])
+    common_directory_and_file[i] <- paste0(common.folder.directory,"/",common.files[i])
   }
   directory_and_file <- c(directory_and_file,common_directory_and_file)
   return(directory_and_file)
