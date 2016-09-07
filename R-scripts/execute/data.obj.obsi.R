@@ -1,12 +1,14 @@
 data.obj.obsi <- function(obj.data.dir,obsi.data.dir) {
   # read in data tables
-  OBJ_data <- read.table(obj.data.dir,header = TRUE, skip=1)
-  OBSi_data <- read.table(obsi.data.dir,header = TRUE, skip=1)
+  OBJ_data_input <- read.table(obj.data.dir,header = TRUE, skip=1)
+  OBSi_data_input <- read.table(obsi.data.dir,header = TRUE, skip=1)
   
-  if (exists("OBJ_data") && (exists("OBSi_data"))) {
+  if (exists("OBJ_data_input") && (exists("OBSi_data_input"))) {
     #order data frames by ID numbers
-    OBJ_data <- OBJ_data[order(OBJ_data$ID),]
-    OBSi_data <- OBSi_data[order(OBSi_data$ID),]
+    OBJ_data <- OBJ_data_input[order(OBJ_data_input$ID),]
+    rownames(OBJ_data) <- NULL
+    OBSi_data <- OBSi_data_input[order(OBSi_data_input$ID),]
+    rownames(OBSi_data) <- NULL
     
     # get OBJ vaslues
     OBJ_vector <- OBJ_data$OBJ
@@ -21,7 +23,10 @@ data.obj.obsi <- function(obj.data.dir,obsi.data.dir) {
     }
     
     # create list of output, just for testing
-    list_out <- list(OBJ_data= OBJ_data,
+    list_out <- list(OBJ_data_input=OBJ_data_input,
+                     OBSi_data_input=OBSi_data_input,
+                     OBJ_data= OBJ_data,
+                     OBSi_data=OBSi_data,
                      OBJ_vector=OBJ_vector,
                      OBSi_vector=OBSi_vector)
     return(list_out)
