@@ -1,3 +1,4 @@
+options(warn=-1) # don't show warnings
 library(testthat)
 # Used libraries
 library(PerformanceAnalytics)
@@ -9,3 +10,4 @@ test_file("simeval/test_ebe_npde.R")
 test_file("simeval/test_cwres_iwres.R")
 test_file("simeval/test_ofv.R")
 test_file("simeval/test_outlier_report_table.R")
+test_file("execute/test_data.obj.obsi.R")
