@@ -5,7 +5,7 @@
 
 use strict;
 use warnings;
-use Test::More tests=>8;
+use Test::More;
 use Test::Exception;
 use Math::Random;
 use FindBin qw($Bin);
@@ -51,6 +51,21 @@ $data = data->new(
 is($data->count_ind,59,'count boot data 1');
 
 
+cp($includes::testfiledir.'/data/with_dates_and_times.csv',$tempdir);
+($new_datas, $incl_ids, $incl_keys, $new_subjects, $orig_count_ind )
+	= data::bootstrap_create_datasets( output_directory   => $tempdir,
+	name_stub   => 'bsa_',
+	samples     => 2,
+	subjects    => {},
+	stratify_on => undef, 
+	input_filename => $tempdir.'with_dates_and_times.csv',
+	ignoresign => '@',
+	idcolumn => 1,  #number not index
+	missing_data_token => '-99'	);
+
+is($orig_count_ind,11,'bootstrap inds');
+is($new_subjects->{'default'},11,'bootstrap subjects');
+
 remove_test_dir($tempdir);
 
-#done_testing;
+done_testing;
