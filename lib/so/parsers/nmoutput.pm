@@ -278,6 +278,13 @@ sub _parse_lst_file
                 push @fixed, $option->fix;
             }
 
+            #Set remaining columnTypes to undefined
+            for my $ct (@all_types) {
+                if (not defined $ct) {
+                    $ct = "undefined";
+                }
+            }
+
             $self->labels_hash({ labels => \@all_labels, on_sd_scale => \@on_sd_scale, column_types => \@all_types });
 
             if ($is_evaluation or $estimation_step_run or $simulation_step_run) {
