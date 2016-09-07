@@ -1,6 +1,4 @@
 library(testthat)
-library(PerformanceAnalytics)
-require("PEIP")
 
 tool = 'simeval'
 
