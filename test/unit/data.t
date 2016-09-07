@@ -29,8 +29,59 @@ my $dotdata = data->new(
 	ignoresign => '@',
 	ignore_missing_files => 0);
 is($dotdata->column_count,9,'column count 2');
+is($dotdata->count_ind,10,'count indiv dotdata 1');
 
 
+is_deeply($dotdata->factors(column=> 3),{ 0 =>[0,1,2,3,4,5,6,7,8,9],1 =>[0,1,2,3,4,5,6,7,8,9], 
+										  2 =>[0,1,2,3,4,5,6,7,8,9],3 =>[0,1,2,3,4,5,6,7,8,9],
+										  'Non-unique values found' => 1},'factors a');
+
+is_deeply($dotdata->factors(column=> 3, return_occurences => 1), 
+		  {0 =>  10,1=>10,2=> 10, 3=>10,'Non-unique values found' => 1}, 'factors b');
+is_deeply($dotdata->factors(column_head=> 'TIME', return_occurences => 1), 
+		  {0 =>  10,1=>10,2=> 10, 3=>10,'Non-unique values found' => 1}, 'factors c');
+
+is_deeply($dotdata->factors(column=> 3, unique_in_individual => 0),{ 0 =>[0,1,2,3,4,5,6,7,8,9],1 =>[0,1,2,3,4,5,6,7,8,9], 
+																	 2 =>[0,1,2,3,4,5,6,7,8,9],3 =>[0,1,2,3,4,5,6,7,8,9]},'factors d');
+
+is_deeply($dotdata->factors(column=> 3, return_occurences => 1, unique_in_individual =>0), 
+		  {0 =>  10,1=>10,2=> 10, 3=>10}, 'factors e');
+
+#		 column => { isa => 'Int', optional => 1 }, #number not index
+#		 column_head => { isa => 'Str', optional => 1 },
+#		 unique_in_individual => { isa => 'Bool', default => 1, optional => 1 },
+#		 verbose => { isa => 'Bool', default => 0, optional => 1 },
+#		 ignore_missing => { isa => 'Bool', default => 0, optional => 1 },
+#		 return_occurences => { isa => 'Bool', default => 0, optional => 1 }
+
+is_deeply($dotdata->factors(column=> 2),{ 0 =>[0,1,2,3,4,5,6,7,8,9],'.' =>[0,1,2], 
+										  30 =>[3],40 =>[4],50 =>[5],60 =>[6],70 =>[7],80 =>[8],90 =>[9],
+										  'Non-unique values found' => 1},'factors f');
+
+is_deeply($dotdata->factors(column=> 2,ignore_missing => 1),{ 0 =>[0,1,2,3,4,5,6,7,8,9],'.' =>[0,1,2], 
+															  30 =>[3],40 =>[4],50 =>[5],60 =>[6],70 =>[7],80 =>[8],90 =>[9],
+															  'Non-unique values found' => 1},'factors g');
+
+is_deeply($dotdata->factors(column=> 2,ignore_missing => 1, unique_in_individual => 0),{ 0 =>[0,1,2,3,4,5,6,7,8,9],'.' =>[0,1,2], 
+										  30 =>[3],40 =>[4],50 =>[5],60 =>[6],70 =>[7],80 =>[8],90 =>[9]},'factors h');
+
+my @parts = @{$dotdata->individuals()}[0 .. 2];
+
+my $dotpartdata = data->new( 
+	idcolumn             => 1,
+	filename             => 'dummy',
+	directory            => $includes::testfiledir,
+	ignoresign => '@',
+	ignore_missing_files => 0,
+	header => $dotdata->header,
+	individuals => \@parts
+	);
+
+is_deeply($dotpartdata->factors(column=> 2,ignore_missing => 1, unique_in_individual => 1),
+		  { 0 =>[0,1,2],'.' =>[0,1,2]},'factors i');
+
+is_deeply($dotpartdata->factors(column=> 2,ignore_missing => 0, unique_in_individual => 1),
+		  { 0 =>[0,1,2],'.' =>[0,1,2],'Non-unique values found' => 1},'factors j');
 
 # Test of reconcile_column
 is_deeply ($data->reconcile_column(template_values=>[1,2,3,4], old_values=> [1,1,1], equal_obs =>1), [1,2,3], 
@@ -104,6 +155,7 @@ is_deeply ($newdata->individuals()->[7]->subject_data(),['8,60,0,64.938,5,66,1,1
 							'8,60,3,87.51,5,66,1,1,2'],"randomized data indiv 7");
 
 unlink("$tempdir/$filename");
+
 random_set_seed_from_phrase('12345');
 $arr = $dotdata->_randomize_data(samples => 1,rand_index=> 1, equal_obs=>0, directory => $tempdir);
 

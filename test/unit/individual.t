@@ -11,8 +11,14 @@ use data::individual;
 
 #factors
 my $ind = data::individual->new(idcolumn => 1, subject_data => ['1,0.0000e0,1.0000e0', '1,1.0000e0,0.0000e0', '1,1.0000e0,0.0000e0']);
-my %factors = %{$ind->factors(column => 2)};
+my %factors = %{$ind->factors(column => 2)}; #column number, not index
 is_deeply([sort keys %factors], ['0.0000e0', '1.0000e0'], "data::individual->factors");
+is_deeply(\%factors,{'0.0000e0' => [0], '1.0000e0' =>[1,2]},"data::individual->factors 2");
+
+$ind = data::individual->new(idcolumn => 1, subject_data => ['1,0.0000e0,1.0000e0,0', '1,1.0000e0,0.0000e0,.', '1,1.0000e0,0.0000e0,-99']);
+%factors = %{$ind->factors(column => 4)};
+is_deeply(\%factors,{'0' => [0], '.' =>[1], '-99' => [2]},"data::individual->factors 3");
+
 
 #update_idnumber
 $ind = data::individual->new(idcolumn => 1, subject_data => ['1,0.0000e0,1.0000e0', '1,1.0000e0,0.0000e0', '1,1.0000e0,0.0000e0']);

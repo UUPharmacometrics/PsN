@@ -17,7 +17,6 @@ use linear_algebra;
 
 has 'individuals' => ( is => 'rw', isa => 'ArrayRef[data::individual]' );
 has 'column_head_indices' => ( is => 'rw', isa => 'HashRef[Str]', default => sub { {} } );
-has 'found_missing_data' => ( is => 'rw', isa => 'HashRef[Str]', default => sub { {} } );
 has 'comment' => ( is => 'rw', isa => 'ArrayRef' );
 has 'directory' => ( is => 'rw', isa => 'Maybe[Str]' );
 has 'filename' => ( is => 'rw', isa => 'Str' );
@@ -1071,7 +1070,7 @@ sub factors
 					 $ifactors[1] eq '.' ||
 					 $ifactors[0] == $self->missing_data_token ||
 					 $ifactors[1] == $self->missing_data_token)){ 
-				%factors = ( 'Non-unique values found' => 1 );
+				$factors{'Non-unique values found'} = 1;
 				print "Individual ".$individual->idnumber." factors ".join(',',@ifactors)."\n" if ($verbose);
 			}
 		}
@@ -1192,38 +1191,6 @@ sub fractions
 	return \%fractions;
 }
 
-sub have_missing_data
-{
-	my $self = shift;
-	my %parm = validated_hash(\@_,
-		 column => { isa => 'Int', optional => 1 },
-		 column_head => { isa => 'Str', optional => 1 }
-	);
-	my $column = $parm{'column'};
-	my $column_head = $parm{'column_head'};
-	my $return_value;
-
-	# Either I<column> or I<column_head> must be specified.
-	#
-	# This method looks through the data column with index I<column> or
-	# (optional) header name I<column_head> and returns O if no missing
-	# data indicator was found or 1 otherwise.
-
-	my $first_id = $self->individuals->[0];
-	croak("No individuals defined in data object based on " . $self->full_name ) unless ( defined $first_id );
-	my @data_row = split( /,/ , $first_id->subject_data->[0] );
-	unless ( defined $column  && defined( $data_row[$column-1] ) ) {
-	  unless(defined($column_head) && defined($self->column_head_indices->{$column_head})){
-	    die "Error in data->have_missing_data: unknown column: \"$column_head\" or invalid column number: \"$column\"\n";
-	  } else {
-	    $column = $self->column_head_indices->{$column_head};
-	  }
-	}
-
-	$return_value = (defined $self->found_missing_data and (defined $self->found_missing_data->{$column}))? $self->found_missing_data->{$column} : 0;
-
-	return $return_value;
-}
 
 sub max
 {
@@ -2743,13 +2710,6 @@ sub _read_individuals
 			#If we have not found first individual to read then skip to next line in file
 
 			# Check if column miss data at some row (This adds about 30% of init time)
-			my $mdt = $self->missing_data_token; #use regexp on whole line?
-			if (defined $mdt){
-				for ( my $i = 0; $i <= $#{$full_row}; $i++ ) {			
-					$self->found_missing_data->{$i+1} = 1
-						if (($full_row->[$i] ne '') and ($full_row->[$i] ne '.')  and ($full_row->[$i] == $mdt) ); # == is slower but safer than eq
-				}
-			}
 			if ( $new_ID != $old_ID ) {
 				my @subject_data = @init_data;
 				my $id = data::individual->new ( idcolumn     => $idcol,
@@ -3050,7 +3010,8 @@ sub scm_calculate_covariate_statistics
 													   unique_in_individual => 0,
 													   return_occurences => 1 );
 			# Statistics
-			$results->{$cov}{'have_missing_data'} = $self -> have_missing_data( column => $model_column_numbers{$cov} );
+			$results->{$cov}{'have_missing_data'} = _have_missing_values(factors => $results->{$cov}{'factors'},
+																		 missing_data_token => $missing_data_token); #$self???
 
 			($results->{$cov}{'median'},$results->{$cov}{'min'},$results->{$cov}{'max'},$results->{$cov}{'mean'}) =
 				$self -> scm_calculate_continuous_statistics(covariate => $cov,
@@ -3091,7 +3052,10 @@ sub scm_calculate_covariate_statistics
 															unique_in_individual => 0,
 															return_occurences => 1 );
 			# Statistics
-			$results->{$cov}{'have_missing_data'} = $self -> have_missing_data( column => $model_column_numbers{$cov} );
+			$results->{$cov}{'have_missing_data'} = _have_missing_values(factors => $results->{$cov}{'factors'},
+																		 missing_data_token => $missing_data_token); #$self???
+
+
 			( $results->{$cov}{'median'},$results->{$cov}{'min'},	$results->{$cov}{'max'} ) =
 				$self -> scm_calculate_categorical_statistics(covariate => $cov,
 															  column_number => $model_column_numbers{$cov},
