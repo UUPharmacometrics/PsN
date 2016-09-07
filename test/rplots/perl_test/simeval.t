@@ -50,10 +50,11 @@ $toolobject -> create_R_script(tool_name => $toolname);
 
 
 
-my %pdf_files_pages=($tempdir.'rundir/PsN_ebe_npde_plots.pdf' => 3,
-					 $tempdir.'rundir/PsN_OFV_plots.pdf' => 4,
+my %pdf_files_pages=($tempdir.'rundir/PsN_ebe_npde_plots.pdf' => 4,
+					 $tempdir.'rundir/PsN_OFV_plots.pdf' => 6,
 					 $tempdir.'rundir/PsN_residual_plots.pdf' => 4,
-					 $tempdir.'rundir/PsN_simeval_vpc_plots.pdf' => 2);
+					 $tempdir.'rundir/PsN_simeval_vpc_plots.pdf' => 2,
+					 $tempdir.'rundir/PsN_outlier_report_table.pdf' => 1);
 
 includes::test_pdf_pages(\%pdf_files_pages);
 
