@@ -8,10 +8,22 @@ use File::Copy 'cp';
 use FindBin qw($Bin);
 use lib "$Bin/.."; #location of includes.pm
 use includes; #file with paths to PsN packages and $path variable definition
+use ui;
 
 our $tempdir = create_test_dir('system_benchmark');
 chdir($tempdir);
 my $model_dir = $includes::testfiledir;
+
+my $options = get_psn_options;
+if (defined $options->{'silent'}){
+	ui->silent($options->{'silent'});
+}
+if (defined $options->{'nm_version'}){
+	ui->print(category => 'all', message => "nm_version is ".$options->{'nm_version'}."\n");
+}else{
+	my ($major,$minor,$version) = get_major_minor_nm_version;
+	ui->print(category => 'all', message => "nm_version is 'default' ($major.$minor)"."\n");
+}
 
 my @commands = (
 #	get_command('benchmark') . " $model_dir/pheno_cond.mod $model_dir/pheno.mod -merge -record_opt=est:METH=ZERO,METH=COND,,est:none,MAXEVAL=10 -alt_nonmem=740 -replicates=2 ",
