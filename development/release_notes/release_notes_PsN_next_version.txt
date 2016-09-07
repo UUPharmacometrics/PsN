@@ -119,7 +119,8 @@ New features implemented by William S. Denney of Human Predictions:
 
    ___bootstrap___
 
-
+- Warn if the number of individuals in the data set is different from the number if individuals
+  NONMEM printed in the original run lst-file.
 
    ___vpc/npc___
 
