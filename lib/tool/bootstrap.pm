@@ -830,6 +830,22 @@ sub general_setup
 			trace(tool => 'bootstrap', message => "Created bootstrapped datasets in ".
 				$self ->directory().'m'.$model_number, level => 1);
 
+			if (defined $output and (defined $output->nind) and (defined $output->nind->[($i-1)])){
+				if ($output->nind->[($i-1)] > $orig_count_ind){
+					ui->print(category => 'all',
+							  message => "\n\nWARNING: The number of individuals in the input dataset ".
+							  "is $orig_count_ind, but in the original model lst-file NONMEM says number of individuals is ".$output->nind->[($i-1)].
+							  ". This is an indication of IGNORE statements that cause all data records for some individuals to be ".
+							  "excluded. It is recommended to filter the original dataset first with relevant IGNORE statements ".
+							  "and then run bootstrap afterwards.");
+				}elsif ($output->nind->[($i-1)] < $orig_count_ind){
+					ui->print(category => 'all',
+							  message => "\n\nWARNING: The number of individuals in the input dataset ".
+							  "is $orig_count_ind, but in the original model lst-file NONMEM says number of individuals is ".$output->nind->[($i-1)].
+							  ". This is an indication of a different data file used for the bootstrap run, or an error in the data file parsing");
+				}
+			}
+			
 			for ( my $j = 0; $j < $self->samples(); $j++ ) {
 				my ($model_dir, $filename) = OSspecific::absolute_path( $self ->directory().'/m'.$model_number, 
 					'bs_pr'.$i.'_'.($j+1).'.mod' );
