@@ -1,5 +1,5 @@
 <h2>Mailing List </h2>
- <p align="justify">The PsN mailing list is hosted by SourceForge. To make life easier for you, we have placed the list administration pages in a convenient inline frame, below.</p>
+ <p align="justify">The PsN mailing list is hosted by SourceForge. To make life easier for you, we have placed the list administration pages in a convenient inline frame, below. Please note that only subscribers of the list can post messages.</p>
  <IFRAME SRC="http://lists.sourceforge.net/lists/listinfo/psn-general" WIDTH="790" HEIGHT="600" align="center">
  <!-- Alternate content for non-supporting browsers -->
  
