@@ -44,7 +44,9 @@ sub get_logfile{
 		#use tempdir from psn.conf instead of default
 		$dir = $PsN::config -> {'_'} -> {'PsN_test_logfile_dir'};
 	}
-	my $logfile = $dir. "/psn_system_test_log_".$version.".txt";
+	my $psn = $PsN::version;
+	$psn =~ s/\./_/g;
+	my $logfile = $dir. "/psn_".$psn."_testlog_".$version.".txt";
 	return $logfile;
 }
 
