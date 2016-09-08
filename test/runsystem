@@ -29,11 +29,21 @@ if (scalar(@nm_versions) == 0) {
 # If the first nmversion is "all" get all versions from psn.conf
 if ($nm_versions[0] eq "all") {
     @nm_versions = ();
-    foreach my $version (keys %{$PsN::config->{nm_versions}}) {
-        if ($version ne "default") {
-            push @nm_versions, $version;
-        }
-    }
+	if (defined $PsN::config and (defined $PsN::config-> {'_'}) and
+		defined ($PsN::config -> {'_'} -> {'PsN_test_all'})){
+		my @tmp = split(',',$PsN::config -> {'_'} -> {'PsN_test_all'});
+		foreach my $version (@tmp){
+			if (defined $PsN::config->{nm_versions}->{$version}){
+				push @nm_versions, $version;
+			}
+		}
+	}else{
+		foreach my $version (keys %{$PsN::config->{nm_versions}}) {
+			if ($version ne "default") {
+				push @nm_versions, $version;
+			}
+		}
+	}
 }
 
 sub get_logfile{

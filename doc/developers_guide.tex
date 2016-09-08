@@ -133,8 +133,13 @@ There is also an option to run the system tests for all NONMEM versions availabl
 \begin{verbatim}
 ./runsystem all
 \end{verbatim}
+The set of NONMEM version run by \verb|./runsystem all| can be changed by setting\\
+\verb|PsN_test_all = list,of,versions| \\
+in the top section of psn.conf, i.e. before any [bracket section].
+Note that PsN\_test\_all is case sensitive.
+
 The log messages from PsN will be redirected to a file in the user's home directory or, if on Windows, the
-Desktop folder. The location of the log file can be changed by setting
+Desktop folder. The location of the log file can be changed by setting\\
 \verb|PsN_test_logfile_dir = /full/path/to/existing/directory| \\
 in the top section of psn.conf, i.e. before any [bracket section].
 Note that PsN\_test\_logfile\_dir is case sensitive. Note also that if prove option -j is used, log messages from
