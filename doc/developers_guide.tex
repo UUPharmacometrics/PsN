@@ -1,5 +1,5 @@
 \input{inputs/format_header.tex}
-\guidetitle{Developer's guide}{2016-05-05}
+\guidetitle{Developer's guide}{2016-09-08}
 \usepackage{hyperref}
 
 \begin{document}
@@ -133,7 +133,12 @@ There is also an option to run the system tests for all NONMEM versions availabl
 \begin{verbatim}
 ./runsystem all
 \end{verbatim}
-
+The log messages from PsN will be redirected to a file in the user's home directory or, if on Windows, the
+Desktop folder. The location of the log file can be changed by setting
+\verb|PsN_test_logfile_dir = /full/path/to/existing/directory| \\
+in the top section of psn.conf, i.e. before any [bracket section].
+Note that PsN\_test\_logfile\_dir is case sensitive. Note also that if prove option -j is used, log messages from
+parallel tests will be intermixed.
 \subsection{Test coverage}
 In the current release we have excellent test coverage for execute (parsing NONMEM control streams, 
 running models, tweaking initial estimates, and reading of final estimates from NONMEM output and reporting 
@@ -153,10 +158,11 @@ but not of control stream manipulation.
 \begin{itemize}
     \item The sse unit tests will fail unless File::Copy::Recursive is installed.
 	\item To speed up testing it is advised to set the nmfe option -prdefault in the psn.conf (add the line nmfe\_options=-prdefault).
-	\item If the tests are to be run on a cluster a setup of a temporary directory that is reachable from all nodes is needed in includes.pm. Edit test/includes.pm and change the row that sets the \$tempdir to \$tempdir = <my path to an already created temporary directory that is reachable from all nodes>;
-	\item If the tests are to be run on Mac, a setup of a temporary directory is needed in includes.pm. 
-    Edit test/includes.pm and change the row that sets the \$tempdir to \$tempdir = <my path to an already created temporary directory>;
-
+	\item If the tests are to be run on a cluster or on a Mac a setup of a temporary directory is needed. Set\\
+    \verb|PsN_test_tempdir = /full/path/to/existing/empty/directory/| \\
+    in the top section of psn.conf, i.e. before any [bracket section].
+     If testing on a cluster the directory must be reachable from all nodes.
+     Note that PsN\_test\_tempdir is case sensitive.
 	\item For NONMEM 7.1.0 and 7.1.2 the system tests will print out a lot of warnings like this:
 \begin{verbatim}
 Warning: Line truncated at (1)

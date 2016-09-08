@@ -2,12 +2,14 @@
 
 # Runs the system tests for multiple versions of NONMEM
 # All arguments starting with "-" will be passed through to prove
-# All other arguemnts are treated as nonmem versions to run
+# All other arguments are treated as nonmem versions to run
 # For example: runsystem nm72 nm73 -j4
 
 use strict;
 use Config;
 use includes;
+use ext::File::HomeDir;
+
 
 my @prove_args;
 my @nm_versions;
@@ -34,7 +36,21 @@ if ($nm_versions[0] eq "all") {
     }
 }
 
+sub get_logfile{
+	my $version = shift;
+	my $dir = home();
+	if (defined $PsN::config and (defined $PsN::config-> {'_'}) and
+		defined ($PsN::config -> {'_'} -> {'PsN_test_logfile_dir'})){
+		#use tempdir from psn.conf instead of default
+		$dir = $PsN::config -> {'_'} -> {'PsN_test_logfile_dir'};
+	}
+	my $logfile = $dir. "/psn_system_test_log_".$version.".txt";
+	return $logfile;
+}
+
 foreach my $nmversion (@nm_versions) {
+	my $logfile = get_logfile($nmversion);
     print "=== Running system tests for NONMEM version: $nmversion ===\n";
-    system("prove system -r @prove_args :: -nm_version=$nmversion -silent");
+    print "=== log file is $logfile\n";
+    system("prove system -r @prove_args > $logfile 2>&1 :: -nm_version=$nmversion "); #no -silent since redirect STDERR
 }
