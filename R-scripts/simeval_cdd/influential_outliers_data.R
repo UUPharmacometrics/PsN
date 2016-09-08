@@ -1,7 +1,8 @@
-influential_outliers_data <- function(all.iofv.file,raw.results.file,skipped.id.file) {
+influential_outliers_data <- function(all.iofv.file,n.subjects,samples,ofv_outlier_criteria,
+                                      raw.results.file,skipped.id.file) {
   # GET OUTLIERS FROM SIMEVAL 
   # simeval (iOFV RES) ------------------------------------------------------------
-  list_i_ofv_res <- i_ofv_res(all.iofv.file,n.subjects=74,samples=300,ofv_outlier_criteria=3) # use function
+  list_i_ofv_res <- i_ofv_res(all.iofv.file,n.subjects,samples,ofv_outlier_criteria) # use function
   simeval_id_sorted <- list_i_ofv_res$id_sorted
   iofv_res <- list_i_ofv_res$result$x
   outlier_ID <- list_i_ofv_res$outlier_ID
