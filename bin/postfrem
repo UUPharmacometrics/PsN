@@ -676,3 +676,6 @@ $rplot->add_preamble(code => [
 					 ]);
 
 $rplot->make_plots;
+if (-e $main_directory.'/Rplots.pdf'){
+	unlink($main_directory.'/Rplots.pdf');
+}
