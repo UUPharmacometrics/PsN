@@ -89,6 +89,10 @@ A new recommended but not required Perl library for runrecord: YAML::Tiny
 
    ___Test scripts___
 
+- The temp directory for the unit and system tests is configurable in psn.conf. See
+  Testing chapter in developers_guide.pdf.
+- runsystem will redirect PsN log messages to a file in the user's home directory,
+  or a directory set in psn.conf. See Testing chapter in developers_guide.pdf.
 
    ___runrecord___
 
