@@ -1,6 +1,6 @@
 \input{inputs/format_header.tex}
 \usepackage{amsmath}
-\guidetitle{FREM userguide}{2016-08-24}
+\guidetitle{FREM userguide}{2016-09-09}
 
 \begin{document}
 \newcommand{\guidetoolname}{frem}
@@ -287,20 +287,21 @@ Estimation is done in parallel with Model 6, if estimation of Model 6 was reques
 %\item If option -vpc is set, the script will also 
 %run the vpc1 model using estimates from FREM model as initial estimates,
 %and finally process output to generate a frem vpc model.
-\item Only if covariance step of Model 4 was not successful:
-Use sir to estimate the uncertainty of Model 4 parameters, see section Model 4 sir.
-\end{enumerate}
-
-\section{Model 4 sir}
-
-If estimation of Model 4 failed to even produce an ofv:
+\item Only if estimation of Model 4 failed to produce an ofv:
 \begin{enumerate}
 \item Create Model 7, which is a copy of Model 4 but with MAXEVAL=0.
 \item Run (Evaluate) Model 7.
 \item If evaluation of Model 7 also failed, then stop frem.
 \end{enumerate}
+\item Create an approximate covariance matrix, see section Proposal density for sir.
+This step is performed even if Model 4 covariance step was successful.
+\item Only if covariance step of Model 4 was not successful and option -run\_sir is set:
+Run sir with -covmat\_input and Model 4 or, if estimation of Model 4 did not produce ofv, Model 7.
+\end{enumerate}
 
-Create a proposal density to use with -covmat\_input option to sir:
+
+
+\section{Proposal density for sir}
 \begin{enumerate}
 \item Create an empty covariance matrix with dimensions for Model 4 estimated parameters.
 This matrix will hold the joined proposal covariance matrix.
@@ -333,7 +334,6 @@ OMEGA was estimated.
 If only $\hat{N}_{x}$ or $\hat{N}_{y}$ available, use the available. If neither available then
 cannot use formula, use rse fallback instead.
 
-Run sir with -covmat\_input and Model 4 or, if estimation of Model 4 did not produce ofv, Model 7.
 
 \section{Model 1}
 The input model, input dataset.

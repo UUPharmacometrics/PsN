@@ -142,7 +142,8 @@ New features implemented by William S. Denney of Human Predictions:
 -  put intermediate models in subdir intermediate_models instead of in m1. Handle PHI in addition to ETA in phi-file (non-classical methods), and multiple $EST (only results from last est are used).
 -  set NONINFETA=1 in last estimation if it is a classical method and NM-version > 7.2.
 -  new postprocessing script postfrem 
-- Rescale option is now default on.
+-  Rescale option is now default on.
+-  Create approximate proposal density for sir even if covariance step of Model 4 is successful.
 
    ___mcmp___
 

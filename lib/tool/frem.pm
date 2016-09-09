@@ -3223,76 +3223,82 @@ sub modelfit_setup
 
 	if ($self->estimate_regular_final_model){
 		#model 4
+		my $sir_model;
+		my $mod4ofv = $final_models->[0]->outputs->[0]->get_single_value(attribute => 'ofv');
+		my $sir_model_text;
+		if (not defined $mod4ofv){
+			ui->print(category => 'frem',
+					  message => 'Estimation of Model 4 failed to give ofv value. Creating Model 7.');
+			$self->prepare_model7(model => $final_models->[0]);
+			($frem_model7,$message) = $self->run_unless_run(numbers => [7],
+															subdirectory => 'final_models');
+			if (defined $message){
+				ui->print(category => 'frem',
+						  message => $message);
+				exit;
+			}else{
+				$sir_model = $frem_model7;
+				$sir_model_text = 'Model 7';
+			}
+		}else{
+			$sir_model = $final_models->[0];
+			$sir_model_text = 'Model 4';
+		}
+
 		my ($error,$message) = check_covstep(output => $final_models->[0]->outputs->[0]);
 		if ($error){
-			my $sir_model;
-			my $mod4ofv = $final_models->[0]->outputs->[0]->get_single_value(attribute => 'ofv');
-			if (not defined $mod4ofv){
-				ui->print(category => 'frem',
-						  message => 'Estimation of Model 4 failed to give ofv value. Creating Model 7.');
-				$self->prepare_model7(model => $final_models->[0]);
-				($frem_model7,$message) = $self->run_unless_run(numbers => [7],
-																subdirectory => 'final_models');
-				if (defined $message){
-					ui->print(category => 'frem',
-							  message => $message);
-					exit;
-				}else{
-					$sir_model = $frem_model7;
-					ui->print(category => 'frem',
-							  message => 'Trying to create proposal density to use in sir with Model 7');
-				}
-			}else{
-				$sir_model = $final_models->[0];
-				ui->print(category => 'frem',
-						  message => 'Covariance step of Model 4 not successful. Trying to create proposal density to use in sir');
-			}
-
-			my $proposal_filename = 'proposal_density.cov';
-
-			print_proposal_density(omega_orders => [$new_omega_order,[]],
-								   partial_outputs => [$output_model1,$frem_model2->outputs->[0]],
-								   full_model => $sir_model,# not updated
-								   reordered_model1 => $frem_model1,
-								   rse => $self->rse,
-								   directory => $self->directory,
-								   filename => $proposal_filename);
 			ui->print(category => 'frem',
-					  message => 'Printed proposal density for sir -covmat_input option to '.
-					  $proposal_filename.' in frem rundir '.$self->directory);
-			if ($self->run_sir){
-				#				chdir($self->directory);
-				ui->print(category => 'frem',
-						  message => 'Starting sir');
-				ui->category('sir');
-				my %options;
-#				$options{'samples'}=2000;
-#				$options{'resamples'}=1000;
-				$options{'problems_per_file'}=25;
-				$options{'covmat_input'} = $self->directory.$proposal_filename;
-				input_checking::check_options(tool => 'sir', options => \%options, model => $sir_model);
+					  message => 'Covariance step of Model 4 not successful. Trying to create proposal density to use in sir with '.
+					  $sir_model_text);
+		}else{
+			ui->print(category => 'frem',
+					  message => 'Covariance step of Model 4 was successful. Will create alternative proposal density for Model 4 sir');
+		}
 
-				my $sir = tool::sir->new ( %{common_options::restore_options(@common_options::tool_options)},
-										   %options,
-										   top_tool => 1,
-										   models				     => [ $sir_model ],
-										   template_file_rplots => 'sir_default.R',
-										   directory => $self->directory.'sir_dir1',
-					);
-
-				$sir-> print_options (cmd_line => 'sir final_models/'.$sir_model->filename.' -covmat_input='.$proposal_filename,
-									  toolname => 'sir',
-									  local_options => ["samples:s","resamples:s","covmat_input:s","problems_per_file:i"],
-									  common_options => \@common_options::tool_options) ;
-				$sir -> run;
-				$sir -> prepare_results();
-				$sir -> print_results();
-
-				ui->category('frem');
-				ui->print(category => 'frem',
-						  message => 'sir done');
-
-			}
+		my $proposal_filename = 'proposal_density.cov';
+		
+		print_proposal_density(omega_orders => [$new_omega_order,[]],
+							   partial_outputs => [$output_model1,$frem_model2->outputs->[0]],
+							   full_model => $sir_model,# not updated, but may have estimates of everything
+							   reordered_model1 => $frem_model1,
+							   rse => $self->rse,
+							   directory => $self->directory,
+							   filename => $proposal_filename);
+		ui->print(category => 'frem',
+				  message => 'Printed proposal density for sir -covmat_input option to '.
+				  $proposal_filename.' in frem rundir '.$self->directory);
+		if ($error and $self->run_sir){
+			#				chdir($self->directory);
+			ui->print(category => 'frem',
+					  message => 'Starting sir');
+			ui->category('sir');
+			my %options;
+			#				$options{'samples'}=2000;
+			#				$options{'resamples'}=1000;
+			$options{'problems_per_file'}=25;
+			$options{'covmat_input'} = $self->directory.$proposal_filename;
+			input_checking::check_options(tool => 'sir', options => \%options, model => $sir_model);
+			
+			my $sir = tool::sir->new ( %{common_options::restore_options(@common_options::tool_options)},
+									   %options,
+									   top_tool => 1,
+									   models				     => [ $sir_model ],
+									   template_file_rplots => 'sir_default.R',
+									   directory => $self->directory.'sir_dir1',
+				);
+			
+			$sir-> print_options (cmd_line => 'sir final_models/'.$sir_model->filename.' -covmat_input='.$proposal_filename,
+								  toolname => 'sir',
+								  local_options => ["samples:s","resamples:s","covmat_input:s","problems_per_file:i"],
+								  common_options => \@common_options::tool_options) ;
+			$sir -> run;
+			$sir -> prepare_results();
+			$sir -> print_results();
+			
+			ui->category('frem');
+			ui->print(category => 'frem',
+					  message => 'sir done');
+			
 		}
 	}
 	
