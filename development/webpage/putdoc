@@ -15,7 +15,7 @@ if ($user eq 'rikard'){
 	$user = 'k_harling,psn';
 }
 
-my $password = $ARGV[0];
+my $password = `zenity --password`;
 unless (length($password) > 1){
 	die "That is clearly not the right password";
 }

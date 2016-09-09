@@ -6,7 +6,8 @@ use FindBin qw($Bin);
 use lib "$Bin/../../lib";
 use PsN;
 chdir('/home/kajsa/kod-psn/PsN4/doc');
-my $password = $ARGV[0];
+
+my $password = `zenity --password`;
 
 my $user = 	`whoami`;
 chomp($user);
