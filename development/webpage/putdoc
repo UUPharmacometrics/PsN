@@ -5,18 +5,23 @@ use strict;
 use FindBin qw($Bin);
 use lib "$Bin/../../lib";
 use PsN;
-chdir('/home/kajsa/kod-psn/PsN4/doc');
-my $password = $ARGV[0];
-my $user = 'k_harling,psn';
 
-if (scalar(@ARGV)>1){
-	#assume second arg is user
-	$user=$ARGV[1];
+my $user = 	`whoami`;
+chomp($user);
+
+if ($user eq 'rikard'){
+	$user = 'rikardno,psn';
+}else{
+	$user = 'k_harling,psn';
 }
 
+my $password = $ARGV[0];
 unless (length($password) > 1){
 	die "That is clearly not the right password";
 }
+
+#assume this is run from development/webpage
+chdir('../../doc');
 
 print "Trying sftp for user $user\n";
 
@@ -24,7 +29,7 @@ my $host='web.sourceforge.net';
 my $path='htdocs/internal_release_pdfdocs';
 
 my $sftp = Net::SFTP::Foreign->new($host,
-								   user => 'k_harling,psn',
+								   user => $user,
 								   password => $password
 	);
 $sftp->die_on_error("Unable to establish SFTP connection");
