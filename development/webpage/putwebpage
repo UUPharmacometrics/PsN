@@ -1,0 +1,55 @@
+#!/usr/bin/perl
+use Net::SFTP::Foreign;
+use File::Glob;
+use strict;
+use FindBin qw($Bin);
+use lib "$Bin/../../lib";
+use PsN;
+chdir('/home/kajsa/kod-psn/PsN4/doc');
+my $password = $ARGV[0];
+
+my $user = 	`whoami`;
+chomp($user);
+
+if ($user eq 'rikard'){
+	$user = 'rikardno,psn';
+}else{
+	$user = 'k_harling,psn';
+}
+
+
+if (scalar(@ARGV)>1){
+	#assume second arg is user
+	$user=$ARGV[1];
+}
+
+unless (length($password) > 1){
+	die "That is clearly not the right password";
+}
+
+print "Trying sftp for user $user\n";
+
+my $host='web.sourceforge.net';
+my $path='htdocs';
+
+my $sftp = Net::SFTP::Foreign->new($host,
+								   user => $user,
+								   password => $password
+	);
+$sftp->die_on_error("Unable to establish SFTP connection");
+
+
+$sftp->setcwd($path) or die "unable to change cwd: " . $sftp->error;
+
+
+foreach my $file ('home.php','docs.php','download.php','install.php','list.php','buglist.php'){
+	my $localfile = 'htdocs/'.$file;
+	if (-e $localfile){
+		print "Try put $localfile\n";
+		$sftp->put($localfile,$file) or 	die "put failed: " . $sftp->error;
+	}else{
+		print "$localfile does not exist, skipping\n";
+	}
+}
+
+
