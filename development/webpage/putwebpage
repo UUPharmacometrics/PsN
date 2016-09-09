@@ -5,7 +5,6 @@ use strict;
 use FindBin qw($Bin);
 use lib "$Bin/../../lib";
 use PsN;
-chdir('/home/kajsa/kod-psn/PsN4/doc');
 
 my $password = `zenity --password`;
 
@@ -16,12 +15,6 @@ if ($user eq 'rikard'){
 	$user = 'rikardno,psn';
 }else{
 	$user = 'k_harling,psn';
-}
-
-
-if (scalar(@ARGV)>1){
-	#assume second arg is user
-	$user=$ARGV[1];
 }
 
 unless (length($password) > 1){
