@@ -46,6 +46,27 @@ if ($nm_versions[0] eq "all") {
 	}
 }
 
+sub get_os_string{
+	my $os='';
+	if (defined $Config{osname}){
+		if ($Config{osname} eq 'MSWin32'){
+			if (eval('require Win32')) { 
+				$os = Win32::GetOSName();
+			}
+		}else{
+			$os = $Config{osname};
+		}
+	}
+
+	$os =~ s/\s+//g; #remove whitespace
+	$os =~ s/\./_/g;
+	if (length($os)>0){
+		$os = '_'.$os;
+	}
+	return $os;
+}
+
+
 sub get_logfile{
 	my $version = shift;
 	my $dir = home();
@@ -56,7 +77,8 @@ sub get_logfile{
 	}
 	my $psn = $PsN::version;
 	$psn =~ s/\./_/g;
-	my $logfile = $dir. "/psn_".$psn."_testlog_".$version.".txt";
+	my $os = get_os_string;
+	my $logfile = $dir. "/psn_".$psn."_testlog".$os."_".$version.".txt";
 	return $logfile;
 }
 
