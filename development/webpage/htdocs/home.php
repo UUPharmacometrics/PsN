@@ -1623,8 +1623,9 @@ Perl-speaks-NONMEM is copyright <br>
 &copy;2006-2007 by Lars Lindbom.<br>
 &copy;2000-2005 by Lars Lindbom and Niclas Jonsson.<br>
 All rights reserved.</p>
-<p>Perl-speaks-NONMEM is licensed under <a href="http://www.gnu.org/licenses/old-licenses/gpl-2.0.html">version 2 of the GNU General
-Public License</a> as published by the Free Software Foundation.</p>
+<p>Perl-speaks-NONMEM is free and open source software: you can redistribute it and/or modify it
+under the terms of the <a href="http://www.gnu.org/licenses/old-licenses/gpl-2.0.html">GNU General Public License</a> as published by
+the Free Software Foundation, either version 2 of the License, or (at your option) any later version.</p>
 <p>
 PsN is developed and maintained by <a href="mailto:kajsa.harling@farmbio.uu.se">Kajsa Harling</a> and <a href="mailto:rikard.nordgren@farmbio.uu.se">Rikard Nordgren</a>
 .</p>

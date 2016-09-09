@@ -63,6 +63,8 @@ A new recommended but not required Perl library for runrecord: YAML::Tiny
 
    ___General___
 
+- PsN has updated its license. It is still licensed under the GNU public license version 2, but
+it is now possible to relicense PsN under any later versions of this license.
 - Bug fix: Some generated paths for the Rplots script were illegal R strings causing R to crash
 
    ___common_options___
