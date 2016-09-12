@@ -6,6 +6,8 @@ use FindBin qw($Bin);
 use lib "$Bin/../../lib";
 use PsN;
 
+my $password = `zenity --password`;
+
 my $user = 	`whoami`;
 chomp($user);
 
@@ -15,18 +17,14 @@ if ($user eq 'rikard'){
 	$user = 'k_harling,psn';
 }
 
-my $password = `zenity --password`;
 unless (length($password) > 1){
 	die "That is clearly not the right password";
 }
 
-#assume this is run from development/webpage
-chdir('../../doc');
-
 print "Trying sftp for user $user\n";
 
 my $host='web.sourceforge.net';
-my $path='htdocs/internal_release_pdfdocs';
+my $path='htdocs';
 
 my $sftp = Net::SFTP::Foreign->new($host,
 								   user => $user,
@@ -37,22 +35,9 @@ $sftp->die_on_error("Unable to establish SFTP connection");
 
 $sftp->setcwd($path) or die "unable to change cwd: " . $sftp->error;
 
-my @pdfs = <*.pdf>;
-#my @pdfs = ();
 
-foreach my $file (@pdfs){
-	print "Try put $file\n";
-	$sftp->put($file,$file) or 	die "put failed: " . $sftp->error;
-}
-
-$path = '../internal_release_install_packages';
-$sftp->setcwd($path) or die "unable to change cwd: " . $sftp->error;
-
-my $zip = 'PsN-'.$PsN::version.'.zip';
-my $tar = 'PsN-'.$PsN::version.'.tar.gz';
-
-foreach my $file ($zip,$tar){
-	my $localfile = '../'.$file;
+foreach my $file ('home.php','docs.php','download.php','install.php','list.php','buglist.php'){
+	my $localfile = 'htdocs/'.$file;
 	if (-e $localfile){
 		print "Try put $localfile\n";
 		$sftp->put($localfile,$file) or 	die "put failed: " . $sftp->error;
@@ -60,3 +45,5 @@ foreach my $file ($zip,$tar){
 		print "$localfile does not exist, skipping\n";
 	}
 }
+
+

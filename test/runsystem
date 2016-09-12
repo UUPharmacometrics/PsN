@@ -2,12 +2,14 @@
 
 # Runs the system tests for multiple versions of NONMEM
 # All arguments starting with "-" will be passed through to prove
-# All other arguemnts are treated as nonmem versions to run
+# All other arguments are treated as nonmem versions to run
 # For example: runsystem nm72 nm73 -j4
 
 use strict;
 use Config;
 use includes;
+use ext::File::HomeDir;
+
 
 my @prove_args;
 my @nm_versions;
@@ -27,14 +29,62 @@ if (scalar(@nm_versions) == 0) {
 # If the first nmversion is "all" get all versions from psn.conf
 if ($nm_versions[0] eq "all") {
     @nm_versions = ();
-    foreach my $version (keys %{$PsN::config->{nm_versions}}) {
-        if ($version ne "default") {
-            push @nm_versions, $version;
-        }
-    }
+	if (defined $PsN::config and (defined $PsN::config-> {'_'}) and
+		defined ($PsN::config -> {'_'} -> {'PsN_test_all'})){
+		my @tmp = split(',',$PsN::config -> {'_'} -> {'PsN_test_all'});
+		foreach my $version (@tmp){
+			if (defined $PsN::config->{nm_versions}->{$version}){
+				push @nm_versions, $version;
+			}
+		}
+	}else{
+		foreach my $version (keys %{$PsN::config->{nm_versions}}) {
+			if ($version ne "default") {
+				push @nm_versions, $version;
+			}
+		}
+	}
+}
+
+sub get_os_string{
+	my $os='';
+	if (defined $Config{osname}){
+		if ($Config{osname} eq 'MSWin32'){
+			if (eval('require Win32')) { 
+				$os = Win32::GetOSName();
+			}
+		}else{
+			$os = $Config{osname};
+		}
+	}
+
+	$os =~ s/\s+//g; #remove whitespace
+	$os =~ s/\./_/g;
+	if (length($os)>0){
+		$os = '_'.$os;
+	}
+	return $os;
+}
+
+
+sub get_logfile{
+	my $version = shift;
+	my $dir = home();
+	if (defined $PsN::config and (defined $PsN::config-> {'_'}) and
+		defined ($PsN::config -> {'_'} -> {'PsN_test_logfile_dir'})){
+		#use tempdir from psn.conf instead of default
+		$dir = $PsN::config -> {'_'} -> {'PsN_test_logfile_dir'};
+	}
+	my $psn = $PsN::version;
+	$psn =~ s/\./_/g;
+	my $os = get_os_string;
+	my $logfile = $dir. "/psn_".$psn."_testlog".$os."_".$version.".txt";
+	return $logfile;
 }
 
 foreach my $nmversion (@nm_versions) {
+	my $logfile = get_logfile($nmversion);
     print "=== Running system tests for NONMEM version: $nmversion ===\n";
-    system("prove system -r @prove_args :: -nm_version=$nmversion -silent");
+    print "=== log file is $logfile\n";
+    system("prove system -r @prove_args > $logfile 2>&1 :: -nm_version=$nmversion "); #no -silent since redirect STDERR
 }

@@ -18,6 +18,7 @@ my $options = get_psn_options;
 if (defined $options->{'silent'}){
 	ui->silent($options->{'silent'});
 }
+ui->print(category => 'all', message => "PsN version is PsN".$includes::version."\n");
 if (defined $options->{'nm_version'}){
 	ui->print(category => 'all', message => "nm_version is ".$options->{'nm_version'}."\n");
 }else{

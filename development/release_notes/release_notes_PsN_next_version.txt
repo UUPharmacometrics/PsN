@@ -63,6 +63,8 @@ A new recommended but not required Perl library for runrecord: YAML::Tiny
 
    ___General___
 
+- PsN has updated its license. It is still licensed under the GNU public license version 2, but
+it is now possible to relicense PsN under any later versions of this license.
 - Bug fix: Some generated paths for the Rplots script were illegal R strings causing R to crash
 
    ___common_options___
@@ -89,6 +91,10 @@ A new recommended but not required Perl library for runrecord: YAML::Tiny
 
    ___Test scripts___
 
+- The temp directory for the unit and system tests is configurable in psn.conf. See
+  Testing chapter in developers_guide.pdf.
+- runsystem will redirect PsN log messages to a file in the user's home directory,
+  or a directory set in psn.conf. See Testing chapter in developers_guide.pdf.
 
    ___runrecord___
 
@@ -136,7 +142,8 @@ New features implemented by William S. Denney of Human Predictions:
 -  put intermediate models in subdir intermediate_models instead of in m1. Handle PHI in addition to ETA in phi-file (non-classical methods), and multiple $EST (only results from last est are used).
 -  set NONINFETA=1 in last estimation if it is a classical method and NM-version > 7.2.
 -  new postprocessing script postfrem 
-- Rescale option is now default on.
+-  Rescale option is now default on.
+-  Create approximate proposal density for sir even if covariance step of Model 4 is successful.
 
    ___mcmp___
 

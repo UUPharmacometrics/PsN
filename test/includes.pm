@@ -12,10 +12,6 @@ require Exporter;
 our @ISA = qw(Exporter);
 our @EXPORT = qw(get_major_minor_nm_version get_command get_command_without_args get_psn_options cmp_float cmp_float_matrix cmp_float_array create_test_dir remove_test_dir copy_test_files like_file_row unlike_file_row do_course_tests cmp_relative redirect_stderr);
 
-# Change the $tempdir variable to the full path of an existing empty folder if you are testing on a Mac
-# Change the $tempdir variable to the full path of an existing empty folder accessible from all nodes if you are testing on a cluster
-my $tempdir = File::Spec->tmpdir;
-
 # Setup an include path to the lib directory
 # First get the path of this module and split out the directory part
 # Then make it into an absolute path
@@ -51,6 +47,20 @@ our $version = '';
 if (not $PsN::dev) {
 	$version = '-' . $PsN::version;
 }
+
+# Set 
+# PsN_test_tempdir = /full/path/to/existing/empty/directory/
+# in the top section of psn.conf, i.e. before any [bracket section]
+# if you are testing on a Mac or if you are testing on a cluster. 
+# If on cluster the directory must be reachable from all nodes.
+my $tempdir = File::Spec->tmpdir;
+
+if (defined $PsN::config and (defined $PsN::config-> {'_'}) and
+	defined ($PsN::config -> {'_'} -> {'PsN_test_tempdir'})){
+	#use tempdir from psn.conf instead of default
+	$tempdir = $PsN::config -> {'_'} -> {'PsN_test_tempdir'};
+}
+
 
 sub redirect_stderr
 {
