@@ -20,9 +20,7 @@ sub get_eta_count
 		);
 	my $header = $parm{'header'};
 
-	my $count;
-	#TODO
-
+	my $count = scalar grep(/^ETA\(\d\)$/, @{$header});;
 	return $count;
 }
 
@@ -36,11 +34,14 @@ sub get_eta_means
 	my $eta_count = $parm{'eta_count'};
 
 	my @means=();
-	#TODO
-	# loop over 1 to eta_count
+	
+	for (my $i = 0; $i < $eta_count; $i++) {
+		my @column = $table->get_column(name => "ETA(".($i+1).")");
+		$means[$i] = array::mean(@column)
+	}
+	#loop over 1 to eta_count
 	#use $table->get_column using column name created from loop index (ETA(1), ETA(2) etc), examples in table.t
 	#use array::mean , see array.t
-
 	return \@means;
 }
 
@@ -54,7 +55,13 @@ sub get_eta_covmatrix
 	my $eta_count = $parm{'eta_count'};
 
 	my $covmatrix=[];
-	#TODO
+	my $ETAmatrix=[];
+	#my @ETAS=();
+	for (my $i = 0; $i < $eta_count; $i++) {
+		#push(@ETAS,$table->get_column(name => "ETA(".($i+1).")"));
+		$ETAmatrix->[$i] = $table->get_column(name => "ETA(".($i+1).")")
+	}
+	my $error= linear_algebra::column_cov($ETAmatrix,$covmatrix);
 	#compute covariance matrix of all eta columns. 
 	# loop over 1 to eta_count
 	#use $table->get_column using column name created from loop index (ETA(1), ETA(2) etc), examples in table.t
@@ -73,9 +80,9 @@ sub get_pred_code
 	my $eta_count = $parm{'eta_count'};
 
 	my @code=();
-	#TODO
-
-	
+	for (my $i = 0; $i < $eta_count; $i++) {
+		$code[$i] = 'IF(EBE.EQ.'.($i+1).') Y=THETA('.($i+1).')+ETA('.($i+1).')+EPS('.($i+1).')*SQRT(VAR'.($i+1).($i+1).')';
+	}
 	return \@code;
 }
 
@@ -87,9 +94,16 @@ sub get_theta_code
 	my $eta_means = $parm{'eta_means'};
 
 	my @code=();
-	#TODO
-
-	
+	my $num = scalar(@{$eta_means});
+	for (my $i = 0; $i < $num; $i++) {
+		if ($eta_means->[$i] == 0) {
+			$eta_means->[$i] = 0.0001;
+			$code[$i] = $eta_means->[$i].' ; mean_EBE'.($i+1);
+		} else {
+			
+			$code[$i] = $eta_means->[$i].' ; mean_EBE'.($i+1);
+		}
+	}	
 	return \@code;
 }
 	
