@@ -1031,8 +1031,9 @@ sub select_best_model
 		if ( defined $run_results -> [$selected-1] -> {'failed'} ){
 			my @raw_row = [($run_no+1,'1','1','run failed: '.($run_results -> [$selected-1] -> {'failed'}))];
 			$self->raw_results([]) unless defined $self->raw_results;
+			$self->raw_nonp_results([]) unless defined $self->raw_nonp_results;
 			push( @{$self->raw_results}, @raw_row );
-			push( @{$self->raw_nonp_results}, @raw_row ) if (defined $self->raw_nonp_results);
+			push( @{$self->raw_nonp_results}, @raw_row );
 
 			#partial cleaning
 			# TODO update move_retry_files and use it here?
@@ -1082,10 +1083,11 @@ sub select_best_model
 			}
 
 			$self->raw_results([]) unless defined $self->raw_results;
+			$self->raw_nonp_results([]) unless defined $self->raw_nonp_results;
 			push( @{$self->raw_results}, @raw_results_rows );
-			push( @{$self->raw_nonp_results}, @{$queue_info_ref -> {'raw_nonp_results'} -> [$selected-1]} )
-			if (defined $self->raw_nonp_results and defined $queue_info_ref -> {'raw_nonp_results'} -> [$selected-1]);
-
+			if (defined $self->raw_nonp_results and defined $queue_info_ref -> {'raw_nonp_results'} -> [$selected-1]){
+				push( @{$self->raw_nonp_results}, @{$queue_info_ref -> {'raw_nonp_results'} -> [$selected-1]} );
+			}
 
 			$self -> move_model_and_output( final_model   => $candidate_model,
 											model         => $model,

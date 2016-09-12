@@ -63,7 +63,7 @@ has 'raw_results_header' => ( is => 'rw', isa => 'ArrayRef[Str]', clearer => 'cl
 			'covariance_step_warnings','estimate_near_boundary','rounding_errors','zero_gradients','final_zero_gradients','hessian_reset',
 			's_matrix_singular','significant_digits','condition_number','est_methods','nburn_set','burn_in_iter','burn_in_conv','model_run_time',
 			'subprob_est_time','subprob_cov_time','ofv','theta','omega','sigma','setheta','seomega','sesigma','shrinkage_eta','shrinkage_iwres','eigen'] }  );
-has 'raw_nonp_results_header' => ( is => 'rw', isa => 'ArrayRef[Str]', default => sub {  ['model','problem','subproblem','npofv','npeta','npomega'] } );
+has 'raw_nonp_results_header' => ( is => 'rw', isa => 'ArrayRef[Str]', default => sub {  ['model','problem','subproblem','minimization_successful','ofv','npofv','npeta','npomega'] } );
 has 'reference_object' => ( is => 'rw' );
 has 'results' => ( is => 'rw', isa => 'ArrayRef', default => sub { [] } );
 has 'results_file' => ( is => 'rw', isa => 'Str', default => 'psn_results.csv' );
