@@ -49,6 +49,10 @@ is(influential_individuals::get_eta_count(header => $array ),0,'get_eta_count te
 $array = ['SUBJECT_NO','ID','ETA(A)','ETA(B)','ETA(C)','OBJ'];
 
 is(influential_individuals::get_eta_count(header => $array ),0,'get_eta_count test f');
+
+$array = ['SUBJECT_NO','ID','ETA(A)','ETA(12)','ETAs(2)','ETA(2)3','ETA(2)a'];
+
+is(influential_individuals::get_eta_count(header => $array ),0,'get_eta_count test g');
    
 #sub get_eta_means
 
@@ -88,14 +92,14 @@ is_deeply(influential_individuals::get_pred_code(eta_count => 2),\@code,' get_pr
 is_deeply(influential_individuals::get_pred_code(eta_count => 4),\@code,' get_pred_code for 4 eta');
 
 #sub get_theta_code
-my @means =(-1.942467568E-04,-1.673126473E-02,-2.919216946E-02,0);
+my @means =(0,-1.673126473,-2.919216946,-1.942467568);
 
 #note that NONMEM does not accept initial value exactly 0 for a parameter that is not FIX
 @code = (
-'-1.942467568E-04 ; mean_EBE1',
-'-1.673126473E-02 ; mean_EBE2',
-'-2.919216946E-02 ; mean_EBE3',
-'0.0001 ; mean_EBE4',
+'0.0001 ; mean_EBE1',
+'-1.673126473 ; mean_EBE2',
+'-2.919216946 ; mean_EBE3',
+'-1.942467568 ; mean_EBE4',
 	);
 
 is_deeply(influential_individuals::get_theta_code(eta_means => \@means),\@code,' get_theta_code for 4 eta');
