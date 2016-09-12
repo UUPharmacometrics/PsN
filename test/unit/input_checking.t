@@ -89,5 +89,36 @@ input_checking::check_options(tool => 'simeval', options => \%options, model => 
 is($options{'samples'},300,'check simeval default samples');
 is($options{'n_simulation_models'},2,'check simeval default n_simulation_models');
 
+#npfit
+%options=();
+$options{'npsupp'}='0,100,200,300';
+$options{'min_retries'}=2;
+input_checking::check_options(tool => 'npfit', options => \%options, model => $model); 
+is_deeply($options{'npsupp'},[0,100,200,300],'check npfit converts to list npsupp 1');
+
+%options=();
+$options{'npsupp'}='0';
+input_checking::check_options(tool => 'npfit', options => \%options, model => $model); 
+is_deeply($options{'npsupp'},[0],'check npfit converts to list npsupp 2');
+
+%options=();
+$options{'threads'}=2;
+$options{'nm_version'}='730';
+dies_ok { input_checking::check_options(tool => 'npfit', 
+					options => \%options, 
+					model => $model) } "npfit croak when no npsupp";
+
+%options=();
+$options{'threads'}=5;
+$options{'npsupp'}='';
+dies_ok { input_checking::check_options(tool => 'npfit', 
+					options => \%options, 
+					model => $model) } "npfit croak when npsupp empty";
+
+%options=();
+$options{'npsupp'}='0,10.2,50';
+dies_ok { input_checking::check_options(tool => 'npfit', 
+					options => \%options, 
+					model => $model) } "npfit croak when npsupp decimal";
 
 done_testing();
