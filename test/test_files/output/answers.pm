@@ -1679,6 +1679,71 @@ sub read_answers
     $answer_hashes[$index]->{parsed_successfully} = 0;
 	$answer_hashes[$index]->{iterations_interrupted} = 1;
 
+
+	$index++;
+	$answer_hashes[$index]={};
+	$answer_hashes[$index]->{file}='nm73/pheno_nonp.lst';
+	$answer_hashes[$index]->{parsed_successfully}=1;
+	$answer_hashes[$index]->{answers}={};
+	$answer_hashes[$index]->{answers}->{0}->{0}->{'nonparametric_step_run'}=1;
+	$answer_hashes[$index]->{answers}->{0}->{0}->{'npofv'}=3379.232;
+	$answer_hashes[$index]->{answers}->{0}->{0}->{'npetabars'}=[-2.68E-03,-3.79E-03];
+	$answer_hashes[$index]->{answers}->{0}->{0}->{'npomegas'}=[1.30E-01,4.01E-02,1.68E-01];
+	$answer_hashes[$index]->{answers}->{0}->{0}->{'npcorr'}=[3.61E-01,2.71E-01,4.10E-01];
+
+	$index++;
+	$answer_hashes[$index]={};
+	$answer_hashes[$index]->{file}='nm73/theo_nonp.lst';
+	$answer_hashes[$index]->{parsed_successfully}=1;
+	$answer_hashes[$index]->{answers}={};
+	$answer_hashes[$index]->{answers}->{0}->{0}->{'nonparametric_step_run'}=1;
+	$answer_hashes[$index]->{answers}->{0}->{0}->{'npofv'}=3586.532;
+	$answer_hashes[$index]->{answers}->{0}->{0}->{'npetabars'}=[8.02E-02,-2.03E-04,1.42E-02,1.75E-02];
+	$answer_hashes[$index]->{answers}->{0}->{0}->{'npomegas'}=[1.94E+00,-1.79E-04,6.85E-06,1.16E-02,-4.68E-04,
+															   3.20E-02,4.59E-02,3.87E-05,-2.87E-03,9.53E-02];
+	$answer_hashes[$index]->{answers}->{0}->{0}->{'npcorr'}=[1.39E+00,-4.92E-02,2.62E-03,4.67E-02,-9.99E-01,1.79E-01,1.07E-01,4.78E-02,-5.19E-02,3.09E-01];
+
+	$index++;
+	$answer_hashes[$index]={};
+	$answer_hashes[$index]->{file}='nm73/mox_nocov_nonp.lst';
+	$answer_hashes[$index]->{parsed_successfully}=1;
+	$answer_hashes[$index]->{answers}={};
+	$answer_hashes[$index]->{answers}->{0}->{0}->{'nonparametric_step_run'}=1;
+	$answer_hashes[$index]->{answers}->{0}->{0}->{'npofv'}=1318.655;
+	$answer_hashes[$index]->{answers}->{0}->{0}->{'npetabars'}=[-5.70E-02,-8.23E-01,-1.64E-02,-4.68E-01,1.61E-01];
+	$answer_hashes[$index]->{answers}->{0}->{0}->{'npomegas'}=[7.92E-02,2.35E-02,1.47E+00,2.70E-02,1.30E-02,5.45E-02,-4.12E-02,3.89E-01,1.25E-01,4.99E+01,-4.14E-02,2.08E+00,-1.55E-01,8.99E+00,4.67E+01];
+
+	$index++;
+	$answer_hashes[$index]={};
+	$answer_hashes[$index]->{file}='nm73/mox_fail_nonp.lst';
+	$answer_hashes[$index]->{parsed_successfully}=1;
+	$answer_hashes[$index]->{answers}={};
+	$answer_hashes[$index]->{answers}->{0}->{0}->{'ofv'}=-828.536;
+	$answer_hashes[$index]->{answers}->{0}->{0}->{'covariance_step_run'}=1;
+	$answer_hashes[$index]->{answers}->{0}->{0}->{'covariance_step_successful'}=0;
+	$answer_hashes[$index]->{answers}->{0}->{0}->{'rounding_errors'}=0;
+	$answer_hashes[$index]->{answers}->{0}->{0}->{'minimization_successful'}=0;
+	$answer_hashes[$index]->{answers}->{0}->{0}->{'estimate_near_boundary'}=0;
+	$answer_hashes[$index]->{answers}->{0}->{0}->{'thetas'}=[2.74E+01,1.04E+01,2.43E-01,7.24E-02,2.87E-01];
+	$answer_hashes[$index]->{answers}->{0}->{0}->{'omegas'}=[1.61E-01,-5.64E-03,3.80E+00,0.00E+00,0.00E+00,4.74E-02,0.00E+00,0.00E+00,0.00E+00,2.15E+02,0.00E+00,0.00E+00,0.00E+00,0.00E+00,2.15E+02];
+	$answer_hashes[$index]->{answers}->{0}->{0}->{'sigmas'}=[1.00E+00];
+	$answer_hashes[$index]->{answers}->{0}->{0}->{'nonparametric_step_run'}=1;
+	$answer_hashes[$index]->{answers}->{0}->{0}->{'npofv'}=undef;
+	$answer_hashes[$index]->{answers}->{0}->{0}->{'npetabars'}=[];
+
+
+
+	$index++;
+	$answer_hashes[$index]={};
+	$answer_hashes[$index]->{file}='nm6/pheno_nonp_nm6.lst';
+	$answer_hashes[$index]->{parsed_successfully}=1;
+    $answer_hashes[$index]->{nonmem_run_failed} = 0;
+	$answer_hashes[$index]->{answers}={};
+	$answer_hashes[$index]->{answers}->{0}->{0}->{'nonparametric_step_run'}=1;
+	$answer_hashes[$index]->{answers}->{0}->{0}->{'npofv'}=683.781;
+	$answer_hashes[$index]->{answers}->{0}->{0}->{'npetabars'}=[7.30E-02,-2.17E-03];
+	$answer_hashes[$index]->{answers}->{0}->{0}->{'npomegas'}=[9.84E-02,5.27E-02,1.94E-01];
+
 	return \@answer_hashes;
 }
 

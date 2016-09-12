@@ -54,10 +54,10 @@ for (my $i=0; $i< scalar(@answer_hashes); $i++){
 
 	my ($fail,$reason) = $outobj->nonmem_run_failed();
 	if(defined $answer_hashes[$i]->{nonmem_run_failed}){
-		cmp_ok($fail,'==',$answer_hashes[$i]->{nonmem_run_failed},"$fname nonmem_run_failed");
+		cmp_ok($fail,'==',$answer_hashes[$i]->{nonmem_run_failed},"$fname nonmem_run_failed ok");
 		cmp_ok($reason,'eq',$answer_hashes[$i]->{nonmem_run_fail_reason},"$fname nonmem fail reason") if ($fail);
 	}else{
-		cmp_ok($fail,'==',0,"$fname nonmem_run_failed");
+		cmp_ok($fail,'==',0,"$fname nonmem_run_failed is false");
 	}
 	if(defined $answer_hashes[$i]->{estimation_evaluation_problem_number}){
 		cmp_ok($outobj->get_estimation_evaluation_problem_number(),'==',
@@ -111,7 +111,7 @@ for (my $i=0; $i< scalar(@answer_hashes); $i++){
 	foreach my $prob (keys %{$answer_hashes[$i]->{answers}}){
 		foreach my $subprob (keys %{$answer_hashes[$i]->{answers}->{$prob}}){
 			foreach my $attr (keys %{$answer_hashes[$i]->{answers}->{$prob}->{$subprob}}){
-				if ($attr =~ /^(sethetas|seomegas|sesigmas|thetas|omegas|sigmas|sdcorrform_|est_thetanames|est_sigmanames|est_omeganames|eigens)/){
+				if ($attr =~ /^(sethetas|seomegas|sesigmas|thetas|omegas|sigmas|sdcorrform_|est_thetanames|est_sigmanames|est_omeganames|eigens|npetabars|npomegas|npcorr)/){
 					cmp_float_array($outobj->get_single_value(problem_index => $prob, 
 														subproblem_index=> $subprob, 
 														attribute=>$attr),

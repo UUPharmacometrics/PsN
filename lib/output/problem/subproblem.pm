@@ -38,6 +38,7 @@ has 'nom' => ( is => 'rw', isa => 'Num' );
 has 'npofv' => ( is => 'rw', isa => 'Num' );
 has 'npomegas' => ( is => 'rw', isa => 'ArrayRef' );
 has 'npetabars' => ( is => 'rw', isa => 'ArrayRef' );
+has 'npcorr' => ( is => 'rw', isa => 'ArrayRef' );
 has 'nrom' => ( is => 'rw', isa => 'Num' );
 has 'nth' => ( is => 'rw', isa => 'Num' );
 has 'ofvpath' => ( is => 'rw', isa => 'ArrayRef' );
@@ -935,31 +936,42 @@ sub _read_npomegas
 	my $nparea= 0;
 	my $npetabararea = 0;
 	my $npomegarea = 0;
-	my ( @npetabar, @npomega, @T, $i );
+	my $npcorrarea = 0;
+	my ( @npetabar, @npomega, @npcorr, @T, $i );
 
 	while( $_ = @{$self->lstfile}[ $start_pos++ ] ) {
 		$nparea = 1 if /NONPARAMETRIC ESTIMATE/;
 		last if ( /THERE ARE ERROR MESSAGES IN FILE PRDERR/ and $nparea );
-		last if ( /^1/ and $nparea );
+		next if ( /^1\s*$/ );
+		last if ( /^ #CPU/ and $nparea );
 		last if ( /^1NONLINEAR/ and $nparea );
 		last if ( /^[A-W]/ and $nparea );
 
 		if (/MINIMUM VALUE OF OBJECTIVE FUNCTION/ and $nparea ) { #Only nonmem6 version
 			$npofvarea = 1;
+			$npetabararea = 0;
+			$npomegarea = 0;
+			$npcorrarea = 0;
 		} elsif ( /EXPECTED VALUE OF ETA/ and $nparea ) {
-			$npetabararea = 1;
 			$npofvarea = 0;
+			$npetabararea = 1;
+			$npomegarea = 0;
+			$npcorrarea = 0;
 			$success = 1;
 		} elsif ( /COVARIANCE MATRIX OF ETA/ and $nparea ) {
+			$npofvarea = 0;
+			$npetabararea = 0;
 			$npomegarea = 1;
-			$npetabararea = 0;
+			$npcorrarea = 0;
 		} elsif ( /CORRELATION MATRIX OF ETA/ and $nparea ) {
-			$npomegarea = 0;
+			$npofvarea = 0;
 			$npetabararea = 0;
+			$npomegarea = 0;
+			$npcorrarea = 1;
 		}
 		if ($npofvarea) {
-			if ( /^\s+(-?\d*\.\d*)/) { #Assignment of attribute at the spot
-				$self->npofv($1);
+			if ( /^\s*(#OBJN:|)\s+(-?\d*\.\d*)/) { 
+				$self->npofv($2);
 				$npofvarea = 0;
 			}
 		} elsif($npetabararea) {
@@ -988,10 +1000,25 @@ sub _read_npomegas
 				}
 				push(@npomega, @T);
 			}
+		} elsif($npcorrarea) {
+			if ( /^(\+|\s{2,})/) {
+				next if /ET/;
+				@T = split(' ',$_);
+				shift @T if (defined $T[0] and ($T[0] eq '+'));
+				for  $i (0..(@T-1)){
+					if($T[$i] ne '.........') {
+						$T[$i] = eval($T[$i]);
+					} else {
+						$T[$i] = undef;
+					}
+				}
+				push(@npcorr, @T);
+			}
 		}
 	}
 	$self->npetabars([@npetabar]);
 	$self->npomegas([@npomega]);
+	$self->npcorr([@npcorr]);
 	unless ( $success ) {
 		debugmessage(3,"rewinding to first position..." );
 	} else {
@@ -1005,23 +1032,32 @@ sub _read_ofv
 
 	my $start_pos = $self->lstfile_pos;
 	my $found_negative_parameter;
+	my $found_terminated_by_obj=0;
 	
 	while ( $_ = @{$self->lstfile}[ $start_pos++ ] ) {
 		if ( / PROBLEM NO\.:\s*\d+\n/ ) {
-			$self -> parsing_error( message => "Error in reading the OFV!\nNext problem found" );
-			return;
+			if($found_terminated_by_obj){
+				$self -> finished_parsing(1); 
+				$self -> _read_minimization_message();
+				return;
+			}else{
+				$self -> parsing_error( message => "Error in reading the OFV!\nNext problem found" );
+				return;
+			}
 		} elsif (/^\s*(ERROR IN TRANS2 ROUTINE: .+ IS NEGATIVE)/) {
 			$found_negative_parameter = $1;
 			chomp $found_negative_parameter;
 		} elsif (/^\s*0PROGRAM TERMINATED BY OBJ/) {
-			# This is an error message which terminates NONMEM. 
-			$self -> finished_parsing(1);
-			$self -> _read_minimization_message();
-			return;
+			# This is an error message which terminates NONMEM unless it is from covstep
+			$found_terminated_by_obj=1;
 		} elsif ( $start_pos >= scalar @{$self->lstfile} ) {
 			if (defined $found_negative_parameter and length($found_negative_parameter)>0){
 				$self -> finished_parsing(1);
 				push( @{$self->minimization_message}, "Error in reading the OFV!\n$found_negative_parameter\n"); 
+				return;
+			}elsif($found_terminated_by_obj){
+				$self -> finished_parsing(1); 
+				$self -> _read_minimization_message();
 				return;
 			}else{
 				$self -> parsing_error( message => "Error in reading the OFV!\nEOF found\n" );

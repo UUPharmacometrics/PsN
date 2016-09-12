@@ -1,0 +1,2 @@
+ TABLE_NO     PROBLEM      SUBPROB      SUPERPROB1   ITER1        SUPERPROB2   ITER2        ETA(1)       ETA(2)       ETC(1,1)     ETC(2,1)     ETC(2,2)
+            1            1            0            0            0            0            0 -2.67919E-03 -3.79079E-03  1.30472E-01  4.01208E-02  1.67943E-01

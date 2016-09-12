@@ -1554,6 +1554,25 @@ sub npomegas
 	return \@npomegas;
 }
 
+sub npcorr
+{
+	my $self = shift;
+	my %parm = validated_hash(\@_,
+							  problems => { isa => 'ArrayRef[Int]', optional => 1 },
+							  subproblems => { isa => 'ArrayRef[Int]', optional => 1 }
+		);
+	my @problems = defined $parm{'problems'} ? @{$parm{'problems'}} : ();
+	my @subproblems = defined $parm{'subproblems'} ? @{$parm{'subproblems'}} : ();
+	my @npomegas = @{$self->access_any(attribute=>'npcorr',problems=>\@problems,subproblems=>\@subproblems)};
+
+
+    # npomegas returns the non-parametric omega estimates.
+    # See L</comegas> for details of the method arguments.
+    #
+    # Level:  Sub problem
+	return \@npomegas;
+}
+
 sub npetabars
 {
 	my $self = shift;
@@ -1941,8 +1960,8 @@ sub get_single_value
 			1;
 		}
 	} elsif ( ($attribute eq 't_matrix') 
-#or
-#			  ($attribute eq 'raw_invcovmatrix') 
+			  or
+			  ($attribute eq 'nonparametric_step_run') 
 		) {
 		$arr = $self->access_any(attribute => $attribute,
 								 problems => [($problem_index + 1)],
