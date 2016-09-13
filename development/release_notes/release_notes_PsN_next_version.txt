@@ -66,6 +66,8 @@ A new recommended but not required Perl library for runrecord: YAML::Tiny
 - PsN has updated its license. It is still licensed under the GNU public license version 2, but
 it is now possible to relicense PsN under any later versions of this license.
 - Bug fix: Some generated paths for the Rplots script were illegal R strings causing R to crash
+- Runs where any of the models have $NONPARAMETRIC will now get an additional file in the main
+  run directory: raw_nonparametric_results.csv, containing regular ofv, nonparametric ofv, etc
 
    ___common_options___
 
@@ -172,8 +174,9 @@ ___boot_scm___
 - Disallow restarts in existing directory as this operation did not work
 
 
-   ___ebe_npde___ 
+   ___sse___ 
 
+- New option -update_fix
 
    ___simeval___
 
@@ -181,16 +184,6 @@ ___boot_scm___
    ___update_inits___
 
 -  New options -rawres_input, -in_filter, -offset_rawres to read parameter estimates from a raw results file.
-
-
-   ___parallel_retries___
-
-
-
-   ___nca___
-
-
-   ___covmat___
 
 
    ___sir___
