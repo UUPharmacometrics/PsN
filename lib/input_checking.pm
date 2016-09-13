@@ -38,10 +38,16 @@ sub check_options
 		$mceta = 1;
 		$error .= check_frem(options => $options, model => $model);
 	}
+	
 	if ($tool eq 'execute'){
 #		$msfi = 1; no need, already done via model->input_files
 		$copy_data = 1;
 		$error .= check_execute(options => $options, model => $model);
+	}
+	
+	if ($tool eq 'npfit'){
+		$msfi = 1; 
+		$error .= check_npfit(options => $options, model => $model);
 	}
 
 	if ($tool eq 'sir'){
@@ -214,6 +220,35 @@ sub check_copy_data
 			$model->relative_data_path(0);
 		}
 	}
+	return $error;
+}
+
+sub check_npfit
+{
+	my %parm = validated_hash(\@_,
+							  options => {isa => 'HashRef', optional => 0},
+							  model =>  {isa => 'model', optional => 0},
+		);
+	my $options = $parm{'options'};
+	my $model = $parm{'model'};
+
+	my $error = '';
+	my @npsupp=();
+	if ( defined $options->{'npsupp'} ){
+		if ($options->{'npsupp'} ne '') {
+			@npsupp = split(/,/,$options->{'npsupp'});
+			foreach my $intege (@npsupp) {
+				if (not ($intege =~ /^[0-9]+$/)){
+					$error .= 'Option -npsupp have to consist of integers only'."\n";
+				}
+			}
+		}else{
+			$error .= 'Option -npsupp is empty'."\n";
+		}
+	}else{
+		$error .= 'Option -npsupp is required'."\n";
+	}
+	$options->{'npsupp'} = \@npsupp;
 	return $error;
 }
 
