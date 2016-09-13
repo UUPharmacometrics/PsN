@@ -120,5 +120,11 @@ $options{'npsupp'}='0,10.2,50';
 dies_ok { input_checking::check_options(tool => 'npfit', 
 					options => \%options, 
 					model => $model) } "npfit croak when npsupp decimal";
-
+					
+%options=();
+$options{'npsupp'}='0 10 50';
+dies_ok { input_checking::check_options(tool => 'npfit', 
+					options => \%options, 
+					model => $model) } "npfit croak when npsupp not comma-separated";
+					
 done_testing();
