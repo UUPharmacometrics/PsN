@@ -54,7 +54,7 @@ has 'cut_thetas_maxevals' => ( is => 'rw', isa => 'Bool', default => 0);
 has 'handle_hessian_npd' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'logfile' => ( is => 'rw', isa => 'ArrayRef[Str]', default => sub { ['modelfit.log'] } );
 has '_raw_results_callback' => ( is => 'rw' );
-
+has 'any_nonparametric_step' => ( is => 'rw', isa => 'Bool', default => 0 );
 #start description
     #
     # In PsN versions < 2.0, the functionality for actually running
@@ -389,6 +389,18 @@ sub run
 	my @models;
 	if (defined $self->models) {
 		@models = @{$self->models};
+		for (my $i=0;$i< scalar(@models); $i++){
+			if (defined $models[$i]->problems){
+				for (my $j=0; $j < scalar(@{$models[$i]->problems}); $j++){
+					if (defined $models[$i]->problems->[$j] and
+						defined $models[$i]->problems->[$j]->nonparametrics and
+						scalar(@{$models[$i]->problems->[$j]->nonparametrics})>0){
+						$self->any_nonparametric_step(1);
+						last;
+					}
+				}
+			}
+		}
 	} else {
 		croak("Have no models!");
 	}
@@ -1439,7 +1451,7 @@ sub print_raw_results
 
   ## print raw_nonp_results
   
-  if( defined $self->raw_nonp_results ) {
+  if( defined $self->raw_nonp_results and $self->any_nonparametric_step) {
     my ($npdir,$npfile) = OSspecific::absolute_path( $self->directory,
 						 $self->raw_nonp_file->[0] );
     my $append = $self->raw_results_append ? '>>' : '>';
