@@ -7,14 +7,17 @@ use MooseX::Params::Validate;
 use include_modules;
 use XML::LibXML;
 
+use so::soblock::modeldiagnostic::diagnosticstructuralmodel;
 use so::table;
 
-has 'VPC' => ( is => 'rw', isa => 'so::table' );
+has 'DiagnosticStructuralModel' => ( is => 'rw', isa => 'so::soblock::modeldiagnostic::diagnosticstructuralmodel');
 
 sub BUILD
 {
     my $self = shift;
 
+    my $dsm = so::soblock::modeldiagnostic::diagnosticstructuralmodel->new();
+    $self->DiagnosticStructuralModel($dsm);
 }
 
 sub parse
@@ -24,12 +27,8 @@ sub parse
 
     my $xpc = so::xml::get_xpc();
 
-    (my $vpc) = $xpc->findnodes('x:VPC', $node);
-    if (defined $vpc) {
-        my $table = so::table->new();
-        $table->parse($vpc);
-        $self->VPC($table);
-    }
+    (my $dsm) = $xpc->findnodes('x:DiagnosticStructuralModel', $node);
+    $self->DiagnosticStructuralModel->parse($dsm) if (defined $dsm);
 }
 
 sub xml
@@ -38,14 +37,14 @@ sub xml
 
     my $md;
 
-    my $vpc;
-    if (defined $self->VPC) {
-        $vpc = $self->VPC->xml();
+    my $dsm;
+    if (defined $self->DiagnosticStructuralModel) {
+        $dsm = $self->DiagnosticStructuralModel->xml();
     }
 
-    if (defined $vpc) {
+    if (defined $dsm) {
         $md = XML::LibXML::Element->new("ModelDiagnostic");
-        $md->appendChild($vpc);
+        $md->appendChild($dsm);
     }
 
     return $md;
