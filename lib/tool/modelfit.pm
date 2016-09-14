@@ -1735,6 +1735,8 @@ sub run_nonmem
 	} # end of "not -e psn-$tries.lst or rerun"
 }
 
+
+
 sub diagnose_lst_errors
 {
 	#static no shift
@@ -1824,6 +1826,12 @@ sub diagnose_lst_errors
 			if ($nmqual){
 				$failure_mess = "It seems like Fortran compilation by NMQual failed. Cannot start NONMEM.\n".
 					"Go to the NM_run".($run_no+1)." subdirectory and run psn.".$modext." with NMQual to diagnose the problem.";
+			}elsif(defined $PsN::config -> {'_'} -> {'transient_compilation_errors'} and
+				   $PsN::config -> {'_'} -> {'transient_compilation_errors'} > 0){
+				$restart_possible = 1; #will only restart if handle_crashes and crash_restarts > 0
+				$failure .= ' - could be transient';
+				$failure_mess = "It seems like Fortran compilation by NONMEM's nmfe script failed in NM_run".($run_no+1).", - could be transient.";
+				sleep($PsN::config -> {'_'} -> {'transient_compilation_errors'}); #long sleep before doing something new, hope this solves the issue
 			}else{
 				$failure_mess = "It seems like Fortran compilation by NONMEM's nmfe script failed. Cannot start NONMEM.\n".
 					"Go to the NM_run".($run_no+1)." subdirectory and run psn.".$modext." with NONMEM's nmfe script to diagnose the problem.";
