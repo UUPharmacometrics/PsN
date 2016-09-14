@@ -1567,7 +1567,7 @@ sub _modelfit_raw_results_callback
 			}
 			$self->raw_line_structure -> write( $dir.'raw_results_structure' );
 		} #end if defined modelfit->raw_results
-		if ( defined $modelfit -> raw_nonp_results() ) {
+		if ( 0 and defined $modelfit -> raw_nonp_results() ) {
 			my @rows = @{$modelfit -> raw_nonp_results()};
 			my $n_rows = scalar(@rows);
 			my @firsts;
@@ -1585,7 +1585,7 @@ sub _modelfit_raw_results_callback
 			}
 
 			for (my $i=0; $i< $n_rows; $i++){
-				my $this_model = $rows[$i]->[0]; 
+				my $this_model = $rows[$i]->[0];  #bug here, get string simulation instead of integer. 
 				my $step= ($this_model-$last_model);
 				if ($step < 0){
 					ui -> print( category => 'sse',
