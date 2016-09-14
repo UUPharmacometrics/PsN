@@ -8,6 +8,7 @@ use Moose;
 use MooseX::Params::Validate;
 use File::Basename;
 use include_modules;
+use nmtablefile;
 
 use so::soblock;
 
@@ -64,7 +65,102 @@ sub _create_vpc
     (my $vpctab) = glob($vpcdir . "vpctab*");
     $vpctab = fileparse($vpctab);
     $self->_so_block->RawResults->add_datafile(name => $vpctab, description => "PsN vpctab", oid => "PsN_VPC_vpctab"); 
-} 
+
+    $self->_add_original_table();
+    $self->_add_simulation_table();
+}
+
+sub _add_simulation_table
+{
+    my $self = shift;
+
+    my $simulation_table = $self->rundir . '/m1/vpc_simulation.1.npctab.dta';
+
+    my $nmtables = nmtablefile->new(filename => $simulation_table);
+
+    my $replicate_no = 1;
+    for my $nmtable (@{$nmtables->tables}) {    # Loop over the replicates
+        my $idcol = $nmtable->header->{'ID'};
+        my $timecol = $nmtable->header->{'TIME'};
+        my $dvcol = $nmtable->header->{'DV'};
+        my $mdvcol = $nmtable->header->{'MDV'};
+
+        my @columns;
+        if (not defined $mdvcol) {
+            @columns = ($nmtable->columns->[$idcol], $nmtable->columns->[$timecol], $nmtable->columns->[$dvcol]);
+        } else {
+            my @id;
+            my @time;
+            my @dv;
+            for (my $i = 0; $i < scalar(@{$nmtable->columns->[$idcol]}); $i++) {
+                if ($nmtable->columns->[$mdvcol]->[$i] == 0) {
+                    push @id, $nmtable->columns->[$idcol]->[$i];
+                    push @time, $nmtable->columns->[$timecol]->[$i];
+                    push @dv, $nmtable->columns->[$dvcol]->[$i];
+                }
+            }
+            @columns = (\@id, \@time, \@dv);
+        }
+
+        my $sim_block = so::soblock::simulation::simulationblock->new(replicate => $replicate_no);
+
+        my $simulated_profiles = so::soblock::simulation::simulationblock::simulationtable->new(
+            name => "SimulatedProfiles",
+            columnId => [ "ID", "TIME", "DV" ],
+            columnType => [ "id", "time", "dv" ],
+            valueType => [ "string", "real", "real" ],
+            columns => \@columns,
+        ); 
+
+        push @{$sim_block->SimulatedProfiles}, $simulated_profiles;
+        push @{$self->_so_block->Simulation->SimulationBlock}, $sim_block;
+
+        $replicate_no++;
+    }
+}
+
+sub _add_original_table
+{
+    my $self = shift;
+
+    my $original_table = $self->rundir . '/m1/vpc_original.npctab.dta';
+
+    my $nmtables = nmtablefile->new(filename => $original_table);
+    my $nmtable = $nmtables->tables->[0];
+
+    my $idcol = $nmtable->header->{'ID'};
+    my $timecol = $nmtable->header->{'TIME'};
+    my $dvcol = $nmtable->header->{'DV'};
+    my $mdvcol = $nmtable->header->{'MDV'};
+
+    my @columns;
+    if (not defined $mdvcol) {
+        @columns = ($nmtable->columns->[$idcol], $nmtable->columns->[$timecol], $nmtable->columns->[$dvcol]);
+    } else {
+        my @id;
+        my @time;
+        my @dv;
+        for (my $i = 0; $i < scalar(@{$nmtable->columns->[$idcol]}); $i++) {
+            if ($nmtable->columns->[$mdvcol]->[$i] == 0) {
+                push @id, $nmtable->columns->[$idcol]->[$i];
+                push @time, $nmtable->columns->[$timecol]->[$i];
+                push @dv, $nmtable->columns->[$dvcol]->[$i];
+            }
+        }
+        @columns = (\@id, \@time, \@dv);
+    }
+
+    my $table = so::table->new(
+        name => "IndivObservationPrediction",
+        columnId => [ "ID", "TIME", "OBSERVATION" ],
+        columnType => [ "id", "idv", "dv" ],
+        valueType => [ "string", "real", "real" ],
+        columns => \@columns,
+    );
+    
+    $self->_so_block->ModelDiagnostic->DiagnosticStructuralModel->IndivObservationPrediction($table);
+}
+
 
 no Moose;
 __PACKAGE__->meta->make_immutable;

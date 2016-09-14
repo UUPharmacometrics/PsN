@@ -89,7 +89,7 @@ Set to create external table files for the simulation results
 Set to include estimates of all fixed parameters.
 \nextopt
 \optname{rundir}
-Extract results from a PsN rundir. Currently supports bootstrap and sse
+Extract results from a PsN rundir. Currently supports bootstrap, sse and vpc
 \nextopt
 \optname{psn\_connector}
 Do not use! Only for internal use by the PsN connector.
@@ -254,6 +254,12 @@ The following entries will be populated:
             \end{itemize}
         \end{itemize}
 \end{itemize}
+
+\subsection{vpc}
+If nmoutput2so was run with the -rundir option in a vpc directory the original data table and the simulations table will be added.
+The original data table to ModelDiagnostic/DiagnosticStructuralModel/IndivObservationPrediction and the simulations table to
+Simulation/SimulationBlock/SimulatedProfiles (each replicate in its own table).
+
 
 \subsection{Raw results}
 Some special raw results files in the RawResults section of the SO will have a specific oid set. This makes it easier to programatically find the files. Here follows a list of these files and oids:
