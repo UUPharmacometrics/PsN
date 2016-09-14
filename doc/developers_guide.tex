@@ -1,5 +1,5 @@
 \input{inputs/format_header.tex}
-\guidetitle{Developer's guide}{2016-09-09}
+\guidetitle{Developer's guide}{2016-09-14}
 \usepackage{hyperref}
 
 \begin{document}
@@ -125,7 +125,9 @@ perl bootstrap.t
 \subsection{System tests for multiple NONMEM versions}
 Multiple versions of NONMEM can be tested automatically with the \verb|runsystem| perl script. This script takes
 an array of NONMEM versions as arguments and all arguments staring with "-" will be tunnelled through to prove.
-The following example will run all system tests once for nm72 and once for nm73 using 4 parallel threads.
+The following example will run all system tests once for nm72 and once for nm73 using 4 parallel threads
+Note that 'threads' in this context means four test scripts in parallel, which is different from the
+threads option to PsN. Running several test scripts in parallel will cause PsN's log messages to be intermixed.
 \begin{verbatim}
 ./runsystem nm72 nm73 -j4
 \end{verbatim}
@@ -144,6 +146,12 @@ Desktop folder. The location of the log file can be changed by setting\\
 in the top section of psn.conf, i.e. before any [bracket section].
 Note that PsN\_test\_logfile\_dir is case sensitive. Note also that if prove option -j is used, log messages from
 parallel tests will be intermixed.
+
+The name of the logfile will be set based on the PsN version, the NONMEM version and
+either a tag set in psn.conf:\\
+\verb|PsN_test_logfile_tag = ubuntu_perl5_22| \\
+or, if PsN\_test\_logfile\_tag is not set, the name of the OS (from Perl Config).
+
 \subsection{Test coverage}
 In the current release we have excellent test coverage for execute (parsing NONMEM control streams, 
 running models, tweaking initial estimates, and reading of final estimates from NONMEM output and reporting 

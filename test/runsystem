@@ -48,7 +48,12 @@ if ($nm_versions[0] eq "all") {
 
 sub get_os_string{
 	my $os='';
-	if (defined $Config{osname}){
+
+	if (defined $PsN::config and (defined $PsN::config-> {'_'}) and
+		defined ($PsN::config -> {'_'} -> {'PsN_test_logfile_tag'})){
+		#use tempdir from psn.conf instead of default
+		$os = $PsN::config -> {'_'} -> {'PsN_test_logfile_tag'};
+	}elsif (defined $Config{osname}){
 		if ($Config{osname} eq 'MSWin32'){
 			if (eval('require Win32')) { 
 				$os = Win32::GetOSName();
@@ -86,7 +91,7 @@ sub get_logfile{
 	my $psn = $PsN::version;
 	$psn =~ s/\./_/g;
 	my $os = get_os_string;
-	my $logfile = $dir.dirsep()."psn_".$psn."_testlog".$os."_".$version.".txt";
+	my $logfile = $dir.dirsep()."testlog".$os."_".$version."_psn_".$psn.".txt";
 	return $logfile;
 }
 
