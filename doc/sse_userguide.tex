@@ -1,5 +1,5 @@
 \input{inputs/format_header.tex}
-\guidetitle{SSE user guide}{2016-05-10}
+\guidetitle{SSE user guide}{2016-09-13}
 
 \begin{document}
 
@@ -55,6 +55,11 @@ This option tells PsN to add the alternative models listed with option -alternat
 \optdefault{rawres\_input}{filename}
 A simple way to simulate with uncertainty. Instead of using identical parameter estimates for simulation of each new dataset, take parameter estimates from a raw\_results.csv file, e.g. from a bootstrap run or the intial\_estimates.csv file from a previous sse run with \$PRIOR in the simulation model. The raw results file must be comma-separated and contain at least as many samples as the input -samples to sse, the labels for  THETA/OMEGA/SIGMA in the file must match the labels in the simulation model given as input to sse, the theta columns must be directly followed by the omega columns which must be directly followed by the sigma columns, and the column header must be model either in the first column just as in a bootstrap raw\_results file or in the second or third column as in a sse raw\_results file. If a column header contains a comma, e.g. OMEGA(2,2), then that header must be enclosed in double quotes. This is done automatically in PsN raw results files. Note that is is possible to generate a file with initial parameter estimates outside of PsN, as long as the file follows the format rules. 
 \nextopt
+\optname{update\_fix}
+Default not set. Only relevant in combination with -rawres\_input.
+If update\_fix is set, FIXED initial estimates in models will
+be updated to values from the rawres\_input file. If update\_fix is 
+not set, the default, FIXED initial estimates will not be changed.
 \optdefault{offset\_rawres}{N}
 Only relevant in combination with -rawres\_input. Default 1. The number of result lines to skip in the input raw results file before starting to read final parameter estimates. In a regular bootstrap raw\_results file, and also in an initial\_estimates.csv file from an sse run, the first line of estimates refers to the input model with the full dataset, so therefore the default offset is 1. 
 \nextopt

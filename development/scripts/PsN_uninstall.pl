@@ -80,11 +80,11 @@ sub get_bin_files{
 
 	my @utilities = (
 		'bootstrap', 'cdd', 'execute', 'llp', 'scm', 'sumo', 'sse',
-		'data_stats', 'se_of_eta', 'update_inits', 'update', 'npc', 'vpc',
+		'data_stats', 'update_inits', 'update', 'npc', 'vpc',
 		'pind','nonpb','extended_grid','psn','psn_options','psn_clean',
 		'runrecord','mcmp','lasso','mimp','xv_scm','parallel_retries',
-		'boot_scm','gls','simeval','ebe_npde','frem','randtest','linearize', 'crossval', 'pvar', 'nca', 'vpctable','sir','rawresults',
-		'precond', 'covmat','nmoutput2so'
+		'boot_scm','gls','simeval','frem','randtest','linearize', 'crossval', 'pvar', 'nca', 'proseval', 'vpctable','sir','rawresults',
+		'precond','covmat','nmoutput2so', 'benchmark','postfrem','se_of_eta','ebe_npde'
 		);
 
 	my @extensions = ('');

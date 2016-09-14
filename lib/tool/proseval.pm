@@ -1,13 +1,14 @@
 package tool::proseval;
 
-use include_modules;
 use strict;
-use File::Copy 'cp';
-use data;
-use log;
-use tool::modelfit;
 use Moose;
 use MooseX::Params::Validate;
+use File::Copy 'cp';
+use include_modules;
+use data;
+use log;
+use filter_data;
+use tool::modelfit;
 
 extends 'tool';
 
@@ -34,7 +35,9 @@ sub modelfit_setup
 {
 	my $self = shift;
 
-    my $orig_data_file = $self->model->datafiles(absolute_path => 1, problem_numbers => [1])->[0];
+    filter_data::filter_dataset(model => $self->model);
+
+    #my $orig_data_file = $self->model->datafiles(absolute_path => 1, problem_numbers => [1])->[0];
     my $ignoresign = defined $self->model->ignoresigns ? $self->model->ignoresigns->[0] : '@';
 
     my $n = 1;
@@ -47,7 +50,7 @@ sub modelfit_setup
 
     while ($continue) {
         my $data = data->new(
-            filename => $orig_data_file,
+            filename => "preprocess_data_dir/filtered.dta",
             ignoresign => $ignoresign,
             missing_data_token => $self->missing_data_token,
             idcolumn => $self->model->idcolumn(),

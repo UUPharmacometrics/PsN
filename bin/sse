@@ -30,6 +30,7 @@ my %optional_options = (
 	'parallel_simulations:i' => undef,
 	'estimate_simulation!' => undef,
 	'keep_tables!' => undef,
+	'update_fix!' => undef,
 	'rawres_input:s' => undef,
 	'offset_rawres:i' => undef,
 	'in_filter:s' => undef,
@@ -102,6 +103,15 @@ $help_text{-keep_tables} = <<'EOF';
 	  alternative models, to save disk space. If option -keep_tables is set, 
 	  PsN will instead keep $TABLE and number the file names according to
 	  the sample number.
+EOF
+
+$help_text{-update_fix} = <<'EOF';
+      -update_fix
+
+      Default not set. Only relevant in combination with -rawres_input.
+      If update_fix is set, FIXED initial estimates in models will
+      be updated to values from the rawres_input file. If update_fix is 
+      not set, the default, FIXED initial estimates will not be changed.
 EOF
 
 $help_text{-ref_ofv} = <<'EOF';
@@ -434,6 +444,7 @@ my $sse = tool::sse->new(
 	add_models          	=> $options{'add_models'},
 	keep_tables          	=> $options{'keep_tables'},
 	rawres_input        	=> $options{'rawres_input'},
+	update_fix        	=> $options{'update_fix'},
 	offset_rawres       	=> $options{'offset_rawres'},
 	covariance_file     	=> $options{'covariance_file'},
 	models	     					=> [ $model ],

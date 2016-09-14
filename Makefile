@@ -18,6 +18,7 @@ LIBFILES= ui.pm \
 	table.pm \
 	nmtable.pm \
 	nmtablefile.pm \
+	filter_data.pm \
 	boxcox.pm \
 	include_modules.pm \
 	ext/Math/SigFigs.pm \

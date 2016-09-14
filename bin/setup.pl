@@ -1075,6 +1075,16 @@ if (confirm()) {
 	close $dh;
 	unlink("$includes_file.temp");
 
+	#change perl binary in runsystem
+	open(my $sh, "+< $test_library_dir/runsystem")                 or die "Opening: $!";
+	my @ARRAY = <$sh>;
+	$ARRAY[0] = "\#!".$perl_binary."\n";
+	seek($sh,0,0)                        or die "Seeking: $!";
+	print $sh @ARRAY                     or die "Printing: $!";
+	truncate($sh,tell($sh))               or die "Truncating: $!";
+	close($sh)                           or die "Closing: $!";
+
+	
 	print "PsN test library installed successfully in [$test_library_dir].\n";
 	print "Please read the 'testing' chapter of the developers_guide.pdf for information on how to run the tests\n\n";
 }

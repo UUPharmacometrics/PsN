@@ -35,6 +35,7 @@ has 'estimate_simulation' => ( is => 'rw', isa => 'Bool', default => 1 );
 has 'keep_tables' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'have_nwpri' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'have_tnpri' => ( is => 'rw', isa => 'Bool', default => 0 );
+has 'update_fix' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'probnum' => ( is => 'rw', isa => 'Int', default => 1 );
 has 'logfile' => ( is => 'rw', isa => 'ArrayRef[Str]', default => sub { ['sse.log'] } );
 has 'results_file' => ( is => 'rw', isa => 'Str', default => 'sse_results.csv' );
@@ -376,7 +377,8 @@ sub modelfit_setup
 
 
 						}else{
-							$sim_model -> update_inits(from_hash => $sampled_params_arr->[0]); 
+							$sim_model -> update_inits(from_hash => $sampled_params_arr->[0],
+													   update_fix => $self->update_fix); 
 							my @paramarr = ();
 							
 							foreach my $label (@{$thetalabels[0]}){
@@ -416,7 +418,8 @@ sub modelfit_setup
 							croak("get_covariance_params returned undef");
 						}
 
-						$sim_model -> update_inits(from_hash => $sampled_params_arr->[0]); 
+						$sim_model -> update_inits(from_hash => $sampled_params_arr->[0],
+												   update_fix => $self->update_fix); 
 						my @paramarr = ();
 						
 						foreach my $label (@{$thetalabels[0]}){
@@ -584,7 +587,8 @@ sub modelfit_setup
 													record_number => 0); #0 means all
 					if (defined $sampled_params_arr){
 						$est_original -> update_inits(from_hash => $sampled_params_arr->[0],
-													  problem_number => $self->probnum()); 
+													  problem_number => $self->probnum(),
+													  update_fix => $self->update_fix); 
 					}
 				} # end 	if( $self -> estimate_simulation  and not $self->simulation_rawres) {
 				
@@ -597,7 +601,8 @@ sub modelfit_setup
 						write_copy => 0,
 						copy_output => 0);
 					if (defined $sampled_params_arr and (not $self->random_estimation_inits)) {
-						$sim_model->update_inits(from_hash => $sampled_params_arr->[($sim_no-1)]); 
+						$sim_model->update_inits(from_hash => $sampled_params_arr->[($sim_no-1)],
+												 update_fix => $self->update_fix); 
 						my @paramarr = ();
 						foreach my $label (@{$thetalabels[0]}) {
 							push(@paramarr,$sampled_params_arr->[($sim_no-1)]{'theta'}{$label});
@@ -635,7 +640,8 @@ sub modelfit_setup
 						copy_output => 0);
 					
 					if (defined $sampled_params_arr){
-						$est_original -> update_inits(from_hash => $sampled_params_arr->[($sim_no-1)]); 
+						$est_original -> update_inits(from_hash => $sampled_params_arr->[($sim_no-1)],
+													  update_fix => $self->update_fix); 
 					}
 				}
 			}
@@ -1194,7 +1200,8 @@ sub modelfit_setup
 
 				}
 				if (defined $sampled_params_arr and $self->random_estimation_inits) {
-					$est_alternative -> update_inits(from_hash => $sampled_params_arr->[$sim_no-1]);
+					$est_alternative -> update_inits(from_hash => $sampled_params_arr->[$sim_no-1],
+													 update_fix => $self->update_fix);
 
 				}
 

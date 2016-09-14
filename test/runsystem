@@ -59,13 +59,21 @@ sub get_os_string{
 	}
 
 	$os =~ s/\s+//g; #remove whitespace
-	$os =~ s/\./_/g;
+	$os =~ s/\.//g; #dot
+	$os =~ s/\///g; #forward slash
 	if (length($os)>0){
 		$os = '_'.$os;
 	}
 	return $os;
 }
 
+sub dirsep{
+	if ((defined $Config{osname}) and ($Config{osname} eq 'MSWin32')){
+		return '\\';
+	}else{
+		return '/';
+	}
+}
 
 sub get_logfile{
 	my $version = shift;
@@ -78,13 +86,16 @@ sub get_logfile{
 	my $psn = $PsN::version;
 	$psn =~ s/\./_/g;
 	my $os = get_os_string;
-	my $logfile = $dir. "/psn_".$psn."_testlog".$os."_".$version.".txt";
+	my $logfile = $dir.dirsep()."psn_".$psn."_testlog".$os."_".$version.".txt";
 	return $logfile;
 }
 
 foreach my $nmversion (@nm_versions) {
 	my $logfile = get_logfile($nmversion);
+	if (-e $logfile){
+		unlink($logfile);
+	}
     print "=== Running system tests for NONMEM version: $nmversion ===\n";
     print "=== log file is $logfile\n";
-    system("prove system -r @prove_args > $logfile 2>&1 :: -nm_version=$nmversion "); #no -silent since redirect STDERR
+    system("prove system -r @prove_args > ".'"'.$logfile.'"'." 2>&1 :: -nm_version=$nmversion "); #no -silent since redirect STDERR
 }
