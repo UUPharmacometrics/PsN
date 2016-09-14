@@ -120,6 +120,7 @@ LIBFILES= ui.pm \
 	so/soblock/simulation.pm \
 	so/soblock/taskinformation.pm \
 	so/soblock/modeldiagnostic.pm \
+	so/soblock/modeldiagnostic/diagnosticstructuralmodel.pm \
 	so/soblock/estimation/individualestimates.pm \
 	so/soblock/estimation/ofmeasures.pm \
 	so/soblock/estimation/populationestimates.pm \
