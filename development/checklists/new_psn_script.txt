@@ -22,6 +22,9 @@ __When only bin script: new script PsN/bin/scriptname
 
 - New system tests test/system/scriptname.t with crash tests 
 
+- Add short description in script bin/psn so that new script shows
+  up in psn -h and psn -help scriptname
+
 - (Before public release: new link for script on docs page)
 
 
