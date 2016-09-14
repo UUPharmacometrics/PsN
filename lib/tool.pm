@@ -114,7 +114,7 @@ has 'quick_summarize' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'handle_crashes' => ( is => 'rw', isa => 'Bool', default => 1 );
 has 'handle_msfo' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'raw_nonp_results' => ( is => 'rw', isa => 'ArrayRef' );
-has 'raw_nonp_file' => ( is => 'rw', isa => 'ArrayRef[Str]', default => sub { ['raw_nonparametric_results.csv'] } );
+has 'raw_nonp_file' => ( is => 'rw', isa => 'ArrayRef[Str]', default => sub { ['raw_nonparametric.csv'] } );
 has 'sge_prepend_flags' => ( is => 'rw', isa => 'Str' );
 has 'nmfe' => ( is => 'rw', isa => 'Bool', default => 1 );
 has 'nmqual' => ( is => 'rw', isa => 'Bool', default => 0 );
@@ -328,9 +328,9 @@ sub BUILD
 		$model->directory( $directory );
 		$filename =~ s/\.[^.]+$//; #remove last dot and extension
 
-		foreach my $attribute ( 'raw_results_file','raw_nonp_file' ) {
-			if ( $self->top_tool() and $first  ) {
-				$first =0;
+		if ( $self->top_tool() and $first  ) {
+			$first =0;
+			foreach my $attribute ( 'raw_results_file','raw_nonp_file' ) {
 				my $name = $self->$attribute->[0];
 				unless ($name =~ /$filename/){
 					if ( $name =~ /\./ ) {
