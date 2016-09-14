@@ -158,6 +158,9 @@ my $dir = $modelfit->directory;
 foreach my $file (<$dir/raw_results_*>){
 	mv($file,$main_directory.'/.');
 }
+foreach my $file (<$dir/raw_nonparametric_*>){
+	mv($file,$main_directory.'/.');
+}
 if ($modelfit->clean > 2){
 	rmtree($dir);
 }
