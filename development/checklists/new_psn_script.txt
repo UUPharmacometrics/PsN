@@ -1,0 +1,37 @@
+
+__When only bin script: new script PsN/bin/scriptname  
+
+- (Only on windows, ignored by git: new .bat file in PsN/bin/ )
+
+- New test in test/system/helptexts.t
+
+- New subs in lib/input_checking.pm and tests in unit/input_checking.t
+
+- In bin/setup.pl add name of bin script in installed utilities
+
+- In PsN/Makefile add scriptname in list under COMPFILES
+
+- New entry in development/release_notes/release_notes_PsN_next_version.txt
+  where refer to scriptname_userguide.pdf
+
+- New userguide doc/scriptname_userguide.tex
+
+- New link on wiki for PsN documentation to internal_release_pdfdocs/scriptname_userguide.pdf 
+
+- in development/scripts/PsN_uninstall.pl add script in list to uninstall
+
+- New system tests test/system/scriptname.t with crash tests 
+
+- (Before public release: new link for script on docs page)
+
+
+__When new tool class also: PsN/lib/tool/mytool.pm
+
+- All of above
+
+- require tool::mytool.pm in bin/scriptname
+
+- new tests in test/unit/tool/scriptname.t
+
+- In PsN/Makefile add tool/mytool.pm in list under LIBFILES
+

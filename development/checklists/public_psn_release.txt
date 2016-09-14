@@ -1,0 +1,13 @@
+- Update web pages, make sure to add links for new tools
+
+- Review all documentation
+
+- release mail
+
+- release notes, name after version
+
+- text file known bugs at time of next release
+
+- upload installation packages, change default files for download
+
+- git tag
