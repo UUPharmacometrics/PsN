@@ -1,0 +1,166 @@
+#!/usr/bin/perl
+
+# Only for Development
+use FindBin qw($Bin);
+use lib "$Bin/../lib";
+
+# Don't edit the line below, it must look exactly like this.
+# Everything above this line will be replaced #
+
+# Perl includes #
+use Config;
+use strict;
+use Getopt::Long;
+# External modules #
+use Math::Random;
+# PsN includes #
+use PsN;
+use common_options;
+use ui;
+use Cwd;
+use File::Copy qw/cp mv/;
+use File::Glob;
+use File::Path 'rmtree';
+# More PsN dependencies included with require further down
+
+my $cmd_line = $0 . " " . join( " ", @ARGV );
+
+my %options;
+
+my %required_options = ('npsupp:s' => undef);
+my %optional_options = ();
+
+my $res = GetOptions( \%options,
+		      @common_options::get_opt_strings,
+			  keys(%required_options),
+		      keys(%optional_options) );
+
+exit unless $res;
+
+my %help_text;
+
+$help_text{Pre_help_message} = <<'EOF';
+Run multiple copies of a single model with
+tweaked initial estimates in parallel.
+EOF
+$help_text{Description} = <<'EOF';
+    Running a modelfile with multiple sets of tweaked initial estimates,
+	either randomly perturbed or from rawres_input.
+EOF
+$help_text{Options} = <<'EOF';
+A model file is required on the command-line. In addition, either
+-min_retries or -rawres_input is required, see below.
+Otherwise the program takes the same input as execute, see execute -h.
+
+The following options are valid:
+EOF
+$help_text{Examples} = <<'EOF';
+npfit run33.mod -min_retries=4 -threads=5 -seed=12345
+EOF
+$help_text{-npsupp} = <<'EOF';
+    -npsupp
+    A comma-separated list of npsupp values.
+EOF
+
+
+
+common_options::online_help('npfit', \%options,\%help_text, \%required_options, \%optional_options);
+common_options::setup( \%options, 'npfit' ); #calls set_globals etc, initiates random sequence
+
+unless (defined $options{'degree'}){
+	my %hash = %{common_options::restore_options(@common_options::tool_options)};
+	if (defined $hash{'degree'}){
+		$options{'degree'} = $hash{'degree'};
+	}else{
+		$options{'degree'} = 0.1;
+	}
+}
+
+require tool::modelfit;
+require model;
+require input_checking;
+
+
+my $eval_string = common_options::model_parameters(\%options);
+
+if( scalar @ARGV > 1 ) {
+  die "When using npfit, no "
+      ."more than one model at a time may be run\n";
+}
+
+my $input_model;
+$input_model = model -> new ( eval( $eval_string ),
+							  filename => $ARGV[0],
+							  ignore_missing_output_files => 1 );
+							  
+input_checking::check_options(tool => 'npfit', options => \%options, model => $input_model);							  
+
+## Set the automatic renaming of modelfit directory
+my $main_directory = tool::get_rundir(create => 1,
+									  basename => 'npfit_dir',
+									  modelname => $ARGV[0],
+									  directory_option => $options{'directory'}); 
+ 
+if( $options{'nonparametric_etas'} or
+    $options{'nonparametric_marginals'} ) {
+  $input_model -> add_nonparametric_code;
+}
+  
+if( $options{'shrinkage'} ) {
+  $input_model -> shrinkage_stats( enabled => 1 );
+}
+  
+my $modelfit;
+
+chdir($main_directory); #created by tool::get_rundir
+my $filestem = $input_model ->filename();
+#this regex must be the same as used in modelfit.pm, for consistency
+$filestem =~ s/\.[^.]+$//; #last dot and extension
+
+$input_model -> set_records(type => 'nonparametric',
+							record_strings => ['UNCONDITIONAL']);
+														
+my @models_array=();
+foreach my $value (@{$options{'npsupp'}}){
+	push(@models_array,$input_model -> copy( filename => $filestem.'_'.$value.'.mod',
+											   copy_datafile => 0,
+											   copy_output => 0,
+											   write_copy => 0,
+											   output_same_directory => 1,
+											   directory => $main_directory));
+	
+	$models_array[-1] -> add_option(record_name => 'nonparametric',
+									option_name => 'NPSUPP',
+									option_value => $value);
+	$models_array[-1] -> _write;
+}
+
+#basedirect $main_directory
+$modelfit = 
+	tool::modelfit->new( eval( $common_options::parameters ),
+	  prepend_model_file_name => 1,
+	  directory => undef,
+	  min_retries => 0,
+	  retries => 0,
+	  copy_data => 0,
+	  models => \@models_array );  
+
+$modelfit-> print_options (cmd_line => $cmd_line,
+			   directory => $main_directory,
+			   toolname => 'npfit',
+			   local_options => [keys %optional_options],
+			   common_options => \@common_options::tool_options);
+
+
+$modelfit -> run;
+
+my $dir = $modelfit->directory;
+foreach my $file (<$dir/raw_results_*>){
+	mv($file,$main_directory.'/.');
+}
+if ($modelfit->clean > 2){
+	rmtree($dir);
+}
+
+ui -> print( category => 'npfit',
+	     message => "\nnpfit done\n" );
