@@ -14,6 +14,9 @@ use ui;
 use Cwd;
 use OSspecific;
 use array;
+use so;
+use so::parsers::vpc;
+
 # More PsN dependencies included with require further down
 
 my $cmd_line = $0 . " " . join( " ", @ARGV );
@@ -64,6 +67,7 @@ my %optional_options = ( 'idv:s' => undef,
     "copy_data!"=>undef,
     'auto_bin:s' => undef,
     'min_points_in_bin:i' => undef,
+    'so!' => undef,
 );
 
 my $res = GetOptions( \%options,
@@ -496,6 +500,13 @@ $help_text{-min_points_in_bin} = <<'EOF';
 		options.
 EOF
 
+$help_text{-so} = <<'EOF';
+      -so
+
+      Default not selected. Create a standard output xml file
+      containing the original table and the simulated tables
+EOF
+
 common_options::online_help( 'vpc', \%options, \%help_text, \%required_options, \%optional_options);
 common_options::setup( \%options, 'vpc' ); #calls set_globals etc, initiates random sequence
 
@@ -783,5 +794,14 @@ $vpc-> print_options (cmd_line => $cmd_line,
 
 $vpc -> run;
 $vpc -> print_results;
+
+if ($options{'so'}) {
+    my $filename = $model->filename;
+    $filename =~ s/\.ctl|\.mod/.SO.xml/;
+    my $so = so->new(filename => $filename);
+    my $parser = so::parsers::vpc->new(so => $so, rundir => $vpc->directory);
+    $so->write();
+}
+
 ui -> print( category => 'vpc',
 	     message => "vpc done\n" );
