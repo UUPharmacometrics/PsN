@@ -800,7 +800,7 @@ if ($options{'so'}) {
     $filename =~ s/\.ctl|\.mod/.SO.xml/;
     my $so = so->new(filename => $filename);
     my $parser = so::parsers::vpc->new(so => $so, rundir => $vpc->directory);
-    $so->write();
+    $so->write(compress => 1);
 }
 
 ui -> print( category => 'vpc',
