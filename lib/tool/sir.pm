@@ -1174,7 +1174,7 @@ sub load_restart_information
 		$model->directory( $directory );
 		$filename =~ s/\.[^.]+$//; #remove last dot and extension
 		$self->raw_results_file(['raw_results_'.$filename.'.csv']);
-		$self->raw_nonp_file(['raw_nonparametric_results_'.$filename.'.csv']);
+		$self->raw_nonp_file(['raw_nonparametric_'.$filename.'.csv']);
 
 		$ok=1;
 	}
