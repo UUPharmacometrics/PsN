@@ -34,6 +34,8 @@ See the NONMEM documentation on \$NONPARAMETRIC for interpretation of NPSUPP.
 \nextopt
 %\optname{copy\_data}
 %\nextopt
+%\optname{keep\_tables}
+%\nextopt
 %\optdefault{rplots}{level}
 %\nextopt
 \end{optionlist}
@@ -53,6 +55,8 @@ contains the parametric and nonparametric ofv, the npsupp value used,
 and the nonparametric ETAs.
 
 \section{Internal npfit workflow}
+
+%check that in bin/npfit tool::nonparametric->new you have top_tool => 1 
 
 \begin{enumerate}
 \item Read the input model into memory. % in npfit/bin via model->new
