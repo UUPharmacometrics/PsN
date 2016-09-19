@@ -107,6 +107,7 @@ if( $options{'shrinkage'} ) {
   
 my $npfit = 
 	tool::nonparametric->new( eval( $common_options::parameters ),
+		directory_name_prefix => 'npfit',
 		models => [$input_model],
 		npsupp => $options{'npsupp'});
       
