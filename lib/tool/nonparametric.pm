@@ -76,6 +76,76 @@ sub modelfit_analyze
 
 }
 
+sub add_column
+{
+	my %parm = validated_hash(\@_,
+							  filename => { isa => 'Str', optional => 0 },
+							  npsupp => {isa => 'ArrayRef', optional => 0},
+		);
+	my $filename = $parm{'filename'};
+	my $npsupp = $parm{'npsupp'};
+	
+	# Read in a csv file
+	open( CSV, '<'."$filename" ) || die "Could not open $filename for reading";
+	my @lines;
+	my @exp;
+	my $amount;
+	while (my $line = <CSV> ) {
+		chomp($line);
+		my @tmp = ();
+		if ($line =~ /^\"/) { 
+			@tmp = split(/","/,$line);  # split columns where row consist of headers
+			$tmp[0] =~ s/['\"']//g; 
+			$tmp[scalar(@tmp)-1] =~ s/['\"']//g; 
+		} else {
+			@tmp = split(/,/,$line); # split columns where row consist of numbers
+		}
+	push(@lines,\@tmp);
+		push(@exp,$line);
+	}
+	close( CSV );
+
+	# search position of the column "npofv"
+	my $element = 'npofv';
+	my $position;
+	for (my $i=0; $i < scalar(@{$lines[0]}); $i++) {
+		if ($lines[0][$i] eq $element) {
+			$position = $i;
+		}
+	}
+	
+	# add column
+	my @rows = ();
+	unless ( defined $npsupp && (scalar(@{$npsupp}) > 0) ) {
+		die "Error: Npsupp values are not defined or there are no npsupp values.";
+	} else {
+		splice @{$lines[0]}, $position+1 , 0, 'npsupp';
+		$rows[0] = '"'.join('","',@{$lines[0]}).'"'."\n";
+		for (my $n=0; $n < scalar(@{$npsupp}); $n++) {
+			splice @{$lines[$n+1]}, $position+1 , 0, $npsupp->[$n];
+			$rows[$n+1] = join(',',@{$lines[$n+1]})."\n";
+		}
+	}
+	
+	return(\@rows);
+}
+
+sub overwrite_csv
+{
+	my %parm = validated_hash(\@_,
+							  filename => { isa => 'Str', optional => 0 },
+							  rows => {isa => 'ArrayRef', optional => 0},
+		);
+	my $filename = $parm{'filename'};
+	my $rows = $parm{'rows'};
+
+	#write a csv file
+	open (my $fh, '>' ."$filename");
+	for (my $n=0; $n < (scalar(@{$rows})); $n++) {
+		print $fh $rows->[$n];	# write each row in the csv file. 
+	}
+	close $fh;	
+}
 
 no Moose;
 __PACKAGE__->meta->make_immutable;
