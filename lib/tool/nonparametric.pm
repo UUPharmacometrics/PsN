@@ -58,6 +58,8 @@ $modelfit =
 	  retries => 0,
 	  copy_data => 0,
 	  top_tool => 0,
+	  raw_results_file => [$self -> directory.$self->raw_results_file->[0]],
+	  raw_nonp_file => [$self -> directory.$self->raw_nonp_file->[0]],
 	  models => \@models_array );
     
     
@@ -70,9 +72,9 @@ sub modelfit_analyze
     # Collect all tables into one results table
 
     my $self = shift;
-
-    
-
+    my $added_column = add_column(filename => $self->raw_nonp_file->[0], npsupp => $self->npsupp);
+	overwrite_csv(filename => $self->raw_nonp_file->[0], rows => $added_column);
+	
 
 }
 
