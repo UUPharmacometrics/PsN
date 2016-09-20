@@ -1,5 +1,5 @@
 \input{inputs/format_header.tex}
-\guidetitle{NPFIT user guide}{2016-09-16}
+\guidetitle{NPFIT user guide}{2016-09-20}
 
 \newcommand{\guidetoolname}{npfit}
 
@@ -13,24 +13,25 @@ Nonparametric estimation using a range of NPSUPP values.
 
 Examples
 \begin{verbatim}
-npfit run1.mod -npsupp_add=0,100,200
+npfit run1.mod -npsupp=50,100,200
 \end{verbatim}
 
 \section{Input and options}
 
 \subsection{Required input}
-A model file is required, and a list of npsupp\_add-values.
+A model file is required, and a list of npsupp-values.
 NONMEM requires that the \$ESTIMATION record is present with the conditional method or POSTHOC.
 %\subsection{Optional input}
 
 \subsection{Options}
 \begin{optionlist}
-\optdefault{npsupp\_add}{0,50,100}
+\optdefault{npsupp}{50,100,200}
 Required. A comma-separated list of non-negative integers.
-For each value i a new copy of the input model will be run with
-\$NONPARAMETRIC UNCONDITIONAL NPSUPP=N+i, where N is
-the number of individuals in the data set (after IGNORE/ACCEPT).
+For each value N a new copy of the input model will be run with
+\$NONPARAMETRIC UNCONDITIONAL NPSUPP=N
 See the NONMEM documentation on \$NONPARAMETRIC for interpretation of NPSUPP.
+All values in the list should be equal to or greater than the number
+of individuals in the data set.
 \nextopt
 %\optname{copy\_data}
 %\nextopt
@@ -94,26 +95,26 @@ to the step below where the old process stopped. %later, not now
 %			ui -> print( category => 'all',		 message => 'Running input model' );
 %			$orig_fit -> run;
 
+\item Find $N_{ind}$, the number of individuals in the data set as reported in the estimation lst-file,
+i.e. the number of individuals after any IGNORE/ACCEPT. If $N_{ind}$ is larger than any of the npsupp values
+then print a warning.
+% my $N_individuals = $model->outputs->[0]->nind();
 \item Update initial estimates with the final estimates from the estimation.
 %find $probnum again, this is not passed on from input_checking via any option
 % $model->update_inits(from_output => $model->outputs->[0], problem_number => $probnum);
-
 \item If the estimation method is classical set MAXEVAL=1 in \$ESTIMATION 
 % if ($model->problems->[$probnum-1]->estimations->[-1]->is_classical)
 %  $model->set_option MAXEVAL=1 in estimation for problem number $probnum, record number -1, with fuzzy match
-
-\item For each value i of npsupp\_add, copy the updated model and set \$NONPARAMETRIC UNCONDITIONAL NPSUPP=i+N,
-where N is the number of individuals in the data set as reported in the estimation lst-file, i.e. the number
-of individuals after any IGNORE/ACCEPT. Any pre-existing \$NONPARAMETRIC will be removed.
+\item For each value i of npsupp, copy the updated model and set \$NONPARAMETRIC UNCONDITIONAL NPSUPP=i
+Any pre-existing \$NONPARAMETRIC will be removed.
 Write the model copy in the m1 subfolder of the run directory.
-% my $N_individuals = $model->outputs->[0]->nind();
-% loop as in bin/npfit, except add N to NPSUPP and use m1 subdirectory, which is automatically created
+% loop as in bin/npfit, except use m1 subdirectory, which is automatically created
 \item Run models with NONMEM
 %create modelfit object and push to $self->tools as in tool/proseval.pm
 % in bin/npfit replace modefit new with nonparametric new and do run on that object instead.
-\item In the raw\_nonparametric results file, add a column with the npsupp\_add values. %or total?
+\item In the raw\_nonparametric results file, add a column with the npsupp values. 
 %first in sub modelfit_analyze, later if have time move to raw_results_callback
-\item Create, and possibly run, R script. 
+\item Create, and possibly run, R script. %later
 \end{enumerate}
 
 %\references
