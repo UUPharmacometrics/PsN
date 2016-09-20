@@ -8,6 +8,7 @@ use ext::Config::Tiny;
 use ext::File::HomeDir;
 use PsN (); #pass empty list so that import, which reads config file, is not called
 
+
 my $version = $PsN::version;
 
 my $default_user_name;
@@ -16,6 +17,7 @@ my $default_bin;
 my $default_perlpath;
 my $use_user_name;
 my $is_root = 0;
+my $username;
 my $uid;
 my $gid;
 my $have_file_copy = 0;
@@ -26,7 +28,6 @@ my $binary_dir;
 my $library_dir;
 my $perl_binary;
 my $old_psn_config_file;
-my $old_default_psn_config_file;
 my $copy_cmd;
 my $copy_recursive_cmd;
 my $relative_lib_path=0;
@@ -52,16 +53,9 @@ if (running_on_windows()) {
 	get_windows_version();
 }
 
-#NEW
-my $default_installation = PsN::get_default_psn_installation_info();
-my $new_defaults = PsN::get_new_installation_defaults($version,$default_installation);
-
-$default_sitelib = $new_defaults->{'base_lib_dir'};
-$default_bin = $new_defaults->{'bin_dir'};
+$default_sitelib = $Config{sitelib};
+$default_bin = $Config{bin};
 $default_perlpath = $Config{perlpath};
-my $old_default_psn_config_file = $new_defaults->{'old_config_file'};
-my $old_default_psn_version = $new_defaults->{'version'};
-
 if (running_on_windows()) {
 	#"trying to find the perl binary via system command\n";
 	my $wherebin;
@@ -100,7 +94,11 @@ if (running_on_windows()) {
 	}elsif(length($local_perlpath)>0 and -x $local_perlpath and (not -d $local_perlpath)) {
 		$default_perlpath = $local_perlpath;
 	}else{
-		$default_perlpath = undef;
+			$default_perlpath = undef;
+		}
+}else{
+	if (-d '/usr/local/bin'){
+		$default_bin = '/usr/local/bin';
 	}
 }
 unless (defined $default_perlpath and defined $default_bin and defined $default_sitelib) {
@@ -115,13 +113,13 @@ my @utilities = (
 	'data_stats', 'update_inits', 'update', 'npc', 'vpc',
 	'pind','nonpb','extended_grid','psn','psn_options','psn_clean',
 	'runrecord','mcmp','lasso','mimp','xv_scm','parallel_retries',
-	'boot_scm','gls','simeval','frem','randtest','linearize', 'crossval', 'pvar', 'nca', 'proseval', 'vpctable','sir','rawresults',
-	'precond','covmat','nmoutput2so', 'benchmark','postfrem','npfit'
+	'boot_scm','gls','simeval','frem','randtest','linearize', 'crossval', 'pvar', 'nca', 'vpctable','sir','rawresults',
+	'precond','covmat','nmoutput2so', 'benchmark'
 	);
 
 my @win_modules = ('Moose', 'MooseX::Params::Validate', 'Math::Random');
 my @nix_modules = ('Moose', 'MooseX::Params::Validate', 'Math::Random', 'Storable');
-my @recommended_modules = ('Archive::Zip','Statistics::Distributions','YAML::Tiny');
+my @recommended_modules = ('Archive::Zip','Statistics::Distributions');
 
 my @modules;
 
@@ -132,6 +130,39 @@ sub get_windows_version
 		$is_win7 = 1 if ($winver eq 'Win7');
 		$is_Vista = 1 if ($winver eq 'WinVista');
 	}
+}
+
+sub check_writeable{
+	my $directory = shift;
+	if (-e $directory){
+		unless (-w $directory){
+			print "\n"."You do not have write permissions in $directory\n";
+			my $mess; 
+			if ($is_root){
+				$mess = "You need to choose another directory";
+			}else{
+				$mess = "You can try to run installation as root to be able to install in $directory";
+			}
+			abort($mess);
+		}
+	}
+}
+
+sub check_default_directory{
+	my $directory = shift;
+	my $type = shift;
+	if (defined $directory and (length($directory)>0) and -e $directory){
+		unless (-w $directory){
+			print "\n"."Cannot suggest a default for $type (you do not have write permissions in $directory)\n";
+			unless ($is_root or running_on_windows()){
+				print "You can try to run installation as root if you want to use the usual default $directory\n";
+			}
+			$directory=undef;
+		}
+	}else{
+		$directory=undef;
+	}
+	return $directory;
 }
 
 sub running_on_windows
@@ -715,12 +746,16 @@ sub test_perl_modules
 
 sub warn_about_local_configuration
 {
+	my $found=0;
 	if (-e home() . "/psn.conf") {
-		print "\nPlease note that for you personally the configuration file you\n".
-		"already have in ".home()."$directory_separator"."psn.conf\n".
-		"will override the settings in\n".
-		"$library_dir"."$directory_separator"."PsN_$name_safe_version"."$directory_separator".
-		"psn.conf\n";
+		$found=1;
+		if (-e "$library_dir"."$directory_separator"."PsN_$name_safe_version"."$directory_separator"."psn.conf"){
+			print "\nPlease note that for you personally the configuration file you\n".
+				"already have in ".home()."$directory_separator"."psn.conf\n".
+				"will override the settings in\n".
+				"$library_dir"."$directory_separator"."PsN_$name_safe_version"."$directory_separator".
+				"psn.conf\n";
+		}
 	} elsif (running_on_windows()) {
 		print "\nPlease note that if you have a psn.conf file in your Desktop folder,\n".
 		"the settings in that file will override the settings in\n".
@@ -731,6 +766,7 @@ sub warn_about_local_configuration
 		"the settings in that file will override the settings in\n".
 		"$library_dir" . "$directory_separator" . "PsN_$name_safe_version" . "$directory_separator" . "psn.conf\n";
 	}
+	return $found;
 }
 
 sub copy_file
@@ -808,15 +844,14 @@ print "\nThis is the PsN installer. I will install PsN version $version.\n".
 if ($Config{osname} eq 'linux' or $Config{osname} eq 'darwin') {
 	my $user = `whoami`;
 	chomp($user);
+	$username=$user;
 	if ($user =~ /^root$/) {
 		$is_root = 1;
 		my $home = $ENV{HOME};
 		if ($home =~ /\/([^\/]*)$/) {
 			$default_user_name = $1;
 		}
-	} else {
-		print "Hi $user, you don't look like root. Please note that you need root privileges to install PsN systemwide.\n";
-	}
+	} 
 } else {
 	if (not running_on_windows()) {
 		print "OS ".$Config{osname}." is not explicitly supported by PsN, but if it is a unix/Mac type\n".
@@ -826,8 +861,11 @@ if ($Config{osname} eq 'linux' or $Config{osname} eq 'darwin') {
 	}
 }
 
+$default_bin = check_default_directory($default_bin,'PsN utilities');
 print "PsN Utilities installation directory [$default_bin]:";
 $binary_dir = get_input($default_bin);
+check_writeable($binary_dir);
+
 create_directory($binary_dir);
 
 print "Path to perl binary used to run Utilities [$default_perlpath]:";
@@ -837,9 +875,10 @@ $perl_binary = get_input($default_perlpath);
 my $runperl_name = "runperl.bat";
 my $runperl_binary = File::Spec->catpath( $volume, $directory, $runperl_name);
 
-
+$default_sitelib = check_default_directory($default_sitelib,'Core and Toolkit');
 print "PsN Core and Toolkit installation directory [$default_sitelib]:";
 $library_dir = get_input($default_sitelib);
+check_writeable($library_dir);
 create_directory($library_dir);
 
 
@@ -866,14 +905,10 @@ if (confirm()) {
 
 my $overwrite = 0;
 my $old_version = 'X_X_X';
-if (defined $old_default_psn_version){
-	$old_version = $old_default_psn_version;
-	$old_version =~ s/\./_/g;
-}
 my $keep_conf = 0;
 
-if (-d "$library_dir/PsN_$name_safe_version"){
-	print "Directory $library_dir/PsN_$name_safe_version already exists.\n";
+if (-d "$library_dir/PsN_$name_safe_version") {
+	print "Directory $library_dir/PsN_$name_safe_version already exists, which means\n";
 	print "PsN $version is already (partially) installed. Would you like to continue anyway [y/n] ?";
 	abort() unless (confirm());
 }else{
@@ -965,14 +1000,9 @@ foreach my $file (@utilities) {
 
 		my $tmp = $old_version;
 		$tmp =~ s/\./\_/g;
-		if (defined $old_default_psn_config_file and -e $old_default_psn_config_file){
-			$old_psn_config_file = $old_default_psn_config_file;
-		}else{
-			$old_psn_config_file = File::Spec->catfile($library_dir, "PsN_$tmp", "psn.conf");
-			unless (-e $old_psn_config_file){
-				$old_psn_config_file = undef ;
-			}
-		}
+		$old_psn_config_file = File::Spec->catfile($library_dir, "PsN_$tmp", "psn.conf");
+		$old_psn_config_file = undef unless (-e $old_psn_config_file);
+		
 		if ($old_version eq $version) {
 			if (not $confirmed) {
 				print("\nThis version ($version) looks like an older installed\n",
@@ -1081,16 +1111,6 @@ if (confirm()) {
 	close $dh;
 	unlink("$includes_file.temp");
 
-	#change perl binary in runsystem
-	open(my $sh, "+< $test_library_dir/runsystem")                 or die "Opening: $!";
-	my @ARRAY = <$sh>;
-	$ARRAY[0] = "\#!".$perl_binary."\n";
-	seek($sh,0,0)                        or die "Seeking: $!";
-	print $sh @ARRAY                     or die "Printing: $!";
-	truncate($sh,tell($sh))               or die "Truncating: $!";
-	close($sh)                           or die "Closing: $!";
-
-	
 	print "PsN test library installed successfully in [$test_library_dir].\n";
 	print "Please read the 'testing' chapter of the developers_guide.pdf for information on how to run the tests\n\n";
 }
@@ -1141,16 +1161,22 @@ if (not $keep_conf) {
 
 }
 
-warn_about_local_configuration();
+my $found_personal_conf = warn_about_local_configuration();
 
-if ($configuration_done) {
+if ($configuration_done or (running_on_windows() and $found_personal_conf)) {
 	print "\nInstallation complete.\n";
 } else {
-	print "\nInstallation partially complete. You still have to create psn.conf before you can run PsN.\n";
-	print "A template psn.conf to edit is found in\n";
-	print "$library_dir"."$directory_separator"."PsN_$name_safe_version\n"; 
-	print "Detailed instructions are found in ";
-	print "$library_dir$directory_separator"."PsN_$name_safe_version$directory_separator"."doc$directory_separator"."psn_configuration.pdf"."\n"; 
+	if ($found_personal_conf) {
+		#linux
+		print "\nInstallation complete, but other users on this system without a personal psn.conf\n";
+		print "need to create their own psn.conf before they can run PsN.\n";
+	}else{
+		print "\nInstallation partially complete. You still have to create psn.conf before you can run PsN.\n";
+		print "A template psn.conf to edit is found in\n";
+		print "$library_dir"."$directory_separator"."PsN_$name_safe_version\n"; 
+		print "Detailed instructions are found in ";
+		print "$library_dir$directory_separator"."PsN_$name_safe_version$directory_separator"."doc$directory_separator"."psn_configuration.pdf"."\n";
+	}
 }
 
 print "\n\nPress ENTER to exit the installation program.\n";

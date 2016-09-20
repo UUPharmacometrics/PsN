@@ -12,7 +12,9 @@
 
 <p> 
 
-PsN is distributed  as a gzipped tarball and zipped file.</p>
+PsN is distributed  as a gzipped tarball and zipped file. </br>
+Mac users need to read <a href="help/install_4_6_0_mac.txt" target="_blank">this</a></dt> before installing.
+</p>
 
 <table class="downloads">
   <tbody>

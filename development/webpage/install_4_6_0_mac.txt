@@ -1,0 +1,34 @@
+
+Mac users with the latest version(s) of Mac Os cannot accept the default installation
+folder for PsN utilities, even when installing as root. Do the following:
+
+Run setup.pl as root. When setup.pl prompts for Utilities directory like this:
+
+PsN Utilities installation directory [/usr/bin]:
+
+then enter /usr/local/bin and hit Enter:
+
+PsN Utilities installation directory [/usr/bin]: /usr/local/bin
+
+The other defaults can be accepted. 
+
+If there is a message about PsN already being installed this message is misleading,
+what it should say is that PsN is already *partially* installed. This is not an error,
+just say yes to continuing.
+
+---------------
+
+Alternatively, the modified installation script setup4_6_0.pl can be used,
+http://sourceforge.net/projects/psn/files/setup4_6_0.pl/download
+where the default has been changed to /usr/local/bin
+
+Why the default cannot be used:
+
+Not even root has write permissions in /usr/bin in the latest version(s) of Mac OS
+and therefore setup.pl cannot install anything there. What we want to do is use
+another directory which is already in $PATH *and* where root has write permission.
+
+Experienced users may choose an entirely different installation directory, and
+then add it to $PATH.
+In Uppsala we use /opt/PsN/bin for utilities and /opt/PsN for Core and Toolkit,
+and have /opt/PsN/bin in $PATH.

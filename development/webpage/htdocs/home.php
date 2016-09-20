@@ -46,6 +46,9 @@ The complete list of new features and bugfixes in 4.6.0 is found
 <a href="pdfdocs/release_notes_PsN_4_6_0.txt" target="_blank">here</a></dt>.
 </p>
 
+ <li>
+Mac users need to read <a href="help/install_4_6_0_mac.txt" target="_blank">this</a></dt> before installing.
+ </li>
  <li>Installation on Windows: Users who install PsN for the first time need to make sure they install a Perl version where
 the needed extra modules are available, see instructions on
 <a href="install.php">installation page</a>.

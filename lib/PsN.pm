@@ -219,7 +219,13 @@ sub get_new_installation_defaults
 	$name_safe_version =~ s/\./_/g;
 
 	my $base_lib_dir =  $Config{sitelib};
-	my %hash=('bin_dir' => $Config{bin});
+
+	my $bin_dir = $Config{bin};
+	if (($Config{osname} ne 'MSWin32') and (-d '/usr/local/bin')){
+		$bin_dir = '/usr/local/bin';
+	}
+		
+	my %hash=('bin_dir' => $bin_dir);
 
 	if (defined $default_installation->{'bin_dir'} and 
 		length($default_installation->{'bin_dir'})>0 and
