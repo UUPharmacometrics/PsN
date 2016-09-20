@@ -23,7 +23,8 @@ Windows users who are installing Perl for the first time should choose Strawberr
 because of easier installation of necessary Perl modules.
 If ActiveState is selected it is important to select a version which supports the extra Perl modules needed for PsN, see the next bullet point.
 On May 10th 2016 the recommended ActiveState Perl version was 5.18.<p> 
-Note 2: Mac users should check if the version of Perl that came with MacOS is 5.10.1 or above. For older versions of MacOS Perl needs to be upgraded.
+Note 2: Mac users should check if the version of Perl that came with MacOS is 5.10.1 or above. For older versions of MacOS
+Perl needs to be upgraded. 
 This can be done by installing ActiveState Perl (and installing the needed packages with ppm install).
 </li>
 <li>Perl modules MooseX::Params::Validate, Math::Random, Statistics::Distributions, Archive::Zip and File::Copy::Recursive <p> 
@@ -96,12 +97,14 @@ cpan MooseX::Params::Validate<br>
       the <tt>PsN-Source </tt>directory and type: </p> 
     </div>
     <p><tt>perl setup.pl</tt></p>
-    <p>Unix users should open their favorite terminal go to the <tt>PsN-Source</tt> directory and type: </p>
-    <p><tt>perl setup.pl</tt></p>
+    <p>Unix/Mac users should open their favorite terminal, cd to the <tt>PsN-Source</tt> directory and type: </p>
+    <p><tt>sudo perl setup.pl</tt></p>
+    <p>sudo can be skipped if you already have write permissions in the installation directories you intend to use.</p>
   </li>
   <li>
     Read all messages carefully and answer the questions on screen. The default is probably the
-       best for most users. It is recommended to let the installation script automatically create psn.conf.
+       best for most users, except on <a href="help/install_4_6_0_mac.txt" target="_blank">Mac Os</a></dt>.
+	   It is recommended to let the installation script automatically create psn.conf.
   </li>
   <li> If you did not let the installation script create a configuration file <tt>psn.conf</tt> for you, 
 or if you are running NONMEM via NMQual or on a cluster, you need to edit <tt>psn.conf</tt> 
