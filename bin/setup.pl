@@ -872,10 +872,16 @@ if (defined $old_default_psn_version){
 }
 my $keep_conf = 0;
 
-unless (mkpath("$library_dir/PsN_$name_safe_version")) {
-	print "Failed to create $library_dir/PsN_$name_safe_version: $!\n";
-	print "PsN is probably already installed. Would you like to continue anyway [y/n] ?";
+if (-d "$library_dir/PsN_$name_safe_version"){
+	print "Directory $library_dir/PsN_$name_safe_version already exists.\n";
+	print "PsN $version is already (partially) installed. Would you like to continue anyway [y/n] ?";
 	abort() unless (confirm());
+}else{
+	unless (mkpath("$library_dir/PsN_$name_safe_version")) {
+		print "Failed to create $library_dir/PsN_$name_safe_version: $!\n";
+		print "Would you like to continue anyway [y/n] ?";
+		abort() unless (confirm());
+	}
 }
 
 if (-e "$library_dir/PsN_$name_safe_version/psn.conf") {
