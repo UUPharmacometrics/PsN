@@ -223,35 +223,6 @@ sub check_copy_data
 	return $error;
 }
 
-sub check_npfit
-{
-	my %parm = validated_hash(\@_,
-							  options => {isa => 'HashRef', optional => 0},
-							  model =>  {isa => 'model', optional => 0},
-		);
-	my $options = $parm{'options'};
-	my $model = $parm{'model'};
-
-	my $error = '';
-	my @npsupp=();
-	if ( defined $options->{'npsupp'} ){
-		if ($options->{'npsupp'} ne '') {
-			@npsupp = split(/,/,$options->{'npsupp'});
-			foreach my $intege (@npsupp) {
-				if (not ($intege =~ /^[0-9]+$/)){
-					$error .= 'Option -npsupp have to consist of integers only'."\n";
-				}
-			}
-		}else{
-			$error .= 'Option -npsupp is empty'."\n";
-		}
-	}else{
-		$error .= 'Option -npsupp is required'."\n";
-	}
-	$options->{'npsupp'} = \@npsupp;
-	return $error;
-}
-
 sub check_rawres_input
 {
 	my %parm = validated_hash(\@_,
@@ -288,6 +259,71 @@ sub check_rawres_input
 	}
 	$options->{'in_filter'} = \@in_filter;
 
+	return $error;
+}
+
+sub check_npfit
+{
+	my %parm = validated_hash(\@_,
+							  options => {isa => 'HashRef', optional => 0},
+							  model =>  {isa => 'model', optional => 0},
+		);
+	my $options = $parm{'options'};
+	my $model = $parm{'model'};
+
+	my $error = '';
+	
+	unless(($PsN::nm_major_version > 7) or (($PsN::nm_major_version ==7) and ($PsN::nm_minor_version > 3))) {
+		$error .= 'To run npfit NONMEM version must be 7.4 or later.'."\n";
+	}
+	
+	# Check npsupp input 	
+	my @npsupp=();
+	if ( defined $options->{'npsupp'} ){
+		if ($options->{'npsupp'} ne '') {
+			@npsupp = split(/,/,$options->{'npsupp'});
+			foreach my $intege (@npsupp) {
+				if (not ($intege =~ /^[0-9]+$/)){
+					$error .= 'Option -npsupp have to consist of integers only'."\n";
+				}
+			}
+		}else{
+			$error .= 'Option -npsupp is empty'."\n";
+		}
+	}else{
+		$error .= 'Option -npsupp is required'."\n";
+	}
+	$options->{'npsupp'} = \@npsupp;
+	
+	
+	my $problems_amount = scalar (@{$model-> problems});
+	# find problem number of the first problem where is an estimation record
+	my $probnum;
+	for (my $i=1; $i <= $problems_amount; $i++) {
+		if ( defined($model->problems->[$i-1]->estimations) && (scalar(@{$model->problems->[$i-1]->estimations})>0)) {
+			$probnum = $i;
+			last;
+		} else {
+			if ($i == $problems_amount) {
+				$error .= "The input model must have \$ESTIMATION in at least one \$PROBLEM.\n";
+			}
+		}
+	}
+	
+	# Check if estimation method is set								   
+	my $method = $model->problems->[$probnum-1]->estimations->[-1]->get_method;
+	my $is_opt_set;
+	unless (($method eq '1') or ($method =~ /^CON/) or ($method eq 'FOCE')) {
+		$is_opt_set = $model->is_option_set(name => 'POSTHOC',
+											record => 'estimation',
+											problem_number => $probnum,
+											record_number => -1,
+											fuzzy_match => 1);
+		if ($is_opt_set == 0) {
+			$error .= "\$ESTIMATION must specify POSTHOC.\n";
+		}
+	}
+		
 	return $error;
 }
 
