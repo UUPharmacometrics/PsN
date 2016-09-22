@@ -57,64 +57,32 @@ and the nonparametric ETAs.
 
 \section{Internal npfit workflow}
 
-%check that in bin/npfit tool::nonparametric->new you have top_tool => 1 
-
 \begin{enumerate}
-\item Read the input model into memory. % in npfit/bin via model->new
+\item Read the input model into memory.
 \item Input checking, i.e. verify that required options are set and valid and that requirements on the input model
-are satisfied.%in input_checking.pm for npfit
+are satisfied.
 \begin{enumerate}
 \item The nonmem version must be 7.4 or later.
-% $PsN::nm_major_version > 7 or ($PsN::nm_major_version ==7 and $PsN::nm_minor_version > 3)
 \item The model must have \$ESTIMATION in at least one \$PROBLEM. The first \$PROBLEM with \$ESTIMATION will be the
 only one being updated in the following procedure.
-% find $probnum, i.e. start at $i=1 and find first where following is true:
-%(defined $model->problems->[$i-1]->estimations and scalar(@{$model->problems->[$i-1]->estimations})>0)
-% if none found then this is an input error
 \item If METHOD is not conditional then \$ESTIMATION must specify POSTHOC.
-% my $method = $model->problems->[$probnum-1]->estimations->[-1]->get_method;
-% unless ($method eq '1' or $method =~ /^CON/ or $method eq 'FOCE')
-%  use $model->is_option_set  for estimation record for problem number $probnum, record number -1, option POSTHOC with fuzzy match
-% if not set then error 
 \end{enumerate}
 \item Create (or reopen) a run directory according to the usual PsN conventions.
-%automatically by tool->new
 \item If the run directory already existed, read any models/results that are already present and skip
-to the step below where the old process stopped. %later, not now
-\item If there is an lst-file linked to the input model then read the estimation results. %automatically by model->new
+to the step below where the old process stopped.
+\item If there is an lst-file linked to the input model then read the estimation results.
 \item If there are no estimation results available for the input model then run the input model and read the estimation results.
-% unless $model->is_run
-%			my $orig_fit = 
-%				tool::modelfit->new( %{common_options::restore_options(@common_options::tool_options)},
-%									 base_directory	 => $self ->directory(),
-%									 directory		 => undef,
-%									 models		 => [$model],
-%									 raw_results           => undef,
-%									 top_tool              =>0 );
-%		tool::add_to_nmoutput(run => $orig_fit, extensions => ['ext','cov']);		
-%			ui -> print( category => 'all',		 message => 'Running input model' );
-%			$orig_fit -> run;
-
 \item Find $N_{ind}$, the number of individuals in the data set as reported in the estimation lst-file,
 i.e. the number of individuals after any IGNORE/ACCEPT. If $N_{ind}$ is larger than any of the npsupp values
 then print a warning.
-% my $N_individuals = $model->outputs->[0]->nind();
 \item Update initial estimates with the final estimates from the estimation.
-%find $probnum again, this is not passed on from input_checking via any option
-% $model->update_inits(from_output => $model->outputs->[0], problem_number => $probnum);
 \item If the estimation method is classical set MAXEVAL=1 in \$ESTIMATION 
-% if ($model->problems->[$probnum-1]->estimations->[-1]->is_classical)
-%  $model->set_option MAXEVAL=1 in estimation for problem number $probnum, record number -1, with fuzzy match
 \item For each value i of npsupp, copy the updated model and set \$NONPARAMETRIC UNCONDITIONAL NPSUPP=i
 Any pre-existing \$NONPARAMETRIC will be removed.
 Write the model copy in the m1 subfolder of the run directory.
-% loop as in bin/npfit, except use m1 subdirectory, which is automatically created
 \item Run models with NONMEM
-%create modelfit object and push to $self->tools as in tool/proseval.pm
-% in bin/npfit replace modefit new with nonparametric new and do run on that object instead.
 \item In the raw\_nonparametric results file, add a column with the npsupp values. 
-%first in sub modelfit_analyze, later if have time move to raw_results_callback
-\item Create, and possibly run, R script. %later
+\item Create, and possibly run, R script.
 \end{enumerate}
 
 %\references
