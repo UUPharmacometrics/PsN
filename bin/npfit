@@ -83,9 +83,13 @@ require input_checking;
 
 my $eval_string = common_options::model_parameters(\%options);
 
-if( scalar @ARGV > 1 ) {
+if( scalar(@ARGV) > 1 ) {
   die "When using npfit, no "
       ."more than one model at a time may be run\n";
+}
+
+if( scalar(@ARGV) == 0 ) {
+  die "Model is not added.\n";
 }
 
 my $input_model;
