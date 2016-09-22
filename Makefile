@@ -260,6 +260,7 @@ COMPFILES=boot_scm \
 	nca \
 	nonpb \
 	npc \
+	npfit \
 	parallel_retries \
 	pind \
 	psn \
