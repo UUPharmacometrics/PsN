@@ -1,0 +1,67 @@
+#!/usr/bin/perl
+
+use strict;
+use warnings;
+use Getopt::Long;
+use File::Basename;
+
+sub usage
+{
+    my $name = basename($0);
+    print("Usage: $name -my=<mydir> -to=<todir>\n");
+    print("\n");
+    exit;
+}
+
+sub error
+{
+	my $msg = shift;
+
+	print("$msg\n\n");
+	exit;
+}
+
+my $my;
+my $to;
+my $help;
+
+my $res = GetOptions(
+    'my=s' => \$my, 
+    'to=s' => \$to,
+    'help' => \$help,
+    'h' => \$help,
+);
+
+exit unless $res;
+
+if ($help or scalar(@ARGV) == 0) {
+	usage();
+}
+
+if (not defined $my or not defined $to) {
+    error("Both options -my and -to must be specified");
+    usage()
+}
+
+if (not -d $to) {
+    error("The -to directory does not exist.");
+}
+
+if (not -d $my) {
+    error("The -my directory does not exist.");
+}
+
+opendir my $dh, $my or die $!;
+my $count = () = readdir $dh;    # gets count thru ()
+if ($count <= 2) {
+	error("The -my directory is empty");
+}
+
+my $username = getpwuid( $< );
+
+my $rc = symlink("../$my", $to . "/$username"); 
+if ($rc == 0) {
+    error("Could not create symblink");
+}
+
+print "Report SUCCESSFUL\n";
