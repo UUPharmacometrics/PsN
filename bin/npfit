@@ -21,7 +21,6 @@ use Cwd;
 use File::Copy qw/cp mv/;
 use File::Glob;
 use File::Path 'rmtree';
-use tool::nonparametric;
 # More PsN dependencies included with require further down
 
 my $cmd_line = $0 . " " . join( " ", @ARGV );
@@ -79,6 +78,7 @@ unless (defined $options{'degree'}){
 require tool::modelfit;
 require model;
 require input_checking;
+require tool::nonparametric;
 
 
 my $eval_string = common_options::model_parameters(\%options);
