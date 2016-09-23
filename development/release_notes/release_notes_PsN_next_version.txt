@@ -68,6 +68,9 @@ it is now possible to relicense PsN under any later versions of this license.
 - Bug fix: Some generated paths for the Rplots script were illegal R strings causing R to crash
 - Runs where any of the models have $NONPARAMETRIC will now get an additional file in the main
   run directory: raw_nonparametric_results.csv, containing regular ofv, nonparametric ofv, etc
+- The handling of $MSFI and MSFO=file has been redesigned. MSF-files never have to be
+  listed with -extra_files or -extra_output.
+- Bug fix: PsN can now handle $MSFI including/path/to/file.msf  
 
    ___common_options___
 
@@ -184,7 +187,7 @@ ___boot_scm___
    ___update_inits___
 
 -  New options -rawres_input, -in_filter, -offset_rawres to read parameter estimates from a raw results file.
-
+-  Bug fix: renumber MSFO=file in $NONPARAMETRIC
 
    ___sir___
 	
