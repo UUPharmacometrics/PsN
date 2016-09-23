@@ -203,3 +203,6 @@ ___boot_scm___
    ___rplots___
 
 - Major redesign
+
+   ___npfit___
+- New tool npfit for nonparametric estimation.
