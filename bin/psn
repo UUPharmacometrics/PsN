@@ -40,6 +40,7 @@ my %optional_options = (
 			 'nonpb' => '',
 			 'nm_versions' => '',
 			 'npc' => '',
+			 'npfit' => '',
 			 'parallel_retries' => '',
 			 'pind' => '',
 			 'precond' => '',
@@ -205,6 +206,11 @@ EOF
 $help_text{-npc} = <<'EOF';
     npc - Numerical Predictive Check
 	See vpc_npc_userguide.pdf for details.
+EOF
+
+$help_text{-npfit} = <<'EOF';
+    npfit - Nonparametric estimation using a range of NPSUPP values.
+	See npfit_userguide.pdf for details.
 EOF
 
 $help_text{-parallel_retries} = <<'EOF';
