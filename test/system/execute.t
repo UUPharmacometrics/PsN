@@ -51,6 +51,7 @@ my @command_line = (
 	get_command('execute') . " notable.mod -cwres ",
 	get_command('execute') . " pheno.mod -min_retries=2 ",
 	get_command('execute') . " pheno.mod -mirror_plots=2 -mirror_from_lst ",
+	get_command('execute') . " pheno.mod -mirror_plots=2  ",
 	get_command('execute') . " $model_dir/tbs1.mod -tbs  ", #prop
 	get_command('execute') . " $model_dir/tbs1.mod -dtbs  ", #prop
 	get_command('execute') . " $model_dir/tbs1a.mod -tbs  ", #add

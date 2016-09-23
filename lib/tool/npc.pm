@@ -262,11 +262,6 @@ sub BUILD
 					if (defined $self->rawres_input) {
 						croak('Cannot use option rawres_input if the simulation model has $PRIOR.');
 					}
-					unless( defined $self->models->[0]->extra_files ) {
-						croak('When using $PRIOR TNPRI you must set option -extra_files to '.
-							  'the msf-file, otherwise the msf-file will not be copied to the NONMEM '.
-							  'run directory.');
-					}
 
 				} else {
 					croak('The simulation model must contain exactly one problem, unless'.
@@ -957,11 +952,6 @@ sub modelfit_setup
 			if ($self->have_tnpri()) {
 				if (defined $self->rawres_input) {
 					croak('Cannot use option rawres_input if the simulation model has $PRIOR.');
-				}
-				unless( defined $model_simulation->extra_files ) {
-					croak('When using $PRIOR TNPRI you must set option -extra_files to '.
-						  'the msf-file, otherwise the msf-file will not be copied to the NONMEM '.
-						  'run directory.');
 				}
 				
 			} else {

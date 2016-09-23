@@ -330,29 +330,6 @@ my $model = model -> new ( eval( $eval_string ),
 			   filename                    => $ARGV[0],
 			   ignore_missing_output_files => 1);
 
-if( defined $model -> msfi_names() ){
-  my @needed_files;
-  foreach my $msfi_files( @{$model -> msfi_names()} ){
-    #loop $PROB
-    if (defined $msfi_files){
-      foreach my $msfi_file( @{$msfi_files} ){
-	#loop instances
-	if ( defined $msfi_file ){
-	  my ( $dir, $file ) = OSspecific::absolute_path(cwd(),$msfi_file);
-	  push (@needed_files,$dir.$file) ;
-	}
-      }
-    }
-  }
-  if (scalar(@needed_files)>0){
-    if( defined $model -> extra_files ){
-      push(@{$model -> extra_files},@needed_files);
-    }else{
-      $model -> extra_files(\@needed_files);
-    }
-  }
-
-}
 
 my @alternatives=();
 if ( defined $options{'alternative_models'} ){

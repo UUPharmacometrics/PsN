@@ -26,10 +26,8 @@ is (model::get_run_number_string(filename => 'run55'),undef,"get_run_number_stri
 is (model::get_run_number_string(filename => 'run1.2.mod'),'1',"get_run_number_string run1.2.mod");
 
 my $msfi = model::problem::msfi->new(record_arr => ['msf8']);
-is ($msfi->options->[0]->name, 'msf8', "msfi before");
+is ($msfi->get_filename, 'msf8', "msfi before");
 
-$msfi->renumber_msfi (numberstring => '9');
-is ($msfi->options->[0]->name, 'msf9', "msfi after 1");
 
 my $est = model::problem::estimation->new(record_arr => ['MAXEV=99 MSFO=msf8', 'ANY=SOUP']);
 is ($est->options->[1]->value, 'msf8', "est msf before");
@@ -54,6 +52,9 @@ is ($est->options->[1]->value, 'run33abc.msf', "est msf after 3");
 
 $est->renumber_msfo (numberstring => '12');
 is ($est->options->[1]->value, 'run12.msf', "est msf after 4");
+
+$est->rename_msfo (name => '13');
+is ($est->options->[1]->value, '13', "est msf after rename");
 
 
 is_deeply(model::get_xpose_runno_and_suffix(filename => 'patab01'),['01',''],'get_xpose_runno_and_suffix 1');

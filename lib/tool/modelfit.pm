@@ -1158,20 +1158,23 @@ sub get_retry_name
 
 sub set_msfo_to_msfi
 {
-	my $self = shift;
+	#static
 	my %parm = validated_hash(\@_,
-		candidate_model => { isa => 'model', optional => 1 },
-		retry => { isa => 'Int', optional => 1 },
-		queue_info => { isa => 'Ref', optional => 1 }
+							  candidate_model => { isa => 'model', optional => 1 },
+							  retry => { isa => 'Int', optional => 1 },
+							  queue_info => { isa => 'HashRef', optional => 1 },
+							  base_msfo_name => { isa => 'Maybe[Str]', optional => 1 },
 	);
 	my $candidate_model = $parm{'candidate_model'};
 	my $retry = $parm{'retry'};
 	my $queue_info = $parm{'queue_info'};
+	my $base_msfo_name = $parm{'base_msfo_name'};
 
-	my $filename = $queue_info->{'model'}->get_option_value(record_name => 'estimation',
-		option_name => 'MSFO');
-
-	$filename = $self->base_msfo_name if (defined $self->base_msfo_name);
+	#this assumes prob index 0, record index 0
+	my $arr = $queue_info->{'model'}->problems->[0]->get_msfo_filenames;
+	
+	my $filename = $arr->[0] if (scalar(@{$arr})>0);
+	$filename = $base_msfo_name if (defined $base_msfo_name);
 	unless (defined $filename) {
 		ui -> print( category => 'all',  message  => "Warning, no MSFO option in model, ".
 			"set_msfo_to_msfi will fail (used when handling option maxevals)",
@@ -1204,59 +1207,47 @@ sub set_msfo_to_msfi
 			newline => 1);
 	}
 
-	#HERE
-	#loop probs. Add rec if not there. If there only change filename
-	foreach my $prob (@{$candidate_model->problems}){
-		if (defined $prob->msfis and scalar(@{$prob->msfis})>0){
-			$prob->msfis->[0]->options->[0]->name($msfi);
-		}else{
-			$prob->set_records(type => 'msfi', record_strings => [$msfi]);
-		}
+	#Add rec in first prob if not there. If already there only change filename
+	if (defined $candidate_model->problems->[0]->msfis and 
+		scalar(@{$candidate_model->problems->[0]->msfis})>0){
+		$candidate_model->problems->[0]->msfis->[0]->set_filename(filename=>$msfi);
+	}else{
+		$candidate_model->problems->[0]->set_records(type => 'msfi', record_strings => [$msfi]);
 	}
-	$candidate_model->remove_records(type => 'theta');
-	$candidate_model->remove_records(type => 'omega');
-	$candidate_model->remove_records(type => 'sigma');
+
+	$candidate_model->remove_records(type => 'theta',problem_numbers =>[1]);
+	$candidate_model->remove_records(type => 'omega',problem_numbers =>[1]);
+	$candidate_model->remove_records(type => 'sigma',problem_numbers =>[1]);
 	$candidate_model->_write;
 }
 
 sub reset_msfo
 {
-	my $self = shift;
 	my %parm = validated_hash(\@_,
 		candidate_model => { isa => 'model', optional => 1 },
-		basic_model => { isa => 'model', optional => 1 }
+		basic_model => { isa => 'model', optional => 1 },
+		base_msfo_name => { isa => 'Maybe[Str]', optional => 1 },
 	);
 	my $candidate_model = $parm{'candidate_model'};
 	my $basic_model = $parm{'basic_model'};
+	my $base_msfo_name = $parm{'base_msfo_name'};
+
 	my $model_modified = 0;
 
-	my @data_ref = @{$candidate_model -> record( record_name => 'msfi' )};
-	# Check if there is a msfi record and then delete it
-	my @new_problems;
-	if (scalar(@data_ref)!=0) {
-		$candidate_model->remove_records(type=>'msfi');
-
-		# Set the intial values + boundaries to the first  values (update theta, omega, sigma)
-
-		my @old_problems = @{$basic_model -> problems};
-		@new_problems = @{$candidate_model -> problems};
-		for ( my $i=0; $i <= $#old_problems; $i++ ) {
-			foreach my $param ( 'thetas', 'omegas', 'sigmas' ) {
-				$new_problems[$i] -> $param( Storable::dclone( $old_problems[$i] -> $param ) );
-			}
-		}						 
-
+	if (defined $candidate_model ->problems->[0]->msfis and
+		scalar(@{$candidate_model ->problems->[0]->msfis})>0){
+		$candidate_model->remove_records(type=>'msfi',problem_numbers => [1]);
+		foreach my $param ( 'thetas', 'omegas', 'sigmas' ) {
+			$candidate_model -> problems->[0] -> $param( Storable::dclone( $basic_model -> problems->[0]-> $param ) );
+		}
 		$model_modified = 1;
-	}
+	}						 
 
-	my $filename = $basic_model -> get_option_value(record_name => 'estimation',
-		option_name => 'MSFO');
-	$filename = $self->base_msfo_name if (defined $self->base_msfo_name);
+	my $filename = $basic_model -> problems->[0]-> get_msfo_filenames->[0];
+	$filename = $base_msfo_name if (defined $base_msfo_name);
 
 	if (defined $filename){
-		$candidate_model-> set_option(record_name => 'estimation',option_name => 'MSFO',
-			fuzzy_match => 1, option_value => $filename,
-			problem_numbers => [scalar(@new_problems)]);
+		$candidate_model-> rename_msfo(name => $filename);
 	}
 
 	return $model_modified;
@@ -2630,9 +2621,10 @@ sub restart_needed
 			
 		}
 		if( $self->handle_msfo or ($maxevals > 0)){
-			$self -> set_msfo_to_msfi( candidate_model => $candidate_model,
-									   retry => ${$tries},
-									   queue_info => $queue_info_ref);
+			set_msfo_to_msfi( candidate_model => $candidate_model,
+							  retry => ${$tries},
+							  queue_info => $queue_info_ref,
+							  base_msfo_name => $self->base_msfo_name);
 		} else {
 			my $new_name = get_retry_name( filename => 'psn.'.$self->modext,
 										   retry => ${$tries},
@@ -2724,8 +2716,9 @@ sub restart_needed
 	$queue_info_ref->{'have_accepted_run'}= 1 if ($do_this->{'run_is_accepted'}); #do not overwrite old if this run not accepted
 
 	if ($do_this->{'reset_msfo'}){
-		$self -> reset_msfo( basic_model => $model,
-							 candidate_model => $candidate_model );
+		reset_msfo( basic_model => $model,
+					candidate_model => $candidate_model,
+					base_msfo_name => $self->base_msfo_name);
 	}
 	if ($do_this->{'cut_thetas'}){
 		$self -> cut_thetas( candidate_model => $candidate_model,
@@ -3044,7 +3037,6 @@ sub copy_model_and_input
 
 			$candidate_model =  model -> new (outputfile                  => 'psn.lst',
 											  filename                    => 'psn.'.$self->modext,
-											  copy_datafile => ($self->copy_data or $self->always_datafile_in_nmrun),
 											  ignore_missing_output_files => 1,
 											  ignore_missing_data => 1);
 			
@@ -3120,63 +3112,46 @@ sub copy_model_and_input
 			# Initialize sequence of msfi/msfo files.
 			
 			my $msfo_names = $candidate_model -> msfo_names;
-			my $msfi_names = $candidate_model -> msfi_names;
+			my $msfi_names = $candidate_model -> msfi_names(absolute_path => 1);
 			my $msfi_in;
 			
-			if( defined $msfo_names ){
-				$msfi_in = $msfo_names -> [0][0];
-			} elsif ( defined $msfi_names ){
-				$msfi_in = $msfi_names -> [0][0];
+			if( defined $msfo_names and (defined $msfo_names -> [0])){
+				$msfi_in = $msfo_names -> [0];
+			} elsif ( defined $msfi_names and (defined $msfi_names -> [0])){
+				$msfi_in = $msfi_names -> [0];
 			}
 			
 			my $basename = 'psn_msfo';
-			if( scalar @{$candidate_model -> record(record_name => 'estimation')} > 0 ){
-				my $setnames = $candidate_model -> get_option_value(record_name => 'estimation',
-																	option_name => 'MSFO',
-																	record_index => 'all');
-				if (defined $setnames){
-					foreach my $set (@{$setnames}){
-						$basename = $set if (defined $set);
-					}
-				}
+			if( defined $msfo_names and (defined $msfo_names -> [0])){
+				$basename = $msfo_names -> [0];
 			}
 
 			if( -s $msfi_in ){
 				#-s returns true if file is non-empty
 				#assume original model has msfi, assume thetas already removed.
 				cp( $msfi_in, $basename.'-0' ); #move or copy... this is from calling directory
-				#assume only one $MSFI per $PROB. Know file names always first opt
-				foreach my $prob (@{$candidate_model->problems}){
-					if (defined $prob->msfis){
-						$prob->msfis->[0]->options->[0]->name($basename.'-0');
-					}
+				#assume only one $MSFI per $PROB. 
+				if (defined $candidate_model->problems->[0]->msfis){
+					$candidate_model->problems->[0]->msfis->[0]->set_filename(filename =>$basename.'-0');
 				}
 			} else {
 				# 
 				1;
 			}
 			
-			if( scalar @{$candidate_model -> record(record_name => 'estimation')} > 0 ){
-				#record_number 0 means all, -1 means last
+			if( defined $candidate_model -> problems->[0]->estimations or
+				defined $candidate_model -> problems->[0]->nonparametrics ){
 				$self->base_msfo_name($basename);
-
-				$candidate_model -> remove_option( record_name => 'estimation',
-												   record_number => 0,
-												   fuzzy_match => 1,
-												   option_name => 'MSFO',
-												   problem_numbers => [scalar(@{$candidate_model -> problems})]);
 				
-				$candidate_model -> add_option( record_name => 'estimation',
-												record_number => -1,
-												option_name => 'MSFO',
-												option_value=> $self->base_msfo_name,
-												problem_numbers => [scalar(@{$candidate_model -> problems})]);
+				$candidate_model -> rename_msfo(name => $basename,
+												add_if_absent => 1);
+				
 			}
 		}
 		
 		$candidate_model -> table_names( new_names            => \@new_table_names,
 										 ignore_missing_files => 1 );
-		$candidate_model -> _write();
+		$candidate_model -> _write(copy_msfi =>1);
 		$candidate_model -> store_inits;
 		$self->run_nmtran(check_verbatim => $check_verbatim,
 						  model => $candidate_model) if ($run_nmtran);
@@ -3414,8 +3389,7 @@ sub move_model_and_output
 		if( $self->clean >= 2 ){
 			unlink( <temp_dir/*> );
 			rmdir( 'temp_dir' );
-			my $msfo=$final_model -> get_option_value(record_name => 'estimation',
-													  option_name => 'MSFO');
+			my $msfo=$final_model -> problems->[0]->get_msfo_filenames->[0];
 			if (defined $msfo){
 				$msfo = get_retry_name( filename => $msfo,
 										retry => $use_run-1,

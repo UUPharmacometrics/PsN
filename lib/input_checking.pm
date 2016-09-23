@@ -16,7 +16,6 @@ sub check_options
 							  options => {isa => 'HashRef', optional => 0},
 							  rawres_input => {isa => 'Bool', default => 0},
 							  copy_data => {isa => 'Bool', default => 0},
-							  msfi => {isa => 'Bool', default => 0},
 							  mceta => {isa => 'Bool', default => 0},
 							  single_prob_or_tnpri => {isa => 'Bool', default => 0},
 							  tool => {isa => 'Str', optional => 0},
@@ -27,26 +26,22 @@ sub check_options
 	my $copy_data = $parm{'copy_data'};
 	my $tool = $parm{'tool'};
 	my $model = $parm{'model'};
-	my $msfi = $parm{'msfi'};
 	my $single_prob_or_tnpri = $parm{'single_prob_or_tnpri'};
 
 	my $require_est = 0;
 	my $error = '';
 
 	if ($tool eq 'frem'){
-		$msfi = 1; #redundant???
 		$mceta = 1;
 		$error .= check_frem(options => $options, model => $model);
 	}
 	
 	if ($tool eq 'execute'){
-#		$msfi = 1; no need, already done via model->input_files
 		$copy_data = 1;
 		$error .= check_execute(options => $options, model => $model);
 	}
 	
 	if ($tool eq 'npfit'){
-		$msfi = 1; 
 		$error .= check_npfit(options => $options, model => $model);
 	}
 
@@ -58,7 +53,6 @@ sub check_options
 	}
 
 	if ($tool eq 'simeval'){
-		$msfi = 1; #redundant?
 		$single_prob_or_tnpri = 1;
 		$require_est = 1;
 		$error .= check_simeval(options => $options, model => $model);
@@ -70,14 +64,10 @@ sub check_options
 	if ($copy_data and (defined $model)){
 		$error .= check_copy_data(model => $model, options => $options);
 	}
-	if ($msfi and (defined $model)){
-		$error .= check_msfi(model => $model, options => $options);
-	}
 	if ($mceta and (defined $model)){
 		$error .= check_mceta(model => $model, options => $options);
 	}
 	if ($single_prob_or_tnpri and (defined $model)){
-		#check_msfi must be run before check tnpri
 		$error .= check_single_prob_or_tnpri(model => $model, options => $options, require_est => $require_est);
 	}
 
@@ -114,13 +104,7 @@ sub check_single_prob_or_tnpri
 				}
 			}
 		}
-		if ($tnpri){
-			unless( defined $model-> extra_files ){
-				$error .= 'When using $PRIOR TNPRI you must set option -extra_files to '.
-					'the msf-file, otherwise the msf-file will not be copied to the NONMEM '.
-					'run directory.'."\n";
-			}
-		}else{
+		unless ($tnpri){
 			$error .= 'The input model must contain exactly one problem, unless'.
 				' first $PROB has $PRIOR TNPRI'."\n";
 		}
@@ -161,41 +145,6 @@ sub check_mceta
 	return $error;
 }
 
-sub check_msfi
-{
-	my %parm = validated_hash(\@_,
-							  options => {isa => 'HashRef', optional => 0},
-							  model =>  {isa => 'model', optional => 0},
-		);
-	my $options = $parm{'options'};
-	my $model = $parm{'model'};
-
-	my $error = '';
-	#this just adds msfi to extra input files, does not check msfi file exists
-	if( defined $model -> msfi_names() ){
-		my @needed_files;
-		foreach my $msfi_files( @{$model -> msfi_names()} ){
-			#loop $PROB
-			if (defined $msfi_files){
-				foreach my $msfi_file( @{$msfi_files} ){
-					#loop instances
-					if ( defined $msfi_file ){
-						my ( $dir, $file ) = OSspecific::absolute_path(cwd(),$msfi_file);
-						push (@needed_files,$dir.$file) ;
-					}
-				}
-			}
-		}
-		if (scalar(@needed_files)>0){
-			if( defined $model -> extra_files ){
-				push(@{$model -> extra_files},@needed_files);
-			}else{
-				$model -> extra_files(\@needed_files);
-			}
-		}
-	}
-	return $error;
-}
 
 sub check_copy_data
 {

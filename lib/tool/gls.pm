@@ -74,14 +74,7 @@ sub BUILD
 
 			$self->have_tnpri(1) if ($tnpri);
 		}
-		if ($self->have_tnpri()){
-			unless( defined $self -> models->[0]-> extra_files ){
-				croak('When using $PRIOR TNPRI you must set option -extra_files to '.
-					  'the msf-file, otherwise the msf-file will not be copied to the NONMEM '.
-					  'run directory.');
-			}
-
-		}else{
+		unless ($self->have_tnpri()){
 			croak('The input model must contain exactly one problem, unless'.
 				  ' first $PROB has $PRIOR TNPRI');
 		}

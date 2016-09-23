@@ -97,12 +97,12 @@ sub _read_options
 	my @row = ();
 	my $order = 0;
 	my $input_record = 0;
-	my $first_data_record = 0;
+	my $first_filename_record = 0;
 	# Get the recordname from the class name.
 	my @class_names = split('::',ref($self));
 	my $fname = uc(pop(@class_names));
 	$input_record = 1 if ($fname eq 'INPUT');
-	$first_data_record = 1 if ($fname eq 'DATA'); 
+	$first_filename_record = 1 if (($fname eq 'DATA') or ($fname eq 'MSFI')); 
 
 	# Loop over all given strings.
 	my $num = defined $self->record_arr ? scalar(@{$self->record_arr}) : 0;
@@ -122,16 +122,16 @@ sub _read_options
 		} else {
 			# Get rid of $RECORD
 			s/^\s*\$\w+//;
-			if ($first_data_record){
+			if ($first_filename_record){
 				if (s/^\s*("|')([^"']+)\1\s//){
 					#only do this for first option of first record line
 					#remove quotes from quoted filename with possible spaces
 					$self -> _add_option( option_string => $2 );
 					$order++;
-					$first_data_record = 0;
+					$first_filename_record = 0;
 				}elsif (/\w/){
 					#have first option (non-empty line) but something not quoted
-					$first_data_record = 0;
+					$first_filename_record = 0;
 				}
 			}
 			# remove spaces near '='
@@ -317,6 +317,40 @@ sub _format_record
 	}
 
 	return \@formatted;
+}
+
+sub renumber_msfo
+{
+	my $self = shift;
+	my %parm = validated_hash(\@_,
+		numberstring => { isa => 'Str', optional => 0 }
+		);
+	my $numberstring = $parm{'numberstring'};
+
+	my @options = defined($self->options) ? @{$self->options} : ();
+	foreach my $opt (@options){
+		if ($opt->name =~ /^\s*MSFO?/  and (defined $opt->value and $opt->value ne '')){
+			my $line = $opt->value;
+			#everything up to but not including optional dot
+			$line =~ s/[0-9]+[^0-9.]*/$numberstring/ ;
+			$opt->value($line);
+		}
+	}
+}
+sub rename_msfo
+{
+	my $self = shift;
+	my %parm = validated_hash(\@_,
+							  name => { isa => 'Str', optional => 0 }
+		);
+	my $name = $parm{'name'};
+	
+	my @options = defined($self->options) ? @{$self->options} : ();
+	foreach my $opt (@options){
+		if ($opt->name =~ /^\s*MSFO?\s*$/  and (defined $opt->value and $opt->value ne '')){
+			$opt->value($name);
+		}
+	}
 }
 
 no Moose;

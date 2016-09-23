@@ -295,29 +295,6 @@ my $model = model->new( eval( $eval_string ),
 			   ignore_missing_output_files => 1,
 			   cwres                       => (($options{'dv'} eq 'CWRES') and ($PsN::nm_major_version < 7))  );
 
-if( defined $model->msfi_names() ){
-  my @needed_files;
-  foreach my $msfi_files( @{$model -> msfi_names()} ){
-    #loop $PROB
-    if (defined $msfi_files){
-      foreach my $msfi_file( @{$msfi_files} ){
-	#loop instances
-	if ( defined $msfi_file ){
-	  my ( $dir, $file ) = OSspecific::absolute_path(cwd(),$msfi_file);
-	  push (@needed_files,$dir.$file) ;
-	}
-      }
-    }
-  }
-  if (scalar(@needed_files)>0){
-    if( defined $model -> extra_files ){
-      push(@{$model -> extra_files},@needed_files);
-    }else{
-      $model -> extra_files(\@needed_files);
-    }
-  }
-
-}
 
 my $columns;
 if (defined $options{'include_all_columns'}) {

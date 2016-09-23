@@ -1624,41 +1624,6 @@ sub _prepare_model
 	debugmessage(3,"Making directory\t\t" . $newdir );
 	mkdir( $newdir );
 	trace(tool => 'tool',message => "Created directory $newdir ", level => 1);
-	if (defined $self -> models()) {
-		my @models = @{$self -> models()};
-		if ( defined $models[$model_number - 1] ) {
-			my $model = $models[$model_number - 1];
-			# copy the msfi files
-
-			#fixed bug in msfi_names, skips existing extra options in $MSFI. AWFUL coding!!!
-			# TODO, this is probably totally unneccessary. Review this.
-
-			my @newarr;
-			if( defined $model -> msfi_names() ){
-				foreach my $msfi_files( @{$model -> msfi_names()} ){
-					#loop $PROB
-					my @new_names;
-					if (defined $msfi_files){
-						foreach my $msfi_file( @{$msfi_files} ){
-							#loop instances
-							if ( defined $msfi_file ) {
-								my ( $dir, $filename ) = OSspecific::absolute_path($model -> directory,
-									$msfi_file );
-								cp( $dir.$filename, $newdir.$filename );
-								push( @new_names, $filename );
-							} else {
-								push( @new_names, undef );
-							}
-						}
-						push(@newarr,\@new_names);
-					}else{
-						push(@newarr,undef);
-					}
-				}
-				$model -> msfi_names( new_names => \@newarr);
-			}
-		} 
-	}
 }
 
 sub print_options

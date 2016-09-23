@@ -82,6 +82,8 @@ is(($esthash->{'B'} == 1),1,'pheno any est');
 #0.0750   
 #0.0467  0.0564  ; IIV (CL-V) 
 $model = model->new(filename => "$modeldir/mox1.mod");
+is_deeply($model->problems->[0]->get_msfo_filenames,[],'MSFO filenames 1');
+
 $model->problems->[0]->cholesky_reparameterize(what => 'o1',
 											   bounded_theta => 0);
 is($model->problems->[0]->record_count(record_name => 'theta'),7,'mox 1 theta count after cholesky repara 01 unbounded');
@@ -508,5 +510,8 @@ is ($problem->find_data_column(column_name => 'ID'), 0, "find_data_column ID");
 is ($problem->find_data_column(column_name => 'AMT'), 2, "find_data_column AMT"); 
 is ($problem->find_data_column(column_name => 'DV'), 5, "find_data_column DV"); 
 is ($problem->find_data_column(column_name => 'NOEX'), -1, "find_data_column non existing column"); 
+
+
+is_deeply($problem->get_msfo_filenames,['phenomsf'],'MSFO filenames 2');
 
 done_testing();

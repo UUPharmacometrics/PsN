@@ -84,11 +84,6 @@ sub BUILD
 			if (defined $self->rawres_input){
 				croak('Cannot use option rawres_input if the simulation model has $PRIOR.');
 			}
-			unless( defined $self -> models->[0]-> extra_files ){
-				croak('When using $PRIOR TNPRI you must set option -extra_files to '.
-					  'the msf-file, otherwise the msf-file will not be copied to the NONMEM '.
-					  'run directory.');
-			}
 
 		}else{
 			croak('The simulation model must contain exactly one problem, unless'.
@@ -535,10 +530,8 @@ sub modelfit_setup
 
 					#handle msfo numbering. first get msfo option from all estimation records.
 					#save stems, i.e. file name without trailing numbers, if any
-					#last remove option completely, will be set with new value frther down
-					my $msfolist_original = $est_original -> get_option_value( record_name  => 'estimation',
-																			   option_name  => 'MSFO',
-																			   record_index => 'all');
+					
+					my $msfolist_original = $est_original -> msfo_names(); #array over prob
 					if (defined $msfolist_original){
 						for (my $k=0; $k<scalar(@{$msfolist_original}); $k++){
 							if (defined $msfolist_original->[$k]){
@@ -906,19 +899,12 @@ sub modelfit_setup
 			#take care of msfo numbering
 			#take care of table FILE numbering
 			for( my $sim_no = 1; $sim_no <= $self -> samples; $sim_no++ ) {
-				for (my $k=0; $k<scalar(@msfo_stems_original); $k++){ 
+				for (my $k=0; $k<scalar(@msfo_stems_original); $k++){
+					#loop over problems
 					if (defined $msfo_stems_original[$k]){
-						$orig_est_models[($sim_no-1)] -> remove_option( record_name  => 'estimation',
-																		option_name  => 'MSFO',
-																		fuzzy_match => 1,
-																		problem_numbers => [($self->probnum())],
-																		record_number => 0); #0 means all
-						$orig_est_models[($sim_no-1)] -> 
-							add_option(record_name  => 'estimation',
-									   record_number  => ($k+1),
-									   option_name  => 'MSFO',
-									   problem_numbers => [($self->probnum())],
-									   option_value => $msfo_stems_original[$k].$sim_no );   
+						#this updates msfi also
+						$orig_est_models[($sim_no-1)] -> rename_msfo(name => $msfo_stems_original[$k].$sim_no,
+																	 problem_index =>$k);
 					}
 				}
 				for (my $k=0; $k<scalar(@orig_table_names); $k++){ 
@@ -1070,12 +1056,10 @@ sub modelfit_setup
 					#handle msfo numbering. first get msfo option from all estimation records.
 					#save stems, i.e. file name without trailing numbers, if any
 					#last remove option completely, will be set with new value frther down
-					my $msfolist = $est_alternative -> get_option_value( record_name  => 'estimation',
-																		 problem_index  => 0,
-																		 option_name  => 'MSFO',
-																		 record_index => 'all');
+					my $msfolist = $est_alternative -> msfo_names;
 					if (defined $msfolist){
 						for (my $k=0; $k<scalar(@{$msfolist}); $k++){
+							#array over problems
 							if (defined $msfolist->[$k]){
 								my $name = $msfolist->[$k];
 								$name =~ s/[0-9]*$//;
@@ -1085,13 +1069,6 @@ sub modelfit_setup
 							}
 						}
 					}
-					$est_alternative -> remove_option( record_name  => 'estimation',
-													   option_name  => 'MSFO',
-													   fuzzy_match => 1,
-													   problem_numbers => [(1)],
-													   record_number => 0); #0 means all
-					
-
 
 					#remove any DATX in $INPUT
 					foreach my $col ('DATE','DAT1','DAT2','DAT3'){
@@ -1216,14 +1193,14 @@ sub modelfit_setup
 			}
 			for( my $sim_no = 1; $sim_no <= $self -> samples; $sim_no++ ) {
 				my $last_name=undef;
-				for (my $k=0; $k<scalar(@msfo_stems); $k++){ 
+				for (my $k=0; $k<scalar(@msfo_stems); $k++){
+					#loop problems
+					
 					if (defined $msfo_stems[$k]){
 						$last_name = $msfo_stems[$k].$alternative_counter.'-'.$sim_no;
-						$alt_est_models[($sim_no-1)] -> add_option(record_name  => 'estimation',
-																   problem_numbers => [(1)],
-																   record_number  => ($k+1),
-																   option_name  => 'MSFO',
-																   option_value => $last_name );
+						#this updates dependent msfi also
+						$alt_est_models[($sim_no-1)] -> rename_msfo(name => $last_name,
+																	problem_index =>$k);
 					}
 				}
 				for (my $k=0; $k<scalar(@alt_table_names); $k++){ 
@@ -1237,15 +1214,7 @@ sub modelfit_setup
 					}
 				}
 
-				# if more than one problem, set MSFI to same as last $k
-				#assume exists $MSFI
 				if ($second_prob){
-					if ( defined $alt_est_models[($sim_no-1)] -> problems->[1]){
-						$alt_est_models[($sim_no-1)] -> set_file( record => 'msfi',new_name => $last_name,
-																  problem_number => 2);
-					} else {
-						ui->print(category => 'all', message => "Error, could not change filename in MSFI record\n");
-					}
 					$alt_est_models[($sim_no-1)] 
 						-> set_option( record_name  => 'table',
 									   record_number => 1,
