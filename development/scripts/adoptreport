@@ -73,4 +73,25 @@ if ($rc == 0) {
     error("Could not create symlink");
 }
 
+print "Enter a message: (press ENTER for no message and enter a blank line to end the message)\n";
+
+my @message;
+my $row;
+
+do {
+    $row = <STDIN>;
+    chomp $row;
+    if ($row ne "") {
+        push @message, $row;
+    }
+} while (defined $row and $row ne "");
+
+if (scalar(@message)) {
+    open my $fh, '>', "$to/$username.txt";
+    for $row (@message) {
+        print $fh "$row\n";
+    }
+    close $fh;
+}
+
 print "Report SUCCESSFUL\n";
