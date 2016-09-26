@@ -125,5 +125,7 @@ $npfit -> print_options (cmd_line => $cmd_line,
 
 $npfit -> run;
 
+$npfit -> print_results; #for rplots. this creates r plots code, does zipping after
+
 ui -> print( category => 'npfit',
 	     message => "\nnpfit done\n" );

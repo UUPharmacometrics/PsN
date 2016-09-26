@@ -13,6 +13,7 @@ use tool::modelfit;
 extends 'tool';
 
 has 'npsupp' => ( is => 'rw', isa => 'ArrayRef');
+#has 'raw_nonparametric_filename' => ( is => 'rw', isa => 'Str' );
 
 sub BUILD
 {
@@ -210,6 +211,18 @@ sub overwrite_csv
 		print $fh $rows->[$n];	# write each row in the csv file. 
 	}
 	close $fh;	
+}
+
+sub create_R_plots_code{
+	my $self = shift;
+	my %parm = validated_hash(\@_,
+							  rplot => { isa => 'rplots', optional => 0 }
+		);
+	my $rplot = $parm{'rplot'};
+	#$self->raw_nonparametric_filename("raw_nonparametric".$model_number.".csv");
+	#$rplot->add_preamble(code => [
+							 #"raw_nonparametric_file <-'".$self->skipped_individuals_filename."'"
+						 #]);
 }
 
 no Moose;
