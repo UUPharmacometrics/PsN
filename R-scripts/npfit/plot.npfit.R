@@ -1,16 +1,18 @@
-plot.npsupp.nofv <- function(raw_nonparametric_file) {
+plot.npsupp.nofv <- function(raw.nonparametric.file,n.indiv,n.eta) {
   
-  raw_nonparametric <- read.csv(raw_nonparametric_file)
+  raw_nonparametric <- read.csv(raw.nonparametric.file)
   ofv <- paste0("Parametric OFV value = ",round(raw_nonparametric$ofv[1],3))
   plot.title <- "NONPARAMETRIC ESTIMATION"
-  plot.subtitle <- paste0("Parametric OFV value = ",round(raw_nonparametric$ofv[1],3))
+  plot.subtitle <- paste0("Parametric OFV value = ",round(raw_nonparametric$ofv[1],3),
+                          ". Number of ETAs = ",n.eta)
   
   # Construct plot
   p <- ggplot(raw_nonparametric, aes(npsupp,npofv)) +
     geom_point(aes(size = 1),show.legend = FALSE) +
-    labs(x = "NPSUPP values", y="Nonparametric ofv values") +
+    geom_vline(xintercept = n.indiv, colour = "red") +
+    labs(x = "NPSUPP values", y="Nonparametric OFV values") +
     theme_bw() +
-    scale_x_continuous(breaks=c(raw_nonparametric$npsupp)) +
+    scale_x_continuous(breaks=c(raw_nonparametric$npsupp,n.indiv)) +
     scale_y_continuous(breaks=c(round(raw_nonparametric$npofv,3))) +
     theme(legend.position = "none",
           axis.title = element_text(size = 16),

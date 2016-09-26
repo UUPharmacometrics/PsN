@@ -13,7 +13,7 @@ use tool::modelfit;
 extends 'tool';
 
 has 'npsupp' => ( is => 'rw', isa => 'ArrayRef');
-#has 'raw_nonparametric_filename' => ( is => 'rw', isa => 'Str' );
+has 'n_individuals' => ( is => 'rw', isa => 'Int' );
 
 sub BUILD
 {
@@ -51,6 +51,7 @@ sub modelfit_setup
 	# check if number of individuals is larger than any of npsupp values
 	my $N_individuals = $input_model->outputs->[0]->nind();
 	my $indiv_number = ${$N_individuals}[0];
+	$self->n_individuals($indiv_number);
 	for (my $i=0; $i<scalar(@{$self->npsupp});$i++) {
 		my $npsupp_value = ${$self->npsupp}[$i];
 		if ($npsupp_value < $indiv_number) {
@@ -219,10 +220,10 @@ sub create_R_plots_code{
 							  rplot => { isa => 'rplots', optional => 0 }
 		);
 	my $rplot = $parm{'rplot'};
-	#$self->raw_nonparametric_filename("raw_nonparametric".$model_number.".csv");
-	#$rplot->add_preamble(code => [
-							 #"raw_nonparametric_file <-'".$self->skipped_individuals_filename."'"
-						 #]);
+	$rplot->add_preamble(code => [
+							 "raw.nonparametric.file <-'".$self->raw_nonp_file->[0]."'",
+							 "n.indiv <- ".$self->n_individuals
+						 ]);
 }
 
 no Moose;
