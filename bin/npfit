@@ -54,7 +54,7 @@ A model file is required on the command-line. In addition
 The following options are valid:
 EOF
 $help_text{Examples} = <<'EOF';
-npfit run1.mod -npsupp=0,100,200
+npfit run1.mod -npsupp=50,100,200
 EOF
 $help_text{-npsupp} = <<'EOF';
     -npsupp
