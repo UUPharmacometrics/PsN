@@ -1,0 +1,60 @@
+\documentclass[a4wide,12pt]{article}
+%\setlength{\marginparwidth}{0pt}%35
+%\setlength{\marginparsep}{0pt}%?
+%\setlength{\evensidemargin}{0pt}
+%\setlength{\oddsidemargin}{0pt}
+\usepackage{lmodern}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{textcomp}
+\usepackage{verbatim}
+\usepackage{enumitem}
+\usepackage{longtable}
+\usepackage{alltt}
+\usepackage{ifthen}
+%\usepackage[backend=biber, maxbibnames=99, defernumbers]{biblatex}
+%\addbibresource{PsN.bib}
+% Reduce the size of the underscore
+\usepackage{relsize}
+\renewcommand{\_}{\textscale{.7}{\textunderscore}}
+
+\newcommand{\revisiondate}[1]{
+\date{#1}
+}
+\newcommand{\guidetitle}[2]{
+\title{#1\\ }
+\date{Revised #2}
+}
+
+
+\newcommand{\doctitle}[2]{
+\title{#1}
+\date{#2}
+}
+
+\newcommand{\optname}[1]{\item{{\bfseries\texttt-#1}\newline}}
+\newcommand{\optdefault}[2]{\item{{\bfseries\texttt-#1}{\mbox{ = \it #2}}\newline}}
+
+\guidetitle{adoptreport user guide}{2016-09-26}
+
+\begin{document}
+
+\maketitle
+\newcommand{\guidetoolname}{adoptreport}
+
+
+\section{Usage by a reporter}
+
+Report your PsN run directory or other file or directory with:
+
+\verb|adoptreport -my=rundir -to=/path/to/reports|
+
+\section{Setup by someone requesting reports}
+
+\begin{itemize}
+    \item Create a report directory in your home directory. (example: \verb|mkdir reports-projectA|)
+    \item Set write permissions for all users on this directory. (example: \verb|chmod a+w reports-projectA|)
+    \item Give instructions to reporters and give them the global path to use as report (to) directory 
+\end{itemize}
+
+\end{document}
