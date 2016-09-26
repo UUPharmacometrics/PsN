@@ -62,12 +62,10 @@ if ($count <= 2) {
 my $username = getpwuid($<);
 my $target_name = $to . "/$username";
 
-if (-e $target_name) {
-    unlink $target_name;
-}
 
 $my = abs_path($my);
 
+unlink $target_name;
 my $rc = symlink($my, $target_name); 
 if ($rc == 0) {
     error("Could not create symlink");
