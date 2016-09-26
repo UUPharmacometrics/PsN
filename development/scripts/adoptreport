@@ -4,6 +4,7 @@ use strict;
 use warnings;
 use Getopt::Long;
 use File::Basename;
+use File::stat;
 use Cwd 'abs_path';
 
 sub usage
@@ -44,33 +45,63 @@ if (not defined $my or not defined $to) {
     usage()
 }
 
+if (scalar(@ARGV) > 0) {
+    print "Ignoring command line input: ", join(" ", @ARGV), "\n";
+}
+
 if (not -d $to) {
-    error("The -to directory does not exist.");
+    error("The -to directory \"$to\" does not exist.");
 }
 
 if (not -d $my) {
-    error("The -my directory does not exist.");
+    error("The -my directory \"$my\" does not exist.");
 }
 
+
+my $info = stat($my);
+my $flags = $info->mode & 0777;     # Octal file permissions
+
+if (($flags & 005) != 005) {
+   error("The -my directory \"$my\" does not have read permission for all users"); 
+}
 
 opendir my $dh, $my or die $!;
 my $count = () = readdir $dh;    # gets count thru ()
 if ($count <= 2) {
-	error("The -my directory is empty");
+	error("The -my directory \"$my\" is empty");
 }
 
 my $username = getpwuid($<);
 my $target_name = $to . "/$username";
 
-if (-e $target_name) {
-    unlink $target_name;
-}
 
 $my = abs_path($my);
 
+unlink $target_name;
 my $rc = symlink($my, $target_name); 
 if ($rc == 0) {
-    error("Could not create symlink");
+    error("Could not create symlink. Report this to the person responsible for the study");
+}
+
+print "Enter a message: (press ENTER for no message and enter a blank line to end the message)\n";
+
+my @message;
+my $row;
+
+do {
+    $row = <STDIN>;
+    chomp $row;
+    if ($row ne "") {
+        push @message, $row;
+    }
+} while (defined $row and $row ne "");
+
+if (scalar(@message)) {
+    open my $fh, '>', "$to/$username.txt";
+    for $row (@message) {
+        print $fh "$row\n";
+    }
+    close $fh;
 }
 
 print "Report SUCCESSFUL\n";
