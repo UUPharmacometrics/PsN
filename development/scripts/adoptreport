@@ -4,6 +4,7 @@ use strict;
 use warnings;
 use Getopt::Long;
 use File::Basename;
+use Cwd 'abs_path';
 
 sub usage
 {
@@ -34,7 +35,7 @@ my $res = GetOptions(
 
 exit unless $res;
 
-if ($help or scalar(@ARGV) == 0) {
+if ($help) {
 	usage();
 }
 
@@ -51,17 +52,25 @@ if (not -d $my) {
     error("The -my directory does not exist.");
 }
 
+
 opendir my $dh, $my or die $!;
 my $count = () = readdir $dh;    # gets count thru ()
 if ($count <= 2) {
 	error("The -my directory is empty");
 }
 
-my $username = getpwuid( $< );
+my $username = getpwuid($<);
+my $target_name = $to . "/$username";
 
-my $rc = symlink("../$my", $to . "/$username"); 
+if (-e $target_name) {
+    unlink $target_name;
+}
+
+$my = abs_path($my);
+
+my $rc = symlink($my, $target_name); 
 if ($rc == 0) {
-    error("Could not create symblink");
+    error("Could not create symlink");
 }
 
 print "Report SUCCESSFUL\n";
