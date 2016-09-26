@@ -78,9 +78,6 @@ if (scalar(@ARGV)>0){
 		print '$current_bin_dir='."'".File::Spec->catdir($volume.$directory)."';\n";
 		print '$current_version='."'".$PsN::version."';\n";
 		exit;
-	}else{
-		print "Unknown argument ".$ARGV[0].". Did you forget the - before the option name?\n";
-		exit;
 	}
 }
 my %help_text;
@@ -209,10 +206,9 @@ $help_text{-npc} = <<'EOF';
 EOF
 
 $help_text{-npfit} = <<'EOF';
-    npfit - Nonparametric estimation using a range of NPSUPP values.
-	See npfit_userguide.pdf for details.
+npfit - Nonparametric estimation using a range of NPSUPP values.
+See npfit_userguide.pdf for details.
 EOF
-
 $help_text{-parallel_retries} = <<'EOF';
     parallel_retries - Running multiple copies of a single model with tweaked 
     initial estimates in parallel.

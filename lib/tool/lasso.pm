@@ -1192,10 +1192,7 @@ sub xv_step_init
 		my $MSFO_file = "lasso_t_". $new_t_value ."_" .($counter++).".msfo1";
 
 		# -1 means last record
-		$model -> set_option( record_name => 'estimation',
-			record_number => -1,
-			option_name => 'MSFO',
-			option_value=> $MSFO_file );
+		$model -> rename_msfo(name => $MSFO_file, add_if_absent => 1);
 
 		$model->_write(overwrite => 1);
 	}

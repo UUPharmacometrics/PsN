@@ -280,6 +280,17 @@ sub BUILD
 				croak("datafile $file does not exist for model ".$self->full_name);
 			}
 		}
+		for (my $i=0; $i< scalar(@{$self->problems}); $i++){
+			if (defined $self->problems->[$i]->msfis){
+				for (my $j=0; $j< scalar(@{$self->problems->[$i]->msfis}); $j++){
+					next if ($self->problems->[$i]->msfis->[$j]->get_msfo_from_problem_number >0);
+					my $file = $self->problems->[$i]->msfis->[$j]->get_absolute_filename;
+					unless (-e $file){
+						croak("msfi $file does not exist for model ".$self->full_name);
+					}
+				}
+			}
+		}
 	}
 	
 }
@@ -614,6 +625,7 @@ sub copy
 							  write_copy => { isa => 'Bool', default => 1, optional => 1 },
 							  copy_output => { isa => 'Bool', default => 0, optional => 1 },
 							  copy_datafile => { isa => 'Bool', default => 0, optional => 1 },
+							  copy_msfi => { isa => 'Bool', default => 0, optional => 1 },
 							  output_same_directory => { isa => 'Bool', default => 0, optional => 1 },
 							  update_shrinkage_tables => { isa => 'Bool', default => 1, optional => 1 },
 							  MX_PARAMS_VALIDATE_NO_CACHE => 1,
@@ -623,6 +635,7 @@ sub copy
 	my $write_copy = $parm{'write_copy'};
 	my $copy_output = $parm{'copy_output'};
 	my $copy_datafile = $parm{'copy_datafile'};
+	my $copy_msfi = $parm{'copy_msfi'};
 	my $output_same_directory = $parm{'output_same_directory'};
 	my $update_shrinkage_tables = $parm{'update_shrinkage_tables'};
 
@@ -680,6 +693,7 @@ sub copy
 	    $new_model->outputfile($new_out);
         $new_model->set_outputfile();
 	}
+	my ($writedir,$modelfile) = OSspecific::absolute_path(undef,$new_model->full_name);
 	if ($copy_datafile){
 		my $datafiles = $new_model->datafiles(absolute_path => 1); #all problems
 		my @new_names =();
@@ -688,7 +702,6 @@ sub copy
 			#if not exists $writedir.$datafilename then copy data full_name to that file
 			#in any case set data file name to new name and relative_data_path
 			my ($datadir,$datafile) = OSspecific::absolute_path(undef,$datafiles->[$i]);
-			my ($writedir,$modelfile) = OSspecific::absolute_path(undef,$new_model->full_name);
 			unless (-e $writedir.$datafile){
 				if (-e $datadir.$datafile){
 					cp($datadir.$datafile,$writedir.$datafile);
@@ -702,8 +715,7 @@ sub copy
 		$new_model->datafiles(new_names => \@new_names);
 		$new_model->relative_data_path(1);
 	}
-
-	$new_model->_write if ($write_copy);
+	$new_model->_write(copy_msfi => $copy_msfi) if ($write_copy);
 	return $new_model;
 }
 
@@ -1218,19 +1230,17 @@ sub labels
 
 	  }
 	  if (scalar @{$labels[$i]} == 0){
-	    if ( ($i == 1) 
-		 and (defined $self->problems()) and (defined $self->problems()->[1]) 
-		 and (defined $self->problems()->[0]) 
-		 and (defined $self->problems()->[1]->msfis()) 
-		 and (scalar(@{$self->problems()->[1]->msfis()})>0)
-		 and ($self -> is_option_set ( name           => 'MSFO', 
-					       record         => 'estimation', 
-					       problem_number => 1,
-					       fuzzy_match    => 1 ))){
-	      for ( my $j = 0; $j < scalar @{$labels[0]}; $j++ ) {
-		$labels[$i][$j] = $labels[0][$j];
-	      }
-	    }
+		  #if $MSFI then no $THETA $OMEGA $SIGMA. if msf file comes from
+		  #previous problem then we copy labels from previous prob
+		  if ( (defined $self->problems()) and (defined $self->problems()->[$i]) 
+			   and (defined $self->problems()->[$i]->msfis()) and
+			   ($self->problems()->[$i]->msfis->[0]->get_msfo_from_problem_number > 0)){
+			  my $source = $self->problems()->[$i]->msfis->[0]->get_msfo_from_problem_number() -1;
+			  for ( my $j = 0; $j < scalar @{$labels[$source]}; $j++ ) {
+				  $labels[$i][$j] = $labels[$source][$j];
+			  }
+			  
+		  }
 	  }
 	}
 
@@ -2956,84 +2966,30 @@ sub msfi_names
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		new_names => { isa => 'ArrayRef', optional => 1 }
-	);
-	my @new_names = defined $parm{'new_names'} ? @{$parm{'new_names'}} : ();
+							  absolute_path => { isa => 'Bool', default => 0 }
+		);
+	my $absolute_path = $parm{'absolute_path'};
 	my @names = ();
 
-	# Usage:
-	#
-	#    @msfiNames = @{$modobj -> msfi_names};
-	#
-	#    or better:
-	#
-	#    $msfiNamesRef = $modobj -> msfi_names;
-	#    @msfiNames = @{$msfiNamesRef} if (defined $msfiNamesRef);
-	#
-	# This basic usage takes no arguments and returns the value of
-	# the MSFI option in the $ESTIMATION NONMEM record of each
-	# problem. @msfiNames will be a two-dimensional array:
-	#
-	#   [[msfiName_prob1],[msfiName_prob2],[msfiName_prob3]...]
-	#
-
-	my @problems;
-	if ( defined $self->problems ) {
-		@problems = @{$self->problems};
-	} else {
+	unless ( defined $self->problems ) {
 		croak("No problems defined in model" );
 	}
-
-	if( scalar @new_names > 0 ) {
-		my $i = 0;
-		foreach my $prob ( @problems ) {
-			if( defined $new_names[$i] ) {
-				if ( defined $prob -> msfis() ) {
-					my @instances = @{$prob -> msfis()};
-					my @prob_names;
-					my $j=0;
-					foreach my $instance ( @instances ) {
-						if (defined $new_names[$i]->[$j]){
-							my @options;
-							if ( defined $instance -> options() ) {
-								@options = @{$instance -> options()};
-							}
-							if ( defined $options[0] ) {
-								$options[0] -> name($new_names[$i]->[$j]);
-							}
-						}
-						$j++;
-					}
-				}else{
-					$prob -> add_records( type           => 'msfi',
-						record_strings => $new_names[$i] );      
-				}
-			}
-			$i++;
-		}
-	} else {
-		foreach my $prob ( @problems ) {
-			if ( defined $prob -> msfis() ) {
-				my @instances = @{$prob -> msfis()};
-				my @prob_names;
-				foreach my $instance ( @instances ) {
-					my @options;
-					if ( defined $instance -> options() ) {
-						@options = @{$instance -> options()};
-					}
-					if ( defined $options[0] ) {
-						push( @prob_names, $options[0] -> name );
-					} else {
-						push( @prob_names, undef );
-					}	
-				}
-				push( @names, \@prob_names );
+	
+	for( my $i=0; $i< scalar(@{$self->problems}); $i++){
+		if ( defined $self->problems->[$i] -> msfis and scalar(@{$self->problems->[$i] -> msfis})>0) {
+			if ($absolute_path){
+				push( @names, $self->problems->[$i]->msfis->[0]->get_absolute_filename );
 			}else{
-				push( @names, undef );
+				push( @names, $self->problems->[$i]->msfis->[0]->get_filename );
 			}
+			if (scalar(@{$self->problems->[$i] -> msfis})>1){
+				ui->print(category => 'all',message => "warning: more than one MSFI in problem ".($i+1));
+			}
+		}else{
+			push( @names, undef );
 		}
 	}
-
+	
 	return \@names;
 }
 
@@ -3041,60 +2997,26 @@ sub msfo_names
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		 new_names => { isa => 'ArrayRef[Str]', optional => 1 },
 		 problem_numbers => { isa => 'ArrayRef[Int]', optional => 1 }
 	);
-	my @new_names = defined $parm{'new_names'} ? @{$parm{'new_names'}} : ();
 	my @problem_numbers = defined $parm{'problem_numbers'} ? @{$parm{'problem_numbers'}} : ();
 	my @names = ();
 
-# Usage:
-#
-#    @msfoNames = @{$modobj -> msfo_names};
-#
-#    or better:
-#
-#    $msfoNamesRef = $modobj -> msfo_names;
-#    @msfoNames = @{$msfoNamesRef} if (defined $msfoNamesRef);
-#
-# This basic usage takes no arguments and returns the value of
-# the MSFO option in the $ESTIMATION NONMEM record of each
-# problem. @msfoNames will be an array:
-#
-#   [msfoName_prob1,msfoName_prob2,msfoName_prob3...]
-#
-#
-# If the I<new_names> argument of msfo_names is given, the
-# values of the MSFO options will be changed.
-#
-# To set the MSFO of specific problems, the I<problem_numbers>
-# argument can be used. It should be a reference to an array
-# containing the numbers of all problems where the FILE should
-# be changed or retrieved. If specified, the size of
-# I<new_names> must be the same as the size of
-# I<problem_numbers>.
-
-	my ( $name_ref ) = $self -> 
-	_option_val_pos( name	     => 'MSFO',
-		record_name     => 'estimation',
-		problem_numbers => \@problem_numbers,
-		new_values	     => \@new_names );
-
-
-	my ( $nonp_name_ref ) = $self ->
-	_option_val_pos( name            => 'MSFO',
-		record_name     => 'nonparametric',
-		problem_numbers => \@problem_numbers,
-		new_values      => \@new_names );
-
-	if( scalar( @{$name_ref -> [0]} > 0 ) ){
-		push( @names, @{$name_ref} );
+	unless (scalar(@problem_numbers)>0){
+		@problem_numbers = (1 .. scalar(@{$self->problems}));
 	}
-
-	if( scalar( @{$nonp_name_ref -> [0]} > 0 ) ){
-		push( @names, @{$nonp_name_ref} );
+	foreach my $probnum (@problem_numbers){
+		my $arr = $self->problems->[$probnum-1]->get_msfo_filenames;
+		if (scalar(@{$arr})==0){
+			push(@names,undef);
+		}else{
+			if (scalar(@{$arr})>1){
+				ui->print(category => 'all',message => "warning: different msfo filenames ".$arr->[0]." and ".
+						  $arr->[1]." in problem $probnum");
+			}
+			push(@names,$arr->[0]);
+		}
 	}
-
 	return \@names;
 }
 
@@ -3628,16 +3550,32 @@ sub _write
         filename => { isa => 'Str', default => $self->full_name, optional => 1 },
         number_format => { isa => 'Maybe[Int]', optional => 1 },
         relative_data_path => { isa => 'Bool', default => $self->relative_data_path, optional => 1 },
+        copy_msfi => { isa => 'Bool', default => 0, optional => 1 },
         overwrite => { isa => 'Bool', default => 0, optional => 1 },
         MX_PARAMS_VALIDATE_NO_CACHE => 1,
     );
 	my $filename = $parm{'filename'};
 	my $number_format = $parm{'number_format'};
+	my $copy_msfi = $parm{'copy_msfi'};
 	my $relative_data_path = $parm{'relative_data_path'};
 	my $overwrite = $parm{'overwrite'};
 
 	my ($writedir,$file) = OSspecific::absolute_path('',$filename);
-	
+	my $updatedmsfi = $self->update_internal_msfi;
+
+	if ($copy_msfi){
+		for ( my $i = 0; $i < scalar @{$self->problems}; $i++ ) {
+			if (defined $self->problems->[$i]->msfis){
+				for ( my $j = 0; $j < scalar @{$self->problems->[$i]->msfis}; $j++ ) {
+					$self->problems->[$i]->msfis->[$j]->copy_msfi_file(write_directory => $writedir,
+																	   ignore_missing_file => $self->ignore_missing_data,
+																	   overwrite => 1,
+																	   msf_etas => have_msf_etas());
+				}
+			}
+		}
+	}
+
 	if (-e $filename and not $overwrite) {
 		debugmessage(3,"Trying to overwrite existing file $filename\n");
 	}
@@ -3907,39 +3845,6 @@ sub input_files
 	my $self = shift;
 	my @file_names;
 
-	# TODO: Skip the dataset for now, when I [PP] rewrite the
-	# "model::copy" routine, I will revisit this.
-
-	# msfi files
-	if( scalar @{$self -> msfi_names()} > 0 ){
-		foreach my $msfi_files( @{$self -> msfi_names()} ){
-			foreach my $msfi_file( @{$msfi_files} ){
-				my ( $dir, $filename ) = OSspecific::absolute_path($self -> directory,
-					$msfi_file );
-				push( @file_names, [$dir, $filename] );
-			}
-		}
-	} else {
-
-		# If we don't have $MSFI we can consider $EST MSFO as input. WHY???
-
-		foreach my $msfo_files( @{$self -> msfo_names()} ){
-			foreach my $msfo_file( @{$msfo_files} ){
-				my ( $dir, $filename ) = OSspecific::absolute_path($self -> directory,
-					$msfo_file );
-				push( @file_names, [$dir, $filename] );
-				my $ver = $PsN::nm_major_version;
-				$ver = '7' unless (defined $ver);
-				$ver .= '.'.$PsN::nm_minor_version if (defined $PsN::nm_minor_version);
-				if ($ver > 7.2){
-					push( @file_names, [$dir, $filename.'_ETAS'] );
-				}
-			}
-		}
-	}
-
-	# TODO: as with data files, revisit this when model::copy is
-	# rewritten.
 
 	# Copy extra fortran files specified in "$SUBROUTINE"
 
@@ -3968,6 +3873,17 @@ sub input_files
 	return \@file_names;
 }
 
+sub have_msf_etas
+{
+	my $ver = $PsN::nm_major_version;
+	$ver = '7' unless (defined $ver);
+	$ver .= '.'.$PsN::nm_minor_version if (defined $PsN::nm_minor_version);
+	my $have=0;
+	if ($ver > 7.2){
+		$have =1;
+	}
+	return $have;
+}
 sub output_files
 {
 	my $self = shift;
@@ -3992,15 +3908,12 @@ sub output_files
 	}
 
 	if( defined $self -> msfo_names() ){
-		foreach my $msfo_files( @{$self -> msfo_names()} ){
-			foreach my $msfo_file( @{$msfo_files} ){
-				my ( $dir, $filename ) = OSspecific::absolute_path( undef, $msfo_file );
-				push( @file_names, $filename );
-				my $ver = $PsN::nm_major_version;
-				$ver .= '.'.$PsN::nm_minor_version if (defined $PsN::nm_minor_version);
-				if ($ver > 7.2){
-					push( @file_names, $filename.'_ETAS' ); #from NM 7.3
-				}
+		foreach my $msfo_file ( @{$self -> msfo_names()} ){
+			next unless (defined $msfo_file);
+			my ( $dir, $filename ) = OSspecific::absolute_path( undef, $msfo_file );
+			push( @file_names, $filename );
+			if (have_msf_etas){
+				push( @file_names, $filename.'_ETAS' ); #from NM 7.3
 			}
 		}
 	}
@@ -4815,6 +4728,9 @@ sub _read_problems
 	my $warning_printed = 0;
 	my $prev_was_not_sizes = 1;
 
+
+	my %internal_msfo_files=(); #hash of filename and problem number, numbering starts at 1
+	
 	# It may look like the loop takes one step to much, but its a
 	# trick that helps parsing the last problem.
 	for (my $i = 0; $i <= @modelfile; $i++) {
@@ -4873,12 +4789,22 @@ sub _read_problems
 					tbs_zeta                   => $self->tbs_zeta,
 					mirror_plots                => $self->mirror_plots,
 					prob_arr                    => \@problem_lines,
-					shrinkage_module            => $sh_mod );
+					shrinkage_module            => $sh_mod,
+					internal_msfo_files => \%internal_msfo_files);
 				if (defined $prob->tbs_thetanum) {
 					$self->tbs_thetanum($prob->tbs_thetanum);
 				}
-
+				
 				push( @problems, $prob );
+				my $array = $prob->get_msfo_filenames;
+				if (scalar(@{$array})>1){
+					ui->print(category=> 'all',
+							  message => 'Warning: MSFO set to different file names in same $PROBLEM: '.join(' ',@{$array})."\n");
+				}
+				foreach my $fn (@{$array}){
+					$internal_msfo_files{$fn}=scalar(@problems); #probnum 1 or higher
+				}
+
 				if ( $self->cwres ) {
 					my @eo;
 					if ( defined $self->extra_output ) {
@@ -5278,29 +5204,124 @@ sub need_data_filtering{
 	return $do_filtering;
 }
 
+sub update_internal_msfi{
+    my $self = shift;
+
+	my @updated=();
+	my $msfo_files = $self->msfo_names(); #array over problems
+	for (my $j=0; $j<scalar(@{$self->problems}); $j++){
+		if (defined $self->problems->[$j]->msfis and scalar(@{$self->problems->[$j]->msfis})>0){
+			if (scalar(@{$self->problems->[$j]->msfis})>1){
+				ui->print(category => 'all',message => 'warning: more than one MSFI in problem '.($j+1));
+			}
+			my $probnum = $self->problems->[$j]->msfis->[0]->get_msfo_from_problem_number;
+			if ( $probnum>0){
+				if (defined $msfo_files->[($probnum-1)]){
+					$self->problems->[$j]->msfis->[0]->set_filename(filename => $msfo_files->[($probnum-1)]);
+					push(@updated,($j+1));
+				}else{
+					ui->print(category => 'all',message => "error update_internal_msfi problem ".($j+1).
+							  " there is no msfo from problem $probnum but msfi depends on that problem");
+				}
+			}
+		}
+	}
+	return \@updated;
+}
+sub rename_msfo{
+    my $self = shift;
+	my %parm = validated_hash(\@_,
+							  name => { isa => 'Str', optional => 0 },
+							  add_if_absent => { isa => 'Bool', optional => 1, default => 0 },
+							  problem_index =>{ isa => 'Int', optional => 1, default => 0 },
+		);
+	my $name = $parm{'name'};
+	my $add_if_absent = $parm{'add_if_absent'};
+	my $problem_index = $parm{'problem_index'};
+
+	my $msfo_files = $self->msfo_names(); #array over problems
+
+	if (defined $msfo_files->[$problem_index]){
+		#change existing
+		if (defined $self->problems->[$problem_index]->estimations){
+			foreach my $rec (@{$self->problems->[$problem_index]->estimations}){
+				$rec->rename_msfo(name => $name);
+			}
+		}
+		if (defined $self->problems->[$problem_index]->nonparametrics){
+			foreach my $rec (@{$self->problems->[$problem_index]->nonparametrics}){
+				$rec->rename_msfo(name => $name);
+			}
+		}
+	}elsif ($add_if_absent){
+		#not exist	
+		if (defined $self->problems->[$problem_index]->estimations and
+			defined $self->problems->[$problem_index]->estimations->[0]){
+			$self->problems->[$problem_index]->estimations->[0]->_add_option(option_string=>'MSFO='.$name); 
+		}elsif(defined $self->problems->[$problem_index]->nonparametrics and 
+			   defined $self->problems->[$problem_index]->nonparametrics->[0]){
+			$self->problems->[$problem_index]->nonparametrics->[0]->_add_option(option_string=>'MSFO='.$name); 
+		}
+	}
+	my $updatedmsfi = $self->update_internal_msfi;
+	
+}
+sub renumber_msfo_msfi{
+    my $self = shift;
+	my %parm = validated_hash(\@_,
+							  numberstring => { isa => 'Str', optional => 0 },
+		);
+	my $numberstring = $parm{'numberstring'};
+
+	my @probmsfo=();
+	my $updatedmsfi=[];
+	my $msfo_files = $self->msfo_names(); #array over problems
+	for (my $j=0; $j<scalar(@{$self->problems}); $j++){
+		if (defined $msfo_files->[$j]){
+			if (defined $self->problems->[$j]->estimations){
+				foreach my $rec (@{$self->problems->[$j]->estimations}){
+					$rec->renumber_msfo (numberstring => $numberstring);
+				}
+			}
+			if (defined $self->problems->[$j]->nonparametrics){
+				foreach my $rec (@{$self->problems->[$j]->nonparametrics}){
+					$rec->renumber_msfo (numberstring => $numberstring);
+				}
+			}
+			push(@probmsfo,($j+1));
+		}
+	}
+	if (scalar(@probmsfo)>0){
+		#anything updated
+		$updatedmsfi = $self->update_internal_msfi;
+	}
+	return (\@probmsfo,$updatedmsfi);
+}
+
+
 sub msfo_to_msfi_mismatch{
 
     my $self = shift;
 	return 0 unless (scalar(@{$self->problems})>1);
-
-	my $msfo = $self->msfo_names(); #array of array over probs
-	my $msfi = $self->msfi_names(); #array of array over probs
+	
+	my $msfo = $self->msfo_names(); #array over probs
+	my $msfi = $self->msfi_names(); #array over probs
 	
 	my $prev_msfo= undef;
 	for (my $i=0; $i<scalar(@{$self->problems}); $i++){
 		if (defined $prev_msfo){
-			if (defined $msfi->[$i] and defined $msfi->[$i][0]){
-				unless ($prev_msfo eq $msfi->[$i][0]){
+			if (defined $msfi->[$i] ){
+				unless ($prev_msfo eq $msfi->[$i]){
 					return ($i+1); #mismatch at problem number $i+1
 				}
 			}
 		}
-		if (defined $msfo->[$i] and defined $msfo->[$i][0]){
-			$prev_msfo = $msfo->[$i][0];
+		if (defined $msfo->[$i] ){
+			$prev_msfo = $msfo->[$i];
 		}
 	}
 	return 0;
-
+	
 }
 
 no Moose;

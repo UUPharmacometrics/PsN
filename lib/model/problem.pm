@@ -190,6 +190,7 @@ has 'own_print_order' => ( is => 'rw', isa => 'Maybe[ArrayRef]' );
 has 'record_order' => ( is => 'rw', isa => 'model::problem::record_order' );
 has 'psn_record_order' => ( is => 'rw', isa => 'Bool', default => 0 );               # Set to use the internal record order otherwise preserve the used order
 has 'estimated_parameters_hash' => ( is => 'rw', isa => 'HashRef' );
+has 'internal_msfo_files' => ( is => 'rw', isa => 'HashRef', default => sub { {} } );
 
 sub BUILD
 {
@@ -1668,8 +1669,12 @@ sub add_records
 		$self->$accessor([]) unless defined $self->$accessor;
 		if (($type eq 'omega') or ($type eq 'sigma') or ($type eq 'theta')) {
 			$record = $rec_class->new(record_arr => \@record_strings, n_previous_rows => $n_previous_rows);
-		}elsif ($type eq 'data'){
+		}elsif ($type eq 'data') {
 			$record = $rec_class->new(record_arr => \@record_strings, model_directory => $self->directory);
+		}elsif ($type eq 'msfi'){
+			$record = $rec_class->new(record_arr => \@record_strings, 
+									  model_directory => $self->directory,
+									  internal_msfo_files => $self->internal_msfo_files);
 		} else {
 			$record = $rec_class->new(record_arr => \@record_strings);
 		}
@@ -1678,6 +1683,29 @@ sub add_records
 	} else {
 		croak("Trying to add unknown record: $type");
 	}
+}
+
+sub get_msfo_filenames
+{
+	my $self = shift;
+	my @filenames=();
+	foreach my $recname ('estimation','nonparametric'){
+		my ($values,$pos) = $self-> _option_val_pos(record_name => $recname,name=>'MSFO', exact_match=>0);
+		foreach my $fn (@{$values}){
+			next unless (defined $fn and length($fn)>0);
+			my $found=0;
+			foreach my $old (@filenames){
+				if ($old eq $fn){
+					$found=1;
+					last;
+				}
+			}
+			push(@filenames,$fn) unless $found;
+		}
+	}
+	#it is a NONMEM error if there is more than one file name here
+	return \@filenames;
+
 }
 
 sub set_records
@@ -1704,9 +1732,7 @@ sub _read_records
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		type => { isa => 'Str', optional => 1 }
 	);
-	my $type = $parm{'type'};
 
 	# We parse the lines of a problem by looping over the them and
 	# look for records(lines starting with a $). When a record is
@@ -2771,6 +2797,8 @@ sub _format_problem
 				if ($type eq 'data'){
 					$arr = $record -> _format_record(write_directory => $write_directory,
 													 relative_data_path => $relative_data_path);
+				}elsif ($type eq 'msfi'){
+					$arr = $record -> _format_record(write_directory => $write_directory);
 				}else{
 					$arr = $record ->  _format_record( number_format => $number_format) ;
 				}

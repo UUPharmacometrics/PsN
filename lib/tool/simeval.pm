@@ -110,7 +110,6 @@ sub modelfit_setup
 	my @orig_and_sim_models;
 	my $orig_model;
 	my $sim_model;
-	my @msfo_stems_original;
 
 	$self->probnum(2) if ($self->have_tnpri());
 

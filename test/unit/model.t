@@ -346,13 +346,29 @@ is_deeply($model->fixed_or_same(parameter_type => 'sigma')->[0],[1],'fixed or sa
 is_deeply($model->same(parameter_type => 'omega')->[0],[0,0,0,0,0,1,0,1],'same omega 2');
 is_deeply($model->same(parameter_type => 'sigma')->[0],[0],'same sigma 2');
 
-$model = model->new(filename => "$modeldir/tnpri.mod");
+$model = model->new(filename => "$modeldir/tnpri.mod", ignore_missing_data =>1);
 is ($model->get_estimation_evaluation_problem_number,-1,"get_estimation_evaluation_problem_number");
+is_deeply($model->msfi_names(absolute_path=>0),['msf_tnpri',undef],'msfi names');
 
 $model = model->new(filename => "$modeldir/twoprobmsf_match.mod", ignore_missing_data =>1);
 is ($model->msfo_to_msfi_mismatch,0,"msfo_to_msfi_mismatch false");
+is_deeply($model->msfi_names(absolute_path=>0),[undef,'msfb1'],'msfi names 2');
+is_deeply($model->msfo_names(),['msfb1',undef],'msfo names 1');
+my ($mo,$mi) = $model->renumber_msfo_msfi(numberstring => '10');
+is_deeply($mo,[1],'renumber_msfo_msfi mo prob ');
+is_deeply($mi,[2],'renumber_msfo_msfi mi prob ');
+is_deeply($model->msfi_names(absolute_path=>0),[undef,'msfb10'],'msfi names 2 after rename');
+is_deeply($model->msfo_names(),['msfb10',undef],'msfo names 1 after rename');
+
 $model = model->new(filename => "$modeldir/twoprobmsf_mismatch.mod", ignore_missing_data =>1);
 is ($model->msfo_to_msfi_mismatch,2,"msfo_to_msfi_mismatch true second prob");
+is_deeply($model->msfi_names(absolute_path=>0),[undef,'msfb2'],'msfi names 3');
+is_deeply($model->msfo_names(),['msfb1',undef],'msfo names 2');
+($mo,$mi) = $model->renumber_msfo_msfi(numberstring => '10');
+is_deeply($mo,[1],'renumber_msfo_msfi mo prob ');
+is_deeply($mi,[],'renumber_msfo_msfi mi prob ');
+is_deeply($model->msfi_names(absolute_path=>0),[undef,'msfb2'],'msfi names 3 after rename');
+is_deeply($model->msfo_names(),['msfb10',undef],'msfo names 2 after rename');
 
 
 # Test of different models
