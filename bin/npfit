@@ -66,15 +66,6 @@ EOF
 common_options::online_help('npfit', \%options,\%help_text, \%required_options, \%optional_options);
 common_options::setup( \%options, 'npfit' ); #calls set_globals etc, initiates random sequence
 
-unless (defined $options{'degree'}){
-	my %hash = %{common_options::restore_options(@common_options::tool_options)};
-	if (defined $hash{'degree'}){
-		$options{'degree'} = $hash{'degree'};
-	}else{
-		$options{'degree'} = 0.1;
-	}
-}
-
 require tool::modelfit;
 require model;
 require input_checking;
@@ -89,7 +80,7 @@ if( scalar(@ARGV) > 1 ) {
 }
 
 if( scalar(@ARGV) == 0 ) {
-  die "Model is not added.\n";
+  die "Model name is not given. Use 'npfit -h' for help.\n";
 }
 
 my $input_model;
