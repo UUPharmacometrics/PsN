@@ -28,9 +28,8 @@ sub BUILD
 			$self->idnumber($data[$self->idcolumn - 1]);
             $self->update_idnumber();
 		} else {
-			print "data is " . $self->subject_data->[0] . "\n";
-			print "idcolumn is " . $self->idcolumn . "\n";
-			croak("The value in the id column, " . $data[$self->idcolumn - 1] . ", does not look like a number\n");
+			croak("data is " . $self->subject_data->[0] . "\n"."idcolumn is " . $self->idcolumn . "\n".
+				  "The value in the id column, " . $data[$self->idcolumn - 1] . ", does not look like a number\n");
 		}
 	}
 }

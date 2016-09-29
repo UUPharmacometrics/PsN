@@ -29,31 +29,41 @@ sub BUILD
 
 	#closing parenthesis is allowed as ignoresign, but not opening
 	my @keep_opts=();
-
-	foreach my $option ( @{$self->options} ) {
+	my $optcount = scalar(@{$self->options});
+	
+	for (my $j=0; $j<$optcount; $j++ ) {
+		my $option = $self->options->[$j];
 		if ( defined $option){ 
 			if ($option->name eq 'IGNORE' or index('IGNORE',$option ->name ) == 0) {
 				my $value = $option->value;
 				chomp( $value );
 				if (defined $value and length($value)>0){
 					if ( $value =~ /^\(/ ) {
-						#opening parenthesis. This cannot be single ignoresign, NONMEM does not allow it
+						#opening parenthesis. This cannot be single ignoresign, NONMEM does not allow it,
+						#so assume beginning of list
 						push(@keep_opts,$option);
 					} else {
-						if (($value =~ /^'/) or ($value =~ /^"/)){
-							croak("PsN does not support quoted IGNORE signs in \$DATA");
+						if (($value =~ /^'.'/) or ($value =~ /^"."/)){
+							croak("PsN does not support quoted IGNORE signs in \$DATA: IGNORE=".$value);
 						}
 						if (length($value)==1){
+							if ($value eq "'") {
+								croak("NONMEM does not support IGNORE=' in \$DATA");
+							}
 							#do not push to keep_opts, store as attribute
 							$self->ignoresign($value);
 						}else{
-							#could be e.g. IGNORE=c1 which is ok in NONMEM
-							push(@keep_opts,$option);
+							croak("Illegal IGNORE in \$DATA, must be single character: IGNORE=".$value);
 						}
 					}
 				}else{
-					push(@keep_opts,$option);
-					#ui->print(category=> 'all',message=> "\nWarning: empty value of IGNORE option in \$DATA\n");
+					if (defined $self->ignoresign or
+						(($j+1)<$optcount and defined $self->options->[$j+1] and $self->options->[$j+1]->name =~ /^\(/ )){
+						#this is beginning of IGNORE (list)
+						push(@keep_opts,$option);
+					}else{
+						croak("No value of IGNORE in \$DATA, did you skip the equal sign in IGNORE= ?");
+					}
 				}
 			}else{
 				push(@keep_opts,$option);
