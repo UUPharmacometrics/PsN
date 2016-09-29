@@ -135,6 +135,7 @@ New features implemented by William S. Denney of Human Predictions:
 
    ___vpc/npc___
 
+- New option -mix to generate simulated and observed data for external post processing
 
    ___frem___
 
