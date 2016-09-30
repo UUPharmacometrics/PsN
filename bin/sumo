@@ -343,12 +343,12 @@ require model;
 			my $row_counter = 0;
 
 			next unless (defined $outobj -> problems -> [$problems] -> subproblems());
-			my $init_problem = $outobj -> problems -> [$problems] ->input_problem;
 
 			my %nam;
 			foreach my $param ('theta','omega','sigma'){
-				my $namesref = $init_problem->get_estimated_attributes(parameter => $param,
-																	   attribute => 'labels');
+				my $namesref = $outobj->output_get_estimated_attributes(parameter => $param,
+																		attribute => 'labels',
+																		problem_index => $problems);
 				my @names=();
 				if (defined $namesref){
 					@names = @{$namesref};

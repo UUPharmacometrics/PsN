@@ -119,6 +119,7 @@ has 'covariance_matrix' => ( is => 'rw', isa => 'ArrayRef' );
 has 'burn_in_iterations' => ( is => 'rw', isa => 'Int' );
 has 'iterations_interrupted' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'simulation_error_message' => ( is => 'rw', isa => 'Maybe[Str]' );
+has 'guess_estimated_attributes' => ( is => 'rw', isa => 'HashRef', default => sub { {} } );
 
 	
 sub BUILD
@@ -310,6 +311,9 @@ sub _read_covmatrix
 	# }}}
 
 	my $keep_headers_array = $self->input_problem->get_estimated_attributes(attribute=>'coordinate_strings');
+	if (scalar(@{$keep_headers_array})==0 and (defined $self->guess_estimated_attributes->{'coordinate_strings'})){
+		$keep_headers_array = $self->guess_estimated_attributes->{'coordinate_strings'};
+	}
 	my $raw_invcovmatrix;
 	
 	while ( $_ = @{$self->lstfile}[ $start_pos++ ] ) {
@@ -2873,9 +2877,16 @@ sub parse_NM7_raw
 	
 	$self->ofv($hash->{'ofv'}) if (defined $hash->{'ofv'});
 	
-	if (defined $self->input_problem ){
-		my %keep_labels_hash;
+	if (defined $self->input_problem and not (defined $self->input_problem->msfis and scalar(@{$self->input_problem->msfis})>0)){
+		my %keep_labels_hash = ();
 		foreach my $coord (@{$self->input_problem->get_estimated_attributes(attribute=>'coordinate_strings')}){
+			$keep_labels_hash{$coord}=1;
+		}
+		$self->keep_labels_hash(\%keep_labels_hash);
+	}else{
+		$self->guess_estimated_attributes(nmtable::guess_estimated_attributes(results => $hash,header => $nmtable->get_header));
+		my %keep_labels_hash = ();
+		foreach my $coord (@{$self->guess_estimated_attributes->{'coordinate_strings'}}){
 			$keep_labels_hash{$coord}=1;
 		}
 		$self->keep_labels_hash(\%keep_labels_hash);

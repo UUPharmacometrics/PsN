@@ -397,7 +397,6 @@ sub high_correlations
 				my $subproblem_count = $self->problems->[$probnum-1]->get_subproblem_count();
 				@subproblems = (1 .. $subproblem_count) if ($subproblem_count > 0);
 			}
-			my $init_problem = $self->problems->[$probnum-1]->input_problem;
 			foreach my $subprobnum (@subproblems){
 				my @sub_high_names_array=();
 				my @sub_high_values_array=();
@@ -405,8 +404,9 @@ sub high_correlations
 					my $correlation_matrix = $self->problems->[$probnum-1]->subproblems->[$subprobnum-1]->correlation_matrix;
 					if (defined $correlation_matrix and scalar(@{$correlation_matrix})>0){
 						$found_any=1;
-						my @names = @{$init_problem->get_estimated_attributes(parameter => 'all',
-																			  attribute => 'labels')};
+						my @names = @{$self->output_get_estimated_attributes(parameter => 'all',
+																			 attribute => 'labels',
+																			 problem_index => ($probnum-1))};
 						my $idx = 0;
 						for ( my $row = 1; $row <= scalar(@names); $row++ ) {
 							for ( my $col = 1; $col <= $row; $col++ ) {
@@ -471,7 +471,6 @@ sub large_standard_errors
 				my $subproblem_count = $self->problems->[$probnum-1]->get_subproblem_count();
 				@subproblems = (1 .. $subproblem_count) if ($subproblem_count > 0);
 			}
-			my $init_problem = $self->problems->[$probnum-1]->input_problem;
 			foreach my $subprobnum (@subproblems){
 				my @sub_high_names_array=();
 				my @sub_high_values_array=();
@@ -483,8 +482,9 @@ sub large_standard_errors
 															 subproblem_index => ($subprobnum-1));
 						if (defined $ref and scalar(@{$ref}>0)){
 							$found_any=1;
-							my @labels = @{$init_problem->get_estimated_attributes(parameter => $param,
-																				   attribute => 'labels')};
+							my @labels = @{$self->output_get_estimated_attributes(parameter => $param,
+																				  attribute => 'labels',
+																				  problem_index => ($probnum-1))};
 
 							for (my $k=0; $k<scalar(@labels); $k++){
 								if ( defined ($ref->[$k]) and abs($ref->[$k]) > eval('$'.$param.'_cv_limit')) {
@@ -537,12 +537,13 @@ sub perfect_individual_count
 											problem_index => $problem_index,
 											subproblem_index => $subproblem_index);
 	
-	my $init_problem = $self->problems->[$problem_index]->input_problem;
-	my @off_diagonal = @{$init_problem->get_estimated_attributes(parameter => 'omega',
-																 attribute => 'off_diagonal')};
-
-	my @strings = @{$init_problem->get_estimated_attributes(parameter => 'omega',
-															attribute => 'coordinate_strings')};
+	my @off_diagonal = @{$self->output_get_estimated_attributes(parameter => 'omega',
+																attribute => 'off_diagonal',
+																problem_index => $problem_index)};
+	
+	my @strings = @{$self->output_get_estimated_attributes(parameter => 'omega',
+														   attribute => 'coordinate_strings',
+														   problem_index => $problem_index)};
 
 	if (defined $seref and scalar(@{$seref}>0)){
 		for (my $k=0; $k < scalar(@{$seref}); $k++){
@@ -607,15 +608,18 @@ sub near_bounds
 			my $subproblem_count = $self->problems->[$probnum-1]->get_subproblem_count();
 			@subproblems = (1 .. $subproblem_count) if ($subproblem_count > 0);
 
-			my $init_problem = $self->problems->[$probnum-1]->input_problem;
-			my @lower = @{$init_problem->get_estimated_attributes(parameter => 'all',
-																  attribute => 'lower_bounds')};
-			my @upper = @{$init_problem->get_estimated_attributes(parameter => 'all',
-																  attribute => 'upper_bounds')};
-			my @labels = @{$init_problem->get_estimated_attributes(parameter => 'all',
-																   attribute => 'labels')};
-			my @off_diagonal = @{$init_problem->get_estimated_attributes(parameter => 'all',
-																		 attribute => 'off_diagonal')};
+			my @lower = @{$self->output_get_estimated_attributes(parameter => 'all',
+																 attribute => 'lower_bounds',
+																 problem_index => ($probnum-1))};
+			my @upper = @{$self->output_get_estimated_attributes(parameter => 'all',
+																 attribute => 'upper_bounds',
+																 problem_index => ($probnum-1))};
+			my @labels = @{$self->output_get_estimated_attributes(parameter => 'all',
+																  attribute => 'labels',
+																  problem_index => ($probnum-1))};
+			my @off_diagonal = @{$self->output_get_estimated_attributes(parameter => 'all',
+																		attribute => 'off_diagonal',
+																		problem_index => ($probnum-1))};
 			#The boundary test for off-diagonal omega elements
 			#are performed by first converting the covariances to the corre-
 			#sponding correlations and then check if they are close to +/-1
@@ -624,7 +628,8 @@ sub near_bounds
 				my @sub_bounds_array=();
 				my @sub_names_array=();
 				my @sub_values_array=();
-				if (defined $self->problems->[$probnum-1]->subproblems->[$subprobnum-1]){
+				if (defined $self->problems->[$probnum-1]->subproblems->[$subprobnum-1]
+					and (scalar(@lower)>0) ){
 					#for thetas and diagonals we want the estimate,
 					# for of-diagonals we want c
 					#make sure arrays are equal length
@@ -1138,10 +1143,10 @@ sub estnames
 		if ($probnum > $max_prob){
 			croak("probnum $probnum too high in output->estnames, problem count is $max_prob");
 		}
-		my $init_problem = $self->problems->[$probnum-1]->input_problem;
 		
-		my @coordinate_strings = @{$init_problem->get_estimated_attributes(parameter => $parameter,
-																		   attribute => 'coordinate_strings')};
+		my @coordinate_strings = @{$self->output_get_estimated_attributes(parameter => $parameter,
+																		   attribute => 'coordinate_strings',
+																		   problem_index => ($probnum-1))};
 		my @arr =();
 		foreach my $subprob (@subproblems){
 			push(@arr,\@coordinate_strings);
@@ -1669,18 +1674,22 @@ sub get_eta_eps_correlations
 
 	#first compute correlations only.
 	#find all estimated diagonal omega or sigma
-	my $init_problem = $self->problems->[$problem_index]->input_problem;
 
-	my @coordinate_strings = @{$init_problem->get_estimated_attributes(parameter => 'all',
-																	   attribute => 'coordinate_strings')};
-	my @coords = @{$init_problem->get_estimated_attributes(parameter => 'all',
-														   attribute => 'coords')};
-	my @off_diagonal = @{$init_problem->get_estimated_attributes(parameter => 'all',
-																 attribute => 'off_diagonal')};
-	my @labels = @{$init_problem->get_estimated_attributes(parameter => 'all',
-														   attribute => 'labels')};
-	my @param = @{$init_problem->get_estimated_attributes(parameter => 'all',
-														   attribute => 'param')};
+	my @coordinate_strings = @{$self->output_get_estimated_attributes(parameter => 'all',
+																	  attribute => 'coordinate_strings',
+																	  problem_index=> $problem_index)};
+	my @coords = @{$self->output_get_estimated_attributes(parameter => 'all',
+														  attribute => 'coords',
+														  problem_index=> $problem_index)};
+	my @off_diagonal = @{$self->output_get_estimated_attributes(parameter => 'all',
+																attribute => 'off_diagonal',
+																problem_index=> $problem_index)};
+	my @labels = @{$self->output_get_estimated_attributes(parameter => 'all',
+														  attribute => 'labels',
+														  problem_index=> $problem_index)};
+	my @param = @{$self->output_get_estimated_attributes(parameter => 'all',
+														 attribute => 'param',
+														 problem_index=> $problem_index)};
 	
 	my @estimates = @{$self->get_filtered_values (problem_index => $problem_index,
 												  subproblem_index => $subproblem_index,
@@ -1844,6 +1853,46 @@ sub correlations_coefficients_covariances
 	return (\@correlations,\@coefficients,\@covariances);
 }
 
+sub output_get_estimated_attributes
+{
+	my $self = shift;
+	my %parm = validated_hash(\@_,
+							  parameter  => { isa => 'Str', optional => 0},
+							  attribute => { isa => 'Str', optional => 0},
+							  problem_index => { isa => 'Int', optional => 0},
+		);
+	my $parameter=$parm{'parameter'};
+	my $attribute=$parm{'attribute'};
+	my $problem_index = $parm{'problem_index'};
+
+	unless (defined $self->problems->[$problem_index]->input_problem->msfis and scalar(@{$self->problems->[$problem_index]->input_problem->msfis})>0){
+		return $self->problems->[$problem_index]->input_problem->get_estimated_attributes(parameter => $parameter,
+																						  attribute => $attribute);
+	}else{
+		my $probnum = $self->problems->[$problem_index]->input_problem->msfis->[0]->get_msfo_from_problem_number;
+		if (($probnum > 0) and (defined $self->problems->[$probnum-1]) and (defined $self->problems->[$probnum-1]->input_problem)) {
+			unless (defined $self->problems->[$probnum-1]->input_problem->msfis and scalar(@{$self->problems->[$probnum-1]->input_problem->msfis})>0){
+				return $self->problems->[$probnum-1]->input_problem->get_estimated_attributes(parameter => $parameter,
+																							  attribute => $attribute);
+			}
+			$problem_index = $probnum-1;
+		}
+		#fallback to guess
+		my @array = ();
+		if (defined $self->problems->[$problem_index]->subproblems and
+			defined $self->problems->[$problem_index]->subproblems->[0] and
+			defined $self->problems->[$problem_index]->subproblems->[0]->guess_estimated_attributes->{$attribute} ){
+			for (my $i=0; $i<scalar(@{$self->problems->[$problem_index]->subproblems->[0]->guess_estimated_attributes->{$attribute}}); $i++){
+				if (($parameter eq 'all') or 
+					($parameter eq $self->problems->[$problem_index]->subproblems->[0]->guess_estimated_attributes->{'param'}->[$i])){
+					push(@array,$self->problems->[$problem_index]->subproblems->[0]->guess_estimated_attributes->{$attribute}->[$i]);
+				}
+			}
+		}
+		return \@array;
+	}
+}
+
 sub get_filtered_values
 {
 	my $self = shift;
@@ -1876,15 +1925,16 @@ sub get_filtered_values
 	unless (defined $self->problems and scalar(@{$self->problems})>$problem_index){
 		croak("problem with index $problem_index does not exist in output object in get_filtered_values");
 	}
-	my $init_problem = $self->problems->[$problem_index]->input_problem;
 
-	my @coordinate_strings = @{$init_problem->get_estimated_attributes(parameter => $parameter,
-																	   attribute => 'coordinate_strings')};
+	my @coordinate_strings = @{$self->output_get_estimated_attributes(parameter => $parameter,
+																	  attribute => 'coordinate_strings',
+																	  problem_index => $problem_index)};
 
 	my %sdcorr_hash;
 	if ($allow_sdcorrform){
-		my @sdcorr_arr = @{$init_problem->get_estimated_attributes(parameter => $parameter,
-																   attribute => 'sdcorrform')};
+		my @sdcorr_arr = @{$self->output_get_estimated_attributes(parameter => $parameter,
+																  attribute => 'sdcorrform',
+																  problem_index => $problem_index)};
 		for (my $j=0; $j< scalar(@coordinate_strings); $j++){
 			$sdcorr_hash{$coordinate_strings[$j]} = $sdcorr_arr[$j];
 		}
