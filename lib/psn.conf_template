@@ -27,18 +27,6 @@ skip_minimization_terminated = 1
 skip_covariance_step_terminated = 0
 skip_with_covstep_warnings = 0
 skip_estimate_near_boundary = 1 
-minimization_successful_limit = 0.8
-covariance_step_successful_limit = 0.8
-covariance_step_warnings_limit = 0.2
-estimate_near_boundary_limit = 0.2
-estimate_near_boundary_limit = 0.2
-se_confidence_intervals_level = 5
-percentile_confidence_intervals_level = 5
-bca_confidence_intervals_level = 5
-se_confidence_intervals_check = 0
-percentile_confidence_intervals_check = 0
-bca_confidence_intervals_check = 0
-large_bias_limit = 0.05
 
 [default_sumo_options]
 sd_rse=1

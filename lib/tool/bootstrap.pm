@@ -48,16 +48,9 @@ has 'confidence_limits' => ( is => 'rw', isa => 'HashRef[Num]', default => sub {
 has 'parameters' => ( is => 'rw', isa => 'ArrayRef[Str]', default => sub { ['ofv', 'theta', 'omega', 'sigma'] } );
 has 'logfile' => ( is => 'rw', isa => 'ArrayRef[Str]', default => sub { ['bootstraplog.csv'] } );
 has 'results_file' => ( is => 'rw', isa => 'Str', default => 'bootstrap_results.csv' );
-has 'minimization_successful_limit' => ( is => 'rw', isa => 'Num', default => 0.80 );
-has 'covariance_step_successful_limit' => ( is => 'rw', isa => 'Num', default => 0.80 );
-has 'covariance_step_warnings_limit' => ( is => 'rw', isa => 'Num', default => 0.20 );
-has 'estimate_near_boundary_limit' => ( is => 'rw', isa => 'Num', default => 0.20 );
 has 'se_confidence_intervals_check' => ( is => 'rw', isa => 'Num', default => 0 );
-has 'se_confidence_intervals_level' => ( is => 'rw', isa => 'Num', default => 5 );
-has 'percentile_confidence_intervals_check' => ( is => 'rw', isa => 'Num', default => 0.5 );
-has 'percentile_confidence_intervals_level' => ( is => 'rw', isa => 'Num', default => 5 );
+has 'percentile_confidence_intervals_check' => ( is => 'rw', isa => 'Num', default => 0 );
 has 'bca_confidence_intervals_check' => ( is => 'rw', isa => 'Num', default => 0 );
-has 'bca_confidence_intervals_level' => ( is => 'rw', isa => 'Num', default => 5 );
 has 'large_bias_limit' => ( is => 'rw', isa => 'Num', default => 0.05 );
 has 'raw_results_dofv' => ( is => 'rw', isa => 'Str', default => 'raw_results_dofv.csv');
 has '_number_of_columns' => ( is => 'rw', isa => 'Int' );

@@ -321,12 +321,6 @@ my $bs =
 						  skip_covariance_step_terminated      => $options{'skip_covariance_step_terminated'},
 						  skip_with_covstep_warnings           => $options{'skip_with_covstep_warnings'},
 						  skip_estimate_near_boundary          => $options{'skip_estimate_near_boundary'},
-						  se_confidence_intervals_level         => $options{'se_confidence_intervals_level'},
-						  percentile_confidence_intervals_level => $options{'percentile_confidence_intervals_level'},
-						  bca_confidence_intervals_level        => $options{'bca_confidence_intervals_level'},
-						  se_confidence_intervals_check         => $options{'se_confidence_intervals_check'},
-						  percentile_confidence_intervals_check => $options{'percentile_confidence_intervals_check'},
-						  bca_confidence_intervals_check        => $options{'bca_confidence_intervals_check'},
 						  allow_ignore_id                      => $options{'allow_ignore_id'},
 						  copy_data                            => $options{'copy_data'}
 	);
