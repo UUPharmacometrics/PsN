@@ -17,11 +17,11 @@ chdir($tempdir);
 my @commands = 
 	(get_command('npfit') . " $model_dir/pheno.mod -npsupp=100,200,300",
 	 get_command('npfit') . " $model_dir/pheno.mod -npsupp=59",
-	 get_command('npfit') . " $model_dir/pheno.mod -npsupp=0,100",
+	 get_command('npfit') . " $model_dir/pheno.mod -npsupp=0,100 -silent",
 	 get_command('npfit') . " $model_dir/mox1.mod -npsupp=80,100",
-	 get_command('npfit') . " $model_dir/mox1.mod -npsupp=54,100",
+	 get_command('npfit') . " $model_dir/mox1.mod -npsupp=54,100 -silent",
 	 get_command('npfit') . " $model_dir/run1.mod -npsupp=100",
-	 get_command('npfit') . " $model_dir/run1.mod -npsupp=2,10",
+	 get_command('npfit') . " $model_dir/run1.mod -npsupp=2,10 -silent",
 	);
 foreach my $command (@commands){
 	print "Running $command\n";
@@ -31,10 +31,11 @@ foreach my $command (@commands){
 }
 
 my @crash_commands = 
-	(get_command('npfit') . " $model_dir/pheno.mod -npsupp=''",
-	 get_command('npfit') . " $model_dir/pheno.mod",
-	 get_command('npfit') . " -npsupp=100",
+	(get_command('npfit') . " $model_dir/pheno.mod -npsupp='' -silent",
+	 get_command('npfit') . " $model_dir/pheno.mod -silent",
+	 get_command('npfit') . " -npsupp=100 -silent ",
 	);
+open STDERR, '>', File::Spec->devnull();       # Silence STDERR croak messages from below
 foreach my $crash_commands (@crash_commands){
 	print "Running $crash_commands\n";
 	my $rc = system($crash_commands);
