@@ -18,12 +18,6 @@ samples=30
 retries=5
 maxevals=50000
 
-[default_llp_options]
-within_interval_check = 0
-theta_interval_ratio_check = 1.3
-omega_interval_ratio_check = 1.6
-sigma_interval_ratio_check = 1.6
-
 [default_cdd_options]
 xv=0
 outside_n_sd_check = 2

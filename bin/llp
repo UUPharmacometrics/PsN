@@ -278,23 +278,18 @@ foreach my $param ('omega','sigma'){
 }
 ## Create new Llp object:
 my $llp = tool::llp -> 
-  new ( eval( $common_options::parameters ),
-	max_iterations     => $options{'max_iterations'},
-	models		   => [ $model ],
-	normq              => $options{'normq'},
-	ofv_increase       => $options{'ofv_increase'},
-	significant_digits => $options{'significant_digits'},
-	run_thetas         => [\@thetas],
-	run_omegas         => [\@omegas],
-	run_sigmas         => [\@sigmas],
-	rse_thetas         => [\%checked_rse_thetas],
-	rse_omegas         => [\%checked_rse_omegas],
-	rse_sigmas         => [\%checked_rse_sigmas],
-	theta_interval_ratio_check => $options{'theta_interval_ratio_check'},
-	omega_interval_ratio_check => $options{'omega_interval_ratio_check'},
-	sigma_interval_ratio_check => $options{'sigma_interval_ratio_check'},
-	within_interval_check => $options{'within_interval_check'} );
-
+	new ( eval( $common_options::parameters ),
+		  max_iterations     => $options{'max_iterations'},
+		  models		   => [ $model ],
+		  normq              => $options{'normq'},
+		  ofv_increase       => $options{'ofv_increase'},
+		  significant_digits => $options{'significant_digits'},
+		  run_thetas         => [\@thetas],
+		  run_omegas         => [\@omegas],
+		  run_sigmas         => [\@sigmas],
+		  rse_thetas         => [\%checked_rse_thetas],
+		  rse_omegas         => [\%checked_rse_omegas],
+		  rse_sigmas         => [\%checked_rse_sigmas]);
 
 $llp-> print_options (cmd_line => $cmd_line,
 		      toolname => 'LLP',
