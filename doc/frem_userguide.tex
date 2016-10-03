@@ -773,6 +773,9 @@ and $n_{cov}=1$.
 Setting option -cholesky will often fail with NONMEM versions older than NM7.3, since the Fortran 95 code line continuation
 \& is not recognized by nmtran.
 
+The frem program does not support \$MSFI in the input model, since that is incompatible
+with changing/adding \$OMEGA and \$THETA records.
+
 %It can happen that final estimate OMEGA blocks in Model 3 are not positive definite due to rounding errors. Then the scripts
 %will halt with an error messages. In that case the user should remove all vpc\_model\_1 output files from
 %the m1 directory, open model\_3.ext and carefully add a small value to the diagonal elements of the problematic omega block,
