@@ -64,13 +64,20 @@ A new recommended but not required Perl library for runrecord: YAML::Tiny
    ___General___
 
 - PsN has updated its license. It is still licensed under the GNU public license version 2, but
-it is now possible to relicense PsN under any later versions of this license.
+  it is now possible to relicense PsN under any later versions of this license.
 - Bug fix: Some generated paths for the Rplots script were illegal R strings causing R to crash
 - Runs where any of the models have $NONPARAMETRIC will now get an additional file in the main
-  run directory: raw_nonparametric_results.csv, containing regular ofv, nonparametric ofv, etc
+  run directory: raw_nonparametric_<modelname>.csv, containing regular ofv, nonparametric ofv, etc
 - The handling of $MSFI and MSFO=file has been redesigned. MSF-files never have to be
   listed with -extra_files or -extra_output.
-- Bug fix: PsN can now handle $MSFI including/path/to/file.msf  
+- Bug fix: PsN can now handle $MSFI including/path/to/file.msf
+- Bug fix: PsN can now handle $MSFI in combination with NONMEM's sparse matrix format in lst-files,
+  which is used for very large covariance matrices.
+- Bug fix: PsN will notify the user if the equal sign in IGNORE=character is skipped,
+  which is not supported by PsN and hence not correctly handled when reading datasets for e.g.
+  bootstrap.
+- Added support for IGNORE=" (double quotation mark) in $DATA
+
 
    ___common_options___
 
@@ -127,8 +134,11 @@ New features implemented by William S. Denney of Human Predictions:
 - A new message when the NONMEM run failed, i.e. estimations/evaluation failed to produce an ofv,
   or when simulation had special error message in lst-file.
 - Do not print message about rounding errors or parameter near boundary if the NONMEM run failed.
+- Bug fix: When the model file copy at the top of the lst-file has $MSFI and there are no parameter
+  labels to use, PsN will use the estimation results to guess which parameters have been estimated
+  and list them in sumo output using their generic names.
 
-   ___bootstrap___
+___bootstrap___
 
 - Warn if the number of individuals in the data set is different from the number if individuals
   NONMEM printed in the original run lst-file.
