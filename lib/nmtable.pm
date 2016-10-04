@@ -183,6 +183,7 @@ sub parse_ext_table
 	}
 	$results{'any_se'} = $any_se;
 	$results{'any_est'} = $any_est;
+
 	if (scalar(@eigenvalues)>0){
 		$results{'eigenvalues'} = \@eigenvalues;
 	}
@@ -194,6 +195,82 @@ sub parse_ext_table
 	$results{'have_sigmas'} = $have_sigmas;
 	
 	return \%results;
+}
+
+sub guess_estimated_attributes
+{
+	my %parm = validated_hash(\@_,
+							  results => { isa => 'HashRef' },
+							  header => { isa => 'ArrayRef', optional => 0 },
+	);
+	my $header = $parm{'header'};
+	my $results = $parm{'results'};
+
+	my $any_se = $results->{'any_se'};
+	my @sorted_header = ();
+	my @sigmaheader = ();
+	for (my $i=1; $i<scalar(@{$header}); $i++){
+		if ($header->[$i] =~ /THETA/ or
+			$header->[$i] =~ /OMEGA/){
+			push(@sorted_header,$header->[$i]);
+		}elsif($header->[$i] =~ /SIGMA/){
+			push(@sigmaheader,$header->[$i]);
+		}
+	}
+	push(@sorted_header,@sigmaheader);
+	
+	my %allcoordval = ();
+	my %secoordval = ();
+	foreach my $param ('theta','omega','sigma'){
+		if (defined $results->{$param.'coordval'}){
+			%allcoordval = (%allcoordval,%{$results->{$param.'coordval'}});
+			if (defined $results->{'se'.$param.'coordval'}){
+				%secoordval = (%secoordval,%{$results->{'se'.$param.'coordval'}});
+			}
+		}
+	}
+	
+	my %hash;
+	$hash{'coords'}=[];
+	$hash{'coordinate_strings'}=[];
+	$hash{'param'}=[];
+	$hash{'labels'}=[];
+	$hash{'off_diagonal'} = [];
+
+	for (my $i=0; $i<scalar(@sorted_header); $i++){
+		my $off_diagonal=0;
+		my $param;
+		my $coord = $sorted_header[$i];
+
+		if ($sorted_header[$i] =~ /THETA/){
+			$param='theta';
+		}elsif($sorted_header[$i] =~ /OMEGA/){
+			$param='omega';
+		}elsif($sorted_header[$i] =~ /SIGMA/){
+			$param='sigma';
+		}else{
+			last;
+		}
+
+		if ($any_se){
+			next unless (defined $secoordval{$sorted_header[$i]}); #already translated 1.00000E+10 to undef
+		}else{
+			next unless (defined $allcoordval{$sorted_header[$i]} and
+						 $allcoordval{$sorted_header[$i]} != 0); #if exactly 0 then must be FIX
+		}
+		
+		push(@{$hash{'coordinate_strings'}},$coord);
+		push(@{$hash{'labels'}},$coord);
+		$coord =~ /(\d+,?\d*)/;
+		push(@{$hash{'coords'}},$1);
+		if ($coord =~ /\((\d+),(\d+)\)/){
+			$off_diagonal = 1 unless ($1 == $2);
+		}
+		push(@{$hash{'off_diagonal'}}, $off_diagonal);
+		push(@{$hash{'param'}},$param);
+
+	}
+	return \%hash;
 }
 
 sub _get_value{

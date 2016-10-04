@@ -196,7 +196,7 @@ $datarec->set_filename(filename=> $homedir.'sub/../other/new3.csv');
 is($datarec ->get_directory,$dir,'data record dir after change 3');
 is($datarec ->get_filename,'new3.csv','data record filename after change 3');
 
-$datarec = model::problem::data->new(record_arr => ['file.csv IGNORE=(DOSE.GT.5)','IGN=@']);
+$datarec = model::problem::data->new(record_arr => ['file.csv IGNORE=(DOSE.GT.5)','IGN =@']);
 is($datarec->ignoresign,'@','data record ignoresign at');
 is($datarec->_format_record(write_directory=>$datarec->get_directory,relative_data_path=>1)->[0],
    '$DATA      file.csv IGNORE=@ IGNORE=(DOSE.GT.5)'."\n",'format record ignoresign at');
@@ -206,12 +206,12 @@ is($datarec->ignoresign,undef,'data record ignoresign undef');
 is($datarec->_format_record(write_directory=>$datarec->get_directory,relative_data_path=>1)->[0],
    '$DATA      file.csv IGNORE=(DOSE.GT.5)'."\n",'format record ignoresign undef');
 
-$datarec = model::problem::data->new(record_arr => ['file.csv IGNOR=# IGNORE =(DOSE.GT.5)']);
+$datarec = model::problem::data->new(record_arr => ['file.csv IGNOR= # IGNORE =(DOSE.GT.5)']);
 is($datarec->ignoresign,'#','data record ignoresign hash');
 is($datarec->_format_record(write_directory=>$datarec->get_directory,relative_data_path=>1)->[0],
    '$DATA      file.csv IGNORE=# IGNORE=(DOSE.GT.5)'."\n",'format record ignoresign hash');
 
-$datarec = model::problem::data->new(record_arr => ['file.csv IGNO=I ','IGNOR=(DOSE.GT.5)']);
+$datarec = model::problem::data->new(record_arr => ['file.csv IGNO = I ','IGNOR=(DOSE.GT.5)']);
 is($datarec->ignoresign,'I','data record ignoresign I');
 is($datarec->_format_record(write_directory=>$datarec->get_directory,relative_data_path=>1)->[0],
    '$DATA      file.csv IGNORE=I IGNOR=(DOSE.GT.5)'."\n",'format record ignoresign I');
@@ -231,6 +231,11 @@ is($datarec->ignoresign,'C','data record ignoresign C split list after =');
 is($datarec->_format_record(write_directory=>$datarec->get_directory,relative_data_path=>1)->[0],
    '$DATA      file.csv IGNORE=C IGNORE (DOSE.GT.5, APGR.LT.2) REWIND'."\n",'format record split after =');
 
+$datarec = model::problem::data->new(record_arr => ['file.csv IGNORE=C  IGNORE ','( DOSE.GT.5,',' APGR.LT.2 ) REWIND']);
+is($datarec->ignoresign,'C','data record ignoresign C split list after space');
+is($datarec->_format_record(write_directory=>$datarec->get_directory,relative_data_path=>1)->[0],
+   '$DATA      file.csv IGNORE=C IGNORE (DOSE.GT.5, APGR.LT.2) REWIND'."\n",'format record split after space list');
+
 $datarec = model::problem::data->new(record_arr => ['file.csv IGNORE=C  IGNORE  ( ',' DOSE.GT.5, APGR.LT.2 ) REWIND']);
 is($datarec->ignoresign,'C','data record ignoresign C split list 2');
 is($datarec->_format_record(write_directory=>$datarec->get_directory,relative_data_path=>1)->[0],
@@ -241,13 +246,24 @@ is($datarec->ignoresign,'C','data record ignoresign C list without =');
 is($datarec->_format_record(write_directory=>$datarec->get_directory,relative_data_path=>1)->[0],
    '$DATA      file.csv IGNORE=C IGNORE (DOSE.GT.5,APGR.LT.2) REWIND'."\n",'format record without =');
 
-$datarec = model::problem::data->new(record_arr => ['file.csv IGNORE=c1  IGNORE  (  DOSE.GT.5, APGR.LT.2 ) REWIND']);
-is($datarec->ignoresign,undef,'data record ignoresign c1 ');
-is($datarec->_format_record(write_directory=>$datarec->get_directory,relative_data_path=>1)->[0],
-   '$DATA      file.csv IGNORE=c1 IGNORE (DOSE.GT.5,APGR.LT.2) REWIND'."\n",'format record c1');
+$datarec = model::problem::data->new(record_arr => ['file.csv IGNORE="  IGNORE  (  DOSE.GT.5, APGR.LT.2 ) REWIND']);
+is($datarec->ignoresign,'"','data record ignoresign " 1');
 
-dies_ok { model::problem::data->new(record_arr => ['file.csv IGNORE=(DOSE.GT.5)',"IGNORE=';' REWIND"]) } "Quoted ignoresign";
+$datarec = model::problem::data->new(record_arr => ['file.csv IGNORE  (  DOSE.GT.5, APGR.LT.2 )  IGNORE="  ']);
+is($datarec->ignoresign,'"','data record ignoresign " 2');
+
+$datarec = model::problem::data->new(record_arr => ['file.csv IGNORE ',' (  DOSE.GT.5, APGR.LT.2 )  IGNORE = "  ']);
+is($datarec->ignoresign,'"','data record ignoresign " 3');
+
+dies_ok { model::problem::data->new(record_arr => ['file.csv IGNORE=c1  IGNORE  (  DOSE.GT.5, APGR.LT.2 ) REWIND'])} "IGNORE=c1";
+dies_ok { model::problem::data->new(record_arr => ['file.csv IGNORE=(DOSE.GT.5)',"IGNORE='C' REWIND"]) } "Quoted ignoresign a";
 dies_ok { model::problem::data->new(record_arr => ['file.csv IGNORE=(',"DOSE.GT.5) REWIND"]) } "split after opening par";
+dies_ok { model::problem::data->new(record_arr => ['file.csv IGNORE=(DOSE.GT.5)','IGNORE="C" REWIND']) } "Quoted ignoresign b";
+dies_ok { model::problem::data->new(record_arr => ['file.csv IGNORE=(DOSE.GT.5)','IGNORE " REWIND']) } "Quoted ignoresign no =";
+dies_ok { model::problem::data->new(record_arr => ['file.csv IGNORE=(DOSE.GT.5)','IGNORE @ REWIND']) } "ignoresign no =";
+dies_ok { model::problem::data->new(record_arr => ['file.csv IGNORE=(DOSE.GT.5)',"IGNORE=' REWIND"]) } "ignoresign ' ";
+
+
 
 
 #model->idcolumn
@@ -312,6 +328,8 @@ my @datafiletests = (
 	{ filename => '9_lead_posneg.csv', input => 'PNEG ID TIME AMT WGT APGR DV', data => 'IGN=@', idcolumn => 2, row => 0, col => 4, val => '1.4' },
 	{ filename => '9_lead_posneg.csv', input => 'PNEG ID TIME AMT WGT APGR DV', data => 'IGN=C', crash => 1 },
 	{ filename => '9_lead_posneg.csv', input => 'PNEG ID TIME AMT WGT APGR DV', idcolumn => 2,data => ''},
+	{ filename => '10_quoted_header.csv', input => 'ID TIME AMT WGT APGR DV', data => ' IGN=" ', idcolumn => 1, row => 4, col => 2, val => 3.5 },
+	{ filename => '10_quoted_header.csv', input => 'ID TIME AMT WGT APGR DV', data => ' IGN=@ ', crash => 1},
 );
 my $problem;
 
@@ -333,8 +351,12 @@ foreach my $test_hash (@datafiletests) {
 						  idcolumn => $idcol,
 						  ignoresign => $ignoresign);
 	} else {
+		if ($test_hash->{'filename'} eq '10_quoted_header.csv'){
+			open STDERR, '>', File::Spec->devnull();       # Silence STDERR warning of non-ignored header in last test
+		}
 		dies_ok { data->new(filename => $dataname, idcolumn => $idcol, ignoresign => $ignoresign) }
 		"bad ignore " . $test_hash->{'filename'};
+		
 	}
 
 	if (not $test_hash->{'crash'}) {

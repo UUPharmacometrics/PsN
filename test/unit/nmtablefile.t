@@ -161,6 +161,7 @@ $t = nmtablefile->new(filename => "$dir/output/special_mod/minimterm_cov_uncondi
 my $table = $t->get_table(index => 0); 
 is_deeply($table->get_iteration_lookup(),
 		  {'est' =>0 ,'se' => 1,'eigen' =>2 ,'matrix'=>3, 'sd'=>4,'sdse'=>5,'extra'=>6},'get iteration lookup');
+
 my $results = $table->parse_ext_table();
 cmp_float($results->{'ofv'},-126.07168897227753,'ext ofv');
 cmp_float($results->{'eigenvalues'}->[1],1.42044E-01,'ext eigen');
@@ -175,5 +176,34 @@ cmp_float($results->{'sdcorrform_omegacoordval'}->{'OMEGA(2,2)'},2.51505E-01,'ex
 cmp_float($results->{'sdcorrform_seomegacoordval'}->{'OMEGA(2,2)'},1.01669E-01,'ext omega sd se');
 cmp_float($results->{'sigmacoordval'}->{'SIGMA(1,1)'},1.00000E+00,'ext sigma est');
 cmp_float($results->{'sdcorrform_sigmacoordval'}->{'SIGMA(2,2)'},1.00000E+00,'ext sigma sd est');
+
+my $guess_attributes = nmtable::guess_estimated_attributes(results => $results,
+														   header => $table->get_header);
+
+is_deeply($guess_attributes->{'param'},['theta','theta','theta','theta','theta','theta','theta','theta','theta','theta','theta','theta','theta','theta','theta','omega','omega','omega'],'guess estimated attributes param');
+is_deeply($guess_attributes->{'coordinate_strings'},['THETA1','THETA2','THETA3','THETA4','THETA5','THETA6','THETA7','THETA8','THETA9','THETA10','THETA11','THETA13','THETA14','THETA16','THETA18','OMEGA(2,2)','OMEGA(3,3)','OMEGA(6,6)'],'guess estimated attributes  cooordinate strings');
+is_deeply($guess_attributes->{'coords'},['1','2','3','4','5','6','7','8','9','10','11','13','14','16','18','2,2','3,3','6,6'],'guess estimated attributes coords');
+is_deeply($guess_attributes->{'off_diagonal'},[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],'guess estimated attributes  off-diag');
+is_deeply($guess_attributes->{'labels'},['THETA1','THETA2','THETA3','THETA4','THETA5','THETA6','THETA7','THETA8','THETA9','THETA10','THETA11','THETA13','THETA14','THETA16','THETA18','OMEGA(2,2)','OMEGA(3,3)','OMEGA(6,6)'],'guess estimated attributes  labels');
+
+
+$t = nmtablefile->new(filename => "$dir/output/onePROB/oneEST/noSIM/sparse_matrix_with_msfi.ext", is_ext_file => 1);
+$table = $t->get_table(index => 0); 
+$results = $table->parse_ext_table();
+$guess_attributes = nmtable::guess_estimated_attributes(results => $results,
+														header => $table->get_header);
+
+is_deeply($guess_attributes->{'param'},['theta','theta','theta','theta','theta','theta','theta','theta','theta','theta','theta',
+'omega','omega','omega','omega','omega','omega','omega','omega','omega','omega','omega',
+'sigma'],'guess estimated attributes param 2');
+is_deeply($guess_attributes->{'coordinate_strings'},['THETA1','THETA2','THETA3','THETA4','THETA5','THETA6','THETA7','THETA8','THETA9','THETA10','THETA11',
+'OMEGA(1,1)','OMEGA(2,1)','OMEGA(2,2)','OMEGA(3,3)','OMEGA(4,4)','OMEGA(5,5)','OMEGA(6,6)','OMEGA(7,7)','OMEGA(9,9)','OMEGA(11,11)','OMEGA(13,13)',
+'SIGMA(1,1)'],'guess estimated attributes  cooordinate strings 2' );
+is_deeply($guess_attributes->{'coords'},['1','2','3','4','5','6','7','8','9','10','11',
+'1,1','2,1','2,2','3,3','4,4','5,5','6,6','7,7','9,9','11,11','13,13','1,1'],'guess estimated attributes coords 2');
+is_deeply($guess_attributes->{'off_diagonal'},[0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0],'guess estimated attributes  off-diag 2');
+is_deeply($guess_attributes->{'labels'},['THETA1','THETA2','THETA3','THETA4','THETA5','THETA6','THETA7','THETA8','THETA9','THETA10','THETA11',
+'OMEGA(1,1)','OMEGA(2,1)','OMEGA(2,2)','OMEGA(3,3)','OMEGA(4,4)','OMEGA(5,5)','OMEGA(6,6)','OMEGA(7,7)','OMEGA(9,9)','OMEGA(11,11)','OMEGA(13,13)',
+'SIGMA(1,1)'],'guess estimated attributes  labels 2');
 
 done_testing();

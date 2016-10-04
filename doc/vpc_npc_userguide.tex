@@ -232,6 +232,14 @@ significant_digits.gt.3.5
 \optname{copy\_data}
 Default set. Disable with -no-copy\_data. By default, PsN will copy the datafile into NM\_run1 and set a local path in psn.mod, the actual modelfile run with NONMEM. If -no-copy\_data is set, PsN will not copy the data to NM\_run1 and instead set the absolute path in \$DATA in psn.mod. However, 
 the absolute path must not be too long, since NONMEM will not accept more than 80 characters for the filename in \$DATA.  
+\nextopt
+\optname{mix}
+      Set a variable to be used for MIXNUM in mixture models.
+      Easiest is to set 'MIXOUT=MIXNUM' in abbreviated code
+      and use -mix=MIXOUT. Note that MIXNUM cannot directly
+      be addressed from a \$TABLE. When using -mix the vpc
+      will quit before doing the postprocessing.
+
 \end{optionlist}
 
 

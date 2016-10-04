@@ -106,6 +106,7 @@ has 'original_model' => ( is => 'rw', isa => 'model' );
 has 'logfile' => ( is => 'rw', isa => 'ArrayRef[Str]', default => sub { ['npc.lop'] } );
 has 'results_file' => ( is => 'rw', isa => 'Str', default => 'npc_results.csv' );
 has 'nca' => ( is => 'rw', isa => 'Bool', default => 0 );
+has 'mix' => ( is => 'rw', isa => 'Str' );
 
 sub BUILD
 {
@@ -1168,6 +1169,12 @@ sub modelfit_setup
 		push(@rec_strings,$self->irep) if (defined $self->irep);
 	}
 	
+    # Add MIXNUM column
+    if (defined $self->mix) {
+        push @sim_strings, $self->mix;
+        push @rec_strings, $self->mix;
+    }
+
 	# Remove duplicate columns
 	my @rec_strings2;
 	my %column_seen;
@@ -1662,6 +1669,12 @@ sub modelfit_analyze
 							  model_number => { isa => 'Num', optional => 1 }
 		);
 	my $model_number = $parm{'model_number'};
+
+    # Exit if -mix
+    if ($self->mix) {
+        print("Simulation for mixture model done.\n");
+        return;
+    }
 
 	# If we ran an nca move data files and return
 	if ($self->nca) {
@@ -2184,7 +2197,6 @@ sub index_matrix_binned_values
 
 	return \@index_matrix;
 }
-
 
 sub get_data_matrix
 {
@@ -5156,8 +5168,6 @@ sub get_npc_result_labels
 	return \@result_column_labels ,\@result_row_labels;
 }
 
-
-
 sub get_lower_and_upper_limits
 {
 	#static no shift
@@ -5200,8 +5210,6 @@ sub get_lower_and_upper_limits
 	return \@lower_limit,\@upper_limit,$alert;
 
 }
-
-
 
 sub update_counts
 {
@@ -5578,7 +5586,8 @@ sub subset_npc_analyze
 	return \@result_values ,\@real_positions ,\@stats_warnings, $npc_alert_written;
 }
 
-sub create_R_plots_code{
+sub create_R_plots_code
+{
 	my $self = shift;
 	my %parm = validated_hash(\@_,
 							  rplot => { isa => 'rplots', optional => 0 }

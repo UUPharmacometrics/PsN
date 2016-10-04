@@ -68,6 +68,7 @@ my %optional_options = ( 'idv:s' => undef,
     'auto_bin:s' => undef,
     'min_points_in_bin:i' => undef,
     'so!' => undef,
+    'mix:s' => undef,
 );
 
 my $res = GetOptions( \%options,
@@ -394,6 +395,7 @@ $help_text{-offset_rawres} = <<'EOF';
       bootstrap raw_results file the first line of estimates refers to the
       input model with the full dataset, so therefore the default offset is 1.
 EOF
+
 $help_text{-in_filter} = <<'EOF';
       -in_filter=comma-separated list of conditions
 
@@ -505,6 +507,16 @@ $help_text{-so} = <<'EOF';
 
       Default not selected. Create a standard output xml file
       containing the original table and the simulated tables
+EOF
+
+$help_text{-mix} = <<'EOF';
+      -mix=VARIABLE
+
+      Set a variable to be used for MIXNUM in mixture models.
+      Easiest is to set 'MIXOUT=MIXNUM' in abbreviated code
+      and use -mix=MIXOUT. Note that MIXNUM cannot directly
+      be addressed from a $TABLE. When using -mix the vpc
+      will quit before doing the postprocessing.
 EOF
 
 common_options::online_help( 'vpc', \%options, \%help_text, \%required_options, \%optional_options);
@@ -750,7 +762,7 @@ my $vpc =
 	  copy_data	     => $options{'copy_data'},
 	  rawres_input	     => $options{'rawres_input'},
 	  offset_rawres	     => $options{'offset_rawres'},
-	in_filter             => \@in_filter,
+	 in_filter             => \@in_filter,
 	  covariance_file     => $options{'covariance_file'},
 	  n_simulation_models => $options{'n_simulation_models'},
 	  boxcox_lambda      => $options{'boxcox_lambda'},
@@ -762,6 +774,7 @@ my $vpc =
     max_no_bins			=> \@max_no_bins,
 	  min_points_in_bin	=> $options{'min_points_in_bin'},
 		directory_name_prefix => 'vpc',
+        mix => $options{'mix'},
 	  );
 
 $vpc-> print_options (cmd_line => $cmd_line,
@@ -776,7 +789,11 @@ if ($options{'so'}) {
     my $filename = $model->filename;
     $filename =~ s/\.ctl|\.mod/.SO.xml/;
     my $so = so->new(filename => $filename);
-    my $parser = so::parsers::vpc->new(so => $so, rundir => $vpc->directory);
+    my $parser = so::parsers::vpc->new(
+        so => $so,
+        rundir => $vpc->directory,
+        dv => $options{'dv'},
+    );
     $so->write(compress => 1);
 }
 

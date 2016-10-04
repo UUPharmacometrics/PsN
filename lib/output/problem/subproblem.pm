@@ -62,6 +62,7 @@ has 'raw_seomegas' => ( is => 'rw', isa => 'ArrayRef' );
 has 'raw_sesigmas' => ( is => 'rw', isa => 'ArrayRef' );
 has 'raw_sigmas' => ( is => 'rw', isa => 'ArrayRef' );
 has 'raw_tmatrix' => ( is => 'rw', isa => 'ArrayRef' );
+has 'raw_smatrix' => ( is => 'rw', isa => 'ArrayRef' );
 has 'tmatrix' => ( is => 'rw', isa => 'ArrayRef' );
 has 'significant_digits' => ( is => 'rw', isa => 'Num' );
 has 'sigmacoordval' => ( is => 'rw', isa => 'HashRef', default => sub { {} } );
@@ -118,6 +119,7 @@ has 'covariance_matrix' => ( is => 'rw', isa => 'ArrayRef' );
 has 'burn_in_iterations' => ( is => 'rw', isa => 'Int' );
 has 'iterations_interrupted' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'simulation_error_message' => ( is => 'rw', isa => 'Maybe[Str]' );
+has 'guess_estimated_attributes' => ( is => 'rw', isa => 'HashRef', default => sub { {} } );
 
 	
 sub BUILD
@@ -309,6 +311,9 @@ sub _read_covmatrix
 	# }}}
 
 	my $keep_headers_array = $self->input_problem->get_estimated_attributes(attribute=>'coordinate_strings');
+	if (scalar(@{$keep_headers_array})==0 and (defined $self->guess_estimated_attributes->{'coordinate_strings'})){
+		$keep_headers_array = $self->guess_estimated_attributes->{'coordinate_strings'};
+	}
 	my $raw_invcovmatrix;
 	
 	while ( $_ = @{$self->lstfile}[ $start_pos++ ] ) {
@@ -322,6 +327,20 @@ sub _read_covmatrix
 																									   keep_headers_array => $keep_headers_array,
 						silent => 1);
 					$self->raw_tmatrix($temp_matrix);
+					last;
+				}
+			}
+			last;		 # No covariance matrix will be found!
+		}
+		if (/        S MATRIX/) {
+			while ( $_ = @{$self->lstfile}[ $start_pos++ ] ) {
+				if (/^\s+TH\s+\d+\s*$/ or /^\s+TH\s+\d+\s+\|/) { # Read matrix and get out of inner while loop
+					my $temp_matrix;
+					( $start_pos, $temp_matrix, $t_success, $dummyheaders )  = _read_matrixoestimates( pos => $start_pos-1,
+																									   lstfile => $self->lstfile,
+																									   keep_headers_array => $keep_headers_array,
+						silent => 1);
+					$self->raw_smatrix($temp_matrix);
 					last;
 				}
 			}
@@ -1154,7 +1173,8 @@ sub _read_sethomsi
 		}
 
 		if ( /T MATRIX/ or
-			/R MATRIX/ ) {
+			/R MATRIX/ or 
+			/S MATRIX/) {
 			# This is also fine, if those matrices were output, we
 			# should end up here before we could start reading the
 			# estimates
@@ -1774,11 +1794,11 @@ sub _read_thomsi
 	       # after the thirteenth omega row. I other words, we
 	       # cannot use /^1$/ as check for omega area ending.
 	       ( 
-                 #/^1\s*$/ or
 		 /STANDARD ERROR OF ESTIMATE/ or
 		 /NONPARAMETRIC ESTIMATE/ or
 		 /T MATRIX/ or
 		 /R MATRIX/ or
+		 /S MATRIX/ or
 		 /TABLES OF DATA AND PREDICTIONS/ )) {
 	    # This is fine, we should end up here after reading the estimates
 	    $success = 1;
@@ -2857,9 +2877,16 @@ sub parse_NM7_raw
 	
 	$self->ofv($hash->{'ofv'}) if (defined $hash->{'ofv'});
 	
-	if (defined $self->input_problem ){
-		my %keep_labels_hash;
+	if (defined $self->input_problem and not (defined $self->input_problem->msfis and scalar(@{$self->input_problem->msfis})>0)){
+		my %keep_labels_hash = ();
 		foreach my $coord (@{$self->input_problem->get_estimated_attributes(attribute=>'coordinate_strings')}){
+			$keep_labels_hash{$coord}=1;
+		}
+		$self->keep_labels_hash(\%keep_labels_hash);
+	}else{
+		$self->guess_estimated_attributes(nmtable::guess_estimated_attributes(results => $hash,header => $nmtable->get_header));
+		my %keep_labels_hash = ();
+		foreach my $coord (@{$self->guess_estimated_attributes->{'coordinate_strings'}}){
 			$keep_labels_hash{$coord}=1;
 		}
 		$self->keep_labels_hash(\%keep_labels_hash);

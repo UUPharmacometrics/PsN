@@ -233,5 +233,9 @@ job_polling_interval=2
 \end{verbatim}
 which will make PsN check for finished jobs every 2 seconds.
 
+\section{Output style}
+There is a possibility to configure the format of the raw results files via the \verb|output_style| configuration option. This option should
+be set before the first \verb|[section_name]| and can be set to either SPLUS, MATLAB or EXCEL. The setting will control how missing data and the header row is handled in the raw results table. Missing data will be added as NA for SPLUS, NaN for MATLAB and empty for EXCEL. The header row will not be added for MATLAB but for EXCEL and SPLUS.
+
 \end{document}
 
