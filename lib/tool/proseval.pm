@@ -69,7 +69,7 @@ sub modelfit_setup
         $modified_model->problems->[0]->tables([]);
 
 		$modified_model->add_records(type => 'table',
-            record_strings => ['ID', 'TIME', 'EVID', 'WRES', 'IWRES', 'NOPRINT', 'NOAPPEND', 'ONEHEADER', "FILE=proseval_$n.tab"]);
+            record_strings => ['ID', 'TIME', 'EVID', 'IPRED', 'WRES', 'IWRES', 'NOPRINT', 'NOAPPEND', 'ONEHEADER', "FILE=proseval_$n.tab"]);
 
         $modified_model->_write(filename => $model_filename, relative_data_path => 1);
         push @models_to_run, $modified_model;

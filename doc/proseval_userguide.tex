@@ -33,9 +33,21 @@ A model file
 
 \section{Result}
 
-The result.csv contains these columns: ID, TIME, EVID, WRES, IWRES and OBS where
+The result.csv contains these columns: ID, TIME, EVID, IPRED, WRES, IWRES and OBS where
 OBS is the number of observations that was used for evaluating that line in the results.
 
+\section{Description}
+
+Proseval creates a number of new data sets for which the EVID columns have been altered according to the following:
+
+\begin{enumerate}
+    \item Start with $n=1$
+    \item Keep $n$ observations for each individual and ignore the rest. I.e. keep the $n$ first EVID=0 and change the rest to EVID=2 for each individual. Don't change any values of EVID that was non-zero in the original data set.
+    \item Increase $n$
+    \item Repeat if some individual had observations ignored from the last iteration.
+\end{enumerate}
+
+Evaluation runs for all data sets are performed and a result table is gathered (see Result).
 
 %\references
 
