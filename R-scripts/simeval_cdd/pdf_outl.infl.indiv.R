@@ -1,7 +1,7 @@
-pdf_outl.infl.indiv <- function(all.iofv.file,n.subjects,samples,ofv_outlier_criteria,
-                                raw.results.file,skipped.id.file) {
+pdf_outl.infl.indiv <- function(all.iofv.file,n.subjects,samples,
+                                raw.results.file,skipped.id.file,pdf.filename) {
   # Compare outliers and influential individuals
-  outdata <- influential_outliers_data(all.iofv.file,n.subjects,samples,ofv_outlier_criteria,
+  outdata <- influential_outliers_data(all.iofv.file,n.subjects,samples,
                                        raw.results.file,skipped.id.file) # use function
   # unlist
   infl_data <- outdata$infl_data
