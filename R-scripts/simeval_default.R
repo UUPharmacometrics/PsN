@@ -39,13 +39,13 @@ pdf.cwres.iwres(residual.files=residual.files,residual.outliers.file,
                 residual.names=residual.names,pdf.filename='PsN_residual_plots.pdf')
 
 pdf_ofv(raw.results.file=raw.results.file,iofv.file=iofv.file,all.iofv.file=all.iofv.file,
-        n.subjects=n.subjects,samples=samples,ofv_outlier_criteria=3,
+        n.subjects=n.subjects,samples=successful.samples,
         ofv.filename='PsN_OFV_plots.pdf',rplots.level=rplots.level,
         model.filename=model.filename)
 
 pdf.all.outlier.report(report.file.name="PsN_outlier_report_table.pdf",
-                       all.iofv.file=all.iofv.file,n.subjects=n.subjects,samples=samples,
-                       ofv_outlier_criteria=3,ebe.npde.file=ebe.npde.file,
+                       all.iofv.file=all.iofv.file,n.subjects=n.subjects,samples=successful.samples,
+                       ebe.npde.file=ebe.npde.file,
                        n.eta=n.eta,outlying_criteria=outlying_criteria,
                        residual.outliers.file=residual.outliers.file)
 
