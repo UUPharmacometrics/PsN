@@ -1,5 +1,5 @@
 pdf_ofv <- function(raw.results.file,iofv.file,all.iofv.file,n.subjects,
-                    samples,ofv_outlier_criteria,ofv.filename,
+                    samples,ofv.filename,
                     rplots.level,model.filename,n) {
   
   #open PDF
@@ -44,10 +44,10 @@ pdf_ofv <- function(raw.results.file,iofv.file,all.iofv.file,n.subjects,
   histogram_i_ofv_npde(i_ofv_npde_data)
   
   #3. iOFV RES
-  list_i_ofv_res <- i_ofv_res(all.iofv.file,n.subjects,samples,ofv_outlier_criteria)# calculation
+  list_i_ofv_res <- i_ofv_res(all.iofv.file,n.subjects,samples)# calculation
   
   # Make a boxplot
-  boxplot_i_ofv_res <- function(list_i_ofv_res,n.subjects,ofv_outlier_criteria) {
+  boxplot_i_ofv_res <- function(list_i_ofv_res,n.subjects) {
     # unlist
     iOFV_res_ord <- list_i_ofv_res$iOFV_res_ord
     id_sorted <- list_i_ofv_res$id_sorted
@@ -74,15 +74,15 @@ pdf_ofv <- function(raw.results.file,iofv.file,all.iofv.file,n.subjects,
       text(1:n.subjects,result$x-1, paste("", vector_text),col="red") # mark outliers
     } 
     abline(h=0, lwd=2, lty=3, col="black")
-    abline(h=-ofv_outlier_criteria, lwd=2, lty=3, col="black") # mark outlier line
-    abline(h=ofv_outlier_criteria, lwd=2, lty=3, col="black") # mark outlier line
+    abline(h=-3, lwd=2, lty=3, col="black") # mark outlier line
+    abline(h=3, lwd=2, lty=3, col="black") # mark outlier line
     abline(v=n.subjects/2, lwd=2, lty=1, col="green") #theoretical crossing zero line
     abline(v=cross, lwd=2, lty=1, col="red") # real crossing zero line
     leg.txt <- c("theoretical crossing zero line","crossing zero line")
     legend("topleft", col=c('green','red'), leg.txt, lty=c(1,1),box.lwd = 0,bg = "white", lwd=2, cex=1)
     title("iOFV RES")
   }
-  boxplot_i_ofv_res(list_i_ofv_res,n.subjects,ofv_outlier_criteria)
+  boxplot_i_ofv_res(list_i_ofv_res,n.subjects)
   
   #4. iOFV PPC
   outlier_ID <- list_i_ofv_res$outlier_ID

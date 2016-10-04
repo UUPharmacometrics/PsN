@@ -1,4 +1,5 @@
-i_ofv_res <- function(all.iofv.file,n.subjects,samples,ofv_outlier_criteria) {
+i_ofv_res <- function(all.iofv.file,n.subjects,samples) {
+
   # iOFV RES
   all.iOFV_sim <- read.csv(all.iofv.file)
   iOFV_obs <- all.iOFV_sim$ORIGINAL
@@ -29,9 +30,9 @@ i_ofv_res <- function(all.iofv.file,n.subjects,samples,ofv_outlier_criteria) {
   # create a text for the plot
   vector_text <- array('',c(n.subjects,1))
   #this are indices in plotted sorted are which are outside lim. always the last few, if any
-  if (any(abs(iOFV_res_median[result$ix]) > ofv_outlier_criteria)) {
-    index_text <- which(abs(iOFV_res_median[result$ix]) > ofv_outlier_criteria)
-    outlier_median <- iOFV_res_median[result$ix][index_text] # medians which abs are > than outlier criteria
+  if (any(abs(iOFV_res_median[result$ix]) > 3)) {
+    index_text <- which(abs(iOFV_res_median[result$ix]) > 3)
+    outlier_median <- iOFV_res_median[result$ix][index_text] # medians which abs are > than standard deviation
     outlier_ID <- id_sorted[index_text]
     vector_text[index_text] <- outlier_ID
     # save in one data frame all outliers ID numbers and the value which formed the basis

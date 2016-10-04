@@ -1,9 +1,9 @@
-all.outlier.report.table <- function(all.iofv.file,n.subjects,samples,ofv_outlier_criteria,
+all.outlier.report.table <- function(all.iofv.file,n.subjects,samples,
                                ebe.npde.file,n.eta,outlying_criteria,
                                residual.outliers.file) {
 
   # Use functions
-  ofv_out <- i_ofv_res(all.iofv.file,n.subjects,samples,ofv_outlier_criteria)
+  ofv_out <- i_ofv_res(all.iofv.file,n.subjects,samples)
   ofv_outliers <- ofv_out$ofv_outliertable
   
   model.filename <- " " # because we are not going to see the model name

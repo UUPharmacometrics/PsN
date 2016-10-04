@@ -23,7 +23,9 @@ pdf.ebe.npde <- function(ebe.npde.file,n.eta,all.eta.names,outlying_criteria,ebe
   
 #..........................................EBE-NPDE correlation graph.............................................  
   # create EBE-NPDE correlation graph
-  chart.Correlation(ebenpde_obs, histogram = TRUE, method = c("spearman"))
+  if (nrow(mydataframe) > 1) {
+    chart.Correlation(ebenpde_obs, histogram = TRUE, method = c("spearman"))
+  }
   
 # create outlier grafs and tables
   if (require("PEIP") == TRUE){
