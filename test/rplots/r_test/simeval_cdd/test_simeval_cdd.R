@@ -33,15 +33,16 @@ files.w.dir <- fun.files.w.dir(toolname = tool)
 
 all.iofv.file <- paste0(files.w.dir,'raw_all_iofv.csv')
 all.iofv.file_1 <- paste0(files.w.dir,'raw_all_iofv_1.csv')
+all.iofv.file_2 <- paste0(files.w.dir,'raw_all_iofv_2.csv')
 raw.results.file_4 <- paste0(files.w.dir,'raw_results_4.csv')
 skipped.id.file_4 <- paste0(files.w.dir,'skipped_4.csv')
 ###################################     3. Make a test    ###################################
 #...........................  (1) Test function influential_outliers_data.R .....................................  
-out <- influential_outliers_data(all.iofv.file,n.subjects=4,samples=3,ofv_outlier_criteria=1,
+out <- influential_outliers_data(all.iofv.file_2,n.subjects=4,samples=3,
                                  raw.results.file_4,skipped.id.file_4)
-out_1 <- influential_outliers_data(all.iofv.file,n.subjects=4,samples=3,ofv_outlier_criteria=2,
+out_1 <- influential_outliers_data(all.iofv.file,n.subjects=4,samples=3,
                                    raw.results.file_4,skipped.id.file_4)
-out_4 <- influential_outliers_data(all.iofv.file_1,n.subjects=4,samples=3,ofv_outlier_criteria=1,
+out_4 <- influential_outliers_data(all.iofv.file_1,n.subjects=4,samples=3,
                                  raw.results.file_4,skipped.id.file_4)
 # unlist
 infl_data <- out$infl_data
@@ -77,7 +78,7 @@ not_outl_not_infl_4 <- out_4$not_outl_not_infl
 # Create expected input data
 exp_infl_data <- data.frame("ID_cdd"=c(35,21,16,11,13,39,37,41,34,31,27,42,23,24,38,19),
                             "delta.ofv"=c(0.01,0.4,0.5,0.54,0.6,0.6,0.7,1.4,1.5,1.9,2.1,2.3,3.2,3.2,5.2,6.3))
-exp_outl_data <- data.frame("ID_simeval"=c(19,4,20,1),"iofv_res"=c(-1.23551,0,0.098918,1.912686))
+exp_outl_data <- data.frame("ID_simeval"=c(19,4,20,1),"iofv_res"=c(-4.758828,0,0.098918,15.305677))
 exp_ID <- 19
 exp_row_cdd <- 16
 exp_row_simeval <- 1
@@ -99,14 +100,14 @@ exp_not_outl_not_infl_1 <- c(4,20,1)
 
 exp_infl_data_4 <- data.frame("ID_cdd"=c(35,21,16,11,13,39,37,41,34,31,27,42,23,24,38,19),
                             "delta.ofv"=c(0.01,0.4,0.5,0.54,0.6,0.6,0.7,1.4,1.5,1.9,2.1,2.3,3.2,3.2,5.2,6.3))
-exp_outl_data_4 <- data.frame("ID_simeval"=c(13,4,20,1),"iofv_res"=c(-1.23551,0,0.098918,1.912686))
+exp_outl_data_4 <- data.frame("ID_simeval"=c(13,4,20,1),"iofv_res"=c(-0.061071,0,0.098918,14.050084))
 exp_ID_4 <- integer(0)
 exp_row_cdd_4 <- integer(0)
 exp_row_simeval_4 <- integer(0)
 exp_infl_outl_4 <- integer(0)
 exp_infl_not_outl_4 <- c(19,38)
-exp_outl_not_infl_4 <- c(13,1)
-exp_not_outl_not_infl_4 <- c(4,20)
+exp_outl_not_infl_4 <- c(1)
+exp_not_outl_not_infl_4 <- c(13,4,20)
 
 # Compare expected input data with real input data
 context("Test function influential_outliers_data")
