@@ -1,7 +1,7 @@
 #!/bin/bash
 
-echo "This scripts sets up the environment for running PsN on Kalkyl."
-echo 'Specifically, it replaces .bash_profile with a copy of /home/kajsa/.bash_profile'
+echo "This scripts sets up the environment for running PsN on UPPMAX."
+echo 'Specifically, it replaces .bash_profile with a copy of /home/rikardno/.bash_profile'
 echo 'and creates a psn.conf file with suitable defaults, including -email_address'
 echo 'and -slurm_account.'
 echo ''
@@ -12,8 +12,8 @@ read ACCOUNT
 echo ''
 
 cd $HOME
-echo 'Replacing .bash_profile with a copy of /home/kajsa/.bash_profile'
-cp /home/kajsa/.bash_profile .
+echo 'Replacing .bash_profile with a copy of /home/rikardno/.bash_profile'
+cp /home/rikardno/.bash_profile .
 echo 'done'
 
 echo 'Creating a new psn.conf based on /home/kajsa/PsN/psn.conf.template, changing'
