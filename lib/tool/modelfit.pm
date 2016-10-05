@@ -3126,7 +3126,7 @@ sub copy_model_and_input
 				$basename = $msfo_names -> [0];
 			}
 
-			if( -s $msfi_in ){
+			if( defined $msfi_in and (-s $msfi_in) ){
 				#-s returns true if file is non-empty
 				#assume original model has msfi, assume thetas already removed.
 				cp( $msfi_in, $basename.'-0' ); #move or copy... this is from calling directory

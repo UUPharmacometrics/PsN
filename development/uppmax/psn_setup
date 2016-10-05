@@ -23,7 +23,7 @@ sed -e "s/youremailaddress/$EMAIL/" -e "s/youruppmaxproject/$ACCOUNT/" /home/kaj
 
 echo 'done'
 echo 'Submitting a test run to the queue to test email and project settings'
-sbatch -A $ACCOUNT -t 0:0:10 -e dirt.psn_setup -o dirt.psn_setup -J psn_setup --mail-type=END --mail-user= $EMAIL bin/ls
+srun -A $ACCOUNT -t 0:0:10 -e dirt.psn_setup -o dirt.psn_setup -J psn_setup --mail-type=END --mail-user=$EMAIL /bin/ls
 
 echo 'If you have not within 10 minutes received an email from SLURM saying something like'
 echo 'SLURM Job_id=NNNNNN Name=psn_setup Ended, Run time ...'
