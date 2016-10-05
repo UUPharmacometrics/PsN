@@ -51,3 +51,10 @@ test/test_files/tbs1a.lst
 test/test_files/tbs1a.phi
 test/rplots/r_test/cdd/*.pdf
 test/rplots/r_test/simeval/*.pdf
+test/test_files/orangeTree_1
+test/test_files/run1.coi
+test/test_files/run1.cor
+test/test_files/run1.cov
+test/test_files/run1.ext
+test/test_files/run1.lst
+test/test_files/run1.phi
