@@ -30,7 +30,5 @@ is_deeply(tool::nonparametric::add_column(filename => $file_3, npsupp => [0,100,
 dies_ok {tool::nonparametric::add_column(filename => $file, npsupp => undef)} "undefined parameter npsupp";
 dies_ok {tool::nonparametric::add_column(filename => $file, npsupp => [])} "array of the npsupp is empty";
 dies_ok {tool::nonparametric::add_column(filename => undef, npsupp => [0,100,200])} "undefined csv file";
-#dies_ok {tool::nonparametric::add_column(filename => $file_1, npsupp => [0,100,200])} "croaks, when missing some data in csv file";
-#dies_ok {tool::nonparametric::add_column(filename => $file_2, npsupp => [0,100,200])} "croaks, if exists text: \"run failed: NONMEM run failed\"";
 
 done_testing();
