@@ -9,9 +9,9 @@ use FindBin qw($Bin);
 use lib "$Bin/.."; #location of includes.pm
 use includes; #file with paths to PsN packages and $path variable definition
 
-#SKIP: {
-#	my ($major,$minor,$dirt) = get_major_minor_nm_version();
- #   skip $major.".".$minor." is a too old NONMEM version for precond",1 if ($major < 7 or ($major == 7 and $minor < 4));
+SKIP: {
+	my ($major,$minor,$dirt) = get_major_minor_nm_version();
+    skip $major.".".$minor." is a too old NONMEM version for precond",1 if ($major < 7 or ($major == 7 and $minor < 4));
 
 	our $tempdir = create_test_dir('system_npfit');
 
@@ -49,6 +49,6 @@ use includes; #file with paths to PsN packages and $path variable definition
 	}
 
 	remove_test_dir($tempdir);
-#}
+}
 
 done_testing();
