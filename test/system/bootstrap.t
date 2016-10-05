@@ -12,7 +12,7 @@ our $tempdir = create_test_dir('system_bootstrap');
 
 my $model_dir = $includes::testfiledir;
 
-copy_test_files($tempdir,["pheno5.mod", "pheno5.dta", "pheno5.lst", "mox1.mod","mox1.lst", "mox_simulated.csv"]);
+copy_test_files($tempdir,["pheno5.mod", "pheno5.dta", "mox1.mod","mox1.lst", "mox_simulated.csv"]);
 chdir($tempdir);
 my $command = get_command('execute') . " pheno5.mod ";
 my $rc = system($command);
