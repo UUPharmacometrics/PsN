@@ -169,18 +169,7 @@ sub add_column
 			$position = $i;
 		}
 	}
-	
-	# check if nonmem croaks (data for some columns are missing, starting from 1th row)
-	#unless (scalar(@{$lines[0]}) == scalar(@{$lines[1]})) {
-	#	die "Nonmem run failed!";
-	#}
-	# check if exists text: "run failed: NONMEM run failed"
-	#for (my $i=0; $i < scalar(@{$lines[1]}); $i++) {
-	#	if ($lines[1][$i] eq 'run failed: NONMEM run failed') {
-	#		die "NONMEM failed.";
-	#	}
-	#}
-			
+				
 	# add column
 	my @rows = ();
 	unless ( defined $npsupp && (scalar(@{$npsupp}) > 0) ) {
