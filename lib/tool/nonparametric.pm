@@ -161,17 +161,6 @@ sub add_column
 	}
 	close( CSV );
 	
-	# check if nonmem croaks (data for some columns are missing, starting from 1th row)
-	unless (scalar(@{$lines[0]}) == scalar(@{$lines[1]})) {
-		die "Some data in csv files are missing.";
-	}
-	# check if exists text: "run failed: NONMEM run failed"
-	for (my $i=0; $i < scalar(@{$lines[1]}); $i++) {
-		if ($lines[1][$i] eq 'run failed: NONMEM run failed') {
-			die "NONMEM failed.";
-		}
-	}
-	
 	# search position of the column "npofv"
 	my $element = 'npofv';
 	my $position;
@@ -180,7 +169,18 @@ sub add_column
 			$position = $i;
 		}
 	}
-		
+	
+	# check if nonmem croaks (data for some columns are missing, starting from 1th row)
+	#unless (scalar(@{$lines[0]}) == scalar(@{$lines[1]})) {
+	#	die "Nonmem run failed!";
+	#}
+	# check if exists text: "run failed: NONMEM run failed"
+	#for (my $i=0; $i < scalar(@{$lines[1]}); $i++) {
+	#	if ($lines[1][$i] eq 'run failed: NONMEM run failed') {
+	#		die "NONMEM failed.";
+	#	}
+	#}
+			
 	# add column
 	my @rows = ();
 	unless ( defined $npsupp && (scalar(@{$npsupp}) > 0) ) {
@@ -189,11 +189,15 @@ sub add_column
 		splice @{$lines[0]}, $position+1 , 0, 'npsupp';
 		$rows[0] = '"'.join('","',@{$lines[0]}).'"'."\n";
 		for (my $n=0; $n < scalar(@{$npsupp}); $n++) {
+			if ($lines[$n+1][$position] eq 'NA') {
+				ui->print(category => 'all',
+				  message => "Warning: Nonmem failed to estimate npofv value for model with npsupp=".$npsupp->[$n]."\n");
+			}
 			splice @{$lines[$n+1]}, $position+1 , 0, $npsupp->[$n];
 			$rows[$n+1] = join(',',@{$lines[$n+1]})."\n";
 		}
 	}
-	
+		
 	return(\@rows);
 }
 

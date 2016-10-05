@@ -22,6 +22,7 @@ files.w.dir <- fun.files.w.dir(toolname = tool)
 raw.results.file <- paste0(files.w.dir,'raw_results_run1.csv')
 iofv.file <- paste0(files.w.dir,'summary_iofv.csv')
 all.iofv.file <- paste0(files.w.dir,'raw_all_iofv.csv')
+all.iofv.file_1 <- paste0(files.w.dir,'raw_all_iofv_1.csv')
 
 ###################################     3. Make tests     ###################################
 
@@ -85,10 +86,8 @@ test_that("If function i_ofv_npde works as expected",{
 })
 
 #..........................  (3) Test function i_ofv_res  ...................................
-out_i_ofv_res <- i_ofv_res(all.iofv.file=all.iofv.file,n.subjects=4,
-                         samples=3,ofv_outlier_criteria=1)
-out_i_ofv_res_a <- i_ofv_res(all.iofv.file=all.iofv.file,n.subjects=4,
-                           samples=3,ofv_outlier_criteria=2)
+out_i_ofv_res <- i_ofv_res(all.iofv.file=all.iofv.file_1,n.subjects=4,samples=3)
+out_i_ofv_res_a <- i_ofv_res(all.iofv.file=all.iofv.file,n.subjects=4,samples=3)
 
 # unlist information
 all.iOFV_sim <- out_i_ofv_res$all.iOFV_sim
@@ -108,18 +107,18 @@ outlier_median_a <- out_i_ofv_res_a$outlier_median
 vector_text_a <- out_i_ofv_res_a$vector_text
 
 # Create expected data
-exp_all.iOFV_sim <- data.frame(ID=as.integer(c(1,4,13,20)),ORIGINAL=c(2.57,-7.4,-10.24,3.9),
-                       sample.1=c(-1.2,2.4,-7.13,5.74),sample.2=c(-2,-7.4,-4.98,-2.11),
-                       sample.3=c(-5.68,NA,1.08,3.5))
-exp_iOFV_res <- matrix(c(1.577862,1.912686,3.45288,-1.414214,0,0,-0.730501,-1.23551,-2.658931,-0.455022,1.486239,0.098918),nrow=3,ncol=4)
-exp_x <- c(-1.23551,0,0.098918,1.912686)
+exp_all.iOFV_sim <- data.frame(ID=as.integer(c(1,4,13,20)),ORIGINAL=c(2.57,-7.4,-25.24,3.9),
+                       sample.1=c(-1.2,2.4,-7.13,5.74),sample.2=c(-2,-4.4,-4.98,-2.11),
+                       sample.3=c(45.68,-4,1.08,3.5))
+exp_iOFV_res <- matrix(c(0.138095,0.167399,-1.579118,-2.568298,-0.786214,-0.891042,-4.253819,-4.758828,-6.182249,-0.455022,1.486239,0.098918),nrow=3,ncol=4)
+exp_x <- c(-4.758828,-0.891042,0.098918,0.138095)
 exp_ix <- c(3,2,4,1)
-exp_iOFV_res_ord <- matrix(c(-0.730501,-1.23551,-2.658931,-1.414214,0,0,-0.455022,1.486239,0.098918,1.577862,1.912686,3.45288),nrow=3,ncol=4)
+exp_iOFV_res_ord <- matrix(c(-4.253819,-4.758828,-6.182249,-2.568298,-0.786214,-0.891042,-0.455022,1.486239,0.098918,0.138095,0.167399,-1.579118),nrow=3,ncol=4)
 exp_id_sorted <- matrix(c(13,4,20,1),4,1)
-exp_outlier_ID <- c(13,1)
-exp_vector_text <- matrix(c("13","","","1"),nrow = 4,ncol = 1)
-exp_ofv_outliertable <- data.frame(ID=c(13,1),MEDIAN=c(-1.23551,1.912686))
-exp_outlier_median <- c(-1.23551,1.912686)
+exp_outlier_ID <- c(13)
+exp_vector_text <- matrix(c("13","","",""),nrow = 4,ncol = 1)
+exp_ofv_outliertable <- data.frame(ID=c(13),MEDIAN=c(-4.758828))
+exp_outlier_median <- c(-4.758828)
 
 exp_outlier_ID_a <- NULL
 exp_ofv_outliertable_a <- data.frame()

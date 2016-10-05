@@ -1,0 +1,4 @@
+"model","problem","subproblem","minimization_successful","ofv","npofv","EXP(ETA1)","OMEGA(1,1)"
+1,1,1,1,-577.0697682087,-603.46,0.00564,0.989
+2,1,1,run failed: NONMEM run failed,NA,NA,NA,NA
+3,1,1,1,-577.0697682087,1435.2,0.00341,0.994
