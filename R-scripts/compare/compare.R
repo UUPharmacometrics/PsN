@@ -20,9 +20,9 @@ args <- commandArgs(TRUE)
 if(length(args) < 2) {
   if((length(args) == 1) && (grepl("^--help",as.character(args[1])))) {
     message("Input:\n    Two folder names are required.
-    The following options are valid, but not required:")
+    The following inputs are valid, but not required:")
     message("-pdf,\n    A name of pdf file.")
-    message("-f,\n    A folder name, where created pdf file, needed csv files and R script are going to be saved.")
+    message("-f,\n    A folder name, where created pdf file, needed csv files and R created script are going to be saved.")
     message("\nExamples:\n    Rscript C:\\PsN\\R-scripts\\compare\\compare.R folder1 folder2 -pdf=my_results.pdf -f=new_folder_name")
     message("    Rscript C:\\PsN\\R-scripts\\compare\\compare.R folder1 folder2")
     quit()
