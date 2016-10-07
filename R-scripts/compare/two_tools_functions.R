@@ -1,7 +1,7 @@
 # check if tool names ar different
 check_tool_names <- function(tool_folder_1,tool_folder_2,quit_opt=TRUE) {
   if (tool_folder_1 == tool_folder_2) {
-    message(paste("Input folders can't be equal! Use '-h' for help!"))
+    message(paste("Error:Input folders can't be equal! Use '-h' for help!"))
     if(quit_opt) { # need for tests
       quit()
     }
@@ -12,7 +12,7 @@ check_tool_names <- function(tool_folder_1,tool_folder_2,quit_opt=TRUE) {
 folder_existence <- function(folders.directory,folder,quit_opt=TRUE) {
   all_files <- list.files(folders.directory)
   if(!(any(all_files == folder))) {
-    message(paste0("Folder with the name ",folder," doesn't exist in the running directory ",folders.directory,"!"))
+    message(paste0("Error:Folder with the name ",folder," doesn't exist in the running directory ",folders.directory,"!"))
     if(quit_opt) { # need for tests
       quit()
     }
@@ -20,21 +20,38 @@ folder_existence <- function(folders.directory,folder,quit_opt=TRUE) {
 }
 
 # function to find model name
-get_model_name <- function(folders.directory,folder) {
-  file <- read.table(paste0(folders.directory,"/",folder,"/","command.txt"))
+get_model_name <- function(folders.directory,folder,quit_opt=TRUE) {
+  file <- read.table(paste0(folders.directory,folder,"/","command.txt"))
   for (i in 2:ncol(file)) {
     if (!(grepl("^-",file[,i]))) {
       model_name <- as.character(file[,i])
     }
   }
-  return(model_name)
+  if(exists("model_name")) {
+    return(model_name)
+  } else {
+    command_file_direct <- paste0(folders.directory,folder,"/","command.txt")
+    message(paste0("Error:Can't find model name in the file ",command_file_direct))
+    if(quit_opt) { # need for tests
+      quit()
+    }
+  }
+  
 }
 
 #get toolnames form command.txt
-get_toolname_foldername <- function(folders.directory,folder) {
-  file <- read.table(paste0(folders.directory,"/",folder,"/","command.txt"))
+get_toolname_foldername <- function(folders.directory,folder,quit_opt=TRUE) {
+  file <- read.table(paste0(folders.directory,folder,"/","command.txt"))
   toolname <- sub(".*\\/", "",file[1,1])
-  return(c(toolname,folder))
+  if(toolname == "") {
+    command_file_direct <- paste0(folders.directory,folder,"/","command.txt")
+    message(paste0("Error:Can't find tool name in the file ",command_file_direct))
+    if(quit_opt) { # need for tests
+      quit()
+    }
+  } else {
+    return(c(toolname,folder))
+  }
 }
 
 #create a new folder
@@ -59,9 +76,11 @@ create_folder_name <- function(folders.directory,toolname_foldername_1,toolname_
 }
 
 # create folder directory
-create_folder_directory <- function(folders.directory,new_folder_name) {
-  dir.create(file.path(folders.directory,new_folder_name))
-  new_folder_directory <- paste0(folders.directory,"/",new_folder_name)
+create_folder_directory <- function(folders.directory,new_folder_name,create_dir=TRUE) {
+  if(create_dir) {
+    dir.create(file.path(folders.directory,new_folder_name))
+  }
+  new_folder_directory <- paste0(folders.directory,new_folder_name)
   return(new_folder_directory)
 }
 
@@ -72,7 +91,7 @@ get_raw_results_file_name <- function(folders.directory,tool_folder_1,tool_folde
   model_name_tool_2 <- get_model_name(folders.directory,tool_folder_2)
   #check if model names are equal (if not stop working)
   if (model_name_tool_1 != model_name_tool_2) {
-    message(paste0("model names ",model_name_tool_1," and ",model_name_tool_2," are not equal!\nTo compare two tools you have to run them with the same model!"))
+    message(paste0("Error:model names ",model_name_tool_1," and ",model_name_tool_2," are not equal!\nTo compare two tools you have to run them with the same model!"))
     if(quit_opt) { # need for tests
       quit()
     }
@@ -83,14 +102,14 @@ get_raw_results_file_name <- function(folders.directory,tool_folder_1,tool_folde
     all_files_tool_folder_1 <- list.files(paste0(folders.directory,"/",tool_folder_1))
     all_files_tool_folder_2 <- list.files(paste0(folders.directory,"/",tool_folder_2))
     if(!(any(all_files_tool_folder_1 == raw_results)) 
-       && !(any(all_files_tool_folder_2 == raw_results))) {
+       || !(any(all_files_tool_folder_2 == raw_results))) {
       message(paste0("Raw results file with the model name ",model_name_tool_1," doesn't exist in the given folders ",tool_folder_1," or ",tool_folder_2,"!"))
       if(quit_opt) { # need for tests
         quit()
       }
     }
-  }
   return(raw_results) # just a name (both have same names)
+  }
 }
 
 #get more needed csv file names (ADD SCRIPT FOR COMPARABLE TOOLS!)
@@ -116,7 +135,7 @@ get_more_csv_file_names <- function(folders.directory,toolname_foldername_1,tool
       }
     }
     if(!(exists("skipped_individuals"))) {
-      message(paste0("Skipped individuals csv file doesn't exist in the folder ",simeval_dir,"!"))
+      message(paste0("Error:Skipped individuals csv file doesn't exist in the folder ",simeval_dir,"!"))
       if(quit_opt) { # need for tests
         quit()
       }
@@ -127,20 +146,25 @@ get_more_csv_file_names <- function(folders.directory,toolname_foldername_1,tool
       }
     }
     if(!(exists("all.iofv.file"))) {
-      message(paste0("File raw_all_iofv.csv doesn't exist in the folder ",cdd_dir,"!"))
+      message(paste0("Error:File raw_all_iofv.csv doesn't exist in the folder ",cdd_dir,"!"))
       if(quit_opt) { # need for tests
         quit()
       }
     }
-    return(list(skipped_individuals=skipped_individuals,all.iofv.file=all.iofv.file))
+    if((exists("skipped_individuals")) && (exists("all.iofv.file"))) {
+      return(list(skipped_individuals=skipped_individuals,all.iofv.file=all.iofv.file))
+    }
+  } else { # not comparable tools
+    message(paste0("Error:Can't compare tools ",toolname_1," and ",toolname_2,"!"))
+    if(quit_opt) { # need for tests
+      quit()
+    }
   }
-  
 }
 
 #get list of files (ADD SCRIPT FOR COMPARABLE TOOLS!)
-get_list_of_files <- function(folders.directory,rscripts.directory,
-                              toolname_foldername_1,toolname_foldername_2,
-                              raw_result_file,other_files) {
+get_list_of_files <- function(folders.directory,toolname_foldername_1,toolname_foldername_2,
+                              raw_result_file,other_files=NULL) {
   toolname_1 <- toolname_foldername_1[1]
   toolname_2 <- toolname_foldername_2[1]
   foldername_1 <- toolname_foldername_1[2]
@@ -158,9 +182,9 @@ get_list_of_files <- function(folders.directory,rscripts.directory,
       cdd_dir <- foldername_1
     }
     skipped_individuals <- other_files$skipped_individuals
-    list_of_files[1] <- paste0(folders.directory,"/",simeval_dir,"/",all.iofv.file)
-    list_of_files[2] <- paste0(folders.directory,"/",cdd_dir,"/",skipped_individuals)
-    list_of_files[3] <- paste0(folders.directory,"/",cdd_dir,"/",raw_result_file)
+    list_of_files[1] <- paste0(folders.directory,simeval_dir,"/",all.iofv.file)
+    list_of_files[2] <- paste0(folders.directory,cdd_dir,"/",skipped_individuals)
+    list_of_files[3] <- paste0(folders.directory,cdd_dir,"/",raw_result_file)
   }
   return(list_of_files)
 }
@@ -200,30 +224,32 @@ create_pdf.filename <- function(toolname_foldername_1,toolname_foldername_2) {
 create_R_script <- function(rscripts.directory,new_folder_directory,
                             toolname_foldername_1,toolname_foldername_2,
                             raw_result_file,other_files,values,pdf.filename) {
-  if(missing(values)) {
-    R_input <- c()
-  }
   toolname_1 <- toolname_foldername_1[1]
   toolname_2 <- toolname_foldername_2[1]
-
+  foldername_1 <- toolname_foldername_1[2]
+  foldername_2 <- toolname_foldername_2[2]
   R_input <- c()
-  next_input_nr <- length(R_input) + 1
+  R_input[1] <- paste0("setwd('",new_folder_directory,"')")
+  R_input[2] <- paste0("rscripts.directory <- '",rscripts.directory,"'")
+  R_input[3] <- paste0("input_folder_1 <- '",foldername_1,"'")
+  R_input[4] <- paste0("input_folder_2 <- '",foldername_2,"'")
+  R_input[5] <- paste0("tool_1 <- '",toolname_1,"'")
+  R_input[6] <- paste0("tool_2 <- '",toolname_2,"'")
+  R_input[7] <- paste0("pdf.filename <- '",pdf.filename,"'")
+  next_nr <- length(R_input) + 1
+
   if ((grepl("^simeval$",toolname_1) && grepl("^cdd$",toolname_2)) ||
       (grepl("^cdd$",toolname_1) && grepl("^simeval$",toolname_2))) {
     skipped_individuals <- other_files$skipped_individuals
     all.iofv.file <- other_files$all.iofv.file
-    R_input[next_input_nr] <- paste0("successful.samples <- ",values[1])
-    R_input[next_input_nr+1] <- paste0("n.subjects <- ",values[2])
-    R_input[next_input_nr+2] <- paste0("pdf.filename <- '",pdf.filename,"'")
-    R_input[next_input_nr+3] <- paste0("rscripts.directory <- '",rscripts.directory,"'")
-    R_input[next_input_nr+4] <- paste0("all.iofv.file <- '",all.iofv.file,"'")
-    R_input[next_input_nr+5] <- paste0("skipped.id.file <- '",skipped_individuals,"'")
-    R_input[next_input_nr+6] <- paste0("raw.results.file <- '",raw_result_file,"'")
-    R_input[next_input_nr+7] <- paste0("tool_folder_1 <- '",tool_folder_1,"'")
-    R_input[next_input_nr+8] <- paste0("tool_folder_2 <- '",tool_folder_2,"'")
-    R_input[next_input_nr+9] <- paste0("setwd('",new_folder_directory,"')")
-    R_input[next_input_nr+10] <- paste0("source(paste0(rscripts.directory,'cdd.simeval_default.R'))")
-    R_input[next_input_nr+11] <- paste0("cdd.simeval(rscripts.directory,all.iofv.file,n.subjects,samples=successful.samples,
+    R_input[next_nr] <- paste0("successful.samples <- ",values[1])
+    R_input[next_nr+1] <- paste0("n.subjects <- ",values[2])
+    R_input[next_nr+2] <- paste0("all.iofv.file <- '",all.iofv.file,"'")
+    R_input[next_nr+3] <- paste0("skipped.id.file <- '",skipped_individuals,"'")
+    R_input[next_nr+4] <- paste0("raw.results.file <- '",raw_result_file,"'")
+    R_input[next_nr+5] <- ""
+    R_input[next_nr+6] <- paste0("source(paste0(rscripts.directory,'cdd.simeval_default.R'))")
+    R_input[next_nr+7] <- paste0("cdd.simeval(rscripts.directory,all.iofv.file,n.subjects,samples=successful.samples,
               raw.results.file,skipped.id.file,pdf.filename)")
   }
 return(R_input)

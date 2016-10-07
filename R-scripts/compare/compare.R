@@ -11,46 +11,62 @@ rscripts.directory <- source_local()
 rscripts.directory <- gsub("\\compare", "",rscripts.directory)
 
 # get directory of the folders
-folders.directory <- getwd()
+folders.directory <- paste0(getwd(),"/")
 
 # input arguments from command line
 args <- commandArgs(TRUE)
 
 # check if input arguments are added
 if(length(args) < 2) {
-  if((length(args) == 1) && (grepl("^-h",as.character(args[1])))) {
-    cat("Input:\n    A compare.R file with the full path is required.\n    The following options are valid:\n\n")
-    cat("-f1,\n    A name of folder 1, is required.\n")
-    cat("-f2,\n    A name of folder 2, is required.\n")
-    cat("-pdf,\n    A name of pdf file, not required.\n\n")
-    cat("Examples:\n    C:\\PsN\\R-scripts\\compare\\compare.R -f1=folder1 -f2=folder2 -pdf=my_results.pdf \n")
-    cat("    C:\\PsN\\R-scripts\\compare\\compare.R -f1=folder1 -f2=folder2 \n")
+  if((length(args) == 1) && (grepl("^--help",as.character(args[1])))) {
+    message("Input:\n    Two folder names are required.
+    The following options are valid, but not required:")
+    message("-pdf,\n    A name of pdf file.")
+    message("-f,\n    A folder name, where created pdf file, needed csv files and R script are going to be saved.")
+    message("\nExamples:\n    Rscript C:\\PsN\\R-scripts\\compare\\compare.R folder1 folder2 -pdf=my_results.pdf -f=new_folder_name")
+    message("    Rscript C:\\PsN\\R-scripts\\compare\\compare.R folder1 folder2")
     quit()
   } else {
-    cat("Two folder names as input are required! Use '-h' for help!")
+    message("Error:Two folder names as input are required! Use '--help' for help!")
     quit()
   }
 }
-if(length(args) > 3) {
-  cat("No more than three arguments can be passed!\nTwo folder names are required. Use '-h' for help!\n")
+if(length(args) > 4) {
+  message("Error:Too many inputs! No more than four input arguments can be passed! Use '--help' for help!")
   quit()
 }
-
+folder_names_in_text <- c()
+folder <- c()
+index <- 0
 for(i in 1:length(args)) {
-  if(grepl("^-f1=",as.character(args[i]))) {
-    tool_folder_1 <- gsub("\\-f1=", "",as.character(args[i]))
-  } else if(grepl("^-f2=",as.character(args[i]))) {
-    tool_folder_2 <- gsub("\\-f2=", "",as.character(args[i]))
-  } else if(grepl("^-pdf=",as.character(args[i]))) {
-    pdf.filename <- gsub("\\pdf=", "",as.character(args[i]))
-    pdf.filename <- substring(pdf.filename,2)
+  if(grepl("^-pdf=",as.character(args[i]))) {
+    pdf.filename <- gsub("\\-pdf=", "",as.character(args[i]))
     if (!(grepl(".pdf$",pdf.filename))) {
       pdf.filename <- paste0(pdf.filename,".pdf")
     }
+  } else if(grepl("^-f=",as.character(args[i]))) {
+    new_folder_name <- gsub("\\-f=", "",as.character(args[i]))
   } else {
-    cat(paste0("Invalid option ",as.character(args[i]),"! Use '-h' for help!"))
-    quit()
+    if(!(grepl("^--help$",as.character(args[i])))) {
+      index <- index + 1
+      folder[index] <- as.character(args[i])
+      folder_names_in_text <- paste0(folder_names_in_text,", ",folder[index])
+    }
   }
+}
+if (length(folder_names_in_text) > 0) {
+  folder_names_in_text <- substring(folder_names_in_text,2)
+}
+
+if(length(folder) > 2) {
+  message(paste0("Error:Too many input folder names:",folder_names_in_text,"!\nTwo folder names as input are required! Use '--help' for help!"))
+  quit()
+} else if(length(folder) < 2){
+  message(paste0("Error:Not enough input folder names:",folder_names_in_text,"!\nTwo folder names as input are required! Use '--help' for help!"))
+  quit()
+} else {
+  tool_folder_1 <- folder[1]
+  tool_folder_2 <- folder[2]
 }
 
 source(paste0(rscripts.directory,"/compare/two_tools_functions.R"))
@@ -72,14 +88,15 @@ raw_result_file <- get_raw_results_file_name(folders.directory,tool_folder_1,too
 other_files <- get_more_csv_file_names(folders.directory,toolname_foldername_1,toolname_foldername_2)
 
 # create new folder
-new_folder_name <- create_folder_name(folders.directory,toolname_foldername_1,toolname_foldername_2)
+if (!exists("new_folder_name")) {
+  new_folder_name <- create_folder_name(folders.directory,toolname_foldername_1,toolname_foldername_2)
+}
 
 # create new folders directory
 new_folder_directory <- create_folder_directory(folders.directory,new_folder_name)
 
 #find files which are going to be copied
-list_of_files <- get_list_of_files(folders.directory,rscripts.directory,
-                                   toolname_foldername_1,toolname_foldername_2,
+list_of_files <- get_list_of_files(folders.directory,toolname_foldername_1,toolname_foldername_2,
                                    raw_result_file,other_files)
 
 # get input values
@@ -99,7 +116,7 @@ R_input <- create_R_script(rscripts.directory,new_folder_directory,
                            raw_result_file,other_files,values,pdf.filename) 
 
 #run R script
-cat("Running R script... \n")
+message("Running R script... \n")
 toolname_1 <- toolname_foldername_1[1]
 toolname_2 <- toolname_foldername_2[1]
 if ((grepl("^simeval$",toolname_1) && grepl("^cdd$",toolname_2)) ||
@@ -117,6 +134,6 @@ if ((grepl("^simeval$",toolname_1) && grepl("^cdd$",toolname_2)) ||
   cdd.simeval(rscripts.directory,all.iofv.file,n.subjects=values[2],samples=values[1],
               raw.results.file,skipped.id.file,pdf.filename)
 }
-cat("DONE! \n")
-cat("Pdf file",pdf.filename,"is saved in the folder",new_folder_directory, "\n")
+message("Pdf file ",pdf.filename," is saved in the folder ",new_folder_directory)
+message("DONE!")
 
