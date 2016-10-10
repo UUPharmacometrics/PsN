@@ -263,20 +263,6 @@ if (defined $options{'rawres_input'}) {
 if (defined $options{'covariance_file'}) {
     print "Cannot use option covariance_file, removed.";
     exit;
-  if (defined $options{'rawres_input'}) {
-    print "Cannot use options covariance_file and rawres_input together.";
-    exit;
-  }
-  if (defined $options{'msfo_file'}) {
-    print "Cannot use options covariance_file and msfo_file together.";
-    exit;
-  }
-  my ( $dir, $file ) = OSspecific::absolute_path(cwd(), $options{'covariance_file'});
-  $options{'covariance_file'} = $dir . $file;
-  unless (-e $options{'covariance_file'}) {
-    print "File ".$options{'covariance_file'}." does not exist";
-    exit;
-  }
 }
 
 if (defined $options{'sim_model'}){
