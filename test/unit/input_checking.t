@@ -89,6 +89,115 @@ input_checking::check_options(tool => 'simeval', options => \%options, model => 
 is($options{'samples'},300,'check simeval default samples');
 is($options{'n_simulation_models'},2,'check simeval default n_simulation_models');
 
+#vpc
+%options=();
+$options{'rawres_input'} = 'this_file_does_not_exist';
+dies_ok { input_checking::check_options(tool => 'vpc', options => \%options, model => $model) } "vpc check rawres input not exist";
+
+#%options=();
+#$options{'in_filder'} = 'minimization_successful.eq.1,significant_digits.gt.3.5';
+#dies_ok { input_checking::check_options(tool => 'vpc', options => \%options, model => $model) } "vpc croaks when rawres input not defined";
+
+%options=();
+$options{'covariance_file'} = 'this_file_does_not_exist';
+dies_ok { input_checking::check_options(tool => 'vpc', options => \%options, model => $model) } "vpc croaks when defined covariance file";
+
+%options=();
+$options{'bin_array'} = '1,2,3';
+input_checking::check_options(tool => 'vpc', options => \%options, model => $model);
+is_deeply($options{'bin_array'}, [[1,2,3]], "check vpc, list of bin array converts to matrix 1");
+
+%options=();
+$options{'bin_array'} = '1,2,3:4,5,6';
+input_checking::check_options(tool => 'vpc', options => \%options, model => $model);
+is_deeply($options{'bin_array'}, [[1,2,3],[4,5,6]], "check vpc, list of bin array converts to matrix 2");
+
+%options=();
+$options{'bin_array'} = '';
+dies_ok { input_checking::check_options(tool => 'vpc', options => \%options, model => $model) } "vpc croaks when bin array not defined";
+
+%options=();
+$options{'levels'} = 'level1,level2';
+input_checking::check_options(tool => 'vpc', options => \%options, model => $model);
+is_deeply($options{'levels'}, ['level1','level2'], "check vpc, list of levels converts to an array reference");
+
+%options=();
+$options{'levels'} = '';
+dies_ok { input_checking::check_options(tool => 'vpc', options => \%options, model => $model) } "vpc croaks when levels not defined";
+
+%options=();
+$options{'no_of_strata'} = '6';
+$options{'stratify_on'} = '3,5,6,7';
+$options{'refstrat'} ='4';
+dies_ok { input_checking::check_options(tool => 'vpc', options => \%options, model => $model) } "vpc croaks when refstrat is defined";
+
+%options=();
+$options{'no_of_strata'} = '4';
+dies_ok { input_checking::check_options(tool => 'vpc', options => \%options, model => $model) } "vpc croaks when stratify_on not defined";
+
+%options=();
+$options{'refstrat'} = '4';
+dies_ok { input_checking::check_options(tool => 'vpc', options => \%options, model => $model) } "vpc croaks when stratify_on not defined";
+
+%options=();
+input_checking::check_options(tool => 'vpc', options => \%options, model => $model);
+is_deeply($options{'auto_bin_mode'}, 'auto', "check vpc, if not defined auto bin, auto_bin_mode = 'auto'");
+
+%options=();
+$options{'bin_by_count'} = 1;
+input_checking::check_options(tool => 'vpc', options => \%options, model => $model);
+is_deeply($options{'auto_bin_mode'}, undef, "check vpc, if not defined auto bin, auto_bin_mode = 'auto'");
+
+%options=();
+$options{'min_points_in_bin'} = 7;
+$options{'no_of_bins'} = 5;
+dies_ok { input_checking::check_options(tool => 'vpc', options => \%options, model => $model) } "vpc croaks when min_points_in_bin defined, but auto_bin_mode not defined";
+
+%options=();
+$options{'auto_bin'} = 7;
+$options{'bin_array'} = '1,2,3:4,5,6';
+dies_ok { input_checking::check_options(tool => 'vpc', options => \%options, model => $model) } "vpc croaks when min_points_in_bin defined, but auto_bin_mode not defined";
+
+%options=();
+$options{'auto_bin'} = 'auto';
+input_checking::check_options(tool => 'vpc', options => \%options, model => $model);
+is_deeply($options{'auto_bin_mode'}, 'auto', "check vpc, if auto bin = 'auto',then auto_bin_mode = 'auto'");
+
+%options=();
+$options{'auto_bin'} = 'unique';
+input_checking::check_options(tool => 'vpc', options => \%options, model => $model);
+is_deeply($options{'auto_bin_mode'}, undef, "check vpc, if auto bin = 'auto', then auto_bin_mode = 'auto'");
+#use Data::Dumper;
+#print Dumper(\%options);
+%options=();
+$options{'auto_bin'} = 5;
+input_checking::check_options(tool => 'vpc', options => \%options, model => $model);
+is_deeply($options{'auto_bin_mode'}, 'minmax', "check vpc, if auto bin = N, then auto_bin_mode = 'minmax' 1");
+is_deeply($options{'min_no_bins'}, [5], "check vpc, if auto bin = N, then min_no_bins is array 1");
+is_deeply($options{'max_no_bins'}, [5], "check vpc, if auto bin = N, then max_no_bins is array 1");
+
+%options=();
+$options{'auto_bin'} = '3,9';
+input_checking::check_options(tool => 'vpc', options => \%options, model => $model);
+is_deeply($options{'auto_bin_mode'}, 'minmax', "check vpc, if auto bin = N, then auto_bin_mode = 'minmax' 2");
+is_deeply($options{'min_no_bins'}, [3], "check vpc, if auto bin = N, then min_no_bins is array 2");
+is_deeply($options{'max_no_bins'}, [9], "check vpc, if auto bin = N, then max_no_bins is array 2");
+
+%options=();
+$options{'auto_bin'} = '3,9:4,10:1,4';
+input_checking::check_options(tool => 'vpc', options => \%options, model => $model);
+is_deeply($options{'auto_bin_mode'}, 'minmax', "check vpc, if auto bin = N, then auto_bin_mode = 'minmax' 3");
+is_deeply($options{'min_no_bins'}, [3,4,1], "check vpc, if auto bin = N, then min_no_bins is array 3");
+is_deeply($options{'max_no_bins'}, [9,10,4], "check vpc, if auto bin = N, then max_no_bins is array 3");
+
+%options=();
+$options{'auto_bin'} = '3,4,5:4,7,8';
+dies_ok { input_checking::check_options(tool => 'vpc', options => \%options, model => $model) } "vpc croaks when auto_bin ";
+
+%options=();
+$options{'auto_bin'} = 'some_other';
+dies_ok { input_checking::check_options(tool => 'vpc', options => \%options, model => $model) } "vpc croaks when auto_bin is not N, unique, auto or min,max";
+
 #npfit
 $PsN::nm_major_version = 7; # For npfit NONMEM version must be 7.4 or later
 $PsN::nm_minor_version = 4;
@@ -190,5 +299,5 @@ $options{'npsupp'}='0,100,200,300';
 dies_ok { input_checking::check_options(tool => 'npfit', 
 					options => \%options, 
 					model => $model) } "croak when NONMEM version is 7.3, it has to be 7.4 or later.";
-					
+										
 done_testing();
