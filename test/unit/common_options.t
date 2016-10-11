@@ -41,4 +41,6 @@ $matrix = common_options::get_option_matrix('23.3');
 is (scalar(@$matrix), 1, "get_option_matrix single value");
 is_deeply ($matrix->[0], [ 23.3 ], "get_option_matrix signle value 1");
 
+is (common_options::get_option_matrix(''), undef, "get_option_matrix error");
+
 done_testing();
