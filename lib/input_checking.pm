@@ -9,6 +9,7 @@ use model;
 use MooseX::Params::Validate;
 use array qw(max min);
 use Config;
+use common_options;
 
 sub check_options
 {
@@ -56,6 +57,12 @@ sub check_options
 		$single_prob_or_tnpri = 1;
 		$require_est = 1;
 		$error .= check_simeval(options => $options, model => $model);
+	}
+	
+	if ($tool eq 'vpc'){
+		$rawres_input = 1;
+		$copy_data = 1;
+		$error .= check_vpc(options => $options, model => $model);
 	}
 	
 	if ($rawres_input){
@@ -271,6 +278,124 @@ sub check_npfit
 		if ($is_opt_set == 0) {
 			$error .= "\$ESTIMATION must specify POSTHOC.\n";
 		}
+	}
+		
+	return $error;
+}
+
+sub check_vpc
+{
+	my %parm = validated_hash(\@_,
+							  options => {isa => 'HashRef', optional => 0},
+							  model =>  {isa => 'model', optional => 0},
+		);
+	my $options = $parm{'options'};
+	my $model = $parm{'model'};
+
+	my $error = '';
+		
+	if (defined $options->{'covariance_file'}) {
+		$error .= "Cannot use option covariance_file, removed.";
+	}
+	# check bin array input
+	my $bin_array;
+	if (defined $options->{'bin_array'}) {
+		$bin_array = common_options::get_option_matrix($options->{'bin_array'});
+		if (not defined $bin_array) {
+			$error .= "Error: Could not parse list bin_array.\n";
+		}
+	$options->{'bin_array'} = $bin_array;
+	}
+	
+	# check levels input
+	my $levels = [];
+	if (defined $options->{'levels'}) {
+		$levels = common_options::get_option_array($options->{'levels'});
+		if (not defined $levels) {
+			$error .= "Error: Could not parse list levels.\n";
+		}
+	$options->{'levels'} = $levels;
+	}
+	
+	if (defined $options->{'no_of_strata'}) {
+		if (not defined $options->{'stratify_on'}) {
+			$error .= "Error: The VPC does not allow option no_of_strata unless a ".
+			"stratification column has been specified.\n";
+		}	
+		if (defined $options->{'refstrat'}) {
+			$error .= "Error: The VPC does not allow option no_of_strata together ".
+			"with option refstrat.\n";
+		}
+	}
+	
+	if (defined $options->{'refstrat'} and (not defined $options->{'stratify_on'})) {
+		$error .= "Error: The VPC does not allow option refstrat unless option stratify_on is ".
+		"also defined.\n";
+	}
+	
+	if ((defined $options->{'sim_table'}) && (defined $options->{'orig_table'})) {
+		#case when only one is defined will be caught in new
+		#make paths global
+		my @simtables = ();
+		my @tmp = split(',',$options->{'sim_table'});
+		foreach my $item (@tmp){
+			my ($dir, $fil) = OSspecific::absolute_path('',$item);
+			push(@simtables,$dir.$fil);
+		}
+		unless (scalar(@simtables)>0){
+			$error .= "failed to parse option sim_table ".$options->{'sim_table'};
+		}
+		$options->{'sim_table'} = \@simtables;
+		my ($dir, $fil) = OSspecific::absolute_path('',$options->{'orig_table'});
+		$options->{'orig_table'} = $dir.$fil;
+	}
+	if (defined $options->{'sim_model'}) {
+		my ($dir, $fil) = OSspecific::absolute_path('',$options->{'sim_model'});
+		$options->{'sim_model'} = $dir.$fil;
+	}
+	
+	# Autobinning options
+	my @min_no_bins;
+	my @max_no_bins;
+	if (defined $options->{'auto_bin'}) {
+		# Check forbidden options
+		if (defined $options->{'bin_by_count'} or defined $options->{'no_of_bins'} or defined $options->{'bin_array'} or defined $options->{'single_bin_size'} or defined $options->{'overlap'}) {
+			$error .= "The options -bin_by_count, -no_of_bins, -bin_array, -single_bin_size and -overlap cannot be used in conjunction with -auto_bin\n";
+		}
+
+		# Check the different options
+		if ($options->{'auto_bin'} =~ /\Aunique\Z|\Au\Z/i) {
+			# Fall back to other options
+		} elsif ($options->{'auto_bin'} =~ /\Aauto\Z|\Aa\Z/i) {
+			$options->{'auto_bin_mode'} = 'auto';
+		} else {
+			$options->{'auto_bin_mode'} = 'minmax';
+			my $matrix = common_options::get_option_matrix($options->{'auto_bin'});
+			if (not defined $matrix or not array::is_int($matrix)) {
+				$error .= "Bad -auto_bin option\n";
+			}
+			foreach my $row (@$matrix) {
+				if (scalar(@$row) == 1) {
+					push(@min_no_bins, $row->[0]);
+					push(@max_no_bins, $row->[0]);
+				} elsif (scalar(@$row) == 2) {
+					push(@min_no_bins, $row->[0]);
+					push(@max_no_bins, $row->[1]);
+				} else {
+					$error .= "Bad -auto_bin option. Can only have either one fixed bin count or a min and max value\n";
+				}
+			}
+		$options->{'min_no_bins'} = \@min_no_bins;
+		$options->{'max_no_bins'} = \@max_no_bins;
+		}
+	} else {
+		unless (defined $options->{'bin_by_count'} or defined $options->{'no_of_bins'} or defined $options->{'bin_array'} or defined $options->{'single_bin_size'} or defined $options->{'overlap'}) {
+			$options->{'auto_bin_mode'} = 'auto';
+		}
+	}
+	
+	if (defined $options->{'min_points_in_bin'} and not defined $options->{'auto_bin_mode'}) {
+		$error .= "The option -min_points_in_bin can only be used in conjunction with the -auto_bin option\n";
 	}
 		
 	return $error;
