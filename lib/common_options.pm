@@ -1569,7 +1569,10 @@ sub get_option_matrix
         }
         push(@matrix, $array);
     }
-
+	if (scalar(@matrix) == 0) {
+		return undef;
+    }
+	
     return \@matrix;
 }
 
