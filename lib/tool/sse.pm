@@ -255,7 +255,6 @@ sub modelfit_setup
 							}
 						}
 					}
-
 				} else {
 					$sim_model = $model->copy(
 						filename    => $self->directory . 'm' . $model_number . '/' . $sim_name,
@@ -1007,6 +1006,32 @@ sub modelfit_setup
 		my $alternative_counter = $self->first_alternative()-1;
 		foreach $alternative (@alternatives){
 			$alternative_counter++;
+
+			if ($self->add_models and ($alternative_counter == $self->first_alternative) and
+				$self->random_estimation_inits and (defined $self->rawres_input)){
+				my $href;
+				($sampled_params_arr,$href) = model::get_rawres_params(filename => $self->rawres_input,
+																	   filter => $self->in_filter,
+																	   offset => $self->offset_rawres,
+																	   model => $model);
+				if (defined $sampled_params_arr) {
+					unless (scalar(@{$sampled_params_arr}) >= ($self->samples)) {
+						if (defined $self->in_filter) {
+							croak("Too few sets (lines) of parameter values in\n".
+								  $self->rawres_input."\nafter filtering. Have ".scalar(@{$sampled_params_arr}).
+								  " but need at least ".$self->samples.".\n");
+						} else {
+							croak("Too few sets (lines) of parameter values in\n".
+								  $self->rawres_input.". Have ".scalar(@{$sampled_params_arr}).
+								  " but need at least ".
+								  ($self->samples + $self->offset_rawres).".\n");
+						}
+					}
+				} else {
+					croak("get_rawres_params returned undef");
+				}
+			}
+			
 			# {{{ create copies of the alternative models
 			@alt_table_names = ();
 			@alt_est_models =();
