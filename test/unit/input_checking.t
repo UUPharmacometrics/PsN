@@ -94,9 +94,16 @@ is($options{'n_simulation_models'},2,'check simeval default n_simulation_models'
 $options{'rawres_input'} = 'this_file_does_not_exist';
 dies_ok { input_checking::check_options(tool => 'vpc', options => \%options, model => $model) } "vpc check rawres input not exist";
 
-#%options=();
-#$options{'in_filder'} = 'minimization_successful.eq.1,significant_digits.gt.3.5';
-#dies_ok { input_checking::check_options(tool => 'vpc', options => \%options, model => $model) } "vpc croaks when rawres input not defined";
+%options=();
+$options{'rawres_input'} = $includes::testfiledir."/raw_pheno_for_rawres_input.csv";
+$options{'msfo_file'} = 'msfo.file';
+dies_ok { input_checking::check_options(tool => 'vpc', options => \%options, model => $model) } "vpc croks when defined rawres input and defined msfo file";
+
+%options=();
+$options{'rawres_input'} = $includes::testfiledir."/raw_pheno_for_rawres_input.csv";
+$options{'samples'} = 20;
+input_checking::check_options(tool => 'vpc', options => \%options, model => $model);
+is($options{'n_simulation_models'},20,'vpc check n_simulation_models = samples');
 
 %options=();
 $options{'covariance_file'} = 'this_file_does_not_exist';
@@ -140,6 +147,28 @@ $options{'refstrat'} = '4';
 dies_ok { input_checking::check_options(tool => 'vpc', options => \%options, model => $model) } "vpc croaks when stratify_on not defined";
 
 %options=();
+$options{'sim_table'} = $includes::testfiledir."/raw_pheno_for_rawres_input.csv";
+dies_ok { input_checking::check_options(tool => 'vpc', options => \%options, model => $model) } "vpc croaks when sim_table id defined but orig_table not defined";
+
+%options=();
+$options{'orig_table'} = $includes::testfiledir."/raw_pheno_for_rawres_input.csv";
+dies_ok { input_checking::check_options(tool => 'vpc', options => \%options, model => $model) } "vpc croaks when orig_table id defined but sim_table not defined";
+
+%options=();
+$options{'orig_table'} = $includes::testfiledir."/raw_pheno_for_rawres_input.csv";
+$options{'sim_table'} = $includes::testfiledir."/file_not_exist.csv";
+dies_ok { input_checking::check_options(tool => 'vpc', options => \%options, model => $model) } "vpc croaks when orig_table or sim_table no exist";
+
+%options=();
+$options{'orig_table'} = $includes::testfiledir."/raw_pheno_for_rawres_input.csv";
+$options{'sim_table'} = "";
+dies_ok { input_checking::check_options(tool => 'vpc', options => \%options, model => $model) } "vpc croaks when sim_table filename is empty";
+
+%options=();
+$options{'orig_table'} = $includes::testfiledir."/file_not_exist.csv";
+dies_ok { input_checking::check_options(tool => 'vpc', options => \%options, model => $model) } "vpc croaks when sim_model not exist";
+
+%options=();
 input_checking::check_options(tool => 'vpc', options => \%options, model => $model);
 is_deeply($options{'auto_bin_mode'}, 'auto', "check vpc, if not defined auto bin, auto_bin_mode = 'auto'");
 
@@ -167,8 +196,7 @@ is_deeply($options{'auto_bin_mode'}, 'auto', "check vpc, if auto bin = 'auto',th
 $options{'auto_bin'} = 'unique';
 input_checking::check_options(tool => 'vpc', options => \%options, model => $model);
 is_deeply($options{'auto_bin_mode'}, undef, "check vpc, if auto bin = 'auto', then auto_bin_mode = 'auto'");
-#use Data::Dumper;
-#print Dumper(\%options);
+
 %options=();
 $options{'auto_bin'} = 5;
 input_checking::check_options(tool => 'vpc', options => \%options, model => $model);
