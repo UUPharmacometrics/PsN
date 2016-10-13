@@ -87,6 +87,7 @@ A new recommended but not required Perl library for runrecord: YAML::Tiny
 
    ___NONMEM output parsing___
 
+- Added NM7.4 NONMEM output extensions .npl, .vpd and .clt to the list of recognized extensions.
 - Bug fix: Handle error message "0ERROR IN READING FILE : FCON" in
   eigenvalue section of lst-file.
 - Bug fix: If the execution of a $PROBLEM stops before any output is produced, consider the
