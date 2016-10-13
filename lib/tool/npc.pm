@@ -88,7 +88,7 @@ has 'single_bin_size' => ( is => 'rw', isa => 'Num' );
 has 'overlap_percent' => ( is => 'rw', isa => 'Num' );
 has 'bin_array' => ( is => 'rw', isa => 'ArrayRef[ArrayRef[Num]]', default => sub { [] } );
 has 'categorized' => ( is => 'rw', isa => 'Bool', default => 0 );
-has 'levels' => ( is => 'rw', isa => 'ArrayRef[Num]' );
+has 'levels' => ( is => 'rw', isa => 'ArrayRef[Num]', default => sub { [] } );
 has 'lloq' => ( is => 'rw', isa => 'Num' );
 has 'uloq' => ( is => 'rw', isa => 'Num' );
 has 'stratify_on' => ( is => 'rw', isa => 'Str' );
