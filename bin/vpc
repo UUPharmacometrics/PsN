@@ -522,6 +522,8 @@ EOF
 common_options::online_help( 'vpc', \%options, \%help_text, \%required_options, \%optional_options);
 common_options::setup( \%options, 'vpc' ); #calls set_globals etc, initiates random sequence
 
+require input_checking;
+
 ## Check that we do have a model file
 
 my $dummymodel=0;
@@ -539,166 +541,6 @@ if (scalar(@ARGV) > 1) {
   print "VPC can only handle one modelfile. Check that all options begin with".
       " -.\nUse 'vpc -h' for help.\n";
   die;
-}
-
-
-if (defined $options{'rawres_input'}) {
-  my ( $dir, $file ) = OSspecific::absolute_path(cwd(), $options{'rawres_input'});
-  $options{'rawres_input'} = $dir . $file;
-  unless (-e $options{'rawres_input'}) {
-    print "File ".$options{'rawres_input'}." does not exist";
-    exit;
-  }
-  $options{'n_simulation_models'} = $options{'samples'};
-  if (defined $options{'msfo_file'}) {
-    print "Cannot use options rawres_input and msfo_file together.";
-    exit;
-  }
-}
-
-my @in_filter=();
-if ( defined $options{'in_filter'} ){
-  unless (defined $options{'rawres_input'}){
-    print "Cannot use option -in_filter without option -rawres_input.\n";
-    exit;
-  }
-  #split string, assume comma separated
-  foreach my $filt (split(/,/,$options{'in_filter'})){
-    if ($filt =~ /.\.(gt|lt|eq)\.\d+\.?\d*/){
-      push(@in_filter,$filt);
-    }else{
-      die "Input filter $filt does not fulfill the format rules.\n";
-    }
-  }
-  if (scalar(@in_filter)<1){
-    die "Error: Option in_filter used, but list of conditions could not be parsed.\n";
-  }	
-}
-
-
-if (defined $options{'covariance_file'}) {
-    print "Cannot use option covariance_file, removed.";
-    exit;
-  if (defined $options{'rawres_input'}) {
-    print "Cannot use options covariance_file and rawres_input together.";
-    exit;
-  }
-  if (defined $options{'msfo_file'}) {
-    print "Cannot use options covariance_file and msfo_file together.";
-    exit;
-  }
-  my ( $dir, $file ) = OSspecific::absolute_path(cwd(), $options{'covariance_file'});
-  $options{'covariance_file'} = $dir . $file;
-  unless (-e $options{'covariance_file'}) {
-    print "File ".$options{'covariance_file'}." does not exist";
-    exit;
-  }
-  $options{'n_simulation_models'} = $options{'samples'};
-}
-
-
-my $bin_array;
-
-if (defined $options{'bin_array'}) {
-    $bin_array = common_options::get_option_matrix($options{'bin_array'});
-    if (not defined $bin_array) {
-        die "Error: Could not parse list bin_array.\n";
-    }
-}
-
-my $levels = [];
-
-if (defined $options{'levels'}) {
-    $levels = common_options::get_option_array($options{'levels'});
-    if (not defined $levels) {
-        die "Error: Could not parse list levels.\n";
-    }
-}
-
-if (defined $options{'no_of_strata'}) {
-  if (not defined $options{'stratify_on'}) {
-    die "Error: The VPC does not allow option no_of_strata unless a ".
-	"stratification column has been specified.\n";
-  }	
-  if (defined $options{'refstrat'}) {
-    die "Error: The VPC does not allow option no_of_strata together ".
-	"with option refstrat.\n";
-  }
-}
-if (defined $options{'refstrat'} and (not defined $options{'stratify_on'})) {
-    die "Error: The VPC does not allow option refstrat unless option stratify_on is ".
-	"also defined.\n";
-}
-
-if ((defined $options{'sim_table'}) && (defined $options{'orig_table'})) {
-  #case when only one is defined will be caught in new
-	#make paths global
-	my @simtables = ();
-	my @tmp = split(',',$options{'sim_table'});
-	foreach my $item (@tmp){
-		my ($dir, $fil) = OSspecific::absolute_path('',$item);
-		push(@simtables,$dir.$fil);
-	}
-	unless (scalar(@simtables)>0){
-		die("failed to parse option sim_table ".$options{'sim_table'});
-	}
-	$options{'sim_table'} = \@simtables;
-	my ($dir, $fil) = OSspecific::absolute_path('',$options{'orig_table'});
-	$options{'orig_table'} = $dir.$fil;
-
-}
-if (defined $options{'sim_model'}) {
-  my ($dir, $fil) = OSspecific::absolute_path('',$options{'sim_model'});
-
-  $options{'sim_model'} = $dir.$fil;
-}
-
-# Autobinning options
-my $auto_bin_mode;
-my @min_no_bins;
-my @max_no_bins;
-
-if (defined $options{'auto_bin'}) {
-	# Check forbidden options
-	if (defined $options{'bin_by_count'} or defined $options{'no_of_bins'} or defined $options{'bin_array'} or defined $options{'single_bin_size'} or defined $options{'overlap'}) {
-		ui->print(category => 'all',
-				  message => "The options -bin_by_count, -no_of_bins, -bin_array, -single_bin_size and -overlap cannot be used in conjunction with -auto_bin\n");
-		die;
-	}
-
-	# Check the different options
-	if ($options{'auto_bin'} =~ /\Aunique\Z|\Au\Z/i) {
-		# Fall back to other options
-	} elsif ($options{'auto_bin'} =~ /\Aauto\Z|\Aa\Z/i) {
-		$auto_bin_mode = 'auto';
-    } else {
-        $auto_bin_mode = 'minmax';
-        my $matrix = common_options::get_option_matrix($options{'auto_bin'});
-        if (not defined $matrix or not array::is_int($matrix)) {
-            die "Bad -auto_bin option\n";
-        }
-        foreach my $row (@$matrix) {
-            if (scalar(@$row) == 1) {
-                push(@min_no_bins, $row->[0]);
-                push(@max_no_bins, $row->[0]);
-            } elsif (scalar(@$row) == 2) {
-                push(@min_no_bins, $row->[0]);
-                push(@max_no_bins, $row->[1]);
-            } else {
-                die "Bad -auto_bin option. Can only have either one fixed bin count or a min and max value\n";
-            }
-        }
-	}
-} else {
-	unless (defined $options{'bin_by_count'} or defined $options{'no_of_bins'} or defined $options{'bin_array'} or defined $options{'single_bin_size'} or defined $options{'overlap'}) {
-		$auto_bin_mode = 'auto';
-	}
-}
-
-if (defined $options{'min_points_in_bin'} and not defined $auto_bin_mode) {
-	ui->print(category => 'all',
-			  message => "The option -min_points_in_bin can only be used in conjunction with the -auto_bin option\n");
-	die;
 }
 
 require model;
@@ -725,9 +567,11 @@ if ($dummymodel){
 
 }
 
+input_checking::check_options(tool => 'vpc', options => \%options, model => $model);
+
 my $vpc = 
 	tool::npc->new( eval( $common_options::parameters ),
-	  models	     => [ $model ],
+	  models	      	 => [ $model ],
 	  stratify_on        => $options{'stratify_on'},
 	  censor             => $options{'censor'},
 	  no_of_strata       => $options{'no_of_strata'},
@@ -741,14 +585,14 @@ my $vpc =
 	  no_of_bins         => $options{'no_of_bins'},
 	  single_bin_size    => $options{'single_bin_size'},
 	  overlap_percent    => $options{'overlap_percent'},
-	  bin_array          => $bin_array,
+	  bin_array          => $options{'bin_array'},
 	  mirrors            => $options{'mirrors'},
 	  dv                 => $options{'dv'},
 	  orig_table         => $options{'orig_table'},
-	  irep          => $options{'irep'},
+	  irep          	 => $options{'irep'},
 	  sim_table          => $options{'sim_table'},
-	  categorized        => ((scalar(@{$levels}) > 0) ? 1 : 0),
-	  levels             => $levels,
+	  levels             => $options{'levels'},
+	  categorized        => ((defined $options{'levels'} and scalar(@{$options{'levels'}}) > 0) ? 1 : 0),
 	  lloq               => $options{'lloq'},
 	  uloq               => $options{'uloq'},
 	  keep_estimation    => $options{'keep_estimation'},
@@ -759,22 +603,22 @@ my $vpc =
 	  varcorr            => $options{'varcorr'},
 	  fine_pi            => $options{'fine_pi'},
 	  tte                => $options{'tte'},
-	  copy_data	     => $options{'copy_data'},
+	  copy_data	     	 => $options{'copy_data'},
 	  rawres_input	     => $options{'rawres_input'},
 	  offset_rawres	     => $options{'offset_rawres'},
-	 in_filter             => \@in_filter,
-	  covariance_file     => $options{'covariance_file'},
-	  n_simulation_models => $options{'n_simulation_models'},
+	  in_filter          => $options{'in_filter'},
+	  covariance_file    => $options{'covariance_file'},
+	  n_simulation_models=> $options{'n_simulation_models'},
 	  boxcox_lambda      => $options{'boxcox_lambda'},
 	  sim_model          => $options{'sim_model'},
 	  flip_comments      => $options{'flip_comments'},
-	  confidence_interval => $options{'confidence_interval'},
-	  auto_bin_mode		=> $auto_bin_mode,
-	  min_no_bins			=> \@min_no_bins,
-    max_no_bins			=> \@max_no_bins,
-	  min_points_in_bin	=> $options{'min_points_in_bin'},
-		directory_name_prefix => 'vpc',
-        mix => $options{'mix'},
+	  confidence_interval=> $options{'confidence_interval'},
+	  auto_bin_mode		 => $options{'auto_bin_mode'},
+	  min_no_bins		 => $options{'min_no_bins'},
+	  max_no_bins		 => $options{'max_no_bins'},
+	  min_points_in_bin	 => $options{'min_points_in_bin'},
+	  directory_name_prefix => 'vpc',
+      mix 				 => $options{'mix'},
 	  );
 
 $vpc-> print_options (cmd_line => $cmd_line,
