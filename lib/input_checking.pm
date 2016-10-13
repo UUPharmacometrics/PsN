@@ -293,6 +293,13 @@ sub check_vpc
 	my $model = $parm{'model'};
 
 	my $error = '';
+	
+	if (defined $options->{'rawres_input'}) {
+		$options->{'n_simulation_models'} = $options->{'samples'};
+		if (defined $options->{'msfo_file'}) {
+			$error .= "Cannot use options rawres_input and msfo_file together.";
+		}
+	}
 		
 	if (defined $options->{'covariance_file'}) {
 		$error .= "Cannot use option covariance_file, removed.";
@@ -334,24 +341,37 @@ sub check_vpc
 	}
 	
 	if ((defined $options->{'sim_table'}) && (defined $options->{'orig_table'})) {
-		#case when only one is defined will be caught in new
-		#make paths global
-		my @simtables = ();
-		my @tmp = split(',',$options->{'sim_table'});
-		foreach my $item (@tmp){
-			my ($dir, $fil) = OSspecific::absolute_path('',$item);
-			push(@simtables,$dir.$fil);
+		if ((-e $options->{'sim_table'}) && (-e $options->{'orig_table'})) {
+			#case when only one is defined will be caught in new
+			#make paths global
+			my @simtables = ();
+			my @tmp = split(',',$options->{'sim_table'});
+			foreach my $item (@tmp){
+				my ($dir, $fil) = OSspecific::absolute_path('',$item);
+				push(@simtables,$dir.$fil);
+			}
+			unless (scalar(@simtables)>0){
+				$error .= "failed to parse option sim_table ".$options->{'sim_table'};
+			}
+			$options->{'sim_table'} = \@simtables;
+			my ($dir, $fil) = OSspecific::absolute_path('',$options->{'orig_table'});
+			$options->{'orig_table'} = $dir.$fil;
+		} else {
+			$error .=  "The sim_table file ".$options->{'sim_table'}." or the orig_table file ".$options->{'orig_table'}." does not exist.\n"; 
 		}
-		unless (scalar(@simtables)>0){
-			$error .= "failed to parse option sim_table ".$options->{'sim_table'};
-		}
-		$options->{'sim_table'} = \@simtables;
-		my ($dir, $fil) = OSspecific::absolute_path('',$options->{'orig_table'});
-		$options->{'orig_table'} = $dir.$fil;
+	} elsif ((defined $options->{'sim_table'}) && (not defined $options->{'orig_table'})) {
+		$error .= "Option -sim_table only allowed when -orig_table is also used\n";
+	} elsif ((not defined $options->{'sim_table'}) && (defined $options->{'orig_table'})) {
+		$error .= "Option -orig_table only allowed when -sim_table is also used\n";
 	}
+	
 	if (defined $options->{'sim_model'}) {
-		my ($dir, $fil) = OSspecific::absolute_path('',$options->{'sim_model'});
-		$options->{'sim_model'} = $dir.$fil;
+		if ((-e $options->{'sim_model'})) {
+			my ($dir, $fil) = OSspecific::absolute_path('',$options->{'sim_model'});
+			$options->{'sim_model'} = $dir.$fil;
+		} else {
+			$error .=  "The sim_model file ".$options->{'sim_model'}." does not exist.\n"; 
+		}
 	}
 	
 	# Autobinning options
