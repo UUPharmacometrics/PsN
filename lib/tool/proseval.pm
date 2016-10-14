@@ -48,6 +48,12 @@ sub modelfit_setup
 	$self->tools([]) unless defined $self->tools;
     my @models_to_run;
 
+	my $model = $self->models()->[0]; 
+    my $mdv_column = $model->problems->[0]->find_data_column(column_name => 'MDV'); 
+    if ($mdv_column == -1) {
+        $mdv_column = undef;
+    }
+
     while ($continue) {
         my $data = data->new(
             filename => "preprocess_data_dir/filtered.dta",
@@ -56,7 +62,7 @@ sub modelfit_setup
             idcolumn => $self->model->idcolumn(),
         );
 
-        $continue = $self->set_evid(dataset => $data, numzeros => $n, evid_column => $self->evid_column);
+        $continue = $self->set_evid(dataset => $data, numzeros => $n, evid_column => $self->evid_column, mdv_column => $mdv_column);
 
         my $data_filename = "m1/proseval_$n.dta";
         my $model_filename = $self->directory . "m1/proseval_$n.mod";
@@ -131,10 +137,12 @@ sub set_evid
 		dataset => { isa => 'data', optional => 0 },
         numzeros => { isa => 'Int', optional => 0 },
         evid_column => { isa => 'Int', optional => 0 },
+        mdv_column => { isa => 'Maybe[Int]', optional => 0 },
 	);
 	my $dataset = $parm{'dataset'};
 	my $numzeros = $parm{'numzeros'};
 	my $evid_column = $parm{'evid_column'};
+	my $mdv_column = $parm{'mdv_column'};
 
     my $set_evid_two = 0;       # Did we set any evid to two?
 
@@ -150,6 +158,9 @@ sub set_evid
                     $set_evid_two = 1;
                     $indiv_set_evid_two = 1;
                     $a[$evid_column] = 2;
+                    if (defined $mdv_column) {      # If EVID=2 must set MDV=1
+                        $a[$mdv_column] = 1;
+                    }
                     $row = join ',', @a;
                 }
             }
