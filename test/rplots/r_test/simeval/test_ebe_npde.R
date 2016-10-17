@@ -17,8 +17,8 @@ for (i in 1:length(directory_and_script)) {
 ###################################    2.Input data    ######################################
 pdf.file.name <- 'PsN_ebe_npde_plots.pdf'
 model.filename <- "run1.mod"
-all.eta.names <- c('ETA(1)','ETA(2)')
-all.eta.names_a <- c('ETA(1)','ETA(2)','ETA(3)')
+iiv.eta.names <- c('ETA(1)','ETA(2)')
+iiv.eta.names_a <- c('ETA(1)','ETA(2)','ETA(3)')
 
 source("../set.working.directory.R")
 files.w.dir <- fun.files.w.dir(toolname = tool)
@@ -27,25 +27,29 @@ ebe.npde.file <- paste0(files.w.dir,'ebe_npde.csv')
 ebe.npde.file_1 <- paste0(files.w.dir,'ebe_npde_1.csv')
 ###################################     3. Make tests     ###################################
 #..................................  (1) Test input_ebe_npde .....................................  
-list_input <- input.data(ebe.npde.file=ebe.npde.file,n.eta=2,all.eta.names=all.eta.names)
-list_input_a <- input.data(ebe.npde.file=ebe.npde.file_1,n.eta=3,all.eta.names=all.eta.names_a)
+list_input <- input.data(ebe.npde.file=ebe.npde.file,iiv.eta.names=iiv.eta.names)
+list_input_a <- input.data(ebe.npde.file=ebe.npde.file_1,iiv.eta.names=iiv.eta.names_a)
 
 #unlist
 ebenpde_tmp <- list_input$ebenpde_tmp
 n.subjects <- list_input$n.subjects
 ebenpde_obs <- list_input$ebenpde_obs
+iiv.eta.names_b <- list_input$iiv.eta.names
 
 ebenpde_tmp_a <- list_input_a$ebenpde_tmp
 n.subjects_a <- list_input_a$n.subjects
 ebenpde_obs_a <- list_input_a$ebenpde_obs
+iiv.eta.names_c <- list_input_a$iiv.eta.names
 
 # Create expected input data
 exp_ebenpde_tmp <- data.frame(ID=as.integer(c(2,11,21,55,56)),STAND_EBE=as.integer(c(0,0,0,0,0)),ETA.1.=c(-1.558,0.54,0.73,0,-2.037),ETA.2.=c(-0.25,0,0.15,-0.46,-0.17))
 exp_n.subjects <- 5
 exp_ebenpde_obs <- data.frame(ETA.1.=c(-1.558,0.54,0.73,0,-2.037),ETA.2.=c(-0.25,0,0.15,-0.46,-0.17))
+exp_iiv.eta.names_b <- c("ETA.1.","ETA.2.")
 exp_ebenpde_tmp_a <- data.frame(ID=as.integer(c(3,7,9,14,23,26)),STAND_EBE=as.integer(c(0,0,0,0,0,0)),ETA.1.=c(1.2,-0.98,6.73,3.6,-0.58,-4.9),ETA.2.=c(-0.25,0.34,0.15,-7.46,0.03,0.83),ETA.3.=c(0.74,-0.201,-4.09,8.05,1.01,7.39))
 exp_n.subjects_a <- 6
 exp_ebenpde_obs_a <- data.frame(ETA.1.=c(1.2,-0.98,6.73,3.6,-0.58,-4.9),ETA.2.=c(-0.25,0.34,0.15,-7.46,0.03,0.83),ETA.3.=c(0.74,-0.201,-4.09,8.05,1.01,7.39))
+exp_iiv.eta.names_c <- c("ETA.1.","ETA.2.","ETA.3.")
 
 # Compare expected input data with real input data
 context("Test function input.data")
@@ -53,14 +57,16 @@ test_that("If function input.data works as expected",{
   expect_equal(exp_ebenpde_tmp,ebenpde_tmp)
   expect_equal(exp_n.subjects,n.subjects)
   expect_equal(exp_ebenpde_obs,ebenpde_obs)
+  expect_equal(exp_iiv.eta.names_b,iiv.eta.names_b)
   expect_equal(exp_ebenpde_tmp_a,ebenpde_tmp_a)
   expect_equal(exp_n.subjects_a,n.subjects_a)
   expect_equal(exp_ebenpde_obs_a,ebenpde_obs_a)
+  expect_equal(exp_iiv.eta.names_c,iiv.eta.names_c)
 })
 
 #.................................  (2) Test summary.table.ebe.npde ...............................   
-mydataframe <- summary.table.ebe.npde(ebenpde_obs,all.eta.names=all.eta.names,n.eta=2)
-mydataframe_a <- summary.table.ebe.npde(ebenpde_obs_a,all.eta.names=all.eta.names_a,n.eta=3)
+mydataframe <- summary.table.ebe.npde(ebenpde_obs,iiv.eta.names=iiv.eta.names)
+mydataframe_a <- summary.table.ebe.npde(ebenpde_obs_a,iiv.eta.names=iiv.eta.names_a)
 
 # Create expected data
 exp_mydataframe <- data.frame(as.factor(c("ETA(1)","ETA(2)")),
@@ -84,8 +90,8 @@ test_that("If function summary.table.ebe.npde works as expected",{
 })
 
 #.................................  (3) Test empirical.distance  ....................................    
-emp_dist <- empirical.distance(ebenpde_obs,n.subjects,n.eta=2)
-emp_dist_a <- empirical.distance(ebenpde_obs_a,n.subjects_a,n.eta=3)
+emp_dist <- empirical.distance(ebenpde_obs,n.subjects,iiv.eta.names)
+emp_dist_a <- empirical.distance(ebenpde_obs_a,n.subjects_a,iiv.eta.names_a)
 # Create expected data
 exp_emp_dist <- matrix(c(2.489864,0.2916,0.5554,0.2116,4.178269),nrow=5,ncol=1)
 exp_emp_dist_a <- matrix(c(2.0501,1.116401,62.0435,133.4141,1.3574,79.311),nrow=6,ncol=1)
@@ -97,8 +103,8 @@ test_that("If function empirical.distance works as expected",{
 })
 
 #.......................................  (4) Test data.for.plots  ...............................................
-list_out_tables <- data.for.plots(emp_dist,n.subjects,n.eta=2)
-list_out_tables_a <- data.for.plots(emp_dist_a,n.subjects_a,n.eta=3)
+list_out_tables <- data.for.plots(emp_dist,n.subjects,iiv.eta.names)
+list_out_tables_a <- data.for.plots(emp_dist_a,n.subjects_a,iiv.eta.names_a)
 
 # Unlist data.for.plots
 index_emp_distance <- list_out_tables$index_emp_distance
@@ -227,59 +233,59 @@ test_that("If function plot_1 works as expected",{
 
 #..................................... (6) Test plot_2  ......................................
 list_plot_2 <- plot_2(ebenpde_tmp,emp_distance_sort,theor_distance,index_emp_distance,
-                 noutlier,flag,n.subjects,n.eta=2,outlying_criteria=1,
+                 noutlier,flag,n.subjects,iiv.eta.names,outlying_criteria=1,
                  outlier_id_row,do_outlier_plot=FALSE,model.filename)
 a_list_plot_2 <- plot_2(ebenpde_tmp,emp_distance_sort,theor_distance,index_emp_distance,
-                      a_noutlier,a_flag,n.subjects,n.eta=2,outlying_criteria=1,
+                      a_noutlier,a_flag,n.subjects,iiv.eta.names,outlying_criteria=1,
                       a_outlier_id_row,do_outlier_plot=FALSE,model.filename)
 b_list_plot_2 <- plot_2(ebenpde_tmp,emp_distance_sort,theor_distance,index_emp_distance,
-                        b_noutlier,b_flag,n.subjects,n.eta=2,outlying_criteria=2,
+                        b_noutlier,b_flag,n.subjects,iiv.eta.names,outlying_criteria=2,
                         b_outlier_id_row,do_outlier_plot=FALSE,model.filename)
 c_list_plot_2 <- plot_2(ebenpde_tmp_a,emp_distance_sort_a,theor_distance_a,index_emp_distance_a,
-                        c_noutlier,c_flag,n.subjects_a,n.eta=3,outlying_criteria=-3,
+                        c_noutlier,c_flag,n.subjects_a,iiv.eta.names_a,outlying_criteria=-3,
                         c_outlier_id_row,do_outlier_plot=FALSE,model.filename)
 # unlist information
 vector_theor_dist <- round(list_plot_2$vector_theor_dist,6)
 noutlier <- list_plot_2$noutlier
 outlier_id_row <- list_plot_2$outlier_id_row
 flag1 <- list_plot_2$flag1
-out_distance <- round(list_plot_2$out_distance,6)
+out_distance <- round(list_plot_2$out_distance,7)
 a_vector_theor_dist <- round(a_list_plot_2$vector_theor_dist,6)
 a_noutlier <- a_list_plot_2$noutlier
 a_outlier_id_row <- a_list_plot_2$outlier_id_row
 a_flag1 <- a_list_plot_2$flag1
-a_out_distance <- round(a_list_plot_2$out_distance,6)
+a_out_distance <- round(a_list_plot_2$out_distance,7)
 b_vector_theor_dist <- round(b_list_plot_2$vector_theor_dist,6)
 b_noutlier <- b_list_plot_2$noutlier
 b_outlier_id_row <- b_list_plot_2$outlier_id_row
 b_flag1 <- b_list_plot_2$flag1
-b_out_distance <- round(b_list_plot_2$out_distance,6)
+b_out_distance <- round(b_list_plot_2$out_distance,7)
 c_vector_theor_dist <- round(c_list_plot_2$vector_theor_dist,6)
 c_noutlier <- c_list_plot_2$noutlier
 c_outlier_id_row <- c_list_plot_2$outlier_id_row
 c_flag1 <- c_list_plot_2$flag1
-c_out_distance <- round(c_list_plot_2$out_distance,6)
+c_out_distance <- round(c_list_plot_2$out_distance,7)
 # Create expected data
 exp_vector_theor_dist <- matrix(c(1.386294,2.772589,3.583519,4.158883,4.60517),nrow=1,ncol=5)
 exp_noutlier <- 1
 exp_outlier_id_row <- 5
 exp_flag1 <- 0
-exp_out_distance <- c(1.180175,2.141203,1.754324,0.830634)
+exp_out_distance <- c(1.1801747,2.1412034,1.7543239,0.8306343)
 exp_a_vector_theor_dist <- matrix(c(1.386294,2.772589,3.583519,4.158883,4.60517),nrow=1,ncol=5)
 exp_a_noutlier <- 0
 exp_a_outlier_id_row <- NULL
 exp_a_flag1 <- 0
-exp_a_out_distance <- c(1.180175,2.141203,1.754324,0.830634)
+exp_a_out_distance <- c(1.1801747,2.1412034,1.7543239,0.8306343)
 exp_b_vector_theor_dist <- matrix(c(1.386294,2.772589,3.583519,4.158883,4.60517),nrow=1,ncol=5)
 exp_b_noutlier <- 2
 exp_b_outlier_id_row <- c(5,1)
 exp_b_flag1 <- 0
-exp_b_out_distance <- c(1.180175,2.141203,1.754324,0.830634)
+exp_b_out_distance <- c(1.1801747,2.1412034,1.7543239,0.8306343)
 exp_c_vector_theor_dist <- matrix(c(2.365974,4.108345,5.071066,5.739413,6.251389,6.666203),nrow=1,ncol=6)
 exp_c_noutlier <- 3
 exp_c_outlier_id_row <- c(4,6,3)
 exp_c_flag1 <- 0
-exp_c_out_distance <- c(-51.660947,-39.813001,2.136146,1.945212,0.883581)
+exp_c_out_distance <- c(-51.6609466,-39.8130014,2.1361458,1.9452118,0.8835815)
 # Compare expected data with real data
 context("Test function plot_2")
 test_that("If function plot_2 works as expected",{
@@ -308,10 +314,10 @@ test_that("If function plot_2 works as expected",{
 #...................................  (7) Test outlier.table.ebe.npde  .........................................
 fortable1 <- outlier.table.ebe.npde(noutlier,outlier_id_row,ebenpde_tmp,ebenpde_obs,
                            index_emp_distance,emp_distance_sort,vector_theor_dist,
-                           n.subjects,all.eta.names=all.eta.names,n.eta=2)
+                           n.subjects,iiv.eta.names=iiv.eta.names)
 b_fortable1 <- outlier.table.ebe.npde(b_noutlier,b_outlier_id_row,ebenpde_tmp,ebenpde_obs,
                              index_emp_distance,emp_distance_sort,b_vector_theor_dist,
-                             n.subjects,all.eta.names=all.eta.names,n.eta=2)
+                             n.subjects,iiv.eta.names=iiv.eta.names)
 # Create expected data
 exp_fortable1 <- data.frame(c(56),c(0.30186),c(4.1783),c(-2.037),c(-0.17))
 colnames(exp_fortable1) <- c("ID", "outlying criteria","MD distance","ETA(1)","ETA(2)")
@@ -326,8 +332,8 @@ test_that("If function outlier.table.ebe.npde works as expected",{
 
 
 #...................................  (8) Test ebe.npde.outliers  .........................................
-ebe.npde_outliers <- ebe.npde.outliers(ebe.npde.file=ebe.npde.file,n.eta=2,outlying_criteria=1,model.filename)
-ebe.npde_outliers_a <- ebe.npde.outliers(ebe.npde.file=ebe.npde.file,n.eta=2,outlying_criteria=-2,model.filename)
+ebe.npde_outliers <- ebe.npde.outliers(ebe.npde.file=ebe.npde.file,iiv.eta.names,outlying_criteria=1,model.filename)
+ebe.npde_outliers_a <- ebe.npde.outliers(ebe.npde.file=ebe.npde.file,iiv.eta.names,outlying_criteria=-2,model.filename)
 # Create expected data
 exp_ebe.npde_outliers <- data.frame(c(56),c(0.30186))
 colnames(exp_ebe.npde_outliers) <- c("ID","outlying criteria")

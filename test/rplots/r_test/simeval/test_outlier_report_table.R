@@ -24,31 +24,33 @@ residual.outliers.file <- paste0(files.w.dir,'residual_outliers.csv')
 residual.outliers.file.1 <- paste0(files.w.dir,'residual_outliers_1.csv')
 residual.outliers.file.2 <- paste0(files.w.dir,'residual_outliers_2.csv')
 ebe.npde.file <- paste0(files.w.dir,'ebe_npde.csv')
+iiv.eta.names <- c("ETA(1)","ETA(2)")
+
 ###################################     3. Make a test    ###################################
 #...........................  (1) Test function all.outlier.report.table.R .....................................  
 all_outlier_table <- all.outlier.report.table(all.iofv.file=all.iofv.file_2,
                                               n.subjects=4,samples=3,
-                                              ebe.npde.file=ebe.npde.file,n.eta=2,outlying_criteria=1,
+                                              ebe.npde.file=ebe.npde.file,iiv.eta.names=iiv.eta.names,outlying_criteria=1,
                                               residual.outliers.file.1)
 all_outlier_table_1 <- all.outlier.report.table(all.iofv.file=all.iofv.file,
                                               n.subjects=4,samples=3, # ofv no outliers
-                                              ebe.npde.file=ebe.npde.file,n.eta=2,outlying_criteria=1,
+                                              ebe.npde.file=ebe.npde.file,iiv.eta.names=iiv.eta.names,outlying_criteria=1,
                                               residual.outliers.file.1)
 all_outlier_table_2 <- all.outlier.report.table(all.iofv.file=all.iofv.file_2,
                                               n.subjects=4,samples=3,
-                                              ebe.npde.file=ebe.npde.file,n.eta=2,outlying_criteria=1,
+                                              ebe.npde.file=ebe.npde.file,iiv.eta.names=iiv.eta.names,outlying_criteria=1,
                                               residual.outliers.file) # no residuals
 all_outlier_table_3 <- all.outlier.report.table(all.iofv.file=all.iofv.file_2,
                                               n.subjects=4,samples=3,
-                                              ebe.npde.file=ebe.npde.file,n.eta=2,outlying_criteria=-2, # no ebe.npde outliers
+                                              ebe.npde.file=ebe.npde.file,iiv.eta.names=iiv.eta.names,outlying_criteria=-2, # no ebe.npde outliers
                                               residual.outliers.file.1)
 all_outlier_table_4 <- all.outlier.report.table(all.iofv.file=all.iofv.file, # no outliers
                                               n.subjects=4,samples=3,
-                                              ebe.npde.file=ebe.npde.file,n.eta=2,outlying_criteria=-2,# no outliers
+                                              ebe.npde.file=ebe.npde.file,iiv.eta.names=iiv.eta.names,outlying_criteria=-2,# no outliers
                                               residual.outliers.file)# no outliers
 all_outlier_table_5 <- all.outlier.report.table(all.iofv.file=all.iofv.file_2,
                                               n.subjects=4,samples=3,
-                                              ebe.npde.file=ebe.npde.file,n.eta=2,outlying_criteria=1,
+                                              ebe.npde.file=ebe.npde.file,iiv.eta.names=iiv.eta.names,outlying_criteria=1,
                                               residual.outliers.file.2)
 # Create expected input data
 exp_all_outlier_table <- data.frame(id=as.factor(c(1,13,24,42,56)),ofv=as.factor(c(9.806,-4.759," "," "," ")),
