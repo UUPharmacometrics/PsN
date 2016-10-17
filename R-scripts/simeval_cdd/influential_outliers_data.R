@@ -29,6 +29,7 @@ influential_outliers_data <- function(all.iofv.file,n.subjects,samples,
   for (i in 1:length(ID_cdd)) {
     cdd_id_sorted[i] <- ID_cdd[cdd_order$ix[i]]  
   }
+  
   # create a data frame
   infl_data <- as.data.frame(cbind(cdd_id_sorted,delta.ofv_order))
   colnames(infl_data) <- c("ID_cdd","delta.ofv")

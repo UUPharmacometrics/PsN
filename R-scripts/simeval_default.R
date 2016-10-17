@@ -31,7 +31,7 @@ source(paste0(rscripts.directory,"/simeval/pdf.all.outlier.report.R"))
 source(paste0(rscripts.directory,"/common/plot.table.R"))
 
 # Create a pdf files
-pdf.ebe.npde(ebe.npde.file=ebe.npde.file,n.eta=n.eta,all.eta.names=all.eta.names,
+pdf.ebe.npde(ebe.npde.file=ebe.npde.file,iiv.eta.names=iiv.eta.names,
              outlying_criteria=outlying_criteria,ebe.filename='PsN_ebe_npde_plots.pdf',
              model.filename=model.filename)
 
@@ -46,7 +46,7 @@ pdf_ofv(raw.results.file=raw.results.file,iofv.file=iofv.file,all.iofv.file=all.
 pdf.all.outlier.report(report.file.name="PsN_outlier_report_table.pdf",
                        all.iofv.file=all.iofv.file,n.subjects=n.subjects,samples=successful.samples,
                        ebe.npde.file=ebe.npde.file,
-                       n.eta=n.eta,outlying_criteria=outlying_criteria,
+                       iiv.eta.names=iiv.eta.names,outlying_criteria=outlying_criteria,
                        residual.outliers.file=residual.outliers.file)
 
 #new pdf for vpc:s DV vs PRED, CWRES vs idv
