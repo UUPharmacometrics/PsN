@@ -1,8 +1,8 @@
 options(warn=-1) # don't show warnings
-library(testthat)
+suppressMessages(library(testthat))
 # Used libraries
-library(PerformanceAnalytics)
-require("PEIP")
+suppressMessages(library(PerformanceAnalytics))
+suppressMessages(require("PEIP"))
 # Test files
 test_file("cdd/test_cdd_1.R")
 test_file("cdd/test_cdd_2.R")
