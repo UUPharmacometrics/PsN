@@ -9,6 +9,7 @@ use lib "$Bin/../..";
 use includes; #file with paths to PsN packages
 use tool::nonparametric;
 
+ui->silent(1); #we do not want warning messages from PsN when we run unit tests.
 my $file= $includes::testfiledir."/nonparametric/nonparam_test.csv";
 my $file_1= $includes::testfiledir."/nonparametric/nonparam_test_1.csv"; # when NONMEM run fails (for example, wrong nonmem license (nonmem.lic) )
 my $file_2= $includes::testfiledir."/nonparametric/nonparam_test_2.csv"; # when NONMEM run fails

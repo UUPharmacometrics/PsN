@@ -316,34 +316,25 @@ ok(-e 'pheno5-1-step2.phi', "move retry crash phi");
 remove_test_dir($tempdir);
 
 my $str = tool::modelfit::get_retry_name(filename => 'psn.lst',
-										 retry => 0,
-										 nm_major_version => 7,
-										 nm_minor_version => undef);
+										 retry => 0);
 cmp_ok($str,'eq','psn-1.lst','get retry name 1');
 
 $str = tool::modelfit::get_retry_name(filename => 'psn.ctl',
 									  retry => 1,
-									  crash => 1,
-									  nm_major_version => 7,
-									  nm_minor_version => undef);
+									  crash => 1);
 cmp_ok($str,'eq','psn-2-step1.ctl','get retry name 2');
 
 $str = tool::modelfit::get_retry_name(filename => 'output',
-										 retry => 0,
-										 nm_major_version => 7,
-										 nm_minor_version => undef);
+									  retry => 0);
 cmp_ok($str,'eq','output-1','get retry name 3');
 
 $str = tool::modelfit::get_retry_name(filename => 'msf_ETAS',
-										 retry => 0,
-										 nm_major_version => 7,
-										 nm_minor_version => 3);
+									  retry => 0);
+
 cmp_ok($str,'eq','msf-1_ETAS','get retry name 4');
-$str = tool::modelfit::get_retry_name(filename => 'run1.msf_ETAS',
-										 retry => 1,
-										 nm_major_version => 7,
-										 nm_minor_version => 3);
-cmp_ok($str,'eq','run1-2.msf_ETAS','get retry name 5');
+$str = tool::modelfit::get_retry_name(filename => 'run1_ETAS.msf',
+									  retry => 1);
+cmp_ok($str,'eq','run1-2_ETAS.msf','get retry name 5');
 
 
 $outobj = output -> new ('filename' => $output_files.'special_mod/maxeval_exceeded.lst');

@@ -116,8 +116,29 @@ is_deeply($model->problems->[0]->get_msfo_filenames,['msfb1'],'MSFO filenames 2 
 is_deeply($model->problems->[1]->get_msfo_filenames,[],'MSFO filenames 2b');
 is($model->problems->[1]->msfis->[0]->format_filename(write_directory => $modeldir.$dirsep.'subdir'),'..'.$dirsep.'msfb2','format_filename msfo mismatch');
 
+is_deeply(model::problem::msfi::get_additional_msfo_files(msfname => 'pheno.run1.msf'),
+		  ['pheno.run1_ETAS.msf','pheno.run1_RMAT.msf','pheno.run1_SMAT.msf'],'get additional msfo files new nonmem two dots');
 
+is_deeply(model::problem::msfi::get_additional_msfo_files(msfname => 'pheno.msf'),
+		  ['pheno_ETAS.msf','pheno_RMAT.msf','pheno_SMAT.msf'],'get additional msfo files new nonmem one dot');
 
+is_deeply(model::problem::msfi::get_additional_msfo_files(msfname => 'phenomsf'),
+		  ['phenomsf_ETAS','phenomsf_RMAT','phenomsf_SMAT'],'get additional msfo files new nonmem no dot');
+
+my ($base,$type,$extension) = model::problem::msfi::get_basename_msftype_extension(filename => 'phenomsf');
+is_deeply([$base,$type,$extension],['phenomsf','',''],'get_basename_msftype_extension 1');
+
+($base,$type,$extension) = model::problem::msfi::get_basename_msftype_extension(filename => 'pheno.run1_RMAT.msf');
+is_deeply([$base,$type,$extension],['pheno.run1','_RMAT','.msf'],'get_basename_msftype_extension 2');
+
+($base,$type,$extension) = model::problem::msfi::get_basename_msftype_extension(filename => 'phenomsf_SMAT');
+is_deeply([$base,$type,$extension],['phenomsf','_SMAT',''],'get_basename_msftype_extension 3');
+
+($base,$type,$extension) = model::problem::msfi::get_basename_msftype_extension(filename => 'pheno_ETAS.msf');
+is_deeply([$base,$type,$extension],['pheno','_ETAS','.msf'],'get_basename_msftype_extension 4');
+
+($base,$type,$extension) = model::problem::msfi::get_basename_msftype_extension(filename => 'run1.mod');
+is_deeply([$base,$type,$extension],['run1','','.mod'],'get_basename_msftype_extension 5');
 
 
 remove_test_dir($tempdir);

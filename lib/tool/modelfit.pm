@@ -1052,9 +1052,7 @@ sub select_best_model
 			foreach my $ext (@PsN::nm7_extensions,'.'.$self->modext,'.lst'){
 				my $filename = 'psn'.$ext;
 				my $use_name = get_retry_name( filename => $filename,
-											   retry => $selected-1,
-											   nm_major_version => $PsN::nm_major_version,
-											   nm_minor_version => $PsN::nm_minor_version);
+											   retry => $selected-1);
 				
 				# move files to final files in NM_run, to be clear about which one was selected
 				mv( $use_name, $filename ) if (-e $use_name); 
@@ -1115,44 +1113,22 @@ sub get_retry_name
 							  retry => { isa => 'Int', optional => 0 },
 							  crash => { isa => 'Maybe[Int]', optional => 1 },
 							  filename => { isa => 'Str', optional => 0 },
-							  nm_major_version => { isa => 'Int', optional => 0 },
-							  nm_minor_version => { isa => 'Maybe[Num]', optional => 1 }
 		);
 	my $retry = $parm{'retry'};
 	my $crash = $parm{'crash'};
 	my $filename = $parm{'filename'};
-	my $nm_major_version = $parm{'nm_major_version'};
-	my $nm_minor_version = $parm{'nm_minor_version'};
 	#input retry is actually the try index, increase with 1 to get retry number
 
 	$retry++;
 
-	my $ver = $nm_major_version;
-	$ver .= '.'.$nm_minor_version if (defined $nm_minor_version);
+	my ($base,$msftype,$extension) = model::problem::msfi::get_basename_msftype_extension(filename => $filename);
 
-	if (($ver > 7.2) and ($filename =~ /_ETAS$/)){
-		$filename =~ s/_ETAS$//;
-		if (defined $crash){
-			unless( $filename =~ s/\.([^.]+)$/-$retry-step$crash.$1/ ){
-				$filename .= "-$retry-step$crash";
-			}
-		}else{
-			unless( $filename =~ s/\.([^.]+)$/-$retry.$1/ ){
-				$filename .= "-$retry";
-			}
-		}
-		$filename .= '_ETAS';
-	}else{
-		if (defined $crash){
-			unless( $filename =~ s/\.([^.]+)$/-$retry-step$crash.$1/ ){
-				$filename .= "-$retry-step$crash";
-			}
-		}else{
-			unless( $filename =~ s/\.([^.]+)$/-$retry.$1/ ){
-				$filename .= "-$retry";
-			}
-		}
+	my $crashstring='';
+	if (defined $crash){
+		$crashstring = "-step$crash";
 	}
+	$filename = "$base-$retry".$crashstring.$msftype.$extension;
+	
 	return $filename;
 }
 
@@ -1182,9 +1158,7 @@ sub set_msfo_to_msfi
 	}
 
 	my $msfo = get_retry_name('filename' => $filename,
-							  'retry' => $retry,
-							  nm_major_version => $PsN::nm_major_version,
-							  nm_minor_version => $PsN::nm_minor_version);
+							  'retry' => $retry);
 	
 	my $msfi;
 
@@ -1195,10 +1169,7 @@ sub set_msfo_to_msfi
 		$msfi = get_retry_name(
 			'filename' => $filename,
 			'retry' => $retry,
-			crash => $queue_info->{'crashes'},
-			nm_major_version => $PsN::nm_major_version,
-			nm_minor_version => $PsN::nm_minor_version,
-			);
+			crash => $queue_info->{'crashes'}	);
 	}
 
 	unless (-e $msfi) {
@@ -1207,17 +1178,8 @@ sub set_msfo_to_msfi
 			newline => 1);
 	}
 
-	#Add rec in first prob if not there. If already there only change filename
-	if (defined $candidate_model->problems->[0]->msfis and 
-		scalar(@{$candidate_model->problems->[0]->msfis})>0){
-		$candidate_model->problems->[0]->msfis->[0]->set_filename(filename=>$msfi);
-	}else{
-		$candidate_model->problems->[0]->set_records(type => 'msfi', record_strings => [$msfi]);
-	}
-
-	$candidate_model->remove_records(type => 'theta',problem_numbers =>[1]);
-	$candidate_model->remove_records(type => 'omega',problem_numbers =>[1]);
-	$candidate_model->remove_records(type => 'sigma',problem_numbers =>[1]);
+	$candidate_model->set_first_problem_msfi(msfiname => $msfi);
+	
 	$candidate_model->_write;
 }
 
@@ -1708,16 +1670,12 @@ sub run_nonmem
 			next unless (defined $filename);
 
 			my $retry_name = get_retry_name(filename => $filename, 
-											retry => $tries,
-											nm_major_version => $PsN::nm_major_version,
-											nm_minor_version => $PsN::nm_minor_version);
-			mv($retry_name, $filename);
+											retry => $tries);
+			mv($retry_name, $filename) if (-e $retry_name);
 		}
 
 		my $fname = get_retry_name(filename => 'psn.lst', 
-								   retry => $tries,
-								   nm_major_version => $PsN::nm_major_version,
-								   nm_minor_version => $PsN::nm_minor_version);
+								   retry => $tries);
 		$queue_map->{'rerun_' . $run_no} = $run_no; #Fake pid
 		trace(tool => 'modelfit',
 								message => "Moved $fname to psn.lst in run_nonmem and ".
@@ -2151,16 +2109,12 @@ sub move_retry_files
 		if (defined $crash){
 			#name without crash
 			$old_name = get_retry_name( filename => $filename,
-										retry => $retry,
-										nm_major_version => $nm_major_version,
-										nm_minor_version => $nm_minor_version );
+										retry => $retry);
 		}
 
 		my $new_name = get_retry_name( filename => $filename,
 									   retry => $retry,
-									   crash => $crash,
-									   nm_major_version => $nm_major_version,
-									   nm_minor_version => $nm_minor_version );
+									   crash => $crash);
 		if ($filename =~ /psn\_etas/){
 			$eta_shrinkage_name = $new_name;
 		}
@@ -2175,15 +2129,11 @@ sub move_retry_files
 	if (defined $crash){
 		#name without crash
 		$old_name = get_retry_name( filename => $nmqual,
-									retry => $retry,
-									nm_major_version => $nm_major_version,
-									nm_minor_version => $nm_minor_version );
+									retry => $retry);
 	}
 	if (-e $old_name){
 		my $new_name = get_retry_name( filename => $nmqual, 
-									   retry => $retry,
-									   nm_major_version => $nm_major_version,
-									   nm_minor_version => $nm_minor_version );
+									   retry => $retry);
 		mv( $old_name, $new_name );
 		$stopmess .= "$old_name to $new_name, ";
 	}
@@ -2628,9 +2578,7 @@ sub restart_needed
 		} else {
 			my $new_name = get_retry_name( filename => 'psn.'.$self->modext,
 										   retry => ${$tries},
-										   crash => $queue_info_ref -> {'crashes'},
-										   nm_major_version => $PsN::nm_major_version,
-										   nm_minor_version => $PsN::nm_minor_version);
+										   crash => $queue_info_ref -> {'crashes'});
 			cp( $new_name, 'psn.'.$self->modext );
 		}
 		
@@ -2790,9 +2738,7 @@ sub update_crash_number {
 	my $crash_no = $queue_info -> {'crashes'};
 	while (-e get_retry_name( filename => 'psn.'.$modext,
 							  retry => $retry,
-							  crash => $crash_no,
-							  nm_major_version => $PsN::nm_major_version,
-							  nm_minor_version => $PsN::nm_minor_version)){
+							  crash => $crash_no)){
 		$crash_no++;
 	}	  
 	$queue_info -> {'crashes'} = $crash_no;
@@ -3281,9 +3227,7 @@ sub move_model_and_output
 
 		#then read final lst-file to memory, append to same array
 		$fname = get_retry_name( filename => 'psn.lst',
-								 retry => $use_run-1,
-								 nm_major_version => $PsN::nm_major_version,
-								 nm_minor_version => $PsN::nm_minor_version );
+								 retry => $use_run-1);
 		open(LSTFILE, $fname);
 		while (my $inline = <LSTFILE>){
 			chomp ($inline);
@@ -3306,9 +3250,7 @@ sub move_model_and_output
 	foreach my $filename ( @output_files, 'compilation_output.txt','psn.'.$self->modext,'nmqual_messages.txt' ){
 
 		my $use_name = get_retry_name( filename => $filename,
-									   retry => $use_run-1,
-									   nm_major_version => $PsN::nm_major_version,
-									   nm_minor_version => $PsN::nm_minor_version );
+									   retry => $use_run-1);
 
 		# Copy $use_run files to final files in NM_run, to be clear about which one was selected
 #		cp( $use_name, $filename ) if (-e $use_name); 
@@ -3392,9 +3334,7 @@ sub move_model_and_output
 			my $msfo=$final_model -> problems->[0]->get_msfo_filenames->[0];
 			if (defined $msfo){
 				$msfo = get_retry_name( filename => $msfo,
-										retry => $use_run-1,
-										nm_major_version => $PsN::nm_major_version,
-										nm_minor_version => $PsN::nm_minor_version );
+										retry => $use_run-1);
 			}
 			my $max_retry = $self->retries;
 			$max_retry = $self->min_retries if ($self->min_retries > $max_retry);
@@ -3403,23 +3343,18 @@ sub move_model_and_output
 				foreach my $filename ( @output_files,'psn.'.$self->modext,'compilation_output.txt','nmqual_messages.txt'){
 
 					my $use_name = get_retry_name( filename => $filename,
-												   retry => $i-1,
-												   nm_major_version => $PsN::nm_major_version,
-												   nm_minor_version => $PsN::nm_minor_version );
+												   retry => $i-1);
 					unlink( $use_name );
 					my $crash=1;
 					my $del_name = get_retry_name( filename => $filename,
 												   retry => $i-1,
-												   crash => $crash,
-												   nm_major_version => $PsN::nm_major_version,
-												   nm_minor_version => $PsN::nm_minor_version);
+												   crash => $crash);
+
 					while (-e $del_name){
 						$crash++;
 						my $next_name = get_retry_name( filename => $filename,
 														retry => $i-1,
-														crash => $crash,
-														nm_major_version => $PsN::nm_major_version,
-														nm_minor_version => $PsN::nm_minor_version);
+														crash => $crash);
 						unlink( $del_name ) unless (($use_name eq $msfo) and 
 													(not -e $next_name));
 						$del_name = $next_name;
