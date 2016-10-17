@@ -12,9 +12,11 @@ extends 'model::problem::record';
 has 'filename'  => ( isa => 'Str', reader => 'get_filename', writer => '_set_filename' );
 has 'directory'  => ( isa => 'Str', reader => 'get_directory', writer => '_set_directory' );
 has 'model_directory' => ( is => 'rw', isa => 'Maybe[Str]' );
-#problem numbering starts at 1, 0 means external msfo
+#problem numbering starts at 1, problem number 0 means external msfo
 has 'msfo_from_problem_number' => ( isa => 'Int', reader => 'get_msfo_from_problem_number', writer => '_set_msfo_from_problem_number', default => 0 ); 
 has 'internal_msfo_files' => (is => 'rw', isa => 'HashRef', default => sub { {} });
+
+our @msf_additional_files = ('_ETAS','_RMAT','_SMAT');
 
 sub BUILD
 {
@@ -156,6 +158,52 @@ sub _format_record
 	return \@formatted;
 }
 
+sub get_additional_msfo_files
+{
+	my %parm = validated_hash(\@_,
+							  msfname => { isa => 'Str', optional => 0 },
+		);
+	my $msfname = $parm{'msfname'};
+	
+	my @array=();
+	my $extension='';
+	if ($msfname =~ s/(\.[^.]+)$//){
+		$extension = $1;
+	}
+
+	foreach my $extra (@msf_additional_files){
+		push(@array,$msfname.$extra.$extension);
+	}
+	
+	return \@array;
+}
+
+sub get_basename_msftype_extension
+{
+	my %parm = validated_hash(\@_,
+							  filename => { isa => 'Str', optional => 0 },
+		);
+	my $filename = $parm{'filename'};
+	
+	my $base =$filename;
+	my $type = '';
+	my $extension='';
+	
+	if ($base =~ s/(\.[^.]+)$//){
+		$extension = $1;
+	}
+
+	foreach my $extra (@msf_additional_files){
+		if ($base =~ s/($extra)$//){
+			$type = $extra;
+			last;
+		}
+	}
+	return ($base,$type,$extension);
+
+}
+
+
 sub copy_msfi_file
 {
 	my $self = shift;
@@ -163,13 +211,11 @@ sub copy_msfi_file
 							  write_directory => { isa => 'Str', optional => 0 },
 							  ignore_missing_file => {isa => 'Bool', default => 0},
 							  overwrite => {isa => 'Bool', default => 0},
-							  msf_etas =>{isa => 'Bool', optional => 0},
 	);
 
 	my $write_directory = $parm{'write_directory'};
 	my $ignore_missing_file = $parm{'ignore_missing_file'};
 	my $overwrite = $parm{'overwrite'};
-	my $msf_etas = $parm{'msf_etas'};
 
 	unless ($self->get_msfo_from_problem_number > 0){
 		my $path = File::Spec->abs2rel($self->get_directory,$write_directory);
@@ -182,9 +228,11 @@ sub copy_msfi_file
 					croak("msfi file $new already exists when copying from $old, and not allowed to overwrite in copy_msfi_file");
 				}else{
 					cp($old,$new);
-					if ($msf_etas){
-						if (-e $old.'_ETAS'){
-							cp($old.'_ETAS',$new.'_ETAS');
+					my $old_extra = get_additional_msfo_files(msfname => $old);
+					my $new_extra = get_additional_msfo_files(msfname => $new);
+					for (my $j=0; $j<scalar(@{$old_extra}); $j++){
+						if (-e $old_extra->[$j]){
+							cp($old_extra->[$j],$new_extra->[$j]);
 						}
 					}
 				}

@@ -3569,8 +3569,7 @@ sub _write
 				for ( my $j = 0; $j < scalar @{$self->problems->[$i]->msfis}; $j++ ) {
 					$self->problems->[$i]->msfis->[$j]->copy_msfi_file(write_directory => $writedir,
 																	   ignore_missing_file => $self->ignore_missing_data,
-																	   overwrite => 1,
-																	   msf_etas => have_msf_etas());
+																	   overwrite => 1);
 				}
 			}
 		}
@@ -3873,17 +3872,6 @@ sub input_files
 	return \@file_names;
 }
 
-sub have_msf_etas
-{
-	my $ver = $PsN::nm_major_version;
-	$ver = '7' unless (defined $ver);
-	$ver .= '.'.$PsN::nm_minor_version if (defined $PsN::nm_minor_version);
-	my $have=0;
-	if ($ver > 7.2){
-		$have =1;
-	}
-	return $have;
-}
 sub output_files
 {
 	my $self = shift;
@@ -3908,13 +3896,12 @@ sub output_files
 	}
 
 	if( defined $self -> msfo_names() ){
+		require model::problem::msfi;
 		foreach my $msfo_file ( @{$self -> msfo_names()} ){
 			next unless (defined $msfo_file);
 			my ( $dir, $filename ) = OSspecific::absolute_path( undef, $msfo_file );
 			push( @file_names, $filename );
-			if (have_msf_etas){
-				push( @file_names, $filename.'_ETAS' ); #from NM 7.3
-			}
+			push( @file_names,@{model::problem::msfi::get_additional_msfo_files(msfname => $filename)});
 		}
 	}
 
@@ -5228,6 +5215,60 @@ sub update_internal_msfi{
 	}
 	return \@updated;
 }
+
+sub set_first_problem_msfo_to_msfi{
+    my $self = shift;
+	my %parm = validated_hash(\@_,
+							  newmsfoname => { isa => 'Str', optional => 1 },
+		);
+	my $newmsfoname = $parm{'newmsfoname'};
+
+	my $oldmsfoname = $self->msfo_names(problem_numbers => [1]);
+	unless (defined $oldmsfoname->[0]){
+		croak("cannot do set_first_problem_msfo_to_msfi, no msfo in first problem");
+	}
+
+	unless (defined $newmsfoname){
+		require model::problem::msfi;
+		my $modelname = $self->filename;
+		my ($base,$msftype,$extension) = model::problem::msfi::get_basename_msftype_extension(filename => $modelname);
+		$newmsfoname = $base.'.msf';
+	}
+	if ($oldmsfoname->[0] eq $newmsfoname){
+		ui->print(category => 'all',message => "warning: set_first_problem_msfo_to_msfi same name msfo, msfi $newmsfoname");
+	}
+	$self->set_first_problem_msfi(msfiname => $oldmsfoname->[0],
+								  newmsfo => $newmsfoname);
+	
+}
+sub set_first_problem_msfi{
+    my $self = shift;
+	my %parm = validated_hash(\@_,
+							  msfiname => { isa => 'Str', optional => 0 },
+							  newmsfo => { isa => 'Str', optional => 1 },
+							  add_msfo_if_absent => { isa => 'Bool', optional => 1, default => 0 },
+		);
+	my $msfiname = $parm{'msfiname'};
+	my $newmsfo = $parm{'newmsfo'};
+	my $add_msfo_if_absent = $parm{'add_msfo_if_absent'};
+
+	#Add rec in first prob if not there. If already there only change filename
+	if (defined $self->problems->[0]->msfis and 
+		scalar(@{$self->problems->[0]->msfis})>0){
+		$self->problems->[0]->msfis->[0]->set_filename(filename=>$msfiname);
+	}else{
+		$self->problems->[0]->set_records(type => 'msfi', record_strings => [$msfiname]);
+	}
+
+	$self->remove_records(type => 'theta',problem_numbers =>[1]);
+	$self->remove_records(type => 'omega',problem_numbers =>[1]);
+	$self->remove_records(type => 'sigma',problem_numbers =>[1]);
+
+	if (defined $newmsfo){
+		$self->rename_msfo(name => $newmsfo, add_if_absent => $add_msfo_if_absent);
+	}
+}
+
 sub rename_msfo{
     my $self = shift;
 	my %parm = validated_hash(\@_,
