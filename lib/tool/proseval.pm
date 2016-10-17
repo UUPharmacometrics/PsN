@@ -35,20 +35,14 @@ sub modelfit_setup
 {
 	my $self = shift;
 
-    filter_data::filter_dataset(model => $self->model);
-
-    #my $orig_data_file = $self->model->datafiles(absolute_path => 1, problem_numbers => [1])->[0];
-    my $ignoresign = defined $self->model->ignoresigns ? $self->model->ignoresigns->[0] : '@';
+    my $model = filter_data::filter_dataset(model => $self->model);
 
     my $n = 1;
     my $continue = 1;
 
-
-    $self->model->set_option(record_name => 'estimation', option_name => 'MAXEVALS', fuzzy_match => 1, option_value => '0');
-	$self->tools([]) unless defined $self->tools;
+    $model->set_option(record_name => 'estimation', option_name => 'MAXEVALS', fuzzy_match => 1, option_value => '0');
     my @models_to_run;
 
-	my $model = $self->models()->[0]; 
     my $mdv_column = $model->problems->[0]->find_data_column(column_name => 'MDV'); 
     if ($mdv_column == -1) {
         $mdv_column = undef;
@@ -57,7 +51,7 @@ sub modelfit_setup
     while ($continue) {
         my $data = data->new(
             filename => "preprocess_data_dir/filtered.dta",
-            ignoresign => $ignoresign,
+            ignoresign => '@',
             missing_data_token => $self->missing_data_token,
             idcolumn => $self->model->idcolumn(),
         );
@@ -68,7 +62,7 @@ sub modelfit_setup
         my $model_filename = $self->directory . "m1/proseval_$n.mod";
         $data->_write(filename => $data_filename);
 
-        my $modified_model = $self->model->copy(filename => $model_filename, output_same_directory => 1);
+        my $modified_model = $model->copy(filename => $model_filename, output_same_directory => 1);
         $modified_model->problems->[0]->datas->[0]->set_filename(filename => $data_filename);
 
         # Remove all tables
@@ -98,6 +92,7 @@ sub modelfit_setup
         copy_data => 0,
 	);
 
+	$self->tools([]) unless defined $self->tools;
 	push(@{$self->tools}, $modelfit);
 }
 
