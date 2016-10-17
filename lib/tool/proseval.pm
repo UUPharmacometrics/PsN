@@ -108,7 +108,7 @@ sub modelfit_analyze
     my $self = shift;
 
     open my $fh, '>', "results.csv";
-    print $fh "ID,TIME,EVID,WRES,IWRES,OBS\n";
+    print $fh "ID,TIME,EVID,IPRED,WRES,IWRES,OBS\n";
 
     for my $ind (0 .. scalar(@{$self->sorted_indiv_numobs}) - 1) {
         for my $numobs (1 .. $self->sorted_indiv_numobs->[$ind]) {
