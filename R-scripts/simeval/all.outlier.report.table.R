@@ -1,5 +1,5 @@
 all.outlier.report.table <- function(all.iofv.file,n.subjects,samples,
-                               ebe.npde.file,n.eta,outlying_criteria,
+                               ebe.npde.file,iiv.eta.names,outlying_criteria,
                                residual.outliers.file) {
 
   # Use functions
@@ -7,7 +7,7 @@ all.outlier.report.table <- function(all.iofv.file,n.subjects,samples,
   ofv_outliers <- ofv_out$ofv_outliertable
   
   model.filename <- " " # because we are not going to see the model name
-  ebe.npde_outliers <- ebe.npde.outliers(ebe.npde.file,n.eta,outlying_criteria,model.filename)
+  ebe.npde_outliers <- ebe.npde.outliers(ebe.npde.file,iiv.eta.names,outlying_criteria,model.filename)
   
   cwres.iwres_out <- outlier.table(residual.outliers.file)
   cwres.iwres_outliers <- cwres.iwres_out$outliers_count
