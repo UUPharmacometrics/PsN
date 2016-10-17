@@ -21,8 +21,8 @@ Getopt::Long::config("auto_abbrev");
 ## Declare the options
 my %options;
 
-my %required_options = ( "groups:i"=>'' );
-my %optional_options = ( );
+my %required_options = ( "groups:i"=> undef );
+my %optional_options = ( "msf!" => undef);
 
 my $res = GetOptions( \%options, 
 		      @common_options::get_opt_strings,
@@ -70,6 +70,14 @@ $help_text{-groups} = <<'EOF';
 
     The number of cross-validation groups in the data set.
 EOF
+$help_text{-msf} = <<'EOF';
+      -msf
+
+    Default not set, which means prediction model THETA/OMEGA/SIGMA are updated 
+    with final estimates from estimation models.
+    If -msf is set, instead use MSFO - MSFI to transfer parameter values
+    from estimation models to prediction models.
+EOF
 
 
 common_options::online_help( 'crossval', \%options, \%help_text, \%required_options, \%optional_options);
@@ -105,6 +113,7 @@ my $xv =  tool::xv_step -> new( eval( $common_options::parameters ),
 								nr_validation_groups => $options{'groups'},
 								directory_name_prefix => 'crossval',
 								top_tool => 1,
+								msf => $options{'msf'},
 								models => [$model],
 								subtool_arguments => { modelfit => { eval( $common_options::parameters ),
 																	 directory => undef} },

@@ -54,6 +54,7 @@ has 'prediction_data' => ( is => 'rw', isa => 'ArrayRef', default => sub { [] } 
 has 'init' => ( is => 'rw', isa => 'Ref' );
 has 'post_analyze' => ( is => 'rw', isa => 'Ref' );
 has 'cont' => ( is => 'rw', isa => 'Bool' );
+has 'msf' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'own_parameters' => ( is => 'rw', isa => 'HashRef' );
 has 'estimation_models' => ( is => 'rw', isa => 'ArrayRef[model]', default => sub { [] } );
 has 'prediction_models' => ( is => 'rw', isa => 'ArrayRef[model]', default => sub { [] } );
@@ -125,6 +126,10 @@ sub modelfit_setup
 												);
 
 			$model_copy_est -> datafiles( new_names => [$self -> estimation_data -> [$i]] );
+			if ($self->msf){
+				$model_copy_est ->rename_msfo(add_if_absent => 1,
+											  name => 'est_model'.$i.'.msf'); #FIXME we do not handle prior tnpri here
+			}
 			#do not write model here, will modify more later
 			push( @{$self -> estimation_models}, $model_copy_est );
 		}
@@ -286,30 +291,39 @@ sub modelfit_post_subtool_analyze
 			defined $est_mod -> outputs -> [0] ->get_single_value(attribute=> 'ofv') ){
 			#before we required minimization successful here
 
-			$pred_mod -> update_inits( from_output => $est_models[$i]->outputs->[0],
-									   update_omegas => 1,
-									   update_sigmas => 1,
-									   update_thetas => 1);
-			my $init_val = $pred_mod ->
-				initial_values( parameter_type    => 'theta',
-								parameter_numbers => [[1..$pred_mod->nthetas()]])->[0];
-			trace(tool => 'xv_step_subs',message => "cut thetas in xv_step_subs ".
-									"modelfit_post_subtool_analyze", level => 1);
-			for(my $j = $self->n_model_thetas(); $j<scalar(@{$init_val}); $j++){ #leave original model thetas intact
-				my $value = $init_val -> [$j];
-				if ((defined $self->cutoff) and (abs($value) <= $self->cutoff()))
-				{
-					$pred_mod->initial_values(parameter_type => 'theta',
-											  parameter_numbers => [[$j+1]],
-											  new_values => [[0]] );
-					$pred_mod->fixed(parameter_type => 'theta',
-									 parameter_numbers => [[$j+1]],
-									 new_values => [[1]] );
+			if ($self->msf){
+				my $oldmsfoname = $est_mod->msfo_names(problem_numbers => [1]);
+				unless (defined $oldmsfoname->[0]){
+					croak("cannot do set_first_problem_msfi, no msfo in est model");
+				}
+
+				$pred_mod -> set_first_problem_msfi(msfiname => $est_mod->directory.$oldmsfoname->[0],
+													set_new_msfo => 1);
+			}else{
+				$pred_mod -> update_inits( from_output => $est_models[$i]->outputs->[0],
+										   update_omegas => 1,
+										   update_sigmas => 1,
+										   update_thetas => 1);
+				my $init_val = $pred_mod ->	initial_values( parameter_type    => 'theta',
+															parameter_numbers => [[1..$pred_mod->nthetas()]])->[0];
+				trace(tool => 'xv_step_subs',message => "cut thetas in xv_step_subs ".
+					  "modelfit_post_subtool_analyze", level => 1);
+				for(my $j = $self->n_model_thetas(); $j<scalar(@{$init_val}); $j++){ #leave original model thetas intact
+					my $value = $init_val -> [$j];
+					if ((defined $self->cutoff) and (abs($value) <= $self->cutoff()))
+					{
+						$pred_mod->initial_values(parameter_type => 'theta',
+												  parameter_numbers => [[$j+1]],
+												  new_values => [[0]] );
+						$pred_mod->fixed(parameter_type => 'theta',
+										 parameter_numbers => [[$j+1]],
+										 new_values => [[1]] );
+					}
 				}
 			}
 
 			# Make sure changes are reflected on disk.
-			$pred_mod->_write(overwrite => 1);
+			$pred_mod->_write(overwrite => 1); #FIXME do not write models in m1 with orginal initials, then do not have to overwrite here
 			push( @models_to_run, $pred_mod );
 		}else{
 			print "est model index $i did not have defined ofv.";
