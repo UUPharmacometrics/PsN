@@ -22,8 +22,8 @@ if(length(args) < 2) {
     message("Input:\n    Two folder names are required.
     The following inputs are valid, but not required:")
     message("-pdf,\n    A name of pdf file.")
-    message("-f,\n    A folder name, where created pdf file, needed csv files and R created script are going to be saved.")
-    message("\nExamples:\n    Rscript C:\\PsN\\R-scripts\\compare\\compare.R folder1 folder2 -pdf=my_results.pdf -f=new_folder_name")
+    message("-dir,\n    A folder name, where created pdf file, needed csv files and R created script are going to be saved.")
+    message("\nExamples:\n    Rscript C:\\PsN\\R-scripts\\compare\\compare.R folder1 folder2 -pdf=my_results.pdf -dir=new_folder_name")
     message("    Rscript C:\\PsN\\R-scripts\\compare\\compare.R folder1 folder2")
     quit()
   } else {
@@ -44,8 +44,8 @@ for(i in 1:length(args)) {
     if (!(grepl(".pdf$",pdf.filename))) {
       pdf.filename <- paste0(pdf.filename,".pdf")
     }
-  } else if(grepl("^-f=",as.character(args[i]))) {
-    new_folder_name <- gsub("\\-f=", "",as.character(args[i]))
+  } else if(grepl("^-dir=",as.character(args[i]))) {
+    new_folder_name <- gsub("\\-dir=", "",as.character(args[i]))
   } else {
     if(!(grepl("^--help$",as.character(args[i])))) {
       index <- index + 1
