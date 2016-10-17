@@ -34,7 +34,7 @@ sub modelfit_setup
 											models => [$input_model],
 											raw_results => undef,
 											top_tool => 0 );
-		tool::add_to_nmoutput(run => $orig_fit, extensions => ['ext','cov']);		
+		tool::add_to_nmoutput(run => $orig_fit, extensions => ['ext','cov','npl','npd','npe','npi']);		
 		ui -> print( category => 'all',	message => 'Running input model' );
 		$orig_fit -> run;
 	}
@@ -56,7 +56,8 @@ sub modelfit_setup
 		my $npsupp_value = ${$self->npsupp}[$i];
 		if ($npsupp_value < $indiv_number) {
 			ui -> print(category => 'all',
-						message => "Number of individuals $indiv_number is larger than NPSUPP values $npsupp_value.");
+						message => "WARNING: Number of individuals".$indiv_number."is larger than NPSUPP values".
+						$npsupp_value."NONMEM will automatically change NPSUPP from".$npsupp_value."to".$indiv_number."\n");
 		}
 	}
 	
