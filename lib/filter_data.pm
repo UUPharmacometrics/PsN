@@ -78,20 +78,21 @@ sub filter_dataset
             clean => 2);
         $filter_fit->run;
 
-        # Is the new model needed?
-        #my $adjusted_model = $model->copy(
-        #    filename => 'adjusted_model.mod',
-        #    directory => '.', 
-        #    copy_datafile => 0,
-        #    copy_output => 0,
-        #    write_copy => 0,
-        #    output_same_directory => 1,
-        #);
+        my $adjusted_model = $model->copy(
+            filename => 'adjusted_model.mod',
+            directory => '.', 
+            copy_datafile => 0,
+            copy_output => 0,
+            write_copy => 0,
+            output_same_directory => 1,
+        );
 
-        # Remove IGNORE, ACCEPT
-        # Change datafile
+        $adjusted_model->remove_option(record_name => 'data', option_name => 'IGNORE', fuzzy_match => 1); 
+        $adjusted_model->remove_option(record_name => 'data', option_name => 'ACCEPT', fuzzy_match => 1); 
+        $adjusted_model->problems->[0]->datas->[0]->set_filename(filename => $datafile);
+        $adjusted_model->problems->[0]->datas->[0]->ignoresign('@');
 
-        #return $adjusted_model;
+        return $adjusted_model;
 
     } else {
         return $model;
