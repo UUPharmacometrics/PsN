@@ -217,6 +217,13 @@ ___boot_scm___
 
 - Add OFV and run number columns to results.csv
 
+   ___cdd___
+
+- New option -update_inits, set by default. The initial estimates in the cdd models will be
+  the final estimates from the base model, unless -no-update_inits is set. If -no-update_inits
+  is set, then the initial estimates will be as in earlier versions, i.e. the same as
+  as the initial estimates of the base model.
+  
    ___rplots___
 
 - Major redesign

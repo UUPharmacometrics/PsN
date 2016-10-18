@@ -23,9 +23,10 @@ my %options;
 
 my %required_options = ( 'case_column:s'        => 'column_name|column_number');
 my %optional_options = ( "bins:i"               => '',
-			 "xv!"                  => '',
-			 "selection_method:s"   => '\'random\'|\'consecutive\'',
-			 "outside_n_sd_check:f" => '' );
+						 "update_inits!"=>'',
+						 "xv!"                  => '',
+						 "selection_method:s"   => '\'random\'|\'consecutive\'',
+						 "outside_n_sd_check:f" => '' );
 
 my $res = GetOptions( \%options,
 		      @common_options::get_opt_strings,
@@ -89,6 +90,12 @@ $help_text{-bins} = <<'EOF';
       Default value = Number of unique values in the case column.
 EOF
 
+$help_text{-update_inits} = <<'EOF';      
+      -update_inits
+
+      Default true. Update the initial estimates of the cdd models to the 
+      final estimates from the estimation (lst-file) of the base model.
+EOF
 $help_text{-selection_method} = <<'EOF';
       -selection_method='random' or 'consecutive'
 
@@ -184,6 +191,7 @@ my $cdd =
 					   bins		     => $options{'bins'},
 					   selection_method   => $options{'selection_method'},
 					   case_column       => $options{'case_column'},
+					   update_inits       => $options{'update_inits'},
 					   outside_n_sd_check => $options{'outside_n_sd_check'},
 					   cross_validate     => $options{'xv'} );
 

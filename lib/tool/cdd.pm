@@ -38,6 +38,7 @@ has 'results_file' => ( is => 'rw', isa => 'Str', default => 'cdd_results.csv' )
 has 'prediction_models' => ( is => 'rw', isa => 'ArrayRef', default => sub { [] } );
 has 'cross_validate' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'outside_n_sd_check' => ( is => 'rw', isa => 'Num', default => 2 );
+has 'update_inits' => ( is => 'rw', isa => 'Bool', default => 1 );
 
 sub BUILD
 {
@@ -871,7 +872,15 @@ sub general_setup
 		# }}} orig run
 
 	}
+	
+	unless ( $model -> outputs -> [0] -> have_output ) {
+		if ($self->update_inits){
+			ui -> print( category => 'cdd',
+						 message => 'There is no output from the base model, will use base model initial values for cdd models.' );
+		}
+	}
 
+	
 	# ------------------------  Print a log-header  -----------------------------
 
 	# {{{ log header
@@ -998,18 +1007,29 @@ sub general_setup
 
 		my $ndatas = scalar @{$new_datas};
 		$self->actual_bins($ndatas);
+
+		my $templatemodel = $model -> copy( filename => $output_directory.'/template.mod',
+										   copy_datafile   => 0,
+										   output_same_directory => 1,
+										   write_copy => 0,
+										   copy_output => 0);
+		if ($model->outputs->[0]->have_output and $self->update_inits){
+			$templatemodel -> update_inits( from_output => $model->outputs->[0] );
+		}
+
 		for ( my $j = 1; $j <= $ndatas; $j++ ) {
 			my @datasets = ( $new_datas -> [$j-1], $remainders -> [$j-1] );
 			my @names = ('cdd_'.$j,'rem_'.$j);
 			foreach my $i ( 0, 1 ) {
 				my $set = $datasets[$i];
-				my $newmodel = $model -> copy( filename => $output_directory.'/'.$names[$i].'.mod',
-											   copy_datafile   => 0,
-											   write_copy => 0,
-											   copy_output => 0);
+				my $newmodel = $templatemodel -> copy( filename => $output_directory.'/'.$names[$i].'.mod',
+													   copy_datafile   => 0,
+													   output_same_directory => 1, #new
+													   write_copy => 0,
+													   copy_output => 0);
 				$newmodel -> datafiles( new_names => [$set] );
-				$newmodel -> outputfile( $output_directory.'/'.$names[$i].".lst" );
-                $newmodel -> set_outputfile();
+				#				$newmodel -> outputfile( $output_directory.'/'.$names[$i].".lst" );
+				#                $newmodel -> set_outputfile();
 				if( $i == 1 ) {
 					# set MAXEVAL=0. Again, CDD will only work for one $PROBLEM
 					my $warn = 0;
