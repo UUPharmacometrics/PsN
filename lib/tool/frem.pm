@@ -1408,8 +1408,6 @@ sub set_model2_omega_blocks
 		}
 	}
 
-	#FIXME update covariate_covmatrix if any correlations exactly 0. then set to correlation 1%, i.e. 0.01. adjust covariance
-	
 	my $matrix;
 	if ($rescale){
 		my $sdcorr = [];
@@ -1426,7 +1424,11 @@ sub set_model2_omega_blocks
 										is_covariance => 1,
 										low_correlation => $small_correlation);
 	}
-	my $omega_lines = get_omega_lines(new_omega => $matrix,
+
+	#NEW OCT18
+	my $rounded = round_off_omega(omega => $matrix);
+	my ($posdefmatrix,$diff)=linear_algebra::get_symmetric_posdef($rounded);
+	my $omega_lines = get_omega_lines(new_omega => $posdefmatrix,
 									  labels => $covariate_labels);
 	push(@{$model -> problems -> [0]-> omegas},model::problem::omega->new(record_arr => $omega_lines, 
 																		  n_previous_rows => $n_previous_rows));
