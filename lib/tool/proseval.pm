@@ -132,7 +132,7 @@ sub set_evid
 		dataset => { isa => 'data', optional => 0 },
         numzeros => { isa => 'Int', optional => 0 },
         evid_column => { isa => 'Int', optional => 0 },
-        mdv_column => { isa => 'Maybe[Int]', optional => 0 },
+        mdv_column => { isa => 'Maybe[Int]', optional => 1 },
 	);
 	my $dataset = $parm{'dataset'};
 	my $numzeros = $parm{'numzeros'};
