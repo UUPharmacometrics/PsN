@@ -865,7 +865,6 @@ sub simeval_analyze
 			push(@etatypes,'occasion_'.$i);
 		}
 
-
 		my @all_eta_headers=();
 		for (my $ti=0; $ti< scalar(@etatypes); $ti++){
 			#my ($iivref,$iovref)
@@ -1055,6 +1054,8 @@ sub simeval_analyze
 			my $npd = [];
 			my $pd=[];
 
+			print "type $type headers ".join(' ',@eta_headers)."\n" if $testing;
+			
 			if ($write_auto and ($ti == 0)){
 				my $origname = 'auto_orig_EBE.tab';
 				my $simname = 'auto_sim_EBE.tab';
@@ -1083,7 +1084,8 @@ sub simeval_analyze
 
 			}
 
-			
+			print 'filename:'."raw_original_$type"."_ebe.csv\n" if $testing;
+
 			open(ORI, ">raw_original_$type"."_ebe.csv") || die("Couldn't open raw_original_$type"."_ebe.csv : $!");
 			print ORI "ID,".join(',',@eta_headers)."\n";
 			for (my $i=0; $i<scalar(@{$est_matrix->[0]});$i++){
@@ -1102,8 +1104,8 @@ sub simeval_analyze
 			($ret,$errmess) = simeval_util::decorrelation($est_matrix,$mean_matrix,$decorr,$dummy);
 			unless ($ret ==0){
 				ui->print(category=> 'all',
-						  message => "\nError in decorrelation for ebe: $ret. ebe results cannot be computed\n".$errmess);
-				last;
+						  message => "\nError in decorrelation for ebe:\n $ret. results cannot be computed for ebe $type\n".$errmess);
+				next;
 			}
 
 			if (0){
@@ -1123,8 +1125,9 @@ sub simeval_analyze
 			}
 			$ret = simeval_util::npde_comp($decorr,$pde,$npde);
 			unless ($ret ==0){
-				print "\nError in npde_comp for eta: $ret. ebe results cannot be computed\n";
-				last;
+				ui->print(category=> 'all',
+						  message => "\nError in npde_comp for ebe: $ret. results cannot be computed for ebe $type\n");
+				next;
 			}
 			if (0){
 				open(DAT, ">ebe_pde_$type".".csv") || die("Couldn't open ebe_pde_$type".".csv : $!");
