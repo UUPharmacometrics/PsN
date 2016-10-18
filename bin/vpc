@@ -512,9 +512,9 @@ EOF
 $help_text{-mix} = <<'EOF';
       -mix=VARIABLE
 
-      Set a variable to be used for MIXNUM in mixture models.
-      Easiest is to set 'MIXOUT=MIXNUM' in abbreviated code
-      and use -mix=MIXOUT. Note that MIXNUM cannot directly
+      Set a variable to be used for MIXEST in mixture models.
+      Easiest is to set 'MIXOUT=MIXEST' in abbreviated code
+      and use -mix=MIXOUT. Note that MIXEST cannot directly
       be addressed from a $TABLE. When using -mix the vpc
       will quit before doing the postprocessing.
 EOF

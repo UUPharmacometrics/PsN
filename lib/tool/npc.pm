@@ -1169,7 +1169,7 @@ sub modelfit_setup
 		push(@rec_strings,$self->irep) if (defined $self->irep);
 	}
 	
-    # Add MIXNUM column
+    # Add MIXEST column
     if (defined $self->mix) {
         push @sim_strings, $self->mix;
         push @rec_strings, $self->mix;
