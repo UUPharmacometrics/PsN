@@ -9,6 +9,7 @@ use data;
 use log;
 use filter_data;
 use tool::modelfit;
+use array;
 
 extends 'tool';
 
@@ -105,14 +106,21 @@ sub modelfit_analyze
     open my $fh, '>', "results.csv";
     print $fh "ID,TIME,EVID,IPRED,WRES,IWRES,OBS\n";
 
+    my $numtabs = array::max($self->sorted_indiv_numobs);
+
+    # Open all tables at the same time. Trading memory for speed
+    my @tables;
+    for my $obsnum (1 .. $numtabs) {
+        $tables[$obsnum - 1] = data->new(
+            filename => "m1/proseval_$obsnum.tab",
+            missing_data_token => $self->missing_data_token,
+            idcolumn => $self->model->idcolumn(),
+        );
+    }
+
     for my $ind (0 .. scalar(@{$self->sorted_indiv_numobs}) - 1) {
         for my $numobs (1 .. $self->sorted_indiv_numobs->[$ind]) {
-            my $data = data->new(
-                filename => "m1/proseval_$numobs.tab",
-                missing_data_token => $self->missing_data_token,
-                idcolumn => $self->model->idcolumn(),
-            );
-            my $individual = $data->individuals->[$ind];
+            my $individual = $tables[$numobs - 1]->individuals->[$ind];
             for my $line (@{$individual->subject_data}) {
                 print $fh "$line,$numobs\n";
             }
