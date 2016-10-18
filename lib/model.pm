@@ -2997,8 +2997,10 @@ sub msfo_names
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		 problem_numbers => { isa => 'ArrayRef[Int]', optional => 1 }
-	);
+		 problem_numbers => { isa => 'ArrayRef[Int]', optional => 1 },
+		 absolute_path => { isa => 'Bool', optional => 1, default => 0 }
+		);
+	my $absolute_path = $parm{'absolute_path'};
 	my @problem_numbers = defined $parm{'problem_numbers'} ? @{$parm{'problem_numbers'}} : ();
 	my @names = ();
 
@@ -3014,7 +3016,11 @@ sub msfo_names
 				ui->print(category => 'all',message => "warning: different msfo filenames ".$arr->[0]." and ".
 						  $arr->[1]." in problem $probnum");
 			}
-			push(@names,$arr->[0]);
+			if ($absolute_path){
+				push(@names,$self->directory.$arr->[0]);
+			}else{
+				push(@names,$arr->[0]);
+			}
 		}
 	}
 	return \@names;
@@ -5216,40 +5222,17 @@ sub update_internal_msfi{
 	return \@updated;
 }
 
-sub set_first_problem_msfo_to_msfi{
-    my $self = shift;
-	my %parm = validated_hash(\@_,
-							  newmsfoname => { isa => 'Str', optional => 1 },
-		);
-	my $newmsfoname = $parm{'newmsfoname'};
-
-	my $oldmsfoname = $self->msfo_names(problem_numbers => [1]);
-	unless (defined $oldmsfoname->[0]){
-		croak("cannot do set_first_problem_msfo_to_msfi, no msfo in first problem");
-	}
-
-	unless (defined $newmsfoname){
-		require model::problem::msfi;
-		my $modelname = $self->filename;
-		my ($base,$msftype,$extension) = model::problem::msfi::get_basename_msftype_extension(filename => $modelname);
-		$newmsfoname = $base.'.msf';
-	}
-	if ($oldmsfoname->[0] eq $newmsfoname){
-		ui->print(category => 'all',message => "warning: set_first_problem_msfo_to_msfi same name msfo, msfi $newmsfoname");
-	}
-	$self->set_first_problem_msfi(msfiname => $oldmsfoname->[0],
-								  newmsfo => $newmsfoname);
-	
-}
 sub set_first_problem_msfi{
     my $self = shift;
 	my %parm = validated_hash(\@_,
 							  msfiname => { isa => 'Str', optional => 0 },
 							  newmsfo => { isa => 'Str', optional => 1 },
+							  set_new_msfo => { isa => 'Bool', optional => 1, default => 0 },
 							  add_msfo_if_absent => { isa => 'Bool', optional => 1, default => 0 },
 		);
 	my $msfiname = $parm{'msfiname'};
 	my $newmsfo = $parm{'newmsfo'};
+	my $set_new_msfo = $parm{'set_new_msfo'};
 	my $add_msfo_if_absent = $parm{'add_msfo_if_absent'};
 
 	#Add rec in first prob if not there. If already there only change filename
@@ -5264,7 +5247,17 @@ sub set_first_problem_msfi{
 	$self->remove_records(type => 'omega',problem_numbers =>[1]);
 	$self->remove_records(type => 'sigma',problem_numbers =>[1]);
 
+	if ($set_new_msfo and (not defined $newmsfo)){
+		require model::problem::msfi;
+		my $modelname = $self->filename;
+		my ($base,$msftype,$extension) = model::problem::msfi::get_basename_msftype_extension(filename => $modelname);
+		$newmsfo = $base.'.msf';
+	}
+	
 	if (defined $newmsfo){
+		if ($msfiname eq $newmsfo){
+			ui->print(category => 'all',message => "warning: set_first_problem_msfi same name msfo, msfi $newmsfo");
+		}
 		$self->rename_msfo(name => $newmsfo, add_if_absent => $add_msfo_if_absent);
 	}
 }

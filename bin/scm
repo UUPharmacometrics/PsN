@@ -268,14 +268,12 @@ $help_text{-parallel_states} = <<'EOF';
     testing a higher state if the preceeding state has been included in the model.
 EOF
 
-common_options::online_help( 'scm', \%options, \%help_text, \%required_options, \%optional_options);
+common_options::online_help('scm', \%options, \%help_text, \%required_options, \%optional_options);
 
-if ( $options{'config_file'} eq '' and (scalar(@ARGV)==1)){
+if (not defined $options{'config_file'} and (scalar(@ARGV) == 1)) {
     $options{'config_file'} = $ARGV[0];
-}else{
-    $options{'model'} =  $ARGV[0];
 }
-if ( $options{'config_file'} eq ''){
+if (not defined $options{'config_file'}) {
     print "Please specify a config file \n";
     exit;
 }
@@ -290,7 +288,6 @@ my $config_file;
 if( -e $options{'config_file'} ){
 	my $file = file -> new( name => $options{'config_file'}, path => '.' );
 	$config_file = 'tool::scm::config_file' -> new ( file => $file );
-
 
 	foreach my $option ( keys %{$config_file -> valid_scalar_options} ){
 		if( defined $options{$option} ) {
@@ -347,7 +344,6 @@ if ($config_file->linearize){
 
 	die "option -linearize only works with NONMEM7" unless ($PsN::nm_major_version == 7);
 
-
 	if ($config_file->derivatives_data()){
 		my ( $dir, $file ) = OSspecific::absolute_path('',$config_file->derivatives_data());
 		$config_file->derivatives_data($dir . $file);
@@ -379,6 +375,10 @@ my $direction = $config_file -> search_direction;
 die "You need to specify a search direction (forward/backward/both)\n" unless (defined $direction );
 my $eval_string = common_options::model_parameters(\%options);
 
+if (defined $options{'model'}) {    # Special case for model if not in config file. Are there others?
+    $config_file->model($options{'model'});
+}
+
 if (not defined $config_file->model) {
     die "Error: No model specified\n";
 }
@@ -405,35 +405,32 @@ if( $direction eq 'forward' or $direction eq 'both' ){
 	ui -> print( category => 'scm',
 				 message => "Starting scm forward search" );
 
-
 	my $orig_ofv;
 	my $orig_p_value;
 	my $ofv_backward=undef;
 	my $p_backward=undef;
-	if( -e $options{'config_file'} ){
 		
-		if( defined $config_file -> ofv_forward ){
-			$orig_ofv = $config_file -> ofv_change;
-			$config_file -> ofv_change($config_file -> ofv_forward);
-		}
-		
-		if( defined $config_file -> p_forward ){
-			$orig_p_value = $config_file -> p_value;
-			$config_file -> p_value( $config_file -> p_forward );
-		}
+    if( defined $config_file -> ofv_forward ){
+        $orig_ofv = $config_file -> ofv_change;
+        $config_file -> ofv_change($config_file -> ofv_forward);
+    }
 
-		if( defined $config_file -> ofv_backward ){
-			$ofv_backward = $config_file -> ofv_backward ;
-		}elsif (defined $orig_ofv){
-			$ofv_backward = $orig_ofv;
-		}
+    if( defined $config_file -> p_forward ){
+        $orig_p_value = $config_file -> p_value;
+        $config_file -> p_value( $config_file -> p_forward );
+    }
 
-		if( defined $config_file -> p_backward ){
-			$p_backward = $config_file -> p_backward;
-		}elsif (defined $orig_p_value){
-			$p_backward = $orig_p_value;     
-		}
-	}
+    if( defined $config_file -> ofv_backward ){
+        $ofv_backward = $config_file -> ofv_backward ;
+    }elsif (defined $orig_ofv){
+        $ofv_backward = $orig_ofv;
+    }
+
+    if( defined $config_file -> p_backward ){
+        $p_backward = $config_file -> p_backward;
+    }elsif (defined $orig_p_value){
+        $p_backward = $orig_p_value;     
+    }
 	
 	$config_file -> search_direction( 'forward' );
 
@@ -459,38 +456,28 @@ if( $direction eq 'forward' or $direction eq 'both' ){
 	#for rplots
 	$scm -> print_results(skip_print => 1);
 	
-	if( -e $options{'config_file'} ){
-		if( defined $orig_ofv ){
-			$config_file -> ofv_change( $orig_ofv );
-		}
+    if( defined $orig_ofv ){
+        $config_file -> ofv_change( $orig_ofv );
+    }
 		
-		if( defined $orig_p_value ){
-			$config_file -> p_value( $orig_p_value );
-		}
+    if( defined $orig_p_value ){
+        $config_file -> p_value( $orig_p_value );
+    }
 
-# this does not work
-#		if( defined $scm -> base_criteria_values ){
-#			$config_file -> base_criteria_values( $scm -> base_criteria_values );
-#		}
-
-		if( defined $scm -> included_relations ){
-			$config_file -> included_relations( $scm -> included_relations );
-		}
-	}
+    if( defined $scm -> included_relations ){
+        $config_file -> included_relations( $scm -> included_relations );
+    }
 }
 
 if( $direction eq 'backward' ){
 	
-	if( -e $options{'config_file'} ){
-		if( defined $config_file -> ofv_backward ){
-			$config_file -> ofv_change( $config_file -> ofv_backward );
-		}
+    if( defined $config_file -> ofv_backward ){
+        $config_file -> ofv_change( $config_file -> ofv_backward );
+    }
 
-		if( defined $config_file -> p_backward ){
-			$config_file -> p_value( $config_file -> p_backward );
-		}
-		
-	}
+    if( defined $config_file -> p_backward ){
+        $config_file -> p_value( $config_file -> p_backward );
+    }
 
 	$config_file -> search_direction( 'backward' );
 

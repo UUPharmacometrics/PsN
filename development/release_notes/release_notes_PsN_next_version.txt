@@ -68,8 +68,8 @@ A new recommended but not required Perl library for runrecord: YAML::Tiny
 - Bug fix: Some generated paths for the Rplots script were illegal R strings causing R to crash
 - Runs where any of the models have $NONPARAMETRIC will now get an additional file in the main
   run directory: raw_nonparametric_<modelname>.csv, containing regular ofv, nonparametric ofv, etc
-- The handling of $MSFI and MSFO=file has been redesigned. MSF-files never have to be
-  listed with -extra_files or -extra_output.
+- The handling of $MSFI and MSFO=file has been redesigned, also for crash restarts. MSF-files
+  never have to be listed with -extra_files or -extra_output.
 - Bug fix: PsN can now handle $MSFI including/path/to/file.msf
 - Bug fix: PsN can now handle $MSFI in combination with NONMEM's sparse matrix format in lst-files,
   which is used for very large covariance matrices.
@@ -174,6 +174,7 @@ ___bootstrap___
 - Change the default lower bounds for the THETA in power and exponential
   parameterizations from -100000 to -100.
 - Removed special use of common option -abort_on_fail.
+- Bugfix: If -model was given on command line but not in config file PsN would crash.
 
    ___linearize___
 - bug fix option time-varying: handle PRED models without MDV in $INPUT
@@ -203,7 +204,8 @@ ___boot_scm___
 
    ___sir___
 	
-- new option -cap_correlation, default 0.8. If set to a number between 0 and 1, at every iteration ensure that no absolute value of a correlation in the proposal exceeds this number.
+- new option -cap_correlation, default 0.8. If set to a number between 0 and 1, at every iteration ensure
+  that no absolute value of a correlation in the proposal exceeds this number.
 - message suggesting reparameterization if any correlations exceed 0.8 (before or after capping)
 - updated R template
 - changed inflation principle, covariances are not inflated meaning that correlations are in practice decreased 
@@ -220,4 +222,12 @@ ___boot_scm___
 - Major redesign
 
    ___npfit___
-- New tool npfit for nonparametric estimation.
+
+- New tool npfit for nonparametric estimation, see npft_userguide.pdf
+
+   ___crossval___ 
+
+- New option -msf, to use MSFO-MSFI instead of updating initial estimates in
+  prediction models. New format of output file xv_results.txt.
+  Refactoring of cross-validation code.
+
