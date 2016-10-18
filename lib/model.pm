@@ -2997,8 +2997,10 @@ sub msfo_names
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-		 problem_numbers => { isa => 'ArrayRef[Int]', optional => 1 }
-	);
+		 problem_numbers => { isa => 'ArrayRef[Int]', optional => 1 },
+		 absolute_path => { isa => 'Bool', optional => 1, default => 0 }
+		);
+	my $absolute_path = $parm{'absolute_path'};
 	my @problem_numbers = defined $parm{'problem_numbers'} ? @{$parm{'problem_numbers'}} : ();
 	my @names = ();
 
@@ -3014,7 +3016,11 @@ sub msfo_names
 				ui->print(category => 'all',message => "warning: different msfo filenames ".$arr->[0]." and ".
 						  $arr->[1]." in problem $probnum");
 			}
-			push(@names,$arr->[0]);
+			if ($absolute_path){
+				push(@names,$self->directory.$arr->[0]);
+			}else{
+				push(@names,$arr->[0]);
+			}
 		}
 	}
 	return \@names;

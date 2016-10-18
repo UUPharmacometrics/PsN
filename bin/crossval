@@ -113,6 +113,7 @@ my $xv =  tool::xv_step -> new( eval( $common_options::parameters ),
 								nr_validation_groups => $options{'groups'},
 								directory_name_prefix => 'crossval',
 								top_tool => 1,
+								is_lasso => 0,
 								msf => $options{'msf'},
 								models => [$model],
 								subtool_arguments => { modelfit => { eval( $common_options::parameters ),
@@ -131,11 +132,12 @@ sub harvest_ofv{
   my $xv_object = shift;
   
   open XV_REPORT, '>', "xv_result.txt";
-  print XV_REPORT "Prediction model OFV's\tEstimation model OFV's\n";
+  print XV_REPORT '"Prediction model OFVs","Estimation model OFVs"'."\n";
   for( my $i = 0; $i <= $#{$xv_object -> prediction_models}; $i++ ){
-    print XV_REPORT $xv_object -> prediction_models -> [$i] -> outputs -> [0] -> ofv  -> [0][0], "\t";
-    print XV_REPORT $xv_object -> estimation_models -> [$i] -> outputs -> [0] -> ofv  -> [0][0], "\n";
+	  print XV_REPORT $xv_object -> prediction_models -> [$i] -> outputs -> [0] -> ofv  -> [0][0].",".
+		  $xv_object -> estimation_models -> [$i] -> outputs -> [0] -> ofv  -> [0][0]."\n";
   }
 
   close XV_REPORT;
+  return 0;
 }
