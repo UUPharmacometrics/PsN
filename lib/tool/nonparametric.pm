@@ -34,7 +34,7 @@ sub modelfit_setup
 											models => [$input_model],
 											raw_results => undef,
 											top_tool => 0 );
-		tool::add_to_nmoutput(run => $orig_fit, extensions => ['ext','cov','npl','npd','npe','npi']);		
+		tool::add_to_nmoutput(run => $orig_fit, extensions => ['ext','cov']);		
 		ui -> print( category => 'all',	message => 'Running input model' );
 		$orig_fit -> run;
 	}
@@ -120,7 +120,8 @@ sub modelfit_setup
 	  raw_results_file => [$self -> directory.$self->raw_results_file->[0]],
 	  raw_nonp_file => [$self -> directory.$self->raw_nonp_file->[0]],
 	  models => \@models_array );
-        
+	  
+    tool::add_to_nmoutput(run => $modelfit, extensions => ['npl','npd','npe','npi']);	   
 	$self->tools([]) unless (defined $self->tools);
 	push(@{$self->tools}, $modelfit);
 }
