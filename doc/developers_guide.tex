@@ -220,6 +220,15 @@ Clone the PsN4 git repository and cd into your clone directory (See chapter 2). 
 to any directory and is runnable from that directory.
 Perl module XML::LibXML must be installed before running nmoutput2so.
 
+\section{Support for new NONMEM versions}
+This is a checklist for things to check when support for a new NONMEM version is developed:
+\begin{itemize}
+    \item Check if NONMEM produces any files with new extensions (i.e. root.xyz). These goes into PsN.pm
+    \item Are there any new \$RECORDs? Be sure to take abbreviations into account (i.e \$THETAP vs \$THE)
+    \item Check if nmfe has a new name (i.e. nmfe74). Set in setup, PsN.pm and psn.conf
+\end{itemize}
+
+
 \section{Build environment}
 The documentation is made in \LaTeX and pdfs can be generated with \verb|make doc|. The
 packages texlive-extra-util, texlive-bibtex-extra, biber, texlive-science and texlive-pictures are needed to build all documents.
