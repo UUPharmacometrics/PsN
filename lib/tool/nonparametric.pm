@@ -56,8 +56,8 @@ sub modelfit_setup
 		my $npsupp_value = ${$self->npsupp}[$i];
 		if ($npsupp_value < $indiv_number) {
 			ui -> print(category => 'all',
-						message => "WARNING: Number of individuals".$indiv_number."is larger than NPSUPP values".
-						$npsupp_value."NONMEM will automatically change NPSUPP from".$npsupp_value."to".$indiv_number."\n");
+						message => "WARNING: Number of individuals ".$indiv_number." is larger than NPSUPP values".
+						$npsupp_value.". NONMEM will automatically change NPSUPP from ".$npsupp_value." to ".$indiv_number.".\n");
 		}
 	}
 	
