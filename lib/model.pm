@@ -2514,9 +2514,11 @@ sub set_union_estimation_record
 	    }
 	  }
 	  #replace all records
-	  $self->set_records(problem_numbers=>[$probnum],
-			     type => 'estimation',
-			     record_strings => [$record_string]);
+      if (defined $record_string) {
+          $self->set_records(problem_numbers=>[$probnum],
+              type => 'estimation',
+              record_strings => [$record_string]);
+      }
 	} #end loop problems
 }
 
