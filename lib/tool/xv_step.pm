@@ -63,7 +63,6 @@ has 'prediction_is_run' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'warnings' => ( is => 'rw', isa => 'Int', default => 0 );
 has 'do_estimation' => ( is => 'rw', isa => 'Bool', default => 1 );
 has 'do_prediction' => ( is => 'rw', isa => 'Bool', default => 1 );
-has 'last_est_complete' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'ignoresigns' => ( is => 'rw', isa => 'ArrayRef');
 has 'model' => ( is => 'rw', isa => 'model');
 
