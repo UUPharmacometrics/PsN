@@ -1,35 +1,37 @@
 library(xpose4)
 
-pdf(file=pdf.filename,width=10,height=7,title=pdf.title)
+pdf(file=pdf.filename, width=10, height=7, title=pdf.title)
 
-done <- FALSE
-if (is.tte){
-   	#data is in the model directory, go there to read input
-	setwd(model.directory)
-	xpdb <- xpose.data(xpose.runno)
-	plots <- kaplan.plot(object=xpdb,VPC=T)
-	#go back to vpc directory 
-	setwd(working.directory)
-	done <- TRUE
-}  
+if (!exists('mix')) {     # A mixture model is a special case
+    if (is.tte) {
+        #data is in the model directory, go there to read input
+        setwd(model.directory)
+        xpdb <- xpose.data(xpose.runno)
+        plots <- kaplan.plot(object=xpdb, VPC=T)
+        #go back to vpc directory 
+        setwd(working.directory)
+    } else if (is.categorical) { 
+        plots <- xpose.VPC.categorical(vpc.info=tool.results.file, vpctab=vpctab)
+    } else if (have.loq.data | have.censored) {
+        plots <- xpose.VPC.both(vpc.info=tool.results.file, vpctab=vpctab)
+    } else {
+        plots <- xpose.VPC(vpc.info=tool.results.file, vpctab=vpctab)
+    }
+    print(plots) 
+} else {
+    if (require("vpc")) {
+        source(paste0(rscripts.directory, "/vpc/vpc_mixtures.R"))
+        observations_tablefile <- paste0(working.directory, '/m1/vpc_original.npctab.dta')
+        simulations_tablefile <- paste0(working.directory, '/m1/vpc_simulation.1.npctab.dta')
 
-if (is.categorical & (!done)){
-    plots<-xpose.VPC.categorical(vpc.info=tool.results.file,vpctab=vpctab)
-	done <- TRUE
+        obs <- read_table_nm(observations_tablefile)
+        sim <- read_table_nm(simulations_tablefile)
+        plots <- vpc_mixtures(obs=obs, sim=sim, numsims=samples, mixcol=mix, dv=dv)
+
+        for (p in plots) {
+            print(p)
+        }
+    }
 }
-
-if ((have.loq.data | have.censored) & (!done) ){
-    plots<-xpose.VPC.both(vpc.info=tool.results.file,vpctab=vpctab)
-	done <- TRUE
-}
-
-if (!done){
-	plots<-xpose.VPC(vpc.info=tool.results.file,vpctab=vpctab)
-	done <- TRUE
-}
-
-print(plots) 
 
 dev.off()
-
-
