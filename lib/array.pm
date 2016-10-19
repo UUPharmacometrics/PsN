@@ -11,7 +11,7 @@ use math qw(round);
 
 require Exporter;
 our @ISA = qw(Exporter);
-our %EXPORT_TAGS = ('all' => [ qw(not_empty is_empty diff cumsum max min linspace unique add sum mean median median_and_ci variance stdev is_int quantile percentile is_equal get_array_positions get_positions sem rse any_nonzero) ]);
+our %EXPORT_TAGS = ('all' => [ qw(not_empty is_empty diff cumsum max min linspace unique add sum mean median median_and_ci variance stdev is_int quantile percentile is_equal get_array_positions get_positions sem rse any_nonzero count_lower) ]);
 our @EXPORT_OK = ( @{ $EXPORT_TAGS{'all'} } );
 
 
@@ -239,9 +239,27 @@ sub max
 	}
 }
 
+sub count_lower
+{
+    # count_lower - Number of values below limit
+	my %parm = validated_hash(\@_,
+							  array => { isa => 'ArrayRef', optional => 0 },
+							  limit => { isa => 'Num', optional => 0 },
+		);
+	my $array = $parm{'array'};
+	my $limit = $parm{'limit'};
+
+	my $count = 0;
+	foreach my $value (@{$array}){
+		$count++ if ($value < $limit);
+	}
+	return $count;
+}
+
+	
 sub min
 {
-    # min - Maximum value in an array or list
+    # min - Minimum value in an array or list
     # Examples:
     # $min = min($array_ref);
     # $min = min(@array);

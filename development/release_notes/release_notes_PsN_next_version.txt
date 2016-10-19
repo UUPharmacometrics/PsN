@@ -148,6 +148,8 @@ ___bootstrap___
 
 - New option -mix to generate simulated and observed data for external post processing
 
+- Refactored input checking.
+
    ___frem___
 
 -  will, if a covariate-covariate correlation is exactly 0, set intial omega estimate corresponding to 1% correlation in Model 2. Similarly in Model3, if correlation from phi-file exactly 0, or parameter-parameter covariance has to be added to create full block, then set initial estimate as 1% correlation
@@ -161,8 +163,13 @@ ___bootstrap___
 -  new postprocessing script postfrem 
 -  Rescale option is now default on.
 -  Create approximate proposal density for sir even if covariance step of Model 4 is successful.
-
-   ___mcmp___
+-  If the covariate covariance matrix is non-positive definite after rounding
+   then modify it to make it positive definite before using it as initial
+   estimate for the new OMEGA block in Model 2.
+-  If frem is resumed, for example after manual modification of the initial
+   estimates in a model and removal of the corresponding lst-file, then
+   frem will automatically recreate all control streams that depend on the
+   modified model and rerun them.
 
 
    ___scm___
@@ -196,6 +203,7 @@ ___boot_scm___
 
    ___simeval___
 
+-  Updated run information messages.
 
    ___update_inits___
 
@@ -209,8 +217,6 @@ ___boot_scm___
 - message suggesting reparameterization if any correlations exceed 0.8 (before or after capping)
 - updated R template
 - changed inflation principle, covariances are not inflated meaning that correlations are in practice decreased 
-
-   ___nmoutput2so___
 
 
    ___pvar___

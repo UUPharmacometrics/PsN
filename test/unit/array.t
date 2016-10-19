@@ -241,4 +241,9 @@ is_deeply(get_array_positions(target => $target,keys=> $keys, R_indexing => 0),[
 $keys =['IVCL','CL','SIGMA(1,1)','V','IVV'];
 is_deeply(get_positions(target => $target,keys=> $keys),[29,27,31,28,30],'get_positions 1 ');
 
+is(count_lower(array => [1,2,3],limit => 1.0),0,'count_lower 1');
+is(count_lower(array => [],limit => 1.0),0,'count_lower 2');
+is(count_lower(array => [0,1E-16,3],limit => 0.0000000001),2,'count_lower 3');
+is(count_lower(array => [0.0000000001,0.000000000012,0.00000000001],limit => 0.0000000001),2,'count_lower 4');
+
 done_testing();

@@ -1143,9 +1143,11 @@ sub get_symmetric_posdef
     (my $eigenvalues, my $Q) = eigenvalue_decomposition($A);
 
 	my $minEigen=0.0000000001;
-
-	if (min($eigenvalues) < $minEigen){
-		return spdarise(matrix => $A,eigenvalues => $eigenvalues, Q => $Q, minEigen => $minEigen); #new A,frob norm diff
+	my $count = count_lower(array => $eigenvalues,limit=>$minEigen);
+	
+	if ($count >0){
+		my ($posdef,$diff) = spdarise(matrix => $A,eigenvalues => $eigenvalues, Q => $Q, minEigen => $minEigen); #new A,frob norm diff
+		return ($posdef,$count);
 	}else{
 		return($A,0);
 	}

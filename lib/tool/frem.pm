@@ -30,6 +30,7 @@ my $small_correlation = 0.01;
 has 'deriv2_nocommon_maxeta'  => ( is => 'rw', isa => 'Int', default=> 60);
 has 'skip_omegas' => ( is => 'rw', isa => 'ArrayRef', default => sub { [] } );
 has 'run_sir' => ( is => 'rw', isa => 'Bool', default=> 0);
+has 'update_existing_model_files' => ( is => 'rw', isa => 'Bool', default=> 0);
 has 'mu' => ( is => 'rw', isa => 'Bool', default=> 0);
 has 'skip_etas' => ( is => 'rw', isa => 'Int', default=> 0);
 has 'rse' => ( is => 'rw', isa => 'Num', default=> 30);
@@ -956,7 +957,7 @@ sub get_filled_omega_block
 										  low_correlation => $small_correlation);
 	my $rounded = round_off_omega(omega => $newmatrix);
 	#get posdef is necessary, pheno will crash without it
-	my ($posdefmatrix,$diff)=linear_algebra::get_symmetric_posdef($rounded);
+	my ($posdefmatrix,$count)=linear_algebra::get_symmetric_posdef($rounded);
 	
 	return($posdefmatrix,'');	
 }
@@ -1325,10 +1326,10 @@ sub round_off_omega
 		);
 	my $omega = $parm{'omega'};
 	my $size = scalar(@{$omega});
-	return () if ($size < 1);
+	return [] if ($size < 1);
 	my @new_lines=();
 	
-	my $form = '%.6G';
+	my $form = '%.12G';
 	for (my $row=0; $row< $size; $row++){
 		push(@new_lines,[]);
 		for (my $col=0; $col<$size; $col++){
@@ -1356,7 +1357,7 @@ sub get_omega_lines
 	return () if ($size < 1);
 	my @record_lines=();
 	push(@record_lines,'BLOCK('.$size.') ');
-	my $form = '  %.6G';
+	my $form = '  %.12G';
 	for (my $row=0; $row< $size; $row++){
 		my $line = '';
 		for (my $col=0; $col<=$row; $col++){
@@ -1425,9 +1426,15 @@ sub set_model2_omega_blocks
 										low_correlation => $small_correlation);
 	}
 
-	#NEW OCT18
+
 	my $rounded = round_off_omega(omega => $matrix);
-	my ($posdefmatrix,$diff)=linear_algebra::get_symmetric_posdef($rounded);
+	my ($posdefmatrix,$count)=linear_algebra::get_symmetric_posdef($rounded);
+	if ($count >0){
+		ui->print(category => 'frem',
+				  message => "\nWarning: The covariate covariance matrix has $count ".
+				  "(essentially) non-positive eigenvalue(s). Modified Model 2 covariate \$OMEGA block to make ".
+				  "is positive definite.");
+	}
 	my $omega_lines = get_omega_lines(new_omega => $posdefmatrix,
 									  labels => $covariate_labels);
 	push(@{$model -> problems -> [0]-> omegas},model::problem::omega->new(record_arr => $omega_lines, 
@@ -1686,7 +1693,7 @@ sub	print_proposal_density
 							   partial_covmats => [$covmat1,$covmat2]);
 
 	
-	my ($posdefmatrix,$diff)=linear_algebra::get_symmetric_posdef($fullmat);
+	my ($posdefmatrix,$count)=linear_algebra::get_symmetric_posdef($fullmat);
 
 	my $formatted = tool::format_covmatrix(matrix => $posdefmatrix, 
 									 header => $full_strings, 
@@ -2531,6 +2538,8 @@ sub prepare_model2
 																					  epsnum => $epsnum,
 																					  indent => $indentation);
 
+	cleanup_outdated_model(modelname => $self -> directory().'intermediate_models/'.$name_model,
+						   need_update => $self->update_existing_model_files);
 	
 	unless (-e $self -> directory().'intermediate_models/'.$name_model){
 		# input model  inits have already been updated
@@ -2709,6 +2718,10 @@ sub prepare_model3
 			$covrecordref->[$i] =~ s/\s*$//; #get rid of newlines
 		}
 	}	
+
+	cleanup_outdated_model(modelname => $self -> directory().'intermediate_models/'.$name_model,
+						   need_update => $self->update_existing_model_files);
+
 	unless (-e $self -> directory().'intermediate_models/'.$name_model){
 		# input model  inits have already been updated
 		$frem_model = $model ->  copy( filename    => $self -> directory().'intermediate_models/'.$name_model,
@@ -2764,6 +2777,9 @@ sub prepare_model4
 	my $name_model = 'model_'.$modnum.'.mod';
 	my $frem_model;
 	
+	cleanup_outdated_model(modelname => $self -> directory().'final_models/'.$name_model,
+						   need_update => $self->update_existing_model_files);
+
 	unless (-e $self -> directory().'final_models/'.$name_model){
 		# input model  inits have already been updated
 		$frem_model = $model ->  copy( filename    => $self -> directory().'final_models/'.$name_model,
@@ -2822,6 +2838,9 @@ sub prepare_model5
 	my $name_model = 'model_'.$modnum.'.mod';
 	my $frem_model;
 	
+	cleanup_outdated_model(modelname => $self -> directory().'intermediate_models/'.$name_model,
+						   need_update => $self->update_existing_model_files);
+
 	unless (-e $self -> directory().'intermediate_models/'.$name_model){
 		#read model 4 from disk, then copy it
 		my $model = model->new( %{common_options::restore_options(@common_options::model_options)},
@@ -2938,6 +2957,9 @@ sub prepare_model6
 	my $name_model = 'model_'.$modnum.'.mod';
 	my $frem_model;
 	
+	cleanup_outdated_model(modelname => $self -> directory().'final_models/'.$name_model,
+						   need_update => $self->update_existing_model_files);
+
 	unless (-e $self -> directory().'final_models/'.$name_model){
 		$frem_model = $model ->  copy( filename    => $self -> directory().'final_models/'.$name_model,
 									   output_same_directory => 1,
@@ -2999,6 +3021,9 @@ sub prepare_model7
 	my $name_model = 'model_'.$modnum.'.mod';
 	my $frem_model;
 	
+	cleanup_outdated_model(modelname => $self -> directory().'final_models/'.$name_model,
+						   need_update => $self->update_existing_model_files);
+
 	unless (-e $self -> directory().'final_models/'.$name_model){
 		$frem_model = $model ->  copy( filename    => $self -> directory().'final_models/'.$name_model,
 									   output_same_directory => 1,
@@ -3020,6 +3045,29 @@ sub prepare_model7
 
 }
 
+sub cleanup_outdated_model
+{
+	my %parm = validated_hash(\@_,
+							  modelname => { isa => 'Str', optional => 0 },
+							  need_update => { isa => 'Bool', optional => 0 },
+	);
+	my $modelname = $parm{'modelname'};
+	my $need_update = $parm{'need_update'};
+	
+	if ($need_update){
+		#we have run a model earlier in the sequence
+		if (-e $modelname){
+			ui -> print( category => 'all', message =>  "Removing existing $modelname and output ".
+						 "because it needs updating after rerun of preceeding model.");
+			unlink($modelname);
+			my $base = $modelname;
+			$base =~ s/(\.[^.]+)$// ;
+			foreach my $extension (@PsN::nm7_extensions,'.lst','.out','.res'){
+				unlink ($base.$extension) if (-e $base.$extension);
+			}
+		}
+	}
+}
 
 sub run_unless_run
 {
@@ -3049,9 +3097,15 @@ sub run_unless_run
 		}
 	}
 	if ($do_run){
-		my $rundir = $self -> directory().'/model'.join('_',@{$numbers}).'_modelfit_dir1';
-		rmtree([ "$rundir" ]) if (-e $rundir);
-
+		my $rundir = $self -> directory().'model'.join('_',@{$numbers}).'_modelfit_dir1';
+		if (-e $rundir){
+			ui -> print( category => 'all', message =>  "Removing old $rundir before rerun of model ".
+						 join(' and ',@{$numbers}));
+			rmtree([ "$rundir" ]);
+			if (-e $rundir){
+				croak("failed to remove $rundir");
+			}
+		}
 		my $run = tool::modelfit ->new( %{common_options::restore_options(@common_options::tool_options)},
 										base_directory	 => $self -> directory(),
 										directory		 => $rundir,
@@ -3064,6 +3118,7 @@ sub run_unless_run
 		$text .= 'Model '.join(' and ',@{$numbers});
 		ui -> print( category => 'all', message =>  $text);
 		$run-> run;
+		$self->update_existing_model_files(1); #any later models in sequence need to be recreated
 	}
 
 	my $message;
