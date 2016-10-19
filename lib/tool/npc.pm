@@ -1618,35 +1618,31 @@ sub modelfit_setup
 
 ###end simulation record######
 
-#det som koer modellerna aer ett modelfit-objekt. Detta maoste skapas explicit.
-
 	$self->original_model($model_orig);
 	$self->simulation_models(\@model_sims);
 
 	trace(tool => 'npc/vpc', message =>"Preparing to create modelfit object to run models.", level => 1);
 
-	my @runmodels=();
-	push (@runmodels,$model_orig) if ($self->run_the_original);
-	push (@runmodels,@model_sims) if ($self->run_the_sim);
+	my @runmodels = ();
+	push (@runmodels, $model_orig) if ($self->run_the_original);
+	push (@runmodels, @model_sims) if ($self->run_the_sim);
 
-	if ($self->run_the_sim or $self->run_the_original){
-		my %subargs = ();
-		#Kajsa 2013-10-04 changed top tool to 0, to get better raw_result_file name
-		my $modfit = tool::modelfit ->new( %{common_options::restore_options(@common_options::tool_options)},
-				 models		 => \@runmodels,
-				 base_directory      => $self->directory, 
-				 directory => undef,
-				 nmtran_skip_model => 3,
-				 parent_threads        => 1,
-				 raw_results           => undef,
-				 prepared_models       => undef,
-				 top_tool              => 0,
-				 copy_data             => $self->copy_data,
-				 prepend_model_file_name => 1,
-				 %subargs );
+	if ($self->run_the_sim or $self->run_the_original) {
+		my $modfit = tool::modelfit->new(%{common_options::restore_options(@common_options::tool_options)},
+            models	=> \@runmodels,
+            base_directory => $self->directory, 
+            directory => undef,
+            nmtran_skip_model => 3,
+            parent_threads => 1,
+            raw_results => undef,
+            prepared_models => undef,
+            top_tool => 0,        # To get better raw_results_file name
+            copy_data => $self->copy_data,
+            prepend_model_file_name => 1,
+		);
 		$self->searchdir($modfit->directory);
 		$self->tools([]) unless defined $self->tools;
-		push( @{$self->tools}, $modfit);
+		push(@{$self->tools}, $modfit);
 	}
 }
 
