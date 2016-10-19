@@ -203,7 +203,7 @@ ___boot_scm___
 
    ___simeval___
 
--  Updated run information messages.
+-  Warn user if any ID lack observations, which simeval cannot handle.
 
    ___update_inits___
 
