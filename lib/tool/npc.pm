@@ -1643,7 +1643,6 @@ sub modelfit_setup
         if (defined $self->mix) {
             $modfit->add_to_nmoutput(extensions => ['phm']);
         }
-        print $modfit->nm_output, "\n";
 		$self->searchdir($modfit->directory);
 		$self->tools([]) unless defined $self->tools;
 		push(@{$self->tools}, $modfit);
