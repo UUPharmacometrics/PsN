@@ -1640,6 +1640,11 @@ sub modelfit_setup
             copy_data => $self->copy_data,
             prepend_model_file_name => 1,
 		);
+        print $modfit->nm_output, "\n";
+        if (defined $self->mix) {
+            $modfit->add_to_nmoutput(extensions => ['phm']);
+        }
+        print $modfit->nm_output, "\n";
 		$self->searchdir($modfit->directory);
 		$self->tools([]) unless defined $self->tools;
 		push(@{$self->tools}, $modfit);
