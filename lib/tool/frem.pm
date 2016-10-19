@@ -2057,7 +2057,7 @@ sub do_model1
 										copy_data     => 1,
 										models		 => [$frem_model],
 										top_tool              => 0);
-		tool::add_to_nmoutput(run => $run, extensions => ['phi','ext','cov']);		
+		$run->add_to_nmoutput(extensions => ['phi','ext','cov']);		
 		ui -> print( category => 'all', message =>  'Estimating Model 1 (the input model)');
 		$run-> run;
 		if (defined $frem_model->outputs and (defined $frem_model->outputs->[0])){
@@ -2343,7 +2343,7 @@ sub do_frem_dataset
 										models		 => [$data_check_model],
 										top_tool              => 0);
 
-		tool::add_to_nmoutput(run => $run, extensions => ['ext']);		
+		$run->add_to_nmoutput(extensions => ['ext']);		
 		ui -> print( category => 'all', message => 'Running data check model');
 		$run -> run;
 		#compare ofv. print this to log file
@@ -3112,7 +3112,7 @@ sub run_unless_run
 										copy_data     => 0,
 										models		 => \@models,
 										top_tool              => 0);
-		tool::add_to_nmoutput(run => $run, extensions => ['phi','ext','cov']);		
+		$run->add_to_nmoutput(extensions => ['phi','ext','cov']);		
 		my $text = 'Estimating ';
 		$text = 'Evaluating ' if ($numbers->[0] == 3 or $numbers->[0] == 7);
 		$text .= 'Model '.join(' and ',@{$numbers});
@@ -3708,7 +3708,7 @@ sub do_model_vpc1
 										models		 => [$frem_vpc_model],
 										top_tool              => 0);
 		
-		tool::add_to_nmoutput(run => $run, extensions => ['phi','ext','cov']);		
+		$run->add_to_nmoutput(extensions => ['phi','ext','cov']);		
 		ui -> print( category => 'all', message => "\nExecuting FREM vpc model 1" );
 		$run -> run;
 		unless (-e $frem_vpc_model->directory().$joindata){
@@ -4132,7 +4132,7 @@ sub olddo_model1
 										copy_data     => 0,
 										models		 => [$frem_model],
 										top_tool              => 0);
-		tool::add_to_nmoutput(run => $run, extensions => ['phi','ext','cov']);		
+		$run->add_to_nmoutput(extensions => ['phi','ext','cov']);		
 		ui -> print( category => 'all', message =>  'Estimating Model 1');
 		$run-> run;
 	}

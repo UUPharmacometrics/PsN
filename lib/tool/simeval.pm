@@ -252,7 +252,7 @@ sub modelfit_setup
 			copy_data => 0,
 			abort_on_fail => $self->abort_on_fail);
 
-		tool::add_to_nmoutput(run => $run_orig, extensions => ['phi','ext']);		
+		$run_orig->add_to_nmoutput(extensions => ['phi','ext']);		
 
 		ui -> print( category => 'simeval',
 					 message  => "Running original model to get final parameter estimates for simulation" );
@@ -412,7 +412,7 @@ sub modelfit_setup
 		copy_data =>0,
 		abort_on_fail => $self->abort_on_fail);
 
-	tool::add_to_nmoutput(run => $run_sim, extensions => ['phi','ext']);		
+	$run_sim->add_to_nmoutput(extensions => ['phi','ext']);		
 
 	my $typerun = 'evaluations';
 	$typerun = 'reestimations' if $self->reminimize;

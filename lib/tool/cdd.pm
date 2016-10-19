@@ -866,7 +866,7 @@ sub general_setup
 		ui -> print( category => 'cdd',
 			message => 'Executing base model.' );
 
-		tool::add_to_nmoutput(run => $orig_fit, extensions => ['phi','ext','cov','coi']);		
+		$orig_fit->add_to_nmoutput(extensions => ['phi','ext','cov','coi']);		
 		$orig_fit -> run;
 
 		# }}} orig run
@@ -1216,7 +1216,7 @@ sub general_setup
 			%subargs ) );
 
 	# }}} sub tools
-	tool::add_to_nmoutput(run => $self->tools->[-1], extensions => ['ext','cov','coi']);		
+	$self->tools->[-1]->add_to_nmoutput(extensions => ['ext','cov','coi']);		
 
 }
 

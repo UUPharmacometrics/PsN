@@ -409,24 +409,23 @@ sub format_covmatrix
 
 sub add_to_nmoutput
 {
+    my $self = shift;
 	my %parm = validated_hash(\@_,
-							  run => { isa => 'tool', optional => 0 },
-							  extensions => {isa => 'ArrayRef', optional => 0}
+        extensions => {isa => 'ArrayRef', optional => 0}
 	);
-	my $run = $parm{'run'};
 	my $extensions = $parm{'extensions'};
 	
-	if (defined $run->nm_output and length($run->nm_output)>0){
-		my $old = $run->nm_output;
-		foreach my $extension (@{$extensions}){
-			unless ($run->nm_output =~ /$extension/){
-				$old .= ','.$extension;
+	if (defined $self->nm_output and length($self->nm_output) > 0) {
+		my $old = $self->nm_output;
+		foreach my $extension (@{$extensions}) {
+			unless ($self->nm_output =~ /$extension/) {
+				$old .= ',' . $extension;
 			}
 		}
-	}else{
-		$run->nm_output(join(',',@{$extensions}));
+        $self->nm_output($old);
+	} else {
+		$self->nm_output(join(',', @{$extensions}));
 	}
-
 }
 
 sub add_model
