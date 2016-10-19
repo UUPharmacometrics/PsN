@@ -1,15 +1,6 @@
+library(vpc)
 library(dplyr, quietly=TRUE)
 library(ggplot2)
-
-# .phm is output after an Estimation in NONMEM
-
-#library(devtools)
-#dev_mode(on=TRUE, path=getOption("devtools.path"))
-#install_local("./vpc", quick=TRUE, dependencies=FALSE, quiet=TRUE)
-library(vpc)
-
-#phm <- read.table("example/example3.phm",  skip=1, header=TRUE)
-#subpops <- phm %>% group_by(ID) %>% summarise(SUBPOP=which.max(PMIX))
 
 #The Simple Asymtotic Method:
 #Where n is the sample size,
@@ -18,7 +9,7 @@ library(vpc)
 #and cc is whether a continuity correction should be applied.
 simpasym <- function(n, p, z=1.96, cc=TRUE) {
     out <- list()
-    if(cc) {
+    if (cc) {
         out$lb <- p - z*sqrt((p*(1-p))/n) - 0.5/n
         out$ub <- p + z*sqrt((p*(1-p))/n) + 0.5/n
     } else {
@@ -92,7 +83,3 @@ subpopulations_from_nonmem_phm <- function(name, nrep) {
 #for (p in plots) {
 #    print(p)
 #}
-
-
-
-#dev_mode(on=FALSE)
