@@ -10,6 +10,7 @@ use FindBin qw($Bin);
 use lib "$Bin/../.."; #location of includes.pm
 use includes; #file with paths to PsN packages and $path variable definition
 use tool;
+use model;
 
 ui -> silent(1);
 #black box testing of data class and progs that are not covered by other test files
@@ -221,9 +222,18 @@ ok (-e "$dir/m1", "tool->new m1 folder was created");
 ok (-e "$dir/m1/bs_pr1_1.cor", "tool->new file inside m1 was created");
 ok (-e "$dir/command.txt", "tool->new command.txt still exists");
 
-
+is($tool->nm_output,undef,'nm_output default undef');
+$tool->add_to_nmoutput(extensions => ['phi','ext']);
+is($tool->nm_output,'phi,ext','nm_output added phi, ext');
+$tool->add_to_nmoutput(extensions => ['phi','cov']);
+is($tool->nm_output,'phi,ext,cov','nm_output added phi, cov');
+$tool->add_to_nmoutput(extensions => ['phm','cov']);
+is($tool->nm_output,'phi,ext,cov,phm','nm_output added phm, cov');
 
 
 remove_test_dir($tempdir);
+
+# Mock mkpath to avoid directory creation
+
 
 done_testing();
