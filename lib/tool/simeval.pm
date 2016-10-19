@@ -663,18 +663,24 @@ sub simeval_analyze
 			}
 			push(@head,'ORIGINAL');
 
+			my %have_observations=();
 			for (my $j=1; $j<scalar(@{$est_matrix->[0]->[0]});$j++){
 				push(@head,'sample.'.$j);
 			}
 			print ORI join(',',@head)."\n";
 			for (my $i=0; $i<scalar(@{$est_matrix->[0]});$i++){
 				print ORI $id_mdv_matrix->[0]->[$i]->[0];
+				if ($k == 0 and (not defined $have_observations{$id_mdv_matrix->[0]->[$i]->[0]} )){
+					$have_observations{$id_mdv_matrix->[0]->[$i]->[0]} = 0;
+				}
+				
 				if ($have_mdv){
 					print ORI ','.$id_mdv_matrix->[1]->[$i]->[0];
 				}
 				
 				if ((not $have_mdv) or ($id_mdv_matrix->[1]->[$i]->[0] == 0)){
 					#not missing DV
+					$have_observations{$id_mdv_matrix->[0]->[$i]->[0]} = 1;
 					for (my $j=0; $j<scalar(@{$est_matrix->[0]->[0]});$j++){
 						print ORI ','.formatfloat($est_matrix->[0]->[$i]->[$j]);
 					}
@@ -686,7 +692,20 @@ sub simeval_analyze
 				print ORI "\n";
 			}
 			close ORI;
-
+			if ($k == 0){
+				my @missing_obs=();
+				foreach my $idnum (keys	%have_observations){
+					push(@missing_obs,sprintf("%i",$idnum)) unless ($have_observations{$idnum});
+				}
+				if (scalar(@missing_obs)>0){
+					ui->print(category => 'all',
+							  message => "\nWARNING: It appears that the subject(s) with ID number(s) ".
+							  join(',',@missing_obs)." do not have any ".
+							  "observations. The simeval script cannot handle that. It is recommended to rerun ".
+							  "simeval with ID ".join(',',@missing_obs)." IGNORED");
+				}
+			}
+			
 			my $original_outlier=[];
 			($ret,$errmess) = simeval_util::decorrelation_and_npde_records_by_id($est_matrix,$mean_matrix,$id_mdv_matrix,$have_mdv,$npde,$original_outlier);
 
