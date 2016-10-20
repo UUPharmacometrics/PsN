@@ -233,7 +233,8 @@ ___sir___
   the final estimates from the base model, unless -no-update_inits is set. If -no-update_inits
   is set, then the initial estimates will be as in earlier versions, i.e. the same as
   the initial estimates of the base model.
-  
+- changed directory name prefix for cross-validation sub-directory (if
+  option -xv is set) from modelfit to crossval.
    ___rplots___
 
 - Major redesign
