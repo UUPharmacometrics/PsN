@@ -399,7 +399,7 @@ if ( defined $options{'ignore_missing_parameters'} ){
 }
 my $update_fix=0;
 if ( defined $options{'update_fix'} ){
-	$update_fix=1;
+	$update_fix=$options{'update_fix'};
 }
 
 

@@ -33,6 +33,7 @@ my %optional_options = ("prepend_options_to_lst!"=> undef,
 						"timestamp!" => undef,
 						"keep_table_files!" => undef,
 						"keep_nm_output!" => undef,
+						"update_fix!" => undef,
 						'rawres_input:s' => undef,
 						'offset_rawres:i' => undef,
 						'samples:i' => undef,
@@ -91,6 +92,14 @@ $help_text{-offset_rawres} = <<'EOF';
       before starting to read final parameter estimates. In a regular
       bootstrap raw_results file the first line of estimates refers to the
       input model with the full dataset, so therefore the default offset is 1.
+EOF
+$help_text{-update_fix} = <<'EOF';
+      -update_fix
+
+      Only relevant in combination with rawres_input. Default not set.
+      By default, FIX values in the input model are not updated based
+      on the rawres_input file, but if -update_fix is set then also
+      FIX values will be updated.
 EOF
 $help_text{-model_dir_name} = <<'EOF';
     -model_dir_name
@@ -308,6 +317,10 @@ my $main_model = $models_array -> [0] -> copy( filename    => $filestem.'_origin
 my $mod_array;
 push(@{$mod_array},$main_model);
 if (defined $options{'rawres_input'}){
+	my $update_fix = 0;
+	if (defined $options{'update_fix'}){
+		$update_fix = $options{'update_fix'};
+	}
 	foreach (my $retry=1;$retry<=$samples;$retry++){
 
 		my $retry_mod = $main_model -> copy( filename    => $filestem.'_init'.$retry.'.mod',
@@ -315,7 +328,8 @@ if (defined $options{'rawres_input'}){
 											 copy_output => 0,
 											 write_copy => 0,
 											 directory => $main_directory);
-		$retry_mod -> update_inits(from_hash => $sampled_params_arr->[$retry-1]); 
+		$retry_mod -> update_inits(from_hash => $sampled_params_arr->[$retry-1],
+								   update_fix => $update_fix); 
 		$retry_mod -> _write();
 		push(@{$mod_array},$retry_mod);
 	}

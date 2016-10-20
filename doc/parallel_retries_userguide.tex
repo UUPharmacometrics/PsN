@@ -1,5 +1,5 @@
 \input{inputs/format_header.tex}
-\guidetitle{PARALLEL\_RETRIES user guide}{2016-02-04}
+\guidetitle{PARALLEL\_RETRIES user guide}{2016-10-20}
 
 \begin{document}
 
@@ -54,6 +54,12 @@ in the file must match the labels in the simulation model given as input to para
 the theta columns must be directly followed by the omega columns which must be directly followed by the sigma columns, and the first column 
 must have header model just as a bootstrap raw\_results file. Note that is is possible to generate a file with initial parameter estimates outside of PsN, 
 as long as the file follows the format rules.
+\nextopt
+\optname{update\_fix}
+Only relevant in combination with rawres\_input. Default not set.
+By default, FIX values in the input model are not updated based
+on the rawres\_input file, but if -update\_fix is set then also
+FIX values will be updated.
 \nextopt
 \optdefault{samples}{N}
 Only valid in combination with -rawres\_input, see above. The number of

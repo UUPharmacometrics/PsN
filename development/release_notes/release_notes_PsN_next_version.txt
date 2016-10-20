@@ -210,7 +210,11 @@ ___boot_scm___
 -  New options -rawres_input, -in_filter, -offset_rawres to read parameter estimates from a raw results file.
 -  Bug fix: renumber MSFO=file in $NONPARAMETRIC
 
-   ___sir___
+   ___parallel_retries___
+
+-  New option -update_fix, default not set.
+
+___sir___
 	
 - new option -cap_correlation, default 0.8. If set to a number between 0 and 1, at every iteration ensure
   that no absolute value of a correlation in the proposal exceeds this number.
