@@ -126,7 +126,7 @@ sub modelfit_analyze
 											models           => $self -> prediction_models->[$model_number-1]{'own'},
 											base_directory   => $self -> directory,
 											nmtran_skip_model => 2,
-#											directory        => $self -> directory.'evaluation_dir'.$model_number, 
+											directory_name_prefix => 'crossval', 
 											threads          => $xv_threads,
 											_raw_results_callback => $self -> _modelfit_raw_results_callback( model_number => $model_number,
 																											  cross_validation_set => 1 ),
@@ -1203,7 +1203,6 @@ sub general_setup
 			 copy_data            => 0, #use relative data path to m1
 			threads               => $subm_threads,
 			nmtran_skip_model => 2,
-#			directory             => $self -> directory.'/'.$subdir.'_dir'.$model_number,
 			_raw_results_callback => $self ->
 			_modelfit_raw_results_callback( model_number => $model_number ),
 			subtools              => \@subtools,
