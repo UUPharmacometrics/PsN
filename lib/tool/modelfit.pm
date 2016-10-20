@@ -1059,9 +1059,18 @@ sub select_best_model
 			}
 
 			if ( $self->clean >= 1 and $PsN::warnings_enabled == 0 ) {
+				if (-e 'nonmem.exe'){
+					#we have observed on Windows 10 that removal of nonmem.exe sometimes fails due to file permissions
+					#hypothesis that removal will succeed after a while, so we try a few times
+					for (my $attempt = 0; $attempt < 10; $attempt++){
+						last if unlink 'nonmem.exe';
+						sleep(3);
+					}
+				}
+				
 				unlink 'nonmem', 'nonmem5','nonmem6','nonmem7',
 				'nonmem5_adaptive','nonmem6_adaptive','nonmem7_adaptive', 
-				'nonmem.exe','nonmem_mpi.exe','nonmem_mpi','NONMEM_MPI.exe','FDATA', 'FREPORT', 'FSUBS', 'FSUBS.f','FSUBS.f90', 
+				'nonmem_mpi.exe','nonmem_mpi','NONMEM_MPI.exe','FDATA', 'FREPORT', 'FSUBS', 'FSUBS.f','FSUBS.f90', 
 				'FSUBS.for', 'LINK.LNK', 'FSTREAM', 'FCON.orig', 'FLIB', 'FCON',#'PRDERR', save for error check
 				'nmprd4p.mod','nul',
 				'fsubs','fsubs.f','fsubs.for','fsubs.f90','FSUBS2','FSUBS_MU.F90';
