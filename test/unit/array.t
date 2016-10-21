@@ -12,6 +12,24 @@ use array qw(:all);
 
 my (@a, @b, $a, $b, $c);
 
+# find_zeros
+@a = qw(-1 0 23 -14.5 0);
+is_deeply(array::find_zeros(\@a), [1,4], "find_zeros 2");
+is_deeply(array::find_zeros([1,2,3]), [], "find_zeros none");
+
+#is_zero
+is_deeply(array::is_zero([1,2,3]), [0,0,0], "is_zero none");
+is_deeply(array::is_zero([1,2,0]), [0,0,1], "is_zero one");
+is_deeply(array::is_zero([0,2,0]), [1,0,1], "is_zero two");
+
+# get_intersection
+is_deeply(array::get_intersection(arr1 => [1,2,3,4], arr2 =>[3,5,6]),[3],'get_intersection 1');
+is_deeply(array::get_intersection(arr1 => [1,2,3,4], arr2 =>[1,5,6]),[1],'get_intersection 2');
+is_deeply(array::get_intersection(arr1 => [1,2,3,4], arr2 =>[1,2,3,4]),[1,2,3,4],'get_intersection 3');
+is_deeply(array::get_intersection(arr1 => [1,2,3,4], arr2 =>[5,6]),[],'get_intersection 4');
+is_deeply(array::get_intersection(arr1 => [1], arr2 =>[5,6,1]),[1],'get_intersection 5');
+
+		  
 #any_nonzero
 ok (!array::any_nonzero([0, 0, 0]), "any_nonzero all zeros");
 ok (!array::any_nonzero([]), "any_nonzero empty array");

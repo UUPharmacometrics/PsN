@@ -6,11 +6,61 @@ use strict;
 use include_modules;
 use MooseX::Params::Validate;
 use nmtablefile;
-use array qw(any_nonzero max min);
+use array qw(any_nonzero max min find_zeros unique get_positions get_intersection is_zero);
 
 our $missing=-99;
 #	$ret = simeval_util::read_table_files(\@found_files,\@eta_headers,$est_matrix,$mean_matrix,1);
 # add id matrix, always return that
+
+sub find_zero_etas{
+	my %parm = validated_hash(\@_,
+							  filename => { isa => 'Str', optional => 0 },
+							  eta_headers => { isa => 'ArrayRef', optional => 0 },
+		);
+	my $filename = $parm{'filename'};
+	my $eta_headers = $parm{'eta_headers'};
+
+	my %diagnostics=();
+
+	my $nmtablefile = nmtablefile->new(filename => $filename);
+
+	my @merged_indices=();
+	my @headers_none_missing = ();
+	my $length = scalar(@{$nmtablefile->tables->[0]->get_column(name=> 'ID')});
+	croak("length ID col is 0") if ($length == 0);
+	my @all_missing = (0 .. ($length-1));
+
+	#$missing_matrix
+	# reference to array  [over columns][over individuals]
+
+	my @is_zero = ();
+	foreach my $header (@{$eta_headers}){
+		my $indices = find_zeros($nmtablefile->tables->[0]->get_column(name=> $header));
+		push(@is_zero,is_zero($nmtablefile->tables->[0]->get_column(name=> $header)));
+		if (scalar(@{$indices})==0){
+			push(@headers_none_missing,$header);
+			@all_missing = ();
+		}else{
+			push(@merged_indices,@{$indices});
+			@all_missing = @{get_intersection(arr1 => $indices, arr2 =>\@all_missing)};
+		}
+	}
+
+	my @any_missing = @{unique(\@merged_indices)};
+	my @complete_after_filter = ();
+	if (scalar(@any_missing) < $length){
+		@complete_after_filter = @{$eta_headers};
+	}
+
+	$diagnostics{'row_index_all_missing'}=\@all_missing; #intersection of zero_indices, double check with OBJ?
+	$diagnostics{'row_index_any_missing'}=\@any_missing; #union of zero_indices
+	$diagnostics{'ETA_none_missing'}=\@headers_none_missing; #set of headers where indices array is empty
+	$diagnostics{'ETA_none_missing_after_filter'}=\@complete_after_filter; # all headers if length of row_index_any_missing is shorter than original column, otherwise empty array
+	$diagnostics{'is_zero'}=\@is_zero;
+		
+	return \%diagnostics;
+	
+}
 
 sub get_nmtabledata{
 	my %parm = validated_hash(\@_,
@@ -256,7 +306,7 @@ sub decorrelation_and_npde_records_by_id{
 		if (($i == ($datarecords-1)) or ($id_mdv_matrix->[0]->[$i+1]->[0] != $id_mdv_matrix->[0]->[$i]->[0] )){
 			#this is last record, observation or not, of this id
 			if ($nobs > 0){
-				($result,$message) = decorrelation($local_estimate_matrix,$local_mean_matrix,$local_decorr,$local_stdev_arr);
+				($result,$message) = decorrelation($local_estimate_matrix,$local_mean_matrix,$local_decorr,$local_stdev_arr,[]);
 				return ($result,$message.' in decorr per id') if ($result);
 				my $pde_matrix =[];
 				my $npde_matrix = [];
@@ -283,7 +333,8 @@ sub decorrelation_and_npde_records_by_id{
 }
 sub decorrelation{
 	#has unit tests
-	my ($estimate_matrix,$mean_matrix,$decorrelated_estmatrix,$stdev_arr) = pos_validated_list(\@_,
+	my ($estimate_matrix,$mean_matrix,$decorrelated_estmatrix,$stdev_arr,$missing_matrix) = pos_validated_list(\@_,
+																							   { isa => 'ArrayRef' },
 																							   { isa => 'ArrayRef' },
 																							   { isa => 'ArrayRef' },
 																							   { isa => 'ArrayRef' },
@@ -297,9 +348,11 @@ sub decorrelation{
 	# reference to empty array to put decorrelated results [over columns][over individuals][over samples]
 	# $decorrelated_estmatrix 
 	# $stdev_arr
-	# $standardized
-	#\frac{(iOFV_{observed} - mean (iOFV_{simulated}))^2}{variance(iOFV_{simulated})}
 
+	#$missing_matrix 1 if missing 0 otherwise
+	# reference to array  [over params][over individuals]
+
+	
     my $input_error = 2;
     my $numerical_error = 1;
 	my $message = '';
@@ -322,6 +375,9 @@ sub decorrelation{
 	}
 #	print "parm $nparm id $individuals samples $samples\n";
 	return ($result,$message) if ($result);
+
+	my $have_filter = 0;
+	$have_filter = 1 if (scalar(@{$missing_matrix})>0);
 	
 	if ($nparm == 1){
 		for (my $i=0;$i<$individuals;$i++){
@@ -361,28 +417,36 @@ sub decorrelation{
 	
 		my $sqrt=sqrt($samples-1);
 		for (my $i=0;$i<$individuals;$i++){
-			my @Amat;
-			my @original;
-			my @meanvec;
+			my @Amat=();
+			my @original=();
+			my @original_filtered=();
+			my @meanvec=();
+			my $acolumns=0;
 			for (my $j=0;$j<$nparm;$j++){
 				my $mean = $mean_matrix->[$j][$i];
 				push (@meanvec,$mean);
 				my $origval = $estimate_matrix->[$j]->[$i]->[0];
 				push(@original,($origval-$mean));
 				#loop over simulations, start at 1 since 0 is original
+				next if ($have_filter and ($missing_matrix->[$j]->[$i] == 1));
+				push(@original_filtered,($origval-$mean));
+				$acolumns++;
 				for (my $k = 1; $k < scalar(@{$estimate_matrix->[$j]->[$i]}); $k++){ 
-					push(@{$Amat[$j]},($estimate_matrix->[$j]->[$i]->[$k])-$mean);
+					push(@{$Amat[($acolumns-1)]},($estimate_matrix->[$j]->[$i]->[$k])-$mean);
 				}
 			}
 
 			my $Rmat = [];
-			my $numerr = linear_algebra::QR_factorize(\@Amat,$Rmat);
-			unless ($numerr == 0){
-				$result = $numerr;
-				$message .= "QR factorization revealed that matrix was not full rank\n";
-				return ($result,$message);
+			my $numerr;
+			if ($acolumns > 0){
+				$numerr = linear_algebra::QR_factorize(\@Amat,$Rmat);
+				unless ($numerr == 0){
+					$result = $numerr;
+					$message .= "QR factorization revealed that matrix was not full rank\n";
+					return ($result,$message);
+				}
 			}
-
+			
 			#want to multiply with inverse 'square root' (in a loose sense) of 
 			#empirical variance-covariance matrix of A'A
 			#i.e. we want to multiply with inv(R*diag(1/sqrt(N-1))
@@ -396,56 +460,65 @@ sub decorrelation{
 
 			#solve diag(1/sqrt(N-1))*bvec=yvec
 			for (my $j=0;$j<$ncol;$j++){
-				$original[$j]=$original[$j]*$sqrt;
+				$original_filtered[$j]=$original_filtered[$j]*$sqrt;
 			}
 			
 			#solve R'* transf=bvec
 			#Golub p 88
-			
-			my $numerr = linear_algebra::upper_triangular_transpose_solve($Rmat,\@original);
-			unless ($numerr == 0){
-				$result = $numerr;
-				$message .= "Solving of triangular system 1 with R matrix broke down, diagonal element of R == 0\n";
-				return ($result,$message);
+
+
+			if ($acolumns > 0){
+				$numerr = linear_algebra::upper_triangular_transpose_solve($Rmat,\@original_filtered);
+				unless ($numerr == 0){
+					$result = $numerr;
+					$message .= "Solving of triangular system 1 with R matrix broke down, diagonal element of R == 0\n";
+					return ($result,$message);
+				}
 			}
-			
+
+			my $anspos=0;
 			for (my $j=0;$j<$nparm;$j++){
-#				if ( ($estimate_matrix->[$j]->[$i]->[0]) == 0){
-#					$decorrelated_estmatrix->[$j]->[$i]=[0];
-#				}else{
-					$decorrelated_estmatrix->[$j]->[$i]=[$original[$j]];
-#				}
+				if ($have_filter and ($missing_matrix->[$j]->[$i] == 1)){
+					$decorrelated_estmatrix->[$j]->[$i]=[$missing];
+				}else{
+					$decorrelated_estmatrix->[$j]->[$i]=[$original_filtered[$anspos]];
+					$anspos++;
+				}
 			}
 
 			#transform estmatrix for each simulation of id $i
 			
 			for (my $k = 1; $k < ($samples+1); $k++){ 
-				my @simvec;
+				my @simvec=();
 				for (my $j=0;$j<$nparm;$j++){
+					next if ($have_filter and ($missing_matrix->[$j]->[$i] == 1));
 					#must subtract mean here also
 					push(@simvec,(($estimate_matrix->[$j]->[$i]->[$k]) - $meanvec[$j]));
 				}
 				
 				#solve R'*x=simvec
-				
-				my $numerr = linear_algebra::upper_triangular_transpose_solve($Rmat,\@simvec);
-				unless ($numerr == 0){
-					$result = $numerr;
-					$message .= "Solving of triangular system sim $k with R matrix broke down, diagonal element of R == 0\n";
-					return ($result,$message);
+
+				if ($acolumns > 0){
+					$numerr = linear_algebra::upper_triangular_transpose_solve($Rmat,\@simvec);
+					unless ($numerr == 0){
+						$result = $numerr;
+						$message .= "Solving of triangular system sim $k with R matrix broke down, diagonal element of R == 0\n";
+						return ($result,$message);
+					}
 				}
-				
 				#solve diag(1/sqrt(N-1))*transf=x
 				for (my $j=0;$j<$ncol;$j++){
 					$simvec[$j]=$simvec[$j]*$sqrt;
 				}
 
+				$anspos=0;
 				for (my $j=0;$j<$nparm;$j++){
-#					if ( ($decorrelated_estmatrix->[$j]->[$i]->[0])==0){
-#						push(@{$decorrelated_estmatrix->[$j][$i]},0);
-#					}else{
-						push(@{$decorrelated_estmatrix->[$j][$i]},$simvec[$j]);
-#					}
+					if ($have_filter and ($missing_matrix->[$j]->[$i] == 1)){
+						push(@{$decorrelated_estmatrix->[$j][$i]},$missing);
+					}else{
+						push(@{$decorrelated_estmatrix->[$j][$i]},$simvec[$anspos]);
+						$anspos++;
+					}
 				}
 			}
 			
@@ -511,6 +584,7 @@ sub npde_comp{
 	}
 	for (my $i=0;$i<scalar(@{$decorrelated->[0]});$i++){
 		for (my $j=0;$j<scalar(@{$decorrelated}) ;$j++){
+			print "i $i j $j \n" if (not defined $decorrelated->[$j]->[$i]);
 			$pde_matrix->[$j]->[$i] = pde($decorrelated->[$j]->[$i]);
 			if ($have_CDF and ($pde_matrix->[$j]->[$i] != $missing)){
 				$npde_matrix->[$j]->[$i] = -(Statistics::Distributions::udistr($pde_matrix->[$j]->[$i]));

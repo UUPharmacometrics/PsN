@@ -30,6 +30,34 @@ is(tool::simeval::formatfloat(-99),'','format float missing');
 
 
 my $filedir = $includes::testfiledir . '/npde/';
+
+my $diagnostics = simeval_util::find_zero_etas(filename => $filedir.'original.phi', eta_headers => ['ETA(1)','ETA(2)']);
+is_deeply($diagnostics->{'row_index_all_missing'},[],'simeval_util::find_zero_etas index_all_missing none');
+is_deeply($diagnostics->{'row_index_any_missing'},[],'simeval_util::find_zero_etas index_any_missing none');
+is_deeply($diagnostics->{'ETA_none_missing'},['ETA(1)','ETA(2)'],'simeval_util::find_zero_etas ETA_none_missing none');
+is_deeply($diagnostics->{'ETA_none_missing_after_filter'},['ETA(1)','ETA(2)'],'simeval_util::find_zero_etas ETA_none_missing_after_filter none');
+is_deeply($diagnostics->{'is_zero'},[[0,0,0,0,0],[0,0,0,0,0]],'simeval_util::find_zero_etas is_zero none');
+
+$diagnostics = simeval_util::find_zero_etas(filename => $filedir.'sporadic_zeros.phi', eta_headers => ['ETA(1)','ETA(2)','ETA(3)']);
+is_deeply($diagnostics->{'row_index_all_missing'},[],'simeval_util::find_zero_etas index_all_missing sporadic');
+
+my @ans = (5,42,51,55,63,65,68,76,81,87,100,101);
+push(@ans,(105..224));
+is_deeply($diagnostics->{'row_index_any_missing'},\@ans, 'simeval_util::find_zero_etas index_any_missing sporadic');
+is_deeply($diagnostics->{'ETA_none_missing'},['ETA(2)'],'simeval_util::find_zero_etas ETA_none_missing sporadic');
+is_deeply($diagnostics->{'ETA_none_missing_after_filter'},['ETA(1)','ETA(2)','ETA(3)'],
+		  'simeval_util::find_zero_etas ETA_none_missing_after_filter sporadic');
+
+$diagnostics = simeval_util::find_zero_etas(filename => $filedir.'one_id_all_zeros.phi', eta_headers => ['ETA(1)','ETA(2)']);
+is_deeply($diagnostics->{'row_index_all_missing'},[1],'simeval_util::find_zero_etas index_all_missing one id');
+is_deeply($diagnostics->{'row_index_any_missing'},[1],'simeval_util::find_zero_etas index_any_missing one id');
+is_deeply($diagnostics->{'ETA_none_missing'},[],'simeval_util::find_zero_etas ETA_none_missing one id');
+is_deeply($diagnostics->{'ETA_none_missing_after_filter'},['ETA(1)','ETA(2)'],'simeval_util::find_zero_etas ETA_none_missing_after_filter one id');
+@ans = (0,1);
+push(@ans,(0)x57);
+is_deeply($diagnostics->{'is_zero'},[\@ans,\@ans],'simeval_util::find_zero_etas is_zero one id');
+
+
 my @file_array=($filedir.'original.phi',$filedir.'sim-1.phi',$filedir.'sim-2.phi',$filedir.'sim-3.phi');
 
 my $headers_array = [['ETA(1)','ETA(2)'],['OBJ'],['ID']];
@@ -107,8 +135,11 @@ if (0){
 
 my $decorr = [];
 my $shrink =[];
+my @missing_matrix =();
+@missing_matrix =([0,0,0,0,0],[0,0,0,0,0]);
+
 my $message;
-($ok,$message) = simeval_util::decorrelation($est_matrix,$mean_matrix,$decorr,$shrink);
+($ok,$message) = simeval_util::decorrelation($est_matrix,$mean_matrix,$decorr,$shrink,\@missing_matrix);
 is ($ok, 0, "decorrelation return status");
 is ($message,'','decorrelation message');
 
@@ -119,6 +150,14 @@ is ($message,'','decorrelation message');
 #bvec=(original -mean(matrix))';
 #decorrorig(1,:)=((inv( (chol(cov(matrix)))'  ))*bvec)';
 
+
+is(scalar(@{$decorr}),2,'2 param in decorr matrix nomiss' );
+is(scalar(@{$decorr->[0]}),5,'5 id in decorr matrix par 1 nomiss'); 
+is(scalar(@{$decorr->[0]->[0]}),4,'4 vals in decorr matrix par 1 id 1 nomiss'); 
+is(scalar(@{$decorr->[0]->[4]}),4,'4 vals in decorr matrix par 1 id 5 nomiss'); 
+is(scalar(@{$decorr->[1]}),5,'5 id in decorr matrix par 2 nomiss');
+is(scalar(@{$decorr->[1]->[0]}),4,'4 vals in decorr matrix par 2 id 1 nomiss'); 
+is(scalar(@{$decorr->[1]->[4]}),4,'4 vals in decorr matrix par 2 id 5 nomiss'); 
 
 cmp_ok(abs($decorr->[0]->[0]->[0]-(0.6059160950135)),'<',$diff,'decorr orig ETA1 ind 1');
 cmp_ok(abs($decorr->[1]->[0]->[0]-(9.2945678814619)),'<',$diff,'decorr orig ETA2 ind 1');
@@ -294,7 +333,12 @@ cmp_ok($est_matrix->[0]->[69]->[3],'==',-0.00014352,'iwres rec 70  sim3');
 
 $decorr = [];
 $shrink =[];
-($ok,$message) = simeval_util::decorrelation($est_matrix,$mean_matrix,$decorr,$shrink);
+@missing_matrix =();
+for (my $i=0; $i<scalar(@{$est_matrix}); $i++){
+	push(@missing_matrix,[(0) x scalar(@{$est_matrix->[0]})]);
+}
+
+($ok,$message) = simeval_util::decorrelation($est_matrix,$mean_matrix,$decorr,$shrink,\@missing_matrix);
 is ($ok, 0, "decorrelation iwres return status");
 is ($message,'','decorrelation iwres message');
 if (0){
@@ -366,5 +410,139 @@ cmp_ok($est_matrix->[1]->[10]->[0],'==',1,'mdv rec 11  original');
 cmp_ok($est_matrix->[1]->[35]->[0],'==',0,'mdv rec 36 original');
 cmp_ok($est_matrix->[1]->[62]->[0],'==',0,'mdv rec 63 original');
 
+
+@file_array=($filedir.'original-miss.phi',$filedir.'sim-miss-1.phi',$filedir.'sim-miss-2.phi',$filedir.'sim-miss-3.phi');
+
+$headers_array = [['ETA(1)','ETA(2)','ETA(3)']];
+$mean_matrix_array = [[]];
+$values_matrix_array = [[]];
+$filter_all_zero_array = [0];
+$init_only_array = [0];
+
+$ok = simeval_util::get_nmtabledata(filenames => \@file_array,
+									header_strings_array => $headers_array,
+									values_matrix_array => $values_matrix_array,
+									mean_matrix_array => $mean_matrix_array,
+									filter_all_zero_array => $filter_all_zero_array,
+									init_only_array => $init_only_array);
+
+is ($ok, 0, "get_nmtabledata return status");
+
+$est_matrix = $values_matrix_array->[0];
+#this is stored in ebe_npde.m in matlab/old/
+cmp_ok($est_matrix->[0]->[0]->[0],'==',-5.50879E-02,'ETA1 ind 1 original');
+cmp_ok($est_matrix->[0]->[1]->[0],'==',-3.34657E-01,'ETA1 ind 2 original');
+cmp_ok($est_matrix->[2]->[4]->[0],'==',-4.50197E-01,'ETA3 ind 5 original');
+cmp_ok($est_matrix->[0]->[0]->[1],'==',-2.46807E-01,'ETA1 ind 1 sim 1');
+cmp_ok($est_matrix->[2]->[0]->[1],'==',2.10681E-01,'ETA3 ind 1 sim 1');
+cmp_ok($est_matrix->[2]->[5]->[1],'==',1.16354E-01,'ETA3 ind 6 sim 1');
+cmp_ok($est_matrix->[0]->[1]->[2],'==',1.44944E-01,'ETA1 ind 2 sim 2');
+cmp_ok($est_matrix->[2]->[3]->[2],'==',1.14446E-01,'ETA3 ind 4 sim 2');
+cmp_ok($est_matrix->[2]->[5]->[2],'==',-4.12498E-01,'ETA3 ind 6 sim 2');
+cmp_ok($est_matrix->[0]->[1]->[3],'==',-4.66493E-02,'ETA1 ind 2 sim 3');
+cmp_ok($est_matrix->[2]->[3]->[3],'==',-1.60687E-01,'ETA3 ind 4 sim 3');
+cmp_ok($est_matrix->[2]->[5]->[3],'==',9.17580E-02,'ETA3 ind 6 sim 3');
+
+$diff = 1E-10;
+$mean_matrix = $mean_matrix_array->[0];
+cmp_ok(abs($mean_matrix->[0]->[0]-(-0.4060175/3)),'<',$diff,'mean ETA1 ind 1');
+cmp_ok(abs($mean_matrix->[1]->[1]-0),'<',$diff,'mean ETA2 ind 2');
+cmp_ok(abs($mean_matrix->[2]->[1]-0.76082/3),'<',$diff,'mean ETA3 ind 2');
+cmp_ok(abs($mean_matrix->[2]->[2]-0),'<',$diff,'mean ETA3 ind 3');
+cmp_ok(abs($mean_matrix->[0]->[3]-(-0.1616416/3)),'<',$diff,'mean ETA1 ind 4');
+cmp_ok(abs($mean_matrix->[2]->[4]-0.0576/3),'<',$diff,'mean ETA3 ind 5');
+cmp_ok(abs($mean_matrix->[0]->[5]-0.272154/3),'<',$diff,'mean ETA1 ind 6');
+cmp_ok(abs($mean_matrix->[2]->[5]-(-0.204386/3)),'<',$diff,'mean ETA3 ind 6');
+
+is(scalar(@{$est_matrix}),3,'3 param in est matrix');
+is(scalar(@{$est_matrix->[0]}),6,'6 id in est matrix 1');
+is(scalar(@{$est_matrix->[1]}),6,'6 id in est matrix 2');
+is(scalar(@{$est_matrix->[2]}),6,'6 id in est matrix 3');
+
+@missing_matrix =([0,0,1,0,0,0],[1,1,1,1,1,1],[0,0,1,0,0,0]);
+
+$decorr=[];
+$shrink=[];
+($ok,$message) = simeval_util::decorrelation($est_matrix,$mean_matrix,$decorr,$shrink,\@missing_matrix);
+is ($ok, 0, "decorrelation return status");
+is ($message,'','decorrelation message');
+
+#param #indiv $sample
+#this is stored in ebe_npde.m in matlab/old/ formula
+#is   matrix = A1(2:end,:); %sim
+#original = A1(index,:);
+#bvec=(original -mean(matrix))';
+#decorrorig(1,:)=((inv( (chol(cov(matrix)))'  ))*bvec)';
+
+is(scalar(@{$decorr}),3,'3 param in decorr matrix');
+is(scalar(@{$decorr->[0]}),6,'6 id in decorr matrix par 1'); #here 70
+is(scalar(@{$decorr->[0]->[0]}),4,'4 vals in decorr matrix par 1 id 1'); 
+is(scalar(@{$decorr->[0]->[5]}),4,'4 vals in decorr matrix par 1 id 6'); 
+is(scalar(@{$decorr->[1]}),6,'6 id in decorr matrix par 2');
+is(scalar(@{$decorr->[1]->[0]}),4,'4 vals in decorr matrix par 2 id 1'); 
+is(scalar(@{$decorr->[1]->[5]}),4,'4 vals in decorr matrix par 2 id 6'); 
+is(scalar(@{$decorr->[2]}),6,'6 id in decorr matrix par 3');
+is(scalar(@{$decorr->[2]->[0]}),4,'4 vals in decorr matrix par 3 id 1'); 
+is(scalar(@{$decorr->[2]->[5]}),4,'4 vals in decorr matrix par 3 id 6'); 
+
+cmp_ok(abs($decorr->[0]->[0]->[0]-(0.6059160950135)),'<',$diff,'decorr orig ETA1 ind 1');
+is_deeply($decorr->[1]->[0],[-99,-99,-99,-99],'decorr all instances ETA2 ind 1 missing');
+cmp_ok(abs($decorr->[2]->[0]->[0]-(9.2945678814619)),'<',$diff,'decorr orig ETA3 ind 1');
+cmp_ok(abs($decorr->[0]->[1]->[0]-(-3.9217365078990)),'<',$diff,'decorr orig ETA1 ind 2');
+cmp_ok(abs($decorr->[2]->[1]->[0]-(101.9532558734349)),'<',$diff,'decorr orig ETA3 ind 2');
+is_deeply($decorr->[0]->[2],[-99,-99,-99,-99],'decorr all instances ETA1 ind 3 missing');
+is_deeply($decorr->[2]->[2],[-99,-99,-99,-99],'decorr all instaces ETA3 ind 3 missing');
+cmp_ok(abs($decorr->[0]->[3]->[0]-(4.5160319298809)),'<',$diff,'decorr orig ETA1 ind 4');
+cmp_ok(abs($decorr->[2]->[3]->[0]-(-349.1157719927939)),'<',$diff,'decorr orig ETA3 ind 4');
+cmp_ok(abs($decorr->[0]->[4]->[0]-(-0.0829056697377)),'<',$diff,'decorr orig ETA1 ind 5');
+cmp_ok(abs($decorr->[2]->[4]->[0]-(-3.3232965189893)),'<',$diff,'decorr orig ETA3 ind 5');
+cmp_ok(abs($decorr->[0]->[5]->[0]-(0.8133168467060)),'<',$diff,'decorr orig ETA1 ind 6');
+cmp_ok(abs($decorr->[2]->[5]->[0]-(4.3913013766347)),'<',$diff,'decorr orig ETA3 ind 6');
+
+cmp_ok(abs($decorr->[0]->[0]->[1]-(-0.841608576391480)),'<',$diff,'decorr sim1 ETA1 ind 1');
+is($decorr->[1]->[0]->[1],-99,'decorr sim1 ETA2 ind 1 missing');
+cmp_ok(abs($decorr->[2]->[0]->[1]-(-0.790587337033390)),'<',$diff,'decorr sim1 ETA3 ind 1');
+cmp_ok(abs($decorr->[0]->[1]->[1]-(0.442611071700808)),'<',$diff,'decorr sim1 ETA1 ind 2');
+cmp_ok(abs($decorr->[2]->[1]->[1]-(1.066503057914682)),'<',$diff,'decorr sim1 ETA3 ind 2');
+is($decorr->[0]->[2]->[1],-99,'decorr sim1 ETA1 ind 3 missing');
+cmp_ok(abs($decorr->[0]->[3]->[1]-(-0.490641459420216)),'<',$diff,'decorr sim1 ETA1 ind 4');
+cmp_ok(abs($decorr->[2]->[3]->[1]-(-1.045277136280930)),'<',$diff,'decorr sim1 ETA3 ind 4');
+cmp_ok(abs($decorr->[0]->[4]->[1]-(1.087900848979833)),'<',$diff,'decorr sim1 ETA1 ind 5');
+cmp_ok(abs($decorr->[2]->[4]->[1]-(-0.387046607170625)),'<',$diff,'decorr sim1 ETA3 ind 5');
+cmp_ok(abs($decorr->[0]->[5]->[1]-(-0.976156115546330)),'<',$diff,'decorr sim1 ETA1 ind 6');
+cmp_ok(abs($decorr->[2]->[5]->[1]-(-0.616808374955168)),'<',$diff,'decorr sim1 ETA3 ind 6');
+
+cmp_ok(abs($decorr->[0]->[0]->[3]-(1.105473005976996)),'<',$diff,'decorr sim3 ETA1 ind 1');
+cmp_ok(abs($decorr->[2]->[0]->[3]-(-0.333560738681136)),'<',$diff,'decorr sim3 ETA3 ind 1');
+cmp_ok(abs($decorr->[0]->[1]->[3]-(-1.144924277218235)),'<',$diff,'decorr sim3 ETA1 ind 2');
+cmp_ok(abs($decorr->[2]->[1]->[3]-(-0.149939096868167)),'<',$diff,'decorr sim3 ETA3 ind 2');
+cmp_ok(abs($decorr->[0]->[3]->[3]-(-0.659915824304090)),'<',$diff,'decorr sim3 ETA1 ind 4');
+cmp_ok(abs($decorr->[2]->[3]->[3]-(0.947546536148295)),'<',$diff,'decorr sim3 ETA3 ind 4');
+cmp_ok(abs($decorr->[0]->[4]->[3]-(-0.879142618748254)),'<',$diff,'decorr sim3 ETA1 ind 5');
+is($decorr->[0]->[2]->[3],-99,'decorr sim3 ETA1 ind 3 missing');
+cmp_ok(abs($decorr->[2]->[4]->[3]-(-0.748626468429881)),'<',$diff,'decorr sim3 ETA3 ind 5');
+cmp_ok(abs($decorr->[0]->[5]->[3]-(-0.046093664205007)),'<',$diff,'decorr sim3 ETA1 ind 6');
+cmp_ok(abs($decorr->[2]->[5]->[3]-(1.153780181600242)),'<',$diff,'decorr sim3 ETA3 ind 6');
+
+
+$npde = [];
+$pde = [];
+$ok = simeval_util::npde_comp($decorr, $pde, $npde);
+is ($ok, 0, "npde_comp eta return status");
+
+cmp_float($pde->[0]->[0],2/3,'pde ETA1 first ID');
+is($pde->[1]->[0],-99,'pde ETA2 first ID missing');
+cmp_float($pde->[2]->[0],2/3,'pde ETA3 first ID');
+is($pde->[0]->[2],-99,'pde ETA1 3rd ID missing');
+cmp_float($pde->[0]->[4],2/3,'pde ETA1 5th ID');
+cmp_float($pde->[2]->[4],1/3,'pde ETA3 5th ID');
+
+#relative matlab
+cmp_relative($npde->[0]->[0],0.430727299295457,4,'npde ETA1 first ID');
+is_deeply($npde->[1],[-99,-99,-99,-99,-99,-99],'npde ETA2 all ID missing');
+is($npde->[0]->[2],-99,'npde ETA1 3rd ID missing');
+cmp_relative($npde->[2]->[0],0.430727299295457,4,'npde ETA3 first ID');
+cmp_relative($npde->[0]->[4],0.430727299295457,4,'npde ETA1 5th ID');
+cmp_relative($npde->[2]->[4],-0.430727299295458,4,'npde ETA3 5th ID');
 
 done_testing();

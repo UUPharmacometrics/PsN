@@ -11,9 +11,36 @@ use math qw(round);
 
 require Exporter;
 our @ISA = qw(Exporter);
-our %EXPORT_TAGS = ('all' => [ qw(not_empty is_empty diff cumsum max min linspace unique add sum mean median median_and_ci variance stdev is_int quantile percentile is_equal get_array_positions get_positions sem rse any_nonzero count_lower) ]);
+our %EXPORT_TAGS = ('all' => [ qw(not_empty is_empty diff cumsum max min linspace unique add sum mean median median_and_ci variance stdev is_int quantile percentile is_equal get_array_positions get_positions sem rse any_nonzero count_lower find_zeros get_intersection is_zero) ]);
 our @EXPORT_OK = ( @{ $EXPORT_TAGS{'all'} } );
 
+sub find_zeros
+{
+	my $a = shift;		# Array reference
+
+	my @indices=();
+	for (my $i=0; $i<scalar(@{$a}); $i++) {
+		if ($a->[$i] == 0){
+			push(@indices,$i);
+		}
+	}
+
+	return \@indices;
+}
+sub is_zero
+{
+	my $a = shift;		# Array reference
+
+	my @is_zero=();
+	for (my $i=0; $i<scalar(@{$a}); $i++) {
+		if ($a->[$i] == 0){
+			push(@is_zero,1);
+		}else{
+			push(@is_zero,0);
+		}
+	}
+	return \@is_zero;
+}
 
 sub get_positions{
 	#static
@@ -37,6 +64,32 @@ sub get_positions{
 		push(@cols,$matched);
 	}
 	return \@cols; #this is sorted according to keys
+}
+
+sub get_intersection{
+	#static
+	my %parm = validated_hash(\@_,
+							  arr1 => { isa => 'ArrayRef', optional => 0 },
+							  arr2 => { isa => 'ArrayRef', optional => 0 },
+		);
+	my $arr1 = $parm{'arr1'};
+	my $arr2 = $parm{'arr2'};
+	my @intersection= ();
+	return \@intersection unless (defined $arr1 and defined $arr2);
+	return \@intersection unless (scalar(@{$arr1})>0 and scalar(@{$arr2})>0);
+
+	my @remaining = @{$arr2};
+
+	for (my $i=0; $i< scalar(@{$arr1}); $i++){
+		for (my $j=0; $j< scalar(@remaining); $j++){
+			if ($arr1->[$i] eq $remaining[$j]){
+				push(@intersection,$arr1->[$i]);
+				splice(@remaining,$j,1); #remove matched element
+				last;
+			}
+		}
+	}
+	return \@intersection; 
 }
 
 

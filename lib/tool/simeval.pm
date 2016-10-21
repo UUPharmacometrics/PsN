@@ -863,6 +863,8 @@ sub simeval_analyze
 					  message => "\nError ebe: original eta file not found, ebe results cannot be computed\n");
 			last;
 		}
+
+
 		my @found_files=();
 		foreach my $file (@{$simeval_all_eta_files}){
 			push(@found_files,$file) if (-e $file);
@@ -897,7 +899,7 @@ sub simeval_analyze
 			push(@{$headers_array},\@eta_headers);
 			push(@{$mean_matrix_array},[]);
 			push(@{$values_matrix_array},[]);
-			push(@{$filter_all_zero_array},1);
+			push(@{$filter_all_zero_array},0);
 			push(@{$init_only_array},0);
 		}
 
@@ -986,7 +988,7 @@ sub simeval_analyze
 #		}
 
 
-		($ret,$errmess) = simeval_util::decorrelation($est_matrix,$mean_matrix,$decorr,$stdev);
+		($ret,$errmess) = simeval_util::decorrelation($est_matrix,$mean_matrix,$decorr,$stdev,[]);
 		unless ($ret ==0){
 			ui->print(category=> 'all',
 					  message => "\nError in decorrelation for iofv: $ret. iofv results cannot be computed\n".$errmess);
@@ -1010,51 +1012,6 @@ sub simeval_analyze
 		}
 		close ORI;
 
-
-		if (0){
-			#have square of decorr in summary iofv
-			open(ORI, ">decorrelated_original_iofv.csv") || 
-				die("Couldn't open decorrelated_original_iofv.csv : $!");
-			print ORI "ID,OFV\n";
-			for (my $i=0; $i<scalar(@{$decorr->[0]});$i++){
-				print ORI $id_matrix->[0]->[$i]->[0].','.formatfloat($decorr->[0]->[$i]->[0])."\n";
-			}
-			close ORI;
-		}
-		if (0){
-			open(DAT, ">iofv_pde.csv") || 
-				die("Couldn't open iofv_pde.csv : $!");
-			print DAT "ID,OFV_PDE\n";
-			for (my $i=0; $i<scalar(@{$pde->[0]});$i++){
-				print DAT $id_matrix->[0]->[$i]->[0].','.formatnpde($pde->[0]->[$i])."\n";
-			}
-			close (DAT);
-		}
-
-		if ($have_CDF){
-			if (0){
-				open(DAT, ">iofv_npde.csv") || 	die("Couldn't open iofv_npde.csv : $!");
-				print DAT "ID,IOFV_NPDE\n";
-				for (my $i=0; $i<scalar(@{$npde->[0]});$i++){
-					print DAT $id_matrix->[0]->[$i]->[0].','.formatnpde($npde->[0]->[$i])."\n";
-				}
-				close (DAT);
-			}
-			if (0){
-				$ret = simeval_util::npde_comp($est_matrix,$pd,$npd);
-				unless ($ret ==0){
-					print "\nError in npde_comp for iofv: $ret. iofv results cannot be computed\n";
-					last;
-				}
-				open(DAT, ">iofv_npd.csv") || die("Couldn't open iofv_npd.csv : $!");
-				print DAT "ID,OFV_NPD\n";
-				for (my $i=0; $i<scalar(@{$npd->[0]});$i++){
-					print DAT $id_matrix->[0]->[$i]->[0].','.formatnpde($npd->[0]->[$i])."\n";
-				}
-				close (DAT);
-			}
-		}
-
 		$ret_subjects = scalar(@{$id_matrix->[0]});
 		
 		my @all_npde=(); #[ind]->[eta]
@@ -1072,6 +1029,7 @@ sub simeval_analyze
 			my $pde=[];
 			my $npd = [];
 			my $pd=[];
+
 
 			print "type $type headers ".join(' ',@eta_headers)."\n" if $testing;
 			
@@ -1120,27 +1078,25 @@ sub simeval_analyze
 			}
 			close ORI;
 			
-			($ret,$errmess) = simeval_util::decorrelation($est_matrix,$mean_matrix,$decorr,$dummy);
+			my $diagnostics = simeval_util::find_zero_etas(filename => $simeval_all_eta_files->[0], 
+													   eta_headers => \@eta_headers);
+			#missing values is $diagnostics->{'is_zero'}
+
+			($ret,$errmess) = simeval_util::decorrelation($est_matrix,$mean_matrix,$decorr,$dummy,$diagnostics->{'is_zero'});
 			unless ($ret ==0){
 				ui->print(category=> 'all',
 						  message => "\nError in decorrelation for ebe:\n $ret. results cannot be computed for ebe $type\n".$errmess);
 				next;
 			}
 
-			if (0){
-				open(ORI, ">decorrelated_original_$type"."_ebe.csv") || die("Couldn't open decorrelated_original_$type"."_ebe.csv : $!");
-				print ORI "ID,".join(',',@eta_headers)."\n";
-				for (my $i=0; $i<scalar(@{$decorr->[0]});$i++){
-					print ORI $id_matrix->[0]->[$i]->[0];
+			if ($ti == 0){ #only iiv
+				for (my $i=0; $i<scalar(@{$decorr->[0]});$i++){ #over individuals
 					my $sd=0;
-					for (my $j=0; $j<scalar(@{$decorr});$j++){
-						print ORI ','.formatfloat($decorr->[$j]->[$i]->[0]);
-						$sd += ($decorr->[$j]->[$i]->[0])**2 unless ($decorr->[$j]->[$i]->[0] == $missing_value)  ;
+					for (my $j=0; $j<scalar(@{$decorr});$j++){ #over ETAs
+						$sd += ($decorr->[$j]->[$i]->[0])**2 unless ($decorr->[$j]->[$i]->[0] == $missing_value);
 					}
 					$standardized[$i] += $sd;
-					print ORI "\n";
 				}
-				close ORI;
 			}
 			$ret = simeval_util::npde_comp($decorr,$pde,$npde);
 			unless ($ret ==0){
@@ -1148,48 +1104,17 @@ sub simeval_analyze
 						  message => "\nError in npde_comp for ebe: $ret. results cannot be computed for ebe $type\n");
 				next;
 			}
-			if (0){
-				open(DAT, ">ebe_pde_$type".".csv") || die("Couldn't open ebe_pde_$type".".csv : $!");
-				print DAT "ID,".join(',',@eta_headers)."\n";
-				for (my $i=0; $i<scalar(@{$pde->[0]});$i++){
-					print DAT $id_matrix->[0]->[$i]->[0];
-					for (my $j=0; $j<scalar(@{$pde});$j++){
-						print DAT ','.formatnpde($pde->[$j]->[$i]);
-					}
-					print DAT "\n";
-				}
-				close (DAT);
-			}
 			if ($have_CDF){
 				for (my $i=0; $i<scalar(@all_npde);$i++){ #loop id
 					for (my $j=0; $j<scalar(@{$npde});$j++){ #loop eta
 						push(@{$all_npde[$i]},$npde->[$j]->[$i]);
 					}
 				}
-
-
-				if (0){
-					$ret = simeval_util::npde_comp($est_matrix,$pd,$npd);
-					unless ($ret ==0){
-						print "\nError in npde_comp for ebe: $ret. ebe results cannot be computed\n";
-						last;
-					}
-					open(DAT, ">ebe_npd_$type".".csv") || die("Couldn't open ebe_npd_$type".".csv : $!");
-					print DAT "ID,".join(',',@eta_headers)."\n";
-					for (my $i=0; $i<scalar(@{$npd->[0]});$i++){
-						print DAT $id_matrix->[0]->[$i]->[0];
-						for (my $j=0; $j<scalar(@{$npd});$j++){
-							print DAT ','.formatnpde($npd->[$j]->[$i]);
-						}
-						print DAT "\n";
-					}
-					close (DAT);
-				}
 			}
 		}#end loop etatypes
 		if ($have_CDF){
 			open(DAT, ">$ebe_npde_file") || die("Couldn't open $ebe_npde_file : $!");
-			print DAT "ID,STAND_EBE,".join(',',@all_eta_headers)."\n";
+			print DAT "ID,STAND_EBE_IIV,".join(',',@all_eta_headers)."\n";
 			for (my $i=0; $i<scalar(@all_npde);$i++){
 				print DAT $id_matrix->[0]->[$i]->[0].','.formatfloat($standardized[$i]);
 				for (my $j=0; $j<scalar(@{$all_npde[$i]});$j++){
