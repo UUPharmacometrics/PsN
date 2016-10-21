@@ -33,7 +33,7 @@ source(paste0(rscripts.directory,"/common/plot.table.R"))
 # Create a pdf files
 pdf.ebe.npde(ebe.npde.file=ebe.npde.file,iiv.eta.names=iiv.eta.names,
              outlying_criteria=outlying_criteria,ebe.filename='PsN_ebe_npde_plots.pdf',
-             model.filename=model.filename)
+             rplots.level=rplots.level,model.filename=model.filename)
 
 pdf.cwres.iwres(residual.files=residual.files,residual.outliers.file,
                 residual.names=residual.names,pdf.filename='PsN_residual_plots.pdf')

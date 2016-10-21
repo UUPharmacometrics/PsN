@@ -27,21 +27,23 @@ pdf_ofv <- function(raw.results.file,iofv.file,all.iofv.file,n.subjects,
   histogram_p_ofv_ppc(p_ofv_ppc_data,model.filename)
   
   #2. draw a histogram of (iOFV NPDE)
-  i_ofv_npde_data <- i_ofv_npde(iofv.file)# calculation
-  
-  histogram_i_ofv_npde <- function(i_ofv_npde_data) {
-    #unlist
-    iOFV_npde <- i_ofv_npde_data$iOFV_npde
-    ylimit <- i_ofv_npde_data$ylimit
-    xlimit_min <- i_ofv_npde_data$xlimit_min
-    xlimit_max <- i_ofv_npde_data$xlimit_max
-    x <- i_ofv_npde_data$x
-    dy <- i_ofv_npde_data$dy
-    #draw a histogram
-    hist(iOFV_npde,xlab="iOFV NPDE",ylim=c(0,ylimit),xlim=c(xlimit_min,xlimit_max))
-    lines(x,dy, col="red")
+  if (rplots.level > 1) {
+    i_ofv_npde_data <- i_ofv_npde(iofv.file)# calculation
+    
+    histogram_i_ofv_npde <- function(i_ofv_npde_data) {
+      #unlist
+      iOFV_npde <- i_ofv_npde_data$iOFV_npde
+      ylimit <- i_ofv_npde_data$ylimit
+      xlimit_min <- i_ofv_npde_data$xlimit_min
+      xlimit_max <- i_ofv_npde_data$xlimit_max
+      x <- i_ofv_npde_data$x
+      dy <- i_ofv_npde_data$dy
+      #draw a histogram
+      hist(iOFV_npde,xlab="iOFV NPDE",ylim=c(0,ylimit),xlim=c(xlimit_min,xlimit_max))
+      lines(x,dy, col="red")
+    }
+    histogram_i_ofv_npde(i_ofv_npde_data)
   }
-  histogram_i_ofv_npde(i_ofv_npde_data)
   
   #3. iOFV RES
   list_i_ofv_res <- i_ofv_res(all.iofv.file,n.subjects,samples)# calculation
@@ -76,45 +78,41 @@ pdf_ofv <- function(raw.results.file,iofv.file,all.iofv.file,n.subjects,
     abline(h=0, lwd=2, lty=3, col="black")
     abline(h=-3, lwd=2, lty=3, col="black") # mark outlier line
     abline(h=3, lwd=2, lty=3, col="black") # mark outlier line
-    abline(v=n.subjects/2, lwd=2, lty=1, col="green") #theoretical crossing zero line
-    abline(v=cross, lwd=2, lty=1, col="red") # real crossing zero line
-    leg.txt <- c("theoretical crossing zero line","crossing zero line")
-    legend("topleft", col=c('green','red'), leg.txt, lty=c(1,1),box.lwd = 0,bg = "white", lwd=2, cex=1)
     title("iOFV RES")
   }
   boxplot_i_ofv_res(list_i_ofv_res,n.subjects)
   
-  #4. iOFV PPC
-  outlier_ID <- list_i_ofv_res$outlier_ID
-  list_i_ofv_ppc <- i_ofv_ppc(all.iofv.file,samples,outlier_ID)# calculation
-  
-  histograms_i_ofv_ppc <- function(list_i_ofv_ppc,model.filename) {
-    amout <- length(list_i_ofv_ppc)
-    if(amout > 0) {
-      for (i in 1:(amout-2)) {
-        #unlist
-        iOFV_sim <- list_i_ofv_ppc[[i]]$iOFV_sim
-        len <- length(iOFV_sim)
-        iOFV_obs <- list_i_ofv_ppc[[i]]$iOFV_obs
-        sort_iOFV_sim <- list_i_ofv_ppc[[i]]$sort_iOFV_sim
-        newxlim <- list_i_ofv_ppc[[i]]$newxlim
-        outlier_data <- list_i_ofv_ppc$outlier_data
-        # make a plot
-        hist(sort_iOFV_sim,xlim=newxlim,axes=TRUE,main=paste('iOFV PPC ',model.filename,'ID =', outlier_data$ID[i]),xlab="iOFV",freq=TRUE)
-        abline(v=iOFV_obs, lwd= 2, lty=1, col="red") 
-        abline(v=median(iOFV_sim[1:len]), lwd=2, lty=4, col="green") 
-        abline(v=quantile(iOFV_sim[1:len], c(0.025, 0.975), na.rm=T)[1], lwd=2, lty=3, col="green") 
-        abline(v=quantile(iOFV_sim[1:len], c(0.025, 0.975), na.rm=T)[2], lwd=2, lty=3, col="green") 
-        leg.txt <- c("iOFVobs","median iOFVsim","5th and 95th iOFVsim")
-        legend("topright", col=c('red', 'green', 'green','green'), leg.txt, lty=c(1,4,3,3),box.lwd = 0,box.col = "white",bg = "white", lwd=2, cex=1)
-      }
-    }
-    
-  }
-  histograms_i_ofv_ppc(list_i_ofv_ppc,model.filename)
-  
-  #5. KLD iOFV
   if (rplots.level > 1) {
+    #4. iOFV PPC
+    outlier_ID <- list_i_ofv_res$outlier_ID
+    list_i_ofv_ppc <- i_ofv_ppc(all.iofv.file,samples,outlier_ID)# calculation
+  
+    histograms_i_ofv_ppc <- function(list_i_ofv_ppc,model.filename) {
+      amout <- length(list_i_ofv_ppc)
+      if(amout > 0) {
+        for (i in 1:(amout-2)) {
+          #unlist
+          iOFV_sim <- list_i_ofv_ppc[[i]]$iOFV_sim
+          len <- length(iOFV_sim)
+          iOFV_obs <- list_i_ofv_ppc[[i]]$iOFV_obs
+          sort_iOFV_sim <- list_i_ofv_ppc[[i]]$sort_iOFV_sim
+          newxlim <- list_i_ofv_ppc[[i]]$newxlim
+          outlier_data <- list_i_ofv_ppc$outlier_data
+          # make a plot
+          hist(sort_iOFV_sim,xlim=newxlim,axes=TRUE,main=paste('iOFV PPC ',model.filename,'ID =', outlier_data$ID[i]),xlab="iOFV",freq=TRUE)
+          abline(v=iOFV_obs, lwd= 2, lty=1, col="red") 
+          abline(v=median(iOFV_sim[1:len]), lwd=2, lty=4, col="green") 
+          abline(v=quantile(iOFV_sim[1:len], c(0.025, 0.975), na.rm=T)[1], lwd=2, lty=3, col="green") 
+          abline(v=quantile(iOFV_sim[1:len], c(0.025, 0.975), na.rm=T)[2], lwd=2, lty=3, col="green") 
+          leg.txt <- c("iOFVobs","median iOFVsim","5th and 95th iOFVsim")
+          legend("topright", col=c('red', 'green', 'green','green'), leg.txt, lty=c(1,4,3,3),box.lwd = 0,box.col = "white",bg = "white", lwd=2, cex=1)
+        }
+      }
+    
+    }
+    histograms_i_ofv_ppc(list_i_ofv_ppc,model.filename)
+  
+    #5. KLD iOFV
     list_kld_i_ofv <- kld_i_ofv(all.iofv.file,n.subjects,samples,n)# calculation
   
     histogram_kld_i_ofv <- function(list_kld_i_ofv,model.filename) {

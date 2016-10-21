@@ -1,8 +1,10 @@
 pdf.ebe.npde <- function(ebe.npde.file,iiv.eta.names,outlying_criteria,ebe.filename,
-                         do_outlier_plot,model.filename) {
+                         rplots.level,model.filename) {
   # default for the do_outlier_plot
-  if(missing(do_outlier_plot)) {
+  if(rplots.level > 1) {
     do_outlier_plot <- TRUE
+  } else {
+    do_outlier_plot <- FALSE
   }
   
   #.........................................(1)input_ebe_npde...........................     
