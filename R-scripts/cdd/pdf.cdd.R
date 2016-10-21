@@ -52,8 +52,9 @@ pdf.cdd <- function(raw.results.file,skipped.id.file,pdf.filename,markeropt,
     delta.ofv <- list.delta.ofv$delta.ofv
     row_infl <- list.delta.ofv$row_infl
     ID <- list.delta.ofv$ID
+    fail_ID <- list.delta.ofv$fail_ID
     # create a plot
-    plot.delta.ofv(delta.ofv,model,ID,row_infl)
+    plot.delta.ofv(delta.ofv,model,ID,row_infl,fail_ID)
   } else {
     # create needed data for plotting
     list.delta.ofv <- delta.ofv.data(cdd.data.all,outlier_ID)
@@ -63,8 +64,9 @@ pdf.cdd <- function(raw.results.file,skipped.id.file,pdf.filename,markeropt,
     row_outl <- list.delta.ofv$row_outl
     row_infl <- list.delta.ofv$row_infl
     ID <- list.delta.ofv$ID
+    fail_ID <- list.delta.ofv$fail_ID
     # create a plot
-    plot.delta.ofv(delta.ofv,model,ID,row_infl,row_outl,row_outl_infl)
+    plot.delta.ofv(delta.ofv,model,ID,row_infl,fail_ID,row_outl,row_outl_infl)
   }
   
   #close pdf

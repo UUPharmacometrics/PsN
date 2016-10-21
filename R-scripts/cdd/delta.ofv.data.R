@@ -3,9 +3,17 @@ delta.ofv.data <- function(cdd.data.all,outlier_ID) {
   if (!missing(outlier_ID)) {
     outlier_ID_all <- outlier_ID
   }
-  
+ 
   cdd.data <- cdd.data.all[-1,]
   rownames(cdd.data) <- NULL
+  
+  #find negative delta ofv values, if exist
+  fail_ID <- c()
+  if (any(cdd.data$cdd.delta.ofv < 0)) {
+    negat.delta.row <- which(cdd.data$cdd.delta.ofv < 0)
+    fail_ID <- cdd.data$ID[negat.delta.row]
+    cdd.data <- cdd.data[-negat.delta.row,]
+  }
   
   nr_of_delta.ofv <- length(cdd.data$cdd.delta.ofv)
   # 10% highest values of the delta ofvs
@@ -39,7 +47,8 @@ delta.ofv.data <- function(cdd.data.all,outlier_ID) {
                 ID_infl=cdd.data$ID[row_infl],
                 ID_outl=cdd.data$ID[row_outl],
                 ID_outl_infl=cdd.data$ID[row_outl_infl],
-                ID=cdd.data$ID
+                ID=cdd.data$ID,
+                fail_ID=fail_ID
     )
   } else {
     row_infl <- row_infl_all
@@ -49,7 +58,8 @@ delta.ofv.data <- function(cdd.data.all,outlier_ID) {
                 delta.ofv_10_pr=delta.ofv_10_pr,
                 row_infl=row_infl,
                 ID_infl=cdd.data$ID[row_infl],
-                ID=cdd.data$ID
+                ID=cdd.data$ID,
+                fail_ID=fail_ID
     )
   }
 return(out)
