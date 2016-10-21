@@ -692,7 +692,7 @@ sub simeval_analyze
 				print ORI "\n";
 			}
 			close ORI;
-			if ($k == 0){
+			if (0 and $k == 0){ #we handle missing observation now
 				my @missing_obs=();
 				foreach my $idnum (keys	%have_observations){
 					push(@missing_obs,sprintf("%i",$idnum)) unless ($have_observations{$idnum});
