@@ -1,5 +1,6 @@
 # Used libraries
 library(PerformanceAnalytics)
+library(grid)
 
 residual.outliers.file <- paste0(working.directory,'residual_outliers.csv')
 # Source ebe npde functions
