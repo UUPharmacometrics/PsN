@@ -11,7 +11,7 @@ use includes; #file with paths to PsN packages and $path variable definition
 
 SKIP: {
 	my ($major,$minor,$dirt) = get_major_minor_nm_version();
-    skip $major.".".$minor." is a too old NONMEM version for precond",1 if ($major < 7 or ($major == 7 and $minor < 4));
+    skip $major.".".$minor." is a too old NONMEM version for npfit",1 if ($major < 7 or ($major == 7 and $minor < 4));
 
 	our $tempdir = create_test_dir('system_npfit');
 
@@ -20,13 +20,13 @@ SKIP: {
 	chdir($tempdir);
 
 	my @commands = 
-		(get_command('npfit') . " $model_dir/pheno.mod -npsupp=100,200,300",
-		get_command('npfit') . " $model_dir/pheno.mod -npsupp=59",
-		get_command('npfit') . " $model_dir/pheno.mod -npsupp=0,100 -silent",
-		get_command('npfit') . " $model_dir/mox1.mod -npsupp=80,100",
-		get_command('npfit') . " $model_dir/mox1.mod -npsupp=54,100 -silent",
-		get_command('npfit') . " $model_dir/run1.mod -npsupp=100",
-		get_command('npfit') . " $model_dir/run1.mod -npsupp=2,10 -silent",
+		(get_command('npfit') . " pheno.mod -npsupp=100,200,300",
+		get_command('npfit') . " pheno.mod -npsupp=59",
+		get_command('npfit') . " pheno.mod -npsupp=0,100 -silent",
+		get_command('npfit') . " mox1.mod -npsupp=80,100",
+		get_command('npfit') . " mox1.mod -npsupp=54,100 -silent",
+		get_command('npfit') . " run1.mod -npsupp=100",
+		get_command('npfit') . " run1.mod -npsupp=2,10 -silent",
 		);
 	foreach my $command (@commands){
 		print "Running $command\n";
@@ -36,8 +36,8 @@ SKIP: {
 	}
 
 	my @crash_commands = 
-		(get_command('npfit') . " $model_dir/pheno.mod -npsupp='' -silent",
-		get_command('npfit') . " $model_dir/pheno.mod -silent",
+		(get_command('npfit') . " pheno.mod -npsupp='' -silent",
+		get_command('npfit') . " pheno.mod -silent",
 		get_command('npfit') . " -npsupp=100 -silent ",
 		);
 	open STDERR, '>', File::Spec->devnull();       # Silence STDERR croak messages from below
