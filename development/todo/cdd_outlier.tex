@@ -1,0 +1,109 @@
+\documentclass[a4wide,12pt]{article}
+%\setlength{\marginparwidth}{0pt}%35
+%\setlength{\marginparsep}{0pt}%?
+%\setlength{\evensidemargin}{0pt}
+%\setlength{\oddsidemargin}{0pt}
+\usepackage{lmodern}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{textcomp}
+\usepackage{verbatim}
+\usepackage{enumitem}
+\usepackage{longtable}
+\usepackage{alltt}
+\usepackage{ifthen}
+%\usepackage[backend=biber, maxbibnames=99, defernumbers]{biblatex}
+%\addbibresource{PsN.bib}
+% Reduce the size of the underscore
+\usepackage{relsize}
+\renewcommand{\_}{\textscale{.7}{\textunderscore}}
+
+\newcommand{\revisiondate}[1]{
+\date{#1}
+}
+\newcommand{\guidetitle}[2]{
+\title{#1\\ }
+\date{Revised #2}
+}
+
+\guidetitle{outlier diagnostics with cdd}{2016-04-14}
+
+
+\begin{document}
+
+\maketitle
+\newcommand{\guidetoolname}{new vpc}
+
+
+\section{Introduction}
+Influential individual diagnostics using cdd
+
+\subsubsection*{CDD today Cook score}
+Overall Cook score per cdd dataset (with one individual
+removed in each). The greater the influence of an individual the greater the
+Cook score. Cook score is
+$\sqrt{\Delta params^T\cdot COV_{orig}^{-1}\Delta params}$ where $\Delta params$
+is cdd data set estimated parameter vector minus
+original data set parameter vector, and $COV_{orig}$ 
+is original data set covariance matrix.
+
+\subsubsection*{CDD today Covariance ratio}
+Covariance ratio is output per cdd dataset. Covariance ratio for
+individual $i$ is $\sqrt{\frac{determinant(COV_{i})}{determinant(COV_{orig})}}$
+where $COV_{orig}$ is 
+is original data set covariance matrix, $COV_{i}$ is covariance matrix
+for data set with individual $i$ excluded.
+
+If covariance ratio is low then problematic individual, get much lower SE:s
+when individual removed. If cov ratio close to 1 then not influential
+individual. If covariance ratio is high then individual has much information,
+get much higher SE:s when individual is removed.
+
+%\begin{verbatim}
+%vpcmixture -samples=200 run1.mod
+%\end{verbatim}
+
+\subsubsection*{Possible extension Cook score}
+Compute Cook scores per parameter $k$ and individual $i$: 
+$\frac{\Delta_i \theta_k}{SE_{\theta k,orig}}$ 
+where $\Delta_i \theta_k$ is change in estimate of $\theta_k$ between original
+estimation and estimation with individual $i$ removed from dataset.
+
+\subsubsection*{Possible extension Cov ratio}
+Compute Covariance ratio per parameter: 
+$\frac{SE_{\theta k,cdd-i}}{SE_{\theta k,orig}}$, 
+ratio of SE of $\theta_k$ from estimation with and without individual $i$
+in dataset.
+
+\section{new Procedure }
+\begin{enumerate}
+\item run regular cdd with case\_column=ID
+\item For each ID $j$, compute $\Delta iOFV_{j}$:  
+\begin{enumerate}
+\item From original estimation
+  phi-file get $origOFV_{no-j}$: total original OFV minus original iOFV
+  for individual $j$.
+\item From raw\_results file, the row for
+  estimation of cdd dataset with individual $j$ removed get total OFV
+  from column ofv: $cddOFV_{no-j}$
+\item Let $\Delta iOFV_{j} = origOFV_{no-j} - cddOFV_{no-j}$ which should
+  always be non-negative.
+\end{enumerate}
+\item For each ID $j$, compute $\Delta iOFV_{xv-j}$:  
+\begin{enumerate}
+\item Use estimated parameters from estimation of cdd dataset with
+  individual $j$ removed, run MAXEVAL=0 on only individual $j$ data to
+  get $iOFV_{j,xv}$
+\item From original estimation
+  phi-file get $iOFV_{j,original}$: original iOFV for individual $j$
+  when all data was used for parameter estimation.
+\item Let $\Delta iOFV_{xv-j} = iOFV_{j,xv}-iOFV_{j,original}$. This
+  should be non-negative since original iOFV should be smaller since
+  since observation $i$
+  was included in estimation of parameters.
+\end{enumerate}
+\item Plot $\Delta iOFV_{xv-j}$ against $\Delta iOFV_{j}$.
+\end{enumerate}
+
+\end{document}
+

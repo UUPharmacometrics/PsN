@@ -1,0 +1,69 @@
+\documentclass{article}
+
+\title{Workflow Perl subroutines}
+\date{2016-08-02}
+
+\usepackage{hyperref}
+
+\begin{document}
+
+\maketitle
+
+\section*{Auto-generate model for uncertainty in ETAs}
+\subsection*{Input} Name of phi-file
+\subsection*{Procedure}
+\begin{enumerate}
+\item Check phi-file exists (use perl command -e)
+\item Read phi-file using nmtablefile module, see example in tool/frem.pm , sub get\_correlation\_matrix\_from\_phi
+\item write sub for Count ETAs in phi header 
+  \item sub compute mean for each ETA column (already have table function get\_column, see example in table.t. Have function for computing mean, see array.t)
+  \item compute covariance matrix for ETAs( see example in tool/frem.pm , sub get\_correlation\_matrix\_from\_phi)
+  \item sub for generating PRED, input ETA count, output a pred record object (example for creating record of PK type in code\_record.t, PRED type is very similar)
+    alternative ??? model::problem::pred->new(record\_arr => ['TVCL=THETA(1)']);
+  \item sub for generating THETAs, input list of ETA means from above, output list of theta records (examples generating theta records in theta.t)
+  \item sub for generating OMEGA, input is probably covariance matrix from above
+  \item sub for generating SIGMA, input ETA count
+  \item sub for generating data file, go from the phi-file to the data set::
+    \begin{enumerate}
+      \item Each ID will have as many lines as ETAs.
+       \item In line 1 for an ID, DV is ETA(1) from phi, line 2 will be ETA(2), etc.
+         \item  The EBE column will be “1” for ETA1, “2” for ETA2 etc
+           \item L2 data item can be the same as ID column
+            \item      ETC(1,1),  ETC(2,1)... can be replicated for each line of an ID.
+              \item    OBJ isn’t used
+      \end{enumerate}
+\end{enumerate}
+\newpage
+\begin{verbatim}
+$PROBLEM    Uncertainty in ETAs
+$INPUT      ID DV EBE L2 VAR11 COV21 VAR22
+$DATA      ebe1.csv IGNORE=@ IGNORE=(ID.GT.100)
+$PRED  
+IF(EBE.EQ.1) Y=THETA(1)+ETA(1)+EPS(1)*SQRT(VAR11)
+IF(EBE.EQ.2) Y=THETA(2)+ETA(2)+EPS(2)*SQRT(VAR22)
+$THETA  0.0228385 ; mean of EBE1
+$THETA  0.163401 ; mean of EBE2
+$OMEGA  BLOCK(2)
+ 0.0205152  ; 1 var_EBE1
+ 0.0143489  ;    2 COV21
+ 0.0492468  ; 3 var_EBE2
+$SIGMA  BLOCK(2) FIX
+ 1
+ .01 1  ; as an approximation the same correlation is assumed for all IDs uncertainty.
+$ESTIMATION METHOD=1 MAXEVAL=9999 PRINT=1
+$COVARIANCE UNCONDITIONAL
+$TABLE      ID VAR11 COV12 VAR22 ETA1 ETA2 EBE NOPRINT ONEHEADER
+            FILE=mytab2
+\end{verbatim}
+
+\begin{verbatim}
+ID	DV	         EBE	L2	ETC11	        ETC21	        ETC22
+1	-0.1371371192	1	1	0.0989143013	0.0010081493	0.1005629807
+1	 0.6035435921	2	1	0.0989143013	0.0010081493	0.1005629807
+2	-0.1910422646	1	2	0.0993396641	0.0009540865	0.1003940703
+2	 0.2403879379	2	2	0.0993396641	0.0009540865	0.1003940703
+\end{verbatim}
+
+
+
+\end{document}
