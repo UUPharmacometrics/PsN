@@ -16,6 +16,14 @@ doc/*.blg
 doc/*.bcf
 doc/*-blx.bib
 doc/*.xml
+development/todo/*.aux
+development/todo/*.log
+development/todo/*.pdf
+development/todo/*.bbl
+development/todo/*.blg
+development/todo/*.bcf
+development/todo/*-blx.bib
+development/todo/*.xml
 doc/ddmore/*.aux
 doc/ddmore/*.log
 doc/ddmore/*.pdf
