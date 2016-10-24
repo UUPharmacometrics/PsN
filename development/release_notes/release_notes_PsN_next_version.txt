@@ -203,7 +203,8 @@ ___boot_scm___
 
    ___simeval___
 
--  Warn user if any ID lack observations, which simeval cannot handle.
+-  Handle ID:s without observations, sporadic zero-valued EBE:s
+-  New rplots
 
    ___update_inits___
 
