@@ -1693,6 +1693,17 @@ sub read_answers
 
 	$index++;
 	$answer_hashes[$index]={};
+	$answer_hashes[$index]->{file}='nm74/only_nonparametric.lst';
+	$answer_hashes[$index]->{parsed_successfully}=1;
+	$answer_hashes[$index]->{answers}={};
+	$answer_hashes[$index]->{answers}->{0}->{0}->{'nonparametric_step_run'}=1;
+	$answer_hashes[$index]->{answers}->{0}->{0}->{'npofv'}=252.786;
+	$answer_hashes[$index]->{answers}->{0}->{0}->{'npetabars'}=[6.82E-02,5.62E-04];
+	$answer_hashes[$index]->{answers}->{0}->{0}->{'npomegas'}=[1.66E-01,9.29E-02,2.47E-01];
+	$answer_hashes[$index]->{answers}->{0}->{0}->{'npcorr'}=[4.08E-01,4.59E-01,4.97E-01];
+
+	$index++;
+	$answer_hashes[$index]={};
 	$answer_hashes[$index]->{file}='nm73/theo_nonp.lst';
 	$answer_hashes[$index]->{parsed_successfully}=1;
 	$answer_hashes[$index]->{answers}={};
