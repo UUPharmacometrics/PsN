@@ -1733,11 +1733,9 @@ sub diagnose_lst_errors
 		} else{
 			$failure = 'NMtran could not be initiated (the NMtran output file FDATA is missing)';
 			$failure_mess = "\nNMtran could not be initiated (the NMtran output file FDATA is missing). There is no output for model ".($run_no+1).'.';
-			if ($run_local) {
-				$failure .= ' - check that the nmfe script can be run independent of PsN';
-				$failure_mess .= ' - check that the nmfe script can be run independent of PsN';
-			}elsif (-e 'job_submission_error'){
+			if (-e 'job_submission_error'){
 				open( MESS, '<job_submission_error' );
+				$restart_possible = 1 if ($run_local); #will only restart if handle_crashes and crash_restarts > 0
 				$failure = '';
 				$failure_mess = "Job submission error:\n";
 				while(<MESS>) {
@@ -1746,6 +1744,9 @@ sub diagnose_lst_errors
 					$failure_mess .= $_."\n";
 				}
 				close( MESS );
+			}elsif ($run_local) {
+				$failure .= ' - check that the nmfe script can be run independent of PsN';
+				$failure_mess .= ' - check that the nmfe script can be run independent of PsN';
 			}else{
 				if ($missing and (not $have_stats_runs) and (not -e 'nmfe_output.txt')){
 					$restart_possible = 1; #will only restart if handle_crashes and crash_restarts > 0

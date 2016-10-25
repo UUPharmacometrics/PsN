@@ -28,7 +28,21 @@ sub submit
 	}
 	system("echo $command > nmqualcommand") if ($self->nmqual);
 
-	my $pid = fork();
+	my $pid; 
+
+	my $tries=3; 
+	for (my $i=0; $i<$tries; $i++){
+		$pid = fork();
+		last if (defined $pid);
+		if ($i<($tries-1)){
+			ui->print(category=> 'all', message => 'Perl fork() failed, sleep 30s and try again');
+			sleep(30);
+		}else{
+			ui->print(category=> 'all', message => 'Perl fork() failed, considering this model failed');
+			system('echo ' . 'Perl fork\(\) failed, have you reached the maximum number of processes in the OS?' . '  > job_submission_error');
+			$pid = -1;
+		}
+	}
 	if ($pid == 0) {
 		system($command);
 		exit;
