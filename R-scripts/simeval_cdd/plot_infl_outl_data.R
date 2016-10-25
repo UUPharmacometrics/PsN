@@ -1,15 +1,15 @@
-plot_infl_outl_data <- function(outl_data,infl_data,ID,row_simeval,row_cdd) {
-  par(oma=c(0,1,0,1))
-  plot (outl_data$iofv_res[-row_simeval],infl_data$delta.ofv[-row_cdd],
+plot_infl_outl_data <- function(table_for_plot,ID,row) {
+  par(oma=c(0,1,2,1))
+  plot (table_for_plot$simeval_iofv_res[-row],table_for_plot$cdd_delta.ofv[-row],
         type="p",
         ylab="CDD",
         xlab="Simeval",
-        ylim=c(min(infl_data$delta.ofv, na.rm=T),max(infl_data$delta.ofv, na.rm=T)),
-        xlim=c(min(outl_data$iofv_res,na.rm=T),max(outl_data$iofv_res,na.rm=T))
+        ylim=c(min(table_for_plot$cdd_delta.ofv, na.rm=T),max(table_for_plot$cdd_delta.ofv, na.rm=T)),
+        xlim=c(min(table_for_plot$simeval_iofv_res,na.rm=T),max(table_for_plot$simeval_iofv_res,na.rm=T))
   )
-  title("Cdd influential individuals and simeval outliers")
-  if (length(row_cdd) > 0) {
-    text(outl_data$iofv_res[row_simeval],infl_data$delta.ofv[row_cdd], labels=ID,cex=.8, col="red")
+  title("Cdd influential individuals and simeval outliers",line=3)
+  if (length(row) > 0) {
+    text(table_for_plot$simeval_iofv_res[row],table_for_plot$cdd_delta.ofv[row], labels=ID,cex=.8, col="red")
   }
-  legend("top",bty='n',xpd=NA,c("ID numbers of the individuals which are both: outliers and inluencial individuals"),text.col = c("red"))
+  mtext("In red color are ID numbers of the individuals which are both: outliers and influential individuals",side=3,line=1,col = "red")
 }

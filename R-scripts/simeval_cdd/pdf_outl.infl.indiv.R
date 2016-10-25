@@ -7,8 +7,8 @@ pdf_outl.infl.indiv <- function(all.iofv.file,n.subjects,samples,
   infl_data <- outdata$infl_data
   outl_data <- outdata$outl_data
   ID <- outdata$ID
-  row_simeval <- outdata$row_simeval
-  row_cdd <- outdata$row_cdd
+  table_for_plot <- outdata$table_for_plot
+  row <- outdata$row
   infl_outl <- outdata$infl_outl
   infl_not_outl <- outdata$infl_not_outl
   outl_not_infl <- outdata$outl_not_infl
@@ -17,7 +17,7 @@ pdf_outl.infl.indiv <- function(all.iofv.file,n.subjects,samples,
   # create pdf file
   pdf(file=pdf.filename,width=10, height=7)
   # plot points, mark outliers and influential individuals ir red
-  plot_infl_outl_data(outl_data,infl_data,ID,row_simeval,row_cdd)
+  plot_infl_outl_data(table_for_plot,ID,row)
   
   # plot summary about how many are only influential, only outliers, both and none.
   plot_summary(infl_outl,infl_not_outl,outl_not_infl,not_outl_not_infl)

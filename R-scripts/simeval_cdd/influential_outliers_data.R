@@ -21,24 +21,29 @@ influential_outliers_data <- function(all.iofv.file,n.subjects,samples,
   ID_cdd <- list_ofv_cdd$ID
   ID_infl <- list_ofv_cdd$ID_infl
   
-  # order cdd data
-  cdd_order <- sort(delta.ofv,index.return=TRUE)
-  delta.ofv_order <- cdd_order$x
-  #order id cdd
-  cdd_id_sorted <- array(0,c(length(ID_cdd),1))
-  for (i in 1:length(ID_cdd)) {
-    cdd_id_sorted[i] <- ID_cdd[cdd_order$ix[i]]  
-  }
-  
-  # create a data frame
-  infl_data <- as.data.frame(cbind(cdd_id_sorted,delta.ofv_order))
+  # save needed columns in one data frame
+  infl_data <- as.data.frame(cbind(ID_cdd,delta.ofv))
   colnames(infl_data) <- c("ID_cdd","delta.ofv")
   
   # cdd and simeval ------------------------------------------------------------------------
   # find which individuals are infuencial and outliers
   ID <- intersect(outlier_ID,ID_infl)
-  row_cdd <- which(infl_data$ID_cdd %in% ID)
-  row_simeval <- which(outl_data$ID_simeval %in% ID)
+
+  #order influential individual table and outlier table by iD numbers
+  ID_ordered_influential_table <- infl_data[order(infl_data$ID_cdd),]
+  rownames(ID_ordered_influential_table) <- NULL
+  ID_ordered_outlier_table <- outl_data[order(outl_data$ID_simeval),]
+  rownames(ID_ordered_outlier_table) <- NULL
+  
+  # create a table for plotting
+  table_for_plot <- as.data.frame(cbind(ID_ordered_influential_table$ID_cdd,ID_ordered_influential_table$delta.ofv,ID_ordered_outlier_table$iofv_res))
+  colnames(table_for_plot) <- c("ID","cdd_delta.ofv","simeval_iofv_res")
+  
+  #rows of infl and outl individuals
+  row <- c()
+  for (i in 1:length(ID)) {
+    row[i] <- which(table_for_plot$ID %in% ID[i])
+  }
   
   # count how many are influential and outliers, influential but not outliers, --------------
   # outliers but not influential, not outliers and not influential
@@ -46,13 +51,13 @@ influential_outliers_data <- function(all.iofv.file,n.subjects,samples,
   infl_not_outl <- setdiff(ID_infl,ID)
   outl_not_infl <- setdiff(outlier_ID,ID)
   not_outl_not_infl <- setdiff(simeval_id_sorted,unique(c(outlier_ID,ID_infl)))
-  
+
   # return
   out <- list(infl_data=infl_data,
               outl_data=outl_data,
+              table_for_plot= table_for_plot,
               ID=ID,
-              row_cdd=row_cdd,
-              row_simeval=row_simeval,
+              row=row,
               infl_outl=infl_outl,
               infl_not_outl=infl_not_outl,
               outl_not_infl=outl_not_infl,
