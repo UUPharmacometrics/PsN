@@ -23,12 +23,14 @@ skipped.id.file <- paste0(files.w.dir,'skipped_2.csv')
 raw.results.file_3 <- paste0(files.w.dir,'raw_results_3.csv')
 raw.results.file_4 <- paste0(files.w.dir,'raw_results_4.csv')
 skipped.id.file_4 <- paste0(files.w.dir,'skipped_4.csv')
+raw.results.file_5 <- paste0(files.w.dir,'raw_results_5.csv')
 
 ###################################     4. Make tests     ###################################
 #.................................  (1) Test create.data.full  ......................................
 out_data <- create.data.full(raw.results.file,skipped.id.file)
 out_data_3 <- create.data.full(raw.results.file_3,skipped.id.file)
 out_data_4 <- create.data.full(raw.results.file_4,skipped.id.file_4)
+out_data_5 <- create.data.full(raw.results.file_5,skipped.id.file_4)
 
 # unlist
 input_cdd.data <- out_data$input_cdd.data
@@ -37,6 +39,8 @@ input_cdd.data_3 <- out_data_3$input_cdd.data
 cdd.data.all_3 <- out_data_3$cdd.data.all
 input_cdd.data_4 <- out_data_4$input_cdd.data
 cdd.data.all_4 <- out_data_4$cdd.data.all
+input_cdd.data_5 <- out_data_5$input_cdd.data
+cdd.data.all_5 <- out_data_5$cdd.data.all
 
 # Create expected data
 exp_input_cdd.data <- data.frame(method=factor(c(rep("cdd",5)),levels=c("cdd","other")),
@@ -256,6 +260,7 @@ out_ofv.delta_1 <- delta.ofv.data(cdd.data.all_4,outlier_ID=c(19,23,41))
 out_ofv.delta_2 <- delta.ofv.data(cdd.data.all_4,outlier_ID=c(23,41))
 out_ofv.delta_3 <- delta.ofv.data(cdd.data.all_4,outlier_ID=c(19,38))
 out_ofv.delta_4 <- delta.ofv.data(cdd.data.all_4,outlier_ID=c())
+out_ofv.delta_5 <- delta.ofv.data(cdd.data.all_5)
 
 # unlist
 delta.ofv <- out_ofv.delta$delta.ofv
@@ -263,6 +268,13 @@ delta.ofv_10_pr <- out_ofv.delta$delta.ofv_10_pr
 row_infl <- out_ofv.delta$row_infl
 ID_infl <- out_ofv.delta$ID_infl
 
+delta.ofv_5 <- out_ofv.delta_5$delta.ofv
+delta.ofv_10_pr_5 <- out_ofv.delta_5$delta.ofv_10_pr
+row_infl_5 <- out_ofv.delta_5$row_infl
+ID_infl_5 <- out_ofv.delta_5$ID_infl
+model_5 <- out_ofv.delta_5$model
+fail_ID_5 <- out_ofv.delta_5$fail_ID
+  
 delta.ofv_1 <- out_ofv.delta_1$delta.ofv
 delta.ofv_10_pr_1 <- out_ofv.delta_1$delta.ofv_10_pr
 row_infl_all_1 <- out_ofv.delta_1$row_infl_all
@@ -312,6 +324,13 @@ exp_delta.ofv <- c(0.54,0.6,0.5,6.3,0.4,3.2,3.2,2.1,1.9,1.5,0.01,0.7,5.2,0.6,1.4
 exp_delta.ofv_10_pr <- c(6.3,5.2)
 exp_row_infl <- c(4,13)
 exp_ID_infl <- c(19,38)
+
+exp_delta.ofv_5 <- c(0.54,0.5,6.3,0.4,3.2,3.2,1.9,1.5,0.01,0.7,5.2,0.6,1.4,2.3)
+exp_delta.ofv_10_pr_5 <- c(6.3)
+exp_row_infl_5 <- c(3)
+exp_ID_infl_5 <- c(19)
+exp_model_5 <- c(1,3,4,5,6,7,9,10,11,12,13,14,15,16)
+exp_fail_ID_5 <- c(13,27)
 
 exp_delta.ofv_1 <- c(0.54,0.6,0.5,6.3,0.4,3.2,3.2,2.1,1.9,1.5,0.01,0.7,5.2,0.6,1.4,2.3)
 exp_delta.ofv_10_pr_1 <- c(6.3,5.2)
@@ -364,6 +383,13 @@ test_that("If function delta.ofv.data works as expected",{
   expect_equal(exp_delta.ofv_10_pr,delta.ofv_10_pr)
   expect_equal(exp_row_infl,row_infl)
   expect_equal(exp_ID_infl,ID_infl)
+  
+  expect_equal(exp_delta.ofv_5,delta.ofv_5)
+  expect_equal(exp_delta.ofv_10_pr_5,delta.ofv_10_pr_5)
+  expect_equal(exp_row_infl_5,row_infl_5)
+  expect_equal(exp_ID_infl_5,ID_infl_5)
+  expect_equal(exp_model_5,model_5)
+  expect_equal(exp_fail_ID_5,fail_ID_5)
   
   expect_equal(exp_delta.ofv_1,delta.ofv_1)
   expect_equal(exp_delta.ofv_10_pr_1,delta.ofv_10_pr_1)
