@@ -47,7 +47,7 @@ correct_cdd.data_1 <- data.frame(model=as.integer(c(0,1,2)),minimization_success
                                cov.ratios=c(0,1.06352,0),outside.n.sd=as.integer(c(0,0,0)))
 correct_cdd.inds_1 <- data.frame(V1=as.integer(c(1,2)))
 # Test input data files input_cdd.data and cdd.inds
-context("Test input data")
+context("CDD, function input data")
 test_that("If input data files are correct",{
   expect_identical(correct_cdd.data,input_cdd.data)
   expect_identical(correct_cdd.inds,cdd.inds)
@@ -70,7 +70,7 @@ correct_cdd.data_1 <- data.frame(model=as.integer(c(1,2)),minimization_successfu
                                  cook.scores=c(1.69474,0.65269),cov.ratios=c(1.06352,0),
                                  outside.n.sd=as.integer(c(0,0)),ID=as.integer(c(1,2)))
 # Test cdd.data_outtable function
-context("Function create.data")
+context("CDD, function create.data")
 test_that("Testing function create.data",{
   expect_identical(correct_cdd.data,cdd.data)
   expect_identical(correct_cdd.data_1,cdd.data_1)
@@ -81,7 +81,7 @@ fail <- failed.values(cdd.data)
 # Correct failed values
 correct_fail <- as.integer(c(0,1,1,1))
 # Test failed.values function
-context("Function failed.values")
+context("CDD, function failed.values")
 test_that("Testing function failed.values",{
   expect_identical(correct_fail,fail)
 })
@@ -167,7 +167,7 @@ correct_p8 <- list(cdd.warn = data.frame(method=factor(rep("cdd",1),levels=c("cd
                                    EI1=as.logical(c(NA,NA,NA)),cook.scores=as.numeric(c(1.69474,0.65269,1.34665)),cov.ratios=as.numeric(c(1.06352,0,0)),
                                    outside.n.sd=as.integer(c(1,0,0)),ID=as.integer(c(1,2,3))))
 # Test warnings.data function
-context("Function warnings.data")
+context("CDD, function warnings.data")
 test_that("Testing function warnings.data",{
   expect_identical(correct_p1,p1)
   expect_identical(correct_p2,p2)
@@ -326,7 +326,7 @@ correct_out_3c <- list(cdd.pt = data.frame(method=factor(rep("cdd",1),levels=c("
                                             EI1=as.logical(c(NA)),cook.scores=as.numeric(c(1.69474)),cov.ratios=as.numeric(c(1.06352)),
                                             outside.n.sd=as.integer(c(1)),ID=as.integer(c(1))))
 # Test mark.options.data function
-context("Function mark.options.data")
+context("CDD, function mark.options.data")
 test_that("Testing function mark.options.data",{
   expect_identical(correct_out_1,out_1)
   expect_identical(correct_out_1a,out_1a)

@@ -90,7 +90,7 @@ exp_OBJ_vector_1<- c(13.835,7.538,11.229)
 exp_OBSi_vector_1 <- c(2,3,1)
 
 # Compare expected input data with real input data
-context("Test function data.obj.obsi")
+context("Execute, function data.obj.obsi")
 test_that("If function data.obj.obsi works as expected",{
   expect_equal(exp_OBJ_data_input,OBJ_data_input)
   expect_equal(exp_OBSi_data_input,OBSi_data_input)

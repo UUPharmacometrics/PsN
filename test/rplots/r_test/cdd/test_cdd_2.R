@@ -83,7 +83,7 @@ exp_cdd.data.all_3 <- data.frame(ID=c(NA,11,13,16,19),
                                  cdd.delta.ofv=c(0,0.54,0.6,0.5,2.3))
   
 # Compare expected data with real data
-context("Test function create.data.full")
+context("CDD, function create.data.full")
 test_that("If function create.data.full works as expected",{
   expect_equal(exp_input_cdd.data,input_cdd.data)
   expect_equal(exp_cdd.data.all,cdd.data.all)
@@ -107,7 +107,7 @@ exp_cov.par.data <- data.frame(cov.par.THETA1=c(1.090909,1.045455,NA,1.086364),
                                cov.par.OMEGA.3.3.=c(1.114286,1.057143,NA,1.714286))
 exp_parameters <- c("THETA1","THETA5","OMEGA.3.3.")
 # Compare expected data with real data
-context("Test function cov.cook.par.data")
+context("CDD, function cov.cook.par.data")
 test_that("If function cov.cook.par.data works as expected",{
   expect_equal(exp_cook.par.data,cook.par.data)
   expect_equal(exp_cov.par.data,cov.par.data)
@@ -184,7 +184,7 @@ exp_cov_outliers_data_2 <- data.frame(ID=as.integer(c(11,16,19)),
                                     cov.par.OMEGA.3.3.=c(1.11429,NA,1.71429))
 
 # Compare expected data with real data
-context("Test function cutoff.cov.cook")
+context("CDD, function cutoff.cov.cook")
 test_that("If function cutoff.cov.cook works as expected",{
   expect_equal(exp_cook.data,cook.data)
   expect_equal(exp_cov.data,cov.data)
@@ -221,7 +221,7 @@ exp_cdd.data <- data.frame(ID=as.integer(c(11,13,16,19)),
                            cook.par.OMEGA.3.3.=c(0.11,0.09,0.2,0.042),
                            jack.cook.par.THETA1=c(0.12,0.41,0.16,0.12))
 # Compare expected data with real data
-context("Test function plot.cov.cook")
+context("CDD, function plot.cov.cook")
 test_that("If function plot.cov.cook works as expected",{
   expect_equal(exp_cdd.data,cdd.data)
 })
@@ -232,7 +232,7 @@ nr.parameters <- plot.cov.cook.par(cook.par.data,cov.par.data,parameters)
 # Create expected data
 exp_nr.parameters <- 3
 # Compare expected data with real data
-context("Test function plot.cov.cook.par")
+context("CDD, function plot.cov.cook.par")
 test_that("If function plot.cov.cook.par works as expected",{
   expect_equal(exp_nr.parameters,nr.parameters)
 })
@@ -248,7 +248,7 @@ ofv.est <- out_ofv.data$ofv.est
 exp_ofv.orig <- c(-108.66,-94.1,-101.5,-86.7)
 exp_ofv.est <- c(-109.2,-94.7,-102,-89)
 # Compare expected data with real data
-context("Test function plot.ofv")
+context("CDD, function plot.ofv")
 test_that("If function plot.ofv works as expected",{
   expect_equal(exp_ofv.orig,ofv.orig)
   expect_equal(exp_ofv.est,ofv.est)
@@ -377,7 +377,7 @@ exp_ID_outl_4 <- as.integer(c())
 exp_ID_outl_infl_4 <- as.integer(c())
 
 # Compare expected data with real data
-context("Test function delta.ofv.data")
+context("CDD, function delta.ofv.data")
 test_that("If function delta.ofv.data works as expected",{
   expect_equal(exp_delta.ofv,delta.ofv)
   expect_equal(exp_delta.ofv_10_pr,delta.ofv_10_pr)

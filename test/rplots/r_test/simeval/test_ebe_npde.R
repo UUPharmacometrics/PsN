@@ -97,7 +97,7 @@ exp_ebenpde_obs_4 <- data.frame(ETA.1.=c(-1.03,-1.1,0.2,NA,-1.4,NA,NA,0.6,-0.9),
 exp_iiv.eta.names_4 <- c("ETA.1.","ETA.3.")
 
 # Compare expected input data with real input data
-context("Test function input.data")
+context("Simeval, ebe npde, function input.data")
 test_that("If function input.data works as expected",{
   expect_equal(exp_ebenpde_tmp,ebenpde_tmp)
   expect_equal(exp_n.subjects,n.subjects)
@@ -198,7 +198,7 @@ exp_iiv.eta.names_4_1 <- c("ETA.1.","ETA.3.")
 exp_case_4_1 <- 'Individual based analysis'
 
 # Compare expected data with real data
-context("Test function two.data.cases")
+context("Simeval, ebe npde, function two.data.cases")
 test_that("If function two.data.cases works as expected",{
   expect_equal(exp_ebenpde_tmp_2_1,ebenpde_tmp_2_1)
   expect_equal(exp_n.subjects_2_1,n.subjects_2_1)
@@ -258,7 +258,7 @@ exp_mydataframe_2 <- data.frame(factor(c("ETA.1.","ETA.2.","ETA.3.")),
 colnames(exp_mydataframe_2) <- c("EBE NPDE","mean","p-value (H_0: mean==0)","variance","p-value (H_0: var==1)","Amount of deleted IDs")
 
 # Compare expected data with real data
-context("Test function summary.table.ebe.npde")
+context("Simeval, ebe npde, function summary.table.ebe.npde")
 test_that("If function summary.table.ebe.npde works as expected",{
   expect_equal(exp_mydataframe,mydataframe)
   expect_equal(exp_mydataframe_a,mydataframe_a)
@@ -273,7 +273,7 @@ emp_dist_2 <- empirical.distance(ebenpde_obs=ebenpde_obs_2,n.subjects=n.subjects
 exp_emp_dist <- matrix(c(2.489864,0.2916,0.5554,0.2116,4.178269),nrow=5,ncol=1)
 exp_emp_dist_a <- matrix(c(2.0501,1.116401,62.0435,133.4141,1.3574,79.311),nrow=6,ncol=1)
 # Compare expected data with real data
-context("Test function empirical.distance")
+context("Simeval, ebe npde, function empirical.distance")
 test_that("If function empirical.distance works as expected",{
   expect_equal(exp_emp_dist,emp_dist)
   expect_equal(exp_emp_dist_a,emp_dist_a)
@@ -312,7 +312,7 @@ exp_out_distance_a <- -89.6243
 exp_ebe_npde_quant_a <- c(0.083333,0.25,0.416667,0.583333,0.75,0.916667)
 
 # Compare expected data with real data
-context("Test function data.for.plots")
+context("Simeval, ebe npde, function data.for.plots")
 test_that("If function data.for.plots works as expected",{
   expect_equal(exp_index_emp_distance,index_emp_distance)
   expect_equal(exp_emp_distance_sort,emp_distance_sort)
@@ -382,7 +382,7 @@ exp_c_outlier_ID <- 14
 exp_c_identityline <- c(1,2,3,4,5,6)
 exp_c_vector_text <- matrix(c("","","","","","14"),nrow = 6,ncol = 1)
 # Compare expected data with real data
-context("Test function plot_1")
+context("Simeval, ebe npde, function plot_1")
 test_that("If function plot_1 works as expected",{
   expect_equal(exp_noutlier,noutlier)
   expect_equal(exp_flag,flag)
@@ -464,7 +464,7 @@ exp_c_outlier_id_row <- c(4,6,3)
 exp_c_flag1 <- 0
 exp_c_out_distance <- c(-51.6609466,-39.8130014,2.1361458,1.9452118,0.8835815)
 # Compare expected data with real data
-context("Test function plot_2")
+context("Simeval, ebe npde, function plot_2")
 test_that("If function plot_2 works as expected",{
   expect_equal(exp_vector_theor_dist,vector_theor_dist)
   expect_equal(exp_noutlier,noutlier)
@@ -501,7 +501,7 @@ colnames(exp_fortable1) <- c("ID", "outlying criteria","MD distance","ETA(1)","E
 exp_b_fortable1 <- data.frame(c(56,2),c(0.30186,1.1802),c(4.1783,2.4899),c(-2.037,-1.558),c(-0.17,-0.25))
 colnames(exp_b_fortable1) <- c("ID", "outlying criteria","MD distance","ETA(1)","ETA(2)")
 # Compare expected data with real data
-context("Test function outlier.table.ebe.npde")
+context("Simeval, ebe npde, function outlier.table.ebe.npde")
 test_that("If function outlier.table.ebe.npde works as expected",{
   expect_equal(exp_fortable1,fortable1)
   expect_equal(exp_b_fortable1,b_fortable1)
@@ -518,7 +518,7 @@ exp_ebe.npde_outliers_a <- data.frame(C = c("No outliers detected"))
 colnames(exp_ebe.npde_outliers_a) <- NULL
 
 # Compare expected data with real data
-context("Test function ebe.npde.outliers")
+context("Simeval, ebe npde, function ebe.npde.outliers")
 test_that("If function ebe.npde.outliers works as expected",{
   expect_equal(exp_ebe.npde_outliers,ebe.npde_outliers)
   expect_equal(exp_ebe.npde_outliers_a,ebe.npde_outliers_a)

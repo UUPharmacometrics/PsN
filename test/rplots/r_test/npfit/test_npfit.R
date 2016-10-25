@@ -47,7 +47,7 @@ colnames(exp_raw_nonparametric_2) <- c('model','problem','subproblem','minimizat
                                        'ofv','npofv','npsupp','EXP.ETA1.','OMEGA.1.1.')
 
 # Compare expected input data with real input data
-context("Test function data.npfit")
+context("Npfit, function data.npfit")
 test_that("If function data.npfit works as expected",{
   expect_equal(exp_raw_nonparametric,raw_nonparametric)
   expect_equal(exp_raw_nonparametric_1,raw_nonparametric_1)

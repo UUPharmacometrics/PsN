@@ -110,7 +110,7 @@ exp_outl_not_infl_4 <- c(1)
 exp_not_outl_not_infl_4 <- c(13,4,20)
 
 # Compare expected input data with real input data
-context("Test function influential_outliers_data")
+context("CDD/Simeval, function influential_outliers_data")
 test_that("If function influential_outliers_data works as expected",{
   expect_equal(exp_infl_data,infl_data)
   expect_equal(exp_outl_data,outl_data)

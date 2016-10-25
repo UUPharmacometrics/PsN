@@ -56,22 +56,22 @@ all_outlier_table_5 <- all.outlier.report.table(all.iofv.file=all.iofv.file_2,
 exp_all_outlier_table <- data.frame(id=as.factor(c(1,13,24,42,56)),ofv=as.factor(c(9.806,-4.759," "," "," ")),
                                     ebe=as.factor(c(" "," "," "," ",0.302)),iwres=as.factor(c(" "," ",1,1," ")),
                                     cwres=as.factor(c(" "," ",2," "," ")))
-colnames(exp_all_outlier_table) <- c("ID","OFV outliers","EBE NPDE outliers","IWRES outliers","CWRES outliers")
+colnames(exp_all_outlier_table) <- c("ID","OFV outliers (SD)","EBE NPDE outliers","IWRES outliers","CWRES outliers")
 
 exp_all_outlier_table_1 <- data.frame(id=as.factor(c(24,42,56)),ofv=as.factor(c(" "," "," ")),
                                     ebe=as.factor(c(" "," ",0.302)),iwres=as.factor(c(1,1," ")),
                                     cwres=as.factor(c(2," "," ")))
-colnames(exp_all_outlier_table_1) <- c("ID","OFV outliers","EBE NPDE outliers","IWRES outliers","CWRES outliers")
+colnames(exp_all_outlier_table_1) <- c("ID","OFV outliers (SD)","EBE NPDE outliers","IWRES outliers","CWRES outliers")
 
 exp_all_outlier_table_2 <- data.frame(id=as.factor(c(1,13,56)),ofv=as.factor(c(9.806,-4.759," ")),
                                     ebe=as.factor(c(" "," ",0.302)),iwres=as.factor(c(" "," "," ")),
                                     cwres=as.factor(c(" "," "," ")))
-colnames(exp_all_outlier_table_2) <- c("ID","OFV outliers","EBE NPDE outliers","IWRES outliers","CWRES outliers")
+colnames(exp_all_outlier_table_2) <- c("ID","OFV outliers (SD)","EBE NPDE outliers","IWRES outliers","CWRES outliers")
 
 exp_all_outlier_table_3 <- data.frame(id=as.factor(c(1,13,24,42)),ofv=as.factor(c(9.806,-4.759," "," ")),
                                     ebe=as.factor(c(" "," "," "," ")),iwres=as.factor(c(" "," ",1,1)),
                                     cwres=as.factor(c(" "," ",2," ")))
-colnames(exp_all_outlier_table_3) <- c("ID","OFV outliers","EBE NPDE outliers","IWRES outliers","CWRES outliers")
+colnames(exp_all_outlier_table_3) <- c("ID","OFV outliers (SD)","EBE NPDE outliers","IWRES outliers","CWRES outliers")
 
 exp_all_outlier_table_4 <- data.frame(C = c("No outliers detected"))
 colnames(exp_all_outlier_table_4) <- NULL
@@ -79,9 +79,9 @@ colnames(exp_all_outlier_table_4) <- NULL
 exp_all_outlier_table_5 <- data.frame(id=as.factor(c(1,13,56)),ofv=as.factor(c(9.806,-4.759," ")),
                                     ebe=as.factor(c(" "," ",0.302)),iwres=as.factor(c(1," ",3)),
                                     cwres=as.factor(c(" "," ",2)))
-colnames(exp_all_outlier_table_5) <- c("ID","OFV outliers","EBE NPDE outliers","IWRES outliers","CWRES outliers")
+colnames(exp_all_outlier_table_5) <- c("ID","OFV outliers (SD)","EBE NPDE outliers","IWRES outliers","CWRES outliers")
 # Compare expected input data with real input data
-context("Test function all.outlier.report.table")
+context("simeval, summary, function all.outlier.report.table")
 test_that("If function all.outlier.report.table works as expected",{
   expect_equal(exp_all_outlier_table,all_outlier_table)
   expect_equal(exp_all_outlier_table_1,all_outlier_table_1)

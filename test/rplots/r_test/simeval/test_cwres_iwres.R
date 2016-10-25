@@ -58,7 +58,7 @@ exp_xlimit_min_2 <- -3
 exp_xlimit_max_2 <- 3
 
 # Compare expected data with real data
-context("function histograms.cwres.iwres")
+context("Simeval, residuals, function histograms.cwres.iwres")
 test_that("If function histograms.cwres.iwres works as expected",{
   expect_equal(exp_RESIDUAL_1,RESIDUAL_1)
   expect_equal(exp_residual_npde_1,residual_npde_1)
@@ -80,7 +80,7 @@ exp_mydataframe <- data.frame(C1 = c('CWRES','IWRES'), C2 = c(0.40173,-0.03232),
                               C4=c(3.32489,1.20288),C5=c(0.864,0.764))
 names(exp_mydataframe) <- c("NPDE","mean","p-value (H_0: mean==0)","variance","p-value (H_0: var==1)")
 # Compare expected data with real data
-context("function summary.table")
+context("Simeval, residuals, function summary.table")
 test_that("If function summary.table works as expected",{
   expect_equal(exp_mydataframe,mydataframe)
 })
@@ -103,7 +103,7 @@ exp_outlierframe_1 <- data.frame(ID=c(24,24,42),TIME=c(176,61.5,95.5),DV=c(38.1,
                                  CWRES=c(-2.1581,-2.4754,-2.348),OUTLIER.IWRES=c(1,0,1),OUTLIER.CWRES=c(1,1,0))
 exp_outliers_count_1 <- data.frame(ID=as.factor(c(24,42)),OUTLIERS.IWRES=as.factor(c(1,1)),OUTLIERS.CWRES= as.factor(c(2," ")))
 # Compare expected data with real data
-context("function outlier.table")
+context("Simeval, residuals, function outlier.table")
 test_that("If function outlier.table works as expected",{
   expect_equal(exp_outlierframe,outlierframe)
   expect_equal(exp_outliers_count,outliers_count)

@@ -22,7 +22,7 @@ files.w.dir <- fun.files.w.dir(toolname = tool)
 
 ###################################     3. Make a test    ###################################
 #...........................  (1) Test if message shows up .....................................  
-context("Test if messages shows up")
+context("Compare, test if messages shows up")
 test_that("messages shows up",{
   expect_message(check_tool_names("first_tool","first_tool",quit_opt=FALSE))
   expect_message(folder_existence(files.w.dir,"sec_tool",quit_opt=FALSE))
@@ -37,7 +37,7 @@ test_that("messages shows up",{
 })
 
 #...............................  (2) Test silent  .....................................
-context("Test silent")
+context("Compare, test silent")
 test_that("silent, no returns, no messages",{
   expect_silent(check_tool_names("first_tool","cdd_dir3"))
   expect_silent(folder_existence(files.w.dir,"cdd_dir3"))
@@ -48,7 +48,7 @@ test_that("silent, no returns, no messages",{
 model_name_1 <- get_model_name(files.w.dir,"cdd_dir3")
 model_name_2 <- get_model_name(files.w.dir,"simeval_dir1")
 
-context("Test function get_model_name")
+context("Compare, test function get_model_name")
 test_that("function get_model_name pass",{
   expect_equal("pheno.mod",model_name_1)
   expect_equal("run1.mod",model_name_2)
@@ -58,7 +58,7 @@ test_that("function get_model_name pass",{
 toolname_foldername_1 <- get_toolname_foldername(files.w.dir,"cdd_dir3")
 toolname_foldername_2 <- get_toolname_foldername(files.w.dir,"simeval_dir1")
 
-context("Test function get_toolname_foldername")
+context("Compare, test function get_toolname_foldername")
 test_that("function get_toolname_foldername pass",{
   expect_equal(c("cdd","cdd_dir3"),toolname_foldername_1)
   expect_equal(c("simeval","simeval_dir1"),toolname_foldername_2)
@@ -68,7 +68,7 @@ test_that("function get_toolname_foldername pass",{
 new_folder_name_1 <- create_folder_name(files.w.dir,c("cdd","cdd_dir3"),c("simeval","first_tool"))
 new_folder_name_2 <- create_folder_name(files.w.dir,c("simeval","simeval_dir1"),c("cdd","cdd_dir3"))
 
-context("Test function create_folder_name")
+context("Compare, test function create_folder_name")
 test_that("function create_folder_name pass",{
   expect_equal("cdd.simeval_dir3",new_folder_name_1)
   expect_equal("simeval.cdd_dir1",new_folder_name_2)
@@ -78,7 +78,7 @@ test_that("function create_folder_name pass",{
 new_folder_directory_1 <- create_folder_directory(files.w.dir,"cdd.simeval_dir3",create_dir=FALSE)
 new_folder_directory_2 <- create_folder_directory(files.w.dir,"simeval.cdd_dir1",create_dir=FALSE)
 
-context("Test function create_folder_directory")
+context("Compare, test function create_folder_directory")
 test_that("function create_folder_directory pass",{
   expect_equal(paste0(files.w.dir,"cdd.simeval_dir3"),new_folder_directory_1)
   expect_equal(paste0(files.w.dir,"simeval.cdd_dir1"),new_folder_directory_2)
@@ -88,7 +88,7 @@ test_that("function create_folder_directory pass",{
 raw_results_1 <- get_raw_results_file_name(files.w.dir,"cdd_dir3","first_tool")
 raw_results_2 <- get_raw_results_file_name(files.w.dir,"first_tool","cdd_dir3")
 
-context("Test function get_raw_results_file_name")
+context("Compare, test function get_raw_results_file_name")
 test_that("function get_raw_results_file_name pass",{
   expect_equal("raw_results_pheno.csv",raw_results_1)
   expect_equal("raw_results_pheno.csv",raw_results_2)
@@ -101,7 +101,7 @@ other_files_2 <- get_more_csv_file_names(files.w.dir,c("simeval","first_tool"),c
 exp_other_files_1 <- list(skipped_individuals="skipped_individuals14f.csv",
                                 all.iofv.file="raw_all_iofv.csv")
 
-context("Test function get_more_csv_file_names")
+context("Compare, test function get_more_csv_file_names")
 test_that("function get_more_csv_file_names pass",{
   expect_equal(exp_other_files_1,other_files_1)
   expect_equal(exp_other_files_1,other_files_2)
@@ -117,7 +117,7 @@ exp_list_of_files_1 <- c(paste0(files.w.dir,"first_tool/raw_all_iofv.csv"),
                          paste0(files.w.dir,"cdd_dir3/skipped_individuals14f.csv"),
                          paste0(files.w.dir,"cdd_dir3/raw_results_pheno.csv"))
 
-context("Test function get_list_of_files")
+context("Compare, test function get_list_of_files")
 test_that("function get_list_of_files pass",{
   expect_equal(exp_list_of_files_1,list_of_files_1)
   expect_equal(exp_list_of_files_1,list_of_files_2)
@@ -127,7 +127,7 @@ test_that("function get_list_of_files pass",{
 input_values_1 <- get_input_values(list_of_files_1,c("cdd","cdd_dir3"),c("simeval","first_tool"))
 input_values_2 <- get_input_values(list_of_files_1,c("simeval","first_tool"),c("cdd","cdd_dir3"))
 
-context("Test function get_input_values")
+context("Compare, test function get_input_values")
 test_that("function get_input_values pass",{
   expect_equal(c(4,5),input_values_1)
   expect_equal(c(4,5),input_values_2)
@@ -137,7 +137,7 @@ test_that("function get_input_values pass",{
 pdf.filename_1 <- create_pdf.filename(c("cdd","cdd_dir3"),c("simeval","first_tool"))
 pdf.filename_2 <- create_pdf.filename(c("simeval","first_tool"),c("cdd","cdd_dir3"))
 
-context("Test function create_pdf.filename")
+context("Compare, test function create_pdf.filename")
 test_that("function create_pdf.filename pass",{
   expect_equal("cdd.simeval.pdf",pdf.filename_1)
   expect_equal("simeval.cdd.pdf",pdf.filename_2)
@@ -170,7 +170,7 @@ exp_R_input_2 <- c(paste0("setwd('",new_folder_directory_2,"')"),
                    "raw.results.file <- 'raw_results_pheno.csv'","",
                    "source(paste0(rscripts.directory,'cdd.simeval_default.R'))",
                    "cdd.simeval(rscripts.directory,all.iofv.file,n.subjects,samples=successful.samples,\n              raw.results.file,skipped.id.file,pdf.filename)")
-# context("Test function create_R_script")
+context("Compare, test function create_R_script")
 test_that("function create_R_script pass",{
   expect_equal(exp_R_input_1,R_input_1)
   expect_equal(exp_R_input_2,R_input_2)

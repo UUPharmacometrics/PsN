@@ -48,7 +48,7 @@ exp_pOFV_sim <- c(-36.3,-39.708)
 exp_sort_pOFV_sim <- c(-39.708,-36.3)
 exp_newxlim <- c(-39.708,-30.72)
 # Compare expected data with real data
-context("Test function p_ofv_ppc")
+context("Simeval, ofv, function p_ofv_ppc")
 test_that("If function p_ofv_ppc works as expected",{
   expect_equal(exp_rawres_input,rawres_input)
   expect_equal(exp_rawres,rawres)
@@ -76,7 +76,7 @@ exp_xlimit_min <- -3.71
 exp_xlimit_max <- 3
 
 # Compare expected data with real data
-context("Test function i_ofv_npde")
+context("Simeval, ofv, function i_ofv_npde")
 test_that("If function i_ofv_npde works as expected",{
   expect_equal(exp_iOFV,iOFV)
   expect_equal(exp_iOFV_npde,iOFV_npde)
@@ -125,7 +125,7 @@ exp_ofv_outliertable_a <- data.frame()
 exp_outlier_median_a <- NULL
 exp_vector_text_a <- matrix(c("","","",""),nrow = 4,ncol = 1)
 # Compare expected data with real data
-context("Test function i_ofv_res")
+context("Simeval, ofv, function i_ofv_res")
 test_that("If function i_ofv_res works as expected",{
   expect_equal(exp_all.iOFV_sim,all.iOFV_sim)
   expect_equal(exp_iOFV_res,iOFV_res)
@@ -181,7 +181,7 @@ exp_newxlim_2 <- c(-10.24,1.08)
 
 exp_out_i_ofv_ppc_a <- NULL
 # Compare expected data with real data
-context("Test function i_ofv_ppc")
+context("Simeval, ofv, function i_ofv_ppc")
 test_that("If function i_ofv_ppc works as expected",{
   expect_equal(exp_all.iOFV_sim,all.iOFV_sim)
   expect_equal(exp_outlier_data,outlier_data)
@@ -227,7 +227,7 @@ exp_KLD_sim <- matrix(c(0.001174,0.001519,0.01124),nrow = 3,ncol = 1)
 exp_KLD_obs <- 0.003206
 exp_newxlim <- c(0.001174,0.01124)
 # Compare expected data with real data
-context("Test function kld_i_ofv")
+context("Simeval, ofv, function kld_i_ofv")
 test_that("If function kld_i_ofv works as expected",{
   expect_equal(exp_all.iOFV_sim,all.iOFV_sim)
   expect_equal(exp_iOFV_obs,iOFV_obs)
@@ -330,7 +330,7 @@ exp_mean.sum.KLD_c <- 0.000191
 exp_intrinsic.discrepancy_c <- 0.00019
 
 # Compare expected data with real data
-context("Test function kld")
+context("Simeval, ofv, function kld")
 test_that("If function kld works as expected",{
   expect_equal(exp_base_a,base_a)
   expect_equal(exp_n1_a,n1_a)
