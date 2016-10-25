@@ -1,5 +1,5 @@
 \input{inputs/format_header.tex}
-\guidetitle{SIMEVAL user guide}{2016-05-16}
+\guidetitle{SIMEVAL user guide}{2016-10-24}
 
 \begin{document}
 
@@ -202,9 +202,6 @@ where observed IWRES or CWRES is outside the simulated distribution.
 %\item[iwres\_npd.csv]  One row per data record. Columns: ID, MDV, NPD of IWRES (normalized pd, not decorrelated)
 \end{description}
 
-\section{Known problems}
-If any IDs in the data set do not have any observation records, then those IDs must be
-IGNOREd in \$DATA, otherwise simeval will not produce all output.
 
 \section{Algorithm overview}
 
@@ -240,20 +237,16 @@ can be used as input when running gls program, see gls\_userguide.pdf.
 \item Compute npde for IWRES, CWRES according to \cite{Comets}.
 \item Read ETA values from 
 phi-files for original and simulated data, and compute npde for EBE:s according to \cite{Comets}.
-Perform computations for IIV, and also for IOV for different occasions, separately. 
+Perform computations separately for IIV ETA and each occasion IOV ETA.
 \item Run basic vpc:s for DV vs PRED and CWRES vs TIME (or idv).
 \end{enumerate}
 
 \subsection{Handling of zero-valued EBE:s}
-PsN will read the EBE:s from the phi-file from the evaluation/estimation of the simulated data set.
-Each EBE column from evaluation of the \emph{first} simulated data set is checked for the existence of
-non-zero EBEs. If \emph{all} values in a column are identical to zero, that ETA number will not be read
-for any simulation number, and the ETA number will be excluded from all further analysis.
-If a few, but not all, EBEs in a column are equal to zero, then those zeros will be treated like
-any other number.
-
-If the EBE are linearly dependent, then the decorrelation will break down, and the EBE analysis will
-be interrupted with an error message.
+Each EBE column in the phi-file from estimation of the original data set is checked for the existence of
+zero-valued EBEs.
+The EBE npde computation is performed for each individual in turn. If one or several EBE:s for
+an individual is exactly 0 in the original data phi-file then those EBE:s are excluded from the npde computation,
+and the corresponding EBE npde for that individual are set to NA.
 
 \subsection{Handling of IWRES}
 The simeval program will check the model code for a line that defines IWRES.
