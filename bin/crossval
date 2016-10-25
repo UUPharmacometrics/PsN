@@ -133,11 +133,14 @@ sub harvest_ofv{
   
   open XV_REPORT, '>', "xv_result.txt";
   print XV_REPORT '"Prediction model OFVs","Estimation model OFVs"'."\n";
-  for( my $i = 0; $i <= $#{$xv_object -> prediction_models}; $i++ ){
-	  print XV_REPORT $xv_object -> prediction_models -> [$i] -> outputs -> [0] -> ofv  -> [0][0].",".
-		  $xv_object -> estimation_models -> [$i] -> outputs -> [0] -> ofv  -> [0][0]."\n";
+  for( my $i = 0; $i < scalar(@{$xv_object -> prediction_models}); $i++ ){
+	  my $string = $xv_object -> prediction_models -> [$i] -> outputs -> [0] -> ofv  -> [0][0].",";
+	  if (defined $xv_object -> estimation_models -> [$i]){
+		  $string .= $xv_object -> estimation_models -> [$i] -> outputs -> [0] -> ofv  -> [0][0];
+	  }
+	  print XV_REPORT $string."\n"; 
   }
-
+  
   close XV_REPORT;
   return 0;
 }

@@ -5229,11 +5229,13 @@ sub set_first_problem_msfi{
 	my %parm = validated_hash(\@_,
 							  msfiname => { isa => 'Str', optional => 0 },
 							  newmsfo => { isa => 'Str', optional => 1 },
+							  extra_options => { isa => 'HashRef', optional => 1 },
 							  set_new_msfo => { isa => 'Bool', optional => 1, default => 0 },
 							  add_msfo_if_absent => { isa => 'Bool', optional => 1, default => 0 },
 		);
 	my $msfiname = $parm{'msfiname'};
 	my $newmsfo = $parm{'newmsfo'};
+	my $extra_options = $parm{'extra_options'};
 	my $set_new_msfo = $parm{'set_new_msfo'};
 	my $add_msfo_if_absent = $parm{'add_msfo_if_absent'};
 
@@ -5245,6 +5247,21 @@ sub set_first_problem_msfi{
 		$self->problems->[0]->set_records(type => 'msfi', record_strings => [$msfiname]);
 	}
 
+	if (defined $extra_options){
+		foreach my $option (keys %{$extra_options}){
+			my $value = $extra_options->{$option}; #can be undef
+			my $found = $self->problems->[0]->is_option_set(record => 'msfi',
+															name           => $option,
+															fuzzy_match    => 1 );
+			$self->problems->[0] -> remove_option( record_name  => 'msfi',
+												   option_name  => $option,
+												   fuzzy_match  => 1) if ( $found );
+			$self->problems->[0] -> add_option( record_name  => 'msfi',
+												option_name  => $option,
+												option_value => $value );
+
+		}
+	}
 	$self->remove_records(type => 'theta',problem_numbers =>[1]);
 	$self->remove_records(type => 'omega',problem_numbers =>[1]);
 	$self->remove_records(type => 'sigma',problem_numbers =>[1]);
