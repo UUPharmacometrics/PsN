@@ -107,6 +107,7 @@ has 'logfile' => ( is => 'rw', isa => 'ArrayRef[Str]', default => sub { ['npc.lo
 has 'results_file' => ( is => 'rw', isa => 'Str', default => 'npc_results.csv' );
 has 'nca' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'mix' => ( is => 'rw', isa => 'Str' );
+has 'mix_random' => ( is => 'rw', isa => 'Bool' );
 
 sub BUILD
 {
@@ -1640,7 +1641,7 @@ sub modelfit_setup
             copy_data => $self->copy_data,
             prepend_model_file_name => 1,
 		);
-        if (defined $self->mix) {
+        if (defined $self->mix_random) {
             $modfit->add_to_nmoutput(extensions => ['phm']);
         }
 		$self->searchdir($modfit->directory);
@@ -5627,7 +5628,14 @@ sub create_R_plots_code
 
     if (defined $self->mix) {
         push @code, "mix <- '" . $self->mix . "'";
+        if (defined $self->mix_random) {
+            push @code, "mix_random <- TRUE";
+            push @code, "phm_file <- 'm1/vpc_original.phm'";
+        } else {
+            push @code, "mix_random <- FALSE";
+        }
     }
+
 
 	$rplot->add_preamble(code => \@code);
 }

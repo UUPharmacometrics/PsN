@@ -69,6 +69,7 @@ my %optional_options = ( 'idv:s' => undef,
     'min_points_in_bin:i' => undef,
     'so!' => undef,
     'mix:s' => undef,
+    'mix_random!' => undef,
 );
 
 my $res = GetOptions( \%options,
@@ -519,6 +520,14 @@ $help_text{-mix} = <<'EOF';
       will quit before doing the postprocessing.
 EOF
 
+$help_text{-mix_random} = <<'EOF';
+    -mix_random
+
+    Option to randomize the subpopulation for each individual
+    from the estimated probabilities of each subpopulation
+    given by the phm-file.
+EOF
+
 common_options::online_help( 'vpc', \%options, \%help_text, \%required_options, \%optional_options);
 common_options::setup( \%options, 'vpc' ); #calls set_globals etc, initiates random sequence
 
@@ -619,6 +628,7 @@ my $vpc =
 	  min_points_in_bin	 => $options{'min_points_in_bin'},
 	  directory_name_prefix => 'vpc',
       mix 				 => $options{'mix'},
+      mix_random         => $options{'mix_random'},
 	  );
 
 $vpc-> print_options (cmd_line => $cmd_line,

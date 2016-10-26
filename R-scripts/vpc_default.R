@@ -26,7 +26,11 @@ if (!exists('mix')) {     # A mixture model is a special case
 
         obs <- read_table_nm(observations_tablefile)
         sim <- read_table_nm(simulations_tablefile)
-        plots <- vpc_mixtures(obs=obs, sim=sim, numsims=samples, mixcol=mix, dv=dv)
+        if (!mix_random) {
+            plots <- vpc_mixtures(obs=obs, sim=sim, numsims=samples, mixcol=mix, dv=dv)
+        } else {
+            plots <- vpc_mixtures(obs=obs, sim=sim, numsims=samples, mixcol=mix, dv=dv, phm=phm_file)
+        }
 
         for (p in plots) {
             print(p)

@@ -19,12 +19,18 @@ simpasym <- function(n, p, z=1.96, cc=TRUE) {
     out
 }
 
-vpc_mixtures <- function(obs, sim, numsims, mixcol="MIXNUM", dv="DV") {
-
-    num_ids <- length(unique(obs$ID))
-
+vpc_mixtures <- function(obs, sim, numsims, mixcol="MIXNUM", dv="DV", phm) {
     # Put in replicate numbers in sim table
     sim$sim <- rep(1:numsims, each=nrow(sim) / numsims)
+
+    if (!missing(phm)) {
+        phm_table <- subpopulations_from_nonmem_phm(phm, numsims)
+        sim <- full_join(sim, phm_table)
+        names(obs)[names(obs) == mixcol] <- 'SUBPOP'    # rename mixcol in obs
+        mixcol <- 'SUBPOP'
+    }
+
+    num_ids <- length(unique(obs$ID))
 
     numsubs <- max(max(obs[mixcol]), max(sim[mixcol]))
 
@@ -60,26 +66,11 @@ vpc_mixtures <- function(obs, sim, numsims, mixcol="MIXNUM", dv="DV") {
 subpopulations_from_nonmem_phm <- function(name, nrep) {
     phm <- read.table(name, skip=1, header=TRUE)
 
-    nind <- length(unique(phm$ID))
-    nsubpop <- max(phm$SUBPOP)
+    phm <- data.frame(ID=phm$ID, SUBPOP=phm$SUBPOP, PMIX=phm$PMIX)  # Keep only interesting columns
+    phm <- phm[rep(seq_len(nrow(phm)), nrep),]  # One phm per replicate
+    phm$sim <- rep(1:nrep, each=nrow(phm) / nrep) # put in the SIM column
 
-    rnd <- runif(nind)
-    rnd <- rep(rnd, nsubpop)
-    mask <- rnd <= phm$PMIX
-    return(data.frame(ID=unique(phm$ID), SUBPOP=phm$SUBPOP[mask]))
+    result <- data.frame(phm %>% group_by(sim, ID) %>% summarize(SUBPOP=sample(SUBPOP, size=1, prob=PMIX)))
+
+    return(result)
 }
-
-
-#phm <- subpopulations_from_nonmem_phm("example/example3.phm")
-
-#obs <- read_table_nm("example/esttab")
-#sim <- read_table_nm("example/simtab")
-
-#sim <- full_join(sim, phm)
-#obs <- full_join(obs, phm)
-
-#plots <- vpc_mixtures(obs=obs, sim=sim, numsims=20, mixcol="SUBPOP", dv="CONC")
-
-#for (p in plots) {
-#    print(p)
-#}
