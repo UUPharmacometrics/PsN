@@ -1,5 +1,5 @@
-library(vpc)
-library(dplyr, quietly=TRUE)
+suppressMessages(library(vpc))
+suppressMessages(library(dplyr))
 library(ggplot2)
 
 #The Simple Asymtotic Method:
@@ -63,8 +63,11 @@ vpc_mixtures <- function(obs, sim, numsims, mixcol="MIXNUM", dv="DV", phm) {
 # a data.frame with ID and SUBPOP columns
 # The SUBPOP is a random sample given the PMIX probabilities
 # nrep is the number of replicates
-subpopulations_from_nonmem_phm <- function(name, nrep) {
-    phm <- read.table(name, skip=1, header=TRUE)
+# phm can either be a file name of a phm file or a data.frame
+subpopulations_from_nonmem_phm <- function(phm, nrep) {
+    if (is.character(phm)) {
+        phm <- read.table(name, skip=1, header=TRUE)
+    }
 
     phm <- data.frame(ID=phm$ID, SUBPOP=phm$SUBPOP, PMIX=phm$PMIX)  # Keep only interesting columns
     phm <- phm[rep(seq_len(nrow(phm)), nrep),]  # One phm per replicate
