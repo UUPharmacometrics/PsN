@@ -66,6 +66,10 @@ has 'do_estimation' => ( is => 'rw', isa => 'Bool', default => 1 );
 has 'do_prediction' => ( is => 'rw', isa => 'Bool', default => 1 );
 has 'ignoresigns' => ( is => 'rw', isa => 'ArrayRef');
 has 'model' => ( is => 'rw', isa => 'model');
+has 'sum_ofv' => ( is => 'rw', isa => 'ArrayRef', default => sub { [] } );
+has 'sum_npofv' => ( is => 'rw', isa => 'ArrayRef', default => sub { [] } );
+has 'results_header' => ( is => 'rw', isa => 'ArrayRef', default => sub { [] } );
+has 'results_rows' => ( is => 'rw', isa => 'ArrayRef', default => sub { [] } );
 
 
 sub BUILD
@@ -81,9 +85,6 @@ sub BUILD
 		croak("must do either prediction or estimation");
 	}
 
-	if (defined $model->problems->[0]->nonparametrics() and scalar(@{$model->problems->[0]->nonparametrics})> 0) {
-		$self->is_nonparametric(1);
-	}
 	if ($self->is_nonparametric){
 		$self->is_lasso(0);
 		$self->msf(1);
@@ -95,11 +96,13 @@ sub estimation_setup
 	my %parm = validated_hash(\@_,
 							  model => { isa => 'model', optional => 0 },
 							  directory => { isa => 'Str', optional => 0 },
+							  tag => { isa => 'Str', optional => 1, default => '' },
 							  msf => { isa => 'Bool', optional => 0 },
 							  estimation_data => { isa => 'ArrayRef', optional => 0 },
 	);
 	my $model = $parm{'model'};
 	my $directory = $parm{'directory'};
+	my $tag = $parm{'tag'};
 	my $msf = $parm{'msf'};
 	my $estimation_data = $parm{'estimation_data'};
 
@@ -107,7 +110,7 @@ sub estimation_setup
 
 	for( my $i = 0; $i < scalar(@{$estimation_data}); $i++  ){
 		my $model_copy_est = $model -> copy(filename => 
-											$directory.'m1/est_model'.$i.'.mod',
+											$directory.'m1/est_model'.$tag.$i.'.mod',
 											output_same_directory => 1,
 											write_copy => 0,
 											copy_datafile => 0, 
@@ -117,7 +120,7 @@ sub estimation_setup
 		$model_copy_est -> datafiles( new_names => [$estimation_data -> [$i]] );
 		if ($msf){
 			$model_copy_est ->rename_msfo(add_if_absent => 1,
-										  name => 'est_model'.$i.'.msf'); #FIXME we do not handle prior tnpri here
+										  name => 'est_model'.$tag.$i.'.msf'); #FIXME we do not handle prior tnpri here
 		}
 		$model_copy_est -> _write();
 		push( @estimation_models, $model_copy_est );
@@ -130,6 +133,7 @@ sub prediction_setup
 	my %parm = validated_hash(\@_,
 							  model => { isa => 'model', optional => 0 },
 							  directory => { isa => 'Str', optional => 0 },
+							  estimation_model_offset => { isa => 'Int', optional => 1, default => 0 },
 							  last_est_complete => { isa => 'Bool', optional => 0 },
 							  msf => { isa => 'Bool', optional => 0 },
 							  is_nonparametric => { isa => 'Bool', optional => 0 },
@@ -138,6 +142,7 @@ sub prediction_setup
 	);
 	my $model = $parm{'model'};
 	my $directory = $parm{'directory'};
+	my $estimation_model_offset = $parm{'estimation_model_offset'};
 	my $last_est_complete = $parm{'last_est_complete'};
 	my $msf = $parm{'msf'};
 	my $is_nonparametric = $parm{'is_nonparametric'};
@@ -145,16 +150,30 @@ sub prediction_setup
 	my $estimation_models = $parm{'estimation_models'};
 
 	my @prediction_models =();
-	my @extra_prediction_models =();
+	my @extra_prediction_models_msfi =();
+	my @extra_prediction_models_update =();
+
+	my $scenario_1 = 0; #parametric update_inits, separate model file
+	my $scenario_2 = 0; #parametric MSFI, separate model file
+	my $scenario_3 = 1; #parametric MSFI, additional $PROB
+	my $scenario_4 = 0; #parametric update_inits, additional $PROB
 	for( my $i = 0; $i < scalar(@{$prediction_data}); $i++){
+		my $filename = 'pred_model'.$i. '.mod';
+		my $est_mod;
+		if (defined $estimation_models and defined $estimation_models->[$estimation_model_offset + $i]){
+			#only true when not lasso
+			$est_mod = $estimation_models->[$estimation_model_offset + $i];
+			$filename = $est_mod->filename;
+			$filename =~ s/est_model/pred_model/;
+		}
 		my $model_copy_pred = $model -> copy(
-			filename => $directory.'m1/pred_model' . $i . '.mod',
+			filename => $directory.'m1/'.$filename,
 			output_same_directory => 1,
 			copy_datafile => 0, 
 			write_copy => 0,
 			copy_output => 0,
 			);
-
+		
 		#to handle NM7 methods
 		$model_copy_pred -> set_maxeval_zero(print_warning => 0,
 											 need_ofv => 1,
@@ -163,29 +182,69 @@ sub prediction_setup
 										option_name => 'NOABORT');
 
 		$model_copy_pred -> datafiles( new_names => [$prediction_data -> [$i]] );
-		if (defined $estimation_models and defined $estimation_models->[$i]){
+		if (defined $est_mod){
 			#only true when not lasso
-			my $est_mod = $estimation_models->[$i];
 			if( defined $est_mod -> outputs -> [0] and 
 				defined $est_mod -> outputs -> [0] ->get_single_value(attribute=> 'ofv') ){
+
 				if ($msf){
 					my $oldmsfoname = $est_mod->msfo_names(problem_numbers => [1], absolute_path => 1);
 					unless (defined $oldmsfoname->[0]){
 						croak("cannot do set_first_problem_msfi, no msfo in est model");
 					}
 					my $extra_options = {};
+					my $temp_model;
 					if ($is_nonparametric){
 						$extra_options = {'NEW' => undef};
-					}
+
+						if ($scenario_1 or $scenario_4){
+							$temp_model = $model_copy_pred -> copy(
+								filename => $directory.'dummy.mod',
+								output_same_directory => 1,
+								copy_datafile => 0, 
+								write_copy => 0,
+								copy_output => 0,
+								);
+							$temp_model->remove_records(type=> 'nonparametric');
+							$temp_model->remove_records(type=> 'covariance');
+							$temp_model->remove_option(record_name => 'estimation',
+													   option_name => 'MSFO',
+													   fuzzy_match => 1);
+							$temp_model -> update_inits( from_output => $est_mod->outputs->[0],
+														 update_omegas => 1,
+														 update_sigmas => 1,
+														 update_thetas => 1);
+							#we never write temp_model to disk, only use as template for update_inits scenario
+						}
+					
+						if ($scenario_1){
+							#create second model file for separate parametric evaluation using update_inits
+							my $extra_filename = $filename;
+							$extra_filename =~ s/pred_model/pred_param_upd_model/;
+
+							my $model_copy_extra_update = $temp_model -> copy(
+								filename => $directory.'m1/'.$extra_filename,
+								output_same_directory => 1,
+								copy_datafile => 0, 
+								write_copy => 0,
+								copy_output => 0,
+								);
+							$model_copy_extra_update -> _write();
+							push( @extra_prediction_models_update, $model_copy_extra_update );
+						}
+					}#end if is_nonparametric
+
 					$model_copy_pred -> set_first_problem_msfi(msfiname => $oldmsfoname->[0],
 															   extra_options => $extra_options,
 															   set_new_msfo => 1);
 					if ($is_nonparametric){
-						#FIXME check with Mats about $ESTIM POSTHOC
-						if (1){
+						if ($scenario_2){
 							#Scenario 2:  create second model file for separate parametric evaluation
+							my $extra_filename = $filename;
+							$extra_filename =~ s/pred_model/pred_param_model/;
+
 							my $model_copy_extra = $model_copy_pred -> copy(
-								filename => $directory.'m1/pred_param_model' . $i . '.mod',
+								filename => $directory.'m1/'.$extra_filename,
 								output_same_directory => 1,
 								copy_datafile => 0, 
 								write_copy => 0,
@@ -198,11 +257,16 @@ sub prediction_setup
 															 option_name => 'MSFO',
 															 fuzzy_match => 1);
 							$model_copy_extra -> _write();
-							push( @extra_prediction_models, $model_copy_extra );
+							push( @extra_prediction_models_msfi, $model_copy_extra );
 						}
-						if (1){
-							#Scenario 1: add second $PROB for parametric evaluation
-							push(@{$model_copy_pred->problems()},get_second_problem(model =>$model_copy_pred));
+						if ($scenario_3){
+							#add additional $PROB using MSFI for parametric evaluation
+							push(@{$model_copy_pred->problems()},get_second_problem_msfi(model =>$model_copy_pred));
+							push(@{$model_copy_pred->active_problems()},1);
+						}
+						if ($scenario_4){
+							#Scenario 4: add additional $PROB using update_inits for parametric evaluation
+							push(@{$model_copy_pred->problems()},get_second_problem_update(model =>$temp_model));
 							push(@{$model_copy_pred->active_problems()},1);
 						}
 						
@@ -229,12 +293,77 @@ sub prediction_setup
 		push( @prediction_models, $model_copy_pred );
 	}
 
-	push(@prediction_models,@extra_prediction_models) if (scalar(@extra_prediction_models)>0);
+	push(@prediction_models,@extra_prediction_models_msfi) if (scalar(@extra_prediction_models_msfi)>0);
+	push(@prediction_models,@extra_prediction_models_update) if (scalar(@extra_prediction_models_update)>0);
 	return \@prediction_models;
 }
 
 
-sub get_second_problem
+sub get_second_problem_msfi
+{
+	#only for nonparametric, scenario 3 with two $PROB in prediction models
+	my %parm = validated_hash(\@_,
+							  model => { isa => 'model', optional => 0 },
+	);
+	my $model = $parm{'model'};
+
+	my @problem_lines = ();
+	my $dummymodel = $model ->  copy( filename    => $model->directory.'dummy.mod',
+									  output_same_directory => 1,
+									  copy_output => 0,
+									  write_copy =>0);
+	
+	#set $DATA REWIND
+	$dummymodel->add_option(problem_numbers => [1],
+							record_name => 'data',
+							option_name => 'REWIND');
+
+	foreach my $record ('simulation','pk','pred','error','covariance','scatter','subroutine',
+						'abbreviated','sizes','prior','model','tol','infn','aesinitial',
+						'aes','des','mix','nonparametric'){
+		$dummymodel -> remove_records (problem_numbers => [1],
+									   keep_last => 0,
+									   type => $record);
+	}
+
+	$dummymodel->remove_option(record_name => 'estimation',
+							   option_name => 'MSFO',
+							   fuzzy_match => 1);
+	$dummymodel->remove_option(record_name => 'msfi',
+							   option_name => 'NEW',
+							   fuzzy_match => 1);
+	$dummymodel->add_option(record_name => 'msfi',
+							option_name => 'POPETAS');
+							
+
+	my $linesarray = $dummymodel->problems->[0]->_format_problem(relative_data_path => $model->relative_data_path,
+																 write_directory => $model->directory);
+	#we cannot use this array directly, must make sure items do not contain line breaks
+	foreach my $line (@{$linesarray}){
+		my @arr = split(/\n/,$line);
+		push(@problem_lines,@arr);
+	}
+	my $sh_mod = model::shrinkage_module -> new ( nomegas => $model -> nomegas -> [0],
+												  directory => $model -> directory(),
+												  problem_number => 2 );
+	my $problem = model::problem ->	new ( directory                   => $model->directory,
+										  ignore_missing_files        => 1,
+										  ignore_missing_output_files => 1,
+										  sde                         => $model->sde,
+										  omega_before_pk             => $model->omega_before_pk,
+										  psn_record_order            => $model->psn_record_order,
+										  cwres                       => $model->cwres,
+										  tbs                         => 0,
+										  dtbs                         => 0,
+										  prob_arr                    => \@problem_lines,
+										  shrinkage_module            => $sh_mod );
+	
+	
+	return $problem;
+
+}
+
+sub get_second_problem_update
 {
 	#only for nonparametric, scenario with two $PROB in prediction models
 	my %parm = validated_hash(\@_,
@@ -253,7 +382,7 @@ sub get_second_problem
 							record_name => 'data',
 							option_name => 'REWIND');
 
-	foreach my $record ('table','simulation','pk','pred','error','covariance','scatter','subroutine',
+	foreach my $record ('simulation','pk','pred','error','covariance','scatter','subroutine',
 						'abbreviated','sizes','prior','model','tol','infn','aesinitial',
 						'aes','des','mix','nonparametric'){
 		$dummymodel -> remove_records (problem_numbers => [1],
@@ -261,9 +390,6 @@ sub get_second_problem
 									   type => $record);
 	}
 
-	$dummymodel->remove_option(record_name => 'estimation',
-							   option_name => 'MSFO',
-							   fuzzy_match => 1);
 
 	my $linesarray = $dummymodel->problems->[0]->_format_problem(relative_data_path => $model->relative_data_path,
 																 write_directory => $model->directory);
@@ -352,14 +478,25 @@ sub modelfit_setup
 													 directory => $self->directory,	
 													 msf => $self->msf,
 													 estimation_data => $self->estimation_data));
-
-		if ($self->do_prediction and $self->is_lasso){
-			$self -> prediction_models(prediction_setup(model => $self->model,
-														directory => $self->directory,
-														last_est_complete => $self->last_est_complete,
-														msf => 0,
-														is_nonparametric => 0,
-														prediction_data => $self->prediction_data));
+		if ($self->is_lasso){
+			if ($self->do_prediction){
+				$self -> prediction_models(prediction_setup(model => $self->model,
+															directory => $self->directory,
+															last_est_complete => $self->last_est_complete,
+															msf => 0,
+															is_nonparametric => 0,
+															prediction_data => $self->prediction_data));
+			}
+		}else{
+			#not lasso. loop extra models
+			for (my $j=1; $j < scalar(@{$self->models}); $j++){
+				push(@{$self -> estimation_models},@{estimation_setup( model => $self->models->[$j],
+																	   tag => '_m'.($j+1).'_',
+																	   directory => $self->directory,	
+																	   msf => $self->msf,
+																	   estimation_data => $self->estimation_data)});
+				
+			}
 		}
 			
 	}else{
@@ -370,6 +507,17 @@ sub modelfit_setup
 													msf => $self->msf,
 													is_nonparametric => $self->is_nonparametric,
 													prediction_data => $self->prediction_data));
+		unless ($self->is_lasso){
+			for (my $j=1; $j < scalar(@{$self->models}); $j++){
+				push(@{$self -> prediction_models},@{prediction_setup( model => $self->models->[$j],
+																	   tag => '_m'.($j+1).'_',
+																	   directory => $self->directory,	
+																	   last_est_complete => $self->last_est_complete,
+																	   msf => $self->msf,
+																	   is_nonparametric => $self->is_nonparametric,
+																	   prediction_data => $self->prediction_data)});
+			}
+		}
 	}
 
 	my %modf_args;
@@ -414,7 +562,131 @@ sub modelfit_analyze
 		$self -> cont($temp); #is this really a boolean???
 	} else {
 		$self -> cont(0);
+		$self->summarize_results;
 	}
+	#here summarize prediction ofv, parametric and nonparametric
+}
+
+sub print_xv_results
+{
+	my $self = shift;
+	open XV_REPORT, '>', $self->directory."xv_result.csv";
+	print XV_REPORT join(',',@{$self->results_header})."\n";
+	for (my $i=0; $i< scalar(@{$self->results_rows}); $i++){
+		print XV_REPORT join(',',@{$self->results_rows->[$i]})."\n";
+	}
+	close XV_REPORT;
+	return 0;
+}
+
+sub summarize_results
+{
+	my $self = shift;
+	my @sum_ofv = (0) x scalar(@{$self->models});
+	my @estimation_ofv = [];
+	my @prediction_ofv = [];
+	my @sum_npofv = (0) x scalar(@{$self->models});
+	my @estimation_npofv = [];
+	my @prediction_npofv = [];
+
+	for (my $j=0; $j<scalar(@{$self->models}); $j++){
+		push(@estimation_ofv,[]);
+		push(@estimation_npofv,[]);
+		push(@prediction_ofv,[]);
+		push(@prediction_npofv,[]);
+
+		for( my $i = 0; $i < $self->nr_validation_groups; $i++  ){
+			my $index = $j*($self->nr_validation_groups)+$i;
+			my $est_model = $self->estimation_models->[$index];
+			my $pred_model = $self->prediction_models->[$index];
+			my $ofv=undef;
+			my $npofv=undef;
+			if (defined $est_model and defined $est_model -> outputs and 
+				defined $est_model -> outputs -> [0] and $est_model->outputs->[0]->have_output) {
+				$ofv =  $est_model -> outputs -> [0] -> get_single_value(attribute => 'ofv',problem_index => 0);
+				if ($self->is_nonparametric){
+					$npofv =  $est_model -> outputs -> [0] -> get_single_value(attribute => 'npofv',problem_index => 0);
+				}
+			}
+			push(@{$estimation_ofv[$j]},$ofv);
+			push(@{$estimation_npofv[$j]},$npofv);
+			
+			$ofv=undef;
+			$npofv=undef;
+			if (defined $pred_model and defined $pred_model -> outputs and 
+				defined $pred_model -> outputs -> [0] and $pred_model->outputs->[0]->have_output) {
+				if ($self->is_nonparametric){
+					$ofv =  $pred_model -> outputs -> [0] -> get_single_value(attribute => 'ofv',problem_index => 1);
+					$npofv =  $pred_model -> outputs -> [0] -> get_single_value(attribute => 'npofv',problem_index => 0);
+				}else{
+					$ofv =  $pred_model -> outputs -> [0] -> get_single_value(attribute => 'ofv',problem_index => 0);
+				}
+			}
+			push(@{$prediction_ofv[$j]},$ofv);
+			push(@{$prediction_npofv[$j]},$npofv);
+			if (defined $sum_ofv[$j] and defined $ofv){
+				$sum_ofv[$j] += $ofv;
+			}else{
+				$sum_ofv[$j] = undef;
+			}
+			if (defined $sum_npofv[$j] and defined $npofv){
+				$sum_npofv[$j] += $npofv;
+			}else{
+				$sum_npofv[$j] = undef;
+			}
+		}
+	}
+	$self->sum_ofv(\@sum_ofv);
+	$self->sum_npofv(\@sum_npofv);
+
+
+	my @header = ('model','sum_ofv');
+	push(@header,'sum_npofv') if $self->is_nonparametric;
+	for( my $i = 0; $i < $self->nr_validation_groups; $i++  ){
+		push(@header,'est_ofv'.$i);
+	}
+	if ($self->is_nonparametric){
+		for( my $i = 0; $i < $self->nr_validation_groups; $i++  ){
+			push(@header,'est_npofv'.$i);
+		}
+	}
+	for( my $i = 0; $i < $self->nr_validation_groups; $i++  ){
+		push(@header,'pred_ofv'.$i);
+	}
+	if ($self->is_nonparametric){
+		for( my $i = 0; $i < $self->nr_validation_groups; $i++  ){
+			push(@header,'pred_npofv'.$i);
+		}
+	}
+
+	$self->results_header(\@header);
+	my @rows = ();
+	for (my $j=0; $j<scalar(@{$self->models}); $j++){
+		push(@rows,[]);
+		my $fname = $self->models->[$j]->filename;
+		$fname =~ s/\.mod$//;
+		$fname =~ s/\.ctl$//;
+		push(@{$rows[$j]},$fname,$sum_ofv[$j]);
+		push(@{$rows[$j]},$sum_npofv[$j]) if $self->is_nonparametric;
+		for( my $i = 0; $i < $self->nr_validation_groups; $i++  ){
+			push(@{$rows[$j]},$estimation_ofv[$j]->[$i]);
+		}
+		if ($self->is_nonparametric){
+			for( my $i = 0; $i < $self->nr_validation_groups; $i++  ){
+				push(@{$rows[$j]},$estimation_npofv[$j]->[$i]);
+			}
+		}
+		for( my $i = 0; $i < $self->nr_validation_groups; $i++  ){
+			push(@{$rows[$j]},$prediction_ofv[$j]->[$i]);
+		}
+		if ($self->is_nonparametric){
+			for( my $i = 0; $i < $self->nr_validation_groups; $i++  ){
+				push(@{$rows[$j]},$prediction_npofv[$j]->[$i]);
+			}
+		}
+	}
+	$self->results_rows(\@rows);
+
 }
 
 sub create_data_sets
@@ -533,6 +805,16 @@ sub modelfit_post_subtool_analyze
 													is_nonparametric => $self->is_nonparametric,
 													prediction_data => $self->prediction_data,
 													estimation_models => $self->estimation_models));
+		for (my $j=1; $j < scalar(@{$self->models}); $j++){
+			push(@{$self -> prediction_models},@{prediction_setup(model => $self->models->[$j],
+																  estimation_model_offset => $j*(scalar(@{$self->prediction_data})),
+																  directory => $self->directory,
+																  last_est_complete => $self->last_est_complete,
+																  msf => $self->msf,
+																  is_nonparametric => $self->is_nonparametric,
+																  prediction_data => $self->prediction_data,
+																  estimation_models => $self->estimation_models)});
+		}
 	}
 	my %modelfit_arg;
 	if(defined $self -> subtool_arguments and defined $self -> subtool_arguments -> {'modelfit'}){ # Override user threads. WHY???
