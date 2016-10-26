@@ -90,11 +90,6 @@ if ( scalar(@ARGV) < 1 ) {
   exit;
 }
 
-if( scalar(@ARGV) > 1 ){
-  print "crossval can only handle one modelfile, you listed: ",join(',',@ARGV),"\n";die;
-  exit;
-}
-
 unless ( defined $options{'groups'} ){
   print "groups must be given\n" ;
   exit;
@@ -106,19 +101,34 @@ require tool::xv;
 my $eval_string = common_options::model_parameters(\%options);
 
 my $model = model -> new ( eval( $eval_string ),
-			   filename                    => @ARGV[0],
+			   filename                    => $ARGV[0],
 			   ignore_missing_output_files => 1 );
+
+my $is_nonparametric = 0;
+if (defined $model->problems->[0]->nonparametrics() and scalar(@{$model->problems->[0]->nonparametrics})> 0) {
+	$is_nonparametric= 1;
+}
+
+my @models = ($model);
+if( scalar(@ARGV) > 1 ){
+	for (my $j=1; $j<scalar(@ARGV); $j++){
+		push(@models,model -> new ( eval( $eval_string ),
+									filename                    => $ARGV[$j],
+									ignore_missing_output_files => 1 ));
+	}
+}
+
 
 my $xv =  tool::xv_step -> new( eval( $common_options::parameters ),
 								nr_validation_groups => $options{'groups'},
 								directory_name_prefix => 'crossval',
 								top_tool => 1,
 								is_lasso => 0,
+								is_nonparametric => $is_nonparametric,
 								msf => $options{'msf'},
-								models => [$model],
+								models => \@models,
 								subtool_arguments => { modelfit => { eval( $common_options::parameters ),
 																	 directory => undef} },
-								post_analyze => \&harvest_ofv,
     );
 $xv-> print_options (cmd_line => $cmd_line,
 					 toolname => 'crossval',
@@ -127,17 +137,7 @@ $xv-> print_options (cmd_line => $cmd_line,
 
 $xv -> run;
 
+$xv->print_xv_results();
 
-sub harvest_ofv{
-  my $xv_object = shift;
-  
-  open XV_REPORT, '>', "xv_result.txt";
-  print XV_REPORT '"Prediction model OFVs","Estimation model OFVs"'."\n";
-  for( my $i = 0; $i <= $#{$xv_object -> prediction_models}; $i++ ){
-	  print XV_REPORT $xv_object -> prediction_models -> [$i] -> outputs -> [0] -> ofv  -> [0][0].",".
-		  $xv_object -> estimation_models -> [$i] -> outputs -> [0] -> ofv  -> [0][0]."\n";
-  }
-
-  close XV_REPORT;
-  return 0;
-}
+ui -> print( category => 'all',
+			 message => "crossval done\n" );

@@ -1100,6 +1100,10 @@ sub _scan_to_subproblems
 			$self -> pre_run_errors($_);
 			$self -> finished_parsing(1);
 			return;
+		} elsif ($self -> nonparametric_step_run and (/^\s*SKIPPING ESTIMATION, USING ETAS THAT ARE FROM MSF FILE/ )) {
+			$self-> estimation_step_initiated(0);
+			$self -> estimation_step_run(0);
+			last;
 		} elsif (/^\s*0ESTIMATION STEP IMPLEMENTED/ ) {
 			if( @{$self->lstfile}[ $start_pos ] =~ / BUT THE NUMBER OF PARAMETERS TO BE ESTIMATED IS 0/ ) {
 				# If this happens, NONMEM aborts so we are finished reading

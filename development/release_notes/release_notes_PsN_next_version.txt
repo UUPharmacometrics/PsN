@@ -77,9 +77,11 @@ A new recommended but not required Perl library for runrecord: YAML::Tiny
   which is not supported by PsN and hence not correctly handled when reading datasets for e.g.
   bootstrap.
 - Added support for IGNORE=" (double quotation mark) in $DATA
+- Bug fix: If Perl fork() fails when running locally on unix, then sleep for 30s and try
+  again. If keeps failing then treat model as failed due to job submission error, and
+  allow crash restart if appropriate crash handling options are set.
 
-
-   ___common_options___
+___common_options___
 
 - Option -abort_on_fail has a new meaning and function. The option is intended for the system tests.
   If set, PsN will exit with an error if NONMEM crashes, or an estimation/evaluation fails to
