@@ -50,7 +50,7 @@ influential_outliers_data <- function(all.iofv.file,n.subjects,samples,
   infl_outl <- ID
   infl_not_outl <- setdiff(ID_infl,ID)
   outl_not_infl <- setdiff(outlier_ID,ID)
-  not_outl_not_infl <- setdiff(simeval_id_sorted,unique(c(outlier_ID,ID_infl)))
+  not_outl_not_infl <- setdiff(table_for_plot$ID,unique(c(outlier_ID,ID_infl)))
 
   # return
   out <- list(infl_data=infl_data,

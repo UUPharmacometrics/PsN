@@ -1,6 +1,13 @@
 plot_infl_outl_data <- function(table_for_plot,ID,row) {
+  if (length(row)>0) {
+    simeval_iofv_res <- table_for_plot$simeval_iofv_res[-row]
+    cdd_delta.ofv <- table_for_plot$cdd_delta.ofv[-row]
+  } else {
+    simeval_iofv_res <- table_for_plot$simeval_iofv_res
+    cdd_delta.ofv <- table_for_plot$cdd_delta.ofv
+  }
   par(oma=c(0,1,2,1))
-  plot (table_for_plot$simeval_iofv_res[-row],table_for_plot$cdd_delta.ofv[-row],
+  plot (simeval_iofv_res,cdd_delta.ofv,
         type="p",
         ylab="CDD",
         xlab="Simeval",

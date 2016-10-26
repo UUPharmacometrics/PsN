@@ -4,10 +4,8 @@ pdf_outl.infl.indiv <- function(all.iofv.file,n.subjects,samples,
   outdata <- influential_outliers_data(all.iofv.file,n.subjects,samples,
                                        raw.results.file,skipped.id.file) # use function
   # unlist
-  infl_data <- outdata$infl_data
-  outl_data <- outdata$outl_data
-  ID <- outdata$ID
   table_for_plot <- outdata$table_for_plot
+  ID <- outdata$ID
   row <- outdata$row
   infl_outl <- outdata$infl_outl
   infl_not_outl <- outdata$infl_not_outl
