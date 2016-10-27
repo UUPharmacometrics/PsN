@@ -25,9 +25,9 @@ source(paste0(rscripts.directory,"/simeval/ofv.i_ofv_ppc.R"))
 source(paste0(rscripts.directory,"/simeval/ofv.kld_i_ofv.R"))
 source(paste0(rscripts.directory,"/simeval/pdf_ofv.R"))
 # Source all outliers report functions
-source(paste0(rscripts.directory,"/simeval/ebe.npde.outliers.R"))
-source(paste0(rscripts.directory,"/simeval/all.outlier.report.table.R"))
-source(paste0(rscripts.directory,"/simeval/pdf.all.outlier.report.R"))
+# source(paste0(rscripts.directory,"/simeval/ebe.npde.outliers.R"))
+# source(paste0(rscripts.directory,"/simeval/all.outlier.report.table.R"))
+# source(paste0(rscripts.directory,"/simeval/pdf.all.outlier.report.R"))
 # Source common function
 source(paste0(rscripts.directory,"/common/plot.table.R"))
 
@@ -44,11 +44,11 @@ pdf_ofv(raw.results.file=raw.results.file,iofv.file=iofv.file,all.iofv.file=all.
         ofv.filename='PsN_OFV_plots.pdf',rplots.level=rplots.level,
         model.filename=model.filename)
 
-pdf.all.outlier.report(report.file.name="PsN_outlier_report_table.pdf",
-                       all.iofv.file=all.iofv.file,n.subjects=n.subjects,samples=successful.samples,
-                       ebe.npde.file=ebe.npde.file,
-                       iiv.eta.names=iiv.eta.names,outlying_criteria=outlying_criteria,
-                       residual.outliers.file=residual.outliers.file)
+# pdf.all.outlier.report(report.file.name="PsN_outlier_report_table.pdf",
+#                        all.iofv.file=all.iofv.file,n.subjects=n.subjects,samples=successful.samples,
+#                        ebe.npde.file=ebe.npde.file,
+#                        iiv.eta.names=iiv.eta.names,outlying_criteria=outlying_criteria,
+#                        residual.outliers.file=residual.outliers.file)
 
 #new pdf for vpc:s DV vs PRED, CWRES vs idv
 library(xpose4)
