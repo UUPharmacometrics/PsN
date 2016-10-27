@@ -11,11 +11,13 @@ pdf_outl.infl.indiv <- function(all.iofv.file,n.subjects,samples,
   infl_not_outl <- outdata$infl_not_outl
   outl_not_infl <- outdata$outl_not_infl
   not_outl_not_infl <- outdata$not_outl_not_infl
+  fail_ID_cdd <- outdata$fail_ID_cdd
+  deleted_outliers <- outdata$deleted_outliers
   
   # create pdf file
   pdf(file=pdf.filename,width=10, height=7)
   # plot points, mark outliers and influential individuals ir red
-  plot_infl_outl_data(table_for_plot,ID,row)
+  plot_infl_outl_data(table_for_plot,ID,row,fail_ID_cdd,deleted_outliers)
   
   # plot summary about how many are only influential, only outliers, both and none.
   plot_summary(infl_outl,infl_not_outl,outl_not_infl,not_outl_not_infl)
