@@ -232,37 +232,29 @@ test_that("If function two.data.cases works as expected",{
 #.................................  (3) Test summary.table.ebe.npde ...............................   
 mydataframe <- summary.table.ebe.npde(ebenpde_obs,iiv.eta.names=iiv.eta.names)
 mydataframe_a <- summary.table.ebe.npde(ebenpde_obs_a,iiv.eta.names=iiv.eta.names_a)
-mydataframe_2 <- summary.table.ebe.npde(ebenpde_obs_2,iiv.eta.names=iiv.eta.names_2)
 
 # Create expected data
 exp_mydataframe <- data.frame(as.factor(c("ETA(1)","ETA(2)")),
+                              c(5,5),
                               as.factor(sprintf("%.5f",c(-0.465,-0.146))),
                               as.factor(sprintf("%.3f",c(0.584,0.201))),
                               as.factor(sprintf("%.5f",c(1.58003,0.05473))),
                               as.factor(sprintf("%.3f",c(0.745,0.355))))
-colnames(exp_mydataframe) <- c("EBE NPDE","mean","p-value (H_0: mean==0)","variance","p-value (H_0: var==1)")
+colnames(exp_mydataframe) <- c("EBE NPDE","Amount of ETAs","mean","p-value (H_0: mean==0)","variance","p-value (H_0: var==1)")
 
 exp_mydataframe_a <- data.frame(factor(c("ETA(1)","ETA(2)","ETA(3)")),
-                              as.factor(sprintf("%.5f",c(0.845,-1.06,2.14983))),
-                              as.factor(sprintf("%.3f",c(0.688,0.844,0.313))),
-                              as.factor(sprintf("%.5f",c(16.14311,9.96008,22.00402))),
-                              as.factor(sprintf("%.3f",c(0.173,0.009,0.037))))
-colnames(exp_mydataframe_a) <- c("EBE NPDE","mean","p-value (H_0: mean==0)","variance","p-value (H_0: var==1)")
-
-exp_mydataframe_2 <- data.frame(factor(c("ETA.1.","ETA.2.","ETA.3.")),
-                                as.factor(sprintf("%.5f",c(-0.605,-0.00333,0.4325))),
-                                as.factor(sprintf("%.3f",c(0.156,0.767,0.25))),
-                                as.factor(sprintf("%.5f",c(0.64895,0.67335,0.30756))),
-                                as.factor(sprintf("%.3f",c(0.63,0.805,0.844))),
-                                c(3,0,5))
-colnames(exp_mydataframe_2) <- c("EBE NPDE","mean","p-value (H_0: mean==0)","variance","p-value (H_0: var==1)","Amount of deleted IDs")
+                                c(6,6,6),
+                                as.factor(sprintf("%.5f",c(0.845,-1.06,2.14983))),
+                                as.factor(sprintf("%.3f",c(0.688,0.844,0.313))),
+                                as.factor(sprintf("%.5f",c(16.14311,9.96008,22.00402))),
+                                as.factor(sprintf("%.3f",c(0.173,0.009,0.037))))
+colnames(exp_mydataframe_a) <- c("EBE NPDE","Amount of ETAs","mean","p-value (H_0: mean==0)","variance","p-value (H_0: var==1)")
 
 # Compare expected data with real data
 context("Simeval, ebe npde, function summary.table.ebe.npde")
 test_that("If function summary.table.ebe.npde works as expected",{
   expect_equal(exp_mydataframe,mydataframe)
   expect_equal(exp_mydataframe_a,mydataframe_a)
-  expect_equal(exp_mydataframe_2,mydataframe_2)
 })
 
 #.................................  (4) Test empirical.distance  ....................................    
@@ -508,18 +500,18 @@ test_that("If function outlier.table.ebe.npde works as expected",{
 })
 
 
-#...................................  (9) Test ebe.npde.outliers  .........................................
-ebe.npde_outliers <- ebe.npde.outliers(ebe.npde.file=ebe.npde.file,iiv.eta.names,outlying_criteria=1,model.filename)
-ebe.npde_outliers_a <- ebe.npde.outliers(ebe.npde.file=ebe.npde.file,iiv.eta.names,outlying_criteria=-2,model.filename)
-# Create expected data
-exp_ebe.npde_outliers <- data.frame(c(56),c(0.30186))
-colnames(exp_ebe.npde_outliers) <- c("ID","outlying criteria")
-exp_ebe.npde_outliers_a <- data.frame(C = c("No outliers detected"))
-colnames(exp_ebe.npde_outliers_a) <- NULL
-
-# Compare expected data with real data
-context("Simeval, ebe npde, function ebe.npde.outliers")
-test_that("If function ebe.npde.outliers works as expected",{
-  expect_equal(exp_ebe.npde_outliers,ebe.npde_outliers)
-  expect_equal(exp_ebe.npde_outliers_a,ebe.npde_outliers_a)
-})
+# #...................................  (9) Test ebe.npde.outliers  .........................................
+# ebe.npde_outliers <- ebe.npde.outliers(ebe.npde.file=ebe.npde.file,iiv.eta.names,outlying_criteria=1,model.filename)
+# ebe.npde_outliers_a <- ebe.npde.outliers(ebe.npde.file=ebe.npde.file,iiv.eta.names,outlying_criteria=-2,model.filename)
+# # Create expected data
+# exp_ebe.npde_outliers <- data.frame(c(56),c(0.30186))
+# colnames(exp_ebe.npde_outliers) <- c("ID","outlying criteria")
+# exp_ebe.npde_outliers_a <- data.frame(C = c("No outliers detected"))
+# colnames(exp_ebe.npde_outliers_a) <- NULL
+# 
+# # Compare expected data with real data
+# context("Simeval, ebe npde, function ebe.npde.outliers")
+# test_that("If function ebe.npde.outliers works as expected",{
+#   expect_equal(exp_ebe.npde_outliers,ebe.npde_outliers)
+#   expect_equal(exp_ebe.npde_outliers_a,ebe.npde_outliers_a)
+# })
