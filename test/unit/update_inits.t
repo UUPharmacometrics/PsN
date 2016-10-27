@@ -56,6 +56,15 @@ is ($est->options->[1]->value, 'run12.msf', "est msf after 4");
 $est->rename_msfo (name => '13');
 is ($est->options->[1]->value, '13', "est msf after rename");
 
+$est = model::problem::estimation->new(record_arr => ['MAXEV=99 ANY=SOUP']);
+is(scalar(@{$est->options}),2,'est 2 options before');
+$est->rename_msfo (name => '13');
+is(scalar(@{$est->options}),2,'est 2 options after rename without add');
+$est->rename_msfo (name => '13', add_if_absent => 1);
+is(scalar(@{$est->options}),3,'est 3 options after rename with add');
+is ($est->options->[2]->value, '13', "est msf after rename");
+
+
 
 is_deeply(model::get_xpose_runno_and_suffix(filename => 'patab01'),['01',''],'get_xpose_runno_and_suffix 1');
 is_deeply(model::get_xpose_runno_and_suffix(filename => 'patab5a'),['5a',''],'get_xpose_runno_and_suffix 2');

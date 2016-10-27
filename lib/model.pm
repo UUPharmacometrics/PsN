@@ -5292,28 +5292,14 @@ sub rename_msfo{
 	my $add_if_absent = $parm{'add_if_absent'};
 	my $problem_index = $parm{'problem_index'};
 
-	my $msfo_files = $self->msfo_names(); #array over problems
-
-	if (defined $msfo_files->[$problem_index]){
-		#change existing
-		if (defined $self->problems->[$problem_index]->estimations){
-			foreach my $rec (@{$self->problems->[$problem_index]->estimations}){
-				$rec->rename_msfo(name => $name);
-			}
+	if (defined $self->problems->[$problem_index]->estimations){
+		foreach my $rec (@{$self->problems->[$problem_index]->estimations}){
+			$rec->rename_msfo(name => $name, add_if_absent => $add_if_absent);
 		}
-		if (defined $self->problems->[$problem_index]->nonparametrics){
-			foreach my $rec (@{$self->problems->[$problem_index]->nonparametrics}){
-				$rec->rename_msfo(name => $name);
-			}
-		}
-	}elsif ($add_if_absent){
-		#not exist	
-		if (defined $self->problems->[$problem_index]->estimations and
-			defined $self->problems->[$problem_index]->estimations->[0]){
-			$self->problems->[$problem_index]->estimations->[0]->_add_option(option_string=>'MSFO='.$name); 
-		}elsif(defined $self->problems->[$problem_index]->nonparametrics and 
-			   defined $self->problems->[$problem_index]->nonparametrics->[0]){
-			$self->problems->[$problem_index]->nonparametrics->[0]->_add_option(option_string=>'MSFO='.$name); 
+	}
+	if (defined $self->problems->[$problem_index]->nonparametrics){
+		foreach my $rec (@{$self->problems->[$problem_index]->nonparametrics}){
+			$rec->rename_msfo(name => $name, add_if_absent => $add_if_absent);
 		}
 	}
 	my $updatedmsfi = $self->update_internal_msfi;

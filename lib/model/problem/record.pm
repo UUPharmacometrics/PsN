@@ -341,15 +341,22 @@ sub rename_msfo
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-							  name => { isa => 'Str', optional => 0 }
+							  name => { isa => 'Str', optional => 0 },
+							  add_if_absent => { isa => 'Bool', optional => 1, default => 0 },
 		);
 	my $name = $parm{'name'};
+	my $add_if_absent = $parm{'add_if_absent'};
 	
 	my @options = defined($self->options) ? @{$self->options} : ();
+	my $found=0;
 	foreach my $opt (@options){
 		if ($opt->name =~ /^\s*MSFO?\s*$/  and (defined $opt->value and $opt->value ne '')){
 			$opt->value($name);
+			$found = 1;
 		}
+	}
+	if ($add_if_absent and (not $found)){
+		$self -> _add_option( option_string => 'MSFO='.$name );
 	}
 }
 
