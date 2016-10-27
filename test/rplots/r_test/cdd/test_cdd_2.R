@@ -267,6 +267,7 @@ delta.ofv <- out_ofv.delta$delta.ofv
 delta.ofv_10_pr <- out_ofv.delta$delta.ofv_10_pr
 row_infl <- out_ofv.delta$row_infl
 ID_infl <- out_ofv.delta$ID_infl
+fail_ID <- out_ofv.delta$fail_ID
 
 delta.ofv_5 <- out_ofv.delta_5$delta.ofv
 delta.ofv_10_pr_5 <- out_ofv.delta_5$delta.ofv_10_pr
@@ -324,6 +325,7 @@ exp_delta.ofv <- c(0.54,0.6,0.5,6.3,0.4,3.2,3.2,2.1,1.9,1.5,0.01,0.7,5.2,0.6,1.4
 exp_delta.ofv_10_pr <- c(6.3,5.2)
 exp_row_infl <- c(4,13)
 exp_ID_infl <- c(19,38)
+exp_fail_ID <- NULL
 
 exp_delta.ofv_5 <- c(0.54,0.5,6.3,0.4,3.2,3.2,1.9,1.5,0.01,0.7,5.2,0.6,1.4,2.3)
 exp_delta.ofv_10_pr_5 <- c(6.3)
@@ -383,6 +385,7 @@ test_that("If function delta.ofv.data works as expected",{
   expect_equal(exp_delta.ofv_10_pr,delta.ofv_10_pr)
   expect_equal(exp_row_infl,row_infl)
   expect_equal(exp_ID_infl,ID_infl)
+  expect_equal(exp_fail_ID,fail_ID)
   
   expect_equal(exp_delta.ofv_5,delta.ofv_5)
   expect_equal(exp_delta.ofv_10_pr_5,delta.ofv_10_pr_5)
