@@ -5,50 +5,37 @@ library(grid)
 residual.outliers.file <- paste0(working.directory,'residual_outliers.csv')
 # Source ebe npde functions
 source(paste0(rscripts.directory,"/simeval/ebe.npde.input.data.R"))
+source(paste0(rscripts.directory,"/simeval/ebe.npde.two.data.cases.R"))
 source(paste0(rscripts.directory,"/simeval/ebe.npde.summary.table.R"))
 source(paste0(rscripts.directory,"/simeval/ebe.npde.empirical.distance.R"))
 source(paste0(rscripts.directory,"/simeval/ebe.npde.data.for.plots.R"))
 source(paste0(rscripts.directory,"/simeval/ebe.npde.plot_1.R"))
 source(paste0(rscripts.directory,"/simeval/ebe.npde.plot_2.R"))
 source(paste0(rscripts.directory,"/simeval/ebe.npde.outlier.table.R"))
-source(paste0(rscripts.directory,"/simeval/pdf.ebe.npde.R"))
 # Source residual functions
 source(paste0(rscripts.directory,"/simeval/residuals.histograms.R"))
 source(paste0(rscripts.directory,"/simeval/residuals.summary.table.R"))
 source(paste0(rscripts.directory,"/simeval/residuals.outlier.table.R"))
-source(paste0(rscripts.directory,"/simeval/pdf.cwres.iwres.R"))
 # Source ofv functions
 source(paste0(rscripts.directory,"/simeval/ofv.p_ofv_ppc.R"))
 source(paste0(rscripts.directory,"/simeval/ofv.i_ofv_npde.R"))
 source(paste0(rscripts.directory,"/simeval/ofv.i_ofv_res.R"))
 source(paste0(rscripts.directory,"/simeval/ofv.i_ofv_ppc.R"))
 source(paste0(rscripts.directory,"/simeval/ofv.kld_i_ofv.R"))
-source(paste0(rscripts.directory,"/simeval/pdf_ofv.R"))
 # Source all outliers report functions
 # source(paste0(rscripts.directory,"/simeval/ebe.npde.outliers.R"))
 # source(paste0(rscripts.directory,"/simeval/all.outlier.report.table.R"))
 # source(paste0(rscripts.directory,"/simeval/pdf.all.outlier.report.R"))
 # Source common function
 source(paste0(rscripts.directory,"/common/plot.table.R"))
+# pdf function
+source(paste0(rscripts.directory,"/simeval/pdf.simeval.R"))
 
 # Create a pdf files
-pdf.ebe.npde(ebe.npde.file=ebe.npde.file,iiv.eta.names=iiv.eta.names,
-             outlying_criteria=outlying_criteria,ebe.filename='PsN_ebe_npde_plots.pdf',
-             rplots.level=rplots.level,model.filename=model.filename)
-
-pdf.cwres.iwres(residual.files=residual.files,residual.outliers.file,
-                residual.names=residual.names,pdf.filename='PsN_residual_plots.pdf')
-
-pdf_ofv(raw.results.file=raw.results.file,iofv.file=iofv.file,all.iofv.file=all.iofv.file,
-        n.subjects=n.subjects,samples=successful.samples,
-        ofv.filename='PsN_OFV_plots.pdf',rplots.level=rplots.level,
-        model.filename=model.filename)
-
-# pdf.all.outlier.report(report.file.name="PsN_outlier_report_table.pdf",
-#                        all.iofv.file=all.iofv.file,n.subjects=n.subjects,samples=successful.samples,
-#                        ebe.npde.file=ebe.npde.file,
-#                        iiv.eta.names=iiv.eta.names,outlying_criteria=outlying_criteria,
-#                        residual.outliers.file=residual.outliers.file)
+pdf.simeval(ebe.npde.file=ebe.npde.file,iiv.eta.names=iiv.eta.names,outlying_criteria=outlying_criteria,
+            residual.files=residual.files,residual.outliers.file=residual.outliers.file,residual.names=residual.names,
+            raw.results.file=raw.results.file,iofv.file=iofv.file,all.iofv.file=all.iofv.file,n.subjects=n.subjects,samples=successful.samples,
+            model.filename=model.filename,rplots.level=rplots.level,pdf_filename=pdf.filename)
 
 #new pdf for vpc:s DV vs PRED, CWRES vs idv
 library(xpose4)
