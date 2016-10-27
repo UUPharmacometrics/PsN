@@ -68,8 +68,8 @@ infl_outl <- out$infl_outl
 infl_not_outl <- out$infl_not_outl
 outl_not_infl <- out$outl_not_infl
 not_outl_not_infl <- out$not_outl_not_infl
-fail_ID_cdd <- out$fail_ID
-deleted_outliers <- out$deleted_outliers
+fail_ID_text <- out$fail_ID_text
+deleted_outliers_text <- out$deleted_outliers_text
 
 infl_data_1 <- out_1$infl_data
 outl_data_1 <- round(out_1$outl_data,3)
@@ -80,8 +80,8 @@ infl_outl_1 <- out_1$infl_outl
 infl_not_outl_1 <- out_1$infl_not_outl
 outl_not_infl_1 <- out_1$outl_not_infl
 not_outl_not_infl_1 <- out_1$not_outl_not_infl
-fail_ID_cdd_1 <- out_1$fail_ID_cdd
-deleted_outliers_1 <- out_1$deleted_outliers
+fail_ID_text_1 <- out_1$fail_ID_text
+deleted_outliers_text_1 <- out_1$deleted_outliers_text
 
 infl_data_2 <- out_2$infl_data
 outl_data_2 <- round(out_2$outl_data,3)
@@ -92,8 +92,8 @@ infl_outl_2 <- out_2$infl_outl
 infl_not_outl_2 <- out_2$infl_not_outl
 outl_not_infl_2 <- out_2$outl_not_infl
 not_outl_not_infl_2 <- out_2$not_outl_not_infl
-fail_ID_cdd_2 <- out_2$fail_ID_cdd
-deleted_outliers_2 <- out_2$deleted_outliers
+fail_ID_text_2 <- out_2$fail_ID_text
+deleted_outliers_text_2 <- out_2$deleted_outliers_text
 
 infl_data_3 <- out_3$infl_data
 outl_data_3 <- round(out_3$outl_data,3)
@@ -104,8 +104,8 @@ infl_outl_3 <- out_3$infl_outl
 infl_not_outl_3 <- out_3$infl_not_outl
 outl_not_infl_3 <- out_3$outl_not_infl
 not_outl_not_infl_3 <- out_3$not_outl_not_infl
-fail_ID_cdd_3 <- out_3$fail_ID_cdd
-deleted_outliers_3 <- out_3$deleted_outliers
+fail_ID_text_3 <- out_3$fail_ID_text
+deleted_outliers_text_3 <- out_3$deleted_outliers_text
 
 infl_data_5 <- out_5$infl_data
 outl_data_5 <- round(out_5$outl_data,3)
@@ -116,8 +116,8 @@ infl_outl_5 <- out_5$infl_outl
 infl_not_outl_5 <- out_5$infl_not_outl
 outl_not_infl_5 <- out_5$outl_not_infl
 not_outl_not_infl_5 <- out_5$not_outl_not_infl
-fail_ID_cdd_5 <- out_5$fail_ID_cdd
-deleted_outliers_5 <- out_5$deleted_outliers
+fail_ID_text_5 <- out_5$fail_ID_text
+deleted_outliers_text_5 <- out_5$deleted_outliers_text
 
 infl_data_6 <- out_6$infl_data
 outl_data_6 <- round(out_6$outl_data,3)
@@ -128,8 +128,8 @@ infl_outl_6 <- out_6$infl_outl
 infl_not_outl_6 <- out_6$infl_not_outl
 outl_not_infl_6 <- out_6$outl_not_infl
 not_outl_not_infl_6 <- out_6$not_outl_not_infl
-fail_ID_cdd_6 <- out_6$fail_ID_cdd
-deleted_outliers_6 <- out_6$deleted_outliers
+fail_ID_text_6 <- out_6$fail_ID_text
+deleted_outliers_text_6 <- out_6$deleted_outliers_text
 
 # Create expected input data
 exp_infl_data <- data.frame("ID_cdd"=c(11,13,16,19,21,23,24,27,31,34,35,37,38,39,41,42),
@@ -145,8 +145,8 @@ exp_infl_outl <- 38
 exp_infl_not_outl <- 19
 exp_outl_not_infl <- c(35,41,16)
 exp_not_outl_not_infl <- c(11,13,21,23,24,27,31,34,37,39,42)
-exp_fail_ID_cdd <- NULL
-exp_deleted_outliers <- integer(0)
+exp_fail_ID_text <- ''
+exp_deleted_outliers_text <- ''
 
 exp_infl_data_1 <- data.frame("ID_cdd"=c(11,13,16,19,21,23,24,27,31,34,35,37,38,39,41,42),
                             "delta.ofv"=c(0.54,0.6,0.5,6.3,0.4,3.2,3.2,2.1,1.9,1.5,0.01,0.7,5.2,0.6,1.4,2.3))
@@ -161,8 +161,8 @@ exp_infl_outl_1 <- integer(0)
 exp_infl_not_outl_1 <- c(19,38)
 exp_outl_not_infl_1 <- c(16,11)
 exp_not_outl_not_infl_1 <- c(13,21,23,24,27,31,34,35,37,39,41,42)
-exp_fail_ID_cdd_1 <- NULL
-exp_deleted_outliers_1 <- integer(0)
+exp_fail_ID_text_1 <- ''
+exp_deleted_outliers_text_1 <- ''
 
 exp_infl_data_2 <- data.frame("ID_cdd"=c(11,13,16,19,21,23,24,27,31,34,35,37,38,39,41,42,43,45,48,49,51,52,55,60,61,63),
                             "delta.ofv"=c(0.54,0.6,0.5,6.3,0.4,3.2,3.2,2.1,1.9,1.5,0.01,0.7,5.2,0.6,1.4,2.3,4.7,0.21,0.9,3.1,1,6.1,2.4,1.3,0.7,0.8))
@@ -177,8 +177,8 @@ exp_infl_outl_2 <- c(52,38)
 exp_infl_not_outl_2 <- 19
 exp_outl_not_infl_2 <- c(35,41,16,37)
 exp_not_outl_not_infl_2 <- c(11,13,21,23,24,27,31,34,39,42,43,45,48,49,51,55,60,61,63)
-exp_fail_ID_cdd_2 <- NULL
-exp_deleted_outliers_2 <- integer(0)
+exp_fail_ID_text_2 <- ''
+exp_deleted_outliers_text_2 <- ''
 
 exp_infl_data_3 <- data.frame("ID_cdd"=c(11,13,16,19,21,23),
                               "delta.ofv"=c(0.54,0.6,0.5,6.3,0.4,3.2))
@@ -193,9 +193,9 @@ exp_infl_outl_3 <- integer(0)
 exp_infl_not_outl_3 <- 19
 exp_outl_not_infl_3 <- NULL
 exp_not_outl_not_infl_3 <- c(11,13,16,21,23)
-exp_fail_ID_cdd_3 <- NULL
-exp_deleted_outliers_3 <- integer(0)
-
+exp_fail_ID_text_3 <- ''
+exp_deleted_outliers_text_3 <- ''
+  
 exp_infl_data_5 <- data.frame("ID_cdd"=c(11,16,19,21,23,24,27,31,34,35,38,39,41,42),
                             "delta.ofv"=c(0.54,0.5,6.3,0.4,3.2,3.2,2.1,1.9,1.5,0.01,5.2,0.6,1.4,2.3))
 exp_outl_data_5 <- data.frame("ID_simeval"=c(35,41,24,39,21,27,34,42,11,23,31,19,16,38),
@@ -209,8 +209,8 @@ exp_infl_outl_5 <- integer(0)
 exp_infl_not_outl_5 <- 19
 exp_outl_not_infl_5 <- c(35,41,16,38)
 exp_not_outl_not_infl_5 <- c(11,21,23,24,27,31,34,39,42)
-exp_fail_ID_cdd_5 <- c(13,37)
-exp_deleted_outliers_5 <- integer(0)
+exp_fail_ID_text_5 <-"13, 37"
+exp_deleted_outliers_text_5 <- ''
 
 exp_infl_data_6 <- data.frame("ID_cdd"=c(13,19,21,23,24,27,31,34,35,38,39,42,43,45,48,49,51,52,55,60,61,63),
                               "delta.ofv"=c(0.6,6.3,0.4,3.2,3.2,2.1,1.9,1.5,0.01,5.2,0.6,2.3,4.7,0.21,0.9,3.1,1,6.1,2.4,1.3,0.7,0.8))
@@ -225,8 +225,8 @@ exp_infl_outl_6 <- 52
 exp_infl_not_outl_6 <- 19
 exp_outl_not_infl_6 <- c(35,38)
 exp_not_outl_not_infl_6 <- c(13,21,23,24,27,31,34,39,42,43,45,48,49,51,55,60,61,63)
-exp_fail_ID_cdd_6 <- c(11,16,37,41)
-exp_deleted_outliers_6 <- c(41,16,37)
+exp_fail_ID_text_6 <- "11, 16, 37, 41"
+exp_deleted_outliers_text_6 <- "16, 37, 41"
 
 # Compare expected input data with real input data
 context("CDD/Simeval, function influential_outliers_data")
@@ -240,8 +240,8 @@ test_that("If function influential_outliers_data works as expected",{
   expect_equal(exp_infl_not_outl,infl_not_outl)
   expect_equal(exp_outl_not_infl,outl_not_infl)
   expect_equal(exp_not_outl_not_infl,not_outl_not_infl)
-  expect_equal(exp_fail_ID_cdd,fail_ID_cdd)
-  expect_equal(exp_deleted_outliers,deleted_outliers)
+  expect_equal(exp_fail_ID_text,fail_ID_text)
+  expect_equal(exp_deleted_outliers_text,deleted_outliers_text)
   
   expect_equal(exp_infl_data_1,infl_data_1)
   expect_equal(exp_outl_data_1,outl_data_1)
@@ -252,8 +252,8 @@ test_that("If function influential_outliers_data works as expected",{
   expect_equal(exp_infl_not_outl_1,infl_not_outl_1)
   expect_equal(exp_outl_not_infl_1,outl_not_infl_1)
   expect_equal(exp_not_outl_not_infl_1,not_outl_not_infl_1)
-  expect_equal(exp_fail_ID_cdd_1,fail_ID_cdd_1)
-  expect_equal(exp_deleted_outliers_1,deleted_outliers_1)
+  expect_equal(exp_fail_ID_text_1,fail_ID_text_1)
+  expect_equal(exp_deleted_outliers_text_1,deleted_outliers_text_1)
   
   expect_equal(exp_infl_data_2,infl_data_2)
   expect_equal(exp_outl_data_2,outl_data_2)
@@ -264,8 +264,8 @@ test_that("If function influential_outliers_data works as expected",{
   expect_equal(exp_infl_not_outl_2,infl_not_outl_2)
   expect_equal(exp_outl_not_infl_2,outl_not_infl_2)
   expect_equal(exp_not_outl_not_infl_2,not_outl_not_infl_2)
-  expect_equal(exp_fail_ID_cdd_2,fail_ID_cdd_2)
-  expect_equal(exp_deleted_outliers_2,deleted_outliers_2)
+  expect_equal(exp_fail_ID_text_2,fail_ID_text_2)
+  expect_equal(exp_deleted_outliers_text_2,deleted_outliers_text_2)
   
   expect_equal(exp_infl_data_3,infl_data_3)
   expect_equal(exp_outl_data_3,outl_data_3)
@@ -276,8 +276,8 @@ test_that("If function influential_outliers_data works as expected",{
   expect_equal(exp_infl_not_outl_3,infl_not_outl_3)
   expect_equal(exp_outl_not_infl_3,outl_not_infl_3)
   expect_equal(exp_not_outl_not_infl_3,not_outl_not_infl_3)
-  expect_equal(exp_fail_ID_cdd_3,fail_ID_cdd_3)
-  expect_equal(exp_deleted_outliers_3,deleted_outliers_3)
+  expect_equal(exp_fail_ID_text_3,fail_ID_text_3)
+  expect_equal(exp_deleted_outliers_text_3,deleted_outliers_text_3)
   
   expect_equal(exp_infl_data_5,infl_data_5)
   expect_equal(exp_outl_data_5,outl_data_5)
@@ -288,8 +288,8 @@ test_that("If function influential_outliers_data works as expected",{
   expect_equal(exp_infl_not_outl_5,infl_not_outl_5)
   expect_equal(exp_outl_not_infl_5,outl_not_infl_5)
   expect_equal(exp_not_outl_not_infl_5,not_outl_not_infl_5)
-  expect_equal(exp_fail_ID_cdd_5,fail_ID_cdd_5)
-  expect_equal(exp_deleted_outliers_5,deleted_outliers_5)
+  expect_equal(exp_fail_ID_text_5,fail_ID_text_5)
+  expect_equal(exp_deleted_outliers_text_5,deleted_outliers_text_5)
   
   expect_equal(exp_infl_data_6,infl_data_6)
   expect_equal(exp_outl_data_6,outl_data_6)
@@ -300,6 +300,6 @@ test_that("If function influential_outliers_data works as expected",{
   expect_equal(exp_infl_not_outl_6,infl_not_outl_6)
   expect_equal(exp_outl_not_infl_6,outl_not_infl_6)
   expect_equal(exp_not_outl_not_infl_6,not_outl_not_infl_6)
-  expect_equal(exp_fail_ID_cdd_6,fail_ID_cdd_6)
-  expect_equal(exp_deleted_outliers_6,deleted_outliers_6)
+  expect_equal(exp_fail_ID_text_6,fail_ID_text_6)
+  expect_equal(exp_deleted_outliers_text_6,deleted_outliers_text_6)
 })
