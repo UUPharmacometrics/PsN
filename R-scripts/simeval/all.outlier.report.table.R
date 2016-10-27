@@ -74,7 +74,7 @@ all.outlier.report.table <- function(all.iofv.file,n.subjects,samples,
       }
     }
     all_outlier_table <- as.data.frame(all_outlier_table)
-    colnames(all_outlier_table) <- c("ID","OFV outliers","EBE NPDE outliers","IWRES outliers","CWRES outliers")
+    colnames(all_outlier_table) <- c("ID","OFV outliers (SD)","EBE NPDE outliers","IWRES outliers","CWRES outliers")
   } else {
     all_outlier_table <- data.frame(C = c("No outliers detected"))
     names(all_outlier_table) <- NULL
