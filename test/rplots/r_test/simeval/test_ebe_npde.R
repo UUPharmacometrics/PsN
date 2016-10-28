@@ -1,4 +1,6 @@
 library(testthat)
+suppressMessages(library(PerformanceAnalytics))
+suppressMessages(require("PEIP"))
 
 tool = 'simeval'
 
@@ -499,19 +501,90 @@ test_that("If function outlier.table.ebe.npde works as expected",{
   expect_equal(exp_b_fortable1,b_fortable1)
 })
 
-
 # #...................................  (9) Test ebe.npde.outliers  .........................................
-# ebe.npde_outliers <- ebe.npde.outliers(ebe.npde.file=ebe.npde.file,iiv.eta.names,outlying_criteria=1,model.filename)
-# ebe.npde_outliers_a <- ebe.npde.outliers(ebe.npde.file=ebe.npde.file,iiv.eta.names,outlying_criteria=-2,model.filename)
-# # Create expected data
-# exp_ebe.npde_outliers <- data.frame(c(56),c(0.30186))
-# colnames(exp_ebe.npde_outliers) <- c("ID","outlying criteria")
-# exp_ebe.npde_outliers_a <- data.frame(C = c("No outliers detected"))
-# colnames(exp_ebe.npde_outliers_a) <- NULL
-# 
-# # Compare expected data with real data
-# context("Simeval, ebe npde, function ebe.npde.outliers")
-# test_that("If function ebe.npde.outliers works as expected",{
-#   expect_equal(exp_ebe.npde_outliers,ebe.npde_outliers)
-#   expect_equal(exp_ebe.npde_outliers_a,ebe.npde_outliers_a)
-# })
+list_out_1 <- ebe.npde.outliers(ebe.npde.file=ebe.npde.file,iiv.eta.names,outlying_criteria=1,model.filename)
+list_out_2 <- ebe.npde.outliers(ebe.npde.file=ebe.npde.file,iiv.eta.names,outlying_criteria=-2,model.filename)
+list_out_3 <- ebe.npde.outliers(ebe.npde.file=ebe.npde.file_2,iiv.eta.names=iiv.eta.names_a,outlying_criteria=1,model.filename)
+list_out_4 <- ebe.npde.outliers(ebe.npde.file=ebe.npde.file_3,iiv.eta.names=iiv.eta.names_3,outlying_criteria=2.6,model.filename)
+list_out_5 <- ebe.npde.outliers(ebe.npde.file=ebe.npde.file_4,iiv.eta.names=iiv.eta.names_4,outlying_criteria=1.1,model.filename)
+list_out_6 <- ebe.npde.outliers(ebe.npde.file=ebe.npde.file_4,iiv.eta.names=iiv.eta.names_4,outlying_criteria=1.4,model.filename)
+
+#unlist
+ebe.npde_outliers_1 <- list_out_1$ebe.npde_outliers
+case_message_1 <- list_out_1$case_message
+deleted_ID_1 <- list_out_1$deleted_ID
+
+ebe.npde_outliers_2 <- list_out_2$ebe.npde_outliers
+case_message_2 <- list_out_2$case_message
+deleted_ID_2 <- list_out_2$deleted_ID
+
+ebe.npde_outliers_3 <- list_out_3$ebe.npde_outliers
+case_message_3 <- list_out_3$case_message
+deleted_ID_3 <- list_out_3$deleted_ID
+
+ebe.npde_outliers_4 <- list_out_4$ebe.npde_outliers
+case_message_4 <- list_out_4$case_message
+deleted_ID_4 <- list_out_4$deleted_ID
+
+ebe.npde_outliers_5 <- list_out_5$ebe.npde_outliers
+case_message_5 <- list_out_5$case_message
+deleted_ID_5 <- list_out_5$deleted_ID
+
+ebe.npde_outliers_6 <- list_out_6$ebe.npde_outliers
+case_message_6 <- list_out_6$case_message
+deleted_ID_6 <- list_out_6$deleted_ID
+
+# Create expected data
+exp_ebe.npde_outliers_1 <- data.frame(c(56),c(0.30186))
+colnames(exp_ebe.npde_outliers_1) <- c("ID","outlying criteria")
+exp_case_message_1 <- ''
+exp_deleted_ID_1 <- NULL
+
+exp_ebe.npde_outliers_2 <- data.frame(C = c("No outliers detected"))
+colnames(exp_ebe.npde_outliers_2) <- NULL
+exp_case_message_2 <- ''
+exp_deleted_ID_2 <- NULL
+
+exp_ebe.npde_outliers_3 <- data.frame(C=c(11),C= as.factor(c("NA")),C=as.factor(c(0.548)))
+colnames(exp_ebe.npde_outliers_3) <- c("ID","EBE NPDE outliers (1)","EBE NPDE outliers (2)")
+exp_case_message_3 <- c("Individual based analysis","ETA based analysis")
+exp_deleted_ID_3 <- c(6,9,10,11,13)
+
+exp_ebe.npde_outliers_4 <- data.frame(C=c(1,4,5,7,11),C= as.factor(c(2.58,2.127,2.055,2.315,"NA")),C=as.factor(c("","","","",1.698)))
+colnames(exp_ebe.npde_outliers_4) <- c("ID","EBE NPDE outliers (1)","EBE NPDE outliers (2)")
+exp_case_message_4 <- c("Individual based analysis","ETA based analysis")
+exp_deleted_ID_4 <- c(6,9,10,11,13)
+
+exp_ebe.npde_outliers_5 <- data.frame(C = c("No outliers detected"))
+colnames(exp_ebe.npde_outliers_5) <- NULL
+exp_case_message_5 <- c("Individual based analysis")
+exp_deleted_ID_5 <- c(6,9,10,11,13)
+
+exp_ebe.npde_outliers_6 <- data.frame(C=c(1,4,5,7),C= as.factor(c(1.097,0.928,0.888,1.3)))
+colnames(exp_ebe.npde_outliers_6) <- c("ID","EBE NPDE outliers (1)")
+exp_case_message_6 <- c("Individual based analysis")
+exp_deleted_ID_6 <- c(6,9,10,11,13)
+
+# Compare expected data with real data
+context("Simeval, ebe npde, function ebe.npde.outliers")
+test_that("If function ebe.npde.outliers works as expected",{
+  expect_equal(exp_ebe.npde_outliers_1,ebe.npde_outliers_1)
+  expect_equal(exp_case_message_1,case_message_1)
+  expect_equal(exp_deleted_ID_1,deleted_ID_1)
+  expect_equal(exp_ebe.npde_outliers_2,ebe.npde_outliers_2)
+  expect_equal(exp_case_message_2,case_message_2)
+  expect_equal(exp_deleted_ID_2,deleted_ID_2)
+  expect_equal(exp_ebe.npde_outliers_3,ebe.npde_outliers_3)
+  expect_equal(exp_case_message_3,case_message_3)
+  expect_equal(exp_deleted_ID_3,deleted_ID_3)
+  expect_equal(exp_ebe.npde_outliers_4,ebe.npde_outliers_4)
+  expect_equal(exp_case_message_4,case_message_4)
+  expect_equal(exp_deleted_ID_4,deleted_ID_4)
+  expect_equal(exp_ebe.npde_outliers_5,ebe.npde_outliers_5)
+  expect_equal(exp_case_message_5,case_message_5)
+  expect_equal(exp_deleted_ID_5,deleted_ID_5)
+  expect_equal(exp_ebe.npde_outliers_6,ebe.npde_outliers_6)
+  expect_equal(exp_case_message_6,case_message_6)
+  expect_equal(exp_deleted_ID_6,deleted_ID_6)
+})
+
