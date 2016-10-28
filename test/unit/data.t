@@ -47,13 +47,6 @@ is_deeply($dotdata->factors(column=> 3, unique_in_individual => 0),{ 0 =>[0,1,2,
 is_deeply($dotdata->factors(column=> 3, return_occurences => 1, unique_in_individual =>0), 
 		  {0 =>  10,1=>10,2=> 10, 3=>10}, 'factors e');
 
-#		 column => { isa => 'Int', optional => 1 }, #number not index
-#		 column_head => { isa => 'Str', optional => 1 },
-#		 unique_in_individual => { isa => 'Bool', default => 1, optional => 1 },
-#		 verbose => { isa => 'Bool', default => 0, optional => 1 },
-#		 ignore_missing => { isa => 'Bool', default => 0, optional => 1 },
-#		 return_occurences => { isa => 'Bool', default => 0, optional => 1 }
-
 is_deeply($dotdata->factors(column=> 2),{ 0 =>[0,1,2,3,4,5,6,7,8,9],'.' =>[0,1,2], 
 										  30 =>[3],40 =>[4],50 =>[5],60 =>[6],70 =>[7],80 =>[8],90 =>[9],
 										  'Non-unique values found' => 1},'factors f');
@@ -434,6 +427,12 @@ $data = data->new(filename => $filename,
 is_deeply($data->header,['ID','F','G','H','G_9','G_3','G_2','H_7','H_51'],'new header after append 2');
 is_deeply($new_categorical,['F','G_9','G_3','G_2','H_7','H_51'],'new categorical');
 is_deeply($warn,[],'regular warn multiple 2');
+
+#have_unique_ids
+$data = data->new(filename => '4_header_ID.csv', directory => $includes::testfiledir . '/data', ignoresign => '@', parse_header => 1);
+ok ($data->have_unique_ids(), "4_header_ID.csv has unique IDs");
+$data = data->new(filename => 'non_unique_ids.csv', directory => $includes::testfiledir . '/data', ignoresign => '@', parse_header => 1);
+ok (!$data->have_unique_ids(), "non_unique_ids.csv does not have unique IDs");
 
 remove_test_dir($tempdir);
 

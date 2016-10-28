@@ -393,7 +393,6 @@ sub append_binary_columns
 	return (\@mapping,\@new_indices,\@new_categorical,\@baseline_and_multiple);
 }
 
-
 sub frem_compute_covariate_properties
 {
 	#static method, no self
@@ -447,7 +446,6 @@ sub frem_compute_covariate_properties
 	for (my $i=0; $i<scalar(@{$invariant_covariates}); $i++){
 		my $covariate = $invariant_covariates->[$i]; #cov name
 		my $column = ($cov_indices->[$i])+1;
-#		print "covariate $covariate col $column\n";
 		my %strata = %{$filtered_data->factors(column => $column, #column number in data set
 											   return_occurences => 1,
 											   verbose => 0,
@@ -1099,6 +1097,7 @@ sub factors
 
 	return \%factors;
 }
+
 sub baseline_factors
 {
 	my $self = shift;
@@ -1190,7 +1189,6 @@ sub fractions
 
 	return \%fractions;
 }
-
 
 sub max
 {
@@ -3198,6 +3196,25 @@ sub scm_calculate_continuous_statistics
 	$mean = sprintf("%.2f", $mean );
 
 	return $median ,$min ,$max ,$mean;
+}
+
+sub have_unique_ids
+{
+    # Check if the dataset has unique IDs
+    my $self = shift;
+
+    my %ids;
+
+    if (defined $self->individuals) {
+        for my $individual (@{$self->individuals}) {
+            if ($ids{$individual->idnumber}) {
+                return 0;
+            }
+            $ids{$individual->idnumber} = 1;
+        }
+    }
+
+    return 1;
 }
 
 no Moose;
