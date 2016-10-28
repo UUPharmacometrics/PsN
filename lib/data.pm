@@ -671,6 +671,9 @@ sub cdd_create_datasets{
 						 missing_data_token => $missing_data_token,
 						 idcolumn => $idcolumn);
 
+    if (!$data->have_unique_ids()) {
+        print("Warning: The dataset does not have unique IDs. There is a risk that individuals will be merged together.\n");
+    }
 	
 	my ($new_datas, $skip_ids, $skip_keys, $skip_values, $remainders, $pr_bins ) =
 		$data -> _case_deletion( case_column => $case_column,
