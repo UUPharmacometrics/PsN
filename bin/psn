@@ -122,7 +122,7 @@ EOF
 
 $help_text{-crossval} = <<'EOF';
     crossval - Cross-validation
-	Run 'crossval -help' for details.
+	See crossval_userguide.pdf for details.
 EOF
 
 $help_text{-data_stats} = <<'EOF';

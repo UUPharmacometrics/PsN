@@ -82,7 +82,6 @@ sub llp_setup
 	my @subm_threads;
 	if (ref($self->threads) eq 'ARRAY') {
 		@subm_threads = @{$self->threads};
-#		unshift(@subm_threads); #useless
 	} else {
 		@subm_threads = ($self->threads);
 	}
@@ -337,7 +336,6 @@ sub get_ofv_estimates_se
 	return (\@ofv,\@estimates,\@se,\@root_cov_det,$successful_estimates);
 }
 
-
 sub get_delta_ofv
 {
 	my %parm = validated_hash(\@_,
@@ -556,7 +554,6 @@ sub cook_scores_and_cov_ratios
 	return (\@original_cook,\@original_cov_ratios,\@original_parameter_cook,\@all_relative_changes,\@all_bias,
 			\@rel_bias,\@jackknife_cook,\@jackknife_parameter_cook,$jackknife_full_cov,$sample_ofvs);
 }
-
 
 sub relative_estimates
 {
@@ -824,7 +821,7 @@ sub general_setup
 	$self -> threads -> [0]:$self -> threads;
 	# case_column names are matched in the model, not the data!
 
-	my $model = $self   -> models -> [$model_number-1];
+	my $model = $self->models->[$model_number-1];
 
 	# Check which models that hasn't been run and run them
 	# This will be performed each step but will only result in running
@@ -1001,10 +998,6 @@ sub general_setup
 									  idcolumn => $idcol->[0][0],  #number not index
 									  missing_data_token => $self->missing_data_token);
 
-		
-
-
-
 		my $ndatas = scalar @{$new_datas};
 		$self->actual_bins($ndatas);
 
@@ -1137,7 +1130,6 @@ sub general_setup
 		shift( @seed ); # get rid of 'seed'-word
 		random_set_seed( @seed );
 
-#		print "stored bins is $stored_bins\n";
 		$self->actual_bins($stored_bins);
 		for ( my $j = 1; $j <= $stored_bins; $j++ ) {
 			my @names = ( 'cdd_'.$j, 'rem_'.$j );
@@ -1206,7 +1198,6 @@ sub general_setup
 			_raw_results_callback => $self ->
 			_modelfit_raw_results_callback( model_number => $model_number ),
 			subtools              => \@subtools,
-#			parent_threads        => $own_threads,
 			parent_tool_id        => $self -> tool_id,
 			logfile	         => undef,
 			raw_results           => undef,
@@ -1218,7 +1209,6 @@ sub general_setup
 	$self->tools->[-1]->add_to_nmoutput(extensions => ['ext','cov','coi']);		
 
 }
-
 
 sub llp_pre_fork_setup
 {
@@ -1499,7 +1489,8 @@ sub prepare_results
 	}
 }
 
-sub create_R_plots_code{
+sub create_R_plots_code
+{
 	my $self = shift;
 	my %parm = validated_hash(\@_,
 							  rplot => { isa => 'rplots', optional => 0 }
