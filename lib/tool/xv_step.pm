@@ -705,7 +705,11 @@ sub create_data_sets
 							 idcolumn => $idcol->[0][0],
 							 ignoresign => $ignoresign,
 							 missing_data_token => $self->missing_data_token);
-	
+
+    if (!$data_obj->have_unique_ids()) {
+        print("Warning: The dataset does not have unique IDs. There is a risk that individuals will be merged together.\n");
+    }
+
 	my $subsets;
 	my $array;
 
