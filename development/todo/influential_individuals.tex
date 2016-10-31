@@ -1,7 +1,7 @@
 \documentclass{article}
 
-\title{Workflow Perl subroutines}
-\date{2016-08-02}
+\title{Influential individuals without full CDD}
+\date{2016-10-31}
 
 \usepackage{hyperref}
 
@@ -9,7 +9,47 @@
 
 \maketitle
 
-\section*{Auto-generate model for uncertainty in ETAs}
+\section*{Monte-Carlo R procedure for uncertainty in ETAs}
+\subsection*{Input} phi-file from estimation of original model on full data.
+\subsection*{Procedure}
+\begin{enumerate}
+\item Read phi-file: For each ID (row) $i$
+\begin{enumerate}
+\item Store ETA(1), ETA(2),... as a vector $\mu_{i}$ of length $N_{eta}$.
+\item Reformat ETC column values to a symmetric covariance matrix $Cov_i$. 
+\end{enumerate}
+\item For $j=1\ldots M$ (suitable value of $M$ needs to be investigated), generate vector $EBE_{mean,j}$
+  and matrix $EBE_{cov,j}$ using the following steps
+\begin{enumerate}
+\item For each individual $i$, draw a single random sample, a vector $EBE_{i,j}$ of length $N_{eta}$,
+  from a multivariate normal distribution with mean $\mu_{i}$
+  and covariance matrix $Cov_i$.
+\item Store the vectors $EBE_{i,j}$ in a matrix $A_j$, with $N_{eta}$ columns and number of
+  rows equal to number of individuals, where row $i$ of $A_j$ is vector $EBE_{i,j}$. 
+\item Compute $EBE_{mean,j}$ as the mean of all vectors $EBE_{i,j}$, i.e. the mean of each column in $A_{j}$
+\item Compute matrix $EBE_{cov,j}$, i.e. the covariance between columns of $A_{j}$. An efficient
+  algorithm for this is to subtract $EBE_{mean,j}$ from each row of $A_{j}$ and then perform a QR
+  factorization of the new matrix. The triangular matrix $R_j$, dimension $N_{eta}$, is the Cholesky factor
+  of $EBE_{cov,j}$, i.e. $R_j^TR_j=EBE_{cov,j}$
+\end{enumerate}
+\item Compute $EBE_{mean,observed}$ and $EBE_{cov,observed}$ based on the original model phi-file
+  ($\mu_{i}$ is row $i$ of $A_{observed}$). 
+\item Compute the uncertainty around $EBE_{mean,observed}$ and $EBE_{cov,observed}$ using the $M$ realizations
+  of $EBE_{mean,j}$ and $EBE_{cov,j}$: Reformat $EBE_{mean,j}$ and the lower triangle $EBE_{cov,j}$ to a vector,
+  create a matrix $B_{original}$ where row $j$ is the vectorized $EBE_{mean,j}$ plus $EBE_{cov,j}$,
+  and compute the covariance matrix of $B_{original}$.
+  The covariance matrix of $B_{original}$ would be the ``observed''
+  data covariance matrix used in Cook score and covariance ratio computations for this simplified
+  ``cdd'' procedure. The original data ``parameter vector'' needed for Cook scores would be (????)
+  the vectorized $EBE_{mean,observed}$ plus lower triangle $EBE_{cov,observed}$
+\item Repeat complete above procedure $N_{individuals}$ times, each time with ID
+  $k$, $k=1,\ldots,N_{individuals}$, excluded (like in a CDD).
+  The covariance matrix of the case-deleted $B_k$ matrices are used in Cook score and covariance
+  ratio computations. The ``parameter vector'' for each case-deleted data set would be (????)
+  the vectorized $EBE_{mean,observed,ID\neq k}$ plus lower triangle $EBE_{cov,observed,ID\neq k}$
+\end{enumerate}
+
+\section*{Auto-generate NONMEM model for uncertainty in ETAs}
 \subsection*{Input} Name of phi-file
 \subsection*{Procedure}
 \begin{enumerate}
