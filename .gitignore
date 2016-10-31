@@ -21,6 +21,7 @@ development/todo/*.log
 development/todo/*.pdf
 development/todo/*.bbl
 development/todo/*.blg
+development/todo/*.out
 development/todo/*.bcf
 development/todo/*-blx.bib
 development/todo/*.xml

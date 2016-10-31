@@ -1,0 +1,88 @@
+#!/usr/bin/perl
+use Net::SFTP::Foreign;
+use File::Glob;
+use strict;
+use FindBin qw($Bin);
+use lib "$Bin/../../lib";
+use PsN;
+
+my $user = 	`whoami`;
+chomp($user);
+
+if ($user eq 'rikard'){
+	$user = 'rikardno,psn';
+}else{
+	$user = 'k_harling,psn';
+}
+
+my $password = `zenity --password`;
+unless (length($password) > 1){
+	die "That is clearly not the right password";
+}
+
+#assume this is run from development/webpage
+chdir('../../doc');
+print "Trying sftp for user $user\n";
+
+my $host='web.sourceforge.net';
+my $path='htdocs/pdfdocs';
+
+my $sftp = Net::SFTP::Foreign->new($host,
+								   user => $user,
+								   password => $password
+	);
+$sftp->die_on_error("Unable to establish SFTP connection");
+
+
+$sftp->setcwd($path) or die "unable to change cwd: " . $sftp->error;
+
+my @pdfs = <*.pdf>;
+#my @pdfs = ();
+my $vstring = $PsN::version;
+$vstring =~ s/\./_/g;
+
+
+foreach my $file (@pdfs){
+	print "Try put $file\n";
+	$sftp->put($file,$file) or 	die "put failed: " . $sftp->error;
+}
+
+my $filepath = '../development/release_notes/';
+my $file = 'release_notes_PsN_'.$vstring.'.txt';
+if (-e $filepath.$file){
+	print "Try put $file\n";
+	$sftp->put($filepath.$file,$file) or 	print "put failed: " . $sftp->error."\n";
+}else{
+	print "release notes $filepath.$file does not exist\n";
+}
+
+#$file = 'bug_list_PsN_'.$vstring.'_at_next_release.txt';
+#if (-e $filepath.$file){
+#	print "Try put $file\n";
+#	$sftp->put($filepath.$file,$file) or 	die "put failed: " . $sftp->error;
+#}
+
+
+$filepath = '../PsN-Source/doc/';
+foreach my $file ('PsN_pdf_documentation.zip','PsN_pdf_documentation.tar.gz'){
+	if (-e $filepath.$file){
+		print "Try put $file\n";
+		$sftp->put($filepath.$file,$file) or 	print "put failed: " . $sftp->error."\n";
+	}
+}
+
+$path = '..';
+$sftp->setcwd($path) or die "unable to change cwd: " . $sftp->error;
+
+
+foreach my $file ('home.php','docs.php','download.php','install.php','list.php','buglist.php'){
+	my $localfile = '../development/webpage/htdocs/'.$file;
+	if (-e $localfile){
+		print "Try put $localfile\n";
+		$sftp->put($localfile,$file) or 	die "put failed: " . $sftp->error;
+	}else{
+		print "$localfile does not exist, skipping\n";
+	}
+}
+
+

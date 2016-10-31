@@ -1,5 +1,5 @@
 \input{inputs/format_header.tex}
-\guidetitle{SIMEVAL user guide}{2016-10-24}
+\guidetitle{SIMEVAL user guide}{2016-10-31}
 
 \begin{document}
 
@@ -153,7 +153,8 @@ be normally distributed with mean 0 and variance 1.
 normal distribution. If there is no model misspecification, the npde should
 be normally distributed with mean 0 and variance 1.
 \item A table with mean and variance of IWRES npde and CWRES npde.
-\item A table with ID, TIME, DV and PRED for data records where IWRES or CWRES calculated on the observed data lies outside the simulated distribution.
+\item A table with ID, TIME, DV and PRED for data records where observed IWRES or CWRES (not npde)
+lies completely above or below the simulated IWRES/CWRES distribution.
 \end{enumerate}
 
 
@@ -184,8 +185,8 @@ standard deviation of iOFV for evaluation of simulated data,
 standardized observed iOFV where
 $iOFV_{standardized}=\frac{(iOFV_{observed} - mean (iOFV_{simulated}))^2}{variance(iOFV_{simulated})}$, NPDE of iOFV
 \item[raw\_results\_<model>.csv] e.g. raw\_results\_run1.csv with ofv for evaluation of simulated data
-\item[residual\_outliers.csv] A table with ID, TIME, DV, PRED, IWRES and CWRES for records
-where observed IWRES or CWRES is outside the simulated distribution.
+\item[residual\_outliers.csv] A table with ID, TIME, DV, PRED, observed IWRES and observed CWRES for records
+where observed IWRES or CWRES (not npde) is outside the simulated distribution.
 \end{description}
 
 \subsubsection*{Additional output}

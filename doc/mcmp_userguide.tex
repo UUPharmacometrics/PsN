@@ -1,5 +1,5 @@
 \input{inputs/format_header.tex}
-\guidetitle{MCMP user guide}{2016-08-03}
+\guidetitle{MCMP user guide}{2016-10-31}
 
 
 \begin{document}
@@ -15,7 +15,10 @@ and aims to provide a fast and accurate prediction of the power and sample size
 relationship without any need for adjustment of the significance criterion.
 The principle of the method is as follows:
 \begin{enumerate}
-\item a large dataset (e.g. 1000 individuals) is simulated with a full model, or a separate simulation model if model misspecification will be taken into account. Note: PsN will run the simulation, and attempt to automatically convert the full model to a simulation model if
+\item a large dataset (e.g. 1000 individuals) is simulated with a full model, or a separate simulation model if model misspecification will be taken into account. Note: The user must create the large NONMEM template dataset with the desired covariates and design, and set it in \$DATA of the simulation model
+(or \$DATA of the full model if the simulation model and the full model are
+the same).
+PsN will run the simulation, and attempt to automatically convert the full model to a simulation model if
 the full model is to be used for simulation, but the simulated data set will have the same size as the data set given in
 \$DATA of the simulation/full model. No individuals will be added by PsN. 
 \item the full and reduced models are re-estimated with the simulated data set
