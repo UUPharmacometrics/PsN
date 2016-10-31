@@ -71,8 +71,6 @@ A new recommended but not required Perl library for runrecord: YAML::Tiny
 - The handling of $MSFI and MSFO=file has been redesigned, also for crash restarts. MSF-files
   never have to be listed with -extra_files or -extra_output.
 - Bug fix: PsN can now handle $MSFI including/path/to/file.msf
-- Bug fix: PsN can now handle $MSFI in combination with NONMEM's sparse matrix format in lst-files,
-  which is used for very large covariance matrices.
 - Bug fix: PsN will notify the user if the equal sign in IGNORE=character is skipped,
   which is not supported by PsN and hence not correctly handled when reading datasets for e.g.
   bootstrap.
@@ -97,6 +95,10 @@ ___common_options___
   an estimation and the second a simulation, and the estimation completes but the simulation
   is not initiated due to e.g. poor estimation results, then PsN will no longer treat the run
   as crashed.
+- Bug fix: PsN can now parse NONMEM output from runs with only nonparametric, no parametric,
+  estimation/evaluation.
+- Bug fix: PsN can now handle $MSFI in combination with NONMEM's sparse matrix format in lst-files,
+  which is used for very large covariance matrices.
   
    ___Cluster/Grid___
 
@@ -109,7 +111,8 @@ ___common_options___
 - The temp directory for the unit and system tests is configurable in psn.conf. See
   Testing chapter in developers_guide.pdf.
 - runsystem will redirect PsN log messages to a file in the user's home directory,
-  or a directory set in psn.conf. See Testing chapter in developers_guide.pdf.
+  or a directory set in psn.conf. The set of 'all' nm_versions in 'runsystem all'
+  command is configurable in psn.conf. See Testing chapter in developers_guide.pdf.
 
    ___runrecord___
 
@@ -143,8 +146,8 @@ New features implemented by William S. Denney of Human Predictions:
 
 ___bootstrap___
 
-- Warn if the number of individuals in the data set is different from the number if individuals
-  NONMEM printed in the original run lst-file.
+- Print a warning message if the number of individuals in the data set is different from the number
+  of individuals NONMEM printed in the original run lst-file.
 
    ___vpc/npc___
 
@@ -154,15 +157,27 @@ ___bootstrap___
 
    ___frem___
 
--  will, if a covariate-covariate correlation is exactly 0, set intial omega estimate corresponding to 1% correlation in Model 2. Similarly in Model3, if correlation from phi-file exactly 0, or parameter-parameter covariance has to be added to create full block, then set initial estimate as 1% correlation
+-  will, if a covariate-covariate correlation is exactly 0, set intial omega estimate corresponding to
+   1% correlation in Model 2. Similarly in Model3, if correlation from phi-file exactly 0, or
+   parameter-parameter covariance has to be added to create full block, then set initial estimate as 1% correlation
 -  handle PRED-models without EVID/MDV column, i.e. all data records are observations.
 -  handle model 2 phi file ETA all 0
 -  new option -mu, i.e. use mu-modelling for added covariates. Not set by default.
--  new option -estimate_means to true. When option -estimate_means is set, only covariates which have missing observations in the frem dataset will have the mean estimated. If -no-estimate_means is set, no means will be estimated regardless of missing observations.
--  rearranged control stream changes. Now all frem code is put last in $PRED/$ERROR and no new variables are defined (this is needed for very large numbers of covariates). New option -estimate_means, default not set. If set then estimate covariate means instead of setting FIX to mean from observed data, new option -mceta, default not set. Set MCETA=N in last $ESTIMATION. New option -deriv2_nocommon_maxeta. Default 60. Set $ABBREVIATED DERIV2=NOCOMMON if number of ETAs is larger than this number.
--  put intermediate models in subdir intermediate_models instead of in m1. Handle PHI in addition to ETA in phi-file (non-classical methods), and multiple $EST (only results from last est are used).
+-  new option -estimate_means to true. When option -estimate_means is set, only covariates which have
+   missing observations in the frem dataset will have the mean estimated. If -no-estimate_means is set,
+   no means will be estimated regardless of missing observations.
+-  rearranged control stream changes. Now all frem code is put last in $PRED/$ERROR and no new variables
+   are defined (this is needed for very large numbers of covariates).
+-  New option -estimate_means, default not set. If set then estimate covariate means instead of setting
+   FIX to mean from observed data,
+-  New option -mceta, default not set. Set MCETA=N in last $ESTIMATION.
+-  New option -deriv2_nocommon_maxeta. Default 60. Set $ABBREVIATED DERIV2=NOCOMMON if number of ETAs
+   is larger than this number.
+-  Put intermediate models in subdir intermediate_models instead of in m1.
+-  Handle PHI in addition to ETA in phi-file (non-classical methods), and multiple $EST (only
+   results from last est are used).
 -  set NONINFETA=1 in last estimation if it is a classical method and NM-version > 7.2.
--  new postprocessing script postfrem 
+-  New postprocessing script postfrem 
 -  Rescale option is now default on.
 -  Create approximate proposal density for sir even if covariance step of Model 4 is successful.
 -  If the covariate covariance matrix is non-positive definite after rounding
@@ -179,7 +194,6 @@ ___bootstrap___
 - Disallow restarts in existing directory as this operation did not work
 - scm will treat . (dot) in covariate column of data set as missing value 
 - bug fix option time-varying: handle PRED models without MDV in $INPUT
-
 - Change the default lower bounds for the THETA in power and exponential
   parameterizations from -100000 to -100.
 - Removed special use of common option -abort_on_fail.
@@ -201,7 +215,8 @@ ___boot_scm___
 
    ___sse___ 
 
-- New option -update_fix
+- New option -update_fix, to be used in combination with -rawres_input. Default false.
+  Update initial estimates for parameters that are FIX.
 
    ___simeval___
 
@@ -215,9 +230,10 @@ ___boot_scm___
 
    ___parallel_retries___
 
--  New option -update_fix, default not set.
+-  New option -update_fix, default false. Only for use in combination with -rawres_input.
+   Update parameters that are FIXED.
 
-___sir___
+   ___sir___
 	
 - new option -cap_correlation, default 0.8. If set to a number between 0 and 1, at every iteration ensure
   that no absolute value of a correlation in the proposal exceeds this number.
@@ -238,17 +254,20 @@ ___sir___
   the initial estimates of the base model.
 - changed directory name prefix for cross-validation sub-directory (if
   option -xv is set) from modelfit to crossval.
-   ___rplots___
+
+ ___rplots___
 
 - Major redesign
 
    ___npfit___
 
-- New tool npfit for nonparametric estimation, see npft_userguide.pdf
+- New tool npfit for nonparametric estimation, see npfit_userguide.pdf
 
    ___crossval___ 
 
 - New option -msf, to use MSFO-MSFI instead of updating initial estimates in
-  prediction models. New format of output file xv_results.txt.
-  Refactoring of cross-validation code.
+  prediction models. New format of output file xv_results.csv, renamed from xv_results.txt.
+- Automatic nonparametric cross-validation if input model has $NONPARAMETRIC.  
+- Refactoring of cross-validation code.
+- A new userguide crossval\_userguide.pdf
 
