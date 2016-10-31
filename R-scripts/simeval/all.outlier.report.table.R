@@ -1,16 +1,14 @@
-all.outlier.report.table <- function(all.iofv.file,n.subjects,samples,
-                               ebe.npde.file,iiv.eta.names,outlying_criteria,
-                               residual.outliers.file) {
-
-  # Use functions
-  ofv_out <- i_ofv_res(all.iofv.file,n.subjects,samples)
-  ofv_outliers <- ofv_out$ofv_outliertable
+all.outlier.report.table <- function(ofv_outliers,cwres.iwres_outliers,list_ebe_outlier_table,cases,deleted_ID) {
+  # ebe outliers
+  list_out <- ebe.npde.all.outliers(list_ebe_outlier_table,cases,deleted_ID)
+  ebe.npde_outliers <- list_out$ebe.npde_outliers
+  case_message <- list_out$case_message
   
-  model.filename <- " " # because we are not going to see the model name
-  ebe.npde_outliers <- ebe.npde.outliers(ebe.npde.file,iiv.eta.names,outlying_criteria,model.filename)
-  
-  cwres.iwres_out <- outlier.table(residual.outliers.file)
-  cwres.iwres_outliers <- cwres.iwres_out$outliers_count
+  if((case_message != '') && (length(case_message) == 2)) {
+    col_amount <- 6
+  } else {
+    col_amount <- 5
+  }
   
   # ID numbers of all ourliers if they exist
   id <- c()
@@ -34,47 +32,69 @@ all.outlier.report.table <- function(all.iofv.file,n.subjects,samples,
     id_unique <- sort(id_unique)
     
     # create all outlier table
-    all_outlier_table <- array(" ", c(length(id_unique),5))
+    all_outlier_table <- array("", c(length(id_unique),col_amount))
     for (n in 1:length(id_unique)) {
+      col_nr <- 1
       id_nr <- id_unique[n]
-      all_outlier_table[n,1] <- id_nr
+      all_outlier_table[n,col_nr] <- id_nr
       
+      col_nr <- col_nr + 1
       # Add OFV values
       if (exists("ofv_ID")) {
         if (any(ofv_ID %in% id_nr)) {
           ofv_value_row <- which(ofv_ID == id_nr)
-          all_outlier_table[n,2] <- round(ofv_outliers$MEDIAN[ofv_value_row],3)
-        } else {
-          all_outlier_table[n,2] <- " "
+          all_outlier_table[n,col_nr] <- round(ofv_outliers$MEDIAN[ofv_value_row],3)
         }
       }
       
+      col_nr <- col_nr + 1
       # Add EBE NPDE values
+      if (any(deleted_ID %in% id_nr)) {
+        all_outlier_table[n,col_nr] <- "NA"
+      }
       if (exists("ebe.npde_ID")) {
         if (any(ebe.npde_ID %in% id_nr)) {
           ebe_value_row <- which(ebe.npde_ID == id_nr)
-          all_outlier_table[n,3] <- round(ebe.npde_outliers[ebe_value_row,2],3)
-        } else {
-          all_outlier_table[n,3] <- " "
+          if(ebe.npde_outliers[ebe_value_row,2] == "NA") {
+            all_outlier_table[n,col_nr] <- "NA"
+          } else {
+            all_outlier_table[n,col_nr] <- round(as.numeric(as.character(ebe.npde_outliers[ebe_value_row,2])),3)
+          }
+          if(ncol(ebe.npde_outliers) > 2) {
+            all_outlier_table[n,col_nr+1] <- round(as.numeric(as.character(ebe.npde_outliers[ebe_value_row,3])),3)
+          }
+        }
+        if(ncol(ebe.npde_outliers) > 2) {
+          col_nr <- col_nr + 1
+        }
+      } else {
+        if(col_amount == 6) {
+          col_nr <- col_nr + 1
         }
       }
       
+      col_nr <- col_nr + 1
       # Add CWRES and IWRES values
       if (exists("cwres.iwres_ID")) {
         if (any(cwres.iwres_ID %in% id_nr)) {
           residual_value_row <- which(cwres.iwres_ID == id_nr)
           cwres.iwres_outliers$OUTLIERS.IWRES <- as.vector(cwres.iwres_outliers$OUTLIERS.IWRES)
           cwres.iwres_outliers$OUTLIERS.CWRES <- as.vector(cwres.iwres_outliers$OUTLIERS.CWRES)
-          all_outlier_table[n,4] <- cwres.iwres_outliers$OUTLIERS.IWRES[residual_value_row]
-          all_outlier_table[n,5] <- cwres.iwres_outliers$OUTLIERS.CWRES[residual_value_row]
-        } else {
-          all_outlier_table[n,4] <- " "
-          all_outlier_table[n,5] <- " "
+          all_outlier_table[n,col_nr] <- cwres.iwres_outliers$OUTLIERS.IWRES[residual_value_row]
+          all_outlier_table[n,col_nr+1] <- cwres.iwres_outliers$OUTLIERS.CWRES[residual_value_row]
         }
       }
     }
     all_outlier_table <- as.data.frame(all_outlier_table)
-    colnames(all_outlier_table) <- c("ID","OFV outliers (SD)","EBE NPDE outliers","IWRES outliers","CWRES outliers")
+    if(length(case_message) == 1 && (case_message == '')) {
+      colnames(all_outlier_table) <- c("ID","OFV outliers (SD)","EBE NPDE outliers","IWRES outliers","CWRES outliers")
+    } else if (col_amount == 6) {
+      colnames(all_outlier_table) <- c("ID","OFV outliers (SD)","EBE NPDE outliers (1)","EBE NPDE outliers (2)","IWRES outliers","CWRES outliers")
+    } else {
+      colnames(all_outlier_table) <- c("ID","OFV outliers (SD)","EBE NPDE outliers (1)","IWRES outliers","CWRES outliers")
+    }
+    # save as character
+    # all_outlier_table <- data.frame(lapply(all_outlier_table, as.character), stringsAsFactors=FALSE) 
   } else {
     all_outlier_table <- data.frame(C = c("No outliers detected"))
     names(all_outlier_table) <- NULL

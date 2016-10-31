@@ -18,6 +18,14 @@ pdf.simeval <- function(ebe.npde.file,iiv.eta.names,outlying_criteria,
   #unlist
   ebenpde_tmp <- list_input[[1]]$ebenpde_tmp
   
+  #find rows with NA values and save ID numbers of those rows in the vector
+  deleted_ID <- c()
+  for (i in 1:nrow(ebenpde_tmp)) {
+    if(any(is.na(ebenpde_tmp[i,]))) {
+      deleted_ID <- c(deleted_ID,ebenpde_tmp$ID[i])
+    }
+  }
+  
   if(any(is.na(ebenpde_tmp))) {
     list_input <- list()
     list_input <- two.data.cases(ebenpde_tmp)
@@ -26,6 +34,8 @@ pdf.simeval <- function(ebe.npde.file,iiv.eta.names,outlying_criteria,
   # open pdf file
   pdf(file=pdf_filename,width=10,height=7)
   
+  list_ebe_outlier_table <- list()
+  cases <- c()
   for (i in 1:length(list_input)) {
     ebenpde_tmp <- list_input[[i]]$ebenpde_tmp
     nr_subjects <- list_input[[i]]$n.subjects
@@ -70,28 +80,37 @@ pdf.simeval <- function(ebe.npde.file,iiv.eta.names,outlying_criteria,
       
       #...........................................(5)plot_1.....................................................    
       # ChiSq Q-Q plot (save flag and noutlier values from function)
-      plot_1 <- plot_1(ebenpde_tmp,theor_distance,emp_distance_sort,index_emp_distance,
+      list_plot_1 <- plot_1(ebenpde_tmp,theor_distance,emp_distance_sort,index_emp_distance,
                        out_distance,n.subjects=nr_subjects,outlying_criteria,do_outlier_plot,
                        model.filename)
-      flag <- plot_1$flag
-      noutlier <- plot_1$noutlier
-      outlier_id_row <-plot_1$outlier_id_row
+      flag <- list_plot_1$flag
+      noutlier <- list_plot_1$noutlier
+      outlier_id_row <-list_plot_1$outlier_id_row
       
       #............................................(6)plot_2....................................................
       # MORE PAGES OF PDF FILE WITH ChiSq Q-Q plot grafs for each n.subjects (only if out_distance < outlying_criteria && flag==1)
       # vector with values of theor_distance to print on the plot
-      plot_2 <- plot_2(ebenpde_tmp,emp_distance_sort,theor_distance,index_emp_distance,
+      list_plot_2 <- plot_2(ebenpde_tmp,emp_distance_sort,theor_distance,index_emp_distance,
                        noutlier,flag,n.subjects=nr_subjects,iiv.eta.names,outlying_criteria,outlier_id_row,
                        do_outlier_plot,model.filename)
-      vector_theor_dist <- plot_2$vector_theor_dist
-      noutlier <- plot_2$noutlier
-      outlier_id_row <- plot_2$outlier_id_row
+      vector_theor_dist <- list_plot_2$vector_theor_dist
+      noutlier <- list_plot_2$noutlier
+      outlier_id_row <- list_plot_2$outlier_id_row
       
       #............................................(7)outlier_table......................................................    
       #CREATE FINAL TABLE (use function outlier_table to create a table fortable1)
       fortable1 <- outlier.table.ebe.npde(noutlier,outlier_id_row,ebenpde_tmp,ebenpde_obs,
                                           index_emp_distance,emp_distance_sort,vector_theor_dist,
                                           n.subjects=nr_subjects,iiv.eta.names)
+      #for ebe.npde.all.outliers
+      if (ncol(fortable1) > 1) {
+        ebe.npde_outliers <- fortable1[,1:2]
+      } else {
+        ebe.npde_outliers <- fortable1
+      }
+      list_ebe_outlier_table[[i]] <- ebe.npde_outliers
+      cases[i] <- case
+      
       #............................................(8)plot.table......................................................    
       #draw the table
       plot.table(fortable1)
@@ -119,6 +138,7 @@ pdf.simeval <- function(ebe.npde.file,iiv.eta.names,outlying_criteria,
   # Use outliertable function to plot outlier tabel
   list <- outlier.table(residual.outliers.file)
   outlierframe <- list$outlierframe
+  cwres.iwres_outliers <- list$outliers_count
   
   # Plot created outlier table on the next page
   plot.table(outlierframe)
@@ -166,6 +186,8 @@ pdf.simeval <- function(ebe.npde.file,iiv.eta.names,outlying_criteria,
   
   #3. iOFV RES
   list_i_ofv_res <- i_ofv_res(all.iofv.file,n.subjects,samples)# calculation
+  # for all outlier table
+  ofv_outliers <- list_i_ofv_res$ofv_outliertable 
   
   # Make a boxplot
   boxplot_i_ofv_res <- function(list_i_ofv_res,n.subjects) {
@@ -251,6 +273,26 @@ pdf.simeval <- function(ebe.npde.file,iiv.eta.names,outlying_criteria,
     }
     histogram_kld_i_ofv(list_kld_i_ofv,model.filename)# histogram
   }
+  
+  ########################################   ALL OUTLIERS REPORT TABLE   ##################################################
+  all_outlier_table <- all.outlier.report.table(ofv_outliers,cwres.iwres_outliers,list_ebe_outlier_table,cases,deleted_ID)
+  
+  # draw the table 
+  # if((nrow(all_outlier_table) == 1) && (ncol(all_outlier_table)==1)) {
+    plot.table(all_outlier_table)
+#   } else {
+#     tab <- tableGrob(all_outlier_table, rows=NULL)
+#     header <- tableGrob(all_outlier_table[1, 1:2], rows=NULL, cols=c("Individual level", "Observation level")) 
+#     
+#     jn <- combine(header[1,], tab, along=2)
+#     jn$widths <- rep(max(jn$widths), length(jn$widths)) # make column widths equal
+#     
+#     # change the relevant rows of gtable
+#     jn$layout[1:4 , c("l","r")] <- list(c(2,4),c(3,5))
+#     
+#     # grid.newpage()
+#     grid.draw(jn)
+#   }
   
   dev.off()
 }

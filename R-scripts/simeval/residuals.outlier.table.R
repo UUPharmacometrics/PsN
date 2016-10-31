@@ -19,7 +19,7 @@ outlier.table <- function(residual.outliers.file) {
       outliers_count[n,3] <- iwres.cwres_count[2]
     }
     # Replace 0 to blank
-    outliers_count[outliers_count == 0] <- " "
+    outliers_count[outliers_count == 0] <- ""
     # transform to data frame
     outliers_count <- as.data.frame(outliers_count)
     colnames(outliers_count) <- c("ID","OUTLIERS.IWRES","OUTLIERS.CWRES")
