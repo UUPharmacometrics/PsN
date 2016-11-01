@@ -1,4 +1,4 @@
-plot.delta.ofv <- function(delta.ofv,model,ID,row_infl,fail_ID,row_outl,row_outl_infl) {
+plot.delta.ofv <- function(delta.ofv,cook.score,ID,row_infl,fail_ID,row_outl,row_outl_infl) {
   # Default for outlier_ID
   if (!missing(row_outl)) {
     outl_legend <- TRUE
@@ -13,15 +13,17 @@ plot.delta.ofv <- function(delta.ofv,model,ID,row_infl,fail_ID,row_outl,row_outl
   } else {
     par(oma=c(0,1,0,5))
   }
-  plot (model[-row],delta.ofv[-row],
-        type="p",
-        col="gray46",
-        xaxt="n",
+  plot (cook.score[-row],delta.ofv[-row],
+        type="n",
+        # col="gray46",
+        # xaxt="n",
         ylab="OFV(cdd-i,orig)-OFV(cdd-i,est)",
-        xlab="",
-        ylim=c(min(delta.ofv, na.rm=T),max(delta.ofv, na.rm=T))
+        xlab="Cook scores",
+        ylim=c(min(delta.ofv, na.rm=T),max(delta.ofv, na.rm=T)),
+        xlim=c(min(cook.score, na.rm=T),max(cook.score, na.rm=T))
   )
-  title(xlab = "Excluded individuals", line = 1) # move x axis label closer to the x axis
+  text(cook.score[-row],delta.ofv[-row], labels=as.character(ID[-row]),cex=.8, col="gray46")
+  # title(xlab = "Excluded individuals", line = 1) # move x axis label closer to the x axis
   if (!exists("outl_legend")) {
     legend(par('usr')[2], par('usr')[4],bty='n',xpd=NA,c("Influential ID"),text.col = c("blue"))
     title(main="Influential individuals")
@@ -30,16 +32,16 @@ plot.delta.ofv <- function(delta.ofv,model,ID,row_infl,fail_ID,row_outl,row_outl
     title(main="Outliers and influential individuals")
   }
   if (length(row_infl) > 0) {
-    text(model[row_infl],delta.ofv[row_infl], labels=as.character(ID[row_infl]),cex=.8, col="blue")
+    text(cook.score[row_infl],delta.ofv[row_infl], labels=as.character(ID[row_infl]),cex=.8, col="blue")
   }
   if (!missing("row_outl")) {
     if (length(row_outl) > 0) {
-      text(model[row_outl],delta.ofv[row_outl], labels=as.character(ID[row_outl]),cex=.8, col="purple")
+      text(cook.score[row_outl],delta.ofv[row_outl], labels=as.character(ID[row_outl]),cex=.8, col="purple")
     }
   }
   if (!missing("row_outl_infl")) {
     if (length(row_outl_infl) > 0) {
-      text(model[row_outl_infl],delta.ofv[row_outl_infl], labels=as.character(ID[row_outl_infl]),cex=.8, col="green2")
+      text(cook.score[row_outl_infl],delta.ofv[row_outl_infl], labels=as.character(ID[row_outl_infl]),cex=.8, col="green2")
     }
   }
   # add text if Nonmem failed in estimation

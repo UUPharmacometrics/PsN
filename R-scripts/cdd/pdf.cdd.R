@@ -48,17 +48,17 @@ pdf.cdd <- function(raw.results.file,skipped.id.file,pdf.filename,markeropt,
   if (missing(outlier_ID)) {
     # create needed data form plotting
     list.delta.ofv <- delta.ofv.data(cdd.data.all)
-    model <- list.delta.ofv$model
+    cook.score <- list.delta.ofv$cook.score
     delta.ofv <- list.delta.ofv$delta.ofv
     row_infl <- list.delta.ofv$row_infl
     ID <- list.delta.ofv$ID
     fail_ID <- list.delta.ofv$fail_ID
     # create a plot
-    plot.delta.ofv(delta.ofv,model,ID,row_infl,fail_ID)
+    plot.delta.ofv(delta.ofv,cook.score,ID,row_infl,fail_ID)
   } else {
     # create needed data for plotting
     list.delta.ofv <- delta.ofv.data(cdd.data.all,outlier_ID)
-    model <- list.delta.ofv$model
+    cook.score <- list.delta.ofv$cook.score
     delta.ofv <- list.delta.ofv$delta.ofv
     row_outl_infl <- list.delta.ofv$row_outl_infl
     row_outl <- list.delta.ofv$row_outl
@@ -66,7 +66,7 @@ pdf.cdd <- function(raw.results.file,skipped.id.file,pdf.filename,markeropt,
     ID <- list.delta.ofv$ID
     fail_ID <- list.delta.ofv$fail_ID
     # create a plot
-    plot.delta.ofv(delta.ofv,model,ID,row_infl,fail_ID,row_outl,row_outl_infl)
+    plot.delta.ofv(delta.ofv,cook.score,ID,row_infl,fail_ID,row_outl,row_outl_infl)
   }
   
   #close pdf

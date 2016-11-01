@@ -36,7 +36,7 @@ delta.ofv.data <- function(cdd.data.all,outlier_ID) {
     row_infl <- setdiff(row_infl_all,row_outl_infl)
     
     #output for testing
-    out <- list(model=cdd.data$model,
+    out <- list(cook.score=cdd.data$cook.scores,
                 delta.ofv=cdd.data$cdd.delta.ofv,
                 delta.ofv_10_pr=delta.ofv_10_pr,
                 row_infl_all=row_infl_all,
@@ -53,7 +53,7 @@ delta.ofv.data <- function(cdd.data.all,outlier_ID) {
   } else {
     row_infl <- row_infl_all
     #output for testing
-    out <- list(model=cdd.data$model,
+    out <- list(cook.score=cdd.data$cook.scores,
                 delta.ofv=cdd.data$cdd.delta.ofv,
                 delta.ofv_10_pr=delta.ofv_10_pr,
                 row_infl=row_infl,
