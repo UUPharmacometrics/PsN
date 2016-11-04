@@ -101,7 +101,7 @@ exp_outliers_count <- data.frame()
 exp_outlierframe_1 <- data.frame(ID=c(24,24,42),TIME=c(176,61.5,95.5),DV=c(38.1,16.7,13.9),
                                  PRED=c(116.4,17.707,52.912),IWRES=c(-0.36353,-0.28375,-0.42719),
                                  CWRES=c(-2.1581,-2.4754,-2.348),OUTLIER.IWRES=c(1,0,1),OUTLIER.CWRES=c(1,1,0))
-exp_outliers_count_1 <- data.frame(ID=as.factor(c(24,42)),OUTLIERS.IWRES=as.factor(c(1,1)),OUTLIERS.CWRES= as.factor(c(2," ")))
+exp_outliers_count_1 <- data.frame(ID=as.factor(c(24,42)),OUTLIERS.IWRES=as.factor(c(1,1)),OUTLIERS.CWRES= as.factor(c(2,"")))
 # Compare expected data with real data
 context("Simeval, residuals, function outlier.table")
 test_that("If function outlier.table works as expected",{
