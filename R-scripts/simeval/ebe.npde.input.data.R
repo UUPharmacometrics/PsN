@@ -1,6 +1,19 @@
 input.data <- function(ebe.npde.file,iiv.eta.names) {
   # read in data
-  ebenpde_tmp <- read.csv(ebe.npde.file) # load csv file
+  ebenpde_tmp_input <- read.csv(ebe.npde.file) # load csv file
+  # check if there are some individuals where all Eta values are NA (delete them)
+  n_eta <- ncol(ebenpde_tmp_input)-2
+  na_each_row <- rowSums(is.na(ebenpde_tmp_input))
+  if (any(na_each_row==n_eta)) {
+    row_delete <- which(na_each_row == n_eta)
+    ID_deleted <- ebenpde_tmp_input$ID[row_delete]
+    ebenpde_tmp <- ebenpde_tmp_input[-row_delete,]
+    rownames(ebenpde_tmp) <- NULL
+  }else {
+    row_delete <- c()
+    ID_deleted <- c()
+    ebenpde_tmp <- ebenpde_tmp_input
+  }
   n.subjects <- nrow(ebenpde_tmp)
   
   # rename ETA(n) to ETA.n. because in dataframe names of ETA columns are with dots
@@ -12,15 +25,46 @@ input.data <- function(ebe.npde.file,iiv.eta.names) {
     ebenpde_obs <- as.data.frame(ebenpde_obs)
     colnames(ebenpde_obs) <- iiv.eta.names
   }
-
+  
   #create ebenpde_tmp data frame
   ebenpde_tmp <- ebenpde_tmp[,-grep("ETA.",colnames(ebenpde_tmp))]
   ebenpde_tmp <- cbind(ebenpde_tmp,ebenpde_obs)
   # output
-  out <- list(ebenpde_tmp=ebenpde_tmp,
+  out <- list(ebenpde_tmp_input=ebenpde_tmp_input,
+              ebenpde_tmp=ebenpde_tmp,
               n.subjects=n.subjects,
               ebenpde_obs=ebenpde_obs,
               iiv.eta.names=iiv.eta.names,
-              case='')
+              ID_deleted=ID_deleted)
   return(out)
 }
+
+  
+  
+  
+# input.data <- function(ebe.npde.file,iiv.eta.names) {
+#   # read in data
+#   ebenpde_tmp <- read.csv(ebe.npde.file) # load csv file
+#   n.subjects <- nrow(ebenpde_tmp)
+#   
+#   # rename ETA(n) to ETA.n. because in dataframe names of ETA columns are with dots
+#   iiv.eta.names <- gsub("\\(",".",iiv.eta.names)
+#   iiv.eta.names <- gsub("\\)",".",iiv.eta.names)
+#   # save needed ETA columns in separate data frame ebenpde_obs
+#   ebenpde_obs <- ebenpde_tmp[,iiv.eta.names]
+#   if(class(ebenpde_obs) == "numeric") {
+#     ebenpde_obs <- as.data.frame(ebenpde_obs)
+#     colnames(ebenpde_obs) <- iiv.eta.names
+#   }
+# 
+#   #create ebenpde_tmp data frame
+#   ebenpde_tmp <- ebenpde_tmp[,-grep("ETA.",colnames(ebenpde_tmp))]
+#   ebenpde_tmp <- cbind(ebenpde_tmp,ebenpde_obs)
+#   # output
+#   out <- list(ebenpde_tmp=ebenpde_tmp,
+#               n.subjects=n.subjects,
+#               ebenpde_obs=ebenpde_obs,
+#               iiv.eta.names=iiv.eta.names,
+#               case='')
+#   return(out)
+# }

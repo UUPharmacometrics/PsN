@@ -38,5 +38,5 @@ plot_2 <- function(ebenpde_tmp,emp_distance_sort,theor_distance,index_emp_distan
               outlier_id_row=outlier_id_row,
               flag1=flag1,
               out_distance=out_distance)
-return(out)
+  return(out)
 }
