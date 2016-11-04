@@ -12,6 +12,7 @@ source(paste0(rscripts.directory,"/simeval/ebe.npde.data.for.plots.R"))
 source(paste0(rscripts.directory,"/simeval/ebe.npde.plot_1.R"))
 source(paste0(rscripts.directory,"/simeval/ebe.npde.plot_2.R"))
 source(paste0(rscripts.directory,"/simeval/ebe.npde.outlier.table.R"))
+source(paste0(rscripts.directory,"/simeval/ebe.npde.all.outliers.R"))
 # Source residual functions
 source(paste0(rscripts.directory,"/simeval/residuals.histograms.R"))
 source(paste0(rscripts.directory,"/simeval/residuals.summary.table.R"))
@@ -23,9 +24,7 @@ source(paste0(rscripts.directory,"/simeval/ofv.i_ofv_res.R"))
 source(paste0(rscripts.directory,"/simeval/ofv.i_ofv_ppc.R"))
 source(paste0(rscripts.directory,"/simeval/ofv.kld_i_ofv.R"))
 # Source all outliers report functions
-# source(paste0(rscripts.directory,"/simeval/ebe.npde.outliers.R"))
-# source(paste0(rscripts.directory,"/simeval/all.outlier.report.table.R"))
-# source(paste0(rscripts.directory,"/simeval/pdf.all.outlier.report.R"))
+source(paste0(rscripts.directory,"/simeval/all.outlier.report.table.R"))
 # Source common function
 source(paste0(rscripts.directory,"/common/plot.table.R"))
 # pdf function
