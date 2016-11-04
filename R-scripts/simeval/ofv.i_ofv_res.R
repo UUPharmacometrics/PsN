@@ -7,7 +7,7 @@ i_ofv_res <- function(all.iofv.file,n.subjects,samples) {
   #find res medians and sort them
   iOFV_res <- array(0,c(samples,n.subjects))
   iOFV_res_median <- array(0,c(n.subjects,1))
-    for (i in 1:n.subjects) {
+  for (i in 1:n.subjects) {
     iOFV_sim <- all.iOFV_sim[i,3:(samples+2)]
     iOFV_sim <- iOFV_sim[!is.na(iOFV_sim)]
     len <- length(iOFV_sim)
