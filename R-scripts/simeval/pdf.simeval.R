@@ -162,12 +162,10 @@ pdf.simeval <- function(ebe.npde.file,iiv.eta.names,outlying_criteria,
       
   # ..........................................EBE-NPDE correlation graph.............................................  
   # create EBE-NPDE correlation graph
-  if (!(any(is.na(ebenpde_obs)))) {
-    if(nrow(mydataframe) > 1) {
-      chart.Correlation(ebenpde_obs, histogram = TRUE, method = c("spearman"))
-    }
+  if(nrow(mydataframe) > 1) {
+    chart.Correlation(ebenpde_obs, histogram = TRUE, method = c("spearman"))
   }
-  
+
   # create outlier grafs and tables
   if (require("PEIP") == TRUE){
     #...........................................(3)emp_distance....................................................    
