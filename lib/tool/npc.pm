@@ -114,8 +114,8 @@ sub BUILD
 	my $self  = shift;
 
 	if (defined $self->auto_bin_mode) {
-		unless ($self->auto_bin_mode eq 'auto' or $self->auto_bin_mode eq 'minmax') {
-			croak("There are only two possible auto_bin modes: auto and minmax\n");
+		unless ($self->auto_bin_mode eq 'auto' or $self->auto_bin_mode eq 'minmax' or $self->auto_bin_mode eq 'auto_equal_count') {
+			croak("There are only three possible auto_bin modes: auto, minmax and auto_equal_count\n");
 		}
 
         if ($self->auto_bin_mode eq 'minmax') {
@@ -3008,6 +3008,17 @@ sub create_binned_data
 			}
 		} elsif (defined $self->auto_bin_mode and ($self->auto_bin_mode eq 'auto')) {
 			$bin_ceilings = binning::bin_auto(\@bin_array, $self->min_points_in_bin, $self->strata_labels->[$strat_ind]);
+        } elsif (defined $self->auto_bin_mode and ($self->auto_bin_mode eq 'auto_equal_count')) {
+            # This method is not reachable from the vpc command but is used by simeval
+            my $num_bins = binning::bin_auto_num_bins(\@bin_array, $self->min_points_in_bin, $self->strata_labels->[$strat_ind]);
+            $bin_ceilings = get_bin_ceilings_from_count(
+                'data_column' => \@bin_array,
+                'value_hash' => $bin_hash,
+                'data_indices' => \@data_indices,
+                'n_bins' => $num_bins,
+                'single_bin_size' => $self->single_bin_size,
+                'list_counts' => [],
+            );
 		} elsif (defined $self->auto_bin_mode and ($self->auto_bin_mode eq 'minmax')) {
             my $min;
             my $max;
