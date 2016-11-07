@@ -1,8 +1,15 @@
 input.data <- function(ebe.npde.file,iiv.eta.names) {
+  # rename ETA(n) to ETA.n. because in dataframe names of ETA columns are with dots
+  iiv.eta.names <- gsub("\\(",".",iiv.eta.names)
+  iiv.eta.names <- gsub("\\)",".",iiv.eta.names)
+  
   # read in data
   ebenpde_tmp_input <- read.csv(ebe.npde.file) # load csv file
   # check if there are some individuals where all Eta values are NA (delete them)
-  n_eta <- ncol(ebenpde_tmp_input)-2
+  n_eta <-length(iiv.eta.names)
+  ebenpde_tmp_input_etas <- ebenpde_tmp_input[,iiv.eta.names]
+  ebenpde_tmp_input <- cbind(ebenpde_tmp_input[,1:2],ebenpde_tmp_input_etas)
+  # n_eta <- ncol(ebenpde_tmp_input)-2
   na_each_row <- rowSums(is.na(ebenpde_tmp_input))
   if (any(na_each_row==n_eta)) {
     row_delete <- which(na_each_row == n_eta)
@@ -16,9 +23,6 @@ input.data <- function(ebe.npde.file,iiv.eta.names) {
   }
   n.subjects <- nrow(ebenpde_tmp)
   
-  # rename ETA(n) to ETA.n. because in dataframe names of ETA columns are with dots
-  iiv.eta.names <- gsub("\\(",".",iiv.eta.names)
-  iiv.eta.names <- gsub("\\)",".",iiv.eta.names)
   # save needed ETA columns in separate data frame ebenpde_obs
   ebenpde_obs <- ebenpde_tmp[,iiv.eta.names]
   if(class(ebenpde_obs) == "numeric") {
