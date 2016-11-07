@@ -157,7 +157,7 @@ pdf.simeval <- function(ebe.npde.file,iiv.eta.names,iov.eta.names,outlying_crite
   # plot explanation text (if they are iiv etas or iov etas and which etas)
   # loop over iiv and iov etas, create same plots
   for (i in 1:length(list_eta_names)) {
-    eta.names <- list_eta_names[[i]]
+    eta_names <- list_eta_names[[i]]
     if(exists("explanation_text")) {
       eta_names <- list_eta_names[[i]]
       eta_names_text <- c()
