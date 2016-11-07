@@ -51,6 +51,27 @@ sub bin_auto
 	return $bin_edges;
 }
 
+sub bin_auto_num_bins
+{
+    # Get the number of bins suggested by the auto binning algorithm
+    my $idv = shift;
+    my $min_points = shift;
+    my $stratum_label = shift;
+
+    my $n_min = 2;
+    my $n_max = 20;
+
+    $min_points = 10 unless defined $min_points;
+
+    my $temp_flush = $|;
+    $| = 1;
+	my $bin_edges = chooseK($idv, $n_min, $n_max, $min_points, $stratum_label);
+    $| = $temp_flush;
+
+    my $num_bins = scalar(@{$bin_edges}) - 1;
+    return $num_bins;
+}
+
 # Algorithm parameters
 my $kurtosis_cutoff = 2.5;	# C
 my $kernel_scaling = 0.25;	# 1/R
