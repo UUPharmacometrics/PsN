@@ -29,7 +29,7 @@ source(paste0(rscripts.directory,"/common/plot.table.R"))
 source(paste0(rscripts.directory,"/simeval/pdf.simeval.R"))
 
 # Create a pdf files
-pdf.simeval(ebe.npde.file=ebe.npde.file,iiv.eta.names=iiv.eta.names,outlying_criteria=outlying_criteria,
+pdf.simeval(ebe.npde.file=ebe.npde.file,iiv.eta.names=iiv.eta.names,iov.eta.names=iov.eta.names,outlying_criteria=outlying_criteria,
             residual.files=residual.files,residual.outliers.file=residual.outliers.file,residual.names=residual.names,
             raw.results.file=raw.results.file,iofv.file=iofv.file,all.iofv.file=all.iofv.file,n.subjects=n.subjects,samples=successful.samples,
             model.filename=model.filename,rplots.level=rplots.level,pdf_filename=pdf.filename)
