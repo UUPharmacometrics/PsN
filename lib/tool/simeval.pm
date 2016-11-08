@@ -1321,22 +1321,23 @@ sub cleanup
 	}
 }
 
-sub create_R_plots_code{
+sub create_R_plots_code
+{
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-							  rplot => { isa => 'rplots', optional => 0 }
-		);
+        rplot => { isa => 'rplots', optional => 0 }
+    );
 	my $rplot = $parm{'rplot'};
 
-	my @all_eta =();
+	my @all_eta = ();
 	my $iiv_eta = 'iiv.eta.names <- c()';
-	if (scalar(@{$self->iiv_eta})>0){
+	if (scalar(@{$self->iiv_eta}) > 0){
 		$iiv_eta = "iiv.eta.names <-  c('".join("','",@{$self->iiv_eta})."')";
 		push (@all_eta,@{$self->iiv_eta});
 	}
 	my $iov_eta = 'iov.eta.names <- list()';
-	if ($self->occasions > 0){
-		$iov_eta = 'iov.eta.occasion.names <- list('."o1=c('".join("','",@{$self->iov_eta->[0]})."')";
+	if ($self->occasions > 0) {
+		$iov_eta = 'iov.eta.names <- list('."o1=c('".join("','",@{$self->iov_eta->[0]})."')";
 		push (@all_eta,@{$self->iov_eta->[0]});
 		for (my $occ=2; $occ<= $self->occasions; $occ++){
 			$iov_eta .= ",o$occ=c('".join("','",@{$self->iov_eta->[$occ-1]})."')";
@@ -1372,7 +1373,6 @@ sub create_R_plots_code{
 	foreach my $filename (@{$self->vpc_result_files}){
 		push(@vpcresults,rplots::double_backslashes(string => $filename));
 	}
-
 	
 	$rplot->add_preamble(code => [
 							 '#simeval-specific preamble',
@@ -1396,7 +1396,6 @@ sub create_R_plots_code{
 							 "vpc.result.files <-  c('".join("','",@vpcresults)."')",
 							 "vpc.names <-  c('".join("','",@{$self->vpc_names})."')",
 						 ]);
-
 }
 
 
