@@ -7,7 +7,8 @@ input.data <- function(ebe.npde.file,iiv.eta.names) {
   ebenpde_tmp_input <- read.csv(ebe.npde.file) # load csv file
   # check if there are some individuals where all Eta values are NA (delete them)
   n_eta <-length(iiv.eta.names)
-  ebenpde_tmp_input_etas <- ebenpde_tmp_input[,iiv.eta.names]
+  ebenpde_tmp_input_etas <- as.data.frame(ebenpde_tmp_input[,iiv.eta.names])
+  colnames(ebenpde_tmp_input_etas) <- iiv.eta.names
   ebenpde_tmp_input <- cbind(ebenpde_tmp_input[,1:2],ebenpde_tmp_input_etas)
   # n_eta <- ncol(ebenpde_tmp_input)-2
   na_each_row <- rowSums(is.na(ebenpde_tmp_input))

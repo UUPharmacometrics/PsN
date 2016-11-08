@@ -245,6 +245,10 @@ pdf.simeval <- function(ebe.npde.file,iiv.eta.names,iov.eta.names,outlying_crite
         ebe.npde_outliers <- fortable1
       }
       
+      if(i <- 1) {
+        ebe.npde_outliers_iiv <- ebe.npde_outliers
+      }
+      
       #............................................(8)plot.table......................................................    
       #draw the table
       plot.table(fortable1)
@@ -388,24 +392,24 @@ pdf.simeval <- function(ebe.npde.file,iiv.eta.names,iov.eta.names,outlying_crite
   plot.table(outlierframe)
   
   ########################################   ALL OUTLIERS REPORT TABLE   ##################################################
-  all_outlier_table <- all.outlier.report.table(ofv_outliers,ebe.npde_outliers,cwres.iwres_outliers,ID_deleted)
+  all_outlier_table <- all.outlier.report.table(ofv_outliers,ebe.npde_outliers=ebe.npde_outliers_iiv,cwres.iwres_outliers,ID_deleted)
   
   # draw the table 
-  if((nrow(all_outlier_table) == 1) && (ncol(all_outlier_table)==1)) {
+  # if((nrow(all_outlier_table) == 1) && (ncol(all_outlier_table)==1)) {
     plot.table(all_outlier_table)
-  } else {
-    tab <- tableGrob(all_outlier_table, rows=NULL)
-    header <- tableGrob(all_outlier_table[1, 1:3], rows=NULL, cols=c("","Individual level", "Observation level")) 
-      
-    jn <- combine(header[1,], tab, along=2)
-    # jn$widths <- rep(max(jn$widths), length(jn$widths)) # make column widths equal
-      
-    # change the relevant rows of gtable
-    jn$layout[1:6 , c("l","r")] <- list(c(1,2,4),c(1,3,5))
-      
-    grid.newpage()
-    grid.draw(jn)
-  }
+#   } else {
+#     tab <- tableGrob(all_outlier_table, rows=NULL)
+#     header <- tableGrob(all_outlier_table[1, 1:3], rows=NULL, cols=c("","Individual level", "Observation level")) 
+#       
+#     jn <- combine(header[1,], tab, along=2)
+#     # jn$widths <- rep(max(jn$widths), length(jn$widths)) # make column widths equal
+#       
+#     # change the relevant rows of gtable
+#     jn$layout[1:6 , c("l","r")] <- list(c(1,2,4),c(1,3,5))
+#       
+#     grid.newpage()
+#     grid.draw(jn)
+#   }
   
   
 #   all_outlier_table <- all.outlier.report.table(ofv_outliers,cwres.iwres_outliers,list_ebe_outlier_table,cases,deleted_ID)
