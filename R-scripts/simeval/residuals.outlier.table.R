@@ -5,6 +5,16 @@ outlier.table <- function(residual.outliers.file) {
     names(outlierframe) <- NULL
     outliers_count <- data.frame(ID=c(),OUTLIERS.IWRES=c(),OUTLIERS.CWRES=c())
   } else {
+    #round values
+    for (i in 3:6) {
+      max_dec_dig <- max(nchar(sub('.*\\.','',outlierframe[,i])))
+      if (max_dec_dig >= 4) {
+        outlierframe[,i] <-sprintf("%.4f",outlierframe[,i])
+      } else {
+        sig_text <- paste0("%.",max_dec_dig,"f")
+        outlierframe[,i] <- sprintf(sig_text,outlierframe[,i])
+      }
+    }
     # subset all different ID numbers
     unique_id <- unique(outlierframe$ID)
     # count ountliers in each ID number
