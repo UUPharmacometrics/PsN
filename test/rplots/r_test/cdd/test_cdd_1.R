@@ -30,7 +30,7 @@ cdd.inds <- read.csv(skipped.id.file, header=F)
 cdd.inds_1 <- read.csv(skipped.id.file_1, header=F)
 
 ###################################     4. Make tests     ###################################
-# 4.1. Test if input data tables are correct
+#.................................................   (1) Test if input data tables are correct   ..................................................................
 # Create correct input data tables
 # correct_cdd.data with column method
 correct_cdd.data <- data.frame(method=factor(c(rep("cdd",5),"other"),levels=c("cdd","other")),model=as.integer(c(0,1,2,3,4,5)),
@@ -55,7 +55,7 @@ test_that("If input data files are correct",{
   expect_identical(correct_cdd.inds_1,cdd.inds_1)
 })
 
-# 4.2.Testing function create.data
+# ...............................................  (2) Testing function create.data  ....................................................................
 cdd.data <- create.data(input_cdd.data,cdd.inds)
 cdd.data_1 <- create.data(input_cdd.data_1,cdd.inds_1)
 # Create correct cdd.data table
@@ -76,7 +76,7 @@ test_that("Testing function create.data",{
   expect_identical(correct_cdd.data_1,cdd.data_1)
 })
 
-# 4.3.Testing function failed.values
+# ...............................................    (3) Testing function failed.values   ...............................................................
 fail <- failed.values(cdd.data)
 # Correct failed values
 correct_fail <- as.integer(c(0,1,1,1))
@@ -86,7 +86,7 @@ test_that("Testing function failed.values",{
   expect_identical(correct_fail,fail)
 })
 
-# 4.4.Testing function warnings.data
+#..................................................   (4) Testing function warnings.data  ..............................................................
 p1 <- warnings.data(cdd.data)
 p2 <- warnings.data(cdd.data,min.failed=TRUE,cov.failed=TRUE,cov.warnings=TRUE,boundary=TRUE)
 p3 <- warnings.data(cdd.data,min.failed=TRUE,cov.failed=TRUE,cov.warnings=TRUE)
@@ -178,14 +178,14 @@ test_that("Testing function warnings.data",{
   expect_identical(correct_p7,p7)
   expect_identical(correct_p8,p8)
 })
-# 4.5. Unlist p1 from different test lists (we need them to test mark.options.data function)
+# Unlist p1 from different test lists (we need them to test mark.options.data function)
 p2 <- p2$p1
 p3 <- p3$p1
 p4 <- p4$p1
 p6 <- p6$p1
 p7 <- p7$p1
 p8 <- p8$p1
-# 4.6.Testing function mark.options.data
+#...................................................   (5) Testing function mark.options.data  .........................................................
 # markeropt == 1
 out_1 <- mark.options.data(p1,1)
 out_1a <- mark.options.data(p2,1)
