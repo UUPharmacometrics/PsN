@@ -1,5 +1,5 @@
 influential_outliers_data <- function(all.iofv.file,n.subjects,samples,
-                                      raw.results.file,skipped.id.file) {
+                                      raw.results.file,skipped.id.file,cutoff_delta.ofv) {
   # GET OUTLIERS FROM SIMEVAL 
   # simeval (iOFV RES) ------------------------------------------------------------
   list_i_ofv_res <- i_ofv_res(all.iofv.file,n.subjects,samples) # use function
@@ -16,14 +16,13 @@ influential_outliers_data <- function(all.iofv.file,n.subjects,samples,
   out_cdd.data.all <- create.data.full(raw.results.file,skipped.id.file) # use function
   cdd.data.all <- out_cdd.data.all$cdd.data.all
 
-  list_ofv_cdd <- delta.ofv.data(cdd.data.all) # use function
-  delta.ofv <- list_ofv_cdd$delta.ofv
-  ID_cdd <- list_ofv_cdd$ID
+  list_ofv_cdd <- delta.ofv.data(cdd.data.all,cutoff_delta.ofv) # use function
+  data_plot <- list_ofv_cdd$data_plot
   ID_infl <- list_ofv_cdd$ID_infl
   fail_ID <- list_ofv_cdd$fail_ID
   
   # save needed columns in one data frame
-  infl_data <- as.data.frame(cbind(ID_cdd,delta.ofv))
+  infl_data <- data_plot[,1:2]
   colnames(infl_data) <- c("ID_cdd","delta.ofv")
   
   # check if all ID numbers exist
@@ -58,12 +57,26 @@ influential_outliers_data <- function(all.iofv.file,n.subjects,samples,
     row[i] <- which(table_for_plot$ID %in% ID[i])
   }
   
-  # count how many are influential and outliers, influential but not outliers, --------------
+  # which ID are influential and outliers, influential but not outliers, --------------
   # outliers but not influential, not outliers and not influential
   infl_outl <- ID
   infl_not_outl <- setdiff(ID_infl,ID)
   outl_not_infl <- setdiff(outlier_ID,ID)
   not_outl_not_infl <- setdiff(table_for_plot$ID,unique(c(outlier_ID,ID_infl)))
+  
+  #rows of influential indiv but not outliers
+  row_infl_not_outl <- c()
+  if(length(infl_not_outl) >0) {
+    for (i in 1:length(infl_not_outl)) {
+      row_infl_not_outl[i] <- which(table_for_plot$ID %in% infl_not_outl[i])
+    }
+  }
+  row_outl_not_infl <- c()
+  if(length(outl_not_infl) > 0) {
+    for (i in 1:length(outl_not_infl)) {
+      row_outl_not_infl[i] <- which(table_for_plot$ID %in% outl_not_infl[i])
+    }
+  }
   
   # order fail_ID and deleted_outliers, save as text
   fail_ID_text <- ''
@@ -92,7 +105,7 @@ influential_outliers_data <- function(all.iofv.file,n.subjects,samples,
   # return
   out <- list(infl_data=infl_data,
               outl_data=outl_data,
-              table_for_plot= table_for_plot,
+              table_for_plot=table_for_plot,
               ID=ID,
               row=row,
               infl_outl=infl_outl,
@@ -100,6 +113,8 @@ influential_outliers_data <- function(all.iofv.file,n.subjects,samples,
               outl_not_infl=outl_not_infl,
               not_outl_not_infl=not_outl_not_infl,
               fail_ID_text=fail_ID_text,
-              deleted_outliers_text=deleted_outliers_text)
+              deleted_outliers_text=deleted_outliers_text,
+              row_infl_not_outl=row_infl_not_outl,
+              row_outl_not_infl=row_outl_not_infl)
   return(out)
 }

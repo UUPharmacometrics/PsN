@@ -1,7 +1,8 @@
-plot_infl_outl_data <- function(table_for_plot,ID,row,fail_ID_text,deleted_outliers_text) {
-  if (length(row)>0) {
-    simeval_iofv_res <- table_for_plot$simeval_iofv_res[-row]
-    cdd_delta.ofv <- table_for_plot$cdd_delta.ofv[-row]
+plot_infl_outl_data <- function(table_for_plot,ID,row,row_outl_not_infl,row_infl_not_outl,fail_ID_text,deleted_outliers_text,cutoff_delta.ofv) {
+  if (length(row)>0 || length(row_outl_not_infl)>0 || length(row_infl_not_outl)>0) {
+    row_ID_nr <- c(row,row_outl_not_infl,row_infl_not_outl)
+    simeval_iofv_res <- table_for_plot$simeval_iofv_res[-row_ID_nr]
+    cdd_delta.ofv <- table_for_plot$cdd_delta.ofv[-row_ID_nr]
   } else {
     simeval_iofv_res <- table_for_plot$simeval_iofv_res
     cdd_delta.ofv <- table_for_plot$cdd_delta.ofv
@@ -15,14 +16,22 @@ plot_infl_outl_data <- function(table_for_plot,ID,row,fail_ID_text,deleted_outli
   # plot
   plot (simeval_iofv_res,cdd_delta.ofv,
         type="p",
-        ylab="CDD",
-        xlab="Simeval",
+        ylab="CDD based influential individuals, OFV(cdd-i,orig)-OFV(cdd-i,est)",
+        xlab="Simeval based outliers, (OFV(i,orig)-mean(OFV(sim)))/SD(OFV(sim))",
         ylim=c(min(table_for_plot$cdd_delta.ofv, na.rm=T),max(table_for_plot$cdd_delta.ofv, na.rm=T)),
         xlim=c(min(table_for_plot$simeval_iofv_res,na.rm=T),max(table_for_plot$simeval_iofv_res,na.rm=T))
   )
+  abline(h=cutoff_delta.ofv, lwd=2, lty=3, col="black")
+  abline(v=3, lwd=2, lty=3, col="black")
   title("Cdd influential individuals and simeval outliers",line=3)
   if (length(row) > 0) {
     text(table_for_plot$simeval_iofv_res[row],table_for_plot$cdd_delta.ofv[row], labels=ID,cex=.8, col="red")
+  }
+  if (length(row_outl_not_infl) > 0) {
+    text(table_for_plot$simeval_iofv_res[row_outl_not_infl],table_for_plot$cdd_delta.ofv[row_outl_not_infl], labels=table_for_plot$ID[row_outl_not_infl],cex=.8, col="black")
+  }
+  if (length(row_infl_not_outl) > 0) {
+    text(table_for_plot$simeval_iofv_res[row_infl_not_outl],table_for_plot$cdd_delta.ofv[row_infl_not_outl], labels=table_for_plot$ID[row_infl_not_outl],cex=.8, col="black")
   }
   mtext("In red color are ID numbers of the individuals which are both: outliers and influential individuals",side=3,line=1,col = "red")
   # if some of ID numbers were deleted
