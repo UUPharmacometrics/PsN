@@ -1,35 +1,55 @@
 plot.cdd <- function(cdd.data,cutoff_cook,cutoff_cov,cdd.pt,cdd.txt,legend,fail,cdd.warn) {
   #find rows of data which are influential(cutoffs)
+  row_red <- c()
   row <- c()
   for (i in 1:nrow(cdd.pt)) {
-    if ((cdd.pt$cook.scores[i] > cutoff_cook) || (cdd.pt$cov.ratios[i] >= max(cutoff_cov)) || (cdd.pt$cov.ratios[i] <= min(cutoff_cov))) {
+    if ((cdd.pt$cook.scores[i] > cutoff_cook) || ((cdd.pt$cov.ratios[i] >= max(cutoff_cov)) || (cdd.pt$cov.ratios[i] <= min(cutoff_cov)))) {
       row <- c(row,i)
     }
   }
-  
+  for (i in 1:nrow(cdd.pt)) {
+    if ((cdd.pt$cook.scores[i] > cutoff_cook) && ((cdd.pt$cov.ratios[i] >= max(cutoff_cov)) || (cdd.pt$cov.ratios[i] <= min(cutoff_cov)))) {
+      row_red <- c(row_red,i)
+    }
+  }
   count_lines <- 1
   for (i in 1:length(fail)) {
     if (fail[i] > 0) {
       count_lines <- count_lines + 1
     }
   }  
-
   if (legend) {
   par(xpd=NA,mar=par()$mar + c(count_lines,0,0,0)) # change margins to add text on the bottom
   }
   #text on axis
   xlab_text <- paste0("Cook score (cutoff: ",cutoff_cook,")")
   ylab_text <- paste0("Covariance ratio (cutoffs: ",round(min(cutoff_cov),3)," and ",round(max(cutoff_cov),3),")")
-  # Construct plot  
-  plot (cdd.pt$cook.scores[-row], cdd.pt$cov.ratios[-row],
-      type="p",
-      xlab=xlab_text,
-      ylab=ylab_text,
-      main="Case-deletion diagnostics",
-      xlim=c(0,max(cdd.data$cook.scores, na.rm=T)),
-      ylim=c(0,max(cdd.data$cov.ratio, na.rm=T))
-  )
-  text(cdd.pt$cook.scores[row], cdd.pt$cov.ratios[row], labels=as.character(cdd.pt$ID[row]),cex=.8, col="black")
+  if(length(row)>0) {
+    # Construct plot  
+    plot (cdd.pt$cook.scores[-row], cdd.pt$cov.ratios[-row],
+          type="p",
+          xlab=xlab_text,
+          ylab=ylab_text,
+          main="Case-deletion diagnostics",
+          xlim=c(0,max(cdd.data$cook.scores, na.rm=T)),
+          ylim=c(0,max(cdd.data$cov.ratio, na.rm=T))
+    )
+  } else {
+    plot (cdd.pt$cook.scores, cdd.pt$cov.ratios,
+          type="p",
+          xlab=xlab_text,
+          ylab=ylab_text,
+          main="Case-deletion diagnostics",
+          xlim=c(0,max(cdd.data$cook.scores, na.rm=T)),
+          ylim=c(0,max(cdd.data$cov.ratio, na.rm=T))
+    )
+  }
+  if (length(row)>0) {
+    text(cdd.pt$cook.scores[row], cdd.pt$cov.ratios[row], labels=as.character(cdd.pt$ID[row]),cex=.8, col="black")
+  }
+  if(length(row_red)>0) {
+    text(cdd.pt$cook.scores[row_red], cdd.pt$cov.ratios[row_red], labels=as.character(cdd.pt$ID[row_red]),cex=.8, col="red")
+  }
   abline(h=max(cutoff_cov), lwd=2, lty=3, col="black")
   abline(h=min(cutoff_cov), lwd=2, lty=3, col="black")
   abline(v=cutoff_cook, lwd=2, lty=3, col="black")
