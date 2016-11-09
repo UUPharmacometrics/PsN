@@ -10,5 +10,6 @@ source(paste0(rscripts.directory,"/cdd/cutoff.cov.cook.R"))
 source(paste0(rscripts.directory,"/cdd/delta.ofv.data.R"))
 source(paste0(rscripts.directory,"/cdd/plot.delta.ofv.R"))
 source(paste0(rscripts.directory,"/common/plot.table.R"))
+source(paste0(rscripts.directory,"/cdd/all.infl.indiv.table.R"))
 pdf.cdd(raw.results.file,skipped.id.file,pdf.filename=pdf.filename,markeropt=1,
-        cutoff_cook=0.8,cutoff_cov=2)
+        cutoff_delta.ofv=3.84)
