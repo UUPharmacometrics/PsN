@@ -190,7 +190,7 @@ version:
 	@cd doc; sed -n 's/.*\$version\s*=\s*.\([0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*\).;/\\newcommand\{\\psnversion\}\{\1\}/p' ../lib/PsN.pm >inputs/version.tex
 
 doc/%.pdf: version doc/%.tex
-	@ cd doc; pdflatex $*.tex >/dev/null; biber $* >/dev/null; pdflatex $*.tex >/dev/null; pdflatex $*.tex >/dev/null
+	cd doc; latexmk -pdf -pdflatex="pdflatex -interaction=nonstopmode" -use-make $*.tex
 
 doc: $(PDFFILES) 
 

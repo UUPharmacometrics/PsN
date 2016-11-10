@@ -16,6 +16,8 @@ doc/*.blg
 doc/*.bcf
 doc/*-blx.bib
 doc/*.xml
+doc/*.fdb_latexmk
+doc/*.fls
 development/todo/*.aux
 development/todo/*.log
 development/todo/*.pdf
