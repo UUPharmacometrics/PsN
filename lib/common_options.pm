@@ -628,6 +628,13 @@ EOF
 	When running multiple copies of a model with different data sets, e.g. in a bootstrap,
 	only the first model will be checked.
 
+    If the model contains verbatim Fortran code NMTRAN will not be able to detect undefined variables
+    in abbreviated code. This can potentially lead to errors that are very hard to detect. In this
+    case PsN will try to detect undefined variables in abbreviated code for you. If a variable is
+    suspected to be undefined PsN will print a warning telling the user to double check that the
+    variable is defined. If the variable is defined in verbatim code then the warning will be printed
+    even if all is well, but this information is included in the warning. 
+
 	The nmtran check requires that it is the installation directory to NONMEM that is set in psn.conf, 
 	rather than the full path to an executable script. If the path to a script is given instead
 	of an NM install directory the nmtran check will not be performed.
