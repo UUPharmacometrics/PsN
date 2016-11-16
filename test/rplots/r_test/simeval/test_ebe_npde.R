@@ -20,6 +20,8 @@ for (i in 1:length(directory_and_script)) {
 pdf.file.name <- 'PsN_ebe_npde_plots.pdf'
 model.filename <- "run1.mod"
 iiv.eta.names_1 <- c('ETA(1)','ETA(2)','ETA(3)')
+iiv.eta.names_2 <- c('ETA(2)','ETA(3)')
+iiv.eta.names_3 <- c('ETA(1)','ETA(3)')
 
 
 # iiv.eta.names <- c('ETA(1)','ETA(2)')
@@ -45,6 +47,8 @@ ebe.npde.file_3 <- paste0(files.w.dir,'ebe_npde_NA_NA.csv')
 input_data_1 <- input.data(ebe.npde.file=ebe.npde.file_1,iiv.eta.names=iiv.eta.names_1)
 input_data_2 <- input.data(ebe.npde.file=ebe.npde.file_2,iiv.eta.names=iiv.eta.names_1)
 input_data_3 <- input.data(ebe.npde.file=ebe.npde.file_3,iiv.eta.names=iiv.eta.names_1)
+input_data_4 <- input.data(ebe.npde.file=ebe.npde.file_3,iiv.eta.names=iiv.eta.names_2)
+input_data_5 <- input.data(ebe.npde.file=ebe.npde.file_3,iiv.eta.names=iiv.eta.names_3)
 
 # list_input <- input.data(ebe.npde.file=ebe.npde.file,iiv.eta.names=iiv.eta.names)
 # list_input_a <- input.data(ebe.npde.file=ebe.npde.file_1,iiv.eta.names=iiv.eta.names_a)
@@ -73,6 +77,20 @@ n.subjects_3 <- input_data_3$n.subjects
 ebenpde_obs_3 <- input_data_3$ebenpde_obs
 iiv.eta.names_3 <- input_data_3$iiv.eta.names
 ID_deleted_3 <- input_data_3$ID_deleted
+
+ebenpde_tmp_input_4 <- input_data_4$ebenpde_tmp_input
+ebenpde_tmp_4 <- input_data_4$ebenpde_tmp
+n.subjects_4 <- input_data_4$n.subjects
+ebenpde_obs_4 <- input_data_4$ebenpde_obs
+iiv.eta.names_4 <- input_data_4$iiv.eta.names
+ID_deleted_4 <- input_data_4$ID_deleted
+
+ebenpde_tmp_input_5 <- input_data_5$ebenpde_tmp_input
+ebenpde_tmp_5 <- input_data_5$ebenpde_tmp
+n.subjects_5 <- input_data_5$n.subjects
+ebenpde_obs_5 <- input_data_5$ebenpde_obs
+iiv.eta.names_5 <- input_data_5$iiv.eta.names
+ID_deleted_5 <- input_data_5$ID_deleted
 
 # ebenpde_tmp <- list_input$ebenpde_tmp
 # n.subjects <- list_input$n.subjects
@@ -126,6 +144,20 @@ exp_ebenpde_obs_3 <- data.frame(ETA.1.=c(1.2,-0.98,NA,-0.58),ETA.2.=c(-0.25,0.34
 exp_iiv.eta.names_3 <- c("ETA.1.","ETA.2.","ETA.3.")
 exp_ID_deleted_3 <- c(14,26)
 
+exp_ebenpde_tmp_input_4 <-data.frame(ID=as.integer(c(3,7,9,14,23,26)),STAND_EBE=as.integer(c(0,0,0,0,0,0)),ETA.2.=c(-0.25,0.34,0.15,NA,0.03,NA),ETA.3.=c(0.74,-0.201,NA,NA,NA,NA))
+exp_ebenpde_tmp_4 <- data.frame(ID=as.integer(c(3,7,9,23)),STAND_EBE=as.integer(c(0,0,0,0)),ETA.2.=c(-0.25,0.34,0.15,0.03),ETA.3.=c(0.74,-0.201,NA,NA))
+exp_n.subjects_4 <- 4
+exp_ebenpde_obs_4 <- data.frame(ETA.2.=c(-0.25,0.34,0.15,0.03),ETA.3.=c(0.74,-0.201,NA,NA))
+exp_iiv.eta.names_4 <- c("ETA.2.","ETA.3.")
+exp_ID_deleted_4 <- c(14,26)
+
+exp_ebenpde_tmp_input_5 <-data.frame(ID=as.integer(c(3,7,9,14,23,26)),STAND_EBE=as.integer(c(0,0,0,0,0,0)),ETA.1.=c(1.2,-0.98,NA,NA,-0.58,NA),ETA.3.=c(0.74,-0.201,NA,NA,NA,NA))
+exp_ebenpde_tmp_5 <- data.frame(ID=as.integer(c(3,7,23)),STAND_EBE=as.integer(c(0,0,0)),ETA.1.=c(1.2,-0.98,-0.58),ETA.3.=c(0.74,-0.201,NA))
+exp_n.subjects_5 <- 3
+exp_ebenpde_obs_5 <- data.frame(ETA.1.=c(1.2,-0.98,-0.58),ETA.3.=c(0.74,-0.201,NA))
+exp_iiv.eta.names_5 <- c("ETA.1.","ETA.3.")
+exp_ID_deleted_5 <- c(9,14,26)
+
 
 # exp_ebenpde_tmp <- data.frame(ID=as.integer(c(2,11,21,55,56)),STAND_EBE=as.integer(c(0,0,0,0,0)),ETA.1.=c(-1.558,0.54,0.73,0,-2.037),ETA.2.=c(-0.25,0,0.15,-0.46,-0.17))
 # exp_n.subjects <- 5
@@ -173,7 +205,19 @@ test_that("If function input.data works as expected",{
     expect_equal(exp_n.subjects_3,n.subjects_3)
     expect_equal(exp_ebenpde_obs_3,ebenpde_obs_3)
     expect_equal(exp_iiv.eta.names_3,iiv.eta.names_3)
+    
+    expect_equal(exp_ebenpde_tmp_input_4,ebenpde_tmp_input_4)
+    expect_equal(exp_ebenpde_tmp_4,ebenpde_tmp_4)
+    expect_equal(exp_n.subjects_4,n.subjects_4)
+    expect_equal(exp_ebenpde_obs_4,ebenpde_obs_4)
+    expect_equal(exp_iiv.eta.names_4,iiv.eta.names_4)
   
+    expect_equal(exp_ebenpde_tmp_input_5,ebenpde_tmp_input_5)
+    expect_equal(exp_ebenpde_tmp_5,ebenpde_tmp_5)
+    expect_equal(exp_n.subjects_5,n.subjects_5)
+    expect_equal(exp_ebenpde_obs_5,ebenpde_obs_5)
+    expect_equal(exp_iiv.eta.names_5,iiv.eta.names_5)
+    
 #   expect_equal(exp_ebenpde_tmp,ebenpde_tmp)
 #   expect_equal(exp_n.subjects,n.subjects)
 #   expect_equal(exp_ebenpde_obs,ebenpde_obs)
@@ -203,6 +247,12 @@ test_that("If function input.data works as expected",{
 #   expect_equal(exp_ebenpde_obs_4,ebenpde_obs_4)
 #   expect_equal(exp_iiv.eta.names_4,iiv.eta.names_4)
 #   expect_equal(exp_case,case_4)
+})
+context("Simeval, ebe npde, expect warning messages from function input.data")
+test_that("Expect warnings from function input.data",{
+  expect_message(input.data(ebe.npde.file=ebe.npde.file_3,iiv.eta.names=iiv.eta.names_1))
+  expect_message(input.data(ebe.npde.file=ebe.npde.file_3,iiv.eta.names=iiv.eta.names_2))
+  expect_message(input.data(ebe.npde.file=ebe.npde.file_3,iiv.eta.names=iiv.eta.names_3))
 })
 
 # #.................................  (2) Test two.data.cases.R  ...............................   

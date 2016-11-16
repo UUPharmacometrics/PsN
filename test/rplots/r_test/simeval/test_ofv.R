@@ -23,6 +23,8 @@ raw.results.file <- paste0(files.w.dir,'raw_results_run1.csv')
 iofv.file <- paste0(files.w.dir,'summary_iofv.csv')
 all.iofv.file <- paste0(files.w.dir,'raw_all_iofv.csv')
 all.iofv.file_1 <- paste0(files.w.dir,'raw_all_iofv_1.csv')
+all.iofv.file_3 <- paste0(files.w.dir,'raw_all_iofv_3.csv')
+all.iofv.file_4 <- paste0(files.w.dir,'raw_all_iofv_4.csv')
 
 ###################################     3. Make tests     ###################################
 
@@ -88,6 +90,7 @@ test_that("If function i_ofv_npde works as expected",{
 #..........................  (3) Test function i_ofv_res  ...................................
 out_i_ofv_res <- i_ofv_res(all.iofv.file=all.iofv.file_1,n.subjects=4,samples=3)
 out_i_ofv_res_a <- i_ofv_res(all.iofv.file=all.iofv.file,n.subjects=4,samples=3)
+out_i_ofv_res_2 <- i_ofv_res(all.iofv.file=all.iofv.file_3,n.subjects=4,samples=3)
 
 # unlist information
 all.iOFV_sim <- out_i_ofv_res$all.iOFV_sim
@@ -100,11 +103,28 @@ outlier_ID <- out_i_ofv_res$outlier_ID
 vector_text <- out_i_ofv_res$vector_text
 ofv_outliertable <- round(out_i_ofv_res$ofv_outliertable,6)
 outlier_median <- round(out_i_ofv_res$outlier_median,6)
+n.subjects_1 <- out_i_ofv_res$n.subjects
+ID_deleted_ofv <- out_i_ofv_res$ID_deleted_ofv
 
 outlier_ID_a <- out_i_ofv_res_a$outlier_ID
 ofv_outliertable_a <- out_i_ofv_res_a$ofv_outliertable
 outlier_median_a <- out_i_ofv_res_a$outlier_median
 vector_text_a <- out_i_ofv_res_a$vector_text
+n.subjects_a <- out_i_ofv_res_a$n.subjects
+ID_deleted_ofv_a <- out_i_ofv_res_a$ID_deleted_ofv
+
+all.iOFV_sim_2 <- out_i_ofv_res_2$all.iOFV_sim
+iOFV_res_2 <- round(out_i_ofv_res_2$iOFV_res,6)
+x_2 <- round(out_i_ofv_res_2$result$x,6)
+ix_2 <- out_i_ofv_res_2$result$ix
+iOFV_res_ord_2 <- round(out_i_ofv_res_2$iOFV_res_ord,6)
+id_sorted_2 <- out_i_ofv_res_2$id_sorted
+outlier_ID_2 <- out_i_ofv_res_2$outlier_ID
+vector_text_2 <- out_i_ofv_res_2$vector_text
+ofv_outliertable_2 <- round(out_i_ofv_res_2$ofv_outliertable,6)
+outlier_median_2 <- round(out_i_ofv_res_2$outlier_median,6)
+n.subjects_2 <- out_i_ofv_res_2$n.subjects
+ID_deleted_ofv_2 <- out_i_ofv_res_2$ID_deleted_ofv
 
 # Create expected data
 exp_all.iOFV_sim <- data.frame(ID=as.integer(c(1,4,13,20)),ORIGINAL=c(2.57,-7.4,-25.24,3.9),
@@ -119,11 +139,31 @@ exp_outlier_ID <- c(13)
 exp_vector_text <- matrix(c("13","","",""),nrow = 4,ncol = 1)
 exp_ofv_outliertable <- data.frame(ID=c(13),MEDIAN=c(-4.758828))
 exp_outlier_median <- c(-4.758828)
+exp_n.subjects_1 <- 4
+exp_ID_deleted_ofv <- NULL
 
 exp_outlier_ID_a <- NULL
 exp_ofv_outliertable_a <- data.frame()
 exp_outlier_median_a <- NULL
 exp_vector_text_a <- matrix(c("","","",""),nrow = 4,ncol = 1)
+exp_n.subjects_a <- 4
+exp_ID_deleted_ofv_a <- NULL
+
+exp_all.iOFV_sim_2 <- data.frame(ID=as.integer(c(1,13,20)),ORIGINAL=c(34.57,-25.24,3.9),
+                               sample.1=c(-1.2,-7.13,5.74),sample.2=c(-2,-4.98,-2.11),
+                               sample.3=c(4.68,1.08,3.5))
+exp_iOFV_res_2 <- matrix(c(9.806025,10.025338,8.194076,-4.253819,-4.758828,-6.182249,-0.455022,1.486239,0.098918),nrow=3,ncol=3)
+exp_x_2 <- c(-4.758828,0.098918,9.806025)
+exp_ix_2 <- c(2,3,1)
+exp_iOFV_res_ord_2 <- matrix(c(-4.253819,-4.758828,-6.182249,-0.455022,1.486239,0.098918,9.806025,10.025338,8.194076),nrow=3,ncol=3)
+exp_id_sorted_2 <- matrix(c(13,20,1),3,1)
+exp_outlier_ID_2 <- c(13,1)
+exp_vector_text_2 <- matrix(c("13","","1"),nrow = 3,ncol = 1)
+exp_ofv_outliertable_2 <- data.frame(ID=c(13,1),MEDIAN=c(-4.758828,9.806025))
+exp_outlier_median_2 <- c(-4.758828,9.806025)
+exp_n.subjects_2 <- 3
+exp_ID_deleted_ofv_2 <- 4
+
 # Compare expected data with real data
 context("Simeval, ofv, function i_ofv_res")
 test_that("If function i_ofv_res works as expected",{
@@ -137,10 +177,32 @@ test_that("If function i_ofv_res works as expected",{
   expect_equal(exp_vector_text,vector_text)
   expect_equal(exp_ofv_outliertable,ofv_outliertable)
   expect_equal(exp_outlier_median,outlier_median)
+  expect_equal(exp_n.subjects_1,n.subjects_1)
+  expect_equal(exp_ID_deleted_ofv,ID_deleted_ofv)
   expect_equal(exp_outlier_ID_a,outlier_ID_a)
   expect_equal(exp_ofv_outliertable_a,ofv_outliertable_a)
   expect_equal(exp_outlier_median_a,outlier_median_a)
   expect_equal(exp_vector_text_a,vector_text_a)
+  expect_equal(exp_n.subjects_a,n.subjects_1)
+  expect_equal(exp_ID_deleted_ofv_a,ID_deleted_ofv)
+  expect_equal(exp_all.iOFV_sim_2,all.iOFV_sim_2)
+  expect_equal(exp_iOFV_res_2,iOFV_res_2)
+  expect_equal(exp_x_2,x_2)
+  expect_equal(exp_ix_2,ix_2)
+  expect_equal(exp_iOFV_res_ord_2,iOFV_res_ord_2)
+  expect_equal(exp_id_sorted_2,id_sorted_2)
+  expect_equal(exp_outlier_ID_2,outlier_ID_2)
+  expect_equal(exp_vector_text_2,vector_text_2)
+  expect_equal(exp_ofv_outliertable_2,ofv_outliertable_2)
+  expect_equal(exp_outlier_median_2,outlier_median_2)
+  expect_equal(exp_n.subjects_2,n.subjects_2)
+  expect_equal(exp_ID_deleted_ofv_2,ID_deleted_ofv_2)
+})
+
+context("Simeval, ofv, expect warning messages from function i_ofv_res")
+test_that("Expect warnings from function i_ofv_res",{
+  expect_message(i_ofv_res(all.iofv.file=all.iofv.file_3,n.subjects=4,samples=3))
+  expect_message(i_ofv_res(all.iofv.file=all.iofv.file_4,n.subjects=4,samples=3))
 })
 
 #..........................  (4) Test function i_ofv_ppc  ...................................
