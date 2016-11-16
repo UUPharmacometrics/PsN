@@ -1,8 +1,9 @@
-pdf_outl.infl.indiv <- function(all.iofv.file,n.subjects,samples,
-                                raw.results.file,skipped.id.file,pdf.filename) {
+pdf_outl.infl.indiv <- function(all.iofv.file,n.subjects,samples,raw.results.file,skipped.id.file,
+                                residual.outliers.file,ebe.npde.file,eta.names,
+                                pdf.filename,cutoff_cook,cutoff_delta.ofv) {
   # Compare outliers and influential individuals
   outdata <- influential_outliers_data(all.iofv.file,n.subjects,samples,
-                                       raw.results.file,skipped.id.file) # use function
+                                       raw.results.file,skipped.id.file,cutoff_delta.ofv) # use function
   # unlist
   table_for_plot <- outdata$table_for_plot
   ID <- outdata$ID
@@ -11,16 +12,84 @@ pdf_outl.infl.indiv <- function(all.iofv.file,n.subjects,samples,
   infl_not_outl <- outdata$infl_not_outl
   outl_not_infl <- outdata$outl_not_infl
   not_outl_not_infl <- outdata$not_outl_not_infl
-  fail_ID_cdd <- outdata$fail_ID_cdd
-  deleted_outliers <- outdata$deleted_outliers
+  fail_ID_text <- outdata$fail_ID_text
+  deleted_outliers_text <- outdata$deleted_outliers_text
+  row_outl_not_infl <- outdata$row_outl_not_infl
+  row_infl_not_outl <- outdata$row_infl_not_outl
   
   # create pdf file
   pdf(file=pdf.filename,width=10, height=7)
   # plot points, mark outliers and influential individuals ir red
-  plot_infl_outl_data(table_for_plot,ID,row,fail_ID_cdd,deleted_outliers)
+  plot_infl_outl_data(table_for_plot,ID,row,row_outl_not_infl,row_infl_not_outl,fail_ID_text,deleted_outliers_text,cutoff_delta.ofv)
   
   # plot summary about how many are only influential, only outliers, both and none.
   plot_summary(infl_outl,infl_not_outl,outl_not_infl,not_outl_not_infl)
   
+  ####################################################     cook.score and EBE NPDE    ##########################################################
+  # u distribution (in Perl calculated statistics::Distributions::udistr(1/successful.samples))
+  outlying_criteria <- round(qnorm(1/samples),4)
+  
+  list_data <- ebe_cook.score_data(ebe.npde.file,eta.names,raw.results.file,skipped.id.file,cutoff_cook)
+  #unlist
+  par_table_for_plot <- list_data$table_for_plot
+  par_ID <- list_data$ID
+  par_row <- list_data$row
+  par_infl_outl <- list_data$infl_outl
+  par_infl_not_outl <- list_data$infl_not_outl
+  par_outl_not_infl <- list_data$outl_not_infl
+  par_not_outl_not_infl <- list_data$not_outl_not_infl
+  par_row_infl_not_outl <- list_data$row_infl_not_outl
+  par_row_outl_not_infl <- list_data$row_outl_not_infl
+  # plot points, mark outliers and influential individuals ir red
+  plot_param_infl_outl_data(par_table_for_plot,par_ID,par_row,par_row_outl_not_infl,par_row_infl_not_outl,cutoff_cook,outlying_criteria)
+  
+  # plot summary about how many are only influential, only outliers, both and none.
+  plot_summary(par_infl_outl,par_infl_not_outl,par_outl_not_infl,par_not_outl_not_infl)
+  
+  ###################################################   summary ourlier influential indiv table  ###########################################################
+  table_list <- outlier_infl_table(all.iofv.file,n.subjects,samples,ebe.npde.file,eta.names,outlying_criteria,
+                     residual.outliers.file,raw.results.file,skipped.id.file,cutoff_delta.ofv)
+  all_infl_indiv_table <- table_list$all_infl_indiv_table
+  all_outlier_table <- table_list$all_outlier_table
+  outl_infl_table <- table_list$outl_infl_table
+  
+  library(gridExtra)
+
+  # draw the table 
+  if((nrow(outl_infl_table) == 1) && (ncol(outl_infl_table)==1)) {
+    plot.table(outl_infl_table)
+  } else {
+    library(grid)
+    library(gridExtra)
+    total_rows_per_page <- 20
+    start_row <- 1
+    if (total_rows_per_page > nrow(outl_infl_table)) {
+      end_row <- nrow(outl_infl_table)
+    } else {
+      end_row <- total_rows_per_page
+    }
+    
+    for (i in 1:ceiling(nrow(outl_infl_table)/total_rows_per_page)){
+      outl_infl_table_part <- outl_infl_table[start_row:end_row,]
+      start_row <- end_row + 1
+      if((total_rows_per_page + end_row) < nrow(outl_infl_table)){
+        end_row <- total_rows_per_page + end_row
+      }else {
+        end_row <- nrow(outl_infl_table)
+      }
+      tab <- tableGrob(outl_infl_table_part, rows=NULL)
+      header <- tableGrob(outl_infl_table_part[1, 1:3], rows=NULL, cols=c("","SIMEVAL outliers", "CDD influentials"))  # extra header
+      
+      jn <- combine(header[1,], tab, along=2)
+      # jn$widths <- rep(max(jn$widths), length(jn$widths)) # make column widths equal
+   
+      # change the relevant rows of gtable
+      jn$layout[1:6 , c("l","r")] <- list(c(1,2,6),c(1,5,8))
+      
+      grid.newpage()
+      grid.draw(jn)
+    }
+  }
+
   dev.off()
 }
