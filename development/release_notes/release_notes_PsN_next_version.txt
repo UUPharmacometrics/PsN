@@ -222,6 +222,7 @@ ___boot_scm___
 
 -  Handle ID:s without observations, sporadic zero-valued EBE:s
 -  New rplots
+-  Possibility to rerun the post processing without rerunning NONMEM by using -dir
 
    ___update_inits___
 

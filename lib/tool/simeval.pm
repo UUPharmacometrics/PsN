@@ -41,6 +41,7 @@ has 'vpctab_filenames' => ( is => 'rw', isa => 'ArrayRef', default => sub { [] }
 has 'vpc_result_files' => ( is => 'rw', isa => 'ArrayRef', default => sub { [] } );
 has 'vpc_names' => ( is => 'rw', isa => 'ArrayRef', default => sub { [] } );
 has 'mdv' => ( is => 'rw', isa => 'Str', default => '' );
+has 'summarize' => ( is => 'rw', isa => 'Bool', default => 0 );     # This is set if this is a rerun in previous rundir.
 
 
 our $iofv_file = 'summary_iofv.csv';
@@ -104,6 +105,11 @@ sub modelfit_setup
 							  model_number => { isa => 'Int', optional => 1 }
 		);
 	my $model_number = $parm{'model_number'};
+
+    # Skip if the simeval has been run before
+    if (-e 'original.lst') {
+        $self->summarize(1);
+    }
 
 	my $model = $self->models->[$model_number-1];
 	my ( @seed, $new_datas, $skip_ids, $skip_keys, $skip_values );
@@ -257,7 +263,9 @@ sub modelfit_setup
 		ui -> print( category => 'simeval',
 					 message  => "Running original model to get final parameter estimates for simulation" );
 
-		$run_orig -> run;
+        if (!$self->summarize) {
+		    $run_orig -> run;
+        }
 		$self->first_callback(0);
 
 		unless (defined $run_orig->raw_results) {
@@ -416,10 +424,15 @@ sub modelfit_setup
 
 	my $typerun = 'evaluations';
 	$typerun = 'reestimations' if $self->reminimize;
-	ui -> print( category => 'simeval',
-				 message  => "Running simulations and $typerun" );
+    if (!$self->summarize) {
+	    ui->print(category => 'simeval', message  => "Running simulations and $typerun");
+    } else {
+        ui->print(category => 'simeval', message => 'Summarizing results of previous run');
+    }
 	$self->tools([]) unless defined $self->tools;
-	push( @{$self->tools}, $run_sim);
+    if (!$self->summarize) {
+	    push(@{$self->tools}, $run_sim);
+    }
 }
 
 sub formatfloat
@@ -477,12 +490,10 @@ sub modelfit_analyze
 		);
 	my $model_number = $parm{'model_number'};
 
-	unless (defined $self->tools->[0]->raw_results){
-		croak("Running simulations failed. Check output in ".$self->tools->[0]->directory);
+	if (not $self->summarize and not defined $self->tools->[0]->raw_results) {
+	    croak("Running simulations failed. Check output in ".$self->tools->[0]->directory);
 	}
 
-
-	
 	my $have_mdv = 0;
 	if (length($self->mdv)>0){
 		$have_mdv = 1 ;
