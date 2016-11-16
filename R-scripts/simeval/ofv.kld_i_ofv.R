@@ -115,7 +115,7 @@ kld_i_ofv <- function(all.iofv.file,n.subjects,samples,n) {
   if(KLD_obs > KLD_sim_sort[samples]){
     newxlim <- c(KLD_sim_sort[1],KLD_obs)}
   if(KLD_obs < KLD_sim_sort[1]){
-    newxlim <- c(pOFV_obs,KLD_sim_sort[samples])}
+    newxlim <- c(KLD_obs,KLD_sim_sort[samples])}
   
 out <- list(all.iOFV_sim=all.iOFV_sim,
             iOFV_obs=iOFV_obs,
