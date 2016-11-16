@@ -16,11 +16,11 @@ This document is mainly intended for PsN developers and testers. It describes ho
 \item Install git \cite{git}. 
 \item Do git clone in a suitable place on your computer.
 \begin{verbatim}
-git clone git://git.code.sf.net/p/psn/PsN4 PsN4
+git clone https://github.com/UppsalaUniversityPharmacometrics/PsN.git PsN
 \end{verbatim}
-\item Change directory to PsN4.
+\item Change directory to PsN.
 \begin{verbatim}
-cd PsN4
+cd PsN
 \end{verbatim}
 \item Run commands 
 \begin{verbatim}
@@ -44,15 +44,15 @@ perl setup.pl
 \item Do git clone in a suitable place on your computer. On linux:
 \begin{verbatim}
 cd ~
-git clone git://git.code.sf.net/p/psn/PsN4 PsN4
+git clone https://github.com/UppsalaUniversityPharmacometrics/PsN.git PsN
 
 \end{verbatim}
 \noindent Then do the following (assuming linux):
-\item Add the PsN4/bin directory to your \$PATH variable, so that you can call PsN scripts without including the path.
+\item Add the PsN/bin directory to your \$PATH variable, so that you can call PsN scripts without including the path.
 \item Unless you already have a psn.conf file in the location set in PsN.pm, put one there. 
-You can use PsN4/lib/psn.conf\_template as a template and just fill in the [nm\_version] section,
+You can use PsN/lib/psn.conf\_template as a template and just fill in the [nm\_version] section,
 according to psn\_configuration.pdf.
-\item Make sure you have the required Perl modules listed in PsN4/README.txt installed.
+\item Make sure you have the required Perl modules listed in PsN/README.txt installed.
 \end{itemize}
 
 \section{External contributions to PsN}
@@ -73,7 +73,7 @@ The more important the feature you are contributing is the more help with the ab
 
 
 \section{Testing}
-When installing PsN the user has the option to install the test suite in a specified directory. The default directory is in the lib directory. If working from a cloned git repository all tests are in the PsN4/test directory. Unit tests are in unit subdirectory and system tests in the system subdirectory.  
+When installing PsN the user has the option to install the test suite in a specified directory. The default directory is in the lib directory. If working from a cloned git repository all tests are in the PsN/test directory. Unit tests are in unit subdirectory and system tests in the system subdirectory.  
 Unit tests are defined as tests that do not involve \emph{running} NONMEM, while system tests are tests involving running NONMEM.  To be able to run the tests the package Test::Exception has to be installed on some systems.
 Tests can be run by using the command \verb|prove| (which is bundled with perl). 
 
@@ -94,7 +94,7 @@ prove -r system :: -silent
 
 Tests can be run from any directory by specifying a path:
 \begin{verbatim}
-prove -r PsN4/test/unit
+prove -r PsN/test/unit
 \end{verbatim}
 
 Individual test scripts can be run with e.g. 
@@ -216,7 +216,7 @@ Currently does not upload bug\_list\_at\_next\_release.
 \input{inputs/rplots_development.tex}
 
 \section{nmoutput2so}
-Clone the PsN4 git repository and cd into your clone directory (See chapter 2). A standalone version of nmoutput2so can be built with \verb|make nmoutput2so|. A zip file called nmoutput2so.zip will be created. This can be unzipped
+Clone the PsN git repository and cd into your clone directory (See chapter 2). A standalone version of nmoutput2so can be built with \verb|make nmoutput2so|. A zip file called nmoutput2so.zip will be created. This can be unzipped
 to any directory and is runnable from that directory.
 Perl module XML::LibXML must be installed before running nmoutput2so.
 
