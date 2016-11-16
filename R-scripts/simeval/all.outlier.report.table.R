@@ -1,4 +1,4 @@
-all.outlier.report.table <- function(ofv_outliers,ebe.npde_outliers,cwres.iwres_outliers,ID_deleted) {
+all.outlier.report.table <- function(ofv_outliers,ebe.npde_outliers,cwres.iwres_outliers,ID_deleted_ebe,ID_deleted_ofv) {
 
   col_amount <- 5
   # ID numbers of all ourliers if they exist
@@ -30,6 +30,13 @@ all.outlier.report.table <- function(ofv_outliers,ebe.npde_outliers,cwres.iwres_
       all_outlier_table[n,col_nr] <- id_nr
       
       col_nr <- col_nr + 1
+      #ofv deleted id if exists
+      if(length(ID_deleted_ofv)>0) {
+        if(any(ID_deleted_ofv %in% id_nr)) {
+          all_outlier_table[n,col_nr] <- "NA"
+        }
+      }
+      
       # Add OFV values
       if (exists("ofv_ID")) {
         if (any(ofv_ID %in% id_nr)) {
@@ -40,8 +47,8 @@ all.outlier.report.table <- function(ofv_outliers,ebe.npde_outliers,cwres.iwres_
       
       col_nr <- col_nr + 1
       #ebe deleted id if exists
-      if(length(ID_deleted)>0) {
-        if(any(ID_deleted %in% id_nr)) {
+      if(length(ID_deleted_ebe)>0) {
+        if(any(ID_deleted_ebe %in% id_nr)) {
           all_outlier_table[n,col_nr] <- "NA"
         }
       }

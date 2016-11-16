@@ -15,6 +15,19 @@ input.data <- function(ebe.npde.file,iiv.eta.names) {
   if (any(na_each_row==n_eta)) {
     row_delete <- which(na_each_row == n_eta)
     ID_deleted <- ebenpde_tmp_input$ID[row_delete]
+    if(length(ID_deleted) > 1) {
+      ID_deleted_text <- c()
+      for (i in 1:length(ID_deleted)) {
+        if(i == 1) {
+          ID_deleted_text <- ID_deleted[i]
+        } else {
+          ID_deleted_text <- paste0(ID_deleted_text,", ",ID_deleted[i])
+        }
+      }
+      message(paste0("WARNING! Removed individuals from csv file \"",ebe.npde.file,"\". No data for ID numbers ",ID_deleted_text,"."))
+    } else {
+      message(paste0("WARNING! Removed individual from csv file \"",ebe.npde.file,"\". No data for ID number ",ID_deleted,"."))
+    }
     ebenpde_tmp <- ebenpde_tmp_input[-row_delete,]
     rownames(ebenpde_tmp) <- NULL
   }else {

@@ -50,7 +50,9 @@ pdf.simeval <- function(ebe.npde.file,iiv.eta.names,iov.eta.names,outlying_crite
   #3. iOFV RES
   list_i_ofv_res <- i_ofv_res(all.iofv.file,n.subjects,samples)# calculation
   # for all outlier table
-  ofv_outliers <- list_i_ofv_res$ofv_outliertable 
+  ofv_outliers <- list_i_ofv_res$ofv_outliertable
+  n.subjects <- list_i_ofv_res$n.subjects
+  ID_deleted_ofv <- list_i_ofv_res$ID_deleted_ofv
   
   # Make a boxplot
   boxplot_i_ofv_res <- function(list_i_ofv_res,n.subjects) {
@@ -182,7 +184,7 @@ pdf.simeval <- function(ebe.npde.file,iiv.eta.names,iov.eta.names,outlying_crite
     n.subjects <- input_data$n.subjects
     ebenpde_obs <- input_data$ebenpde_obs
     eta_names <- input_data$iiv.eta.names
-    ID_deleted <- input_data$ID_deleted
+    ID_deleted_ebe <- input_data$ID_deleted
     
     #.........................................(2)ebe_npde_summary......................... 
     # create EBE npde summary statistics table
@@ -202,7 +204,6 @@ pdf.simeval <- function(ebe.npde.file,iiv.eta.names,iov.eta.names,outlying_crite
       # Calsulate empirical distance
       list_emp_distance <- empirical.distance(ebenpde_obs,n.subjects)
       emp_distance <- list_emp_distance$emp_distance
-      ID_deleted <- list_emp_distance$ID_deleted
       #...........................................(4)out_tables......................................................   
       # Sort emp_distance values and remember rows, where they were in the beginning, 
       # create a vector of probability,
@@ -392,7 +393,7 @@ pdf.simeval <- function(ebe.npde.file,iiv.eta.names,iov.eta.names,outlying_crite
   plot.table(outlierframe)
   
   ########################################   ALL OUTLIERS REPORT TABLE   ##################################################
-  all_outlier_table <- all.outlier.report.table(ofv_outliers,ebe.npde_outliers=ebe.npde_outliers_iiv,cwres.iwres_outliers,ID_deleted)
+  all_outlier_table <- all.outlier.report.table(ofv_outliers,ebe.npde_outliers=ebe.npde_outliers_iiv,cwres.iwres_outliers,ID_deleted_ebe,ID_deleted_ofv)
   
   # draw the table 
   if((nrow(all_outlier_table) == 1) && (ncol(all_outlier_table)==1)) {

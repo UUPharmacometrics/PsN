@@ -2,6 +2,37 @@ i_ofv_res <- function(all.iofv.file,n.subjects,samples) {
 
   # iOFV RES
   all.iOFV_sim <- read.csv(all.iofv.file)
+  
+  # delete individuals with all 0 values (save ID numbers with deleted individuals)
+  deleted_rows <- c()
+  ID_deleted_ofv <- c()
+  for (i in 1:n.subjects) {
+    if(all(all.iOFV_sim[i,-1] == 0)) {
+      deleted_rows <- c(deleted_rows,i)
+      ID_deleted_ofv <- c(ID_deleted_ofv,all.iOFV_sim$ID[i])
+    }
+  }
+  
+  #print warning messages
+  if(length(deleted_rows) > 0) {
+    if(length(ID_deleted_ofv) > 1) {
+      ID_deleted_ofv_text <- c()
+      for (i in 1:length(ID_deleted_ofv)) {
+        if(i == 1) {
+          ID_deleted_ofv_text <- ID_deleted_ofv[i]
+        } else {
+          ID_deleted_ofv_text <- paste0(ID_deleted_ofv_text,", ",ID_deleted_ofv[i])
+        }
+      }
+      message(paste0("WARNING! Removed individuals from csv file \"",all.iofv.file,"\". No data for ID numbers ",ID_deleted_ofv_text,"."))
+    } else {
+      message(paste0("WARNING! Removed individual from csv file \"",all.iofv.file,"\". No data for ID number ",ID_deleted_ofv,"."))
+    }
+    all.iOFV_sim <- all.iOFV_sim[-deleted_rows,]
+    rownames(all.iOFV_sim ) <- NULL
+    n.subjects <- n.subjects - length(deleted_rows)
+  }
+  
   iOFV_obs <- all.iOFV_sim$ORIGINAL
   
   #find res medians and sort them
@@ -53,6 +84,8 @@ i_ofv_res <- function(all.iofv.file,n.subjects,samples) {
               outlier_ID=outlier_ID,
               ofv_outliertable=ofv_outliertable,
               outlier_median=outlier_median,
-              vector_text=vector_text)
+              vector_text=vector_text,
+              n.subjects=n.subjects,
+              ID_deleted_ofv=ID_deleted_ofv)
   return(out)
 }
