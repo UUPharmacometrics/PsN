@@ -1,4 +1,7 @@
-input.data <- function(ebe.npde.file,iiv.eta.names) {
+input.data <- function(ebe.npde.file,iiv.eta.names,show.warning) {
+  if(missing(show.warning)){
+    show.warning <- TRUE
+  }
   # rename ETA(n) to ETA.n. because in dataframe names of ETA columns are with dots
   iiv.eta.names <- gsub("\\(",".",iiv.eta.names)
   iiv.eta.names <- gsub("\\)",".",iiv.eta.names)
@@ -24,9 +27,13 @@ input.data <- function(ebe.npde.file,iiv.eta.names) {
           ID_deleted_text <- paste0(ID_deleted_text,", ",ID_deleted[i])
         }
       }
-      message(paste0("WARNING! Removed individuals from csv file \"",ebe.npde.file,"\". No data for ID numbers ",ID_deleted_text,"."))
+      if(show.warning){
+        message(paste0("WARNING! Removed individuals from csv file \"",ebe.npde.file,"\". No data for ID numbers ",ID_deleted_text,"."))
+      }
     } else {
-      message(paste0("WARNING! Removed individual from csv file \"",ebe.npde.file,"\". No data for ID number ",ID_deleted,"."))
+      if(show.warning) {
+        message(paste0("WARNING! Removed individual from csv file \"",ebe.npde.file,"\". No data for ID number ",ID_deleted,"."))
+      }
     }
     ebenpde_tmp <- ebenpde_tmp_input[-row_delete,]
     rownames(ebenpde_tmp) <- NULL

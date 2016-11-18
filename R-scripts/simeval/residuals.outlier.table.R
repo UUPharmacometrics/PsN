@@ -1,7 +1,7 @@
 outlier.table <- function(residual.outliers.file) {
   outlierframe <- read.csv(residual.outliers.file)
   if(length(outlierframe$ID)<1){
-    outlierframe <- data.frame(C = c("No outliers detected"))
+    outlierframe <- data.frame(C = c("No residual outliers detected"))
     names(outlierframe) <- NULL
     outliers_count <- data.frame(ID=c(),OUTLIERS.IWRES=c(),OUTLIERS.CWRES=c())
   } else {

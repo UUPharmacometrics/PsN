@@ -56,7 +56,7 @@ all.outlier.report.table <- function(ofv_outliers,ebe.npde_outliers,cwres.iwres_
       if (exists("ebe.npde_ID")) {
         if (any(ebe.npde_ID %in% id_nr)) {
           ebe.npde_value_row <- which(ebe.npde_ID == id_nr)
-          all_outlier_table[n,col_nr] <- round(ebe.npde_outliers[ebe.npde_value_row,2],3)
+          all_outlier_table[n,col_nr] <- ebe.npde_outliers[ebe.npde_value_row,2]
         }
       }
       
@@ -75,7 +75,7 @@ all.outlier.report.table <- function(ofv_outliers,ebe.npde_outliers,cwres.iwres_
     all_outlier_table <- as.data.frame(all_outlier_table)
     # save as character
     all_outlier_table <- data.frame(lapply(all_outlier_table, as.character), stringsAsFactors=FALSE) 
-    colnames(all_outlier_table) <- c("ID","OFV outliers (SD)","EBE NPDE outliers","IWRES outliers","CWRES outliers")
+    colnames(all_outlier_table) <- c("ID","OFV outliers (SD)","EBE NPDE outliers (ETA numbers)","IWRES outliers","CWRES outliers")
   } else {
     all_outlier_table <- data.frame(C = c("No outliers detected"))
     names(all_outlier_table) <- NULL
