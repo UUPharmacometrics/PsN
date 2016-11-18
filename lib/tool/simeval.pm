@@ -42,6 +42,7 @@ has 'vpc_result_files' => ( is => 'rw', isa => 'ArrayRef', default => sub { [] }
 has 'vpc_names' => ( is => 'rw', isa => 'ArrayRef', default => sub { [] } );
 has 'mdv' => ( is => 'rw', isa => 'Str', default => '' );
 has 'summarize' => ( is => 'rw', isa => 'Bool', default => 0 );     # This is set if this is a rerun in previous rundir.
+has 'skipped_residuals' => ( is => 'rw', isa => 'Bool', default => 0);  # Will be set to true if residuals were skipped
 
 
 our $iofv_file = 'summary_iofv.csv';
@@ -502,7 +503,7 @@ sub modelfit_analyze
 		$have_mdv = 1 ;
 	}
 
-	my ($succ_samp,$subjects) = simeval_analyze(have_mdv => $have_mdv,
+	my ($succ_samp, $subjects, $skipped_residuals) = simeval_analyze(have_mdv => $have_mdv,
 												have_iwres => $self->have_iwres,
 												gls_data_file => $self->gls_data_file,
 												simeval_all_table_files => $self->all_table_files,
@@ -516,6 +517,7 @@ sub modelfit_analyze
 		);
 	$self->successful_samples($succ_samp);
 	$self->subjects($subjects);
+    $self->skipped_residuals($skipped_residuals);
 }
 
 sub simeval_analyze
@@ -553,6 +555,7 @@ sub simeval_analyze
 	my $errmess;
 	my $ret_subjects;
 	my $ret_successful_samples;
+    my $skipped_residuals = 0;
 
 	my $commaMDV = '';
 	if ($have_mdv){
@@ -576,6 +579,20 @@ sub simeval_analyze
 					  message => "\nError residuals: original residuals table file not found, residual results cannot be computed\n");
 			last;
 		}
+        # Check if CWRES is not all zeros else skip residuals computation
+        my $cwres_column = $original_nmtable->tables->[0]->columns->[$original_nmtable->tables->[0]->header->{'CWRES'}];
+        $skipped_residuals = 1;
+        for my $a (@$cwres_column) {
+            if ($a != 0) {
+                $skipped_residuals = 0;
+                last;
+            }
+        }
+        if ($skipped_residuals) {
+            ui->print(category => 'all', message => "\nNo CWRES: Skipping residuals computations\n");
+            last;
+        }
+
 		my @found_files = ();
 		foreach my $file (@{$simeval_all_table_files}) {
 			push(@found_files,$file) if (-e $file);
@@ -1031,7 +1048,7 @@ sub simeval_analyze
 		}
 		last; #must break while here
 	}
-	return ($ret_successful_samples,$ret_subjects);
+	return ($ret_successful_samples, $ret_subjects, $skipped_residuals);
 }
 
 sub _modelfit_raw_results_callback

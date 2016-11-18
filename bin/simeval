@@ -222,34 +222,35 @@ push(@{$simeval->vpctab_filenames},$vpc->vpctab_filename);
 push(@{$simeval->vpc_result_files},$vpc->directory.$vpc->results_file);
 push(@{$simeval->vpc_names},'DV vs PRED');
 
-$vpc = tool::npc->new( eval( $common_options::parameters ),
-					   models	     => [ $model ],
-					   directory => $simeval->directory.'/vpc_cwres_vs_idv',
-					   samples => $options{'samples'},
-					   orig_table => $simeval->all_table_files->[0],
-					   sim_table => \@array,
-					   idv => $simeval->idv,
-					   dv => 'CWRES',
-					   top_tool => 1,
-					   auto_bin_mode => 'auto_equal_count',
-					   is_vpc             => 1,
-					   directory_name_prefix => 'vpc',
-					   levels             => [],
-					   zip => 0,
-					   rplots => -1);
+if (not $simeval->skipped_residuals) {
+    $vpc = tool::npc->new( eval( $common_options::parameters ),
+        models	     => [ $model ],
+        directory => $simeval->directory.'/vpc_cwres_vs_idv',
+        samples => $options{'samples'},
+        orig_table => $simeval->all_table_files->[0],
+        sim_table => \@array,
+        idv => $simeval->idv,
+        dv => 'CWRES',
+        top_tool => 1,
+        auto_bin_mode => 'auto_equal_count',
+        is_vpc             => 1,
+        directory_name_prefix => 'vpc',
+        levels             => [],
+        zip => 0,
+        rplots => -1);
 
-$vpc-> print_options (cmd_line => 'vpc internal',
-					  toolname => 'vpc',
-					  local_options => ['samples','orig_table','idv','dv'],
-					  common_options => \@common_options::tool_options);
-$vpc->run;
-$vpc->print_results;
+    $vpc-> print_options (cmd_line => 'vpc internal',
+        toolname => 'vpc',
+        local_options => ['samples','orig_table','idv','dv'],
+        common_options => \@common_options::tool_options);
+    $vpc->run;
+    $vpc->print_results;
 
-push(@{$simeval->vpctab_filenames},$vpc->vpctab_filename);
-push(@{$simeval->vpc_result_files},$vpc->directory.$vpc->results_file);
-push(@{$simeval->vpc_names},'CWRES vs '.$simeval->idv);
-
-$simeval -> print_results; #for rplots. this creates r plots code, does zipping after
+    push(@{$simeval->vpctab_filenames},$vpc->vpctab_filename);
+    push(@{$simeval->vpc_result_files},$vpc->directory.$vpc->results_file);
+    push(@{$simeval->vpc_names},'CWRES vs '.$simeval->idv);
+}
+$simeval->print_results; #for rplots. this creates r plots code, does zipping after
 
 ui -> print( category => 'simeval',
 	     message => "\nsimeval done\n" );
