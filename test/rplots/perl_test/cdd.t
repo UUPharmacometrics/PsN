@@ -38,7 +38,7 @@ $toolobject -> skipped_individuals_filename('skipped_individuals1.csv');
 $toolobject -> create_R_script(tool_name => $toolname); 
 
 
-my %pdf_files_pages=($tempdir.'rundir/PsN_cdd_plots.pdf' => 4);
+my %pdf_files_pages=($tempdir.'rundir/PsN_cdd_plots.pdf' => 5);
 
 includes::test_pdf_pages(\%pdf_files_pages);
 
