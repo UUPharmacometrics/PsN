@@ -220,9 +220,11 @@ ___boot_scm___
 
    ___simeval___
 
+-  Bug fix: Skip computations on residuals if CWRES is zero.
 -  Handle ID:s without observations, sporadic zero-valued EBE:s
 -  New rplots
 -  Possibility to rerun the post processing without rerunning NONMEM by using -dir
+-  New option -dv for DV vs PRED plot
 
    ___update_inits___
 

@@ -527,19 +527,23 @@ sub check_sir
 sub check_simeval
 {
 	my %parm = validated_hash(\@_,
-							  options => {isa => 'HashRef', optional => 0},
-							  model =>  {isa => 'model', optional => 0},
-		);
+        options => {isa => 'HashRef', optional => 0},
+        model =>  {isa => 'model', optional => 0},
+    );
 	my $options = $parm{'options'};
 	my $model = $parm{'model'};
-	
+
+    if (not defined $options->{'dv'}) {
+        $options->{'dv'} = 'DV';
+    }
+
 	my $error = '';
 	if (defined $options->{'samples'}) {
-		unless ($options->{'samples'} > 0){
+		unless ($options->{'samples'} > 0) {
 			$error .= "samples must be larger than 0\n";
 		}
-	}else{
-		$options->{'samples'}=300;
+	} else {
+		$options->{'samples'} = 300;
 	}
 
 	my @var = ();

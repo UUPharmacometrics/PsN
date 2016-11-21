@@ -28,6 +28,7 @@ my %optional_options = ( 'samples:i' => undef,
 						 'estimate_input!' => undef,
 						 'lst_file:s' => undef,
 						 'idv:s' => undef,
+                         'dv:s' => undef,
 						 'extra_variables:s' => undef,
 						 'n_simulation_models:i' => undef,
 						 'reminimize!' => undef,
@@ -110,6 +111,7 @@ $help_text{-n_simulation_models} = <<'EOF';
       By setting this option to a number N greater than 1, the 'samples' simulations
       will be split equally between N model files, which can be run in parallel.
 EOF
+
 $help_text{-reminimize} = <<'EOF';
       -reminimize
 
@@ -126,16 +128,24 @@ $help_text{-gls_data_file} = <<'EOF';
       created, the gls program can be run with option -gls_model and -ind_shrinkage 
       with minimum runtime, see gls_userguide.pdf
 EOF
+
 $help_text{-idv} = <<'EOF';
       -idv=variable
 
       Default TIME. Independent variable for DV vs idv plot.
 EOF
+
+$help_text{-dv} = <<'EOF';
+      -dv=VARIABLE
+
+      Default is DV. Name of dependent variable for DV vs PRED plot.
+EOF
+
 $help_text{-extra_variables} = <<'EOF';
       -extra_variables=comma-separated list
 
-Default empty. A comma-separated list of extra variables to add to 
-$TABLE of simulation models.
+    Default empty. A comma-separated list of extra variables to add to 
+    $TABLE of simulation models.
 EOF
 
 $help_text{Post_help_message} = <<'EOF';
@@ -203,6 +213,7 @@ my $vpc = tool::npc->new( eval( $common_options::parameters ),
 						  orig_table => $simeval->all_table_files->[0],
 						  sim_table => \@array,
 						  idv => 'PRED',
+                          dv => $options{'dv'},
 						  auto_bin_mode => 'auto_equal_count',
 						  top_tool => 1,
 						  levels             => [],
