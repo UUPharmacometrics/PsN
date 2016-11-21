@@ -313,32 +313,43 @@ pdf.simeval <- function(ebe.npde.file,iiv.eta.names,iov.eta.names,outlying_crite
     print("library PEIP not installed, cannot create outlier results for ebe npde")
   } 
     
+  
   #######################################     RESIDUALS PLOTS    #############################################
-  #------------------------------------------(1)histograms-----------------------------------------
-  # npde (for each data frame plot a histogram)
-  histograms.cwres.iwres(residual.files,residual.names)
-  
-  #------------------------------------------(2)summary_table plot----------------------------------
-  # Summary table
-  mydataframe <- summary.table(residual.files,residual.names)
-  
-  # plot summary table "mydataframe" on the new page
-  plot.table(mydataframe)
-  
-  #------------------------------------------(3)outliertable plot----------------------------------
-  # Use outliertable function to plot outlier tabel
-  list <- outlier.table(residual.outliers.file)
-  outlierframe <- list$outlierframe
-  cwres.iwres_outliers <- list$outliers_count
-  
-  # Plot created outlier table on the next page
-  plot.table(outlierframe)
-  
-  ########################################   ALL OUTLIERS REPORT TABLE   ##################################################
-  all_outlier_table <- all.outlier.report.table(ofv_outliers,ebe.npde_outliers=ebe.npde_outliers,cwres.iwres_outliers,ID_deleted_ebe,ID_deleted_ofv)
-  
-  # draw the table 
-  plot.all.outlier.table(all_outlier_table)
+  if (file.exists(residual.files[1]) && file.exists(residual.files[2]) && file.exists(residual.outliers.file)) {
+    #------------------------------------------(1)histograms-----------------------------------------
+    # npde (for each data frame plot a histogram)
+    histograms.cwres.iwres(residual.files,residual.names)
+    
+    #------------------------------------------(2)summary_table plot----------------------------------
+    # Summary table
+    mydataframe <- summary.table(residual.files,residual.names)
+    
+    # plot summary table "mydataframe" on the new page
+    plot.table(mydataframe)
+    
+    #------------------------------------------(3)outliertable plot----------------------------------
+    # Use outliertable function to plot outlier tabel
+    list <- outlier.table(residual.outliers.file)
+    outlierframe <- list$outlierframe
+    cwres.iwres_outliers <- list$outliers_count
+    
+    # Plot created outlier table on the next page
+    plot.table(outlierframe)
+    
+    ########################################   ALL OUTLIERS REPORT TABLE   ##################################################
+    all_outlier_table <- all.outlier.report.table(ofv_outliers,ebe.npde_outliers=ebe.npde_outliers,cwres.iwres_outliers,
+                                                  ID_deleted_ebe,ID_deleted_ofv)
+    
+    # draw the table 
+    plot.all.outlier.table(all_outlier_table)
+  } else {
+    ########################################   ALL OUTLIERS REPORT TABLE   ##################################################
+    all_outlier_table <- all.outlier.report.table(ofv_outliers,ebe.npde_outliers=ebe.npde_outliers,
+                                                  ID_deleted_ebe=ID_deleted_ebe,ID_deleted_ofv=ID_deleted_ofv)
+    
+    # draw the table 
+    plot.table(all_outlier_table)
+  }
   
   dev.off()
 }
