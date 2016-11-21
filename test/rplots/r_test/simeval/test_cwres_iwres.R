@@ -95,7 +95,7 @@ outliers_count <- out_list$outliers_count
 outlierframe_1 <- out_list_1$outlierframe
 outliers_count_1 <- out_list_1$outliers_count
 # Create expected data set
-exp_outlierframe <- data.frame(C = c("No outliers detected"))
+exp_outlierframe <- data.frame(C = c("No residual outliers detected"))
 names(exp_outlierframe) <- NULL
 exp_outliers_count <- data.frame()
 exp_outlierframe_1 <- data.frame(ID=c(24,24,42),TIME=c(176,61.5,95.5),DV=c("38.1","16.7","13.9"),
