@@ -26,9 +26,9 @@ outlier.table.ebe.npde <- function(ebenpde_tmp,eta_names,outlier_id_row) {
             eta_numbers <- paste0(eta_numbers,",",all.eta_values[j])
           }
           if(length(eta_values) == 0) {
-            eta_values <- paste0(table_row[,j])
+            eta_values <- paste0(round(table_row[,j],3))
           } else {
-            eta_values <- paste0(eta_values,",",table_row[,j])
+            eta_values <- paste0(eta_values,",",round(table_row[,j],3))
           }
         }
       }
