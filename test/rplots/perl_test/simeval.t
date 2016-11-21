@@ -49,12 +49,9 @@ push(@{$toolobject->vpc_names},'CWRES vs '.$toolobject->idv);
 $toolobject -> create_R_script(tool_name => $toolname); 
 
 
-
-my %pdf_files_pages=($tempdir.'rundir/PsN_ebe_npde_plots.pdf' => 4,
-					 $tempdir.'rundir/PsN_OFV_plots.pdf' => 6,
-					 $tempdir.'rundir/PsN_residual_plots.pdf' => 4,
-					 $tempdir.'rundir/PsN_simeval_vpc_plots.pdf' => 2,
-					 $tempdir.'rundir/PsN_outlier_report_table.pdf' => 1);
+my %pdf_files_pages=($tempdir.'rundir/PsN_simeval_plots.pdf' => 16,
+					 $tempdir.'rundir/PsN_simeval_vpc_plots.pdf' => 2);
+					 
 
 includes::test_pdf_pages(\%pdf_files_pages);
 
@@ -98,12 +95,8 @@ push(@{$toolobject->vpc_names},'CWRES vs '.$toolobject->idv);
 $toolobject -> create_R_script(tool_name => $toolname); 
 
 
-
-%pdf_files_pages=($tempdir.'rundir/PsN_ebe_npde_plots.pdf' => 4,
-				  $tempdir.'rundir/PsN_OFV_plots.pdf' => 7,
-				  $tempdir.'rundir/PsN_residual_plots.pdf' => 4,
-				  $tempdir.'rundir/PsN_simeval_vpc_plots.pdf' => 2,
-				  $tempdir.'rundir/PsN_outlier_report_table.pdf' => 1);
+%pdf_files_pages=($tempdir.'rundir/PsN_simeval_plots.pdf' => 16,
+				  $tempdir.'rundir/PsN_simeval_vpc_plots.pdf' => 2);
 
 includes::test_pdf_pages(\%pdf_files_pages);
 
