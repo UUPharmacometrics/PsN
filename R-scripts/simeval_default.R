@@ -2,7 +2,7 @@
 library(PerformanceAnalytics)
 library(grid)
 
-residual.outliers.file <- paste0(working.directory,'residual_outliers.csv')
+residual.outliers.file <- 'residual_outliers.csv'
 # Source ebe npde functions
 source(paste0(rscripts.directory,"/simeval/ebe.npde.input.data.R"))
 source(paste0(rscripts.directory,"/simeval/ebe.npde.summary.table.R"))
@@ -23,6 +23,7 @@ source(paste0(rscripts.directory,"/simeval/ofv.i_ofv_ppc.R"))
 source(paste0(rscripts.directory,"/simeval/ofv.kld_i_ofv.R"))
 # Source all outliers report functions
 source(paste0(rscripts.directory,"/simeval/all.outlier.report.table.R"))
+source(paste0(rscripts.directory,"/simeval/plot.all.outlier.table.R"))
 # Source common function
 source(paste0(rscripts.directory,"/common/plot.table.R"))
 # pdf function
