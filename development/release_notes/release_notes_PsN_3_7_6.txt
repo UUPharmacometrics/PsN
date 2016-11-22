@@ -1,0 +1,280 @@
+﻿This PsN version has been tested on the following systems:
+
+- MS Windows XP with ActiveState Perl 5.12.2 and NM 7.2.0.
+- MS Windows 7 64bit with ActiveState Perl 5.16.3 and NM 7.2.0.
+- Mac OS X 10.6.6 with Perl 5.10.0 and NM 7.2.0.
+- Linux Ubuntu 13.04 with Perl 5.14.2 and NM 7.2.0.
+- Scientific Linux release 6.3 with Perl 5.10.1 and NM 7.2.0
+- Linux CentOS 5.9 with Perl 5.8.8 and NM 6.1, 6.2, 7.1.0,
+7.1.2, 7.2.0 and 7.3.0 beta-26AUG2013.
+
+************************
+Installation
+************************
+
+Follow the installation instructions on
+http://psn.sourceforge.net/install.php
+
+
+************************
+Documentation
+************************
+All documentation is found in the doc subdirectory of the PsN 
+installation directory. During installation it is also possible 
+to have all documentation copied to a user-specified directory.
+
+All documentation can also be downloaded from
+the PsN website http://psn.sourceforge.net/
+
+************************
+Dependencies 
+************************
+
+- Xpose must, if used, be version 4.2.1 or later to handle PsN-3.5.3 or later 
+  output format. It is recommended to use the latest Xpose release
+  from http://xpose.sf.net
+
+************************
+Known issues 
+************************
+
+- Windows users ***who are to install PsN for the first time*** need to be careful to choose 
+  a Perl version where the extra modules needed for PsN are available. See the 
+  instructions on http://psn.sourceforge.net/install.php
+  Windows users ***who are already running an older version of PsN*** do not need 
+  to upgrade the Perl version.
+
+- Installation problem on some Windows systems where 
+  perl 'system' command does not work. Make sure perl module File::Copy::Recursive
+  is installed *before* (re)running the installation script setup.pl
+
+- On Windows PsN has only been tested with ActiveState Perl. Strawberry Perl is
+  not recommended.
+
+*********************************************
+Changes and bug fixes from PsN 3.6.2 to 3.7.5
+*********************************************
+
+   ___General___
+
+- New program linearize for linearization of a model. Use command linearize -h for help. 
+
+- New program randtest for randomization testing. See randtest_userguide.pdf for details.
+
+- Major refactoring of all code. All programs have been cleaned up. Removed debug module and
+  replaced with Perl core module Carp.pm. Removed modules extra_data, xrsl_file.
+  Removed option adaptive, and related code. Removed all support for automatic wrapping of data 
+  files, including scripts create_cont_data, single_valued_columns and unwrap_data,
+  since recent versions of NONMEM can handle any number of columns in $INPUT and $TABLE when $SIZES is set.
+  Removed usage of external Run3 module.
+
+- New format of all userguides to increase readability.
+
+- More error checking in installation script, detect and handle configuration errors in Perl installation.
+
+- Easier diagnose of errors when -clean >=3. If PsN detects an error with the run that the user needs to
+  check for in the lst-file, PsN will not remove the NM_run subdirectory with the lst-file even if clean >=3.
+
+- Bug fix: When options -verbose and -clean=3 are used in combination do not try to read output from file
+  that has been cleaned.
+
+- Bug fix: Fixed the output object error that would give message
+  "function can only be called where output object parsed successfully" in e.g. scm.
+
+   ___Cluster/grid interaction___
+
+- All grid/cluster submissions are now made using Perl backtick operator or perl 'system' command, not
+  the run3 sub-routine of the external Run3 module as in earlier PsN versions. 
+
+- Running on sge: Removed : (colon) from regular expression in sge queue monitoring code so that 
+  PsN will handle qstat response from Univa Grid Engine 8 (a fork of SGE 6.2u5).
+
+- Running on sge: If -run_on_sge_nmfe is set then print qsub command to file qsubcommand in NM_run.
+
+- Running on slurm: The option -slurm_project has been renamed to slurm_account, to match the slurm documentation.
+  The option maps to -A as in earlier PsN versions.
+
+- Running on slurm: A new option -slurm_partition, which maps to -p.
+
+- Running on slurm: Print sbatch command to file sbatchcommand in NM_run.
+
+- Running on slurm: Bug fix: PsN-3.7.6 will pass on -nmfe_options and -parafile to the nmfe script when option 
+  -run_on_slurm is set
+
+   ___NONMEM interaction___
+
+- New option -check_nmtran, set by default. PsN will run NMtran on models before forking on a local
+  computer or submitting to a grid/cluster. This saves time in case of simple control 
+  stream syntax errors, since the user does not have to 
+  wait for the run to get a slot in the queue to get the error message.
+  The check will only be done if the path to a NONMEM installation directory has been
+  set in psn.conf, rather than the path to an executable script.
+  This functionality can be disabled with -no-check_nmtran.
+  PsN will only run the check on the first model in a set of models that are essentially copies of
+  the same original model, e.g. in a bootstrap or sse.
+
+- In $PK $PRED $ERROR do not print a line break after $<RECORD>, to avoid a bug in NM7.3 beta
+
+- Use Perl backtick operator or Perl 'system' command to invoke nmfe script instead of run3 routine
+  from external Run3 module.
+
+- Bug fix: When the setting of the NONMEM installation directory is incorrect in psn.conf and PsN 
+  tries to diagnose the error, PsN will distinguish between incorrect setting of a directory
+  and an executable file. 
+
+- Bug fix: Do not treat the line
+  0OBJ. FUNCT. IS NOT DEFINED
+  as a sure sign of run failure if found in the lst-file. 
+
+   ___sse___
+
+- New column in raw_results file that identifes the simulated dataset used for fitting. 
+
+- More informative error messages and improved detection of input errors. 
+
+- Shorter file names for estimation files, to give a better overview in cluster monitoring 
+  tools (qstat, squeue...). 
+
+- Store simulation raw_results file in main run directory so that it will be saved even when -clean=3.
+
+- Additional variants of bias and rmse in sse_results.csv.
+
+- More flexible and robust -rawres_input functionality to allow raw_results files from previous 
+  sse runs to be used as input. Also make format rules for the input file
+  more flexible, so that quotes are only necessary around header cells that contain a comma.
+
+- Bug fix: Set correct label for DV in sse_results.csv 
+
+- Bug fix: When simulating with uncertainty, compute the correct bias and rmse, using the individual 
+  simulation parameter values as reference.
+
+- Bug fix: When simulating with uncertainty using $PRIOR, collect the parameter values used for simulations so
+  that they can be used as reference when computing results.
+
+- Bug fix: Set numbered names of table files in simulation model when using -add_models and original run 
+  had option -no-estimate_simulation set.
+
+- Bug fix: Print full PsN version name in sse_results.csv.
+
+   ___scm___
+
+- Bug fix: Handling of -missing_data_token has been completely rewritten to handle other tokens than -99.
+  In earlier PsN versions the data statistics (median, max, min) would not be computed correctly
+  if the covariate column had missing data and -missing_data_token was anything else than -99.
+
+- Automatic setting of $SIZES if NM version is 7.2 or later and number of needed items in $INPUT or $TABLE exceeds 50.
+
+- Automatic setting of $SIZES LTH if more thatn 40 THETA needed in a candidate model.
+
+- Bug fix: scm will ignore any header in the data file, which does not need to have a header at all. The scm
+  program will only look at $INPUT of model file when searching for covariates.
+
+- Bug fix: When -linearize is set, use adaptive FORMAT statement when default FORMAT in $TABLE would trigger 
+  bug in NONMEM that data records can be at most 999 characters long.
+
+- Bug fix: When -linearize is set, if MCETA is set in the input model then this MCETA setting will be 
+  copied to the linearized model.
+
+- Bug fix: When computing the median of a covariate, use only one value per individual.
+
+   ___vpc/npc___
+
+- Automatic binning for vpc, used by default. New option -auto_bin controls the auto-binning, see vpc_npc_userguide.pdf
+  for details. The binning algorithm is described in vpc_binning.pdf.
+
+- Ten times faster reading and formatting of DV data after rewrite of parsing algorithm.
+
+- vpc will compute mean and confidence intervals for the mean. Use latest version of Xpose to visualize.
+
+- New option -refstrat, see userguide for details. If set then vpc will compute delta-mean, i.e. difference
+  in mean between current stratum and reference stratum set with -refstrat option. Use latest version of Xpose to visualize.
+
+- New option -fine_pi to compute more percentiles, see userguide.
+
+- Changed run directory structure so that NM_run1 and NM_run2 are found in a modelfit_dir subdirectory, and the
+  lst-files from the simulation are copied to m1 instead of the top level of the run directory.
+
+- vpc will now accept a list of variables for option -stratify_on. The first variable in the list will be used
+  for stratification in the current run, and the rest will be added to table output so that those variables can
+  be used for stratification in later restarts without needing to rerun simulations.
+
+- More flexible and robust -rawres_input functionality to allow raw_results files from previous 
+  sse runs to be used as input. Also make format rules for the input file
+  more flexible, so that quotes are only necessary around header cells that contain a comma.
+
+- Bug fix: Make sure the label for the simulation file in vpc_results.csv is correct when flip_comments is not used.
+
+- Bug fix: Do not try to update initial estimates from an existing lst-file unless it has an estimation step that was run.
+
+- Bug fix: Ignore comment lines when doing input checking on control stream.
+
+- Bug fix: Make sure full PsN version number is written to vpc_results.csv
+
+- Bug fix: More clear error message when option -lower_bound needs to be set/adjusted 
+  because a PRED value below the lower bound was found.
+
+   ___bootstrap___
+
+- Code for automatic generation of R scripts for bootstrap results is no longer 
+  maintained and may not work. Functionality for handling bootstrap results is 
+  incorporated into latest version of Xpose.
+
+- New option -dofv: Run a MAXEVAL=0 run with each set of bootstrap parameter estimates on original data, and compute
+  delta-ofv compared to original estimates. Related option -mceta, which maps to $EST MCETA, allowed for NM7.3. 
+
+- bootstrap will now only accept a column name from $INPUT as value for option stratify_on. Column number not accepted.
+
+- Bug fix: The bootstrap program can be run with option -directory set to a global path when option -bca is set. 
+
+- Bug fix: Ignore comment lines when checking input model for synonym use.
+
+   ___RunRecord___
+
+- Bug fix: Improved reading of data file name and parsing of documentation comments.
+
+- Bug fix: No empty headers printed for non-existing sigma or omega. 
+
+   ___psn_clean___
+
+Bug fix: Remove simulation_dir subdirectories completely if option -level is >= 3.
+
+   ___update_inits___
+
+The program will now handle renumbering of file names with .csv-extension in $TABLE.
+
+   ___extended_grid___
+
+Bug fix: Better detection of missing files and more clear error messages if NONMEM runs fail.
+    
+Bug fix: Always use headers in $INPUT instead of any header in the data file.
+
+   ___sumo___
+
+Bug fix: Set 'WARNING' flag for Covariance step if lst-file says S or R matrix is singular.
+
+   ___nonpb___
+
+Bug fix: When -nonpb_version=2 program will set sample size for bootstrap call.
+
+   ___mcmp___
+
+Bug fix: Only print undropped columns in $TABLE of simulation model. If using full model as simulation 
+	model then exit with message saying dropping columns in $INPUT is not supported when full model is
+	used as simulation model.
+
+   ___lasso___
+
+Bug	fix: If the input model has thetas with estimates smaller than the cutoff, lasso will no longer cut
+	these thetas and destroy the model.
+
+
+
+
+
+
+
+
+
+
+
+

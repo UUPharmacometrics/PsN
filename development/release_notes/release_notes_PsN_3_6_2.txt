@@ -1,0 +1,253 @@
+﻿This PsN version has been tested on the following systems:
+
+- MS Windows 7 with ActiveState 5.16.6 and NM 7.2.0.
+- Mac OS X 10.6.6 with Perl 5.10.0 and NM 7.2.0.
+- Linux Ubuntu 12.04 with Perl 5.14.2 and NM 7.2.0.
+- Linux CentOS 5.9 with Perl 5.8.8 and NM 6.1, 6.2, 7.1.0,
+7.1.2, 7.2.0 and 7.3.0 beta.
+
+************************
+Installation
+************************
+
+- Depending on your Perl distribution you may have to install the following
+perl packages:
+
+Math::Random
+Storable::Store (Unix only)
+
+- Recommended perl packages, not absolutely required when running PsN 
+but necessary for some features:
+
+Statistics::Distributions
+Archive::Zip
+File::Copy::Recursive
+
+All available from CPAN ( www.cpan.org )
+
+- Before installing PsN, verify that all NONMEM installations you intend to
+use can be run directly via the nmfe (or NMQual) scripts and that they 
+produce complete output files. 
+
+Please note that with NMQual8 the nm72.xml file must be slightly modified 
+(to expect .mod instead of .ctl as the control stream suffix) before NONMEM 
+installation, see document psn_configuration.pdf, otherwise PsN's NMQual8 
+support will not work.
+
+This version of PsN has not been tested with NMQual, but is believed to work
+with NMQual version 8.2.4 and on. However the PsN reference output that comes
+with NMQual may be out of date.
+
+If you plan to use the parallelization features of NONMEM7.2 you must first
+verify that you can run NONMEM in parallel directly with nmfe72.
+
+If running NONMEM with nmfe (or NMQual) does not work then PsN will not work. 
+
+- Unpack the installation package downloaded from psn.sf.net. It will 
+create a directory called PsN-Source. Run the installation script 
+setup.pl from within PsN-Source.
+
+- More detailed installation instructions are found 
+on the PsN website http://psn.sourceforge.net/ under
+Installation. 
+
+- The installation script can automatically generate a minimal configuration 
+file psn.conf, both on Windows and Unix-type systems. If PsN is to be run on 
+a cluster and/or with NMQual then some manual editing of psn.conf is still 
+needed, see psn_configuration.pdf
+
+************************
+Documentation
+************************
+All documentation is found in the doc subdirectory of the PsN 
+installation directory. During installation it is also possible 
+to have all documentation copied to a user-specified directory.
+
+All documentation can also be downloaded from
+the PsN website http://psn.sourceforge.net/
+
+
+************************
+Dependencies 
+************************
+
+- Xpose must, if used, be version 4.2.1 or later to handle PsN-3.5.3 or later 
+  output format. It is recommended to use the latest Xpose release
+  from http://xpose.sf.net
+
+************************
+Known issues 
+************************
+
+- Installation problem on some Windows systems where 
+perl 'system' command does not work. Make sure perl module File::Copy::Recursive
+is installed *before* (re)running the installation script setup.pl
+
+- On Windows 7 with ActiveState Perl 5.16.3 the installation script failed
+to detect a correctly installed Math::Random module. If you think you have 
+Math::Random installed even though the installation script complains
+then just go ahead with the installation and test running execute with 
+option -min_retries=1 . If it works then you do have Math::Random and all 
+is well.
+
+
+*********************************************
+Changes and bug fixes from PsN 3.5.3 to 3.6.2
+*********************************************
+
+   ___NONMEM interaction___
+
+- A completely redesigned NONMEM output file parser. It has been tested on 
+NONMEM versions 6.1, 6.2, 7.1.0, 7.1.2, 7.2.0 and 7.3.0 beta. NM5 has not been
+tested. The old parser in 3.5.3 is guaranteed to fail with NM 7.3 output file 
+format.
+
+The new parser requires that the lst-file has a copy of the model file (control 
+stream) at the beginning. This is handled automatically by NONMEM's nmfe scripts
+from version 6.2 and on. With NM6.1 you might have to edit nmfe6 to prepend the
+model file to the lst-file. PsN will exit with an error if the model file copy 
+is missing. PsN uses the information in the model file copy to deduce which 
+sections to expect in the rest of the lst-file, and e.g. to compare initial 
+estimates with final estimates in the sumo program.
+
+- Support for $LEVEL $ANNEAL $ETAS $PHIS, new in NM 7.3.
+
+- PsN will remove $FINEDATA from the model file.
+
+- PsN requires that either option -nmfe or -nmqual is set, meaning that NONMEM 
+must be invoked either via an nmfe script, an NMQual script, or a user written 
+wrapper script. Most users do this already. It is no longer possible to make PsN
+do compiling and linking to produce the nonmem executable.
+
+- Running on slurm: More robust pattern matching in slurm queueing system 
+responses. slurm_project is no longer a required parameter.
+
+- Running on torque: Improved monitoring of jobs, more robust pattern matching 
+in torque system responses.
+
+- Bug fix: Handling of +Infinity and -Infinity strings in NONMEM output.
+
+- Bug fix: Handling of $AES and $AESINITIAL. PsN-3.5.3 could interpret and 
+format these records incorrectly.
+
+- Bug fix: Successful covariance step will now be recognized by PsN. PsN-3.5.3
+would sometimes fail at this.
+
+- Bug fix: Handling of estimation results from multiple $PROB in same model 
+file.
+
+- Bug fix: More robust reading of date string in lst files(start and stop 
+times).
+
+- Bug fix: Option -nmfe is set automatically if either -run_on_sge_nmfe, 
+-run_on_slurm or -run_on_lsf_nmfe is set.
+
+- Bug fix: Handle model files with two $PROBLEM with two different data files. 
+PsN-3.5.3 would set same data file for both $PROB.
+
+- Bug fix: A more informative error message when raw results have comma as the 
+delimiter, which is not supported by PsN.
+
+   ___General___
+
+- Option -wrap_data has been removed. Use $SIZES in NONMEM instead.
+
+- When tweaking initial estimates for a retry, PsN will use a different method
+to ensure that OMEGA and SIGMA are stricly diagonally dominant. In 3.6.2 PsN 
+will, if necessary, decrease the magnitude of the off-diagonal elements. PsN 
+3.5.3 would increase the diagonal elements.
+
+   ___execute___
+
+- Removed obsolete option -prepend_model_to_lst
+
+- New option: By default execute copies the data file to the NM run directory. 
+By setting option -no-copy_data PsN will not copy the data file but instead 
+use the full path to the data file in the model file. However, if the path is 
+very long this can lead to a line-wrap in the $DATA record which will make 
+NONMEM fail.
+
+   ___gls___
+
+- New option -set_simest to have different $EST for all steps, and different 
+$SIM in input and simulation. Output computed shrinkage for all steps. Set NEW
+in default $SIM. 
+
+- Bug fix: Remove $EST if $SIM ONLYSIM. 
+
+- Bug fix: Handling of models with $ERROR. Fix errors in results computation.
+
+   ___mimp___
+
+- Bug fix: Ignore that data files set in $DATA of alternative models etc are 
+missing at the start of the run. 
+
+   ___sse___
+
+- Warn if .EQ. or .NE. is found in IGNORE/ACCEPT statements of alternative 
+models. If found then warn that to NONMEM 1 is not equal to 1.000 
+(.EQ. and .NE. does string matching instead of numerical comparison)
+
+- sse will now accept to not estimate any models, only simulate and stop when 
+-no-estim is set and no alternative models are given.
+
+- Bug fix: Ensure that random seed cannot be set to 0.
+
+   ___scm___
+
+
+- Linearized scm: If more than 50 items needed in $INPUT then set RFORMAT in 
+$TABLE when generating derivatives data, to reduce risk of longer lines than 
+999 which NM7.2 cannot handle in a data file.
+
+- Bug fix: Handling of missing data in covariate data columns.
+
+- Bug fix: Linearized scm: If the number of items needed in $INPUT exceeds 50 
+then PsN will automatically set $SIZES instead of trying to automatically wrap 
+data.
+
+- Bug fix: scm will now check that no parameter or covariate in the list of 
+parameter-covariate interactions is named PAR or COV. PAR and COV are reserved 
+words in scm and must only be used as place-holders in the [code] section.
+
+- Bug fix: Time-varying covariates (option -time_varying) now works.
+
+   ___vpc/npc___
+
+- By default vpc copies the data file to the NM run directory. By setting 
+option -no-copy_data PsN will not copy the data file but instead use the full 
+path to the data file in the model file. However, if the path is very long this
+can lead to a line-wrap in the $DATA record which will make NONMEM fail.
+
+- Bug fix: Cleaning without using globbing for file names.
+
+   ___bootstrap___
+
+- Code for automatic generation of R scripts for bootstrap results is no longer 
+maintained and may not work. Functionality for handling bootstrap results is 
+to be incorporated into Xpose.
+
+- Bug fix: Print informative error message if no runs pass the criteria for 
+inclusion in the results computaions.
+
+   ___RunRecord___
+
+Bug fix: Handle tags that contain $. Before runrecord would break at $ in tags.
+
+   ___psn_clean___
+
+Remove temp_dir sub-directory of NM_run directories.
+
+   ___update_inits___
+
+New option -diagonal_dominance (can be abbreviated to diag). By default not set.
+If set then PsN will ensure that OMEGA and SIGMA are stricly diagonally 
+dominant after updating by decreasing the magnitude of the off-diagonal elements
+if necessary. This option is useful in the cases when NONMEM prints OMEGA or 
+SIGMA to the lst-file which NONMEM itself will not accept as input OMEGA or 
+SIGMA because the matrix is not positive definite. 
+
+   ___extended_grid___
+
+New userguide.
+
