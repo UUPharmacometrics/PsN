@@ -192,7 +192,7 @@ pdf.simeval <- function(ebe.npde.file,iiv.eta.names,iov.eta.names,outlying_crite
   }
     
   # create EBE-NPDE correlation graph
-  if(nrow(mydataframe) > 1) {
+  if(ncol(ebenpde_obs_iiv) > 1) {
     chart.Correlation(ebenpde_obs_iiv, histogram = TRUE, method = c("spearman"))
   }
     
@@ -207,14 +207,12 @@ pdf.simeval <- function(ebe.npde.file,iiv.eta.names,iov.eta.names,outlying_crite
     n.subjects_list <- list()
     ebenpde_obs_list <- list()
     eta_names_list <- list()
-    ID_deleted_ebe_list <- list()
     for (i in 1:length(iov.eta.names)) {
       input_data_list <- input.data(ebe.npde.file,iov.eta.names[[i]],show.warning=FALSE)
       ebenpde_tmp_list[[i]] <- input_data_list$ebenpde_tmp
       n.subjects_list[[i]] <- input_data_list$n.subjects
       ebenpde_obs_list[[i]] <- input_data_list$ebenpde_obs
       eta_names_list[[i]] <- input_data_list$iiv.eta.names
-      ID_deleted_ebe_list[[i]] <- input_data_list$ID_deleted
       if(i==1){
         ebenpde_obs_iov_sect <- ebenpde_obs_list[[i]]
       } else {
@@ -248,10 +246,11 @@ pdf.simeval <- function(ebe.npde.file,iiv.eta.names,iov.eta.names,outlying_crite
       iov.eta.names_text <- paste0("Correlation graph for EBE NPDE IOV:",iov.eta.names_text)
       textplot(iov.eta.names_text,halign="center",valign="center")
     }
+    
       
     # create EBE-NPDE IOV correlation graph
     if(!(any(is.na(ebenpde_obs_iov_sect)))) {
-      if(nrow(mydataframe) > 1) {
+      if(ncol(ebenpde_obs_iov_sect) > 1) {
         chart.Correlation(ebenpde_obs_iov_sect, histogram = TRUE, method = c("spearman"))
       }
     }
