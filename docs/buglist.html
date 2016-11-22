@@ -1,3 +1,21 @@
+<!DOCTYPE html PUBLIC -//W3C//DTD XHTML 1.0 Strict//EN   http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd>
+<html>
+<head>
+    <title>PsN :: Home</title>
+    <link rel="stylesheet" type="text/css" href="style/style.css">
+    <script type="text/javascript" src="javascript/jquery.js"></script>
+    <script> 
+        $(function() {
+            $("#nav").load("menu.html");
+            $("#footer").load("footer.html");
+        });
+    </script> 
+</head>
+<body>
+    <div id="wrap">
+        <div id="header"></div>
+        <div id="nav"></div>
+        <div id="main">
 
 <h2 class="heading1">Bugs</h2>
 <p>The most common source of errors are problems with psn.conf. Instructions about how to make correct settings can be found in <a href='pdfdocs/psn_configuration.pdf' target="_blank">psn_configuration.pdf</a>.</p>
@@ -19,3 +37,9 @@ list. Do not send model files and data files unless we ask you to.</p>
 
 <h3>Known bugs in current release </h3>
  <p>Click <a href="http://sourceforge.net/p/psn/wiki/Bug_list_current_release" target="_blank">here</a> to see the bug list wiki.</p>
+ 
+         </div>
+        <div id="footer" style="padding-top:2px;padding-right:2px;padding-left:2px;"></div>
+    </div>
+</body>
+</html>

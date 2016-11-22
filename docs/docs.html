@@ -1,3 +1,23 @@
+<!DOCTYPE html PUBLIC “-//W3C//DTD XHTML 1.0 Strict//EN”   “http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd”>
+<html>
+<head>
+    <title>PsN :: Home</title>
+    <link rel="stylesheet" type="text/css" href="style/style.css">
+    <script type="text/javascript" src="javascript/jquery.js"></script>
+    <script> 
+        $(function() {
+            $("#nav").load("menu.html");
+            $("#footer").load("footer.html");
+        });
+    </script> 
+</head>
+<body>
+    <div id="wrap">
+        <div id="header"></div>
+        <div id="nav"></div>
+        <div id="main">
+       
+      
 <h2>User Documentation</h2>
 
   All pdf documents listed below as a <a href="pdfdocs/PsN_pdf_documentation.tar.gz" target="_blank"><strong>tar.gz</strong></a> or
@@ -184,7 +204,7 @@ Some extensively commented example/template configuration files for scm:<br>
   structure. You will get the output summaries from the command line tools, but it
   may still be useful to orient yourself in the directory structure. You
   can, for instance, find individual NONMEM run outputs as well as logs
-  from PsN. To make it a bit easier we have created <a href="directory_docs.php">The PsN Directory Guide</a>, which is a small guide to the
+  from PsN. To make it a bit easier we have created <a href="directory_docs.html">The PsN Directory Guide</a>, which is a small guide to the
   structure of the directories. <tt><tt>&nbsp;</tt></tt></p>
 <h3>Restarting a PsN script</h3>
 <p>If a PsN script is stopped before it has finished it is possible to
@@ -211,3 +231,10 @@ Some extensively commented example/template configuration files for scm:<br>
 <h2>Documentation for developers and testers</h2>
 The <a href="pdfdocs/developers_guide.pdf" target="_blank">developers guide</a> contain information for developers and for those in need of information
 about how to run the PsN test suite.
+     
+    
+        </div>
+        <div id="footer" style="padding-top:2px;padding-right:2px;padding-left:2px;"></div>
+    </div>
+</body>
+</html>

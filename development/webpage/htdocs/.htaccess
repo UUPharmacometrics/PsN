@@ -1,7 +1,0 @@
-
-RewriteEngine On
-RewriteCond %{REQUEST_URI} index.php
-RewriteRule .* - [L]
-
-RewriteRule ^([^/]+)$  /index.php?page=$1 
-

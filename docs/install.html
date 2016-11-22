@@ -1,3 +1,22 @@
+<!DOCTYPE html PUBLIC -//W3C//DTD XHTML 1.0 Strict//EN   http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd>
+<html>
+<head>
+    <title>PsN :: Home</title>
+    <link rel="stylesheet" type="text/css" href="style/style.css">
+    <script type="text/javascript" src="javascript/jquery.js"></script>
+    <script> 
+        $(function() {
+            $("#nav").load("menu.html");
+            $("#footer").load("footer.html");
+        });
+    </script> 
+</head>
+<body>
+    <div id="wrap">
+        <div id="header"></div>
+        <div id="nav"></div>
+        <div id="main">
+
 
 <h2>Installation instructions</h2>
 <p>
@@ -111,7 +130,7 @@ or if you are running NONMEM via NMQual or on a cluster, you need to edit <tt>ps
 in the PsN installation directory. 
 The document <a href='pdfdocs/psn_configuration.pdf' target="_blank">psn_configuration.pdf</a> in 
 PsN-Source/doc describes how to make correct settings in the psn.conf file. 
-The document is also found on <a href="http://psn.sourceforge.net/docs.php">the PsN website</a> under Documentation.
+The document is also found on <a href="docs.html">the PsN website</a> under Documentation.
   </li>
   <li>When the installation is
     done you can safely remove the <tt>PsN-Source</tt>
@@ -119,3 +138,9 @@ The document is also found on <a href="http://psn.sourceforge.net/docs.php">the 
 </li>
 </ol>
 <br>
+
+        </div>
+        <div id="footer" style="padding-top:2px;padding-right:2px;padding-left:2px;"></div>
+    </div>
+</body>
+</html>
