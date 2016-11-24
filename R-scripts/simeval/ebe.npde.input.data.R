@@ -2,10 +2,7 @@ input.data <- function(ebe.npde.file,iiv.eta.names,show.warning) {
   if(missing(show.warning)){
     show.warning <- TRUE
   }
-  # rename ETA(n) to ETA.n. because in dataframe names of ETA columns are with dots
-  iiv.eta.names <- gsub("\\(",".",iiv.eta.names)
-  iiv.eta.names <- gsub("\\)",".",iiv.eta.names)
-  
+
   # read in data
   ebenpde_tmp_input <- read.csv(ebe.npde.file) # load csv file
   # check if there are some individuals where all Eta values are NA (delete them)
@@ -59,7 +56,6 @@ input.data <- function(ebe.npde.file,iiv.eta.names,show.warning) {
               ebenpde_tmp=ebenpde_tmp,
               n.subjects=n.subjects,
               ebenpde_obs=ebenpde_obs,
-              iiv.eta.names=iiv.eta.names,
               ID_deleted=ID_deleted)
   return(out)
 }

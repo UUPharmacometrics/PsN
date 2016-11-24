@@ -35,9 +35,9 @@ summary.table.ebe.npde <- function(ebenpde_obs,iiv.eta.names) {
   if(any(indiv_amount != indiv_amount[1])) {
     mydataframe <- data.frame('EBE NPDE' = iiv.eta.names,
                               'Number\nof ID' = indiv_amount,
-                              mean = sprintf("%.5f",mymean),
+                              mean = sprintf("%.3f",mymean),
                               'p-value\n(H_0: mean==0)'=sprintf("%.3f",p_mean_not_0),
-                              variance=sprintf("%.5f",variance),
+                              variance=sprintf("%.3f",variance),
                               'p-value\n(H_0: var==1)'=sprintf("%.3f",p_var_not_1),
                               skewness=sprintf("%.3f",myskewness),
                               kurtosis=sprintf("%.3f",mykurtosis),
@@ -45,9 +45,9 @@ summary.table.ebe.npde <- function(ebenpde_obs,iiv.eta.names) {
                               check.names=FALSE,stringsAsFactors = F)
   } else {
     mydataframe <- data.frame('EBE NPDE' = iiv.eta.names,
-                              mean = sprintf("%.5f",mymean),
+                              mean = sprintf("%.3f",mymean),
                               'p-value\n(H_0: mean==0)'=sprintf("%.3f",p_mean_not_0),
-                              variance=sprintf("%.5f",variance),
+                              variance=sprintf("%.3f",variance),
                               'p-value\n(H_0: var==1)'=sprintf("%.3f",p_var_not_1),
                               skewness=sprintf("%.3f",myskewness),
                               kurtosis=sprintf("%.3f",mykurtosis),

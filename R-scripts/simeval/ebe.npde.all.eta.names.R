@@ -31,9 +31,43 @@ eta_iiv_iov <- function(iiv.eta.names,iov.eta.names) {
     }
   }
   
+  # explanation (correlation graph iiv)
+  iiv.eta.names_text <- c()
+  for (n in 1:length(iiv.eta.names)) {
+    if(n == 1) {
+      iiv.eta.names_text <- iiv.eta.names[n]
+    } else {
+      iiv.eta.names_text <- paste0(iiv.eta.names_text,",",iiv.eta.names[n])
+    }
+  }
+  iiv.eta.names_text <- paste0("(",iiv.eta.names_text,")")
+  iiv.eta.names_text <- paste0("Correlation graph for EBE NPDE IIV:\n",iiv.eta.names_text)
+  
+  
+  # explanation (correlation graph iov)
+  iov.eta.names_text <- c()
+  if(length(iov.eta.names)>0) {
+    iov.eta.names_text_occ <- c()
+    for (i in 1:length(iov.eta.names)) {
+      iov.eta.names_occ <- iov.eta.names[[i]]
+      for (n in 1:length(iov.eta.names_occ)) {
+        if(n == 1) {
+          iov.eta.names_text_occ <- iov.eta.names_occ[n]
+        } else {
+          iov.eta.names_text_occ <- paste0(iov.eta.names_text_occ,",",iov.eta.names_occ[n])
+        }
+      }
+      iov.eta.names_text_occ <- paste0("(",iov.eta.names_text_occ,")")
+      iov.eta.names_text <- paste0(iov.eta.names_text,"\n",iov.eta.names_text_occ)
+    }
+    iov.eta.names_text <- paste0("Correlation graph for EBE NPDE IOV:",iov.eta.names_text)
+  }
+  
   out <- list(eta.names=eta.names,
               iiv.eta.names=iiv.eta.names,
               iov.eta.names=iov.eta.names,
-              eta.names_text=eta.names_text)
+              eta.names_text=eta.names_text,
+              iiv.eta.names_text=iiv.eta.names_text,
+              iov.eta.names_text=iov.eta.names_text)
   return(out)
 }
