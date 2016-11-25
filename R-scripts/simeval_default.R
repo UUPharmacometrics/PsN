@@ -4,7 +4,6 @@ library(grid)
 
 residual.outliers.file <- 'residual_outliers.csv'
 # Source ebe npde functions
-source(paste0(rscripts.directory,"/simeval/ebe.npde_all.R"))
 source(paste0(rscripts.directory,"/simeval/ebe.npde.all.eta.names.R"))
 source(paste0(rscripts.directory,"/simeval/ebe.npde.input.data.R"))
 source(paste0(rscripts.directory,"/simeval/ebe.npde.summary.table.R"))
