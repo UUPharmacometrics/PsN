@@ -20,8 +20,8 @@ source("../set.working.directory.R")
 ###################################     3. Make a test    ###################################
 #input data
 # ebe
-ebe.npde_outliers_1 <- data.frame(c(14,26,9),c(-89.624,-51.661,-39.813))
-colnames(ebe.npde_outliers_1) <- c("ID", "outlying criteria")
+ebe.npde_outliers_1 <- data.frame(c(14,26,9),c("1,2","1,2,3,4","1"),stringsAsFactors = F)
+colnames(ebe.npde_outliers_1) <- c("ID", "Outlying EBE (ETA numbers)")
 
 ebe.npde_outliers_2 <- data.frame(C = c("No outliers detected"))
 names(ebe.npde_outliers_2) <- NULL
@@ -37,31 +37,36 @@ cwres.iwres_outliers_2 <- data.frame(ID=as.factor(c(1,42)),OUTLIERS.IWRES=as.fac
 cwres.iwres_outliers_3 <- data.frame()
 
 # use function
-all_outlier_table_1 <- all.outlier.report.table(ofv_outliers_1,ebe.npde_outliers_1,cwres.iwres_outliers_1,ID_deleted=c(),ID_deleted_ofv=c())
-all_outlier_table_2 <- all.outlier.report.table(ofv_outliers_1,ebe.npde_outliers_1,cwres.iwres_outliers_2,ID_deleted=c(1),ID_deleted_ofv=c(42))
-all_outlier_table_3 <- all.outlier.report.table(ofv_outliers_2,ebe.npde_outliers_1,cwres.iwres_outliers_2,ID_deleted=c(),ID_deleted_ofv=c())
-all_outlier_table_4 <- all.outlier.report.table(ofv_outliers_3,ebe.npde_outliers_1,cwres.iwres_outliers_3,ID_deleted=c(4),ID_deleted_ofv=c())
-all_outlier_table_5 <- all.outlier.report.table(ofv_outliers_3,ebe.npde_outliers_2,cwres.iwres_outliers_3,ID_deleted=c(),ID_deleted_ofv=c())
-all_outlier_table_6 <- all.outlier.report.table(ofv_outliers_3,ebe.npde_outliers_1,ID_deleted=c(4),ID_deleted_ofv=c())
+all_outlier_table_1 <- all.outlier.report.table(ofv_outliers=ofv_outliers_1,ebe.npde_outliers=ebe.npde_outliers_1,
+                                                cwres.iwres_outliers=cwres.iwres_outliers_1,ID_deleted_ebe=c(),ID_deleted_ofv=c())
+all_outlier_table_2 <- all.outlier.report.table(ofv_outliers=ofv_outliers_1,ebe.npde_outliers=ebe.npde_outliers_1,
+                                                cwres.iwres_outliers=cwres.iwres_outliers_2,ID_deleted_ebe=c(1),ID_deleted_ofv=c(42))
+all_outlier_table_3 <- all.outlier.report.table(ofv_outliers=ofv_outliers_2,ebe.npde_outliers=ebe.npde_outliers_1,
+                                                cwres.iwres_outliers=cwres.iwres_outliers_2,ID_deleted_ebe=c(),ID_deleted_ofv=c())
+all_outlier_table_4 <- all.outlier.report.table(ofv_outliers=ofv_outliers_3,ebe.npde_outliers=ebe.npde_outliers_1,
+                                                cwres.iwres_outliers=cwres.iwres_outliers_3,ID_deleted_ebe=c(4),ID_deleted_ofv=c())
+all_outlier_table_5 <- all.outlier.report.table(ofv_outliers=ofv_outliers_3,ebe.npde_outliers=ebe.npde_outliers_2,
+                                                cwres.iwres_outliers=cwres.iwres_outliers_3,ID_deleted_ebe=c(),ID_deleted_ofv=c())
+all_outlier_table_6 <- all.outlier.report.table(ofv_outliers=ofv_outliers_3,ebe.npde_outliers=ebe.npde_outliers_1,ID_deleted_ebe=c(4),ID_deleted_ofv=c())
 
 # expected data
 exp_all_outlier_table_1 <- data.frame(id=as.character(c(9,13,14,26,42)),ofv=as.character(c(-4.4,-4.759,-3.214,"","")),
-                                    ebe=as.character(c(-39.813,"",-89.624,-51.661,"")),iwres=as.character(c("","",1,"",1)),
+                                    ebe=as.character(c("1","","1,2","1,2,3,4","")),iwres=as.character(c("","",1,"",1)),
                                     cwres=as.character(c("","",2,"","")),stringsAsFactors=FALSE)
 colnames(exp_all_outlier_table_1) <- c("ID","OFV outliers (SD)","EBE NPDE outliers (ETA numbers)","IWRES outliers","CWRES outliers")
 
 exp_all_outlier_table_2 <- data.frame(id=as.character(c(1,9,13,14,26,42)),ofv=as.character(c("",-4.4,-4.759,-3.214,"","NA")),
-                                      ebe=as.character(c("NA",-39.813,"",-89.624,-51.661,"")),iwres=as.character(c("","","","","",3)),
+                                      ebe=as.character(c("NA","1","","1,2","1,2,3,4","")),iwres=as.character(c("","","","","",3)),
                                       cwres=as.character(c(2,"","","","","")),stringsAsFactors=FALSE)
 colnames(exp_all_outlier_table_2) <- c("ID","OFV outliers (SD)","EBE NPDE outliers (ETA numbers)","IWRES outliers","CWRES outliers")
 
 exp_all_outlier_table_3 <- data.frame(id=as.character(c(1,2,9,13,14,26,42)),ofv=as.character(c("",-3.54,"",-4.759,"","","")),
-                                      ebe=as.character(c("","",-39.813,"",-89.624,-51.661,"")),iwres=as.character(c("","","","","","",3)),
+                                      ebe=as.character(c("","","1","","1,2","1,2,3,4","")),iwres=as.character(c("","","","","","",3)),
                                       cwres=as.character(c(2,"","","","","","")),stringsAsFactors=FALSE)
 colnames(exp_all_outlier_table_3) <- c("ID","OFV outliers (SD)","EBE NPDE outliers (ETA numbers)","IWRES outliers","CWRES outliers")
 
 exp_all_outlier_table_4 <- data.frame(id=as.character(c(9,14,26)),ofv=as.character(c("","","")),
-                                      ebe=as.character(c(-39.813,-89.624,-51.661)),iwres=as.character(c("","","")),
+                                      ebe=as.character(c("1","1,2","1,2,3,4")),iwres=as.character(c("","","")),
                                       cwres=as.character(c("","","")),stringsAsFactors=FALSE)
 colnames(exp_all_outlier_table_4) <- c("ID","OFV outliers (SD)","EBE NPDE outliers (ETA numbers)","IWRES outliers","CWRES outliers")
 
@@ -69,7 +74,7 @@ exp_all_outlier_table_5 <- data.frame(C = c("No outliers detected"))
 names(exp_all_outlier_table_5) <- NULL
 
 exp_all_outlier_table_6 <- data.frame(id=as.character(c(9,14,26)),ofv=as.character(c("","","")),
-                                      ebe=as.character(c(-39.813,-89.624,-51.661)),stringsAsFactors=FALSE)
+                                      ebe=as.character(c("1","1,2","1,2,3,4")),stringsAsFactors=FALSE)
 colnames(exp_all_outlier_table_6) <- c("ID","OFV outliers (SD)","EBE NPDE outliers (ETA numbers)")
 
 # Compare expected data with real data
