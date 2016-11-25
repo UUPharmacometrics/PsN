@@ -28,7 +28,7 @@ all.iofv.file_4 <- paste0(files.w.dir,'raw_all_iofv_4.csv')
 
 ###################################     3. Make tests     ###################################
 
-#..........................  (1) Test function   ...................................
+#..........................  (1) Test function p_ofv_ppc ...................................
 out_p_ofv_ppc <- p_ofv_ppc(raw.results.file=raw.results.file)
 
 # unlist information
