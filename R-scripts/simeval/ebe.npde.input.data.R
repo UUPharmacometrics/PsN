@@ -1,4 +1,4 @@
-input.data <- function(ebe.npde.file,iiv.eta.names,show.warning) {
+input.data <- function(ebe.npde.file,eta.names,show.warning) {
   if(missing(show.warning)){
     show.warning <- TRUE
   }
@@ -6,9 +6,9 @@ input.data <- function(ebe.npde.file,iiv.eta.names,show.warning) {
   # read in data
   ebenpde_tmp_input <- read.csv(ebe.npde.file) # load csv file
   # check if there are some individuals where all Eta values are NA (delete them)
-  n_eta <-length(iiv.eta.names)
-  ebenpde_tmp_input_etas <- as.data.frame(ebenpde_tmp_input[,iiv.eta.names])
-  colnames(ebenpde_tmp_input_etas) <- iiv.eta.names
+  n_eta <-length(eta.names)
+  ebenpde_tmp_input_etas <- as.data.frame(ebenpde_tmp_input[,eta.names])
+  colnames(ebenpde_tmp_input_etas) <- eta.names
   ebenpde_tmp_input <- cbind(ebenpde_tmp_input[,1:2],ebenpde_tmp_input_etas)
   # n_eta <- ncol(ebenpde_tmp_input)-2
   na_each_row <- rowSums(is.na(ebenpde_tmp_input))
@@ -42,10 +42,10 @@ input.data <- function(ebe.npde.file,iiv.eta.names,show.warning) {
   n.subjects <- nrow(ebenpde_tmp)
   
   # save needed ETA columns in separate data frame ebenpde_obs
-  ebenpde_obs <- ebenpde_tmp[,iiv.eta.names]
+  ebenpde_obs <- ebenpde_tmp[,eta.names]
   if(class(ebenpde_obs) == "numeric") {
     ebenpde_obs <- as.data.frame(ebenpde_obs)
-    colnames(ebenpde_obs) <- iiv.eta.names
+    colnames(ebenpde_obs) <- eta.names
   }
   
   #create ebenpde_tmp data frame

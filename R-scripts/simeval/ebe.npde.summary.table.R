@@ -1,4 +1,4 @@
-summary.table.ebe.npde <- function(ebenpde_obs,iiv.eta.names) {
+summary.table.ebe.npde <- function(ebenpde_obs,eta.names) {
   # Calculate variance, mean, p-values(mean==0), p-value(var==1) for each ETA
   variance <- c() 
   mymean <- c()
@@ -8,7 +8,7 @@ summary.table.ebe.npde <- function(ebenpde_obs,iiv.eta.names) {
   p_var_not_1 <- c()
   indiv_amount <- c()
   p_shap.wilks <- c()
-  for(i in 1:length(iiv.eta.names)){ 
+  for(i in 1:length(eta.names)){ 
     vect <- ebenpde_obs[!is.na(ebenpde_obs[,i]),i]
     if(length(vect)==0) {
       indiv_amount[i] <- 0
@@ -31,9 +31,8 @@ summary.table.ebe.npde <- function(ebenpde_obs,iiv.eta.names) {
     }
   }
   
-  #ETAs are not sorted if any iov eta, use iiv.eta.names from preamble
   if(any(indiv_amount != indiv_amount[1])) {
-    mydataframe <- data.frame('EBE NPDE' = iiv.eta.names,
+    mydataframe <- data.frame('EBE NPDE' = eta.names,
                               'Number\nof ID' = indiv_amount,
                               mean = sprintf("%.3f",mymean),
                               'p-value\n(H_0: mean==0)'=sprintf("%.3f",p_mean_not_0),
@@ -44,7 +43,7 @@ summary.table.ebe.npde <- function(ebenpde_obs,iiv.eta.names) {
                               'p-value\n(normality)'=sprintf("%.3f",p_shap.wilks),
                               check.names=FALSE,stringsAsFactors = F)
   } else {
-    mydataframe <- data.frame('EBE NPDE' = iiv.eta.names,
+    mydataframe <- data.frame('EBE NPDE' = eta.names,
                               mean = sprintf("%.3f",mymean),
                               'p-value\n(H_0: mean==0)'=sprintf("%.3f",p_mean_not_0),
                               variance=sprintf("%.3f",variance),
@@ -57,7 +56,7 @@ summary.table.ebe.npde <- function(ebenpde_obs,iiv.eta.names) {
   }
   
   # replace 0 values with "", because if nr of ID == 0, then there are no values to calculate means....
-  if(ncol(mydataframe)==6) {
+  if(any(names(mydataframe)=="Number\nof ID")) {
     for (i in 1:nrow(mydataframe)) {
       if(mydataframe$`Number\nof ID`[i] == 0) {
         mydataframe$mean[i] <- ""
@@ -66,7 +65,7 @@ summary.table.ebe.npde <- function(ebenpde_obs,iiv.eta.names) {
         mydataframe$`p-value\n(H_0: var==1)`[i] <- ""
         mydataframe$skewness[i] <- ""
         mydataframe$kurtosis[i] <- ""
-        mydataframe$`p-value\nnormality`[i] <- ""
+        mydataframe$`p-value\n(normality)`[i] <- ""
       }
     }
   }
