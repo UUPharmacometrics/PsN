@@ -1,0 +1,12 @@
+This file holds information about bugs found in PsN-4.6.0.
+
+* bias and relative bias in cdd_results.csv are incorrect when option -bins is not set. To get the correct bias value, the displayed values should be multiplied with (1- 'default number of bins') where the default number of bins is the number of individuals (or cases).
+
+* sse will use the wrong simulated data for reestimation if the simulation model file has more than one $INPUT statement. The table file with simulated data used for reestimation will only include the items from the last $INPUT. Note: It works fine to split $INPUT over several lines, as long as the text $INPUT only appears once.
+
+* Data values with more than five significant digits in sse
+  The simulated datasets used in sse are \$TABLE output from NONMEM, and NONMEM rounds off values when printing tables. In NONMEM 6 1013201 is rounded to 1013200 (five significant digits), and if this makes a significant change to the model estimation, for example if the value is a covariate, then the sse results will be wrong. In NONMEM7 it is possible to set the FORMAT option in $TABLE to make sure no important information is lost. With NONMEM 6 the user must make sure the rounding to five significant digits does not harm the results.
+
+* Lower case user defined and reserved words
+Starting with NONMEM 7.2 lower case user defined and reserved words are supported. This is not supported
+by PsN. For example in $INPUT all reserved words have to be upper case.
