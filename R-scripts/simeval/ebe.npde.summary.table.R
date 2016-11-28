@@ -27,7 +27,12 @@ summary.table.ebe.npde <- function(ebenpde_obs,eta.names) {
       mykurtosis[i] <- kurtosis(vect)
       p_mean_not_0[i] <- wilcox.test(vect)$p.value # $p.value (it means that we look only on p-value from this test)
       p_var_not_1[i]  <- ks.test(vect,"pnorm",mean=mymean[i],sd=1)$p.value #sd = standard variatio and $p.value (it means that we look only on p-value from this test)
-      p_shap.wilks[i] <- shapiro.test(vect)$p.value
+      if(length(vect)>=3) { # shapiro wilks test works only fif samples are form 3-5000
+        p_shap.wilks[i] <- shapiro.test(vect)$p.value
+      } else {
+        p_shap.wilks[i] <- -1 # later replacing with NA value
+      }
+      
     }
   }
   
@@ -69,6 +74,13 @@ summary.table.ebe.npde <- function(ebenpde_obs,eta.names) {
       }
     }
   }
+  # shapiro wilks test works only for sample size 3-5000 (we replace -1 value with NA)
+  for (i in 1:nrow(mydataframe)) {
+    if(mydataframe$`p-value\n(normality)`[i] == "-1.000") {
+      mydataframe$`p-value\n(normality)`[i] <- "NA"
+    }
+  }
+
   
   return(mydataframe)
 }
