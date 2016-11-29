@@ -128,7 +128,7 @@ if (defined $options{'lst'}){
   $lst_file = (substr ($ARGV[0],0,-3)).'lst'; #keep from beginning, skip last four characters
   unless ( -e $lst_file ){
     print "When option -lst is omitted, the name of the lst-file is assumed to be the same\n".
-	"as the modelfile except that the last three letters are lst. Cannot find file $lst_file\.";
+	"as the modelfile except that the last three letters are lst. Cannot find file $lst_file\n";
     exit;
   }
 }
