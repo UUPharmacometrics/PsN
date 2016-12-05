@@ -12,7 +12,6 @@ use model::shrinkage_module;
 use Math::Random qw(random_multivariate_normal);
 use model::iofv_module;
 use model::nonparametric_module;
-use model::shrinkage_module;
 use model::annotation;
 use output;
 use model::problem;
