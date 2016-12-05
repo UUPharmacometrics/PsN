@@ -1,0 +1,113 @@
+#!/usr/bin/perl
+
+use FindBin qw($Bin);
+use lib "$Bin/../lib";
+
+# Don't edit the line below, it must look exactly like this.
+# Everything above this line will be replaced #
+
+use PsN;
+use strict;
+use Getopt::Long;
+use common_options;
+use Cwd;
+use ui;
+# More PsN dependencies included with require further down
+
+my $cmd_line = $0 . " " . join( " ", @ARGV );
+
+## Configure the command line parsing
+Getopt::Long::config("auto_abbrev");
+
+my %options;
+## Declare the options
+
+my %required_options = ( 'samples:i' => '200');
+
+#option etas is not implemented, bootstrap always done on all etas
+my %optional_options = (
+			);
+
+my $res = GetOptions( \%options,
+		      @common_options::get_opt_strings,
+		      keys(%required_options),
+		      keys(%optional_options) );
+exit unless $res;
+
+
+
+my %help_text;
+
+$help_text{Pre_help_message} = <<'EOF';
+  Residual modelling
+EOF
+    
+$help_text{Description} = <<'EOF';
+    Residual modelling
+EOF
+
+$help_text{Examples} = <<'EOF';
+resmod run1.mod
+EOF
+$help_text{Options} = <<'EOF';
+	A model file is required as argument, 
+
+	The following options are valid:
+EOF
+$help_text{-h} = <<'EOF';
+      -h | -?
+      
+      With -h or -? resmod will print a list of options and exit.
+EOF
+      
+$help_text{-help} = <<'EOF';      
+      -help
+      
+      With -help resmod will print this, longer, help message.
+EOF
+
+common_options::online_help( 'nonpb', \%options, \%help_text, \%required_options, \%optional_options);
+common_options::setup( \%options, 'nonpb' ); #calls set_globals etc, initiates random sequence
+
+## Check that we do have a model file
+if (scalar(@ARGV) < 1) {
+  print "A model file must be specified. Use 'resmod -h' for help.\n";
+  exit;
+}
+
+if( scalar(@ARGV) > 1) {
+  print "resmod can only handle one modelfile, you listed: ",
+  join(',',@ARGV),". Use 'resmod -h' for help.\n";die;
+  exit;
+}
+
+ui -> category( 'resmod' );
+ui -> silent(1) if ($options{'silent'});
+
+require model;
+require tool::resmod;
+
+my $eval_string = common_options::model_parameters(\%options);
+
+my $model = model -> new (
+    eval( $eval_string ),
+    filename                    => $ARGV[0],
+    ignore_missing_output_files => 1
+);
+
+my $resmod = tool::resmod->new(
+    eval( $common_options::parameters ),
+    models => [$model],
+);
+
+$resmod->print_options(
+    cmd_line => $cmd_line,
+    toolname => 'resmod',
+    local_options => [keys %optional_options],
+    common_options => \@common_options::tool_options
+);
+
+$resmod -> run();
+$resmod -> print_results();
+
+ui -> print(category => 'resmod', message  => "Residual modelling done.\n");
