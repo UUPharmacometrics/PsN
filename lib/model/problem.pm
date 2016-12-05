@@ -2805,7 +2805,7 @@ sub _format_problem
 				push( @formatted,  @{$arr} );
 			}
 		}
-		if( $self->shrinkage_module -> enabled and $type eq 'table' ) {
+		if (defined $self->shrinkage_module and  $self->shrinkage_module -> enabled and $type eq 'table' ) {
 			push( @formatted, @{$self->shrinkage_module -> format_shrinkage_tables } );
 		}	
 	}
@@ -3349,7 +3349,7 @@ sub create_print_order
             $self->record_order->insert($record);
         }
     }
-	if( $self->shrinkage_module -> enabled) {
+	if(defined $self->shrinkage_module and $self->shrinkage_module -> enabled) {
 		$self->record_order->insert('table');
 	}
 
@@ -3521,8 +3521,10 @@ sub find_table
     my $self = shift;
     my %parm = validated_hash(\@_,
         columns => { isa => 'ArrayRef[Str]' },
+        get_object => { isa => 'Bool', default => 0 },      # return filename if false and table object reference if true
     );
     my $columns = $parm{'columns'};
+    my $get_object = $parm{'get_object'};
     
     if (defined $self->tables) {
         foreach my $table (@{$self->tables}) {
@@ -3550,7 +3552,11 @@ sub find_table
                 delete $search{'WRES'};
             }
             if (scalar(keys %search) == 0) {
-                return $filename;
+                if ($get_object) {
+                    return $table;
+                } else {
+                    return $filename;
+                }
             }
         }
     }
