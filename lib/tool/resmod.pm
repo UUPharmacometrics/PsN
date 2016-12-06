@@ -257,6 +257,8 @@ sub modelfit_analyze
 {
     my $self = shift;
 
+    open my $fh, '>', 'results.csv';
+    print $fh "Name,OFV\n";
     for (my $i = 0; $i < scalar(@{$self->cwres_models}); $i++) {
         my $model = $self->cwres_models->[$i];
         my $ofv;
@@ -269,8 +271,9 @@ sub modelfit_analyze
         } else {
             $ofv = 'NA';
         }
-        print $residual_models[$i]->{'name'}, ": ", $ofv, "\n";
+        print $fh $residual_models[$i]->{'name'}, ", ", $ofv, "\n";
     }
+    close $fh;
 }
 
 no Moose;
