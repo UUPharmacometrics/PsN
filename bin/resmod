@@ -26,7 +26,8 @@ my %required_options = ( 'samples:i' => '200');
 
 #option etas is not implemented, bootstrap always done on all etas
 my %optional_options = (
-			);
+    'idv:s' => undef,
+);
 
 my $res = GetOptions( \%options,
 		      @common_options::get_opt_strings,
@@ -66,6 +67,12 @@ $help_text{-help} = <<'EOF';
       With -help resmod will print this, longer, help message.
 EOF
 
+$help_text{-idv} = <<'EOF';
+      -idv
+
+      Name of the independent variable. TIME is default.
+EOF
+
 common_options::online_help( 'nonpb', \%options, \%help_text, \%required_options, \%optional_options);
 common_options::setup( \%options, 'nonpb' ); #calls set_globals etc, initiates random sequence
 
@@ -98,6 +105,7 @@ my $model = model -> new (
 my $resmod = tool::resmod->new(
     eval( $common_options::parameters ),
     models => [$model],
+    idv => $options{'idv'},
 );
 
 $resmod->print_options(
