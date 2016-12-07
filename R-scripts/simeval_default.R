@@ -20,6 +20,7 @@ source(paste0(rscripts.directory,"/simeval/residuals.outlier.table.R"))
 # Source ofv functions
 source(paste0(rscripts.directory,"/simeval/ofv.p_ofv_ppc.R"))
 source(paste0(rscripts.directory,"/simeval/ofv.i_ofv_npde.R"))
+source(paste0(rscripts.directory,"/simeval/ofv.summary.table.R"))
 source(paste0(rscripts.directory,"/simeval/ofv.i_ofv_res.R"))
 source(paste0(rscripts.directory,"/simeval/ofv.i_ofv_ppc.R"))
 source(paste0(rscripts.directory,"/simeval/ofv.kld_i_ofv.R"))

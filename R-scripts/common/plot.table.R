@@ -1,7 +1,9 @@
-plot.table <- function(table, rotate) {
+plot.table <- function(table,total_rows_per_page,rotate) {
   library(gridExtra)
-  # draw only 20 rows of table per each page
-  total_rows_per_page <- 19
+  # draw only 18 rows of table per each page
+  if (missing(total_rows_per_page)) {
+    total_rows_per_page <- 18
+  }
   start_row <- 1
   if (total_rows_per_page > nrow(table)) {
     end_row <- nrow(table)
@@ -20,7 +22,9 @@ plot.table <- function(table, rotate) {
     }
     
     #plot table
-    frame() # need for drawing table on the next page  
+    # if(i != 1) {
+      frame() # need for drawing table on the next page
+    # }
     if(packageVersion("gridExtra") < "2.0.0"){
       if(!missing(rotate)){
         grid.table(table_plot,show.rownames=FALSE,theme=rotate)

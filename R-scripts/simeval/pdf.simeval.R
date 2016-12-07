@@ -23,7 +23,7 @@ pdf.simeval <- function(ebe.npde.file,iiv.eta.names,iov.eta.names,outlying_crite
     abline(v=median(pOFV_sim),lwd=2, lty=4, col="green")
     abline(v=quantile(pOFV_sim,c(0.025, 0.975), na.rm=T)[1],lwd=2, lty=3, col="green")
     abline(v=quantile(pOFV_sim, c(0.025, 0.975), na.rm=T)[2],lwd=2, lty=3, col="green")
-    leg.txt <- c("pOFV","median pOFVsim","5th and 95th pOFVsim")
+    leg.txt <- c("pOFV","median pOFVsim","2.5th and 97.5th pOFVsim")
     legend("topright", col=c('red', 'green', 'green','green'), leg.txt, lty=c(1,4,3,3),box.lwd = 0,box.col = "white",bg = "white", lwd=2, cex=1)
   }
   histogram_p_ofv_ppc(p_ofv_ppc_data,model.filename)
@@ -46,6 +46,12 @@ pdf.simeval <- function(ebe.npde.file,iiv.eta.names,iov.eta.names,outlying_crite
     }
     histogram_i_ofv_npde(i_ofv_npde_data)
   }
+  
+  #3. iOFV NPDE summary table
+  iofv_summary_table <- summary.table.ofv(iofv.file)
+  
+  # plot summary table
+  plot.table(iofv_summary_table)
   
   #3. iOFV RES
   list_i_ofv_res <- i_ofv_res(all.iofv.file,n.subjects,samples)# calculation
@@ -108,9 +114,9 @@ pdf.simeval <- function(ebe.npde.file,iiv.eta.names,iov.eta.names,outlying_crite
           hist(sort_iOFV_sim,xlim=newxlim,axes=TRUE,main=paste('iOFV PPC ',model.filename,'ID =', outlier_data$ID[i]),xlab="iOFV",freq=TRUE)
           abline(v=iOFV_obs, lwd= 2, lty=1, col="red") 
           abline(v=median(iOFV_sim[1:len]), lwd=2, lty=4, col="green") 
-          abline(v=quantile(iOFV_sim[1:len], c(0.025, 0.975), na.rm=T)[1], lwd=2, lty=3, col="green") 
-          abline(v=quantile(iOFV_sim[1:len], c(0.025, 0.975), na.rm=T)[2], lwd=2, lty=3, col="green") 
-          leg.txt <- c("iOFVobs","median iOFVsim","5th and 95th iOFVsim")
+          abline(v=quantile(iOFV_sim[1:len], c(0.001, 0.999), na.rm=T)[1], lwd=2, lty=3, col="green") 
+          abline(v=quantile(iOFV_sim[1:len], c(0.001, 0.999), na.rm=T)[2], lwd=2, lty=3, col="green") 
+          leg.txt <- c("iOFVobs","median iOFVsim","0.1th and 99.9th iOFVsim")
           legend("topright", col=c('red', 'green', 'green','green'), leg.txt, lty=c(1,4,3,3),box.lwd = 0,box.col = "white",bg = "white", lwd=2, cex=1)
         }
       }
@@ -132,7 +138,7 @@ pdf.simeval <- function(ebe.npde.file,iiv.eta.names,iov.eta.names,outlying_crite
       abline(v=median(KLD_sim),lwd=2, lty=4, col="green")
       abline(v=quantile(KLD_sim,c(0.025, 0.975), na.rm=T)[1],lwd=2, lty=3, col="green")
       abline(v=quantile(KLD_sim, c(0.025, 0.975), na.rm=T)[2],lwd=2, lty=3, col="green")
-      leg.txt <- c("KLDobs","median KLDsim","5th and 95th KLDsim")
+      leg.txt <- c("KLDobs","median KLDsim","2.5th and 97.5th KLDsim")
       legend("topright", col=c('red', 'green', 'green','green'), leg.txt, lty=c(1,4,3,3),
              box.lwd = 0,box.col = "white",bg = "white", lwd=2, cex=1)
     }

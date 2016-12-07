@@ -1,8 +1,13 @@
-plot.all.outlier.table <- function(all_outlier_table) {
+plot.all.outlier.table <- function(all_outlier_table,total_rows_per_page) {
+  # draw only 18 rows of table per each page
+  if (missing(total_rows_per_page)) {
+    total_rows_per_page <- 18
+  }
+  
   if((nrow(all_outlier_table) == 1) && (ncol(all_outlier_table)==1)) {
     plot.table(all_outlier_table)
   } else {
-    total_rows_per_page <- 19
+    # total_rows_per_page <- 18
     start_row <- 1
     if (total_rows_per_page > nrow(all_outlier_table)) {
       end_row <- nrow(all_outlier_table)
