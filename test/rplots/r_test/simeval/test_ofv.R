@@ -1,4 +1,5 @@
 library(testthat)
+suppressMessages(library(PerformanceAnalytics))
 
 tool = 'simeval' 
 
@@ -21,6 +22,7 @@ files.w.dir <- fun.files.w.dir(toolname = tool)
 
 raw.results.file <- paste0(files.w.dir,'raw_results_run1.csv')
 iofv.file <- paste0(files.w.dir,'summary_iofv.csv')
+iofv.file_1 <- paste0(files.w.dir,'summary_iofv_1.csv')
 all.iofv.file <- paste0(files.w.dir,'raw_all_iofv.csv')
 all.iofv.file_1 <- paste0(files.w.dir,'raw_all_iofv_1.csv')
 all.iofv.file_3 <- paste0(files.w.dir,'raw_all_iofv_3.csv')
@@ -87,7 +89,27 @@ test_that("If function i_ofv_npde works as expected",{
   expect_equal(exp_xlimit_max,xlimit_max)
 })
 
-#..........................  (3) Test function i_ofv_res  ...................................
+#..........................  (3) Test summary.table.ofv  ...................................
+mydataframe <- summary.table.ofv(iofv.file=iofv.file)
+mydataframe_1 <- summary.table.ofv(iofv.file=iofv.file_1)
+
+# Create expected data
+exp_mydataframe <- data.frame(C1 = c('iOFV'), C2 = c("-0.677"),C3=c("0.789"),
+                              C4=c("5.269"),C5=c("0.904"),c("-0.394"),c("-1.040"),c("0.854"),stringsAsFactors = F)
+exp_mydataframe_1 <- data.frame(C1 = c('iOFV'), C2 = c("-2.255"),C3=c("0.500"),
+                                C4=c("4.234"),C5=c("0.749"),c("-0.000"),c("-2.000"),c("NA"),stringsAsFactors = F)
+names(exp_mydataframe) <- c("NPDE","mean","p-value\n(H_0: mean==0)","variance","p-value\n(H_0: var==1)","skewness","kurtosis","p-value\n(normality)")
+names(exp_mydataframe_1) <- c("NPDE","mean","p-value\n(H_0: mean==0)","variance","p-value\n(H_0: var==1)","skewness","kurtosis","p-value\n(normality)")
+
+
+# Compare expected data with real data
+context("Simeval, ofv, function summary.table.ofv")
+test_that("If function summary.table.ofv works as expected",{
+  expect_equal(exp_mydataframe,mydataframe)
+  expect_equal(exp_mydataframe_1,mydataframe_1)
+})
+
+#..........................  (4) Test function i_ofv_res  ...................................
 out_i_ofv_res <- i_ofv_res(all.iofv.file=all.iofv.file_1,n.subjects=4,samples=3)
 out_i_ofv_res_a <- i_ofv_res(all.iofv.file=all.iofv.file,n.subjects=4,samples=3)
 out_i_ofv_res_2 <- i_ofv_res(all.iofv.file=all.iofv.file_3,n.subjects=4,samples=3)
@@ -205,7 +227,7 @@ test_that("Expect warnings from function i_ofv_res",{
   expect_message(i_ofv_res(all.iofv.file=all.iofv.file_4,n.subjects=4,samples=3))
 })
 
-#..........................  (4) Test function i_ofv_ppc  ...................................
+#..........................  (5) Test function i_ofv_ppc  ...................................
 list_i_ofv_ppc <- i_ofv_ppc(all.iofv.file=all.iofv.file,samples=3,
                            outlier_ID=c(13,4))
 out_i_ofv_ppc_a <- i_ofv_ppc(all.iofv.file=all.iofv.file,samples=3,
@@ -259,7 +281,7 @@ test_that("If function i_ofv_ppc works as expected",{
   
 })
 
-#..........................  (5) Test function kld_i_ofv  ...................................
+#..........................  (6) Test function kld_i_ofv  ...................................
 out_kld_i_ofv <- kld_i_ofv(all.iofv.file=all.iofv.file,n.subjects=4,samples=3,n=5)
 
 # unlist information
@@ -304,7 +326,7 @@ test_that("If function kld_i_ofv works as expected",{
   expect_equal(exp_newxlim,newxlim)
 })
 
-#..........................  (6) Test function kld  ...................................
+#..........................  (7) Test function kld  ...................................
 list_kld_a <- KLD(iOFV_kernel_average,iOFV_kernel[,1],base=2)
 list_kld_b <- KLD(iOFV_kernel_average,iOFV_kernel_obs,base=2)
 list_kld_c <- KLD(matrix(c(0,0.3,0.49,0.201),nrow = 4,ncol = 1),c(0.029,0.041,0.05,0.037))

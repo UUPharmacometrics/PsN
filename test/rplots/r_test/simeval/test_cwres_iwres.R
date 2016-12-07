@@ -1,4 +1,5 @@
 library(testthat)
+suppressMessages(library(PerformanceAnalytics))
 tool = 'simeval'
 
 #####################    1.Source functions which are going to be testet   ##################
@@ -18,6 +19,7 @@ source("../set.working.directory.R")
 files.w.dir <- fun.files.w.dir(toolname = tool)
 
 residual.files <- c(paste0(files.w.dir,'summary_cwres.csv'),paste0(files.w.dir,'summary_iwres.csv'))
+residual.files_1 <- c(paste0(files.w.dir,'summary_cwres_1.csv'),paste0(files.w.dir,'summary_iwres.csv'))
 residual.outliers.file <- paste0(files.w.dir,'residual_outliers.csv')
 residual.outliers.file.1 <- paste0(files.w.dir,'residual_outliers_1.csv')
 residual.names <- c('CWRES','IWRES')
@@ -74,15 +76,20 @@ test_that("If function histograms.cwres.iwres works as expected",{
 
 #...............................  (2) Test function summary.table  ...............................
 mydataframe <- summary.table(residual.files,residual.names)
+mydataframe_1 <- summary.table(residual.files_1,residual.names)
 
 # Create expected data set
-exp_mydataframe <- data.frame(C1 = c('CWRES','IWRES'), C2 = c(0.40173,-0.03232),C3=c(0.75,1.00),
-                              C4=c(3.32489,1.20288),C5=c(0.864,0.764))
-names(exp_mydataframe) <- c("NPDE","mean","p-value (H_0: mean==0)","variance","p-value (H_0: var==1)")
+exp_mydataframe <- data.frame(C1 = c('CWRES','IWRES'), C2 = c(0.402,-0.032),C3=c(0.75,1.00),
+                              C4=c(3.325,1.203),C5=c(0.864,0.764),c(-0.298,-0.622),c(-1.5,-1.5),c(0.723,0.315))
+exp_mydataframe_1 <- data.frame(C1 = c('CWRES','IWRES'), C2 = c(-0.424,-0.032),C3=c(1,1.00),
+                              C4=c(2.556,1.203),C5=c(0.883,0.764),c(0,-0.622),c(-2,-1.5),c(NA,0.315))
+names(exp_mydataframe) <- c("NPDE","mean","p-value\n(H_0: mean==0)","variance","p-value\n(H_0: var==1)","skewness","kurtosis","p-value\n(normality)")
+names(exp_mydataframe_1) <- c("NPDE","mean","p-value\n(H_0: mean==0)","variance","p-value\n(H_0: var==1)","skewness","kurtosis","p-value\n(normality)")
 # Compare expected data with real data
 context("Simeval, residuals, function summary.table")
 test_that("If function summary.table works as expected",{
   expect_equal(exp_mydataframe,mydataframe)
+  expect_equal(exp_mydataframe_1,mydataframe_1)
 })
 
 #...............................  (3) Test function outlier.tablee  ...............................
