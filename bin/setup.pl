@@ -116,7 +116,7 @@ my @utilities = (
 	'pind','nonpb','extended_grid','psn','psn_options','psn_clean',
 	'runrecord','mcmp','lasso','mimp','xv_scm','parallel_retries',
 	'boot_scm','gls','simeval','frem','randtest','linearize', 'crossval', 'pvar', 'nca', 'proseval', 'vpctable','sir','rawresults',
-	'precond','covmat','nmoutput2so', 'benchmark','postfrem','npfit'
+	'precond','covmat','nmoutput2so', 'benchmark','postfrem','npfit', 'resmod'
 	);
 
 my @win_modules = ('Moose', 'MooseX::Params::Validate', 'Math::Random');

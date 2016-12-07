@@ -161,6 +161,7 @@ LIBFILES= ui.pm \
 	tool/pvar.pm \
 	tool/proseval.pm \
 	tool/nonparametric.pm \
+	tool/resmod.pm \
 	utils/file.pm \
 
 BINFILES=$(wildcard bin/*)
