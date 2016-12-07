@@ -1274,8 +1274,7 @@ sub create_R_plots_code
 
 	my $succ = $self->successful_samples;
 	$succ = 2 if ($succ == 0);
-	my $outlying = 'outlying_criteria <- '.-(Statistics::Distributions::udistr(1/($succ))).
-		'  # for successful samples='.$succ;
+	my $outlying = 'outlying_criteria <-'. -3;
 
 	my @residual_files = ($cwres_file);
 	my @residual_names = ('CWRES');
