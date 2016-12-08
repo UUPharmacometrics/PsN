@@ -1010,15 +1010,6 @@ sub simeval_analyze
 				next;
 			}
 
-			if ($ti == 0){ #only iiv
-				for (my $i=0; $i<scalar(@{$decorr->[0]});$i++){ #over individuals
-					my $sd=0;
-					for (my $j=0; $j<scalar(@{$decorr});$j++){ #over ETAs
-						$sd += ($decorr->[$j]->[$i]->[0])**2 unless ($decorr->[$j]->[$i]->[0] == $missing_value);
-					}
-					$standardized[$i] += $sd;
-				}
-			}
 			$ret = simeval_util::npde_comp($decorr,$pde,$npde);
 			unless ($ret ==0){
 				ui->print(category=> 'all',
@@ -1030,6 +1021,15 @@ sub simeval_analyze
 					for (my $j=0; $j<scalar(@{$npde});$j++){ #loop eta
 						push(@{$all_npde[$i]},$npde->[$j]->[$i]);
 					}
+				}
+			}
+			if ($ti == 0){ #only iiv
+				for (my $i = 0; $i < scalar(@all_npde); $i++) { #over individuals
+					my $sd = 0;
+					for (my $j = 0; $j < scalar(@{$all_npde[$i]}); $j++) { #over ETAs
+						$sd += ($all_npde[$i]->[$j])**2 unless ($all_npde[$i]->[$j] == $missing_value);
+					}
+					$standardized[$i] += $sd;
 				}
 			}
 		}#end loop etatypes
