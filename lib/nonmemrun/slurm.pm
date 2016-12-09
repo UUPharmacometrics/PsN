@@ -10,6 +10,7 @@ extends 'nonmemrun';
 
 has 'partition' => ( is => 'rw', isa => 'Maybe[Str]' );
 has 'account' => ( is => 'rw', isa => 'Maybe[Str]' );
+has 'check_modfile' => ( is => 'rw', isa => 'Bool', default => 1 );
 
 sub submit
 {
@@ -82,18 +83,19 @@ sub submit
 	}
 	my $lstfile = 'psn.lst';
 
-	unless (-e $modfile){
-		#this is a fatal error
-		my $work_dir = cwd();
-		print "\n Error: cannot run ".$self->model->full_name." in proper NM_run\n".
-			"$modfile does not exist in $work_dir before slurm job submission,\n".
-			"mkdir or chdir in PsN must have failed. Considering this model failed.\n".
-			"Please report this error\n";
-		$jobId = -1;
-		$self->job_id($jobId);
-		return $jobId;
-	}
-	
+	if ($self->check_modfile){
+		unless (-e $modfile){
+			#this is a fatal error
+			my $work_dir = cwd();
+			print "\n Error: cannot run ".$self->model->full_name." in proper NM_run\n".
+				"$modfile does not exist in $work_dir before slurm job submission,\n".
+				"mkdir or chdir in PsN must have failed. Considering this model failed.\n".
+				"Please report this error\n";
+			$jobId = -1;
+			$self->job_id($jobId);
+			return $jobId;
+		}
+	}	
 	system("echo sbatch $flags $command \"2>&1\" > sbatchcommand");
 
 	for (my $i = 0; $i < 10; $i++) {

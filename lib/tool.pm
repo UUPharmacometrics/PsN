@@ -1624,11 +1624,13 @@ sub _prepare_model
 	my $model_number = $parm{'model_number'};
 
 	my ($newdir, $newfile) = OSspecific::absolute_path( $self->directory .  '/m'.$model_number, '' );
-	debugmessage(3,"Making directory\t\t" . $newdir );
-	unless(mkdir( $newdir )){
-		croak("_prepare_model failed to create $newdir : $!");
+	unless (-e $newdir){
+		debugmessage(3,"Making directory\t\t" . $newdir );
+		unless(mkdir( $newdir )){
+			croak("_prepare_model failed to create $newdir : $!");
+		}
+		trace(tool => 'tool',message => "Created directory $newdir ", level => 1);
 	}
-	trace(tool => 'tool',message => "Created directory $newdir ", level => 1);
 }
 
 sub print_options

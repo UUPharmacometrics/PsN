@@ -26,7 +26,9 @@ my $model = model->new(filename => $includes::testfiledir . "/pheno5.mod");
 my $old_uppmax = $PsN::config -> {'default_options'} -> {'uppmax'};
 $PsN::config -> {'default_options'} -> {'uppmax'} = 0;
 
-my $nonmemrun = nonmemrun::slurm->new(nm_version => $nmvers, model => $model);
+my $nonmemrun = nonmemrun::slurm->new(nm_version => $nmvers, 
+									  model => $model,
+									  check_modfile => 0);
 $nonmemrun->submit;
 
 #reset uppmax
@@ -70,6 +72,7 @@ $nonmemrun = nonmemrun::slurm->new(
 	send_email => 'ALL',
 	email_address => 'psn@psn.org',
 	prepend_flags => 'myflags flag2',
+	check_modfile => 0,
 );
 $nonmemrun->submit;
 
