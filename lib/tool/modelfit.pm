@@ -3631,7 +3631,9 @@ sub create_sub_dir
 	($tmp_dir, $file) = OSspecific::absolute_path( $self->directory . '/' .  $subDir, '');
 
 	unless( -e $tmp_dir ){
-	    mkdir( $tmp_dir );
+	    unless (mkdir( $tmp_dir )){
+			croak("Error in create_sub_dir: Failed to create $tmp_dir\n system error $! \n");
+		}
 	}
 	open( FILE, '>'.$tmp_dir.'/modelname' );
 	print FILE "$modelname\n";
