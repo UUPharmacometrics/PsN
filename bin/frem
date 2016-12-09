@@ -29,6 +29,7 @@ my %optional_options = (
 #	'vpc!' => undef,
 	'check!' => undef,
 	'rescale!' => undef,
+	'fork_runs!' => undef,
 #	'estimate_regular_final_model!' => undef,
 	'estimate_means!' => undef,
 	'categorical:s' => undef,
@@ -39,6 +40,7 @@ my %optional_options = (
 	'run_sir!' => undef,
 	'mu' => undef,
 	'cholesky!' => undef,
+	'always_proposal_density!' => undef,
 #	'skip_etas:i' => undef
 	'skip_omegas:s' => undef
 );
@@ -119,6 +121,19 @@ $help_text{-skip_omegas} = <<'EOF';
       Numbering goes strictly by the text $OMEGA in the control stream, without concern
       about the type or size of the record. OMEGAs for BOV ETAs will be automatically skipped,
       even if option -skip_omegas was not set.
+EOF
+
+$help_text{-fork_runs} = <<'EOF';
+       -fork_runs
+ 
+       Fork out separate processes for all output parsing. Default not set.
+       Will only work on *nix.
+EOF
+$help_text{-always_proposal_density} = <<'EOF';
+       -always_proposal_density
+ 
+       Default set, unset with -no-always_proposal_density. If set then print alternative
+       proposal density to use as input to sir even if Model 4 covstep is successful.
 EOF
 
 $help_text{-rse} = <<'EOF';
@@ -227,8 +242,9 @@ require model;
 my $eval_string = common_options::model_parameters(\%options);
 
 my $model = model -> new ( eval( $eval_string ),
-			   filename                    => $ARGV[0],
-			   ignore_missing_output_files => 1);
+						   parse_output => 0,
+						   filename                    => $ARGV[0],
+						   ignore_missing_output_files => 1);
 
 require input_checking;
 input_checking::check_options(tool => 'frem', options => \%options, model => $model);
@@ -248,6 +264,8 @@ my $frem = tool::frem->new( eval( $common_options::parameters ),
 							log => $options{'log'},
 							rse => $options{'rse'},
 							mu => $options{'mu'},
+							fork_runs => $options{'fork_runs'},
+							always_proposal_density => $options{'always_proposal_density'},
 							skip_omegas => $options{'skip_omegas'}, 
 							check => $options{'check'}, 
 							mceta => $options{'mceta'},

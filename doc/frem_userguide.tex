@@ -1,6 +1,6 @@
 \input{inputs/format_header.tex}
 \usepackage{amsmath}
-\guidetitle{FREM userguide}{2016-09-09}
+\guidetitle{FREM userguide}{2016-12-09}
 
 \begin{document}
 \newcommand{\guidetoolname}{frem}
@@ -157,6 +157,14 @@ in last \$EST of Model 2 and later.
 \nextopt
 \optname{check}
 Default not set. Run evaluation with frem records ignored after frem data set generation, to check ofv is the same.
+\nextopt
+\optname{fork\_runs}
+Default not set. Fork out separate processes for all output parsing. Will only work on unix-like systems.
+Only relevant if output objects very, very large.
+\nextopt
+\optname{always\_proposal\_density}
+Default set, unset with -no-always\_proposal\_density. If set then print alternative
+proposal density to use as input to sir even if Model 4 covstep is successful.
 \nextopt
 %\optdefault{rplots}{level}
 %{\Large \texttt{Later}}
@@ -770,6 +778,9 @@ and $n_{cov}=1$.
 
 
 \section{Known issues}
+\$OMEGA records that are set to 0 FIX must be listed in -skip\_omegas. If 0 FIX \$OMEGA are not skipped then
+frem will fail.
+
 Setting option -cholesky will often fail with NONMEM versions older than NM7.3, since the Fortran 95 code line continuation
 \& is not recognized by nmtran.
 
