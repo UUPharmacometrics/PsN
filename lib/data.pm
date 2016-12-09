@@ -3020,6 +3020,24 @@ sub scm_calculate_covariate_statistics
 															 time_varying => \@time_varying,
 															 linearize => $linearize,
 															 return_after_derivatives_done => $return_after_derivatives_done);
+
+			my $prob = "This will probably cause errors later in the run.";
+			unless (math::usable_number($results->{$cov}{'min'})){
+				if (defined $results->{$cov}{'min'}){
+					ui->print(category => 'all',"\n WARNING: Minimum value for $cov is ".$results->{$cov}{'min'}.
+							  " which is not a usable number. $prob" );
+				}else{
+					ui->print(category => 'all',"\n WARNING: Minimum value for $cov is undefined. $prob" );
+				}
+			}
+			unless (math::usable_number($results->{$cov}{'max'})){
+				if (defined $results->{$cov}{'max'}){
+					ui->print(category => 'all',"\n WARNING: Maximum value for $cov is ".$results->{$cov}{'max'}." which is not a usable number. $prob" );
+				}else{
+					ui->print(category => 'all',"\n WARNING: Maximum value for $cov is undefined. $prob" );
+				}
+			}
+				
 			if( $status_bar -> tick () ){
 				ui -> print( category => $category,
 							 message  => $status_bar -> print_step(),
