@@ -223,6 +223,32 @@ release: main completion rel_dir $(RELFILES) $(PDFFILES)
 	@ echo  
 	@ echo Remember sftp putdoc for guides!
 
+release_old_doc: main completion rel_dir $(RELFILES)
+	@ rm -f $(ZIPFILE)
+	@ rm -f $(TARFILE)
+	@ mkdir -p PsN-Source/development
+	@ mkdir -p PsN-Source/development/completion_files
+	@ cp development/completion_files/* PsN-Source/development/completion_files
+	@ mkdir -p PsN-Source/test
+	@ cp -ar test/unit PsN-Source/test
+	@ cp -ar test/system PsN-Source/test
+	@ cp -ar test/rplots PsN-Source/test
+	@ cp -ar test/test_files PsN-Source/test
+	@ cp -ar R-scripts PsN-Source/lib
+	@ cp test/includes.pm PsN-Source/test
+	@ cp test/runsystem PsN-Source/test
+	@ mkdir -p PsN-Source/doc
+	@ cp doc/*.pdf PsN-Source/doc
+	@ cp doc/*.scm PsN-Source/doc
+	@ cp doc/*.xls PsN-Source/doc
+	@ cp doc/PsN.bib PsN-Source/lib
+	@ cd PsN-Source/doc/; zip -q PsN_pdf_documentation *.pdf *.xls *.scm
+	@ cd PsN-Source/doc/; tar -czf PsN_pdf_documentation.tar.gz *.pdf *.xls *.scm
+	@ chmod -R a+r PsN-Source/test/test_files
+	@ sed -i 's/dev\s*=\s*1;/dev = 0;/' PsN-Source/lib/PsN.pm
+	@ zip -rq $(ZIPFILE) PsN-Source/
+	@ tar czf $(TARFILE) PsN-Source/
+
 # Release the nmoutput2so separately
 nmoutput2so: version
 	@ cd doc; pdflatex nmoutput2so_userguide.tex >/dev/null; pdflatex nmoutput2so_userguide.tex >/dev/null; biber nmoutput2so_userguide >/dev/null; pdflatex nmoutput2so_userguide.tex >/dev/null
