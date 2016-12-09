@@ -23,7 +23,7 @@ has 'filename' => ( is => 'rw', isa => 'Str' );
 has 'nonmem_version' => ( is => 'rw', isa => 'Num' );
 has 'ignore_missing_files' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'tablenames' => ( is => 'rw', isa => 'ArrayRef[Str]' );
-has 'target' => ( is => 'rw', isa => 'Str', default => 'mem' );
+has 'parse_output' => ( is => 'rw', isa => 'Bool', default => 1 );
 has 'parsed_successfully' => ( is => 'rw', isa => 'Bool', default => 1 );
 has 'msfo_has_terminated' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'runtime' => ( is => 'rw', isa => 'Str' );
@@ -88,12 +88,6 @@ sub BUILD
 	# The basic usage above creates a output object with the data
 	# in file.out parsed into memory.
 	#
-	#   $outputObject -> new( filename => 'run1.lst',
-	#                         target   => 'disk' );
-	#
-	# If I<target> is set to 'disk', the data in "run1.lst" will
-	# be left on disk in an effort to preserve memory. The file
-	# will be read if needed.
 
 	debugmessage(3,"Initiating new\tNM::output object from file " . $self->filename );
 
@@ -115,7 +109,7 @@ sub BUILD
         }
 
 		if ( -e $self->full_name ) { 
-			if ($self->target eq 'mem') {
+			if ($self->parse_output) {
 				$self->_read_problems;
 			}
 		} else {
@@ -136,6 +130,28 @@ sub add_problem
 	$self->problems([]) unless defined $self->problems;
 	push( @{$self->problems}, output::problem->new( %{$parm{'init_data'}} ) );
 
+}
+
+sub load
+{
+    #this method returns an empty string if all goes well. Empty string evaluates to
+    #false while non-empty strings are true, so return value from load can always be 
+    #checked with $error = $output->load; if ($error){"something went wrong $error"}else{'all ok'}
+    my $self = shift;
+    my $error = '';
+
+    if ($self->have_output){
+		unless ( not_empty($self->problems) ) {
+			$self -> _read_problems;
+		}
+		unless( $self -> parsed_successfully ){
+			$error = "Trying to load output but unable to read everything from outputfile, parser error message:\n".
+				$self -> parsing_error_message();
+		}
+    }else{
+		$error = "Trying to load output but output object is empty, file\n".$self->full_name."\n";
+    }
+    return $error;
 }
 
 sub nonmem_run_failed
@@ -216,9 +232,8 @@ sub get_estimation_evaluation_problem_number
 	my $estimation_step_run = 0;
 
 	if ( $self -> have_output ) {
-		unless ( not_empty($self->problems) ) {
-			$self -> _read_problems;
-		}
+		$self -> load;
+
 		if( defined $self->problems ) {
 			for (my $i=0; $i<scalar(@{$self->problems}); $i++){
 				if ((defined $self->problems->[$i]) and (defined $self->problems->[$i]->subproblems) and
@@ -263,22 +278,15 @@ sub get_problem_count
 {
 	my $self = shift;
 
-	my $answer;
-	if ( $self -> have_output ) {
-		unless ( not_empty($self->problems) ) {
-			$self -> _read_problems;
-		}
+	my $answer = undef;
+	my $error = $self->load;
+	unless ($error){
 		if( defined $self->problems ) {
 			$answer = scalar(@{$self->problems});
 		} else {
 			$answer= 0;
 		}
-		
-	} else {
-		#print "\nTrying to access output object, that have no data on file(" . $self->full_name . ") or in memory\n" ;
-		$answer= undef;
-	}
-	
+	} 	
 	return $answer;
 }
 
@@ -306,12 +314,10 @@ sub access_any
 	# the automatic). e.g check that parameter_numbers is a two-
 	# dimensional array.
 
-	if ( $self -> have_output ) {
-		unless ( not_empty($self->problems) ) {
-			$self -> _read_problems;
-		}
-	} else {
-		print "\nTrying to access output object, that have no data on file(" . $self->full_name . ") or in memory\n" ;
+	
+	my $error = $self->load;
+	if ( $error  ) {
+		print "\n $error \n" ;
 		return [];
 	}
 
@@ -1125,18 +1131,17 @@ sub estnames
 	#FIXME default all problems all subproblems
 
 	my @estnames =();
-	
-	if ( $self -> have_output ) {
-		unless ( not_empty($self->problems) ) {
-			$self -> _read_problems;
-		}
-		unless (defined $self->problems and scalar(@{$self->problems})>0 ) {
-			return [];
-		}
-	} else {
-		print "\nTrying to access output object, that have no data on file(" . $self->full_name . ") or in memory\n" ;
+
+	my $error = $self->load;
+
+	if ( $error ) {
+		print "\n $error \n";
 		return [];
 	}
+	unless (defined $self->problems and scalar(@{$self->problems})>0 ) {
+		return [];
+	}
+
 	my $max_prob = scalar(@{$self->problems});
 
 	foreach my $probnum (@problems){
@@ -3139,7 +3144,7 @@ sub problem_structure
 	my $flush = 0;
 	unless ( not_empty($self->problems) ) {
 		# Try to read from disk
-		$self -> _read_problems;
+		$self -> load;
 		$flush = 1;
 	}
 	if ( not_empty($self->problems) ) {
@@ -3191,8 +3196,7 @@ sub _read_problems
 	# This is a private method, and should not be used outside
 	# this file.
 
-
-#	print "slurp ".$self->full_name."\n";
+	debugmessage(2,"Parsing output: " . $self->full_name );
 	my @lstfile = utils::file::slurp_file($self->full_name);
 	if ($self->append_nm_OUTPUT and -e $self->directory.'OUTPUT'){
 		my @extra = utils::file::slurp_file($self->directory.'OUTPUT');
@@ -3515,17 +3519,11 @@ sub get_nonmem_parameters
 	);
 	my $output = $parm{'output'};
 
-	unless ($output->have_output){
-		croak("Trying get_nonmem_parameters but output object is empty, output file\n".$output->full_name."\n");
-	}
-	unless( $output -> parsed_successfully ){
-		croak("Trying get_nonmem_parameters but unable to read everything from outputfile, parser error message:\n".
-			  $output -> parsing_error_message());
-	}
-	unless ( not_empty($output->problems) ) {
-	    $output -> _read_problems;
-	}
+	my $error = $output -> load;
 
+	if ($error){
+		croak("Failed get_nonmem_parameters:\n $error \n");
+	}
 
 	my %hash;
 	$hash{'values'} = $output->get_filtered_values(parameter => 'all',
