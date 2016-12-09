@@ -973,7 +973,9 @@ sub run
 	my @prepared_models;
 
 	my $return_dir = getcwd();
-	chdir( $self->directory );
+	unless (chdir( $self->directory )){
+		croak("tool->run failed to chdir to self->directory ".$self->directory);
+	}
 	trace(tool=> 'tool', message => "Changed directory to " . $self->directory, level => 1);
 
 	#even if there is never any forking over tools, there is code in pre_fork_setup that we keep.
@@ -1021,7 +1023,9 @@ sub run
 	# defined.
 	$self -> post_fork_analyze;
 
-	chdir($return_dir);
+	unless(chdir($return_dir)){
+		croak("tool failed chdir to return_dir $return_dir");
+	}
 	trace(tool => 'tool',message => "Changed directory to ".$return_dir, level => 1);
 
     # Remove all NM_run and m folders for non-top_tools
@@ -1621,7 +1625,9 @@ sub _prepare_model
 
 	my ($newdir, $newfile) = OSspecific::absolute_path( $self->directory .  '/m'.$model_number, '' );
 	debugmessage(3,"Making directory\t\t" . $newdir );
-	mkdir( $newdir );
+	unless(mkdir( $newdir )){
+		croak("_prepare_model failed to create $newdir : $!");
+	}
 	trace(tool => 'tool',message => "Created directory $newdir ", level => 1);
 }
 
@@ -1786,7 +1792,11 @@ sub get_rundir
 	}
 
 	if ($create){
-		mkpath( $rundir) unless ( -d $rundir);
+		unless ( -d $rundir){
+			unless(mkpath( $rundir)){
+				croak("get_rundir: Failed to create $rundir : $!");
+			}
+		}
 	}
 
 	return $rundir;
