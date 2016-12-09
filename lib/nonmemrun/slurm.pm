@@ -4,6 +4,7 @@ use include_modules;
 use Moose;
 use MooseX::Params::Validate;
 use OSspecific;
+use Cwd;
 
 extends 'nonmemrun';
 
@@ -81,6 +82,18 @@ sub submit
 	}
 	my $lstfile = 'psn.lst';
 
+	unless (-e $modfile){
+		#this is a fatal error
+		my $work_dir = cwd();
+		print "\n Error: cannot run ".$self->model->full_name." in proper NM_run\n".
+			"$modfile does not exist in $work_dir before slurm job submission,\n".
+			"mkdir or chdir in PsN must have failed. Considering this model failed.\n".
+			"Please report this error\n";
+		$jobId = -1;
+		$self->job_id($jobId);
+		return $jobId;
+	}
+	
 	system("echo sbatch $flags $command \"2>&1\" > sbatchcommand");
 
 	for (my $i = 0; $i < 10; $i++) {

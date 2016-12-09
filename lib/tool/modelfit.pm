@@ -381,7 +381,9 @@ sub run
 	my $started_all_models_print = 0;
 	my $do_abort = 0;
 	my $failed_run_message = '';
-	chdir($self->directory);
+	unless (chdir($self->directory)){
+		croak("Failed chdir to self->directory: ".$self->directory."\n system error $!");
+	}
     trace(tool => 'modelfit', message => "Changed directory to " . $self->directory, level => 1);
 
 	# sanity checks
@@ -521,7 +523,9 @@ sub run
 
 			ui -> category('modelfit');
 
-			chdir( 'NM_run'.($run+1) );
+			unless(chdir( 'NM_run'.($run+1) )){
+				croak("Failed chdir to ".'NM_run'.($run+1)."\n system error $!");
+			}
 			trace(tool => 'modelfit',message => " Moved to NM_run".($run+1).".", level => 2);
 
 			## Start tail of output if requested. Only works for Win32.
@@ -679,7 +683,9 @@ sub run
 				my $candidate_model = $queue_info{$run}{'candidate_model'};
 
 				my $work_dir = 'NM_run' . ($run + 1);
-				chdir($work_dir);
+				unless(chdir($work_dir)){
+					croak("Failed chdir to work_dir $work_dir"."\n system error $!");
+				}
 				trace(tool => 'modelfit', message => "A NONMEM run has finished (system process with id $pid ".
 										"has disappeared).\n".
 										"Changed to directory $work_dir of this process to check results.", level => 2);
@@ -837,7 +843,9 @@ sub run
 
 	$self->print_raw_results();
 
-	chdir($cwd);
+	unless(chdir($cwd)){
+		croak("Failed chdir to cwd: $cwd"."\n system error $!");
+	}
 	trace(tool => 'modelfit', message => "changed directory to $cwd", level => 2);
 
     # clean $self -> directory 
@@ -2343,7 +2351,7 @@ sub restart_needed
 
 	# -------------- Notes about automatic pertubation and retries -----------------
   
-	# see cdocumentation in common_options
+	# see documentation in common_options
 
   
   # We need the trail of files to select the most appropriate at the end
