@@ -251,6 +251,7 @@ foreach my $model_name ( @ARGV ){
 	my $model;
 	$model = model -> new ( eval( $eval_string ),
 							filename                    => $model_name,
+							parse_output => 0,
 							ignore_missing_output_files => 1 );
 
 	input_checking::check_options(tool => 'execute', options => \%options, model => $model);

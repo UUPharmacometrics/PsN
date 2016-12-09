@@ -116,7 +116,7 @@ has 'ignore_missing_data' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'ignore_missing_files' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'ignore_missing_output_files' => ( is => 'rw', isa => 'Bool', default => 1 );
 has 'outputfile' => ( is => 'rw', isa => 'Maybe[Str]' );
-has 'parse_output' => ( is => 'rw', isa => 'Bool', default => 0 );
+has 'parse_output' => ( is => 'rw', isa => 'Bool', default => 1 );
 has 'sde' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'omega_before_pk' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'psn_record_order' => ( is => 'rw', isa => 'Bool', default => 0 );
