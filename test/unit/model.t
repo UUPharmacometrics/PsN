@@ -93,8 +93,13 @@ is($positions_ref -> [0],3,"column number in input 1");
 #print "is est ".$model->is_estimation(problem_number => 1)."\n";
 is ($model->get_estimation_evaluation_problem_number,-1,"get_estimation_evaluation_problem_number saem-foci");
 
-$model = model->new(filename => "$modeldir/pheno.mod");
+$model = model->new(filename => "$modeldir/pheno.mod",parse_output => 0);
 is($model->need_data_filtering,0,'need data filtering 3');
+is( (not ((defined $model->outputs->[0]->problems) and (scalar(@{$model->outputs->[0]->problems})>0))),1,
+   'output problems is empty when parse_output is false');
+$model->outputs->[0]->load;
+is((defined $model->outputs->[0]->problems and scalar(@{$model->outputs->[0]->problems})>0),1,
+   'output problems is not empty after output->load');
 
 is ($model->get_estimation_evaluation_problem_number,1,"get_estimation_evaluation_problem_number");
 

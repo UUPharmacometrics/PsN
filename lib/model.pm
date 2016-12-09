@@ -116,6 +116,7 @@ has 'ignore_missing_data' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'ignore_missing_files' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'ignore_missing_output_files' => ( is => 'rw', isa => 'Bool', default => 1 );
 has 'outputfile' => ( is => 'rw', isa => 'Maybe[Str]' );
+has 'parse_output' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'sde' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'omega_before_pk' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'psn_record_order' => ( is => 'rw', isa => 'Bool', default => 0 );
@@ -235,6 +236,7 @@ sub BUILD
         push(@{$self->outputs}, output->new(
             filename => $self->outputfile,
             directory => $self->directory,
+				 parse_output => $self->parse_output,
             ignore_missing_files => ($self->ignore_missing_files || $self->ignore_missing_output_files))
         );
     }
@@ -292,6 +294,16 @@ sub BUILD
 		}
 	}
 	
+}
+
+sub load_output
+{
+    my $self = shift;
+    if (defined $self-> outputs){
+		for (my $i=0; $i<scalar(@{$self->outputs}); $i++){
+			$self->outputs->[$i]->load;
+		}
+    }
 }
 
 sub check_and_set_sizes
@@ -559,7 +571,7 @@ sub set_outputfile
 	my $self = shift;
 
 	  $self->outputs( 
-		  [ output->new(filename => $self->outputfile, ignore_missing_files => ($self->ignore_missing_files || $self->ignore_missing_output_files)) ]
+		  [ output->new(filename => $self->outputfile, parse_output => $self->parse_output, ignore_missing_files => ($self->ignore_missing_files || $self->ignore_missing_output_files)) ]
       );
 }
 
@@ -1305,8 +1317,9 @@ sub get_values_to_labels
 	unless (defined $output_object){
 	 croak("get_values_to_labels can only be called where output object exists"); 
 	}
-	unless ( $output_object -> parsed_successfully() ){
-	  croak("get_values_to_labels can only be called where output object parsed successfully" ); 
+	my $error = $output_object ->load;
+	if ( $error ) {
+	    croak("model->get_values_to_labels cannot be run, output file error: \n".$error);
 	}
 
 	#zeros may be present, they are ambigous (really 0 or not estimated)
@@ -3279,13 +3292,16 @@ sub update_inits
 	my %allparams;
 	if ( defined $from_output ) {
 		debugmessage(3,"using output object specified as argument\n");
+	    $from_output->load;
 	} elsif ( defined $from_hash ) {
 		$from_output = undef;
 		%allparams = %{$from_hash};
 	} elsif ( defined $from_output_file ) {
-		$from_output = output->new(filename => $from_output_file);
+		$from_output = output->new(filename => $from_output_file,
+								   parse_output => 1);
 	} else {
 		$from_output = @{$from_model->outputs}[0]; #assume 1st $PROB
+	    $from_output->load;
 	}
 
 	my @params = ();
@@ -5106,6 +5122,7 @@ sub get_estimation_evaluation_problem_number
 	my $probnum=-1;
 
 	if (defined $self->outputs and defined $self->outputs->[0] and $self->outputs->[0]->have_output()){
+	    $self->outputs->[0]->load;
 		$probnum = $self->outputs->[0]->get_estimation_evaluation_problem_number();
 	}else{
 		for (my $i=1; $i <= scalar (@{$self->problems}); $i++ ){
