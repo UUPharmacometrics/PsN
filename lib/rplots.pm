@@ -24,6 +24,7 @@ has 'standard_preamble' => ( is => 'rw', isa => 'ArrayRef[Str]',default => sub{ 
 has 'extra_preamble' => ( is => 'rw', isa => 'ArrayRef[Str]',default => sub{ [] } );
 has 'plotcode' => ( is => 'rw', isa => 'ArrayRef[Str]', required => 1);
 has 'subset_variable' => (is => 'rw', isa => 'Maybe[Str]' );
+has 'R_markdown' => (is => 'rw', isa => 'Bool', default => 0);
 
 our $preambleline = '#WHEN THIS FILE IS USED AS A TEMPLATE THIS LINE MUST LOOK EXACTLY LIKE THIS';
 
@@ -44,9 +45,13 @@ sub setup
 	my $model = $parm{'model'};
 
 	unless (defined $self->filename){
-		$self->filename('PsN_'.$self->toolname.'_plots.R');
+		if($self->R_markdown) {
+			$self->filename('PsN_'.$self->toolname.'_plots.Rmd');
+		} else {
+			$self->filename('PsN_'.$self->toolname.'_plots.R');
+		}	
 	}
-
+	
 	if (defined $self->raw_results_file){
 		my ( $ldir, $rawname ) = OSspecific::absolute_path('', $self->raw_results_file);
 		$self->raw_results_file($rawname);
@@ -249,7 +254,12 @@ sub make_plots{
 	#sometimes run script - need high enough level and defined R executable
 	if ($self->level > 0 and defined ($self->_R_executable)){
 		ui->print(category=> 'all',message => "\nRunning ".$self->filename."...\n");
-		system($self->_R_executable." CMD BATCH ".$self->filename);
+		if($self->R_markdown) {
+			system($self->_R_executable."script -e \"rmarkdown::render(input='".$self->filename."',output_format='pdf_document',output_file='PsN_".$self->toolname()."_plots.pdf')\" > PsN_".$self->toolname()."_plots.Rout 2>&1");
+			#system($self->_R_executable."script -e \"rmarkdown::render('".$self->filename."')\" > PsN_".$self->toolname()."_plots.Rout 2>&1");
+		} else {
+			system($self->_R_executable." CMD BATCH ".$self->filename);
+		}
 		unlink('.RData');
 	}
 	chdir($basedir);
@@ -258,26 +268,67 @@ sub make_plots{
 sub print_R_script
 {
 	my $self = shift;
-
-	#filter preamble from plotcode, if any
+		
+	my @printcode_first=();
+	my @printcode_second=();	
 	my @printcode=();
-	foreach my $line (@{$self->plotcode}){
-		if ($line =~ /$preambleline/){
-			#reset
-			#print "\nfound preline\n";
-			@printcode=();
-		}else{
-			push(@printcode,$line);
+	if($self->R_markdown) {
+		# R markdown code has to be separated in two parts
+		my $value = 0;
+		my $first_line = 1; #TRUE
+		foreach my $line (@{$self->plotcode}){
+			if($value == 1 && $line =~ /^--- *$/) {
+				$value = ++$value;
+			}
+			if ($first_line && $line =~ /^--- *$/){
+				$value = ++$value;
+				$first_line = 0; #FALSE
+			}
+			if($value == 0) {
+				push(@printcode_second,$line);
+			}
+			if($value == 1 || $value == 2) {
+				push(@printcode_first,$line);
+			}
+			if ($value == 2) {
+				$value = 0;
+			}			
+		}
+	} else {
+		#filter preamble from plotcode, if any
+		foreach my $line (@{$self->plotcode}){
+			if ($line =~ /$preambleline/){
+				reset
+				print "\nfound preline\n";
+				@printcode=();
+			}else{
+				push(@printcode,$line);
+			}
 		}
 	}
 
+
 	open ( SCRIPT, ">" . $self->filename ); #local filename
 	no warnings qw(uninitialized);
+	if($self->R_markdown) {
+		if(@printcode_first ne '') {
+			print SCRIPT join("\n",@printcode_first)."\n";
+			print SCRIPT "\n";
+		}
+		print SCRIPT join("\n",'```{r input_from_PsN,include=FALSE}')."\n"; # begin R markdown code chunk
+		print SCRIPT "\n";
+	}
 	print SCRIPT join("\n",@{$self->get_preamble})."\n";
 	print SCRIPT "\n";
-	print SCRIPT join("\n",@printcode)."\n";
-	print SCRIPT "\n";
-
+	if($self->R_markdown) {
+		print SCRIPT join("\n",'```')."\n"; # end R markdown code chunk
+		print SCRIPT "\n";
+		print SCRIPT join("\n",@printcode_second)."\n";
+		print SCRIPT "\n";
+	} else {
+		print SCRIPT join("\n",@printcode)."\n";
+		print SCRIPT "\n";
+	}
 	close SCRIPT;
 }
 
