@@ -52,13 +52,13 @@ pdf.cdd <- function(raw.results.file,skipped.id.file,pdf.filename,markeropt,
   cook_outliers_data <- list_out$cook_outliers_data
   infl_cook_data <- list_out$infl_cook_data
   # draw a table
-  plot.table(cook_outliers_data,rotate)
+  plot.table(cook_outliers_data,rotate=rotate)
   
   
   cov_outliers_data <- list_out$cov_outliers_data
   infl_cov_data <- list_out$infl_cov_data
   # draw a table
-  plot.table(cov_outliers_data,rotate)
+  plot.table(cov_outliers_data,rotate=rotate)
 
 
   # 7. read in input data
