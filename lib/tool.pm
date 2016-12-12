@@ -1830,7 +1830,13 @@ sub create_R_script
 	#these are set in common_options, should never be undefined
 	my ($dir, $file) = OSspecific::absolute_path($self->template_directory_rplots,$self->template_file_rplots);
 	my $template_file = $dir.$file;
-
+		
+	# check if tool default R file is a markdown file
+	my $rmarkdown = 0; # FALSE
+	if($template_file =~ /\.Rmd$/) {
+		$rmarkdown = 1; #TRUE
+	}
+	
 #	print "template $template_file\n";
 	if (-e $template_file){
 		open( FILE, $template_file ) ||
@@ -1849,7 +1855,8 @@ sub create_R_script
 								tool_results_file => $self->results_file,
 								plotcode => \@code,
 								subset_variable => $self->subset_variable_rplots,
-								model => $self->models->[0]);
+								model => $self->models->[0],
+								R_markdown => $rmarkdown);
 
 		$self->create_R_plots_code(rplot => $rplot) if ($self->can("create_R_plots_code"));
 		$rplot->make_plots;
