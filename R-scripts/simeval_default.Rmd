@@ -14,7 +14,7 @@ library(grid)
 library(gridExtra)
 library(xpose4)
 #new   
-library(xtable)
+#library(xtable)
 
 residual.outliers.file <- 'residual_outliers.csv'
 # Source ebe npde functions
