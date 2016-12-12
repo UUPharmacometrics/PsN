@@ -187,6 +187,7 @@ sub restore_options
   return \%stored_opts; #return reference to stored_opts
 }
   
+
 sub set_globals
 {
   my $opts = shift;
@@ -277,6 +278,10 @@ sub get_defaults
 	  if (-e $dir.$file){
 		  $options->{'template_directory_rplots'} = $try_local_R_template_dir;
 	  }
+	  if (-e $dir.$file.'md'){ # check if .Rmd file exists in in local R template directory
+		  $options->{'template_directory_rplots'} = $try_local_R_template_dir;
+		  $options -> {'template_file_rplots'} = $tool.'_default.Rmd';
+	  }	  
   }
   if( exists $options -> {'template_directory_rplots'} ){
 	  #make sure path is absolute if it was not already
@@ -286,12 +291,19 @@ sub get_defaults
 	  $options -> {'template_directory_rplots'} = $PsN::Rscripts_dir;
   }
   
+  #check if there is an .Rmd file 
+  my ($dir, $file) = OSspecific::absolute_path($options->{'template_directory_rplots'},$options->{'template_file_rplots'});
+  if (-e $dir.$file.'md'){
+	  $options -> {'template_file_rplots'} = $tool.'_default.Rmd';
+  }	 
+        
   if ($warn_R_template ){
 	  my ($dir, $file) = OSspecific::absolute_path($options->{'template_directory_rplots'},$options->{'template_file_rplots'});
 	  my $template_file = $dir.$file;
-	  unless (-e $template_file){
+	  my $template_file_Rmd = $dir.$file.'md';
+	  unless ((-e $template_file) || (-e $template_file_Rmd)){
 		  croak ("template_file_rplots ".$options->{'template_file_rplots'}." does not exist in ".$options->{'template_directory_rplots'})
-	  }
+	  }  
   }
 
 
