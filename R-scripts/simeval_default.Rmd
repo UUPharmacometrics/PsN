@@ -342,6 +342,8 @@ Correlation graph for EBE NPDE IOV
   }
 ```
 
+\pagebreak
+
 ```{r ebe_npde_outlier_table,results='hide',echo=FALSE,warning=FALSE,message=FALSE,fig.width=10,fig.height=5.5,fig.keep="high",fig.align="center"}
 # create outlier grafs and tables
   if (require("PEIP") == TRUE){
@@ -423,7 +425,8 @@ Residual outlier table
     cwres.iwres_outliers <- list$outliers_count
   }
 ```
-```{r residual_outlier_table,echo=FALSE,fig.width=9,fig.height=6,fig.keep="high"} 
+
+```{r residual_outlier_table,echo=FALSE,fig.width=9,fig.height=6,fig.keep="high",fig.align="center"} 
   if (show_residual_plots) {
     # Plot created outlier table on the next page
     # outlierframe_x <- xtable(outlierframe, caption = "A \\code{longtable} spanning several pages")
