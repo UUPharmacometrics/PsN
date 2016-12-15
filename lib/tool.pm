@@ -1833,10 +1833,23 @@ sub create_R_script
 		
 	# check if tool default R file is a markdown file
 	my $rmarkdown = 0; # FALSE
+	my $Rmarkdown_installed = 0;
 	if($template_file =~ /\.Rmd$/) {
 		$rmarkdown = 1; #TRUE
+		#check if rmarkdown/pandoc(version 1.12.3 or higher)/latex are installed
+		my $test_file = 'test_file_rmarkdown_installed.Rmd';
+		open ( SCRIPT, ">" . $test_file );
+		print SCRIPT join("\n",'experiment')."\n";
+		close SCRIPT;
+		system("Rscript -e \"rmarkdown::render(input='".$test_file."',output_format='pdf_document',output_file='test_file_rmarkdown_installed.pdf')\" > test_file_rmarkdown_installed.Rout 2>&1");
+		if (-e 'test_file_rmarkdown_installed.pdf') {
+			$Rmarkdown_installed = 1;
+			unlink('test_file_rmarkdown_installed.pdf'); # delete test files
+		}
+		unlink('test_file_rmarkdown_installed.Rmd');
+		unlink('test_file_rmarkdown_installed.Rout');
 	}
-	
+		
 #	print "template $template_file\n";
 	if (-e $template_file){
 		open( FILE, $template_file ) ||
@@ -1856,7 +1869,8 @@ sub create_R_script
 								plotcode => \@code,
 								subset_variable => $self->subset_variable_rplots,
 								model => $self->models->[0],
-								R_markdown => $rmarkdown);
+								R_markdown => $rmarkdown,
+								rmarkdown_installed => $Rmarkdown_installed);
 
 		$self->create_R_plots_code(rplot => $rplot) if ($self->can("create_R_plots_code"));
 		$rplot->make_plots;
