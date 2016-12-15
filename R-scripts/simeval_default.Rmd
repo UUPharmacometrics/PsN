@@ -1,0 +1,478 @@
+---
+title: "Simeval"
+header-includes:
+  - \usepackage{longtable}
+output: pdf_document
+classoption: landscape
+---
+
+```{r loading_libraries_and_sourcing_functions,include = FALSE}
+
+# Used libraries
+library(PerformanceAnalytics)
+library(grid)
+library(gridExtra)
+library(xpose4)
+#new   
+#library(xtable)
+
+residual.outliers.file <- 'residual_outliers.csv'
+# Source ebe npde functions
+source(paste0(rscripts.directory,"/simeval/ebe.npde.all.R"),echo=TRUE)
+source(paste0(rscripts.directory,"/simeval/ebe.npde.all.eta.names.R"),echo=TRUE)
+source(paste0(rscripts.directory,"/simeval/ebe.npde.input.data.R"),echo=TRUE)
+source(paste0(rscripts.directory,"/simeval/ebe.npde.summary.table.R"),echo=TRUE)
+source(paste0(rscripts.directory,"/simeval/ebe.npde.empirical.distance.R"),echo=TRUE)
+source(paste0(rscripts.directory,"/simeval/ebe.npde.data.for.plots.R"),echo=TRUE)
+source(paste0(rscripts.directory,"/simeval/ebe.npde.plot_1.R"),echo=TRUE)
+source(paste0(rscripts.directory,"/simeval/ebe.npde.plot_2.R"),echo=TRUE)
+source(paste0(rscripts.directory,"/simeval/ebe.npde.outlier.table.R"),echo=TRUE)
+# Source residual functions
+source(paste0(rscripts.directory,"/simeval/residuals.histograms.R"),echo=TRUE)
+source(paste0(rscripts.directory,"/simeval/residuals.summary.table.R"),echo=TRUE)
+source(paste0(rscripts.directory,"/simeval/residuals.outlier.table.R"),echo=TRUE)
+# Source ofv functions
+source(paste0(rscripts.directory,"/simeval/ofv.p_ofv_ppc.R"),echo=TRUE)
+source(paste0(rscripts.directory,"/simeval/ofv.i_ofv_npde.R"),echo=TRUE)
+source(paste0(rscripts.directory,"/simeval/ofv.summary.table.R"),echo=TRUE)
+source(paste0(rscripts.directory,"/simeval/ofv.i_ofv_res.R"),echo=TRUE)
+source(paste0(rscripts.directory,"/simeval/ofv.i_ofv_ppc.R"),echo=TRUE)
+source(paste0(rscripts.directory,"/simeval/ofv.kld_i_ofv.R"),echo=TRUE)
+# Source all outliers report functions
+source(paste0(rscripts.directory,"/simeval/all.outlier.report.table.R"),echo=TRUE)
+source(paste0(rscripts.directory,"/simeval/plot.all.outlier.table.R"),echo=TRUE)
+# Source common function
+source(paste0(rscripts.directory,"/common/plot.table.R"),echo=TRUE)
+```
+
+
+```{r histogram_pOFV_PPC,results='hide',echo=FALSE,fig.width=10,fig.height=6,fig.keep="high",fig.align="center"}
+#1. draw a histogram of the simulated ofv values (pOFV PPC)
+  p_ofv_ppc_data <- p_ofv_ppc(raw.results.file) # calcultation
+  
+  #histogram
+  histogram_p_ofv_ppc <- function(p_ofv_ppc_data,model.filename) {
+    #unlist
+    pOFV_sim <- p_ofv_ppc_data$pOFV_sim
+    pOFV_obs <- p_ofv_ppc_data$pOFV_obs
+    newxlim <- p_ofv_ppc_data$newxlim
+    #draw a histogram
+    hist(pOFV_sim,xlim=newxlim,main=paste('pOFV PPC ',model.filename),xlab="pOFV",freq=TRUE)
+    # draw vertical lines
+    abline(v=pOFV_obs,col="red",lwd=2, lty=1)
+    abline(v=median(pOFV_sim),lwd=2, lty=4, col="green")
+    abline(v=quantile(pOFV_sim,c(0.025, 0.975), na.rm=T)[1],lwd=2, lty=3, col="green")
+    abline(v=quantile(pOFV_sim, c(0.025, 0.975), na.rm=T)[2],lwd=2, lty=3, col="green")
+    leg.txt <- c("pOFV","median pOFVsim","2.5th and 97.5th pOFVsim")
+    legend("topright", col=c('red', 'green', 'green','green'), leg.txt, lty=c(1,4,3,3),box.lwd = 0,box.col = "white",bg = "white", lwd=2, cex=1)
+  }
+  histogram_p_ofv_ppc(p_ofv_ppc_data,model.filename)
+```
+
+```{r histogram_iOFV_NPDE,results='hide',echo=FALSE,fig.width=9,fig.height=7,fig.keep="high",fig.align="center"}
+#2. draw a histogram of (iOFV NPDE)
+  if (rplots.level > 1) {
+    i_ofv_npde_data <- i_ofv_npde(iofv.file)# calculation
+    
+    histogram_i_ofv_npde <- function(i_ofv_npde_data) {
+      #unlist
+      iOFV_npde <- i_ofv_npde_data$iOFV_npde
+      ylimit <- i_ofv_npde_data$ylimit
+      xlimit_min <- i_ofv_npde_data$xlimit_min
+      xlimit_max <- i_ofv_npde_data$xlimit_max
+      x <- i_ofv_npde_data$x
+      dy <- i_ofv_npde_data$dy
+      #draw a histogram
+      hist(iOFV_npde,xlab="iOFV NPDE",ylim=c(0,ylimit),xlim=c(xlimit_min,xlimit_max))
+      lines(x,dy, col="red")
+    }
+    histogram_i_ofv_npde(i_ofv_npde_data)
+  }
+```
+
+```{r summary_table_iOFV_NPDE,results='hide',warning=FALSE,echo=FALSE,fig.width=9,fig.height=2,fig.keep="high",fig.align="center"}
+#3. iOFV NPDE summary table
+  iofv_summary_table <- summary.table.ofv(iofv.file)
+  
+  # plot summary table
+  plot.table(iofv_summary_table)
+```
+To test wether the mean is significantly different from 0, a Wilcoxon signed rank test is used.\newline
+To test wether the variance is significantly different from 1, a Kolmogorov-Smirnov test is used.\newline
+To test wether the distribution is significantly different from a normal distribution, a Shapiro-Wilks test is used.\newline
+
+```{r boxplot_iOFV_RES,results='hide',echo=FALSE,fig.width=9,fig.height=7,fig.keep="high",fig.align="center"}
+#4. iOFV RES
+  list_i_ofv_res <- i_ofv_res(all.iofv.file,n.subjects,samples)# calculation
+  # for all outlier table
+  ofv_outliers <- list_i_ofv_res$ofv_outliertable
+  n.subjects <- list_i_ofv_res$n.subjects
+  ID_deleted_ofv <- list_i_ofv_res$ID_deleted_ofv
+  
+  # Make a boxplot
+  boxplot_i_ofv_res <- function(list_i_ofv_res,n.subjects) {
+    # unlist
+    iOFV_res_ord <- list_i_ofv_res$iOFV_res_ord
+    id_sorted <- list_i_ofv_res$id_sorted
+    result <- list_i_ofv_res$result
+    vector_text <- list_i_ofv_res$vector_text
+    
+    # From which position sorted res medians starts crossing zero line 
+    #(need for drawing vertical line in the plot)
+    flag <- 0
+    cross <- 0
+    for (i in 1:n.subjects) {
+      if(flag == 0){
+        if(result$x[i] > 0){
+          cross <- i
+          flag <- 1
+        }
+      } 
+    }
+    
+    #make a plot
+    boxplot(iOFV_res_ord, outline=FALSE, range=0.001,names=as.character(id_sorted),xlab="ID",ylab="iOFV RES")
+    #this are indices in plotted sorted arr which are outside lim. always the last few, if any
+    if (any(vector_text != "")) {
+      text(1:n.subjects,result$x-1, paste("", vector_text),col="red") # mark outliers
+    } 
+    abline(h=0, lwd=2, lty=3, col="black")
+    abline(h=-3, lwd=2, lty=3, col="black") # mark outlier line
+    abline(h=3, lwd=2, lty=3, col="black") # mark outlier line
+    title("iOFV RES")
+  }
+  boxplot_i_ofv_res(list_i_ofv_res,n.subjects)
+  
+```
+
+```{r histograms_iOFV_PPC,results='hide',echo=FALSE,fig.width=9,fig.height=7,fig.keep="high",fig.align="center"}  
+  if (rplots.level > 1) {
+    #5. iOFV PPC
+    outlier_ID <- list_i_ofv_res$outlier_ID
+    list_i_ofv_ppc <- i_ofv_ppc(all.iofv.file,samples,outlier_ID)# calculation
+    
+    histograms_i_ofv_ppc <- function(list_i_ofv_ppc,model.filename) {
+      amout <- length(list_i_ofv_ppc)
+      if(amout > 0) {
+        for (i in 1:(amout-2)) {
+          #unlist
+          iOFV_sim <- list_i_ofv_ppc[[i]]$iOFV_sim
+          len <- length(iOFV_sim)
+          iOFV_obs <- list_i_ofv_ppc[[i]]$iOFV_obs
+          sort_iOFV_sim <- list_i_ofv_ppc[[i]]$sort_iOFV_sim
+          newxlim <- list_i_ofv_ppc[[i]]$newxlim
+          outlier_data <- list_i_ofv_ppc$outlier_data
+          # make a plot
+          hist(sort_iOFV_sim,xlim=newxlim,axes=TRUE,main=paste('iOFV PPC ',model.filename,'ID =', outlier_data$ID[i]),xlab="iOFV",freq=TRUE)
+          abline(v=iOFV_obs, lwd= 2, lty=1, col="red") 
+          abline(v=median(iOFV_sim[1:len]), lwd=2, lty=4, col="green") 
+          abline(v=quantile(iOFV_sim[1:len], c(0.001, 0.999), na.rm=T)[1], lwd=2, lty=3, col="green") 
+          abline(v=quantile(iOFV_sim[1:len], c(0.001, 0.999), na.rm=T)[2], lwd=2, lty=3, col="green") 
+          leg.txt <- c("iOFVobs","median iOFVsim","0.1th and 99.9th iOFVsim")
+          legend("topright", col=c('red', 'green', 'green','green'), leg.txt, lty=c(1,4,3,3),box.lwd = 0,box.col = "white",bg = "white", lwd=2, cex=1)
+        }
+      }
+    }
+    histograms_i_ofv_ppc(list_i_ofv_ppc,model.filename)
+  }
+```
+
+```{r histogram_iOFV_KLD,results='hide',echo=FALSE,fig.width=9,fig.height=7,fig.keep="high",fig.align="center"}  
+  if (rplots.level > 1) {
+    #6. KLD iOFV
+    list_kld_i_ofv <- kld_i_ofv(all.iofv.file,n.subjects,samples)# calculation
+    
+    histogram_kld_i_ofv <- function(list_kld_i_ofv,model.filename) {
+      # unlist needed data
+      KLD_sim <- list_kld_i_ofv$KLD_sim
+      newxlim <- list_kld_i_ofv$newxlim
+      KLD_obs <- list_kld_i_ofv$KLD_obs
+      # Draw a histogram
+      hist(KLD_sim,xlim=newxlim,main=paste('KLD iOFV ',model.filename),xlab="KLD",freq=TRUE)
+      abline(v=KLD_obs,col="red",lwd=2, lty=1)
+      abline(v=median(KLD_sim),lwd=2, lty=4, col="green")
+      abline(v=quantile(KLD_sim,c(0.025, 0.975), na.rm=T)[1],lwd=2, lty=3, col="green")
+      abline(v=quantile(KLD_sim, c(0.025, 0.975), na.rm=T)[2],lwd=2, lty=3, col="green")
+      leg.txt <- c("KLDobs","median KLDsim","2.5th and 97.5th KLDsim")
+      legend("topright", col=c('red', 'green', 'green','green'), leg.txt, lty=c(1,4,3,3),
+             box.lwd = 0,box.col = "white",bg = "white", lwd=2, cex=1)
+    }
+    histogram_kld_i_ofv(list_kld_i_ofv,model.filename)# histogram
+  }
+```
+
+\pagebreak
+
+```{r iiv_iov_eta_names_ebe_npde_summary_table,results='hide',echo=FALSE,warning=FALSE,fig.width=10,fig.height=5.5,fig.keep="high",fig.align="center"}
+
+  # default for the do_outlier_plot
+  if(rplots.level > 1) {
+    do_outlier_plot <- TRUE
+  } else {
+    do_outlier_plot <- FALSE
+  }
+
+  etas_list <- eta_iiv_iov(iiv.eta.names,iov.eta.names)
+  
+  eta.names <- etas_list$eta.names
+  iiv.eta.names <- etas_list$iiv.eta.names
+  iov.eta.names <- etas_list$iov.eta.names
+  eta.names_text <- etas_list$eta.names_text
+  # plot iov correlation graph text (if correlation graph will be ploted)
+  if(length(iov.eta.names)>0) {
+    plot_iov <- TRUE
+  } else {
+    plot_iov <- FALSE
+  }
+  
+  #.........................................(1)input_ebe_npde...........................  
+  input_data <- input.data(ebe.npde.file,eta.names)
+  
+  ebenpde_tmp <- input_data$ebenpde_tmp
+  n.subjects <- input_data$n.subjects
+  ebenpde_obs <- input_data$ebenpde_obs
+  ID_deleted_ebe <- input_data$ID_deleted
+  
+  # create EBE npde summary statistics table
+  mydataframe <- summary.table.ebe.npde(ebenpde_obs,eta.names_text)
+  # draw a table
+  plot.table(mydataframe,total_rows_per_page=18)
+```
+To test wether the mean is significantly different from 0, a Wilcoxon signed rank test is used.\newline
+To test wether the variance is significantly different from 1, a Kolmogorov-Smirnov test is used.\newline
+To test wether the distribution is significantly different from a normal distribution, a Shapiro-Wilks test is used.\newline
+
+\pagebreak
+\begin{center}
+Correlation graph for EBE NPDE IIV
+\end{center}
+
+```{r correlation_plot_iiv_etas,results='hide',echo=FALSE,warning=FALSE,fig.width=8,fig.height=6,fig.keep="high",fig.align="center"}
+
+  ebenpde_obs_iiv <- ebenpde_obs[,iiv.eta.names]
+
+  if(ncol(ebenpde_obs_iiv) > 1) {
+    chart.Correlation(ebenpde_obs_iiv, histogram = TRUE, method = c("spearman"))
+  }
+
+```
+
+```{asis Add_text_for_correlation_graph_iov_if_exists, echo=plot_iov}
+\begin{center}
+Correlation graph for EBE NPDE IOV
+\end{center}
+```
+
+```{r correlation_plot_iov_etas,results='hide',echo=FALSE,warning=FALSE,fig.width=8,fig.height=6,fig.keep="high",fig.align="center"}
+# ..........................................EBE-NPDE correlation graph iov.............................................  
+  if(length(iov.eta.names)>0) {
+    iiv_eta_place <- which(eta.names==iiv.eta.names)
+    iov.eta.names_all <- eta.names[-iiv_eta_place]
+    ebenpde_obs_iov <- ebenpde_obs[,iov.eta.names_all]
+    
+    # create ebenpde_obs_iov table by sections
+    ebenpde_obs_list <- list()
+    for (i in 1:length(iov.eta.names)) {
+      input_data_list <- input.data(ebe.npde.file,iov.eta.names[[i]],show.warning=FALSE)
+      ebenpde_obs_list[[i]] <- input_data_list$ebenpde_obs
+      if(i==1){
+        ebenpde_obs_iov_sect <- ebenpde_obs_list[[i]]
+      } else {
+        col_names <- names(ebenpde_obs_iov_sect)
+        new_names <- iov.eta.names[[i]]
+        for (j in 1:length(iov.eta.names[[i]])) {
+          col_names[j] <- paste0(col_names[j],",",new_names[j])
+        }
+        colnames(ebenpde_obs_list[[i]]) <- col_names
+        colnames(ebenpde_obs_iov_sect) <- col_names
+        ebenpde_obs_iov_sect <- rbind(ebenpde_obs_iov_sect,ebenpde_obs_list[[i]])
+      }
+      
+    }
+
+    # create EBE-NPDE IOV correlation graph
+      if(!(any(is.na(ebenpde_obs_iov_sect)))) {
+        if(ncol(ebenpde_obs_iov_sect) > 1) {
+          chart.Correlation(ebenpde_obs_iov_sect, histogram = TRUE, method = c("spearman"))
+        }
+      }
+  }
+```
+
+```{r QQplots_ebe_npde,results='hide',echo=FALSE,warning=FALSE,message=FALSE,fig.width=8,fig.height=6,fig.keep="high",fig.align="center"}
+# create outlier grafs and tables
+  if (require("PEIP") == TRUE){
+    plot_ETA <- TRUE
+    #...........................................(3)emp_distance....................................................    
+    # Calsulate empirical distance
+    list_emp_distance <- empirical.distance(ebenpde_obs,n.subjects)
+    emp_distance <- list_emp_distance$emp_distance
+    #...........................................(4)out_tables......................................................   
+    # Sort emp_distance values and remember rows, where they were in the beginning, 
+    # create a vector of probability,
+    # compute the inverse Chi^2 distribution,
+    # create out_distance table
+    out_tables <- data.for.plots(emp_distance,n.subjects,eta.names)
+    index_emp_distance <- out_tables$index_emp_distance
+    emp_distance_sort <- out_tables$emp_distance_sort
+    theor_distance <- out_tables$theor_distance
+    out_distance <- out_tables$out_distance
+    
+    #...........................................(5)plot_1.....................................................    
+    # ChiSq Q-Q plot (save flag and noutlier values from function)
+    list_plot_1 <- plot_1(ebenpde_tmp,theor_distance,emp_distance_sort,index_emp_distance,
+                          out_distance,n.subjects,outlying_criteria,do_outlier_plot,
+                          model.filename)
+    flag <- list_plot_1$flag
+    noutlier <- list_plot_1$noutlier
+    outlier_id_row <-list_plot_1$outlier_id_row
+    
+    #............................................(6)plot_2....................................................
+    # MORE PAGES OF PDF FILE WITH ChiSq Q-Q plot grafs for each n.subjects (only if out_distance < outlying_criteria && flag==1)
+    # vector with values of theor_distance to print on the plot
+    list_plot_2 <- plot_2(ebenpde_tmp,emp_distance_sort,theor_distance,index_emp_distance,
+                          noutlier,flag,n.subjects,eta.names,outlying_criteria,outlier_id_row,
+                          do_outlier_plot,model.filename)
+    vector_theor_dist <- list_plot_2$vector_theor_dist
+    noutlier <- list_plot_2$noutlier
+    outlier_id_row <- list_plot_2$outlier_id_row
+  } else {
+    plot_ETA <- FALSE
+    print("library PEIP not installed, cannot create outlier results for ebe npde")
+  }
+```
+
+\pagebreak
+
+```{r ebe_npde_outlier_table,results='hide',echo=FALSE,warning=FALSE,message=FALSE,fig.width=10,fig.height=5.5,fig.keep="high",fig.align="center"}
+# create outlier grafs and tables
+  if (require("PEIP") == TRUE){
+    
+    #............................................(7)outlier_table......................................................    
+    #CREATE FINAL TABLE (use function outlier_table to create a table fortable1)
+    fortable1 <- outlier.table.ebe.npde(ebenpde_tmp,eta.names,outlier_id_row)
+    
+    #............................................(8)plot.table......................................................  
+    #draw the table
+    plot.table(fortable1,total_rows_per_page=18)
+    
+    
+    #for ebe.npde.outliers
+    if (ncol(fortable1) > 1) {
+      ebe.npde_outliers <- fortable1[,1:2]
+    } else {
+      ebe.npde_outliers <- fortable1
+    }
+    
+  } else {
+    print("library PEIP not installed, cannot create outlier results for ebe npde")
+  }
+```
+
+```{r check_if_residual_csv_files_exist,results='hide',echo=FALSE,fig.align="center"}
+  # RESIDUAL PLOTS
+  if (file.exists(residual.files[1]) && file.exists(residual.files[2]) && file.exists(residual.outliers.file)) {  
+    show_residual_plots <- TRUE
+  } else {
+    show_residual_plots <- FALSE
+  }
+```
+
+```{r histogram_cwres_iwres,results='hide',echo=FALSE,warning=FALSE,fig.width=9,fig.height=6,fig.align="center"}
+  if (show_residual_plots) {  
+    #######################################     RESIDUALS PLOTS    #############################################
+    #------------------------------------------(1)histograms-----------------------------------------
+    # npde (for each data frame plot a histogram)
+
+    histograms.cwres.iwres(residual.files,residual.names)
+  }
+```
+
+```{asis Add_pagebreak_2_if_ploting_residuals, echo=show_residual_plots}
+\pagebreak
+```
+
+```{r summary_table_residuals,resluts='hide',echo=FALSE,warning=FALSE,fig.height=2,fig.width=8,fig.keep="high",fig.align="center"}
+  if (show_residual_plots) {  
+    #------------------------------------------(2)summary_table plot----------------------------------
+    # Summary table
+    mydataframe <- summary.table(residual.files,residual.names)
+
+    # plot summary table "mydataframe" on the new page
+   plot.table(mydataframe,total_rows_per_page=18)
+  }
+```
+
+```{asis Add Add_residual_summary_table_text_if_exists, echo=show_residual_plots}
+
+To test wether the mean is significantly different from 0, a Wilcoxon signed rank test is used.\newline
+To test wether the variance is significantly different from 1, a Kolmogorov-Smirnov test is used.\newline
+
+\pagebreak
+```
+```{asis Add_residual_outlier_table_title_if_exists, echo=show_residual_plots}
+\begin{center}
+Residual outlier table
+\end{center}
+```
+
+```{r calculations_residual_outlier_table,results='hide',echo=FALSE,fig.width=9,fig.height=6,fig.keep="high",fig.align="center"} 
+  if (show_residual_plots) {
+    #------------------------------------------(3)outliertable plot----------------------------------
+    # Use outliertable function to plot outlier tabel
+    list <- outlier.table(residual.outliers.file)
+    outlierframe <- list$outlierframe
+    cwres.iwres_outliers <- list$outliers_count
+  }
+```
+
+```{r residual_outlier_table,echo=FALSE,fig.width=9,fig.height=6,fig.keep="high",fig.align="center"} 
+  if (show_residual_plots) {
+    # Plot created outlier table on the next page
+    # outlierframe_x <- xtable(outlierframe, caption = "A \\code{longtable} spanning several pages")
+    # add.to.row <- list(pos = list(0), command = NULL)
+    # command <- paste0("\\hline\n\\endhead\n",
+    #                 "\\hline\n",
+    #                 "\\multicolumn{", dim(outlierframe)[2] + 1, "}{l}",
+    #                 "{\\footnotesize Continued on next page}\n",
+    #                 "\\endfoot\n",
+    #                 "\\endlastfoot\n")
+    # add.to.row$command <- command
+    # print(outlierframe_x, hline.after=c(-1), add.to.row = add.to.row,
+    #       tabular.environment = "longtable")
+    plot.table(outlierframe,total_rows_per_page=18)
+  }
+```
+
+\pagebreak
+\begin{center}
+All outlier report table
+\end{center}
+
+```{r all_outlier_table,results='hide',echo=FALSE,warning=FALSE,fig.width=9,fig.height=5.8,fig.keep="high",fig.align="center"}
+    if (file.exists(residual.files[1]) && file.exists(residual.files[2]) && file.exists(residual.outliers.file)) {
+      all_outlier_table <- all.outlier.report.table(ofv_outliers,ebe.npde_outliers=ebe.npde_outliers,cwres.iwres_outliers,
+                                                    ID_deleted_ebe,ID_deleted_ofv)
+    
+      # draw the table 
+      plot.all.outlier.table(all_outlier_table,total_rows_per_page=18)
+    } else {
+      all_outlier_table <- all.outlier.report.table(ofv_outliers,ebe.npde_outliers=ebe.npde_outliers,
+                                                  ID_deleted_ebe=ID_deleted_ebe,ID_deleted_ofv=ID_deleted_ofv)
+    
+      # draw the table 
+      plot.table(all_outlier_table,total_rows_per_page=18)
+    }
+```
+
+\pagebreak
+
+```{r vpc_plots,results='hide',echo=FALSE,warning=FALSE,fig.width=9,fig.height=6,fig.keep="high",fig.align="center"}
+#plots for vpc:s DV vs PRED, CWRES vs idv
+n.vpc <- length(vpctab.filenames)
+for(j in 1:n.vpc){  
+  plots <- xpose.VPC(vpc.info=vpc.result.files[j],vpctab=vpctab.filenames[j])
+  print(plots) 
+}
+```
+
