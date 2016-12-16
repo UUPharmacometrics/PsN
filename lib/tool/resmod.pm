@@ -199,6 +199,14 @@ sub modelfit_setup
             die "Error original model has no table containing ID, IDV, CWRES and IPRED\n";
         }
 
+        # Do we have MDV?
+        for my $option (@{$cwres_table->options}) {
+            if ($options->name eq 'MDV') {
+                push @columns, 'MDV';
+                last;
+            }
+        }
+
         # Create $INPUT
         my $input_columns;
         my @found_columns;
