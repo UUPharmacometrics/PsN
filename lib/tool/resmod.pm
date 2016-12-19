@@ -10,12 +10,14 @@ use model;
 use model::problem;
 use tool::modelfit;
 use output;
+use nmtablefile;
 
 extends 'tool';
 
 has 'model' => ( is => 'rw', isa => 'model' );
+has 'model_names' => ( is => 'rw', isa => 'ArrayRef', default => sub { [] } );
 has 'idv' => ( is => 'rw', isa => 'Str', default => 'TIME' );
-has 'cwres_models' => ( is => 'rw', isa => 'ArrayRef[model]' );
+has 'run_models' => ( is => 'rw', isa => 'ArrayRef[model]' );
 
 # This array of hashes represent the different models to be tested. The 0th is the base model
 our @residual_models =
@@ -167,11 +169,31 @@ our @residual_models =
 			'$THETA (3,10)',
 			'$OMEGA 0.01',
 			'$ESTIMATION METHOD=1 LAPLACE MAXEVALS=9990 PRINT=2 -2LL',
-
         ],
     },
 );
 
+our @phi_models =
+(
+	{
+		name => 'base',
+	    prob_arr => [
+            '$PROBLEM PHI mod',
+            '$INPUT <phiinputcolumns>',
+            '$DATA <phiname> IGNORE=@',
+            '$PRED',
+            'BXPAR = THETA(2) ; Shape parameter',
+            'PHI = EXP(ETA(1)) ; Exponential trans',
+            'ETATR = (PHI ** BXPAR - 1) / BXPAR',
+            'Y = THETA(1) + ETATR + ERR(1) * SQRT(<etc>)',
+            '$THETA 0.00576107',
+            '$THETA 0.1576107',
+            '$OMEGA 0.0173428',
+            '$SIGMA 1.37603',
+            '$ESTIMATION METHOD=1 INTER MAXEVALS=9990 PRINT=2 POSTHOC',
+        ],
+    },
+);
 
 sub BUILD
 {
@@ -184,7 +206,6 @@ sub BUILD
 sub modelfit_setup
 {
 	my $self = shift;
-
 
 	my @models_to_run;
     for my $model_properties (@residual_models) {
@@ -201,7 +222,7 @@ sub modelfit_setup
 
         # Do we have MDV?
         for my $option (@{$cwres_table->options}) {
-            if ($options->name eq 'MDV') {
+            if ($option->name eq 'MDV') {
                 push @columns, 'MDV';
                 last;
             }
@@ -243,10 +264,57 @@ sub modelfit_setup
         );
         my $cwres_model = model->new(directory => 'm1/', filename => $model_properties->{'name'} . "_cwres.mod", problems => [ $cwres_problem ]);
         $cwres_model->_write();
+        push @{$self->model_names}, $model_properties->{'name'} . '_cwres';
         push @models_to_run, $cwres_model;
     }
 
-    $self->cwres_models(\@models_to_run);
+    $self->run_models(\@models_to_run);
+
+    my $run_phi_modelling = 1;
+    if ($run_phi_modelling) {
+        my $phiname = '../' . $self->model->filename();
+        $phiname =~ s/\.mod$/.phi/;
+        if (-e $phiname) {
+            my $phitable = nmtablefile->new(filename => $phiname); 
+            # Loop over ETAs
+            for (my $i = 1; $i <= scalar(grep { /ETA/ } @{$phitable->tables->[0]->header_array}); $i++) {
+
+                my @a;
+                for my $colname (@{$phitable->tables->[0]->header_array}) {
+                    my $newname = $colname;
+                    $newname =~ s/[(,)]//g;
+                    $newname =~ s/^ETA/ET/;
+                    $newname =~ s/^ET$i/DV/;
+                    push @a, $newname;
+                }
+                my $phiinputs = join(' ', @a);
+
+                for my $model_properties (@phi_models) {
+
+                    my @model_code;
+                    for my $row (@{$model_properties->{'prob_arr'}}) {
+                        my $newrow = $row;
+                        $newrow =~ s/<phiinputcolumns>/$phiinputs/;
+                        $newrow =~ s/<phiname>/$phiname/;
+                        $newrow =~ s/<etc>/ETC$i$i/;
+                        push @model_code, $newrow;
+                    }
+                    my $sh_mod = model::shrinkage_module->new(
+                        nomegas => 1,
+                        directory => 'm1/',
+                        problem_number => 1);
+                    my $phi_problem = model::problem->new(
+                        prob_arr => \@model_code,
+                        shrinkage_module => $sh_mod,
+                    );
+                    my $phi_model = model->new(directory => 'm1/', filename => $model_properties->{'name'} . "${i}_phi.mod", problems => [ $phi_problem ]);
+                    $phi_model->_write();
+                    push @models_to_run, $phi_model;
+                    push @{$self->model_names}, $model_properties->{'name'} . "${i}_phi";
+                }
+            }
+        }
+    }
 
 	my $modelfit = tool::modelfit->new(
 		%{common_options::restore_options(@common_options::tool_options)},
@@ -267,8 +335,8 @@ sub modelfit_analyze
 
     open my $fh, '>', 'results.csv';
     print $fh "Name,OFV\n";
-    for (my $i = 0; $i < scalar(@{$self->cwres_models}); $i++) {
-        my $model = $self->cwres_models->[$i];
+    for (my $i = 0; $i < scalar(@{$self->run_models}); $i++) {
+        my $model = $self->run_models->[$i];
         my $ofv;
         if ($model->is_run()) {
             my $output = $model->outputs->[0];
@@ -279,7 +347,7 @@ sub modelfit_analyze
         } else {
             $ofv = 'NA';
         }
-        print $fh $residual_models[$i]->{'name'}, ", ", $ofv, "\n";
+        print $fh $self->model_names->[$i], ", ", $ofv, "\n";
     }
     close $fh;
 }
