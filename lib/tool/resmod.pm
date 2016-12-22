@@ -27,7 +27,7 @@ our @residual_models =
 	    prob_arr => [
 			'$PROBLEM CWRES base model',
 			'$INPUT <inputcolumns>',
-			'$DATA ../<cwrestablename> IGNORE=@',
+			'$DATA ../<cwrestablename> IGNORE=@ <dvidaccept>',
 			'$PRED',
             'Y = THETA(1) + ETA(1) + ERR(1)',
 			'$THETA .1',
@@ -40,7 +40,7 @@ our @residual_models =
 	    prob_arr => [
 			'$PROBLEM CWRES omega-on-epsilon',
 			'$INPUT <inputcolumns>',
-			'$DATA ../<cwrestablename> IGNORE=@',
+			'$DATA ../<cwrestablename> IGNORE=@ <dvidaccept>',
 			'$PRED',
             'Y = THETA(1) + ETA(1) + ERR(1) * EXP(ETA(2))',
 			'$THETA .1',
@@ -54,7 +54,7 @@ our @residual_models =
         prob_arr => [
 			'$PROBLEM CWRES AR1',
 			'$INPUT <inputcolumns>',
-			'$DATA ../<cwrestablename> IGNORE=@',
+			'$DATA ../<cwrestablename> IGNORE=@ <dvidaccept>',
 			'$PRED',
             '"FIRST',
             '" USE SIZES, ONLY: NO',
@@ -86,11 +86,11 @@ our @residual_models =
         ]
     }, {
 		name => 'power_ipred',
-        extra_input => [ 'IPRED' ],
+        need_ipred => 1,
 	    prob_arr => [
 			'$PROBLEM CWRES power IPRED',
 			'$INPUT <inputcolumns>',
-			'$DATA ../<cwrestablename> IGNORE=@',
+			'$DATA ../<cwrestablename> IGNORE=@ <dvidaccept>',
 			'$PRED',
             'Y = THETA(1) + ETA(1) + ERR(1)*(EXP(IPRED))**THETA(2)',
 			'$THETA .1',
@@ -104,7 +104,7 @@ our @residual_models =
 	    prob_arr => [
 			'$PROBLEM CWRES laplace',
 			'$INPUT <inputcolumns>',
-			'$DATA ../<cwrestablename> IGNORE=@',
+			'$DATA ../<cwrestablename> IGNORE=@ <dvidaccept>',
 			'$PRED',
             'Y = THETA(1) + ETA(1) + ERR(1)',
 			'$THETA .1',
@@ -117,13 +117,13 @@ our @residual_models =
         prob_arr => [
 			'$PROBLEM CWRES laplace 2LL DF=100',
 			'$INPUT <inputcolumns>',
-			'$DATA ../<cwrestablename> IGNORE=@',
+			'$DATA ../<cwrestablename> IGNORE=@ <dvidaccept>',
 			'$PRED',
-            'IPRED = THETA(1) + ETA(1)',
+            'MYIPRED = THETA(1) + ETA(1)',
             'W = THETA(2)',
             'DF = THETA(3) ; degrees of freedom of Student distribution',
             'SIG1 = W ; scaling factor for standard deviation of RUV',
-            'IWRES = (DV - IPRED) / SIG1',
+            'IWRES = (DV - MYIPRED) / SIG1',
             'PHI = (DF + 1) / 2 ; Nemesapproximation of gamma funtion(2007) for first factor of t-distrib(gamma((DF+1)/2))',
             'INN = PHI + 1 / (12 * PHI - 1 / (10 * PHI))',
             'GAMMA = SQRT(2 * 3.14159265 / PHI) * (INN / EXP(1)) ** PHI',
@@ -146,13 +146,13 @@ our @residual_models =
         prob_arr => [
 			'$PROBLEM CWRES laplace 2LL DF=est',
 			'$INPUT <inputcolumns>',
-			'$DATA ../<cwrestablename> IGNORE=@',
+			'$DATA ../<cwrestablename> IGNORE=@ <dvidaccept>',
 			'$PRED',
-            'IPRED = THETA(1) + ETA(1)',
+            'MYIPRED = THETA(1) + ETA(1)',
             'W = THETA(2)',
             'DF = THETA(3) ; degrees of freedom of Student distribution',
             'SIG1 = W ; scaling factor for standard deviation of RUV',
-            'IWRES = (DV - IPRED) / SIG1',
+            'IWRES = (DV - MYIPRED) / SIG1',
             'PHI = (DF + 1) / 2 ; Nemesapproximation of gamma funtion(2007) for first factor of t-distrib(gamma((DF+1)/2))',
             'INN = PHI + 1 / (12 * PHI - 1 / (10 * PHI))',
             'GAMMA = SQRT(2 * 3.14159265 / PHI) * (INN / EXP(1)) ** PHI',
@@ -192,7 +192,29 @@ our @phi_models =
             '$SIGMA 1.37603',
             '$ESTIMATION METHOD=1 INTER MAXEVALS=9990 PRINT=2 POSTHOC',
         ],
-    },
+    }
+    # , {
+#        name => 'boxcox',
+    #       prob_arr => [
+#    $PROBLEM    MOXONIDINE PK,FINAL ESTIMATES,ALL DATA
+#;;
+
+#$INPUT      SUBJ ID ET1 ET2 DV ETC1 ETC21 ETC22 ETC31 ETC32 ETC33 OBJX
+#$DATA      run1.phi IGNORE=@
+#$PRED   
+#BXPAR = THETA(2) ; Shape parameter
+#PHI = EXP(ETA(1)) ; Exponential trans
+#ETATR = (PHI**BXPAR-1)/BXPAR 
+
+#     Y     = THETA(1) +ETATR +ERR(1)*SQRT(ETC33)
+#$THETA  0.00576107 ; TV
+#$THETA  0.1576107 ; TV_
+#$OMEGA  0.0173428  ; IIV (CL-V)
+#$SIGMA  1.37603
+#$ESTIMATION METHOD=1 INTER MAXEVALS=9990 PRINT=2 POSTHOC
+
+    #       ],
+
 );
 
 sub BUILD
@@ -207,70 +229,95 @@ sub modelfit_setup
 {
 	my $self = shift;
 
-	my @models_to_run;
-    for my $model_properties (@residual_models) {
-        # Find a table with ID, TIME, CWRES and extra_input (IPRED)
-        my @columns = ( 'ID', $self->idv, 'CWRES' );
-        if (exists $model_properties->{'extra_input'}) {
-            push(@columns, @{$model_properties->{'extra_input'}});
-        }
-        my $cwres_table = $self->model->problems->[0]->find_table(columns => \@columns, get_object => 1);
-        my $cwres_table_name = $self->model->problems->[0]->find_table(columns => \@columns);
-        if (not defined $cwres_table) {
-            die "Error original model has no table containing ID, IDV, CWRES and IPRED\n";
-        }
+    # Find a table with ID, TIME, CWRES and extra_input (IPRED)
+    my @columns = ( 'ID', $self->idv, 'CWRES' );
+    my $cwres_table = $self->model->problems->[0]->find_table(columns => \@columns, get_object => 1);
+    my $cwres_table_name = $self->model->problems->[0]->find_table(columns => \@columns);
+    if (not defined $cwres_table) {
+        die "Error original model has no table containing ID, IDV and CWRES\n";
+    }
 
-        # Do we have MDV?
-        for my $option (@{$cwres_table->options}) {
-            if ($option->name eq 'MDV') {
-                push @columns, 'MDV';
+    # Do we have MDV or DVID?
+    my $have_ipred = 0;
+    my $have_dvid = 0;
+    for my $option (@{$cwres_table->options}) {
+        if ($option->name eq 'IPRED') {
+            $have_ipred = 1;
+            push @columns, 'IPRED';
+        } elsif ($option->name eq 'DVID') {
+            $have_dvid = 1;
+            push @columns, 'DVID';
+        }
+    }
+
+    my $unique_dvid;
+    my $number_of_dvid = 1;
+    if ($have_dvid) {
+        my $table = nmtablefile->new(filename => "../$cwres_table_name"); 
+        my $dvid_column = $table->tables->[0]->header->{'DVID'};
+        $unique_dvid = array::unique($table->tables->[0]->columns->[$dvid_column]);
+        $number_of_dvid = scalar(@$unique_dvid);
+    }
+
+    # Create $INPUT
+    my $input_columns;
+    my @found_columns;
+    for my $option (@{$cwres_table->options}) {
+        my $found = 0; 
+        for (my $i = 0; $i < scalar(@columns); $i++) {
+            if ($option->name eq $columns[$i] and not $found_columns[$i]) {
+                $found_columns[$i] = 1;
+                my $name = $option->name;
+                $name = 'DV' if ($name eq 'CWRES');
+                $input_columns .= $name;
+                $found = 1;
                 last;
             }
         }
-
-        # Create $INPUT
-        my $input_columns;
-        my @found_columns;
-        for my $option (@{$cwres_table->options}) {
-            my $found = 0; 
-            for (my $i = 0; $i < scalar(@columns); $i++) {
-                if ($option->name eq $columns[$i] and not $found_columns[$i]) {
-                    $found_columns[$i] = 1;
-                    my $name = $option->name;
-                    $name = 'DV' if ($name eq 'CWRES');
-                    $input_columns .= $name;
-                    $found = 1;
-                    last;
-                }
-            }
-            if (not $found) {
-                $input_columns .= 'DROP';
-            }
-            last if ((grep { $_ } @found_columns) == scalar(@columns));
-            $input_columns .= ' ';
+        if (not $found) {
+            $input_columns .= 'DROP';
         }
+        last if ((grep { $_ } @found_columns) == scalar(@columns));
+        $input_columns .= ' ';
+    }
 
-        for my $row (@{$model_properties->{'prob_arr'}}) {
-            $row =~ s/<inputcolumns>/$input_columns/;
-            $row =~ s/<cwrestablename>/$cwres_table_name/;
+	my @models_to_run;
+    for my $model_properties (@residual_models) {
+        next if ($model_properties->{'need_ipred'} and not $have_ipred);
+
+        my $accept = "";
+        for (my $i = 0; $i < $number_of_dvid; $i++) {
+            if ($have_dvid) {
+                $accept = "ACCEPT=(DVID.EQN." . $unique_dvid->[$i] . ")";
+            }
+
+            my @prob_arr = @{$model_properties->{'prob_arr'}};
+            for my $row (@prob_arr) {
+                $row =~ s/<inputcolumns>/$input_columns/;
+                $row =~ s/<cwrestablename>/$cwres_table_name/;
+                $row =~ s/<dvidaccept>/$accept/;
+            }
+            my $sh_mod = model::shrinkage_module->new(
+                nomegas => 1,
+                directory => 'm1/',
+                problem_number => 1
+            );
+            my $cwres_problem = model::problem->new(
+                prob_arr => \@prob_arr,
+                shrinkage_module => $sh_mod,
+            );
+            my $dvid_suffix = "";
+            $dvid_suffix = "_DVID" . $unique_dvid->[$i] if ($have_dvid);
+            my $cwres_model = model->new(directory => 'm1/', filename => $model_properties->{'name'} . "_cwres$dvid_suffix.mod", problems => [ $cwres_problem ]);
+            $cwres_model->_write();
+            push @{$self->model_names}, $model_properties->{'name'} . "_cwres$dvid_suffix";
+            push @models_to_run, $cwres_model;
         }
-        my $sh_mod = model::shrinkage_module->new(
-            nomegas => 1,
-            directory => 'm1/',
-            problem_number => 1);
-        my $cwres_problem = model::problem->new(
-            prob_arr => $model_properties->{'prob_arr'},
-            shrinkage_module => $sh_mod,
-        );
-        my $cwres_model = model->new(directory => 'm1/', filename => $model_properties->{'name'} . "_cwres.mod", problems => [ $cwres_problem ]);
-        $cwres_model->_write();
-        push @{$self->model_names}, $model_properties->{'name'} . '_cwres';
-        push @models_to_run, $cwres_model;
     }
 
     $self->run_models(\@models_to_run);
 
-    my $run_phi_modelling = 1;
+    my $run_phi_modelling = 0;      # Skip phi-modelling for now
     if ($run_phi_modelling) {
         my $phiname = '../' . $self->model->filename();
         $phiname =~ s/\.mod$/.phi/;
