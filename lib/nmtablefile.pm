@@ -78,7 +78,7 @@ sub read_nmtable
 
     $self->filename($filename);
 
-    open my $fh, '<', $filename;
+    open my $fh, '<', $filename or die("Could not open table $filename\n");
 
     my $table_row = <$fh>;
 	
