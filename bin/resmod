@@ -96,10 +96,11 @@ require tool::resmod;
 
 my $eval_string = common_options::model_parameters(\%options);
 
-my $model = model -> new (
-    eval( $eval_string ),
-    filename                    => $ARGV[0],
-    ignore_missing_output_files => 1
+my $model = model->new(
+    eval($eval_string),
+    filename => $ARGV[0],
+    ignore_missing_output_files => 1,
+    ignore_missing_data => 1,
 );
 
 my $resmod = tool::resmod->new(
