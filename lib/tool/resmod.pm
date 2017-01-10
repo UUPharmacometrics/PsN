@@ -92,7 +92,7 @@ our @residual_models =
 			'$INPUT <inputcolumns>',
 			'$DATA ../<cwrestablename> IGNORE=@ <dvidaccept>',
 			'$PRED',
-            'Y = THETA(1) + ETA(1) + ERR(1)*(EXP(IPRED))**THETA(2)',
+            'Y = THETA(1) + ETA(1) + ERR(1)*(IPRED)**THETA(2)',
 			'$THETA .1',
 			'$THETA .1',
 			'$OMEGA 0.01',
