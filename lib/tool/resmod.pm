@@ -119,11 +119,11 @@ our @residual_models =
 			'$INPUT <inputcolumns>',
 			'$DATA ../<cwrestablename> IGNORE=@ <dvidaccept>',
 			'$PRED',
-            'MYIPRED = THETA(1) + ETA(1)',
+            'IPRED = THETA(1) + ETA(1)',
             'W = THETA(2)',
             'DF = THETA(3) ; degrees of freedom of Student distribution',
             'SIG1 = W ; scaling factor for standard deviation of RUV',
-            'IWRES = (DV - MYIPRED) / SIG1',
+            'IWRES = (DV - IPRED) / SIG1',
             'PHI = (DF + 1) / 2 ; Nemesapproximation of gamma funtion(2007) for first factor of t-distrib(gamma((DF+1)/2))',
             'INN = PHI + 1 / (12 * PHI - 1 / (10 * PHI))',
             'GAMMA = SQRT(2 * 3.14159265 / PHI) * (INN / EXP(1)) ** PHI',
@@ -148,11 +148,11 @@ our @residual_models =
 			'$INPUT <inputcolumns>',
 			'$DATA ../<cwrestablename> IGNORE=@ <dvidaccept>',
 			'$PRED',
-            'MYIPRED = THETA(1) + ETA(1)',
+            'IPRED = THETA(1) + ETA(1)',
             'W = THETA(2)',
             'DF = THETA(3) ; degrees of freedom of Student distribution',
             'SIG1 = W ; scaling factor for standard deviation of RUV',
-            'IWRES = (DV - MYIPRED) / SIG1',
+            'IWRES = (DV - IPRED) / SIG1',
             'PHI = (DF + 1) / 2 ; Nemesapproximation of gamma funtion(2007) for first factor of t-distrib(gamma((DF+1)/2))',
             'INN = PHI + 1 / (12 * PHI - 1 / (10 * PHI))',
             'GAMMA = SQRT(2 * 3.14159265 / PHI) * (INN / EXP(1)) ** PHI',
@@ -170,7 +170,65 @@ our @residual_models =
 			'$OMEGA 0.01',
 			'$ESTIMATION METHOD=1 LAPLACE MAXEVALS=9990 PRINT=2 -2LL',
         ],
-    },
+    }, {
+        name => 'dtbs_base',
+        prob_arr => [
+			'$PROBLEM    CWRES dtbs base model',
+			'$INPUT <inputcolumns>',
+			'$DATA ../<cwrestablename> IGNORE=@ <dvidaccept>',
+			'$PRED',
+			'IPRED = THETA(1) + ETA(1)',
+			'IF(IPRED.LT.0) IPRED=0.0001',
+			'W = THETA(2)',
+			'Y = IPRED + ERR(1)*W',
+			'IF(ICALL.EQ.4) Y=EXP(DV)',
+			'$THETA  0.973255 ; IPRED 1',
+			'$THETA  (0,1.37932) ; W',
+			'$OMEGA  0.0001',
+			'$SIGMA  1  FIX',
+			'$SIMULATION (1234)',
+			'$ESTIMATION METHOD=1 INTER MAXEVALS=99999 PRINT=2 POSTHOC',
+        ],
+    }, {
+		name => 'dtbs',
+        need_ipred => 1,
+		prob_arr => [
+			'$PROBLEM    CWRES dtbs model',
+			'$INPUT <inputcolumns>',
+			'$DATA ../<cwrestablename> IGNORE=@ <dvidaccept>',
+			'$SUBROUTINE CONTR=contr.txt CCONTR=ccontra.txt',
+			'$PRED',
+			'IPRT = THETA(1)+ETA(1)',
+			'LAMBDA = THETA(3)',
+			'ZETA   = THETA(4)',
+			'IF(IPRT.LT.0) IPRT=0.0001',
+			'W = THETA(2)*IPRED**ZETA',
+			'IPRTR = IPRT',
+			'IF (LAMBDA .NE. 0 .AND. IPRT .NE.0) THEN',
+			'	IPRTR = (IPRT**LAMBDA-1)/LAMBDA',
+			'ENDIF',
+			'IF (LAMBDA .EQ. 0 .AND. IPRT .NE.0) THEN',
+			'    IPRTR = LOG(IPRT)',
+			'ENDIF',
+			'IF (LAMBDA .NE. 0 .AND. IPRT .EQ.0) THEN',
+			'	IPRTR = -1/LAMBDA',
+			'ENDIF',
+			'IF (LAMBDA .EQ. 0 .AND. IPRT .EQ.0) THEN',
+			'	IPRTR = -1000000000',
+			'ENDIF',
+			'IPRT = IPRTR',
+			'Y = IPRT + ERR(1)*W',
+			'IF(ICALL.EQ.4) Y=EXP(DV)',
+			'$THETA  1.01102 ; IPRED 1',
+			'$THETA  (0,0.610345) ; W',
+			'$THETA  0.001 ; tbs_lambda',
+			'$THETA  0.001 ; tbs_zeta',
+			'$OMEGA  0.00238626',
+			'$SIGMA  1  FIX',
+			'$SIMULATION (1234)',
+			'$ESTIMATION METHOD=1 INTER MAXEVALS=99999 PRINT=2 POSTHOC',
+		],
+	},
 );
 
 our @phi_models =
@@ -229,6 +287,45 @@ sub modelfit_setup
 {
 	my $self = shift;
 
+	# Create the contr.txt and ccontra.txt needed for dtbs
+	open my $fh_contr, '>', "contr.txt";
+	print $fh_contr <<'END';
+      subroutine contr (icall,cnt,ier1,ier2)
+      double precision cnt
+      call ncontr (cnt,ier1,ier2,l2r)
+      return
+      end
+END
+	close $fh_contr;
+
+	open my $fh_ccontra, '>', "ccontra.txt";
+	print $fh_ccontra <<'END';
+      subroutine ccontr (icall,c1,c2,c3,ier1,ier2)
+      USE ROCM_REAL,   ONLY: theta=>THETAC,y=>DV_ITM2
+      USE NM_INTERFACE,ONLY: CELS
+!      parameter (lth=40,lvr=30,no=50)
+!      common /rocm0/ theta (lth)
+!      common /rocm4/ y
+!      double precision c1,c2,c3,theta,y,w,one,two
+      double precision c1,c2,c3,w,one,two
+      dimension c2(:),c3(:,:)
+      data one,two/1.,2./
+      if (icall.le.1) return
+      w=y(1)
+
+         if(theta(3).eq.0) y(1)=log(y(1))
+         if(theta(3).ne.0) y(1)=(y(1)**theta(3)-one)/theta(3)
+
+
+      call cels (c1,c2,c3,ier1,ier2)
+      y(1)=w
+      c1=c1-two*(theta(3)-one)*log(y(1))
+
+      return
+      end
+END
+	close $fh_ccontra;
+
     # Find a table with ID, TIME, CWRES and extra_input (IPRED)
     my @columns = ( 'ID', $self->idv, 'CWRES' );
     my $cwres_table = $self->model->problems->[0]->find_table(columns => \@columns, get_object => 1);
@@ -259,30 +356,10 @@ sub modelfit_setup
         $number_of_dvid = scalar(@$unique_dvid);
     }
 
-    # Create $INPUT
-    my $input_columns;
-    my @found_columns;
-    for my $option (@{$cwres_table->options}) {
-        my $found = 0; 
-        for (my $i = 0; $i < scalar(@columns); $i++) {
-            if ($option->name eq $columns[$i] and not $found_columns[$i]) {
-                $found_columns[$i] = 1;
-                my $name = $option->name;
-                $name = 'DV' if ($name eq 'CWRES');
-                $input_columns .= $name;
-                $found = 1;
-                last;
-            }
-        }
-        if (not $found) {
-            $input_columns .= 'DROP';
-        }
-        last if ((grep { $_ } @found_columns) == scalar(@columns));
-        $input_columns .= ' ';
-    }
 
 	my @models_to_run;
     for my $model_properties (@residual_models) {
+    	my $input_columns = _create_input(table => $cwres_table, columns => \@columns, ipred => $model_properties->{'need_ipred'});
         next if ($model_properties->{'need_ipred'} and not $have_ipred);
 
         my $accept = "";
@@ -308,7 +385,12 @@ sub modelfit_setup
             );
             my $dvid_suffix = "";
             $dvid_suffix = "_DVID" . $unique_dvid->[$i] if ($have_dvid);
-            my $cwres_model = model->new(directory => 'm1/', filename => $model_properties->{'name'} . "_cwres$dvid_suffix.mod", problems => [ $cwres_problem ]);
+            my $cwres_model = model->new(
+				directory => 'm1/',
+				filename => $model_properties->{'name'} . "_cwres$dvid_suffix.mod",
+				problems => [ $cwres_problem ],
+				extra_files => [ $self->directory . '/contr.txt', $self->directory . '/ccontra.txt' ],
+			);
             $cwres_model->_write();
             push @{$self->model_names}, $model_properties->{'name'} . "_cwres$dvid_suffix";
             push @models_to_run, $cwres_model;
@@ -379,6 +461,9 @@ sub modelfit_setup
 sub modelfit_analyze
 {
     my $self = shift;
+	
+	# Remove the extra files
+	unlink('contr.txt', 'ccontra.txt');
 
     open my $fh, '>', 'results.csv';
     print $fh "Name,OFV\n";
@@ -398,6 +483,44 @@ sub modelfit_analyze
     }
     close $fh;
 }
+
+sub _create_input
+{
+	# Create $INPUT string from table
+    my %parm = validated_hash(\@_,
+        table => { isa => 'model::problem::table' },
+		columns => { isa => 'ArrayRef' },
+		ipred => { isa => 'Bool', default => 1 },		# Should ipred be included if in columns?
+    );
+    my $table = $parm{'table'};
+	my @columns = @{$parm{'columns'}};
+    my $ipred = $parm{'ipred'};
+
+    my $input_columns;
+    my @found_columns;
+    for my $option (@{$table->options}) {
+        my $found = 0; 
+        for (my $i = 0; $i < scalar(@columns); $i++) {
+            if ($option->name eq $columns[$i] and not $found_columns[$i]) {
+                $found_columns[$i] = 1;
+                my $name = $option->name;
+                $name = 'DV' if ($name eq 'CWRES');
+				$name = 'DROP' if ($name eq 'IPRED' and not $ipred);
+                $input_columns .= $name;
+                $found = 1;
+                last;
+            }
+        }
+        if (not $found) {
+            $input_columns .= 'DROP';
+        }
+        last if ((grep { $_ } @found_columns) == scalar(@columns));
+        $input_columns .= ' ';
+    }
+	
+	return $input_columns;
+}
+
 
 no Moose;
 __PACKAGE__->meta->make_immutable;
