@@ -27,7 +27,7 @@ our @residual_models =
 	    prob_arr => [
 			'$PROBLEM CWRES base model',
 			'$INPUT <inputcolumns>',
-			'$DATA ../<cwrestablename> IGNORE=@ <dvidaccept>',
+			'$DATA ../<cwrestablename> IGNORE=@ IGNORE=(DV.EQN.0) <dvidaccept>',
 			'$PRED',
             'Y = THETA(1) + ETA(1) + ERR(1)',
 			'$THETA .1',
@@ -40,7 +40,7 @@ our @residual_models =
 	    prob_arr => [
 			'$PROBLEM CWRES omega-on-epsilon',
 			'$INPUT <inputcolumns>',
-			'$DATA ../<cwrestablename> IGNORE=@ <dvidaccept>',
+			'$DATA ../<cwrestablename> IGNORE=@ IGNORE=(DV.EQN.0) <dvidaccept>',
 			'$PRED',
             'Y = THETA(1) + ETA(1) + ERR(1) * EXP(ETA(2))',
 			'$THETA .1',
@@ -54,7 +54,7 @@ our @residual_models =
         prob_arr => [
 			'$PROBLEM CWRES AR1',
 			'$INPUT <inputcolumns>',
-			'$DATA ../<cwrestablename> IGNORE=@ <dvidaccept>',
+			'$DATA ../<cwrestablename> IGNORE=@ IGNORE=(DV.EQN.0) <dvidaccept>',
 			'$PRED',
             '"FIRST',
             '" USE SIZES, ONLY: NO',
@@ -90,7 +90,7 @@ our @residual_models =
 	    prob_arr => [
 			'$PROBLEM CWRES power IPRED',
 			'$INPUT <inputcolumns>',
-			'$DATA ../<cwrestablename> IGNORE=@ <dvidaccept>',
+			'$DATA ../<cwrestablename> IGNORE=@ IGNORE=(DV.EQN.0) <dvidaccept>',
 			'$PRED',
             'Y = THETA(1) + ETA(1) + ERR(1)*(IPRED)**THETA(2)',
 			'$THETA .1',
@@ -104,7 +104,7 @@ our @residual_models =
 	    prob_arr => [
 			'$PROBLEM CWRES laplace',
 			'$INPUT <inputcolumns>',
-			'$DATA ../<cwrestablename> IGNORE=@ <dvidaccept>',
+			'$DATA ../<cwrestablename> IGNORE=@ IGNORE=(DV.EQN.0) <dvidaccept>',
 			'$PRED',
             'Y = THETA(1) + ETA(1) + ERR(1)',
 			'$THETA .1',
@@ -117,7 +117,7 @@ our @residual_models =
         prob_arr => [
 			'$PROBLEM CWRES laplace 2LL DF=100',
 			'$INPUT <inputcolumns>',
-			'$DATA ../<cwrestablename> IGNORE=@ <dvidaccept>',
+			'$DATA ../<cwrestablename> IGNORE=@ IGNORE=(DV.EQN.0) <dvidaccept>',
 			'$PRED',
             'IPRED = THETA(1) + ETA(1)',
             'W = THETA(2)',
@@ -146,7 +146,7 @@ our @residual_models =
         prob_arr => [
 			'$PROBLEM CWRES laplace 2LL DF=est',
 			'$INPUT <inputcolumns>',
-			'$DATA ../<cwrestablename> IGNORE=@ <dvidaccept>',
+			'$DATA ../<cwrestablename> IGNORE=@ IGNORE=(DV.EQN.0) <dvidaccept>',
 			'$PRED',
             'IPRED = THETA(1) + ETA(1)',
             'W = THETA(2)',
@@ -175,7 +175,7 @@ our @residual_models =
         prob_arr => [
 			'$PROBLEM    CWRES dtbs base model',
 			'$INPUT <inputcolumns>',
-			'$DATA ../<cwrestablename> IGNORE=@ <dvidaccept>',
+			'$DATA ../<cwrestablename> IGNORE=@ IGNORE=(DV.EQN.0) <dvidaccept>',
 			'$PRED',
 			'IPRED = THETA(1) + ETA(1)',
 			'IF(IPRED.LT.0) IPRED=0.0001',
@@ -195,7 +195,7 @@ our @residual_models =
 		prob_arr => [
 			'$PROBLEM    CWRES dtbs model',
 			'$INPUT <inputcolumns>',
-			'$DATA ../<cwrestablename> IGNORE=@ <dvidaccept>',
+			'$DATA ../<cwrestablename> IGNORE=@ IGNORE=(DV.EQN.0) <dvidaccept>',
 			'$SUBROUTINE CONTR=contr.txt CCONTR=ccontra.txt',
 			'$PRED',
 			'IPRT = THETA(1)+ETA(1)',
@@ -334,7 +334,7 @@ END
         die "Error original model has no table containing ID, IDV and CWRES\n";
     }
 
-    # Do we have MDV or DVID?
+    # Do we have IPRED or DVID?
     my $have_ipred = 0;
     my $have_dvid = 0;
     for my $option (@{$cwres_table->options}) {
