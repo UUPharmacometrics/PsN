@@ -36,7 +36,7 @@ our @residual_models =
 			'$ESTIMATION METHOD=1 INTER MAXEVALS=9990 PRINT=2 POSTHOC',
         ]
 	}, {
-		name => 'omega_on_epsilon',
+		name => 'eta_on_epsilon',
 	    prob_arr => [
 			'$PROBLEM CWRES omega-on-epsilon',
 			'$INPUT <inputcolumns>',
