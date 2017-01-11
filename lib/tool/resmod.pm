@@ -527,7 +527,9 @@ sub _calculate_quartiles
     my $column = $parm{'column'};
 
     my $column_no = $table->header->{$column};
-    my @quartiles = array::quartiles($table->columns->[$column_no]);
+    my @data = grep { $_ } @{$table->columns->[$column_no]};    # Filter out all 0 CWRES as non-observations
+
+    my @quartiles = array::quartiles(\@data);
 
     return @quartiles;
 }
