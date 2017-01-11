@@ -4,6 +4,9 @@
 
 package array;
 
+use strict;
+#use warnings;
+
 use MooseX::Params::Validate;
 use include_modules;
 use POSIX 'floor';
@@ -11,7 +14,7 @@ use math qw(round);
 
 require Exporter;
 our @ISA = qw(Exporter);
-our %EXPORT_TAGS = ('all' => [ qw(not_empty is_empty diff cumsum max min linspace unique add sum mean median median_and_ci variance stdev is_int quantile percentile is_equal get_array_positions get_positions sem rse any_nonzero count_lower find_zeros get_intersection is_zero) ]);
+our %EXPORT_TAGS = ('all' => [ qw(not_empty is_empty diff cumsum max min linspace unique add sum mean median median_and_ci quartiles variance stdev is_int quantile percentile is_equal get_array_positions get_positions sem rse any_nonzero count_lower find_zeros get_intersection is_zero) ]);
 our @EXPORT_OK = ( @{ $EXPORT_TAGS{'all'} } );
 
 sub find_zeros
@@ -27,6 +30,7 @@ sub find_zeros
 
 	return \@indices;
 }
+
 sub is_zero
 {
 	my $a = shift;		# Array reference
@@ -42,7 +46,8 @@ sub is_zero
 	return \@is_zero;
 }
 
-sub get_positions{
+sub get_positions
+{
 	#static
 	my %parm = validated_hash(\@_,
 							  target => { isa => 'ArrayRef', optional => 0 },
@@ -66,7 +71,8 @@ sub get_positions{
 	return \@cols; #this is sorted according to keys
 }
 
-sub get_intersection{
+sub get_intersection
+{
 	#static
 	my %parm = validated_hash(\@_,
 							  arr1 => { isa => 'ArrayRef', optional => 0 },
@@ -92,8 +98,8 @@ sub get_intersection{
 	return \@intersection; 
 }
 
-
-sub get_array_positions{
+sub get_array_positions
+{
 	#static
 	my %parm = validated_hash(\@_,
 							  target => { isa => 'ArrayRef', optional => 0 },
@@ -309,7 +315,6 @@ sub count_lower
 	return $count;
 }
 
-	
 sub min
 {
     # min - Minimum value in an array or list
@@ -540,6 +545,39 @@ sub median_and_ci
 	return ($median,$sorted[$low_ci_ind],$sorted[$high_ci_ind]);
 }
 
+sub quartiles
+{
+    # Calculate the quartiles and median of array according to wikipedia method 1
+    my $ref = shift;
+
+    my @sorted = sort ({$a <=> $b} @{$ref});
+
+    my $median;
+    if (scalar(@sorted) % 2) {
+	    $median = $sorted[$#sorted / 2];
+    } else {
+	    $median = ($sorted[@sorted / 2] + $sorted[(@sorted - 2) / 2]) / 2;
+    }
+    my $size = int(scalar(@sorted) / 2);
+
+    my $low_q;
+    my $high_q;
+    if ($size % 2) {
+        $low_q = $sorted[($size - 1) / 2];
+        $high_q = $sorted[scalar(@sorted) - $size + ($size - 1) / 2];
+    } else {
+	    $low_q = ($sorted[$size / 2] + $sorted[($size - 2) / 2]) / 2;
+        my $offset = scalar(@sorted) - $size;
+	    $high_q = ($sorted[$offset + $size / 2] + $sorted[$offset + ($size - 2) / 2]) / 2;
+    }
+
+    my @quartiles;
+    $quartiles[0] = $low_q;
+    $quartiles[1] = $median;
+    $quartiles[2] = $high_q;
+    return @quartiles;
+}
+
 sub variance
 {
     # Calculate the variance of an array
@@ -744,7 +782,7 @@ sub print
 {
     my $array = shift;
 
-    foreach $e (@$array) {
+    foreach my $e (@$array) {
         print "$e\n";
     }
 }

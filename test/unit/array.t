@@ -179,6 +179,20 @@ is_deeply (\@ans, [10.5,1,20], "median_and_ci 3");
 @ans = array::median_and_ci(\@a,95);
 is_deeply (\@ans, [4,1,7], "median_and_ci 4");
 
+# Test of quartiles
+@a = qw(1 2 4 4);
+my @res = array::quartiles(\@a);
+is_deeply (\@res, [ 1.5, 3, 4 ], "quartiles 1");
+@a = qw(4 3 2 5 1);
+@res = array::quartiles(\@a);
+is_deeply (\@res, [ 1.5, 3, 4.5 ], "quartiles 2");
+@a = qw(9 10 11 12 13 14 15 16);
+@res = array::quartiles(\@a);
+is_deeply (\@res, [ 10.5, 12.5, 14.5 ], "quartiles 3");
+@a = qw(4 6 8 10 12 24);
+@res = array::quartiles(\@a);
+is_deeply (\@res, [ 6, 9, 12 ], "quartiles 4");
+
 # Test of variance
 @a = qw(1 2 4 4);
 is (array::variance(\@a), 2.25, "A simple variance"); 
