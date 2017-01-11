@@ -6,6 +6,7 @@ use MooseX::Params::Validate;
 use List::Util qw(max);
 use include_modules;
 use log;
+use array;
 use model;
 use model::problem;
 use tool::modelfit;
@@ -49,6 +50,31 @@ our @residual_models =
 			'$SIGMA 1',
 			'$ESTIMATION METHOD=1 INTER MAXEVALS=9990 PRINT=2 POSTHOC',
         ]
+    }, {
+        name => 'time_varying',
+        prob_arr => [
+            '$PROBLEM CWRES time varying',
+            '$INPUT <inputcolumns>',
+            '$DATA ../<cwrestablename> IGNORE=@ IGNORE=(DV.EQN.0) <dvidaccept>',
+            '$PRED',
+            'Y = THETA(1) + ETA(1) + ERR(4)', 
+            'IF (<idv>.LT.<q1>) THEN',
+            '    Y = THETA(1) + ETA(1) + ERR(1)',
+            'END IF',
+            'IF (<idv>.GE.<q1> .AND. <idv>.LT.<median>) THEN',
+            '    Y = THETA(1) + ETA(1) + ERR(2)',
+            'END IF',
+            'IF (<idv>.GE.<median> .AND. <idv>.LT.<q3>) THEN',
+            '    Y = THETA(1) + ETA(1) + ERR(3)',
+            'END IF',
+            '$THETA -0.0345794',
+            '$OMEGA 0.5',
+            '$SIGMA 0.5',
+            '$SIGMA 0.5',
+            '$SIGMA 0.5',
+            '$SIGMA 0.5',
+            '$ESTIMATION METHOD=1 INTER MAXEVALS=9990 PRINT=2 POSTHOC',
+        ],
     }, {
         name => 'AR1',
         prob_arr => [
@@ -347,15 +373,17 @@ END
         }
     }
 
+    my $table = nmtablefile->new(filename => "../$cwres_table_name"); 
+
     my $unique_dvid;
     my $number_of_dvid = 1;
     if ($have_dvid) {
-        my $table = nmtablefile->new(filename => "../$cwres_table_name"); 
         my $dvid_column = $table->tables->[0]->header->{'DVID'};
         $unique_dvid = array::unique($table->tables->[0]->columns->[$dvid_column]);
         $number_of_dvid = scalar(@$unique_dvid);
     }
 
+    my @quartiles = _calculate_quartiles(table => $table->tables->[0], column => $self->idv);
 
 	my @models_to_run;
     for my $model_properties (@residual_models) {
@@ -370,9 +398,14 @@ END
 
             my @prob_arr = @{$model_properties->{'prob_arr'}};
             for my $row (@prob_arr) {
-                $row =~ s/<inputcolumns>/$input_columns/;
-                $row =~ s/<cwrestablename>/$cwres_table_name/;
-                $row =~ s/<dvidaccept>/$accept/;
+                $row =~ s/<inputcolumns>/$input_columns/g;
+                $row =~ s/<cwrestablename>/$cwres_table_name/g;
+                $row =~ s/<dvidaccept>/$accept/g;
+                $row =~ s/<q1>/$quartiles[0]/g;
+                $row =~ s/<median>/$quartiles[1]/g;
+                $row =~ s/<q3>/$quartiles[2]/g;
+                my $idv = $self->idv;
+                $row =~ s/<idv>/$idv/g;
             }
             my $sh_mod = model::shrinkage_module->new(
                 nomegas => 1,
@@ -482,6 +515,21 @@ sub modelfit_analyze
         print $fh $self->model_names->[$i], ", ", $ofv, "\n";
     }
     close $fh;
+}
+
+sub _calculate_quartiles
+{
+    my %parm = validated_hash(\@_,
+        table => { isa => 'nmtable' },
+		column => { isa => 'Str' },
+    );
+    my $table = $parm{'table'};
+    my $column = $parm{'column'};
+
+    my $column_no = $table->header->{$column};
+    my @quartiles = array::quartiles($table->columns->[$column_no]);
+
+    return @quartiles;
 }
 
 sub _create_input
