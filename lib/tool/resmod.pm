@@ -393,7 +393,7 @@ END
         my $accept = "";
         for (my $i = 0; $i < $number_of_dvid; $i++) {
             if ($have_dvid) {
-                $accept = "ACCEPT=(DVID.EQN." . $unique_dvid->[$i] . ")";
+                $accept = "IGNORE=(DVID.NEN." . $unique_dvid->[$i] . ")";
             }
 
             my @prob_arr = @{$model_properties->{'prob_arr'}};
