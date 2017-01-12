@@ -22,7 +22,7 @@ Getopt::Long::config("auto_abbrev");
 my %options;
 ## Declare the options
 
-my %required_options = ( 'samples:i' => '200');
+my %required_options = ();
 
 #option etas is not implemented, bootstrap always done on all etas
 my %optional_options = (
