@@ -1,0 +1,183 @@
+\input{inputs/format_header.tex}
+\guidetitle{RESMOD user guide}{2017-01-11}
+
+\begin{document}
+
+\maketitle
+\newcommand{\guidetoolname}{resmod}
+
+
+\section{Overview}
+The residual modelling tool performs modelling of the conditional weighted residual output of a model run. Different types of models are run and the OFV of each will be presented.
+
+Example
+\begin{verbatim}
+resmod run1.mod
+\end{verbatim}
+
+\section{Input and options}
+
+\subsection{Required input}
+A model file is required on the command-line.
+
+\subsection{Optional input}
+
+\begin{optionlist}
+\optdefault{idv}{TIME}
+Name of the independent variable. Set to TIME by default.
+\nextopt
+\end{optionlist}
+
+\section{Output}
+The OFVs of all models are summarized in the results.csv file.
+
+\section{Residual models}
+
+\subsection{Base model}
+Named \verb|base| in results.csv.
+
+\begin{verbatim}
+Y = THETA(1) + ETA(1) + ERR(1)
+\end{verbatim}
+
+\subsection{Laplace}
+Named \verb|laplace| in results.csv.
+
+\begin{verbatim}
+Y = THETA(1) + ETA(1) + ERR(1)
+\end{verbatim}
+
+Using the Laplace estimation method.
+
+\subsection{Laplace 2LL}
+Named \verb|laplace_2ll_100df| and \verb|laplace_2ll_dfest| in results.csv. The first variant have 100 degrees of freedom and the second variant estimates the degrees of freedom.
+
+\begin{verbatim}
+IPRED = THETA(1) + ETA(1)
+W = THETA(2)
+DF = THETA(3) ; degrees of freedom of Student distribution
+SIG1 = W ; scaling factor for standard deviation of RUV
+IWRES = (DV - IPRED) / SIG1
+; Nemesapproximation of gamma funtion(2007) for
+; first factor of t-distrib(gamma((DF+1)/2))
+PHI = (DF + 1) / 2
+INN = PHI + 1 / (12 * PHI - 1 / (10 * PHI))
+GAMMA = SQRT(2 * 3.14159265 / PHI) * (INN / EXP(1)) ** PHI
+; Nemesapproximation of gamma funtion(2007) for
+; second factor of t-distrib(gamma(DF/2))
+PHI2 = DF / 2
+INN2 = PHI2 + 1 / (12 * PHI2 - 1 / (10 * PHI2))
+GAMMA2 = SQRT(2*3.14159265/PHI2)*(INN2/EXP(1))**PHI2
+; coefficient of PDF of t-distribution
+COEFF=GAMMA/(GAMMA2*SQRT(DF*3.14159265))/SIG1
+BASE=1+IWRES*IWRES/DF ; base of PDF of t-distribution
+POW=-(DF+1)/2 ; power of PDF of t-distribution
+L=COEFF*BASE**POW ; PDF oft-distribution
+Y=-2*LOG(L)
+\end{verbatim}
+
+\subsection{Eta on epsilon}
+Named \verb|eta_on_epsilon| in results.csv.
+
+\begin{verbatim}
+Y = THETA(1) + ETA(1) + ERR(1) * EXP(ETA(2))
+\end{verbatim}
+
+\subsection{Combined time varying}
+Named \verb|time_varying_all| in results.csv. The <idv> below will be replaced with the name of the independent variable. The <q1>, <q2> and <q3> below will be replaced with the quartiles of the independent variable
+for all observations combined. I.e. from the data set remove all records for which CWRES = 0 then calculate the quartiles of the idv column.
+\begin{verbatim}
+Y = THETA(1) + ETA(1) + ERR(4)
+IF (<idv>.LT.<q1>) THEN
+    Y = THETA(1) + ETA(1) + ERR(1)
+            'END IF
+IF (<idv>.GE.<q1> .AND. <idv>.LT.<q2>) THEN
+    Y = THETA(1) + ETA(1) + ERR(2)
+END IF
+IF (<idv>.GE.<q2> .AND. <idv>.LT.<q3>) THEN
+    Y = THETA(1) + ETA(1) + ERR(3)
+END IF
+\end{verbatim}
+
+\subsection{Time varying first, second or third quartile cutoffs}
+Named \verb|time_varying_q1|, \verb|time_varying_q2| and \verb|time_varying_q3| in results.csv. The <idv> and <qx> will be replaced as in the combined time varying model above.
+\begin{verbatim}
+Y = THETA(1) + ETA(1) + ERR(2)
+IF (<idv>.LT.<qx>) THEN
+    Y = THETA(1) + ETA(1) + ERR(1)
+END IF
+\end{verbatim}
+
+\subsection{AR1}
+Named \verb|AR1| in results.csv.
+\begin{verbatim}
+"FIRST
+" USE SIZES, ONLY: NO
+" USE NMPRD_REAL, ONLY: C=>CORRL2
+" REAL (KIND=DPSIZE) :: T(NO)
+" INTEGER (KIND=ISIZE) :: I,J,L
+"MAIN
+"C If new ind, initialize loop
+" IF (NEWIND.NE.2) THEN
+"  I=0
+"  L=1
+"  OID=ID
+" END IF
+"C Only if first in L2 set and if observation
+"C  IF (MDV.EQ.0) THEN
+"  I=I+1
+"  T(I)=TIME
+"  IF (OID.EQ.ID) L=I
+"
+"  DO J=1,I
+"      C(J,1)=EXP((-0.6931/THETA(2))*(TIME-T(J)))
+"  ENDDO
+Y = THETA(1) + ETA(1) + EPS(1)
+\end{verbatim}
+
+\subsection{Power IPRED}
+Named \verb|power_ipred| in results.csv.
+\begin{verbatim}
+'Y = THETA(1) + ETA(1) + ERR(1)*(IPRED)**THETA(2)
+\end{verbatim}
+
+\subsection{DTBS base model}
+Named \verb|dtbs_base| in results.csv.
+\begin{verbatim}
+IPRED = THETA(1) + ETA(1)
+IF(IPRED.LT.0) IPRED=0.0001
+W = THETA(2)
+Y = IPRED + ERR(1)*W
+IF(ICALL.EQ.4) Y=EXP(DV)
+\end{verbatim}
+
+\subsection{DTBS}
+Named \verb|dtbs| in results.csv.
+
+\begin{verbatim}
+$SUBROUTINE CONTR=contr.txt CCONTR=ccontra.txt
+$PRED
+IPRT = THETA(1)+ETA(1)
+LAMBDA = THETA(3)
+ZETA   = THETA(4)
+IF(IPRT.LT.0) IPRT=0.0001
+W = THETA(2)*IPRED**ZETA
+IPRTR = IPRT
+IF (LAMBDA .NE. 0 .AND. IPRT .NE.0) THEN
+	IPRTR = (IPRT**LAMBDA-1)/LAMBDA
+ENDIF
+IF (LAMBDA .EQ. 0 .AND. IPRT .NE.0) THEN
+    IPRTR = LOG(IPRT)
+ENDIF
+IF (LAMBDA .NE. 0 .AND. IPRT .EQ.0) THEN
+	IPRTR = -1/LAMBDA
+ENDIF
+IF (LAMBDA .EQ. 0 .AND. IPRT .EQ.0) THEN
+	IPRTR = -1000000000
+ENDIF
+IPRT = IPRTR
+Y = IPRT + ERR(1)*W
+IF(ICALL.EQ.4) Y=EXP(DV)
+\end{verbatim}
+
+\end{document}
