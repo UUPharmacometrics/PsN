@@ -75,7 +75,7 @@ my @correct_cov =([0.412497085304906,0.388203652647791,-0.0903657802519095,8.466
 
 my $covmatrix = influential_individuals::get_eta_covmatrix(table => $phi->tables->[0], eta_count =>7);
 
-is_deeply($covmatrix,\@correct_cov,'get_eta_covmatrix mox1.phi');
+cmp_float_matrix($covmatrix, \@correct_cov, 'get_eta_covmatrix mox1.phi');
 
 
 #sub get_pred_code

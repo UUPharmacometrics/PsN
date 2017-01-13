@@ -145,9 +145,6 @@ cmp_ok($new_value,'==','0',' check_and_set NM7 12');
  
 ($succ,$err,$new_value) = $option1->check_and_set_init(new_value => 0.0000001);
 my $format_string = $option1->_format_option();
-is($format_string, '(-1.679,1E-07,2472000)', '_format_option scientific notation'); 
-
-print $format_string . "\n";
-
+like($format_string, '/\(-1.679,1E-00?7,2472000\)/', '_format_option scientific notation'); 
 
 done_testing();
