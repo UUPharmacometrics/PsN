@@ -217,6 +217,7 @@ ___boot_scm___
 
 - New option -update_fix, to be used in combination with -rawres_input. Default false.
   Update initial estimates for parameters that are FIX.
+- bug fix when samples=1. RSE should be NA and not 0.
 
    ___simeval___
 

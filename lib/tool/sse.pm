@@ -1977,7 +1977,11 @@ sub prepare_results
 
 					  unless ((defined $self->rawres_input() and $self->random_estimation_inits)or $self->have_nwpri() or $self->have_tnpri()){
 						  #not sim with uncertainty, all inits are the same
-						  $rse = ($init->[0] != 0)? 100*$stdev/(($init->[0])*sqrt($samples)) : 'NA';
+                          if (defined $stdev and $init->[0] != 0) {
+                              $rse = 100*$stdev/(($init->[0])*sqrt($samples));
+                          } else {
+                              $rse = 'NA';
+                          }
 					  }
 				  }
 
