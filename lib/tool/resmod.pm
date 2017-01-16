@@ -49,6 +49,9 @@ our @residual_models =
             '$OMEGA 0.01',
 			'$SIGMA 1',
 			'$ESTIMATION METHOD=1 INTER MAXEVALS=9990 PRINT=2 POSTHOC',
+        ],
+        parameters => [
+            { name => "ω0", parameter => "OMEGA(2,2)" },
         ]
     }, {
         name => 'time_varying_all',
@@ -71,57 +74,6 @@ our @residual_models =
             '$OMEGA 0.5',
             '$SIGMA 0.5',
             '$SIGMA 0.5',
-            '$SIGMA 0.5',
-            '$SIGMA 0.5',
-            '$ESTIMATION METHOD=1 INTER MAXEVALS=9990 PRINT=2 POSTHOC',
-        ],
-    }, {
-        name => 'time_varying_q1',
-        prob_arr => [
-            '$PROBLEM CWRES time varying',
-            '$INPUT <inputcolumns>',
-            '$DATA ../<cwrestablename> IGNORE=@ IGNORE=(DV.EQN.0) <dvidaccept>',
-            '$PRED',
-            'Y = THETA(1) + ETA(1) + ERR(2)',
-            'IF (<idv>.LT.<q1>) THEN',
-            '    Y = THETA(1) + ETA(1) + ERR(1)',
-            'END IF',
-            '$THETA -0.0345794',
-            '$OMEGA 0.5',
-            '$SIGMA 0.5',
-            '$SIGMA 0.5',
-            '$ESTIMATION METHOD=1 INTER MAXEVALS=9990 PRINT=2 POSTHOC',
-        ],
-    }, {
-        name => 'time_varying_q2',
-        prob_arr => [
-            '$PROBLEM CWRES time varying',
-            '$INPUT <inputcolumns>',
-            '$DATA ../<cwrestablename> IGNORE=@ IGNORE=(DV.EQN.0) <dvidaccept>',
-            '$PRED',
-            'Y = THETA(1) + ETA(1) + ERR(2)',
-            'IF (<idv>.LT.<median>) THEN',
-            '    Y = THETA(1) + ETA(1) + ERR(1)',
-            'END IF',
-            '$THETA -0.0345794',
-            '$OMEGA 0.5',
-            '$SIGMA 0.5',
-            '$SIGMA 0.5',
-            '$ESTIMATION METHOD=1 INTER MAXEVALS=9990 PRINT=2 POSTHOC',
-        ],
-    }, {
-        name => 'time_varying_q3',
-        prob_arr => [
-            '$PROBLEM CWRES time varying',
-            '$INPUT <inputcolumns>',
-            '$DATA ../<cwrestablename> IGNORE=@ IGNORE=(DV.EQN.0) <dvidaccept>',
-            '$PRED',
-            'Y = THETA(1) + ETA(1) + ERR(2)',
-            'IF (<idv>.LT.<q3>) THEN',
-            '    Y = THETA(1) + ETA(1) + ERR(1)',
-            'END IF',
-            '$THETA -0.0345794',
-            '$OMEGA 0.5',
             '$SIGMA 0.5',
             '$SIGMA 0.5',
             '$ESTIMATION METHOD=1 INTER MAXEVALS=9990 PRINT=2 POSTHOC',
@@ -550,7 +502,7 @@ sub modelfit_analyze
 	unlink('contr.txt', 'ccontra.txt');
 
     open my $fh, '>', 'results.csv';
-    print $fh "Model,OFV\n";
+    print $fh "Model,OFV,Parameters\n";
     for (my $i = 0; $i < scalar(@{$self->run_models}); $i++) {
         my $model = $self->run_models->[$i];
         my $ofv;
@@ -563,7 +515,15 @@ sub modelfit_analyze
         } else {
             $ofv = 'NA';
         }
-        print $fh $self->model_names->[$i], ", ", $ofv, "\n";
+        print $fh $self->model_names->[$i], ",", $ofv, ",";
+        if (exists $residual_models[$i]->{'parameters'}) {
+            for my $parameter (@{$residual_models[$i]->{'parameters'}}) {
+                print $fh $parameter->{'name'} . "=";
+                print $fh $model->outputs->[0]->omegacoordval()->[0]->[0]->{$parameter->{'parameter'}};
+                print $fh " ";
+            }
+        }
+        print $fh "\n";
     }
     close $fh;
 }
