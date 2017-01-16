@@ -550,7 +550,7 @@ sub modelfit_analyze
 	unlink('contr.txt', 'ccontra.txt');
 
     open my $fh, '>', 'results.csv';
-    print $fh "Name,OFV\n";
+    print $fh "Model,OFV\n";
     for (my $i = 0; $i < scalar(@{$self->run_models}); $i++) {
         my $model = $self->run_models->[$i];
         my $ofv;
