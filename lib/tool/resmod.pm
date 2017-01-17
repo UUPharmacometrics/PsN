@@ -578,8 +578,9 @@ sub modelfit_analyze
 	unlink('contr.txt', 'ccontra.txt');
 
     open my $fh, '>', 'results.csv';
-    print $fh "Model,ΔOFV,Parameters\n";
+    print $fh "\x{EF}\x{BB}\x{BF}Model,ΔOFV,Parameters\n";		# EFBBBF is the byte order mark for UTF-8 letting Excel understand that this csv if encoded in UTF-8
     my %base_models;        # Hash from basemodelno to base model OFV
+	my $current_dvid;
     for (my $i = 0; $i < scalar(@{$self->run_models}); $i++) {
         my $model = $self->run_models->[$i];
         my $ofv;
@@ -594,15 +595,25 @@ sub modelfit_analyze
             $base_models{$residual_models[$i]->{'base'}} = $ofv;
             next;
         }
+		my $model_name = $self->model_names->[$i];
+		if ($model_name =~ /_DVID(\d+)/) {
+			my $dvid = $1;
+			if (not defined $current_dvid or $current_dvid != $dvid) {
+				print $fh "DVID=$dvid\n";
+				$current_dvid = $dvid;
+			}
+			$model_name =~ s/_DVID\d+//;
+		}
+
         my $base_ofv;
 		$base_ofv = $base_models{$residual_models[$i]->{'use_base'}};
         if ($base_ofv eq 'NA' or $ofv eq 'NA') {        # Really skip parameters if no base ofv?
-            print $fh $self->model_names->[$i], ",NA,NA\n";
+            print $fh $model_name, ",NA,NA\n";
 			next;
         }
         my $delta_ofv = $ofv - $base_ofv;
         $delta_ofv = sprintf("%.2f", $delta_ofv);
-        print $fh $self->model_names->[$i], ",", $delta_ofv, ",";
+        print $fh $model_name, ",", $delta_ofv, ",";
         if (exists $residual_models[$i]->{'parameters'}) {
             for my $parameter (@{$residual_models[$i]->{'parameters'}}) {
 				if ($parameter->{'name'} eq "QUARTILES") {
