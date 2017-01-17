@@ -625,18 +625,18 @@ names(infl_cov_data_3) <- NULL
 
 
 #use function
-all_infl_indiv_table_1 <- all.infl.indiv.table(infl_ofv_1,infl_cook_data_1,infl_cov_data_1)
-all_infl_indiv_table_2 <- all.infl.indiv.table(infl_ofv_1,infl_cook_data_2,infl_cov_data_2)
-all_infl_indiv_table_3 <- all.infl.indiv.table(infl_ofv_1,infl_cook_data_3,infl_cov_data_1)
-all_infl_indiv_table_4 <- all.infl.indiv.table(infl_ofv_2,infl_cook_data_3,infl_cov_data_2)
-all_infl_indiv_table_5 <- all.infl.indiv.table(infl_ofv_2,infl_cook_data_3,infl_cov_data_3)
-all_infl_indiv_table_6 <- all.infl.indiv.table(infl_ofv,infl_cook_data,infl_cov_data)
+all_infl_indiv_table_1 <- all.infl.indiv.table(infl_ofv_1,infl_cook_data_1,infl_cov_data_1,fail_ID=c())
+all_infl_indiv_table_2 <- all.infl.indiv.table(infl_ofv_1,infl_cook_data_2,infl_cov_data_2,fail_ID=c(12,11))
+all_infl_indiv_table_3 <- all.infl.indiv.table(infl_ofv_1,infl_cook_data_3,infl_cov_data_1,fail_ID=c())
+all_infl_indiv_table_4 <- all.infl.indiv.table(infl_ofv_2,infl_cook_data_3,infl_cov_data_2,fail_ID=c())
+all_infl_indiv_table_5 <- all.infl.indiv.table(infl_ofv_2,infl_cook_data_3,infl_cov_data_3,fail_ID=c())
+all_infl_indiv_table_6 <- all.infl.indiv.table(infl_ofv,infl_cook_data,infl_cov_data,fail_ID=c())
 
 # Create expected data
 exp_all_infl_indiv_table_1 <- data.frame("ID"=as.character(c(3,7,11,13,19)),"Delta OFV influentials"=as.character(c(4,4.1,"","",6.3)),
                                          "Cook score influentials"=as.character(c("","",1,"",6.23)),
                                          "Cov ratio influentials"=as.character(c("","",0.7,0.9,1.2)),check.names = F, stringsAsFactors=FALSE)
-exp_all_infl_indiv_table_2 <- data.frame("ID"=as.character(c(1,3,7,11,12,19)),"Delta OFV influentials"=as.character(c("",4,4.1,"","",6.3)),
+exp_all_infl_indiv_table_2 <- data.frame("ID"=as.character(c(1,3,7,11,12,19)),"Delta OFV influentials"=as.character(c("",4,4.1,"NA","NA",6.3)),
                                          "Cook score influentials"=as.character(c(6.23,"","","",1,"")),
                                          "Cov ratio influentials"=as.character(c("","","",0.7,"","")),check.names = F, stringsAsFactors=FALSE)
 exp_all_infl_indiv_table_3 <- data.frame("ID"=as.character(c(3,7,11,13,19)),"Delta OFV influentials"=as.character(c(4,4.1,"","",6.3)),

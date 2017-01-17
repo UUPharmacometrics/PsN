@@ -65,12 +65,12 @@ test_that("function get_toolname_foldername pass",{
 })
 
 #...............................  (5) Test create_folder_name  .....................................
-new_folder_name_1 <- create_folder_name(files.w.dir,c("cdd","cdd_dir3"),c("simeval","first_tool"))
-new_folder_name_2 <- create_folder_name(files.w.dir,c("simeval","simeval_dir1"),c("cdd","cdd_dir3"))
+new_folder_name_1 <- create_folder_name(folders.directory=files.w.dir,toolname_foldername_1=c("cdd","cdd_dir3"),toolname_foldername_2=c("simeval","first_tool"))
+new_folder_name_2 <- create_folder_name(folders.directory=files.w.dir,toolname_foldername_1=c("simeval","simeval_dir1"),toolname_foldername_2=c("cdd","cdd_dir3"))
 
 context("Compare, test function create_folder_name")
 test_that("function create_folder_name pass",{
-  expect_equal("cdd.simeval_dir3",new_folder_name_1)
+  expect_equal("cdd.simeval_dir4",new_folder_name_1)
   expect_equal("simeval.cdd_dir1",new_folder_name_2)
 })
 
@@ -99,7 +99,9 @@ other_files_1 <- get_more_csv_file_names(files.w.dir,c("cdd","cdd_dir3"),c("sime
 other_files_2 <- get_more_csv_file_names(files.w.dir,c("simeval","first_tool"),c("cdd","cdd_dir3"))
 
 exp_other_files_1 <- list(skipped_individuals="skipped_individuals14f.csv",
-                                all.iofv.file="raw_all_iofv.csv")
+                          all.iofv.file="raw_all_iofv.csv",
+                          residual.outliers.file="residual_outliers.csv",
+                          ebe.npde.file="ebe_npde.csv")
 
 context("Compare, test function get_more_csv_file_names")
 test_that("function get_more_csv_file_names pass",{
@@ -115,7 +117,9 @@ list_of_files_2 <- get_list_of_files(files.w.dir,c("simeval","first_tool"),c("cd
 
 exp_list_of_files_1 <- c(paste0(files.w.dir,"first_tool/raw_all_iofv.csv"),
                          paste0(files.w.dir,"cdd_dir3/skipped_individuals14f.csv"),
-                         paste0(files.w.dir,"cdd_dir3/raw_results_pheno.csv"))
+                         paste0(files.w.dir,"cdd_dir3/raw_results_pheno.csv"),
+                         paste0(files.w.dir,"first_tool/ebe_npde.csv"),
+                         paste0(files.w.dir,"first_tool/residual_outliers.csv"))
 
 context("Compare, test function get_list_of_files")
 test_that("function get_list_of_files pass",{
@@ -129,8 +133,8 @@ input_values_2 <- get_input_values(list_of_files_1,c("simeval","first_tool"),c("
 
 context("Compare, test function get_input_values")
 test_that("function get_input_values pass",{
-  expect_equal(c(4,5),input_values_1)
-  expect_equal(c(4,5),input_values_2)
+  expect_equal(list(successful.samples=4,n.subjects=5,eta.names=c("ETA.1.","ETA.2.","ETA.3.")),input_values_1)
+  expect_equal(list(successful.samples=4,n.subjects=5,eta.names=c("ETA.1.","ETA.2.","ETA.3.")),input_values_2)
 })
 
 #...............................  (11) Test create_pdf.filename  .....................................
@@ -157,9 +161,10 @@ exp_R_input_1 <- c(paste0("setwd('",new_folder_directory_1,"')"),
                    "tool_1 <- 'cdd'","tool_2 <- 'simeval'","pdf.filename <- 'cdd.simeval.pdf'",
                    "successful.samples <- 4","n.subjects <- 5",
                    "all.iofv.file <- 'raw_all_iofv.csv'","skipped.id.file <- 'skipped_individuals14f.csv'",
-                   "raw.results.file <- 'raw_results_pheno.csv'","",
+                   "raw.results.file <- 'raw_results_pheno.csv'","residual.outliers.file <- 'residual_outliers.csv'",
+                   "ebe.npde.file <- 'ebe_npde.csv'","eta.names <- c('ETA.1.','ETA.2.','ETA.3.')","",
                    "source(paste0(rscripts.directory,'cdd.simeval_default.R'))",
-                   "cdd.simeval(rscripts.directory,all.iofv.file,n.subjects,samples=successful.samples,\n              raw.results.file,skipped.id.file,pdf.filename)")
+                   "cdd.simeval(rscripts.directory,all.iofv.file,n.subjects,samples=successful.samples,\n              raw.results.file,skipped.id.file,residual.outliers.file,ebe.npde.file,eta.names,\n              pdf.filename,cutoff_cook=0.8,cutoff_delta.ofv=3.84)")
 
 exp_R_input_2 <- c(paste0("setwd('",new_folder_directory_2,"')"),
                    paste0("rscripts.directory <- '",rscript.w.dir,"'"),
@@ -167,9 +172,10 @@ exp_R_input_2 <- c(paste0("setwd('",new_folder_directory_2,"')"),
                    "tool_1 <- 'simeval'","tool_2 <- 'cdd'","pdf.filename <- 'simeval.cdd.pdf'",
                    "successful.samples <- 4","n.subjects <- 5",
                    "all.iofv.file <- 'raw_all_iofv.csv'","skipped.id.file <- 'skipped_individuals14f.csv'",
-                   "raw.results.file <- 'raw_results_pheno.csv'","",
+                   "raw.results.file <- 'raw_results_pheno.csv'","residual.outliers.file <- 'residual_outliers.csv'",
+                   "ebe.npde.file <- 'ebe_npde.csv'","eta.names <- c('ETA.1.','ETA.2.','ETA.3.')","",
                    "source(paste0(rscripts.directory,'cdd.simeval_default.R'))",
-                   "cdd.simeval(rscripts.directory,all.iofv.file,n.subjects,samples=successful.samples,\n              raw.results.file,skipped.id.file,pdf.filename)")
+                   "cdd.simeval(rscripts.directory,all.iofv.file,n.subjects,samples=successful.samples,\n              raw.results.file,skipped.id.file,residual.outliers.file,ebe.npde.file,eta.names,\n              pdf.filename,cutoff_cook=0.8,cutoff_delta.ofv=3.84)")
 context("Compare, test function create_R_script")
 test_that("function create_R_script pass",{
   expect_equal(exp_R_input_1,R_input_1)
