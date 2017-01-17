@@ -166,7 +166,7 @@ our @residual_models =
 			'$THETA  (0,1) ; W : SD',
 			'$OMEGA  0.0001',
 			'$ESTIMATION MAXEVAL=99999 -2LL METH=1 LAPLACE PRINT=2 POSTHOC',
-      ],
+		],
 		base => 2,
     }, {
         name => 'tdist_2ll_df100',
@@ -496,7 +496,7 @@ END
                 shrinkage_module => $sh_mod,
             );
             my $dvid_suffix = "";
-            $dvid_suffix = "_DVID" . $unique_dvid->[$i] if ($have_dvid);
+            $dvid_suffix = "_DVID" . int($unique_dvid->[$i]) if ($have_dvid);
             my $cwres_model = model->new(
 				directory => 'm1/',
 				filename => $model_properties->{'name'} . "$dvid_suffix.mod",
@@ -573,7 +573,7 @@ END
 sub modelfit_analyze
 {
     my $self = shift;
-	
+
 	# Remove the extra files
 	unlink('contr.txt', 'ccontra.txt');
 
