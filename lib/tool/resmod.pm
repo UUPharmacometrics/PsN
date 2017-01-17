@@ -423,9 +423,10 @@ END
         die "Error original model has no table containing ID, IDV and CWRES\n";
     }
 
-    # Do we have IPRED or DVID?
+    # Do we have IPRED, DVID or TAD?
     my $have_ipred = 0;
     my $have_dvid = 0;
+	my $have_tad = 0;
     for my $option (@{$cwres_table->options}) {
         if ($option->name eq 'IPRED') {
             $have_ipred = 1;
@@ -433,7 +434,10 @@ END
         } elsif ($option->name eq 'DVID') {
             $have_dvid = 1;
             push @columns, 'DVID';
-        }
+        } elsif ($option->name eq 'TAD') {
+			$have_tad = 1;
+			push @columns, 'TAD',
+		}
     }
 
     my $table = nmtablefile->new(filename => "../$cwres_table_name"); 
@@ -446,12 +450,20 @@ END
         $number_of_dvid = scalar(@$unique_dvid);
     }
 
-    my @quartiles = _calculate_quartiles(table => $table->tables->[0], column => $self->idv);
+	my $idv_column = $self->idv;
+	if ($have_tad) {
+		$idv_column = 'TAD';
+	}
+    my @quartiles = _calculate_quartiles(table => $table->tables->[0], column => $idv_column);
 	$self->quartiles(\@quartiles);
 
 	my @models_to_run;
     for my $model_properties (@residual_models) {
-    	my $input_columns = _create_input(table => $cwres_table, columns => \@columns, ipred => $model_properties->{'need_ipred'});
+		my $tad;
+		if ($have_tad and $model_properties->{'name'} eq 'time_varying') {
+			$tad = 1;
+		}
+    	my $input_columns = _create_input(table => $cwres_table, columns => \@columns, ipred => $model_properties->{'need_ipred'}, tad => $tad);
         next if ($model_properties->{'need_ipred'} and not $have_ipred);
 
         my $accept = "";
@@ -469,6 +481,9 @@ END
                 $row =~ s/<median>/$quartiles[1]/g;
                 $row =~ s/<q3>/$quartiles[2]/g;
                 my $idv = $self->idv;
+				if ($have_tad and $model_properties->{'name'} eq 'time_varying') {
+					$idv = 'TAD';
+				} 
                 $row =~ s/<idv>/$idv/g;
             }
             my $sh_mod = model::shrinkage_module->new(
@@ -582,7 +597,7 @@ sub modelfit_analyze
         my $base_ofv;
 		$base_ofv = $base_models{$residual_models[$i]->{'use_base'}};
         if ($base_ofv eq 'NA' or $ofv eq 'NA') {        # Really skip parameters if no base ofv?
-            print $fh $self->model_names->[$i], "NA", "NA";
+            print $fh $self->model_names->[$i], ",NA,NA\n";
 			next;
         }
         my $delta_ofv = $ofv - $base_ofv;
@@ -640,10 +655,12 @@ sub _create_input
         table => { isa => 'model::problem::table' },
 		columns => { isa => 'ArrayRef' },
 		ipred => { isa => 'Bool', default => 1 },		# Should ipred be included if in columns?
+		tad => { isa => 'Bool', default => 0 },			# Should TAD be used instead of $self->idv?
     );
     my $table = $parm{'table'};
 	my @columns = @{$parm{'columns'}};
     my $ipred = $parm{'ipred'};
+    my $tad = $parm{'tad'};
 
     my $input_columns;
     my @found_columns;
@@ -655,6 +672,8 @@ sub _create_input
                 my $name = $option->name;
                 $name = 'DV' if ($name eq 'CWRES');
 				$name = 'DROP' if ($name eq 'IPRED' and not $ipred);
+				$name = 'DROP' if ($name eq 'TAD' and not $tad);
+				$name = 'DROP' if ($name eq 'TIME' and $tad);
                 $input_columns .= $name;
                 $found = 1;
                 last;
