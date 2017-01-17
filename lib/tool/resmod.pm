@@ -19,6 +19,7 @@ has 'model' => ( is => 'rw', isa => 'model' );
 has 'model_names' => ( is => 'rw', isa => 'ArrayRef', default => sub { [] } );
 has 'idv' => ( is => 'rw', isa => 'Str', default => 'TIME' );
 has 'run_models' => ( is => 'rw', isa => 'ArrayRef[model]' );
+has 'quartiles' => ( is => 'rw', isa => 'ArrayRef' );
 
 # This array of hashes represent the different models to be tested. The 0th is the base model
 our @residual_models =
@@ -104,6 +105,7 @@ our @residual_models =
             { name => "σt1-t2", parameter => "SIGMA(2,2)" },
             { name => "σt2-t3", parameter => "SIGMA(3,3)" },
             { name => "σt3-inf", parameter => "SIGMA(4,4)" },
+			{ name => "QUARTILES" },
         ],
         use_base => 1,
     }, {
@@ -146,21 +148,28 @@ our @residual_models =
         ],
         use_base => 1,
     }, {
-		name => 'laplace',
+		name => 'tdist_base',
 	    prob_arr => [
-			'$PROBLEM CWRES laplace',
+			'$PROBLEM CWRES t-distribution base mode',
 			'$INPUT <inputcolumns>',
 			'$DATA ../<cwrestablename> IGNORE=@ IGNORE=(DV.EQN.0) <dvidaccept>',
 			'$PRED',
-            'Y = THETA(1) + ETA(1) + ERR(1)',
-			'$THETA .1',
-			'$OMEGA 0.01',
-			'$SIGMA 1',
-			'$ESTIMATION METHOD=1 INTER LAPLACE MAXEVALS=9990 PRINT=2 POSTHOC',
-        ],
+			'IPRED = THETA(1) + ETA(1)',
+			'W     = THETA(2)',
+			'IWRES=(DV-IPRED)/W',
+			'LIM = 10E-14',
+			'IF(IWRES.EQ.0) IWRES = LIM',
+			'LL=-0.5*LOG(2*3.14159265)-LOG(W)-0.5*(IWRES**2)',
+			'L=EXP(LL)',
+			'Y=-2*LOG(L)',
+			'$THETA  .1 ; Mean',
+			'$THETA  (0,1) ; W : SD',
+			'$OMEGA  0.0001',
+			'$ESTIMATION MAXEVAL=99999 -2LL METH=1 LAPLACE PRINT=2 POSTHOC',
+      ],
 		base => 2,
     }, {
-        name => 'laplace_2ll_df100',
+        name => 'tdist_2ll_df100',
         prob_arr => [
 			'$PROBLEM CWRES laplace 2LL DF=100',
 			'$INPUT <inputcolumns>',
@@ -190,7 +199,7 @@ our @residual_models =
         ],
 		use_base => 2,
     }, {
-        name => 'laplace_2ll_dfest',
+        name => 'tdist_2ll_dfest',
         prob_arr => [
 			'$PROBLEM CWRES laplace 2LL DF=est',
 			'$INPUT <inputcolumns>',
@@ -217,6 +226,9 @@ our @residual_models =
 			'$THETA (3,10)',
 			'$OMEGA 0.01',
 			'$ESTIMATION METHOD=1 LAPLACE MAXEVALS=9990 PRINT=2 -2LL',
+        ],
+        parameters => [
+            { name => "df", parameter => "THETA3" },
         ],
 		use_base => 2,
     }, {
@@ -435,6 +447,7 @@ END
     }
 
     my @quartiles = _calculate_quartiles(table => $table->tables->[0], column => $self->idv);
+	$self->quartiles(\@quartiles);
 
 	my @models_to_run;
     for my $model_properties (@residual_models) {
@@ -567,17 +580,22 @@ sub modelfit_analyze
             next;
         }
         my $base_ofv;
-        if (exists $residual_models[$i]->{'use_base'}) {
-            $base_ofv = $base_models{$residual_models[$i]->{'use_base'}};
-        }
-        if ($base_ofv eq 'NA') {        # Really skip parameters if no base ofv?
+		$base_ofv = $base_models{$residual_models[$i]->{'use_base'}};
+        if ($base_ofv eq 'NA' or $ofv eq 'NA') {        # Really skip parameters if no base ofv?
             print $fh $self->model_names->[$i], "NA", "NA";
+			next;
         }
         my $delta_ofv = $ofv - $base_ofv;
         $delta_ofv = sprintf("%.2f", $delta_ofv);
         print $fh $self->model_names->[$i], ",", $delta_ofv, ",";
         if (exists $residual_models[$i]->{'parameters'}) {
             for my $parameter (@{$residual_models[$i]->{'parameters'}}) {
+				if ($parameter->{'name'} eq "QUARTILES") {
+					print $fh sprintf("t1=%.3f", $self->quartiles()->[0]);
+					print $fh sprintf(" t2=%.3f", $self->quartiles()->[1]);
+					print $fh sprintf(" t3=%.3f", $self->quartiles()->[2]);
+					next;
+				}
                 print $fh $parameter->{'name'} . "=";
                 my $coordval;
                 my $param = $parameter->{'parameter'};
