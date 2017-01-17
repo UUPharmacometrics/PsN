@@ -69,3 +69,4 @@ test/test_files/run1.cov
 test/test_files/run1.ext
 test/test_files/run1.lst
 test/test_files/run1.phi
+test/rplots/r_test/simeval/.RData
