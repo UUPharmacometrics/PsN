@@ -141,6 +141,9 @@ our @residual_models =
             '$SIGMA  0.864271',
             '$ESTIMATION METHOD=1 INTER MAXEVALS=9990 PRINT=2 POSTHOC',
         ],
+        parameters => [
+            { name => "autocorr", parameter => "THETA2" },
+        ],
         use_base => 1,
     }, {
 		name => 'laplace',
@@ -154,7 +157,8 @@ our @residual_models =
 			'$OMEGA 0.01',
 			'$SIGMA 1',
 			'$ESTIMATION METHOD=1 INTER LAPLACE MAXEVALS=9990 PRINT=2 POSTHOC',
-        ]
+        ],
+		base => 2,
     }, {
         name => 'laplace_2ll_df100',
         prob_arr => [
@@ -184,6 +188,7 @@ our @residual_models =
 			'$OMEGA 0.01',
 			'$ESTIMATION METHOD=1 LAPLACE MAXEVALS=9990 PRINT=2 -2LL',
         ],
+		use_base => 2,
     }, {
         name => 'laplace_2ll_dfest',
         prob_arr => [
@@ -213,6 +218,7 @@ our @residual_models =
 			'$OMEGA 0.01',
 			'$ESTIMATION METHOD=1 LAPLACE MAXEVALS=9990 PRINT=2 -2LL',
         ],
+		use_base => 2,
     }, {
         name => 'dtbs_base',
         need_ipred => 1,
