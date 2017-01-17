@@ -6,6 +6,7 @@ influential_outliers_data <- function(all.iofv.file,n.subjects,samples,
   simeval_id_sorted <- list_i_ofv_res$id_sorted
   iofv_res <- list_i_ofv_res$result$x
   outlier_ID <- list_i_ofv_res$outlier_ID
+  ID_deleted_ofv <- list_i_ofv_res$ID_deleted_ofv
   
   # create a data frame
   outl_data <- as.data.frame(cbind(simeval_id_sorted,iofv_res))
