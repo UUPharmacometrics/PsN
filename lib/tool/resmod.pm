@@ -20,6 +20,8 @@ has 'model_names' => ( is => 'rw', isa => 'ArrayRef', default => sub { [] } );
 has 'idv' => ( is => 'rw', isa => 'Str', default => 'TIME' );
 has 'run_models' => ( is => 'rw', isa => 'ArrayRef[model]' );
 has 'quartiles' => ( is => 'rw', isa => 'ArrayRef' );
+has 'unique_dvid' => ( is => 'rw', isa => 'ArrayRef' );
+has 'numdvid' => ( is => 'rw', isa => 'Int' );
 
 # This array of hashes represent the different models to be tested. The 0th is the base model
 our @residual_models =
@@ -447,8 +449,10 @@ END
     if ($have_dvid) {
         my $dvid_column = $table->tables->[0]->header->{'DVID'};
         $unique_dvid = array::unique($table->tables->[0]->columns->[$dvid_column]);
+		$self->unique_dvid($unique_dvid);
         $number_of_dvid = scalar(@$unique_dvid);
     }
+	$self->numdvid($number_of_dvid);
 
 	my $idv_column = $self->idv;
 	if ($have_tad) {
@@ -581,103 +585,102 @@ sub modelfit_analyze
     print $fh "\x{EF}\x{BB}\x{BF}Model,ΔOFV,Parameters\n";		# EFBBBF is the byte order mark for UTF-8 letting Excel understand that this csv if encoded in UTF-8
     my %base_models;        # Hash from basemodelno to base model OFV
 	my $current_dvid;
-    for (my $i = 0; $i < scalar(@{$self->run_models}); $i++) {
-        my $model = $self->run_models->[$i];
-        my $ofv;
-        if ($model->is_run()) {
-            my $output = $model->outputs->[0];
-            $ofv = $output->get_single_value(attribute => 'ofv');
-        }
-        if (not defined $ofv) {
-            $ofv = 'NA';
-        }
-        if (exists $residual_models[$i]->{'base'}) {        # This is a base model
-            $base_models{$residual_models[$i]->{'base'}} = $ofv;
-            next;
-        }
-		my $model_name = $self->model_names->[$i];
-		if ($model_name =~ /_DVID(\d+)/) {
-			my $dvid = $1;
-			if (not defined $current_dvid or $current_dvid != $dvid) {
-				print $fh "DVID=$dvid\n";
-				$current_dvid = $dvid;
-			}
-			$model_name =~ s/_DVID\d+//;
+	for (my $dvid_index = 0; $dvid_index < $self->numdvid; $dvid_index++) {
+		if ($self->numdvid > 1) {
+			print $fh "DVID=", int($self->unique_dvid->[$dvid_index]), "\n";
 		}
+		for (my $i = 0; $i < scalar(@residual_models); $i++) {
+			my $model_index = $dvid_index + $i * $self->numdvid;
+			my $model = $self->run_models->[$model_index];
+			my $model_name = $self->model_names->[$model_index];
+			$model_name =~ s/_DVID\d+//;
+			my $ofv;
+			if ($model->is_run()) {
+				my $output = $model->outputs->[0];
+				$ofv = $output->get_single_value(attribute => 'ofv');
+			}
+			if (not defined $ofv) {
+				$ofv = 'NA';
+			}
+			if (exists $residual_models[$i]->{'base'}) {        # This is a base model
+				$base_models{$residual_models[$i]->{'base'}} = $ofv;
+				next;
+			}
 
-        my $base_ofv;
-		$base_ofv = $base_models{$residual_models[$i]->{'use_base'}};
-        if ($base_ofv eq 'NA' or $ofv eq 'NA') {        # Really skip parameters if no base ofv?
-            print $fh $model_name, ",NA,NA\n";
-			next;
-        }
-        my $delta_ofv = $ofv - $base_ofv;
-        $delta_ofv = sprintf("%.2f", $delta_ofv);
-        print $fh $model_name, ",", $delta_ofv, ",";
-        if (exists $residual_models[$i]->{'parameters'}) {
-            for my $parameter (@{$residual_models[$i]->{'parameters'}}) {
-				if ($parameter->{'name'} eq "QUARTILES") {
-					print $fh sprintf("t1=%.3f", $self->quartiles()->[0]);
-					print $fh sprintf(" t2=%.3f", $self->quartiles()->[1]);
-					print $fh sprintf(" t3=%.3f", $self->quartiles()->[2]);
-					next;
+			my $base_ofv;
+			$base_ofv = $base_models{$residual_models[$i]->{'use_base'}};
+			if ($base_ofv eq 'NA' or $ofv eq 'NA') {        # Really skip parameters if no base ofv?
+				print $fh $model_name, ",NA,NA\n";
+				next;
+			}
+			my $delta_ofv = $ofv - $base_ofv;
+			$delta_ofv = sprintf("%.2f", $delta_ofv);
+			print $fh $model_name, ",", $delta_ofv, ",";
+			if (exists $residual_models[$i]->{'parameters'}) {
+				for my $parameter (@{$residual_models[$i]->{'parameters'}}) {
+					if ($parameter->{'name'} eq "QUARTILES") {
+						print $fh sprintf("t1=%.3f", $self->quartiles()->[0]);
+						print $fh sprintf(" t2=%.3f", $self->quartiles()->[1]);
+						print $fh sprintf(" t3=%.3f", $self->quartiles()->[2]);
+						next;
+					}
+					print $fh $parameter->{'name'} . "=";
+					my $coordval;
+					my $param = $parameter->{'parameter'};
+					my $paramhash;
+					if ($param =~ /OMEGA/) {
+						$paramhash = $model->outputs->[0]->omegacoordval()->[0]->[0];
+					} elsif ($param =~ /SIGMA/) {
+						$paramhash = $model->outputs->[0]->sigmacoordval()->[0]->[0];
+					} elsif ($param =~ /THETA/) {
+						$paramhash = $model->outputs->[0]->thetacoordval()->[0]->[0];
+					}
+					print $fh sprintf("%.3f", $paramhash->{$param});
+					print $fh " ";
 				}
-                print $fh $parameter->{'name'} . "=";
-                my $coordval;
-                my $param = $parameter->{'parameter'};
-                my $paramhash;
-                if ($param =~ /OMEGA/) {
-                    $paramhash = $model->outputs->[0]->omegacoordval()->[0]->[0];
-                } elsif ($param =~ /SIGMA/) {
-                    $paramhash = $model->outputs->[0]->sigmacoordval()->[0]->[0];
-                } elsif ($param =~ /THETA/) {
-                    $paramhash = $model->outputs->[0]->thetacoordval()->[0]->[0];
-                }
-                print $fh sprintf("%.3f", $paramhash->{$param});
-                print $fh " ";
-            }
-        }
-        print $fh "\n";
-    }
-    close $fh;
+			}
+			print $fh "\n";
+		}
+	}
+	close $fh;
 }
 
 sub _calculate_quartiles
 {
-    my %parm = validated_hash(\@_,
-        table => { isa => 'nmtable' },
+	my %parm = validated_hash(\@_,
+		table => { isa => 'nmtable' },
 		column => { isa => 'Str' },
-    );
-    my $table = $parm{'table'};
-    my $column = $parm{'column'};
+	);
+	my $table = $parm{'table'};
+	my $column = $parm{'column'};
 
-    my $column_no = $table->header->{$column};
-    my @data = grep { $_ } @{$table->columns->[$column_no]};    # Filter out all 0 CWRES as non-observations
+	my $column_no = $table->header->{$column};
+	my @data = grep { $_ } @{$table->columns->[$column_no]};    # Filter out all 0 CWRES as non-observations
 
-    my @quartiles = array::quartiles(\@data);
+	my @quartiles = array::quartiles(\@data);
 
-    return @quartiles;
+	return @quartiles;
 }
 
 sub _create_input
 {
 	# Create $INPUT string from table
-    my %parm = validated_hash(\@_,
-        table => { isa => 'model::problem::table' },
+	my %parm = validated_hash(\@_,
+		table => { isa => 'model::problem::table' },
 		columns => { isa => 'ArrayRef' },
 		ipred => { isa => 'Bool', default => 1 },		# Should ipred be included if in columns?
 		tad => { isa => 'Bool', default => 0 },			# Should TAD be used instead of $self->idv?
-    );
-    my $table = $parm{'table'};
+	);
+	my $table = $parm{'table'};
 	my @columns = @{$parm{'columns'}};
-    my $ipred = $parm{'ipred'};
-    my $tad = $parm{'tad'};
+	my $ipred = $parm{'ipred'};
+	my $tad = $parm{'tad'};
 
-    my $input_columns;
-    my @found_columns;
-    for my $option (@{$table->options}) {
-        my $found = 0; 
-        for (my $i = 0; $i < scalar(@columns); $i++) {
+	my $input_columns;
+	my @found_columns;
+	for my $option (@{$table->options}) {
+		my $found = 0; 
+		for (my $i = 0; $i < scalar(@columns); $i++) {
             if ($option->name eq $columns[$i] and not $found_columns[$i]) {
                 $found_columns[$i] = 1;
                 my $name = $option->name;
