@@ -60,7 +60,7 @@ pdf_outl.infl.indiv <- function(all.iofv.file,n.subjects,samples,raw.results.fil
   if((nrow(outl_infl_table) == 1) && (ncol(outl_infl_table)==1)) {
     plot.table(outl_infl_table)
   } else {
-    total_rows_per_page <- 20
+    total_rows_per_page <- 18
     start_row <- 1
     if (total_rows_per_page > nrow(outl_infl_table)) {
       end_row <- nrow(outl_infl_table)
@@ -70,6 +70,14 @@ pdf_outl.infl.indiv <- function(all.iofv.file,n.subjects,samples,raw.results.fil
     
     for (i in 1:ceiling(nrow(outl_infl_table)/total_rows_per_page)){
       outl_infl_table_part <- outl_infl_table[start_row:end_row,]
+      
+      # add text "continues", if table continues in other pages
+      nr_col <- ncol(outl_infl_table_part)
+      add_vect <- c(rep("",nr_col-1),"continues...")
+      if(i != ceiling(nrow(outl_infl_table)/total_rows_per_page)) {
+        outl_infl_table_part <- rbind(outl_infl_table_part,add_vect)
+      }
+      
       start_row <- end_row + 1
       if((total_rows_per_page + end_row) < nrow(outl_infl_table)){
         end_row <- total_rows_per_page + end_row
