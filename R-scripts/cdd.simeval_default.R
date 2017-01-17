@@ -1,8 +1,12 @@
 cdd.simeval <- function(rscripts.directory,
                         all.iofv.file,n.subjects,samples,raw.results.file,skipped.id.file,
                         residual.outliers.file,ebe.npde.file,eta.names,
-                        pdf.filename) {
+                        pdf.filename,
+                        cutoff_cook,cutoff_delta.ofv) { # can be missing
   library(ggplot2)
+  library(grid)
+  library(gridExtra)
+  
   source(paste0(rscripts.directory,"simeval/ofv.i_ofv_res.R"))
   source(paste0(rscripts.directory,"simeval/ebe.npde.input.data.R"))
   source(paste0(rscripts.directory,"simeval/ebe.npde.empirical.distance.R"))
@@ -10,7 +14,6 @@ cdd.simeval <- function(rscripts.directory,
   source(paste0(rscripts.directory,"simeval/ebe.npde.plot_1.R"))
   source(paste0(rscripts.directory,"simeval/ebe.npde.plot_2.R"))
   source(paste0(rscripts.directory,"simeval/ebe.npde.outlier.table.R"))
-  source(paste0(rscripts.directory,"simeval/ebe.npde.all.outliers.R"))
   source(paste0(rscripts.directory,"simeval/residuals.outlier.table.R"))
   source(paste0(rscripts.directory,"simeval/all.outlier.report.table.R"))
   source(paste0(rscripts.directory,"cdd/create.data.full.R"))
@@ -27,8 +30,13 @@ cdd.simeval <- function(rscripts.directory,
   source(paste0(rscripts.directory,"simeval_cdd/outlier.infl.table.R"))
   source(paste0(rscripts.directory,"common/plot.table.R"))
  
-  cutoff_cook <- 0.8
-  cutoff_delta.ofv <- 3.84
+  if (missing(cutoff_cook)) {
+    cutoff_cook <- 0.8
+  }
+  if (missing(cutoff_delta.ofv)) {
+    cutoff_delta.ofv <- 3.84
+  }
+  
   pdf_outl.infl.indiv(all.iofv.file,n.subjects,samples,raw.results.file,skipped.id.file,
                       residual.outliers.file,ebe.npde.file,eta.names,
                       pdf.filename,cutoff_cook,cutoff_delta.ofv)
