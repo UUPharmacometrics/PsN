@@ -89,7 +89,7 @@ pdf.cdd <- function(raw.results.file,skipped.id.file,pdf.filename,markeropt,
   }
   
   # influential summary table
-  all_infl_indiv_table <- all.infl.indiv.table(infl_ofv,infl_cook_data,infl_cov_data)
+  all_infl_indiv_table <- all.infl.indiv.table(infl_ofv,infl_cook_data,infl_cov_data,fail_ID)
   plot.table(all_infl_indiv_table)
   
   #close pdf

@@ -1,4 +1,4 @@
-all.infl.indiv.table <- function(infl_ofv,infl_cook_data,infl_cov_data) {
+all.infl.indiv.table <- function(infl_ofv,infl_cook_data,infl_cov_data,fail_ID) {
   col_amount <- 4
   # ID numbers of all influential individuals if they exist
   id <- c()
@@ -29,6 +29,13 @@ all.infl.indiv.table <- function(infl_ofv,infl_cook_data,infl_cov_data) {
       all_infl_indiv_table[n,col_nr] <- id_nr
       
       col_nr <- col_nr + 1
+      #ofv deleted id if exists
+      if(length(fail_ID)>0) {
+        if(any(fail_ID %in% id_nr)) {
+          all_infl_indiv_table[n,col_nr] <- "NA"
+        }
+      }
+      
       # Add OFV values
       if (exists("ofv_ID")) {
         if (any(ofv_ID %in% id_nr)) {

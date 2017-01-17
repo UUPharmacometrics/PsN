@@ -1,4 +1,8 @@
 cutoff.cov.cook <- function(raw.results.file,skipped.id.file,cutoff_cook) {
+  if(missing("cutoff_cook")) {
+    cutoff_cook <- 0.8
+  }
+  
   list_out <- list()
   # add ID numbers to the data set
   out_cdd.data.all <- create.data.full(raw.results.file,skipped.id.file)
