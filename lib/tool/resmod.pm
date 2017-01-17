@@ -35,7 +35,8 @@ our @residual_models =
 			'$OMEGA 0.01',
 			'$SIGMA 1',
 			'$ESTIMATION METHOD=1 INTER MAXEVALS=9990 PRINT=2 POSTHOC',
-        ]
+        ],
+        base => 1,
 	}, {
 		name => 'eta_on_epsilon',
 	    prob_arr => [
@@ -52,9 +53,29 @@ our @residual_models =
         ],
         parameters => [
             { name => "ω0", parameter => "OMEGA(2,2)" },
-        ]
+        ],
+        use_base => 1,
     }, {
-        name => 'time_varying_all',
+		name => 'power_ipred',
+        need_ipred => 1,
+	    prob_arr => [
+			'$PROBLEM CWRES power IPRED',
+			'$INPUT <inputcolumns>',
+			'$DATA ../<cwrestablename> IGNORE=@ IGNORE=(DV.EQN.0) <dvidaccept>',
+			'$PRED',
+            'Y = THETA(1) + ETA(1) + ERR(1)*(IPRED)**THETA(2)',
+			'$THETA .1',
+			'$THETA .1',
+			'$OMEGA 0.01',
+			'$SIGMA 1',
+			'$ESTIMATION METHOD=1 INTER MAXEVALS=9990 PRINT=2 POSTHOC',
+        ],
+        parameters => [
+            { name => "power", parameter => "THETA2" },
+        ],
+        use_base => 1,
+	}, {
+        name => 'time_varying',
         prob_arr => [
             '$PROBLEM CWRES time varying',
             '$INPUT <inputcolumns>',
@@ -78,6 +99,13 @@ our @residual_models =
             '$SIGMA 0.5',
             '$ESTIMATION METHOD=1 INTER MAXEVALS=9990 PRINT=2 POSTHOC',
         ],
+        parameters => [
+            { name => "σ0-t1", parameter => "SIGMA(1,1)" },
+            { name => "σt1-t2", parameter => "SIGMA(2,2)" },
+            { name => "σt2-t3", parameter => "SIGMA(3,3)" },
+            { name => "σt3-inf", parameter => "SIGMA(4,4)" },
+        ],
+        use_base => 1,
     }, {
         name => 'AR1',
         prob_arr => [
@@ -112,23 +140,9 @@ our @residual_models =
             '$OMEGA  2.41E-006',
             '$SIGMA  0.864271',
             '$ESTIMATION METHOD=1 INTER MAXEVALS=9990 PRINT=2 POSTHOC',
-        ]
+        ],
+        use_base => 1,
     }, {
-		name => 'power_ipred',
-        need_ipred => 1,
-	    prob_arr => [
-			'$PROBLEM CWRES power IPRED',
-			'$INPUT <inputcolumns>',
-			'$DATA ../<cwrestablename> IGNORE=@ IGNORE=(DV.EQN.0) <dvidaccept>',
-			'$PRED',
-            'Y = THETA(1) + ETA(1) + ERR(1)*(IPRED)**THETA(2)',
-			'$THETA .1',
-			'$THETA .1',
-			'$OMEGA 0.01',
-			'$SIGMA 1',
-			'$ESTIMATION METHOD=1 INTER MAXEVALS=9990 PRINT=2 POSTHOC',
-        ]
-	}, {
 		name => 'laplace',
 	    prob_arr => [
 			'$PROBLEM CWRES laplace',
@@ -201,43 +215,25 @@ our @residual_models =
         ],
     }, {
         name => 'dtbs_base',
+        need_ipred => 1,
         prob_arr => [
 			'$PROBLEM    CWRES dtbs base model',
 			'$INPUT <inputcolumns>',
 			'$DATA ../<cwrestablename> IGNORE=@ IGNORE=(DV.EQN.0) <dvidaccept>',
-			'$PRED',
-			'IPRED = THETA(1) + ETA(1)',
-			'IF(IPRED.LT.0) IPRED=0.0001',
-			'W = THETA(2)',
-			'Y = IPRED + ERR(1)*W',
-			'IF(ICALL.EQ.4) Y=EXP(DV)',
-			'$THETA  0.973255 ; IPRED 1',
-			'$THETA  (0,1.37932) ; W',
-			'$OMEGA  0.0001',
-			'$SIGMA  1  FIX',
-			'$SIMULATION (1234)',
-			'$ESTIMATION METHOD=1 INTER MAXEVALS=99999 PRINT=2 POSTHOC',
-        ],
-    }, {
-		name => 'dtbs',
-        need_ipred => 1,
-		prob_arr => [
-			'$PROBLEM    CWRES dtbs model',
-			'$INPUT <inputcolumns>',
-			'$DATA ../<cwrestablename> IGNORE=@ IGNORE=(DV.EQN.0) <dvidaccept>',
 			'$SUBROUTINE CONTR=contr.txt CCONTR=ccontra.txt',
 			'$PRED',
-			'IPRT = THETA(1)+ETA(1)',
+			'IPRT   = THETA(1)*EXP(ETA(1))',
+			'WA     = THETA(2)',
 			'LAMBDA = THETA(3)',
 			'ZETA   = THETA(4)',
-			'IF(IPRT.LT.0) IPRT=0.0001',
-			'W = THETA(2)*IPRED**ZETA',
+			'IF(IPRT.LT.0) IPRT=10E-14',
+			'W = WA*IPRED**ZETA',
 			'IPRTR = IPRT',
 			'IF (LAMBDA .NE. 0 .AND. IPRT .NE.0) THEN',
 			'	IPRTR = (IPRT**LAMBDA-1)/LAMBDA',
 			'ENDIF',
 			'IF (LAMBDA .EQ. 0 .AND. IPRT .NE.0) THEN',
-			'    IPRTR = LOG(IPRT)',
+			'	IPRTR = LOG(IPRT)',
 			'ENDIF',
 			'IF (LAMBDA .NE. 0 .AND. IPRT .EQ.0) THEN',
 			'	IPRTR = -1/LAMBDA',
@@ -248,15 +244,61 @@ our @residual_models =
 			'IPRT = IPRTR',
 			'Y = IPRT + ERR(1)*W',
 			'IF(ICALL.EQ.4) Y=EXP(DV)',
-			'$THETA  1.01102 ; IPRED 1',
-			'$THETA  (0,0.610345) ; W',
-			'$THETA  0.001 ; tbs_lambda',
-			'$THETA  0.001 ; tbs_zeta',
-			'$OMEGA  0.00238626',
+			'$THETA  0.973255 ; IPRED 1',
+			'$THETA  (0,1.37932) ; WA',
+			'$THETA  0 FIX ; lambda',
+			'$THETA  0 FIX ; zeta',
+			'$OMEGA  0.0001',
+			'$SIGMA  1  FIX',
+			'$SIMULATION (1234)',
+			'$ESTIMATION METHOD=1 INTER MAXEVALS=99999 PRINT=2 POSTHOC',
+        ],
+		base => 3,
+    }, {
+		name => 'dtbs',
+        need_ipred => 1,
+		prob_arr => [
+			'$PROBLEM    CWRES dtbs model',
+			'$INPUT <inputcolumns>',
+			'$DATA ../<cwrestablename> IGNORE=@ IGNORE=(DV.EQN.0) <dvidaccept>',
+			'$SUBROUTINE CONTR=contr.txt CCONTR=ccontra.txt',
+			'$PRED',
+			'IPRT   = THETA(1)*EXP(ETA(1))',
+			'WA     = THETA(2)',
+			'LAMBDA = THETA(3)',
+			'ZETA   = THETA(4)',
+			'IF(IPRT.LT.0) IPRT=10E-14',
+			'W = WA*IPRED**ZETA',
+			'IPRTR = IPRT',
+			'IF (LAMBDA .NE. 0 .AND. IPRT .NE.0) THEN',
+			'	IPRTR = (IPRT**LAMBDA-1)/LAMBDA',
+			'ENDIF',
+			'IF (LAMBDA .EQ. 0 .AND. IPRT .NE.0) THEN',
+			'	IPRTR = LOG(IPRT)',
+			'ENDIF',
+			'IF (LAMBDA .NE. 0 .AND. IPRT .EQ.0) THEN',
+			'	IPRTR = -1/LAMBDA',
+			'ENDIF',
+			'IF (LAMBDA .EQ. 0 .AND. IPRT .EQ.0) THEN',
+			'	IPRTR = -1000000000',
+			'ENDIF',
+			'IPRT = IPRTR',
+			'Y = IPRT + ERR(1)*W',
+			'IF(ICALL.EQ.4) Y=EXP(DV)',
+			'$THETA   0.973255 ; IPRED 1',
+			'$THETA  (0,1.37932) ; WA',
+			'$THETA     0.001    ; lambda',
+			'$THETA     0.001    ; zeta',
+			'$OMEGA  0.0001',
 			'$SIGMA  1  FIX',
 			'$SIMULATION (1234)',
 			'$ESTIMATION METHOD=1 INTER MAXEVALS=99999 PRINT=2 POSTHOC',
 		],
+        parameters => [
+            { name => "lambda", parameter => "THETA3" },
+            { name => "zeta", parameter => "THETA4" },
+        ],
+		use_base => 3,
 	},
 );
 
@@ -423,12 +465,12 @@ END
             $dvid_suffix = "_DVID" . $unique_dvid->[$i] if ($have_dvid);
             my $cwres_model = model->new(
 				directory => 'm1/',
-				filename => $model_properties->{'name'} . "_cwres$dvid_suffix.mod",
+				filename => $model_properties->{'name'} . "$dvid_suffix.mod",
 				problems => [ $cwres_problem ],
 				extra_files => [ $self->directory . '/contr.txt', $self->directory . '/ccontra.txt' ],
 			);
             $cwres_model->_write();
-            push @{$self->model_names}, $model_properties->{'name'} . "_cwres$dvid_suffix";
+            push @{$self->model_names}, $model_properties->{'name'} . "$dvid_suffix";
             push @models_to_run, $cwres_model;
         }
     }
@@ -502,7 +544,8 @@ sub modelfit_analyze
 	unlink('contr.txt', 'ccontra.txt');
 
     open my $fh, '>', 'results.csv';
-    print $fh "Model,OFV,Parameters\n";
+    print $fh "Model,ΔOFV,Parameters\n";
+    my %base_models;        # Hash from basemodelno to base model OFV
     for (my $i = 0; $i < scalar(@{$self->run_models}); $i++) {
         my $model = $self->run_models->[$i];
         my $ofv;
@@ -510,16 +553,37 @@ sub modelfit_analyze
             my $output = $model->outputs->[0];
             $ofv = $output->get_single_value(attribute => 'ofv');
         }
-        if (defined $ofv) {
-            $ofv = sprintf("%.2f", $ofv);
-        } else {
+        if (not defined $ofv) {
             $ofv = 'NA';
         }
-        print $fh $self->model_names->[$i], ",", $ofv, ",";
+        if (exists $residual_models[$i]->{'base'}) {        # This is a base model
+            $base_models{$residual_models[$i]->{'base'}} = $ofv;
+            next;
+        }
+        my $base_ofv;
+        if (exists $residual_models[$i]->{'use_base'}) {
+            $base_ofv = $base_models{$residual_models[$i]->{'use_base'}};
+        }
+        if ($base_ofv eq 'NA') {        # Really skip parameters if no base ofv?
+            print $fh $self->model_names->[$i], "NA", "NA";
+        }
+        my $delta_ofv = $ofv - $base_ofv;
+        $delta_ofv = sprintf("%.2f", $delta_ofv);
+        print $fh $self->model_names->[$i], ",", $delta_ofv, ",";
         if (exists $residual_models[$i]->{'parameters'}) {
             for my $parameter (@{$residual_models[$i]->{'parameters'}}) {
                 print $fh $parameter->{'name'} . "=";
-                print $fh $model->outputs->[0]->omegacoordval()->[0]->[0]->{$parameter->{'parameter'}};
+                my $coordval;
+                my $param = $parameter->{'parameter'};
+                my $paramhash;
+                if ($param =~ /OMEGA/) {
+                    $paramhash = $model->outputs->[0]->omegacoordval()->[0]->[0];
+                } elsif ($param =~ /SIGMA/) {
+                    $paramhash = $model->outputs->[0]->sigmacoordval()->[0]->[0];
+                } elsif ($param =~ /THETA/) {
+                    $paramhash = $model->outputs->[0]->thetacoordval()->[0]->[0];
+                }
+                print $fh sprintf("%.3f", $paramhash->{$param});
                 print $fh " ";
             }
         }
