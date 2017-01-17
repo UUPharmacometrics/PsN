@@ -18,21 +18,21 @@ args <- commandArgs(TRUE)
 
 # check if input arguments are added
 if(length(args) < 2) {
-  if((length(args) == 1) && (grepl("^--help",as.character(args[1])))) {
+  if((length(args) == 1) && (grepl("^-help",as.character(args[1])))) {
     message("Input:\n    Two folder names are required.
-    The following inputs are valid, but not required:")
-    message("-pdf,\n    A name of pdf file.")
-    message("-dir,\n    A folder name, where created pdf file, needed csv files and R created script are going to be saved.")
+    \nThe following inputs are valid, but not required:")
+    message("-pdf,\n    A name of a pdf file.")
+    message("-dir,\n    A folder name, where created pdf file, needed csv files and created R-script are going to be saved.")
     message("\nExamples:\n    Rscript C:\\PsN\\R-scripts\\compare\\compare.R folder1 folder2 -pdf=my_results.pdf -dir=new_folder_name")
     message("    Rscript C:\\PsN\\R-scripts\\compare\\compare.R folder1 folder2")
     quit()
   } else {
-    message("Error:Two folder names as input are required! Use '--help' for help!")
+    message("Error:Two folder names as input are required! Use '-help' for help!")
     quit()
   }
 }
 if(length(args) > 4) {
-  message("Error:Too many inputs! No more than four input arguments can be passed! Use '--help' for help!")
+  message("Error:Too many inputs! No more than four input arguments can be passed! Use '-help' for help!")
   quit()
 }
 folder_names_in_text <- c()
@@ -47,7 +47,7 @@ for(i in 1:length(args)) {
   } else if(grepl("^-dir=",as.character(args[i]))) {
     new_folder_name <- gsub("\\-dir=", "",as.character(args[i]))
   } else {
-    if(!(grepl("^--help$",as.character(args[i])))) {
+    if(!(grepl("^-help$",as.character(args[i])))) {
       index <- index + 1
       folder[index] <- as.character(args[i])
       folder_names_in_text <- paste0(folder_names_in_text,", ",folder[index])
@@ -59,10 +59,10 @@ if (length(folder_names_in_text) > 0) {
 }
 
 if(length(folder) > 2) {
-  message(paste0("Error:Too many input folder names:",folder_names_in_text,"!\nTwo folder names as input are required! Use '--help' for help!"))
+  message(paste0("Error:Too many input folder names:",folder_names_in_text,"!\nTwo folder names as input are required! Use '-help' for help!"))
   quit()
 } else if(length(folder) < 2){
-  message(paste0("Error:Not enough input folder names:",folder_names_in_text,"!\nTwo folder names as input are required! Use '--help' for help!"))
+  message(paste0("Error:Not enough input folder names:",folder_names_in_text,"!\nTwo folder names as input are required! Use '-help' for help!"))
   quit()
 } else {
   tool_folder_1 <- folder[1]
@@ -123,17 +123,21 @@ if ((grepl("^simeval$",toolname_1) && grepl("^cdd$",toolname_2)) ||
     (grepl("^cdd$",toolname_1) && grepl("^simeval$",toolname_2))) {
   # write R file
   setwd(new_folder_directory)
-  write(R_input,"cdd.simeval.R")
-
+  write(R_input,"PsN_compare_cdd.simeval_plots.R")
+  
+  #run R script
   pdf.filename <- pdf.filename
   all.iofv.file <- other_files$all.iofv.file
   raw.results.file <- raw_result_file
   skipped.id.file <- other_files$skipped_individuals
+  residual.outliers.file <- other_files$residual.outliers.file
+  ebe.npde.file <- other_files$ebe.npde.file
   
   source(paste0(rscripts.directory,"cdd.simeval_default.R"))
-  cdd.simeval(rscripts.directory,all.iofv.file,n.subjects=values[2],samples=values[1],
-              raw.results.file,skipped.id.file,pdf.filename)
+  cdd.simeval(rscripts.directory,all.iofv.file,n.subjects=values$n.subjects,samples=values$successful.samples,
+              raw.results.file,skipped.id.file,
+              residual.outliers.file,ebe.npde.file,eta.names=values$eta.names,
+              pdf.filename)
 }
 message("Pdf file ",pdf.filename," is saved in the folder ",new_folder_directory)
 message("DONE!")
-

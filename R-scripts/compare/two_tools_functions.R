@@ -1,4 +1,4 @@
-# check if tool names ar different
+# check if tool names are different
 check_tool_names <- function(tool_folder_1,tool_folder_2,quit_opt=TRUE) {
   if (tool_folder_1 == tool_folder_2) {
     message(paste("Error:Input folders can't be equal! Use '-h' for help!"))
@@ -68,7 +68,10 @@ create_folder_name <- function(folders.directory,toolname_foldername_1,toolname_
   }
   if (exists("existing_folder")) {
     delete_part <- paste0(toolname_1,".",toolname_2,"_dir")
-    number <- as.integer(gsub(delete_part, "",existing_folder))
+    left <- gsub(delete_part, "",existing_folder)
+    if(grepl('^[0-9]+$',left)) { 
+      number <- as.integer(left)
+    }
   }
   number <- number +1
   new_folder_name <- paste0(toolname_1,".",toolname_2,"_dir",number)
@@ -135,7 +138,7 @@ get_more_csv_file_names <- function(folders.directory,toolname_foldername_1,tool
       }
     }
     if(!(exists("skipped_individuals"))) {
-      message(paste0("Error:Skipped individuals csv file doesn't exist in the folder ",simeval_dir,"!"))
+      message(paste0("Error:Skipped individuals csv file doesn't exist in the folder ",cdd_dir,"!"))
       if(quit_opt) { # need for tests
         quit()
       }
@@ -144,15 +147,34 @@ get_more_csv_file_names <- function(folders.directory,toolname_foldername_1,tool
       if(grepl("^raw_all_iofv.csv$",all_simeval_files[i])) {
         all.iofv.file <- all_simeval_files[i]
       }
+      if(grepl("^residual_outliers.csv$",all_simeval_files[i])) {
+        residual.outliers.file <- all_simeval_files[i]
+      }
+      if(grepl("^ebe_npde.csv$",all_simeval_files[i])) {
+        ebe.npde.file <- all_simeval_files[i]
+      }
     }
     if(!(exists("all.iofv.file"))) {
-      message(paste0("Error:File raw_all_iofv.csv doesn't exist in the folder ",cdd_dir,"!"))
+      message(paste0("Error:File raw_all_iofv.csv doesn't exist in the folder ",simeval_dir,"!"))
       if(quit_opt) { # need for tests
         quit()
       }
     }
-    if((exists("skipped_individuals")) && (exists("all.iofv.file"))) {
-      return(list(skipped_individuals=skipped_individuals,all.iofv.file=all.iofv.file))
+    if(!(exists("residual.outliers.file"))) {
+      message(paste0("Error:File residual_outliers.csv doesn't exist in the folder ",simeval_dir,"!"))
+      if(quit_opt) { # need for tests
+        quit()
+      }
+    }
+    if(!(exists("ebe.npde.file"))) {
+      message(paste0("Error:File ebe_npde.csv doesn't exist in the folder ",simeval_dir,"!"))
+      if(quit_opt) { # need for tests
+        quit()
+      }
+    }
+    if((exists("skipped_individuals")) && (exists("all.iofv.file")) && (exists("residual.outliers.file")) && (exists("ebe.npde.file"))) {
+      return(list(skipped_individuals=skipped_individuals,all.iofv.file=all.iofv.file,
+                  residual.outliers.file=residual.outliers.file,ebe.npde.file=ebe.npde.file))
     }
   } else { # not comparable tools
     message(paste0("Error:Can't compare tools ",toolname_1," and ",toolname_2,"!"))
@@ -174,6 +196,8 @@ get_list_of_files <- function(folders.directory,toolname_foldername_1,toolname_f
       (grepl("^cdd$",toolname_1) && grepl("^simeval$",toolname_2))) {
     skipped_individuals <- other_files$skipped_individuals
     all.iofv.file <- other_files$all.iofv.file
+    residual.outliers.file <- other_files$residual.outliers.file
+    ebe.npde.file <- other_files$ebe.npde.file
     if (grepl("^simeval$",toolname_1)) {
       simeval_dir <- foldername_1
       cdd_dir <- foldername_2
@@ -181,10 +205,12 @@ get_list_of_files <- function(folders.directory,toolname_foldername_1,toolname_f
       simeval_dir <- foldername_2
       cdd_dir <- foldername_1
     }
-    skipped_individuals <- other_files$skipped_individuals
+    #skipped_individuals <- other_files$skipped_individuals
     list_of_files[1] <- paste0(folders.directory,simeval_dir,"/",all.iofv.file)
-    list_of_files[2] <- paste0(folders.directory,cdd_dir,"/",skipped_individuals)
+    list_of_files[2] <- paste0(folders.directory,cdd_dir,"/",other_files$skipped_individuals)
     list_of_files[3] <- paste0(folders.directory,cdd_dir,"/",raw_result_file)
+    list_of_files[4] <- paste0(folders.directory,simeval_dir,"/",ebe.npde.file)
+    list_of_files[5] <- paste0(folders.directory,simeval_dir,"/",residual.outliers.file)
   }
   return(list_of_files)
 }
@@ -197,12 +223,16 @@ get_input_values <- function(list_of_files,toolname_foldername_1,toolname_folder
   foldername_2 <- toolname_foldername_2[2]
   if ((grepl("^simeval$",toolname_1) && grepl("^cdd$",toolname_2)) ||
       (grepl("^cdd$",toolname_1) && grepl("^simeval$",toolname_2))) {
-    all.iofv.file <- list_of_files[1]
+    all.iofv.csv <- list_of_files[1]
+    ebe.npde.csv <- list_of_files[4]
     # get n.subjects, successful.samples
-    all.iofv.file_table <- read.csv(all.iofv.file)
+    all.iofv.file_table <- read.csv(all.iofv.csv)
     n.subjects <- nrow(all.iofv.file_table) # get n.subjects
     successful.samples <- length(grep("^sample.",colnames(all.iofv.file_table))) # get number of successful samples
-  return(c(successful.samples,n.subjects))
+    # get all ETA names (in calculations use all ETA names, don't care about iiv.etas and iov.etas)
+    ebe.npde.file_table <- read.csv(ebe.npde.csv)
+    eta.names <- grep("^ETA.",colnames(ebe.npde.file_table),value=TRUE)
+  return(list(successful.samples=successful.samples,n.subjects=n.subjects,eta.names=eta.names))
   }
 }
 
@@ -240,17 +270,19 @@ create_R_script <- function(rscripts.directory,new_folder_directory,
 
   if ((grepl("^simeval$",toolname_1) && grepl("^cdd$",toolname_2)) ||
       (grepl("^cdd$",toolname_1) && grepl("^simeval$",toolname_2))) {
-    skipped_individuals <- other_files$skipped_individuals
-    all.iofv.file <- other_files$all.iofv.file
-    R_input[next_nr] <- paste0("successful.samples <- ",values[1])
-    R_input[next_nr+1] <- paste0("n.subjects <- ",values[2])
-    R_input[next_nr+2] <- paste0("all.iofv.file <- '",all.iofv.file,"'")
-    R_input[next_nr+3] <- paste0("skipped.id.file <- '",skipped_individuals,"'")
+    R_input[next_nr] <- paste0("successful.samples <- ",values$successful.samples)
+    R_input[next_nr+1] <- paste0("n.subjects <- ",values$n.subjects)
+    R_input[next_nr+2] <- paste0("all.iofv.file <- '",other_files$all.iofv.file,"'")
+    R_input[next_nr+3] <- paste0("skipped.id.file <- '",other_files$skipped_individuals,"'")
     R_input[next_nr+4] <- paste0("raw.results.file <- '",raw_result_file,"'")
-    R_input[next_nr+5] <- ""
-    R_input[next_nr+6] <- paste0("source(paste0(rscripts.directory,'cdd.simeval_default.R'))")
-    R_input[next_nr+7] <- paste0("cdd.simeval(rscripts.directory,all.iofv.file,n.subjects,samples=successful.samples,
-              raw.results.file,skipped.id.file,pdf.filename)")
+    R_input[next_nr+5] <- paste0("residual.outliers.file <- '",other_files$residual.outliers.file,"'")
+    R_input[next_nr+6] <- paste0("ebe.npde.file <- '",other_files$ebe.npde.file,"'")
+    R_input[next_nr+7] <- paste0("eta.names <- c('",paste(values$eta.names,collapse="','"),"')")
+    R_input[next_nr+8] <- ""
+    R_input[next_nr+9] <- paste0("source(paste0(rscripts.directory,'cdd.simeval_default.R'))")
+    R_input[next_nr+10] <- paste0("cdd.simeval(rscripts.directory,all.iofv.file,n.subjects,samples=successful.samples,
+              raw.results.file,skipped.id.file,residual.outliers.file,ebe.npde.file,eta.names,
+              pdf.filename,cutoff_cook=0.8,cutoff_delta.ofv=3.84)")
   }
 return(R_input)
 }
