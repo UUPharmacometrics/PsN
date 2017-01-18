@@ -552,7 +552,7 @@ sub modelfit_analyze
 	unlink('contr.txt', 'ccontra.txt');
 
     open my $fh, '>', 'results.csv';
-    print $fh "\x{EF}\x{BB}\x{BF}Model,dOFV,Parameters\n";		# EFBBBF is the byte order mark for UTF-8 letting Excel understand that this csv if encoded in UTF-8
+    print $fh "Model,dOFV,Parameters\n";
     my %base_models;        # Hash from basemodelno to base model OFV
 	my $current_dvid;
 	for (my $dvid_index = 0; $dvid_index < $self->numdvid; $dvid_index++) {
