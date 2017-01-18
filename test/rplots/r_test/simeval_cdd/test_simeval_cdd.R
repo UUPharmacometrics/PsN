@@ -52,6 +52,8 @@ ebe.npde.file_1 <- paste0(files.w.dir,'ebe_npde_iiv_iov.csv')
 ebe.npde.file_2 <- paste0(files.w.dir,'ebe_npde_iiv_iov_1.csv')
 ebe.npde.file_3 <- paste0(files.w.dir,'ebe_npde_1.csv')
 ebe.npde.file_4 <- paste0(files.w.dir,'ebe_npde_2.csv')
+ebe.npde.file_5 <- paste0(files.w.dir,'ebe_npde_3.csv')
+ebe.npde.file_6 <- paste0(files.w.dir,'ebe_npde_4.csv')
 residual.outliers.file_1 <- paste0(files.w.dir,'residual_outliers_1.csv')
 residual.outliers.file_2 <- paste0(files.w.dir,'residual_outliers_2.csv')
 

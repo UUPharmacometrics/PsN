@@ -27,7 +27,7 @@ ebe_cook.score_data <- function(ebe.npde.file,eta.names,outlying_criteria,
   # find outliers
   outlier_row <- c()
   for (i in 1:nrow(outl_data)) {
-    if(outl_data$EBE_NPDE[i] < outlying_criteria) {
+    if(outl_data$EBE_NPDE[i] > outlying_criteria) { # if something is bigger than 3 (because ebe npde values are calculated with abs)
       outlier_row <- c(outlier_row,i)
     }
   }

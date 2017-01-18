@@ -1,7 +1,7 @@
 pdf_outl.infl.indiv <- function(all.iofv.file,n.subjects,samples,raw.results.file,skipped.id.file,
                                 residual.outliers.file,ebe.npde.file,eta.names,
                                 pdf.filename,cutoff_cook,cutoff_delta.ofv) {
-  outlying_criteria <- -3
+  outlying_criteria <- 3 # no -3, because we we compare max(abs(EBE_NPDE values)) always positive
   ##################################################    delta odv and simeval OFV  ##########################################################
   # Compare outliers and influential individuals
   outdata <- influential_outliers_data(all.iofv.file,n.subjects,samples,
