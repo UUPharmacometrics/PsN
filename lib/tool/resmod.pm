@@ -630,8 +630,13 @@ sub _calculate_quartiles
 	my $column = $parm{'column'};
 
 	my $column_no = $table->header->{$column};
-	my @data = grep { $_ } @{$table->columns->[$column_no]};    # Filter out all 0 CWRES as non-observations
-
+    my $cwres_col = $table->header->{'CWRES'};
+    my @data;
+    for my $i (0 .. scalar(@{$table->columns->[$column_no]}) - 1) {    # Filter out all 0 CWRES as non-observations
+        if ($table->columns->[$cwres_col]->[$i] != 0) {
+            push @data, $table->columns->[$column_no]->[$i] + 0;
+        }
+    }
 	my @quartiles = array::quartiles(\@data);
 
 	return @quartiles;
