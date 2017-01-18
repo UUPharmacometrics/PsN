@@ -40,22 +40,22 @@ This model is used as a base model for the eta-on-epsilon, power, time-varying a
 Y = THETA(1) + ETA(1) + ERR(1)
 \end{verbatim}
 
-\subsection{Eta on epsilon}
-This model is compared to Base model 1 and is named \verb|eta_on_epsilon| in results.csv. The omega for ETA(2) is presented.
+\subsection{IIV on RUV}
+This model is compared to Base model 1 and is named \verb|IIV_on_RUV| in results.csv. The \%CI for the omega for ETA(2) is presented.
 
 \begin{verbatim}
 Y = THETA(1) + ETA(1) + ERR(1) * EXP(ETA(2))
 \end{verbatim}
 
-\subsection{Power IPRED}
-This model is compared to Base model 1 and is named \verb|power_ipred| in results.csv. The power (THETA(2)) is presented.
+\subsection{Power}
+This model is compared to Base model 1 and is named \verb|power| in results.csv. The power (THETA(2)) is presented.
 
 \begin{verbatim}
 Y = THETA(1) + ETA(1) + ERR(1)*(IPRED)**THETA(2)
 \end{verbatim}
 
-\subsection{Time varying}
-This model is compared to Base model 1 and is named \verb|time_varying_all| in results.csv. The <idv> below will be replaced with the name of the independent variable. The <q1>, <q2> and <q3> below will be replaced with the quartiles of the independent variable
+\subsection{Time varying RUV}
+This model is compared to Base model 1 and is named \verb|time_varying_RUV| in results.csv. The <idv> below will be replaced with the name of the independent variable. The <q1>, <q2> and <q3> below will be replaced with the quartiles of the independent variable
 for all observations combined. I.e. from the data set remove all records for which CWRES = 0 then calculate the quartiles of the idv column. All sigmas and the time cutoff values are presented in the results.csv.
 \begin{verbatim}
 Y = THETA(1) + ETA(1) + ERR(4)
@@ -70,8 +70,8 @@ IF (<idv>.GE.<q2> .AND. <idv>.LT.<q3>) THEN
 END IF
 \end{verbatim}
 
-\subsection{AR1}
-This model is compared to Base model 1 and is named \verb|AR1| in results.csv. The autocorrelation (THETA(2)) will be presented.
+\subsection{Autocorrelation}
+This model is compared to Base model 1 and is named \verb|autocorrelation| in results.csv. The autocorrelation (THETA(2)) will be presented.
 \begin{verbatim}
 "FIRST
 " USE SIZES, ONLY: NO
@@ -98,7 +98,7 @@ Y = THETA(1) + ETA(1) + EPS(1)
 \end{verbatim}
 
 \subsection{T-distribution base model}
-This model is used as base model for the t-distribution models.
+This model is used as base model for the t-distribution model.
 
 \begin{verbatim}
     IPRED = THETA(1) + ETA(1)
@@ -114,7 +114,7 @@ This model is used as base model for the t-distribution models.
 Using the Laplace estimation method.
 
 \subsection{T-distribution 2LL}
-Named \verb|tdist_2ll_100df| and \verb|tdist_2ll_dfest| in results.csv. The first variant have 100 degrees of freedom and the second variant estimates the degrees of freedom. The second variant will present the degrees of freedom in results.csv.
+Named \verb|tdist_2ll_dfest| in results.csv. The degrees of freedom is estimated and presented in results.csv.
 
 \begin{verbatim}
 IPRED = THETA(1) + ETA(1)
