@@ -41,7 +41,7 @@ Y = THETA(1) + ETA(1) + ERR(1)
 \end{verbatim}
 
 \subsection{IIV on RUV}
-This model is compared to Base model 1 and is named \verb|IIV_on_RUV| in results.csv. The \%CI for the omega for ETA(2) is presented.
+This model is compared to Base model 1 and is named \verb|IIV_on_RUV| in results.csv. The \%CV for the omega for ETA(2) is presented.
 
 \begin{verbatim}
 Y = THETA(1) + ETA(1) + ERR(1) * EXP(ETA(2))
@@ -56,7 +56,7 @@ Y = THETA(1) + ETA(1) + ERR(1)*(IPRED)**THETA(2)
 
 \subsection{Time varying RUV}
 This model is compared to Base model 1 and is named \verb|time_varying_RUV| in results.csv. The <idv> below will be replaced with the name of the independent variable. The <q1>, <q2> and <q3> below will be replaced with the quartiles of the independent variable
-for all observations combined. I.e. from the data set remove all records for which CWRES = 0 then calculate the quartiles of the idv column. All sigmas and the time cutoff values are presented in the results.csv.
+for all observations combined. I.e. from the data set remove all records for which CWRES = 0 then calculate the quartiles of the idv column. The standard deviations of the epsilons and the time cutoff values are presented in the results.csv.
 \begin{verbatim}
 Y = THETA(1) + ETA(1) + ERR(4)
 IF (<idv>.LT.<q1>) THEN

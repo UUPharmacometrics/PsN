@@ -55,7 +55,7 @@ our @residual_models =
 			'$ESTIMATION METHOD=1 INTER MAXEVALS=9990 PRINT=2 POSTHOC',
         ],
         parameters => [
-            { name => "%CI", parameter => "OMEGA(2,2)", recalc => sub { sqrt($_[0])*100 } },
+            { name => "%CV", parameter => "OMEGA(2,2)", recalc => sub { sqrt($_[0])*100 } },
         ],
         use_base => 1,
     }, {
@@ -74,7 +74,7 @@ our @residual_models =
 			'$ESTIMATION METHOD=1 INTER MAXEVALS=9990 PRINT=2 POSTHOC',
         ],
         parameters => [
-            { name => "theta", parameter => "THETA2" },
+            { name => "power", parameter => "THETA2" },
         ],
         use_base => 1,
 	}, {
@@ -103,10 +103,10 @@ our @residual_models =
             '$ESTIMATION METHOD=1 INTER MAXEVALS=9990 PRINT=2 POSTHOC',
         ],
         parameters => [
-            { name => "sigma_0-t1", parameter => "SIGMA(1,1)" },
-            { name => "sigma_t1-t2", parameter => "SIGMA(2,2)" },
-            { name => "sigma_t2-t3", parameter => "SIGMA(3,3)" },
-            { name => "sigma_t3-inf", parameter => "SIGMA(4,4)" },
+            { name => "sdeps_0-t1", parameter => "SIGMA(1,1)", recalc => sub { sqrt($_[0]) } },
+            { name => "sdeps_t1-t2", parameter => "SIGMA(2,2)", recalc => sub { sqrt($_[0]) } },
+            { name => "sdeps_t2-t3", parameter => "SIGMA(3,3)" , recalc => sub { sqrt($_[0]) } },
+            { name => "sdeps_t3-inf", parameter => "SIGMA(4,4)", recalc => sub { sqrt($_[0]) } },
 			{ name => "QUARTILES" },
         ],
         use_base => 1,
@@ -557,6 +557,7 @@ sub modelfit_analyze
 	my $current_dvid;
 	for (my $dvid_index = 0; $dvid_index < $self->numdvid; $dvid_index++) {
 		if ($self->numdvid > 1) {
+            print $fh "\n";
 			print $fh "DVID=", int($self->unique_dvid->[$dvid_index]), "\n";
 		}
 		for (my $i = 0; $i < scalar(@residual_models); $i++) {
