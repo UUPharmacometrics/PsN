@@ -29,7 +29,7 @@ my $template_dir = includes::get_template_directory_rplots();
 my $toolobject = tool::simeval->new(directory => 'rundir',
 								 rplots => 2,
 								 template_directory_rplots =>$template_dir,
-								 template_file_rplots => $toolname.'_default.R',
+								 template_file_rplots => $toolname.'_default.Rmd',
 								 models	     => [ $model ],
 								 samples            => 100);
 $toolobject->iiv_eta(['ETA(1)','ETA(2)']);
@@ -74,7 +74,7 @@ $template_dir = includes::get_template_directory_rplots();
 $toolobject = tool::simeval->new(directory => 'rundir',
 								 rplots => 2,
 								 template_directory_rplots =>$template_dir,
-								 template_file_rplots => $toolname.'_default.R',
+								 template_file_rplots => $toolname.'_default.Rmd',
 								 models	     => [ $model ],
 								 samples            => 300);
 $toolobject->iiv_eta(['ETA(1)','ETA(2)']);
@@ -94,9 +94,7 @@ push(@{$toolobject->vpc_names},'CWRES vs '.$toolobject->idv);
 
 $toolobject -> create_R_script(tool_name => $toolname); 
 
-%pdf_files_pages=($tempdir.'rundir/PsN_simeval_plots.pdf' => 21);
-#%pdf_files_pages=($tempdir.'rundir/PsN_simeval_plots.pdf' => 19,
-#				  $tempdir.'rundir/PsN_simeval_vpc_plots.pdf' => 2);
+%pdf_files_pages=($tempdir.'rundir/PsN_simeval_plots.pdf' => 19);
 
 includes::test_pdf_pages(\%pdf_files_pages);
 
