@@ -41,7 +41,7 @@ our @residual_models =
         ],
         base => 1,
 	}, {
-		name => 'eta_on_epsilon',
+		name => 'IIV_on_RUV',
 	    prob_arr => [
 			'$PROBLEM CWRES omega-on-epsilon',
 			'$INPUT <inputcolumns>',
@@ -55,11 +55,11 @@ our @residual_models =
 			'$ESTIMATION METHOD=1 INTER MAXEVALS=9990 PRINT=2 POSTHOC',
         ],
         parameters => [
-            { name => "ω0", parameter => "OMEGA(2,2)" },
+            { name => "%CI", parameter => "OMEGA(2,2)", recalc => sub { sqrt($_[0])*100 } },
         ],
         use_base => 1,
     }, {
-		name => 'power_ipred',
+		name => 'power',
         need_ipred => 1,
 	    prob_arr => [
 			'$PROBLEM CWRES power IPRED',
@@ -74,11 +74,11 @@ our @residual_models =
 			'$ESTIMATION METHOD=1 INTER MAXEVALS=9990 PRINT=2 POSTHOC',
         ],
         parameters => [
-            { name => "power", parameter => "THETA2" },
+            { name => "theta", parameter => "THETA2" },
         ],
         use_base => 1,
 	}, {
-        name => 'time_varying',
+        name => 'time_varying_RUV',
         prob_arr => [
             '$PROBLEM CWRES time varying',
             '$INPUT <inputcolumns>',
@@ -103,15 +103,15 @@ our @residual_models =
             '$ESTIMATION METHOD=1 INTER MAXEVALS=9990 PRINT=2 POSTHOC',
         ],
         parameters => [
-            { name => "σ0-t1", parameter => "SIGMA(1,1)" },
-            { name => "σt1-t2", parameter => "SIGMA(2,2)" },
-            { name => "σt2-t3", parameter => "SIGMA(3,3)" },
-            { name => "σt3-inf", parameter => "SIGMA(4,4)" },
+            { name => "sigma_0-t1", parameter => "SIGMA(1,1)" },
+            { name => "sigma_t1-t2", parameter => "SIGMA(2,2)" },
+            { name => "sigma_t2-t3", parameter => "SIGMA(3,3)" },
+            { name => "sigma_t3-inf", parameter => "SIGMA(4,4)" },
 			{ name => "QUARTILES" },
         ],
         use_base => 1,
     }, {
-        name => 'AR1',
+        name => 'autocorrelation',
         prob_arr => [
 			'$PROBLEM CWRES AR1',
 			'$INPUT <inputcolumns>',
@@ -146,7 +146,7 @@ our @residual_models =
             '$ESTIMATION METHOD=1 INTER MAXEVALS=9990 PRINT=2 POSTHOC',
         ],
         parameters => [
-            { name => "autocorr", parameter => "THETA2" },
+            { name => "half-life", parameter => "THETA2" },
         ],
         use_base => 1,
     }, {
@@ -170,36 +170,6 @@ our @residual_models =
 			'$ESTIMATION MAXEVAL=99999 -2LL METH=1 LAPLACE PRINT=2 POSTHOC',
 		],
 		base => 2,
-    }, {
-        name => 'tdist_2ll_df100',
-        prob_arr => [
-			'$PROBLEM CWRES laplace 2LL DF=100',
-			'$INPUT <inputcolumns>',
-			'$DATA ../<cwrestablename> IGNORE=@ IGNORE=(DV.EQN.0) <dvidaccept>',
-			'$PRED',
-            'IPRED = THETA(1) + ETA(1)',
-            'W = THETA(2)',
-            'DF = THETA(3) ; degrees of freedom of Student distribution',
-            'SIG1 = W ; scaling factor for standard deviation of RUV',
-            'IWRES = (DV - IPRED) / SIG1',
-            'PHI = (DF + 1) / 2 ; Nemesapproximation of gamma funtion(2007) for first factor of t-distrib(gamma((DF+1)/2))',
-            'INN = PHI + 1 / (12 * PHI - 1 / (10 * PHI))',
-            'GAMMA = SQRT(2 * 3.14159265 / PHI) * (INN / EXP(1)) ** PHI',
-            'PHI2 = DF / 2 ; Nemesapproximation of gamma funtion(2007) for second factor of t-distrib(gamma(DF/2))',
-            'INN2 = PHI2 + 1 / (12 * PHI2 - 1 / (10 * PHI2))',
-            'GAMMA2 = SQRT(2*3.14159265/PHI2)*(INN2/EXP(1))**PHI2',
-            'COEFF=GAMMA/(GAMMA2*SQRT(DF*3.14159265))/SIG1 ; coefficient of PDF of t-distribution',
-            'BASE=1+IWRES*IWRES/DF ; base of PDF of t-distribution',
-            'POW=-(DF+1)/2 ; power of PDF of t-distribution',
-            'L=COEFF*BASE**POW ; PDF oft-distribution',
-            'Y=-2*LOG(L)',
-			'$THETA .1',
-			'$THETA (0,1)',
-			'$THETA 100 FIX',
-			'$OMEGA 0.01',
-			'$ESTIMATION METHOD=1 LAPLACE MAXEVALS=9990 PRINT=2 -2LL',
-        ],
-		use_base => 2,
     }, {
         name => 'tdist_2ll_dfest',
         prob_arr => [
@@ -582,7 +552,7 @@ sub modelfit_analyze
 	unlink('contr.txt', 'ccontra.txt');
 
     open my $fh, '>', 'results.csv';
-    print $fh "\x{EF}\x{BB}\x{BF}Model,ΔOFV,Parameters\n";		# EFBBBF is the byte order mark for UTF-8 letting Excel understand that this csv if encoded in UTF-8
+    print $fh "\x{EF}\x{BB}\x{BF}Model,dOFV,Parameters\n";		# EFBBBF is the byte order mark for UTF-8 letting Excel understand that this csv if encoded in UTF-8
     my %base_models;        # Hash from basemodelno to base model OFV
 	my $current_dvid;
 	for (my $dvid_index = 0; $dvid_index < $self->numdvid; $dvid_index++) {
@@ -635,7 +605,11 @@ sub modelfit_analyze
 					} elsif ($param =~ /THETA/) {
 						$paramhash = $model->outputs->[0]->thetacoordval()->[0]->[0];
 					}
-					print $fh sprintf("%.3f", $paramhash->{$param});
+                    my $param_value = $paramhash->{$param};
+                    if (exists $parameter->{'recalc'}) {
+                        $param_value = $parameter->{'recalc'}->($param_value);
+                    }
+					print $fh sprintf("%.3f", $param_value);
 					print $fh " ";
 				}
 			}
