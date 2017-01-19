@@ -74,7 +74,7 @@ our @residual_models =
 			'$ESTIMATION METHOD=1 INTER MAXEVALS=9990 PRINT=2 POSTHOC',
         ],
         parameters => [
-            { name => "power", parameter => "THETA2" },
+            { name => "delta_power", parameter => "THETA2" },
         ],
         use_base => 1,
 	}, {
