@@ -1,6 +1,7 @@
 outlier_infl_table <- function(all.iofv.file,n.subjects,samples,ebe.npde.file,eta.names,outlying_criteria,
                                residual.outliers.file,
                                raw.results.file,skipped.id.file,cutoff_delta.ofv,cutoff_cook) {
+  outlying_criteria <- -outlying_criteria #need negative outlying criteria 
 ################################################################   SIMEVAL   ##############################################################################  
   # ebe npde part
   list_input <- input.data(ebe.npde.file,eta.names)
@@ -230,7 +231,7 @@ outlier_infl_table <- function(all.iofv.file,n.subjects,samples,ebe.npde.file,et
     names(outl_infl_table) <- NULL
   }
   
-
+  outlying_criteria <- -outlying_criteria # set it back to positive
   out <- list(col_amount=col_amount,
               all_outlier_table=all_outlier_table,
               all_infl_indiv_table=all_infl_indiv_table,
