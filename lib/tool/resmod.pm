@@ -195,7 +195,7 @@ our @residual_models =
             'Y=-2*LOG(L)',
 			'$THETA .1',
 			'$THETA (0,1)',
-			'$THETA (3,10)',
+			'$THETA (3,10,300)',
 			'$OMEGA 0.01',
 			'$ESTIMATION METHOD=1 LAPLACE MAXEVALS=9990 PRINT=2 -2LL',
         ],
