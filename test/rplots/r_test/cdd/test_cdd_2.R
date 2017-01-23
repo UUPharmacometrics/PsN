@@ -39,16 +39,22 @@ out_data_7 <- create.data.full(raw.results.file_7,skipped.id.file)
 # unlist
 input_cdd.data <- out_data$input_cdd.data
 cdd.data.all <- out_data$cdd.data.all
+make_pdf <- out_data$make_pdf
 input_cdd.data_3 <- out_data_3$input_cdd.data
 cdd.data.all_3 <- out_data_3$cdd.data.all
+make_pdf_3 <- out_data_3$make_pdf
 input_cdd.data_4 <- out_data_4$input_cdd.data
 cdd.data.all_4 <- out_data_4$cdd.data.all
+make_pdf_4 <- out_data_4$make_pdf
 input_cdd.data_5 <- out_data_5$input_cdd.data
 cdd.data.all_5 <- out_data_5$cdd.data.all
+make_pdf_5 <- out_data_5$make_pdf
 input_cdd.data_6 <- out_data_6$input_cdd.data
 cdd.data.all_6 <- out_data_6$cdd.data.all
+make_pdf_6 <- out_data_6$make_pdf
 input_cdd.data_7 <- out_data_7$input_cdd.data
 cdd.data.all_7 <- out_data_7$cdd.data.all
+make_pdf_7 <- out_data_7$make_pdf
 
 # Create expected data
 exp_input_cdd.data <- data.frame(method=factor(c(rep("cdd",5)),levels=c("cdd","other")),
@@ -137,25 +143,33 @@ exp_input_cdd.data_3 <- data.frame(method=factor(c(rep("cdd",5)),levels=c("cdd",
                                  model=as.integer(c(0,1,2,3,4)),
                                  ofv=c(-114,-109.2,-94.7,-102,-89),
                                  seSIGMA.1.1.=c(NA,NA,NA,NA,NA),
-                                 cdd.delta.ofv=c(0,0.54,0.6,0.5,2.3))
+                                 cdd.delta.ofv=c(0,0.54,0.6,0.5,2.3),
+                                 cook.scores=c(0,NA,NA,NA,NA),
+                                 cov.ratios=c(1,0,0,0,0))
 exp_cdd.data.all_3 <- data.frame(ID=c(NA,11,13,16,19),
                                  method=factor(c(rep("cdd",5)),levels=c("cdd","other")),
                                  model=as.integer(c(0,1,2,3,4)),
                                  ofv=c(-114,-109.2,-94.7,-102,-89),
                                  seSIGMA.1.1.=c(NA,NA,NA,NA,NA),
-                                 cdd.delta.ofv=c(0,0.54,0.6,0.5,2.3))
+                                 cdd.delta.ofv=c(0,0.54,0.6,0.5,2.3),
+                                 cook.scores=c(0,NA,NA,NA,NA),
+                                 cov.ratios=c(1,0,0,0,0))
   
 # Compare expected data with real data
 context("CDD, function create.data.full")
 test_that("If function create.data.full works as expected",{
   expect_equal(exp_input_cdd.data,input_cdd.data)
   expect_equal(exp_cdd.data.all,cdd.data.all)
+  expect_equal(TRUE,make_pdf)
   expect_equal(exp_input_cdd.data_3,input_cdd.data_3)
   expect_equal(exp_cdd.data.all_3,cdd.data.all_3)
+  expect_equal(FALSE,make_pdf_3)
   expect_equal(exp_input_cdd.data_6,input_cdd.data_6)
   expect_equal(exp_cdd.data.all_6,cdd.data.all_6)
+  expect_equal(TRUE,make_pdf_6)
   expect_equal(exp_input_cdd.data_7,input_cdd.data_7)
   expect_equal(exp_cdd.data.all_7,cdd.data.all_7)
+  expect_equal(TRUE,make_pdf_7)
 })
 
 #.................................  (2) Test cov.cook.par.data  ...............................
