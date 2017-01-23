@@ -16,14 +16,14 @@ create.data.full <- function(raw.results.file,skipped.id.file) {
   cdd.data.all <- cbind(cdd.inds,input_cdd.data)
   colnames(cdd.data.all)[1] <- "ID"
   
-  make_pdf <- TRUE
+  no.cook.cov <- FALSE
   if(all(is.na(cdd.data.all$cook.scores[-1])) || (all(cdd.data.all$cov.ratios[-1]==0))) {
-    make_pdf <- FALSE
+    no.cook.cov <- TRUE
   }
   
   # output
   out <- list(input_cdd.data=input_cdd.data,
               cdd.data.all=cdd.data.all,
-              make_pdf=make_pdf)
+              no.cook.cov=no.cook.cov)
   return(out)
 }

@@ -12,9 +12,9 @@ pdf.cdd <- function(raw.results.file,skipped.id.file,pdf.filename,markeropt,
   # 1. Create table cdd.data
   list_input_data <- create.data.full(raw.results.file,skipped.id.file)
   cdd.data.all <- list_input_data$cdd.data.all
-  make_pdf <- list_input_data$make_pdf
+  no.cook.cov <- list_input_data$no.cook.cov
   
-  if(make_pdf) {
+  if(!(no.cook.cov)) {
     ## skip first record (no cases deleted)
     cdd.data <- cdd.data.all[-1,]
     
@@ -93,6 +93,6 @@ pdf.cdd <- function(raw.results.file,skipped.id.file,pdf.filename,markeropt,
     #close pdf
     dev.off()
   } else {
-    message(paste0("Can't create a pdf file, because no cook score or cov ratio values are found in the raw results csv file!"))
+    message("Can't create a pdf file, because no cook score or cov ratio values are found in the raw results csv file!")
   }
 }
