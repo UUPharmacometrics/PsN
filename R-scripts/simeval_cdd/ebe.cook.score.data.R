@@ -44,7 +44,7 @@ ebe_cook.score_data <- function(ebe.npde.file,eta.names,outlying_criteria,
   cdd.data.all <- cdd.data.all[-1,]
   no.cook.cov <- out_cdd.data.all$no.cook.cov
   
-  if(!no.cook.cov) {
+  if(no.cook.cov==FALSE) {
     # save needed columns in one data frame
     infl_data <- as.data.frame(cbind(cdd.data.all$ID,cdd.data.all$cook.scores))
     colnames(infl_data) <- c("ID_cdd","cook_scores")
@@ -166,8 +166,8 @@ ebe_cook.score_data <- function(ebe.npde.file,eta.names,outlying_criteria,
                 no.cook.cov=no.cook.cov)
     return(out)
   } else {
-    return(no.cook.cov)
     message("No cook score or cov ratio values are found in the raw results csv file!")
+    return(no.cook.cov)
   }
   
 }

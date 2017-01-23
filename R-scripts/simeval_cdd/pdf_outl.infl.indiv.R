@@ -33,7 +33,7 @@ pdf_outl.infl.indiv <- function(all.iofv.file,n.subjects,samples,raw.results.fil
   list_data <- ebe_cook.score_data(ebe.npde.file,eta.names,outlying_criteria,
                                    raw.results.file,skipped.id.file,cutoff_cook)
   
-  if(class("list_data") == "list") {
+  if(class(list_data) == "list") {
     #unlist
     par_table_for_plot <- list_data$table_for_plot
     par_ID <- list_data$ID
@@ -44,6 +44,7 @@ pdf_outl.infl.indiv <- function(all.iofv.file,n.subjects,samples,raw.results.fil
     par_not_outl_not_infl <- list_data$not_outl_not_infl
     par_row_infl_not_outl <- list_data$row_infl_not_outl
     par_row_outl_not_infl <- list_data$row_outl_not_infl
+    no.cook.cov <- list_data$no.cook.cov
     # plot points, mark outliers and influential individuals ir red
     plot_param_infl_outl_data(par_table_for_plot,par_ID,par_row,par_row_outl_not_infl,par_row_infl_not_outl,cutoff_cook,outlying_criteria)
     
