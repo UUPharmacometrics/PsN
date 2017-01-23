@@ -2,6 +2,7 @@ create.data.full <- function(raw.results.file,skipped.id.file) {
   ## read files
   input_cdd.data <- read.csv(raw.results.file)
   cdd.inds <- read.csv(skipped.id.file, header=F)
+  
   # Create table cdd.data.all
   # check if exist column method
   if ("method" %in% colnames(input_cdd.data)) {
@@ -15,8 +16,14 @@ create.data.full <- function(raw.results.file,skipped.id.file) {
   cdd.data.all <- cbind(cdd.inds,input_cdd.data)
   colnames(cdd.data.all)[1] <- "ID"
   
+  make_pdf <- TRUE
+  if(all(is.na(cdd.data.all$cook.scores[-1])) || (all(cdd.data.all$cov.ratios[-1]==0))) {
+    make_pdf <- FALSE
+  }
+  
   # output
   out <- list(input_cdd.data=input_cdd.data,
-              cdd.data.all=cdd.data.all)
+              cdd.data.all=cdd.data.all,
+              make_pdf=make_pdf)
   return(out)
 }
