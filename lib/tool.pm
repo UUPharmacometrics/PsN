@@ -1874,9 +1874,9 @@ sub create_R_script
 
 		$self->create_R_plots_code(rplot => $rplot) if ($self->can("create_R_plots_code"));
 		$rplot->make_plots;
-	}
-
-
+	} else {
+        print "The R template file '$template_file' does not exist\n";
+    }
 }
 
 no Moose;
