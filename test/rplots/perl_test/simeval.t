@@ -48,7 +48,7 @@ push(@{$toolobject->vpc_names},'CWRES vs '.$toolobject->idv);
 
 $toolobject -> create_R_script(tool_name => $toolname); 
 
-my %pdf_files_pages=($tempdir.'rundir/PsN_simeval_plots.pdf' => 17);
+my %pdf_files_pages=($tempdir.'rundir/PsN_simeval_plots.pdf' => 18);
 #my %pdf_files_pages=($tempdir.'rundir/PsN_simeval_plots.pdf' => 15,
 #					 $tempdir.'rundir/PsN_simeval_vpc_plots.pdf' => 2);
 					 
@@ -94,7 +94,7 @@ push(@{$toolobject->vpc_names},'CWRES vs '.$toolobject->idv);
 
 $toolobject -> create_R_script(tool_name => $toolname); 
 
-%pdf_files_pages=($tempdir.'rundir/PsN_simeval_plots.pdf' => 19);
+%pdf_files_pages=($tempdir.'rundir/PsN_simeval_plots.pdf' => 20);
 
 includes::test_pdf_pages(\%pdf_files_pages);
 
