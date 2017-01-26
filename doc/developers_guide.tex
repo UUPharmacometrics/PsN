@@ -74,9 +74,14 @@ The more important the feature you are contributing is the more help with the ab
 
 \section{Testing}
 When installing PsN the user has the option to install the test suite in a specified directory. The default directory is in the lib directory. If working from a cloned git repository all tests are in the PsN/test directory. Unit tests are in unit subdirectory and system tests in the system subdirectory.  
-Unit tests are defined as tests that do not involve \emph{running} NONMEM, while system tests are tests involving running NONMEM.  To be able to run the tests the package Test::Exception has to be installed on some systems.
+Unit tests are defined as tests that do not involve \emph{running} NONMEM, while system tests are tests involving running NONMEM.
 Tests can be run by using the command \verb|prove| (which is bundled with perl). 
 
+\subsection{Prerequisites for testing}
+The additional Perl package Test::Exception needs to be installed.
+Running the rplots tests requires "pdfinfo" to be installed on Linux and Mac.
+
+\subsection{Running tests}
 The unit tests can be run by issuing the command (if the current directory is the test directory).
 \begin{verbatim}
 prove -r unit
