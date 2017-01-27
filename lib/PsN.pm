@@ -176,6 +176,7 @@ sub get_R_exec
 			$rexec = 'R';
 		}
 	}
+    $rexec =~ s/\.exe$//;
 	return $rexec;
 }
 
