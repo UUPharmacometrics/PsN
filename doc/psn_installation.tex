@@ -132,4 +132,44 @@ execute-3.7.6  -help
 including PsN3-versions) are fixed automatically so that they are callable with a specific version as 
 explained above. This is a new feature of PsN4 when installing on Windows.
 
+
+\section{Rplots}
+
+The automatic rplots functionality in PsN (via the -rplots option) require that R (at least version 3.1.2 is required) is installed and that some specific R packages along with their dependencies are installed in R. The R-scripts/required\_packages.R can be run to install all needed R-packages. Some of these packages need some external dependencies be installed before installing in R.
+
+\subsection{Ubuntu/Debian}
+\begin{verbatim}
+    apt install libpq-dev
+    apt install libcairo2-dev
+    apt install libssl-dev
+    apt install libcurl4-openssl-dev
+    apt install libmariadb-client-lgpl-dev
+\end{verbatim}
+
+\subsection{CentOS/Fedora}
+\begin{verbatim}
+    yum install openssl-devel
+    yum install libcurl-devel
+    yum install cairo-devel
+    yum install mariadb-devel
+\end{verbatim}
+
+\subsection{MacOS}
+For MacOS one option is to install the following packages via brew: openssl@1.1, cairo and mariadb-connector-c
+
+
+\subsection{rmarkdown}
+
+Some of the PsN tools support using rmarkdown to plot. This need rmarkdown to be installed in R together with its dependencies. When using rstudio the installation of these will be taken care of behind the scenes.
+
+\subsubsection{Ubuntu/Debian}
+
+For Ubuntu and Debian Linux apart from installing the rmarkdown package the following commands are needed to install the dependencies:
+
+\begin{verbatim}
+    apt install pandoc
+    apt install texlive
+    apt install texlive-latex-extra
+\end{verbatim}
+
 \end{document}
