@@ -197,7 +197,9 @@ $help_text{-bin_array} = <<'EOF';
       -bin_by_count is 1 or 0. If binning is done by count, the list 
       must contain at least 2 numbers, otherwise 1 number is enough.
       If used, the option -bin_by_count is required, while all other
-      binning options are forbidden.
+      binning options are forbidden. If different values are wanted for
+      different stratas multiple arrays can be specified separated with
+      a colon, i.e. 1,2,3:4,5,6
 EOF
 
 $help_text{-stratify_on} = <<'EOF';
