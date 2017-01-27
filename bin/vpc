@@ -14,8 +14,6 @@ use ui;
 use Cwd;
 use OSspecific;
 use array;
-use so;
-use so::parsers::vpc;
 
 # More PsN dependencies included with require further down
 
@@ -642,6 +640,8 @@ $vpc -> run;
 $vpc -> print_results;
 
 if ($options{'so'}) {
+    require so;
+    require so::parsers::vpc;
     my $filename = $model->filename;
     $filename =~ s/\.ctl|\.mod/.SO.xml/;
     my $so = so->new(filename => $filename);
