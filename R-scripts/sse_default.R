@@ -145,7 +145,7 @@ if(diagnostics){
 	d_ply(diag_curves,.(name),function(diag_df){
 		p <- ggplot()+
 			geom_ribbon(data=diag_df, mapping=aes(x=quantile,  ymin=prob_low, ymax=prob_high),fill="lightgray")+
-			geom_line(data=diag_df, mapping=aes(x=quantile,  y=prob),linestyle="dashed", size=1)+
+			geom_line(data=diag_df, mapping=aes(x=quantile,  y=prob), linetype="dashed", size=1)+
 			stat_ecdf(data=subset(dofvs_df, name==diag_df$name[1]), aes(dofv), geom="step", colour="darkred", size=1)+
 			scale_x_continuous("Quantile")+
 			scale_y_continuous("Probability", labels=function(breaks) paste0(breaks*100,"%"))+
@@ -153,8 +153,6 @@ if(diagnostics){
 		
 		print(p)
 	})
-	
-	
 }
 
 dev.off()
