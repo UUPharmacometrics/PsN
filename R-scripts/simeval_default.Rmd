@@ -1,5 +1,5 @@
 ---
-title: "Simeval"
+title: "Simulation-evaluation based diagnostics"
 header-includes:
   - \usepackage{longtable}
 output: pdf_document
@@ -68,6 +68,7 @@ source(paste0(rscripts.directory,"/common/plot.table.R"),echo=TRUE)
   }
   histogram_p_ofv_ppc(p_ofv_ppc_data,model.filename)
 ```
+\pagebreak
 
 ```{r histogram_iOFV_NPDE,results='hide',echo=FALSE,fig.width=9,fig.height=7,fig.keep="high",fig.align="center"}
 #2. draw a histogram of (iOFV NPDE)
@@ -89,6 +90,7 @@ source(paste0(rscripts.directory,"/common/plot.table.R"),echo=TRUE)
     histogram_i_ofv_npde(i_ofv_npde_data)
   }
 ```
+\pagebreak
 
 ```{r summary_table_iOFV_NPDE,results='hide',warning=FALSE,echo=FALSE,fig.width=9,fig.height=2,fig.keep="high",fig.align="center"}
 #3. iOFV NPDE summary table
@@ -100,6 +102,7 @@ source(paste0(rscripts.directory,"/common/plot.table.R"),echo=TRUE)
 To test wether the mean is significantly different from 0, a Wilcoxon signed rank test is used.\newline
 To test wether the variance is significantly different from 1, a Kolmogorov-Smirnov test is used.\newline
 To test wether the distribution is significantly different from a normal distribution, a Shapiro-Wilks test is used.\newline
+\pagebreak
 
 ```{r boxplot_iOFV_RES,results='hide',echo=FALSE,fig.width=9,fig.height=7,fig.keep="high",fig.align="center"}
 #4. iOFV RES
@@ -144,6 +147,7 @@ To test wether the distribution is significantly different from a normal distrib
   boxplot_i_ofv_res(list_i_ofv_res,n.subjects)
   
 ```
+\pagebreak
 
 ```{r histograms_iOFV_PPC,results='hide',echo=FALSE,fig.width=9,fig.height=7,fig.keep="high",fig.align="center"}  
   if (rplots.level > 1) {
@@ -176,6 +180,7 @@ To test wether the distribution is significantly different from a normal distrib
     histograms_i_ofv_ppc(list_i_ofv_ppc,model.filename)
   }
 ```
+\pagebreak
 
 ```{r histogram_iOFV_KLD,results='hide',echo=FALSE,fig.width=9,fig.height=7,fig.keep="high",fig.align="center"}  
   if (rplots.level > 1) {
@@ -200,7 +205,6 @@ To test wether the distribution is significantly different from a normal distrib
     histogram_kld_i_ofv(list_kld_i_ofv,model.filename)# histogram
   }
 ```
-
 \pagebreak
 
 ```{r iiv_iov_eta_names_ebe_npde_summary_table,results='hide',echo=FALSE,warning=FALSE,fig.width=10,fig.height=5.5,fig.keep="high",fig.align="center"}
@@ -258,6 +262,7 @@ Correlation graph for EBE NPDE IIV
 ```
 
 ```{asis Add_text_for_correlation_graph_iov_if_exists, echo=plot_iov}
+\pagebreak
 \begin{center}
 Correlation graph for EBE NPDE IOV
 \end{center}
@@ -298,6 +303,7 @@ Correlation graph for EBE NPDE IOV
       }
   }
 ```
+\pagebreak
 
 ```{r QQplots_ebe_npde,results='hide',echo=FALSE,warning=FALSE,message=FALSE,fig.width=8,fig.height=6,fig.keep="high",fig.align="center"}
 # create outlier grafs and tables
@@ -341,7 +347,6 @@ Correlation graph for EBE NPDE IOV
     print("library PEIP not installed, cannot create outlier results for ebe npde")
   }
 ```
-
 \pagebreak
 
 ```{r ebe_npde_outlier_table,results='hide',echo=FALSE,warning=FALSE,message=FALSE,fig.width=10,fig.height=5.5,fig.keep="high",fig.align="center"}
@@ -368,6 +373,7 @@ Correlation graph for EBE NPDE IOV
     print("library PEIP not installed, cannot create outlier results for ebe npde")
   }
 ```
+\pagebreak
 
 ```{r check_if_residual_csv_files_exist,results='hide',echo=FALSE,fig.align="center"}
   # RESIDUAL PLOTS
@@ -407,6 +413,7 @@ Correlation graph for EBE NPDE IOV
 
 To test wether the mean is significantly different from 0, a Wilcoxon signed rank test is used.\newline
 To test wether the variance is significantly different from 1, a Kolmogorov-Smirnov test is used.\newline
+To test wether the distribution is significantly different from a normal distribution, a Shapiro-Wilks test is used.\newline
 
 \pagebreak
 ```
