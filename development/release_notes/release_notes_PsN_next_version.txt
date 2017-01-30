@@ -78,6 +78,7 @@ A new recommended but not required Perl library for runrecord: YAML::Tiny
 - Bug fix: If Perl fork() fails when running locally on unix, then sleep for 30s and try
   again. If keeps failing then treat model as failed due to job submission error, and
   allow crash restart if appropriate crash handling options are set.
+- Bug fix: PsN can now be run from symbolic link wrappers.
 
 ___common_options___
 

@@ -8,7 +8,6 @@ use File::Copy qw/cp mv/;
 use File::Path;
 use File::Glob;
 use File::Spec;
-use FindBin qw($Bin);
 use Storable;
 use Math::Random;
 use nonmemrun;
