@@ -176,8 +176,10 @@ RELFILES=$(addprefix PsN-Source/lib/,$(LIBFILES)) \
 
 TEXFILES=$(wildcard doc/*.tex)
 PDFFILES=$(TEXFILES:.tex=.pdf)
-ZIPFILE=`sed -n 's/.*\$version\s*=\s*.\([0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*\).;/PsN-\1.zip/p' lib/PsN.pm`
-TARFILE=`sed -n 's/.*\$version\s*=\s*.\([0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*\).;/PsN-\1.tar.gz/p' lib/PsN.pm`
+VERSION=`sed -n 's/.*\$version\s*=\s*.\([0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*\).;/\1/p' lib/PsN.pm`
+ZIPFILE="PsN-${VERSION}.zip"
+TARFILE="PsN-${VERSION}.tar.gz"
+NMOUTPUT2SOFILE="nmoutput2so-${VERSION}.zip"
 
 main:
 	@ cp bin/update_inits bin/update
@@ -251,6 +253,7 @@ release_old_doc: main completion rel_dir $(RELFILES)
 
 # Release the nmoutput2so separately
 nmoutput2so: version
+	@ rm -rf nmoutput2so
 	@ cd doc; pdflatex nmoutput2so_userguide.tex >/dev/null; pdflatex nmoutput2so_userguide.tex >/dev/null; biber nmoutput2so_userguide >/dev/null; pdflatex nmoutput2so_userguide.tex >/dev/null
 	@ mkdir nmoutput2so
 	@ mkdir nmoutput2so/bin
@@ -261,7 +264,7 @@ nmoutput2so: version
 	@ rm -r nmoutput2so/lib/tool
 	@ rm -r nmoutput2so/lib/nonmemrun
 	@ mv nmoutput2so/lib/psn.conf_template nmoutput2so/lib/psn.conf
-	@ zip -r nmoutput2so nmoutput2so/
+	@ zip -r ${NMOUTPUT2SOFILE} nmoutput2so/
 
 documentation: doc/*.pdf $(PDFFILES)
 	@ cd PsN-Source/doc/; zip -q PsN_pdf_documentation *.pdf *.xls *.scm
