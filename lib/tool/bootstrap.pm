@@ -166,6 +166,7 @@ sub check_ignore_id
 	}
 
 }
+
 sub modelfit_setup
 {
 	my $self = shift;
@@ -185,8 +186,8 @@ sub cleanup
 	#remove datafiles in modelfit_dirX/NM_runX
 	#leave in m1
 
-	my $prob=1;
-	while (1){
+	my $prob = 1;
+	while (1) {
 		my $dir = $self ->directory()."modelfit_dir$prob/";
 		last unless (-e $dir);
 		my $sample=1;
@@ -208,8 +209,7 @@ sub llp_setup
 	);
 	my $model_number = $parm{'model_number'};
 
-	$self -> general_setup( model_number => $model_number,
-		class        => 'tool::llp');
+	$self->general_setup(model_number => $model_number, class => 'tool::llp');
 }
 
 sub calculate_diagnostic_means
@@ -1664,11 +1664,9 @@ sub prepare_results
 						unless ($j==0){#do not use original row ($j==0)
 							if (not defined $self->_number_of_columns){
 								$self->_number_of_columns($totalcolumns-$startcolumn);
-#								print "\ntotal is $totalcolumns, start $startcolumn, number is ".$self->_number_of_columns."\n";
 							}elsif ($self->_number_of_columns < ($totalcolumns-$startcolumn)){
 								#if e.g. this has cov step successful but first included did not
 								$self->_number_of_columns($totalcolumns-$startcolumn);
-#								print "\ntotal is $totalcolumns, start $startcolumn, number is ".$self->_number_of_columns."\n";
 							}
 							$included++; 
 						}
