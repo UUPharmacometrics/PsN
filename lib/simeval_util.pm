@@ -1,7 +1,5 @@
 package simeval_util;
 
-use FindBin qw($Bin);
-use lib "$Bin/../lib";
 use strict;
 use include_modules;
 use MooseX::Params::Validate;

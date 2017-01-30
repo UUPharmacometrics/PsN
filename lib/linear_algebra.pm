@@ -2,8 +2,6 @@ package linear_algebra;
 
 use MooseX::Params::Validate;
 
-use FindBin qw($Bin);
-use lib "$Bin/../lib";
 use strict;
 use array qw(:all);
 use Math::Trig;

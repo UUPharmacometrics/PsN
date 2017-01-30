@@ -1,7 +1,5 @@
 package common_options;
 
-#use FindBin qw($Bin);
-#use lib "$Bin/../lib";
 use include_modules;
 use Getopt::Long;
 use Text::Wrap;
