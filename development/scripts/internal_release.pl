@@ -9,6 +9,7 @@ if (scalar(@ARGV) != 1) {
 my $tag = $ARGV[0];
 
 my $access_token = readpipe("zenity --entry --text \"Enter your github access token\" 2> /dev/null");
+chomp $access_token;
 
 my $cmd = <<"EOF";
 curl --data '{"tag_name": "$tag","target_commitish": "master","name": "PsN $tag internal release","body": "internal release","draft": false,"prerelease": true}' https://api.github.com/repos/UUPharmacometrics/PsN/releases?access_token=$access_token
@@ -19,8 +20,15 @@ my $response = readpipe($cmd);
 $response =~ /\s\s\"id\":\s(\d+)/m;
 my $id = $1; 
 
-print $response;
+chdir "../.." or die "Could not change directory";
 
-print "Q: $id\n";
+my @docs = glob("doc/*.pdf");
+my @files = (@docs, "PsN-$tag.zip", "PsN-$tag.tar.gz", "nmoutput2so-$tag.zip");
 
-# Continue at http://help.appveyor.com/discussions/kb/2-guide-how-to-release-automatically-your-artifact-to-github
+for my $filename (@files) {
+    my $upload_cmd = <<"EOF";
+curl -# -XPOST -H "Authorization:token $access_token" -H "Content-Type:application/octet-stream" --data-binary \@$filename https://uploads.github.com/repos/UUPharmacometrics/PsN/releases/$id/assets?name=$filename
+EOF
+
+    $response = readpipe($upload_cmd);
+}
