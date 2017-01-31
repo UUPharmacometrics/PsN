@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 
-use FindBin qw($Bin);
-use lib "$Bin/../lib";
+use FindBin qw($RealBin);
+use lib "$RealBin/../lib";
 
 # Don't edit the line below, it must look exactly like this.
 # Everything above this line will be replaced #
