@@ -801,14 +801,14 @@ sub general_setup
 			}
 		}
 
-		my ( @seed, $new_datas, $incl_ids, $incl_keys, $new_mod, $new_subjects, $orig_count_ind );
+		my ( @seed, $new_datas, $incl_ids, $incl_keys, $new_mod, $new_subjects, $orig_count_ind, $all_individuals );
 
 		$done = ( -e $self ->directory()."/m$model_number/done.$i" ) ? 1 : 0;
 		if ( not $done ) {
 			ui -> print( category => 'bootstrap',
 				message  => "Resampling from ".$datafilenames->[$i-1]);
 
-			( $new_datas, $incl_ids, $incl_keys, $new_subjects, $orig_count_ind )
+			( $new_datas, $incl_ids, $incl_keys, $new_subjects, $orig_count_ind, $all_individuals )
 				= data::bootstrap_create_datasets( output_directory   => $self ->directory().'/m'.$model_number,
 												   name_stub   => 'bs_pr'.$i,
 												   samples     => $self->samples(),
@@ -897,6 +897,11 @@ sub general_setup
 				print DONE join(',',@{$incl_keys -> [$k]}),"\n";
 			}
 			close( DONE );
+
+            open my $all_fh, '>', $self->directory() . "all_individuals$model_number.csv";
+            print $all_fh join(',', @{$all_individuals}), "\n";
+            close $all_fh;
+
 			open( INCL, ">".$self ->directory()."included_individuals".$model_number.".csv" ) ;
 			for( my $k = 0; $k < scalar @{$incl_ids}; $k++ ) {
 				print INCL join(',',@{$incl_ids -> [$k]}),"\n";

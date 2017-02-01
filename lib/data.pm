@@ -621,6 +621,11 @@ sub bootstrap_create_datasets
 						 missing_data_token => $missing_data_token,
 						 idcolumn => $idcolumn);
 
+    my @all_individuals;
+    for my $id (@{$data->individuals}) {
+        push @all_individuals, $id->idnumber;
+    }
+
 	my $count = $data->count_ind;
 	unless (scalar(keys %subjects) > 0) {
 		$subjects{'default'} = $count;
@@ -632,7 +637,7 @@ sub bootstrap_create_datasets
 															   subjects    => \%subjects,
 															   stratify_on => $stratify_on);
 	$data = undef;
-	return ($new_datas, $incl_ids, $incl_keys,\%subjects, $count);
+	return ($new_datas, $incl_ids, $incl_keys,\%subjects, $count, \@all_individuals);
 }
 
 sub cdd_create_datasets{
