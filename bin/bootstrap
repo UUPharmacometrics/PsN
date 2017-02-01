@@ -26,6 +26,7 @@ my %optional_options = ("samples:i"=>'',
 						"sample_size:s"=>'',
 						"stratify_on:s"=>'',
 						'keep_tables!' => undef,
+                        'keep_covariance!' => undef,
 						"bca"=>'',
 						"dofv!"=>'',	
 						"run_base_model!"=>'',
@@ -174,6 +175,14 @@ $help_text{-keep_tables} = <<'EOF';
 	  PsN will instead keep $TABLE.
 EOF
 
+$help_text{-keep_covariance} = <<'EOF';
+      -keep_covariance
+
+      By default the $COVARIANCE will be deleted from the bootstrap models, 
+	  to save run time. If option -keep_covariance is set, 
+	  PsN will instead keep $COVARIANCE.
+EOF
+
     $help_text{-copy_data} = <<'EOF';
       -copy_data
     Default set. By default, the original model is run with a copy of the 
@@ -312,6 +321,7 @@ my $bs =
 						  subjects			     => $subj_hash,
 						  type				     => $type,
 						  keep_tables          	=> $options{'keep_tables'},
+                          keep_covariance => $options{'keep_covariance'},
 						  run_base_model          	=> $options{'run_base_model'},
 						  update_inits          	=> $options{'update_inits'},
 						  stratify_on                          => $options{'stratify_on'},

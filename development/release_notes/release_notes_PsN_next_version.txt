@@ -147,6 +147,8 @@ New features implemented by William S. Denney of Human Predictions:
 
 ___bootstrap___
 
+- The $COVARIANCE will by default be removed from the model. If wanted it can be kept
+  with the new -keep_covariance option.
 - Print a warning message if the number of individuals in the data set is different from the number
   of individuals NONMEM printed in the original run lst-file.
 - New file 'all_individuals1.csv' contains a list of all individuals of the original dataset.

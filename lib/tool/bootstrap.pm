@@ -27,6 +27,7 @@ has 'bootstrap_estimates' => ( is => 'rw', isa => 'ArrayRef', default => sub { [
 has 'jackknife_estimates' => ( is => 'rw', isa => 'ArrayRef', default => sub { [] } );
 has 'skip_minimization_terminated' => ( is => 'rw', isa => 'Bool', default => 1 );
 has 'keep_tables' => ( is => 'rw', isa => 'Bool', default => 0 );
+has 'keep_covariance' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'allow_ignore_id' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'copy_data' => ( is => 'rw', isa => 'Bool', default => 1 );
 has 'jackknife' => ( is => 'rw', isa => 'ArrayRef' );
@@ -857,6 +858,9 @@ sub general_setup
 				unless ($self->keep_tables){
 					$new_mod -> remove_records( type => 'table' );
 				}
+                unless ($self->keep_covariance) {
+                    $new_mod->remove_records(type => 'covariance');
+                }
 				if( $self -> shrinkage() ) {
 					$new_mod -> shrinkage_stats( enabled => 1 );
 					$new_mod -> shrinkage_modules( $model -> shrinkage_modules );

@@ -51,6 +51,11 @@ the same as the initial estimates set in the input model, even if final estimate
 By default, all \$TABLE will be deleted from the bootstrap models, to save disk space. If option -keep\_tables is set, 
 PsN will instead keep \$TABLE, which can require much disk space.
 \nextopt
+\optname{keep\_covariance}
+By default the \$COVARIANCE will be deleted from the bootstrap models, 
+to save run time. If option -keep\_covariance is set, 
+PsN will instead keep \$COVARIANCE.
+\nextopt
 \optname{bca}
 Default not used. When used, the bootstrap utility will calculate the confidence intervals through the BCa method \cite{Efron}. The BCa is intended for calculation of second-order correct confidence intervals. Warning: Using bca is very time-consuming. 
 \nextopt
