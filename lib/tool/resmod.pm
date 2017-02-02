@@ -140,7 +140,7 @@ our @residual_models =
             '"  ENDDO',
             'Y = THETA(1) + ETA(1) + EPS(1)',
             '$THETA  -0.0345794',
-            '$THETA  (0.001,1,10)',
+            '$THETA  (0.001,1)',
             '$OMEGA  2.41E-006',
             '$SIGMA  0.864271',
             '$ESTIMATION METHOD=1 INTER MAXEVALS=9990 PRINT=2 POSTHOC',
