@@ -73,8 +73,8 @@ $help_text{-idv} = <<'EOF';
       Name of the independent variable. TIME is default.
 EOF
 
-common_options::online_help( 'nonpb', \%options, \%help_text, \%required_options, \%optional_options);
-common_options::setup( \%options, 'nonpb' ); #calls set_globals etc, initiates random sequence
+common_options::online_help( 'resmod', \%options, \%help_text, \%required_options, \%optional_options);
+common_options::setup( \%options, 'resmod' ); #calls set_globals etc, initiates random sequence
 
 ## Check that we do have a model file
 if (scalar(@ARGV) < 1) {
