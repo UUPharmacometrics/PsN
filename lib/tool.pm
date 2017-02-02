@@ -1830,7 +1830,7 @@ sub create_R_script
 	#these are set in common_options, should never be undefined
 	my ($dir, $file) = OSspecific::absolute_path($self->template_directory_rplots,$self->template_file_rplots);
 	my $template_file = $dir.$file;
-		
+
 	# check if tool default R file is a markdown file
 	my $rmarkdown = 0; # FALSE
 	my $Rmarkdown_installed = 0;
@@ -1850,7 +1850,6 @@ sub create_R_script
 		unlink('test_file_rmarkdown_installed.Rout');
 	}
 		
-#	print "template $template_file\n";
 	if (-e $template_file){
 		open( FILE, $template_file ) ||
 			croak("Could not open $template_file for reading" );
@@ -1874,9 +1873,7 @@ sub create_R_script
 
 		$self->create_R_plots_code(rplot => $rplot) if ($self->can("create_R_plots_code"));
 		$rplot->make_plots;
-	} else {
-        print "The R template file '$template_file' does not exist\n";
-    }
+	}
 }
 
 no Moose;
