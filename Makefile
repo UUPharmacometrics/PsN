@@ -222,8 +222,6 @@ release: main completion rel_dir $(RELFILES) $(PDFFILES)
 	@ sed -i 's/dev\s*=\s*1;/dev = 0;/' PsN-Source/lib/PsN.pm
 	@ zip -rq $(ZIPFILE) PsN-Source/
 	@ tar czf $(TARFILE) PsN-Source/
-	@ echo  
-	@ echo Remember sftp putdoc for guides!
 
 release_old_doc: main completion rel_dir $(RELFILES)
 	@ rm -f $(ZIPFILE)
