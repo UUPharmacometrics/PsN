@@ -292,50 +292,6 @@ our @residual_models =
 	},
 );
 
-our @phi_models =
-(
-	{
-		name => 'base',
-	    prob_arr => [
-            '$PROBLEM PHI mod',
-            '$INPUT <phiinputcolumns>',
-            '$DATA <phiname> IGNORE=@',
-            '$PRED',
-            'BXPAR = THETA(2) ; Shape parameter',
-            'PHI = EXP(ETA(1)) ; Exponential trans',
-            'ETATR = (PHI ** BXPAR - 1) / BXPAR',
-            'Y = THETA(1) + ETATR + ERR(1) * SQRT(<etc>)',
-            '$THETA 0.00576107',
-            '$THETA 0.1576107',
-            '$OMEGA 0.0173428',
-            '$SIGMA 1.37603',
-            '$ESTIMATION METHOD=1 INTER MAXEVALS=9990 PRINT=2 POSTHOC',
-        ],
-    }
-    # , {
-#        name => 'boxcox',
-    #       prob_arr => [
-#    $PROBLEM    MOXONIDINE PK,FINAL ESTIMATES,ALL DATA
-#;;
-
-#$INPUT      SUBJ ID ET1 ET2 DV ETC1 ETC21 ETC22 ETC31 ETC32 ETC33 OBJX
-#$DATA      run1.phi IGNORE=@
-#$PRED   
-#BXPAR = THETA(2) ; Shape parameter
-#PHI = EXP(ETA(1)) ; Exponential trans
-#ETATR = (PHI**BXPAR-1)/BXPAR 
-
-#     Y     = THETA(1) +ETATR +ERR(1)*SQRT(ETC33)
-#$THETA  0.00576107 ; TV
-#$THETA  0.1576107 ; TV_
-#$OMEGA  0.0173428  ; IIV (CL-V)
-#$SIGMA  1.37603
-#$ESTIMATION METHOD=1 INTER MAXEVALS=9990 PRINT=2 POSTHOC
-
-    #       ],
-
-);
-
 sub BUILD
 {
     my $self = shift;
@@ -484,52 +440,6 @@ END
     }
 
     $self->run_models(\@models_to_run);
-
-    my $run_phi_modelling = 0;      # Skip phi-modelling for now
-    if ($run_phi_modelling) {
-        my $phiname = '../' . $self->model->filename();
-        $phiname =~ s/\.mod$/.phi/;
-        if (-e $phiname) {
-            my $phitable = nmtablefile->new(filename => $phiname); 
-            # Loop over ETAs
-            for (my $i = 1; $i <= scalar(grep { /ETA/ } @{$phitable->tables->[0]->header_array}); $i++) {
-
-                my @a;
-                for my $colname (@{$phitable->tables->[0]->header_array}) {
-                    my $newname = $colname;
-                    $newname =~ s/[(,)]//g;
-                    $newname =~ s/^ETA/ET/;
-                    $newname =~ s/^ET$i/DV/;
-                    push @a, $newname;
-                }
-                my $phiinputs = join(' ', @a);
-
-                for my $model_properties (@phi_models) {
-
-                    my @model_code;
-                    for my $row (@{$model_properties->{'prob_arr'}}) {
-                        my $newrow = $row;
-                        $newrow =~ s/<phiinputcolumns>/$phiinputs/;
-                        $newrow =~ s/<phiname>/$phiname/;
-                        $newrow =~ s/<etc>/ETC$i$i/;
-                        push @model_code, $newrow;
-                    }
-                    my $sh_mod = model::shrinkage_module->new(
-                        nomegas => 1,
-                        directory => 'm1/',
-                        problem_number => 1);
-                    my $phi_problem = model::problem->new(
-                        prob_arr => \@model_code,
-                        shrinkage_module => $sh_mod,
-                    );
-                    my $phi_model = model->new(directory => 'm1/', filename => $model_properties->{'name'} . "${i}_phi.mod", problems => [ $phi_problem ]);
-                    $phi_model->_write();
-                    push @models_to_run, $phi_model;
-                    push @{$self->model_names}, $model_properties->{'name'} . "${i}_phi";
-                }
-            }
-        }
-    }
 
 	my $modelfit = tool::modelfit->new(
 		%{common_options::restore_options(@common_options::tool_options)},
