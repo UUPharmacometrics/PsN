@@ -26,6 +26,7 @@ my %required_options = ();
 
 #option etas is not implemented, bootstrap always done on all etas
 my %optional_options = (
+    'dvid:s' => undef,
     'idv:s' => undef,
     'iterative!' => undef,
 );
@@ -66,6 +67,12 @@ $help_text{-help} = <<'EOF';
       -help
       
       With -help resmod will print this, longer, help message.
+EOF
+
+$help_text{-dvid} = <<'EOF';
+      -dvid
+
+      Name of the dvid column. DVID is default.
 EOF
 
 $help_text{-idv} = <<'EOF';
@@ -120,6 +127,7 @@ if (not defined $options{'iterative'}) {
 my $resmod = tool::resmod->new(
     eval( $common_options::parameters ),
     models => [$model],
+    dvid => $options{'dvid'},
     idv => $options{'idv'},
     iterative => $options{'iterative'},
 );

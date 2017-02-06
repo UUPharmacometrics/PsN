@@ -18,6 +18,7 @@ extends 'tool';
 has 'model' => ( is => 'rw', isa => 'model' );
 has 'model_names' => ( is => 'rw', isa => 'ArrayRef', default => sub { [] } );
 has 'idv' => ( is => 'rw', isa => 'Str', default => 'TIME' );
+has 'dvid' => ( is => 'rw', isa => 'Str', default => 'DVID' );
 has 'run_models' => ( is => 'rw', isa => 'ArrayRef[model]' );
 has 'quartiles' => ( is => 'rw', isa => 'ArrayRef' );
 has 'unique_dvid' => ( is => 'rw', isa => 'ArrayRef' );
@@ -361,9 +362,9 @@ END
         if ($option->name eq 'IPRED') {
             $have_ipred = 1;
             push @columns, 'IPRED';
-        } elsif ($option->name eq 'DVID') {
+        } elsif ($option->name eq $self->dvid) {
             $have_dvid = 1;
-            push @columns, 'DVID';
+            push @columns, $self->dvid;
         } elsif ($option->name eq 'TAD') {
 			$have_tad = 1;
 			push @columns, 'TAD',
@@ -379,7 +380,7 @@ END
     my $unique_dvid;
     my $number_of_dvid = 1;
     if ($have_dvid) {
-        my $dvid_column = $table->tables->[0]->header->{'DVID'};
+        my $dvid_column = $table->tables->[0]->header->{$self->dvid};
         $unique_dvid = array::unique($table->tables->[0]->columns->[$dvid_column]);
 		$self->unique_dvid($unique_dvid);
         $number_of_dvid = scalar(@$unique_dvid);
@@ -405,7 +406,7 @@ END
         my $accept = "";
         for (my $i = 0; $i < $number_of_dvid; $i++) {
             if ($have_dvid) {
-                $accept = "IGNORE=(DVID.NEN." . $unique_dvid->[$i] . ")";
+                $accept = "IGNORE=(" . $self->dvid . ".NEN." . $unique_dvid->[$i] . ")";
             }
 
             my @prob_arr = @{$model_properties->{'prob_arr'}};
@@ -482,7 +483,7 @@ sub modelfit_analyze
 	for (my $dvid_index = 0; $dvid_index < $self->numdvid; $dvid_index++) {
 		if ($self->numdvid > 1) {
             print $fh "\n";
-			print $fh "DVID=", int($self->unique_dvid->[$dvid_index]), "\n";
+			print $fh $self->dvid, '=', int($self->unique_dvid->[$dvid_index]), "\n";
 		}
 		for (my $i = 0; $i < scalar(@residual_models); $i++) {
 			my $model_index = $dvid_index + $i * $self->numdvid;
