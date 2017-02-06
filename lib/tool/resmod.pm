@@ -16,10 +16,10 @@ use nmtablefile;
 extends 'tool';
 
 has 'model' => ( is => 'rw', isa => 'model' );
-has 'model_names' => ( is => 'rw', isa => 'ArrayRef', default => sub { [] } );
 has 'idv' => ( is => 'rw', isa => 'Str', default => 'TIME' );
 has 'dvid' => ( is => 'rw', isa => 'Str', default => 'DVID' );
-has 'run_models' => ( is => 'rw', isa => 'ArrayRef[model]' );
+has 'run_models' => ( is => 'rw', isa => 'ArrayRef', default => sub { [] } );      # Array of arrays for the run models [DVID]->[model]
+has 'residual_models' => ( is => 'rw', isa => 'ArrayRef', default => sub { [] } );  # Array of arrays of hashes for the actual run_models [DVID]->[model]
 has 'quartiles' => ( is => 'rw', isa => 'ArrayRef' );
 has 'unique_dvid' => ( is => 'rw', isa => 'ArrayRef' );
 has 'numdvid' => ( is => 'rw', isa => 'Int' );
@@ -447,12 +447,11 @@ END
 				extra_files => [ $self->directory . '/contr.txt', $self->directory . '/ccontra.txt' ],
 			);
             $cwres_model->_write();
-            push @{$self->model_names}, $model_properties->{'name'} . "$dvid_suffix";
             push @models_to_run, $cwres_model;
+            push @{$self->run_models->[$i]}, $cwres_model;
+            push @{$self->residual_models->[$i]}, $model_properties; 
         }
     }
-
-    $self->run_models(\@models_to_run);
 
 	my $modelfit = tool::modelfit->new(
 		%{common_options::restore_options(@common_options::tool_options)},
@@ -485,11 +484,9 @@ sub modelfit_analyze
             print $fh "\n";
 			print $fh $self->dvid, '=', int($self->unique_dvid->[$dvid_index]), "\n";
 		}
-		for (my $i = 0; $i < scalar(@residual_models); $i++) {
-			my $model_index = $dvid_index + $i * $self->numdvid;
-			my $model = $self->run_models->[$model_index];
-			my $model_name = $self->model_names->[$model_index];
-			$model_name =~ s/_DVID\d+//;
+		for (my $i = 0; $i < scalar(@{$self->residual_models->[$dvid_index]}); $i++) {
+			my $model = $self->run_models->[$dvid_index]->[$i];
+			my $model_name = $self->residual_models->[$dvid_index]->[$i]->{'name'};
 			my $ofv;
 			if ($model->is_run()) {
 				my $output = $model->outputs->[0];
@@ -498,13 +495,13 @@ sub modelfit_analyze
 			if (not defined $ofv) {
 				$ofv = 'NA';
 			}
-			if (exists $residual_models[$i]->{'base'}) {        # This is a base model
-				$base_models{$residual_models[$i]->{'base'}} = $ofv;
+			if (exists $self->residual_models->[$dvid_index]->[$i]->{'base'}) {        # This is a base model
+				$base_models{$self->residual_models->[$dvid_index]->[$i]->{'base'}} = $ofv;
 				next;
 			}
 
 			my $base_ofv;
-			$base_ofv = $base_models{$residual_models[$i]->{'use_base'}};
+			$base_ofv = $base_models{$self->residual_models->[$dvid_index]->[$i]->{'use_base'}};
 			if ($base_ofv eq 'NA' or $ofv eq 'NA') {        # Really skip parameters if no base ofv?
 				print $fh $model_name, ",NA,NA\n";
 				next;
@@ -514,8 +511,8 @@ sub modelfit_analyze
             push @dofvs, $delta_ofv;
             push @model_names, $model_name;
 			print $fh $model_name, ",", $delta_ofv, ",";
-			if (exists $residual_models[$i]->{'parameters'}) {
-				for my $parameter (@{$residual_models[$i]->{'parameters'}}) {
+			if (exists $self->residual_models->[$dvid_index]->[$i]->{'parameters'}) {
+				for my $parameter (@{$self->residual_models->[$dvid_index]->[$i]->{'parameters'}}) {
 					if ($parameter->{'name'} eq "QUARTILES") {
 						print $fh sprintf("t1=%.3f", $self->quartiles()->[0]);
 						print $fh sprintf(" t2=%.3f", $self->quartiles()->[1]);
