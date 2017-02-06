@@ -27,6 +27,7 @@ my %required_options = ();
 #option etas is not implemented, bootstrap always done on all etas
 my %optional_options = (
     'idv:s' => undef,
+    'iterative!' => undef,
 );
 
 my $res = GetOptions( \%options,
@@ -73,6 +74,15 @@ $help_text{-idv} = <<'EOF';
       Name of the independent variable. TIME is default.
 EOF
 
+$help_text{-iterative} = <<'EOF';
+      -iterative
+
+      Set if an iterative process is wanted.
+      The iteration is to pick the model with best dOFV
+      and rerun all models with the CWRES output from that
+      model etc until all models have been picked.
+EOF
+
 common_options::online_help( 'resmod', \%options, \%help_text, \%required_options, \%optional_options);
 common_options::setup( \%options, 'resmod' ); #calls set_globals etc, initiates random sequence
 
@@ -103,10 +113,15 @@ my $model = model->new(
     ignore_missing_data => 1,
 );
 
+if (not defined $options{'iterative'}) {
+    $options{'iterative'} = 0;
+}
+
 my $resmod = tool::resmod->new(
     eval( $common_options::parameters ),
     models => [$model],
     idv => $options{'idv'},
+    iterative => $options{'iterative'},
 );
 
 $resmod->print_options(

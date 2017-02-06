@@ -22,6 +22,8 @@ has 'run_models' => ( is => 'rw', isa => 'ArrayRef[model]' );
 has 'quartiles' => ( is => 'rw', isa => 'ArrayRef' );
 has 'unique_dvid' => ( is => 'rw', isa => 'ArrayRef' );
 has 'numdvid' => ( is => 'rw', isa => 'Int' );
+has 'iterative' => ( is => 'rw', isa => 'Bool', default => 0 );
+has 'best_models' => ( is => 'rw', isa => 'ArrayRef', default => sub { [] } );
 
 # This array of hashes represent the different models to be tested. The 0th is the base model
 our @residual_models =
@@ -368,6 +370,10 @@ END
 		}
     }
 
+    if (scalar(@{$self->best_models}) > 0) {
+        $cwres_table_name = "m1/$cwres_table_name";
+    }
+
     my $table = nmtablefile->new(filename => "../$cwres_table_name"); 
 
     my $unique_dvid;
@@ -416,6 +422,14 @@ END
 				} 
                 $row =~ s/<idv>/$idv/g;
             }
+
+            my $dvid_suffix = "";
+            $dvid_suffix = "_DVID" . int($unique_dvid->[$i]) if ($have_dvid);
+
+            if ($self->iterative) {
+                push @prob_arr, '$TABLE ID TIME CWRES NOPRINT NOAPPEND ONEHEADER FILE=' . $model_properties->{'name'} . "$dvid_suffix.tab";
+            }
+
             my $sh_mod = model::shrinkage_module->new(
                 nomegas => 1,
                 directory => 'm1/',
@@ -425,8 +439,6 @@ END
                 prob_arr => \@prob_arr,
                 shrinkage_module => $sh_mod,
             );
-            my $dvid_suffix = "";
-            $dvid_suffix = "_DVID" . int($unique_dvid->[$i]) if ($have_dvid);
             my $cwres_model = model->new(
 				directory => 'm1/',
 				filename => $model_properties->{'name'} . "$dvid_suffix.mod",
@@ -465,6 +477,8 @@ sub modelfit_analyze
     print $fh "Model,dOFV,Parameters\n";
     my %base_models;        # Hash from basemodelno to base model OFV
 	my $current_dvid;
+    my @dofvs;
+    my @model_names;
 	for (my $dvid_index = 0; $dvid_index < $self->numdvid; $dvid_index++) {
 		if ($self->numdvid > 1) {
             print $fh "\n";
@@ -496,6 +510,8 @@ sub modelfit_analyze
 			}
 			my $delta_ofv = $ofv - $base_ofv;
 			$delta_ofv = sprintf("%.2f", $delta_ofv);
+            push @dofvs, $delta_ofv;
+            push @model_names, $model_name;
 			print $fh $model_name, ",", $delta_ofv, ",";
 			if (exists $residual_models[$i]->{'parameters'}) {
 				for my $parameter (@{$residual_models[$i]->{'parameters'}}) {
@@ -527,7 +543,27 @@ sub modelfit_analyze
 			print $fh "\n";
 		}
 	}
-	close $fh;
+
+    if ($self->iterative) {
+        (my $minvalue, my $minind) = array::min(@dofvs);
+        my $model_name = $model_names[$minind];
+        my $model = model->new(
+            #eval($eval_string),
+            filename => "m1/$model_name.mod",
+            ignore_missing_output_files => 1,
+            ignore_missing_data => 1,
+        );
+        my $resmod = tool::resmod->new(
+            #eval( $common_options::parameters ),
+            models => [ $model ],
+            idv => $self->idv,
+            iterative => $self->iterative,
+            best_models => [ @{$self->best_models}, $model_name ],
+        );
+        $resmod->run();
+    }
+
+    close $fh;
 }
 
 sub _calculate_quartiles
