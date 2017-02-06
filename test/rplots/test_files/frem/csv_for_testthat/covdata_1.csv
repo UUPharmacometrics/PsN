@@ -1,0 +1,5 @@
+covname,perc5th,mean,perc95th,reference,is.categorical,unit,category.reference,category.other
+WT,3.9702919136,4.3427324243,4.6539603502,4.3427324243,0,,,
+AGE,55,65.1756756757,77,65.1756756757,0,years,,
+SEX,1,1.2027027027,2,1,1,,male,female
+ACE,0,0.6351351351,1,1,1,,1,0
