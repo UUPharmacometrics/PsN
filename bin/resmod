@@ -75,6 +75,12 @@ $help_text{-dvid} = <<'EOF';
       Name of the dvid column. DVID is default.
 EOF
 
+$help_text{-occ} = <<'EOF';
+      -occ
+
+      Name of the occasion column. OCC is default.
+EOF
+
 $help_text{-idv} = <<'EOF';
       -idv
 
@@ -129,6 +135,7 @@ my $resmod = tool::resmod->new(
     models => [$model],
     dvid => $options{'dvid'},
     idv => $options{'idv'},
+	occ => $options{'occ'},
     iterative => $options{'iterative'},
 );
 

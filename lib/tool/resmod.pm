@@ -18,6 +18,7 @@ extends 'tool';
 has 'model' => ( is => 'rw', isa => 'model' );
 has 'idv' => ( is => 'rw', isa => 'Str', default => 'TIME' );
 has 'dvid' => ( is => 'rw', isa => 'Str', default => 'DVID' );
+has 'occ' => ( is => 'rw', isa => 'Str', default => 'OCC' );
 has 'run_models' => ( is => 'rw', isa => 'ArrayRef', default => sub { [] } );      # Array of arrays for the run models [DVID]->[model]
 has 'residual_models' => ( is => 'rw', isa => 'ArrayRef', default => sub { [] } );  # Array of arrays of hashes for the actual run_models [DVID]->[model]
 has 'quartiles' => ( is => 'rw', isa => 'ArrayRef' );
@@ -152,6 +153,46 @@ our @residual_models =
             { name => "half-life", parameter => "THETA2" },
         ],
         use_base => 1,
+    }, {
+		name => 'autocorrelation_iov',
+		need_occ => 1,
+		prob_arr => [
+			'$PROBLEM CWRES AR1 IOV',
+			'$INPUT <inputcolumns>',
+			'$DATA ../<cwrestablename> IGNORE=@ IGNORE=(DV.EQN.0) <dvidaccept>',
+			'$ABBREVIATED DECLARE T1(NO)',
+			'$ABBREVIATED DECLARE INTEGER I,DOWHILE J',
+			'$PRED', 
+			'IF(NEWIND.NE.2) THEN',
+			'  I=0',
+			'  L=1',
+			'  OOCC=OCC',
+			'  OID=ID',
+			'END IF',
+			'IF(NEWL2==1) THEN',
+			'  I=I+1',
+			'  T1(I)=TIME',
+			'  IF(OID.EQ.ID.AND.OOCC.NE.OCC)THEN',
+			'    L=I',
+			'    OOCC=OCC',
+			'  END IF',
+			'  J=L',
+			'  DO WHILE (J<=I)',
+			'    CORRL2(J,1) = EXP((-0.6931/THETA(2))*(TIME-T1(J)))',
+			'    J=J+1',
+			'  ENDDO',
+			'ENDIF',
+			'Y = THETA(1) + ETA(1) + EPS(1)',
+			'$THETA -0.0345794',
+			'$THETA (0.001,1)',
+			'$OMEGA 2.41E-006',
+			'$SIGMA 0.864271',
+			'$ESTIMATION METHOD=1 INTER MAXEVALS=9990 PRINT=2 POSTHOC',
+		],
+        parameters => [
+            { name => "half-life", parameter => "THETA2" },
+        ],
+		use_base => 1, 
     }, {
 		name => 'tdist_base',
 	    prob_arr => [
@@ -357,6 +398,7 @@ END
     # Do we have IPRED, DVID or TAD?
     my $have_ipred = 0;
     my $have_dvid = 0;
+	my $have_occ = 0;
 	my $have_tad = 0;
     for my $option (@{$cwres_table->options}) {
         if ($option->name eq 'IPRED') {
@@ -365,6 +407,9 @@ END
         } elsif ($option->name eq $self->dvid) {
             $have_dvid = 1;
             push @columns, $self->dvid;
+		} elsif ($option->name eq $self->occ) {
+			$have_occ = 1;
+			push @columns, $self->occ;
         } elsif ($option->name eq 'TAD') {
 			$have_tad = 1;
 			push @columns, 'TAD',
@@ -400,8 +445,16 @@ END
 		if ($have_tad and $model_properties->{'name'} eq 'time_varying') {
 			$tad = 1;
 		}
-    	my $input_columns = _create_input(table => $cwres_table, columns => \@columns, ipred => $model_properties->{'need_ipred'}, tad => $tad);
+    	my $input_columns = _create_input(
+			table => $cwres_table,
+			columns => \@columns,
+			ipred => $model_properties->{'need_ipred'},
+			occ => $model_properties->{'need_occ'},
+			occ_name => $self->occ,
+			tad => $tad
+		);
         next if ($model_properties->{'need_ipred'} and not $have_ipred);
+		next if ($model_properties->{'need_occ'} and not $have_occ);
 
         my $accept = "";
         for (my $i = 0; $i < $number_of_dvid; $i++) {
@@ -594,11 +647,15 @@ sub _create_input
 		table => { isa => 'model::problem::table' },
 		columns => { isa => 'ArrayRef' },
 		ipred => { isa => 'Bool', default => 1 },		# Should ipred be included if in columns?
+		occ => { isa => 'Bool', default => 1 },			# Should occ be included if in columns?
+		occ_name => { isa => 'Str' },					# Name of the occ column
 		tad => { isa => 'Bool', default => 0 },			# Should TAD be used instead of $self->idv?
 	);
 	my $table = $parm{'table'};
 	my @columns = @{$parm{'columns'}};
 	my $ipred = $parm{'ipred'};
+	my $occ = $parm{'occ'};
+	my $occ_name = $parm{'occ_name'};
 	my $tad = $parm{'tad'};
 
 	my $input_columns;
@@ -611,6 +668,7 @@ sub _create_input
                 my $name = $option->name;
                 $name = 'DV' if ($name eq 'CWRES');
 				$name = 'DROP' if ($name eq 'IPRED' and not $ipred);
+				$name = 'DROP' if ($name eq $occ_name and not $occ);
 				$name = 'DROP' if ($name eq 'TAD' and not $tad);
 				$name = 'DROP' if ($name eq 'TIME' and $tad);
                 $input_columns .= $name;
