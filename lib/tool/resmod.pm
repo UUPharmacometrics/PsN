@@ -194,6 +194,21 @@ our @residual_models =
         ],
 		use_base => 1, 
     }, {
+#		name => 'L2',
+#		need_l2 => 1,
+#		need_dvid => 1,
+#		prob_arr => [
+#			'$PROBLEM CWRES L2',
+#			'$INPUT <inputcolumns>',
+#			'$DATA ../<cwrestablename> IGNORE=@ IGNORE=(DV.EQN.0)',
+#			'$PRED',
+#			'<l2_special>',
+#			'$ESTIMATION METHOD=1 INTER MAXEVALS=9990 PRINT=2 POSTHOC',
+#		],
+#		parameters => [
+#		],
+#		use_base => 'L2',
+#	}, {
 		name => 'tdist_base',
 	    prob_arr => [
 			'$PROBLEM CWRES t-distribution base mode',
@@ -532,6 +547,7 @@ sub modelfit_analyze
 	my $current_dvid;
     my @dofvs;
     my @model_names;
+	my %dvid_sum;
 	for (my $dvid_index = 0; $dvid_index < $self->numdvid; $dvid_index++) {
 		if ($self->numdvid > 1) {
             print $fh "\n";
@@ -564,6 +580,11 @@ sub modelfit_analyze
             push @dofvs, $delta_ofv;
             push @model_names, $model_name;
 			print $fh $model_name, ",", $delta_ofv, ",";
+
+			if ($self->numdvid > 1) {
+				$dvid_sum{$model_name} += $delta_ofv;
+			}
+
 			if (exists $self->residual_models->[$dvid_index]->[$i]->{'parameters'}) {
 				for my $parameter (@{$self->residual_models->[$dvid_index]->[$i]->{'parameters'}}) {
 					if ($parameter->{'name'} eq "QUARTILES") {
@@ -594,6 +615,16 @@ sub modelfit_analyze
 			print $fh "\n";
 		}
 	}
+
+	# Create summary table for DVID	
+    if ($self->numdvid > 1) {
+        print $fh "\nDVID_summary\n";
+        for (my $i = 0; $i < scalar(@{$self->residual_models->[0]}); $i++) {
+            next if (exists $self->residual_models->[0]->[$i]->{'base'});
+            my $name = $self->residual_models->[0]->[$i]->{'name'};
+            print $fh $name, ',', $dvid_sum{$name}, "\n"; 
+        }
+    }
 
     if ($self->iterative) {
         (my $minvalue, my $minind) = array::min(@dofvs);
