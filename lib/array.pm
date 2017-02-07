@@ -685,18 +685,32 @@ sub is_int
 sub quantile
 {
 	#mimic R quantile(nubmers,type=2, probs= probs)
+    # alternatively use groups instead of probs to create probs automatically. I.e. groups=>4 for quartiles
 	#numbers must be sorted!
 
 	my %parm = validated_hash(\@_,
-        probs => { isa => 'ArrayRef', optional => 0 },
-        numbers => { isa => 'ArrayRef', optional => 0 }
+        numbers => { isa => 'ArrayRef', optional => 0 },
+        probs => { isa => 'ArrayRef', optional => 1 },
+        groups => { isa => 'Int', optional => 1 },
     );
-    my $probs = $parm{'probs'};
 	my $numbers = $parm{'numbers'};
+    my $probs = $parm{'probs'};
+    my $groups = $parm{'groups'};
 
 	my $n = scalar(@{$numbers});
 	croak("Empty set of numbers to quantile") if ($n < 1);
-	croak("Empty set of probs to quantile") if (scalar(@{$probs}) < 1);
+    unless ((defined $probs and scalar(@{$probs}) >= 1) xor defined $groups) {
+        croak("Must have either probs or groups");
+    }
+
+    if (defined $groups) {
+        $probs = [];
+        my $cur = 1 / $groups;
+        for (my $i = 0; $i < $groups - 1; $i++) {
+            push @{$probs}, $cur;
+            $cur += 1 / $groups; 
+        }
+    }
 
 	my $m = 0; #R quantile type 2 m value
 	

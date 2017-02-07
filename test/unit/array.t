@@ -278,4 +278,23 @@ is(count_lower(array => [],limit => 1.0),0,'count_lower 2');
 is(count_lower(array => [0,1E-16,3],limit => 0.0000000001),2,'count_lower 3');
 is(count_lower(array => [0.0000000001,0.000000000012,0.00000000001],limit => 0.0000000001),2,'count_lower 4');
 
+# Quantiles
+my @a = ( 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 );
+my $q;
+
+$q = array::quantile(numbers => \@a, groups => 2);
+is (scalar(@$q), 1, "quantile, groups=2, length");
+is ($q->[0], 5.5, "quantile, groups=2, q1");
+
+$q = array::quantile(numbers => \@a, groups => 3);
+is (scalar(@$q), 2, "quantile, groups=3, length");
+is ($q->[0], 4, "quantile, groups=2, q1");
+is ($q->[1], 7, "quantile, groups=2, q2");
+
+$q = array::quantile(numbers => \@a, groups => 4);
+is (scalar(@$q), 3, "quantile, groups=4, length");
+is ($q->[0], 3, "quantile, groups=3, q1");
+is ($q->[1], 5.50, "quantile, groups=3, q2");
+is ($q->[2], 8, "quantile, groups=3, q3");
+
 done_testing();
