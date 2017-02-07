@@ -16,6 +16,7 @@ use nmtablefile;
 extends 'tool';
 
 has 'model' => ( is => 'rw', isa => 'model' );
+has 'groups' => ( is => 'rw', isa => 'Int', default => 4 );       # The number of groups to use for quantiles in the time_varying model 
 has 'idv' => ( is => 'rw', isa => 'Str', default => 'TIME' );
 has 'dvid' => ( is => 'rw', isa => 'Str', default => 'DVID' );
 has 'occ' => ( is => 'rw', isa => 'Str', default => 'OCC' );
@@ -23,6 +24,7 @@ has 'run_models' => ( is => 'rw', isa => 'ArrayRef', default => sub { [] } );   
 has 'l2_model' => ( is => 'rw', isa => 'model' );
 has 'residual_models' => ( is => 'rw', isa => 'ArrayRef', default => sub { [] } );  # Array of arrays of hashes for the actual run_models [DVID]->[model]
 has 'quartiles' => ( is => 'rw', isa => 'ArrayRef' );
+has 'cutoffs' => ( is => 'rw', isa => 'ArrayRef' );
 has 'unique_dvid' => ( is => 'rw', isa => 'ArrayRef' );
 has 'numdvid' => ( is => 'rw', isa => 'Int' );
 has 'iterative' => ( is => 'rw', isa => 'Bool', default => 0 );
@@ -443,6 +445,12 @@ END
     my @quartiles = _calculate_quartiles(table => $table->tables->[0], column => $idv_column);
 	$self->quartiles(\@quartiles);
 
+    # Add the time_varying models
+    my $cutoffs = $self->_calculate_quantiles(table => $table->tables->[0], column => $idv_column);  
+    my $time_var_modeltemplates = $self->_build_time_varying_template(cutoffs => $cutoffs);
+    push @residual_models, @$time_var_modeltemplates;
+    $self->cutoffs($cutoffs);
+
 	my @models_to_run;
     for my $model_properties (@residual_models) {
 		my $tad;
@@ -588,11 +596,16 @@ sub modelfit_analyze
 			if (exists $self->residual_models->[$dvid_index]->[$i]->{'parameters'}) {
 				for my $parameter (@{$self->residual_models->[$dvid_index]->[$i]->{'parameters'}}) {
 					if ($parameter->{'name'} eq "QUARTILES") {
-						print $fh sprintf("t1=%.3f", $self->quartiles()->[0]);
-						print $fh sprintf(" t2=%.3f", $self->quartiles()->[1]);
-						print $fh sprintf(" t3=%.3f", $self->quartiles()->[2]);
+						print $fh sprintf("t1=%.2f", $self->quartiles()->[0]);
+						print $fh sprintf(" t2=%.2f", $self->quartiles()->[1]);
+						print $fh sprintf(" t3=%.2f", $self->quartiles()->[2]);
 						next;
-					}
+					} elsif ($parameter->{'name'} eq "CUTOFFS") {
+                        for (my $i = 0; $i < scalar(@{$self->cutoffs}); $i++) {
+                            print $fh sprintf("t$i=%.2f ", $self->cutoffs->[$i]);
+                        }
+                        next;
+                    }
 					print $fh $parameter->{'name'} . "=";
 					my $coordval;
 					my $param = $parameter->{'parameter'};
@@ -665,6 +678,7 @@ sub modelfit_analyze
 
 sub _calculate_quartiles
 {
+    # FIXME: Remove this later
 	my %parm = validated_hash(\@_,
 		table => { isa => 'nmtable' },
 		column => { isa => 'Str' },
@@ -684,6 +698,32 @@ sub _calculate_quartiles
 	my @quartiles = array::quartiles(\@data);
 
 	return @quartiles;
+}
+
+sub _calculate_quantiles
+{
+    # FIXME: Remove this later
+    my $self = shift;
+	my %parm = validated_hash(\@_,
+		table => { isa => 'nmtable' },
+		column => { isa => 'Str' },
+	);
+	my $table = $parm{'table'};
+	my $column = $parm{'column'};
+
+	my $column_no = $table->header->{$column};
+    my $cwres_col = $table->header->{'CWRES'};
+    my @data;
+    for my $i (0 .. scalar(@{$table->columns->[$column_no]}) - 1) {    # Filter out all 0 CWRES as non-observations
+        my $cwres = $table->columns->[$cwres_col]->[$i];
+        if ($cwres ne 'CWRES' and $cwres != 0) {
+            push @data, $table->columns->[$column_no]->[$i] + 0;
+        }
+    }
+    @data = sort { $a <=> $b } @data;
+	my $quantiles = array::quantile(numbers => \@data, groups => $self->groups);
+	
+    return $quantiles;
 }
 
 sub _create_input
@@ -776,7 +816,7 @@ sub _prepare_L2_model
         table_name => { isa => 'Str' },
         num_dvid => { isa => 'Int' },
     );
-    my $input_columns = $parm{'input_columns'};;
+    my $input_columns = $parm{'input_columns'};
     my $table_name = $parm{'table_name'};
     my $num_dvid = $parm{'num_dvid'};
 
@@ -817,6 +857,61 @@ sub _prepare_L2_model
     );
 
     return $l2_model;
+}
+
+sub _build_time_varying_template
+{
+    # Create the templates for the different time_varying models and add to global hash
+    my $self = shift;
+    my %parm = validated_hash(\@_,
+		cutoffs => { isa => 'ArrayRef' },
+    );
+    my $cutoffs = $parm{'cutoffs'};
+
+    my @models;
+
+    # Create one model for each interval.
+    for (my $i = 0; $i < scalar(@$cutoffs); $i++) {
+        my %hash;
+        $hash{'use_base'} = 1;
+        $hash{'name'} = "time_varying_RUV_cutoff$i";
+        my @prob_arr = (
+            "\$PROBLEM CWRES time varying cutoff $i",
+            '$INPUT <inputcolumns>',
+            '$DATA ../<cwrestablename> IGNORE=@ IGNORE=(DV.EQN.0) <dvidaccept>',
+            '$PRED',
+            'Y = THETA(1) + ETA(1) + ERR(2)',
+            'IF (<idv>.LT.' . $cutoffs->[$i] . ") THEN",
+            '    Y = THETA(1) + ETA(1) + ERR(1)',
+            'END IF',
+            '$THETA -0.0345794',
+            '$OMEGA 0.5',
+            '$SIGMA 0.5',
+            '$SIGMA 0.5',
+            '$ESTIMATION METHOD=1 INTER MAXEVALS=9990 PRINT=2 POSTHOC',
+        );
+
+        $hash{'prob_arr'} = \@prob_arr;
+
+        $hash{'parameters'} = [
+            { name => "sdeps_0-t1", parameter => "SIGMA(1,1)", recalc => sub { sqrt($_[0]) } },
+            { name => "sdeps_t1-inf", parameter => "SIGMA(2,2)", recalc => sub { sqrt($_[0]) } },
+            { name => "CUTOFFS" },
+        ];
+
+        push @models, \%hash;
+    } 
+
+    # Useful to combined model 
+    #if ($i == 0) {
+        #    push @prob_arr, "IF (<idv>.LT." . $cutoffs->[0] . ") THEN";
+        #} elsif ($i == scalar(@$cutoffs)) {
+        #    push @prob_arr, "IF (<idv>.GE." . $cutoffs->[$i - 1] . ") THEN";
+        #} else {
+        #    push @prob_arr, "IF (<idv>.GE." .$cutoffs->[$i - 1] . " .AND. <idv>.LT." . $cutoffs->[$i] . ") THEN";
+        #}
+
+    return \@models;
 }
 
 no Moose;

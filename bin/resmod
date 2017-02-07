@@ -29,12 +29,13 @@ my %optional_options = (
     'dvid:s' => undef,
     'idv:s' => undef,
     'iterative!' => undef,
+    'groups:i' => undef,
 );
 
 my $res = GetOptions( \%options,
-		      @common_options::get_opt_strings,
-		      keys(%required_options),
-		      keys(%optional_options) );
+    @common_options::get_opt_strings,
+    keys(%required_options),
+    keys(%optional_options) );
 exit unless $res;
 
 
@@ -96,6 +97,14 @@ $help_text{-iterative} = <<'EOF';
       model etc until all models have been picked.
 EOF
 
+$help_text{-groups} = <<'EOF';
+      -groups
+
+      Set the number of groups to use for the time varying models.     
+      Quantiles using this number will be calculated.
+      The default is 4.
+EOF
+
 common_options::online_help( 'resmod', \%options, \%help_text, \%required_options, \%optional_options);
 common_options::setup( \%options, 'resmod' ); #calls set_globals etc, initiates random sequence
 
@@ -137,6 +146,7 @@ my $resmod = tool::resmod->new(
     idv => $options{'idv'},
 	occ => $options{'occ'},
     iterative => $options{'iterative'},
+    groups => $options{'groups'},
 );
 
 $resmod->print_options(
