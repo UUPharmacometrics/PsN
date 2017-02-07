@@ -1,11 +1,11 @@
 ebe_cook.score_data <- function(ebe.npde.file,eta.names,outlying_criteria,
-                                raw.results.file,skipped.id.file,cutoff_cook) {
+                                raw.results.file,skipped.id.file,cutoff_cook,show.warning=TRUE) {
   # GET OUTLIERS FROM SIMEVAL 
   do_outlier_plot <- FALSE
   model.filename <- ''
 
   # simeval (ebe outliers) ------------------------------------------------------------
-  list_input <- input.data(ebe.npde.file,eta.names)
+  list_input <- input.data(ebe.npde.file,eta.names,show.warning)
   
   ebenpde_tmp <- list_input$ebenpde_tmp
   n.subjects <- list_input$n.subjects
@@ -92,9 +92,13 @@ ebe_cook.score_data <- function(ebe.npde.file,eta.names,outlying_criteria,
                 deleted_infl_ID_text <- paste0(deleted_infl_ID_text,", ",deleted_infl_ID[i])
               }
             }
-            message(paste0("WARNING! Deleted individuals ",deleted_cdd_ID.ebe_text," from which individuals ",deleted_infl_ID_text," are influential!"))
+            if(show.warning) {
+              message(paste0("WARNING! Deleted individuals ",deleted_cdd_ID.ebe_text," from which individuals ",deleted_infl_ID_text," are influential!"))
+            }
           } else {
-            message(paste0("WARNING! Deleted individuals ",deleted_cdd_ID.ebe_text,"!"))
+            if(show.warning) {
+              message(paste0("WARNING! Deleted individuals ",deleted_cdd_ID.ebe_text,"!"))
+            }
           }
           
         }
@@ -166,7 +170,9 @@ ebe_cook.score_data <- function(ebe.npde.file,eta.names,outlying_criteria,
                 no.cook.cov=no.cook.cov)
     return(out)
   } else {
-    message("No cook score or cov ratio values are found in the raw results csv file!")
+    if(show.warning) {
+      message("No cook score or cov ratio values are found in the raw results csv file!")
+    }
     return(no.cook.cov)
   }
   

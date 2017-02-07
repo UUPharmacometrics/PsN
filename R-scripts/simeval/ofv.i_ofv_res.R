@@ -1,4 +1,4 @@
-i_ofv_res <- function(all.iofv.file,n.subjects,samples) {
+i_ofv_res <- function(all.iofv.file,n.subjects,samples,show.warning=TRUE) {
 
   # iOFV RES
   all.iOFV_sim <- read.csv(all.iofv.file)
@@ -24,9 +24,13 @@ i_ofv_res <- function(all.iofv.file,n.subjects,samples) {
           ID_deleted_ofv_text <- paste0(ID_deleted_ofv_text,", ",ID_deleted_ofv[i])
         }
       }
-      message(paste0("WARNING! Removed individuals from csv file \"",all.iofv.file,"\". No data for ID numbers ",ID_deleted_ofv_text,"."))
+      if(show.warning) {
+        message(paste0("WARNING! Removed individuals from csv file \"",all.iofv.file,"\". No data for ID numbers ",ID_deleted_ofv_text,"."))
+      }
     } else {
-      message(paste0("WARNING! Removed individual from csv file \"",all.iofv.file,"\". No data for ID number ",ID_deleted_ofv,"."))
+      if(show.warning) {
+        message(paste0("WARNING! Removed individual from csv file \"",all.iofv.file,"\". No data for ID number ",ID_deleted_ofv,"."))
+      }
     }
     all.iOFV_sim <- all.iOFV_sim[-deleted_rows,]
     rownames(all.iOFV_sim ) <- NULL

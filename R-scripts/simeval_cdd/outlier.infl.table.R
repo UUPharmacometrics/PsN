@@ -1,6 +1,6 @@
 outlier_infl_table <- function(all.iofv.file,n.subjects,samples,ebe.npde.file,eta.names,outlying_criteria,
                                residual.outliers.file,
-                               raw.results.file,skipped.id.file,cutoff_delta.ofv,cutoff_cook) {
+                               raw.results.file,skipped.id.file,cutoff_delta.ofv,cutoff_cook,show.warning=TRUE) {
   outlying_criteria <- -outlying_criteria #need negative outlying criteria 
 ################################################################   SIMEVAL   ##############################################################################  
   # ebe npde part
@@ -65,7 +65,7 @@ outlier_infl_table <- function(all.iofv.file,n.subjects,samples,ebe.npde.file,et
     }
   
   # ofv part
-  list_i_ofv_res <- i_ofv_res(all.iofv.file,n.subjects,samples)# calculation
+  list_i_ofv_res <- i_ofv_res(all.iofv.file,n.subjects,samples,show.warning)# calculation
   # for all outlier table
   ofv_outliers <- list_i_ofv_res$ofv_outliertable
   ID_deleted_ofv <- list_i_ofv_res$ID_deleted_ofv
