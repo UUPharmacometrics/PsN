@@ -1,0 +1,9 @@
+method,model,ofv,"seSIGMA(1,1)",cdd.delta.ofv,cook.scores,cov.ratios
+cdd,0,-114,NA,0,0,1
+cdd,4,-119,NA,1.3,,1.5
+cdd,5,-89,NA,0.4,,1.8
+cdd,6,-92,NA,3.2,,0.3
+cdd,7,-103,NA,2.2,,0.6
+cdd,13,-117,NA,1.2,,1.8
+cdd,14,-106,NA,0.6,,0.5
+other,5,-105,NA,0.21,,2
