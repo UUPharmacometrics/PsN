@@ -20,6 +20,7 @@ has 'idv' => ( is => 'rw', isa => 'Str', default => 'TIME' );
 has 'dvid' => ( is => 'rw', isa => 'Str', default => 'DVID' );
 has 'occ' => ( is => 'rw', isa => 'Str', default => 'OCC' );
 has 'run_models' => ( is => 'rw', isa => 'ArrayRef', default => sub { [] } );      # Array of arrays for the run models [DVID]->[model]
+has 'l2_model' => ( is => 'rw', isa => 'model' );
 has 'residual_models' => ( is => 'rw', isa => 'ArrayRef', default => sub { [] } );  # Array of arrays of hashes for the actual run_models [DVID]->[model]
 has 'quartiles' => ( is => 'rw', isa => 'ArrayRef' );
 has 'unique_dvid' => ( is => 'rw', isa => 'ArrayRef' );
@@ -194,21 +195,6 @@ our @residual_models =
         ],
 		use_base => 1, 
     }, {
-#		name => 'L2',
-#		need_l2 => 1,
-#		need_dvid => 1,
-#		prob_arr => [
-#			'$PROBLEM CWRES L2',
-#			'$INPUT <inputcolumns>',
-#			'$DATA ../<cwrestablename> IGNORE=@ IGNORE=(DV.EQN.0)',
-#			'$PRED',
-#			'<l2_special>',
-#			'$ESTIMATION METHOD=1 INTER MAXEVALS=9990 PRINT=2 POSTHOC',
-#		],
-#		parameters => [
-#		],
-#		use_base => 'L2',
-#	}, {
 		name => 'tdist_base',
 	    prob_arr => [
 			'$PROBLEM CWRES t-distribution base mode',
@@ -415,6 +401,7 @@ END
     my $have_dvid = 0;
 	my $have_occ = 0;
 	my $have_tad = 0;
+    my $have_l2 = 0;
     for my $option (@{$cwres_table->options}) {
         if ($option->name eq 'IPRED') {
             $have_ipred = 1;
@@ -428,7 +415,9 @@ END
         } elsif ($option->name eq 'TAD') {
 			$have_tad = 1;
 			push @columns, 'TAD',
-		}
+		} elsif ($option->name eq 'L2') {
+            $have_l2 = 1;
+        }
     }
 
     if (scalar(@{$self->best_models}) > 0) {
@@ -499,26 +488,33 @@ END
                 push @prob_arr, '$TABLE ID TIME CWRES NOPRINT NOAPPEND ONEHEADER FILE=' . $model_properties->{'name'} . "$dvid_suffix.tab";
             }
 
-            my $sh_mod = model::shrinkage_module->new(
-                nomegas => 1,
-                directory => 'm1/',
-                problem_number => 1
-            );
-            my $cwres_problem = model::problem->new(
+            my $cwres_model = $self->_create_new_model(
                 prob_arr => \@prob_arr,
-                shrinkage_module => $sh_mod,
+                filename => $model_properties->{'name'} . "$dvid_suffix.mod"
             );
-            my $cwres_model = model->new(
-				directory => 'm1/',
-				filename => $model_properties->{'name'} . "$dvid_suffix.mod",
-				problems => [ $cwres_problem ],
-				extra_files => [ $self->directory . '/contr.txt', $self->directory . '/ccontra.txt' ],
-			);
-            $cwres_model->_write();
+
             push @models_to_run, $cwres_model;
             push @{$self->run_models->[$i]}, $cwres_model;
             push @{$self->residual_models->[$i]}, $model_properties; 
         }
+    }
+
+    if ($have_l2 and $number_of_dvid > 1) {
+        push @columns, 'L2';
+    	my $input_columns = _create_input(
+			table => $cwres_table,
+			columns => \@columns,
+            l2 => 1,
+		);
+
+        my $l2_model = $self->_prepare_L2_model(
+		    input_columns => $input_columns,
+            table_name => $cwres_table_name,
+            num_dvid => $number_of_dvid,
+        );
+
+        $self->l2_model($l2_model);
+        push @models_to_run, $l2_model;
     }
 
 	my $modelfit = tool::modelfit->new(
@@ -548,6 +544,7 @@ sub modelfit_analyze
     my @dofvs;
     my @model_names;
 	my %dvid_sum;
+    my $base_sum = 0;
 	for (my $dvid_index = 0; $dvid_index < $self->numdvid; $dvid_index++) {
 		if ($self->numdvid > 1) {
             print $fh "\n";
@@ -566,6 +563,9 @@ sub modelfit_analyze
 			}
 			if (exists $self->residual_models->[$dvid_index]->[$i]->{'base'}) {        # This is a base model
 				$base_models{$self->residual_models->[$dvid_index]->[$i]->{'base'}} = $ofv;
+                if ($self->residual_models->[$dvid_index]->[$i]->{'name'} eq 'base') {
+                    $base_sum += $ofv;
+                }
 				next;
 			}
 
@@ -624,6 +624,21 @@ sub modelfit_analyze
             my $name = $self->residual_models->[0]->[$i]->{'name'};
             print $fh $name, ',', $dvid_sum{$name}, "\n"; 
         }
+        if (defined $self->l2_model) {
+            my $ofv;
+            my $dofv;
+            if ($self->l2_model->is_run()) {
+                my $output = $self->l2_model->outputs->[0];
+                $ofv = $output->get_single_value(attribute => 'ofv');
+            }
+            if (not defined $ofv or not defined $base_sum) {
+                $dofv = 'NA';
+            } else {
+                $dofv = $ofv - $base_sum;
+			    $dofv = sprintf("%.2f", $dofv);
+            }
+            print $fh 'L2,', $dofv, "\n";
+        }
     }
 
     if ($self->iterative) {
@@ -679,8 +694,9 @@ sub _create_input
 		columns => { isa => 'ArrayRef' },
 		ipred => { isa => 'Bool', default => 1 },		# Should ipred be included if in columns?
 		occ => { isa => 'Bool', default => 1 },			# Should occ be included if in columns?
-		occ_name => { isa => 'Str' },					# Name of the occ column
+		occ_name => { isa => 'Str', default => 'OCC' },	# Name of the occ column
 		tad => { isa => 'Bool', default => 0 },			# Should TAD be used instead of $self->idv?
+        l2 => { isa => 'Bool', default => 0 },          # Should L2 be included if in columns?
 	);
 	my $table = $parm{'table'};
 	my @columns = @{$parm{'columns'}};
@@ -688,6 +704,7 @@ sub _create_input
 	my $occ = $parm{'occ'};
 	my $occ_name = $parm{'occ_name'};
 	my $tad = $parm{'tad'};
+	my $l2 = $parm{'l2'};
 
 	my $input_columns;
 	my @found_columns;
@@ -702,6 +719,7 @@ sub _create_input
 				$name = 'DROP' if ($name eq $occ_name and not $occ);
 				$name = 'DROP' if ($name eq 'TAD' and not $tad);
 				$name = 'DROP' if ($name eq 'TIME' and $tad);
+                $name = 'DROP' if ($name eq 'L2' and not $l2);
                 $input_columns .= $name;
                 $found = 1;
                 last;
@@ -717,6 +735,89 @@ sub _create_input
 	return $input_columns;
 }
 
+sub _create_new_model
+{
+    my $self = shift;
+	my %parm = validated_hash(\@_,
+		prob_arr => { isa => 'ArrayRef' },
+        filename => { isa => 'Str' },
+    );
+    my $prob_arr = $parm{'prob_arr'};
+    my $filename = $parm{'filename'};
+
+    my $sh_mod = model::shrinkage_module->new(
+        nomegas => 1,
+        directory => 'm1/',
+        problem_number => 1
+    );
+
+    my $cwres_problem = model::problem->new(
+        prob_arr => $prob_arr,
+        shrinkage_module => $sh_mod,
+    );
+
+    my $cwres_model = model->new(
+        directory => 'm1/',
+        filename => $filename,
+        problems => [ $cwres_problem ],
+        extra_files => [ $self->directory . '/contr.txt', $self->directory . '/ccontra.txt' ],
+    );
+
+    $cwres_model->_write();
+    
+    return $cwres_model;
+}
+
+sub _prepare_L2_model
+{
+    my $self = shift;
+    my %parm = validated_hash(\@_,
+		input_columns => { isa => 'Str' },
+        table_name => { isa => 'Str' },
+        num_dvid => { isa => 'Int' },
+    );
+    my $input_columns = $parm{'input_columns'};;
+    my $table_name = $parm{'table_name'};
+    my $num_dvid = $parm{'num_dvid'};
+
+    my @prob_arr = (
+        '$PROBLEM    CWRES base model',
+        '$INPUT ' . $input_columns,
+        '$DATA ../' . $table_name . ' IGNORE=@ IGNORE(DV.EQN.0)',
+        '$PRED',
+    );
+
+    for (my $i = 1; $i <= $num_dvid; $i++) {
+        push @prob_arr, "IF(DVID.EQ.$i) Y = THETA($i) + ETA($i) + ERR($i)";
+    }
+
+    for (my $i = 0; $i < $num_dvid; $i++) {
+        push @prob_arr, '$THETA 0.1';
+    }    
+
+    for (my $i = 0; $i < $num_dvid; $i++) {
+        push @prob_arr, '$OMEGA 0.01';
+    }
+
+    push @prob_arr, "\$SIGMA BLOCK($num_dvid)";
+    for (my $i = 0; $i < $num_dvid; $i++) {
+        my $row = " ";
+        for (my $j = 0; $j < $i; $j++) {
+            $row .= '0.01 ';
+        }
+        $row .= '1';
+        push @prob_arr, $row;
+    }
+
+    push @prob_arr, '$ESTIMATION METHOD=1 INTER MAXEVALS=9990 PRINT=2 POSTHOC';
+
+    my $l2_model = $self->_create_new_model(
+        prob_arr => \@prob_arr,
+        filename => 'l2.mod',
+    );
+
+    return $l2_model;
+}
 
 no Moose;
 __PACKAGE__->meta->make_immutable;
