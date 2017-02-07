@@ -48,6 +48,8 @@ raw.results.file_5 <- paste0(files.w.dir,'raw_results_5.csv')
 raw.results.file_6 <- paste0(files.w.dir,'raw_results_6.csv')
 raw.results.file_7 <- paste0(files.w.dir,'raw_results_7.csv')
 raw.results.file_8 <- paste0(files.w.dir,'raw_results_8.csv')
+raw.results.file_9 <- paste0(files.w.dir,'raw_results_9.csv')
+raw.results.file_10 <- paste0(files.w.dir,'raw_results_10.csv')
 ebe.npde.file_1 <- paste0(files.w.dir,'ebe_npde_iiv_iov.csv')
 ebe.npde.file_2 <- paste0(files.w.dir,'ebe_npde_iiv_iov_1.csv')
 ebe.npde.file_3 <- paste0(files.w.dir,'ebe_npde_1.csv')
@@ -406,13 +408,13 @@ list_data_1 <- ebe_cook.score_data(ebe.npde.file=ebe.npde.file_1,eta.names=c('ET
                                    raw.results.file=raw.results.file_1,skipped.id.file=skipped.id.file_1,cutoff_cook=0.8) #outl, infl
 list_data_2 <- ebe_cook.score_data(ebe.npde.file=ebe.npde.file_2,eta.names=c('ETA.1.','ETA.2.','ETA.3.','ETA.4.','ETA.5.','ETA.6.'),
                                    outlying_criteria=3, 
-                                   raw.results.file=raw.results.file_1,skipped.id.file=skipped.id.file_1,cutoff_cook=0.8) #no outl, infl
+                                   raw.results.file=raw.results.file_1,skipped.id.file=skipped.id.file_1,cutoff_cook=0.8,show.warning=FALSE) #no outl, infl
 list_data_3 <- ebe_cook.score_data(ebe.npde.file=ebe.npde.file_1,eta.names=c('ETA.1.','ETA.2.','ETA.3.','ETA.4.','ETA.5.','ETA.6.'),
                                    outlying_criteria=3, 
                                    raw.results.file=raw.results.file_1,skipped.id.file=skipped.id.file_1,cutoff_cook=0.95) #oult, no infl
 list_data_4 <- ebe_cook.score_data(ebe.npde.file=ebe.npde.file_2,eta.names=c('ETA.1.','ETA.2.','ETA.3.','ETA.4.','ETA.5.','ETA.6.'),
                                    outlying_criteria=3, 
-                                   raw.results.file=raw.results.file_1,skipped.id.file=skipped.id.file_1,cutoff_cook=0.95) #no outlier, no infl
+                                   raw.results.file=raw.results.file_1,skipped.id.file=skipped.id.file_1,cutoff_cook=0.95,show.warning=FALSE) #no outlier, no infl
 
 # unlist
 infl_data_1 <- list_data_1$infl_data
@@ -517,8 +519,8 @@ exp_row_infl_not_outl_4 <- c()
 exp_row_outl_not_infl_4 <- c()
 
 # Compare expected data with real data
-context("CDD/Simeval, function influential_outliers_data")
-test_that("If function influential_outliers_data works as expected",{
+context("CDD/Simeval, function ebe.cook.score.data")
+test_that("If function ebe.cook.score.data works as expected",{
   expect_equal(exp_infl_data_1,infl_data_1)
   expect_equal(exp_outl_data_1,outl_data_1)
   expect_equal(exp_table_for_plot_1,table_for_plot_1)
@@ -568,7 +570,7 @@ test_that("If function influential_outliers_data works as expected",{
   expect_equal(exp_row_outl_not_infl_4,row_outl_not_infl_4)
 })
 
-context("CDD/Simeval, messages from function influential_outliers_data")
+context("CDD/Simeval, messages from function ebe.cook.score.data")
 test_that("messages shows up",{
   expect_message(ebe_cook.score_data(ebe.npde.file=ebe.npde.file_2,eta.names=c('ETA.1.','ETA.2.','ETA.3.','ETA.4.','ETA.5.','ETA.6.'),
                                      outlying_criteria=3,raw.results.file=raw.results.file_1,
@@ -576,18 +578,24 @@ test_that("messages shows up",{
   expect_message(ebe_cook.score_data(ebe.npde.file=ebe.npde.file_2,eta.names=c('ETA.1.','ETA.2.','ETA.3.','ETA.4.','ETA.5.','ETA.6.'),
                                      outlying_criteria=3,raw.results.file=raw.results.file_1,
                                      skipped.id.file=skipped.id.file_1,cutoff_cook=0.95)) #no outlier, no infl
+  expect_message(ebe_cook.score_data(ebe.npde.file=ebe.npde.file_2,eta.names=c('ETA.1.','ETA.2.','ETA.3.','ETA.4.','ETA.5.','ETA.6.'),
+                                     outlying_criteria=3,raw.results.file=raw.results.file_9,
+                                     skipped.id.file=skipped.id.file_1,cutoff_cook=0.95)) #no outlier, no infl
+  expect_message(ebe_cook.score_data(ebe.npde.file=ebe.npde.file_2,eta.names=c('ETA.1.','ETA.2.','ETA.3.','ETA.4.','ETA.5.','ETA.6.'),
+                                     outlying_criteria=3,raw.results.file=raw.results.file_10,
+                                     skipped.id.file=skipped.id.file_1,cutoff_cook=0.95)) #no outlier, no infl
 })
 
 #...........................  (3) Test function outlier.infl.table.R .....................................  
 table_list_1 <- outlier_infl_table(all.iofv.file=all.iofv.file_1,n.subjects=6,samples=3,ebe.npde.file=ebe.npde.file_3,
                                  eta.names=c("ETA.1.","ETA.2.","ETA.3."),outlying_criteria=2,
                                  residual.outliers.file=residual.outliers.file_1,
-                                 raw.results.file=raw.results.file_6,skipped.id.file=skipped.id.file_2,cutoff_delta.ofv=3.84)
+                                 raw.results.file=raw.results.file_6,skipped.id.file=skipped.id.file_2,cutoff_delta.ofv=3.84,show.warning=FALSE)
 
 table_list_2 <- outlier_infl_table(all.iofv.file=all.iofv.file_1,n.subjects=6,samples=3,ebe.npde.file=ebe.npde.file_3,
                                  eta.names=c("ETA.1.","ETA.2.","ETA.3."),outlying_criteria=2,
                                  residual.outliers.file=residual.outliers.file_1,
-                                 raw.results.file=raw.results.file_7,skipped.id.file=skipped.id.file_2,cutoff_delta.ofv=3.84)
+                                 raw.results.file=raw.results.file_7,skipped.id.file=skipped.id.file_2,cutoff_delta.ofv=3.84,show.warning=FALSE)
 
 table_list_3 <- outlier_infl_table(all.iofv.file=all.iofv.file_5,n.subjects=6,samples=3,ebe.npde.file=ebe.npde.file_4,
                                    eta.names=c("ETA.1.","ETA.2.","ETA.3."),outlying_criteria=2,
@@ -602,7 +610,7 @@ table_list_4 <- outlier_infl_table(all.iofv.file=all.iofv.file_5,n.subjects=6,sa
 table_list_5 <- outlier_infl_table(all.iofv.file=all.iofv.file_1,n.subjects=6,samples=3,ebe.npde.file=ebe.npde.file_4,
                                    eta.names=c("ETA.1.","ETA.2.","ETA.3."),outlying_criteria=2,
                                    residual.outliers.file=residual.outliers.file_2,
-                                   raw.results.file=raw.results.file_8,skipped.id.file=skipped.id.file_2,cutoff_delta.ofv=3.84)
+                                   raw.results.file=raw.results.file_8,skipped.id.file=skipped.id.file_2,cutoff_delta.ofv=3.84,show.warning=FALSE)
 
 # table_list_6 <- outlier_infl_table(all.iofv.file=all.iofv.file_5,n.subjects=6,samples=3,ebe.npde.file=ebe.npde.file_4,
 #                                    eta.names=c("ETA.1.","ETA.2.","ETA.3."),outlying_criteria=2,
@@ -733,3 +741,18 @@ test_that("If function outlier_infl_table works as expected",{
   expect_equal(exp_outl_infl_table_5,outl_infl_table_5)
 })
 
+context("CDD/Simeval, messages from function outlier.infl.table")
+test_that("messages shows up",{
+  expect_message(outlier_infl_table(all.iofv.file=all.iofv.file_1,n.subjects=6,samples=3,ebe.npde.file=ebe.npde.file_3,
+                                    eta.names=c("ETA.1.","ETA.2.","ETA.3."),outlying_criteria=2,
+                                    residual.outliers.file=residual.outliers.file_1,
+                                    raw.results.file=raw.results.file_6,skipped.id.file=skipped.id.file_2,cutoff_delta.ofv=3.84))  
+  expect_message(outlier_infl_table(all.iofv.file=all.iofv.file_1,n.subjects=6,samples=3,ebe.npde.file=ebe.npde.file_3,
+                                    eta.names=c("ETA.1.","ETA.2.","ETA.3."),outlying_criteria=2,
+                                    residual.outliers.file=residual.outliers.file_1,
+                                    raw.results.file=raw.results.file_7,skipped.id.file=skipped.id.file_2,cutoff_delta.ofv=3.84)) 
+  expect_message(outlier_infl_table(all.iofv.file=all.iofv.file_1,n.subjects=6,samples=3,ebe.npde.file=ebe.npde.file_4,
+                                    eta.names=c("ETA.1.","ETA.2.","ETA.3."),outlying_criteria=2,
+                                    residual.outliers.file=residual.outliers.file_2,
+                                    raw.results.file=raw.results.file_8,skipped.id.file=skipped.id.file_2,cutoff_delta.ofv=3.84)) 
+})

@@ -112,7 +112,7 @@ test_that("If function summary.table.ofv works as expected",{
 #..........................  (4) Test function i_ofv_res  ...................................
 out_i_ofv_res <- i_ofv_res(all.iofv.file=all.iofv.file_1,n.subjects=4,samples=3)
 out_i_ofv_res_a <- i_ofv_res(all.iofv.file=all.iofv.file,n.subjects=4,samples=3)
-out_i_ofv_res_2 <- i_ofv_res(all.iofv.file=all.iofv.file_3,n.subjects=4,samples=3)
+out_i_ofv_res_2 <- i_ofv_res(all.iofv.file=all.iofv.file_3,n.subjects=4,samples=3,show.warning=FALSE)
 
 # unlist information
 all.iOFV_sim <- out_i_ofv_res$all.iOFV_sim
