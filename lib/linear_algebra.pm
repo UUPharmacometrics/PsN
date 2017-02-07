@@ -282,7 +282,6 @@ sub copy_and_reorder_square_matrix
 	return \@copy;
 }
 
-
 sub is_symmetric
 {
     # Check if matrix is symmetric (A^T = A)
@@ -457,6 +456,7 @@ sub cook_score_parameters
 	return (0,\@scores);
 
 }
+
 sub cook_score_all
 {
 	my $cholesky = shift;
@@ -932,6 +932,7 @@ sub get_inverse_parameter_list
 	return {'ETA' => \@etalist, 'EPS' => \@epslist, 'THETA' => \@thetalist, 'RECORD' => \@recordlist, 'bounded_theta' => $bounded_theta};
 
 }
+
 sub substitute_etas
 {
     my %parm = validated_hash(\@_,
@@ -1048,8 +1049,6 @@ sub eta_cholesky_code
 
 	return ($dimension,\@code,\@etalist);
 }
-
-
 
 sub cholesky
 {
@@ -1202,7 +1201,6 @@ sub spdarise
     
 	return(\@posdefmatrix,$fNormDiff);
 }
-
 
 sub eigenvalue_decomposition
 {
@@ -1608,6 +1606,7 @@ sub cap_correlation
 	return ($modified,$max_correlation,\@indices,\@cap_indices);
 
 }
+
 sub covar2sdcorr
 {
     my $varcov=shift;
@@ -1986,6 +1985,7 @@ sub lower_triangular_UTU_multiply
     }
     return 0;
 }
+
 sub conditional_covariance_coefficients
 {
 	#has unit tests
@@ -2241,9 +2241,5 @@ sub frem_conditional_coefficients
 	}
 	return (0,\@coefficients);
 }
-
-
-
-
 
 1;
