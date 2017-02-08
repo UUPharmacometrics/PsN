@@ -601,8 +601,12 @@ sub modelfit_analyze
 						print $fh sprintf(" t3=%.2f", $self->quartiles()->[2]);
 						next;
 					} elsif ($parameter->{'name'} eq "CUTOFFS") {
-                        for (my $i = 0; $i < scalar(@{$self->cutoffs}); $i++) {
-                            print $fh sprintf("t$i=%.2f ", $self->cutoffs->[$i]);
+                        if ($parameter->{'cutoff'} eq 'all') {
+                            for (my $i = 0; $i < scalar(@{$self->cutoffs}); $i++) {
+                                print $fh sprintf("t" . ($i + 1) . "=%.2f ", $self->cutoffs->[$i]);
+                            }
+                        } else {
+                            print $fh sprintf('t0=%.2f', $self->cutoffs->[$parameter->{'cutoff'}]); 
                         }
                         next;
                     }
@@ -894,22 +898,66 @@ sub _build_time_varying_template
         $hash{'prob_arr'} = \@prob_arr;
 
         $hash{'parameters'} = [
-            { name => "sdeps_0-t1", parameter => "SIGMA(1,1)", recalc => sub { sqrt($_[0]) } },
-            { name => "sdeps_t1-inf", parameter => "SIGMA(2,2)", recalc => sub { sqrt($_[0]) } },
-            { name => "CUTOFFS" },
+            { name => "sdeps_0-t0", parameter => "SIGMA(1,1)", recalc => sub { sqrt($_[0]) } },
+            { name => "sdeps_t0-inf", parameter => "SIGMA(2,2)", recalc => sub { sqrt($_[0]) } },
+            { name => "CUTOFFS", cutoff => $i },
         ];
 
         push @models, \%hash;
     } 
 
-    # Useful to combined model 
-    #if ($i == 0) {
-        #    push @prob_arr, "IF (<idv>.LT." . $cutoffs->[0] . ") THEN";
-        #} elsif ($i == scalar(@$cutoffs)) {
-        #    push @prob_arr, "IF (<idv>.GE." . $cutoffs->[$i - 1] . ") THEN";
-        #} else {
-        #    push @prob_arr, "IF (<idv>.GE." .$cutoffs->[$i - 1] . " .AND. <idv>.LT." . $cutoffs->[$i] . ") THEN";
-        #}
+	my %hash;
+	$hash{'name'} = 'time_varying_RUV';
+	$hash{'use_base'} = 1;
+	my @prob_arr = (
+		'$PROBLEM CWRES time varying',
+		'$INPUT <inputcolumns>',
+		'$DATA ../<cwrestablename> IGNORE=@ IGNORE=(DV.EQN.0) <dvidaccept>',
+		'$PRED',
+        'Y = THETA(1) + ETA(1) + ERR(' . (scalar(@$cutoffs) + 1)  . ')',
+	);
+
+    for (my $i = 0; $i < scalar(@$cutoffs); $i++) {
+        if ($i == 0) {
+            push @prob_arr, "IF (<idv>.LT." . $cutoffs->[0] . ") THEN";
+        } else {
+            push @prob_arr, "IF (<idv>.GE." .$cutoffs->[$i - 1] . " .AND. <idv>.LT." . $cutoffs->[$i] . ") THEN";
+        }
+    }
+
+	push @prob_arr, '$THETA -0.0345794';
+    push @prob_arr, '$OMEGA 0.5';
+
+	for (my $i = 0; $i <= scalar(@$cutoffs); $i++) {
+        push @prob_arr, '$SIGMA 0.5';
+    }
+
+	push @prob_arr, '$ESTIMATION METHOD=1 INTER MAXEVALS=9990 PRINT=2 POSTHOC';
+	$hash{'prob_arr'} = \@prob_arr;
+     
+    my @parameters;
+    for (my $i = 0; $i <= scalar(@$cutoffs); $i++) {
+        my %parameter_hash;
+        my $start;
+        my $end;
+        if ($i == 0) {
+            $start = '0';
+        } else {
+            $start = "t$i";
+        }
+        if ($i == scalar(@$cutoffs)) {
+            $end = 'inf';
+        } else {
+            $end = "t" . ($i + 1);
+        }
+        $parameter_hash{'name'} = "sdeps_$start-$end";
+        $parameter_hash{'parameter'} = "SIGMA(" . ($i + 1) . "," . ($i + 1) . ")";
+        $parameter_hash{'recalc'} = sub { sqrt($_[0]) };
+        push @parameters, \%parameter_hash;
+    }
+    push @parameters, { name => "CUTOFFS", cutoff => 'all' };
+    $hash{'parameters'} = \@parameters;
+    push @models, \%hash;
 
     return \@models;
 }
