@@ -21,9 +21,19 @@ create.data.full <- function(raw.results.file,skipped.id.file) {
     no.cook.cov <- TRUE
   }
   
+  # check if there are some cov ratios = 0 (it means that covariance step failed for specifick excluded ID)
+  ID_failed_cov <- c()
+  if(any(cdd.data.all$cov.ratios[-1]==0)) {
+    ID_failed_cov <- cdd.data.all$ID[(cdd.data.all$cov.ratios==0)]
+    if(is.na(ID_failed_cov[1])) {
+      ID_failed_cov <- ID_failed_cov[-1]
+    }
+  }
+  
   # output
   out <- list(input_cdd.data=input_cdd.data,
               cdd.data.all=cdd.data.all,
-              no.cook.cov=no.cook.cov)
+              no.cook.cov=no.cook.cov,
+              ID_failed_cov=ID_failed_cov)
   return(out)
 }

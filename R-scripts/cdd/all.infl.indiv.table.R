@@ -1,4 +1,4 @@
-all.infl.indiv.table <- function(infl_ofv,infl_cook_data,infl_cov_data,fail_ID) {
+all.infl.indiv.table <- function(infl_ofv,infl_cook_data,infl_cov_data,fail_ID,ID_failed_cov) {
   col_amount <- 4
   # ID numbers of all influential individuals if they exist
   id <- c()
@@ -45,7 +45,7 @@ all.infl.indiv.table <- function(infl_ofv,infl_cook_data,infl_cov_data,fail_ID) 
       }
       
       col_nr <- col_nr + 1
-      # Add OFV values
+      # Add cook scores values
       if (exists("cook_ID")) {
         if (any(cook_ID %in% id_nr)) {
           cook_value_row <- which(cook_ID == id_nr)
@@ -54,7 +54,14 @@ all.infl.indiv.table <- function(infl_ofv,infl_cook_data,infl_cov_data,fail_ID) 
       }
       
       col_nr <- col_nr + 1
-      # Add OFV values
+      #cov.ratios deleted id if exists
+      if(length(ID_failed_cov)>0) {
+        if(any(ID_failed_cov %in% id_nr)) {
+          all_infl_indiv_table[n,col_nr] <- "NA"
+        }
+      }
+      
+      # Add cov ratios values
       if (exists("cov_ID")) {
         if (any(cov_ID %in% id_nr)) {
           cov_value_row <- which(cov_ID == id_nr)

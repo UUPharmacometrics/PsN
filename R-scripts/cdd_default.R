@@ -11,5 +11,8 @@ source(paste0(rscripts.directory,"/cdd/delta.ofv.data.R"))
 source(paste0(rscripts.directory,"/cdd/plot.delta.ofv.R"))
 source(paste0(rscripts.directory,"/common/plot.table.R"))
 source(paste0(rscripts.directory,"/cdd/all.infl.indiv.table.R"))
-pdf.cdd(raw.results.file,skipped.id.file,pdf.filename=pdf.filename,markeropt=1,
+
+library(gridExtra)
+
+pdf.cdd(raw.results.file,skipped.id.file,pdf.filename=pdf.filename,
         cutoff_delta.ofv=3.84)

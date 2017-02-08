@@ -1,4 +1,4 @@
-pdf.cdd <- function(raw.results.file,skipped.id.file,pdf.filename,markeropt,
+pdf.cdd <- function(raw.results.file,skipped.id.file,pdf.filename,
                     min.failed,cov.failed,cov.warnings,boundary,legend,cutoff_delta.ofv,
                     cutoff_cook,outlier_ID) {
   #default for legend is FALSE
@@ -13,6 +13,7 @@ pdf.cdd <- function(raw.results.file,skipped.id.file,pdf.filename,markeropt,
   list_input_data <- create.data.full(raw.results.file,skipped.id.file)
   cdd.data.all <- list_input_data$cdd.data.all
   no.cook.cov <- list_input_data$no.cook.cov
+  ID_failed_cov <- list_input_data$ID_failed_cov
   
   if(!(no.cook.cov)) {
     ## skip first record (no cases deleted)
@@ -24,30 +25,26 @@ pdf.cdd <- function(raw.results.file,skipped.id.file,pdf.filename,markeropt,
       cdd.warn <- p1$cdd.warn
       p1 <- p1$p1
     }
-    # 3. Create tables cdd.pt and cdd.txt
-    out <- mark.options.data(p1,markeropt)
-    cdd.pt <- out$cdd.pt
-    cdd.txt <- out$cdd.txt
     
-    # 4. Count not successful values
+    # 3. Count not successful values
     fail <- failed.values(cdd.data)
     
     # create pdf file
     pdf(file=pdf.filename,width=11.69, height=8.27)
     
-    # 6. calculate cutoff cov ratios
+    # 4. calculate cutoff cov ratios
     list_out <- cutoff.cov.cook(raw.results.file,skipped.id.file,cutoff_cook)
     cutoff_cov <- list_out$cutoff_cov
+    cov.cook.data <- list_out$cov.cook.data
     
     # 5. Create a plot
     if (exists("cdd.warn")) {
-      plot.cdd(cdd.data,cutoff_cook,cutoff_cov,cdd.pt,cdd.txt,legend,fail,cdd.warn)
+      plot.cdd(cov.cook.data,cutoff_cook,cutoff_cov,ID_failed_cov,legend,fail,cdd.warn)
     } else {
-      plot.cdd(cdd.data,cutoff_cook,cutoff_cov,cdd.pt,cdd.txt,legend,fail)
+      plot.cdd(cov.cook.data,cutoff_cook,cutoff_cov,ID_failed_cov,legend,fail)
     }
     
     # create cutoff tables
-    library(gridExtra)
     # rotate column names
     rotate = ttheme_default(colhead=list(fg_params=list(rot=90)))
     #unlist
@@ -87,7 +84,7 @@ pdf.cdd <- function(raw.results.file,skipped.id.file,pdf.filename,markeropt,
     }
     
     # influential summary table
-    all_infl_indiv_table <- all.infl.indiv.table(infl_ofv,infl_cook_data,infl_cov_data,fail_ID)
+    all_infl_indiv_table <- all.infl.indiv.table(infl_ofv,infl_cook_data,infl_cov_data,fail_ID,ID_failed_cov)
     plot.table(all_infl_indiv_table)
     
     #close pdf

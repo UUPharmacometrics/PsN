@@ -1,4 +1,4 @@
-cutoff.cov.cook <- function(raw.results.file,skipped.id.file,cutoff_cook) {
+cutoff.cov.cook <- function(raw.results.file,skipped.id.file,cutoff_cook,show.warning=TRUE) {
   if(missing("cutoff_cook")) {
     cutoff_cook <- 0.8
   }
@@ -7,6 +7,12 @@ cutoff.cov.cook <- function(raw.results.file,skipped.id.file,cutoff_cook) {
   # add ID numbers to the data set
   out_cdd.data.all <- create.data.full(raw.results.file,skipped.id.file)
   cdd.data.all <- out_cdd.data.all$cdd.data.all
+  ID_failed_cov <- out_cdd.data.all$ID_failed_cov
+  if(length(ID_failed_cov) > 0) {
+    if(show.warning) {
+      message(paste0("WARNING! No covariance ratios for individuals with ID numbers: ",paste(as.character(ID_failed_cov),collapse = ", ")))
+    }
+  }
   
   # subset overall cook score and cov ratios column (except 1 row)
   cook.scores <- cdd.data.all$cook.scores[-1]
@@ -22,11 +28,20 @@ cutoff.cov.cook <- function(raw.results.file,skipped.id.file,cutoff_cook) {
   # Make data frame for cook score and add ID numbers
   cook.data <- cbind(ID,cook.scores,cook.par.data)
   cov.data <- cbind(ID,cov.ratios,cov.par.data)
+  # delete indivuduals if no information (cov.ratios=0)
+  if(any(cov.data$cov.ratios==0)) {
+    cov.data <- cov.data[-(which(cov.data$cov.ratios==0)),]
+    rownames(cov.data) <- NULL
+  }
+  
+  #create cov ratios and cook scores data for plot
+  rows <- which(cook.data$ID %in% cov.data$ID)
+  cov.cook.data <- cbind(cov.data[,1:2],cook.scores=cook.data$cook.scores[rows])
   
   #calculate cutoff_cov by formula |covratio-1| >= 3p/n (p - number of parameters, n - number of individuals)
   cutoff_cov <- c()
-  cutoff_cov[1] <- (-3*ncol(cov.par.data)/nrow(cov.par.data))+1
-  cutoff_cov[2] <- (3*ncol(cov.par.data)/nrow(cov.par.data))+1
+  cutoff_cov[1] <- (-3*ncol(cov.par.data)/nrow(cov.data))+1
+  cutoff_cov[2] <- (3*ncol(cov.par.data)/nrow(cov.data))+1
   
   # create tables
   library(gridExtra)
@@ -79,7 +94,8 @@ cutoff.cov.cook <- function(raw.results.file,skipped.id.file,cutoff_cook) {
     
   
   # output
-    list_out <- list(cutoff_cov=cutoff_cov,
+    list_out <- list(cov.cook.data=cov.cook.data,
+                     cutoff_cov=cutoff_cov,
                      cook.data=cook.data,
                      cov.data=cov.data,
                      cook_outliers=cook_outliers,
@@ -87,7 +103,8 @@ cutoff.cov.cook <- function(raw.results.file,skipped.id.file,cutoff_cook) {
                      cook_outliers_data=cook_outliers_data,
                      cov_outliers_data=cov_outliers_data,
                      infl_cov_data=infl_cov_data,
-                     infl_cook_data=infl_cook_data)
+                     infl_cook_data=infl_cook_data,
+                     ID_failed_cov=ID_failed_cov)
 
   return(list_out)
 }
