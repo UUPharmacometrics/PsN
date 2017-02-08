@@ -23,7 +23,6 @@ has 'occ' => ( is => 'rw', isa => 'Str', default => 'OCC' );
 has 'run_models' => ( is => 'rw', isa => 'ArrayRef', default => sub { [] } );      # Array of arrays for the run models [DVID]->[model]
 has 'l2_model' => ( is => 'rw', isa => 'model' );
 has 'residual_models' => ( is => 'rw', isa => 'ArrayRef', default => sub { [] } );  # Array of arrays of hashes for the actual run_models [DVID]->[model]
-has 'quartiles' => ( is => 'rw', isa => 'ArrayRef' );
 has 'cutoffs' => ( is => 'rw', isa => 'ArrayRef' );
 has 'unique_dvid' => ( is => 'rw', isa => 'ArrayRef' );
 has 'numdvid' => ( is => 'rw', isa => 'Int' );
@@ -85,39 +84,6 @@ our @residual_models =
         ],
         use_base => 1,
 	}, {
-        name => 'time_varying_RUV',
-        prob_arr => [
-            '$PROBLEM CWRES time varying',
-            '$INPUT <inputcolumns>',
-            '$DATA ../<cwrestablename> IGNORE=@ IGNORE=(DV.EQN.0) <dvidaccept>',
-            '$PRED',
-            'Y = THETA(1) + ETA(1) + ERR(4)',
-            'IF (<idv>.LT.<q1>) THEN',
-            '    Y = THETA(1) + ETA(1) + ERR(1)',
-            'END IF',
-            'IF (<idv>.GE.<q1> .AND. <idv>.LT.<median>) THEN',
-            '    Y = THETA(1) + ETA(1) + ERR(2)',
-            'END IF',
-            'IF (<idv>.GE.<median> .AND. <idv>.LT.<q3>) THEN',
-            '    Y = THETA(1) + ETA(1) + ERR(3)',
-            'END IF',
-            '$THETA -0.0345794',
-            '$OMEGA 0.5',
-            '$SIGMA 0.5',
-            '$SIGMA 0.5',
-            '$SIGMA 0.5',
-            '$SIGMA 0.5',
-            '$ESTIMATION METHOD=1 INTER MAXEVALS=9990 PRINT=2 POSTHOC',
-        ],
-        parameters => [
-            { name => "sdeps_0-t1", parameter => "SIGMA(1,1)", recalc => sub { sqrt($_[0]) } },
-            { name => "sdeps_t1-t2", parameter => "SIGMA(2,2)", recalc => sub { sqrt($_[0]) } },
-            { name => "sdeps_t2-t3", parameter => "SIGMA(3,3)" , recalc => sub { sqrt($_[0]) } },
-            { name => "sdeps_t3-inf", parameter => "SIGMA(4,4)", recalc => sub { sqrt($_[0]) } },
-			{ name => "QUARTILES" },
-        ],
-        use_base => 1,
-    }, {
         name => 'autocorrelation',
         prob_arr => [
 			'$PROBLEM CWRES AR1',
@@ -442,8 +408,6 @@ END
 	if ($have_tad) {
 		$idv_column = 'TAD';
 	}
-    my @quartiles = _calculate_quartiles(table => $table->tables->[0], column => $idv_column);
-	$self->quartiles(\@quartiles);
 
     # Add the time_varying models
     my $cutoffs = $self->_calculate_quantiles(table => $table->tables->[0], column => $idv_column);  
@@ -479,9 +443,6 @@ END
                 $row =~ s/<inputcolumns>/$input_columns/g;
                 $row =~ s/<cwrestablename>/$cwres_table_name/g;
                 $row =~ s/<dvidaccept>/$accept/g;
-                $row =~ s/<q1>/$quartiles[0]/g;
-                $row =~ s/<median>/$quartiles[1]/g;
-                $row =~ s/<q3>/$quartiles[2]/g;
                 my $idv = $self->idv;
 				if ($have_tad and $model_properties->{'name'} eq 'time_varying') {
 					$idv = 'TAD';
@@ -595,12 +556,7 @@ sub modelfit_analyze
 
 			if (exists $self->residual_models->[$dvid_index]->[$i]->{'parameters'}) {
 				for my $parameter (@{$self->residual_models->[$dvid_index]->[$i]->{'parameters'}}) {
-					if ($parameter->{'name'} eq "QUARTILES") {
-						print $fh sprintf("t1=%.2f", $self->quartiles()->[0]);
-						print $fh sprintf(" t2=%.2f", $self->quartiles()->[1]);
-						print $fh sprintf(" t3=%.2f", $self->quartiles()->[2]);
-						next;
-					} elsif ($parameter->{'name'} eq "CUTOFFS") {
+					if ($parameter->{'name'} eq "CUTOFFS") {
                         if ($parameter->{'cutoff'} eq 'all') {
                             for (my $i = 0; $i < scalar(@{$self->cutoffs}); $i++) {
                                 print $fh sprintf("t" . ($i + 1) . "=%.2f ", $self->cutoffs->[$i]);
@@ -678,30 +634,6 @@ sub modelfit_analyze
     }
 
     close $fh;
-}
-
-sub _calculate_quartiles
-{
-    # FIXME: Remove this later
-	my %parm = validated_hash(\@_,
-		table => { isa => 'nmtable' },
-		column => { isa => 'Str' },
-	);
-	my $table = $parm{'table'};
-	my $column = $parm{'column'};
-
-	my $column_no = $table->header->{$column};
-    my $cwres_col = $table->header->{'CWRES'};
-    my @data;
-    for my $i (0 .. scalar(@{$table->columns->[$column_no]}) - 1) {    # Filter out all 0 CWRES as non-observations
-        my $cwres = $table->columns->[$cwres_col]->[$i];
-        if ($cwres ne 'CWRES' and $cwres != 0) {
-            push @data, $table->columns->[$column_no]->[$i] + 0;
-        }
-    }
-	my @quartiles = array::quartiles(\@data);
-
-	return @quartiles;
 }
 
 sub _calculate_quantiles
@@ -923,6 +855,8 @@ sub _build_time_varying_template
         } else {
             push @prob_arr, "IF (<idv>.GE." .$cutoffs->[$i - 1] . " .AND. <idv>.LT." . $cutoffs->[$i] . ") THEN";
         }
+        push @prob_arr, "    Y = THETA(1) + ETA(1) + EPS(" . ($i + 1) . ")";
+        push @prob_arr, "END IF";
     }
 
 	push @prob_arr, '$THETA -0.0345794';

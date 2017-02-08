@@ -14,7 +14,7 @@ use math qw(round);
 
 require Exporter;
 our @ISA = qw(Exporter);
-our %EXPORT_TAGS = ('all' => [ qw(not_empty is_empty diff cumsum max min linspace unique add sum mean median median_and_ci quartiles variance stdev is_int quantile percentile is_equal get_array_positions get_positions sem rse any_nonzero count_lower find_zeros get_intersection is_zero) ]);
+our %EXPORT_TAGS = ('all' => [ qw(not_empty is_empty diff cumsum max min linspace unique add sum mean median median_and_ci variance stdev is_int quantile percentile is_equal get_array_positions get_positions sem rse any_nonzero count_lower find_zeros get_intersection is_zero) ]);
 our @EXPORT_OK = ( @{ $EXPORT_TAGS{'all'} } );
 
 sub find_zeros
@@ -543,39 +543,6 @@ sub median_and_ci
 	my $low_ci_ind = round((100-$ci)*($count-1)/200);
 	my $high_ci_ind = $count - $low_ci_ind - 1; #index of end  of  c_i% interval
 	return ($median,$sorted[$low_ci_ind],$sorted[$high_ci_ind]);
-}
-
-sub quartiles
-{
-    # Calculate the quartiles and median of array according to wikipedia method 1
-    my $ref = shift;
-
-    my @sorted = sort ({$a <=> $b} @{$ref});
-
-    my $median;
-    if (scalar(@sorted) % 2) {
-	    $median = $sorted[$#sorted / 2];
-    } else {
-	    $median = ($sorted[@sorted / 2] + $sorted[(@sorted - 2) / 2]) / 2;
-    }
-    my $size = int(scalar(@sorted) / 2);
-
-    my $low_q;
-    my $high_q;
-    if ($size % 2) {
-        $low_q = $sorted[($size - 1) / 2];
-        $high_q = $sorted[scalar(@sorted) - $size + ($size - 1) / 2];
-    } else {
-	    $low_q = ($sorted[$size / 2] + $sorted[($size - 2) / 2]) / 2;
-        my $offset = scalar(@sorted) - $size;
-	    $high_q = ($sorted[$offset + $size / 2] + $sorted[$offset + ($size - 2) / 2]) / 2;
-    }
-
-    my @quartiles;
-    $quartiles[0] = $low_q;
-    $quartiles[1] = $median;
-    $quartiles[2] = $high_q;
-    return @quartiles;
 }
 
 sub variance

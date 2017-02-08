@@ -34,13 +34,6 @@ $input = tool::resmod::_create_input(table => $table, columns => [ 'ID', 'TIME',
 is ($input, "ID TIME DROP DROP DROP DROP DROP DROP DROP DROP DV", "resmod _create_input ipred excluded");
 
 
-$table = nmtablefile->new(filename => "$test_files/resmod/sdtab"); 
-$table = $table->tables->[0];
-my @quartiles = tool::resmod::_calculate_quartiles(table => $table, column => 'TIME');
-
-is_deeply (\@quartiles, [ 6, 63.5, 131.8 ], "_calculate_quartiles 1");
-
-
 remove_test_dir($tempdir);
 
 done_testing();
