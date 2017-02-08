@@ -614,9 +614,37 @@ sub modelfit_analyze
         }
     }
 
+    close $fh;
+    
     if ($self->iterative) {
-        (my $minvalue, my $minind) = array::min(@dofvs);
-        my $model_name = $model_names[$minind];
+        my @best_models = @{$self->best_models};
+        my $model_name;
+
+        while (scalar(@dofvs)) {
+            (my $minvalue, my $minind) = array::min(@dofvs);
+            $model_name = $model_names[$minind];
+
+            
+            # Was the model selected previously?
+            if (grep { $_ eq $model_name } @best_models) {
+                splice @dofvs, $minind, 1;
+                splice @model_names, $minind, 1;
+                next;
+            }
+
+            # Check if the CWRES column is all zeros
+            my $table = nmtablefile->new(filename => "m1/$model_name.tab"); 
+
+
+            last;
+        }
+
+        if (scalar(@dofvs) == 0) {      # Exit recursion
+            return;
+        }
+
+        push @best_models, $model_name;
+
         my $model = model->new(
             #eval($eval_string),
             filename => "m1/$model_name.mod",
@@ -628,12 +656,10 @@ sub modelfit_analyze
             models => [ $model ],
             idv => $self->idv,
             iterative => $self->iterative,
-            best_models => [ @{$self->best_models}, $model_name ],
+            best_models => \@best_models,
         );
         $resmod->run();
     }
-
-    close $fh;
 }
 
 sub _calculate_quantiles
