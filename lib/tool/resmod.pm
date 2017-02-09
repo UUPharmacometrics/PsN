@@ -28,6 +28,7 @@ has 'unique_dvid' => ( is => 'rw', isa => 'ArrayRef' );
 has 'numdvid' => ( is => 'rw', isa => 'Int' );
 has 'iterative' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'best_models' => ( is => 'rw', isa => 'ArrayRef', default => sub { [] } );
+has 'top_directory' => ( is => 'rw', isa => 'Str' );    # Path to the toplevel directory to put results files
 
 # This array of hashes represent the different models to be tested. The 0th is the base model
 our @residual_models =
@@ -311,6 +312,10 @@ sub BUILD
 
 	my $model = $self->models()->[0]; 
     $self->model($model);
+
+    if (not defined $self->top_directory) {     # This is the first run if iterative
+        $self->top_directory($self->directory);
+    }
 }
 
 sub modelfit_setup
@@ -508,8 +513,13 @@ sub modelfit_analyze
 	# Remove the extra files
 	unlink('contr.txt', 'ccontra.txt');
 
-    open my $fh, '>', 'results.csv';
-    print $fh "Model,dOFV,Parameters\n";
+    open my $fh, '>>', $self->top_directory . 'results.csv';
+    if (scalar(@{$self->best_models} == 0)) {        # Only print header for first iteration
+        print $fh "Model,dOFV,Parameters\n";
+    }
+    if ($self->iterative) {
+        print $fh "\n\"** ITERATION", scalar(@{$self->best_models}) + 1, " **\"\n";
+    }
     my %base_models;        # Hash from basemodelno to base model OFV
 	my $current_dvid;
     my @dofvs;
@@ -666,6 +676,7 @@ sub modelfit_analyze
             iterative => $self->iterative,
             best_models => \@best_models,
             cutoffs => $self->cutoffs,
+            top_directory => $self->top_directory,
         );
         $resmod->run();
     }
