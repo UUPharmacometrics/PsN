@@ -110,11 +110,12 @@ sub modelfit_analyze
 
     # Open all tables at the same time. Trading memory for speed
     my @tables;
+
     for my $obsnum (1 .. $numtabs) {
         $tables[$obsnum - 1] = data->new(
             filename => "m1/proseval_$obsnum.tab",
             missing_data_token => $self->missing_data_token,
-            idcolumn => $self->model->idcolumn(),
+            idcolumn => 1,
         );
     }
 
