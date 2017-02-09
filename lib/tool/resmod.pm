@@ -409,11 +409,13 @@ END
 		$idv_column = 'TAD';
 	}
 
-    # Add the time_varying models
-    my $cutoffs = $self->_calculate_quantiles(table => $table->tables->[0], column => $idv_column);  
-    my $time_var_modeltemplates = $self->_build_time_varying_template(cutoffs => $cutoffs);
-    push @residual_models, @$time_var_modeltemplates;
-    $self->cutoffs($cutoffs);
+    # Add the time_varying models if not already added (we are iterating)
+    if (not defined $self->cutoffs) {
+        my $cutoffs = $self->_calculate_quantiles(table => $table->tables->[0], column => $idv_column);  
+        my $time_var_modeltemplates = $self->_build_time_varying_template(cutoffs => $cutoffs);
+        push @residual_models, @$time_var_modeltemplates;
+        $self->cutoffs($cutoffs);
+    }
 
 	my @models_to_run;
     for my $model_properties (@residual_models) {
@@ -615,7 +617,7 @@ sub modelfit_analyze
     }
 
     close $fh;
-    
+
     if ($self->iterative) {
         my @best_models = @{$self->best_models};
         my $model_name;
@@ -624,7 +626,6 @@ sub modelfit_analyze
             (my $minvalue, my $minind) = array::min(@dofvs);
             $model_name = $model_names[$minind];
 
-            
             # Was the model selected previously?
             if (grep { $_ eq $model_name } @best_models) {
                 splice @dofvs, $minind, 1;
@@ -634,7 +635,14 @@ sub modelfit_analyze
 
             # Check if the CWRES column is all zeros
             my $table = nmtablefile->new(filename => "m1/$model_name.tab"); 
-
+            my $cwres_column = $table->tables->[0]->header->{'CWRES'};
+            my $unique_cwres = array::unique($table->tables->[0]->columns->[$cwres_column]);
+            if (scalar(@$unique_cwres) == 1 && $unique_cwres->[0] == 0) {
+                splice @dofvs, $minind, 1;
+                splice @model_names, $minind, 1;
+                push @best_models, $model_name;
+                next;
+            }
 
             last;
         }
@@ -657,6 +665,7 @@ sub modelfit_analyze
             idv => $self->idv,
             iterative => $self->iterative,
             best_models => \@best_models,
+            cutoffs => $self->cutoffs,
         );
         $resmod->run();
     }
