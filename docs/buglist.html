@@ -36,8 +36,28 @@ out. Maybe you will also get help from other users on the mailing
 list. Do not send model files and data files unless we ask you to.</p>
 
 <h3>Known bugs in current release </h3>
- <p>Click <a href="https://raw.githubusercontent.com/UUPharmacometrics/PsN/master/development/release_notes/buglist_current_release.txt" target="_blank">here</a> to see the bug list.</p>
- 
+
+This list holds information about bugs found in PsN-4.6.0
+
+<ul>
+	<li>bias and relative bias in cdd_results.csv are incorrect when option -bins is not set. To get the correct bias value, the displayed values should be multiplied with (1- 'default number of bins') where the default number of bins is the number of individuals (or cases).</li>
+
+	<li>sse will use the wrong simulated data for reestimation if the simulation model file has more than one $INPUT statement. The table file with simulated data used for reestimation will only include the items from the last $INPUT. Note: It works fine to split $INPUT over several lines, as long as the text $INPUT only appears once.</li>
+
+	<li>Data values with more than five significant digits in sse
+    The simulated datasets used in sse are \$TABLE output from NONMEM, and NONMEM rounds off values when printing tables. In NONMEM 6 1013201 is rounded to 1013200 (five significant digits), and if this makes a significant change to the model estimation, for example if the value is a covariate, then the sse results will be wrong. In NONMEM7 it is possible to set the FORMAT option in $TABLE to make sure no important information is lost. With NONMEM 6 the user must make sure the rounding to five significant digits does not harm the results.</li>
+
+	<li>Lower case user defined and reserved words
+    Starting with NONMEM 7.2 lower case user defined and reserved words are supported. This is not supported
+    by PsN. For example in $INPUT all reserved words have to be upper case.</li>
+
+	<li>
+		Dropped covariates in scm can cause scm results to be invalid. If the column of a covariate is set to DROP in $INPUT and the covariate
+		is set to be investigated by the scm the results cannot be trusted and PsN will not give any warnings or errors. The workaround is to make sure
+		that no covariates that are being used by the scm are set to DROP. The bug was fixed in development release 4.6.6.
+	</li>
+</ul>
+
          </div>
         <div id="footer" style="padding-top:2px;padding-right:2px;padding-left:2px;"></div>
     </div>
