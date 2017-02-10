@@ -170,9 +170,9 @@ our @residual_models =
 			'$INPUT <inputcolumns>',
 			'$DATA ../<cwrestablename> IGNORE=@ IGNORE=(DV.EQN.0) <dvidaccept>',
 			'$PRED',
-			'IPRED = THETA(1) + ETA(1)',
+			'IPRED_ = THETA(1) + ETA(1)',
 			'W     = THETA(2)',
-			'IWRES=(DV-IPRED)/W',
+			'IWRES=(DV-IPRED_)/W',
 			'LIM = 10E-14',
 			'IF(IWRES.EQ.0) IWRES = LIM',
 			'LL=-0.5*LOG(2*3.14159265)-LOG(W)-0.5*(IWRES**2)',
@@ -191,11 +191,11 @@ our @residual_models =
 			'$INPUT <inputcolumns>',
 			'$DATA ../<cwrestablename> IGNORE=@ IGNORE=(DV.EQN.0) <dvidaccept>',
 			'$PRED',
-            'IPRED = THETA(1) + ETA(1)',
+            'IPRED_ = THETA(1) + ETA(1)',
             'W = THETA(2)',
             'DF = THETA(3) ; degrees of freedom of Student distribution',
             'SIG1 = W ; scaling factor for standard deviation of RUV',
-            'IWRES = (DV - IPRED) / SIG1',
+            'IWRES = (DV - IPRED_) / SIG1',
             'PHI = (DF + 1) / 2 ; Nemesapproximation of gamma funtion(2007) for first factor of t-distrib(gamma((DF+1)/2))',
             'INN = PHI + 1 / (12 * PHI - 1 / (10 * PHI))',
             'GAMMA = SQRT(2 * 3.14159265 / PHI) * (INN / EXP(1)) ** PHI',
@@ -431,7 +431,7 @@ END
     	my $input_columns = _create_input(
 			table => $cwres_table,
 			columns => \@columns,
-			ipred => $model_properties->{'need_ipred'},
+			ipred => 1,     # Always add ipred to be able to pass it through to next iteration if needed
 			occ => $model_properties->{'need_occ'},
 			occ_name => $self->occ,
 			tad => $tad
@@ -461,7 +461,11 @@ END
             $dvid_suffix = "_DVID" . int($unique_dvid->[$i]) if ($have_dvid);
 
             if ($self->iterative) {
-                push @prob_arr, '$TABLE ID TIME CWRES NOPRINT NOAPPEND ONEHEADER FILE=' . $model_properties->{'name'} . "$dvid_suffix.tab";
+                my $ipred = "";
+                if ($have_ipred) {
+                    $ipred = ' IPRED';
+                } 
+                push @prob_arr, "\$TABLE ID TIME CWRES$ipred NOPRINT NOAPPEND ONEHEADER FILE=" . $model_properties->{'name'} . "$dvid_suffix.tab";
             }
 
             my $cwres_model = $self->_create_new_model(
