@@ -636,8 +636,9 @@ sub modelfit_analyze
         my @best_models = @{$self->best_models};
         my $model_name;
 
+        my $minvalue;
         while (scalar(@dofvs)) {
-            (my $minvalue, my $minind) = array::min(@dofvs);
+            ($minvalue, my $minind) = array::min(@dofvs);
             $model_name = $model_names[$minind];
 
             # Was the model selected previously?
@@ -664,6 +665,8 @@ sub modelfit_analyze
         if (scalar(@dofvs) == 0) {      # Exit recursion
             return;
         }
+
+        $self->_add_to_iteration_summary(model_name => $model_name, iteration => scalar(@{$self->best_models} + 1), dofv => $minvalue);
 
         push @best_models, $model_name;
 
@@ -944,6 +947,31 @@ sub _build_time_varying_template
     push @models, \%hash;
 
     return \@models;
+}
+
+
+sub _add_to_iteration_summary
+{
+    my $self = shift;
+
+    my %parm = validated_hash(\@_,
+		model_name => { isa => 'Str' },
+		iteration => { isa => 'Int' },
+        dofv => { isa => 'Num' },
+    );
+    my $model_name = $parm{'model_name'};
+    my $iteration = $parm{'iteration'};
+    my $dofv = $parm{'dofv'};
+
+    open my $fh, '>>', $self->top_directory . "iteration_summary.csv";
+
+    if ($iteration == 1) {      # This is the first iteration
+        print $fh "Model,Iteration,dOFV\n";    
+    }
+
+    print $fh "$model_name,$iteration,$dofv\n";
+
+    close $fh;
 }
 
 no Moose;
