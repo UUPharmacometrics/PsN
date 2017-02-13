@@ -17,6 +17,7 @@ has 'model' => ( is => 'rw', isa => 'model' );
 has 'evid_column' => ( is => 'rw', isa => 'Int' ); 
 has 'numobs_indiv' => ( is => 'rw', isa => 'HashRef', default => sub { {} } );
 has 'sorted_indiv_numobs' => ( is => 'rw', isa => 'ArrayRef', default => sub { [] } );
+has 'columns' => ( is => 'rw', isa => 'ArrayRef' );
 
 sub BUILD
 {
@@ -66,11 +67,18 @@ sub modelfit_setup
         my $modified_model = $model->copy(filename => $model_filename, output_same_directory => 1);
         $modified_model->problems->[0]->datas->[0]->set_filename(filename => $data_filename);
 
-        # Remove all tables
-        $modified_model->problems->[0]->tables([]);
-
-		$modified_model->add_records(type => 'table',
-            record_strings => ['ID', 'TIME', 'EVID', 'IPRED', 'WRES', 'IWRES', 'NOPRINT', 'NOAPPEND', 'ONEHEADER', "FILE=proseval_$n.tab"]);
+        # Remove all tables except the first
+        my $first_table = $modified_model->problems->[0]->tables->[0];
+        $modified_model->problems->[0]->tables([ $first_table ]);
+        $modified_model->set_option(record_name => 'table', option_name => 'FILE', option_value => "proseval_$n.tab");
+        $modified_model->remove_option(record_name => 'table', option_name => 'PRINT');
+        $modified_model->set_option(record_name => 'table', option_name => 'NOPRINT');
+        $modified_model->remove_option(record_name => 'table', option_name => 'APPEND');
+        $modified_model->set_option(record_name => 'table', option_name => 'NOAPPEND');
+        $modified_model->remove_option(record_name => 'table', option_name => 'NOHEADER');
+        $modified_model->set_option(record_name => 'table', option_name => 'ONEHEADER');
+        my $columns = $first_table->columns();
+        $self->columns($columns);
 
         $modified_model->_write(filename => $model_filename, relative_data_path => 1);
         push @models_to_run, $modified_model;
@@ -104,7 +112,7 @@ sub modelfit_analyze
     my $self = shift;
 
     open my $fh, '>', "results.csv";
-    print $fh "ID,TIME,EVID,IPRED,WRES,IWRES,OBS\n";
+    print $fh join(',', @{$self->columns}), ",OBS\n";
 
     my $numtabs = array::max($self->sorted_indiv_numobs);
 

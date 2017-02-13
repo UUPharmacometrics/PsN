@@ -24,6 +24,24 @@ sub renumber_file{
 
 }
 
+sub columns
+{
+    my $self = shift;
+
+    my @columns;
+
+	my @options = defined($self->options) ? @{$self->options} : ();
+    foreach my $opt (@options) {
+        if ($opt->name !~ /PRINT|NOPRINT|FILE|NOHEADER|ONEHEADER|NOTITLE|NOLABEL|
+            FIRSTONLY|NOFORWARD|FORWARD|APPEND|NOAPPEND|FORMAT|LFORMAT|RFORMAT|
+            ESAMPLE|WRESCHOL|SEED|RANMETHOD|UNCONDITIONAL|CONDITIONAL|OMITTED/x) {
+            push @columns, $opt->name;
+        }
+    }
+
+    return \@columns;
+}
+
 no Moose;
 __PACKAGE__->meta->make_immutable;
 1;
