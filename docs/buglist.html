@@ -52,9 +52,11 @@ This list holds information about bugs found in PsN-4.6.0
     by PsN. For example in $INPUT all reserved words have to be upper case.</li>
 
 	<li>
-		Dropped covariates in scm can cause scm results to be invalid. If the column of a covariate is set to DROP in $INPUT and the covariate
-		is set to be investigated by the scm the results cannot be trusted and PsN will not give any warnings or errors. The workaround is to make sure
-		that no covariates that are being used by the scm are set to DROP. The bug was fixed in development release 4.6.6.
+A bug with potentially serious consequences has been discovered in the scm program in PsN release versions 4.4.8 and 4.6.0. The bug is triggered when there is a dropped covariate (i.e. in $INPUT the user has set DROP/SKIP on a covariate which is listed in continuous_covariates or categorical_covariates in the scm config file) *in combination with* the data filtering step (i.e. when $DATA has an IGNORE statement which is more complex than IGNORE=&lt;single character&gt;). 
+
+When *both* these conditions are met, scm-4.6.0 and scm-4.4.8 will during the filtering step replace the DROP-ped covariate with a placeholder column (the first undropped column, which usually is the ID-column), but then later un-DROP the corresponding item in $INPUT when it is found that the item is listed as a covariate in the scm config file. This results in the placeholder column being tested as a covariate in the scm run instead of the correct data column. The file covariate_statistics.txt shows what values where actually used for the covariate in the scm run, so check this file to see if an old scm run has been affected by the bug.
+
+PsN release 4.4.0 is not affected by this bug (the run will crash if a covariate is dropped in $INPUT and the filtering step is triggered). In PsN versions >= 4.6.6 and all later versions there is an input check that no covariates are DROPped or SKIPped in $INPUT, preventing the above error.
 	</li>
 </ul>
 
