@@ -9,7 +9,7 @@ estimate extraction from output files, data file sub setting and resampling,
 to advanced computer-intensive statistical methods. PsN includes stand-alone 
 tools for the end-user as well as development libraries for method developers.
 
-Please find more information on the webpage: http://psn.sourceforge.net/
+Please find more information on the webpage: https://uupharmacometrics.github.io/PsN 
 
 ************************
 Installation
