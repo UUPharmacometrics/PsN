@@ -891,60 +891,89 @@ sub _build_time_varying_template
         push @models, \%hash;
     } 
 
-	my %hash;
-	$hash{'name'} = 'time_varying_RUV';
-	$hash{'use_base'} = 1;
-	my @prob_arr = (
-		'$PROBLEM CWRES time varying',
-		'$INPUT <inputcolumns>',
-		'$DATA ../<cwrestablename> IGNORE=@ IGNORE=(DV.EQN.0) <dvidaccept>',
-		'$PRED',
-        'Y = THETA(1) + ETA(1) + ERR(' . (scalar(@$cutoffs) + 1)  . ')',
-	);
-
-    for (my $i = 0; $i < scalar(@$cutoffs); $i++) {
-        if ($i == 0) {
-            push @prob_arr, "IF (<idv>.LT." . $cutoffs->[0] . ") THEN";
+    for my $param ('theta', 'eps') {
+        my %hash;
+        if ($param eq 'eps') {
+            $hash{'name'} = 'time_varying_RUV';
         } else {
-            push @prob_arr, "IF (<idv>.GE." .$cutoffs->[$i - 1] . " .AND. <idv>.LT." . $cutoffs->[$i] . ") THEN";
+            $hash{'name'} = 'time_varying_theta';
         }
-        push @prob_arr, "    Y = THETA(1) + ETA(1) + EPS(" . ($i + 1) . ")";
-        push @prob_arr, "END IF";
-    }
+        $hash{'use_base'} = 1;
+        my @prob_arr = (
+            '$PROBLEM CWRES time varying',
+            '$INPUT <inputcolumns>',
+            '$DATA ../<cwrestablename> IGNORE=@ IGNORE=(DV.EQN.0) <dvidaccept>',
+            '$PRED',
+        );
 
-	push @prob_arr, '$THETA -0.0345794';
-    push @prob_arr, '$OMEGA 0.5';
-
-	for (my $i = 0; $i <= scalar(@$cutoffs); $i++) {
-        push @prob_arr, '$SIGMA 0.5';
-    }
-
-	push @prob_arr, '$ESTIMATION METHOD=1 INTER MAXEVALS=9990 PRINT=2 POSTHOC';
-	$hash{'prob_arr'} = \@prob_arr;
-     
-    my @parameters;
-    for (my $i = 0; $i <= scalar(@$cutoffs); $i++) {
-        my %parameter_hash;
-        my $start;
-        my $end;
-        if ($i == 0) {
-            $start = '0';
+        if ($param eq 'eps') {
+            push @prob_arr, 'Y = THETA(1) + ETA(1) + ERR(' . (scalar(@$cutoffs) + 1)  . ')';
         } else {
-            $start = "t$i";
+            push @prob_arr, 'Y = THETA(' . (scalar(@$cutoffs) + 1) . ') + ETA(1) + ERR(1)';
         }
-        if ($i == scalar(@$cutoffs)) {
-            $end = 'inf';
+        for (my $i = 0; $i < scalar(@$cutoffs); $i++) {
+            if ($i == 0) {
+                push @prob_arr, "IF (<idv>.LT." . $cutoffs->[0] . ") THEN";
+            } else {
+                push @prob_arr, "IF (<idv>.GE." .$cutoffs->[$i - 1] . " .AND. <idv>.LT." . $cutoffs->[$i] . ") THEN";
+            }
+            if ($param eq 'eps') {
+                push @prob_arr, "    Y = THETA(1) + ETA(1) + EPS(" . ($i + 1) . ")";
+            } else {
+                push @prob_arr, "    Y = THETA(" . ($i + 1) . ") + ETA(1) + EPS(1)";
+            }
+            push @prob_arr, "END IF";
+        }
+
+        if ($param eq 'eps') {
+            push @prob_arr, '$THETA -0.0345794';
         } else {
-            $end = "t" . ($i + 1);
+            for (my $i = 0 ; $i <= scalar(@$cutoffs); $i++) {
+                push @prob_arr, '$THETA 0.03';
+            }
         }
-        $parameter_hash{'name'} = "sdeps_$start-$end";
-        $parameter_hash{'parameter'} = "SIGMA(" . ($i + 1) . "," . ($i + 1) . ")";
-        $parameter_hash{'recalc'} = sub { sqrt($_[0]) };
-        push @parameters, \%parameter_hash;
+        push @prob_arr, '$OMEGA 0.5';
+
+        if ($param eq 'eps') {
+            for (my $i = 0; $i <= scalar(@$cutoffs); $i++) {
+                push @prob_arr, '$SIGMA 0.5';
+            }
+        } else {
+            push @prob_arr, '$SIGMA 0.5';
+        }
+
+        push @prob_arr, '$ESTIMATION METHOD=1 INTER MAXEVALS=9990 PRINT=2 POSTHOC';
+        $hash{'prob_arr'} = \@prob_arr;
+
+        my @parameters;
+        for (my $i = 0; $i <= scalar(@$cutoffs); $i++) {
+            my %parameter_hash;
+            my $start;
+            my $end;
+            if ($i == 0) {
+                $start = '0';
+            } else {
+                $start = "t$i";
+            }
+            if ($i == scalar(@$cutoffs)) {
+                $end = 'inf';
+            } else {
+                $end = "t" . ($i + 1);
+            }
+            if ($param eq 'eps') {
+                $parameter_hash{'name'} = "sdeps_$start-$end";
+                $parameter_hash{'parameter'} = "SIGMA(" . ($i + 1) . "," . ($i + 1) . ")";
+                $parameter_hash{'recalc'} = sub { sqrt($_[0]) };
+            } else {
+                $parameter_hash{'name'} = "th_$start-$end";
+                $parameter_hash{'parameter'} = "THETA" . ($i + 1);
+            }
+            push @parameters, \%parameter_hash;
+        }
+        push @parameters, { name => "CUTOFFS", cutoff => 'all' };
+        $hash{'parameters'} = \@parameters;
+        push @models, \%hash;
     }
-    push @parameters, { name => "CUTOFFS", cutoff => 'all' };
-    $hash{'parameters'} = \@parameters;
-    push @models, \%hash;
 
     return \@models;
 }
