@@ -1,0 +1,63 @@
+---
+title: "Bootstrap"
+output: pdf_document
+classoption: landscape
+geometry: margin=1.5cm
+---
+
+```{r loading_libraries_and_sourcing_functions,include = FALSE}
+source(paste0(rscripts.directory, "/bootstrap/cook.cov.calcul.R"))
+source(paste0(rscripts.directory, "/bootstrap/plot.cook.cov.R"))
+source(paste0(rscripts.directory, "/bootstrap/format.dofv.data.R"))
+source(paste0(rscripts.directory, "/bootstrap/plot.dofv.R"))
+
+library(xpose4)
+library(ggplot2)
+library(grid)
+require(plyr)
+require(dplyr)
+```
+
+```{r check_xpose4_version,results='hide',echo=FALSE}
+if(packageVersion("xpose4")<"4.5.0"){
+		warning("xpose4 version must be 4.5.0 or later for bootstrap plot")	
+}							 
+```
+
+```{r histograms_of_all_parameters,results='hide',warning=FALSE,echo=FALSE,fig.width=10,fig.height=7,fig.keep="high",fig.align="center"}
+bootplots <- boot.hist(results.file=raw.results.file,incl.ids.file=included.ids.file,
+                       min.failed=skip.minimization.terminated,
+                       cov.failed=skip.covariance.step.terminated,
+                       cov.warnings=skip.with.covstep.warnings,
+                       boundary=skip.estimate.near.boundary)
+print(bootplots[1]) #parameters
+```
+\pagebreak
+
+```{r dOFV_distribution_plot,results='hide',warning=FALSE,message=FALSE,echo=FALSE,fig.width=10,fig.height=7,fig.keep="high",fig.align="center"}
+
+add_dOFV_plots <- FALSE
+if (dofv.is.run){
+  add_dOFV_plots <- TRUE
+  
+  # Read in and format data
+  list_dofv <- format_dofv_data(dofv.raw.results.file,raw.results.file,N.ESTIMATED.PARAMS)
+  all <- list_dofv$all
+  df_est <- list_dofv$df_est
+
+  # Plot dOFV distributions
+  qdOFV_all <- plot_dofv(all,df_est,N.ESTIMATED.PARAMS)
+  print(qdOFV_all)
+}
+```
+
+```{asis Add_pagebreak_on_condition, echo=add_dOFV_plots}
+\pagebreak
+```
+
+```{r Histogram_of_objective_function,results='hide',echo=FALSE,fig.width=10,fig.height=7,fig.keep="high",fig.align="center"}
+
+if (rplots.level > 1){
+    print(bootplots[2:4]) #SEs ofv eigenvalues
+}
+```

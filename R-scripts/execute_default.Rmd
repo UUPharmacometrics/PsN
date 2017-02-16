@@ -1,0 +1,156 @@
+---
+title: "Execute diagnostic plots"
+output: pdf_document
+classoption: landscape
+geometry: margin=1.5cm
+---
+
+```{r load_libraries_and_source_functions,include = FALSE}
+# Used libraries
+library(xpose4)
+
+source(paste0(rscripts.directory,"/common/file_existence_in_directory.R"),echo=TRUE)
+source(paste0(rscripts.directory,"/execute/data.obj.obsi.R"),echo=TRUE) 
+source(paste0(rscripts.directory,"/execute/plot.obj.obsi.R"),echo=TRUE)
+```
+
+```{r Summary_plot,results='hide',echo=FALSE,fig.width=9,fig.height=6.5,fig.keep="high",fig.align="center"}
+xpdb <- xpose.data(xpose.runno,directory=model.directory,tab.suffix=tab.suffix,mod.prefix=mod.prefix,mod.suffix=mod.suffix)
+
+#uncomment below to change the idv from TIME to something else such as TAD.
+#Other xpose preferences could also be changed
+#xpdb@Prefs@Xvardef$idv="TAD"
+runsum(xpdb,dir=model.directory,
+         modfile=paste(model.directory,model.filename,sep=""),
+         listfile=paste(model.directory,sub(mod.suffix,".lst",model.filename),sep=""))
+```
+\pagebreak
+
+```{r Basic_goodness_of_fit_plots,results='hide',echo=FALSE,fig.width=9,fig.height=7,fig.keep="high",fig.align="center"}
+if (is.null(subset.variable)){
+    print(basic.gof(xpdb))
+}else{
+    # change the subset variable from categorical to continuous or vice versa.
+    # change.cat.cont(xpdb) <- c(subset.variable)
+    print(basic.gof(xpdb,by=subset.variable,max.plots.per.page=1))
+}
+```
+\pagebreak
+
+```{r Histograms_distribution_of_ETAs,results='hide',echo=FALSE,fig.width=9,fig.height=7,fig.keep="high",fig.align="center"}
+if (is.null(subset.variable)){
+    print(ranpar.hist(xpdb))
+}else{
+    # change the subset variable from categorical to continuous or vice versa.
+    # change.cat.cont(xpdb) <- c(subset.variable)
+    print(ranpar.hist(xpdb,by=subset.variable,scales="free",max.plots.per.page=1))
+}
+```
+\pagebreak
+
+```{r Distribution_of_random_parameters,results='hide',echo=FALSE,fig.width=9,fig.height=7,fig.keep="high",fig.align="center"}
+if (is.null(subset.variable)){
+    print(ranpar.qq(xpdb))
+}else{
+    # change the subset variable from categorical to continuous or vice versa.
+    # change.cat.cont(xpdb) <- c(subset.variable)
+    print(ranpar.qq(xpdb,by=subset.variable,max.plots.per.page=1))
+}
+```
+\pagebreak
+
+```{r Observations_Individual.pred_Population.pred_vs.Time,results='hide',echo=FALSE,fig.width=9,fig.height=7,fig.keep="high",fig.align="center"}
+if (is.null(subset.variable)){
+    print(dv.preds.vs.idv(xpdb))
+}else{
+    # change the subset variable from categorical to continuous or vice versa.
+    # change.cat.cont(xpdb) <- c(subset.variable)
+    print(dv.preds.vs.idv(xpdb,by=subset.variable))
+}
+```
+\pagebreak
+
+```{r Observations_vs.Time,results='hide',echo=FALSE,fig.width=9,fig.height=7,fig.keep="high",fig.align="center"}
+if (is.null(subset.variable)){
+    print(dv.vs.idv(xpdb))
+}else{
+    # change the subset variable from categorical to continuous or vice versa.
+    # change.cat.cont(xpdb) <- c(subset.variable)
+    print(dv.vs.idv(xpdb,by=subset.variable))
+}
+```
+\pagebreak
+
+```{r Individual_predictions_vs.Time,results='hide',echo=FALSE,fig.width=9,fig.height=7,fig.keep="high",fig.align="center"}
+if (is.null(subset.variable)){
+    print(ipred.vs.idv(xpdb))
+}else{
+    # change the subset variable from categorical to continuous or vice versa.
+    # change.cat.cont(xpdb) <- c(subset.variable)
+    print(ipred.vs.idv(xpdb,by=subset.variable))
+}
+```
+\pagebreak
+
+```{r Population_predictions_vs.Time,results='hide',echo=FALSE,fig.width=9,fig.height=7,fig.keep="high",fig.align="center"}
+if (is.null(subset.variable)){
+    print(pred.vs.idv(xpdb))
+    
+}else{
+    # change the subset variable from categorical to continuous or vice versa.
+    # change.cat.cont(xpdb) <- c(subset.variable)
+    print(pred.vs.idv(xpdb,by=subset.variable))
+}
+```
+\pagebreak
+
+```{r Individual_plots,results='hide',echo=FALSE,fig.width=9,fig.height=7,fig.keep="high",fig.align="center"}
+rplots.gr.1 <- FALSE
+if (rplots.level > 1){
+  rplots.gr.1 <- TRUE
+  #individual plots of ten random IDs
+  #find idcolumn
+  idvar <- xvardef("id",xpdb)
+  ten.random.ids<-sort(sample(unique(xpdb@Data[,idvar]),10,replace=FALSE))
+  subset.string <- paste0(idvar,'==',paste(ten.random.ids,collapse=paste0(' | ',idvar,'==')))
+
+  if (is.null(subset.variable)){
+    print(ind.plots(xpdb,subset=subset.string))
+  }else{
+    for (flag in unique(xpdb@Data[,subset.variable])){
+      print(ind.plots(xpdb,layout=c(1,1),subset=paste0(subset.variable,'==',flag,' & (',subset.string,')')))
+    }
+  }
+}  
+```
+
+```{asis Add_pagebreak_on_condition, echo=rplots.gr.1}
+\pagebreak
+```
+
+```{r Plot_obj_obsi,results='hide',echo=FALSE,fig.width=9,fig.height=7,fig.keep="high",fig.align="center"}
+if (rplots.level > 1){
+  #check if files exist
+  if (res.table != '') {
+    file_1_exists <- file_existence_in_directory(directory=model.directory,file_name=paste0(mod.prefix,xpose.runno,".phi"))
+    file_2_exists <- file_existence_in_directory(directory=model.directory,file_name=res.table)
+    
+    if ((file_1_exists == TRUE) && (file_2_exists == TRUE)) {
+      # calculate data
+      list_out <- data.obj.obsi(obj.data.dir=paste0(model.directory,mod.prefix,xpose.runno,".phi"),
+                                obsi.data.dir=paste0(model.directory,res.table))
+      have_needed_columns <- list_out$have_needed_columns
+      if(have_needed_columns) {
+        OBJ_data <- list_out$OBJ_data
+        OBSi_vector <- list_out$OBSi_vector
+        OBJ_vector <- list_out$OBJ_vecto
+      
+        # plot data
+        plot.obj.obsi(OBJ_data,OBSi_vector,OBJ_vector)
+      }
+    }
+  }
+}
+```
+
+
