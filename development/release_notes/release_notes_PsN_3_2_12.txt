@@ -1,0 +1,61 @@
+New features in PsN 3.2.12
+* General
+o Changed shrinkage computation. All ETA values that are exactly zero are skipped, computations only include non-zero ETAs. PsN will never read shrinkage values from NONMEM output, and the option -shrinkage must be set to make PsN compute shrinkage.
+o Save time by turning off redundant data file parsing for bootstrap, vpc/npc, sse, cdd, llp, execute, update_inits and scm.
+o Much improved handling of failed/crashed NONMEM runs. When the lst-file is missing a row will still be printed to raw_results indicating the cause of the error (perl installation problems, NMtran failure, compilation failure). The message is also printed to screen. PsN will not terminate. If additional models are to be run after the one that failed, e.g. in sse or bootstrap, execution will continue after the error, and results will be based on the models that did finish. The user can choose to terminate the PsN run after a single failed run by setting the option abort_on_fail.
+o To handle possibility of slow file sync, PsN will on unix-type systems do a `ls -la 2>&1` to try forcing a sync, wait 70s if psn.lst is not found, but continue immediately if the file psn_nonmem_error_messages.txt is found (proof that psn.lst will never appear).
+o tweak_inits no longer takes a value on the command-line, it is set/unset with -tweak_inits/-no-tweak_inits
+o Save time by skipping second output parsing when output files are copied back to the base directory of the model file.
+* mcmp
+o A new script for computing Monte-Carlo Mapped power. Method presented at PAGE-2010: Camille Vong, Martin Bergstrand, Mats O. Karlsson. Rapid sample size calculations for a defined likelihood ratio test-based power in mixed effects models.
+* vpc/npc
+o Changed default behaviour for lst_file option: if neither -lst_file nor -msfo_file is specified as option, PsN will check if there is a lst-file with the same stem as the modelfile (e.g. run55.lst for run55.mod) and then update initial estimates from this lst-file before running the simulations.
+* sse
+o Changed default value of sse option -parallel_simulations: If option -parallel_simulations is not set, it will get the same value as option -threads. Before the default for -parallel_simulations was 1.
+o Save disk space by letting datafiles be read from m1 instead of copied to NM_run directories for each nonmem run. After simulation simulated data is deleted from NM_run. Copies of simulated data are kept in m1, and read from there during estimation.
+o Set default clean level to 1 in sse to make restarts work better.
+* scm
+o Removed option -sum_covariates and added option -logit that can be set individually for each parameter. Adapt parameterizations and covariate addition to logit transformed parameters.
+o Option -linearize has been developed further and extensively tested. Details in the userguide.
+o Extended possibilities to define new parameterizations of covariates, to use different parameterizations for different parameter-covariate pairs.
+o Possibility to use median, maximum and minimum of covariate in user-defined parameterizations without having to enter the numerical values.
+o Shortcut codes for pre-defined parameterizations to simplify using different parameterizations for different parameter-covariate pairs.
+o option -parallel_states to try all possible parameterizations for a covariate on a parameter simultaneously, instead of only trying more complex parameterizations after a more simple one has been found significant and included in the model.
+o Copying of final models to final_models sub-directory of run directory.
+o If search_direction=both the forward and backward searches are done in the same run directory.
+o Possibility to set option nm_version in the configuration file.
+o Complete reformatting of logfile.
+o Anchor functionality. By default scm adds all covariate code first in $PK/$PRED, but if the line 
+;;;SCM-ANCHOR
+is found the covariate code will be added after this line instead.
+o Provided that perl package Statistics::Distributions is installed: Option p_forward and p_backward accept any value. Model selection in each step is based on p-value instead of as before a combination of p-value and ofv which could give errors when comparing models with different numbers of extra parameters.
+o Added handling of shrinkage, if requested on the command-line.
+o If included_relations is set but base_criteria_values is not, scm will run the base model with the included relations instead of terminating the run.
+o More input checking and improved handling of exceptions.
+* update_inits (use update_inits -h for help)
+o Will not change values that are fixed in original model.
+Bug fixes in PsN 3.2.12
+* General
+torque-queue is now read from the configuration file. Before torque-queue could not be set.
+o Wrap lines that exceed 150 characters when printing THETA/OMEGA/SIGMA records.
+o Fixed bug in parsing of OMEGA/SIGMA initial estimates for block omegas/sigmas when the block size exceeds what NONMEM will print in the lst-file.
+o Fixed bug in parsing of diagonal OMEGA/SIGMA when the matrix dimension exceeds 20.
+o If JobStat file cannot be opened when running on sge, simply try again instead of terminating program run.
+o Handle parsing of lst-files with multiple $EST when the last $EST has MAXEVAL=0.
+* vpc/npc
+o Copy MSFO-file to run directory if option -msfo is used.
+* scm
+o Fixed handling of user-defined parameterizations that span multiple lines.
+o Fixed handling of user-defined parameterizations that involve more than one THETA.
+o Provided that perl package Statistics::Distributions is installed: Model selection in each step is based on p-value instead of as before a combination of p-value and ofv which could give errors when comparing models with different numbers of extra parameters.
+o Changed the exponential parameterization in case of missing covariate values so that the missing value number could never be exponentiated.
+o Fixed bug where the two thetas of the hockey-stick parameterization would be given the same coordinate string label, causing errors when updating initial estimates later.
+o Covariates added to code in new way to handle all cases of TVparameter code, including
+TVparameter = THETA(1)
+IF (X.GT.1) TVparameter = THETA(2)
+which before was handled incorrectly.
+o Fixed bug in multiple-line definitions of parameterizations in [code] section.
+o Fixed bug in passing on common PsN options to all parts of the program. Before parallelization options etc were not passed on.
+* pind and nonpb
+o Update initial estimates before fixing parameters, update_inits function will not change fixed values.
+

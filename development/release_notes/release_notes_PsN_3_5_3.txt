@@ -1,0 +1,94 @@
+New features in PsN 3.5.3
+* Installation
+Major redesign of the installation script. Extensive error checking, automatic generation of configuration file psn.conf for basic installations, automatic copying of documentation to user-specified location. Allow multiple missing levels in installation path when creating installtion directory. Added possibility to install symlinks/extra .bat-files psn_ for all psn programs, to avoid conflicts will already installed software.
+* NONMEM interaction
+o Support for $SIZES and $BIND.
+o Support for NMQual8. See instructions in psn_configuration.pdf.
+o The user can now decide which NONMEM7 output files PsN should copy back to the calling directory. By default only the lst-file is copied back (in addition to tables and extra output files). If option -nm_output, e.g. -nm_output=ext,cov,phi,coi,cor is set, then the NM7 output files with those extensions will also be copied to the calling directory. Note that the automatically generated psn.conf, if used, has nm_output=ext,cov,phi,coi,cor set.
+o Set name of custom nmfe wrapper in psn.conf, and invoke NONMEM via this wrapper instead of running nmfe directly. Useful e.g. if running NONMEM remotely on a cluster requires some environment variable changes that can be implemented in a wrapper.
+* General
+o New formatting of control streams: In earlier PsN versions $OMEGA was always printed before $PK. The new default is to print $OMEGA after $THETA. To print $OMEGA before $PK set option -omega_before_pk.
+o Running on LSF: New option run_on_lsf_nmfe for submitting nmfe directly via bsub instead of submitting a perl process with nonmem.pm. Improved error checking, better error handling when submisison fails, and more logging to disk. Jobs are submitted via a script, lsf_jobscript, which simplifies debugging when submission fails.
+o When option -silent is set, all messages will be printed to file run_messages.txt in the main run directory instead of to screen. This helps diagnostics when runs fail.
+o New option -tbs, Transform Both Sides, for automatic Box-Cox transformation and estimation of lambda. See common_options_defaults_versions_psn.pdf for details.
+o New optionc d2u. Default not set. If set then run dos2unix on model files and regular data files (not extra data files) before starting NONMEM if they seem to have windows type line breaks.
+o When a run is resumed (same command with -dir set to existing directory) then the new command is appended to command.txt, instead of overwriting old command.txt. Gives better logging of runs in e.g. sse.
+o New option -add_retries. By default, if file stats-runs.csv found in NM-run subdirectory then that run is considered finished and no check of tries is done. If option -add_retries is set when a PsN run is restarted, PsN will ignore the existence of stats-runs.csv and investigare existing retries to see if more are needed based on (new) settings of e.g. retries and picky.
+o Name raw results after the model file, e.g. raw_results_run1.csv if running execute run1.mod. This makes it possible to open several raw results files in Excel without renaming them first.
+o New columns in raw results: subprob_est_time, subprob_cov_time, model_run_time, est_methods. For Bayes/SAEM nburn_set, nburn_iter, nburn_conv.
+o New principle for which retry is selected, and when a retry should be performed. See common_options_defaults_versions.pdf for details.
+o Partial support for $PRIOR NWPRI. Explicitly handled in vpc, sse and update_inits. Not handled in lasso, gls, scm and with option -tbs. Implicitly handled, but not well testen, in all scripts where new $THETA are not added by PsN.
+* gls
+A new script for using generalized least squares approximations in the residual error model.
+* mimp
+A new script for multiple imputation of missing covariate values.
+* update_inits
+o New option -sigdig=N. Reduce the number of significant digits in parameter estimates to N. Only works for NONMEM7 and later.
+o New option -degree=X. Randomly perturb initial estimates by degree X after updating them.
+o New option -add_prior. Add $PRIOR NWPRI based on output files. Experimental, output must be checked before being used.
+o Added possibility to invoke update_inits with command update.
+* sumo
+o Added model run time, subproblem estimation time, subproblem covariance time in output. Add explanatory message about results of sd_rse setting.
+o Read NM-version from lst-file directly to get settings right, instead of trusting default in psn.conf.
+o Added reading of default_sumo_options from psn.conf, to make it possible to set defaults for this program. If user wants to set own sumo defaults then must be done in section [default_sumo_options].
+o New sumo userguide document.
+* boot_scm
+New PsN program boot_scm for bootstrapped stepwise covariate modeling (scm).
+* sse
+o Simulation with uncertainty from $PRIOR TNPRI, $PRIOR NWPRI or a boostrap results file (options -rawres_input and -offset_rawres)
+o New option -in_filter to be used with -rawres_input. Filter sets of input parameters before using for simulation with uncertainty.
+o New option -out_filter, e.g. only compute statistics for runs with minimization successful.
+o New option -recompute. Create new sse_results file, e.g. using new setting of -out_filter, without rerunning any models.
+o If -add_models and -estimate_simulation set then reread estimated simulation models, if existing, from original run. This saves time. If no-estimate_simulation is set then no estimated simulations will be read even if they exist.
+o Keep $TABLE in simulation models, file names are numbered with -sim-N.
+* scm
+o Data file format: To handle functionality in boot_scm and xv_scm, which in turn call the scm program, the data file for any scm run must have a header line, and the column headers must match $INPUT of the input model.
+o New option -time_varying= to correctly compute median and mean of time-varying covariates. Instructions and formula details in userguide.
+o Detection of time-varying covariates during computation of covariate statistics (single individual has multiple values of covariate). Warn the user that centering will not be correct if option time_varying is not set for this covariate.
+o Pre-filtering of data if IGNORE()/ACCEPT() found in control stream. Will make sure covariate statistics are computed based only on included observations.
+o Allow setting -nmfe_options in scm config file.
+o New option -noabort for scm -linearize: add NOABORT to $EST for the linearized models. Option has no effect unless -linearize is set.
+o Added possibility to use 'mean' in [code], [inits] and bounds sections, just as median, minimum and maximum.
+o Warn if $PRIOR NWPRI in input model (not supported).
+o Allow user to call scm with 'scm config.scm' directly instead of having to set scm -config_file=config.scm.
+* npc/vpc
+o If -tte is set: More cleaning to save disk space. Allow -stratify_on to be a comma-separated list of variables. PsN will print all those variables in the file used as Xpose input to kaplan.plot.
+o Simulation with uncertainty added. Note: It is normally not appropriate to use simulation with uncertainty in vpc. Invoked by setting options -rawres_input and -offset_rawres or by having $PRIOR in the input/simulation model, same as for sse.
+
+Bug fixes in PsN 3.5.3
+* General
+o Improvements of NONMEM output file reading: More robust detection of starttime line. Handle NM7.2-new variants of 'HESSIAN OF POSTERIOR DENSITY NON...'. Handle NPARAMETR lines when reading iteration path. When reading initial estimates from the lst-file and find OMEGA BLOCK STRUCTURE but not OMEGA HAS BLOCK FORM, assume only diagonal elements are non-zero and read last init (diagonal element) on each row.
+o Simply ignore PsN option -nmfe_options unless NM7.2 or later instead of aborting execution with error message.
+o Improved stratification in cross-validation subsetting (lasso, xv_scm). Make sure same number of individuals in each bin even if number of individuals in factor category not evenly divisible with number of bins. Also warn if number of IDs with same value of stratification variable is less than number of bins.
+o Improved PsN detection of non-computer-crash lst-file errors: If there is an end time properly printed by nmfe in the lst-file then never invoke handle crashes functionality. Assume some error in NONMEM run that made NONMEM terminate on its own, eg hessian not positive definite.
+o Make PsN look for signs for nmtran errors or compilation errors even if psn.lst exists, which is needed for NM7.2 which produces a lst-file even in the case of nmtran error or compilation error. Never invoke crash restart functionality for such errors. Changed error message when FDATA and lst-file do not exist, to include suggestion of file system problem.
+o Make sure grid submit (lsf, sge, slurm,...) returns -1 by default (when failing to extract jobID) and handle this case as run finished and crashed.
+o Fixed bug with run_on_sge_nmfe where setting option -nodes resulted in other options beeing ignored.
+o Bugfix when option -min_retries is set: Now PsN will remember if one of the early tries was accepted as successful. PsN will then not do more retries after min_retries reached, even if the most recent retry was not accepted.
+o If handle_msfo is set and msfo file already exists in main directory, PsN will automatically use existing msf file as input (set msfi). Bugfix: Do not do this if existing msf file is empty. If handle_msfo: if MSFO already set in model then use that name as base_msfo_name instead of psn_msfo.
+o Bugfix parafile and nodes option on windows, which caused crash in PsN-3.4.2. (There should be no double quotes around parafile and nodes.)
+* npc/vpc
+o When using a separate simulation model (option -flip_comments or -sim_model), do not update initial estimates of MAXEVAL=0 model. Let options -lst and -msfo refer to initial parameter estimates for the simulation model. If not lst or msfo given, try to find lst-file for simulation model and only update that model. In vpc_results.csv, set information about simulation model (auto-generated, flip comments or sim_model filename) instead of 'parameter values from'
+o Skip multiplication of numerator and denominator with conjugate in predcorr, could lead to division by 0.
+* scm
+o Better checking that output exists before trying to read e.g. ofv, give sensible error message if missing.
+o If derivatives_data given as input with -linearize then covariate statistics is now computed based on that file, instead of original datafile for model (important in e.g. boot_scm).
+o Pass on option -only_successful to later iterations.
+o Fixed bug where, if linearize set, numbering of THETAs in user-defined parameterizations would not work for parameterizations with more than one THETA per line.
+o Allow space after EXP in EXP(ETA(1)) etc when detecting ETA relation forms in linearized scm.
+* llp
+o Fixed bug where omega and sigma diagonal entries lower limit of 0 was not respected. Make sure that if sigma/omega and on diagonal then lower limit stored as 0.
+o Fixed bug where computed guess -nan was not recognized as 'not a number'.
+* sse
+Add handling of BLOCK SAME in preparation of results.
+* sumo
+o Fixed bug when checking if omega/sigma estimate is close to bound.
+o Fixed bug when SIGMA 0 block was printed even if no sigma in model.
+* update_inits
+Fixed bug in MSFO-filename renumbering. Complete rewrite to make script more stable.
+* nonpb
+Made nonpb and pind work with NONMEM7 (removed fortran77 comment line in user-written routine).
+* RunRecord
+Handle 'Based on ' input error in runrecord. Print warning and ignore 'Based on' tag. Otherwise this input error would make runrecord produce no output.
+
+
