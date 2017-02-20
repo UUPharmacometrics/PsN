@@ -1,7 +1,7 @@
 New features in PsN 3.5.3
 * Installation
 Major redesign of the installation script. Extensive error checking, automatic generation of configuration file psn.conf for basic installations, automatic copying of documentation to user-specified location. 
-Allow multiple missing levels in installation path when creating installtion directory. Added possibility to install symlinks/extra .bat-files psn_ for all psn programs, to avoid conflicts will already installed software.
+Allow multiple missing levels in installation path when creating installation directory. Added possibility to install symlinks/extra .bat-files psn_ for all psn programs, to avoid conflicts will already installed software.
 * NONMEM interaction
 o Support for $SIZES and $BIND.
 o Support for NMQual8. See instructions in psn_configuration.pdf.
@@ -50,7 +50,7 @@ o Keep $TABLE in simulation models, file names are numbered with -sim-N.
 * scm
 o Data file format: To handle functionality in boot_scm and xv_scm, which in turn call the scm program, the data file for any scm run must have a header line, and the column headers must 
 match $INPUT of the input model.
-o New option -time_varying=�to correctly compute median and mean of time-varying covariates. Instructions and formula details in userguide.
+o New option -time_varying=to correctly compute median and mean of time-varying covariates. Instructions and formula details in userguide.
 o Detection of time-varying covariates during computation of covariate statistics (single individual has multiple values of covariate). Warn the user that centering will not be correct if 
 option time_varying is not set for this covariate.
 o Pre-filtering of data if IGNORE()/ACCEPT() found in control stream. Will make sure covariate statistics are computed based only on included observations.

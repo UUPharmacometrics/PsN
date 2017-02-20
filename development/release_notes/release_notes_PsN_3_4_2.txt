@@ -1,19 +1,26 @@
 New features in PsN 3.4.2
 * NONMEM 7.2 support
-o Options -parafile, -nodes and -nmfe_options can be used to pass on a parafile name, the number of nodes and nmfe options such as xmloff to nmfe. This requires that NONMEM version 7.2 has been specified in psn.conf and that option -nmfe or -run_on_sge_nmfe is set.
+o Options -parafile, -nodes and -nmfe_options can be used to pass on a parafile name, the number of nodes and nmfe options such as xmloff to nmfe. This requires that NONMEM 
+version 7.2 has been specified in psn.conf and that option -nmfe or -run_on_sge_nmfe is set.
 
 If -nmfe or -run_on_sge_nmfe is not set then NM7.2 is not supported.
 o A new option -nmqual_options can be used to pass on options when -nmqual is set.
 o PsN does not support any but the default value of ORDER in $EST. If option ORDER is found it will be removed by PsN.
-o PsN will keep STANDARD CORRELATION CHOLESKY in model file if found, but print warning that output handling, especially setting initial estimates in a new file to the final estimates from a previoud run, may not work correctly.
-o Cleaning of NM7.2 output files: If clean>=1 then the following files are removed LINKC.LNK, compile.lnk, gfortran.txt, ifort.txt, garbage.out, newline, nmexec.set, parafile.set, prcompile.set, prdefault.set, prsame.set, psn.log, rundir.set, runpdir.set, temporaryfile.xml; temp.out, trashfile.xxx, trskip.set, worker.set, xmloff.set prsizes.f90, licfile.set, background.set, FMSG, FSIZES. If clean >=2 then PsN will remove the temp_dir subdirectory of NM_run.
+o PsN will keep STANDARD CORRELATION CHOLESKY in model file if found, but print warning that output handling, especially setting initial estimates in a new file to the final 
+estimates from a previoud run, may not work correctly.
+o Cleaning of NM7.2 output files: If clean>=1 then the following files are removed LINKC.LNK, compile.lnk, gfortran.txt, ifort.txt, garbage.out, newline, nmexec.set, parafile.set, 
+prcompile.set, prdefault.set, prsame.set, psn.log, rundir.set, runpdir.set, temporaryfile.xml; temp.out, trashfile.xxx, trskip.set, worker.set, xmloff.set prsizes.f90, licfile.set, 
+background.set, FMSG, FSIZES. If clean >=2 then PsN will remove the temp_dir subdirectory of NM_run.
 o PsN will set retry numbering for NM7.2 new output files .xml .phm .shk .grd .smt .rmt just as for .lst etc, and copy the output from the selected run back to the calling directory.
 * General
-o Installation: If windows and path to perl binary chosen by user is not the same as default in psn.conf, write warning that psn.conf must be edited. Require y or n answer for yes/no questions instead of treating no anwer as no, which could lead to premature termination of the installation process.
+o Installation: If windows and path to perl binary chosen by user is not the same as default in psn.conf, write warning that psn.conf must be edited. Require y or n answer 
+for yes/no questions instead of treating no anwer as no, which could lead to premature termination of the installation process.
 o Installation: More explicit error checking of each step in the installation process, and more detailed error messages.
 o New options -torque_queue and -torque_prepend_flags to allow more flexible settings when running on torque.
-o Made option -retries and -min_retries consistent. Option -min_retries is defined as before, but option -retries is now the maximum number of *extra* tries, instead of the maximum number of tries as before.
-o Support for SLURM queueing system, options -run_on_slurm, -email_address, -send_email, -slurm_project, -max_runtime (maps to squeue -t). Currently -run_on_slurm only works with option -nmfe set.
+o Made option -retries and -min_retries consistent. Option -min_retries is defined as before, but option -retries is now the maximum number of *extra* tries, instead of the 
+maximum number of tries as before.
+o Support for SLURM queueing system, options -run_on_slurm, -email_address, -send_email, -slurm_project, -max_runtime (maps to squeue -t). Currently -run_on_slurm only works 
+with option -nmfe set.
 o Changed meaning of option max_runtime. Now only allowed for run_on_slurm.
 o Iterations output to screen: New option -display_iterations common to all PsN scripts. By default not set. In template psn.conf set as default for execute program but not the others.
 o Option stop_motion for educational purposes: See common_options_defaults_versions.pdf for instructions.
@@ -21,19 +28,32 @@ o New option -maxevals. Set on command-line to allow more evalutations than NONM
 o Removed option significant_digits_rerun. Created new option significant_digits_accept with same functionality but correct documentation.
 o modified sge_monitor to read stderr directly instead of creating file with JobID and then opening it.
 o Make all scripts print done at the end, e.g. "sse done".
-o Skipped reset of FORMAT and DELIM option to make formatting more flexible, e.g. allow more significant digits. If however user sets delimiter to other than default then PsN will not be able to parse output.
+o Skipped reset of FORMAT and DELIM option to make formatting more flexible, e.g. allow more significant digits. If however user sets delimiter to other than default then PsN 
+will not be able to parse output.
 o Make PsN use higher precision for initial estimates in NM7 model files. Up to 15 sigdigits.
-o Changed output parsing so that a model with only a $TABLE and no $EST or $SIM will not be handled as crashed. In read_eststep handle finding of 'TABLES STEP OMITTED' (set est step initiated, run, sim step run to 0) separately from 'COVARIANCE STEP OMITTED' (error). In read_inits stop reading if encounter 'TABLES STEP OMITTED' in same places as ESTIMATION or SIMULATION STEP OMITTED.
-o Changed handling of retries. After a NONMEM run is finished then psn.mod .lst .cov etc will be moved instead of copied to numbered retry files psn-N.mod etc. After all retries are finished and the best retry has been selected, then that retry's files are copied to psn.mod, psn.lst. The file stats-runs.csv contains, as in earlier PsN versions, a summary of the best run's results.
-o Changed restart procedure. PsN will check if stats-runs.csv already exists in the NM_run subdirectory. If is exists it is proof that all retries of the model are already finished, and PsN will not start any NONMEM run for this model. PsN will parse psn.lst as the selected model and use this when producing raw_results and other output later. This procedure is new, in earlier PsN versions the existing psn.mod file would always be overwritten, and would also be rerun unless a numbered retry file was present in the directory. The fact that stats-runs.csv is used as a flag for all retries done makes it possible to restart and reuse old partial results also if -clean=2. In older versions PsN would use the numbered retry file, which is removed if -clean=2, as the signal.
-If stats-runs.csv does not exist but psn.lst does, then PsN will assume the main PsN process has been interrupted while the NONMEM run subprocess has finished, e.g. in a process submitted to a grid, giving the psn.lst output file. PsN will check for existing numbered retry files in the NM_run directory to figure out which retry the psn.lst file belongs to, and summarize the results or start a new retry based on the contents of psn.lst and the settings for retries.�
+o Changed output parsing so that a model with only a $TABLE and no $EST or $SIM will not be handled as crashed. In read_eststep handle finding of 'TABLES STEP OMITTED' 
+(set est step initiated, run, sim step run to 0) separately from 'COVARIANCE STEP OMITTED' (error). In read_inits stop reading if encounter 'TABLES STEP OMITTED' in same places 
+as ESTIMATION or SIMULATION STEP OMITTED.
+o Changed handling of retries. After a NONMEM run is finished then psn.mod .lst .cov etc will be moved instead of copied to numbered retry files psn-N.mod etc. After all retries 
+are finished and the best retry has been selected, then that retry's files are copied to psn.mod, psn.lst. The file stats-runs.csv contains, as in earlier PsN versions, a summary 
+of the best run's results.
+o Changed restart procedure. PsN will check if stats-runs.csv already exists in the NM_run subdirectory. If is exists it is proof that all retries of the model are already finished, 
+and PsN will not start any NONMEM run for this model. PsN will parse psn.lst as the selected model and use this when producing raw_results and other output later. This procedure is 
+new, in earlier PsN versions the existing psn.mod file would always be overwritten, and would also be rerun unless a numbered retry file was present in the directory. The fact that
+stats-runs.csv is used as a flag for all retries done makes it possible to restart and reuse old partial results also if -clean=2. In older versions PsN would use the numbered retry 
+file, which is removed if -clean=2, as the signal.
+If stats-runs.csv does not exist but psn.lst does, then PsN will assume the main PsN process has been interrupted while the NONMEM run subprocess has finished, e.g. in a process 
+submitted to a grid, giving the psn.lst output file. PsN will check for existing numbered retry files in the NM_run directory to figure out which retry the psn.lst file belongs to, 
+and summarize the results or start a new retry based on the contents of psn.lst and the settings for retries.
 When restarting PsN will also check for numbered crash files, so that the counting of restarts after a crash is not reset every time the main PsN process is restarted.
-PsN will not copy psn.mod to NM_run if there already is such a file there, because it either means the previous run was interrupted, or that everything is finished for that model (stats-runs.csv exists).
+PsN will not copy psn.mod to NM_run if there already is such a file there, because it either means the previous run was interrupted, or that everything is finished for 
+that model (stats-runs.csv exists).
 * parallel_retries
 A new script for running retries in parallel. Very similar to execute, and described in the execute userguide.
 * psn_clean
 o changed psn_clean to remove both .dta and .dat files if option dta is set, not only .dta
-o New option -level to psn_clean, values 2-4, mimics -clean to regular PsN scripts. Extra level 4 for complete removal of m1. Make psn_clean keep file stats-runs.csv even if option .csv is set, to enable reusage of runs after clean level 2.
+o New option -level to psn_clean, values 2-4, mimics -clean to regular PsN scripts. Extra level 4 for complete removal of m1. Make psn_clean keep file stats-runs.csv even 
+if option .csv is set, to enable reusage of runs after clean level 2.
 o psn_clean does not yet support NM7.2.
 * sumo
 Suppress off-diagonal zeros in OMEGA and SIGMA output.
@@ -43,7 +63,7 @@ o More flexible definition of simulation model using -sim_model or -flip_comment
 o tte option to vpc for (repeated) time-to-event models. Needs Xpose for plotting (as all vpc).
 o option boxcox_lambda to handle Box-Cox transformed data.
 o new option confidence_interval, default is 95 (%)
-o New option -censor=�to vpc and npc. Variable to indicated if an observation is missing. Can be used e.g. when modelling dropout.
+o New option -censor= to vpc and npc. Variable to indicated if an observation is missing. Can be used e.g. when modelling dropout.
 o Added possibility in vpc to use -lloq or -uloq in combination with predcorr.
 * xv_scm
 New PsN program xv_scm for cross-validated stepwise covariate modeling (scm).
@@ -67,8 +87,10 @@ Bug fixes in PsN 3.4.2
 o use function localtime instead of date and time functions when printing start and finish times of nm runs to lst-files. Gets rid of annoying error messages on some windows versions
 o Fixed bug introduced in 3.1.12 that if there is code preceeding " FIRST in $PK then PsN will move this code to after "FIRST... section.
 o Do not add $EST if not present when setting maxeval=0 for NM7. Fixed bug in set_maxeval_zero so that estimation record is not added if it is not present in input model
-o Fixed bug in parsing of NM7 raw output that if PsN does not find the line with ofv and final estimates in psn.ext, parsing of that file will be aborted and PsN will pick everything from lst-file instead. Handles for example the case when NONMEM prints an empty table to psn.ext.
-o Bugfixing in wrap_data feature, and added NM7 support (max 50 items per line instead of 20), add support for using items from CONT=1 in $PRED. Handle existing MDV correctly, handle DV correctly. Added warning if wrap_data without MDV in dataset.
+o Fixed bug in parsing of NM7 raw output that if PsN does not find the line with ofv and final estimates in psn.ext, parsing of that file will be aborted and PsN will pick
+everything from lst-file instead. Handles for example the case when NONMEM prints an empty table to psn.ext.
+o Bugfixing in wrap_data feature, and added NM7 support (max 50 items per line instead of 20), add support for using items from CONT=1 in $PRED. Handle existing MDV correctly,
+handle DV correctly. Added warning if wrap_data without MDV in dataset.
 o When submitting to lsf: also check lsf_err for JobId, to handle case when diagnostic output is redirected to stderr. BSUB_STDERR redirectes LSF diagnostic messages to stderr.
 o fixed bug in sge_submit: prepend jobname with psn: if jobname (model name) starts with digit
 o fixed bug in problem_subs.pm drop_dropped that PsN handles both VALUE=DROP and DROP=VALUE, also in data_subs.pm
@@ -81,7 +103,8 @@ o remove MSFO option from $NONP if it is there.
 o make npc and vpc write changed models to disk in m1 so that m1-models reflect what is run in NM_run1 and 2.
 o add check in npc_subs that reading of original data file gave back some individuals and not an undefined value
 * scm
-o Fixed bugs in handling of initial estimates that sometimes could cause inits to be outside boundaries: Do not round initial values (handled by init_option_subs - check_and_set_init). Only call format_init_bounds if first recursion level (step_number==1). Set bounds before inits in add_code and add_code_linearize.
+o Fixed bugs in handling of initial estimates that sometimes could cause inits to be outside boundaries: Do not round initial values (handled by init_option_subs - check_and_set_init). 
+Only call format_init_bounds if first recursion level (step_number==1). Set bounds before inits in add_code and add_code_linearize.
 o fixed bug in scm, bad detection of logit parameter ETAs (= instead of ==)
 o set default FORMAT in linearized model in scm to s1PE17.10 to avoid case when NM considers its own OMEGA output as non-positive definite. Is solved with higher precision.
 o better handling of crashed models in scm: print FAILED in logfile and continue instead of crashing because trying to retrieve ofv from model with no output.
