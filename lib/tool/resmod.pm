@@ -30,7 +30,9 @@ has 'iterative' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'best_models' => ( is => 'rw', isa => 'ArrayRef', default => sub { [] } );
 has 'top_directory' => ( is => 'rw', isa => 'Str' );    # Path to the toplevel directory to put results files
 
-# This array of hashes represent the different models to be tested. The 0th is the base model
+has 'model_templates' => ( is => 'rw', isa => 'ArrayRef' );		# List of model_templates to use
+
+# This array of hashes represent the different models to be tested.
 our @residual_models =
 (
 	{
@@ -416,14 +418,11 @@ END
 
     # Add the time_varying models if not already added (we are iterating)
     if (not defined $self->cutoffs) {
-        my $cutoffs = $self->_calculate_quantiles(table => $table->tables->[0], column => $idv_column);  
-        my $time_var_modeltemplates = $self->_build_time_varying_template(cutoffs => $cutoffs);
-        push @residual_models, @$time_var_modeltemplates;
-        $self->cutoffs($cutoffs);
+		$self->_create_model_templates(table => $table, idv_column => $idv_column); 
     }
 
 	my @models_to_run;
-    for my $model_properties (@residual_models) {
+    for my $model_properties (@{$self->model_templates}) {
 		my $tad;
 		if ($have_tad and $model_properties->{'name'} eq 'time_varying') {
 			$tad = 1;
@@ -978,7 +977,6 @@ sub _build_time_varying_template
     return \@models;
 }
 
-
 sub _add_to_iteration_summary
 {
     my $self = shift;
@@ -1002,6 +1000,28 @@ sub _add_to_iteration_summary
 
     close $fh;
 }
+
+
+sub _create_model_templates
+{
+    # Top level call to resmod will generate all model templates via this method
+    my $self = shift;
+    my %parm = validated_hash(\@_,
+		table => { isa => 'nmtablefile' },
+        idv_column => { isa => 'Str' },
+    );
+    my $table = $parm{'table'};
+    my $idv_column = $parm{'idv_column'};
+
+    my @templates = @residual_models;      # A shallow copy
+    $self->model_templates(\@templates);
+
+    my $cutoffs = $self->_calculate_quantiles(table => $table->tables->[0], column => $idv_column);  
+    my $time_var_modeltemplates = $self->_build_time_varying_template(cutoffs => $cutoffs);
+    push @{$self->model_templates}, @$time_var_modeltemplates;
+    $self->cutoffs($cutoffs);
+}
+
 
 no Moose;
 __PACKAGE__->meta->make_immutable;
