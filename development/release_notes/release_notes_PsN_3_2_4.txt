@@ -8,53 +8,66 @@ o When reanalyzing previously produced data, the MAXEVAL=0 run (on original data
 o Added possibility to run the simulations of a vpc or npc in parallel. Use option -n_simulation_models=N which will make PsN split the simulations over N modelfiles.
 o Complete redesign of prediction and variability correction (options -predcorr and -varcorr) functionality. These options are now stable.
 o New option -lnDV for transformation of data (mostly for -predcorr/-varcorr).
-o new format for additional features information in vpc_results.csv, and more robust connection with Xpose. Will only run with Xpose-4.2.1 or later.
+o new format for additional features information in vpc_results.csv, and more robust connection with Xpose. Will only run with Xpose-4.2.1 or later.
 o changed vpctab numbering to append anything between 'run' and '.mod' to vpctab
 * sse
-o New option -add_models. It is possible to reuse the previously simulated datasets when wanting to try additional alternative models. Old output sse_results.csv and raw_results will not be overwritten, the new output will be numbered add1, add2 etc.
-o Better error handling in sse. Even if some samples do not finish for some models, statistics will still be computed on the finished samples, using a smaller N. All runs which produce a non-zero OFV will be used in the statistics.
+o New option -add_models. It is possible to reuse the previously simulated datasets when wanting to try additional alternative models. Old output sse_results.csv and raw_results will not be overwritten, 
+the new output will be numbered add1, add2 etc.
+o Better error handling in sse. Even if some samples do not finish for some models, statistics will still be computed on the finished samples, using a smaller N. All runs which produce a non-zero OFV will 
+be used in the statistics.
 o It is possible to have alternative models with more than one $PROBLEM (for simulation from the estimated model).
 o Option clean is set to 3 as default to save disk space. For unstable models it is recommended to set clean=1 to make it possible to restart runs. Option -add_models works even if -clean=3.
-o sse renumbers filename in MSFO=filename so that it has same numbering as modelfile (1,2,3 etc for simulation model, 1-1,1-2,...,2-1,2-2... for alternative models). Makes it possible to output MSFO in first $PROBLEM and use $MSFI in second $PROBLEM of alternative models.
+o sse renumbers filename in MSFO=filename so that it has same numbering as modelfile (1,2,3 etc for simulation model, 1-1,1-2,...,2-1,2-2... for alternative models). Makes it possible to output MSFO in first 
+$PROBLEM and use $MSFI in second $PROBLEM of alternative models.
 * scm
 o A new userguide.
 o More input checking.
 o Added option to either consider or not consider models without minmization successful when selecting the best one in the step, option -only_successful.
 o New and experimental feature -linearize, for accelerated covariate search. Work in progress. Akash Khandelwal will give a talk on this topic at PAGE 2010.
-o Added scm option -sum_covariates. The default is to multiply covariates when computing typical value of a parameter. With option -sum_covariates the covariate function values are summed instead. Relevant with logit-transformed models. Using this option requires the user to set a [code] section in the scm configuration file. Examples are found in the userguide.
+o Added scm option -sum_covariates. The default is to multiply covariates when computing typical value of a parameter. With option -sum_covariates the covariate function values are summed instead. 
+Relevant with logit-transformed models. Using this option requires the user to set a [code] section in the scm configuration file. Examples are found in the userguide.
 * psn_clean (use psn_clean -h for help)
 o A new script for removing obsolete files in PsN run directories after a successful run.
 * RunRecord
-o A new tool. RunRecord is a PsN based script that facilitates the creation of run records for NONMEM runs. It takes a range of run numbers as input, extracts information and generates a txt file that can be imported into Excel for further manipulation. The information extracted includes parameter estimates, standard errors, condition number, objective function value (OFV), parameter names and information about model components. Some of this comes from the NONMEM output files while some parts are extracted from user-supplied information in the NONMEM model file. 
+o A new tool. RunRecord is a PsN based script that facilitates the creation of run records for NONMEM runs. It takes a range of run numbers as input, extracts information and generates a txt file 
+that can be imported into Excel for further manipulation. The information extracted includes parameter estimates, standard errors, condition number, objective function value (OFV), parameter names 
+and information about model components. Some of this comes from the NONMEM output files while some parts are extracted from user-supplied information in the NONMEM model file.
 
-An additional way to use the runrecord script is to create a ¡Èraw_results¡É-like file from a set of lst-files, for example to recover results from a bootstrap that did not finish.
+An additional way to use the runrecord script is to create a raw_results -like file from a set of lst-files, for example to recover results from a bootstrap that did not finish.
 * update_inits (use update_inits -h for help)
 o The -renumber='new number' option will now also change MSFO='anything''some number' to MSFO='anything''new number'
-o option -add_tags to add empty tags for RunRecord, and option -based_on to set runrecord tag ¡ÈBased on.¡É
+o option -add_tags to add empty tags for RunRecord, and option -based_on to set runrecord tag Based on.
 * PsN configuration.
 o New possibility to run perl code "pre_compile_command" before PsN's fortran compilation. Can e.g. be used to modify environment variables for a specific compiler.
 * General
 o New option -sge_prepend_flags for setting extra flags for qsub when using option run_on_sge (sometimes e.g. need -V).
-o Added option -run_on_mosix, will have effect on Unix systems only. If used, PsN will start the perl processes running NONMEM with 'mosenv -e perl...' instead of with the default 'perl...'. (As before, the name of the perl binary is configurable in psn.conf)
-o New option -nmqual, invoke nonmem using nmqual generated perl script (similar to option -nmfe). See PsN configuration.
-o Changed handling of final parameter estimates. Unlike in 3.1.0, off-diagonal OMEGA/SIGMA zeroes will now be stored by the output parser. Removal of uninteresting zeros is done by the scripts. Zeroes removal is however not implemented yet in sumo.
+o Added option -run_on_mosix, will have effect on Unix systems only. If used, PsN will start the perl processes running NONMEM with 'mosenv -e perl...' instead of with the default 'perl...'. 
+(As before, the name of the perl binary is configurable in psn.conf)
+o New option -nmqual, invoke nonmem using nmqual generated perl script (similar to option -nmfe). See PsN configuration.
+o Changed handling of final parameter estimates. Unlike in 3.1.0, off-diagonal OMEGA/SIGMA zeroes will now be stored by the output parser. Removal of uninteresting zeros is done by the scripts. 
+Zeroes removal is however not implemented yet in sumo.
 Bug fixes in PsN 3.2.4
 * General
-Fixed bug where very small but non-zero final parameter estimates were rounded off to 0.000000 and put as initial estimates in model. Most commonly encountered in scm. Now for NM6, for THETAS and diagonal OMEGA/SIGMA values x, where 0 < x < 0.000001, x is replaced with 0.000001 (smallest positive non-zero number that NM6 will accept) and values x, where -0.00001 < x < 0, are replaced with -0.00001 (largest negative non-zero number NM6 will accept). Off-diagonal OMEGA/SIGMA is rounded off to 0 as before if very small absolute value. For NM7, values are given in E notation if necessary, and the same precision as the default in raw output is used.
+Fixed bug where very small but non-zero final parameter estimates were rounded off to 0.000000 and put as initial estimates in model. Most commonly encountered in scm. Now for NM6, for THETAS and 
+diagonal OMEGA/SIGMA values x, where 0 < x < 0.000001, x is replaced with 0.000001 (smallest positive non-zero number that NM6 will accept) and values x, where -0.00001 < x < 0, are replaced with -0.00001 
+(largest negative non-zero number NM6 will accept). Off-diagonal OMEGA/SIGMA is rounded off to 0 as before if very small absolute value. For NM7, values are given in E notation if necessary, and the same 
+precision as the default in raw output is used.
 o PsN will skip $WARNINGS record instead of crashing if it is encountered
 o Fixed some over-active error checking (string matching of estimation method names in raw and additional output, missing method name when only simulating)
 o Changed verbatim fortran code for option -extra_data_file to work with NM7
 o Fixed errors in -run_on_zink option
 o Fixed bug in reading "FIRST in $PK/$PRED/$ERROR, made it optional to have space between " and FIRST
 o Handle parsing of list file when there is no row OMEGA HAS BLOCK STRUCTURE when omega is a sequence of size 1 blocks.
-o If the nonmem version number in the lst-file does not match the version specified in psn.conf for the -nm_version used, then psn will print a warning and then continue parsing, instead of stopping as in earlier versions.
+o If the nonmem version number in the lst-file does not match the version specified in psn.conf for the -nm_version used, then psn will print a warning and then continue parsing, instead of stopping as in 
+earlier versions.
 o When shrinkage cannot be computed because omegas are missing, print error message and continue execution instead of writing error message and stopping.
 o Look for executable nmfe script (instead of just existing file) when option -nmfe is used.
 o minor torque bug fixed, make sure jobnames do not start with number/contain spaces.
 o PsN will accept multiple $PROB in modelfiles when running NM7
 o Better mathematical exception handling (avoid division by small number) in compute_comegas_or_csigmas function in output parser.
 o fixed bug regarding missing parameter estimates in raw_results file for second $PROBLEMs that use $MSFI record
-o Fixed bug in output parsing for NONMEM6 and models with only $THETAs (no omega or sigma). Before fix PsN would not detect the end of the final parameter estimate section and interpret standard errors as additionl final estimates of THETA.
+o Fixed bug in output parsing for NONMEM6 and models with only $THETAs (no omega or sigma). Before fix PsN would not detect the end of the final parameter estimate section and interpret standard errors as 
+additionl final estimates of THETA.
 * bootstrap
 o Fixed -bca option, run would crash for certain types of output.
 o Pass on parallelization options to jackknife
@@ -70,5 +83,5 @@ o Fixed bug in covariate function theta boundary calculation for cases when medi
 * cdd
 o Handling of failed covariance step.
 Documentation updates in PsN 3.2.4
-* The new document scm userguide.pdf describes the scm tool and gives examples on how to set the many input options. For the new RunRecord script there is a userguide and an Excel template. The vpc/npc userguide has a "Getting started" section for new users. There are additions in known_bugs_and_workarounds.
-
+* The new document scm userguide.pdf describes the scm tool and gives examples on how to set the many input options. For the new RunRecord script there is a userguide and an Excel template. 
+The vpc/npc userguide has a "Getting started" section for new users. There are additions in known_bugs_and_workarounds.

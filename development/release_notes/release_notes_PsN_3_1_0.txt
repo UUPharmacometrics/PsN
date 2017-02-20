@@ -1,15 +1,20 @@
 New features in PsN 3.1.0
-1. Extensive NONMEM7 support. All PsN tools accept modelfiles with multiple $ESTIMATION. All estimation methods are supported. Note: only results from last $EST will be presented and used in data processing.
+1. Extensive NONMEM7 support. All PsN tools accept modelfiles with multiple $ESTIMATION. All estimation methods are supported. Note: only results from last $EST will 
+be presented and used in data processing.
 2. New parser for THETA, OMEGA and SIGMA. With the new parser all known bugs are removed. All formatting variants described in the NONMEM userguide are supported.
-3. tweak_inits will ensure that OMEGA and SIGMA are strictly diagonally dominant. This reduces the risk of NONMEM halting due to non-postive definite initial estimate matrices. Also, tweak_inits will not change initial estimates that are zero, regardless if they are FIXED or not. This preserves band matrices.
-4. New options -predcorr (prediction correction) and -varcorr (variability correction, experimental) to vpc. More details in the npc/vpc userguide.
-5. New options -last_est_complete and -niter_eonly for tools that run some models with skipped estimation step (cdd, npc, vpc, execute with mirror_plots option). More details in PsN_and_NONMEM7.pdf.
+3. tweak_inits will ensure that OMEGA and SIGMA are strictly diagonally dominant. This reduces the risk of NONMEM halting due to non-postive definite initial estimate matrices. 
+Also, tweak_inits will not change initial estimates that are zero, regardless if they are FIXED or not. This preserves band matrices.
+4. New options -predcorr (prediction correction) and -varcorr (variability correction, experimental) to vpc. More details in the npc/vpc userguide.
+5. New options -last_est_complete and -niter_eonly for tools that run some models with skipped estimation step (cdd, npc, vpc, execute with mirror_plots option). More details in 
+PsN_and_NONMEM7.pdf.
 6. update_inits now has options for renumbering output files in $TABLE and adding comments in $PROBLEM
-7. Both run information files version_and_option_info.txt and command.txt will be overwritten at each rerun in the same PsN directory, also for npc and vpc. The files from the original PsN call are saved as original_command.txt and original_version_and_option_info.txt
-8. The logic for the flag minimization_successful has been adapted to new the estimation methods. Affects retries and sumo output. More details in PsN_and_NONMEM7.pdf.
+7. Both run information files version_and_option_info.txt and command.txt will be overwritten at each rerun in the same PsN directory, also for npc and vpc. The files from the 
+original PsN call are saved as original_command.txt and original_version_and_option_info.txt
+8. The logic for the flag minimization_successful has been adapted to new the estimation methods. Affects retries and sumo output. More details in PsN_and_NONMEM7.pdf.
 9. For developers only: Many accessors to the output object have changed. Contact the PsN development team for more information.
 Minor changes and bug fixes in PsN 3.1.0
-1. When option -nmfe is used, PsN will first look for nmfe script in the 'run' and then in the 'util' subdirectory of the NONMEM installation directory. In PsN-3.0.0 the order was 'util' then 'run'.
+1. When option -nmfe is used, PsN will first look for nmfe script in the 'run' and then in the 'util' subdirectory of the NONMEM installation directory. In PsN-3.0.0 the order 
+was 'util' then 'run'.
 2. shrinkage: PsN will report percentages in raw_results, instead of fraction. Eta shrinkage will be taken from the lst-file when available.
 3. sse tool will keep IGNORE=list statements (IGNORE=single character will still be changed to IGNORE=@). ACCEPT statements are kept as before.
 4. Headers in raw_results will look different, using full indexes for SIGMA and OMEGA, e.g. SIGMA(2,1), OMEGA(3,3).
@@ -17,5 +22,4 @@ Minor changes and bug fixes in PsN 3.1.0
 6. three unstable functionalities disabled for NM7: summarize, handle_maxevals, handle_msfo.
 7. PsN now accepts both comma- and space-separated $INPUT.
 New documentation in PsN 3.1.0
-1. PsN_and_NONMEM7.pdf describes how PsN deals with the many new features and functions of NONMEM7. This document is essential for anyone who intends to use PsN with NONMEM7.
-
+1. PsN_and_NONMEM7.pdf describes how PsN deals with the many new features and functions of NONMEM7. This document is essential for anyone who intends to use PsN with NONMEM7.

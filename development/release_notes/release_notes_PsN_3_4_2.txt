@@ -1,6 +1,7 @@
 New features in PsN 3.4.2
 * NONMEM 7.2 support
-o Options -parafile, -nodes and -nmfe_options can be used to pass on a parafile name, the number of nodes and nmfe options such as xmloff to nmfe. This requires that NONMEM version 7.2 has been specified in psn.conf and that option -nmfe or -run_on_sge_nmfe is set. 
+o Options -parafile, -nodes and -nmfe_options can be used to pass on a parafile name, the number of nodes and nmfe options such as xmloff to nmfe. This requires that NONMEM version 7.2 has been specified in psn.conf and that option -nmfe or -run_on_sge_nmfe is set.
+
 If -nmfe or -run_on_sge_nmfe is not set then NM7.2 is not supported.
 o A new option -nmqual_options can be used to pass on options when -nmqual is set.
 o PsN does not support any but the default value of ORDER in $EST. If option ORDER is found it will be removed by PsN.
@@ -19,14 +20,14 @@ o Option stop_motion for educational purposes: See common_options_defaults_versi
 o New option -maxevals. Set on command-line to allow more evalutations than NONMEMs 9999 using sequence of msfo-msfi files.
 o Removed option significant_digits_rerun. Created new option significant_digits_accept with same functionality but correct documentation.
 o modified sge_monitor to read stderr directly instead of creating file with JobID and then opening it.
-o Make all scripts print done at the end, e.g. "sse done".
+o Make all scripts print done at the end, e.g. "sse done".
 o Skipped reset of FORMAT and DELIM option to make formatting more flexible, e.g. allow more significant digits. If however user sets delimiter to other than default then PsN will not be able to parse output.
 o Make PsN use higher precision for initial estimates in NM7 model files. Up to 15 sigdigits.
 o Changed output parsing so that a model with only a $TABLE and no $EST or $SIM will not be handled as crashed. In read_eststep handle finding of 'TABLES STEP OMITTED' (set est step initiated, run, sim step run to 0) separately from 'COVARIANCE STEP OMITTED' (error). In read_inits stop reading if encounter 'TABLES STEP OMITTED' in same places as ESTIMATION or SIMULATION STEP OMITTED.
 o Changed handling of retries. After a NONMEM run is finished then psn.mod .lst .cov etc will be moved instead of copied to numbered retry files psn-N.mod etc. After all retries are finished and the best retry has been selected, then that retry's files are copied to psn.mod, psn.lst. The file stats-runs.csv contains, as in earlier PsN versions, a summary of the best run's results.
-o Changed restart procedure. PsN will check if stats-runs.csv already exists in the NM_run subdirectory. If is exists it is proof that all retries of the model are already finished, and PsN will not start any NONMEM run for this model. PsN will parse psn.lst as the selected model and use this when producing raw_results and other output later. This procedure is new, in earlier PsN versions the existing psn.mod file would always be overwritten, and would also be rerun unless a numbered retry file was present in the directory. The fact that stats-runs.csv is used as a flag for all retries done makes it possible to restart and reuse old partial results also if -clean=2. In older versions PsN would use the numbered retry file, which is removed if -clean=2, as the signal. 
-If stats-runs.csv does not exist but psn.lst does, then PsN will assume the main PsN process has been interrupted while the NONMEM run subprocess has finished, e.g. in a process submitted to a grid, giving the psn.lst output file. PsN will check for existing numbered retry files in the NM_run directory to figure out which retry the psn.lst file belongs to, and summarize the results or start a new retry based on the contents of psn.lst and the settings for retries. 
-When restarting PsN will also check for numbered crash files, so that the counting of restarts after a crash is not reset every time the main PsN process is restarted. 
+o Changed restart procedure. PsN will check if stats-runs.csv already exists in the NM_run subdirectory. If is exists it is proof that all retries of the model are already finished, and PsN will not start any NONMEM run for this model. PsN will parse psn.lst as the selected model and use this when producing raw_results and other output later. This procedure is new, in earlier PsN versions the existing psn.mod file would always be overwritten, and would also be rerun unless a numbered retry file was present in the directory. The fact that stats-runs.csv is used as a flag for all retries done makes it possible to restart and reuse old partial results also if -clean=2. In older versions PsN would use the numbered retry file, which is removed if -clean=2, as the signal.
+If stats-runs.csv does not exist but psn.lst does, then PsN will assume the main PsN process has been interrupted while the NONMEM run subprocess has finished, e.g. in a process submitted to a grid, giving the psn.lst output file. PsN will check for existing numbered retry files in the NM_run directory to figure out which retry the psn.lst file belongs to, and summarize the results or start a new retry based on the contents of psn.lst and the settings for retries.ï¿½
+When restarting PsN will also check for numbered crash files, so that the counting of restarts after a crash is not reset every time the main PsN process is restarted.
 PsN will not copy psn.mod to NM_run if there already is such a file there, because it either means the previous run was interrupted, or that everything is finished for that model (stats-runs.csv exists).
 * parallel_retries
 A new script for running retries in parallel. Very similar to execute, and described in the execute userguide.
@@ -42,15 +43,14 @@ o More flexible definition of simulation model using -sim_model or -flip_comment
 o tte option to vpc for (repeated) time-to-event models. Needs Xpose for plotting (as all vpc).
 o option boxcox_lambda to handle Box-Cox transformed data.
 o new option confidence_interval, default is 95 (%)
-o New option -censor= to vpc and npc. Variable to indicated if an observation is missing. Can be used e.g. when modelling dropout.
+o New option -censor=ï¿½to vpc and npc. Variable to indicated if an observation is missing. Can be used e.g. when modelling dropout.
 o Added possibility in vpc to use -lloq or -uloq in combination with predcorr.
 * xv_scm
 New PsN program xv_scm for cross-validated stepwise covariate modeling (scm).
 * lasso
-New script for covariate model building using the method presented in 
-The lasso, a novel method for predictive covariate model building in nonlinear mixed effects models. 
-Jakob Ribbing, Joakim Nyberg, Ola Caster, E. Niclas Jonsson. 
-J Pharmacokinet Pharmacodyn (2007) 34:485–517
+New script for covariate model building using the method presented in The lasso, a novel method for predictive covariate model building in nonlinear mixed effects models.
+Jakob Ribbing, Joakim Nyberg, Ola Caster, E. Niclas Jonsson.
+J Pharmacokinet Pharmacodyn (2007) 34:485 517
 * nonpb
 o More documentation
 o Changed default method to 1 (short version)
@@ -95,4 +95,3 @@ o More documentation
 o Changed default method to 1 (short version)
 * RunRecord
 fixed bug in runrecord so that lst-files from crashed NONMEM runs are handled.
-

@@ -1,14 +1,13 @@
 Changes between PsN 2.3.1 and 2.3.2
 1. Added support for censored and categorical data in vpc.
-Please see the updated npc/vpc_userguide for details.
+Please see the updated npc/vpc_userguide for details.
 2. Added some simple error checking in $OMEGA and $SIGMA parsing.
 3. Enabled negation of some common options (e.g. -compress).
-4. Changed the default value of option -restarts from 5 to 0 
-in the source code. Please note: Users can set their own 
-defaults in psn.conf, see Common_option_default_versions_PsN.pdf.
+4. Changed the default value of option -restarts from 5 to 0
+in the source code. Please note: Users can set their own
+defaults in psn.conf, see Common_option_default_versions_PsN.pdf.
 5. Fixed a bug to the sse that caused options not to be passed correctly.
 6. Fixed a bug to sumo that prevented the user from setting some options.
 7. Fixed a bug in the code for running on Torque (the torgue bug).
 8. Replaced the computational principles of nonpb version 1.
 9. Fixed a bug in the input checking of vpc/npc.
-

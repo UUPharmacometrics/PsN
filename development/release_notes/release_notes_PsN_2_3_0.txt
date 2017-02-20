@@ -2,8 +2,8 @@ Changes between PsN 2.2.5 and 2.3.0
 1. Support for NONMEM VI 2.0 has been added.
 2. Major documentation effort. All command-line help texts have been
 reviewed and updated.
-3. User-guide documents for common PsN options, bootstrap, execute,
-sse, npc/vpc, , llp and cdd are now available in the subfolder "doc"
+3. User-guide documents for common PsN options, bootstrap, execute,
+sse, npc/vpc, llp and cdd are now available in the subfolder "doc"
 under the PsN Core and Toolkit installation directory, which is
 chosen during the installation (e.g. C:\Perl\site\lib\doc). There
 are still gaps, but they are smaller than before.
@@ -17,9 +17,9 @@ actual values of optional general PsN options. The general PsN
 options include nm_version (NONMEM version as named in psn.conf) and
 seed.
 5. Changed principle for selecting best result from a set of retries.
-Please see the change log or the README.txt file for details.
-6. New script called "PsN" that lists all PsN scripts available using "psn -h" or "psn -help", and lists all available NONMEM versions (the ones listed in psn.conf) using "psn -nm_versions"
-7. New script called "psn_options" that lists options common to most scripts ("psn_options -h").
+Please see the change log or the README.txt file for details.
+6. New script called "PsN" that lists all PsN scripts available using "psn -h" or "psn -help", 
+and lists all available NONMEM versions (the ones listed in psn.conf) using "psn -nm_versions"
+7. New script called "psn_options" that lists options common to most scripts ("psn_options -h").
 8. New version of sumo, including help texts. see "sumo -help"
-9. Lots of new additions and changes, please see the change log or the README.txt file for details.
-
+9. Lots of new additions and changes, please see the change log or the README.txt file for details.

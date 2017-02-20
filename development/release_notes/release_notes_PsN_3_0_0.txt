@@ -1,9 +1,11 @@
 New features in PsN 3.0.0
 1. NONMEM7 support for NONMEM6 type input
-PsN 3.0.0 has partial support for NONMEM7. It will handle NONMEM6 type input, i.e. single $ESTIMATION and classical estimation methods, with any PsN tool (bootstrap, scm...). PsN 3.0.0 has full support for NONMEM6. Details in release notes.
+PsN 3.0.0 has partial support for NONMEM7. It will handle NONMEM6 type input, i.e. single $ESTIMATION and classical estimation methods, with any PsN tool (bootstrap, scm...). PsN 3.0.0 has full support for NONMEM6. 
+Details in release notes.
 2. New option nmfe:
-There is a new commandline option -nmfe (no arguments) that can be used with any PsN tool. When enabled, PsN will invoke nmfe6 or nmfe7 to run NONMEM instead of doing stepwise compiling and execution. See PsN_configuration.pdf and common_options_defaults_version.pdf for details. When nmfe is set the compiler configuration is ignored.
-3. Compiler configuration The compiler configuration can be set differently for each NONMEM version. See PsN_configuration.pdf for details.
+There is a new commandline option -nmfe (no arguments) that can be used with any PsN tool. When enabled, PsN will invoke nmfe6 or nmfe7 to run NONMEM instead of doing stepwise compiling and execution. 
+See PsN_configuration.pdf and common_options_defaults_version.pdf for details. When nmfe is set the compiler configuration is ignored.
+3. Compiler configuration The compiler configuration can be set differently for each NONMEM version. See PsN_configuration.pdf for details.
 Minor changes and bug fixes in PsN 3.0.0
 1. Fixed the -clean option and documentation so that the behaviour matches the documentation.
 2. Fixed a bug that caused bootstrap to crash when dataset has no header.
@@ -20,6 +22,5 @@ Minor changes and bug fixes in PsN 3.0.0
 13. Updated error messages to give more information.
 New documentation in PsN 3.0.0
 1. Installation instructions are found in psn_installation.pdf.
-2. In PsN_configuration.pdf it is described how to edit psn.conf to configure PsN correctly. Please read that document before running PsN for the first time. Old psn.conf files must be edited to work correctly with PsN3.
-3. The document known_bugs_and_workarounds.pdf lists the most commonly encountered unfixed bugs and how to work around them.
-
+2. In PsN_configuration.pdf it is described how to edit psn.conf to configure PsN correctly. Please read that document before running PsN for the first time. Old psn.conf files must be edited to work correctly with PsN3.
+3. The document known_bugs_and_workarounds.pdf lists the most commonly encountered unfixed bugs and how to work around them.
