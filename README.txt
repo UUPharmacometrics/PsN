@@ -51,7 +51,7 @@ create a directory called PsN-Source. Run the installation script
 setup.pl from within PsN-Source.
 
 - More detailed installation instructions are found 
-on the PsN website http://psn.sourceforge.net/ under
+on the PsN website https://uupharmacometrics.github.io/PsN under
 Installation. 
 
 - The installation script can automatically generate a minimal configuration 
@@ -68,7 +68,7 @@ installation directory. During installation it is also possible
 to have all documentation copied to a user-specified directory.
 
 All documentation can also be downloaded from
-the PsN website http://psn.sourceforge.net/
+the PsN website https://uupharmacometrics.github.io/PsN
 
 ************************
 Testing 
@@ -108,9 +108,8 @@ Known issues
 
 - Windows users need to be careful to choose 
   a Perl version where the extra modules needed for PsN are available. See the 
-  instructions on http://psn.sourceforge.net/install.php
+  instructions on https://uupharmacometrics.github.io/PsN/install.html
 
 - Installation problem on some Windows systems where 
 perl 'system' command does not work. Make sure perl module File::Copy::Recursive
 is installed *before* (re)running the installation script setup.pl
-
