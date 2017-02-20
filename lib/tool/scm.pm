@@ -5954,9 +5954,13 @@ sub create_R_plots_code{
 		$parcovstring .= ',' if(length($parcovstring)>0); #not first
 		$parcovstring .= "'".$par."'=c('".join("','",@{$parcov{$par}})."')";
 	}
+	my $scm_log_file = $self -> logfile -> [0];
+	$scm_log_file =~ s/(?<!%)\\/\\\\/g;
+	my $scm_short_log = $self -> short_logfile -> [0];
+	$scm_short_log =~ s/(?<!%)\\/\\\\/g;	
 	$rplot->add_preamble(code => [
-							 "scm.log.file <-'".$self -> logfile -> [0]."'",
-							 "scm.short.log   <- '".$self -> short_logfile -> [0]."'",
+							 "scm.log.file <-'".$scm_log_file."'",
+							 "scm.short.log   <- '".$scm_short_log."'",
 							 'continuous.covariates <- c('.$cont.')',
 							 'categorical.covariates <- c('.$cat.')',
 							 'parameters <- c('.$parameters.')',
