@@ -29,14 +29,14 @@ my $template_dir = includes::get_template_directory_rplots();
 my $toolobject = tool::modelfit->new(directory => 'rundir',
 								rplots => 2,
 								template_directory_rplots =>$template_dir,
-								template_file_rplots => $toolname.'_default.R',
+								template_file_rplots => $toolname.'_default.Rmd',
 								models	     => [ $model ]);
 
 $toolobject -> raw_results_file([$toolobject ->directory.'raw_results_run3.csv']);
 $toolobject -> create_R_script(tool_name => $toolname); 
 
 
-my %pdf_files_pages=($tempdir.'rundir/run3_plots.pdf' => 10);
+my %pdf_files_pages=($tempdir.'rundir/PsN_execute_plots.pdf' => 10);
 
 includes::test_pdf_pages(\%pdf_files_pages);
 

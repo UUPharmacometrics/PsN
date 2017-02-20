@@ -24,6 +24,15 @@ $rc = $rc >> 8;
 
 ok ($rc == 0, "bootstrap 1 that should run ok");
 ok (-e 'boot1/modelfit_dir1/NM_run1/bs_pr1_1.dta','always datafile in nmrun yes');
+ok (-e 'boot1/PsN_bootstrap_plots.Rmd','Creates Rmd default file, not R');
+
+$command = get_command('bootstrap') . " pheno5.mod -samples=10 -seed=12345 -dir=boot1a -dofv -no-rmarkdown";
+
+$rc = system($command);
+$rc = $rc >> 8;
+
+ok ($rc == 0, "bootstrap 1a that should run ok");
+ok (-e 'boot1a/PsN_bootstrap_plots.R','Creates R default file, not Rmd');
 
 $command = get_command('bootstrap') . " pheno5.mod -samples=10 -seed=12345 -dir=boot1 -dofv ";
 

@@ -58,6 +58,7 @@ Getopt::Long::config("auto_abbrev");
 		  "prepend_model_file_name!",
 		  "quick_summarize|quick_summary",
 		  "retries:i",
+		  "rmarkdown!",
 		  "rplots:i",
 		  "run_on_lsf!",
 		  "run_on_ud!",
@@ -1399,6 +1400,12 @@ $help_hash{-citations} = <<'EOF';
     -citations
     Print a list of references for this tool.
     The list will be in BibTeX format.
+EOF
+
+$help_hash{-rmarkdown} = <<'EOF';
+    -rmarkdown
+    If it is possible the Rmarkdown file instead of 
+	R file for R plots will be created.
 EOF
 
     $help_hash{'-h'} = $help_hash{'-?'};

@@ -1,7 +1,15 @@
+---
+title: "VPC"
+output: pdf_document
+classoption: landscape
+geometry: margin=1.5cm
+---
+
+```{r loading_libraries,include = FALSE}
 library(xpose4)
+```
 
-pdf(file=pdf.filename, width=10, height=7, title=pdf.title)
-
+```{r vpc_plots,results='hide',echo=FALSE,fig.width=9,fig.height=6.5,fig.keep="high",fig.align="center"}
 if (!exists('mix')) {     # A mixture model is a special case
     if (is.tte) {
         #data is in the model directory, go there to read input
@@ -37,5 +45,4 @@ if (!exists('mix')) {     # A mixture model is a special case
         }
     }
 }
-
-dev.off()
+```

@@ -1,4 +1,4 @@
-﻿This PsN version has been tested on the following systems:
+This PsN version has been tested on the following systems:
 
 - MS Windows 7 with ActiveState 5.16.6 and NM 7.2.0.
 - Mac OS X 10.6.6 with Perl 5.10.0 and NM 7.2.0.

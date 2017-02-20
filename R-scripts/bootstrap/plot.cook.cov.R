@@ -1,6 +1,7 @@
 plot_cook_cov <- function(data_plots,failed_cov_ID) {
   #need ggplot2 and grid libraries
   #create plot object
+  theme_set(theme_bw(base_size=20)) #set usual background
   p_1 <- ggplot(data_plots,aes(x=cook.scores,y=cov.ratios,label=ID))+
     geom_text()
   
@@ -17,6 +18,6 @@ plot_cook_cov <- function(data_plots,failed_cov_ID) {
   
   gt <- ggplotGrob(p_1)
   gt$layout$clip[gt$layout$name=="panel"] <- "off"
-  #plot
-  grid.draw(gt)
+  
+  return(gt)
 }

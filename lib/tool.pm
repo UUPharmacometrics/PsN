@@ -145,7 +145,7 @@ has 'template_file_rplots' => ( is => 'rw', isa => 'Str');
 has 'standardised_output' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'subset_variable_rplots' => ( is => 'rw', isa => 'Str');
 has 'zip' => ( is => 'rw', isa => 'Bool', default => 0 );
-
+has 'rmarkdown' => ( is => 'rw', isa => 'Bool', default => 1 );
 
 sub BUILDARGS
 {
@@ -1831,23 +1831,25 @@ sub create_R_script
 	my ($dir, $file) = OSspecific::absolute_path($self->template_directory_rplots,$self->template_file_rplots);
 	my $template_file = $dir.$file;
 
-	# check if tool default R file is a markdown file
+	# check if tool default R file is a Rmarkdown file
 	my $rmarkdown = 0; # FALSE
 	my $Rmarkdown_installed = 0;
 	if($template_file =~ /\.Rmd$/) {
 		$rmarkdown = 1; #TRUE
-		#check if rmarkdown/pandoc(version 1.12.3 or higher)/latex are installed
-		my $test_file = 'test_file_rmarkdown_installed.Rmd';
-		open ( SCRIPT, ">" . $test_file );
-		print SCRIPT join("\n",'experiment')."\n";
-		close SCRIPT;
-		system("Rscript -e \"rmarkdown::render(input='".$test_file."',output_format='pdf_document',output_file='test_file_rmarkdown_installed.pdf')\" > test_file_rmarkdown_installed.Rout 2>&1");
-		if (-e 'test_file_rmarkdown_installed.pdf') {
-			$Rmarkdown_installed = 1;
-			unlink('test_file_rmarkdown_installed.pdf'); # delete test files
+		if($self->rmarkdown) { # check if option -no-rmarkdown is used, then Rmarkdown file will not be created
+					#check if rmarkdown/pandoc(version 1.12.3 or higher)/latex are installed
+			my $test_file = 'test_file_rmarkdown_installed.Rmd';
+			open ( SCRIPT, ">" . $test_file );
+			print SCRIPT join("\n",'experiment')."\n";
+			close SCRIPT;
+			system("Rscript -e \"rmarkdown::render(input='".$test_file."',output_format='pdf_document',output_file='test_file_rmarkdown_installed.pdf')\" > test_file_rmarkdown_installed.Rout 2>&1");
+			if (-e 'test_file_rmarkdown_installed.pdf') {
+				$Rmarkdown_installed = 1;
+				unlink('test_file_rmarkdown_installed.pdf'); # delete test files
+			}
+			unlink('test_file_rmarkdown_installed.Rmd');
+			unlink('test_file_rmarkdown_installed.Rout');
 		}
-		unlink('test_file_rmarkdown_installed.Rmd');
-		unlink('test_file_rmarkdown_installed.Rout');
 	}
 		
 	if (-e $template_file){

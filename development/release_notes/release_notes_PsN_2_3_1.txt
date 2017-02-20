@@ -1,0 +1,8 @@
+Changes between PsN 2.3.0 and 2.3.1
+1. Updated the sse_userguide.
+2. Added support for models with block SIGMA structure in NONMEM VI
+2.0.
+3. Fixed a bug to the bootstrap that caused options not to be passed
+correctly
+4. Added support for the Torque grid computing system.
+5. Fixed a bug so that the -mplots flag works with bootstrap and llp.

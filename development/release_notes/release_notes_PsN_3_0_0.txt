@@ -1,0 +1,26 @@
+New features in PsN 3.0.0
+1. NONMEM7 support for NONMEM6 type input
+PsN 3.0.0 has partial support for NONMEM7. It will handle NONMEM6 type input, i.e. single $ESTIMATION and classical estimation methods, with any PsN tool (bootstrap, scm...). PsN 3.0.0 has full support for NONMEM6. 
+Details in release notes.
+2. New option nmfe:
+There is a new commandline option -nmfe (no arguments) that can be used with any PsN tool. When enabled, PsN will invoke nmfe6 or nmfe7 to run NONMEM instead of doing stepwise compiling and execution. 
+See PsN_configuration.pdf and common_options_defaults_version.pdf for details. When nmfe is set the compiler configuration is ignored.
+3. Compiler configuration The compiler configuration can be set differently for each NONMEM version. See PsN_configuration.pdf for details.
+Minor changes and bug fixes in PsN 3.0.0
+1. Fixed the -clean option and documentation so that the behaviour matches the documentation.
+2. Fixed a bug that caused bootstrap to crash when dataset has no header.
+3. The psn.mod file in NM_run subdirectory is now the selected model from the set of retries, instead of the last model that was run.
+4. Fixed a bug to -iofv option for NONMEM6 on Windows. (-iofv is not supported for NONMEM7 since iofv values are obtained from phi additional output.)
+5. Removed old experimental database code.
+6. Added a temporary solution to file path problem on windows and old perl5.8 build versions. Thanks to Joachim Grevel.
+7. Fixed a bug to rewriting model compartments (line break at wrong place).
+8. Added handling of commas in comments to parameters using a solution provided by Bill Denney and Jeroen Elassaiss-Schaap.
+9. Changed sge queueing of jobs. Awaiting test result from Justin Wilkins who reported the bug.
+10. Changed npc/vpc to use CWRES in $TABLE if NONMEM7 is used , and to allow longer variable names.
+11. Changed installer script setup.pl so that it no longer installs required perl modules, but instead optionally checks if required modules are installed.
+12. Changed installer script so that documentation is copied to doc subdirectory of PsN installation directory.
+13. Updated error messages to give more information.
+New documentation in PsN 3.0.0
+1. Installation instructions are found in psn_installation.pdf.
+2. In PsN_configuration.pdf it is described how to edit psn.conf to configure PsN correctly. Please read that document before running PsN for the first time. Old psn.conf files must be edited to work correctly with PsN3.
+3. The document known_bugs_and_workarounds.pdf lists the most commonly encountered unfixed bugs and how to work around them.
