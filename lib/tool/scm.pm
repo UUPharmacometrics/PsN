@@ -5955,9 +5955,9 @@ sub create_R_plots_code{
 		$parcovstring .= "'".$par."'=c('".join("','",@{$parcov{$par}})."')";
 	}
 	my $scm_log_file = $self -> logfile -> [0];
-	$scm_log_file =~ s/(?<!%)\\/\\\\/g;
+	$scm_log_file =~ s/\\/\\\\/g;
 	my $scm_short_log = $self -> short_logfile -> [0];
-	$scm_short_log =~ s/(?<!%)\\/\\\\/g;	
+	$scm_short_log =~ s/\\/\\\\/g;	
 	$rplot->add_preamble(code => [
 							 "scm.log.file <-'".$scm_log_file."'",
 							 "scm.short.log   <- '".$scm_short_log."'",
