@@ -1,12 +1,20 @@
+---
+title: "SCM"
+output: pdf_document
+classoption: landscape
+geometry: margin=1.5cm
+---
+
+```{r loading_libraries_and_sourcing_functions,include = FALSE}
 source(paste0(rscripts.directory, "/scm/first.inclusion.step.R"))
 source(paste0(rscripts.directory, "/scm/included.covariates.R"))
 source(paste0(rscripts.directory, "/scm/plot_first.included.step.R"))
 source(paste0(rscripts.directory, "/scm/plot_included.covariates.R"))
 
 library(ggplot2)
+```
 
-pdf(file=pdf.filename,width=10,height=7,title=pdf.title)
-
+```{r plot_for_included_covariates,results='hide',echo=FALSE,warning=FALSE,fig.width=9,fig.height=6.5,fig.keep="high",fig.align="center"}
 # get included covariates data
 list_incl_cov <- included_covariates(scm.short.log)
 n1 <- list_incl_cov$n1 #Number of covariate included after forward step
@@ -17,8 +25,11 @@ name <- list_incl_cov$name
 # plot SCM results included covariates   
 p <- plot_included_covariates(data,sign,n1,name)
 print(p)
+```
+\pagebreak
 
-
+```{r plot_for_first_included_step,results='hide',echo=FALSE,warning=FALSE,fig.width=9,fig.height=8,fig.keep="high",fig.align="center"}
+# get first included step data
 list_first_incl_step <- first_inclusion_step(scm.log.file)
 n1 <- list_first_incl_step$n1
 data <- list_first_incl_step$data
@@ -26,9 +37,9 @@ base <- list_first_incl_step$base
 sign <- list_first_incl_step$sign
 name <- list_first_incl_step$name
 
+# plot first included step data
 p <- plot_first_included_step(data,base,sign,n1,name)
-    
 print(p)
+```
 
-dev.off()
 
