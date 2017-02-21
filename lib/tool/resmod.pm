@@ -35,6 +35,7 @@ has 'model_templates' => ( is => 'rw', isa => 'ArrayRef' );		# List of model_tem
 # Array of iterations over Hash of dvids over Hash of modelnames over type of result = dOFV or parameters
 has 'resmod_results' => ( is => 'rw', isa => 'ArrayRef', default => sub { [] } );
 has 'iteration' => ( is => 'rw', isa => 'Int', default => 0 );      # Number of the iteration
+has 'iteration_summary' => ( is => 'rw', isa => 'ArrayRef[ArrayRef]', default => sub { [ [] ] } );  # [iteration]->[modelnumber if multiple in one iter]->{dvid}->{'model_name', 'dOFV'
 
 sub BUILD
 {
@@ -308,6 +309,7 @@ sub modelfit_analyze
         my $model_name;
 
         my $minvalue;
+        my $model_no = 0;
         while (scalar(@dofvs)) {
             ($minvalue, my $minind) = array::min(@dofvs);
             $model_name = $model_names[$minind];
@@ -327,6 +329,9 @@ sub modelfit_analyze
                 splice @dofvs, $minind, 1;
                 splice @model_names, $minind, 1;
                 push @best_models, $model_name;
+                $self->iteration_summary->[$self->iteration]->[$model_no]->{'NA'}->{'dOFV'} = $minvalue;
+                $self->iteration_summary->[$self->iteration]->[$model_no]->{'NA'}->{'model_name'} = $model_name;
+                $model_no++;
                 next;
             }
 
@@ -337,7 +342,8 @@ sub modelfit_analyze
             return;
         }
 
-        $self->_add_to_iteration_summary(model_name => $model_name, iteration => scalar(@{$self->best_models} + 1), dofv => $minvalue);
+        $self->iteration_summary->[$self->iteration]->[$model_no]->{'NA'}->{'dOFV'} = $minvalue;
+        $self->iteration_summary->[$self->iteration]->[$model_no]->{'NA'}->{'model_name'} = $model_name;
 
         push @best_models, $model_name;
 
@@ -361,6 +367,7 @@ sub modelfit_analyze
             unique_dvid => $self->unique_dvid,
             iteration => $self->iteration + 1,
             resmod_results => $self->resmod_results,
+            iteration_summary => $self->iteration_summary,
         );
         $resmod->run();
     }
@@ -423,6 +430,21 @@ sub _print_results
     }
 
     close $fh;
+
+    open my $iter_fh, '>', "iteration_summary.csv";
+    print $iter_fh "Iteration,Model no,DVID,Model,dOFV\n";
+
+    for (my $iter = 0; $iter < scalar(@{$self->iteration_summary}); $iter++) {
+        for (my $model_no = 0; $model_no < scalar(@{$self->iteration_summary->[$iter]}); $model_no++) {
+            my @sorted_dvids = sort keys %{$self->iteration_summary->[$iter]->[$model_no]};
+            for my $dvid (@sorted_dvids) {
+                my $model_name = $self->iteration_summary->[$iter]->[$model_no]->{$dvid}->{'model_name'};
+                my $dofv = $self->iteration_summary->[$iter]->[$model_no]->{$dvid}->{'dOFV'};
+                print $iter_fh "$iter,$model_no,$dvid,$model_name,$dofv\n"
+            }
+        }
+    }
+    close $iter_fh;
 }
 
 sub _calculate_quantiles
@@ -711,30 +733,6 @@ sub _build_time_varying_template
     }
 
     return \@models;
-}
-
-sub _add_to_iteration_summary
-{
-    my $self = shift;
-
-    my %parm = validated_hash(\@_,
-		model_name => { isa => 'Str' },
-		iteration => { isa => 'Int' },
-        dofv => { isa => 'Num' },
-    );
-    my $model_name = $parm{'model_name'};
-    my $iteration = $parm{'iteration'};
-    my $dofv = $parm{'dofv'};
-
-    open my $fh, '>>', $self->top_directory . "iteration_summary.csv";
-
-    if ($iteration == 1) {      # This is the first iteration
-        print $fh "Model,Iteration,dOFV\n";    
-    }
-
-    print $fh "$model_name,$iteration,$dofv\n";
-
-    close $fh;
 }
 
 sub _create_extra_fortran_files
