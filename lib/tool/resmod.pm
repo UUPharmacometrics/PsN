@@ -51,7 +51,7 @@ sub BUILD
         }
         my $cwres_table_name = $self->model->problems->[0]->find_table(columns => \@columns);
         my $table = nmtablefile->new(filename => "$cwres_table_name"); 
-        my @columns_in_table = $cwres_table->columns();
+        my @columns_in_table = @{$cwres_table->columns()};
         my $have_tad = grep { $_ eq 'TAD' } @columns_in_table; 
         my $have_dvid = grep { $_ eq $self->dvid } @columns_in_table;
 
@@ -216,7 +216,6 @@ sub modelfit_analyze
 	my $current_dvid;
     my @dofvs;
     my @model_names;
-	my %dvid_sum;
     my $base_sum = 0;
 	for (my $dvid_index = 0; $dvid_index < $self->numdvid; $dvid_index++) {
 		for (my $i = 0; $i < scalar(@{$self->residual_models->[$dvid_index]}); $i++) {
@@ -250,10 +249,6 @@ sub modelfit_analyze
             push @dofvs, $delta_ofv;
             push @model_names, $model_name;
             $self->resmod_results->[$self->iteration]->{$self->unique_dvid->[$dvid_index]}->{$model_name}->{'dOFV'} = $delta_ofv;
-
-			if ($self->numdvid > 1) {
-				$dvid_sum{$model_name} += $delta_ofv;
-			}
 
 			if (exists $self->residual_models->[$dvid_index]->[$i]->{'parameters'}) {
                 my @parameter_strings;
@@ -291,31 +286,6 @@ sub modelfit_analyze
 			}
 		}
 	}
-
-	# Create summary table for DVID	
-#    if ($self->numdvid > 1) {
-#        print $fh "\nDVID_summary\n";
-#        for (my $i = 0; $i < scalar(@{$self->residual_models->[0]}); $i++) {
-#            next if (exists $self->residual_models->[0]->[$i]->{'base'});
-#            my $name = $self->residual_models->[0]->[$i]->{'name'};
-#            print $fh $name, ',', $dvid_sum{$name}, "\n"; 
-#        }
-#        if (defined $self->l2_model) {
-#            my $ofv;
-#            my $dofv;
-#            if ($self->l2_model->is_run()) {
-#                my $output = $self->l2_model->outputs->[0];
-#                $ofv = $output->get_single_value(attribute => 'ofv');
-#            }
-#            if (not defined $ofv or not defined $base_sum) {
-#                $dofv = 'NA';
-#            } else {
-#                $dofv = $ofv - $base_sum;
-#			    $dofv = sprintf("%.2f", $dofv);
-#            }
-#            print $fh 'L2,', $dofv, "\n";
-#        }
-#    }
 
     if ($self->iterative) {
         my @best_models = @{$self->best_models};
@@ -394,23 +364,56 @@ sub _print_results
     print $fh "Iteration,DVID,Model,dOFV,Parameters\n";
 
     for (my $iter = 0; $iter < scalar(@{$self->resmod_results}); $iter++) {
+        my $print_iter;
+        if (scalar(@{$self->resmod_results}) == 1) {
+            $print_iter = 'NA';
+        } else {
+            $print_iter = $iter;
+        }
         my @sorted_dvids = sort keys %{$self->resmod_results->[$iter]};
+        my %dvid_sum;
         for my $dvid (@sorted_dvids) {
             my @sorted_modelnames = sort { $a cmp $b } keys %{$self->resmod_results->[$iter]->{$dvid}};
             for my $model_name (@sorted_modelnames) {
                 my $dofv = $self->resmod_results->[$iter]->{$dvid}->{$model_name}->{'dOFV'};
-                my $parameter_string = $self->resmod_results->[$iter]->{$dvid}->{$model_name}->{'parameters'};
-                my $print_iter;
-                if (scalar(@{$self->resmod_results}) == 1) {
-                    $print_iter = 'NA';
-                } else {
-                    $print_iter = $iter;
+                if (not defined $dvid_sum{$model_name}) {
+                    $dvid_sum{$model_name} = 0;
                 }
+                if ($dvid_sum{$model_name} ne 'NA') {
+                    if ($dofv ne 'NA') {
+                        $dvid_sum{$model_name} += $dofv;
+                    } else {
+                        $dvid_sum{$model_name} = 'NA';
+                    }
+                }
+                my $parameter_string = $self->resmod_results->[$iter]->{$dvid}->{$model_name}->{'parameters'};
                 print $fh "$print_iter,$dvid,$model_name,$dofv,$parameter_string\n";
             }
         }
+        # Create summary for DVID
+        if (scalar(@sorted_dvids) > 1) {
+            my @sorted_modelnames = sort { $a cmp $b } keys %{$self->resmod_results->[$iter]->{$sorted_dvids[0]}};
+            for my $model_name (@sorted_modelnames) {
+                print $fh "$print_iter,sum,$model_name,$dvid_sum{$model_name}\n";
+            }
+        } 
     }
 
+#        if (defined $self->l2_model) {
+#            my $ofv;
+#            my $dofv;
+#            if ($self->l2_model->is_run()) {
+#                my $output = $self->l2_model->outputs->[0];
+#                $ofv = $output->get_single_value(attribute => 'ofv');
+#            }
+#            if (not defined $ofv or not defined $base_sum) {
+#                $dofv = 'NA';
+#            } else {
+#                $dofv = $ofv - $base_sum;
+#			    $dofv = sprintf("%.2f", $dofv);
+#            }
+#            print $fh 'L2,', $dofv, "\n";
+#        }
     close $fh;
 }
 
