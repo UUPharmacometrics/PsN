@@ -69,7 +69,7 @@ sub BUILD
             my $number_of_dvid = scalar(@$unique_dvid);
             $self->numdvid($number_of_dvid);
         } else {
-            $self->unique_dvid([1]);
+            $self->unique_dvid(['NA']);
             $self->numdvid(1);
         }
     }
@@ -212,13 +212,6 @@ sub modelfit_analyze
 
     _delete_extra_fortran_files();
 
-    open my $fh, '>>', $self->top_directory . 'results.csv';
-    if (scalar(@{$self->best_models} == 0)) {        # Only print header for first iteration
-        print $fh "Model,dOFV,Parameters\n";
-    }
-    if ($self->iterative) {
-        print $fh "\n\"** ITERATION", scalar(@{$self->best_models}) + 1, " **\"\n";
-    }
     my %base_models;        # Hash from basemodelno to base model OFV
 	my $current_dvid;
     my @dofvs;
@@ -226,10 +219,6 @@ sub modelfit_analyze
 	my %dvid_sum;
     my $base_sum = 0;
 	for (my $dvid_index = 0; $dvid_index < $self->numdvid; $dvid_index++) {
-		if ($self->numdvid > 1) {
-            print $fh "\n";
-			print $fh $self->dvid, '=', int($self->unique_dvid->[$dvid_index]), "\n";
-		}
 		for (my $i = 0; $i < scalar(@{$self->residual_models->[$dvid_index]}); $i++) {
 			my $model = $self->run_models->[$dvid_index]->[$i];
 			my $model_name = $self->residual_models->[$dvid_index]->[$i]->{'name'};
@@ -253,7 +242,7 @@ sub modelfit_analyze
 			$base_ofv = $base_models{$self->residual_models->[$dvid_index]->[$i]->{'use_base'}};
 			if ($base_ofv eq 'NA' or $ofv eq 'NA') {        # Really skip parameters if no base ofv?
                 $self->resmod_results->[$self->iteration]->{$self->unique_dvid->[$dvid_index]}->{$model_name}->{'dOFV'} = 'NA';
-				print $fh $model_name, ",NA,NA\n";
+                $self->resmod_results->[$self->iteration]->{$self->unique_dvid->[$dvid_index]}->{$model_name}->{'parameters'} = 'NA';
 				next;
 			}
 			my $delta_ofv = $ofv - $base_ofv;
@@ -261,7 +250,6 @@ sub modelfit_analyze
             push @dofvs, $delta_ofv;
             push @model_names, $model_name;
             $self->resmod_results->[$self->iteration]->{$self->unique_dvid->[$dvid_index]}->{$model_name}->{'dOFV'} = $delta_ofv;
-			print $fh $model_name, ",", $delta_ofv, ",";
 
 			if ($self->numdvid > 1) {
 				$dvid_sum{$model_name} += $delta_ofv;
@@ -300,37 +288,34 @@ sub modelfit_analyze
 				}
                 my $parameter_string = join(',', @parameter_strings);
                 $self->resmod_results->[$self->iteration]->{$self->unique_dvid->[$dvid_index]}->{$model_name}->{'parameters'} = $parameter_string;
-			    print $fh "$parameter_string\n";
 			}
 		}
 	}
 
 	# Create summary table for DVID	
-    if ($self->numdvid > 1) {
-        print $fh "\nDVID_summary\n";
-        for (my $i = 0; $i < scalar(@{$self->residual_models->[0]}); $i++) {
-            next if (exists $self->residual_models->[0]->[$i]->{'base'});
-            my $name = $self->residual_models->[0]->[$i]->{'name'};
-            print $fh $name, ',', $dvid_sum{$name}, "\n"; 
-        }
-        if (defined $self->l2_model) {
-            my $ofv;
-            my $dofv;
-            if ($self->l2_model->is_run()) {
-                my $output = $self->l2_model->outputs->[0];
-                $ofv = $output->get_single_value(attribute => 'ofv');
-            }
-            if (not defined $ofv or not defined $base_sum) {
-                $dofv = 'NA';
-            } else {
-                $dofv = $ofv - $base_sum;
-			    $dofv = sprintf("%.2f", $dofv);
-            }
-            print $fh 'L2,', $dofv, "\n";
-        }
-    }
-
-    close $fh;
+#    if ($self->numdvid > 1) {
+#        print $fh "\nDVID_summary\n";
+#        for (my $i = 0; $i < scalar(@{$self->residual_models->[0]}); $i++) {
+#            next if (exists $self->residual_models->[0]->[$i]->{'base'});
+#            my $name = $self->residual_models->[0]->[$i]->{'name'};
+#            print $fh $name, ',', $dvid_sum{$name}, "\n"; 
+#        }
+#        if (defined $self->l2_model) {
+#            my $ofv;
+#            my $dofv;
+#            if ($self->l2_model->is_run()) {
+#                my $output = $self->l2_model->outputs->[0];
+#                $ofv = $output->get_single_value(attribute => 'ofv');
+#            }
+#            if (not defined $ofv or not defined $base_sum) {
+#                $dofv = 'NA';
+#            } else {
+#                $dofv = $ofv - $base_sum;
+#			    $dofv = sprintf("%.2f", $dofv);
+#            }
+#            print $fh 'L2,', $dofv, "\n";
+#        }
+#    }
 
     if ($self->iterative) {
         my @best_models = @{$self->best_models};
@@ -363,8 +348,6 @@ sub modelfit_analyze
         }
 
         if (scalar(@dofvs) == 0) {      # Exit recursion
-use Data::Dumper;
-print Dumper($self->resmod_results);
             return;
         }
 
@@ -395,11 +378,44 @@ print Dumper($self->resmod_results);
         );
         $resmod->run();
     }
+
+
+    # End of all iterations
+    if ($self->top_level) {
+        $self->_print_results();
+    }
+}
+
+sub _print_results
+{
+    my $self = shift;
+
+    open my $fh, '>', 'results.csv';
+    print $fh "Iteration,DVID,Model,dOFV,Parameters\n";
+
+    for (my $iter = 0; $iter < scalar(@{$self->resmod_results}); $iter++) {
+        my @sorted_dvids = sort keys %{$self->resmod_results->[$iter]};
+        for my $dvid (@sorted_dvids) {
+            my @sorted_modelnames = sort { $a cmp $b } keys %{$self->resmod_results->[$iter]->{$dvid}};
+            for my $model_name (@sorted_modelnames) {
+                my $dofv = $self->resmod_results->[$iter]->{$dvid}->{$model_name}->{'dOFV'};
+                my $parameter_string = $self->resmod_results->[$iter]->{$dvid}->{$model_name}->{'parameters'};
+                my $print_iter;
+                if (scalar(@{$self->resmod_results}) == 1) {
+                    $print_iter = 'NA';
+                } else {
+                    $print_iter = $iter;
+                }
+                print $fh "$print_iter,$dvid,$model_name,$dofv,$parameter_string\n";
+            }
+        }
+    }
+
+    close $fh;
 }
 
 sub _calculate_quantiles
 {
-    # FIXME: Remove this later
     my $self = shift;
 	my %parm = validated_hash(\@_,
 		table => { isa => 'nmtable' },
