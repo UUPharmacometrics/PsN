@@ -30,283 +30,9 @@ has 'iterative' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'best_models' => ( is => 'rw', isa => 'ArrayRef', default => sub { [] } );
 has 'top_directory' => ( is => 'rw', isa => 'Str' );    # Path to the toplevel directory to put results files
 
+has 'top_level' => ( is => 'rw', isa => 'Bool', default => 1 );     # Is this the top level resmod object
 has 'model_templates' => ( is => 'rw', isa => 'ArrayRef' );		# List of model_templates to use
 
-# This array of hashes represent the different models to be tested.
-our @residual_models =
-(
-	{
-		name => 'base',
-	    prob_arr => [
-			'$PROBLEM CWRES base model',
-			'$INPUT <inputcolumns>',
-			'$DATA ../<cwrestablename> IGNORE=@ IGNORE=(DV.EQN.0) <dvidaccept>',
-			'$PRED',
-            'Y = THETA(1) + ETA(1) + ERR(1)',
-			'$THETA .1',
-			'$OMEGA 0.01',
-			'$SIGMA 1',
-			'$ESTIMATION METHOD=1 INTER MAXEVALS=9990 PRINT=2 POSTHOC',
-        ],
-        base => 1,
-	}, {
-		name => 'IIV_on_RUV',
-	    prob_arr => [
-			'$PROBLEM CWRES omega-on-epsilon',
-			'$INPUT <inputcolumns>',
-			'$DATA ../<cwrestablename> IGNORE=@ IGNORE=(DV.EQN.0) <dvidaccept>',
-			'$PRED',
-            'Y = THETA(1) + ETA(1) + ERR(1) * EXP(ETA(2))',
-			'$THETA .1',
-			'$OMEGA 0.01',
-            '$OMEGA 0.01',
-			'$SIGMA 1',
-			'$ESTIMATION METHOD=1 INTER MAXEVALS=9990 PRINT=2 POSTHOC',
-        ],
-        parameters => [
-            { name => "%CV", parameter => "OMEGA(2,2)", recalc => sub { sqrt($_[0])*100 } },
-        ],
-        use_base => 1,
-    }, {
-		name => 'power',
-        need_ipred => 1,
-	    prob_arr => [
-			'$PROBLEM CWRES power IPRED',
-			'$INPUT <inputcolumns>',
-			'$DATA ../<cwrestablename> IGNORE=@ IGNORE=(DV.EQN.0) <dvidaccept>',
-			'$PRED',
-            'Y = THETA(1) + ETA(1) + ERR(1)*(IPRED)**THETA(2)',
-			'$THETA .1',
-			'$THETA .1',
-			'$OMEGA 0.01',
-			'$SIGMA 1',
-			'$ESTIMATION METHOD=1 INTER MAXEVALS=9990 PRINT=2 POSTHOC',
-        ],
-        parameters => [
-            { name => "delta_power", parameter => "THETA2" },
-        ],
-        use_base => 1,
-	}, {
-        name => 'autocorrelation',
-        prob_arr => [
-			'$PROBLEM CWRES AR1',
-			'$INPUT <inputcolumns>',
-			'$DATA ../<cwrestablename> IGNORE=@ IGNORE=(DV.EQN.0) <dvidaccept>',
-			'$PRED',
-            '"FIRST',
-            '" USE SIZES, ONLY: NO',
-            '" USE NMPRD_REAL, ONLY: C=>CORRL2',
-            '" REAL (KIND=DPSIZE) :: T(NO)',
-            '" INTEGER (KIND=ISIZE) :: I,J,L',
-            '"MAIN',
-            '"C If new ind, initialize loop',
-            '" IF (NEWIND.NE.2) THEN',
-            '"  I=0',
-            '"  L=1',
-            '"  OID=ID',
-            '" END IF',
-            '"C Only if first in L2 set and if observation',
-            '"C  IF (MDV.EQ.0) THEN',
-            '"  I=I+1',
-            '"  T(I)=TIME',
-            '"  IF (OID.EQ.ID) L=I',
-            '"',
-            '"  DO J=1,I',
-            '"      C(J,1)=EXP((-0.6931/THETA(2))*(TIME-T(J)))',
-            '"  ENDDO',
-            'Y = THETA(1) + ETA(1) + EPS(1)',
-            '$THETA  -0.0345794',
-            '$THETA  (0.001,1)',
-            '$OMEGA  2.41E-006',
-            '$SIGMA  0.864271',
-            '$ESTIMATION METHOD=1 INTER MAXEVALS=9990 PRINT=2 POSTHOC',
-        ],
-        parameters => [
-            { name => "half-life", parameter => "THETA2" },
-        ],
-        use_base => 1,
-    }, {
-		name => 'autocorrelation_iov',
-		need_occ => 1,
-		prob_arr => [
-			'$PROBLEM CWRES AR1 IOV',
-			'$INPUT <inputcolumns>',
-			'$DATA ../<cwrestablename> IGNORE=@ IGNORE=(DV.EQN.0) <dvidaccept>',
-			'$ABBREVIATED DECLARE T1(NO)',
-			'$ABBREVIATED DECLARE INTEGER I,DOWHILE J',
-			'$PRED', 
-			'IF(NEWIND.NE.2) THEN',
-			'  I=0',
-			'  L=1',
-			'  OOCC=OCC',
-			'  OID=ID',
-			'END IF',
-			'IF(NEWL2==1) THEN',
-			'  I=I+1',
-			'  T1(I)=TIME',
-			'  IF(OID.EQ.ID.AND.OOCC.NE.OCC)THEN',
-			'    L=I',
-			'    OOCC=OCC',
-			'  END IF',
-			'  J=L',
-			'  DO WHILE (J<=I)',
-			'    CORRL2(J,1) = EXP((-0.6931/THETA(2))*(TIME-T1(J)))',
-			'    J=J+1',
-			'  ENDDO',
-			'ENDIF',
-			'Y = THETA(1) + ETA(1) + EPS(1)',
-			'$THETA -0.0345794',
-			'$THETA (0.001,1)',
-			'$OMEGA 2.41E-006',
-			'$SIGMA 0.864271',
-			'$ESTIMATION METHOD=1 INTER MAXEVALS=9990 PRINT=2 POSTHOC',
-		],
-        parameters => [
-            { name => "half-life", parameter => "THETA2" },
-        ],
-		use_base => 1, 
-    }, {
-		name => 'tdist_base',
-	    prob_arr => [
-			'$PROBLEM CWRES t-distribution base mode',
-			'$INPUT <inputcolumns>',
-			'$DATA ../<cwrestablename> IGNORE=@ IGNORE=(DV.EQN.0) <dvidaccept>',
-			'$PRED',
-			'IPRED_ = THETA(1) + ETA(1)',
-			'W     = THETA(2)',
-			'IWRES=(DV-IPRED_)/W',
-			'LIM = 10E-14',
-			'IF(IWRES.EQ.0) IWRES = LIM',
-			'LL=-0.5*LOG(2*3.14159265)-LOG(W)-0.5*(IWRES**2)',
-			'L=EXP(LL)',
-			'Y=-2*LOG(L)',
-			'$THETA  .1 ; Mean',
-			'$THETA  (0,1) ; W : SD',
-			'$OMEGA  0.0001',
-			'$ESTIMATION MAXEVAL=99999 -2LL METH=1 LAPLACE PRINT=2 POSTHOC',
-		],
-		base => 2,
-    }, {
-        name => 'tdist_2ll_dfest',
-        prob_arr => [
-			'$PROBLEM CWRES laplace 2LL DF=est',
-			'$INPUT <inputcolumns>',
-			'$DATA ../<cwrestablename> IGNORE=@ IGNORE=(DV.EQN.0) <dvidaccept>',
-			'$PRED',
-            'IPRED_ = THETA(1) + ETA(1)',
-            'W = THETA(2)',
-            'DF = THETA(3) ; degrees of freedom of Student distribution',
-            'SIG1 = W ; scaling factor for standard deviation of RUV',
-            'IWRES = (DV - IPRED_) / SIG1',
-            'PHI = (DF + 1) / 2 ; Nemesapproximation of gamma funtion(2007) for first factor of t-distrib(gamma((DF+1)/2))',
-            'INN = PHI + 1 / (12 * PHI - 1 / (10 * PHI))',
-            'GAMMA = SQRT(2 * 3.14159265 / PHI) * (INN / EXP(1)) ** PHI',
-            'PHI2 = DF / 2 ; Nemesapproximation of gamma funtion(2007) for second factor of t-distrib(gamma(DF/2))',
-            'INN2 = PHI2 + 1 / (12 * PHI2 - 1 / (10 * PHI2))',
-            'GAMMA2 = SQRT(2*3.14159265/PHI2)*(INN2/EXP(1))**PHI2',
-            'COEFF=GAMMA/(GAMMA2*SQRT(DF*3.14159265))/SIG1 ; coefficient of PDF of t-distribution',
-            'BASE=1+IWRES*IWRES/DF ; base of PDF of t-distribution',
-            'POW=-(DF+1)/2 ; power of PDF of t-distribution',
-            'L=COEFF*BASE**POW ; PDF oft-distribution',
-            'Y=-2*LOG(L)',
-			'$THETA .1',
-			'$THETA (0,1)',
-			'$THETA (3,10,300)',
-			'$OMEGA 0.01',
-			'$ESTIMATION METHOD=1 LAPLACE MAXEVALS=9990 PRINT=2 -2LL',
-        ],
-        parameters => [
-            { name => "df", parameter => "THETA3" },
-        ],
-		use_base => 2,
-    }, {
-        name => 'dtbs_base',
-        need_ipred => 1,
-        prob_arr => [
-			'$PROBLEM    CWRES dtbs base model',
-			'$INPUT <inputcolumns>',
-			'$DATA ../<cwrestablename> IGNORE=@ IGNORE=(DV.EQN.0) <dvidaccept>',
-			'$SUBROUTINE CONTR=contr.txt CCONTR=ccontra.txt',
-			'$PRED',
-			'IPRT   = THETA(1)*EXP(ETA(1))',
-			'WA     = THETA(2)',
-			'LAMBDA = THETA(3)',
-			'ZETA   = THETA(4)',
-			'IF(IPRT.LT.0) IPRT=10E-14',
-			'W = WA*IPRED**ZETA',
-			'IPRTR = IPRT',
-			'IF (LAMBDA .NE. 0 .AND. IPRT .NE.0) THEN',
-			'	IPRTR = (IPRT**LAMBDA-1)/LAMBDA',
-			'ENDIF',
-			'IF (LAMBDA .EQ. 0 .AND. IPRT .NE.0) THEN',
-			'	IPRTR = LOG(IPRT)',
-			'ENDIF',
-			'IF (LAMBDA .NE. 0 .AND. IPRT .EQ.0) THEN',
-			'	IPRTR = -1/LAMBDA',
-			'ENDIF',
-			'IF (LAMBDA .EQ. 0 .AND. IPRT .EQ.0) THEN',
-			'	IPRTR = -1000000000',
-			'ENDIF',
-			'IPRT = IPRTR',
-			'Y = IPRT + ERR(1)*W',
-			'IF(ICALL.EQ.4) Y=EXP(DV)',
-			'$THETA  0.973255 ; IPRED 1',
-			'$THETA  (0,1.37932) ; WA',
-			'$THETA  0 FIX ; lambda',
-			'$THETA  0 FIX ; zeta',
-			'$OMEGA  0.0001',
-			'$SIGMA  1  FIX',
-			'$SIMULATION (1234)',
-			'$ESTIMATION METHOD=1 INTER MAXEVALS=99999 PRINT=2 POSTHOC',
-        ],
-		base => 3,
-    }, {
-		name => 'dtbs',
-        need_ipred => 1,
-		prob_arr => [
-			'$PROBLEM    CWRES dtbs model',
-			'$INPUT <inputcolumns>',
-			'$DATA ../<cwrestablename> IGNORE=@ IGNORE=(DV.EQN.0) <dvidaccept>',
-			'$SUBROUTINE CONTR=contr.txt CCONTR=ccontra.txt',
-			'$PRED',
-			'IPRT   = THETA(1)*EXP(ETA(1))',
-			'WA     = THETA(2)',
-			'LAMBDA = THETA(3)',
-			'ZETA   = THETA(4)',
-			'IF(IPRT.LT.0) IPRT=10E-14',
-			'W = WA*IPRED**ZETA',
-			'IPRTR = IPRT',
-			'IF (LAMBDA .NE. 0 .AND. IPRT .NE.0) THEN',
-			'	IPRTR = (IPRT**LAMBDA-1)/LAMBDA',
-			'ENDIF',
-			'IF (LAMBDA .EQ. 0 .AND. IPRT .NE.0) THEN',
-			'	IPRTR = LOG(IPRT)',
-			'ENDIF',
-			'IF (LAMBDA .NE. 0 .AND. IPRT .EQ.0) THEN',
-			'	IPRTR = -1/LAMBDA',
-			'ENDIF',
-			'IF (LAMBDA .EQ. 0 .AND. IPRT .EQ.0) THEN',
-			'	IPRTR = -1000000000',
-			'ENDIF',
-			'IPRT = IPRTR',
-			'Y = IPRT + ERR(1)*W',
-			'IF(ICALL.EQ.4) Y=EXP(DV)',
-			'$THETA   0.973255 ; IPRED 1',
-			'$THETA  (0,1.37932) ; WA',
-			'$THETA     0.001    ; lambda',
-			'$THETA     0.001    ; zeta',
-			'$OMEGA  0.0001',
-			'$SIGMA  1  FIX',
-			'$SIMULATION (1234)',
-			'$ESTIMATION METHOD=1 INTER MAXEVALS=99999 PRINT=2 POSTHOC',
-		],
-        parameters => [
-            { name => "lambda", parameter => "THETA3" },
-            { name => "zeta", parameter => "THETA4" },
-        ],
-		use_base => 3,
-	},
-);
 
 sub BUILD
 {
@@ -323,45 +49,6 @@ sub BUILD
 sub modelfit_setup
 {
 	my $self = shift;
-
-	# Create the contr.txt and ccontra.txt needed for dtbs
-	open my $fh_contr, '>', "contr.txt";
-	print $fh_contr <<'END';
-      subroutine contr (icall,cnt,ier1,ier2)
-      double precision cnt
-      call ncontr (cnt,ier1,ier2,l2r)
-      return
-      end
-END
-	close $fh_contr;
-
-	open my $fh_ccontra, '>', "ccontra.txt";
-	print $fh_ccontra <<'END';
-      subroutine ccontr (icall,c1,c2,c3,ier1,ier2)
-      USE ROCM_REAL,   ONLY: theta=>THETAC,y=>DV_ITM2
-      USE NM_INTERFACE,ONLY: CELS
-!      parameter (lth=40,lvr=30,no=50)
-!      common /rocm0/ theta (lth)
-!      common /rocm4/ y
-!      double precision c1,c2,c3,theta,y,w,one,two
-      double precision c1,c2,c3,w,one,two
-      dimension c2(:),c3(:,:)
-      data one,two/1.,2./
-      if (icall.le.1) return
-      w=y(1)
-
-         if(theta(3).eq.0) y(1)=log(y(1))
-         if(theta(3).ne.0) y(1)=(y(1)**theta(3)-one)/theta(3)
-
-
-      call cels (c1,c2,c3,ier1,ier2)
-      y(1)=w
-      c1=c1-two*(theta(3)-one)*log(y(1))
-
-      return
-      end
-END
-	close $fh_ccontra;
 
     # Find a table with ID, TIME, CWRES and extra_input (IPRED)
     my @columns = ( 'ID', $self->idv, 'CWRES' );
@@ -395,7 +82,7 @@ END
         }
     }
 
-    if (scalar(@{$self->best_models}) > 0) {
+    if (not $self->top_level) {
         $cwres_table_name = "m1/$cwres_table_name";
     }
 
@@ -496,6 +183,8 @@ END
         push @models_to_run, $l2_model;
     }
 
+    _create_extra_fortran_files();
+
 	my $modelfit = tool::modelfit->new(
 		%{common_options::restore_options(@common_options::tool_options)},
 		models => \@models_to_run, 
@@ -513,8 +202,7 @@ sub modelfit_analyze
 {
     my $self = shift;
 
-	# Remove the extra files
-	unlink('contr.txt', 'ccontra.txt');
+    _delete_extra_fortran_files();
 
     open my $fh, '>>', $self->top_directory . 'results.csv';
     if (scalar(@{$self->best_models} == 0)) {        # Only print header for first iteration
@@ -683,6 +371,8 @@ sub modelfit_analyze
             best_models => \@best_models,
             cutoffs => $self->cutoffs,
             top_directory => $self->top_directory,
+            top_level => 0,
+            model_templates => $self->model_templates,
         );
         $resmod->run();
     }
@@ -1001,6 +691,328 @@ sub _add_to_iteration_summary
     close $fh;
 }
 
+sub _create_extra_fortran_files
+{
+	# Create the contr.txt and ccontra.txt needed for dtbs
+	open my $fh_contr, '>', "contr.txt";
+	print $fh_contr <<'END';
+      subroutine contr (icall,cnt,ier1,ier2)
+      double precision cnt
+      call ncontr (cnt,ier1,ier2,l2r)
+      return
+      end
+END
+	close $fh_contr;
+
+	open my $fh_ccontra, '>', "ccontra.txt";
+	print $fh_ccontra <<'END';
+      subroutine ccontr (icall,c1,c2,c3,ier1,ier2)
+      USE ROCM_REAL,   ONLY: theta=>THETAC,y=>DV_ITM2
+      USE NM_INTERFACE,ONLY: CELS
+!      parameter (lth=40,lvr=30,no=50)
+!      common /rocm0/ theta (lth)
+!      common /rocm4/ y
+!      double precision c1,c2,c3,theta,y,w,one,two
+      double precision c1,c2,c3,w,one,two
+      dimension c2(:),c3(:,:)
+      data one,two/1.,2./
+      if (icall.le.1) return
+      w=y(1)
+
+         if(theta(3).eq.0) y(1)=log(y(1))
+         if(theta(3).ne.0) y(1)=(y(1)**theta(3)-one)/theta(3)
+
+
+      call cels (c1,c2,c3,ier1,ier2)
+      y(1)=w
+      c1=c1-two*(theta(3)-one)*log(y(1))
+
+      return
+      end
+END
+	close $fh_ccontra;
+}
+
+sub _delete_extra_fortran_files
+{
+	unlink('contr.txt', 'ccontra.txt');
+}
+
+# This array of hashes represent the different models to be tested.
+our @residual_models =
+(
+	{
+		name => 'base',
+	    prob_arr => [
+			'$PROBLEM CWRES base model',
+			'$INPUT <inputcolumns>',
+			'$DATA ../<cwrestablename> IGNORE=@ IGNORE=(DV.EQN.0) <dvidaccept>',
+			'$PRED',
+            'Y = THETA(1) + ETA(1) + ERR(1)',
+			'$THETA .1',
+			'$OMEGA 0.01',
+			'$SIGMA 1',
+			'$ESTIMATION METHOD=1 INTER MAXEVALS=9990 PRINT=2 POSTHOC',
+        ],
+        base => 1,
+	}, {
+		name => 'IIV_on_RUV',
+	    prob_arr => [
+			'$PROBLEM CWRES omega-on-epsilon',
+			'$INPUT <inputcolumns>',
+			'$DATA ../<cwrestablename> IGNORE=@ IGNORE=(DV.EQN.0) <dvidaccept>',
+			'$PRED',
+            'Y = THETA(1) + ETA(1) + ERR(1) * EXP(ETA(2))',
+			'$THETA .1',
+			'$OMEGA 0.01',
+            '$OMEGA 0.01',
+			'$SIGMA 1',
+			'$ESTIMATION METHOD=1 INTER MAXEVALS=9990 PRINT=2 POSTHOC',
+        ],
+        parameters => [
+            { name => "%CV", parameter => "OMEGA(2,2)", recalc => sub { sqrt($_[0])*100 } },
+        ],
+        use_base => 1,
+    }, {
+		name => 'power',
+        need_ipred => 1,
+	    prob_arr => [
+			'$PROBLEM CWRES power IPRED',
+			'$INPUT <inputcolumns>',
+			'$DATA ../<cwrestablename> IGNORE=@ IGNORE=(DV.EQN.0) <dvidaccept>',
+			'$PRED',
+            'Y = THETA(1) + ETA(1) + ERR(1)*(IPRED)**THETA(2)',
+			'$THETA .1',
+			'$THETA .1',
+			'$OMEGA 0.01',
+			'$SIGMA 1',
+			'$ESTIMATION METHOD=1 INTER MAXEVALS=9990 PRINT=2 POSTHOC',
+        ],
+        parameters => [
+            { name => "delta_power", parameter => "THETA2" },
+        ],
+        use_base => 1,
+	}, {
+        name => 'autocorrelation',
+        prob_arr => [
+			'$PROBLEM CWRES AR1',
+			'$INPUT <inputcolumns>',
+			'$DATA ../<cwrestablename> IGNORE=@ IGNORE=(DV.EQN.0) <dvidaccept>',
+			'$PRED',
+            '"FIRST',
+            '" USE SIZES, ONLY: NO',
+            '" USE NMPRD_REAL, ONLY: C=>CORRL2',
+            '" REAL (KIND=DPSIZE) :: T(NO)',
+            '" INTEGER (KIND=ISIZE) :: I,J,L',
+            '"MAIN',
+            '"C If new ind, initialize loop',
+            '" IF (NEWIND.NE.2) THEN',
+            '"  I=0',
+            '"  L=1',
+            '"  OID=ID',
+            '" END IF',
+            '"C Only if first in L2 set and if observation',
+            '"C  IF (MDV.EQ.0) THEN',
+            '"  I=I+1',
+            '"  T(I)=TIME',
+            '"  IF (OID.EQ.ID) L=I',
+            '"',
+            '"  DO J=1,I',
+            '"      C(J,1)=EXP((-0.6931/THETA(2))*(TIME-T(J)))',
+            '"  ENDDO',
+            'Y = THETA(1) + ETA(1) + EPS(1)',
+            '$THETA  -0.0345794',
+            '$THETA  (0.001,1)',
+            '$OMEGA  2.41E-006',
+            '$SIGMA  0.864271',
+            '$ESTIMATION METHOD=1 INTER MAXEVALS=9990 PRINT=2 POSTHOC',
+        ],
+        parameters => [
+            { name => "half-life", parameter => "THETA2" },
+        ],
+        use_base => 1,
+    }, {
+		name => 'autocorrelation_iov',
+		need_occ => 1,
+		prob_arr => [
+			'$PROBLEM CWRES AR1 IOV',
+			'$INPUT <inputcolumns>',
+			'$DATA ../<cwrestablename> IGNORE=@ IGNORE=(DV.EQN.0) <dvidaccept>',
+			'$ABBREVIATED DECLARE T1(NO)',
+			'$ABBREVIATED DECLARE INTEGER I,DOWHILE J',
+			'$PRED', 
+			'IF(NEWIND.NE.2) THEN',
+			'  I=0',
+			'  L=1',
+			'  OOCC=OCC',
+			'  OID=ID',
+			'END IF',
+			'IF(NEWL2==1) THEN',
+			'  I=I+1',
+			'  T1(I)=TIME',
+			'  IF(OID.EQ.ID.AND.OOCC.NE.OCC)THEN',
+			'    L=I',
+			'    OOCC=OCC',
+			'  END IF',
+			'  J=L',
+			'  DO WHILE (J<=I)',
+			'    CORRL2(J,1) = EXP((-0.6931/THETA(2))*(TIME-T1(J)))',
+			'    J=J+1',
+			'  ENDDO',
+			'ENDIF',
+			'Y = THETA(1) + ETA(1) + EPS(1)',
+			'$THETA -0.0345794',
+			'$THETA (0.001,1)',
+			'$OMEGA 2.41E-006',
+			'$SIGMA 0.864271',
+			'$ESTIMATION METHOD=1 INTER MAXEVALS=9990 PRINT=2 POSTHOC',
+		],
+        parameters => [
+            { name => "half-life", parameter => "THETA2" },
+        ],
+		use_base => 1, 
+    }, {
+		name => 'tdist_base',
+	    prob_arr => [
+			'$PROBLEM CWRES t-distribution base mode',
+			'$INPUT <inputcolumns>',
+			'$DATA ../<cwrestablename> IGNORE=@ IGNORE=(DV.EQN.0) <dvidaccept>',
+			'$PRED',
+			'IPRED_ = THETA(1) + ETA(1)',
+			'W     = THETA(2)',
+			'IWRES=(DV-IPRED_)/W',
+			'LIM = 10E-14',
+			'IF(IWRES.EQ.0) IWRES = LIM',
+			'LL=-0.5*LOG(2*3.14159265)-LOG(W)-0.5*(IWRES**2)',
+			'L=EXP(LL)',
+			'Y=-2*LOG(L)',
+			'$THETA  .1 ; Mean',
+			'$THETA  (0,1) ; W : SD',
+			'$OMEGA  0.0001',
+			'$ESTIMATION MAXEVAL=99999 -2LL METH=1 LAPLACE PRINT=2 POSTHOC',
+		],
+		base => 2,
+    }, {
+        name => 'tdist_2ll_dfest',
+        prob_arr => [
+			'$PROBLEM CWRES laplace 2LL DF=est',
+			'$INPUT <inputcolumns>',
+			'$DATA ../<cwrestablename> IGNORE=@ IGNORE=(DV.EQN.0) <dvidaccept>',
+			'$PRED',
+            'IPRED_ = THETA(1) + ETA(1)',
+            'W = THETA(2)',
+            'DF = THETA(3) ; degrees of freedom of Student distribution',
+            'SIG1 = W ; scaling factor for standard deviation of RUV',
+            'IWRES = (DV - IPRED_) / SIG1',
+            'PHI = (DF + 1) / 2 ; Nemesapproximation of gamma funtion(2007) for first factor of t-distrib(gamma((DF+1)/2))',
+            'INN = PHI + 1 / (12 * PHI - 1 / (10 * PHI))',
+            'GAMMA = SQRT(2 * 3.14159265 / PHI) * (INN / EXP(1)) ** PHI',
+            'PHI2 = DF / 2 ; Nemesapproximation of gamma funtion(2007) for second factor of t-distrib(gamma(DF/2))',
+            'INN2 = PHI2 + 1 / (12 * PHI2 - 1 / (10 * PHI2))',
+            'GAMMA2 = SQRT(2*3.14159265/PHI2)*(INN2/EXP(1))**PHI2',
+            'COEFF=GAMMA/(GAMMA2*SQRT(DF*3.14159265))/SIG1 ; coefficient of PDF of t-distribution',
+            'BASE=1+IWRES*IWRES/DF ; base of PDF of t-distribution',
+            'POW=-(DF+1)/2 ; power of PDF of t-distribution',
+            'L=COEFF*BASE**POW ; PDF oft-distribution',
+            'Y=-2*LOG(L)',
+			'$THETA .1',
+			'$THETA (0,1)',
+			'$THETA (3,10,300)',
+			'$OMEGA 0.01',
+			'$ESTIMATION METHOD=1 LAPLACE MAXEVALS=9990 PRINT=2 -2LL',
+        ],
+        parameters => [
+            { name => "df", parameter => "THETA3" },
+        ],
+		use_base => 2,
+    }, {
+        name => 'dtbs_base',
+        need_ipred => 1,
+        prob_arr => [
+			'$PROBLEM    CWRES dtbs base model',
+			'$INPUT <inputcolumns>',
+			'$DATA ../<cwrestablename> IGNORE=@ IGNORE=(DV.EQN.0) <dvidaccept>',
+			'$SUBROUTINE CONTR=contr.txt CCONTR=ccontra.txt',
+			'$PRED',
+			'IPRT   = THETA(1)*EXP(ETA(1))',
+			'WA     = THETA(2)',
+			'LAMBDA = THETA(3)',
+			'ZETA   = THETA(4)',
+			'IF(IPRT.LT.0) IPRT=10E-14',
+			'W = WA*IPRED**ZETA',
+			'IPRTR = IPRT',
+			'IF (LAMBDA .NE. 0 .AND. IPRT .NE.0) THEN',
+			'	IPRTR = (IPRT**LAMBDA-1)/LAMBDA',
+			'ENDIF',
+			'IF (LAMBDA .EQ. 0 .AND. IPRT .NE.0) THEN',
+			'	IPRTR = LOG(IPRT)',
+			'ENDIF',
+			'IF (LAMBDA .NE. 0 .AND. IPRT .EQ.0) THEN',
+			'	IPRTR = -1/LAMBDA',
+			'ENDIF',
+			'IF (LAMBDA .EQ. 0 .AND. IPRT .EQ.0) THEN',
+			'	IPRTR = -1000000000',
+			'ENDIF',
+			'IPRT = IPRTR',
+			'Y = IPRT + ERR(1)*W',
+			'IF(ICALL.EQ.4) Y=EXP(DV)',
+			'$THETA  0.973255 ; IPRED 1',
+			'$THETA  (0,1.37932) ; WA',
+			'$THETA  0 FIX ; lambda',
+			'$THETA  0 FIX ; zeta',
+			'$OMEGA  0.0001',
+			'$SIGMA  1  FIX',
+			'$SIMULATION (1234)',
+			'$ESTIMATION METHOD=1 INTER MAXEVALS=99999 PRINT=2 POSTHOC',
+        ],
+		base => 3,
+    }, {
+		name => 'dtbs',
+        need_ipred => 1,
+		prob_arr => [
+			'$PROBLEM    CWRES dtbs model',
+			'$INPUT <inputcolumns>',
+			'$DATA ../<cwrestablename> IGNORE=@ IGNORE=(DV.EQN.0) <dvidaccept>',
+			'$SUBROUTINE CONTR=contr.txt CCONTR=ccontra.txt',
+			'$PRED',
+			'IPRT   = THETA(1)*EXP(ETA(1))',
+			'WA     = THETA(2)',
+			'LAMBDA = THETA(3)',
+			'ZETA   = THETA(4)',
+			'IF(IPRT.LT.0) IPRT=10E-14',
+			'W = WA*IPRED**ZETA',
+			'IPRTR = IPRT',
+			'IF (LAMBDA .NE. 0 .AND. IPRT .NE.0) THEN',
+			'	IPRTR = (IPRT**LAMBDA-1)/LAMBDA',
+			'ENDIF',
+			'IF (LAMBDA .EQ. 0 .AND. IPRT .NE.0) THEN',
+			'	IPRTR = LOG(IPRT)',
+			'ENDIF',
+			'IF (LAMBDA .NE. 0 .AND. IPRT .EQ.0) THEN',
+			'	IPRTR = -1/LAMBDA',
+			'ENDIF',
+			'IF (LAMBDA .EQ. 0 .AND. IPRT .EQ.0) THEN',
+			'	IPRTR = -1000000000',
+			'ENDIF',
+			'IPRT = IPRTR',
+			'Y = IPRT + ERR(1)*W',
+			'IF(ICALL.EQ.4) Y=EXP(DV)',
+			'$THETA   0.973255 ; IPRED 1',
+			'$THETA  (0,1.37932) ; WA',
+			'$THETA     0.001    ; lambda',
+			'$THETA     0.001    ; zeta',
+			'$OMEGA  0.0001',
+			'$SIGMA  1  FIX',
+			'$SIMULATION (1234)',
+			'$ESTIMATION METHOD=1 INTER MAXEVALS=99999 PRINT=2 POSTHOC',
+		],
+        parameters => [
+            { name => "lambda", parameter => "THETA3" },
+            { name => "zeta", parameter => "THETA4" },
+        ],
+		use_base => 3,
+	},
+);
 
 sub _create_model_templates
 {
