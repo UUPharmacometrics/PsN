@@ -184,7 +184,7 @@ sub modelfit_setup
         my $l2_model = $self->_prepare_L2_model(
 		    input_columns => $input_columns,
             table_name => $cwres_table_name,
-            num_dvid => $self->number_of_dvid,
+            num_dvid => $self->numdvid,
         );
 
         $self->l2_model($l2_model);
@@ -287,6 +287,22 @@ sub modelfit_analyze
 		}
 	}
 
+    if (defined $self->l2_model) {
+        my $ofv;
+        my $dofv;
+        if ($self->l2_model->is_run()) {
+            my $output = $self->l2_model->outputs->[0];
+            $ofv = $output->get_single_value(attribute => 'ofv');
+        }
+        if (not defined $ofv or not defined $base_sum) {
+            $dofv = 'NA';
+        } else {
+            $dofv = $ofv - $base_sum;
+            $dofv = sprintf("%.2f", $dofv);
+        }
+        $self->resmod_results->[$self->iteration]->{'L2'} = $dofv;
+    }
+
     if ($self->iterative) {
         my @best_models = @{$self->best_models};
         my $model_name;
@@ -370,6 +386,10 @@ sub _print_results
         } else {
             $print_iter = $iter;
         }
+        my $l2_dofv = $self->resmod_results->[$iter]->{'L2'};
+        if (defined $l2_dofv) {
+            delete $self->resmod_results->[$iter]->{'L2'};
+        }
         my @sorted_dvids = sort keys %{$self->resmod_results->[$iter]};
         my %dvid_sum;
         for my $dvid (@sorted_dvids) {
@@ -396,24 +416,12 @@ sub _print_results
             for my $model_name (@sorted_modelnames) {
                 print $fh "$print_iter,sum,$model_name,$dvid_sum{$model_name}\n";
             }
+            if (defined $l2_dofv) {
+                print $fh "$print_iter,sum,L2,$l2_dofv\n";
+            }
         } 
     }
 
-#        if (defined $self->l2_model) {
-#            my $ofv;
-#            my $dofv;
-#            if ($self->l2_model->is_run()) {
-#                my $output = $self->l2_model->outputs->[0];
-#                $ofv = $output->get_single_value(attribute => 'ofv');
-#            }
-#            if (not defined $ofv or not defined $base_sum) {
-#                $dofv = 'NA';
-#            } else {
-#                $dofv = $ofv - $base_sum;
-#			    $dofv = sprintf("%.2f", $dofv);
-#            }
-#            print $fh 'L2,', $dofv, "\n";
-#        }
     close $fh;
 }
 
