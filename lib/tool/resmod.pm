@@ -32,7 +32,9 @@ has 'top_directory' => ( is => 'rw', isa => 'Str' );    # Path to the toplevel d
 
 has 'top_level' => ( is => 'rw', isa => 'Bool', default => 1 );     # Is this the top level resmod object
 has 'model_templates' => ( is => 'rw', isa => 'ArrayRef' );		# List of model_templates to use
-
+# Array of iterations over Hash of dvids over Hash of modelnames over type of result = dOFV or parameters
+has 'resmod_results' => ( is => 'rw', isa => 'ArrayRef', default => sub { [] } );
+has 'iteration' => ( is => 'rw', isa => 'Int', default => 0 );      # Number of the iteration
 
 sub BUILD
 {
@@ -40,6 +42,37 @@ sub BUILD
 
 	my $model = $self->models()->[0]; 
     $self->model($model);
+
+    if ($self->top_level) {
+        my @columns = ( 'ID', $self->idv, 'CWRES' );
+        my $cwres_table = $self->model->problems->[0]->find_table(columns => \@columns, get_object => 1);
+        if (not defined $cwres_table) {
+            die "Error original model has no table containing ID, IDV and CWRES\n";
+        }
+        my $cwres_table_name = $self->model->problems->[0]->find_table(columns => \@columns);
+        my $table = nmtablefile->new(filename => "$cwres_table_name"); 
+        my @columns_in_table = $cwres_table->columns();
+        my $have_tad = grep { $_ eq 'TAD' } @columns_in_table; 
+        my $have_dvid = grep { $_ eq $self->dvid } @columns_in_table;
+
+        my $idv_column = $self->idv;
+        if ($have_tad) {
+            $idv_column = 'TAD';
+        }
+
+        $self->_create_model_templates(table => $table, idv_column => $idv_column); 
+
+        if ($have_dvid) {
+            my $dvid_column = $table->tables->[0]->header->{$self->dvid};
+            my $unique_dvid = array::unique($table->tables->[0]->columns->[$dvid_column]);
+            $self->unique_dvid($unique_dvid);
+            my $number_of_dvid = scalar(@$unique_dvid);
+            $self->numdvid($number_of_dvid);
+        } else {
+            $self->unique_dvid([1]);
+            $self->numdvid(1);
+        }
+    }
 
     if (not defined $self->top_directory) {     # This is the first run if iterative
         $self->top_directory($self->directory);
@@ -54,9 +87,6 @@ sub modelfit_setup
     my @columns = ( 'ID', $self->idv, 'CWRES' );
     my $cwres_table = $self->model->problems->[0]->find_table(columns => \@columns, get_object => 1);
     my $cwres_table_name = $self->model->problems->[0]->find_table(columns => \@columns);
-    if (not defined $cwres_table) {
-        die "Error original model has no table containing ID, IDV and CWRES\n";
-    }
 
     # Do we have IPRED, DVID or TAD?
     my $have_ipred = 0;
@@ -86,28 +116,6 @@ sub modelfit_setup
         $cwres_table_name = "m1/$cwres_table_name";
     }
 
-    my $table = nmtablefile->new(filename => "../$cwres_table_name"); 
-
-    my $unique_dvid;
-    my $number_of_dvid = 1;
-    if ($have_dvid) {
-        my $dvid_column = $table->tables->[0]->header->{$self->dvid};
-        $unique_dvid = array::unique($table->tables->[0]->columns->[$dvid_column]);
-		$self->unique_dvid($unique_dvid);
-        $number_of_dvid = scalar(@$unique_dvid);
-    }
-	$self->numdvid($number_of_dvid);
-
-	my $idv_column = $self->idv;
-	if ($have_tad) {
-		$idv_column = 'TAD';
-	}
-
-    # Add the time_varying models if not already added (we are iterating)
-    if (not defined $self->cutoffs) {
-		$self->_create_model_templates(table => $table, idv_column => $idv_column); 
-    }
-
 	my @models_to_run;
     for my $model_properties (@{$self->model_templates}) {
 		my $tad;
@@ -126,9 +134,9 @@ sub modelfit_setup
 		next if ($model_properties->{'need_occ'} and not $have_occ);
 
         my $accept = "";
-        for (my $i = 0; $i < $number_of_dvid; $i++) {
+        for (my $i = 0; $i < $self->numdvid; $i++) {
             if ($have_dvid) {
-                $accept = "IGNORE=(" . $self->dvid . ".NEN." . $unique_dvid->[$i] . ")";
+                $accept = "IGNORE=(" . $self->dvid . ".NEN." . $self->unique_dvid->[$i] . ")";
             }
 
             my @prob_arr = @{$model_properties->{'prob_arr'}};
@@ -144,7 +152,7 @@ sub modelfit_setup
             }
 
             my $dvid_suffix = "";
-            $dvid_suffix = "_DVID" . int($unique_dvid->[$i]) if ($have_dvid);
+            $dvid_suffix = "_DVID" . int($self->unique_dvid->[$i]) if ($have_dvid);
 
             if ($self->iterative) {
                 my $ipred = "";
@@ -165,7 +173,7 @@ sub modelfit_setup
         }
     }
 
-    if ($have_l2 and $number_of_dvid > 1) {
+    if ($have_l2 and $self->numdvid > 1) {
         push @columns, 'L2';
     	my $input_columns = _create_input(
 			table => $cwres_table,
@@ -176,7 +184,7 @@ sub modelfit_setup
         my $l2_model = $self->_prepare_L2_model(
 		    input_columns => $input_columns,
             table_name => $cwres_table_name,
-            num_dvid => $number_of_dvid,
+            num_dvid => $self->number_of_dvid,
         );
 
         $self->l2_model($l2_model);
@@ -244,6 +252,7 @@ sub modelfit_analyze
 			my $base_ofv;
 			$base_ofv = $base_models{$self->residual_models->[$dvid_index]->[$i]->{'use_base'}};
 			if ($base_ofv eq 'NA' or $ofv eq 'NA') {        # Really skip parameters if no base ofv?
+                $self->resmod_results->[$self->iteration]->{$self->unique_dvid->[$dvid_index]}->{$model_name}->{'dOFV'} = 'NA';
 				print $fh $model_name, ",NA,NA\n";
 				next;
 			}
@@ -251,6 +260,7 @@ sub modelfit_analyze
 			$delta_ofv = sprintf("%.2f", $delta_ofv);
             push @dofvs, $delta_ofv;
             push @model_names, $model_name;
+            $self->resmod_results->[$self->iteration]->{$self->unique_dvid->[$dvid_index]}->{$model_name}->{'dOFV'} = $delta_ofv;
 			print $fh $model_name, ",", $delta_ofv, ",";
 
 			if ($self->numdvid > 1) {
@@ -258,18 +268,19 @@ sub modelfit_analyze
 			}
 
 			if (exists $self->residual_models->[$dvid_index]->[$i]->{'parameters'}) {
+                my @parameter_strings;
 				for my $parameter (@{$self->residual_models->[$dvid_index]->[$i]->{'parameters'}}) {
 					if ($parameter->{'name'} eq "CUTOFFS") {
                         if ($parameter->{'cutoff'} eq 'all') {
                             for (my $i = 0; $i < scalar(@{$self->cutoffs}); $i++) {
-                                print $fh sprintf("t" . ($i + 1) . "=%.2f ", $self->cutoffs->[$i]);
+                                push @parameter_strings, sprintf("t" . ($i + 1) . "=%.2f ", $self->cutoffs->[$i]);
                             }
                         } else {
-                            print $fh sprintf('t0=%.2f', $self->cutoffs->[$parameter->{'cutoff'}]); 
+                            push @parameter_strings, sprintf('t0=%.2f', $self->cutoffs->[$parameter->{'cutoff'}]); 
                         }
                         next;
                     }
-					print $fh $parameter->{'name'} . "=";
+                    my $param_string = $parameter->{'name'} . "=";
 					my $coordval;
 					my $param = $parameter->{'parameter'};
 					my $paramhash;
@@ -284,11 +295,13 @@ sub modelfit_analyze
                     if (exists $parameter->{'recalc'}) {
                         $param_value = $parameter->{'recalc'}->($param_value);
                     }
-					print $fh sprintf("%.3f", $param_value);
-					print $fh " ";
+                    $param_string .= sprintf("%.3f", $param_value);
+                    push @parameter_strings, $param_string;
 				}
+                my $parameter_string = join(',', @parameter_strings);
+                $self->resmod_results->[$self->iteration]->{$self->unique_dvid->[$dvid_index]}->{$model_name}->{'parameters'} = $parameter_string;
+			    print $fh "$parameter_string\n";
 			}
-			print $fh "\n";
 		}
 	}
 
@@ -350,6 +363,8 @@ sub modelfit_analyze
         }
 
         if (scalar(@dofvs) == 0) {      # Exit recursion
+use Data::Dumper;
+print Dumper($self->resmod_results);
             return;
         }
 
@@ -373,6 +388,10 @@ sub modelfit_analyze
             top_directory => $self->top_directory,
             top_level => 0,
             model_templates => $self->model_templates,
+            numdvid => $self->numdvid,
+            unique_dvid => $self->unique_dvid,
+            iteration => $self->iteration + 1,
+            resmod_results => $self->resmod_results,
         );
         $resmod->run();
     }
