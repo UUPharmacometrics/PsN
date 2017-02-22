@@ -702,11 +702,11 @@ sub _build_time_varying_template
         );
 
         if ($param eq 'eps') {
-            push @prob_arr, 'Y = THETA(1) + ETA(1) + ERR(' . (scalar(@$cutoffs) + 1)  . ')';
+            push @prob_arr, 'Y = THETA(1) + ETA(1) + EPS(' . (scalar(@$cutoffs) + 1)  . ')';
         } elsif ($param eq 'theta') {
-            push @prob_arr, 'Y = THETA(' . (scalar(@$cutoffs) + 1) . ') + ETA(1) + ERR(1)';
+            push @prob_arr, 'Y = THETA(' . (scalar(@$cutoffs) + 1) . ') + ETA(1) + EPS(1)';
         } else {
-            push @prob_arr, 'Y = THETA(' . (scalar(@$cutoffs) + 1) . ') + ETA(1) + ERR(' . (scalar(@$cutoffs) + 1) . ')';
+            push @prob_arr, 'Y = THETA(' . (scalar(@$cutoffs) + 1) . ') + ETA(1) + EPS(' . (scalar(@$cutoffs) + 1) . ')';
         }
         for (my $i = 0; $i < scalar(@$cutoffs); $i++) {
             if ($i == 0) {
