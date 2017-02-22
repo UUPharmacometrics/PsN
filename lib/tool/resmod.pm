@@ -459,18 +459,20 @@ sub _print_results
 
     if ($self->iterative) {
         open my $iter_fh, '>', "iteration_summary.csv";
-        print $iter_fh "Iteration,Model no,DVID,Model,dOFV\n";
+        print $iter_fh "DVID,Iteration,Model no,Model,dOFV\n";
 
-        for (my $iter = 0; $iter < scalar(@{$self->iteration_summary}); $iter++) {
-            for (my $model_no = 0; $model_no < scalar(@{$self->iteration_summary->[$iter]}); $model_no++) {
-                my @sorted_dvids = sort keys %{$self->iteration_summary->[$iter]->[$model_no]};
-                for my $dvid (@sorted_dvids) {
+        for (my $dvid_index = 0; $dvid_index < $self->numdvid; $dvid_index++) {
+            for (my $iter = 0; $iter < scalar(@{$self->iteration_summary}); $iter++) {
+                for (my $model_no = 0; $model_no < scalar(@{$self->iteration_summary->[$iter]}); $model_no++) {
+                    my $dvid = $self->unique_dvid->[$dvid_index];
                     my $model_name = $self->iteration_summary->[$iter]->[$model_no]->{$dvid}->{'model_name'};
                     my $dofv = $self->iteration_summary->[$iter]->[$model_no]->{$dvid}->{'dOFV'};
-                    print $iter_fh "$iter,$model_no,$dvid,$model_name,$dofv\n"
+                    next if not defined $dofv;
+                    print $iter_fh "$dvid,$iter,$model_no,$model_name,$dofv\n";
                 }
             }
         }
+
         close $iter_fh;
     }
 }
