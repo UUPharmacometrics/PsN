@@ -30,7 +30,7 @@ has 'iterative' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'best_models' => ( is => 'rw', isa => 'ArrayRef', default => sub { [] } );
 
 has 'top_level' => ( is => 'rw', isa => 'Bool', default => 1 );     # Is this the top level resmod object
-has 'current_dvid' => ( is => 'rw', isa => 'Int' );             # Index of the current DVID. undef if don't have dvid
+has 'current_dvid' => ( is => 'rw', isa => 'Int', default => 0 );             # Index of the current DVID. if don't have dvid = 0
 has 'model_templates' => ( is => 'rw', isa => 'ArrayRef' );		# List of model_templates to use
 # Array of iterations over Hash of dvids over Hash of modelnames over type of result = dOFV or parameters
 has 'resmod_results' => ( is => 'rw', isa => 'ArrayRef', default => sub { [] } );
@@ -80,6 +80,28 @@ sub modelfit_setup
 {
 	my $self = shift;
 
+    if ($self->top_level and $self->numdvid > 1) {
+        # Spawn one resmod per DVID
+        for (my $i = 0; $i < $self->numdvid; $i++) {
+            my $resmod = tool::resmod->new(
+                models => [ $self->model ],
+                idv => $self->idv,
+                iterative => $self->iterative,
+                cutoffs => $self->cutoffs,
+                top_level => 0,
+                model_templates => $self->model_templates,
+                numdvid => $self->numdvid,
+                unique_dvid => $self->unique_dvid,
+                iteration => $self->iteration,
+                resmod_results => $self->resmod_results,
+                iteration_summary => $self->iteration_summary,
+                current_dvid => $i,
+            );
+            $resmod->run();
+        }
+        return;
+    }
+
     # Find a table with ID, TIME, CWRES and extra_input (IPRED)
     my @columns = ( 'ID', $self->idv, 'CWRES' );
     my $cwres_table = $self->model->problems->[0]->find_table(columns => \@columns, get_object => 1);
@@ -110,64 +132,63 @@ sub modelfit_setup
     }
 
     if (not $self->top_level) {
-        $cwres_table_name = "m1/$cwres_table_name";
+        if ($self->numdvid > 1 and $self->iteration == 0) {      # First iteration for DVID is special case
+            $cwres_table_name = "../$cwres_table_name";
+        } else {
+            $cwres_table_name = "m1/$cwres_table_name";
+        }
     }
 
 	my @models_to_run;
     for my $model_properties (@{$self->model_templates}) {
-		my $tad;
-		if ($have_tad and $model_properties->{'name'} eq 'time_varying') {
-			$tad = 1;
-		}
-    	my $input_columns = _create_input(
-			table => $cwres_table,
-			columns => \@columns,
-			ipred => 1,     # Always add ipred to be able to pass it through to next iteration if needed
-			occ => $model_properties->{'need_occ'},
-			occ_name => $self->occ,
-			tad => $tad
-		);
+        my $tad;
+        if ($have_tad and $model_properties->{'name'} eq 'time_varying') {
+            $tad = 1;
+        }
+        my $input_columns = _create_input(
+            table => $cwres_table,
+            columns => \@columns,
+            ipred => 1,     # Always add ipred to be able to pass it through to next iteration if needed
+            occ => $model_properties->{'need_occ'},
+            occ_name => $self->occ,
+            tad => $tad
+        );
         next if ($model_properties->{'need_ipred'} and not $have_ipred);
-		next if ($model_properties->{'need_occ'} and not $have_occ);
+        next if ($model_properties->{'need_occ'} and not $have_occ);
 
         my $accept = "";
-        for (my $i = 0; $i < $self->numdvid; $i++) {
-            if ($have_dvid) {
-                $accept = "IGNORE=(" . $self->dvid . ".NEN." . $self->unique_dvid->[$i] . ")";
-            }
-
-            my @prob_arr = @{$model_properties->{'prob_arr'}};
-            for my $row (@prob_arr) {
-                $row =~ s/<inputcolumns>/$input_columns/g;
-                $row =~ s/<cwrestablename>/$cwres_table_name/g;
-                $row =~ s/<dvidaccept>/$accept/g;
-                my $idv = $self->idv;
-				if ($have_tad and $model_properties->{'name'} eq 'time_varying') {
-					$idv = 'TAD';
-				} 
-                $row =~ s/<idv>/$idv/g;
-            }
-
-            my $dvid_suffix = "";
-            $dvid_suffix = "_DVID" . int($self->unique_dvid->[$i]) if ($have_dvid);
-
-            if ($self->iterative) {
-                my $ipred = "";
-                if ($have_ipred) {
-                    $ipred = ' IPRED';
-                } 
-                push @prob_arr, "\$TABLE ID TIME CWRES$ipred NOPRINT NOAPPEND ONEHEADER FILE=" . $model_properties->{'name'} . "$dvid_suffix.tab";
-            }
-
-            my $cwres_model = $self->_create_new_model(
-                prob_arr => \@prob_arr,
-                filename => $model_properties->{'name'} . "$dvid_suffix.mod"
-            );
-
-            push @models_to_run, $cwres_model;
-            push @{$self->run_models->[$i]}, $cwres_model;
-            push @{$self->residual_models->[$i]}, $model_properties; 
+        if ($have_dvid) {
+            $accept = "IGNORE=(" . $self->dvid . ".NEN." . $self->unique_dvid->[$self->current_dvid] . ")";
         }
+
+        my @prob_arr = @{$model_properties->{'prob_arr'}};
+        for my $row (@prob_arr) {
+            $row =~ s/<inputcolumns>/$input_columns/g;
+            $row =~ s/<cwrestablename>/$cwres_table_name/g;
+            $row =~ s/<dvidaccept>/$accept/g;
+            my $idv = $self->idv;
+            if ($have_tad and $model_properties->{'name'} eq 'time_varying') {
+                $idv = 'TAD';
+            } 
+            $row =~ s/<idv>/$idv/g;
+        }
+
+        if ($self->iterative) {
+            my $ipred = "";
+            if ($have_ipred) {
+                $ipred = ' IPRED';
+            } 
+            push @prob_arr, "\$TABLE ID TIME CWRES$ipred NOPRINT NOAPPEND ONEHEADER FILE=" . $model_properties->{'name'} . ".tab";
+        }
+
+        my $cwres_model = $self->_create_new_model(
+            prob_arr => \@prob_arr,
+            filename => $model_properties->{'name'} . ".mod"
+        );
+
+        push @models_to_run, $cwres_model;
+        push @{$self->run_models}, $cwres_model;
+        push @{$self->residual_models}, $model_properties; 
     }
 
     if ($have_l2 and $self->numdvid > 1) {
@@ -207,82 +228,87 @@ sub modelfit_analyze
 {
     my $self = shift;
 
+    # If this is the toplevel and we have dvid print results and exit
+    if ($self->top_level and $self->numdvid > 1) {
+        $self->_print_results();
+        return;
+    }
+
     _delete_extra_fortran_files();
 
     my %base_models;        # Hash from basemodelno to base model OFV
-	my $current_dvid;
+    my $current_dvid;
     my @dofvs;
     my @model_names;
     my $base_sum = 0;
-	for (my $dvid_index = 0; $dvid_index < $self->numdvid; $dvid_index++) {
-		for (my $i = 0; $i < scalar(@{$self->residual_models->[$dvid_index]}); $i++) {
-			my $model = $self->run_models->[$dvid_index]->[$i];
-			my $model_name = $self->residual_models->[$dvid_index]->[$i]->{'name'};
-			my $ofv;
-			if ($model->is_run()) {
-				my $output = $model->outputs->[0];
-				$ofv = $output->get_single_value(attribute => 'ofv');
-			}
-			if (not defined $ofv) {
-				$ofv = 'NA';
-			}
-			if (exists $self->residual_models->[$dvid_index]->[$i]->{'base'}) {        # This is a base model
-				$base_models{$self->residual_models->[$dvid_index]->[$i]->{'base'}} = $ofv;
-                if ($self->residual_models->[$dvid_index]->[$i]->{'name'} eq 'base') {
-                    $base_sum += $ofv;
-                }
-				next;
-			}
 
-			my $base_ofv;
-			$base_ofv = $base_models{$self->residual_models->[$dvid_index]->[$i]->{'use_base'}};
-			if ($base_ofv eq 'NA' or $ofv eq 'NA') {        # Really skip parameters if no base ofv?
-                $self->resmod_results->[$self->iteration]->{$self->unique_dvid->[$dvid_index]}->{$model_name}->{'dOFV'} = 'NA';
-                $self->resmod_results->[$self->iteration]->{$self->unique_dvid->[$dvid_index]}->{$model_name}->{'parameters'} = 'NA';
-				next;
-			}
-			my $delta_ofv = $ofv - $base_ofv;
-			$delta_ofv = sprintf("%.2f", $delta_ofv);
-            push @dofvs, $delta_ofv;
-            push @model_names, $model_name;
-            $self->resmod_results->[$self->iteration]->{$self->unique_dvid->[$dvid_index]}->{$model_name}->{'dOFV'} = $delta_ofv;
+    for (my $i = 0; $i < scalar(@{$self->residual_models}); $i++) {
+        my $model = $self->run_models->[$i];
+        my $model_name = $self->residual_models->[$i]->{'name'};
+        my $ofv;
+        if ($model->is_run()) {
+            my $output = $model->outputs->[0];
+            $ofv = $output->get_single_value(attribute => 'ofv');
+        }
+        if (not defined $ofv) {
+            $ofv = 'NA';
+        }
+        if (exists $self->residual_models->[$i]->{'base'}) {        # This is a base model
+            $base_models{$self->residual_models->[$i]->{'base'}} = $ofv;
+            if ($self->residual_models->[$i]->{'name'} eq 'base') {
+                $base_sum += $ofv;
+            }
+            next;
+        }
 
-			if (exists $self->residual_models->[$dvid_index]->[$i]->{'parameters'}) {
-                my @parameter_strings;
-				for my $parameter (@{$self->residual_models->[$dvid_index]->[$i]->{'parameters'}}) {
-					if ($parameter->{'name'} eq "CUTOFFS") {
-                        if ($parameter->{'cutoff'} eq 'all') {
-                            for (my $i = 0; $i < scalar(@{$self->cutoffs}); $i++) {
-                                push @parameter_strings, sprintf("t" . ($i + 1) . "=%.2f ", $self->cutoffs->[$i]);
-                            }
-                        } else {
-                            push @parameter_strings, sprintf('t0=%.2f', $self->cutoffs->[$parameter->{'cutoff'}]); 
+        my $base_ofv;
+        $base_ofv = $base_models{$self->residual_models->[$i]->{'use_base'}};
+        if ($base_ofv eq 'NA' or $ofv eq 'NA') {        # Really skip parameters if no base ofv?
+            $self->resmod_results->[$self->iteration]->{$self->unique_dvid->[$self->current_dvid]}->{$model_name}->{'dOFV'} = 'NA';
+            $self->resmod_results->[$self->iteration]->{$self->unique_dvid->[$self->current_dvid]}->{$model_name}->{'parameters'} = 'NA';
+            next;
+        }
+        my $delta_ofv = $ofv - $base_ofv;
+        $delta_ofv = sprintf("%.2f", $delta_ofv);
+        push @dofvs, $delta_ofv;
+        push @model_names, $model_name;
+        $self->resmod_results->[$self->iteration]->{$self->unique_dvid->[$self->current_dvid]}->{$model_name}->{'dOFV'} = $delta_ofv;
+
+        if (exists $self->residual_models->[$i]->{'parameters'}) {
+            my @parameter_strings;
+            for my $parameter (@{$self->residual_models->[$i]->{'parameters'}}) {
+                if ($parameter->{'name'} eq "CUTOFFS") {
+                    if ($parameter->{'cutoff'} eq 'all') {
+                        for (my $i = 0; $i < scalar(@{$self->cutoffs}); $i++) {
+                            push @parameter_strings, sprintf("t" . ($i + 1) . "=%.2f ", $self->cutoffs->[$i]);
                         }
-                        next;
+                    } else {
+                        push @parameter_strings, sprintf('t0=%.2f', $self->cutoffs->[$parameter->{'cutoff'}]); 
                     }
-                    my $param_string = $parameter->{'name'} . "=";
-					my $coordval;
-					my $param = $parameter->{'parameter'};
-					my $paramhash;
-					if ($param =~ /OMEGA/) {
-						$paramhash = $model->outputs->[0]->omegacoordval()->[0]->[0];
-					} elsif ($param =~ /SIGMA/) {
-						$paramhash = $model->outputs->[0]->sigmacoordval()->[0]->[0];
-					} elsif ($param =~ /THETA/) {
-						$paramhash = $model->outputs->[0]->thetacoordval()->[0]->[0];
-					}
-                    my $param_value = $paramhash->{$param};
-                    if (exists $parameter->{'recalc'}) {
-                        $param_value = $parameter->{'recalc'}->($param_value);
-                    }
-                    $param_string .= sprintf("%.3f", $param_value);
-                    push @parameter_strings, $param_string;
-				}
-                my $parameter_string = join(',', @parameter_strings);
-                $self->resmod_results->[$self->iteration]->{$self->unique_dvid->[$dvid_index]}->{$model_name}->{'parameters'} = $parameter_string;
-			}
-		}
-	}
+                    next;
+                }
+                my $param_string = $parameter->{'name'} . "=";
+                my $coordval;
+                my $param = $parameter->{'parameter'};
+                my $paramhash;
+                if ($param =~ /OMEGA/) {
+                    $paramhash = $model->outputs->[0]->omegacoordval()->[0]->[0];
+                } elsif ($param =~ /SIGMA/) {
+                    $paramhash = $model->outputs->[0]->sigmacoordval()->[0]->[0];
+                } elsif ($param =~ /THETA/) {
+                    $paramhash = $model->outputs->[0]->thetacoordval()->[0]->[0];
+                }
+                my $param_value = $paramhash->{$param};
+                if (exists $parameter->{'recalc'}) {
+                    $param_value = $parameter->{'recalc'}->($param_value);
+                }
+                $param_string .= sprintf("%.3f", $param_value);
+                push @parameter_strings, $param_string;
+            }
+            my $parameter_string = join(',', @parameter_strings);
+            $self->resmod_results->[$self->iteration]->{$self->unique_dvid->[$self->current_dvid]}->{$model_name}->{'parameters'} = $parameter_string;
+        }
+    }
 
     if (defined $self->l2_model) {
         my $ofv;
@@ -303,6 +329,11 @@ sub modelfit_analyze
     if ($self->iterative) {
         my @best_models = @{$self->best_models};
         my $model_name;
+
+        my $dvid = 'NA';
+        if ($self->numdvid > 1) {
+            $dvid = $self->unique_dvid->[$self->current_dvid];
+        }
 
         my $minvalue;
         my $model_no = 0;
@@ -325,8 +356,8 @@ sub modelfit_analyze
                 splice @dofvs, $minind, 1;
                 splice @model_names, $minind, 1;
                 push @best_models, $model_name;
-                $self->iteration_summary->[$self->iteration]->[$model_no]->{'NA'}->{'dOFV'} = $minvalue;
-                $self->iteration_summary->[$self->iteration]->[$model_no]->{'NA'}->{'model_name'} = $model_name;
+                $self->iteration_summary->[$self->iteration]->[$model_no]->{$dvid}->{'dOFV'} = $minvalue;
+                $self->iteration_summary->[$self->iteration]->[$model_no]->{$dvid}->{'model_name'} = $model_name;
                 $model_no++;
                 next;
             }
@@ -338,8 +369,8 @@ sub modelfit_analyze
             return;
         }
 
-        $self->iteration_summary->[$self->iteration]->[$model_no]->{'NA'}->{'dOFV'} = $minvalue;
-        $self->iteration_summary->[$self->iteration]->[$model_no]->{'NA'}->{'model_name'} = $model_name;
+        $self->iteration_summary->[$self->iteration]->[$model_no]->{$dvid}->{'dOFV'} = $minvalue;
+        $self->iteration_summary->[$self->iteration]->[$model_no]->{$dvid}->{'model_name'} = $model_name;
 
         push @best_models, $model_name;
 
@@ -363,10 +394,10 @@ sub modelfit_analyze
             iteration => $self->iteration + 1,
             resmod_results => $self->resmod_results,
             iteration_summary => $self->iteration_summary,
+            current_dvid => $self->current_dvid,
         );
         $resmod->run();
     }
-
 
     # End of all iterations
     if ($self->top_level) {
@@ -426,20 +457,22 @@ sub _print_results
 
     close $fh;
 
-    open my $iter_fh, '>', "iteration_summary.csv";
-    print $iter_fh "Iteration,Model no,DVID,Model,dOFV\n";
+    if ($self->iterative) {
+        open my $iter_fh, '>', "iteration_summary.csv";
+        print $iter_fh "Iteration,Model no,DVID,Model,dOFV\n";
 
-    for (my $iter = 0; $iter < scalar(@{$self->iteration_summary}); $iter++) {
-        for (my $model_no = 0; $model_no < scalar(@{$self->iteration_summary->[$iter]}); $model_no++) {
-            my @sorted_dvids = sort keys %{$self->iteration_summary->[$iter]->[$model_no]};
-            for my $dvid (@sorted_dvids) {
-                my $model_name = $self->iteration_summary->[$iter]->[$model_no]->{$dvid}->{'model_name'};
-                my $dofv = $self->iteration_summary->[$iter]->[$model_no]->{$dvid}->{'dOFV'};
-                print $iter_fh "$iter,$model_no,$dvid,$model_name,$dofv\n"
+        for (my $iter = 0; $iter < scalar(@{$self->iteration_summary}); $iter++) {
+            for (my $model_no = 0; $model_no < scalar(@{$self->iteration_summary->[$iter]}); $model_no++) {
+                my @sorted_dvids = sort keys %{$self->iteration_summary->[$iter]->[$model_no]};
+                for my $dvid (@sorted_dvids) {
+                    my $model_name = $self->iteration_summary->[$iter]->[$model_no]->{$dvid}->{'model_name'};
+                    my $dofv = $self->iteration_summary->[$iter]->[$model_no]->{$dvid}->{'dOFV'};
+                    print $iter_fh "$iter,$model_no,$dvid,$model_name,$dofv\n"
+                }
             }
         }
+        close $iter_fh;
     }
-    close $iter_fh;
 }
 
 sub _calculate_quantiles
