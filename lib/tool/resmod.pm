@@ -27,6 +27,7 @@ has 'cutoffs' => ( is => 'rw', isa => 'ArrayRef' );
 has 'unique_dvid' => ( is => 'rw', isa => 'ArrayRef' );
 has 'numdvid' => ( is => 'rw', isa => 'Int' );
 has 'iterative' => ( is => 'rw', isa => 'Bool', default => 0 );
+has 'max_iterations' => ( is => 'rw', isa => 'Int' );       # Inf if undef
 has 'best_models' => ( is => 'rw', isa => 'ArrayRef', default => sub { [] } );
 
 has 'top_level' => ( is => 'rw', isa => 'Bool', default => 1 );     # Is this the top level resmod object
@@ -98,6 +99,7 @@ sub modelfit_setup
                 iteration_summary => $self->iteration_summary,
                 current_dvid => $i,
                 base_sum => $self->base_sum,
+                max_iterations => $self->max_iterations,
             );
             $resmod->run();
         }
@@ -366,7 +368,7 @@ sub modelfit_analyze
         $self->iteration_summary->[$self->iteration]->[$model_no]->{$dvid}->{'dOFV'} = $minvalue;
         $self->iteration_summary->[$self->iteration]->[$model_no]->{$dvid}->{'model_name'} = $model_name;
 
-        if (scalar(@dofvs) == 0) {      # Exit recursion
+        if (scalar(@dofvs) == 0 or $self->iteration >= $self->max_iterations - 1) {      # Exit recursion
             return;
         }
 
@@ -394,6 +396,7 @@ sub modelfit_analyze
             iteration_summary => $self->iteration_summary,
             current_dvid => $self->current_dvid,
             base_sum => $self->base_sum,
+            max_iterations => $self->max_iterations,
         );
         $resmod->run();
     }

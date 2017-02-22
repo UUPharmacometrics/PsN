@@ -30,6 +30,7 @@ my %optional_options = (
     'idv:s' => undef,
     'occ:s' => undef,
     'iterative!' => undef,
+    'max_iterations:i' => undef,
     'groups:i' => undef,
 );
 
@@ -98,6 +99,14 @@ $help_text{-iterative} = <<'EOF';
       model etc until all models have been picked.
 EOF
 
+$help_text{-max_iterations} = <<'EOF';
+      -max_iterations
+
+      Limit the maximum number of steps
+      in the iterative procedure. 
+      Default is no limit.
+EOF
+
 $help_text{-groups} = <<'EOF';
       -groups
 
@@ -148,6 +157,7 @@ my $resmod = tool::resmod->new(
 	occ => $options{'occ'},
     iterative => $options{'iterative'},
     groups => $options{'groups'},
+    max_iterations => $options{'max_iterations'},
 );
 
 $resmod->print_options(
