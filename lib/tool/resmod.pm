@@ -28,9 +28,9 @@ has 'unique_dvid' => ( is => 'rw', isa => 'ArrayRef' );
 has 'numdvid' => ( is => 'rw', isa => 'Int' );
 has 'iterative' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'best_models' => ( is => 'rw', isa => 'ArrayRef', default => sub { [] } );
-has 'top_directory' => ( is => 'rw', isa => 'Str' );    # Path to the toplevel directory to put results files
 
 has 'top_level' => ( is => 'rw', isa => 'Bool', default => 1 );     # Is this the top level resmod object
+has 'current_dvid' => ( is => 'rw', isa => 'Int' );             # Index of the current DVID. undef if don't have dvid
 has 'model_templates' => ( is => 'rw', isa => 'ArrayRef' );		# List of model_templates to use
 # Array of iterations over Hash of dvids over Hash of modelnames over type of result = dOFV or parameters
 has 'resmod_results' => ( is => 'rw', isa => 'ArrayRef', default => sub { [] } );
@@ -73,10 +73,6 @@ sub BUILD
             $self->unique_dvid(['NA']);
             $self->numdvid(1);
         }
-    }
-
-    if (not defined $self->top_directory) {     # This is the first run if iterative
-        $self->top_directory($self->directory);
     }
 }
 
@@ -360,7 +356,6 @@ sub modelfit_analyze
             iterative => $self->iterative,
             best_models => \@best_models,
             cutoffs => $self->cutoffs,
-            top_directory => $self->top_directory,
             top_level => 0,
             model_templates => $self->model_templates,
             numdvid => $self->numdvid,
@@ -607,7 +602,7 @@ sub _prepare_L2_model
 
 sub _build_time_varying_template
 {
-    # Create the templates for the different time_varying models and add to global hash
+    # Create the templates for the different time_varying models
     my $self = shift;
     my %parm = validated_hash(\@_,
 		cutoffs => { isa => 'ArrayRef' },
