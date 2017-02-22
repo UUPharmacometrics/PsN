@@ -36,6 +36,7 @@ has 'model_templates' => ( is => 'rw', isa => 'ArrayRef' );		# List of model_tem
 has 'resmod_results' => ( is => 'rw', isa => 'ArrayRef', default => sub { [] } );
 has 'iteration' => ( is => 'rw', isa => 'Int', default => 0 );      # Number of the iteration
 has 'iteration_summary' => ( is => 'rw', isa => 'ArrayRef[ArrayRef]', default => sub { [ [] ] } );  # [iteration]->[modelnumber if multiple in one iter]->{dvid}->{'model_name', 'dOFV'
+has 'base_sum' => ( is => 'rw', isa => 'ArrayRef', default => sub { [] } );     # Sum of all base models for each DVID
 
 sub BUILD
 {
@@ -96,6 +97,7 @@ sub modelfit_setup
                 resmod_results => $self->resmod_results,
                 iteration_summary => $self->iteration_summary,
                 current_dvid => $i,
+                base_sum => $self->base_sum,
             );
             $resmod->run();
         }
@@ -151,7 +153,7 @@ sub modelfit_setup
             ipred => 1,     # Always add ipred to be able to pass it through to next iteration if needed
             occ => $model_properties->{'need_occ'},
             occ_name => $self->occ,
-            tad => $tad
+            tad => $tad,
         );
         next if ($model_properties->{'need_ipred'} and not $have_ipred);
         next if ($model_properties->{'need_occ'} and not $have_occ);
@@ -174,11 +176,13 @@ sub modelfit_setup
         }
 
         if ($self->iterative) {
-            my $ipred = "";
-            if ($have_ipred) {
-                $ipred = ' IPRED';
-            } 
-            push @prob_arr, "\$TABLE ID TIME CWRES$ipred NOPRINT NOAPPEND ONEHEADER FILE=" . $model_properties->{'name'} . ".tab";
+            my $table_string = $self->_create_table(
+                name => $model_properties->{'name'},
+                have_ipred => $have_ipred,
+                have_occ => $have_occ,
+                have_l2 => 0,
+            );
+            push @prob_arr, $table_string;
         }
 
         my $cwres_model = $self->_create_new_model(
@@ -191,7 +195,7 @@ sub modelfit_setup
         push @{$self->residual_models}, $model_properties; 
     }
 
-    if ($have_l2 and $self->numdvid > 1) {
+    if ($have_l2 and $self->numdvid > 1 and $self->current_dvid == 0) {     # Only start the L2 model once per iteration
         push @columns, 'L2';
     	my $input_columns = _create_input(
 			table => $cwres_table,
@@ -199,10 +203,13 @@ sub modelfit_setup
             l2 => 1,
 		);
 
+        my $table_string = $self->_create_table(name => 'l2', have_ipred => $have_ipred, have_occ => $have_occ, have_l2 => 1);
+
         my $l2_model = $self->_prepare_L2_model(
 		    input_columns => $input_columns,
             table_name => $cwres_table_name,
             num_dvid => $self->numdvid,
+            table_string => $table_string,
         );
 
         $self->l2_model($l2_model);
@@ -237,10 +244,8 @@ sub modelfit_analyze
     _delete_extra_fortran_files();
 
     my %base_models;        # Hash from basemodelno to base model OFV
-    my $current_dvid;
     my @dofvs;
     my @model_names;
-    my $base_sum = 0;
 
     for (my $i = 0; $i < scalar(@{$self->residual_models}); $i++) {
         my $model = $self->run_models->[$i];
@@ -256,7 +261,7 @@ sub modelfit_analyze
         if (exists $self->residual_models->[$i]->{'base'}) {        # This is a base model
             $base_models{$self->residual_models->[$i]->{'base'}} = $ofv;
             if ($self->residual_models->[$i]->{'name'} eq 'base') {
-                $base_sum += $ofv;
+                $self->base_sum->[$self->iteration] += $ofv;
             }
             next;
         }
@@ -312,18 +317,11 @@ sub modelfit_analyze
 
     if (defined $self->l2_model) {
         my $ofv;
-        my $dofv;
         if ($self->l2_model->is_run()) {
             my $output = $self->l2_model->outputs->[0];
             $ofv = $output->get_single_value(attribute => 'ofv');
         }
-        if (not defined $ofv or not defined $base_sum) {
-            $dofv = 'NA';
-        } else {
-            $dofv = $ofv - $base_sum;
-            $dofv = sprintf("%.2f", $dofv);
-        }
-        $self->resmod_results->[$self->iteration]->{'L2'} = $dofv;
+        $self->resmod_results->[$self->iteration]->{'L2'} = $ofv;
     }
 
     if ($self->iterative) {
@@ -365,12 +363,12 @@ sub modelfit_analyze
             last;
         }
 
+        $self->iteration_summary->[$self->iteration]->[$model_no]->{$dvid}->{'dOFV'} = $minvalue;
+        $self->iteration_summary->[$self->iteration]->[$model_no]->{$dvid}->{'model_name'} = $model_name;
+
         if (scalar(@dofvs) == 0) {      # Exit recursion
             return;
         }
-
-        $self->iteration_summary->[$self->iteration]->[$model_no]->{$dvid}->{'dOFV'} = $minvalue;
-        $self->iteration_summary->[$self->iteration]->[$model_no]->{$dvid}->{'model_name'} = $model_name;
 
         push @best_models, $model_name;
 
@@ -395,6 +393,7 @@ sub modelfit_analyze
             resmod_results => $self->resmod_results,
             iteration_summary => $self->iteration_summary,
             current_dvid => $self->current_dvid,
+            base_sum => $self->base_sum,
         );
         $resmod->run();
     }
@@ -419,8 +418,8 @@ sub _print_results
         } else {
             $print_iter = $iter;
         }
-        my $l2_dofv = $self->resmod_results->[$iter]->{'L2'};
-        if (defined $l2_dofv) {
+        my $l2_ofv = $self->resmod_results->[$iter]->{'L2'};
+        if (defined $l2_ofv) {
             delete $self->resmod_results->[$iter]->{'L2'};
         }
         my @sorted_dvids = sort keys %{$self->resmod_results->[$iter]};
@@ -449,7 +448,8 @@ sub _print_results
             for my $model_name (@sorted_modelnames) {
                 print $fh "$print_iter,sum,$model_name,$dvid_sum{$model_name}\n";
             }
-            if (defined $l2_dofv) {
+            if (defined $l2_ofv) {
+                my $l2_dofv = sprintf("%.2f", $l2_ofv - $self->base_sum->[$iter]);
                 print $fh "$print_iter,sum,L2,$l2_dofv\n";
             }
         } 
@@ -591,10 +591,12 @@ sub _prepare_L2_model
 		input_columns => { isa => 'Str' },
         table_name => { isa => 'Str' },
         num_dvid => { isa => 'Int' },
+        table_string => { isa => 'Str' },
     );
     my $input_columns = $parm{'input_columns'};
     my $table_name = $parm{'table_name'};
     my $num_dvid = $parm{'num_dvid'};
+    my $table_string = $parm{'table_string'};
 
     my @prob_arr = (
         '$PROBLEM    CWRES base model',
@@ -626,6 +628,7 @@ sub _prepare_L2_model
     }
 
     push @prob_arr, '$ESTIMATION METHOD=1 INTER MAXEVALS=9990 PRINT=2 POSTHOC';
+    push @prob_arr, $table_string;
 
     my $l2_model = $self->_create_new_model(
         prob_arr => \@prob_arr,
@@ -763,6 +766,36 @@ sub _build_time_varying_template
     }
 
     return \@models;
+}
+
+sub _create_table
+{
+    my $self = shift;
+    my %parm = validated_hash(\@_,
+        name => { isa => 'Str' },
+		have_ipred => { isa => 'Bool' },
+        have_occ => { isa => 'Bool' },
+        have_l2 => { isa => 'Bool' },
+    );
+    my $name = $parm{'name'};
+    my $have_ipred = $parm{'have_ipred'};
+    my $have_occ = $parm{'have_occ'};
+    my $have_l2 = $parm{'have_l2'};
+
+    my $ipred = '';
+    if ($have_ipred) {
+        $ipred = ' IPRED';
+    } 
+    my $occ = '';
+    if ($have_occ) {
+        $occ = ' ' . $self->occ; 
+    }
+    my $l2 = '';
+    if ($have_l2) {
+        $l2 = ' L2';
+    }
+    
+    return "\$TABLE ID TIME CWRES$ipred$occ$l2 NOPRINT NOAPPEND ONEHEADER FILE=$name.tab";
 }
 
 sub _create_extra_fortran_files
