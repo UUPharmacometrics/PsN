@@ -28,6 +28,7 @@ my %required_options = ();
 my %optional_options = (
     'dvid:s' => undef,
     'idv:s' => undef,
+    'occ:s' => undef,
     'iterative!' => undef,
     'groups:i' => undef,
 );
