@@ -684,12 +684,14 @@ sub _build_time_varying_template
         push @models, \%hash;
     } 
 
-    for my $param ('theta', 'eps') {
+    for my $param ('theta', 'eps', 'both') {
         my %hash;
         if ($param eq 'eps') {
             $hash{'name'} = 'time_varying_RUV';
-        } else {
+        } elsif ($param eq 'theta') {
             $hash{'name'} = 'time_varying_theta';
+        } else {
+            $hash{'name'} = 'time_varying_combined';
         }
         $hash{'use_base'} = 1;
         my @prob_arr = (
@@ -701,8 +703,10 @@ sub _build_time_varying_template
 
         if ($param eq 'eps') {
             push @prob_arr, 'Y = THETA(1) + ETA(1) + ERR(' . (scalar(@$cutoffs) + 1)  . ')';
-        } else {
+        } elsif ($param eq 'theta') {
             push @prob_arr, 'Y = THETA(' . (scalar(@$cutoffs) + 1) . ') + ETA(1) + ERR(1)';
+        } else {
+            push @prob_arr, 'Y = THETA(' . (scalar(@$cutoffs) + 1) . ') + ETA(1) + ERR(' . (scalar(@$cutoffs) + 1) . ')';
         }
         for (my $i = 0; $i < scalar(@$cutoffs); $i++) {
             if ($i == 0) {
@@ -712,8 +716,10 @@ sub _build_time_varying_template
             }
             if ($param eq 'eps') {
                 push @prob_arr, "    Y = THETA(1) + ETA(1) + EPS(" . ($i + 1) . ")";
-            } else {
+            } elsif ($param eq 'theta') {
                 push @prob_arr, "    Y = THETA(" . ($i + 1) . ") + ETA(1) + EPS(1)";
+            } else {
+                push @prob_arr, "    Y = THETA(" . ($i + 1) . ") + ETA(1) + EPS(" . ($i + 1) . ")";
             }
             push @prob_arr, "END IF";
         }
@@ -727,7 +733,7 @@ sub _build_time_varying_template
         }
         push @prob_arr, '$OMEGA 0.5';
 
-        if ($param eq 'eps') {
+        if ($param eq 'eps' or $param eq 'both') {
             for (my $i = 0; $i <= scalar(@$cutoffs); $i++) {
                 push @prob_arr, '$SIGMA 0.5';
             }
@@ -740,7 +746,6 @@ sub _build_time_varying_template
 
         my @parameters;
         for (my $i = 0; $i <= scalar(@$cutoffs); $i++) {
-            my %parameter_hash;
             my $start;
             my $end;
             if ($i == 0) {
@@ -753,15 +758,19 @@ sub _build_time_varying_template
             } else {
                 $end = "t" . ($i + 1);
             }
-            if ($param eq 'eps') {
+            if ($param eq 'eps' or $param eq 'both') {
+                my %parameter_hash;
                 $parameter_hash{'name'} = "sdeps_$start-$end";
                 $parameter_hash{'parameter'} = "SIGMA(" . ($i + 1) . "," . ($i + 1) . ")";
                 $parameter_hash{'recalc'} = sub { sqrt($_[0]) };
-            } else {
+                push @parameters, \%parameter_hash;
+            }
+            if ($param eq 'theta' or $param eq 'both') {
+                my %parameter_hash;
                 $parameter_hash{'name'} = "th_$start-$end";
                 $parameter_hash{'parameter'} = "THETA" . ($i + 1);
+                push @parameters, \%parameter_hash;
             }
-            push @parameters, \%parameter_hash;
         }
         push @parameters, { name => "CUTOFFS", cutoff => 'all' };
         $hash{'parameters'} = \@parameters;
