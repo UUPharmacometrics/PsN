@@ -1,5 +1,5 @@
 \input{inputs/format_header.tex}
-\guidetitle{RESMOD user guide}{2017-01-17}
+\guidetitle{RESMOD user guide}{2017-02-22}
 
 \begin{document}
 
@@ -37,7 +37,19 @@ Name of the occasion column. Set to OCC by default.
       Quantiles using this number will be calculated.
       The default is 4.
 \nextopt
+    \optname{iterative}
+        Iterate by selecting the best model and rerun all models with the output from that model.
+    \nextopt
+    \optname{max\_iterations}
+        Default is to iterate until all models have been selected, but this option makes it possible
+        to stop the iteration earlier.
+    \nextopt
 \end{optionlist}
+
+\section{Iteration}
+If the option -iterate has been selected the model with the lowest dOFV will be selected. The output from this model
+will be used to rerun all the models once more etc. The iteration will stop when either the -max\_iterations has been
+reached or when all models have been selected. The iteration will be done for each DVID separately.
 
 \section{Output}
 The delta OFVs of all models are summarized in the results.csv file together with the interesting parameter estimates.
