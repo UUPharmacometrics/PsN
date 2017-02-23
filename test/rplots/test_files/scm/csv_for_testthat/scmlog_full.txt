@@ -1,0 +1,10 @@
+Model directory C:\m1
+
+MODEL            TEST   BASE OFV NEW OFV      TEST OFV (DROP) GOAL  dDF    SIGNIFICANT PVAL
+CLWGT-2          PVAL    725.6   672.9             52.6  >   3.8    1        YES!  0.6
+VCVD1-2          PVAL    725.6   717.7              7.8  >   3.8    1        YES!  0.005
+
+Parameter-covariate relation chosen in this forward step: CL-WGT-2
+CRITERION              PVAL < 0.05
+
+

@@ -1,0 +1,19 @@
+Model directory C:\
+
+MODEL            TEST   BASE OFV NEW OFV         TEST OFV (DROP)  GOAL     dDF    SIGNIFICANT PVAL
+CLCV1-4          PVAL    661.3   662.5            -1.1      >     -3.8     -1                 0.28
+
+Parameter-covariate relation chosen in this forward step: CL-CV2-5
+CRITERION              PVAL < 0.05
+BASE_MODEL_OFV         661.39162
+CHOSEN_MODEL_OFV       661.18431
+Relations included after this step:
+CL      CV1-3   CV2-5   CV3-5   WGT-2   
+V       CVD1-2  WGT-1   
+--------------------
+
+Model directory C:\
+MODEL            TEST     BASE OFV     NEW OFV         TEST OFV (DROP)    GOAL     dDF    SIGNIFICANT PVAL
+CLCV1-4          PVAL    661.18431   662.28094             -1.09664  >  -3.84150   -1              0.295010 
+CLWGT-3          PVAL    661.18431   660.99124              0.19307  >   3.84150    1              0.660370 
+

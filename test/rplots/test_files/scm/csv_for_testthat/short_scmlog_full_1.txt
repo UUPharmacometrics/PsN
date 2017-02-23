@@ -1,0 +1,6 @@
+CLWGT-2          PVAL    725.6   672.6            52.9  >   3.8    1        YES!  3.5
+Relations included after final step:
+CL      WGT-2   
+V       
+--------------------
+
