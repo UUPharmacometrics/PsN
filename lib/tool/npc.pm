@@ -4479,6 +4479,7 @@ sub vpc_analyze
 				my $false_pos=0;
 				my $false_neg=0;
 				for (my $j=0; $j<$max_bin_observations; $j++){
+                    next if ($uncensored_real[$j] eq '.');      # Let NA observation be neither false_pos nor false_neg
 					if ($npc_realpos->[$i]->[$j] == 0){
 						#NPC inside
 						if (((defined $limit[($i*2-$npc_pi_offset+$npc_pi_skip)]) and 
