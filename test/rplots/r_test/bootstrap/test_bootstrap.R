@@ -65,7 +65,7 @@ exp_parameter_data <- data.frame(THETA1=c(0.57,0.6,0.5,0.62,0.5,0.6,0.56),
                                  THETA2=c(1.28,1.47,1.5,1.43,1.6,1.68,1.56),
                                  OMEGA.1.1.=c(0.14,0.23,0.09,0.01,0.009,0.103,0.077),
                                  SIGMA.1.1.=c(0.011,0.011,0.016,0.013,0.02,0.019,0.01))
-exp_P_orig <- c(0.002329,0.01669,0.00588,0.000017)
+exp_P_orig <- c(0.564286,1.502857,0.094143,0.014286)
 exp_list_parameter_data_per_no_ID <- list(data.frame(THETA1=c(0.6,0.5,0.6),
                                            THETA2=c(1.47,1.5,1.68),
                                            OMEGA.1.1.=c(0.23,0.09,0.103),
@@ -92,7 +92,7 @@ exp_var_param_no_ID <- data.frame(THETA1=c(0.003333,0.0036,0.0012,0.0008,0.00242
                                   OMEGA.1.1.=c(0.005983,0.001519,0.001892,0.000338,0.002869),
                                   SIGMA.1.1.=c(0.000016,0.000026,0.000025,0.00004,0.000007))
 exp_data_plots <- data.frame(ID=c(2,7,9,10,11),
-                             cook.scores=c(0.036003,0.092542,0.123548,0.107971,0.042705),
+                             cook.scores=c(0.758441,0.841988,1.129236,0.96639,0.67066),
                              cov.ratios=c(1.053393,0.548095,0.196174,0.144297,0.432692))
 exp_failed_cov_ID <- NULL
 
@@ -122,7 +122,7 @@ exp_var_param_no_ID_1 <- data.frame(THETA1=c(0.003333,0.0036,NA,NA,0.002425),
                                   OMEGA.1.1.=c(0.005983,0.001519,NA,NA,0.002869),
                                   SIGMA.1.1.=c(0.000016,0.000026,NA,NA,0.000007))
 exp_data_plots_1 <- data.frame(ID=c(2,7,11),
-                             cook.scores=c(0.036003,0.092542,0.042705),
+                             cook.scores=c(0.758441,0.841988,0.67066),
                              cov.ratios=c(1.053393,0.548095,0.432692))
 exp_failed_cov_ID_1 <- as.integer(c(9,10))
 
@@ -139,7 +139,7 @@ test_that("If function cook_cov_calcul works as expected",{
   expect_identical(exp_var_param_no_ID,var_param_no_ID)
   expect_identical(exp_data_plots,data_plots)
   expect_identical(exp_failed_cov_ID,failed_cov_ID)
-  
+
   expect_identical(exp_raw.results.data,raw.results.data_1)
   expect_identical(exp_included.ids.data_1,included.ids.data_1)
   expect_identical(exp_ID,ID_1)
