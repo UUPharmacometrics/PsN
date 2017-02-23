@@ -1,5 +1,5 @@
 \input{inputs/format_header.tex}
-\guidetitle{VPC and NPC user guide}{2016-04-04}
+\guidetitle{VPC and NPC user guide}{2017-02-23}
 
 \begin{document}
 
@@ -740,7 +740,7 @@ since it is unknown (below BQL somewhere).
 
 \begin{enumerate}
 	\item For each bin, compute the percentage of false positives and false negatives for each PI as follows: 
-For each observation in the bin, sort the non-missing simulated DV values in ascending order. Check if the real data observation lies inside or outside each PI interval (as for an NPC). The observation is a false positive if it lies within the PI interval of the sorted simulated values, but outside the VPC PI computed for the whole bin. The observation is a false negative if the real data observation lies outside the PI interval of the sorted simulated values but inside the VPC PI for the bin. Repeat the sorting and checking for all observations in the bin and report the percentage of false positives and false negatives in the bin for each PI.
+For each observation in the bin, sort the non-missing simulated DV values in ascending order. Check if the real data observation lies inside or outside each PI interval (as for an NPC). The observation is a false positive if it lies within the PI interval of the sorted simulated values, but outside the VPC PI computed for the whole bin. The observation is a false negative if the real data observation lies outside the PI interval of the sorted simulated values but inside the VPC PI for the bin. If the observation is a '.' in the original data it will be neither a false positive nor a false negative. Repeat the sorting and checking for all observations in the bin and report the percentage of false positives and false negatives in the bin for each PI.
 
 	\item Report percentages of false positives/negatives for each PI in the whole strata:
 Sum the number of false positives and negatives over all bins, and divide by the sum of non-missing observations in  the bins. Note: This corresponds to computing a weighted average of the classification for observations that belong to more than one bin in the case of bin overlap. Then the sum of bin observations may be larger than the number of observations in the strata, and a single observation may, for example, be a false positive in one bin and a true negative in another. 
