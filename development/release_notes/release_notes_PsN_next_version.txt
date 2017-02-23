@@ -156,8 +156,10 @@ ___bootstrap___
    ___vpc/npc___
 
 - New option -mix to generate simulated and observed data for external post processing
-
 - Refactored input checking.
+- Fix bug causing warnings to be emitted when having '.' in DV column of original table.
+  The warnings came from the calculation of the diagnostic False Pos. It is now defined that
+  such observations can neither be false positives nor false negatives
 
    ___frem___
 
