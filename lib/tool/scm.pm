@@ -18,7 +18,6 @@ extends 'tool';
 use tool::scm::config_file;
 
 has 'config_file' => ( is => 'rw', isa => 'tool::scm::config_file' );
-has 'append_log' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'base_criteria_values' => ( is => 'rw', isa => 'HashRef', default => sub { {} } );
 has 'format' => ( is => 'rw', isa => 'Str' );
 has 'main_data_file' => ( is => 'rw', isa => 'Str' );
@@ -2851,8 +2850,7 @@ sub modelfit_analyze
 			chosen_state       => $chosen_state,
 			results            => $self -> results->[$model_number-1]{'own'},
 			criterion           => $criterion,
-			test_log           => $test_log_ref,
-			append             => $self -> append_log);
+			test_log           => $test_log_ref);
 
 		# Check if there still are some states to test
 		my $still_one_left = 0;
@@ -2919,7 +2917,6 @@ sub modelfit_analyze
 				relations            => $self -> relations(),
 				initial_estimates_model => $self -> resulting_model,
 				included_relations   => $self -> included_relations,
-				append_log           => 1,
 				step_number          => ($self -> step_number() + 1),
 				raw_results_file     => [$self -> raw_results_file ->[$model_number-1]],
 				logfile              => [$self -> logfile->[$model_number-1]],
@@ -3009,7 +3006,6 @@ sub modelfit_analyze
 				results            => $self -> results->[$model_number-1]{'own'},
 				criterion          => $criterion,
 				test_log           => $test_log_ref,
-				append             => 1,
 				final_short => 1);
 		}
 	} else {
@@ -3029,8 +3025,7 @@ sub modelfit_analyze
 		$self -> write_log ( direction         => $self -> search_direction,
 			criterion          => $criterion,
 			logfile            => $self -> logfile->[$model_number-1],
-			results            => $self -> results->[$model_number-1]{'own'},
-			append             => $self -> append_log);
+			results            => $self -> results->[$model_number-1]{'own'});
 
 
 		if( $self->update_derivatives()){
@@ -5057,7 +5052,6 @@ sub write_log
 	my $results = $parm{'results'};
 	my $criterion = $parm{'criterion'};
 	my $test_log_ref = $parm{'test_log'};
-	my $append  = $parm{'append'};
 	my $final  = (defined $parm{'final_short'}) ? $parm{'final_short'} : 0;
 	my %test_log = %{$test_log_ref} if defined ( $test_log_ref );
 	my @names = ();
@@ -5377,7 +5371,6 @@ sub modelfit_post_fork_analyze
 			relations            => $self -> relations(),
 			initial_estimates_model => $self -> initial_estimates_model,
 			included_relations   => $self -> included_relations,
-			append_log           => 1,
 			step_number          => ($self -> step_number() + 1),
 			raw_results_file     => [$self -> raw_results_file ->[0]],
 			logfile              => [$self -> logfile ->[0]],
