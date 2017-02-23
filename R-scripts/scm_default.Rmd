@@ -15,20 +15,29 @@ library(ggplot2)
 ```
 
 ```{r plot_for_included_covariates,results='hide',echo=FALSE,warning=FALSE,fig.width=9,fig.height=6.5,fig.keep="high",fig.align="center"}
-# get included covariates data
-list_incl_cov <- included_covariates(scm.short.log)
-n1 <- list_incl_cov$n1 #Number of covariate included after forward step
-sign <- list_incl_cov$sign
-data <- list_incl_cov$data
-name <- list_incl_cov$name
+info <- file.info(scm.short.log)
+if (info$size!=0) {
+  add_pagebreak <- TRUE
+  # get included covariates data
+  list_incl_cov <- included_covariates(scm.short.log)
+  n1 <- list_incl_cov$n1 #Number of covariate included after forward step
+  sign <- list_incl_cov$sign
+  data <- list_incl_cov$data
+  name <- list_incl_cov$name
     
-# plot SCM results included covariates   
-p <- plot_included_covariates(data,sign,n1,name)
-print(p)
-```
-\pagebreak
+  # plot SCM results included covariates   
+  p <- plot_included_covariates(data,sign,n1,name)
+  print(p)
+} else {
+  add_pagebreak <- FALSE
+}
 
-```{r plot_for_first_included_step,results='hide',echo=FALSE,warning=FALSE,fig.width=9,fig.height=8,fig.keep="high",fig.align="center"}
+```
+```{asis Add_pagebreak_on_condition, echo=add_pagebreak}
+\pagebreak
+```
+
+```{r plot_for_first_included_step,results='hide',echo=FALSE,warning=FALSE,fig.width=9,fig.height=6.5,fig.keep="high",fig.align="center"}
 # get first included step data
 list_first_incl_step <- first_inclusion_step(scm.log.file)
 n1 <- list_first_incl_step$n1

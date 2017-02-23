@@ -1,22 +1,32 @@
 first_inclusion_step <- function(scm.log.file) {
-  log_input <- read.delim(scm.log.file,header=F, skip=2)
+  log_input <- read.delim(scm.log.file,header=F)
   log <- log_input
   
   log$V1 <- as.character(log$V1)
   
-  i <- 1
-  n1 <- 0 #Number of covariate tested in fist step
-  
-  while(i==1){
-    a <- unlist(strsplit(log$V1[n1+1], " "))[1]
-    n1 <- n1+1
-    if(a =="Parameter-covariate"){
-      i <- 2
-      n1 <- n1-2
-    } 
+  i <- 0 #rows
+  start <- 0
+  end <- 0
+  n1 <- 0 #Number of covariate tested in first step
+  while(end==0) {
+    i <- i+1
+    text_part <- unlist(strsplit(log$V1[i], " "))[1]
+    if((start==1) && ((text_part=="Parameter-covariate") || (text_part=="--------------------"))) {
+      end <- 1
+    }
+    if(start==1 && end==0) {
+      n1 <- n1+1
+    }
+    if((text_part=="MODEL")) {
+      previous_first <- unlist(strsplit(log$V1[i-1], " "))[1] #an extra check
+      previous_second <- unlist(strsplit(log$V1[i-1], " "))[2]
+      if((previous_first=="Model") && (previous_second=="directory")) {
+        start <- 1
+      }
+    }
   }
   
-  log <- log[1:n1+1,]
+  log <- log[(i-n1):(i-1),]
   
   log1 <- strsplit(log, " ")
   
@@ -34,6 +44,11 @@ first_inclusion_step <- function(scm.log.file) {
     if(i!=1) out <- rbind(out,r) 
     i <- i+1
   }
+  
+  if(class(out)!="matrix") {
+    out <- matrix(out,1)
+  }
+  rownames(out) <- NULL
   
   x <- c(1:n1)
   y <- as.numeric(out[,4])

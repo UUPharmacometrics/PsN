@@ -6,13 +6,14 @@ included_covariates <- function(scm.short.log) {
   
   i <- 1
   n1 <- 0 #Number of covariate included after forward step
-  n2 <- 0 #Number of covariate included after backward step
   while(i<=length(log$V1)){
-    if((n1==0)&log$V1[i]=="Relations included after final step:") n1 <- i-1
-    if((n1!=0)&(log$V1[i]=="Relations included after final step:")) n2 <- i-n1-3
-    i=i+1
+    if((n1==0)&(log$V1[i]=="Relations included after final step:")) n1 <- i-1
+    i <- i+1
   }
-  
+  if (n1==0 && nrow(log)>0) { # If text "Relations included after final step" not found, but there are some lines in the file
+    n1 <- nrow(log)
+  }
+
   log <- log[1:n1,]
   log1 <- strsplit(log, " ")
   
@@ -31,18 +32,26 @@ included_covariates <- function(scm.short.log) {
     i <- i+1
   }
   
+  # if n1=1
+  if(class(out)!="matrix") {
+    out <- matrix(out,1)
+  }
+  rownames(out) <- NULL
+  
+  alphaf <- as.numeric(out[1,7])
+  if(n1==1) {
+    sign <- as.numeric(out[1,3])-alphaf
+  } else {
+    sign <- as.numeric(c(out[1,3], out[1:(n1-1),4]))-alphaf # why n1-1 ???
+  }
+  
   x <- c(0, rep(1:(n1), each=2), n1+1)
   y <- as.numeric(rep(c(out[1,3], out[,4]), each=2))
   data <- data.frame(x,y)
-  
-  alphaf <- as.numeric(out[1,7])
-  sign <- as.numeric(c(out[1,3], out[1:(n1-1),4]))-alphaf
-  
   name <- c("none", out[,1])
   
   out_list <- list(log_input=log_input,
                    n1=n1,
-                   n2=n2,
                    log=log,
                    log1=log1,
                    out=out,
