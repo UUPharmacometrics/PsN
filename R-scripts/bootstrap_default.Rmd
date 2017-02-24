@@ -10,12 +10,17 @@ source(paste0(rscripts.directory, "/bootstrap/cook.cov.calcul.R"))
 source(paste0(rscripts.directory, "/bootstrap/plot.cook.cov.R"))
 source(paste0(rscripts.directory, "/bootstrap/format.dofv.data.R"))
 source(paste0(rscripts.directory, "/bootstrap/plot.dofv.R"))
+source(paste0(rscripts.directory, "/common/fix.column.names.R"))
 
 library(xpose4)
 library(ggplot2)
 library(grid)
 require(plyr)
 require(dplyr)
+```
+
+```{r fix.column.names,include = FALSE}
+est.param.names <- fix_column_names(col_names=ESTIMATED.PARAMS)
 ```
 
 ```{r check_xpose4_version,results='hide',echo=FALSE}
@@ -41,12 +46,12 @@ if (dofv.is.run){
   add_dOFV_plots <- TRUE
   
   # Read in and format data
-  list_dofv <- format_dofv_data(dofv.raw.results.file,raw.results.file,N.ESTIMATED.PARAMS)
+  list_dofv <- format_dofv_data(dofv.raw.results.file,raw.results.file,est.param.names)
   all <- list_dofv$all
   df_est <- list_dofv$df_est
 
   # Plot dOFV distributions
-  qdOFV_all <- plot_dofv(all,df_est,N.ESTIMATED.PARAMS)
+  qdOFV_all <- plot_dofv(all,df_est,est.param.names)
   print(qdOFV_all)
 }
 ```

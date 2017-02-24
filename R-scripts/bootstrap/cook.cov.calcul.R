@@ -1,4 +1,4 @@
-cook_cov_calcul <- function(raw.results.file,included.ids.file,N.ESTIMATED.PARAMS) {
+cook_cov_calcul <- function(raw.results.file,included.ids.file,est.param.names) {
   #read in needed files
   raw.results.data <- read.csv(raw.results.file)
   included.ids.data <- read.csv(included.ids.file,header=F)
@@ -7,26 +7,24 @@ cook_cov_calcul <- function(raw.results.file,included.ids.file,N.ESTIMATED.PARAM
   ID_unique <- unique(unlist(included.ids.data))
   ID <- sort(ID_unique)
   
-  #parameter names
-  ofv_column_nr <- grep("^ofv$",colnames(raw.results.data))
-  parameter_names <- colnames(raw.results.data[,(ofv_column_nr+1):(ofv_column_nr+N.ESTIMATED.PARAMS)])
-  parameter_data <- raw.results.data[-1,parameter_names]
+  #estimated parameter data
+  parameter_data <- raw.results.data[-1,est.param.names]
   rownames(parameter_data) <- NULL
   
   #calcutate variances of each parameter and set variance values to P_orig
   P_orig <- c()
   P_orig_var <- c()
-  for(i in 1:N.ESTIMATED.PARAMS) {
+  for(i in 1:length(est.param.names)) {
     P_orig[i] <- mean(parameter_data[,i])
     P_orig_var[i] <- var(parameter_data[,i])
   }
   
   # variances of parameter values for each not included ID matrix
-  var_param_no_ID <- array(NA,c(length(ID),N.ESTIMATED.PARAMS)) #parameter estimates where ID is not included
-  colnames(var_param_no_ID) <- parameter_names
+  var_param_no_ID <- array(NA,c(length(ID),length(est.param.names))) #parameter estimates where ID is not included
+  colnames(var_param_no_ID) <- est.param.names
   var_param_no_ID <- as.data.frame(var_param_no_ID)
-  mean_param_no_ID <- array(NA,c(length(ID),N.ESTIMATED.PARAMS)) #parameter estimates where ID is not included
-  colnames(mean_param_no_ID) <- parameter_names
+  mean_param_no_ID <- array(NA,c(length(ID),length(est.param.names))) #parameter estimates where ID is not included
+  colnames(mean_param_no_ID) <- est.param.names
   mean_param_no_ID <- as.data.frame(mean_param_no_ID)
   list_covar_var_matr <- list()
   list_parameter_data_per_no_ID <- list()
@@ -52,16 +50,16 @@ cook_cov_calcul <- function(raw.results.file,included.ids.file,N.ESTIMATED.PARAM
   cov.ratios <- c()
   for(i in 1:length(ID)) {
     Pk <- mean_param_no_ID[i,]
-    Pk <- matrix(as.numeric(Pk),N.ESTIMATED.PARAMS,1)
-    Porig <- matrix(as.numeric(P_orig),N.ESTIMATED.PARAMS,1)
-    cov_P_orig <- diag(P_orig_var,N.ESTIMATED.PARAMS,N.ESTIMATED.PARAMS)
+    Pk <- matrix(as.numeric(Pk),length(est.param.names),1)
+    Porig <- matrix(as.numeric(P_orig),length(est.param.names),1)
+    cov_P_orig <- diag(P_orig_var,length(est.param.names),length(est.param.names))
     cook.scores[i] <- sqrt(t(Pk - Porig)%*%solve(cov_P_orig)%*%(Pk - Porig))
     if(any(is.na(var_param_no_ID[i,]))) {
       # cook.scores[i] <- NA
       cov.ratios[i] <- NA
     } else {
       Pk_var <- var_param_no_ID[i,]
-      cov_Pk <- diag(Pk_var,N.ESTIMATED.PARAMS,N.ESTIMATED.PARAMS)
+      cov_Pk <- diag(Pk_var,length(est.param.names),length(est.param.names))
       if(any(P_orig==0)) {
         cov.ratios[i] <- NA
       } else {
@@ -84,13 +82,13 @@ cook_cov_calcul <- function(raw.results.file,included.ids.file,N.ESTIMATED.PARAM
   
   # get parameter cook scores
   # formula = abs(p_i,j - p_orig,j)/se(p_orig,j)
-  cook.param.data <- array(NA,c(length(ID),N.ESTIMATED.PARAMS))
-  for (i in 1:length(parameter_names)) {
-    cook.param.names <- paste0("cook.par.",parameter_names)
+  cook.param.data <- array(NA,c(length(ID),length(est.param.names)))
+  for (i in 1:length(est.param.names)) {
+    cook.param.names <- paste0("cook.par.",est.param.names)
   }
   colnames(cook.param.data) <- cook.param.names
   cook.param.data <- as.data.frame(cook.param.data)
-  for (i in 1:N.ESTIMATED.PARAMS) {
+  for (i in 1:length(est.param.names)) {
     for (j in 1:length(ID)) {
       cook.param.data[j,i] <- (abs(mean_param_no_ID[j,i] - P_orig[i])/sqrt(P_orig_var[i]))
     }
@@ -102,7 +100,6 @@ cook_cov_calcul <- function(raw.results.file,included.ids.file,N.ESTIMATED.PARAM
   out <- list(raw.results.data=raw.results.data,
               included.ids.data=included.ids.data,
               ID=ID,
-              parameter_names=parameter_names,
               parameter_data=parameter_data,
               P_orig=P_orig,
               P_orig_var=P_orig_var,

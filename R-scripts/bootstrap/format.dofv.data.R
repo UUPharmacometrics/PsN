@@ -1,4 +1,4 @@
-format_dofv_data <- function(dofv.raw.results.file,raw.results.file,N.ESTIMATED.PARAMS) {
+format_dofv_data <- function(dofv.raw.results.file,raw.results.file,est.param.names) {
   
   # Read in BOOT results (dOFV)
   raw.results.data <- read.csv(raw.results.file)
@@ -18,13 +18,13 @@ format_dofv_data <- function(dofv.raw.results.file,raw.results.file,N.ESTIMATED.
   boot$minimization_successful <- "yes+no"
   
   # Create reference chisquare (for dOFV)
-  ref <- data.frame("deltaofv"=qchisq(seq(0,0.99,0.01),df=N.ESTIMATED.PARAMS),"rownames"=seq(0,0.99,0.01),"METHOD"="REF")
+  ref <- data.frame("deltaofv"=qchisq(seq(0,0.99,0.01),df=length(est.param.names)),"rownames"=seq(0,0.99,0.01),"METHOD"="REF")
   
   # Merge and format datasets
   all <- rbind.fill(boot,boot_term,ref)
   all$minimization_successful[is.na(all$minimization_successful)] <- "yes"
   df_est   <- ddply(all,.(METHOD,minimization_successful), summarise, "df"=round(mean(deltaofv,na.rm=T),1))  # get df for each distribution
-  df_est[df_est$METHOD=="REF",]$df <- N.ESTIMATED.PARAMS # replace with true df to avoid random noise
+  df_est[df_est$METHOD=="REF",]$df <- length(est.param.names) # replace with true df to avoid random noise
   
   out <- list(dofv.raw.results.data=dofv.raw.results.data,
               raw.results.data=raw.results.data,
