@@ -34,7 +34,7 @@ my $toolobject = tool::npc->new(directory => 'rundir',
 								idv => 'TIME',
 								categorized => 0,
 								template_directory_rplots =>$template_dir,
-								template_file_rplots => $toolname.'_default.R',
+								template_file_rplots => $toolname.'_default.Rmd',
 								samples => 100,
 								models	     => [ $model ]);
 
