@@ -24,14 +24,13 @@ included.ids.file_2 <- paste0(files.w.dir,'included_individuals2.csv')
 
 ###################################     4. Make tests     ###################################
 #.................................................   (1) Test function cook_cov_calcul   ..................................................................
-list_cook.cov <- cook_cov_calcul(raw.results.file,included.ids.file=included.ids.file_1,N.ESTIMATED.PARAMS=4)
-list_cook.cov_1 <- cook_cov_calcul(raw.results.file,included.ids.file=included.ids.file_2,N.ESTIMATED.PARAMS=4)
+list_cook.cov <- cook_cov_calcul(raw.results.file,included.ids.file=included.ids.file_1,est.param.names=c("THETA1","THETA2","OMEGA.1.1.","SIGMA.1.1."))
+list_cook.cov_1 <- cook_cov_calcul(raw.results.file,included.ids.file=included.ids.file_2,est.param.names=c("THETA1","THETA2","OMEGA.1.1.","SIGMA.1.1."))
 
 #unlist
 raw.results.data <- list_cook.cov$raw.results.data
 included.ids.data <- list_cook.cov$included.ids.data
 ID <- list_cook.cov$ID
-parameter_names <- list_cook.cov$parameter_names
 parameter_data <- list_cook.cov$parameter_data
 P_orig <- round(list_cook.cov$P_orig,6)
 var_param_no_ID <- round(list_cook.cov$var_param_no_ID,6)
@@ -42,7 +41,6 @@ failed_cov_ID <- list_cook.cov$failed_cov_ID
 raw.results.data_1 <- list_cook.cov_1$raw.results.data
 included.ids.data_1 <- list_cook.cov_1$included.ids.data
 ID_1 <- list_cook.cov_1$ID
-parameter_names_1 <- list_cook.cov_1$parameter_names
 parameter_data_1 <- list_cook.cov_1$parameter_data
 P_orig_1 <- round(list_cook.cov_1$P_orig,6)
 var_param_no_ID_1 <- round(list_cook.cov_1$var_param_no_ID,6)
@@ -52,15 +50,17 @@ failed_cov_ID_1 <- as.integer(list_cook.cov_1$failed_cov_ID)
 
 # Create expected data
 exp_raw.results.data <- data.frame(model=as.integer(c(0,1,2,3,4,5,6,7)),ofv=c(730.1,686,740,733,633,716,742,760),
+                                   dofv=c(4,3,2,5,6,4,3,2),
                                    THETA1=c(0.58,0.57,0.6,0.5,0.62,0.5,0.6,0.56),
                                    THETA2=c(1.4,1.28,1.47,1.5,1.43,1.6,1.68,1.56),
+                                   THETA3=c(0,0,0,0,0,0,0,0),
                                    OMEGA.1.1.=c(0.11,0.14,0.23,0.09,0.01,0.009,0.103,0.077),
+                                   OMEGA.2.2.=c(0.11,0.14,0.23,0.09,0.01,0.009,0.103,0.077),
                                    SIGMA.1.1.=c(0.01,0.011,0.011,0.016,0.013,0.02,0.019,0.01),
-                                   seTHETA1=c(0.0004,NA,NA,NA,NA,NA,NA,NA))
+                                   seTHETA1=c(0.04,NA,NA,NA,NA,NA,NA,NA))
 exp_included.ids.data <- data.frame(V1=as.integer(c(2,7,10,2,11,7,2)),V2=as.integer(c(7,10,10,10,10,11,2)),
                                     V3=as.integer(c(2,11,10,9,11,7,2)),V4=as.integer(c(9,7,7,2,2,7,2)),V5=as.integer(c(10,9,7,2,11,9,2)))
 exp_ID <- as.integer(c(2,7,9,10,11))
-exp_parameter_names <- c("THETA1","THETA2","OMEGA.1.1.","SIGMA.1.1.")
 exp_parameter_data <- data.frame(THETA1=c(0.57,0.6,0.5,0.62,0.5,0.6,0.56),
                                  THETA2=c(1.28,1.47,1.5,1.43,1.6,1.68,1.56),
                                  OMEGA.1.1.=c(0.14,0.23,0.09,0.01,0.009,0.103,0.077),
@@ -129,10 +129,9 @@ exp_failed_cov_ID_1 <- as.integer(c(9,10))
 # Compare expected data with real data
 context("Bootstrap, function cook_cov_calcul")
 test_that("If function cook_cov_calcul works as expected",{
-  expect_identical(exp_raw.results.data,raw.results.data)
+  expect_equal(exp_raw.results.data,raw.results.data)
   expect_identical(exp_included.ids.data,included.ids.data)
   expect_identical(exp_ID,ID)
-  expect_identical(exp_parameter_names,parameter_names)
   expect_identical(exp_parameter_data,parameter_data)
   expect_identical(exp_P_orig,P_orig)
   expect_identical(exp_list_parameter_data_per_no_ID,list_parameter_data_per_no_ID)
@@ -140,10 +139,9 @@ test_that("If function cook_cov_calcul works as expected",{
   expect_identical(exp_data_plots,data_plots)
   expect_identical(exp_failed_cov_ID,failed_cov_ID)
 
-  expect_identical(exp_raw.results.data,raw.results.data_1)
+  expect_equal(exp_raw.results.data,raw.results.data_1)
   expect_identical(exp_included.ids.data_1,included.ids.data_1)
   expect_identical(exp_ID,ID_1)
-  expect_identical(exp_parameter_names,parameter_names_1)
   expect_identical(exp_parameter_data,parameter_data_1)
   expect_identical(exp_P_orig,P_orig_1)
   expect_identical(exp_list_parameter_data_per_no_ID_1,list_parameter_data_per_no_ID_1)
