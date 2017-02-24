@@ -1995,17 +1995,16 @@ sub create_R_plots_code
 	my $boundary = $self->skip_estimate_near_boundary() ? 'TRUE' : 'FALSE';
 
 	#todo add bool dofv
-	my $paramcount = 0;
+	my $estim_params = '';
 	my $labelref = $self->models->[0]->problems->[0]->get_estimated_attributes(parameter => 'all',
 																			   attribute => 'labels');
+	
 	if (defined $labelref){
 		#we should not filter out off-diagonals like in sse. Verified. 
-		$paramcount = scalar(@{$labelref});
+		$estim_params = "'".join("','",@{$labelref})."'";
 	}
-
-
-	my $paramstring = 'N.ESTIMATED.PARAMS <- '.$paramcount;
-
+	my $paramstring = 'ESTIMATED.PARAMS <- c('.$estim_params.')';
+	
 	my $rawresdofvstring;
 	if ($self->dofv){
 		$rawresdofvstring = "dofv.raw.results.file <- '".$self->raw_results_dofv."'";
