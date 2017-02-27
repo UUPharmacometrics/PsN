@@ -1,4 +1,4 @@
-plot_cook_cov <- function(data_plots,failed_cov_ID) {
+plot_cook_cov <- function(data_plots,failed_cov_ID,samples,estimation_failures) {
   #need ggplot2 and grid libraries
   #create plot object
   theme_set(theme_bw(base_size=20)) #set usual background

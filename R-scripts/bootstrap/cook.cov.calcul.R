@@ -1,16 +1,31 @@
 cook_cov_calcul <- function(raw.results.file,included.ids.file,est.param.names) {
   #read in needed files
   raw.results.data <- read.csv(raw.results.file)
-  included.ids.data <- read.csv(included.ids.file,header=F)
-
+  included.ids.data_input <- read.csv(included.ids.file,header=F)
+  included.ids.data <- included.ids.data_input
+  
   #get all ID numbers
-  ID_unique <- unique(unlist(included.ids.data))
+  ID_unique <- unique(unlist(included.ids.data_input))
   ID <- sort(ID_unique)
   
   #estimated parameter data
   parameter_data <- raw.results.data[-1,est.param.names]
   rownames(parameter_data) <- NULL
+  samples <- nrow(parameter_data)
   
+  #check if there are some estimation step failures
+  if(any(is.na(parameter_data))) {
+    estimation_failure_rows <- which(rowSums(is.na(parameter_data))>0)
+    parameter_data <- parameter_data[-estimation_failure_rows,]
+    rownames(parameter_data) <- NULL
+  }
+  estimation_failures <- samples-nrow(parameter_data)
+  
+  if(estimation_failures > 0) {
+    included.ids.data <- included.ids.data_input[-estimation_failure_rows,]
+    rownames(included.ids.data) <- NULL
+  }
+
   #calcutate variances of each parameter and set variance values to P_orig
   P_orig <- c()
   P_orig_var <- c()
@@ -98,6 +113,7 @@ cook_cov_calcul <- function(raw.results.file,included.ids.file,est.param.names) 
   #write.csv(cook.cov.data,"cook_cov_data.csv")
   
   out <- list(raw.results.data=raw.results.data,
+              included.ids.data_input=included.ids.data_input,
               included.ids.data=included.ids.data,
               ID=ID,
               parameter_data=parameter_data,
@@ -110,6 +126,8 @@ cook_cov_calcul <- function(raw.results.file,included.ids.file,est.param.names) 
               failed_cov_ID=failed_cov_ID,
               cook.param.data=cook.param.data,
               cook.param.names=cook.param.names,
-              cook.cov.data=cook.cov.data)
+              cook.cov.data=cook.cov.data,
+              samples=samples,
+              estimation_failures=estimation_failures)
   return(out)
 }
