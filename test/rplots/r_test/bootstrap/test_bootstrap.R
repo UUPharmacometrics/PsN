@@ -27,7 +27,7 @@ included.ids.file_2 <- paste0(files.w.dir,'included_individuals2.csv')
 #.................................................   (1) Test function cook_cov_calcul   ..................................................................
 list_cook.cov <- cook_cov_calcul(raw.results.file,included.ids.file=included.ids.file_1,est.param.names=c("THETA1","THETA2","OMEGA.1.1.","SIGMA.1.1."))
 list_cook.cov_1 <- cook_cov_calcul(raw.results.file,included.ids.file=included.ids.file_2,est.param.names=c("THETA1","THETA2","OMEGA.1.1.","SIGMA.1.1."))
-list_cook.cov_2 <- cook_cov_calcul(raw.results.file_1,included.ids.file=included.ids.file_1,est.param.names=c("THETA1","THETA2","OMEGA.1.1.","SIGMA.1.1."))
+list_cook.cov_2 <- cook_cov_calcul(raw.results.file_1,included.ids.file=included.ids.file_1,est.param.names=c("THETA1","THETA2","OMEGA.1.1.","SIGMA.1.1."),show.warning=F)
 
 #unlist
 raw.results.data <- list_cook.cov$raw.results.data
@@ -249,3 +249,8 @@ test_that("If function cook_cov_calcul works as expected",{
   expect_identical(as.integer(7),samples_2)
   expect_identical(as.integer(2),estimation_failures_2)
   })
+
+context("Bootstrap, messages from function cook_cov_calcul")
+test_that("messages shows up",{
+  expect_message(cook_cov_calcul(raw.results.file_1,included.ids.file=included.ids.file_1,est.param.names=c("THETA1","THETA2","OMEGA.1.1.","SIGMA.1.1.")))  
+})
