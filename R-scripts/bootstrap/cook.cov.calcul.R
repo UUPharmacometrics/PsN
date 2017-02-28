@@ -1,4 +1,4 @@
-cook_cov_calcul <- function(raw.results.file,included.ids.file,est.param.names) {
+cook_cov_calcul <- function(raw.results.file,included.ids.file,est.param.names,show.warning=TRUE) {
   #read in needed files
   raw.results.data <- read.csv(raw.results.file)
   included.ids.data_input <- read.csv(included.ids.file,header=F)
@@ -24,6 +24,13 @@ cook_cov_calcul <- function(raw.results.file,included.ids.file,est.param.names) 
   if(estimation_failures > 0) {
     included.ids.data <- included.ids.data_input[-estimation_failure_rows,]
     rownames(included.ids.data) <- NULL
+  }
+  
+  # show warning
+  if(estimation_failures > 0) {
+    if(show.warning) {
+      message(paste0("WARNING! Estimation step failures: ",estimation_failures," of ",samples))
+    }
   }
 
   #calcutate variances of each parameter and set variance values to P_orig
