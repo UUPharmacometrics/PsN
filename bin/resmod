@@ -27,6 +27,7 @@ my %required_options = ();
 #option etas is not implemented, bootstrap always done on all etas
 my %optional_options = (
     'dvid:s' => undef,
+    'dv:s' => undef,
     'idv:s' => undef,
     'occ:s' => undef,
     'iterative!' => undef,
@@ -88,6 +89,12 @@ $help_text{-idv} = <<'EOF';
       -idv
 
       Name of the independent variable. TIME is default.
+EOF
+
+$help_text{-dv} = <<'EOF';
+      -dv
+
+      Name of the dependent variable. CWRES is default.
 EOF
 
 $help_text{-iterative} = <<'EOF';
@@ -154,6 +161,7 @@ my $resmod = tool::resmod->new(
     models => [$model],
     dvid => $options{'dvid'},
     idv => $options{'idv'},
+    dv => $options{'dv'},
 	occ => $options{'occ'},
     iterative => $options{'iterative'},
     groups => $options{'groups'},

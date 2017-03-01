@@ -18,6 +18,7 @@ extends 'tool';
 has 'model' => ( is => 'rw', isa => 'model' );
 has 'groups' => ( is => 'rw', isa => 'Int', default => 4 );       # The number of groups to use for quantiles in the time_varying model 
 has 'idv' => ( is => 'rw', isa => 'Str', default => 'TIME' );
+has 'dv' => ( is => 'rw', isa => 'Str', default => 'CWRES' );
 has 'dvid' => ( is => 'rw', isa => 'Str', default => 'DVID' );
 has 'occ' => ( is => 'rw', isa => 'Str', default => 'OCC' );
 has 'run_models' => ( is => 'rw', isa => 'ArrayRef', default => sub { [] } );      # Array of arrays for the run models [DVID]->[model]
@@ -47,10 +48,10 @@ sub BUILD
     $self->model($model);
 
     if ($self->top_level) {
-        my @columns = ( 'ID', $self->idv, 'CWRES' );
+        my @columns = ( 'ID', $self->idv, $self->dv );
         my $cwres_table = $self->model->problems->[0]->find_table(columns => \@columns, get_object => 1);
         if (not defined $cwres_table) {
-            die "Error original model has no table containing ID, IDV and CWRES\n";
+            die "Error original model has no table containing ID, IDV and " . $self->dv. "\n";
         }
         my $cwres_table_name = $self->model->problems->[0]->find_table(columns => \@columns);
         my $table = nmtablefile->new(filename => "$cwres_table_name"); 
@@ -88,6 +89,7 @@ sub modelfit_setup
             my $resmod = tool::resmod->new(
                 models => [ $self->model ],
                 idv => $self->idv,
+                dv => $self->dv,
                 iterative => $self->iterative,
                 cutoffs => $self->cutoffs,
                 top_level => 0,
@@ -106,8 +108,8 @@ sub modelfit_setup
         return;
     }
 
-    # Find a table with ID, TIME, CWRES and extra_input (IPRED)
-    my @columns = ( 'ID', $self->idv, 'CWRES' );
+    # Find a table with ID, idv, dv and extra_input (IPRED)
+    my @columns = ( 'ID', $self->idv, $self->dv );
     my $cwres_table = $self->model->problems->[0]->find_table(columns => \@columns, get_object => 1);
     my $cwres_table_name = $self->model->problems->[0]->find_table(columns => \@columns);
 
@@ -149,7 +151,7 @@ sub modelfit_setup
         if ($have_tad and $model_properties->{'name'} eq 'time_varying') {
             $tad = 1;
         }
-        my $input_columns = _create_input(
+        my $input_columns = $self->_create_input(
             table => $cwres_table,
             columns => \@columns,
             ipred => 1,     # Always add ipred to be able to pass it through to next iteration if needed
@@ -199,7 +201,7 @@ sub modelfit_setup
 
     if ($have_l2 and $self->numdvid > 1 and $self->current_dvid == 0) {     # Only start the L2 model once per iteration
         push @columns, 'L2';
-    	my $input_columns = _create_input(
+    	my $input_columns = $self->_create_input(
 			table => $cwres_table,
 			columns => \@columns,
             l2 => 1,
@@ -348,9 +350,9 @@ sub modelfit_analyze
                 next;
             }
 
-            # Check if the CWRES column is all zeros
+            # Check if the DV column is all zeros
             my $table = nmtablefile->new(filename => "m1/$model_name.tab"); 
-            my $cwres_column = $table->tables->[0]->header->{'CWRES'};
+            my $cwres_column = $table->tables->[0]->header->{$self->dv};
             my $unique_cwres = array::unique($table->tables->[0]->columns->[$cwres_column]);
             if (scalar(@$unique_cwres) == 1 && $unique_cwres->[0] == 0) {
                 splice @dofvs, $minind, 1;
@@ -368,7 +370,7 @@ sub modelfit_analyze
         $self->iteration_summary->[$self->iteration]->[$model_no]->{$dvid}->{'dOFV'} = $minvalue;
         $self->iteration_summary->[$self->iteration]->[$model_no]->{$dvid}->{'model_name'} = $model_name;
 
-        if (scalar(@dofvs) == 0 or $self->iteration >= $self->max_iterations - 1) {      # Exit recursion
+        if (scalar(@dofvs) == 0 or (defined $self->max_iterations and $self->iteration >= $self->max_iterations - 1)) {      # Exit recursion
             return;
         }
 
@@ -384,6 +386,7 @@ sub modelfit_analyze
             #eval( $common_options::parameters ),
             models => [ $model ],
             idv => $self->idv,
+            dv => $self->dv,
             iterative => $self->iterative,
             best_models => \@best_models,
             cutoffs => $self->cutoffs,
@@ -491,11 +494,11 @@ sub _calculate_quantiles
 	my $column = $parm{'column'};
 
 	my $column_no = $table->header->{$column};
-    my $cwres_col = $table->header->{'CWRES'};
+    my $dv_col = $table->header->{$self->dv};
     my @data;
-    for my $i (0 .. scalar(@{$table->columns->[$column_no]}) - 1) {    # Filter out all 0 CWRES as non-observations
-        my $cwres = $table->columns->[$cwres_col]->[$i];
-        if ($cwres ne 'CWRES' and $cwres != 0) {
+    for my $i (0 .. scalar(@{$table->columns->[$column_no]}) - 1) {    # Filter out all dv=0 (CWRES) as non-observations
+        my $dv = $table->columns->[$dv_col]->[$i];
+        if ($dv ne $self->dv and $dv != 0) {
             push @data, $table->columns->[$column_no]->[$i] + 0;
         }
     }
@@ -507,6 +510,7 @@ sub _calculate_quantiles
 
 sub _create_input
 {
+    my $self = shift;
 	# Create $INPUT string from table
 	my %parm = validated_hash(\@_,
 		table => { isa => 'model::problem::table' },
@@ -533,7 +537,7 @@ sub _create_input
             if ($option->name eq $columns[$i] and not $found_columns[$i]) {
                 $found_columns[$i] = 1;
                 my $name = $option->name;
-                $name = 'DV' if ($name eq 'CWRES');
+                $name = 'DV' if ($name eq $self->dv);
 				$name = 'DROP' if ($name eq 'IPRED' and not $ipred);
 				$name = 'DROP' if ($name eq $occ_name and not $occ);
 				$name = 'DROP' if ($name eq 'TAD' and not $tad);
@@ -570,21 +574,21 @@ sub _create_new_model
         problem_number => 1
     );
 
-    my $cwres_problem = model::problem->new(
+    my $problem = model::problem->new(
         prob_arr => $prob_arr,
         shrinkage_module => $sh_mod,
     );
 
-    my $cwres_model = model->new(
+    my $model = model->new(
         directory => 'm1/',
         filename => $filename,
-        problems => [ $cwres_problem ],
+        problems => [ $problem ],
         extra_files => [ $self->directory . '/contr.txt', $self->directory . '/ccontra.txt' ],
     );
 
-    $cwres_model->_write();
+    $model->_write();
     
-    return $cwres_model;
+    return $model;
 }
 
 sub _prepare_L2_model
@@ -602,7 +606,7 @@ sub _prepare_L2_model
     my $table_string = $parm{'table_string'};
 
     my @prob_arr = (
-        '$PROBLEM    CWRES base model',
+        '$PROBLEM    base model',
         '$INPUT ' . $input_columns,
         '$DATA ../' . $table_name . ' IGNORE=@ IGNORE(DV.EQN.0)',
         '$PRED',
@@ -658,7 +662,7 @@ sub _build_time_varying_template
         $hash{'use_base'} = 1;
         $hash{'name'} = "time_varying_RUV_cutoff$i";
         my @prob_arr = (
-            "\$PROBLEM CWRES time varying cutoff $i",
+            "\$PROBLEM time varying cutoff $i",
             '$INPUT <inputcolumns>',
             '$DATA ../<cwrestablename> IGNORE=@ IGNORE=(DV.EQN.0) <dvidaccept>',
             '$PRED',
@@ -695,7 +699,7 @@ sub _build_time_varying_template
         }
         $hash{'use_base'} = 1;
         my @prob_arr = (
-            '$PROBLEM CWRES time varying',
+            '$PROBLEM time varying',
             '$INPUT <inputcolumns>',
             '$DATA ../<cwrestablename> IGNORE=@ IGNORE=(DV.EQN.0) <dvidaccept>',
             '$PRED',
@@ -807,7 +811,7 @@ sub _create_table
         $l2 = ' L2';
     }
     
-    return "\$TABLE ID TIME CWRES$ipred$occ$l2 NOPRINT NOAPPEND ONEHEADER FILE=$name.tab";
+    return "\$TABLE ID TIME " . $self->dv . "$ipred$occ$l2 NOPRINT NOAPPEND ONEHEADER FILE=$name.tab";
 }
 
 sub _create_extra_fortran_files
@@ -863,7 +867,7 @@ our @residual_models =
 	{
 		name => 'base',
 	    prob_arr => [
-			'$PROBLEM CWRES base model',
+			'$PROBLEM base model',
 			'$INPUT <inputcolumns>',
 			'$DATA ../<cwrestablename> IGNORE=@ IGNORE=(DV.EQN.0) <dvidaccept>',
 			'$PRED',
@@ -877,7 +881,7 @@ our @residual_models =
 	}, {
 		name => 'IIV_on_RUV',
 	    prob_arr => [
-			'$PROBLEM CWRES omega-on-epsilon',
+			'$PROBLEM omega-on-epsilon',
 			'$INPUT <inputcolumns>',
 			'$DATA ../<cwrestablename> IGNORE=@ IGNORE=(DV.EQN.0) <dvidaccept>',
 			'$PRED',
@@ -896,7 +900,7 @@ our @residual_models =
 		name => 'power',
         need_ipred => 1,
 	    prob_arr => [
-			'$PROBLEM CWRES power IPRED',
+			'$PROBLEM power IPRED',
 			'$INPUT <inputcolumns>',
 			'$DATA ../<cwrestablename> IGNORE=@ IGNORE=(DV.EQN.0) <dvidaccept>',
 			'$PRED',
@@ -914,7 +918,7 @@ our @residual_models =
 	}, {
         name => 'autocorrelation',
         prob_arr => [
-			'$PROBLEM CWRES AR1',
+			'$PROBLEM AR1',
 			'$INPUT <inputcolumns>',
 			'$DATA ../<cwrestablename> IGNORE=@ IGNORE=(DV.EQN.0) <dvidaccept>',
 			'$PRED',
@@ -954,7 +958,7 @@ our @residual_models =
 		name => 'autocorrelation_iov',
 		need_occ => 1,
 		prob_arr => [
-			'$PROBLEM CWRES AR1 IOV',
+			'$PROBLEM AR1 IOV',
 			'$INPUT <inputcolumns>',
 			'$DATA ../<cwrestablename> IGNORE=@ IGNORE=(DV.EQN.0) <dvidaccept>',
 			'$ABBREVIATED DECLARE T1(NO)',
@@ -993,7 +997,7 @@ our @residual_models =
     }, {
 		name => 'tdist_base',
 	    prob_arr => [
-			'$PROBLEM CWRES t-distribution base mode',
+			'$PROBLEM t-distribution base mode',
 			'$INPUT <inputcolumns>',
 			'$DATA ../<cwrestablename> IGNORE=@ IGNORE=(DV.EQN.0) <dvidaccept>',
 			'$PRED',
@@ -1014,7 +1018,7 @@ our @residual_models =
     }, {
         name => 'tdist_2ll_dfest',
         prob_arr => [
-			'$PROBLEM CWRES laplace 2LL DF=est',
+			'$PROBLEM laplace 2LL DF=est',
 			'$INPUT <inputcolumns>',
 			'$DATA ../<cwrestablename> IGNORE=@ IGNORE=(DV.EQN.0) <dvidaccept>',
 			'$PRED',
@@ -1048,7 +1052,7 @@ our @residual_models =
         name => 'dtbs_base',
         need_ipred => 1,
         prob_arr => [
-			'$PROBLEM    CWRES dtbs base model',
+			'$PROBLEM dtbs base model',
 			'$INPUT <inputcolumns>',
 			'$DATA ../<cwrestablename> IGNORE=@ IGNORE=(DV.EQN.0) <dvidaccept>',
 			'$SUBROUTINE CONTR=contr.txt CCONTR=ccontra.txt',
@@ -1089,7 +1093,7 @@ our @residual_models =
 		name => 'dtbs',
         need_ipred => 1,
 		prob_arr => [
-			'$PROBLEM    CWRES dtbs model',
+			'$PROBLEM dtbs model',
 			'$INPUT <inputcolumns>',
 			'$DATA ../<cwrestablename> IGNORE=@ IGNORE=(DV.EQN.0) <dvidaccept>',
 			'$SUBROUTINE CONTR=contr.txt CCONTR=ccontra.txt',
