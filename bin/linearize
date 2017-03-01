@@ -18,21 +18,24 @@ use File::Copy qw/cp mv/;
 use include_modules;
 # More PsN dependencies included with require further down
 
-my $cmd_line = $0 . " " . join( " ", @ARGV );
+my $cmd_line = $0 . " " . join(" ", @ARGV);
 
 my %options;
 
 my %required_options = ();
 
-my %optional_options = ("epsilon!" => '',
-			"foce!" => '',
-			"error:s"=> '');
+my %optional_options = (
+    "epsilon!" => '',
+    "foce!" => '',
+    "error:s"=> ''
+);
 
-my $res = GetOptions( \%options, 
-		      @common_options::get_opt_strings,
-		      keys(%required_options),
-		      keys(%optional_options)
-		      );
+my $res = GetOptions(
+    \%options,
+    @common_options::get_opt_strings,
+    keys(%required_options),
+    keys(%optional_options)
+);
 exit unless $res;
 
 #cannot run setup here, must read config file first
@@ -42,7 +45,7 @@ $help_text{Pre_help_message} = <<'EOF';
   Linearization of a model
 EOF
 
-    $help_text{Description} = <<'EOF';
+$help_text{Description} = <<'EOF';
     The linearize script is a PsN tool that allows you to automatically create
 	a linearized version of a model and obtain the dataset including individual
 	predictions and derivatives necessary for further estimation of extensions
@@ -70,35 +73,37 @@ the linlog.txt file generated in the linearization folder). If the OFV-values
 differ more than a few points, this can depend on the occurrence of local
 minima in the MAP estimation. See further details in linearize_userguide.pdf.
 EOF
-    $help_text{Examples} = <<'EOF';
+
+$help_text{Examples} = <<'EOF';
 linearize run10.mod
 EOF
 
-    $help_text{Options} = <<'EOF';
+$help_text{Options} = <<'EOF';
 	A model file is required as argument.
 
     The following options are valid:
 EOF
 
-    $help_text{-h} = <<'EOF';
+$help_text{-h} = <<'EOF';
     -h | -?
 
     With -h or -? linearize will print a list of options and exit.
 EOF
 
-    $help_text{-help} = <<'EOF';
+$help_text{-help} = <<'EOF';
     -help
 
     With -help linearize will print this, longer, help message.
 EOF
 
-    $help_text{-foce} = <<'EOF';
+$help_text{-foce} = <<'EOF';
     -foce
 
     Set by default. Expand around 
     conditional ETA estimates instead of around ETA=0.    
 EOF
-    $help_text{-error} = <<'EOF';
+
+$help_text{-error} = <<'EOF';
     -error
 
     Only relevant if -no-epsilon is set. 
@@ -109,14 +114,15 @@ EOF
     The error model must be defined in a particular way when this option is used,
     see the scm userguide for details.
 EOF
-    $help_text{-epsilon} = <<'EOF';
+
+$help_text{-epsilon} = <<'EOF';
     -epsilon
 
     Linearize with respect to epsilons,
     set by default. Disable with -no-epsilon.
 EOF
 
-    $help_text{Post_help_message} = <<'EOF';
+$help_text{Post_help_message} = <<'EOF';
     Also see 'psn_options -h' for a description of common options.
 EOF
 
@@ -162,44 +168,43 @@ foreach my $option (@{$model->problems->[0]->inputs->[0]->options()}){
 
 #set do not drop to everything undropped in model
 
-my $scm = 
-	tool::scm->new(eval($common_options::parameters ),
-				   models	=> [$model],
-				   epsilon => $options{'epsilon'},
-				   foce => $options{'foce'},
-				   do_not_drop => \@keep,
-				   lst_file => $lstfile,
-				   error=> $options{'error'},
-				   search_direction => 'forward',
-				   linearize => 1,
-				   max_steps => 0,
-				   test_relations         => {},
-				   categorical_covariates => [],
-				   continuous_covariates  => [],
-				   both_directions => 0,
-				   logfile =>['linlog.txt'],
-				   directory_name_prefix => 'linearize');
+my $scm = tool::scm->new(
+    eval($common_options::parameters ),
+    models => [$model],
+    epsilon => $options{'epsilon'},
+    foce => $options{'foce'},
+    do_not_drop => \@keep,
+    lst_file => $lstfile,
+    error=> $options{'error'},
+    search_direction => 'forward',
+    linearize => 1,
+    max_steps => 0,
+    test_relations => {},
+    categorical_covariates => [],
+    continuous_covariates  => [],
+    both_directions => 0,
+    logfile => ['linlog.txt'],
+    directory_name_prefix => 'linearize',
+);
 
-$scm-> print_options (cmd_line => $cmd_line,
-					  toolname => 'scm',
-					  local_options => [keys %optional_options],
-					  common_options => \@common_options::tool_options);
+$scm->print_options(
+    cmd_line => $cmd_line,
+    toolname => 'scm',
+    local_options => [keys %optional_options],
+    common_options => \@common_options::tool_options
+);
 
-
-
-$scm -> run;
+$scm->run;
 
 #cleanup
-rmtree([ $scm->directory.'m1' ]);
-rmtree([ $scm->directory.'final_models' ]);
-unlink($scm->directory.'covariate_statistics.txt');
-unlink($scm->directory.'relations.txt');
-unlink($scm->directory.'short_scmlog.txt');
-unlink($scm->directory.'original.mod');
-unlink($scm->directory.'base_model.mod');
-cp($scm->directory.$scm->basename.'.dta',$scm->basename.'.dta');
-cp($scm->directory.$scm->basename.'.mod',$scm->basename.'.mod');
+rmtree([ $scm->directory . 'm1' ]);
+rmtree([ $scm->directory . 'final_models' ]);
+unlink($scm->directory . 'covariate_statistics.txt');
+unlink($scm->directory . 'relations.txt');
+unlink($scm->directory . 'short_scmlog.txt');
+unlink($scm->directory . 'original.mod');
+unlink($scm->directory . 'base_model.mod');
+cp($scm->directory . $scm->basename . '.dta', $scm->basename . '.dta');
+cp($scm->directory . $scm->basename . '.mod', $scm->basename . '.mod');
 
-
-ui -> print( category => 'linearize',
-	     message => "\nlinearize done\n" );
+ui->print(category => 'linearize', message => "\nlinearize done\n");
