@@ -207,6 +207,7 @@ ___bootstrap___
 
    ___linearize___
 - bug fix option time-varying: handle PRED models without MDV in $INPUT
+- New option -full_block to also run the linearized model with a full omega block.
 
 
 ___boot_scm___
