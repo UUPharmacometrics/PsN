@@ -13,6 +13,8 @@ has 'foce' => ( is => 'rw', isa => 'Bool', default => 1 );
 has 'error' => ( is => 'rw', isa => 'Maybe[Str]' );
 has 'full_block' => ( is => 'rw', isa => 'Bool' );      # Set to also run with full block OMEGA
 
+has 'full_block_model' => ( is => 'rw', isa => 'model' );
+
 extends 'tool';
 
 sub BUILD
@@ -49,6 +51,7 @@ sub modelfit_setup
 
     my $scm = tool::scm->new(
 		%{common_options::restore_options(@common_options::tool_options)},
+        clean => 2,
         models => [ $model ],
         epsilon => $self->epsilon,
         foce => $self->foce,
@@ -87,6 +90,7 @@ sub modelfit_setup
         my $name = $scm->basename;
         $name =~ s/linbase/full_block.mod/;
         my $full_block_model = $self->_create_full_block(input_model_name => $scm->basename . '.mod', output_model_name => "$name");
+        $self->full_block_model($full_block_model);
 
         my $modelfit = tool::modelfit->new(
             %{common_options::restore_options(@common_options::tool_options)},
@@ -103,6 +107,22 @@ sub modelfit_setup
 
 sub modelfit_analyze
 {
+    my $self = shift;
+
+    # Print the ofv of the full block model
+    if (defined $self->full_block_model) {
+        my $ofv;
+        if ($self->full_block_model->is_run()) {
+            my $output = $self->full_block_model->outputs->[0];
+            $ofv = $output->get_single_value(attribute => 'ofv');
+        }
+        if (defined $ofv) {
+            $ofv = sprintf('%.5f', $ofv);
+        } else {
+            $ofv = 'NA';
+        }
+        print "\nThe ofv of the full omega block model:   $ofv   " . $self->full_block_model->filename . "\n";
+    }
 }
 
 sub _create_full_block
