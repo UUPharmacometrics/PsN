@@ -140,8 +140,7 @@ if ( scalar( @ARGV ) < 1 ) {
 
 require file;
 require model;
-require tool::scm;
-require tool::modelfit;
+require tool::linearize;
 
 my $eval_string = common_options::model_parameters(\%options);
 
@@ -149,62 +148,22 @@ my $model = model -> new ( eval( $eval_string ),
 						   filename                    => $ARGV[0],
 						   ignore_missing_output_files => 1);
 
-my $lstfile;
-if (-e $model->outputs->[0]->full_name()){
-    $lstfile = $model->outputs->[0]->full_name();
-}
-
-if( $model-> is_option_set( record => 'abbreviated', name => 'REPLACE' ) ){
-    print "\nWARNING: Option REPLACE used in \$ABBREVIATED. This can lead to serious errors.\n\n";
-}
-
-my @keep;
-foreach my $option (@{$model->problems->[0]->inputs->[0]->options()}){
-    push ( @keep, $option->name() ) if ( not ($option -> value eq 'DROP' or $option -> value eq 'SKIP'
-					      or $option -> name eq 'DROP' or $option -> name eq 'SKIP'
-					      or $option->name eq 'ID' or $option->name eq 'DV' 
-					      or $option->name eq 'MDV'));
-}
-
-#set do not drop to everything undropped in model
-
-my $scm = tool::scm->new(
-    eval($common_options::parameters ),
+my $linearize = tool::linearize->new(
+    eval($common_options::parameters),
     models => [$model],
     epsilon => $options{'epsilon'},
     foce => $options{'foce'},
-    do_not_drop => \@keep,
-    lst_file => $lstfile,
-    error=> $options{'error'},
-    search_direction => 'forward',
-    linearize => 1,
-    max_steps => 0,
-    test_relations => {},
-    categorical_covariates => [],
-    continuous_covariates  => [],
-    both_directions => 0,
-    logfile => ['linlog.txt'],
-    directory_name_prefix => 'linearize',
+    error => $options{'error'},
 );
 
-$scm->print_options(
+$linearize->run();
+$linearize->print_results();
+
+$linearize->print_options(
     cmd_line => $cmd_line,
     toolname => 'scm',
     local_options => [keys %optional_options],
     common_options => \@common_options::tool_options
 );
-
-$scm->run;
-
-#cleanup
-rmtree([ $scm->directory . 'm1' ]);
-rmtree([ $scm->directory . 'final_models' ]);
-unlink($scm->directory . 'covariate_statistics.txt');
-unlink($scm->directory . 'relations.txt');
-unlink($scm->directory . 'short_scmlog.txt');
-unlink($scm->directory . 'original.mod');
-unlink($scm->directory . 'base_model.mod');
-cp($scm->directory . $scm->basename . '.dta', $scm->basename . '.dta');
-cp($scm->directory . $scm->basename . '.mod', $scm->basename . '.mod');
 
 ui->print(category => 'linearize', message => "\nlinearize done\n");
