@@ -87,6 +87,7 @@ sub modelfit_setup
         # Spawn one resmod per DVID
         for (my $i = 0; $i < $self->numdvid; $i++) {
             my $resmod = tool::resmod->new(
+			    %{common_options::restore_options(@common_options::tool_options)},
                 models => [ $self->model ],
                 idv => $self->idv,
                 dv => $self->dv,
@@ -384,7 +385,7 @@ sub modelfit_analyze
             ignore_missing_data => 1,
         );
         my $resmod = tool::resmod->new(
-            #eval( $common_options::parameters ),
+			%{common_options::restore_options(@common_options::tool_options)},
             models => [ $model ],
             idv => $self->idv,
             dv => $self->dv,
