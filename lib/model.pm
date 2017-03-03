@@ -403,6 +403,7 @@ sub check_and_set_sizes
 	}
 	return $error;
 }
+
 sub create_maxeval_zero_models_array
 {
 	my %parm = validated_hash(\@_,
@@ -677,14 +678,12 @@ sub copy
 	$new_model->directory( $directory );
 	$new_model->filename( $filename );
 
-	# {{{ update the shrinkage modules
+	# update the shrinkage modules
 
 	my @problems = @{$new_model -> problems};
 	for( my $i = 1; $i <= scalar @problems; $i++ ) {
 	  $problems[ $i-1 ] -> shrinkage_module -> nomegas( $new_model -> nomegas()->[$i-1] );
 	}
-
-	# }}} update the shrinkage modules
 
 	# Copy the output object if so is requested (only one output
 	# object defined per model object)
@@ -925,7 +924,6 @@ sub fixed
 
 	return \@fixed;
 }
-
 
 sub fixed_or_same
 {
@@ -3099,7 +3097,6 @@ sub table_names
 	return \@names;
 }
 
-
 sub flip_comments
 {
 	my %parm = validated_hash(\@_,
@@ -5159,7 +5156,8 @@ sub get_eta_names
     return \@names;
 }
 
-sub get_run_number_string{
+sub get_run_number_string
+{
 	#static method, no shift
 	my %parm = validated_hash(\@_,
 							  filename => { isa => 'Str', optional => 0 },
@@ -5174,7 +5172,8 @@ sub get_run_number_string{
 	return $number;
 }
 
-sub get_xpose_runno_and_suffix{
+sub get_xpose_runno_and_suffix
+{
 	#static method, no shift
 	my %parm = validated_hash(\@_,
 							  filename => { isa => 'Str', optional => 0 },
@@ -5193,7 +5192,8 @@ sub get_xpose_runno_and_suffix{
 	return [$runno,$suffix];
 }
 
-sub need_data_filtering{
+sub need_data_filtering
+{
 
     my $self = shift;
 	my $do_filtering=0;
@@ -5215,7 +5215,8 @@ sub need_data_filtering{
 	return $do_filtering;
 }
 
-sub update_internal_msfi{
+sub update_internal_msfi
+{
     my $self = shift;
 
 	my @updated=();
@@ -5240,7 +5241,8 @@ sub update_internal_msfi{
 	return \@updated;
 }
 
-sub set_first_problem_msfi{
+sub set_first_problem_msfi
+{
     my $self = shift;
 	my %parm = validated_hash(\@_,
 							  msfiname => { isa => 'Str', optional => 0 },
@@ -5297,7 +5299,8 @@ sub set_first_problem_msfi{
 	}
 }
 
-sub rename_msfo{
+sub rename_msfo
+{
     my $self = shift;
 	my %parm = validated_hash(\@_,
 							  name => { isa => 'Str', optional => 0 },
@@ -5321,7 +5324,9 @@ sub rename_msfo{
 	my $updatedmsfi = $self->update_internal_msfi;
 	
 }
-sub renumber_msfo_msfi{
+
+sub renumber_msfo_msfi
+{
     my $self = shift;
 	my %parm = validated_hash(\@_,
 							  numberstring => { isa => 'Str', optional => 0 },
@@ -5353,8 +5358,8 @@ sub renumber_msfo_msfi{
 	return (\@probmsfo,$updatedmsfi);
 }
 
-
-sub msfo_to_msfi_mismatch{
+sub msfo_to_msfi_mismatch
+{
 
     my $self = shift;
 	return 0 unless (scalar(@{$self->problems})>1);
