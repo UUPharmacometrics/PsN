@@ -5384,6 +5384,52 @@ sub msfo_to_msfi_mismatch
 	
 }
 
+sub boxcox_etas
+{
+    # Boxcox transform all ETAs of model
+    # Assume only one $PROBLEM
+    my $self = shift;
+
+    my $netas = $self->nomegas->[0];
+    my $nthetas = $self->nthetas;
+
+    # Transform all ETAs
+    for my $record (('pk', 'pred', 'error', 'des', 'aes', 'aesinitial', 'mix', 'infn')) {
+		if ($self->has_code(record => $record)) {  
+			my $code = $self->get_code(record => $record);
+
+            for (my $i = 0; $i < scalar(@$code); $i++) {
+                $code->[$i] =~ s/(?<!\w)ETA\((\d+)\)/ETAT$1/g;
+            }
+
+            $self->set_code(record => $record, code => $code);
+        }
+	}
+
+    # Prepend transformation code and add thetas
+	my @code;
+	my $code_record;
+	if ($self->has_code(record => 'pk')) {
+		@code = @{$self->get_code(record => 'pk')};
+		$code_record = 'pk';
+	} elsif ($self->has_code(record => 'pred')) {
+		@code = @{$self->get_code(record => 'pred')};
+		$code_record = 'pred';
+	} else {
+		croak("Neither PK nor PRED defined in " . $self->filename . "\n");
+	}
+
+    my $next_theta = $nthetas + 1;
+    for (my $i = 1; $i <= $netas; $i++) {
+        my $line = "ETAT$i = (EXP(ETA($i))**THETA($next_theta) - 1) / (THETA($next_theta))";
+        $next_theta++;
+        unshift @code, $line;
+        $self->add_records(type => 'theta', record_strings => [ '$THETA (-3, 0.01, 3)']); 
+    }
+
+    $self->set_code(record => $code_record, code => \@code);
+}
+
 no Moose;
 __PACKAGE__->meta->make_immutable;
 1;

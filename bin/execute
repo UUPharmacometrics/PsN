@@ -35,7 +35,8 @@ my %optional_options = ( "predict_data:s" => undef,
 			 "tail_output!" => undef,
 			 "wintail_exe:s" => undef,
 			 "wintail_command:s" => undef,
-			 "copy_data!"=>undef
+			 "copy_data!"=>undef,
+             "boxcox!" => undef,
 			 );
 
 my $res = GetOptions( \%options,
@@ -186,6 +187,13 @@ $help_text{-wintail_command} = <<'EOF';
     Only for Windows. See execute -h tail_output for description.
 EOF
 
+$help_text{-boxcox} = <<'EOF';
+    -boxcox
+    
+    Set to boxcox transform all ETAs before running. Cannot be used
+    on models with multiple $PROBLEMs
+EOF
+
 $help_text{Post_help_message} = <<'EOF';
 EOF
 
@@ -255,6 +263,10 @@ foreach my $model_name ( @ARGV ){
 							ignore_missing_output_files => 1 );
 
 	input_checking::check_options(tool => 'execute', options => \%options, model => $model);
+
+    if ($options{'boxcox'}) {
+        $model->boxcox_etas();
+    }
 
 	push( @{$models_array}, $model );
 

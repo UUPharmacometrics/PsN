@@ -68,6 +68,10 @@ If the option directory is used it will override -timestamp.
 \optname{copy\_data}
 Default set. Disable with -no-copy\_data. By default, PsN will copy the datafile into NM\_run1 and set a local path in psn.mod, the actual modelfile run with NONMEM. If -no-copy\_data is set, PsN will not copy the data to NM\_run1 and instead set a global path to the datafile in psn.mod.
 \nextopt
+    \optname{boxcox}
+        Set to boxcox transform all ETAs before running. Cannot be used
+        on models with multiple \$PROBLEMs
+    \nextopt
 \end{optionlist}
 
 \subsection{Auto-generated R-plots from PsN}

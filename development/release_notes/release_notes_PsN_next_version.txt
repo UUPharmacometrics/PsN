@@ -115,6 +115,10 @@ ___common_options___
   or a directory set in psn.conf. The set of 'all' nm_versions in 'runsystem all'
   command is configurable in psn.conf. See Testing chapter in developers_guide.pdf.
 
+   ___execute___
+
+- New option -boxcox to automatically boxcox transform all ETAs before running the model
+
    ___runrecord___
 
 - Option -to is no longer required. The default value is the highest run number found in
