@@ -122,6 +122,7 @@ sub modelfit_analyze
             $ofv = 'NA';
         }
         print "\nThe ofv of the full omega block model:   $ofv   " . $self->full_block_model->filename . "\n";
+        cp($self->full_block_model->full_name(), '..');
     }
 }
 
