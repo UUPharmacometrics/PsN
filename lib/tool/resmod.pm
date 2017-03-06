@@ -56,15 +56,9 @@ sub BUILD
         my $cwres_table_name = $self->model->problems->[0]->find_table(columns => \@columns);
         my $table = nmtablefile->new(filename => "$cwres_table_name"); 
         my @columns_in_table = @{$cwres_table->columns()};
-        my $have_tad = grep { $_ eq 'TAD' } @columns_in_table; 
         my $have_dvid = grep { $_ eq $self->dvid } @columns_in_table;
 
-        my $idv_column = $self->idv;
-        if ($have_tad) {
-            $idv_column = 'TAD';
-        }
-
-        $self->_create_model_templates(table => $table, idv_column => $idv_column); 
+        $self->_create_model_templates(table => $table, idv_column => $self->idv); 
 
         if ($have_dvid) {
             my $dvid_column = $table->tables->[0]->header->{$self->dvid};
@@ -115,11 +109,10 @@ sub modelfit_setup
     my $cwres_table = $self->model->problems->[0]->find_table(columns => \@columns, get_object => 1);
     my $cwres_table_name = $self->model->problems->[0]->find_table(columns => \@columns);
 
-    # Do we have IPRED, DVID or TAD?
+    # Do we have IPRED, DVID, OCC or L2?
     my $have_ipred = 0;
     my $have_dvid = 0;
 	my $have_occ = 0;
-	my $have_tad = 0;
     my $have_l2 = 0;
     for my $option (@{$cwres_table->options}) {
         if ($option->name eq 'IPRED') {
@@ -131,9 +124,6 @@ sub modelfit_setup
 		} elsif ($option->name eq $self->occ) {
 			$have_occ = 1;
 			push @columns, $self->occ;
-        } elsif ($option->name eq 'TAD') {
-			$have_tad = 1;
-			push @columns, 'TAD',
 		} elsif ($option->name eq 'L2') {
             $have_l2 = 1;
         }
@@ -149,17 +139,12 @@ sub modelfit_setup
 
 	my @models_to_run;
     for my $model_properties (@{$self->model_templates}) {
-        my $tad;
-        if ($have_tad and $model_properties->{'name'} eq 'time_varying') {
-            $tad = 1;
-        }
         my $input_columns = $self->_create_input(
             table => $cwres_table,
             columns => \@columns,
             ipred => 1,     # Always add ipred to be able to pass it through to next iteration if needed
             occ => $model_properties->{'need_occ'},
             occ_name => $self->occ,
-            tad => $tad,
         );
         next if ($model_properties->{'need_ipred'} and not $have_ipred);
         next if ($model_properties->{'need_occ'} and not $have_occ);
@@ -175,9 +160,6 @@ sub modelfit_setup
             $row =~ s/<cwrestablename>/$cwres_table_name/g;
             $row =~ s/<dvidaccept>/$accept/g;
             my $idv = $self->idv;
-            if ($have_tad and $model_properties->{'name'} eq 'time_varying') {
-                $idv = 'TAD';
-            } 
             $row =~ s/<idv>/$idv/g;
         }
 
@@ -521,7 +503,6 @@ sub _create_input
 		ipred => { isa => 'Bool', default => 1 },		# Should ipred be included if in columns?
 		occ => { isa => 'Bool', default => 1 },			# Should occ be included if in columns?
 		occ_name => { isa => 'Str', default => 'OCC' },	# Name of the occ column
-		tad => { isa => 'Bool', default => 0 },			# Should TAD be used instead of $self->idv?
         l2 => { isa => 'Bool', default => 0 },          # Should L2 be included if in columns?
 	);
 	my $table = $parm{'table'};
@@ -529,7 +510,6 @@ sub _create_input
 	my $ipred = $parm{'ipred'};
 	my $occ = $parm{'occ'};
 	my $occ_name = $parm{'occ_name'};
-	my $tad = $parm{'tad'};
 	my $l2 = $parm{'l2'};
 
 	my $input_columns;
@@ -543,8 +523,6 @@ sub _create_input
                 $name = 'DV' if ($name eq $self->dv);
 				$name = 'DROP' if ($name eq 'IPRED' and not $ipred);
 				$name = 'DROP' if ($name eq $occ_name and not $occ);
-				$name = 'DROP' if ($name eq 'TAD' and not $tad);
-				$name = 'DROP' if ($name eq 'TIME' and $tad);
                 $name = 'DROP' if ($name eq 'L2' and not $l2);
                 $input_columns .= $name;
                 $found = 1;
@@ -940,11 +918,11 @@ our @residual_models =
             '"C Only if first in L2 set and if observation',
             '"C  IF (MDV.EQ.0) THEN',
             '"  I=I+1',
-            '"  T(I)=TIME',
+            '"  T(I)=<idv>',
             '"  IF (OID.EQ.ID) L=I',
             '"',
             '"  DO J=1,I',
-            '"      C(J,1)=EXP((-0.6931/THETA(2))*(TIME-T(J)))',
+            '"      C(J,1)=EXP((-0.6931/THETA(2))*(<idv>-T(J)))',
             '"  ENDDO',
             'Y = THETA(1) + ETA(1) + EPS(1)',
             '$THETA  -0.0345794',
@@ -975,14 +953,14 @@ our @residual_models =
 			'END IF',
 			'IF(NEWL2==1) THEN',
 			'  I=I+1',
-			'  T1(I)=TIME',
+			'  T1(I)=<idv>',
 			'  IF(OID.EQ.ID.AND.OOCC.NE.OCC)THEN',
 			'    L=I',
 			'    OOCC=OCC',
 			'  END IF',
 			'  J=L',
 			'  DO WHILE (J<=I)',
-			'    CORRL2(J,1) = EXP((-0.6931/THETA(2))*(TIME-T1(J)))',
+			'    CORRL2(J,1) = EXP((-0.6931/THETA(2))*(<idv>-T1(J)))',
 			'    J=J+1',
 			'  ENDDO',
 			'ENDIF',
