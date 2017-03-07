@@ -114,6 +114,7 @@ sub modelfit_setup
     my $have_dvid = 0;
 	my $have_occ = 0;
     my $have_l2 = 0;
+    my $have_time = 0;
     for my $option (@{$cwres_table->options}) {
         if ($option->name eq 'IPRED') {
             $have_ipred = 1;
@@ -126,6 +127,9 @@ sub modelfit_setup
 			push @columns, $self->occ;
 		} elsif ($option->name eq 'L2') {
             $have_l2 = 1;
+        } elsif ($option->name eq 'TIME') {
+            $have_time = 1;
+            push @columns, 'TIME';
         }
     }
 
@@ -145,7 +149,9 @@ sub modelfit_setup
             ipred => 1,     # Always add ipred to be able to pass it through to next iteration if needed
             occ => $model_properties->{'need_occ'},
             occ_name => $self->occ,
+            time => $model_properties->{'need_time'},
         );
+        next if ($model_properties->{'need_time'} and not $have_time);
         next if ($model_properties->{'need_ipred'} and not $have_ipred);
         next if ($model_properties->{'need_occ'} and not $have_occ);
 
@@ -504,6 +510,7 @@ sub _create_input
 		occ => { isa => 'Bool', default => 1 },			# Should occ be included if in columns?
 		occ_name => { isa => 'Str', default => 'OCC' },	# Name of the occ column
         l2 => { isa => 'Bool', default => 0 },          # Should L2 be included if in columns?
+        time => { isa => 'Bool', default => 0 },        # Should time be included if in columns and idv != TIME?
 	);
 	my $table = $parm{'table'};
 	my @columns = @{$parm{'columns'}};
@@ -511,6 +518,7 @@ sub _create_input
 	my $occ = $parm{'occ'};
 	my $occ_name = $parm{'occ_name'};
 	my $l2 = $parm{'l2'};
+    my $time = $parm{'time'};
 
 	my $input_columns;
 	my @found_columns;
@@ -524,6 +532,7 @@ sub _create_input
 				$name = 'DROP' if ($name eq 'IPRED' and not $ipred);
 				$name = 'DROP' if ($name eq $occ_name and not $occ);
                 $name = 'DROP' if ($name eq 'L2' and not $l2);
+                $name = 'DROP' if ($name eq 'TIME' and $self->idv ne 'TIME' and not $time);
                 $input_columns .= $name;
                 $found = 1;
                 last;
@@ -898,6 +907,7 @@ our @residual_models =
         use_base => 1,
 	}, {
         name => 'autocorrelation',
+        need_time => 1,
         prob_arr => [
 			'$PROBLEM AR1',
 			'$INPUT <inputcolumns>',
@@ -918,11 +928,11 @@ our @residual_models =
             '"C Only if first in L2 set and if observation',
             '"C  IF (MDV.EQ.0) THEN',
             '"  I=I+1',
-            '"  T(I)=<idv>',
+            '"  T(I)=TIME',
             '"  IF (OID.EQ.ID) L=I',
             '"',
             '"  DO J=1,I',
-            '"      C(J,1)=EXP((-0.6931/THETA(2))*(<idv>-T(J)))',
+            '"      C(J,1)=EXP((-0.6931/THETA(2))*(TIME-T(J)))',
             '"  ENDDO',
             'Y = THETA(1) + ETA(1) + EPS(1)',
             '$THETA  -0.0345794',
