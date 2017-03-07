@@ -85,6 +85,8 @@ sub modelfit_setup
 
     cp($scm->basename . '.dta', '../' . $scm->basename . '.dta');
     cp($scm->basename . '.mod', '../' . $scm->basename . '.mod');
+    cp($scm->basename . '.lst', '../' . $scm->basename . '.lst');
+    cp($scm->basename . '.phi', '../' . $scm->basename . '.phi');
 
     if ($self->full_block) {
         my $name = $scm->basename;
