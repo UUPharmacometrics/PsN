@@ -55,6 +55,8 @@ it is recommended to implement these in the nonlinear version of the model and r
 \item When decided which extension to include, implement in standard nonlinear format and reestimate.
 \end{enumerate}
 
+If the original model has already been run the initial values will be updated and MAXEVAL=0 will be used for the derivatives model.
+
 \section{Input and options}
 \subsection{Required input}
 A model file (the nonlinear base model) is required on the command-line.

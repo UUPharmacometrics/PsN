@@ -67,6 +67,7 @@ sub modelfit_setup
         continuous_covariates  => [],
         both_directions => 0,
         logfile => ['linlog.txt'],
+        from_linearize => 1,
     );
 
     $scm->run;

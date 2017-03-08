@@ -88,6 +88,7 @@ has 'work_queue' => ( is => 'rw', isa => 'ArrayRef' );
 has 'covariate_statistics_file' => ( is => 'rw', isa => 'Str', default => 'covariate_statistics.txt' );
 has 'relations_file' => ( is => 'rw', isa => 'Str', default => 'relations.txt' );
 has 'short_logfile' => ( is => 'rw', isa => 'ArrayRef[Str]', default => sub { ['short_scmlog.txt'] } );
+has 'from_linearize' => ( is => 'rw', isa => 'Bool', default => 0 );    # Was the scm-object created by linearize?
 
 sub BUILD
 {
@@ -1779,9 +1780,20 @@ sub linearize_setup
 		#create derivatives_model from original model (copy)
 		$derivatives_model = $original_model -> copy ( filename => 'derivatives.mod',
 													   output_same_directory => 1,
-													   copy_datafile          => 0,
+													   copy_datafile => 0,
 													   write_copy => 0,
-													   copy_output        => 0);
+													   copy_output => 0);
+
+        if ($self->from_linearize and $original_model->is_run()) {
+            $derivatives_model->update_inits(from_output => $original_model->outputs->[0]);
+            $derivatives_model->set_maxeval_zero(
+                print_warning => 1,
+                last_est_complete => $self->last_est_complete(),
+                niter_eonly => $self->niter_eonly(),
+                need_ofv => 1,
+            );
+        }
+
 		$derivatives_model->remove_records( type => 'table' );
 
 		if ($self->sizes_pd() > 0){
