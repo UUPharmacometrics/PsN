@@ -650,7 +650,7 @@ sub _build_time_varying_template
     for (my $i = 0; $i < scalar(@$cutoffs); $i++) {
         my %hash;
         $hash{'use_base'} = 1;
-        $hash{'name'} = "time_varying_RUV_cutoff$i";
+        $hash{'name'} = "idv_varying_RUV_cutoff$i";
         my @prob_arr = (
             "\$PROBLEM time varying cutoff $i",
             '$INPUT <inputcolumns>',
@@ -681,11 +681,11 @@ sub _build_time_varying_template
     for my $param ('theta', 'eps', 'both') {
         my %hash;
         if ($param eq 'eps') {
-            $hash{'name'} = 'time_varying_RUV';
+            $hash{'name'} = 'idv_varying_RUV';
         } elsif ($param eq 'theta') {
-            $hash{'name'} = 'time_varying_theta';
+            $hash{'name'} = 'idv_varying_theta';
         } else {
-            $hash{'name'} = 'time_varying_combined';
+            $hash{'name'} = 'idv_varying_combined';
         }
         $hash{'use_base'} = 1;
         my @prob_arr = (
