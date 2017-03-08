@@ -14,6 +14,7 @@ has 'error' => ( is => 'rw', isa => 'Maybe[Str]' );
 has 'full_block' => ( is => 'rw', isa => 'Bool' );      # Set to also run with full block OMEGA
 
 has 'full_block_model' => ( is => 'rw', isa => 'model' );
+has 'dataname' => ( is => 'rw', isa => 'Str' );
 
 extends 'tool';
 
@@ -90,6 +91,7 @@ sub modelfit_setup
 
     if ($self->full_block) {
         my $name = $scm->basename;
+        $self->dataname($scm->basename . '.dta');
         $name =~ s/linbase/full_block.mod/;
         my $full_block_model = $self->_create_full_block(input_model_name => $scm->basename . '.mod', output_model_name => "$name");
         $self->full_block_model($full_block_model);
@@ -124,7 +126,9 @@ sub modelfit_analyze
             $ofv = 'NA';
         }
         print "\nThe ofv of the full omega block model:   $ofv   " . $self->full_block_model->filename . "\n";
-        cp($self->full_block_model->full_name(), '..');
+        $self->full_block_model->directory("../");
+        $self->full_block_model->datafiles(new_names => [ '../' . $self->dataname ]);
+        $self->full_block_model->_write();
     }
 }
 
@@ -155,7 +159,7 @@ sub _create_full_block
     my $omega = model::problem::omega->new(record_arr => \@record_arr);
     $model->problems->[0]->omegas([ $omega ]);
 
-    $model->_write;
+    $model->_write();
 
     return $model;
 }
