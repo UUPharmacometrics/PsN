@@ -1800,9 +1800,6 @@ sub linearize_setup
 			}
 		}
 
-#needed if not run_linearized_base???
-#	  $derivatives_model -> filename('derivatives.mod');
-
 		#1.1
 		if( $self->lst_file ){
 			$derivatives_model -> update_inits (from_output_file => $self->lst_file());
@@ -3573,9 +3570,6 @@ sub _create_models
 			$self->main_data_file($string);		
 		}else{
 			unless (defined $self->main_data_file and length($self->main_data_file)>0){
-#				if ($self->step_number > 1){
-#					croak("step_number is ".$self->step_number." but main_data_file is not set. This is a bug");
-#				}
 				$self->main_data_file($orig_model->datafiles(absolute_path => 1)->[0]);
 			}
 		}
