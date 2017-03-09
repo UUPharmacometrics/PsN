@@ -22,10 +22,19 @@ my $id = $1;
 
 chdir "../.." or die "Could not change directory";
 
-my @docs = glob("doc/*.pdf");
-my @files = (@docs, "PsN-$tag.zip", "PsN-$tag.tar.gz", "nmoutput2so-$tag.zip");
+my @files = ("PsN-$tag.zip", "PsN-$tag.tar.gz", "nmoutput2so-$tag.zip");
 
 for my $filename (@files) {
+    my $upload_cmd = <<"EOF";
+curl -# -XPOST -H "Authorization:token $access_token" -H "Content-Type:application/octet-stream" --data-binary \@$filename https://uploads.github.com/repos/UUPharmacometrics/PsN/releases/$id/assets?name=$filename
+EOF
+
+    $response = readpipe($upload_cmd);
+}
+
+chdir("doc");
+my @docs = glob("*.pdf");
+for my $filename (@docs) {
     my $upload_cmd = <<"EOF";
 curl -# -XPOST -H "Authorization:token $access_token" -H "Content-Type:application/octet-stream" --data-binary \@$filename https://uploads.github.com/repos/UUPharmacometrics/PsN/releases/$id/assets?name=$filename
 EOF
