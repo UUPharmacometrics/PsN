@@ -7,6 +7,7 @@ use tool::modelfit;
 use OSspecific;
 use Data::Dumper;
 use File::Copy 'cp';
+use File::Spec;
 use status_bar;
 use Moose;
 use MooseX::Params::Validate;
@@ -2080,26 +2081,37 @@ sub linearize_setup
 		#get a header since it is a table file. Keep IGNORE=LIST
 		$original_model->problems->[0]->datas->[0]->ignoresign('@');
 
-		my $mceta = $original_model->get_option_value(record_name => 'estimation',
+        my $mceta = $original_model->get_option_value(record_name => 'estimation',
 			option_name => 'MCETA',
-			fuzzy_match => 1);
+			fuzzy_match => 1
+        );
 
-		$original_model->remove_records( type => 'theta' );
-		$original_model->remove_records( type => 'table' );
-		$original_model->remove_records( type => 'pk' );
-		$original_model->remove_records( type => 'des' );
-		$original_model->remove_records( type => 'error' );
-		$original_model->remove_records( type => 'subroutine' );
-		$original_model->remove_records( type => 'model' );
-		$original_model->remove_records( type => 'covariance' );
-		$original_model->remove_records( type => 'estimation' );
-		#3.5
-		$original_model -> set_records(type => 'input',
-			record_strings => \@inputstrings);
-		#3.6
+		$original_model->remove_records(type => 'theta');
+		$original_model->remove_records(type => 'table');
+		$original_model->remove_records(type => 'pk');
+		$original_model->remove_records(type => 'des');
+		$original_model->remove_records(type => 'error');
+		$original_model->remove_records(type => 'subroutine');
+		$original_model->remove_records(type => 'model');
+		$original_model->remove_records(type => 'covariance');
+		$original_model->remove_records(type => 'estimation');
+
+		$original_model->set_records(type => 'input', record_strings => \@inputstrings);
+
+        my $phi_file = $self->phi_file();
+        if ($self->from_linearize and defined $phi_file) {
+            $mceta = '1';
+            (undef, undef, my $filename) = File::Spec->splitpath($phi_file);
+            $original_model->set_records(type => 'etas', record_strings => [ "FILE=$filename" ]);
+            if (not defined $original_model->extra_files) {
+                $original_model->extra_files([]);
+            }
+            push @{$original_model->extra_files}, $phi_file;
+        }
+
 		my @eststrings;
-		if (defined $mceta){
-			push(@eststrings,'MCETA='.$mceta);
+		if (defined $mceta) {
+			push(@eststrings, 'MCETA=' . $mceta);
 		}
 
 		if ($self->epsilon() or $self->error eq 'propadd' or $self->error eq 'prop'
@@ -2607,6 +2619,22 @@ sub linearize_setup
 	} #end if first step or update derivatives
 
 	return $original_model;
+}
+
+sub phi_file
+{
+    # Return the name of the phi file of the original model or undef if non-existant
+    my $self = shift;
+    my $name = $self->basename;
+
+    $name =~ s/_linbase$/.phi/;
+    $name = "../../$name";
+
+    if (not -e $name) {
+        undef $name;
+    }
+
+    return $name;
 }
 
 sub modelfit_analyze
