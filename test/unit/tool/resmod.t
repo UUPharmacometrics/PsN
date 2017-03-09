@@ -25,12 +25,15 @@ my $model = model->new(
 
 my $table = $model->problems->[0]->tables->[1];
 
+delete $tool::resmod::{BUILD};
+my $resmod = tool::resmod->new(models => [$model]);
+
 my $input;
-$input = tool::resmod::_create_input(table => $table, columns => [ 'ID', 'TIME', 'CWRES' ]); 
+$input = $resmod->_create_input(table => $table, columns => [ 'ID', 'TIME', 'CWRES' ]); 
 is ($input, "ID TIME DROP DROP DROP DROP DROP DROP DROP DROP DV", "resmod _create_input 1");
-$input = tool::resmod::_create_input(table => $table, columns => [ 'ID', 'TIME', 'CWRES', 'IPRED' ]);
+$input = $resmod->_create_input(table => $table, columns => [ 'ID', 'TIME', 'CWRES', 'IPRED' ]);
 is ($input, "ID TIME DROP DROP DROP IPRED DROP DROP DROP DROP DV", "resmod _create_input ipred included");
-$input = tool::resmod::_create_input(table => $table, columns => [ 'ID', 'TIME', 'CWRES', 'IPRED' ], ipred => 0);
+$input = $resmod->_create_input(table => $table, columns => [ 'ID', 'TIME', 'CWRES', 'IPRED' ], ipred => 0);
 is ($input, "ID TIME DROP DROP DROP DROP DROP DROP DROP DROP DV", "resmod _create_input ipred excluded");
 
 
