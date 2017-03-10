@@ -256,10 +256,10 @@ SKIP: {
     is_deeply($so->SOBlock->[0]->Estimation->PrecisionPopulationEstimates->MLE->RelativeStandardError->columns, [ [ 'CL', 'V', 'IVCL', 'IVV', 'SIGMA_1_1_' ], [ 7.11711711711712, 5.96268656716418, 63.1578947368421, 24.5774647887324, 20.6707317073171 ]  ], "Pheno: RelativeStandardError columns");
 
     is($so->SOBlock->[0]->Estimation->OFMeasures->Deviance, 742.051, "Pheno: Deviance");
-    is_deeply($so->SOBlock->[0]->Estimation->OFMeasures->IndividualContributionToLL->columnId, [ 'ID', 'ICtoLL' ], "Pheno: ICTOLL columnIds");
-    is_deeply($so->SOBlock->[0]->Estimation->OFMeasures->IndividualContributionToLL->columnType, [ 'id', 'undefined' ], "Pheno: ICTOLL columnTypes");
-    is_deeply($so->SOBlock->[0]->Estimation->OFMeasures->IndividualContributionToLL->valueType, [ 'string', 'real' ], "Pheno: ICTOLL valueTypes");
-    is_deeply($so->SOBlock->[0]->Estimation->OFMeasures->IndividualContributionToLL->columns, [ 
+    is_deeply($so->SOBlock->[0]->Estimation->OFMeasures->IndividualContribToLL->columnId, [ 'ID', 'ICtoLL' ], "Pheno: ICTOLL columnIds");
+    is_deeply($so->SOBlock->[0]->Estimation->OFMeasures->IndividualContribToLL->columnType, [ 'id', 'undefined' ], "Pheno: ICTOLL columnTypes");
+    is_deeply($so->SOBlock->[0]->Estimation->OFMeasures->IndividualContribToLL->valueType, [ 'string', 'real' ], "Pheno: ICTOLL valueTypes");
+    is_deeply($so->SOBlock->[0]->Estimation->OFMeasures->IndividualContribToLL->columns, [ 
       [ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27,
 		28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52,
 		53, 54, 55, 56, 57, 58, 59 ],

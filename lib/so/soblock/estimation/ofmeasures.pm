@@ -8,7 +8,7 @@ use include_modules;
 use XML::LibXML;
 
 has 'Deviance' => ( is => 'rw', isa => 'Maybe[Str]' );
-has 'IndividualContributionToLL' => ( is => 'rw', isa => 'so::table' );
+has 'IndividualContribToLL' => ( is => 'rw', isa => 'so::table' );
 
 sub parse
 {
@@ -20,11 +20,11 @@ sub parse
     (my $dev) = $xpc->findnode('x:Deviance', $node);
     $self->Deviance($dev->textContent) if (defined $dev);
 
-    (my $ictll) = $xpc->findnodes('x:IndividualContributionToLL', $node);
+    (my $ictll) = $xpc->findnodes('x:IndividualContribToLL', $node);
     if (defined $ictll) {
         my $table = so::table->new();
         $table->parse($ictll);
-        $self->IndividualContributionToLL($table);
+        $self->IndividualContribToLL($table);
     }
 }
 
@@ -41,8 +41,8 @@ sub xml
     }
 
     my $ictll;
-    if (defined $self->IndividualContributionToLL) {
-        $ictll = $self->IndividualContributionToLL->xml();
+    if (defined $self->IndividualContribToLL) {
+        $ictll = $self->IndividualContribToLL->xml();
     }
 
     if (defined $dev or defined $ictll) {

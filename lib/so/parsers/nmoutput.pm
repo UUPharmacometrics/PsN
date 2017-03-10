@@ -1663,14 +1663,14 @@ sub _add_indiv_ofv
     my $id = $phi_table->columns->[$ind_id];
 
     my $ictll = so::table->new(
-        name => "IndividualContributionToLL",
+        name => "IndividualContribToLL",
         columnId => [ 'ID', 'ICtoLL' ],
         columnType => [ 'id', 'undefined' ],
         valueType =>  [ 'string', 'real' ],
         columns => [ $id, $obj ],
     );
 
-    $self->_so_block->Estimation->OFMeasures->IndividualContributionToLL($ictll);
+    $self->_so_block->Estimation->OFMeasures->IndividualContribToLL($ictll);
     $self->_so_block->RawResults->add_datafile(name => $phi_file, description => "NONMEM phi file");
 }
 
