@@ -17,6 +17,7 @@ use math;
 use linear_algebra;
 use utils::file;
 use PsN;
+use nmtablefile;
 use so;
 use so::soblock;
 use so::soblock::simulation::simulationblock;
@@ -399,6 +400,11 @@ sub _parse_lst_file
                 }
 
                 $self->_so_block->Estimation->OFMeasures->Deviance($ofv);
+
+                my $phi_file = utils::file::replace_extension($self->lst_file, 'phi');
+                if (-e $phi_file) {
+                    $self->_add_indiv_ofv(phi_file => $phi_file);
+                }
 
                 if (not defined $ofv and defined $minimization_message) {
                     $self->_so_block->TaskInformation->add_message(
@@ -1640,6 +1646,34 @@ sub _add_status_messages
         }
     }
 }
+
+sub _add_indiv_ofv
+{
+    my $self = shift;
+    my %parm = validated_hash(\@_,
+        phi_file => { isa => 'Str' },
+    );
+    my $phi_file = $parm{'phi_file'};
+
+    my $phi_table_file = nmtablefile->new(filename => $phi_file);
+    my $phi_table = $phi_table_file->tables->[0];
+    my $ind_obj = $phi_table->header->{'OBJ'};
+    my $obj = $phi_table->columns->[$ind_obj];
+    my $ind_id = $phi_table->header->{'ID'};
+    my $id = $phi_table->columns->[$ind_id];
+
+    my $ictll = so::table->new(
+        name => "IndividualContributionToLL",
+        columnId => [ 'ID', 'ICtoLL' ],
+        columnType => [ 'id', 'undefined' ],
+        valueType =>  [ 'string', 'real' ],
+        columns => [ $id, $obj ],
+    );
+
+    $self->_so_block->Estimation->OFMeasures->IndividualContributionToLL($ictll);
+    $self->_so_block->RawResults->add_datafile(name => $phi_file, description => "NONMEM phi file");
+}
+
 
 no Moose;
 __PACKAGE__->meta->make_immutable;

@@ -43,7 +43,7 @@ SKIP: {
 
     our $tempdir = create_test_dir('unit_standardised_output');
     copy_test_files($tempdir,
-        [ "output/special_mod/data_missing.lst", "output/special_mod/missingmodel.lst", "output/special_mod/psnmissingdata.out", "output/special_mod/psnmissingmodel.out", "SO/bootstrap_results.csv", "SO/pheno.lst", "SO/patab", "SO/sdtab" ]);
+        [ "output/special_mod/data_missing.lst", "output/special_mod/missingmodel.lst", "output/special_mod/psnmissingdata.out", "output/special_mod/psnmissingmodel.out", "SO/bootstrap_results.csv", "SO/pheno.lst", "pheno.phi", "SO/patab", "SO/sdtab" ]);
 
     chdir $tempdir;
 
@@ -256,8 +256,31 @@ SKIP: {
     is_deeply($so->SOBlock->[0]->Estimation->PrecisionPopulationEstimates->MLE->RelativeStandardError->columns, [ [ 'CL', 'V', 'IVCL', 'IVV', 'SIGMA_1_1_' ], [ 7.11711711711712, 5.96268656716418, 63.1578947368421, 24.5774647887324, 20.6707317073171 ]  ], "Pheno: RelativeStandardError columns");
 
     is($so->SOBlock->[0]->Estimation->OFMeasures->Deviance, 742.051, "Pheno: Deviance");
+    is_deeply($so->SOBlock->[0]->Estimation->OFMeasures->IndividualContributionToLL->columnId, [ 'ID', 'ICtoLL' ], "Pheno: ICTOLL columnIds");
+    is_deeply($so->SOBlock->[0]->Estimation->OFMeasures->IndividualContributionToLL->columnType, [ 'id', 'undefined' ], "Pheno: ICTOLL columnTypes");
+    is_deeply($so->SOBlock->[0]->Estimation->OFMeasures->IndividualContributionToLL->valueType, [ 'string', 'real' ], "Pheno: ICTOLL valueTypes");
+    is_deeply($so->SOBlock->[0]->Estimation->OFMeasures->IndividualContributionToLL->columns, [ 
+      [ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27,
+		28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52,
+		53, 54, 55, 56, 57, 58, 59 ],
+		[
+'7.8248985505876467', '11.311662454654364', '12.987164424972134', '10.930773368140819', '11.973922423431009',
+'14.326781480548480', '9.9020958021516208', '12.170213314589695', '14.671847086632191', '11.403978101901435',
+'5.7857683900737742', '12.710692014358964', '9.0937342845310312', '19.196956118942815', '7.8973434502851063',
+'11.418476842543138', '11.645574155310072', '22.790662221032729', '11.234110773114121', '10.983442435034043',
+'13.747278283273658', '7.5215776919126185', '19.216984063053090', '24.891661928825187', '29.405421024405321',
+'14.899453624260275', '9.0652152566733140', '8.2049749601601647', '4.4331718368526110', '10.502291639344595',
+'4.4721489501316567', '21.909394974957493', '8.2614541674690152', '8.6384096650535671', '10.931936421961762',
+'14.268729250911953', '8.0050144531585072', '16.618204941534113', '16.665357176134425', '6.4464117043520686',
+'12.886727789302764', '15.447597003587155', '6.2031056163592773', '11.873832950635899', '9.0371885480210459',
+'4.0682787940378740', '7.0088981902361578', '40.447851125131592', '12.441515107769046', '17.334498957239958',
+'14.600362504376461', '19.008460020703708', '9.2424646178953882', '15.394566598053673', '4.6208965186478110',
+'9.8627528465068508', '10.857071908445393', '11.488344152069550', '11.861443296273823', 
+] 
 
-    is(scalar(@{$so->SOBlock->[0]->RawResults->DataFile}), 1, "Pheno: Number of RawResults files");
+        ], "Pheno: ICTOLL columns");
+
+    is(scalar(@{$so->SOBlock->[0]->RawResults->DataFile}), 2, "Pheno: Number of RawResults files");
     is($so->SOBlock->[0]->RawResults->DataFile->[0]->{path}, "pheno.lst", "Pheno: Name of lst file");
 
     is_deeply($so->SOBlock->[0]->Estimation->PrecisionPopulationEstimates->MLE->CovarianceMatrix->RowNames,  [ 'CL', 'V', 'IVCL', 'IVV', 'SIGMA_1_1_' ], "Pheno: CovarianceMatrix RowNames");
