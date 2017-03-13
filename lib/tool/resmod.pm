@@ -187,7 +187,7 @@ sub modelfit_setup
         push @{$self->residual_models}, $model_properties; 
     }
 
-    if ($self->numdvid > 1 and $self->current_dvid == 0) {     # Only start the L2 model once per iteration
+    if ($self->numdvid > 1 and $self->current_dvid == 0 and $self->iteration == 0) {     # Only start the L2 model once
     	my $input_columns = $self->_create_input(
 			table => $cwres_table,
 			columns => \@columns,
