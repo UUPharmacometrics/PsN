@@ -8,6 +8,7 @@ use include_modules;
 use log;
 use array;
 use model;
+use data;
 use model::problem;
 use tool::modelfit;
 use output;
@@ -109,11 +110,10 @@ sub modelfit_setup
     my $cwres_table = $self->model->problems->[0]->find_table(columns => \@columns, get_object => 1);
     my $cwres_table_name = $self->model->problems->[0]->find_table(columns => \@columns);
 
-    # Do we have IPRED, DVID, OCC or L2?
+    # Do we have IPRED, DVID or OCC?
     my $have_ipred = 0;
     my $have_dvid = 0;
 	my $have_occ = 0;
-    my $have_l2 = 0;
     my $have_time = 0;
     for my $option (@{$cwres_table->options}) {
         if ($option->name eq 'IPRED') {
@@ -125,8 +125,6 @@ sub modelfit_setup
 		} elsif ($option->name eq $self->occ) {
 			$have_occ = 1;
 			push @columns, $self->occ;
-		} elsif ($option->name eq 'L2') {
-            $have_l2 = 1;
         } elsif ($option->name eq 'TIME') {
             $have_time = 1;
             push @columns, 'TIME';
@@ -189,12 +187,10 @@ sub modelfit_setup
         push @{$self->residual_models}, $model_properties; 
     }
 
-    if ($have_l2 and $self->numdvid > 1 and $self->current_dvid == 0) {     # Only start the L2 model once per iteration
-        push @columns, 'L2';
+    if ($self->numdvid > 1 and $self->current_dvid == 0) {     # Only start the L2 model once per iteration
     	my $input_columns = $self->_create_input(
 			table => $cwres_table,
 			columns => \@columns,
-            l2 => 1,
 		);
 
         my $table_string = $self->_create_table(name => 'l2', have_ipred => $have_ipred, have_occ => $have_occ, have_l2 => 1);
@@ -509,7 +505,6 @@ sub _create_input
 		ipred => { isa => 'Bool', default => 1 },		# Should ipred be included if in columns?
 		occ => { isa => 'Bool', default => 1 },			# Should occ be included if in columns?
 		occ_name => { isa => 'Str', default => 'OCC' },	# Name of the occ column
-        l2 => { isa => 'Bool', default => 0 },          # Should L2 be included if in columns?
         time => { isa => 'Bool', default => 0 },        # Should time be included if in columns and idv != TIME?
 	);
 	my $table = $parm{'table'};
@@ -517,21 +512,22 @@ sub _create_input
 	my $ipred = $parm{'ipred'};
 	my $occ = $parm{'occ'};
 	my $occ_name = $parm{'occ_name'};
-	my $l2 = $parm{'l2'};
     my $time = $parm{'time'};
 
 	my $input_columns;
 	my @found_columns;
-	for my $option (@{$table->options}) {
+
+    my $table_columns = $table->columns();
+
+	for my $col (@{$table_columns}) {
 		my $found = 0; 
 		for (my $i = 0; $i < scalar(@columns); $i++) {
-            if ($option->name eq $columns[$i] and not $found_columns[$i]) {
+            if ($col eq $columns[$i] and not $found_columns[$i]) {
                 $found_columns[$i] = 1;
-                my $name = $option->name;
+                my $name = $col;
                 $name = 'DV' if ($name eq $self->dv);
 				$name = 'DROP' if ($name eq 'IPRED' and not $ipred);
 				$name = 'DROP' if ($name eq $occ_name and not $occ);
-                $name = 'DROP' if ($name eq 'L2' and not $l2);
                 $name = 'DROP' if ($name eq 'TIME' and $self->idv ne 'TIME' and not $time);
                 $input_columns .= $name;
                 $found = 1;
@@ -595,10 +591,25 @@ sub _prepare_L2_model
     my $num_dvid = $parm{'num_dvid'};
     my $table_string = $parm{'table_string'};
 
+    open my $fh, '>', 'm1/l2_input.dat';
+    my $data = data->new(
+        filename => '../' . $table_name,
+        ignoresign => '@',
+        parse_header => 1,
+    );
+    my $time_col = $data->column_to_array(column => 'TIME');
+    my $i = 0;
+    for my $ind (@{$data->individuals}) {
+        for my $row (@{$ind->subject_data}) {
+            print $fh join(',', $row) . ',' . $time_col->[$i++] . "\n";
+        } 
+    }
+    close $fh;
+
     my @prob_arr = (
         '$PROBLEM    base model',
-        '$INPUT ' . $input_columns,
-        '$DATA ../' . $table_name . ' IGNORE=@ IGNORE(DV.EQN.0)',
+        '$INPUT ' . $input_columns . ' L2',
+        '$DATA m1/l2_input.dat IGNORE=@ IGNORE(DV.EQN.0)',
         '$PRED',
     );
 

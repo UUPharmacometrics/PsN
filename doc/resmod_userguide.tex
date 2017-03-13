@@ -200,4 +200,13 @@ Named \verb|dtbs| in results.csv. The lambda and zeta parameters (THETA(3) and T
 
 This model is same as the base model except that all parameters will be estimated.
 
+\subsection{L2}
+Name \verb|L2| in results.csv. The L2 model will be tried only if the original model has multiple DVs. The L2 data column will
+be taken to be a copy of the TIME column. Resulting delta ofv will be the difference between the sum of the OFVs of the base models for all DVIDs and
+the OFV of the L2 model.
+\begin{verbatim}
+IF(DVID.EQ.1) Y = THETA(1) + ETA(1) + ERR(1)
+IF(DVID.EQ.2) Y = THETA(2) + ETA(2) + ERR(2)
+\end{verbatim}
+
 \end{document}
