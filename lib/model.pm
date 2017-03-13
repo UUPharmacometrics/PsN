@@ -5430,6 +5430,33 @@ sub boxcox_etas
     $self->set_code(record => $code_record, code => \@code);
 }
 
+sub init_etas
+{
+    my $self = shift;
+    my $based_on = $self->annotation->get_based_on();
+    if (defined $based_on) {
+        my $phi_name = "run$based_on.phi";
+        if (-e $phi_name) {
+            $self->set_records(type => 'etas', record_strings => [ "FILE=$phi_name" ]);
+            if (not defined $self->extra_files) {
+                $self->extra_files([]);
+            }
+            push @{$self->extra_files}, $phi_name;
+            $self->add_option(
+                record_name => 'estimation',
+                option_name => 'MCETA',
+                option_value => ( '1' ), 
+                add_record => 0,
+            );
+        } else {
+            print "Warning: the phi file $phi_name does not exist. Option -eta skipped\n";
+        }
+    } else {
+        print "Warning: the model " . $self->filename . " wasn't based on any other model. Option -eta skipped\n";
+    }
+
+}
+
 no Moose;
 __PACKAGE__->meta->make_immutable;
 1;

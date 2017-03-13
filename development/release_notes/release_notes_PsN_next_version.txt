@@ -118,6 +118,7 @@ ___common_options___
    ___execute___
 
 - New option -boxcox to automatically boxcox transform all ETAs before running the model
+- New option -eta to automatically add eta starting values from the previous phi-file
 
    ___runrecord___
 

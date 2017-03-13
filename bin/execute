@@ -37,6 +37,7 @@ my %optional_options = ( "predict_data:s" => undef,
 			 "wintail_command:s" => undef,
 			 "copy_data!"=>undef,
              "boxcox!" => undef,
+             "eta!" => undef,
 			 );
 
 my $res = GetOptions( \%options,
@@ -194,6 +195,13 @@ $help_text{-boxcox} = <<'EOF';
     on models with multiple $PROBLEMs
 EOF
 
+$help_text{-eta} = <<'EOF';
+    -eta
+    
+    If available use the phi-file of the previous run as initial estimates
+    for the etas. The phi-file will be used in $ETAS.
+EOF
+
 $help_text{Post_help_message} = <<'EOF';
 EOF
 
@@ -255,12 +263,14 @@ my $models_array;
 
 my $eval_string = common_options::model_parameters(\%options);
 
-foreach my $model_name ( @ARGV ){  
+foreach my $model_name (@ARGV) {  
 	my $model;
-	$model = model -> new ( eval( $eval_string ),
-							filename                    => $model_name,
-							parse_output => 0,
-							ignore_missing_output_files => 1 );
+	$model = model->new(
+        eval($eval_string),
+        filename => $model_name,
+        parse_output => 0,
+        ignore_missing_output_files => 1,
+    );
 
 	input_checking::check_options(tool => 'execute', options => \%options, model => $model);
 
@@ -268,8 +278,11 @@ foreach my $model_name ( @ARGV ){
         $model->boxcox_etas();
     }
 
-	push( @{$models_array}, $model );
+    if ($options{'eta'}) {
+        $model->init_etas();
+    }
 
+	push( @{$models_array}, $model );
 }
 
 my $modelfit;
