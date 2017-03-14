@@ -178,7 +178,7 @@ sub parse_ext_table
 			}
 		}elsif($header->[$i] =~ /OBJ/ and defined $lookup->{'est'}){
 			my $val = _get_value($values->[$lookup->{'est'}]);
-			$results{'ofv'} = $val if (defined $val);
+			$results{'ofv'} = $values->[$lookup->{'est'}] if (defined $val);
 		}
 	}
 	$results{'any_se'} = $any_se;
@@ -281,7 +281,7 @@ sub _get_value{
 	if((not defined $answer) or ($answer == $no_value) or (not math::usable_number($val))){
 		$answer = undef;
 	}
-	return $answer;
+    return $answer;
 }
 
 no Moose;
