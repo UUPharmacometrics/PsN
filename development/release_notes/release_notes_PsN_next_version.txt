@@ -101,6 +101,7 @@ ___common_options___
   estimation/evaluation.
 - Bug fix: PsN can now handle $MSFI in combination with NONMEM's sparse matrix format in lst-files,
   which is used for very large covariance matrices.
+- Bug fix: Two digits of precision were lost when parsing OFV from .ext file
   
    ___Cluster/Grid___
 
