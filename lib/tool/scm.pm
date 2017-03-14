@@ -2098,15 +2098,17 @@ sub linearize_setup
 
 		$original_model->set_records(type => 'input', record_strings => \@inputstrings);
 
-        my $phi_file = $self->phi_file();
-        if ($self->from_linearize and defined $phi_file) {
-            $mceta = '1';
-            (undef, undef, my $filename) = File::Spec->splitpath($phi_file);
-            $original_model->set_records(type => 'etas', record_strings => [ "FILE=$filename" ]);
-            if (not defined $original_model->extra_files) {
-                $original_model->extra_files([]);
+        if ($self->from_linearize) {
+            my $phi_file = $self->phi_file();
+            if (defined $phi_file) {
+                $mceta = '1';
+                (undef, undef, my $filename) = File::Spec->splitpath($phi_file);
+                $original_model->set_records(type => 'etas', record_strings => [ "FILE=$filename" ]);
+                if (not defined $original_model->extra_files) {
+                    $original_model->extra_files([]);
+                }
+                push @{$original_model->extra_files}, $phi_file;
             }
-            push @{$original_model->extra_files}, $phi_file;
         }
 
 		my @eststrings;
