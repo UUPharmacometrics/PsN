@@ -88,7 +88,7 @@ Getopt::Long::config("auto_abbrev");
 		  "near_bound_sign_digits:i",
 		  "near_zero_boundary_limit:f",
 		  "precision:i",
-          "standardised_output!",
+          "so!",
           "zip!",
     );
 
@@ -1383,11 +1383,11 @@ EOF
     Print PsN version of script called.
 EOF
 
-    $help_hash{-standardised_output} = <<'EOF';
-    -standardised_output
-    Create an additional DDMoRe standardised output xml file.
-    Note that the file format is still under development
-    and that this option should be considered experimental.
+    $help_hash{-so} = <<'EOF';
+    -so
+
+    Create an additional DDMoRe standard output xml file.
+    Note that the created file will have SO version 0.3.1
 EOF
     
 $help_hash{-zip} = <<'EOF';

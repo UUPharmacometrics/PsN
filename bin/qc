@@ -31,6 +31,7 @@ my %optional_options = (
     'idv:s' => undef,
     'occ:s' => undef,
     'groups:i' => undef,
+    'covariates:s' => undef,
 );
 
 my $res = GetOptions( \%options,
@@ -103,6 +104,12 @@ $help_text{-groups} = <<'EOF';
       The default is 10.
 EOF
 
+$help_text{-covariates} = <<'EOF';
+      -covariates
+
+      A comma separated list of covariates
+EOF
+
 common_options::online_help( 'resmod', \%options, \%help_text, \%required_options, \%optional_options);
 common_options::setup( \%options, 'resmod' ); #calls set_globals etc, initiates random sequence
 
@@ -141,6 +148,7 @@ my $qc = tool::qc->new(
     dv => $options{'dv'},
 	occ => $options{'occ'},
     groups => $options{'groups'},
+    covariates => $options{'covariates'},
 );
 
 $qc->print_options(

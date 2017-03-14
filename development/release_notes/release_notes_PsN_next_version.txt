@@ -85,6 +85,7 @@ ___common_options___
 - Option -abort_on_fail has a new meaning and function. The option is intended for the system tests.
   If set, PsN will exit with an error if NONMEM crashes, or an estimation/evaluation fails to
   produce an ofv, or a simulation gives a typical error message in the lst-file.
+- Option -standardised_output was renamed to -so
 
    ___NONMEM output parsing___
 

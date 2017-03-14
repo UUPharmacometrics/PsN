@@ -369,10 +369,6 @@ sub BUILD
 sub run
 {
 	my $self = shift;
-#	my %parm = validated_hash(\@_,
-#		resuming => { isa => 'Bool', default => 0, optional => 1 }
-#	);
-#	my $resuming = $parm{'resuming'};
 	my @results;
 
 	my $cwd = getcwd();
@@ -468,7 +464,6 @@ sub run
 	# and while we have jobs running, i.e. scalar keys %queue_map > 0 (represented in the queue_info)
 
 	while ((scalar(@queue) > 0) or (scalar keys %queue_map > 0)) {
-#		print "queue is ".scalar(@queue)." map is ".(scalar keys %queue_map)."\n";
 		if ((scalar(@queue) > 0) and (scalar keys %queue_map < $threads)) {
 			#we may start a new job here 
 			# This is where we initiate a new job:
@@ -492,18 +487,6 @@ sub run
 
 				push(@{$self->raw_results}, @{$raw_results_row});
 				push(@{$self->raw_nonp_results}, @{$nonp_row});
-
-
-#candidate model needed somewhere???
-#				$queue_info{$run}{'candidate_model'} = 
-#					model->new(	filename => "./NM_run" . ($run + 1) . "/psn.".$self->modext,
-#								ignore_missing_files => 1,
-#								cwres                => $models[$run] -> cwres()
-#					);
-#				$self->print_finish_message(candidate_model => $queue_info{$run}{'candidate_model'}, run => $run);
-
-#				$self->prepared_models([]) unless defined $self->prepared_models;
-#				push(@{$self->prepared_models->[$run]{'own'}}, $queue_info{$run}{'candidate_model'});
 
 				next; # We are done with this model. It has already been run. Go back to main while loop.
 			}
@@ -915,13 +898,10 @@ sub make_delay{
 				$max_sleep = 0;
 			}
 
-#			my $slept = 0;
 			while ((not(-e 'NM_run' . ($run) . '/psn.lst')) and 
 				   (Time::HiRes::time() - $start_sleep) < $max_sleep) {
 				Time::HiRes::usleep($min_sleep);
-#				$slept++;
 			}
-#			print "slept ".(($slept*$min_sleep)/1000000)." seconds\n";
 		}
 
 	}
@@ -1914,8 +1894,6 @@ sub store_results_old_run
 										  label_model => $model,
 										  model_number => $run_no + 1,
 										  raw_line_structure => $self->raw_line_structure);
-#										  eta_shrinkage_file => $eta_shrinkage_name,
-#										  iwres_shrinkage_file => $iwres_shrinkage_name);
 	
 	if (-e 'psn.lst'){
 		my $output_file = $candidate_model -> outputs -> [0];
@@ -3197,7 +3175,6 @@ sub write_tbs_files
 	close(FILE);
 }
 
-#sub copy_model_and_output
 sub move_model_and_output
 {
 	my $self = shift;
@@ -3270,7 +3247,6 @@ sub move_model_and_output
 									   retry => $use_run-1);
 
 		# Copy $use_run files to final files in NM_run, to be clear about which one was selected
-#		cp( $use_name, $filename ) if (-e $use_name); 
 		mv( $use_name, $filename ) if (-e $use_name); 
 		next if( $filename eq 'psn.'.$self->modext );
 		next if( $filename eq 'nmqual_messages.txt' );
@@ -3279,7 +3255,6 @@ sub move_model_and_output
 		# from the $model object.
 		if ($filename eq 'psn.lst') {
 			cp($filename, $outfilename); 
-#			mv($use_name, $outfilename); 
             $final_lst = $outfilename;
 			next;
 		}
@@ -3307,7 +3282,6 @@ sub move_model_and_output
 
 	}
 
-#	trace(tool => 'modelfit', message => "Best retry is $use_run.\nCopied psn-".
 	trace(tool => 'modelfit', message => "Best retry is $use_run.\nMoved psn-".
 		  $use_run.".".$self->modext." to psn.".$self->modext.", psn-$use_run".".lst to psn.lst etc.\n".
 		  "Copied psn.lst and other output to this models 'home directory' $dir ".
@@ -3394,10 +3368,10 @@ sub move_model_and_output
 			if ( $self->compress and $Config{osname} eq 'MSWin32' );
 	}
 
-    if ($self->standardised_output) {
+    if ($self->so) {
         if (not eval("require so; require so::parsers::nmoutput;")) {
             ui->print(category=> 'all',
-					  message=> "Unable to create the standardised output: the option -standardised_output needs to have the XML::LibXML module installed");
+					  message=> "Unable to create the standard output: the option -so needs the XML::LibXML module to be installed");
         }else{
 			my $so = so->new();
 			my $nm_parser = so::parsers::nmoutput->new(so => $so, lst_file => $final_lst);

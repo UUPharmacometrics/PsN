@@ -20,7 +20,7 @@ SKIP: {
 
     my @commands = (
         get_command('nmoutput2so') . " pheno.lst",
-        get_command('execute') ." pheno.mod -standardised_output ",
+        get_command('execute') ." pheno.mod -so ",
     );
     foreach my $command (@commands){
         print "Running $command\n";

@@ -373,6 +373,6 @@ if (defined $options{'rundir'}) {
 
 $so->write(compress => $options{'compress'});
 
-#my $so = standardised_output->new(
+#my $so = so->new(
 #    use_tables => $options{'use_tables'},
 #);
