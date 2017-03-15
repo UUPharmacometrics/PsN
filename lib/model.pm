@@ -5360,7 +5360,6 @@ sub renumber_msfo_msfi
 
 sub msfo_to_msfi_mismatch
 {
-
     my $self = shift;
 	return 0 unless (scalar(@{$self->problems})>1);
 	
@@ -5455,6 +5454,28 @@ sub init_etas
         print "Warning: the model " . $self->filename . " wasn't based on any other model. Option -eta skipped\n";
     }
 
+}
+
+sub find_input_column
+{
+    # Find the number of the column given a name. If the name is numeric just return it.
+    my $self = shift;
+	my %parm = validated_hash(\@_,
+        name => { isa => 'Str', optional => 0 },
+    );
+	my $name = $parm{'name'};
+
+    if (not $name =~ /^\d/) {
+        my ($junk, $column_position) = $self->_get_option_val_pos(
+            name => $name,
+            record_name => 'input',
+            problem_numbers => [1],
+        );
+        # We assume that there are no duplicate column names
+        return $column_position->[0][0];
+    }
+
+    return $name;
 }
 
 no Moose;

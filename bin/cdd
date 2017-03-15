@@ -166,19 +166,10 @@ my $model = model -> new ( eval( $eval_string ),
 						   filename                    => $ARGV[0],
 						   ignore_missing_output_files => 1 );
 
-if (not $options{'case_column'} =~ /^\d/) {
-    # STRING
-    my ($junk, $column_position) = $model->_get_option_val_pos(
-        name => $options{'case_column'},
-        record_name     => 'input',
-        problem_numbers => [1],
-    );
-    # We assume that there are no duplicate column names
-    unless (defined $column_position->[0][0]) {
-        print "Error finding column ".$options{'case_column'}. " in \$INPUT of model\n";
-        exit;
-    }
-    $options{'case_column'} = $column_position->[0][0];
+my $input_column = $model->find_input_column(name => $options{'case_column'});
+if (not defined $input_column) {
+    print "Error finding column " . $options{'case_column'} . " in \$INPUT of model\n";
+    exit;
 }
 
 if ($options{'shrinkage'}) {
@@ -190,7 +181,7 @@ my $cdd = tool::cdd->new(
     models => [ $model ],
     bins => $options{'bins'},
     selection_method => $options{'selection_method'},
-    case_column => $options{'case_column'},
+    case_column => $input_column,
     update_inits => $options{'update_inits'},
     outside_n_sd_check => $options{'outside_n_sd_check'},
     cross_validate => $options{'xv'},
