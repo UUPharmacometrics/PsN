@@ -9,6 +9,8 @@ use utils::file;
 use tool::modelfit;
 use tool::linearize;
 use tool::frem;
+use tool::cdd;
+use tool::simeval;
 
 extends 'tool';
 
@@ -47,10 +49,12 @@ sub modelfit_setup
     $linearize->print_results();
     # FIXME: model is garbled here
 
-    print "*** Running boxcox transformed model ***\n";
-    my $boxcox_model = model->new(
+    my $linearized_model = model->new(
         filename => $linearized_model_name,
     );
+
+    print "*** Running boxcox transformed model ***\n";
+    my $boxcox_model = $linearized_model->copy(filename => "boxcox.mod");
     $boxcox_model->boxcox_etas();
     my $modelfit = tool::modelfit->new(
         eval($common_options::parameters),
@@ -58,19 +62,44 @@ sub modelfit_setup
         directory => 'boxcox_run',
     );
     $modelfit->run();
+    unlink("boxcox.mod");
 
-    print "*** Running FREM ***\n";
-    my $frem_model = model->new(filename => $linearized_model_name);
-    my $frem = tool::frem->new(
+    if (defined $self->covariates) {
+        print "*** Running FREM ***\n";
+        my $frem_model = model->new(filename => $linearized_model_name);
+        my $frem = tool::frem->new(
+            eval($common_options::parameters),
+            models => [ $frem_model ],
+            covariates => [ split(',', $self->covariates) ],
+            directory => 'frem_run',
+            rescale => 1, 
+            run_sir => 1, 
+            rplots => 1,
+        ); 
+        $frem->run();
+    }
+
+    print "*** Running cdd ***\n";
+    my $cdd_model = model->new(filename => $linearized_model_name);
+    my $cdd = tool::cdd->new(
         eval($common_options::parameters),
-        models => [ $frem_model ],
-        covariates => [ split(',', $self->covariates) ],
-        directory => 'frem_run',
-        rescale => 1, 
-        run_sir => 1, 
+        models => [ $cdd_model ],
+        directory => 'cdd_run',
         rplots => 1,
-    ); 
-    $frem->run();
+    );
+    $cdd->run();
+
+    print "*** Running simeval ***\n";
+    my $simeval_model = model->new(filename => $linearized_model_name);
+    my $simeval = tool::simeval->new(
+        eval($common_options::parameters),
+        models => [ $simeval_model ],
+        rplots => 1,
+        lst_file => "pheno_linbase.lst",
+        n_simulation_models => 5,
+        directory => "simeval_dir",
+    );
+    $simeval->run();
 }
 
 sub modelfit_analyze
