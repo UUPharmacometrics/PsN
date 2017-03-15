@@ -266,6 +266,7 @@ ___boot_scm___
 
 - Add OFV and run number columns to results.csv
 
+
    ___cdd___
 
 - New option -update_inits, set by default. The initial estimates in the cdd models will be
@@ -274,14 +275,18 @@ ___boot_scm___
   the initial estimates of the base model.
 - changed directory name prefix for cross-validation sub-directory (if
   option -xv is set) from modelfit to crossval.
+- ID is now default for the case_column option
+
 
  ___rplots___
 
 - Major redesign
 
+
    ___npfit___
 
 - New tool npfit for nonparametric estimation, see npfit_userguide.pdf
+
 
    ___crossval___ 
 

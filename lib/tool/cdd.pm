@@ -15,7 +15,8 @@ use array qw(not_empty);
 
 extends 'tool';
 
-has 'case_column' => ( is => 'rw', required => 1, isa => 'Int' );
+# Either the number or the number of the column. Will be converted to number by BUILD
+has 'case_column' => ( is => 'rw', required => 1, isa => 'Value', default => 'ID' );
 has 'bins' => ( is => 'rw', isa => 'Int' );
 has 'actual_bins' => ( is => 'rw', isa => 'Int' );
 has 'cook_scores' => ( is => 'rw', isa => 'ArrayRef', default => sub { [] } );
@@ -43,6 +44,12 @@ has 'update_inits' => ( is => 'rw', isa => 'Bool', default => 1 );
 sub BUILD
 {
 	my $self = shift;
+
+    my $input_column = $self->models->[0]->find_input_column(name => $self->case_column);
+    if (not defined $input_column) {
+        croak("Error finding column " . $self->case_column . " in \$INPUT of model\n");
+    }
+    $self->case_column($input_column);
 
 	for my $accessor ('logfile','raw_results_file','raw_nonp_file'){
 		my @new_files = ();

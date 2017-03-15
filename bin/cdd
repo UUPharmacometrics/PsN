@@ -62,7 +62,6 @@ EOF
 
 $help_text{Options} = <<'EOF';  
 A NONMEM model file with successful termination is required as argument.
-The -case_column option is also required.
 
       The following options are valid:
 EOF
@@ -109,11 +108,11 @@ EOF
 $help_text{-case_column} = <<'EOF';
       -case_column=column_name|column_number
 
-      This flag is mandatory. Through this flag you set the column on
-      which the case-deletion is done. You can either use the name of
-      the column as specified in the $INPUT record in the model file
-      or you can use the column number. Numbering starts with 1.
-
+      Through this flag you set the column on which the case-deletion
+      is done. You can either use the name of the column as specified
+      in the $INPUT record in the model file or you can use the
+      column number. Numbering starts with 1.
+      Default is ID.
 EOF
 
 $help_text{-outside_n_sd_check} = <<'EOF';
@@ -147,11 +146,6 @@ if (scalar(@ARGV) > 1) {
   exit;
 }
 
-unless (defined $options{'case_column'}) {
-  print "case_column must be given\n";
-  exit;
-}
-
 if (defined $options{'dummy_data'}) {
   #never allow dummy_data with cdd
   $options{'dummy_data'} = 0;
@@ -162,15 +156,11 @@ require tool::cdd;
 
 my $eval_string = common_options::model_parameters(\%options);
 
-my $model = model -> new ( eval( $eval_string ),
-						   filename                    => $ARGV[0],
-						   ignore_missing_output_files => 1 );
-
-my $input_column = $model->find_input_column(name => $options{'case_column'});
-if (not defined $input_column) {
-    print "Error finding column " . $options{'case_column'} . " in \$INPUT of model\n";
-    exit;
-}
+my $model = model->new(
+    eval($eval_string),
+    filename => $ARGV[0],
+    ignore_missing_output_files => 1
+);
 
 if ($options{'shrinkage'}) {
   $model->shrinkage_stats(enabled => 1);
@@ -181,7 +171,7 @@ my $cdd = tool::cdd->new(
     models => [ $model ],
     bins => $options{'bins'},
     selection_method => $options{'selection_method'},
-    case_column => $input_column,
+    case_column => $options{'case_column'},
     update_inits => $options{'update_inits'},
     outside_n_sd_check => $options{'outside_n_sd_check'},
     cross_validate => $options{'xv'},
