@@ -65,6 +65,7 @@ A new recommended but not required Perl library for runrecord: YAML::Tiny
 
 - PsN has updated its license. It is still licensed under the GNU public license version 2, but
   it is now possible to relicense PsN under any later versions of this license.
+- File specified in $ETAS will be automatically copied when model run
 - Bug fix: Some generated paths for the Rplots script were illegal R strings causing R to crash
 - Runs where any of the models have $NONPARAMETRIC will now get an additional file in the main
   run directory: raw_nonparametric_<modelname>.csv, containing regular ofv, nonparametric ofv, etc
