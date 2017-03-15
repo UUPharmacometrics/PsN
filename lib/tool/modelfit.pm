@@ -56,14 +56,6 @@ has '_raw_results_callback' => ( is => 'rw' );
 has 'any_nonparametric_step' => ( is => 'rw', isa => 'Bool', default => 0 );
 #start description
     #
-    # In PsN versions < 2.0, the functionality for actually running
-    # NONMEM on models and data PsN objects was provided by the model
-    # class. As of PsN versions 2.0 and higher, this functinality has
-    # been moved to the separate class I<modelfit> in order to make the
-    # class responsibilities clearer.
-    #
-    # Fitting a model can be viewed as a special case of a more
-    # general set of tools for population PK/PD. In PsN, the
     # modelfit class is therefore a specialization of a general PsN
     # tool class. The tool class itself is not capable of much at
     # all but to define a common structure for all PsN tools.
@@ -73,24 +65,6 @@ has 'any_nonparametric_step' => ( is => 'rw', isa => 'Bool', default => 0 );
     # are defined in both classes (e.g. the L</run>) and in these
     # cases it is the modelfit version that will be used.
     #
-    # =begin html
-    #
-    # <tr>Please look at the documentation for the <a
-    # href="../tool.html">general tool class</a> as well as the <a
-    # href="#examples">examples</a> section of this document for
-    # descriptions of the setting that are available for all
-    # tools.</tr>
-    #
-    # =end html
-    # 
-    # =begin man
-    #
-    # Please look at the documentation for the general I<tool> class
-    # as well as the L</examples> section of this document for
-    # descriptions of the setting that are available for all tools.
-    #
-    # =end man
-    # 
 #end description
 
 #start examples
