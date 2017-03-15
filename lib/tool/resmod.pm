@@ -614,7 +614,7 @@ sub _prepare_L2_model
     );
 
     for (my $i = 1; $i <= $num_dvid; $i++) {
-        push @prob_arr, "IF(DVID.EQ.$i) Y = THETA($i) + ETA($i) + ERR($i)";
+        push @prob_arr, "IF(" . $self->dvid . ".EQ.$i) Y = THETA($i) + ETA($i) + ERR($i)";
     }
 
     for (my $i = 0; $i < $num_dvid; $i++) {
