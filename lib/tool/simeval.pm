@@ -13,7 +13,7 @@ use utils::file;
 
 extends 'tool';
 
-has 'samples' => ( is => 'rw', isa => 'Int' );
+has 'samples' => ( is => 'rw', isa => 'Int', default => 300 );
 has 'successful_samples' => ( is => 'rw', isa => 'Int' );
 has 'subjects' => ( is => 'rw', isa => 'Int' );
 has 'lst_file' => ( is => 'rw', isa => 'Str' );
