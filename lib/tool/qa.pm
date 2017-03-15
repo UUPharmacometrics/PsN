@@ -1,4 +1,4 @@
-package tool::qc;
+package tool::qa;
 
 use strict;
 use Moose;

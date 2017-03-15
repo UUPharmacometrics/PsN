@@ -163,7 +163,7 @@ LIBFILES= ui.pm \
 	tool/nonparametric.pm \
 	tool/resmod.pm \
 	tool/linearize.pm \
-	tool/qc.pm \
+	tool/qa.pm \
 	utils/file.pm \
 
 BINFILES=$(wildcard bin/*)
