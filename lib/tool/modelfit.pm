@@ -841,7 +841,6 @@ sub run
 	return \@results;
 }
 
-
 sub make_delay{
 	my %parm = validated_hash(\@_,
 							  threads => { isa => 'Int', optional => 0 },
@@ -1448,7 +1447,6 @@ sub _get_run_options
 	return \%options_hash;
 }
 
-
 sub run_nonmem
 {
 	my $self = shift;
@@ -1654,8 +1652,6 @@ sub run_nonmem
 	} # end of "not -e psn-$tries.lst or rerun"
 }
 
-
-
 sub diagnose_lst_errors
 {
 	#static no shift
@@ -1835,7 +1831,6 @@ sub passed_picky
 
 }
 
-
 sub store_results_old_run
 {
 	my $self = shift;
@@ -1977,7 +1972,6 @@ sub hessian_error
 	return $value;
 }
 
-
 sub significant_digits_accepted
 {
 	#static
@@ -2002,7 +1996,6 @@ sub significant_digits_accepted
 
 	return $accept;
 }
-
 
 sub local_minimum
 {
@@ -2108,7 +2101,6 @@ sub move_retry_files
 	}
 	return ($stopmess,$eta_shrinkage_name,$iwres_shrinkage_name);
 }
-
 
 sub retries_decide_what_to_do
 {
@@ -2265,7 +2257,6 @@ sub retries_decide_what_to_do
 	return \%hash;
 
 }
-
 
 sub restart_needed
 {
