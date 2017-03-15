@@ -3861,9 +3861,18 @@ sub _option_val_pos
 
 sub input_files
 {
+    # List all input files needed by this model
 	my $self = shift;
 	my @file_names;
 
+    # Copy file for $ETAS
+    ( my $model_fsubs, undef ) = $self->_option_val_pos(record_name => 'etas', name => 'FILE');
+    for my $problem_files (@$model_fsubs) {
+        for my $etas_file (@$problem_files) {
+			my ( $dir, $filename ) = OSspecific::absolute_path($self->directory, $etas_file);
+			push(@file_names, [ $dir, $filename ]);
+        }
+    }
 
 	# Copy extra fortran files specified in "$SUBROUTINE"
 

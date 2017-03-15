@@ -187,7 +187,7 @@ sub BUILDARGS
 
 sub BUILD
 {
-	my $self  = shift;
+	my $self = shift;
 
 	# Usage:
 	# 
@@ -305,19 +305,16 @@ sub BUILD
 		$self->logfile([join('', OSspecific::absolute_path( $self->directory, $self->logfile->[0]) ) ]);
 	}
 
-
 	my $ref = nonmemrun::setup_paths(nm_version => $self->nm_version,
 									 nmqual => $self->nmqual);
 
 	$self->full_path_runscript($ref->{'full_path_runscript'});
 	$self->full_path_nmtran($ref->{'full_path_nmtran'}) if (defined $ref->{'full_path_nmtran'});
 
-
 	if ($self->nmqual) {
 		$self->modext('ctl');
 		$self->nmqual_xml($ref->{'nmqual_xml'});
 	}
-
 
 	if ($self->run_on_lsf or $self->run_on_ud or $self->run_on_zink or
 		$self->run_on_torque or $self->run_on_slurm or
