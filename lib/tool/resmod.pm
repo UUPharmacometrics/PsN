@@ -55,7 +55,7 @@ sub BUILD
             die "Error original model has no table containing ID, IDV and " . $self->dv. "\n";
         }
         my $cwres_table_name = $self->model->problems->[0]->find_table(columns => \@columns);
-        my $table = nmtablefile->new(filename => "$cwres_table_name"); 
+        my $table = nmtablefile->new(filename => $model->directory . $cwres_table_name); 
         my @columns_in_table = @{$cwres_table->columns()};
         my $have_dvid = grep { $_ eq $self->dvid } @columns_in_table;
 
@@ -133,10 +133,12 @@ sub modelfit_setup
 
     if (not $self->top_level) {
         if ($self->numdvid > 1 and $self->iteration == 0) {      # First iteration for DVID is special case
-            $cwres_table_name = "../$cwres_table_name";
+            $cwres_table_name = "../../$cwres_table_name";
         } else {
-            $cwres_table_name = "m1/$cwres_table_name";
+            $cwres_table_name = "../m1/$cwres_table_name";
         }
+    } else {
+        $cwres_table_name = File::Spec->abs2rel($self->model->directory . $cwres_table_name);
     }
 
 	my @models_to_run;
@@ -665,7 +667,7 @@ sub _build_time_varying_template
         my @prob_arr = (
             "\$PROBLEM time varying cutoff $i",
             '$INPUT <inputcolumns>',
-            '$DATA ../<cwrestablename> IGNORE=@ IGNORE=(DV.EQN.0) <dvidaccept>',
+            '$DATA <cwrestablename> IGNORE=@ IGNORE=(DV.EQN.0) <dvidaccept>',
             '$PRED',
             'Y = THETA(1) + ETA(1) + ERR(2)',
             'IF (<idv>.LT.' . $cutoffs->[$i] . ") THEN",
@@ -702,7 +704,7 @@ sub _build_time_varying_template
         my @prob_arr = (
             '$PROBLEM time varying',
             '$INPUT <inputcolumns>',
-            '$DATA ../<cwrestablename> IGNORE=@ IGNORE=(DV.EQN.0) <dvidaccept>',
+            '$DATA <cwrestablename> IGNORE=@ IGNORE=(DV.EQN.0) <dvidaccept>',
             '$PRED',
         );
 
@@ -870,7 +872,7 @@ our @residual_models =
 	    prob_arr => [
 			'$PROBLEM base model',
 			'$INPUT <inputcolumns>',
-			'$DATA ../<cwrestablename> IGNORE=@ IGNORE=(DV.EQN.0) <dvidaccept>',
+			'$DATA <cwrestablename> IGNORE=@ IGNORE=(DV.EQN.0) <dvidaccept>',
 			'$PRED',
             'Y = THETA(1) + ETA(1) + ERR(1)',
 			'$THETA .1',
@@ -884,7 +886,7 @@ our @residual_models =
 	    prob_arr => [
 			'$PROBLEM omega-on-epsilon',
 			'$INPUT <inputcolumns>',
-			'$DATA ../<cwrestablename> IGNORE=@ IGNORE=(DV.EQN.0) <dvidaccept>',
+			'$DATA <cwrestablename> IGNORE=@ IGNORE=(DV.EQN.0) <dvidaccept>',
 			'$PRED',
             'Y = THETA(1) + ETA(1) + ERR(1) * EXP(ETA(2))',
 			'$THETA .1',
@@ -903,7 +905,7 @@ our @residual_models =
 	    prob_arr => [
 			'$PROBLEM power IPRED',
 			'$INPUT <inputcolumns>',
-			'$DATA ../<cwrestablename> IGNORE=@ IGNORE=(DV.EQN.0) <dvidaccept>',
+			'$DATA <cwrestablename> IGNORE=@ IGNORE=(DV.EQN.0) <dvidaccept>',
 			'$PRED',
             'Y = THETA(1) + ETA(1) + ERR(1)*(IPRED)**THETA(2)',
 			'$THETA .1',
@@ -922,7 +924,7 @@ our @residual_models =
         prob_arr => [
 			'$PROBLEM AR1',
 			'$INPUT <inputcolumns>',
-			'$DATA ../<cwrestablename> IGNORE=@ IGNORE=(DV.EQN.0) <dvidaccept>',
+			'$DATA <cwrestablename> IGNORE=@ IGNORE=(DV.EQN.0) <dvidaccept>',
 			'$PRED',
             '"FIRST',
             '" USE SIZES, ONLY: NO',
@@ -962,7 +964,7 @@ our @residual_models =
 		prob_arr => [
 			'$PROBLEM AR1 IOV',
 			'$INPUT <inputcolumns>',
-			'$DATA ../<cwrestablename> IGNORE=@ IGNORE=(DV.EQN.0) <dvidaccept>',
+			'$DATA <cwrestablename> IGNORE=@ IGNORE=(DV.EQN.0) <dvidaccept>',
 			'$ABBREVIATED DECLARE T1(NO)',
 			'$ABBREVIATED DECLARE INTEGER I,DOWHILE J',
 			'$PRED', 
@@ -1001,7 +1003,7 @@ our @residual_models =
 	    prob_arr => [
 			'$PROBLEM t-distribution base mode',
 			'$INPUT <inputcolumns>',
-			'$DATA ../<cwrestablename> IGNORE=@ IGNORE=(DV.EQN.0) <dvidaccept>',
+			'$DATA <cwrestablename> IGNORE=@ IGNORE=(DV.EQN.0) <dvidaccept>',
 			'$PRED',
 			'IPRED_ = THETA(1) + ETA(1)',
 			'W     = THETA(2)',
@@ -1022,7 +1024,7 @@ our @residual_models =
         prob_arr => [
 			'$PROBLEM laplace 2LL DF=est',
 			'$INPUT <inputcolumns>',
-			'$DATA ../<cwrestablename> IGNORE=@ IGNORE=(DV.EQN.0) <dvidaccept>',
+			'$DATA <cwrestablename> IGNORE=@ IGNORE=(DV.EQN.0) <dvidaccept>',
 			'$PRED',
             'IPRED_ = THETA(1) + ETA(1)',
             'W = THETA(2)',
@@ -1056,7 +1058,7 @@ our @residual_models =
         prob_arr => [
 			'$PROBLEM dtbs base model',
 			'$INPUT <inputcolumns>',
-			'$DATA ../<cwrestablename> IGNORE=@ IGNORE=(DV.EQN.0) <dvidaccept>',
+			'$DATA <cwrestablename> IGNORE=@ IGNORE=(DV.EQN.0) <dvidaccept>',
 			'$SUBROUTINE CONTR=contr.txt CCONTR=ccontra.txt',
 			'$PRED',
 			'IPRT   = THETA(1)*EXP(ETA(1))',
@@ -1097,7 +1099,7 @@ our @residual_models =
 		prob_arr => [
 			'$PROBLEM dtbs model',
 			'$INPUT <inputcolumns>',
-			'$DATA ../<cwrestablename> IGNORE=@ IGNORE=(DV.EQN.0) <dvidaccept>',
+			'$DATA <cwrestablename> IGNORE=@ IGNORE=(DV.EQN.0) <dvidaccept>',
 			'$SUBROUTINE CONTR=contr.txt CCONTR=ccontra.txt',
 			'$PRED',
 			'IPRT   = THETA(1)*EXP(ETA(1))',
