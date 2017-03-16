@@ -35,18 +35,19 @@ sub modelfit_setup
 {
 	my $self = shift;
 
-#    print "*** Running resmod ***\n";
-#    my $resmod = tool::resmod->new(
-#        eval( $common_options::parameters ),
-#        models => [ $self->model ],
-#        dvid => $self->dvid,
-#        idv => $self->idv,
-#        dv => $self->dv,
-#        occ => $self->occ,
-#        groups => $self->groups,
-#        iterative => 0,
-#    );
-#    $resmod->run();
+    print "*** Running resmod ***\n";
+    my $resmod = tool::resmod->new(
+        eval( $common_options::parameters ),
+        models => [ $self->model ],
+        dvid => $self->dvid,
+        idv => $self->idv,
+        dv => $self->dv,
+        occ => $self->occ,
+        groups => $self->groups,
+        iterative => 0,
+        directory => 'resmod_run',
+    );
+    $resmod->run();
 
     print "*** Running linearize ***\n";
     my $linearized_model_name = $self->model->filename;
