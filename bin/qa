@@ -45,11 +45,11 @@ exit unless $res;
 my %help_text;
 
 $help_text{Pre_help_message} = <<'EOF';
-  Quality control
+  Quality assurance
 EOF
     
 $help_text{Description} = <<'EOF';
-    Quality control
+    Quality assurance
 EOF
 
 $help_text{Examples} = <<'EOF';
