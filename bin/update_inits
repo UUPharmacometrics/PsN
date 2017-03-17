@@ -60,7 +60,8 @@ my %optional_options = (
  	"silent" => undef,
 	'rawres_input:s' => undef,
 	'offset_rawres:i' => undef,
-	'in_filter:s' => undef
+	'in_filter:s' => undef,
+    'etas!' => undef,
 	);
 
 my $res = GetOptions( \%options,
@@ -385,6 +386,14 @@ $help_text{-renumber} = <<'EOF';
 	Set option -renumber=0 to prevent automatic renumbering in $TABLE and $EST and $MSFI.
 EOF
 
+$help_text{-etas} = <<'EOF';
+-etas
+
+    Default not set
+
+    Add $ETAS to the model using the phi file of the model.
+    Also add the necessary MCETA=1 to $EST
+EOF
 
 common_options::online_help('update_inits', \%options, \%help_text, \%required_options, \%optional_options);
 common_options::setup( \%options, 'update_inits' ); #calls set_globals etc, initiates random sequence, sets nm_version
@@ -628,6 +637,12 @@ if (defined $options{'from_model'}) {
 									 update_fix => $update_fix );
 	}
 }
+
+if ($options{'etas'}) {
+    my $added_phi = $model_copy->init_etas();
+    print "Added $added_phi to \$ETAS\n";
+}
+
 $model_copy -> filename( $outfile );
 
 if ( $options{'cholesky'} ){

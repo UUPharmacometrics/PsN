@@ -37,7 +37,7 @@ my %optional_options = ( "predict_data:s" => undef,
 			 "wintail_command:s" => undef,
 			 "copy_data!"=>undef,
              "boxcox!" => undef,
-             "eta!" => undef,
+             "etas!" => undef,
 			 );
 
 my $res = GetOptions( \%options,
@@ -195,8 +195,8 @@ $help_text{-boxcox} = <<'EOF';
     on models with multiple $PROBLEMs
 EOF
 
-$help_text{-eta} = <<'EOF';
-    -eta
+$help_text{-etas} = <<'EOF';
+    -etas
     
     If available use the phi-file of the previous run as initial estimates
     for the etas. The phi-file will be used in $ETAS.
@@ -278,8 +278,8 @@ foreach my $model_name (@ARGV) {
         $model->boxcox_etas();
     }
 
-    if ($options{'eta'}) {
-        $model->init_etas();
+    if ($options{'etas'}) {
+        $model->init_etas(phi_from_base => 1);
     }
 
 	push( @{$models_array}, $model );

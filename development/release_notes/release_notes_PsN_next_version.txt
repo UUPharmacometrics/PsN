@@ -121,7 +121,7 @@ ___common_options___
    ___execute___
 
 - New option -boxcox to automatically boxcox transform all ETAs before running the model
-- New option -eta to automatically add eta starting values from the previous phi-file
+- New option -etas to automatically add eta starting values from the previous phi-file
 
    ___runrecord___
 
@@ -247,6 +247,7 @@ ___boot_scm___
    ___update_inits___
 
 -  New options -rawres_input, -in_filter, -offset_rawres to read parameter estimates from a raw results file.
+-  New option -etas to add $ETAS and MCETA=1 to the model file using the phi-file
 -  Bug fix: renumber MSFO=file in $NONPARAMETRIC
 
    ___parallel_retries___

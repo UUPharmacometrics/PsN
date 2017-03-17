@@ -5441,28 +5441,41 @@ sub boxcox_etas
 sub init_etas
 {
     my $self = shift;
-    my $based_on = $self->annotation->get_based_on();
-    if (defined $based_on) {
-        my $phi_name = "run$based_on.phi";
-        if (-e $phi_name) {
-            $self->set_records(type => 'etas', record_strings => [ "FILE=$phi_name" ]);
-            if (not defined $self->extra_files) {
-                $self->extra_files([]);
-            }
-            push @{$self->extra_files}, $phi_name;
-            $self->add_option(
-                record_name => 'estimation',
-                option_name => 'MCETA',
-                option_value => ( '1' ), 
-                add_record => 0,
-            );
+	my %parm = validated_hash(\@_,
+        phi_from_base => { isa => 'Str', default => 0 },        # Should we use the phi-file from the base model? If not use the current phi-file
+    );
+	my $phi_from_base = $parm{'phi_from_base'};
+
+    my $phi_name;
+
+    if ($phi_from_base) {
+        my $based_on = $self->annotation->get_based_on();
+        if (defined $based_on) {
+           $phi_name = "run$based_on.phi";
         } else {
-            print "Warning: the phi file $phi_name does not exist. Option -eta skipped\n";
+            print "Warning: the model " . $self->filename . " wasn't based on any other model. Option -etas skipped\n";
         }
     } else {
-        print "Warning: the model " . $self->filename . " wasn't based on any other model. Option -eta skipped\n";
+        $phi_name = utils::file::replace_extension($self->filename, 'phi'); 
     }
 
+    if (-e $phi_name) {
+        $self->set_records(type => 'etas', record_strings => [ "FILE=$phi_name" ]);
+        if (not defined $self->extra_files) {
+            $self->extra_files([]);
+        }
+        push @{$self->extra_files}, $phi_name;
+        $self->add_option(
+            record_name => 'estimation',
+            option_name => 'MCETA',
+            option_value => ( '1' ), 
+            add_record => 0,
+        );
+    } else {
+        print "Warning: the phi file $phi_name does not exist. Option -etas skipped\n";
+    }
+
+    return $phi_name;
 }
 
 sub find_input_column
