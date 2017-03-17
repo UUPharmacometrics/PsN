@@ -122,6 +122,18 @@ sub modelfit_analyze
     my $self = shift;
 }
 
+sub create_R_plots_code
+{
+	my $self = shift;
+	my %parm = validated_hash(\@_,
+        rplot => { isa => 'rplots', optional => 0 }
+    );
+	my $rplot = $parm{'rplot'};
+
+	$rplot->pdf_title('Quality assurance');
+}
+
+
 no Moose;
 __PACKAGE__->meta->make_immutable;
 1;

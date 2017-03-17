@@ -1,0 +1,6 @@
+---
+title: "Quality assurance"
+output: pdf_document
+classoption: landscape
+geometry: margin=1.5cm
+---
