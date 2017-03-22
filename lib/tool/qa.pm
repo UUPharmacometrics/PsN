@@ -80,7 +80,7 @@ sub modelfit_setup
     unlink("boxcox.mod");
 
     if (defined $self->covariates) {
-        print "*** Running FREM ***\n";
+        print "\n*** Running FREM ***\n";
         my $frem_model = model->new(filename => $linearized_model_name);
         my $frem = tool::frem->new(
             eval($common_options::parameters),
@@ -94,7 +94,7 @@ sub modelfit_setup
         $frem->run();
     }
 
-    print "*** Running cdd ***\n";
+    print "\n*** Running cdd ***\n";
     my $cdd_model = model->new(filename => $linearized_model_name);
     my $cdd = tool::cdd->new(
         eval($common_options::parameters),
@@ -104,15 +104,14 @@ sub modelfit_setup
     );
     $cdd->run();
 
-    print "*** Running simeval ***\n";
+    print "\n*** Running simeval ***\n";
     my $simeval_model = model->new(filename => $linearized_model_name);
     my $simeval = tool::simeval->new(
         eval($common_options::parameters),
         models => [ $simeval_model ],
         rplots => 1,
-        lst_file => "pheno_linbase.lst",
         n_simulation_models => 5,
-        directory => "simeval_dir",
+        directory => "simeval_run",
     );
     $simeval->run();
 }
