@@ -1,7 +1,15 @@
 i_ofv_res <- function(all.iofv.file,n.subjects,samples,show.warning=TRUE) {
-
+  
   # iOFV RES
   all.iOFV_sim <- read.csv(all.iofv.file)
+  
+  # get sample size and number of subjects from the data frame dimentions
+  if (missing(samples)) {
+    samples <- ncol(all.iOFV_sim)-2
+  }
+  if (missing(n.subjects)) {
+    n.subjects <- nrow(all.iOFV_sim)
+  }
   
   # delete individuals with all 0 values (save ID numbers with deleted individuals)
   deleted_rows <- c()
