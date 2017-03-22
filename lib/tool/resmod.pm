@@ -52,7 +52,7 @@ sub BUILD
         my @columns = ( 'ID', $self->idv, $self->dv );
         my $cwres_table = $self->model->problems->[0]->find_table(columns => \@columns, get_object => 1);
         if (not defined $cwres_table) {
-            die "Error original model has no table containing ID, IDV and " . $self->dv. "\n";
+            die "Error original model has no table containing ID, " .$self->idv ." and " . $self->dv. "\n";
         }
         my $cwres_table_name = $self->model->problems->[0]->find_table(columns => \@columns);
         my $table = nmtablefile->new(filename => $model->directory . $cwres_table_name); 

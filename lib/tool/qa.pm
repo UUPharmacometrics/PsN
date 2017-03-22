@@ -36,18 +36,65 @@ sub modelfit_setup
 	my $self = shift;
 
     print "*** Running resmod ***\n";
-    my $resmod = tool::resmod->new(
-        %{common_options::restore_options(@common_options::tool_options)},
-        models => [ $self->model ],
-        dvid => $self->dvid,
-        idv => $self->idv,
-        dv => $self->dv,
-        occ => $self->occ,
-        groups => $self->groups,
-        iterative => 0,
-        directory => 'resmod_run',
-    );
-    $resmod->run();
+    my $resmod_idv;
+    eval {
+        $resmod_idv = tool::resmod->new(
+            %{common_options::restore_options(@common_options::tool_options)},
+            models => [ $self->model ],
+            dvid => $self->dvid,
+            idv => $self->idv,
+            dv => $self->dv,
+            occ => $self->occ,
+            groups => $self->groups,
+            iterative => 0,
+            directory => 'resmod_idv',
+        );
+    };
+    if (not $@) {
+        $resmod_idv->run();
+    } else {
+        rmdir "resmod_idv";
+    }
+
+    my $resmod_tad;
+    eval {
+        $resmod_tad = tool::resmod->new(
+            %{common_options::restore_options(@common_options::tool_options)},
+            models => [ $self->model ],
+            dvid => $self->dvid,
+            idv => 'TAD',
+            dv => $self->dv,
+            occ => $self->occ,
+            groups => $self->groups,
+            iterative => 0,
+            directory => 'resmod_TAD',
+        );
+    };
+    if (not $@) {
+        $resmod_tad->run();
+    } else {
+        rmdir 'resmod_TAD';
+    }
+
+    my $resmod_pred;
+    eval {
+        $resmod_pred = tool::resmod->new(
+            %{common_options::restore_options(@common_options::tool_options)},
+            models => [ $self->model ],
+            dvid => $self->dvid,
+            idv => 'PRED',
+            dv => $self->dv,
+            occ => $self->occ,
+            groups => $self->groups,
+            iterative => 0,
+            directory => 'resmod_PRED',
+        );
+    };
+    if (not $@) {
+        $resmod_pred->run();
+    } else {
+        rmdir 'resmod_PRED';
+    }
 
     my $model_copy = $self->model->copy(filename => $self->model->filename );
     print "*** Running linearize ***\n";
