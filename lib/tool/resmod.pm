@@ -166,6 +166,9 @@ sub modelfit_setup
             $row =~ s/<cwrestablename>/$cwres_table_name/g;
             $row =~ s/<dvidaccept>/$accept/g;
             my $idv = $self->idv;
+            if ($idv eq 'PRED') {
+                $idv = 'PPRD';
+            }
             $row =~ s/<idv>/$idv/g;
         }
 
@@ -531,6 +534,7 @@ sub _create_input
 				$name = 'DROP' if ($name eq 'IPRED' and not $ipred);
 				$name = 'DROP' if ($name eq $occ_name and not $occ);
                 $name = 'DROP' if ($name eq 'TIME' and $self->idv ne 'TIME' and not $time);
+                $name = 'PPRD' if ($name eq 'PRED' and $self->idv eq 'PRED');
                 $input_columns .= $name;
                 $found = 1;
                 last;
@@ -976,14 +980,14 @@ our @residual_models =
 			'END IF',
 			'IF(NEWL2==1) THEN',
 			'  I=I+1',
-			'  T1(I)=<idv>',
+			'  T1(I)=TIME',
 			'  IF(OID.EQ.ID.AND.OOCC.NE.OCC)THEN',
 			'    L=I',
 			'    OOCC=OCC',
 			'  END IF',
 			'  J=L',
 			'  DO WHILE (J<=I)',
-			'    CORRL2(J,1) = EXP((-0.6931/THETA(2))*(<idv>-T1(J)))',
+			'    CORRL2(J,1) = EXP((-0.6931/THETA(2))*(TIME-T1(J)))',
 			'    J=J+1',
 			'  ENDDO',
 			'ENDIF',

@@ -88,7 +88,8 @@ EOF
 $help_text{-idv} = <<'EOF';
       -idv
 
-      Name of the independent variable. TIME is default.
+      Name of the independent variable. Set to TIME by default. If set to PRED
+      PsN will rename it appropriately so that it can be used in \$INPUT.
 EOF
 
 $help_text{-dv} = <<'EOF';
