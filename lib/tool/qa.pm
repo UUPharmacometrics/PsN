@@ -37,7 +37,7 @@ sub modelfit_setup
 
     print "*** Running resmod ***\n";
     my $resmod = tool::resmod->new(
-        eval( $common_options::parameters ),
+        %{common_options::restore_options(@common_options::tool_options)},
         models => [ $self->model ],
         dvid => $self->dvid,
         idv => $self->idv,
@@ -49,13 +49,14 @@ sub modelfit_setup
     );
     $resmod->run();
 
+    my $model_copy = $self->model->copy(filename => $self->model->filename );
     print "*** Running linearize ***\n";
     my $linearized_model_name = $self->model->filename;
     $linearized_model_name =~ s/(\.[^.]+)$/_linbase.mod/;
 
     my $linearize = tool::linearize->new(
-        eval($common_options::parameters),
-        models => [ $self->model ],
+        %{common_options::restore_options(@common_options::tool_options)},
+        models => [ $model_copy ],
         full_block => 1,
         directory => 'linearize_run',
     );
@@ -72,7 +73,7 @@ sub modelfit_setup
     my $boxcox_model = $linearized_model->copy(filename => "boxcox.mod");
     $boxcox_model->boxcox_etas();
     my $modelfit = tool::modelfit->new(
-        eval($common_options::parameters),
+        %{common_options::restore_options(@common_options::tool_options)},
         models => [ $boxcox_model ],
         directory => 'boxcox_run',
     );
@@ -83,7 +84,7 @@ sub modelfit_setup
         print "\n*** Running FREM ***\n";
         my $frem_model = model->new(filename => $linearized_model_name);
         my $frem = tool::frem->new(
-            eval($common_options::parameters),
+            %{common_options::restore_options(@common_options::tool_options)},
             models => [ $frem_model ],
             covariates => [ split(',', $self->covariates) ],
             directory => 'frem_run',
@@ -92,12 +93,15 @@ sub modelfit_setup
             rplots => 1,
         ); 
         $frem->run();
-    }
 
+        print "\n*** Running scm ***\n";
+        $self->_create_scm_config();
+        system("scm config.scm");       # FIXME: cheating for now
+    }
     print "\n*** Running cdd ***\n";
     my $cdd_model = model->new(filename => $linearized_model_name);
     my $cdd = tool::cdd->new(
-        eval($common_options::parameters),
+        %{common_options::restore_options(@common_options::tool_options)},
         models => [ $cdd_model ],
         directory => 'cdd_run',
         rplots => 1,
@@ -107,7 +111,7 @@ sub modelfit_setup
     print "\n*** Running simeval ***\n";
     my $simeval_model = model->new(filename => $linearized_model_name);
     my $simeval = tool::simeval->new(
-        eval($common_options::parameters),
+        %{common_options::restore_options(@common_options::tool_options)},
         models => [ $simeval_model ],
         rplots => 1,
         n_simulation_models => 5,
@@ -119,6 +123,44 @@ sub modelfit_setup
 sub modelfit_analyze
 {
     my $self = shift;
+}
+
+sub _create_scm_config
+{
+    my $self = shift;
+    open my $fh, '>', 'config.scm';
+
+	my $model_name = $self->model->full_name();
+	my $covariates = $self->covariates;
+
+my $content = <<"END";
+model=$model_name
+
+directory=scm_run
+
+search_direction=forward
+linearize=1
+foce=1
+
+p_forward=0.05
+max_steps=1
+;p_backward=0.01
+
+continuous_covariates=$covariates
+
+do_not_drop=$covariates
+
+
+[test_relations]
+CL=$covariates
+V=$covariates
+
+[valid_states]
+continuous = 1,4
+categorical = 1,2
+END
+	print $fh $content;
+    close $fh;
 }
 
 sub create_R_plots_code
