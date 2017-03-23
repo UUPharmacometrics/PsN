@@ -31,6 +31,7 @@ has 'numdvid' => ( is => 'rw', isa => 'Int' );
 has 'iterative' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'max_iterations' => ( is => 'rw', isa => 'Int' );       # Inf if undef
 has 'best_models' => ( is => 'rw', isa => 'ArrayRef', default => sub { [] } );
+has 'table' => ( is => 'rw', isa => 'nmtable' );
 
 has 'top_level' => ( is => 'rw', isa => 'Bool', default => 1 );     # Is this the top level resmod object
 has 'current_dvid' => ( is => 'rw', isa => 'Int', default => 0 );             # Index of the current DVID. if don't have dvid = 0
@@ -59,6 +60,11 @@ sub BUILD
         my @columns_in_table = @{$cwres_table->columns()};
         my $have_dvid = grep { $_ eq $self->dvid } @columns_in_table;
 
+        my %table_header = %{$table->tables->[0]->header};
+        if (not (exists $table_header{'ID'} and exists $table_header{$self->idv} and exists $table_header{$self->dv})) {
+            die "Error original model has no table containing ID, " .$self->idv ." and " . $self->dv. "\n";
+        }
+        $self->table($table->tables->[0]);
         $self->_create_model_templates(table => $table, idv_column => $self->idv); 
 
         if ($have_dvid) {
@@ -99,6 +105,7 @@ sub modelfit_setup
                 current_dvid => $i,
                 base_sum => $self->base_sum,
                 max_iterations => $self->max_iterations,
+                table => $self->table,
             );
             $resmod->run();
         }
@@ -144,7 +151,7 @@ sub modelfit_setup
 	my @models_to_run;
     for my $model_properties (@{$self->model_templates}) {
         my $input_columns = $self->_create_input(
-            table => $cwres_table,
+            table => $self->table,
             columns => \@columns,
             ipred => 1,     # Always add ipred to be able to pass it through to next iteration if needed
             occ => $model_properties->{'need_occ'},
@@ -194,7 +201,7 @@ sub modelfit_setup
 
     if ($self->numdvid > 1 and $self->current_dvid == 0 and $self->iteration == 0) {     # Only start the L2 model once
     	my $input_columns = $self->_create_input(
-			table => $cwres_table,
+			table => $self->table,
 			columns => \@columns,
 		);
 
@@ -392,6 +399,7 @@ sub modelfit_analyze
             current_dvid => $self->current_dvid,
             base_sum => $self->base_sum,
             max_iterations => $self->max_iterations,
+            table => $self->table,
         );
         $resmod->run();
     }
@@ -505,7 +513,7 @@ sub _create_input
     my $self = shift;
 	# Create $INPUT string from table
 	my %parm = validated_hash(\@_,
-		table => { isa => 'model::problem::table' },
+		table => { isa => 'nmtable' },
 		columns => { isa => 'ArrayRef' },
 		ipred => { isa => 'Bool', default => 1 },		# Should ipred be included if in columns?
 		occ => { isa => 'Bool', default => 1 },			# Should occ be included if in columns?
@@ -522,9 +530,7 @@ sub _create_input
 	my $input_columns;
 	my @found_columns;
 
-    my $table_columns = $table->columns();
-
-	for my $col (@{$table_columns}) {
+	for my $col (@{$table->header_array()}) {
 		my $found = 0; 
 		for (my $i = 0; $i < scalar(@columns); $i++) {
             if ($col eq $columns[$i] and not $found_columns[$i]) {
