@@ -101,6 +101,7 @@ sub modelfit_setup
     my $linearized_model_name = $self->model->filename;
     $linearized_model_name =~ s/(\.[^.]+)$/_linbase.mod/;
 
+    ui->category('linearize');
     my $linearize = tool::linearize->new(
         %{common_options::restore_options(@common_options::tool_options)},
         models => [ $model_copy ],
@@ -110,7 +111,7 @@ sub modelfit_setup
 
     $linearize->run();
     $linearize->print_results();
-    # FIXME: model is garbled here
+    ui->category('qa');
 
     my $linearized_model = model->new(
         filename => $linearized_model_name,
