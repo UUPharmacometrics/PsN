@@ -1464,14 +1464,26 @@ sub modelfit_setup
 					defined $self -> base_criteria_values -> {'ofv'})) {
 				$self -> base_criteria_values -> {'ofv'} = $start_ofv;
 			}
-#override if update_derivatives, set even if old value defined
-#	  we always reestimate included, so should not need to set derivatives ofv as linearized base
+            #override if update_derivatives, set even if old value defined
+            #	  we always reestimate included, so should not need to set derivatives ofv as linearized base
 			if ($self->linearize()){
 				my $ofv = sprintf("%12.5f",$start_ofv);
 				open( LOG, ">>".$self -> logfile -> [$model_number-1] );
 				if ($self->update_derivatives() and $self->step_number()>1){
 					print LOG "The $ofvname of the updated linearized base model:$ofv        $start_name\n";
-				}else{
+				} else {
+                    if ($self->from_linearize) {
+                        my $initial_ofv;
+                        my $ofv_path = $start_model->outputs->[0]->get_single_value(attribute => 'ofvpath');
+                        if (defined $ofv_path) {
+                            $initial_ofv = $ofv_path->[0];
+                        }
+                        if (defined $initial_ofv) {
+				            my $initial_ofv = sprintf("%12.5f", $initial_ofv);
+                            ui->print(category => 'linearize',
+                                message => "\nThe $ofvname of the linearized base model before estimation:$initial_ofv\n");
+                        }
+                    }
 					print LOG "The $ofvname of the linearized base model:$ofv        $start_name\n";
 					ui -> print(category => 'linearize',
 						message =>"\nThe $ofvname of the linearized base model:$ofv        $start_name\n");
