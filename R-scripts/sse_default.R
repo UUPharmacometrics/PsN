@@ -10,17 +10,6 @@ diagnostics <- rplots.level>1 		# should diagnostics be created
 # end of user options
 options(stringsAsFactors = FALSE)
 
-#parametric power estimation function
-ppe <- function(dofvs, df=1){
-  dofvs <- dofvs[dofvs>0]
-  opt.fun<-function(ncp)-sum(dchisq(dofvs,df,ncp,log=T))
-  init <- mean(dofvs)-df
-  fit <- optim(par=init, fn=opt.fun, lower=0, method="L-BFGS-B")
-  ncp <- fit$par
-  power <- pchisq(qchisq(1-alpha,df=df,ncp=0),df=df,ncp=ncp,lower.tail=F)
-  return(list(power=power, ncp=ncp))
-}
-
 # this function does the actual parameter estimation, it will estimate ncp & df parameters
 # if they are set to NA
 chi_square_est <- function(dofvs, ncp = NA, df=1){
@@ -76,41 +65,37 @@ param_boot_ppe <- function(ncp, nmc_samples, df=1, n.boot=1000, value="ncp",
   }
 }
 
+# the script performs type I error assessment if the simulation model has the suffix _base/_reduced/_red/_r
+type_1 <- grepl("_(base|r|red|reduced)",model.filename)
 
-# construct full reduced pairs based on models provided
-model_names_indicies <- regexpr(".*(?=\\..*)", model.file.names, perl = T)
-model_names <- substr(model.file.names, model_names_indicies, model_names_indicies+attr(model_names_indicies, "match.length")-1)
-
-reduced_pattern <- ifelse(grepl("_(f|full)$", model_names), 
-                          gsub("_(f|full)$","_(r|red|reduced)\\\\d*",model_names),
-                          paste0(model_names, "_(r|red|reduced)\\d*")) 			 
-
+# default for matching during a power assessment is to take the first estimated model as the full and all 
+# other models as alternatives for a reduced model
+# during a type 1 error assessment the first estimated model is taken to be the reduced model and all
+# other models as alternatives for the full model
+pair_indicies <- data.frame(full = 1, red = 2:length(model.file.names))
+if(type_1) colnames(pair_indicies) <- rev(colnames(pair_indicies))
+# this pairing by position can be overwritten by adhering to the following naming convention 
+# full model: name_full,name_f,name_est,name reduced model: name_reduced, name_red, name_r, name_base
+model_names <- tools::file_path_sans_ext(model.file.names)
+reduced_pattern <- ifelse(grepl("_(f|full|est)$", model_names), 
+                          gsub("_(f|full|est)$","_(r|red|reduced|base)\\\\d*",model_names),
+                          paste0(model_names, "_(r|red|reduced|base)\\d*")) 			 
 reduced_matches <- sapply(reduced_pattern, grepl, x=model_names, USE.NAMES = F)
 
 if(any(reduced_matches)){
-  order_matching <- F
-  #matching based on filename
-  comb_index <- which(reduced_matches, arr.ind = T)
-  
-}else{
-  #matching based on order
-  order_matching <- T
-  comb_index <- matrix(seq_len(length(model.file.names)%/%2*2), ncol=2, byrow = T,dimnames = list(NULL, c("col","row")))
+  # matching based on filename
+  matched_pair_indicies <- which(reduced_matches, arr.ind = T)
+  colnames(matched_pair_indicies) <- c("red", "full")
+  pair_indicies <- subset(pair_indicies, !(red %in% matched_pair_indicies | full %in% matched_pair_indicies))
+  pair_indicies <- rbind(pair_indicies, matched_pair_indicies)
 }
 
-model_pairs <- data.frame(full=model.rawres.names[comb_index[,"col"]],
-                          full_mod=model_names[comb_index[,"col"]],
-                          red=model.rawres.names[comb_index[,"row"]],
-                          red_mod=model_names[comb_index[,"row"]],
-                          subjects=model.subjects[comb_index[,"col"]],
-                          df=model.estimated.params[comb_index[,"col"]]-model.estimated.params[comb_index[,"row"]])
-
-if(order_matching && any(model_pairs$df<0)){
-  temp <- model_pairs[,c("full", "full_mod")]
-  model_pairs[,c("full", "full_mod")] <- model_pairs[,c("red","red_mod")]
-  model_pairs[,c("red","red_mod")] <- temp
-  model_pairs$df <- -model_pairs$df
-}
+model_pairs <- data.frame(full=model.rawres.names[pair_indicies[,"full"]],
+                          full_mod=model_names[pair_indicies[,"full"]],
+                          red=model.rawres.names[pair_indicies[,"red"]],
+                          red_mod=model_names[pair_indicies[,"red"]],
+                          subjects=model.subjects[pair_indicies[,"full"]],
+                          df=model.estimated.params[pair_indicies[,"full"]]-model.estimated.params[pair_indicies[,"red"]])
 
 if(nrow(model_pairs)==0) stop("No valid model pair provided!")
 
@@ -124,8 +109,6 @@ dofvs_df <- ddply(model_pairs, names(model_pairs), function(model_pair){
   names(ofv_reduced) <- c("SIM", "RED")
   combined <- merge(ofv_full, ofv_reduced, all.x=T)
   delta_ofvs <- with(combined, RED-FULL)
-  type_1 <- F
-  if(median(delta_ofvs)<0) type_1 <- T
   if(remove_na_dofvs) delta_ofvs <- delta_ofvs[!is.na(delta_ofvs)]
   data.frame(dofv=delta_ofvs, 
              name=sprintf("%s vs. %s (%i DF)", model_pair[1,"full_mod"], model_pair[1,"red_mod"],model_pair[1,"df"]),
@@ -134,14 +117,14 @@ dofvs_df <- ddply(model_pairs, names(model_pairs), function(model_pair){
 
 
 est_results <- plyr::ddply(dofvs_df, .(name), function(dofv_df){
+  n_negative <- sum(dofv_df$dofv<0) 
   if(dofv_df$type_1[1]){
     parameter <- "df"
-    dofv_df$dofv <- -dofv_df$dofv
     est_results <- df_est(dofv_df$dofv)
     estimate <- est_results[[parameter]]
     prob <- est_results$type_1
     bootstrap_ci <- param_boot_ppe(ncp = 0, 
-                                   nmc_samples = nrow(dofv_df), 
+                                   nmc_samples = nrow(dofv_df)-n_negative, 
                                    df = estimate, value = parameter)  
     max_subjects <- NA
   }else{
@@ -149,7 +132,7 @@ est_results <- plyr::ddply(dofvs_df, .(name), function(dofv_df){
     est_results <- ppe(dofv_df$dofv)
     estimate <- est_results[[parameter]]
     bootstrap_ci <- param_boot_ppe(ncp = estimate, 
-                                   nmc_samples = nrow(dofv_df), 
+                                   nmc_samples = nrow(dofv_df)-n_negative, 
                                    df = dofv_df$df[1], value = parameter)
     prob <- est_results$power
     # determine range for sample size curves
@@ -159,10 +142,6 @@ est_results <- plyr::ddply(dofvs_df, .(name), function(dofv_df){
                    pred.n.subjects=n_subjects)-max_power,
       lower=0, upper=2*max_power/prob*dofv_df$subjects[1], extendInt="upX", tol=0.01)$root
   }
-  n_negative <- sum(dofv_df$dofv<0) 
-  # estimate df parameter
-  # calculate df CI using parametric bootstrap
-  
   data.frame(df  = dofv_df$df[1], subjects = dofv_df$subjects[1],
              samples = nrow(dofv_df), n_negative = n_negative, max_dofv = max(dofv_df$dofv),
              type_1 = alpha, prob = prob, max_subjects = max_subjects,
@@ -185,11 +164,23 @@ power_curves <- ddply(subset(est_results, parameter=="ncp"), .(name), function(d
 })
 
 output_table <- plyr::ddply(est_results, .(), function(df)
-  data.frame(Comparison=df$name, 
-             `#dOFV` = df$samples,
-             `#(dOFV<0)` = df$n_negative,
-             Parameter=df$parameter,
-             `Estimate [CI]` = sprintf("%.1f [%.1f-%.1f]", df$estimate, df$ci_lower, df$ci_upper), check.names = F))
+  if(type_1){
+    data.frame(Comparison=df$name, 
+               `#dOFV` = df$samples,
+               `#(dOFV<0)` = df$n_negative,
+               `df [CI]` = sprintf("%.1f [%.1f-%.1f]", df$estimate, df$ci_lower, df$ci_upper),
+               `Type-I` = round(df$prob*100,1),
+               check.names = F)    
+  }else{
+    data.frame(Comparison=df$name, 
+               `#dOFV` = df$samples,
+               `#(dOFV<0)` = df$n_negative,
+               Parameter=df$parameter,
+               `ncp [CI]` = sprintf("%.1f [%.1f-%.1f]", df$estimate, df$ci_lower, df$ci_upper),
+               `Power` = round(df$prob*100,1),
+               check.names = F)
+  }
+)
 output_table$`.id` <- NULL
 
 pdf(pdf.filename)
@@ -213,9 +204,6 @@ if(nrow(power_curves)){
 if(diagnostics){
   
   diag_curves <- ddply(est_results, .(name), function(dofv_df){
-    # estimate ncp parameter
-    #ppe_results <- ppe(dofv_df$dofv, dofv_df$df[1])
-    #ncp_ci <- param_boot_ppe(ppe_results$ncp, length(dofv_df$dofv), df=dofv_df$df[1], sum.fun.args = list(probs=c(0.025,0.975)))
     grid <- seq(0, dofv_df$max_dofv[1], length=100)
     fun <- switch(dofv_df$parameter,
                   ncp = function(est) pchisq(grid, df=dofv_df$df[1], ncp=est),
@@ -226,13 +214,13 @@ if(diagnostics){
   
   d_ply(diag_curves,.(name),function(diag_df){
     dofvs_df <- subset(dofvs_df, name==diag_df$name[1])
-    if(diag_df$parameter[1]=="df") dofvs_df <- transform(dofvs_df, dofv=-dofv)
+    #if(diag_df$parameter[1]=="df") dofvs_df <- transform(dofvs_df, dofv=-dofv)
     p <- ggplot()+
       geom_ribbon(data=diag_df, mapping=aes(x=quantile,  ymin=prob_low, ymax=prob_high),fill="lightgray")+
       geom_line(data=diag_df, mapping=aes(x=quantile,  y=prob),linetype="dashed", size=1)+
       stat_ecdf(data=dofvs_df, aes(dofv), geom="step", colour="darkred", size=1)+
-      scale_x_continuous("Quantile")+
-      scale_y_continuous("Probability", labels=function(breaks) paste0(breaks*100,"%"))+
+      scale_x_continuous("dOFV")+
+      scale_y_continuous("Cumulative Probability", labels=function(breaks) paste0(breaks*100,"%"))+
       ggtitle(sprintf("Diagnostic: %s",diag_df$name[1]))
     
     print(p)
