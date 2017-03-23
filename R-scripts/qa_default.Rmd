@@ -4,3 +4,202 @@ output: pdf_document
 classoption: landscape
 geometry: margin=1.5cm
 ---
+
+
+```{r source_functions,include = FALSE}
+library(dplyr)
+library(knitr)
+source(paste0(rscripts.directory, "/cdd/create.data.full.R"))
+source(paste0(rscripts.directory, "/simeval/ofv.i_ofv_res.R"))
+```
+
+```{r getting_delta_ofv,results='hide',echo=FALSE}
+# Helping functions
+# get a ofv value from the raw_results.csv
+.get_rawres_ofv <- function(rawres_file, row = 1){
+  read.csv(rawres_file) %>%
+    slice(row) %>%
+    select(ofv) %>% 
+    as.numeric()
+}
+
+# get a ofv value from the ext file
+.get_ext_ofv <- function(ext_file){
+  read.table(ext_file,header=TRUE,skip=1,stringsAsFactors = F) %>%
+    filter(ITERATION==-1000000000) %>%
+    select(OBJ) %>% 
+    as.numeric()
+}
+
+
+
+
+
+
+# 5.Influential individuals (CDD)
+get_ii_table <- function(cdd_directory,cutoff){
+  data_full <- create.data.full(file.path(cdd_directory, "raw_results.csv"),
+                                file.path(cdd_directory, "skipped_individuals1.csv"))
+  cdd.data <- data_full$cdd.data.all
+  cdd.data <- cdd.data %>% select(c(ID,cdd.delta.ofv)) %>% slice(-1)
+  colnames(cdd.data) <- c("id", "dofv")
+  
+  #find negative delta ofv values, if exist
+  fail_ID <- c()
+  if (any(cdd.data$dofv < 0)) {
+    negat.delta.row <- which(cdd.data$dofv < 0)
+    fail_ID <- cdd.data$ID[negat.delta.row]
+    cdd.data <- cdd.data[-negat.delta.row,]
+  }
+  
+  # find influential individuals, where delta ofv values are bigger than cutoffs
+  if(any(cdd.data$dofv > cutoff)) {
+    ii_table <- subset(cdd.data,dofv > cutoff)
+  } else {
+    ii_table <- data.frame(id=NA,dofv=NA)
+  }
+
+  return(list(cdd.data=cdd.data,
+              ii_table=ii_table))
+}
+ii_list <- get_ii_table(cdd_directory=file.path(working.directory,"cdd_run"),cutoff=0.1)
+cdd.data <- ii_list$cdd.data
+ii_table <- ii_list$ii_table
+cdd.data[,2] <- round(as.numeric(cdd.data[,2]), 2)
+ii_table[,2] <- round(as.numeric(ii_table[,2]), 2)
+
+# 6.Outliers (Simeval)
+get_outlier_ids <- function(simeval_directory){
+  iofv_res <- i_ofv_res(file.path(simeval_directory, "raw_all_iofv.csv"))
+  outlier_ID <- iofv_res$outlier_ID
+  return(outlier_ID)
+}
+outlier_ids <- get_outlier_ids(simeval_directory=file.path(working.directory, "simeval_run"))
+if(length(outlier_ids)!=0) {
+  outliers_table <- cdd.data %>% filter(id %in% outlier_ids)
+  outliers_table[,2] <- round(as.numeric(outliers_table[,2]), 2)
+} else {
+  outliers_table <- data.frame(id=NA,dofv=NA)
+}
+
+
+# 3.Covariate Models
+  # 3.1.All (FREM)
+get_all_covariates <- function(frem_directory) {
+  ofv_frem_all_cov <- .get_rawres_ofv(file.path(frem_directory,"model2_modelfit_dir1/raw_results.csv"))
+  ofv_frem_no_cov <- .get_rawres_ofv(file.path(frem_directory,"model4_modelfit_dir1/raw_results.csv"))
+  dofv_frem <-  ofv_frem_no_cov - ofv_frem_all_cov
+  frem_table <- data.frame(relation = "ALL", dofv = dofv_frem)
+  return(frem_table)
+}
+frem_table <- get_all_covariates(frem_directory=file.path(working.directory,"frem_run"))
+frem_table[,2] <- round(as.numeric(frem_table[,2]), 2)
+
+ # 3.2.Covariate (SCM)
+.get_scm_table <- function(rawres_file){
+  scm_table <- read.csv(rawres_file,stringsAsFactors = F) %>%
+    mutate(dofv = ofv[step.number==0]-ofv) %>%
+    slice(-1) %>%
+    select(relation, dofv)
+
+  scm_table
+}
+scm_table <- .get_scm_table(file.path(working.directory,paste0("scm_run/raw_results_",mod.prefix,".csv")))
+scm_table[,2] <- round(as.numeric(scm_table[,2]), 2)
+covariates_table <- rbind(frem_table,scm_table[which.max(scm_table$dofv),])
+
+covariates_extra_table <- rbind(scm_table,c("sum(SCMu)",sum(scm_table[,2])),c("FREM",frem_table[,2]))
+colnames(covariates_extra_table) <- c("Covariate","dofv")
+
+# 2.Parameter Variability Models
+get_param_var_table <- function(linearize_directory,boxcox_directory,n.eta) {
+  linbase_ofv <- .get_ext_ofv(file.path(linearize_directory,"pheno_real_linbase.ext"))
+  linblock_ofv <- .get_rawres_ofv(file.path(linearize_directory,"modelfit_dir1/raw_results.csv"))
+  dofv_block <- linbase_ofv-linblock_ofv
+  linbox_ofv <- .get_rawres_ofv(file.path(boxcox_directory,"raw_results.csv"))
+  dofv_box <- linbase_ofv - linbox_ofv
+  par_var_models <- data.frame(models = c("Full OMEGA Block", "Box-Cox Transformation"), 
+                               dofv=c(dofv_block, dofv_box)
+                               )
+  
+  #get lambda values
+  boxcox_raw_results <- read.csv(file.path(boxcox_directory,"raw_results.csv"))
+  col_nr <- which(names(boxcox_raw_results)=="ofv")
+  lambdas <- boxcox_raw_results[1,c((col_nr+1):(col_nr+n.eta))]
+  boxcox_lambdas_table <- as.data.frame(array(0,c(length(lambdas),2)))
+  colnames(boxcox_lambdas_table) <- c("","Lambda")
+  for(i in 1:length(lambdas)) {
+    boxcox_lambdas_table[i,1] <- paste0("ETA(",i,")")
+    boxcox_lambdas_table[i,2] <- lambdas[i]
+  }
+  boxcox_lambdas_table <- rbind(boxcox_lambdas_table,c("dofv",dofv_box))
+  
+  return(list(par_var_models=par_var_models,
+              boxcox_lambdas_table=boxcox_lambdas_table))
+}
+list_par_var_models <- get_param_var_table(linearize_directory=file.path(working.directory,"linearize_run"),
+                                      boxcox_directory=file.path(working.directory,"boxcox_run"),
+                                      n.eta)
+par_var_models <- list_par_var_models$par_var_models
+par_var_models[,2] <- round(as.numeric(par_var_models[,2]), 2)
+boxcox_lambdas_table <- list_par_var_models$boxcox_lambdas_table
+boxcox_lambdas_table[,2] <- round(as.numeric(boxcox_lambdas_table[,2]), 2)
+  #get full omega block
+
+
+
+
+```
+
+#Overview
+1.Structural model
+
+2.Parameter Variability Model
+```{r overview1,echo=F,results='asis'}
+kable(par_var_models,format = 'markdown',row.names = F)
+```
+3.Covariates
+```{r overview2,echo=F,results='asis'}
+kable(covariates_table,format = 'markdown',row.names = F)
+```
+4.Residual Error Model
+
+5.Influential Individuals
+```{r overview3,echo=F,results='asis'}
+kable(ii_table[which.max(ii_table$dofv),],format = 'markdown',row.names = F)
+```
+6.Outliers
+```{r overview4,echo=F,results='asis'}
+kable(outliers_table[which.max(outliers_table$dofv),],format = 'markdown',row.names = F)
+```
+
+#Structural
+###TIME
+
+###TAD
+
+###PRED
+
+#Parameter Variability Model
+###Full OMEGA Block
+
+###Box-Cox Transformation
+```{r boxcox_tranformation,echo=F,results='asis'}
+kable(boxcox_lambdas_table,format = 'markdown',row.names = F)
+```
+
+#Covariates
+```{r covariates,echo=F,results='asis'}
+kable(covariates_extra_table,format = 'markdown',row.names = F)
+```
+
+#Residual Error Model
+
+#Influential Individuals
+```{r influential_individuals,echo=F,results='asis'}
+kable(ii_table[order(ii_table$dofv,decreasing = T),],format = 'markdown',row.names = F)
+```
+#Outliers
+```{r outliers,echo=F,results='asis'}
+kable(outliers_table[order(outliers_table$dofv,decreasing = T),],format = 'markdown',row.names = F)
+```
