@@ -51,7 +51,9 @@ sub modelfit_setup
         );
     };
     if (not $@) {
-        $resmod_idv->run();
+        eval {
+            $resmod_idv->run();
+        };
     } else {
         rmdir "resmod_idv";
     }
@@ -71,7 +73,9 @@ sub modelfit_setup
         );
     };
     if (not $@) {
-        $resmod_tad->run();
+        eval {
+            $resmod_tad->run();
+        };
     } else {
         rmdir 'resmod_TAD';
     }
@@ -91,7 +95,9 @@ sub modelfit_setup
         );
     };
     if (not $@) {
-        $resmod_pred->run();
+        eval {
+            $resmod_pred->run();
+        };
     } else {
         rmdir 'resmod_PRED';
     }
@@ -120,52 +126,62 @@ sub modelfit_setup
     print "*** Running boxcox transformed model ***\n";
     my $boxcox_model = $linearized_model->copy(filename => "boxcox.mod");
     $boxcox_model->boxcox_etas();
-    my $modelfit = tool::modelfit->new(
-        %{common_options::restore_options(@common_options::tool_options)},
-        models => [ $boxcox_model ],
-        directory => 'boxcox_run',
-    );
-    $modelfit->run();
+    eval {
+        my $modelfit = tool::modelfit->new(
+            %{common_options::restore_options(@common_options::tool_options)},
+            models => [ $boxcox_model ],
+            directory => 'boxcox_run',
+        );
+        $modelfit->run();
+    };
     unlink("boxcox.mod");
 
     if (defined $self->covariates) {
         print "\n*** Running FREM ***\n";
         my $frem_model = model->new(filename => $linearized_model_name);
-        my $frem = tool::frem->new(
-            %{common_options::restore_options(@common_options::tool_options)},
-            models => [ $frem_model ],
-            covariates => [ split(',', $self->covariates) ],
-            directory => 'frem_run',
-            rescale => 1, 
-            run_sir => 1, 
-            rplots => 1,
-        ); 
-        $frem->run();
+        eval {
+            my $frem = tool::frem->new(
+                %{common_options::restore_options(@common_options::tool_options)},
+                models => [ $frem_model ],
+                covariates => [ split(',', $self->covariates) ],
+                directory => 'frem_run',
+                rescale => 1, 
+                run_sir => 1, 
+                rplots => 1,
+            ); 
+            $frem->run();
+        };
 
         print "\n*** Running scm ***\n";
         $self->_create_scm_config();
-        system("scm config.scm");       # FIXME: cheating for now
+        eval {
+            system("scm config.scm");       # FIXME: cheating for now
+        };
     }
     print "\n*** Running cdd ***\n";
     my $cdd_model = model->new(filename => $linearized_model_name);
-    my $cdd = tool::cdd->new(
-        %{common_options::restore_options(@common_options::tool_options)},
-        models => [ $cdd_model ],
-        directory => 'cdd_run',
-        rplots => 1,
-    );
-    $cdd->run();
+    eval {
+        my $cdd = tool::cdd->new(
+            %{common_options::restore_options(@common_options::tool_options)},
+            models => [ $cdd_model ],
+            directory => 'cdd_run',
+            rplots => 1,
+        );
+        $cdd->run();
+    };
 
     print "\n*** Running simeval ***\n";
     my $simeval_model = model->new(filename => $linearized_model_name);
-    my $simeval = tool::simeval->new(
-        %{common_options::restore_options(@common_options::tool_options)},
-        models => [ $simeval_model ],
-        rplots => 1,
-        n_simulation_models => 5,
-        directory => "simeval_run",
-    );
-    $simeval->run();
+    eval {
+        my $simeval = tool::simeval->new(
+            %{common_options::restore_options(@common_options::tool_options)},
+            models => [ $simeval_model ],
+            rplots => 1,
+            n_simulation_models => 5,
+            directory => "simeval_run",
+        );
+        $simeval->run();
+    };
 }
 
 sub modelfit_analyze
