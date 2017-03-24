@@ -2637,16 +2637,6 @@ sub get_matrix
 			$new_matrix[$i][$j] = $old_matrix[$i+$diff][$j+$diff];
 		}
 	}
-	if (0){
-		print "\nold, $old_size:\n";
-		for (my $i=0; $i < $old_size; $i++){
-			print join("\t",@{$old_matrix[$i]})."\n";
-		}
-		print "new, $new_size:\n";
-		for (my $i=0; $i< scalar(@new_matrix); $i++){
-			print join("\t",@{$new_matrix[$i]})."\n";
-		}
-	}
 	unless ($new_matrix[$new_size-1][$new_size-1] > 0){
 		print "\n";
 		for (my $i=0; $i< scalar(@new_matrix); $i++){
