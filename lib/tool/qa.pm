@@ -58,6 +58,8 @@ sub modelfit_setup
         rmdir "resmod_idv";
     }
 
+    $self->_to_qa_dir();
+
     my $resmod_tad;
     eval {
         $resmod_tad = tool::resmod->new(
@@ -79,6 +81,7 @@ sub modelfit_setup
     } else {
         rmdir 'resmod_TAD';
     }
+    $self->_to_qa_dir();
 
     my $resmod_pred;
     eval {
@@ -101,6 +104,7 @@ sub modelfit_setup
     } else {
         rmdir 'resmod_PRED';
     }
+    $self->_to_qa_dir();
 
     my $model_copy = $self->model->copy(filename => $self->model->filename);
     $model_copy->phi_file($self->model->get_phi_file());
@@ -136,6 +140,7 @@ sub modelfit_setup
         );
         $modelfit->run();
     };
+    $self->_to_qa_dir();
 
     if (defined $self->covariates) {
         print "\n*** Running FREM ***\n";
@@ -152,12 +157,14 @@ sub modelfit_setup
             ); 
             $frem->run();
         };
+        $self->_to_qa_dir();
 
         print "\n*** Running scm ***\n";
         $self->_create_scm_config();
         eval {
             system("scm config.scm");       # FIXME: cheating for now
         };
+        $self->_to_qa_dir();
     }
     print "\n*** Running cdd ***\n";
     my $cdd_model = model->new(filename => $linearized_model_name);
@@ -170,6 +177,7 @@ sub modelfit_setup
         );
         $cdd->run();
     };
+    $self->_to_qa_dir();
 
     print "\n*** Running simeval ***\n";
     my $simeval_model = model->new(filename => $linearized_model_name);
@@ -183,6 +191,7 @@ sub modelfit_setup
         );
         $simeval->run();
     };
+    $self->_to_qa_dir();
 }
 
 sub modelfit_analyze
@@ -226,6 +235,13 @@ categorical = 1,2
 END
 	print $fh $content;
     close $fh;
+}
+
+sub _to_qa_dir
+{
+    my $self = shift;
+
+    chdir $self->directory;
 }
 
 sub create_R_plots_code
