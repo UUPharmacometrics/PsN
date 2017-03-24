@@ -102,11 +102,11 @@ sub modelfit_setup
         rmdir 'resmod_PRED';
     }
 
-    my $model_copy = $self->model->copy(filename => $self->model->filename );
+    my $model_copy = $self->model->copy(filename => $self->model->filename);
+    $model_copy->phi_file($self->model->get_phi_file());
     print "*** Running linearize ***\n";
     my $linearized_model_name = $self->model->filename;
     $linearized_model_name =~ s/(\.[^.]+)$/_linbase.mod/;
-
     ui->category('linearize');
     my $linearize = tool::linearize->new(
         %{common_options::restore_options(@common_options::tool_options)},

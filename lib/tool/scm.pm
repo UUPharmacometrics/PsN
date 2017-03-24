@@ -2111,11 +2111,10 @@ sub linearize_setup
 		$original_model->set_records(type => 'input', record_strings => \@inputstrings);
 
         if ($self->from_linearize) {
-            my $phi_file = $self->phi_file();
+            my $phi_file = $original_model->get_phi_file();
             if (defined $phi_file) {
                 $mceta = '1';
-                (undef, undef, my $filename) = File::Spec->splitpath($phi_file);
-                $original_model->set_records(type => 'etas', record_strings => [ "FILE=$filename" ]);
+                $original_model->set_records(type => 'etas', record_strings => [ "FILE=$phi_file" ]);
                 if (not defined $original_model->extra_files) {
                     $original_model->extra_files([]);
                 }
@@ -2633,22 +2632,6 @@ sub linearize_setup
 	} #end if first step or update derivatives
 
 	return $original_model;
-}
-
-sub phi_file
-{
-    # Return the name of the phi file of the original model or undef if non-existant
-    my $self = shift;
-    my $name = $self->basename;
-
-    $name =~ s/_linbase$/.phi/;
-    $name = "../../$name";
-
-    if (not -e $name) {
-        undef $name;
-    }
-
-    return $name;
 }
 
 sub modelfit_analyze

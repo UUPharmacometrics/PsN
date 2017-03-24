@@ -130,6 +130,7 @@ has 'missing_data_token' => ( is => 'rw', isa => 'Maybe[Int]', default => -99 );
 has 'last_est_complete' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'niter_eonly' => ( is => 'rw', isa => 'Maybe[Int]' );
 has 'annotation' => ( is => 'rw', isa => 'model::annotation' );
+has 'phi_file' => ( is => 'rw', isa => 'Str' );
 
 sub BUILD
 {
@@ -5495,6 +5496,26 @@ sub find_input_column
         );
         # We assume that there are no duplicate column names
         return $column_position->[0][0];
+    }
+
+    return $name;
+}
+
+sub get_phi_file
+{
+    # Get the full plath of phi file of this model
+    # The attribute phi_file will override in case there is a user specified phi file
+    my $self = shift;
+
+    if (defined $self->phi_file) {
+        return $self->phi_file;
+    }
+
+    my $name = $self->full_name;
+    $name = utils::file::replace_extension($name, 'phi');
+
+    if (not -e $name) {
+        undef $name;
     }
 
     return $name;
