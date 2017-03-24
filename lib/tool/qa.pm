@@ -123,11 +123,12 @@ sub modelfit_setup
     );
 
     print "*** Running full omega block and boxcox model ***\n";
-    my $full_block_model = $linearized_model->copy(filename => "fullblock.mod");
-    $full_block_model->full_omega_block();
-    my $boxcox_model = $linearized_model->copy(filename => "boxcox.mod");
-    $boxcox_model->boxcox_etas();
     eval {
+        my $full_block_model = $linearized_model->copy(filename => "fullblock.mod");
+        $full_block_model->full_omega_block();
+        my $boxcox_model = $linearized_model->copy(filename => "boxcox.mod");
+        $boxcox_model->boxcox_etas();
+
         my $modelfit = tool::modelfit->new(
             %{common_options::restore_options(@common_options::tool_options)},
             models => [ $full_block_model, $boxcox_model ],
