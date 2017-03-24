@@ -5521,6 +5521,27 @@ sub get_phi_file
     return $name;
 }
 
+sub full_omega_block
+{
+    # Replace all omegas into one big full block
+    my $self = shift;
+
+    my $omega_matrix = $self->problems->[0]->get_filled_omega_matrix(start_eta => 1);
+    my $size = @{$omega_matrix};
+    my @record_arr = ( "\$OMEGA BLOCK($size)" );
+    for (my $i = 0; $i < $size; $i++) {
+        my $row = "";
+        for (my $j = 0; $j <= $i; $j++) {
+            $row .= $omega_matrix->[$i]->[$j] . ' ';
+        }
+        push @record_arr, "$row\n";
+    }
+
+    my $omega = model::problem::omega->new(record_arr => \@record_arr);
+    $self->problems->[0]->omegas([ $omega ]);
+}
+
+
 no Moose;
 __PACKAGE__->meta->make_immutable;
 1;

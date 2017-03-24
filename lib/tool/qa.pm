@@ -111,7 +111,6 @@ sub modelfit_setup
     my $linearize = tool::linearize->new(
         %{common_options::restore_options(@common_options::tool_options)},
         models => [ $model_copy ],
-        full_block => 1,
         directory => 'linearize_run',
     );
 
@@ -123,18 +122,19 @@ sub modelfit_setup
         filename => $linearized_model_name,
     );
 
-    print "*** Running boxcox transformed model ***\n";
+    print "*** Running full omega block and boxcox model ***\n";
+    my $full_block_model = $linearized_model->copy(filename => "fullblock.mod");
+    $full_block_model->full_omega_block();
     my $boxcox_model = $linearized_model->copy(filename => "boxcox.mod");
     $boxcox_model->boxcox_etas();
     eval {
         my $modelfit = tool::modelfit->new(
             %{common_options::restore_options(@common_options::tool_options)},
-            models => [ $boxcox_model ],
-            directory => 'boxcox_run',
+            models => [ $full_block_model, $boxcox_model ],
+            directory => 'modelfit_run',
         );
         $modelfit->run();
     };
-    unlink("boxcox.mod");
 
     if (defined $self->covariates) {
         print "\n*** Running FREM ***\n";
