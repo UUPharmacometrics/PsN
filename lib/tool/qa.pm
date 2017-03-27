@@ -35,77 +35,6 @@ sub modelfit_setup
 {
 	my $self = shift;
 
-    print "*** Running resmod ***\n";
-    my $resmod_idv;
-    eval {
-        $resmod_idv = tool::resmod->new(
-            %{common_options::restore_options(@common_options::tool_options)},
-            models => [ $self->model ],
-            dvid => $self->dvid,
-            idv => $self->idv,
-            dv => $self->dv,
-            occ => $self->occ,
-            groups => $self->groups,
-            iterative => 0,
-            directory => 'resmod_idv',
-        );
-    };
-    if (not $@) {
-        eval {
-            $resmod_idv->run();
-        };
-    } else {
-        rmdir "resmod_idv";
-    }
-
-    $self->_to_qa_dir();
-
-    my $resmod_tad;
-    eval {
-        $resmod_tad = tool::resmod->new(
-            %{common_options::restore_options(@common_options::tool_options)},
-            models => [ $self->model ],
-            dvid => $self->dvid,
-            idv => 'TAD',
-            dv => $self->dv,
-            occ => $self->occ,
-            groups => $self->groups,
-            iterative => 0,
-            directory => 'resmod_TAD',
-        );
-    };
-    if (not $@) {
-        eval {
-            $resmod_tad->run();
-        };
-    } else {
-        rmdir 'resmod_TAD';
-    }
-    $self->_to_qa_dir();
-
-    my $resmod_pred;
-    eval {
-        $resmod_pred = tool::resmod->new(
-            %{common_options::restore_options(@common_options::tool_options)},
-            models => [ $self->model ],
-            dvid => $self->dvid,
-            idv => 'PRED',
-            dv => $self->dv,
-            occ => $self->occ,
-            groups => $self->groups,
-            iterative => 0,
-            directory => 'resmod_PRED',
-        );
-    };
-    if (not $@) {
-        eval {
-            $resmod_pred->run();
-        };
-    } else {
-        rmdir 'resmod_PRED';
-    }
-    $self->_to_qa_dir();
-
     my $model_copy = $self->model->copy(filename => $self->model->filename);
     $model_copy->phi_file($self->model->get_phi_file());
     print "*** Running linearize ***\n";
@@ -192,6 +121,78 @@ sub modelfit_setup
         $simeval->run();
     };
     $self->_to_qa_dir();
+
+    print "*** Running resmod ***\n";
+    my $resmod_idv;
+    eval {
+        $resmod_idv = tool::resmod->new(
+            %{common_options::restore_options(@common_options::tool_options)},
+            models => [ $self->model ],
+            dvid => $self->dvid,
+            idv => $self->idv,
+            dv => $self->dv,
+            occ => $self->occ,
+            groups => $self->groups,
+            iterative => 0,
+            directory => 'resmod_idv',
+        );
+    };
+    if (not $@) {
+        eval {
+            $resmod_idv->run();
+        };
+    } else {
+        rmdir "resmod_idv";
+    }
+
+    $self->_to_qa_dir();
+
+    my $resmod_tad;
+    eval {
+        $resmod_tad = tool::resmod->new(
+            %{common_options::restore_options(@common_options::tool_options)},
+            models => [ $self->model ],
+            dvid => $self->dvid,
+            idv => 'TAD',
+            dv => $self->dv,
+            occ => $self->occ,
+            groups => $self->groups,
+            iterative => 0,
+            directory => 'resmod_TAD',
+        );
+    };
+    if (not $@) {
+        eval {
+            $resmod_tad->run();
+        };
+    } else {
+        rmdir 'resmod_TAD';
+    }
+    $self->_to_qa_dir();
+
+    my $resmod_pred;
+    eval {
+        $resmod_pred = tool::resmod->new(
+            %{common_options::restore_options(@common_options::tool_options)},
+            models => [ $self->model ],
+            dvid => $self->dvid,
+            idv => 'PRED',
+            dv => $self->dv,
+            occ => $self->occ,
+            groups => $self->groups,
+            iterative => 0,
+            directory => 'resmod_PRED',
+        );
+    };
+    if (not $@) {
+        eval {
+            $resmod_pred->run();
+        };
+    } else {
+        rmdir 'resmod_PRED';
+    }
+    $self->_to_qa_dir();
+
 }
 
 sub modelfit_analyze
