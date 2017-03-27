@@ -2705,9 +2705,9 @@ sub get_filled_omega_matrix
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-							  covmatrix => { isa => 'Ref', optional => 1 },
-							  start_eta => { isa => 'Int', optional => 0 }
-		);
+        covmatrix => { isa => 'Ref', optional => 1 },
+        start_eta => { isa => 'Int', optional => 0 },
+    );
 	my $covmatrix = $parm{'covmatrix'};
 	my $start_eta = $parm{'start_eta'};
 
@@ -2715,11 +2715,15 @@ sub get_filled_omega_matrix
 	#input is optional covmatrix to be used for 0 off-diags
 	#if old off-diagonals not present then set small values
 
-	my $old_full_omega = $self->get_matrix( type=> 'omega',
-											start_row => $start_eta);
+	my $old_full_omega = $self->get_matrix(
+        type=> 'omega',
+        start_row => $start_eta,
+    );
 	
-	my $new_full_omega = get_posdef_matrix(covmatrix => $covmatrix,
-										   old_matrix => $old_full_omega);
+	my $new_full_omega = get_posdef_matrix(
+        covmatrix => $covmatrix,
+        old_matrix => $old_full_omega
+    );
 
 	return $new_full_omega;
 }
