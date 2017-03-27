@@ -5,6 +5,10 @@ classoption: landscape
 geometry: margin=1.5cm
 ---
 
+```{r R_input,include = FALSE}
+cdd_dofv_cutoff <- 3.84
+cdd_max_rows <- 10
+```
 
 ```{r source_functions,include = FALSE}
 library(dplyr)
@@ -31,9 +35,13 @@ source(paste0(rscripts.directory, "/simeval/ofv.i_ofv_res.R"))
     as.numeric()
 }
 
-
-
-
+#round values in a dataframe
+.round_values <- function(data_frame,col,dec) {
+  if(missing(col)) col="dofv"
+  if(missing(dec)) dec=2
+  data_frame[,which(colnames(data_frame) %in% col)] <- round(data_frame[,which(colnames(data_frame) %in% col)],dec)
+  data_frame
+}
 
 
 # 5.Influential individuals (CDD)
@@ -52,21 +60,28 @@ get_ii_table <- function(cdd_directory,cutoff){
     cdd.data <- cdd.data[-negat.delta.row,]
   }
   
+  #get individual with the highest dofv
+  cdd_highest_dofv <- cdd.data[which.max(cdd.data$dofv),]
+  cdd_highest_dofv[,2] <- round(as.numeric(cdd_highest_dofv[,2]), 2)
+  
   # find influential individuals, where delta ofv values are bigger than cutoffs
   if(any(cdd.data$dofv > cutoff)) {
     ii_table <- subset(cdd.data,dofv > cutoff)
+    ii_table <- ii_table[order(ii_table$dofv,decreasing = T),]
+    ii_table[,2] <- round(as.numeric(ii_table[,2]), 2)
   } else {
-    ii_table <- data.frame(id=NA,dofv=NA)
+    ii_table <- data.frame(c("No influential individuals detected"))
+    colnames(ii_table) <- ""
   }
 
   return(list(cdd.data=cdd.data,
+              cdd_highest_dofv=cdd_highest_dofv,
               ii_table=ii_table))
 }
-ii_list <- get_ii_table(cdd_directory=file.path(working.directory,"cdd_run"),cutoff=0.1)
+ii_list <- get_ii_table(cdd_directory=file.path(working.directory,"cdd_run"),cutoff=cdd_dofv_cutoff)
 cdd.data <- ii_list$cdd.data
+cdd_highest_dofv <- ii_list$cdd_highest_dofv
 ii_table <- ii_list$ii_table
-cdd.data[,2] <- round(as.numeric(cdd.data[,2]), 2)
-ii_table[,2] <- round(as.numeric(ii_table[,2]), 2)
 
 # 6.Outliers (Simeval)
 get_outlier_ids <- function(simeval_directory){
@@ -77,9 +92,11 @@ get_outlier_ids <- function(simeval_directory){
 outlier_ids <- get_outlier_ids(simeval_directory=file.path(working.directory, "simeval_run"))
 if(length(outlier_ids)!=0) {
   outliers_table <- cdd.data %>% filter(id %in% outlier_ids)
-  outliers_table[,2] <- round(as.numeric(outliers_table[,2]), 2)
+  outliers_table <- outliers_table[order(outliers_table$dofv,decreasing = T),]
+  outliers_table$dofv <- round(as.numeric(outliers_table$dofv), 2)
 } else {
-  outliers_table <- data.frame(id=NA,dofv=NA)
+  outliers_table <- data.frame(c("No outliers detected"))
+    colnames(outliers_table) <- ""
 }
 
 
@@ -112,20 +129,20 @@ covariates_extra_table <- rbind(scm_table,c("sum(SCMu)",sum(scm_table[,2])),c("F
 colnames(covariates_extra_table) <- c("Covariate","dofv")
 
 # 2.Parameter Variability Models
-get_param_var_table <- function(linearize_directory,boxcox_directory,n.eta) {
-  linbase_ofv <- .get_ext_ofv(file.path(linearize_directory,"pheno_real_linbase.ext"))
-  linblock_ofv <- .get_rawres_ofv(file.path(linearize_directory,"modelfit_dir1/raw_results.csv"))
+get_param_var_table <- function(directory,n.eta) {
+  linbase_ofv <- .get_ext_ofv(paste0(directory,"linearize_run/",mod.prefix,"_linbase.ext"))
+  linblock_ofv <- .get_rawres_ofv(paste0(directory,"modelfit_run/raw_results.csv"))
   dofv_block <- linbase_ofv-linblock_ofv
-  linbox_ofv <- .get_rawres_ofv(file.path(boxcox_directory,"raw_results.csv"))
+  linbox_ofv <- .get_rawres_ofv(paste0(directory,"modelfit_run/raw_results.csv"),row=2)
   dofv_box <- linbase_ofv - linbox_ofv
   par_var_models <- data.frame(models = c("Full OMEGA Block", "Box-Cox Transformation"), 
                                dofv=c(dofv_block, dofv_box)
                                )
   
   #get lambda values
-  boxcox_raw_results <- read.csv(file.path(boxcox_directory,"raw_results.csv"))
+  boxcox_raw_results <- read.csv(paste0(directory,"modelfit_run/raw_results.csv"))
   col_nr <- which(names(boxcox_raw_results)=="ofv")
-  lambdas <- boxcox_raw_results[1,c((col_nr+1):(col_nr+n.eta))]
+  lambdas <- boxcox_raw_results[2,c((col_nr+1):(col_nr+n.eta))] # second row is a boxcox results
   boxcox_lambdas_table <- as.data.frame(array(0,c(length(lambdas),2)))
   colnames(boxcox_lambdas_table) <- c("","Lambda")
   for(i in 1:length(lambdas)) {
@@ -137,17 +154,192 @@ get_param_var_table <- function(linearize_directory,boxcox_directory,n.eta) {
   return(list(par_var_models=par_var_models,
               boxcox_lambdas_table=boxcox_lambdas_table))
 }
-list_par_var_models <- get_param_var_table(linearize_directory=file.path(working.directory,"linearize_run"),
-                                      boxcox_directory=file.path(working.directory,"boxcox_run"),
-                                      n.eta)
+list_par_var_models <- get_param_var_table(working.directory,n.eta)
 par_var_models <- list_par_var_models$par_var_models
 par_var_models[,2] <- round(as.numeric(par_var_models[,2]), 2)
 boxcox_lambdas_table <- list_par_var_models$boxcox_lambdas_table
 boxcox_lambdas_table[,2] <- round(as.numeric(boxcox_lambdas_table[,2]), 2)
-  #get full omega block
+  
+#get full omega block from full_block.ext file
+get_full_omega_block <- function(folder) {
+  full_block_table <- read.csv(file.path(folder,"raw_results.csv")) %>%
+    slice(1) 
+  omega_values <- full_block_table[,grep("^OMEGA",colnames(full_block_table))]
+  
+  # create a table
+  full_omega_block_table <- as.data.frame(array(NA,c(length(omega_values),2)))
+  colnames(full_omega_block_table) <- c("","Value")
+  for(i in 1:length(omega_values)) {
+    numeration <- sub('.*OMEGA.','',colnames(omega_values[i]))
+    numeration <- substr(numeration, 1, nchar(numeration)-1) # delete last element in string
+    first <- sub('\\..*','',numeration)
+    second <- sub('.*\\.','',numeration)
+    if(first==second) {
+      full_omega_block_table[i,1] <- paste0("sd(",first,")")
+    } else {
+      
+      full_omega_block_table[i,1] <- paste0("corr(",min(first,second),",",max(first,second),")")
+    }
+    full_omega_block_table[i,2] <- omega_values[i]
+  }
+  
+  return(full_omega_block_table)
+}
+full_omega_block_table <- get_full_omega_block(folder=file.path(working.directory,"modelfit_run"))
+full_omega_block_table <- rbind(full_omega_block_table,c("dofv",par_var_models[1,2]))
+full_omega_block_table[,2] <- round(as.numeric(full_omega_block_table[,2]),2)
+
+# get resmod result.csv files (can't open like usually, besause there are more column than column names)
+.get_resmod_table <- function(directory, suffix){
+  path <- file.path(directory, paste0("resmod_", suffix), "results.csv") 
+  con <- file(path)
+  lines <- readLines(con)
+  close(con)
+  fields <- stringr::str_split(lines, ",")
+  header <- fields[[1]]
+  fields[[1]] <- NULL
+  plyr::ldply(fields, function(l){
+    fields_with_header <- l[seq_along(header)]
+    names(fields_with_header) <- tolower(header)
+    fields_with_header[[length(header)]] <-  paste0(l[length(header):length(l)], collapse=",")
+    fields_with_header
+  }) %>%
+    mutate(dofv = -scan(text=paste0(dofv)))
+  
+}
+
+# create residual error model table (extra table)
+get_resmod_ruv_table <- function(directory, suffix="idv"){
+  resmod_table <- .get_resmod_table(directory, suffix) %>%
+    select(-iteration, -dvid)
+  non_time_var <- resmod_table %>%
+    filter(!grepl("idv_varying", model)) %>%
+    mutate(df = stringr::str_count(parameters, "="))
+  time_var_cutoff <- resmod_table %>%
+    filter(grepl("idv_varying_RUV_cutoff",model)) %>%
+    mutate(df = 2) %>%
+    arrange(desc(dofv))
+  resmod_ruv_table <- bind_rows(non_time_var, 
+              time_var_cutoff %>% 
+              slice(1) %>%
+              mutate(model = "time varying"))
+  resmod_ruv_table <- resmod_ruv_table[order(resmod_ruv_table$dofv,decreasing = T),]
+  colnames(resmod_ruv_table)[which(colnames(resmod_ruv_table)=="model")] <- "Model"
+  resmod_ruv_overview <- resmod_ruv_table[which(resmod_ruv_table$Model %in% c("dtbs","time varying")),]
+  
+  return(list(resmod_ruv_table=resmod_ruv_table,
+              resmod_ruv_overview=resmod_ruv_overview))
+}
+resmod_ruv_models_list <- get_resmod_ruv_table(directory=working.directory, suffix="idv")
+resmod_ruv_models_table <- resmod_ruv_models_list$resmod_ruv_table[,c("Model","dofv")]
+resmod_ruv_overview <- resmod_ruv_models_list$resmod_ruv_overview[,c("Model","dofv")]
+
+
+ 
+.get_resmod_structural_dofv <- function(directory, suffix) {
+  .get_resmod_table(directory, suffix) %>%
+    filter(model=="idv_varying_combined") %>%
+    select(dofv) %>%
+    as.numeric()
+}
+
+resmod_structural_models <- list("idv","PRED") %>%
+  plyr::ldply(function(var) 
+          data.frame(dv="cwres", idv=var, dofv=.get_resmod_structural_dofv(working.directory, var)))
+
+# .calc_and_add_shift_from_cwres <- function(directory, cwres_table, idv){
+#   final_estimates <- read.table(file.path(directory, "run1.ext"), skip=1, header=T) %>%
+#     filter(ITERATION==-1000000000)
+#   # populate omega from .ext file
+#   omega_values <- final_estimates %>%
+#     select(starts_with("OMEGA")) %>% unlist()
+#   dim_omega <- (sqrt(1+4*length(omega_values)*2)-1)/2
+#   omega_matrix <- matrix(0, dim_omega, dim_omega)
+#   omega_matrix[lower.tri(omega_matrix, T)] <- omega_values
+#   omega_matrix[upper.tri(omega_matrix, T)] <- t(omega_matrix)[upper.tri(omega_matrix, T)]
+#   # populate sigma from ext file
+#   sigma_values <- final_estimates %>%
+#     select(starts_with("SIGMA")) %>% unlist()
+#   dim_sigma <- (sqrt(1+4*length(sigma_values)*2)-1)/2
+#   sigma_matrix <- matrix(0, dim_sigma, dim_sigma)
+#   sigma_matrix[lower.tri(sigma_matrix, T)] <- sigma_values
+#   sigma_matrix[upper.tri(sigma_matrix, T)] <- t(sigma_matrix)[upper.tri(sigma_matrix, T)]
+#   # get table with IDV values
+#   idv_df <- read.table(file.path(directory, "mytab1"), skip = 1, header=T) %>%
+#     filter(AMT==0) %>%
+#     select_(idv) %>%
+#     rename_(idv=idv)
+#   # get derivatives from linearized model
+#   mean_shifts <- read.table(file.path(directory, "run1_linbase.dta"), skip = 1, header=T) %>%
+#     filter(MDV==0) %>%
+#     bind_cols(idv_df) %>%
+#     mutate(bin_index = findInterval(unlist(.$idv), cwres_table$bin_min),  # in which bin did observation go
+#            bin_value = cwres_table$value[bin_index]) %>%                    # get value for that bin
+#     group_by(ID)  %>%
+#     do({
+#       H <- select(., starts_with("H")) %>% as.matrix()
+#       G <- select(., starts_with("G")) %>% as.matrix()
+#       ICOV <- diag(diag(H %*% sigma_matrix %*% t(H)), nrow = nrow(.)) + G %*%   omega_matrix %*% t(G)
+#       sqrtm <- expm::sqrtm
+#       if(nrow(.)==1) sqrtm <- sqrt
+#       data.frame(shift = sqrtm(ICOV) %*% as.matrix(.$bin_value),
+#                  bin_index = .$bin_index,
+#                  ipred = .$OPRED)
+#     }) %>%
+#     group_by(bin_index) %>%
+#     summarise(relative_shift = 100*mean(shift/ipred), shift = mean(shift)) %>%
+#     mutate(bin_min = cwres_table$bin_min[bin_index],
+#            bin_max = cwres_table$bin_max[bin_index],
+#            bin_mid=bin_min+(bin_max-bin_min)/2)
+# 
+#   cwres_table %>%
+#     slice(mean_shifts$bin_index) %>%
+#     bind_cols(mean_shifts %>% select(bin_mid, relative_shift, shift))
+# 
+# }
+
+# .get_resmod_structural_details <- function(directory, suffix) {
+#   type_labels <- c(th = "mean", sdeps = "sd")
+#   model_names <- c("idv_varying_combined"="combined","idv_varying_theta"="theta", "idv_varying_RUV"="sigma")
+#   .get_resmod_table(directory, suffix) %>%
+#     filter(model == 'idv_varying_theta') %>%
+#     mutate(model = model_names[model],
+#            idv = suffix) %>%
+#     group_by(model) %>%
+#     do(
+#        {
+#         all_params <- data.frame(str=unlist(stringr::str_split(.$parameters, ","))) %>%
+#            tidyr::separate(str, c("variable", "value"), "=" )
+#         bin_boundaries <- all_params %>%
+#           filter(!grepl("_", variable)) %>%
+#           rename(bin_value = value)
+#         all_params %>%
+#           filter(grepl("_", variable)) %>%
+#           tidyr::separate(variable, c("type","bin"), "_") %>%
+#           tidyr::separate(bin, c("bin_min","bin_max"), "-") %>%
+#           left_join(bin_boundaries, c(bin_min = "variable")) %>%
+#           mutate(bin_value = ifelse(bin_min=='0', 0, bin_value)) %>%
+#           rename(bin_min_value = bin_value) %>%
+#           left_join(bin_boundaries, c(bin_max = "variable")) %>%
+#           mutate(bin_value = ifelse(bin_max=='inf', Inf, bin_value),
+#                  type = type_labels[type]) %>%
+#           rename(bin_max = bin_value,
+#                  bin_min = bin_min_value)
+#       })%>%
+#     ungroup() %>%
+#     mutate_each(funs(as.numeric), value, bin_min, bin_max)
+# }
 
 
 
+# resmod_structural_details <- list(time = "idv",tad ="TAD") %>%
+#     plyr::llply(function(idv) list(
+#         idv = idv,
+#         dofv =  .get_resmod_structural_dofv(directory, idv),
+#         table = .get_resmod_structural_details(directory, suffix = idv) %>%
+#           .calc_and_add_shift_from_cwres(directory = directory, idv = ifelse(idv=="pred", "PPRD", toupper(idv)))
+#       )
+#     )
 
 ```
 
@@ -155,21 +347,23 @@ boxcox_lambdas_table[,2] <- round(as.numeric(boxcox_lambdas_table[,2]), 2)
 1.Structural model
 
 2.Parameter Variability Model
-```{r overview1,echo=F,results='asis'}
+```{r overview2,echo=F,results='asis'}
 kable(par_var_models,format = 'markdown',row.names = F)
 ```
 3.Covariates
-```{r overview2,echo=F,results='asis'}
+```{r overview3,echo=F,results='asis'}
 kable(covariates_table,format = 'markdown',row.names = F)
 ```
 4.Residual Error Model
-
+```{r overview4,echo=F,results='asis'}
+kable(resmod_ruv_overview,format = 'markdown',row.names = F)
+```
 5.Influential Individuals
-```{r overview3,echo=F,results='asis'}
-kable(ii_table[which.max(ii_table$dofv),],format = 'markdown',row.names = F)
+```{r overview5,echo=F,results='asis'}
+kable(cdd_highest_dofv,format = 'markdown',row.names = F)
 ```
 6.Outliers
-```{r overview4,echo=F,results='asis'}
+```{r overview6,echo=F,results='asis'}
 kable(outliers_table[which.max(outliers_table$dofv),],format = 'markdown',row.names = F)
 ```
 
@@ -182,7 +376,9 @@ kable(outliers_table[which.max(outliers_table$dofv),],format = 'markdown',row.na
 
 #Parameter Variability Model
 ###Full OMEGA Block
-
+```{r full_omega_block,echo=F,results='asis'}
+kable(full_omega_block_table,format = 'markdown',row.names = F)
+```
 ###Box-Cox Transformation
 ```{r boxcox_tranformation,echo=F,results='asis'}
 kable(boxcox_lambdas_table,format = 'markdown',row.names = F)
@@ -194,12 +390,19 @@ kable(covariates_extra_table,format = 'markdown',row.names = F)
 ```
 
 #Residual Error Model
+```{r resiual_error_model,echo=F,results='asis'}
+kable(resmod_ruv_models_table,format = 'markdown',row.names = F)
+```
 
 #Influential Individuals
 ```{r influential_individuals,echo=F,results='asis'}
-kable(ii_table[order(ii_table$dofv,decreasing = T),],format = 'markdown',row.names = F)
+if(nrow(ii_table) > cdd_max_rows) {
+  ii_table <- ii_table[,1:cdd_max_rows]
+}
+
+kable(ii_table,format = 'markdown',row.names = F)
 ```
 #Outliers
 ```{r outliers,echo=F,results='asis'}
-kable(outliers_table[order(outliers_table$dofv,decreasing = T),],format = 'markdown',row.names = F)
+kable(outliers_table,format = 'markdown',row.names = F)
 ```
