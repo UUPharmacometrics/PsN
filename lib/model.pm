@@ -5524,7 +5524,7 @@ sub get_phi_file
 sub full_omega_block
 {
     # Replace all omegas into one big full block
-    # FIXed omegas are assument to be at the end and will be kept
+    # FIXed and SAME omegas are assumed to be at the end and will be kept
     my $self = shift;
 
     my $fixed = $self->fixed_or_same(parameter_type => 'omega')->[0];
@@ -5573,6 +5573,20 @@ sub full_omega_block
         }
 
         $self->problems->[0]->omegas([ $omega, @keep ]);
+    }
+}
+
+sub unfix_omega_0_fix
+{
+    # Unfix all omegas that are set to 0 FIX
+    my $self = shift;
+
+    for my $record (@{$self->problems->[0]->omegas}) {
+        for my $option (@{$record->options}) {
+            if ($option->init == 0 and $option->fix) {
+                $option->fix(0);
+            }
+        }
     }
 }
 
