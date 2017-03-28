@@ -2535,7 +2535,7 @@ sub get_matrix
 	my %parm = validated_hash(\@_,
         type => {isa => 'Str', optional => 0},
         start_row => {isa => 'Int', optional => 0},
-        end_row => {isa => 'Int', optional => 1}
+        end_row => {isa => 'Maybe[Int]', optional => 1}
     );
 	my $type = $parm{'type'};
 	my $start_row = $parm{'start_row'};
@@ -2707,9 +2707,11 @@ sub get_filled_omega_matrix
 	my %parm = validated_hash(\@_,
         covmatrix => { isa => 'Ref', optional => 1 },
         start_eta => { isa => 'Int', optional => 0 },
+        end_eta => { isa => 'Int', optional => 1 },     # Not tested to work in conjunction with covmatrix
     );
 	my $covmatrix = $parm{'covmatrix'};
 	my $start_eta = $parm{'start_eta'};
+	my $end_eta = $parm{'end_eta'};
 
 	#create one big full omega block (lower triangular) as new_omega->[$row][$col]
 	#input is optional covmatrix to be used for 0 off-diags
@@ -2718,6 +2720,7 @@ sub get_filled_omega_matrix
 	my $old_full_omega = $self->get_matrix(
         type=> 'omega',
         start_row => $start_eta,
+        end_row => $end_eta,
     );
 	
 	my $new_full_omega = get_posdef_matrix(

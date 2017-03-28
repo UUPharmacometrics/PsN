@@ -5524,21 +5524,56 @@ sub get_phi_file
 sub full_omega_block
 {
     # Replace all omegas into one big full block
+    # FIXed omegas are assument to be at the end and will be kept
     my $self = shift;
 
-    my $omega_matrix = $self->problems->[0]->get_filled_omega_matrix(start_eta => 1);
-    my $size = @{$omega_matrix};
-    my @record_arr = ( "\$OMEGA BLOCK($size)" );
-    for (my $i = 0; $i < $size; $i++) {
-        my $row = "";
-        for (my $j = 0; $j <= $i; $j++) {
-            $row .= $omega_matrix->[$i]->[$j] . ' ';
+    my $fixed = $self->fixed(parameter_type => 'omega')->[0];
+    # Find first FIX omega
+    my $current = 1;
+    my $first_fix;
+    for my $fix (@{$fixed}) {
+        if ($fix) {
+            $first_fix = $current;
+            last;
         }
-        push @record_arr, "$row\n";
+        $current++;
     }
 
-    my $omega = model::problem::omega->new(record_arr => \@record_arr);
-    $self->problems->[0]->omegas([ $omega ]);
+    if (not defined $first_fix) {
+        $first_fix = @{$fixed} + 1;
+    }
+    if ($first_fix != 1) {      # The first is fixed. Do nothing
+        my $end_eta = $first_fix - 1;
+        my $omega_matrix = $self->problems->[0]->get_filled_omega_matrix(start_eta => 1, end_eta => $end_eta);
+        my $size = @{$omega_matrix};
+        my @record_arr = ( "\$OMEGA BLOCK($size)" );
+        for (my $i = 0; $i < $size; $i++) {
+            my $row = "";
+            for (my $j = 0; $j <= $i; $j++) {
+                $row .= $omega_matrix->[$i]->[$j] . ' ';
+            }
+            push @record_arr, "$row\n";
+        }
+
+        my $omega = model::problem::omega->new(record_arr => \@record_arr);
+
+        # Keep all FIX records
+        my @keep;
+        for my $record (@{$self->problems->[0]->omegas}) {
+            my $found_fix = 0;
+            for my $option (@{$record->options}) {
+                if ($option->fix) {
+                    $found_fix = 1;
+                    last;
+                }
+            }
+            if ($found_fix) {
+                push @keep, $record;
+            }
+        }
+
+        $self->problems->[0]->omegas([ $omega, @keep ]);
+    }
 }
 
 
