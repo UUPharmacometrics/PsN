@@ -1,18 +1,23 @@
 ---
 title: "Quality assurance"
-output: pdf_document
+output: pdf_document # delete if html file needed and set type="html"
+header-includes: \usepackage{colortbl} # delete if html file needed and set type="html"
 classoption: landscape
 geometry: margin=1.5cm
 ---
 
+
 ```{r R_input,include = FALSE}
 cdd_dofv_cutoff <- 3.84
 cdd_max_rows <- 10
+type <- "latex" # set to "html" if want to create a html file
+real.mod.prefix <- sub('.mod.*','',model.filename)
 ```
 
 ```{r source_functions,include = FALSE}
 library(dplyr)
 library(knitr)
+require(ztable)
 source(paste0(rscripts.directory, "/cdd/create.data.full.R"))
 source(paste0(rscripts.directory, "/simeval/ofv.i_ofv_res.R"))
 ```
@@ -228,7 +233,7 @@ get_scm_table <- function(rawres_file){
   return(list(scm_files_exists=scm_files_exists,
               scm_table=scm_table))
 }
-scm_table_list <- get_scm_table(file.path(working.directory,paste0("scm_run/raw_results_",mod.prefix,".csv")))
+scm_table_list <- get_scm_table(file.path(working.directory,paste0("scm_run/raw_results_",real.mod.prefix,".csv")))
 scm_files_exists <- scm_table_list$scm_files_exists
 scm_table <- scm_table_list$scm_table
 if(scm_files_exists) {
@@ -262,10 +267,10 @@ covariates_table <- rbind(frem_table,max_scm_table)
 # 2.Parameter Variability Models
 get_param_var_table <- function(directory,n.eta) {
   param_var_file_exists <- TRUE
-  if(file.exists(paste0(directory,"linearize_run/",mod.prefix,"_linbase.ext")) &&
+  if(file.exists(paste0(directory,"linearize_run/",real.mod.prefix,"_linbase.ext")) &&
      file.exists(paste0(directory,"modelfit_run/raw_results.csv"))) {
     
-    linbase_ofv <- .get_ext_ofv(paste0(directory,"linearize_run/",mod.prefix,"_linbase.ext"))
+    linbase_ofv <- .get_ext_ofv(paste0(directory,"linearize_run/",real.mod.prefix,"_linbase.ext"))
     linblock_ofv <- .get_rawres_ofv(paste0(directory,"modelfit_run/raw_results.csv"))
     dofv_block <- linbase_ofv-linblock_ofv
     linbox_ofv <- .get_rawres_ofv(paste0(directory,"modelfit_run/raw_results.csv"),row=2)
@@ -304,7 +309,7 @@ get_param_var_table <- function(directory,n.eta) {
               par_var_models=par_var_models,
               boxcox_lambdas_table=boxcox_lambdas_table))
 }
-list_par_var_models <- get_param_var_table(working.directory,n.eta)
+list_par_var_models <- get_param_var_table(directory=working.directory,n.eta)
 param_var_file_exists <- list_par_var_models$param_var_file_exists
 boxcox_file_exists <- list_par_var_models$boxcox_file_exists
 par_var_models <- list_par_var_models$par_var_models
@@ -400,6 +405,7 @@ get_resmod_ruv_table <- function(directory, suffix="idv"){
               slice(1) %>%
               mutate(model = "time varying"))
   resmod_ruv_table <- resmod_ruv_table[order(resmod_ruv_table$dofv,decreasing = T),]
+  rownames(resmod_ruv_table) <- NULL
   colnames(resmod_ruv_table)[which(colnames(resmod_ruv_table)=="model")] <- "Model"
   resmod_ruv_overview <- resmod_ruv_table[which(resmod_ruv_table$Model %in% c("dtbs","time varying")),]
   
@@ -421,29 +427,24 @@ if(resmod_file_exists) {
 ```
 
 #Overview
-1.Structural model
-
-2.Parameter Variability Model
-```{r overview2,echo=F,results='asis'}
-kable(par_var_models,format = 'markdown',row.names = F)
-```
-3.Covariates
-```{r overview3,echo=F,results='asis'}
-kable(covariates_table,format = 'markdown',row.names = F)
-```
-4.Residual Error Model
-```{r overview4,echo=F,results='asis'}
-kable(resmod_ruv_overview,format = 'markdown',row.names = F)
-```
-5.Influential Individuals
-```{r overview5,echo=F,results='asis'}
-kable(cdd_highest_dofv,format = 'markdown',row.names = F)
-```
-6.Outliers
-```{r overview6,echo=F,results='asis'}
-if(exists("max_outlier_table")) {
-  kable(max_outlier_table,format = 'markdown',row.names = F)
+```{r overview_table,echo=F,results='asis'}
+rgroup <- c("Parameter Variability Model","Covariates","Residual Error Model","Influential Individuals","Outliers")
+overview_list <- list(par_var_models,covariates_table,resmod_ruv_overview,cdd_highest_dofv,max_outlier_table)
+n.rgroup <- c()
+for(i in 1:length(overview_list)) {
+  n.rgroup[i] <- nrow(overview_list[[i]])
+  if(i == 1) {
+    overview_table <- overview_list[[i]]
+  } else {
+    overview_table <- rbind(overview_table,overview_list[[i]])
+  }
 }
+rownames(overview_table) <- NULL
+# options(ztable.colnames.bold=TRUE)
+overview_table <- ztable(overview_table)
+overview_table <- addrgroup(overview_table,rgroup=rgroup,n.rgroup=n.rgroup,cspan.rgroup=1)
+overview_table <- update_ztable(overview_table,type=type,colnames.bold = T)
+print(overview_table)
 ```
 
 #Structural
@@ -454,23 +455,37 @@ if(exists("max_outlier_table")) {
 ###PRED
 
 #Parameter Variability Model
+
 ###Full OMEGA Block
 ```{r full_omega_block,echo=F,results='asis'}
-kable(full_omega_block_table,format = 'markdown',row.names = F)
+full_omega_block_table <- ztable(full_omega_block_table)
+full_omega_block_table <- update_ztable(full_omega_block_table,type="latex",colnames.bold = T,include.rownames = F)
+print(full_omega_block_table)
 ```
+
 ###Box-Cox Transformation
 ```{r boxcox_tranformation,echo=F,results='asis'}
-kable(boxcox_lambdas_table,format = 'markdown',row.names = F)
+boxcox_lambdas_table <- ztable(boxcox_lambdas_table)
+boxcox_lambdas_table <- update_ztable(boxcox_lambdas_table,type=type,colnames.bold = T,include.rownames = F)
+print(boxcox_lambdas_table)
 ```
 
 #Covariates
 ```{r covariates,echo=F,results='asis'}
-kable(covariates_extra_table,format = 'markdown',row.names = F)
+covariates_extra_table <- ztable(covariates_extra_table)
+covariates_extra_table <- update_ztable(covariates_extra_table,type=type,colnames.bold = T,include.rownames = F)
+print(covariates_extra_table)
 ```
 
 #Residual Error Model
 ```{r resiual_error_model,echo=F,results='asis'}
-kable(resmod_ruv_models_table,format = 'markdown',row.names = F)
+nr_rows <- grep("_",resmod_ruv_models_table[,1])
+for(i in 1:length(nr_rows)) {
+  resmod_ruv_models_table[nr_rows[i],1] <- gsub("_"," ",resmod_ruv_models_table[nr_rows[i],1])
+}
+resmod_ruv_models_table <- ztable(resmod_ruv_models_table)
+resmod_ruv_models_table <- update_ztable(resmod_ruv_models_table,type=type,colnames.bold = T,include.rownames = F)
+print(resmod_ruv_models_table)
 ```
 
 #Influential Individuals
@@ -480,9 +495,14 @@ if(cdd_files_exists) {
     ii_table <- ii_table[,1:cdd_max_rows]
   }
 }
-kable(ii_table,format = 'markdown',row.names = F)
+ii_table <- ztable(ii_table)
+ii_table <- update_ztable(ii_table,type=type,colnames.bold = T,include.rownames = F)
+print(ii_table)
 ```
+
 #Outliers
 ```{r outliers,echo=F,results='asis'}
-kable(outliers_table,format = 'markdown',row.names = F)
+outliers_table <- ztable(outliers_table)
+outliers_table <- update_ztable(outliers_table,type=type,colnames.bold = T,include.rownames = F)
+print(outliers_table)
 ```
