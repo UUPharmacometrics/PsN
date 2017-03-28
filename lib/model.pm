@@ -5527,7 +5527,7 @@ sub full_omega_block
     # FIXed omegas are assument to be at the end and will be kept
     my $self = shift;
 
-    my $fixed = $self->fixed(parameter_type => 'omega')->[0];
+    my $fixed = $self->fixed_or_same(parameter_type => 'omega')->[0];
     # Find first FIX omega
     my $current = 1;
     my $first_fix;
