@@ -5585,6 +5585,7 @@ sub unfix_omega_0_fix
         for my $option (@{$record->options}) {
             if ($option->init == 0 and $option->fix) {
                 $option->fix(0);
+                $option->init(0.01);
             }
         }
     }
