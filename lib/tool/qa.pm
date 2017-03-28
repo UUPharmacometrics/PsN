@@ -21,7 +21,9 @@ has 'idv' => ( is => 'rw', isa => 'Str', default => 'TIME' );
 has 'dv' => ( is => 'rw', isa => 'Str', default => 'CWRES' );
 has 'dvid' => ( is => 'rw', isa => 'Str', default => 'DVID' );
 has 'occ' => ( is => 'rw', isa => 'Str', default => 'OCC' );
-has 'covariates' => ( is => 'rw', isa => 'Str' );       # A comma separated list of covariate symbols
+has 'covariates' => ( is => 'rw', isa => 'Str' );       # A comma separated list of continuous covariate symbols
+has 'categorical' => ( is => 'rw', isa => 'Str' );       # A comma separated list of categorical covariate symbols
+has 'parameters' => ( is => 'rw', isa => 'Str' );       # A comma separated list of parameter symbols
 
 sub BUILD
 {
@@ -73,14 +75,22 @@ sub modelfit_setup
     };
     $self->_to_qa_dir();
 
-    if (defined $self->covariates) {
+    if (defined $self->covariates or defined $self->categorical) {
         print "\n*** Running FREM ***\n";
         my $frem_model = model->new(filename => $linearized_model_name);
         eval {
+            my @covariates; 
+            if (defined $self->covariates) {
+                @covariates = split(',', $self->covariates);
+            }
+            my @categorical;
+            if (defined $self->categorical) {
+                @categorical = split(',', $self->categorical);
+            }
             my $frem = tool::frem->new(
                 %{common_options::restore_options(@common_options::tool_options)},
                 models => [ $frem_model ],
-                covariates => [ split(',', $self->covariates) ],
+                covariates => [ @covariates, @categorical ],
                 directory => 'frem_run',
                 rescale => 1, 
                 run_sir => 1, 
@@ -90,12 +100,14 @@ sub modelfit_setup
         };
         $self->_to_qa_dir();
 
-        print "\n*** Running scm ***\n";
-        $self->_create_scm_config();
-        eval {
-            system("scm config.scm");       # FIXME: cheating for now
-        };
-        $self->_to_qa_dir();
+        if (defined $self->parameters) {
+            print "\n*** Running scm ***\n";
+            $self->_create_scm_config(model_name => $linearized_model_name);
+            eval {
+                system("scm config.scm");       # FIXME: cheating for now
+            };
+            $self->_to_qa_dir();
+        }
     }
     print "\n*** Running cdd ***\n";
     my $cdd_model = model->new(filename => $linearized_model_name);
@@ -205,10 +217,34 @@ sub modelfit_analyze
 sub _create_scm_config
 {
     my $self = shift;
+
     open my $fh, '>', 'config.scm';
 
 	my $model_name = $self->model->full_name();
-	my $covariates = $self->covariates;
+
+    my $covariates = "";
+    if (defined $self->covariates) {
+        $covariates = "continuous_covariates=" . $self->covariates;
+    }
+
+    my $categorical = "";
+    if (defined $self->categorical) {
+        $categorical = "categorical_covariates=" . $self->categorical;
+    }
+
+    my $all = "";
+    if (defined $self->categorical and not defined $self->covariates) {
+        $all = $self->categorical;
+    } elsif (not defined $self->categorical and defined $self->covariates) {
+        $all = $self->covariates;
+    } else {
+        $all = $self->covariates . ',' . $self->categorical;
+    }
+  
+    my $relations;
+    for my $param (split(',', $self->parameters)) {
+        $relations .= "$param=" . $all . "\n";
+    }
 
 my $content = <<"END";
 model=$model_name
@@ -223,14 +259,14 @@ p_forward=0.05
 max_steps=1
 ;p_backward=0.01
 
-continuous_covariates=$covariates
+$covariates
+$categorical
 
-do_not_drop=$covariates
+do_not_drop=$all
 
 
 [test_relations]
-CL=$covariates
-V=$covariates
+$relations
 
 [valid_states]
 continuous = 1,4

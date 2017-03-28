@@ -32,6 +32,8 @@ my %optional_options = (
     'occ:s' => undef,
     'groups:i' => undef,
     'covariates:s' => undef,
+    'categorical:s' => undef,
+    'parameters:s' => undef,
 );
 
 my $res = GetOptions( \%options,
@@ -107,7 +109,19 @@ EOF
 $help_text{-covariates} = <<'EOF';
       -covariates
 
-      A comma separated list of covariates
+      A comma separated list of continuous covariates
+EOF
+
+$help_text{-categorical} = <<'EOF';
+      -categorical
+
+      A comma separated list of categorical covariates
+EOF
+
+$help_text{-parameters} = <<'EOF';
+      -parameters
+
+      A comma separated list of parameters
 EOF
 
 common_options::online_help( 'qa', \%options, \%help_text, \%required_options, \%optional_options);
@@ -149,6 +163,8 @@ my $qa = tool::qa->new(
 	occ => $options{'occ'},
     groups => $options{'groups'},
     covariates => $options{'covariates'},
+    categorical => $options{'categorical'},
+    parameters => $options{'parameters'},
 );
 
 $qa->print_options(
