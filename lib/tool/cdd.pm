@@ -40,6 +40,7 @@ has 'prediction_models' => ( is => 'rw', isa => 'ArrayRef', default => sub { [] 
 has 'cross_validate' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'outside_n_sd_check' => ( is => 'rw', isa => 'Num', default => 2 );
 has 'update_inits' => ( is => 'rw', isa => 'Bool', default => 1 );
+has 'etas' => ( is => 'rw', isa => 'Bool', default => 0 );      # If to add $ETAs from original model on all cdd models
 
 sub BUILD
 {
@@ -1022,11 +1023,19 @@ sub general_setup
 			my @names = ('cdd_'.$j,'rem_'.$j);
 			foreach my $i ( 0, 1 ) {
 				my $set = $datasets[$i];
-				my $newmodel = $templatemodel -> copy( filename => $output_directory.'/'.$names[$i].'.mod',
-													   copy_datafile   => 0,
-													   output_same_directory => 1,
-													   write_copy => 0,
-													   copy_output => 0);
+				my $newmodel = $templatemodel->copy(
+                    filename => $output_directory . '/' . $names[$i] . '.mod',
+                    copy_datafile => 0,
+                    output_same_directory => 1,
+                    write_copy => 0,
+                    copy_output => 0
+                );
+                if ($self->etas) {
+                    my $phi_file = $model->get_phi_file();
+                    if (defined $phi_file) {
+                       $newmodel->init_etas(phi_name => $phi_file);
+                    }
+                }
 				$newmodel -> datafiles( new_names => [$set] );
 				if ($i == 1) {
 					# set MAXEVAL=0. Again, CDD will only work for one $PROBLEM

@@ -5443,20 +5443,22 @@ sub init_etas
     my $self = shift;
 	my %parm = validated_hash(\@_,
         phi_from_base => { isa => 'Bool', default => 0 },        # Should we use the phi-file from the base model? If not use the current phi-file
+        phi_name => { isa => 'Str', optional => 1 },            # This will be used if specified
     );
 	my $phi_from_base = $parm{'phi_from_base'};
+	my $phi_name = $parm{'phi_name'};
 
-    my $phi_name;
-
-    if ($phi_from_base) {
-        my $based_on = $self->annotation->get_based_on();
-        if (defined $based_on) {
-           $phi_name = "run$based_on.phi";
+    if (not defined $phi_name) {
+        if ($phi_from_base) {
+            my $based_on = $self->annotation->get_based_on();
+            if (defined $based_on) {
+            $phi_name = "run$based_on.phi";
+            } else {
+                print "Warning: the model " . $self->filename . " wasn't based on any other model. Option -etas skipped\n";
+            }
         } else {
-            print "Warning: the model " . $self->filename . " wasn't based on any other model. Option -etas skipped\n";
+            $phi_name = utils::file::replace_extension($self->filename, 'phi'); 
         }
-    } else {
-        $phi_name = utils::file::replace_extension($self->filename, 'phi'); 
     }
 
     if (-e $phi_name) {
