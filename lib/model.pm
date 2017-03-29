@@ -5467,6 +5467,10 @@ sub init_etas
             $self->extra_files([]);
         }
         push @{$self->extra_files}, $phi_name;
+        $self->remove_option(
+            record_name => 'estimation',
+            option_name => 'MCETA',
+        );
         $self->add_option(
             record_name => 'estimation',
             option_name => 'MCETA',
