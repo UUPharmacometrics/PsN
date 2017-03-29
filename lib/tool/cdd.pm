@@ -1032,14 +1032,16 @@ sub general_setup
 					# set MAXEVAL=0. Again, CDD will only work for one $PROBLEM
 					my $warn = 0;
 					$warn = 1 if ($j == 1);
-					my $ok = $newmodel -> set_maxeval_zero(need_ofv => 1,print_warning => $warn,
-														   niter_eonly => $self->niter_eonly,
-														   last_est_complete => $self->last_est_complete());
+					my $ok = $newmodel->set_maxeval_zero(
+                        need_ofv => 1,
+                        print_warning => $warn,
+                        niter_eonly => $self->niter_eonly,
+                        last_est_complete => $self->last_est_complete(),
+                    );
 				}
 
-				if( $self -> nonparametric_etas or
-					$self -> nonparametric_marginals ) {
-					$newmodel -> add_nonparametric_code;
+				if ($self->nonparametric_etas or $self->nonparametric_marginals) {
+					$newmodel->add_nonparametric_code;
 				}
 				
 				$newmodel -> _write;
