@@ -1,21 +1,11 @@
 package boxcox;
 
-
-
 use strict;
 use warnings;
 use MooseX::Params::Validate;
 use include_modules;
 use Statistics::Distributions qw(udistr);
 use array qw(sum);
-#use Math::CDF qw(qnorm);
-#use math qw(:all);
-
-#require Exporter;
-#our @ISA = qw(Exporter);
-#our %EXPORT_TAGS = ('all' => [ qw(round eps inf ceil usable_number to_precision convert_float_string) ]);
-#our @EXPORT_OK = ( @{ $EXPORT_TAGS{'all'} } );
-
 
 sub r_of_lambda
 {
@@ -204,7 +194,6 @@ sub make_splits
 
 }
 
-
 sub turn
 {
 	my ($p1,$p2,$p3) = pos_validated_list(\@_,
@@ -220,6 +209,7 @@ sub turn
 	#1 is x 0 is y
 	return ($p2->[1]-$p1->[1])*(-$p3->[0]+$p1->[0])-(-$p2->[0]+$p1->[0])*($p3->[1]-$p1->[1]);
 }
+
 sub get_split_indices
 {
 	my ($matrix,$range) = pos_validated_list(\@_,
@@ -328,7 +318,6 @@ sub get_smallest_best_index
 	return ($smallest,$best);
 }
 
-
 sub direct_search_maximize
 {
 	#this will search for highest
@@ -423,6 +412,7 @@ sub grid_search_maximize
 	return \@best;
 
 }
+
 sub secant_method_maximize
 {
 	#this will search for derivative 0 and then pick highest
@@ -513,7 +503,6 @@ sub secant_method_maximize
 
 }
 
-
 sub next_secant_step
 {
    my ($xn,$xn_minus_1,$fn,$fn_minus_1) = pos_validated_list(\@_,
@@ -562,7 +551,6 @@ sub inverse_box_cox
 	return \@transformed;
 
 }
-
 
 sub shift_and_box_cox
 {
@@ -632,7 +620,6 @@ sub shift_and_box_cox
 	}
 
 }
-
 
 sub box_cox
 {

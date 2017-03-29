@@ -24,13 +24,6 @@ is (round(-1.5), -2, "round negative x.5");
 is (round(-18.999), -19, "round negative down");
 is (round(-199), -199, "round negative integer");
 
-# ceil
-is (ceil(1.23), 2, "ceil positive");
-is (ceil(28), 28, "ceil integer");
-is (ceil(0), 0, "ceil zero");
-is (ceil(-1.23), -1, "ceil negative");
-is (ceil(-28), -28, "ceil negative integer");
-
 # eps
 is (eps(1), 2.220446049250313e-16, "eps(1)");
 is (eps(-1), 2.220446049250313e-16, "eps(-1)");

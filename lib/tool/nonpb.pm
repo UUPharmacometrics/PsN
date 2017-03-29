@@ -7,11 +7,11 @@ use tool::modelfit;
 use tool::pind;
 use File::Copy qw/mv/;
 use File::Path;
+use POSIX;
 use model;
 use ui;
 use Moose;
 use MooseX::Params::Validate;
-use math qw(ceil);
 
 extends 'tool';
 
@@ -367,7 +367,7 @@ sub get_statistics_array
 	}
 
 	foreach my $ci (95,90,50,25){
-		my $lower_index = ceil($nval * (100 - $ci) / 200) - 1;
+		my $lower_index = POSIX::ceil($nval * (100 - $ci) / 200) - 1;
 		my $upper_index = $nval - ($lower_index+1);
 		push (@statistics,($sorted_array[$upper_index]));
 		push (@statistics,($sorted_array[$lower_index]));

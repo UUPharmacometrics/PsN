@@ -7,7 +7,6 @@ use File::Spec qw(splitpath catfile);
 use Config;
 use OSspecific;
 use Storable;
-use POSIX qw(ceil floor);
 use model::shrinkage_module;
 use Math::Random qw(random_multivariate_normal);
 use model::iofv_module;

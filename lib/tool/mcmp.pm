@@ -8,10 +8,11 @@ use model;
 use ui;
 use Config;
 use File::Copy qw/cp mv/;
+use POSIX;
 use OSspecific;
 use Moose;
 use MooseX::Params::Validate;
-use math qw(round ceil);
+use math qw(round);
 use array qw(sum);
 extends 'tool';
 
@@ -768,7 +769,7 @@ sub get_total_samples
 
 	if ($last_N->[0] == 0){ #most recent step
 		#this is the first iteration
-		$total_samples = ceil(10 / $self->increment) * $self->increment;
+		$total_samples = POSIX::ceil(10 / $self->increment) * $self->increment;
 		$self->rounding(1);
 	}elsif ($last_N->[1] == 0){ #step before most recent
 		#this is the second iteration
@@ -787,7 +788,7 @@ sub get_total_samples
 		return -1 unless ($last_Y->[1] > 0 and $last_Y->[1]<=1);
 		return -1 if ($last_Y->[0] == $last_Y->[1]);
 		my $N=$last_N->[0]+(($self->target_power()/100)-$last_Y->[0])*($last_N->[0]-$last_N->[1])/($last_Y->[0]-$last_Y->[1]);
-		$total_samples = ceil($N / $self->increment) * $self->increment;
+		$total_samples = POSIX::ceil($N / $self->increment) * $self->increment;
 		$self->rounding(-1*$self->rounding);      
 	}
 	$self->rounding(1) if($total_samples <= $self->increment());
