@@ -1024,13 +1024,11 @@ sub general_setup
 				my $set = $datasets[$i];
 				my $newmodel = $templatemodel -> copy( filename => $output_directory.'/'.$names[$i].'.mod',
 													   copy_datafile   => 0,
-													   output_same_directory => 1, #new
+													   output_same_directory => 1,
 													   write_copy => 0,
 													   copy_output => 0);
 				$newmodel -> datafiles( new_names => [$set] );
-				#				$newmodel -> outputfile( $output_directory.'/'.$names[$i].".lst" );
-				#                $newmodel -> set_outputfile();
-				if( $i == 1 ) {
+				if ($i == 1) {
 					# set MAXEVAL=0. Again, CDD will only work for one $PROBLEM
 					my $warn = 0;
 					$warn = 1 if ($j == 1);
