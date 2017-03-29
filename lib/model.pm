@@ -5442,7 +5442,7 @@ sub init_etas
 {
     my $self = shift;
 	my %parm = validated_hash(\@_,
-        phi_from_base => { isa => 'Str', default => 0 },        # Should we use the phi-file from the base model? If not use the current phi-file
+        phi_from_base => { isa => 'Bool', default => 0 },        # Should we use the phi-file from the base model? If not use the current phi-file
     );
 	my $phi_from_base = $parm{'phi_from_base'};
 
