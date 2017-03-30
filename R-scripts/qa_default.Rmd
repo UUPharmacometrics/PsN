@@ -1,7 +1,9 @@
 ---
 title: "Quality assurance"
 output: pdf_document # delete if html file needed and set type="html"
-header-includes: \usepackage{colortbl} # delete if html file needed and set type="html"
+header-includes: #needed to create a pdf file
+    - \usepackage{colortbl}
+    - \usepackage{longtable}
 classoption: landscape
 geometry: margin=1.5cm
 ---
@@ -11,18 +13,23 @@ geometry: margin=1.5cm
 cdd_dofv_cutoff <- 3.84
 cdd_max_rows <- 10
 type <- "latex" # set to "html" if want to create a html file
-real.mod.prefix <- sub('.mod.*','',model.filename)
 ```
 
 ```{r source_functions,include = FALSE}
 library(dplyr)
 library(knitr)
 require(ztable)
+source(paste0(rscripts.directory, "/common/find_r_files_in_subdir.R"))
 source(paste0(rscripts.directory, "/cdd/create.data.full.R"))
 source(paste0(rscripts.directory, "/simeval/ofv.i_ofv_res.R"))
+#source qa functions
+rscript <- find_r_files_in_subdir(toolname,rscripts.directory)
+for (i in 1:length(rscript)) {
+  source(rscript[i])
+}
 ```
 
-```{r getting_delta_ofv,results='hide',echo=FALSE}
+```{r calculations,results='hide',echo=FALSE}
 # Helping functions
 # get a ofv value from the raw_results.csv
 .get_rawres_ofv <- function(rawres_file, row = 1){
@@ -48,399 +55,65 @@ source(paste0(rscripts.directory, "/simeval/ofv.i_ofv_res.R"))
   data_frame
 }
 
-#error table
-error_table <- function(first_column="",col=2,column_names) {
-  if(missing(column_names)) {
-    if(col>=2) column_names <- c("","dofv",rep("",(col-2)))
-    if(col<2) column_names <- ""
-  }
-  nr_rows <- length(first_column)
-  if(col > 2) {
-    error.table <- data.frame(matrix(c("ERROR",rep("",col-2)),1,(col-1)),stringsAsFactors = F)
-    error.table <- cbind(first_column,error.table)
-    colnames(error.table) <- column_names
-  } else if(col == 2){
-    error.table <- data.frame(first_column,"ERROR",stringsAsFactors = F)
-    colnames(error.table) <- column_names
-  } else {
-    error.table <- data.frame("ERROR",stringsAsFactors = F)
-    colnames(error.table) <- column_names
-  }
-  return(error.table)
-}
-
 #which resmod_ folders are in the working directory
-which_resmod_folders <- function(directory) {
-  all_folders <- list.files(directory)
-  structures <- c("idv","PRED","TAD")
-  j <- 0
-  resmod_suffix <- c()
-  for(i in 1:length(structures)) {
-    if(any(all_folders==paste0("resmod_",structures[i]))) {
-      j <- j + 1
-      resmod_suffix[j] <- structures[i]
-    }
-  }
-  return(resmod_suffix)
-}
 resmod_suffix <- which_resmod_folders(directory=working.directory)
 
 
-
-
-
-# 5.Influential individuals (CDD)
-get_ii_table <- function(cdd_directory,cutoff){
-  cdd_files_exists <- TRUE
-  if(file.exists(file.path(cdd_directory, "raw_results.csv")) && file.exists(file.path(cdd_directory, "skipped_individuals1.csv"))) {
-      data_full <- create.data.full(file.path(cdd_directory, "raw_results.csv"),
-                                file.path(cdd_directory, "skipped_individuals1.csv"))
-    cdd.data <- data_full$cdd.data.all
-    cdd.data <- cdd.data %>% select(c(ID,cdd.delta.ofv)) %>% slice(-1)
-    colnames(cdd.data) <- c("id", "dofv")
-  
-    #find negative delta ofv values, if exist
-    fail_ID <- c()
-    if (any(cdd.data$dofv < 0)) {
-      negat.delta.row <- which(cdd.data$dofv < 0)
-      fail_ID <- cdd.data$ID[negat.delta.row]
-      cdd.data <- cdd.data[-negat.delta.row,]
-    }
-  
-    #get individual with the highest dofv
-    cdd_highest_dofv <- cdd.data[which.max(cdd.data$dofv),]
-    cdd_highest_dofv[,2] <- round(as.numeric(cdd_highest_dofv[,2]), 2)
-    cdd_highest_dofv <- cdd_highest_dofv %>%
-        mutate(id=paste("Subject",id))
-    colnames(cdd_highest_dofv) <- c("","dofv")
-  
-    # find influential individuals, where delta ofv values are bigger than cutoffs
-    if(any(cdd.data$dofv > cutoff)) {
-      ii_table <- subset(cdd.data,dofv > cutoff)
-      ii_table <- ii_table[order(ii_table$dofv,decreasing = T),]
-      ii_table[,2] <- round(as.numeric(ii_table[,2]), 2)
-      ii_table <- ii_table %>%
-        mutate(id=paste("Subject",id))
-      colnames(ii_table)[which(colnames(ii_table)=="id")] <- "Subjects"
-    } else {
-      ii_table <- data.frame(c("No influential individuals detected"))
-      colnames(ii_table) <- ""
-    }
-
-    return(list(cdd_files_exists=cdd_files_exists,
-                cdd.data=cdd.data,
-                cdd_highest_dofv=cdd_highest_dofv,
-                ii_table=ii_table))
-  } else {
-    cdd_files_exists <- FALSE
-    ii_table <- error_table(col=1)
-    cdd_highest_dofv <- error_table("CDD")
-    return(list(cdd_files_exists=cdd_files_exists,
-                cdd_highest_dofv=cdd_highest_dofv,
-                ii_table=ii_table))
-  }
-}
-ii_list <- get_ii_table(cdd_directory=file.path(working.directory,"cdd_run"),cutoff=cdd_dofv_cutoff)
-cdd_files_exists <- ii_list$cdd_files_exists
-if(cdd_files_exists) {
-  cdd.data <- ii_list$cdd.data
-}
-cdd_highest_dofv <- ii_list$cdd_highest_dofv
-ii_table <- ii_list$ii_table
-
-
-
-
-
-# 6.Outliers (Simeval)
-get_outlier_ids <- function(simeval_directory){
-  simeval_files_exists <- file.exists(file.path("simeval_run", "raw_all_iofv.csv"))
-  if(simeval_files_exists) {
-    iofv_res <- i_ofv_res(file.path(simeval_directory, "raw_all_iofv.csv"),show.warning=F)
-    outlier_ID <- iofv_res$outlier_ID
-    return(list(simeval_files_exists=simeval_files_exists,
-                outlier_ID=outlier_ID))
-  } else {
-    return(list(simeval_files_exists=simeval_files_exists))
-  }
-}
-outlier_ids_list <- get_outlier_ids(simeval_directory=file.path(working.directory, "simeval_run"))
-simeval_files_exists <- outlier_ids_list$simeval_files_exists
-if(simeval_files_exists && cdd_files_exists) {
-  outlier_ids <- outlier_ids_list$outlier_ID
-  if(length(outlier_ids)!=0) {
-    outliers_table <- cdd.data %>% filter(id %in% outlier_ids)
-    outliers_table <- outliers_table[order(outliers_table$dofv,decreasing = T),]
-    outliers_table$dofv <- round(as.numeric(outliers_table$dofv), 2)
-    outliers_table <- outliers_table %>%
-        mutate(id=paste("Subject",id))
-    colnames(outliers_table)[which(colnames(outliers_table)=="id")] <- "Subjects"
-    max_outlier_table <- outliers_table[which.max(outliers_table$dofv),]
-    colnames(max_outlier_table) <- c("","dofv")
-  } else {
-    outliers_table <- data.frame(c("No outliers detected"))
-    colnames(outliers_table) <- ""
-  }
-} else {
-  outliers_table <- error_table(col=1)
-  max_outlier_table <- error_table("SIMEVAL")
-}
-
-
-
+# 2.Parameter Variability Models
+list_par_var_models <- get_param_var_tables(directory=working.directory,n.eta)
+par_var_models <- list_par_var_models$par_var_models
+full_omega_block_table <- list_par_var_models$full_omega_block_table
+boxcox_lambdas_table <- list_par_var_models$boxcox_lambdas_table
 
 
 # 3.Covariate Models
   # 3.1.All (FREM)
-get_all_covariates <- function(frem_directory) {
-  frem_files_exists <- TRUE
-  if(file.exists(file.path(frem_directory,"model2_modelfit_dir1/raw_results.csv")) &&
-     file.exists(file.path(frem_directory,"model4_modelfit_dir1/raw_results.csv"))) {
-    
-    ofv_frem_all_cov <- .get_rawres_ofv(file.path(frem_directory,"model2_modelfit_dir1/raw_results.csv"))
-    ofv_frem_no_cov <- .get_rawres_ofv(file.path(frem_directory,"model4_modelfit_dir1/raw_results.csv"))
-    dofv_frem <-  ofv_frem_no_cov - ofv_frem_all_cov
-    frem_table <- data.frame("ALL",dofv_frem)
-    colnames(frem_table) <- c("","dofv")
-  } else {
-    frem_files_exists <- FALSE
-    frem_table <- error_table("FREM")
-  }
-
-  return(list(frem_files_exists=frem_files_exists,
-              frem_table=frem_table))
-}
 frem_table_list <- get_all_covariates(frem_directory=file.path(working.directory,"frem_run"))
 frem_files_exists <- frem_table_list$frem_files_exists
 frem_table <- frem_table_list$frem_table
-if(frem_files_exists) {
-  frem_table[,2] <- round(as.numeric(frem_table[,2]), 2)
-}
-
-
  # 3.2.Covariate (SCM)
-get_scm_table <- function(rawres_file){
-  scm_files_exists <- file.exists(rawres_file)
-  if(scm_files_exists) {
-    scm_table <- read.csv(rawres_file,stringsAsFactors = F) %>%
-      mutate(dofv = ofv[step.number==0]-ofv) %>%
-      slice(-1) %>%
-      select(relation, dofv)
-    colnames(scm_table) <- c("","dofv")
-  } else {
-    scm_table <- error_table("SCM")
-  }
-  return(list(scm_files_exists=scm_files_exists,
-              scm_table=scm_table))
-}
-scm_table_list <- get_scm_table(file.path(working.directory,paste0("scm_run/raw_results_",real.mod.prefix,".csv")))
+scm_table_list <- get_scm_table(file.path(working.directory,paste0("scm_run/raw_results_",sub('.mod.*','',model.filename),".csv")))
 scm_files_exists <- scm_table_list$scm_files_exists
 scm_table <- scm_table_list$scm_table
-if(scm_files_exists) {
-  scm_table[,2] <- round(as.numeric(scm_table[,2]), 2)
-  max_scm_table <- scm_table[which.max(scm_table$dofv),]
-  if(frem_files_exists) {
-    covariates_extra_table <- rbind(scm_table,c("sum(SCMu)",sum(scm_table[,2])),c("FREM",frem_table[,2]))
-    colnames(covariates_extra_table) <- c("Covariate","dofv")
-  } else {
-    covariates_extra_table <- rbind(scm_table,c("sum(SCMu)",sum(scm_table[,2])),frem_table)
-    colnames(covariates_extra_table) <- c("Covariate","dofv")
-  }
-} else {
-  max_scm_table <- error_table("SCM")
-  if(frem_files_exists) {
-    covariates_extra_table <- rbind(scm_table,c("FREM",frem_table[,2]))
-    colnames(covariates_extra_table) <- c("Covariate","dofv")
-  } else {
-    covariates_extra_table <- rbind(scm_table,frem_table)
-    colnames(covariates_extra_table) <- c("Covariate","dofv")
-  }
-}
-covariates_table <- rbind(frem_table,max_scm_table)
+  #summary
+covariates_table_list <- get_covariates_table(frem_table,scm_table,frem_files_exists,scm_files_exists)
+covariates_extra_table <- covariates_table_list$covariates_extra_table
+covariates_table <- covariates_table_list$covariates_table
+
+
+#4.create residual error model table (extra table)
+resmod_table_list <- get_resmod_ruv_table(directory=file.path(working.directory), suffix="idv")
+resmod_ruv_models_table <- resmod_table_list$resmod_ruv_table
+resmod_ruv_overview <- resmod_table_list$resmod_ruv_overview
+
+
+# 5.Influential individuals (CDD)
+ii_list <- get_ii_table(cdd_directory=file.path(working.directory,"cdd_run"),cutoff=cdd_dofv_cutoff)
+cdd_files_exist <- ii_list$cdd_files_exist
+cdd.data <- ii_list$cdd.data
+cdd_highest_dofv <- ii_list$cdd_highest_dofv
+ii_table <- ii_list$ii_table
+
+
+# 6.Outliers (Simeval)
+outlier_table_list <- get_outliers_table(simeval_directory=file.path(working.directory, "simeval_run"),cdd.data)
+simeval_files_exist <- outlier_table_list$simeval_files_exist
+outliers_table <- outlier_table_list$outliers_table
+max_outlier_table <- outlier_table_list$max_outlier_table
 
 
 
+# get overview table
+rgroup <- c("Parameter Variability Model","Covariates","Residual Error Model","Influential Individuals","Outliers")
+overview_list <- list(par_var_models,covariates_table,resmod_ruv_overview,cdd_highest_dofv,max_outlier_table)
 
-
-
-
-# 2.Parameter Variability Models
-get_param_var_table <- function(directory,n.eta) {
-  param_var_file_exists <- TRUE
-  if(file.exists(paste0(directory,"linearize_run/",real.mod.prefix,"_linbase.ext")) &&
-     file.exists(paste0(directory,"modelfit_run/raw_results.csv"))) {
-    
-    linbase_ofv <- .get_ext_ofv(paste0(directory,"linearize_run/",real.mod.prefix,"_linbase.ext"))
-    linblock_ofv <- .get_rawres_ofv(paste0(directory,"modelfit_run/raw_results.csv"))
-    dofv_block <- linbase_ofv-linblock_ofv
-    linbox_ofv <- .get_rawres_ofv(paste0(directory,"modelfit_run/raw_results.csv"),row=2)
-    dofv_box <- linbase_ofv - linbox_ofv
-    par_var_models <- data.frame(c("Full OMEGA Block", "Box-Cox Transformation"), 
-                                c(dofv_block, dofv_box)
-                                )
-    colnames(par_var_models) <- c("","dofv")
-  } else {
-    param_var_file_exists <- FALSE
-    par_var_models <- error_table(c("Full OMEGA Block","Box-cox Transformation"))
-  }
-    #get lambda values
-  boxcox_file_exists <- TRUE
-  if(file.exists(paste0(directory,"modelfit_run/raw_results.csv"))) {
-    boxcox_raw_results <- read.csv(paste0(directory,"modelfit_run/raw_results.csv"))
-    col_nr <- which(names(boxcox_raw_results)=="ofv")
-    lambdas <- boxcox_raw_results[2,c((col_nr+1):(col_nr+n.eta))] # second row is a boxcox results
-    boxcox_lambdas_table <- as.data.frame(array(0,c(length(lambdas),2)))
-    colnames(boxcox_lambdas_table) <- c("","Lambda")
-    for(i in 1:length(lambdas)) {
-      boxcox_lambdas_table[i,1] <- paste0("ETA(",i,")")
-      boxcox_lambdas_table[i,2] <- lambdas[i]
-    }
-    if(param_var_file_exists) {
-      boxcox_lambdas_table <- rbind(boxcox_lambdas_table,c("dofv",dofv_box))
-    }
-    
-  } else {
-    boxcox_file_exists <- FALSE
-    boxcox_lambdas_table <- error_table(col=1)
-  }
-    
-  return(list(param_var_file_exists=param_var_file_exists,
-              boxcox_file_exists=boxcox_file_exists,
-              par_var_models=par_var_models,
-              boxcox_lambdas_table=boxcox_lambdas_table))
-}
-list_par_var_models <- get_param_var_table(directory=working.directory,n.eta)
-param_var_file_exists <- list_par_var_models$param_var_file_exists
-boxcox_file_exists <- list_par_var_models$boxcox_file_exists
-par_var_models <- list_par_var_models$par_var_models
-if(param_var_file_exists) {
-  par_var_models[,2] <- round(as.numeric(par_var_models[,2]), 2)
-} 
-boxcox_lambdas_table <- list_par_var_models$boxcox_lambdas_table
-if(boxcox_file_exists) {
-  boxcox_lambdas_table[,2] <- round(as.numeric(boxcox_lambdas_table[,2]), 2)
-}
-
-  
-#get full omega block from full_block.ext file
-get_full_omega_block <- function(folder) {
-  full_omega_block_file_exists <- file.exists(file.path(folder,"raw_results.csv"))
-  if(file.exists(file.path(folder,"raw_results.csv"))) {
-    full_block_table <- read.csv(file.path(folder,"raw_results.csv")) %>%
-      slice(1) 
-    omega_values <- full_block_table[,grep("^OMEGA",colnames(full_block_table))]
-  
-    # create a table
-    full_omega_block_table <- as.data.frame(array(NA,c(length(omega_values),2)))
-    colnames(full_omega_block_table) <- c("","Value")
-    for(i in 1:length(omega_values)) {
-      numeration <- sub('.*OMEGA.','',colnames(omega_values[i]))
-      numeration <- substr(numeration, 1, nchar(numeration)-1) # delete last element in string
-      first <- sub('\\..*','',numeration)
-      second <- sub('.*\\.','',numeration)
-      if(first==second) {
-        full_omega_block_table[i,1] <- paste0("sd(",first,")")
-      } else {
-      
-        full_omega_block_table[i,1] <- paste0("corr(",min(first,second),",",max(first,second),")")
-      }
-      full_omega_block_table[i,2] <- omega_values[i]
-    }
-  } else {
-    full_omega_block_table <- error_table(col=1)
-  }
-  
-  return(list(full_omega_block_file_exists=full_omega_block_file_exists,
-              full_omega_block_table=full_omega_block_table))
-}
-full_omega_block_table_list <- get_full_omega_block(folder=file.path(working.directory,"modelfit_run"))
-full_omega_block_file_exists <- full_omega_block_table_list$full_omega_block_file_exists
-full_omega_block_table <- full_omega_block_table_list$full_omega_block_table
-if(full_omega_block_file_exists) {
-  full_omega_block_table[,2] <- round(as.numeric(full_omega_block_table[,2]),2)
-}
-if(param_var_file_exists) {
-  full_omega_block_table <- rbind(full_omega_block_table,c("dofv",round(par_var_models[1,2],2)))
-}
-
-
-# get resmod result.csv files (can't open like usually, besause there are more column than column names)
-get_resmod_table <- function(directory, suffix){
-  resmod_file_exists <- file.exists(file.path(directory, paste0("resmod_", suffix), "results.csv"))
-  if(resmod_file_exists) {
-    path <- file.path(directory, paste0("resmod_", suffix), "results.csv") 
-    con <- file(path)
-    lines <- readLines(con)
-    close(con)
-    fields <- stringr::str_split(lines, ",")
-    header <- fields[[1]]
-    fields[[1]] <- NULL
-    resmod_table <- plyr::ldply(fields, function(l){
-      fields_with_header <- l[seq_along(header)]
-      names(fields_with_header) <- tolower(header)
-      fields_with_header[[length(header)]] <-  paste0(l[length(header):length(l)], collapse=",")
-      fields_with_header
-    }) %>%
-    mutate(dofv = -scan(text=paste0(dofv)))
-    return(list(resmod_file_exists=resmod_file_exists,
-                resmod_table=resmod_table))
-  } else {
-    return(list(resmod_file_exists=resmod_file_exists))
-  }
-}
-
-# create residual error model table (extra table)
-get_resmod_ruv_table <- function(directory, suffix="idv"){
-  resmod_table <- get_resmod_table(directory, suffix)$resmod_table %>%
-    select(-iteration, -dvid)
-  non_time_var <- resmod_table %>%
-    filter(!grepl("idv_varying", model)) %>%
-    mutate(df = stringr::str_count(parameters, "="))
-  time_var_cutoff <- resmod_table %>%
-    filter(grepl("idv_varying_RUV_cutoff",model)) %>%
-    mutate(df = 2) %>%
-    arrange(desc(dofv))
-  resmod_ruv_table <- bind_rows(non_time_var, 
-              time_var_cutoff %>% 
-              slice(1) %>%
-              mutate(model = "time varying"))
-  resmod_ruv_table <- resmod_ruv_table[order(resmod_ruv_table$dofv,decreasing = T),]
-  rownames(resmod_ruv_table) <- NULL
-  colnames(resmod_ruv_table)[which(colnames(resmod_ruv_table)=="model")] <- "Model"
-  resmod_ruv_overview <- resmod_ruv_table[which(resmod_ruv_table$Model %in% c("dtbs","time varying")),]
-  
-  return(list(resmod_ruv_table=resmod_ruv_table,
-              resmod_ruv_overview=resmod_ruv_overview))
-}
-resmod_file_exists <- get_resmod_table(directory=working.directory, suffix="idv")$resmod_file_exists
-if(resmod_file_exists) {
-  resmod_ruv_models_list <- get_resmod_ruv_table(directory=working.directory, suffix="idv")
-  resmod_ruv_models_table <- resmod_ruv_models_list$resmod_ruv_table[,c("Model","dofv")]
-  resmod_ruv_overview <- resmod_ruv_models_list$resmod_ruv_overview[,c("Model","dofv")]
-  colnames(resmod_ruv_overview) <- c("","dofv")
-} else {
-  resmod_ruv_models_table <- error_table(col=1)
-  resmod_ruv_overview <- error_table("RESMOD")
-}
-
-
+overview_table_list <- get_overview_table(overview_list,rgroup)
+n.rgroup <- overview_table_list$n.rgroup
+overview_table <- overview_table_list$overview_table
 ```
 
 #Overview
-```{r overview_table,echo=F,results='asis'}
-rgroup <- c("Parameter Variability Model","Covariates","Residual Error Model","Influential Individuals","Outliers")
-overview_list <- list(par_var_models,covariates_table,resmod_ruv_overview,cdd_highest_dofv,max_outlier_table)
-n.rgroup <- c()
-for(i in 1:length(overview_list)) {
-  n.rgroup[i] <- nrow(overview_list[[i]])
-  if(i == 1) {
-    overview_table <- overview_list[[i]]
-  } else {
-    overview_table <- rbind(overview_table,overview_list[[i]])
-  }
-}
-rownames(overview_table) <- NULL
-# options(ztable.colnames.bold=TRUE)
+```{r draw_overview_table,echo=F,results='asis'}
 overview_table <- ztable(overview_table)
 overview_table <- addrgroup(overview_table,rgroup=rgroup,n.rgroup=n.rgroup,cspan.rgroup=1)
 overview_table <- update_ztable(overview_table,type=type,colnames.bold = T)
@@ -448,6 +121,7 @@ print(overview_table)
 ```
 
 #Structural
+
 ###TIME
 
 ###TAD
@@ -457,52 +131,49 @@ print(overview_table)
 #Parameter Variability Model
 
 ###Full OMEGA Block
-```{r full_omega_block,echo=F,results='asis'}
+```{r draw_full_omega_block_table,echo=F,results='asis'}
 full_omega_block_table <- ztable(full_omega_block_table)
-full_omega_block_table <- update_ztable(full_omega_block_table,type="latex",colnames.bold = T,include.rownames = F)
+full_omega_block_table <- update_ztable(full_omega_block_table,type=type,colnames.bold = T,include.rownames = F,longtable = T)
 print(full_omega_block_table)
 ```
 
 ###Box-Cox Transformation
-```{r boxcox_tranformation,echo=F,results='asis'}
+```{r draw_boxcox_tranformation_table,echo=F,results='asis'}
 boxcox_lambdas_table <- ztable(boxcox_lambdas_table)
-boxcox_lambdas_table <- update_ztable(boxcox_lambdas_table,type=type,colnames.bold = T,include.rownames = F)
+boxcox_lambdas_table <- update_ztable(boxcox_lambdas_table,type=type,colnames.bold = T,include.rownames = F,longtable = T)
 print(boxcox_lambdas_table)
 ```
 
 #Covariates
-```{r covariates,echo=F,results='asis'}
+```{r draw_covariates_table,echo=F,results='asis'}
 covariates_extra_table <- ztable(covariates_extra_table)
-covariates_extra_table <- update_ztable(covariates_extra_table,type=type,colnames.bold = T,include.rownames = F)
+covariates_extra_table <- update_ztable(covariates_extra_table,type=type,colnames.bold = T,include.rownames = F,longtable = T)
 print(covariates_extra_table)
 ```
 
 #Residual Error Model
-```{r resiual_error_model,echo=F,results='asis'}
-nr_rows <- grep("_",resmod_ruv_models_table[,1])
-for(i in 1:length(nr_rows)) {
-  resmod_ruv_models_table[nr_rows[i],1] <- gsub("_"," ",resmod_ruv_models_table[nr_rows[i],1])
-}
+```{r draw_resiual_error_model_table,echo=F,results='asis'}
 resmod_ruv_models_table <- ztable(resmod_ruv_models_table)
-resmod_ruv_models_table <- update_ztable(resmod_ruv_models_table,type=type,colnames.bold = T,include.rownames = F)
+resmod_ruv_models_table <- update_ztable(resmod_ruv_models_table,type=type,colnames.bold = T,include.rownames = F,longtable = T)
 print(resmod_ruv_models_table)
 ```
 
 #Influential Individuals
-```{r influential_individuals,echo=F,results='asis'}
-if(cdd_files_exists) {
+```{r draw_influential_individuals_table,echo=F,results='asis'}
+if(cdd_files_exist) {
   if(nrow(ii_table) > cdd_max_rows) {
     ii_table <- ii_table[,1:cdd_max_rows]
   }
 }
+
 ii_table <- ztable(ii_table)
-ii_table <- update_ztable(ii_table,type=type,colnames.bold = T,include.rownames = F)
+ii_table <- update_ztable(ii_table,type=type,colnames.bold = T,include.rownames = F,longtable = T)
 print(ii_table)
 ```
 
 #Outliers
-```{r outliers,echo=F,results='asis'}
+```{r draw_outliers_table,echo=F,results='asis'}
 outliers_table <- ztable(outliers_table)
-outliers_table <- update_ztable(outliers_table,type=type,colnames.bold = T,include.rownames = F)
+outliers_table <- update_ztable(outliers_table,type=type,colnames.bold = T,include.rownames = F,longtable = T)
 print(outliers_table)
 ```
