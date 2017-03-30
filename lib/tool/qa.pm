@@ -292,6 +292,15 @@ sub create_R_plots_code
 	my $rplot = $parm{'rplot'};
 
 	$rplot->pdf_title('Quality assurance');
+
+    $rplot->add_preamble(
+        code => [
+            '# qa specific preamble',
+            "idv <- '" . $self->idv . "'",
+            "covariates <- " . rplots::create_r_vector(array => [split(/,/, $self->covariates)]),
+            "categorical <- " . rplots::create_r_vector(array => [split(/,/, $self->categorical)]),
+        ]
+    );
 }
 
 

@@ -195,7 +195,8 @@ sub setup
 
 }
 
-sub double_backslashes{
+sub double_backslashes
+{
 	my %parm = validated_hash(\@_,
 							  string => { isa => 'Str', optional => 0 }
 		);
@@ -244,8 +245,8 @@ sub get_preamble()
 	return \@arr;
 }
 
-
-sub make_plots{
+sub make_plots
+{
 	my $self = shift;
 
 	my $basedir = getcwd();
@@ -364,6 +365,20 @@ sub add_preamble
 
 }
 
+sub create_r_vector
+{
+    # Creates the rcode for a vector given an array
+	my %parm = validated_hash(\@_,
+        array => { isa => 'ArrayRef', optional => 0 }
+    );
+    my $array = $parm{'array'};
+   
+    my $str = "c(";
+    $str .= "'" . join("', '", @{$array}) . "'";
+    $str .= ')';
+
+    return $str;
+}
 
 no Moose;
 __PACKAGE__->meta->make_immutable;
