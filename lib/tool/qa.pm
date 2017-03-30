@@ -299,6 +299,7 @@ sub create_R_plots_code
             "idv <- '" . $self->idv . "'",
             "covariates <- " . rplots::create_r_vector(array => [split(/,/, $self->covariates)]),
             "categorical <- " . rplots::create_r_vector(array => [split(/,/, $self->categorical)]),
+            "parameters <- " . rplots::create_r_vector(array => [split(/,/, $self->parameters)]),
         ]
     );
 }
