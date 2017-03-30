@@ -275,6 +275,7 @@ ___boot_scm___
   the final estimates from the base model, unless -no-update_inits is set. If -no-update_inits
   is set, then the initial estimates will be as in earlier versions, i.e. the same as
   the initial estimates of the base model.
+- New option -etas to use $ETAS and the phi-file of the original model for all estimation runs
 - changed directory name prefix for cross-validation sub-directory (if
   option -xv is set) from modelfit to crossval.
 - ID is now default for the case_column option
