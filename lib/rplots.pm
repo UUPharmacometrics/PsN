@@ -374,7 +374,9 @@ sub create_r_vector
     my $array = $parm{'array'};
    
     my $str = "c(";
-    $str .= "'" . join("', '", @{$array}) . "'";
+    if (@$array) {
+        $str .= "'" . join("', '", @{$array}) . "'";
+    }
     $str .= ')';
 
     return $str;

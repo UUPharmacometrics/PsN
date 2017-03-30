@@ -25,6 +25,8 @@ has 'covariates' => ( is => 'rw', isa => 'Str' );       # A comma separated list
 has 'categorical' => ( is => 'rw', isa => 'Str' );       # A comma separated list of categorical covariate symbols
 has 'parameters' => ( is => 'rw', isa => 'Str' );       # A comma separated list of parameter symbols
 
+has 'resmod_idv_table' => ( is => 'rw', isa => 'Str' ); # The table used by resmod
+
 sub BUILD
 {
     my $self = shift;
@@ -151,6 +153,7 @@ sub modelfit_setup
             directory => 'resmod_idv',
         );
     };
+    $self->resmod_idv_table($resmod_idv->table_file);
     if (not $@) {
         eval {
             $resmod_idv->run();
@@ -293,13 +296,27 @@ sub create_R_plots_code
 
 	$rplot->pdf_title('Quality assurance');
 
+    my @covariates;
+    if (defined $self->covariates) {
+        @covariates = split(/,/, $self->covariates);
+    }
+    my @categorical;
+    if (defined $self->categorical) {
+        @categorical = split(/,/, $self->categorical);
+    }
+    my @parameters;
+    if (defined $self->parameters) {
+        @parameters = split(/,/, $self->parameters);
+    }
+
     $rplot->add_preamble(
         code => [
             '# qa specific preamble',
             "idv <- '" . $self->idv . "'",
-            "covariates <- " . rplots::create_r_vector(array => [split(/,/, $self->covariates)]),
-            "categorical <- " . rplots::create_r_vector(array => [split(/,/, $self->categorical)]),
-            "parameters <- " . rplots::create_r_vector(array => [split(/,/, $self->parameters)]),
+            "covariates <- " . rplots::create_r_vector(array => \@covariates),
+            "categorical <- " . rplots::create_r_vector(array => \@categorical),
+            "parameters <- " . rplots::create_r_vector(array => \@parameters),
+            "CWRES_table <- '" . $self->resmod_idv_table . "'",
         ]
     );
 }

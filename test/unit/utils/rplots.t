@@ -24,4 +24,8 @@ is(rplots::double_backslashes(string=> $ans),$ans,'double backslash not changed 
 $string ='/home/kajsa/kod-psn/devel/simeval_dir1/vpc_dv_vs_pred/vpctab';
 is(rplots::double_backslashes(string=>$string),$string,'forward slash not changes');
 
+is(rplots::create_r_vector(array => [1, 2, 3]), "c('1', '2', '3')", "Create R vector of numbers");
+is(rplots::create_r_vector(array => ['CL', 'V']), "c('CL', 'V')", "Create R vector of strings");
+is(rplots::create_r_vector(array => []), "c()", "Create empty R vector");
+
 done_testing();

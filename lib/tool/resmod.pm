@@ -41,6 +41,7 @@ has 'resmod_results' => ( is => 'rw', isa => 'ArrayRef', default => sub { [] } )
 has 'iteration' => ( is => 'rw', isa => 'Int', default => 0 );      # Number of the iteration
 has 'iteration_summary' => ( is => 'rw', isa => 'ArrayRef[ArrayRef]', default => sub { [ [] ] } );  # [iteration]->[modelnumber if multiple in one iter]->{dvid}->{'model_name', 'dOFV'
 has 'base_sum' => ( is => 'rw', isa => 'ArrayRef', default => sub { [] } );     # Sum of all base models for each DVID
+has 'table_file' => ( is => 'rw', isa => 'Str' );   # The name of the table file that was used
 
 sub BUILD
 {
@@ -56,7 +57,8 @@ sub BUILD
             die "Error original model has no table containing ID, " .$self->idv ." and " . $self->dv. "\n";
         }
         my $cwres_table_name = $self->model->problems->[0]->find_table(columns => \@columns);
-        my $table = nmtablefile->new(filename => $model->directory . $cwres_table_name); 
+        $self->table_file($model->directory . $cwres_table_name);
+        my $table = nmtablefile->new(filename => $self->table_file); 
         my @columns_in_table = @{$cwres_table->columns()};
         my $have_dvid = grep { $_ eq $self->dvid } @columns_in_table;
 
