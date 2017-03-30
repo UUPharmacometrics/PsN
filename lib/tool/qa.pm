@@ -119,6 +119,7 @@ sub modelfit_setup
             models => [ $cdd_model ],
             directory => 'cdd_run',
             rplots => 1,
+            etas => 1,
         );
         $cdd->run();
     };

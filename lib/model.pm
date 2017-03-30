@@ -3871,6 +3871,16 @@ sub input_files
         for my $etas_file (@$problem_files) {
 			my ( $dir, $filename ) = OSspecific::absolute_path($self->directory, $etas_file);
 			push(@file_names, [ $dir, $filename ]);
+            $self->remove_option(
+                record_name => 'etas',
+                option_name => 'FILE',
+            );
+            $self->add_option(
+                record_name => 'etas',
+                option_name => 'FILE',
+                option_value => ( $filename ), 
+                add_record => 0,
+            );
         }
     }
 
@@ -5463,10 +5473,6 @@ sub init_etas
 
     if (-e $phi_name) {
         $self->set_records(type => 'etas', record_strings => [ "FILE=$phi_name" ]);
-        if (not defined $self->extra_files) {
-            $self->extra_files([]);
-        }
-        push @{$self->extra_files}, $phi_name;
         $self->remove_option(
             record_name => 'estimation',
             option_name => 'MCETA',
@@ -5508,7 +5514,7 @@ sub find_input_column
 
 sub get_phi_file
 {
-    # Get the full plath of phi file of this model
+    # Get the full path of phi file of this model
     # The attribute phi_file will override in case there is a user specified phi file
     my $self = shift;
 
