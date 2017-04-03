@@ -313,7 +313,7 @@ sub create_R_plots_code
     $rplot->add_preamble(
         code => [
             '# qa specific preamble',
-            "idv <- '" . $self->idv . "'",
+            "idv_name <- '" . $self->idv . "'",
             "covariates <- " . rplots::create_r_vector(array => \@covariates),
             "categorical <- " . rplots::create_r_vector(array => \@categorical),
             "parameters <- " . rplots::create_r_vector(array => \@parameters),
