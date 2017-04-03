@@ -93,6 +93,7 @@ sub modelfit_setup
                 %{common_options::restore_options(@common_options::tool_options)},
                 models => [ $frem_model ],
                 covariates => [ @covariates, @categorical ],
+                categorical => [ @categorical ],
                 directory => 'frem_run',
                 rescale => 1, 
                 run_sir => 1, 
