@@ -12,7 +12,10 @@ error_table <- function(first_column="",col=2,column_names) {
     error.table <- data.frame(first_column,"ERROR",stringsAsFactors = F)
     colnames(error.table) <- column_names
   } else {
-    error.table <- data.frame("ERROR",stringsAsFactors = F)
+    if(first_column=="") {
+      first_column <- "ERROR"
+    }
+    error.table <- data.frame(first_column,stringsAsFactors = F)
     colnames(error.table) <- column_names
   }
   return(error.table)

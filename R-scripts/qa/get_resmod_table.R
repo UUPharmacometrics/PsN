@@ -7,6 +7,12 @@ get_resmod_table <- function(directory, suffix){
     lines <- readLines(con)
     close(con)
     fields <- stringr::str_split(lines, ",")
+    # delete empty values ("") in each list, if exists
+    for(i in 1:length(fields)) {
+      if(any(fields[[i]] == "")) {
+        fields[[i]] <- fields[[i]][which(fields[[i]]!="")]
+      }
+    }
     header <- fields[[1]]
     fields[[1]] <- NULL
     resmod_table <- plyr::ldply(fields, function(l){
