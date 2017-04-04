@@ -29,7 +29,7 @@ for (i in 1:length(rscript)) {
 }
 ```
 
-```{r calculations,results='hide',echo=FALSE}
+```{r calculations,results='hide',echo=FALSE,message=FALSE}
 # Helping functions
 # get a ofv value from the raw_results.csv
 .get_rawres_ofv <- function(rawres_file, row = 1){
@@ -58,6 +58,10 @@ for (i in 1:length(rscript)) {
 #which resmod_ folders are in the working directory
 resmod_suffix <- which_resmod_folders(directory=working.directory)
 
+# 1.Structural models
+structural_overview <- get_structural_overview_table(working.directory,idv=resmod_suffix)
+# get resmod structural details tables
+resmod_structural_details <- resmod_structural_details_tables(working.directory,model.directory,model.filename,CWRES_table,resmod_suffix,idv_name)
 
 # 2.Parameter Variability Models
 list_par_var_models <- get_param_var_tables(directory=working.directory,n.eta)
@@ -68,11 +72,12 @@ boxcox_lambdas_table <- list_par_var_models$boxcox_lambdas_table
 
 # 3.Covariate Models
   # 3.1.All (FREM)
-frem_table_list <- get_all_covariates(frem_directory=file.path(working.directory,"frem_run"))
+frem_table_list <- get_all_covariates(frem_directory=file.path(working.directory,"frem_run"),covariates,categorical)
 frem_files_exists <- frem_table_list$frem_files_exists
 frem_table <- frem_table_list$frem_table
  # 3.2.Covariate (SCM)
-scm_table_list <- get_scm_table(file.path(working.directory,paste0("scm_run/raw_results_",sub('.mod.*','',model.filename),".csv")))
+scm_table_list <- get_scm_table(file.path(working.directory,paste0("scm_run/raw_results_",sub('.mod.*','',model.filename),".csv")),
+                                parameters,covariates,categorical)
 scm_files_exists <- scm_table_list$scm_files_exists
 scm_table <- scm_table_list$scm_table
   #summary
@@ -82,7 +87,7 @@ covariates_table <- covariates_table_list$covariates_table
 
 
 #4.create residual error model table (extra table)
-resmod_table_list <- get_resmod_ruv_table(directory=file.path(working.directory), suffix="idv")
+resmod_table_list <- get_resmod_ruv_table(directory=file.path(working.directory), idv_name)
 resmod_ruv_models_table <- resmod_table_list$resmod_ruv_table
 resmod_ruv_overview <- resmod_table_list$resmod_ruv_overview
 
@@ -102,14 +107,14 @@ outliers_table <- outlier_table_list$outliers_table
 max_outlier_table <- outlier_table_list$max_outlier_table
 
 
-
 # get overview table
-rgroup <- c("Parameter Variability Model","Covariates","Residual Error Model","Influential Individuals","Outliers")
-overview_list <- list(par_var_models,covariates_table,resmod_ruv_overview,cdd_highest_dofv,max_outlier_table)
+rgroup <- c("Structural Model","Parameter Variability Model","Covariates","Residual Error Model","Influential Individuals","Outliers")
+overview_list <- list(structural_overview,par_var_models,covariates_table,resmod_ruv_overview,cdd_highest_dofv,max_outlier_table)
 
 overview_table_list <- get_overview_table(overview_list,rgroup)
 n.rgroup <- overview_table_list$n.rgroup
 overview_table <- overview_table_list$overview_table
+
 ```
 
 #Overview
@@ -121,12 +126,18 @@ print(overview_table)
 ```
 
 #Structural
-
-###TIME
-
-###TAD
-
-###PRED
+```{r draw_structural_details_tables,echo=F,results='asis'}
+for(i in 1:length(resmod_suffix)) {
+  cat(resmod_suffix[i])
+  first_table <- ztable(resmod_structural_details[[i]]$first_table)
+  first_table <- update_ztable(first_table,type=type,include.colnames = F,include.rownames = F,longtable = T)
+  print(first_table)
+  second_table <- ztable(resmod_structural_details[[i]]$second_table)
+  second_table <- addcgroup(second_table,cgroup=c("","Mean"),n.cgroup=c(1,2))
+  second_table <- update_ztable(second_table,type=type,colnames.bold = T,include.rownames = F,longtable = T)
+  print(second_table)
+}
+```
 
 #Parameter Variability Model
 
