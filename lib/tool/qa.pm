@@ -152,7 +152,7 @@ sub modelfit_setup
             occ => $self->occ,
             groups => $self->groups,
             iterative => 0,
-            directory => 'resmod_idv',
+            directory => 'resmod_'.$self->idv,
         );
     };
     $self->resmod_idv_table($resmod_idv->table_file);
@@ -161,7 +161,7 @@ sub modelfit_setup
             $resmod_idv->run();
         };
     } else {
-        rmdir "resmod_idv";
+        rmdir "resmod_".$self->idv;
     }
 
     $self->_to_qa_dir();
@@ -310,7 +310,8 @@ sub create_R_plots_code
     if (defined $self->parameters) {
         @parameters = split(/,/, $self->parameters);
     }
-
+	my $CWRES_table_path = $self->resmod_idv_table;
+	$CWRES_table_path =~ s/\\/\//g;
     $rplot->add_preamble(
         code => [
             '# qa specific preamble',
@@ -318,7 +319,7 @@ sub create_R_plots_code
             "covariates <- " . rplots::create_r_vector(array => \@covariates),
             "categorical <- " . rplots::create_r_vector(array => \@categorical),
             "parameters <- " . rplots::create_r_vector(array => \@parameters),
-            "CWRES_table <- '" . $self->resmod_idv_table . "'",
+            "CWRES_table <- '" . $CWRES_table_path . "'",
         ]
     );
 }
