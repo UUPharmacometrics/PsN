@@ -13,7 +13,10 @@ use Moose;
 use MooseX::Params::Validate;
 use math;
 use utils::file;
-use array qw(get_positions);
+use array qw(get_positions any_nonzero);
+use nmtablefile;
+
+
 extends 'tool';
 
 use tool::scm::config_file;
@@ -90,6 +93,7 @@ has 'covariate_statistics_file' => ( is => 'rw', isa => 'Str', default => 'covar
 has 'relations_file' => ( is => 'rw', isa => 'Str', default => 'relations.txt' );
 has 'short_logfile' => ( is => 'rw', isa => 'ArrayRef[Str]', default => sub { ['short_scmlog.txt'] } );
 has 'from_linearize' => ( is => 'rw', isa => 'Bool', default => 0 );    # Was the scm-object created by linearize?
+has 'original_nonlinear_model' => ( is => 'rw', isa => 'model' );       # If linearizing this will be the real original model
 
 sub BUILD
 {
@@ -1324,11 +1328,12 @@ sub modelfit_setup
 		#if linearize then copy original model here (only allow one model)
 		if ($self->linearize) {
 			my $tmp_orig = $model->copy(
-				filename           => $self->final_model_directory.'/original.mod',
-				copy_datafile          => 0,
+				filename => $self->final_model_directory.'/original.mod',
+				copy_datafile => 0,
 				write_copy =>1,
-				copy_output        => 0);
-			$tmp_orig = undef;
+				copy_output => 0,
+            );
+            $self->original_nonlinear_model($tmp_orig);
 		}
 	}
 
@@ -1482,6 +1487,15 @@ sub modelfit_setup
 				            my $initial_ofv = sprintf("%12.5f", $initial_ofv);
                             ui->print(category => 'linearize',
                                 message => "\nThe $ofvname of the linearized base model before estimation:$initial_ofv\n");
+                        }
+                        my $datafile = $start_model->datafiles(problem_numbers => [ 1 ], absolute_path => 1)->[0];
+                        my $has_interaction = _check_interaction(datafile => $datafile, model => $self->original_nonlinear_model);
+                        if ($has_interaction) {
+                            ui->print(category => 'linearize',
+                                message => "NOTE: The model has interaction");
+                        } else {
+                            ui->print(category => 'linearize',
+                                message => "NOTE: The model does NOT have interaction");
                         }
                     }
 					print LOG "The $ofvname of the linearized base model:$ofv        $start_name\n";
@@ -5948,7 +5962,8 @@ sub preprocess_data
 	return $filtered_data_model;
 }
 
-sub create_R_plots_code{
+sub create_R_plots_code
+{
 	my $self = shift;
 	my %parm = validated_hash(\@_,
 							  rplot => { isa => 'rplots', optional => 0 }
@@ -5992,6 +6007,35 @@ sub create_R_plots_code{
 						 ]);
 
 }
+
+sub _check_interaction
+{
+    # Check if this model has interaction i.e.
+    #   1. It has D_EPSETA non-zero in derivatives data
+    #   2. It has INTER on $EST in original model
+	my %parm = validated_hash(\@_,
+        datafile => { isa => 'Str' },
+        model => { isa => 'model' },
+    );
+	my $datafile = $parm{'datafile'};
+	my $model = $parm{'model'};
+
+    my $table_file = nmtablefile->new(filename => $datafile);
+    my $table = $table_file->tables->[0];
+   
+    my $nonzero = 0;
+    for (my $col = 0; $col < @{$table->columns}; $col++) { 
+        if ($table->header_array->[$col] =~ /^D_EPSETA/) {
+            $nonzero = array::any_nonzero($table->columns->[$col]);
+            last if $nonzero;
+        }
+    }
+
+    my $inter = $model->is_option_set(record => 'estimation', name => 'INTERACTION', fuzzy_match => 1);
+
+    return $nonzero && $inter;
+}
+
 
 no Moose;
 __PACKAGE__->meta->make_immutable;
