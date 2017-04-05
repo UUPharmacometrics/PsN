@@ -3,6 +3,7 @@
 
 install.packages("caTools", dependencies=TRUE)
 install.packages("dplyr", dependencies=TRUE)
+install.packages("expm", dependencies=TRUE)
 install.packages("ggplot2", dependencies=TRUE)
 install.packages("gplots", dependencies=TRUE)
 install.packages("grid", dependencies=TRUE)
