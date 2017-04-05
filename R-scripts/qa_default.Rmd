@@ -15,6 +15,7 @@ library(methods)
 library(ztable)
 library(expm)
 source(paste0(rscripts.directory, "/common/find_r_files_in_subdir.R"))
+source(paste0(rscripts.directory, "/common/iofv.R"))
 source(paste0(rscripts.directory, "/cdd/create.data.full.R"))
 source(paste0(rscripts.directory, "/simeval/ofv.i_ofv_res.R"))
 #source qa functions
@@ -182,4 +183,13 @@ print(ii_table)
 outliers_table <- ztable(outliers_table)
 outliers_table <- update_ztable(outliers_table,type=type,colnames.bold = T,include.rownames = F,longtable = T)
 print(outliers_table)
+```
+
+```{r plot_iofv_vs_iofv,echo=F,results='asis',fig.width=9,fig.height=6.5,fig.keep="high",fig.align="center"}
+phi1 <- file.path(working.directory,"linearize_run",paste0(sub('.mod.*','',model.filename),"_linbase.phi"))
+phi2 <- file.path(working.directory,"linearize_run/scm_dir1/derivatives.phi")
+if(file.exists(phi1) && file.exists(phi2)) {
+  plot_iofv_vs_iofv <- iofv_vs_iofv(phi1,phi2)
+  print(plot_iofv_vs_iofv)
+}
 ```
