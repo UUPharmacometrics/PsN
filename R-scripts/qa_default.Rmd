@@ -8,17 +8,12 @@ classoption: landscape
 geometry: margin=1.5cm
 ---
 
-
-```{r R_input,include = FALSE}
-cdd_dofv_cutoff <- 3.84
-cdd_max_rows <- 10
-type <- "latex" # set to "html" if want to create a html file
-```
-
 ```{r source_functions,include = FALSE}
 library(dplyr)
 library(knitr)
-require(ztable)
+library(methods)
+library(ztable)
+library(expm)
 source(paste0(rscripts.directory, "/common/find_r_files_in_subdir.R"))
 source(paste0(rscripts.directory, "/cdd/create.data.full.R"))
 source(paste0(rscripts.directory, "/simeval/ofv.i_ofv_res.R"))
