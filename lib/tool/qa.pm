@@ -320,6 +320,9 @@ sub create_R_plots_code
             "categorical <- " . rplots::create_r_vector(array => \@categorical),
             "parameters <- " . rplots::create_r_vector(array => \@parameters),
             "CWRES_table <- '" . $CWRES_table_path . "'",
+			"cdd_dofv_cutoff <- 3.84 ",
+			"cdd_max_rows <- 10",
+			"type <- 'latex' # set to 'html' if want to create a html file "
         ]
     );
 }
