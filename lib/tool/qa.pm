@@ -16,7 +16,7 @@ use tool::simeval;
 extends 'tool';
 
 has 'model' => ( is => 'rw', isa => 'model' );
-has 'groups' => ( is => 'rw', isa => 'Int', default => 4 );       # The number of groups to use for quantiles in the time_varying model 
+has 'groups' => ( is => 'rw', isa => 'Int', default => 10 );       # The number of groups to use for quantiles in the time_varying model 
 has 'idv' => ( is => 'rw', isa => 'Str', default => 'TIME' );
 has 'dv' => ( is => 'rw', isa => 'Str', default => 'CWRES' );
 has 'dvid' => ( is => 'rw', isa => 'Str', default => 'DVID' );
