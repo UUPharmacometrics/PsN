@@ -129,7 +129,7 @@ has 'missing_data_token' => ( is => 'rw', isa => 'Maybe[Int]', default => -99 );
 has 'last_est_complete' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'niter_eonly' => ( is => 'rw', isa => 'Maybe[Int]' );
 has 'annotation' => ( is => 'rw', isa => 'model::annotation' );
-has 'phi_file' => ( is => 'rw', isa => 'Str' );
+has 'phi_file' => ( is => 'rw', isa => 'Maybe[Str]' );
 
 sub BUILD
 {
