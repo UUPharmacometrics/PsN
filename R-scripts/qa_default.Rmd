@@ -25,6 +25,7 @@ for (i in 1:length(rscript)) {
 }
 ```
 
+
 ```{r calculations,results='hide',echo=FALSE,message=FALSE}
 # Helping functions
 # get a ofv value from the raw_results.csv
@@ -43,32 +44,25 @@ for (i in 1:length(rscript)) {
     as.numeric()
 }
 
-#round values in a dataframe
-.round_values <- function(data_frame,col,dec) {
-  if(missing(col)) col="dofv"
-  if(missing(dec)) dec=2
-  data_frame[,which(colnames(data_frame) %in% col)] <- round(data_frame[,which(colnames(data_frame) %in% col)],dec)
-  data_frame
-}
-
 #which resmod_ folders are in the working directory
 resmod_suffix <- which_resmod_folders(directory=working.directory)
 
 # 1.Structural models
-structural_overview <- get_structural_overview_table(working.directory,idv=resmod_suffix)
+structural_overview <- get_structural_overview_table(working.directory,idv=resmod_suffix,groups)
 # get resmod structural details tables
 resmod_structural_details <- resmod_structural_details_tables(working.directory,model.directory,model.filename,CWRES_table,resmod_suffix,idv_name)
 
 # 2.Parameter Variability Models
-list_par_var_models <- get_param_var_tables(directory=working.directory,n.eta)
+list_par_var_models <- get_param_var_tables(directory=working.directory)
+param_var_file_exists <- list_par_var_models$param_var_file_exists
 par_var_models <- list_par_var_models$par_var_models
-full_omega_block_table <- list_par_var_models$full_omega_block_table
-boxcox_lambdas_table <- list_par_var_models$boxcox_lambdas_table
 
+full_omega_block_table <- get_full_omega_block(working.directory,param_var_file_exists,list_par_var_models$dofv_block)
+boxcox_lambdas_table <- get_boxcox_lambda_table(working.directory,param_var_file_exists,list_par_var_models$dofv_box)
 
 # 3.Covariate Models
   # 3.1.All (FREM)
-frem_table_list <- get_all_covariates(frem_directory=file.path(working.directory,"frem_run"),covariates,categorical)
+frem_table_list <- get_all_covariates(frem_directory=file.path(working.directory,"frem_run"),covariates,categorical,parameters)
 frem_files_exists <- frem_table_list$frem_files_exists
 frem_table <- frem_table_list$frem_table
  # 3.2.Covariate (SCM)
@@ -76,14 +70,15 @@ scm_table_list <- get_scm_table(file.path(working.directory,paste0("scm_run/raw_
                                 parameters,covariates,categorical)
 scm_files_exists <- scm_table_list$scm_files_exists
 scm_table <- scm_table_list$scm_table
+max_scm_table <- scm_table_list$max_scm_table
   #summary
-covariates_table_list <- get_covariates_table(frem_table,scm_table,frem_files_exists,scm_files_exists)
+covariates_table_list <- get_covariates_table(frem_table,scm_table,max_scm_table,frem_files_exists,scm_files_exists)
 covariates_extra_table <- covariates_table_list$covariates_extra_table
 covariates_table <- covariates_table_list$covariates_table
 
 
 #4.create residual error model table (extra table)
-resmod_table_list <- get_resmod_ruv_table(directory=file.path(working.directory), idv_name)
+resmod_table_list <- get_resmod_ruv_table(directory=working.directory, idv_name)
 resmod_ruv_models_table <- resmod_table_list$resmod_ruv_table
 resmod_ruv_overview <- resmod_table_list$resmod_ruv_overview
 
@@ -106,7 +101,6 @@ max_outlier_table <- outlier_table_list$max_outlier_table
 # get overview table
 rgroup <- c("Structural Model","Parameter Variability Model","Covariates","Residual Error Model","Influential Individuals","Outliers")
 overview_list <- list(structural_overview,par_var_models,covariates_table,resmod_ruv_overview,cdd_highest_dofv,max_outlier_table)
-
 overview_table_list <- get_overview_table(overview_list,rgroup)
 n.rgroup <- overview_table_list$n.rgroup
 overview_table <- overview_table_list$overview_table
@@ -115,21 +109,22 @@ overview_table <- overview_table_list$overview_table
 
 #Overview
 ```{r draw_overview_table,echo=F,results='asis'}
-overview_table <- ztable(overview_table)
+overview_table <- ztable(overview_table,align="lrc")
 overview_table <- addrgroup(overview_table,rgroup=rgroup,n.rgroup=n.rgroup,cspan.rgroup=1)
-overview_table <- update_ztable(overview_table,type=type,colnames.bold = T)
+overview_table <- update_ztable(overview_table,type=type,include.rownames = F,colnames.bold = T)
 print(overview_table)
 ```
 
 #Structural
+
 ```{r draw_structural_details_tables,echo=F,results='asis'}
 for(i in 1:length(resmod_suffix)) {
   cat(resmod_suffix[i])
-  first_table <- ztable(resmod_structural_details[[i]]$first_table)
+  first_table <- ztable(resmod_structural_details[[i]]$first_table,align="lr")
   first_table <- update_ztable(first_table,type=type,include.colnames = F,include.rownames = F,longtable = T)
   print(first_table)
-  second_table <- ztable(resmod_structural_details[[i]]$second_table)
-  second_table <- addcgroup(second_table,cgroup=c("","Mean"),n.cgroup=c(1,2))
+  second_table <- ztable(resmod_structural_details[[i]]$second_table,align="rlrr")
+  second_table <- addcgroup(second_table,cgroup=c("","Estimated shift"),n.cgroup=c(1,2))
   second_table <- update_ztable(second_table,type=type,colnames.bold = T,include.rownames = F,longtable = T)
   print(second_table)
 }
@@ -139,28 +134,28 @@ for(i in 1:length(resmod_suffix)) {
 
 ###Full OMEGA Block
 ```{r draw_full_omega_block_table,echo=F,results='asis'}
-full_omega_block_table <- ztable(full_omega_block_table)
+full_omega_block_table <- ztable(full_omega_block_table,align="lr")
 full_omega_block_table <- update_ztable(full_omega_block_table,type=type,colnames.bold = T,include.rownames = F,longtable = T)
 print(full_omega_block_table)
 ```
 
 ###Box-Cox Transformation
 ```{r draw_boxcox_tranformation_table,echo=F,results='asis'}
-boxcox_lambdas_table <- ztable(boxcox_lambdas_table)
+boxcox_lambdas_table <- ztable(boxcox_lambdas_table,align="lr")
 boxcox_lambdas_table <- update_ztable(boxcox_lambdas_table,type=type,colnames.bold = T,include.rownames = F,longtable = T)
 print(boxcox_lambdas_table)
 ```
 
 #Covariates
 ```{r draw_covariates_table,echo=F,results='asis'}
-covariates_extra_table <- ztable(covariates_extra_table)
+covariates_extra_table <- ztable(covariates_extra_table,align="lr")
 covariates_extra_table <- update_ztable(covariates_extra_table,type=type,colnames.bold = T,include.rownames = F,longtable = T)
 print(covariates_extra_table)
 ```
 
 #Residual Error Model
 ```{r draw_resiual_error_model_table,echo=F,results='asis'}
-resmod_ruv_models_table <- ztable(resmod_ruv_models_table)
+resmod_ruv_models_table <- ztable(resmod_ruv_models_table,align="lr",digits=1)
 resmod_ruv_models_table <- update_ztable(resmod_ruv_models_table,type=type,colnames.bold = T,include.rownames = F,longtable = T)
 print(resmod_ruv_models_table)
 ```
@@ -172,24 +167,29 @@ if(cdd_files_exist) {
     ii_table <- ii_table[,1:cdd_max_rows]
   }
 }
-
-ii_table <- ztable(ii_table)
-ii_table <- update_ztable(ii_table,type=type,colnames.bold = T,include.rownames = F,longtable = T)
+value <- T
+if(ncol(ii_table)==1 && nrow(ii_table)==1) value <- F
+ii_table <- ztable(ii_table,digits = 1,align="lr")
+ii_table <- update_ztable(ii_table,type=type,colnames.bold = value,include.colnames = value,include.rownames = F,longtable = T)
 print(ii_table)
 ```
 
 #Outliers
 ```{r draw_outliers_table,echo=F,results='asis'}
-outliers_table <- ztable(outliers_table)
-outliers_table <- update_ztable(outliers_table,type=type,colnames.bold = T,include.rownames = F,longtable = T)
+value <- T
+if(ncol(outliers_table)==1 && nrow(outliers_table)==1) value <- F
+outliers_table <- ztable(outliers_table,digits = 1,align="lr")
+outliers_table <- update_ztable(outliers_table,type=type,colnames.bold = value,include.colnames = value,include.rownames = F,longtable = T)
 print(outliers_table)
 ```
 
 ```{r plot_iofv_vs_iofv,echo=F,results='asis',fig.width=9,fig.height=6.5,fig.keep="high",fig.align="center"}
-phi1 <- file.path(working.directory,"linearize_run",paste0(sub('.mod.*','',model.filename),"_linbase.phi"))
-phi2 <- file.path(working.directory,"linearize_run/scm_dir1/derivatives.phi")
-if(file.exists(phi1) && file.exists(phi2)) {
-  plot_iofv_vs_iofv <- iofv_vs_iofv(phi1,phi2)
-  print(plot_iofv_vs_iofv)
+if(rplots.level > 1) {
+  phi1 <- file.path(working.directory,"linearize_run",paste0(sub('.mod.*','',model.filename),"_linbase.phi"))
+  phi2 <- file.path(working.directory,"linearize_run/scm_dir1/derivatives.phi")
+  if(file.exists(phi1) && file.exists(phi2)) {
+    plot_iofv_vs_iofv <- iofv_vs_iofv(phi1,phi2)
+    print(plot_iofv_vs_iofv)
+  }
 }
 ```
