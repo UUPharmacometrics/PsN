@@ -4,6 +4,7 @@ get_resmod_structural_dofv <- function(directory, suffix) {
     resmod_structural_dofv <- get_resmod_table(directory, suffix)$resmod_table %>%
       filter(model=="idv_varying_combined") %>%
       select(dofv) %>%
+      round(1) %>%
       as.character() # so we can see NA values
   } else {
     resmod_structural_dofv <- "ERROR"

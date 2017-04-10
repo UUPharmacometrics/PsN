@@ -21,8 +21,9 @@ get_resmod_ruv_table <- function(directory, suffix){
     
     #choose only 2 columns
     resmod_ruv_table <- resmod_ruv_table[,c("Model","dofv")]
-    resmod_ruv_overview <- resmod_ruv_overview[,c("Model","dofv")]
-    colnames(resmod_ruv_overview) <- c("","dofv")
+    resmod_ruv_overview <- resmod_ruv_overview[,c("Model","dofv","df")]
+    colnames(resmod_ruv_overview) <- c("","dofv","Add.params")
+    resmod_ruv_overview$dofv <- round(resmod_ruv_overview$dofv,1)
     
     #replace symbol "_" with the space
     nr_rows <- grep("_",resmod_ruv_table[,1])

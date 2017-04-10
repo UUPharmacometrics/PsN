@@ -12,7 +12,7 @@ get_outliers_table <- function(simeval_directory,cdd.data) {
           outliers_table[i,2] <- ifelse(any(cdd.data$id %in% outlier_ids[i]),cdd.data$dofv[which(cdd.data$id==outlier_ids[i])],NA)
         }
         outliers_table <- outliers_table[order(outliers_table$dofv,decreasing = T),]
-        outliers_table$dofv <- round(as.numeric(outliers_table$dofv), 2)
+        outliers_table$dofv <- round(as.numeric(outliers_table$dofv), 1)
         outliers_table <- outliers_table %>% mutate(Subjects=paste("Subject",Subjects))
         if(!all(is.na(outliers_table$dofv))) {
           max_outlier_table <- outliers_table[which.max(outliers_table$dofv),]

@@ -27,5 +27,6 @@
                  bin_min = bin_min_value)
       })%>%
     ungroup() %>%
-    mutate_each(funs(as.numeric), value, bin_min, bin_max)
+    mutate_each(funs(as.numeric), value, bin_min, bin_max) %>%
+    mutate_each(funs(round(.,1)), bin_min, bin_max)
 }

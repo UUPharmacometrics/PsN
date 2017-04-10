@@ -1,82 +1,65 @@
-get_param_var_tables <- function(directory,n.eta) {
+get_param_var_tables <- function(directory) {
   #for overview table
   param_var_file_exists <- TRUE
   if(file.exists(paste0(directory,"linearize_run/",sub('.mod.*','',model.filename),"_linbase.ext")) &&
-     file.exists(paste0(directory,"modelfit_run/raw_results.csv"))) {
+     file.exists(paste0(directory,"modelfit_run"))) {
     
     linbase_ofv <- .get_ext_ofv(paste0(directory,"linearize_run/",sub('.mod.*','',model.filename),"_linbase.ext"))
-    linblock_ofv <- .get_rawres_ofv(paste0(directory,"modelfit_run/raw_results.csv"))
-    dofv_block <- linbase_ofv-linblock_ofv
-    linbox_ofv <- .get_rawres_ofv(paste0(directory,"modelfit_run/raw_results.csv"),row=2)
-    dofv_box <- linbase_ofv - linbox_ofv
-    linaddeta_ofv <- .get_rawres_ofv(paste0(directory,"modelfit_run/raw_results.csv"),row=3)
-    dofv_additional_eta <- linbase_ofv - linaddeta_ofv
+
+    #full omega block
+    if(file.exists(paste0(directory,"modelfit_run/NM_run1/psn.ext"))) {
+      linblock_ofv <- .get_ext_ofv(paste0(directory,"modelfit_run/NM_run1/psn.ext"))
+      dofv_block <- linbase_ofv-linblock_ofv
+      # how many omega cov omegas were added
+      boxcox_omegas <- get_omega_values(paste0(directory,"modelfit_run/NM_run1/psn.ext"))$omegas_cov
+      linbase_omegas <- get_omega_values(paste0(directory,"linearize_run/",sub('.mod.*','',model.filename),"_linbase.ext"))$omegas_cov
+      add.par_block <- length(setdiff(colnames(boxcox_omegas),colnames(linbase_omegas)))
+    } else {
+      dofv_block <- NA
+      add.par_block <- NA
+    }
+    
+    #boxcox transformation
+    if(file.exists(paste0(directory,"modelfit_run/NM_run2/psn.ext"))) {
+      linbox_ofv <- .get_ext_ofv(paste0(directory,"modelfit_run/NM_run2/psn.ext"))
+      dofv_box <- linbase_ofv - linbox_ofv
+      #get nr TH+d
+      ext_file <- read.table((paste0(directory,"modelfit_run/NM_run2/psn.ext")),header=TRUE,skip=1,stringsAsFactors = F) %>%
+        filter(ITERATION==-1000000000)
+      TH_values <- ext_file[grep("^THETA+[0-9]$",colnames(ext_file))]
+      add.par_box <- length(TH_values[!is.na(TH_values)])
+    } else {
+      dofv_box <- NA
+      add.par_box <- NA
+    }
+        
+    # additional etas
+    if(file.exists(paste0(directory,"modelfit_run/NM_run3/psn.ext"))) {
+      linaddeta_ofv <- .get_ext_ofv(paste0(directory,"modelfit_run/NM_run3/psn.ext"))
+      dofv_additional_eta <- linbase_ofv - linaddeta_ofv
+      addetas_omegas <- get_omega_values(paste0(directory,"modelfit_run/NM_run3/psn.ext"))$omegas_var
+      linbase_omegas <- get_omega_values(paste0(directory,"linearize_run/",sub('.mod.*','',model.filename),"_linbase.ext"))$omegas_var
+      add.par_additional_eta <- length(setdiff(colnames(addetas_omegas),colnames(linbase_omegas)))
+    } else {
+      dofv_additional_eta <- NA
+      add.par_additional_eta <- NA
+    }
+
+    
     par_var_models <- data.frame(c("Full OMEGA Block", "Box-Cox Transformation","Additional ETA"), 
-                                 c(dofv_block, dofv_box, dofv_additional_eta)
-    )
-    colnames(par_var_models) <- c("","dofv")
-    par_var_models$dofv <- round(as.numeric(par_var_models[,2]), 2)
+                                 c(dofv_block, dofv_box, dofv_additional_eta),
+                                 c(add.par_block, add.par_box, add.par_additional_eta),stringsAsFactors = F)
+    colnames(par_var_models) <- c("","dofv","Add.params")
+    par_var_models$dofv <- round(as.numeric(par_var_models[,2]), 1)
   } else {
     param_var_file_exists <- FALSE
     par_var_models <- error_table(c("Full OMEGA Block","Box-cox Transformation","Additional ETA"))
-  }
-  
-  #get lambda values (extra table for box-cox transformation)
-  rr_file_exists <- file.exists(paste0(directory,"modelfit_run/raw_results.csv"))
-  if(rr_file_exists) {
-    boxcox_raw_results <- read.csv(paste0(directory,"modelfit_run/raw_results.csv"))
-    col_nr <- which(names(boxcox_raw_results)=="ofv")
-    lambdas <- boxcox_raw_results[2,c((col_nr+1):(col_nr+n.eta))] # second row is a boxcox results
-    boxcox_lambdas_table <- as.data.frame(array(0,c(length(lambdas),2)))
-    colnames(boxcox_lambdas_table) <- c("","Lambda")
-    for(i in 1:length(lambdas)) {
-      boxcox_lambdas_table[i,1] <- paste0("ETA(",i,")")
-      boxcox_lambdas_table[i,2] <- lambdas[i]
-    }
-    if(param_var_file_exists) {
-      boxcox_lambdas_table <- rbind(boxcox_lambdas_table,c("dofv",dofv_box))
-    }
-    boxcox_lambdas_table[,2] <- round(as.numeric(boxcox_lambdas_table[,2]), 2)
-    
-  } else {
-    boxcox_lambdas_table <- error_table(col=1)
-  }
-  
-  #get full omega block extra table
-  if(rr_file_exists) {
-    full_block_table <- read.csv(paste0(directory,"modelfit_run/raw_results.csv")) %>%
-      slice(1) 
-    omega_values <- full_block_table[,grep("^OMEGA",colnames(full_block_table))]
-    
-    # create a table
-    full_omega_block_table <- as.data.frame(array(NA,c(length(omega_values),2)))
-    colnames(full_omega_block_table) <- c("","Value")
-    for(i in 1:length(omega_values)) {
-      numeration <- sub('.*OMEGA.','',colnames(omega_values[i]))
-      numeration <- substr(numeration, 1, nchar(numeration)-1) # delete last element in string
-      first <- sub('\\..*','',numeration)
-      second <- sub('.*\\.','',numeration)
-      if(first==second) {
-        full_omega_block_table[i,1] <- paste0("sd(",first,")")
-      } else {
-        
-        full_omega_block_table[i,1] <- paste0("corr(",min(first,second),",",max(first,second),")")
-      }
-      full_omega_block_table[i,2] <- omega_values[i]
-    }
-    full_omega_block_table[,2] <- round(as.numeric(full_omega_block_table[,2]),2)
-    
-    if(param_var_file_exists) {
-      full_omega_block_table <- rbind(full_omega_block_table,c("dofv",round(dofv_block,2)))
-    }
-    
-  } else {
-    full_omega_block_table <- error_table(col=1)
+    dofv_block <- NA
+    dofv_box <- NA
   }
   
   return(list(param_var_file_exists=param_var_file_exists,
-              rr_file_exists=rr_file_exists,
               par_var_models=par_var_models,
-              boxcox_lambdas_table=boxcox_lambdas_table,
-              full_omega_block_table=full_omega_block_table))
+              dofv_block=dofv_block,
+              dofv_box=dofv_box))
 }
