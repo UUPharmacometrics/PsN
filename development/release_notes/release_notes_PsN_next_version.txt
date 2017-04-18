@@ -80,6 +80,8 @@ A new recommended but not required Perl library for runrecord: YAML::Tiny
   again. If keeps failing then treat model as failed due to job submission error, and
   allow crash restart if appropriate crash handling options are set.
 - Bug fix: PsN can now be run from symbolic link wrappers.
+- Added seconds to "Run started" in version_and_option_info.txt
+
 
 ___common_options___
 
@@ -87,6 +89,7 @@ ___common_options___
   If set, PsN will exit with an error if NONMEM crashes, or an estimation/evaluation fails to
   produce an ofv, or a simulation gives a typical error message in the lst-file.
 - Option -standardised_output was renamed to -so
+
 
    ___NONMEM output parsing___
 
@@ -104,11 +107,13 @@ ___common_options___
   which is used for very large covariance matrices.
 - Bug fix: Two digits of precision were lost when parsing OFV from .ext file
   
+
    ___Cluster/Grid___
 
 - When -run_on_torque is set, PsN will now add -d <full path to NM_run subdirectory>
   to the qsub command. The qsub command will be saved to file qsubcommand in the
   NM_run subdirectory, for easier debugging.
+
 
    ___Test scripts___
 
@@ -118,10 +123,12 @@ ___common_options___
   or a directory set in psn.conf. The set of 'all' nm_versions in 'runsystem all'
   command is configurable in psn.conf. See Testing chapter in developers_guide.pdf.
 
+
    ___execute___
 
 - New option -boxcox to automatically boxcox transform all ETAs before running the model
 - New option -etas to automatically add eta starting values from the previous phi-file
+
 
    ___runrecord___
 
@@ -153,6 +160,7 @@ New features implemented by William S. Denney of Human Predictions:
   labels to use, PsN will use the estimation results to guess which parameters have been estimated
   and list them in sumo output using their generic names.
 
+
 ___bootstrap___
 
 - The $COVARIANCE will by default be removed from the model. If wanted it can be kept
@@ -161,6 +169,7 @@ ___bootstrap___
   of individuals NONMEM printed in the original run lst-file.
 - New file 'all_individuals1.csv' contains a list of all individuals of the original dataset.
 
+
    ___vpc/npc___
 
 - New option -mix to generate simulated and observed data for external post processing
@@ -168,6 +177,7 @@ ___bootstrap___
 - Fix bug causing warnings to be emitted when having '.' in DV column of original table.
   The warnings came from the calculation of the diagnostic False Pos. It is now defined that
   such observations can neither be false positives nor false negatives
+
 
    ___frem___
 
@@ -236,6 +246,7 @@ ___boot_scm___
   Update initial estimates for parameters that are FIX.
 - bug fix when samples=1. RSE should be NA and not 0.
 
+
    ___simeval___
 
 -  Bug fix: Skip computations on residuals if CWRES is zero.
@@ -244,16 +255,19 @@ ___boot_scm___
 -  Possibility to rerun the post processing without rerunning NONMEM by using -dir
 -  New option -dv for DV vs PRED plot
 
+
    ___update_inits___
 
 -  New options -rawres_input, -in_filter, -offset_rawres to read parameter estimates from a raw results file.
 -  New option -etas to add $ETAS and MCETA=1 to the model file using the phi-file
 -  Bug fix: renumber MSFO=file in $NONPARAMETRIC
 
+
    ___parallel_retries___
 
 -  New option -update_fix, default false. Only for use in combination with -rawres_input.
    Update parameters that are FIXED.
+
 
    ___sir___
 	

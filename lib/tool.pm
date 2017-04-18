@@ -1679,7 +1679,7 @@ sub print_options
 	open(CMD, "> ", $option_file);
 	my @datearr=localtime;
 	my $theDate=sprintf "%4.4d-%2.2d-%2.2d",($datearr[5]+1900),($datearr[4]+1),($datearr[3]);
-	my $theTime=sprintf "%2.2d:%2.2d",($datearr[2]),($datearr[1]);
+	my $theTime=sprintf "%2.2d:%2.2d:%2.2d",($datearr[2]),($datearr[1]), $datearr[0];
 	my $info_line = "PsN version: ".$PsN::version."\nRun started: $theDate at $theTime\n";
 	print CMD "$info_line";
 	print CMD "version_and_option_info.txt is overwitten if the run is restarted later using option -directory.\n";
