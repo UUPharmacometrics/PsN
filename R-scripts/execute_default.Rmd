@@ -59,7 +59,7 @@ if (is.null(subset.variable)){
 ```
 \pagebreak
 
-```{r Observations_Individual.pred_Population.pred_vs.Time,results='hide',echo=FALSE,fig.width=9,fig.height=7,fig.keep="high",fig.align="center"}
+```{r Observations_Individual_pred_Population_pred_vs_Time,results='hide',echo=FALSE,fig.width=9,fig.height=7,fig.keep="high",fig.align="center"}
 if (is.null(subset.variable)){
     print(dv.preds.vs.idv(xpdb))
 }else{
@@ -70,7 +70,7 @@ if (is.null(subset.variable)){
 ```
 \pagebreak
 
-```{r Observations_vs.Time,results='hide',echo=FALSE,fig.width=9,fig.height=7,fig.keep="high",fig.align="center"}
+```{r Observations_vs_Time,results='hide',echo=FALSE,fig.width=9,fig.height=7,fig.keep="high",fig.align="center"}
 if (is.null(subset.variable)){
     print(dv.vs.idv(xpdb))
 }else{
@@ -81,7 +81,7 @@ if (is.null(subset.variable)){
 ```
 \pagebreak
 
-```{r Individual_predictions_vs.Time,results='hide',echo=FALSE,fig.width=9,fig.height=7,fig.keep="high",fig.align="center"}
+```{r Individual_predictions_vs_Time,results='hide',echo=FALSE,fig.width=9,fig.height=7,fig.keep="high",fig.align="center"}
 if (is.null(subset.variable)){
     print(ipred.vs.idv(xpdb))
 }else{
@@ -92,7 +92,7 @@ if (is.null(subset.variable)){
 ```
 \pagebreak
 
-```{r Population_predictions_vs.Time,results='hide',echo=FALSE,fig.width=9,fig.height=7,fig.keep="high",fig.align="center"}
+```{r Population_predictions_vs_Time,results='hide',echo=FALSE,fig.width=9,fig.height=7,fig.keep="high",fig.align="center"}
 if (is.null(subset.variable)){
     print(pred.vs.idv(xpdb))
     

@@ -8,7 +8,7 @@ classoption: landscape
 geometry: margin=1.5cm
 ---
 
-```{r source_functions,include = FALSE}
+```{r loading_libraries_and_sourcing_functions,include = FALSE}
 library(dplyr)
 library(knitr)
 library(methods)
