@@ -40,6 +40,7 @@ sub modelfit_setup
 	my $self = shift;
 
     my $model_copy = $self->model->copy(filename => $self->model->filename, directory => $self->model->directory, output_same_directory => 1);
+    $model_copy->_write(filename => $self->directory . $self->model->filename);
     $model_copy->phi_file($self->model->get_phi_file());
     print "*** Running linearize ***\n";
     my $linearized_model_name = $self->model->filename;
