@@ -133,10 +133,14 @@ if (scalar(@ARGV) < 1) {
   exit;
 }
 
-if( scalar(@ARGV) > 1) {
+if (scalar(@ARGV) > 1) {
   print "qa can only handle one modelfile, you listed: ",
   join(',',@ARGV),". Use 'resmod -h' for help.\n";die;
   exit;
+}
+
+if (not defined $options{'rplots'}) {
+    $options{'rplots'} = 2;
 }
 
 ui->category('qa');
