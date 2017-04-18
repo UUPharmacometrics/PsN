@@ -148,14 +148,15 @@ print(boxcox_lambdas_table)
 
 #Covariates
 ```{r draw_covariates_table,echo=F,results='asis'}
-covariates_extra_table <- ztable(covariates_extra_table,align="lr")
+align <- paste(c("l",rep("r",ncol(covariates_extra_table)-1)),collapse = '')
+covariates_extra_table <- ztable(covariates_extra_table,align=align)
 covariates_extra_table <- update_ztable(covariates_extra_table,type=type,colnames.bold = T,include.rownames = F,longtable = T)
 print(covariates_extra_table)
 ```
 
 #Residual Error Model
 ```{r draw_resiual_error_model_table,echo=F,results='asis'}
-resmod_ruv_models_table <- ztable(resmod_ruv_models_table,align="lr",digits=1)
+resmod_ruv_models_table <- ztable(resmod_ruv_models_table,align="lrc")
 resmod_ruv_models_table <- update_ztable(resmod_ruv_models_table,type=type,colnames.bold = T,include.rownames = F,longtable = T)
 print(resmod_ruv_models_table)
 ```
