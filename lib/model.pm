@@ -5536,55 +5536,59 @@ sub full_omega_block
 {
     # Replace all omegas into one big full block
     # FIXed and SAME omegas are assumed to be at the end and will be kept
+    # Return 1 if model is already full block else 0
     my $self = shift;
 
-    my $fixed = $self->fixed_or_same(parameter_type => 'omega')->[0];
-    # Find first FIX omega
-    my $current = 1;
-    my $first_fix;
-    for my $fix (@{$fixed}) {
-        if ($fix) {
-            $first_fix = $current;
-            last;
+    my $omegas = $self->problems->[0]->omegas;
+
+    my $numetas = 0;
+    my $keep_rest = 0;
+    my @keep;
+    for (my $i = 0; $i < scalar(@$omegas); $i++) {
+        my $last = 0;
+        if ($i == scalar(@$omegas) - 1) {
+            $last = 1;
         }
-        $current++;
-    }
-
-    if (not defined $first_fix) {
-        $first_fix = @{$fixed} + 1;
-    }
-    if ($first_fix != 1) {      # The first is fixed. Do nothing
-        my $end_eta = $first_fix - 1;
-        my $omega_matrix = $self->problems->[0]->get_filled_omega_matrix(start_eta => 1, end_eta => $end_eta);
-        my $size = @{$omega_matrix};
-        my @record_arr = ( "\$OMEGA BLOCK($size)" );
-        for (my $i = 0; $i < $size; $i++) {
-            my $row = "";
-            for (my $j = 0; $j <= $i; $j++) {
-                $row .= $omega_matrix->[$i]->[$j] . ' ';
-            }
-            push @record_arr, "$row\n";
+        if (not $last and $omegas->[$i + 1]->same) {    # The next omega record is SAME
+            $keep_rest = 1;
         }
-
-        my $omega = model::problem::omega->new(record_arr => \@record_arr);
-
-        # Keep all FIX records
-        my @keep;
-        for my $record (@{$self->problems->[0]->omegas}) {
-            my $found_fix = 0;
-            for my $option (@{$record->options}) {
-                if ($option->fix) {
-                    $found_fix = 1;
-                    last;
-                }
-            }
-            if ($found_fix) {
-                push @keep, $record;
+        my $anyfix = 0;
+        for my $option (@{$omegas->[$i]->options}) {
+            if ($option->fix) {
+                $anyfix = 1;
+                last;
             }
         }
+        if ($anyfix or $omegas->[$i]->fix) {        # Is record FIX or any option FIX
+            $keep_rest = 1;
+        }
 
-        $self->problems->[0]->omegas([ $omega, @keep ]);
+        if ($keep_rest) {
+            push @keep, $omegas->[$i];
+        } else {
+            $numetas += $omegas->[$i]->size;
+        }
     }
+
+    if ($numetas == 0 or ($omegas->[0]->type eq 'BLOCK' and $omegas->[0]->size == $numetas)) {  # No ETAS left or only one BLOCK
+        return 1;
+    }
+
+    my $omega_matrix = $self->problems->[0]->get_filled_omega_matrix(start_eta => 1, end_eta => $numetas);
+    my $size = @{$omega_matrix};
+    my @record_arr = ( "\$OMEGA BLOCK($size)" );
+    for (my $i = 0; $i < $size; $i++) {
+        my $row = "";
+        for (my $j = 0; $j <= $i; $j++) {
+            $row .= $omega_matrix->[$i]->[$j] . ' ';
+        }
+        push @record_arr, "$row\n";
+    }
+
+    my $new_omega_block = model::problem::omega->new(record_arr => \@record_arr);
+    $self->problems->[0]->omegas([ $new_omega_block, @keep ]);
+
+    return 0;
 }
 
 sub unfix_omega_0_fix
