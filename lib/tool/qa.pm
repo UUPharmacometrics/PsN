@@ -315,6 +315,7 @@ sub create_R_plots_code
     $rplot->add_preamble(
         code => [
             '# qa specific preamble',
+			"groups <- " . $self->groups,
             "idv_name <- '" . $self->idv . "'",
             "covariates <- " . rplots::create_r_vector(array => \@covariates),
             "categorical <- " . rplots::create_r_vector(array => \@categorical),
