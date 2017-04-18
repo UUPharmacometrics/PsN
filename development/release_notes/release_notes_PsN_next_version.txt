@@ -81,6 +81,7 @@ A new recommended but not required Perl library for runrecord: YAML::Tiny
   allow crash restart if appropriate crash handling options are set.
 - Bug fix: PsN can now be run from symbolic link wrappers.
 - Added seconds to "Run started" in version_and_option_info.txt
+- Added finish time to version_and_option_info.txt
 
 
 ___common_options___

@@ -718,6 +718,23 @@ sub print_results
     if ($self->zip) {
         $self->compress_m1();
     }
+
+    # Add finish time to version_and_option_info.txt
+    my @datearr = localtime;
+	my $theDate = sprintf "%4.4d-%2.2d-%2.2d",($datearr[5]+1900),($datearr[4]+1),($datearr[3]);
+	my $theTime = sprintf "%2.2d:%2.2d:%2.2d",($datearr[2]),($datearr[1]), $datearr[0];
+	my $info_line = "Run finished: $theDate at $theTime\n";
+
+    my @content = utils::file::slurp_file($self->directory . 'version_and_option_info.txt');
+
+    open my $fh, '>', $self->directory . "version_and_option_info.txt";
+    for my $line (@content) {
+        print $fh $line;
+        if ($line =~ /^Run started:/) {
+            print $fh $info_line;
+        } 
+    }
+    close $fh;
 }
 
 sub compress_m1
