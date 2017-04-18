@@ -257,7 +257,7 @@ sub make_plots
 	if ($self->level > 0 and defined ($self->_R_executable)){
 		ui->print(category=> 'all',message => "\nRunning ".$self->filename."...\n");
 		if($self->R_markdown && $self->rmarkdown_installed) {
-			system($self->_R_executable."script -e \"rmarkdown::render(input='".$self->filename."',output_format='pdf_document',output_file='PsN_".$self->toolname()."_plots.pdf')\" > PsN_".$self->toolname()."_plots.Rout 2>&1");
+			system($self->_R_executable."script -e \"rmarkdown::render(input='".$self->filename."')\" > PsN_".$self->toolname()."_plots.Rout 2>&1");
 		} else {
 			system($self->_R_executable." CMD BATCH ".$self->filename);
 		}
