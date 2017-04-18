@@ -17,19 +17,22 @@ get_resmod_ruv_table <- function(directory, suffix){
     resmod_ruv_table <- resmod_ruv_table[order(resmod_ruv_table$dofv,decreasing = T),]
     rownames(resmod_ruv_table) <- NULL
     colnames(resmod_ruv_table)[which(colnames(resmod_ruv_table)=="model")] <- "Model"
-    resmod_ruv_overview <- resmod_ruv_table[which(resmod_ruv_table$Model %in% c("dtbs","time varying")),]
-    
-    #choose only 2 columns
-    resmod_ruv_table <- resmod_ruv_table[,c("Model","dofv")]
-    resmod_ruv_overview <- resmod_ruv_overview[,c("Model","dofv","df")]
-    colnames(resmod_ruv_overview) <- c("","dofv","Add.params")
-    resmod_ruv_overview$dofv <- round(resmod_ruv_overview$dofv,1)
     
     #replace symbol "_" with the space
     nr_rows <- grep("_",resmod_ruv_table[,1])
     for(i in 1:length(nr_rows)) {
       resmod_ruv_table[nr_rows[i],1] <- gsub("_"," ",resmod_ruv_table[nr_rows[i],1])
     }
+    
+    resmod_ruv_overview <- resmod_ruv_table[c(1:2),] #the highest ofv values
+    #choose only 3 columns
+    resmod_ruv_table <- resmod_ruv_table[,c("Model","dofv","df")]
+    resmod_ruv_table[,2] <- as.character(round(resmod_ruv_table[,2],1))
+    resmod_ruv_table[,3] <- as.character(resmod_ruv_table[,3])
+    colnames(resmod_ruv_table) <- c("Model","dofv","Additional parameters")
+    resmod_ruv_overview <- resmod_ruv_overview[,c("Model","dofv","df")]
+    colnames(resmod_ruv_overview) <- c("","dofv","Add.params")
+    resmod_ruv_overview$dofv <- round(resmod_ruv_overview$dofv,1)
     
   } else {
     resmod_ruv_table <- error_table(col=1)
