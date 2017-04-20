@@ -87,6 +87,7 @@ sub modelfit_setup
     cp($scm->basename . '.mod', '../' . $scm->basename . '.mod');
     cp($scm->basename . '.lst', '../' . $scm->basename . '.lst');
     cp($scm->basename . '.phi', '../' . $scm->basename . '.phi');
+    cp($scm->basename . '.ext', '../' . $scm->basename . '.ext');
 }
 
 sub modelfit_analyze
