@@ -84,6 +84,7 @@ sub modelfit_setup
             %{common_options::restore_options(@common_options::tool_options)},
             models => \@models,
             directory => 'modelfit_run',
+            top_tool => 1,
         );
         $modelfit->run();
     };
@@ -110,6 +111,7 @@ sub modelfit_setup
                 rescale => 1, 
                 run_sir => 1, 
                 rplots => 1,
+                top_tool => 1,
             ); 
             $frem->run();
         };
@@ -133,6 +135,7 @@ sub modelfit_setup
             directory => 'cdd_run',
             rplots => 1,
             etas => 1,
+            top_tool => 1,
         );
         $cdd->run();
     };
@@ -147,6 +150,7 @@ sub modelfit_setup
             rplots => 1,
             n_simulation_models => 5,
             directory => "simeval_run",
+            top_tool => 1,
         );
         $simeval->run();
     };
@@ -165,6 +169,7 @@ sub modelfit_setup
             groups => $self->groups,
             iterative => 0,
             directory => 'resmod_'.$self->idv,
+            top_tool => 1,
         );
     };
     $self->resmod_idv_table($resmod_idv->table_file);
@@ -190,6 +195,7 @@ sub modelfit_setup
             groups => $self->groups,
             iterative => 0,
             directory => 'resmod_TAD',
+            top_tool => 1,
         );
     };
     if (not $@) {
@@ -213,6 +219,7 @@ sub modelfit_setup
             groups => $self->groups,
             iterative => 0,
             directory => 'resmod_PRED',
+            top_rool => 1,
         );
     };
     if (not $@) {
@@ -223,7 +230,6 @@ sub modelfit_setup
         rmdir 'resmod_PRED';
     }
     $self->_to_qa_dir();
-
 }
 
 sub modelfit_analyze
