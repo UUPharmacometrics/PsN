@@ -306,6 +306,11 @@ ___boot_scm___
 - New tool npfit for nonparametric estimation, see npfit_userguide.pdf
 
 
+   ___transform___
+
+- New tool for automatic model transformations.
+
+
    ___crossval___ 
 
 - New option -msf, to use MSFO-MSFI instead of updating initial estimates in
@@ -313,4 +318,3 @@ ___boot_scm___
 - Automatic nonparametric cross-validation if input model has $NONPARAMETRIC.  
 - Refactoring of cross-validation code.
 - A new userguide crossval\_userguide.pdf
-

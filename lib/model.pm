@@ -5418,7 +5418,7 @@ sub boxcox_etas
     }
     my $nthetas = $self->nthetas;
 
-    # Transform all ETAs
+    # Transform ETAs
     for my $record (('pk', 'pred', 'error', 'des', 'aes', 'aesinitial', 'mix', 'infn')) {
 		if ($self->has_code(record => $record)) {  
 			my $code = $self->get_code(record => $record);

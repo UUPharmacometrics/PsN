@@ -1,0 +1,43 @@
+\input{inputs/format_header.tex}
+\guidetitle{TRANSFORM user guide}{2017-04-23}
+
+\begin{document}
+
+\maketitle
+\newcommand{\guidetoolname}{transform}
+
+
+\section{Overview}
+This tool will transform or change one model into another given certain rules. The first argument on the command line is the name of one of the available transformations (listed and explained in the Transformations section below) and the second is the name of the model to transform.
+
+\begin{verbatim}
+transform boxcox run1.mod
+\end{verbatim}
+
+\section{Input and options}
+
+\subsection{Required input}
+The name of the transformation and a model file is required on the command-line.
+
+
+\subsection{Optional input}
+
+\begin{optionlist}
+\optname{out}
+Set a name to use for the output model file. 
+\nextopt
+\optdefault{etas}
+List the etas to transform. Default is all etas.
+This option is valid for the boxcox transformation.
+\nextopt
+\end{optionlist}
+
+\section{Output}
+
+The output of transform will be an updated model file. If the -out option was specified this name will be used otherwise if the file was using the run number nomenclature (runxx.mod or runxx.ctl) the next higher available run number will be used for the output model.
+
+\section{Transformations}
+\subsection{boxcox}
+The boxcox transformation will boxcox transform all etas and add thetas for the lambdas. The -etas option can be used to specify a list of etas that should be transformed. Default is to transform all etas in the model.
+
+\end{document}
