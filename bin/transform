@@ -1,0 +1,161 @@
+#!/usr/bin/perl
+
+use FindBin qw($Bin);
+use lib "$Bin/../lib";
+
+# Don't edit the line below, it must look exactly like this.
+# Everything above this line will be replaced #
+
+use PsN;
+use strict;
+use Getopt::Long;
+use common_options;
+use Cwd;
+use ui;
+# More PsN dependencies included with require further down
+
+my $cmd_line = $0 . " " . join( " ", @ARGV );
+
+## Configure the command line parsing
+Getopt::Long::config("auto_abbrev");
+
+my %options;
+## Declare the options
+
+my %required_options = ();
+
+#option etas is not implemented, bootstrap always done on all etas
+my %optional_options = (
+    'out:s' => undef,
+    'etas:s' => undef,
+);
+
+my $res = GetOptions( \%options,
+    @common_options::get_opt_strings,
+    keys(%required_options),
+    keys(%optional_options) );
+exit unless $res;
+
+
+
+my %help_text;
+
+$help_text{Pre_help_message} = <<'EOF';
+  Quality assurance
+EOF
+    
+$help_text{Description} = <<'EOF';
+    Quality assurance
+EOF
+
+$help_text{Examples} = <<'EOF';
+qa run1.mod
+EOF
+$help_text{Options} = <<'EOF';
+	A model file is required as argument, 
+
+	The following options are valid:
+EOF
+$help_text{-h} = <<'EOF';
+      -h | -?
+      
+      With -h or -? resmod will print a list of options and exit.
+EOF
+      
+$help_text{-help} = <<'EOF';      
+      -help
+      
+      With -help resmod will print this, longer, help message.
+EOF
+
+$help_text{-out} = <<'EOF';
+      -out
+      
+      Specify a filename for the output model
+EOF
+
+$help_text{-etas} = <<'EOF';
+      -etas
+      
+      List the etas to transform. Default is all etas.
+      This option is valid for the boxcox transformation.
+EOF
+
+common_options::online_help( 'transform', \%options, \%help_text, \%required_options, \%optional_options);
+common_options::setup( \%options, 'transform' ); #calls set_globals etc, initiates random sequence
+
+## Check that we do have a model file
+if (scalar(@ARGV) < 2) {
+  print "A transformation and a model file must be specified. Use 'transform -h' for help.\n";
+  exit;
+}
+
+if (scalar(@ARGV) > 2) {
+  print "transform can only handle one transformation and one modelfile, you listed: ",
+  join(',',@ARGV),". Use 'transform -h' for help.\n";die;
+  exit;
+}
+
+my @valid_transformations = ( 'boxcox' );
+my $transformation = $ARGV[0];
+my $input_filename = $ARGV[1];
+
+if (not grep(/$transformation/, @valid_transformations)) {
+    print "Unknown transformation: ", $transformation, "\n";
+    print "Valid transformations are: ", join(", ", @valid_transformations), "\n";
+}
+
+
+my $output_filename;
+if (defined $options{'out'}) {
+    $output_filename = $options{'out'};
+} else {
+    # Default handling of output filename.
+    if ($input_filename =~ /^run(\d+)\.(mod|ctl)/) {
+        # input filename is following the runno nomenclature
+        my $runno = $1;
+        my $extension = $2;
+        my $current_closest_runno = $runno + 1;
+        my @runnos;
+        opendir my $dh, '.' || die "Can't open the current directory";
+        while (readdir $dh) {
+            /^run(\d+)\.(mod|ctl)/;
+            push @runnos, $1;
+        }
+        closedir $dh;
+        @runnos = sort { $a <=> $b } @runnos;
+        for my $rn (@runnos) {
+            if ($rn == $current_closest_runno) {
+                $current_closest_runno++;
+            }
+        }
+        $output_filename = "run$current_closest_runno.$extension";
+    } else {
+        # input filename is free form
+        print "Input file name does not follow the run-number nomenclature. Please specify an output file name via the -out option\n";
+        exit;
+    }
+}
+
+require model;
+
+my $eval_string = common_options::model_parameters(\%options);
+
+my $model = model->new(
+    eval($eval_string),
+    filename => $input_filename,
+    ignore_missing_output_files => 1,
+    ignore_missing_data => 1,
+);
+
+$model->filename($output_filename);
+
+if ($transformation eq 'boxcox') {
+    if (defined $options{'etas'}) {
+        $model->boxcox_etas(etas => [split ',', $options{'etas'}]);
+    } else {
+        $model->boxcox_etas();
+    }
+}
+
+$model->_write();
