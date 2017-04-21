@@ -135,7 +135,7 @@ if (scalar(@ARGV) < 1) {
 
 if (scalar(@ARGV) > 1) {
   print "qa can only handle one modelfile, you listed: ",
-  join(',',@ARGV),". Use 'resmod -h' for help.\n";die;
+  join(',',@ARGV),". Use 'qa -h' for help.\n";die;
   exit;
 }
 
