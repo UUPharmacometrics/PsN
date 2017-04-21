@@ -96,7 +96,7 @@ if (scalar(@ARGV) > 2) {
   exit;
 }
 
-my @valid_transformations = ( 'boxcox' );
+my @valid_transformations = ( 'boxcox', 'remove_iiv' );
 my $transformation = $ARGV[0];
 my $input_filename = $ARGV[1];
 
@@ -156,6 +156,8 @@ if ($transformation eq 'boxcox') {
     } else {
         $model->boxcox_etas();
     }
+} elsif ($transformation eq 'remove_iiv') {
+    $model->remove_iiv();
 }
 
 $model->_write();

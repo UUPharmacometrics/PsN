@@ -5419,19 +5419,15 @@ sub boxcox_etas
     my $nthetas = $self->nthetas;
 
     # Transform ETAs
-    for my $record (('pk', 'pred', 'error', 'des', 'aes', 'aesinitial', 'mix', 'infn')) {
-		if ($self->has_code(record => $record)) {  
-			my $code = $self->get_code(record => $record);
-
-            for (my $i = 0; $i < scalar(@$code); $i++) {
-                if ($code->[$i] =~ /(?<!\w)ETA\((\d+)\)/) {
-                    if (grep($1, @$etas)) { 
-                        $code->[$i] =~ s/(?<!\w)ETA\((\d+)\)/ETAT$1/g;
-                    }
+    for my $eta (@$etas) {
+        for my $record (('pk', 'pred', 'error', 'des', 'aes', 'aesinitial', 'mix', 'infn')) {
+		    if ($self->has_code(record => $record)) {  
+			    my $code = $self->get_code(record => $record);
+                for (my $i = 0; $i < scalar(@$code); $i++) {
+                    $code->[$i] =~ s/(?<!\w)ETA\($eta\)/ETAT$eta/g;
                 }
+                $self->set_code(record => $record, code => $code);
             }
-
-            $self->set_code(record => $record, code => $code);
         }
 	}
 
@@ -5617,6 +5613,30 @@ sub unfix_omega_0_fix
     }
 }
 
+sub remove_iiv
+{
+    my $self = shift;
+
+    my $omegas = $self->problems->[0]->omegas;
+
+    for (my $i = 0; $i < scalar(@$omegas); $i++) {
+        my $last = 0;
+        if ($i == scalar(@$omegas) - 1) {
+            $last = 1;
+        }
+        unless ($omegas->[$i]->same or (not $last and $omegas->[$i + 1]->same) or $omegas->[$i]->fix) {    # Keep if IOV or block FIX
+            if ($omegas->[$i]->type eq 'BLOCK') {
+                $omegas->[$i]->fix(1);
+            }
+            for my $option (@{$omegas->[$i]->options}) {
+                $option->init(0);
+                if ($omegas->[$i]->type ne 'BLOCK') {
+                    $option->fix(1);
+                }
+            }
+        }
+    }
+}
 
 no Moose;
 __PACKAGE__->meta->make_immutable;
