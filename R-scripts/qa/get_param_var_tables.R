@@ -13,7 +13,7 @@ get_param_var_tables <- function(directory) {
       fullblock_mod <- TRUE
       if(file.exists(paste0(directory,"fullblock.ext"))) {
         linblock_ofv <- .get_ext_ofv(paste0(directory,"fullblock.ext"))
-        dofv_block <- round(as.numeric(linbase_ofv-linblock_ofv,1))
+        dofv_block <- round(as.numeric(linbase_ofv-linblock_ofv),1)
         # how many omega cov omegas were added
         boxcox_omegas <- get_omega_values(paste0(directory,"fullblock.ext"))$omegas_cov
         linbase_omegas <- get_omega_values(paste0(directory,sub('.mod.*','',model.filename),"_linbase.ext"))$omegas_cov

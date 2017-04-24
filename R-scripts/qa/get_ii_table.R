@@ -1,8 +1,7 @@
-get_ii_table <- function(cdd_directory,cutoff){
+get_ii_table <- function(raw.results.file,skipped.id.file,cutoff){
   cdd_files_exist <- TRUE
-  if(file.exists(file.path(cdd_directory, "raw_results.csv")) && file.exists(file.path(cdd_directory, "skipped_individuals1.csv"))) {
-    data_full <- create.data.full(file.path(cdd_directory, "raw_results.csv"),
-                                  file.path(cdd_directory, "skipped_individuals1.csv"))
+  if(file.exists(raw.results.file) && file.exists(skipped.id.file)) {
+    data_full <- create.data.full(raw.results.file,skipped.id.file)
     cdd.data <- data_full$cdd.data.all
     cdd.data <- cdd.data %>% select(c(ID,cdd.delta.ofv)) %>% slice(-1)
     colnames(cdd.data) <- c("id", "dofv")
