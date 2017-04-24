@@ -94,7 +94,9 @@ resmod_ruv_overview <- resmod_table_list$resmod_ruv_overview
 
 
 # 5.Influential individuals (CDD)
-ii_list <- get_ii_table(cdd_directory=file.path(working.directory,"cdd_run"),cutoff=cdd_dofv_cutoff)
+ii_list <- get_ii_table(raw.results.file=file.path(working.directory,"cdd_run",paste0("raw_results_",sub('.mod.*','',model.filename),"_linbase.csv")),
+                        skipped.id.file=file.path(working.directory,"cdd_run/skipped_individuals1.csv"),
+                        cutoff=cdd_dofv_cutoff)
 cdd_files_exist <- ii_list$cdd_files_exist
 cdd.data <- ii_list$cdd.data
 cdd_highest_dofv <- ii_list$cdd_highest_dofv
