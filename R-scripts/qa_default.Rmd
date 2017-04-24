@@ -1,10 +1,10 @@
 ---
 title: "Quality assurance"
+date: '`r format(Sys.Date(), "%B %d, %Y")`'
 output: pdf_document # delete if html file needed and set type="html"
 header-includes: #needed to create a pdf file
     - \usepackage{colortbl}
     - \usepackage{longtable}
-classoption: landscape
 geometry: margin=1.5cm
 ---
 
@@ -56,9 +56,19 @@ resmod_structural_details <- resmod_structural_details_tables(working.directory,
 list_par_var_models <- get_param_var_tables(directory=working.directory)
 param_var_file_exists <- list_par_var_models$param_var_file_exists
 par_var_models <- list_par_var_models$par_var_models
-
-full_omega_block_table <- get_full_omega_block(working.directory,param_var_file_exists,list_par_var_models$dofv_block)
-boxcox_lambdas_table <- get_boxcox_lambda_table(working.directory,param_var_file_exists,list_par_var_models$dofv_box)
+fullblock_mod <- list_par_var_models$fullblock_mod
+boxcox_mod <- list_par_var_models$boxcox_mod
+if(fullblock_mod) {
+  full_omega_block_table <- get_full_omega_block(working.directory,param_var_file_exists,list_par_var_models$dofv_block)
+}
+if(boxcox_mod) {
+  boxcox_lambdas_table <- get_boxcox_lambda_table(working.directory,param_var_file_exists,list_par_var_models$dofv_box)
+}
+if(fullblock_mod || boxcox_mod) {
+  param_sector <- TRUE
+} else {
+  param_sector <- FALSE
+}
 
 # 3.Covariate Models
   # 3.1.All (FREM)
@@ -130,20 +140,32 @@ for(i in 1:length(resmod_suffix)) {
 }
 ```
 
+```{asis Add_text_for_parameter_section_if_exist_mod_files, echo=param_sector}
 #Parameter Variability Model
-
-###Full OMEGA Block
-```{r draw_full_omega_block_table,echo=F,results='asis'}
-full_omega_block_table <- ztable(full_omega_block_table,align="lr")
-full_omega_block_table <- update_ztable(full_omega_block_table,type=type,colnames.bold = T,include.rownames = F,longtable = T)
-print(full_omega_block_table)
 ```
 
+```{asis Add_text_for_fullblock_if_exists_mod_file, echo=fullblock_mod}
+###Full OMEGA Block
+```
+
+```{r draw_full_omega_block_table,echo=F,results='asis'}
+if(fullblock_mod) {
+  full_omega_block_table <- ztable(full_omega_block_table,align="lr")
+  full_omega_block_table <- update_ztable(full_omega_block_table,type=type,colnames.bold = T,include.rownames = F,longtable = T)
+  print(full_omega_block_table)
+}
+```
+
+```{asis Add_text_for_boxcox_if_exists_mod_file, echo=boxcox_mod}
 ###Box-Cox Transformation
+```
+
 ```{r draw_boxcox_tranformation_table,echo=F,results='asis'}
-boxcox_lambdas_table <- ztable(boxcox_lambdas_table,align="lr")
-boxcox_lambdas_table <- update_ztable(boxcox_lambdas_table,type=type,colnames.bold = T,include.rownames = F,longtable = T)
-print(boxcox_lambdas_table)
+if(boxcox_mod) {
+  boxcox_lambdas_table <- ztable(boxcox_lambdas_table,align="lr")
+  boxcox_lambdas_table <- update_ztable(boxcox_lambdas_table,type=type,colnames.bold = T,include.rownames = F,longtable = T)
+  print(boxcox_lambdas_table)
+}
 ```
 
 #Covariates
