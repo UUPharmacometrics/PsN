@@ -5402,59 +5402,6 @@ sub msfo_to_msfi_mismatch
 	
 }
 
-sub boxcox_etas
-{
-    # Boxcox transform all ETAs of model
-    # Assume only one $PROBLEM
-    my $self = shift;
-	my %parm = validated_hash(\@_,
-        etas => { isa => 'ArrayRef', optional => 1 },       # An array of the etas to transform or unspecified for all etas
-    );
-	my $etas = $parm{'etas'};
-
-    my $netas = $self->nomegas->[0];
-    if (not defined $etas) {
-        $etas = [1 .. $netas];
-    }
-    my $nthetas = $self->nthetas;
-
-    # Transform ETAs
-    for my $eta (@$etas) {
-        for my $record (('pk', 'pred', 'error', 'des', 'aes', 'aesinitial', 'mix', 'infn')) {
-		    if ($self->has_code(record => $record)) {  
-			    my $code = $self->get_code(record => $record);
-                for (my $i = 0; $i < scalar(@$code); $i++) {
-                    $code->[$i] =~ s/(?<!\w)ETA\($eta\)/ETAT$eta/g;
-                }
-                $self->set_code(record => $record, code => $code);
-            }
-        }
-	}
-
-    # Prepend transformation code and add thetas
-	my @code;
-	my $code_record;
-	if ($self->has_code(record => 'pk')) {
-		@code = @{$self->get_code(record => 'pk')};
-		$code_record = 'pk';
-	} elsif ($self->has_code(record => 'pred')) {
-		@code = @{$self->get_code(record => 'pred')};
-		$code_record = 'pred';
-	} else {
-		croak("Neither PK nor PRED defined in " . $self->filename . "\n");
-	}
-
-    my $next_theta = $nthetas + 1;
-    for my $i (@$etas) {
-        my $line = "ETAT$i = (EXP(ETA($i))**THETA($next_theta) - 1) / (THETA($next_theta))";
-        $next_theta++;
-        unshift @code, $line;
-        $self->add_records(type => 'theta', record_strings => [ '$THETA (-3, 0.01, 3)']); 
-    }
-
-    $self->set_code(record => $code_record, code => \@code);
-}
-
 sub init_etas
 {
     my $self = shift;

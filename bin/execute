@@ -19,6 +19,7 @@ use common_options;
 use ui;
 use Cwd;
 use include_modules;
+use model_transformations;
 # More PsN dependencies included with require further down
 
 my $cmd_line = $0 . " " . join( " ", @ARGV );
@@ -282,7 +283,7 @@ foreach my $model_name (@ARGV) {
 	input_checking::check_options(tool => 'execute', options => \%options, model => $model);
 
     if ($options{'boxcox'}) {
-        $model->boxcox_etas();
+        model_transformations::boxcox_etas(model => $model);
     }
     if ($options{'full_block'}) {
         $model->full_omega_block();

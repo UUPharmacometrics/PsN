@@ -12,6 +12,7 @@ use Getopt::Long;
 use common_options;
 use Cwd;
 use ui;
+use model_transformations;
 # More PsN dependencies included with require further down
 
 my $cmd_line = $0 . " " . join( " ", @ARGV );
@@ -152,9 +153,9 @@ $model->filename($output_filename);
 
 if ($transformation eq 'boxcox') {
     if (defined $options{'etas'}) {
-        $model->boxcox_etas(etas => [split ',', $options{'etas'}]);
+        model_transformations::boxcox_etas(model => $model, etas => [split ',', $options{'etas'}]);
     } else {
-        $model->boxcox_etas();
+        model_transformations::boxcox_etas(model => $model);
     }
 } elsif ($transformation eq 'remove_iiv') {
     $model->remove_iiv();

@@ -5,6 +5,7 @@ use Moose;
 use MooseX::Params::Validate;
 use include_modules;
 use log;
+use model_transformations;
 use utils::file;
 use tool::modelfit;
 use tool::resmod;
@@ -72,7 +73,7 @@ sub modelfit_setup
             push @models, $full_block_model;
         }
         my $boxcox_model = $linearized_model->copy(filename => "boxcox.mod");
-        $boxcox_model->boxcox_etas();
+        model_transformations::boxcox_etas(model => $boxcox_model);
         $boxcox_model->_write();
         push @models, $boxcox_model;
         my $add_etas_model = $linearized_model->copy(filename => "add_etas.mod");

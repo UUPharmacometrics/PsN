@@ -5,6 +5,7 @@ LIBFILES= ui.pm \
 	rplots.pm \
 	math.pm \
 	PsN.pm \
+	model_transformations.pm \
 	common_options.pm \
 	influential_individuals.pm \
 	input_checking.pm \
