@@ -37,26 +37,32 @@ my $res = GetOptions( \%options,
     keys(%optional_options) );
 exit unless $res;
 
-
+my @valid_transformations = ( 'boxcox', 'remove_iiv' );
+my $valid_transformations_string = join("\n", @valid_transformations);
 
 my %help_text;
 
 $help_text{Pre_help_message} = <<'EOF';
-  Quality assurance
+  Model transformation
 EOF
     
 $help_text{Description} = <<'EOF';
-    Quality assurance
+    Model transformation
 EOF
 
 $help_text{Examples} = <<'EOF';
-qa run1.mod
+transform boxcox run1.mod
 EOF
-$help_text{Options} = <<'EOF';
-	A model file is required as argument, 
+
+$help_text{Options} = <<"EOF";
+	A model file and a transformation are required as arguments.
+
+    Valid transformations are:
+    $valid_transformations_string
 
 	The following options are valid:
 EOF
+
 $help_text{-h} = <<'EOF';
       -h | -?
       
@@ -85,6 +91,7 @@ EOF
 common_options::online_help( 'transform', \%options, \%help_text, \%required_options, \%optional_options);
 common_options::setup( \%options, 'transform' ); #calls set_globals etc, initiates random sequence
 
+
 ## Check that we do have a model file
 if (scalar(@ARGV) < 2) {
   print "A transformation and a model file must be specified. Use 'transform -h' for help.\n";
@@ -97,7 +104,6 @@ if (scalar(@ARGV) > 2) {
   exit;
 }
 
-my @valid_transformations = ( 'boxcox', 'remove_iiv' );
 my $transformation = $ARGV[0];
 my $input_filename = $ARGV[1];
 
@@ -158,7 +164,7 @@ if ($transformation eq 'boxcox') {
         model_transformations::boxcox_etas(model => $model);
     }
 } elsif ($transformation eq 'remove_iiv') {
-    $model->remove_iiv();
+    model_transformations::remove_iiv(model => $model);
 }
 
 $model->_write();
