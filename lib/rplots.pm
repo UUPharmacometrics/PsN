@@ -26,24 +26,20 @@ has 'plotcode' => ( is => 'rw', isa => 'ArrayRef[Str]', required => 1);
 has 'subset_variable' => (is => 'rw', isa => 'Maybe[Str]' );
 has 'R_markdown' => (is => 'rw', isa => 'Bool', default => 0);
 has 'rmarkdown_installed' => (is => 'rw', isa => 'Bool', default => 0);
+has 'model' => (is => 'rw', isa => 'model');
 
 our $preambleline = '#WHEN THIS FILE IS USED AS A TEMPLATE THIS LINE MUST LOOK EXACTLY LIKE THIS';
 
 sub BUILD
 {
 	my $self = shift;
-	my $params = shift; 
 	$self->set_R_executable();
-	$self->setup(model => $params->{'model'});
+	$self->setup();
 }
 
 sub setup
 {
 	my $self = shift;
-	my %parm = validated_hash(\@_,
-							  model => { isa => 'model', optional => 0 }
-		);
-	my $model = $parm{'model'};
 
 	unless (defined $self->filename){
 		if($self->R_markdown && $self->rmarkdown_installed) {
@@ -52,17 +48,17 @@ sub setup
 			$self->filename('PsN_'.$self->toolname.'_plots.R');
 		}	
 	}
-	
+
 	if (defined $self->raw_results_file){
 		my ( $ldir, $rawname ) = OSspecific::absolute_path('', $self->raw_results_file);
 		$self->raw_results_file($rawname);
 	}
-	my ($modeldir, $modelfile) = OSspecific::absolute_path($model-> directory,
-												 $model-> filename );
+	my ($modeldir, $modelfile) = OSspecific::absolute_path($self->model-> directory,
+												 $self->model-> filename );									 
 
 	#figure out table suffix and xpose runno
 	my @xpose_names=("sdtab","mutab","patab","catab","cotab","mytab","xptab","cwtab");
-	my @tables = @{$model->table_names}; #array of arrays without path
+	my @tables = @{$self->model->table_names}; #array of arrays without path
 	my $runno;
 	my $is_sim=0;
 	my $tabSuffix='';
@@ -155,12 +151,12 @@ sub setup
 	}
 
 	#parameter names and numbers, fixed
-	unless ($model->is_dummy){
+	unless ($self->model->is_dummy){
 		foreach my $param ('theta','omega','sigma'){
-			my $labels = $model->labels(parameter_type => $param,
+			my $labels = $self->model->labels(parameter_type => $param,
 										problem_numbers => [1],
 										generic => 0);
-			my $fixed = $model->fixed(parameter_type => $param,
+			my $fixed = $self->model->fixed(parameter_type => $param,
 									  problem_numbers => [1]);
 			my $labelstring = '';
 			my $fixstring = '';
@@ -177,8 +173,8 @@ sub setup
 				 $param.'.fixed <- c('.$fixstring.')'
 				);
 		}
-		my $nomegas = $model->nomegas(problem_numbers=>[1], with_same => 1, with_correlations => 0);
-		my $nsigmas = $model->nsigmas(problem_numbers=>[1], with_same => 1, with_correlations => 0);
+		my $nomegas = $self->model->nomegas(problem_numbers=>[1], with_same => 1, with_correlations => 0);
+		my $nsigmas = $self->model->nsigmas(problem_numbers=>[1], with_same => 1, with_correlations => 0);
 		my $neta=0;
 		my $neps=0;
 		$neta = $nomegas->[0] if (defined $nomegas->[0]);
@@ -220,7 +216,7 @@ sub get_preamble()
 {
 	my $self=shift;
 
-	my $pdfname = $self->filename();
+	my $pdfname = $self->filename;
 	$pdfname =~ s/\.[^.]*$//;
 	$pdfname .= '.pdf';
 
@@ -269,7 +265,10 @@ sub make_plots
 sub print_R_script
 {
 	my $self = shift;
-		
+	
+	my ($modeldir, $modelfile) = OSspecific::absolute_path($self->model-> directory,
+														$self->model-> filename );
+
 	my @printcode_first=();
 	my @printcode_second=();	
 	my @printcode=();
@@ -278,6 +277,7 @@ sub print_R_script
 			# R markdown code has to be separated in two parts
 			my $value = 0;
 			my $first_line = 1; #TRUE
+			my $add_subtitle = 1;
 			foreach my $line (@{$self->plotcode}){
 				if($value == 1 && $line =~ /^--- *$/) {
 					$value = ++$value;
@@ -291,6 +291,11 @@ sub print_R_script
 				}
 				if($value == 1 || $value == 2) {
 					push(@printcode_first,$line);
+					if($value == 1 && $add_subtitle == 1 && not($line =~ /^--- *$/)) {
+						my $subtitle = "subtitle: 'Model filename: ".$modelfile."'"; # add model name and data file name
+						push(@printcode_first,$subtitle);
+						$add_subtitle = 0;
+					}
 				}
 				if ($value == 2) {
 					$value = 0;
