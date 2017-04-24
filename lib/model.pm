@@ -5560,30 +5560,6 @@ sub unfix_omega_0_fix
     }
 }
 
-sub remove_iiv
-{
-    my $self = shift;
-
-    my $omegas = $self->problems->[0]->omegas;
-
-    for (my $i = 0; $i < scalar(@$omegas); $i++) {
-        my $last = 0;
-        if ($i == scalar(@$omegas) - 1) {
-            $last = 1;
-        }
-        unless ($omegas->[$i]->same or (not $last and $omegas->[$i + 1]->same) or $omegas->[$i]->fix) {    # Keep if IOV or block FIX
-            if ($omegas->[$i]->type eq 'BLOCK') {
-                $omegas->[$i]->fix(1);
-            }
-            for my $option (@{$omegas->[$i]->options}) {
-                $option->init(0);
-                if ($omegas->[$i]->type ne 'BLOCK') {
-                    $option->fix(1);
-                }
-            }
-        }
-    }
-}
 
 no Moose;
 __PACKAGE__->meta->make_immutable;
