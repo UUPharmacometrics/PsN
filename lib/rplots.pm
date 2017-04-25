@@ -268,6 +268,7 @@ sub print_R_script
 	
 	my ($modeldir, $modelfile) = OSspecific::absolute_path($self->model-> directory,
 														$self->model-> filename );
+	my $datafile = $self->model -> model::datafiles->[0];
 
 	my @printcode_first=();
 	my @printcode_second=();	
@@ -292,7 +293,7 @@ sub print_R_script
 				if($value == 1 || $value == 2) {
 					push(@printcode_first,$line);
 					if($value == 1 && $add_subtitle == 1 && not($line =~ /^--- *$/)) {
-						my $subtitle = "subtitle: 'Model filename: ".$modelfile."'"; # add model name and data file name
+						my $subtitle = "subtitle: 'Model filename: ".$modelfile."; Input datafile: ".$datafile."'"; # add model name and data file name
 						push(@printcode_first,$subtitle);
 						$add_subtitle = 0;
 					}
