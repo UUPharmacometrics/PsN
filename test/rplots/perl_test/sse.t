@@ -41,7 +41,7 @@ $toolobject -> raw_results_file([$toolobject ->directory.'raw_results_run3.csv']
 $toolobject -> create_R_script(tool_name => $toolname); 
 
 
-my %pdf_files_pages=($tempdir.'rundir/PsN_sse_plots.pdf' => 2);
+my %pdf_files_pages=($tempdir.'rundir/PsN_sse_plots.pdf' => 3);
 
 includes::test_pdf_pages(\%pdf_files_pages);
 

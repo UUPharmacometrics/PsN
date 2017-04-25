@@ -13,6 +13,10 @@ use nmtablefile;
 use tool::resmod;
 use model;
 
+# Mock mkpath to avoid directory creation
+no warnings qw(redefine);
+*tool::mkpath = sub { 1 };
+
 our $test_files = $includes::testfiledir;
 our $tempdir = create_test_dir("unit_resmod");
 
