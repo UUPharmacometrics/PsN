@@ -29,6 +29,7 @@ my %required_options = ();
 my %optional_options = (
     'out:s' => undef,
     'etas:s' => undef,
+    'fix!' => undef,
 );
 
 my $res = GetOptions( \%options,
@@ -88,11 +89,17 @@ $help_text{-etas} = <<'EOF';
       This option is valid for the boxcox transformation.
 EOF
 
+$help_text{-fix} = <<'EOF';
+      -fix
+      
+      Fix the omegas to zero
+      This option is valid for the remove_iiv transformation.
+EOF
+
 common_options::online_help( 'transform', \%options, \%help_text, \%required_options, \%optional_options);
 common_options::setup( \%options, 'transform' ); #calls set_globals etc, initiates random sequence
 
 
-## Check that we do have a model file
 if (scalar(@ARGV) < 2) {
   print "A transformation and a model file must be specified. Use 'transform -h' for help.\n";
   exit;
@@ -112,6 +119,19 @@ if (not grep(/$transformation/, @valid_transformations)) {
     print "Valid transformations are: ", join(", ", @valid_transformations), "\n";
 }
 
+if (defined $options{'etas'}) {
+    if ($transformation ne 'boxcox') {
+        print "Option -etas cannot be used together with the $transformation transformation.\n";
+        exit;
+    }
+}
+
+if (defined $options{'fix'}) {
+    if ($transformation ne 'remove_iiv') {
+        print "Option -fix cannot be used together with the $transformation transformation.\n";
+        exit;
+    }
+}
 
 my $output_filename;
 if (defined $options{'out'}) {
@@ -164,7 +184,11 @@ if ($transformation eq 'boxcox') {
         model_transformations::boxcox_etas(model => $model);
     }
 } elsif ($transformation eq 'remove_iiv') {
-    model_transformations::remove_iiv(model => $model);
+    if (defined $options{'fix'}) {
+        model_transformations::remove_iiv(model => $model, fix => $options{'fix'});
+    } else {
+        model_transformations::remove_iiv(model => $model);
+    }
 }
 
 $model->_write();

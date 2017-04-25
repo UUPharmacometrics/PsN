@@ -26,10 +26,14 @@ The name of the transformation and a model file is required on the command-line.
 \optname{out}
 Set a name to use for the output model file. 
 \nextopt
-\optdefault{etas}
+\optname{etas}
 List the etas to transform. Default is all etas.
 This option is valid for the boxcox transformation.
 \nextopt
+    \optname{fix}
+      Fix the omegas to zero
+      This option is valid for the remove\_iiv transformation.
+    \nextopt
 \end{optionlist}
 
 \section{Output}
@@ -40,6 +44,6 @@ The output of transform will be an updated model file. If the -out option was sp
 \subsection{boxcox}
 The boxcox transformation will boxcox transform all etas and add thetas for the lambdas. The -etas option can be used to specify a list of etas that should be transformed. Default is to transform all etas in the model.
 \subsection{remove\_iiv}
-Fix all IIV etas to zero.
+Remove all IIV omegas, replace the corresponding etas in the code with 0 and renumber the remaining etas. If the -fix option is set instead fix all IIV etas to zero.
 
 \end{document}
