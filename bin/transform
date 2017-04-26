@@ -38,7 +38,7 @@ my $res = GetOptions( \%options,
     keys(%optional_options) );
 exit unless $res;
 
-my @valid_transformations = ( 'boxcox', 'remove_iiv' );
+my @valid_transformations = ( 'boxcox', 'remove_iiv', 'remove_iov' );
 my $valid_transformations_string = join("\n", @valid_transformations);
 
 my %help_text;
@@ -93,7 +93,7 @@ $help_text{-fix} = <<'EOF';
       -fix
       
       Fix the omegas to zero
-      This option is valid for the remove_iiv transformation.
+      This option is valid for the remove_iiv and remove_iov transformations.
 EOF
 
 common_options::online_help( 'transform', \%options, \%help_text, \%required_options, \%optional_options);
@@ -117,6 +117,7 @@ my $input_filename = $ARGV[1];
 if (not grep(/$transformation/, @valid_transformations)) {
     print "Unknown transformation: ", $transformation, "\n";
     print "Valid transformations are: ", join(", ", @valid_transformations), "\n";
+    exit;
 }
 
 if (defined $options{'etas'}) {
@@ -127,7 +128,7 @@ if (defined $options{'etas'}) {
 }
 
 if (defined $options{'fix'}) {
-    if ($transformation ne 'remove_iiv') {
+    unless ($transformation eq 'remove_iiv' or $transformation eq 'remove_iov') {
         print "Option -fix cannot be used together with the $transformation transformation.\n";
         exit;
     }
@@ -188,6 +189,12 @@ if ($transformation eq 'boxcox') {
         model_transformations::remove_iiv(model => $model, fix => $options{'fix'});
     } else {
         model_transformations::remove_iiv(model => $model);
+    }
+} elsif ($transformation eq 'remove_iov') {
+    if (defined $options{'fix'}) {
+        model_transformations::remove_iov(model => $model, fix => $options{'fix'});
+    } else {
+        model_transformations::remove_iov(model => $model);
     }
 }
 

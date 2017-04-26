@@ -32,7 +32,7 @@ This option is valid for the boxcox transformation.
 \nextopt
     \optname{fix}
       Fix the omegas to zero
-      This option is valid for the remove\_iiv transformation.
+      This option is valid for the remove\_iiv and remove\_iov transformations.
     \nextopt
 \end{optionlist}
 
@@ -45,5 +45,6 @@ The output of transform will be an updated model file. If the -out option was sp
 The boxcox transformation will boxcox transform all etas and add thetas for the lambdas. The -etas option can be used to specify a list of etas that should be transformed. Default is to transform all etas in the model.
 \subsection{remove\_iiv}
 Remove all IIV omegas, replace the corresponding etas in the code with 0 and renumber the remaining etas. If the -fix option is set instead fix all IIV etas to zero.
-
+\subsection{remove\_iov}
+Remove all IOV omegas, replace the corresponding etas in the code with 0 and renumber the remaining etas. If the -fix option is set instead fix all IOV etas to zero.
 \end{document}

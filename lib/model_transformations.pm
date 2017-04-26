@@ -74,22 +74,64 @@ sub remove_iiv
 
     my $omegas = $model->problems->[0]->omegas;
 
-    my @remove;
+    my $remove = find_omega_records(model => $model, type => 'iiv');
+
+    if ($fix) {
+        _fix_omegas(model => $model, omegas => $remove);
+    } else {
+        _remove_omegas(model => $model, omegas => $remove);
+    }
+}
+
+sub remove_iov
+{
+	my %parm = validated_hash(\@_,
+        model => { isa => 'model' },
+        fix => { isa => 'Bool', default => 0 },     # Set to fix removed iiv $OMEGAs else remove them
+    );
+    my $model = $parm{'model'};
+    my $fix = $parm{'fix'};
+
+    my $omegas = $model->problems->[0]->omegas;
+
+    my $remove = find_omega_records(model => $model, type => 'iov');
+
+    if ($fix) {
+        _fix_omegas(model => $model, omegas => $remove);
+    } else {
+        _remove_omegas(model => $model, omegas => $remove);
+    }
+}
+
+sub find_omega_records
+{
+	my %parm = validated_hash(\@_,
+        model => { isa => 'model' },
+        type => { isa => 'Str' },     # Set to either 'iov' or 'iiv'
+    );
+    my $model = $parm{'model'};
+    my $type = $parm{'type'};
+
+    my $omegas = $model->problems->[0]->omegas;
+
+    my @found;
     my $last = 0;
     for (my $i = 0; $i < scalar(@$omegas); $i++) {
         if ($i == scalar(@$omegas) - 1) {
             $last = 1;
         }
         unless ($omegas->[$i]->same or (not $last and $omegas->[$i + 1]->same) or $omegas->[$i]->fix) {    # Keep if IOV or block FIX
-            push @remove, $omegas->[$i];
+            if ($type eq 'iiv') {
+                push @found, $omegas->[$i];
+            }
+        } else {
+            if ($type eq 'iov') {
+                push @found, $omegas->[$i];
+            }
         }
     }
 
-    if ($fix) {
-        _fix_omegas(model => $model, omegas => \@remove);
-    } else {
-        _remove_omegas(model => $model, omegas => \@remove);
-    }
+    return \@found;
 }
 
 sub _fix_omegas
@@ -102,7 +144,7 @@ sub _fix_omegas
     my $omegas = $parm{'omegas'};
 
     for my $omega (@$omegas) {
-        if (defined $omega->type and $omega->type eq 'BLOCK') {
+        if (defined $omega->type and $omega->type eq 'BLOCK' and not $omega->same) {
             $omega->fix(1);
         }
         for my $option (@{$omega->options}) {
