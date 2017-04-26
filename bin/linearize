@@ -28,6 +28,7 @@ my %optional_options = (
     "epsilon!" => undef,
     "foce!" => undef,
     "error:s"=> undef,
+    "keep_covariance!" => undef,
 );
 
 my $res = GetOptions(
@@ -122,6 +123,14 @@ $help_text{-epsilon} = <<'EOF';
     set by default. Disable with -no-epsilon.
 EOF
 
+$help_text{-keep_covariance} = <<'EOF';
+      -keep_covariance
+
+      By default the $COVARIANCE will be deleted from the bootstrap models, 
+	  to save run time. If option -keep_covariance is set, 
+	  PsN will instead keep $COVARIANCE.
+EOF
+
 $help_text{Post_help_message} = <<'EOF';
     Also see 'psn_options -h' for a description of common options.
 EOF
@@ -154,6 +163,7 @@ my $linearize = tool::linearize->new(
     epsilon => $options{'epsilon'},
     foce => $options{'foce'},
     error => $options{'error'},
+    keep_covariance => $options{'keep_covariance'},
 );
 
 $linearize->run();

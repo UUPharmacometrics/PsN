@@ -229,6 +229,7 @@ ___bootstrap___
 - New option -full_block to also run the linearized model with a full omega block.
 - If the phi-file of the original model is available linearize will use that in a
   $ETAS record.
+- New option -keep_covariance
 
 
 ___boot_scm___

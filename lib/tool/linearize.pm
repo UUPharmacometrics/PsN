@@ -11,6 +11,7 @@ use tool::scm;
 has 'epsilon' => ( is => 'rw', isa => 'Bool', default => 1 );
 has 'foce' => ( is => 'rw', isa => 'Bool', default => 1 );
 has 'error' => ( is => 'rw', isa => 'Maybe[Str]' );
+has 'keep_covariance' => ( is => 'rw', isa => 'Bool', default => 0 );
 
 has 'dataname' => ( is => 'rw', isa => 'Str' );
 
@@ -66,6 +67,7 @@ sub modelfit_setup
         both_directions => 0,
         logfile => ['linlog.txt'],
         from_linearize => 1,
+        keep_covariance => $self->keep_covariance,
     );
 
     $scm->run;

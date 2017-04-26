@@ -94,6 +94,7 @@ has 'relations_file' => ( is => 'rw', isa => 'Str', default => 'relations.txt' )
 has 'short_logfile' => ( is => 'rw', isa => 'ArrayRef[Str]', default => sub { ['short_scmlog.txt'] } );
 has 'from_linearize' => ( is => 'rw', isa => 'Bool', default => 0 );    # Was the scm-object created by linearize?
 has 'original_nonlinear_model' => ( is => 'rw', isa => 'model' );       # If linearizing this will be the real original model
+has 'keep_covariance' => ( is => 'rw', isa => 'Bool', default => 0 );
 
 sub BUILD
 {
@@ -2119,7 +2120,9 @@ sub linearize_setup
 		$original_model->remove_records(type => 'error');
 		$original_model->remove_records(type => 'subroutine');
 		$original_model->remove_records(type => 'model');
-		$original_model->remove_records(type => 'covariance');
+        unless ($self->from_linearize and $self->keep_covariance) {
+		    $original_model->remove_records(type => 'covariance');
+        }
 		$original_model->remove_records(type => 'estimation');
 
 		$original_model->set_records(type => 'input', record_strings => \@inputstrings);
