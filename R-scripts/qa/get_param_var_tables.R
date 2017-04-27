@@ -53,10 +53,10 @@ get_param_var_tables <- function(directory) {
     if(file.exists(paste0(directory,"add_etas.mod"))) {
       add_etas_mod <- TRUE
       if(file.exists(paste0(directory,"add_etas.ext"))) {
-        linaddeta_ofv <- .get_ext_ofv(paste0(directory,"modelfit_run/NM_run3/psn.ext"))
+        linaddeta_ofv <- .get_ext_ofv(paste0(directory,"add_etas.ext"))
         dofv_additional_eta <- round(as.numeric(linbase_ofv - linaddeta_ofv),1)
-        addetas_omegas <- get_omega_values(paste0(directory,"modelfit_run/NM_run3/psn.ext"))$omegas_var
-        linbase_omegas <- get_omega_values(paste0(directory,"linearize_run/",sub('.mod.*','',model.filename),"_linbase.ext"))$omegas_var
+        addetas_omegas <- get_omega_values(paste0(directory,"add_etas.ext"))$omegas_var
+        linbase_omegas <- get_omega_values(paste0(directory,sub('.mod.*','',model.filename),"_linbase.ext"))$omegas_var
         add.par_additional_eta <- length(setdiff(colnames(addetas_omegas),colnames(linbase_omegas)))
       } else {
         dofv_additional_eta <- "ERROR"
