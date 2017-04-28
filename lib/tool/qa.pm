@@ -103,6 +103,9 @@ sub modelfit_setup
             if (defined $self->categorical) {
                 @categorical = split(',', $self->categorical);
             }
+
+            my $old_clean = common_options::get_option('clean');    # Hack to set clean further down
+            common_options::set_option('clean', 1);
             my $frem = tool::frem->new(
                 %{common_options::restore_options(@common_options::tool_options)},
                 models => [ $frem_model ],
@@ -113,8 +116,10 @@ sub modelfit_setup
                 run_sir => 1, 
                 rplots => 1,
                 top_tool => 1,
+                clean => 1,
             ); 
             $frem->run();
+            common_options::set_option('clean', $old_clean);
         };
         $self->_to_qa_dir();
 
