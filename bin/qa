@@ -169,6 +169,7 @@ my $qa = tool::qa->new(
     covariates => $options{'covariates'},
     categorical => $options{'categorical'},
     parameters => $options{'parameters'},
+    cmd_line => $cmd_line,
 );
 
 $qa->print_options(

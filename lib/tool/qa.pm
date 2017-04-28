@@ -25,6 +25,7 @@ has 'occ' => ( is => 'rw', isa => 'Str', default => 'OCC' );
 has 'covariates' => ( is => 'rw', isa => 'Str' );       # A comma separated list of continuous covariate symbols
 has 'categorical' => ( is => 'rw', isa => 'Str' );       # A comma separated list of categorical covariate symbols
 has 'parameters' => ( is => 'rw', isa => 'Str' );       # A comma separated list of parameter symbols
+has 'cmd_line' => ( is => 'rw', isa => 'Str' );         # Used as a work around for calling scm via system
 
 has 'resmod_idv_table' => ( is => 'rw', isa => 'Str' ); # The table used by resmod
 
@@ -129,8 +130,20 @@ sub modelfit_setup
         if (defined $self->parameters) {
             print "\n*** Running scm ***\n";
             $self->_create_scm_config(model_name => $linearized_model_name);
+            my %tool_options = %{common_options::restore_options(@common_options::tool_options)};
+            my $scm_options = "";
+            for my $cmd (split /\s+/, $self->cmd_line) {
+                if ($cmd =~ /^--?/) {
+                    my $option = $cmd;
+                    $option =~ s/^--?(no-)?(.*)/$2/;
+                    $option =~ s/=(.*)//;
+                    if (grep { $_ eq $option } @common_options::tool_options) {
+                        $scm_options .= " $cmd";
+                    }
+                }
+            }
             eval {
-                system("scm config.scm");       # FIXME: cheating for now
+                system("scm config.scm $scm_options");       # FIXME: system for now
             };
             $self->_to_qa_dir();
         }
