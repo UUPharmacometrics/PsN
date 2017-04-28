@@ -5550,14 +5550,18 @@ sub unfix_omega_0_fix
     # Unfix all omegas that are set to 0 FIX
     my $self = shift;
 
+    my $did_fix = 0;
     for my $record (@{$self->problems->[0]->omegas}) {
         for my $option (@{$record->options}) {
             if ($option->init == 0 and $option->fix) {
+                $did_fix = 1;
                 $option->fix(0);
                 $option->init(0.01);
             }
         }
     }
+
+    return $did_fix;
 }
 
 

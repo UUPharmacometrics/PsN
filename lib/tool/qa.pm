@@ -77,10 +77,13 @@ sub modelfit_setup
         $boxcox_model->_write();
         push @models, $boxcox_model;
         my $add_etas_model = $linearized_model->copy(filename => "add_etas.mod");
-        $add_etas_model->unfix_omega_0_fix();
-        $add_etas_model->_write();
-        push @models, $add_etas_model;
-
+        my $was_added = $add_etas_model->unfix_omega_0_fix();
+        if ($was_added) {
+            $add_etas_model->_write();
+            push @models, $add_etas_model;
+        } else {
+            unlink("add_etas.mod");
+        }
         my $modelfit = tool::modelfit->new(
             %{common_options::restore_options(@common_options::tool_options)},
             models => \@models,
