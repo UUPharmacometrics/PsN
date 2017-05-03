@@ -32,6 +32,7 @@ my %optional_options = (
 	'fork_runs!' => undef,
 #	'estimate_regular_final_model!' => undef,
 	'estimate_means!' => undef,
+        'estimate_covariates!' => undef,
 	'categorical:s' => undef,
 	'deriv2_nocommon_maxeta:i' => undef,
 	"mceta:i"=>'',
@@ -172,6 +173,15 @@ even if option -estimate_means is set. If -no-estimate_means is set, frem will n
 any means even if there are missing observations.
 EOF
 
+$help_text{-estimate_covariates} = <<'EOF';
+    -estimate_covariates
+
+Default not set. By default frem will not estimate the variances and covariances of the covariates
+until the final FREM model estimation, but instead evaluate the EBEs (in model 2) assuming the same
+variances and covariances as in covariate data. These estimates should not differ unless covariates
+have missing data (which might warrant this option to be set).
+EOF
+
 $help_text{-cholesky} = <<'EOF';
     -cholesky
 
@@ -259,6 +269,7 @@ my $frem = tool::frem->new( eval( $common_options::parameters ),
 							categorical => $options{'categorical'},
 #							estimate_regular_final_model => $options{'estimate_regular_final_model'},
 							estimate_means => $options{'estimate_means'},
+                                                        estimate_covariates => $options{'estimate_covariates'},
 							cholesky => $options{'cholesky'},
 							deriv2_nocommon_maxeta => $options{'deriv2_nocommon_maxeta'},
 							log => $options{'log'},

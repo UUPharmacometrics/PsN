@@ -76,6 +76,7 @@ has 'results_file' => ( is => 'rw', isa => 'Str', default => 'frem_results.csv' 
 has 'use_pred' => ( is => 'rw', isa => 'Bool', default => 1 );
 has 'estimate_regular_final_model' => ( is => 'rw', isa => 'Bool', default => 1 ); #no commandline option currently
 has 'estimate_means' => ( is => 'rw', isa => 'Bool', default => 1 );
+has 'estimate_covariates' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'have_missing_covariates' => ( is => 'rw', isa => 'ArrayRef', default => sub { [] } );
 has 'cholesky' => ( is => 'rw', isa => 'Bool', default => 0 );
 
