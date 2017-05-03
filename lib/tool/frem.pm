@@ -2683,6 +2683,10 @@ sub prepare_model2
 			$frem_model->problems->[0]->estimations->[-1]->_add_option(option_string => 'MCETA='.$self->mceta);
 		}
 
+                unless ($self->estimate_covariates) {
+                    $frem_model->set_maxeval_zero(problem_number => 0, print_warning => 1);
+                }
+
 		$frem_model->_write();
 
 	}
