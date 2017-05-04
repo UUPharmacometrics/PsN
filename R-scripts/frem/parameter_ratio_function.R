@@ -4,7 +4,8 @@ parameter_ratio <- function(inTable_frem,covdata,pardata,file_format) {
     file_format <- c("png")
   }
   # check if there are all 3 input data files
-  if (exists("inTable_frem") & exists("covdata") & exists("pardata")) {
+  files_exists <- (exists("inTable_frem") & exists("covdata") & exists("pardata"))
+  if (files_exists) {
     library(grid)
     library(gridExtra)
     library(reshape2)
@@ -65,6 +66,8 @@ parameter_ratio <- function(inTable_frem,covdata,pardata,file_format) {
     # SORT NEEDED DATA FOR EACH PARAMETER -------------------------------------
     list_part <- list()
     list_colnames <- list()
+    cov_effect_on_param_plots <- list()
+    param <- list()
     for (j in 1:nrow(pardata)) {
       for (i in 1:length(covariate)) {
         if (covdata$is.categorical[i] != "1") {
@@ -167,15 +170,18 @@ parameter_ratio <- function(inTable_frem,covdata,pardata,file_format) {
       }
 
       # print out forest plot with table text
-      gp <- grid.arrange(p, data_table, ncol=2, top = textGrob(title,gp=gpar(fontsize=20)))
+      cov_effect_on_param_plots[[j]] <- grid.arrange(p, data_table, ncol=2, top = textGrob(title,gp=gpar(fontsize=20)))
 
       # Save each plot with different names in different pdg files (based on each parameter j)
-      name <- paste0(pardata$parname[j],".",file_format)
-      ggsave(filename = name, plot = gp, width=11.69, height=8.27)
-      dev.off()
+      param[[j]] <- paste0(pardata$parname[j],".",file_format)
+      
     }
+    return(list(plots=indiv_for_param_plots,
+                param=param,
+                files_exists=files_exists))
   } else {
     cat("Input data files are not found! Make sore that input data files are in your working directory!")
+    return(list(files_exists=files_exists))
   }
 }
 

@@ -4,7 +4,8 @@ ID_ratio <- function(frem_id,covdata,pardata,file_format) {
     file_format <- c("png")
   }
   # check if there are all 3 input data files
-  if (exists("frem_id") & exists("covdata") & exists("pardata")) {
+  files_exists <- (exists("frem_id") & exists("covdata") & exists("pardata"))
+  if (files_exists) {
 
     library(grid)
     library(gridExtra)
@@ -66,6 +67,8 @@ ID_ratio <- function(frem_id,covdata,pardata,file_format) {
     }
 
     # SORT NEEDED DATA FOR EACH PARAMETER -------------------------------------
+    indiv_for_param_plots <- list()
+    param <- list()
     for (j in 1:length(parameter)) {
       # Sort data into neat order
       obs_col <- paste0(parameter[j], ".observed")
@@ -178,21 +181,27 @@ ID_ratio <- function(frem_id,covdata,pardata,file_format) {
 
       # print out forest plot with table text
       if (ncolumns >= 8) {
-        gp <- grid.arrange(p, t, ncol = 2,top = textGrob(paste0("Individuals for parameter ", parameter[j]), gp = gpar(fontsize=20)), widths = c(2:3))
+        indiv_for_param_plots[[j]] <- grid.arrange(p, t, ncol = 2,top = textGrob(paste0("Individuals for parameter ", parameter[j]), gp = gpar(fontsize=20)), widths = c(2:3))
       } else {
-        gp <- grid.arrange(p, t, ncol = 2,top = textGrob(paste0("Individuals for parameter ", parameter[j]), gp = gpar(fontsize=20)))
+        indiv_for_param_plots[[j]] <- grid.arrange(p, t, ncol = 2,top = textGrob(paste0("Individuals for parameter ", parameter[j]), gp = gpar(fontsize=20)))
       }
 
       # Save each plot with different names in different pdf files (based on each parameter j)
-      name <- paste0("ID.",parameter[j],".",file_format)
-      ggsave(filename = name, plot = gp, width=11.69, height=8.27)
-      dev.off()
+      param[[j]] <- paste0("ID.",parameter[j],".",file_format)
+      
     }
+    return(list(plots=indiv_for_param_plots,
+                param=param,
+                files_exists=files_exists))
+    
   } else {
     cat("Input data files are not found! Make sore that input data files are in your working directory!")
+    return(list(files_exists=files_exists))
   }
+  
 }
 
-
-
+# indiv_for_param_plots <- ID_ratio(frem_id,covdata,pardata,file_format)
+#   ggsave(filename = name, plot = gp, width=11.69, height=8.27)
+# for (i in 1:length(ID_ratio_plot_list))
 
