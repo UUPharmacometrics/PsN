@@ -86,7 +86,7 @@ is($msfirec->format_filename(write_directory=>$tempdir.'subdir3',
 
 my ($homedir,$dirt) = OSspecific::absolute_path(getcwd(),'file');
 $msfirec->set_filename(filename=> 'new.csv');
-is($msfirec ->get_directory,$homedir,'msfi record dir after change');
+is(File::Spec->canonpath($msfirec->get_directory), File::Spec->canonpath($homedir), 'msfi record dir after change');
 is($msfirec ->get_filename,'new.csv','msfi record filename after change');
 ($dir,$dirt) = OSspecific::absolute_path($homedir.'sub','file');
 $msfirec->set_filename(filename=> $homedir.'sub/new2.csv');
