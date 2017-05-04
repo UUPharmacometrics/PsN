@@ -13,6 +13,7 @@ use model::problem;
 use tool::modelfit;
 use output;
 use nmtablefile;
+use PsN;
 
 extends 'tool';
 
@@ -46,6 +47,10 @@ has 'table_file' => ( is => 'rw', isa => 'Str' );   # The name of the table file
 sub BUILD
 {
     my $self = shift;
+
+    if ($PsN::nm_major_version < 7 or ($PsN::nm_major_version == 7 and $PsN::nm_minor_version < 3)) {
+        croak("resmod need at least NONMEM 7.3.0 or newer");
+    }
 
 	my $model = $self->models()->[0]; 
     $self->model($model);
