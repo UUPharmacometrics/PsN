@@ -99,6 +99,13 @@ sub import
 
 }
 
+sub minimum_nonmem_version
+{
+    my $major = shift;
+    my $minor = shift;
+
+    return ($nm_major_version > $major or $nm_major_version == $major and $nm_minor_version >= $minor);
+}
 
 sub get_nmversion_info
 {
