@@ -11,7 +11,7 @@ use MooseX::Params::Validate;
 
 sub boxcox_etas
 {
-    # Boxcox transform all ETAs of model
+    # Boxcox transform all or some ETAs of model
     # Assume only one $PROBLEM
 	my %parm = validated_hash(\@_,
         model => { isa => 'model' },
