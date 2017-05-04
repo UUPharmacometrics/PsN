@@ -15,6 +15,7 @@ use math;
 use utils::file;
 use array qw(get_positions any_nonzero);
 use nmtablefile;
+use PsN;
 
 
 extends 'tool';
@@ -2127,7 +2128,7 @@ sub linearize_setup
 
 		$original_model->set_records(type => 'input', record_strings => \@inputstrings);
 
-        if ($self->from_linearize) {
+        if ($self->from_linearize and PsN::minimum_nonmem_version(7, 3)) {
             my $phi_file = $original_model->get_phi_file();
             if (defined $phi_file) {
                 $mceta = '1';
