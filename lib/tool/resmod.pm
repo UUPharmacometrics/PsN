@@ -668,6 +668,11 @@ sub _build_time_varying_template
 		cutoffs => { isa => 'ArrayRef' },
     );
     my $cutoffs = $parm{'cutoffs'};
+	
+	my $start_time = 0;
+	if($cutoffs->[0] < 0) {
+		$start_time = '-inf';
+	}
 
     my @models;
 
@@ -693,9 +698,9 @@ sub _build_time_varying_template
         );
 
         $hash{'prob_arr'} = \@prob_arr;
-
+		
         $hash{'parameters'} = [
-            { name => "sdeps_0-t0", parameter => "SIGMA(1,1)", recalc => sub { sqrt($_[0]) } },
+            { name => "sdeps_".$start_time."-t0", parameter => "SIGMA(1,1)", recalc => sub { sqrt($_[0]) } },
             { name => "sdeps_t0-inf", parameter => "SIGMA(2,2)", recalc => sub { sqrt($_[0]) } },
             { name => "CUTOFFS", cutoff => $i },
         ];
@@ -768,7 +773,7 @@ sub _build_time_varying_template
             my $start;
             my $end;
             if ($i == 0) {
-                $start = '0';
+                $start = $start_time;
             } else {
                 $start = "t$i";
             }
