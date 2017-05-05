@@ -1,18 +1,14 @@
 This PsN version has been tested on the following systems:
 
-Windows 10 64-bit with Strawberry Perl 5.22.1 , gfortran 4.9.2 and NONMEM 7.2.0 and 7.3.0
-Windows 7 64-bit with ActivePerl 5.20.1 (32 bit), gfortran 4.8.1 and NONMEM 7.3.0
-Windows 7 64-bit with ActivePerl 5.16.3 (32 bit), gfortran 4.6.0 and NONMEM 7.3.0
+Windows 10 64-bit with Strawberry Perl 5.24.0 , gfortran 4.9.2 and NONMEM 7.1.0, 7.1.2, 7.2.0 and 7.3.0
 Windows 7 64-bit with Strawberry Perl 5.18.2, gfortran 4.7.3 and NONMEM 7.2.0 and 7.3.0
-Windows XP 32-bit with ActivePerl 5.16.3, gfortran 4.6.0 and NONMEM 7.1.0, 7.1.2 and 7.2.0
-MacOS X 10.11.4 with Perl 5.18.2, gfortran 5.2.0 and NONMEM 7.3.0
-MacOS X 10.6.6 with ActiveState Perl 5.16.3, gfortran 4.6.2 and NONMEM 7.3.0
-MacOS X 10.6.6 with ActiveState Perl 5.16.3, ifort 12.0.0 and NONMEM 7.2.0 and 7.3.0
-Ubuntu Linux 15.10 with Perl 5.20.2, gfortran 5.2.1 and NONMEM 7.2.0 and 7.3.0
-Fedora 20 with Perl 5.18.2, gfortran 4.8.2 and NONMEM 7.2.0
-Scientific Linux 6.3 with Perl 5.10.1, gfortran 4.4.7 and NONMEM 7.2.0 and 7.3.0
-Scientific Linux 6.3 with Perl 5.10.1, gfortran 5.1.1 and NONMEM 7.3.0
-CentOS 6.5 with Perl 5.10.1, gfortran 4.4.7 and NONMEM 7.1.0, 7.1.2 and 7.3.0
+Windows 7 64-bit with Strawberry Perl 5.24.1, gfortran 4.9.2 and NONMEM 7.4.0
+Windows 7 64-bit with ActivePerl 5.16.3 (32-bit), gfortran 4.6.0 and NONMEM 7.3.0
+MacOS X 10.6.6 with ActiveState Perl 5.16.3, ifort 12.0.0 and NONMEM 7.2.0, 7.3.0 and 7.4.0
+Ubuntu Linux 16.10 with Perl 5.22, gfortran 6.2 and NONMEM 7.2.0, 7.3.0 and 7.4.0
+Scientific Linux 6.3 with Perl 5.10.1, gfortran 4.4.7 and NONMEM 7.2.0
+Scientific Linux 6.3 with Perl 5.10.1, gfortran 5.1.1 and NONMEM 7.3.0 and 7.4.0
+CentOS 7 with Perl 5.16.3, gfortran 4.8.5 and NONMEM 7.3.0 and 7.4.0
 
 
 ************************
@@ -20,7 +16,7 @@ Installation
 ************************
 
 Follow the installation instructions on
-http://psn.sourceforge.net/install.php
+https://uupharmacometrics.github.io/PsN/install.html
 
 ************************
 Documentation
@@ -30,7 +26,7 @@ installation directory. During installation it is also possible
 to have all documentation copied to a user-specified directory.
 
 All documentation can also be downloaded from
-the PsN website http://psn.sourceforge.net/
+the PsN website https://uupharmacometrics.github.io/PsN/docs.html
 
 ************************
 Dependencies 
@@ -40,6 +36,7 @@ Dependencies
   and the default execute, vpc and bootstrap R plots.
 
 - Each userguide lists the R packages required to obtain the diagnostic R plots.
+
 ************************
 Known issues 
 ************************
@@ -47,14 +44,14 @@ Known issues
 - Windows users need to be careful to choose 
   a Perl version where the extra modules needed for PsN are available. 
   For new Perl installations the PsN team recommends Strawberry Perl
-  See the instructions on http://psn.sourceforge.net/install.php
+  See the instructions on https://uupharmacometrics.github.io/PsN/install.html
 
 - Installation problem on some Windows systems where 
   perl 'system' command does not work. Make sure perl module File::Copy::Recursive
   is installed *before* (re)running the installation script setup.pl
 
 *********************************************
-Changes and bug fixes from PsN 4.6.0 to n.n.n
+Changes and bug fixes from PsN 4.6.0 to 4.7.0
 *********************************************
 
 A new recommended but not required Perl library for runrecord: YAML::Tiny 
@@ -63,6 +60,8 @@ A new recommended but not required Perl library for runrecord: YAML::Tiny
 
    ___General___
 
+- New web page at https://uupharmacometrics.github.io/PsN/
+- New git repository and development webpage at https://github.com/UUPharmacometrics/PsN
 - PsN has updated its license. It is still licensed under the GNU public license version 2, but
   it is now possible to relicense PsN under any later versions of this license.
 - File specified in $ETAS will be automatically copied when model run
@@ -84,7 +83,7 @@ A new recommended but not required Perl library for runrecord: YAML::Tiny
 - Added finish time to version_and_option_info.txt
 
 
-___common_options___
+   ___common_options___
 
 - Option -abort_on_fail has a new meaning and function. The option is intended for the system tests.
   If set, PsN will exit with an error if NONMEM crashes, or an estimation/evaluation fails to
@@ -162,7 +161,7 @@ New features implemented by William S. Denney of Human Predictions:
   and list them in sumo output using their generic names.
 
 
-___bootstrap___
+   ___bootstrap___
 
 - The $COVARIANCE will by default be removed from the model. If wanted it can be kept
   with the new -keep_covariance option.
@@ -232,7 +231,7 @@ ___bootstrap___
 - New option -keep_covariance
 
 
-___boot_scm___
+   ___boot_scm___
 
 - Disallow restarts in existing directory as this operation did not work
 
