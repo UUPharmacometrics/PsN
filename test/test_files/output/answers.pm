@@ -47,6 +47,11 @@ sub read_answers
 	$answer_hashes[$index]->{answers}={};
 	$answer_hashes[$index]->{answers}->{0}->{0}->{'eigens'}=[ 1.24E-01, 3.10E-01, 6.23E-01, 8.14E-01, 1.53E+00, 2.60E+00 ];
 
+    $index++;
+	$answer_hashes[$index]={};
+	$answer_hashes[$index]->{file}='nm74/prior.lst';
+	$answer_hashes[$index]->{parsed_successfully} = 0;
+
 	$index++;
 	$answer_hashes[$index]={};
 	$answer_hashes[$index]->{file}='special_mod/interrupted_at_eigen.lst';
