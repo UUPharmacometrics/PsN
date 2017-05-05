@@ -1,4 +1,4 @@
-.calc_and_add_shift_from_cwres <- function(working.directory, model.directory, model.filename, CWRES_table, structural_details_table, idv, idv_name){
+.calc_and_add_shift_from_cwres <- function(structural_details_table, working.directory, model.directory, model.filename, CWRES_table, idv, idv_name){
   # .ext file with the final estimates
   final_estimates <- read.table(file.path(model.directory, paste0(sub('.mod.*','',model.filename),".ext")), skip=1, header=T) %>%
     filter(ITERATION==-1000000000)

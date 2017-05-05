@@ -1,7 +1,7 @@
 ---
 title: "Quality assurance"
 date: '`r format(Sys.Date(), "%B %d, %Y")`'
-output: pdf_document # delete if html file needed and set type="html"
+output: pdf_document # delete if html file needed and set type <- 'html'
 header-includes: #needed to create a pdf file
     - \usepackage{colortbl}
     - \usepackage{longtable}
@@ -16,8 +16,11 @@ library(ztable)
 library(expm)
 source(paste0(rscripts.directory, "/common/find_r_files_in_subdir.R"))
 source(paste0(rscripts.directory, "/common/iofv.R"))
+source(paste0(rscripts.directory, "/common/keep_symbols.R"))
 source(paste0(rscripts.directory, "/cdd/create.data.full.R"))
 source(paste0(rscripts.directory, "/simeval/ofv.i_ofv_res.R"))
+source(paste0(rscripts.directory,"/frem/ID_ratio_function.R"))
+source(paste0(rscripts.directory,"/frem/parameter_ratio_function.R"))
 #source qa functions
 rscript <- find_r_files_in_subdir(toolname,rscripts.directory)
 for (i in 1:length(rscript)) {
@@ -26,7 +29,7 @@ for (i in 1:length(rscript)) {
 ```
 
 
-```{r calculations,results='hide',echo=FALSE,message=FALSE}
+```{r helping_functions,results='hide',echo=FALSE,message=FALSE}
 # Helping functions
 # get a ofv value from the raw_results.csv
 .get_rawres_ofv <- function(rawres_file, row = 1){
@@ -46,12 +49,16 @@ for (i in 1:length(rscript)) {
 
 #which resmod_ folders are in the working directory
 resmod_suffix <- which_resmod_folders(directory=working.directory)
+```
 
+```{r structural_model_calculations,results='hide',echo=FALSE,message=FALSE}
 # 1.Structural models
 structural_overview <- get_structural_overview_table(working.directory,idv=resmod_suffix,groups)
 # get resmod structural details tables
 resmod_structural_details <- resmod_structural_details_tables(working.directory,model.directory,model.filename,CWRES_table,resmod_suffix,idv_name)
+```
 
+```{r parameter_model_calculations,results='hide',echo=FALSE,message=FALSE}
 # 2.Parameter Variability Models
 list_par_var_models <- get_param_var_tables(directory=working.directory)
 param_var_file_exists <- list_par_var_models$param_var_file_exists
@@ -69,30 +76,32 @@ if(fullblock_mod || boxcox_mod) {
 } else {
   param_sector <- FALSE
 }
+```
 
+```{r covariate_model_calculations,results='hide',echo=FALSE,message=FALSE}
 # 3.Covariate Models
   # 3.1.All (FREM)
 frem_table_list <- get_all_covariates(frem_directory=file.path(working.directory,"frem_run"),covariates,categorical,parameters)
-frem_files_exists <- frem_table_list$frem_files_exists
 frem_table <- frem_table_list$frem_table
  # 3.2.Covariate (SCM)
 scm_table_list <- get_scm_table(file.path(working.directory,paste0("scm_run/raw_results_",sub('.mod.*','',model.filename),".csv")),
                                 parameters,covariates,categorical)
-scm_files_exists <- scm_table_list$scm_files_exists
 scm_table <- scm_table_list$scm_table
 max_scm_table <- scm_table_list$max_scm_table
   #summary
-covariates_table_list <- get_covariates_table(frem_table,scm_table,max_scm_table,frem_files_exists,scm_files_exists)
+covariates_table_list <- get_covariates_table(frem_table,scm_table,max_scm_table)
 covariates_extra_table <- covariates_table_list$covariates_extra_table
 covariates_table <- covariates_table_list$covariates_table
+```
 
-
+```{r residual_error_model_calculations,results='hide',echo=FALSE,message=FALSE}
 #4.create residual error model table (extra table)
 resmod_table_list <- get_resmod_ruv_table(directory=working.directory, idv_name)
 resmod_ruv_models_table <- resmod_table_list$resmod_ruv_table
 resmod_ruv_overview <- resmod_table_list$resmod_ruv_overview
+```
 
-
+```{r influential_individuals_calculations,results='hide',echo=FALSE,message=FALSE}
 # 5.Influential individuals (CDD)
 ii_list <- get_ii_table(raw.results.file=file.path(working.directory,"cdd_run",paste0("raw_results_",sub('.mod.*','',model.filename),"_linbase.csv")),
                         skipped.id.file=file.path(working.directory,"cdd_run/skipped_individuals1.csv"),
@@ -101,48 +110,54 @@ cdd_files_exist <- ii_list$cdd_files_exist
 cdd.data <- ii_list$cdd.data
 cdd_highest_dofv <- ii_list$cdd_highest_dofv
 ii_table <- ii_list$ii_table
+```
 
-
+```{r outliers_calculations,results='hide',echo=FALSE,message=FALSE}
 # 6.Outliers (Simeval)
 outlier_table_list <- get_outliers_table(simeval_directory=file.path(working.directory, "simeval_run"),cdd.data)
 simeval_files_exist <- outlier_table_list$simeval_files_exist
 outliers_table <- outlier_table_list$outliers_table
 max_outlier_table <- outlier_table_list$max_outlier_table
+```
 
-
+```{r make_overview_table,results='hide',echo=FALSE,message=FALSE}
 # get overview table
 rgroup <- c("Structural Model","Parameter Variability Model","Covariates","Residual Error Model","Influential Individuals","Outliers")
 overview_list <- list(structural_overview,par_var_models,covariates_table,resmod_ruv_overview,cdd_highest_dofv,max_outlier_table)
 overview_table_list <- get_overview_table(overview_list,rgroup)
 n.rgroup <- overview_table_list$n.rgroup
 overview_table <- overview_table_list$overview_table
-
 ```
 
 #Overview
 ```{r draw_overview_table,echo=F,results='asis'}
-overview_table <- ztable(overview_table,align="lrc")
+overview_table <- keep_symbols(overview_table,type)
+overview_table <- ztable_sub(overview_table,type=type,include.rownames = F,colnames.bold = T,align="lrc")
 overview_table <- addrgroup(overview_table,rgroup=rgroup,n.rgroup=n.rgroup,cspan.rgroup=1)
-overview_table <- update_ztable(overview_table,type=type,include.rownames = F,colnames.bold = T)
 print(overview_table)
 ```
+
+\pagebreak
 
 #Structural
 
 ```{r draw_structural_details_tables,echo=F,results='asis'}
 for(i in 1:length(resmod_suffix)) {
   cat(resmod_suffix[i])
-  first_table <- ztable(resmod_structural_details[[i]]$first_table,align="lr")
-  first_table <- update_ztable(first_table,type=type,include.colnames = F,include.rownames = F,longtable = T)
+  first_table <- keep_symbols(resmod_structural_details[[i]]$first_table,type)
+  first_table <- ztable_sub(first_table,type=type,include.colnames = F,include.rownames = F,longtable = T,align="lr")
   print(first_table)
-  second_table <- ztable(resmod_structural_details[[i]]$second_table,align="rlrr")
-  second_table <- addcgroup(second_table,cgroup=c("","Estimated shift"),n.cgroup=c(1,2))
-  second_table <- update_ztable(second_table,type=type,colnames.bold = T,include.rownames = F,longtable = T)
+  second_table <- keep_symbols(resmod_structural_details[[i]]$second_table,type)
+  second_table <- ztable_sub(second_table,type=type,colnames.bold = T,include.rownames = F,longtable = T,align="rlrr")
+  second_table <- addcgroup(second_table,cgroup=c("","Estimated bias"),n.cgroup=c(1,2))
   print(second_table)
+  cat("\n\\newpage\n")
 }
 ```
 
 ```{asis Add_text_for_parameter_section_if_exist_mod_files, echo=param_sector}
+\pagebreak
+
 #Parameter Variability Model
 ```
 
@@ -152,8 +167,8 @@ for(i in 1:length(resmod_suffix)) {
 
 ```{r draw_full_omega_block_table,echo=F,results='asis'}
 if(fullblock_mod) {
-  full_omega_block_table <- ztable(full_omega_block_table,align="lr")
-  full_omega_block_table <- update_ztable(full_omega_block_table,type=type,colnames.bold = T,include.rownames = F,longtable = T)
+  full_omega_block_table <- keep_symbols(full_omega_block_table,type)
+  full_omega_block_table <- ztable_sub(full_omega_block_table,type=type,colnames.bold=T,include.rownames=F,longtable=T,align="lr")
   print(full_omega_block_table)
 }
 ```
@@ -164,26 +179,54 @@ if(fullblock_mod) {
 
 ```{r draw_boxcox_tranformation_table,echo=F,results='asis'}
 if(boxcox_mod) {
-  boxcox_lambdas_table <- ztable(boxcox_lambdas_table,align="lr")
-  boxcox_lambdas_table <- update_ztable(boxcox_lambdas_table,type=type,colnames.bold = T,include.rownames = F,longtable = T)
+  boxcox_lambdas_table <- keep_symbols(boxcox_lambdas_table,type)
+  boxcox_lambdas_table <- ztable_sub(boxcox_lambdas_table,type=type,colnames.bold=T,include.rownames=F,longtable=T,align="lr")
   print(boxcox_lambdas_table)
 }
 ```
 
+\pagebreak
+
 #Covariates
 ```{r draw_covariates_table,echo=F,results='asis'}
+covariates_extra_table <- keep_symbols(covariates_extra_table,type)
 align <- paste(c("l",rep("r",ncol(covariates_extra_table)-1)),collapse = '')
-covariates_extra_table <- ztable(covariates_extra_table,align=align)
-covariates_extra_table <- update_ztable(covariates_extra_table,type=type,colnames.bold = T,include.rownames = F,longtable = T)
+covariates_extra_table <- ztable_sub(covariates_extra_table,type=type,colnames.bold = T,include.rownames = F,longtable = T,align=align)
 print(covariates_extra_table)
 ```
 
+```{r draw_frem_plots,echo=F,message=F,warning=F,results='asis',fig.width=11,fig.height=15,fig.keep="high",fig.align="center"}
+if(file.exists(paste0(working.directory,"/postfrem1/frem_ratio.csv")) && 
+   file.exists(paste0(working.directory,"/postfrem1/frem_id_ratios.csv")) && 
+   file.exists(paste0(working.directory,"/postfrem1/covdata.csv")) &&
+   file.exists(paste0(working.directory,"/postfrem1/pardata.csv"))) {
+  inTable_frem <- read.csv(file.path(working.directory,"postfrem1","frem_ratio.csv"),header = T, as.is = T)
+  frem_id <- read.csv(file.path(working.directory,"postfrem1","frem_id_ratios.csv"), header = T, as.is = T)
+  covdata <- read.csv(file.path(working.directory,"postfrem1","covdata.csv"),header = T, as.is = T)
+  pardata <- read.csv(file.path(working.directory,"postfrem1","pardata.csv"),header = T, as.is = T)
+  if(ID_ratio(frem_id,covdata,pardata)$files_exist) {
+	  indiv_for_param_plots <- ID_ratio(frem_id,covdata,pardata)$plots
+	  grid.draw(marrangeGrob(indiv_for_param_plots,nrow=2,ncol=1,top=''))
+	  grid.newpage()
+  }
+  if(parameter_ratio(inTable_frem,covdata,pardata)$files_exist) {
+	  cov_effect_on_param_plots <- parameter_ratio(inTable_frem,covdata,pardata)$plots
+	  grid.draw(marrangeGrob(cov_effect_on_param_plots,nrow=2,ncol=1,top=''))
+	  grid.newpage()
+  }
+}
+```
+
+\pagebreak
+
 #Residual Error Model
 ```{r draw_resiual_error_model_table,echo=F,results='asis'}
-resmod_ruv_models_table <- ztable(resmod_ruv_models_table,align="lrc")
-resmod_ruv_models_table <- update_ztable(resmod_ruv_models_table,type=type,colnames.bold = T,include.rownames = F,longtable = T)
+resmod_ruv_models_table <- keep_symbols(resmod_ruv_models_table,type)
+resmod_ruv_models_table <- ztable_sub(resmod_ruv_models_table,type=type,colnames.bold = T,include.rownames = F,longtable = T,align="lrc")
 print(resmod_ruv_models_table)
 ```
+
+\pagebreak
 
 #Influential Individuals
 ```{r draw_influential_individuals_table,echo=F,results='asis'}
@@ -194,17 +237,19 @@ if(cdd_files_exist) {
 }
 value <- T
 if(ncol(ii_table)==1 && nrow(ii_table)==1) value <- F
-ii_table <- ztable(ii_table,digits = 1,align="lr")
-ii_table <- update_ztable(ii_table,type=type,colnames.bold = value,include.colnames = value,include.rownames = F,longtable = T)
+ii_table <- keep_symbols(ii_table,type)
+ii_table <- ztable_sub(ii_table,type=type,colnames.bold=value,include.colnames=value,include.rownames=F,longtable=T,digits=1,align="lr")
 print(ii_table)
 ```
+
+\pagebreak
 
 #Outliers
 ```{r draw_outliers_table,echo=F,results='asis'}
 value <- T
 if(ncol(outliers_table)==1 && nrow(outliers_table)==1) value <- F
-outliers_table <- ztable(outliers_table,digits = 1,align="lr")
-outliers_table <- update_ztable(outliers_table,type=type,colnames.bold = value,include.colnames = value,include.rownames = F,longtable = T)
+outliers_table <- keep_symbols(outliers_table,type)
+outliers_table <- ztable_sub(outliers_table,type=type,colnames.bold = value,include.colnames = value,include.rownames = F,longtable = T,digits = 1,align="lr")
 print(outliers_table)
 ```
 

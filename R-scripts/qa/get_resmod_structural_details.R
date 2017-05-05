@@ -16,9 +16,9 @@
         all_params %>%
           filter(grepl("_", variable)) %>%
           tidyr::separate(variable, c("type","bin"), "_") %>%
-          tidyr::separate(bin, c("bin_min","bin_max"), "-") %>%
+          tidyr::extract(bin, into=c("bin_min","bin_max"), '(.*)\\-([^-]+)$') %>%
           left_join(bin_boundaries, c(bin_min = "variable")) %>%
-          mutate(bin_value = ifelse(bin_min=='0', 0, bin_value)) %>%
+          mutate(bin_value = ifelse(bin_min=='0', 0, ifelse(bin_min=='-inf', -Inf ,bin_value))) %>%
           rename(bin_min_value = bin_value) %>%
           left_join(bin_boundaries, c(bin_max = "variable")) %>%
           mutate(bin_value = ifelse(bin_max=='inf', Inf, bin_value),
@@ -28,5 +28,5 @@
       })%>%
     ungroup() %>%
     mutate_each(funs(as.numeric), value, bin_min, bin_max) %>%
-    mutate_each(funs(round(.,1)), bin_min, bin_max)
+    mutate_each(funs(round(.,2)), bin_min, bin_max)
 }
