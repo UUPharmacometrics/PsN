@@ -1,11 +1,8 @@
-parameter_ratio <- function(inTable_frem,covdata,pardata,file_format) {
-  # as default file format will be png
-  if (missing(file_format)) {
-    file_format <- c("png")
-  }
+parameter_ratio <- function(inTable_frem,covdata,pardata) {
+
   # check if there are all 3 input data files
-  files_exists <- (exists("inTable_frem") & exists("covdata") & exists("pardata"))
-  if (files_exists) {
+  files_exist <- (exists("inTable_frem") & exists("covdata") & exists("pardata"))
+  if (files_exist) {
     library(grid)
     library(gridExtra)
     library(reshape2)
@@ -170,18 +167,18 @@ parameter_ratio <- function(inTable_frem,covdata,pardata,file_format) {
       }
 
       # print out forest plot with table text
-      cov_effect_on_param_plots[[j]] <- grid.arrange(p, data_table, ncol=2, top = textGrob(title,gp=gpar(fontsize=20)))
+      cov_effect_on_param_plots[[j]] <- arrangeGrob(p, data_table, ncol=2, top = textGrob(title,gp=gpar(fontsize=20)))
 
       # Save each plot with different names in different pdg files (based on each parameter j)
-      param[[j]] <- paste0(pardata$parname[j],".",file_format)
+      param[[j]] <- paste0(pardata$parname[j])
       
     }
-    return(list(plots=indiv_for_param_plots,
+    return(list(plots=cov_effect_on_param_plots,
                 param=param,
-                files_exists=files_exists))
+                files_exist=files_exist))
   } else {
     cat("Input data files are not found! Make sore that input data files are in your working directory!")
-    return(list(files_exists=files_exists))
+    return(list(files_exist=files_exist))
   }
 }
 
