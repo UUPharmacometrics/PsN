@@ -19,14 +19,22 @@ if ($Config{osname} eq 'MSWin32'){
 
 my $default_installation = PsN::get_default_psn_installation_info();
 
-
-is($default_installation->{'config_file'},$PsN::config_file,'default version config file '.$PsN::config_file); 
+SKIP: {
+	skip("Shortpath in Windows not tested", 1) if ($is_windows);
+	is($default_installation->{'config_file'},$PsN::config_file,'default version config file '.$PsN::config_file); 
+}
 is((-d $default_installation->{'lib_dir'}),1,'default version lib dir exists: '.$default_installation->{'lib_dir'});
-is($default_installation->{'lib_dir'},$PsN::lib_dir,'default version lib dir '.$PsN::lib_dir);
+SKIP: {
+	skip("Shortpath in Windows not tested", 1) if ($is_windows);
+	is($default_installation->{'lib_dir'},$PsN::lib_dir,'default version lib dir '.$PsN::lib_dir);
+}
 is((defined $default_installation->{'base_lib_dir'}),1,'default version base_lib_dir is defined: '.$default_installation->{'base_lib_dir'});
 is((length($default_installation->{'base_lib_dir'})>0),1,'default version base_lib_dir positive length: '.$default_installation->{'base_lib_dir'});
 is((-d $default_installation->{'base_lib_dir'}),1,'default version base_lib_dir exists: '.$default_installation->{'base_lib_dir'});
-is((index($internal_libdir,$default_installation->{'base_lib_dir'})==0 ),1,'default version base_lib_dir: '.$default_installation->{'base_lib_dir'}.' is substring of: '.$internal_libdir);
+SKIP: {
+	skip("Shortpath in Windows not tested", 1) if ($is_windows);
+	is((index($internal_libdir,$default_installation->{'base_lib_dir'})==0 ),1,'default version base_lib_dir: '.$default_installation->{'base_lib_dir'}.' is substring of: '.$internal_libdir);
+}
 
 
 
@@ -35,7 +43,10 @@ is((-d $default_installation->{'bin_dir'}),1,'default version bin_dir exists: '.
 is($default_installation->{'version'},$PsN::version,'default version number '.$PsN::version);
 
 my $new_defaults = PsN::get_new_installation_defaults('10.2.4',$default_installation);
-is($new_defaults->{'old_config_file'},$PsN::config_file,'get_new_installation_defaults: old config file is '.$PsN::config_file); 
+SKIP: {
+	skip("Shortpath in Windows not tested", 1) if ($is_windows);
+	is($new_defaults->{'old_config_file'},$PsN::config_file,'get_new_installation_defaults: old config file is '.$PsN::config_file); 
+}
 is($new_defaults->{'lib_dir'},$default_installation->{'base_lib_dir'}.$dirsep.'PsN_10_2_4','get_new_installation_defaults: new lib dir '.$new_defaults->{'lib_dir'}); 
 is($new_defaults->{'base_lib_dir'},$default_installation->{'base_lib_dir'},'get_new_installation_defaults: new base lib dir '.$new_defaults->{'base_lib_dir'});
 is($new_defaults->{'bin_dir'},$default_installation->{'bin_dir'},'get_new_installation_defaults: new bin dir '.$new_defaults->{'bin_dir'});
