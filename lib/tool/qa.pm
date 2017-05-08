@@ -40,7 +40,6 @@ sub BUILD
 sub modelfit_setup
 {
 	my $self = shift;
-
     my $model_copy = $self->model->copy(filename => $self->model->filename, directory => $self->model->directory, output_same_directory => 1);
     $model_copy->_write(filename => $self->directory . $self->model->filename);
     $model_copy->phi_file($self->model->get_phi_file());
@@ -98,18 +97,18 @@ sub modelfit_setup
     if (defined $self->covariates or defined $self->categorical) {
         print "\n*** Running FREM ***\n";
         my $frem_model = model->new(filename => $linearized_model_name);
-        eval {
-            my @covariates; 
-            if (defined $self->covariates) {
-                @covariates = split(',', $self->covariates);
-            }
-            my @categorical;
-            if (defined $self->categorical) {
-                @categorical = split(',', $self->categorical);
-            }
+        my @covariates; 
+        if (defined $self->covariates) {
+            @covariates = split(',', $self->covariates);
+        }
+        my @categorical;
+        if (defined $self->categorical) {
+            @categorical = split(',', $self->categorical);
+        }
 
-            my $old_clean = common_options::get_option('clean');    # Hack to set clean further down
-            common_options::set_option('clean', 1);
+        my $old_clean = common_options::get_option('clean');    # Hack to set clean further down
+        common_options::set_option('clean', 1);
+        eval {
             my $frem = tool::frem->new(
                 %{common_options::restore_options(@common_options::tool_options)},
                 models => [ $frem_model ],
@@ -123,8 +122,14 @@ sub modelfit_setup
                 clean => 1,
             ); 
             $frem->run();
-            common_options::set_option('clean', $old_clean);
         };
+        common_options::set_option('clean', $old_clean);
+        $self->_to_qa_dir();
+        if (-d "frem_run") {
+            eval {
+                system("postfrem -frem_directory=frem_run -directory=postfrem_run");
+            };
+        }
         $self->_to_qa_dir();
 
         if (defined $self->parameters) {

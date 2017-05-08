@@ -30,6 +30,7 @@ use array qw(quantile unique);
 use math qw(round);
 use MooseX::Params::Validate;
 use rplots;
+use ext::Carp;
 # More PsN dependencies included with require further down
 
 my $minimum = 100; 
