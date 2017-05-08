@@ -703,6 +703,7 @@ sub _read_iteration_path
 				} elsif (s/^ GRADIENT:\s*//) {
 					do {
 						push(@gradient_vector, split);
+                        @gradient_vector = map { math::fortran_number_to_string($_) } @gradient_vector;
 						$_ = @{$self->lstfile}[ ++$start_pos ];
 						if( $start_pos >= scalar @{$self->lstfile} ) {
 							$self -> parsing_error( message => "Error in reading iteration path!\nEOF found\n" );

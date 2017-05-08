@@ -13,6 +13,14 @@ use math qw(:all);
 
 my (@a, @b, $a, $b, $c);
 
+# fortran_number_to_string
+is (fortran_number_to_string("123.1-345"), "123.1E-345", "fortran_number_to_string special format");
+is (fortran_number_to_string("123.2+345"), "123.2E+345", "fortran_number_to_string special format 2");
+is (fortran_number_to_string("1.23"), "1.23", "fortran_number_to_string regular non-scientific string");
+is (fortran_number_to_string("1.23E23"), "1.23E23", "fortran_number_to_string regular scientific string");
+is (fortran_number_to_string("1.23E-23"), "1.23E-23", "fortran_number_to_string regular scientific string 2");
+is (fortran_number_to_string("1.23E+23"), "1.23E+23", "fortran_number_to_string regular scientific string 3");
+
 # round
 is (round(1.23), 1, "round positive down");
 is (round(23.5), 24, "round positive x.5");
