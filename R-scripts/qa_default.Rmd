@@ -258,7 +258,7 @@ outliers_table <- ztable_sub(outliers_table,type=type,colnames.bold = value,incl
 print(outliers_table)
 ```
 
-```{r plot_outliers,echo=F,results='asis'}
+```{r plot_outliers,echo=F,results='asis',fig.width=11,fig.height=7}
 if(file.exists(file.path(working.directory,"simeval_run/raw_all_iofv.csv"))) {
   list_i_ofv_res <- i_ofv_res(file.path(working.directory,"simeval_run/raw_all_iofv.csv"))# calculation
   n.subjects <- list_i_ofv_res$n.subjects
