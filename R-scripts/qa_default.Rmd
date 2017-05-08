@@ -151,6 +151,9 @@ for(i in 1:length(resmod_suffix)) {
   second_table <- ztable_sub(second_table,type=type,colnames.bold = T,include.rownames = F,longtable = T,align="rlrr")
   second_table <- addcgroup(second_table,cgroup=c("","Estimated bias"),n.cgroup=c(1,2))
   print(second_table)
+  table <- resmod_structural_details[[i]]$table
+  idv_plot <- plot_ipred(table,resmod_suffix)
+  print(idv_plot)
   cat("\n\\newpage\n")
 }
 ```

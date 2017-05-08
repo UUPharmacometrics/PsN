@@ -63,10 +63,10 @@
     summarise(relative_shift = 100*mean(shift/ipred), shift = mean(shift)) %>%
     mutate(bin_min = structural_details_table$bin_min[bin_index],
            bin_max = structural_details_table$bin_max[bin_index],
-           bin_mid=bin_min+(bin_max-bin_min)/2)
+           bin_mean=bin_min+(bin_max-bin_min)/2)
   
   structural_details_table %>%
     slice(mean_shifts$bin_index) %>%
-    bind_cols(mean_shifts %>% select(bin_mid, relative_shift, shift))
+    bind_cols(mean_shifts %>% select(bin_mean, relative_shift, shift))
   
 }

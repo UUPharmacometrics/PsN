@@ -24,7 +24,8 @@ resmod_structural_details_tables <- function(working.directory,model.directory,m
       resmod_structural_details[[i]] <- list(idv = idv,
                                              dofv = dofv,
                                              first_table = first_table,
-                                             second_table = second_table)
+                                             second_table = second_table,
+                                             table=table)
     }
   } else {
     resmod_structural_details <- error_table(col=1)
