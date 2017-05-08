@@ -176,10 +176,11 @@ EOF
 $help_text{-estimate_covariates} = <<'EOF';
     -estimate_covariates
 
-Default not set. By default frem will not estimate the variances and covariances of the covariates
-until the final FREM model estimation, but instead evaluate the EBEs (in model 2) assuming the same
+Default not set. By default FREM will not estimate the variances and covariances of the covariates
+until the final FREM model estimation, but instead evaluate the EBEs (in Model 2) assuming the same
 variances and covariances as in covariate data. These estimates should not differ unless covariates
-have missing data (which might warrant this option to be set).
+have missing data (which might warrant this option to be set). Setting this means that Model 2 is
+estimated which in some cases can be time-consuming.
 EOF
 
 $help_text{-cholesky} = <<'EOF';
