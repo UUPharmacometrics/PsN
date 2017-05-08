@@ -33,7 +33,7 @@ use rplots;
 use ext::Carp;
 # More PsN dependencies included with require further down
 
-my $minimum = 100; 
+my $minimum = 100;
 
 my %categorytext=();
 $categorytext{'SEX'}={1=>'male',2=>'female'}; #hamren
@@ -153,7 +153,7 @@ if( defined $options{'rawres_input'})  {
 															  only_first_match => 1,
 															  model => $model);
 	if (defined $center_params_arr and scalar(@{$center_params_arr} == 1)){
-		$model -> update_inits(from_hash => $center_params_arr->[0]);		
+		$model -> update_inits(from_hash => $center_params_arr->[0]);
 	}else{
 		croak("error reading center estimates from sir raw results file");
 	}
@@ -186,7 +186,7 @@ if( defined $options{'rawres_input'})  {
 	my $message = "Sampling from the truncated multivariate normal distribution";
 	print $message."\n";
 	my $mu_values= $parameter_hash->{'values'};
-	
+
 	my $mat = new Math::MatrixReal(1,1);
 	my $muvector = $mat->new_from_rows( [$mu_values] );
 	my ($vectorsamples,$boxcox_samples) = tool::sir::sample_multivariate_normal(
@@ -207,7 +207,7 @@ if( defined $options{'rawres_input'})  {
 		mu => $muvector,
 		lambda => [],
 		delta => []);
-		
+
 		$sampled_params_arr = tool::sir::create_sampled_params_arr(samples_array => $vectorsamples,
 														labels_hash => $parameter_hash,
 														user_labels => 0);
@@ -229,7 +229,7 @@ my @parnames = @{$parn};
 my @cov_means = @{$means};
 my $npar = scalar(@parnames);
 
-my ($cov_5th,$cov_95th,$id_covariate_vectors,$categorical,$categoryinfo) = 
+my ($cov_5th,$cov_95th,$id_covariate_vectors,$categorical,$categoryinfo) =
 	tool::frem::read_covdata(covnames => \@covnames,
 							 filename => $options{'frem_dataset'});
 
@@ -237,7 +237,7 @@ my ($cov_5th,$cov_95th,$id_covariate_vectors,$categorical,$categoryinfo) =
 for (my $i=0; $i<scalar(@covnames); $i++){
 	my $cn = $covnames[$i];
 	if ($categorical->[$i]){
-		push(@cov_reference,$categoryinfo->{$cn}->{'reference'}); 
+		push(@cov_reference,$categoryinfo->{$cn}->{'reference'});
 		push(@cov_units,'');
 	}else{
 		push(@cov_reference,$cov_means[$i]);
@@ -268,7 +268,7 @@ if (defined $options{'rawres_input'}){
 		}
 		if (scalar(@in_filter)<1){
 			die "Error: Option in_filter used, but list of conditions could not be parsed.\n";
-		}	
+		}
 	}
 
 	($sampled_params_arr,$href) = model::get_rawres_params(filename => $options{'rawres_input'},
@@ -380,7 +380,7 @@ for (my $i=0; $i< scalar(@covnames); $i++){
 close FILE2;
 
 
-	
+
 my @rescale = (1) x $npar;
 push(@rescale,@cov_rescale);
 unless (scalar(@rescale)==$size){
@@ -432,17 +432,17 @@ print VARFILE "$varheader\n";
 for (my $k=0;$k<=scalar(@{$sampled_params_arr}); $k++){
 	if ($k==0){
 	#center
-#		$model -> update_inits(from_hash => $center_params_arr->[0]);		
+#		$model -> update_inits(from_hash => $center_params_arr->[0]);
 	}else{
 		$model -> update_inits(from_hash => $sampled_params_arr->[$k-1],
 							   match_labels => $match_labels);
 	}
 	my $varcov = $model->problems->[0]->omegas->[$omegaindex]->get_matrix;
 	my $error;
-	#my $sdcorr=[]; 
+	#my $sdcorr=[];
 	#my $error =linear_algebra::covar2sdcorr($varcov,$sdcorr);
-	#croak("numerr index $k ") unless ($error == 0); 
-	
+	#croak("numerr index $k ") unless ($error == 0);
+
 	my $ratiovec = "$k";
 	my $variancevec = "$k";
 	for (my $i=0;$i<$npar; $i++){
@@ -538,14 +538,14 @@ for (my $k=0;$k<=scalar(@{$sampled_params_arr}); $k++){
 #		}
 #	}
 
-	
+
 
 #my ($cov_5th,$cov_95th)
-	
+
 	print RATIOFILE "$ratiovec\n";
 	print VARFILE "$variancevec\n";
 #	push(@sdcorr_array,$numvec);
-#	last; 
+#	last;
 }
 close( RATIOFILE );
 close( VARFILE );
@@ -630,7 +630,7 @@ for (my $i=0;$i<$npar; $i++){
 		$line .= ','.sqrt($quantref->[1]);
 
 		if ($type eq 'none'){
-			$line .= ',' x (1+scalar(@covnames)); 
+			$line .= ',' x (1+scalar(@covnames));
 		}elsif($type eq 'all'){
 			#				push(@{$coeff_arrays{$labels[$i]}->{'all'}},join(',',@{$coeff->[$i]})); # a string
 			$line .= ','.$coeff_arrays{$par}->{'all'}->[0].','.$coeff_arrays{$par}->{'all'}->[1];
@@ -640,7 +640,7 @@ for (my $i=0;$i<$npar; $i++){
 			$line .= ','x (scalar(@covnames)-$k) ;
 			$line .= ','.$coeff_arrays{$par}->{$type}->[1];
 		}
-			
+
 		print {$parfh} "$line\n";
 	}
 }
@@ -675,7 +675,7 @@ my @templatecode = (
 	);
 
 
-my $rplot = rplots->new(toolname => 'frem', 
+my $rplot = rplots->new(toolname => 'frem',
 						directory => $main_directory,
 						level => 1,
 						raw_results_file => 'dummy',
