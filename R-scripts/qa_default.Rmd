@@ -21,6 +21,8 @@ source(paste0(rscripts.directory, "/cdd/create.data.full.R"))
 source(paste0(rscripts.directory, "/simeval/ofv.i_ofv_res.R"))
 source(paste0(rscripts.directory,"/frem/ID_ratio_function.R"))
 source(paste0(rscripts.directory,"/frem/parameter_ratio_function.R"))
+source(paste0(rscripts.directory,"/simeval/ofv.i_ofv_res.R"))
+source(paste0(rscripts.directory,"/simeval/boxplot_i_ofv_res.R"))
 #source qa functions
 rscript <- find_r_files_in_subdir(toolname,rscripts.directory)
 for (i in 1:length(rscript)) {
@@ -141,7 +143,7 @@ print(overview_table)
 
 #Structural
 
-```{r draw_structural_details_tables,echo=F,results='asis'}
+```{r draw_structural_details_tables,echo=F,results='asis',warning=F}
 for(i in 1:length(resmod_suffix)) {
   cat(resmod_suffix[i])
   first_table <- keep_symbols(resmod_structural_details[[i]]$first_table,type)
@@ -199,14 +201,14 @@ print(covariates_extra_table)
 ```
 
 ```{r draw_frem_plots,echo=F,message=F,warning=F,results='asis',fig.width=11,fig.height=15,fig.keep="high",fig.align="center"}
-if(file.exists(paste0(working.directory,"/postfrem1/frem_ratio.csv")) && 
-   file.exists(paste0(working.directory,"/postfrem1/frem_id_ratios.csv")) && 
-   file.exists(paste0(working.directory,"/postfrem1/covdata.csv")) &&
-   file.exists(paste0(working.directory,"/postfrem1/pardata.csv"))) {
-  inTable_frem <- read.csv(file.path(working.directory,"postfrem1","frem_ratio.csv"),header = T, as.is = T)
-  frem_id <- read.csv(file.path(working.directory,"postfrem1","frem_id_ratios.csv"), header = T, as.is = T)
-  covdata <- read.csv(file.path(working.directory,"postfrem1","covdata.csv"),header = T, as.is = T)
-  pardata <- read.csv(file.path(working.directory,"postfrem1","pardata.csv"),header = T, as.is = T)
+if(file.exists(paste0(working.directory,"/postfrem_run/frem_ratio.csv")) && 
+   file.exists(paste0(working.directory,"/postfrem_run/frem_id_ratios.csv")) && 
+   file.exists(paste0(working.directory,"/postfrem_run/covdata.csv")) &&
+   file.exists(paste0(working.directory,"/postfrem_run/pardata.csv"))) {
+  inTable_frem <- read.csv(file.path(working.directory,"postfrem_run","frem_ratio.csv"),header = T, as.is = T)
+  frem_id <- read.csv(file.path(working.directory,"postfrem_run","frem_id_ratios.csv"), header = T, as.is = T)
+  covdata <- read.csv(file.path(working.directory,"postfrem_run","covdata.csv"),header = T, as.is = T)
+  pardata <- read.csv(file.path(working.directory,"postfrem_run","pardata.csv"),header = T, as.is = T)
   if(ID_ratio(frem_id,covdata,pardata)$files_exist) {
 	  indiv_for_param_plots <- ID_ratio(frem_id,covdata,pardata)$plots
 	  grid.draw(marrangeGrob(indiv_for_param_plots,nrow=2,ncol=1,top=''))
@@ -254,6 +256,15 @@ if(ncol(outliers_table)==1 && nrow(outliers_table)==1) value <- F
 outliers_table <- keep_symbols(outliers_table,type)
 outliers_table <- ztable_sub(outliers_table,type=type,colnames.bold = value,include.colnames = value,include.rownames = F,longtable = T,digits = 1,align="lr")
 print(outliers_table)
+```
+
+```{r plot_outliers,echo=F,results='asis'}
+if(file.exists(file.path(working.directory,"simeval_run/raw_all_iofv.csv"))) {
+  list_i_ofv_res <- i_ofv_res(file.path(working.directory,"simeval_run/raw_all_iofv.csv"))# calculation
+  n.subjects <- list_i_ofv_res$n.subjects
+  # Make a boxplot
+  boxplot_i_ofv_res(list_i_ofv_res,n.subjects)
+}
 ```
 
 ```{r plot_iofv_vs_iofv,echo=F,results='asis',fig.width=9,fig.height=6.5,fig.keep="high",fig.align="center"}
