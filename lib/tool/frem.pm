@@ -2539,14 +2539,28 @@ sub prepare_model2
 	cleanup_outdated_model(modelname => $self -> directory().'intermediate_models/'.$name_model,
 						   need_update => $update_existing_model_files);
 
+    # do estimation record changes even if this is a restart, to save records pre-set_maxeval_zero (for model 3 generation)
+    $frem_model = $model->copy(filename    => $self -> directory().'intermediate_models/'.$name_model,
+                               output_same_directory => 1,
+                               write_copy => 0,
+                               copy_datafile   => 0,
+                               copy_output => 0);
+    if ($frem_model->problems->[0]->estimations->[-1]->is_classical){
+            if ((($PsN::nm_major_version == 7) and ($PsN::nm_minor_version > 2)) or ($PsN::nm_major_version > 7)){
+                    $frem_model->problems->[0]->estimations->[-1]->remove_option(name => 'NONINFETA', fuzzy_match => 1);
+                    $frem_model->problems->[0]->estimations->[-1]->_add_option(option_string => 'NONINFETA=1');
+            }
+    }
+    if ($self->mceta > 0){
+            #input checking that mceta ok NM version and est method
+            $frem_model->problems->[0]->estimations->[-1]->remove_option(name => 'MCETA', fuzzy_match => 1);
+            $frem_model->problems->[0]->estimations->[-1]->_add_option(option_string => 'MCETA='.$self->mceta);
+    }
+    my $est_records = $frem_model->problems->[0]->estimations;
+
 	unless (-e $self -> directory().'intermediate_models/'.$name_model){
 		# input model  inits have already been updated
 		#omegas have been reordered
-		$frem_model = $model ->  copy( filename    => $self -> directory().'intermediate_models/'.$name_model,
-									   output_same_directory => 1,
-									   write_copy => 0,
-									   copy_datafile   => 0,
-									   copy_output => 0);
 
 		#DATA changes
 		#we want to clear all old options from DATA
@@ -2671,49 +2685,39 @@ sub prepare_model2
 						 'There may be NMtran errors when running the model');
 		}
 
-		if ($frem_model->problems->[0]->estimations->[-1]->is_classical){
-			if ((($PsN::nm_major_version == 7) and ($PsN::nm_minor_version > 2)) or ($PsN::nm_major_version > 7)){
-				$frem_model->problems->[0]->estimations->[-1]->remove_option(name => 'NONINFETA', fuzzy_match => 1);
-				$frem_model->problems->[0]->estimations->[-1]->_add_option(option_string => 'NONINFETA=1');
-			}
-		}
-		if ($self->mceta > 0){
-			#input checking that mceta ok NM version and est method
-			$frem_model->problems->[0]->estimations->[-1]->remove_option(name => 'MCETA', fuzzy_match => 1);
-			$frem_model->problems->[0]->estimations->[-1]->_add_option(option_string => 'MCETA='.$self->mceta);
-		}
-
-                unless ($self->estimate_covariates) {
-                    $frem_model->set_maxeval_zero(problem_number => 0, print_warning => 1);
-                }
+        unless ($self->estimate_covariates) {
+            $frem_model->set_maxeval_zero(print_warning => 1,
+                                          last_est_complete => $self->last_est_complete,
+                                          niter_eonly => $self->niter_eonly,
+                                          need_ofv => 0);
+        }
 
 		$frem_model->_write();
 
 	}
 
-	return ($ntheta,$epsnum);
-
+	return ($est_records,$ntheta,$epsnum);
 }
 
 sub prepare_model3
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-							  model => { isa => 'model', optional => 0 },
-							  start_omega_record => { isa => 'Int', optional => 0 },
-							  parcov_blocks => { isa => 'ArrayRef', optional => 0},
-							  update_existing_model_files => { isa => 'Bool', optional => 0 },
-	);
+                                  model => { isa => 'model', optional => 0 },
+                                  start_omega_record => { isa => 'Int', optional => 0 },
+                                  parcov_blocks => { isa => 'ArrayRef', optional => 0 },
+                                  update_existing_model_files => { isa => 'Bool', optional => 0 },
+                                  est_records => { isa => 'ArrayRef', optional => 0 });
 	my $model = $parm{'model'};
 	my $start_omega_record = $parm{'start_omega_record'};
 	my $parcov_blocks = $parm{'parcov_blocks'};
 	my $update_existing_model_files = $parm{'update_existing_model_files'};
+	my $est_records = $parm{'est_records'};
 
 	my $modnum=3;
 
 	my $name_model = $name_model_3;
 	my $frem_model;
-	my $est_records = $model->problems->[0]->estimations;
 	my $covrecordref=[];
 	if (defined $model->problems->[0]->covariances and scalar(@{$model->problems->[0]->covariances})>0){
 		$covrecordref = $model->problems->[0]->covariances->[0] -> _format_record() ;
@@ -3384,14 +3388,13 @@ sub modelfit_setup
 														 with_same => 1);
 	$covariate_etanumbers = [(($maxeta+1) .. ($maxeta+scalar(@{$self->covariates})))] ;
 
-	($ntheta,$epsnum) = $self->prepare_model2(model => $frem_model1,
-											  fremdataname => $frem_datasetname,
-											  skip_etas => $self->skip_etas,
-											  start_omega_record => $self->start_omega_record,
-											  invariant_mean => $self->invariant_mean,
-											  invariant_covmatrix => $self->invariant_covmatrix,
-											  update_existing_model_files => $update_existing_model_files
-		);
+	($est_records,$ntheta,$epsnum) = $self->prepare_model2(model => $frem_model1,
+                                                           fremdataname => $frem_datasetname,
+                                                           skip_etas => $self->skip_etas,
+                                                           start_omega_record => $self->start_omega_record,
+                                                           invariant_mean => $self->invariant_mean,
+                                                           invariant_covmatrix => $self->invariant_covmatrix,
+                                                           update_existing_model_files => $update_existing_model_files);
 
 	if ($self->fork_runs){
 	    $self->submit_child;
@@ -3442,10 +3445,10 @@ sub modelfit_setup
 	}
 
 	($est_records,$cov_records) = $self->prepare_model3(model => $frem_model2,
-														start_omega_record => $self->start_omega_record,
-														parcov_blocks => $mod3_parcov_block,
-														update_existing_model_files => $update_existing_model_files
-		);
+                                                        start_omega_record => $self->start_omega_record,
+                                                        parcov_blocks => $mod3_parcov_block,
+                                                        update_existing_model_files => $update_existing_model_files,
+                                                        est_records => $est_records);
 
 
 	if ($self->fork_runs){
