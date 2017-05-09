@@ -1,0 +1,1 @@
+../../../../bin/sir final_models/model_4.mod -covmat_input=proposal_density.cov -dir=sir
