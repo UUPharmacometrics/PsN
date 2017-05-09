@@ -13,6 +13,7 @@ use tool::linearize;
 use tool::frem;
 use tool::cdd;
 use tool::simeval;
+use PsN;
 
 extends 'tool';
 
@@ -43,6 +44,10 @@ sub modelfit_setup
     my $model_copy = $self->model->copy(filename => $self->model->filename, directory => $self->model->directory, output_same_directory => 1);
     $model_copy->_write(filename => $self->directory . $self->model->filename);
     $model_copy->phi_file($self->model->get_phi_file());
+	
+	my $vers = $PsN::version;
+	my $dev =$PsN::dev;
+	
     print "*** Running linearize ***\n";
     my $linearized_model_name = $self->model->filename;
     $linearized_model_name =~ s/(\.[^.]+)$/_linbase.mod/;
@@ -127,7 +132,11 @@ sub modelfit_setup
         $self->_to_qa_dir();
         if (-d "frem_run") {
             eval {
-                system("postfrem -frem_directory=frem_run -directory=postfrem_run");
+				if($dev) {
+					system("postfrem -frem_directory=frem_run -directory=postfrem_run");
+				} else {
+					system("postfrem-".$vers." -frem_directory=frem_run -directory=postfrem_run");
+				}
             };
         }
         $self->_to_qa_dir();
@@ -148,7 +157,11 @@ sub modelfit_setup
                 }
             }
             eval {
-                system("scm config.scm $scm_options");       # FIXME: system for now
+				if($dev) {
+					system("scm config.scm $scm_options");       # FIXME: system for now
+				} else {
+					system("scm-".$vers." config.scm $scm_options");       # FIXME: system for now
+				}
             };
             $self->_to_qa_dir();
         }
