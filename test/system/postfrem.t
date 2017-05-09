@@ -78,11 +78,15 @@ for my $i (0..$#commands) {
 	my  $rc = system($command);
 	$rc = $rc >> 8;
 
-	ok ($rc == 0, "$command");
+	my $postfrem_passed = ok ($rc == 0, "$command");
 
-	foreach my $file (keys %{$hashes{$test_dir}}) {
-		my $file_to_hash = "$test_dir/$file";
-		ok ($hashes{$test_dir}->{$file} eq digest_file_hex($file_to_hash, "SHA-1"), "hash eq test : ".$file_to_hash);
+	# execute deterministic file hashing tests if postfrem succeeded
+	subtest "$test_dir hash tests" => sub {
+		plan 'skip_all' unless $postfrem_passed;
+		foreach my $file (keys %{$hashes{$test_dir}}) {
+			my $file_to_hash = "$test_dir/$file";
+			ok ($hashes{$test_dir}->{$file} eq digest_file_hex($file_to_hash, "SHA-1"), "hash eq test : ".$file_to_hash);
+		}
 	}
 }
 
