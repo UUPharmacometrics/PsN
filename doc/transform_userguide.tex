@@ -1,5 +1,5 @@
 \input{inputs/format_header.tex}
-\guidetitle{TRANSFORM user guide}{2017-04-23}
+\guidetitle{TRANSFORM user guide}{2017-05-09}
 
 \begin{document}
 
@@ -43,6 +43,8 @@ The output of transform will be an updated model file. If the -out option was sp
 \section{Transformations}
 \subsection{boxcox}
 The boxcox transformation will boxcox transform all etas and add thetas for the lambdas. The -etas option can be used to specify a list of etas that should be transformed. Default is to transform all etas in the model.
+\subsection{full\_block}
+Transform all omegas up to the first FIX or SAME block into one big full block record.
 \subsection{remove\_iiv}
 Remove all IIV omegas, replace the corresponding etas in the code with 0 and renumber the remaining etas. If the -fix option is set instead fix all IIV etas to zero.
 \subsection{remove\_iov}

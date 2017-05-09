@@ -260,7 +260,7 @@ print(outliers_table)
 
 ```{r plot_outliers,echo=F,results='asis',warning=F,fig.width=11,fig.height=7}
 if(file.exists(file.path(working.directory,"simeval_run/raw_all_iofv.csv"))) {
-  list_i_ofv_res <- i_ofv_res(file.path(working.directory,"simeval_run/raw_all_iofv.csv"))# calculation
+  list_i_ofv_res <- i_ofv_res(file.path(working.directory,"simeval_run/raw_all_iofv.csv"),show.warning=F)# calculation
   n.subjects <- list_i_ofv_res$n.subjects
   # Make a boxplot
   boxplot_i_ofv_res(list_i_ofv_res,n.subjects)

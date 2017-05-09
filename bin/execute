@@ -39,7 +39,6 @@ my %optional_options = ( "predict_data:s" => undef,
 			 "copy_data!"=>undef,
              "boxcox!" => undef,
              "etas!" => undef,
-             "full_block!" => undef,
 			 );
 
 my $res = GetOptions( \%options,
@@ -204,12 +203,6 @@ $help_text{-etas} = <<'EOF';
     for the etas. The phi-file will be used in $ETAS.
 EOF
 
-$help_text{-full_block} = <<'EOF';
-    -full_block
-    
-    Make the omega matrix into a full block before running the model.
-EOF
-
 $help_text{Post_help_message} = <<'EOF';
 EOF
 
@@ -284,9 +277,6 @@ foreach my $model_name (@ARGV) {
 
     if ($options{'boxcox'}) {
         model_transformations::boxcox_etas(model => $model);
-    }
-    if ($options{'full_block'}) {
-        $model->full_omega_block();
     }
 
     if ($options{'etas'}) {

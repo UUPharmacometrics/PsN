@@ -225,7 +225,6 @@ New features implemented by William S. Denney of Human Predictions:
 
    ___linearize___
 - bug fix option time-varying: handle PRED models without MDV in $INPUT
-- New option -full_block to also run the linearized model with a full omega block.
 - If the phi-file of the original model is available linearize will use that in a
   $ETAS record.
 - New option -keep_covariance
