@@ -5486,65 +5486,6 @@ sub get_phi_file
     return $name;
 }
 
-sub full_omega_block
-{
-    # Replace all omegas into one big full block
-    # FIXed and SAME omegas are assumed to be at the end and will be kept
-    # Return 1 if model is already full block else 0
-    my $self = shift;
-
-    my $omegas = $self->problems->[0]->omegas;
-
-    my $numetas = 0;
-    my $keep_rest = 0;
-    my @keep;
-    for (my $i = 0; $i < scalar(@$omegas); $i++) {
-        my $last = 0;
-        if ($i == scalar(@$omegas) - 1) {
-            $last = 1;
-        }
-        if (not $last and $omegas->[$i + 1]->same) {    # The next omega record is SAME
-            $keep_rest = 1;
-        }
-        my $anyfix = 0;
-        for my $option (@{$omegas->[$i]->options}) {
-            if ($option->fix) {
-                $anyfix = 1;
-                last;
-            }
-        }
-        if ($anyfix or $omegas->[$i]->fix) {        # Is record FIX or any option FIX
-            $keep_rest = 1;
-        }
-
-        if ($keep_rest) {
-            push @keep, $omegas->[$i];
-        } else {
-            $numetas += $omegas->[$i]->size;
-        }
-    }
-
-    if ($numetas == 0 or ($omegas->[0]->type eq 'BLOCK' and $omegas->[0]->size == $numetas)) {  # No ETAS left or only one BLOCK
-        return 1;
-    }
-
-    my $omega_matrix = $self->problems->[0]->get_filled_omega_matrix(start_eta => 1, end_eta => $numetas);
-    my $size = @{$omega_matrix};
-    my @record_arr = ( "\$OMEGA BLOCK($size)" );
-    for (my $i = 0; $i < $size; $i++) {
-        my $row = "";
-        for (my $j = 0; $j <= $i; $j++) {
-            $row .= $omega_matrix->[$i]->[$j] . ' ';
-        }
-        push @record_arr, "$row\n";
-    }
-
-    my $new_omega_block = model::problem::omega->new(record_arr => \@record_arr);
-    $self->problems->[0]->omegas([ $new_omega_block, @keep ]);
-
-    return 0;
-}
-
 sub unfix_omega_0_fix
 {
     # Unfix all omegas that are set to 0 FIX

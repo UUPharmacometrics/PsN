@@ -65,7 +65,7 @@ sub modelfit_setup
     eval {
         my @models;
         my $full_block_model = $linearized_model->copy(filename => "fullblock.mod");
-        my $was_full_block = $full_block_model->full_omega_block();
+        my $was_full_block = model_transformations::full_omega_block(model => $full_block_model);
         if ($was_full_block) {
             unlink("fullblock.mod");        # Why was this created in the first place?
         } else {

@@ -9,6 +9,91 @@ use PsN;
 use MooseX::Params::Validate;
 
 
+sub full_omega_block
+{
+    # Replace all omegas into one big full block
+    # FIXed and SAME omegas are assumed to be at the end and will be kept
+    # Return 1 if model is already full block else 0
+	my %parm = validated_hash(\@_,
+        model => { isa => 'model' },
+    );
+    my $model = $parm{'model'};
+
+    my $omegas = $model->problems->[0]->omegas;
+
+    my $numetas = 0;
+    my $keep_rest = 0;
+    my @keep;
+    for (my $i = 0; $i < scalar(@$omegas); $i++) {
+        my $last = 0;
+        if ($i == scalar(@$omegas) - 1) {
+            $last = 1;
+        }
+        if (not $last and $omegas->[$i + 1]->same) {    # The next omega record is SAME
+            $keep_rest = 1;
+        }
+        my $anyfix = 0;
+        for my $option (@{$omegas->[$i]->options}) {
+            if ($option->fix) {
+                $anyfix = 1;
+                last;
+            }
+        }
+        if ($anyfix or $omegas->[$i]->fix) {        # Is record FIX or any option FIX
+            $keep_rest = 1;
+        }
+
+        if ($keep_rest) {
+            push @keep, $omegas->[$i];
+        } else {
+            if ($omegas->[$i]->is_block()) {
+                $numetas += $omegas->[$i]->size;
+            } else {
+                $numetas += scalar(@{$omegas->[$i]->options});
+            }
+        }
+    }
+
+    if ($numetas == 0 or ($omegas->[0]->is_block() and $omegas->[0]->size == $numetas)) {  # No ETAS left or only one BLOCK
+        return 1;
+    }
+
+    my $new_omega_block = omega_block(model => $model, start_eta => 1, end_eta => $numetas);
+
+    $model->problems->[0]->omegas([ $new_omega_block, @keep ]);
+
+    return 0;
+}
+
+sub omega_block
+{
+    # Transform a number of omegas into block
+    # Return the new block without side effects
+	my %parm = validated_hash(\@_,
+        model => { isa => 'model' },
+        start_eta => { isa => 'Int' },
+        end_eta => { isa => 'Int' },
+    );
+    my $model = $parm{'model'};
+    my $start_eta = $parm{'start_eta'};
+    my $end_eta = $parm{'end_eta'};
+
+    my $omega_matrix = $model->problems->[0]->get_filled_omega_matrix(start_eta => $start_eta, end_eta => $end_eta);
+    my $size = @{$omega_matrix};
+    my @record_arr = ( "\$OMEGA BLOCK($size)" );
+    for (my $i = 0; $i < $size; $i++) {
+        my $row = "";
+        for (my $j = 0; $j <= $i; $j++) {
+            $row .= $omega_matrix->[$i]->[$j] . ' ';
+        }
+        push @record_arr, "$row\n";
+    }
+
+    my $new_omega_block = model::problem::omega->new(record_arr => \@record_arr);
+
+    return $new_omega_block;
+}
+
 sub boxcox_etas
 {
     # Boxcox transform all or some ETAs of model

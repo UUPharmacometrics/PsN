@@ -72,5 +72,90 @@ is ($model->problems->[0]->omegas->[0]->fix, 0, "_fix_omegas 1 other");
 is ($model->problems->[0]->omegas->[1]->fix, 1, "_fix_omegas 1 fixed");
 
 
+# omega_block
+my $omega_ob = model::problem::omega->new(record_arr => ['$OMEGA DIAGONAL(2) 0.1 0.2']);
+$model->problems->[0]->omegas([ $omega_ob ]);
+my $omega_block = model_transformations::omega_block(model => $model, start_eta => 1, end_eta => 2);
+is ($omega_block->size, 2, "omega_block size");
+is ($omega_block->type, "BLOCK", "omega_block size");
+is (scalar(@{$omega_block->options}), 3, "omega_block options size");
+
+my $omega_ob2 = model::problem::omega->new(record_arr => ['$OMEGA 0.1']);
+my $omega_ob3 = model::problem::omega->new(record_arr => ['$OMEGA 0.2'], n_previous_rows => 1);
+$model->problems->[0]->omegas([ $omega_ob2, $omega_ob3 ]);
+$omega_block = model_transformations::omega_block(model => $model, start_eta => 1, end_eta => 2);
+is ($omega_block->size, 2, "omega_block size");
+is ($omega_block->type, "BLOCK", "omega_block size");
+is (scalar(@{$omega_block->options}), 3, "omega_block options size");
+
+# full_omega_block
+my $was_full = model_transformations::full_omega_block(model => $model);
+ok (!$was_full, "full_omega_block was_full 1");
+$omega_block = $model->problems->[0]->omegas->[0];
+is (scalar(@{$model->problems->[0]->omegas}), 1, "full_omega_block nomega blocks");
+is ($omega_block->size, 2, "full_omega_block size");
+is ($omega_block->type, "BLOCK", "full_omega_block size");
+is (scalar(@{$omega_block->options}), 3, "full_omega_block options size");
+
+$omega_ob = model::problem::omega->new(record_arr => ['$OMEGA DIAGONAL(2) 0.1 0.2']);
+$model->problems->[0]->omegas([ $omega_ob ]);
+$was_full = model_transformations::full_omega_block(model => $model);
+ok (!$was_full, "full_omega_block was_full 2");
+$omega_block = $model->problems->[0]->omegas->[0];
+is (scalar(@{$model->problems->[0]->omegas}), 1, "full_omega_block nomega blocks 2");
+is ($omega_block->size, 2, "full_omega_block size 2");
+is ($omega_block->type, "BLOCK", "full_omega_block size 2");
+is (scalar(@{$omega_block->options}), 3, "full_omega_block options size 2");
+
+$omega_ob = model::problem::omega->new(record_arr => ['$OMEGA BLOCK(2) 0.1 0.02 0.1']);
+$omega_ob2 = model::problem::omega->new(record_arr => ['$OMEGA DIAGONAL(1) 0.2'], n_previous_rows => 2);
+$model->problems->[0]->omegas([ $omega_ob, $omega_ob2 ]);
+$was_full = model_transformations::full_omega_block(model => $model);
+ok (!$was_full, "full_omega_block was_full 3");
+$omega_block = $model->problems->[0]->omegas->[0];
+is (scalar(@{$model->problems->[0]->omegas}), 1, "full_omega_block nomega blocks 3");
+is ($omega_block->size, 3, "full_omega_block size 3");
+is ($omega_block->type, "BLOCK", "full_omega_block size 3");
+is (scalar(@{$omega_block->options}), 6, "full_omega_block options size 3");
+
+$omega_ob = model::problem::omega->new(record_arr => ['$OMEGA 0.1 FIX']);
+$omega_ob2 = model::problem::omega->new(record_arr => ['$OMEGA DIAGONAL(1) 0.2'], n_previous_rows => 1);
+$model->problems->[0]->omegas([ $omega_ob, $omega_ob2 ]);
+$was_full = model_transformations::full_omega_block(model => $model);
+ok ($was_full, "full_omega_block was_full 4");
+$omega_block = $model->problems->[0]->omegas->[0];
+is (scalar(@{$model->problems->[0]->omegas}), 2, "full_omega_block nomega blocks 4");
+
+$omega_ob = model::problem::omega->new(record_arr => ['$OMEGA BLOCK(2) 0.1 0.01 0.1']);
+$omega_ob2 = model::problem::omega->new(record_arr => ['$OMEGA BLOCK(2) SAME'], n_previous_rows => 2);
+$model->problems->[0]->omegas([ $omega_ob, $omega_ob2 ]);
+$was_full = model_transformations::full_omega_block(model => $model);
+ok ($was_full, "full_omega_block was_full 5");
+$omega_block = $model->problems->[0]->omegas->[0];
+is (scalar(@{$model->problems->[0]->omegas}), 2, "full_omega_block nomega blocks 5");
+
+$omega_ob = model::problem::omega->new(record_arr => ['$OMEGA DIAGONAL(2) 0.1 0.01']);
+$omega_ob2 = model::problem::omega->new(record_arr => ['$OMEGA 0.1 FIX'], n_previous_rows => 2);
+$model->problems->[0]->omegas([ $omega_ob, $omega_ob2 ]);
+$was_full = model_transformations::full_omega_block(model => $model);
+ok (!$was_full, "full_omega_block was_full 6");
+$omega_block = $model->problems->[0]->omegas->[0];
+is (scalar(@{$model->problems->[0]->omegas}), 2, "full_omega_block nomega blocks 6");
+is ($omega_block->size, 2, "full_omega_block size 6");
+is ($omega_block->type, "BLOCK", "full_omega_block size 6");
+is (scalar(@{$omega_block->options}), 3, "full_omega_block options size 6");
+
+$omega_ob = model::problem::omega->new(record_arr => ['$OMEGA DIAGONAL(2) 0.1 0.01']);
+$omega_ob2 = model::problem::omega->new(record_arr => ['$OMEGA BLOCK(2) 0.1 0.1 0.1 '], n_previous_rows => 2);
+$omega_ob3 = model::problem::omega->new(record_arr => ['$OMEGA BLOCK(2) SAME'], n_previous_rows => 4);
+$model->problems->[0]->omegas([ $omega_ob, $omega_ob2, $omega_ob3 ]);
+$was_full = model_transformations::full_omega_block(model => $model);
+ok (!$was_full, "full_omega_block was_full 7");
+$omega_block = $model->problems->[0]->omegas->[0];
+is (scalar(@{$model->problems->[0]->omegas}), 3, "full_omega_block nomega blocks 7");
+is ($omega_block->size, 2, "full_omega_block size 7");
+is ($omega_block->type, "BLOCK", "full_omega_block size 7");
+is (scalar(@{$omega_block->options}), 3, "full_omega_block options size 7");
+
 
 done_testing();

@@ -397,34 +397,4 @@ my ($dir,$file)=OSspecific::absolute_path($model->directory.'/model','file');
 my ($dir2,$file2)=OSspecific::absolute_path($flipped->directory,'file'); 
 is($dir,$dir2,'flip_comments output model in subdir');
 
-# Test full_omega_block
-
-$model = model->new(filename => "$modeldir/pheno.mod");
-my $omega1 = model::problem::omega->new(record_arr => ['$OMEGA BLOCK(2)', '0.5 0.1 0.5']);
-my $omega2 = model::problem::omega->new(record_arr => ['$OMEGA BLOCK(2)', '0.25 0.1 0.25'], n_previous_rows => 2);
-my $omega3 = model::problem::omega->new(record_arr => ['$OMEGA BLOCK(2) SAME'], n_previous_rows => 4);
-my $omega4 = model::problem::omega->new(record_arr => ['$OMEGA BLOCK(2)', '0.5 0.1 0.5 FIX'], n_previous_rows => 2);
-
-$model->problems->[0]->omegas([$omega1]);
-my $res = $model->full_omega_block();
-is ($res, 1, "full_block test 1 res=1");
-is ($model->problems->[0]->omegas->[0], $omega1, "full_block test 1 no change");
-is (scalar(@{$model->problems->[0]->omegas}), 1, "full_block test 1 same size");
-
-$model->problems->[0]->omegas([$omega1, $omega2]);
-$res = $model->full_omega_block();
-is ($res, 0, "full_block test 2 res=0");
-is ($model->problems->[0]->omegas->[0]->size, 4, "full_block test 2 size");
-is (scalar(@{$model->problems->[0]->omegas}), 1, "full_block test 2 array size");
-
-$model->problems->[0]->omegas([$omega1, $omega2, $omega3]);
-$res = $model->full_omega_block();
-is ($res, 1, "full_block test 3 res=1");
-is ($model->problems->[0]->omegas->[0]->size, 2, "full_block test 3 size");
-is (scalar(@{$model->problems->[0]->omegas}), 3, "full_block test 3 same size");
-
-$model->problems->[0]->omegas([$omega1, $omega4]);
-$res = $model->full_omega_block();
-is ($res, 1, "full_block test 3 res=1");
-
 done_testing();

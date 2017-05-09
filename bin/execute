@@ -286,7 +286,7 @@ foreach my $model_name (@ARGV) {
         model_transformations::boxcox_etas(model => $model);
     }
     if ($options{'full_block'}) {
-        $model->full_omega_block();
+        model_transformations::full_omega_block(model => $model);
     }
 
     if ($options{'etas'}) {
