@@ -38,7 +38,7 @@ my $res = GetOptions( \%options,
     keys(%optional_options) );
 exit unless $res;
 
-my @valid_transformations = ( 'boxcox', 'remove_iiv', 'remove_iov' );
+my @valid_transformations = ( 'boxcox', 'full_block', 'remove_iiv', 'remove_iov' );
 my $valid_transformations_string = join("\n", @valid_transformations);
 
 my %help_text;
@@ -184,6 +184,8 @@ if ($transformation eq 'boxcox') {
     } else {
         model_transformations::boxcox_etas(model => $model);
     }
+} elsif ($transformation eq 'full_block') {
+    model_transformations::full_omega_block(model => $model);
 } elsif ($transformation eq 'remove_iiv') {
     if (defined $options{'fix'}) {
         model_transformations::remove_iiv(model => $model, fix => $options{'fix'});
