@@ -8,6 +8,60 @@ use model;
 use PsN;
 use MooseX::Params::Validate;
 
+sub add_tv
+{
+    # Add TV (typical value) variable for list of parameters
+	my %parm = validated_hash(\@_,
+        model => { isa => 'model' },
+        parameters => { isa => 'ArrayRef' },
+    );
+    my $model = $parm{'model'};
+    my $parameters = $parm{'parameters'};
+
+    my @code;
+	my $code_record;
+	if ($model->has_code(record => 'pk')) {
+		@code = @{$model->get_code(record => 'pk')};
+		$code_record = 'pk';
+	} elsif ($model->has_code(record => 'pred')) {
+		@code = @{$model->get_code(record => 'pred')};
+		$code_record = 'pred';
+	} else {
+		croak("Neither PK nor PRED defined in " . $model->filename . "\n");
+	}
+
+    my @add_params;     # Parameters that don't already have TVxx
+    for my $param (@$parameters) {
+        my $found = 0;
+        for my $line (@code) {
+            if ($line =~ /^\s*TV$param\s*=/) {
+                $found = 1;
+            }
+        }
+        if (not $found) {
+            push @add_params, $param;
+        }
+    }
+
+    my @newcode;
+    for my $line (@code) {
+        my $found = 0;
+        for my $param (@add_params) {
+            if ($line =~ /^(\s*)$param\s*=/) {
+                push @newcode, "$1TV$param = 1";
+                push @newcode, $line;
+                push @newcode, "$1$param = $param * TV$param";
+                $found = 1;
+                last;
+            }
+        } 
+        if (not $found) {
+            push @newcode, $line;
+        }
+    }
+
+    $model->set_code(record => $code_record, code => \@newcode);
+}
 
 sub full_omega_block
 {

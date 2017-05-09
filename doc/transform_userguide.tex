@@ -34,6 +34,10 @@ This option is valid for the boxcox transformation.
       Fix the omegas to zero
       This option is valid for the remove\_iiv and remove\_iov transformations.
     \nextopt
+    \optname{parameters}
+      Specify list of parameters.
+      This option is mandatory for the add\_tv transformation.
+    \nextopt
 \end{optionlist}
 
 \section{Output}
@@ -41,12 +45,24 @@ This option is valid for the boxcox transformation.
 The output of transform will be an updated model file. If the -out option was specified this name will be used otherwise if the file was using the run number nomenclature (runxx.mod or runxx.ctl) the next higher available run number will be used for the output model.
 
 \section{Transformations}
+
 \subsection{boxcox}
 The boxcox transformation will boxcox transform all etas and add thetas for the lambdas. The -etas option can be used to specify a list of etas that should be transformed. Default is to transform all etas in the model.
+
 \subsection{full\_block}
 Transform all omegas up to the first FIX or SAME block into one big full block record.
+
+\subsection{add\_tv}
+Add TV (typical value) to all parameters listed in the -parameters option. Will add nothing for parameters that already have TV defined. If TV is not already defined for a model the transformation will add:
+\begin{verbatim}
+    TVCL = 1
+    CL = ...
+    CL = CL * TVCL
+\end{verbatim}
+
 \subsection{remove\_iiv}
 Remove all IIV omegas, replace the corresponding etas in the code with 0 and renumber the remaining etas. If the -fix option is set instead fix all IIV etas to zero.
+
 \subsection{remove\_iov}
 Remove all IOV omegas, replace the corresponding etas in the code with 0 and renumber the remaining etas. If the -fix option is set instead fix all IOV etas to zero.
 \end{document}

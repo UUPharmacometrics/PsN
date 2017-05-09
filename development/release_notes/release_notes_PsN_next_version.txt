@@ -143,6 +143,6 @@ A new recommended but not required Perl library for runrecord: YAML::Tiny
 
    ___transform___
 
-- Add full_block transformation
+- Added full_block and add_tv transformations
 
    ___crossval___ 

@@ -30,6 +30,7 @@ my %optional_options = (
     'out:s' => undef,
     'etas:s' => undef,
     'fix!' => undef,
+    'parameters:s' => undef,
 );
 
 my $res = GetOptions( \%options,
@@ -38,7 +39,7 @@ my $res = GetOptions( \%options,
     keys(%optional_options) );
 exit unless $res;
 
-my @valid_transformations = ( 'boxcox', 'full_block', 'remove_iiv', 'remove_iov' );
+my @valid_transformations = ( 'boxcox', 'full_block', 'add_tv', 'remove_iiv', 'remove_iov' );
 my $valid_transformations_string = join("\n", @valid_transformations);
 
 my %help_text;
@@ -96,6 +97,13 @@ $help_text{-fix} = <<'EOF';
       This option is valid for the remove_iiv and remove_iov transformations.
 EOF
 
+$help_text{-parameters} = <<'EOF';
+      -parameters
+      
+      Specify list of parameters.
+      This option is mandatory for the add_tv transformation.
+EOF
+
 common_options::online_help( 'transform', \%options, \%help_text, \%required_options, \%optional_options);
 common_options::setup( \%options, 'transform' ); #calls set_globals etc, initiates random sequence
 
@@ -130,6 +138,18 @@ if (defined $options{'etas'}) {
 if (defined $options{'fix'}) {
     unless ($transformation eq 'remove_iiv' or $transformation eq 'remove_iov') {
         print "Option -fix cannot be used together with the $transformation transformation.\n";
+        exit;
+    }
+}
+
+if (defined $options{'parameters'}) {
+    unless ($transformation eq 'add_tv') {
+        print "Option -parameters cannot be used together with the $transformation transformation.\n";
+        exit;
+    }
+} else {
+    if ($transformation eq 'add_tv') {
+        print "Option -parameters need to be used together with the add_tv transformation.\n";
         exit;
     }
 }
@@ -186,6 +206,8 @@ if ($transformation eq 'boxcox') {
     }
 } elsif ($transformation eq 'full_block') {
     model_transformations::full_omega_block(model => $model);
+} elsif ($transformation eq 'add_tv') {
+    model_transformations::add_tv(model => $model, parameters => [ split ',', $options{'parameters'}]);
 } elsif ($transformation eq 'remove_iiv') {
     if (defined $options{'fix'}) {
         model_transformations::remove_iiv(model => $model, fix => $options{'fix'});
