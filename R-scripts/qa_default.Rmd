@@ -258,7 +258,7 @@ outliers_table <- ztable_sub(outliers_table,type=type,colnames.bold = value,incl
 print(outliers_table)
 ```
 
-```{r plot_outliers,echo=F,results='asis',fig.width=11,fig.height=7}
+```{r plot_outliers,echo=F,results='asis',warning=F,fig.width=11,fig.height=7}
 if(file.exists(file.path(working.directory,"simeval_run/raw_all_iofv.csv"))) {
   list_i_ofv_res <- i_ofv_res(file.path(working.directory,"simeval_run/raw_all_iofv.csv"))# calculation
   n.subjects <- list_i_ofv_res$n.subjects
@@ -267,7 +267,7 @@ if(file.exists(file.path(working.directory,"simeval_run/raw_all_iofv.csv"))) {
 }
 ```
 
-```{r plot_iofv_vs_iofv,echo=F,results='asis',fig.width=9,fig.height=6.5,fig.keep="high",fig.align="center"}
+```{r plot_iofv_vs_iofv,echo=F,results='asis',warning=F,fig.width=9,fig.height=6.5,fig.keep="high",fig.align="center"}
 if(rplots.level > 1) {
   phi1 <- file.path(working.directory,"linearize_run",paste0(sub('.mod.*','',model.filename),"_linbase.phi"))
   phi2 <- file.path(working.directory,"linearize_run/scm_dir1/derivatives.phi")

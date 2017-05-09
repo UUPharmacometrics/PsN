@@ -1,7 +1,7 @@
 get_full_omega_block <- function(directory,param_var_file_exists,dofv_block) {
   #get full omega block extra table
-  if(file.exists(paste0(directory,"modelfit_run/NM_run1/psn.ext"))) {
-    full_block_table <-read.table((paste0(directory,"modelfit_run/NM_run1/psn.ext")),header=TRUE,skip=1,stringsAsFactors = F) %>%
+  if(file.exists(paste0(directory,"/fullblock.ext"))) {
+    full_block_table <-read.table((paste0(directory,"/fullblock.ext")),header=TRUE,skip=1,stringsAsFactors = F) %>%
       filter(ITERATION==-1000000000)
     omega_values <- full_block_table[,grep("^OMEGA",colnames(full_block_table))]
     omega_values <- omega_values[,which(omega_values!=0)]
