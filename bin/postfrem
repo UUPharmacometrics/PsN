@@ -33,7 +33,7 @@ use rplots;
 use ext::Carp;
 # More PsN dependencies included with require further down
 
-my $minimum = 100; 
+my $minimum = 100;
 
 my %categorytext=();
 $categorytext{'SEX'}={1=>'male',2=>'female'}; #hamren
@@ -139,27 +139,30 @@ if( not defined $options{'frem_dataset'})  {
   die "must set -frem_dataset\n";
 }
 
+my $NA_string = ""; # for values missing when no uncertainty (point estimates only)
 
 my $model = model -> new ( eval( $eval_string ),
 			  filename                    => $options{'model'},
 			  ignore_missing_output_files => 1 );
 
+my $have_uncertainty;
 my $sampled_params_arr;
 my $match_labels;
-if( defined $options{'rawres_input'})  {
+if (defined $options{'rawres_input'}) {
+    # e.g. user specified a sir directory
 	my ($center_params_arr,$href2) = model::get_rawres_params(filename => $options{'rawres_input'},
 															  filter => [],
 															  offset => 0,
 															  only_first_match => 1,
 															  model => $model);
 	if (defined $center_params_arr and scalar(@{$center_params_arr} == 1)){
-		$model -> update_inits(from_hash => $center_params_arr->[0]);		
+		$model -> update_inits(from_hash => $center_params_arr->[0]);
 	}else{
 		croak("error reading center estimates from sir raw results file");
 	}
 	$match_labels=1;
-
-}else{
+    $have_uncertainty=1;
+} else {
 	$match_labels=0;
 	#i.e. did not set sir_directory
 	#check if have covstep of model 4
@@ -172,49 +175,57 @@ if( defined $options{'rawres_input'})  {
 						  ignore_missing_parameters => 0,
 						  update_fix => 0);
 
-	my $covmatrix = tool::sir::get_nonmem_covmatrix(output => $model->outputs->[0]);
+    my $covmatrix;
+    if ($model->outputs->[0]->get_single_value(attribute => 'covariance_step_successful')) {
+	    $covmatrix = tool::sir::get_nonmem_covmatrix(output => $model->outputs->[0]);
+    } else {
+        print "Covariance step was not succesful\n";
+    }
 	if (defined $covmatrix ){
 		my $err = tool::sir::check_matrix_posdef(matrix => $covmatrix);
 		if ($err == 1){
-			croak("\nERROR: covariance matrix is numerically not positive definite\n".
-				  "(as checked with Cholesky decomposition without pivoting). Cannot proceed.\n");
-		}
-	}else{
-		die "No covmatrix, cannot proceed\n";
+            print "Covariance matrix is numerically not positive definite\n".
+                  "(as checked with Cholesky decomposition without pivoting)\n";
+            $have_uncertainty=0;
+		} else {
+            # use valid covariance matrix for uncertainty
+            my $parameter_hash = output::get_nonmem_parameters(output => $model->outputs->[0]);
+            my $message = "Sampling from the truncated multivariate normal distribution";
+            print $message."\n";
+            my $mu_values= $parameter_hash->{'values'};
+
+            my $mat = new Math::MatrixReal(1,1);
+            my $muvector = $mat->new_from_rows( [$mu_values] );
+            my ($vectorsamples,$boxcox_samples) = tool::sir::sample_multivariate_normal(
+                check_cholesky_reparameterization => 0,
+                fix_theta_labels => [],
+                fix_theta_values => [],
+                samples=>1000,
+                labels => $parameter_hash->{'labels'},
+                covmatrix => $covmatrix,
+                inflation => [],
+                adjust_blocks => 0,
+                lower_bound => $parameter_hash->{'lower_bounds'},
+                upper_bound => $parameter_hash->{'upper_bounds'},
+                param => $parameter_hash->{'param'},
+                coords => $parameter_hash->{'coords'},
+                block_number => $parameter_hash->{'block_number'},
+                choleskyform => $parameter_hash->{'choleskyform'},
+                mu => $muvector,
+                lambda => [],
+                delta => []);
+
+            $sampled_params_arr = tool::sir::create_sampled_params_arr(samples_array => $vectorsamples,
+                                                                       labels_hash => $parameter_hash,
+                                                                       user_labels => 0);
+            $have_uncertainty=1;
+        }
+	} else {
+        # no sir directory & no covariance matrix: no uncertainty (point estimate mode)
+        $have_uncertainty=0;
 	}
-	my $parameter_hash = output::get_nonmem_parameters(output => $model->outputs->[0]);
-	my $message = "Sampling from the truncated multivariate normal distribution";
-	print $message."\n";
-	my $mu_values= $parameter_hash->{'values'};
-	
-	my $mat = new Math::MatrixReal(1,1);
-	my $muvector = $mat->new_from_rows( [$mu_values] );
-	my ($vectorsamples,$boxcox_samples) = tool::sir::sample_multivariate_normal(
-		check_cholesky_reparameterization => 0,
-		fix_theta_labels => [],
-		fix_theta_values => [],
-		samples=>1000,
-		labels => $parameter_hash->{'labels'},
-		covmatrix => $covmatrix,
-		inflation => [],
-		adjust_blocks => 0,
-		lower_bound => $parameter_hash->{'lower_bounds'},
-		upper_bound => $parameter_hash->{'upper_bounds'},
-		param => $parameter_hash->{'param'},
-		coords => $parameter_hash->{'coords'},
-		block_number => $parameter_hash->{'block_number'},
-		choleskyform => $parameter_hash->{'choleskyform'},
-		mu => $muvector,
-		lambda => [],
-		delta => []);
-		
-		$sampled_params_arr = tool::sir::create_sampled_params_arr(samples_array => $vectorsamples,
-														labels_hash => $parameter_hash,
-														user_labels => 0);
-
-
-
 }
+$have_uncertainty || print "No covmatrix and no sir dir, no uncertainty (only point estimates available)\n";
 
 
 my ($covn,$resc,$omegaindex,$parn,$size,$means) = tool::frem::get_post_processing_data(model => $model);
@@ -229,7 +240,7 @@ my @parnames = @{$parn};
 my @cov_means = @{$means};
 my $npar = scalar(@parnames);
 
-my ($cov_5th,$cov_95th,$id_covariate_vectors,$categorical,$categoryinfo) = 
+my ($cov_5th,$cov_95th,$id_covariate_vectors,$categorical,$categoryinfo) =
 	tool::frem::read_covdata(covnames => \@covnames,
 							 filename => $options{'frem_dataset'});
 
@@ -237,7 +248,7 @@ my ($cov_5th,$cov_95th,$id_covariate_vectors,$categorical,$categoryinfo) =
 for (my $i=0; $i<scalar(@covnames); $i++){
 	my $cn = $covnames[$i];
 	if ($categorical->[$i]){
-		push(@cov_reference,$categoryinfo->{$cn}->{'reference'}); 
+		push(@cov_reference,$categoryinfo->{$cn}->{'reference'});
 		push(@cov_units,'');
 	}else{
 		push(@cov_reference,$cov_means[$i]);
@@ -251,46 +262,48 @@ for (my $i=0; $i<scalar(@covnames); $i++){
 
 my @labels=(@parnames,@covnames);
 
-if (defined $options{'rawres_input'}){
-	my $href;
-	my $samples;
-	my $offset=1;
-	$offset= $options{'offset_rawres'} if (defined $options{'offset_rawres'});
-	my @in_filter=();
-	if ( defined $options{'in_filter'} ){
-		#split string, assume comma separated
-		foreach my $filt (split(/,/,$options{'in_filter'})){
-			if ($filt =~ /.\.(gt|lt|eq)\.\d+\.?\d*/){
-				push(@in_filter,$filt);
-			}else{
-				die "Input filter $filt does not fulfill the format rules.\n";
-			}
-		}
-		if (scalar(@in_filter)<1){
-			die "Error: Option in_filter used, but list of conditions could not be parsed.\n";
-		}	
-	}
+if ($have_uncertainty) {
+    if (defined $options{'rawres_input'}){
+        my $href;
+        my $samples;
+        my $offset=1;
+        $offset= $options{'offset_rawres'} if (defined $options{'offset_rawres'});
+        my @in_filter=();
+        if ( defined $options{'in_filter'} ){
+            #split string, assume comma separated
+            foreach my $filt (split(/,/,$options{'in_filter'})){
+                if ($filt =~ /.\.(gt|lt|eq)\.\d+\.?\d*/){
+                    push(@in_filter,$filt);
+                }else{
+                    die "Input filter $filt does not fulfill the format rules.\n";
+                }
+            }
+            if (scalar(@in_filter)<1){
+                die "Error: Option in_filter used, but list of conditions could not be parsed.\n";
+            }
+        }
 
-	($sampled_params_arr,$href) = model::get_rawres_params(filename => $options{'rawres_input'},
-														   filter => \@in_filter,
-														   offset => $offset,
-														   model => $model);
-}
+        ($sampled_params_arr,$href) = model::get_rawres_params(filename => $options{'rawres_input'},
+                                                               filter => \@in_filter,
+                                                               offset => $offset,
+                                                               model => $model);
+    }
 
-if (defined $sampled_params_arr) {
-	unless (scalar(@{$sampled_params_arr}) >= $minimum) {
-		if (defined $options{'in_filter'}) {
-		 croak("Too few sets (lines) of parameter values in\n".
-				 "rawres file after filtering. Have ".
-		scalar(@{$sampled_params_arr})." but need at least $minimum\n");
-		} else {
-			croak("Too few sets (lines) of parameter values in\n".
-			  "rawres file. Have ".scalar(@{$sampled_params_arr}).
-			  " but need at least $minimum plus offset\n");
-		}
-	}
-}else{
-   croak("get_rawres_params returned undef");
+    if (defined $sampled_params_arr) {
+        unless (scalar(@{$sampled_params_arr}) >= $minimum) {
+            if (defined $options{'in_filter'}) {
+             croak("Too few sets (lines) of parameter values in\n".
+                     "rawres file after filtering. Have ".
+            scalar(@{$sampled_params_arr})." but need at least $minimum\n");
+            } else {
+                croak("Too few sets (lines) of parameter values in\n".
+                  "rawres file. Have ".scalar(@{$sampled_params_arr}).
+                  " but need at least $minimum plus offset\n");
+            }
+        }
+    } else {
+       croak("get_rawres_params returned undef");
+    }
 }
 
 
@@ -380,7 +393,7 @@ for (my $i=0; $i< scalar(@covnames); $i++){
 close FILE2;
 
 
-	
+
 my @rescale = (1) x $npar;
 push(@rescale,@cov_rescale);
 unless (scalar(@rescale)==$size){
@@ -429,97 +442,99 @@ print RATIOFILE "$ratioheader\n";
 open( VARFILE, '>frem_condvar.csv' );
 print VARFILE "$varheader\n";
 
-for (my $k=0;$k<=scalar(@{$sampled_params_arr}); $k++){
-	if ($k==0){
-	#center
-#		$model -> update_inits(from_hash => $center_params_arr->[0]);		
-	}else{
-		$model -> update_inits(from_hash => $sampled_params_arr->[$k-1],
-							   match_labels => $match_labels);
-	}
-	my $varcov = $model->problems->[0]->omegas->[$omegaindex]->get_matrix;
-	my $error;
-	#my $sdcorr=[]; 
-	#my $error =linear_algebra::covar2sdcorr($varcov,$sdcorr);
-	#croak("numerr index $k ") unless ($error == 0); 
-	
-	my $ratiovec = "$k";
-	my $variancevec = "$k";
-	for (my $i=0;$i<$npar; $i++){
-		#		$varheader .= ',CONDVAR.par.'.$labels[$i].'.given.none';
-		$variancevec .= ','.$varcov->[$i]->[$i];
-		push(@{$variance_arrays{$labels[$i]}->{'none'}},$varcov->[$i]->[$i]);
-	}
-	my ($error,$cond_covar,$coeff);
-	for (my $j=$npar;$j<$size; $j++){ #foreach covariate
-		($error,$cond_covar,$coeff) = linear_algebra::conditional_covariance_coefficients(varcov => $varcov,
-																						  rescaling => \@rescale,
-																						  cov_index_first => $j,
-																						  cov_index_last => $j,
-																						  par_index_first => 0,
-																						  par_index_last => ($npar-1));
-		croak("cond covar coeff failed") if ($error != 0);
-		my $covindex  = $j-$npar;
-		for (my $i=0;$i<$npar; $i++){
-			if ($categorical->[$covindex]){
+# calculate from distribution of samples
+my $nsamples = $have_uncertainty ? scalar(@{$sampled_params_arr}) : 0;
+for (my $k=0;$k<=$nsamples; $k++){
+    if ($k==0){
+        # first "sample" is point estimates
+        # $model -> update_inits(from_hash => $center_params_arr->[0]); # center
+    } else {
+        $model -> update_inits(from_hash => $sampled_params_arr->[$k-1],
+                               match_labels => $match_labels);
+    }
+    my $varcov = $model->problems->[0]->omegas->[$omegaindex]->get_matrix;
+    my $error;
+    #my $sdcorr=[];
+    #my $error =linear_algebra::covar2sdcorr($varcov,$sdcorr);
+    #croak("numerr index $k ") unless ($error == 0);
+
+    my $ratiovec = "$k";
+    my $variancevec = "$k";
+    for (my $i=0;$i<$npar; $i++){
+        #		$varheader .= ',CONDVAR.par.'.$labels[$i].'.given.none';
+        $variancevec .= ','.$varcov->[$i]->[$i];
+        push(@{$variance_arrays{$labels[$i]}->{'none'}},$varcov->[$i]->[$i]);
+    }
+    my ($error,$cond_covar,$coeff);
+    for (my $j=$npar;$j<$size; $j++){ #foreach covariate
+        ($error,$cond_covar,$coeff) = linear_algebra::conditional_covariance_coefficients(varcov => $varcov,
+                                                                                          rescaling => \@rescale,
+                                                                                          cov_index_first => $j,
+                                                                                          cov_index_last => $j,
+                                                                                          par_index_first => 0,
+                                                                                          par_index_last => ($npar-1));
+        croak("cond covar coeff failed") if ($error != 0);
+        my $covindex  = $j-$npar;
+        for (my $i=0;$i<$npar; $i++){
+            if ($categorical->[$covindex]){
 #				$ratioheader .= ',RATIO.par.'.$labels[$i].'.given.other.'.$labels[$j];
 #				$ratiovec .= ',1';
-				$ratiovec .= ','.exp(($categoryinfo->{$labels[$j]}->{'diff'})*($coeff->[$i]->[0]));
-			}else{
-			#		$ratioheader .= ',RATIO.par.'.$labels[$i].'.given.cov5th.'.$labels[$j];
-			#		$ratioheader .= ',RATIO.par.'.$labels[$i].'.given.cov95th.'.$labels[$j];
-				$ratiovec .= ','.exp(($cov_5th->[$covindex]-$cov_means[$covindex])*($coeff->[$i]->[0]));
-				$ratiovec .= ','.exp(($cov_95th->[$covindex]-$cov_means[$covindex])*($coeff->[$i]->[0]));
-			}
-			#		$varheader .= ',CONDVAR.par.'.$labels[$i].'.given.cov.'.$labels[$j];
-			$variancevec .= ','.$cond_covar->[$i]->[$i];
-			push(@{$variance_arrays{$labels[$i]}->{$labels[$j]}},$cond_covar->[$i]->[$i]);
-			if ($k==0){
-				push(@{$coeff_arrays{$labels[$i]}->{$labels[$j]}},$coeff->[$i]->[0]);
-				#push the parameterization
-				my $str = sprintf("%.3E",$coeff->[$i]->[0]).'*('.$covnames[$covindex].'-'.sprintf("%.4g",$cov_means[$covindex]).')';
-				push(@{$coeff_arrays{$labels[$i]}->{$labels[$j]}},$str);
-			}
-		}
-	}
-	#all covariates
-	($error,$cond_covar,$coeff) = linear_algebra::conditional_covariance_coefficients(varcov => $varcov,
-																					  rescaling => \@rescale,
-																					  cov_index_first => $npar,
-																					  cov_index_last => ($size-1),
-																					  par_index_first => 0,
-																					  par_index_last => ($npar-1));
-	croak("cond covar coeff failed") if ($error != 0);
-	for (my $i=0;$i<$npar; $i++){
-		#	$varheader .= ',CONDVAR.par.'.$labels[$i].'.given.allcov';
-		$variancevec .= ','.$cond_covar->[$i]->[$i];
-		push(@{$variance_arrays{$labels[$i]}->{'all'}},$cond_covar->[$i]->[$i]);
-		if ($k==0){
-			push(@{$coeff_arrays{$labels[$i]}->{'all'}},join(',',@{$coeff->[$i]})); # a string
-			#push the parameterization
-			my $str = '';
-			for (my $covindex=0; $covindex<($size-$npar); $covindex++){
-				#sign!!!
-				if (($covindex >0) and ($coeff->[$i]->[$covindex] > 0)){
-					$str .= '+'
-				}
-				$str .= sprintf("%.3E",$coeff->[$i]->[$covindex]).'*('.$covnames[$covindex].'-'.sprintf("%.4g",$cov_means[$covindex]).')';
-			}
-			push(@{$coeff_arrays{$labels[$i]}->{'all'}},$str);
-		}
+                $ratiovec .= ','.exp(($categoryinfo->{$labels[$j]}->{'diff'})*($coeff->[$i]->[0]));
+            }else{
+            #		$ratioheader .= ',RATIO.par.'.$labels[$i].'.given.cov5th.'.$labels[$j];
+            #		$ratioheader .= ',RATIO.par.'.$labels[$i].'.given.cov95th.'.$labels[$j];
+                $ratiovec .= ','.exp(($cov_5th->[$covindex]-$cov_means[$covindex])*($coeff->[$i]->[0]));
+                $ratiovec .= ','.exp(($cov_95th->[$covindex]-$cov_means[$covindex])*($coeff->[$i]->[0]));
+            }
+            #		$varheader .= ',CONDVAR.par.'.$labels[$i].'.given.cov.'.$labels[$j];
+            $variancevec .= ','.$cond_covar->[$i]->[$i];
+            push(@{$variance_arrays{$labels[$i]}->{$labels[$j]}},$cond_covar->[$i]->[$i]);
+            if ($k==0){
+                push(@{$coeff_arrays{$labels[$i]}->{$labels[$j]}},$coeff->[$i]->[0]);
+                #push the parameterization
+                my $str = sprintf("%.3E",$coeff->[$i]->[0]).'*('.$covnames[$covindex].'-'.sprintf("%.4g",$cov_means[$covindex]).')';
+                push(@{$coeff_arrays{$labels[$i]}->{$labels[$j]}},$str);
+            }
+        }
+    }
+    #all covariates
+    ($error,$cond_covar,$coeff) = linear_algebra::conditional_covariance_coefficients(varcov => $varcov,
+                                                                                      rescaling => \@rescale,
+                                                                                      cov_index_first => $npar,
+                                                                                      cov_index_last => ($size-1),
+                                                                                      par_index_first => 0,
+                                                                                      par_index_last => ($npar-1));
+    croak("cond covar coeff failed") if ($error != 0);
+    for (my $i=0;$i<$npar; $i++){
+        #	$varheader .= ',CONDVAR.par.'.$labels[$i].'.given.allcov';
+        $variancevec .= ','.$cond_covar->[$i]->[$i];
+        push(@{$variance_arrays{$labels[$i]}->{'all'}},$cond_covar->[$i]->[$i]);
+        if ($k==0){
+            push(@{$coeff_arrays{$labels[$i]}->{'all'}},join(',',@{$coeff->[$i]})); # a string
+            #push the parameterization
+            my $str = '';
+            for (my $covindex=0; $covindex<($size-$npar); $covindex++){
+                #sign!!!
+                if (($covindex >0) and ($coeff->[$i]->[$covindex] > 0)){
+                    $str .= '+'
+                }
+                $str .= sprintf("%.3E",$coeff->[$i]->[$covindex]).'*('.$covnames[$covindex].'-'.sprintf("%.4g",$cov_means[$covindex]).')';
+            }
+            push(@{$coeff_arrays{$labels[$i]}->{'all'}},$str);
+        }
 #		my $idvec = "$k";
-		for (my $l=0; $l<$id_count; $l++){
-			#	$idheader .= ',RATIO.id.'.$id_covariate_vectors->[$l]->[0];
-			my $num=0;
-			for (my $j=0;$j<($size-$npar); $j++){ #foreach covariate
-				$num += ($id_covariate_vectors->[$l]->[$j+1]-$cov_reference[$j] )*($coeff->[$i]->[$j]);
-			}
+        for (my $l=0; $l<$id_count; $l++){
+            #	$idheader .= ',RATIO.id.'.$id_covariate_vectors->[$l]->[0];
+            my $num=0;
+            for (my $j=0;$j<($size-$npar); $j++){ #foreach covariate
+                $num += ($id_covariate_vectors->[$l]->[$j+1]-$cov_reference[$j] )*($coeff->[$i]->[$j]);
+            }
 #			$idvec .= ','.exp($num);
-			push(@{$id_ratio_arrays{$labels[$i]}->{$id_covariate_vectors->[$l]->[0]}},exp($num));
-		}
+            push(@{$id_ratio_arrays{$labels[$i]}->{$id_covariate_vectors->[$l]->[0]}},exp($num));
+        }
 
 #		print {$parameter_filehandles[$i]} "$idvec\n";
-	}
+    }
 
 #	for (my $i=0;$i<$size; $i++){
 #		$numvec .= ','.($rescale[$i])*($sdcorr->[$i]->[$i]);   #',STDEV.'$lab;
@@ -529,23 +544,22 @@ for (my $k=0;$k<=scalar(@{$sampled_params_arr}); $k++){
 #			$numvec .= ','.$sdcorr->[$i]->[$j];  #',CORREL.'.$labels[$i].'.'.$labels[$j];
 #		}
 #	}
-	#covariate coefficients
+    #covariate coefficients
 #	for (my $i=0;$i<$npar; $i++){
 #		for (my $j=$npar;$j<$size; $j++){
 #			# cov(par,cov)/var(cov) plus rescale
 #			$numvec .= ','.($varcov->[$i]->[$j])/(($rescale[$j])*($varcov->[$j]->[$j]));
-			#',COEFF.par.'.$labels[$i].'.cov.'.$labels[$j];
+            #',COEFF.par.'.$labels[$i].'.cov.'.$labels[$j];
 #		}
 #	}
 
-	
 
 #my ($cov_5th,$cov_95th)
-	
-	print RATIOFILE "$ratiovec\n";
-	print VARFILE "$variancevec\n";
+
+    print RATIOFILE "$ratiovec\n";
+    print VARFILE "$variancevec\n";
 #	push(@sdcorr_array,$numvec);
-#	last; 
+#	last;
 }
 close( RATIOFILE );
 close( VARFILE );
@@ -583,11 +597,16 @@ for (my $l=0; $l<$id_count; $l++){
 		my $par = $labels[$i];
 		my $observed = shift(@{$id_ratio_arrays{$par}->{$idnum}});
 		$idline .= ','.$observed;
-		my @sorted = (sort {$a <=> $b} @{$id_ratio_arrays{$par}->{$idnum}}); #sort ascending
-		my $quantref = quantile(probs => \@probs, numbers=> \@sorted);
-		for (my $k=0; $k< scalar(@probs); $k++){
-			$idline .= ','.$quantref->[$k];
-		}
+        my $quantref;
+        if ($have_uncertainty) {
+            my @sorted = (sort {$a <=> $b} @{$id_ratio_arrays{$par}->{$idnum}}); #sort ascending
+            $quantref = quantile(probs => \@probs, numbers=> \@sorted);
+        }
+        for (my $k=0; $k< scalar(@probs); $k++){
+            # NA in quantiles columns if we are in point estimate mode
+            my $value = $have_uncertainty ? $quantref->[$k] : $NA_string;
+            $idline .= ','.$value;
+        }
 	}
 	print {$parfh} "$idline\n";
 }
@@ -624,13 +643,18 @@ for (my $i=0;$i<$npar; $i++){
 		my $type = $types[$k];
 		my $observed = shift(@{$variance_arrays{$par}->{$type}});
 		my $line = $par.'.'.$type.','.sqrt($observed);
-		my @sorted = (sort {$a <=> $b} @{$variance_arrays{$par}->{$type}});
-		my $quantref = quantile(probs => \@probs, numbers=> \@sorted);
-		$line .= ','.sqrt($quantref->[0]);
-		$line .= ','.sqrt($quantref->[1]);
+        if ($have_uncertainty) {
+            my @sorted = (sort {$a <=> $b} @{$variance_arrays{$par}->{$type}});
+            my $quantref = quantile(probs => \@probs, numbers=> \@sorted);
+            $line .= ','.sqrt($quantref->[0]);
+            $line .= ','.sqrt($quantref->[1]);
+        } else {
+            # NA in quantiles columns if we are in point estimate mode
+            $line .= ','.$NA_string.','.$NA_string;
+        }
 
 		if ($type eq 'none'){
-			$line .= ',' x (1+scalar(@covnames)); 
+			$line .= ',' x (1+scalar(@covnames));
 		}elsif($type eq 'all'){
 			#				push(@{$coeff_arrays{$labels[$i]}->{'all'}},join(',',@{$coeff->[$i]})); # a string
 			$line .= ','.$coeff_arrays{$par}->{'all'}->[0].','.$coeff_arrays{$par}->{'all'}->[1];
@@ -640,7 +664,7 @@ for (my $i=0;$i<$npar; $i++){
 			$line .= ','x (scalar(@covnames)-$k) ;
 			$line .= ','.$coeff_arrays{$par}->{$type}->[1];
 		}
-			
+
 		print {$parfh} "$line\n";
 	}
 }
@@ -657,7 +681,7 @@ my @templatecode = (
 	"pardata <- read.csv(pardatafile,header = T, as.is = T)",
 	"output.format <- 'pdf'",
 	"",
-	"if(ID_ratio(frem_id,covdata,pardata)\$files_exists) {",
+	"if(ID_ratio(frem_id,covdata,pardata)\$files_exist) {",
 	"	indiv_for_param_plots <- ID_ratio(frem_id,covdata,pardata)\$plots",
 	"	param <- ID_ratio(frem_id,covdata,pardata)\$param",
 	"	for (i in 1:length(param)) {",
@@ -665,7 +689,7 @@ my @templatecode = (
 	"	}",
 	"}",
 	"",
-	"if(parameter_ratio(inTable_frem,covdata,pardata)\$files_exists) {",
+	"if(parameter_ratio(inTable_frem,covdata,pardata)\$files_exist) {",
 	"	cov_effect_on_param_plots <- parameter_ratio(inTable_frem,covdata,pardata)\$plots",
 	"	param <- parameter_ratio(inTable_frem,covdata,pardata)\$param",
 	"	for (i in 1:length(param)) {",
@@ -675,7 +699,7 @@ my @templatecode = (
 	);
 
 
-my $rplot = rplots->new(toolname => 'frem', 
+my $rplot = rplots->new(toolname => 'frem',
 						directory => $main_directory,
 						level => 1,
 						raw_results_file => 'dummy',
