@@ -83,7 +83,7 @@ if(fullblock_mod || boxcox_mod) {
 ```{r covariate_model_calculations,results='hide',echo=FALSE,message=FALSE}
 # 3.Covariate Models
   # 3.1.All (FREM)
-frem_table_list <- get_all_covariates(frem_directory=file.path(working.directory,"frem_run"),covariates,categorical,parameters)
+frem_table_list <- get_all_covariates(frem_directory=file.path(working.directory,"frem_run"),covariates,categorical,parameters,list_par_var_models$dofv_block)
 frem_table <- frem_table_list$frem_table
  # 3.2.Covariate (SCM)
 scm_table_list <- get_scm_table(file.path(working.directory,paste0("scm_run/raw_results_scm.csv")),
