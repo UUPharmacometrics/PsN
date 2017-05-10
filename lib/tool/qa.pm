@@ -185,7 +185,10 @@ sub modelfit_setup
     $self->_to_qa_dir();
 
     print "\n*** Running simeval ***\n";
-    my $simeval_model = model->new(filename => $linearized_model_name);
+    my $simeval_model = $linearized_model->copy(filename => "m1/simeval.mod");
+    $simeval_model->remove_records(type => 'etas');
+    $simeval_model->remove_option(record_name => 'estimation', option_name => 'MCETA');
+    $simeval_model->_write();
     eval {
         my $simeval = tool::simeval->new(
             %{common_options::restore_options(@common_options::tool_options)},
