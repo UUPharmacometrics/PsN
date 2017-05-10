@@ -44,10 +44,10 @@ sub modelfit_setup
     my $model_copy = $self->model->copy(filename => $self->model->filename, directory => $self->model->directory, output_same_directory => 1);
     $model_copy->_write(filename => $self->directory . $self->model->filename);
     $model_copy->phi_file($self->model->get_phi_file());
-	
+
 	my $vers = $PsN::version;
 	my $dev =$PsN::dev;
-	
+
     print "*** Running linearize ***\n";
     my $linearized_model_name = $self->model->filename;
     $linearized_model_name =~ s/(\.[^.]+)$/_linbase.mod/;
@@ -143,7 +143,10 @@ sub modelfit_setup
 
         if (defined $self->parameters) {
             print "\n*** Running scm ***\n";
-            $self->_create_scm_config(model_name => $linearized_model_name);
+            my $scm_model = $linearized_model->copy(filename => "m1/scm.mod");
+            model_transformations::add_tv(model => $scm_model, parameters => [split /,/, $self->parameters]);
+            $scm_model->_write();
+            $self->_create_scm_config(model_name => "m1/scm.mod");
             my %tool_options = %{common_options::restore_options(@common_options::tool_options)};
             my $scm_options = "";
             for my $cmd (split /\s+/, $self->cmd_line) {

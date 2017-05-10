@@ -5505,6 +5505,24 @@ sub unfix_omega_0_fix
     return $did_fix;
 }
 
+sub get_pk_or_pred_code
+{
+    my $self = shift;
+
+    my @code;
+	my $code_record;
+	if ($self->has_code(record => 'pk')) {
+		@code = @{$self->get_code(record => 'pk')};
+		$code_record = 'pk';
+	} elsif ($self->has_code(record => 'pred')) {
+		@code = @{$self->get_code(record => 'pred')};
+		$code_record = 'pred';
+	} else {
+		croak("Neither PK nor PRED defined in " . $self->filename . "\n");
+	}
+
+    return ($code_record, \@code);
+}
 
 no Moose;
 __PACKAGE__->meta->make_immutable;

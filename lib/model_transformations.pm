@@ -10,7 +10,7 @@ use MooseX::Params::Validate;
 
 sub add_tv
 {
-    # Add TV (typical value) variable for list of parameters
+    # Add TV (typical value) variable if it doesn't already exist for list of parameters
 	my %parm = validated_hash(\@_,
         model => { isa => 'model' },
         parameters => { isa => 'ArrayRef' },
@@ -18,22 +18,12 @@ sub add_tv
     my $model = $parm{'model'};
     my $parameters = $parm{'parameters'};
 
-    my @code;
-	my $code_record;
-	if ($model->has_code(record => 'pk')) {
-		@code = @{$model->get_code(record => 'pk')};
-		$code_record = 'pk';
-	} elsif ($model->has_code(record => 'pred')) {
-		@code = @{$model->get_code(record => 'pred')};
-		$code_record = 'pred';
-	} else {
-		croak("Neither PK nor PRED defined in " . $model->filename . "\n");
-	}
+    (my $code_record, my $code) = $model->get_pk_or_pred_code();
 
     my @add_params;     # Parameters that don't already have TVxx
     for my $param (@$parameters) {
         my $found = 0;
-        for my $line (@code) {
+        for my $line (@$code) {
             if ($line =~ /^\s*TV$param\s*=/) {
                 $found = 1;
             }
@@ -44,7 +34,7 @@ sub add_tv
     }
 
     my @newcode;
-    for my $line (@code) {
+    for my $line (@$code) {
         my $found = 0;
         for my $param (@add_params) {
             if ($line =~ /^(\s*)$param\s*=/) {
