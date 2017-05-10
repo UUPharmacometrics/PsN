@@ -143,7 +143,7 @@ sub modelfit_setup
 
         if (defined $self->parameters) {
             print "\n*** Running scm ***\n";
-            my $scm_model = $linearized_model->copy(filename => "m1/scm.mod");
+            my $scm_model = $self->model->copy(filename => "m1/scm.mod");
             model_transformations::add_tv(model => $scm_model, parameters => [split /,/, $self->parameters]);
             $scm_model->_write();
             $self->_create_scm_config(model_name => "m1/scm.mod");
@@ -286,10 +286,14 @@ sub modelfit_analyze
 sub _create_scm_config
 {
     my $self = shift;
+	my %parm = validated_hash(\@_,
+        model_name => { isa => 'Str' }
+    );
+	my $model_name = $parm{'model_name'};
 
     open my $fh, '>', 'config.scm';
 
-	my $model_name = $self->model->full_name();
+    #my $model_name = $self->model->full_name();
 
     my $covariates = "";
     if (defined $self->covariates) {
