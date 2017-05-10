@@ -1,8 +1,8 @@
-resmod_structural_details_tables <- function(working.directory,model.directory,model.filename,CWRES_table,resmod_suffix,idv_name) {
+resmod_structural_details_tables <- function(working.directory,model.directory,model.filename,CWRES_table,idv_all,idv_name) {
   resmod_structural_details <- list()
-  if(length(resmod_suffix)!=0) {
-    for(i in 1:length(resmod_suffix)) {
-      idv <- resmod_suffix[i]
+  if(length(idv_all)!=0) {
+    for(i in 1:length(idv_all)) {
+      idv <- idv_all[i]
       dofv = get_resmod_structural_dofv(working.directory, idv)
       first_table = data.frame(C1=c("DV","IDV","dOFV"),C2=c("CWRES",idv,dofv),stringsAsFactors = F)
       if(file.exists(file.path(model.directory, paste0(sub('.mod.*','',model.filename),".ext"))) &&

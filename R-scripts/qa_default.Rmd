@@ -145,11 +145,12 @@ print(overview_table)
 
 ```{r draw_structural_details_tables,warning=F,message=F,echo=F,results='asis',warning=F}
 #tables for vpc plots
-# obs <- vpc::read_table_nm(CWRES_table)
-# extra_obs <- vpc::read_table_nm(paste0(working.directory,"/pheno_real_linbase.dta"))
-# obs <- left_join(obs,extra_obs[,c("ID","DV","TIME")])
-# add_cols <- obs[,c("ID",resmod_suffix)]
-# sim <- vpc::read_table_nm(paste0(working.directory,"/simeval_run/m1/sim_res_table-1.dta")) %>% left_join(add_cols)
+obs <- vpc::read_table_nm(CWRES_table)
+extra_obs <- vpc::read_table_nm(paste0(working.directory,"/",sub('.mod.*','',model.filename),"_linbase.dta"))
+obs <- cbind(obs,"DV"=extra_obs[,"DV"],"MDV"=extra_obs[,"MDV"])
+add_cols <- obs[,c(resmod_suffix)]
+sim <- vpc::read_table_nm(paste0(working.directory,"/simeval_run/m1/sim_res_table-1.dta"))
+sim <- cbind(sim,add_cols)
 
 for(i in 1:length(resmod_suffix)) {
   cat(resmod_suffix[i])
@@ -163,9 +164,10 @@ for(i in 1:length(resmod_suffix)) {
   shift_tab <- resmod_structural_details[[i]]$table
   idv_plot <- plot_ipred(shift_tab,resmod_suffix[i])
   print(idv_plot)
+  cat("\n\n")
   #vpc plots
-  # vpc_plot <- plot_structural_vpc(table1,table2,shift_tab,idv=resmod_suffix[i])
-  # print(vpc_plot)
+  vpc_plot <- plot_structural_vpc(obs,sim,shift_tab,idv=resmod_suffix[i])
+  print(vpc_plot)
   cat("\n\\newpage\n")
 }
 ```
