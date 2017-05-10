@@ -1042,7 +1042,7 @@ our @residual_models =
 		],
 		base => 2,
     }, {
-        name => 'tdist_2ll_dfest',
+        name => 'tdist',
         prob_arr => [
 			'$PROBLEM laplace 2LL DF=est',
 			'$INPUT <inputcolumns>',
