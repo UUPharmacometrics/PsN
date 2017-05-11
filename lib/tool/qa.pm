@@ -131,8 +131,9 @@ sub modelfit_setup
         common_options::set_option('clean', $old_clean);
         $self->_to_qa_dir();
         if (-d "frem_run") {
+            print "\n*** Running POSTFREM ***\n";
             eval {
-				if($dev) {
+				if ($dev) {
 					system("postfrem -frem_directory=frem_run -directory=postfrem_run");
 				} else {
 					system("postfrem-".$vers." -frem_directory=frem_run -directory=postfrem_run");
