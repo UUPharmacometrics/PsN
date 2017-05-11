@@ -4183,10 +4183,10 @@ sub add_code
 			$relationarea = 0;
 			last;
 		}
-		if ( $relationarea ) {
+		if ($relationarea) {
 			$found_REL = $i;
-			debugmessage(3,$parameter . "COV has already been added to the code" );
-			if ( /$parameter$covariate/ ){
+			debugmessage(3, $parameter . "COV has already been added to the code");
+			if (/$parameter$covariate/) {
 				$found_correct_REL = 1; 
 				last ;
 			}
@@ -4200,9 +4200,9 @@ sub add_code
 	}
 
 	# If we have old scm code present.
-	if ( $found_REL ) {
-		unless ( $found_correct_REL ) {
-			if ( $#row > 2 ) {
+	if ($found_REL) {
+		if (not $found_correct_REL) {
+			if ($#row > 2) {
 				@code =  (@code[0..$found_REL],
 					"$parameter"."COV=$parameter"."COV$operator$parameter$covariate\n",
 					@code[$found_REL+1..$#code]);
@@ -4212,8 +4212,8 @@ sub add_code
 			}
 		}
 	} else {
-		if ($found_anchor >= 0){
-			@code =  (@code[0..$found_anchor],
+		if ($found_anchor >= 0) {
+			@code = (@code[0..$found_anchor],
 				";;; $parameter-RELATION START\n",
 				"$parameter"."COV=$parameter$covariate\n",
 				";;; $parameter-RELATION END\n\n",
@@ -4226,31 +4226,31 @@ sub add_code
 		}
 	}
 
-	if ($found_anchor >= 0){
-		@code =  (@code[0..$found_anchor],
+	if ($found_anchor >= 0) {
+		@code = (@code[0..$found_anchor],
 			"\n;;; $parameter$covariate-DEFINITION START\n",
 			@definition_code,
 			";;; $parameter$covariate-DEFINITION END\n\n",
 			@code[$found_anchor+1..$#code]);
-	}else{
+	} else {
 		@code = ( "\n;;; $parameter$covariate-DEFINITION START\n",
 			@definition_code,
 			";;; $parameter$covariate-DEFINITION END\n\n",
 			@code );
 	}
 	# Add to the parameter code
-	unless ( $found_REL ) {
+	if (not $found_REL) {
 		my $success = 0;
-		for ( reverse @code ) {
+		for (reverse @code) {
 			#want to find last occurrence
-			if ( /[^A-Z0-9_]*TV(\w+)\s*=\s*/ and $1 eq $parameter){
+			if (/[^A-Z0-9_]*TV(\w+)\s*=\s*/ and $1 eq $parameter) {
 				#add new definition line after last occurence
 				$_ = $_."\n"."TV$parameter = $parameter"."COV$operator"."TV$parameter\n";
 				$success = 1;
 				last; #only change the last line where appears
 			}
 		}
-		unless ( $success ) {
+		if (not $success) {
 			croak("Could not determine a good place to add the covariate relation.\n".
 				" i.e. No TV$parameter was found\n" );
 		}
@@ -4263,23 +4263,31 @@ sub add_code
 
 	#initial values must be set first, since we need to add if absent
 
-	$applicant_model -> initial_values( parameter_numbers => [[$start_theta..$end_theta]],
-		new_values        => [\@inits],
-		add_if_absent     => 1,
-		parameter_type    => 'theta',
-		problem_numbers   => [1]);
-	$applicant_model -> lower_bounds( parameter_type    => 'theta',
+	$applicant_model->initial_values(
+        parameter_numbers => [[$start_theta..$end_theta]],
+		new_values => [\@inits],
+		add_if_absent => 1,
+		parameter_type => 'theta',
+		problem_numbers => [1],
+    );
+	$applicant_model->lower_bounds(
+        parameter_type => 'theta',
 		parameter_numbers => [[$start_theta..$end_theta]],
-		problem_numbers   => [1],
-		new_values        => [$bounds{'lower'}] );
-	$applicant_model -> upper_bounds( parameter_type    => 'theta',
+		problem_numbers => [1],
+		new_values => [$bounds{'lower'}],
+    );
+	$applicant_model->upper_bounds(
+        parameter_type => 'theta',
 		parameter_numbers => [[$start_theta..$end_theta]],
-		problem_numbers   => [1],
-		new_values        => [$bounds{'upper'}] );
-	$applicant_model -> labels( parameter_type    => 'theta',
+		problem_numbers => [1],
+		new_values => [$bounds{'upper'}],
+    );
+	$applicant_model->labels(
+        parameter_type => 'theta',
 		parameter_numbers => [[$start_theta..$end_theta]],
-		problem_numbers   => [1],
-		new_values        => [\@labels] );
+		problem_numbers => [1],
+		new_values => [\@labels],
+    );
 
 	return $applicant_model;
 }
@@ -4307,25 +4315,25 @@ sub add_code_linearize
 	my $applicant_model = $parm{'applicant_model'};
 
 	my @labels;
-	for ( my $i = 1; $i <= $nthetas; $i++ ) {
-		push( @labels, $parameter.$covariate.$i );
+	for (my $i = 1; $i <= $nthetas; $i++) {
+		push (@labels, $parameter . $covariate . $i);
 	}
 
-	my $start_theta = $applicant_model -> nthetas() + 1;
+	my $start_theta = $applicant_model->nthetas() + 1;
 	my $end_theta = $start_theta + $nthetas - 1;
-	my $operator='*';
-	$operator='+' if ($sum_covariates);
+	my $operator = '*';
+	$operator = '+' if ($sum_covariates);
 
 	my $tmp = $start_theta;
 
 	#handle mulitple THETA on same line, handle multiple uses of same THETA
 	my %original_to_model_thetas;
-	for (my $i=1; $i<=$nthetas;$i++){
+	for (my $i = 1; $i <= $nthetas; $i++) {
 		$original_to_model_thetas{$i} = 0;
 	}
-	for ( @definition_code ) {
-		while ( /THETA\((\d+)\)/ ) {
-			if ($original_to_model_thetas{$1} == 0){
+	for (@definition_code) {
+		while (/THETA\((\d+)\)/) {
+			if ($original_to_model_thetas{$1} == 0) {
 				$original_to_model_thetas{$1} = $tmp++;
 			}
 			my $num = $original_to_model_thetas{$1};
@@ -4340,8 +4348,7 @@ sub add_code_linearize
 	@code = @{$applicant_model->get_code(record => 'pred')};
 	$use_pred = 1;
 	if ($#code <= 0) {
-		croak("PRED not defined in " .
-			$applicant_model -> filename . "\n" );
+		croak("PRED not defined in " . $applicant_model->filename . "\n");
 	}
 
 	my $found_REL = 0;
@@ -4350,31 +4357,31 @@ sub add_code_linearize
 	my $relationarea = 0;
 	my @row;
 	my $found_correct_REL = 0;
-	for ( @code ) {
-		if ( /^;;;SCM-ANCHOR/) {
+	for (@code) {
+		if (/^;;;SCM-ANCHOR/) {
 			$found_anchor = $i;
 			$i++;
 			next;
 		}
-		if ( /^;;; (\w+)-RELATION START/ and $1 eq $parameter ) {
+		if (/^;;; (\w+)-RELATION START/ and $1 eq $parameter) {
 			$relationarea = 1;
 			$i++;
 			next;
 		}
-		if ( /^;;; (\w+)-RELATION END/ and $1 eq $parameter ) {
+		if (/^;;; (\w+)-RELATION END/ and $1 eq $parameter) {
 			$relationarea = 0;
 			last;
 		}
-		if ( $relationarea ) {
+		if ($relationarea) {
 			$found_REL = $i;
-			debugmessage(3,"GZ_".$parameter . " has already been added to the code" );
-			if ( /$parameter$covariate/ ){
+			debugmessage(3, "GZ_".$parameter . " has already been added to the code");
+			if (/$parameter$covariate/) {
 				$found_correct_REL = 1;
-				last ;
+				last;
 			}
-			if ($sum_covariates){
+			if ($sum_covariates) {
 				@row = split(/\)\+\(/);
-			}else{
+			} else {
 				@row = split(/\)\*\(/);
 			}
 		}
@@ -4383,11 +4390,11 @@ sub add_code_linearize
 
 	# If we have old scm code present.
 	my $etanum;
-	if ( $found_REL ) {
-		unless ( $found_correct_REL ) {
-			if ( $#row > 2 ) {
+	if ($found_REL) {
+		if (not $found_correct_REL) {
+			if ($#row > 2) {
 				print "warning: adding covariates to old scm code not tested\n";
-				@code =  (@code[0..$found_REL],
+				@code = (@code[0..$found_REL],
 					"GZ_$parameter"."=GZ_$parameter"."$operator$parameter$covariate\n",
 					@code[$found_REL+1..$#code]);
 			} else {
@@ -4398,19 +4405,19 @@ sub add_code_linearize
 	} else {
 		my %parameter_eta;
 		%parameter_eta = %{$self->parameter_eta()} if defined $self->parameter_eta();
-		if ( defined $parameter_eta{$parameter}){
+		if (defined $parameter_eta{$parameter}) {
 			$etanum= $parameter_eta{$parameter};
-		}else{
+		} else {
 			croak("Could not extract ETA number for $parameter");
 		}
-		if ($found_anchor >= 0){
+		if ($found_anchor >= 0) {
 			@code =  (@code[0..$found_anchor],
 				";;; $parameter-RELATION START\n",
 				"; $parameter IS ETA$etanum",
 				"GZ_$parameter"." = $parameter$covariate\n",
 				";;; $parameter-RELATION END\n\n",
 				@code[$found_anchor+1..$#code]);
-		}else {
+		} else {
 			@code = ( ";;; $parameter-RELATION START\n",
 				"; $parameter IS ETA$etanum",
 				"GZ_$parameter"." = $parameter$covariate\n",
@@ -4419,13 +4426,13 @@ sub add_code_linearize
 		}
 	}
 
-	if ($found_anchor >= 0){
+	if ($found_anchor >= 0) {
 		@code =  (@code[0..$found_anchor],
 			"\n;;; $parameter$covariate-DEFINITION START\n",
 			@definition_code,
 			";;; $parameter$covariate-DEFINITION END\n\n",
 			@code[$found_anchor+1..$#code]);
-	}else{
+	} else {
 		@code = ( "\n;;; $parameter$covariate-DEFINITION START\n",
 			@definition_code,
 			";;; $parameter$covariate-DEFINITION END\n\n",
@@ -4433,9 +4440,9 @@ sub add_code_linearize
 	}
 
 	# Add to the parameter code
-	unless ( $found_REL ) {
+	if (not $found_REL) {
 		my $success = 0;
-		for ( @code ) {
+		for (@code) {
 			if ( /^\s*IPRED\s*=/) {
 				my ($line,$comment) = split( ';', $_, 2 );
 				$_ = $line;
@@ -4452,9 +4459,9 @@ sub add_code_linearize
 				last; #so not add term on multiple lines
 			}
 		}
-		unless ( $success ) {
+		if (not $success) {
 			croak("Could not determine a good place to add the covariate relation.\n".
-				" i.e. No IPRED= was found\n" );
+				" i.e. No IPRED= was found\n");
 		}
 	}
 	if ($use_pred) {
