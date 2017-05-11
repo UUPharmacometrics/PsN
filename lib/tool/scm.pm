@@ -1332,7 +1332,7 @@ sub modelfit_setup
 			my $tmp_orig = $model->copy(
 				filename => $self->final_model_directory.'/original.mod',
 				copy_datafile => 0,
-				write_copy =>1,
+				write_copy => 1,
 				copy_output => 0,
             );
             $self->original_nonlinear_model($tmp_orig);
@@ -1341,7 +1341,7 @@ sub modelfit_setup
 
 
 	#setup linearize here. 
-	if ($self->linearize()){
+	if ($self->linearize()) {
 		#this will modify $model if step_number > 1
 		$self->linearize_setup(original_model => $model);
 		return if ($self->return_after_derivatives_done());
@@ -1356,11 +1356,10 @@ sub modelfit_setup
 	# the directory attribute is given explicitly below.
 
 	my %included_relations;
-	%included_relations = %{$self -> included_relations} if 
-	(defined $self -> included_relations);
+	%included_relations = %{$self->included_relations} if (defined $self->included_relations);
 	my $need_base_ofv = 1;
-	$need_base_ofv = 0 if ( defined $self -> base_criteria_values and
-		defined $self -> base_criteria_values -> {'ofv'} );
+	$need_base_ofv = 0 if (defined $self->base_criteria_values and
+		defined $self->base_criteria_values->{'ofv'});
 
 	if ( ( (not $model -> is_run and ($self->step_number()==1 or $self->update_derivatives())) 
 				or ((%included_relations) and $need_base_ofv and $self->step_number()==1)
@@ -1387,10 +1386,12 @@ sub modelfit_setup
 		my $copy_datafile = 0;
 		$copy_datafile = 1 if ((not $self->linearize ) and (not defined $self->xv_pred_data));
 
-		my $start_model = $model->copy(filename => $fname,
-									   write_copy => 0,
-									   copy_datafile          => $copy_datafile,
-									   copy_output        => 0);
+		my $start_model = $model->copy(
+            filename => $fname,
+            write_copy => 0,
+            copy_datafile => $copy_datafile,
+            copy_output => 0
+        );
 		
 		$start_model->directory($self->directory);
 		if (scalar(keys %included_relations) > 0) {
@@ -1439,24 +1440,24 @@ sub modelfit_setup
 		}
 		$start_model->_write;
 
-		my $orig_fit = tool::modelfit->new
-		( %{common_options::restore_options(@common_options::tool_options)},
+		my $orig_fit = tool::modelfit->new(
+		    %{common_options::restore_options(@common_options::tool_options)},
 			base_directory => $self->directory,
-			directory      => $self->directory . '/base_modelfit_dir' . $model_number . '/',
-			models         => [$start_model],
-			top_tool       => 0,
+			directory => $self->directory . '/base_modelfit_dir' . $model_number . '/',
+			models => [$start_model],
+			top_tool => 0,
 			parent_tool_id => $self->tool_id,
-			copy_data  => (not $self->linearize));
+			copy_data => (not $self->linearize)
+        );
 
-		my $mess = "Estimating base model";
-		$mess .= " with included_relations to get base ofv" if ($self->have_run_included);
+		my $mess = "Estimating base model with included_relations to get base ofv" if ($self->have_run_included);
 		if ($self->linearize) {
 			$mess = "Estimating linearized base model";
 			if ($self->step_number > 1) {
 				$mess .= " with updated derivatives and predictions";
 			}
 		}
-		ui -> print(category => 'scm', message  => $mess) unless ($self->parent_threads > 1);
+		ui->print(category => 'scm', message  => $mess) unless ($self->parent_threads > 1);
 		$orig_fit->run;
 
 		if (defined $start_model->outputs and defined $start_model->outputs->[0] and
@@ -2688,8 +2689,8 @@ sub modelfit_analyze
 			if ( $type -> {'name'} eq 'minimization_successful' ){
 				for ( my $i = 0; $i < scalar @{$type -> {'values'}}; $i++ ) {
 					for ( my $j = 0; $j < scalar @{$type -> {'values'}[$i]}; $j++ ) {
-						if ( $self -> picky ) {
-# Did minimization just loose one dimension?
+						if ($self->picky) {
+                            # Did minimization just loose one dimension?
 							if ( not defined $type -> {'values'}[$i][$j] or 
 								$type -> {'values'}[$i][$j] != 1 ) {
 								$crash = 2;
@@ -4513,22 +4514,20 @@ sub add_code_gfunc
 	push(@code,';;;SCM-LINEARIZE_CONSTANTS'."\n") unless ((defined $self->directory_name_prefix) and
 														  $self->directory_name_prefix eq 'linearize');
 	foreach my $parameter (keys %parameter_G){
-		push(@code,'OGZ_'.$parameter.'='.$parameter_G{$parameter}."\n");
-		if ($parameter_relation{$parameter} eq 'exponential'){
-			push(@code,'OGK_'.$parameter.'=1/'.$parameter_G{$parameter}."\n");
-		}elsif ($parameter_relation{$parameter} eq 'proportional'){
+		push(@code, 'OGZ_' . $parameter . '=' . $parameter_G{$parameter} . "\n");
+		if ($parameter_relation{$parameter} eq 'exponential') {
+			push(@code, 'OGK_' . $parameter . '=1/' . $parameter_G{$parameter} . "\n");
+		} elsif ($parameter_relation{$parameter} eq 'proportional') {
 			push(@code,'OGK_'.$parameter.
 				'='.$parameter.'/(TV'.$parameter.'*'.$parameter_G{$parameter}.')'.
 				' ; This gives (1+ETA)/'.$parameter.'COV'."\n");
-		}elsif ($parameter_relation{$parameter} eq 'additive'){
+		} elsif ($parameter_relation{$parameter} eq 'additive') {
 			push(@code,'OGK_'.$parameter.
 				'=TV'.$parameter.'/'.$parameter_G{$parameter}."\n");
-		}elsif ($parameter_relation{$parameter} eq 'logit'){
-			push(@code,'OGK_'.$parameter.
-				"=1\n");
-		}else{
-			croak("No relation (additive/exponential/proportional) defined".
-				"for ETA on $parameter");
+		} elsif ($parameter_relation{$parameter} eq 'logit') {
+			push(@code, 'OGK_' . $parameter . "=1\n");
+		} else {
+			croak("No relation (additive/exponential/proportional) defined for ETA on $parameter");
 		}
 	}
 	if ($use_pred) {
@@ -4594,12 +4593,11 @@ sub run_xv_pred_step
 		  clean => 1,
 		  parent_tool_id   => $self -> tool_id,
 		  copy_data => 1); 
-#clean 2 later
-	ui -> print( category => 'xv_scm',
-		message  => $mess ) unless ( $self -> parent_threads > 1 );
-	$xv_base_fit -> run;
+    #clean 2 later
+	ui->print(category => 'xv_scm', message => $mess) unless ($self->parent_threads > 1);
+	$xv_base_fit->run();
 
-	if ($derivatives_run){
+	if ($derivatives_run) {
 		#change $self->xv_pred_data to new filename from derivatives output.
 		#this makes it impossible to use update_derivatives unless original pred_data is kept
 
@@ -4634,7 +4632,7 @@ sub run_xv_pred_step
 		}
 	}
 	chdir('..');
-	ui -> category($oldcat);
+	ui->category($oldcat);
 }
 
 sub format_inits_bounds
@@ -4698,8 +4696,8 @@ sub format_inits_bounds
 sub format_max_min_median_mean
 {
 	my %parm = validated_hash(\@_,
-							  statistics => { isa => 'HashRef', optional => 0 },
-		);
+        statistics => { isa => 'HashRef', optional => 0 },
+    );
 	my $statistics = $parm{'statistics'};
 
 	my $median = $statistics->{'median'};
@@ -4714,7 +4712,7 @@ sub format_max_min_median_mean
 		$min = sprintf "%6.2f", $min;
 		$min =~ s/^\s*//;
 	}else{
-		$min='';
+		$min = '';
 	}
 	my $max = $statistics->{'max'};
 	if (defined $max){
@@ -4724,14 +4722,14 @@ sub format_max_min_median_mean
 		$max = '';
 	}
 	my $mean = $statistics->{'mean'};
-	if (defined $mean){
+	if (defined $mean) {
 		$mean = sprintf "%6.2f", $mean;
 		$mean =~ s/^\s*//;
-	}else{
-		$mean='';
+	} else {
+		$mean = '';
 	}
 	
-	return ($max,$min,$median,$mean);
+	return ($max, $min, $median, $mean);
 }
 
 sub get_covariate_code
@@ -4773,9 +4771,9 @@ sub get_covariate_code
 		croak("Input code is defined but type is $type.") unless ($type eq 'user');
 	}
 	
-	if ($type eq 'none'){
+	if ($type eq 'none') {
 		$code->[0] = "   $parameter$covariate = $offset\n";
-	}elsif ($type eq 'user'){
+	} elsif ($type eq 'user') {
 		my %unique_thetas;
 		# count the thetas.
 		for ( @{$code} ) {
@@ -4800,8 +4798,8 @@ sub get_covariate_code
 				}
 			}
 		}
-	}elsif ($type eq 'linear'){
-		if( $have_missing_data ) {
+	} elsif ($type eq 'linear') {
+		if ($have_missing_data) {
 			$code->[0] = $comment."IF($covariate.EQ.$missing_data_token) THEN\n";
 			$code->[1] = "$comment   $parameter$covariate = $offset\n";
 			$code->[2] = $comment."ELSE\n";
