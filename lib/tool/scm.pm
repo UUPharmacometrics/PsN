@@ -5212,124 +5212,136 @@ sub write_final_models
 	my $final_model = $parm{'final_model'};
 	my $model_number = $parm{'model_number'};
 
-	my $fname = 'final_'.$self->search_direction().'.mod';
+	my $fname = 'final_' . $self->search_direction() . '.mod';
 	if ($self->linearize()){
-		$fname = 'final_'.$self->search_direction().'_linear.mod';
+		$fname = 'final_' . $self->search_direction() . '_linear.mod';
 	}
 	my $fdir = $self->final_model_directory();
 	return if (-e "$fdir$fname"); #otherwise may write twice
 
-	ui -> print( category => 'scm',
-		message => "Writing final models from the ".$self->search_direction()." search." );
-	$final_model -> filename($fname);
-	$final_model -> directory( $fdir);
+	ui->print(
+        category => 'scm',
+		message => "Writing final models from the " . $self->search_direction() . " search."
+    );
+	$final_model->filename($fname);
+	$final_model->directory( $fdir);
 	$fname =~ s/\.mod/\.lst/;
 	return unless (-e $final_model->outputfile); #unless lst-file exists (could have crashed)
-	cp( $final_model -> outputfile, "$fdir$fname" );
+	cp($final_model->outputfile, "$fdir$fname");
 	my $prob_num = undef;
-	$final_model -> update_inits(from_output => $final_model->outputs->[0],
-		problem_number => $prob_num);
-	$final_model -> outputfile("$fdir$fname");
-    $final_model -> set_outputfile();
-	if ($self->linearize()){
+	$final_model->update_inits(
+        from_output => $final_model->outputs->[0],
+		problem_number => $prob_num,
+    );
+	$final_model->outputfile("$fdir$fname");
+    $final_model->set_outputfile();
+	if ($self->linearize()) {
 		#set datafilename to something ok
-		$final_model -> ignore_missing_files(1);
+		$final_model->ignore_missing_files(1);
 		my $datafilename = 'derivatives_covariates.dta';
 		if ($self->update_derivatives()){
-			my $stepname='';
-			if ($self->step_number()>1){
-				$stepname = '_'.($self->step_number()-1);
-				if ($self->search_direction() eq 'forward'){
+			my $stepname = '';
+			if ($self->step_number() > 1) {
+				$stepname = '_' . ($self->step_number() - 1);
+				if ($self->search_direction() eq 'forward') {
 					$stepname .= 'f';
 				}else{
 					$stepname .= 'b';
 				}
 			}
-			$datafilename = 'derivatives_covariates'.$stepname.'.dta';
+			$datafilename = "derivatives_covariates$stepname.dta";
 		}
 
-		my @new_names = ($datafilename) x scalar(@{$final_model ->problems});
-		$final_model -> datafiles(new_names => \@new_names); #one for each $PROB
+		my @new_names = ($datafilename) x scalar(@{$final_model->problems});
+		$final_model->datafiles(new_names => \@new_names); #one for each $PROB
 
 	}else{
-		$final_model -> ignore_missing_files(1);
+		$final_model->ignore_missing_files(1);
 		#ref to all data filenames
-		my $datafilenames = $self->models()->[$model_number -1]->datafiles(absolute_path => 1);
-		$final_model -> datafiles(new_names => $datafilenames); #one for each $PROB
+		my $datafilenames = $self->models()->[$model_number - 1]->datafiles(absolute_path => 1);
+		$final_model->datafiles(new_names => $datafilenames); #one for each $PROB
 	}
-	$final_model -> _write;
+	$final_model->_write;
 
 	if ($self->linearize()){
 		#create final nonlinear model
-		my $final_nonlin = model->new ( %{common_options::restore_options(@common_options::model_options)},
-										filename => $self->final_model_directory().'original.mod',
-										ignore_missing_files => 1);
-		$final_nonlin ->filename('final_'.$self->search_direction().'_nonlinear.mod');
+		my $final_nonlin = model->new(
+            %{common_options::restore_options(@common_options::model_options)},
+            filename => $self->final_model_directory() . 'original.mod',
+            ignore_missing_files => 1
+        );
+		$final_nonlin->filename('final_' . $self->search_direction() . '_nonlinear.mod');
 		#add all included  relations
 
 		my %included_relations;
-		%included_relations = %{$self -> included_relations} if 
-		(defined $self -> included_relations);
-		foreach my $incl_par ( sort keys %included_relations ) {
-			foreach my $incl_cov ( sort keys %{$included_relations{$incl_par}} ) {
-				$self -> 
-				add_code( definition_code => $included_relations{$incl_par}{$incl_cov}{'code'},
-					nthetas         => $included_relations{$incl_par}{$incl_cov}{'nthetas'},
-					inits           => $included_relations{$incl_par}{$incl_cov}{'inits'},
-					bounds          => $included_relations{$incl_par}{$incl_cov}{'bounds'},
+		%included_relations = %{$self->included_relations} if (defined $self->included_relations);
+		foreach my $incl_par (sort keys %included_relations) {
+			foreach my $incl_cov (sort keys %{$included_relations{$incl_par}}) {
+				$self->add_code(
+                    definition_code => $included_relations{$incl_par}{$incl_cov}{'code'},
+					nthetas => $included_relations{$incl_par}{$incl_cov}{'nthetas'},
+					inits => $included_relations{$incl_par}{$incl_cov}{'inits'},
+					bounds => $included_relations{$incl_par}{$incl_cov}{'bounds'},
 					applicant_model => $final_nonlin,
-					sum_covariates  => $self->sum_covariates_hash->{$incl_par},
-					parameter       => $incl_par,
-					covariate       => $incl_cov );
+					sum_covariates => $self->sum_covariates_hash->{$incl_par},
+					parameter => $incl_par,
+					covariate => $incl_cov,
+                );
 			}
 		}
 		#update initials, from initial_estimates_model??? from where?
-		if ($self->update_derivatives()){
-			my $fb = ($self->search_direction() eq 'forward')? 'f' : 'b';
-			my $outf='scm_dir1/derivatives_updated_'.($self->step_number()).$fb.'.lst'; 
-			if (-e $outf){
-				$final_nonlin->update_inits(from_output_file => $outf,
-					problem_number => $prob_num);
-			}else{
+		if ($self->update_derivatives()) {
+			my $fb = ($self->search_direction() eq 'forward') ? 'f' : 'b';
+			my $outf = 'scm_dir1/derivatives_updated_' . ($self->step_number()) . $fb . '.lst'; 
+			if (-e $outf) {
+				$final_nonlin->update_inits(from_output_file => $outf, problem_number => $prob_num);
+			} else {
 				#print "nothing left to add? could not find $outf\n";
 				#we will also end up here if first step and nothing significant. Would liek
 				# to keep all estimates from derivatives run in that case, but ahve no way of 
 				#separating cases right now.
-				$outf='derivatives_updated_'.($self->step_number()-1).$fb.'.lst'; 
-				$outf='derivatives.lst' if ($self->step_number() == 1);
-				if (-e $outf){
-					$final_nonlin->update_inits(from_output_file => $outf,
+				$outf = 'derivatives_updated_' . ($self->step_number() - 1) . $fb . '.lst'; 
+				$outf = 'derivatives.lst' if ($self->step_number() == 1);
+				if (-e $outf) {
+					$final_nonlin->update_inits(
+                        from_output_file => $outf,
 						ignore_missing_parameters => 1,
-						problem_number => $prob_num);
-				}else{
-					my $outf2='copy_last_forward_derivatives.lst';
-					if (-e $outf2){
-						$final_nonlin->update_inits(from_output_file => $outf2,
+						problem_number => $prob_num,
+                    );
+				} else {
+					my $outf2 = 'copy_last_forward_derivatives.lst';
+					if (-e $outf2) {
+						$final_nonlin->update_inits(
+                            from_output_file => $outf2,
 							ignore_missing_parameters => 1,
-							problem_number => $prob_num);
-					}else{
+							problem_number => $prob_num,
+                        );
 					}
 				}
-				$final_nonlin -> update_inits(from_model => $final_model,
+				$final_nonlin->update_inits(
+                    from_model => $final_model,
 					ignore_missing_parameters => 1,
-					problem_number => $prob_num);
+					problem_number => $prob_num,
+                );
 			}
-
-		}else{
+		} else {
 			#if not update derivatives then first take original derivatives, ignore missing,
 			#and then final linear, by labels ,ignore missing
-			my $outf= $fdir.'../derivatives.lst'; 
-			if (-e $outf){
-				$final_nonlin->update_inits(from_output_file => $outf,
+			my $outf = $fdir . '../derivatives.lst';
+			if (-e $outf) {
+				$final_nonlin->update_inits(
+                    from_output_file => $outf,
 					ignore_missing_parameters => 1,
-					problem_number => $prob_num);
-			}else{
+					problem_number => $prob_num,
+                );
 			}
-			$final_nonlin -> update_inits(from_model => $final_model,
+			$final_nonlin->update_inits(
+                from_model => $final_model,
 				ignore_missing_parameters => 1,
-				problem_number => $prob_num);
+				problem_number => $prob_num,
+            );
 		}
-		$final_nonlin -> _write();
+		$final_nonlin->_write();
 		$final_nonlin = undef;
 	}
 
