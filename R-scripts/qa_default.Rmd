@@ -1,6 +1,6 @@
 ---
 title: "Quality assurance"
-date: '`r format(Sys.Date(), "%B %d, %Y")`'
+date: '`r format(Sys.Date())`'
 output: pdf_document # delete if html file needed and set type <- 'html'
 header-includes: #needed to create a pdf file
     - \usepackage{colortbl}
@@ -14,6 +14,7 @@ library(knitr)
 library(methods)
 library(ztable)
 library(expm)
+library(vpc)
 source(paste0(rscripts.directory, "/common/find_r_files_in_subdir.R"))
 source(paste0(rscripts.directory, "/common/iofv.R"))
 source(paste0(rscripts.directory, "/common/keep_symbols.R"))
@@ -83,7 +84,7 @@ if(fullblock_mod || boxcox_mod) {
 ```{r covariate_model_calculations,results='hide',echo=FALSE,message=FALSE}
 # 3.Covariate Models
   # 3.1.All (FREM)
-frem_table_list <- get_all_covariates(frem_directory=file.path(working.directory,"frem_run"),covariates,categorical,parameters)
+frem_table_list <- get_all_covariates(frem_directory=file.path(working.directory,"frem_run"),covariates,categorical,parameters,list_par_var_models$dofv_block)
 frem_table <- frem_table_list$frem_table
  # 3.2.Covariate (SCM)
 scm_table_list <- get_scm_table(file.path(working.directory,paste0("scm_run/raw_results_scm.csv")),
@@ -145,11 +146,11 @@ print(overview_table)
 
 ```{r draw_structural_details_tables,warning=F,message=F,echo=F,results='asis',warning=F}
 #tables for vpc plots
-obs <- vpc::read_table_nm(CWRES_table)
-extra_obs <- vpc::read_table_nm(paste0(working.directory,"/",sub('.mod.*','',model.filename),"_linbase.dta"))
+obs <- read_table_nm_with_NA(CWRES_table,delete_NA_rows = F)
+extra_obs <- read_table_nm_with_NA(paste0(working.directory,"/",sub('.mod.*','',model.filename),"_linbase.dta"),delete_NA_rows = F)
 obs <- cbind(obs,"DV"=extra_obs[,"DV"],"MDV"=extra_obs[,"MDV"])
 add_cols <- obs[,c(resmod_suffix)]
-sim <- vpc::read_table_nm(paste0(working.directory,"/simeval_run/m1/sim_res_table-1.dta"))
+sim <- read_table_nm(paste0(working.directory,"/simeval_run/m1/sim_res_table-1.dta"))
 sim <- cbind(sim,add_cols)
 
 for(i in 1:length(resmod_suffix)) {
