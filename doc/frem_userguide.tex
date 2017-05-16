@@ -672,6 +672,7 @@ Also output the parameter-eta variances conditional on no covariates.
 In addition, compute the coefficients for adjusting parameter-eta means
 conditional on knowing the covariates in each situation, and the full expressions to be used in NONMEM code
 including the covariate reference values (means) and covariate names.
+
 \item For each parameter do the following:\\
 For each covariate in turn, define a reference individual with the value of this single covariate equal to
 the reference value. For continous covariates the reference value is the observed mean, and for categorical covariates
@@ -701,7 +702,13 @@ are assumed.
 \item Runs the R scripts for frem results visualization.
 \end{enumerate}
 
-\noindent To get the postfrem output in a different format (e.g. pdf) edit the plotfrem.R script and (re-)run
+\noindent If no uncertainty information could be read postfrem try to perform the above for only one sample, the mean
+value (typical individual), so as to fall back on merely population predictions. If matrices are not positive-definite
+(which may be the case when cov step did not succeed in NONMEM), they are forced such through setting small eigenvalues
+above tolerance value. This is necessary for finding inverse through current Cholesky decomposition implementation. The
+impact of this on the results should be small.
+
+To get the postfrem output in a different format (e.g. pdf) edit the plotfrem.R script and (re-)run
 \begin{verbatim}
 R CMD BATCH plotfrem.R
 \end{verbatim}
