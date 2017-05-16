@@ -2129,10 +2129,27 @@ sub frem_conditional_variance
 
 	my $result = [];
 
+    # deep copy because cholesky is pass-by-ref
+    my $orig_matrix = [];
+    foreach my $line (@{$matrix}) {
+        my $new_line = [];
+        foreach my $val (@{$line}) {
+            push(@{$new_line}, $val);
+        }
+        push(@{$orig_matrix}, $new_line);
+    }
+
     my $err=cholesky($matrix);
     if ($err > 0){
-		print "cholesky error $err in frem\n";
-		return ($err,[]) ;
+        # try to save calculation by forcing positive-definiteness (likely small numerical problems due to lack of cov-step of NONMEM)
+		print "cholesky error $err in frem_conditional_variance, likely positive semidefinite or numerically close, forcing positive-definite matrix\n";
+        my $count;
+        ($matrix,$count) = get_symmetric_posdef($orig_matrix);
+        print "$count small eigenvalue(s) adjusted\n";
+        $err = cholesky($matrix);
+        if ($err > 0) {
+		    return ($err,[]);
+        }
     }
     my $refInv = [];
     $err = lower_triangular_identity_solve($matrix,$npar,$refInv);
@@ -2214,11 +2231,28 @@ sub frem_conditional_coefficients
 		}
 	}
 
+    # deep copy because invert_symmetric is pass-by-ref
+    my $orig_matrix = [];
+    foreach my $line (@{$matrix}) {
+        my $new_line = [];
+        foreach my $val (@{$line}) {
+            push(@{$new_line}, $val);
+        }
+        push(@{$orig_matrix}, $new_line);
+    }
+
     my $refInv = [];
     $error=invert_symmetric($matrix,$refInv);
     if ($error > 0){
-		print "invert_symmetric error $error in frem_conditional_coefficients\n";
-		return ($error,[]) ;
+        # try to save calculation by forcing positive-definiteness (likely small numerical problems due to lack of cov-step of NONMEM)
+		print "invert_symmetric error $error in frem_conditional_coefficients, likely positive semidefinite or numerically close, forcing positive-definite matrix\n";
+        my $count;
+        ($matrix,$count) = get_symmetric_posdef($orig_matrix);
+        print "$count small eigenvalue(s) adjusted\n";
+        $error = invert_symmetric($matrix, $refInv);
+        if ($error > 0) {
+		    return ($error,[]);
+        }
     }
 	#now multiply all vectors with refInv
 	my $veccount = scalar(@{$vectors});
