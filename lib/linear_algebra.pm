@@ -110,7 +110,7 @@ sub reduce_matrix
 	my $A = shift;
 	my $new_size = shift;
 	my $cur_size = scalar(@$A);
-	
+
 	for (my $row = 0; $row < $new_size; $row++) {
 		splice @{$A->[$row]}, $new_size, $cur_size - $new_size;
 	}
@@ -175,7 +175,7 @@ sub mvnpdf_cholesky
     croak("input xvectors to mvnpdf_cholesky undefined ") unless (defined $xvectors);
     croak("input xvectors to mvnpdf_cholesky is empty ") unless (scalar(@{$xvectors})>0);
     croak("input xvectors to mvnpdf_cholesky has wrong dim ".scalar(@{$xvectors->[0]})) unless ($ncol == scalar(@{$xvectors->[0]}));
-    croak("input inflation to mvnpdf_cholesky has illegal length ".scalar(@{$inflation})) unless 
+    croak("input inflation to mvnpdf_cholesky has illegal length ".scalar(@{$inflation})) unless
 		(scalar(@{$inflation}) == 0 or scalar(@{$inflation})== $ncol );
     croak("input relative to mvnpdf_cholesky is $relative") unless (($relative == 1) or ($relative==0));
 
@@ -194,9 +194,9 @@ sub mvnpdf_cholesky
 	for (my $i=0; $i< $ncol; $i++){
 		my $value = $covar_copy[$i][$i]; #pick out diagonal elements
 		unless (scalar(@{$inflation}) == 0){
-			$value = $value*sqrt($inflation->[$i]);  
+			$value = $value*sqrt($inflation->[$i]);
 		}
-		push(@arr,$value); 
+		push(@arr,$value);
 	}
 	my @sorted = sort { $a <=> $b } @arr; #sort ascending
 
@@ -213,7 +213,7 @@ sub mvnpdf_cholesky
 		for (my $j=0; $j< $ncol; $j++){
 			$diff[$j]= ($xvec->[$j] - $mu->[$j]);
 			unless (scalar(@{$inflation}) == 0){
-				$diff[$j] = $diff[$j]/(sqrt($inflation->[$j]));  
+				$diff[$j] = $diff[$j]/(sqrt($inflation->[$j]));
 			}
 		}
 		$err = linear_algebra::upper_triangular_transpose_solve(\@covar_copy,\@diff);
@@ -278,7 +278,7 @@ sub copy_and_reorder_square_matrix
 			croak("error index $usecol in order") if ($usecol >= $ncol);
 			$copy[$i][$j] = $A->[$userow][$usecol];
 		}
-	} 
+	}
 	return \@copy;
 }
 
@@ -299,7 +299,7 @@ sub is_symmetric
 }
 
 sub house
-{ 
+{
     my $xvec = shift;
     #add checking for 0 div here
     my $n=scalar(@{$xvec});
@@ -330,7 +330,7 @@ sub house
     $answer{'beta'}=$beta;
     $answer{'vvec'}=\@vvec;
     return \%answer;
-} 
+}
 
 sub full_rank
 {
@@ -359,8 +359,8 @@ sub full_rank
 }
 
 sub QR_factorize
-{ 
-    
+{
+
     #verified against matlab for small matrices
     #householder method transform
     #assume Amatrix is column format
@@ -395,15 +395,15 @@ sub QR_factorize
 			$wvec[$i]=0;
 			for (my $k=0;$k<($mrow-$j);$k++){
 				$wvec[$i] += $beta*($vvec->[$k])*$Amatrix[$col][$k+$j];
-			}      
+			}
 		}
 		#col $j gives R
 		my @rcol;
 		@rcol = @{$Amatrix[$j]}[0..($j-1)] if ($j>0);
 		push(@rcol,($Amatrix[$j][$j]-$wvec[0]*$vvec->[0]));
 		push(@{$Rmatrix},\@rcol);
-		$singular = $numerical_error if (abs($rcol[-1])< 0.0000000000001); 
-		#check that rest practically 0 
+		$singular = $numerical_error if (abs($rcol[-1])< 0.0000000000001);
+		#check that rest practically 0
 		for (my $k=1;$k<($mrow-$j);$k++){
 			my $val = $Amatrix[$j][$j+$k]-$wvec[0]*$vvec->[$k];
 			unless ( $val < 0.00001){
@@ -420,7 +420,7 @@ sub QR_factorize
     }
 
     return $singular;
-} 
+}
 
 sub cholesky_of_vector_matrix
 {
@@ -446,13 +446,13 @@ sub cook_score_parameters
 	my $ncol = scalar(@{$standard_errors});
 	return (2,[]) unless (
 		($ncol > 0) and
-		($ncol == scalar(@{$estimate_1})) and 
+		($ncol == scalar(@{$estimate_1})) and
 		($ncol == scalar(@{$estimate_2})));
 
 	my @scores=();
 	for (my $i=0; $i< $ncol; $i++){
 		push(@scores,abs($estimate_1->[$i] - $estimate_2->[$i])/$standard_errors->[$i]);
-	}	
+	}
 	return (0,\@scores);
 
 }
@@ -470,13 +470,13 @@ sub cook_score_all
 	return ($input_error,0) unless (
 		($ncol > 0) and
 		($ncol == scalar(@{$cholesky->[0]})) and
-		($ncol == scalar(@{$estimate_1})) and 
+		($ncol == scalar(@{$estimate_1})) and
 		($ncol == scalar(@{$estimate_2})));
 
 	my @diff=();
 	for (my $i=0; $i< $ncol; $i++){
 		push(@diff,($estimate_1->[$i] - $estimate_2->[$i]));
-	}	
+	}
 	my $sum_squares = 0;
 	for (my $i=0; $i< $ncol; $i++){
 		my $scalar_product=0;
@@ -502,10 +502,10 @@ sub diagonal_product
 	#hence square root of determinant of positive definite matrix is product of cholesky factor diagonal
 	my $matrix = shift;
 	my $ncol = scalar(@{$matrix});
-	
+
 	my @arr=();
 	for (my $i=0; $i< $ncol; $i++){
-		push(@arr,$matrix->[$i]->[$i]); #pick out diagonal elements; 
+		push(@arr,$matrix->[$i]->[$i]); #pick out diagonal elements;
 	}
 	my @sorted = sort { $a <=> $b } @arr; #sort ascending
 
@@ -518,7 +518,7 @@ sub diagonal_product
 
 sub cholesky_transpose
 {
-    #input is lower triangle, including diagonal, of symmetric positive definite matrix 
+    #input is lower triangle, including diagonal, of symmetric positive definite matrix
     #in *column format*, A->[col][row]
 
 	my $Aref=shift;
@@ -599,7 +599,7 @@ sub string_cholesky_block
 	my $FIX='';
 	$FIX = ' FIX' if $fix;
 	my $warnings = 0;
-	
+
 	my $letter=record_index_to_letter(index=>$record_index);
 
 	my $dimension = scalar(@{$value_matrix});
@@ -642,7 +642,7 @@ sub string_cholesky_block
 				push(@theta_inits,"$sdparam=exp($init);");
 			}
 		}else{
-			my $formatted = sprintf("%.8G",$init); 
+			my $formatted = sprintf("%.8G",$init);
 			if (($formatted == 0) and (not $fix)){
 				$formatted = '0.000001';
 			}
@@ -682,7 +682,7 @@ sub string_cholesky_block
 						push(@theta_inits,'0 FIX ; logit ('.$rho.'+1)/2 ; initial <= cutoff ');
 					}
 				}else{
-					my $formatted = sprintf("%.8G",$init); 
+					my $formatted = sprintf("%.8G",$init);
 					if (($formatted == 0) and (not $fix)){
 						$formatted = '0.000001';
 					}
@@ -758,7 +758,7 @@ sub string_cholesky_block
 					for (my $i=$j; $i<$dimension; $i++){
 						my $newvar=$par.'CH'.$sepd.$letter.$indices[$i].$indices[$j];
 						push(@code,';'.$newvar.'='.$stringmatrix->[$j][$i].$term);
-					}				
+					}
 				}
 			}
 		}
@@ -808,7 +808,7 @@ sub string_cholesky_diagonal
 	my $testing = $parm{'testing'};
 	my $bounded_theta = $parm{'bounded_theta'};
 	my $reparameterize_fix = $parm{'reparameterize_fix'};
-	
+
 	my $letter=record_index_to_letter(index=>$record_index);
 
 
@@ -910,7 +910,7 @@ sub get_inverse_parameter_list
 				$bounded_theta = 1;
 			}
 		}elsif ($line =~ /^\s*(SD|COR)_([A-Z]+)\d+\s*=EXP\(THETA\((\d+)\)/){
-			#unbounded 
+			#unbounded
 			$thetaparams{$3}=1;
 			$record_indices{record_index_to_letter(letter => $2)}=1;
 			if (defined $bounded_theta){
@@ -1052,9 +1052,9 @@ sub eta_cholesky_code
 
 sub cholesky
 {
-    #input is lower triangle, including diagonal, of symmetric positive definite matrix 
+    #input is lower triangle, including diagonal, of symmetric positive definite matrix
     #in *column format*, A->[col][row]
-    #this matrix is overwritten with lower triangular Cholesky factor (G^T) 
+    #this matrix is overwritten with lower triangular Cholesky factor (G^T)
     #Golub p144 Alg 4.2.1
     #verified with matlab
     #verified call by reference
@@ -1105,7 +1105,7 @@ sub LU_factorization
 {
 	my $A_matrix = shift;
 	my @A_temp = @{$A_matrix};
-	
+
 	#in *row format*, A->[row][col]
 	#this matrix is overwritten with L(without the identity diagonal elements) and U
 	#Golub p92 Algorithm 3.2.2
@@ -1117,7 +1117,7 @@ sub LU_factorization
 			}
 		}
 		my @A_copy = map { [@$_] } @A_temp;
-		
+
 		for (my $j = $i + 1; $j < $#A_temp + 1; $j++) {
 			my $tau = $A_temp[$j][$i] / $A_temp[$i][$i];
 			for (my $k = $i + 1; $k < $#A_temp + 1; $k++) {
@@ -1141,7 +1141,7 @@ sub get_symmetric_posdef
 
 	my $minEigen=0.0000000001;
 	my $count = count_lower(array => $eigenvalues,limit=>$minEigen);
-	
+
 	if ($count >0){
 		my ($posdef,$diff) = spdarise(matrix => $A,eigenvalues => $eigenvalues, Q => $Q, minEigen => $minEigen); #new A,frob norm diff
 		return ($posdef,$count);
@@ -1152,8 +1152,8 @@ sub get_symmetric_posdef
 
 sub spdarise
 {
-	#Takes a symmetric matrix and modify it to the symmetric positive definite 
-	#matrix with the specified minimum eigen value (probably the closest to the 
+	#Takes a symmetric matrix and modify it to the symmetric positive definite
+	#matrix with the specified minimum eigen value (probably the closest to the
 	#original matrix in Frobenius norm sense).
     my %parm = validated_hash(\@_,
 							  matrix => { isa => 'ArrayRef', optional => 0 },
@@ -1172,7 +1172,7 @@ sub spdarise
 	unless ($minEigen > 0){
 		croak("minEigen $minEigen is not > 0");
 	}
-		
+
     my @posdefmatrix = map { [@$_] } @$matrix;
     my @tempA = map { [@$_] } @$matrix;
 
@@ -1181,10 +1181,10 @@ sub spdarise
             $eigenvalues->[$index]=$minEigen;
         }
     }
-    
+
     for (my $index1 = 0; $index1 < scalar(@{$matrix}); $index1++) {
         for (my $index2 = 0; $index2 < scalar(@{$matrix}); $index2++) {
-            $tempA[$index1]->[$index2] = $Q->[$index1]->[$index2] * $eigenvalues->[$index2];        
+            $tempA[$index1]->[$index2] = $Q->[$index1]->[$index2] * $eigenvalues->[$index2];
 		}
     }
     my $fNormDiff=0;
@@ -1198,7 +1198,7 @@ sub spdarise
 			$fNormDiff=$fNormDiff+($posdefmatrix[$index1]->[$index2]-$matrix->[$index1]->[$index2])*($posdefmatrix[$index1]->[$index2]-$matrix->[$index1]->[$index2]) ;
         }
     }
-    
+
 	return(\@posdefmatrix,$fNormDiff);
 }
 
@@ -1325,7 +1325,7 @@ sub lower_triangular_identity_solve
     }
 
     #solve by forward substitution
-    for (my $i=0; $i< $nsolve; $i++){   
+    for (my $i=0; $i< $nsolve; $i++){
 	if ($i < ($nrow-1)){
 	    #right column is nonzero only for j=i
 	    return $numerical_error if ($Aref->[$i][$i] == 0);
@@ -1358,7 +1358,7 @@ sub upper_triangular_solve
     #and reference to right hand vector which will be overwritten with solution
     #solve Umat*x=b
     #algorithm Golub p 89, alg 3.1.2
-    #verified with matlab 
+    #verified with matlab
 
     my $Umat=shift;
     my $solution = shift;
@@ -1374,7 +1374,7 @@ sub upper_triangular_solve
 	$sum += ($Umat->[$j][$i])*$solution->[$j];
       }
       return $numerical_error if ($Umat->[$i][$i] == 0);
-      $solution->[$i]=($solution->[$i]-$sum)/($Umat->[$i][$i]); 
+      $solution->[$i]=($solution->[$i]-$sum)/($Umat->[$i][$i]);
     }
     return 0;
 
@@ -1406,9 +1406,9 @@ sub upper_triangular_transpose_solve
 		return $numerical_error if ($Umat->[$i][$i] == 0);
 		$solution->[$i]=($solution->[$i]-$sum)/$Umat->[$i][$i];
     }
-	
+
     return 0;
-	
+
 }
 
 sub upper_triangular_identity_solve
@@ -1497,7 +1497,7 @@ sub upper_triangular_UUT_multiply
 
 sub column_cov
 {
-    #input is reference to values matrix 
+    #input is reference to values matrix
     #in *column format*, Aref->[col][row]
     #and reference to empty result matrix
     #compute square variance covariance matrix
@@ -1538,7 +1538,7 @@ sub column_cov
 	}
 
 	#covariance
-	#here $j is always smaller than $col, meaning that mean is already computed 
+	#here $j is always smaller than $col, meaning that mean is already computed
 	for (my $j=0; $j< $col; $j++){
 	    my $sum_errors_prod=0;
 	    for (my $i=0; $i< $nrow; $i++){
@@ -1547,7 +1547,7 @@ sub column_cov
 	    unless( $sum_errors_prod == 0 ){
 		#if sum is 0 then assume all estimates 0, just ignore
 		$varcov->[$j][$col]= $sum_errors_prod/($nrow-1);
-		$varcov->[$col][$j]=$varcov->[$j][$col]; 
+		$varcov->[$col][$j]=$varcov->[$j][$col];
 	    }
 	}
 
@@ -1567,7 +1567,7 @@ sub cap_correlation
 	if (defined $capcorr){
 		return ($input_error,undef,[]) if (($capcorr > 1) or ($capcorr < 0));
 	}
-	
+
     my $nrow= scalar(@{$varcov});
     return ($input_error,undef,[]) if ($nrow < 1);
 
@@ -1677,7 +1677,7 @@ sub jackknife_inv_cholesky_mean_det
 		for (my $col=0; $col< $ncol; $col++){
 			$sum[$col] = $sum[$col] + $Aref->[$row][$col];
 		}
-	}	
+	}
     return ($input_error,undef) if ($nrow < 2);
 	for (my $col=0; $col< $ncol; $col++){
 		$mean->[$col]=$sum[$col]/$nrow;
@@ -1688,7 +1688,7 @@ sub jackknife_inv_cholesky_mean_det
 		#regular
 		$normfactor = 1/sqrt(($nrow-1)); #varcov
 	}
-	
+
 	for (my $col=0; $col< $ncol; $col++){
 		push(@centered,[]); #column format
 		my $sum_squared_errors=0;
@@ -1699,7 +1699,7 @@ sub jackknife_inv_cholesky_mean_det
 		}
 		$stderr->[$col]=sqrt($sum_squared_errors)*$normfactor;
 		$full_cov->[$col]->[$col]=$sum_squared_errors*($normfactor**2);
-	}	
+	}
 	for (my $col1=0; $col1< $ncol; $col1++){
 		for(my $col2=0; $col2<$col1; $col2++){
 			my $sum_squared_errors=0;
@@ -1712,20 +1712,20 @@ sub jackknife_inv_cholesky_mean_det
 	}
 
 	my $Rmat=[];
-			
+
 	my $err = QR_factorize(\@centered,$Rmat);
 	return ($err,undef) unless($err == 0);
 
 
 	my $det = abs(diagonal_product($Rmat))*($normfactor**$ncol);
 	return ($numerical_error,undef) unless ($det > 0);
-	my $inv_determinant = 1/$det; 
+	my $inv_determinant = 1/$det;
 
 	#inverse R
     my $refRInv = [];
     $err = upper_triangular_identity_solve($Rmat,$refRInv);
 	return ($err,undef) unless($err == 0);
-	
+
 	#refRInv is lower triang in row format. we want form for linear_algebra::cook_score_all(
 #	for (my $i=0; $i< $ncol; $i++){
 #		for (my $j=$i; $j<$ncol; $j++){
@@ -1737,18 +1737,18 @@ sub jackknife_inv_cholesky_mean_det
 			$inv_cholesky->[$row]->[$col]= ($refRInv->[$row]->[$col])/$normfactor;
 		}
 	}
-	
+
 	return (0,$inv_determinant);
 }
 
 sub row_cov
 {
-    #input is reference to values matrix 
+    #input is reference to values matrix
     #in *row format*, Aref->[row][col]
     #and reference to empty result matrix
     #compute square variance covariance matrix
     #Normalization is done with N-1, input error if N<2
-    
+
     my $Aref=shift;
     my $varcov = shift;
     my $debug=0;
@@ -1787,7 +1787,7 @@ sub row_cov
 		}
 
 		#covariance
-		#here $j is always smaller than $col, meaning that mean is already computed 
+		#here $j is always smaller than $col, meaning that mean is already computed
 		for (my $j=0; $j< $col; $j++){
 			my $sum_errors_prod=0;
 			for (my $i=0; $i< $nrow; $i++){
@@ -1796,7 +1796,7 @@ sub row_cov
 			unless( $sum_errors_prod == 0 ){
 				#if sum is 0 then assume all estimates 0, just ignore
 				$varcov->[$j][$col]= $sum_errors_prod/($nrow-1);
-				$varcov->[$col][$j]=$varcov->[$j][$col]; 
+				$varcov->[$col][$j]=$varcov->[$j][$col];
 			}
 		}
 
@@ -1807,7 +1807,7 @@ sub row_cov
 
 sub row_cov_median_mean
 {
-    #input is reference to values matrix 
+    #input is reference to values matrix
     #in *row format*, Aref->[row][col]
     #and reference to empty result matrix covariance
     #and reference to empty result array median
@@ -1819,7 +1819,7 @@ sub row_cov_median_mean
     #handle missing values: skip in all computations, adjust N in mean and normalization
     #verified with matlab cov function when no missing values.
     #verified with matlab for replacing values equal to mean with missing in a pattern when only xor missing, not both missing
-    
+
     my $Aref=shift;
     my $varcov = shift;
     my $median = shift;
@@ -1850,7 +1850,7 @@ sub row_cov_median_mean
 		for (my $row=0; $row< $nrow; $row++){
 			unless ($Aref->[$row][$col] == $missing_data_token){
 				$sum[$col] = $sum[$col] + $Aref->[$row][$col];
-				$N_array[$col] = $N_array[$col]+1; 
+				$N_array[$col] = $N_array[$col]+1;
 				push(@values,$Aref->[$row][$col]);
 			}
 		}
@@ -1872,9 +1872,9 @@ sub row_cov_median_mean
 		}
 
 		#covariance
-		#here $j is always smaller than $col, meaning that mean is already computed 
-		#how handle missing in one but not the other...? 
-		#if xor missing then add to N_local but not to sum_errors_prod. Is like assuming missin value is equal to mean, 
+		#here $j is always smaller than $col, meaning that mean is already computed
+		#how handle missing in one but not the other...?
+		#if xor missing then add to N_local but not to sum_errors_prod. Is like assuming missin value is equal to mean,
 		#which is not too bad
 		for (my $j=0; $j< $col; $j++){
 			my $sum_errors_prod=0;
@@ -1893,12 +1893,12 @@ sub row_cov_median_mean
 			unless( $sum_errors_prod == 0 ){
 				#if sum is 0 then assume all estimates 0, just ignore
 				$varcov->[$j][$col]= $sum_errors_prod/($N_local-1);
-				$varcov->[$col][$j]=$varcov->[$j][$col]; 
+				$varcov->[$col][$j]=$varcov->[$j][$col];
 			}
 		}
 
     }
-	
+
     return 0;
 }
 
@@ -1918,7 +1918,7 @@ sub get_identity_matrix
 
 sub invert_symmetric
 {
-    #input is full symmetric positive definite matrix 
+    #input is full symmetric positive definite matrix
     #this matrix will be overwritten
 	#and reference to empty result matrix
     #have unit tests
@@ -2032,11 +2032,11 @@ sub conditional_covariance_coefficients
 		$cov_index_array = [$cov_index_first .. $cov_index_last]
 	}
 	return ($error,[],[]) if ($error > 0);
-	
+
 	unless (defined $par_index_last){
 		$par_index_last = $par_index_first;
 	}
-	
+
 	my $size = scalar(@{$varcov});
 	if (($par_index_first >= $size) or ($par_index_last >= $size) or ($cov_index_first >= $size) or ($cov_index_last >= $size)){
 		print "par_index_first $par_index_first or par_index_last $par_index_last or cov_index_first $cov_index_first or ".
@@ -2071,7 +2071,7 @@ sub conditional_covariance_coefficients
 	return ($error,[],[]) if ($error > 0);
 
 	my @indices = (($par_index_first .. $par_index_last),@{$cov_index_array},);
-	
+
 	my @varcov_copy=();
 	my @parcov_vectors=();
 	my @cov_copy=();
@@ -2115,7 +2115,7 @@ sub conditional_covariance_coefficients
 															   scaling => \@local_rescale);
 
 	return ($error2,$newcovar,$coefficients);
-	
+
 }
 
 sub frem_conditional_variance
@@ -2168,7 +2168,7 @@ sub frem_conditional_variance
 		return ($err,[]) ;
     }
 
-    #fill in full matrix to avoid sorrows outside this function 
+    #fill in full matrix to avoid sorrows outside this function
     my $dim = scalar(@{$result});
     for (my $row=0; $row<$dim; $row++){
 		for (my $col=0; $col<$dim; $col++){
@@ -2177,7 +2177,7 @@ sub frem_conditional_variance
     }
 
     return (0,$result);
-	
+
 }
 
 sub frem_conditional_coefficients
@@ -2190,7 +2190,7 @@ sub frem_conditional_coefficients
 	my $matrix = $parm{'matrix'};
 	my $vectors = $parm{'vectors'};
 	my $scaling = $parm{'scaling'};
-	
+
 	my @coefficients = ();
 
 	my $size = scalar(@{$matrix});
@@ -2201,7 +2201,7 @@ sub frem_conditional_coefficients
 		for (my $k=0; $k< scalar(@{$vectors}); $k++){
 			print join(' ',@{$vectors->[$k]})."\n";
 		}
-		
+
 		$error =1;
 		return ($error,[]);
 	}
@@ -2211,7 +2211,7 @@ sub frem_conditional_coefficients
 			print "scaling dim $dim_scaling but size $size and vectors ".scalar(@{$vectors})."\n";
 			$error =1;
 			return ($error,[]);
-		}  
+		}
 	}
 
     my $refInv = [];
