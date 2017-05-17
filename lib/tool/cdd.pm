@@ -563,115 +563,6 @@ sub cook_scores_and_cov_ratios
 			\@rel_bias,\@jackknife_cook,\@jackknife_parameter_cook,$jackknife_full_cov,$sample_ofvs);
 }
 
-sub relative_estimates
-{
-	my $self = shift;
-	my %parm = validated_hash(\@_,
-		parameter => { isa => 'Str', default => 0, optional => 1 },
-		percentage => { isa => 'Bool', default => 0, optional => 1 }
-	);
-	my $parameter = $parm{'parameter'};
-	my $percentage = $parm{'percentage'};
-	my @relative_estimates;
-
-	my $accessor = $parameter.'s';
-	my @params = $self -> $accessor;
-
-	my @orig_params = $self -> $accessor( original_models => 1 );
-	for ( my $i = 0; $i < scalar @params; $i++ ) {
-		# Loop over models
-		my @mod = ();
-		for ( my $j = 0; $j < scalar @{$params[$i]}; $j++ ) {
-			# Loop over data sets
-			my @prep = ();
-			for ( my $k = 1; $k < scalar @{$params[$i]->[$j]}; $k++ ) {
-				# Loop over problems (sort of, at least)
-				my @prob = ();
-				for ( my $l = 0; $l < scalar @{$params[$i]->[$j]->[$k]}; $l++ ) {
-					# Loop over sub problems (sort of, at least)
-					my @sub = ();
-					for ( my $m = 0; $m < scalar @{$params[$i]->[$j]->[$k]->[$l]}; $m++ ) {
-						# Loop over the params
-						my @par = ();
-						for ( my $n = 0; $n < scalar @{$params[$i][$j][$k][$l][$m]}; $n++ ) {
-							my $orig = $orig_params[$i][$j][$l][$m][$n];
-							my $prep = $params[$i][$j][$k][$l][$m][$n];
-							if ( $orig != 0 ) {
-								if ( $percentage ) {
-									push( @par, ($prep/$orig*100)-100 );
-								} else {
-									push( @par, $prep/$orig );
-								}
-							} else {
-								push( @par, $PsN::out_miss_data );
-							}
-						}
-						push( @sub, \@par );
-					}
-					push( @prob, \@sub );
-				}
-				push( @prep, \@prob );
-			}
-			push( @mod, \@prep );
-		}
-		push( @relative_estimates, \@mod );
-	}
-
-	return \@relative_estimates;
-}
-
-sub relative_confidence_limits
-{
-	my $self = shift;
-	my %parm = validated_hash(\@_,
-		parameter => { isa => 'Str', default => 0, optional => 1 },
-		percentage => { isa => 'Bool', default => 0, optional => 1 }
-	);
-	my $parameter = $parm{'parameter'};
-	my $percentage = $parm{'percentage'};
-	my @relative_limits;
-
-	my @params = @{$self -> confidence_limits( class     => 'tool::llp',
-	parameter => $parameter )};
-	for ( my $i = 0; $i < scalar @params; $i++ ) {
-		# Loop over models
-		my @mod = ();
-		for ( my $j = 1; $j < scalar @{$params[$i]}; $j++ ) {
-			# Loop over data sets
-			my %num_lim;
-			my @nums = sort {$a <=> $b} keys %{$params[$i][$j]};
-			foreach my $num ( @nums ) {
-				my @prob_lim = ();
-				for ( my $n = 0; $n < scalar @{$params[$i][$j]->{$num}}; $n++ ) {
-					my @side_lim = ();
-					for ( my $o = 0; $o < scalar @{$params[$i][$j]->{$num}->[$n]}; $o++ ) {
-						# OBS: the [0] in the $j position points at the first element i.e
-						# the results of the tool run on the original model 
-						my $orig = $params[$i][0]->{$num}->[$n][$o];
-						my $prep = $params[$i][$j]->{$num}->[$n][$o];
-						print "ORIG: $orig, PREP: $prep\n";
-						if ( $orig != 0 ) {
-							if ( $percentage ) {
-								push( @side_lim, ($prep/$orig*100)-100 );
-							} else {
-								push( @side_lim, $prep/$orig );
-							}
-						} else {
-							push( @side_lim, $PsN::out_miss_data );
-						}
-					}
-					push( @prob_lim, \@side_lim );
-				}
-				$num_lim{$num} = \@prob_lim;
-			}
-			push( @mod, \%num_lim );
-		}
-		push( @relative_limits, \@mod );
-	}
-
-	return \@relative_limits;
-}
-
 sub llp_analyze
 {
 	my $self = shift;
@@ -691,7 +582,6 @@ sub modelfit_post_fork_analyze
 	my $self = shift;
 
 	my @modelfit_results = @{$self->results};
-
 }
 
 sub modelfit_results
@@ -1308,11 +1198,6 @@ sub _modelfit_raw_results_callback
 		}
 	}; 
 	return $subroutine;
-}
-
-sub print_summary
-{
-	my $self = shift;
 }
 
 sub update_raw_results
