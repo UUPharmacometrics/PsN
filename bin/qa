@@ -34,6 +34,7 @@ my %optional_options = (
     'covariates:s' => undef,
     'categorical:s' => undef,
     'parameters:s' => undef,
+    'fo!' => undef,
 );
 
 my $res = GetOptions( \%options,
@@ -124,6 +125,13 @@ $help_text{-parameters} = <<'EOF';
       A comma separated list of parameters
 EOF
 
+$help_text{-fo} = <<'EOF';
+      -fo
+
+      Set if the FO method should be used for all estimations
+      of the linearized model. Default is off.
+EOF
+
 common_options::online_help( 'qa', \%options, \%help_text, \%required_options, \%optional_options);
 common_options::setup( \%options, 'qa' ); #calls set_globals etc, initiates random sequence
 
@@ -170,6 +178,7 @@ my $qa = tool::qa->new(
     categorical => $options{'categorical'},
     parameters => $options{'parameters'},
     cmd_line => $cmd_line,
+    fo => $options{'fo'},
 );
 
 $qa->print_options(

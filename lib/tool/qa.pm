@@ -26,6 +26,7 @@ has 'occ' => ( is => 'rw', isa => 'Str', default => 'OCC' );
 has 'covariates' => ( is => 'rw', isa => 'Str' );       # A comma separated list of continuous covariate symbols
 has 'categorical' => ( is => 'rw', isa => 'Str' );       # A comma separated list of categorical covariate symbols
 has 'parameters' => ( is => 'rw', isa => 'Str' );       # A comma separated list of parameter symbols
+has 'fo' => ( is => 'rw', isa => 'Bool' );
 has 'cmd_line' => ( is => 'rw', isa => 'Str' );         # Used as a work around for calling scm via system
 
 has 'resmod_idv_table' => ( is => 'rw', isa => 'Str' ); # The table used by resmod
@@ -46,7 +47,7 @@ sub modelfit_setup
     $model_copy->phi_file($self->model->get_phi_file());
 
 	my $vers = $PsN::version;
-	my $dev =$PsN::dev;
+	my $dev = $PsN::dev;
 
     print "*** Running linearize ***\n";
     my $linearized_model_name = $self->model->filename;
@@ -65,6 +66,11 @@ sub modelfit_setup
     my $linearized_model = model->new(
         filename => $linearized_model_name,
     );
+
+    if ($self->fo) {
+        $linearized_model->remove_option(record_name => 'estimation', option_name => 'METHOD');
+        $linearized_model->_write();
+    }
 
     print "*** Running full omega block, add etas and boxcox model ***\n";
     eval {
