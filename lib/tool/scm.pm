@@ -1450,7 +1450,8 @@ sub modelfit_setup
 			copy_data => (not $self->linearize)
         );
 
-		my $mess = "Estimating base model with included_relations to get base ofv" if ($self->have_run_included);
+		my $mess = "Estimating base model";
+        $mess .= " with included_relations to get base ofv" if ($self->have_run_included);
 		if ($self->linearize) {
 			$mess = "Estimating linearized base model";
 			if ($self->step_number > 1) {
