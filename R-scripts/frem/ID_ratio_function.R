@@ -178,7 +178,9 @@ ID_ratio <- function(frem_id,covdata,pardata,file_format) {
         coord_cartesian(xlim = c(1,ncolumns + 0.5))
 
       # print out forest plot with table text
-      if (ncolumns >= 8) {
+      if (ncolumns >= 16) {
+        indiv_for_param_plots[[j]] <- arrangeGrob(p, t, ncol = 2,top = textGrob(paste0("Individuals for parameter ", parameter_names[j]), gp = gpar(fontsize=20)), widths = c(1:2))
+      } else if ((ncolumns >= 8) && (ncolumns < 16)) {
         indiv_for_param_plots[[j]] <- arrangeGrob(p, t, ncol = 2,top = textGrob(paste0("Individuals for parameter ", parameter_names[j]), gp = gpar(fontsize=20)), widths = c(2:3))
       } else {
         indiv_for_param_plots[[j]] <- arrangeGrob(p, t, ncol = 2,top = textGrob(paste0("Individuals for parameter ", parameter_names[j]), gp = gpar(fontsize=20)))
@@ -189,12 +191,10 @@ ID_ratio <- function(frem_id,covdata,pardata,file_format) {
       
     }
     return(list(plots=indiv_for_param_plots,
-                param=param,
-                files_exist=files_exist))
+                param=param))
     
   } else {
     cat("Input data files are not found! Make sore that input data files are in your working directory!")
-    return(list(files_exist=files_exist))
   }
   
 }
