@@ -146,12 +146,18 @@ print(overview_table)
 
 ```{r draw_structural_details_tables,warning=F,message=F,echo=F,results='asis',warning=F}
 #tables for vpc plots
-obs <- read_table_nm_with_NA(CWRES_table,delete_NA_rows = F)
-extra_obs <- read_table_nm_with_NA(paste0(working.directory,"/",sub('.mod.*','',model.filename),"_linbase.dta"),delete_NA_rows = F)
-obs <- cbind(obs,"DV"=extra_obs[,"DV"],"MDV"=extra_obs[,"MDV"])
-add_cols <- obs[,c(resmod_suffix)]
-sim <- read_table_nm(paste0(working.directory,"/simeval_run/m1/sim_res_table-1.dta"))
-sim <- cbind(sim,add_cols)
+make_vpc <- F
+if(file.exists(CWRES_table) && 
+   file.exists(file.path(working.directory,sub('.mod.*','',model.filename),"_linbase.dta")) &&
+   file.exists(file.path(working.directory,"simeval_run/m1/sim_res_table-1.dta"))) {
+  make_vpc <- T
+  obs <- read_table_nm_with_NA(CWRES_table,delete_NA_rows = F)
+  extra_obs <- read_table_nm_with_NA(paste0(working.directory,"/",sub('.mod.*','',model.filename),"_linbase.dta"),delete_NA_rows = F)
+  obs <- cbind(obs,"DV"=extra_obs[,"DV"],"MDV"=extra_obs[,"MDV"])
+  add_cols <- obs[,c(resmod_suffix)]
+  sim <- read_table_nm(paste0(working.directory,"/simeval_run/m1/sim_res_table-1.dta"))
+  sim <- cbind(sim,add_cols)
+}
 
 for(i in 1:length(resmod_suffix)) {
   cat(resmod_suffix[i])
@@ -165,10 +171,12 @@ for(i in 1:length(resmod_suffix)) {
   shift_tab <- resmod_structural_details[[i]]$table
   idv_plot <- plot_ipred(shift_tab,resmod_suffix[i])
   print(idv_plot)
-  cat("\n\n")
-  #vpc plots
-  vpc_plot <- plot_structural_vpc(obs,sim,shift_tab,idv=resmod_suffix[i])
-  print(vpc_plot)
+  if(make_vpc) {
+    cat("\n\n")
+    #vpc plots
+    vpc_plot <- plot_structural_vpc(obs,sim,shift_tab,idv=resmod_suffix[i])
+    print(vpc_plot)
+  }
   cat("\n\\newpage\n")
 }
 ```
