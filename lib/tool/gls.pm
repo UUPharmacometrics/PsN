@@ -733,6 +733,12 @@ sub modelfit_setup
 	my $found_W;
 	my $i = 0;
 	for ( @code ) {
+        if (/^\s*\(/ && /\)\s*$/ or /^\s*CALLFL\s*=/ or /^\s*COMRES\s*=/) {
+            # found pseudo-assignment statement: (..) or CALLFL=.. or COMRES=..
+            # put this before GLS code block, nonmem will crash if not first
+            unshift(@newcode,$_);
+            next;
+        }
 		if ( /^\s*W\s*=/) {
 			if ( /^\s*W\s*=\s*SQRT\(/ and /IPRED/) {
 				$found_W = $i;
