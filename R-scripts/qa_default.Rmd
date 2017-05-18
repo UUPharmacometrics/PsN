@@ -6,6 +6,7 @@ header-includes: #needed to create a pdf file
     - \usepackage{colortbl}
     - \usepackage{longtable}
 geometry: margin=1.5cm
+classoption: a4paper
 ---
 
 ```{r loading_libraries_and_sourcing_functions,include = FALSE}
@@ -221,7 +222,7 @@ covariates_extra_table <- ztable_sub(covariates_extra_table,type=type,colnames.b
 print(covariates_extra_table)
 ```
 
-```{r draw_frem_plots,echo=F,message=F,warning=F,results='asis',fig.width=11,fig.height=15,fig.keep="high",fig.align="center"}
+```{r draw_frem_plots,echo=F,message=F,warning=F,results='asis',fig.width=11,fig.height=16,fig.keep="high",fig.align="center"}
 if((file.exists(paste0(working.directory,"/postfrem_run/frem_ratio.csv")) || 
    file.exists(paste0(working.directory,"/postfrem_run/frem_id_ratios.csv"))) && 
    file.exists(paste0(working.directory,"/postfrem_run/covdata.csv")) &&
