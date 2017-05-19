@@ -96,6 +96,7 @@ has 'short_logfile' => ( is => 'rw', isa => 'ArrayRef[Str]', default => sub { ['
 has 'from_linearize' => ( is => 'rw', isa => 'Bool', default => 0 );    # Was the scm-object created by linearize?
 has 'original_nonlinear_model' => ( is => 'rw', isa => 'model' );       # If linearizing this will be the real original model
 has 'keep_covariance' => ( is => 'rw', isa => 'Bool', default => 0 );
+has 'estimate_fo' => ( is => 'rw', isa => 'Bool', default => 0 );   # If linearizing use FO to estimate the linearized model
 
 sub BUILD
 {
@@ -2147,11 +2148,11 @@ sub linearize_setup
 			push(@eststrings, 'MCETA=' . $mceta);
 		}
 
-		if ($self->epsilon() or $self->error eq 'propadd' or $self->error eq 'prop'
-				or $self->error eq 'exp' or $self->error eq 'user'){
-			push(@eststrings,'METHOD=COND','INTERACTION');
-		}else{
-			push(@eststrings,'METHOD=ZERO');
+		if (not $self->estimate_fo and ($self->epsilon() or $self->error eq 'propadd' or $self->error eq 'prop'
+				or $self->error eq 'exp' or $self->error eq 'user')) {
+			push(@eststrings, 'METHOD=COND', 'INTERACTION');
+		} else {
+			push(@eststrings, 'METHOD=ZERO');
 		}
 		push(@eststrings,$self->format) if (defined $self->format());
 		if ($self->noabort()){

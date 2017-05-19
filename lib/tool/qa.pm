@@ -26,7 +26,7 @@ has 'occ' => ( is => 'rw', isa => 'Str', default => 'OCC' );
 has 'covariates' => ( is => 'rw', isa => 'Str' );       # A comma separated list of continuous covariate symbols
 has 'categorical' => ( is => 'rw', isa => 'Str' );       # A comma separated list of categorical covariate symbols
 has 'parameters' => ( is => 'rw', isa => 'Str' );       # A comma separated list of parameter symbols
-has 'fo' => ( is => 'rw', isa => 'Bool' );
+has 'fo' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'cmd_line' => ( is => 'rw', isa => 'Str' );         # Used as a work around for calling scm via system
 
 has 'resmod_idv_table' => ( is => 'rw', isa => 'Str' ); # The table used by resmod
@@ -57,6 +57,7 @@ sub modelfit_setup
         %{common_options::restore_options(@common_options::tool_options)},
         models => [ $model_copy ],
         directory => 'linearize_run',
+        estimate_fo => $self->fo, 
     );
 
     $linearize->run();
@@ -67,10 +68,10 @@ sub modelfit_setup
         filename => $linearized_model_name,
     );
 
-    if ($self->fo) {
-        $linearized_model->remove_option(record_name => 'estimation', option_name => 'METHOD');
-        $linearized_model->_write();
-    }
+    #if ($self->fo) {
+    #    $linearized_model->remove_option(record_name => 'estimation', option_name => 'METHOD');
+    #    $linearized_model->_write();
+    #}
 
     print "*** Running full omega block, add etas and boxcox model ***\n";
     eval {
