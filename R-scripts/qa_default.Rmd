@@ -52,14 +52,14 @@ for (i in 1:length(rscript)) {
 }
 
 #which resmod_ folders are in the working directory
-resmod_suffix <- which_resmod_folders(directory=working.directory)
+idv_all <- which_resmod_folders(directory=working.directory)
 ```
 
 ```{r structural_model_calculations,results='hide',echo=FALSE,message=FALSE}
 # 1.Structural models
-structural_overview <- get_structural_overview_table(working.directory,idv=resmod_suffix,groups)
+structural_overview <- get_structural_overview_table(working.directory,idv=idv_all,groups)
 # get resmod structural details tables
-resmod_structural_details <- resmod_structural_details_tables(working.directory,model.directory,model.filename,CWRES_table,resmod_suffix,idv_name)
+resmod_structural_details <- resmod_structural_details_tables(working.directory,model.directory,model.filename,CWRES_table,idv_all,idv_name)
 ```
 
 ```{r parameter_model_calculations,results='hide',echo=FALSE,message=FALSE}
@@ -149,19 +149,19 @@ print(overview_table)
 #tables for vpc plots
 make_vpc <- F
 if(file.exists(CWRES_table) && 
-   file.exists(file.path(working.directory,sub('.mod.*','',model.filename),"_linbase.dta")) &&
-   file.exists(file.path(working.directory,"simeval_run/m1/sim_res_table-1.dta"))) {
+   file.exists(paste0(working.directory,"/",sub('.mod.*','',model.filename),"_linbase.dta")) &&
+   file.exists(paste0(working.directory,"/simeval_run/m1/sim_res_table-1.dta"))) {
   make_vpc <- T
   obs <- read_table_nm_with_NA(CWRES_table,delete_NA_rows = F)
   extra_obs <- read_table_nm_with_NA(paste0(working.directory,"/",sub('.mod.*','',model.filename),"_linbase.dta"),delete_NA_rows = F)
   obs <- cbind(obs,"DV"=extra_obs[,"DV"],"MDV"=extra_obs[,"MDV"])
-  add_cols <- obs[,c(resmod_suffix)]
+  add_cols <- obs[,c(idv_all)]
   sim <- read_table_nm(paste0(working.directory,"/simeval_run/m1/sim_res_table-1.dta"))
   sim <- cbind(sim,add_cols)
 }
 
-for(i in 1:length(resmod_suffix)) {
-  cat(resmod_suffix[i])
+for(i in 1:length(idv_all)) {
+  cat(idv_all[i])
   first_table <- keep_symbols(resmod_structural_details[[i]]$first_table,type)
   first_table <- ztable_sub(first_table,type=type,include.colnames = F,include.rownames = F,longtable = T,align="lr")
   print(first_table)
@@ -170,12 +170,12 @@ for(i in 1:length(resmod_suffix)) {
   second_table <- addcgroup(second_table,cgroup=c("","Estimated bias"),n.cgroup=c(1,2))
   print(second_table)
   shift_tab <- resmod_structural_details[[i]]$table
-  idv_plot <- plot_ipred(shift_tab,resmod_suffix[i])
+  idv_plot <- plot_ipred(shift_tab,idv_all[i])
   print(idv_plot)
   if(make_vpc) {
     cat("\n\n")
     #vpc plots
-    vpc_plot <- plot_structural_vpc(obs,sim,shift_tab,idv=resmod_suffix[i])
+    vpc_plot <- plot_structural_vpc(obs,sim,shift_tab,idv=idv_all[i])
     print(vpc_plot)
   }
   cat("\n\\newpage\n")
