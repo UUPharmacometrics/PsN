@@ -167,11 +167,16 @@ sub modelfit_setup
                     }
                 }
             }
+            my $fo = "";
+            if ($self->fo) {
+                $fo = "-estimate_fo";
+            }
+
             eval {
 				if($dev) {
-					system("scm config.scm $scm_options");       # FIXME: system for now
+					system("scm config.scm $scm_options $fo");       # FIXME: system for now
 				} else {
-					system("scm-".$vers." config.scm $scm_options");       # FIXME: system for now
+					system("scm-".$vers." config.scm $scm_options $fo");       # FIXME: system for now
 				}
             };
             $self->_to_qa_dir();
