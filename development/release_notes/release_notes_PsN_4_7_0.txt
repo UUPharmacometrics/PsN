@@ -89,6 +89,8 @@ A new recommended but not required Perl library for runrecord: YAML::Tiny
   If set, PsN will exit with an error if NONMEM crashes, or an estimation/evaluation fails to
   produce an ofv, or a simulation gives a typical error message in the lst-file.
 - Option -standardised_output was renamed to -so
+- New option -rmarkdown. If -rplots>0, some tools by default will create an Rmarkdown file. 
+  To create R file instead of Rmarkdown file, use -no-rmakdown.
 
 
    ___NONMEM output parsing___
@@ -128,6 +130,7 @@ A new recommended but not required Perl library for runrecord: YAML::Tiny
 
 - New option -boxcox to automatically boxcox transform all ETAs before running the model
 - New option -etas to automatically add eta starting values from the previous phi-file
+- If -rplots>0, by default Rmarkdown file will be created.
 
 
    ___runrecord___
@@ -168,6 +171,7 @@ New features implemented by William S. Denney of Human Predictions:
 - Print a warning message if the number of individuals in the data set is different from the number
   of individuals NONMEM printed in the original run lst-file.
 - New file 'all_individuals1.csv' contains a list of all individuals of the original dataset.
+- If -rplots>0, by default Rmarkdown file will be created.
 
 
    ___vpc/npc___
@@ -176,7 +180,8 @@ New features implemented by William S. Denney of Human Predictions:
 - Refactored input checking.
 - Fix bug causing warnings to be emitted when having '.' in DV column of original table.
   The warnings came from the calculation of the diagnostic False Pos. It is now defined that
-  such observations can neither be false positives nor false negatives
+  such observations can neither be false positives nor false negatives.
+- If -rplots>0, by default Rmarkdown file will be created.
 
 
    ___frem___
@@ -222,6 +227,7 @@ New features implemented by William S. Denney of Human Predictions:
   parameterizations from -100000 to -100.
 - Removed special use of common option -abort_on_fail.
 - Bugfix: If -model was given on command line but not in config file PsN would crash.
+- If -rplots>0, by default Rmarkdown file will be created.
 
    ___linearize___
 - bug fix option time-varying: handle PRED models without MDV in $INPUT
@@ -249,24 +255,25 @@ New features implemented by William S. Denney of Human Predictions:
 
    ___simeval___
 
--  Bug fix: Skip computations on residuals if CWRES is zero.
--  Handle ID:s without observations, sporadic zero-valued EBE:s
--  New rplots
--  Possibility to rerun the post processing without rerunning NONMEM by using -dir
--  New option -dv for DV vs PRED plot
+- Bug fix: Skip computations on residuals if CWRES is zero.
+- Handle ID:s without observations, sporadic zero-valued EBE:s
+- New rplots
+- If -rplots>0, by default Rmarkdown file will be created.
+- Possibility to rerun the post processing without rerunning NONMEM by using -dir
+- New option -dv for DV vs PRED plot
 
 
    ___update_inits___
 
--  New options -rawres_input, -in_filter, -offset_rawres to read parameter estimates from a raw results file.
--  New option -etas to add $ETAS and MCETA=1 to the model file using the phi-file
--  Bug fix: renumber MSFO=file in $NONPARAMETRIC
+- New options -rawres_input, -in_filter, -offset_rawres to read parameter estimates from a raw results file.
+- New option -etas to add $ETAS and MCETA=1 to the model file using the phi-file
+- Bug fix: renumber MSFO=file in $NONPARAMETRIC
 
 
    ___parallel_retries___
 
--  New option -update_fix, default false. Only for use in combination with -rawres_input.
-   Update parameters that are FIXED.
+- New option -update_fix, default false. Only for use in combination with -rawres_input.
+  Update parameters that are FIXED.
 
 
    ___sir___
@@ -293,6 +300,8 @@ New features implemented by William S. Denney of Human Predictions:
 - changed directory name prefix for cross-validation sub-directory (if
   option -xv is set) from modelfit to crossval.
 - ID is now default for the case_column option
+- New rplots added.
+- If -rplots>0, by default Rmarkdown file will be created.
 
 
  ___rplots___
