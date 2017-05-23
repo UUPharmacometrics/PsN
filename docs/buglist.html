@@ -19,9 +19,9 @@
 
 <h2 class="heading1">Buglist</h2>
 <p>The most common source of errors are problems with psn.conf. Instructions about how to make correct settings can be found in 
-<a href='https://github.com/UUPharmacometrics/PsN/releases/download/v4.6.0/psn_configuration.pdf'>PsN configuration.pdf</a>.</p>
+<a href='https://github.com/UUPharmacometrics/PsN/releases/download/v4.7.0/psn_configuration.pdf'>PsN configuration.pdf</a>.</p>
 <p> Like all software, PsN has bugs. Some unfixed bugs and known workarounds can be found in the document 
-<a href='https://github.com/UUPharmacometrics/PsN/releases/download/v4.6.0/known_bugs_and_workarounds.pdf'>Known bugs and workarounds.pdf</a>. 
+<a href='https://github.com/UUPharmacometrics/PsN/releases/download/v4.7.0/known_bugs_and_workarounds.pdf'>Known bugs and workarounds.pdf</a>. 
 Please help us to get better by letting us know about undocumented errors or problems.</p>
 <p>
 The best way to submit a bug is to send an e-mail to <a href="mailto:psn-general@lists.sourceforge.net">psn-general@lists.sourceforge.net</a> 
@@ -36,12 +36,9 @@ list. Do not send model files and data files unless we ask you to.</p>
 
 <h3>Known bugs in current release </h3>
 
-This list holds information about bugs found in PsN 4.6.0
+This list holds information about bugs found in PsN 4.7.0
 
 <ul>
-	<li>bias and relative bias in cdd_results.csv are incorrect when option -bins is not set. To get the correct bias value, the displayed values should be multiplied with (1- 'default number of bins') 
-	where the default number of bins is the number of individuals (or cases).</li>
-
 	<li>sse will use the wrong simulated data for reestimation if the simulation model file has more than one $INPUT statement. The table file with simulated data used for reestimation will only include 
 	the items from the last $INPUT. Note: It works fine to split $INPUT over several lines, as long as the text $INPUT only appears once.</li>
 
@@ -53,12 +50,6 @@ This list holds information about bugs found in PsN 4.6.0
 	<li>Lower case user defined and reserved words
     Starting with NONMEM 7.2 lower case user defined and reserved words are supported. This is not supported
     by PsN. For example in $INPUT all reserved words have to be upper case.</li>
-
-	<li>
-		Dropped covariates in scm can cause scm results to be invalid. If the column of a covariate is set to DROP in $INPUT and the covariate
-		is set to be investigated by the scm the results cannot be trusted and PsN will not give any warnings or errors. The workaround is to make sure
-		that no covariates that are being used by the scm are set to DROP. The bug was fixed in development release 4.6.6.
-	</li>
 </ul>
 
          </div>

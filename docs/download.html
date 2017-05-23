@@ -39,19 +39,19 @@ Mac users need to read <a href="install_4_6_0_mac.txt" target="_blank">install P
 <table class="downloads">
   <tbody>
     <tr>
-      <th colspan="3" style="text-align:left;">Latest release PsN 4.6.0</th>
+      <th colspan="3" style="text-align:left;">Latest release PsN 4.7.0</th>
     </tr>
     <tr>
-        <td style="text-align:left;"> <i>2016-05-23</i>
-<p>Please see the <a href="https://raw.githubusercontent.com/UUPharmacometrics/PsN/master/development/release_notes/release_notes_PsN_4_6_0.txt">release notes 4.6.0</a> for details. </td>
+        <td style="text-align:left;"> <i>2017-05-23</i>
+<p>Please see the <a href="https://raw.githubusercontent.com/UUPharmacometrics/PsN/master/development/release_notes/release_notes_PsN_4_7_0.txt">release notes 4.7.0</a> for details. </td>
            
         </td>
 	<p>
     </tr>
     <tr>
         <td style="text-align:left;">
-            <a href="https://github.com/UUPharmacometrics/PsN/releases/download/v4.6.0/PsN-4.6.0.zip">PsN 4.6.0.zip</a><p>
-            <a href="https://github.com/UUPharmacometrics/PsN/releases/download/v4.6.0/PsN-4.6.0.tar.gz">PsN 4.6.0.tar.gz</a><p>
+            <a href="https://github.com/UUPharmacometrics/PsN/releases/download/4.7.0/PsN-4.7.0.zip">PsN 4.7.0.zip</a><p>
+            <a href="https://github.com/UUPharmacometrics/PsN/releases/download/4.7.0/PsN-4.7.0.tar.gz">PsN 4.7.0.tar.gz</a><p>
         </td>
       </tr>
    </tbody>
@@ -64,8 +64,17 @@ Mac users need to read <a href="install_4_6_0_mac.txt" target="_blank">install P
 	<tbody>
     <tr>
       <th colspan="3" style="text-align:left;">Older releases</th>
-		</tr>
+	</tr>
     <tr>
+        <td style="text-align:left;"> 
+            PsN 4.6.0
+        </td>
+	<td rowspan="2" width="70%">Please see the <a href="https://raw.githubusercontent.com/UUPharmacometrics/PsN/master/development/release_notes/release_notes_PsN_4_6_0.txt" target="_blank">release notes 4.6.0</a> for details. </td>
+        <td rowspan="2">2016-05-23</td>
+    </tr>
+
+   
+        <tr>
         <td style="text-align:left;"> 
             PsN 4.4.8
         </td>
@@ -341,16 +350,16 @@ Mac users need to read <a href="install_4_6_0_mac.txt" target="_blank">install P
 The development version of PsN is available from the <a target="_blank"
 href="https://github.com/UUPharmacometrics/PsN">GitHub repository</a>.
 Remember that stability is not guaranteed for the development version - it might
-be broken and it might break at any time in the future. See the <a href="https://github.com/UUPharmacometrics/PsN/releases/download/v4.6.0/developers_guide.pdf">Developer's guide.pdf</a>
+be broken and it might break at any time in the future. See the <a href="https://github.com/UUPharmacometrics/PsN/releases/download/4.7.0/developers_guide.pdf">Developer's guide.pdf</a>
 for more information on how to install from the git repository.</p>
 <h3 class="heading1">Compatibility<br> </h3>
 <p><strong>Grid/Cluster support:</strong> PsN has built-in functionality for submitting 
 the NONMEM runs to SGE, Slurm, LSF, ud and torque.
-<a href="https://github.com/UUPharmacometrics/PsN/releases/download/v4.6.0/common_options.pdf" target="_blank">See documentation</a>.
+<a href="https://github.com/UUPharmacometrics/PsN/releases/download/4.7.0/common_options.pdf" target="_blank">See documentation</a>.
 The PsN test suite has been run on slurm and locally.
 </p>
 
-<p><strong>Platforms:</strong> PsN-4.6.0 is tested on the systems listed below.</p>
+<p><strong>Platforms:</strong> PsN-4.7.0 is tested on the systems listed below.</p>
 <table>
   <tr>
     <th>Platform</th>
@@ -362,93 +371,65 @@ The PsN test suite has been run on slurm and locally.
   <tr>
     <th>Microsoft Windows</th>
     <td>10 64-bit</td>
-    <td>Strawberry Perl 5.22.1</td>
-    <td>7.2.0, 7.3.0</td>
+    <td>Strawberry Perl 5.24.0</td>
+    <td>7.1.0, 7.1.2, 7.2.0, 7.3.0 and 7.4.0</td>
     <td>gfortran 4.9.2</td>
   </tr>
   <tr>
     <th>Microsoft Windows</th>
     <td>7 64-bit</td>
-    <td>ActiveState Perl 5.20.1 (32-bit)</td>
-    <td>7.3.0</td>
-    <td>gfortran 4.8.1</td>
-  </tr>
-  <tr>
-    <th>Microsoft Windows</th>
-    <td>7 64-bit</td>
-    <td>ActiveState Perl 5.16.3 (32-bit)</td>
-    <td>7.3.0</td>
-    <td>gfortran 4.6.0</td>
-  </tr>
-  <tr>
-    <th>Microsoft Windows</th>
-    <td>7 64-bit</td>
     <td>Strawberry Perl 5.18.2</td>
-    <td>7.2.0, 7.3.0</td>
+    <td>7.2.0 and 7.3.0</td>
     <td>gfortran 4.7.3</td>
   </tr>
   <tr>
     <th>Microsoft Windows</th>
-    <td>XP 32-bit</td>
-    <td>ActiveState Perl 5.16.3</td>
-    <td>7.1.0, 7.1.2, 7.2.0</td>
+    <td>7 64-bit</td>
+    <td>Strawberry Perl 5.24.1</td>
+    <td>7.4.0</td>
+    <td>gfortran 4.9.2</td>
+  </tr>
+  <tr>
+    <th>Microsoft Windows</th>
+    <td>7 64-bit</td>
+    <td>Active Perl 5.16.3 (32-bit)</td>
+    <td>7.3.0</td>
     <td>gfortran 4.6.0</td>
   </tr>
   <tr>
     <th>Mac</th>
-    <td>OS X 10.11.4</td>
-    <td>Perl 5.18.2</td>
-    <td>7.3.0</td>
-    <td>gfortran 5.2.0</td>
-  </tr>
-  <tr>
-    <th>Mac</th>
     <td>OS X 10.6.6</td>
     <td>ActiveState Perl 5.16.3</td>
-    <td>7.3.0</td>
-    <td>gfortran 4.6.2</td>
-  </tr>
-  <tr>
-    <th>Mac</th>
-    <td>OS X 10.6.6</td>
-    <td>ActiveState Perl 5.16.3</td>
-    <td>7.2.0, 7.3.0</td>
+    <td>7.2.0, 7.3.0 and 7.4.0</td>
     <td>ifort 12.0.0</td>
   </tr>
   <tr>
-    <th >Linux</th>
-    <td >Ubuntu 15.10</td>
-    <td >5.20.2</td>
-    <td>7.2.0, 7.3.0</td>
-    <td>gfortran 5.2.1</td>
+    <th>Linux</th>
+    <td>Ubuntu 16.10</td>
+    <td>5.22</td>
+    <td>7.2.0, 7.3.0 and 7.4.0</td>
+    <td>gfortran 6.2</td>
   </tr>
   <tr>
-    <th >Linux</th>
-    <td >Fedora 20</td>
-    <td >5.18.2</td>
+    <th>Linux</th>
+    <td>Scientific Linux 6.3</td>
+    <td>5.10.1</td>
     <td>7.2.0</td>
-    <td>gfortran 4.8.2</td>
-  </tr>
-  <tr>
-    <th >Linux</th>
-    <td >Scientific Linux 6.3</td>
-    <td >5.10.1</td>
-    <td>7.2.0, 7.3.0</td>
     <td>gfortran 4.4.7</td>
   </tr>
   <tr>
-    <th >Linux</th>
-    <td >Scientific Linux 6.3</td>
-    <td >5.10.1</td>
-    <td>7.3.0</td>
+    <th>Linux</th>
+    <td>Scientific Linux 6.3</td>
+    <td>5.10.1</td>
+    <td>7.3.0 and 7.4.0</td>
     <td>gfortran 5.1.1</td>
   </tr>
   <tr>
-    <th >Linux</th>
-    <td >CentOS 6.5</td>
-    <td >5.10.1</td>
-    <td>7.1.0, 7.1.2, 7.3.0</td>
-    <td>gfortran 4.4.7</td>
+    <th>Linux</th>
+    <td>CentOS 7</td>
+    <td>5.16.1</td>
+    <td>7.3.0 and 7.4.0</td>
+    <td>gfortran 4.8.5</td>
   </tr>
 </table>
      
