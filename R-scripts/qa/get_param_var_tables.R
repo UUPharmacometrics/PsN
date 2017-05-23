@@ -24,7 +24,7 @@ get_param_var_tables <- function(directory) {
       }
     } else {
       dofv_block <- NA
-      add.par_block <- NA
+      add.par_block <- ''
     }
 
 
@@ -46,7 +46,7 @@ get_param_var_tables <- function(directory) {
       }
     } else {
       dofv_box <- NA
-      add.par_box <- NA
+      add.par_box <- ''
     }
         
     # additional etas
@@ -64,7 +64,7 @@ get_param_var_tables <- function(directory) {
       }
     } else {
       dofv_additional_eta <- NA
-      add.par_additional_eta <- NA
+      add.par_additional_eta <- ''
     }
 
     
