@@ -43,6 +43,7 @@ has 'iteration' => ( is => 'rw', isa => 'Int', default => 0 );      # Number of 
 has 'iteration_summary' => ( is => 'rw', isa => 'ArrayRef[ArrayRef]', default => sub { [ [] ] } );  # [iteration]->[modelnumber if multiple in one iter]->{dvid}->{'model_name', 'dOFV'
 has 'base_sum' => ( is => 'rw', isa => 'ArrayRef', default => sub { [] } );     # Sum of all base models for each DVID
 has 'table_file' => ( is => 'rw', isa => 'Str' );   # The name of the table file that was used
+has 'negative_ipred' => ( is => 'rw', isa => 'Bool', default => 0 );
 
 sub BUILD
 {
@@ -84,6 +85,16 @@ sub BUILD
             $self->unique_dvid(['NA']);
             $self->numdvid(1);
         }
+
+        my $have_ipred = grep { $_ eq 'IPRED' } @columns_in_table;
+        if ($have_ipred) {
+            my $ipred_column = $table->tables->[0]->header->{'IPRED'};
+            my $min_ipred = array::min($table->tables->[0]->columns->[$ipred_column]);
+            if ($min_ipred < 0) {
+                $self->negative_ipred(1);
+                print "Negative IPRED values: not running power and dtbs models\n";
+            }
+        }
     }
 }
 
@@ -113,6 +124,7 @@ sub modelfit_setup
                 base_sum => $self->base_sum,
                 max_iterations => $self->max_iterations,
                 table => $self->table,
+                negative_ipred => $self->negative_ipred,
             );
             $resmod->run();
         }
@@ -167,6 +179,7 @@ sub modelfit_setup
         );
         next if ($model_properties->{'need_time'} and not $have_time);
         next if ($model_properties->{'need_ipred'} and not $have_ipred);
+        next if ($model_properties->{'need_ipred'} and $self->negative_ipred);
         next if ($model_properties->{'need_occ'} and not $have_occ);
 
         my $accept = "";
@@ -407,6 +420,7 @@ sub modelfit_analyze
             base_sum => $self->base_sum,
             max_iterations => $self->max_iterations,
             table => $self->table,
+            negative_ipred => $self->negative_ipred,
         );
         $resmod->run();
     }
