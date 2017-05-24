@@ -132,6 +132,20 @@ sub format_filename
 	return $string;
 }
 
+sub remove_ignore_accept
+{
+    # Remove all IGNORE=() and ACCEPT=() statements
+    my $self = shift;
+
+    my @options;
+    for my $option (@{$self->options}) {
+        if ($option->name !~ /^(IGNORE|IGNOR|IGNO|IGN|ACCEPT|ACCEP|ACCE|ACC)/) {
+            push @options, $option;
+        }
+    }
+    $self->options(\@options);
+}
+
 sub _format_record
 {
 	my $self = shift;

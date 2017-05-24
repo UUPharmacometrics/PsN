@@ -2652,6 +2652,9 @@ sub linearize_setup
 		}
 	} #end if first step or update derivatives
 
+    # Remove IGN or ACC in $DATA. Might crash future runs
+    $original_model->problems->[0]->datas->[0]->remove_ignore_accept();
+
 	return $original_model;
 }
 
