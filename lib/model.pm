@@ -4754,7 +4754,7 @@ sub _read_problems
 	my $warning_printed = 0;
 	my $prev_was_not_sizes = 1;
 
-
+    my @shrinkage_modules;
 	my %internal_msfo_files=(); #hash of filename and problem number, numbering starts at 1
 	
 	# It may look like the loop takes one step to much, but its a
@@ -4799,6 +4799,7 @@ sub _read_problems
 					nomegas => $self->nomegas->[0],
 					directory => $self->directory,
 					problem_number => $problem_number );
+                push @shrinkage_modules, $sh_mod;
 
 				my $prob = model::problem -> new (
 					directory                   => $self->directory,
@@ -4861,6 +4862,9 @@ sub _read_problems
 			"Could not find any problem in modelfile $file");
 	}
 	$self -> problems(\@problems);
+    for my $module (@shrinkage_modules) {   # Need to set nomegas after parsing problems for shrinkage_modules
+        $module->nomegas($self->nomegas->[0]);
+    }
 }
 
 sub _get_option_val_pos
