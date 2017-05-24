@@ -210,3 +210,8 @@ merge_firstonly <- function(x, quiet) {
 msg <- function(txt, quiet = TRUE) {
   if (!quiet) message(txt)
 }
+
+# Reports whether x is a nm.table.list object
+is.nm.table.list <- function(x) {
+  inherits(x, 'nm_table_list')
+}
