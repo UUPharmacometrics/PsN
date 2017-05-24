@@ -269,7 +269,11 @@ my $model = model->new(
 );
 
 if (scalar(@{$model->problems}) != 1) {
-	die("Precond can only handle modelfiles with exactly one problem");
+	die("Precond can only handle modelfiles with exactly one problem\n");
+}
+
+if (not defined $model->problems->[0]->thetas or scalar(@{$model->problems->[0]->thetas}) == 0) {
+    die("Precond can only precondition models that have thetas\n");
 }
 
 my @precMatrix;
