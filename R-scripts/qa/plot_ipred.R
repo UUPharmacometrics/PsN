@@ -5,7 +5,7 @@ plot_ipred <- function(table,idv) {
     geom_line()+
     geom_point(color="darkred")+
     xlab(toupper(idv))+
-    ylab("Estimated bias (%IPRED)")+
+    ylab("Estimated bias (%CPRED)")+
     theme_bw()
   
   return(ipred_plot)
