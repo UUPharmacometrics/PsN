@@ -71,40 +71,38 @@ sub BUILD
 		}
 	}
 
-
 	$self->options(\@keep_opts);
-
 }
+
 sub get_absolute_filename
 {
 	my $self = shift;
 	return File::Spec->catfile($self->get_directory,$self->get_filename);
-
 }
+
 sub set_filename
 {
 	#setting filename 
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-							  filename => { isa => 'Str', optional => 0 },
-							  directory => { isa => 'Maybe[Str]', optional => 1 }
-		);
+        filename => { isa => 'Str', optional => 0 },
+        directory => { isa => 'Maybe[Str]', optional => 1 }
+    );
 	my $filename = $parm{'filename'};
 	my $directory = $parm{'directory'};
 
 	my ($dir,$file) = OSspecific::absolute_path($directory,$filename);
 	$self->_set_filename($file);
 	$self->_set_directory($dir);
-	
 }
 
 sub format_filename
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-							  write_directory => { isa => 'Str', optional => 0 },
-							  relative_data_path => { isa => 'Bool', optional => 0 }
-		);
+        write_directory => { isa => 'Str', optional => 0 },
+        relative_data_path => { isa => 'Bool', optional => 0 }
+    );
 	my $write_directory = $parm{'write_directory'};
 	my $relative_data_path = $parm{'relative_data_path'};
 	my $string;
@@ -118,7 +116,6 @@ sub format_filename
 			#abs2 rel does not give / or \, catfile adds it
 			$string = File::Spec->catfile($path,$self->get_filename);
 		}
-#		print "write_directory is $write_directory data_dir is ".$self->get_directory." path is $path\n";
 	}else{
 		$string = File::Spec->catfile($self->get_directory,$self->get_filename);
 	}
@@ -133,8 +130,8 @@ sub format_filename
 	}
 
 	return $string;
-
 }
+
 sub _format_record
 {
 	my $self = shift;
@@ -148,7 +145,6 @@ sub _format_record
 
 	#overloaded for DATA
 	# data::format_record
-	# 
 
 	#we make it easy and print all comments at the end, regardless of print order.
 
@@ -159,14 +155,12 @@ sub _format_record
 		#we should not end up here, should have been picked up by model
 		#that should copy data if too long
 		#TODO fix not implemented yet
-#		croak("This is a bug: datafile string too long, more than 80,\n $filestring"); #croak useful during development 
 		debugmessage(1,"datafile string too long, more than 80,\n $filestring");
 	}
 
-	my $line =0;
+	my $line = 0;
 	$formatted[$line] = '$DATA'.(' ' x (10 - length('DATA')) ).$filestring;
 	
-
 	#add ignoresign if defined, stored separately from options
 	if (defined $self->ignoresign and length($self->ignoresign)> 0){
 		# Check and add linebreak if necessary.
