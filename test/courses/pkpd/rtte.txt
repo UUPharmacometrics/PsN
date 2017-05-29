@@ -1,8 +1,12 @@
-#Task 1 of 4
+#Task 1
 execute run51.mod
-#Task 2 of 4
+#Task 2
 vpc run51.mod -tte=RTTE -flip_comments -samples=20 -compress -clean=3 -stratify_on=DOSE,CON,SMAX,SMXH,THR,CAV,CAVH,CONC
-#Task 3 of 4
+#Task 3
 execute run57.mod
-#Task 4 of 4
+#Task 4
 vpc run57.mod -tte=RTTE -flip_comments -samples=20 -compress -clean=3 -stratify_on=DOSE,CON,SMAX,SMXH,THR,CAV,CAVH,CONC
+# Task me1
+execute run57.mod
+# Task me3
+vpc run57.mod -tte=RTTE -flip_comments -samples=30 -compress -clean=3 -stratify_on=DOSE,CON,SMAX,SMXH,THR,CAV,CAVH,CONC
