@@ -33,6 +33,7 @@ my %optional_options = (
     'iterative!' => undef,
     'max_iterations:i' => undef,
     'groups:i' => undef,
+    'obs_column:s' => undef,
 );
 
 my $res = GetOptions( \%options,
@@ -123,6 +124,14 @@ $help_text{-groups} = <<'EOF';
       The default is 4.
 EOF
 
+$help_text{-obs_column} = <<'EOF';
+      -obs_column
+
+      Use this column to ignore non-observations. All zero entries
+      in this column will be interpreted as a non-observation.
+      The default is to same as -dv
+EOF
+
 common_options::online_help( 'resmod', \%options, \%help_text, \%required_options, \%optional_options);
 common_options::setup( \%options, 'resmod' ); #calls set_globals etc, initiates random sequence
 
@@ -167,6 +176,7 @@ my $resmod = tool::resmod->new(
     iterative => $options{'iterative'},
     groups => $options{'groups'},
     max_iterations => $options{'max_iterations'},
+    obs_column => $options{'obs_column'},
 );
 
 $resmod->print_options(
