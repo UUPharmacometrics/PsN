@@ -702,11 +702,16 @@ are assumed.
 \item Runs the R scripts for frem results visualization.
 \end{enumerate}
 
-\noindent If no uncertainty information could be read postfrem try to perform the above for only one sample, the mean
-value (typical individual), so as to fall back on merely population predictions. If matrices are not positive-definite
-(which may be the case when cov step did not succeed in NONMEM), they are forced such through setting small eigenvalues
-above tolerance value. This is necessary for finding inverse through current Cholesky decomposition implementation. The
-impact of this on the results should be small.
+\noindent If no uncertainty information could be read postfrem tries to perform the above for only one sample, the mean
+value (typical individual), so as to fall back on mere population predictions. If matrices are not positive-definite
+(which may be the case if cov step did not succeed in NONMEM), they are forced such through pushing small eigenvalues
+above tolerance value. This is necessary for finding the inverse through current Cholesky decomposition implementation.
+The impact of this on the results should be small.
+
+If covariance matrix could be read but is not positive-definite, postfrem can't proceed. This can happen when the cov
+step of NONMEM does not terminate appropriately (or the S matrix is used in place of the R matrix).
+\texttt{-force\_posdef\_covmatrix} can then be supplied to force eigenvalues to become positive (the impact of this is
+unclear and a positive-definite covariance matrix from NONMEM is recommended).
 
 To get the postfrem output in a different format (e.g. pdf) edit the plotfrem.R script and (re-)run
 \begin{verbatim}

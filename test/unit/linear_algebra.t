@@ -134,10 +134,10 @@ my @eigenValMatrix = ( [ '8.9544282663304415E+01', '-8.2566649009388087E+01', '8
     );
 
 (my $eigen, my $vecs) = linear_algebra::eigenvalue_decomposition(\@eigenValMatrix);
-cmp_float_array($eigen, 
+cmp_float_array($eigen,
 [ '103.735518977137', '577.409123620258', '26.4391034036385', '8.31436812089702', '-0.0922465852143416',
   '735.406959776145', '94218.259066972', '132.962268669761', '421.085176924333', '1007.57699130853' ], "eigenvalues");
-cmp_float_matrix($vecs, 
+cmp_float_matrix($vecs,
 [ [ '0.858533360145535', '-0.0815272625678409', '-0.276778340107342', '-0.0370674630316422', '0.407929997751623', '0.0941137963799454', '1.10321458448217e-05', '0.0501809815749305', '0.0154494947282136', '0.0165051795403893' ],
           [ '-0.127128277969396', '0.593306835379972', '-0.192703954766765', '-0.0135472742932071', '0.408079183625171', '-0.585521402054757', '0.000779676970620123', '-0.0286033162157461', '-0.253754027916267', '-0.14118519949914' ],
           [ '0.0993153815302009', '0.0126487578069314', '0.905771563340727', '-0.0392429769917785', '0.409272163234004', '-0.0213427696052516', '-0.000187835774071636', '0.00175871852579824', '0.00444455468674422', '-0.00567695916958289' ],
@@ -189,7 +189,7 @@ is ($err,1,'invert_symmetric numerr');
 my $identity = linear_algebra::get_identity_matrix(2);
 is_deeply($identity, [ [ 1, 0 ], [ 0, 1 ] ], "identity matrix");
 
-my $matrix = [ [1,2,3,4],[2,2,3,4],[3,3,3,4],[4,4,4,4] ]; 
+my $matrix = [ [1,2,3,4],[2,2,3,4],[3,3,3,4],[4,4,4,4] ];
 
 is_deeply(linear_algebra::copy_and_reorder_square_matrix($matrix,[1,3,0,2]),[ [2,4,2,3],[4,4,4,4],[2,4,1,3],[3,4,3,3] ] , "copy and reorder");
 
@@ -294,7 +294,7 @@ my $omega6 = [
 	[0.1,0.05,3,0.3,0.2,-0.1],
 	[0.1,0.2,0.3,4,0.1,0.3],
 	[0.2,-0.3,0.2,0.1,4,0.4],
-	[-0.2,0.2,-0.1,0.3,0.4,2] 
+	[-0.2,0.2,-0.1,0.3,0.4,2]
 ];
 
 ($strings,$inits,$code,$warnings)=linear_algebra::string_cholesky_block(
@@ -305,7 +305,7 @@ my $omega6 = [
 	testing=>0,
 	fix=>0);
 
-is($inits->[0],'0.000001 ; log SD_C1','string cholesky init block 1'); 
+is($inits->[0],'0.000001 ; log SD_C1','string cholesky init block 1');
 is($inits->[1],'0.80471896 ; log SD_C2','string cholesky init block 2');
 is($inits->[2],'0.17936477 ; logit (COR_C21+1)/2','string cholesky init block 3');
 
@@ -661,7 +661,7 @@ cmp_float_array($ans2->[0],$coeff1,'conditional_covariance_coefficients 1 coeffi
 ($err,$ans1,$ans2) = linear_algebra::conditional_covariance_coefficients(varcov => $covariance,
 																		 par_index_first => $par_index_first,
 																		 cov_index_array => [$cov_index_first,$cov_index_last]);
-	
+
 is($err,0,'conditional_covariance_coefficients 1b return status');
 cmp_float_array($ans1->[0],$cov1,'conditional_covariance_coefficients 1b covariance');
 cmp_float_array($ans2->[0],$coeff1,'conditional_covariance_coefficients 1b coefficients');
@@ -669,7 +669,7 @@ cmp_float_array($ans2->[0],$coeff1,'conditional_covariance_coefficients 1b coeff
 ($err,$ans1,$ans2) = linear_algebra::conditional_covariance_coefficients(varcov => $covariance,
 																		 par_index_first => $par_index_first,
 																		 cov_index_array => [$cov_index_last,$cov_index_first]);
-	
+
 is($err,1,'conditional_covariance_coefficients 1c return status');
 
 $par_index_first=1;
@@ -704,7 +704,7 @@ $cov_index_first = 3;
 $cov_index_last = 3;
 my $coeff4 = [0.233333333333333];
 my $cov4 = [ 4.836666666666667];
-  
+
 ($err,$ans1,$ans2) = linear_algebra::conditional_covariance_coefficients(varcov => $covariance,
 																		 par_index_first => $par_index_first,
 																		 cov_index_first => $cov_index_first,
@@ -840,12 +840,12 @@ my $invcovmat = [
 my $matlabanswer=[
 [11.224170347958909,0,0,0,0,0,0,0,0],
 [-9.550104522379476, 6.129315101349178,0,0,0,0,0,0,0],
-[-1.639230288708672, 4.249998405343509,12.877516748781876,0,0,0,0,0,0], 
-[2.319948752803385,-3.932551439370128,-1.774327522583869,15.056979737107815,0,0,0,0,0], 
+[-1.639230288708672, 4.249998405343509,12.877516748781876,0,0,0,0,0,0],
+[2.319948752803385,-3.932551439370128,-1.774327522583869,15.056979737107815,0,0,0,0,0],
 [4.230040932035026, 2.067756808927676, 0.390785597554319,-0.140589053392896,12.656052181752875,0,0,0,0],
-[-8.844430984429268,-2.772649155944083,-1.879889200456328,-0.505718814677402, -18.059659708007011, 8.094653391293978,0,0,0], 
-[2.400622866963160, 0.643938063723248, 1.657659499712793, 0.732373198287161, 8.269161061298735,-6.313996906225586, 3.539006430146603,0,0], 
-[1.714505340120703,-0.730341763092609,-0.775536136558838, 4.800715354144464, 0.498404848193361,-1.887337796362435, 4.826732894782685,17.837122703768546,0], 
+[-8.844430984429268,-2.772649155944083,-1.879889200456328,-0.505718814677402, -18.059659708007011, 8.094653391293978,0,0,0],
+[2.400622866963160, 0.643938063723248, 1.657659499712793, 0.732373198287161, 8.269161061298735,-6.313996906225586, 3.539006430146603,0,0],
+[1.714505340120703,-0.730341763092609,-0.775536136558838, 4.800715354144464, 0.498404848193361,-1.887337796362435, 4.826732894782685,17.837122703768546,0],
 [0.043411137295204, 0.004800193515600, 0.238608118030645,-0.041660589701606,-0.031255335681780,-0.132882327881091, 0.256671499513844, 0.579461518457291, 1.429115976213738]];
 
 is ($err,0,"no error cholesky vector");
@@ -855,7 +855,7 @@ for (my $i=0; $i< scalar(@{$ans1}); $i++){
 
 cmp_relative(linear_algebra::diagonal_product($ans1),1.232838893716535e+08,8,'diagonal product of cholesky factor');
 
-my $cook; 
+my $cook;
 ($err,$cook) = linear_algebra::cook_score_all($ans1,[0,0,0,0,0,0,0,0,0],[1,2,3,4,5,6,7,8,9]);
 is ($err,0,"no error cook score");
 cmp_relative($cook,1.939403173504674e+02,8,'cook score');
@@ -899,4 +899,22 @@ is($modified,1,'modified after cap 2');
 is_deeply($indices,[2,0],'indices maxcorr 2');
 is_deeply($cap_indices->[0],[2,1,2/3],'cap indices maxcorr 2');
 is(scalar(@{$cap_indices}),1,'capped indices count');
+
+# frobenius norm tests
+is(linear_algebra::frobenius_norm(matrix => [[10]]), 10, 'frobenius_norm [[10]]');
+my $mat1 = [
+    [28.4344, 35.8203, -124.5168],
+    [10.2272, -130.4963, -90.6012],
+    [-93.2571, -80.8955, -131.5728],
+];
+my $mat2 = [
+    [2.0902, -86.4408, 41.8317],
+    [112.0796, -1.6414, 19.8897],
+    [-31.9668, 125.5487, 62.482],
+];
+cmp_float(linear_algebra::frobenius_norm(matrix => $mat1), 274.75601935747, 'frobenius_norm mat1');
+cmp_float(linear_algebra::frobenius_norm(matrix => $mat2), 207.06220263416, 'frobenius_norm mat2');
+is(linear_algebra::frobenius_norm(matrix => $mat1, matrix2 => $mat1), 0, 'frobenius_norm distance mat1 to mat1');
+cmp_float(linear_algebra::frobenius_norm(matrix => $mat1, matrix2 => $mat2), 408.08372488063, 'frobenius_norm distance mat1 to mat2');
+
 done_testing();

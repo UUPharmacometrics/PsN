@@ -1202,6 +1202,32 @@ sub spdarise
 	return(\@posdefmatrix,$fNormDiff);
 }
 
+sub frobenius_norm {
+    # calculate the frobenius norm of a matrix (or frobenius norm of element-wise difference)
+    # TODO: use MatrixReal class instead
+    my %parm = validated_hash(\@_,
+        matrix => { isa => 'ArrayRef', optional => 0 },
+        matrix2 => { isa => 'ArrayRef', optional => 1 },
+	);
+	my $matrix = $parm{'matrix'};
+	my $matrix2 = $parm{'matrix2'};
+
+    # sum of all elements squared (of matrix or element-wise difference to matrix2)
+    my $sum = 0;
+    for (my $i=0; $i < scalar(@{$matrix}); $i++) {
+        my $row = $matrix->[$i];
+        my $row2;
+        if (defined $matrix2) { $row2 = $matrix2->[$i]; }
+        for (my $j=0; $j < scalar(@{$row}); $j++) {
+            my $val = $row->[$j];
+            if (defined $row2) { $val = $val - $row2->[$j]; }
+            $sum += abs( $val**2 );
+        }
+    }
+
+    return sqrt($sum);
+}
+
 sub eigenvalue_decomposition
 {
     # Perfor an eigenvalue decomposition of a symmetric matrix

@@ -52,6 +52,7 @@ my %optional_options = ('offset_rawres:i' => undef,
 						'in_filter:s' => undef,
 						'output_format:s' => undef,
 						'sir_directory:s' => undef,
+                        'force_posdef_covmatrix!' => undef,
 	);
 
 my $res = GetOptions( \%options,
@@ -70,6 +71,9 @@ $options{'frem_dataset'} = $options{'frem_directory'}.'/frem_dataset.dta';
 if( defined $options{'sir_directory'} and (-d $options{'sir_directory'}))  {
 	$options{'rawres_input'}=$options{'sir_directory'}.'/raw_results_model_4.csv';
 	$options{'in_filter'}='resamples.gt.0';
+    if (defined $options{'force_posdef_covmatrix'}) {
+        warn "option -force_posdef_covmatrix not applicable to sir directory uncertainty";
+    }
 }
 if (defined $options{'output_format'}){
 	unless ($options{'output_format'} =~ /^(pdf|png|svg|jpg)$/){
@@ -109,6 +113,11 @@ $help_text{-in_filter} = <<'EOF';
 
     Default not used.
 	If full sir run then set to resamples.gt.0, otherwise skip.
+EOF
+$help_text{-force_posdef_covmatrix} = <<'EOF';
+      -force_posdef_covmatrix
+
+      Default not used. Forces covariance matrix to be positive-definite.
 EOF
 
 common_options::online_help('postfrem', \%options,\%help_text, \%required_options, \%optional_options);
@@ -182,12 +191,47 @@ if (defined $options{'rawres_input'}) {
         print "Covariance step was not succesful\n";
     }
 	if (defined $covmatrix ){
-		my $err = tool::sir::check_matrix_posdef(matrix => $covmatrix);
-		if ($err == 1){
-            print "Covariance matrix is numerically not positive definite\n".
+		my $posdef_err = tool::sir::check_matrix_posdef(matrix => $covmatrix);
+		if ($posdef_err == 1){
+            print "Covariance matrix is numerically not positive definite (check that covariance step is OK)\n".
                   "(as checked with Cholesky decomposition without pivoting)\n";
-            $have_uncertainty=0;
-		} else {
+            if (defined $options{'force_posdef_covmatrix'}) {
+                # force positive definite
+                print "Option -force_posdef_covmatrix set, forcing matrix positive definite\n";
+                (my $covmatrix_posdef, my $count) = linear_algebra::get_symmetric_posdef($covmatrix);
+                print "$count eigenvalue(s) adjusted\n";
+
+                # copy and test that this modification is good enough for cholesky decomp
+                my $covmatrix_copy = [];
+                for (my $i=0; $i < scalar(@{$covmatrix_posdef}); $i++) {
+                    my $row_copy = [];
+                    my $row = $covmatrix_posdef->[$i];
+                    for (my $j=0; $j < scalar(@{$row}); $j++) {
+                        push(@{$row_copy}, $row->[$j]);
+                    }
+                    push(@{$covmatrix_copy}, $row_copy);
+                }
+				my $err = linear_algebra::cholesky($covmatrix_copy);
+                if ($err > 0) {
+                    die "cholesky error $err after get_symmetric_posdef\n";
+                }
+
+                # output the frobenius norm differences
+                my $norm_orig = linear_algebra::frobenius_norm(matrix => $covmatrix);
+                my $norm_forced = linear_algebra::frobenius_norm(matrix => $covmatrix_posdef);
+                my $norm_diff = abs( $norm_orig - $norm_forced );
+                print "Absolute difference of frobenius norms: $norm_diff\n";
+                $norm_diff = linear_algebra::frobenius_norm(matrix => $covmatrix, matrix2 => $covmatrix_posdef);
+                print "Frobenius norm of (element-wise) difference matrix: $norm_diff\n";
+                print "(if large the results might be severely affected by adjustments)\n";
+
+                $covmatrix = $covmatrix_posdef;
+                $posdef_err=0;
+            } else {
+                $have_uncertainty=0;
+            }
+		}
+        if ($posdef_err != 1) {
             # use valid covariance matrix for uncertainty
             my $parameter_hash = output::get_nonmem_parameters(output => $model->outputs->[0]);
             my $message = "Sampling from the truncated multivariate normal distribution";
