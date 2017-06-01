@@ -6,6 +6,7 @@ use MooseX::Params::Validate;
 extends 'model::problem::record';
 
 has 'code' => ( is => 'rw', isa => 'ArrayRef[Str]' );
+has 'pseudo_assignments' => ( is => 'rw', isa => 'ArrayRef[Str]' );
 has 'pre_verbatim' => ( is => 'rw', isa => 'ArrayRef[Str]' );
 has 'verbatim_last' => ( is => 'rw', isa => 'ArrayRef[Str]' );
 has 'verbatim_first' => ( is => 'rw', isa => 'ArrayRef[Str]' );
@@ -21,6 +22,7 @@ sub _format_record
 
     my $fname;
     if ( defined $self->verbatim_first
+      or defined $self->pseudo_assignments
       or defined $self->pre_verbatim
       or defined $self->code
       or defined $self->verbatim_last ) {
@@ -29,6 +31,10 @@ sub _format_record
         $fname = "\$".$fname; #and then prepend to $formatted[0] at the very end so that do not get line break
     }
 
+    if ( defined $self->pseudo_assignments ) {
+        # can be put after first verbatim (only non-verbatim, non-pseudo-assignment must preceed it), but very first is simpler
+        push( @formatted, @{$self->pseudo_assignments} );
+    }
     if ( defined $self->pre_verbatim ) {
         push( @formatted, @{$self->pre_verbatim} );
     }
@@ -44,10 +50,11 @@ sub _format_record
         push( @formatted, @{$self->verbatim_last} );
     }
     if (scalar(@formatted)>0){
-        if ($formatted[0] =~/^\s*;/){ #first code line is a comment
-            unshift(@formatted,$fname);
-        } else {
+        if ($formatted[0] =~/^\s*\(/ && $formatted[0] =~ /\)\s*$/){
+            # join first line with $ if it's a pseudo-assignment in (..) form
             $formatted[0] = $fname.' '.$formatted[0];
+        } else {
+            unshift(@formatted,$fname);
         }
     }
 
@@ -61,23 +68,40 @@ sub _read_options
     my $in = 0;
     if ( defined $self->record_arr ) {
         $self->code([]);
-        my ( $first, $last, $have_first ) = ( 0, 0, 0 );
-        my @pre_verbatim = ();
+        my ( $first, $last, $have_first, $have_nonverbatim ) = ( 0, 0, 0, 0 );
+        my @pre_verbatim = (); # pre-"FIRST verbatim statement
         for ( @{$self->record_arr} ) {
-            # Get rid of $RECORD and unwanted spaces
-            s/^\s*\$\w+//;
+            if( /^\s*\$\w+/ ) {
+                # get rid of $RECORD and unwanted spaces
+                s/^\s*\$\w+//;
+                # skip empty line (if $RECORD was on lone line)
+                next if( $_ eq '');
+            }
             if ( /\" (\w+) = EVTREC\((\d+),(\d+)\)/ ) {
                 next;
             }
-            if( /^\"\s*FIRST/ ) {
-                $first = 1;
-                $have_first = 1;
+            if ( ! $have_nonverbatim and /^\s*\(/ && /\)\s*$/ || /^\s*CALLFL\s*=/ || /^\s*COMRES\s*=/ ) {
+                # found pseudo-assignment statement: (..) or CALLFL=.. or COMRES=..
+                # this is NOT code and should not be treated as such
+                # (exception: after non-verbatim code; likely expected to stay put)
+                $self->pseudo_assignments([]) unless defined $self->pseudo_assignments;
+                push( @{$self->pseudo_assignments}, $_ );
                 next;
             }
-            if( /^\"\s*LAST/ ) {
-                $first = 0;
-                $last  = 1;
-                next;
+            if( ! /^\"\s*/ ) {
+                # pseudo-assignments here after should not move
+                $have_nonverbatim = 1;
+            } else {
+                if( /^\"\s*FIRST/ ) {
+                    $first = 1;
+                    $have_first = 1;
+                    next;
+                }
+                if( /^\"\s*LAST/ ) {
+                    $first = 0;
+                    $last  = 1;
+                    next;
+                }
             }
             if( $first or $last ) {
                 if( /^\"/ ) {
@@ -102,9 +126,11 @@ sub _read_options
             }
         }
         if ($have_first) {
+            # keep pre-code separate if there's a FIRST
             $self->pre_verbatim([]) unless defined $self->pre_verbatim;
             push( @{$self->pre_verbatim}, @pre_verbatim);
         } else {
+            # regard all collected code as ordinary code
             unshift @{$self->code}, @pre_verbatim;
         }
     }
