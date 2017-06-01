@@ -142,7 +142,9 @@ A new recommended but not required Perl library for runrecord: YAML::Tiny
 
    ___rplots___
 
-   ___npfit___
+   ___nmoutput2so___
+
+- Bugfixes for simulation results that caused nmoutput2so to crash
 
 
    ___transform___
