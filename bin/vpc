@@ -648,7 +648,7 @@ if ($options{'so'}) {
     my $parser = so::parsers::vpc->new(
         so => $so,
         rundir => $vpc->directory,
-        dv => $options{'dv'},
+        dv => defined($options{'dv'}) ? $options{'dv'} : 'DV',
     );
     $so->write(compress => 1);
 }
