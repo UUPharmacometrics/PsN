@@ -969,23 +969,23 @@ sub _create_simulation
 
     my ($profiles_table_fh, $indiv_table_fh, $random_effects_table_fh, $covariates_table_fh, $population_table_fh);
     if (defined $profiles_table_name) {
-        open $profiles_table_fh, '<', $path . $profiles_table_name;
+        open $profiles_table_fh, '<', $path . $profiles_table_name or undef($profiles_table_fh);
     }
     if (defined $indiv_table_name) {
-        open $indiv_table_fh, '<', $path . $indiv_table_name;
+        open $indiv_table_fh, '<', $path . $indiv_table_name or undef($indiv_table_fh);
     }
     if (defined $random_effects_table_name) {
-        open $random_effects_table_fh, '<', $path . $random_effects_table_name;
+        open $random_effects_table_fh, '<', $path . $random_effects_table_name or undef($random_effects_table_fh);
     }
     if (defined $covariates_table_name) {
-        open $covariates_table_fh, '<', $path . $covariates_table_name;
+        open $covariates_table_fh, '<', $path . $covariates_table_name or undef($covariates_table_fh);
     }
     if (defined $population_table_name) {
-        open $population_table_fh, '<', $path . $population_table_name;
+        open $population_table_fh, '<', $path . $population_table_name or undef($population_table_fh);
     }
     my $extra_output_table_fh;
     if (defined $extra_output_table_name) {
-        open $extra_output_table_fh, '<', $path . $extra_output_table_name;
+        open $extra_output_table_fh, '<', $path . $extra_output_table_name or undef($extra_output_table_fh);
     }
 
     my $replicate_no = 1;
