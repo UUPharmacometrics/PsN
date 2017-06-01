@@ -154,7 +154,8 @@ sub _parse_lst_file
             my $estimation_step_run = $outobj->get_single_value(attribute => 'estimation_step_run', problem_index => $problems);
 
             my $is_evaluation;
-            if ($outobj->problems->[$problems]->subproblems->[$sub_problems]->method_string =~ /.*\(Evaluation\)/) {
+            my $method_string = $outobj->problems->[$problems]->subproblems->[$sub_problems]->method_string;
+            if (defined $method_string and $method_string =~ /.*\(Evaluation\)/) {
                 $is_evaluation = 1;
             }
 
@@ -1080,14 +1081,12 @@ sub _create_simulation
         last if (defined $self->max_replicates and $replicate_no >= $self->max_replicates); 
     }
 
-    close $covariates_table_fh;
-    close $indiv_table_fh;
-    close $random_effects_table_fh;
-    close $profiles_table_fh;
-    close $population_parameters_fh;
-    if (defined $extra_output_table_fh) {
-        close $extra_output_table_fh;
-    }
+    close $covariates_table_fh if defined $covariates_table_fh;
+    close $indiv_table_fh if defined $indiv_table_fh;
+    close $random_effects_table_fh if defined $random_effects_table_fh;
+    close $profiles_table_fh if defined $profiles_table_fh;
+    close $population_table_fh if defined $population_table_fh;
+    close $extra_output_table_fh if defined $extra_output_table_fh;
 }
 
 sub _read_header
