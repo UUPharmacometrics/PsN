@@ -26,6 +26,7 @@ has 'occ' => ( is => 'rw', isa => 'Str', default => 'OCC' );
 has 'covariates' => ( is => 'rw', isa => 'Str' );       # A comma separated list of continuous covariate symbols
 has 'categorical' => ( is => 'rw', isa => 'Str' );       # A comma separated list of categorical covariate symbols
 has 'parameters' => ( is => 'rw', isa => 'Str' );       # A comma separated list of parameter symbols
+has 'fo' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'cmd_line' => ( is => 'rw', isa => 'Str' );         # Used as a work around for calling scm via system
 
 has 'resmod_idv_table' => ( is => 'rw', isa => 'Str' ); # The table used by resmod
@@ -46,7 +47,7 @@ sub modelfit_setup
     $model_copy->phi_file($self->model->get_phi_file());
 
 	my $vers = $PsN::version;
-	my $dev =$PsN::dev;
+	my $dev = $PsN::dev;
 
     print "*** Running linearize ***\n";
     my $linearized_model_name = $self->model->filename;
@@ -56,6 +57,7 @@ sub modelfit_setup
         %{common_options::restore_options(@common_options::tool_options)},
         models => [ $model_copy ],
         directory => 'linearize_run',
+        estimate_fo => $self->fo, 
     );
 
     $linearize->run();
@@ -65,6 +67,11 @@ sub modelfit_setup
     my $linearized_model = model->new(
         filename => $linearized_model_name,
     );
+
+    #if ($self->fo) {
+    #    $linearized_model->remove_option(record_name => 'estimation', option_name => 'METHOD');
+    #    $linearized_model->_write();
+    #}
 
     print "*** Running full omega block, add etas and boxcox model ***\n";
     eval {
@@ -160,11 +167,16 @@ sub modelfit_setup
                     }
                 }
             }
+            my $fo = "";
+            if ($self->fo) {
+                $fo = "-estimate_fo";
+            }
+
             eval {
 				if($dev) {
-					system("scm config.scm $scm_options");       # FIXME: system for now
+					system("scm config.scm $scm_options $fo");       # FIXME: system for now
 				} else {
-					system("scm-".$vers." config.scm $scm_options");       # FIXME: system for now
+					system("scm-".$vers." config.scm $scm_options $fo");       # FIXME: system for now
 				}
             };
             $self->_to_qa_dir();
@@ -218,8 +230,8 @@ sub modelfit_setup
             directory => 'resmod_'.$self->idv,
             top_tool => 1,
         );
+        $self->resmod_idv_table($resmod_idv->table_file);
     };
-    $self->resmod_idv_table($resmod_idv->table_file);
     if (not $@) {
         eval {
             $resmod_idv->run();

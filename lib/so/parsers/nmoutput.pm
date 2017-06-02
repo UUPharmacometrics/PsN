@@ -154,7 +154,8 @@ sub _parse_lst_file
             my $estimation_step_run = $outobj->get_single_value(attribute => 'estimation_step_run', problem_index => $problems);
 
             my $is_evaluation;
-            if ($outobj->problems->[$problems]->subproblems->[$sub_problems]->method_string =~ /.*\(Evaluation\)/) {
+            my $method_string = $outobj->problems->[$problems]->subproblems->[$sub_problems]->method_string;
+            if (defined $method_string and $method_string =~ /.*\(Evaluation\)/) {
                 $is_evaluation = 1;
             }
 
@@ -966,14 +967,25 @@ sub _create_simulation
         return;
     }
 
-    open my $profiles_table_fh, '<', $path . $profiles_table_name;
-    open my $indiv_table_fh, '<', $path . $indiv_table_name;
-    open my $random_effects_table_fh, '<', $path . $random_effects_table_name;
-    open my $covariates_table_fh, '<', $path . $covariates_table_name;
-    open my $population_table_fh, '<', $path . $population_table_name;
+    my ($profiles_table_fh, $indiv_table_fh, $random_effects_table_fh, $covariates_table_fh, $population_table_fh);
+    if (defined $profiles_table_name) {
+        open $profiles_table_fh, '<', $path . $profiles_table_name or undef($profiles_table_fh);
+    }
+    if (defined $indiv_table_name) {
+        open $indiv_table_fh, '<', $path . $indiv_table_name or undef($indiv_table_fh);
+    }
+    if (defined $random_effects_table_name) {
+        open $random_effects_table_fh, '<', $path . $random_effects_table_name or undef($random_effects_table_fh);
+    }
+    if (defined $covariates_table_name) {
+        open $covariates_table_fh, '<', $path . $covariates_table_name or undef($covariates_table_fh);
+    }
+    if (defined $population_table_name) {
+        open $population_table_fh, '<', $path . $population_table_name or undef($population_table_fh);
+    }
     my $extra_output_table_fh;
     if (defined $extra_output_table_name) {
-        open $extra_output_table_fh, '<', $path . $extra_output_table_name;
+        open $extra_output_table_fh, '<', $path . $extra_output_table_name or undef($extra_output_table_fh);
     }
 
     my $replicate_no = 1;
@@ -981,10 +993,13 @@ sub _create_simulation
     for (;;) {      # Loop through simulation replicates aka simulation blocks
         my $sim_block = so::soblock::simulation::simulationblock->new(replicate => $replicate_no);
         my $external_table_name = $self->external_tables ? $table_file . "_$replicate_no" : undef;
-        my $simulated_profiles = $self->_create_simulated_profiles(
-            file => $profiles_table_fh,
-            table_file => $external_table_name,
-        );
+        my $simulated_profiles;
+        if (defined $profiles_table_fh) {
+            $simulated_profiles = $self->_create_simulated_profiles(
+                file => $profiles_table_fh,
+                table_file => $external_table_name,
+            );
+        }
         my $extra_output_simulated_profiles;
         if (defined $extra_output_table_fh) {
             $extra_output_simulated_profiles = $self->_create_simulated_profiles(
@@ -994,28 +1009,40 @@ sub _create_simulation
                 dv_columns => $self->extra_output,
             ); 
         }
-        my $indiv_parameters = $self->_create_indiv_parameters(
-            file => $indiv_table_fh,
-            table_file => $external_table_name,
-            model => $model,
-            problem => $problem
-        );
-        my $random_effects = $self->_create_random_effects(
-            file => $random_effects_table_fh,
-            table_file => $external_table_name,
-            model => $model,
-            problem => $problem
-        );
-        my $covariates = $self->_create_covariates(
-            file => $covariates_table_fh,
-            table_file => $external_table_name
-        );
-        my $population_parameters = $self->_create_population_parameters(
-            file => $population_table_fh,
-            table_file => $external_table_name,
-            labels => $labels,
-            inits => $inits,
-        );
+        my $indiv_parameters;
+        if (defined $indiv_table_fh) {
+            $indiv_parameters = $self->_create_indiv_parameters(
+                file => $indiv_table_fh,
+                table_file => $external_table_name,
+                model => $model,
+                problem => $problem
+            );
+        }
+        my $random_effects;
+        if (defined $random_effects_table_fh) {
+            $random_effects = $self->_create_random_effects(
+                file => $random_effects_table_fh,
+                table_file => $external_table_name,
+                model => $model,
+                problem => $problem
+            );
+        }
+        my $covariates;
+        if (defined $covariates_table_fh) {
+            $covariates = $self->_create_covariates(
+                file => $covariates_table_fh,
+                table_file => $external_table_name
+            );
+        }
+        my $population_parameters;
+        if (defined $population_table_fh) {
+            $population_parameters = $self->_create_population_parameters(
+                file => $population_table_fh,
+                table_file => $external_table_name,
+                labels => $labels,
+                inits => $inits,
+            );
+        }
 
         if (defined $simulated_profiles) {
             push @{$sim_block->SimulatedProfiles}, $simulated_profiles;
@@ -1054,13 +1081,12 @@ sub _create_simulation
         last if (defined $self->max_replicates and $replicate_no >= $self->max_replicates); 
     }
 
-    close $covariates_table_fh;
-    close $indiv_table_fh;
-    close $random_effects_table_fh;
-    close $profiles_table_fh;
-    if (defined $extra_output_table_fh) {
-        close $extra_output_table_fh;
-    }
+    close $covariates_table_fh if defined $covariates_table_fh;
+    close $indiv_table_fh if defined $indiv_table_fh;
+    close $random_effects_table_fh if defined $random_effects_table_fh;
+    close $profiles_table_fh if defined $profiles_table_fh;
+    close $population_table_fh if defined $population_table_fh;
+    close $extra_output_table_fh if defined $extra_output_table_fh;
 }
 
 sub _read_header

@@ -8,6 +8,12 @@ parameter_ratio <- function(inTable_frem,covdata,pardata) {
     library(reshape2)
     library(dplyr)
     library(ggplot2)
+    
+    # in case if column names consist of not valid symbols, for example, "(" 
+    parameter_names <- pardata[,1]
+    col_names <- colnames(pardata)
+    pardata <- data.frame(make.names(parameter_names),stringsAsFactors = F)
+    colnames(pardata) <- col_names
 
     # colnames of frem data
     colnames_frem <- colnames(inTable_frem)
@@ -21,9 +27,6 @@ parameter_ratio <- function(inTable_frem,covdata,pardata) {
       }
     }
    
-    # number of covariates
-    iNumCovs <- length(covariate)
-
     # round values to reasonable amount of significant figures (4 as maximum)
     for (i in 1:nrow(covdata)) {
       if (covdata$is.categorical[i] == "0") {
@@ -68,16 +71,16 @@ parameter_ratio <- function(inTable_frem,covdata,pardata) {
     for (j in 1:nrow(pardata)) {
       for (i in 1:length(covariate)) {
         if (covdata$is.categorical[i] != "1") {
-          part_5th <- inTable_frem[ , grepl("RATIO.par.", names(inTable_frem)) & grepl(pardata$parname[j], names(inTable_frem)) & grepl("given.cov5th.", names(inTable_frem))  & grepl(covariate[i], names(inTable_frem))]
+          part_5th <- inTable_frem[ , grepl(paste0("RATIO.par.",pardata$parname[j],".given.cov5th.",covariate[i]), names(inTable_frem))]
           name_5th <- paste0(covariate[i],".cov5th")
-          part_95th <- inTable_frem[ , grepl("RATIO.par.", names(inTable_frem)) & grepl(pardata$parname[j], names(inTable_frem)) & grepl("given.cov95th.", names(inTable_frem))  & grepl(covariate[i], names(inTable_frem))]
+          part_95th <- inTable_frem[ , grepl(paste0("RATIO.par.",pardata$parname[j],".given.cov95th.",covariate[i]), names(inTable_frem))]
           name_95th <- paste0(covariate[i],".cov95th")
           part <- cbind(part_5th,part_95th)
           name <- cbind(name_5th,name_95th)
           list_part[i] <- list(part)
           list_colnames[i] <- list(name)
         } else {
-          part <- inTable_frem[ , grepl("RATIO.par.", names(inTable_frem)) & grepl(pardata$parname[j], names(inTable_frem)) & grepl("given.other.", names(inTable_frem))  & grepl(covariate[i], names(inTable_frem))]
+          part <- inTable_frem[ , grepl(paste0("RATIO.par.",pardata$parname[j],".given.other.",covariate[i]), names(inTable_frem))]
           name <- paste0(covariate[i],".other")
           list_part[i] <- list(part)
           list_colnames[i] <- list(name)
@@ -128,11 +131,11 @@ parameter_ratio <- function(inTable_frem,covdata,pardata) {
               axis.ticks = element_blank(),
               axis.text.y = element_blank(),
               plot.margin = unit(c(1,0.1,1,1), "cm"))
-      if ((2 %in% c(1:ncol(pardata))) & (3 %in% c(1:ncol(pardata)))) {
-        if ((is.na(pardata[j,2]) == FALSE) & (is.na(pardata[j,3]) == FALSE)) {
-          p <- p + coord_cartesian(xlim = c(pardata[j,2],pardata[j,3]))
-        }
-      }
+      # if ((2 %in% c(1:ncol(pardata))) & (3 %in% c(1:ncol(pardata)))) {
+      #   if ((is.na(pardata[j,2]) == FALSE) & (is.na(pardata[j,3]) == FALSE)) {
+      #     p <- p + coord_cartesian(xlim = c(pardata[j,2],pardata[j,3]))
+      #   }
+      # }
 
       # create table with all needed information
       outTable <- outTable[-1,]
@@ -156,29 +159,19 @@ parameter_ratio <- function(inTable_frem,covdata,pardata) {
         coord_cartesian(xlim = c(1,5))
 
       # Create title in the plot
-      if (4 %in% c(1:ncol(pardata))) {
-        if (is.na(pardata[j,4]) == TRUE) {
-          title <- paste0("Covariate effects on parameter ",pardata$parname[j])
-        } else {
-          title <- paste0(pardata[j,4])
-        }
-      } else {
-        title <- paste0("Covariate effects on parameter ",pardata$parname[j])
-      }
+      title <- paste0("Covariate effects on parameter ",parameter_names[j])
 
       # print out forest plot with table text
       cov_effect_on_param_plots[[j]] <- arrangeGrob(p, data_table, ncol=2, top = textGrob(title,gp=gpar(fontsize=20)))
 
       # Save each plot with different names in different pdg files (based on each parameter j)
-      param[[j]] <- paste0(pardata$parname[j])
+      param[[j]] <- paste0(parameter_names[j])
       
     }
     return(list(plots=cov_effect_on_param_plots,
-                param=param,
-                files_exist=files_exist))
+                param=param))
   } else {
     cat("Input data files are not found! Make sore that input data files are in your working directory!")
-    return(list(files_exist=files_exist))
   }
 }
 

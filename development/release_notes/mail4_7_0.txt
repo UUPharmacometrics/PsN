@@ -1,0 +1,23 @@
+Dear PsN users,
+
+PsN 4.7.0 is now available for download from https://uupharmacometrics.github.io/PsN.
+
+New features include 
+
+* Major extensions to simeval, a tool for simulation-evaluation diagnostics for outlier detection.
+
+* Updates to frem, a tool for full random effects modelling for covariate building.
+
+* resmod, a new tool to evaluate different residual models.
+
+* Addition of support for rmarkdown when using rplots greatly facilitating the automatic creation of reports.
+
+* Support for NONMEM 7.4
+
+The complete list of new features and bug fixes is found on
+https://raw.githubusercontent.com/UUPharmacometrics/PsN/master/development/release_notes/release_notes_PsN_4_7_0.txt
+
+Please come and see us at PAGE!
+
+Best regards,
+The PsN development team

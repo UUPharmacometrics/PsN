@@ -1,4 +1,12 @@
-#Task 1 of 2
-execute run36.mod -model_dir_name
-#Task 2 of 2
-vpc run36vpc.mod -samples=20 -seed=1234 -levels=1.5 -dir=vpc_36 -lst=run36.lst -stratify_on=DOSE -nopred -dv=SMXH
+# Task 1
+execute run36.mod -mod
+# Task 1 sumo
+sumo run36.lst
+# Task 2 no strat
+vpc run36.mod -samples=20 -dir=vpc_36 -lst=run36.lst -levels=1.5 -dv=SMXH -auto_bin=unique -flip_comments -rplots=1
+# Task 2 strat
+vpc run36.mod -samples=20 -dir=vpc_36 -lst=run36.lst -levels=1.5 -dv=SMXH -auto_bin=unique -flip_comments -rplots=1 -stratify_on=DOSE
+# Task 2 update
+update_inits run36.mod -flip_comments -out=run36sim.mod
+# Task 2 sim
+execute run36sim.mod -rplots=1 -template_file=binary.R -mod

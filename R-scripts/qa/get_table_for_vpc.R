@@ -1,17 +1,24 @@
-get_tables_for_vpc <- function(obs_table,obs_extra_table,sim_table,model.filename,idv) {
-  vpc_files_exist <- (file.exists(obs_table) && file.exists(obs_extra_table) && file.exists(sim_table))
-  if(vpc_files_exist) {
-    obs <- vpc::read_table_nm(obs_table)
-    extra_obs <- vpc::read_table_nm(obs_extra_table)
-    obs <- cbind(obs,"DV"=extra_obs[,"DV"],"MDV"=extra_obs[,"MDV"])
-    add_cols <- obs[,c(idv)]
-    sim <- vpc::read_table_nm(sim_table)
+get_tables_for_vpc <- function(obs_table,obs_extra_table,sim_table,idv_all) {
+  make_vpc <- (file.exists(obs_table) && file.exists(obs_extra_table) && file.exists(sim_table))
+  if(make_vpc) {
+    obs <- read_nm_tables(obs_table)
+    extra_obs <- read_nm_tables(obs_extra_table)
+    if(all(colnames(obs)!="DV")) {
+      obs <- cbind(obs,"DV"=extra_obs[,"DV"])
+    }
+    if(all(colnames(obs)!="MDV")) {
+      obs <- cbind(obs,"MDV"=extra_obs[,"MDV"])
+    }
+    add_cols <- obs[,c(idv_all)]
+    sim <- read_nm_tables(sim_table)
+    sim_names <- colnames(sim)
     sim <- cbind(sim,add_cols)
+    colnames(sim) <- c(sim_names,idv_all)
     out <- list(obs=obs,
                 sim=sim,
-                vpc_files_exist=vpc_files_exist)
+                make_vpc=make_vpc)
   } else {
-    out <- list(vpc_files_exist=vpc_files_exist)
+    out <- list(make_vpc=make_vpc)
   }
   return(out)
 }

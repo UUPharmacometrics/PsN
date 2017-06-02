@@ -102,6 +102,8 @@ A new recommended but not required Perl library for runrecord: YAML::Tiny
 
    ___scm___
 
+- Bugfix: Remove IGNORE or ACCEPT statements for linearized models that would else crash.
+
 
    ___linearize___
 
@@ -130,7 +132,9 @@ A new recommended but not required Perl library for runrecord: YAML::Tiny
    ___sir___
 	
 
-   ___pvar___
+   ___precond___
+
+- Give error if model does not have any THETAS (i.e. linearized model)
 
 
    ___cdd___
@@ -138,11 +142,15 @@ A new recommended but not required Perl library for runrecord: YAML::Tiny
 
    ___rplots___
 
-   ___npfit___
+   ___nmoutput2so___
+
+- Bugfixes for simulation results that caused nmoutput2so to crash
 
 
    ___transform___
 
 - Added full_block and add_tv transformations
 
-   ___crossval___ 
+   ___resmod___ 
+
+- Don't run dtbs and power for models giving negative IPRED

@@ -14,7 +14,8 @@ ID_ratio <- function(frem_id,covdata,pardata,file_format) {
     EXTR_ID_NUM = 10
 
     # names of parameter (names of first column in pardata input table,header = FALSE)
-    parameter <- pardata[[1]]
+    parameter_names <- pardata[[1]]
+    parameter <- make.names(parameter_names)
     # names of covariate (names of first column in covdata input table,header = FALSE)
     covariate <- as.character(covdata[[1]])
     
@@ -177,23 +178,23 @@ ID_ratio <- function(frem_id,covdata,pardata,file_format) {
         coord_cartesian(xlim = c(1,ncolumns + 0.5))
 
       # print out forest plot with table text
-      if (ncolumns >= 8) {
-        indiv_for_param_plots[[j]] <- arrangeGrob(p, t, ncol = 2,top = textGrob(paste0("Individuals for parameter ", parameter[j]), gp = gpar(fontsize=20)), widths = c(2:3))
+      if (ncolumns >= 16) {
+        indiv_for_param_plots[[j]] <- arrangeGrob(p, t, ncol = 2,top = textGrob(paste0("Individuals for parameter ", parameter_names[j]), gp = gpar(fontsize=20)), widths = c(1:2))
+      } else if ((ncolumns >= 8) && (ncolumns < 16)) {
+        indiv_for_param_plots[[j]] <- arrangeGrob(p, t, ncol = 2,top = textGrob(paste0("Individuals for parameter ", parameter_names[j]), gp = gpar(fontsize=20)), widths = c(2:3))
       } else {
-        indiv_for_param_plots[[j]] <- arrangeGrob(p, t, ncol = 2,top = textGrob(paste0("Individuals for parameter ", parameter[j]), gp = gpar(fontsize=20)))
+        indiv_for_param_plots[[j]] <- arrangeGrob(p, t, ncol = 2,top = textGrob(paste0("Individuals for parameter ", parameter_names[j]), gp = gpar(fontsize=20)))
       }
 
       # Save each plot with different names in different pdf files (based on each parameter j)
-      param[[j]] <- paste0("ID.",parameter[j])
+      param[[j]] <- paste0("ID.",parameter_names[j])
       
     }
     return(list(plots=indiv_for_param_plots,
-                param=param,
-                files_exist=files_exist))
+                param=param))
     
   } else {
     cat("Input data files are not found! Make sore that input data files are in your working directory!")
-    return(list(files_exist=files_exist))
   }
   
 }
