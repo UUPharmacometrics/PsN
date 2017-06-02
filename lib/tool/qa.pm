@@ -230,8 +230,8 @@ sub modelfit_setup
             directory => 'resmod_'.$self->idv,
             top_tool => 1,
         );
+        $self->resmod_idv_table($resmod_idv->table_file);
     };
-    $self->resmod_idv_table($resmod_idv->table_file);
     if (not $@) {
         eval {
             $resmod_idv->run();
