@@ -253,7 +253,7 @@ print(resmod_ruv_models_table)
 ```{r draw_influential_individuals_table,echo=F,results='asis'}
 if(cdd_files_exist) {
   if(nrow(ii_table) > cdd_max_rows) {
-    ii_table <- ii_table[,1:cdd_max_rows]
+    ii_table <- ii_table[1:cdd_max_rows,]
   }
 }
 value <- T
