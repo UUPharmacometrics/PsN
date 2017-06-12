@@ -1374,73 +1374,73 @@ sub get_omega_lines
 
 sub set_model2_omega_blocks
 {
-	my %parm = validated_hash(\@_,
-							  model => { isa => 'model', optional => 0 },
-							  start_omega_record => {isa => 'Int', optional => 0},
-							  rescale => {isa => 'Bool', optional => 0},
-							  skip_etas => {isa => 'Int', optional => 0},
-							  covariate_covmatrix => {isa => 'ArrayRef', optional => 0},
-							  covariate_labels => {isa => 'ArrayRef', optional => 0},
-	);
+    my %parm = validated_hash(\@_,
+        model => { isa => 'model', optional => 0 },
+        start_omega_record => {isa => 'Int', optional => 0},
+        rescale => {isa => 'Bool', optional => 0},
+        skip_etas => {isa => 'Int', optional => 0},
+        covariate_covmatrix => {isa => 'ArrayRef', optional => 0},
+        covariate_labels => {isa => 'ArrayRef', optional => 0},
+    );
+    my $model = $parm{'model'};
+    my $start_omega_record = $parm{'start_omega_record'};
+    my $rescale = $parm{'rescale'};
+    my $skip_etas = $parm{'skip_etas'};
+    my $covariate_covmatrix = $parm{'covariate_covmatrix'};
+    my $covariate_labels = $parm{'covariate_labels'};
 
-	my $model = $parm{'model'};
-	my $start_omega_record = $parm{'start_omega_record'};
-	my $rescale = $parm{'rescale'};
-	my $skip_etas = $parm{'skip_etas'};
-	my $covariate_covmatrix = $parm{'covariate_covmatrix'};
-	my $covariate_labels = $parm{'covariate_labels'};
+    my $covariate_size = scalar(@{$covariate_covmatrix});
+    croak("too few labels") unless (scalar(@{$covariate_labels}) == $covariate_size);
 
-	my $covariate_size = scalar(@{$covariate_covmatrix});
-	croak("too few labels") unless (scalar(@{$covariate_labels}) == $covariate_size);
+    my @covariate_etanumbers = ();
 
-	my @covariate_etanumbers = ();
+    my @covariate_code = ();
 
-	my @covariate_code = ();
+    my $n_previous_rows =  $model->problems()->[0]->nomegas(with_correlations => 0, with_same => 1);
 
-	my $n_previous_rows =  $model->problems()->[0]->nomegas(with_correlations => 0,
-															with_same => 1);
+    for (my $i = 0; $i < scalar(@{$model->problems->[0]->omegas}); $i++) {
+        if ($model->problems->[0]->omegas->[$i]->is_block) {
+            $model->problems->[0]->omegas->[$i]->fix(1) unless ($model->problems->[0]->omegas->[$i]->same);
+        } else {
+            for (my $j = 0; $j < scalar(@{$model->problems->[0]->omegas->[$i]->options}); $j++) {
+                $model->problems->[0]->omegas->[$i]->options->[$j]->fix(1);
+            }
+        }
+    }
 
-	for (my $i=0; $i < scalar(@{$model -> problems -> [0]-> omegas}); $i++){
-		if ($model -> problems -> [0]-> omegas->[$i]->is_block){
-			$model -> problems -> [0]-> omegas->[$i]->fix(1) unless ($model -> problems -> [0]-> omegas->[$i]->same);
-		}else{
-			for (my $j=0; $j< scalar(@{$model -> problems -> [0]-> omegas->[$i]->options}); $j++){
-				$model -> problems -> [0]-> omegas->[$i]->options->[$j]->fix(1);
-			}
-		}
-	}
+    my $matrix;
+    if ($rescale) {
+        my $sdcorr = [];
+        my $err = linear_algebra::covar2sdcorr($covariate_covmatrix, $sdcorr);
+        for (my $row = 0; $row < scalar(@{$sdcorr}); $row++) {
+            $sdcorr->[$row][$row] = 1;
+        }
 
-	my $matrix;
-	if ($rescale){
-		my $sdcorr = [];
-		my $err = linear_algebra::covar2sdcorr($covariate_covmatrix,$sdcorr);
-		for (my $row=0; $row< scalar(@{$sdcorr}); $row++){
-			$sdcorr->[$row][$row]=1;
-		}
-
-		$matrix = replace_0_correlation(old_matrix => $sdcorr,
-										is_covariance => 0,
-										low_correlation => $small_correlation);
-	}else{
-		$matrix = replace_0_correlation(old_matrix => $covariate_covmatrix,
-										is_covariance => 1,
-										low_correlation => $small_correlation);
-	}
+        $matrix = replace_0_correlation(
+            old_matrix => $sdcorr,
+            is_covariance => 0,
+            low_correlation => $small_correlation
+        );
+    } else {
+        $matrix = replace_0_correlation(
+            old_matrix => $covariate_covmatrix,
+            is_covariance => 1,
+            low_correlation => $small_correlation
+        );
+    }
 
 
-	my $rounded = round_off_omega(omega => $matrix);
-	my ($posdefmatrix,$count)=linear_algebra::get_symmetric_posdef($rounded);
-	if ($count >0){
-		ui->print(category => 'frem',
-				  message => "\nWarning: The covariate covariance matrix has $count ".
-				  "(essentially) non-positive eigenvalue(s). Modified Model 2 covariate \$OMEGA block to make ".
-				  "is positive definite.");
-	}
-	my $omega_lines = get_omega_lines(new_omega => $posdefmatrix,
-									  labels => $covariate_labels);
-	push(@{$model -> problems -> [0]-> omegas},model::problem::omega->new(record_arr => $omega_lines,
-																		  n_previous_rows => $n_previous_rows));
-
+    my $rounded = round_off_omega(omega => $matrix);
+    my ($posdefmatrix, $count) = linear_algebra::get_symmetric_posdef($rounded);
+    if ($count > 0) {
+        ui->print(category => 'frem',
+            message => "\nWarning: The covariate covariance matrix has $count ".
+            "(essentially) non-positive eigenvalue(s). Modified Model 2 covariate \$OMEGA block to make ".
+            "is positive definite.");
+    }
+    my $omega_lines = get_omega_lines(new_omega => $posdefmatrix, labels => $covariate_labels);
+    push(@{$model->problems->[0]->omegas}, model::problem::omega->new(record_arr => $omega_lines,
+            n_previous_rows => $n_previous_rows));
 }
 
 sub get_covmatrix
