@@ -3406,7 +3406,7 @@ sub modelfit_setup
 		($frem_model2,$message,$need_update) = $self->run_unless_run(numbers => [2]);
 		if (defined $message and length($message)>0){
 			ui->print(category => 'frem', message => $message) unless ($self->fork_runs); #let main process print message if fork
-			exit;
+			die;
 		}
 		$update_existing_model_files = 1 if ($need_update);
 		$mod3_parcov_block = get_parcov_blocks(model => $frem_model2,
@@ -3439,7 +3439,7 @@ sub modelfit_setup
 		if (defined $message and length($message)>0){
 			ui->print(category => 'frem',
 					  message => $message);
-			exit;
+			die;
 		}
 		$mod3_parcov_block = \@tmp_parcov_block;
 	}
@@ -3461,7 +3461,7 @@ sub modelfit_setup
 		($frem_model3,$message,$need_update) = $self->run_unless_run(numbers => [3]);
 		if (defined $message and length($message)>0){
 			ui->print(category => 'frem', message => $message) unless ($self->fork_runs); #let main process print message if fork
-			exit;
+			die;
 		}
 		$update_existing_model_files = 1 if ($need_update);
 		$mod4_parcov_block = get_parcov_blocks(model => $frem_model3,
@@ -3492,7 +3492,7 @@ sub modelfit_setup
 		if (defined $message and length($message)>0){
 			ui->print(category => 'frem',
 					  message => $message);
-			exit;
+			die;
 		}
 		$mod4_parcov_block = \@tmp_parcov_block;
 	}
@@ -3551,7 +3551,7 @@ sub modelfit_setup
 			if (defined $message){
 				ui->print(category => 'frem',
 						  message => $message);
-				exit;
+				die;
 			}else{
 				$sir_model = $frem_model7;
 				$sir_model_text = 'Model 7';
@@ -4139,7 +4139,7 @@ sub do_model_vpc2
 			if ($res == 1){
 				print "\nError when calling frem_conditional_omega_block for BSV, probably BSV_all part of omega from Model 3 ".
 					"was not positive definite. Take care of this manually and restart frem.\n";
-				exit;
+				die;
 			}
 			if ($res == 2){
 				croak("\nInput error when calling frem_conditional_omega_block for BSV, this is a bug.\n");
@@ -4160,7 +4160,7 @@ sub do_model_vpc2
 				print "\nError when calling frem_conditional_omega_block for BOV, ".
 					"probably BOV_all_occ1 part of omega from Model 3 ".
 					"was not positive definite. Take care of this manually and restart frem.\n";
-				exit;
+				die;
 			}
 			if ($res == 2){
 				croak("\nInput error when calling frem_conditional_omega_block for BOV, this is a bug.\n");
