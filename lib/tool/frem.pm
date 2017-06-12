@@ -164,11 +164,8 @@ sub BUILD
 			unless (($option -> value eq 'DROP' or $option -> value eq 'SKIP'
 						or $option -> name eq 'DROP' or $option -> name eq 'SKIP')){
 				$dv_ok = 1 if ($option -> name() eq $self->dv());
-#				$type_ok = 1 if ($option -> name() eq $self->type());
-#				$occ_ok = 1 if ($option -> name() eq $self->occasion());
 			}
 		}
-#		croak("type column ".$self->type()." not found in \$INPUT" ) unless $type_ok;
 		croak("dependent column ".$self->dv()." not found in \$INPUT" ) unless $dv_ok;
 	} else {
 		croak("Trying to check parameters in input model".
@@ -696,14 +693,10 @@ sub put_skipped_omegas_first
 			if (defined $model->problems->[0]->$acc and
 				scalar(@{$model->problems->[0]->$acc})>0 ) {
 				my @code = @{$model->problems->[0]->$acc->[0]->code};
-#				print "\n old ".join(' ',@old_etas)."\n";
-#				print "\n intermediate ".join(' ',@intermediate_etas)."\n";
-#				print "before\n".join(' ',@code)."\n";
 				# rename all existing ETA\((\d+)\) to ETA(o\d+)
 				model::problem::renumber_etas(code => \@code,
 											  eta_from => [\@old_etas],
 											  eta_to => [\@intermediate_etas]);
-#				print "\n intermediate ".join(' ',@code)."\n";
 				#for each omega record
 				#rename from ETA\(o(\d+)\) to ETA(newnum) , also if oldnum and newnum the same
 				my $new_eta_count = 0;
@@ -718,13 +711,10 @@ sub put_skipped_omegas_first
 					push(@to,(($new_eta_count+1) .. ($new_eta_count + $size)));
 					$new_eta_count += $size;
 				}
-#				print "\n from ".join(' ',@from)."\n";
-#				print "\n to ".join(' ',@to)."\n";
 				model::problem::renumber_etas(code => \@code,
 											  eta_from => [\@from],
 											  eta_to => [\@to]);
 
-#				print "after\n".join(' ',@code)."\n";
 				$model->problems->[0]-> set_records( type => $coderec,
 													 record_strings => \@code );
 			}
@@ -835,7 +825,6 @@ sub get_eta_mapping{
 	}
 	return \%eta_mapping;
 }
-
 
 sub get_filled_omega_block
 {
@@ -1109,7 +1098,6 @@ sub get_CTV_parameters
 	}
 	#find all par = lines and check if have ETA, then add to CTV hash. Allow IF lines
 	foreach my $par (@TVPAR){
-#		next if (defined $CTV_par{$par}); #we already know this has BOV ETA but we want to get etanum mapping
 		for (my $i=0; $i<scalar(@code); $i++) {
 			next if ( $code[$i] =~ /^\s*\;/); #comment line
 			if ( $code[$i] =~ /^[^;]*\b$par\s*=.*\bETA\((\d+)\)/  ){
@@ -1125,7 +1113,6 @@ sub get_CTV_parameters
 
 	return (\@CTV_parameters,\%etanum_to_parameter);
 }
-
 
 sub create_labels{ #not used
 	my %parm = validated_hash(\@_,
@@ -1456,7 +1443,6 @@ sub set_model2_omega_blocks
 
 }
 
-
 sub get_covmatrix
 {
 	my %parm = validated_hash(\@_,
@@ -1724,6 +1710,7 @@ sub	print_proposal_density
 	close(RES);
 
 }
+
 sub get_rse_guesses
 {
 	my %parm = validated_hash(\@_,
@@ -1760,6 +1747,7 @@ sub get_rse_guesses
 	}
 	return \%hash;
 }
+
 sub get_variance_guesses
 {
 	my %parm = validated_hash(\@_,
@@ -1993,6 +1981,7 @@ sub check_input_bov{
 	}
 
 }
+
 sub get_parameters_to_etas{ #not used
 	my %parm = validated_hash(\@_,
 							  model => { isa => 'model', optional => 0 },
@@ -2028,8 +2017,6 @@ sub get_parameters_to_etas{ #not used
 	}
 	return \@parameters;
 }
-
-
 
 sub do_model1
 {
@@ -2123,7 +2110,6 @@ sub get_regular_covariates
 	}
 	return \@regular;
 }
-
 
 sub get_indices
 {
@@ -2241,10 +2227,6 @@ sub do_filter_dataset_and_append_binary
 		push(@is_log,(0) x scalar(@{$new_categorical}));
 	}
 
-#	print "\n".join("\t",@cov_names)."\n";
-#	print join("\t",@cov_indices)."\n";
-#	print join("\t",@{$data_set_headers})."\n";
-
 	$self->covariates(\@cov_names);
 
 	$indices->{'cov_indices'} = \@cov_indices;
@@ -2290,9 +2272,6 @@ sub do_frem_dataset
 															dv_index => $indices->{$self->dv},
 															type_index => $indices->{$fremtype},
 															cov_indices => $indices->{'cov_indices'});
-#															first_timevar_type => scalar(@cov_indices));
-
-
 
 	if ($do_check){
 		my $name_check_model = 'check_data.mod';
@@ -2348,7 +2327,6 @@ sub do_frem_dataset
 	}
 	return $resultref;
 }
-
 
 sub get_covrecord
 {
@@ -2482,7 +2460,6 @@ sub get_pred_error_pk_code
 
 }
 
-
 sub prepare_model2
 {
 	my $self = shift;
@@ -2569,20 +2546,6 @@ sub prepare_model2
 		$frem_model->datafiles(problem_numbers => [1],
 							   new_names => [$self -> directory().$fremdataname]);
 
-
-#		foreach my $coderec ('error','des','pk','pred'){ #never any ETAs in $MIX
-#			my $acc = $coderec.'s';
-#			if (defined $frem_model->problems->[0]->$acc and
-#				scalar(@{$frem_model->problems->[0]->$acc})>0 ) {
-#				my @extra_code = @{$frem_model->problems->[0]->$acc->[0]->code};
-#				renumber_etas(code => \@extra_code,
-#							  eta_from => $eta_mapping->{'eta_from'},
-#							  eta_to => $eta_mapping->{'eta_to'});
-#				$frem_model->problems->[0]-> set_records( type => $coderec,
-#														  record_strings => \@extra_code );
-#			}
-#		}
-
 		#INPUT changes
 		#remove names of DROP items, in case have special meaning like DATE=DROP
 		foreach my $input (@{$frem_model->problems->[0]->inputs}){
@@ -2639,20 +2602,6 @@ sub prepare_model2
 							pk_code => $pk_code,
 							mu => $self->mu,
 							use_pred => $self->use_pred);
-
-#		add_pk_pred_error_code(model=>$frem_model,
-#							   pk_pred_code => \@pk_pred_code,
-#							   N_parameter_blocks => $N_parameter_blocks,
-#							   N_parameter_blocks => 1,
-#							   covariates => $self->covariates,
-#							   epsnum => $epsnum,
-#							   use_pred => $self->use_pred);
-
-#		if (0 ){
-#			model::problem::rescale_etas(problem => $frem_model->problems->[0],
-#										 use_pred =>$self->use_pred,
-#										 omega_indices => [($start_omega_record-1) .. (scalar(@{$frem_model->problems->[0]->omegas})-1)]);
-#		}
 
 		unless (defined $frem_model->problems->[0]->covariances and
 				scalar(@{$frem_model->problems->[0]->covariances})>0){
@@ -2947,7 +2896,6 @@ sub prepare_model5
 			ui -> print( category => 'all', message =>  $message.' However this NONMEM version does not support $SIZES. '.
 						 'There may be NMtran errors when running the model');
 		}
-#		$frem_model->set_option(record_name => 'estimation', option_name =>'MCETA', option_value => '100',fuzzy_match => 1);
 		$frem_model->_write();
 	}
 }
@@ -3021,7 +2969,6 @@ sub prepare_model6
 		$frem_model->_write();
 	}
 }
-
 
 sub prepare_model7
 {
@@ -3240,7 +3187,6 @@ sub restore_fork
 	}
 	return ($outobj,$model);
 }
-
 
 sub modelfit_setup
 {
@@ -3879,6 +3825,7 @@ sub create_data2_model
 	return ($filtered_data_model,\@filter_table_header,$extra_input_items,$message);
 
 }
+
 sub do_model_vpc1
 { #not used
 	my $self = shift;
@@ -4233,6 +4180,7 @@ sub	add_pred_error_code
 	}
 
 }
+
 sub	add_pk_pred_error_code
 { #not used
 	my %parm = validated_hash(\@_,
@@ -4318,8 +4266,6 @@ sub	add_pk_pred_error_code
 	}
 
 }
-
-
 
 sub cleanup
 {
@@ -4420,7 +4366,6 @@ sub olddo_model1
 	return ($frem_model,\@leading_omega_records);
 }
 
-
 sub submit_child
 {
 	my $self = shift;
@@ -4447,6 +4392,7 @@ sub wait_until_child_finished
 	    sleep($self->poll_interval);
 	}
 }
+
 sub child_process_finished
 {
 	my $self = shift;
