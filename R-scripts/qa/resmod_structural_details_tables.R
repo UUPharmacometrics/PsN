@@ -13,9 +13,18 @@ resmod_structural_details_tables <- function(working.directory,model.directory,m
           .calc_and_add_shift_from_cwres(working.directory,model.directory,model.filename,CWRES_table,idv,idv_name)
 
         second_table = data.frame(C1=paste0(format(table$bin_min,nsmall=2),"  :  ",format(table$bin_max,nsmall=2)),C2=as.character(format(round(table$value,2),nsmall=2)),
-                                    C3=as.character(round(table$relative_shift,0)),stringsAsFactors = F)
-
-        colnames(second_table) <- c("Bin","CWRES","%CPRED")
+                                  stringsAsFactors = F)
+        if(any(is.na(table$relative_shift))) {
+          second_table = data.frame(C1=paste0(format(table$bin_min,nsmall=2),"  :  ",format(table$bin_max,nsmall=2)),C2=as.character(format(round(table$value,2),nsmall=2)),
+                                    C3=as.character(format(round(table$shift,2),nsmall=2)),
+                                    stringsAsFactors = F)
+          colnames(second_table) <- c("Bin","CWRES","CPRED")
+        } else {
+          second_table = data.frame(C1=paste0(format(table$bin_min,nsmall=2),"  :  ",format(table$bin_max,nsmall=2)),C2=as.character(format(round(table$value,2),nsmall=2)),
+                                    C3=as.character(round(table$relative_shift,0)),
+                                    stringsAsFactors = F)
+          colnames(second_table) <- c("Bin","CWRES","%CPRED")
+        }
         
       } else {
         second_table = data.frame(C1="ERROR",C2="ERROR",C3="ERROR",stringsAsFactors = F)

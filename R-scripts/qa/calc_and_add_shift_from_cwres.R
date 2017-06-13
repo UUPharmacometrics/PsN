@@ -43,7 +43,8 @@
     rename_(idv=idv)
   
   # get derivatives from linearized model
-  mean_shifts <- read.table(file.path(working.directory, paste0(sub('.mod.*','',model.filename),"_linbase.dta")), skip = 1, header=T) %>%
+  mean_shifts_table <- read.table(file.path(working.directory, paste0(sub('.mod.*','',model.filename),"_linbase.dta")), skip = 1, header=T)
+  mean_shifts <- mean_shifts_table %>%
     filter(MDV==0) %>%
     bind_cols(idv_df) %>%
     mutate(bin_index = findInterval(unlist(.$idv), structural_details_table$bin_min),  # in which bin did observation go
@@ -60,7 +61,7 @@
                  ipred = .$OPRED)
     }) %>%
     group_by(bin_index) %>%
-    summarise(relative_shift = 100*mean(shift/ipred), shift = mean(shift)) %>%
+    summarise(relative_shift = ifelse((any(mean_shifts_table$OPRED > 0) && any(mean_shifts_table$OPRED < 0)),NA,100*mean(shift/ipred)), shift = mean(shift)) %>%
     mutate(bin_min = structural_details_table$bin_min[bin_index],
            bin_max = structural_details_table$bin_max[bin_index],
            bin_mean=ifelse(bin_min==-Inf,-Inf,bin_min+(bin_max-bin_min)/2))
@@ -68,5 +69,4 @@
   structural_details_table %>%
     slice(mean_shifts$bin_index) %>%
     bind_cols(mean_shifts %>% select(bin_mean, relative_shift, shift))
-  
 }
