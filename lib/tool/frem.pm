@@ -84,6 +84,34 @@ has 'cholesky' => ( is => 'rw', isa => 'Bool', default => 0 );
 sub BUILD
 {
 	my $self  = shift;
+    my $model = $self->models->[0];
+    my $problem = $model->problems->[0];
+    my $datafiles = $model->datafiles(absolute_path => 1);
+    my $data = data->new(
+        filename => $datafiles->[0],
+        ignoresign => defined $model->ignoresigns ? $model->ignoresigns->[0] : undef,
+        missing_data_token => $self->missing_data_token,
+        idcolumn => $problem->find_data_column(column_name => 'ID') + 1,
+    );
+
+    # Check if any covariate column has all same value
+    # In that case warn and remove column
+    my @filtered_covariates;
+    my @filtered_categorical;
+    for my $column (@{$self->covariates}) {
+        my $colno = $problem->find_data_column(column_name => $column);
+        my $column_data = $data->column_to_array(column => $colno);
+        if (scalar @{array::unique($column_data)} == 1) {
+            print "Warning: Covariate $column excluded because it has only one value for all rows in the dataset.\n";
+        } else {
+            push @filtered_covariates, $column;
+            if (grep { $_ eq $column } @{$self->categorical}) {
+                push @filtered_categorical, $column;
+            }
+        }
+    }
+    $self->covariates(\@filtered_covariates);
+    $self->categorical(\@filtered_categorical);
 
 	for my $accessor ('logfile','raw_results_file','raw_nonp_file'){
 		my @new_files=();
