@@ -107,6 +107,8 @@ A new recommended but not required Perl library for runrecord: YAML::Tiny
 
    ___linearize___
 
+- Ignore all MDV!=0 in linear model if MDV obtainable
+- Support models with extension .ctl
 
    ___boot_scm___
 

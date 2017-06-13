@@ -1580,7 +1580,7 @@ sub linearize_setup
 		scalar(keys %{$self->test_relations()}) == 0){
 		$linearize_only = 1;
 		my $base = $original_model->filename();
-		$base =~ s/\.mod$//;
+		$base =~ s/\.(mod|ctl)$//;
 		$base .= '_linbase';
 		$self->basename($base);
 	}
