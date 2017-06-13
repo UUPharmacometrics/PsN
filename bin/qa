@@ -79,6 +79,7 @@ $help_text{-dvid} = <<'EOF';
       -dvid
 
       Name of the dvid column. DVID is default.
+      Will only be used for the structural and residual model analysis.
 EOF
 
 $help_text{-occ} = <<'EOF';
@@ -90,13 +91,15 @@ EOF
 $help_text{-idv} = <<'EOF';
       -idv
 
-      Name of the independent variable. TIME is default.
+      Name of the independent variable for the structural and residual model analysis.
+      Default is to use TIME,PRED and TAD (if present). This option will change the name
+      of TIME.
 EOF
 
 $help_text{-dv} = <<'EOF';
       -dv
 
-      Name of the dependent variable. CWRES is default.
+      Name of the dependent variable for the structural and residual model analysis. CWRES is default.
 EOF
 
 $help_text{-groups} = <<'EOF';
