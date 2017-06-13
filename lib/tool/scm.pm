@@ -2655,6 +2655,11 @@ sub linearize_setup
     # Remove IGN or ACC in $DATA. Might crash future runs
     $original_model->problems->[0]->datas->[0]->remove_ignore_accept();
 
+    # If have MDV ignore all MDV != 0
+    if (should_add_mdv(model => $original_model)) {
+        $original_model->add_option(record_name => 'data', option_name => 'IGNORE(MDV.NEN.0)');
+    }
+
 	return $original_model;
 }
 
