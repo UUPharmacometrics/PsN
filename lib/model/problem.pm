@@ -3809,11 +3809,13 @@ sub find_data_column
 	my $column_name = $parm{'column_name'};
 
     my $counter = 0;
-    foreach my $opt (@{$self->inputs->[0]->options()}) {
-        if ($opt->name() eq $column_name) {
-            return $counter;
+    foreach my $record (@{$self->inputs}) {
+        foreach my $opt (@{$record->options}) {
+            if ($opt->name eq $column_name) {
+                return $counter;
+            }
+            $counter++;
         }
-        $counter++;
     }
 
     return -1;
