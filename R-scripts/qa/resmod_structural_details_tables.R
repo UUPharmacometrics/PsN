@@ -29,6 +29,7 @@ resmod_structural_details_tables <- function(working.directory,model.directory,m
       } else {
         second_table = data.frame(C1="ERROR",C2="ERROR",C3="ERROR",stringsAsFactors = F)
         colnames(second_table) <- c("Bin","CWRES","%CPRED")
+        table <- error_table(col=1)
       }
       resmod_structural_details[[i]] <- list(idv = idv,
                                              dofv = dofv,

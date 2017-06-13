@@ -164,13 +164,15 @@ for(i in 1:length(idv_all)) {
   second_table <- addcgroup(second_table,cgroup=c("","Estimated bias"),n.cgroup=c(1,2))
   print(second_table)
   shift_tab <- resmod_structural_details[[i]]$table
-  idv_plot <- plot_ipred(shift_tab,idv_all[i])
-  print(idv_plot)
-  if(make_vpc) {
-    cat("\n\n")
-    #vpc plots
-    vpc_plot <- plot_structural_vpc(obs,sim,shift_tab,idv=idv_all[i])
-    print(vpc_plot)
+  if(ncol(shift_tab)!=1) {
+    idv_plot <- plot_ipred(shift_tab,idv_all[i])
+    print(idv_plot)
+    if(make_vpc) {
+      cat("\n\n")
+      #vpc plots
+      vpc_plot <- plot_structural_vpc(obs,sim,shift_tab,idv=idv_all[i])
+      print(vpc_plot)
+    }
   }
   cat("\n\\newpage\n")
 }
