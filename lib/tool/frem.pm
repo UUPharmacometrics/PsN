@@ -3112,18 +3112,6 @@ sub save_covresults{
 	if (defined $resultref){
 		$self->have_missing_covariates($resultref->{'have_missing_covariates'}) if (defined $resultref->{'have_missing_covariates'});
 		$self->occasionlist($resultref->{'occasionlist'}) if (defined $resultref->{'occasionlist'});
-		if (0){
-			if (defined $resultref->{'invariant_median'}){
-				$self->invariant_median($resultref->{'invariant_median'}) ;
-				for (my $i=0; $i< scalar(@{$self->covariates}); $i++){
-					if (abs($resultref->{'invariant_median'}->[$i])<0.01){
-						ui -> print( category => 'all', message => 'Warning: abs(median) for '.$self->covariates->[$i].
-									 ' is '.abs($resultref->{'invariant_median'}->[$i]).
-									 ', the additive error may not be appropriate for this covariate'."\n");
-					}
-				}
-			}
-		}
 		if (defined $resultref->{'invariant_mean'}){
 			$self->invariant_mean($resultref->{'invariant_mean'}) ;
 			for (my $i=0; $i< scalar(@{$self->covariates}); $i++){
