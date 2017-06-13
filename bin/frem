@@ -25,14 +25,11 @@ my %options;
 
 my %required_options = ('covariates:s');
 my %optional_options = (
-#	'dv:s' => undef,
-#	'vpc!' => undef,
 	'check!' => undef,
 	'rescale!' => undef,
 	'fork_runs!' => undef,
-#	'estimate_regular_final_model!' => undef,
 	'estimate_means!' => undef,
-        'estimate_covariates!' => undef,
+    'estimate_covariates!' => undef,
 	'categorical:s' => undef,
 	'deriv2_nocommon_maxeta:i' => undef,
 	"mceta:i"=>'',
@@ -42,7 +39,6 @@ my %optional_options = (
 	'mu' => undef,
 	'cholesky!' => undef,
 	'always_proposal_density!' => undef,
-#	'skip_etas:i' => undef
 	'skip_omegas:s' => undef
 );
 
@@ -155,13 +151,6 @@ $ABBREVIATED DERIV2=NOCOMMON
 will be set in the control stream.
 EOF
 
-#$help_text{-estimate_regular_final_model} = <<'EOF';
-#    -estimate_regular_final_model
-#
-#Default set. If set then script will estimate the final regular parameterization frem model,
-#otherwise the model will be created but not estimated.
-#EOF
-
 $help_text{-estimate_means} = <<'EOF';
     -estimate_means
 
@@ -188,14 +177,6 @@ $help_text{-cholesky} = <<'EOF';
 
 Default not set. If set then script will create and estimate Model 5 and Model 6.
 EOF
-
-#$help_text{-vpc} = <<'EOF';
-#      -vpc
-
-#      Default not set. If set then script will create a frem model that
-#can be run with the vpc script (in a separate call to the vpc
-#script).
-#EOF
 
 $help_text{-mceta} = <<'EOF';
       -mceta=N
@@ -236,72 +217,66 @@ common_options::setup( \%options, 'frem' ); #get defaults,
 
 
 ## Check that we do have a model file
-if ( scalar(@ARGV) < 1 ) {
+if (scalar(@ARGV) < 1) {
   print "An input model file must be specified. Use 'frem -h' for help.\n";
   die;
 }
 
-if( scalar(@ARGV) > 1 ){
-  print "FREM can only handle one modelfile, you listed: ",join(',',@ARGV),". Use 'frem -h' for help.\n";
+if (scalar(@ARGV) > 1) {
+  print "FREM can only handle one modelfile, you listed: ", join(',',@ARGV),". Use 'frem -h' for help.\n";
   die;
 }
-
-
 
 require model;
 
 my $eval_string = common_options::model_parameters(\%options);
 
-my $model = model -> new ( eval( $eval_string ),
-						   parse_output => 0,
-						   filename                    => $ARGV[0],
-						   ignore_missing_output_files => 1);
+my $model = model->new(
+    eval($eval_string),
+    parse_output => 0,
+    filename => $ARGV[0],
+    ignore_missing_output_files => 1
+);
 
 require input_checking;
 input_checking::check_options(tool => 'frem', options => \%options, model => $model);
 
-
 require tool::frem;
 
-my $frem = tool::frem->new( eval( $common_options::parameters ),
-							models	     => [ $model ],
-							top_tool           => 1,
-							covariates => $options{'covariates'},
-							categorical => $options{'categorical'},
-#							estimate_regular_final_model => $options{'estimate_regular_final_model'},
-							estimate_means => $options{'estimate_means'},
-                                                        estimate_covariates => $options{'estimate_covariates'},
-							cholesky => $options{'cholesky'},
-							deriv2_nocommon_maxeta => $options{'deriv2_nocommon_maxeta'},
-							log => $options{'log'},
-							rse => $options{'rse'},
-							mu => $options{'mu'},
-							fork_runs => $options{'fork_runs'},
-							always_proposal_density => $options{'always_proposal_density'},
-							skip_omegas => $options{'skip_omegas'},
-							check => $options{'check'},
-							mceta => $options{'mceta'},
-							rescale => $options{'rescale'},
-							vpc => $options{'vpc'},
-							run_sir => $options{'run_sir'},
-#							dv => $options{'dv'}
-	);
+my $frem = tool::frem->new(
+    eval( $common_options::parameters ),
+    models => [ $model ],
+    top_tool => 1,
+    covariates => $options{'covariates'},
+    categorical => $options{'categorical'},
+    estimate_means => $options{'estimate_means'},
+    estimate_covariates => $options{'estimate_covariates'},
+    cholesky => $options{'cholesky'},
+    deriv2_nocommon_maxeta => $options{'deriv2_nocommon_maxeta'},
+    log => $options{'log'},
+    rse => $options{'rse'},
+    mu => $options{'mu'},
+    fork_runs => $options{'fork_runs'},
+    always_proposal_density => $options{'always_proposal_density'},
+    skip_omegas => $options{'skip_omegas'},
+    check => $options{'check'},
+    mceta => $options{'mceta'},
+    rescale => $options{'rescale'},
+    vpc => $options{'vpc'},
+    run_sir => $options{'run_sir'},
+);
 
-$frem-> print_options (cmd_line => $cmd_line,
-		      toolname => 'frem',
-		      local_options => [keys %optional_options],
-		      common_options => \@common_options::tool_options);
+$frem->print_options(
+    cmd_line => $cmd_line,
+    toolname => 'frem',
+    local_options => [keys %optional_options],
+    common_options => \@common_options::tool_options
+);
 
+$frem->run;
 
-$frem -> run;
-
-if ($frem->vpc and -e $frem->directory.'frem_vpc.mod'){
-	ui -> print( category => 'frem',
-				 message => "The prepared frem vpc model is ".$frem->directory."frem_vpc.mod\n" );
+if ($frem->vpc and -e $frem->directory . 'frem_vpc.mod') {
+	ui->print(category => 'frem', message => "The prepared frem vpc model is " . $frem->directory . "frem_vpc.mod\n");
 }
 
-#$frem -> prepare_results;
-#$frem -> print_results; #only for frem_results.csv
-ui -> print( category => 'frem',
-	     message => "frem done\n" );
-
+ui->print(category => 'frem', message => "frem done\n");
