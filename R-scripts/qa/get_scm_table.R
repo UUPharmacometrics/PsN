@@ -8,7 +8,7 @@ get_scm_table <- function(rawres_file,parameters,covariates,categorical){
         select(relation, dofv)
         colnames(scm_table) <- c("","dofv")
       #max_table
-      scm_table[,2] <- round(as.numeric(scm_table[,2]), 1)
+      scm_table$dofv <- round(as.numeric(scm_table$dofv), 1)
       max_scm_table <- cbind(scm_table[which.max(scm_table$dofv),],1)
       max_scm_table[,2] <- round(max_scm_table[,2],1)
       
