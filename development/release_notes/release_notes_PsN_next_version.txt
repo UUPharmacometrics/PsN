@@ -109,6 +109,7 @@ A new recommended but not required Perl library for runrecord: YAML::Tiny
 
 - Ignore all MDV!=0 in linear model if MDV obtainable
 - Support models with extension .ctl
+- Do not propagate name of -dir to subtools (i.e. underlying scm directory will always be called scm_dir1)
 
    ___boot_scm___
 
@@ -140,6 +141,8 @@ A new recommended but not required Perl library for runrecord: YAML::Tiny
 
 
    ___cdd___
+
+- Do not propagate -dir to subtools (i.e. subdir of modelfit of cdd runs will always be 'modelfit_dir1') 
 
 
    ___rplots___

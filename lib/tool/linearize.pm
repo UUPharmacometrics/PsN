@@ -70,6 +70,7 @@ sub modelfit_setup
         from_linearize => 1,
         keep_covariance => $self->keep_covariance,
         estimate_fo => $self->estimate_fo,
+        directory => 'scm_dir1',
     );
 
     $scm->run;
