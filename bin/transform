@@ -44,23 +44,20 @@ my $valid_transformations_string = join("\n", @valid_transformations);
 
 my %help_text;
 
-$help_text{Pre_help_message} = <<'EOF';
+$help_text{Pre_help_message} = <<"EOF";
   Model transformation
+
+  The following transformations are supported:
+  $valid_transformations_string
+
 EOF
     
-$help_text{Description} = <<'EOF';
-    Model transformation
-EOF
-
 $help_text{Examples} = <<'EOF';
 transform boxcox run1.mod
 EOF
 
 $help_text{Options} = <<"EOF";
 	A model file and a transformation are required as arguments.
-
-    Valid transformations are:
-    $valid_transformations_string
 
 	The following options are valid:
 EOF
