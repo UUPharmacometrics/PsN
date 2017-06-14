@@ -97,6 +97,8 @@ has 'from_linearize' => ( is => 'rw', isa => 'Bool', default => 0 );    # Was th
 has 'original_nonlinear_model' => ( is => 'rw', isa => 'model' );       # If linearizing this will be the real original model
 has 'keep_covariance' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'estimate_fo' => ( is => 'rw', isa => 'Bool', default => 0 );   # If linearizing use FO to estimate the linearized model
+has 'extra_table_columns' => ( is => 'rw', isa => 'ArrayRef[Str]' ); # Set to array of colnames to add to an extra data table output by derivatives.mod
+
 
 sub BUILD
 {
@@ -2025,8 +2027,13 @@ sub linearize_setup
 
 		push(@tablestrings,'NOPRINT','NOAPPEND','ONEHEADER');
 		push(@tablestrings,'FILE='.$datafilename);
-		$derivatives_model -> set_records(type => 'table',
-			record_strings => \@tablestrings);
+		$derivatives_model->set_records(type => 'table', record_strings => \@tablestrings);
+
+        # An extra table was requested
+        if (defined $self->extra_table_columns) {
+            my @extra_tablestrings = ( @{$self->extra_table_columns}, 'NOPRINT', 'NOAPPEND', 'ONEHEADER', 'FILE=extra_table' );
+            $derivatives_model->add_records(type => 'table', record_strings => \@extra_tablestrings);
+        }
 
 		if ((scalar(@tablestrings)-4) == (1+$table_highprec+$table_lowprec)){
 			if ($use_tableformat){

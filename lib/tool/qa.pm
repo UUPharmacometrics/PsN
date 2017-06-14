@@ -53,11 +53,18 @@ sub modelfit_setup
     my $linearized_model_name = $self->model->filename;
     $linearized_model_name =~ s/(\.[^.]+)$/_linbase.mod/;
     ui->category('linearize');
+
+    my @table_columns = ( 'ID', $self->idv, 'CWRES', 'PRED', 'CIPREDI' );
+    if ($model_copy->defined_variable(name => 'TAD')) {
+        push @table_columns, 'TAD';
+    }
+
     my $linearize = tool::linearize->new(
         %{common_options::restore_options(@common_options::tool_options)},
         models => [ $model_copy ],
         directory => 'linearize_run',
         estimate_fo => $self->fo, 
+        extra_table_columns => \@table_columns,
     );
 
     $linearize->run();
@@ -216,11 +223,13 @@ sub modelfit_setup
     $self->_to_qa_dir();
 
     print "*** Running resmod ***\n";
+    my $resmod_model = model->new(filename => 'linearize_run/scm_dir1/derivatives.mod');
+
     my $resmod_idv;
     eval {
         $resmod_idv = tool::resmod->new(
             %{common_options::restore_options(@common_options::tool_options)},
-            models => [ $self->model ],
+            models => [ $resmod_model ],
             dvid => $self->dvid,
             idv => $self->idv,
             dv => $self->dv,
@@ -246,7 +255,7 @@ sub modelfit_setup
     eval {
         $resmod_tad = tool::resmod->new(
             %{common_options::restore_options(@common_options::tool_options)},
-            models => [ $self->model ],
+            models => [ $resmod_model ],
             dvid => $self->dvid,
             idv => 'TAD',
             dv => $self->dv,
@@ -270,7 +279,7 @@ sub modelfit_setup
     eval {
         $resmod_pred = tool::resmod->new(
             %{common_options::restore_options(@common_options::tool_options)},
-            models => [ $self->model ],
+            models => [ $resmod_model ],
             dvid => $self->dvid,
             idv => 'PRED',
             dv => $self->dv,

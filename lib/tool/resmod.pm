@@ -46,6 +46,7 @@ has 'iteration_summary' => ( is => 'rw', isa => 'ArrayRef[ArrayRef]', default =>
 has 'base_sum' => ( is => 'rw', isa => 'ArrayRef', default => sub { [] } );     # Sum of all base models for each DVID
 has 'table_file' => ( is => 'rw', isa => 'Str' );   # The name of the table file that was used
 has 'negative_ipred' => ( is => 'rw', isa => 'Bool', default => 0 );
+has 'ipred_name' => ( is => 'rw', isa => 'Str' );
 
 sub BUILD
 {
@@ -97,12 +98,20 @@ sub BUILD
         }
 
         my $have_ipred = grep { $_ eq 'IPRED' } @columns_in_table;
-        if ($have_ipred) {
-            my $ipred_column = $table->tables->[0]->header->{'IPRED'};
+        my $have_cipredi = grep { $_ eq 'CIPREDI' } @columns_in_table;
+        if ($have_ipred or $have_cipredi) {
+            my $ipred_name;
+            if ($have_ipred) {
+                $ipred_name = 'IPRED';
+            } else {
+                $ipred_name = 'CIPREDI';
+            }
+            $self->ipred_name($ipred_name);
+            my $ipred_column = $table->tables->[0]->header->{$ipred_name};
             my $min_ipred = array::min($table->tables->[0]->columns->[$ipred_column]);
             if ($min_ipred < 0) {
                 $self->negative_ipred(1);
-                print "Negative IPRED values: not running power and dtbs models\n";
+                print "Negative $ipred_name values: not running power and dtbs models\n";
             }
         }
     }
@@ -150,15 +159,15 @@ sub modelfit_setup
     my $cwres_table = $self->model->problems->[0]->find_table(columns => \@columns, get_object => 1);
     my $cwres_table_name = $self->model->problems->[0]->find_table(columns => \@columns);
 
-    # Do we have IPRED, DVID or OCC?
+    # Do we have IPRED/CIPREDI, DVID or OCC?
     my $have_ipred = 0;
     my $have_dvid = 0;
 	my $have_occ = 0;
     my $have_time = 0;
     for my $option (@{$cwres_table->options}) {
-        if ($option->name eq 'IPRED') {
+        if ($option->name eq $self->ipred_name) {
             $have_ipred = 1;
-            push @columns, 'IPRED';
+            push @columns, $self->ipred_name;
         } elsif ($option->name eq $self->dvid) {
             $have_dvid = 1;
             push @columns, $self->dvid;
@@ -575,10 +584,11 @@ sub _create_input
                 $found_columns[$i] = 1;
                 my $name = $col;
                 $name = 'DV' if ($name eq $self->dv);
-				$name = 'DROP' if ($name eq 'IPRED' and not $ipred);
+				$name = 'DROP' if ($name eq $self->ipred_name and not $ipred);
 				$name = 'DROP' if ($name eq $occ_name and not $occ);
                 $name = 'DROP' if ($name eq 'TIME' and $self->idv ne 'TIME' and not $time);
                 $name = 'PPRD' if ($name eq 'PRED' and $self->idv eq 'PRED');
+                $name = 'IPRED' if ($name eq 'CIPREDI' and $ipred);
                 $name = $self->obs_ignore if (defined $self->obs_ignore and $self->obs_column ne 'DV' and $name eq $self->obs_column);
                 $input_columns .= $name;
                 $found = 1;

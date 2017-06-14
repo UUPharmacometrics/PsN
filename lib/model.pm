@@ -5528,6 +5528,35 @@ sub get_pk_or_pred_code
     return ($code_record, \@code);
 }
 
+sub defined_variable
+{
+    # Check if a variable is defined in code or in $INPUT
+    my $self = shift;
+	my %parm = validated_hash(\@_,
+        name => { isa => 'Str' },
+    );
+	my $name = $parm{'name'};
+
+    if ($self->problems->[0]->find_data_column(column_name => $name) != -1) {
+        return 1;
+    }
+
+    my @code_records = ( 'pred', 'pk', 'error' );
+    for my $record (@code_records) {	
+        my $code = $self->get_code(record => $record);
+        if (defined $code) {
+            for my $line (@$code) {
+                if ($line =~ /\s*$name\s*=/) {
+                    return 1;
+                }
+            }
+        }
+    }
+
+    return 0;
+}
+
+
 no Moose;
 __PACKAGE__->meta->make_immutable;
 1;
