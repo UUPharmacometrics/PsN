@@ -1109,6 +1109,7 @@ sub general_setup
 			raw_results           => undef,
 			prepared_models       => undef,
 			top_tool              => 0,
+            directory => "modelfit_dir1",
 			%subargs ) );
 
 	# }}} sub tools
