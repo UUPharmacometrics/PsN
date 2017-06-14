@@ -58,6 +58,7 @@ sub modelfit_setup
         models => [ $model_copy ],
         directory => 'linearize_run',
         estimate_fo => $self->fo, 
+        model_dir_name => 0,
     );
 
     $linearize->run();
@@ -192,6 +193,7 @@ sub modelfit_setup
             rplots => 1,
             etas => 1,
             top_tool => 1,
+            model_dir_name => 0,
         );
         $cdd->run();
     };
