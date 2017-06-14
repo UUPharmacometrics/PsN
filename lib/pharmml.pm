@@ -5,6 +5,7 @@ use warnings;
 use File::Spec::Functions qw(devnull);
 use PsN;
 use nonmemrun;
+use MooseX::Params::Validate;
 
 sub is_pharmml
 {
@@ -74,5 +75,50 @@ sub check_converted_model
 	unlink('FDATA', 'FREPORT');
 	return $ok;
 }
+
+sub create_minimal_pharmml
+{
+    # Create a minimal PharmML from a NONMEM model.
+    # The intent is to use it in conjunction with an SO to
+    # automatically extract types of variability parameters for example
+	my %parm = validated_hash(\@_,
+        model => { isa => 'model' },
+        filename => { isa => 'Str' },
+    );
+	my $model = $parm{'model'};
+	my $filename = $parm{'filename'};
+
+    open my $fh, '>', $filename or return;
+
+    print $fh <<'END';
+<?xml version="1.0" encoding="UTF-8"?>
+<PharmML xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+	xmlns="http://www.pharmml.org/pharmml/0.8/PharmML"
+	xsi:schemaLocation="http://www.pharmml.org/pharmml/0.8/PharmML"
+	xmlns:math="http://www.pharmml.org/pharmml/0.8/Maths"
+	xmlns:ct="http://www.pharmml.org/pharmml/0.8/CommonTypes"
+	xmlns:ds="http://www.pharmml.org/pharmml/0.8/Dataset"
+	xmlns:mdef="http://www.pharmml.org/pharmml/0.8/ModelDefinition"
+	xmlns:mstep="http://www.pharmml.org/pharmml/0.8/ModellingSteps"
+	xmlns:design="http://www.pharmml.org/pharmml/0.8/TrialDesign"
+	writtenVersion="0.8.1">
+
+    <ModelDefinition xmlns="http://www.pharmml.org/pharmml/0.8/ModelDefinition">
+		<VariabilityModel blkId="vm_err" type="residualError">
+			<Level referenceLevel="false" symbId="DV"/>
+		</VariabilityModel>
+		<VariabilityModel blkId="vm_mdl" type="parameterVariability">
+			<Level referenceLevel="true" symbId="ID"/>
+		</VariabilityModel>
+END
+
+    print $fh <<'END';
+    </ModelDefinition>
+</PharmML>
+END
+
+    close $fh;
+}
+
 
 1;

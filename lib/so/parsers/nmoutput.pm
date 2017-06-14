@@ -21,6 +21,7 @@ use nmtablefile;
 use so;
 use so::soblock;
 use so::soblock::simulation::simulationblock;
+use pharmml;
 
 has 'so' => ( is => 'rw', isa => 'so' );
 has 'lst_file' => ( is => 'rw', isa => 'Str' );
@@ -33,6 +34,7 @@ has 'external_tables' => ( is => 'rw', isa => 'Bool', default => 0 );   # For no
 has 'labels_hash' => ( is => 'rw', isa => 'HashRef' );  # List of labels on sd/corr scale etc. Intended for external use i.e. bootstrap
 has 'extra_output' => ( is => 'rw', isa => 'Maybe[ArrayRef]' );
 has 'include_fixed_params' => ( is => 'rw', isa => 'Bool', default => 0 );  # If set includes all fixed parameters. If unset skips FIX parameters without label
+has 'pharmml' => ( is => 'rw', isa => 'Bool', default => 0 );   # Should a minimal companion PharmML be created?
 has '_idv' => ( is => 'rw', isa => 'Str' );                         # The name of the idv column
 has '_document' => ( is => 'rw', isa => 'Ref' );                    # The XML document 
 has '_duplicate_blocknames' => ( is => 'rw', isa => 'HashRef' );    # Contains those blocknames which will have duplicates with next number for block
@@ -101,6 +103,12 @@ sub _parse_lst_file
                 severity => 10,
             );
         } else {
+            if ($self->pharmml) {
+                my $pharmml_name = $self->lst_file;
+                $pharmml_name =~ s/\.lst/.xml/;
+                pharmml::create_minimal_pharmml(model => $outobj->lst_model, filename => $pharmml_name); 
+            }
+
             my $problems = 0; #TODO check if first $PROB is prior, then should be =1 here, as in e.g. sse script
             my $sub_problems = 0;  #always 0 since we do not have workflow simulation + estimation?
 
