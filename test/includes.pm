@@ -142,8 +142,8 @@ sub cmp_float
 	my $y = shift;
 	my $text = shift;
 
-	$x = sprintf("%.13e", $x);
-	$y = sprintf("%.13e", $y);
+	$x = sprintf("%.11e", $x);
+	$y = sprintf("%.11e", $y);
 
 	cmp_ok($x, '==', $y, $text);
 }
