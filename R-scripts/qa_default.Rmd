@@ -9,7 +9,7 @@ geometry: margin=1.5cm
 classoption: a4paper
 ---
 
-```{r loading_libraries_and_sourcing_functions,include = FALSE}
+```{r loading_libraries_and_sourcing_functions,include = FALSE,warning=F,message=F}
 library(dplyr)
 library(knitr)
 library(methods)
@@ -59,7 +59,7 @@ idv_all <- which_resmod_folders(directory=working.directory)
 # 1.Structural models
 structural_overview <- get_structural_overview_table(working.directory,idv=idv_all,groups)
 # get resmod structural details tables
-resmod_structural_details <- resmod_structural_details_tables(working.directory,model.directory,model.filename,CWRES_table,idv_all,idv_name)
+resmod_structural_details <- resmod_structural_details_tables(working.directory,model.filename,CWRES_table,idv_all,idv_name)
 ```
 
 ```{r parameter_model_calculations,results='hide',echo=FALSE,message=FALSE}
@@ -218,6 +218,17 @@ covariates_extra_table <- ztable_sub(covariates_extra_table,type=type,colnames.b
 print(covariates_extra_table)
 ```
 
+```{r draw_sd_par_cov_table,echo=F,results='asis'}
+list_sd_par_cov <- sd_par_cov(paste0(working.directory,"/postfrem_run/sd_coefficients_summary.csv"))
+sd_parcov_file_exists <- list_sd_par_cov$sd_parcov_file_exists
+if(sd_parcov_file_exists) {
+  sd_parcov_tab <- list_sd_par_cov$sd_parcov_tab
+  sd_parcov_tab <- keep_symbols(sd_parcov_tab,type)
+  sd_parcov_tab <- ztable_sub(sd_parcov_tab,type=type,colnames.bold = T,include.rownames = F,longtable = T,align="lll")
+  print(sd_parcov_tab)
+}
+```
+
 ```{r draw_frem_plots,echo=F,message=F,warning=F,results='asis',fig.width=11,fig.height=16,fig.keep="high",fig.align="center"}
 if((file.exists(paste0(working.directory,"/postfrem_run/frem_ratio.csv")) || 
    file.exists(paste0(working.directory,"/postfrem_run/frem_id_ratios.csv"))) && 
@@ -286,12 +297,12 @@ if(file.exists(file.path(working.directory,"simeval_run/raw_all_iofv.csv"))) {
 ```
 
 ```{r plot_iofv_vs_iofv,echo=F,results='asis',warning=F,fig.width=9,fig.height=6.5,fig.keep="high",fig.align="center"}
-if(rplots.level > 1) {
-  phi1 <- file.path(working.directory,"linearize_run",paste0(sub('.mod.*','',model.filename),"_linbase.phi"))
-  phi2 <- file.path(working.directory,"linearize_run/scm_dir1/derivatives.phi")
-  if(file.exists(phi1) && file.exists(phi2)) {
-    plot_iofv_vs_iofv <- iofv_vs_iofv(phi1,phi2)
-    print(plot_iofv_vs_iofv)
-  }
-}
+ if(rplots.level > 1) {
+   # phi1 <- file.path(working.directory,"linearize_run",paste0(sub('.mod.*','',model.filename),"_linbase.phi"))
+   # phi2 <- file.path(working.directory,"linearize_run/scm_dir1/derivatives.phi")
+   # if(file.exists(phi1) && file.exists(phi2)) {
+   #   plot_iofv_vs_iofv <- iofv_vs_iofv(phi1,phi2)
+   #   print(plot_iofv_vs_iofv)
+   # }
+ }
 ```

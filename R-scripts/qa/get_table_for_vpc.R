@@ -9,9 +9,19 @@ get_tables_for_vpc <- function(obs_table,obs_extra_table,sim_table,idv_all) {
     if(all(colnames(obs)!="MDV")) {
       obs <- cbind(obs,"MDV"=extra_obs[,"MDV"])
     }
+    if(any(obs$MDV==1)) {
+      obs <- obs[which(obs$MDV==0),]
+      rownames(obs) <- NULL
+    }
+    if(any(extra_obs$MDV==1)) {
+      extra_obs <- extra_obs[which(extra_obs$MDV==0),]
+      rownames(extra_obs) <- NULL
+    }
+    
     add_cols <- obs[,c(idv_all)]
     sim <- read_nm_tables(sim_table)
     sim_names <- colnames(sim)
+
     sim <- cbind(sim,add_cols)
     colnames(sim) <- c(sim_names,idv_all)
     out <- list(obs=obs,

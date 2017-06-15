@@ -1,6 +1,6 @@
-.calc_and_add_shift_from_cwres <- function(structural_details_table, working.directory, model.directory, model.filename, CWRES_table, idv, idv_name){
+.calc_and_add_shift_from_cwres <- function(structural_details_table, working.directory, model.filename, CWRES_table, idv, idv_name){
   # .ext file with the final estimates
-  final_estimates <- read.table(file.path(model.directory, paste0(sub('.mod.*','',model.filename),".ext")), skip=1, header=T) %>%
+  final_estimates <- read.table(paste0(working.directory,"linearize_run/scm_dir1/derivatives.ext"), skip=1, header=T) %>%
     filter(ITERATION==-1000000000)
   
   # populate omega from .ext file

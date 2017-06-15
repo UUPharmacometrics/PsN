@@ -7,6 +7,7 @@ keep_symbols <- function(table,type) {
       } else {
         table[i,j] <- gsub("-","$-$",table[i,j])
       }
+      table[i,j] <- gsub("_",".",table[i,j])
     }
   }
   
