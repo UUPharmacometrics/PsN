@@ -151,7 +151,7 @@ if (scalar(@ARGV) > 1) {
 }
 
 if (not defined $options{'rplots'}) {
-    $options{'rplots'} = 2;
+    $options{'rplots'} = 1;
 }
 
 ui->category('qa');
