@@ -1,6 +1,3 @@
-
-#alphabetical
-
 install.packages("caTools", dependencies=TRUE)
 install.packages("dplyr", dependencies=TRUE)
 install.packages("expm", dependencies=TRUE)
@@ -24,4 +21,5 @@ install.packages("stats4", dependencies=TRUE)
 install.packages("tidyr", dependencies=TRUE)
 install.packages("xpose4", dependencies=TRUE)
 install.packages("ztable", dependencies=TRUE)
-
+install.packages("devtool", dependencies=TRUE)
+devtools::install_github("sebastianueckert/vpc")
