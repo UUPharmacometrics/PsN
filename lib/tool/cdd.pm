@@ -40,6 +40,7 @@ has 'prediction_models' => ( is => 'rw', isa => 'ArrayRef', default => sub { [] 
 has 'cross_validate' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'outside_n_sd_check' => ( is => 'rw', isa => 'Num', default => 2 );
 has 'update_inits' => ( is => 'rw', isa => 'Bool', default => 1 );
+has 'etas' => ( is => 'rw', isa => 'Bool', default => 0 );      # If to add $ETAs from original model on all cdd models
 
 sub BUILD
 {
@@ -562,115 +563,6 @@ sub cook_scores_and_cov_ratios
 			\@rel_bias,\@jackknife_cook,\@jackknife_parameter_cook,$jackknife_full_cov,$sample_ofvs);
 }
 
-sub relative_estimates
-{
-	my $self = shift;
-	my %parm = validated_hash(\@_,
-		parameter => { isa => 'Str', default => 0, optional => 1 },
-		percentage => { isa => 'Bool', default => 0, optional => 1 }
-	);
-	my $parameter = $parm{'parameter'};
-	my $percentage = $parm{'percentage'};
-	my @relative_estimates;
-
-	my $accessor = $parameter.'s';
-	my @params = $self -> $accessor;
-
-	my @orig_params = $self -> $accessor( original_models => 1 );
-	for ( my $i = 0; $i < scalar @params; $i++ ) {
-		# Loop over models
-		my @mod = ();
-		for ( my $j = 0; $j < scalar @{$params[$i]}; $j++ ) {
-			# Loop over data sets
-			my @prep = ();
-			for ( my $k = 1; $k < scalar @{$params[$i]->[$j]}; $k++ ) {
-				# Loop over problems (sort of, at least)
-				my @prob = ();
-				for ( my $l = 0; $l < scalar @{$params[$i]->[$j]->[$k]}; $l++ ) {
-					# Loop over sub problems (sort of, at least)
-					my @sub = ();
-					for ( my $m = 0; $m < scalar @{$params[$i]->[$j]->[$k]->[$l]}; $m++ ) {
-						# Loop over the params
-						my @par = ();
-						for ( my $n = 0; $n < scalar @{$params[$i][$j][$k][$l][$m]}; $n++ ) {
-							my $orig = $orig_params[$i][$j][$l][$m][$n];
-							my $prep = $params[$i][$j][$k][$l][$m][$n];
-							if ( $orig != 0 ) {
-								if ( $percentage ) {
-									push( @par, ($prep/$orig*100)-100 );
-								} else {
-									push( @par, $prep/$orig );
-								}
-							} else {
-								push( @par, $PsN::out_miss_data );
-							}
-						}
-						push( @sub, \@par );
-					}
-					push( @prob, \@sub );
-				}
-				push( @prep, \@prob );
-			}
-			push( @mod, \@prep );
-		}
-		push( @relative_estimates, \@mod );
-	}
-
-	return \@relative_estimates;
-}
-
-sub relative_confidence_limits
-{
-	my $self = shift;
-	my %parm = validated_hash(\@_,
-		parameter => { isa => 'Str', default => 0, optional => 1 },
-		percentage => { isa => 'Bool', default => 0, optional => 1 }
-	);
-	my $parameter = $parm{'parameter'};
-	my $percentage = $parm{'percentage'};
-	my @relative_limits;
-
-	my @params = @{$self -> confidence_limits( class     => 'tool::llp',
-	parameter => $parameter )};
-	for ( my $i = 0; $i < scalar @params; $i++ ) {
-		# Loop over models
-		my @mod = ();
-		for ( my $j = 1; $j < scalar @{$params[$i]}; $j++ ) {
-			# Loop over data sets
-			my %num_lim;
-			my @nums = sort {$a <=> $b} keys %{$params[$i][$j]};
-			foreach my $num ( @nums ) {
-				my @prob_lim = ();
-				for ( my $n = 0; $n < scalar @{$params[$i][$j]->{$num}}; $n++ ) {
-					my @side_lim = ();
-					for ( my $o = 0; $o < scalar @{$params[$i][$j]->{$num}->[$n]}; $o++ ) {
-						# OBS: the [0] in the $j position points at the first element i.e
-						# the results of the tool run on the original model 
-						my $orig = $params[$i][0]->{$num}->[$n][$o];
-						my $prep = $params[$i][$j]->{$num}->[$n][$o];
-						print "ORIG: $orig, PREP: $prep\n";
-						if ( $orig != 0 ) {
-							if ( $percentage ) {
-								push( @side_lim, ($prep/$orig*100)-100 );
-							} else {
-								push( @side_lim, $prep/$orig );
-							}
-						} else {
-							push( @side_lim, $PsN::out_miss_data );
-						}
-					}
-					push( @prob_lim, \@side_lim );
-				}
-				$num_lim{$num} = \@prob_lim;
-			}
-			push( @mod, \%num_lim );
-		}
-		push( @relative_limits, \@mod );
-	}
-
-	return \@relative_limits;
-}
-
 sub llp_analyze
 {
 	my $self = shift;
@@ -690,7 +582,6 @@ sub modelfit_post_fork_analyze
 	my $self = shift;
 
 	my @modelfit_results = @{$self->results};
-
 }
 
 sub modelfit_results
@@ -1022,26 +913,34 @@ sub general_setup
 			my @names = ('cdd_'.$j,'rem_'.$j);
 			foreach my $i ( 0, 1 ) {
 				my $set = $datasets[$i];
-				my $newmodel = $templatemodel -> copy( filename => $output_directory.'/'.$names[$i].'.mod',
-													   copy_datafile   => 0,
-													   output_same_directory => 1, #new
-													   write_copy => 0,
-													   copy_output => 0);
+				my $newmodel = $templatemodel->copy(
+                    filename => $output_directory . '/' . $names[$i] . '.mod',
+                    copy_datafile => 0,
+                    output_same_directory => 1,
+                    write_copy => 0,
+                    copy_output => 0
+                );
+                if ($self->etas) {
+                    my $phi_file = $model->get_phi_file();
+                    if (defined $phi_file) {
+                       $newmodel->init_etas(phi_name => $phi_file);
+                    }
+                }
 				$newmodel -> datafiles( new_names => [$set] );
-				#				$newmodel -> outputfile( $output_directory.'/'.$names[$i].".lst" );
-				#                $newmodel -> set_outputfile();
-				if( $i == 1 ) {
+				if ($i == 1) {
 					# set MAXEVAL=0. Again, CDD will only work for one $PROBLEM
 					my $warn = 0;
 					$warn = 1 if ($j == 1);
-					my $ok = $newmodel -> set_maxeval_zero(need_ofv => 1,print_warning => $warn,
-														   niter_eonly => $self->niter_eonly,
-														   last_est_complete => $self->last_est_complete());
+					my $ok = $newmodel->set_maxeval_zero(
+                        need_ofv => 1,
+                        print_warning => $warn,
+                        niter_eonly => $self->niter_eonly,
+                        last_est_complete => $self->last_est_complete(),
+                    );
 				}
 
-				if( $self -> nonparametric_etas or
-					$self -> nonparametric_marginals ) {
-					$newmodel -> add_nonparametric_code;
+				if ($self->nonparametric_etas or $self->nonparametric_marginals) {
+					$newmodel->add_nonparametric_code;
 				}
 				
 				$newmodel -> _write;
@@ -1210,6 +1109,7 @@ sub general_setup
 			raw_results           => undef,
 			prepared_models       => undef,
 			top_tool              => 0,
+            directory => "modelfit_dir1",
 			%subargs ) );
 
 	# }}} sub tools
@@ -1299,11 +1199,6 @@ sub _modelfit_raw_results_callback
 		}
 	}; 
 	return $subroutine;
-}
-
-sub print_summary
-{
-	my $self = shift;
 }
 
 sub update_raw_results

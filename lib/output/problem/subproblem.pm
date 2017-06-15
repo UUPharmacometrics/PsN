@@ -459,7 +459,7 @@ sub _read_eigen
 		}
 		if ( $eig_area ) {
 			$start_pos-- and last if (/^[a-df-zA-DF-Z]/); #Rewind one step
-			last if ( /^\s*\*/ or /^1/ or /^\s*#/ or /^0ERROR/ or /^0PROGRAM/);
+			last if ( /^\s*\*/ or /^1/ or /^\s*#/ or /^\sElapsed finaloutput time in seconds:/ or /^0ERROR/ or /^0PROGRAM/);
 			push( @eigens, split );
 		}
 		$start_pos-- and last if ( /^ PROBLEM.*SUBPROBLEM/ or /^ PROBLEM NO\.:\s+\d/ );
@@ -470,6 +470,7 @@ sub _read_eigen
 		my @list = sort { $a <=> $b } @eigens; #sort ascending
 		$self->condition_number( abs($list[$#list] / $list[0]) ) if ( $list[0] != 0 );
 	}
+
 	$self->eigens(\@eigens);
 }
 
@@ -702,6 +703,7 @@ sub _read_iteration_path
 				} elsif (s/^ GRADIENT:\s*//) {
 					do {
 						push(@gradient_vector, split);
+                        @gradient_vector = map { math::fortran_number_to_string($_) } @gradient_vector;
 						$_ = @{$self->lstfile}[ ++$start_pos ];
 						if( $start_pos >= scalar @{$self->lstfile} ) {
 							$self -> parsing_error( message => "Error in reading iteration path!\nEOF found\n" );

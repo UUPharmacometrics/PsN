@@ -1,14 +1,13 @@
-
-#alphabetical
-
 install.packages("caTools", dependencies=TRUE)
 install.packages("dplyr", dependencies=TRUE)
+install.packages("expm", dependencies=TRUE)
 install.packages("ggplot2", dependencies=TRUE)
 install.packages("gplots", dependencies=TRUE)
 install.packages("grid", dependencies=TRUE)
 install.packages("gridExtra", dependencies=TRUE)
 install.packages("MASS", dependencies=TRUE)
 install.packages("MCMCpack", dependencies=TRUE)
+install.packages("rmarkdown",dependencies = TRUE)
 install.packages("ggthemes", dependencies=TRUE)
 install.packages("PEIP", dependencies=TRUE)
 install.packages("PerformanceAnalytics", dependencies=TRUE)
@@ -21,3 +20,6 @@ install.packages("scales", dependencies=TRUE)
 install.packages("stats4", dependencies=TRUE)
 install.packages("tidyr", dependencies=TRUE)
 install.packages("xpose4", dependencies=TRUE)
+install.packages("ztable", dependencies=TRUE)
+install.packages("devtool", dependencies=TRUE)
+devtools::install_github("sebastianueckert/vpc")

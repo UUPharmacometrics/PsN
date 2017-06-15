@@ -41,7 +41,7 @@ sub BUILD
 			push(@new_files,$ldir.$name) ;
 		}
 		$self->$accessor(\@new_files);
-	}	
+	}
 
 	foreach my $model ( @{$self -> models} ) {
 		foreach my $problem (@{$model->problems()}){
@@ -57,7 +57,7 @@ sub BUILD
 	if ( scalar (@{$self -> models->[0]-> problems}) > 2 ){
 		croak('Cannot have more than two $PROB in the input model.');
 	}elsif  (scalar (@{$self -> models->[0]-> problems}) == 2 ){
-		if ((defined $self -> models->[0]-> problems->[0]->priors()) and 
+		if ((defined $self -> models->[0]-> problems->[0]->priors()) and
 			scalar(@{$self -> models->[0]-> problems->[0] -> priors()})>0 ){
 			my $tnpri=0;
 			foreach my $rec (@{$self -> models->[0]-> problems->[0] -> priors()}){
@@ -65,7 +65,7 @@ sub BUILD
 					debugmessage(3,"No options for rec \$PRIOR" );
 				}
 				foreach my $option ( @{$rec -> options} ) {
-					if ((defined $option) and 
+					if ((defined $option) and
 						(($option->name eq 'TNPRI') || (index('TNPRI',$option ->name ) == 0))){
 						$tnpri=1;
 					}
@@ -110,7 +110,7 @@ sub modelfit_setup
 	my $gls_model;
 	my $newthetanum=$model->nthetas(problem_number => $self->probnum())+1;
 	my $sim_record;
-	my $simdirname='simulation_dir'; 
+	my $simdirname='simulation_dir';
 	my $shrinkage_value;
 	$self->additional_callback(0);
 
@@ -122,7 +122,7 @@ sub modelfit_setup
 		my @gls_lines;
 		my @sim_lines;
 
-		open(MOD, $self-> models->[0]->full_name()) || 
+		open(MOD, $self-> models->[0]->full_name()) ||
 			die("Couldn't open ".$self-> models->[0]->full_name()." : $!");
 
 		while(<MOD>) {
@@ -155,7 +155,7 @@ sub modelfit_setup
 						  "records with tag ;gls-final");
 				}
 				chomp $line;
-				$gls_estimation_string .= ' '.$line; 
+				$gls_estimation_string .= ' '.$line;
 			}
 		}
 		if (scalar(@sim_lines)>0){
@@ -187,13 +187,13 @@ sub modelfit_setup
 					}
 				}
 				chomp $line;
-				$sim_estimation_string .= ' '.$line if ($is_est == 1); 
+				$sim_estimation_string .= ' '.$line if ($is_est == 1);
 				if ($is_sim == 1){
 					#remove NSUBS setting, if any
 					$line =~ s/SUBP[A-Z]*=[0-9]+//;
 					$line =~ s/NSUB[A-Z]*=[0-9]+//;
 					$line =~ s/TRUE=[A-Z]+//;
-					$sim_simulation_string .= ' '.$line ; 
+					$sim_simulation_string .= ' '.$line ;
 				}
 
 			}
@@ -231,7 +231,7 @@ sub modelfit_setup
 							  new_values => [[1]] );
 
 		}
-		if (defined $gls_model ->outputs() and 
+		if (defined $gls_model ->outputs() and
 			defined $gls_model->outputs()->[0] and
 			$gls_model->outputs()->[0]-> have_output()){
 			$gls_model -> update_inits ( from_output => $gls_model->outputs()->[0],
@@ -335,7 +335,7 @@ sub modelfit_setup
 		my $oprob = $orig_model -> problems -> [$self->probnum()-1];
 		if( defined $oprob -> inputs and defined $oprob -> inputs -> [0] -> options ) {
 			foreach my $option ( @{$oprob -> inputs -> [0] -> options} ) {
-				push( @table_header, $option -> name ) unless 
+				push( @table_header, $option -> name ) unless
 					(($option -> value eq 'DROP' or $option -> value eq 'SKIP'
 					  or $option -> name eq 'DROP' or $option -> name eq 'SKIP'));
 			}
@@ -349,7 +349,7 @@ sub modelfit_setup
 												   ' IPRED PRED NOPRINT NOAPPEND ONEHEADER FILE=glsinput.dta']);
 
 		my $orig_model_output;
-		if (defined $model ->outputs() and 
+		if (defined $model ->outputs() and
 			defined $model->outputs()->[0] and
 			$model->outputs()->[0]-> have_output()
 			and $self->ind_shrinkage()){
@@ -358,18 +358,18 @@ sub modelfit_setup
 			$orig_model -> update_inits ( from_output => $orig_model_output,
 										  problem_number => $self->probnum(),
 										  ignore_missing_parameters => 1);
-			$orig_model -> _write(); 
+			$orig_model -> _write();
 			push( @orig_and_sim_models, $orig_model );
-			$simdirname='orig_and_simulation_dir'; 
+			$simdirname='orig_and_simulation_dir';
 		}else{
 			$orig_model -> _write();
 			#run original here to get param estimates for sim
-			my $run_orig = tool::modelfit -> new( 
+			my $run_orig = tool::modelfit -> new(
 				%{common_options::restore_options(@common_options::tool_options)},
 				top_tool         => 0,
 				models           => [$orig_model],
 				base_directory   => $self -> directory,
-				directory        => $self -> directory.'original_dir'.$model_number, 
+				directory        => $self -> directory.'original_dir'.$model_number,
 				parent_tool_id   => $self -> tool_id,
 				logfile	         => undef,
 				raw_results_file     => [$self ->raw_results_file()->[$model_number-1]],
@@ -397,7 +397,7 @@ sub modelfit_setup
 				$shrinkage_value = ($run_orig -> raw_results -> [0][$start])/100; #value is in percent
 			}
 
-			if (defined $orig_model ->outputs() and 
+			if (defined $orig_model ->outputs() and
 				defined $orig_model->outputs()->[0] and
 				$orig_model->outputs()->[0]-> have_output()){
 				$orig_model_output = $orig_model->outputs()->[0];
@@ -412,7 +412,7 @@ sub modelfit_setup
 		}
 
 		#change table FILE in gls if table present. Left original model as is.
-		my $tbl_nm_ref = 
+		my $tbl_nm_ref =
 			$gls_model -> get_option_value( record_name  => 'table',
 											option_name  => 'FILE',
 											record_index => 'all',
@@ -432,7 +432,7 @@ sub modelfit_setup
 											 record_number  => ($k+1),
 											 option_name  => 'FILE',
 											 problem_numbers => [($self->probnum())],
-											 option_value => $name.'-gls' );   
+											 option_value => $name.'-gls' );
 				}
 			}
 		}
@@ -466,7 +466,7 @@ sub modelfit_setup
 		}
 
 
-	}  #done if not gls_model    
+	}  #done if not gls_model
 
 	$gls_model -> add_option( record_name  => 'data',
 							  problem_numbers => [($self->probnum())],
@@ -545,7 +545,7 @@ sub modelfit_setup
 
 				while( $old_seed =~ /(\D*)(\d+)(.*)/ ){
 					$new_line .= $1;
-					$new_line .= random_uniform_integer( 1, 0, 1000000 ); # Upper limit is from nmhelp 
+					$new_line .= random_uniform_integer( 1, 0, 1000000 ); # Upper limit is from nmhelp
 					$old_seed = $3;
 				}
 
@@ -559,7 +559,7 @@ sub modelfit_setup
 							  record_strings => \@new_record );
 
 
-		if( $sim_model -> is_option_set( record => 'simulation', 
+		if( $sim_model -> is_option_set( record => 'simulation',
 										 name => 'ONLYSIMULATION',
 										 fuzzy_match => 1) ){
 			$sim_model -> remove_records( type => 'estimation' );
@@ -574,7 +574,7 @@ sub modelfit_setup
 		$prob -> add_option(record_name  => 'table',
 							record_number  => 1,
 							option_name  => 'FILE',
-							option_value => $iwres_file );   
+							option_value => $iwres_file );
 
 		if ($self->sim_table()){
 			my $tab_file = "sdtab-sim$sim_no.dta";
@@ -586,7 +586,7 @@ sub modelfit_setup
 			$prob -> add_option(record_name  => 'table',
 								record_number  => 2,
 								option_name  => 'FILE',
-								option_value => $tab_file );   
+								option_value => $tab_file );
 		}
 
 		push( @all_iwres_files, $self -> directory.'m'.$model_number.'/'.
@@ -596,12 +596,12 @@ sub modelfit_setup
 		push( @orig_and_sim_models, $sim_model );
 
 		if( $sim_no == $samples ) {
-			my $run_sim = tool::modelfit -> new( 
+			my $run_sim = tool::modelfit -> new(
 				%{common_options::restore_options(@common_options::tool_options)},
 				top_tool         => 0,
 				models           => \@orig_and_sim_models,
 				base_directory   => $self -> directory,
-				directory        => $self -> directory.$simdirname.$model_number, 
+				directory        => $self -> directory.$simdirname.$model_number,
 				parent_tool_id   => $self -> tool_id,
 				nmtran_skip_model => 2,
 				logfile	         => undef,
@@ -667,12 +667,12 @@ sub modelfit_setup
 				push(@shrinkage_arr,sprintf("%.8f",(1-$stdev)));
 			}
 			#append to glsinput.dta, also print to own file
-			my $fname = 'm'.$model_number.'/glsinput.dta'; 
+			my $fname = 'm'.$model_number.'/glsinput.dta';
 			if (-e $fname){
 				my @tmp = utils::file::slurp_file($fname);
 				my $first=1;
 				open(GLS, ">$fname") || die("Couldn't open $fname : $!");
-				open(DAT, ">ind_iwres_shrinkage.dta") || 
+				open(DAT, ">ind_iwres_shrinkage.dta") ||
 					die("Couldn't open ind_iwres_shrinkage.dta : $!");
 				print GLS join(' ',@table_header);
 				print GLS " PIPR PPRE ISHR\n";
@@ -705,7 +705,7 @@ sub modelfit_setup
 		$shrinkage = $shrinkage_value;
 		$shrinkage = sprintf("%.8f",$shrinkage);
 	}else{
-		$shrinkage = 'ISHR'; 
+		$shrinkage = 'ISHR';
 	}
 	my @newcode = ("SHRI=$shrinkage\n",
 				   "IF(SHRI.LE.0) SHRI = 0\n");
@@ -804,10 +804,10 @@ sub _modelfit_raw_results_callback
 	my $subroutine;
 
 	# Use the mc's raw_results file.
-	my ($dir,$file) = 
+	my ($dir,$file) =
 		OSspecific::absolute_path( $self -> directory,
 								   $self -> raw_results_file->[$model_number-1] );
-	my ($npdir,$npfile) = 
+	my ($npdir,$npfile) =
 		OSspecific::absolute_path( $self -> directory,
 								   $self -> raw_nonp_file->[$model_number-1]);
 
@@ -823,7 +823,7 @@ sub _modelfit_raw_results_callback
 		$totsamples = $self -> samples() if (defined $self -> samples());
 
 
-		# a column with run type, original or gls or sim is prepended. 
+		# a column with run type, original or gls or sim is prepended.
 
 		#if prior tnpri nothing will be in raw_results for first $PROB, can
 		#take first row for model as final estimates as usual, even if
@@ -836,7 +836,7 @@ sub _modelfit_raw_results_callback
 			my $n_rows = scalar(@{$modelfit -> raw_results()});
 
 			my $last_model= 0;
-			my $sample = 0; 
+			my $sample = 0;
 
 			if ($self->additional_callback < 1){
 				unshift( @{$modelfit -> raw_results_header}, 'run_type' );
@@ -852,7 +852,7 @@ sub _modelfit_raw_results_callback
 				$type='gls';
 			}
 			for (my $i=0; $i< $n_rows; $i++){
-				my $this_model = $modelfit -> raw_results()->[$i]->[0]; 
+				my $this_model = $modelfit -> raw_results()->[$i]->[0];
 				my $step= ($this_model-$last_model);
 				if ($last_model > 0 and $step>0){
 					$type='simulation';
@@ -890,7 +890,7 @@ sub _modelfit_raw_results_callback
 			my $n_rows = scalar(@{$modelfit -> raw_nonp_results()});
 
 			my $last_model= 0;
-			my $sample = 0; 
+			my $sample = 0;
 			my $type;
 			if (($self->additional_callback < 1) and (not $self->gls_model()) ){
 				$type='original';
@@ -903,7 +903,7 @@ sub _modelfit_raw_results_callback
 			unshift( @{$modelfit -> raw_nonp_results_header}, 'run_type' );
 
 			for (my $i=0; $i< $n_rows; $i++){
-				my $this_model = $modelfit -> raw_nonp_results()->[$i]->[0]; 
+				my $this_model = $modelfit -> raw_nonp_results()->[$i]->[0];
 				my $step= ($this_model-$last_model);
 				if ($last_model > 0 and $step>0){
 					$type='simulation';
@@ -934,7 +934,7 @@ sub cleanup
 {
 	my $self = shift;
 
-	#remove tablefiles in simulation NM_runs, they are 
+	#remove tablefiles in simulation NM_runs, they are
 	#copied to m1 by modelfit and read from there anyway.
 	for (my $samp=1;$samp<=$self->samples(); $samp++){
 		unlink $self -> directory."/simulation_dir1/NM_run".$samp."/mc-sim-".$samp.".dat";

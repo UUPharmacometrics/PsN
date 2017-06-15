@@ -5,10 +5,12 @@
     <link rel="stylesheet" type="text/css" href="style/style.css">
     <script type="text/javascript" src="javascript/jquery.js"></script>
     <script> 
+        // @license magnet:?xt=urn:btih:e95b018ef3580986a04669f1b5879592219e2a7a&dn=public-domain.txt public-domain
         $(function() {
             $("#nav").load("menu.html");
             $("#footer").load("footer.html");
         });
+        // @license-end
     </script> 
 </head>
 <body>
@@ -17,8 +19,8 @@
         <div id="nav"></div>
         <div id="main">
        
-      
 <script>
+    // @license magnet:?xt=urn:btih:e95b018ef3580986a04669f1b5879592219e2a7a&dn=public-domain.txt public-domain
     $(document).ready(function(){
        $('#show_older_changes').click(function(){
             $('#show_older_changes').hide();
@@ -26,8 +28,10 @@
             
        });
     });
+    // @license-end
 </script>
 <script>
+    // @license magnet:?xt=urn:btih:e95b018ef3580986a04669f1b5879592219e2a7a&dn=public-domain.txt public-domain
     $(document).ready(function(){
        $('#show_bugfixes').click(function(){
             $('#show_bugfixes').hide();
@@ -35,8 +39,10 @@
             
        });
     });
+    // @license-end
 </script>
 <script>
+    // @license magnet:?xt=urn:btih:e95b018ef3580986a04669f1b5879592219e2a7a&dn=public-domain.txt public-domain
     $(document).ready(function(){
        $('#show_features').click(function(){
             $('#show_features').hide();
@@ -44,17 +50,44 @@
             
        });
     });
+    // @license-end
 </script>
 <h2>Perl-speaks-NONMEM</h2>
   <p>Perl-speaks-NONMEM (PsN) is a collection of Perl modules and programs aiding in the development
     of non-linear mixed effect models using NONMEM. The functionality ranges from solutions to simpler
     tasks such as parameter estimate extraction from output files, data file sub setting and resampling,
     to advanced computer-intensive statistical methods. PsN includes stand-alone tools for the end-user
-    as well as development libraries for method developers. You can read more about the different parts of PsN under <a href="docs.html">Documentation</a>.</p>
+    as well as development libraries for method developers. You can read more about the different parts of PsN under <a href="docs.html">documentation</a>.</p>
 <h3>Latest news</h3>
  <p>
-Version 4.6.0 was released May 23rd 2016, and is available <a href="download.html">here</a>.
+<a href="download.html">Download PsN version 4.7.0</a> <i>(released May 23rd 2017)</i>.
 </p>
+ <p>
+ New features in this version include major extensions to <strong>simeval</strong>, a tool for simulation-evaluation diagnostics for outlier detection, updates to <strong>frem</strong>, a tool for full random effects modelling for covariate building, <strong>resmod</strong>, a new tool to evaluate different residual models, the addition of support for rmarkdown when using rplots greatly facilitating the automatic creation of reports and support for NONMEM 7.4.
+</p>
+<p>
+<a href="https://raw.githubusercontent.com/UUPharmacometrics/PsN/master/development/release_notes/release_notes_PsN_4_7_0.txt"  target="_blank">Complete list of new features and bugfixes in 4.7.0</a></dt>.
+</p>
+
+ <li>
+<a href="install_4_6_0_mac.txt" target="_blank">How to install PsN on Mac.</a></dt>
+ </li>
+ <li><a href="install.html">How to install PsN on Windows</a>. 
+<p>Users who install PsN for the first time need to make sure they install a Perl version where
+the needed extra modules are available.
+
+</li>
+ <li><a href="https://uupharmacometrics.github.io/PsN/buglist.html">Known bugs</a> with the most recent information regarding known bugs in the latest release.
+</li>
+</p>
+
+<div style="text-align:left;"><a style="font-size:small;color:gray;" href="#" id="show_older_changes">Release notes for older versions</a></div>
+<div id="older_changes" style="display:none;">  
+
+    <h3>PsN 4.6.0</h3>
+    <p>
+Version 4.6.0 was released May 23rd 2016.
+    </p>
  <p>
 New features in this version include major redesign and extension to <strong>sir</strong>,
 a tool for fast and robust assessment of parameter uncertainty with automatically generated visual diagnostics of convergence and parameter
@@ -62,33 +95,22 @@ confidence intervals, <strong>simeval</strong>, a tool for simulation-evaluation
 comparisons of estimation results and approximate run times across combinations of NONMEM options, Fortran compiler and NONMEM versions.
 </p>
 <p>
-The complete list of new features and bugfixes in 4.6.0 is found  
-<a href="https://raw.githubusercontent.com/UUPharmacometrics/PsN/master/development/release_notes/release_notes_PsN_4_6_0.txt" target="_blank">here</a></dt>.
+<a href="https://raw.githubusercontent.com/UUPharmacometrics/PsN/master/development/release_notes/release_notes_PsN_4_6_0.txt" target="_blank">Complete list of new features and bugfixes in 4.6.0</a></dt>.
+</p>
+<p> 
+<a href="https://raw.githubusercontent.com/UUPharmacometrics/PsN/master/development/release_notes/bug_list_PsN_4_6_0_at_next_release.txt" target="_blank">List of bugs in 4.6.0 that were known at release of 4.7.0</a>.
 </p>
 
- <li>
-Mac users need to read <a href="install_4_6_0_mac.txt" target="_blank">this</a></dt> before installing.
- </li>
- <li>Installation on Windows: Users who install PsN for the first time need to make sure they install a Perl version where
-the needed extra modules are available, see instructions on
-<a href="install.html">installation page</a>.
-</li>
- <li> Click <a href="http://sourceforge.net/p/psn/wiki/Bug_list_current_release" target="_blank">here</a> to open the known bugs wiki with the most recent information regarding known bugs in the latest release.
-</li>
-</p>
 
-<div style="text-align:left;"><a style="font-size:small;color:gray;" href="#" id="show_older_changes">Click here to show change notes for older versions</a></div>
-<div id="older_changes" style="display:none;">  
 <h3>PsN 4.4.8</h3>
 <p>
 Version 4.4.8 was released September 7th 2015.
 </p>
  <p>
 The focus of this release is bug fixes and extensions of the test suite. Several of the bugs have been in PsN since version 3.7.6, some are even older. There are only minor new features.
-The complete list of new features and bugfixes in 4.4.8 is found  
-<a href="https://raw.githubusercontent.com/UUPharmacometrics/PsN/master/development/release_notes/release_notes_PsN_4_4_8.txt" target="_blank">here</a></dt>.
-</p><p>The list of bugs in 4.4.8 that were known at release of 4.6.0 is found
-<a href="https://raw.githubusercontent.com/UUPharmacometrics/PsN/master/development/release_notes/bug_list_PsN_4_4_8_at_next_release.txt" target="_blank">here</a>
+<a href="https://raw.githubusercontent.com/UUPharmacometrics/PsN/master/development/release_notes/release_notes_PsN_4_4_8.txt" target="_blank">Complete list of new features and bugfixes in 4.4.8</a></dt>.
+</p><p> 
+<a href="https://raw.githubusercontent.com/UUPharmacometrics/PsN/master/development/release_notes/bug_list_PsN_4_4_8_at_next_release.txt" target="_blank">List of bugs in 4.4.8 that were known at release of 4.6.0</a>.
 </p>
 
 <h3>PsN 4.4.0</h3>
@@ -101,23 +123,22 @@ major improvements to sir, a tool for obtaining parameter uncertainty faster tha
 and the -rplots option, a simple yet powerful mechanism for generating default or custom R plots for visualizing PsN output.
 </p>
 <p>
-The <a href="http://www.page-meeting.org/default.asp?abstract=3586" target="_blank">preconditioning method</a>, 
-which has been developed by Yasunori Aoki, was presented during the 
-Stuart Beal Methodology Session at PAGE 2015.
+The <a href="http://www.page-meeting.org/pdf_assets/7835-2015_06_PAGE_HOOKER_PRECOND_7.pdf" target="_blank">preconditioning method</a>, 
+which has been developed by Yasunori Aoki, was presented during the Stuart Beal Methodology Session at PAGE 2015.
 </p>
 <p>
 Default R templates are available for a number of tools, including 
-<a href="http://www.page-meeting.org/default.asp?abstract=3103" target="_blank">nca</a> (non-compartmental 
+<a href="http://www.page-meeting.org/pdf_assets/9295-nca_ppc-PAGE2014.pdf" target="_blank">nca</a> (non-compartmental 
 analysis using the ncappc package available from CRAN), 
-<a href="http://www.page-meeting.org/default.asp?abstract=2907" target="_blank">sir</a>, 
-sse for <a href="http://www.page-meeting.org/default.asp?abstract=3263" target="_blank">parametric power estimation</a>, vpc, 
+<a href="http://www.page-meeting.org/pdf_assets/7435-SIR_DosneAG_2013.pdf" target="_blank">sir</a>, 
+sse for <a href="http://www.page-meeting.org/pdf_assets/5138-poster_page_su.pdf" target="_blank">parametric power estimation</a>, vpc, 
 bootstrap and execute.
 </p>
 <p>
-The complete list of new features and bugfixes in 4.4.0 is found  
-<a href="https://raw.githubusercontent.com/UUPharmacometrics/PsN/master/development/release_notes/release_notes_PsN_4_4_0.txt" target="_blank">here</a></dt>.
-</p><p>The list of bugs in 4.4.0 that were known at release of 4.4.8 is found
-<a href="https://raw.githubusercontent.com/UUPharmacometrics/PsN/master/development/release_notes/bug_list_PsN_4_4_0_at_next_release.txt" target="_blank">here</a>
+
+<a href="https://raw.githubusercontent.com/UUPharmacometrics/PsN/master/development/release_notes/release_notes_PsN_4_4_0.txt" target="_blank">Complete list of new features and bugfixes in 4.4.0.</a></dt>
+</p><p>
+<a href="https://raw.githubusercontent.com/UUPharmacometrics/PsN/master/development/release_notes/bug_list_PsN_4_4_0_at_next_release.txt" target="_blank">List of bugs in 4.4.0 that were known at release of 4.4.8.</a>
 </p>
 <h3>Known issues with version 4.4.0</h3>
 <li>
@@ -126,8 +147,7 @@ If psn.conf is created by the installation script then the setting of nm_output 
 A suitable setting is</br></br>
 [default_options]</br>
 nm_output=ext,cov,cor,coi,phi</br></br>
-This bug is further described on the 
-<a href="http://sourceforge.net/p/psn/wiki/Bug_list_current_release" target="_blank">knows bugs wiki</a>.
+<a href="https://raw.githubusercontent.com/UUPharmacometrics/PsN/master/development/release_notes/bug_list_PsN_4_4_0_at_next_release.txt" target="_blank">List of bugs in 4.4.0 that were known at release of 4.4.8.</a>
 </li>
 
 <h3>PsN 4.2.0</h3>
@@ -139,10 +159,10 @@ New features include new scripts nca, pvar, sir, frem and rawresults and a new t
 Under the hood there have been big changes. PsN has been completely rewritten using the Moose object system. 
 </p>
 <p>
-The list of new features and bugfixes in 4.2.0 is found
-<a href="https://raw.githubusercontent.com/UUPharmacometrics/PsN/master/development/release_notes/release_notes_PsN_4_2_0.txt" target="_blank">here</a></p>
-The list of bugs in 4.2.0 that were known at release of 4.4.0 is found
-<a href="https://raw.githubusercontent.com/UUPharmacometrics/PsN/master/development/release_notes/bug_list_PsN_4_2_0_at_next_release.txt" target="_blank">here</a></p>
+
+<a href="https://raw.githubusercontent.com/UUPharmacometrics/PsN/master/development/release_notes/release_notes_PsN_4_2_0.txt" target="_blank">List of new features and bugfixes in 4.2.0.</a></p>
+
+<a href="https://raw.githubusercontent.com/UUPharmacometrics/PsN/master/development/release_notes/bug_list_PsN_4_2_0_at_next_release.txt" target="_blank">List of bugs in 4.2.0 that were known at release of 4.4.0.</a></p>
 
 <h3>PsN 3.7.6</h3>
 <p>
@@ -152,8 +172,7 @@ Version 3.7.6 was released December 4th 2013.
 New features include automatic binning and 10 times faster DV processing in vpc, a new program randtest for randomization testing, and more alternatives for simulation with uncertainty.
 </p>
 <p>
-The list of new features and bugfixes in 3.7.6 is found
-<a href="https://raw.githubusercontent.com/UUPharmacometrics/PsN/master/development/release_notes/release_notes_PsN_3_7_6.txt" target="_blank">here</a></p>
+<a href="https://raw.githubusercontent.com/UUPharmacometrics/PsN/master/development/release_notes/release_notes_PsN_3_7_6.txt" target="_blank">List of new features and bugfixes in 3.7.6.</a></p>
 
 <h3>PsN 3.6.2</h3>
  <p>
@@ -166,8 +185,7 @@ output file format.
 There are very few new features compared to 3.5.3, the focus has been on bugfixes and the new parser.
 </p>
 <p>
-The list of new features and bugfixes in 3.6.2 is found  
-<a href="https://raw.githubusercontent.com/UUPharmacometrics/PsN/master/development/release_notes/release_notes_PsN_3_6_2.txt" target="_blank">here</a></dt>.
+<a href="https://raw.githubusercontent.com/UUPharmacometrics/PsN/master/development/release_notes/release_notes_PsN_3_6_2.txt" target="_blank">List of new features and bugfixes in 3.6.2.</a></dt>
 </p>
 
 <h3>New features in PsN 3.5.3</h3>
@@ -374,7 +392,7 @@ Allow user to call scm with 'scm config.scm' directly instead of having to set s
 </li> 
 </ul>
 </li>
-<li> <a href='pdfdocs/npc_vpc_userguide.pdf' target="_blank">vpc/npc</a>
+<li> <a href='pdfdocs/npc_vpc_userguide.pdf' target="_blank">npc/vpc</a>
 <ul>
 <li>
 If -tte is set: More cleaning to save disk space. 
@@ -448,7 +466,7 @@ Bugfix parafile and nodes option on windows, which caused crash in PsN-3.4.2.
 </ul>
 </li>
 
-<li> <a href='pdfdocs/npc_vpc_userguide.pdf' target="_blank">vpc/npc</a>
+<li> <a href='pdfdocs/npc_vpc_userguide.pdf' target="_blank">npc/vpc</a>
 <ul>
 <li>
 When using a separate simulation model (option -flip_comments or -sim_model), 
@@ -703,7 +721,7 @@ Suppress off-diagonal zeros in OMEGA and SIGMA output.
 </li>
 </ul>
 </li>
-<li> <a href='pdfdocs/npc_vpc_userguide.pdf' target="_blank">vpc/npc</a>
+<li> <a href='pdfdocs/npc_vpc_userguide.pdf' target="_blank">npc/vpc</a>
 <ul>
 <li>
 Accept models with stratification variable different from STRT and not in $INPUT 
@@ -840,7 +858,7 @@ add check in subproblem_subs.pm that matrix reference is not empty when calling 
 </ul>
 </li>
 
-<li> <a href='pdfdocs/npc_vpc_userguide.pdf' target="_blank">vpc/npc</a>
+<li> <a href='pdfdocs/npc_vpc_userguide.pdf' target="_blank">npc/vpc</a>
 <ul>
 <li>
 Accept any number of seeds in existing $SIM.
@@ -1181,7 +1199,7 @@ will not change fixed values.
 </li>
 </ul>
 </li>
-<li> <a href='pdfdocs/npc_vpc_userguide.pdf' target="_blank">vpc/npc</a>
+<li> <a href='pdfdocs/npc_vpc_userguide.pdf' target="_blank">npc/vpc</a>
 <ul>
 <li>
 Save diskspace by always removing copied table output from NM_run directories.
@@ -1270,7 +1288,7 @@ option -add_tags to add empty tags for RunRecord, and option -based_on to set ru
 </li>
 
 
-<li>  <a href='pdfdocs/psn_configuration.pdf' target="_blank">Configuration</a> of PsN
+<li>  <a href='pdfdocs/psn_configuration.pdf' target="_blank">PsN configuration.</a> 
 <ul>
 <li>New possibility to run perl code "pre_compile_command" before PsN's fortran compilation. Can e.g. be used to modify environment variables for a specific compiler. 
 </li>
@@ -1286,7 +1304,7 @@ New option -sge_prepend_flags for setting extra flags for qsub when using option
 Added option -run_on_mosix, will have effect on Unix systems only. If used, PsN will start the perl processes running NONMEM with 'mosenv -e perl...' instead of with the default 'perl...'. (As before, the name of the perl binary is configurable in psn.conf)
 </li>
 <li>
-New option -nmqual, invoke nonmem using nmqual generated perl script (similar to option -nmfe). See <a href='pdfdocs/psn_configuration.pdf' target="_blank">psn_configuration.pdf</a>.
+New option -nmqual, invoke nonmem using nmqual generated perl script (similar to option -nmfe). See <a href='pdfdocs/psn_configuration.pdf' target="_blank">PsN configuration.</a>
 </li>
 <li>
 Changed handling of final parameter estimates. Unlike in 3.1.0, off-diagonal OMEGA/SIGMA zeroes will now be stored by the output parser. Removal of uninteresting zeros is done by the scripts. Zeroes removal is however not implemented yet in sumo.
@@ -1402,7 +1420,9 @@ Handling of failed covariance step.
 </ul>
 <h3>Documentation updates in PsN 3.2.4</h3>
 <ul>
-<li>The new document <a href='pdfdocs/scm_userguide.pdf' target="_blank">scm_userguide.pdf</a> describes the scm tool and gives examples on how to set the many input options. For the new RunRecord script there is a <a href='pdfdocs/runrecord_userguide.pdf' target="_blank">userguide</a> and <a href='pdfdocs/runrecord_template.xls' target="_blank">Excel template</a>. The <a href='pdfdocs/npc_vpc_userguide.pdf' target="_blank">vpc/npc userguide</a> has a "Getting started" section for new users. There are additions in <a href='pdfdocs/known_bugs_and_workarounds.pdf' target="_blank">known_bugs_and_workarounds.pdf</a>. </li>
+<li>The new document <a href='pdfdocs/scm_userguide.pdf' target="_blank">scm userguide.pdf</a> describes the scm tool and gives examples on how to set the many input options. 
+For the new RunRecord script there is a <a href='pdfdocs/runrecord_userguide.pdf' target="_blank">userguide</a> and an <a href='pdfdocs/runrecord_template.xls' target="_blank">Excel template</a>. 
+The <a href='pdfdocs/npc_vpc_userguide.pdf' target="_blank">vpc/npc userguide</a> has a "Getting started" section for new users. There are additions in <a href='pdfdocs/known_bugs_and_workarounds.pdf' target="_blank">known_bugs_and_workarounds</a>. </li>
 </ul>
 <h3>New features in PsN 3.1.0</h3>
 <ol>
@@ -1420,7 +1440,7 @@ Handling of failed covariance step.
   that are zero, regardless if they are FIXED or not. This preserves band matrices.
 </li>
 <li>New options -predcorr (prediction correction) and -varcorr
-  (variability correction, experimental) to vpc. More details in the vpc <a href='pdfdocs/npc_vpc_userguide.pdf' target="_blank">userguide</a>.
+  (variability correction, experimental) to vpc. More details in the <a href='pdfdocs/npc_vpc_userguide.pdf' target="_blank">npc/vpc userguide</a>.
 </li>
 <li>New options -last_est_complete and -niter_eonly for tools that run some models with 
   skipped estimation step (cdd, npc, vpc, execute with mirror_plots option). 
@@ -1466,25 +1486,26 @@ Handling of failed covariance step.
 
 <h3>New documentation in PsN 3.1.0</h3>
 <ol>
-<li>The document <a href='pdfdocs/PsN_and_NONMEM7.pdf' target="_blank">PsN_and_NONMEM7.pdf</a> describes how PsN deals with the
+<li><a href='pdfdocs/PsN_and_NONMEM7.pdf' target="_blank">PsN_and_NONMEM7.pdf</a> describes how PsN deals with the
   many new features and functions of NONMEM7. This document is essential for
   anyone who intends to use PsN with NONMEM7.</li>
 </ol>
 <h3>New features in PsN 3.0.0</h3>
 <ol>
 <li> NONMEM7 support for NONMEM6 type input<br>
-PsN 3.0.0 has partial support for NONMEM7. It will handle NONMEM6 type input, i.e. single $ESTIMATION and classical estimation methods, with any PsN tool (bootstrap, scm...). PsN 3.0.0 has full support for NONMEM6. Details in <a href="http://downloads.sourceforge.net/project/psn/release_notes_PsN_3_0_0.txt">release notes</a>. 
+PsN 3.0.0 has partial support for NONMEM7. It will handle NONMEM6 type input, i.e. single $ESTIMATION and classical estimation methods, with any PsN tool (bootstrap, scm...). 
+PsN 3.0.0 has full support for NONMEM6. Details in <a href="https://raw.githubusercontent.com/UUPharmacometrics/PsN/master/development/release_notes/release_notes_PsN_3_0_0.txt">release notes</a>. 
 </li>
 <li> New option nmfe:<br>
 There is a new commandline option -nmfe (no arguments) that can be used
 with any PsN tool. When enabled, PsN will invoke nmfe6 or nmfe7 to run NONMEM
-instead of doing stepwise compiling and execution. See <a href='pdfdocs/psn_configuration.pdf' target="_blank">psn_configuration.pdf</a> and <a href='pdfdocs/common_options_defaults_versions_psn.pdf' target="_blank">common_options_defaults_version.pdf</a> for details.
+instead of doing stepwise compiling and execution. See <a href='pdfdocs/psn_configuration.pdf' target="_blank">PsN_configuration.pdf</a> and <a href='pdfdocs/common_options_defaults_versions_psn.pdf' target="_blank">common_options_defaults_version.pdf</a> for details.
 When nmfe is set the compiler configuration is ignored.
 </li>
 <li>
 Compiler configuration
 The compiler configuration can be set differently for each NONMEM version.
-See <a href='pdfdocs/psn_configuration.pdf' target="_blank">psn_configuration.pdf</a> for details.
+See <a href='pdfdocs/psn_configuration.pdf' target="_blank">PsN_configuration.pdf</a> for details.
 </li>
 </ol>
 <h3>Minor changes and bug fixes in PsN 3.0.0</h3>
@@ -1530,7 +1551,7 @@ subdirectory of PsN installation directory.</li>
 <ol>
 <li>Installation instructions are found in psn_installation.pdf.</li>
 
-<li>In <a href='pdfdocs/psn_configuration.pdf' target="_blank">psn_configuration.pdf</a> it is described how to
+<li>In <a href='pdfdocs/psn_configuration.pdf' target="_blank">PsN_configuration.pdf</a> it is described how to
 edit psn.conf to configure PsN correctly. Please read that
 document before running PsN for the first time.
 Old psn.conf files must be edited to work correctly with PsN3.</li>
@@ -1543,7 +1564,7 @@ encountered unfixed bugs and how to work around them.</li>
   <ol>
     <li>
   <p>Added support for censored and categorical data in vpc.</br>
-  Please see the updated <a href="pdfdocs/npc_vpc_userguide.pdf" target="_blank">userguide</a> for details.
+  Please see the updated <a href="pdfdocs/npc_vpc_userguide.pdf" target="_blank">npc/vpc_userguide</a> for details.
     </li>
     <li>
     <p>Added some simple error checking in $OMEGA and $SIGMA parsing.</p>
@@ -1554,7 +1575,7 @@ encountered unfixed bugs and how to work around them.</li>
     <li>
   <p>Changed the default value of option -restarts from 5 to 0 <br>in the source code.
     Please note: Users can set their own <br>defaults in psn.conf, see 
-<a href="pdfdocs/common_options_defaults_versions_psn.pdf" target="_blank">instructions here.</a></p>
+<a href="pdfdocs/common_options_defaults_versions_psn.pdf" target="_blank">Common_option_default_versions_PsN.pdf.</a></p>
     </li>
     <li>
   <p>Fixed a bug to the sse that caused options not to be passed correctly.</p>
@@ -1603,8 +1624,10 @@ encountered unfixed bugs and how to work around them.</li>
       reviewed and updated.</p>
   </li>
   <li>
-    <p>User-guide documents for <a href="pdfdocs/common_options_defaults_versions_psn.pdf" target="_blank">common PsN options</a>, <a href="pdfdocs/bootstrap_userguide.pdf" target="_blank">bootstrap</a>,<a href="pdfdocs/execute_userguide.pdf" target="_blank"> execute</a>,<br>
-      <a href="pdfdocs/sse_userguide.pdf" target="_blank">sse</a>, <a href="pdfdocs/npc_vpc_userguide.pdf" target="_blank">vpc, npc</a>,<a href="pdfdocs/llp_userguide.pdf" target="_blank"> llp</a> and <a href="pdfdocs/cdd_userguide.pdf" target="_blank">cdd</a> are now available in the subfolder &quot;doc&quot;<br>
+    <p>User-guide documents for <a href="pdfdocs/common_options_defaults_versions_psn.pdf" target="_blank">common PsN options</a>, 
+	<a href="pdfdocs/bootstrap_userguide.pdf" target="_blank">bootstrap</a>,<a href="pdfdocs/execute_userguide.pdf" target="_blank"> execute</a>,<br>
+      <a href="pdfdocs/sse_userguide.pdf" target="_blank">sse</a>, <a href="pdfdocs/npc_vpc_userguide.pdf" target="_blank">npc/vpc,
+	  </a>,<a href="pdfdocs/llp_userguide.pdf" target="_blank"> llp</a> and <a href="pdfdocs/cdd_userguide.pdf" target="_blank">cdd</a> are now available in the subfolder &quot;doc&quot;<br>
       under the PsN Core and Toolkit installation directory, which is<br>
       chosen during the installation (e.g. C:\Perl\site\lib\doc).  There<br>
       are still gaps, but they are smaller than before.</p>
@@ -1622,10 +1645,9 @@ encountered unfixed bugs and how to work around them.</li>
   </li>
   <li>
     <p>Changed principle for selecting best result from a set of retries.<br>
-      Please see the <a href="https://sourceforge.net/project/shownotes.php?release_id=635567&group_id=101419">change log</a> or the README.txt file for details. </p>
   </li>
   <li>    
-    <p>New script called <strong>&quot;<a href="pdfdocs/common_options_defaults_versions_psn.pdf">psn</a></strong>&quot; that lists all PsN scripts available using &quot;psn -h&quot; or &quot;psn -help&quot;, and lists all available NONMEM versions (the ones listed in psn.conf) using &quot;psn -nm_versions&quot;</p>
+    <p>New script called <strong>&quot;<a href="pdfdocs/common_options_defaults_versions_psn.pdf">PsN</a></strong>&quot; that lists all PsN scripts available using &quot;psn -h&quot; or &quot;psn -help&quot;, and lists all available NONMEM versions (the ones listed in psn.conf) using &quot;psn -nm_versions&quot;</p>
   </li>
   <li>
     <p>New script called <strong>&quot;<a href="pdfdocs/common_options_defaults_versions_psn.pdf">psn_options</a>&quot;</strong> that lists options common to most scripts (&quot;psn_options -h&quot;).<br>
@@ -1634,38 +1656,38 @@ encountered unfixed bugs and how to work around them.</li>
   <li>
     <p>New version of sumo, including help texts. see &quot;sumo -help&quot;</p>
   </li>
-  <li> Lots of new additions and changes, please see the <a href="https://sourceforge.net/project/shownotes.php?release_id=635567&group_id=101419">change log</a> or the README.txt file for details.<br>
+  <li> Lots of new additions and changes.<br>
   </li>
   </ol>
 </div>
 <h3>More information</h3>
 <p>
 Perl-speaks-NONMEM is copyright <br>
-&copy;2013-2016 by Mats Karlsson, Andrew Hooker, Rikard Nordgren and Kajsa Harling.<br>
+&copy;2016-2017 by Mats Karlsson, Andrew Hooker, Rikard Nordgren, Kajsa Harling and Svetlana Freiberga.<br>
+&copy;2013-2015 by Mats Karlsson, Andrew Hooker, Rikard Nordgren and Kajsa Harling.<br>
 &copy;2008-2012 by Mats Karlsson, Niclas Jonsson, Andrew Hooker and Kajsa Harling.<br>
 &copy;2006-2007 by Lars Lindbom.<br>
 &copy;2000-2005 by Lars Lindbom and Niclas Jonsson.<br>
 All rights reserved.</p>
 <p>Perl-speaks-NONMEM is free and open source software: you can redistribute it and/or modify it
-under the terms of the <a href="http://www.gnu.org/licenses/old-licenses/gpl-2.0.html">GNU General Public License</a> as published by
+under the terms of the <a href="http://www.gnu.org/licenses/old-licenses/gpl-2.0.html"target="_blank">GNU General Public License</a> as published by
 the Free Software Foundation, either version 2 of the License, or (at your option) any later version.</p>
 <p>
-PsN is developed and maintained by <a href="mailto:kajsa.harling@farmbio.uu.se">Kajsa Harling</a> and <a href="mailto:rikard.nordgren@farmbio.uu.se">Rikard Nordgren</a>
-.</p>
+PsN is developed and maintained by <a href="mailto:rikard.nordgren@farmbio.uu.se">Rikard Nordgren</a> and <a href="mailto:svetlana.freiberga@farmbio.uu.se">Svetlana Freiberga</a>.</p>
 
 <p>PsN was originally developed by Niclas Jonsson and continued by Lars 
-Lindbom for his doctoral thesis. Additional implementation has been done by Pontus Pihlgren, Jakob Ribbing, Kristin Karlsson, 
-Maria Kjellsson and Joakim Nyberg. Additional contributions by Radojka Savic, Paul Baverel, Martin Bergstrand, Elodie Plan, Yasunori Aoki and many more.</p>
+Lindbom for his doctoral thesis. Lead developer for PsN between 2008 and 2016 was Kajsa Harling. Additional implementation has been done by Pontus Pihlgren, Jakob Ribbing, Kristin Karlsson, 
+Maria Kjellsson and Joakim Nyberg. Additional contributions by Radojka Savic, Paul Baverel, Martin Bergstrand, Elodie Plan, Yasunori Aoki, William Denney and many more.</p>
 
 <h4>References</h4>
 <ul>
     <li class="reference"> <a href="http://www.ncbi.nlm.nih.gov/entrez/query.fcgi?db=pubmed&cmd=Retrieve&dopt=AbstractPlus&list_uids=
-16023764&query_hl=1&itool=pubmed_docsum">Lindbom L, Pihlgren P, Jonsson EN.</a> <br>
+16023764&query_hl=1&itool=pubmed_docsum" target="_blank">Lindbom L, Pihlgren P, Jonsson EN.</a> <br>
                 PsN-Toolkit--a collection of computer intensive statistical methods for non-linear mixed effect modeling using NON
 MEM. <br>
                 Comput Methods Programs Biomed. 2005 Sep;79(3):241-57. </li>
     <li class="reference"> <a href="http://www.ncbi.nlm.nih.gov/entrez/query.fcgi?db=pubmed&cmd=Retrieve&dopt=AbstractPlus&list_uids=
-15212851&query_hl=1&itool=pubmed_docsum">Lindbom L, Ribbing J, Jonsson EN. </a> <br>
+15212851&query_hl=1&itool=pubmed_docsum" target="_blank">Lindbom L, Ribbing J, Jonsson EN. </a> <br>
                 Perl-speaks-NONMEM (PsN)--a Perl module for NONMEM related programming.<br>
         Comput Methods Programs Biomed. 2004 Aug;75(2):85-94.</li>
 </ul>

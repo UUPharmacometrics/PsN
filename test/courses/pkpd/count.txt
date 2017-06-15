@@ -1,0 +1,4 @@
+#Task 1
+execute run65.mod
+#Task 2
+vpc run65.mod -flip_comments -samples=20 -levels=0,1,2,3,4 -dir=vpc65a -dv=HC -rplots=1 -auto_bin=unique -seed=123 -stratify_on=DOSE

@@ -5,10 +5,12 @@
     <link rel="stylesheet" type="text/css" href="style/style.css">
     <script type="text/javascript" src="javascript/jquery.js"></script>
     <script> 
+        // @license magnet:?xt=urn:btih:e95b018ef3580986a04669f1b5879592219e2a7a&dn=public-domain.txt
         $(function() {
             $("#nav").load("menu.html");
             $("#footer").load("footer.html");
         });
+        // @license-end
     </script> 
 </head>
 <body>
@@ -18,12 +20,12 @@
         <div id="main">
 
 
-<h2>Installation instructions</h2>
+<h2>Installation</h2>
 <p>
 Before you install PsN, you should make sure that the following programs/modules are installed on your computer. 
 
 <ul>
-<li>NONMEM<p>
+<li><a target="_blank" href="https://nonmem.iconplc.com/">NONMEM</a><p>
 PsN4 supports standard and NMQual8 installations of NONMEM. 
 You must verify that all NONMEM installations you intend to
 use can be run directly via the nmfe/autolog scripts and that they 
@@ -32,22 +34,21 @@ of NONMEM you must also verify that you can run NONMEM in parallel directly
 with the nmfe script, for example nmfe73. <p>
 If running NONMEM with nmfe/autolog.pl does not work then PsN will not work.
 </li>
-<li>Perl5<p>
-PsN4 requires at least Perl5 version 5.10.1. Please note that users of the free version of ActiveState Perl need an even higher version to be able to download the needed Perl packages (see note below). Users who are already running an older version of PsN should check if they need to upgrade Perl before installing PsN4. The Perl version can be checked with the command <pre>perl --version</pre><p>
-Note 1: For Windows we recommend
-<a target="_blank" href="http://strawberryperl.com/">Strawberry Perl</a>, but 
+<li>Perl5 version 5.10.1<p>
+PsN4 requires at least Perl5 version 5.10.1. Please note that users of the free version of ActiveState Perl need an even higher version to be able to download the needed Perl packages (see note below). 
+Users who are already running an older version of PsN should check if they need to upgrade Perl before installing PsN4. The Perl version can be checked with the command <pre>perl --version</pre><p>
+<li> <b>Windows</b><p>
+We recommend
+<a target="_blank" href="http://strawberryperl.com/">Strawberry Perl</a>, and Windows users who are installing Perl for the first time should choose Strawberry Perl because of the easier installation of necessary Perl modules.<p>
 <a target="_blank" href="http://www.activestate.com/activeperl/downloads/">ActiveState Perl</a>
-also works even though some Perl modules might be more difficult to install.
-Windows users who are installing Perl for the first time should choose Strawberry Perl
-because of easier installation of necessary Perl modules.
-If ActiveState is selected it is important to select a version which supports the extra Perl modules needed for PsN, see the next bullet point.
-On May 10th 2016 the recommended ActiveState Perl version was 5.18.<p> 
-Note 2: Mac users should check if the version of Perl that came with MacOS is 5.10.1 or above. For older versions of MacOS
-Perl needs to be upgraded. 
-This can be done by installing ActiveState Perl (and installing the needed packages with ppm install).
+also works even though some Perl modules might be more difficult to install. If ActiveState is selected it is important to select a version which supports the extra Perl modules needed for PsN, see the next bullet point.
+On May 10th 2016 the recommended ActiveState Perl version was 5.18.<p> </li>
+<li> <b>Mac </b><p>
+The version of Perl needs to be 5.10.1 or above. For older versions of MacOS
+Perl needs to be upgraded. This can be done by installing ActiveState Perl (and installing the needed packages with ppm install).</li>
 </li>
 <li>Perl modules MooseX::Params::Validate, Math::Random, Statistics::Distributions, Archive::Zip and File::Copy::Recursive <p> 
-PsN can be run without Statistics::Distributions, Archive::Zip and File::Copy::Recursive 
+PsN can be run without the modules Statistics::Distributions, Archive::Zip and File::Copy::Recursive 
 but some features and bugfixes will not be available.
 For updated information 
 on which modules are available for which Perl version in ActiveState Perl see 
@@ -128,12 +129,11 @@ cpan MooseX::Params::Validate<br>
   <li> If you did not let the installation script create a configuration file <tt>psn.conf</tt> for you, 
 or if you are running NONMEM via NMQual or on a cluster, you need to edit <tt>psn.conf</tt> 
 in the PsN installation directory. 
-The document <a href='https://github.com/UUPharmacometrics/PsN/releases/download/v4.6.0/psn_configuration.pdf'>psn_configuration.pdf</a> in 
+The document <a href='https://github.com/UUPharmacometrics/PsN/releases/download/4.7.0/psn_configuration.pdf'>PsN configuration.pdf</a> in 
 PsN-Source/doc describes how to make correct settings in the psn.conf file. 
-The document is also found on <a href="docs.html">the PsN website</a> under Documentation.
+The document is also found under <a href="docs.html">Documentation</a> .
   </li>
-  <li>When the installation is
-    done you can safely remove the <tt>PsN-Source</tt>
+  <li>When the installation is done you can safely remove the <tt>PsN-Source</tt>
     directory.
 </li>
 </ol>

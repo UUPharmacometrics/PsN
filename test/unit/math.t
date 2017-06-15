@@ -13,6 +13,14 @@ use math qw(:all);
 
 my (@a, @b, $a, $b, $c);
 
+# fortran_number_to_string
+is (fortran_number_to_string("123.1-345"), "123.1E-345", "fortran_number_to_string special format");
+is (fortran_number_to_string("123.2+345"), "123.2E+345", "fortran_number_to_string special format 2");
+is (fortran_number_to_string("1.23"), "1.23", "fortran_number_to_string regular non-scientific string");
+is (fortran_number_to_string("1.23E23"), "1.23E23", "fortran_number_to_string regular scientific string");
+is (fortran_number_to_string("1.23E-23"), "1.23E-23", "fortran_number_to_string regular scientific string 2");
+is (fortran_number_to_string("1.23E+23"), "1.23E+23", "fortran_number_to_string regular scientific string 3");
+
 # round
 is (round(1.23), 1, "round positive down");
 is (round(23.5), 24, "round positive x.5");
@@ -23,13 +31,6 @@ is (round(-1.23), -1, "round negative up");
 is (round(-1.5), -2, "round negative x.5");
 is (round(-18.999), -19, "round negative down");
 is (round(-199), -199, "round negative integer");
-
-# ceil
-is (ceil(1.23), 2, "ceil positive");
-is (ceil(28), 28, "ceil integer");
-is (ceil(0), 0, "ceil zero");
-is (ceil(-1.23), -1, "ceil negative");
-is (ceil(-28), -28, "ceil negative integer");
 
 # eps
 is (eps(1), 2.220446049250313e-16, "eps(1)");

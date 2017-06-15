@@ -11,16 +11,13 @@ use tool::scm;
 has 'epsilon' => ( is => 'rw', isa => 'Bool', default => 1 );
 has 'foce' => ( is => 'rw', isa => 'Bool', default => 1 );
 has 'error' => ( is => 'rw', isa => 'Maybe[Str]' );
-has 'full_block' => ( is => 'rw', isa => 'Bool' );      # Set to also run with full block OMEGA
+has 'keep_covariance' => ( is => 'rw', isa => 'Bool', default => 0 );
+has 'estimate_fo' => ( is => 'rw', isa => 'Bool', default => 0 );
+has 'extra_table_columns' => ( is => 'rw', isa => 'ArrayRef[Str]' );    # Set to array of colnames to add to an extra data table output by derivatives.mod
 
-has 'full_block_model' => ( is => 'rw', isa => 'model' );
 has 'dataname' => ( is => 'rw', isa => 'Str' );
 
 extends 'tool';
-
-sub BUILD
-{
-}
 
 sub modelfit_setup
 {
@@ -68,6 +65,10 @@ sub modelfit_setup
         both_directions => 0,
         logfile => ['linlog.txt'],
         from_linearize => 1,
+        keep_covariance => $self->keep_covariance,
+        estimate_fo => $self->estimate_fo,
+        directory => 'scm_dir1',
+        extra_table_columns => $self->extra_table_columns,
     );
 
     $scm->run;
@@ -89,80 +90,12 @@ sub modelfit_setup
     cp($scm->basename . '.mod', '../' . $scm->basename . '.mod');
     cp($scm->basename . '.lst', '../' . $scm->basename . '.lst');
     cp($scm->basename . '.phi', '../' . $scm->basename . '.phi');
-
-    if ($self->full_block) {
-        my $name = $scm->basename;
-        $self->dataname($scm->basename . '.dta');
-        $name =~ s/linbase/full_block.mod/;
-        my $full_block_model = $self->_create_full_block(input_model_name => $scm->basename . '.mod', output_model_name => "$name");
-        $self->full_block_model($full_block_model);
-
-        my $modelfit = tool::modelfit->new(
-            %{common_options::restore_options(@common_options::tool_options)},
-		    models => [ $full_block_model ], 
-            base_dir => $self->directory . 'm1/',
-            directory => undef,
-            top_tool => 0,
-            copy_data => 0,
-        );
-        $self->tools([]) unless defined $self->tools;
-        push(@{$self->tools}, $modelfit);
-    }
+    cp($scm->basename . '.ext', '../' . $scm->basename . '.ext');
 }
 
 sub modelfit_analyze
 {
     my $self = shift;
-
-    # Print the ofv of the full block model
-    if (defined $self->full_block_model) {
-        my $ofv;
-        if ($self->full_block_model->is_run()) {
-            my $output = $self->full_block_model->outputs->[0];
-            $ofv = $output->get_single_value(attribute => 'ofv');
-        }
-        if (defined $ofv) {
-            $ofv = sprintf('%.5f', $ofv);
-        } else {
-            $ofv = 'NA';
-        }
-        print "\nThe ofv of the full omega block model:   $ofv   " . $self->full_block_model->filename . "\n";
-        $self->full_block_model->directory("../");
-        $self->full_block_model->datafiles(new_names => [ '../' . $self->dataname ]);
-        $self->full_block_model->_write();
-    }
-}
-
-sub _create_full_block
-{
-    my $self = shift;
-    my %parm = validated_hash(\@_,
-		input_model_name => { isa => 'Str' },
-		output_model_name => { isa => 'Str' },
-	);
-	my $input_model_name = $parm{'input_model_name'};
-	my $output_model_name = $parm{'output_model_name'};
-
-    my $base = model->new(filename => $input_model_name);
-    my $model = $base->copy(filename => "m1/$output_model_name");
-
-    my $omega_matrix = $model->problems->[0]->get_filled_omega_matrix(start_eta => 1);
-    my $size = @{$omega_matrix};
-    my @record_arr = ( "\$OMEGA BLOCK($size)" );
-    for (my $i = 0; $i < $size; $i++) {
-        my $row = "";
-        for (my $j = 0; $j <= $i; $j++) {
-            $row .= $omega_matrix->[$i]->[$j] . ' ';
-        }
-        push @record_arr, "$row\n";
-    }
-
-    my $omega = model::problem::omega->new(record_arr => \@record_arr);
-    $model->problems->[0]->omegas([ $omega ]);
-
-    $model->_write();
-
-    return $model;
 }
 
 

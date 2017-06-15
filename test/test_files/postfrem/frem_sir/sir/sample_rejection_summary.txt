@@ -1,0 +1,29 @@
+Sample rejection summary:
+BoxCox LowerBound UpperBound Zero  Label
+     0          0         0     0  THETA1
+     0          0         0     0  THETA2
+     0          0         0     0  THETA3
+     3          0         0     0  LAG
+     0          0         0     0  W
+     0          0         0     0  OMEGA(1,1)
+     0          0         0     0  OMEGA(2,1)
+     0          0         0     0  OMEGA(2,2)
+     0          0         0     0  OMEGA(3,1)
+     0          0         0     0  OMEGA(3,2)
+     0          0         0     0  KA
+     0          0         0     0  OMEGA(4,1)
+     0          0         0     0  OMEGA(4,2)
+     0          0         0     0  OMEGA(4,3)
+     0          0         0     0  BSV_WT
+     0          0         0     0  OMEGA(5,1)
+     0          0         0     0  OMEGA(5,2)
+     0          0         0     0  OMEGA(5,3)
+     0          0         0     0  OMEGA(5,4)
+     0          0         0     0  BSV_DGRP_9
+     0          0         0     0  OMEGA(6,1)
+     0          0         0     0  OMEGA(6,2)
+     0          0         0     0  OMEGA(6,3)
+     0          0         0     0  OMEGA(6,4)
+     0          0         0     0  OMEGA(6,5)
+     0          0         0     0  BSV_DGRP_8
+OMEGA/SIGMA blocks nonposdef rejections: 346

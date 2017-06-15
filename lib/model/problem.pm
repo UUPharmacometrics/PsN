@@ -2533,22 +2533,22 @@ sub get_matrix
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-							  type => {isa => 'Str', optional => 0},
-							  start_row => {isa => 'Int', optional => 0},
-							  end_row => {isa => 'Int', optional => 1}
-		);
+        type => {isa => 'Str', optional => 0},
+        start_row => {isa => 'Int', optional => 0},
+        end_row => {isa => 'Maybe[Int]', optional => 1}
+    );
 	my $type = $parm{'type'};
 	my $start_row = $parm{'start_row'};
 	my $end_row = $parm{'end_row'};
 	my $accessor;
 	if ($type eq 'omega'){
 		$accessor = 'omegas';
-	}elsif($type eq 'sigma'){
+	} elsif($type eq 'sigma') {
 		$accessor = 'sigmas';
-	}else{
+	} else {
 		croak('Unknown parameter type '.$type.' in problem->get_matrix');
 	}
-	if (0){
+	if (0) {
 		my @formatted=();
 		my $count=0;
 		foreach my $record (@{$self->$accessor}) {
@@ -2568,31 +2568,30 @@ sub get_matrix
 	
 	my $sa = 'n'.$accessor;
 	my $old_size = $self->$sa(with_correlations => 0, with_same => 1);
-	if ($old_size < $start_row){
-		croak ("Illegal input to get_matrix, start_row $start_row larger than size $old_size");
+	if ($old_size < $start_row) {
+		croak("Illegal input to get_matrix, start_row $start_row larger than size $old_size");
 	}
-	if (defined $end_row){
-		if ($old_size < $end_row){
-			croak ("Illegal input to get_matrix, end_row $end_row larger than size $old_size");
+	if (defined $end_row) {
+		if ($old_size < $end_row) {
+			croak("Illegal input to get_matrix, end_row $end_row larger than size $old_size");
 		}
-	}else{
+	} else {
 		$end_row = $old_size;
 	}
-	if ($end_row < $start_row){
-		croak ("Illegal input to get_matrix, end_row $end_row smaller than start_row $start_row");
+	if ($end_row < $start_row) {
+		croak("Illegal input to get_matrix, end_row $end_row smaller than start_row $start_row");
 	}
 	my $new_size = ($end_row - $start_row +1);
-	my @old_matrix=();
-	for (my $i=0; $i < $old_size; $i++){
+	my @old_matrix = ();
+	for (my $i=0; $i < $old_size; $i++) {
 		push(@old_matrix,[(0) x $old_size]);
 	}
 
-	my @records =  @{$self -> $accessor};
+	my @records = @{$self->$accessor};
 
 	my $block_size;
 	my $prev_rows=0;
-	for (my $i=0; $i<scalar(@records); $i++){
-		#print "$i\n";
+	for (my $i=0; $i<scalar(@records); $i++) {
 		if  ($records[$i]->same() ){
 			#store values in old_matrix
 			my $old_start = $prev_rows - $block_size;
@@ -2606,17 +2605,16 @@ sub get_matrix
 			$prev_rows += $block_size;
 			next;
 		}
-		unless (defined $records[$i] -> options()){
+		unless (defined $records[$i]->options) {
 			croak("$type record has no values");
 		}
-		if (defined $records[$i] -> size() and ($records[$i] -> size() > 0)){
+		if (defined $records[$i]->size() and ($records[$i]->size() > 0)) {
 			$block_size = $records[$i]->size(); #could be diagonal
 		}else{
 			$block_size = 1;
 		}
-		foreach my $option (@{$records[$i] -> options()}) {
+		foreach my $option (@{$records[$i]->options()}) {
 			my $name = $option -> coordinate_string();
-			print ' '.$name if (0);
 			croak("unknown coord $name ") unless ($name =~ /A\((\d+),(\d+)\)/ );
 			croak("row in $name outside size $old_size") if ($1 > $old_size );
 			croak("col in $name outside size $old_size") if ($2 > $old_size );
@@ -2629,27 +2627,17 @@ sub get_matrix
 		}
 	}
 
-	my $diff=$start_row-1;
-	my @new_matrix=();
-	for (my $i=0; $i < $new_size; $i++){
+	my $diff = $start_row - 1;
+	my @new_matrix = ();
+	for (my $i=0; $i < $new_size; $i++) {
 		push(@new_matrix,[(0) x $new_size]);
-		for (my $j=0; $j < $new_size; $j++){
+		for (my $j=0; $j < $new_size; $j++) {
 			$new_matrix[$i][$j] = $old_matrix[$i+$diff][$j+$diff];
 		}
 	}
-	if (0){
-		print "\nold, $old_size:\n";
-		for (my $i=0; $i < $old_size; $i++){
-			print join("\t",@{$old_matrix[$i]})."\n";
-		}
-		print "new, $new_size:\n";
-		for (my $i=0; $i< scalar(@new_matrix); $i++){
-			print join("\t",@{$new_matrix[$i]})."\n";
-		}
-	}
-	unless ($new_matrix[$new_size-1][$new_size-1] > 0){
+	unless ($new_matrix[$new_size-1][$new_size-1] > 0) {
 		print "\n";
-		for (my $i=0; $i< scalar(@new_matrix); $i++){
+		for (my $i=0; $i< scalar(@new_matrix); $i++) {
 			print join(' ',@{$new_matrix[$i]})."\n";
 		}
 
@@ -2657,7 +2645,6 @@ sub get_matrix
 	}
 
 	return \@new_matrix;
-
 }
 
 sub get_posdef_matrix
@@ -2718,21 +2705,28 @@ sub get_filled_omega_matrix
 {
 	my $self = shift;
 	my %parm = validated_hash(\@_,
-							  covmatrix => { isa => 'Ref', optional => 1 },
-							  start_eta => { isa => 'Int', optional => 0 }
-		);
+        covmatrix => { isa => 'Ref', optional => 1 },
+        start_eta => { isa => 'Int', optional => 0 },
+        end_eta => { isa => 'Int', optional => 1 },     # Not tested to work in conjunction with covmatrix
+    );
 	my $covmatrix = $parm{'covmatrix'};
 	my $start_eta = $parm{'start_eta'};
+	my $end_eta = $parm{'end_eta'};
 
 	#create one big full omega block (lower triangular) as new_omega->[$row][$col]
 	#input is optional covmatrix to be used for 0 off-diags
 	#if old off-diagonals not present then set small values
 
-	my $old_full_omega = $self->get_matrix( type=> 'omega',
-											start_row => $start_eta);
+	my $old_full_omega = $self->get_matrix(
+        type=> 'omega',
+        start_row => $start_eta,
+        end_row => $end_eta,
+    );
 	
-	my $new_full_omega = get_posdef_matrix(covmatrix => $covmatrix,
-										   old_matrix => $old_full_omega);
+	my $new_full_omega = get_posdef_matrix(
+        covmatrix => $covmatrix,
+        old_matrix => $old_full_omega
+    );
 
 	return $new_full_omega;
 }
@@ -3815,11 +3809,13 @@ sub find_data_column
 	my $column_name = $parm{'column_name'};
 
     my $counter = 0;
-    foreach my $opt (@{$self->inputs->[0]->options()}) {
-        if ($opt->name() eq $column_name) {
-            return $counter;
+    foreach my $record (@{$self->inputs}) {
+        foreach my $opt (@{$record->options}) {
+            if ($opt->name eq $column_name) {
+                return $counter;
+            }
+            $counter++;
         }
-        $counter++;
     }
 
     return -1;

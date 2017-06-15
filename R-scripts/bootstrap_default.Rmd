@@ -19,10 +19,25 @@ require(plyr)
 require(dplyr)
 ```
 
-```{r fix.column.names,include = FALSE}
+```{r fix_column._ames,include = FALSE}
 est.param.names <- fix_column_names(col_names=ESTIMATED.PARAMS)
 ```
 
+```{r cook_scores_cov_ratios_plot,results='hide',echo=FALSE,fig.width=9,fig.height=6.5,fig.keep="high",fig.align="center"}
+#calculate cook scores and cov ratios
+list_cook.cov <- cook_cov_calcul(raw.results.file,included.ids.file,est.param.names)
+#unlist
+data_plots <- list_cook.cov$data_plots
+failed_cov_ID <- list_cook.cov$failed_cov_ID
+estimation_failures <- list_cook.cov$estimation_failures
+samples <- list_cook.cov$samples
+
+#plot cook scores and cov ratios to find influential individuals
+gt <- plot_cook_cov(data_plots,failed_cov_ID,samples,estimation_failures)
+#plot
+grid.draw(gt)
+```
+\pagebreak
 
 ```{r check_xpose4_version,results='hide',echo=FALSE}
 if(packageVersion("xpose4")<"4.5.0"){

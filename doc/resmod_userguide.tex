@@ -1,5 +1,5 @@
 \input{inputs/format_header.tex}
-\guidetitle{RESMOD user guide}{2017-02-22}
+\guidetitle{RESMOD user guide}{2017-05-04}
 
 \begin{document}
 
@@ -8,7 +8,7 @@
 
 
 \section{Overview}
-The residual modelling tool performs modelling of the conditional weighted residual output of a model run. Different types of models are run and changes in OFV will be recorded together with some interesting parameters.
+The residual modelling tool performs modelling of the conditional weighted residual output of a model run. Different types of models are run and changes in OFV will be recorded together with some parameters of interest. Resmod is not compatible with NONMEM 7.2 or older versions.
 
 Example
 \begin{verbatim}
@@ -27,7 +27,8 @@ A model file is required on the command-line.
 Name of the dvid column. DVID is default.
 \nextopt
 \optdefault{idv}{TIME}
-Name of the independent variable. Set to TIME by default.
+Name of the independent variable. Set to TIME by default. If set to PRED
+PsN will rename it appropriately so that it can be used in \$INPUT.
 \nextopt
     \optdefault{dv}{CWRES}
         Name of the dependent variable. Set to CWRES by default.

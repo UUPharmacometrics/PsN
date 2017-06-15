@@ -11,8 +11,9 @@ our @EXPORT_OK = ( @{ $EXPORT_TAGS{'all'} } );
 use strict;
 use include_modules;
 use Math::Trig;	# For pi
+use POSIX;
 use array qw(:all);
-use math qw(round eps inf ceil);
+use math qw(round eps inf);
 
 sub bin_range
 {
@@ -1025,7 +1026,7 @@ sub gaussFilter
 
 	# Perform a convolution between the Gauss Kernel and the data density
 	for (my $i = 0; $i < @$density; $i++) {
-		$mid = ceil(($$idv[$i] - $$mesh[0]) * $spacing);
+		$mid = POSIX::ceil(($$idv[$i] - $$mesh[0]) * $spacing);
 
 		# Loop forward from midpoint and backward from midpoint separately. Stop is the kernel function is close to zero.
 		my $k = $mid;

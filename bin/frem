@@ -24,14 +24,12 @@ my %options;
 ## Declare the options
 
 my %required_options = ('covariates:s');
-my %optional_options = ( 
-#	'dv:s' => undef,
-#	'vpc!' => undef,
+my %optional_options = (
 	'check!' => undef,
 	'rescale!' => undef,
 	'fork_runs!' => undef,
-#	'estimate_regular_final_model!' => undef,
 	'estimate_means!' => undef,
+    'estimate_covariates!' => undef,
 	'categorical:s' => undef,
 	'deriv2_nocommon_maxeta:i' => undef,
 	"mceta:i"=>'',
@@ -41,7 +39,6 @@ my %optional_options = (
 	'mu' => undef,
 	'cholesky!' => undef,
 	'always_proposal_density!' => undef,
-#	'skip_etas:i' => undef
 	'skip_omegas:s' => undef
 );
 
@@ -58,18 +55,18 @@ $help_text{Pre_help_message} = <<'EOF';
     Full Random Effects Model
 EOF
 
-$help_text{Description} = <<'EOF';      
-The frem program is an aid to the method described in 
-A full model approach based on the covariance matrix of parameters and covariates, 
-PAGE 21 (2012) Abstr 2455, M Karlsson. 
+$help_text{Description} = <<'EOF';
+The frem program is an aid to the method described in
+A full model approach based on the covariance matrix of parameters and covariates,
+PAGE 21 (2012) Abstr 2455, M Karlsson.
 
-The program step by step builds a model with full random effects. 
+The program step by step builds a model with full random effects.
 EOF
 
-$help_text{Examples} = <<'EOF';      
+$help_text{Examples} = <<'EOF';
 frem run1.mod -covariates=WT,SEX,DGRP -categorical=SEX,DGRP
 EOF
-$help_text{Options} = <<'EOF';      
+$help_text{Options} = <<'EOF';
 	A model file is required as argument.
 
       The following options are valid:
@@ -77,13 +74,13 @@ EOF
 
 $help_text{-h} = <<'EOF';
       -h | -?
-      
+
       With -h or -? frem will print a list of options and exit.
 EOF
-      
-$help_text{-help} = <<'EOF';      
+
+$help_text{-help} = <<'EOF';
       -help
-      
+
       With -help frem will print this, longer, help message.
 EOF
 
@@ -125,13 +122,13 @@ EOF
 
 $help_text{-fork_runs} = <<'EOF';
        -fork_runs
- 
+
        Fork out separate processes for all output parsing. Default not set.
        Will only work on *nix.
 EOF
 $help_text{-always_proposal_density} = <<'EOF';
        -always_proposal_density
- 
+
        Default set, unset with -no-always_proposal_density. If set then print alternative
        proposal density to use as input to sir even if Model 4 covstep is successful.
 EOF
@@ -142,34 +139,37 @@ $help_text{-rse} = <<'EOF';
 Default 30 \%.
 If the covariance step of both Model 4 and either/both of Model 1 and Model 2 fails, then
 this is the guess of relative standard error that will be used for parameters for which there is no other
-information that can be used to guess the variance needed for 
+information that can be used to guess the variance needed for
 a proposal density for a sir run with Model 4.
 EOF
 
 $help_text{-deriv2_nocommon_maxeta} = <<'EOF';
     -deriv2_nocommon_maxeta=N
 
-Default 60. If the number of ETAs in model 2 is larger than this number then 
+Default 60. If the number of ETAs in model 2 is larger than this number then
 $ABBREVIATED DERIV2=NOCOMMON
 will be set in the control stream.
 EOF
 
-#$help_text{-estimate_regular_final_model} = <<'EOF';
-#    -estimate_regular_final_model
-#
-#Default set. If set then script will estimate the final regular parameterization frem model, 
-#otherwise the model will be created but not estimated.
-#EOF
-
 $help_text{-estimate_means} = <<'EOF';
     -estimate_means
 
-Default set. By default frem will estimate the mean values of the covariates which have any 
-missing observations in the FREM dataset. Note that the FREM dataset contains covariate 
+Default set. By default frem will estimate the mean values of the covariates which have any
+missing observations in the FREM dataset. Note that the FREM dataset contains covariate
 observations only from the first original data observation record for each individual.
 If no covariate observations are missing in the frem dataset then the mean will not be estimated,
-even if option -estimate_means is set. If -no-estimate_means is set, frem will not estimate 
+even if option -estimate_means is set. If -no-estimate_means is set, frem will not estimate
 any means even if there are missing observations.
+EOF
+
+$help_text{-estimate_covariates} = <<'EOF';
+    -estimate_covariates
+
+Default not set. By default FREM will not estimate the variances and covariances of the covariates
+until the final FREM model estimation, but instead evaluate the EBEs (in Model 2) assuming the same
+variances and covariances as in covariate data. These estimates should not differ unless covariates
+have missing data (which might warrant this option to be set). Setting this means that Model 2 is
+estimated which in some cases can be time-consuming.
 EOF
 
 $help_text{-cholesky} = <<'EOF';
@@ -178,26 +178,18 @@ $help_text{-cholesky} = <<'EOF';
 Default not set. If set then script will create and estimate Model 5 and Model 6.
 EOF
 
-#$help_text{-vpc} = <<'EOF';
-#      -vpc
-
-#      Default not set. If set then script will create a frem model that
-#can be run with the vpc script (in a separate call to the vpc
-#script).
-#EOF
-
-$help_text{-mceta} = <<'EOF';      
+$help_text{-mceta} = <<'EOF';
       -mceta=N
 
       Default not set.
-      Only allowed when NM7.3 or later and the last estimation method accepts MCETA. 
+      Only allowed when NM7.3 or later and the last estimation method accepts MCETA.
       Set MCETA=N in last $ESTIMATION.
 EOF
 
 $help_text{-check} = <<'EOF';
       -check
 
-Default not set. Run evaluation with frem records ignored after frem data set 
+Default not set. Run evaluation with frem records ignored after frem data set
 generation, to check ofv is the same.
 EOF
 
@@ -220,76 +212,71 @@ $help_text{Post_help_message} = <<'EOF';
 EOF
 
 common_options::online_help( 'frem', \%options, \%help_text, \%required_options, \%optional_options);
-common_options::setup( \%options, 'frem' ); #get defaults, 
+common_options::setup( \%options, 'frem' ); #get defaults,
 #calls set_globals etc, initiates random sequence
 
 
 ## Check that we do have a model file
-if ( scalar(@ARGV) < 1 ) {
+if (scalar(@ARGV) < 1) {
   print "An input model file must be specified. Use 'frem -h' for help.\n";
   die;
 }
 
-if( scalar(@ARGV) > 1 ){
-  print "FREM can only handle one modelfile, you listed: ",join(',',@ARGV),". Use 'frem -h' for help.\n";
+if (scalar(@ARGV) > 1) {
+  print "FREM can only handle one modelfile, you listed: ", join(',',@ARGV),". Use 'frem -h' for help.\n";
   die;
 }
-
-
 
 require model;
 
 my $eval_string = common_options::model_parameters(\%options);
 
-my $model = model -> new ( eval( $eval_string ),
-						   parse_output => 0,
-						   filename                    => $ARGV[0],
-						   ignore_missing_output_files => 1);
+my $model = model->new(
+    eval($eval_string),
+    parse_output => 0,
+    filename => $ARGV[0],
+    ignore_missing_output_files => 1
+);
 
 require input_checking;
 input_checking::check_options(tool => 'frem', options => \%options, model => $model);
 
-
 require tool::frem;
 
-my $frem = tool::frem->new( eval( $common_options::parameters ),
-							models	     => [ $model ],
-							top_tool           => 1,
-							covariates => $options{'covariates'},
-							categorical => $options{'categorical'},
-#							estimate_regular_final_model => $options{'estimate_regular_final_model'},
-							estimate_means => $options{'estimate_means'},
-							cholesky => $options{'cholesky'},
-							deriv2_nocommon_maxeta => $options{'deriv2_nocommon_maxeta'},
-							log => $options{'log'},
-							rse => $options{'rse'},
-							mu => $options{'mu'},
-							fork_runs => $options{'fork_runs'},
-							always_proposal_density => $options{'always_proposal_density'},
-							skip_omegas => $options{'skip_omegas'}, 
-							check => $options{'check'}, 
-							mceta => $options{'mceta'},
-							rescale => $options{'rescale'}, 
-							vpc => $options{'vpc'}, 
-							run_sir => $options{'run_sir'}, 
-#							dv => $options{'dv'}
-	); 
+my $frem = tool::frem->new(
+    eval( $common_options::parameters ),
+    models => [ $model ],
+    top_tool => 1,
+    covariates => $options{'covariates'},
+    categorical => $options{'categorical'},
+    estimate_means => $options{'estimate_means'},
+    estimate_covariates => $options{'estimate_covariates'},
+    cholesky => $options{'cholesky'},
+    deriv2_nocommon_maxeta => $options{'deriv2_nocommon_maxeta'},
+    log => $options{'log'},
+    rse => $options{'rse'},
+    mu => $options{'mu'},
+    fork_runs => $options{'fork_runs'},
+    always_proposal_density => $options{'always_proposal_density'},
+    skip_omegas => $options{'skip_omegas'},
+    check => $options{'check'},
+    mceta => $options{'mceta'},
+    rescale => $options{'rescale'},
+    vpc => $options{'vpc'},
+    run_sir => $options{'run_sir'},
+);
 
-$frem-> print_options (cmd_line => $cmd_line,
-		      toolname => 'frem',
-		      local_options => [keys %optional_options],
-		      common_options => \@common_options::tool_options);
+$frem->print_options(
+    cmd_line => $cmd_line,
+    toolname => 'frem',
+    local_options => [keys %optional_options],
+    common_options => \@common_options::tool_options
+);
 
-   
-$frem -> run;
+$frem->run;
 
-if ($frem->vpc and -e $frem->directory.'frem_vpc.mod'){
-	ui -> print( category => 'frem',
-				 message => "The prepared frem vpc model is ".$frem->directory."frem_vpc.mod\n" );
+if ($frem->vpc and -e $frem->directory . 'frem_vpc.mod') {
+	ui->print(category => 'frem', message => "The prepared frem vpc model is " . $frem->directory . "frem_vpc.mod\n");
 }
 
-#$frem -> prepare_results;
-#$frem -> print_results; #only for frem_results.csv
-ui -> print( category => 'frem',
-	     message => "frem done\n" );
-
+ui->print(category => 'frem', message => "frem done\n");

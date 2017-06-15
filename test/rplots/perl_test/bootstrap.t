@@ -26,7 +26,7 @@ my $rc = system($command);
 $rc = $rc >> 8;
 
 ok ($rc == 0, "bootstrap 1 that should run ok");
-my %pdf_files_pages=($tempdir.'rundir/PsN_bootstrap_plots.pdf' => 5);
+my %pdf_files_pages=($tempdir.'rundir/PsN_bootstrap_plots.pdf' => 6);
 
 includes::test_pdf_pages(\%pdf_files_pages);
 	

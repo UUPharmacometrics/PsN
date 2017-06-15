@@ -1,4 +1,10 @@
-#Task 1 of 2
-execute run45.mod
-#Task 2 of 2
-vpc run45vpc.mod -samples=20 -seed=1234 -dir=vpc_45 -lst=run45.lst -nopred -dv=SMXH -levels=0.5,1.5,2.5
+#Task 1 execute
+execute run45.mod -model_dir_name
+#Task 1 update
+update_inits run45.mod -flip_comments -out=run45sim.mod
+#Task 1 simulate
+execute run45sim.mod -rplots=1 -template_file=categorical.R -mod
+#Task 1 vpc
+vpc run45.mod -flip_comments -samples=20 -levels=0.5,1.5,2.5 -dir=vpc45 -dv=SMXH -rplots=1 -auto_bin=unique
+#Task 2
+update_inits run45.mod -out=run46.mod

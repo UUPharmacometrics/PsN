@@ -22,26 +22,29 @@ my %options;
 
 my %required_options = ( "config_file:s" => '');
 
-my %optional_options = ( "search_direction:s" => 'forward|backward|both',
-						 "gof:s" => '',
-						 "base_ofv:f" => '',
-						 "global_init:s" => '',
-						 "logfile:s" => '',
-						 "model:s" => '',
-						 "noabort!" => '',
-						 "max_steps:i" => '',
-						 "p_value:s" => '',
-						 "p_forward:s" => '',
-						 "p_backward:s" => '',
-						 "do_not_drop:s" => '',
-						 "linearize!" => '',
-						 "epsilon!" => '',
-						 "foce!" => '',
-						 "lst_file:s" => '',
-						 "update_derivatives!" => '',
-						 "only_successful!" => '',
-						 "parallel_states!" => '',
-						 "error:s"=> '');
+my %optional_options = (
+    "search_direction:s" => 'forward|backward|both',
+    "gof:s" => '',
+    "base_ofv:f" => '',
+    "global_init:s" => '',
+    "logfile:s" => '',
+    "model:s" => '',
+    "noabort!" => '',
+    "max_steps:i" => '',
+    "p_value:s" => '',
+    "p_forward:s" => '',
+    "p_backward:s" => '',
+    "do_not_drop:s" => '',
+    "linearize!" => '',
+    "epsilon!" => '',
+    "foce!" => '',
+    "lst_file:s" => '',
+    "update_derivatives!" => '',
+    "only_successful!" => '',
+    "parallel_states!" => '',
+    "error:s"=> '',
+    "estimate_fo!" => '',                    
+);
 
 my $res = GetOptions( \%options, 
 					  @common_options::get_opt_strings,
@@ -267,6 +270,12 @@ $help_text{-parallel_states} = <<'EOF';
     instead of the default method to test valid_states sequentially, only
     testing a higher state if the preceeding state has been included in the model.
 EOF
+$help_text{-estimate_fo} = <<'EOF';
+-estimate_fo
+
+    If this option is set, use first order method to estimate the linearized
+    model.
+EOF
 
 common_options::online_help('scm', \%options, \%help_text, \%required_options, \%optional_options);
 
@@ -441,7 +450,9 @@ if( $direction eq 'forward' or $direction eq 'both' ){
 						 config_file => $config_file,
 						 both_directions => ($direction eq 'both')? 1 : 0,
 						 p_backward => $p_backward,
-						 ofv_backward => $ofv_backward);
+						 ofv_backward => $ofv_backward,
+                         estimate_fo => $options{'estimate_fo'}, 
+                     );
 	
 	$scm-> print_options (cmd_line => $cmd_line,
 						  toolname => 'scm',
@@ -486,7 +497,9 @@ if( $direction eq 'backward' ){
 			  base_criteria_values => \%base_criteria_values,
 			  directory   => $options{'directory'},
 			  models	=> $models_array,
-			  config_file => $config_file );
+			  config_file => $config_file,
+              estimate_fo => $options{'estimate_fo'},
+          );
 
 
 	ui -> print( category => 'scm',

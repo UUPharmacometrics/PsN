@@ -133,6 +133,18 @@ $parameters = options_to_parameters([@tool_options,'top_tool']);
 
 my $options_ref;
 
+sub get_option
+{
+    my $option = shift;
+    return $options_ref->{$option};
+}
+
+sub set_option
+{
+    my $option = shift;
+    my $value => shift;
+    $options_ref->{$option} = $value;
+}
 
 sub options_to_parameters
 {

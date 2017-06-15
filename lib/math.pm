@@ -9,8 +9,20 @@ use include_modules;
 
 require Exporter;
 our @ISA = qw(Exporter);
-our %EXPORT_TAGS = ('all' => [ qw(round eps inf ceil usable_number to_precision convert_float_string logit inverse_logit correlation2unbounded unbounded2correlation) ]);
+our %EXPORT_TAGS = ('all' => [ qw(fortran_number_to_string round eps inf usable_number to_precision convert_float_string logit inverse_logit correlation2unbounded unbounded2correlation) ]);
 our @EXPORT_OK = ( @{ $EXPORT_TAGS{'all'} } );
+
+sub fortran_number_to_string
+{
+    my $n = shift;
+
+    # Compare with special scientific notation without E or e in fortran
+    if ($n =~ /(\.\d+|\d+|\d+\.\d+)([+-])(\d+)/) {
+        return "$1E$2$3";
+    } else {
+        return $n;
+    }
+}
 
 sub logit
 {
@@ -65,26 +77,6 @@ sub round
     } else {
         $integer_out = (abs($rem) >= 0.5) ? $floor - 1 : $floor;
     }
-
-    return $integer_out;
-}
-
-sub ceil
-{
-    my ($number) = pos_validated_list(\@_,
-        { isa => 'Num' },
-    );
-
-    my $integer_out;
-
-    my $floor = int($number);
-    my $rem = $number - $floor;
-    if ($rem > 0) {
-        $integer_out = $floor + 1;
-    } else {
-        #equal or negative
-        $integer_out = $floor;
-    } 
 
     return $integer_out;
 }

@@ -28,7 +28,7 @@ my %optional_options = (
     "epsilon!" => undef,
     "foce!" => undef,
     "error:s"=> undef,
-    "full_block!" => undef,
+    "keep_covariance!" => undef,
 );
 
 my $res = GetOptions(
@@ -123,11 +123,12 @@ $help_text{-epsilon} = <<'EOF';
     set by default. Disable with -no-epsilon.
 EOF
 
-$help_text{-full_block} = <<'EOF';
-    -full_block
+$help_text{-keep_covariance} = <<'EOF';
+      -keep_covariance
 
-    Run the linearized model also with full_block
-    OMEGA matrix. Disabled by default.
+      By default the $COVARIANCE will be deleted from the bootstrap models, 
+	  to save run time. If option -keep_covariance is set, 
+	  PsN will instead keep $COVARIANCE.
 EOF
 
 $help_text{Post_help_message} = <<'EOF';
@@ -162,7 +163,7 @@ my $linearize = tool::linearize->new(
     epsilon => $options{'epsilon'},
     foce => $options{'foce'},
     error => $options{'error'},
-    full_block => $options{'full_block'},
+    keep_covariance => $options{'keep_covariance'},
 );
 
 $linearize->run();

@@ -9,7 +9,7 @@ our ($dev,$version,$lib_dir,$config_file,$config,$Rscripts_dir);
 #the version line is extracted in Makefile using regular expression
 # /\$version\s*=\s*.[0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*.;/
 # so be careful when you edit!!!
-$version = '4.6.16';
+$version = '4.7.1';
 
 # The following line will be changed by make
 $dev = 1;
@@ -99,6 +99,13 @@ sub import
 
 }
 
+sub minimum_nonmem_version
+{
+    my $major = shift;
+    my $minor = shift;
+
+    return ($nm_major_version > $major or $nm_major_version == $major and $nm_minor_version >= $minor);
+}
 
 sub get_nmversion_info
 {

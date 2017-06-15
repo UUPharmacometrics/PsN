@@ -1,0 +1,328 @@
+This PsN version has been tested on the following systems:
+
+Windows 10 64-bit with Strawberry Perl 5.24.0 , gfortran 4.9.2 and NONMEM 7.1.0, 7.1.2, 7.2.0, 7.3.0 and 7.4.0
+Windows 7 64-bit with Strawberry Perl 5.18.2, gfortran 4.7.3 and NONMEM 7.2.0 and 7.3.0
+Windows 7 64-bit with Strawberry Perl 5.24.1, gfortran 4.9.2 and NONMEM 7.4.0
+Windows 7 64-bit with ActivePerl 5.16.3 (32-bit), gfortran 4.6.0 and NONMEM 7.3.0
+MacOS X 10.6.6 with ActiveState Perl 5.16.3, ifort 12.0.0 and NONMEM 7.2.0, 7.3.0 and 7.4.0
+Ubuntu Linux 16.10 with Perl 5.22, gfortran 6.2 and NONMEM 7.2.0, 7.3.0 and 7.4.0
+Scientific Linux 6.3 with Perl 5.10.1, gfortran 4.4.7 and NONMEM 7.2.0
+Scientific Linux 6.3 with Perl 5.10.1, gfortran 5.1.1 and NONMEM 7.3.0 and 7.4.0
+CentOS 7 with Perl 5.16.3, gfortran 4.8.5 and NONMEM 7.3.0 and 7.4.0
+
+
+************************
+Installation
+************************
+
+Follow the installation instructions on
+https://uupharmacometrics.github.io/PsN/install.html
+
+************************
+Documentation
+************************
+All documentation is found in the doc subdirectory of the PsN 
+installation directory. During installation it is also possible 
+to have all documentation copied to a user-specified directory.
+
+All documentation can also be downloaded from
+the PsN website https://uupharmacometrics.github.io/PsN/docs.html
+
+************************
+Dependencies 
+************************
+
+- It is recommended to use Xpose version 4.5.3 or later for the -cwres functionality 
+  and the default execute, vpc and bootstrap R plots.
+
+- Each userguide lists the R packages required to obtain the diagnostic R plots.
+
+************************
+Known issues 
+************************
+
+- Windows users need to be careful to choose 
+  a Perl version where the extra modules needed for PsN are available. 
+  For new Perl installations the PsN team recommends Strawberry Perl
+  See the instructions on https://uupharmacometrics.github.io/PsN/install.html
+
+- Installation problem on some Windows systems where 
+  perl 'system' command does not work. Make sure perl module File::Copy::Recursive
+  is installed *before* (re)running the installation script setup.pl
+
+*********************************************
+Changes and bug fixes from PsN 4.6.0 to 4.7.0
+*********************************************
+
+A new recommended but not required Perl library for runrecord: YAML::Tiny 
+
+
+
+   ___General___
+
+- New web page at https://uupharmacometrics.github.io/PsN/
+- New git repository and development webpage at https://github.com/UUPharmacometrics/PsN
+- PsN has updated its license. It is still licensed under the GNU public license version 2, but
+  it is now possible to relicense PsN under any later versions of this license.
+- File specified in $ETAS will be automatically copied when model run
+- Bug fix: Some generated paths for the Rplots script were illegal R strings causing R to crash
+- Runs where any of the models have $NONPARAMETRIC will now get an additional file in the main
+  run directory: raw_nonparametric_<modelname>.csv, containing regular ofv, nonparametric ofv, etc
+- The handling of $MSFI and MSFO=file has been redesigned, also for crash restarts. MSF-files
+  never have to be listed with -extra_files or -extra_output.
+- Bug fix: PsN can now handle $MSFI including/path/to/file.msf
+- Bug fix: PsN will notify the user if the equal sign in IGNORE=character is skipped,
+  which is not supported by PsN and hence not correctly handled when reading datasets for e.g.
+  bootstrap.
+- Added support for IGNORE=" (double quotation mark) in $DATA
+- Bug fix: If Perl fork() fails when running locally on unix, then sleep for 30s and try
+  again. If keeps failing then treat model as failed due to job submission error, and
+  allow crash restart if appropriate crash handling options are set.
+- Bug fix: PsN can now be run from symbolic link wrappers.
+- Added seconds to "Run started" in version_and_option_info.txt
+- Added finish time to version_and_option_info.txt
+
+
+   ___common_options___
+
+- Option -abort_on_fail has a new meaning and function. The option is intended for the system tests.
+  If set, PsN will exit with an error if NONMEM crashes, or an estimation/evaluation fails to
+  produce an ofv, or a simulation gives a typical error message in the lst-file.
+- Option -standardised_output was renamed to -so
+- New option -rmarkdown. If -rplots>0, some tools by default will create an Rmarkdown file. 
+  To create R file instead of Rmarkdown file, use -no-rmakdown.
+
+
+   ___NONMEM output parsing___
+
+- Added NM7.4 NONMEM output extensions .npl, .vpd and .clt to the list of recognized extensions.
+- Bug fix: Handle error message "0ERROR IN READING FILE : FCON" in
+  eigenvalue section of lst-file.
+- Bug fix: If the execution of a $PROBLEM stops before any output is produced, consider the
+  NONMEM run failed only if it is the first $PROBLEM. For example, if the first $PROBLEM is
+  an estimation and the second a simulation, and the estimation completes but the simulation
+  is not initiated due to e.g. poor estimation results, then PsN will no longer treat the run
+  as crashed.
+- Bug fix: PsN can now parse NONMEM output from runs with only nonparametric, no parametric,
+  estimation/evaluation.
+- Bug fix: PsN can now handle $MSFI in combination with NONMEM's sparse matrix format in lst-files,
+  which is used for very large covariance matrices.
+- Bug fix: Two digits of precision were lost when parsing OFV from .ext file
+  
+
+   ___Cluster/Grid___
+
+- When -run_on_torque is set, PsN will now add -d <full path to NM_run subdirectory>
+  to the qsub command. The qsub command will be saved to file qsubcommand in the
+  NM_run subdirectory, for easier debugging.
+
+
+   ___Test scripts___
+
+- The temp directory for the unit and system tests is configurable in psn.conf. See
+  Testing chapter in developers_guide.pdf.
+- runsystem will redirect PsN log messages to a file in the user's home directory,
+  or a directory set in psn.conf. The set of 'all' nm_versions in 'runsystem all'
+  command is configurable in psn.conf. See Testing chapter in developers_guide.pdf.
+
+
+   ___execute___
+
+- New option -boxcox to automatically boxcox transform all ETAs before running the model
+- New option -etas to automatically add eta starting values from the previous phi-file
+- If -rplots>0, by default Rmarkdown file will be created.
+
+
+   ___runrecord___
+
+- Option -to is no longer required. The default value is the highest run number found in
+  an uninterrupted sequence of files <root>1.<mod_ext>, <root>2.<mod_ext>,... etc.
+
+New features implemented by William S. Denney of Human Predictions:
+- Output to .csv using a sufficient part of RFC 4180 [https://tools.ietf.org/html/rfc4180]
+  to handle commas and quotes (optionally, not by default).
+- Optionally output to .csvy files (.csv files with a YAML header; readable by the rio R
+  library).  Columns can now have attributes like parameter type
+  ('theta', 'omega', ...). The YAML header requires the YAML::Tiny Perl library,
+  if it is not installed the header will have text format.
+- Automatically detect if the output file has the extension "csv" or "csvy" and output to
+  the csv/csvy format if yes and another output format has not been specifically requested.
+- Automatically detect max_lvl (optionally, by default)
+- Give a header column name to the child run headers to more easily distinguish them from
+  empty column headers (which now should not exist) (optionally, by default).
+
+
+   ___sumo___
+
+- Bug fix: The message stating that there is no gradient information after an SAEM run was duplicated
+- The checks for large relative standard errors were removed together with the options to set the limits.
+- A new message when the NONMEM run failed, i.e. estimations/evaluation failed to produce an ofv,
+  or when simulation had special error message in lst-file.
+- Do not print message about rounding errors or parameter near boundary if the NONMEM run failed.
+- Bug fix: When the model file copy at the top of the lst-file has $MSFI and there are no parameter
+  labels to use, PsN will use the estimation results to guess which parameters have been estimated
+  and list them in sumo output using their generic names.
+
+
+   ___bootstrap___
+
+- The $COVARIANCE will by default be removed from the model. If wanted it can be kept
+  with the new -keep_covariance option.
+- Print a warning message if the number of individuals in the data set is different from the number
+  of individuals NONMEM printed in the original run lst-file.
+- New file 'all_individuals1.csv' contains a list of all individuals of the original dataset.
+- If -rplots>0, by default Rmarkdown file will be created.
+
+
+   ___vpc/npc___
+
+- New option -mix to generate simulated and observed data for external post processing
+- Refactored input checking.
+- Fix bug causing warnings to be emitted when having '.' in DV column of original table.
+  The warnings came from the calculation of the diagnostic False Pos. It is now defined that
+  such observations can neither be false positives nor false negatives.
+- If -rplots>0, by default Rmarkdown file will be created.
+
+
+   ___frem___
+
+-  will, if a covariate-covariate correlation is exactly 0, set intial omega estimate corresponding to
+   1% correlation in Model 2. Similarly in Model3, if correlation from phi-file exactly 0, or
+   parameter-parameter covariance has to be added to create full block, then set initial estimate as 1% correlation
+-  handle PRED-models without EVID/MDV column, i.e. all data records are observations.
+-  handle model 2 phi file ETA all 0
+-  new option -mu, i.e. use mu-modelling for added covariates. Not set by default.
+-  new option -estimate_means to true. When option -estimate_means is set, only covariates which have
+   missing observations in the frem dataset will have the mean estimated. If -no-estimate_means is set,
+   no means will be estimated regardless of missing observations.
+-  rearranged control stream changes. Now all frem code is put last in $PRED/$ERROR and no new variables
+   are defined (this is needed for very large numbers of covariates).
+-  New option -estimate_means, default not set. If set then estimate covariate means instead of setting
+   FIX to mean from observed data,
+-  New option -mceta, default not set. Set MCETA=N in last $ESTIMATION.
+-  New option -deriv2_nocommon_maxeta. Default 60. Set $ABBREVIATED DERIV2=NOCOMMON if number of ETAs
+   is larger than this number.
+-  Put intermediate models in subdir intermediate_models instead of in m1.
+-  Handle PHI in addition to ETA in phi-file (non-classical methods), and multiple $EST (only
+   results from last est are used).
+-  set NONINFETA=1 in last estimation if it is a classical method and NM-version > 7.2.
+-  New postprocessing script postfrem 
+-  Rescale option is now default on.
+-  Create approximate proposal density for sir even if covariance step of Model 4 is successful.
+-  If the covariate covariance matrix is non-positive definite after rounding
+   then modify it to make it positive definite before using it as initial
+   estimate for the new OMEGA block in Model 2.
+-  If frem is resumed, for example after manual modification of the initial
+   estimates in a model and removal of the corresponding lst-file, then
+   frem will automatically recreate all control streams that depend on the
+   modified model and rerun them.
+
+
+   ___scm___
+
+- Disallow restarts in existing directory as this operation did not work
+- scm will treat . (dot) in covariate column of data set as missing value 
+- bug fix option time-varying: handle PRED models without MDV in $INPUT
+- Change the default lower bounds for the THETA in power and exponential
+  parameterizations from -100000 to -100.
+- Removed special use of common option -abort_on_fail.
+- Bugfix: If -model was given on command line but not in config file PsN would crash.
+- If -rplots>0, by default Rmarkdown file will be created.
+
+   ___linearize___
+- bug fix option time-varying: handle PRED models without MDV in $INPUT
+- If the phi-file of the original model is available linearize will use that in a
+  $ETAS record.
+- New option -keep_covariance
+
+
+   ___boot_scm___
+
+- Disallow restarts in existing directory as this operation did not work
+
+
+   ___xv_scm___
+
+- Disallow restarts in existing directory as this operation did not work
+
+
+   ___sse___ 
+
+- New option -update_fix, to be used in combination with -rawres_input. Default false.
+  Update initial estimates for parameters that are FIX.
+- bug fix when samples=1. RSE should be NA and not 0.
+
+
+   ___simeval___
+
+- Bug fix: Skip computations on residuals if CWRES is zero.
+- Handle ID:s without observations, sporadic zero-valued EBE:s
+- New rplots
+- If -rplots>0, by default Rmarkdown file will be created.
+- Possibility to rerun the post processing without rerunning NONMEM by using -dir
+- New option -dv for DV vs PRED plot
+
+
+   ___update_inits___
+
+- New options -rawres_input, -in_filter, -offset_rawres to read parameter estimates from a raw results file.
+- New option -etas to add $ETAS and MCETA=1 to the model file using the phi-file
+- Bug fix: renumber MSFO=file in $NONPARAMETRIC
+
+
+   ___parallel_retries___
+
+- New option -update_fix, default false. Only for use in combination with -rawres_input.
+  Update parameters that are FIXED.
+
+
+   ___sir___
+	
+- new option -cap_correlation, default 0.8. If set to a number between 0 and 1, at every iteration ensure
+  that no absolute value of a correlation in the proposal exceeds this number.
+- message suggesting reparameterization if any correlations exceed 0.8 (before or after capping)
+- updated R template
+- changed inflation principle, covariances are not inflated meaning that correlations are in practice decreased 
+
+
+   ___pvar___
+
+- Add OFV and run number columns to results.csv
+
+
+   ___cdd___
+
+- New option -update_inits, set by default. The initial estimates in the cdd models will be
+  the final estimates from the base model, unless -no-update_inits is set. If -no-update_inits
+  is set, then the initial estimates will be as in earlier versions, i.e. the same as
+  the initial estimates of the base model.
+- New option -etas to use $ETAS and the phi-file of the original model for all estimation runs
+- changed directory name prefix for cross-validation sub-directory (if
+  option -xv is set) from modelfit to crossval.
+- ID is now default for the case_column option
+- New rplots added.
+- If -rplots>0, by default Rmarkdown file will be created.
+
+
+ ___rplots___
+
+- Major redesign
+
+
+   ___npfit___
+
+- New tool npfit for nonparametric estimation, see npfit_userguide.pdf
+
+
+   ___transform___
+
+- New tool for automatic model transformations.
+
+
+   ___crossval___ 
+
+- New option -msf, to use MSFO-MSFI instead of updating initial estimates in
+  prediction models. New format of output file xv_results.csv, renamed from xv_results.txt.
+- Automatic nonparametric cross-validation if input model has $NONPARAMETRIC.  
+- Refactoring of cross-validation code.
+- A new userguide crossval\_userguide.pdf

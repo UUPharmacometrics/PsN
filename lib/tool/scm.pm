@@ -13,7 +13,11 @@ use Moose;
 use MooseX::Params::Validate;
 use math;
 use utils::file;
-use array qw(get_positions);
+use array qw(get_positions any_nonzero);
+use nmtablefile;
+use PsN;
+
+
 extends 'tool';
 
 use tool::scm::config_file;
@@ -90,6 +94,11 @@ has 'covariate_statistics_file' => ( is => 'rw', isa => 'Str', default => 'covar
 has 'relations_file' => ( is => 'rw', isa => 'Str', default => 'relations.txt' );
 has 'short_logfile' => ( is => 'rw', isa => 'ArrayRef[Str]', default => sub { ['short_scmlog.txt'] } );
 has 'from_linearize' => ( is => 'rw', isa => 'Bool', default => 0 );    # Was the scm-object created by linearize?
+has 'original_nonlinear_model' => ( is => 'rw', isa => 'model' );       # If linearizing this will be the real original model
+has 'keep_covariance' => ( is => 'rw', isa => 'Bool', default => 0 );
+has 'estimate_fo' => ( is => 'rw', isa => 'Bool', default => 0 );   # If linearizing use FO to estimate the linearized model
+has 'extra_table_columns' => ( is => 'rw', isa => 'ArrayRef[Str]' ); # Set to array of colnames to add to an extra data table output by derivatives.mod
+
 
 sub BUILD
 {
@@ -1324,17 +1333,18 @@ sub modelfit_setup
 		#if linearize then copy original model here (only allow one model)
 		if ($self->linearize) {
 			my $tmp_orig = $model->copy(
-				filename           => $self->final_model_directory.'/original.mod',
-				copy_datafile          => 0,
-				write_copy =>1,
-				copy_output        => 0);
-			$tmp_orig = undef;
+				filename => $self->final_model_directory.'/original.mod',
+				copy_datafile => 0,
+				write_copy => 1,
+				copy_output => 0,
+            );
+            $self->original_nonlinear_model($tmp_orig);
 		}
 	}
 
 
 	#setup linearize here. 
-	if ($self->linearize()){
+	if ($self->linearize()) {
 		#this will modify $model if step_number > 1
 		$self->linearize_setup(original_model => $model);
 		return if ($self->return_after_derivatives_done());
@@ -1349,11 +1359,10 @@ sub modelfit_setup
 	# the directory attribute is given explicitly below.
 
 	my %included_relations;
-	%included_relations = %{$self -> included_relations} if 
-	(defined $self -> included_relations);
+	%included_relations = %{$self->included_relations} if (defined $self->included_relations);
 	my $need_base_ofv = 1;
-	$need_base_ofv = 0 if ( defined $self -> base_criteria_values and
-		defined $self -> base_criteria_values -> {'ofv'} );
+	$need_base_ofv = 0 if (defined $self->base_criteria_values and
+		defined $self->base_criteria_values->{'ofv'});
 
 	if ( ( (not $model -> is_run and ($self->step_number()==1 or $self->update_derivatives())) 
 				or ((%included_relations) and $need_base_ofv and $self->step_number()==1)
@@ -1380,10 +1389,12 @@ sub modelfit_setup
 		my $copy_datafile = 0;
 		$copy_datafile = 1 if ((not $self->linearize ) and (not defined $self->xv_pred_data));
 
-		my $start_model = $model->copy(filename => $fname,
-									   write_copy => 0,
-									   copy_datafile          => $copy_datafile,
-									   copy_output        => 0);
+		my $start_model = $model->copy(
+            filename => $fname,
+            write_copy => 0,
+            copy_datafile => $copy_datafile,
+            copy_output => 0
+        );
 		
 		$start_model->directory($self->directory);
 		if (scalar(keys %included_relations) > 0) {
@@ -1432,24 +1443,25 @@ sub modelfit_setup
 		}
 		$start_model->_write;
 
-		my $orig_fit = tool::modelfit->new
-		( %{common_options::restore_options(@common_options::tool_options)},
+		my $orig_fit = tool::modelfit->new(
+		    %{common_options::restore_options(@common_options::tool_options)},
 			base_directory => $self->directory,
-			directory      => $self->directory . '/base_modelfit_dir' . $model_number . '/',
-			models         => [$start_model],
-			top_tool       => 0,
+			directory => $self->directory . '/base_modelfit_dir' . $model_number . '/',
+			models => [$start_model],
+			top_tool => 0,
 			parent_tool_id => $self->tool_id,
-			copy_data  => (not $self->linearize));
+			copy_data => (not $self->linearize)
+        );
 
 		my $mess = "Estimating base model";
-		$mess .= " with included_relations to get base ofv" if ($self->have_run_included);
+        $mess .= " with included_relations to get base ofv" if ($self->have_run_included);
 		if ($self->linearize) {
 			$mess = "Estimating linearized base model";
 			if ($self->step_number > 1) {
 				$mess .= " with updated derivatives and predictions";
 			}
 		}
-		ui -> print(category => 'scm', message  => $mess) unless ($self->parent_threads > 1);
+		ui->print(category => 'scm', message  => $mess) unless ($self->parent_threads > 1);
 		$orig_fit->run;
 
 		if (defined $start_model->outputs and defined $start_model->outputs->[0] and
@@ -1464,14 +1476,35 @@ sub modelfit_setup
 					defined $self -> base_criteria_values -> {'ofv'})) {
 				$self -> base_criteria_values -> {'ofv'} = $start_ofv;
 			}
-#override if update_derivatives, set even if old value defined
-#	  we always reestimate included, so should not need to set derivatives ofv as linearized base
+            #override if update_derivatives, set even if old value defined
+            #	  we always reestimate included, so should not need to set derivatives ofv as linearized base
 			if ($self->linearize()){
 				my $ofv = sprintf("%12.5f",$start_ofv);
 				open( LOG, ">>".$self -> logfile -> [$model_number-1] );
 				if ($self->update_derivatives() and $self->step_number()>1){
 					print LOG "The $ofvname of the updated linearized base model:$ofv        $start_name\n";
-				}else{
+				} else {
+                    if ($self->from_linearize) {
+                        my $initial_ofv;
+                        my $ofv_path = $start_model->outputs->[0]->get_single_value(attribute => 'ofvpath');
+                        if (defined $ofv_path) {
+                            $initial_ofv = $ofv_path->[0];
+                        }
+                        if (defined $initial_ofv) {
+				            my $initial_ofv = sprintf("%12.5f", $initial_ofv);
+                            ui->print(category => 'linearize',
+                                message => "\nThe $ofvname of the linearized base model before estimation:$initial_ofv\n");
+                        }
+                        my $datafile = $start_model->datafiles(problem_numbers => [ 1 ], absolute_path => 1)->[0];
+                        my $has_interaction = _check_interaction(datafile => $datafile, model => $self->original_nonlinear_model);
+                        if ($has_interaction) {
+                            ui->print(category => 'linearize',
+                                message => "NOTE: The model has interaction");
+                        } else {
+                            ui->print(category => 'linearize',
+                                message => "NOTE: The model does NOT have interaction");
+                        }
+                    }
 					print LOG "The $ofvname of the linearized base model:$ofv        $start_name\n";
 					ui -> print(category => 'linearize',
 						message =>"\nThe $ofvname of the linearized base model:$ofv        $start_name\n");
@@ -1549,7 +1582,7 @@ sub linearize_setup
 		scalar(keys %{$self->test_relations()}) == 0){
 		$linearize_only = 1;
 		my $base = $original_model->filename();
-		$base =~ s/\.mod$//;
+		$base =~ s/\.(mod|ctl)$//;
 		$base .= '_linbase';
 		$self->basename($base);
 	}
@@ -1785,15 +1818,15 @@ sub linearize_setup
 													   write_copy => 0,
 													   copy_output => 0);
 
-        if ($self->from_linearize and $original_model->is_run()) {
+        if ($original_model->is_run()) {
             $derivatives_model->update_inits(from_output => $original_model->outputs->[0]);
-            $derivatives_model->set_maxeval_zero(
-                print_warning => 1,
-                last_est_complete => $self->last_est_complete(),
-                niter_eonly => $self->niter_eonly(),
-                need_ofv => 1,
-            );
         }
+        $derivatives_model->set_maxeval_zero(
+            print_warning => 1,
+            last_est_complete => $self->last_est_complete(),
+            niter_eonly => $self->niter_eonly(),
+            need_ofv => 1,
+        );
 
 		$derivatives_model->remove_records( type => 'table' );
 
@@ -1994,8 +2027,13 @@ sub linearize_setup
 
 		push(@tablestrings,'NOPRINT','NOAPPEND','ONEHEADER');
 		push(@tablestrings,'FILE='.$datafilename);
-		$derivatives_model -> set_records(type => 'table',
-			record_strings => \@tablestrings);
+		$derivatives_model->set_records(type => 'table', record_strings => \@tablestrings);
+
+        # An extra table was requested
+        if (defined $self->extra_table_columns) {
+            my @extra_tablestrings = ( @{$self->extra_table_columns}, 'NOPRINT', 'NOAPPEND', 'ONEHEADER', 'FILE=extra_table' );
+            $derivatives_model->add_records(type => 'table', record_strings => \@extra_tablestrings);
+        }
 
 		if ((scalar(@tablestrings)-4) == (1+$table_highprec+$table_lowprec)){
 			if ($use_tableformat){
@@ -2093,17 +2131,18 @@ sub linearize_setup
 		$original_model->remove_records(type => 'error');
 		$original_model->remove_records(type => 'subroutine');
 		$original_model->remove_records(type => 'model');
-		$original_model->remove_records(type => 'covariance');
+        unless ($self->from_linearize and $self->keep_covariance) {
+		    $original_model->remove_records(type => 'covariance');
+        }
 		$original_model->remove_records(type => 'estimation');
 
 		$original_model->set_records(type => 'input', record_strings => \@inputstrings);
 
-        if ($self->from_linearize) {
-            my $phi_file = $self->phi_file();
+        if ($self->from_linearize and PsN::minimum_nonmem_version(7, 3)) {
+            my $phi_file = $original_model->get_phi_file();
             if (defined $phi_file) {
                 $mceta = '1';
-                (undef, undef, my $filename) = File::Spec->splitpath($phi_file);
-                $original_model->set_records(type => 'etas', record_strings => [ "FILE=$filename" ]);
+                $original_model->set_records(type => 'etas', record_strings => [ "FILE=$phi_file" ]);
                 if (not defined $original_model->extra_files) {
                     $original_model->extra_files([]);
                 }
@@ -2116,11 +2155,11 @@ sub linearize_setup
 			push(@eststrings, 'MCETA=' . $mceta);
 		}
 
-		if ($self->epsilon() or $self->error eq 'propadd' or $self->error eq 'prop'
-				or $self->error eq 'exp' or $self->error eq 'user'){
-			push(@eststrings,'METHOD=COND','INTERACTION');
-		}else{
-			push(@eststrings,'METHOD=ZERO');
+		if (not $self->estimate_fo and ($self->epsilon() or $self->error eq 'propadd' or $self->error eq 'prop'
+				or $self->error eq 'exp' or $self->error eq 'user')) {
+			push(@eststrings, 'METHOD=COND', 'INTERACTION');
+		} else {
+			push(@eststrings, 'METHOD=ZERO');
 		}
 		push(@eststrings,$self->format) if (defined $self->format());
 		if ($self->noabort()){
@@ -2620,23 +2659,15 @@ sub linearize_setup
 		}
 	} #end if first step or update derivatives
 
-	return $original_model;
-}
+    # Remove IGN or ACC in $DATA. Might crash future runs
+    $original_model->problems->[0]->datas->[0]->remove_ignore_accept();
 
-sub phi_file
-{
-    # Return the name of the phi file of the original model or undef if non-existant
-    my $self = shift;
-    my $name = $self->basename;
-
-    $name =~ s/_linbase$/.phi/;
-    $name = "../../$name";
-
-    if (not -e $name) {
-        undef $name;
+    # If have MDV ignore all MDV != 0
+    if (should_add_mdv(model => $original_model)) {
+        $original_model->add_option(record_name => 'data', option_name => 'IGNORE(MDV.NEN.0)');
     }
 
-    return $name;
+	return $original_model;
 }
 
 sub modelfit_analyze
@@ -2675,8 +2706,8 @@ sub modelfit_analyze
 			if ( $type -> {'name'} eq 'minimization_successful' ){
 				for ( my $i = 0; $i < scalar @{$type -> {'values'}}; $i++ ) {
 					for ( my $j = 0; $j < scalar @{$type -> {'values'}[$i]}; $j++ ) {
-						if ( $self -> picky ) {
-# Did minimization just loose one dimension?
+						if ($self->picky) {
+                            # Did minimization just loose one dimension?
 							if ( not defined $type -> {'values'}[$i][$j] or 
 								$type -> {'values'}[$i][$j] != 1 ) {
 								$crash = 2;
@@ -4169,10 +4200,10 @@ sub add_code
 			$relationarea = 0;
 			last;
 		}
-		if ( $relationarea ) {
+		if ($relationarea) {
 			$found_REL = $i;
-			debugmessage(3,$parameter . "COV has already been added to the code" );
-			if ( /$parameter$covariate/ ){
+			debugmessage(3, $parameter . "COV has already been added to the code");
+			if (/$parameter$covariate/) {
 				$found_correct_REL = 1; 
 				last ;
 			}
@@ -4186,9 +4217,9 @@ sub add_code
 	}
 
 	# If we have old scm code present.
-	if ( $found_REL ) {
-		unless ( $found_correct_REL ) {
-			if ( $#row > 2 ) {
+	if ($found_REL) {
+		if (not $found_correct_REL) {
+			if ($#row > 2) {
 				@code =  (@code[0..$found_REL],
 					"$parameter"."COV=$parameter"."COV$operator$parameter$covariate\n",
 					@code[$found_REL+1..$#code]);
@@ -4198,8 +4229,8 @@ sub add_code
 			}
 		}
 	} else {
-		if ($found_anchor >= 0){
-			@code =  (@code[0..$found_anchor],
+		if ($found_anchor >= 0) {
+			@code = (@code[0..$found_anchor],
 				";;; $parameter-RELATION START\n",
 				"$parameter"."COV=$parameter$covariate\n",
 				";;; $parameter-RELATION END\n\n",
@@ -4212,31 +4243,31 @@ sub add_code
 		}
 	}
 
-	if ($found_anchor >= 0){
-		@code =  (@code[0..$found_anchor],
+	if ($found_anchor >= 0) {
+		@code = (@code[0..$found_anchor],
 			"\n;;; $parameter$covariate-DEFINITION START\n",
 			@definition_code,
 			";;; $parameter$covariate-DEFINITION END\n\n",
 			@code[$found_anchor+1..$#code]);
-	}else{
+	} else {
 		@code = ( "\n;;; $parameter$covariate-DEFINITION START\n",
 			@definition_code,
 			";;; $parameter$covariate-DEFINITION END\n\n",
 			@code );
 	}
 	# Add to the parameter code
-	unless ( $found_REL ) {
+	if (not $found_REL) {
 		my $success = 0;
-		for ( reverse @code ) {
+		for (reverse @code) {
 			#want to find last occurrence
-			if ( /[^A-Z0-9_]*TV(\w+)\s*=\s*/ and $1 eq $parameter){
+			if (/[^A-Z0-9_]*TV(\w+)\s*=\s*/ and $1 eq $parameter) {
 				#add new definition line after last occurence
 				$_ = $_."\n"."TV$parameter = $parameter"."COV$operator"."TV$parameter\n";
 				$success = 1;
 				last; #only change the last line where appears
 			}
 		}
-		unless ( $success ) {
+		if (not $success) {
 			croak("Could not determine a good place to add the covariate relation.\n".
 				" i.e. No TV$parameter was found\n" );
 		}
@@ -4249,23 +4280,31 @@ sub add_code
 
 	#initial values must be set first, since we need to add if absent
 
-	$applicant_model -> initial_values( parameter_numbers => [[$start_theta..$end_theta]],
-		new_values        => [\@inits],
-		add_if_absent     => 1,
-		parameter_type    => 'theta',
-		problem_numbers   => [1]);
-	$applicant_model -> lower_bounds( parameter_type    => 'theta',
+	$applicant_model->initial_values(
+        parameter_numbers => [[$start_theta..$end_theta]],
+		new_values => [\@inits],
+		add_if_absent => 1,
+		parameter_type => 'theta',
+		problem_numbers => [1],
+    );
+	$applicant_model->lower_bounds(
+        parameter_type => 'theta',
 		parameter_numbers => [[$start_theta..$end_theta]],
-		problem_numbers   => [1],
-		new_values        => [$bounds{'lower'}] );
-	$applicant_model -> upper_bounds( parameter_type    => 'theta',
+		problem_numbers => [1],
+		new_values => [$bounds{'lower'}],
+    );
+	$applicant_model->upper_bounds(
+        parameter_type => 'theta',
 		parameter_numbers => [[$start_theta..$end_theta]],
-		problem_numbers   => [1],
-		new_values        => [$bounds{'upper'}] );
-	$applicant_model -> labels( parameter_type    => 'theta',
+		problem_numbers => [1],
+		new_values => [$bounds{'upper'}],
+    );
+	$applicant_model->labels(
+        parameter_type => 'theta',
 		parameter_numbers => [[$start_theta..$end_theta]],
-		problem_numbers   => [1],
-		new_values        => [\@labels] );
+		problem_numbers => [1],
+		new_values => [\@labels],
+    );
 
 	return $applicant_model;
 }
@@ -4293,25 +4332,25 @@ sub add_code_linearize
 	my $applicant_model = $parm{'applicant_model'};
 
 	my @labels;
-	for ( my $i = 1; $i <= $nthetas; $i++ ) {
-		push( @labels, $parameter.$covariate.$i );
+	for (my $i = 1; $i <= $nthetas; $i++) {
+		push (@labels, $parameter . $covariate . $i);
 	}
 
-	my $start_theta = $applicant_model -> nthetas() + 1;
+	my $start_theta = $applicant_model->nthetas() + 1;
 	my $end_theta = $start_theta + $nthetas - 1;
-	my $operator='*';
-	$operator='+' if ($sum_covariates);
+	my $operator = '*';
+	$operator = '+' if ($sum_covariates);
 
 	my $tmp = $start_theta;
 
 	#handle mulitple THETA on same line, handle multiple uses of same THETA
 	my %original_to_model_thetas;
-	for (my $i=1; $i<=$nthetas;$i++){
+	for (my $i = 1; $i <= $nthetas; $i++) {
 		$original_to_model_thetas{$i} = 0;
 	}
-	for ( @definition_code ) {
-		while ( /THETA\((\d+)\)/ ) {
-			if ($original_to_model_thetas{$1} == 0){
+	for (@definition_code) {
+		while (/THETA\((\d+)\)/) {
+			if ($original_to_model_thetas{$1} == 0) {
 				$original_to_model_thetas{$1} = $tmp++;
 			}
 			my $num = $original_to_model_thetas{$1};
@@ -4326,8 +4365,7 @@ sub add_code_linearize
 	@code = @{$applicant_model->get_code(record => 'pred')};
 	$use_pred = 1;
 	if ($#code <= 0) {
-		croak("PRED not defined in " .
-			$applicant_model -> filename . "\n" );
+		croak("PRED not defined in " . $applicant_model->filename . "\n");
 	}
 
 	my $found_REL = 0;
@@ -4336,31 +4374,31 @@ sub add_code_linearize
 	my $relationarea = 0;
 	my @row;
 	my $found_correct_REL = 0;
-	for ( @code ) {
-		if ( /^;;;SCM-ANCHOR/) {
+	for (@code) {
+		if (/^;;;SCM-ANCHOR/) {
 			$found_anchor = $i;
 			$i++;
 			next;
 		}
-		if ( /^;;; (\w+)-RELATION START/ and $1 eq $parameter ) {
+		if (/^;;; (\w+)-RELATION START/ and $1 eq $parameter) {
 			$relationarea = 1;
 			$i++;
 			next;
 		}
-		if ( /^;;; (\w+)-RELATION END/ and $1 eq $parameter ) {
+		if (/^;;; (\w+)-RELATION END/ and $1 eq $parameter) {
 			$relationarea = 0;
 			last;
 		}
-		if ( $relationarea ) {
+		if ($relationarea) {
 			$found_REL = $i;
-			debugmessage(3,"GZ_".$parameter . " has already been added to the code" );
-			if ( /$parameter$covariate/ ){
+			debugmessage(3, "GZ_".$parameter . " has already been added to the code");
+			if (/$parameter$covariate/) {
 				$found_correct_REL = 1;
-				last ;
+				last;
 			}
-			if ($sum_covariates){
+			if ($sum_covariates) {
 				@row = split(/\)\+\(/);
-			}else{
+			} else {
 				@row = split(/\)\*\(/);
 			}
 		}
@@ -4369,11 +4407,11 @@ sub add_code_linearize
 
 	# If we have old scm code present.
 	my $etanum;
-	if ( $found_REL ) {
-		unless ( $found_correct_REL ) {
-			if ( $#row > 2 ) {
+	if ($found_REL) {
+		if (not $found_correct_REL) {
+			if ($#row > 2) {
 				print "warning: adding covariates to old scm code not tested\n";
-				@code =  (@code[0..$found_REL],
+				@code = (@code[0..$found_REL],
 					"GZ_$parameter"."=GZ_$parameter"."$operator$parameter$covariate\n",
 					@code[$found_REL+1..$#code]);
 			} else {
@@ -4384,19 +4422,19 @@ sub add_code_linearize
 	} else {
 		my %parameter_eta;
 		%parameter_eta = %{$self->parameter_eta()} if defined $self->parameter_eta();
-		if ( defined $parameter_eta{$parameter}){
+		if (defined $parameter_eta{$parameter}) {
 			$etanum= $parameter_eta{$parameter};
-		}else{
+		} else {
 			croak("Could not extract ETA number for $parameter");
 		}
-		if ($found_anchor >= 0){
+		if ($found_anchor >= 0) {
 			@code =  (@code[0..$found_anchor],
 				";;; $parameter-RELATION START\n",
 				"; $parameter IS ETA$etanum",
 				"GZ_$parameter"." = $parameter$covariate\n",
 				";;; $parameter-RELATION END\n\n",
 				@code[$found_anchor+1..$#code]);
-		}else {
+		} else {
 			@code = ( ";;; $parameter-RELATION START\n",
 				"; $parameter IS ETA$etanum",
 				"GZ_$parameter"." = $parameter$covariate\n",
@@ -4405,13 +4443,13 @@ sub add_code_linearize
 		}
 	}
 
-	if ($found_anchor >= 0){
+	if ($found_anchor >= 0) {
 		@code =  (@code[0..$found_anchor],
 			"\n;;; $parameter$covariate-DEFINITION START\n",
 			@definition_code,
 			";;; $parameter$covariate-DEFINITION END\n\n",
 			@code[$found_anchor+1..$#code]);
-	}else{
+	} else {
 		@code = ( "\n;;; $parameter$covariate-DEFINITION START\n",
 			@definition_code,
 			";;; $parameter$covariate-DEFINITION END\n\n",
@@ -4419,9 +4457,9 @@ sub add_code_linearize
 	}
 
 	# Add to the parameter code
-	unless ( $found_REL ) {
+	if (not $found_REL) {
 		my $success = 0;
-		for ( @code ) {
+		for (@code) {
 			if ( /^\s*IPRED\s*=/) {
 				my ($line,$comment) = split( ';', $_, 2 );
 				$_ = $line;
@@ -4438,9 +4476,9 @@ sub add_code_linearize
 				last; #so not add term on multiple lines
 			}
 		}
-		unless ( $success ) {
+		if (not $success) {
 			croak("Could not determine a good place to add the covariate relation.\n".
-				" i.e. No IPRED= was found\n" );
+				" i.e. No IPRED= was found\n");
 		}
 	}
 	if ($use_pred) {
@@ -4500,22 +4538,20 @@ sub add_code_gfunc
 	push(@code,';;;SCM-LINEARIZE_CONSTANTS'."\n") unless ((defined $self->directory_name_prefix) and
 														  $self->directory_name_prefix eq 'linearize');
 	foreach my $parameter (keys %parameter_G){
-		push(@code,'OGZ_'.$parameter.'='.$parameter_G{$parameter}."\n");
-		if ($parameter_relation{$parameter} eq 'exponential'){
-			push(@code,'OGK_'.$parameter.'=1/'.$parameter_G{$parameter}."\n");
-		}elsif ($parameter_relation{$parameter} eq 'proportional'){
+		push(@code, 'OGZ_' . $parameter . '=' . $parameter_G{$parameter} . "\n");
+		if ($parameter_relation{$parameter} eq 'exponential') {
+			push(@code, 'OGK_' . $parameter . '=1/' . $parameter_G{$parameter} . "\n");
+		} elsif ($parameter_relation{$parameter} eq 'proportional') {
 			push(@code,'OGK_'.$parameter.
 				'='.$parameter.'/(TV'.$parameter.'*'.$parameter_G{$parameter}.')'.
 				' ; This gives (1+ETA)/'.$parameter.'COV'."\n");
-		}elsif ($parameter_relation{$parameter} eq 'additive'){
+		} elsif ($parameter_relation{$parameter} eq 'additive') {
 			push(@code,'OGK_'.$parameter.
 				'=TV'.$parameter.'/'.$parameter_G{$parameter}."\n");
-		}elsif ($parameter_relation{$parameter} eq 'logit'){
-			push(@code,'OGK_'.$parameter.
-				"=1\n");
-		}else{
-			croak("No relation (additive/exponential/proportional) defined".
-				"for ETA on $parameter");
+		} elsif ($parameter_relation{$parameter} eq 'logit') {
+			push(@code, 'OGK_' . $parameter . "=1\n");
+		} else {
+			croak("No relation (additive/exponential/proportional) defined for ETA on $parameter");
 		}
 	}
 	if ($use_pred) {
@@ -4581,12 +4617,11 @@ sub run_xv_pred_step
 		  clean => 1,
 		  parent_tool_id   => $self -> tool_id,
 		  copy_data => 1); 
-#clean 2 later
-	ui -> print( category => 'xv_scm',
-		message  => $mess ) unless ( $self -> parent_threads > 1 );
-	$xv_base_fit -> run;
+    #clean 2 later
+	ui->print(category => 'xv_scm', message => $mess) unless ($self->parent_threads > 1);
+	$xv_base_fit->run();
 
-	if ($derivatives_run){
+	if ($derivatives_run) {
 		#change $self->xv_pred_data to new filename from derivatives output.
 		#this makes it impossible to use update_derivatives unless original pred_data is kept
 
@@ -4621,7 +4656,7 @@ sub run_xv_pred_step
 		}
 	}
 	chdir('..');
-	ui -> category($oldcat);
+	ui->category($oldcat);
 }
 
 sub format_inits_bounds
@@ -4685,8 +4720,8 @@ sub format_inits_bounds
 sub format_max_min_median_mean
 {
 	my %parm = validated_hash(\@_,
-							  statistics => { isa => 'HashRef', optional => 0 },
-		);
+        statistics => { isa => 'HashRef', optional => 0 },
+    );
 	my $statistics = $parm{'statistics'};
 
 	my $median = $statistics->{'median'};
@@ -4701,7 +4736,7 @@ sub format_max_min_median_mean
 		$min = sprintf "%6.2f", $min;
 		$min =~ s/^\s*//;
 	}else{
-		$min='';
+		$min = '';
 	}
 	my $max = $statistics->{'max'};
 	if (defined $max){
@@ -4711,14 +4746,14 @@ sub format_max_min_median_mean
 		$max = '';
 	}
 	my $mean = $statistics->{'mean'};
-	if (defined $mean){
+	if (defined $mean) {
 		$mean = sprintf "%6.2f", $mean;
 		$mean =~ s/^\s*//;
-	}else{
-		$mean='';
+	} else {
+		$mean = '';
 	}
 	
-	return ($max,$min,$median,$mean);
+	return ($max, $min, $median, $mean);
 }
 
 sub get_covariate_code
@@ -4760,9 +4795,9 @@ sub get_covariate_code
 		croak("Input code is defined but type is $type.") unless ($type eq 'user');
 	}
 	
-	if ($type eq 'none'){
+	if ($type eq 'none') {
 		$code->[0] = "   $parameter$covariate = $offset\n";
-	}elsif ($type eq 'user'){
+	} elsif ($type eq 'user') {
 		my %unique_thetas;
 		# count the thetas.
 		for ( @{$code} ) {
@@ -4787,8 +4822,8 @@ sub get_covariate_code
 				}
 			}
 		}
-	}elsif ($type eq 'linear'){
-		if( $have_missing_data ) {
+	} elsif ($type eq 'linear') {
+		if ($have_missing_data) {
 			$code->[0] = $comment."IF($covariate.EQ.$missing_data_token) THEN\n";
 			$code->[1] = "$comment   $parameter$covariate = $offset\n";
 			$code->[2] = $comment."ELSE\n";
@@ -5201,124 +5236,136 @@ sub write_final_models
 	my $final_model = $parm{'final_model'};
 	my $model_number = $parm{'model_number'};
 
-	my $fname = 'final_'.$self->search_direction().'.mod';
+	my $fname = 'final_' . $self->search_direction() . '.mod';
 	if ($self->linearize()){
-		$fname = 'final_'.$self->search_direction().'_linear.mod';
+		$fname = 'final_' . $self->search_direction() . '_linear.mod';
 	}
 	my $fdir = $self->final_model_directory();
 	return if (-e "$fdir$fname"); #otherwise may write twice
 
-	ui -> print( category => 'scm',
-		message => "Writing final models from the ".$self->search_direction()." search." );
-	$final_model -> filename($fname);
-	$final_model -> directory( $fdir);
+	ui->print(
+        category => 'scm',
+		message => "Writing final models from the " . $self->search_direction() . " search."
+    );
+	$final_model->filename($fname);
+	$final_model->directory( $fdir);
 	$fname =~ s/\.mod/\.lst/;
 	return unless (-e $final_model->outputfile); #unless lst-file exists (could have crashed)
-	cp( $final_model -> outputfile, "$fdir$fname" );
+	cp($final_model->outputfile, "$fdir$fname");
 	my $prob_num = undef;
-	$final_model -> update_inits(from_output => $final_model->outputs->[0],
-		problem_number => $prob_num);
-	$final_model -> outputfile("$fdir$fname");
-    $final_model -> set_outputfile();
-	if ($self->linearize()){
+	$final_model->update_inits(
+        from_output => $final_model->outputs->[0],
+		problem_number => $prob_num,
+    );
+	$final_model->outputfile("$fdir$fname");
+    $final_model->set_outputfile();
+	if ($self->linearize()) {
 		#set datafilename to something ok
-		$final_model -> ignore_missing_files(1);
+		$final_model->ignore_missing_files(1);
 		my $datafilename = 'derivatives_covariates.dta';
 		if ($self->update_derivatives()){
-			my $stepname='';
-			if ($self->step_number()>1){
-				$stepname = '_'.($self->step_number()-1);
-				if ($self->search_direction() eq 'forward'){
+			my $stepname = '';
+			if ($self->step_number() > 1) {
+				$stepname = '_' . ($self->step_number() - 1);
+				if ($self->search_direction() eq 'forward') {
 					$stepname .= 'f';
 				}else{
 					$stepname .= 'b';
 				}
 			}
-			$datafilename = 'derivatives_covariates'.$stepname.'.dta';
+			$datafilename = "derivatives_covariates$stepname.dta";
 		}
 
-		my @new_names = ($datafilename) x scalar(@{$final_model ->problems});
-		$final_model -> datafiles(new_names => \@new_names); #one for each $PROB
+		my @new_names = ($datafilename) x scalar(@{$final_model->problems});
+		$final_model->datafiles(new_names => \@new_names); #one for each $PROB
 
 	}else{
-		$final_model -> ignore_missing_files(1);
+		$final_model->ignore_missing_files(1);
 		#ref to all data filenames
-		my $datafilenames = $self->models()->[$model_number -1]->datafiles(absolute_path => 1);
-		$final_model -> datafiles(new_names => $datafilenames); #one for each $PROB
+		my $datafilenames = $self->models()->[$model_number - 1]->datafiles(absolute_path => 1);
+		$final_model->datafiles(new_names => $datafilenames); #one for each $PROB
 	}
-	$final_model -> _write;
+	$final_model->_write;
 
 	if ($self->linearize()){
 		#create final nonlinear model
-		my $final_nonlin = model->new ( %{common_options::restore_options(@common_options::model_options)},
-										filename => $self->final_model_directory().'original.mod',
-										ignore_missing_files => 1);
-		$final_nonlin ->filename('final_'.$self->search_direction().'_nonlinear.mod');
+		my $final_nonlin = model->new(
+            %{common_options::restore_options(@common_options::model_options)},
+            filename => $self->final_model_directory() . 'original.mod',
+            ignore_missing_files => 1
+        );
+		$final_nonlin->filename('final_' . $self->search_direction() . '_nonlinear.mod');
 		#add all included  relations
 
 		my %included_relations;
-		%included_relations = %{$self -> included_relations} if 
-		(defined $self -> included_relations);
-		foreach my $incl_par ( sort keys %included_relations ) {
-			foreach my $incl_cov ( sort keys %{$included_relations{$incl_par}} ) {
-				$self -> 
-				add_code( definition_code => $included_relations{$incl_par}{$incl_cov}{'code'},
-					nthetas         => $included_relations{$incl_par}{$incl_cov}{'nthetas'},
-					inits           => $included_relations{$incl_par}{$incl_cov}{'inits'},
-					bounds          => $included_relations{$incl_par}{$incl_cov}{'bounds'},
+		%included_relations = %{$self->included_relations} if (defined $self->included_relations);
+		foreach my $incl_par (sort keys %included_relations) {
+			foreach my $incl_cov (sort keys %{$included_relations{$incl_par}}) {
+				$self->add_code(
+                    definition_code => $included_relations{$incl_par}{$incl_cov}{'code'},
+					nthetas => $included_relations{$incl_par}{$incl_cov}{'nthetas'},
+					inits => $included_relations{$incl_par}{$incl_cov}{'inits'},
+					bounds => $included_relations{$incl_par}{$incl_cov}{'bounds'},
 					applicant_model => $final_nonlin,
-					sum_covariates  => $self->sum_covariates_hash->{$incl_par},
-					parameter       => $incl_par,
-					covariate       => $incl_cov );
+					sum_covariates => $self->sum_covariates_hash->{$incl_par},
+					parameter => $incl_par,
+					covariate => $incl_cov,
+                );
 			}
 		}
 		#update initials, from initial_estimates_model??? from where?
-		if ($self->update_derivatives()){
-			my $fb = ($self->search_direction() eq 'forward')? 'f' : 'b';
-			my $outf='scm_dir1/derivatives_updated_'.($self->step_number()).$fb.'.lst'; 
-			if (-e $outf){
-				$final_nonlin->update_inits(from_output_file => $outf,
-					problem_number => $prob_num);
-			}else{
+		if ($self->update_derivatives()) {
+			my $fb = ($self->search_direction() eq 'forward') ? 'f' : 'b';
+			my $outf = 'scm_dir1/derivatives_updated_' . ($self->step_number()) . $fb . '.lst'; 
+			if (-e $outf) {
+				$final_nonlin->update_inits(from_output_file => $outf, problem_number => $prob_num);
+			} else {
 				#print "nothing left to add? could not find $outf\n";
 				#we will also end up here if first step and nothing significant. Would liek
 				# to keep all estimates from derivatives run in that case, but ahve no way of 
 				#separating cases right now.
-				$outf='derivatives_updated_'.($self->step_number()-1).$fb.'.lst'; 
-				$outf='derivatives.lst' if ($self->step_number() == 1);
-				if (-e $outf){
-					$final_nonlin->update_inits(from_output_file => $outf,
+				$outf = 'derivatives_updated_' . ($self->step_number() - 1) . $fb . '.lst'; 
+				$outf = 'derivatives.lst' if ($self->step_number() == 1);
+				if (-e $outf) {
+					$final_nonlin->update_inits(
+                        from_output_file => $outf,
 						ignore_missing_parameters => 1,
-						problem_number => $prob_num);
-				}else{
-					my $outf2='copy_last_forward_derivatives.lst';
-					if (-e $outf2){
-						$final_nonlin->update_inits(from_output_file => $outf2,
+						problem_number => $prob_num,
+                    );
+				} else {
+					my $outf2 = 'copy_last_forward_derivatives.lst';
+					if (-e $outf2) {
+						$final_nonlin->update_inits(
+                            from_output_file => $outf2,
 							ignore_missing_parameters => 1,
-							problem_number => $prob_num);
-					}else{
+							problem_number => $prob_num,
+                        );
 					}
 				}
-				$final_nonlin -> update_inits(from_model => $final_model,
+				$final_nonlin->update_inits(
+                    from_model => $final_model,
 					ignore_missing_parameters => 1,
-					problem_number => $prob_num);
+					problem_number => $prob_num,
+                );
 			}
-
-		}else{
+		} else {
 			#if not update derivatives then first take original derivatives, ignore missing,
 			#and then final linear, by labels ,ignore missing
-			my $outf= $fdir.'../derivatives.lst'; 
-			if (-e $outf){
-				$final_nonlin->update_inits(from_output_file => $outf,
+			my $outf = $fdir . '../derivatives.lst';
+			if (-e $outf) {
+				$final_nonlin->update_inits(
+                    from_output_file => $outf,
 					ignore_missing_parameters => 1,
-					problem_number => $prob_num);
-			}else{
+					problem_number => $prob_num,
+                );
 			}
-			$final_nonlin -> update_inits(from_model => $final_model,
+			$final_nonlin->update_inits(
+                from_model => $final_model,
 				ignore_missing_parameters => 1,
-				problem_number => $prob_num);
+				problem_number => $prob_num,
+            );
 		}
-		$final_nonlin -> _write();
+		$final_nonlin->_write();
 		$final_nonlin = undef;
 	}
 
@@ -5953,7 +6000,8 @@ sub preprocess_data
 	return $filtered_data_model;
 }
 
-sub create_R_plots_code{
+sub create_R_plots_code
+{
 	my $self = shift;
 	my %parm = validated_hash(\@_,
 							  rplot => { isa => 'rplots', optional => 0 }
@@ -5997,6 +6045,35 @@ sub create_R_plots_code{
 						 ]);
 
 }
+
+sub _check_interaction
+{
+    # Check if this model has interaction i.e.
+    #   1. It has D_EPSETA non-zero in derivatives data
+    #   2. It has INTER on $EST in original model
+	my %parm = validated_hash(\@_,
+        datafile => { isa => 'Str' },
+        model => { isa => 'model' },
+    );
+	my $datafile = $parm{'datafile'};
+	my $model = $parm{'model'};
+
+    my $table_file = nmtablefile->new(filename => $datafile);
+    my $table = $table_file->tables->[0];
+   
+    my $nonzero = 0;
+    for (my $col = 0; $col < @{$table->columns}; $col++) { 
+        if ($table->header_array->[$col] =~ /^D_EPSETA/) {
+            $nonzero = array::any_nonzero($table->columns->[$col]);
+            last if $nonzero;
+        }
+    }
+
+    my $inter = $model->is_option_set(record => 'estimation', name => 'INTERACTION', fuzzy_match => 1);
+
+    return $nonzero && $inter;
+}
+
 
 no Moose;
 __PACKAGE__->meta->make_immutable;

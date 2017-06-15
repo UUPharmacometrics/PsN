@@ -7,7 +7,6 @@ use File::Spec qw(splitpath catfile);
 use Config;
 use OSspecific;
 use Storable;
-use POSIX qw(ceil floor);
 use model::shrinkage_module;
 use Math::Random qw(random_multivariate_normal);
 use model::iofv_module;
@@ -130,6 +129,7 @@ has 'missing_data_token' => ( is => 'rw', isa => 'Maybe[Int]', default => -99 );
 has 'last_est_complete' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'niter_eonly' => ( is => 'rw', isa => 'Maybe[Int]' );
 has 'annotation' => ( is => 'rw', isa => 'model::annotation' );
+has 'phi_file' => ( is => 'rw', isa => 'Maybe[Str]' );
 
 sub BUILD
 {
@@ -3871,6 +3871,16 @@ sub input_files
         for my $etas_file (@$problem_files) {
 			my ( $dir, $filename ) = OSspecific::absolute_path($self->directory, $etas_file);
 			push(@file_names, [ $dir, $filename ]);
+            $self->remove_option(
+                record_name => 'etas',
+                option_name => 'FILE',
+            );
+            $self->add_option(
+                record_name => 'etas',
+                option_name => 'FILE',
+                option_value => ( $filename ), 
+                add_record => 0,
+            );
         }
     }
 
@@ -4744,7 +4754,7 @@ sub _read_problems
 	my $warning_printed = 0;
 	my $prev_was_not_sizes = 1;
 
-
+    my @shrinkage_modules;
 	my %internal_msfo_files=(); #hash of filename and problem number, numbering starts at 1
 	
 	# It may look like the loop takes one step to much, but its a
@@ -4789,6 +4799,7 @@ sub _read_problems
 					nomegas => $self->nomegas->[0],
 					directory => $self->directory,
 					problem_number => $problem_number );
+                push @shrinkage_modules, $sh_mod;
 
 				my $prob = model::problem -> new (
 					directory                   => $self->directory,
@@ -4851,6 +4862,9 @@ sub _read_problems
 			"Could not find any problem in modelfile $file");
 	}
 	$self -> problems(\@problems);
+    for my $module (@shrinkage_modules) {   # Need to set nomegas after parsing problems for shrinkage_modules
+        $module->nomegas($self->nomegas->[0]);
+    }
 }
 
 sub _get_option_val_pos
@@ -5392,79 +5406,35 @@ sub msfo_to_msfi_mismatch
 	
 }
 
-sub boxcox_etas
-{
-    # Boxcox transform all ETAs of model
-    # Assume only one $PROBLEM
-    my $self = shift;
-
-    my $netas = $self->nomegas->[0];
-    my $nthetas = $self->nthetas;
-
-    # Transform all ETAs
-    for my $record (('pk', 'pred', 'error', 'des', 'aes', 'aesinitial', 'mix', 'infn')) {
-		if ($self->has_code(record => $record)) {  
-			my $code = $self->get_code(record => $record);
-
-            for (my $i = 0; $i < scalar(@$code); $i++) {
-                $code->[$i] =~ s/(?<!\w)ETA\((\d+)\)/ETAT$1/g;
-            }
-
-            $self->set_code(record => $record, code => $code);
-        }
-	}
-
-    # Prepend transformation code and add thetas
-	my @code;
-	my $code_record;
-	if ($self->has_code(record => 'pk')) {
-		@code = @{$self->get_code(record => 'pk')};
-		$code_record = 'pk';
-	} elsif ($self->has_code(record => 'pred')) {
-		@code = @{$self->get_code(record => 'pred')};
-		$code_record = 'pred';
-	} else {
-		croak("Neither PK nor PRED defined in " . $self->filename . "\n");
-	}
-
-    my $next_theta = $nthetas + 1;
-    for (my $i = 1; $i <= $netas; $i++) {
-        my $line = "ETAT$i = (EXP(ETA($i))**THETA($next_theta) - 1) / (THETA($next_theta))";
-        $next_theta++;
-        unshift @code, $line;
-        $self->add_records(type => 'theta', record_strings => [ '$THETA (-3, 0.01, 3)']); 
-    }
-
-    $self->set_code(record => $code_record, code => \@code);
-}
-
 sub init_etas
 {
     my $self = shift;
 	my %parm = validated_hash(\@_,
-        phi_from_base => { isa => 'Str', default => 0 },        # Should we use the phi-file from the base model? If not use the current phi-file
+        phi_from_base => { isa => 'Bool', default => 0 },        # Should we use the phi-file from the base model? If not use the current phi-file
+        phi_name => { isa => 'Str', optional => 1 },            # This will be used if specified
     );
 	my $phi_from_base = $parm{'phi_from_base'};
+	my $phi_name = $parm{'phi_name'};
 
-    my $phi_name;
-
-    if ($phi_from_base) {
-        my $based_on = $self->annotation->get_based_on();
-        if (defined $based_on) {
-           $phi_name = "run$based_on.phi";
+    if (not defined $phi_name) {
+        if ($phi_from_base) {
+            my $based_on = $self->annotation->get_based_on();
+            if (defined $based_on) {
+            $phi_name = "run$based_on.phi";
+            } else {
+                print "Warning: the model " . $self->filename . " wasn't based on any other model. Option -etas skipped\n";
+            }
         } else {
-            print "Warning: the model " . $self->filename . " wasn't based on any other model. Option -etas skipped\n";
+            $phi_name = utils::file::replace_extension($self->filename, 'phi'); 
         }
-    } else {
-        $phi_name = utils::file::replace_extension($self->filename, 'phi'); 
     }
 
     if (-e $phi_name) {
         $self->set_records(type => 'etas', record_strings => [ "FILE=$phi_name" ]);
-        if (not defined $self->extra_files) {
-            $self->extra_files([]);
-        }
-        push @{$self->extra_files}, $phi_name;
+        $self->remove_option(
+            record_name => 'estimation',
+            option_name => 'MCETA',
+        );
         $self->add_option(
             record_name => 'estimation',
             option_name => 'MCETA',
@@ -5499,6 +5469,93 @@ sub find_input_column
 
     return $name;
 }
+
+sub get_phi_file
+{
+    # Get the full path of phi file of this model
+    # The attribute phi_file will override in case there is a user specified phi file
+    my $self = shift;
+
+    if (defined $self->phi_file) {
+        return $self->phi_file;
+    }
+
+    my $name = $self->full_name;
+    $name = utils::file::replace_extension($name, 'phi');
+
+    if (not -e $name) {
+        undef $name;
+    }
+
+    return $name;
+}
+
+sub unfix_omega_0_fix
+{
+    # Unfix all omegas that are set to 0 FIX
+    my $self = shift;
+
+    my $did_fix = 0;
+    for my $record (@{$self->problems->[0]->omegas}) {
+        for my $option (@{$record->options}) {
+            if ($option->init == 0 and $option->fix) {
+                $did_fix = 1;
+                $option->fix(0);
+                $option->init(0.01);
+            }
+        }
+    }
+
+    return $did_fix;
+}
+
+sub get_pk_or_pred_code
+{
+    my $self = shift;
+
+    my @code;
+	my $code_record;
+	if ($self->has_code(record => 'pk')) {
+		@code = @{$self->get_code(record => 'pk')};
+		$code_record = 'pk';
+	} elsif ($self->has_code(record => 'pred')) {
+		@code = @{$self->get_code(record => 'pred')};
+		$code_record = 'pred';
+	} else {
+		croak("Neither PK nor PRED defined in " . $self->filename . "\n");
+	}
+
+    return ($code_record, \@code);
+}
+
+sub defined_variable
+{
+    # Check if a variable is defined in code or in $INPUT
+    my $self = shift;
+	my %parm = validated_hash(\@_,
+        name => { isa => 'Str' },
+    );
+	my $name = $parm{'name'};
+
+    if ($self->problems->[0]->find_data_column(column_name => $name) != -1) {
+        return 1;
+    }
+
+    my @code_records = ( 'pred', 'pk', 'error' );
+    for my $record (@code_records) {	
+        my $code = $self->get_code(record => $record);
+        if (defined $code) {
+            for my $line (@$code) {
+                if ($line =~ /\s*$name\s*=/) {
+                    return 1;
+                }
+            }
+        }
+    }
+
+    return 0;
+}
+
 
 no Moose;
 __PACKAGE__->meta->make_immutable;

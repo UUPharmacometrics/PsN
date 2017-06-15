@@ -397,5 +397,4 @@ my ($dir,$file)=OSspecific::absolute_path($model->directory.'/model','file');
 my ($dir2,$file2)=OSspecific::absolute_path($flipped->directory,'file'); 
 is($dir,$dir2,'flip_comments output model in subdir');
 
-
 done_testing();

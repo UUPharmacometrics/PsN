@@ -50,8 +50,4 @@ When the first \$PROBLEM in the modelfile uses \$MSFI, and \$THETA, \$OMEGA and 
 \subsection{Data values with more than five significant digits in sse}
 The simulated datasets used in sse are \$TABLE output from NONMEM, and NONMEM rounds off values when printing tables. In NONMEM 6 1013201 is rounded to 1013200 (five significant digits), and if this makes a significant change to the model estimation, for example if the value is a covariate, then the sse results will be wrong. In NONMEM7 it is possible to set the FORMAT option in \$TABLE to make sure no important information is lost. With NONMEM 6 the user must make sure the rounding to five significant digits does not harm the results.
 
-\subsection{Lower case user defined and reserved words}
-Starting with NONMEM 7.2 lower case user defined and reserved words are supported. This is not supported
-by PsN. For example in \$INPUT all reserved words have to be upper case.
-
 \end{document}

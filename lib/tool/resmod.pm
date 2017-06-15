@@ -13,6 +13,7 @@ use model::problem;
 use tool::modelfit;
 use output;
 use nmtablefile;
+use PsN;
 
 extends 'tool';
 
@@ -31,6 +32,9 @@ has 'numdvid' => ( is => 'rw', isa => 'Int' );
 has 'iterative' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'max_iterations' => ( is => 'rw', isa => 'Int' );       # Inf if undef
 has 'best_models' => ( is => 'rw', isa => 'ArrayRef', default => sub { [] } );
+has 'table' => ( is => 'rw', isa => 'nmtable' );
+has 'obs_column' => ( is => 'rw', isa => 'Str', default => 'DV' );
+has 'obs_ignore' => ( is => 'rw', isa => 'Str' );   # Column to use in IGNORE() statement
 
 has 'top_level' => ( is => 'rw', isa => 'Bool', default => 1 );     # Is this the top level resmod object
 has 'current_dvid' => ( is => 'rw', isa => 'Int', default => 0 );             # Index of the current DVID. if don't have dvid = 0
@@ -40,10 +44,25 @@ has 'resmod_results' => ( is => 'rw', isa => 'ArrayRef', default => sub { [] } )
 has 'iteration' => ( is => 'rw', isa => 'Int', default => 0 );      # Number of the iteration
 has 'iteration_summary' => ( is => 'rw', isa => 'ArrayRef[ArrayRef]', default => sub { [ [] ] } );  # [iteration]->[modelnumber if multiple in one iter]->{dvid}->{'model_name', 'dOFV'
 has 'base_sum' => ( is => 'rw', isa => 'ArrayRef', default => sub { [] } );     # Sum of all base models for each DVID
+has 'table_file' => ( is => 'rw', isa => 'Str' );   # The name of the table file that was used
+has 'negative_ipred' => ( is => 'rw', isa => 'Bool', default => 0 );
+has 'ipred_name' => ( is => 'rw', isa => 'Str' );
 
 sub BUILD
 {
     my $self = shift;
+
+    if ($PsN::nm_major_version < 7 or ($PsN::nm_major_version == 7 and $PsN::nm_minor_version < 3)) {
+        croak("resmod need at least NONMEM 7.3.0 or newer");
+    }
+
+    if (defined $self->obs_column) {
+        if ($self->obs_column ne 'DV') {
+            $self->obs_ignore('OBSQQ');
+        } else {
+            $self->obs_ignore('DV');
+        }
+    }
 
 	my $model = $self->models()->[0]; 
     $self->model($model);
@@ -52,13 +71,19 @@ sub BUILD
         my @columns = ( 'ID', $self->idv, $self->dv );
         my $cwres_table = $self->model->problems->[0]->find_table(columns => \@columns, get_object => 1);
         if (not defined $cwres_table) {
-            die "Error original model has no table containing ID, IDV and " . $self->dv. "\n";
+            die "Error original model has no table containing ID, " .$self->idv ." and " . $self->dv. "\n";
         }
         my $cwres_table_name = $self->model->problems->[0]->find_table(columns => \@columns);
-        my $table = nmtablefile->new(filename => $model->directory . $cwres_table_name); 
+        $self->table_file($model->directory . $cwres_table_name);
+        my $table = nmtablefile->new(filename => $self->table_file); 
         my @columns_in_table = @{$cwres_table->columns()};
         my $have_dvid = grep { $_ eq $self->dvid } @columns_in_table;
 
+        my %table_header = %{$table->tables->[0]->header};
+        if (not (exists $table_header{'ID'} and exists $table_header{$self->idv} and exists $table_header{$self->dv})) {
+            die "Error original model has no table containing ID, " .$self->idv ." and " . $self->dv. "\n";
+        }
+        $self->table($table->tables->[0]);
         $self->_create_model_templates(table => $table, idv_column => $self->idv); 
 
         if ($have_dvid) {
@@ -70,6 +95,24 @@ sub BUILD
         } else {
             $self->unique_dvid(['NA']);
             $self->numdvid(1);
+        }
+
+        my $have_ipred = grep { $_ eq 'IPRED' } @columns_in_table;
+        my $have_cipredi = grep { $_ eq 'CIPREDI' } @columns_in_table;
+        if ($have_ipred or $have_cipredi) {
+            my $ipred_name;
+            if ($have_ipred) {
+                $ipred_name = 'IPRED';
+            } else {
+                $ipred_name = 'CIPREDI';
+            }
+            $self->ipred_name($ipred_name);
+            my $ipred_column = $table->tables->[0]->header->{$ipred_name};
+            my $min_ipred = array::min($table->tables->[0]->columns->[$ipred_column]);
+            if ($min_ipred < 0) {
+                $self->negative_ipred(1);
+                print "Negative $ipred_name values: not running power and dtbs models\n";
+            }
         }
     }
 }
@@ -99,6 +142,9 @@ sub modelfit_setup
                 current_dvid => $i,
                 base_sum => $self->base_sum,
                 max_iterations => $self->max_iterations,
+                table => $self->table,
+                negative_ipred => $self->negative_ipred,
+                obs_column => $self->obs_column,
             );
             $resmod->run();
         }
@@ -107,18 +153,21 @@ sub modelfit_setup
 
     # Find a table with ID, idv, dv and extra_input (IPRED)
     my @columns = ( 'ID', $self->idv, $self->dv );
+    if ($self->obs_column ne 'DV') {
+        push @columns, $self->obs_column;
+    }
     my $cwres_table = $self->model->problems->[0]->find_table(columns => \@columns, get_object => 1);
     my $cwres_table_name = $self->model->problems->[0]->find_table(columns => \@columns);
 
-    # Do we have IPRED, DVID or OCC?
+    # Do we have IPRED/CIPREDI, DVID or OCC?
     my $have_ipred = 0;
     my $have_dvid = 0;
 	my $have_occ = 0;
     my $have_time = 0;
     for my $option (@{$cwres_table->options}) {
-        if ($option->name eq 'IPRED') {
+        if ($option->name eq $self->ipred_name) {
             $have_ipred = 1;
-            push @columns, 'IPRED';
+            push @columns, $self->ipred_name;
         } elsif ($option->name eq $self->dvid) {
             $have_dvid = 1;
             push @columns, $self->dvid;
@@ -144,7 +193,7 @@ sub modelfit_setup
 	my @models_to_run;
     for my $model_properties (@{$self->model_templates}) {
         my $input_columns = $self->_create_input(
-            table => $cwres_table,
+            table => $self->table,
             columns => \@columns,
             ipred => 1,     # Always add ipred to be able to pass it through to next iteration if needed
             occ => $model_properties->{'need_occ'},
@@ -153,6 +202,7 @@ sub modelfit_setup
         );
         next if ($model_properties->{'need_time'} and not $have_time);
         next if ($model_properties->{'need_ipred'} and not $have_ipred);
+        next if ($model_properties->{'need_ipred'} and $self->negative_ipred);
         next if ($model_properties->{'need_occ'} and not $have_occ);
 
         my $accept = "";
@@ -164,8 +214,13 @@ sub modelfit_setup
         for my $row (@prob_arr) {
             $row =~ s/<inputcolumns>/$input_columns/g;
             $row =~ s/<cwrestablename>/$cwres_table_name/g;
+            my $ignore_string = 'IGNORE=(' . $self->obs_ignore . '.EQN.0)';
+            $row =~ s/<ignore>/$ignore_string/g;
             $row =~ s/<dvidaccept>/$accept/g;
             my $idv = $self->idv;
+            if ($idv eq 'PRED') {
+                $idv = 'PPRD';
+            }
             $row =~ s/<idv>/$idv/g;
         }
 
@@ -191,7 +246,7 @@ sub modelfit_setup
 
     if ($self->numdvid > 1 and $self->current_dvid == 0 and $self->iteration == 0) {     # Only start the L2 model once
     	my $input_columns = $self->_create_input(
-			table => $cwres_table,
+			table => $self->table,
 			columns => \@columns,
 		);
 
@@ -389,6 +444,9 @@ sub modelfit_analyze
             current_dvid => $self->current_dvid,
             base_sum => $self->base_sum,
             max_iterations => $self->max_iterations,
+            table => $self->table,
+            negative_ipred => $self->negative_ipred,
+            obs_column => $self->obs_column,
         );
         $resmod->run();
     }
@@ -502,7 +560,7 @@ sub _create_input
     my $self = shift;
 	# Create $INPUT string from table
 	my %parm = validated_hash(\@_,
-		table => { isa => 'model::problem::table' },
+		table => { isa => 'nmtable' },
 		columns => { isa => 'ArrayRef' },
 		ipred => { isa => 'Bool', default => 1 },		# Should ipred be included if in columns?
 		occ => { isa => 'Bool', default => 1 },			# Should occ be included if in columns?
@@ -519,18 +577,19 @@ sub _create_input
 	my $input_columns;
 	my @found_columns;
 
-    my $table_columns = $table->columns();
-
-	for my $col (@{$table_columns}) {
+	for my $col (@{$table->header_array()}) {
 		my $found = 0; 
 		for (my $i = 0; $i < scalar(@columns); $i++) {
             if ($col eq $columns[$i] and not $found_columns[$i]) {
                 $found_columns[$i] = 1;
                 my $name = $col;
                 $name = 'DV' if ($name eq $self->dv);
-				$name = 'DROP' if ($name eq 'IPRED' and not $ipred);
+				$name = 'DROP' if ($name eq $self->ipred_name and not $ipred);
 				$name = 'DROP' if ($name eq $occ_name and not $occ);
                 $name = 'DROP' if ($name eq 'TIME' and $self->idv ne 'TIME' and not $time);
+                $name = 'PPRD' if ($name eq 'PRED' and $self->idv eq 'PRED');
+                $name = 'IPRED' if ($name eq 'CIPREDI' and $ipred);
+                $name = $self->obs_ignore if (defined $self->obs_ignore and $self->obs_column ne 'DV' and $name eq $self->obs_column);
                 $input_columns .= $name;
                 $found = 1;
                 last;
@@ -611,7 +670,7 @@ sub _prepare_L2_model
     my @prob_arr = (
         '$PROBLEM    base model',
         '$INPUT ' . $input_columns . ' L2',
-        '$DATA m1/l2_input.dat IGNORE=@ IGNORE(DV.EQN.0)',
+        '$DATA m1/l2_input.dat IGNORE=@ IGNORE(' . $self->obs_ignore . '.EQN.0)',
         '$PRED',
     );
 
@@ -656,6 +715,11 @@ sub _build_time_varying_template
 		cutoffs => { isa => 'ArrayRef' },
     );
     my $cutoffs = $parm{'cutoffs'};
+	
+	my $start_time = 0;
+	if($cutoffs->[0] < 0) {
+		$start_time = '-inf';
+	}
 
     my @models;
 
@@ -667,7 +731,7 @@ sub _build_time_varying_template
         my @prob_arr = (
             "\$PROBLEM time varying cutoff $i",
             '$INPUT <inputcolumns>',
-            '$DATA <cwrestablename> IGNORE=@ IGNORE=(DV.EQN.0) <dvidaccept>',
+            '$DATA <cwrestablename> IGNORE=@ IGNORE=(' . $self->obs_ignore . '.EQN.0) <dvidaccept>',
             '$PRED',
             'Y = THETA(1) + ETA(1) + ERR(2)',
             'IF (<idv>.LT.' . $cutoffs->[$i] . ") THEN",
@@ -681,9 +745,9 @@ sub _build_time_varying_template
         );
 
         $hash{'prob_arr'} = \@prob_arr;
-
+		
         $hash{'parameters'} = [
-            { name => "sdeps_0-t0", parameter => "SIGMA(1,1)", recalc => sub { sqrt($_[0]) } },
+            { name => "sdeps_".$start_time."-t0", parameter => "SIGMA(1,1)", recalc => sub { sqrt($_[0]) } },
             { name => "sdeps_t0-inf", parameter => "SIGMA(2,2)", recalc => sub { sqrt($_[0]) } },
             { name => "CUTOFFS", cutoff => $i },
         ];
@@ -704,7 +768,7 @@ sub _build_time_varying_template
         my @prob_arr = (
             '$PROBLEM time varying',
             '$INPUT <inputcolumns>',
-            '$DATA <cwrestablename> IGNORE=@ IGNORE=(DV.EQN.0) <dvidaccept>',
+            '$DATA <cwrestablename> IGNORE=@ IGNORE=(' . $self->obs_ignore . '.EQN.0) <dvidaccept>',
             '$PRED',
         );
 
@@ -756,7 +820,7 @@ sub _build_time_varying_template
             my $start;
             my $end;
             if ($i == 0) {
-                $start = '0';
+                $start = $start_time;
             } else {
                 $start = "t$i";
             }
@@ -872,7 +936,7 @@ our @residual_models =
 	    prob_arr => [
 			'$PROBLEM base model',
 			'$INPUT <inputcolumns>',
-			'$DATA <cwrestablename> IGNORE=@ IGNORE=(DV.EQN.0) <dvidaccept>',
+			'$DATA <cwrestablename> IGNORE=@ <ignore> <dvidaccept>',
 			'$PRED',
             'Y = THETA(1) + ETA(1) + ERR(1)',
 			'$THETA .1',
@@ -886,7 +950,7 @@ our @residual_models =
 	    prob_arr => [
 			'$PROBLEM omega-on-epsilon',
 			'$INPUT <inputcolumns>',
-			'$DATA <cwrestablename> IGNORE=@ IGNORE=(DV.EQN.0) <dvidaccept>',
+			'$DATA <cwrestablename> IGNORE=@ <ignore> <dvidaccept>',
 			'$PRED',
             'Y = THETA(1) + ETA(1) + ERR(1) * EXP(ETA(2))',
 			'$THETA .1',
@@ -905,7 +969,7 @@ our @residual_models =
 	    prob_arr => [
 			'$PROBLEM power IPRED',
 			'$INPUT <inputcolumns>',
-			'$DATA <cwrestablename> IGNORE=@ IGNORE=(DV.EQN.0) <dvidaccept>',
+			'$DATA <cwrestablename> IGNORE=@ <ignore> <dvidaccept>',
 			'$PRED',
             'Y = THETA(1) + ETA(1) + ERR(1)*(IPRED)**THETA(2)',
 			'$THETA .1',
@@ -924,7 +988,7 @@ our @residual_models =
         prob_arr => [
 			'$PROBLEM AR1',
 			'$INPUT <inputcolumns>',
-			'$DATA <cwrestablename> IGNORE=@ IGNORE=(DV.EQN.0) <dvidaccept>',
+			'$DATA <cwrestablename> IGNORE=@ <ignore> <dvidaccept>',
 			'$PRED',
             '"FIRST',
             '" USE SIZES, ONLY: NO',
@@ -964,7 +1028,7 @@ our @residual_models =
 		prob_arr => [
 			'$PROBLEM AR1 IOV',
 			'$INPUT <inputcolumns>',
-			'$DATA <cwrestablename> IGNORE=@ IGNORE=(DV.EQN.0) <dvidaccept>',
+			'$DATA <cwrestablename> IGNORE=@ <ignore> <dvidaccept>',
 			'$ABBREVIATED DECLARE T1(NO)',
 			'$ABBREVIATED DECLARE INTEGER I,DOWHILE J',
 			'$PRED', 
@@ -976,14 +1040,14 @@ our @residual_models =
 			'END IF',
 			'IF(NEWL2==1) THEN',
 			'  I=I+1',
-			'  T1(I)=<idv>',
+			'  T1(I)=TIME',
 			'  IF(OID.EQ.ID.AND.OOCC.NE.OCC)THEN',
 			'    L=I',
 			'    OOCC=OCC',
 			'  END IF',
 			'  J=L',
 			'  DO WHILE (J<=I)',
-			'    CORRL2(J,1) = EXP((-0.6931/THETA(2))*(<idv>-T1(J)))',
+			'    CORRL2(J,1) = EXP((-0.6931/THETA(2))*(TIME-T1(J)))',
 			'    J=J+1',
 			'  ENDDO',
 			'ENDIF',
@@ -1003,7 +1067,7 @@ our @residual_models =
 	    prob_arr => [
 			'$PROBLEM t-distribution base mode',
 			'$INPUT <inputcolumns>',
-			'$DATA <cwrestablename> IGNORE=@ IGNORE=(DV.EQN.0) <dvidaccept>',
+			'$DATA <cwrestablename> IGNORE=@ <ignore> <dvidaccept>',
 			'$PRED',
 			'IPRED_ = THETA(1) + ETA(1)',
 			'W     = THETA(2)',
@@ -1020,11 +1084,11 @@ our @residual_models =
 		],
 		base => 2,
     }, {
-        name => 'tdist_2ll_dfest',
+        name => 'tdist',
         prob_arr => [
 			'$PROBLEM laplace 2LL DF=est',
 			'$INPUT <inputcolumns>',
-			'$DATA <cwrestablename> IGNORE=@ IGNORE=(DV.EQN.0) <dvidaccept>',
+			'$DATA <cwrestablename> IGNORE=@ <ignore> <dvidaccept>',
 			'$PRED',
             'IPRED_ = THETA(1) + ETA(1)',
             'W = THETA(2)',
@@ -1058,7 +1122,7 @@ our @residual_models =
         prob_arr => [
 			'$PROBLEM dtbs base model',
 			'$INPUT <inputcolumns>',
-			'$DATA <cwrestablename> IGNORE=@ IGNORE=(DV.EQN.0) <dvidaccept>',
+			'$DATA <cwrestablename> IGNORE=@ <ignore> <dvidaccept>',
 			'$SUBROUTINE CONTR=contr.txt CCONTR=ccontra.txt',
 			'$PRED',
 			'IPRT   = THETA(1)*EXP(ETA(1))',
@@ -1099,7 +1163,7 @@ our @residual_models =
 		prob_arr => [
 			'$PROBLEM dtbs model',
 			'$INPUT <inputcolumns>',
-			'$DATA <cwrestablename> IGNORE=@ IGNORE=(DV.EQN.0) <dvidaccept>',
+			'$DATA <cwrestablename> IGNORE=@ <ignore> <dvidaccept>',
 			'$SUBROUTINE CONTR=contr.txt CCONTR=ccontra.txt',
 			'$PRED',
 			'IPRT   = THETA(1)*EXP(ETA(1))',

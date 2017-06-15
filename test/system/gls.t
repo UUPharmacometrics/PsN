@@ -13,15 +13,21 @@ our $tempdir = create_test_dir('system_gls');
 
 my $model_dir = $includes::testfiledir;
 chdir($tempdir);
-my $command = get_command('gls') . " $model_dir/glstags.mod -samples=5 -set_simest -ind_shrink -dir=glsdir";
 
+# simple gls runtest
+my $command = get_command('gls') . " $model_dir/glstags.mod -samples=5 -set_simest -ind_shrink -dir=glsdir";
 my  $rc = system($command);
 $rc = $rc >> 8;
-
 ok ($rc == 0, "gls that should run ok");
 ok (-e "glsdir/m1/gls4tab-gls", "gls table created");
 
-remove_test_dir($tempdir);
+# gls runtest with (ONLY OBSERVATIONS) which should work now that code_record.pm is aware of pseudo-assignments
+$command = get_command('gls') . " $model_dir/glstags-pseudoassign.mod -samples=5 -set_simest -ind_shrink -dir=glsdir-pseudoassign";
+$rc = system($command);
+$rc = $rc >> 8;
+ok ($rc == 0, "gls with pseudo-assignment that should run ok");
+ok (-e "glsdir-pseudoassign/m1/gls4tab-gls", "gls table created");
 
+remove_test_dir($tempdir);
 
 done_testing();

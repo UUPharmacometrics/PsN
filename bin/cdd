@@ -26,7 +26,9 @@ my %optional_options = ( "bins:i"               => '',
 						 "update_inits!"=>'',
 						 "xv!"                  => '',
 						 "selection_method:s"   => '\'random\'|\'consecutive\'',
-						 "outside_n_sd_check:f" => '' );
+						 "outside_n_sd_check:f" => '',
+                         "etas!",
+                     );
 
 my $res = GetOptions( \%options,
 		      @common_options::get_opt_strings,
@@ -128,6 +130,13 @@ $help_text{-xv} = <<'EOF';
       default behaviour is to not run the cross-validation step.
 EOF
 
+$help_text{-etas} = <<'EOF';
+      -etas
+
+      Use the phi file of the original model as initial estimates for
+      the etas.
+EOF
+
 $help_text{Post_help_message} = <<'EOF';
       Also see 'psn_options -h' for a description of common options.
 EOF
@@ -175,6 +184,7 @@ my $cdd = tool::cdd->new(
     update_inits => $options{'update_inits'},
     outside_n_sd_check => $options{'outside_n_sd_check'},
     cross_validate => $options{'xv'},
+    etas => $options{'etas'},
 );
 
 $cdd->print_options(

@@ -1073,7 +1073,12 @@ sub _scan_to_subproblems
 	my $endtime;
 	
 	while( $_ = @{$self->lstfile}[ $start_pos++ ] ) {
-
+        if (/^0MUST SET COVARIANCE MATRIX TO R MATRIX WHEN USING A PRIOR WITH FO, FOCE, OR LAPLACE/) {
+            $self->parsing_error(message => "NONMEM terminated with message:\n" . $_);
+            $self->pre_run_errors($_);
+            $self->finished_parsing(1);
+            return;
+        }
 		if ( /^ INITIAL ESTIMATE OF OMEGA HAS A NONZERO BLOCK WHICH IS NUMERICALLY NOT POSITIVE DEFINITE/ ) {
 			$self -> parsing_error( message => "NONMEM terminated with message:\n".$_ );
 			$self -> pre_run_errors($_);

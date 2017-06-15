@@ -1,0 +1,1 @@
+../../../bin/frem -covar=WT,DGRP -categorical=DGRP -no-check mox_frem.mod -no-run_sir -mceta=50
