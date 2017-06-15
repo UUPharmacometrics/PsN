@@ -731,10 +731,12 @@ sub modelfit_setup
 	}
 
 	my $found_W;
+	my $found_ipred_in_w;
 	my $i = 0;
 	for ( @code ) {
 		if ( /^\s*W\s*=/) {
 			$found_W = $i;
+			$found_ipred_in_w = $i if(/IPRED/);
 			s/IPRED/GLSP/;
 			if (defined $self->additive_theta()){
 				if(/^\s*W\s*=\s*SQRT\(/ and /IPRED/) {
@@ -752,6 +754,9 @@ sub modelfit_setup
 	unless ( defined $found_W ) {
 		croak("Could not determine a good place to add the GLS code,\n".
 			  " i.e. no W= line was found\n" );
+	}
+	unless (defined $found_ipred_in_w) {
+		croak("Could not find IPRED in the expression for W.");
 	}
 
 	$gls_model->set_code(record => $code_record, code => \@newcode);
