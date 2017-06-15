@@ -40,8 +40,9 @@ Getopt::Long::config("auto_abbrev");
 my %options;
 ## Declare the options
 
-my %required_options = ( 'samples:i' => undef );
+my %required_options = ();
 my %optional_options = (
+    'samples:i' => undef,
     'idv:s' => undef,
     'rawres_input:s' => undef,
     'offset_rawres:i' => undef,
@@ -96,7 +97,7 @@ EOF
 
 $help_text{Options} = <<'EOF';
 A modelfile must be specified
--samples is mandatory and must be at least 20.
+-samples is by default set to 300.
 -columns is probably needed to get data for the desired columns
 
 The following options are valid:
@@ -105,8 +106,8 @@ EOF
 $help_text{-samples} = <<'EOF';
       -samples=number
 
-      Number of simulated datasets to generate, required.
-      Must be at least 20.
+      Number of simulated datasets to generate.
+      Must be at least 20. Default set to 300.
 EOF
 
 $help_text{-idv} = <<'EOF';
@@ -290,6 +291,10 @@ if (defined $options{'include_all_columns'}) {
 }
 if (defined $options{'columns'}) {
 	$columns .= $options{'columns'};
+}
+
+if (not defined $options{'samples'}) {
+    $options{'samples'} = 300;
 }
 
 my $nca = tool::npc->new(eval($common_options::parameters),

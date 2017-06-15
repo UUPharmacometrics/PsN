@@ -113,7 +113,9 @@ A new recommended but not required Perl library for runrecord: YAML::Tiny
 - Do not propagate name of -dir to subtools (i.e. underlying scm directory will always be called scm_dir1)
 - Only evaluate (MAXEVALS=0) the derivatives model. If lst file is available update initial values first.
 
-   ___boot_scm___
+   ___nca___
+
+- Set number of samples to default 300.
 
 
 
