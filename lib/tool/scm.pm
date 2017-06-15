@@ -1818,15 +1818,15 @@ sub linearize_setup
 													   write_copy => 0,
 													   copy_output => 0);
 
-        if ($self->from_linearize and $original_model->is_run()) {
+        if ($original_model->is_run()) {
             $derivatives_model->update_inits(from_output => $original_model->outputs->[0]);
-            $derivatives_model->set_maxeval_zero(
-                print_warning => 1,
-                last_est_complete => $self->last_est_complete(),
-                niter_eonly => $self->niter_eonly(),
-                need_ofv => 1,
-            );
         }
+        $derivatives_model->set_maxeval_zero(
+            print_warning => 1,
+            last_est_complete => $self->last_est_complete(),
+            niter_eonly => $self->niter_eonly(),
+            need_ofv => 1,
+        );
 
 		$derivatives_model->remove_records( type => 'table' );
 

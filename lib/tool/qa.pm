@@ -3,6 +3,7 @@ package tool::qa;
 use strict;
 use Moose;
 use MooseX::Params::Validate;
+use File::Copy 'cp';
 use include_modules;
 use log;
 use model_transformations;
@@ -159,6 +160,9 @@ sub modelfit_setup
         if (defined $self->parameters) {
             print "\n*** Running scm ***\n";
             my $scm_model = $self->model->copy(filename => "m1/scm.mod");
+            if ($self->model->is_run()) {
+                cp($self->model->outputs->[0]->full_name(), 'm1/scm.lst');
+            }
             model_transformations::add_tv(model => $scm_model, parameters => [split /,/, $self->parameters]);
             $scm_model->_write();
             $self->_create_scm_config(model_name => "m1/scm.mod");

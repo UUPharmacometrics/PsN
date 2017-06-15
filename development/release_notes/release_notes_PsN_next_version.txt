@@ -103,6 +103,7 @@ A new recommended but not required Perl library for runrecord: YAML::Tiny
    ___scm___
 
 - Bugfix: Remove IGNORE or ACCEPT statements for linearized models that would else crash.
+- Linearized scm will always evaluate the derivatives model and not estimate it.
 
 
    ___linearize___
@@ -110,6 +111,7 @@ A new recommended but not required Perl library for runrecord: YAML::Tiny
 - Ignore all MDV!=0 in linear model if MDV obtainable
 - Support models with extension .ctl
 - Do not propagate name of -dir to subtools (i.e. underlying scm directory will always be called scm_dir1)
+- Only evaluate (MAXEVALS=0) the derivatives model. If lst file is available update initial values first.
 
    ___boot_scm___
 
