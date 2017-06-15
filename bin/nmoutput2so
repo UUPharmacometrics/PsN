@@ -42,7 +42,7 @@ my %optional_options = (
     'extra_output:s' => undef,
     'compress!' => undef,
     'include_fixed_params!' => undef,
-    'pharmml!' => undef,
+    'generate_pharmml!' => undef,
 );
 
 
@@ -258,8 +258,8 @@ $help_text{-include_fixed_params} = <<'EOF';
     Set to include estimates of all fixed parameters
 EOF
 
-$help_text{-pharmml} = <<'EOF';
-    -pharmml
+$help_text{-generate_pharmml} = <<'EOF';
+    -generate_pharmml
 
     Generate and connect a minimal companion PharmML to the SO. This can be used to automatically extract
     for example the parameter variability levels.
@@ -344,7 +344,7 @@ foreach my $lst_file (@files) {
         external_tables => $options{'external_tables'},
         extra_output => $extra_output_columns,
         include_fixed_params => $options{'include_fixed_params'},
-        pharmml => $options{'pharmml'},
+        pharmml => $options{'generate_pharmml'},
     );
     $first_labels_hash = $nm_parser->labels_hash if not defined $first_labels_hash;
 }
