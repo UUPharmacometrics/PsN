@@ -734,17 +734,16 @@ sub modelfit_setup
 	my $i = 0;
 	for ( @code ) {
 		if ( /^\s*W\s*=/) {
-			if ( /^\s*W\s*=\s*SQRT\(/ and /IPRED/) {
-				$found_W = $i;
-				s/IPRED/GLSP/;
-				if (defined $self->additive_theta){
-					my $newexp = "=SQRT(THETA($newthetanum)**2+";
-					s/=\s*SQRT\(/$newexp/;
+			$found_W = $i;
+			s/IPRED/GLSP/;
+			if (defined $self->additive_theta()){
+				if(/^\s*W\s*=\s*SQRT\(/ and /IPRED/) {
+						my $newexp = "=SQRT(THETA($newthetanum)**2+";
+						s/=\s*SQRT\(/$newexp/;
+					#keep looking, may be more than one W definition line
+				}else{
+					croak("W definition does not match the pattern W = SQRT(...IPRED...)");
 				}
-
-				#keep looking, may be more than one W definition line
-			}else{
-				croak("W definition does not match the pattern W = SQRT(...IPRED...)");
 			}
 		}
 		push(@newcode,$_);
