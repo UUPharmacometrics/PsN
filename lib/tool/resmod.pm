@@ -46,7 +46,7 @@ has 'iteration_summary' => ( is => 'rw', isa => 'ArrayRef[ArrayRef]', default =>
 has 'base_sum' => ( is => 'rw', isa => 'ArrayRef', default => sub { [] } );     # Sum of all base models for each DVID
 has 'table_file' => ( is => 'rw', isa => 'Str' );   # The name of the table file that was used
 has 'negative_ipred' => ( is => 'rw', isa => 'Bool', default => 0 );
-has 'ipred_name' => ( is => 'rw', isa => 'Str' );
+has 'ipred_name' => ( is => 'rw', isa => 'Str', default => 'IPRED' );
 
 sub BUILD
 {
