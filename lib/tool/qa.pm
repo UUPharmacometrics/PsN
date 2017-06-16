@@ -28,6 +28,7 @@ has 'covariates' => ( is => 'rw', isa => 'Str' );       # A comma separated list
 has 'categorical' => ( is => 'rw', isa => 'Str' );       # A comma separated list of categorical covariate symbols
 has 'parameters' => ( is => 'rw', isa => 'Str' );       # A comma separated list of parameter symbols
 has 'fo' => ( is => 'rw', isa => 'Bool', default => 0 );
+has 'lst_file' => ( is => 'rw', isa => 'Str' );
 has 'cmd_line' => ( is => 'rw', isa => 'Str' );         # Used as a work around for calling scm via system
 
 has 'resmod_idv_table' => ( is => 'rw', isa => 'Str' ); # The table used by resmod
@@ -60,12 +61,18 @@ sub modelfit_setup
         push @table_columns, 'TAD';
     }
 
+    my $lst_file;
+    if (defined $self->lst_file) {
+        $lst_file = '../../../' . $self->lst_file;
+    }
+
     my $linearize = tool::linearize->new(
         %{common_options::restore_options(@common_options::tool_options)},
         models => [ $model_copy ],
         directory => 'linearize_run',
         estimate_fo => $self->fo, 
         extra_table_columns => \@table_columns,
+        lst_file => $lst_file,
     );
 
     $linearize->run();

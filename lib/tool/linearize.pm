@@ -14,6 +14,7 @@ has 'error' => ( is => 'rw', isa => 'Maybe[Str]' );
 has 'keep_covariance' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'estimate_fo' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'extra_table_columns' => ( is => 'rw', isa => 'ArrayRef[Str]' );    # Set to array of colnames to add to an extra data table output by derivatives.mod
+has 'lst_file' => ( is => 'rw', isa => 'Str' );
 
 has 'dataname' => ( is => 'rw', isa => 'Str' );
 
@@ -28,11 +29,6 @@ sub modelfit_setup
 	my $model_number = $parm{'model_number'};
 
 	my $model = $self->models->[$model_number - 1];
-
-    my $lstfile;
-    if (-e $model->outputs->[0]->full_name()){
-        $lstfile = $model->outputs->[0]->full_name();
-    }
 
     if ($model->is_option_set(record => 'abbreviated', name => 'REPLACE')) {
         print "\nWARNING: Option REPLACE used in \$ABBREVIATED. This can lead to serious errors.\n\n";
@@ -54,7 +50,7 @@ sub modelfit_setup
         epsilon => $self->epsilon,
         foce => $self->foce,
         do_not_drop => \@keep,
-        lst_file => $lstfile,
+        lst_file => $self->lst_file,
         error => $self->error,
         search_direction => 'forward',
         linearize => 1,
