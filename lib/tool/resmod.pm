@@ -182,7 +182,7 @@ sub modelfit_setup
 
     if (not $self->top_level) {
         if ($self->numdvid > 1 and $self->iteration == 0) {      # First iteration for DVID is special case
-            $cwres_table_name = "../../$cwres_table_name";
+            $cwres_table_name = File::Spec->abs2rel($self->model->directory . $cwres_table_name);
         } else {
             $cwres_table_name = "../m1/$cwres_table_name";
         }
@@ -268,8 +268,8 @@ sub modelfit_setup
 	my $modelfit = tool::modelfit->new(
 		%{common_options::restore_options(@common_options::tool_options)},
 		models => \@models_to_run, 
-		base_dir => $self->directory . 'm1/',
-		directory => undef,
+        base_dir => $self->directory . 'm1/',
+		directory => undef,     # To override directory in restore_options
 		top_tool => 0,
         copy_data => 0,
 	);
@@ -654,7 +654,7 @@ sub _prepare_L2_model
 
     open my $fh, '>', 'm1/l2_input.dat';
     my $data = data->new(
-        filename => '../' . $table_name,
+        filename => $table_name,
         ignoresign => '@',
         parse_header => 1,
     );
