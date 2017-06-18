@@ -223,6 +223,40 @@ sub BUILD
 												 type => 'sigmas'));
 
 
+    # auto-skip fixed OMEGAs
+    my %skip_omegas = map { $_ => 1 } @{$self->skip_omegas};
+    my @new_skip_omegas;
+    my $om_num = 1;
+    for (my $i=0; $i<scalar(@{$self->input_model_fix_omegas}); $i++) { # loop over omegas
+        for (my $j=0; $j<scalar(@{$self->input_model_fix_omegas->[$i]}); $j++) {
+            my $fixed = $self->input_model_fix_omegas->[$i]->[$j];
+            if ($fixed && !exists($skip_omegas{$om_num})) {
+                push @{$self->skip_omegas}, $om_num;
+                push @new_skip_omegas, $om_num;
+            }
+            $om_num++;
+        }
+    }
+    if (scalar(@new_skip_omegas) > 0) {
+        print "Skipping fixed OMEGA record(s) which were not already skipped (required): ", join( ", ", @new_skip_omegas ), "\n";
+        %skip_omegas = map { $_ => 1 } @{$self->skip_omegas};
+    }
+
+	# check that skipped OMEGAs are all first or last
+    if (keys %skip_omegas > 0) {
+        my $nom = $om_num-1;
+        my $first_skip = exists($skip_omegas{1}) ? 1 : 0;
+        my $last_skip = exists($skip_omegas{$nom}) ? 1 : 0;
+        unless ($first_skip || $last_skip) {
+            croak "Skipped OMEGA record(s) must all be positioned first or last (neither first nor last OMEGA record is skipped)"
+        }
+        for (my $i=2; $i<=(keys %skip_omegas); $i++) {
+            $om_num = $first_skip ? $i : $nom-$i+1; # count forward or backward
+            unless (exists($skip_omegas{$om_num})) {
+                croak "Skipped OMEGA records must all be positioned first or last (expected OMEGA record $om_num skipped)";
+            }
+        }
+    }
 }
 
 sub get_phi_coltypes
