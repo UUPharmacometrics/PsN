@@ -175,7 +175,7 @@ if (defined $options{'rawres_input'}) {
 	$match_labels=0;
 	#i.e. did not set sir_directory
 	#check if have covstep of model 4
-	print "No sir directory given, trying to use covariance step results from frem model_4\n";
+	print "Trying to use covariance step results from frem model_4\n";
 	unless (defined $model->outputs and defined $model->outputs->[0]){
 		die "No output from model_4 in frem directory";
 	}
