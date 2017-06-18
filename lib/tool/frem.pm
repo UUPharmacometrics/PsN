@@ -375,25 +375,42 @@ sub read_covdata
 		}
 	}
 
+    my @id_with_missing = ();
+    my @cov_with_missing = ();
 	my @id_covariate_vectors = ();
-	foreach my $idnum (sort {$a <=> $b} keys %id_arrays){
-		push(@id_covariate_vectors,[$idnum]);
+	foreach my $idnum (sort {$a <=> $b} keys %id_arrays){ # for each id
+        # check for missingness
+        my $missing = 0;
 		for (my $i=0; $i< scalar(@{$covnames}); $i++){
-			if (defined $id_arrays{$idnum}->{$covnames->[$i]}){
-				push(@{$id_covariate_vectors[-1]},$id_arrays{$idnum}->{$covnames->[$i]});
-			}else{
-				croak("id $idnum undefined covariate ".$covnames->[$i]);
+			if (!defined $id_arrays{$idnum}->{$covnames->[$i]}){
+                # croak("id $idnum undefined covariate ".$covnames->[$i]);
+                $missing = 1;
+                push @id_with_missing, $idnum;
+                push @cov_with_missing, $covnames->[$i];
 			}
-		}
-	}
+        }
 
-	for (my $i=1; $i< scalar(@{$covnames}); $i++){
-		unless (scalar(@{$cov_arrays{$covnames->[$i]}}) == scalar(@{$cov_arrays{$covnames->[$i-1]}})){
-			croak("unequal length $i and $i-1");
-		}
+        # only consider non-missing subjects
+        unless ($missing) {
+            push(@id_covariate_vectors,[$idnum]);
+            for (my $i=0; $i< scalar(@{$covnames}); $i++){
+                push(@{$id_covariate_vectors[-1]},$id_arrays{$idnum}->{$covnames->[$i]});
+            }
+        }
 	}
+    if (scalar(@id_with_missing) > 0) {
+        print "Warning: Covariate value(s) (of ", join(",", @cov_with_missing), ") are missing of some IDs (", join(",", @id_with_missing), ")\n";
+        print "(Assumed missing completely at random and dropped)\n";
+    }
 
-	return(\@perc_5th,\@perc_95th,\@id_covariate_vectors,\@categorical,\%categoryinfo);
+    # sanity check implemented before missingness code above, subject for removal
+	# for (my $i=1; $i< scalar(@{$covnames}); $i++){
+	# 	unless (scalar(@{$cov_arrays{$covnames->[$i]}}) == scalar(@{$cov_arrays{$covnames->[$i-1]}})){
+	# 		croak("unequal length $i and $i-1");
+	# 	}
+	# }
+
+	return(\@perc_5th,\@perc_95th,\@id_covariate_vectors,\@categorical,\%categoryinfo,\@id_with_missing,\@cov_with_missing);
 }
 
 sub get_post_processing_data
