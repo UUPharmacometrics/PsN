@@ -33,7 +33,7 @@ for (i in 1:length(rscript)) {
 ```
 
 
-```{r helping_functions,results='hide',echo=FALSE,message=FALSE}
+```{r helping_functions,results='hide',echo=FALSE,message=FALSE,warning=FALSE}
 # Helping functions
 # get a ofv value from the raw_results.csv
 .get_rawres_ofv <- function(rawres_file, row = 1){
@@ -55,16 +55,16 @@ for (i in 1:length(rscript)) {
 idv_all <- which_resmod_folders(directory=working.directory)
 ```
 
-```{r structural_model_calculations,results='hide',echo=FALSE,message=FALSE}
+```{r structural_model_calculations,results='hide',echo=FALSE,message=FALSE,warning=FALSE}
 # 1.Structural models
 structural_overview <- get_structural_overview_table(working.directory,idv=idv_all,groups)
 # get resmod structural details tables
 resmod_structural_details <- resmod_structural_details_tables(working.directory,model.filename,CWRES_table,idv_all,idv_name)
 ```
 
-```{r parameter_model_calculations,results='hide',echo=FALSE,message=FALSE}
+```{r parameter_model_calculations,results='hide',echo=FALSE,message=FALSE,warning=F}
 # 2.Parameter Variability Models
-list_par_var_models <- get_param_var_tables(directory=working.directory)
+list_par_var_models <- get_param_var_tables(directory=working.directory,model.filename)
 param_var_file_exists <- list_par_var_models$param_var_file_exists
 par_var_models <- list_par_var_models$par_var_models
 fullblock_mod <- list_par_var_models$fullblock_mod
@@ -82,7 +82,7 @@ if(fullblock_mod || boxcox_mod) {
 }
 ```
 
-```{r covariate_model_calculations,results='hide',echo=FALSE,message=FALSE}
+```{r covariate_model_calculations,results='hide',echo=FALSE,message=FALSE,warning=FALSE}
 # 3.Covariate Models
   # 3.1.All (FREM)
 frem_table_list <- get_all_covariates(frem_directory=file.path(working.directory,"frem_run"),covariates,categorical,parameters,list_par_var_models$dofv_block)
@@ -98,16 +98,16 @@ covariates_extra_table <- covariates_table_list$covariates_extra_table
 covariates_table <- covariates_table_list$covariates_table
 ```
 
-```{r residual_error_model_calculations,results='hide',echo=FALSE,message=FALSE}
+```{r residual_error_model_calculations,results='hide',echo=FALSE,message=FALSE,warning=FALSE}
 #4.create residual error model table (extra table)
 resmod_table_list <- get_resmod_ruv_table(directory=working.directory, idv_name)
 resmod_ruv_models_table <- resmod_table_list$resmod_ruv_table
 resmod_ruv_overview <- resmod_table_list$resmod_ruv_overview
 ```
 
-```{r influential_individuals_calculations,results='hide',echo=FALSE,message=FALSE}
+```{r influential_individuals_calculations,results='hide',echo=FALSE,message=FALSE,warning=FALSE}
 # 5.Influential individuals (CDD)
-ii_list <- get_ii_table(raw.results.file=file.path(working.directory,"cdd_run",paste0("raw_results_",sub('.mod.*','',model.filename),"_linbase.csv")),
+ii_list <- get_ii_table(raw.results.file=file.path(working.directory,"cdd_run",paste0("raw_results_",sub('.([^.]*)$','',model.filename),"_linbase.csv")),
                         skipped.id.file=file.path(working.directory,"cdd_run/skipped_individuals1.csv"),
                         cutoff=cdd_dofv_cutoff)
 cdd_files_exist <- ii_list$cdd_files_exist
@@ -116,7 +116,7 @@ cdd_highest_dofv <- ii_list$cdd_highest_dofv
 ii_table <- ii_list$ii_table
 ```
 
-```{r outliers_calculations,results='hide',echo=FALSE,message=FALSE}
+```{r outliers_calculations,results='hide',echo=FALSE,message=FALSE,warning=FALSE}
 # 6.Outliers (Simeval)
 outlier_table_list <- get_outliers_table(simeval_directory=file.path(working.directory, "simeval_run"),cdd.data)
 simeval_files_exist <- outlier_table_list$simeval_files_exist
@@ -124,7 +124,7 @@ outliers_table <- outlier_table_list$outliers_table
 max_outlier_table <- outlier_table_list$max_outlier_table
 ```
 
-```{r make_overview_table,results='hide',echo=FALSE,message=FALSE}
+```{r make_overview_table,results='hide',echo=FALSE,message=FALSE,warning=FALSE}
 # get overview table
 rgroup <- c("Structural Model","Parameter Variability Model","Covariates","Residual Error Model","Influential Individuals","Outliers")
 overview_list <- list(structural_overview,par_var_models,covariates_table,resmod_ruv_overview,cdd_highest_dofv,max_outlier_table)
@@ -134,7 +134,7 @@ overview_table <- overview_table_list$overview_table
 ```
 
 #Overview
-```{r draw_overview_table,echo=F,results='asis'}
+```{r draw_overview_table,echo=F,results='asis',warning=FALSE}
 overview_table <- keep_symbols(overview_table,type)
 overview_table <- ztable_sub(overview_table,type=type,include.rownames = F,colnames.bold = T,align="lrc")
 overview_table <- addrgroup(overview_table,rgroup=rgroup,n.rgroup=n.rgroup,cspan.rgroup=1)
@@ -147,7 +147,7 @@ print(overview_table)
 
 ```{r draw_structural_details_tables,warning=F,message=F,echo=F,results='asis',warning=F}
 #tables for vpc plots
-vpc_tables_list <- get_tables_for_vpc(obs_table=CWRES_table,obs_extra_table=paste0(working.directory,"/",sub('.mod.*','',model.filename),"_linbase.dta"),sim_table=paste0(working.directory,"/simeval_run/m1/sim_res_table-1.dta"),idv_all)
+vpc_tables_list <- get_tables_for_vpc(obs_table=CWRES_table,obs_extra_table=paste0(working.directory,"/",sub('.([^.]*)$','',model.filename),"_linbase.dta"),sim_table=paste0(working.directory,"/simeval_run/m1/sim_res_table-1.dta"),idv_all)
 make_vpc <- vpc_tables_list$make_vpc
 if(make_vpc) {
   obs <- vpc_tables_list$obs
@@ -236,16 +236,16 @@ if((file.exists(paste0(working.directory,"/postfrem_run/frem_ratio.csv")) ||
    file.exists(paste0(working.directory,"/postfrem_run/pardata.csv"))) {
   covdata <- read.csv(file.path(working.directory,"postfrem_run","covdata.csv"),header = T, as.is = T)
   pardata <- read.csv(file.path(working.directory,"postfrem_run","pardata.csv"),header = T, as.is = T)
-  if(file.exists(paste0(working.directory,"/postfrem_run/frem_id_ratios.csv"))) {
-    frem_id <- read.csv(file.path(working.directory,"postfrem_run","frem_id_ratios.csv"), header = T, as.is = T)
-	  indiv_for_param_plots <- ID_ratio(frem_id,covdata,pardata)$plots
-	  grid.draw(marrangeGrob(indiv_for_param_plots,nrow=2,ncol=1,top=''))
-	  grid.newpage()
-  }
   if(file.exists(paste0(working.directory,"/postfrem_run/frem_ratio.csv"))) {
     inTable_frem <- read.csv(file.path(working.directory,"postfrem_run","frem_ratio.csv"),header = T, as.is = T)
 	  cov_effect_on_param_plots <- parameter_ratio(inTable_frem,covdata,pardata)$plots
 	  grid.draw(marrangeGrob(cov_effect_on_param_plots,nrow=2,ncol=1,top=''))
+	  grid.newpage()
+  }
+  if(file.exists(paste0(working.directory,"/postfrem_run/frem_id_ratios.csv"))) {
+    frem_id <- read.csv(file.path(working.directory,"postfrem_run","frem_id_ratios.csv"), header = T, as.is = T)
+	  indiv_for_param_plots <- ID_ratio(frem_id,covdata,pardata)$plots
+	  grid.draw(marrangeGrob(indiv_for_param_plots,nrow=2,ncol=1,top=''))
 	  grid.newpage()
   }
 }
@@ -298,7 +298,7 @@ if(file.exists(file.path(working.directory,"simeval_run/raw_all_iofv.csv"))) {
 
 ```{r plot_iofv_vs_iofv,echo=F,results='asis',warning=F,fig.width=9,fig.height=6.5,fig.keep="high",fig.align="center"}
  if(rplots.level > 1) {
-   phi1 <- file.path(working.directory,"linearize_run",paste0(sub('.mod.*','',model.filename),"_linbase.phi"))
+   phi1 <- file.path(working.directory,"linearize_run",paste0(sub('.([^.]*)$','',model.filename),"_linbase.phi"))
    phi2 <- file.path(working.directory,"linearize_run/scm_dir1/derivatives.phi")
    if(file.exists(phi1) && file.exists(phi2)) {
      plot_iofv_vs_iofv <- iofv_vs_iofv(phi1,phi2)

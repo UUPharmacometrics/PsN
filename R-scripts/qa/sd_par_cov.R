@@ -6,7 +6,7 @@ sd_par_cov <- function(filename) {
     sd_parcov_tab <- as.data.frame(array(NA,c(nrow(sd_tab_input),3)))
     colnames(sd_parcov_tab) <- c("Parameter","Covariate","sd")
     for(i in 1:nrow(sd_tab_input)) {
-      param <- sub('\\..*','',sd_tab_input[i,1])
+      param <- sub('.([^.]*)$','',sd_tab_input[i,1])
       covar <- sub('.*\\.','',sd_tab_input[i,1])
       sd_parcov_tab[i,1] <- param
       sd_parcov_tab[i,2] <- covar

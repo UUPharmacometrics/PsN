@@ -700,22 +700,22 @@ Stratify the data, according to Stratification for NPC/VPC.
 
 Bin the observations according to the values of the independent variable. Principle as defined by input and above section Binning for VPC.
 
-For each bin separately, perform steps 1-7: 
+For each bin separately, perform steps a-g: 
 Let N be the number of samples (simulations), and let M be the number of observations in the bin.
+%Must have a-g here, other sections refer to the letters
+\begin{itemize}
+	\item[a)] Compute the DV values representing the boundaries of the prediction intervals in the set. The value in the “Y\% sim“ column is the Y\% percentile of the uncensored (at most M*N) simulated values.
 
-\begin{enumerate}
-	\item Compute the DV values representing the boundaries of the prediction intervals in the set. The value in the “Y\% sim“ column is the Y\% percentile of the uncensored (at most M*N) simulated values.
+	\item[b)] Determine the PI boundaries for the real dataset. The value in the “Y\% real“ column is the Y\% percentile of the uncensored (at most M) real values.
 
-	\item Determine the PI boundaries for the real dataset. The value in the “Y\% real“ column is the Y\% percentile of the uncensored (at most M) real values.
-
-	\item Determine a confidence interval for each PI boundary computed in (a) as follows: 
+	\item[c)] Determine a confidence interval for each PI boundary computed in (a) as follows: 
 For each simulated dataset separately, take the Y\% percentile of the uncensored (at most M) values in the bin, just as for the real values described above in (b) (i.e. repeat N times to collect N values in total, exclude value if there are 0 uncensored values). Compute the CC\% CI based on the at most N collected values.
 
-	\item Generate data for mirror plots. For N randomly chosen simulated datasets, report the DV values representing the PI boundaries for the bin just as for the real dataset in (b). (Note: the data is extracted from the computations in (c), no extra analysis is required.)
+	\item[d)] Generate data for mirror plots. For N randomly chosen simulated datasets, report the DV values representing the PI boundaries for the bin just as for the real dataset in (b). (Note: the data is extracted from the computations in (c), no extra analysis is required.)
 
-	\item Perform diagnostics for continuous data according to section VPC results diagnostics. In case option -lloq or -uloq is used, only step (iii) of section VPC results diagnostics, a regular NPC, is performed.  
+	\item[e)] Perform diagnostics for continuous data according to section VPC results diagnostics. In case option -lloq or -uloq is used, only step (iii) of section VPC results diagnostics, a regular NPC, is performed.  
 
-	\item In the case of censored data, i.e. of any of the options -lloq, -uloq or -censor is used, some extra results are presented in a section “Censored data” in vpc\_results.csv. 
+	\item[f)] In the case of censored data, i.e. of any of the options -lloq, -uloq or -censor is used, some extra results are presented in a section “Censored data” in vpc\_results.csv. 
 Left censored data: The value in the column “Real left censored” is the fraction of the non-missing (at most M) original dataset observations in the bin that is below lloq. The fraction of non-missing observations below lloq is also calculated for each simulated dataset separately, i.e. at most N times (exclude datasets where there are 0 non-missing values). The value in the “Simulated left censored” column is the median of the at most N calculated fractions of simulated observations. The values in the “CC\% CI for left censored from/to” columns is the CC\% CI based on the at most N values. If the option -uloq or -censor is used but not -lloq, then 'NA' is displayed in the columns for left censored data.
 Right censored data: Analogous to Left censored data. Instead of the fraction of non-missing observations below lloq, the fraction above uloq is considered. If -lloq or -censor is used but not -uloq, then 'NA' is displayed.
 Missing data (input option -censor): Analogous to Left censored data, but instead of the fraction of non-missing observations below lloq, the fraction of missing observations out of the total M is considered. If -lloq or -uloq is used but not -censor, then 'NA' is displayed.
@@ -733,8 +733,8 @@ then the median is known, even if the exact DV of the
 40 known values, the median value will be 'NA',
 since it is unknown (below BQL somewhere).
 
-	\item In the case of categorical data, i.e. when option -levels is used, results are presented in the section Categorical data. The value in the column “Real xx”, where xx defines the dependent value boundaries of the category, is the fraction of the at most M original dataset observations in the bin that falls within these boundaries. The fraction of observations within the boundaries is also calculated for each simulated dataset separately, i.e. at most N times (exclude dataset where non-missing observations is 0). The value in the “Sim xx” column is the median of the at most N calculated fractions of simulated observations. The values in the “CC\% CI for xx from/to” columns is the CC\% CI based on the at most N values.
-\end{enumerate}
+	\item[g)] In the case of categorical data, i.e. when option -levels is used, results are presented in the section Categorical data. The value in the column “Real xx”, where xx defines the dependent value boundaries of the category, is the fraction of the at most M original dataset observations in the bin that falls within these boundaries. The fraction of observations within the boundaries is also calculated for each simulated dataset separately, i.e. at most N times (exclude dataset where non-missing observations is 0). The value in the “Sim xx” column is the median of the at most N calculated fractions of simulated observations. The values in the “CC\% CI for xx from/to” columns is the CC\% CI based on the at most N values.
+\end{itemize}
 
 \section{VPC results diagnostics}
 

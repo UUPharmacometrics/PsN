@@ -35,6 +35,7 @@ my %optional_options = (
     'categorical:s' => undef,
     'parameters:s' => undef,
     'fo!' => undef,
+    'lst_file:s' => undef,
 );
 
 my $res = GetOptions( \%options,
@@ -135,6 +136,13 @@ $help_text{-fo} = <<'EOF';
       of the linearized model. Default is off.
 EOF
 
+$help_text{-lst_file} = <<'EOF';
+      -lst_file
+
+      Set a NONMEM output file to be used for initial estimates.
+      Default is to use an lst-file with the same name as the model.
+EOF
+
 common_options::online_help( 'qa', \%options, \%help_text, \%required_options, \%optional_options);
 common_options::setup( \%options, 'qa' ); #calls set_globals etc, initiates random sequence
 
@@ -182,6 +190,7 @@ my $qa = tool::qa->new(
     parameters => $options{'parameters'},
     cmd_line => $cmd_line,
     fo => $options{'fo'},
+    lst_file => $options{'lst_file'},
 );
 
 $qa->print_options(
