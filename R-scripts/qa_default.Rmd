@@ -236,16 +236,16 @@ if((file.exists(paste0(working.directory,"/postfrem_run/frem_ratio.csv")) ||
    file.exists(paste0(working.directory,"/postfrem_run/pardata.csv"))) {
   covdata <- read.csv(file.path(working.directory,"postfrem_run","covdata.csv"),header = T, as.is = T)
   pardata <- read.csv(file.path(working.directory,"postfrem_run","pardata.csv"),header = T, as.is = T)
-  if(file.exists(paste0(working.directory,"/postfrem_run/frem_id_ratios.csv"))) {
-    frem_id <- read.csv(file.path(working.directory,"postfrem_run","frem_id_ratios.csv"), header = T, as.is = T)
-	  indiv_for_param_plots <- ID_ratio(frem_id,covdata,pardata)$plots
-	  grid.draw(marrangeGrob(indiv_for_param_plots,nrow=2,ncol=1,top=''))
-	  grid.newpage()
-  }
   if(file.exists(paste0(working.directory,"/postfrem_run/frem_ratio.csv"))) {
     inTable_frem <- read.csv(file.path(working.directory,"postfrem_run","frem_ratio.csv"),header = T, as.is = T)
 	  cov_effect_on_param_plots <- parameter_ratio(inTable_frem,covdata,pardata)$plots
 	  grid.draw(marrangeGrob(cov_effect_on_param_plots,nrow=2,ncol=1,top=''))
+	  grid.newpage()
+  }
+  if(file.exists(paste0(working.directory,"/postfrem_run/frem_id_ratios.csv"))) {
+    frem_id <- read.csv(file.path(working.directory,"postfrem_run","frem_id_ratios.csv"), header = T, as.is = T)
+	  indiv_for_param_plots <- ID_ratio(frem_id,covdata,pardata)$plots
+	  grid.draw(marrangeGrob(indiv_for_param_plots,nrow=2,ncol=1,top=''))
 	  grid.newpage()
   }
 }
