@@ -1,6 +1,5 @@
 ---
 title: "Quality assurance"
-date: '`r format(Sys.Date())`'
 output: pdf_document # delete if html file needed and set type <- 'html'
 header-includes: #needed to create a pdf file
     - \usepackage{colortbl}
@@ -19,6 +18,7 @@ library(vpc)
 source(paste0(rscripts.directory, "/common/find_r_files_in_subdir.R"))
 source(paste0(rscripts.directory, "/common/iofv.R"))
 source(paste0(rscripts.directory, "/common/keep_symbols.R"))
+source(paste0(rscripts.directory, "/common/command_text.R"))
 source(paste0(rscripts.directory, "/cdd/create.data.full.R"))
 source(paste0(rscripts.directory, "/simeval/ofv.i_ofv_res.R"))
 source(paste0(rscripts.directory,"/frem/ID_ratio_function.R"))
@@ -132,6 +132,14 @@ overview_table_list <- get_overview_table(overview_list,rgroup)
 n.rgroup <- overview_table_list$n.rgroup
 overview_table <- overview_table_list$overview_table
 ```
+
+
+```{r command_text_from_command_line,echo=F,results='asis',warning=FALSE,message=F}
+command_runtime <- command_text(directory=working.directory)
+```
+Command: `r I(command_runtime$command)`
+`r I(command_runtime$run_start)`
+`r I(command_runtime$run_finish)`
 
 #Overview
 ```{r draw_overview_table,echo=F,results='asis',warning=FALSE}

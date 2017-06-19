@@ -278,7 +278,7 @@ sub print_R_script
 			# R markdown code has to be separated in two parts
 			my $value = 0;
 			my $first_line = 1; #TRUE
-			my $add_subtitle = 1;
+			#my $add_subtitle = 1;
 			foreach my $line (@{$self->plotcode}){
 				if($value == 1 && $line =~ /^--- *$/) {
 					$value = ++$value;
@@ -292,11 +292,11 @@ sub print_R_script
 				}
 				if($value == 1 || $value == 2) {
 					push(@printcode_first,$line);
-					if($value == 1 && $add_subtitle == 1 && not($line =~ /^--- *$/)) {
-						my $subtitle = "subtitle: 'Model filename: ".$modelfile."; Input datafile: ".$datafile."'"; # add model name and data file name
-						push(@printcode_first,$subtitle);
-						$add_subtitle = 0;
-					}
+					#if($value == 1 && $add_subtitle == 1 && not($line =~ /^--- *$/)) {
+					#	my $subtitle = "subtitle: 'Model filename: ".$modelfile."; Input datafile: ".$datafile."'"; # add model name and data file name
+					#	push(@printcode_first,$subtitle);
+					#	$add_subtitle = 0;
+					#}
 				}
 				if ($value == 2) {
 					$value = 0;
