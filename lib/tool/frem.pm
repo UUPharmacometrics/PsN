@@ -322,6 +322,8 @@ sub read_covdata
 		last if (($frem_index >= 0) and ($dv_index >=0) and ($id_index >=0));
 	}
 	croak("could not find DV and FREMTYPE and ID") unless (($frem_index >= 0) and ($dv_index >=0) and ($id_index >=0));
+    my %id_idx;
+    my $idx = 0;
 	my $row;
 	while (1) {
 		$row = <$fh>;
@@ -334,11 +336,14 @@ sub read_covdata
 			my $id = $fields[$id_index];
 			unless (exists $id_arrays{$id}){
 				$id_arrays{$id}={};
+                $idx++;
 			}
 			if (exists $id_arrays{$id}->{$cov}){
 				croak("redefinition of $cov for id $id");
 			}else{
 				$id_arrays{$id}->{$cov} = $fields[$dv_index];
+                # map id to index (in cov arrays)
+                $id_idx{$id} = ($idx-1);
 			}
 		}
 	}
@@ -348,6 +353,48 @@ sub read_covdata
 			croak("legth $i not larger than 0");
 		}
 	}
+
+    # build covariate vectors and remove subjects with missing data
+    my %id_has_missing;
+    my %cov_has_missing;
+	my @id_covariate_vectors = ();
+	foreach my $idnum (sort {$a <=> $b} keys %id_arrays){ # for each id
+        # check for missingness
+        my @nonmissing_covs = ();
+		for (my $i=0; $i< scalar(@{$covnames}); $i++){
+			if (!defined $id_arrays{$idnum}->{$covnames->[$i]}){
+                $id_has_missing{$idnum} = 1 unless (exists($id_has_missing{$idnum}));
+                $cov_has_missing{$covnames->[$i]} = 1 unless (exists($cov_has_missing{$covnames->[$i]}));
+			} else {
+                push @nonmissing_covs, $covnames->[$i];
+            }
+        }
+
+        # only consider non-missing subjects
+        if (scalar(@nonmissing_covs) != scalar(@{$covnames})) {
+            # delete all other read covariate values from this subject
+            foreach my $cov (@nonmissing_covs) {
+                splice @{$cov_arrays{$cov}}, $id_idx{$idnum}, 1;
+            }
+            # TODO: refactor this function in general (index counting is very patched)
+            foreach my $id (keys %id_idx) {
+                $id_idx{$id}-- if ($id_idx{$id} > $id_idx{$idnum});
+            }
+            delete $id_idx{$idnum};
+            # delete corresponding value from raw id arrays
+            delete $id_arrays{$idnum};
+        } else {
+            push(@id_covariate_vectors,[$idnum]);
+            for (my $i=0; $i< scalar(@{$covnames}); $i++){
+                push(@{$id_covariate_vectors[-1]},$id_arrays{$idnum}->{$covnames->[$i]});
+            }
+        }
+	}
+    if (scalar(keys %id_has_missing) > 0) {
+        print "Warning: Covariate value(s) (of ", join(",", keys %cov_has_missing), ") are missing of some IDs (", join(",", keys %id_has_missing), ")\n";
+        print "(Assumed missing completely at random, subjects dropped)\n";
+        # TODO: support other modes of missingness handling
+    }
 
 	my %categoryinfo=();
 	my @perc_5th=();
@@ -375,42 +422,14 @@ sub read_covdata
 		}
 	}
 
-    my @id_with_missing = ();
-    my @cov_with_missing = ();
-	my @id_covariate_vectors = ();
-	foreach my $idnum (sort {$a <=> $b} keys %id_arrays){ # for each id
-        # check for missingness
-        my $missing = 0;
-		for (my $i=0; $i< scalar(@{$covnames}); $i++){
-			if (!defined $id_arrays{$idnum}->{$covnames->[$i]}){
-                # croak("id $idnum undefined covariate ".$covnames->[$i]);
-                $missing = 1;
-                push @id_with_missing, $idnum;
-                push @cov_with_missing, $covnames->[$i];
-			}
-        }
 
-        # only consider non-missing subjects
-        unless ($missing) {
-            push(@id_covariate_vectors,[$idnum]);
-            for (my $i=0; $i< scalar(@{$covnames}); $i++){
-                push(@{$id_covariate_vectors[-1]},$id_arrays{$idnum}->{$covnames->[$i]});
-            }
-        }
+	for (my $i=1; $i< scalar(@{$covnames}); $i++){
+		unless (scalar(@{$cov_arrays{$covnames->[$i]}}) == scalar(@{$cov_arrays{$covnames->[$i-1]}})){
+			croak("unequal length $i and $i-1");
+		}
 	}
-    if (scalar(@id_with_missing) > 0) {
-        print "Warning: Covariate value(s) (of ", join(",", @cov_with_missing), ") are missing of some IDs (", join(",", @id_with_missing), ")\n";
-        print "(Assumed missing completely at random and dropped)\n";
-    }
 
-    # sanity check implemented before missingness code above, subject for removal
-	# for (my $i=1; $i< scalar(@{$covnames}); $i++){
-	# 	unless (scalar(@{$cov_arrays{$covnames->[$i]}}) == scalar(@{$cov_arrays{$covnames->[$i-1]}})){
-	# 		croak("unequal length $i and $i-1");
-	# 	}
-	# }
-
-	return(\@perc_5th,\@perc_95th,\@id_covariate_vectors,\@categorical,\%categoryinfo,\@id_with_missing,\@cov_with_missing);
+	return(\@perc_5th,\@perc_95th,\@id_covariate_vectors,\@categorical,\%categoryinfo,\%id_has_missing,\%cov_has_missing);
 }
 
 sub get_post_processing_data

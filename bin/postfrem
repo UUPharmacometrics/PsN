@@ -272,7 +272,7 @@ if (defined $options{'rawres_input'}) {
 $have_uncertainty || print "No covmatrix and no sir dir, no uncertainty (only point estimates available)\n";
 
 
-my ($covn,$resc,$omegaindex,$parn,$size,$means,$missing_ids,$missing_covs) = tool::frem::get_post_processing_data(model => $model);
+my ($covn,$resc,$omegaindex,$parn,$size,$means) = tool::frem::get_post_processing_data(model => $model);
 
 my @tvpar = ();
 my @cov_reference = ();
@@ -284,7 +284,7 @@ my @parnames = @{$parn};
 my @cov_means = @{$means};
 my $npar = scalar(@parnames);
 
-my ($cov_5th,$cov_95th,$id_covariate_vectors,$categorical,$categoryinfo) =
+my ($cov_5th,$cov_95th,$id_covariate_vectors,$categorical,$categoryinfo,%missing_id,%missing_cov) =
 	tool::frem::read_covdata(covnames => \@covnames,
 							 filename => $options{'frem_dataset'});
 
