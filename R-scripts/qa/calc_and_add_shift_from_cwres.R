@@ -43,7 +43,7 @@
     rename_(idv=idv)
   
   # get derivatives from linearized model
-  mean_shifts_table <- read.table(file.path(working.directory, paste0(sub('.mod.*','',model.filename),"_linbase.dta")), skip = 1, header=T)
+  mean_shifts_table <- read.table(file.path(working.directory, paste0(sub('.([^.]*)$','',model.filename),"_linbase.dta")), skip = 1, header=T)
   mean_shifts <- mean_shifts_table %>%
     filter(MDV==0) %>%
     bind_cols(idv_df) %>%

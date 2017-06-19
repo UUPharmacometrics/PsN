@@ -1,12 +1,12 @@
-get_param_var_tables <- function(directory) {
+get_param_var_tables <- function(directory,model.filename) {
   #for overview table
   param_var_file_exists <- TRUE
   fullblock_mod <- FALSE
   boxcox_mod <- FALSE
   add_etas_mod <- FALSE
-  if(file.exists(paste0(directory,sub('.mod.*','',model.filename),"_linbase.ext"))) {
+  if(file.exists(paste0(directory,sub('.([^.]*)$','',model.filename),"_linbase.ext"))) {
     
-    linbase_ofv <- .get_ext_ofv(paste0(directory,sub('.mod.*','',model.filename),"_linbase.ext"))
+    linbase_ofv <- .get_ext_ofv(paste0(directory,sub('.([^.]*)$','',model.filename),"_linbase.ext"))
 
     #full omega block
     if(file.exists(paste0(directory,"fullblock.mod"))) {
@@ -16,7 +16,7 @@ get_param_var_tables <- function(directory) {
         dofv_block <- round(as.numeric(linbase_ofv-linblock_ofv),1)
         # how many omega cov omegas were added
         boxcox_omegas <- get_omega_values(paste0(directory,"fullblock.ext"))$omegas_cov
-        linbase_omegas <- get_omega_values(paste0(directory,sub('.mod.*','',model.filename),"_linbase.ext"))$omegas_cov
+        linbase_omegas <- get_omega_values(paste0(directory,sub('.([^.]*)$','',model.filename),"_linbase.ext"))$omegas_cov
         add.par_block <- length(setdiff(colnames(boxcox_omegas),colnames(linbase_omegas)))
       } else {
         dofv_block <- "ERROR"
@@ -56,7 +56,7 @@ get_param_var_tables <- function(directory) {
         linaddeta_ofv <- .get_ext_ofv(paste0(directory,"add_etas.ext"))
         dofv_additional_eta <- round(as.numeric(linbase_ofv - linaddeta_ofv),1)
         addetas_omegas <- get_omega_values(paste0(directory,"add_etas.ext"))$omegas_var
-        linbase_omegas <- get_omega_values(paste0(directory,sub('.mod.*','',model.filename),"_linbase.ext"))$omegas_var
+        linbase_omegas <- get_omega_values(paste0(directory,sub('.([^.]*)$','',model.filename),"_linbase.ext"))$omegas_var
         add.par_additional_eta <- length(setdiff(colnames(addetas_omegas),colnames(linbase_omegas)))
       } else {
         dofv_additional_eta <- "ERROR"
