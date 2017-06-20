@@ -10,16 +10,22 @@ command_text <- function(directory) {
     }
   }
   
-  #vers_opt_file <- read.delim(file.path(working.directory,"version_and_option_info.txt"))
-  #for (i in 1:nrow(vers_opt_file)) {
-  #  if (grepl("^Run started:",as.character(vers_opt_file[i,1]))) {
-  #    run_start <- as.character(vers_opt_file[i,1])
-  #  }
-  #  if (grepl("^Run finished:",as.character(vers_opt_file[i,1]))) {
-  #    run_finish <- as.character(vers_opt_file[i,1])
-  #  }
-  #}
+  vers_opt_file <- read.delim(file.path(working.directory,"version_and_option_info.txt"))
+  for (i in 1:nrow(vers_opt_file)) {
+   if (grepl("^Run started:",as.character(vers_opt_file[i,1]))) {
+     run_start <- as.character(vers_opt_file[i,1])
+   }
+   if (grepl("^Run finished:",as.character(vers_opt_file[i,1]))) {
+     run_finish <- as.character(vers_opt_file[i,1])
+   }
+  }
+  if (!exists("run_finish")) {
+    run_finish <- as.vector(strsplit(as.character(Sys.time())," "))
+    run_finish <- paste("Run finished:",run_finish[[1]][1],"at",run_finish[[1]][2])
+  }
   
-  out <- list(command=command)
+  out <- list(command=command,
+              run_start=run_start,
+              run_finish=run_finish)
   return(out)
 }

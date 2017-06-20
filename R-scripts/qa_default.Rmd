@@ -1,6 +1,5 @@
 ---
 title: "Quality assurance"
-date: '`r format(Sys.Date())`'
 output: pdf_document # delete if html file needed and set type <- 'html'
 header-includes: #needed to create a pdf file
     - \usepackage{colortbl}
@@ -141,6 +140,10 @@ overview_table <- overview_table_list$overview_table
 command_runtime <- command_text(directory=working.directory)
 ```
 Command: `r I(command_runtime$command)`
+
+`r I(command_runtime$run_start)`
+
+`r I(command_runtime$run_finish)`
 
 #Overview
 ```{r draw_overview_table,echo=F,results='asis',warning=FALSE}
