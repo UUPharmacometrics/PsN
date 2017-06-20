@@ -66,6 +66,8 @@ if( not defined $options{'frem_directory'} or (not -d $options{'frem_directory'}
 	die "must set -frem_directory to existing directory\n";
 }
 $options{'model'}=$options{'frem_directory'}.'/final_models/model_4.mod';
+$options{'base_model'}=$options{'frem_directory'}.'/intermediate_models/model_1.mod';
+$options{'base_model_covmat'}=$options{'frem_directory'}.'/intermediate_models/model_1.cov';
 $options{'frem_dataset'} = $options{'frem_directory'}.'/frem_dataset.dta';
 
 if( defined $options{'sir_directory'} and (-d $options{'sir_directory'}))  {
@@ -125,6 +127,133 @@ common_options::setup( \%options, 'postfrem' ); #calls set_globals etc, initiate
 
 require model;
 
+sub get_empty_matrix
+{
+    my %parm = validated_hash(\@_,
+        size => {isa => 'Int', optional => 0},
+    );
+    my $size = $parm{'size'};
+
+    my $mat = [];
+    for (my $i=0; $i<$size; $i++) {
+        my $col = [(0) x $size];
+        push @{$mat}, $col;
+    }
+
+    return $mat;
+}
+sub get_tri_coords
+{
+    my %parm = validated_hash(\@_,
+        num => {isa => 'Int', optional => 0},
+        size => {isa => 'Int', optional => 0},
+        num_zero_start => {isa => 'Bool', default => 1, optional => 1},
+    );
+    my $num = $parm{'num'};
+    my $size = $parm{'size'};
+    my $num_zero_start = $parm{'num_zero_start'};
+
+    my $count = $num_zero_start ? 0 : 1;
+    for (my $i=1; $i<=$size; $i++) {
+        for (my $j=1; $j<=$i; $j++) {
+            return ($i, $j) if ($num == $count);
+            $count++;
+        }
+    }
+    croak("Linear coordinate $num is out of bounds in ${size}x${size} triangle");
+    return (undef, undef);
+}
+sub get_lin_coord
+{
+    my %parm = validated_hash(\@_,
+        x => {isa => 'Int', optional => 0},
+        y => {isa => 'Int', optional => 0},
+        size => {isa => 'Int', optional => 0},
+        lin_zero_start => {isa => 'Bool', default => 1, optional => 1},
+    );
+    my $x = $parm{'x'};
+    my $y = $parm{'y'};
+    my $size = $parm{'size'};
+    my $lin_zero_start = $parm{'lin_zero_start'};
+
+    my $count = $lin_zero_start ? 0 : 1;
+    for (my $i=1; $i<=$size; $i++) {
+        for (my $j=1; $j<=$i; $j++) {
+            return $count if ($i == $x && $j == $y);
+            $count++;
+        }
+    }
+    croak("Coordinates ($x, $y) are out of bounds in ${size}x${size} triangle");
+    return undef;
+}
+sub write_covmatrix
+{
+    my %parm = validated_hash(\@_,
+        matrix => {isa => 'ArrayRef[ArrayRef]', optional => 0},
+        filename => {isa => 'Str', default => 1, optional => 0},
+        nthetas => {isa => 'Int', optional => 0},
+        nsigmas => {isa => 'Int', optional => 0},
+        nomegas => {isa => 'Int', optional => 0},
+    );
+    my $matrix = $parm{'matrix'};
+    my $filename = $parm{'filename'};
+    my $nthetas = $parm{'nthetas'};
+    my $nsigmas = $parm{'nsigmas'};
+    my $nomegas = $parm{'nomegas'};
+
+    # construct label vector
+    my @labels;
+    for (my $i=1; $i<=$nthetas; $i++) {
+        my $name = "THETA$i";
+        push @labels, $name;
+    }
+    for (my $i=1; $i<=$nsigmas; $i++) {
+        for (my $j=1; $j<=$i; $j++) {
+            my $name = "SIGMA($i,$j)";
+            push @labels, $name;
+        }
+    }
+    for (my $i=1; $i<=$nomegas; $i++) {
+        for (my $j=1; $j<=$i; $j++) {
+            my $name = "OMEGA($i,$j)";
+            push @labels, $name;
+        }
+    }
+
+    # copy and transpose
+    my $mat = [];
+    foreach my $col (@{$matrix}) {
+        my @col_copy;
+        foreach my $val (@{$col}) {
+            push @col_copy, $val;
+        }
+        push @{$mat}, \@col_copy;
+    }
+    linear_algebra::transpose($mat);
+
+    # output
+    open(my $fh, '>', $filename) or croak("Could not open $filename for writing");
+    print $fh "TABLE NO.     1: Covariance matrix output by write_covmatrix\n";
+    my $format = ("%-12s " x (scalar(@labels)+1));
+    printf $fh " $format\n", "NAME", @labels;
+    for (my $row=0; $row<scalar(@{$mat}); $row++) {
+        my $rvec = $matrix->[$row];
+        my $format = "%-12s ".("%12.5E " x scalar(@labels));
+        printf $fh " $format\n", $labels[$row], @{$rvec};
+    }
+    close $fh;
+}
+sub create_m4_covmatrix
+{
+    my %parm = validated_hash(\@_,
+        m1_covmatrix => {isa => 'ArrayRef[ArrayRef]', optional => 0},
+        m4_omega_matrix => {isa => 'ArrayRef[ArrayRef]', optional => 0},
+    );
+
+}
+
+
+
 ## Set the automatic renaming of modelfit directory
 
 my $main_directory = tool::get_rundir(create => 1,
@@ -150,9 +279,9 @@ if( not defined $options{'frem_dataset'})  {
 
 my $NA_string = ""; # for values missing when no uncertainty (point estimates only)
 
-my $model = model -> new ( eval( $eval_string ),
-			  filename                    => $options{'model'},
-			  ignore_missing_output_files => 1 );
+my $model = model->new ( eval( $eval_string ),
+                         filename => $options{'model'},
+                         ignore_missing_output_files => 1 );
 
 my $have_uncertainty;
 my $sampled_params_arr;
@@ -228,6 +357,7 @@ if (defined $options{'rawres_input'}) {
                 $covmatrix = $covmatrix_posdef;
                 $posdef_err=0;
             } else {
+                # covariance matrix not positive definite and not forcing: no uncertainty
                 $have_uncertainty=0;
             }
 		}
@@ -265,12 +395,10 @@ if (defined $options{'rawres_input'}) {
             $have_uncertainty=1;
         }
 	} else {
-        # no sir directory & no covariance matrix: no uncertainty (point estimate mode)
+        # no sir directory & no covariance matrix: no uncertainty
         $have_uncertainty=0;
 	}
 }
-$have_uncertainty || print "No covmatrix and no sir dir, no uncertainty (only point estimates available)\n";
-
 
 my ($covn,$resc,$omegaindex,$parn,$size,$means) = tool::frem::get_post_processing_data(model => $model);
 
@@ -287,7 +415,6 @@ my $npar = scalar(@parnames);
 my ($cov_5th,$cov_95th,$id_covariate_vectors,$categorical,$categoryinfo) =
 	tool::frem::read_covdata(covnames => \@covnames,
 							 filename => $options{'frem_dataset'});
-
 
 for (my $i=0; $i<scalar(@covnames); $i++){
 	my $cn = $covnames[$i];
@@ -350,14 +477,6 @@ if ($have_uncertainty) {
     }
 }
 
-
-
-
-chdir($main_directory); #created by tool::get_rundir
-
-
-
-
 my $index=0;
 unless (scalar(@labels)==$size){
 	croak("size is $size but label count is ".scalar(@labels));
@@ -377,6 +496,247 @@ unless (scalar(@labels)==$size){
 #}
 
 my $id_count = scalar(@{$id_covariate_vectors});
+
+# M1 uncertainty can be propagated down as a fallback for missing M4 uncertainty
+unless ($have_uncertainty) {
+    print "No covmatrix and no sir dir, trying to propagate model 1 (base model) uncertainty\n";
+    my $base_model = model->new( eval( $eval_string ),
+                                 filename => $options{'base_model'},
+                                 ignore_missing_output_files => 1 );
+    if (defined $base_model->outputs and defined $base_model->outputs->[0]) {
+		$base_model->update_inits( from_output => $base_model->outputs->[0],
+							       ensure_posdef => 0,
+							  	   ignore_missing_parameters => 0,
+							  	   update_fix => 0 );
+
+		my $base_covmatrix;
+		if ($base_model->outputs->[0]->get_single_value(attribute => 'covariance_step_successful')) {
+			$base_covmatrix = tool::sir::get_nonmem_covmatrix(output => $base_model->outputs->[0]);
+			my $posdef_err = tool::sir::check_matrix_posdef(matrix => $base_covmatrix);
+            if ($posdef_err == 1) {
+                print "Covariance matrix is numerically not positive definite (check that model_1 covariance step is OK)\n".
+                      "(as checked with Cholesky decomposition without pivoting)\n";
+            } else {
+                # M1 has good uncertainty which we'll use
+                my $parameter_hash = output::get_nonmem_parameters(output => $model->outputs->[0]);
+                my $base_parameter_hash = output::get_nonmem_parameters(output => $base_model->outputs->[0]);
+
+                my $opt_file = $options{'frem_directory'}.'/version_and_option_info.txt';
+                my $opt_read;
+                my %skip_omegas = [];
+                if (-e $opt_file) {
+                    open my $fh, '<', $opt_file;
+                    while (<$fh>) {
+                        if (/^-skip_omegas=(.*)$/) {
+                            my @skips = ();
+                            if ($1 ne "") {
+                                chomp($1);
+                                @skips = split(/,/, $1);
+                            }
+                            %skip_omegas = map { $_ => 1 } @skips;
+                            $opt_read = 1;
+                        }
+                    }
+                    close $fh;
+                }
+
+                if (keys %skip_omegas == 0) {
+                    # get full omega matrices of M4 (including 0:s where none were estimated)
+                    my $om_mat = $model->problems->[0]->get_matrix(type => 'omega', start_row => 1);
+
+                    # get full SE matrix of M1 in table form (needed to not remove 0-rows and -cols) and create array matrix form
+                    my $base_covmat_table = nmtablefile->new(filename => $options{'base_model_covmat'})->get_table(index => 0);
+                    my $base_covmat_header = $base_covmat_table->get_header();
+                    my $base_covmat_size = scalar(@{$base_covmat_table->columns})-1; # skip NAME column
+                    my $base_covmat_startom;
+                    my $base_covmat = [];
+                    for (my $i=1; $i<=$base_covmat_size; $i++) {
+                        if ($base_covmat_header->[$i] =~ /^OMEGA/ && ! $base_covmat_startom) {
+                            $base_covmat_startom = $i-1;
+                        }
+                        push @{$base_covmat}, $base_covmat_table->get_column(index => $i);
+                    }
+
+                    # sizes (without correlation terms)
+                    my $thetas = $model->nthetas;
+                    my $sigmas = $model->nsigmas->[0];
+                    my $omegas = $model->nomegas->[0];
+                    my $base_thetas = $base_model->nthetas;
+                    my $base_sigmas = $base_model->nsigmas->[0];
+                    my $base_omegas = $base_model->nomegas->[0];
+                    # sizes with correlation terms
+                    my $covmat_sigmas = ($sigmas**2-$sigmas)/2 + $sigmas;
+                    my $covmat_omegas = ($omegas**2-$omegas)/2 + $omegas;
+                    my $covmat_parcov_omegas = $npar*scalar(@{$covn});
+                    my $covmat_size = $thetas + $covmat_sigmas + $covmat_omegas;
+                    my $base_covmat_sigmas = ($base_sigmas**2-$base_sigmas)/2 + $base_sigmas;
+                    my $base_covmat_omegas = ($base_omegas**2-$base_omegas)/2 + $base_omegas;
+                    my $base_covmat_size = $base_thetas + $base_covmat_sigmas + $base_covmat_omegas;
+                    # parameter types in covmatrices
+                    my @base_ptype = (
+                        ('theta') x $base_thetas,
+                        ('sigma') x $base_covmat_sigmas,
+                        ('omega') x $base_covmat_omegas,
+                    );
+                    my %base_ptype_start = (
+                        'theta' => 0,
+                        'sigma' => $base_thetas,
+                        'omega' => ($base_thetas + $base_covmat_sigmas),
+                    );
+                    my @ptype = (
+                        ('theta') x ($thetas - scalar(@{$covn})),
+                        ('cov-theta') x scalar(@{$covn}),
+                        ('sigma') x $base_covmat_sigmas,
+                        ('cov-sigma') x ($covmat_sigmas - $base_covmat_sigmas),
+                        ('omega') x $base_covmat_omegas,
+                        ('parcov-omega') x $covmat_parcov_omegas,
+                        ('cov-omega') x ($covmat_omegas - $base_covmat_omegas - $covmat_parcov_omegas),
+                    );
+                    my %ptype_start = ('theta' => 0);
+                    for (my $i=1; $i<scalar(@ptype); $i++) {
+                        $ptype_start{$ptype[$i]} = $i if ($ptype[$i] ne $ptype[$i-1]);
+                    }
+
+                    # construct empty SE matrix of M4
+                    my $covmat = get_empty_matrix(size => $covmat_size);
+
+                    # get effective number of subjects (estimated information content) for each omega of M4
+                    my @eff_n = ($id_count) x ($covmat_size); # default to maximum information
+                    for (my $i=0; $i<$covmat_size; $i++) {
+                        if ($ptype[$i] eq 'omega' || $ptype[$i] eq 'parcov-omega') { # omega's associated with PK parameters do not have perfect information
+                            # get omega ordinal number (linear omega coordinate)
+                            my $om_i = $i - $ptype_start{'omega'};
+
+                            # get matrix coordinates and corresponding variance estimates for both in correlation
+                            my @om_tri = get_tri_coords(num => $om_i, size => $omegas, num_zero_start => 1);
+                            my @var = ($om_mat->[$om_tri[0]-1]->[$om_tri[0]-1], $om_mat->[$om_tri[1]-1]->[$om_tri[1]-1]);
+                            # print "\nLinear om $om_i : OMEGA($om_tri[0], $om_tri[1]) : var $var[0] & var $var[1]\n";
+
+                            # calculate information content for both and choose the lowest for this correlation
+                            my @eff = (0, 0);
+                            for (my $i=0; $i<=1; $i++) {
+                                if ($om_tri[$i] > $base_omegas) {
+                                    $eff[$i] = $id_count;
+                                } else {
+                                    my $base_lin = get_lin_coord(x => $om_tri[$i], y => $om_tri[$i], size => $omegas, lin_zero_start => 1);
+                                    $base_lin = $base_lin + $base_ptype_start{'omega'};
+                                    my $se = sqrt($base_covmat->[$base_lin]->[$base_lin]);
+                                    # print "se $se\n";
+                                    $eff[$i] = 1 + 2*($var[$i]**2 / $se**2);
+                                    if ($eff[$i] > $id_count) {
+                                        print "Warning: SE of OMEGA($om_tri[$i],$om_tri[$i]) estimated with high effective N=$eff[$i] (compare to Nsubj=$id_count)\n";
+                                    }
+                                }
+                            }
+                            # print "eff $eff[0] & eff $eff[1]\n";
+                            $eff_n[$i] = ($eff[0] < $eff[1]) ? $eff[0] : $eff[1];
+                        }
+                        # TODO: adjust effective number of subjects also for covariates (e.g. when missing)
+                    }
+
+                    # fill M4 covariance matrix (copy + calculate diagonal for new estimators)
+                    for (my $col=0; $col<$covmat_size; $col++) {
+                        for (my $row=0; $row<=$col; $row++) {
+                            if (    $ptype[$col] eq 'theta' || $ptype[$col] eq 'omega' || $ptype[$col] eq 'sigma'
+                                and $ptype[$row] eq 'theta' || $ptype[$row] eq 'omega' || $ptype[$row] eq 'sigma') { # must exist in old matrix
+                                # get index of parameter type (0 for first theta, first omega or first sigma)
+                                my $col_par_i = $col - $ptype_start{ $ptype[$col] };
+                                my $row_par_i = $row - $ptype_start{ $ptype[$row] };
+
+                                # get corresponding column and row of old matrix
+                                my $old_col = $col_par_i + $base_ptype_start{ $ptype[$col] };
+                                my $old_row = $row_par_i + $base_ptype_start{ $ptype[$row] };
+
+                                # copy element from old matrix
+                                my $old_val = $base_covmat->[$old_col]->[$old_row];
+                                if ($old_val != 0) {
+                                    $covmat->[$col]->[$row] = $old_val;
+                                    # just debug output
+									my @names;
+                                    my @types = ($ptype[$col], $ptype[$row]);
+                                    my @indices = ($col_par_i, $row_par_i);
+		                            for (my $i=0; $i<=1; $i++) {
+                                        my $type = $types[$i];
+                                        my $index = $indices[$i];
+                                        if ($type eq 'theta') {
+                                            push @names, "THETA".($index+1);
+                                        } elsif ($type eq 'omega') {
+                                            my ($num_a, $num_b) = get_tri_coords(num => $index, size => $omegas, num_zero_start => 1);
+                                            push @names, "OMEGA($num_a,$num_b)";
+                                        } elsif ($type eq 'sigma') {
+                                            my ($num_a, $num_b) = get_tri_coords(num => $index, size => $sigmas, num_zero_start => 1);
+                                            push @names, "SIGMA($num_a,$num_b)";
+                                        }
+                                    }
+                                    printf "SE for %-12s - %-12s copied over (%12.5E)\n", $names[0], $names[1], $old_val;
+                                }
+                            } elsif ($col == $row) { # fill diagonal
+                                my $se = 0; # e.g. for cov-sigma (since FREM sigma is fixed)
+                                if ($ptype[$col] eq 'cov-theta') {
+                                    $se = 0; # TODO: might do something smarter here
+                                } elsif ($ptype[$col] eq 'parcov-omega' || $ptype[$col] eq 'cov-omega') {
+                                    my $om_i = $col - $ptype_start{'omega'};
+                                    my @om_tri = get_tri_coords(num => $om_i, size => $omegas, num_zero_start => 1);
+                                    if ($om_tri[0] == $om_tri[1]) { # variance estimator
+                                        my $var = $om_mat->[$om_tri[0]-1]->[$om_tri[1]-1];
+                                        $se = $var*sqrt(2/($eff_n[$col]-1));
+                                    } else { # covariance estimator
+                                        my @var = ($om_mat->[$om_tri[0]-1]->[$om_tri[0]-1], $om_mat->[$om_tri[1]-1]->[$om_tri[1]-1]);
+                                        my $covar = $om_mat->[$om_tri[0]-1]->[$om_tri[1]-1];
+                                        $se = sqrt(($covar^2 + $var[0]*$var[1])/$eff_n[$col])
+                                    }
+                                    # TODO: get 4th moment from phi file and use to estimate better uncertainty
+                                }
+                                if ($se != 0) {
+                                    my $val = $se**2;
+                                    $covmat->[$col]->[$row] = $val;
+                                    # just debug output
+									my @names;
+                                    my @types = ($ptype[$col], $ptype[$row]);
+                                    my @indices = ($col, $row);
+		                            for (my $i=0; $i<=1; $i++) {
+                                        my $type = $types[$i];
+                                        my $index = $indices[$i];
+                                        if ($type eq 'cov-theta') {
+                                            $index = $index - $ptype_start{'theta'};
+                                            push @names, "THETA".($index+1);
+                                        } elsif ($type eq 'parcov-omega' || $type eq 'cov-omega') {
+                                            $index = $index - $ptype_start{'omega'};
+                                            my ($num_a, $num_b) = get_tri_coords(num => $index, size => $omegas, num_zero_start => 1);
+                                            push @names, "OMEGA($num_a,$num_b)";
+                                        }
+                                    }
+                                    printf "SE for %-12s - %-12s set to new  (%12.5E)\n", $names[0], $names[1], $val;
+                                }
+                            }
+                        }
+                        # symmetrize
+                        for (my $i=0; $i<$col; $i++) {
+                            $covmat->[$i]->[$col] = $covmat->[$col]->[$i];
+                        }
+                    }
+
+                    write_covmatrix(matrix => $covmat,
+                                    filename => 'test.cov',
+                                    nthetas => $thetas, nsigmas => $sigmas, nomegas => $omegas);
+                    $have_uncertainty = 1;
+                } else {
+                    # print "Could not read skipped omega status from version_and_option_info.txt\n";
+                    print "Skipped omegas not yet supported for M1 uncertainty propagation\n";
+                }
+            }
+        } else {
+            print "Covariance step of model_1 was not succesful or not run\n";
+        }
+    } else {
+        die "No output from model_1 in frem directory";
+    }
+}
+$have_uncertainty || print "All attempts at getting uncertainty failed (only point estimates available)\n";
+
+
+chdir($main_directory); #created by tool::get_rundir
+
 
 my %coeff_arrays=();
 my %variance_arrays=();
@@ -720,7 +1080,7 @@ my @templatecode = (
 	"source(file.path(rscripts.directory,'frem','ID_ratio_function.R',".'fsep = .Platform$file.sep))',
 	"source(file.path(rscripts.directory,'frem','parameter_ratio_function.R',".'fsep = .Platform$file.sep))',
 	"output.format <- 'pdf'",
-	
+
 	"if((file.exists(idfile) || file.exists(frem.ratio)) && ",
 	"	 file.exists(covdatafile) && file.exists(pardatafile)){" ,
 	"	covdata <- read.csv(covdatafile,header = T, as.is = T)",
