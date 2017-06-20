@@ -308,6 +308,9 @@ Default not set. In each step, after selecting the covariate to add, rerun non-l
 \optconfig{epsilon}{0}
 Default set. Linearize with respect to epsilons in addition to etas. Disable with epsilon=0 in the configuration file or -no-epsilon on the command-line, then no linearization with respect to epsilon is performed. 
 \nextopt
+    \optname{nointer}
+        Don't use interaction. Default is off.
+    \nextopt
 \optconfig{error}{add,prop,propadd or user}
 No default. Only allowed to set when -no-epsilon is set. Use an approximate linearization of the error model instead of exact linearization with respect to epsilons. Alternatives are add for additive, prop for proportional, propadd for proportional plus additive and user for user defined. 
 

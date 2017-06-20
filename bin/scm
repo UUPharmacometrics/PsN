@@ -44,6 +44,7 @@ my %optional_options = (
     "parallel_states!" => '',
     "error:s"=> '',
     "estimate_fo!" => '',                    
+    "nointer!" => '',
 );
 
 my $res = GetOptions( \%options, 
@@ -276,6 +277,12 @@ $help_text{-estimate_fo} = <<'EOF';
     If this option is set, use first order method to estimate the linearized
     model.
 EOF
+$help_text{-nointer} = <<'EOF';
+-nointer
+
+    Set to not use interaction in linearization. Default is off. 
+EOF
+
 
 common_options::online_help('scm', \%options, \%help_text, \%required_options, \%optional_options);
 
@@ -377,6 +384,8 @@ if ($config_file->linearize){
 		if $config_file->error_code();
 	die "Option -derivatives_data is only allowed together with option -linearize" 
 		if $config_file->derivatives_data();
+    die "Option -nointer is only allowed together with option -linearize"
+        if $config_file->nointer();
 }
 
 
@@ -452,6 +461,7 @@ if( $direction eq 'forward' or $direction eq 'both' ){
 						 p_backward => $p_backward,
 						 ofv_backward => $ofv_backward,
                          estimate_fo => $options{'estimate_fo'}, 
+                         nointer => $options{'nointer'},
                      );
 	
 	$scm-> print_options (cmd_line => $cmd_line,
@@ -499,6 +509,7 @@ if( $direction eq 'backward' ){
 			  models	=> $models_array,
 			  config_file => $config_file,
               estimate_fo => $options{'estimate_fo'},
+              nointer => $options{'nointer'},
           );
 
 

@@ -36,6 +36,7 @@ my %optional_options = (
     'parameters:s' => undef,
     'fo!' => undef,
     'lst_file:s' => undef,
+    'nointer!' => undef,
 );
 
 my $res = GetOptions( \%options,
@@ -143,6 +144,12 @@ $help_text{-lst_file} = <<'EOF';
       Default is to use an lst-file with the same name as the model.
 EOF
 
+$help_text{-nointer} = <<'EOF';
+      -nointer
+
+      Don't use interaction in the linearized model. Default is off
+EOF
+
 common_options::online_help( 'qa', \%options, \%help_text, \%required_options, \%optional_options);
 common_options::setup( \%options, 'qa' ); #calls set_globals etc, initiates random sequence
 
@@ -191,6 +198,7 @@ my $qa = tool::qa->new(
     cmd_line => $cmd_line,
     fo => $options{'fo'},
     lst_file => $options{'lst_file'},
+    nointer => $options{'nointer'},
 );
 
 $qa->print_options(

@@ -30,6 +30,7 @@ has 'parameters' => ( is => 'rw', isa => 'Str' );       # A comma separated list
 has 'fo' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'lst_file' => ( is => 'rw', isa => 'Str' );
 has 'cmd_line' => ( is => 'rw', isa => 'Str' );         # Used as a work around for calling scm via system
+has 'nointer' => ( is => 'rw', isa => 'Bool', default => 0 );
 
 has 'resmod_idv_table' => ( is => 'rw', isa => 'Str' ); # The table used by resmod
 
@@ -73,6 +74,7 @@ sub modelfit_setup
         estimate_fo => $self->fo, 
         extra_table_columns => \@table_columns,
         lst_file => $lst_file,
+        nointer => $self->nointer,
     );
 
     $linearize->run();
@@ -189,12 +191,16 @@ sub modelfit_setup
             if ($self->fo) {
                 $fo = "-estimate_fo";
             }
+            my $nointer = "";
+            if ($self->nointer) {
+                $nointer = "-nointer";
+            }
 
             eval {
 				if($dev) {
-					system("scm config.scm $scm_options $fo");       # FIXME: system for now
+					system("scm config.scm $scm_options $fo $nointer");       # FIXME: system for now
 				} else {
-					system("scm-".$vers." config.scm $scm_options $fo");       # FIXME: system for now
+					system("scm-".$vers." config.scm $scm_options $fo $nointer");       # FIXME: system for now
 				}
             };
             $self->_to_qa_dir();

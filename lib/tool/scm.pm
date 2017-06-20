@@ -98,6 +98,7 @@ has 'original_nonlinear_model' => ( is => 'rw', isa => 'model' );       # If lin
 has 'keep_covariance' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'estimate_fo' => ( is => 'rw', isa => 'Bool', default => 0 );   # If linearizing use FO to estimate the linearized model
 has 'extra_table_columns' => ( is => 'rw', isa => 'ArrayRef[Str]' ); # Set to array of colnames to add to an extra data table output by derivatives.mod
+has 'nointer' => ( is => 'rw', isa => 'Bool', default => 0 );   # Set to not use interaction columns in linearization (set D_EPSETA to 0)
 
 
 sub BUILD
@@ -1985,7 +1986,11 @@ sub linearize_setup
 			my $com = defined $comresno ? $comresno + 1 : 1;
 			for(my $i= 1; $i<=$nEPS;$i++ ){
 				for(my $j= 1; $j<=$nETA;$j++ ){
-					push( @{$code},"\"  COM($com)=$H($i,".($j+1).")" );
+                    if (not $self->nointer) {
+					    push( @{$code},"\"  COM($com)=$H($i,".($j+1).")" );
+                    } else {
+                        push( @{$code}, "\"  COM($com) = 0");
+                    }
 					push( @tablestrings, "COM($com)=D_EPSETA$i"."_$j");
 					$table_highprec++;
 					push( @inputstrings, "D_EPSETA$i"."_$j");
