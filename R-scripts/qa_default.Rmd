@@ -242,8 +242,9 @@ if(sd_parcov_file_exists) {
   print(sd_parcov_tab)
 }
 ```
+Unexplained variability in eta of parameters conditional on none, one or all covariates. That is the expected variability with a structural covariate-parameter relationship.
 
-```{r draw_frem_plots,echo=F,message=F,warning=F,results='asis',fig.width=11,fig.height=16,fig.keep="high",fig.align="center"}
+```{r draw_frem_plots,echo=F,message=F,warning=F,results='asis',fig.width=11,fig.height=15,fig.keep="high",fig.align="center"}
 if((file.exists(paste0(working.directory,"/postfrem_run/frem_ratio.csv")) || 
    file.exists(paste0(working.directory,"/postfrem_run/frem_id_ratios.csv"))) && 
    file.exists(paste0(working.directory,"/postfrem_run/covdata.csv")) &&
@@ -254,12 +255,14 @@ if((file.exists(paste0(working.directory,"/postfrem_run/frem_ratio.csv")) ||
     inTable_frem <- read.csv(file.path(working.directory,"postfrem_run","frem_ratio.csv"),header = T, as.is = T)
 	  cov_effect_on_param_plots <- parameter_ratio(inTable_frem,covdata,pardata)$plots
 	  grid.draw(marrangeGrob(cov_effect_on_param_plots,nrow=2,ncol=1,top=''))
+	  cat("5th and 95th percentile of each covariate and the size of the effect on parameter (assuming log-normal). The bands show 90% confidence interval around the point estimate. Categorical covariates are compared to the other category.")
 	  grid.newpage()
   }
   if(file.exists(paste0(working.directory,"/postfrem_run/frem_id_ratios.csv"))) {
     frem_id <- read.csv(file.path(working.directory,"postfrem_run","frem_id_ratios.csv"), header = T, as.is = T)
 	  indiv_for_param_plots <- ID_ratio(frem_id,covdata,pardata)$plots
 	  grid.draw(marrangeGrob(indiv_for_param_plots,nrow=2,ncol=1,top=''))
+	  cat("Most extreme individuals (in both directions) in terms of expected effect size of their covariate sets, on parameter (assuming log-normal). The bands show 90% confidence interval around the point estimate.")
 	  grid.newpage()
   }
 }
