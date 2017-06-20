@@ -25,7 +25,7 @@ get_ii_table <- function(raw.results.file,skipped.id.file,cutoff){
       
       # find influential individuals, where delta ofv values are bigger than cutoffs
       if(any(cdd.data$dofv > cutoff)) {
-        ii_table <- subset(cdd.data,dofv > cutoff)
+        ii_table <- as.data.frame(subset(cdd.data,dofv > cutoff))
         ii_table <- ii_table[order(ii_table$dofv,decreasing = T),]
         ii_table[,2] <- round(as.numeric(ii_table[,2]), 1)
         ii_table <- ii_table %>%

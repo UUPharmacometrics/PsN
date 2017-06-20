@@ -52,7 +52,9 @@ for (i in 1:length(rscript)) {
 }
 
 #which resmod_ folders are in the working directory
-idv_all <- which_resmod_folders(directory=working.directory)
+resmod_list <- which_resmod_folders(directory=working.directory,idv_name)
+idv_all <- resmod_list$all_idvs
+vpc_captions <- resmod_list$vpc_captions
 ```
 
 ```{r structural_model_calculations,results='hide',echo=FALSE,message=FALSE,warning=FALSE}
@@ -180,6 +182,8 @@ for(i in 1:length(idv_all)) {
       #vpc plots
       vpc_plot <- plot_structural_vpc(obs,sim,shift_tab,idv=idv_all[i])
       print(vpc_plot)
+      cat("\n\n")
+      cat(vpc_captions[i])
     }
   }
   cat("\n\\newpage\n")
@@ -301,6 +305,7 @@ if(file.exists(file.path(working.directory,"simeval_run/raw_all_iofv.csv"))) {
   n.subjects <- list_i_ofv_res$n.subjects
   # Make a boxplot
   boxplot_i_ofv_res(list_i_ofv_res,n.subjects)
+  cat("High iOFV RES values indicate subjects for which the model describe the data worse than expected. The unit is in SDs different from the expected goodness of fit based on OFV of the observed data relative OFV of simulated data from model.")
 }
 ```
 
