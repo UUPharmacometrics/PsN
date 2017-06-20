@@ -10,18 +10,16 @@ command_text <- function(directory) {
     }
   }
   
-  vers_opt_file <- read.delim(file.path(working.directory,"version_and_option_info.txt"))
-  for (i in 1:nrow(vers_opt_file)) {
-    if (grepl("^Run started:",as.character(vers_opt_file[i,1]))) {
-      run_start <- as.character(vers_opt_file[i,1])
-    }
-    if (grepl("^Run finished:",as.character(vers_opt_file[i,1]))) {
-      run_finish <- as.character(vers_opt_file[i,1])
-    }
-  }
+  #vers_opt_file <- read.delim(file.path(working.directory,"version_and_option_info.txt"))
+  #for (i in 1:nrow(vers_opt_file)) {
+  #  if (grepl("^Run started:",as.character(vers_opt_file[i,1]))) {
+  #    run_start <- as.character(vers_opt_file[i,1])
+  #  }
+  #  if (grepl("^Run finished:",as.character(vers_opt_file[i,1]))) {
+  #    run_finish <- as.character(vers_opt_file[i,1])
+  #  }
+  #}
   
-  out <- list(command=command,
-              run_start=run_start,
-              run_finish=run_finish)
+  out <- list(command=command)
   return(out)
 }
