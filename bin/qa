@@ -195,7 +195,7 @@ my $qa = tool::qa->new(
 
 $qa->print_options(
     cmd_line => $cmd_line,
-    toolname => 'resmod',
+    toolname => 'qa',
     local_options => [keys %optional_options],
     common_options => \@common_options::tool_options
 );
@@ -203,4 +203,4 @@ $qa->print_options(
 $qa->run();
 $qa->print_results();
 
-ui->print(category => 'resmod', message  => "Residual modelling done.\n");
+ui->print(category => 'qa', message  => "Quality assurance done.\n");
