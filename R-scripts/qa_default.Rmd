@@ -138,7 +138,13 @@ overview_table <- overview_table_list$overview_table
 
 ```{r command_text_from_command_line,echo=F,results='asis',warning=FALSE,message=F}
 command_runtime <- command_text(directory=working.directory)
+cat("Command: ",command_runtime$command)
+if (file.exists(file.path(working.directory,"version_and_option_info.txt"))) {
+cat(command_runtime$run_start)
+cat(command_runtime$run_finish)
+}
 ```
+
 Command: `r I(command_runtime$command)`
 `r I(command_runtime$run_start)`
 `r I(command_runtime$run_finish)`
