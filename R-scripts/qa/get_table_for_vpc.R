@@ -3,21 +3,27 @@ get_tables_for_vpc <- function(obs_table,obs_extra_table,sim_table,idv_all) {
   if(make_vpc) {
     obs <- read_nm_tables(obs_table)
     extra_obs <- read_nm_tables(obs_extra_table)
-    if(all(colnames(obs)!="DV")) {
-      obs <- cbind(obs,"DV"=extra_obs[,"DV"])
+    if(any(colnames(extra_obs)=="DV")) {
+      if(all(colnames(obs)!="DV")) {
+        obs <- cbind(obs,"DV"=extra_obs[,"DV"])
+      }
+    } else {
+      make_vpc <- FALSE # problem with synonyms in PsN, if in model is DV=MYDV, it will produce table with column MYDV, even if in $TABLE is DV
     }
-    if(all(colnames(obs)!="MDV")) {
-      obs <- cbind(obs,"MDV"=extra_obs[,"MDV"])
+
+    if(any(colnames(extra_obs)=="MDV")) {
+      if(all(colnames(obs)!="MDV")) {
+        obs <- cbind(obs,"MDV"=extra_obs[,"MDV"])
+      }
+      if(any(obs$MDV==1)) {
+        obs <- obs[which(obs$MDV==0),]
+        rownames(obs) <- NULL
+      }
+      if(any(extra_obs$MDV==1)) {
+        extra_obs <- extra_obs[which(extra_obs$MDV==0),]
+        rownames(extra_obs) <- NULL
+      }
     }
-    if(any(obs$MDV==1)) {
-      obs <- obs[which(obs$MDV==0),]
-      rownames(obs) <- NULL
-    }
-    if(any(extra_obs$MDV==1)) {
-      extra_obs <- extra_obs[which(extra_obs$MDV==0),]
-      rownames(extra_obs) <- NULL
-    }
-    
     add_cols <- obs[,c(idv_all)]
     sim <- read_nm_tables(sim_table)
     sim_names <- colnames(sim)
