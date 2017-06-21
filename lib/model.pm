@@ -925,6 +925,82 @@ sub fixed
 	return \@fixed;
 }
 
+sub fillblock_fixed
+{
+    my $self = shift;
+    my %parm = validated_hash(\@_,
+        parameter_type => { isa => 'Str', optional => 0 },
+        # parameter_numbers => { isa => 'ArrayRef', optional => 1 },
+        problem_numbers => { isa => 'ArrayRef[Int]', optional => 1 },
+        # new_values => { isa => 'ArrayRef', optional => 1 },
+        # with_priors => { isa => 'Bool', default => 0, optional => 1 }
+    );
+    my $parameter_type = $parm{'parameter_type'};
+    # my @parameter_numbers = defined $parm{'parameter_numbers'} ? @{$parm{'parameter_numbers'}} : ();
+    my @problem_numbers = defined $parm{'problem_numbers'} ? @{$parm{'problem_numbers'}} : ();
+    # my @new_values = defined $parm{'new_values'} ? @{$parm{'new_values'}} : ();
+    # my $with_priors = $parm{'with_priors'};
+    # TODO: support parameter_numbers, new_values and with_priors
+
+    # Sets or gets the same as fixed() above but includes all correlation parameters which
+    # might not be in model (which might be considered "fixed" to 0). I.e. the size of the
+    # returned vectors are only dependent on amount of variance parameters (or thetas) in model.
+
+    unless ($parameter_type eq 'theta' || $parameter_type eq 'omega' || $parameter_type eq 'sigma') {
+        croak "parameter type '$parameter_type' not known";
+    }
+
+    # thetas have no blocks, just return
+    if ($parameter_type eq 'theta') {
+        my $fixed = $self->fixed(
+            parameter_type => 'theta',
+            # parameter_numbers => \@parameter_numbers,
+            problem_numbers => \@problem_numbers,
+            # new_values => \@new_values,
+            # with_priors => $with_priors,
+        );
+        return $fixed;
+    }
+
+    my $fixed = $self->fixed(
+        parameter_type => $parameter_type,
+		problem_numbers => \@problem_numbers,
+    );
+    my $indices = $self->indexes(
+        parameter_type => $parameter_type,
+		problem_numbers => \@problem_numbers,
+    );
+
+    my $fixed_arr = [];
+    my $fixed_hash = [];
+    for (my $problem=0; $problem<scalar(@{$indices}); $problem++) {
+        $fixed_arr->[$problem] = [];
+        $fixed_hash->[$problem] = {};
+
+        # fill hash with coord string => fixed
+        my $str;
+        for (my $i=0; $i<scalar(@{$indices->[$problem]}); $i++) {
+            $str = $indices->[$problem]->[$i];
+            $fixed_hash->[$problem]->{$str} = $fixed->[$problem]->[$i];
+        }
+        my @last_coords = $str =~ /(\d+)/g;
+        my $last_num = $last_coords[1];
+
+        # fill missing coord strings with implicit fix and push to array
+        for (my $i=1; $i<=$last_num; $i++) {
+            for (my $j=1; $j<=$i; $j++) {
+                $str = $parameter_type eq 'sigma' ? "SIGMA($i,$j)" : "OMEGA($i,$j)";
+                unless (defined $fixed_hash->[$problem]->{$str}) {
+                    $fixed_hash->[$problem]->{$str} = 1;
+                }
+                push @{$fixed_arr->[$problem]}, $fixed_hash->[$problem]->{$str};
+            }
+        }
+    }
+
+    return $fixed_arr;
+}
+
 sub fixed_or_same
 {
 	my $self = shift;
