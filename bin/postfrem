@@ -372,27 +372,28 @@ sub propagate_m1_to_m4_covmatrix
 
 				# copy element from old matrix
 				my $old_val = $m1_covmat->[$old_col]->[$old_row];
-				if ($old_val != 0) {
-					$covmat->[$col]->[$row] = $old_val;
-					# just debug output
-					my @names;
-					my @types = ($ptype[$col], $ptype[$row]);
-					my @indices = ($col_par_i, $row_par_i);
-					for (my $i=0; $i<=1; $i++) {
-						my $type = $types[$i];
-						my $index = $indices[$i];
-						if ($type eq 'theta') {
-							push @names, "THETA".($index+1);
-						} elsif ($type eq 'omega') {
-							my ($num_a, $num_b) = get_tri_coords(num => $index, size => $omegas, num_zero_start => 1);
-							push @names, "OMEGA($num_a,$num_b)";
-						} elsif ($type eq 'sigma') {
-							my ($num_a, $num_b) = get_tri_coords(num => $index, size => $sigmas, num_zero_start => 1);
-							push @names, "SIGMA($num_a,$num_b)";
-						}
-					}
-					printf "SE for %-12s - %-12s copied over (%12.5E)\n", $names[0], $names[1], $old_val;
-				}
+                $covmat->[$col]->[$row] = $old_val;
+
+                # just debug output
+                if ($options{'force_m1_propagation'}) {
+                    my @names;
+                    my @types = ($ptype[$col], $ptype[$row]);
+                    my @indices = ($col_par_i, $row_par_i);
+                    for (my $i=0; $i<=1; $i++) {
+                        my $type = $types[$i];
+                        my $index = $indices[$i];
+                        if ($type eq 'theta') {
+                            push @names, "THETA".($index+1);
+                        } elsif ($type eq 'omega') {
+                            my ($num_a, $num_b) = get_tri_coords(num => $index, size => $omegas, num_zero_start => 1);
+                            push @names, "OMEGA($num_a,$num_b)";
+                        } elsif ($type eq 'sigma') {
+                            my ($num_a, $num_b) = get_tri_coords(num => $index, size => $sigmas, num_zero_start => 1);
+                            push @names, "SIGMA($num_a,$num_b)";
+                        }
+                    }
+                    printf "SE for %-12s - %-12s copied over (%12.5E)\n", $names[0], $names[1], $old_val;
+                }
 			} elsif ($col == $row) { # fill diagonal
 				my $se = 0; # e.g. for cov-sigma (since FREM sigma is fixed)
 				if ($ptype[$col] eq 'cov-theta') {
@@ -410,27 +411,37 @@ sub propagate_m1_to_m4_covmatrix
 					}
 					# TODO: get 4th moment from phi file and use to estimate better uncertainty
 				}
-				if ($se != 0) {
-					my $val = $se**2;
-					$covmat->[$col]->[$row] = $val;
-					# just debug output
-					my @names;
-					my @types = ($ptype[$col], $ptype[$row]);
-					my @indices = ($col, $row);
-					for (my $i=0; $i<=1; $i++) {
-						my $type = $types[$i];
-						my $index = $indices[$i];
-						if ($type eq 'cov-theta') {
-							$index = $index - $ptype_start{'theta'};
-							push @names, "THETA".($index+1);
-						} elsif ($type eq 'parcov-omega' || $type eq 'cov-omega') {
-							$index = $index - $ptype_start{'omega'};
-							my ($num_a, $num_b) = get_tri_coords(num => $index, size => $omegas, num_zero_start => 1);
-							push @names, "OMEGA($num_a,$num_b)";
-						}
-					}
-					printf "SE for %-12s - %-12s set to new  (%12.5E)\n", $names[0], $names[1], $val;
-				}
+
+                my $element = $se**2;
+				$covmat->[$col]->[$row] = $element if ($se != 0);
+
+                # just debug output
+                if ($options{'force_m1_propagation'}) {
+                    my @names;
+                    my @types = ($ptype[$col], $ptype[$row]);
+                    my @indices = ($col, $row);
+                    for (my $i=0; $i<=1; $i++) {
+                        my $type = $types[$i];
+                        my $index = $indices[$i];
+                        if ($type =~ /theta$/) {
+                            $index = $index - $ptype_start{'theta'};
+                            push @names, "THETA".($index+1);
+                        } elsif ($type =~ /sigma$/) {
+                            $index = $index - $ptype_start{'sigma'};
+                            my ($num_a, $num_b) = get_tri_coords(num => $index, size => $sigmas, num_zero_start => 1);
+                            push @names, "SIGMA($num_a,$num_b)";
+                        } elsif ($type =~ /omega$/) {
+                            $index = $index - $ptype_start{'omega'};
+                            my ($num_a, $num_b) = get_tri_coords(num => $index, size => $omegas, num_zero_start => 1);
+                            push @names, "OMEGA($num_a,$num_b)";
+                        }
+                    }
+                    if ($se != 0) {
+                        printf "SE for %-12s - %-12s set to new  (%12.5E)\n", $names[0], $names[1], $element;
+                    } else {
+                        printf "SE for %-12s - %-12s set to zero (%12.5E)\n", $names[0], $names[1], $element;
+                    }
+                }
 			}
 		}
 		# symmetrize
@@ -838,7 +849,7 @@ if (defined $propagated_covmatrix) {
         nsigmas => $m4_nsigmas,
         nomegas => $m4_nomegas
     );
-    print "Reconstructed model_4 covariance matrix can be found as $filename in $options{'directory'}\n";
+    print "Constructed (base model uncertainty propagated) model_4 covariance matrix: $options{'directory'}$filename\n";
 }
 
 my %coeff_arrays=();
