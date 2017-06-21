@@ -441,6 +441,50 @@ sub propagate_m1_to_m4_covmatrix
 
 	return $covmat;
 }
+sub remove_params_in_covmatrix
+{
+    my %parm = validated_hash(\@_,
+        covmatrix => {isa => 'ArrayRef[ArrayRef]', optional => 0},
+        thetas => {isa => 'ArrayRef', optional => 0},
+        sigmas => {isa => 'ArrayRef', optional => 0},
+        omegas => {isa => 'ArrayRef', optional => 0},
+    );
+    my $covmatrix = $parm{'covmatrix'};
+    my $thetas = $parm{'thetas'};
+    my $sigmas = $parm{'sigmas'};
+    my $omegas = $parm{'omegas'};
+
+    my @params = (@{$thetas}, @{$sigmas}, @{$omegas});
+
+    my $nparams = scalar(@params);
+    my $ncols = scalar(@{$covmatrix});
+    croak "$nparams parameters while \$covmatrix has $ncols columns" if ($nparams != $ncols);
+
+    # get new size of matrix (after erasure)
+    my $new_size = 0;
+    foreach my $param (@params) {
+        $new_size++ unless ($param);
+    }
+    my $new_covmatrix = get_empty_matrix(size => $new_size);
+
+    # copy only non-marked parameters over
+    for (my $i=0, my $new_i=0; $i<$ncols; $i++) {
+        next if ($params[$i]);
+
+        my $nrows = scalar(@{$covmatrix->[$i]});
+        croak "column $i has $nrows rows but matrix has $ncols columns" if ($nrows != $ncols);
+
+        for (my $j=0, my $new_j=0; $j<scalar(@{$covmatrix->[$i]}); $j++) {
+            next if ($params[$j]);
+
+            $new_covmatrix->[$new_i]->[$new_j] = $covmatrix->[$i]->[$j];
+            $new_j++;
+        }
+        $new_i++;
+    }
+
+    return $new_covmatrix;
+}
 
 
 
@@ -517,8 +561,7 @@ my $m4_nomegas = $model->nomegas->[0];
 
 # get uncertainty and simulate parameter vectors
 my $have_uncertainty;
-my $has_propagated_m1;
-my $covmatrix; # only for disk write later
+my $propagated_covmatrix; # only for disk write later
 my $sampled_params_arr;
 my $match_labels;
 if (defined $options{'rawres_input'}) {
@@ -548,6 +591,7 @@ if (defined $options{'rawres_input'}) {
 						  ignore_missing_parameters => 0,
 						  update_fix => 0);
 
+    my $covmatrix;
     if ($model->outputs->[0]->get_single_value(attribute => 'covariance_step_successful')) {
 	    $covmatrix = tool::sir::get_nonmem_covmatrix(output => $model->outputs->[0]);
     } else {
@@ -604,7 +648,7 @@ if (defined $options{'rawres_input'}) {
 					# get full omega matrices of M4 (including 0:s where none were estimated)
 					my $m4_omegas = $model->problems->[0]->get_matrix(type => 'omega', start_row => 1);
 
-					$covmatrix = propagate_m1_to_m4_covmatrix(
+					$propagated_covmatrix = propagate_m1_to_m4_covmatrix(
 						m1_covmat => $m1_covmat,
 						m4_omegas => $m4_omegas,
 						npar => $npar,
@@ -616,7 +660,13 @@ if (defined $options{'rawres_input'}) {
 						skip_omegas => \@skip_omegas,
 					);
 					if (defined $covmatrix) {
-						$has_propagated_m1 = 1;
+                        # remove fixed parameters
+                        $covmatrix = remove_params_in_covmatrix(
+                            covmatrix => $propagated_covmatrix,
+                            thetas => $model->fillblock_fixed(parameter_type => 'theta')->[0],
+                            sigmas => $model->fillblock_fixed(parameter_type => 'sigma')->[0],
+                            omegas => $model->fillblock_fixed(parameter_type => 'omega')->[0],
+                        );
 					}
 				}
 			} else {
@@ -629,14 +679,14 @@ if (defined $options{'rawres_input'}) {
 	if (defined $covmatrix)	{
 		my $posdef_err = tool::sir::check_matrix_posdef(matrix => $covmatrix);
 		if ($posdef_err == 1){
-            if ($has_propagated_m1) {
+            if (defined $propagated_covmatrix) {
                 print "Covariance matrix is numerically not positive definite (check that covariance step is OK)\n".
                       "(as checked with Cholesky decomposition without pivoting)\n";
             } else {
                 print "Propagated model_1 uncertainty resulted in not numerically positive definite matrix\n".
                       "(this is to be expected; not all elements can be constructed)\n";
             }
-            if (defined $options{'force_posdef_covmatrix'} or $has_propagated_m1) {
+            if (defined $options{'force_posdef_covmatrix'} or defined $propagated_covmatrix) {
                 # force positive definite
                 print "Forcing matrix positive definite\n";
                 (my $covmatrix_posdef, my $count) = linear_algebra::get_symmetric_posdef($covmatrix);
@@ -779,10 +829,10 @@ unless (scalar(@labels)==$size){
 chdir($main_directory); #created by tool::get_rundir
 
 # write covariance matrix if m1 uncertainty has been used (i.e. we made this matrix)
-if ($has_propagated_m1) {
+if (defined $propagated_covmatrix) {
     my $filename = 'model_4.cov';
     write_covmatrix(
-        matrix => $covmatrix,
+        matrix => $propagated_covmatrix,
         filename => $filename,
         nthetas => $m4_nthetas,
         nsigmas => $m4_nsigmas,
