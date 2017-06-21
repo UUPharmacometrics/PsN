@@ -240,9 +240,9 @@ if(sd_parcov_file_exists) {
   sd_parcov_tab <- keep_symbols(sd_parcov_tab,type)
   sd_parcov_tab <- ztable_sub(sd_parcov_tab,type=type,colnames.bold = T,include.rownames = F,longtable = T,align="lll")
   print(sd_parcov_tab)
+  cat("Unexplained variability in eta of parameters conditional on none, one or all covariates. That is the expected variability with a structural covariate-parameter relationship.")
 }
 ```
-Unexplained variability in eta of parameters conditional on none, one or all covariates. That is the expected variability with a structural covariate-parameter relationship.
 
 ```{r draw_frem_plots,echo=F,message=F,warning=F,results='asis',fig.width=11,fig.height=15,fig.keep="high",fig.align="center"}
 if((file.exists(paste0(working.directory,"/postfrem_run/frem_ratio.csv")) || 
