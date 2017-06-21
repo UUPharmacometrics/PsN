@@ -6,7 +6,7 @@ which_resmod_folders <- function(directory,idv_name) {
   
   #order TIME,TAD,PRED
   order <- c(idv_name,"TAD","PRED")
-  vpc_captions_all <- c(paste0("VPC of observations (DV) vs. binned time (",idv_name,") before and after correcting for the estimated structural bias by TAD bin."),
+  vpc_captions_all <- c(paste0("VPC of observations (DV) vs. binned time (",idv_name,") before and after correcting for the estimated structural bias by ",idv_name," bin."),
                     "VPC of observations (DV) vs. binned time after dose (TAD) before and after correcting for the estimated structural bias by TAD bin.",
                     "VPC of observations (DV) vs. binned population predictions (PRED) before and after correcting for the estimated structural bias by PRED bin.")
   all_idvs <- c()
