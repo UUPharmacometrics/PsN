@@ -1,5 +1,5 @@
 \input{inputs/format_header.tex}
-\guidetitle{QA user guide}{2017-06-19}
+\guidetitle{QA user guide}{2017-06-21}
 
 \begin{document}
 
@@ -8,7 +8,7 @@
 
 
 \section{Overview}
-Qa is a tool.
+Quality assurance (qa) is a tool to assess the quality of a final model. The analysis is not done directly on the final model, but on certain model proxies to speed up the analysis time. The proxies include a linearized version of the final model and modelling on the residual error.
 
 Example
 \begin{verbatim}
@@ -19,11 +19,6 @@ qa pheno.mod -parameters=CL,V -covariates=CL,APGR
 
 \subsection{Required input}
 A model file is required on the command-line.
-
-\subsection{Constraints on the input model}
-\begin{itemize}
-	\item A fixed omega is not allowed if there are non-fixed omegas both before and after it
-\end{itemize}
 
 
 
@@ -74,6 +69,36 @@ A comma separated list of parameters
         Don't use interaction. Default is off.
     \nextopt
 \end{optionlist}
+
+\section{Known limitations and problems}
+
+Some limitations and problems will affect the ability to generate any output, other will impact one or some of the different evaluations, but still result in an output report. 
+
+\subsection{General limitations and problems}
+\begin{itemize}
+	\item There is no support in qa for categorical data, including handling censored continuous data using the M3/M4 likelihood-based methods
+	\item There is no support in qa for the first-order (FO) method. Testing with FOCE(I) has been extensive, and sparse with other methods (LAPLACE, SAEM, ITS, IMP and IMPMAP). BAYES has not been tested. 
+	\item With linearization and eta-epsilon interaction (INTER) individual estimates of empirical Bayes estimates (EBE) of parameters may end up in local minima. The most prominent sign of this is that differences in OFV between two models have a sign, different from that expected, i.e. a smaller model may have a lower OFV than a full model. The best remedy is to rerun the qa script with the option \verb|-nointer|, which will omit an update of the interaction terms in the linearization calculations.
+	\item Multiple variables, through the option \verb|-dvid|, is not yet implemented in the report although the relevant models are being estimated.
+	\item Automatic addition of interoccasion variability, implemented via \verb|-iov| is not yet functional.
+	\item Only parameters associated with an ETA can be used in the \verb|-parameter=| option
+    \item All covariates must be available in the dataset and declared in \$INPUT
+    \item Missing values for covariates must be coded using -99
+\end{itemize}
+
+\subsection{SCM}
+\begin{itemize}
+	\item The SCM requires parameters defined in \verb|-parameter=P| to be associated with the corresponding ETA in the format P=f(ETA(x)), i.e. where the ETA is on the left-hand side of the equation defining the parameter. Parameters need to be defined in \$PK or \$PRED, not \$ERROR.
+
+	\item There is no support in the QA version of SCM to handle multi-category covariates. A work-around is to define them as either continuous or as multiple bivariate covariates. The latter would require changes to the dataset. Naturally the QA investigation could be made more focused by not including these covariates in the evaluation by omitting them in the \verb|-categorical| option.
+\end{itemize}
+
+\subsection{FREM}
+\begin{itemize}
+	\item For time-varying covariates, only the baseline value will be used.
+	\item For multiple categorical covariates, missing combinations may make the model unstable. Such aan example would be the bivariate covariates SEX and GENOTYPE, with the category female-PM missing.
+	\item A fixed omega is not allowed in the model if there are non-fixed omegas both before and after it
+\end{itemize}
 
 
 \section{Results}

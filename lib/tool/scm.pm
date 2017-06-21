@@ -2670,6 +2670,7 @@ sub linearize_setup
     # If have MDV ignore all MDV != 0
     if (should_add_mdv(model => $original_model)) {
         $original_model->add_option(record_name => 'data', option_name => 'IGNORE(MDV.NEN.0)');
+        $original_model->problems->[0]->psn_record_order(1);   # In case $DATA was before $INPUT
     }
 
 	return $original_model;
