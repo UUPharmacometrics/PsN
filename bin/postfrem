@@ -279,7 +279,8 @@ sub propagate_m1_to_m4_covmatrix
 
 	if (scalar(@skip_omegas) > 0) {
 		# TODO: support skipped omegas
-		print "Skipped omegas not yet supported for M1 uncertainty propagation\n";
+		print "Skipped omegas not yet supported for uncertainty propagation; skipping\n";
+        return undef;
 	}
 
     # sizes (without correlation terms)
@@ -659,18 +660,18 @@ if (defined $options{'rawres_input'}) {
 					# get full omega matrices of M4 (including 0:s where none were estimated)
 					my $m4_omegas = $model->problems->[0]->get_matrix(type => 'omega', start_row => 1);
 
-					$propagated_covmatrix = propagate_m1_to_m4_covmatrix(
-						m1_covmat => $m1_covmat,
-						m4_omegas => $m4_omegas,
-						npar => $npar,
-						ncov => $ncov,
-						thetas => $m4_nthetas,
-						sigmas => $m4_nsigmas,
-						omegas => $m4_nomegas,
-						nsubjects => $id_count,
-						skip_omegas => \@skip_omegas,
-					);
-					if (defined $covmatrix) {
+                    $propagated_covmatrix = propagate_m1_to_m4_covmatrix(
+                        m1_covmat => $m1_covmat,
+                        m4_omegas => $m4_omegas,
+                        npar => $npar,
+                        ncov => $ncov,
+                        thetas => $m4_nthetas,
+                        sigmas => $m4_nsigmas,
+                        omegas => $m4_nomegas,
+                        nsubjects => $id_count,
+                        skip_omegas => \@skip_omegas,
+                    );
+					if (defined $propagated_covmatrix) {
                         # remove fixed parameters
                         $covmatrix = remove_params_in_covmatrix(
                             covmatrix => $propagated_covmatrix,
