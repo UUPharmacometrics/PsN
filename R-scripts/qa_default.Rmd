@@ -55,6 +55,7 @@ for (i in 1:length(rscript)) {
 resmod_list <- which_resmod_folders(directory=working.directory,idv_name)
 idv_all <- resmod_list$all_idvs
 vpc_captions <- resmod_list$vpc_captions
+resmod_dofv_table_captions <- resmod_list$resmod_dofv_table_captions
 ```
 
 ```{r structural_model_calculations,results='hide',echo=FALSE,message=FALSE,warning=FALSE}
@@ -151,6 +152,7 @@ overview_table <- keep_symbols(overview_table,type)
 overview_table <- ztable_sub(overview_table,type=type,include.rownames = F,colnames.bold = T,align="lrc")
 overview_table <- addrgroup(overview_table,rgroup=rgroup,n.rgroup=n.rgroup,cspan.rgroup=1)
 print(overview_table)
+cat("Overview of possible modifications to different model aspects, expected improvement in OFV as well as number of additional parameters used.")
 ```
 
 \pagebreak
@@ -171,6 +173,7 @@ for(i in 1:length(idv_all)) {
   first_table <- keep_symbols(resmod_structural_details[[i]]$first_table,type)
   first_table <- ztable_sub(first_table,type=type,include.colnames = F,include.rownames = F,longtable = T,align="lr")
   print(first_table)
+  cat(resmod_dofv_table_captions[i])
   second_table <- keep_symbols(resmod_structural_details[[i]]$second_table,type)
   second_table <- ztable_sub(second_table,type=type,colnames.bold = T,include.rownames = F,longtable = T,align="rlrr")
   second_table <- addcgroup(second_table,cgroup=c("","Estimated bias"),n.cgroup=c(1,2))
@@ -207,6 +210,7 @@ if(fullblock_mod) {
   full_omega_block_table <- keep_symbols(full_omega_block_table,type)
   full_omega_block_table <- ztable_sub(full_omega_block_table,type=type,colnames.bold=T,include.rownames=F,longtable=T,align="lr")
   print(full_omega_block_table)
+  cat("Estimated standard deviation (sd) and correlation (corr) as well as expected improvement in OFV when allowing for a full block correlation structure between subject-level random effects.")
 }
 ```
 
@@ -219,6 +223,7 @@ if(boxcox_mod) {
   boxcox_lambdas_table <- keep_symbols(boxcox_lambdas_table,type)
   boxcox_lambdas_table <- ztable_sub(boxcox_lambdas_table,type=type,colnames.bold=T,include.rownames=F,longtable=T,align="lr")
   print(boxcox_lambdas_table)
+  cat("Estimated shape parameters (Lambda) as well as expected improvement in OFV when estimating a Box-Cox transformation for each subject-level random effect.")
 }
 ```
 
@@ -230,6 +235,7 @@ covariates_extra_table <- keep_symbols(covariates_extra_table,type)
 align <- paste(c("l",rep("r",ncol(covariates_extra_table)-1)),collapse = '')
 covariates_extra_table <- ztable_sub(covariates_extra_table,type=type,colnames.bold = T,include.rownames = F,longtable = T,align=align)
 print(covariates_extra_table)
+cat("Model parameter covariate relationship, resulting improvement in OFV and estimated covariate coefficient. Furthermore, the sum of all univariate improvements in OFV ignoring between covariate correlations (sum(SCMu)), as well as joint improvement in OFV when taking correlations into account (FREM).")
 ```
 
 ```{r draw_sd_par_cov_table,echo=F,results='asis'}
@@ -275,6 +281,7 @@ if((file.exists(paste0(working.directory,"/postfrem_run/frem_ratio.csv")) ||
 resmod_ruv_models_table <- keep_symbols(resmod_ruv_models_table,type)
 resmod_ruv_models_table <- ztable_sub(resmod_ruv_models_table,type=type,colnames.bold = T,include.rownames = F,longtable = T,align="lrc")
 print(resmod_ruv_models_table)
+cat("Residual error model, resulting expected improvement in OFV as well as required additional model parameters.")
 ```
 
 \pagebreak
@@ -291,6 +298,7 @@ if(ncol(ii_table)==1 && nrow(ii_table)==1) value <- F
 ii_table <- keep_symbols(ii_table,type)
 ii_table <- ztable_sub(ii_table,type=type,colnames.bold=value,include.colnames=value,include.rownames=F,longtable=T,digits=1,align="lr")
 print(ii_table)
+cat("Subjects identified as significantly influencing the model fit for all other subjects and their influence in terms of improvement in OFV for other subjects when excluding them during the fit.")
 ```
 
 \pagebreak
@@ -302,6 +310,7 @@ if(ncol(outliers_table)==1 && nrow(outliers_table)==1) value <- F
 outliers_table <- keep_symbols(outliers_table,type)
 outliers_table <- ztable_sub(outliers_table,type=type,colnames.bold = value,include.colnames = value,include.rownames = F,longtable = T,digits = 1,align="lr")
 print(outliers_table)
+cat("Subjects identified as outliers based on a worse than expected model fit and the corresponding improvement in OFV when excluding them during the fit.")
 ```
 
 ```{r plot_outliers,echo=F,results='asis',warning=F,fig.width=11,fig.height=7}

@@ -1,5 +1,5 @@
 get_resmod_ruv_table <- function(directory, suffix){
-  resmod_file_exists <- get_resmod_table(directory=working.directory, suffix=suffix)$resmod_file_exists
+  resmod_file_exists <- get_resmod_table(directory=working.directory, suffix)$resmod_file_exists
   if(resmod_file_exists) {
     resmod_table <- get_resmod_table(directory, suffix)$resmod_table %>%
       select(-iteration, -dvid)

@@ -1,8 +1,8 @@
 # get resmod result.csv files (can't open like usually, besause there are more column than column names)
-get_resmod_table <- function(directory, suffix){
-  resmod_file_exists <- file.exists(file.path(directory, paste0("resmod_", suffix), "results.csv"))
+get_resmod_table <- function(directory, idv){
+  resmod_file_exists <- file.exists(file.path(directory, paste0("resmod_", idv), "results.csv"))
   if(resmod_file_exists) {
-    path <- file.path(directory, paste0("resmod_", suffix), "results.csv") 
+    path <- file.path(directory, paste0("resmod_", idv), "results.csv") 
     con <- file(path)
     lines <- readLines(con)
     close(con)
@@ -22,6 +22,12 @@ get_resmod_table <- function(directory, suffix){
       fields_with_header
     }) %>%
       mutate(dofv = -scan(text=paste0(dofv)))
+    
+    for(i in 1:nrow(resmod_table)) {
+      if(resmod_table$dvid[i]!="sum" && resmod_table$dvid[i]!="NA") {
+        resmod_table$dvid[i] <- as.character(as.numeric(resmod_table$dvid[i]))
+      } 
+    }
     return(list(resmod_file_exists=resmod_file_exists,
                 resmod_table=resmod_table))
   } else {
