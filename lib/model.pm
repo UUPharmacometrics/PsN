@@ -202,7 +202,7 @@ sub BUILD
 					$self->add_option(record_name=>'estimation',
 									  option_name=>'MSFO',
 									  problem_numbers=> [$probnum],
-									  option_value => ( $probnum == 1 ? 'psn_msf':('psn_msf_pr'.$probnum)), 
+									  option_value => ( $probnum == 1 ? 'psn_msf':('psn_msf_pr'.$probnum)),
 									  add_record=>0);
 				}
 			}
@@ -246,7 +246,7 @@ sub BUILD
 	# or not.
 
 	if( defined $self->mirror_plots and ($self->mirror_plots > 0 )){
-		my $mirror_plot_module = model::mirror_plot_module -> new( base_model => $self, 
+		my $mirror_plot_module = model::mirror_plot_module -> new( base_model => $self,
 																   nr_of_mirrors => $self->mirror_plots,
 																   cwres => $self->cwres,
 																   mirror_from_lst => $self->mirror_from_lst,
@@ -260,7 +260,7 @@ sub BUILD
 		$self->iofv_modules([]) unless defined $self->iofv_modules;
 		push( @{$self->iofv_modules}, $iofv_module );
 	}
-	
+
 	unless ($self->is_dummy){
 		#simple checks to detect garbage input, for example missing $DATA in first $PROB
 		unless (defined $self -> problems and defined $self -> problems->[0] and defined $self -> problems->[0]->datas
@@ -293,7 +293,7 @@ sub BUILD
 			}
 		}
 	}
-	
+
 }
 
 sub load_output
@@ -327,17 +327,17 @@ sub check_and_set_sizes
 	my $can_set_sizes = 1;
 	my $need_set_sizes = 0;
 	my $error = '';
-	
+
 	if (($PsN::nm_major_version == 5) or ($PsN::nm_major_version == 6) or ($PsN::nm_major_version == 7 and ($PsN::nm_minor_version < 2))) {
 		$can_set_sizes = 0;
 	}
-	
+
 	my %max_allowed=(); #NONMEM defaults #FIXME set per NM version
 	$max_allowed{'LVR'}=30;
 	$max_allowed{'LVR2'}=20;
 	$max_allowed{'LTH'}=100;
 	$max_allowed{'PD'}=50;
-	
+
 	foreach my $option (keys %max_allowed){
 		#check if other value than default set in $SIZES
 		my $set_value = $self->get_option_value(record_name => 'sizes',
@@ -352,9 +352,9 @@ sub check_and_set_sizes
 	foreach my $option (keys %max_allowed){
 		$count_in_model{$option}=0;
 	}
-	
+
 	foreach my $prob (@{$self->problems}){
-		#LVR 
+		#LVR
 		my $eta_plus_eps = ($prob->nomegas(with_correlations => 0,with_same => 1)+
 							$prob->nsigmas(with_correlations => 0,with_same => 1));
 		$count_in_model{'LVR'} = $eta_plus_eps if ($eta_plus_eps > $count_in_model{'LVR'});
@@ -369,8 +369,8 @@ sub check_and_set_sizes
 		$pdcount += 10; #seems that exact count was not enough. "cannot append items"
 		$count_in_model{'PD'} = $pdcount if ($pdcount > $count_in_model{'PD'});
 		#LVR2
-		if ($prob->is_option_set ( name           => 'LAPLACE', 
-								   record         => 'estimation', 
+		if ($prob->is_option_set ( name           => 'LAPLACE',
+								   record         => 'estimation',
 								   record_number => 0, #this means all records
 								   fuzzy_match    => 1 )){
 			my $laplace_eta = $prob->nomegas(with_correlations => 0,with_same => 1);
@@ -498,7 +498,7 @@ sub create_maxeval_zero_models_array
 		#update ests for first $PROB in real model
 		$run_model -> update_inits(from_hash => $sampled_params_arr->[$samples_done],
 								   ignore_missing_parameters => $ignore_missing_parameters,
-								   match_labels => $match_labels); 
+								   match_labels => $match_labels);
 
 		$samples_done++;
 		my $probnum=2;
@@ -531,7 +531,7 @@ sub create_maxeval_zero_models_array
 			$samples_done++;
 			$probnum++;
 		}
-		$run_model -> _write(); 
+		$run_model -> _write();
 		push(@modelsarr,$run_model);
 	}
 
@@ -571,7 +571,7 @@ sub set_outputfile
 {
 	my $self = shift;
 
-	  $self->outputs( 
+	  $self->outputs(
 		  [ output->new(filename => $self->outputfile, parse_output => $self->parse_output, ignore_missing_files => ($self->ignore_missing_files || $self->ignore_missing_output_files)) ]
       );
 }
@@ -624,7 +624,7 @@ sub add_records
 					    'record_strings' => \@record_strings );
 	  } else {
 	    croak("Problem number $i does not exist.");
-	  } 
+	  }
 	}
 }
 
@@ -767,7 +767,7 @@ sub datafiles
 	my @names;
 
 	# The datafiles method retrieves or sets the names of the
-	# datafiles specified in the $DATA record of each problem. 
+	# datafiles specified in the $DATA record of each problem.
 	# If filename is set then a name relative the current *working* directory is assumed unless
 	# filename is given with absolute path
 	# The problem_numbers argument can be used to control which
@@ -826,8 +826,8 @@ sub set_file
 		push (@problem_numbers,$problem_number);
 	}
 	foreach my $num (@problem_numbers){
-		$self -> _option_name( position	  => 0, 
-							   record	  => $record, 
+		$self -> _option_name( position	  => 0,
+							   record	  => $record,
 							   problem_number => $num,
 							   new_name	  => $new_name);
 
@@ -869,7 +869,7 @@ sub covariance
 	    croak("Problem number $i does not exist!" );
 	  }
 	  $j++;
-	}	
+	}
 
 	return \@indicators;
 }
@@ -951,7 +951,7 @@ sub fixed_or_same
 		#loop problems
 		for (my $pi=0; $pi< scalar(@fixed_or_same); $pi++){
 			for (my $i=0; $i< scalar(@{$fixed_or_same[$pi]}); $i++){
-				$fixed_or_same[$pi]->[$i] = 1 unless (defined $fixed_or_same[$pi]->[$i]); 
+				$fixed_or_same[$pi]->[$i] = 1 unless (defined $fixed_or_same[$pi]->[$i]);
 			}
 		}
 	}
@@ -989,7 +989,7 @@ sub same
 					$same[$pi]->[$i] = 0;
 				}else{
 					$same[$pi]->[$i] = 1;
-				} 
+				}
 			}
 		}
 	}else{
@@ -1024,10 +1024,10 @@ sub idcolumn
 
 	my $junk_ref;
 	( $junk_ref, $col ) = $self ->
-	  _get_option_val_pos( name => 'ID', 
-			       record_name => 'input', 
+	  _get_option_val_pos( name => 'ID',
+			       record_name => 'input',
 			       problem_numbers => [$problem_number] );
-	
+
 	$col = $col->[0][0];
 	croak("ID column was not defined in problem number $problem_number") unless (defined $col);
 	return $col;
@@ -1087,7 +1087,7 @@ sub ignoresigns
 		  push( @ignore, '@' );
 	  }
 	}
-	
+
 	return \@ignore;
 }
 
@@ -1119,7 +1119,7 @@ sub initial_values
 	  # parameter_numbers to an array that specify the indices
 	  # of the parameters in the subproblem for which the initial
 	  # values are set, replaced or retrieved.
-	  # 
+	  #
 	  # The add_if_absent argument tells the method to add an init
 	  # (theta,omega,sigma) if the parameter number points to a
 	  # non-existing parameter with parameter number one higher
@@ -1241,14 +1241,14 @@ sub labels
 	  if (scalar @{$labels[$i]} == 0){
 		  #if $MSFI then no $THETA $OMEGA $SIGMA. if msf file comes from
 		  #previous problem then we copy labels from previous prob
-		  if ( (defined $self->problems()) and (defined $self->problems()->[$i]) 
+		  if ( (defined $self->problems()) and (defined $self->problems()->[$i])
 			   and (defined $self->problems()->[$i]->msfis()) and
 			   ($self->problems()->[$i]->msfis->[0]->get_msfo_from_problem_number > 0)){
 			  my $source = $self->problems()->[$i]->msfis->[0]->get_msfo_from_problem_number() -1;
 			  for ( my $j = 0; $j < scalar @{$labels[$source]}; $j++ ) {
 				  $labels[$i][$j] = $labels[$source][$j];
 			  }
-			  
+
 		  }
 	  }
 	}
@@ -1260,7 +1260,7 @@ sub get_hash_values_to_labels
 {
 	my $self = shift;
 
-	
+
 	my @allparams=();
 
 	foreach my $prob (@{$self->problems}){
@@ -1268,7 +1268,7 @@ sub get_hash_values_to_labels
 		foreach my $param ('theta','omega','sigma'){
 			my $access = $param.'s';
 			my %hash;
-			
+
 			if (defined $prob->$access){
 				foreach my $rec (@{$prob->$access}){
 					next unless (defined $rec->options);
@@ -1313,7 +1313,7 @@ sub get_values_to_labels
 		$output_object = $self -> outputs -> [0];
 	}
 	unless (defined $output_object){
-	 croak("get_values_to_labels can only be called where output object exists"); 
+	 croak("get_values_to_labels can only be called where output object exists");
 	}
 	my $error = $output_object ->load;
 	if ( $error ) {
@@ -1396,7 +1396,7 @@ sub get_coordslabels
 	# This basic usage takes one argument and returns matched coords and labels
 	# of the specified parameter. The parameter_type argument
 	# is mandatory. It returns coords and labels of all parameters of type given by
-	# $parameter_type. If label is undefined it will be set to coordinate string 
+	# $parameter_type. If label is undefined it will be set to coordinate string
 	# (THETA1, OMEGA(1,1)....
 	#
 	# @coordslabels will be an array of hashes:
@@ -1418,7 +1418,7 @@ sub get_coordslabels
 	  @problem_numbers = (1 .. $#{$self->problems}+1);
 	}
 	my @problems = @{$self->problems};
-	
+
 	foreach my $prob (@problem_numbers){
 	  my $prob_index = $prob -1;
 	  my %hash;
@@ -1542,13 +1542,13 @@ sub get_rawres_params
 
 	#input is filename + offset and possibly array filter and possibly array string_filter
 	#input require_numeric_ofv is special filter, default false, if true then check that usable_number(ofv)
-	#input 
+	#input
 	#output is hash of arrays of hashes allparams
 
 	my %thetapos;
 	my %omegapos;
 	my %sigmapos;
-	
+
 	croak("file $filename does not exist") unless ( -e $filename );
 
 	open( RRES, $filename) or die "could not open $filename";
@@ -1571,15 +1571,15 @@ sub get_rawres_params
 				if ($header =~ /^\"/){
 					#enclosed double quotes, handle more than one in a row
 					if ($header =~ /^\"+([^"]+)\"+\s*\,?/){
-						$header =~ s/^\"+([^"]+)\"+\s*\,?//; #" 
-						$col = $1; 
+						$header =~ s/^\"+([^"]+)\"+\s*\,?//; #"
+						$col = $1;
 					}else{
 						croak("Failed parsing the header of the rawres input file\n$header");
 					}
 				}else{
 					#no quotes
-					$header =~ s/([^,]+)\,?// ; #" 
-					$col = $1; 
+					$header =~ s/([^,]+)\,?// ; #"
+					$col = $1;
 				}
 				# we allow empty matches
 				push(@tmp,$col);
@@ -1697,7 +1697,7 @@ sub get_rawres_params
 			}
 		}
 	}
-	
+
 	my %labels_hash;
 	$labels_hash{'labels'}=[];
 	$labels_hash{'param'}=[];;
@@ -1818,13 +1818,13 @@ sub get_rawres_params
 		if($extra_count > 0){
 			for (my $j=0; $j< $extra_count; $j++){
 				my $ind = $extra_indices[$j];
-				my $lab = $extra_columns[$j]; 
+				my $lab = $extra_columns[$j];
 				$allpar{$lab} = $line->[$ind];
 			}
 		}
 		push (@allparams,\%allpar);
 		last if $only_first_match;
-	}  
+	}
 
 	return (\@allparams,\%labels_hash);
 }
@@ -1837,12 +1837,12 @@ sub create_vectorsamples
 		);
 	my $sampled_params_arr = $parm{'sampled_params_arr'};
 	my @vectorsamples=();
-	
+
 	my %labels;
 	foreach my $param ('theta','omega','sigma'){
 		$labels{$param} = $self -> labels(parameter_type => $param,problem_numbers => [1])->[0];
 	}
-	
+
 	for (my $k=0; $k < scalar(@{$sampled_params_arr}); $k++){
 		my @line =();
 		foreach my $param ('theta','omega','sigma'){
@@ -1853,7 +1853,7 @@ sub create_vectorsamples
 		}
 		push(@vectorsamples,\@line);
 	}
-	
+
 	return \@vectorsamples;
 }
 
@@ -2011,7 +2011,7 @@ sub get_covariance_params
 	unless (defined $thetainits[0] and defined $omegainits[0] and defined $sigmainits[0]){
 	  croak("all inits references are not defined in get_covariance_params");
 	}
-	
+
 	croak("file $filename does not exist") unless ( -e $filename );
 
 	open( RRES, $filename) or die "could not open $filename";
@@ -2066,7 +2066,7 @@ sub get_covariance_params
 	  my @new_matrix =();
 	  foreach my $row (@covar){
 	    my @newrow=();
-	    for (my $i=0;$i<scalar(@{$row});$i++){ 
+	    for (my $i=0;$i<scalar(@{$row});$i++){
 	      push(@newrow,$row->[$i]) unless
 		  (defined $remove_columns{$header[$i]});
 	    }
@@ -2098,7 +2098,7 @@ sub get_covariance_params
 	    }
 	    if ($1 == $2){
 	      croak("$coord is diagonal OMEGA/SIGMA, but not found in model");
-	    } 
+	    }
 	    #if off-diagonal sigma or omega ok, set init 0 and label to coord
 	    push(@mean,0);
 	    push(@labels,$coord);
@@ -2122,7 +2122,7 @@ sub get_covariance_params
 	  $allpar{'omega'} = \%omega;
 	  $allpar{'sigma'} = \%sigma;
 	  push (@allparams,\%allpar);
-	}  
+	}
 
 	return \@allparams;
 }
@@ -2147,7 +2147,7 @@ sub lower_bounds
 	# lower_bounds either sets or gets the initial values of the
 	# parameter specified in the argument parameter_type for
 	# each problem specified in problem_numbers. See L</fixed>.
-	
+
 	if ($parameter_type eq 'theta'){
 		@lower_bounds = @{ $self -> _init_attr
 							   ( parameter_type    => $parameter_type,
@@ -2180,7 +2180,7 @@ sub lower_bounds
 			}
 		}
 	}
-	
+
 	return \@lower_bounds;
 }
 
@@ -2202,7 +2202,7 @@ sub on_diagonal
 	  # on_diagonal gets the values for
 	  #  argument parameter_type for
 	  # each problem specified in problem_numbers. See L</fixed>.
-	  
+
 	@on_diagonal = @{ $self -> _init_attr
 			      ( parameter_type    => $parameter_type,
 				parameter_numbers => \@parameter_numbers,
@@ -2227,33 +2227,33 @@ sub maxeval
 	my @values;
 
 # 	 Usage:
-# 	
+#
 # 	   @maxev = @{$modobj -> maxeval};
-# 	
+#
 # 	 This basic usage takes no arguments and returns the value of the
 # 	 MAXEVAL option in the $ESTIMATION record of each problem.
 # 	 @maxev will be a two dimensional array:
 # 	 [[maxeval_prob1][maxeval_prob2][maxeval_prob3]...]
-# 	
+#
 # 	   $modobj -> maxeval( new_values => [[0],[999]];
-# 	
+#
 # 	 If the new_values argument of maxeval is given, the values of the
 # 	 MAXEVAL options will be changed. In this example, MAXEVAL will be
 # 	 set to 0 in the first problem and to 999 in the second.
 # 	 The number of elements in new_values must match the number of problems
 # 	 in the model object $modobj.
-# 	
+#
 # 	   $modobj -> maxeval( new_values => [[0],[999]],
 # 	                       problem_numbers    => [2,4] );
-# 	
+#
 # 	 To set the MAXEVAL of specific problems, the problem_numbers argument can
 # 	 be used. It should be a reference to an array containing the numbers
 # 	 of all problems where the MAXEVAL should be changed or retrieved.
 # 	 If specified, the size of new_values must be the same as the size
 # 	 of problem_numbers.
-# 	
-	
- 	my ( $val_ref, $junk ) = $self -> 
+#
+
+ 	my ( $val_ref, $junk ) = $self ->
  	  _option_val_pos( name            => 'MAX',
  			   record_name     => 'estimation',
  			   problem_numbers => \@problem_numbers,
@@ -2320,30 +2320,30 @@ sub set_maxeval_zero
 	  }
 	  foreach my $i (@problem_numbers){
 	    my $meth = $self-> get_option_value (record_name => 'estimation',option_name=>'METHOD',
-						 problem_index => ($i-1), record_index=>0, 
+						 problem_index => ($i-1), record_index=>0,
 						 option_index=>0);
 	    if ((not defined $meth) or ($meth =~ /^(0|1|ZER|CON|HYB)/ )){
 	      #undef is ok, default method is classical
 	      #will get undef also if no estimation at all...
 	      # if classical method (including no METH which means default) set MAXEVAL=0, done
 	      $self -> set_option(record_name => 'estimation',option_name => 'MAXEVALS',
-				  fuzzy_match => 1, option_value => '0', 
+				  fuzzy_match => 1, option_value => '0',
 				  problem_numbers => [($i)]);
 	    }elsif ($meth =~ /^IMP/ ){
 	      # if IMP or IMPMAP set EONLY=1
 	      $self -> set_option(record_name => 'estimation',option_name => 'EONLY',
-				  fuzzy_match => 1, option_value => '1', 
+				  fuzzy_match => 1, option_value => '1',
 				  problem_numbers => [($i)]);
 	      if (defined $niter_eonly){
 		croak("illegal value niter_eonly $niter_eonly") unless ($niter_eonly >= 0);
 		$self -> set_option(record_name => 'estimation',option_name => 'NITER',
-				    fuzzy_match => 1, option_value => $niter_eonly, 
+				    fuzzy_match => 1, option_value => $niter_eonly,
 				    problem_numbers => [($i)]);
 	      } else {
 		unless ($need_ofv){
 		  #need to adjust NITER. set 1 or 0 unless need ofv
 		  $self -> set_option(record_name => 'estimation',option_name => 'NITER',
-				      fuzzy_match => 1, option_value => '0', 
+				      fuzzy_match => 1, option_value => '0',
 				      problem_numbers => [($i)]);
 		}
 	      }
@@ -2351,7 +2351,7 @@ sub set_maxeval_zero
 	      if (defined $niter_eonly){
 		croak("illegal value niter_eonly $niter_eonly") unless ($niter_eonly >= 0);
 		$self -> set_option(record_name => 'estimation',option_name => 'NITER',
-				    fuzzy_match => 1, option_value => $niter_eonly, 
+				    fuzzy_match => 1, option_value => $niter_eonly,
 				    problem_numbers => [($i)]);
 	      }
 	      #if other method return error no success
@@ -2378,7 +2378,7 @@ sub set_union_estimation_record
 	my $need_ofv = $parm{'need_ofv'};
 
 	#this will not work with CHAIN
-	#Take first $EST. Loop over the following $EST. 
+	#Take first $EST. Loop over the following $EST.
 	#Loop over options in following EST, set each in first EST.
 	#set record EST (remove all existing) to union record.
 	my @skiplist =('NOTITLE','NOLABEL','FILE','MSFO');
@@ -2412,7 +2412,7 @@ sub set_union_estimation_record
 	  my $niter;
 	  my $pred='unset';
 	  my $isample;
-	  #value is 'set', 'NO' or 'value' or 'unset' 
+	  #value is 'set', 'NO' or 'value' or 'unset'
 	  foreach my $est (@estimations){
 	    my @options;
 	    @options =@{$est->options()} if (defined $est->options());
@@ -2435,19 +2435,19 @@ sub set_union_estimation_record
 	      }
 	      next if ($skip);
 	      if ($name eq 'METHOD' or (index('METHOD',$name) == 0)){
-		croak("METHOD in \$EST requires a value") 
+		croak("METHOD in \$EST requires a value")
 		    unless (defined $opt->value());
 		$method = $opt->value();
 		next;
 	      }
 	      if ($name eq 'NITER' or (index('NITER',$name) == 0)){
-		croak("NITER in \$EST requires a value") 
+		croak("NITER in \$EST requires a value")
 		    unless (defined $opt->value());
 		$niter = $opt->value();
 		next;
 	      }
 	      if ($name eq 'ISAMPLE' or (index('ISAMPLE',$name) == 0)){
-		croak("ISAMPLE in \$EST requires a value") 
+		croak("ISAMPLE in \$EST requires a value")
 		    unless (defined $opt->value());
 		$isample = $opt->value();
 		next;
@@ -2465,17 +2465,17 @@ sub set_union_estimation_record
 		$pred = $name;
 		next;
 	      }
-	      
+
 	      my $val='set';
 	      if (defined $opt->value() and ($opt->value() =~ /[^\s]/)){
 		#value has something that is not whitespace
-		$val = $opt->value();   
+		$val = $opt->value();
 	      }else {
 		#we have skipped NOTITLE, and NOPRIOR has a value and will not end up here
 		#get rid of leading NO, do matching on the rest
 		$val = 'NO' if ($name =~ s/^NO//);
-	      } 
-	      
+	      }
+
 	      for (my $i=0; $i< scalar(@namesarray);$i++){
 		if (index($namesarray[$i],$name) == 0 ){
 		  $valuesarray[$i]=$val;
@@ -2501,9 +2501,9 @@ sub set_union_estimation_record
 	    $record_string = 'METHOD='.$method.' NITER='.$niter; #EONLY handled outside
 	    $record_string .= ' ISAMPLE='.$isample if (defined $isample);
 	  }else {
-	    #set to IMP and hope for the best. 
-	    # if not need ofv set isample to 1, otherwise leave isample to default 
-	    $niter = 10 unless (defined $niter and $niter < 10); 
+	    #set to IMP and hope for the best.
+	    # if not need ofv set isample to 1, otherwise leave isample to default
+	    $niter = 10 unless (defined $niter and $niter < 10);
 	    $record_string = 'METHOD=IMP NITER='.$niter; #EONLY handled outside
 	    $record_string .= ' ISAMPLE=1' unless ($need_ofv);
 	  }
@@ -2557,12 +2557,12 @@ sub nomegas
 	my @problems = @{$self->problems};
 	foreach my $i ( @problem_numbers ) {
 	  if ( defined $problems[ $i-1 ] ) {
-	    push( @nomegas, $problems[$i-1]->nomegas( 
+	    push( @nomegas, $problems[$i-1]->nomegas(
 		    with_correlations => $with_correlations,
 		    with_same => $with_same, with_priors => $with_priors));
 	  } else {
 	    croak("Problem number $i does not exist.");
-	  } 
+	  }
 	}
 
 	return \@nomegas;
@@ -2603,7 +2603,7 @@ sub nsigmas
 					with_same => $with_same));
 		} else {
 			croak("Problem number $i does not exist.");
-		} 
+		}
 	}
 
 	return \@nsigmas;
@@ -2627,12 +2627,12 @@ sub nthetas
 	  croak("problem number $problem_number does not exist" );
 	}
 
-	if((not $with_priors) and 
+	if((not $with_priors) and
 	   defined $self->problems()->[$problem_number - 1] -> nwpri_ntheta()){
 		$nthetas = $self->problems()->[$problem_number - 1] -> nwpri_ntheta();
 	}else{
-	  $nthetas = 
-	      $self -> _parameter_count( 'record' => 'theta', 
+	  $nthetas =
+	      $self -> _parameter_count( 'record' => 'theta',
 					 'problem_number' => $problem_number );
 	}
 
@@ -2652,9 +2652,9 @@ sub set_code
 	my $problem_number = $parm{'problem_number'};
 
 	# Sets the code for a given problem
-	
+
 	my @prob = @{$self->problems};
-	
+
 	if (not defined $prob[$problem_number - 1]) {
 	  croak("problem number $problem_number does not exist" );
 	}
@@ -2681,7 +2681,7 @@ sub get_code
 
 	# Gets the code for a given problem
 	my @prob = @{$self->problems};
-	
+
 	if (not defined $prob[$problem_number - 1]) {
 	  croak("problem number $problem_number does not exist");
 	}
@@ -2751,10 +2751,10 @@ sub record
 	 # undefined, record returns lines of code belonging to the
 	 # record specified by record_name in a format that is valid in
 	 # a NONMEM modelfile.
-	 
+
 	 my @problems = @{$self->problems};
 	 my $records;
-	 
+
 	if ( defined $problems[ $problem_number - 1 ] ) {
 		if ( scalar(@new_data) > 0 ){
 			my $rec_class = "model::problem::$record_name";
@@ -2796,16 +2796,16 @@ sub get_option_value
 	my $return_value;
 
 	#$modelObject -> get_option_value(record_name => 'recordName', option_name => 'optionName',
-	#                         problem_index => <index>, record_index => <index>/'all', 
+	#                         problem_index => <index>, record_index => <index>/'all',
 	#                         option_index => <index>/'all',
 	#                         fuzzy_match => 1/0)
 	# record_name and option_name are required. All other have default 0. Fuzzy match default 1.
 	#record_index and option_index may either be scalar integer or string 'all'.
-	# Depending on input parameters the return value can be 
+	# Depending on input parameters the return value can be
 	# Case 1. a scalar for record_index => integer, option_index => integer
-	# Case 2. a reference to an array of scalars for (record_index=>'all',option_index => integer) 
-	# Case 3. a reference to an array of scalars for (record_index=>integer,option_index => 'all') 
-	# Case 4. a reference to an array of references to arrays for (record_index=>'all',option_index => 'all')  
+	# Case 2. a reference to an array of scalars for (record_index=>'all',option_index => integer)
+	# Case 3. a reference to an array of scalars for (record_index=>integer,option_index => 'all')
+	# Case 4. a reference to an array of references to arrays for (record_index=>'all',option_index => 'all')
 	my ( @problems, @records, @options );
 	my $accessor = $record_name.'s';
 	my @rec_arr;
@@ -2813,7 +2813,7 @@ sub get_option_value
 
 	#Basic error checking. Error return type is undef for Case 1
 	#and reference to empty array for Case 2 and 3 and 4.
-	
+
 	if (lc($record_index) eq 'all' || lc($option_index) eq 'all' ){
 	    $fail = [];
 	} else {
@@ -2831,7 +2831,7 @@ sub get_option_value
 			     "index $problem_index defined in model" );
 	    return $fail;
 	}
-	
+
 	if ( defined $problems[$problem_index] -> $accessor ) {
 	    @records = @{$problems[$problem_index] -> $accessor};
 	} else {
@@ -2868,14 +2868,14 @@ sub get_option_value
 	      @options = @{$records[$ri] -> options};
 	      my $oi=-1;
 	      my $val;
-	      #go through all options (array contains all options, regardless of name). 
-	      # For each check if it the correct type, if so 
+	      #go through all options (array contains all options, regardless of name).
+	      # For each check if it the correct type, if so
 	      #increase counter $oi after possibly storing the option value
-	      #if current correct option is the single we want value for, then 
-	      #store value and break out of loop. If want to store values for 
+	      #if current correct option is the single we want value for, then
+	      #store value and break out of loop. If want to store values for
 	      #all correct options, store value and then continue with loop
 	      foreach my $option ( @options ) {
-		  if (defined $option and 
+		  if (defined $option and
 		      (($option->name eq $option_name) || ($fuzzy_match and  index($option_name,$option ->name ) == 0))){
 		      $oi++; #first is 0
 		      if (lc($option_index) eq 'all' || $option_index == $oi){
@@ -2912,7 +2912,7 @@ sub get_option_value
 	if (lc($record_index) eq 'all'){
 	    $return_value = \@rec_arr; #Case 2 and 4
 	}
-	
+
 	return $return_value;
 }
 
@@ -2956,7 +2956,7 @@ sub set_records
 					    'record_strings' => \@record_strings );
 	  } else {
 	    croak("Problem number $i does not exist." );
-	  } 
+	  }
 	}
 }
 
@@ -2986,7 +2986,7 @@ sub msfi_names
 	unless ( defined $self->problems ) {
 		croak("No problems defined in model" );
 	}
-	
+
 	for( my $i=0; $i< scalar(@{$self->problems}); $i++){
 		if ( defined $self->problems->[$i] -> msfis and scalar(@{$self->problems->[$i] -> msfis})>0) {
 			if ($absolute_path){
@@ -3001,7 +3001,7 @@ sub msfi_names
 			push( @names, undef );
 		}
 	}
-	
+
 	return \@names;
 }
 
@@ -3076,7 +3076,7 @@ sub table_names
 	# set names of table that does not exist yet (e.g. before a
 	# run has been performed).
 
-	my ( $name_ref, $junk ) = $self -> 
+	my ( $name_ref, $junk ) = $self ->
 	  _option_val_pos( name		   => 'FILE',
 			   record_name	   => 'table',
 			   problem_numbers => \@problem_numbers,
@@ -3126,7 +3126,7 @@ sub flip_comments
 	my $sim_tag = 0;
 	while(<MOD>) {
 		my $tag_line = 0;
-		
+
 		# find Sim_end
 		if (/^\s*\;+\s*[Ss]im\_end/) {
 			$sim_tag = 0;
@@ -3137,7 +3137,7 @@ sub flip_comments
 			$sim_tag = 1;
 			$tag_line=1;
 		}
-		
+
 		if(($sim_tag==1)and (not $tag_line)) {
 			if(/^\s*\;+/) {
 				s/\;//;
@@ -3153,7 +3153,7 @@ sub flip_comments
 	my $newdir;
 	my $filename;
 	($newdir, $filename) = OSspecific::absolute_path(undef,$new_file_name);
-	#first create new model object in dir of old model, to get relative paths to data correct 
+	#first create new model object in dir of old model, to get relative paths to data correct
 	my $newmodel = model->new(directory => $from_model->directory,
 							  filename => $filename,
 							  model_lines => \@simlines,
@@ -3337,7 +3337,7 @@ sub update_inits
 				croak("The number of problems are not the same in ".
 					"$from_string (".($#intermediate_coordslabels+1).")".
 					" and the model to be updated ".$self -> full_name." (".
-					($#problems+1).")" ) 
+					($#problems+1).")" )
 				unless ($#problems == $#intermediate_coordslabels);
 			} else {
 				$from_string = 'from-output '.$from_output->full_name();
@@ -3403,7 +3403,7 @@ sub update_inits
 						my %fromval = %{$from_coordval[$i]->[0]};
 						my %intermediate = %{$intermediate_coordslabels[$i]};
 						foreach my $coord (keys %fromval){
-							#if there is no label for the coord, get_coordslabels stores the coordinate string 
+							#if there is no label for the coord, get_coordslabels stores the coordinate string
 							#as the hash value. Always defined.
 							my $name = $intermediate{$coord}; #this is either coordinate string or label
 							if (defined $name){
@@ -3423,7 +3423,7 @@ sub update_inits
 			#if fix but not ignore_missing we still match values to see if any missing
 			#name of own param is label if from_model defined and label defined, otherwise coord
 			#look up value in namesvalues hash, replace value with "matched"
-			
+
 			my $any_same=0;
 			foreach my $record (@records){
 				my $blockfix = 0;
@@ -3434,7 +3434,7 @@ sub update_inits
 					next;
 				}
 				if  ($record->fix() and (not $update_fix)){
-					$store_rec = 0; 
+					$store_rec = 0;
 					next if ($ignore_missing_parameters or $any_same);
 				}
 				unless (defined $record -> options()){
@@ -3452,14 +3452,14 @@ sub update_inits
 					}
 					my $name = $option -> coordinate_string();
 					if ($match_labels and (
-							((defined $from_model) or (defined $from_hash)) and 
+							((defined $from_model) or (defined $from_hash)) and
 							(defined $option -> label()))){
 						$name = $option -> label();#do matching on label instead of coordinate
 					}
 					if (defined $namesvalues{$name}){
 						my $value = $namesvalues{$name};
 						croak("Multiple instances of label $name in problem to update, ".
-							  "ambiguous parameter matching by label.") 
+							  "ambiguous parameter matching by label.")
 							if ($value eq 'matched');
 						$store_val = 0 if ($value == 0 and $skip_output_zeros);
 						if ($store_val){
@@ -3470,8 +3470,8 @@ sub update_inits
 						$namesvalues{$name} = 'matched';
 					} else {
 						unless ($ignore_missing_parameters){
-							unless (($option->fix) 
-									or 
+							unless (($option->fix)
+									or
 									 ($blockfix) or
 									($option->init() == 0 and (defined $option->on_diagonal) and (not $option->on_diagonal()))
 								){
@@ -3491,7 +3491,7 @@ sub update_inits
 			unless ($ignore_missing_parameters or $any_same){
 				foreach my $name (keys %namesvalues){
 					croak("No match for $param ".
-						"$name found in problem to update") 
+						"$name found in problem to update")
 					if (($namesvalues{$name} ne 'matched') and ($namesvalues{$name} != 0));
 				}
 			}
@@ -3535,7 +3535,7 @@ sub upper_bounds
 								 new_values        => \@new_values,
 								 with_priors       => $with_priors,
 								 attribute         => 'upbnd')};
-		
+
 	}else{
 		#omega or sigma
 		if (scalar (@new_values)> 0){
@@ -3635,7 +3635,7 @@ sub _write
 		push(@preformatted, "\n");
 		push(@formatted, @preformatted);
 	}
-	
+
 	# Open a file and print the formatted problems.
 	# TODO Add some errorchecking.
 	no warnings qw(closed);
@@ -3671,7 +3671,7 @@ sub is_option_set
 	my $fuzzy_match = $parm{'fuzzy_match'};
 
 	# Usage:
-	# 
+	#
 	# if( $modelObject -> is_option_set( record => 'recordName', name => 'optionName' ) ){
 	#     print "problem_number 1 has option optionName set in record recordName";
 	# }
@@ -3704,7 +3704,7 @@ sub is_run
 	my $return_value = 0;
 
 	# Usage:
-	# 
+	#
 	# is_run returns true if the outputobject owned by the
 	# modelobject has valid outpudata either in memory or on disc.
 	if (defined $self->outputs) {
@@ -3734,7 +3734,7 @@ sub indexes
 	# Usage:
 	#
 	#   @indexArray = @{$modelObject -> indexes( 'parameter_type' => 'omega' )};
-	# 
+	#
 	# A call to I<indexes> returns the indexes of all parameters
 	# specified in I<parameter_numbers> from the subproblems
 	# specified in I<problem_numbers>. The method returns a reference to an array that has
@@ -3878,7 +3878,7 @@ sub input_files
             $self->add_option(
                 record_name => 'etas',
                 option_name => 'FILE',
-                option_value => ( $filename ), 
+                option_value => ( $filename ),
                 add_record => 0,
             );
         }
@@ -3906,7 +3906,7 @@ sub input_files
 			unless (-e $dir.$filename);
 			push( @file_names, [$dir, $filename] );
 		}
-	}  
+	}
 
 	return \@file_names;
 }
@@ -3986,7 +3986,7 @@ sub remove_inits
 	my $problem_number = $parm{'problem_number'};
 
       # Usage
-      # 
+      #
       # $model -> remove_inits( type => 'theta',
       #                         indexes => [1,2,5,6] )
       #
@@ -4018,7 +4018,7 @@ sub remove_inits
 
       # First pick out a referens to the theta records array.
       my $records_ref = $self -> problems -> [$problem_number -1] -> $accessor;
-      
+
       # If we have any thetas at all:
       if ( defined $records_ref ) {
 	my @records_array = @{$records_ref};
@@ -4058,7 +4058,7 @@ sub remove_inits
 	my $index = 0;
 	my $nr_options = 1;
 	my @keep_records;
-	
+
 	# Loop over all records
         RECORD_LOOP: foreach my $record ( @records_array ){
 	  my @keep_options = ();
@@ -4083,7 +4083,7 @@ sub remove_inits
 	    push( @keep_records, $record );
 	  }
 	}
-	
+
 	# Set the all kept thetas back into the modelobject.
 	@{$records_ref} = @keep_records;
 
@@ -4184,7 +4184,7 @@ sub is_estimation
 	my $problem_number = $parm{'problem_number'};
 	my $is_est = 0;
 
-	#this function is used to check whether we should care about minimization status 
+	#this function is used to check whether we should care about minimization status
 	#for possible retries. We only care of we are doing a real estimation
 	#if multiple $EST in single PROB for NM7 we assume estimation
 
@@ -4200,8 +4200,8 @@ sub is_estimation
 			$is_est = 0;
 		}
 		# If we have a ONLYSIM option in the simulation record.
-		if( $self -> is_option_set ( name           => 'ONLYSIM', 
-				record         => 'simulation', 
+		if( $self -> is_option_set ( name           => 'ONLYSIM',
+				record         => 'simulation',
 				problem_number => $problem_number )){
 			print "onlysim in simulation\n" if $verbose;
 			$is_est = 0 ;
@@ -4213,9 +4213,9 @@ sub is_estimation
 			if ( defined $problem->estimations){
 				my $record_index = scalar( @{$problem->estimations} )-1;
 				if ($record_index >= 0) {
-					my $max = $self -> get_option_value(record_name => 'estimation', 
+					my $max = $self -> get_option_value(record_name => 'estimation',
 														option_name => 'MAXEVALS',
-														problem_index => ($problem_number - 1), 
+														problem_index => ($problem_number - 1),
 														record_index => $record_index,
 														option_index => 0);
 
@@ -4223,9 +4223,9 @@ sub is_estimation
 						$is_est = 0 ;
 						print "last est step maxeval 0\n" if $verbose;
 					}
-					my $eonly = $self -> get_option_value(record_name => 'estimation', 
+					my $eonly = $self -> get_option_value(record_name => 'estimation',
 														  option_name => 'EONLY',
-														  problem_index => ($problem_number - 1), 
+														  problem_index => ($problem_number - 1),
 														  record_index => $record_index,
 														  option_index => 0);
 					if (defined $eonly and $eonly == 1){
@@ -4446,7 +4446,7 @@ sub add_marginals_code
 			$problems[$i-1] -> add_marginals_code( nomegas => $nomegas[ $j ]  );
 		} else {
 			croak("Problem number $i does not exist.");
-		} 
+		}
 		$j++;
 	}
 }
@@ -4562,7 +4562,7 @@ sub nonparametric_code
 			croak("Problem number $i does not exist!" );
 		}
 		$j++;
-	}	
+	}
 
 	return \@indicators;
 }
@@ -4616,7 +4616,7 @@ sub shrinkage_stats
 			croak("Problem number $i does not exist!" );
 		}
 		$j++;
-	}	
+	}
 
 	return \@indicators;
 }
@@ -4634,7 +4634,7 @@ sub eta_shrinkage
 	my $problem_number = 0;
 	foreach my $problem ( @problems ) {
 		$problem_number++;
-		push( @eta_shrinkage, $problem -> eta_shrinkage( model => $self, 
+		push( @eta_shrinkage, $problem -> eta_shrinkage( model => $self,
 				probnum => $problem_number,
 				directory => $self -> directory,
 				eta_filename => $eta_filename) );
@@ -4656,7 +4656,7 @@ sub iwres_shrinkage
 	my $problem_number = 0;
 	foreach my $problem ( @problems ) {
 		$problem_number++;
-		push( @iwres_shrinkage, $problem -> iwres_shrinkage( model => $self, 
+		push( @iwres_shrinkage, $problem -> iwres_shrinkage( model => $self,
 				probnum => $problem_number,
 				directory => $self -> directory,
 				iwres_filename => $iwres_filename) );
@@ -4738,7 +4738,7 @@ sub _read_problems
 
 	}
 	foreach (@modelfile){
-		#remove any windows line feed if we are running a dos format file on unix 
+		#remove any windows line feed if we are running a dos format file on unix
 		s/\r//g;
 	}
 
@@ -4756,7 +4756,7 @@ sub _read_problems
 
     my @shrinkage_modules;
 	my %internal_msfo_files=(); #hash of filename and problem number, numbering starts at 1
-	
+
 	# It may look like the loop takes one step to much, but its a
 	# trick that helps parsing the last problem.
 	for (my $i = 0; $i <= @modelfile; $i++) {
@@ -4821,7 +4821,7 @@ sub _read_problems
 				if (defined $prob->tbs_thetanum) {
 					$self->tbs_thetanum($prob->tbs_thetanum);
 				}
-				
+
 				push( @problems, $prob );
 				my $array = $prob->get_msfo_filenames;
 				if (scalar(@{$array})>1){
@@ -5065,15 +5065,15 @@ sub _init_attr
 	# if the parameter number points to a non-existing parameter with parameter number
 	# one higher than the highest presently included. Only applicatble if
 	# I<new_values> are set. Default value = 0;
-	
+
 	unless( scalar @problem_numbers > 0 ){
 		$self->problems([]) unless defined $self->problems;
 	  @problem_numbers = (1 .. $#{$self->problems}+1);
 	}
 	my @problems = @{$self->problems};
 	if ( $#new_values >= 0 ) {
-	  croak("The number of new value sets " . 
-			  ($#new_values+1) . " do not" . 
+	  croak("The number of new value sets " .
+			  ($#new_values+1) . " do not" .
 			  " match the number of problems " . ($#problem_numbers+1) . " specified" )
 	      unless(($#new_values == $#problem_numbers) );
 	  if ( $#parameter_numbers > 0 ) {
@@ -5121,12 +5121,12 @@ sub create_dummy_model
 {
 	my $dummy_prob = model::problem->new(ignore_missing_files=> 1,
 										 prob_arr       => ['$PROB','$INPUT ID','$DATA dummy.txt']);
-	
+
 	my $model = model->new(filename => 'dummy',
 						   problems => [$dummy_prob],
 						   is_dummy => 1,
 						   ignore_missing_files => 1);
-	
+
 	return $model;
 }
 
@@ -5186,12 +5186,12 @@ sub get_run_number_string
 							  filename => { isa => 'Str', optional => 0 },
 		);
 	my $filename = $parm{'filename'};
-	#input is model file name 
+	#input is model file name
 	#output is number(s) plus possible anything up to first dot, which has to be there
 	my $number = undef;
 	if ($filename =~ /^(run|Run|RUN)([0-9]+[^0-9.]*)\./){
 		$number = $2;
-	}  
+	}
 	return $number;
 }
 
@@ -5202,7 +5202,7 @@ sub get_xpose_runno_and_suffix
 							  filename => { isa => 'Str', optional => 0 },
 		);
 	my $filename = $parm{'filename'};
-	#input is table file name 
+	#input is table file name
 
 	my $runno = undef;
 	my $suffix = '';
@@ -5211,7 +5211,7 @@ sub get_xpose_runno_and_suffix
 		if (length($2)>0){
 			$suffix = $2;
 		}
-	}  
+	}
 	return [$runno,$suffix];
 }
 
@@ -5233,7 +5233,7 @@ sub need_data_filtering
 		unless (length($val)==1){
 			$do_filtering=1;
 			last;
-		} 
+		}
 	}
 	return $do_filtering;
 }
@@ -5281,7 +5281,7 @@ sub set_first_problem_msfi
 	my $add_msfo_if_absent = $parm{'add_msfo_if_absent'};
 
 	#Add rec in first prob if not there. If already there only change filename
-	if (defined $self->problems->[0]->msfis and 
+	if (defined $self->problems->[0]->msfis and
 		scalar(@{$self->problems->[0]->msfis})>0){
 		$self->problems->[0]->msfis->[0]->set_filename(filename=>$msfiname);
 	}else{
@@ -5313,7 +5313,7 @@ sub set_first_problem_msfi
 		my ($base,$msftype,$extension) = model::problem::msfi::get_basename_msftype_extension(filename => $modelname);
 		$newmsfo = $base.'.msf';
 	}
-	
+
 	if (defined $newmsfo){
 		if ($msfiname eq $newmsfo){
 			ui->print(category => 'all',message => "warning: set_first_problem_msfi same name msfo, msfi $newmsfo");
@@ -5345,7 +5345,7 @@ sub rename_msfo
 		}
 	}
 	my $updatedmsfi = $self->update_internal_msfi;
-	
+
 }
 
 sub renumber_msfo_msfi
@@ -5385,10 +5385,10 @@ sub msfo_to_msfi_mismatch
 {
     my $self = shift;
 	return 0 unless (scalar(@{$self->problems})>1);
-	
+
 	my $msfo = $self->msfo_names(); #array over probs
 	my $msfi = $self->msfi_names(); #array over probs
-	
+
 	my $prev_msfo= undef;
 	for (my $i=0; $i<scalar(@{$self->problems}); $i++){
 		if (defined $prev_msfo){
@@ -5403,7 +5403,7 @@ sub msfo_to_msfi_mismatch
 		}
 	}
 	return 0;
-	
+
 }
 
 sub init_etas
@@ -5425,7 +5425,7 @@ sub init_etas
                 print "Warning: the model " . $self->filename . " wasn't based on any other model. Option -etas skipped\n";
             }
         } else {
-            $phi_name = utils::file::replace_extension($self->filename, 'phi'); 
+            $phi_name = utils::file::replace_extension($self->filename, 'phi');
         }
     }
 
@@ -5438,7 +5438,7 @@ sub init_etas
         $self->add_option(
             record_name => 'estimation',
             option_name => 'MCETA',
-            option_value => ( '1' ), 
+            option_value => ( '1' ),
             add_record => 0,
         );
     } else {
