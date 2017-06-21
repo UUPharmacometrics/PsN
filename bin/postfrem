@@ -692,11 +692,11 @@ if (defined $options{'rawres_input'}) {
 		my $posdef_err = tool::sir::check_matrix_posdef(matrix => $covmatrix);
 		if ($posdef_err == 1){
             if (defined $propagated_covmatrix) {
-                print "Covariance matrix is numerically not positive definite (check that covariance step is OK)\n".
-                      "(as checked with Cholesky decomposition without pivoting)\n";
-            } else {
                 print "Propagated model_1 uncertainty resulted in not numerically positive definite matrix\n".
                       "(this is to be expected; not all elements can be constructed)\n";
+            } else {
+                print "Covariance matrix is numerically not positive definite (check that covariance step is OK)\n".
+                      "(as checked with Cholesky decomposition without pivoting)\n";
             }
             if (defined $options{'force_posdef_covmatrix'} or defined $propagated_covmatrix) {
                 # force positive definite
