@@ -87,10 +87,29 @@ sub BUILD
         $self->_create_model_templates(table => $table, idv_column => $self->idv); 
 
         if ($have_dvid) {
-            my $dvid_column = $table->tables->[0]->header->{$self->dvid};
-            my $unique_dvid = array::unique($table->tables->[0]->columns->[$dvid_column]);
-            $self->unique_dvid($unique_dvid);
-            my $number_of_dvid = scalar(@$unique_dvid);
+            my $dvid_column_no = $table->tables->[0]->header->{$self->dvid};
+            my $dvid_column = $table->tables->[0]->columns->[$dvid_column_no];
+            my $dv_column_no = $table->tables->[0]->header->{$self->dv};
+            my $dv_column = $table->tables->[0]->columns->[$dv_column_no];
+            my $unique_dvid = array::unique($dvid_column);
+            my @filtered_unique_dvid;       # Filter away all DVID that have all DV = 0 (i.e. non-observations)
+            for my $dvid (@$unique_dvid) {
+                my $found = 0;
+                for (my $i = 0; $i < scalar(@$dv_column); $i++) {
+                    if ($dvid_column->[$i] == $dvid and $dv_column->[$i] != 0) {
+                        $found = 1;
+                        last;
+                    }
+                }
+                my $int_dvid = int($dvid);
+                if ($found) {
+                    push @filtered_unique_dvid, $int_dvid;
+                } else {
+                    print "Warning: DVID=$int_dvid has no observations. Removing it from the analysis.\n";
+                }
+            }
+            $self->unique_dvid(\@filtered_unique_dvid);
+            my $number_of_dvid = scalar(@filtered_unique_dvid);
             $self->numdvid($number_of_dvid);
         } else {
             $self->unique_dvid(['NA']);
