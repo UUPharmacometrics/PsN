@@ -12,7 +12,7 @@ Quality assurance (qa) is a tool to assess the quality of a final model. The ana
 
 Example
 \begin{verbatim}
-qa pheno.mod -parameters=CL,V -covariates=CL,APGR
+qa pheno.mod -parameters=CL,V -covariates=WGT,APGR
 \end{verbatim}
 
 \section{Input and options}
@@ -78,7 +78,7 @@ Some limitations and problems will affect the ability to generate any output, ot
 \begin{itemize}
 	\item There is no support in qa for categorical data, including handling censored continuous data using the M3/M4 likelihood-based methods
 	\item There is no support in qa for the first-order (FO) method. Testing with FOCE(I) has been extensive, and sparse with other methods (LAPLACE, SAEM, ITS, IMP and IMPMAP). BAYES has not been tested. 
-	\item With linearization and eta-epsilon interaction (INTER) individual estimates of empirical Bayes estimates (EBE) of parameters may end up in local minima. The most prominent sign of this is that differences in OFV between two models have a sign, different from that expected, i.e. a smaller model may have a lower OFV than a full model. The best remedy is to rerun the qa script with the option \verb|-nointer|, which will omit an update of the interaction terms in the linearization calculations.
+	\item With linearization and eta-epsilon interaction (INTER) individual estimates of empirical Bayes estimates (EBE) of parameters may end up in local minima. The most prominent sign of this is that differences in OFV between two models have a sign, different from that expected, i.e. a smaller model may have a lower OFV than a full model. One experimental remedy is to rerun the qa script with the option \verb|-nointer|, which will omit an update of the interaction terms in the linearization calculations.
 	\item Multiple variables, through the option \verb|-dvid|, is not yet implemented in the report although the relevant models are being estimated.
 	\item Automatic addition of interoccasion variability, implemented via \verb|-iov| is not yet functional.
 	\item Only parameters associated with an ETA can be used in the \verb|-parameter=| option
