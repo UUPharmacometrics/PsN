@@ -320,6 +320,7 @@ sub modelfit_setup
             iterative => 0,
             directory => 'resmod_PRED',
             top_rool => 1,
+            clean => 0,         # Should not be need as top_tool is 1, but top_tool gets reset somehow for this run
         );
     };
     if (not $@) {
