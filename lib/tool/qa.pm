@@ -19,7 +19,7 @@ use PsN;
 extends 'tool';
 
 has 'model' => ( is => 'rw', isa => 'model' );
-has 'groups' => ( is => 'rw', isa => 'Int', default => 10 );       # The number of groups to use for quantiles in the time_varying model 
+has 'groups' => ( is => 'rw', isa => 'Int', default => 10 );       # The number of groups to use for quantiles in the time_varying model
 has 'idv' => ( is => 'rw', isa => 'Str', default => 'TIME' );
 has 'dv' => ( is => 'rw', isa => 'Str', default => 'CWRES' );
 has 'dvid' => ( is => 'rw', isa => 'Str', default => 'DVID' );
@@ -38,7 +38,7 @@ sub BUILD
 {
     my $self = shift;
 
-	my $model = $self->models()->[0]; 
+	my $model = $self->models()->[0];
     $self->model($model);
 }
 
@@ -71,7 +71,7 @@ sub modelfit_setup
         %{common_options::restore_options(@common_options::tool_options)},
         models => [ $model_copy ],
         directory => 'linearize_run',
-        estimate_fo => $self->fo, 
+        estimate_fo => $self->fo,
         extra_table_columns => \@table_columns,
         lst_file => $lst_file,
         nointer => $self->nointer,
@@ -126,7 +126,7 @@ sub modelfit_setup
     if (defined $self->covariates or defined $self->categorical) {
         print "\n*** Running FREM ***\n";
         my $frem_model = model->new(filename => $linearized_model_name);
-        my @covariates; 
+        my @covariates;
         if (defined $self->covariates) {
             @covariates = split(',', $self->covariates);
         }
@@ -144,12 +144,12 @@ sub modelfit_setup
                 covariates => [ @covariates, @categorical ],
                 categorical => [ @categorical ],
                 directory => 'frem_run',
-                rescale => 1, 
-                run_sir => 1, 
+                rescale => 1,
+                run_sir => 1,
                 rplots => 1,
                 top_tool => 1,
                 clean => 1,
-            ); 
+            );
             $frem->run();
             $frem->print_options(   # To get skip_omegas over to postfrem
                 toolname => 'frem',
@@ -165,7 +165,7 @@ sub modelfit_setup
             print "\n*** Running POSTFREM ***\n";
             eval {
 				if ($dev) {
-					system("postfrem -frem_directory=frem_run -directory=postfrem_run");
+					system("postfrem -frem_directory=frem_run -directory=postfrem_run -force_posdef_covmatrix");
 				} else {
 					system("postfrem-".$vers." -frem_directory=frem_run -directory=postfrem_run");
 				}
@@ -359,7 +359,7 @@ sub _create_scm_config
     } else {
         $all = $self->covariates . ',' . $self->categorical;
     }
-  
+
     my $relations;
     for my $param (split(',', $self->parameters)) {
         $relations .= "$param=" . $all . "\n";

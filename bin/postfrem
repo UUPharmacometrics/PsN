@@ -613,6 +613,7 @@ my $m4_nomegas = $model->nomegas->[0];
 # get uncertainty and simulate parameter vectors
 my $have_uncertainty;
 my $propagated_covmatrix; # only for disk write later
+my $forced_posdef_covmatrix = 0;
 my $sampled_params_arr;
 my $match_labels;
 if (defined $options{'rawres_input'}) {
@@ -741,6 +742,7 @@ if (defined $options{'rawres_input'}) {
                 # force positive definite
                 print "Forcing matrix positive definite\n";
                 (my $covmatrix_posdef, my $count) = linear_algebra::get_symmetric_posdef($covmatrix);
+                $forced_posdef_covmatrix = 1; # adjust blocks also in sir sampler then
                 print "$count eigenvalue(s) adjusted\n";
 
                 # copy and test that this modification is good enough for cholesky decomp
@@ -777,8 +779,10 @@ if (defined $options{'rawres_input'}) {
         if ($posdef_err != 1) {
             # use valid covariance matrix for uncertainty
             my $parameter_hash = output::get_nonmem_parameters(output => $model->outputs->[0]);
-            my $message = "Sampling from the truncated multivariate normal distribution";
-            print $message."\n";
+            print "Sampling from the truncated multivariate normal distribution\n";
+            if ($forced_posdef_covmatrix) {
+                print "(adjusting all sampling blocks due to forced positive definiteness on sampling matrix)\n";
+            }
             my $mu_values= $parameter_hash->{'values'};
 
             my $mat = new Math::MatrixReal(1,1);
@@ -791,7 +795,7 @@ if (defined $options{'rawres_input'}) {
                 labels => $parameter_hash->{'labels'},
                 covmatrix => $covmatrix,
                 inflation => [],
-                adjust_blocks => 0,
+                adjust_blocks => $forced_posdef_covmatrix,
                 lower_bound => $parameter_hash->{'lower_bounds'},
                 upper_bound => $parameter_hash->{'upper_bounds'},
                 param => $parameter_hash->{'param'},
