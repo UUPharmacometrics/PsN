@@ -24,8 +24,8 @@ resmod_structural_details_tables <- function(working.directory,model.filename,CW
         } else {
           idv_text <- paste0(idv_all[i]," (DVID=",dvid_nr[j],")")
         }
-        dofv = get_resmod_structural_dofv(working.directory, idv,dvid=dvid_nr[j])
-        first_table = data.frame(C1=c("DV","IDV","dOFV"),C2=c("CWRES",idv,dofv),stringsAsFactors = F)
+        dOFV = get_resmod_structural_dofv(working.directory, idv,dvid=dvid_nr[j])
+        first_table = data.frame(C1=c("DV","IDV","dOFV"),C2=c("CWRES",idv,dOFV),stringsAsFactors = F)
         if(file.exists(paste0(working.directory, "linearize_run/scm_dir1/derivatives.ext")) &&
            file.exists(file.path(working.directory, paste0(sub('.([^.]*)$','',model.filename),"_linbase.dta"))) &&
            file.exists(CWRES_table)) {
@@ -61,7 +61,7 @@ resmod_structural_details_tables <- function(working.directory,model.filename,CW
         
         resmod_structural_details[[k]] <- list(idv = idv,
                                                idv_text=idv_text,
-                                               dofv = dofv,
+                                               dOFV = dOFV,
                                                first_table = first_table,
                                                second_table = second_table,
                                                table=table,

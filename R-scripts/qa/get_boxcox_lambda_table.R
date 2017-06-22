@@ -12,7 +12,7 @@ get_boxcox_lambda_table <- function(directory,param_var_file_exists,dofv_box) {
     }
     boxcox_lambdas_table[,2] <- as.character(round(as.numeric(boxcox_lambdas_table[,2]), 1))
     if(param_var_file_exists) {
-      boxcox_lambdas_table <- rbind(boxcox_lambdas_table,c("dofv",dofv_box))
+      boxcox_lambdas_table <- rbind(boxcox_lambdas_table,c("dOFV",dofv_box))
     }
     
   } else {

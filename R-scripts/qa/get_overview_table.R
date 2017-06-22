@@ -6,7 +6,7 @@ get_overview_table <- function(overview_list,rgroup) {
       #   overview_list[[i]][j,1] <- paste("      ",(overview_list[[i]][j,1]))
       # }
       overview_list[[i]] <- cbind(overview_list[[i]],rep("",nrow(overview_list[[i]])))
-      colnames(overview_list[[i]]) <- c("","dofv","Add.params")
+      colnames(overview_list[[i]]) <- c("","dOFV","Add.params")
     }
     n.rgroup[i] <- nrow(overview_list[[i]])
     if(i == 1) {

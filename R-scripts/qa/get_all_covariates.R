@@ -18,7 +18,7 @@ get_all_covariates <- function(frem_directory,covariates,categorical,parameters,
     frem_files_exists <- FALSE
     frem_table <- data.frame("FREM",NA,"",stringsAsFactors = F)
   }
-  colnames(frem_table) <- c("","dofv","Add.params")
+  colnames(frem_table) <- c("","dOFV","Add.params")
   return(list(frem_files_exists=frem_files_exists,
               frem_table=frem_table))
 }

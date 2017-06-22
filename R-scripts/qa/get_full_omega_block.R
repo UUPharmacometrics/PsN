@@ -33,7 +33,7 @@ get_full_omega_block <- function(directory,param_var_file_exists,dofv_block) {
     full_omega_block_table[,2] <- round(as.numeric(full_omega_block_table[,2]),2)
     
     if(param_var_file_exists) {
-      full_omega_block_table <- rbind(full_omega_block_table,c("dofv",dofv_block))
+      full_omega_block_table <- rbind(full_omega_block_table,c("dOFV",dofv_block))
     }
     
   } else {

@@ -71,7 +71,7 @@ get_param_var_tables <- function(directory,model.filename) {
     par_var_models <- data.frame(c("Full OMEGA Block", "Box-Cox Transformation","Additional ETA"), 
                                  c(dofv_block, dofv_box, dofv_additional_eta),
                                  c(add.par_block, add.par_box, add.par_additional_eta),stringsAsFactors = F)
-    colnames(par_var_models) <- c("","dofv","Add.params")
+    colnames(par_var_models) <- c("","dOFV","Add.params")
   } else {
     param_var_file_exists <- FALSE
     par_var_models <- error_table(c("Full OMEGA Block","Box-cox Transformation","Additional ETA"))

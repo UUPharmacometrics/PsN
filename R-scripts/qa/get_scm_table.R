@@ -3,14 +3,14 @@ get_scm_table <- function(rawres_file,parameters,covariates,categorical){
   if(length(parameters)!=0 && (length(categorical)!=0 || (length(covariates)!=0))) {
     if(scm_files_exists) {
       scm_table <- read.csv(rawres_file,stringsAsFactors = F) %>%
-        mutate(dofv = ofv[step.number==0]-ofv) %>%
+        mutate(dOFV = ofv[step.number==0]-ofv) %>%
         slice(-1) %>%
-        select(relation, dofv)
-        colnames(scm_table) <- c("","dofv")
+        select(relation, dOFV)
+        colnames(scm_table) <- c("","dOFV")
       #max_table
-      scm_table$dofv <- round(scm_table$dofv, 1)
-      max_scm_table <- cbind(scm_table[which.max(scm_table$dofv),],1)
-      max_scm_table$dofv <- round(max_scm_table$dofv,1)
+      scm_table$dOFV <- round(scm_table$dOFV, 1)
+      max_scm_table <- cbind(scm_table[which.max(scm_table$dOFV),],1)
+      max_scm_table$dOFV <- round(max_scm_table$dOFV,1)
       
       # add coefficient
       scm_table_coef <- read.csv(rawres_file,stringsAsFactors = F) %>%
@@ -35,11 +35,11 @@ get_scm_table <- function(rawres_file,parameters,covariates,categorical){
   } else {
     scm_files_exists <- FALSE
     scm_table <- data.frame("SCM",NA,stringsAsFactors = F)
-    colnames(scm_table) <- c("","dofv")
+    colnames(scm_table) <- c("","dOFV")
     max_scm_table <- cbind(scm_table,"")
 
   }
-  colnames(max_scm_table) <- c("","dofv","Add.params")
+  colnames(max_scm_table) <- c("","dOFV","Add.params")
   return(list(scm_files_exists=scm_files_exists,
               scm_table=scm_table,
               max_scm_table=max_scm_table))

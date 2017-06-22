@@ -21,7 +21,7 @@ get_resmod_table <- function(directory, idv){
       fields_with_header[[length(header)]] <-  paste0(l[length(header):length(l)], collapse=",")
       fields_with_header
     }) %>%
-      mutate(dofv = -scan(text=paste0(dofv)))
+      mutate(dOFV = -scan(text=paste0(dofv)))
     
     for(i in 1:nrow(resmod_table)) {
       if(resmod_table$dvid[i]!="sum" && resmod_table$dvid[i]!="NA") {

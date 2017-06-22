@@ -15,7 +15,7 @@ get_structural_overview_table <- function(directory,idv,groups) {
     }
     
     structural_overview <- as.data.frame(array(0,c((length(idv)*length(dvid_nr)),3)))
-    colnames(structural_overview) <- c("","dofv","Add.params")
+    colnames(structural_overview) <- c("","dOFV","Add.params")
     k <- 0
     for(j in 1:length(dvid_nr)) {
       for(i in 1:length(idv)) {
