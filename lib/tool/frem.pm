@@ -2140,6 +2140,21 @@ sub do_model1
 									   write_copy => 1,
 									   copy_datafile   => 0,
 									   copy_output => 0);
+
+        # copy base model lst, cov and ext to intermediate models (postfrem needs them)
+        my $im_dir = $self->directory().'intermediate_models/';
+        my $model_dir = $model->directory();
+        my $model_filename = $model->filename();
+        my @extra_extensions = (".lst", ".cov", ".ext", ".phi");
+        foreach my $ext (@extra_extensions) {
+            my $extra_file_orig = ($model_filename =~ s/\..*$/$ext/r);
+            my $extra_file_copy = ($name_model =~ s/\..*$/$ext/r);
+            if (-f $model_dir.$extra_file_orig) {
+                cp($model_dir.$extra_file_orig, $im_dir.$extra_file_copy);
+            } else {
+                print "Could not find $extra_file_orig; not copied to intermediate_models/$extra_file_copy\n";
+            }
+        }
 	}
 
 	if ($frem_model -> is_run() and (defined $frem_model->outputs->[0] )

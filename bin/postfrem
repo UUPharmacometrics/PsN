@@ -73,40 +73,42 @@ $options{'model'}=$options{'frem_directory'}.'/final_models/model_4.mod';
 
 # find base model (FREM only copies base model results into dir if base model was not pre-executed)
 $options{'base_model'}=$options{'frem_directory'}.'/intermediate_models/model_1.mod';
+$options{'base_model'} // croak "Could not find base model $options{'base_model'}";
 $options{'base_model_lst'}=$options{'frem_directory'}.'/intermediate_models/model_1.lst';
+$options{'base_model_lst'} // croak "Could not find base model results $options{'base_model_lst'}";
 $options{'base_model_cov'}=$options{'frem_directory'}.'/intermediate_models/model_1.cov';
-unless (-f $options{'base_model_lst'}) {
-    my $orig_model;
-    if (-f $options{'option_file'}) {
-        open my $fh, '<', $options{'option_file'};
-        my $frem_cmd;
-        while (my $line = <$fh>) {
-            if ($frem_cmd) {
-                if ($line ne "") {
-                    chomp($line);
-                    my @words = split(/ +/, $line);
-                    foreach my $word (@words[1..$#words]) {
-                         if ($word =~ /^[^-].*/) {
-                             $orig_model = $word;
-                             last;
-                         }
-                    }
-                }
-                last;
-            }
-            $frem_cmd = 1 if ($line =~ /^Command:/);
-        }
-        close $fh;
-    } else {
-        croak "Could not read option file $options{'option_file'} (for finding base model execution results)";
-    }
-    if (defined $orig_model) {
-        $options{'base_model'} = $orig_model;
-        $options{'base_model_lst'} = ($orig_model =~ s/(\..*)$/.lst/r);
-        $options{'base_model_cov'} = ($orig_model =~ s/(\..*)$/.cov/r);
-    }
-    croak "Could not read base model ($options{'base_model'}) and lst" unless (-f $options{'base_model_lst'});
-}
+# unless (-f $options{'base_model_lst'}) {
+#     my $orig_model;
+#     if (-f $options{'option_file'}) {
+#         open my $fh, '<', $options{'option_file'};
+#         my $frem_cmd;
+#         while (my $line = <$fh>) {
+#             if ($frem_cmd) {
+#                 if ($line ne "") {
+#                     chomp($line);
+#                     my @words = split(/ +/, $line);
+#                     foreach my $word (@words[1..$#words]) {
+#                          if ($word =~ /^[^-].*/) {
+#                              $orig_model = $word;
+#                              last;
+#                          }
+#                     }
+#                 }
+#                 last;
+#             }
+#             $frem_cmd = 1 if ($line =~ /^Command:/);
+#         }
+#         close $fh;
+#     } else {
+#         croak "Could not read option file $options{'option_file'} (for finding base model execution results)";
+#     }
+#     if (defined $orig_model) {
+#         $options{'base_model'} = $orig_model;
+#         $options{'base_model_lst'} = ($orig_model =~ s/(\..*)$/.lst/r);
+#         $options{'base_model_cov'} = ($orig_model =~ s/(\..*)$/.cov/r);
+#     }
+#     croak "Could not read base model ($options{'base_model'}) and lst" unless (-f $options{'base_model_lst'});
+# }
 $options{'frem_dataset'} = $options{'frem_directory'}.'/frem_dataset.dta';
 
 if( defined $options{'sir_directory'} and (-d $options{'sir_directory'}))  {
