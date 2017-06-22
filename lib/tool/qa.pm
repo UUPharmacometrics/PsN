@@ -151,8 +151,6 @@ sub modelfit_setup
                 clean => 1,
             ); 
             $frem->run();
-            use Data::Dumper;
-            print Dumper($frem->skip_omegas);
             $frem->print_options(   # To get skip_omegas over to postfrem
                 toolname => 'frem',
                 local_options => [ 'skip_omegas' ],
