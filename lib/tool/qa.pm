@@ -151,8 +151,15 @@ sub modelfit_setup
                 clean => 1,
             ); 
             $frem->run();
+            $frem->print_options(   # To get skip_omegas over to postfrem
+                toolname => 'frem',
+                local_options => [ 'skip_omegas' ],
+                #common_options => \@common_options::tool_options
+            );
         };
         common_options::set_option('clean', $old_clean);
+
+
         $self->_to_qa_dir();
         if (-d "frem_run") {
             print "\n*** Running POSTFREM ***\n";
