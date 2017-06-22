@@ -54,8 +54,6 @@ for (i in 1:length(rscript)) {
 #which resmod_ folders are in the working directory
 resmod_list <- which_resmod_folders(directory=working.directory,idv_name)
 idv_all <- resmod_list$all_idvs
-vpc_captions <- resmod_list$vpc_captions
-resmod_dofv_table_captions <- resmod_list$resmod_dofv_table_captions
 ```
 
 ```{r structural_model_calculations,results='hide',echo=FALSE,message=FALSE,warning=FALSE}
@@ -160,38 +158,55 @@ cat("Overview of possible modifications to different model aspects, expected imp
 #Structural
 
 ```{r draw_structural_details_tables,warning=F,message=F,echo=F,results='asis',warning=F}
-#tables for vpc plots
-vpc_tables_list <- get_tables_for_vpc(obs_table=CWRES_table,obs_extra_table=paste0(working.directory,"/",sub('.([^.]*)$','',model.filename),"_linbase.dta"),sim_table=paste0(working.directory,"/simeval_run/m1/sim_res_table-1.dta"),idv_all)
-make_vpc <- vpc_tables_list$make_vpc
-if(make_vpc) {
-  obs <- vpc_tables_list$obs
-  sim <- vpc_tables_list$sim
-}
-
-for(i in 1:length(idv_all)) {
-  cat(idv_all[i])
-  first_table <- keep_symbols(resmod_structural_details[[i]]$first_table,type)
-  first_table <- ztable_sub(first_table,type=type,include.colnames = F,include.rownames = F,longtable = T,align="lr")
-  print(first_table)
-  cat(resmod_dofv_table_captions[i])
-  second_table <- keep_symbols(resmod_structural_details[[i]]$second_table,type)
-  second_table <- ztable_sub(second_table,type=type,colnames.bold = T,include.rownames = F,longtable = T,align="rlrr")
-  second_table <- addcgroup(second_table,cgroup=c("","Estimated bias"),n.cgroup=c(1,2))
-  print(second_table)
-  shift_tab <- resmod_structural_details[[i]]$table
-  if(ncol(shift_tab)!=1) {
-    idv_plot <- plot_ipred(shift_tab,idv_all[i])
-    print(idv_plot)
-    if(make_vpc) {
-      cat("\n\n")
-      #vpc plots
-      vpc_plot <- plot_structural_vpc(obs,sim,shift_tab,idv=idv_all[i])
-      print(vpc_plot)
-      cat("\n\n")
-      cat(vpc_captions[i])
-    }
+if(length(idv_all)!=0) {
+  #tables for vpc plots
+  vpc_tables_list <- get_tables_for_vpc(obs_table=CWRES_table,obs_extra_table=paste0(working.directory,"/",sub('.([^.]*)$','',model.filename),"_linbase.dta"),sim_table=paste0(working.directory,"/simeval_run/m1/sim_res_table-1.dta"),idv_all)
+  make_vpc <- vpc_tables_list$make_vpc
+  if(make_vpc) {
+    obs <- vpc_tables_list$obs
+    sim <- vpc_tables_list$sim
   }
-  cat("\n\\newpage\n")
+
+  for(i in 1:length(idv_all)) {
+    perc <- resmod_structural_details[[i]]$perc
+    #captions
+    all_captions <- captions_structural(idv_all,idv_name,perc)
+    resmod_dofv_table_captions <- all_captions$resmod_dofv_table_captions
+    structural_bias_tables_captions <- all_captions$structural_bias_tables_captions
+    structural_bias_plots_captions <- all_captions$structural_bias_plots_captions
+    vpc_captions <- all_captions$vpc_captions
+    
+    #print
+    cat(idv_all[i])
+    first_table <- keep_symbols(resmod_structural_details[[i]]$first_table,type)
+    first_table <- ztable_sub(first_table,type=type,include.colnames = F,include.rownames = F,longtable = T,align="lr")
+    print(first_table)
+    cat(resmod_dofv_table_captions[i])
+    second_table <- keep_symbols(resmod_structural_details[[i]]$second_table,type)
+    second_table <- ztable_sub(second_table,type=type,colnames.bold = T,include.rownames = F,longtable = T,align="rlrr")
+    second_table <- addcgroup(second_table,cgroup=c("","Estimated bias"),n.cgroup=c(1,2))
+    print(second_table)
+    cat(structural_bias_tables_captions[i])
+    shift_tab <- resmod_structural_details[[i]]$table
+    if(ncol(shift_tab)!=1) {
+      cat("\n\n")
+      idv_plot <- plot_ipred(shift_tab,idv_all[i])
+      print(idv_plot)
+      cat("\n\n")
+      cat(structural_bias_plots_captions[i])
+      if(make_vpc) {
+        cat("\n\n")
+        #vpc plots
+        vpc_plot <- plot_structural_vpc(obs,sim,shift_tab,idv=idv_all[i])
+        print(vpc_plot)
+        cat("\n\n")
+        cat(vpc_captions[i])
+      }
+    }
+    cat("\n\\newpage\n")
+  }
+} else {
+  print(resmod_structural_details)
 }
 ```
 

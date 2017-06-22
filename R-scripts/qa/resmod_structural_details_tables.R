@@ -52,18 +52,27 @@ resmod_structural_details_tables <- function(working.directory,model.filename,CW
           colnames(second_table) <- c("Bin","CWRES","%CPRED")
           table <- error_table(col=1)
         }
+        
+
+        perc <- FALSE
+        if(any(colnames(second_table)=="%CPRED")) {
+          perc <- TRUE
+        }
+        
         resmod_structural_details[[k]] <- list(idv = idv,
                                                idv_text=idv_text,
                                                dofv = dofv,
                                                first_table = first_table,
                                                second_table = second_table,
-                                               table=table)
+                                               table=table,
+                                               perc=perc)
       }
     }
     
   } else {
     resmod_structural_details <- error_table(col=1)
   }
-
+  
+  
   return(resmod_structural_details)
 }
