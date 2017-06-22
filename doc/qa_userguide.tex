@@ -8,8 +8,24 @@
 
 
 \section{Overview}
-Quality assurance (qa) is a tool to assess the quality of a final model. The analysis is not done directly on the final model, but on certain model proxies to speed up the analysis time. The proxies include a linearized version of the final model and modelling on the residual error.
+Quality assurance (qa) is a tool to assess the quality of a final model. The analysis is not done directly on the final model, but on certain model proxies to speed up the analysis time.
+The proxies include a linearized version of the model to be qa:ed as well as additional modeling of the residuals from that model \cite{Khandelwal, Svensson, Ibrahim}. The idea is that these simplified models will provide similar improvement in goodness-of-it (OFV) and similar parameter estimates with a model change as if the same model change had been done directly on the non-linear model. The model proxies however are running much faster and are more robust. 
 
+The suggested use of the resulting report is that first inspect the overview section and there assess whether any change to the model resulted in an improvement of such a size that it would be of interest to learn more about it. If so, there is more information in the subsections. If not, the qa functionality has provided reassurance that the model in a large number of aspects describe the data well. 
+
+The "Structural" section contains information additional information about bias in the population predictions versus different independent variables.  If this bias is low, despite a marked improvement in OFV, an argument can be made about the clinical relevance of the bias. This size and direction of the bias may also suggest a new model structure. Note though that also covariate or stochastic model misspecification can result in bias and may be best to corrected for first. 
+
+The "Parameter Variability Model" section extensions to the IIV model are tested \cite{Svensson, Petersson}. If any model suggests an improvement, the PsN functionality "transform" can easily make the corresponding change to the original model (learn through \verb|transform -help|).
+
+The "Covariates" section explores covariate relations in addition to those already present in the model. A very strong, but correctly implemented covariate in the original model, should not provide a signal in this analysis. Thus for a model with correctly implemented covariates this would provide only marginal improvements. Two methods are used: a univariate estimation of all individual parameter-covariate relations (the typical first step in an SCM \cite{Jonsson}), and a full random effects model (FREM \cite{Karlsson, Yun, Yngman}) which estimates simultaneously all parameter-covariate relations using the baseline covariate values.
+
+"Residual Error Model" explores a number of extensions to the original residual error model \cite{Ibrahim, Karlsson2, Karlsson3, Dosne2012}. (For dtbs there is functionality in PsN to transform the original model automatically (see option dtbs after \verb|execute –help|). 
+
+"Influential individuals" are identified through a case-deletion diagnostics routine where the model is reestimated after dropping one subject at a time (subject i). The metric used is the difference in OFV for all subjects except subject i between the model with all subjects included and the model where subject i is dropped. This difference should always be positive as the model will always fit the remaining subjects better when subject I has been omitted. If the difference is >3.84 (the cut-off used for declaring an influential subject) it means that a parameter may have changed significantly (@ p<0.05) by the presence of the subject, hence influential.
+
+"Outliers" are subjects for which the model fits poorly. In this evaluation outlier status is judged based the overall goodness of fit to an individual's data \cite{Largajolli}. For an individual with such a characteristic, it may be further evaluated whether it is due to unusual parameter values and/or outlying observations (see simeval functionality in PsN). The metric presented for outlying subjects is the same as for Influential Individuals. Naturally an individual that is both outlying and influential is of particular concern.
+\\
+\\
 Example
 \begin{verbatim}
 qa pheno.mod -parameters=CL,V -covariates=WGT,APGR
