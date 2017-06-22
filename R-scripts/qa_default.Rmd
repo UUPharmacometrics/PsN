@@ -345,6 +345,7 @@ if(file.exists(file.path(working.directory,"simeval_run/raw_all_iofv.csv"))) {
    if(file.exists(phi1) && file.exists(phi2)) {
      plot_iofv_vs_iofv <- iofv_vs_iofv(phi1,phi2)
      print(plot_iofv_vs_iofv)
+     cat("Agreement in individual OFV contribution (iOFV) between non-linear and linearized model.")
    }
  }
 ```
