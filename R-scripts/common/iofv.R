@@ -12,6 +12,7 @@ iofv_vs_iofv <- function(phi1, phi2) {
         geom_abline(intercept = 0, slope = 1) +
         xlab(phi1name) +
         ylab(phi2name) +
+        theme_bw() +
         ggtitle("iOFV vs iOFV")
     return(plot)
 }

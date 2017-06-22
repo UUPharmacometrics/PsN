@@ -67,6 +67,8 @@ sub modelfit_setup
         $lst_file = '../../../' . $self->lst_file;
     }
 
+    $model_copy->set_records(type => 'covariance', record_strings => [ "UNCONDITIONAL" ]);     # Might need this for FREM CIs
+
     my $linearize = tool::linearize->new(
         %{common_options::restore_options(@common_options::tool_options)},
         models => [ $model_copy ],
@@ -75,6 +77,7 @@ sub modelfit_setup
         extra_table_columns => \@table_columns,
         lst_file => $lst_file,
         nointer => $self->nointer,
+        keep_covariance => 1,
     );
 
     $linearize->run();
