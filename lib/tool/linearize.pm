@@ -67,6 +67,7 @@ sub modelfit_setup
         directory => 'scm_dir1',
         extra_table_columns => $self->extra_table_columns,
         nointer => $self->nointer,
+        nm_output => $self->nm_output,
     );
 
     $scm->run;
@@ -90,6 +91,7 @@ sub modelfit_setup
     cp($scm->basename . '.phi', '../' . $scm->basename . '.phi');
     cp($scm->basename . '.ext', '../' . $scm->basename . '.ext');
     cp($scm->basename . '.cov', '../' . $scm->basename . '.cov');
+    cp($scm->basename . '.coi', '../' . $scm->basename . '.coi');
 }
 
 sub modelfit_analyze

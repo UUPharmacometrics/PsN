@@ -520,7 +520,6 @@ sub cholesky_transpose
 {
     #input is lower triangle, including diagonal, of symmetric positive definite matrix
     #in *column format*, A->[col][row]
-
 	my $Aref=shift;
     my $input_error = 2;
     my $numerical_error = 1;

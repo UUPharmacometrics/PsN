@@ -69,6 +69,8 @@ sub modelfit_setup
 
     $model_copy->set_records(type => 'covariance', record_strings => [ "UNCONDITIONAL" ]);     # Might need this for FREM CIs
 
+    my $old_nm_output = common_options::get_option('nm_output');    # Hack to set clean further down
+    common_options::set_option('nm_output', 'phi,ext,cov,cor,coi');
     my $linearize = tool::linearize->new(
         %{common_options::restore_options(@common_options::tool_options)},
         models => [ $model_copy ],
@@ -78,11 +80,14 @@ sub modelfit_setup
         lst_file => $lst_file,
         nointer => $self->nointer,
         keep_covariance => 1,
+        nm_output => 'phi,ext,cov,cor,coi',
     );
 
     $linearize->run();
     $linearize->print_results();
     ui->category('qa');
+
+    common_options::set_option('nm_output', $old_nm_output);
 
     my $linearized_model = model->new(
         filename => $linearized_model_name,
@@ -170,7 +175,7 @@ sub modelfit_setup
 				if ($dev) {
 					system("postfrem -frem_directory=frem_run -directory=postfrem_run -force_posdef_covmatrix");
 				} else {
-					system("postfrem-".$vers." -frem_directory=frem_run -directory=postfrem_run");
+					system("postfrem-".$vers." -force_posdef_covmatrix -frem_directory=frem_run -directory=postfrem_run");
 				}
             };
         }

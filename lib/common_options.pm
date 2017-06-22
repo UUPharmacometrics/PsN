@@ -142,7 +142,7 @@ sub get_option
 sub set_option
 {
     my $option = shift;
-    my $value => shift;
+    my $value = shift;
     $options_ref->{$option} = $value;
 }
 
