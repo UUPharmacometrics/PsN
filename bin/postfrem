@@ -64,12 +64,49 @@ my $res = GetOptions( \%options,
 
 exit unless $res;
 
+# base files and folders
 if( not defined $options{'frem_directory'} or (not -d $options{'frem_directory'}))  {
 	die "must set -frem_directory to existing directory\n";
 }
+$options{'option_file'}=$options{'frem_directory'}.'/version_and_option_info.txt';
 $options{'model'}=$options{'frem_directory'}.'/final_models/model_4.mod';
+
+# find base model (FREM only copies base model results into dir if base model was not pre-executed)
 $options{'base_model'}=$options{'frem_directory'}.'/intermediate_models/model_1.mod';
-$options{'base_model_covmat'}=$options{'frem_directory'}.'/intermediate_models/model_1.cov';
+$options{'base_model_lst'}=$options{'frem_directory'}.'/intermediate_models/model_1.lst';
+$options{'base_model_cov'}=$options{'frem_directory'}.'/intermediate_models/model_1.cov';
+unless (-f $options{'base_model_lst'}) {
+    my $orig_model;
+    if (-f $options{'option_file'}) {
+        open my $fh, '<', $options{'option_file'};
+        my $frem_cmd;
+        while (my $line = <$fh>) {
+            if ($frem_cmd) {
+                if ($line ne "") {
+                    chomp($line);
+                    my @words = split(/ +/, $line);
+                    foreach my $word (@words[1..$#words]) {
+                         if ($word =~ /^[^-].*/) {
+                             $orig_model = $word;
+                             last;
+                         }
+                    }
+                }
+                last;
+            }
+            $frem_cmd = 1 if ($line =~ /^Command:/);
+        }
+        close $fh;
+    } else {
+        croak "Could not read option file $options{'option_file'} (for finding base model execution results)";
+    }
+    if (defined $orig_model) {
+        $options{'base_model'} = $orig_model;
+        $options{'base_model_lst'} = ($orig_model =~ s/(\..*)$/.lst/r);
+        $options{'base_model_cov'} = ($orig_model =~ s/(\..*)$/.cov/r);
+    }
+    croak "Could not read base model ($options{'base_model'}) and lst" unless (-f $options{'base_model_lst'});
+}
 $options{'frem_dataset'} = $options{'frem_directory'}.'/frem_dataset.dta';
 
 if( defined $options{'sir_directory'} and (-d $options{'sir_directory'}))  {
@@ -612,7 +649,7 @@ if (defined $options{'rawres_input'}) {
 
     # M1 uncertainty can be propagated down as a fallback for missing M4 uncertainty
     if (!defined $covmatrix or $options{'force_m1_propagation'}) {
-		print "Trying to propagate model 1 (base model) uncertainty\n";
+		print "Trying to propagate model_1 (base model) uncertainty\n";
 		my $base_model = model->new( eval( $eval_string ),
 									 filename => $options{'base_model'},
 									 ignore_missing_output_files => 1 );
@@ -623,7 +660,7 @@ if (defined $options{'rawres_input'}) {
 									   update_fix => 0 );
 
 			my $base_covmatrix;
-			if ($base_model->outputs->[0]->get_single_value(attribute => 'covariance_step_successful')) {
+			if ($base_model->outputs->[0]->get_single_value(attribute => 'covariance_step_successful') && -f $options{'base_model_cov'}) {
 				$base_covmatrix = tool::sir::get_nonmem_covmatrix(output => $base_model->outputs->[0]);
 				my $posdef_err = tool::sir::check_matrix_posdef(matrix => $base_covmatrix);
 				if ($posdef_err == 1) {
@@ -631,7 +668,7 @@ if (defined $options{'rawres_input'}) {
 						  "(as checked with Cholesky decomposition without pivoting)\n";
 				} else {
 					# M1 has good uncertainty which we'll try to use
-					my $opt_file = $options{'frem_directory'}.'/version_and_option_info.txt';
+					my $opt_file = $options{'option_file'};
 					my $opt_read;
 					my @skip_omegas;
 					if (-e $opt_file) {
@@ -647,10 +684,10 @@ if (defined $options{'rawres_input'}) {
 						}
 						close $fh;
 					}
-					$opt_read or die "Could not read skipped omegas information from version_and_option_info.txt";
+					$opt_read or die "Could not read skipped omegas information from $options{'option_file'}";
 
 					# get full SE matrix of M1 in table form (needed to not remove 0-rows and -cols) and create array matrix form
-					my $m1_covmat_table = nmtablefile->new(filename => $options{'base_model_covmat'})->get_table(index => 0);
+					my $m1_covmat_table = nmtablefile->new(filename => $options{'base_model_cov'})->get_table(index => 0);
 					my $m1_covmat_size = scalar(@{$m1_covmat_table->columns})-1; # skip NAME column
 					my $m1_covmat = [];
 					for (my $i=1; $i<=$m1_covmat_size; $i++) {
@@ -682,7 +719,7 @@ if (defined $options{'rawres_input'}) {
 					}
 				}
 			} else {
-				print "Covariance step of model_1 was not succesful or not run\n";
+				print "Covariance step of model_1 was not succesful, not run or .cov file not found\n";
 			}
 		} else {
 			die "No output from model_1 in frem directory";
