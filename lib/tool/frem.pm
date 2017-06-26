@@ -3193,7 +3193,7 @@ sub run_unless_run
 										top_tool              => 0);
 		$run->add_to_nmoutput(extensions => ['phi','ext','cov']);
 		my $text = 'Estimating ';
-		$text = 'Evaluating ' if ($numbers->[0] == 3 or $numbers->[0] == 7);
+		$text = 'Evaluating ' if ($numbers->[0] == 3 or $numbers->[0] == 7 or ($numbers->[0] == 2 && !$self->estimate_covariates));
 		$text .= 'Model '.join(' and ',@{$numbers});
 		ui -> print( category => 'all', message =>  $text);
 		$run-> run;
