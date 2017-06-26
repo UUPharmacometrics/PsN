@@ -67,7 +67,9 @@ sub modelfit_setup
         $lst_file = '../../../' . $self->lst_file;
     }
 
-    $model_copy->set_records(type => 'covariance', record_strings => [ "UNCONDITIONAL" ]);     # Might need this for FREM CIs
+    # $model_copy->set_records(type => 'covariance', record_strings => [ "UNCONDITIONAL" ]);     # Might need this for FREM CIs
+    # cov step execution in non-linear model (derivatives.mod) might take hours or days, just omit for now
+    $model_copy->set_records(type => 'covariance', record_strings => [ "OMITTED" ]);
 
     my $old_nm_output = common_options::get_option('nm_output');    # Hack to set clean further down
     common_options::set_option('nm_output', 'phi,ext,cov,cor,coi');
