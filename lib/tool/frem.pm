@@ -2884,11 +2884,27 @@ sub prepare_model4
 
 		$frem_model -> problems -> [0]->omegas(\@omega_records);
 		$frem_model -> problems -> [0]->estimations($est_records);
-		$frem_model -> problems -> [0]->add_records( record_strings => $cov_records,
-													 type => 'covariance' );
-		$frem_model->_write();
 
-	}
+        # if OMITTED was on $COV line, remove it for M4 covariance step (and add UNCONDITIONAL)
+        my $new_cov_records = [];
+        my $uncond;
+        foreach my $opt (@{$cov_records}) {
+            if ($opt =~ /^OMIT/) {
+                print "Removed '$opt' from \$COV in Model 4\n";
+            } else {
+                push @{$new_cov_records}, $opt;
+            }
+            $uncond = 1 if ($opt =~ /^UNC/);
+        }
+        unless ($uncond) {
+            print "Added 'UNCONDITIONAL' to \$COV in Model 4\n";
+            push @{$new_cov_records}, "UNCONDITIONAL";
+        }
+        $frem_model -> problems -> [0]->add_records( record_strings => $new_cov_records,
+                                                     type => 'covariance' );
+        $frem_model->_write();
+
+    }
 
 
 }
