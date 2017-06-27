@@ -8,8 +8,8 @@ parameter_ratio <- function(inTable_frem,covdata,pardata) {
     library(reshape2)
     library(dplyr)
     library(ggplot2)
-    
-    # in case if column names consist of not valid symbols, for example, "(" 
+
+    # in case if column names consist of not valid symbols, for example, "("
     parameter_names <- pardata[,1]
     col_names <- colnames(pardata)
     pardata <- data.frame(make.names(parameter_names),stringsAsFactors = F)
@@ -19,14 +19,23 @@ parameter_ratio <- function(inTable_frem,covdata,pardata) {
     colnames_frem <- colnames(inTable_frem)
     # names of covariate (names of first column in covdata input table, header = FALSE)
     covariate <- as.character(covdata[[1]])
-    
+
     # delete "LN" prefixes (if they exist) from any of covariates
     for (i in 1:length(covariate)) {
       if (grepl("^LN", covariate[i])) {
         covariate[i] <- gsub("\\LN","",covariate[i])
       }
     }
-   
+
+    # delete "LN" prefixes (if they exist) from any of colnames in inTable_frem data frame
+    col_names <- colnames(inTable_frem)
+    for (i in 1:length(col_names)) {
+      if (grepl("5th\\.LN",col_names[i])) {
+        col_names[i] <- gsub("5th\\.LN","5th.",col_names[i])
+      }
+    }
+    colnames(inTable_frem) <- col_names
+
     # round values to reasonable amount of significant figures (4 as maximum)
     for (i in 1:nrow(covdata)) {
       if (covdata$is.categorical[i] == "0") {
@@ -166,7 +175,7 @@ parameter_ratio <- function(inTable_frem,covdata,pardata) {
 
       # Save each plot with different names in different pdg files (based on each parameter j)
       param[[j]] <- paste0(parameter_names[j])
-      
+
     }
     return(list(plots=cov_effect_on_param_plots,
                 param=param))
