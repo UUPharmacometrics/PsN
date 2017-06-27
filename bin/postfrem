@@ -687,31 +687,33 @@ if (defined $options{'rawres_input'}) {
 						}
 						close $fh;
 					}
-					$opt_read or die "Could not read skipped omegas information from $options{'option_file'}";
+                    if ($opt_read) {
+                        # get full SE matrix of M1 in table form (needed to not remove 0-rows and -cols) and create array matrix form
+                        my $m1_covmat_table = nmtablefile->new(filename => $options{'base_model_cov'})->get_table(index => 0);
+                        my $m1_covmat_size = scalar(@{$m1_covmat_table->columns})-1; # skip NAME column
+                        my $m1_covmat = [];
+                        for (my $i=1; $i<=$m1_covmat_size; $i++) {
+                            push @{$m1_covmat}, $m1_covmat_table->get_column(index => $i);
+                        }
 
-					# get full SE matrix of M1 in table form (needed to not remove 0-rows and -cols) and create array matrix form
-					my $m1_covmat_table = nmtablefile->new(filename => $options{'base_model_cov'})->get_table(index => 0);
-					my $m1_covmat_size = scalar(@{$m1_covmat_table->columns})-1; # skip NAME column
-					my $m1_covmat = [];
-					for (my $i=1; $i<=$m1_covmat_size; $i++) {
-						push @{$m1_covmat}, $m1_covmat_table->get_column(index => $i);
-					}
+                        # get full omega matrices of M4 (including 0:s where none were estimated)
+                        my $m4_omegas = $model->problems->[0]->get_matrix(type => 'omega', start_row => 1);
 
-					# get full omega matrices of M4 (including 0:s where none were estimated)
-					my $m4_omegas = $model->problems->[0]->get_matrix(type => 'omega', start_row => 1);
-
-                    $propagated_covmatrix = propagate_m1_to_m4_covmatrix(
-                        m1_covmat => $m1_covmat,
-                        m4_omegas => $m4_omegas,
-                        npar => $npar,
-                        ncov => $ncov,
-                        thetas => $m4_nthetas,
-                        sigmas => $m4_nsigmas,
-                        omegas => $m4_nomegas,
-                        nsubjects => $id_count,
-                        skip_omegas => \@skip_omegas,
-                    );
-					if (defined $propagated_covmatrix) {
+                        $propagated_covmatrix = propagate_m1_to_m4_covmatrix(
+                            m1_covmat => $m1_covmat,
+                            m4_omegas => $m4_omegas,
+                            npar => $npar,
+                            ncov => $ncov,
+                            thetas => $m4_nthetas,
+                            sigmas => $m4_nsigmas,
+                            omegas => $m4_nomegas,
+                            nsubjects => $id_count,
+                            skip_omegas => \@skip_omegas,
+                        );
+                    } else {
+                        print "Could not read skipped omegas information from $options{'option_file'}; skipping\n";
+                    }
+                    if (defined $propagated_covmatrix) {
                         # remove fixed parameters
                         $covmatrix = remove_params_in_covmatrix(
                             covmatrix => $propagated_covmatrix,
@@ -719,7 +721,7 @@ if (defined $options{'rawres_input'}) {
                             sigmas => $model->fillblock_fixed(parameter_type => 'sigma')->[0],
                             omegas => $model->fillblock_fixed(parameter_type => 'omega')->[0],
                         );
-					}
+                    }
 				}
 			} else {
 				print "Covariance step of model_1 was not succesful, not run or .cov file not found\n";
