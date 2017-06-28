@@ -30,8 +30,8 @@ parameter_ratio <- function(inTable_frem,covdata,pardata) {
     # delete "LN" prefixes (if they exist) from any of colnames in inTable_frem data frame
     col_names <- colnames(inTable_frem)
     for (i in 1:length(col_names)) {
-      if (grepl("5th\\.LN",col_names[i])) {
-        col_names[i] <- gsub("5th\\.LN","5th.",col_names[i])
+      if (grepl("\\.LN",col_names[i])) {
+        col_names[i] <- gsub("\\.LN",".",col_names[i])
       }
     }
     colnames(inTable_frem) <- col_names
