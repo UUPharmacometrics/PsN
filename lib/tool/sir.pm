@@ -10,7 +10,7 @@ use tool::modelfit;
 use Math::Random;
 use Moose;
 use MooseX::Params::Validate;
-use ext::Math::MatrixReal;# qw(all); 
+use ext::Math::MatrixReal;# qw(all);
 use Math::Trig;	# For pi
 use Math::Random;
 use output;
@@ -83,14 +83,14 @@ sub BUILD
 	$self->problems_per_file(100) unless defined ($self->problems_per_file);
 	croak("problems_per_file must be larger than 0") unless ($self->problems_per_file > 0);
 
-	croak("No \$PROBLEM in input model") unless 
+	croak("No \$PROBLEM in input model") unless
 		(defined $self ->models()->[0]->problems and scalar(@{$self ->models()->[0]->problems})>0);
 
-	croak("No \$INPUT found") unless 
-		(defined $self ->models()->[0]->problems->[0]->inputs and 
+	croak("No \$INPUT found") unless
+		(defined $self ->models()->[0]->problems->[0]->inputs and
 		 scalar(@{$self ->models()->[0]->problems->[0]->inputs})>0);
-	croak("No \$DATA found") unless 
-		(defined $self ->models()->[0]->problems->[0]->datas and 
+	croak("No \$DATA found") unless
+		(defined $self ->models()->[0]->problems->[0]->datas and
 		 scalar(@{$self ->models()->[0]->problems->[0]->datas})>0);
 
 	#TODO support multiple $PROB
@@ -98,7 +98,7 @@ sub BUILD
 
 	unless (scalar(@{$self->samples}) == scalar(@{$self->resamples})){
 		croak("samples and resamples arrays must have equal length");
-	} 
+	}
 
 	if ($self->add_iterations){
 		unless ((-d $self->directory ) and ( -e $self->directory.$recovery_filename )){
@@ -154,7 +154,7 @@ sub BUILD
 			$self->check_cholesky_reparameterization(0);
 		}
 	}
-	
+
 	for my $accessor ('logfile','raw_results_file','raw_nonp_file'){
 		my @new_files=();
 		my @old_files = @{$self->$accessor};
@@ -166,20 +166,20 @@ sub BUILD
 			push(@new_files,$ldir.$name) ;
 		}
 		$self->$accessor(\@new_files);
-	}	
+	}
 
 
 	unless (scalar(@{$self->samples})>0){
 		croak("samples arrays must have at least length 1");
-	} 
+	}
 
 	$self->max_iteration(scalar(@{$self->samples}));
 	for (my $j=0; $j<scalar(@{$self->samples}); $j++){
 		croak("Number of samples must be larger than 0") unless ($self->samples()->[$j]>0);
 		croak("Number of resamples must be larger than 1") unless ($self->resamples()->[$j]>1);
 		croak("Number of resamples cannot be larger than samples unless with_replacement is set or ".
-			  "cap_resampling is large enough") unless 
-			(($self->resamples()->[$j] <= ($self->samples->[$j]*$self->cap_resampling)) or 
+			  "cap_resampling is large enough") unless
+			(($self->resamples()->[$j] <= ($self->samples->[$j]*$self->cap_resampling)) or
 			 ($self->with_replacement));
 	}
 
@@ -226,7 +226,7 @@ sub get_offdiagonal_variance{
 	my $var_i = $parm{'var_i'};
 	my $var_j = $parm{'var_j'};
 	my $type = $parm{'type'};
-	
+
 	croak("illegal rse_i $rse_i") unless ($rse_i > 0);
 	croak("illegal rse_j $rse_j") unless ($rse_j > 0);
 	croak("illegal var_i $var_i") unless ($var_i > 0);
@@ -243,10 +243,10 @@ sub get_offdiagonal_variance{
 		$variance =abs($covariance)*sqrt($var_i*$var_j)*$rse_i*$rse_j/(100**2);
 	}
 	return $variance;
-	
+
 }
 
-	 
+
 sub setup_variancevec_from_rse
 {
 	my %parm = validated_hash(\@_,
@@ -263,7 +263,7 @@ sub setup_variancevec_from_rse
 	my $parameter_hash = $parm{'parameter_hash'};
 	my $type = $parm{'type'};
 	no warnings qw(uninitialized);
-	
+
 	#param => $self->parameter_hash->{'param'},
 	#coords => $self->parameter_hash->{'coords'},
 	#'values'
@@ -277,7 +277,7 @@ sub setup_variancevec_from_rse
 	my %diag_uncert_sd;
 	my %diag_est_var;
 	my %rse_hash;
-	
+
 	for (my $i=0; $i<scalar(@{$parameter_hash->{'param'}}); $i++){
 		my $coord = $parameter_hash->{'coords'}->[$i];
 		my $estimate = $parameter_hash->{'values'}->[$i];
@@ -345,7 +345,7 @@ sub setup_variancevec_from_rse
 				}else{
 					croak("bug finding diagvalues for $param $left and $right");
 				}
-				
+
 			}else{
 				croak("bug string $param matching for $coord");
 			}
@@ -513,7 +513,7 @@ sub modelfit_setup
 			my @models=();
 			my $message = "Running input model";
 
-			my $orig_fit = 
+			my $orig_fit =
 				tool::modelfit->new( %{common_options::restore_options(@common_options::tool_options)},
 									 base_directory	 => $self ->directory(),
 									 directory		 => $self ->directory().
@@ -598,7 +598,7 @@ sub modelfit_setup
 				#is done in empirical_statistics.
 			}
 
-			($rawres_resampled_params_arr,$resamp_href) = 
+			($rawres_resampled_params_arr,$resamp_href) =
 				model::get_rawres_params(filename => $self->rawres_input,
 										 filter => $self->in_filter,
 										 offset => $self->offset_rawres,
@@ -638,7 +638,7 @@ sub modelfit_setup
 													 filename => $filename,
 													 directory => $self->directory,
 				);
-				
+
 			$rawres_resampled_params_arr = create_sampled_params_arr(samples_array => $tweaksamples,
 																	 labels_hash => $self->parameter_hash,
 																	 user_labels => 1); #otherwise get empty values, zero vectors
@@ -649,8 +649,8 @@ sub modelfit_setup
 												   do_sdcorr => 0);
 
 			my( $ldir, $name ) = OSspecific::absolute_path( $self ->directory(),$covfile);
-			print_empirical_covmatrix(filename=> $ldir.$name, 
-									  parameter_hash => $self->parameter_hash, 
+			print_empirical_covmatrix(filename=> $ldir.$name,
+									  parameter_hash => $self->parameter_hash,
 									  covar => $resulthash->{'covar'});
 
 		}
@@ -671,7 +671,7 @@ sub modelfit_setup
 			}
 
 			my @lines = utils::file::slurp_file($self->covmat_input);
-			my ($success,$lower_covar,$index_order_ref,$header_labels_ref) = 
+			my ($success,$lower_covar,$index_order_ref,$header_labels_ref) =
 				output::problem::subproblem::parse_additional_table (covariance_step_run => 1,
 																	 have_omegas => 1,
 																	 have_sigmas => 1,
@@ -759,12 +759,12 @@ sub modelfit_setup
 					if (defined $opt->label and length($opt->label)>0){
 						push(@{$fix_theta_values},$opt->init);
 						push(@{$fix_theta_labels},$opt->label);
-					}# else cannot be SD or COR 
+					}# else cannot be SD or COR
 				}
 			}
 		}
 	}
-	
+
 	for (my $iteration=$first_iteration;$iteration<=$self->max_iteration(); $iteration++){
 		if (defined $resampled_params_arr){
 			#we have resampled_params_arr, either from first iteration or rawresinput, on original scale
@@ -803,12 +803,12 @@ sub modelfit_setup
 		#covmatrix already read if *not* have resampled params
 		if ($have_resampled_params){
 			$inflation = [] unless ($iteration ==1); #keep inflation if rawres input and first iteration
-			croak("iteration ".($iteration-1)."iteration_resulthash not defined") 
-				unless (defined $previous_iteration_resulthash and 
+			croak("iteration ".($iteration-1)."iteration_resulthash not defined")
+				unless (defined $previous_iteration_resulthash and
 						defined $previous_iteration_resulthash->{'covar'});
-#							defined $previous_iteration_resulthash->{'lambda'} and 
+#							defined $previous_iteration_resulthash->{'lambda'} and
 #							defined $previous_iteration_resulthash->{'delta'} and
-			
+
 			if ($previous_iteration_resulthash->{'rank_deficient'}){
 				croak("The number of parameter vectors obtained in iteration ".($iteration-1)." is smaller than ".
 					  "the number of estimated parameters. This gives a rank deficient covariance matrix, so ".
@@ -876,7 +876,7 @@ sub modelfit_setup
 				"without changing the number of resamples to avoid the exhaustion of good samples.";
 			ui -> print( category => 'sir',	 message => $message);
 		}elsif (abs($maxcorr) > $warn_correlations){
-			my $message = 
+			my $message =
 				"\nThe correlation between ".$self->parameter_hash->{'labels'}->[$max_indices->[0]].
 				" and ".$self->parameter_hash->{'labels'}->[$max_indices->[1]]." in the proposal exceeds $warn_correlations. This\n".
 				"might lead to an underestimation of parameter uncertainty if the true\n".
@@ -884,7 +884,7 @@ sub modelfit_setup
 				"reparameterize the model if possible.\n";
 			ui -> print( category => 'sir',	 message => $message);
 		}
-		
+
 		my $message = "Sampling from the truncated multivariate normal distribution";
 		ui -> print( category => 'sir',	 message => $message);
 
@@ -894,7 +894,7 @@ sub modelfit_setup
 													   successful_samples=>$self->successful_samples,
 													   attempted_samples=>$self->attempted_samples,
 													   iteration=> $iteration);
-		if (($current_samples > $self->samples->[($iteration-1)]) and 
+		if (($current_samples > $self->samples->[($iteration-1)]) and
 			($self->problems_per_file() > 1)){
 			ui->print(category=> "sir", message => "Setting problems_per_file to 1 to minimize ofv losses");
 			$self->problems_per_file(1);
@@ -918,7 +918,7 @@ sub modelfit_setup
 			mu => $muvector,
 			lambda => $lambda,
 			delta => $delta);
-		
+
 		$sampled_params_arr = create_sampled_params_arr(samples_array => $vectorsamples,
 														labels_hash => $self->parameter_hash,
 														user_labels => $user_labels);
@@ -929,10 +929,10 @@ sub modelfit_setup
 			$pdfvec= linear_algebra::mvnpdf_cholesky($covmatrix,$mu_values,$vectorsamples,$inflation,$relativepdf)
 		}
 		$self->pdf_vector($pdfvec);
-		
+
 		ui -> print( category => 'sir',
 					 message => "Creating parameter vector evaluation models iteration $iteration...");
-		
+
 		my $modelsarr = model::create_maxeval_zero_models_array(
 			problems_per_file => $self->problems_per_file,
 			sampled_params_arr => $sampled_params_arr,
@@ -944,15 +944,15 @@ sub modelfit_setup
 			purpose => 'sir_iteration'.$iteration,
 			match_labels => $user_labels
 			);
-		
+
 		my %subargs = ();
 		if ( defined $self -> subtool_arguments() ) {
 			%subargs = %{$self -> subtool_arguments()};
 		}
-		
+
 		$message = "Running iteration ".$self->iteration()." evaluation models";
-		
-		my $iteration_evaluation = 
+
+		my $iteration_evaluation =
 			tool::modelfit ->new( %{common_options::restore_options(@common_options::tool_options)},
 								  models		 => $modelsarr,
 								  base_directory   => $self -> directory,
@@ -968,23 +968,23 @@ sub modelfit_setup
 								  top_tool              => 0,
 								  copy_data             => $self->copy_data,
 								  %subargs );
-		
-		
-		
+
+
+
 		ui -> print( category => 'sir', message => $message );
-		
+
 		if ($iteration < $self->max_iteration()){
 			#not final round
 			push(@{$self->intermediate_raw_results_files},'raw_results_sir_iteration'.$iteration.'.csv');
 			$iteration_evaluation -> run;
 			#here we read all successful samples even if not resampled. The filtering on resamples column
 			#is done in empirical_statistics
-			($resampled_params_arr,$resamp_href) = 
+			($resampled_params_arr,$resamp_href) =
 				model::get_rawres_params(filename => $iteration_evaluation->raw_results_file()->[0],
 										 require_numeric_ofv => 1,
 										 extra_columns => ['resamples'],
 										 offset => 1, #first is center
-										 model => $model); 
+										 model => $model);
 
 			if (($self->negative_dofv->[($iteration-1)] > 0) and ($self->recenter)){
 				my ($errors,$new_ofv,$new_center) = get_min_ofv_values(sampled_params_arr => $resampled_params_arr,
@@ -993,7 +993,7 @@ sub modelfit_setup
 					croak("Recentering mu failed, error messages are \n".join("\n",@{$errors})."\n");
 				}
 				$self->parameter_hash->{'values'} = $new_center;
-				
+
 				$self->reference_ofv($new_ofv);
 				ui->print(category => 'sir',
 						  message => "Recentered mu to parameter vector\n".
@@ -1033,7 +1033,7 @@ sub modelfit_setup
 
 		}else{
 			#final round
-			my ($dir,$file)= 
+			my ($dir,$file)=
 				OSspecific::absolute_path( $self ->directory(),
 										   $self -> raw_results_file()->[$model_number-1] );
 			push(@{$self->intermediate_raw_results_files},$file);
@@ -1117,13 +1117,13 @@ sub load_restart_information
 			$self->resamples(\@resamples);
 
  			$self->nm_version($nm_version);
-			random_set_seed(@seed_array); 
+			random_set_seed(@seed_array);
 
 		}else{
 			#add_iterations
 			ui->print(category => 'sir',message => "Reading results from iteration $iteration. "."\n".
 					  "Options from original run will not be read.\n");
-			
+
 			my @new_samples = @samples[0 .. ($iteration-1)];
 			push(@new_samples,@{$self->samples}); #append from commandline
 			$self->samples(\@new_samples);
@@ -1133,7 +1133,7 @@ sub load_restart_information
 			$self->resamples(\@new_resamples);
 
 		}
-		
+
 		$self->subjects($subjects);
 		$self->iteration($iteration);
 		$self->reference_ofv($reference_ofv);
@@ -1157,7 +1157,7 @@ sub load_restart_information
 		unless ($self->copy_data){
 			$model->relative_data_path(0);
 		}
-		$self->models([$model]); 
+		$self->models([$model]);
 
 		if ($done and $self->add_iterations){
 			#we need to copy final raw_results file from last iteration to a numbered raw results file,
@@ -1283,7 +1283,7 @@ sub get_min_ofv_values{
 		}
 	}
 #	print "\nLowest ofv $lowest_ofv at index $index_lowest_ofv\n";
-	#modify $parameter_hash->{'values'}, match on $parameter_hash->{'labels'} 
+	#modify $parameter_hash->{'values'}, match on $parameter_hash->{'labels'}
 
 	my ($new_center,$errors) = get_vector_from_sampled_params_arr(sampled_params_arr => $sampled_params_arr,
 																  parameter_hash => $parameter_hash,
@@ -1465,11 +1465,11 @@ sub recompute_weights{
 		);
 	my $weight_hash = $parm{'weight_hash'};
 	my $reset_index = $parm{'reset_index'};
-	
+
 	my $len = scalar(@{$weight_hash->{'weights'}});
 	if ($reset_index < 0 or $reset_index >= $len){
 		croak("illlegal input to recompute_weights, reset_index is $reset_index but length of weights is $len");
-	} 
+	}
 	$weight_hash->{'weights'}->[$reset_index] = 0;
 	my $cumsum=0;
 	$cumsum = $weight_hash->{'cdf'}->[$reset_index-1] if ($reset_index > 0);
@@ -1755,7 +1755,7 @@ sub check_auto_cholesky_blocks_posdef{
 		my $c=shift; #0 based col
 		return round(($r*($r+1)/2)+($c+1)-1);
 	}
-	
+
 	foreach my $hashref (@{$hash_array}){
 		my $size = $hashref->{'size'};
 		my $bounded = $hashref->{'bounded'};
@@ -1820,7 +1820,7 @@ sub setup_auto_cholesky_block_posdef_check
 	my $labels = $parm{'labels'};
 	my $fix_theta_labels = $parm{'fix_theta_labels'};
 	my $param = $parm{'param'};
-	
+
 	my $dim = scalar(@{$labels});
 
 	#one row at a time, sd first , then corr if any
@@ -1828,7 +1828,7 @@ sub setup_auto_cholesky_block_posdef_check
 
 	#FIXME option to turn off check
 	#FIXME auto-detect in pk/pred code
-	
+
 	my %sdcorr_matrices;
 	my %sdcorr_fix;
 	my %dimension;
@@ -1964,7 +1964,7 @@ sub setup_block_posdef_check
 	my $choleskyform = $parm{'choleskyform'};
 	my $coords = $parm{'coords'};
 	my $param = $parm{'param'};
-	
+
 	my $dim = scalar(@{$coords});
 
 	unless ($dim>0){
@@ -1986,7 +1986,7 @@ sub setup_block_posdef_check
 	my $prev_localcol = 0;
 	my $prev_globalrow = 0;
 	my $prev_globalcol = 0;
-	
+
 	for (my $i=0; $i< $dim; $i++){
 		#does this i belong to a block we should care about?
 		if (($block_number->[$i] == 0) or ($choleskyform->[$i] == 1)){
@@ -2049,14 +2049,14 @@ sub setup_block_posdef_check
 			push(@thisarray,$i);
 
 			#if this is last i of a block
-			if ( ($i==($dim-1)) or 
+			if ( ($i==($dim-1)) or
 				 ($block_number->[$i] != $block_number->[$i+1]) or
 				 ($param->[$i] ne $param->[$i+1])
 				){
 				unless ($prev_localrow == $prev_localcol){
 					croak("last item in block but not diagonal $prev_localrow , $prev_localcol coords ".$coords->[$i]);
 				}
-				
+
 				#only add block if have any offdiag
 				if ($any_offdiag){
 					push(@blockarrays,{'size' => $prev_localrow, 'indices'=> [@thisarray]});
@@ -2074,275 +2074,275 @@ sub setup_block_posdef_check
 	}
 
 	return \@blockarrays;
-	
+
 }
 
 sub sample_multivariate_normal
 {
-	my %parm = validated_hash(\@_,
-							  samples => { isa => 'Int', optional => 0 },
-							  adjust_blocks => { isa => 'Bool', optional => 0},
-							  print_summary => { isa => 'Bool', default => 1},
-							  check_cholesky_reparameterization => { isa => 'Bool', optional => 0},
-							  fix_theta_labels => { isa => 'ArrayRef', optional => 0 },
-							  fix_theta_values => { isa => 'ArrayRef', optional => 0 },
-#							  multivariate_normal  => { isa => 'Bool', optional => 1, default => 1},
-							  covmatrix => { isa => 'ArrayRef[ArrayRef]', optional => 0 }, #required for multnorm
-#							  bootstrap_samples => { isa => 'ArrayRef', optional => 1 }, #required for uniform
-							  labels => { isa => 'ArrayRef', optional => 0 },
-							  lower_bound => { isa => 'ArrayRef', optional => 0 },
-							  upper_bound => { isa => 'ArrayRef', optional => 0 },
-							  param => { isa => 'ArrayRef', optional => 0 },
-							  block_number => { isa => 'ArrayRef', optional => 0 },
-							  choleskyform => { isa => 'ArrayRef', optional => 0 },
-							  coords => { isa => 'ArrayRef', optional => 0 },
-							  mu => { isa => 'Math::MatrixReal', optional => 0 }, #required for multnorm							  
-							  inflation => { isa => 'ArrayRef', optional => 0 }, #required for multnorm
-#							  degree => { isa => 'Num', optional => 1 }, #required for uniform
-							  lambda => { isa => 'ArrayRef', optional => 1 }, #not allowed for uniform?
-							  delta => { isa => 'ArrayRef', optional => 1 }, #not allowed for uniform?
-		);
-	my $samples = $parm{'samples'};
-	my $adjust_blocks = $parm{'adjust_blocks'};
-	my $print_summary = $parm{'print_summary'};
-	my $check_cholesky_reparameterization = $parm{'check_cholesky_reparameterization'};
-#	my $multivariate_normal = $parm{'multivariate_normal'};
-	my $covmatrix = $parm{'covmatrix'};
-#	my $bootstrap_samples = $parm{'bootstrap_samples'};
-	my $labels = $parm{'labels'};
-	my $fix_theta_labels = $parm{'fix_theta_labels'};
-	my $fix_theta_values = $parm{'fix_theta_values'};
-	my $lower_bound = $parm{'lower_bound'};
-	my $upper_bound = $parm{'upper_bound'};
-	my $param = $parm{'param'};
-	my $block_number = $parm{'block_number'};
-	my $choleskyform = $parm{'choleskyform'};
-	my $coords = $parm{'coords'};
-	my $mu = $parm{'mu'};
-	my $inflation = $parm{'inflation'};
-#	my $degree = $parm{'degree'};
-	my $lambda = $parm{'lambda'};
-	my $delta = $parm{'delta'};
+    my %parm = validated_hash(\@_,
+                              samples => { isa => 'Int', optional => 0 },
+                              adjust_blocks => { isa => 'Bool', optional => 0},
+                              print_summary => { isa => 'Bool', default => 1},
+                              check_cholesky_reparameterization => { isa => 'Bool', optional => 0},
+                              fix_theta_labels => { isa => 'ArrayRef', optional => 0 },
+                              fix_theta_values => { isa => 'ArrayRef', optional => 0 },
+#                              multivariate_normal  => { isa => 'Bool', optional => 1, default => 1},
+                              covmatrix => { isa => 'ArrayRef[ArrayRef]', optional => 0 }, #required for multnorm
+#                              bootstrap_samples => { isa => 'ArrayRef', optional => 1 }, #required for uniform
+                              labels => { isa => 'ArrayRef', optional => 0 },
+                              lower_bound => { isa => 'ArrayRef', optional => 0 },
+                              upper_bound => { isa => 'ArrayRef', optional => 0 },
+                              param => { isa => 'ArrayRef', optional => 0 },
+                              block_number => { isa => 'ArrayRef', optional => 0 },
+                              choleskyform => { isa => 'ArrayRef', optional => 0 },
+                              coords => { isa => 'ArrayRef', optional => 0 },
+                              mu => { isa => 'Math::MatrixReal', optional => 0 }, #required for multnorm
+                              inflation => { isa => 'ArrayRef', optional => 0 }, #required for multnorm
+#                              degree => { isa => 'Num', optional => 1 }, #required for uniform
+                              lambda => { isa => 'ArrayRef', optional => 1 }, #not allowed for uniform?
+                              delta => { isa => 'ArrayRef', optional => 1 }, #not allowed for uniform?
+        );
+    my $samples = $parm{'samples'};
+    my $adjust_blocks = $parm{'adjust_blocks'};
+    my $print_summary = $parm{'print_summary'};
+    my $check_cholesky_reparameterization = $parm{'check_cholesky_reparameterization'};
+#    my $multivariate_normal = $parm{'multivariate_normal'};
+    my $covmatrix = $parm{'covmatrix'};
+#    my $bootstrap_samples = $parm{'bootstrap_samples'};
+    my $labels = $parm{'labels'};
+    my $fix_theta_labels = $parm{'fix_theta_labels'};
+    my $fix_theta_values = $parm{'fix_theta_values'};
+    my $lower_bound = $parm{'lower_bound'};
+    my $upper_bound = $parm{'upper_bound'};
+    my $param = $parm{'param'};
+    my $block_number = $parm{'block_number'};
+    my $choleskyform = $parm{'choleskyform'};
+    my $coords = $parm{'coords'};
+    my $mu = $parm{'mu'};
+    my $inflation = $parm{'inflation'};
+#    my $degree = $parm{'degree'};
+    my $lambda = $parm{'lambda'};
+    my $delta = $parm{'delta'};
 
-	my $dim = scalar(@{$coords});
+    my $dim = scalar(@{$coords});
 
-	unless ($dim>0){
-		croak("Input error sample_multivariate_normal: coords has dimension $dim");
-	}
+    unless ($dim>0){
+        croak("Input error sample_multivariate_normal: coords has dimension $dim");
+    }
 
-	my $transform=0;
-	if (defined $lambda){
-		if (scalar(@{$lambda})>0){
-			unless(scalar(@{$lambda})==$dim){
-				croak("Input error sample_multivariate_normal: coords vector has dimension $dim but lambda has dimension ".scalar(@{$lambda}));
-			}
-			unless(scalar(@{$delta})==$dim){
-				croak("Input error sample_multivariate_normal: coords vector has dimension $dim but delta has dimension ".scalar(@{$delta}));
-			}
-			$transform=1;
-		}
-	} 
-	unless (scalar(@{$lower_bound})==$dim){
-		croak("Input error sample_multivariate_normal: coords vector has dimension $dim but lower_bound has dimension ".scalar(@{$lower_bound}));
-	}
-	unless (scalar(@{$upper_bound})==$dim){
-		croak("Input error sample_multivariate_normal: coords vector has dimension $dim but upper_bound has dimension ".scalar(@{$upper_bound}));
-	}
-	unless (scalar(@{$block_number})==$dim){
-		croak("Input error sample_multivariate_normal: coords vector has dimension $dim but block_number has dimension ".scalar(@{$block_number}));
-	}
-	unless (scalar(@{$param})==$dim){
-		croak("Input error sample_multivariate_normal: coords vector has dimension $dim but param has dimension ".scalar(@{$param}));
-	}
-	unless (scalar($samples)>0){
-		croak("Input error sample_multivariate_normal: samples must be larger than 0");
-	}
+    my $transform=0;
+    if (defined $lambda){
+        if (scalar(@{$lambda})>0){
+            unless(scalar(@{$lambda})==$dim){
+                croak("Input error sample_multivariate_normal: coords vector has dimension $dim but lambda has dimension ".scalar(@{$lambda}));
+            }
+            unless(scalar(@{$delta})==$dim){
+                croak("Input error sample_multivariate_normal: coords vector has dimension $dim but delta has dimension ".scalar(@{$delta}));
+            }
+            $transform=1;
+        }
+    }
+    unless (scalar(@{$lower_bound})==$dim){
+        croak("Input error sample_multivariate_normal: coords vector has dimension $dim but lower_bound has dimension ".scalar(@{$lower_bound}));
+    }
+    unless (scalar(@{$upper_bound})==$dim){
+        croak("Input error sample_multivariate_normal: coords vector has dimension $dim but upper_bound has dimension ".scalar(@{$upper_bound}));
+    }
+    unless (scalar(@{$block_number})==$dim){
+        croak("Input error sample_multivariate_normal: coords vector has dimension $dim but block_number has dimension ".scalar(@{$block_number}));
+    }
+    unless (scalar(@{$param})==$dim){
+        croak("Input error sample_multivariate_normal: coords vector has dimension $dim but param has dimension ".scalar(@{$param}));
+    }
+    unless (scalar($samples)>0){
+        croak("Input error sample_multivariate_normal: samples must be larger than 0");
+    }
 
-	my @muvec=();
-	my $use_covmatrix;
-#	if ($multivariate_normal){
-	unless (defined $covmatrix ){
-		croak("Input error sample_multivariate_normal: covmatrix is required for multivariate normal");
-	}
-	unless (defined $mu ){
-		croak("Input error sample_multivariate_normal: mu is required for multivariate normal");
-	}
-	unless (defined $inflation){
-		croak("inflation parameter is required for multivariate normal");
-	}
+    my @muvec=();
+    my $use_covmatrix;
+#    if ($multivariate_normal){
+    unless (defined $covmatrix ){
+        croak("Input error sample_multivariate_normal: covmatrix is required for multivariate normal");
+    }
+    unless (defined $mu ){
+        croak("Input error sample_multivariate_normal: mu is required for multivariate normal");
+    }
+    unless (defined $inflation){
+        croak("inflation parameter is required for multivariate normal");
+    }
 
-	my ($rows,$columns) = $mu->dim();
-	unless ($rows == 1 and ($columns == $dim)){
-		croak("Input error sample_multivariate_normal: mu vector has dimension ($rows,$columns)");
-	}
-	for (my $i=1; $i<= $dim; $i++){
-		push(@muvec,$mu->element(1,$i));
-	}
-	
-	unless (scalar(@{$covmatrix})==$dim){
-		croak("Input error sample_multivariate_normal: coords vector has dimension $dim but covmatrix has dimension ".scalar(@{$covmatrix}));
-	}
-	unless (scalar(@{$covmatrix->[0]})==$dim){
-		croak("Input error sample_multivariate_normal: covmatrix is not square ");
-	}
-	if (scalar(@{$inflation}) != 0){
-		$use_covmatrix = inflate_covmatrix(matrix => $covmatrix,
-										   inflation => $inflation);
-	}else{
-		$use_covmatrix = $covmatrix;
-	}
-#	}else{
-		#uniform
-#		unless (defined $bootstrap_samples ){
-#			croak("Input error sample_multivariate_normal: bootstrap_samples is required for uniform");
-#		}
-#		unless (defined $degree ){
-#			croak("Input error sample_multivariate_normal: degree is required for uniform");
-#		}
-		#TODO rawres_hash_array-> array of vectors in plain format
-#	}
-	
-	my $block_check_array = setup_block_posdef_check(block_number => $block_number,
-													 choleskyform => $choleskyform,
-													 coords => $coords,
-													 param => $param);
+    my ($rows,$columns) = $mu->dim();
+    unless ($rows == 1 and ($columns == $dim)){
+        croak("Input error sample_multivariate_normal: mu vector has dimension ($rows,$columns)");
+    }
+    for (my $i=1; $i<= $dim; $i++){
+        push(@muvec,$mu->element(1,$i));
+    }
 
-	my $cholesky_block_array;
-	if ($check_cholesky_reparameterization){
-		$cholesky_block_array = setup_auto_cholesky_block_posdef_check(
-			param=> $param,
-			labels => $labels,
-			fix_theta_labels => $fix_theta_labels);
-	}
-	
-	my %rejections;
-	$rejections{'lower_bound'}=[(0) x $dim];
-	$rejections{'upper_bound'}=[(0) x $dim];
-	$rejections{'block'}=0;
-	$rejections{'reparameterized_block'}=0;
-	$rejections{'boxcox'}=[(0) x $dim];
-	$rejections{'zero'}=[(0) x $dim];
-	
-	my @samples_array=();
-	my @boxcox_samples_array=();
-	my $counter=0;
-	my $max_iter=1000;
-	my $half_iter = 500;
-	my $discarded=0;
-	my $adjusted = 0;
-	my $this_adjusted=0;
-	my $discarded_adjusted = 0;
-	for (my $j=0; $j<$max_iter; $j++){
-		#we will probably discard some samples, generate twice needed amount to start with
-		my @candidate_samples;
-#		if ($multivariate_normal){
-		@candidate_samples = Math::Random::random_multivariate_normal((2*$samples), @muvec, @{$use_covmatrix});
-#		}
+    unless (scalar(@{$covmatrix})==$dim){
+        croak("Input error sample_multivariate_normal: coords vector has dimension $dim but covmatrix has dimension ".scalar(@{$covmatrix}));
+    }
+    unless (scalar(@{$covmatrix->[0]})==$dim){
+        croak("Input error sample_multivariate_normal: covmatrix is not square ");
+    }
+    if (scalar(@{$inflation}) != 0){
+        $use_covmatrix = inflate_covmatrix(matrix => $covmatrix,
+                                           inflation => $inflation);
+    }else{
+        $use_covmatrix = $covmatrix;
+    }
+#    }else{
+        #uniform
+#        unless (defined $bootstrap_samples ){
+#            croak("Input error sample_multivariate_normal: bootstrap_samples is required for uniform");
+#        }
+#        unless (defined $degree ){
+#            croak("Input error sample_multivariate_normal: degree is required for uniform");
+#        }
+        #TODO rawres_hash_array-> array of vectors in plain format
+#    }
 
-		for (my $cand=0; $cand < scalar(@candidate_samples); $cand++){
-			my $xvec;
-			my $accept = 1;
-			if ($transform){
-				#back-transform from boxcox
-				$xvec = boxcox::shift_and_box_cox(vector=>$candidate_samples[$cand],
-												  lambda=>$lambda,
-												  delta=>$delta, 
-												  inverse => 1);
-				for (my $i=0; $i< $dim; $i++){
-					unless (usable_number($xvec->[$i])){
-						$rejections{'boxcox'}->[$i]=$rejections{'boxcox'}->[$i]+1;
-						$accept=0;
-						last;
-					}
-				}
-			}else{
-				$xvec= $candidate_samples[$cand];
-			}
-			unless ($accept){
-				$discarded++;
-				next ;
-			}
+    my $block_check_array = setup_block_posdef_check(block_number => $block_number,
+                                                     choleskyform => $choleskyform,
+                                                     coords => $coords,
+                                                     param => $param);
 
-			for (my $i=0; $i< $dim; $i++){
-				if ($xvec->[$i] <= $lower_bound->[$i]){
-					$rejections{'lower_bound'}->[$i]=$rejections{'lower_bound'}->[$i]+1;
-					$accept=0;
-					last;
-				}elsif($xvec->[$i] >= $upper_bound->[$i]){
-					$rejections{'upper_bound'}->[$i]=$rejections{'upper_bound'}->[$i]+1;
-					$accept=0;
-					last;
-				}elsif($xvec->[$i] == 0){
-					#unlikely, but must handle
-					$rejections{'zero'}->[$i]=$rejections{'zero'}->[$i]+1;
-					$accept=0;
-					last;
-				}
-			}
-			unless ($accept){
-				$discarded++;
-				next ;
-			}
-			($accept,$this_adjusted) = check_blocks_posdef(xvec => $xvec,
-														   hash_array => $block_check_array,
-														   adjust_blocks => $adjust_blocks);
-			unless ($accept){
-				$rejections{'block'}++;
-				$discarded++;
-				$discarded_adjusted++ if ($this_adjusted);
-				next ;
-			}
-			if ($check_cholesky_reparameterization){
-				$accept = check_auto_cholesky_blocks_posdef(hash_array =>$cholesky_block_array, 
-															xvec => $xvec,
-															fix_xvec => $fix_theta_values);
-			}
-			unless ($accept){
-				$rejections{'reparameterized_block'}++;
-				next ;
-			}
+    my $cholesky_block_array;
+    if ($check_cholesky_reparameterization){
+        $cholesky_block_array = setup_auto_cholesky_block_posdef_check(
+            param=> $param,
+            labels => $labels,
+            fix_theta_labels => $fix_theta_labels);
+    }
 
-			$adjusted++ if ($this_adjusted);
-			push(@samples_array,$xvec);
-			push(@boxcox_samples_array,$candidate_samples[$cand]) if ($transform);
-			$counter++;
-			last if ($counter == $samples);
-		}
-		last if ($counter == $samples);
-		if (($j > 0) and (($j+1) % 100 == 0) and ($j<($max_iter-1))){
-			ui->print(category=> 'sir',
-					  message => "Only have $counter accepted parameter vectors within the boundaries ".
-					  "after generating ".(2*($j+1)*$samples)." candidates, drawing more candidates\n");
-		}
-		if (($j==$half_iter) and (not $adjust_blocks)){
-			ui->print(category=> 'sir',
-					  message => "Turning on automatic adjustment of OMEGA/SIGMA blocks to increase acceptance rate\n");
-			$adjust_blocks = 1;
-		}
-	}
+    my %rejections;
+    $rejections{'lower_bound'}=[(0) x $dim];
+    $rejections{'upper_bound'}=[(0) x $dim];
+    $rejections{'block'}=0;
+    $rejections{'reparameterized_block'}=0;
+    $rejections{'boxcox'}=[(0) x $dim];
+    $rejections{'zero'}=[(0) x $dim];
 
-	my $fname = 'sample_rejection_summary.txt';
-	print_rejections(rejections => \%rejections,
-					 labels => $labels,
-					 file => $fname,
-					 dim => $dim,
-					 check_cholesky_reparameterization => $check_cholesky_reparameterization) if ($print_summary); 
-	
-	unless ($counter == $samples){
-		ui->print(category => 'sir',message=>"Failed to generate $samples accepted parameter vectors within the boundaries ".
-				  "even after generating ".
-				  (2*$max_iter*$samples)." candidates, only have $counter accepted.\n".
-				  "See summary of causes of rejections in file $fname.\n");
-		croak("Cannot proceed with sir\n");
-	}
-	my $extra = '';
-	if ($adjusted > 0){
-		$extra = "and adjusted $adjusted samples to make blocks positive definite\n";
-	}
-	ui->print(category => 'sir',message=> "Redrew $discarded samples that did not fulfill boundary conditions\n".
-			  "$extra");
-	return (\@samples_array,\@boxcox_samples_array);
-	
+    my @samples_array=();
+    my @boxcox_samples_array=();
+    my $counter=0;
+    my $max_iter=1000;
+    my $half_iter = 500;
+    my $discarded=0;
+    my $adjusted = 0;
+    my $this_adjusted=0;
+    my $discarded_adjusted = 0;
+    for (my $j=0; $j<$max_iter; $j++){
+        #we will probably discard some samples, generate twice needed amount to start with
+        my @candidate_samples;
+#        if ($multivariate_normal){
+        @candidate_samples = Math::Random::random_multivariate_normal((2*$samples), @muvec, @{$use_covmatrix});
+#        }
+
+        for (my $cand=0; $cand < scalar(@candidate_samples); $cand++){
+            my $xvec;
+            my $accept = 1;
+            if ($transform){
+                #back-transform from boxcox
+                $xvec = boxcox::shift_and_box_cox(vector=>$candidate_samples[$cand],
+                                                  lambda=>$lambda,
+                                                  delta=>$delta,
+                                                  inverse => 1);
+                for (my $i=0; $i< $dim; $i++){
+                    unless (usable_number($xvec->[$i])){
+                        $rejections{'boxcox'}->[$i]=$rejections{'boxcox'}->[$i]+1;
+                        $accept=0;
+                        last;
+                    }
+                }
+            }else{
+                $xvec= $candidate_samples[$cand];
+            }
+            unless ($accept){
+                $discarded++;
+                next ;
+            }
+
+            for (my $i=0; $i< $dim; $i++){
+                if ($xvec->[$i] <= $lower_bound->[$i]){
+                    $rejections{'lower_bound'}->[$i]=$rejections{'lower_bound'}->[$i]+1;
+                    $accept=0;
+                    last;
+                }elsif($xvec->[$i] >= $upper_bound->[$i]){
+                    $rejections{'upper_bound'}->[$i]=$rejections{'upper_bound'}->[$i]+1;
+                    $accept=0;
+                    last;
+                }elsif($xvec->[$i] == 0){
+                    #unlikely, but must handle
+                    $rejections{'zero'}->[$i]=$rejections{'zero'}->[$i]+1;
+                    $accept=0;
+                    last;
+                }
+            }
+            unless ($accept){
+                $discarded++;
+                next ;
+            }
+            ($accept,$this_adjusted) = check_blocks_posdef(xvec => $xvec,
+                                                           hash_array => $block_check_array,
+                                                           adjust_blocks => $adjust_blocks);
+            unless ($accept){
+                $rejections{'block'}++;
+                $discarded++;
+                $discarded_adjusted++ if ($this_adjusted);
+                next ;
+            }
+            if ($check_cholesky_reparameterization){
+                $accept = check_auto_cholesky_blocks_posdef(hash_array =>$cholesky_block_array,
+                                                            xvec => $xvec,
+                                                            fix_xvec => $fix_theta_values);
+            }
+            unless ($accept){
+                $rejections{'reparameterized_block'}++;
+                next ;
+            }
+
+            $adjusted++ if ($this_adjusted);
+            push(@samples_array,$xvec);
+            push(@boxcox_samples_array,$candidate_samples[$cand]) if ($transform);
+            $counter++;
+            last if ($counter == $samples);
+        }
+        last if ($counter == $samples);
+        if (($j > 0) and (($j+1) % 100 == 0) and ($j<($max_iter-1))){
+            ui->print(category=> 'sir',
+                      message => "Only have $counter accepted parameter vectors within the boundaries ".
+                      "after generating ".(2*($j+1)*$samples)." candidates, drawing more candidates\n");
+        }
+        if (($j==$half_iter) and (not $adjust_blocks)){
+            ui->print(category=> 'sir',
+                      message => "Turning on automatic adjustment of OMEGA/SIGMA blocks to increase acceptance rate\n");
+            $adjust_blocks = 1;
+        }
+    }
+
+    my $fname = 'sample_rejection_summary.txt';
+    print_rejections(rejections => \%rejections,
+                     labels => $labels,
+                     file => $fname,
+                     dim => $dim,
+                     check_cholesky_reparameterization => $check_cholesky_reparameterization) if ($print_summary);
+
+    unless ($counter == $samples){
+        ui->print(category => 'sir',message=>"Failed to generate $samples accepted parameter vectors within the boundaries ".
+                  "even after generating ".
+                  (2*$max_iter*$samples)." candidates, only have $counter accepted.\n".
+                  "See summary of causes of rejections in file $fname.\n");
+        croak("Cannot proceed with sir\n");
+    }
+    my $extra = '';
+    if ($adjusted > 0){
+        $extra = "and adjusted $adjusted samples to make blocks positive definite\n";
+    }
+    ui->print(category => 'sir',message=> "Redrew $discarded samples that did not fulfill boundary conditions\n".
+              "$extra");
+    return (\@samples_array,\@boxcox_samples_array);
+
 }
 
 sub print_rejections{
@@ -2359,7 +2359,7 @@ sub print_rejections{
 	my $file = $parm{'file'};
 	my $dim = $parm{'dim'};
 	my $check_cholesky_reparameterization = $parm{'check_cholesky_reparameterization'};
-	
+
 	open ( RES, ">" .$file); #overwrite
 	print RES "Sample rejection summary:\n";
 	print RES "BoxCox LowerBound UpperBound Zero  Label\n";
@@ -2425,8 +2425,8 @@ sub check_blocks_posdef{
 		if (linear_algebra::min($eigenvalues) < $minEigen){
 			if ($adjust_blocks){
 				my ($newmat,$change) = linear_algebra::spdarise(matrix => $mat,
-																eigenvalues => $eigenvalues, 
-																Q => $Q, 
+																eigenvalues => $eigenvalues,
+																Q => $Q,
 																minEigen => $minEigen);
 				$row=0;
 				$col=0;
@@ -2485,7 +2485,7 @@ sub tweak_inits_sampling{
 
 	my @Amatrix=();
 	my $nparam = scalar(@{$parameter_hash->{'values'}});
-	
+
 	my $referencemodel = $model->copy( filename => 'referencefortweakinits.mod',
 								  write_copy => 0,
 								  copy_output => 0);
@@ -2535,7 +2535,7 @@ sub tweak_inits_sampling{
 			$referencemodel -> update_inits(from_hash => $sampled_params_arr->[$i],
 											problem_number => ($i+1),
 											ignore_missing_parameters => 0,
-											match_labels => 1); 
+											match_labels => 1);
 		}
 	}
 
@@ -2584,7 +2584,7 @@ sub create_sampled_params_arr{
 	my $samples_array = $parm{'samples_array'};
 	my $labels_hash = $parm{'labels_hash'};
 	my $user_labels = $parm{'user_labels'};
-	
+
 	my @allparams=();
 
 	my $labelkey='coordinate_strings';
@@ -2638,7 +2638,7 @@ sub inflate_covmatrix
 	for (my $i=0;$i< $dim; $i++){
 		push(@copy,[0 x $dim]);
 		for (my $j=0;$j< $i; $j++){
-			$copy[$i]->[$j] = $copy[$j]->[$i]; 
+			$copy[$i]->[$j] = $copy[$j]->[$i];
 		}
 		for (my $j=$i;$j< $dim; $j++){
 			$copy[$i]->[$j] = ($matrix->[$i]->[$j])*$rootinfl[$i]*$rootinfl[$j];
@@ -2680,7 +2680,7 @@ sub get_nonmem_covmatrix
 		output => { isa => 'output', optional => 0 }
 	);
 	my $output = $parm{'output'};
-	
+
 	unless ($output->have_output){
 		croak("Trying get_nonmem_covmatrix but output object is empty, output file\n".$output->full_name."\n");
 	}
@@ -2699,7 +2699,7 @@ sub get_nonmem_covmatrix
 					 message  => "Warning: Doing get_nonmem_covmatrix but there were covariance step warnings in the lst-file. This is ".
 					 " likely to give errors in the computation of weights");
 	}
-	
+
 	my $lower_covar  = $output -> get_single_value(attribute => 'covariance_matrix');
 
 	unless (defined $lower_covar){
@@ -2717,7 +2717,7 @@ sub get_nonmem_inverse_covmatrix
 		output => { isa => 'output', optional => 0 }
 	);
 	my $output = $parm{'output'};
-	
+
 	unless ($output->have_output){
 		croak("Trying get_nonmem_inverse_covmatrix but output object is empty, output file\n".$output->full_name."\n");
 	}
@@ -2736,7 +2736,7 @@ sub get_nonmem_inverse_covmatrix
 					 message  => "Warning: Doing get_nonmem_inverse_covmatrix but there were covariance step warnings in the lst-file. This is ".
 					 " likely to give errors in the SIR sampling");
 	}
-	
+
 	my $lower_icm  = $output -> get_single_value(attribute => 'inverse_covariance_matrix');
 
 	unless (defined $lower_icm){
@@ -2775,7 +2775,7 @@ sub modelfit_analyze
 							  check_cholesky_reparameterization => $self->check_cholesky_reparameterization,
 							  copy_data => $self->copy_data,
 							  boxcox => $self->boxcox,
-							  center_rawresults_vector => $self->center_rawresults_vector, 
+							  center_rawresults_vector => $self->center_rawresults_vector,
 							  with_replacement => $self->with_replacement,
 							  cap_resampling => $self->cap_resampling,
 							  cap_correlation => $self->cap_correlation,
@@ -2808,19 +2808,19 @@ sub _modelfit_raw_results_callback
 	my $model_number = $parm{'model_number'};
 	my $subroutine;
 
-	my ($dir,$file,$nonp_file); 
+	my ($dir,$file,$nonp_file);
 
 	my $reference_ofv = $self->reference_ofv();
 	my $pdf_vector = $self->pdf_vector();
 	my $attempted_samples = $self->attempted_samples()->[($self->iteration-1)];
-	
+
 	my $iteration = $self->iteration;
 	my $final_iteration = 0;
 	$final_iteration = 1 if ($self->iteration == $self->max_iteration);
-	($dir,$file)= 
+	($dir,$file)=
 		OSspecific::absolute_path( $self ->directory(),
 								   $self -> raw_results_file()->[$model_number-1] );
-	($dir,$nonp_file) = 
+	($dir,$nonp_file) =
 		OSspecific::absolute_path( $self ->directory(),
 								   $self -> raw_nonp_file()->[$model_number-1] );
 
@@ -2846,7 +2846,7 @@ sub _modelfit_raw_results_callback
 		my $structure;
 		for (my $i=1;$i <= scalar(keys %{$modelfit->raw_line_structure()}); $i++){
 			if (defined $modelfit->raw_line_structure()->{$i} and defined $modelfit->raw_line_structure()->{$i}->{'ofv'}){
-				$structure = $i; 
+				$structure = $i;
 				last;
 			}else{
 				#print "rawline $i not ok!\n";
@@ -2888,7 +2888,7 @@ sub _modelfit_raw_results_callback
 					$negative_count++;
 				}
 				if ($row->[$ofvindex] < $this_minimum_ofv){
-					$this_minimum_ofv = $row->[$ofvindex]; 
+					$this_minimum_ofv = $row->[$ofvindex];
 					@minimum_ofv_row = @{$row};
 				}
 			}else{
@@ -2921,7 +2921,7 @@ sub _modelfit_raw_results_callback
 																   actual_resamples=>$self->actual_resamples,
 																   successful_count=>$successful_count,
 																   iteration=> $iteration);
-		
+
 		if ($successful_count == $attempted_samples){
 			#check that original pdf and filtered_pdf are the same
 			my $mismatch=0;
@@ -2974,8 +2974,8 @@ sub _modelfit_raw_results_callback
 
 		my @original_weights = @{$wghash->{'weights'}};
 		my $total_weights = $wghash->{'sum_weights'};
-		my @times_sampled = (0) x scalar(@delta_ofv); #this is the filtered_samples length 
-		my @sample_order = (0) x scalar(@delta_ofv); 
+		my @times_sampled = (0) x scalar(@delta_ofv); #this is the filtered_samples length
+		my @sample_order = (0) x scalar(@delta_ofv);
 
 		ui -> print( category => 'sir', message => "Resampling vectors based on weights" );
 
@@ -3008,7 +3008,7 @@ sub _modelfit_raw_results_callback
 					$original_weights[$index]/$total_weights, #probability_resample
 					$times_sampled[$index],
 					$sample_order[$index],
-					@oldrow[$ofvindex+1 .. $#oldrow]]; 
+					@oldrow[$ofvindex+1 .. $#oldrow]];
 			$index++;
 		}
 
@@ -3028,8 +3028,8 @@ sub _modelfit_raw_results_callback
 		my @oldrow =@{$self->center_rawresults_vector};
 
 		#sample.id                      'deltaofv','likelihood_ratio','relPDF','importance_ratio','probability_resample','resamples','sample_order'
-		my $row = [0,@oldrow[0 .. $ofvindex],0,undef,undef,undef,undef,undef,undef,@oldrow[$ofvindex+1 .. $#oldrow]]; 
-		
+		my $row = [0,@oldrow[0 .. $ofvindex],0,undef,undef,undef,undef,undef,undef,@oldrow[$ofvindex+1 .. $#oldrow]];
+
 		unshift( @{$modelfit -> raw_results()}, @{[$row]} );
 
 		#recenter for next iteration
@@ -3039,7 +3039,7 @@ sub _modelfit_raw_results_callback
 		}
 
 		#fix the header
-		
+
 		my @old_header = @{$modelfit -> raw_results_header()};
 		my $headerindex;
 		for (my $k=0; $k<scalar(@old_header);$k++){
@@ -3068,7 +3068,7 @@ sub _modelfit_raw_results_callback
 				#	$modelfit->raw_line_structure() -> {$mod}->{'deltaofv'} = ($ofvindex+1).',1';
 			}
 		}
-		
+
 		if ($negative_count > 0) {
 			my $message ="\nFound ".$negative_count.
 				" samples with negative delta-ofv, this means that ".
@@ -3079,7 +3079,7 @@ sub _modelfit_raw_results_callback
 		if ($final_iteration){
 			$self->raw_line_structure($modelfit -> raw_line_structure());
 			$self->raw_line_structure() -> write( $dir.'raw_results_structure' );
-			
+
 			$self -> raw_results_header($modelfit -> raw_results_header());
 			$self -> raw_results($modelfit -> raw_results());
 		}else{
@@ -3112,7 +3112,7 @@ sub augment_rawresults
 	my @augmented_pdf=();
 	my @augmented_dofv=();
 	my @augmented_id=();
-	
+
 	my $count = scalar(@{$raw_results});
 	for (my $i=0; $i< $count ; $i++){
 		my $max = 1;
@@ -3224,7 +3224,7 @@ sub update_attempted_samples
 			$new_samples = round($samples->[($iteration-1)]/$previous_turnout);
 		}
 	}
-	
+
 	push(@{$attempted_samples},$new_samples);
 	return $new_samples;
 }
@@ -3272,7 +3272,7 @@ sub prepare_results
 															  require_numeric_ofv => 1,
 															  extra_columns => ['resamples'],
 															  offset => 1,
-															  model => $model); 
+															  model => $model);
 	my $len= 0;
 	$len = scalar(@{$sampled_params_arr}) if (defined $sampled_params_arr);
 	## Prepare general run info for output file
@@ -3329,8 +3329,8 @@ sub prepare_results
 	my $basename = $model->create_output_filename();
 	$basename =~ s/\.lst$/_sir.cov/;
 	my( $ldir, $name ) = OSspecific::absolute_path( $self ->directory(),$basename);
-	print_empirical_covmatrix(filename=> $ldir.$name, 
-							  parameter_hash => $self->parameter_hash, 
+	print_empirical_covmatrix(filename=> $ldir.$name,
+							  parameter_hash => $self->parameter_hash,
 							  covar => $resulthash->{'covar'});
 
 }
@@ -3391,7 +3391,7 @@ sub create_R_plots_code{
 
 	my $labelref = $self->models->[0]->problems->[0]->get_estimated_attributes(parameter => 'all',
 																		  attribute => 'labels');
-	#we should not filter out off-diagonals like in sse. Verified. 
+	#we should not filter out off-diagonals like in sse. Verified.
 
 	if (defined $labelref){
 		$count{'param'} = scalar(@{$labelref});
