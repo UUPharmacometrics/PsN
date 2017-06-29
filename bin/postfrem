@@ -806,7 +806,8 @@ if (defined $options{'rawres_input'}) {
                 choleskyform => $parameter_hash->{'choleskyform'},
                 mu => $muvector,
                 lambda => [],
-                delta => []);
+                delta => [],
+                fast_posdef_check => 1);
 
             $sampled_params_arr = tool::sir::create_sampled_params_arr(samples_array => $vectorsamples,
                                                                        labels_hash => $parameter_hash,
