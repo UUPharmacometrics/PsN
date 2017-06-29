@@ -2101,6 +2101,7 @@ sub sample_multivariate_normal
 #                              degree => { isa => 'Num', optional => 1 }, #required for uniform
                               lambda => { isa => 'ArrayRef', optional => 1 }, #not allowed for uniform?
                               delta => { isa => 'ArrayRef', optional => 1 }, #not allowed for uniform?
+							  fast_posdef_check => { isa => 'Bool', default=> 0, optional => 1 },
         );
     my $samples = $parm{'samples'};
     my $adjust_blocks = $parm{'adjust_blocks'};
@@ -2123,6 +2124,7 @@ sub sample_multivariate_normal
 #    my $degree = $parm{'degree'};
     my $lambda = $parm{'lambda'};
     my $delta = $parm{'delta'};
+    my $fast_posdef_check = $parm{'fast_posdef_check'};
 
     my $dim = scalar(@{$coords});
 
@@ -2285,7 +2287,8 @@ sub sample_multivariate_normal
             }
             ($accept,$this_adjusted) = check_blocks_posdef(xvec => $xvec,
                                                            hash_array => $block_check_array,
-                                                           adjust_blocks => $adjust_blocks);
+                                                           adjust_blocks => $adjust_blocks,
+                                                           fast_posdef_check => $fast_posdef_check);
             unless ($accept){
                 $rejections{'block'}++;
                 $discarded++;
@@ -2382,15 +2385,30 @@ sub print_rejections{
 
 sub check_blocks_posdef{
 	#static, no shift
+
+    # Check multiple matrices (blocks) for positive definiteness and adjust them (if desired).
+    # Blocks are triangular and consecutively contained within xvec, indexed by hash_array.
+    # E.g. for identity 2x2 and 3x3 interspaced by a single (ignored) zero:
+    # xvec = [1,0,1,0,1,0,1,0,0,1]
+    # hash_array = [
+    #                { 'size' => 2, indices => [1,2,3] },
+    #                { 'size' => 3, indices => [5,6,7,8,9,10] },
+    #              ]
+    #
+    # fast_posdef_check will use cholesky decomposition instead of eigenvalue decomposition to
+    # speed up rejection process (but adjustment will be unaffected)
+
 	my %parm = validated_hash(\@_,
 							  xvec => { isa => 'ArrayRef', optional => 0 },
 							  hash_array => {isa => 'ArrayRef', optional => 0},
 							  adjust_blocks => {isa => 'Bool', optional => 0},
+							  fast_posdef_check => { isa => 'Bool', default => 0, optional => 1 },
 		);
 
 	my $xvec = $parm{'xvec'};
 	my $hash_array = $parm{'hash_array'};
 	my $adjust_blocks = $parm{'adjust_blocks'};
+	my $fast_posdef_check = $parm{'fast_posdef_check'};
 
 	my $minEigen=0.000000001;
 	my $accept = 1;
@@ -2420,43 +2438,64 @@ sub check_blocks_posdef{
 				$col=0;
 			}
 		}
-		(my $eigenvalues, my $Q) = linear_algebra::eigenvalue_decomposition($mat);
+        my $cholesky_err = 0;
+        if ($fast_posdef_check) {
+            # fast pre-check via cholesky decomposition
+            # (if fine we don't need to decompose into eigenvalues, saving valuable time)
+            $cholesky_err = check_matrix_posdef(matrix => $mat);
+            if ($cholesky_err and !$adjust_blocks) {
+                # if not adjusting we can already reject the blocks (otherwise it might get adjusted below)
+                $accept = 0;
+                last;
+            }
+        }
+        if (!$fast_posdef_check or ($cholesky_err && $adjust_blocks)) {
+            (my $eigenvalues, my $Q) = linear_algebra::eigenvalue_decomposition($mat);
 
-		if (linear_algebra::min($eigenvalues) < $minEigen){
-			if ($adjust_blocks){
-				my ($newmat,$change) = linear_algebra::spdarise(matrix => $mat,
-																eigenvalues => $eigenvalues,
-																Q => $Q,
-																minEigen => $minEigen);
-				$row=0;
-				$col=0;
-				foreach my $index (@{$hashref->{'indices'}}){
-					if ($index >= 0){
-						$xvec->[$index] = $newmat->[$row]->[$col];
-					}else{
-						#need to verify that 0 is ok
-						$newmat->[$row]->[$col] = 0;
-						$newmat->[$col]->[$row] = 0;
-					}
-					$col++;
-					if($col>$row){
-						$row++;
-						$col=0;
-					}
-				}
-				$adjusted = 1;
-				#if band matrix we need to check that setting 0 was ok
-				if ($band_matrix){
-					($eigenvalues, $Q) = linear_algebra::eigenvalue_decomposition($newmat);
-					if (linear_algebra::min($eigenvalues) < $minEigen){
-						$accept = 0;
-					}
-				}
-			}else{
-				$accept = 0;
-				last;
-			}
-		}
+            if (linear_algebra::min($eigenvalues) < $minEigen){
+                if ($adjust_blocks){
+                    my ($newmat,$change) = linear_algebra::spdarise(matrix => $mat,
+                                                                    eigenvalues => $eigenvalues,
+                                                                    Q => $Q,
+                                                                    minEigen => $minEigen);
+                    $row=0;
+                    $col=0;
+                    foreach my $index (@{$hashref->{'indices'}}){
+                        if ($index >= 0){
+                            $xvec->[$index] = $newmat->[$row]->[$col];
+                        }else{
+                            #need to verify that 0 is ok
+                            $newmat->[$row]->[$col] = 0;
+                            $newmat->[$col]->[$row] = 0;
+                        }
+                        $col++;
+                        if($col>$row){
+                            $row++;
+                            $col=0;
+                        }
+                    }
+                    $adjusted = 1;
+                    #if band matrix we need to check that setting 0 was ok
+                    if ($band_matrix){
+                        if ($fast_posdef_check) {
+                            # save time via fast posdef check here also
+                            $cholesky_err = check_matrix_posdef(matrix => $newmat);
+                            if ($cholesky_err) {
+                                $accept = 0;
+                            }
+                        } else {
+                            ($eigenvalues, $Q) = linear_algebra::eigenvalue_decomposition($newmat);
+                            if (linear_algebra::min($eigenvalues) < $minEigen){
+                                $accept = 0;
+                            }
+                        }
+                    }
+                }else{
+                    $accept = 0;
+                    last;
+                }
+            }
+        }
 		last unless ($accept);
 	}
 	return ($accept,$adjusted);
