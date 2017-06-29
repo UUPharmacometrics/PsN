@@ -8,7 +8,7 @@ use Test::Exception;
 use FindBin qw($Bin);
 use lib "$Bin/.."; #location of includes.pm
 use includes; #file with paths to PsN packages
-use ext::Math::MatrixReal qw(all); 
+use ext::Math::MatrixReal qw(all);
 use Math::Trig;	# For pi
 use Math::Random;
 use output;
@@ -167,11 +167,11 @@ cmp_relative($pdf->[0],1.035247587409e-01,11,'pdf compare matlab 1'); #multnorm.
 cmp_relative($pdf->[1],2.982414449872e-01,11,'pdf compare matlab 2'); #multnorm.m tag2
 cmp_relative($pdf->[2],5.974361835534e-01,11,'pdf compare matlab 3'); #multnorm.m tag3
 #print "\npdf ".$pdf->[0]."\n";
-     
+
 
 my $wghash = tool::sir::compute_weights(pdf_array => $pdf,
 										dofv_array => [1,10,5]);
-          
+
 #tag3 multnorm.m
 cmp_relative($wghash->{'weights'}->[0],5.858798099018610,11,'weight 1');
 cmp_relative($wghash->{'weights'}->[1],2.259225574558877e-02,11,'weight 2');
@@ -550,86 +550,100 @@ is(scalar(@{$arr}),1,'setup block posdef count 5');
 is($arr->[0]->{'size'},3,'setup block posdef size 6');
 is_deeply($arr->[0]->{'indices'},[3,4,5,-1,6,7],'setup block posdef indices 5');
 
-my $orig_xv = [1,1,3,0.1,1,0.2,0.3,3,4,1,3];
-$xvec = [1,1,3,0.1,1,0.2,0.3,3,4,1,3];
-my $hash_arr = [{'size' => 3, 'indices' => [2,3,4,5,6,7]},{'size' => 2, 'indices' => [8,9,10]}];
-my ($accept,$adjusted) = tool::sir::check_blocks_posdef(xvec => $xvec,
-														hash_array => $hash_arr,
-														adjust_blocks => 0);
-is($accept,1,'check blocks posdef accept 1');
-is($adjusted,0,'check blocks posdef adjusted 1');
-is_deeply($xvec,$orig_xv,'post xvec 1');
+foreach my $fast_posdef (0,1) {
+    print "\$fast_posdef=$fast_posdef\n";
+    my $str = $fast_posdef ? " (fast posdef)" : "";
 
-($accept,$adjusted) = tool::sir::check_blocks_posdef(xvec => $xvec,
-													 hash_array => $hash_arr,
-													 adjust_blocks => 1);
-is($accept,1,'check blocks posdef accept 2');
-is($adjusted,0,'check blocks posdef adjusted 2');
-is_deeply($xvec,$orig_xv,'post xvec 2');
+    my $orig_xv = [1,1,3,0.1,1,0.2,0.3,3,4,1,3];
+    $xvec = [1,1,3,0.1,1,0.2,0.3,3,4,1,3];
+    my $hash_arr = [{'size' => 3, 'indices' => [2,3,4,5,6,7]},{'size' => 2, 'indices' => [8,9,10]}];
+    my ($accept,$adjusted) = tool::sir::check_blocks_posdef(xvec => $xvec,
+                                                            hash_array => $hash_arr,
+                                                            adjust_blocks => 0,
+                                                            fast_posdef_check => $fast_posdef);
+    is($accept,1,'check blocks posdef accept 1'.$str);
+    is($adjusted,0,'check blocks posdef adjusted 1'.$str);
+    is_deeply($xvec,$orig_xv,'post xvec 1'.$str);
 
-$orig_xv = [1,1,3,0.1,1,0.2,0.3,3,1,1,1];
-$xvec = [1,1,3,0.1,1,0.2,0.3,3,1,1,1];
+    ($accept,$adjusted) = tool::sir::check_blocks_posdef(xvec => $xvec,
+                                                         hash_array => $hash_arr,
+                                                         adjust_blocks => 1,
+                                                         fast_posdef_check => $fast_posdef);
+    is($accept,1,'check blocks posdef accept 2'.$str);
+    is($adjusted,0,'check blocks posdef adjusted 2'.$str);
+    is_deeply($xvec,$orig_xv,'post xvec 2'.$str);
 
-($accept,$adjusted) = tool::sir::check_blocks_posdef(xvec => $xvec,
-													 hash_array => $hash_arr,
-													 adjust_blocks => 0);
-is($accept,0,'check blocks posdef accept 3');
-is($adjusted,0,'check blocks posdef adjusted 3');
-is_deeply($xvec,$orig_xv,'post xvec 3');
+    $orig_xv = [1,1,3,0.1,1,0.2,0.3,3,1,1,1];
+    $xvec = [1,1,3,0.1,1,0.2,0.3,3,1,1,1];
 
-($accept,$adjusted) = tool::sir::check_blocks_posdef(xvec => $xvec,
-													 hash_array => $hash_arr,
-													 adjust_blocks => 1);
-is($accept,1,'check blocks posdef accept 4');
-is($adjusted,1,'check blocks posdef adjusted 4');
-cmp_float_array($xvec,[1,1,3,0.1,1,0.2,0.3,3,1,0.999999999,1],'post xvec 4');
+    ($accept,$adjusted) = tool::sir::check_blocks_posdef(xvec => $xvec,
+                                                         hash_array => $hash_arr,
+                                                         adjust_blocks => 0,
+                                                         fast_posdef_check => $fast_posdef);
+    is($accept,0,'check blocks posdef accept 3'.$str);
+    is($adjusted,0,'check blocks posdef adjusted 3'.$str);
+    is_deeply($xvec,$orig_xv,'post xvec 3'.$str);
 
-
-$xvec = [1,1,1,3,0.1,1,0.1,3,1,0.1,1];
-$orig_xv = [1,1,1,3,0.1,1,0.1,3,1,0.1,1];
-
-$hash_arr = [{'size' => 3, 'indices' => [3,4,5,-1,6,7]},{'size' => 2, 'indices' => [8,9,10]}];
-
-($accept,$adjusted) = tool::sir::check_blocks_posdef(xvec => $xvec,
-													 hash_array => $hash_arr,
-													 adjust_blocks => 0);
-is($accept,1,'check blocks posdef accept 5');
-is($adjusted,0,'check blocks posdef adjusted 5');
-is_deeply($xvec,$orig_xv,'post xvec 5');
-
-$xvec =    [1,1,1,3,0.1,3,3,3,1,0.1,1];
-$orig_xv = [1,1,1,3,0.1,3,3,3,1,0.1,1];
-
-($accept,$adjusted) = tool::sir::check_blocks_posdef(xvec => $xvec,
-													 hash_array => $hash_arr,
-													 adjust_blocks => 0);
-is($accept,0,'check blocks posdef accept 6');
-is($adjusted,0,'check blocks posdef adjusted 6');
-is_deeply($xvec,$orig_xv,'post xvec 6');
-
-($accept,$adjusted) = tool::sir::check_blocks_posdef(xvec => $xvec,
-													 hash_array => $hash_arr,
-													 adjust_blocks => 1);
-is($accept,0,'check blocks posdef accept 7');
-is($adjusted,1,'check blocks posdef adjusted 7');
-cmp_float_array($xvec,[1,1,1,3.00000092e+00,9.99722453e-02,3.00083310e+00,2.99916736e+00,3.00083218e+00,1,0.1,1],'post xvec 7');
+    ($accept,$adjusted) = tool::sir::check_blocks_posdef(xvec => $xvec,
+                                                         hash_array => $hash_arr,
+                                                         adjust_blocks => 1,
+                                                         fast_posdef_check => $fast_posdef);
+    is($accept,1,'check blocks posdef accept 4'.$str);
+    is($adjusted,1,'check blocks posdef adjusted 4'.$str);
+    cmp_float_array($xvec,[1,1,3,0.1,1,0.2,0.3,3,1,0.999999999,1],'post xvec 4'.$str);
 
 
-$xvec =    [1,1,1,3,0.00000001,3,3,3,1,0.1,1];
-$orig_xv =    [1,1,1,3,0.00000001,3,3,3,1,0.1,1];
-($accept,$adjusted) = tool::sir::check_blocks_posdef(xvec => $xvec,
-													 hash_array => $hash_arr,
-													 adjust_blocks => 0);
-is($accept,0,'check blocks posdef accept 8');
-is($adjusted,0,'check blocks posdef adjusted 8');
-is_deeply($xvec,$orig_xv,'post xvec 8');
+    $xvec = [1,1,1,3,0.1,1,0.1,3,1,0.1,1];
+    $orig_xv = [1,1,1,3,0.1,1,0.1,3,1,0.1,1];
 
-($accept,$adjusted) = tool::sir::check_blocks_posdef(xvec => $xvec,
-													 hash_array => $hash_arr,
-													 adjust_blocks => 1);
-is($accept,1,'check blocks posdef accept 9');
-is($adjusted,1,'check blocks posdef adjusted 9');
-is_deeply($xvec,[1,1,1,3,9.99999999833334e-09,3.0000000005,2.9999999995,3.0000000005,1,0.1,1],'post xvec 9');
+    $hash_arr = [{'size' => 3, 'indices' => [3,4,5,-1,6,7]},{'size' => 2, 'indices' => [8,9,10]}];
+
+    ($accept,$adjusted) = tool::sir::check_blocks_posdef(xvec => $xvec,
+                                                         hash_array => $hash_arr,
+                                                         adjust_blocks => 0,
+                                                         fast_posdef_check => $fast_posdef);
+    is($accept,1,'check blocks posdef accept 5'.$str);
+    is($adjusted,0,'check blocks posdef adjusted 5'.$str);
+    is_deeply($xvec,$orig_xv,'post xvec 5'.$str);
+
+    $xvec =    [1,1,1,3,0.1,3,3,3,1,0.1,1];
+    $orig_xv = [1,1,1,3,0.1,3,3,3,1,0.1,1];
+
+    ($accept,$adjusted) = tool::sir::check_blocks_posdef(xvec => $xvec,
+                                                         hash_array => $hash_arr,
+                                                         adjust_blocks => 0,
+                                                         fast_posdef_check => $fast_posdef);
+    is($accept,0,'check blocks posdef accept 6'.$str);
+    is($adjusted,0,'check blocks posdef adjusted 6'.$str);
+    is_deeply($xvec,$orig_xv,'post xvec 6'.$str);
+
+    ($accept,$adjusted) = tool::sir::check_blocks_posdef(xvec => $xvec,
+                                                         hash_array => $hash_arr,
+                                                         adjust_blocks => 1,
+                                                         fast_posdef_check => $fast_posdef);
+    is($accept,0,'check blocks posdef accept 7'.$str);
+    is($adjusted,1,'check blocks posdef adjusted 7'.$str);
+    cmp_float_array($xvec,[1,1,1,3.00000092e+00,9.99722453e-02,3.00083310e+00,2.99916736e+00,3.00083218e+00,1,0.1,1],'post xvec 7'.$str);
+
+
+    $xvec =    [1,1,1,3,0.00000001,3,3,3,1,0.1,1];
+    $orig_xv =    [1,1,1,3,0.00000001,3,3,3,1,0.1,1];
+    ($accept,$adjusted) = tool::sir::check_blocks_posdef(xvec => $xvec,
+                                                         hash_array => $hash_arr,
+                                                         adjust_blocks => 0,
+                                                         fast_posdef_check => $fast_posdef);
+    is($accept,0,'check blocks posdef accept 8'.$str);
+    is($adjusted,0,'check blocks posdef adjusted 8'.$str);
+    is_deeply($xvec,$orig_xv,'post xvec 8'.$str);
+
+    ($accept,$adjusted) = tool::sir::check_blocks_posdef(xvec => $xvec,
+                                                         hash_array => $hash_arr,
+                                                         adjust_blocks => 1,
+                                                         fast_posdef_check => $fast_posdef);
+    is($accept,1,'check blocks posdef accept 9'.$str);
+    is($adjusted,1,'check blocks posdef adjusted 9'.$str);
+    is_deeply($xvec,[1,1,1,3,9.99999999833334e-09,3.0000000005,2.9999999995,3.0000000005,1,0.1,1],'post xvec 9'.$str);
+}
 
 
 $covar = [[3,2,1],[2,8,3],[1,3,9]];
