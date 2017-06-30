@@ -55,6 +55,7 @@ my %optional_options = (
     'sir_directory:s' => undef,
     'force_posdef_covmatrix!' => undef,
     'force_m1_propagation!' => undef,
+    'force_posdef_samples!' => undef,
 );
 
 my $res = GetOptions( \%options,
@@ -170,6 +171,12 @@ $help_text{-force_m1_propagation} = <<'EOF';
 
       Default not used. Forces the propagation of model 1 uncertainty, even when
       covariance step from model 4 was succesful (mainly useful for debugging/research).
+EOF
+$help_text{-force_posdef_samples} = <<'EOF';
+      -force_posdef_samples
+
+      Default not used. Forces each multivariate normal sample to be positive-definite
+      (OMEGA and SIGMA blocks), instead of waiting for posdef samples to get drawn.
 EOF
 
 common_options::online_help('postfrem', \%options,\%help_text, \%required_options, \%optional_options);
@@ -613,7 +620,6 @@ my $m4_nomegas = $model->nomegas->[0];
 # get uncertainty and simulate parameter vectors
 my $have_uncertainty;
 my $propagated_covmatrix; # only for disk write later
-my $forced_posdef_covmatrix = 0;
 my $sampled_params_arr;
 my $match_labels;
 if (defined $options{'rawres_input'}) {
@@ -744,7 +750,6 @@ if (defined $options{'rawres_input'}) {
                 # force positive definite
                 print "Forcing matrix positive definite\n";
                 (my $covmatrix_posdef, my $count) = linear_algebra::get_symmetric_posdef($covmatrix);
-                $forced_posdef_covmatrix = 1; # adjust blocks also in sir sampler then
                 print "$count eigenvalue(s) adjusted\n";
 
                 # copy and test that this modification is good enough for cholesky decomp
@@ -782,8 +787,8 @@ if (defined $options{'rawres_input'}) {
             # use valid covariance matrix for uncertainty
             my $parameter_hash = output::get_nonmem_parameters(output => $model->outputs->[0]);
             print "Sampling from the truncated multivariate normal distribution\n";
-            if ($forced_posdef_covmatrix) {
-                print "(adjusting all sampling blocks due to forced positive definiteness on sampling matrix)\n";
+            if ($options{'force_posdef_samples') {
+                print "(adjusting all OMEGA and SIGMA sampled blocks to positive-definiteness)\n";
             }
             my $mu_values= $parameter_hash->{'values'};
 
@@ -797,7 +802,7 @@ if (defined $options{'rawres_input'}) {
                 labels => $parameter_hash->{'labels'},
                 covmatrix => $covmatrix,
                 inflation => [],
-                adjust_blocks => $forced_posdef_covmatrix,
+                adjust_blocks => $options{'force_posdef_samples'},
                 lower_bound => $parameter_hash->{'lower_bounds'},
                 upper_bound => $parameter_hash->{'upper_bounds'},
                 param => $parameter_hash->{'param'},
