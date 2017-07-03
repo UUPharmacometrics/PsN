@@ -787,7 +787,7 @@ if (defined $options{'rawres_input'}) {
             # use valid covariance matrix for uncertainty
             my $parameter_hash = output::get_nonmem_parameters(output => $model->outputs->[0]);
             print "Sampling from the truncated multivariate normal distribution\n";
-            if ($options{'force_posdef_samples') {
+            if ($options{'force_posdef_samples'}) {
                 print "(adjusting all OMEGA and SIGMA sampled blocks to positive-definiteness)\n";
             }
             my $mu_values= $parameter_hash->{'values'};
