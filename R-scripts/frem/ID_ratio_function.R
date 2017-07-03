@@ -23,6 +23,7 @@ ID_ratio <- function(frem_id,covdata,pardata,file_format) {
     for (i in 1:length(covariate)) {
       if (grepl("^LN", covariate[i])) {
         covariate[i] <- gsub("\\LN","",covariate[i])
+        covdata[i,2:5] <- exp(covdata[i,2:5])
       }
     }
     
@@ -31,6 +32,7 @@ ID_ratio <- function(frem_id,covdata,pardata,file_format) {
     for (i in 1:length(col_names)) {
       if (grepl("^cov.LN",col_names[i])) {
         col_names[i] <- gsub("\\LN","",col_names[i])
+        frem_id[i] <- exp(frem_id[i])
       }
     }
     colnames(frem_id) <- col_names

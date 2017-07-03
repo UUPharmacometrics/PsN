@@ -24,6 +24,7 @@ parameter_ratio <- function(inTable_frem,covdata,pardata) {
     for (i in 1:length(covariate)) {
       if (grepl("^LN", covariate[i])) {
         covariate[i] <- gsub("\\LN","",covariate[i])
+        covdata[i,2:5] <- exp(covdata[i,2:5])
       }
     }
 
