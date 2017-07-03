@@ -1,4 +1,4 @@
-ID_ratio <- function(frem_id,covdata,pardata,file_format) {
+ID_ratio <- function(frem_id,covdata,pardata) {
 
   # check if there are all 3 input data files
   files_exist <- (exists("frem_id") & exists("covdata") & exists("pardata"))
