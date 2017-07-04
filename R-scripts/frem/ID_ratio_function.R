@@ -15,7 +15,7 @@ ID_ratio <- function(frem_id,covdata,pardata) {
 
     # names of parameter (names of first column in pardata input table,header = FALSE)
     parameter_names <- pardata[[1]]
-    parameter <- make.names(parameter_names)
+    parameter_names <- make.names(parameter_names)
     # names of covariate (names of first column in covdata input table,header = FALSE)
     covariate <- as.character(covdata[[1]])
     
@@ -69,9 +69,9 @@ ID_ratio <- function(frem_id,covdata,pardata) {
     # SORT NEEDED DATA FOR EACH PARAMETER -------------------------------------
     indiv_for_param_plots <- list()
     param <- list()
-    for (j in 1:length(parameter)) {
+    for (j in 1:length(parameter_names)) {
       # Sort data into neat order
-      obs_col <- paste0(parameter[j], ".observed")
+      obs_col <- paste0(parameter_names[j], ".observed")
       frem_id <- frem_id[order(frem_id[, obs_col]),]
       rownames(frem_id) <- NULL
       num_ids <- nrow(frem_id)
@@ -79,8 +79,8 @@ ID_ratio <- function(frem_id,covdata,pardata) {
       # Build new data frame from original data
       DF <- data.frame(id = frem_id[, "ID"],
                        mean = frem_id[, obs_col]*100-100,
-                       ci_low = frem_id[, paste0(parameter[j], ".5th")]*100-100,
-                       ci_high = frem_id[, paste0(parameter[j],".95th")]*100-100)
+                       ci_low = frem_id[, paste0(parameter_names[j], ".5th")]*100-100,
+                       ci_high = frem_id[, paste0(parameter_names[j],".95th")]*100-100)
       DF$interval <- sprintf("%.2f %%  [%.2f, %.2f]", DF$mean, DF$ci_low,DF$ci_high)
       DF$group <- "other"
 
@@ -134,7 +134,6 @@ ID_ratio <- function(frem_id,covdata,pardata) {
       DF_text <- data.frame(V1 = col1, V05 = 1)
       column_size <- nrow(DF_text)
       ncolumns <- 1
-      length(col1)
 
       # Create one column per each covariate
       for (cov_num in 1:length(covariate)) {

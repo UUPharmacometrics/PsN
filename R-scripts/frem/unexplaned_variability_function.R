@@ -10,12 +10,8 @@ unexplaned_variability <- function(frem_condvar,covdata,pardata) {
     
     # in case if column names consist of not valid symbols, for example, "("
     parameter_names <- pardata[,1]
-    col_names <- colnames(pardata)
-    pardata <- data.frame(make.names(parameter_names),stringsAsFactors = F)
-    colnames(pardata) <- col_names
+    parameter_names <- make.names(parameter_names)
     
-    # colnames of frem data
-    colnames_frem <- colnames(frem_condvar)
     # names of covariate (names of first column in covdata input table, header = FALSE)
     covariate <- as.character(covdata[[1]])
     covariate <- c("none",covariate,"allcov")
@@ -37,17 +33,15 @@ unexplaned_variability <- function(frem_condvar,covdata,pardata) {
     colnames(frem_condvar) <- col_names
     
     # SORT NEEDED DATA FOR EACH PARAMETER -------------------------------------
-    list_part <- list()
-    list_colnames <- list()
     unexplaned_variability_plots <- list()
     param <- list()
-    for (j in 1:nrow(pardata)) {
+    for (j in 1:length(parameter_names)) {
       DF <- as.data.frame(array(0,c(nrow(frem_condvar),length(covariate))))
       for (i in 1:length(covariate)) {
         if (covariate[i] != "none" && covariate[i] != "allcov") {
-          DF[,i] <- frem_condvar[ , grepl(paste0("CONDVAR.par.",pardata$parname[j],".given.cov.",covariate[i]), names(frem_condvar))]
+          DF[,i] <- frem_condvar[ , grepl(paste0("CONDVAR.par.",parameter_names[j],".given.cov.",covariate[i]), names(frem_condvar))]
         } else {
-          DF[,i] <- frem_condvar[ , grepl(paste0("CONDVAR.par.",pardata$parname[j],".given.",covariate[i]), names(frem_condvar))]
+          DF[,i] <- frem_condvar[ , grepl(paste0("CONDVAR.par.",parameter_names[j],".given.",covariate[i]), names(frem_condvar))]
         }
       }
       colnames(DF) <- covariate
@@ -65,8 +59,8 @@ unexplaned_variability <- function(frem_condvar,covdata,pardata) {
       outTable$unexp_var <- sprintf("%.3G [%.3G, %.3G]",outTable$mean,outTable$perc_5th,outTable$perc_95th)
       outTable$round_mean <- round(outTable$mean,3)
       outTable$covariates <- covariate
-      
-      
+      outTable$group <- c(rep("all",nrow(outTable)))
+
       # add an empty row to outTable
       empty_row <- c(rep(NA,ncol(outTable)))
       outTable <-rbind(empty_row,outTable)
@@ -74,10 +68,11 @@ unexplaned_variability <- function(frem_condvar,covdata,pardata) {
       outTable$y <- factor(c(1:nrow(outTable)), levels=c(nrow(outTable):1))
       # MAKE FOREST PLOT --------------------------------------------------------
       p <- ggplot(outTable, aes(mean,y)) +
-        geom_point(size = 2) +
-        geom_text(aes(label = round_mean),size = 4, vjust = 0, nudge_y = 0.1) +
-        geom_errorbarh(aes(xmax = perc_95th, xmin = perc_5th, height = 0.15)) +
-        geom_vline(xintercept = 0, linetype = "longdash") +
+        geom_point(aes(color = group),size = 2) +
+        geom_text(aes(label = round_mean,color = group),size = 4, vjust = 0, nudge_y = 0.1) +
+        scale_colour_manual(values = c("all" = "gray30")) +
+        geom_errorbarh(aes(xmax = perc_95th, xmin = perc_5th, color = group, height = 0.15)) +
+        geom_vline(xintercept = 0, linetype = "longdash",alpha=0.4) +
         labs(x = "Conditional variability", y="") +
         theme_bw() +
         theme(legend.position = "none",
@@ -95,10 +90,12 @@ unexplaned_variability <- function(frem_condvar,covdata,pardata) {
       V1 <- c("COVARIATE",outTable$covariates,"UNEXPLANED VARIABILITY",outTable$unexp_var)
       V05 <- rep(c(1:2),each = (nrow(outTable) +1) )
       outTable_text <- data.frame(V1,V05,V0 = factor(rep(c(1:(nrow(outTable) +1)),2),levels = c((nrow(outTable) +1):1)))
+      outTable_text$group <- rep(c("title",rep("all",nrow(outTable))),2)
       
       # create plot of text table
       data_table <- ggplot(outTable_text,aes(x = V05, y = V0, label = format(V1, nsmall = 1))) +
-        geom_text(size = 4, hjust = 0, vjust = 0.2) + theme_bw() +
+        scale_colour_manual(values = c("title" = "black", "all" = "gray30")) +
+        geom_text(size = 4, hjust = 0, vjust = 0.2,aes(colour = group)) + theme_bw() +
         geom_hline(aes(yintercept = c(nrow(outTable) + 0.5))) +
         theme(panel.grid.major = element_blank(),
               panel.border = element_blank(),

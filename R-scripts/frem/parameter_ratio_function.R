@@ -11,9 +11,7 @@ parameter_ratio <- function(inTable_frem,covdata,pardata) {
 
     # in case if column names consist of not valid symbols, for example, "("
     parameter_names <- pardata[,1]
-    col_names <- colnames(pardata)
-    pardata <- data.frame(make.names(parameter_names),stringsAsFactors = F)
-    colnames(pardata) <- col_names
+    parameter_names <- make.names(parameter_names)
 
     # colnames of frem data
     colnames_frem <- colnames(inTable_frem)
@@ -78,19 +76,19 @@ parameter_ratio <- function(inTable_frem,covdata,pardata) {
     list_colnames <- list()
     cov_effect_on_param_plots <- list()
     param <- list()
-    for (j in 1:nrow(pardata)) {
+    for (j in 1:length(parameter_names)) {
       for (i in 1:length(covariate)) {
         if (covdata$is.categorical[i] != "1") {
-          part_5th <- inTable_frem[ , grepl(paste0("RATIO.par.",pardata$parname[j],".given.cov5th.",covariate[i]), names(inTable_frem))]
+          part_5th <- inTable_frem[ , grepl(paste0("RATIO.par.",parameter_names[j],".given.cov5th.",covariate[i]), names(inTable_frem))]
           name_5th <- paste0(covariate[i],".cov5th")
-          part_95th <- inTable_frem[ , grepl(paste0("RATIO.par.",pardata$parname[j],".given.cov95th.",covariate[i]), names(inTable_frem))]
+          part_95th <- inTable_frem[ , grepl(paste0("RATIO.par.",parameter_names[j],".given.cov95th.",covariate[i]), names(inTable_frem))]
           name_95th <- paste0(covariate[i],".cov95th")
           part <- cbind(part_5th,part_95th)
           name <- cbind(name_5th,name_95th)
           list_part[i] <- list(part)
           list_colnames[i] <- list(name)
         } else {
-          part <- inTable_frem[ , grepl(paste0("RATIO.par.",pardata$parname[j],".given.other.",covariate[i]), names(inTable_frem))]
+          part <- inTable_frem[ , grepl(paste0("RATIO.par.",parameter_names[j],".given.other.",covariate[i]), names(inTable_frem))]
           name <- paste0(covariate[i],".other")
           list_part[i] <- list(part)
           list_colnames[i] <- list(name)
@@ -129,8 +127,9 @@ parameter_ratio <- function(inTable_frem,covdata,pardata) {
       p <- ggplot(outTable, aes(mean,y)) +
         geom_point(aes(color = group, shape = group),size = 2) +
         geom_text(aes(label = points, color = group),size = 4, vjust = 0, nudge_y = 0.1) +
+        scale_colour_manual(values = c("red","blue","green")) +
         geom_errorbarh(aes(xmax = ci_high, xmin = ci_low, color = group, height = 0.15)) +
-        geom_vline(xintercept = 0, linetype = "longdash") +
+        geom_vline(xintercept = 0, linetype = "longdash", alpha=0.4) +
         labs(x = "Effect size in percentage (%)", y="") +
         theme_bw() +
         theme(legend.position = "none",
@@ -141,11 +140,6 @@ parameter_ratio <- function(inTable_frem,covdata,pardata) {
               axis.ticks = element_blank(),
               axis.text.y = element_blank(),
               plot.margin = unit(c(1,0.1,1,1), "cm"))
-      # if ((2 %in% c(1:ncol(pardata))) & (3 %in% c(1:ncol(pardata)))) {
-      #   if ((is.na(pardata[j,2]) == FALSE) & (is.na(pardata[j,3]) == FALSE)) {
-      #     p <- p + coord_cartesian(xlim = c(pardata[j,2],pardata[j,3]))
-      #   }
-      # }
 
       # create table with all needed information
       outTable <- outTable[-1,]
@@ -153,11 +147,13 @@ parameter_ratio <- function(inTable_frem,covdata,pardata) {
       V1 <- c(colnames(outTable)[9], outTable$COVARIATE, colnames(outTable)[8],outTable$MEAN, colnames(outTable)[5], outTable$EXPECTED)
       V05 <- rep(c(1:3),each = (nrow(outTable) +1) )
       outTable_text <- data.frame(V1,V05,V0 = factor(rep(c(1:(nrow(outTable) +1)),3),levels = c((nrow(outTable) +1):1)))
+      outTable_text$group <- rep(c("title",rep("all",nrow(outTable))),3)
 
       # create plot of text table
       data_table <- ggplot(outTable_text,aes(x = V05, y = V0, label = format(V1, nsmall = 1))) +
-        geom_text(size = 4, hjust = 0, vjust = 0.2) + theme_bw() +
+        geom_text(size = 4, hjust = 0, vjust = 0.2,aes(colour = group)) + theme_bw() +
         geom_hline(aes(yintercept = c(nrow(outTable) + 0.5))) +
+        scale_colour_manual(values = c("title" = "black", "all" = "gray30")) +
         theme(panel.grid.major = element_blank(),
               panel.border = element_blank(),
               legend.position = "none",
