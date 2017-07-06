@@ -755,115 +755,122 @@ sub get_new_omega_order
 sub put_skipped_omegas_first
 {
 
-	my %parm = validated_hash(\@_,
-							  model => { isa => 'model', optional => 0 },
-							  problem_index  => { isa => 'Int', default => 0 },
-							  start_omega_record  => { isa => 'Int', optional => 0 },
-							  need_to_move  => { isa => 'Bool', optional => 0 },
-							  new_omega_order  => { isa => 'ArrayRef', optional => 0 },
-							  input_model_fix_omegas => { isa => 'ArrayRef', optional => 0 },
-	);
-	my $model = $parm{'model'};
-	my $problem_index = $parm{'problem_index'};
-	my $start_omega_record = $parm{'start_omega_record'};
-	my $need_to_move = $parm{'need_to_move'};
-	my $new_omega_order = $parm{'new_omega_order'};
-	my $input_model_fix_omegas = $parm{'input_model_fix_omegas'};
+    my %parm = validated_hash(\@_,
+                              model => { isa => 'model', optional => 0 },
+                              problem_index  => { isa => 'Int', default => 0 },
+                              start_omega_record  => { isa => 'Int', optional => 0 },
+                              need_to_move  => { isa => 'Bool', optional => 0 },
+                              new_omega_order  => { isa => 'ArrayRef', optional => 0 },
+                              input_model_fix_omegas => { isa => 'ArrayRef', optional => 0 },
+                              etas_file => { isa => 'Maybe[Str]', optional => 0 }
+    );
+    my $model = $parm{'model'};
+    my $problem_index = $parm{'problem_index'};
+    my $start_omega_record = $parm{'start_omega_record'};
+    my $need_to_move = $parm{'need_to_move'};
+    my $new_omega_order = $parm{'new_omega_order'};
+    my $input_model_fix_omegas = $parm{'input_model_fix_omegas'};
+    my $etas_file = $parm{'etas_file'};
 
-	my @parameter_etanumbers = ();
-	my $skip_etas = 0;
-	my @fix_omegas;
+    if ($etas_file) {
+        carp("\$ETAS used but not yet supported, removed for model 2 and later");
+        $model->remove_records(type => "etas");
+    }
 
-	my $maxeta =  $model->problems()->[0]->nomegas(with_correlations => 0,
-												   with_same => 1);
-	#for each omega find old eta numbers and new eta numbers
-	my $etas_per_omega = model::problem::etas_per_omega(problem => $model->problems->[0]);
+    my @parameter_etanumbers = ();
+    my $skip_etas = 0;
+    my @fix_omegas;
 
-	if ($need_to_move){
-		my @old_etas = (1 .. $maxeta);
-		my @intermediate_etas =();
-		foreach my $eta (@old_etas){
-			push(@intermediate_etas,'o'.$eta);
-		}
+    my $maxeta =  $model->problems()->[0]->nomegas(with_correlations => 0,
+                                                   with_same => 1);
+    #for each omega find old eta numbers and new eta numbers
+    my $etas_per_omega = model::problem::etas_per_omega(problem => $model->problems->[0]);
 
-		foreach my $coderec ('error','des','pk','pred'){ #never any ETAs in $MIX
-			my $acc = $coderec.'s';
-			if (defined $model->problems->[0]->$acc and
-				scalar(@{$model->problems->[0]->$acc})>0 ) {
-				my @code = @{$model->problems->[0]->$acc->[0]->code};
-				# rename all existing ETA\((\d+)\) to ETA(o\d+)
-				model::problem::renumber_etas(code => \@code,
-											  eta_from => [\@old_etas],
-											  eta_to => [\@intermediate_etas]);
-				#for each omega record
-				#rename from ETA\(o(\d+)\) to ETA(newnum) , also if oldnum and newnum the same
-				my $new_eta_count = 0;
-				my @from = ();
-				my @to = ();
-				foreach my $pos (@{$new_omega_order}) {
-					my $j = $pos-1;
-					my $size = scalar(@{$etas_per_omega->[$j]});
-					foreach my $eta (@{$etas_per_omega->[$j]}){
-						push(@from,$intermediate_etas[($eta-1)]); #with o prefix
-					}
-					push(@to,(($new_eta_count+1) .. ($new_eta_count + $size)));
-					$new_eta_count += $size;
-				}
-				model::problem::renumber_etas(code => \@code,
-											  eta_from => [\@from],
-											  eta_to => [\@to]);
+    if ($need_to_move){
+        my @old_etas = (1 .. $maxeta);
+        my @intermediate_etas =();
+        foreach my $eta (@old_etas){
+            push(@intermediate_etas,'o'.$eta);
+        }
 
-				$model->problems->[0]-> set_records( type => $coderec,
-													 record_strings => \@code );
-			}
-		}
+        foreach my $coderec ('error','des','pk','pred'){ #never any ETAs in $MIX
+            my $acc = $coderec.'s';
+            if (defined $model->problems->[0]->$acc and
+                scalar(@{$model->problems->[0]->$acc})>0 ) {
+                my @code = @{$model->problems->[0]->$acc->[0]->code};
+                # rename all existing ETA\((\d+)\) to ETA(o\d+)
+                model::problem::renumber_etas(code => \@code,
+                                              eta_from => [\@old_etas],
+                                              eta_to => [\@intermediate_etas]);
+                #for each omega record
+                #rename from ETA\(o(\d+)\) to ETA(newnum) , also if oldnum and newnum the same
+                my $new_eta_count = 0;
+                my @from = ();
+                my @to = ();
+                foreach my $pos (@{$new_omega_order}) {
+                    my $j = $pos-1;
+                    my $size = scalar(@{$etas_per_omega->[$j]});
+                    foreach my $eta (@{$etas_per_omega->[$j]}){
+                        push(@from,$intermediate_etas[($eta-1)]); #with o prefix
+                    }
+                    push(@to,(($new_eta_count+1) .. ($new_eta_count + $size)));
+                    $new_eta_count += $size;
+                }
+                model::problem::renumber_etas(code => \@code,
+                                              eta_from => [\@from],
+                                              eta_to => [\@to]);
 
-	}
+                $model->problems->[0]-> set_records( type => $coderec,
+                                                     record_strings => \@code );
+            }
+        }
 
-	#reorder omega records and check non-skipped are not diagonal size > 1
-	my @new_records = ();
-	my $n_previous_rows = 0;
-	for (my $k=0; $k<scalar(@{$new_omega_order}); $k++){
-		if ($k==($start_omega_record-1)){ #	$start_omega_record = scalar(@{$skip_omegas})+1;
-			$skip_etas = $n_previous_rows;
-		}
-		my $i = $new_omega_order->[$k]-1; #old index
-		my $size = scalar(@{$etas_per_omega->[$i]});
+    }
 
-		if ( $model->problems->[0]->omegas->[$i]->is_block or
-			($k < ($start_omega_record-1))){ #	$start_omega_record = scalar(@{$skip_omegas})+1;
-			my $formatted = $model->problems->[0]->omegas->[$i]->_format_record();
-			my @lines =();
-			for (my $j=0; $j < scalar(@{$formatted}); $j++){
-				push(@lines,split("\n",$formatted->[$j]));
-			}
-			#print "count ".scalar(@lines)."\n";
-			push(@new_records,
-				 model::problem::omega->new(record_arr => \@lines,
-											n_previous_rows => $n_previous_rows));
-			$n_previous_rows += $size;
-		}else{ #DIAGONAL and non-skipped
-			foreach my $opt (@{$model->problems->[0]->omegas->[$i]->options}){
-				my ($formatted,$no_break) = $opt -> _format_option(is_block => 0); #is_blocks makes format add FIX if set
-				push(@new_records,model::problem::omega->new(record_arr => ['BLOCK (1)',$formatted],
-															 n_previous_rows => $n_previous_rows));
-				$n_previous_rows++;
-			}
-		}
-	}
-	$model -> problems -> [0]-> omegas(\@new_records);
+    #reorder omega records and check non-skipped are not diagonal size > 1
+    my @new_records = ();
+    my $n_previous_rows = 0;
+    for (my $k=0; $k<scalar(@{$new_omega_order}); $k++){
+        if ($k==($start_omega_record-1)){ #    $start_omega_record = scalar(@{$skip_omegas})+1;
+            $skip_etas = $n_previous_rows;
+        }
+        my $i = $new_omega_order->[$k]-1; #old index
+        my $size = scalar(@{$etas_per_omega->[$i]});
 
-	@fix_omegas = @{get_or_set_fix(model => $model,
-								   type => 'omegas',
-								   stop_record => ($start_omega_record-1))};
+        if ( $model->problems->[0]->omegas->[$i]->is_block or
+            ($k < ($start_omega_record-1))){ #    $start_omega_record = scalar(@{$skip_omegas})+1;
+            my $formatted = $model->problems->[0]->omegas->[$i]->_format_record();
+            my @lines =();
+            for (my $j=0; $j < scalar(@{$formatted}); $j++){
+                push(@lines,split("\n",$formatted->[$j]));
+            }
+            #print "count ".scalar(@lines)."\n";
+            push(@new_records,
+                 model::problem::omega->new(record_arr => \@lines,
+                                            n_previous_rows => $n_previous_rows));
+            $n_previous_rows += $size;
+        }else{ #DIAGONAL and non-skipped
+            foreach my $opt (@{$model->problems->[0]->omegas->[$i]->options}){
+                my ($formatted,$no_break) = $opt -> _format_option(is_block => 0); #is_blocks makes format add FIX if set
+                push(@new_records,model::problem::omega->new(record_arr => ['BLOCK (1)',$formatted],
+                                                             n_previous_rows => $n_previous_rows));
+                $n_previous_rows++;
+            }
+        }
+    }
+    $model -> problems -> [0]-> omegas(\@new_records);
 
-	#reset etas per omega
-	$etas_per_omega = model::problem::etas_per_omega(problem => $model->problems->[0]);
-	for (my $j = ($start_omega_record-1); $j< scalar(@{$etas_per_omega}); $j++){
-		push(@parameter_etanumbers,$etas_per_omega->[$j]);
-	}
+    @fix_omegas = @{get_or_set_fix(model => $model,
+                                   type => 'omegas',
+                                   stop_record => ($start_omega_record-1))};
 
-	return $skip_etas,\@fix_omegas,\@parameter_etanumbers;
+    #reset etas per omega
+    $etas_per_omega = model::problem::etas_per_omega(problem => $model->problems->[0]);
+    for (my $j = ($start_omega_record-1); $j< scalar(@{$etas_per_omega}); $j++){
+        push(@parameter_etanumbers,$etas_per_omega->[$j]);
+    }
+
+    return $skip_etas,\@fix_omegas,\@parameter_etanumbers;
 }
 
 sub get_reordered_coordinate_strings{
@@ -2129,6 +2136,8 @@ sub do_model1
 	my $frem_model;
 	my $need_update = 0;
 
+    my $etas_file = $model->get_or_set_etas_file(problem_number => 1); # absolute path if present
+
 	if (-e $self -> directory().'intermediate_models/'.$name_model){
 		$frem_model = model->new( %{common_options::restore_options(@common_options::model_options)},
 								  filename                    => 'intermediate_models/'.$name_model,
@@ -2154,6 +2163,15 @@ sub do_model1
             } else {
                 print "Could not find $extra_file_orig; not copied to intermediate_models/$extra_file_copy\n";
             }
+        }
+
+        # copy etas file and update model to new location
+        if ($etas_file) {
+            croak "\$ETAS FILE=$etas_file could not be read" unless (-f $etas_file);
+            cp($etas_file, $im_dir);
+            # update etas file in model to new path (just filename since same directory)
+            my ($new_etas_dir, $new_etas_file) = OSspecific::absolute_path($im_dir, $etas_file);
+            $frem_model->get_or_set_etas_file(problem_number => 1, new_file => $new_etas_file);
         }
 	}
 
@@ -2192,7 +2210,7 @@ sub do_model1
 
 	$frem_model->update_inits (from_output => $output);
 
-	return ($frem_model,$output,$need_update);
+	return ($frem_model,$output,$need_update,$etas_file);
 
 }
 
@@ -3307,151 +3325,153 @@ sub restore_fork
 
 sub modelfit_setup
 {
-	my $self = shift;
-	my %parm = validated_hash(\@_,
-		 model_number => { isa => 'Int', optional => 1 }
-	);
-	my $model_number = $parm{'model_number'};
+    my $self = shift;
+    my %parm = validated_hash(\@_,
+         model_number => { isa => 'Int', optional => 1 }
+    );
+    my $model_number = $parm{'model_number'};
 
-	my $model = $self -> models -> [$model_number-1];
-	my ($frem_model2,$frem_model3,$frem_model4,$frem_model5,$frem_model7);
-	my ($frem_model1,$output_model1,$mod1_ofv,$output_model1_fullname,$output_model2_fullname);
-	my $frem_datasetname = 'frem_dataset.dta';
-	my ($filtered_data,$indices);
-	my ($new_omega_order,$need_to_move_omegas);
-	my ($skip_etas,$fix_omegas,$parameter_etanumbers);
-	my ($covariate_etanumbers,$ntheta,$epsnum,$maxeta);
-	my ($mod3_parcov_block,$est_records,$cov_records);
-	my (@tmp_covariates,@tmp_extra_input_items,@tmp_log,@tmp_categorical,%covresultref);
-	my @tmp_parcov_block;
-	my $covresultref;
-	my ($mod4_parcov_block,$mod4ofv);
-	my $finaldir= $self->directory.'final_models';
-	my ($final_models,$mes,$sir_model, $sir_model_text);
-	my ($error,$message,$fh);
-	my $do_print_proposal=0;
-	my $proposal_filename = 'proposal_density.cov';
-	my @final_numbers = ();
-	my $recovery_filename = 'child_process_variables';
-	my $update_existing_model_files = 0;
-	my $need_update;
+    my $model = $self -> models -> [$model_number-1];
+    my ($frem_model2,$frem_model3,$frem_model4,$frem_model5,$frem_model7);
+    my ($frem_model1,$output_model1,$mod1_ofv,$output_model1_fullname,$output_model2_fullname);
+    my $frem_datasetname = 'frem_dataset.dta';
+    my ($filtered_data,$indices);
+    my ($new_omega_order,$need_to_move_omegas);
+    my ($skip_etas,$fix_omegas,$parameter_etanumbers);
+    my ($covariate_etanumbers,$ntheta,$epsnum,$maxeta);
+    my ($mod3_parcov_block,$est_records,$cov_records);
+    my (@tmp_covariates,@tmp_extra_input_items,@tmp_log,@tmp_categorical,%covresultref);
+    my @tmp_parcov_block;
+    my $covresultref;
+    my ($mod4_parcov_block,$mod4ofv);
+    my $finaldir= $self->directory.'final_models';
+    my ($final_models,$mes,$sir_model, $sir_model_text);
+    my ($error,$message,$fh);
+    my $do_print_proposal=0;
+    my $proposal_filename = 'proposal_density.cov';
+    my @final_numbers = ();
+    my $recovery_filename = 'child_process_variables';
+    my $update_existing_model_files = 0;
+    my $need_update;
+    my $etas_file; # $etas file= if present (continuously updated; new files created downstream)
 
-	my $inter = $self -> directory().'intermediate_models';
-	unless (-d $inter){
-		mkdir($inter);
-	}
+    my $inter = $self -> directory().'intermediate_models';
+    unless (-d $inter){
+        mkdir($inter);
+    }
 
-	if ($self->fork_runs){
-	    $self->submit_child;
-	}
+    if ($self->fork_runs){
+        $self->submit_child;
+    }
 
-	if ($self->tool_child_id == 0){ #this is true if no forking and main process, or with fork and child process
-	    #this runs input model, if necessary, and updates inits
-	    ($frem_model1,$output_model1,$need_update)=  $self-> do_model1(model => $model);
-	    $mod1_ofv = $output_model1->get_single_value(attribute=> 'ofv');
-		$update_existing_model_files = 1 if ($need_update);
-	    if ($self->fork_runs){
-			#we have done a fork and this is child process
-			#store mod1_ofv and write updated frem_model1 to disk
-			$frem_model1->filename($name_model_1_updated);
-			$frem_model1->_write();
-			my @dumper_names = qw(mod1_ofv output_model1_fullname update_existing_model_files);
-			open($fh, '>'.$self->directory.$recovery_filename.'_mod1') or
-				die "Could not open file $recovery_filename mod1 for writing.\n";
-			print $fh Data::Dumper->Dump(
-				[$mod1_ofv,$output_model1->full_name,$update_existing_model_files],
-				\@dumper_names
-				);
-			close $fh;
-			debugmessage(1,"exit child process for mod1");
-			exit 0;
-	    }
-	}else{
-	    #we have done a fork and this is main process
-	    $self->wait_until_child_finished;
-	    my $string = get_recovery_string($self->directory.$recovery_filename.'_mod1');
-	    eval $string;
-		($output_model1,$frem_model1) = restore_fork(outputname => $output_model1_fullname,
-													 modelname => 'intermediate_models/'.$name_model_1_updated);
-	}
-
-
-	if ($self->fork_runs){
-	    $self->submit_child;
-	}
-
-	if ($self->tool_child_id == 0){
-		#either main process of not forked frem, or child of forked frem
-		#this modifies $self->covariates,self->extra_input_items($extra_input_items),$self->log(\@new_log)
-		#		$self->categorical($new_categorical);
-		($filtered_data,$indices) = $self->do_filter_dataset_and_append_binary(model => $frem_model1);
-		#																			  rescale_data => $self->rescale_data);
-
-		$covresultref = $self->do_frem_dataset(model => $model, #must be input model here, not updated with final ests
-											   N_parameter_blocks => 1,
-											   filtered_data => $filtered_data,
-											   indices => $indices,
-											   mod1_ofv => $mod1_ofv,
-											   fremdataname => $frem_datasetname);
-
-	    if ($self->fork_runs){
-			my @dumper_names = qw(*tmp_covariates *tmp_extra_input_items *tmp_log *tmp_categorical *covresultref);
-			open($fh, '>'.$self->directory.$recovery_filename.'_fremdata') or
-				die "Could not open file $recovery_filename fremdata for writing.\n";
-			print $fh Data::Dumper->Dump(
-				[$self->covariates,$self->extra_input_items,$self->log,$self->categorical,$covresultref],
-				\@dumper_names
-				);
-			close $fh;
-			debugmessage(1,"exit child process for fremdata");
-			exit 0;
-	    }else{
-			$self->save_covresults($covresultref);
-		}
-
-	}else{
-	    #we have done a fork and this is main process
-	    $self->wait_until_child_finished;
-	    my $string = get_recovery_string($self->directory.$recovery_filename.'_fremdata');
-	    eval $string;
-		$self->covariates(\@tmp_covariates);
-		$self->extra_input_items(\@tmp_extra_input_items);
-		$self->log(\@tmp_log);
-		$self->categorical(\@tmp_categorical);
-		$self->save_covresults(\%covresultref);
-	}
+    if ($self->tool_child_id == 0){ #this is true if no forking and main process, or with fork and child process
+        #this runs input model, if necessary, and updates inits
+        ($frem_model1,$output_model1,$need_update,$etas_file) = $self->do_model1(model => $model);
+        $mod1_ofv = $output_model1->get_single_value(attribute=> 'ofv');
+        $update_existing_model_files = 1 if ($need_update);
+        if ($self->fork_runs){
+            #we have done a fork and this is child process
+            #store mod1_ofv and write updated frem_model1 to disk
+            $frem_model1->filename($name_model_1_updated);
+            $frem_model1->_write();
+            my @dumper_names = qw(mod1_ofv output_model1_fullname update_existing_model_files);
+            open($fh, '>'.$self->directory.$recovery_filename.'_mod1') or
+                die "could not open file $recovery_filename mod1 for writing.\n";
+            print $fh data::dumper->dump(
+                [$mod1_ofv,$output_model1->full_name,$update_existing_model_files],
+                \@dumper_names
+                );
+            close $fh;
+            debugmessage(1,"exit child process for mod1");
+            exit 0;
+        }
+    }else{
+        #we have done a fork and this is main process
+        $self->wait_until_child_finished;
+        my $string = get_recovery_string($self->directory.$recovery_filename.'_mod1');
+        eval $string;
+        ($output_model1,$frem_model1) = restore_fork(outputname => $output_model1_fullname,
+                                                     modelname => 'intermediate_models/'.$name_model_1_updated);
+    }
 
 
-	$self->start_omega_record(scalar(@{$self->skip_omegas})+1);
+    if ($self->fork_runs){
+        $self->submit_child;
+    }
 
-	($new_omega_order,$need_to_move_omegas)=get_new_omega_order(model =>$frem_model1,
-																   skip_omegas => $self->skip_omegas);
+    if ($self->tool_child_id == 0){
+        #either main process of not forked frem, or child of forked frem
+        #this modifies $self->covariates,self->extra_input_items($extra_input_items),$self->log(\@new_log)
+        #        $self->categorical($new_categorical);
+        ($filtered_data,$indices) = $self->do_filter_dataset_and_append_binary(model => $frem_model1);
+        #                                                                              rescale_data => $self->rescale_data);
 
-	if ($need_to_move_omegas and $self->mu){
-		ui->print(category => 'all',
-				  message => "\n##########################################################################".
-				  "\nWarning: -skip_omegas option (see userguide) will result in renumbering\n".
-				  " of some ETAs, but MU variables will not be renumbered.\n".
-				  "##########################################################################\n\n");
-	}
+        $covresultref = $self->do_frem_dataset(model => $model, #must be input model here, not updated with final ests
+                                               n_parameter_blocks => 1,
+                                               filtered_data => $filtered_data,
+                                               indices => $indices,
+                                               mod1_ofv => $mod1_ofv,
+                                               fremdataname => $frem_datasetname);
 
-	($skip_etas,$fix_omegas,$parameter_etanumbers) =
-		put_skipped_omegas_first(model => $frem_model1,
-								 start_omega_record =>$self->start_omega_record,
-								 new_omega_order =>$new_omega_order,
-								 need_to_move =>$need_to_move_omegas,
-								 input_model_fix_omegas => $self->input_model_fix_omegas);
+        if ($self->fork_runs){
+            my @dumper_names = qw(*tmp_covariates *tmp_extra_input_items *tmp_log *tmp_categorical *covresultref);
+            open($fh, '>'.$self->directory.$recovery_filename.'_fremdata') or
+                die "could not open file $recovery_filename fremdata for writing.\n";
+            print $fh data::dumper->dump(
+                [$self->covariates,$self->extra_input_items,$self->log,$self->categorical,$covresultref],
+                \@dumper_names
+                );
+            close $fh;
+            debugmessage(1,"exit child process for fremdata");
+            exit 0;
+        }else{
+            $self->save_covresults($covresultref);
+        }
 
-	#now model1 is reordered, and diagonal N -> N block 1
+    }else{
+        #we have done a fork and this is main process
+        $self->wait_until_child_finished;
+        my $string = get_recovery_string($self->directory.$recovery_filename.'_fremdata');
+        eval $string;
+        $self->covariates(\@tmp_covariates);
+        $self->extra_input_items(\@tmp_extra_input_items);
+        $self->log(\@tmp_log);
+        $self->categorical(\@tmp_categorical);
+        $self->save_covresults(\%covresultref);
+    }
 
-	$self->input_model_fix_omegas($fix_omegas);
-	$self->skip_etas($skip_etas);
 
-	$maxeta =  $frem_model1->problems()->[0]->nomegas(with_correlations => 0,
-														 with_same => 1);
-	$covariate_etanumbers = [(($maxeta+1) .. ($maxeta+scalar(@{$self->covariates})))] ;
+    $self->start_omega_record(scalar(@{$self->skip_omegas})+1);
 
-	($est_records,$ntheta,$epsnum) = $self->prepare_model2(model => $frem_model1,
+    ($new_omega_order,$need_to_move_omegas)=get_new_omega_order(model =>$frem_model1,
+                                                                   skip_omegas => $self->skip_omegas);
+
+    if ($need_to_move_omegas and $self->mu){
+        ui->print(category => 'all',
+                  message => "\n##########################################################################".
+                  "\nwarning: -skip_omegas option (see userguide) will result in renumbering\n".
+                  " of some etas, but mu variables will not be renumbered.\n".
+                  "##########################################################################\n\n");
+    }
+
+    ($skip_etas,$fix_omegas,$parameter_etanumbers) =
+        put_skipped_omegas_first(model => $frem_model1,
+                                 start_omega_record =>$self->start_omega_record,
+                                 new_omega_order =>$new_omega_order,
+                                 need_to_move =>$need_to_move_omegas,
+                                 input_model_fix_omegas => $self->input_model_fix_omegas,
+                                 etas_file => $etas_file);
+
+    #now model1 is reordered, and diagonal n -> n block 1
+
+    $self->input_model_fix_omegas($fix_omegas);
+    $self->skip_etas($skip_etas);
+
+    $maxeta =  $frem_model1->problems()->[0]->nomegas(with_correlations => 0,
+                                                         with_same => 1);
+    $covariate_etanumbers = [(($maxeta+1) .. ($maxeta+scalar(@{$self->covariates})))] ;
+
+    ($est_records,$ntheta,$epsnum) = $self->prepare_model2(model => $frem_model1,
                                                            fremdataname => $frem_datasetname,
                                                            skip_etas => $self->skip_etas,
                                                            start_omega_record => $self->start_omega_record,
@@ -3459,272 +3479,271 @@ sub modelfit_setup
                                                            invariant_covmatrix => $self->invariant_covmatrix,
                                                            update_existing_model_files => $update_existing_model_files);
 
-	if ($self->fork_runs){
-	    $self->submit_child;
-	}
+    if ($self->fork_runs){
+        $self->submit_child;
+    }
 
-	$message = undef;
-	if ($self->tool_child_id == 0){
+    $message = undef;
+    if ($self->tool_child_id == 0){
 
-		($frem_model2,$message,$need_update) = $self->run_unless_run(numbers => [2]);
-		if (defined $message and length($message)>0){
-			ui->print(category => 'frem', message => $message) unless ($self->fork_runs); #let main process print message if fork
-			die;
-		}
-		$update_existing_model_files = 1 if ($need_update);
-		$mod3_parcov_block = get_parcov_blocks(model => $frem_model2,
-											   skip_etas => $self->skip_etas,
-											   covariate_etanumbers => $covariate_etanumbers,
-											   parameter_etanumbers => $parameter_etanumbers,
-											   start_omega_record => $self->start_omega_record);
+        ($frem_model2,$message,$need_update) = $self->run_unless_run(numbers => [2]);
+        if (defined $message and length($message)>0){
+            ui->print(category => 'frem', message => $message) unless ($self->fork_runs); #let main process print message if fork
+            die;
+        }
+        $update_existing_model_files = 1 if ($need_update);
+        $mod3_parcov_block = get_parcov_blocks(model => $frem_model2,
+                                               skip_etas => $self->skip_etas,
+                                               covariate_etanumbers => $covariate_etanumbers,
+                                               parameter_etanumbers => $parameter_etanumbers,
+                                               start_omega_record => $self->start_omega_record);
 
-		if ($self->fork_runs){
-			#we have done a fork and this is child process
-			#write updated model 2 and message
-			$frem_model2->filename($name_model_2_updated);
-			$frem_model2->_write();
-			my @dumper_names = qw(message update_existing_model_files output_model2_fullname *tmp_parcov_block);
-			open($fh, '>'.$self->directory.$recovery_filename.'_mod2') or
-				die "Could not open file $recovery_filename mod2 for writing.\n";
-			print $fh Data::Dumper->Dump([$message,$update_existing_model_files,$frem_model2->outputs->[0]->full_name,$mod3_parcov_block],
-										 \@dumper_names);
-			close $fh;
-			debugmessage(1,"exit child process for mod2");
-			exit 0;
-		}
-	}else{
-	    #we have done a fork and this is main process
-	    $self->wait_until_child_finished;
-	    my $string = get_recovery_string($self->directory.$recovery_filename.'_mod2');
-	    eval $string;
-		my $dirt;
-		($dirt,$frem_model2) = restore_fork(modelname => 'intermediate_models/'.$name_model_2_updated);
-		if (defined $message and length($message)>0){
-			ui->print(category => 'frem',
-					  message => $message);
-			die;
-		}
-		$mod3_parcov_block = \@tmp_parcov_block;
-	}
+        if ($self->fork_runs){
+            #we have done a fork and this is child process
+            #write updated model 2 and message
+            $frem_model2->filename($name_model_2_updated);
+            $frem_model2->_write();
+            my @dumper_names = qw(message update_existing_model_files output_model2_fullname *tmp_parcov_block);
+            open($fh, '>'.$self->directory.$recovery_filename.'_mod2') or
+                die "could not open file $recovery_filename mod2 for writing.\n";
+            print $fh data::dumper->dump([$message,$update_existing_model_files,$frem_model2->outputs->[0]->full_name,$mod3_parcov_block],
+                                         \@dumper_names);
+            close $fh;
+            debugmessage(1,"exit child process for mod2");
+            exit 0;
+        }
+    }else{
+        #we have done a fork and this is main process
+        $self->wait_until_child_finished;
+        my $string = get_recovery_string($self->directory.$recovery_filename.'_mod2');
+        eval $string;
+        my $dirt;
+        ($dirt,$frem_model2) = restore_fork(modelname => 'intermediate_models/'.$name_model_2_updated);
+        if (defined $message and length($message)>0){
+            ui->print(category => 'frem',
+                      message => $message);
+            die;
+        }
+        $mod3_parcov_block = \@tmp_parcov_block;
+    }
 
-	($est_records,$cov_records) = $self->prepare_model3(model => $frem_model2,
+    ($est_records,$cov_records) = $self->prepare_model3(model => $frem_model2,
                                                         start_omega_record => $self->start_omega_record,
                                                         parcov_blocks => $mod3_parcov_block,
                                                         update_existing_model_files => $update_existing_model_files,
                                                         est_records => $est_records);
 
 
-	if ($self->fork_runs){
-	    $self->submit_child;
-	}
+    if ($self->fork_runs){
+        $self->submit_child;
+    }
 
-	$message = undef;
-	if ($self->tool_child_id == 0){
+    $message = undef;
+    if ($self->tool_child_id == 0){
 
-		($frem_model3,$message,$need_update) = $self->run_unless_run(numbers => [3]);
-		if (defined $message and length($message)>0){
-			ui->print(category => 'frem', message => $message) unless ($self->fork_runs); #let main process print message if fork
-			die;
-		}
-		$update_existing_model_files = 1 if ($need_update);
-		$mod4_parcov_block = get_parcov_blocks(model => $frem_model3,
-											   skip_etas => $self->skip_etas,
-											   covariate_etanumbers => $covariate_etanumbers,
-											   parameter_etanumbers => $parameter_etanumbers,
-											   start_omega_record => $self->start_omega_record);
-		if ($self->fork_runs){
-			#we have done a fork and this is child process
-			$frem_model3->filename($name_model_3_updated);
-			$frem_model3->_write();
-			my @dumper_names = qw(message update_existing_model_files *tmp_parcov_block);
-			open($fh, '>'.$self->directory.$recovery_filename.'_mod3') or
-				die "Could not open file $recovery_filename mod3 for writing.\n";
-			print $fh Data::Dumper->Dump([$message,$update_existing_model_files,$mod4_parcov_block],\@dumper_names);
-			close $fh;
-			debugmessage(1,"exit child process for mod3");
-			exit 0;
-		}
+        ($frem_model3,$message,$need_update) = $self->run_unless_run(numbers => [3]);
+        if (defined $message and length($message)>0){
+            ui->print(category => 'frem', message => $message) unless ($self->fork_runs); #let main process print message if fork
+            die;
+        }
+        $update_existing_model_files = 1 if ($need_update);
+        $mod4_parcov_block = get_parcov_blocks(model => $frem_model3,
+                                               skip_etas => $self->skip_etas,
+                                               covariate_etanumbers => $covariate_etanumbers,
+                                               parameter_etanumbers => $parameter_etanumbers,
+                                               start_omega_record => $self->start_omega_record);
+        if ($self->fork_runs){
+            #we have done a fork and this is child process
+            $frem_model3->filename($name_model_3_updated);
+            $frem_model3->_write();
+            my @dumper_names = qw(message update_existing_model_files *tmp_parcov_block);
+            open($fh, '>'.$self->directory.$recovery_filename.'_mod3') or
+                die "could not open file $recovery_filename mod3 for writing.\n";
+            print $fh data::dumper->dump([$message,$update_existing_model_files,$mod4_parcov_block],\@dumper_names);
+            close $fh;
+            debugmessage(1,"exit child process for mod3");
+            exit 0;
+        }
 
-	}else{
-	    #we have done a fork and this is main process
-	    $self->wait_until_child_finished;
-	    my $string = get_recovery_string($self->directory.$recovery_filename.'_mod3');
-	    eval $string;
-		my $dirt;
-		($dirt,$frem_model3) = restore_fork(modelname => 'intermediate_models/'.$name_model_3_updated);
-		if (defined $message and length($message)>0){
-			ui->print(category => 'frem',
-					  message => $message);
-			die;
-		}
-		$mod4_parcov_block = \@tmp_parcov_block;
-	}
-
-
-	mkdir($finaldir) unless (-d $finaldir);
-
-	$self->prepare_model4(model => $frem_model3,
-						  start_omega_record => $self->start_omega_record,
-						  parcov_blocks => $mod4_parcov_block,
-						  est_records => $est_records,
-						  cov_records => $cov_records,
-						  update_existing_model_files => $update_existing_model_files
-		);
-
-	#FIXME subtool instead?
-
-	push(@final_numbers,4) if $self->estimate_regular_final_model;
-
-	if ($self->cholesky){
-		$self->prepare_model5(start_omega_record => $self->start_omega_record,
-							  first_cholesky_theta => scalar(@{$frem_model3->problems->[0]->thetas}),
-							  parameter_etanumbers => $parameter_etanumbers,
-							  update_existing_model_files => $update_existing_model_files
-			);
-
-		($frem_model5,$message,$need_update) = $self->run_unless_run(numbers => [5]);
-		if (defined $message){
-			ui->print(category => 'frem',
-					  message => "Estimation of model 5 failed, cannot prepare model 6 (final Cholesky model)");
-		}else{
-			$self->prepare_model6(model => $frem_model5,
-								  first_cholesky_theta => scalar(@{$frem_model3->problems->[0]->thetas}),
-								  start_omega_record => $self->start_omega_record,
-								  parameter_etanumbers => $parameter_etanumbers,
-								  update_existing_model_files => ($need_update or $update_existing_model_files)
-				);
-
-			push(@final_numbers,6);
-		}
-	}
-
-	($final_models,$mes) = $self->run_unless_run(numbers => \@final_numbers,
-												 subdirectory => 'final_models',
-												 final => 1) if (scalar(@final_numbers)>0);
-
-	if ($self->estimate_regular_final_model){
-		#model 4
-		$mod4ofv = $final_models->[0]->outputs->[0]->get_single_value(attribute => 'ofv');
-		if (not defined $mod4ofv){
-			ui->print(category => 'frem',
-					  message => 'Estimation of Model 4 failed to give ofv value. Creating Model 7.');
-			$self->prepare_model7(model => $final_models->[0],update_existing_model_files => $update_existing_model_files);
-			($frem_model7,$message,$need_update) = $self->run_unless_run(numbers => [7],
-																		 subdirectory => 'final_models');
-			if (defined $message){
-				ui->print(category => 'frem',
-						  message => $message);
-				die;
-			}else{
-				$sir_model = $frem_model7;
-				$sir_model_text = 'Model 7';
-			}
-		}else{
-			$sir_model = $final_models->[0];
-			$sir_model_text = 'Model 4';
-		}
-
-		($error,$message) = check_covstep(output => $final_models->[0]->outputs->[0]);
-
-		if ($error){
-			ui->print(category => 'frem',
-					  message => 'Covariance step of Model 4 not successful. Trying to create proposal density to use in sir with '.
-					  $sir_model_text);
-			$do_print_proposal=1;
-		}else{
-		    if ($self->always_proposal_density){
-				$do_print_proposal=1;
-				ui->print(category => 'frem',
-						  message => 'Covariance step of Model 4 was successful. Will create alternative proposal density for Model 4 sir');
-		    }else{
-				$do_print_proposal=0;
-				ui->print(category => 'frem',
-						  message => 'Covariance step of Model 4 was successful.');
-		    }
-		}
+    }else{
+        #we have done a fork and this is main process
+        $self->wait_until_child_finished;
+        my $string = get_recovery_string($self->directory.$recovery_filename.'_mod3');
+        eval $string;
+        my $dirt;
+        ($dirt,$frem_model3) = restore_fork(modelname => 'intermediate_models/'.$name_model_3_updated);
+        if (defined $message and length($message)>0){
+            ui->print(category => 'frem',
+                      message => $message);
+            die;
+        }
+        $mod4_parcov_block = \@tmp_parcov_block;
+    }
 
 
-		if ($do_print_proposal){
-			my $output_2;
-			if (defined $output_model2_fullname){
-				$output_2 = output -> new (filename =>$output_model2_fullname, parse_output => 0);
-			}else{
-				$output_2 = $frem_model2->outputs->[0];
-			}
-		    print_proposal_density(omega_orders => [$new_omega_order,[]],
-					   partial_outputs => [$output_model1,$output_2],
-					   full_model => $sir_model,# not updated, but may have estimates of everything
-					   reordered_model1 => $frem_model1,
-					   rse => $self->rse,
-					   directory => $self->directory,
-					   filename => $proposal_filename);
-		    ui->print(category => 'frem',
-			      message => 'Printed proposal density for sir -covmat_input option to '.
-			      $proposal_filename.' in frem rundir '.$self->directory);
-		}
-		if ($error and $self->run_sir){
-			#				chdir($self->directory);
-			ui->print(category => 'frem',
-					  message => 'Starting sir');
-			ui->category('sir');
-			my %options;
-			#				$options{'samples'}=2000;
-			#				$options{'resamples'}=1000;
-			$options{'problems_per_file'}=25;
-			$options{'covmat_input'} = $self->directory.$proposal_filename;
-			input_checking::check_options(tool => 'sir', options => \%options, model => $sir_model);
+    mkdir($finaldir) unless (-d $finaldir);
 
-			my $sir = tool::sir->new ( %{common_options::restore_options(@common_options::tool_options)},
-									   %options,
-									   top_tool => 1,
-									   models				     => [ $sir_model ],
-									   template_file_rplots => 'sir_default.R',
-									   directory => $self->directory.'sir_dir1',
-				);
+    $self->prepare_model4(model => $frem_model3,
+                          start_omega_record => $self->start_omega_record,
+                          parcov_blocks => $mod4_parcov_block,
+                          est_records => $est_records,
+                          cov_records => $cov_records,
+                          update_existing_model_files => $update_existing_model_files
+        );
 
-			$sir-> print_options (cmd_line => 'sir final_models/'.$sir_model->filename.' -covmat_input='.$proposal_filename,
-								  toolname => 'sir',
-								  local_options => ["samples:s","resamples:s","covmat_input:s","problems_per_file:i"],
-								  common_options => \@common_options::tool_options) ;
-			$sir -> run;
-			$sir -> prepare_results();
-			$sir -> print_results();
+    #fixme subtool instead?
 
-			ui->category('frem');
-			ui->print(category => 'frem',
-					  message => 'sir done');
+    push(@final_numbers,4) if $self->estimate_regular_final_model;
 
-		}
-	}
+    if ($self->cholesky){
+        $self->prepare_model5(start_omega_record => $self->start_omega_record,
+                              first_cholesky_theta => scalar(@{$frem_model3->problems->[0]->thetas}),
+                              parameter_etanumbers => $parameter_etanumbers,
+                              update_existing_model_files => $update_existing_model_files
+            );
 
-	if ($self->vpc()){
-		#FIXME we renumber according to eta_mapping, should get_CTV be done after or before that?
-		my $bsv_parameter_count; #FIXME
-		my ($CTV_parameters,$etanum_to_parameter) = get_CTV_parameters(model => $frem_model1);
+        ($frem_model5,$message,$need_update) = $self->run_unless_run(numbers => [5]);
+        if (defined $message){
+            ui->print(category => 'frem',
+                      message => "estimation of model 5 failed, cannot prepare model 6 (final cholesky model)");
+        }else{
+            $self->prepare_model6(model => $frem_model5,
+                                  first_cholesky_theta => scalar(@{$frem_model3->problems->[0]->thetas}),
+                                  start_omega_record => $self->start_omega_record,
+                                  parameter_etanumbers => $parameter_etanumbers,
+                                  update_existing_model_files => ($need_update or $update_existing_model_files)
+                );
 
-		my $labelshash = create_labels(	 covariates => $self->covariates,
-										 etanum_to_parameter => $etanum_to_parameter,
-										 start_eta => ($self->skip_etas +1),
-										 bsv_parameters => $bsv_parameter_count);
-		my $BSV_par_block; #FIXME
-		my $joindata = 'frem_vpc.dta';
-		my ($vpc_model1,$vpc2_input_par) = $self->do_model_vpc1(model => $frem_model3,
-																joindata => $joindata,
-																CTV_parameters => $CTV_parameters);
+            push(@final_numbers,6);
+        }
+    }
+
+    ($final_models,$mes) = $self->run_unless_run(numbers => \@final_numbers,
+                                                 subdirectory => 'final_models',
+                                                 final => 1) if (scalar(@final_numbers)>0);
+
+    if ($self->estimate_regular_final_model){
+        #model 4
+        $mod4ofv = $final_models->[0]->outputs->[0]->get_single_value(attribute => 'ofv');
+        if (not defined $mod4ofv){
+            ui->print(category => 'frem',
+                      message => 'estimation of model 4 failed to give ofv value. creating model 7.');
+            $self->prepare_model7(model => $final_models->[0],update_existing_model_files => $update_existing_model_files);
+            ($frem_model7,$message,$need_update) = $self->run_unless_run(numbers => [7],
+                                                                         subdirectory => 'final_models');
+            if (defined $message){
+                ui->print(category => 'frem',
+                          message => $message);
+                die;
+            }else{
+                $sir_model = $frem_model7;
+                $sir_model_text = 'model 7';
+            }
+        }else{
+            $sir_model = $final_models->[0];
+            $sir_model_text = 'model 4';
+        }
+
+        ($error,$message) = check_covstep(output => $final_models->[0]->outputs->[0]);
+
+        if ($error){
+            ui->print(category => 'frem',
+                      message => 'covariance step of model 4 not successful. trying to create proposal density to use in sir with '.
+                      $sir_model_text);
+            $do_print_proposal=1;
+        }else{
+            if ($self->always_proposal_density){
+                $do_print_proposal=1;
+                ui->print(category => 'frem',
+                          message => 'covariance step of model 4 was successful. will create alternative proposal density for model 4 sir');
+            }else{
+                $do_print_proposal=0;
+                ui->print(category => 'frem',
+                          message => 'covariance step of model 4 was successful.');
+            }
+        }
 
 
-		$self->do_model_vpc2(model => $vpc_model1,
-							 joindata => $joindata,
-							 ntheta => $ntheta,
-							 epsnum => $epsnum,
-							 CTV_parameters => $CTV_parameters,
-							 vpc2_input_params => $vpc2_input_par,
-							 labelshash => $labelshash,
-							 bsv_parameter_count => $bsv_parameter_count,
-							 start_omega_record => $self->start_omega_record	);
+        if ($do_print_proposal){
+            my $output_2;
+            if (defined $output_model2_fullname){
+                $output_2 = output -> new (filename =>$output_model2_fullname, parse_output => 0);
+            }else{
+                $output_2 = $frem_model2->outputs->[0];
+            }
+            print_proposal_density(omega_orders => [$new_omega_order,[]],
+                       partial_outputs => [$output_model1,$output_2],
+                       full_model => $sir_model,# not updated, but may have estimates of everything
+                       reordered_model1 => $frem_model1,
+                       rse => $self->rse,
+                       directory => $self->directory,
+                       filename => $proposal_filename);
+            ui->print(category => 'frem',
+                  message => 'printed proposal density for sir -covmat_input option to '.
+                  $proposal_filename.' in frem rundir '.$self->directory);
+        }
+        if ($error and $self->run_sir){
+            #                chdir($self->directory);
+            ui->print(category => 'frem',
+                      message => 'starting sir');
+            ui->category('sir');
+            my %options;
+            #                $options{'samples'}=2000;
+            #                $options{'resamples'}=1000;
+            $options{'problems_per_file'}=25;
+            $options{'covmat_input'} = $self->directory.$proposal_filename;
+            input_checking::check_options(tool => 'sir', options => \%options, model => $sir_model);
 
-	}
+            my $sir = tool::sir->new ( %{common_options::restore_options(@common_options::tool_options)},
+                                       %options,
+                                       top_tool => 1,
+                                       models                     => [ $sir_model ],
+                                       template_file_rplots => 'sir_default.r',
+                                       directory => $self->directory.'sir_dir1',
+                );
 
+            $sir-> print_options (cmd_line => 'sir final_models/'.$sir_model->filename.' -covmat_input='.$proposal_filename,
+                                  toolname => 'sir',
+                                  local_options => ["samples:s","resamples:s","covmat_input:s","problems_per_file:i"],
+                                  common_options => \@common_options::tool_options) ;
+            $sir -> run;
+            $sir -> prepare_results();
+            $sir -> print_results();
+
+            ui->category('frem');
+            ui->print(category => 'frem',
+                      message => 'sir done');
+
+        }
+    }
+
+    if ($self->vpc()){
+        #fixme we renumber according to eta_mapping, should get_ctv be done after or before that?
+        my $bsv_parameter_count; #fixme
+        my ($ctv_parameters,$etanum_to_parameter) = get_ctv_parameters(model => $frem_model1);
+
+        my $labelshash = create_labels(     covariates => $self->covariates,
+                                         etanum_to_parameter => $etanum_to_parameter,
+                                         start_eta => ($self->skip_etas +1),
+                                         bsv_parameters => $bsv_parameter_count);
+        my $bsv_par_block; #fixme
+        my $joindata = 'frem_vpc.dta';
+        my ($vpc_model1,$vpc2_input_par) = $self->do_model_vpc1(model => $frem_model3,
+                                                                joindata => $joindata,
+                                                                ctv_parameters => $ctv_parameters);
+
+
+        $self->do_model_vpc2(model => $vpc_model1,
+                             joindata => $joindata,
+                             ntheta => $ntheta,
+                             epsnum => $epsnum,
+                             ctv_parameters => $ctv_parameters,
+                             vpc2_input_params => $vpc2_input_par,
+                             labelshash => $labelshash,
+                             bsv_parameter_count => $bsv_parameter_count,
+                             start_omega_record => $self->start_omega_record    );
+
+    }
 }
 
 sub _modelfit_raw_results_callback
