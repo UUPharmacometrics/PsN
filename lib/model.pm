@@ -5566,6 +5566,32 @@ sub get_phi_file
     return $name;
 }
 
+sub get_etas_file
+{
+    # Get the full path of file specified on $ETAS record of this model
+    # (undef if no record or no such option)
+    my $self = shift;
+    my %parm = validated_hash(\@_,
+         problem_number => { isa => 'Num', default => 1, optional => 1 }
+    );
+    my $problem_number = $parm{'problem_number'};
+
+    my $filename = undef;
+    if (scalar $self->record(record_name => 'etas', problem_number => $problem_number) > 0) {
+        my ($vals,$junk) = $self->problems->[$problem_number-1]->_option_val_pos(
+            record_name => 'etas',
+            name => 'FILE',
+            exact_match => 0
+        );
+        if (scalar @{$vals} > 0) {
+            my ($dir, $file) = OSspecific::absolute_path($self->directory, $vals->[0]);
+            $filename = $dir.$file;
+        }
+    }
+
+    return $filename;
+}
+
 sub unfix_omega_0_fix
 {
     # Unfix all omegas that are set to 0 FIX
@@ -5618,7 +5644,7 @@ sub defined_variable
     }
 
     my @code_records = ( 'pred', 'pk', 'error' );
-    for my $record (@code_records) {	
+    for my $record (@code_records) {
         my $code = $self->get_code(record => $record);
         if (defined $code) {
             for my $line (@$code) {
