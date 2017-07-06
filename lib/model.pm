@@ -5566,18 +5566,26 @@ sub get_phi_file
     return $name;
 }
 
-sub get_etas_file
+sub get_or_set_etas_file
 {
-    # Get the full path of file specified on $ETAS record of this model
-    # (undef if no record or no such option)
+    # Get the (full) path of file specified on $ETAS record of this model
+    # (undef if no record or no such option), or set it to new value
+    # (record and option MUST then exist)
     my $self = shift;
     my %parm = validated_hash(\@_,
-         problem_number => { isa => 'Num', default => 1, optional => 1 }
+         problem_number => { isa => 'Num', default => 1, optional => 1 },
+         new_file => { isa => 'Str', optional => 1 }
     );
     my $problem_number = $parm{'problem_number'};
+    my $new_etas_file = $parm{'new_file'};
 
     my $filename = undef;
     if (scalar $self->record(record_name => 'etas', problem_number => $problem_number) > 0) {
+        my $new_values = [];
+        if ($new_etas_file) {
+            push @{$new_values}, $new_etas_file;
+        }
+
         my ($vals,$junk) = $self->problems->[$problem_number-1]->_option_val_pos(
             record_name => 'etas',
             name => 'FILE',
@@ -5586,7 +5594,20 @@ sub get_etas_file
         if (scalar @{$vals} > 0) {
             my ($dir, $file) = OSspecific::absolute_path($self->directory, $vals->[0]);
             $filename = $dir.$file;
+
+            if ($new_etas_file) {
+                $self->problems->[$problem_number-1]->_option_val_pos(
+                    record_name => 'etas',
+                    name => 'FILE',
+                    new_values => $new_values,
+                    exact_match => 0
+                );
+            }
+        } elsif ($new_etas_file) {
+            croak "FILE option of ETAS record could not be set: FILE option not found";
         }
+    } elsif ($new_etas_file) {
+        croak "FILE option of ETAS record could not be set: ETAS record not found";
     }
 
     return $filename;
