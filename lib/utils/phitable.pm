@@ -26,8 +26,6 @@ sub BUILD
     $self->valid( $valid );
     my $num_etas = $self->num_etas;
     my $num_rows = $self->num_rows;
-
-    print "num_etas=$num_etas and num_rows=$num_rows\n";
 }
 
 sub validate_phi
@@ -39,7 +37,6 @@ sub validate_phi
     );
     my $path = $parm{'path'};
     my ($dir, $filename) = OSspecific::absolute_path("", $path);
-    print "dir=$dir and filename=$filename\n";
     $self->filename( $filename );
 
     # load table
