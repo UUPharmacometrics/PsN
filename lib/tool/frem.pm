@@ -10,6 +10,7 @@ use ui;
 use File::Copy qw/cp mv/;
 use File::Path 'rmtree';
 use nmtablefile;
+use utils::phitable;
 use array;
 use tool::sir;
 use POSIX ":sys_wait_h"; #for forking
@@ -772,11 +773,6 @@ sub put_skipped_omegas_first
     my $input_model_fix_omegas = $parm{'input_model_fix_omegas'};
     my $etas_file = $parm{'etas_file'};
 
-    if ($etas_file) {
-        carp("\$ETAS used but not yet supported, removed for model 2 and later");
-        $model->remove_records(type => "etas");
-    }
-
     my @parameter_etanumbers = ();
     my $skip_etas = 0;
     my @fix_omegas;
@@ -787,6 +783,14 @@ sub put_skipped_omegas_first
     my $etas_per_omega = model::problem::etas_per_omega(problem => $model->problems->[0]);
 
     if ($need_to_move){
+        if ($etas_file) {
+            print "\$etas_file=$etas_file\n";
+            # TODO: Support reordering via phitable->swap_etas
+            carp("ETAS must be reordered but \$ETAS used (not supported), \$ETAS removed for model 2 and later");
+            $model->remove_records(type => "etas");
+            undef $etas_file;
+        }
+
         my @old_etas = (1 .. $maxeta);
         my @intermediate_etas =();
         foreach my $eta (@old_etas){
@@ -870,7 +874,7 @@ sub put_skipped_omegas_first
         push(@parameter_etanumbers,$etas_per_omega->[$j]);
     }
 
-    return $skip_etas,\@fix_omegas,\@parameter_etanumbers;
+    return $skip_etas,\@fix_omegas,\@parameter_etanumbers,$etas_file;
 }
 
 sub get_reordered_coordinate_strings{
@@ -2137,6 +2141,7 @@ sub do_model1
 	my $need_update = 0;
 
     my $etas_file = $model->get_or_set_etas_file(problem_number => 1); # absolute path if present
+    print "\$etas_file=$etas_file\n";
 
 	if (-e $self -> directory().'intermediate_models/'.$name_model){
 		$frem_model = model->new( %{common_options::restore_options(@common_options::model_options)},
@@ -2167,11 +2172,18 @@ sub do_model1
 
         # copy etas file and update model to new location
         if ($etas_file) {
-            croak "\$ETAS FILE=$etas_file could not be read" unless (-f $etas_file);
+            unless (-f $etas_file) {
+                croak "\$ETAS FILE=$etas_file could not be read"
+            }
+
+            # copy file to intermediate_models
             cp($etas_file, $im_dir);
+
             # update etas file in model to new path (just filename since same directory)
-            my ($new_etas_dir, $new_etas_file) = OSspecific::absolute_path($im_dir, $etas_file);
-            $frem_model->get_or_set_etas_file(problem_number => 1, new_file => $new_etas_file);
+            my (undef, undef, $etas_filename) = File::Spec->splitpath($etas_file);
+            $frem_model->get_or_set_etas_file(problem_number => 1, new_file => $etas_filename);
+            $etas_file = $im_dir.$etas_filename;
+            print "\$etas_file=$etas_file\n";
         }
 	}
 
@@ -2602,6 +2614,7 @@ sub prepare_model2
 							  invariant_mean => { isa => 'ArrayRef', optional => 0 },
 							  invariant_covmatrix => { isa => 'ArrayRef', optional => 0 },
 							  update_existing_model_files => { isa => 'Bool', optional => 0 },
+                              etas_file => { isa => 'Maybe[Str]', optional => 0 }
 	);
 	my $model = $parm{'model'};
 	my $fremdataname = $parm{'fremdataname'};
@@ -2610,6 +2623,7 @@ sub prepare_model2
 	my $invariant_mean = $parm{'invariant_mean'};
 	my $invariant_covmatrix = $parm{'invariant_covmatrix'};
 	my $update_existing_model_files = $parm{'update_existing_model_files'};
+	my $etas_file = $parm{'etas_file'};
 
 	my $name_model = $name_model_2;
 
@@ -2665,6 +2679,27 @@ sub prepare_model2
             $frem_model->problems->[0]->estimations->[-1]->_add_option(option_string => 'MCETA='.$self->mceta);
     }
     my $est_records = $frem_model->problems->[0]->estimations;
+    # if $ETAS FILE= used, M2 needs modified file with new omegas (initialized to 0)
+    if ($etas_file) {
+        unless (-f $etas_file) {
+            croak "\$ETAS file $etas_file could not be read for model 2, this is a bug";
+        }
+        # load etas file and get number of new ETAs
+        my $phi = phitable->new(path => $etas_file);
+        my $num_new_etas = scalar(@{$self->covariates});
+
+        # add new ETAs and construct new filename and path
+        $phi->add_zero_etas(num_etas => $num_new_etas);
+        $etas_file =~ s/\..+$/_m2input.phi/;
+        my $im_dir = $self->directory().'intermediate_models/';
+        my (undef, $etas_filename) = OSspecific::absolute_path($im_dir, $etas_file);
+
+        # update FILE in model to new path (just filename since same directory) and write file to disk
+        $frem_model->get_or_set_etas_file(problem_number => 1, new_file => $etas_filename);
+        $etas_file = $im_dir.$etas_filename;
+        $phi->write(path => $etas_file);
+        print "\$etas_file=$etas_file\n";
+    }
 
 	unless (-e $self -> directory().'intermediate_models/'.$name_model){
 		# input model  inits have already been updated
@@ -3353,7 +3388,7 @@ sub modelfit_setup
     my $recovery_filename = 'child_process_variables';
     my $update_existing_model_files = 0;
     my $need_update;
-    my $etas_file; # $etas file= if present (continuously updated; new files created downstream)
+    my $etas_file; # $ETAS FILE= if present (continuously updated; new files created downstream)
 
     my $inter = $self -> directory().'intermediate_models';
     unless (-d $inter){
@@ -3407,7 +3442,7 @@ sub modelfit_setup
         #                                                                              rescale_data => $self->rescale_data);
 
         $covresultref = $self->do_frem_dataset(model => $model, #must be input model here, not updated with final ests
-                                               n_parameter_blocks => 1,
+                                               N_parameter_blocks => 1,
                                                filtered_data => $filtered_data,
                                                indices => $indices,
                                                mod1_ofv => $mod1_ofv,
@@ -3454,7 +3489,7 @@ sub modelfit_setup
                   "##########################################################################\n\n");
     }
 
-    ($skip_etas,$fix_omegas,$parameter_etanumbers) =
+    ($skip_etas,$fix_omegas,$parameter_etanumbers,$etas_file) =
         put_skipped_omegas_first(model => $frem_model1,
                                  start_omega_record =>$self->start_omega_record,
                                  new_omega_order =>$new_omega_order,
@@ -3471,13 +3506,14 @@ sub modelfit_setup
                                                          with_same => 1);
     $covariate_etanumbers = [(($maxeta+1) .. ($maxeta+scalar(@{$self->covariates})))] ;
 
-    ($est_records,$ntheta,$epsnum) = $self->prepare_model2(model => $frem_model1,
-                                                           fremdataname => $frem_datasetname,
-                                                           skip_etas => $self->skip_etas,
-                                                           start_omega_record => $self->start_omega_record,
-                                                           invariant_mean => $self->invariant_mean,
-                                                           invariant_covmatrix => $self->invariant_covmatrix,
-                                                           update_existing_model_files => $update_existing_model_files);
+    ($est_records,$ntheta,$epsnum,$etas_file) = $self->prepare_model2(model => $frem_model1,
+                                                                      fremdataname => $frem_datasetname,
+                                                                      skip_etas => $self->skip_etas,
+                                                                      start_omega_record => $self->start_omega_record,
+                                                                      invariant_mean => $self->invariant_mean,
+                                                                      invariant_covmatrix => $self->invariant_covmatrix,
+                                                                      update_existing_model_files => $update_existing_model_files,
+                                                                      etas_file => $etas_file);
 
     if ($self->fork_runs){
         $self->submit_child;
