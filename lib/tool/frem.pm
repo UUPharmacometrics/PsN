@@ -2182,7 +2182,10 @@ sub do_model1
             # update etas file in model to new path (just filename since same directory)
             my (undef, undef, $etas_filename) = File::Spec->splitpath($etas_file);
             $frem_model->get_or_set_etas_file(problem_number => 1, new_file => $etas_filename);
-            $etas_file = $im_dir.$etas_filename;
+
+            # update etas file to model 1 output (for downstream model 2 usage)
+            (my $phi_filename = $name_model) =~ s/(.*)\..*/$1.phi/;
+            $etas_file = $im_dir.$phi_filename;
             print "\$etas_file=$etas_file\n";
         }
 	}
@@ -2690,7 +2693,7 @@ sub prepare_model2
 
         # add new ETAs and construct new filename and path
         $phi->add_zero_etas(num_etas => $num_new_etas);
-        $etas_file =~ s/\..+$/_m2input.phi/;
+        ($etas_file = $name_model) =~ s/(.*)\..*/$1_input.phi/;
         my $im_dir = $self->directory().'intermediate_models/';
         my (undef, $etas_filename) = OSspecific::absolute_path($im_dir, $etas_file);
 
