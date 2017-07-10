@@ -2141,7 +2141,6 @@ sub do_model1
 	my $need_update = 0;
 
     my $etas_file = $model->get_or_set_etas_file(problem_number => 1); # absolute path if present
-    print "\$etas_file=$etas_file\n";
 
 	if (-e $self -> directory().'intermediate_models/'.$name_model){
 		$frem_model = model->new( %{common_options::restore_options(@common_options::model_options)},
