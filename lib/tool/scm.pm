@@ -149,8 +149,8 @@ sub BUILD
 	}
 
 	if (defined $self->error) {
-		croak("Unknown error form ".$self->error)  unless 
-		( $self->error eq 'add' or 
+		croak("Unknown error form ".$self->error)  unless
+		( $self->error eq 'add' or
 			$self->error eq 'prop' or
 			$self->error eq 'propadd' or
 			$self->error eq 'exp' or
@@ -238,17 +238,17 @@ sub BUILD
 			push(@new_files,$ldir.$name) ;
 		}
 		$self->$accessor(\@new_files);
-	}	
+	}
 	for my $accessor ( 'covariate_statistics_file','relations_file'){
 		#will this move files that already have global path???
 		my ( $ldir, $name )= OSspecific::absolute_path( $self ->directory(), $self->$accessor);
 		$self->$accessor($ldir.$name);
-	}	
+	}
 
 	unless ( defined $self -> test_relations ) {
 		croak("You need to specify \'test_relations'\ either as argument or in the config file." );
 	}
-	unless ( defined( $self -> categorical_covariates() ) 
+	unless ( defined( $self -> categorical_covariates() )
 			or defined( $self -> continuous_covariates() )) {
 		croak("You must specify either " .
 			"categorical and/or continuous covariates either as argument or in the config file" );
@@ -318,7 +318,7 @@ sub BUILD
 			}
 		}
 		if ( scalar @not_found ){
-			croak("Covariate(s) [ ". join(',', @not_found). " ] either DROPPED or not defined in " . 
+			croak("Covariate(s) [ ". join(',', @not_found). " ] either DROPPED or not defined in " .
 				$self ->  models->[0] -> filename );
 		}
 	}
@@ -346,9 +346,9 @@ sub BUILD
 				push( @not_found, $cov ) unless ( $covariate_test );
 			}
 			if ( scalar @not_found and
-				( not defined $self -> models->[0] -> extra_files or 
+				( not defined $self -> models->[0] -> extra_files or
 					scalar @{$self -> models->[0] -> extra_files} == 0 ) ) {
-				croak("Covariate(s) [ " . join( ',', @not_found ). " ] specified for parameter $par " . 
+				croak("Covariate(s) [ " . join( ',', @not_found ). " ] specified for parameter $par " .
 					"in test_relations is not defined as a covariate" );
 			}
 		}
@@ -383,7 +383,7 @@ sub BUILD
 			$model = $self->models->[0];
 		}
 		# Assume one $PROBLEM
-		my %model_column_numbers; 
+		my %model_column_numbers;
 
 		my $data_obj;
 		if (defined $self->derivatives_data) {
@@ -395,7 +395,7 @@ sub BUILD
 				parse_header				 => 1	); #ok parse_header, do not know idcol
 
 			#set header from this data, must have column headers otherwise die
-			if (defined $data_obj->column_head_indices and scalar(keys %{$data_obj->column_head_indices}) > 0) { 
+			if (defined $data_obj->column_head_indices and scalar(keys %{$data_obj->column_head_indices}) > 0) {
 				%model_column_numbers = %{$data_obj->column_head_indices};
 			} else {
 				croak("When using option derivatives_data (done implicitly in boot_scm) the given file must have a header.");
@@ -438,22 +438,22 @@ sub BUILD
 				#this is necessary for xv_scm
 				if (defined $self->continuous_covariates) {
 					foreach my $cov (@{$self -> continuous_covariates()}){
-						$self -> covariate_statistics->{$cov}{'have_missing_data'} = 
+						$self -> covariate_statistics->{$cov}{'have_missing_data'} =
 							$self -> global_covariate_statistics->{$cov}{'have_missing_data'};
-						$self -> covariate_statistics->{$cov}{'min'} = 
+						$self -> covariate_statistics->{$cov}{'min'} =
 							$self -> global_covariate_statistics->{$cov}{'min'};
-						$self -> covariate_statistics->{$cov}{'max'} = 
+						$self -> covariate_statistics->{$cov}{'max'} =
 							$self -> global_covariate_statistics->{$cov}{'max'};
 					}
 				}
 				if ( defined $self -> categorical_covariates()) {
 					foreach my $cov (@{$self -> categorical_covariates()}){
 						#this is necessary for xv_scm
-						$self -> covariate_statistics->{$cov}{'have_missing_data'} = 
+						$self -> covariate_statistics->{$cov}{'have_missing_data'} =
 							$self -> global_covariate_statistics->{$cov}{'have_missing_data'};
-						$self -> covariate_statistics->{$cov}{'min'} = 
+						$self -> covariate_statistics->{$cov}{'min'} =
 							$self -> global_covariate_statistics->{$cov}{'min'};
-						$self -> covariate_statistics->{$cov}{'max'} = 
+						$self -> covariate_statistics->{$cov}{'max'} =
 							$self -> global_covariate_statistics->{$cov}{'max'};
 					}
 				}
@@ -486,10 +486,10 @@ sub BUILD
 		3=>7.81,
 		4=>9.49,
 		5=>11.07,
-		6=>12.59,	
+		6=>12.59,
 		7=>14.07,
-		8=>15.51,	
-		9=>16.92,	
+		8=>15.51,
+		9=>16.92,
 		10=>18.31};
 	## p=0.01
 	$p_values{'0.01'}  = {1=>6.63,
@@ -570,7 +570,7 @@ sub BUILD
 						}
 						close( LOG );
 					}
-				} 
+				}
 				$self -> relations->{$par}{$cov}{'ofv_changes'} = $ofv_changes;
 				# Is this covariate continuous or not?
 				my $continuous = 1;
@@ -607,7 +607,7 @@ sub BUILD
 							}
 						}
 					} else {
-						croak("No code defined for relation $par-$cov state $state\n") 
+						croak("No code defined for relation $par-$cov state $state\n")
 						if ($state > 5);
 						$self -> relations->{$par}{$cov}{'code'}{$state} = [];
 					}
@@ -620,7 +620,7 @@ sub BUILD
 								  message => "\nError covariate statistics for :$cov:, not stored.\n".
 								  "Have stored :".join(':',keys %{$self -> covariate_statistics}).":\n");
 					}
-					
+
 					my %local_statistics = %{$self -> covariate_statistics->{$cov}};
 					if (defined $self->medians->{$par.'_'.$cov}){
 						$local_statistics{'median'} = $self->medians->{$par.'_'.$cov};
@@ -663,7 +663,7 @@ sub BUILD
 						statistics  => \%local_statistics,
 						sum_covariates  => $self->sum_covariates_hash->{$par},
 						missing_data_token => $self -> missing_data_token);
-					if ( defined $self->included_relations() and 
+					if ( defined $self->included_relations() and
 						exists $self -> included_relations->{$par} and
 						exists $self -> included_relations->{$par}{$cov} and
 						$self -> included_relations->{$par}{$cov}{'state'} == $state ) {
@@ -723,7 +723,7 @@ sub BUILD
 
 sub add_config_file
 {
-	my ($self, %parm) = validated_hash(@_, 
+	my ($self, %parm) = validated_hash(@_,
 		init_data => {isa => 'Any', optional => 0}
 	);
 	push( @{$self->config_files}, config_file->new( %{$parm{'init_data'}} ) );
@@ -778,7 +778,7 @@ sub _raw_results_callback
 	# relations. The active relations of each model [$i] is stored in $rel_flag[$i] as
 	# a 1. All inactive relations are indicated by a 0. A header for the raw_results
 	# file is stored in @rel_header. %npars is a bit superfluous since this
-	# information may be reach through relations-{par}{cov}{'nthetas'}{state} later on. 
+	# information may be reach through relations-{par}{cov}{'nthetas'}{state} later on.
 	foreach my $parameter ( sort keys %{$self -> relations()} ) {
 		foreach my $covariate ( sort keys %{$self -> relations()->{$parameter}} ) {
 			my ( $in_step, $in_step_state ) = ( 0, undef );
@@ -822,7 +822,7 @@ sub _raw_results_callback
 	}
 
 	# Use the scm's raw_results file.
-	my ($dir,$file) = 
+	my ($dir,$file) =
 	OSspecific::absolute_path( $self -> directory,
 		$self -> raw_results_file->[$model_number-1] );
 	my $step_number = $self -> step_number();
@@ -849,7 +849,7 @@ sub _raw_results_callback
 		my $cols = scalar @{$modelfit -> raw_results -> [0]}; # first non-header row
 		#callback is only used when running candidate models.
 		#only change raw_line_structure first iteration.
-		#use rawline structure for model no 1, edit, overwrite for other models 
+		#use rawline structure for model no 1, edit, overwrite for other models
 		#if not first iteration then read from file?
 
 		my @diagnostic_params = @{$self -> diagnostic_parameters};
@@ -882,19 +882,19 @@ sub _raw_results_callback
 		if (defined $modelfit->raw_line_structure->{'1'}->{'omega'});
 		($sigma_start,$len) = split(',',$modelfit->raw_line_structure->{'1'}->{'sigma'})
 		if (defined $modelfit->raw_line_structure->{'1'}->{'sigma'});
-		($setheta_start,$len_setheta) = 
+		($setheta_start,$len_setheta) =
 		split(',',$modelfit->raw_line_structure->{'1'}->{'setheta'})
 		if (defined $modelfit->raw_line_structure->{'1'}->{'setheta'});
-		($seomega_start,$len_seomega) = 
+		($seomega_start,$len_seomega) =
 		split(',',$modelfit->raw_line_structure->{'1'}->{'seomega'})
 		if (defined $modelfit->raw_line_structure->{'1'}->{'seomega'});
-		($sesigma_start,$len_sesigma) = 
+		($sesigma_start,$len_sesigma) =
 		split(',',$modelfit->raw_line_structure->{'1'}->{'sesigma'})
 		if (defined $modelfit->raw_line_structure->{'1'}->{'sesigma'});
-		($shrinkage_eta_start,$len_shrinkage_eta) = 
+		($shrinkage_eta_start,$len_shrinkage_eta) =
 		split(',',$modelfit->raw_line_structure->{'1'}->{'shrinkage_eta'})
 		if (defined $modelfit->raw_line_structure->{'1'}->{'shrinkage_eta'});
-		($shrinkage_iwres_start,$len_shrinkage_iwres) = 
+		($shrinkage_iwres_start,$len_shrinkage_iwres) =
 		split(',',$modelfit->raw_line_structure->{'1'}->{'shrinkage_iwres'})
 		if (defined $modelfit->raw_line_structure->{'1'}->{'shrinkage_iwres'});
 
@@ -912,7 +912,7 @@ sub _raw_results_callback
 
 			# }}}
 
-			# {{{ Get the thetas that were present in the original model 
+			# {{{ Get the thetas that were present in the original model
 
 			for ( my $j = $theta_start;
 				$j < ($theta_start+$npar_orig{'theta'}); $j++ ) {
@@ -979,7 +979,7 @@ sub _raw_results_callback
 				}
 			}
 
-			# }}} 
+			# }}}
 
 			# {{{ Get all the omegas and sigmas
 
@@ -1058,18 +1058,18 @@ sub _raw_results_callback
 					for (my $i=0;$i< scalar(@{$orig_mod ->problems()}); $i++){
 						#get ref of array of methods
 						my $methref = $orig_mod -> get_option_value(record_name => 'estimation', option_name => 'METHOD',
-							problem_index => $i, record_index => 'all'); 
+							problem_index => $i, record_index => 'all');
 
-						my $eonlyref = $orig_mod -> get_option_value(record_name => 'estimation', 
+						my $eonlyref = $orig_mod -> get_option_value(record_name => 'estimation',
 							option_name => 'EONLY',
-							problem_index => $i, record_index => 'all'); 
+							problem_index => $i, record_index => 'all');
 						my @string_arr;
-						for (my $j=0; $j< scalar(@{$methref}); $j++){ 
+						for (my $j=0; $j< scalar(@{$methref}); $j++){
 							if (defined $methref->[$j]){
-								if ($methref->[$j] eq '1' or $methref->[$j] eq 'COND' or 
+								if ($methref->[$j] eq '1' or $methref->[$j] eq 'COND' or
 									(index('COND', $methref->[$j]) == 0)){
 									if( $orig_mod-> is_option_set( record => 'estimation', name => 'LAPLACE',
-											record_number => ($j+1),fuzzy_match =>1) or 
+											record_number => ($j+1),fuzzy_match =>1) or
 										$orig_mod-> is_option_set( record => 'estimation', name => 'LAPLACIAN',
 											record_number => ($j+1),
 											fuzzy_match =>1)){
@@ -1077,7 +1077,7 @@ sub _raw_results_callback
 									}else{
 										push(@string_arr,'FOCE');
 									}
-								}elsif ($methref->[$j] eq '0' or $methref->[$j] eq 'ZERO' or 
+								}elsif ($methref->[$j] eq '0' or $methref->[$j] eq 'ZERO' or
 									(index('ZERO', $methref->[$j]) == 0)){
 									push(@string_arr,'FO');
 								}elsif (defined $eonlyref->[$j] and $eonlyref->[$j] == 1){
@@ -1091,9 +1091,9 @@ sub _raw_results_callback
 							last unless ($PsN::nm_major_version >= 7);
 						}
 						push(@arr,join('-',@string_arr));
-						$saem = 1 if ($string_arr[$#string_arr] eq 'SAEM' or 
+						$saem = 1 if ($string_arr[$#string_arr] eq 'SAEM' or
 							(index('SAEM',$string_arr[$#string_arr])==0));
-						$bayes = 1 if ($string_arr[$#string_arr] eq 'BAYES' or 
+						$bayes = 1 if ($string_arr[$#string_arr] eq 'BAYES' or
 							(index('BAYES',$string_arr[$#string_arr])==0));
 					}
 					$res = \@arr;
@@ -1101,9 +1101,9 @@ sub _raw_results_callback
 					if ($saem or $bayes){
 						my @arr=();
 						for (my $i=0;$i< scalar(@{$orig_mod ->problems()}); $i++){
-							my $nburnref = $orig_mod -> get_option_value(record_name => 'estimation', 
+							my $nburnref = $orig_mod -> get_option_value(record_name => 'estimation',
 								option_name => 'NBURN',
-								problem_index => $i, record_index => 'all'); 
+								problem_index => $i, record_index => 'all');
 							if (defined $nburnref){
 								my $j= scalar(@{$nburnref})-1;
 								if (defined $nburnref->[$j]){
@@ -1120,35 +1120,35 @@ sub _raw_results_callback
 				}elsif ( $param eq 'burn_in_iter' ) {
 					if ($saem or $bayes){
 						$accessor = 'burn_in_iterations';
-						$res = $orig_mod -> outputs -> [0] -> $accessor;	  
+						$res = $orig_mod -> outputs -> [0] -> $accessor;
 					}else{
 						$res = undef;
 					}
 				}elsif ( $param eq 'burn_in_conv' ) {
 					if ($saem or $bayes){
 						$accessor = 'burn_in_convergence';
-						$res = $orig_mod -> outputs -> [0] -> $accessor;	  
+						$res = $orig_mod -> outputs -> [0] -> $accessor;
 					}else{
 						$res = undef;
 					}
 				}elsif ( $param eq 'subprob_est_time' ) {
 					if ($PsN::nm_major_version >= 7){
 						$accessor = 'sum_estimation_time';
-						$res = $orig_mod -> outputs -> [0] -> $accessor;	  
+						$res = $orig_mod -> outputs -> [0] -> $accessor;
 					}else{
 						$res = undef;
 					}
 				}elsif ( $param eq 'model_run_time' ) {
 					if ($PsN::nm_major_version >= 7){
 						#this is a scalar string
-						$res = $orig_mod -> outputs -> [0] -> runtime();	  
+						$res = $orig_mod -> outputs -> [0] -> runtime();
 					}else{
 						$res = undef;
 					}
 				}elsif ( $param eq 'subprob_cov_time' ) {
 					if ($PsN::nm_major_version >= 7){
 						$accessor = 'sum_covariance_time';
-						$res = $orig_mod -> outputs -> [0] -> $accessor;	  
+						$res = $orig_mod -> outputs -> [0] -> $accessor;
 					}else{
 						$res = undef;
 					}
@@ -1200,7 +1200,7 @@ sub _raw_results_callback
 						for (my $i=0;$i < $maxn; $i++){
 							last if ($j == $npar_orig{'theta'});
 							push(@orig_res,$res->[$j++]);
-						}		    
+						}
 						# Important to loop over the sorted hash
 						# Add all included relations estimates
 						my %results;
@@ -1233,7 +1233,7 @@ sub _raw_results_callback
 					} else {
 						for (my $j=0;$j< $npar_orig{'theta'}; $j++){
 							push(@orig_res,undef);
-						}		    
+						}
 						# Push undef's for all possible relations
 						foreach my $par ( sort keys %npars ) {
 							foreach my $cov ( sort keys %{$npars{$par}} ) {
@@ -1278,8 +1278,8 @@ sub _raw_results_callback
 				}
 			}
 			$modelfit -> raw_results_header(\@new_header);
-			#in struct need to change length theta start of all later 
-			#then need to change length setheta and start of all later 
+			#in struct need to change length theta start of all later
+			#then need to change length setheta and start of all later
 			#will assume theta is before setheta
 			my ($start,$sethstart,$len,$thstart);
 			foreach my $mod (sort({$a <=> $b} keys %{$self->raw_line_structure})){
@@ -1344,7 +1344,7 @@ sub modelfit_setup
 	}
 
 
-	#setup linearize here. 
+	#setup linearize here.
 	if ($self->linearize()) {
 		#this will modify $model if step_number > 1
 		$self->linearize_setup(original_model => $model);
@@ -1365,7 +1365,7 @@ sub modelfit_setup
 	$need_base_ofv = 0 if (defined $self->base_criteria_values and
 		defined $self->base_criteria_values->{'ofv'});
 
-	if ( ( (not $model -> is_run and ($self->step_number()==1 or $self->update_derivatives())) 
+	if ( ( (not $model -> is_run and ($self->step_number()==1 or $self->update_derivatives()))
 				or ((%included_relations) and $need_base_ofv and $self->step_number()==1)
 				or ((defined $self->xv_pred_data) and $self->step_number()==1)
 		)
@@ -1396,7 +1396,7 @@ sub modelfit_setup
             copy_datafile => $copy_datafile,
             copy_output => 0
         );
-		
+
 		$start_model->directory($self->directory);
 		if (scalar(keys %included_relations) > 0) {
 			$self->have_run_included(1);
@@ -1472,8 +1472,8 @@ sub modelfit_setup
 			my $ofvname = 'ofv';
 			my $start_name = $start_model->filename;
 			#change base criteria values unless it is defined already (to override start value)
-			if (($self->linearize() and $self->step_number() > 1) 
-					or not ( defined $self -> base_criteria_values and 
+			if (($self->linearize() and $self->step_number() > 1)
+					or not ( defined $self -> base_criteria_values and
 					defined $self -> base_criteria_values -> {'ofv'})) {
 				$self -> base_criteria_values -> {'ofv'} = $start_ofv;
 			}
@@ -1572,252 +1572,252 @@ sub modelfit_setup
 
 sub linearize_setup
 {
-	my $self = shift;
-	my %parm = validated_hash(\@_,
-		original_model => { isa => 'model', optional => 1 }
-	);
-	my $original_model = $parm{'original_model'};
+    my $self = shift;
+    my %parm = validated_hash(\@_,
+        original_model => { isa => 'model', optional => 1 }
+    );
+    my $original_model = $parm{'original_model'};
 
-	my $linearize_only=0;
-	if ((defined $self->max_steps() and $self->max_steps() == 0) and ($self->step_number()==1) and 
-		scalar(keys %{$self->test_relations()}) == 0){
-		$linearize_only = 1;
-		my $base = $original_model->filename();
-		$base =~ s/\.(mod|ctl)$//;
-		$base .= '_linbase';
-		$self->basename($base);
-	}
-	#add_code_linearize needs input parameter or eta, plus translation
-	#or simply use add_code for derivatives model?
-	# make check that only one problem for linearize 
-	my $derivatives_model; 
-	my %included_relations;
-	%included_relations = %{$self -> included_relations} if 
-	(defined $self -> included_relations);
-	my $datafilename;
-	my $part='-part';
-	my $rerun_derivatives_new_direction = 1;
-	my $stepname='';
-	if ($self->step_number()>1){
-		$stepname = '_'.($self->step_number()-1);
-		if ($self->search_direction() eq 'forward'){
-			$stepname .= 'f';
-		}else{
-			$stepname .= 'b';
-		}
-	}
-	if ($self->step_number() == 1){
-		#if first step then prepare parameter_eta hash
-		#assume parameters given and not etas. search code to find which eta goes with each param
-		#1.7
-		my $nETA=  $original_model-> nomegas(with_correlations => 0, with_same => 1) -> [0];
-		my $nEPS=  $original_model-> nsigmas(with_correlations => 0, with_same => 1) -> [0];
+    my $linearize_only=0;
+    if ((defined $self->max_steps() and $self->max_steps() == 0) and ($self->step_number()==1) and
+        scalar(keys %{$self->test_relations()}) == 0){
+        $linearize_only = 1;
+        my $base = $original_model->filename();
+        $base =~ s/\.(mod|ctl)$//;
+        $base .= '_linbase';
+        $self->basename($base);
+    }
+    #add_code_linearize needs input parameter or eta, plus translation
+    #or simply use add_code for derivatives model?
+    # make check that only one problem for linearize
+    my $derivatives_model;
+    my %included_relations;
+    %included_relations = %{$self -> included_relations} if
+    (defined $self -> included_relations);
+    my $datafilename;
+    my $part='-part';
+    my $rerun_derivatives_new_direction = 1;
+    my $stepname='';
+    if ($self->step_number()>1){
+        $stepname = '_'.($self->step_number()-1);
+        if ($self->search_direction() eq 'forward'){
+            $stepname .= 'f';
+        }else{
+            $stepname .= 'b';
+        }
+    }
+    if ($self->step_number() == 1){
+        #if first step then prepare parameter_eta hash
+        #assume parameters given and not etas. search code to find which eta goes with each param
+        #1.7
+        my $nETA=  $original_model-> nomegas(with_correlations => 0, with_same => 1) -> [0];
+        my $nEPS=  $original_model-> nsigmas(with_correlations => 0, with_same => 1) -> [0];
 
-		my %parameter_eta;
-		my %parameter_relation;
-		my @code;
-		@code = @{$original_model->get_code(record => 'pk')};
-		unless ( $#code > 0 ) {
-			@code = @{$original_model->get_code(record => 'pred')};
-		}
-		if ( $#code <= 0 ) {
-			croak("Neither PK or PRED defined in " .
-				$original_model -> filename . ", cannot match parameters to ETAs\n" );
-		}
-		my $n_param=0;
-		open( LOG, ">>".$self -> logfile -> [0] ); #model_number -1
-		foreach my $parameter ( keys %{$self -> test_relations()} ){
-			$n_param++;
-			my $etanum = 0;
-			my $relation='';
+        my %parameter_eta;
+        my %parameter_relation;
+        my @code;
+        @code = @{$original_model->get_code(record => 'pk')};
+        unless ( $#code > 0 ) {
+            @code = @{$original_model->get_code(record => 'pred')};
+        }
+        if ( $#code <= 0 ) {
+            croak("Neither PK or PRED defined in " .
+                $original_model -> filename . ", cannot match parameters to ETAs\n" );
+        }
+        my $n_param=0;
+        open( LOG, ">>".$self -> logfile -> [0] ); #model_number -1
+        foreach my $parameter ( keys %{$self -> test_relations()} ){
+            $n_param++;
+            my $etanum = 0;
+            my $relation='';
 
-			for ( @code ) {
-				if ( /^\s*(\w+)\s*=\s*/ and $1 eq $parameter ){
-					s/^\s*(\w+)\s*=\s*//;
-					my ($line,$comment) = split( ';', $_, 2 );
-					$_ = $line;
-					chomp;
+            for ( @code ) {
+                if ( /^\s*(\w+)\s*=\s*/ and $1 eq $parameter ){
+                    s/^\s*(\w+)\s*=\s*//;
+                    my ($line,$comment) = split( ';', $_, 2 );
+                    $_ = $line;
+                    chomp;
 
-					if (/\*\s*EXP\s*\(\s*ETA\(([0-9]+)\)/){
-						$relation = 'exponential';
-					}elsif (/[^A-Z0-9_]*EXP\s*\(\s*ETA\(([0-9]+)\)/){
-						$relation = 'exponential';
-					}elsif (/[^A-Z0-9_]*EXP\s*\(\s*MU\_([0-9]+)\s*\+\s*ETA\(([0-9]+)\)/){
-						$relation = 'exponential';
-					}elsif(/[^A-Z0-9_]*TV(\w+)\s*\+\s*ETA\(([0-9]+)\)/){
-						if ($self->sum_covariates_hash->{$parameter}==1){
-							$relation = 'logit';
-						}else{
-							$relation = 'additive';
-						}
-					}elsif(/[^A-Z0-9_]*TV(\w+)\s*\*\s*ETA\(([0-9]+)\)/){
-						$relation = 'proportional';
-					}elsif(/[^A-Z0-9_]*ETA\(([0-9]+)\)\s*\*\s*TV(\w+)/){
-						$relation = 'proportional';
-					}elsif(/\*\s*\(\s*1\s*\+\s*ETA\(([0-9]+)\)/){
-						$relation = 'proportional';
-					}elsif(/\*\(\s*ETA\(([0-9]+)\)\s*\+\s*1/){
-						$relation = 'proportional';
-					}
+                    if (/\*\s*EXP\s*\(\s*ETA\(([0-9]+)\)/){
+                        $relation = 'exponential';
+                    }elsif (/[^A-Z0-9_]*EXP\s*\(\s*ETA\(([0-9]+)\)/){
+                        $relation = 'exponential';
+                    }elsif (/[^A-Z0-9_]*EXP\s*\(\s*MU\_([0-9]+)\s*\+\s*ETA\(([0-9]+)\)/){
+                        $relation = 'exponential';
+                    }elsif(/[^A-Z0-9_]*TV(\w+)\s*\+\s*ETA\(([0-9]+)\)/){
+                        if ($self->sum_covariates_hash->{$parameter}==1){
+                            $relation = 'logit';
+                        }else{
+                            $relation = 'additive';
+                        }
+                    }elsif(/[^A-Z0-9_]*TV(\w+)\s*\*\s*ETA\(([0-9]+)\)/){
+                        $relation = 'proportional';
+                    }elsif(/[^A-Z0-9_]*ETA\(([0-9]+)\)\s*\*\s*TV(\w+)/){
+                        $relation = 'proportional';
+                    }elsif(/\*\s*\(\s*1\s*\+\s*ETA\(([0-9]+)\)/){
+                        $relation = 'proportional';
+                    }elsif(/\*\(\s*ETA\(([0-9]+)\)\s*\+\s*1/){
+                        $relation = 'proportional';
+                    }
 
-					if (s/[^A-Z0-9_]ETA\(([0-9]+)\)//){
-						$etanum = $1;
-					}else{
-						last;
-					}
+                    if (s/[^A-Z0-9_]ETA\(([0-9]+)\)//){
+                        $etanum = $1;
+                    }else{
+                        last;
+                    }
 
-					if (s/[^A-Z0-9_]ETA\(([0-9]+)\)//){
-						croak("Could not determine the ETA ".
-							"coupled to $parameter,\n".
-							" two ETA(<number>) found ".
-							"on $parameter = ... row\n" );
-					}
-				}
-			}
-			if ( $etanum ) {
-				$parameter_eta{$parameter}=$etanum;
-			}else{
-				my $mes = "Could not determine the ETA coupled to $parameter\n";
-				$mes .= " i.e. no $parameter = (expression with ETA) was ".
-				"found in \$PK or \$PRED\n" ;
-				croak($mes );
-			}
-			if ( length($relation) > 1 ) {
-				$parameter_relation{$parameter}=$relation;
-				if ($relation eq 'logit'){
-					print "Detected ETA".$parameter_eta{$parameter}." added to the logit $parameter\n";
-					print LOG "Detected ETA".$parameter_eta{$parameter}.
-					" added to the logit $parameter\n";
-				}else{
-					print "Detected $relation ETA".$parameter_eta{$parameter}." on $parameter\n";
-					print LOG "Detected $relation ETA".$parameter_eta{$parameter}." on $parameter\n";
-				}
-			}else{
-				croak("Could not determine the ETA relation ".
-					"(exponential/additive/proportional) for $parameter\n");
-			}
-		}
-		print LOG "\nIf any of the above ETA relations is not correct all the following results will be wrong.\n".
-		"--------------------\n" if (scalar(keys %{$self -> test_relations()})>0);
-		close LOG;
-		$self->parameter_eta(\%parameter_eta);
-		$self->parameter_relation(\%parameter_relation);
+                    if (s/[^A-Z0-9_]ETA\(([0-9]+)\)//){
+                        croak("Could not determine the ETA ".
+                            "coupled to $parameter,\n".
+                            " two ETA(<number>) found ".
+                            "on $parameter = ... row\n" );
+                    }
+                }
+            }
+            if ( $etanum ) {
+                $parameter_eta{$parameter}=$etanum;
+            }else{
+                my $mes = "Could not determine the ETA coupled to $parameter\n";
+                $mes .= " i.e. no $parameter = (expression with ETA) was ".
+                "found in \$PK or \$PRED\n" ;
+                croak($mes );
+            }
+            if ( length($relation) > 1 ) {
+                $parameter_relation{$parameter}=$relation;
+                if ($relation eq 'logit'){
+                    print "Detected ETA".$parameter_eta{$parameter}." added to the logit $parameter\n";
+                    print LOG "Detected ETA".$parameter_eta{$parameter}.
+                    " added to the logit $parameter\n";
+                }else{
+                    print "Detected $relation ETA".$parameter_eta{$parameter}." on $parameter\n";
+                    print LOG "Detected $relation ETA".$parameter_eta{$parameter}." on $parameter\n";
+                }
+            }else{
+                croak("Could not determine the ETA relation ".
+                    "(exponential/additive/proportional) for $parameter\n");
+            }
+        }
+        print LOG "\nIf any of the above ETA relations is not correct all the following results will be wrong.\n".
+        "--------------------\n" if (scalar(keys %{$self -> test_relations()})>0);
+        close LOG;
+        $self->parameter_eta(\%parameter_eta);
+        $self->parameter_relation(\%parameter_relation);
 
-		croak("too many problems in input model") 
-		if (scalar(@{$original_model->problems}) > 1);
+        croak("too many problems in input model")
+        if (scalar(@{$original_model->problems}) > 1);
 
-		#1.2 
-		my @covariates=();
-		if ( defined $self -> categorical_covariates() ) {
-			push( @covariates, @{$self -> categorical_covariates()});
-		}
-		if ( defined $self -> continuous_covariates() ) {
-			push( @covariates, @{$self -> continuous_covariates()});
-		}
-
-
-		#1.8
-		my $singles = 3; # ID DV IPRED
-		if ($self->epsilon()){
-			#Hi1+Hi2+...+Hi(1+$nETA), i=1...$nEPS
-			$singles = $singles + (1 + $nETA)*$nEPS;
-		}else{
-			$singles++ unless ($self->error eq 'user'); #W
-			$singles++ if ($self->error eq 'propadd'); #WP
-		}
-		my @extra_parameters=();
-
-		if (defined $self->do_not_drop and (scalar(@{$self->do_not_drop}) > 0)){
-			#separate between parameters that should be put in $TABLE and covariates that 
-			#should not be dropped
-			my @do_not_drop=();
-			foreach my $par (@{$self -> do_not_drop}){
-				my $extra_param=1;
-				foreach my $cov (@covariates){
-					if ($cov eq $par){
-						#this is a covariate, put in do_not_drop
-						push(@do_not_drop,$par);
-						$extra_param=0;
-						last;
-					}
-				}
-				push (@extra_parameters,$par) if ($extra_param);
-			}
-			$singles = $singles + scalar(@extra_parameters);
-			$self->do_not_drop(\@do_not_drop); #reset to only covariates
-		}
-
-		$singles++;# unless (defined $original_model->problems->[0]-> preds and defined $mdv);
-
-		my $num=0;
-		if ($self->foce()){
-			if ($self->second_order()){
-				$num = (scalar(@covariates)+2*$nETA+$nETA*($nETA+1)/2+$singles+2*$n_param);
-			}else{
-				$num =(scalar(@covariates)+2*$nETA+$singles+2*$n_param);
-			}
-		}else{
-			if ($self->second_order()){
-				$num = (scalar(@covariates)+$nETA+$nETA*($nETA+1)/2+$singles+2*$n_param);
-			}else{
-				$num = (scalar(@covariates)+$nETA+$singles+2*$n_param);
-			}
-		}
-
-		$self->data_items($num);
-
-		my $use_tableformat = 0;
-
-		if($self->data_items() > $self->max_data_items){
-			if ($PsN::nm_minor_version >= 2){
-				$use_tableformat = 1;
-				my $max = $self->data_items();
-
-				my $pdt_value = $original_model->get_option_value( option_name => 'PDT',
-					record_name => 'sizes',
-					fuzzy_match => 0);
-
-				if (defined $pdt_value){
-					$max=$pdt_value if ($pdt_value > $max);
-				}
-				my $pd_value = $original_model->get_option_value( option_name => 'PD',
-					record_name => 'sizes',
-					fuzzy_match => 0);
-
-				if (defined $pd_value){
-					$max=$pd_value if ($pd_value > $max);
-				}
-				$self->sizes_pd($max);
+        #1.2
+        my @covariates=();
+        if ( defined $self -> categorical_covariates() ) {
+            push( @covariates, @{$self -> categorical_covariates()});
+        }
+        if ( defined $self -> continuous_covariates() ) {
+            push( @covariates, @{$self -> continuous_covariates()});
+        }
 
 
-				if (defined $original_model ->problems->[0]->sizess() 
-						and scalar(@{$original_model ->problems->[0]->sizess()})>0){
-					$original_model -> set_option(record_name => 'sizes',
-						record_number => 1,
-						option_name => 'PD',
-						option_value => $self->sizes_pd(),
-						fuzzy_match => 0);
+        #1.8
+        my $singles = 3; # ID DV IPRED
+        if ($self->epsilon()){
+            #Hi1+Hi2+...+Hi(1+$nETA), i=1...$nEPS
+            $singles = $singles + (1 + $nETA)*$nEPS;
+        }else{
+            $singles++ unless ($self->error eq 'user'); #W
+            $singles++ if ($self->error eq 'propadd'); #WP
+        }
+        my @extra_parameters=();
 
-				}else{
-					$original_model -> add_records( type => 'sizes',
-						record_strings => [ " PD=".$max ] );
-				}
+        if (defined $self->do_not_drop and (scalar(@{$self->do_not_drop}) > 0)){
+            #separate between parameters that should be put in $TABLE and covariates that
+            #should not be dropped
+            my @do_not_drop=();
+            foreach my $par (@{$self -> do_not_drop}){
+                my $extra_param=1;
+                foreach my $cov (@covariates){
+                    if ($cov eq $par){
+                        #this is a covariate, put in do_not_drop
+                        push(@do_not_drop,$par);
+                        $extra_param=0;
+                        last;
+                    }
+                }
+                push (@extra_parameters,$par) if ($extra_param);
+            }
+            $singles = $singles + scalar(@extra_parameters);
+            $self->do_not_drop(\@do_not_drop); #reset to only covariates
+        }
 
-			}else{
-				my $mess = "$num items needed in \$INPUT, too many for NONMEM. ".
-				"Use NM version 7.2 or later, which can handle more items in \$INPUT.".
-				"If you are already using 7.2 or later, check that the version info in psn.conf is correct.";
-				croak($mess);
-			}
-		}
+        $singles++;# unless (defined $original_model->problems->[0]-> preds and defined $mdv);
+
+        my $num=0;
+        if ($self->foce()){
+            if ($self->second_order()){
+                $num = (scalar(@covariates)+2*$nETA+$nETA*($nETA+1)/2+$singles+2*$n_param);
+            }else{
+                $num =(scalar(@covariates)+2*$nETA+$singles+2*$n_param);
+            }
+        }else{
+            if ($self->second_order()){
+                $num = (scalar(@covariates)+$nETA+$nETA*($nETA+1)/2+$singles+2*$n_param);
+            }else{
+                $num = (scalar(@covariates)+$nETA+$singles+2*$n_param);
+            }
+        }
+
+        $self->data_items($num);
+
+        my $use_tableformat = 0;
+
+        if($self->data_items() > $self->max_data_items){
+            if ($PsN::nm_minor_version >= 2){
+                $use_tableformat = 1;
+                my $max = $self->data_items();
+
+                my $pdt_value = $original_model->get_option_value( option_name => 'PDT',
+                    record_name => 'sizes',
+                    fuzzy_match => 0);
+
+                if (defined $pdt_value){
+                    $max=$pdt_value if ($pdt_value > $max);
+                }
+                my $pd_value = $original_model->get_option_value( option_name => 'PD',
+                    record_name => 'sizes',
+                    fuzzy_match => 0);
+
+                if (defined $pd_value){
+                    $max=$pd_value if ($pd_value > $max);
+                }
+                $self->sizes_pd($max);
 
 
-		#create derivatives_model from original model (copy)
-		$derivatives_model = $original_model -> copy ( filename => 'derivatives.mod',
-													   output_same_directory => 1,
-													   copy_datafile => 0,
-													   write_copy => 0,
-													   copy_output => 0);
+                if (defined $original_model ->problems->[0]->sizess()
+                        and scalar(@{$original_model ->problems->[0]->sizess()})>0){
+                    $original_model -> set_option(record_name => 'sizes',
+                        record_number => 1,
+                        option_name => 'PD',
+                        option_value => $self->sizes_pd(),
+                        fuzzy_match => 0);
+
+                }else{
+                    $original_model -> add_records( type => 'sizes',
+                        record_strings => [ " PD=".$max ] );
+                }
+
+            }else{
+                my $mess = "$num items needed in \$INPUT, too many for NONMEM. ".
+                "Use NM version 7.2 or later, which can handle more items in \$INPUT.".
+                "If you are already using 7.2 or later, check that the version info in psn.conf is correct.";
+                croak($mess);
+            }
+        }
+
+
+        #create derivatives_model from original model (copy)
+        $derivatives_model = $original_model -> copy ( filename => 'derivatives.mod',
+                                                       output_same_directory => 1,
+                                                       copy_datafile => 0,
+                                                       write_copy => 0,
+                                                       copy_output => 0);
 
         if ($original_model->is_run()) {
             $derivatives_model->update_inits(from_output => $original_model->outputs->[0]);
@@ -1829,210 +1829,210 @@ sub linearize_setup
             need_ofv => 1,
         );
 
-		$derivatives_model->remove_records( type => 'table' );
+        $derivatives_model->remove_records( type => 'table' );
 
-		if ($self->sizes_pd() > 0){
-			#need to set $SIZES PDT
-			if (defined $derivatives_model ->problems->[0]->sizess() 
-					and scalar(@{$derivatives_model ->problems->[0]->sizess()})>0){
-				$derivatives_model -> set_option(record_name => 'sizes',
-					record_number => 1,
-					option_name => 'PDT',
-					option_value => $self->sizes_pd(),
-					fuzzy_match => 0);
+        if ($self->sizes_pd() > 0){
+            #need to set $SIZES PDT
+            if (defined $derivatives_model ->problems->[0]->sizess()
+                    and scalar(@{$derivatives_model ->problems->[0]->sizess()})>0){
+                $derivatives_model -> set_option(record_name => 'sizes',
+                    record_number => 1,
+                    option_name => 'PDT',
+                    option_value => $self->sizes_pd(),
+                    fuzzy_match => 0);
 
-			}else{
-				$derivatives_model -> add_records( type => 'sizes',
-					record_strings => [ " PDT=".$self->sizes_pd() ] );
-			}
-		}
+            }else{
+                $derivatives_model -> add_records( type => 'sizes',
+                    record_strings => [ " PDT=".$self->sizes_pd() ] );
+            }
+        }
 
-		#1.1
-		if( $self->lst_file ){
-			$derivatives_model -> update_inits (from_output_file => $self->lst_file());
-		}
+        #1.1
+        if( $self->lst_file ){
+            $derivatives_model -> update_inits (from_output_file => $self->lst_file());
+        }
 
-		#1.9
-		my @tablestrings = ('ID','DV');
-		my @inputstrings = ('ID','DV');
-		my $table_highprec=1;
-		my $table_lowprec=0;
+        #1.9
+        my @tablestrings = ('ID','DV');
+        my @inputstrings = ('ID','DV');
+        my $table_highprec=1;
+        my $table_lowprec=0;
 
-		if ( should_add_mdv(model => $derivatives_model) ){
-			push(@tablestrings,'MDV');
-			push(@inputstrings,'MDV');
-			$table_highprec++;
-		}
-		#1.10
+        if ( should_add_mdv(model => $derivatives_model) ){
+            push(@tablestrings,'MDV');
+            push(@inputstrings,'MDV');
+            $table_highprec++;
+        }
+        #1.10
 
-		if ($self->foce()){
-			push(@tablestrings,'IPRED=OPRED');
-			$table_highprec++;
-		}else{
-			push(@tablestrings,'PREDI=OPRED');
-			$table_highprec++;
-		}
+        if ($self->foce()){
+            push(@tablestrings,'IPRED=OPRED');
+            $table_highprec++;
+        }else{
+            push(@tablestrings,'PREDI=OPRED');
+            $table_highprec++;
+        }
 
-		push(@inputstrings,'OPRED');
-		#1.11
-		if ($self->epsilon()){
-			for (my $j=1; $j<=$nEPS; $j++){
-				if ($j<10){
-					push(@tablestrings,('H0'.$j.'1'));
-					$table_highprec++;
-				}else{
-					push(@tablestrings,'H'.$j.'1');
-					$table_highprec++;
-				}
-				push(@inputstrings,'D_EPS'.$j);
-			}
-		}else{
-			if ($self->error eq 'propadd'){
-				push(@tablestrings,'WP');
-				$table_highprec++;
-				push(@inputstrings,'OWP');
-				push(@tablestrings,'WA');
-				$table_highprec++;
-				push(@inputstrings,'OWA');
-			}elsif ($self->error eq 'add'){
-				push(@tablestrings,'W');
-				$table_highprec++;
-				push(@inputstrings,'OW');
-			}elsif ($self->error eq 'prop'){
-				push(@tablestrings,'W');
-				$table_highprec++;
-				push(@inputstrings,'OW');
-			}elsif ($self->error eq 'exp'){
-				push(@tablestrings,'WE');
-				$table_highprec++;
-				push(@inputstrings,'OWE');
-			}elsif ($self->error eq 'user'){
-				1;
-			}else{
-				croak('Unknown error type '.$self->error);
-			}
-		}
-		#these may be needed for user error code, or for IGNORE
-		push(@tablestrings,@extra_parameters);
-		$table_highprec = $table_highprec+scalar(@extra_parameters);
-		push(@inputstrings,@extra_parameters);
+        push(@inputstrings,'OPRED');
+        #1.11
+        if ($self->epsilon()){
+            for (my $j=1; $j<=$nEPS; $j++){
+                if ($j<10){
+                    push(@tablestrings,('H0'.$j.'1'));
+                    $table_highprec++;
+                }else{
+                    push(@tablestrings,'H'.$j.'1');
+                    $table_highprec++;
+                }
+                push(@inputstrings,'D_EPS'.$j);
+            }
+        }else{
+            if ($self->error eq 'propadd'){
+                push(@tablestrings,'WP');
+                $table_highprec++;
+                push(@inputstrings,'OWP');
+                push(@tablestrings,'WA');
+                $table_highprec++;
+                push(@inputstrings,'OWA');
+            }elsif ($self->error eq 'add'){
+                push(@tablestrings,'W');
+                $table_highprec++;
+                push(@inputstrings,'OW');
+            }elsif ($self->error eq 'prop'){
+                push(@tablestrings,'W');
+                $table_highprec++;
+                push(@inputstrings,'OW');
+            }elsif ($self->error eq 'exp'){
+                push(@tablestrings,'WE');
+                $table_highprec++;
+                push(@inputstrings,'OWE');
+            }elsif ($self->error eq 'user'){
+                1;
+            }else{
+                croak('Unknown error type '.$self->error);
+            }
+        }
+        #these may be needed for user error code, or for IGNORE
+        push(@tablestrings,@extra_parameters);
+        $table_highprec = $table_highprec+scalar(@extra_parameters);
+        push(@inputstrings,@extra_parameters);
 
-		for (my $i=1;$i<=$nETA;$i++){
-			if ($i<10){
-				push(@tablestrings,('G0'.$i.'1'));
-				$table_highprec++;
-			}else{
-				push(@tablestrings,('G'.$i.'1'));
-				$table_highprec++;
-			}
-			push(@inputstrings,('D_ETA'.$i));
-		}
-		if ($self->foce()){
-			for (my $i=1;$i<=$nETA;$i++){
-				push(@tablestrings,('ETA'.$i));
-				$table_highprec++;
-				push(@inputstrings,('OETA'.$i));
-			}
-		}
+        for (my $i=1;$i<=$nETA;$i++){
+            if ($i<10){
+                push(@tablestrings,('G0'.$i.'1'));
+                $table_highprec++;
+            }else{
+                push(@tablestrings,('G'.$i.'1'));
+                $table_highprec++;
+            }
+            push(@inputstrings,('D_ETA'.$i));
+        }
+        if ($self->foce()){
+            for (my $i=1;$i<=$nETA;$i++){
+                push(@tablestrings,('ETA'.$i));
+                $table_highprec++;
+                push(@inputstrings,('OETA'.$i));
+            }
+        }
 
-		#handle second order and linearized epsilon imitate cwres
-		if ($self->second_order() or $self->epsilon()){
+        #handle second order and linearized epsilon imitate cwres
+        if ($self->second_order() or $self->epsilon()){
 
-			my $new_comresno = $nEPS*$nETA;
-			$new_comresno += $nETA*($nETA+1)/2 if ($self->second_order());
-			my $comresno;
-			if (defined $derivatives_model ->problems->[0]->abbreviateds() 
-					and scalar(@{$derivatives_model ->problems->[0]->abbreviateds()})>0){
-				# Get current comres number
-				$comresno = $derivatives_model->get_option_value( option_name => 'COMRES',
-					record_name => 'abbreviated');
+            my $new_comresno = $nEPS*$nETA;
+            $new_comresno += $nETA*($nETA+1)/2 if ($self->second_order());
+            my $comresno;
+            if (defined $derivatives_model ->problems->[0]->abbreviateds()
+                    and scalar(@{$derivatives_model ->problems->[0]->abbreviateds()})>0){
+                # Get current comres number
+                $comresno = $derivatives_model->get_option_value( option_name => 'COMRES',
+                    record_name => 'abbreviated');
 
-				$new_comresno += $comresno if ( defined $comresno );
-				$derivatives_model->set_option( option_name => 'COMRES',
-					record_name => 'abbreviated',
-					fuzzy_match => 1,
-					option_value => $new_comresno);
-			}else {
-				# Add $ABBREVIATED if necessary
-				$derivatives_model -> add_records( type => 'abbreviated',
-					record_strings => [ "COMRES=".($new_comresno) ] );
-			}
+                $new_comresno += $comresno if ( defined $comresno );
+                $derivatives_model->set_option( option_name => 'COMRES',
+                    record_name => 'abbreviated',
+                    fuzzy_match => 1,
+                    option_value => $new_comresno);
+            }else {
+                # Add $ABBREVIATED if necessary
+                $derivatives_model -> add_records( type => 'abbreviated',
+                    record_strings => [ "COMRES=".($new_comresno) ] );
+            }
 
-			#can look for ADVAN<any number> this way
-			my ($advan,$junk) = $derivatives_model->problems->[0] -> _option_val_pos( record_name => 'subroutine',
-				name => 'ADVAN',
-				exact_match => 0);
-			my $have_advan = scalar(@{$advan}) > 0;
+            #can look for ADVAN<any number> this way
+            my ($advan,$junk) = $derivatives_model->problems->[0] -> _option_val_pos( record_name => 'subroutine',
+                name => 'ADVAN',
+                exact_match => 0);
+            my $have_advan = scalar(@{$advan}) > 0;
 
-			my $code_records;
-			my $H='H';
-			if( $have_advan ){
-				# We have and ADVAN option in $SUBROUTINE, get $ERROR code
-				$code_records = $derivatives_model->problems->[0]-> errors();
-				$H='HH';
-			} else {
-				# No ADVAN subroutine, we should modify $PRED code
-				$code_records = $derivatives_model->problems->[0] -> preds;
-			}
+            my $code_records;
+            my $H='H';
+            if( $have_advan ){
+                # We have and ADVAN option in $SUBROUTINE, get $ERROR code
+                $code_records = $derivatives_model->problems->[0]-> errors();
+                $H='HH';
+            } else {
+                # No ADVAN subroutine, we should modify $PRED code
+                $code_records = $derivatives_model->problems->[0] -> preds;
+            }
 
-			# Get code array reference, so we can update the code inplace.
-			my $code = $code_records -> [0] -> verbatim_last;
+            # Get code array reference, so we can update the code inplace.
+            my $code = $code_records -> [0] -> verbatim_last;
 
-			unless( defined $code ){
-				$code = [];
-				$code_records -> [0] -> verbatim_last($code);
-			}
+            unless( defined $code ){
+                $code = [];
+                $code_records -> [0] -> verbatim_last($code);
+            }
 
-			my $com = defined $comresno ? $comresno + 1 : 1;
-			for(my $i= 1; $i<=$nEPS;$i++ ){
-				for(my $j= 1; $j<=$nETA;$j++ ){
+            my $com = defined $comresno ? $comresno + 1 : 1;
+            for(my $i= 1; $i<=$nEPS;$i++ ){
+                for(my $j= 1; $j<=$nETA;$j++ ){
                     if (not $self->nointer) {
-					    push( @{$code},"\"  COM($com)=$H($i,".($j+1).")" );
+                        push( @{$code},"\"  COM($com)=$H($i,".($j+1).")" );
                     } else {
                         push( @{$code}, "\"  COM($com) = 0");
                     }
-					push( @tablestrings, "COM($com)=D_EPSETA$i"."_$j");
-					$table_highprec++;
-					push( @inputstrings, "D_EPSETA$i"."_$j");
-					$com++;
-				}
-			}
-			if ($self->second_order()){
-				for(my $i= 1; $i<=$nETA;$i++ ){
-					for(my $j= 1; $j<=$i;$j++ ){
-						push( @{$code},"\"  COM($com)=G($i,".($j+1).")" );
-						push( @tablestrings, "COM($com)=D2_ETA$i"."_$j");
-						$table_highprec++;
-						push( @inputstrings, "D2_ETA$i"."_$j");
-						$com++;
-					}
-				}
-			}
-		} #end second_order or epsilons
-		#1.12
-		push(@tablestrings,@covariates);
-		$table_highprec = $table_highprec + scalar(@covariates);
-		push(@inputstrings,@covariates);
+                    push( @tablestrings, "COM($com)=D_EPSETA$i"."_$j");
+                    $table_highprec++;
+                    push( @inputstrings, "D_EPSETA$i"."_$j");
+                    $com++;
+                }
+            }
+            if ($self->second_order()){
+                for(my $i= 1; $i<=$nETA;$i++ ){
+                    for(my $j= 1; $j<=$i;$j++ ){
+                        push( @{$code},"\"  COM($com)=G($i,".($j+1).")" );
+                        push( @tablestrings, "COM($com)=D2_ETA$i"."_$j");
+                        $table_highprec++;
+                        push( @inputstrings, "D2_ETA$i"."_$j");
+                        $com++;
+                    }
+                }
+            }
+        } #end second_order or epsilons
+        #1.12
+        push(@tablestrings,@covariates);
+        $table_highprec = $table_highprec + scalar(@covariates);
+        push(@inputstrings,@covariates);
 
-		#GZs and GKs are added to code further down, add_code_gfunc
-		foreach my $parameter ( keys %{$self -> test_relations()} ){
-			push(@tablestrings,'OGZ_'.$parameter);
-			$table_lowprec++;
-			push(@inputstrings,'OGZ_'.$parameter);
-			push(@tablestrings,'OGK_'.$parameter);
-			$table_lowprec++;
-			push(@inputstrings,'OGK_'.$parameter);
-		}
+        #GZs and GKs are added to code further down, add_code_gfunc
+        foreach my $parameter ( keys %{$self -> test_relations()} ){
+            push(@tablestrings,'OGZ_'.$parameter);
+            $table_lowprec++;
+            push(@inputstrings,'OGZ_'.$parameter);
+            push(@tablestrings,'OGK_'.$parameter);
+            $table_lowprec++;
+            push(@inputstrings,'OGK_'.$parameter);
+        }
 
-		#1.13
-		$datafilename = 'derivatives_covariates.dta';
-		if($linearize_only){
-			$datafilename = $self->basename.'.dta';
-		}
+        #1.13
+        $datafilename = 'derivatives_covariates.dta';
+        if($linearize_only){
+            $datafilename = $self->basename.'.dta';
+        }
 
-		push(@tablestrings,'NOPRINT','NOAPPEND','ONEHEADER');
-		push(@tablestrings,'FILE='.$datafilename);
-		$derivatives_model->set_records(type => 'table', record_strings => \@tablestrings);
+        push(@tablestrings,'NOPRINT','NOAPPEND','ONEHEADER');
+        push(@tablestrings,'FILE='.$datafilename);
+        $derivatives_model->set_records(type => 'table', record_strings => \@tablestrings);
 
         # An extra table was requested
         if (defined $self->extra_table_columns) {
@@ -2040,108 +2040,108 @@ sub linearize_setup
             $derivatives_model->add_records(type => 'table', record_strings => \@extra_tablestrings);
         }
 
-		if ((scalar(@tablestrings)-4) == (1+$table_highprec+$table_lowprec)){
-			if ($use_tableformat){
-				#more than 50 items, try to reduce field width to not hit 999 limit in NM7.2
-				#do not use RFORMAT with space in specification, can get line break there.
-				if ( ($table_lowprec+$table_highprec)*12> 999){
-					#default format will give too long line
-					#figure out how wide fields are ok
-					my $width = int(999/($table_lowprec+$table_highprec)); #round down towards 0
-					my $form = 's1PE'.$width.'.4'; #just hope this will work
-					$derivatives_model -> add_option(record_name => 'table',
-						option_name => 'FORMAT',
-						option_value=> $form);
-				}
-			}
+        if ((scalar(@tablestrings)-4) == (1+$table_highprec+$table_lowprec)){
+            if ($use_tableformat){
+                #more than 50 items, try to reduce field width to not hit 999 limit in NM7.2
+                #do not use RFORMAT with space in specification, can get line break there.
+                if ( ($table_lowprec+$table_highprec)*12> 999){
+                    #default format will give too long line
+                    #figure out how wide fields are ok
+                    my $width = int(999/($table_lowprec+$table_highprec)); #round down towards 0
+                    my $form = 's1PE'.$width.'.4'; #just hope this will work
+                    $derivatives_model -> add_option(record_name => 'table',
+                        option_name => 'FORMAT',
+                        option_value=> $form);
+                }
+            }
 
-		}else{
-			croak("Bug in setting table format when preparing derivatives model, please report\n".
-				"highprec $table_highprec lowprec $table_lowprec items ".(scalar(@tablestrings)-4));
-		}
+        }else{
+            croak("Bug in setting table format when preparing derivatives model, please report\n".
+                "highprec $table_highprec lowprec $table_lowprec items ".(scalar(@tablestrings)-4));
+        }
 
-		if ($self->update_derivatives()){
-			#store derivatives_base_model if update_derivatives
-			$self->derivatives_base_model($derivatives_model -> 
-										  copy ( filename => 'derivatives_base.mod',
-												 output_same_directory => 1,
-												 copy_datafile =>0,
-												 write_copy => 0,
-												 copy_output        => 0));
-		}
-		#need to store GK and GZ funcs for covariates
-		my %parameter_G;
-		foreach my $parameter ( keys %{$self -> test_relations()} ){
-			$parameter_G{$parameter}=1; #will later reset the ones that are included
-			$parameter_G{$parameter}=0 if ($self->sum_covariates_hash->{$parameter}==1);
-		}
+        if ($self->update_derivatives()){
+            #store derivatives_base_model if update_derivatives
+            $self->derivatives_base_model($derivatives_model ->
+                                          copy ( filename => 'derivatives_base.mod',
+                                                 output_same_directory => 1,
+                                                 copy_datafile =>0,
+                                                 write_copy => 0,
+                                                 copy_output        => 0));
+        }
+        #need to store GK and GZ funcs for covariates
+        my %parameter_G;
+        foreach my $parameter ( keys %{$self -> test_relations()} ){
+            $parameter_G{$parameter}=1; #will later reset the ones that are included
+            $parameter_G{$parameter}=0 if ($self->sum_covariates_hash->{$parameter}==1);
+        }
 
-		#add included relations add_code normal
-		foreach my $incl_par ( sort keys %included_relations ) {
-			foreach my $incl_cov ( sort keys %{$included_relations{$incl_par}} ) {
-				$self -> 
-				add_code( definition_code => $included_relations{$incl_par}{$incl_cov}{'code'},
-					nthetas         => $included_relations{$incl_par}{$incl_cov}{'nthetas'},
-					inits           => $included_relations{$incl_par}{$incl_cov}{'inits'},
-					bounds          => $included_relations{$incl_par}{$incl_cov}{'bounds'},
-					applicant_model => $derivatives_model,
-					sum_covariates  => $self->sum_covariates_hash->{$incl_par},
-					parameter       => $incl_par,
-					covariate       => $incl_cov );
-				#add in inner loop, otherwise may get params not included
-				$parameter_G{$incl_par}=$incl_par.'COV';
-			}
-		}
+        #add included relations add_code normal
+        foreach my $incl_par ( sort keys %included_relations ) {
+            foreach my $incl_cov ( sort keys %{$included_relations{$incl_par}} ) {
+                $self ->
+                add_code( definition_code => $included_relations{$incl_par}{$incl_cov}{'code'},
+                    nthetas         => $included_relations{$incl_par}{$incl_cov}{'nthetas'},
+                    inits           => $included_relations{$incl_par}{$incl_cov}{'inits'},
+                    bounds          => $included_relations{$incl_par}{$incl_cov}{'bounds'},
+                    applicant_model => $derivatives_model,
+                    sum_covariates  => $self->sum_covariates_hash->{$incl_par},
+                    parameter       => $incl_par,
+                    covariate       => $incl_cov );
+                #add in inner loop, otherwise may get params not included
+                $parameter_G{$incl_par}=$incl_par.'COV';
+            }
+        }
 
-		$self -> 
-		add_code_gfunc( applicant_model => $derivatives_model,
-			parameter_G => \%parameter_G,
-			parameter_relation => \%parameter_relation);
+        $self ->
+        add_code_gfunc( applicant_model => $derivatives_model,
+            parameter_G => \%parameter_G,
+            parameter_relation => \%parameter_relation);
 
-		$derivatives_model ->_write(); #so that changes are reflected on disk
+        $derivatives_model ->_write(); #so that changes are reflected on disk
 
-		#3.2, 3.3
-		@code =(); 
-		@code = @{$original_model->get_code(record => 'pk')};
-		unless ( $#code > 0 ) {
-			@code = @{$original_model->get_code(record => 'pred')};
-		}
-		if ( $#code <= 0 ) {
-			croak("Neither PK or PRED defined in " .
-				$original_model -> filename . "\n" );
-		}
-		my $found_anchor = -1;
-		my $i = 0;
-		for ( @code ) {
-			if ( /^;;;SCM-ANCHOR/) {
-				$found_anchor = $i;
-				last;
-			}
-			$i++;
-		}
+        #3.2, 3.3
+        @code =();
+        @code = @{$original_model->get_code(record => 'pk')};
+        unless ( $#code > 0 ) {
+            @code = @{$original_model->get_code(record => 'pred')};
+        }
+        if ( $#code <= 0 ) {
+            croak("Neither PK or PRED defined in " .
+                $original_model -> filename . "\n" );
+        }
+        my $found_anchor = -1;
+        my $i = 0;
+        for ( @code ) {
+            if ( /^;;;SCM-ANCHOR/) {
+                $found_anchor = $i;
+                last;
+            }
+            $i++;
+        }
 
-		#set IGNORE=@ since datafile will
-		#get a header since it is a table file. Keep IGNORE=LIST
-		$original_model->problems->[0]->datas->[0]->ignoresign('@');
+        #set IGNORE=@ since datafile will
+        #get a header since it is a table file. Keep IGNORE=LIST
+        $original_model->problems->[0]->datas->[0]->ignoresign('@');
 
         my $mceta = $original_model->get_option_value(record_name => 'estimation',
-			option_name => 'MCETA',
-			fuzzy_match => 1
+            option_name => 'MCETA',
+            fuzzy_match => 1
         );
 
-		$original_model->remove_records(type => 'theta');
-		$original_model->remove_records(type => 'table');
-		$original_model->remove_records(type => 'pk');
-		$original_model->remove_records(type => 'des');
-		$original_model->remove_records(type => 'error');
-		$original_model->remove_records(type => 'subroutine');
-		$original_model->remove_records(type => 'model');
+        $original_model->remove_records(type => 'theta');
+        $original_model->remove_records(type => 'table');
+        $original_model->remove_records(type => 'pk');
+        $original_model->remove_records(type => 'des');
+        $original_model->remove_records(type => 'error');
+        $original_model->remove_records(type => 'subroutine');
+        $original_model->remove_records(type => 'model');
         unless ($self->from_linearize and $self->keep_covariance) {
-		    $original_model->remove_records(type => 'covariance');
+            $original_model->remove_records(type => 'covariance');
         }
-		$original_model->remove_records(type => 'estimation');
+        $original_model->remove_records(type => 'estimation');
 
-		$original_model->set_records(type => 'input', record_strings => \@inputstrings);
+        $original_model->set_records(type => 'input', record_strings => \@inputstrings);
 
         if ($self->from_linearize and PsN::minimum_nonmem_version(7, 3)) {
             my $phi_file = $original_model->get_phi_file();
@@ -2155,514 +2155,514 @@ sub linearize_setup
             }
         }
 
-		my @eststrings;
-		if (defined $mceta) {
-			push(@eststrings, 'MCETA=' . $mceta);
-		}
+        my @eststrings;
+        if (defined $mceta) {
+            push(@eststrings, 'MCETA=' . $mceta);
+        }
 
-		if (not $self->estimate_fo and ($self->epsilon() or $self->error eq 'propadd' or $self->error eq 'prop'
-				or $self->error eq 'exp' or $self->error eq 'user')) {
-			push(@eststrings, 'METHOD=COND', 'INTERACTION');
-		} else {
-			push(@eststrings, 'METHOD=ZERO');
-		}
-		push(@eststrings,$self->format) if (defined $self->format());
-		if ($self->noabort()){
-			push(@eststrings,'NOABORT');
-		}
-		$original_model -> set_records(type => 'estimation',
-			record_strings => \@eststrings);
-		#3.7
-		my @pred_block; #make one element per row
-		if ($found_anchor >= 0){
-			@pred_block =  (@code[0..$found_anchor]);
-		}
-		my $base_count=0; #base count
-		my $cov_count=0;
+        if (not $self->estimate_fo and ($self->epsilon() or $self->error eq 'propadd' or $self->error eq 'prop'
+                or $self->error eq 'exp' or $self->error eq 'user')) {
+            push(@eststrings, 'METHOD=COND', 'INTERACTION');
+        } else {
+            push(@eststrings, 'METHOD=ZERO');
+        }
+        push(@eststrings,$self->format) if (defined $self->format());
+        if ($self->noabort()){
+            push(@eststrings,'NOABORT');
+        }
+        $original_model -> set_records(type => 'estimation',
+            record_strings => \@eststrings);
+        #3.7
+        my @pred_block; #make one element per row
+        if ($found_anchor >= 0){
+            @pred_block =  (@code[0..$found_anchor]);
+        }
+        my $base_count=0; #base count
+        my $cov_count=0;
 
-		my %eta_parameter;
-		foreach my $parameter (keys %parameter_eta){
-			if (defined $eta_parameter{($parameter_eta{$parameter})}){
-				croak("ETA(".$parameter_eta{$parameter}.") affects both ".
-					"$parameter and ".$eta_parameter{($parameter_eta{$parameter})}." but ".
-					"the linearize option is only implemented for ".
-					"models where each ETA appears on only one parameter.");
-			}
-			$eta_parameter{($parameter_eta{$parameter})} = $parameter;
-		}
-		#add code for covariate relations, will give zeros GZ-OGZ=1-1 in base model
-		my @temp_block=();
-		for (my $i=1;$i<=$nETA;$i++){
-			#not all ETAs have a parameter
-			if (defined ($eta_parameter{$i})){
-				my $param = $eta_parameter{$i};
-				if ($self->sum_covariates_hash->{$param}==1){
-					push(@pred_block, ( ";;; $param-RELATION START\n",
-							";;; This is 0 for logit parameters without covariate added\n",
-							"GZ_$param"." = 0\n",
-							";;; $param-RELATION END\n\n"));
-				}else{
-					push(@pred_block, ( ";;; $param-RELATION START\n",
-							";;; This is 1 for parameters without covariate added\n",
-							"GZ_$param"." = 1\n",
-							";;; $param-RELATION END\n\n"));
-				}
-				$cov_count++;
-				my $cname='COV'.$cov_count;
-				push(@temp_block,$cname.'=D_ETA'.$i.'*OGK_'.$param.'*(GZ_'.$param.'-OGZ_'.$param.')');
-			}else {
-				my $param = 'ETA'.$i;
-				$eta_parameter{$i}=$param;
-				if ($self->second_order()){
-					#probably important to have OGZ first and GZ last, it is last (GZ) that will be modified
-					push(@pred_block, ( ";;; $param-RELATION START\n",
-							";;; This will always be 1, no parameter with covariates for $param\n",
-							"OGZ_$param"." = 1\n",
-							"GZ_$param"." = 1\n",
-							";;; $param-RELATION END\n\n"));
-					$cov_count++;
-				}
-			}
-		}
-		#now all ETAs have parameter in hash eta_parameter
+        my %eta_parameter;
+        foreach my $parameter (keys %parameter_eta){
+            if (defined $eta_parameter{($parameter_eta{$parameter})}){
+                croak("ETA(".$parameter_eta{$parameter}.") affects both ".
+                    "$parameter and ".$eta_parameter{($parameter_eta{$parameter})}." but ".
+                    "the linearize option is only implemented for ".
+                    "models where each ETA appears on only one parameter.");
+            }
+            $eta_parameter{($parameter_eta{$parameter})} = $parameter;
+        }
+        #add code for covariate relations, will give zeros GZ-OGZ=1-1 in base model
+        my @temp_block=();
+        for (my $i=1;$i<=$nETA;$i++){
+            #not all ETAs have a parameter
+            if (defined ($eta_parameter{$i})){
+                my $param = $eta_parameter{$i};
+                if ($self->sum_covariates_hash->{$param}==1){
+                    push(@pred_block, ( ";;; $param-RELATION START\n",
+                            ";;; This is 0 for logit parameters without covariate added\n",
+                            "GZ_$param"." = 0\n",
+                            ";;; $param-RELATION END\n\n"));
+                }else{
+                    push(@pred_block, ( ";;; $param-RELATION START\n",
+                            ";;; This is 1 for parameters without covariate added\n",
+                            "GZ_$param"." = 1\n",
+                            ";;; $param-RELATION END\n\n"));
+                }
+                $cov_count++;
+                my $cname='COV'.$cov_count;
+                push(@temp_block,$cname.'=D_ETA'.$i.'*OGK_'.$param.'*(GZ_'.$param.'-OGZ_'.$param.')');
+            }else {
+                my $param = 'ETA'.$i;
+                $eta_parameter{$i}=$param;
+                if ($self->second_order()){
+                    #probably important to have OGZ first and GZ last, it is last (GZ) that will be modified
+                    push(@pred_block, ( ";;; $param-RELATION START\n",
+                            ";;; This will always be 1, no parameter with covariates for $param\n",
+                            "OGZ_$param"." = 1\n",
+                            "GZ_$param"." = 1\n",
+                            ";;; $param-RELATION END\n\n"));
+                    $cov_count++;
+                }
+            }
+        }
+        #now all ETAs have parameter in hash eta_parameter
 
-		push(@pred_block,@temp_block);
+        push(@pred_block,@temp_block);
 
-		if ($self->second_order()){
+        if ($self->second_order()){
 
-			#could just skip the ones where eta_parameter is undefined for j, set 0 factor if undef for i
-			for (my $i=1;$i<=$nETA;$i++){
-				my $parami = $eta_parameter{$i};
-				for (my $j=1;$j<=$nETA;$j++){
-					my $eta = ($j>$i) ? 'D2_ETA'.$j.'_'.$i :'D2_ETA'.$i.'_'.$j;
-					my $paramj = $eta_parameter{$j};
-					$cov_count++;
-					my $cname='COV'.$cov_count; #($nETA+$i*($i-1)/2+$j);
-					push(@pred_block,$cname.
-						'='.$eta.'*0.5*(OGK_'.$parami.'*(GZ_'.$parami.'-OGZ_'.$parami.')*OGK_'.$paramj.'*(GZ_'.$paramj.'-OGZ_'.$paramj.')'.
-						'+(ETA('.$i.')-OETA'.$i.')*OGK_'.$paramj.'*(GZ_'.$paramj.'-OGZ_'.$paramj.'))');
-				}
-			}
-		} #end if second_order
+            #could just skip the ones where eta_parameter is undefined for j, set 0 factor if undef for i
+            for (my $i=1;$i<=$nETA;$i++){
+                my $parami = $eta_parameter{$i};
+                for (my $j=1;$j<=$nETA;$j++){
+                    my $eta = ($j>$i) ? 'D2_ETA'.$j.'_'.$i :'D2_ETA'.$i.'_'.$j;
+                    my $paramj = $eta_parameter{$j};
+                    $cov_count++;
+                    my $cname='COV'.$cov_count; #($nETA+$i*($i-1)/2+$j);
+                    push(@pred_block,$cname.
+                        '='.$eta.'*0.5*(OGK_'.$parami.'*(GZ_'.$parami.'-OGZ_'.$parami.')*OGK_'.$paramj.'*(GZ_'.$paramj.'-OGZ_'.$paramj.')'.
+                        '+(ETA('.$i.')-OETA'.$i.')*OGK_'.$paramj.'*(GZ_'.$paramj.'-OGZ_'.$paramj.'))');
+                }
+            }
+        } #end if second_order
 
-		my $sum_count=1;
-		my $sum_string='CSUM'.$sum_count;
-		my $cov_string='COV_TERMS='.$sum_string;
-		$sum_string .= '=';
-		for (my $i=1;$i<=$cov_count;$i++){
-			$sum_string .= 'COV'.$i;
-			if ($i<$cov_count){
-				if (length($sum_string) >= 63 ){
-					push(@pred_block,$sum_string);
-					$sum_count++;
-					$sum_string='CSUM'.$sum_count;
-					$cov_string .= '+'.$sum_string ;
-					$sum_string .= '=';
-				}else{
-					$sum_string .= '+';
-				}
-			}
-		}
-		push(@pred_block,$sum_string)  if ($cov_count>0);
-		push(@pred_block,$cov_string) if ($cov_count>0);
+        my $sum_count=1;
+        my $sum_string='CSUM'.$sum_count;
+        my $cov_string='COV_TERMS='.$sum_string;
+        $sum_string .= '=';
+        for (my $i=1;$i<=$cov_count;$i++){
+            $sum_string .= 'COV'.$i;
+            if ($i<$cov_count){
+                if (length($sum_string) >= 63 ){
+                    push(@pred_block,$sum_string);
+                    $sum_count++;
+                    $sum_string='CSUM'.$sum_count;
+                    $cov_string .= '+'.$sum_string ;
+                    $sum_string .= '=';
+                }else{
+                    $sum_string .= '+';
+                }
+            }
+        }
+        push(@pred_block,$sum_string)  if ($cov_count>0);
+        push(@pred_block,$cov_string) if ($cov_count>0);
 
-		for (my $i=1;$i<=$nETA;$i++){
-			if ($self->foce()){
-				push(@pred_block,'BASE'.$i.'=D_ETA'.$i.'*(ETA('.$i.')-OETA'.$i.')');
-			}else{
-				push(@pred_block,'BASE'.$i.'=D_ETA'.$i.'*ETA('.$i.')');
-			}
-			$base_count++;
-		}
+        for (my $i=1;$i<=$nETA;$i++){
+            if ($self->foce()){
+                push(@pred_block,'BASE'.$i.'=D_ETA'.$i.'*(ETA('.$i.')-OETA'.$i.')');
+            }else{
+                push(@pred_block,'BASE'.$i.'=D_ETA'.$i.'*ETA('.$i.')');
+            }
+            $base_count++;
+        }
 
-		if ($self->second_order()){
-			for (my $i=1;$i<=$nETA;$i++){
-				for (my $j=1;$j<=$nETA;$j++){
-					$base_count++; 
-					my $eta = ($j>$i) ? 'D2_ETA'.$j.'_'.$i :'D2_ETA'.$i.'_'.$j;
-					push(@pred_block,'BASE'.$base_count.
-						'='.$eta.'*0.5*(ETA('.$i.')-OETA'.$i.')*(ETA('.$j.')-OETA'.$j.')');
-				}
-			}
-		}
-		$sum_count=1;
-		$sum_string='BSUM'.$sum_count;
-		my $base_string='BASE_TERMS='.$sum_string;
-		$sum_string .= '=';
-		for (my $i=1;$i<=$base_count;$i++){
-			$sum_string .= 'BASE'.$i;
-			if ($i<$base_count){
-				if (length($sum_string) >= 63){
-					push(@pred_block,$sum_string);
-					$sum_count++;
-					$sum_string='BSUM'.$sum_count;
-					$base_string .= '+'.$sum_string ;
-					$sum_string .= '=';
-				}else{
-					$sum_string .= '+';
-				}
-			}
-		}
-		push(@pred_block,$sum_string);
-		push(@pred_block,$base_string);
+        if ($self->second_order()){
+            for (my $i=1;$i<=$nETA;$i++){
+                for (my $j=1;$j<=$nETA;$j++){
+                    $base_count++;
+                    my $eta = ($j>$i) ? 'D2_ETA'.$j.'_'.$i :'D2_ETA'.$i.'_'.$j;
+                    push(@pred_block,'BASE'.$base_count.
+                        '='.$eta.'*0.5*(ETA('.$i.')-OETA'.$i.')*(ETA('.$j.')-OETA'.$j.')');
+                }
+            }
+        }
+        $sum_count=1;
+        $sum_string='BSUM'.$sum_count;
+        my $base_string='BASE_TERMS='.$sum_string;
+        $sum_string .= '=';
+        for (my $i=1;$i<=$base_count;$i++){
+            $sum_string .= 'BASE'.$i;
+            if ($i<$base_count){
+                if (length($sum_string) >= 63){
+                    push(@pred_block,$sum_string);
+                    $sum_count++;
+                    $sum_string='BSUM'.$sum_count;
+                    $base_string .= '+'.$sum_string ;
+                    $sum_string .= '=';
+                }else{
+                    $sum_string .= '+';
+                }
+            }
+        }
+        push(@pred_block,$sum_string);
+        push(@pred_block,$base_string);
 
-		$sum_string='IPRED=OPRED+BASE_TERMS';
-		$sum_string .='+COV_TERMS' if ($cov_count>0);
-		push(@pred_block,$sum_string);
-		#3.9
-		if ($self->epsilon()){
-			my $err_count=0;
-			for (my $i=1; $i<= $nEPS; $i++){
-				my $eps = 'EPS('.$i.')';
-				$err_count++;
-				my $string = 'ERR'.$err_count.'='.$eps.'*(D_EPS'.$i;
-				for (my $j=1; $j<= $nETA; $j++){
-					my $line = 'D_EPSETA'.$i.'_'.$j.'*(ETA('.$j.')-OETA'.$j.')';
-					if (length($string.$line) >= 63){
-						$string .= ')'."\n";
-						push(@pred_block,$string);
-						$err_count++;
-						$string = 'ERR'.$err_count.'='.$eps.'*(';
-					}else{
-						$string .= '+';
-					}
-					$string .= $line;
-				}#end inner loop eta
-				$string .= ')'."\n";
-				push(@pred_block,$string);
-				if ($cov_count>0){
-					$err_count++;
-					my $string = 'ERR'.$err_count.'='.$eps.'*(';
-					#now loop over params
-					for (my $j=1;$j<=$nETA;$j++){
-						if (defined ($eta_parameter{$j})){
-							my $param = $eta_parameter{$j};
-							next if ($param eq 'ETA'.$j);
-							my $line = 'D_EPSETA'.$i.'_'.$j.'*OGK_'.$param.'*(GZ_'.$param.'-OGZ_'.$param.')';
-							if (length($string.$line) >= 63){
-								$string .= ')'."\n";
-								push(@pred_block,$string);
-								$err_count++;
-								$string = 'ERR'.$err_count.'='.$eps.'*(';
-							}else{
-								$string .= '+' if (length($string) > 15);
-							}
-							$string .= $line;
-						}
-					}
-					$string .= ")\n";
-					push(@pred_block,$string);
-				}#end if cov_count>0
-			} #end loop over eps
+        $sum_string='IPRED=OPRED+BASE_TERMS';
+        $sum_string .='+COV_TERMS' if ($cov_count>0);
+        push(@pred_block,$sum_string);
+        #3.9
+        if ($self->epsilon()){
+            my $err_count=0;
+            for (my $i=1; $i<= $nEPS; $i++){
+                my $eps = 'EPS('.$i.')';
+                $err_count++;
+                my $string = 'ERR'.$err_count.'='.$eps.'*(D_EPS'.$i;
+                for (my $j=1; $j<= $nETA; $j++){
+                    my $line = 'D_EPSETA'.$i.'_'.$j.'*(ETA('.$j.')-OETA'.$j.')';
+                    if (length($string.$line) >= 63){
+                        $string .= ')'."\n";
+                        push(@pred_block,$string);
+                        $err_count++;
+                        $string = 'ERR'.$err_count.'='.$eps.'*(';
+                    }else{
+                        $string .= '+';
+                    }
+                    $string .= $line;
+                }#end inner loop eta
+                $string .= ')'."\n";
+                push(@pred_block,$string);
+                if ($cov_count>0){
+                    $err_count++;
+                    my $string = 'ERR'.$err_count.'='.$eps.'*(';
+                    #now loop over params
+                    for (my $j=1;$j<=$nETA;$j++){
+                        if (defined ($eta_parameter{$j})){
+                            my $param = $eta_parameter{$j};
+                            next if ($param eq 'ETA'.$j);
+                            my $line = 'D_EPSETA'.$i.'_'.$j.'*OGK_'.$param.'*(GZ_'.$param.'-OGZ_'.$param.')';
+                            if (length($string.$line) >= 63){
+                                $string .= ')'."\n";
+                                push(@pred_block,$string);
+                                $err_count++;
+                                $string = 'ERR'.$err_count.'='.$eps.'*(';
+                            }else{
+                                $string .= '+' if (length($string) > 15);
+                            }
+                            $string .= $line;
+                        }
+                    }
+                    $string .= ")\n";
+                    push(@pred_block,$string);
+                }#end if cov_count>0
+            } #end loop over eps
 
-			my $sum_count=1;
-			my $sum_string='ESUM'.$sum_count;
-			my $err_string='ERROR_TERMS='.$sum_string;
-			$sum_string .= '=';
-			for (my $i=1;$i<=$err_count;$i++){
-				$sum_string .= 'ERR'.$i;
-				if ($i<$err_count){
-					if (length($sum_string) >= 63){
-						push(@pred_block,$sum_string);
-						$sum_count++;
-						$sum_string='ESUM'.$sum_count;
-						$err_string .= '+'.$sum_string ;
-						$sum_string .= '=';
-					}else{
-						$sum_string .= '+';
-					}
-				}
-			}
-			push(@pred_block,$sum_string);
-			push(@pred_block,$err_string);
+            my $sum_count=1;
+            my $sum_string='ESUM'.$sum_count;
+            my $err_string='ERROR_TERMS='.$sum_string;
+            $sum_string .= '=';
+            for (my $i=1;$i<=$err_count;$i++){
+                $sum_string .= 'ERR'.$i;
+                if ($i<$err_count){
+                    if (length($sum_string) >= 63){
+                        push(@pred_block,$sum_string);
+                        $sum_count++;
+                        $sum_string='ESUM'.$sum_count;
+                        $err_string .= '+'.$sum_string ;
+                        $sum_string .= '=';
+                    }else{
+                        $sum_string .= '+';
+                    }
+                }
+            }
+            push(@pred_block,$sum_string);
+            push(@pred_block,$err_string);
 
-			push(@pred_block,'Y=IPRED+ERROR_TERMS'."\n");
-		}else{
-			if ($self->error eq 'add'){
-				push(@pred_block,'Y=IPRED+OW*EPS(1)'."\n");
-			}elsif ($self->error eq 'prop'){
-				push(@pred_block,'W=IPRED*OW'."\n");
-				push(@pred_block,'IF (OPRED.NE.0) W=IPRED*(OW/OPRED)'."\n");
-				push(@pred_block,'Y=IPRED+W*EPS(1)'."\n");
-			}elsif ($self->error eq 'propadd'){
-				push(@pred_block,'W=SQRT(OWA**2+(OWP*IPRED)**2)'."\n");
-				push(@pred_block,'Y=IPRED+W*EPS(1)'."\n");
-			}elsif ($self->error eq 'exp'){
-				push(@pred_block,'Y=IPRED*EXP(EPS(1)*OWE)'."\n");
-			}elsif ($self->error eq 'user'){
-				push(@pred_block,@{$self->error_code()});
-				push(@pred_block,"\n");
-			}else{
-				croak("Unknown error form ".$self->error);
-			}	   
-		}
-		$original_model -> set_records( type => 'pred',
-			record_strings => \@pred_block );
+            push(@pred_block,'Y=IPRED+ERROR_TERMS'."\n");
+        }else{
+            if ($self->error eq 'add'){
+                push(@pred_block,'Y=IPRED+OW*EPS(1)'."\n");
+            }elsif ($self->error eq 'prop'){
+                push(@pred_block,'W=IPRED*OW'."\n");
+                push(@pred_block,'IF (OPRED.NE.0) W=IPRED*(OW/OPRED)'."\n");
+                push(@pred_block,'Y=IPRED+W*EPS(1)'."\n");
+            }elsif ($self->error eq 'propadd'){
+                push(@pred_block,'W=SQRT(OWA**2+(OWP*IPRED)**2)'."\n");
+                push(@pred_block,'Y=IPRED+W*EPS(1)'."\n");
+            }elsif ($self->error eq 'exp'){
+                push(@pred_block,'Y=IPRED*EXP(EPS(1)*OWE)'."\n");
+            }elsif ($self->error eq 'user'){
+                push(@pred_block,@{$self->error_code()});
+                push(@pred_block,"\n");
+            }else{
+                croak("Unknown error form ".$self->error);
+            }
+        }
+        $original_model -> set_records( type => 'pred',
+            record_strings => \@pred_block );
 
-		$original_model -> fixed( parameter_type => 'sigma',
-			new_values => [[(0) x $original_model -> nsigmas -> [0] ]] );
+        $original_model -> fixed( parameter_type => 'sigma',
+            new_values => [[(0) x $original_model -> nsigmas -> [0] ]] );
 
-		#end if step_number == 1
-	}elsif ($self->update_derivatives()){
-		$datafilename = 'derivatives_covariates'.$stepname.'.dta';
-		if ($self->step_number() == 2 and $self->both_directions() 
-				and $self->search_direction() eq 'backward'){
-			#if first backward step after switching directions we do not have to rerun 
-			#derivatives if no covariates were significant in the last step == unless 
-			#all covariates are in their final state. Instead copy derivatives_covariates.dta
-			#from forward directory (check exists so that no cleaning has removed it)
-			#to be used by linearized model. 
-			#if we need to rerun then at least find lst-file of last derivatives run to be used for update_inits
+        #end if step_number == 1
+    }elsif ($self->update_derivatives()){
+        $datafilename = 'derivatives_covariates'.$stepname.'.dta';
+        if ($self->step_number() == 2 and $self->both_directions()
+                and $self->search_direction() eq 'backward'){
+            #if first backward step after switching directions we do not have to rerun
+            #derivatives if no covariates were significant in the last step == unless
+            #all covariates are in their final state. Instead copy derivatives_covariates.dta
+            #from forward directory (check exists so that no cleaning has removed it)
+            #to be used by linearized model.
+            #if we need to rerun then at least find lst-file of last derivatives run to be used for update_inits
 
-			#we want to reuse the last derivatives run completely if no covariates were significant
-			#in last step
-			#check if all covariates are in their final state. Then rerun using update_inits, 
-			#Otherwise reuse
+            #we want to reuse the last derivatives run completely if no covariates were significant
+            #in last step
+            #check if all covariates are in their final state. Then rerun using update_inits,
+            #Otherwise reuse
 
-			#if update_derivatives then want to find output of deepest derivatives run
-			#use this as derivatives output to get best initial estimates for new derivatives run
+            #if update_derivatives then want to find output of deepest derivatives run
+            #use this as derivatives output to get best initial estimates for new derivatives run
 
-			my $old_derivatives = '../derivatives.';
-			my $exists = (-e $old_derivatives.'lst');
-			#no not die here, could have derivatives_data set.
-			#could still be derivatives from old run
-			#croak("No original derivatives.lst") unless ($exists);
-			my $dir = '../';
-			my $new_file = 'derivatives_updated_1f.';
-			my $new_dir = '../forward_scm_dir1/';
-			my $level=1;
-			while (-e $new_dir.$new_file.'lst'){
-				$exists = 1;
-				$dir = $new_dir;
-				$old_derivatives = $dir.$new_file;
-				$level++;
-				$new_dir .='scm_dir1/';
-				$new_file = 'derivatives_updated_'.$level.'f.';
-			}
-			$level=$level-1;
-			my $stepname = ($level == 0)? '': "_$level".'f';
-			$self->derivatives_output(output->new( filename => $old_derivatives.'lst')) 
-			if ($exists);
+            my $old_derivatives = '../derivatives.';
+            my $exists = (-e $old_derivatives.'lst');
+            #no not die here, could have derivatives_data set.
+            #could still be derivatives from old run
+            #croak("No original derivatives.lst") unless ($exists);
+            my $dir = '../';
+            my $new_file = 'derivatives_updated_1f.';
+            my $new_dir = '../forward_scm_dir1/';
+            my $level=1;
+            while (-e $new_dir.$new_file.'lst'){
+                $exists = 1;
+                $dir = $new_dir;
+                $old_derivatives = $dir.$new_file;
+                $level++;
+                $new_dir .='scm_dir1/';
+                $new_file = 'derivatives_updated_'.$level.'f.';
+            }
+            $level=$level-1;
+            my $stepname = ($level == 0)? '': "_$level".'f';
+            $self->derivatives_output(output->new( filename => $old_derivatives.'lst'))
+            if ($exists);
 
-			if (-e $dir.'derivatives_can_be_reused'){
-				$rerun_derivatives_new_direction = 0;
-				#copy deepest derivatives_covariates.dta from forward_scm_dir and put it locally with correct name
-				# $datafilename
-				if (-e $dir.'derivatives_covariates'.$stepname.'.dta' ){
-					cp( $dir.'derivatives_covariates'.$stepname.'.dta', "$datafilename" );
-					cp( $old_derivatives.'mod', 'copy_last_forward_derivatives.mod');
-					cp( $old_derivatives.'lst', 'copy_last_forward_derivatives.lst');
-				}else{
-					ui -> print( category => 'scm',
-						message  => "cannot find old derivatives data, rerunning",
-						newline => 1);
-					$rerun_derivatives_new_direction =1; #cannot find data
-				}
-			}
-		}
+            if (-e $dir.'derivatives_can_be_reused'){
+                $rerun_derivatives_new_direction = 0;
+                #copy deepest derivatives_covariates.dta from forward_scm_dir and put it locally with correct name
+                # $datafilename
+                if (-e $dir.'derivatives_covariates'.$stepname.'.dta' ){
+                    cp( $dir.'derivatives_covariates'.$stepname.'.dta', "$datafilename" );
+                    cp( $old_derivatives.'mod', 'copy_last_forward_derivatives.mod');
+                    cp( $old_derivatives.'lst', 'copy_last_forward_derivatives.lst');
+                }else{
+                    ui -> print( category => 'scm',
+                        message  => "cannot find old derivatives data, rerunning",
+                        newline => 1);
+                    $rerun_derivatives_new_direction =1; #cannot find data
+                }
+            }
+        }
 
-		if ($rerun_derivatives_new_direction){
-			$derivatives_model = $self->derivatives_base_model() -> 
-				copy ( filename => 'derivatives_updated'.$stepname.'.mod',
-					   output_same_directory => 1,
-					   copy_datafile          => 0,
-					   write_copy       => 0,
-					   copy_output        => 0);
-			$derivatives_model -> directory($self->directory());
-			$derivatives_model->outputs->[0]->problems([]); #remove output so will be rerun
+        if ($rerun_derivatives_new_direction){
+            $derivatives_model = $self->derivatives_base_model() ->
+                copy ( filename => 'derivatives_updated'.$stepname.'.mod',
+                       output_same_directory => 1,
+                       copy_datafile          => 0,
+                       write_copy       => 0,
+                       copy_output        => 0);
+            $derivatives_model -> directory($self->directory());
+            $derivatives_model->outputs->[0]->problems([]); #remove output so will be rerun
 
-			$derivatives_model->set_option( option_name => 'FILE',
-				record_name => 'table',
-				fuzzy_match => 0,
-				option_value => $datafilename,
-				problem_numbers=>[1]);
+            $derivatives_model->set_option( option_name => 'FILE',
+                record_name => 'table',
+                fuzzy_match => 0,
+                option_value => $datafilename,
+                problem_numbers=>[1]);
 
-			#need to store GZ and GK funcs for covariates
-			my %parameter_G;
-			foreach my $parameter ( keys %{$self -> test_relations()} ){
-				$parameter_G{$parameter}=1; #will later reset the ones that are included
-				$parameter_G{$parameter}=0 if ($self->sum_covariates_hash->{$parameter}==1);
-			}
-			#add included relations add_code normal
-			foreach my $incl_par ( sort keys %included_relations ) {
-				foreach my $incl_cov ( sort keys %{$included_relations{$incl_par}} ) {
-					$self -> 
-					add_code( definition_code => $included_relations{$incl_par}{$incl_cov}{'code'},
-						nthetas         => $included_relations{$incl_par}{$incl_cov}{'nthetas'},
-						inits           => $included_relations{$incl_par}{$incl_cov}{'inits'},
-						bounds          => $included_relations{$incl_par}{$incl_cov}{'bounds'},
-						applicant_model => $derivatives_model,
-						sum_covariates  => $self->sum_covariates_hash->{$incl_par},
-						parameter       => $incl_par,
-						covariate       => $incl_cov );
-					#add in inner loop, otherwise will get parameters that are not included 
-					$parameter_G{$incl_par}=$incl_par.'COV';
-				}
-			}
-			#need drop_undrop here?
-			$self -> 
-			add_code_gfunc( applicant_model => $derivatives_model,
-				parameter_G => \%parameter_G,
-				parameter_relation => $self->parameter_relation());
+            #need to store GZ and GK funcs for covariates
+            my %parameter_G;
+            foreach my $parameter ( keys %{$self -> test_relations()} ){
+                $parameter_G{$parameter}=1; #will later reset the ones that are included
+                $parameter_G{$parameter}=0 if ($self->sum_covariates_hash->{$parameter}==1);
+            }
+            #add included relations add_code normal
+            foreach my $incl_par ( sort keys %included_relations ) {
+                foreach my $incl_cov ( sort keys %{$included_relations{$incl_par}} ) {
+                    $self ->
+                    add_code( definition_code => $included_relations{$incl_par}{$incl_cov}{'code'},
+                        nthetas         => $included_relations{$incl_par}{$incl_cov}{'nthetas'},
+                        inits           => $included_relations{$incl_par}{$incl_cov}{'inits'},
+                        bounds          => $included_relations{$incl_par}{$incl_cov}{'bounds'},
+                        applicant_model => $derivatives_model,
+                        sum_covariates  => $self->sum_covariates_hash->{$incl_par},
+                        parameter       => $incl_par,
+                        covariate       => $incl_cov );
+                    #add in inner loop, otherwise will get parameters that are not included
+                    $parameter_G{$incl_par}=$incl_par.'COV';
+                }
+            }
+            #need drop_undrop here?
+            $self ->
+            add_code_gfunc( applicant_model => $derivatives_model,
+                parameter_G => \%parameter_G,
+                parameter_relation => $self->parameter_relation());
 
-			if (defined $self->derivatives_output()){
-				$derivatives_model ->update_inits(from_output => $self->derivatives_output(),
-					ignore_missing_parameters => 1,
-					problem_number => 1);
-			}else{
-				ui -> print( category => 'scm',
-					message  => "Warning: No output stored from previous derivatives run.",newline => 1 )
-				unless ($self->derivatives_data());
-			}
-			$derivatives_model ->_write();
-		} #end if rerun_derivatives
-	} #end elsif update_derivatives
+            if (defined $self->derivatives_output()){
+                $derivatives_model ->update_inits(from_output => $self->derivatives_output(),
+                    ignore_missing_parameters => 1,
+                    problem_number => 1);
+            }else{
+                ui -> print( category => 'scm',
+                    message  => "Warning: No output stored from previous derivatives run.",newline => 1 )
+                unless ($self->derivatives_data());
+            }
+            $derivatives_model ->_write();
+        } #end if rerun_derivatives
+    } #end elsif update_derivatives
 
-	if ($self->step_number()==1 or $self->update_derivatives()){
-		my $derivatives_ofv;
-		my $ofvname = 'ofv';
-		my $derivatives_name = '';
-		my $reused=0;
-		#set name of datafile before creating it so that will not read data here
-		$original_model -> ignore_missing_data(1);
-		$original_model -> datafiles(new_names => [$datafilename]);
+    if ($self->step_number()==1 or $self->update_derivatives()){
+        my $derivatives_ofv;
+        my $ofvname = 'ofv';
+        my $derivatives_name = '';
+        my $reused=0;
+        #set name of datafile before creating it so that will not read data here
+        $original_model -> ignore_missing_data(1);
+        $original_model -> datafiles(new_names => [$datafilename]);
 
-		if ($self->step_number()==1 and $self->derivatives_data()){
-			#do not run derivatives model, instead copy file to right name
-			cp( $self->derivatives_data(), $datafilename );
-		} elsif ($rerun_derivatives_new_direction){
-			#run derivatives_model
-			my $derivatives_fit = tool::modelfit -> new
-			( %{common_options::restore_options(@common_options::tool_options)},
-				base_directory => $self -> directory,
-				directory      => $self -> directory.'/derivatives_modelfit_dir/',
-				models         => [$derivatives_model],
-				top_tool       => 0);
+        if ($self->step_number()==1 and $self->derivatives_data()){
+            #do not run derivatives model, instead copy file to right name
+            cp( $self->derivatives_data(), $datafilename );
+        } elsif ($rerun_derivatives_new_direction){
+            #run derivatives_model
+            my $derivatives_fit = tool::modelfit -> new
+            ( %{common_options::restore_options(@common_options::tool_options)},
+                base_directory => $self -> directory,
+                directory      => $self -> directory.'/derivatives_modelfit_dir/',
+                models         => [$derivatives_model],
+                top_tool       => 0);
 
-			my $updated = '';
-			if ($self->step_number()> 1) {
-				if ($self->search_direction() eq 'forward'){
-					$updated = ' with the added covariate relation.';
-				}elsif ($self->step_number() == 2 and $self->both_directions()){
-					$updated = ' with all included covariate relations.';
-				}else{
-					$updated = ' without the removed covariate relation.';
-				}
-			}
+            my $updated = '';
+            if ($self->step_number()> 1) {
+                if ($self->search_direction() eq 'forward'){
+                    $updated = ' with the added covariate relation.';
+                }elsif ($self->step_number() == 2 and $self->both_directions()){
+                    $updated = ' with all included covariate relations.';
+                }else{
+                    $updated = ' without the removed covariate relation.';
+                }
+            }
 
-			ui -> print( category => 'all',
-				message  => "Estimating derivatives model$updated",
-				newline => 1);
-			$derivatives_fit -> run;
+            ui -> print( category => 'all',
+                message  => "Estimating derivatives model$updated",
+                newline => 1);
+            $derivatives_fit -> run;
 
-			if (defined $derivatives_model->outputs() and 
-				defined $derivatives_model->outputs()->[0] and
-				$derivatives_model->outputs()->[0]-> have_output()){
-				$self->run_xv_pred_step(estimation_model => $derivatives_model,
-										model_name => 'xv_pred_derivatives',
-										derivatives_run => 1) 
-					if (defined $self->xv_pred_data);
-				if ($self->update_derivatives()){
-					#store derivatives output if update_derivatives so that can use that in next iteration
-					$self->derivatives_output($derivatives_model -> outputs -> [0]);
-				}
-				if ( defined $derivatives_model -> outputs->[0]->  get_single_value(attribute=> 'ofv') ) {
-					$derivatives_ofv = $derivatives_model -> outputs->[0]->  
-						get_single_value(attribute=> 'ofv');
-					$derivatives_name = $derivatives_model ->filename();
-				}else{
-					print "Warning: could not retrieve OFV from derivatives model.\n";
-				}
-			}else{
-				ui->print (category => 'scm',
-						   message => "Warning: No output from derivatives run. Unexpected.",
-						   newline => 1);
-			}
-		}else{
-			ui -> print( category => 'scm',
-				message  => "Reusing the derivatives model output from the ".
-				"last step in the forward search.",
-				newline => 1);
-			if ( defined $self->derivatives_output() ->  get_single_value(attribute=> 'ofv') ) {
-				$derivatives_ofv = $self->derivatives_output()-> get_single_value(attribute=> 'ofv');
-				#$ofvname = 'DIC' if 
-				#	  (defined $self->derivatives_output()->get_single_value(attribute=>'dic')); #error
-				$derivatives_name = $self->derivatives_output()->filename();
-				$derivatives_name =~ s/\.lst$/\.mod/;
-				open( LOG, ">>".$self -> logfile -> [0] ); #model_number -1
-				print LOG "Reusing the derivatives model output from the last step in the forward search.\n";
-				close LOG;
-				$reused=1;
-			}else{
-				print "Warning: could not retrieve OFV from derivatives model.\n";
-			}
-		}
-		my $ofv;
-		if (defined $derivatives_ofv){
-			$ofv = sprintf("%12.5f",$derivatives_ofv);
-		}else{
-			$ofv = 'NA';
-		}
-		if ($self->run_linearized_base()){
-			open( LOG, ">>".$self -> logfile -> [0] ); #model_number -1
-			if ($self->step_number()==1){
-				print LOG "The $ofvname of the nonlinear base model :$ofv        $derivatives_name\n";
-				ui->print(category => 'linearize',
-					message =>"\nThe $ofvname of the nonlinear base model :$ofv        $derivatives_name\n");
-			}else{
-				if ($reused){
-					print LOG "The $ofvname of the nonlinear model              :$ofv        $derivatives_name\n";
-				}else{
-					print LOG "The $ofvname of the updated nonlinear model      :$ofv        $derivatives_name\n";
-				}
-			}
-			close LOG;
-		}else{
-			if (($self->step_number() > 1) 
-					or not ( defined $self -> base_criteria_values and 
-					defined $self -> base_criteria_values -> {'ofv'})) {
-				$self -> base_criteria_values -> {'ofv'} = $derivatives_ofv; #assuming $model_number==1
-			}
-			if ($self->update_derivatives() and $self->step_number()>1){
-				open( LOG, ">>".$self -> logfile -> [0] ); #model_number -1
-				print LOG "Updated base ofv value from derivatives run:$ofv        $derivatives_name\n";
-				print LOG "--------------------\n\n";
-				close LOG;
-			}
-		}
+            if (defined $derivatives_model->outputs() and
+                defined $derivatives_model->outputs()->[0] and
+                $derivatives_model->outputs()->[0]-> have_output()){
+                $self->run_xv_pred_step(estimation_model => $derivatives_model,
+                                        model_name => 'xv_pred_derivatives',
+                                        derivatives_run => 1)
+                    if (defined $self->xv_pred_data);
+                if ($self->update_derivatives()){
+                    #store derivatives output if update_derivatives so that can use that in next iteration
+                    $self->derivatives_output($derivatives_model -> outputs -> [0]);
+                }
+                if ( defined $derivatives_model -> outputs->[0]->  get_single_value(attribute=> 'ofv') ) {
+                    $derivatives_ofv = $derivatives_model -> outputs->[0]->
+                        get_single_value(attribute=> 'ofv');
+                    $derivatives_name = $derivatives_model ->filename();
+                }else{
+                    print "Warning: could not retrieve OFV from derivatives model.\n";
+                }
+            }else{
+                ui->print (category => 'scm',
+                           message => "Warning: No output from derivatives run. Unexpected.",
+                           newline => 1);
+            }
+        }else{
+            ui -> print( category => 'scm',
+                message  => "Reusing the derivatives model output from the ".
+                "last step in the forward search.",
+                newline => 1);
+            if ( defined $self->derivatives_output() ->  get_single_value(attribute=> 'ofv') ) {
+                $derivatives_ofv = $self->derivatives_output()-> get_single_value(attribute=> 'ofv');
+                #$ofvname = 'DIC' if
+                #      (defined $self->derivatives_output()->get_single_value(attribute=>'dic')); #error
+                $derivatives_name = $self->derivatives_output()->filename();
+                $derivatives_name =~ s/\.lst$/\.mod/;
+                open( LOG, ">>".$self -> logfile -> [0] ); #model_number -1
+                print LOG "Reusing the derivatives model output from the last step in the forward search.\n";
+                close LOG;
+                $reused=1;
+            }else{
+                print "Warning: could not retrieve OFV from derivatives model.\n";
+            }
+        }
+        my $ofv;
+        if (defined $derivatives_ofv){
+            $ofv = sprintf("%12.5f",$derivatives_ofv);
+        }else{
+            $ofv = 'NA';
+        }
+        if ($self->run_linearized_base()){
+            open( LOG, ">>".$self -> logfile -> [0] ); #model_number -1
+            if ($self->step_number()==1){
+                print LOG "The $ofvname of the nonlinear base model :$ofv        $derivatives_name\n";
+                ui->print(category => 'linearize',
+                    message =>"\nThe $ofvname of the nonlinear base model :$ofv        $derivatives_name\n");
+            }else{
+                if ($reused){
+                    print LOG "The $ofvname of the nonlinear model              :$ofv        $derivatives_name\n";
+                }else{
+                    print LOG "The $ofvname of the updated nonlinear model      :$ofv        $derivatives_name\n";
+                }
+            }
+            close LOG;
+        }else{
+            if (($self->step_number() > 1)
+                    or not ( defined $self -> base_criteria_values and
+                    defined $self -> base_criteria_values -> {'ofv'})) {
+                $self -> base_criteria_values -> {'ofv'} = $derivatives_ofv; #assuming $model_number==1
+            }
+            if ($self->update_derivatives() and $self->step_number()>1){
+                open( LOG, ">>".$self -> logfile -> [0] ); #model_number -1
+                print LOG "Updated base ofv value from derivatives run:$ofv        $derivatives_name\n";
+                print LOG "--------------------\n\n";
+                close LOG;
+            }
+        }
 
-		if (($self->run_linearized_base() and (not $self->return_after_derivatives_done()))
-				or $linearize_only){
-			#transform $original_model to linearized base model
-			$original_model -> filename('base_model'.$stepname.'.mod');
-			$original_model -> outputfile('base_model'.$stepname.'.lst');
+        if (($self->run_linearized_base() and (not $self->return_after_derivatives_done()))
+                or $linearize_only){
+            #transform $original_model to linearized base model
+            $original_model -> filename('base_model'.$stepname.'.mod');
+            $original_model -> outputfile('base_model'.$stepname.'.lst');
             $original_model -> set_outputfile();
-			$original_model -> directory($self->directory());
-			#remove problem data from output object so that scm will rerun
-			$original_model->outputs->[0]->problems([]);
-			#update linearized model with estimates from derivatives model
-			#3.1
-			if ($self->step_number()==1 and $self->derivatives_data()){
-				1;
-				#have no derivatives output
-			}elsif ($rerun_derivatives_new_direction){
-				#have fresh output
-				$original_model->update_inits(from_output => $derivatives_model->outputs->[0],
-					ignore_missing_parameters => 1,
-					problem_number => 1);
-			}else{
-				#have output stored
-				$original_model->update_inits(from_output => $self->derivatives_output(),
-					ignore_missing_parameters => 1,
-					problem_number => 1);
-			}
-			#3.4
-			$original_model -> _write();
+            $original_model -> directory($self->directory());
+            #remove problem data from output object so that scm will rerun
+            $original_model->outputs->[0]->problems([]);
+            #update linearized model with estimates from derivatives model
+            #3.1
+            if ($self->step_number()==1 and $self->derivatives_data()){
+                1;
+                #have no derivatives output
+            }elsif ($rerun_derivatives_new_direction){
+                #have fresh output
+                $original_model->update_inits(from_output => $derivatives_model->outputs->[0],
+                    ignore_missing_parameters => 1,
+                    problem_number => 1);
+            }else{
+                #have output stored
+                $original_model->update_inits(from_output => $self->derivatives_output(),
+                    ignore_missing_parameters => 1,
+                    problem_number => 1);
+            }
+            #3.4
+            $original_model -> _write();
 
-		}else{
-			$original_model -> _write() unless ($self->return_after_derivatives_done());
-		}
-	} #end if first step or update derivatives
+        }else{
+            $original_model -> _write() unless ($self->return_after_derivatives_done());
+        }
+    } #end if first step or update derivatives
 
     # Remove IGN or ACC in $DATA. Might crash future runs
     $original_model->problems->[0]->datas->[0]->remove_ignore_accept();
@@ -2673,7 +2673,7 @@ sub linearize_setup
         $original_model->problems->[0]->psn_record_order(1);   # In case $DATA was before $INPUT
     }
 
-	return $original_model;
+    return $original_model;
 }
 
 sub modelfit_analyze
@@ -2685,7 +2685,7 @@ sub modelfit_analyze
 	my $model_number = $parm{'model_number'};
 
 	return if ($self->return_after_derivatives_done());
-	return if ((defined $self->max_steps() and $self->max_steps() == 0) and ($self->step_number()==1) and 
+	return if ((defined $self->max_steps() and $self->max_steps() == 0) and ($self->step_number()==1) and
 		scalar(keys %{$self->test_relations}) == 0
 			and $self->linearize);
 
@@ -2694,7 +2694,7 @@ sub modelfit_analyze
 
 	my @minimizations;
 	for ( my $i = 0; $i < scalar @{$self -> prepared_models->[$model_number-1]{'own'}}; $i++ ) {
-		if (defined $self -> prepared_models->[$model_number-1]{'own'}[$i]->outputs() and 
+		if (defined $self -> prepared_models->[$model_number-1]{'own'}[$i]->outputs() and
 			defined $self -> prepared_models->[$model_number-1]{'own'}[$i]->outputs()->[0] and
 			$self -> prepared_models->[$model_number-1]{'own'}[$i]->outputs()->[0]-> have_output() ){
 			my $term = $self -> prepared_models->[$model_number-1]{'own'}[$i] ->
@@ -2714,12 +2714,12 @@ sub modelfit_analyze
 					for ( my $j = 0; $j < scalar @{$type -> {'values'}[$i]}; $j++ ) {
 						if ($self->picky) {
                             # Did minimization just loose one dimension?
-							if ( not defined $type -> {'values'}[$i][$j] or 
+							if ( not defined $type -> {'values'}[$i][$j] or
 								$type -> {'values'}[$i][$j] != 1 ) {
 								$crash = 2;
 							}
 						} else {
-							if ( not defined $type -> {'values'}[$i][$j] or 
+							if ( not defined $type -> {'values'}[$i][$j] or
 								$type -> {'values'}[$i][$j] <= 0 ) {
 								$crash = 1;
 							}
@@ -2740,11 +2740,11 @@ sub modelfit_analyze
 	# models are not indexed by parameters and covariate
 	# combination
 	my $base_ofv;
-	if ( defined $self -> base_criteria_values and 
+	if ( defined $self -> base_criteria_values and
 		defined $self -> base_criteria_values -> {'ofv'}) {
 		$base_ofv = $self -> base_criteria_values -> {'ofv'};
 	} else {
-		if (defined $self -> models->[$model_number-1]->outputs() and 
+		if (defined $self -> models->[$model_number-1]->outputs() and
 			defined $self -> models->[$model_number-1]->outputs()->[0] and
 			$self -> models->[$model_number-1]->outputs()->[0]-> have_output()){
 			$base_ofv = $self -> models->[$model_number-1] ->
@@ -2789,7 +2789,7 @@ sub modelfit_analyze
 			if (defined $self -> prepared_models->[$model_number-1] and
 				defined $self -> prepared_models->[$model_number-1]{'own'} and
 				defined $self -> prepared_models->[$model_number-1]{'own'}[$i] and
-				defined $self -> prepared_models->[$model_number-1]{'own'}[$i]->outputs() and 
+				defined $self -> prepared_models->[$model_number-1]{'own'}[$i]->outputs() and
 				defined $self -> prepared_models->[$model_number-1]{'own'}[$i]->outputs()->[0] and
 				$self -> prepared_models->[$model_number-1]{'own'}[$i]->outputs()->[0]-> have_output()){
 				$new_ofv = $self -> prepared_models->[$model_number-1]{'own'}[$i] -> outputs -> [0] -> get_single_value(attribute=> 'ofv');# -> [0][0];
@@ -2828,7 +2828,7 @@ sub modelfit_analyze
 		$func = \&gof_ofv;
 	} elsif ( lc($self -> gof()) eq 'p_value') {
 		$func = \&gof_pval;
-	} 
+	}
 
 	my $temp_res_mod;
 	( $temp_res_mod,
@@ -2945,7 +2945,7 @@ sub modelfit_analyze
 					$still_one_left = 1 unless ($self -> search_direction() eq 'forward' and
 						( $self -> included_relations->{$par}{$cov}{'state'} ==
 							$self -> valid_states->{$kind} ->
-							[ scalar @{$self -> valid_states->{$kind}} - 1] )); 
+							[ scalar @{$self -> valid_states->{$kind}} - 1] ));
 				} else {
 					#tests left unless direction is backward and there are no included relations
 					$still_one_left = 1 unless ($self -> search_direction() eq 'backward');
@@ -3143,17 +3143,17 @@ sub modelfit_analyze
 }
 
 sub should_add_mdv
-{ 
+{
 	my %parm = validated_hash(\@_,
 							  model => { isa => 'model', optional => 0 },
 		);
 	my $model = $parm{'model'};
-	
+
 	my $add_mdv=0;
 	if ( defined $model->problems->[0] -> preds and scalar(@{$model->problems->[0] -> preds})>0){
-		if( defined $model->problems()->[0] -> inputs and 
+		if( defined $model->problems()->[0] -> inputs and
 			defined $model->problems()->[0] -> inputs -> [0] -> options ) {
-			my ($arr,$time_added) = $model->problems()->[0] -> inputs -> [0]->get_filter_table_names; 
+			my ($arr,$time_added) = $model->problems()->[0] -> inputs -> [0]->get_filter_table_names;
 			croak ("found no undropped data column in \$INPUT ") unless (defined $arr);
 			for (my $i=0; $i< scalar(@{$arr}); $i++){
 				if($arr->[$i] eq 'MDV'){
@@ -3185,9 +3185,9 @@ sub gof_ofv
 			get_single_value(attribute=> 'ofv') ) {
 			$base_ofv = $self -> models -> [$model_number-1] -> outputs -> [0] ->
 			get_single_value(attribute=> 'ofv');
-			#do not want to use this ofv if have run a start_model, make sure base_criteria_values already defined 
+			#do not want to use this ofv if have run a start_model, make sure base_criteria_values already defined
 		} else {
-			croak("OFV estimates not available from model" . 
+			croak("OFV estimates not available from model" .
 				$self -> models -> [$model_number-1] -> full_name );
 		}
 	}
@@ -3200,7 +3200,7 @@ sub gof_ofv
 		#change to MAXNUM if not minimization successful?
 		if ($model -> outputs -> [0]->have_output()){
 			push( @ofvs, $model -> outputs -> [0] -> get_single_value(attribute=> 'ofv') );
-			push( @successful, $model -> outputs -> [0] -> 
+			push( @successful, $model -> outputs -> [0] ->
 				get_single_value(attribute=> 'minimization_successful') );
 		}else{
 			push( @ofvs,undef);
@@ -3233,7 +3233,7 @@ sub gof_ofv
 	my ( %drop_sign, @n_param_diffs );
 	my @step_relations = @{$self -> step_relations};
 	for ( my $i = 0; $i <= $#step_relations; $i++ ) {
-		my $n_param_diff = 
+		my $n_param_diff =
 		$self -> prepared_models->[$model_number-1]{'own'}[$i] ->
 		nthetas( problem_number => 1 ) - $base_n_param;
 		push( @n_param_diffs, $n_param_diff );
@@ -3242,7 +3242,7 @@ sub gof_ofv
 		-$ofv_changes[$model_number-1]{-$n_param_diff};
 		my $test_val;
 		my $ofv;
-		if ( (not defined( $ofvs[$i] )) or (not defined $successful[$i]) or 
+		if ( (not defined( $ofvs[$i] )) or (not defined $successful[$i]) or
 			($self->only_successful() and $successful[$i] != 1) ){
 			$test_val = ' ' x 43 . 'FAILED';
 			$ofv = ' ' x 4 . 'FAILED';
@@ -3330,16 +3330,16 @@ sub gof_pval
 	} elsif ( $direction eq 'backward' ) {
 		croak("Backward search needs a 'base' OFV estimate" );
 	} else {
-		if ( defined $self -> models -> [$model_number-1]->outputs() and 
+		if ( defined $self -> models -> [$model_number-1]->outputs() and
 			defined $self -> models -> [$model_number-1]->outputs()->[0] and
 			$self -> models -> [$model_number-1]->outputs()->[0]-> have_output() and
 			defined $self -> models -> [$model_number-1] -> outputs -> [0] ->
 			get_single_value(attribute=> 'ofv') ) {
 			$base_ofv = $self -> models -> [$model_number-1] -> outputs -> [0] ->
 			get_single_value(attribute=> 'ofv');
-			#do not want to use this ofv if have run a start_model, make sure base_criteria_values already defined 
+			#do not want to use this ofv if have run a start_model, make sure base_criteria_values already defined
 		} else {
-			croak("OFV estimates not available from model" . 
+			croak("OFV estimates not available from model" .
 				$self -> models -> [$model_number-1] -> full_name );
 		}
 	}
@@ -3349,11 +3349,11 @@ sub gof_pval
 	my @successful;
 	foreach my $model ( @models ) {
 		#change to MAXNUM if not minimization successful?
-		if (defined $model->outputs() and 
+		if (defined $model->outputs() and
 			defined $model->outputs()->[0] and
 			$model->outputs()->[0]-> have_output()){
 			push( @ofvs, $model -> outputs -> [0] -> get_single_value(attribute=> 'ofv') );
-			push( @successful, $model -> outputs -> [0] -> 
+			push( @successful, $model -> outputs -> [0] ->
 				get_single_value(attribute=> 'minimization_successful') );
 		}else{
 			push( @ofvs,undef);
@@ -3388,7 +3388,7 @@ sub gof_pval
 	my ( %drop_sign, @n_param_diffs );
 	my @step_relations = @{$self -> step_relations};
 	for ( my $i = 0; $i <= $#step_relations; $i++ ) {
-		my $n_param_diff = 
+		my $n_param_diff =
 		$self -> prepared_models->[$model_number-1]{'own'}[$i] ->
 		nthetas( problem_number => 1 ) - $base_n_param;
 		my $df_sign= ($n_param_diff < 0)? -1:1;
@@ -3407,7 +3407,7 @@ sub gof_pval
 		}
 		my $test_val;
 		my $ofv;
-		if ( (not defined( $ofvs[$i] )) or (not defined $successful[$i]) or 
+		if ( (not defined( $ofvs[$i] )) or (not defined $successful[$i]) or
 			($self->only_successful() and $successful[$i] != 1) ){
 			$test_val = ' ' x 17 . 'FAILED';
 			$ofv = ' ' x 4 . 'FAILED';
@@ -3418,7 +3418,7 @@ sub gof_pval
 			#if df decreases ($n_param_diff < 0) then a positive drop is significant at 0
 			#if df is unchanged ($n_param_diff == 0) then a 0 drop is significant at 1
 
-			#put df_sign on pval. Samma antal parametrar. For att acceptera addition kravs 
+			#put df_sign on pval. Samma antal parametrar. For att acceptera addition kravs
 			if ($n_param_diff == 0){
 				if ($direction eq 'forward'){
 					if ($test_val == 0){
@@ -3427,13 +3427,13 @@ sub gof_pval
 						push ( @p_values, 999);
 					}else{
 						#test_val > 0
-						push ( @p_values, 0); #accepted even with p-value 0 
+						push ( @p_values, 0); #accepted even with p-value 0
 					}
 				}else{
 					#which p-value, coming from the forward direction, was necessary for adding this
 					#parameter
 					if ($test_val == 0){
-						push ( @p_values, 99); #larger than 1, we never accept 0 change in forward dir  
+						push ( @p_values, 99); #larger than 1, we never accept 0 change in forward dir
 					}elsif ($test_val < 0){ #same as increase in forward, accepted even with p=0
 						push ( @p_values, 0);
 					}else{  #there is no p-value high enough to make this accepted in forward dir
@@ -3445,11 +3445,11 @@ sub gof_pval
 				if ($direction eq 'forward'){
 					push ( @p_values, 9999); #no p-value high enough
 				}else{
-					push ( @p_values, -1); #optimal to get lower ofv with fewer parameters 
+					push ( @p_values, -1); #optimal to get lower ofv with fewer parameters
 				}
 			}elsif (($n_param_diff < 0) and ($test_val > 0)){
 				if ($direction eq 'forward'){
-					push ( @p_values, -1); #optimal to get lower ofv with fewer parameters 
+					push ( @p_values, -1); #optimal to get lower ofv with fewer parameters
 				}else{
 					push ( @p_values, 9999); #no p-value high enough
 				}
@@ -3469,12 +3469,12 @@ sub gof_pval
 		$ofv.
 		$test_val. '  >'.
 		sprintf("%10.5f",$change).
-		sprintf("%5s",$n_param_diff); 
+		sprintf("%5s",$n_param_diff);
 		print LOG $log_text;
 		# Significant ?
 		if( ($change eq '-inf') or
-			($change ne 'inf'  
-					and defined $ofvs[$i] and $test_val > $change 
+			($change ne 'inf'
+					and defined $ofvs[$i] and $test_val > $change
 					and (($direction eq 'forward' and $p_values[$i] <= $pval) or
 					($direction eq 'backward' and $p_values[$i] >= $pval)))
 		){
@@ -3545,8 +3545,8 @@ sub gof_pval
 		if ($direction eq 'forward'){
 			@sorted_ids = sort { $sign{$a} <=> $sign{$b} } keys %sign; #smallest is best
 		}else{
-			#biggest is worst (most important to remove 
-			@sorted_ids = sort { $sign{$b} <=> $sign{$a} } keys %sign; 
+			#biggest is worst (most important to remove
+			@sorted_ids = sort { $sign{$b} <=> $sign{$a} } keys %sign;
 		}
 		#check if there are any p_vals that are equal to best. In that case
 		#find best ofv-drop
@@ -3621,8 +3621,8 @@ sub _create_models
 		option_name=>'LTH',
 		fuzzy_match => 0);
 	my $have_sizes = 0;
-	$have_sizes = 1 if ((defined $sizes_lth) or 
-		(defined $orig_model ->problems->[0]->sizess() 
+	$have_sizes = 1 if ((defined $sizes_lth) or
+		(defined $orig_model ->problems->[0]->sizess()
 				and scalar(@{$orig_model ->problems->[0]->sizess()})>0));
 
 	my $done = ( -e $self -> directory."/m$model_number/done" ) ? 1 : 0;
@@ -3632,9 +3632,9 @@ sub _create_models
 		#check if should copy datafile to new level, done every 9th iteration
 		my $maxlev = 9;
 		#want mod to be zero when it is time to do something
-		my $modulus = ($self->step_number()-1)%($maxlev); 
+		my $modulus = ($self->step_number()-1)%($maxlev);
 		if ($self->linearize){
-			if (($modulus == 0 and ($self->step_number()>1) or ($self->search_direction eq 'backward' and $self->step_number == 2)) 
+			if (($modulus == 0 and ($self->step_number()>1) or ($self->search_direction eq 'backward' and $self->step_number == 2))
 				and (not $self->update_derivatives)) {
 				$copy_datafile = 1;
 			}
@@ -3646,7 +3646,7 @@ sub _create_models
 			my $filename = $orig_model->datafiles(absolute_path => 0)->[0];
 			my $string = File::Spec->catfile($self -> directory,$filename);
 			cp($fullpath,$string);
-			$self->main_data_file($string);		
+			$self->main_data_file($string);
 		}else{
 			unless (defined $self->main_data_file and length($self->main_data_file)>0){
 				$self->main_data_file($orig_model->datafiles(absolute_path => 1)->[0]);
@@ -3748,7 +3748,7 @@ sub _create_models
 						foreach my $incl_cov ( sort keys %{$included_relations{$incl_par}} ) {
 							next if ( $incl_par eq $parameter and $incl_cov eq $covariate );
 							if ($self->linearize()){
-								$self -> 
+								$self ->
 								add_code_linearize( definition_code => $included_relations{$incl_par}{$incl_cov}{'code'},
 									nthetas         => $included_relations{$incl_par}{$incl_cov}{'nthetas'},
 									inits           => $included_relations{$incl_par}{$incl_cov}{'inits'},
@@ -3758,7 +3758,7 @@ sub _create_models
 									parameter       => $incl_par,
 									covariate       => $incl_cov );
 							}else{
-								$self -> 
+								$self ->
 								add_code( definition_code => $included_relations{$incl_par}{$incl_cov}{'code'},
 									nthetas         => $included_relations{$incl_par}{$incl_cov}{'nthetas'},
 									inits           => $included_relations{$incl_par}{$incl_cov}{'inits'},
@@ -3920,7 +3920,7 @@ sub _create_models
 			$st_rel{'state'}     = $state;
 			$st_rel{'continuous'} = $continuous;
 			push( @step_relations, \%st_rel );
-			my $nl = $i == $#rows ? "" : "\r"; 
+			my $nl = $i == $#rows ? "" : "\r";
 			ui -> print( category => 'scm',
 				message  => ui -> status_bar( sofar => $i+1,
 					goal  => $#rows+1 ).$nl,
@@ -3975,7 +3975,7 @@ sub get_typestring
 	}elsif ( scalar @{$code} > 1){
 		$typestring = 'user';
 	}
-	
+
 	unless (defined $typestring){
 		if ( $codetype == 1 ) {
 			$typestring = 'none';
@@ -4002,9 +4002,9 @@ sub get_typestring
 	if (not $continuous){
 		if (($typestring eq 'hockey-stick') or ($typestring eq 'power') or ($typestring eq 'exponential')){
 			croak("The $typestring parameterization is not defined for categorical covariates");
-		} 
+		}
 	}
-	
+
 	return $typestring;
 }
 
@@ -4061,7 +4061,7 @@ sub create_code
 				  message => "Warning: The $typestring relation is inappropriate on ".
 				  "logit parameters.",newline => 1) ;
 	}
-	
+
 	#only format if first level recursion
 	if ($self->step_number() == 1){
 		for (my $i=0; $i< scalar(@inits);$i++){
@@ -4087,7 +4087,7 @@ sub create_code
 					$bounds{'upper'}[$i] = $self->format_inits_bounds(string => $bounds{'upper'}[$i],
 						statistics => \%statistics,
 						continuous => $continuous,
-						is_bound => 1); 
+						is_bound => 1);
 				}
 			}
 		}
@@ -4095,7 +4095,7 @@ sub create_code
 
 	my ($nexttheta,$fraction) = get_covariate_code(statistics => \%statistics,
 												   type => $typestring,
-												   sum_covariates => $sum_covariates, 
+												   sum_covariates => $sum_covariates,
 												   linearize =>$self->linearize,
 												   missing_data_token => $missing_data_token,
 												   parameter => $parameter,
@@ -4107,8 +4107,8 @@ sub create_code
 
 	get_covariate_theta_bounds_inits(bounds => \%bounds,
 									 max => $max,
-									 min => $min, 
-									 median => $median, 
+									 min => $min,
+									 median => $median,
 									 type => $typestring,
 									 inits => \@inits,
 									 global_init => $self->global_init,
@@ -4210,7 +4210,7 @@ sub add_code
 			$found_REL = $i;
 			debugmessage(3, $parameter . "COV has already been added to the code");
 			if (/$parameter$covariate/) {
-				$found_correct_REL = 1; 
+				$found_correct_REL = 1;
 				last ;
 			}
 			if ($sum_covariates){
@@ -4622,7 +4622,7 @@ sub run_xv_pred_step
 		  top_tool       => 0,
 		  clean => 1,
 		  parent_tool_id   => $self -> tool_id,
-		  copy_data => 1); 
+		  copy_data => 1);
     #clean 2 later
 	ui->print(category => 'xv_scm', message => $mess) unless ($self->parent_threads > 1);
 	$xv_base_fit->run();
@@ -4642,7 +4642,7 @@ sub run_xv_pred_step
 
 	}else{
 		#not a derivatives run
-		if ( defined $model_copy_pred->outputs() and 
+		if ( defined $model_copy_pred->outputs() and
 			defined $model_copy_pred->outputs()->[0] and
 			$model_copy_pred->outputs()->[0]-> have_output() and
 			defined $model_copy_pred->outputs->[0]->get_single_value(attribute=> 'ofv') ) {
@@ -4758,7 +4758,7 @@ sub format_max_min_median_mean
 	} else {
 		$mean = '';
 	}
-	
+
 	return ($max, $min, $median, $mean);
 }
 
@@ -4784,7 +4784,7 @@ sub get_covariate_code
 	my $covariate = $parm{'covariate'};
 	my $theta_number = $parm{'theta_number'};
 	my $code = $parm{'code'};
-	
+
 	my $offset = '1';
 	$offset = '0' if ($sum_covariates);
 
@@ -4792,7 +4792,7 @@ sub get_covariate_code
 	my $have_missing_data = 0;
 	$have_missing_data = 1 if $statistics->{'have_missing_data'};
 	my $fraction;
-	
+
 	my $comment = '';
 
 	if ( scalar @{$code} < 1 or ( scalar @{$code} == 1 and $code->[0] eq '' ) ) {
@@ -4800,7 +4800,7 @@ sub get_covariate_code
 	} else {
 		croak("Input code is defined but type is $type.") unless ($type eq 'user');
 	}
-	
+
 	if ($type eq 'none') {
 		$code->[0] = "   $parameter$covariate = $offset\n";
 	} elsif ($type eq 'user') {
@@ -4866,7 +4866,7 @@ sub get_covariate_code
 			push @{$code}, $comment."$parameter$covariate"."_COMMON=0  ";
 		}
 		for ( my $i = 0; $i <= $#sorted; $i++ ) {
-			if ( $have_missing_data and ( $missing_data_token eq $sorted[$i] 
+			if ( $have_missing_data and ( $missing_data_token eq $sorted[$i]
 										  or $missing_data_token == $sorted[$i]) ) {
 				if ($linearize){
 					$missing_line = $comment."IF($covariate.EQ.$sorted[$i]) $parameter$covariate = $offset  ; Missing data\n";
@@ -4922,7 +4922,7 @@ sub get_covariate_code
 					 "Covariate function value ".
 					 "may be negative or imaginary for observations where $covariate is < 0, which would lead to ".
 					 "errors.", newline => 1) if ($min < 0);
-		
+
 		ui->print(category => 'scm',
 				  message => "Warning: The exponential relation is inappropriate on ".
 				  "logit parameters.",newline => 1) if ($sum_covariates);
@@ -4942,7 +4942,7 @@ sub get_covariate_code
 		ui->print(category => 'scm',
 				  message => "Warning: The exponential relation is inappropriate on ".
 				  "logit parameters.",newline => 1) if ($sum_covariates);
-		
+
 		my $sign = '-';
 		$sign = '+' if ( $median < 0 );
 		if ( $have_missing_data ) {
@@ -4988,11 +4988,11 @@ sub get_covariate_theta_bounds_inits
 	my $linearize = $parm{'linearize'};
 	my $inits = $parm{'inits'};
 	my $global_init = $parm{'global_init'};
-	
+
 	if ($linearize and ($type eq 'categorical') and (not defined $fraction)){
 		croak("must define fraction if linearize and categorical");
 	}
-	
+
 	unless ( defined $bounds->{'upper'} and defined $bounds->{'upper'}[0] ) {
 		if ($sum_covariates){
 			for ( my $i = 0; $i < $ntheta; $i++ ) {
@@ -5042,14 +5042,14 @@ sub get_covariate_theta_bounds_inits
 			croak("unknown type $type");
 		}
 	}
-			
+
 	unless ( defined $bounds->{'lower'} and defined $bounds->{'lower'}[0] ) {
 		if ($sum_covariates){
 			for ( my $i = 0; $i < $ntheta; $i++ ) {
 				$bounds->{'lower'}[$i] = -20;
 			}
 		}elsif ($type eq 'linear'){
-			my $lower_bound; 
+			my $lower_bound;
 			if ( $median-$max == 0 ) {
 				$lower_bound=-100000;
 			}else{
@@ -5163,7 +5163,7 @@ sub write_log
 	}
 	if (defined $included_relations and (scalar (keys %{$included_relations}) > 0 )) {
 		if ($final){
-			print LOG "Relations included after final step:\n";	    
+			print LOG "Relations included after final step:\n";
 		}else{
 			print LOG "Relations included after this step:\n";
 		}
@@ -5322,15 +5322,15 @@ sub write_final_models
 		#update initials, from initial_estimates_model??? from where?
 		if ($self->update_derivatives()) {
 			my $fb = ($self->search_direction() eq 'forward') ? 'f' : 'b';
-			my $outf = 'scm_dir1/derivatives_updated_' . ($self->step_number()) . $fb . '.lst'; 
+			my $outf = 'scm_dir1/derivatives_updated_' . ($self->step_number()) . $fb . '.lst';
 			if (-e $outf) {
 				$final_nonlin->update_inits(from_output_file => $outf, problem_number => $prob_num);
 			} else {
 				#print "nothing left to add? could not find $outf\n";
 				#we will also end up here if first step and nothing significant. Would liek
-				# to keep all estimates from derivatives run in that case, but ahve no way of 
+				# to keep all estimates from derivatives run in that case, but ahve no way of
 				#separating cases right now.
-				$outf = 'derivatives_updated_' . ($self->step_number() - 1) . $fb . '.lst'; 
+				$outf = 'derivatives_updated_' . ($self->step_number() - 1) . $fb . '.lst';
 				$outf = 'derivatives.lst' if ($self->step_number() == 1);
 				if (-e $outf) {
 					$final_nonlin->update_inits(
@@ -5397,8 +5397,8 @@ sub modelfit_post_fork_analyze
 		}
 	}
 
-	if ($self->search_direction() eq 'forward' and $self->both_directions() 
-			and $self->step_number()==1 and 
+	if ($self->search_direction() eq 'forward' and $self->both_directions()
+			and $self->step_number()==1 and
 		scalar(@{$self->models}) == 1) {
 		#we are all but done with the $scm->run called from the top script.
 		#experiment, try switching directions here instead of returning
@@ -5505,7 +5505,7 @@ sub read_config_file
 		$self -> relations($config_file -> relations);
 	}
 
-	foreach my $config_option ( keys %{$config_file -> valid_scalar_options}, 
+	foreach my $config_option ( keys %{$config_file -> valid_scalar_options},
 		keys %{$config_file -> valid_array_options},
 		keys %{$config_file -> valid_hash_options},
 		keys %{$config_file -> valid_code_options} ){
@@ -5575,7 +5575,7 @@ sub preprocess_data
 	#out model
 
 	$filtered_data_model = $model -> copy ( filename => 'filter_data.mod',
-											directory => $directory, 
+											directory => $directory,
 											output_same_directory => 1,
 											copy_datafile          => 0,
 											write_copy => 0,
@@ -5594,10 +5594,10 @@ sub preprocess_data
 	my $only_filter = 0;
 
 	my $time_added=0;
-	if( defined $filtered_data_model->problems()->[0] -> inputs and 
+	if( defined $filtered_data_model->problems()->[0] -> inputs and
 		defined $filtered_data_model->problems()->[0] -> inputs -> [0] -> options ) {
 		my $arr;
-		($arr,$time_added) = $filtered_data_model->problems()->[0] -> inputs -> [0]->get_filter_table_names; 
+		($arr,$time_added) = $filtered_data_model->problems()->[0] -> inputs -> [0]->get_filter_table_names;
 		croak ("found no undropped data column in \$INPUT ") unless (defined $arr);
 		croak ("automatic filtering cannot yet handle \$INPUT with DATX but without TIME") if ($time_added);
 		@filter_table_header = @{$arr};
@@ -5636,7 +5636,7 @@ sub preprocess_data
 
 		my $new_comresno = $parm_counter+$pair_counter;
 
-		$run_mess = "Running input model to determine median of time-varying covariates";	
+		$run_mess = "Running input model to determine median of time-varying covariates";
 		if (($new_comresno + 2*$parm_counter + scalar(@filter_table_header))>50){
 			if ($PsN::nm_minor_version >= 2){
 				my $max = $new_comresno + 2*$parm_counter + scalar(@filter_table_header);
@@ -5649,7 +5649,7 @@ sub preprocess_data
 					$max=$pdt_value if ($pdt_value > $max);
 				}
 
-				if (defined $filtered_data_model ->problems->[0]->sizess() 
+				if (defined $filtered_data_model ->problems->[0]->sizess()
 						and scalar(@{$filtered_data_model ->problems->[0]->sizess()})>0){
 					$filtered_data_model -> set_option(record_name => 'sizes',
 						record_number => 1,
@@ -5668,12 +5668,12 @@ sub preprocess_data
 				"Use NM version 7.2 or later, which can handle more items.".
 				"If you are already using 7.2 or later, check that the version info in psn.conf is correct.";
 				croak($mess);
-			}	    
+			}
 
 		}
 
 		#update_inits from $model output
-		if (defined $model->outputs() and 
+		if (defined $model->outputs() and
 			defined $model ->outputs()->[0] and
 			$model ->outputs()->[0]-> have_output()){
 			$filtered_data_model -> update_inits ( from_output => $model->outputs()->[0]);
@@ -5683,7 +5683,7 @@ sub preprocess_data
 
 
 		my $comresno;
-		if (defined $filtered_data_model ->problems->[0]->abbreviateds() 
+		if (defined $filtered_data_model ->problems->[0]->abbreviateds()
 				and scalar(@{$filtered_data_model ->problems->[0]->abbreviateds()})>0){
 			# Get current comres number
 			$comresno = $filtered_data_model->get_option_value( option_name => 'COMRES',
@@ -5781,7 +5781,7 @@ sub preprocess_data
 				push( @tablestrings, "COM($com)=$par$cov".'NUM');
 				$com++;
 			}
-			$filtered_data_model -> 
+			$filtered_data_model ->
 			add_records( type           => 'table',
 				record_strings => [ $mdvstring.'ID '.join( ' ', @tablestrings ).
 					' NOAPPEND NOPRINT ONEHEADER FILE='.$par.$timevarfile]);
@@ -5808,7 +5808,7 @@ sub preprocess_data
 
 	} else {
 		#only $filter is true
-		$only_filter = 1;	
+		$only_filter = 1;
 
 	}
 
@@ -5825,7 +5825,7 @@ sub preprocess_data
 				$max=$pd_value if ($pd_value > $max);
 			}
 
-			if (defined $filtered_data_model ->problems->[0]->sizess() 
+			if (defined $filtered_data_model ->problems->[0]->sizess()
 					and scalar(@{$filtered_data_model ->problems->[0]->sizess()})>0){
 				$filtered_data_model -> set_option(record_name => 'sizes',
 					record_number => 1,
@@ -5848,7 +5848,7 @@ sub preprocess_data
 			"with fewer columns than 50. Note that it is not enough to DROP ".
 			"columns, they must be removed completely from the data set.";
 			croak($mess);
-		}	    
+		}
 
 	}
 
@@ -5944,7 +5944,7 @@ sub preprocess_data
 				$ratsum += $vals[2];
 				for (my $i=0; $i<$ncov;$i++){
 					$sum_arr[$i] += $vals[$i+3];
-				} 
+				}
 				$prev_id = $vals[1];
 			}
 			#process the last one
@@ -5956,7 +5956,7 @@ sub preprocess_data
 				}else{
 					push(@{$ave_arr[$i]},$sum_arr[$i]/$ratsum);
 				}
-			} 
+			}
 
 			open( LOG, ">>".$self -> logfile -> [0] ); #model_number -1
 			for (my $i=0; $i<$ncov;$i++){
@@ -6024,7 +6024,7 @@ sub create_R_plots_code
 	}
 
 	my %parcov;
-   
+
 	foreach my $par ( sort keys %{$self -> test_relations()} ){
 		$parcov{$par}=[];
 		foreach my $cov ( @{$self -> test_relations()->{$par}} ){
@@ -6040,7 +6040,7 @@ sub create_R_plots_code
 	my $scm_log_file = $self -> logfile -> [0];
 	$scm_log_file =~ s/\\/\\\\/g;
 	my $scm_short_log = $self -> short_logfile -> [0];
-	$scm_short_log =~ s/\\/\\\\/g;	
+	$scm_short_log =~ s/\\/\\\\/g;
 	$rplot->add_preamble(code => [
 							 "scm.log.file <-'".$scm_log_file."'",
 							 "scm.short.log   <- '".$scm_short_log."'",
@@ -6066,9 +6066,9 @@ sub _check_interaction
 
     my $table_file = nmtablefile->new(filename => $datafile);
     my $table = $table_file->tables->[0];
-   
+
     my $nonzero = 0;
-    for (my $col = 0; $col < @{$table->columns}; $col++) { 
+    for (my $col = 0; $col < @{$table->columns}; $col++) {
         if ($table->header_array->[$col] =~ /^D_EPSETA/) {
             $nonzero = array::any_nonzero($table->columns->[$col]);
             last if $nonzero;
