@@ -16,6 +16,9 @@ has 'valid' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'num_rows' => ( is => 'rw', isa => 'Int', default => 0 );
 has 'num_etas' => ( is => 'rw', isa => 'Int', default => 0 );
 
+# contains ("ETA","ETC") or ("PHI","PHC") after validate_phi:
+has 'types' => ( is => 'rw', isa => 'ArrayRef[Str]', default => sub { [] } );
+
 # TODO: extends nmtable;
 
 sub BUILD
@@ -73,23 +76,36 @@ sub validate_phi
     my $eta_count = 1;
     my $etc_x_count = 1;
     my $etc_y_count = 1;
+    my @types = ();
     foreach my $name (@{$header}[2..($size-1)]) {
-        if ($name =~ /^ETA\(\d+\)$/) {
+        # get ETA/ETC or PHI/PHC type (estimation method dependent)
+        if (scalar @types == 0) {
+            my ($type) = $name =~ /(.+)\(/;
+            if ($type eq "ETA" or $type eq "ETC") {
+                @types = ("ETA", "ETC");
+                # print "ETA type detected\n";
+            } else {
+                @types = ("PHI", "PHC");
+                # print "PHI type detected\n";
+            }
+        }
+
+        if ($name =~ /$types[0]\(\d+\)/) {
             my ($num) = $name =~ /(\d+)/;
             if ($num != $eta_count) {
                 my $missing = $eta_count-1;
-                croak "phi file ($filename) error: missing ETA($missing) col";
+                croak "phi file ($filename) error: missing $types[0]($missing) col";
             } elsif ($etc_x_count > 1 or $etc_y_count > 1) {
-                croak "phi file ($filename) error: ETA col $name after ETC col";
+                croak "phi file ($filename) error: $types[0] col $name after shrinkage col $types[1]";
             }
 
             $eta_count++;
-        } elsif ($name =~ /^ETC\(\d+,\d+\)$/) {
+        } elsif ($name =~ /$types[1]\(\d+,\d+\)/) {
             my @num = $name =~ /(\d+)/g;
             if ($num[0] != $etc_x_count || $num[1] != $etc_y_count) {
-                croak "phi file ($filename) error: missing ETC($etc_x_count,$etc_y_count) col";
+                croak "phi file ($filename) error: missing expected $types[1]($etc_x_count,$etc_y_count) col";
             } elsif ($num[0] > $eta_count || $num[1] > $eta_count) {
-                croak "phi file ($filename) error: $name col larger indices than ETA cols";
+                croak "phi file ($filename) error: $name col larger indices than parsed $types[0] cols";
             }
 
             if ($etc_y_count < $etc_x_count) {
@@ -108,12 +124,13 @@ sub validate_phi
     # now we know phi file is ordered exactly as expected (important for modifications)
     $self->num_rows( scalar @{$table_mat->[0]} );
     $self->num_etas( $eta_count-1 );
+    $self->types( \@types );
     return 1;
 }
 
 sub swap_etas
 {
-    # swap two ETA columns (1-indexed as in header), renumber and shift + renumber ETC columns
+    # swap two ETA/PHI columns (1-indexed as in header), renumber and shift + renumber ETC/PHC columns
     my $self = shift;
     my %parm = validated_hash(\@_,
         eta_num_a => { isa => 'Int', optional => 0 },
@@ -122,8 +139,9 @@ sub swap_etas
     my $eta_num_a = $parm{'eta_num_a'};
     my $eta_num_b = $parm{'eta_num_b'};
     my $netas = $self->num_etas;
-    croak "eta_num_a out of bounds ($netas ETA cols)" if ($eta_num_a <= 0 || $eta_num_a > $netas);
-    croak "eta_num_b out of bounds ($netas ETA cols)" if ($eta_num_b <= 0 || $eta_num_b > $netas);
+    my @types = @{ $self->types };
+    croak "eta_num_a out of bounds ($netas $types[0] cols)" if ($eta_num_a <= 0 || $eta_num_a > $netas);
+    croak "eta_num_b out of bounds ($netas $types[0] cols)" if ($eta_num_b <= 0 || $eta_num_b > $netas);
     croak "can't modify non-valid phi" unless ($self->valid);
 
     # get old columns, header array and hash (before reordering)
@@ -138,18 +156,18 @@ sub swap_etas
         $reorder[$i] = $i;
 
         my $name = $header_array[$i];
-        if ($name =~ /^ETA\(\d+\)$/) {
+        if ($name =~ /^$types[0]\(\d+\)$/) {
             my ($old_eta) = $name =~ /(\d+)/;
             my $swap_eta;
             $swap_eta = $eta_num_a if ($eta_num_b == $old_eta);
             $swap_eta = $eta_num_b if ($eta_num_a == $old_eta);
             if (defined $swap_eta) {
-                # eta index match index to swap: new index becomes old index of ETA to swap with
-                my $swap_name = "ETA($swap_eta)";
+                # eta index match index to swap: new index becomes old index of ETA/PHI to swap with
+                my $swap_name = "$types[0]($swap_eta)";
                 $reorder[$i] = $header_hash{$swap_name};
                 print "MOVED $header_array[$i] [$i] => $swap_name [$reorder[$i]]\n";
             }
-        } elsif ($name =~ /^ETC\(\d+,\d+\)$/) {
+        } elsif ($name =~ /^$types[1]\(\d+,\d+\)$/) {
             my @old_etas = $name =~ /(\d+)/g;
             my ($swap_eta_1, $swap_eta_2);
             $swap_eta_1 = $eta_num_a if ($old_etas[0] == $eta_num_b);
@@ -158,16 +176,16 @@ sub swap_etas
             $swap_eta_2 = $eta_num_b if ($old_etas[1] == $eta_num_a);
             if (defined $swap_eta_1 or defined $swap_eta_2) {
                 # at least one of the indices match one of the indices to swap, if any is non-defined
-                # (e.g. 2 of ETC(2,1) where ETA 1 and 3 to swap) assign old index
+                # (e.g. 2 of ETC/PHC(2,1) where ETA/PHI 1 and 3 to swap) assign old index
                 $swap_eta_1 //= $old_etas[0];
                 $swap_eta_2 //= $old_etas[1];
 
                 # now we can generate the new name: new index becomes old index of ETC to swap with
                 my $swap_name;
                 if ($swap_eta_1 >= $swap_eta_2) {
-                    $swap_name = "ETC($swap_eta_1,$swap_eta_2)";
+                    $swap_name = "$types[1]($swap_eta_1,$swap_eta_2)";
                 } else {
-                    $swap_name = "ETC($swap_eta_2,$swap_eta_1)";
+                    $swap_name = "$types[1]($swap_eta_2,$swap_eta_1)";
                 }
                 $reorder[$i] = $header_hash{$swap_name};
                 print "MOVED $header_array[$i] [$i] => $swap_name [$reorder[$i]]\n";
@@ -175,7 +193,7 @@ sub swap_etas
         }
     }
 
-    # create the new column array (note: header and header hash do NOT change; ETAs get "renumbered")
+    # create the new column array (note: header and header hash do NOT change; ETA/PHIs get "renumbered")
     my $new_columns = [];
     for (my $i=0; $i<(scalar @reorder); $i++) {
         # get new index and column and push
@@ -190,8 +208,8 @@ sub swap_etas
 
 sub add_zero_etas
 {
-    # appends correctly numbered ETA columns with 0s to (proper) end of phi table,
-    # and adds new ETC values for each new ETA column (also filled with 0s)
+    # appends correctly numbered ETA/PHI columns with 0s to (proper) end of phi table,
+    # and adds new ETC/PHC values for each new ETA/PHI column (also filled with 0s)
     my $self = shift;
     my %parm = validated_hash(\@_,
         num_etas => { isa => 'Int', optional => 0 },
@@ -205,14 +223,15 @@ sub add_zero_etas
     my $columns = $self->table->columns;
     my $header_hash = $self->table->header;
     my $header_array = $self->table->header_array;
+    my @types = @{ $self->types };
 
-    # push new zero ETA and ETC columns and new header entries
+    # push new zero ETA/PHI and ETC/PHC columns and new header entries
     my $eta_cols;
     my @eta_names;
     for (my $i=1; $i<=$num_zero_etas; $i++) {
         my $idx = $i+$netas;
         my $col = [ (0) x $nrows ];
-        my $name = "ETA($idx)";
+        my $name = "$types[0]($idx)";
 
         # 2 offset for SUBJECT_NO and ID and -1 for 1-indexing
         splice @{$columns},      (2 + $netas + $i-1), 0, $col;
@@ -222,9 +241,9 @@ sub add_zero_etas
             my $x = $netas + $i;
             my $y = $j;
             my $col = [ (0) x $nrows ];
-            my $name = "ETC($x,$y)";
+            my $name = "$types[1]($x,$y)";
 
-            # current size offset for all added ETA cols and -1 for 1-indexing
+            # current size offset for all added ETA/PHI cols and -1 for 1-indexing
             my $cur_size = scalar @{$columns};
             splice @{$columns},      ($cur_size - 1), 0, $col;
             splice @{$header_array}, ($cur_size - 1), 0, $name;
