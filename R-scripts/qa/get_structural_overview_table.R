@@ -1,4 +1,4 @@
-get_structural_overview_table <- function(directory,idv,groups) {
+get_structural_overview_table <- function(directory,idv,dvid_name,groups) {
   if(length(length(idv))!=0) {
     #check if dvid exist
     resmod_file_exists <- get_resmod_table(directory, idv[1])$resmod_file_exists
@@ -14,19 +14,30 @@ get_structural_overview_table <- function(directory,idv,groups) {
       dvid_nr <- 'NA'
     }
     
-    structural_overview <- as.data.frame(array(0,c((length(idv)*length(dvid_nr)),3)))
+    if(length(dvid_nr) == 1 && dvid_nr=="NA"){
+      structural_overview <- as.data.frame(array(0,c(length(idv),3)))
+    } else {
+      structural_overview <- as.data.frame(array(0,c((length(idv)*length(dvid_nr)+length(dvid_nr)),3)))
+    }
     colnames(structural_overview) <- c("","dOFV","Add.params")
-    k <- 0
+    
+    k <- 1
     for(j in 1:length(dvid_nr)) {
-      for(i in 1:length(idv)) {
+      if(length(dvid_nr) > 0 && dvid_nr != 'NA') {
+        structural_overview[k,1] <- paste0(" (",dvid_name,"=",dvid_nr[j],")")
+        structural_overview[k,2] <- ''
+        structural_overview[k,3] <- ''
         k <- k + 1
-        if(length(dvid_nr) > 0 && dvid_nr != 'NA') {
-          structural_overview[k,1] <- paste0(idv[i]," (DVID=",dvid_nr[j],")")
-        } else {
-          structural_overview[i,1] <- idv[i]
-        }
+      }
+      for(i in 1:length(idv)) {
+        structural_overview[k,1] <- idv[i]
         structural_overview[k,2] <- get_resmod_structural_dofv(directory, idv=idv[i],dvid=dvid_nr[j])
-        structural_overview[k,3] <- groups-1
+        if(get_resmod_table(directory, idv[i])$resmod_file_exists) {
+          structural_overview[k,3] <- groups-1
+        } else {
+          structural_overview[k,3] <- ''
+        }
+        k <- k + 1
       }
     }
   } else {

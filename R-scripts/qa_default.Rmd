@@ -8,6 +8,7 @@ geometry: margin=1.5cm
 classoption: a4paper
 ---
 
+
 ```{r loading_libraries_and_sourcing_functions,include = FALSE,warning=F,message=F}
 library(dplyr)
 library(knitr)
@@ -58,9 +59,9 @@ idv_all <- resmod_list$all_idvs
 
 ```{r structural_model_calculations,results='hide',echo=FALSE,message=FALSE,warning=FALSE}
 # 1.Structural models
-structural_overview <- get_structural_overview_table(working.directory,idv=idv_all,groups)
+structural_overview <- get_structural_overview_table(directory=working.directory,idv=idv_all,dvid_name,groups)
 # get resmod structural details tables
-resmod_structural_details <- resmod_structural_details_tables(working.directory,model.filename,CWRES_table,idv_all,idv_name)
+resmod_structural_details <- resmod_structural_details_tables(working.directory,model.filename,CWRES_table,idv_all,idv_name,dvid_name)
 ```
 
 ```{r parameter_model_calculations,results='hide',echo=FALSE,message=FALSE,warning=F}
@@ -101,9 +102,10 @@ covariates_table <- covariates_table_list$covariates_table
 
 ```{r residual_error_model_calculations,results='hide',echo=FALSE,message=FALSE,warning=FALSE}
 #4.create residual error model table (extra table)
-resmod_table_list <- get_resmod_ruv_table(directory=working.directory, idv_name)
-resmod_ruv_models_table <- resmod_table_list$resmod_ruv_table
+resmod_table_list <- get_resmod_ruv_table(directory=working.directory,idv_name,dvid_name)
+resmod_ruv_models_table_list <- resmod_table_list$resmod_ruv_table_list
 resmod_ruv_overview <- resmod_table_list$resmod_ruv_overview
+dvid_nr <- resmod_table_list$dvid_nr
 ```
 
 ```{r influential_individuals_calculations,results='hide',echo=FALSE,message=FALSE,warning=FALSE}
@@ -157,50 +159,52 @@ cat("Overview of possible modifications to different model aspects, expected imp
 
 #Structural
 
-```{r draw_structural_details_tables,warning=F,message=F,echo=F,results='asis',warning=F}
+```{r draw_structural_details_tables,warning=F,message=F,echo=F,results='asis'}
 if(length(idv_all)!=0) {
-  #tables for vpc plots
-  vpc_tables_list <- get_tables_for_vpc(obs_table=CWRES_table,obs_extra_table=paste0(working.directory,"/",sub('.([^.]*)$','',model.filename),"_linbase.dta"),sim_table=paste0(working.directory,"/simeval_run/m1/sim_res_table-1.dta"),idv_all)
-  make_vpc <- vpc_tables_list$make_vpc
-  if(make_vpc) {
-    obs <- vpc_tables_list$obs
-    sim <- vpc_tables_list$sim
-  }
 
-  for(i in 1:length(idv_all)) {
+  for(i in 1:length(resmod_structural_details)) {
+    #tables for vpc plots
+    vpc_tables_list <- get_tables_for_vpc(obs_table=CWRES_table,obs_extra_table=paste0(working.directory,"/",sub('.([^.]*)$','',model.filename),"_linbase.dta"),sim_table=paste0(working.directory,"/simeval_run/m1/sim_res_table-1.dta"),sim_extra_table=paste0(working.directory,"/simeval_run/m1/orig_pred.dta"),idv_all,resmod_structural_details[[i]]$dvid,dvid_name)
+    make_vpc <- vpc_tables_list$make_vpc
+    if(make_vpc) {
+      obs <- vpc_tables_list$obs
+      sim <- vpc_tables_list$sim
+    }
+    
+    
     perc <- resmod_structural_details[[i]]$perc
     #captions
-    all_captions <- captions_structural(idv_all,idv_name,perc)
-    resmod_dofv_table_captions <- all_captions$resmod_dofv_table_captions
-    structural_bias_tables_captions <- all_captions$structural_bias_tables_captions
-    structural_bias_plots_captions <- all_captions$structural_bias_plots_captions
-    vpc_captions <- all_captions$vpc_captions
+    all_captions <- captions_structural(idv_all,idv_name,resmod_structural_details[[i]]$idv,perc)
+    resmod_dofv_table_captions <- all_captions$idv_resmod_dofv_table_captions
+    structural_bias_tables_captions <- all_captions$idv_structural_bias_tables_captions
+    structural_bias_plots_captions <- all_captions$idv_structural_bias_plots_captions
+    vpc_captions <- all_captions$idv_vpc_captions
     
     #print
-    cat(idv_all[i])
+    cat(resmod_structural_details[[i]]$idv_text)
     first_table <- keep_symbols(resmod_structural_details[[i]]$first_table,type)
     first_table <- ztable_sub(first_table,type=type,include.colnames = F,include.rownames = F,longtable = T,align="lr")
     print(first_table)
-    cat(resmod_dofv_table_captions[i])
+    cat(resmod_dofv_table_captions)
     second_table <- keep_symbols(resmod_structural_details[[i]]$second_table,type)
     second_table <- ztable_sub(second_table,type=type,colnames.bold = T,include.rownames = F,longtable = T,align="rlrr")
     second_table <- addcgroup(second_table,cgroup=c("","Estimated bias"),n.cgroup=c(1,2))
     print(second_table)
-    cat(structural_bias_tables_captions[i])
+    cat(structural_bias_tables_captions)
     shift_tab <- resmod_structural_details[[i]]$table
     if(ncol(shift_tab)!=1) {
       cat("\n\n")
-      idv_plot <- plot_ipred(shift_tab,idv_all[i])
+      idv_plot <- plot_ipred(shift_tab,resmod_structural_details[[i]]$idv)
       print(idv_plot)
       cat("\n\n")
-      cat(structural_bias_plots_captions[i])
+      cat(structural_bias_plots_captions)
       if(make_vpc) {
         cat("\n\n")
         #vpc plots
-        vpc_plot <- plot_structural_vpc(obs,sim,shift_tab,idv=idv_all[i])
+        vpc_plot <- plot_structural_vpc(obs,sim,shift_tab,idv=resmod_structural_details[[i]]$idv)
         print(vpc_plot)
         cat("\n\n")
-        cat(vpc_captions[i])
+        cat(vpc_captions)
       }
     }
     cat("\n\\newpage\n")
@@ -293,9 +297,20 @@ if((file.exists(paste0(working.directory,"/postfrem_run/frem_ratio.csv")) ||
 
 #Residual Error Model
 ```{r draw_resiual_error_model_table,echo=F,results='asis'}
-resmod_ruv_models_table <- keep_symbols(resmod_ruv_models_table,type)
-resmod_ruv_models_table <- ztable_sub(resmod_ruv_models_table,type=type,colnames.bold = T,include.rownames = F,longtable = T,align="lrc")
-print(resmod_ruv_models_table)
+for (i in 1:length(resmod_ruv_models_table_list)) {
+  if(length(dvid_nr) ==1 && dvid_nr == 'NA') {
+    resmod_ruv_models_table <- keep_symbols(resmod_ruv_models_table_list[[i]],type)
+    resmod_ruv_models_table <- ztable_sub(resmod_ruv_models_table,type=type,colnames.bold = T,include.rownames = F,longtable = T,align="lrc")
+    print(resmod_ruv_models_table)
+  } else {
+    resmod_ruv_models_table <- keep_symbols(resmod_ruv_models_table_list[[i]],type)
+    resmod_ruv_models_table <- ztable_sub(resmod_ruv_models_table,type=type,colnames.bold = T,include.rownames = F,longtable = T,align="lrc",caption = paste0(dvid_name,"=",dvid_nr[i]))
+    # cgroup <- c(paste0(dvid_name,"=",dvid_nr[i]))
+    # n.cgroup <- c(3)
+    # resmod_ruv_models_table <- addcgroup(resmod_ruv_models_table,cgroup=cgroup,n.cgroup=n.cgroup)
+    print(resmod_ruv_models_table)
+  }
+}
 cat("Residual error model, resulting expected improvement in OFV as well as required additional model parameters.")
 ```
 

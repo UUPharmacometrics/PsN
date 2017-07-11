@@ -1,4 +1,4 @@
-captions_structural <- function(idv_all,idv_name,perc) {
+captions_structural <- function(idv_all,idv_name,which_idv,perc) {
   #captions
   #order TIME,TAD,PRED
   order <- c(idv_name,"TAD","PRED")
@@ -25,7 +25,7 @@ captions_structural <- function(idv_all,idv_name,perc) {
                                             "Estimated structural bias on the population prediction (CPRED) scale vs. binned population predictions (PRED).")
   }
   
-  
+  idv <- c()
   vpc_captions <- c()
   resmod_dofv_table_captions <- c()
   structural_bias_tables_captions <- c()
@@ -33,6 +33,7 @@ captions_structural <- function(idv_all,idv_name,perc) {
   j <- 1
   for (i in 1:length(order)) {
     if(any(idv_all==order[i])) {
+      idv[j] <- order[i]
       vpc_captions[j] <- vpc_captions_all[i]
       resmod_dofv_table_captions[j] <- resmod_dofv_table_captions_all[i]
       structural_bias_tables_captions[j] <- structural_bias_tables_captions_all[i]
@@ -40,9 +41,17 @@ captions_structural <- function(idv_all,idv_name,perc) {
       j <- j + 1
     }
   }
-  out <- list(resmod_dofv_table_captions=resmod_dofv_table_captions,
-              structural_bias_tables_captions=structural_bias_tables_captions,
-              structural_bias_plots_captions=structural_bias_plots_captions,
-              vpc_captions=vpc_captions)
+  
+  #which of idv captions to print out
+  nr_of_idv <- which(idv == which_idv)
+  idv_resmod_dofv_table_captions <- resmod_dofv_table_captions[nr_of_idv]
+  idv_structural_bias_tables_captions <- structural_bias_tables_captions[nr_of_idv]
+  idv_structural_bias_plots_captions <- structural_bias_plots_captions[nr_of_idv]
+  idv_vpc_captions <- vpc_captions[nr_of_idv]
+  
+  out <- list(idv_resmod_dofv_table_captions=idv_resmod_dofv_table_captions,
+              idv_structural_bias_tables_captions=idv_structural_bias_tables_captions,
+              idv_structural_bias_plots_captions=idv_structural_bias_plots_captions,
+              idv_vpc_captions=idv_vpc_captions)
   return(out)
 }

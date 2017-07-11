@@ -1,4 +1,4 @@
-.calc_and_add_shift_from_cwres <- function(structural_details_table, working.directory, model.filename, CWRES_table, idv, idv_name){
+.calc_and_add_shift_from_cwres <- function(structural_details_table, working.directory, model.filename, CWRES_table, idv, idv_name, dvid, dvid_name){
   # .ext file with the final estimates
   final_estimates <- read.table(paste0(working.directory,"linearize_run/scm_dir1/derivatives.ext"), skip=1, header=T) %>%
     filter(ITERATION==-1000000000)
@@ -37,13 +37,22 @@
   }
   
   # get table with IDV values
-  idv_df <- read.table(CWRES_table, skip = 1, header=T) %>%
+  idv_df <- read.table(CWRES_table, skip = 1, header=T)
+  if(any(colnames(idv_df)== dvid_name)) {
+    dvid_column_nr <- which(colnames(idv_df)== dvid_name)
+    idv_df <- idv_df[which(idv_df[,dvid_column_nr] == dvid),]
+  }
+  idv_df <-  idv_df %>%
     filter(CWRES!=0) %>%
     select_(idv) %>%
     rename_(idv=idv)
   
   # get derivatives from linearized model
   mean_shifts_table <- read.table(file.path(working.directory, paste0(sub('.([^.]*)$','',model.filename),"_linbase.dta")), skip = 1, header=T)
+  if(any(colnames(mean_shifts_table)== dvid_name)) {
+    dvid_column_nr <- which(colnames(mean_shifts_table)== dvid_name)
+    mean_shifts_table<- mean_shifts_table[which(mean_shifts_table[,dvid_column_nr] == dvid),]
+  }
   mean_shifts <- mean_shifts_table %>%
     filter(MDV==0) %>%
     bind_cols(idv_df) %>%
