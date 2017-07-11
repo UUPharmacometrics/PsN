@@ -56,8 +56,13 @@ sub modelfit_setup
     my $linearized_model_name = $self->model->filename;
     $linearized_model_name =~ s/(\.[^.]+)$/_linbase.mod/;
     ui->category('linearize');
-
-    my @table_columns = ( 'ID', $self->idv, 'CWRES', 'PRED', 'CIPREDI' );
+	
+	my @table_columns = ( 'ID', $self->idv,'CWRES', 'PRED', 'CIPREDI' );
+	
+    if ($model_copy->defined_variable(name => $self->dvid)) {
+		push @table_columns, $self->dvid;
+	} 
+	
     if ($model_copy->defined_variable(name => 'TAD')) {
         push @table_columns, 'TAD';
     }
@@ -437,11 +442,13 @@ sub create_R_plots_code
     }
 	my $CWRES_table_path = $self->resmod_idv_table;
 	$CWRES_table_path =~ s/\\/\//g;
+		
     $rplot->add_preamble(
         code => [
             '# qa specific preamble',
 			"groups <- " . $self->groups,
             "idv_name <- '" . $self->idv . "'",
+			"dvid_name <- '" . $self->dvid . "'",
             "covariates <- " . rplots::create_r_vector(array => \@covariates),
             "categorical <- " . rplots::create_r_vector(array => \@categorical),
             "parameters <- " . rplots::create_r_vector(array => \@parameters),
