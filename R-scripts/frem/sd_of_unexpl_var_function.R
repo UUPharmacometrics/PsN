@@ -1,6 +1,6 @@
 sd_unexpl_var <- function(sd_coef_summary,covdata,pardata) {
   # check if there are all 3 input data files
-  files_exist <- (exists("frem_condvar") & exists("covdata") & exists("pardata"))
+  files_exist <- (exists("sd_coef_summary") & exists("covdata") & exists("pardata"))
   if (files_exist) {
     library(grid)
     library(gridExtra)
