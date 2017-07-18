@@ -24,6 +24,7 @@ source(paste0(rscripts.directory, "/cdd/create.data.full.R"))
 source(paste0(rscripts.directory, "/simeval/ofv.i_ofv_res.R"))
 source(paste0(rscripts.directory,"/frem/ID_ratio_function.R"))
 source(paste0(rscripts.directory,"/frem/parameter_ratio_function.R"))
+source(paste0(rscripts.directory,"/frem/sd_of_unexpl_var_function.R"))
 source(paste0(rscripts.directory,"/simeval/ofv.i_ofv_res.R"))
 source(paste0(rscripts.directory,"/simeval/boxplot_i_ofv_res.R"))
 #source qa functions
@@ -45,9 +46,9 @@ for (i in 1:length(rscript)) {
 }
 
 # get a ofv value from the ext file
-.get_ext_ofv <- function(ext_file){
+.get_ext_ofv <- function(ext_file,iteration=-1000000000){
   read.table(ext_file,header=TRUE,skip=1,stringsAsFactors = F) %>%
-    filter(ITERATION==-1000000000) %>%
+    filter(ITERATION==iteration) %>%
     select(OBJ) %>% 
     as.numeric()
 }
@@ -55,6 +56,10 @@ for (i in 1:length(rscript)) {
 #which resmod_ folders are in the working directory
 resmod_list <- which_resmod_folders(directory=working.directory,idv_name)
 idv_all <- resmod_list$all_idvs
+```
+
+```{r summary_about_ofv_values,results='asis',echo=FALSE,message=FALSE,warning=FALSE}
+ofv_table <- ofv_summary_table(working.directory,model.filename)
 ```
 
 ```{r structural_model_calculations,results='hide',echo=FALSE,message=FALSE,warning=FALSE}
@@ -136,15 +141,20 @@ n.rgroup <- overview_table_list$n.rgroup
 overview_table <- overview_table_list$overview_table
 ```
 
+<!-- ###############################   Write Rmarkdown document here   ##################################### -->
 
 ```{r command_text_from_command_line,echo=F,results='asis',warning=FALSE,message=F}
 command_runtime <- command_text(directory=working.directory)
+
+cat(command_runtime$command,"\n\n")
+cat(command_runtime$run_start,"\n\n")
+cat(command_runtime$run_finish,"\n\n")
 ```
-Command: `r I(command_runtime$command)`
 
-`r I(command_runtime$run_start)`
-
-`r I(command_runtime$run_finish)`
+```{r draw_ofv_table,echo=F,results='asis',warning=FALSE}
+ofv_table <- ztable_sub(ofv_table,type=type,include.rownames = F,colnames.bold = T,align="ll",position = "l")
+print(ofv_table)
+```
 
 #Overview
 ```{r draw_overview_table,echo=F,results='asis',warning=FALSE}
@@ -227,7 +237,7 @@ if(length(idv_all)!=0) {
 ```{r draw_full_omega_block_table,echo=F,results='asis'}
 if(fullblock_mod) {
   full_omega_block_table <- keep_symbols(full_omega_block_table,type)
-  full_omega_block_table <- ztable_sub(full_omega_block_table,type=type,colnames.bold=T,include.rownames=F,longtable=T,align="lr")
+  full_omega_block_table <- ztable_sub(full_omega_block_table,type=type,colnames.bold=T,include.rownames=F,longtable=T,align="lrr")
   print(full_omega_block_table)
   cat("Estimated standard deviation (sd) and correlation (corr) as well as expected improvement in OFV when allowing for a full block correlation structure between subject-level random effects.")
 }
@@ -257,18 +267,6 @@ print(covariates_extra_table)
 cat("Model parameter covariate relationship, resulting improvement in OFV and estimated covariate coefficient. Furthermore, the sum of all univariate improvements in OFV ignoring between covariate correlations (sum(SCMu)), as well as joint improvement in OFV when taking correlations into account (FREM).")
 ```
 
-```{r draw_sd_par_cov_table,echo=F,results='asis'}
-list_sd_par_cov <- sd_par_cov(paste0(working.directory,"/postfrem_run/sd_coefficients_summary.csv"))
-sd_parcov_file_exists <- list_sd_par_cov$sd_parcov_file_exists
-if(sd_parcov_file_exists) {
-  sd_parcov_tab <- list_sd_par_cov$sd_parcov_tab
-  sd_parcov_tab <- keep_symbols(sd_parcov_tab,type)
-  sd_parcov_tab <- ztable_sub(sd_parcov_tab,type=type,colnames.bold = T,include.rownames = F,longtable = T,align="lll")
-  print(sd_parcov_tab)
-  cat("Unexplained variability in eta of parameters conditional on none, one or all covariates. That is the expected variability with a structural covariate-parameter relationship.")
-}
-```
-
 ```{r draw_frem_plots,echo=F,message=F,warning=F,results='asis',fig.width=11,fig.height=15,fig.keep="high",fig.align="center"}
 if((file.exists(paste0(working.directory,"/postfrem_run/frem_ratio.csv")) || 
    file.exists(paste0(working.directory,"/postfrem_run/frem_id_ratios.csv"))) && 
@@ -290,6 +288,14 @@ if((file.exists(paste0(working.directory,"/postfrem_run/frem_ratio.csv")) ||
 	  cat("Most extreme individuals (in both directions) in terms of expected effect size of their covariate sets, on parameter (assuming log-normal). The bands show 90% confidence interval around the point estimate.")
 	  grid.newpage()
   }
+  if(file.exists(paste0(working.directory,"/postfrem_run/sd_coefficients_summary.csv"))) {
+    sd_coef_summary <- read.csv(file.path(working.directory,"postfrem_run","sd_coefficients_summary.csv"), header = T, as.is = T)
+	  sd_unexpl_var_plots <- sd_unexpl_var(sd_coef_summary,covdata,pardata)$plots
+	  grid.draw(marrangeGrob(sd_unexpl_var_plots,nrow=2,ncol=1,top=''))
+	 # cat("")
+	  grid.newpage()
+  }
+  
 }
 ```
 
@@ -300,11 +306,11 @@ if((file.exists(paste0(working.directory,"/postfrem_run/frem_ratio.csv")) ||
 for (i in 1:length(resmod_ruv_models_table_list)) {
   if(length(dvid_nr) ==1 && dvid_nr == 'NA') {
     resmod_ruv_models_table <- keep_symbols(resmod_ruv_models_table_list[[i]],type)
-    resmod_ruv_models_table <- ztable_sub(resmod_ruv_models_table,type=type,colnames.bold = T,include.rownames = F,longtable = T,align="lrc")
+    resmod_ruv_models_table <- ztable_sub(resmod_ruv_models_table,type=type,colnames.bold = T,include.rownames = F,longtable = T,align="lrcl")
     print(resmod_ruv_models_table)
   } else {
     resmod_ruv_models_table <- keep_symbols(resmod_ruv_models_table_list[[i]],type)
-    resmod_ruv_models_table <- ztable_sub(resmod_ruv_models_table,type=type,colnames.bold = T,include.rownames = F,longtable = T,align="lrc",caption = paste0(dvid_name,"=",dvid_nr[i]))
+    resmod_ruv_models_table <- ztable_sub(resmod_ruv_models_table,type=type,colnames.bold = T,include.rownames = F,longtable = T,align="lrcl",caption = paste0(dvid_name,"=",dvid_nr[i]))
     # cgroup <- c(paste0(dvid_name,"=",dvid_nr[i]))
     # n.cgroup <- c(3)
     # resmod_ruv_models_table <- addcgroup(resmod_ruv_models_table,cgroup=cgroup,n.cgroup=n.cgroup)

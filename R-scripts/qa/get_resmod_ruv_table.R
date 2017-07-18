@@ -36,10 +36,10 @@ get_resmod_ruv_table <- function(directory, idv_name, dvid_name){
       colnames(resmod_ruv_table)[which(colnames(resmod_ruv_table)=="model")] <- "Model"
       
       #choose only 3 columns
-      resmod_ruv_table <- resmod_ruv_table[,c("Model","dOFV","df")]
+      resmod_ruv_table <- resmod_ruv_table[,c("Model","dOFV","df","parameters")]
       resmod_ruv_table[,2] <- as.character(round(resmod_ruv_table[,2],1))
       resmod_ruv_table[,3] <- as.character(resmod_ruv_table[,3])
-      colnames(resmod_ruv_table) <- c("Model","dOFV","Additional parameters")
+      colnames(resmod_ruv_table) <- c("Model","dOFV","Additional parameters","Parameter values")
       
       #replace symbol "_" with the space
       nr_rows <- grep("_",resmod_ruv_table[,1])
