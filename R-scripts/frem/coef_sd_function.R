@@ -1,4 +1,4 @@
-coef_sd <- function(sd_coef_summary,covdata,pardata) {
+sd_unexpl_var <- function(sd_coef_summary,covdata,pardata) {
   # check if there are all 3 input data files
   files_exist <- (exists("frem_condvar") & exists("covdata") & exists("pardata"))
   if (files_exist) {
@@ -31,7 +31,7 @@ coef_sd <- function(sd_coef_summary,covdata,pardata) {
     }
     
     # SORT NEEDED DATA FOR EACH PARAMETER -------------------------------------
-    coef_sd_plots <- list()
+    sd_unexpl_var_plots <- list()
     param <- list()
     for (j in 1:length(parameter_names)) {
       DF <- subset(sd_coef_summary,select = 1:4, subset = grepl(parameter_names[j], sd_coef_summary$par.conditionedOn))
@@ -52,7 +52,7 @@ coef_sd <- function(sd_coef_summary,covdata,pardata) {
         scale_colour_manual(values = c("all" = "gray30")) +
         geom_errorbarh(aes(xmax = sd.95th, xmin = sd.5th, color = group, height = 0.15)) +
         geom_vline(xintercept = 0, linetype = "longdash", alpha=0.4) +
-        labs(x = "Coefficient standard diviation", y="") +
+        labs(x = "SD of unexplained variability", y="") +
         theme_bw() +
         theme(legend.position = "none",
               panel.border = element_rect(),
@@ -66,7 +66,7 @@ coef_sd <- function(sd_coef_summary,covdata,pardata) {
       # create table with all needed information
       DF <- DF[-1,]
       DF_text <- data.frame()
-      V1 <- c("COVARIATE",DF$par.conditionedOn,"EXPECTED",DF$expected)
+      V1 <- c("COVARIATE",DF$par.conditionedOn,"EXPECTED SD",DF$expected)
       V05 <- rep(c(1:2),each = (nrow(DF) +1) )
       DF_text <- data.frame(V1,V05,V0 = factor(rep(c(1:(nrow(DF) +1)),2),levels = c((nrow(DF) +1):1)))
       DF_text$group <- rep(c("title",rep("all",nrow(DF))),2)
@@ -87,16 +87,16 @@ coef_sd <- function(sd_coef_summary,covdata,pardata) {
         coord_cartesian(xlim = c(1,3))
       
       # Create title in the plot
-      title <- paste0("? ",parameter_names[j])
+      title <- paste0("Unexplained variability on ",parameter_names[j])
       
       # print out forest plot with table text
-      coef_sd_plots[[j]] <- arrangeGrob(p, data_table, ncol=2, top = textGrob(title,gp=gpar(fontsize=20)))
+      sd_unexpl_var_plots[[j]] <- arrangeGrob(p, data_table, ncol=2, top = textGrob(title,gp=gpar(fontsize=20)))
       
       # Save each plot with different names in different pdg files (based on each parameter j)
-      param[[j]] <- paste0("SD.COEF.",parameter_names[j])
+      param[[j]] <- paste0("SD.OF.UNEXPL.VAR.",parameter_names[j])
       
     }
-    return(list(plots=coef_sd_plots,
+    return(list(plots=sd_unexpl_var_plots,
                 param=param))
   } else {
     cat("Input data files are not found! Make sore that input data files are in your working directory!")
