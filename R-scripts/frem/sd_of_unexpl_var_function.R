@@ -35,6 +35,8 @@ sd_unexpl_var <- function(sd_coef_summary,covdata,pardata) {
     param <- list()
     for (j in 1:length(parameter_names)) {
       DF <- subset(sd_coef_summary,select = 1:4, subset = grepl(parameter_names[j], sd_coef_summary$par.conditionedOn))
+      DF[,3] <- as.numeric(DF[,3])
+      DF[,4] <- as.numeric(DF[,4])
       DF[,1] <- gsub(paste0(parameter_names[j],"."),'',DF[,1])
       
       DF$expected <- sprintf("%.3G [%.3G, %.3G]",DF$observed.sd,DF$sd.5th,DF$sd.95th)

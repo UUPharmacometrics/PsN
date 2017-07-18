@@ -361,7 +361,7 @@ if(file.exists(file.path(working.directory,"simeval_run/raw_all_iofv.csv"))) {
 
 ```{r plot_iofv_vs_iofv,echo=F,results='asis',warning=F,fig.width=9,fig.height=6.5,fig.keep="high",fig.align="center"}
  if(rplots.level > 1) {
-   phi1 <- file.path(working.directory,"linearize_run",paste0(sub('.([^.]*)$','',model.filename),"_linbase.phi"))
+   phi1 <- file.path(working.directory,"linearize_run/scm_dir1/",paste0(sub('.([^.]*)$','',model.filename),"_linbase.phi"))
    phi2 <- file.path(working.directory,"linearize_run/scm_dir1/derivatives.phi")
    if(file.exists(phi1) && file.exists(phi2)) {
      plot_iofv_vs_iofv <- iofv_vs_iofv(phi1,phi2)
