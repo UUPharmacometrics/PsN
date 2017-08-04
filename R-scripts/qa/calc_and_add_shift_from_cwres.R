@@ -65,7 +65,7 @@
       ICOV <- diag(diag(H %*% sigma_matrix %*% t(H)), nrow = nrow(.)) + G %*% omega_matrix %*% t(G)
       sqrtm <- expm::sqrtm
       if(nrow(.)==1) sqrtm <- sqrt
-      data.frame(shift = sqrtm(ICOV) %*% as.matrix(.$bin_value),
+      data.frame(shift = -sqrtm(ICOV) %*% as.matrix(.$bin_value),
                  bin_index = .$bin_index,
                  ipred = .$OPRED)
     }) %>%
