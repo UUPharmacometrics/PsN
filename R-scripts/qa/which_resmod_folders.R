@@ -15,7 +15,6 @@ which_resmod_folders <- function(directory,idv_name) {
       j <- j + 1
     }
   }
-  out <- list(all_idvs=all_idvs)
 
-  return(out)
+  return(all_idvs)
 }

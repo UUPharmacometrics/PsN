@@ -1,19 +1,13 @@
-get_full_omega_block <- function(directory,param_var_file_exists,dofv_block) {
+get_full_omega_block <- function(directory,dofv_block) {
   #get full omega block extra table
-  if(file.exists(paste0(directory,"/fullblock.ext")) && file.exists(paste0(directory,"/linearize_run/scm_dir1/derivatives.ext"))) {
-    full_block_table <-read.table((paste0(directory,"/fullblock.ext")),header=TRUE,skip=1,stringsAsFactors = F) %>%
-      filter(ITERATION==-1000000000)
-    omega_values <- full_block_table[,grep("^OMEGA",colnames(full_block_table))]
-    omega_values <- omega_values[,which(omega_values!=0)]
-    
+  if(file.exists(file.path(directory,"fullblock.ext")) && file.exists(file.path(directory,"linearize_run/scm_dir1/derivatives.ext"))) {
+    # omega values from fullblock model
+    omega_values <- get_omega_values(ext_file=file.path(directory,"fullblock.ext"),omegas="all")
     # omega values from original model
-    derivatives_table <-read.table((paste0(directory,"/linearize_run/scm_dir1/derivatives.ext")),header=TRUE,skip=1,stringsAsFactors = F) %>%
-      filter(ITERATION==-1000000000)
-    deriv_omega_values <- derivatives_table[,grep("^OMEGA",colnames(derivatives_table))]
-    deriv_omega_values <- deriv_omega_values[,which(deriv_omega_values!=0)]
+    deriv_omega_values <- get_omega_values(ext_file=file.path(directory,"/linearize_run/scm_dir1/derivatives.ext"),omegas="all")
     
     # create a table
-    full_omega_block_table <- as.data.frame(array(NA,c(length(omega_values),3)))
+    full_omega_block_table <- as.data.frame(array(0,c(length(omega_values),3)))
     colnames(full_omega_block_table) <- c("","New","Old")
     for(i in 1:length(omega_values)) {
       numeration <- sub('.*OMEGA.','',colnames(omega_values[i]))
@@ -29,11 +23,11 @@ get_full_omega_block <- function(directory,param_var_file_exists,dofv_block) {
           col_nr <- which(colnames(deriv_omega_values)==colnames(omega_values)[i])
           full_omega_block_table[i,3] <- sqrt(as.numeric(deriv_omega_values[col_nr]))
         } else {
-          full_omega_block_table[i,3] <- NA
+          full_omega_block_table[i,3] <- as.numeric(NA)
         }
       
       } else {
-        full_omega_block_table[i,1] <- paste0("corr(",min(first,second),",",max(first,second),")")
+        full_omega_block_table[i,1] <- paste0("corr(",max(first,second),",",min(first,second),")")
         if(any(colnames(omega_values)==paste0("OMEGA.",max(first,second),".",min(first,second),"."))) {
           cov_xy <- as.numeric(omega_values[,grep(paste0("OMEGA.",max(first,second),".",min(first,second),"."),colnames(omega_values))])
         } else {
@@ -55,23 +49,21 @@ get_full_omega_block <- function(directory,param_var_file_exists,dofv_block) {
           var_y <- as.numeric(deriv_omega_values[,grep(paste0("OMEGA.",max(first,second),".",max(first,second),"."),colnames(deriv_omega_values))])
           full_omega_block_table[i,3] <- cov_xy/(sqrt(var_x)*sqrt(var_y))
         } else {
-          full_omega_block_table[i,3] <- NA
+          full_omega_block_table[i,3] <- as.numeric(NA)
         }
       }
       
     }
-    full_omega_block_table[,2] <- round(as.numeric(full_omega_block_table[,2]),2)
-    full_omega_block_table[,3] <- round(as.numeric(full_omega_block_table[,3]),2)
+    full_omega_block_table[,2] <- format(as.numeric(full_omega_block_table[,2]),digits=1,trim=T,nsmall=1,scientific = F)
+    full_omega_block_table[,3] <- format(as.numeric(full_omega_block_table[,3]),digits=1,trim=T,nsmall=1,scientific = F)
     
-    if(param_var_file_exists) {
-      full_omega_block_table <- rbind(full_omega_block_table,c("dOFV",dofv_block,""))
+    if(class(dofv_block)!="character") {
+      full_omega_block_table <- rbind(full_omega_block_table,c("dOFV",format(dofv_block,digits=1,scientific=F,nsmall=1),""))
     }
     
   } else {
     full_omega_block_table <- error_table(col=1)
   }
-  
+
   return(full_omega_block_table)
 }
-
-

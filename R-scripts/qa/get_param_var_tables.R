@@ -1,42 +1,41 @@
 get_param_var_tables <- function(directory,model.filename) {
   #for overview table
-  param_var_file_exists <- TRUE
   fullblock_mod <- FALSE
   boxcox_mod <- FALSE
   add_etas_mod <- FALSE
-  if(file.exists(paste0(directory,sub('.([^.]*)$','',model.filename),"_linbase.ext"))) {
+  if(file.exists(file.path(directory,paste0(sub('.([^.]*)$','',model.filename),"_linbase.ext")))) {
     
-    linbase_ofv <- .get_ext_ofv(paste0(directory,sub('.([^.]*)$','',model.filename),"_linbase.ext"))
+    linbase_ofv <- .get_ext_ofv(file.path(directory,paste0(sub('.([^.]*)$','',model.filename),"_linbase.ext")))
 
     #full omega block
-    if(file.exists(paste0(directory,"fullblock.mod"))) {
+    if(file.exists(file.path(directory,"fullblock.mod"))) {
       fullblock_mod <- TRUE
-      if(file.exists(paste0(directory,"fullblock.ext"))) {
-        linblock_ofv <- .get_ext_ofv(paste0(directory,"fullblock.ext"))
-        dofv_block <- round(as.numeric(linbase_ofv-linblock_ofv),1)
+      if(file.exists(file.path(directory,"fullblock.ext"))) {
+        linblock_ofv <- .get_ext_ofv(file.path(directory,"fullblock.ext"))
+        dofv_block <- as.numeric(linbase_ofv-linblock_ofv)
         # how many omega cov omegas were added
-        boxcox_omegas <- get_omega_values(paste0(directory,"fullblock.ext"))$omegas_cov
-        linbase_omegas <- get_omega_values(paste0(directory,sub('.([^.]*)$','',model.filename),"_linbase.ext"))$omegas_cov
+        boxcox_omegas <- get_omega_values(file.path(directory,"fullblock.ext"),"cov")
+        linbase_omegas <- get_omega_values(file.path(directory,paste0(sub('.([^.]*)$','',model.filename),"_linbase.ext")),"cov")
         add.par_block <- length(setdiff(colnames(boxcox_omegas),colnames(linbase_omegas)))
       } else {
         dofv_block <- "ERROR"
         add.par_block <- ''
       }
     } else {
-      dofv_block <- NA
+      dofv_block <- "NA"
       add.par_block <- ''
     }
 
 
     
     #boxcox transformation
-    if(file.exists(paste0(directory,"boxcox.mod"))) {
+    if(file.exists(file.path(directory,"boxcox.mod"))) {
       boxcox_mod <- TRUE
-      if(file.exists(paste0(directory,"boxcox.ext"))) {
-        linbox_ofv <- .get_ext_ofv(paste0(directory,"boxcox.ext"))
-        dofv_box <- round(as.numeric(linbase_ofv - linbox_ofv),1)
+      if(file.exists(file.path(directory,"boxcox.ext"))) {
+        linbox_ofv <- .get_ext_ofv(file.path(directory,"boxcox.ext"))
+        dofv_box <- as.numeric(linbase_ofv - linbox_ofv)
         #get nr TH+d
-        ext_file <- read.table((paste0(directory,"boxcox.ext")),header=TRUE,skip=1,stringsAsFactors = F) %>%
+        ext_file <- read.table(file.path(directory,"boxcox.ext"),header=TRUE,skip=1,stringsAsFactors = F) %>%
           filter(ITERATION==-1000000000)
         TH_values <- ext_file[grep("^THETA+[0-9]$",colnames(ext_file))]
         add.par_box <- length(TH_values[!is.na(TH_values)])
@@ -45,43 +44,41 @@ get_param_var_tables <- function(directory,model.filename) {
         add.par_box <- ''
       }
     } else {
-      dofv_box <- NA
+      dofv_box <- "NA"
       add.par_box <- ''
     }
         
     # additional etas
-    if(file.exists(paste0(directory,"add_etas.mod"))) {
+    if(file.exists(file.path(directory,"add_etas.mod"))) {
       add_etas_mod <- TRUE
-      if(file.exists(paste0(directory,"add_etas.ext"))) {
-        linaddeta_ofv <- .get_ext_ofv(paste0(directory,"add_etas.ext"))
-        dofv_additional_eta <- round(as.numeric(linbase_ofv - linaddeta_ofv),1)
-        addetas_omegas <- get_omega_values(paste0(directory,"add_etas.ext"))$omegas_var
-        linbase_omegas <- get_omega_values(paste0(directory,sub('.([^.]*)$','',model.filename),"_linbase.ext"))$omegas_var
+      if(file.exists(file.path(directory,"add_etas.ext"))) {
+        linaddeta_ofv <- .get_ext_ofv(file.path(directory,"add_etas.ext"))
+        dofv_additional_eta <- as.numeric(linbase_ofv - linaddeta_ofv)
+        addetas_omegas <- get_omega_values(file.path(directory,"add_etas.ext"),"var")
+        linbase_omegas <- get_omega_values(file.path(directory,paste0(sub('.([^.]*)$','',model.filename),"_linbase.ext")),"var")
         add.par_additional_eta <- length(setdiff(colnames(addetas_omegas),colnames(linbase_omegas)))
       } else {
         dofv_additional_eta <- "ERROR"
         add.par_additional_eta <- ''
       }
     } else {
-      dofv_additional_eta <- NA
+      dofv_additional_eta <- "NA"
       add.par_additional_eta <- ''
     }
 
     
     par_var_models <- data.frame(c("Full OMEGA Block", "Box-Cox Transformation","Additional ETA"), 
-                                 c(dofv_block, dofv_box, dofv_additional_eta),
+                                 c(dofv_block,dofv_box,dofv_additional_eta),
                                  c(add.par_block, add.par_box, add.par_additional_eta),stringsAsFactors = F)
     colnames(par_var_models) <- c("","dOFV","Add.params")
   } else {
-    param_var_file_exists <- FALSE
-    par_var_models <- error_table(c("Full OMEGA Block","Box-cox Transformation","Additional ETA"))
-    dofv_block <- NA
-    dofv_box <- NA
+    par_var_models <- error_table(c("Full OMEGA Block","Box-Cox Transformation","Additional ETA"))
+    dofv_block <- "NA"
+    dofv_box <- "NA"
     
   }
   
-  return(list(param_var_file_exists=param_var_file_exists,
-              par_var_models=par_var_models,
+  return(list(par_var_models=par_var_models,
               dofv_block=dofv_block,
               dofv_box=dofv_box,
               fullblock_mod=fullblock_mod,

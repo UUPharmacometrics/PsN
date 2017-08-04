@@ -1,24 +1,31 @@
-get_ii_table <- function(raw.results.file,skipped.id.file,cutoff){
+get_ii_table <- function(raw.results.file,skipped.id.file,cutoff,max_rows){
   cdd_files_exist <- TRUE
+  infl_id <- c()
+  all_dofv <- c()
   if(file.exists(raw.results.file) && file.exists(skipped.id.file)) {
     data_full <- create.data.full(raw.results.file,skipped.id.file)
-    cdd.data <- data_full$cdd.data.all
-    if(any(colnames(cdd.data)=="cdd.delta.ofv")) {
-      cdd.data <- cdd.data %>% select(c(ID,cdd.delta.ofv)) %>% slice(-1)
-      colnames(cdd.data) <- c("id", "dOFV")
+    cdd.data.all <- data_full$cdd.data.all
+    if(any(colnames(cdd.data.all)=="cdd.delta.ofv")) {
+      all_dofv <- cdd.data.all$cdd.delta.ofv[-1]
+      cdd.data.all <- cdd.data.all %>% select(c(ID,cdd.delta.ofv)) %>% slice(-1)
+      colnames(cdd.data.all) <- c("id", "dOFV")
       
       #find negative delta ofv values, if exist
       fail_ID <- c()
-      if (any(cdd.data$dOFV < 0)) {
-        negat.delta.row <- which(cdd.data$dOFV < 0)
-        fail_ID <- cdd.data$ID[negat.delta.row]
-        cdd.data <- cdd.data[-negat.delta.row,]
+      if (any(cdd.data.all$dOFV < 0)) {
+        negat.delta.row <- which(cdd.data.all$dOFV < 0)
+        fail_ID <- cdd.data.all$id[negat.delta.row]
+        cdd.data <- as.data.frame(cdd.data.all[-negat.delta.row,])
+        if(nrow(cdd.data)==0) {
+          cdd.data <- data.frame()
+        }
+      } else {
+        cdd.data <- as.data.frame(cdd.data.all)
       }
       
       if(nrow(cdd.data)!=0) {
         #get individual with the highest dofv
         cdd_highest_dofv <- cdd.data[which.max(cdd.data$dOFV),]
-        cdd_highest_dofv[,2] <- round(as.numeric(cdd_highest_dofv[,2]), 1)
         cdd_highest_dofv <- cdd_highest_dofv %>%
           mutate(id=paste("Subject",id))
         colnames(cdd_highest_dofv) <- c("","dOFV")
@@ -28,10 +35,16 @@ get_ii_table <- function(raw.results.file,skipped.id.file,cutoff){
         if(any(cdd.data$dOFV > cutoff)) {
           ii_table <- as.data.frame(subset(cdd.data,dOFV > cutoff))
           ii_table <- ii_table[order(ii_table$dOFV,decreasing = T),]
-          ii_table[,2] <- round(as.numeric(ii_table[,2]), 1)
+          ii_table[,2] <- format(round(as.numeric(ii_table[,2]),1),trim=T,digits=1,nsmall=1)
+          infl_id <- as.numeric(ii_table$id)
           ii_table <- ii_table %>%
             mutate(id=paste("Subject",id))
           colnames(ii_table)[which(colnames(ii_table)=="id")] <- "Subjects"
+          
+          # only cdd max rows
+          if(nrow(ii_table) > max_rows) {
+            ii_table <- ii_table[1:max_rows,]
+          }
         } else {
           ii_table <- data.frame(c("No influential individuals detected"),stringsAsFactors = F)
           colnames(ii_table) <- ""
@@ -45,7 +58,6 @@ get_ii_table <- function(raw.results.file,skipped.id.file,cutoff){
         colnames(ii_table) <- ""
       }
     } else {
-      cdd_files_exist <- FALSE
       ii_table <- error_table(col=1)
       cdd_highest_dofv <- error_table("CDD")
       cdd.data <- error_table(col=1)
@@ -56,8 +68,20 @@ get_ii_table <- function(raw.results.file,skipped.id.file,cutoff){
     cdd_highest_dofv <- error_table("CDD")
     cdd.data <- error_table(col=1)
   }
+  
+  if(length(infl_id)<=3) {
+    fig_height_infl <- 5
+  } else if(length(infl_id)<=6) {
+    fig_height_infl <- 7
+  } else {
+    fig_height_infl <- 15
+  }
+  
   return(list(cdd_files_exist=cdd_files_exist,
+              all_dofv=all_dofv,
               cdd.data=cdd.data,
               cdd_highest_dofv=cdd_highest_dofv,
-              ii_table=ii_table))
+              ii_table=ii_table,
+              infl_id=infl_id,
+              fig_height_infl=fig_height_infl))
 }

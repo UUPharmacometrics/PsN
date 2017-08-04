@@ -9,13 +9,16 @@ classoption: a4paper
 ---
 
 
-```{r loading_libraries_and_sourcing_functions,include = FALSE,warning=F,message=F}
+```{r loading_libraries_and_sourcing_functions,include=F,warning=F,message=F}
 library(dplyr)
+library(tidyr)
 library(knitr)
 library(methods)
 library(ztable)
 library(expm)
 library(vpc)
+library(ggplot2)
+#library(xpose)
 source(paste0(rscripts.directory, "/common/find_r_files_in_subdir.R"))
 source(paste0(rscripts.directory, "/common/iofv.R"))
 source(paste0(rscripts.directory, "/common/keep_symbols.R"))
@@ -35,7 +38,7 @@ for (i in 1:length(rscript)) {
 ```
 
 
-```{r helping_functions,results='hide',echo=FALSE,message=FALSE,warning=FALSE}
+```{r helping_functions,results='hide',echo=F,warning=F,message=F}
 # Helping functions
 # get a ofv value from the raw_results.csv
 .get_rawres_ofv <- function(rawres_file, row = 1){
@@ -54,33 +57,35 @@ for (i in 1:length(rscript)) {
 }
 
 #which resmod_ folders are in the working directory
-resmod_list <- which_resmod_folders(directory=working.directory,idv_name)
-idv_all <- resmod_list$all_idvs
+idv_all <- which_resmod_folders(directory=working.directory,idv_name)
 ```
 
-```{r summary_about_ofv_values,results='asis',echo=FALSE,message=FALSE,warning=FALSE}
+<!-- ##############################   Calculations  #################################### -->
+
+```{r summary_about_ofv_values,results='asis',echo=F,warning=F,message=F}
 ofv_table <- ofv_summary_table(working.directory,model.filename)
 ```
 
-```{r structural_model_calculations,results='hide',echo=FALSE,message=FALSE,warning=FALSE}
+```{r structural_model_calculations,results='hide',echo=F,warning=F,message=F}
 # 1.Structural models
 structural_overview <- get_structural_overview_table(directory=working.directory,idv=idv_all,dvid_name,groups)
 # get resmod structural details tables
 resmod_structural_details <- resmod_structural_details_tables(working.directory,model.filename,CWRES_table,idv_all,idv_name,dvid_name)
 ```
 
-```{r parameter_model_calculations,results='hide',echo=FALSE,message=FALSE,warning=F}
+```{r parameter_model_calculations,results='hide',echo=F,warning=F,message=F}
 # 2.Parameter Variability Models
 list_par_var_models <- get_param_var_tables(directory=working.directory,model.filename)
-param_var_file_exists <- list_par_var_models$param_var_file_exists
 par_var_models <- list_par_var_models$par_var_models
 fullblock_mod <- list_par_var_models$fullblock_mod
 boxcox_mod <- list_par_var_models$boxcox_mod
 if(fullblock_mod) {
-  full_omega_block_table <- get_full_omega_block(working.directory,param_var_file_exists,list_par_var_models$dofv_block)
+  full_omega_block_table <- get_full_omega_block(working.directory,list_par_var_models$dofv_block)
 }
 if(boxcox_mod) {
-  boxcox_lambdas_table <- get_boxcox_lambda_table(working.directory,param_var_file_exists,list_par_var_models$dofv_box)
+  boxcox_lambdas_list <- get_boxcox_lambda_table(working.directory,list_par_var_models$dofv_box)
+  boxcox_lambdas_orig <- boxcox_lambdas_list$boxcox_lambdas_orig
+  boxcox_lambdas_table <- boxcox_lambdas_list$boxcox_lambdas_table
 }
 if(fullblock_mod || boxcox_mod) {
   param_sector <- TRUE
@@ -89,7 +94,20 @@ if(fullblock_mod || boxcox_mod) {
 }
 ```
 
-```{r covariate_model_calculations,results='hide',echo=FALSE,message=FALSE,warning=FALSE}
+```{r boxcox_shape_table_for_plot,results='hide',echo=F,warning=F,message=F}
+eta_table <- get_boxcox_eta_values(working.directory)
+if(exists("boxcox_lambdas_orig")) {
+  list_boxcox_shape <- tables_for_boxcox_shape(boxcox_lambdas_orig)
+  make_boxcox_shape_plot <- list_boxcox_shape$make_boxcox_shape_plot
+  if(make_boxcox_shape_plot) {
+    boxcox_shape_table <- list_boxcox_shape$boxcox_shape_table
+    fig_height_boxcox <- list_boxcox_shape$fig_height_boxcox
+  }
+}
+```
+
+
+```{r covariate_model_calculations,results='hide',echo=F,warning=F,message=F}
 # 3.Covariate Models
   # 3.1.All (FREM)
 frem_table_list <- get_all_covariates(frem_directory=file.path(working.directory,"frem_run"),covariates,categorical,parameters,list_par_var_models$dofv_block)
@@ -105,7 +123,7 @@ covariates_extra_table <- covariates_table_list$covariates_extra_table
 covariates_table <- covariates_table_list$covariates_table
 ```
 
-```{r residual_error_model_calculations,results='hide',echo=FALSE,message=FALSE,warning=FALSE}
+```{r residual_error_model_calculations,results='hide',echo=F,warning=F,message=F}
 #4.create residual error model table (extra table)
 resmod_table_list <- get_resmod_ruv_table(directory=working.directory,idv_name,dvid_name)
 resmod_ruv_models_table_list <- resmod_table_list$resmod_ruv_table_list
@@ -113,37 +131,40 @@ resmod_ruv_overview <- resmod_table_list$resmod_ruv_overview
 dvid_nr <- resmod_table_list$dvid_nr
 ```
 
-```{r influential_individuals_calculations,results='hide',echo=FALSE,message=FALSE,warning=FALSE}
+```{r influential_individuals_calculations,results='hide',echo=F,warning=F,message=F}
 # 5.Influential individuals (CDD)
 ii_list <- get_ii_table(raw.results.file=file.path(working.directory,"cdd_run",paste0("raw_results_",sub('.([^.]*)$','',model.filename),"_linbase.csv")),
                         skipped.id.file=file.path(working.directory,"cdd_run/skipped_individuals1.csv"),
-                        cutoff=cdd_dofv_cutoff)
-cdd_files_exist <- ii_list$cdd_files_exist
+                        cutoff=cdd_dofv_cutoff,
+                        max_rows=cdd_max_rows)
+all_dofv <- ii_list$all_dofv
 cdd.data <- ii_list$cdd.data
 cdd_highest_dofv <- ii_list$cdd_highest_dofv
 ii_table <- ii_list$ii_table
+infl_id <- ii_list$infl_id
+fig_height_infl <- ii_list$fig_height_infl
 ```
 
-```{r outliers_calculations,results='hide',echo=FALSE,message=FALSE,warning=FALSE}
+```{r outliers_calculations,results='hide',echo=F,warning=F,message=F}
 # 6.Outliers (Simeval)
 outlier_table_list <- get_outliers_table(simeval_directory=file.path(working.directory, "simeval_run"),cdd.data)
-simeval_files_exist <- outlier_table_list$simeval_files_exist
 outliers_table <- outlier_table_list$outliers_table
 max_outlier_table <- outlier_table_list$max_outlier_table
+outlier_ids <- outlier_table_list$outlier_ids
+fig_height_outl <- outlier_table_list$fig_height_outl
 ```
 
-```{r make_overview_table,results='hide',echo=FALSE,message=FALSE,warning=FALSE}
+```{r make_overview_table,results='hide',echo=F,warning=F,message=F}
 # get overview table
-rgroup <- c("Structural Model","Parameter Variability Model","Covariates","Residual Error Model","Influential Individuals","Outliers")
-overview_list <- list(structural_overview,par_var_models,covariates_table,resmod_ruv_overview,cdd_highest_dofv,max_outlier_table)
-overview_table_list <- get_overview_table(overview_list,rgroup)
+overview_table_list <- get_overview_table(structural_overview=structural_overview,param_var_overview=par_var_models,covariates_overview=covariates_table,resmod_ruv_overview=resmod_ruv_overview,infl_indiv_overview=cdd_highest_dofv,outliers_overview=max_outlier_table)
+rgroup_names <- overview_table_list$rgroup_names
 n.rgroup <- overview_table_list$n.rgroup
 overview_table <- overview_table_list$overview_table
 ```
 
-<!-- ###############################   Write Rmarkdown document here   ##################################### -->
+<!-- #######################   Write Rmarkdown document here   ################################ -->
 
-```{r command_text_from_command_line,echo=F,results='asis',warning=FALSE,message=F}
+```{r command_text_from_command_line,results='asis',echo=F,warning=F,message=F}
 command_runtime <- command_text(directory=working.directory)
 
 cat(command_runtime$command,"\n\n")
@@ -151,16 +172,16 @@ cat(command_runtime$run_start,"\n\n")
 cat(command_runtime$run_finish,"\n\n")
 ```
 
-```{r draw_ofv_table,echo=F,results='asis',warning=FALSE}
+```{r draw_ofv_table,results='asis',echo=F,warning=F,message=F}
 ofv_table <- ztable_sub(ofv_table,type=type,include.rownames = F,colnames.bold = T,align="ll",position = "l")
 print(ofv_table)
 ```
 
 #Overview
-```{r draw_overview_table,echo=F,results='asis',warning=FALSE}
+```{r draw_overview_table,results='asis',echo=F,warning=F,message=F}
 overview_table <- keep_symbols(overview_table,type)
 overview_table <- ztable_sub(overview_table,type=type,include.rownames = F,colnames.bold = T,align="lrc")
-overview_table <- addrgroup(overview_table,rgroup=rgroup,n.rgroup=n.rgroup,cspan.rgroup=1)
+overview_table <- addrgroup(overview_table,rgroup=rgroup_names,n.rgroup=n.rgroup,cspan.rgroup=1)
 print(overview_table)
 cat("Overview of possible modifications to different model aspects, expected improvement in OFV as well as number of additional parameters used.")
 ```
@@ -169,9 +190,8 @@ cat("Overview of possible modifications to different model aspects, expected imp
 
 #Structural
 
-```{r draw_structural_details_tables,warning=F,message=F,echo=F,results='asis'}
+```{r draw_structural_details_tables,results='asis',echo=F,warning=F,message=F}
 if(length(idv_all)!=0) {
-
   for(i in 1:length(resmod_structural_details)) {
     #tables for vpc plots
     vpc_tables_list <- get_tables_for_vpc(obs_table=CWRES_table,obs_extra_table=paste0(working.directory,"/",sub('.([^.]*)$','',model.filename),"_linbase.dta"),sim_table=paste0(working.directory,"/simeval_run/m1/sim_res_table-1.dta"),sim_extra_table=paste0(working.directory,"/simeval_run/m1/orig_pred.dta"),idv_all,resmod_structural_details[[i]]$dvid,dvid_name)
@@ -234,7 +254,7 @@ if(length(idv_all)!=0) {
 ###Full OMEGA Block
 ```
 
-```{r draw_full_omega_block_table,echo=F,results='asis'}
+```{r draw_full_omega_block_table,results='asis',echo=F,warning=F,message=F}
 if(fullblock_mod) {
   full_omega_block_table <- keep_symbols(full_omega_block_table,type)
   full_omega_block_table <- ztable_sub(full_omega_block_table,type=type,colnames.bold=T,include.rownames=F,longtable=T,align="lrr")
@@ -247,19 +267,28 @@ if(fullblock_mod) {
 ###Box-Cox Transformation
 ```
 
-```{r draw_boxcox_tranformation_table,echo=F,results='asis'}
+```{r draw_boxcox_tranformation_table,results='asis',echo=F,warning=F,message=F}
 if(boxcox_mod) {
   boxcox_lambdas_table <- keep_symbols(boxcox_lambdas_table,type)
-  boxcox_lambdas_table <- ztable_sub(boxcox_lambdas_table,type=type,colnames.bold=T,include.rownames=F,longtable=T,align="lr")
+  boxcox_lambdas_table <- ztable_sub(boxcox_lambdas_table,type=type,colnames.bold=T,include.rownames=F,longtable=T,align="lrrr")
   print(boxcox_lambdas_table)
   cat("Estimated shape parameters (Lambda) as well as expected improvement in OFV when estimating a Box-Cox transformation for each subject-level random effect.")
 }
 ```
 
+<!-- # ```{r plot_boxcox_shape,results='asis',echo=F,warning=F,message=F,fig.width=11,fig.height=fig_height_boxcox,fig.keep="high",fig.align="center"} -->
+<!-- # if(make_boxcox_shape_plot) { -->
+<!-- #    boxcox_shape_plot <- plot_boxcox_shape(data_table=boxcox_shape_table,eta_table) -->
+<!-- #   for(i in 1:length(boxcox_shape_plot)) { -->
+<!-- #     print(boxcox_shape_plot[[i]]) -->
+<!-- #   } -->
+<!-- # } -->
+<!-- # ``` -->
+
 \pagebreak
 
 #Covariates
-```{r draw_covariates_table,echo=F,results='asis'}
+```{r draw_covariates_table,results='asis',echo=F,warning=F,message=F}
 covariates_extra_table <- keep_symbols(covariates_extra_table,type)
 align <- paste(c("l",rep("r",ncol(covariates_extra_table)-1)),collapse = '')
 covariates_extra_table <- ztable_sub(covariates_extra_table,type=type,colnames.bold = T,include.rownames = F,longtable = T,align=align)
@@ -267,7 +296,7 @@ print(covariates_extra_table)
 cat("Model parameter covariate relationship, resulting improvement in OFV and estimated covariate coefficient. Furthermore, the sum of all univariate improvements in OFV ignoring between covariate correlations (sum(SCMu)), as well as joint improvement in OFV when taking correlations into account (FREM).")
 ```
 
-```{r draw_frem_plots,echo=F,message=F,warning=F,results='asis',fig.width=11,fig.height=15,fig.keep="high",fig.align="center"}
+```{r draw_frem_plots,results='asis',echo=F,warning=F,message=F,fig.width=11,fig.height=15,fig.keep="high",fig.align="center"}
 if((file.exists(paste0(working.directory,"/postfrem_run/frem_ratio.csv")) || 
    file.exists(paste0(working.directory,"/postfrem_run/frem_id_ratios.csv"))) && 
    file.exists(paste0(working.directory,"/postfrem_run/covdata.csv")) &&
@@ -302,7 +331,7 @@ if((file.exists(paste0(working.directory,"/postfrem_run/frem_ratio.csv")) ||
 \pagebreak
 
 #Residual Error Model
-```{r draw_resiual_error_model_table,echo=F,results='asis'}
+```{r draw_resiual_error_model_table,results='asis',echo=F,warning=F,message=F}
 for (i in 1:length(resmod_ruv_models_table_list)) {
   if(length(dvid_nr) ==1 && dvid_nr == 'NA') {
     resmod_ruv_models_table <- keep_symbols(resmod_ruv_models_table_list[[i]],type)
@@ -323,12 +352,7 @@ cat("Residual error model, resulting expected improvement in OFV as well as requ
 \pagebreak
 
 #Influential Individuals
-```{r draw_influential_individuals_table,echo=F,results='asis'}
-if(cdd_files_exist) {
-  if(nrow(ii_table) > cdd_max_rows) {
-    ii_table <- ii_table[1:cdd_max_rows,]
-  }
-}
+```{r draw_influential_individuals_table,results='asis',echo=F,warning=F,message=F}
 value <- T
 if(ncol(ii_table)==1 && nrow(ii_table)==1) value <- F
 ii_table <- keep_symbols(ii_table,type)
@@ -337,19 +361,32 @@ print(ii_table)
 cat("Subjects identified as significantly influencing the model fit for all other subjects and their influence in terms of improvement in OFV for other subjects when excluding them during the fit.")
 ```
 
+```{r histogram_of_cdd_dofv,results='asis',echo=F,warning=F,message=F,fig.width=11,fig.height=6}
+hist_of_cdd_dofv(data=all_dofv)
+```
+
+<!-- # ```{r add_infl_indiv_individual_plots,results='asis',echo=F,warning=F,message=F,fig.width=11,fig.height=fig_height_infl} -->
+<!-- # if(length(infl_id)>0) { -->
+<!-- #   infl.ind_individual_plots <- individual_plots(file_name=file.path(working.directory,"linearize_run/scm_dir1/derivatives.mod"), -->
+<!-- #                                               ID_nr=infl_id[1:10]) -->
+<!-- #   print(infl.ind_individual_plots) -->
+<!-- #  -->
+<!-- # } -->
+<!-- # ``` -->
+
 \pagebreak
 
 #Outliers
-```{r draw_outliers_table,echo=F,results='asis'}
+```{r draw_outliers_table,results='asis',echo=F,warning=F,message=F}
 value <- T
 if(ncol(outliers_table)==1 && nrow(outliers_table)==1) value <- F
 outliers_table <- keep_symbols(outliers_table,type)
-outliers_table <- ztable_sub(outliers_table,type=type,colnames.bold = value,include.colnames = value,include.rownames = F,longtable = T,digits = 1,align="lr")
-print(outliers_table)
+outliers_table_z <- ztable_sub(outliers_table,type=type,colnames.bold = value,include.colnames = value,include.rownames = F,longtable = T,digits = 1,align="lr")
+print(outliers_table_z)
 cat("Subjects identified as outliers based on a worse than expected model fit and the corresponding improvement in OFV when excluding them during the fit.")
 ```
 
-```{r plot_outliers,echo=F,results='asis',warning=F,fig.width=11,fig.height=7}
+```{r plot_outliers,results='asis',echo=F,warning=F,message=F,fig.width=11,fig.height=7}
 if(file.exists(file.path(working.directory,"simeval_run/raw_all_iofv.csv"))) {
   list_i_ofv_res <- i_ofv_res(file.path(working.directory,"simeval_run/raw_all_iofv.csv"),show.warning=F)# calculation
   n.subjects <- list_i_ofv_res$n.subjects
@@ -359,14 +396,27 @@ if(file.exists(file.path(working.directory,"simeval_run/raw_all_iofv.csv"))) {
 }
 ```
 
-```{r plot_iofv_vs_iofv,echo=F,results='asis',warning=F,fig.width=9,fig.height=6.5,fig.keep="high",fig.align="center"}
+<!-- # ```{r add_outliers_individual_plots,results='asis',echo=F,warning=F,message=F,fig.width=11,fig.height=fig_height_outl} -->
+<!-- # if(length(outlier_ids)>0) { -->
+<!-- #   outlier_individual_plots <- individual_plots(file_name=file.path(working.directory,"linearize_run/scm_dir1/derivatives.mod"), -->
+<!-- #                                               ID_nr=outlier_ids) -->
+<!-- #   print(outlier_individual_plots) -->
+<!-- #  -->
+<!-- # } -->
+<!-- # ``` -->
+<!-- # \pagebreak -->
+
+```{r plot_iofv_vs_iofv,results='asis',echo=F,warning=F,message=F,fig.width=9,fig.height=6.5,fig.keep="high",fig.align="center"}
  if(rplots.level > 1) {
-   phi1 <- file.path(working.directory,"linearize_run/scm_dir1/",paste0(sub('.([^.]*)$','',model.filename),"_linbase.phi"))
+   phi1 <- file.path(working.directory,"linearize_run/scm_dir1",paste0(sub('.([^.]*)$','',model.filename),"_linbase.phi"))
    phi2 <- file.path(working.directory,"linearize_run/scm_dir1/derivatives.phi")
    if(file.exists(phi1) && file.exists(phi2)) {
-     plot_iofv_vs_iofv <- iofv_vs_iofv(phi1,phi2)
-     print(plot_iofv_vs_iofv)
-     cat("Agreement in individual OFV contribution (iOFV) between non-linear and linearized model.")
+     make_iofv_plot <- iofv_vs_iofv(phi1,phi2)$make_plot
+     if(make_iofv_plot) {
+       plot_iofv_vs_iofv <- iofv_vs_iofv(phi1,phi2)$plot
+       print(plot_iofv_vs_iofv)
+       cat("Agreement in individual OFV contribution (iOFV) between non-linear and linearized model.")
+     }
    }
  }
 ```

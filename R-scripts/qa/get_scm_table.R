@@ -8,9 +8,7 @@ get_scm_table <- function(rawres_file,parameters,covariates,categorical){
         select(relation, dOFV)
         colnames(scm_table) <- c("","dOFV")
       #max_table
-      scm_table$dOFV <- round(scm_table$dOFV, 1)
       max_scm_table <- cbind(scm_table[which.max(scm_table$dOFV),],1)
-      max_scm_table$dOFV <- round(max_scm_table$dOFV,1)
       
       # add coefficient
       scm_table_coef <- read.csv(rawres_file,stringsAsFactors = F) %>%
@@ -22,21 +20,20 @@ get_scm_table <- function(rawres_file,parameters,covariates,categorical){
       for(i in 1:length(coef_table)) {
         row_nr <- which(paste0(gsub("-",".",scm_table[,1]),".1") == colnames(coef_table[i]))
         if(!all(is.na(coef_table[i]))) {
-          scm_table$Coef[row_nr] <- round(coef_table[!is.na(coef_table[i]),i],2)
+          scm_table$Coef[row_nr] <- as.numeric(coef_table[!is.na(coef_table[i]),i])
         }
       }
-      scm_table$Coef <- as.character(scm_table$Coef)
+      colnames(scm_table) <- c("","dOFV","Coef")
 
     } else {
       scm_table <- error_table("SCM")
-      max_scm_table <- scm_table
-      max_scm_table <- cbind(scm_table,"")
+      max_scm_table <- cbind(scm_table,"",stringsAsFactors = F)
     }
   } else {
     scm_files_exists <- FALSE
-    scm_table <- data.frame("SCM",NA,stringsAsFactors = F)
+    scm_table <- data.frame("SCM","NA",stringsAsFactors = F)
     colnames(scm_table) <- c("","dOFV")
-    max_scm_table <- cbind(scm_table,"")
+    max_scm_table <- cbind(scm_table,"",stringsAsFactors = F)
 
   }
   colnames(max_scm_table) <- c("","dOFV","Add.params")

@@ -1,7 +1,7 @@
 read_nm_tables <- function(files         = NULL,
                            combined      = TRUE,
                            rm_duplicates = TRUE,
-                           quiet         = FALSE,
+                           quiet         = TRUE,
                            simtab        = NULL,
                            ...) {
   
