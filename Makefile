@@ -166,6 +166,7 @@ LIBFILES= ui.pm \
 	tool/linearize.pm \
 	tool/qa.pm \
 	utils/file.pm \
+	utils/phitable.pm
 
 BINFILES=$(wildcard bin/*)
 
