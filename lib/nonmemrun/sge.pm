@@ -38,7 +38,7 @@ sub submit
 	my $outp = readpipe("qsub $submitstring 2>&1");
 	chomp($outp);
 
-	if ($outp =~ /^Your job (\d+)/) {
+	if ($outp =~ /Your job (\d+)/) {
 		$jobId = $1;
 	} else {
 		print "SGE submit failed.\nSystem error message: $outp\nConsidering this model failed.\n";
