@@ -6,7 +6,6 @@ use File::Spec::Functions qw(devnull);
 use PsN;
 use nonmemrun;
 use MooseX::Params::Validate;
-use so::xml;
 
 sub is_pharmml
 {
@@ -88,6 +87,11 @@ sub create_minimal_pharmml
     );
     my $model = $parm{'model'};
     my $filename = $parm{'filename'};
+
+    eval { require so::xml; };
+    if ($@) {
+        die "Unable to find libxml2\n";
+    }
 
     open my $fh, '>', $filename;
 
