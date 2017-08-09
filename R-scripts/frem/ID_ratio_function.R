@@ -91,10 +91,15 @@ ID_ratio <- function(frem_id,covdata,pardata) {
         DF_low <- DF[1:EXTR_ID_NUM,]
         DF_high <- DF[(nrow(DF)-(EXTR_ID_NUM-1)):nrow(DF),]
         DF <- rbind(DF_low, empty, DF_high)
-        rownames(DF) <- NULL
-        # Save information about subset (for table creation later)
-        num_ids <- nrow(DF)
+      } else {
+        low_nr <- 1:(nrow(DF)/2)
+        DF_low <- DF[low_nr,]
+        DF_high <- DF[(max(low_nr)+1):nrow(DF),]
+        DF <- rbind(DF_low, empty, DF_high)
       }
+      rownames(DF) <- NULL
+      # Save information about subset (for table creation later)
+      num_ids <- nrow(DF)
 
       # Add two empty rows (because we're putting the typical individual in the table here)
       empty_row <- c(rep(NA,ncol(DF)))
@@ -122,13 +127,13 @@ ID_ratio <- function(frem_id,covdata,pardata) {
 
       # Create table for table output
       DF_text <- data.frame()
-
+      
       # Remember that we might have sampled the original data
       selected_rows <- which(frem_id$ID %in% DF$id, arr.ind=TRUE)
       frem_id_subset <- frem_id[selected_rows,]
       # devide data set in 2 peaces
       lower <- c(1:((length(selected_rows))/2))
-      upper <- c((((length(selected_rows))/2)+1):(length(selected_rows)))
+      upper <- c((max(lower)+1):(length(selected_rows)))
       # Create first column, the ID column
       col1 <- c("ID",frem_id_subset[lower,"ID"], "typical",frem_id_subset[upper,"ID"])
       DF_text <- data.frame(V1 = col1, V05 = 1)
@@ -149,7 +154,7 @@ ID_ratio <- function(frem_id,covdata,pardata) {
         id_values <- frem_id_subset[, col_name]
 
         # Construct new columns and append them to data frame
-        V1 <- c(cov_name, id_values[1:EXTR_ID_NUM],typ_value, id_values[(EXTR_ID_NUM+1):(EXTR_ID_NUM*2)])
+        V1 <- c(cov_name, id_values[lower],typ_value, id_values[upper])
         DF_cov <- data.frame(V1 = V1, V05 = cov_num + 1)
         DF_text <- rbind(DF_text, DF_cov)
 
@@ -159,7 +164,7 @@ ID_ratio <- function(frem_id,covdata,pardata) {
 
       # Construct that weird factor column that we apparently need
       DF_text$V0 <- factor(rep(1:column_size, ncolumns), levels = column_size:1)
-      DF_text$group <- rep(c("title",rep("other",EXTR_ID_NUM),"typical",rep("other",EXTR_ID_NUM)), ncolumns)
+      DF_text$group <- rep(c("title",rep("other",length(lower)),"typical",rep("other",length(upper))), ncolumns)
 
       # create plot of text table
       t <- ggplot(DF_text,aes(x = V05, y = V0, label = format(V1))) +
