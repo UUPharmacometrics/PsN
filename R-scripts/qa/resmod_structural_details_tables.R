@@ -10,7 +10,11 @@ resmod_structural_details_tables <- function(working.directory,model.filename,CW
         resmod_table <- get_resmod_table(directory=working.directory, idv_all[i])$resmod_table
         if(any(resmod_table$dvid!="NA")) {
           dvid_nr <- unique(resmod_table$dvid)
-          dvid_nr <- as.numeric(dvid_nr[-which(dvid_nr=="sum")])
+          if(any(dvid_nr=="sum")) {
+            dvid_nr <- as.numeric(dvid_nr[-which(dvid_nr=="sum")])
+          } else {
+            dvid_nr <- as.numeric(dvid_nr)
+          }
         } else {
           dvid_nr <- 'NA'
         }

@@ -5,7 +5,11 @@ get_resmod_ruv_table <- function(directory, idv_name, dvid_name){
     resmod_table_full <- get_resmod_table(directory, idv_name)$resmod_table 
     if(any(resmod_table_full$dvid!="NA")) {
       dvid_nr <- unique(resmod_table_full$dvid)
-      dvid_nr <- as.numeric(dvid_nr[-which(dvid_nr=="sum")])
+      if(any(dvid_nr=="sum")) {
+        dvid_nr <- as.numeric(dvid_nr[-which(dvid_nr=="sum")])
+      } else {
+        dvid_nr <- as.numeric(dvid_nr)
+      }
     } else {
       dvid_nr <- 'NA'
     }
