@@ -2,6 +2,7 @@ create.data.full <- function(raw.results.file,skipped.id.file) {
   ## read files
   input_cdd.data <- read.csv(raw.results.file)
   cdd.inds <- read.csv(skipped.id.file, header=F)
+  cdd.inds <- unique(cdd.inds)
   
   # Create table cdd.data.all
   # check if exist column method
