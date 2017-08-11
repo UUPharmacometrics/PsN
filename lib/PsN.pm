@@ -9,7 +9,7 @@ our ($dev,$version,$lib_dir,$config_file,$config,$Rscripts_dir);
 #the version line is extracted in Makefile using regular expression
 # /\$version\s*=\s*.[0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*.;/
 # so be careful when you edit!!!
-$version = '4.7.2';
+$version = '4.7.4';
 
 # The following line will be changed by make
 $dev = 1;
