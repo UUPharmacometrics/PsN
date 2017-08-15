@@ -18,7 +18,7 @@ library(ztable)
 library(expm)
 library(vpc)
 library(ggplot2)
-#library(xpose)
+library(xpose)
 source(file.path(rscripts.directory, "/common/find_r_files_in_subdir.R"))
 source(file.path(rscripts.directory, "/common/iofv.R"))
 source(file.path(rscripts.directory, "/common/keep_symbols.R"))
@@ -229,14 +229,14 @@ if(boxcox_mod) {
 }
 ```
 
-<!-- # ```{r plot_boxcox_shape,results='asis',echo=F,warning=F,message=F,fig.width=11,fig.height=fig_height_boxcox,fig.keep="high",fig.align="center"} -->
-<!-- # if(make_boxcox_shape_plot) { -->
-<!-- #    boxcox_shape_plot <- plot_boxcox_shape(data_table=boxcox_shape_table,eta_table) -->
-<!-- #   for(i in 1:length(boxcox_shape_plot)) { -->
-<!-- #     print(boxcox_shape_plot[[i]]) -->
-<!-- #   } -->
-<!-- # } -->
-<!-- # ``` -->
+```{r plot_boxcox_shape,results='asis',echo=F,warning=F,message=F,fig.width=11,fig.height=fig_height_boxcox,fig.keep="high",fig.align="center"}
+if(make_boxcox_shape_plot) {
+   boxcox_shape_plot <- plot_boxcox_shape(data_table=boxcox_shape_table,eta_table)
+  for(i in 1:length(boxcox_shape_plot)) {
+    print(boxcox_shape_plot[[i]])
+  }
+}
+```
 
 \pagebreak
 
@@ -290,14 +290,13 @@ cat("Subjects identified as significantly influencing the model fit for all othe
 hist_of_cdd_dofv(data=all_dofv)
 ```
 
-<!-- # ```{r add_infl_indiv_individual_plots,results='asis',echo=F,warning=F,message=F,fig.width=11,fig.height=fig_height_infl} -->
-<!-- # if(length(infl_id)>0) { -->
-<!-- #   infl.ind_individual_plots <- individual_plots(file_name=file.path(working.directory,"linearize_run/scm_dir1/derivatives.mod"), -->
-<!-- #                                               ID_nr=infl_id[1:10]) -->
-<!-- #   print(infl.ind_individual_plots) -->
-<!-- #  -->
-<!-- # } -->
-<!-- # ``` -->
+```{r add_infl_indiv_individual_plots,results='asis',echo=F,warning=F,message=F,fig.width=11,fig.height=fig_height_infl}
+if(length(infl_id)>0) {
+  infl.ind_individual_plots <- individual_plots(file_name=file.path(working.directory,"linearize_run/scm_dir1/derivatives.mod"),
+                                              ID_nr=infl_id[1:10])
+  print(infl.ind_individual_plots)
+}
+```
 
 \pagebreak
 
@@ -321,15 +320,14 @@ if(file.exists(file.path(working.directory,"simeval_run/raw_all_iofv.csv"))) {
 }
 ```
 
-<!-- # ```{r add_outliers_individual_plots,results='asis',echo=F,warning=F,message=F,fig.width=11,fig.height=fig_height_outl} -->
-<!-- # if(length(outlier_ids)>0) { -->
-<!-- #   outlier_individual_plots <- individual_plots(file_name=file.path(working.directory,"linearize_run/scm_dir1/derivatives.mod"), -->
-<!-- #                                               ID_nr=outlier_ids) -->
-<!-- #   print(outlier_individual_plots) -->
-<!-- #  -->
-<!-- # } -->
-<!-- # ``` -->
-<!-- # \pagebreak -->
+```{r add_outliers_individual_plots,results='asis',echo=F,warning=F,message=F,fig.width=11,fig.height=fig_height_outl}
+if(length(outlier_ids)>0) {
+  outlier_individual_plots <- individual_plots(file_name=file.path(working.directory,"linearize_run/scm_dir1/derivatives.mod"),
+                                              ID_nr=outlier_ids)
+  print(outlier_individual_plots)
+}
+```
+\pagebreak
 
 ```{r plot_iofv_vs_iofv,results='asis',echo=F,warning=F,message=F,fig.width=9,fig.height=6.5,fig.keep="high",fig.align="center"}
  if(rplots.level > 1) {
