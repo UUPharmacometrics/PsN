@@ -156,6 +156,7 @@ A new recommended but not required Perl library for runrecord: YAML::Tiny
    ___nmoutput2so___
 
 - Bugfixes for simulation results that caused nmoutput2so to crash
+- Change columnType for TIME in SimulatedProfiles from time to idv
 
 
    ___transform___

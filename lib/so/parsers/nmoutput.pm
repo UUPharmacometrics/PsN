@@ -1178,7 +1178,7 @@ sub _create_simulated_profiles
         $simulated_profiles = so::soblock::simulation::simulationblock::simulationtable->new(
             name => "SimulatedProfiles",
             columnId => [ "ID", "TIME", @$dv_columns ],
-            columnType => [ "id", "time", ("dv") x scalar(@$dv_columns) ],
+            columnType => [ "id", "idv", ("dv") x scalar(@$dv_columns) ],
             valueType => [ "string", "real", ("real") x scalar(@$dv_columns) ],
             columns => [ \@id, \@time, @extra ],
             table_file => $table_file,
@@ -1187,7 +1187,7 @@ sub _create_simulated_profiles
         $simulated_profiles = so::soblock::simulation::simulationblock::simulationtable->new(
             name => "SimulatedProfiles",
             columnId => [ "ID", "DVID", "TIME", "Observation" ],
-            columnType => [ "id", "dvid", "time", "dv" ],
+            columnType => [ "id", "dvid", "idv", "dv" ],
             valueType => [ "string", "int", "real", "real" ],
             columns => [ \@id, \@dvid, \@time, \@dv ],
             table_file => $table_file,

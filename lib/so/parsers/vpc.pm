@@ -99,7 +99,7 @@ sub _add_simulation_table
         my $simulated_profiles = so::soblock::simulation::simulationblock::simulationtable->new(
             name => "SimulatedProfiles",
             columnId => [ "ID", "TIME", "DV" ],
-            columnType => [ "id", "time", "dv" ],
+            columnType => [ "id", "idv", "dv" ],
             valueType => [ "string", "real", "real" ],
             columns => \@columns,
         ); 
