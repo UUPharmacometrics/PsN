@@ -28,7 +28,7 @@ Set a name to use for the output model file.
 \nextopt
 \optname{etas}
 List the etas to transform. Default is all etas.
-This option is valid for the boxcox transformation.
+This option is valid for the boxcox and tdist transformations.
 \nextopt
     \optname{fix}
       Fix the omegas to zero
@@ -48,6 +48,9 @@ The output of transform will be an updated model file. If the -out option was sp
 
 \subsection{boxcox}
 The boxcox transformation will boxcox transform all etas and add thetas for the lambdas. The -etas option can be used to specify a list of etas that should be transformed. Default is to transform all etas in the model.
+
+\subsection{tdist}
+The tdist transformation will transform all etas to follow a t-distribution. The degree of freedom parameters will be added as THETAs to be estimated. The -etas option can be used to specify a list of etas that should be transformed. Default is to transfor all etas in the model.
 
 \subsection{full\_block}
 Transform all omegas up to the first FIX or SAME block into one big full block record.

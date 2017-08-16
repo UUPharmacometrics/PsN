@@ -138,9 +138,96 @@ sub omega_block
     return $new_omega_block;
 }
 
+sub _rename_etas
+{
+    # Rename all or some ETAs of model
+    my %parm = validated_hash(\@_,
+        model => { isa => 'model' },
+        etas => { isa => 'ArrayRef', optional => 1 },   # Array of the etas to rename or unspecified for all etas
+		prefix => { isa => 'Str', default => 'ETAT' },	# The name to use for the transformed eta
+    );
+    my $model = $parm{'model'};
+	my $etas = $parm{'etas'};
+	my $prefix = $parm{'prefix'};
+
+    if (not defined $etas) {
+        my $netas = $model->nomegas->[0];
+        $etas = [1 .. $netas];
+    }
+
+    for my $eta (@$etas) {
+        for my $record (('pk', 'pred', 'error', 'des', 'aes', 'aesinitial', 'mix', 'infn')) {
+		    if ($model->has_code(record => $record)) {  
+			    my $code = $model->get_code(record => $record);
+                for (my $i = 0; $i < scalar(@$code); $i++) {
+                    $code->[$i] =~ s/(?<!\w)ETA\($eta\)/$prefix$eta/g;
+                }
+                $model->set_code(record => $record, code => $code);
+            }
+        }
+	}
+}
+
+sub prepend_code
+{
+    # Add code to beginning of $PRED or $PK
+    my %parm = validated_hash(\@_,
+        model => { isa => 'model' },
+        code => { isa => 'ArrayRef' },
+    );
+    my $model = $parm{'model'};
+	my $code = $parm{'code'};
+
+	my @model_code;
+	my $code_record;
+	if ($model->has_code(record => 'pk')) {
+		@model_code = @{$model->get_code(record => 'pk')};
+		$code_record = 'pk';
+	} elsif ($model->has_code(record => 'pred')) {
+		@model_code = @{$model->get_code(record => 'pred')};
+		$code_record = 'pred';
+	} else {
+		croak("Neither PK nor PRED defined in " . $model->filename . "\n");
+	}
+
+	@model_code = (@$code, @model_code); 
+
+    $model->set_code(record => $code_record, code => \@model_code);
+}
+
 sub boxcox_etas
 {
     # Boxcox transform all or some ETAs of model
+    # Assume only one $PROBLEM
+	my %parm = validated_hash(\@_,
+        model => { isa => 'model' },
+        etas => { isa => 'ArrayRef', optional => 1 },       # An array of the etas to transform or unspecified for all etas
+    );
+    my $model = $parm{'model'};
+	my $etas = $parm{'etas'};
+
+    if (not defined $etas) {
+        my $netas = $model->nomegas->[0];
+        $etas = [1 .. $netas];
+    }
+    my $nthetas = $model->nthetas;
+
+    _rename_etas(model => $model, etas => $etas, prefix => 'ETAB');
+
+    my $next_theta = $nthetas + 1;
+    my @code;
+    for my $i (@$etas) {
+        push @code, "ETAB$i = (EXP(ETA($i))**THETA($next_theta) - 1) / (THETA($next_theta))";
+        $next_theta++;
+        $model->add_records(type => 'theta', record_strings => [ '$THETA (-3, 0.01, 3)']); 
+    }
+
+    prepend_code(model => $model, code => \@code);
+}
+
+sub tdist_etas
+{
+    # Tdist transform all or some ETAs of model
     # Assume only one $PROBLEM
 	my %parm = validated_hash(\@_,
         model => { isa => 'model' },
@@ -155,41 +242,20 @@ sub boxcox_etas
     }
     my $nthetas = $model->nthetas;
 
-    # Transform ETAs
-    for my $eta (@$etas) {
-        for my $record (('pk', 'pred', 'error', 'des', 'aes', 'aesinitial', 'mix', 'infn')) {
-		    if ($model->has_code(record => $record)) {  
-			    my $code = $model->get_code(record => $record);
-                for (my $i = 0; $i < scalar(@$code); $i++) {
-                    $code->[$i] =~ s/(?<!\w)ETA\($eta\)/ETAT$eta/g;
-                }
-                $model->set_code(record => $record, code => $code);
-            }
-        }
-	}
-
-    # Prepend transformation code and add thetas
-	my @code;
-	my $code_record;
-	if ($model->has_code(record => 'pk')) {
-		@code = @{$model->get_code(record => 'pk')};
-		$code_record = 'pk';
-	} elsif ($model->has_code(record => 'pred')) {
-		@code = @{$model->get_code(record => 'pred')};
-		$code_record = 'pred';
-	} else {
-		croak("Neither PK nor PRED defined in " . $model->filename . "\n");
-	}
+    _rename_etas(model => $model, etas => $etas, prefix => 'ETAT');
 
     my $next_theta = $nthetas + 1;
+    my @code;
     for my $i (@$etas) {
-        my $line = "ETAT$i = (EXP(ETA($i))**THETA($next_theta) - 1) / (THETA($next_theta))";
+        push @code,
+			"ETAT$i = ETA($i)*(1+((ETA($i)**2+1)/(4*THETA($next_theta)))&\n" .
+			"	+((5*ETA($i)**4+16*ETA($i)**2+3)/(96*THETA($next_theta)**2))&\n" .
+			"	+((3*ETA($i)**6+19*ETA($i)**4+17*ETA($i)**2-15)/(384*THETA($next_theta)**3)))\n";
         $next_theta++;
-        unshift @code, $line;
-        $model->add_records(type => 'theta', record_strings => [ '$THETA (-3, 0.01, 3)']); 
+        $model->add_records(type => 'theta', record_strings => [ '$THETA (3,,100)']); 
     }
 
-    $model->set_code(record => $code_record, code => \@code);
+    prepend_code(model => $model, code => \@code);
 }
 
 sub remove_iiv
