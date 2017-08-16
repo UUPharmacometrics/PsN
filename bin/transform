@@ -39,7 +39,7 @@ my $res = GetOptions( \%options,
     keys(%optional_options) );
 exit unless $res;
 
-my @valid_transformations = ( 'boxcox', 'full_block', 'add_tv', 'remove_iiv', 'remove_iov' );
+my @valid_transformations = ( 'boxcox', 'tdist', 'full_block', 'add_tv', 'remove_iiv', 'remove_iov' );
 my $valid_transformations_string = join("\n", @valid_transformations);
 
 my %help_text;
@@ -84,7 +84,7 @@ $help_text{-etas} = <<'EOF';
       -etas
       
       List the etas to transform. Default is all etas.
-      This option is valid for the boxcox transformation.
+      This option is valid for the boxcox and tdist transformations.
 EOF
 
 $help_text{-fix} = <<'EOF';
@@ -126,7 +126,7 @@ if (not grep(/$transformation/, @valid_transformations)) {
 }
 
 if (defined $options{'etas'}) {
-    if ($transformation ne 'boxcox') {
+    if ($transformation ne 'boxcox' and $transformation ne 'tdist') {
         print "Option -etas cannot be used together with the $transformation transformation.\n";
         exit;
     }
@@ -200,6 +200,12 @@ if ($transformation eq 'boxcox') {
         model_transformations::boxcox_etas(model => $model, etas => [split ',', $options{'etas'}]);
     } else {
         model_transformations::boxcox_etas(model => $model);
+    }
+} elsif ($transformation eq 'tdist') {
+    if (defined $options{'etas'}) {
+        model_transformations::tdist_etas(model => $model, etas => [split ',', $options{'etas'}]);
+    } else {
+        model_transformations::tdist_etas(model => $model);
     }
 } elsif ($transformation eq 'full_block') {
     model_transformations::full_omega_block(model => $model);

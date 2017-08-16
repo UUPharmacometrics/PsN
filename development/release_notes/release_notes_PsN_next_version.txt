@@ -161,7 +161,7 @@ A new recommended but not required Perl library for runrecord: YAML::Tiny
 
    ___transform___
 
-- Added full_block and add_tv transformations
+- Added tdist, full_block and add_tv transformations
 
    ___resmod___ 
 

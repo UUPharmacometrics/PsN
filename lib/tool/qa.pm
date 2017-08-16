@@ -105,7 +105,7 @@ sub modelfit_setup
     #    $linearized_model->_write();
     #}
 
-    print "*** Running full omega block, add etas and boxcox model ***\n";
+    print "*** Running full omega block, add etas, boxcox and tdist models ***\n";
     eval {
         my @models;
         my $full_block_model = $linearized_model->copy(filename => "fullblock.mod");
@@ -120,6 +120,10 @@ sub modelfit_setup
         model_transformations::boxcox_etas(model => $boxcox_model);
         $boxcox_model->_write();
         push @models, $boxcox_model;
+        my $tdist_model = $linearized_model->copy(filename => "tdist.mod");
+        model_transformations::tdist_etas(model => $tdist_model);
+        $tdist_model->_write();
+        push @models, $tdist_model;
         my $add_etas_model = $linearized_model->copy(filename => "add_etas.mod");
         my $was_added = $add_etas_model->unfix_omega_0_fix();
         if ($was_added) {
