@@ -1860,7 +1860,7 @@ sub linearize_setup
                         $derivatives_model->extra_files([]);
                     }
                     push @{$derivatives_model->extra_files}, $etas_file;
-                } elsif ($mceta > 1) {
+                } elsif (defined $mceta and $mceta > 1) {
                     print "Original model has no phi output nor \$ETAS file record, but has MCETA=$mceta (can be slow)\n";
                 } else {
                     print "Warning: Original model has no phi output, \$ETAS file nor MCETA>1; ETAs will be initialized at 0\n";
