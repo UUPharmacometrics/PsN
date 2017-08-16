@@ -2460,6 +2460,15 @@ sub linearize_setup
 
         $original_model -> fixed( parameter_type => 'sigma',
             new_values => [[(0) x $original_model -> nsigmas -> [0] ]] );
+        # Refix all sigma 0
+        my @sigmas = @{$original_model->problems->[0]->sigmas};
+        for my $record (@sigmas) {
+            for my $option (@{$record->options}) {
+                if ($option->init == 0) {
+                    $option->fix(1);
+                }
+            }
+        }
 
         #end if step_number == 1
     }elsif ($self->update_derivatives()){
