@@ -40,7 +40,8 @@ resmod_structural_details_tables <- function(working.directory,model.filename,CW
         if(file.exists(paste0(working.directory, "linearize_run/scm_dir1/derivatives.ext")) &&
           file.exists(file.path(working.directory, paste0(sub('.([^.]*)$','',model.filename),"_linbase.dta"))) &&
           file.exists(CWRES_table) &&
-          resmod_file_exists_idv[i]==TRUE) {
+          resmod_file_exists_idv[i]==TRUE &&
+          !all(resmod_table$parameters=="NA")) {
             
           table = get_resmod_structural_details(directory=working.directory, suffix = idv, dvid=dvid_nr_idv[[i]][j]) %>%
             .calc_and_add_shift_from_cwres(working.directory,model.filename,CWRES_table,idv,idv_name, dvid=dvid_nr_idv[[i]][j],dvid_name)

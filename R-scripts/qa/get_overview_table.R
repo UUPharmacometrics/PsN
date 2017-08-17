@@ -26,7 +26,9 @@ get_overview_table <- function(structural_overview,param_var_overview,covariates
       dofv_values[j] <- as.numeric(overview_table$dOFV[i])
     }
   }
-  dofv_values <- format(round(dofv_values,2),trim=T,digits=1,nsmall=1)
+  if(length(dofv_values)>0) {
+    dofv_values <- format(round(dofv_values,2),trim=T,digits=1,nsmall=1,scientific = F)
+  }
   # format all dofv values in overview table
   j <- 0
   for(i in 1:nrow(overview_table)){

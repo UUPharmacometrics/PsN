@@ -52,6 +52,10 @@ get_resmod_ruv_table <- function(directory, idv_name, dvid_name){
         resmod_ruv_table[nr_rows[i],1] <- gsub("_"," ",resmod_ruv_table[nr_rows[i],1])
       }
       
+      if(all(is.na(resmod_ruv_table$dOFV))) {
+        resmod_ruv_table$dOFV <- format(resmod_ruv_table$dOFV)
+      }
+      
       if(length(dvid_nr) == 1 && dvid_nr=="NA") {
         resmod_ruv_overview <- resmod_ruv_table[c(1:2),c("Model","dOFV","Additional parameters")] #the highest ofv values
       } else {
@@ -63,11 +67,11 @@ get_resmod_ruv_table <- function(directory, idv_name, dvid_name){
       resmod_ruv_table_list[[j]] <- resmod_ruv_table
     }
    colnames(resmod_ruv_overview) <- c("","dOFV","Add.params")
-   #if all dOFV values are NA
-   if(all(is.na(resmod_ruv_overview$dOFV))) {
-     resmod_ruv_overview <- data.frame("RESMOD","NA","",stringsAsFactors = F)
-     colnames(resmod_ruv_overview) <- c("","dOFV","Add.params")
-   }
+   # #if all dOFV values are NA
+   # if(all(is.na(resmod_ruv_overview$dOFV))) {
+   #   resmod_ruv_overview <- data.frame("RESMOD","NA","",stringsAsFactors = F)
+   #   colnames(resmod_ruv_overview) <- c("","dOFV","Add.params")
+   # }
    
   } else {
     resmod_ruv_table_list[[1]] <- error_table(col=1)
