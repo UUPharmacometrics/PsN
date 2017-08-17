@@ -7,6 +7,7 @@ use Cwd;
 use model;
 use PsN;
 use MooseX::Params::Validate;
+use utils::file;
 
 sub add_tv
 {
@@ -478,5 +479,69 @@ sub _etas_from_omega_records
     return \@etas;
 }
 
+sub omit_ids
+{
+    # Omit one or more ids from a model or dataset
+	my %parm = validated_hash(\@_,
+        model => { isa => 'model' },
+        ids => { isa => 'ArrayRef' },       # An array of the ids to omnit from model or dataset
+        ignore => { isa => 'Bool', default => 0 },
+    );
+    my $model = $parm{'model'};
+	my $ids = $parm{'ids'};
+	my $ignore = $parm{'ignore'};
+
+    # Check if ids are available
+    my $data = $model->problems->[0]->datas->[0];
+    my $data_table = data->new(
+        directory => $data->get_directory,
+        filename => $data->get_filename,
+        ignoresign => $data->ignoresign,
+        parse_header => 1
+    );
+
+    my $found;
+    my @to_remove;
+    for my $id (@$ids) {
+        $found = 0;
+        for (my $i = 0; $i < scalar(@{$data_table->individuals}); $i++) {
+            my $individual = $data_table->individuals->[$i];
+            if ($id == $individual->idnumber) {
+                $found = 1;
+                if ($ignore) {
+                    $model->add_option(record_name => 'data', option_name => 'IGNORE', option_value => "(ID.EQ.$id)");
+                } else { 
+                    push @to_remove, $i;
+                }
+                last;
+            }
+        }
+        if (not $found) {
+            print "Warning: ID=$id was not found in dataset. No need to omit it\n";
+        }
+    }
+
+    if (not $ignore) {
+        my @keep;
+        my $found;
+        for (my $i = 0; $i < scalar(@{$data_table->individuals}); $i++) {
+            $found = 0;
+            for my $remidx (@to_remove) {
+                if ($remidx == $i) {
+                    $found = 1;
+                    last;
+                }
+            }
+            if (not $found) {
+                push @keep, $data_table->individuals->[$i];
+            }
+        }
+        $data_table->individuals(\@keep);
+        my $filename = utils::file::replace_extension($model->filename, "dta");
+        $data_table->filename($filename);
+        $data_table->_write();
+        $data->set_filename(filename => $filename, directory => $model->directory );
+    }
+}
 
 1;

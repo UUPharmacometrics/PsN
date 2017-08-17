@@ -31,6 +31,8 @@ my %optional_options = (
     'etas:s' => undef,
     'fix!' => undef,
     'parameters:s' => undef,
+    'ids:s' => undef,
+    'ignore!' => undef,
 );
 
 my $res = GetOptions( \%options,
@@ -39,7 +41,7 @@ my $res = GetOptions( \%options,
     keys(%optional_options) );
 exit unless $res;
 
-my @valid_transformations = ( 'boxcox', 'tdist', 'full_block', 'add_tv', 'remove_iiv', 'remove_iov' );
+my @valid_transformations = ( 'boxcox', 'tdist', 'full_block', 'add_tv', 'remove_iiv', 'remove_iov', 'omit_ids' );
 my $valid_transformations_string = join("\n", @valid_transformations);
 
 my %help_text;
@@ -101,6 +103,21 @@ $help_text{-parameters} = <<'EOF';
       This option is mandatory for the add_tv transformation.
 EOF
 
+$help_text{-ids} = <<'EOF';
+      -ids
+      
+      Specify a list of ids.
+      This option is mandatory for the omit_ids transformation.
+EOF
+
+$help_text{-ignore} = <<'EOF';
+      -ignore
+      
+      Omit ids by using IGNORE statements in the model.
+      Default the option is not set and changes are done to the dataset.
+      This option is only valid for the omit_ids transformation.
+EOF
+
 common_options::online_help( 'transform', \%options, \%help_text, \%required_options, \%optional_options);
 common_options::setup( \%options, 'transform' ); #calls set_globals etc, initiates random sequence
 
@@ -135,6 +152,25 @@ if (defined $options{'etas'}) {
 if (defined $options{'fix'}) {
     unless ($transformation eq 'remove_iiv' or $transformation eq 'remove_iov') {
         print "Option -fix cannot be used together with the $transformation transformation.\n";
+        exit;
+    }
+}
+
+if (defined $options{'ids'}) {
+    unless ($transformation eq 'omit_ids') {
+        print "Option -ids cannot be used together with the $transformation transformation.\n";
+        exit;
+    }
+} else {
+    if ($transformation eq 'omit_ids') {
+        print "Option -ids need to be used together with the omit_ids transformation.\n";
+        exit;
+    }
+}
+
+if (defined $options{'ignore'}) {
+    unless ($transformation eq 'omit_ids') {
+        print "Option -ignore cannot be used together with the $transformation transformation.\n";
         exit;
     }
 }
@@ -223,6 +259,12 @@ if ($transformation eq 'boxcox') {
     } else {
         model_transformations::remove_iov(model => $model);
     }
+} elsif ($transformation eq 'omit_ids') {
+    my $ignore = 0;
+    if (defined $options{'ignore'}) {
+        $ignore = $options{'ignore'};
+    }
+    model_transformations::omit_ids(model => $model, ids => [ split ',', $options{'ids'}], ignore => $ignore);
 }
 
 $model->_write();
