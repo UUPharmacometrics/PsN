@@ -2160,12 +2160,10 @@ sub do_model1
         my $model_filename = $model->filename();
         my @extra_extensions = (".lst", ".cov", ".ext", ".phi");
         foreach my $ext (@extra_extensions) {
-            my $extra_file_orig = ($model_filename =~ s/\..*$/$ext/r);
-            my $extra_file_copy = ($name_model =~ s/\..*$/$ext/r);
+            (my $extra_file_orig = $model_filename) =~ s/\..*$/$ext/;
+            (my $extra_file_copy = $name_model) =~ s/\..*$/$ext/;
             if (-f $model_dir.$extra_file_orig) {
                 cp($model_dir.$extra_file_orig, $im_dir.$extra_file_copy);
-            } else {
-                print "Could not find $extra_file_orig; not copied to intermediate_models/$extra_file_copy\n";
             }
         }
 
