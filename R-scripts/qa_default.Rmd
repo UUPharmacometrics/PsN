@@ -84,11 +84,16 @@ if(fullblock_mod) {
   full_omega_block_table <- get_full_omega_block(working.directory,list_par_var_models$dofv_block)
 }
 if(boxcox_mod) {
-  boxcox_lambdas_list <- get_boxcox_lambda_table(working.directory,list_par_var_models$dofv_box)
-  boxcox_lambdas_orig <- boxcox_lambdas_list$boxcox_lambdas_orig
-  boxcox_lambdas_table <- boxcox_lambdas_list$boxcox_lambdas_table
+  boxcox_lambdas_list <- get_param_extra_table(directory=working.directory,dofv=list_par_var_models$dofv_box,param_model="boxcox")
+  boxcox_lambdas_orig <- boxcox_lambdas_list$param_extra_table_orig
+  boxcox_lambdas_table <- boxcox_lambdas_list$param_extra_table
 }
-if(fullblock_mod || boxcox_mod) {
+if(tdist_mod) {
+  tdist_list <- get_param_extra_table(directory=working.directory,dofv=list_par_var_models$dofv_tdist,param_model="tdist")
+  tdist_table_orig <- tdist_list$param_extra_table_orig
+  tdist_table <- tdist_list$param_extra_table
+}
+if(fullblock_mod || boxcox_mod || tdist_mod) {
   param_sector <- TRUE
 } else {
   param_sector <- FALSE
@@ -96,7 +101,7 @@ if(fullblock_mod || boxcox_mod) {
 ```
 
 ```{r boxcox_shape_table_for_plot,results='hide',echo=F,warning=F,message=F}
-eta_table <- get_boxcox_eta_values(working.directory=file.path(working.directory,"modelfit_run"))
+eta_table <- get_eta_values(working.directory=file.path(working.directory,"modelfit_run"),param_model="boxcox")
 if(exists("boxcox_lambdas_orig")) {
   list_boxcox_shape <- tables_for_boxcox_shape(boxcox_lambdas_orig)
   make_boxcox_shape_plot <- list_boxcox_shape$make_boxcox_shape_plot
@@ -236,6 +241,18 @@ if(make_boxcox_shape_plot) {
   for(i in 1:length(boxcox_shape_plot)) {
     print(boxcox_shape_plot[[i]])
   }
+}
+```
+
+```{asis Add_text_for_tdist_if_exists_mod_file, echo=tdist_mod}
+###t-distribution
+```
+
+```{r draw_tdist_table,results='asis',echo=F,warning=F,message=F}
+if(tdist_mod) {
+  tdist_table <- keep_symbols(tdist_table,type)
+  tdist_table <- ztable_sub(tdist_table,type=type,colnames.bold=T,include.rownames=F,longtable=T,align="lrrr")
+  print(tdist_table)
 }
 ```
 
