@@ -107,34 +107,39 @@ sub modelfit_setup
 
     print "*** Running full omega block, add etas, boxcox and tdist models ***\n";
     eval {
+        mkdir "modelfit_run";
         my @models;
-        my $full_block_model = $linearized_model->copy(filename => "fullblock.mod", write_copy => 0);
+        my $full_block_model = $linearized_model->copy(directory => "modelfit_run", filename => "fullblock.mod", write_copy => 0);
         my $was_full_block = model_transformations::full_omega_block(model => $full_block_model);
         if (not $was_full_block) {
             $full_block_model->_write();
             push @models, $full_block_model;
         }
-        my $boxcox_model = $linearized_model->copy(filename => "boxcox.mod");
+        my $boxcox_model = $linearized_model->copy(directory => "modelfit_run", filename => "boxcox.mod", write_copy => 0);
         model_transformations::boxcox_etas(model => $boxcox_model);
         $boxcox_model->_write();
         push @models, $boxcox_model;
-        my $tdist_model = $linearized_model->copy(filename => "tdist.mod");
+        my $tdist_model = $linearized_model->copy(directory => "modelfit_run", filename => "tdist.mod", write_copy => 0);
         model_transformations::tdist_etas(model => $tdist_model);
         $tdist_model->_write();
         push @models, $tdist_model;
-        my $add_etas_model = $linearized_model->copy(filename => "add_etas.mod", write_copy => 0);
+        my $add_etas_model = $linearized_model->copy(directory => "modelfit_run", filename => "add_etas.mod", write_copy => 0);
         my $was_added = $add_etas_model->unfix_omega_0_fix();
         if ($was_added) {
             $add_etas_model->_write();
             push @models, $add_etas_model;
         }
+        for my $model (@models) {       # Set output directory so that .lst file gets saved in the rundir
+            $model->outputs->[0]->directory(".");
+        }
+        chdir "modelfit_run";
         my $modelfit = tool::modelfit->new(
             %{common_options::restore_options(@common_options::tool_options)},
             models => \@models,
-            directory => 'modelfit_run',
             top_tool => 1,
         );
         $modelfit->run();
+        chdir "..";
     };
     $self->_to_qa_dir();
 
