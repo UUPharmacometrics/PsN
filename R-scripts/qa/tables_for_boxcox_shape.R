@@ -1,34 +1,43 @@
-tables_for_boxcox_shape <- function(boxcox_lambdas_table,seq_length.out=1000) {
-  fig_height_boxcox <- 15
-  if(any(grepl('ETA',boxcox_lambdas_table$ETA)))  {
-    make_boxcox_shape_plot <- TRUE
+get_eta_transf_table <- function(input_table,seq_length.out=1000) {
+  fig_height <- 15
+  if(any(grepl('ETA',input_table$ETA)) && (any(colnames(input_table)=="Lambda") || any(colnames(input_table)=="Degrees of freedom")))  {
+    make_eta_transf_plot <- TRUE
     
-    for(i in 1:nrow(boxcox_lambdas_table)) {
-      sd <- as.numeric(boxcox_lambdas_table[i,3])
-      lambda <- as.numeric(boxcox_lambdas_table$Lambda[i])
+    for(i in 1:nrow(input_table)) {
+      sd <- as.numeric(input_table[i,3])
+      if(any(colnames(input_table)=="Lambda")) {
+        lambda <- as.numeric(input_table$Lambda[i])
+      } else {
+        deg_of_freedom <- as.numeric(input_table$`Degrees of freedom`[i])
+      }
       eta <- qnorm(seq(1E-7, 1-1E-7, length.out = seq_length.out), sd=sd)
       density <- dnorm(eta,sd=sd)
-      ETAT <- (exp(eta)^lambda -1)/lambda
-      table_per_eta <- data.frame(ETA_name=boxcox_lambdas_table$ETA[i],ETA=eta,density=density,ETAT=ETAT,stringsAsFactors = F)
+      if(any(colnames(input_table)=="Lambda")) {
+        ETAT <- (exp(eta)^lambda -1)/lambda
+      } else {
+        ETAT <- eta*(1+((eta^2 + 1)/(4*deg_of_freedom))+((5*eta^4 + 16*eta^2 + 3)/(96*deg_of_freedom^2))
+                     +((3*eta^6 + 19*eta^4 + 17*eta^2 - 15)/(384*deg_of_freedom^3)))
+      }
+      table_per_eta <- data.frame(ETA_name=input_table$ETA[i],ETA=eta,density=density,ETAT=ETAT,stringsAsFactors = F)
       table_per_eta <- table_per_eta %>% gather(type,eta,-ETA_name,-density)
       if(i > 1) {
-        boxcox_shape_table <- rbind(boxcox_shape_table,table_per_eta)
+        eta_transf_table <- rbind(eta_transf_table,table_per_eta)
       } else {
-        boxcox_shape_table <- table_per_eta
+        eta_transf_table <- table_per_eta
       }
     }
     
     #count unique ETAs
-    if(length(unique(boxcox_shape_table$ETA_name)) <= 8) {
-      fig_height_boxcox <- 7
+    if(length(unique(eta_transf_table$ETA_name)) <= 8) {
+      fig_height <- 7
     }
-    out <- list(boxcox_shape_table=boxcox_shape_table,
-                make_boxcox_shape_plot=make_boxcox_shape_plot,
-                fig_height_boxcox=fig_height_boxcox)
+    out <- list(eta_transf_table=eta_transf_table,
+                make_eta_transf_plot=make_eta_transf_plot,
+                fig_height=fig_height)
   } else {
-    make_boxcox_shape_plot <- FALSE
-    out <- list(make_boxcox_shape_plot=make_boxcox_shape_plot,
-                fig_height_boxcox=fig_height_boxcox)
+    make_eta_transf_plot <- FALSE
+    out <- list(make_eta_transf_plot=make_eta_transf_plot,
+                fig_height=fig_height)
   }
   
   return(out)

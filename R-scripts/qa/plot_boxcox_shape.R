@@ -1,5 +1,11 @@
-plot_boxcox_shape <- function(data_table,eta_table) {
-  
+plot_transformed_density <- function(data_table,eta_table,param_model) {
+  if(param_model=="boxcox") {
+    labels=c("Untransformed density","Boxcox transformed density")
+  }
+  if(param_model=="tdist") {
+    labels=c("Untransformed density","t-distribution transformed density")
+  }
+
     get_x_min_max <- function(data_table,eta_table,y_pec=0.01) {
       for(i in unique(data_table$ETA_name)) {
         data_table_per_eta <- data_table %>% filter(ETA_name %in% i)
@@ -9,7 +15,7 @@ plot_boxcox_shape <- function(data_table,eta_table) {
         x_max <- max(spec$eta)
         x_min <- min(spec$eta)
 
-        # check if y_min_limit should be smaller because of the real boxcox eta values
+        # check if y_min_limit should be smaller because of the real eta values
         if(any(eta_table$value > x_max)) {
           x_max <- max(eta_table$value)
         }
@@ -36,7 +42,7 @@ plot_boxcox_shape <- function(data_table,eta_table) {
         geom_area(alpha=0.3) +
         theme_bw() +
         labs(x="",y="") +
-        scale_fill_manual("",values=c("ETA"="black","ETAT"="blue"),labels=c("Untransformed density","Boxcox transformed density")) +
+        scale_fill_manual("",values=c("ETA"="black","ETAT"="blue"),labels=labels) +
         theme(legend.position = "top")
       
       if(length(unique(data_table_new$ETA_name)) > 4) {

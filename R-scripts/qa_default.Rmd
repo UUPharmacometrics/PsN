@@ -103,11 +103,11 @@ if(fullblock_mod || boxcox_mod || tdist_mod) {
 ```{r boxcox_shape_table_for_plot,results='hide',echo=F,warning=F,message=F}
 eta_table <- get_eta_values(working.directory=file.path(working.directory,"modelfit_run"),param_model="boxcox")
 if(exists("boxcox_lambdas_orig")) {
-  list_boxcox_shape <- tables_for_boxcox_shape(boxcox_lambdas_orig)
-  make_boxcox_shape_plot <- list_boxcox_shape$make_boxcox_shape_plot
+  list_boxcox_shape <- get_eta_transf_table(input_table=boxcox_lambdas_orig)
+  make_boxcox_shape_plot <- list_boxcox_shape$make_eta_transf_plot
   if(make_boxcox_shape_plot) {
-    boxcox_shape_table <- list_boxcox_shape$boxcox_shape_table
-    fig_height_boxcox <- list_boxcox_shape$fig_height_boxcox
+    boxcox_shape_table <- list_boxcox_shape$eta_transf_table
+    fig_height_boxcox <- list_boxcox_shape$fig_height
   }
 } else {
   fig_height_boxcox <- 15
@@ -115,6 +115,20 @@ if(exists("boxcox_lambdas_orig")) {
 }
 ```
 
+```{r tdist_shape_table_for_plot,results='hide',echo=F,warning=F,message=F}
+eta_table <- get_eta_values(working.directory=file.path(working.directory,"modelfit_run"),param_model="tdist")
+if(exists("tdist_table_orig")) {
+  list_tdist_shape <- get_eta_transf_table(input_table=tdist_table_orig)
+  make_tdist_shape_plot <- list_tdist_shape$make_eta_transf_plot
+  if(make_tdist_shape_plot) {
+    tdist_shape_table <- list_tdist_shape$eta_transf_table
+    fig_height_tdist <- list_tdist_shape$fig_height
+  }
+} else {
+  fig_height_tdist <- 15
+  make_tdist_shape_plot <- FALSE
+}
+```
 
 ```{r covariate_model_calculations,results='hide',echo=F,warning=F,message=F}
 # 3.Covariate Models
@@ -237,7 +251,7 @@ if(boxcox_mod) {
 
 ```{r plot_boxcox_shape,results='asis',echo=F,warning=F,message=F,fig.width=11,fig.height=fig_height_boxcox,fig.keep="high",fig.align="center"}
 if(make_boxcox_shape_plot) {
-   boxcox_shape_plot <- plot_boxcox_shape(data_table=boxcox_shape_table,eta_table)
+   boxcox_shape_plot <- plot_transformed_density(data_table=boxcox_shape_table,eta_table,param_model="boxcox")
   for(i in 1:length(boxcox_shape_plot)) {
     print(boxcox_shape_plot[[i]])
   }
@@ -253,6 +267,15 @@ if(tdist_mod) {
   tdist_table <- keep_symbols(tdist_table,type)
   tdist_table <- ztable_sub(tdist_table,type=type,colnames.bold=T,include.rownames=F,longtable=T,align="lrrr")
   print(tdist_table)
+}
+```
+
+```{r plot_tdist_shape,results='asis',echo=F,warning=F,message=F,fig.width=11,fig.height=fig_height_tdist,fig.keep="high",fig.align="center"}
+if(make_tdist_shape_plot) {
+   tdist_shape_plot <- plot_transformed_density(data_table=tdist_shape_table,eta_table,param_model="tdist")
+  for(i in 1:length(tdist_shape_plot)) {
+    print(tdist_shape_plot[[i]])
+  }
 }
 ```
 
