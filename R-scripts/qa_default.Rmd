@@ -79,6 +79,7 @@ list_par_var_models <- get_param_var_tables(directory=working.directory,model.fi
 par_var_models <- list_par_var_models$par_var_models
 fullblock_mod <- list_par_var_models$fullblock_mod
 boxcox_mod <- list_par_var_models$boxcox_mod
+tdist_mod <- list_par_var_models$tdist_mod
 if(fullblock_mod) {
   full_omega_block_table <- get_full_omega_block(working.directory,list_par_var_models$dofv_block)
 }
@@ -95,7 +96,7 @@ if(fullblock_mod || boxcox_mod) {
 ```
 
 ```{r boxcox_shape_table_for_plot,results='hide',echo=F,warning=F,message=F}
-eta_table <- get_boxcox_eta_values(working.directory)
+eta_table <- get_boxcox_eta_values(working.directory=file.path(working.directory,"modelfit_run"))
 if(exists("boxcox_lambdas_orig")) {
   list_boxcox_shape <- tables_for_boxcox_shape(boxcox_lambdas_orig)
   make_boxcox_shape_plot <- list_boxcox_shape$make_boxcox_shape_plot
