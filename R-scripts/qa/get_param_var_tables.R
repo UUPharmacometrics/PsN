@@ -93,7 +93,7 @@ get_param_var_tables <- function(directory,model.filename) {
     par_var_models <- error_table(c("Full OMEGA Block","Box-Cox Transformation","Additional ETA","t-distribution"))
     dofv_block <- "NA"
     dofv_box <- "NA"
-    
+    dofv_tdist <- "NA"
   }
   
   return(list(par_var_models=par_var_models,
