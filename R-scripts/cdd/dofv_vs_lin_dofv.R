@@ -32,6 +32,3 @@ dofv_vs_lin_dofv <- function(cdd_folder,lin_cdd_folder,model_name) {
   abline(v=3.84, lwd=2, lty=3, col="black")
   text(data_plot$lin_dofv,data_plot$dofv, labels=data_plot$id,cex=.8, col="black")
 }
-dofv_vs_lin_dofv(cdd_folder='C:\\Users\\svefr809\\develope\\cdd\\prazocin_run5_cdd',
-                 lin_cdd_folder='C:\\Users\\svefr809\\develope\\cdd\\prazocin_run5_cdd_lin',
-                 model_name='run5')
