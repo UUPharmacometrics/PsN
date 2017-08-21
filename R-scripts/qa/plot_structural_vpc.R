@@ -16,9 +16,9 @@ plot_structural_vpc <- function(obs,sim,shift_tab,idv) {
                    dv = "DV",
                    idv = toupper(idv)),
                  bins = "percentiles",
-                 n_bins = 10, 
-                 stratify = "type", 
-                 facet_names = FALSE
+                 n_bins = 10,
+                 stratify = "type"#,
+                 #facet_names = FALSE
   )+
     theme_bw() +
     theme(axis.text.x = element_text(angle = 90, hjust = 1))
