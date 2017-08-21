@@ -3,6 +3,7 @@ get_param_var_tables <- function(directory,model.filename) {
   fullblock_mod <- FALSE
   boxcox_mod <- FALSE
   add_etas_mod <- FALSE
+  tdist_mod <- FALSE
   if(file.exists(file.path(directory,paste0(sub('.([^.]*)$','',model.filename),"_linbase.ext")))) {
     
     linbase_ofv <- .get_ext_ofv(file.path(directory,paste0(sub('.([^.]*)$','',model.filename),"_linbase.ext")))
