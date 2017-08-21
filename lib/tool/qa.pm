@@ -108,11 +108,9 @@ sub modelfit_setup
     print "*** Running full omega block, add etas, boxcox and tdist models ***\n";
     eval {
         my @models;
-        my $full_block_model = $linearized_model->copy(filename => "fullblock.mod");
+        my $full_block_model = $linearized_model->copy(filename => "fullblock.mod", write_copy => 0);
         my $was_full_block = model_transformations::full_omega_block(model => $full_block_model);
-        if ($was_full_block) {
-            unlink("fullblock.mod");        # Why was this created in the first place?
-        } else {
+        if (not $was_full_block) {
             $full_block_model->_write();
             push @models, $full_block_model;
         }
@@ -124,13 +122,11 @@ sub modelfit_setup
         model_transformations::tdist_etas(model => $tdist_model);
         $tdist_model->_write();
         push @models, $tdist_model;
-        my $add_etas_model = $linearized_model->copy(filename => "add_etas.mod");
+        my $add_etas_model = $linearized_model->copy(filename => "add_etas.mod", write_copy => 0);
         my $was_added = $add_etas_model->unfix_omega_0_fix();
         if ($was_added) {
             $add_etas_model->_write();
             push @models, $add_etas_model;
-        } else {
-            unlink("add_etas.mod");
         }
         my $modelfit = tool::modelfit->new(
             %{common_options::restore_options(@common_options::tool_options)},
