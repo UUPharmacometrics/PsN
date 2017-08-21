@@ -31,6 +31,7 @@ has 'fo' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'lst_file' => ( is => 'rw', isa => 'Str' );
 has 'cmd_line' => ( is => 'rw', isa => 'Str' );         # Used as a work around for calling scm via system
 has 'nointer' => ( is => 'rw', isa => 'Bool', default => 0 );
+has 'nonlinear' => ( is => 'rw', isa => 'Bool', default => 0 );
 
 has 'resmod_idv_table' => ( is => 'rw', isa => 'Str' ); # The table used by resmod
 
@@ -52,78 +53,84 @@ sub modelfit_setup
 	my $vers = $PsN::version;
 	my $dev = $PsN::dev;
 
-    print "*** Running linearize ***\n";
-    my $linearized_model_name = $self->model->filename;
-    $linearized_model_name =~ s/(\.[^.]+)$/_linbase.mod/;
-    ui->category('linearize');
-	
-	my @table_columns = ( 'ID', $self->idv,'CWRES', 'PRED', 'CIPREDI' );
-	
-    if ($model_copy->defined_variable(name => $self->dvid)) {
-		push @table_columns, $self->dvid;
-	} 
-	
-    if ($model_copy->defined_variable(name => 'TAD')) {
-        push @table_columns, 'TAD';
-    }
-
-    my $lst_file;
-    if (defined $self->lst_file) {
-        $lst_file = '../../../' . $self->lst_file;
-    }
-
-    # $model_copy->set_records(type => 'covariance', record_strings => [ "UNCONDITIONAL" ]);     # Might need this for FREM CIs
-    # cov step execution in non-linear model (derivatives.mod) might take hours or days, just omit for now
     $model_copy->set_records(type => 'covariance', record_strings => [ "OMITTED" ]);
 
-    my $old_nm_output = common_options::get_option('nm_output');    # Hack to set clean further down
-    common_options::set_option('nm_output', 'phi,ext,cov,cor,coi');
-    my $linearize = tool::linearize->new(
-        %{common_options::restore_options(@common_options::tool_options)},
-        models => [ $model_copy ],
-        directory => 'linearize_run',
-        estimate_fo => $self->fo,
-        extra_table_columns => \@table_columns,
-        lst_file => $lst_file,
-        nointer => $self->nointer,
-        keep_covariance => 1,
-        nm_output => 'phi,ext,cov,cor,coi',
-    );
+    my $base_model_name = $self->model->filename;
+    if (not $self->nonlinear) {
+        $base_model_name =~ s/(\.[^.]+)$/_linbase.mod/;
+    
+        print "*** Running linearize ***\n";
+        ui->category('linearize');
+	
+    	my @table_columns = ( 'ID', $self->idv,'CWRES', 'PRED', 'CIPREDI' );
+	
+        if ($model_copy->defined_variable(name => $self->dvid)) {
+            push @table_columns, $self->dvid;
+        } 
+	
+        if ($model_copy->defined_variable(name => 'TAD')) {
+            push @table_columns, 'TAD';
+        }
 
-    $linearize->run();
-    $linearize->print_results();
-    ui->category('qa');
+        my $lst_file;
+        if (defined $self->lst_file) {
+            $lst_file = '../../../' . $self->lst_file;
+        }
 
-    common_options::set_option('nm_output', $old_nm_output);
+        my $old_nm_output = common_options::get_option('nm_output');    # Hack to set clean further down
+        common_options::set_option('nm_output', 'phi,ext,cov,cor,coi');
+        my $linearize = tool::linearize->new(
+            %{common_options::restore_options(@common_options::tool_options)},
+            models => [ $model_copy ],
+            directory => 'linearize_run',
+            estimate_fo => $self->fo,
+            extra_table_columns => \@table_columns,
+            lst_file => $lst_file,
+            nointer => $self->nointer,
+            keep_covariance => 1,
+            nm_output => 'phi,ext,cov,cor,coi',
+        );
 
-    my $linearized_model = model->new(
-        filename => $linearized_model_name,
-    );
+        $linearize->run();
+        $linearize->print_results();
+        ui->category('qa');
+
+        common_options::set_option('nm_output', $old_nm_output);
+    }
+
+    my $base_model;
+    if (not $self->nonlinear) {
+        $base_model = model->new(
+            filename => $base_model_name,
+        );
+    } else {
+        $base_model = $model_copy;
+    }
 
     #if ($self->fo) {
-    #    $linearized_model->remove_option(record_name => 'estimation', option_name => 'METHOD');
-    #    $linearized_model->_write();
+    #    $base_model->remove_option(record_name => 'estimation', option_name => 'METHOD');
+    #    $base_model->_write();
     #}
 
     print "*** Running full omega block, add etas, boxcox and tdist models ***\n";
     eval {
         mkdir "modelfit_run";
         my @models;
-        my $full_block_model = $linearized_model->copy(directory => "modelfit_run", filename => "fullblock.mod", write_copy => 0);
+        my $full_block_model = $base_model->copy(directory => "modelfit_run", filename => "fullblock.mod", write_copy => 0);
         my $was_full_block = model_transformations::full_omega_block(model => $full_block_model);
         if (not $was_full_block) {
             $full_block_model->_write();
             push @models, $full_block_model;
         }
-        my $boxcox_model = $linearized_model->copy(directory => "modelfit_run", filename => "boxcox.mod", write_copy => 0);
+        my $boxcox_model = $base_model->copy(directory => "modelfit_run", filename => "boxcox.mod", write_copy => 0);
         model_transformations::boxcox_etas(model => $boxcox_model);
         $boxcox_model->_write();
         push @models, $boxcox_model;
-        my $tdist_model = $linearized_model->copy(directory => "modelfit_run", filename => "tdist.mod", write_copy => 0);
+        my $tdist_model = $base_model->copy(directory => "modelfit_run", filename => "tdist.mod", write_copy => 0);
         model_transformations::tdist_etas(model => $tdist_model);
         $tdist_model->_write();
         push @models, $tdist_model;
-        my $add_etas_model = $linearized_model->copy(directory => "modelfit_run", filename => "add_etas.mod", write_copy => 0);
+        my $add_etas_model = $base_model->copy(directory => "modelfit_run", filename => "add_etas.mod", write_copy => 0);
         my $was_added = $add_etas_model->unfix_omega_0_fix();
         if ($was_added) {
             $add_etas_model->_write();
@@ -136,6 +143,7 @@ sub modelfit_setup
         my $modelfit = tool::modelfit->new(
             %{common_options::restore_options(@common_options::tool_options)},
             models => \@models,
+            directory => "modelfit_dir1",
             top_tool => 1,
         );
         $modelfit->run();
@@ -145,7 +153,7 @@ sub modelfit_setup
 
     if (defined $self->covariates or defined $self->categorical) {
         print "\n*** Running FREM ***\n";
-        my $frem_model = model->new(filename => $linearized_model_name);
+        my $frem_model = model->new(filename => $base_model_name);
         my @covariates;
         if (defined $self->covariates) {
             @covariates = split(',', $self->covariates);
@@ -222,19 +230,23 @@ sub modelfit_setup
             if ($self->nointer) {
                 $nointer = "-nointer";
             }
+            my $nonlinear = "";
+            if ($self->nonlinear) {
+                $nonlinear = "-no-linearize -no-foce";
+            }
 
             eval {
 				if($dev) {
-					system("scm config.scm $scm_options $fo $nointer");       # FIXME: system for now
+					system("scm config.scm $scm_options $fo $nointer $nonlinear");       # FIXME: system for now
 				} else {
-					system("scm-".$vers." config.scm $scm_options $fo $nointer");       # FIXME: system for now
+					system("scm-".$vers." config.scm $scm_options $fo $nointer $nonlinear");       # FIXME: system for now
 				}
             };
             $self->_to_qa_dir();
         }
     }
     print "\n*** Running cdd ***\n";
-    my $cdd_model = model->new(filename => $linearized_model_name);
+    my $cdd_model = model->new(filename => $base_model_name);
     eval {
         my $cdd = tool::cdd->new(
             %{common_options::restore_options(@common_options::tool_options)},
@@ -249,7 +261,7 @@ sub modelfit_setup
     $self->_to_qa_dir();
 
     print "\n*** Running simeval ***\n";
-    my $simeval_model = $linearized_model->copy(filename => "m1/simeval.mod");
+    my $simeval_model = $base_model->copy(filename => "m1/simeval.mod");
     $simeval_model->remove_records(type => 'etas');
     $simeval_model->remove_option(record_name => 'estimation', option_name => 'MCETA');
     $simeval_model->_write();
@@ -267,7 +279,12 @@ sub modelfit_setup
     $self->_to_qa_dir();
 
     print "*** Running resmod ***\n";
-    my $resmod_model = model->new(filename => 'linearize_run/scm_dir1/derivatives.mod');
+    my $resmod_model;
+    if (not $self->nonlinear) {
+        $resmod_model = model->new(filename => 'linearize_run/scm_dir1/derivatives.mod');
+    } else {
+        $resmod_model = $model_copy;
+    }
 
     my $resmod_idv;
     eval {

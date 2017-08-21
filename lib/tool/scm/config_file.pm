@@ -50,6 +50,7 @@ has 'logit' => ( is => 'rw', isa => 'ArrayRef[Str]', default => sub { [] } );
 has 'time_varying' => ( is => 'rw', isa => 'Maybe[ArrayRef[Str]]', default => sub { [] } );
 has 'second_order' => ( is => 'rw', isa => 'Bool|Ref', default => sub { \'1,0' } );
 has 'foce' => ( is => 'rw', isa => 'Bool|Ref', default => sub { \'1,0' } );
+has 'nointer' => ( is => 'rw', isa => 'Bool|Ref', default => sub { \'1,0' } );
 has 'lst_file' => ( is => 'rw', isa => 'Str|Ref', default => sub { \'' } );
 has 'derivatives_data' => ( is => 'rw', isa => 'Str|Ref', default => sub { \'' } );
 has 'search_direction' => ( is => 'rw', isa => 'Str|Ref', default => sub { \'forward,backward,both' } );

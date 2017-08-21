@@ -37,6 +37,7 @@ my %optional_options = (
     'fo!' => undef,
     'lst_file:s' => undef,
     'nointer!' => undef,
+    'nonlinear!' => undef,
 );
 
 my $res = GetOptions( \%options,
@@ -150,6 +151,12 @@ $help_text{-nointer} = <<'EOF';
       Don't use interaction in the linearized model. Default is off
 EOF
 
+$help_text{-nonlinear} = <<'EOF';
+      -nonlinear
+
+      Don't linearize the model and use the original non-linear model for all runs. Default is off
+EOF
+
 common_options::online_help( 'qa', \%options, \%help_text, \%required_options, \%optional_options);
 common_options::setup( \%options, 'qa' ); #calls set_globals etc, initiates random sequence
 
@@ -199,6 +206,7 @@ my $qa = tool::qa->new(
     fo => $options{'fo'},
     lst_file => $options{'lst_file'},
     nointer => $options{'nointer'},
+    nonlinear => $options{'nonlinear'},
 );
 
 $qa->print_options(
