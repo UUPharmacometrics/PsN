@@ -1,7 +1,3 @@
-# cdd_folder  <- 'C:\\Users\\svefr809\\develope\\cdd\\pheno_cdd'
-# lin_cdd_folder <- 'C:\\Users\\svefr809\\develope\\cdd\\pheno_cdd_lin'
-# model_name <- 'pheno_real'
-
 dofv_vs_lin_dofv <- function(cdd_folder,lin_cdd_folder,model_name) {
   #cdd
   rawres_data <- read.csv(paste0(cdd_folder,"/raw_results_",model_name,".csv"),stringsAsFactors = F)
