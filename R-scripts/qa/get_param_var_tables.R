@@ -99,7 +99,7 @@ get_param_var_tables <- function(directory,model.filename) {
   return(list(par_var_models=par_var_models,
               dofv_block=dofv_block,
               dofv_box=dofv_box,
-              dofv_tdist,
+              dofv_tdist=dofv_tdist,
               fullblock_mod=fullblock_mod,
               boxcox_mod=boxcox_mod,
               add_etas_mod=add_etas_mod,
