@@ -1632,9 +1632,9 @@ sub linearize_setup
             my $relation = '';
 
             for (@code) {
-                if ( /^\s*(\w+)\s*=\s*/ and $1 eq $parameter ) {
+                if (/^\s*(\w+)\s*=\s*/ and $1 eq $parameter) {
                     s/^\s*(\w+)\s*=\s*//;
-                    my ($line,$comment) = split( ';', $_, 2 );
+                    my ($line,$comment) = split(';', $_, 2);
                     $_ = $line;
                     chomp;
 
@@ -1644,19 +1644,19 @@ sub linearize_setup
                         $relation = 'exponential';
                     } elsif (/[^A-Z0-9_]*EXP\s*\(\s*MU\_([0-9]+)\s*\+\s*ETA\(([0-9]+)\)/) {
                         $relation = 'exponential';
-                    } elsif(/[^A-Z0-9_]*TV(\w+)\s*\+\s*ETA\(([0-9]+)\)/) {
+                    } elsif (/[^A-Z0-9_]*TV(\w+)\s*\+\s*ETA\(([0-9]+)\)/) {
                         if ($self->sum_covariates_hash->{$parameter}==1) {
                             $relation = 'logit';
                         } else {
                             $relation = 'additive';
                         }
-                    } elsif(/[^A-Z0-9_]*TV(\w+)\s*\*\s*ETA\(([0-9]+)\)/) {
+                    } elsif (/[^A-Z0-9_]*TV(\w+)\s*\*\s*ETA\(([0-9]+)\)/) {
                         $relation = 'proportional';
-                    } elsif(/[^A-Z0-9_]*ETA\(([0-9]+)\)\s*\*\s*TV(\w+)/) {
+                    } elsif (/[^A-Z0-9_]*ETA\(([0-9]+)\)\s*\*\s*TV(\w+)/) {
                         $relation = 'proportional';
-                    } elsif(/\*\s*\(\s*1\s*\+\s*ETA\(([0-9]+)\)/) {
+                    } elsif (/\*\s*\(\s*1\s*\+\s*ETA\(([0-9]+)\)/) {
                         $relation = 'proportional';
-                    } elsif(/\*\(\s*ETA\(([0-9]+)\)\s*\+\s*1/) {
+                    } elsif (/\*\(\s*ETA\(([0-9]+)\)\s*\+\s*1/) {
                         $relation = 'proportional';
                     }
 
