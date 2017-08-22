@@ -28,7 +28,7 @@ get_structural_overview_table <- function(directory,idv,dvid_name,groups) {
     k <- 1
     for(j in 1:length(dvid_nr)) {
       if(length(dvid_nr) > 0 && dvid_nr != 'NA') {
-        structural_overview[k,1] <- paste0("(",dvid_name,"=",dvid_nr[j],")")
+        structural_overview[k,1] <- paste0("(",dvid_name," = ",dvid_nr[j],")")
         structural_overview[k,2] <- ''
         structural_overview[k,3] <- ''
         k <- k + 1
@@ -50,9 +50,9 @@ get_structural_overview_table <- function(directory,idv,dvid_name,groups) {
         k <- k + 1
       }
     }
-    if(all(structural_overview$dOFV=="NA")){
-      structural_overview$Add.params <- rep("",length(structural_overview$Add.params))
-    }
+    # if(all(structural_overview$dOFV=="NA")){
+    #   structural_overview$Add.params <- rep("",length(structural_overview$Add.params))
+    # }
   } else {
     structural_overview <- error_table("RESMOD")
   }
