@@ -89,6 +89,18 @@ A comma separated list of parameters
     \optname{nonlinear}
       Don't linearize the model and use the original non-linear model for all runs. Default is off
     \nextopt
+    \optname{skip}
+      Skip one or more sections of the qa procedure. Takes a list of
+      section names to skip. The sections are: scm, frem, cdd, simeval,
+      etas and resmod. This option is intended for testing and
+      development.
+    \nextopt
+    \optname{only}
+      Only run one or more sections of the qa procedure. Takes a list of
+      section names to run. The sections are: scm, frem, cdd, simeval,
+      etas and resmod. This option is intended for testing and
+      development.
+    \nextopt
 \end{optionlist}
 
 \section{Known limitations and problems}

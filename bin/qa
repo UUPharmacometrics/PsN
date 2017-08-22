@@ -38,6 +38,8 @@ my %optional_options = (
     'lst_file:s' => undef,
     'nointer!' => undef,
     'nonlinear!' => undef,
+    'skip:s' => undef,
+    'only:s' => undef,
 );
 
 my $res = GetOptions( \%options,
@@ -157,6 +159,24 @@ $help_text{-nonlinear} = <<'EOF';
       Don't linearize the model and use the original non-linear model for all runs. Default is off
 EOF
 
+$help_text{-skip} = <<'EOF';
+      -skip
+
+      Skip one or more sections of the qa procedure. Takes a list of
+      section names to skip. The sections are: scm, frem, cdd, simeval,
+      etas and resmod. This option is intended for testing and
+      development.
+EOF
+
+$help_text{-only} = <<'EOF';
+      -only
+
+      Only run one or more sections of the qa procedure. Takes a list of
+      section names to run. The sections are: scm, frem, cdd, simeval,
+      etas and resmod. This option is intended for testing and
+      development.
+EOF
+
 common_options::online_help( 'qa', \%options, \%help_text, \%required_options, \%optional_options);
 common_options::setup( \%options, 'qa' ); #calls set_globals etc, initiates random sequence
 
@@ -207,6 +227,8 @@ my $qa = tool::qa->new(
     lst_file => $options{'lst_file'},
     nointer => $options{'nointer'},
     nonlinear => $options{'nonlinear'},
+    skip => [split /,/, $options{'skip'}],
+    only => [split /,/, $options{'only'}],
 );
 
 $qa->print_options(
