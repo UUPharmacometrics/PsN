@@ -1622,11 +1622,11 @@ sub linearize_setup
         }
         if ($#code <= 0) {
             croak("Neither PK or PRED defined in " .
-                $original_model -> filename . ", cannot match parameters to ETAs\n" );
+                $original_model->filename . ", cannot match parameters to ETAs\n" );
         }
         my $n_param = 0;
         open(LOG, ">>" . $self->logfile->[0]); #model_number -1
-        foreach my $parameter (keys %{$self -> test_relations()}) {
+        foreach my $parameter (keys %{$self->test_relations()}) {
             $n_param++;
             my $etanum = 0;
             my $relation = '';
@@ -1645,7 +1645,7 @@ sub linearize_setup
                     } elsif (/[^A-Z0-9_]*EXP\s*\(\s*MU\_([0-9]+)\s*\+\s*ETA\(([0-9]+)\)/) {
                         $relation = 'exponential';
                     } elsif (/[^A-Z0-9_]*TV(\w+)\s*\+\s*ETA\(([0-9]+)\)/) {
-                        if ($self->sum_covariates_hash->{$parameter}==1) {
+                        if ($self->sum_covariates_hash->{$parameter} == 1) {
                             $relation = 'logit';
                         } else {
                             $relation = 'additive';
