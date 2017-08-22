@@ -23,6 +23,12 @@ unexplaned_variability <- function(frem_condvar,covdata,pardata) {
       }
     }
     
+    #check if uncertanty exists
+    uncertainty <- TRUE
+    if(nrow(frem_condvar) < 2) {
+      uncertainty <- FALSE
+    }
+    
     # delete "LN" prefixes (if they exist) from any of colnames in frem_condvar data frame
     col_names <- colnames(frem_condvar)
     for (i in 1:length(col_names)) {
@@ -56,7 +62,11 @@ unexplaned_variability <- function(frem_condvar,covdata,pardata) {
                   perc_5th = quantile(value[-1], probs=c(0.05),type=2),
                   perc_95th = quantile(value[-1], probs=c(0.95),type=2))
       # add some needed columns for plotting
-      outTable$unexp_var <- sprintf("%.3G [%.3G, %.3G]",outTable$mean,outTable$perc_5th,outTable$perc_95th)
+      if(uncertainty) {
+        outTable$unexp_var <- sprintf("%.3G [%.3G, %.3G]",outTable$mean,outTable$perc_5th,outTable$perc_95th)
+      } else {
+        outTable$unexp_var <- sprintf("%.3G",outTable$mean)
+      }
       outTable$round_mean <- round(outTable$mean,3)
       outTable$covariates <- covariate
       outTable$group <- c(rep("all",nrow(outTable)))

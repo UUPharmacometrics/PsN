@@ -112,7 +112,11 @@ parameter_ratio <- function(inTable_frem,covdata,pardata) {
       outTablet_proc <- t(round(t((outTable[, 2:ncol(outTable)])-1) * 100, 2))
       outTable <- cbind(outTable[1],outTablet_proc)
       # add some needed columns for plotting
-      outTable$EXPECTED<-sprintf("%+.3G %%  [%+.3G, %+.3G]",outTable$mean,outTable$ci_low,outTable$ci_high)
+      if(nrow(inTable_frem)>1) {
+        outTable$EXPECTED<-sprintf("%+.3G %%  [%+.3G, %+.3G]",outTable$mean,outTable$ci_low,outTable$ci_high)
+      } else {
+        outTable$EXPECTED<-sprintf("%+.3G %%",outTable$mean)
+      }
       outTable$points <- point_names
       outTable$group <- point_color
       outTable$MEAN <- MEAN
