@@ -15,6 +15,7 @@ use math;
 use utils::file;
 use array qw(get_positions any_nonzero);
 use nmtablefile;
+use code_parsing;
 use PsN;
 
 
@@ -1624,6 +1625,7 @@ sub linearize_setup
             croak("Neither PK or PRED defined in " .
                 $original_model->filename . ", cannot match parameters to ETAs\n" );
         }
+        my $assignments = code_parsing::find_assignments(model => $original_model);
         my $n_param = 0;
         open(LOG, ">>" . $self->logfile->[0]); #model_number -1
         foreach my $parameter (keys %{$self->test_relations()}) {
@@ -1635,6 +1637,7 @@ sub linearize_setup
                 if (/^\s*(\w+)\s*=\s*/ and $1 eq $parameter) {
                     s/^\s*(\w+)\s*=\s*//;
                     my ($line,$comment) = split(';', $_, 2);
+                    $line = code_parsing::merge_assignments_and_expression(expression => $line, assignments => $assignments);
                     $_ = $line;
                     chomp;
 
