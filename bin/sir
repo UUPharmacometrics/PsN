@@ -43,6 +43,7 @@ my %optional_options = (
 	"cap_resampling:i"=>'',
 	"recenter!"=>'',
 	"boxcox!"=>'',
+    "fast_posdef_checks!"=>'',
 	"add_iterations"=>'',
 	"copy_data!"=>'');
 
@@ -203,6 +204,13 @@ EOF
 #with unlimited replacement.
 #To cap resampling at e.g. 5, use option -cap_resampling instead.
 #EOF
+    $help_text{-fast_posdef_checks} = <<'EOF';
+      -fast_posdef_checks
+Default not set. Enables experimental fast positive semi-definiteness checks via cholesky
+decomposition.  By default sampler uses eigenvalue decomposition (to get subspace which constitute
+valid covariance matrices) which in some cases can be several orders of magnitude slower (especially
+with large matrices).
+EOF
 $help_text{-cap_resampling} = <<'EOF';
       -cap_resampling=N
 
@@ -406,7 +414,8 @@ my $sir =
 					 boxcox       	=> $options{'boxcox'},
 					 add_iterations        => $options{'add_iterations'},
 					 in_filter             => $options{'in_filter'},
-					 copy_data                            => $options{'copy_data'}
+					 copy_data                            => $options{'copy_data'},
+                     fast_posdef_checks    => $options{'fast_posdef_checks'}
 	);
 
 $sir-> print_options (cmd_line => $cmd_line,
