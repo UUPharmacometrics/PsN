@@ -3227,7 +3227,11 @@ sub move_model_and_output
 				foreach my $out (@nmout){
 					$out =~ s/^\.//;
 					if ('.'.$out eq $ext){
-						my $ok = cp( $filename, $dir.$dotless_model_filename.$ext);
+                        if ($self->model_subdir) {
+                            cp($filename, $dir . $self->model_subdir_name . $dotless_model_filename . $ext);
+                        } else {
+						    my $ok = cp( $filename, $dir.$dotless_model_filename.$ext);
+                        }
 						last;
 					}
 				}

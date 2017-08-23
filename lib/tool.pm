@@ -148,6 +148,7 @@ has 'subset_variable_rplots' => ( is => 'rw', isa => 'Str');
 has 'zip' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'rmarkdown' => ( is => 'rw', isa => 'Bool', default => 1 );
 has 'model_subdir' => ( is => 'rw', isa => 'Bool', default => 0 );
+has 'model_subdir_name' => ( is => 'rw', isa => 'Str' );
 
 sub BUILDARGS
 {
@@ -264,6 +265,11 @@ sub BUILD
 	# still produce the output as a normal run would. This is useful
 	# both for resuming crashed runs as well as for extracting
 	# information form an old run.
+
+    if ($self->model_subdir) {
+        my $model_subdir_name = utils::file::get_file_stem($self->models->[0]->filename) . '/';
+        $self->model_subdir_name($model_subdir_name);
+    }
 
 	if( $PsN::config -> {'default_options'} -> {'lsf_pfizer'}){
 		my $apath  = cwd();
