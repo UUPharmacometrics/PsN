@@ -23,6 +23,15 @@ source("../set.working.directory.R")
 files.w.dir <- fun.files.w.dir(toolname = tool)
 
 ###################################     3. Make a test    ###################################
+#...........................  (1) Test function get_rawres_ofv.R and get_ext_ofv.R .....................................  
+context("qa, get_rawres_ofv and get_ext_ofv")
+test_that("gets ofv values from csv and ext files",{
+  expect_equal(587.27,.get_rawres_ofv(rawres_file=file.path(files.w.dir,"qa_run1/scm_run/raw_results_scm.csv")))
+  expect_equal(587.1,.get_rawres_ofv(rawres_file=file.path(files.w.dir,"qa_run1/scm_run/raw_results_scm.csv"),row=4))
+  expect_equal(-14.174,.get_ext_ofv(ext_file=file.path(files.w.dir,"qa_run1/new.ext")))
+  expect_equal(-14.1487,.get_ext_ofv(ext_file=file.path(files.w.dir,"qa_run1/new.ext"),iteration=19))
+})
+
 #...........................  (2) Test function which_resmod_folders.R .....................................  
 context("qa, which_resmod_folders")
 test_that("gets all idv names from resmod folders",{
