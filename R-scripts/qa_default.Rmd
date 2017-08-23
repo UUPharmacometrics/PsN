@@ -37,30 +37,12 @@ for (i in 1:length(rscript)) {
 }
 ```
 
+<!-- ##############################   Calculations  #################################### -->
 
-```{r helping_functions,results='hide',echo=F,warning=F,message=F}
-# Helping functions
-# get a ofv value from the raw_results.csv
-.get_rawres_ofv <- function(rawres_file, row = 1){
-  read.csv(rawres_file) %>%
-    slice(row) %>%
-    select(ofv) %>% 
-    as.numeric()
-}
-
-# get a ofv value from the ext file
-.get_ext_ofv <- function(ext_file,iteration=-1000000000){
-  read.table(ext_file,header=TRUE,skip=1,stringsAsFactors = F) %>%
-    filter(ITERATION==iteration) %>%
-    select(OBJ) %>% 
-    as.numeric()
-}
-
+```{r find_resmod_folders,results='hide',echo=F,warning=F,message=F}
 #which resmod_ folders are in the working directory
 idv_all <- which_resmod_folders(directory=working.directory,idv_name)
 ```
-
-<!-- ##############################   Calculations  #################################### -->
 
 ```{r summary_about_ofv_values,results='asis',echo=F,warning=F,message=F}
 ofv_table <- ofv_summary_table(working.directory,model.filename)
