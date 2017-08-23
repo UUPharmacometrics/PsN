@@ -23,21 +23,6 @@ source("../set.working.directory.R")
 files.w.dir <- fun.files.w.dir(toolname = tool)
 
 ###################################     3. Make a test    ###################################
-.get_rawres_ofv <- function(rawres_file, row = 1){
-  read.csv(rawres_file) %>%
-    slice(row) %>%
-    select(ofv) %>% 
-    as.numeric()
-}
-
-# get a ofv value from the ext file
-.get_ext_ofv <- function(ext_file,iteration=-1000000000){
-  read.table(ext_file,header=TRUE,skip=1,stringsAsFactors = F) %>%
-    filter(ITERATION==iteration) %>%
-    select(OBJ) %>% 
-    as.numeric()
-}
-
 #...........................  (2) Test function which_resmod_folders.R .....................................  
 context("qa, which_resmod_folders")
 test_that("gets all idv names from resmod folders",{
@@ -104,10 +89,10 @@ test_that("get dofv value form the resmod table",{
 #create expected data
 str_overview_1 <- data.frame(c("TIME","PRED"),c(4.314,4.8),c(4,4),stringsAsFactors = F)
 colnames(str_overview_1) <- c("","dOFV","Add.params")
-str_overview_2 <- data.frame(c("(ORIG=1)","TIME","PRED","(ORIG=2)","TIME","PRED"),c("","4.51","4.8","","NA","0.4"),c("",3,3,"",3,3),
+str_overview_2 <- data.frame(c("(ORIG = 1)","TIME","PRED","(ORIG = 2)","TIME","PRED"),c("","4.51","4.8","","NA","0.4"),c("",3,3,"",3,3),
                              stringsAsFactors = F)
 colnames(str_overview_2) <- c("","dOFV","Add.params")
-str_overview_3 <- data.frame(c("(ORIG=1)","TIME","TAD","PRED","(ORIG=2)","TIME","TAD","PRED"),c("","4.51","ERROR","4.8","","NA","ERROR","0.4"),c("",3,"",3,"",3,"",3),
+str_overview_3 <- data.frame(c("(ORIG = 1)","TIME","TAD","PRED","(ORIG = 2)","TIME","TAD","PRED"),c("","4.51","ERROR","4.8","","NA","ERROR","0.4"),c("",3,"",3,"",3,"",3),
                              stringsAsFactors = F)
 colnames(str_overview_3) <- c("","dOFV","Add.params")
 str_overview_4 <- data.frame(c("TIME","TAD"),c("ERROR","ERROR"),c("",""),stringsAsFactors = F)
@@ -116,8 +101,11 @@ str_overview_5 <- data.frame(c("TIME","PRED"),c("NA","4.8"),c(4,4),stringsAsFact
 colnames(str_overview_5) <- c("","dOFV","Add.params")
 str_overview_6 <- data.frame(c("TIME","TAD","PRED"),c("NA","ERROR","4.8"),c("4","","4"),stringsAsFactors = F)
 colnames(str_overview_6) <- c("","dOFV","Add.params")
-str_overview_7 <- data.frame(c("TIME","PRED"),c("NA","NA"),c("",""),stringsAsFactors = F)
+str_overview_7 <- data.frame(c("TIME","PRED"),c("NA","NA"),c(4,4),stringsAsFactors = F)
 colnames(str_overview_7) <- c("","dOFV","Add.params")
+str_overview_8 <- data.frame(c("(DVID = 1)","TIME","PRED","(DVID = 2)","TIME","PRED"),c("","NA","NA","","NA","NA"),c("","4","4","","4","4"),
+                             stringsAsFactors = F)
+colnames(str_overview_8) <- c("","dOFV","Add.params")
 #compare
 context("qa, get_structural_overview_table")
 test_that("get structural overview table",{
@@ -128,6 +116,7 @@ test_that("get structural overview table",{
   expect_equal(str_overview_5,get_structural_overview_table(directory=file.path(files.w.dir,"qa_run5"),idv=c("TIME","PRED"),dvid_name="NA",groups=5))
   expect_equal(str_overview_6,get_structural_overview_table(directory=file.path(files.w.dir,"qa_run6"),idv=c("TIME","TAD","PRED"),dvid_name="NA",groups=5))
   expect_equal(str_overview_7,get_structural_overview_table(directory=file.path(files.w.dir,"qa_run7"),idv=c("TIME","PRED"),dvid_name="NA",groups=5))
+  expect_equal(str_overview_8,get_structural_overview_table(directory=file.path(files.w.dir,"qa_run8"),idv=c("TIME","PRED"),dvid_name="DVID",groups=5))
 })
 
 #...........................  (7) Test function get_omega_values.R .....................................
@@ -136,15 +125,15 @@ test_that("get omega variances and covariances",{
   expect_equal(data.frame("OMEGA.1.1."=c(0.0168598),"OMEGA.2.1."=c(0.229251),"OMEGA.2.2."=c(0.166343),stringsAsFactors = F),
                get_omega_values(ext_file=file.path(files.w.dir,"qa_run1/new.ext"),"all"))
   expect_equal(data.frame("OMEGA.1.1."=c(0.0168598),"OMEGA.2.2."=c(0.229251),"OMEGA.3.3."=c(0.166343),"OMEGA.4.4."=c(0.0154853),stringsAsFactors = F),
-               get_omega_values(ext_file=file.path(files.w.dir,"qa_run1/boxcox.ext"),"var"))
+               get_omega_values(ext_file=file.path(files.w.dir,"qa_run1/modelfit_run/boxcox.ext"),"var"))
   expect_equal(data.frame(),
-               get_omega_values(ext_file=file.path(files.w.dir,"qa_run1/boxcox.ext"),"cov"))
+               get_omega_values(ext_file=file.path(files.w.dir,"qa_run1/modelfit_run/boxcox.ext"),"cov"))
   expect_equal(data.frame(),
                get_omega_values(ext_file=file.path(files.w.dir,"qa_run1/new_2.ext"),"all"))
   expect_equal(data.frame(),
-               get_omega_values(ext_file=file.path(files.w.dir,"qa_run1/boxcox_2.ext"),"var"))
+               get_omega_values(ext_file=file.path(files.w.dir,"qa_run1/modelfit_run/boxcox_2.ext"),"var"))
   expect_equal(data.frame("OMEGA.2.1."=0.36,"OMEGA.3.2."=0.15),
-               get_omega_values(ext_file=file.path(files.w.dir,"qa_run1/boxcox_2.ext"),"cov"))
+               get_omega_values(ext_file=file.path(files.w.dir,"qa_run1/modelfit_run/boxcox_2.ext"),"cov"))
 })
 
 #...........................  (8) Test function get_param_var_tables.R .....................................
@@ -156,29 +145,29 @@ param_var_list_4 <- get_param_var_tables(directory=file.path(files.w.dir,"qa_mis
 param_var_list_5 <- get_param_var_tables(directory=file.path(files.w.dir,"qa_run4"),model.filename="run_100.mod")
 param_var_list_6 <- get_param_var_tables(directory=file.path(files.w.dir,"qa_missing_folders_files"),model.filename="run_100.mod")
 #create expected data
-par_var_models_1 <- data.frame(c("Full OMEGA Block", "Box-Cox Transformation","Additional ETA"), 
-                             c(-3.730,-0.566,3.410),
-                             c(4,0,2),stringsAsFactors = F)
+par_var_models_1 <- data.frame(c("Full OMEGA Block", "Box-Cox Transformation","Additional ETA","t-distribution"), 
+                             c(-3.73,-0.566,3.41,-1.03),
+                             c(4,0,2,0),stringsAsFactors = F)
 colnames(par_var_models_1) <- c("","dOFV","Add.params")
-par_var_models_2 <- data.frame(c("Full OMEGA Block", "Box-Cox Transformation","Additional ETA"), 
-                               c("ERROR","-0.566000000000001","NA"),
-                               c("","3",""),stringsAsFactors = F)
+par_var_models_2 <- data.frame(c("Full OMEGA Block", "Box-Cox Transformation","Additional ETA","t-distribution"), 
+                               c("ERROR","-0.566000000000001","NA","NA"),
+                               c("","3","",""),stringsAsFactors = F)
 colnames(par_var_models_2) <- c("","dOFV","Add.params")
-par_var_models_3 <- data.frame(c("Full OMEGA Block", "Box-Cox Transformation","Additional ETA"), 
-                               c("ERROR","NA","ERROR"),
-                               c("","",""),stringsAsFactors = F)
+par_var_models_3 <- data.frame(c("Full OMEGA Block", "Box-Cox Transformation","Additional ETA","t-distribution"), 
+                               c("ERROR","NA","ERROR","NA"),
+                               c("","","",""),stringsAsFactors = F)
 colnames(par_var_models_3) <- c("","dOFV","Add.params")
-par_var_models_4 <- data.frame(c("Full OMEGA Block", "Box-Cox Transformation","Additional ETA"), 
-                               c("ERROR","ERROR","ERROR"),
+par_var_models_4 <- data.frame(c("Full OMEGA Block", "Box-Cox Transformation","Additional ETA","t-distribution"), 
+                               c("ERROR","ERROR","ERROR","ERROR"),
                                stringsAsFactors = F)
 colnames(par_var_models_4) <- c("","dOFV")
-par_var_models_5 <- data.frame(c("Full OMEGA Block", "Box-Cox Transformation","Additional ETA"), 
-                               c("-3.73","NA","3.41"),
-                               c("0","","0"),stringsAsFactors = F)
+par_var_models_5 <- data.frame(c("Full OMEGA Block", "Box-Cox Transformation","Additional ETA","t-distribution"), 
+                               c("-3.73","NA","3.41","NA"),
+                               c("0","","0",""),stringsAsFactors = F)
 colnames(par_var_models_5) <- c("","dOFV","Add.params")
-par_var_models_6 <- data.frame(c("Full OMEGA Block", "Box-Cox Transformation","Additional ETA"), 
-                               c("NA","NA","NA"),
-                               c("","",""),stringsAsFactors = F)
+par_var_models_6 <- data.frame(c("Full OMEGA Block", "Box-Cox Transformation","Additional ETA","t-distribution"), 
+                               c("NA","NA","NA","NA"),
+                               c("","","",""),stringsAsFactors = F)
 colnames(par_var_models_6) <- c("","dOFV","Add.params")
 #compare
 context("qa, get_param_var_tables")
@@ -186,39 +175,51 @@ test_that("get parameter variability overview part, get delta ofv values",{
   expect_equal(par_var_models_1,param_var_list_1$par_var_models)
   expect_equal(-3.73,param_var_list_1$dofv_block)
   expect_equal(-0.566,param_var_list_1$dofv_box)
+  expect_equal(-1.03,param_var_list_1$dofv_tdist)
   expect_equal(TRUE,param_var_list_1$fullblock_mod)
   expect_equal(TRUE,param_var_list_1$boxcox_mod)
   expect_equal(TRUE,param_var_list_1$add_etas_mod)
+  expect_equal(TRUE,param_var_list_1$tdist_mod)
   expect_equal(par_var_models_2,param_var_list_2$par_var_models)
   expect_equal("ERROR",param_var_list_2$dofv_block)
   expect_equal(-0.566,param_var_list_2$dofv_box)
+  expect_equal("NA",param_var_list_2$dofv_tdist)
   expect_equal(TRUE,param_var_list_2$fullblock_mod)
   expect_equal(TRUE,param_var_list_2$boxcox_mod)
   expect_equal(FALSE,param_var_list_2$add_etas_mod)
+  expect_equal(FALSE,param_var_list_2$tdist_mod)
   expect_equal(par_var_models_3,param_var_list_3$par_var_models)
   expect_equal("ERROR",param_var_list_3$dofv_block)
   expect_equal("NA",param_var_list_3$dofv_box)
+  expect_equal("NA",param_var_list_3$dofv_tdist)
   expect_equal(TRUE,param_var_list_3$fullblock_mod)
   expect_equal(FALSE,param_var_list_3$boxcox_mod)
   expect_equal(TRUE,param_var_list_3$add_etas_mod)
+  expect_equal(FALSE,param_var_list_3$tdist_mod)
   expect_equal(par_var_models_4,param_var_list_4$par_var_models)
   expect_equal("NA",param_var_list_4$dofv_block)
   expect_equal("NA",param_var_list_4$dofv_box)
+  expect_equal("NA",param_var_list_4$dofv_tdist)
   expect_equal(FALSE,param_var_list_4$fullblock_mod)
   expect_equal(FALSE,param_var_list_4$boxcox_mod)
   expect_equal(FALSE,param_var_list_4$add_etas_mod)
+  expect_equal(FALSE,param_var_list_4$tdist_mod)
   expect_equal(par_var_models_5,param_var_list_5$par_var_models)
   expect_equal(-3.73,param_var_list_5$dofv_block)
   expect_equal("NA",param_var_list_5$dofv_box)
+  expect_equal("NA",param_var_list_5$dofv_tdist)
   expect_equal(TRUE,param_var_list_5$fullblock_mod)
   expect_equal(FALSE,param_var_list_5$boxcox_mod)
   expect_equal(TRUE,param_var_list_5$add_etas_mod)
+  expect_equal(FALSE,param_var_list_5$tdist_mod)
   expect_equal(par_var_models_6,param_var_list_6$par_var_models)
   expect_equal("NA",param_var_list_6$dofv_block)
   expect_equal("NA",param_var_list_6$dofv_box)
+  expect_equal("NA",param_var_list_6$dofv_tdist)
   expect_equal(FALSE,param_var_list_6$fullblock_mod)
   expect_equal(FALSE,param_var_list_6$boxcox_mod)
   expect_equal(FALSE,param_var_list_6$add_etas_mod)
+  expect_equal(FALSE,param_var_list_6$tdist_mod)
 })
 
 #...........................  (9) Test function get_full_omega_block.R .....................................
@@ -244,9 +245,7 @@ test_that("get full omega block, extra table",{
                get_full_omega_block(directory=file.path(files.w.dir,"qa_missing_folders_files"),dofv_block=3.3414))
 })
 
-#...........................  (10) Test function get_boxcox_lambda_table.R .....................................
-#run function
-get_boxcox_lambda_table(directory=file.path(files.w.dir,"qa_run1"),dofv_boxcox="ERROR")$boxcox_lambdas_orig
+#...........................  (10) Test function get_param_extra_table.R .....................................
 #create expected data
 boxcox_lambdas_table_1 <- data.frame(c("ETA(1)","ETA(2)","ETA(3)","ETA(4)","dOFV"),
                                        c("2.11","NA","-1.14","-0.82","3.0"),
@@ -260,43 +259,62 @@ boxcox_lambdas_table_2 <- data.frame(c("ETA(1)","ETA(2)","ETA(3)","ETA(4)"),
 colnames(boxcox_lambdas_table_2) <- c("","Lambda","New SD","Old SD")
 boxcox_lambdas_table_3 <- data.frame("ERROR",stringsAsFactors = F)
 colnames(boxcox_lambdas_table_3) <- c("")
-boxcox_lambdas_orig_1 <- data.frame(c("ETA(1)","ETA(2)","ETA(3)","ETA(4)"),
-                                     c(2.107970,NA,-1.138560,-0.819117),
-                                     c(0.1298453,0.4788016,0.4078517,0.1244399),
-                                     c(0.1341175,0.7722836,0.0000000,0.0000000),stringsAsFactors = F)
-colnames(boxcox_lambdas_orig_1) <- c("ETA","Lambda","New SD","Old SD")
 boxcox_lambdas_orig_3 <- data.frame("ERROR",stringsAsFactors = F)
 colnames(boxcox_lambdas_orig_3) <- c("")
+#create expected data
+tdist_table_1 <- data.frame(c("ETA(1)","ETA(2)","ETA(3)","ETA(4)","dOFV"),
+                                     c("2.11","NA","-1.14","-0.82","3.0"),
+                                     c("0.13","0.48","0.41","0.12",""),
+                                     c("0.13","0.77","0.00","0.00",""),stringsAsFactors = F)
+colnames(tdist_table_1) <- c("","Degrees of freedom","New SD","Old SD")
+tdist_table_2 <- data.frame(c("ETA(1)","ETA(2)","ETA(3)","ETA(4)"),
+                                     c("2.11","NA","-1.14","-0.82"),
+                                     c("0.13","0.48","0.41","0.12"),
+                                     c("0.13","0.77","0.00","0.00"),stringsAsFactors = F)
+colnames(tdist_table_2) <- c("","Degrees of freedom","New SD","Old SD")
+tdist_table_3 <- data.frame("ERROR",stringsAsFactors = F)
+colnames(tdist_table_3) <- c("")
 #compare
-context("qa, get_full_omega_block")
-test_that("get full omega block, extra table",{
+context("qa, get_param_extra_table")
+test_that("get full omega block or tdist extra table",{
   expect_equal(boxcox_lambdas_table_1,
-               get_boxcox_lambda_table(directory=file.path(files.w.dir,"qa_run1"),dofv_boxcox=3.0014)$boxcox_lambdas_table)
+               get_param_extra_table(directory=file.path(files.w.dir,"qa_run1"),dofv=3.0014,param_model="boxcox")$param_extra_table)
   expect_equal(boxcox_lambdas_table_2,
-               get_boxcox_lambda_table(directory=file.path(files.w.dir,"qa_run1"),dofv_boxcox="ERROR")$boxcox_lambdas_table)
+               get_param_extra_table(directory=file.path(files.w.dir,"qa_run1"),dofv="ERROR",param_model="boxcox")$param_extra_table)
   expect_equal(boxcox_lambdas_table_3,
-                get_boxcox_lambda_table(directory=file.path(files.w.dir,"qa_missing_folders_files"),dofv_boxcox=3.3414)$boxcox_lambdas_table)
-  # expect_equal(boxcox_lambdas_orig_1,
-  #              get_boxcox_lambda_table(directory=file.path(files.w.dir,"qa_run1"),dofv_boxcox=3.0014)$boxcox_lambdas_orig)
-  # expect_equal(boxcox_lambdas_orig_1,
-  #              get_boxcox_lambda_table(directory=file.path(files.w.dir,"qa_run1"),dofv_boxcox="ERROR")$boxcox_lambdas_orig)
+               get_param_extra_table(directory=file.path(files.w.dir,"qa_missing_folders_files"),dofv=3.3414,param_model="boxcox")$param_extra_table)
   expect_equal(boxcox_lambdas_orig_3,
-               get_boxcox_lambda_table(directory=file.path(files.w.dir,"qa_missing_folders_files"),dofv_boxcox=3.3414)$boxcox_lambdas_orig)
+               get_param_extra_table(directory=file.path(files.w.dir,"qa_missing_folders_files"),dofv=3.3414,param_model="boxcox")$param_extra_table_orig)
+  expect_equal(tdist_table_1,
+               get_param_extra_table(directory=file.path(files.w.dir,"qa_run1"),dofv=3.0014,param_model="tdist")$param_extra_table)
+  expect_equal(tdist_table_2,
+               get_param_extra_table(directory=file.path(files.w.dir,"qa_run1"),dofv="ERROR",param_model="tdist")$param_extra_table)
+  expect_equal(tdist_table_3,
+               get_param_extra_table(directory=file.path(files.w.dir,"qa_missing_folders_files"),dofv=3.3414,param_model="tdist")$param_extra_table)
+  expect_equal(boxcox_lambdas_orig_3,
+               get_param_extra_table(directory=file.path(files.w.dir,"qa_missing_folders_files"),dofv=3.3414,param_model="tdist")$param_extra_table_orig)
 })
 
-#...........................  (11) Test function get_boxcox_eta_values.R .....................................
+#...........................  (11) Test function get_eta_values.R .....................................
 #compare
-context("qa, get_boxcox_eta_values")
-test_that("get eta values from boxcox phi file",{
+context("qa, get_eta_values")
+test_that("get eta values from boxcox or tdist phi file",{
   expect_equal(data.frame("ETA_name"=c(rep("ETA(1)",4),rep("ETA(2)",4),rep("ETA(3)",4),rep("ETA(4)",4)),
                           "value"=c(0.18,0.22,0.19,0.097,-0.023,0.1,0.89,-0.023,-0.13,-0.4,-0.59,0.14,-0.11,-0.074,0.034,0.042),
                           stringsAsFactors = F),
-               get_boxcox_eta_values(working.directory=file.path(files.w.dir,"qa_run1")))
+               get_eta_values(working.directory=file.path(files.w.dir,"qa_run1/modelfit_run"),param_model="boxcox"))
   expect_equal(data.frame(),
-               get_boxcox_eta_values(working.directory=file.path(files.w.dir,"qa_run2")))
+               get_eta_values(working.directory=file.path(files.w.dir,"qa_run2/modelfit_run"),param_model="boxcox"))
+  expect_equal(data.frame("ETA_name"=c(rep("ETA(1)",4),rep("ETA(2)",4),rep("ETA(3)",4),rep("ETA(4)",4)),
+                          "value"=c(0.18,0.22,0.19,0.097,-0.023,0.1,0.89,-0.023,-0.13,-0.4,-0.59,0.14,-0.11,-0.074,0.034,0.042),
+                          stringsAsFactors = F),
+               get_eta_values(working.directory=file.path(files.w.dir,"qa_run1/modelfit_run"),param_model="tdist"))
+  expect_equal(data.frame(),
+               get_eta_values(working.directory=file.path(files.w.dir,"qa_run2/modelfit_run"),param_model="tdist"))
+  
  })
 
-#...........................  (12) Test function tables_for_boxcox_shape.R .....................................
+#...........................  (12) Test function get_eta_transf_table.R .....................................
 #create input data
 boxcox_lambdas_orig_1 <- data.frame(c("ETA(1)","ETA(2)","ETA(3)"),
                                     c(2.107970,NA,-1.138560),
@@ -308,21 +326,36 @@ boxcox_lambdas_orig_2 <- data.frame(c("ETA(1)","ETA(2)","ETA(3)","ETA(4)","ETA(5
                                     c(0.12,0.4,0.4,0.1,0.2,0.14,0.14,0.9,0.1),
                                     c(0.1,0.7,0,0,0,0,0,0,0),stringsAsFactors = F)
 colnames(boxcox_lambdas_orig_2) <- c("ETA","Lambda","New SD","Old SD")
+
+tdist_table_orig_1 <- boxcox_lambdas_orig_1
+colnames(tdist_table_orig_1) <- c("ETA","Degrees of freedom","New SD","Old SD")
+tdist_table_orig_2 <- boxcox_lambdas_orig_2
+colnames(tdist_table_orig_2) <- c("ETA","Degrees of freedom","New SD","Old SD")
+
 #run function
-list_boxcox_shape_1 <- tables_for_boxcox_shape(boxcox_lambdas_table=boxcox_lambdas_orig_1,seq_length.out=3)
-boxcox_shape_table_1 <- list_boxcox_shape_1$boxcox_shape_table
-make_boxcox_shape_plot_1 <- list_boxcox_shape_1$make_boxcox_shape_plot
-fig_height_boxcox_1 <- list_boxcox_shape_1$fig_height_boxcox
-list_boxcox_shape_2 <- tables_for_boxcox_shape(boxcox_lambdas_table=boxcox_lambdas_orig_2,seq_length.out=3)
-boxcox_shape_table_2 <- list_boxcox_shape_2$boxcox_shape_table
-make_boxcox_shape_plot_2 <- list_boxcox_shape_2$make_boxcox_shape_plot
-fig_height_boxcox_2 <- list_boxcox_shape_2$fig_height_boxcox
-list_boxcox_shape_3 <- tables_for_boxcox_shape(boxcox_lambdas_table=boxcox_lambdas_orig_3,seq_length.out=3)
-make_boxcox_shape_plot_3 <- list_boxcox_shape_3$make_boxcox_shape_plot
-fig_height_boxcox_3 <- list_boxcox_shape_3$fig_height_boxcox
+list_boxcox_shape_1 <- get_eta_transf_table(input_table=boxcox_lambdas_orig_1,seq_length.out=3)
+boxcox_shape_table_1 <- list_boxcox_shape_1$eta_transf_table
+make_boxcox_shape_plot_1 <- list_boxcox_shape_1$make_eta_transf_plot
+fig_height_boxcox_1 <- list_boxcox_shape_1$fig_height
+list_boxcox_shape_2 <- get_eta_transf_table(input_table=boxcox_lambdas_orig_2,seq_length.out=3)
+boxcox_shape_table_2 <- list_boxcox_shape_2$eta_transf_table
+make_boxcox_shape_plot_2 <- list_boxcox_shape_2$make_eta_transf_plot
+fig_height_boxcox_2 <- list_boxcox_shape_2$fig_height
+list_boxcox_shape_3 <- get_eta_transf_table(input_table=boxcox_lambdas_orig_3,seq_length.out=3)
+make_boxcox_shape_plot_3 <- list_boxcox_shape_3$make_eta_transf_plot
+fig_height_boxcox_3 <- list_boxcox_shape_3$fig_height
+
+list_tdist_tables_1 <- get_eta_transf_table(input_table=tdist_table_orig_1,seq_length.out=3)
+tdist_table_1 <- list_tdist_tables_1$eta_transf_table
+make_tdist_plot_1 <- list_tdist_tables_1$make_eta_transf_plot
+fig_height_tdist_1 <- list_tdist_tables_1$fig_height
+list_tdist_tables_2 <- get_eta_transf_table(input_table=tdist_table_orig_2,seq_length.out=3)
+tdist_table_2 <- list_tdist_tables_2$eta_transf_table
+make_tdist_plot_2 <- list_tdist_tables_2$make_eta_transf_plot
+fig_height_tdist_2 <- list_tdist_tables_2$fig_height
 #compare
-context("qa, tables_for_boxcox_shape")
-test_that("get create input table for boxcox shape plot",{
+context("qa, get_eta_transf_table")
+test_that("get create input table for transformed density plot",{
   expect_equal(c("ETA_name","density","type","eta"),colnames(boxcox_shape_table_1))
   expect_equal(c(18,4),dim(boxcox_shape_table_1))
   expect_equal(c(rep("ETA(1)",6),rep("ETA(2)",6),rep("ETA(3)",6)),boxcox_shape_table_1$ETA_name)
@@ -343,6 +376,25 @@ test_that("get create input table for boxcox shape plot",{
   expect_equal(15,fig_height_boxcox_2)
   expect_equal(FALSE,make_boxcox_shape_plot_3)
   expect_equal(15,fig_height_boxcox_3)
+  
+  expect_equal(c("ETA_name","density","type","eta"),colnames(tdist_table_1))
+  expect_equal(c(18,4),dim(tdist_table_1))
+  expect_equal(c(rep("ETA(1)",6),rep("ETA(2)",6),rep("ETA(3)",6)),tdist_table_1$ETA_name)
+  expect_equal(rep(c(rep("ETA",3),rep("ETAT",3)),3),tdist_table_1$type)
+  expect_equal(c(-0.6751095,0,0.6751095,-0.3600795,0,1.4943333,-2.4894512,0,2.4894512,rep(NA,3),
+                 -2.1205587,0,2.1205587,-8.9436407,0,0.7997624),
+               round(tdist_table_1$eta),7)
+  expect_equal(TRUE,make_tdist_plot_1)
+  expect_equal(7,fig_height_tdist_1)
+  expect_equal(c("ETA_name","density","type","eta"),colnames(tdist_table_2))
+  expect_equal(c(54,4),dim(tdist_table_2))
+  expect_equal(c(rep("ETA(1)",6),rep("ETA(2)",6),rep("ETA(3)",6),
+                 rep("ETA(4)",6),rep("ETA(5)",6),rep("ETA(6)",6),
+                 rep("ETA(7)",6),rep("ETA(8)",6),rep("ETA(9)",6)),tdist_table_2$ETA_name)
+  expect_equal(rep(c(rep("ETA",3),rep("ETAT",3)),9),tdist_table_2$type)
+  expect_equal(TRUE,make_tdist_plot_2)
+  expect_equal(15,fig_height_tdist_2)
+  expect_equal(15,fig_height_tdist_2)
 })
 
 #...........................  (13) Test function get_all_covariates.R .....................................
@@ -383,6 +435,10 @@ scm_table_3 <- data.frame(c("CLAPGR-4","CLWGT-4","VAPGR-4","VWGT-4"),c(2.87,0.47
 colnames(scm_table_3) <- c("","dOFV","Coef")
 max_scm_table_3 <- data.frame("CLAPGR-4",2.87,1,stringsAsFactors = F)
 colnames(max_scm_table_3) <- c("","dOFV","Add.params")
+scm_table_4 <- data.frame(c("CLAPGR-4","CLWGT-4","VAPGR-4","VWGT-4"),c(NA,0.47,0.17,0.12),c(NA,0.05,0.004,-0.012),stringsAsFactors = F)
+colnames(scm_table_4) <- c("","dOFV","Coef")
+max_scm_table_4 <- data.frame("CLWGT-4",0.47,1,stringsAsFactors = F)
+colnames(max_scm_table_4) <- c("","dOFV","Add.params")
 
 #compare
 context("qa, get_scm_table")
@@ -411,6 +467,12 @@ test_that("get SCM table",{
                get_scm_table(rawres_file=file.path(files.w.dir,"qa_run2/scm_run/raw_results_scm.csv"),parameters=c('CL','V'),covariates=c('APGR,WGT'),categorical=c())$max_scm_table)
   expect_equal(TRUE,
                get_scm_table(rawres_file=file.path(files.w.dir,"qa_run2/scm_run/raw_results_scm.csv"),parameters=c('CL','V'),covariates=c('APGR,WGT'),categorical=c())$scm_files_exists)
+  expect_equal(scm_table_4,
+               get_scm_table(rawres_file=file.path(files.w.dir,"qa_run3/scm_run/raw_results_scm.csv"),parameters=c('CL','V'),covariates=c('APGR,WGT'),categorical=c())$scm_table)
+  expect_equal(max_scm_table_4,
+               get_scm_table(rawres_file=file.path(files.w.dir,"qa_run3/scm_run/raw_results_scm.csv"),parameters=c('CL','V'),covariates=c('APGR,WGT'),categorical=c())$max_scm_table)
+  expect_equal(TRUE,
+               get_scm_table(rawres_file=file.path(files.w.dir,"qa_run3/scm_run/raw_results_scm.csv"),parameters=c('CL','V'),covariates=c('APGR,WGT'),categorical=c())$scm_files_exists)
 })
 
 #...........................  (15) Test function get_covariates_table.R .....................................
@@ -439,6 +501,11 @@ covariates_extra_table_5 <- data.frame("Covariate"=c("CLAPGR-4","CLWGT-4","VAPGR
 covariates_table_6 <- data.frame(c("FREM","SCM"),c("7.1","ERROR"),c("0",""),stringsAsFactors = F)
 colnames(covariates_table_6) <- c("","dOFV","Add.params")
 covariates_extra_table_6 <- data.frame("Covariate"=c("SCM","FREM"),"dOFV"=c("ERROR","7.1"),stringsAsFactors = F)
+covariates_table_7 <- data.frame(c("FREM","CLWGT-4"),c(3.6,0.47),c(6,1),stringsAsFactors = F)
+colnames(covariates_table_7) <- c("","dOFV","Add.params")
+covariates_extra_table_7 <- data.frame("Covariate"=c("CLAPGR-4","CLWGT-4","VAPGR-4","VWGT-4","sum(SCMu)","FREM"),
+                                       "dOFV"=c("NA","0.5","0.2","0.1","NA","3.6"),
+                                       "Coefficient"=c("NA","0.050","0.004","-0.012","",""),stringsAsFactors = F)
 #compare
 context("qa, get_covariates_table")
 test_that("create covariate table (FREM and SCM) and extra table",{
@@ -454,6 +521,8 @@ test_that("create covariate table (FREM and SCM) and extra table",{
   expect_equal(covariates_extra_table_5,get_covariates_table(frem_table=frem_table_1,scm_table=scm_table_3,max_scm_table=max_scm_table_3)$covariates_extra_table)
   expect_equal(covariates_table_6,get_covariates_table(frem_table=frem_table_4,scm_table=scm_table_1,max_scm_table=max_scm_table_1)$covariates_table)
   expect_equal(covariates_extra_table_6,get_covariates_table(frem_table=frem_table_4,scm_table=scm_table_1,max_scm_table=max_scm_table_1)$covariates_extra_table)
+  expect_equal(covariates_table_7,get_covariates_table(frem_table=frem_table_3,scm_table=scm_table_4,max_scm_table=max_scm_table_4)$covariates_table)
+  expect_equal(covariates_extra_table_7,get_covariates_table(frem_table=frem_table_3,scm_table=scm_table_4,max_scm_table=max_scm_table_4)$covariates_extra_table)
 })
 
 #...........................  (16) Test function get_resmod_ruv_table.R .....................................
@@ -487,7 +556,7 @@ resmod_ruv_table_list_3_b <- data.frame("Model"=c("time varying","IIV on RUV","t
                                         "Parameter values"=c("sdeps_0-t0=0.868,sdeps_t0-inf=1.020,t0=7.00","%CV=15.214","df=119.865","half-life=0.011"),
                                         stringsAsFactors = F)
 colnames(resmod_ruv_table_list_3_b) <- c("Model","dOFV","Additional parameters","Parameter values")
-resmod_ruv_overview_3 <- data.frame(c("(ORIG=1)","tdist","IIV on RUV","(ORIG=2)","time varying","IIV on RUV"),
+resmod_ruv_overview_3 <- data.frame(c("(ORIG = 1)","tdist","IIV on RUV","(ORIG = 2)","time varying","IIV on RUV"),
                                     c("","5.02","2.68","","1.65","1.05"),
                                     c("","1","1","","2","1"),stringsAsFactors = F)
 colnames(resmod_ruv_overview_3) <- c("","dOFV","Add.params")
@@ -517,7 +586,7 @@ test_that("create resmod ruv table",{
   expect_equal(c(1,2),resmod_list_3$dvid_nr)
   expect_equal(1,length(resmod_list_4$resmod_ruv_table_list))
   expect_equal(resmod_ruv_table_list_4,resmod_list_4$resmod_ruv_table_list[[1]])
-  expect_equal(resmod_ruv_overview_4,resmod_list_4$resmod_ruv_overview)
+  # expect_equal(resmod_ruv_overview_4,resmod_list_4$resmod_ruv_overview)
   expect_equal('NA',resmod_list_4$dvid_nr)
 })
 
@@ -749,53 +818,53 @@ overview_list_5 <- get_overview_table(structural_overview=str_overview_1,
                                       infl_indiv_overview=cdd_highest_dofv_extra,
                                       outliers_overview=max_outlier_table_6)
 #expected data
-overview_table_1 <- data.frame(c("TIME","TAD","Full OMEGA Block","Box-Cox Transformation","Additional ETA",
+overview_table_1 <- data.frame(c("TIME","TAD","Full OMEGA Block","Box-Cox Transformation","Additional ETA","t-distribution",
                                  "FREM","SCM","RESMOD","CDD","SIMEVAL"),
-                               c(rep("ERROR",10)),c(rep("",10)),
+                               c(rep("ERROR",11)),c(rep("",11)),
                                stringsAsFactors = F)
 colnames(overview_table_1) <- c("","dOFV","Additional parameters")
 rgroup_names <- c("Structural Model","Parameter Variability Model","Covariates",
                   "Residual Error Model","Influential Individuals","Outliers")
-overview_table_2 <- data.frame(c("TIME","PRED","Full OMEGA Block","Box-Cox Transformation","Additional ETA",
+overview_table_2 <- data.frame(c("TIME","PRED","Full OMEGA Block","Box-Cox Transformation","Additional ETA","t-distribution",
                                  "FREM","SCM","RESMOD","CDD","SIMEVAL"),
-                               c(rep("NA",8),rep("ERROR",2)),c(rep("",10)),
+                               c(rep("NA",9),rep("ERROR",2)),c("4","4",rep("",9)),
                                stringsAsFactors = F)
 colnames(overview_table_2) <- c("","dOFV","Additional parameters")
-overview_table_3 <- data.frame(c("TIME","PRED","Full OMEGA Block","Box-Cox Transformation","Additional ETA",
+overview_table_3 <- data.frame(c("TIME","PRED","Full OMEGA Block","Box-Cox Transformation","Additional ETA","t-distribution",
                                  "FREM","CLAPGR-4","tdist","dtbs","All dOFV values are negative","No dOFV values found"),
-                               c("NA","4.8","ERROR","-0.6","NA","NA","2.9","43.6","21.7","",""),
-                               c("4","4","","3","","","1","1","2","",""),
+                               c("NA","4.8","ERROR","-0.6","NA","NA","NA","2.9","43.6","21.7","",""),
+                               c("4","4","","3","","","","1","1","2","",""),
                                stringsAsFactors = F)
 colnames(overview_table_3) <- c("","dOFV","Additional parameters")
-overview_table_4 <- data.frame(c("TIME","PRED","Full OMEGA Block","Box-Cox Transformation","Additional ETA",
+overview_table_4 <- data.frame(c("TIME","PRED","Full OMEGA Block","Box-Cox Transformation","Additional ETA","t-distribution",
                                  "FREM","CLAPGR-4","tdist","dtbs","Subject 34","Subject 34"),
-                               c("4.3","4.8","-3.7","-0.6","3.4","3.6","2.9","43.6","21.7","2.0","2.0"),
-                               c(rep("4",3),"0","2","6","1","1","2","",""),
+                               c("4.3","4.8","-3.7","-0.6","3.4","-1.0","3.6","2.9","43.6","21.7","2.0","2.0"),
+                               c(rep("4",3),"0","2","0","6","1","1","2","",""),
                                stringsAsFactors = F)
 colnames(overview_table_4) <- c("","dOFV","Additional parameters")
-overview_table_5 <- data.frame(c("TIME","PRED","Full OMEGA Block","Box-Cox Transformation","Additional ETA",
+overview_table_5 <- data.frame(c("TIME","PRED","Full OMEGA Block","Box-Cox Transformation","Additional ETA","t-distribution",
                                  "FREM","CLAPGR-4","tdist","dtbs","Subject 34","Subject 34"),
-                               c("4.314","4.800","-3.730","-0.566","3.410","3.600","2.870","43.620","21.670","0.003","2.003"),
-                               c(rep("4",3),"0","2","6","1","1","2","",""),
+                               c("4.3","4.8","-3.7","-0.6","3.4","-1.0","3.6","2.9","43.6","21.7","0.0","2.0"),
+                               c(rep("4",3),"0","2","0","6","1","1","2","",""),
                                stringsAsFactors = F)
 colnames(overview_table_5) <- c("","dOFV","Additional parameters")
 #compare
 context("qa, get_overview_table")
 test_that("create an overview table",{
   expect_equal(overview_table_1,overview_list_1$overview_table)
-  expect_equal(c(2,3,2,1,1,1),overview_list_1$n.rgroup)
+  expect_equal(c(2,4,2,1,1,1),overview_list_1$n.rgroup)
   expect_equal(rgroup_names,overview_list_1$rgroup_names)
   expect_equal(overview_table_2,overview_list_2$overview_table)
-  expect_equal(c(2,3,2,1,1,1),overview_list_2$n.rgroup)
+  expect_equal(c(2,4,2,1,1,1),overview_list_2$n.rgroup)
   expect_equal(rgroup_names,overview_list_2$rgroup_names)
   expect_equal(overview_table_3,overview_list_3$overview_table)
-  expect_equal(c(2,3,2,2,1,1),overview_list_3$n.rgroup)
+  expect_equal(c(2,4,2,2,1,1),overview_list_3$n.rgroup)
   expect_equal(rgroup_names,overview_list_3$rgroup_names)
   expect_equal(overview_table_4,overview_list_4$overview_table)
-  expect_equal(c(2,3,2,2,1,1),overview_list_4$n.rgroup)
+  expect_equal(c(2,4,2,2,1,1),overview_list_4$n.rgroup)
   expect_equal(rgroup_names,overview_list_4$rgroup_names)
   expect_equal(overview_table_5,overview_list_5$overview_table)
-  expect_equal(c(2,3,2,2,1,1),overview_list_5$n.rgroup)
+  expect_equal(c(2,4,2,2,1,1),overview_list_5$n.rgroup)
   expect_equal(rgroup_names,overview_list_5$rgroup_names)
 })
 
@@ -872,54 +941,54 @@ list_vpc_tables_14 <- get_tables_for_vpc(obs_table=file.path(files.w.dir,"qa_run
                                         sim_extra_table=file.path(files.w.dir,"qa_run1/simeval_run/m1/orig_pred.dta"),
                                         idv_all=c("TIME","PRED"),dvid="2",dvid_name="ORIG")
 #expected_data
-obs_1 <- data.frame(ID=c(1,1,2,2,3,4,4,4,5,5,5),
+obs_1 <- data.frame(ID=as.factor(c(1,1,2,2,3,4,4,4,5,5,5)),
                     TIME=c(2,112.5,2,63.5,134.3,1.8,59.3,130.8,2,59.5,132),
                     CWRES=c(-0.401,0.58,-1.27,1.6,-1.5,0.0206,-0.34,0.31,-0.92,-0.702,-1),
                     PRED=c(17,28,10,18,31,20,24,30,19,23,28),
                     CIPREDI=c(17,28,11,21,28,20,24,30,14,18,23),
                     DV=c(17.3,31,9.7,24.6,24.3,23.9,0,31.7,14.2,18.2,20.3),
                     MDV=c(rep(0,11)))
-sim_1 <- data.frame(ID=rep(c(1,1,2,2,3,4,4,4,5,5,5),3),
+sim_1 <- data.frame(ID=as.factor(rep(c(1,1,2,2,3,4,4,4,5,5,5),3)),
                     DV=c(25,34,10.9,28,27,20,21,34,22,29,40,20,27.8,25,32,36,19,26,39.1,21,19,34,16,30.1,17,30.8,26,18,19,28,21,24.1,28),
                     MDV=c(rep(0,33)),
                     CWRES=c(1.8,0.73,-0.18,0.42,-0.9,0.13,-1.2,1.07,0.27,1.1,2.4,0.84,-0.37,1.2,0.87,1,-0.85,0.047,1.8,0.96,-1.3,1.4,-0.503,0.45,-1.06,1.1,1.4,-0.045,-1.3,-0.16,0.82,0.2,-0.13),
                     IPRED=c(22,33,11,28,29,20.2,24,30.5,22,27,33,18,29,23,32,33,21,26,32,20,24,29,17,28,20.8,28,23,17,21,27,19,23,29),
                     TIME=rep(c(2,112.5,2,63.5,134.3,1.8,59.3,130.8,2,59.5,132),3),
                     PRED=rep(c(17,28,10,18,31,20,24,30,19,23,28),3))
-obs_8 <- data.frame(ID=c(1,1,2,2,3,4,4,4,5,5,5),
+obs_8 <- data.frame(ID=as.factor(c(1,1,2,2,3,4,4,4,5,5,5)),
                     TIME=c(2,112.5,2,63.5,134.3,1.8,59.3,130.8,2,59.5,132),
                     CWRES=c(-0.401,0.58,-1.27,1.6,-1.5,0.0206,-0.34,0.31,-0.92,-0.702,-1),
                     PRED=c(17,28,10,18,31,20,24,30,19,23,28),
                     CIPREDI=c(17,28,11,21,28,20,24,30,14,18,23),
                     MDV=c(rep(0,11)),
                     DV=c(17.3,31,9.7,24.6,24.3,23.9,0,31.7,14.2,18.2,20.3))
-obs_9 <- data.frame(ID=c(1,1,2,2,3,4,4,4,5,5,5),
+obs_9 <- data.frame(ID=as.factor(c(1,1,2,2,3,4,4,4,5,5,5)),
                     TIME=c(2,112.5,2,63.5,134.3,1.8,59.3,130.8,2,59.5,132),
                     CWRES=c(-0.401,0.58,-1.27,1.6,-1.5,0.0206,-0.34,0.31,-0.92,-0.702,-1),
                     PRED=c(17,28,10,18,31,20,24,30,19,23,28),
                     CIPREDI=c(17,28,11,21,28,20,24,30,14,18,23),
                     MDV=c(rep(0,11)))
-obs_11 <- data.frame(ID=c(1,1,2,2,3,4,4,4,5,5,5),
+obs_11 <- data.frame(ID=as.factor(c(1,1,2,2,3,4,4,4,5,5,5)),
                     TIME=c(2,112.5,2,63.5,134.3,1.8,59.3,130.8,2,59.5,132),
                     CWRES=c(-0.401,0.58,-1.27,1.6,-1.5,0.0206,-0.34,0.31,-0.92,-0.702,-1),
                     PRED=c(17,28,10,18,31,20,24,30,19,23,28),
                     CIPREDI=c(17,28,11,21,28,20,24,30,14,18,23),
                     DV=c(17.3,31,9.7,24.6,24.3,20.8,23.9,31.7,14.2,18.2,20.3))
-obs_12 <- data.frame(ID=c(1,1,3,5,5,5),
+obs_12 <- data.frame(ID=factor(c(1,1,3,5,5,5),levels = c(1,2,3,4,5)),
                     TIME=c(2,112.5,134.3,2,59.5,132),
                     CWRES=c(-0.401,0.58,-1.5,-0.92,-0.702,-1),
                     PRED=c(17,28,31,19,23,28),
                     CIPREDI=c(17,28,28,14,18,23),
                     DV=c(17.3,31,24.3,14.2,18.2,20.3),
                     MDV=c(rep(0,6)))
-sim_12 <- data.frame(ID=rep(c(1,1,3,5,5,5),3),
+sim_12 <- data.frame(ID=as.factor(rep(c(1,1,3,5,5,5),3)),
                     DV=c(25,34,27,22,29,40,20,27.8,36,21,19,34,16,30.1,26,21,24.1,28),
                     MDV=c(rep(0,18)),
                     CWRES=c(1.8,0.73,-0.9,0.27,1.1,2.4,0.84,-0.37,1,0.96,-1.3,1.4,-0.503,0.45,1.4,0.82,0.2,-0.13),
                     IPRED=c(22,33,29,22,27,33,18,29,33,20,24,29,17,28,23,19,23,29),
                     TIME=rep(c(2,112.5,134.3,2,59.5,132),3),
                     PRED=rep(c(17,28,31,19,23,28),3))
-obs_6 <- data.frame(ID=c(1,1,2,2,3,4,4,4,5,5,5),
+obs_6 <- data.frame(ID=as.factor(c(1,1,2,2,3,4,4,4,5,5,5)),
                     TIME=c(2,112.5,2,63.5,134.3,1.8,59.3,130.8,2,59.5,132),
                     CWRES=c(-0.401,0.58,-1.27,1.6,-1.5,0.0206,-0.34,0.31,-0.92,-0.702,-1),
                     PRED=c(17,28,10,18,31,20,24,30,19,23,28),
@@ -927,7 +996,7 @@ obs_6 <- data.frame(ID=c(1,1,2,2,3,4,4,4,5,5,5),
                     ORIG=c(rep(2,11)),
                     DV=c(17.3,31,9.7,24.6,24.3,23.9,0,31.7,14.2,18.2,20.3),
                     MDV=c(rep(0,11)))
-sim_6 <- data.frame(ID=rep(c(1,1,2,2,3,4,4,4,5,5,5),3),
+sim_6 <- data.frame(ID=as.factor(rep(c(1,1,2,2,3,4,4,4,5,5,5),3)),
                     DV=c(25,34,10.9,28,27,20,21,34,22,29,40,20,27.8,25,32,36,19,26,39.1,21,19,34,16,30.1,17,30.8,26,18,19,28,21,24.1,28),
                     MDV=c(rep(0,33)),
                     CWRES=c(1.8,0.73,-0.18,0.42,-0.9,0.13,-1.2,1.07,0.27,1.1,2.4,0.84,-0.37,1.2,0.87,1,-0.85,0.047,1.8,0.96,-1.3,1.4,-0.503,0.45,-1.06,1.1,1.4,-0.045,-1.3,-0.16,0.82,0.2,-0.13),
@@ -935,7 +1004,7 @@ sim_6 <- data.frame(ID=rep(c(1,1,2,2,3,4,4,4,5,5,5),3),
                     ORIG=rep(2,33),
                     TIME=rep(c(2,112.5,2,63.5,134.3,1.8,59.3,130.8,2,59.5,132),3),
                     PRED=rep(c(17,28,10,18,31,20,24,30,19,23,28),3))
-obs_13 <- data.frame(ID=c(1,1,3,5,5,5),
+obs_13 <- data.frame(ID=as.factor(c(1,1,3,5,5,5)),
                      TIME=c(2,112.5,134.3,2,59.5,132),
                      CWRES=c(-0.401,0.58,-1.5,-0.92,-0.702,-1),
                      PRED=c(17,28,31,19,23,28),
@@ -943,7 +1012,7 @@ obs_13 <- data.frame(ID=c(1,1,3,5,5,5),
                      ORIG=rep(2,6),
                      DV=c(17.3,31,24.3,14.2,18.2,20.3),
                      MDV=c(rep(0,6)))
-sim_13 <- data.frame(ID=rep(c(1,1,3,5,5,5),3),
+sim_13 <- data.frame(ID=as.factor(rep(c(1,1,3,5,5,5),3)),
                      DV=c(25,34,27,22,29,40,20,27.8,36,21,19,34,16,30.1,26,21,24.1,28),
                      MDV=c(rep(0,18)),
                      CWRES=c(1.8,0.73,-0.9,0.27,1.1,2.4,0.84,-0.37,1,0.96,-1.3,1.4,-0.503,0.45,1.4,0.82,0.2,-0.13),
