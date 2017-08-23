@@ -31,6 +31,9 @@ has 'fo' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'lst_file' => ( is => 'rw', isa => 'Str' );
 has 'cmd_line' => ( is => 'rw', isa => 'Str' );         # Used as a work around for calling scm via system
 has 'nointer' => ( is => 'rw', isa => 'Bool', default => 0 );
+has 'nonlinear' => ( is => 'rw', isa => 'Bool', default => 0 );
+has 'skip' => ( is => 'rw', isa => 'ArrayRef[Str]', default => sub { [] } );
+has 'only' => ( is => 'rw', isa => 'ArrayRef[Str]', default => sub { [] } );    # Will be transformed into skip in BUILD
 
 has 'resmod_idv_table' => ( is => 'rw', isa => 'Str' ); # The table used by resmod
 
@@ -40,6 +43,28 @@ sub BUILD
 
 	my $model = $self->models()->[0];
     $self->model($model);
+
+    if (scalar(@{$self->skip}) > 0 and scalar(@{$self->only}) > 0) {
+        die("Cannot have both skip and only\n");
+    }
+
+    if (scalar(@{$self->only}) > 0) {
+        my %skip_hash = ( 'scm' => 1, 'frem' => 1, 'cdd' => 1, 'simeval' => 1, 'etas' => 1, 'resmod' => 1 );
+        for my $section (@{$self->only}) {
+            if (exists $skip_hash{$section}) {
+                delete $skip_hash{$section};
+            } else {
+                die("only: Unknown section $section. Allowed are etas, scm, frem, cdd, simeval and resmod\n");
+            }
+        }
+        $self->skip([keys %skip_hash]);
+    }
+
+    for my $skip (@{$self->skip}) {
+        if ($skip !~ /^(etas|scm|frem|cdd|simeval|resmod)$/) {
+            die("skip: Unknown section $skip. Allowed are etas, scm, frem, cdd, simeval and resmod\n");
+        }
+    }
 }
 
 sub modelfit_setup
@@ -52,147 +77,159 @@ sub modelfit_setup
 	my $vers = $PsN::version;
 	my $dev = $PsN::dev;
 
-    print "*** Running linearize ***\n";
-    my $linearized_model_name = $self->model->filename;
-    $linearized_model_name =~ s/(\.[^.]+)$/_linbase.mod/;
-    ui->category('linearize');
-	
-	my @table_columns = ( 'ID', $self->idv,'CWRES', 'PRED', 'CIPREDI' );
-	
-    if ($model_copy->defined_variable(name => $self->dvid)) {
-		push @table_columns, $self->dvid;
-	} 
-	
-    if ($model_copy->defined_variable(name => 'TAD')) {
-        push @table_columns, 'TAD';
-    }
-
-    my $lst_file;
-    if (defined $self->lst_file) {
-        $lst_file = '../../../' . $self->lst_file;
-    }
-
-    # $model_copy->set_records(type => 'covariance', record_strings => [ "UNCONDITIONAL" ]);     # Might need this for FREM CIs
-    # cov step execution in non-linear model (derivatives.mod) might take hours or days, just omit for now
     $model_copy->set_records(type => 'covariance', record_strings => [ "OMITTED" ]);
 
-    my $old_nm_output = common_options::get_option('nm_output');    # Hack to set clean further down
-    common_options::set_option('nm_output', 'phi,ext,cov,cor,coi');
-    my $linearize = tool::linearize->new(
-        %{common_options::restore_options(@common_options::tool_options)},
-        models => [ $model_copy ],
-        directory => 'linearize_run',
-        estimate_fo => $self->fo,
-        extra_table_columns => \@table_columns,
-        lst_file => $lst_file,
-        nointer => $self->nointer,
-        keep_covariance => 1,
-        nm_output => 'phi,ext,cov,cor,coi',
-    );
+    my $base_model_name = $self->model->filename;
+    if (not $self->nonlinear) {
+        $base_model_name =~ s/(\.[^.]+)$/_linbase.mod/;
+    
+        print "*** Running linearize ***\n";
+        ui->category('linearize');
+	
+    	my @table_columns = ( 'ID', $self->idv,'CWRES', 'PRED', 'CIPREDI' );
+	
+        if ($model_copy->defined_variable(name => $self->dvid)) {
+            push @table_columns, $self->dvid;
+        } 
+	
+        if ($model_copy->defined_variable(name => 'TAD')) {
+            push @table_columns, 'TAD';
+        }
 
-    $linearize->run();
-    $linearize->print_results();
-    ui->category('qa');
+        my $lst_file;
+        if (defined $self->lst_file) {
+            $lst_file = '../../../' . $self->lst_file;
+        }
 
-    common_options::set_option('nm_output', $old_nm_output);
+        my $old_nm_output = common_options::get_option('nm_output');    # Hack to set clean further down
+        common_options::set_option('nm_output', 'phi,ext,cov,cor,coi');
+        my $linearize = tool::linearize->new(
+            %{common_options::restore_options(@common_options::tool_options)},
+            models => [ $model_copy ],
+            directory => 'linearize_run',
+            estimate_fo => $self->fo,
+            extra_table_columns => \@table_columns,
+            lst_file => $lst_file,
+            nointer => $self->nointer,
+            keep_covariance => 1,
+            nm_output => 'phi,ext,cov,cor,coi',
+        );
 
-    my $linearized_model = model->new(
-        filename => $linearized_model_name,
-    );
+        $linearize->run();
+        $linearize->print_results();
+        ui->category('qa');
+
+        common_options::set_option('nm_output', $old_nm_output);
+    }
+
+    my $base_model;
+    if (not $self->nonlinear) {
+        $base_model = model->new(
+            filename => $base_model_name,
+        );
+    } else {
+        $base_model = $model_copy;
+    }
 
     #if ($self->fo) {
-    #    $linearized_model->remove_option(record_name => 'estimation', option_name => 'METHOD');
-    #    $linearized_model->_write();
+    #    $base_model->remove_option(record_name => 'estimation', option_name => 'METHOD');
+    #    $base_model->_write();
     #}
 
-    print "*** Running full omega block, add etas, boxcox and tdist models ***\n";
-    eval {
-        my @models;
-        my $full_block_model = $linearized_model->copy(filename => "fullblock.mod");
-        my $was_full_block = model_transformations::full_omega_block(model => $full_block_model);
-        if ($was_full_block) {
-            unlink("fullblock.mod");        # Why was this created in the first place?
-        } else {
-            $full_block_model->_write();
-            push @models, $full_block_model;
-        }
-        my $boxcox_model = $linearized_model->copy(filename => "boxcox.mod");
-        model_transformations::boxcox_etas(model => $boxcox_model);
-        $boxcox_model->_write();
-        push @models, $boxcox_model;
-        my $tdist_model = $linearized_model->copy(filename => "tdist.mod");
-        model_transformations::tdist_etas(model => $tdist_model);
-        $tdist_model->_write();
-        push @models, $tdist_model;
-        my $add_etas_model = $linearized_model->copy(filename => "add_etas.mod");
-        my $was_added = $add_etas_model->unfix_omega_0_fix();
-        if ($was_added) {
-            $add_etas_model->_write();
-            push @models, $add_etas_model;
-        } else {
-            unlink("add_etas.mod");
-        }
-        my $modelfit = tool::modelfit->new(
-            %{common_options::restore_options(@common_options::tool_options)},
-            models => \@models,
-            directory => 'modelfit_run',
-            top_tool => 1,
-        );
-        $modelfit->run();
-    };
-    $self->_to_qa_dir();
+    if (not $self->_skipped('etas')) {
+        print "*** Running full omega block, add etas, boxcox and tdist models ***\n";
+        eval {
+            mkdir "modelfit_run";
+            my @models;
+            my $full_block_model = $base_model->copy(directory => "modelfit_run", filename => "fullblock.mod", write_copy => 0);
+            my $was_full_block = model_transformations::full_omega_block(model => $full_block_model);
+            if (not $was_full_block) {
+                $full_block_model->_write();
+                push @models, $full_block_model;
+            }
+            my $boxcox_model = $base_model->copy(directory => "modelfit_run", filename => "boxcox.mod", write_copy => 0);
+            model_transformations::boxcox_etas(model => $boxcox_model);
+            $boxcox_model->_write();
+            push @models, $boxcox_model;
+            my $tdist_model = $base_model->copy(directory => "modelfit_run", filename => "tdist.mod", write_copy => 0);
+            model_transformations::tdist_etas(model => $tdist_model);
+            $tdist_model->_write();
+            push @models, $tdist_model;
+            my $add_etas_model = $base_model->copy(directory => "modelfit_run", filename => "add_etas.mod", write_copy => 0);
+            my $was_added = $add_etas_model->unfix_omega_0_fix();
+            if ($was_added) {
+                $add_etas_model->_write();
+                push @models, $add_etas_model;
+            }
+            for my $model (@models) {       # Set output directory so that .lst file gets saved in the rundir
+                $model->outputs->[0]->directory(".");
+            }
+            chdir "modelfit_run";
+            my $modelfit = tool::modelfit->new(
+                %{common_options::restore_options(@common_options::tool_options)},
+                models => \@models,
+                directory => "modelfit_dir1",
+                top_tool => 1,
+            );
+            $modelfit->run();
+            chdir "..";
+        };
+        $self->_to_qa_dir();
+    }
 
     if (defined $self->covariates or defined $self->categorical) {
-        print "\n*** Running FREM ***\n";
-        my $frem_model = model->new(filename => $linearized_model_name);
-        my @covariates;
-        if (defined $self->covariates) {
-            @covariates = split(',', $self->covariates);
-        }
-        my @categorical;
-        if (defined $self->categorical) {
-            @categorical = split(',', $self->categorical);
-        }
+        if (not $self->_skipped('frem')) {
+            print "\n*** Running FREM ***\n";
+            my $frem_model = model->new(filename => $base_model_name);
+            my @covariates;
+            if (defined $self->covariates) {
+                @covariates = split(',', $self->covariates);
+            }
+            my @categorical;
+            if (defined $self->categorical) {
+                @categorical = split(',', $self->categorical);
+            }
 
-        my $old_clean = common_options::get_option('clean');    # Hack to set clean further down
-        common_options::set_option('clean', 1);
-        eval {
-            my $frem = tool::frem->new(
-                %{common_options::restore_options(@common_options::tool_options)},
-                models => [ $frem_model ],
-                covariates => [ @covariates, @categorical ],
-                categorical => [ @categorical ],
-                directory => 'frem_run',
-                rescale => 1,
-                run_sir => 1,
-                rplots => 1,
-                top_tool => 1,
-                clean => 1,
-            );
-            $frem->run();
-            $frem->print_options(   # To get skip_omegas over to postfrem
-                toolname => 'frem',
-                local_options => [ 'skip_omegas' ],
-                #common_options => \@common_options::tool_options
-            );
-        };
-        common_options::set_option('clean', $old_clean);
-
-
-        $self->_to_qa_dir();
-        if (-d "frem_run") {
-            print "\n*** Running POSTFREM ***\n";
+            my $old_clean = common_options::get_option('clean');    # Hack to set clean further down
+            common_options::set_option('clean', 1);
             eval {
-				if ($dev) {
-					system("postfrem -frem_directory=frem_run -directory=postfrem_run -force_posdef_covmatrix");
-				} else {
-					system("postfrem-".$vers." -force_posdef_covmatrix -frem_directory=frem_run -directory=postfrem_run");
-				}
+                my $frem = tool::frem->new(
+                    %{common_options::restore_options(@common_options::tool_options)},
+                    models => [ $frem_model ],
+                    covariates => [ @covariates, @categorical ],
+                    categorical => [ @categorical ],
+                    directory => 'frem_run',
+                    rescale => 1,
+                    run_sir => 1,
+                    rplots => 1,
+                    top_tool => 1,
+                    clean => 1,
+                );
+                $frem->run();
+                $frem->print_options(   # To get skip_omegas over to postfrem
+                    toolname => 'frem',
+                    local_options => [ 'skip_omegas' ],
+                    #common_options => \@common_options::tool_options
+                );
             };
-        }
-        $self->_to_qa_dir();
+            common_options::set_option('clean', $old_clean);
 
-        if (defined $self->parameters) {
+
+            $self->_to_qa_dir();
+            if (-d "frem_run") {
+                print "\n*** Running POSTFREM ***\n";
+                eval {
+                    if ($dev) {
+                        system("postfrem -frem_directory=frem_run -directory=postfrem_run -force_posdef_covmatrix");
+                    } else {
+                        system("postfrem-".$vers." -force_posdef_covmatrix -frem_directory=frem_run -directory=postfrem_run");
+                    }
+                };
+            }
+            $self->_to_qa_dir();
+        }
+
+        if (not $self->_skipped('scm') and defined $self->parameters) {
             print "\n*** Running scm ***\n";
             my $scm_model = $self->model->copy(filename => "m1/scm.mod");
             if ($self->model->is_run()) {
@@ -221,132 +258,167 @@ sub modelfit_setup
             if ($self->nointer) {
                 $nointer = "-nointer";
             }
+            my $nonlinear = "";
+            if ($self->nonlinear) {
+                $nonlinear = "-no-linearize -no-foce";
+            }
 
             eval {
 				if($dev) {
-					system("scm config.scm $scm_options $fo $nointer");       # FIXME: system for now
+					system("scm config.scm $scm_options $fo $nointer $nonlinear");       # FIXME: system for now
 				} else {
-					system("scm-".$vers." config.scm $scm_options $fo $nointer");       # FIXME: system for now
+					system("scm-".$vers." config.scm $scm_options $fo $nointer $nonlinear");       # FIXME: system for now
 				}
             };
             $self->_to_qa_dir();
         }
     }
-    print "\n*** Running cdd ***\n";
-    my $cdd_model = model->new(filename => $linearized_model_name);
-    eval {
-        my $cdd = tool::cdd->new(
-            %{common_options::restore_options(@common_options::tool_options)},
-            models => [ $cdd_model ],
-            directory => 'cdd_run',
-            rplots => 1,
-            etas => 1,
-            top_tool => 1,
-        );
-        $cdd->run();
-    };
-    $self->_to_qa_dir();
 
-    print "\n*** Running simeval ***\n";
-    my $simeval_model = $linearized_model->copy(filename => "m1/simeval.mod");
-    $simeval_model->remove_records(type => 'etas');
-    $simeval_model->remove_option(record_name => 'estimation', option_name => 'MCETA');
-    $simeval_model->_write();
-    eval {
-        my $simeval = tool::simeval->new(
-            %{common_options::restore_options(@common_options::tool_options)},
-            models => [ $simeval_model ],
-            rplots => 1,
-            n_simulation_models => 5,
-            directory => "simeval_run",
-            top_tool => 1,
-        );
-        $simeval->run();
-    };
-    $self->_to_qa_dir();
-
-    print "*** Running resmod ***\n";
-    my $resmod_model = model->new(filename => 'linearize_run/scm_dir1/derivatives.mod');
-
-    my $resmod_idv;
-    eval {
-        $resmod_idv = tool::resmod->new(
-            %{common_options::restore_options(@common_options::tool_options)},
-            models => [ $resmod_model ],
-            dvid => $self->dvid,
-            idv => $self->idv,
-            dv => $self->dv,
-            occ => $self->occ,
-            groups => $self->groups,
-            iterative => 0,
-            directory => 'resmod_'.$self->idv,
-            top_tool => 1,
-        );
-        $self->resmod_idv_table($resmod_idv->table_file);
-    };
-    if (not $@) {
+    if (not $self->_skipped('cdd')) {
+        print "\n*** Running cdd ***\n";
+        my $cdd_model = model->new(filename => $base_model_name);
         eval {
-            $resmod_idv->run();
+            my $cdd = tool::cdd->new(
+                %{common_options::restore_options(@common_options::tool_options)},
+                models => [ $cdd_model ],
+                directory => 'cdd_run',
+                rplots => 1,
+                etas => 1,
+                top_tool => 1,
+            );
+            $cdd->run();
         };
-    } else {
-        rmdir "resmod_".$self->idv;
+        $self->_to_qa_dir();
     }
 
-    $self->_to_qa_dir();
-
-    my $resmod_tad;
-    eval {
-        $resmod_tad = tool::resmod->new(
-            %{common_options::restore_options(@common_options::tool_options)},
-            models => [ $resmod_model ],
-            dvid => $self->dvid,
-            idv => 'TAD',
-            dv => $self->dv,
-            occ => $self->occ,
-            groups => $self->groups,
-            iterative => 0,
-            directory => 'resmod_TAD',
-            top_tool => 1,
-        );
-    };
-    if (not $@) {
+    if (not $self->_skipped('simeval')) {
+        print "\n*** Running simeval ***\n";
+        my $simeval_model = $base_model->copy(filename => "m1/simeval.mod");
+        $simeval_model->remove_records(type => 'etas');
+        $simeval_model->remove_option(record_name => 'estimation', option_name => 'MCETA');
+        $simeval_model->_write();
         eval {
-            $resmod_tad->run();
+            my $simeval = tool::simeval->new(
+                %{common_options::restore_options(@common_options::tool_options)},
+                models => [ $simeval_model ],
+                rplots => 1,
+                n_simulation_models => 5,
+                directory => "simeval_run",
+                top_tool => 1,
+            );
+            $simeval->run();
         };
-    } else {
-        rmdir 'resmod_TAD';
+        $self->_to_qa_dir();
     }
-    $self->_to_qa_dir();
 
-    my $resmod_pred;
-    eval {
-        $resmod_pred = tool::resmod->new(
-            %{common_options::restore_options(@common_options::tool_options)},
-            models => [ $resmod_model ],
-            dvid => $self->dvid,
-            idv => 'PRED',
-            dv => $self->dv,
-            occ => $self->occ,
-            groups => $self->groups,
-            iterative => 0,
-            directory => 'resmod_PRED',
-            top_rool => 1,
-            clean => 0,         # Should not be need as top_tool is 1, but top_tool gets reset somehow for this run
-        );
-    };
-    if (not $@) {
+    if (not $self->_skipped('resmod')) {
+        print "*** Running resmod ***\n";
+        my $resmod_model;
+        if (not $self->nonlinear) {
+            $resmod_model = model->new(filename => 'linearize_run/scm_dir1/derivatives.mod');
+        } else {
+            $resmod_model = $model_copy;
+        }
+
+        my $resmod_idv;
         eval {
-            $resmod_pred->run();
+            $resmod_idv = tool::resmod->new(
+                %{common_options::restore_options(@common_options::tool_options)},
+                models => [ $resmod_model ],
+                dvid => $self->dvid,
+                idv => $self->idv,
+                dv => $self->dv,
+                occ => $self->occ,
+                groups => $self->groups,
+                iterative => 0,
+                directory => 'resmod_'.$self->idv,
+                top_tool => 1,
+            );
+            $self->resmod_idv_table($resmod_idv->table_file);
         };
-    } else {
-        rmdir 'resmod_PRED';
+        if (not $@) {
+            eval {
+                $resmod_idv->run();
+            };
+        } else {
+            rmdir "resmod_".$self->idv;
+        }
+
+        $self->_to_qa_dir();
+
+        my $resmod_tad;
+        eval {
+            $resmod_tad = tool::resmod->new(
+                %{common_options::restore_options(@common_options::tool_options)},
+                models => [ $resmod_model ],
+                dvid => $self->dvid,
+                idv => 'TAD',
+                dv => $self->dv,
+                occ => $self->occ,
+                groups => $self->groups,
+                iterative => 0,
+                directory => 'resmod_TAD',
+                top_tool => 1,
+            );
+        };
+        if (not $@) {
+            eval {
+                $resmod_tad->run();
+            };
+        } else {
+            rmdir 'resmod_TAD';
+        }
+        $self->_to_qa_dir();
+
+        my $resmod_pred;
+        eval {
+            $resmod_pred = tool::resmod->new(
+                %{common_options::restore_options(@common_options::tool_options)},
+                models => [ $resmod_model ],
+                dvid => $self->dvid,
+                idv => 'PRED',
+                dv => $self->dv,
+                occ => $self->occ,
+                groups => $self->groups,
+                iterative => 0,
+                directory => 'resmod_PRED',
+                top_rool => 1,
+                clean => 0,         # Should not be need as top_tool is 1, but top_tool gets reset somehow for this run
+            );
+        };
+        if (not $@) {
+            eval {
+                $resmod_pred->run();
+            };
+        } else {
+            rmdir 'resmod_PRED';
+        }
+        $self->_to_qa_dir();
     }
-    $self->_to_qa_dir();
 }
 
 sub modelfit_analyze
 {
     my $self = shift;
+}
+
+sub _skipped
+{
+    my $self = shift;
+    my $skip = shift;
+
+    for my $a (@{$self->skip}) {
+        if ($skip eq $a) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
+sub _all_skipped_for_linearize
+{
+    my $self = shift;
+    return $self->_skipped('scm') && $self->_skipped('frem') && $self->_skipped('cdd') && $self->_skipped('simeval') && $self->_skipped('etas');
 }
 
 sub _create_scm_config
@@ -445,7 +517,11 @@ sub create_R_plots_code
         @parameters = split(/,/, $self->parameters);
     }
 	my $CWRES_table_path = $self->resmod_idv_table;
-	$CWRES_table_path =~ s/\\/\//g;
+    if (defined $CWRES_table_path) {
+	    $CWRES_table_path =~ s/\\/\//g;
+    } else {
+        $CWRES_table_path = "";
+    }
 		
     $rplot->add_preamble(
         code => [
@@ -459,7 +535,8 @@ sub create_R_plots_code
             "CWRES_table <- '" . $CWRES_table_path . "'",
 			"cdd_dofv_cutoff <- 3.84 ",
 			"cdd_max_rows <- 10",
-			"type <- 'latex' # set to 'html' if want to create a html file "
+			"type <- 'latex' # set to 'html' if want to create a html file ",
+            "skip <- " . rplots::create_r_vector(array => $self->skip),
         ]
     );
 }

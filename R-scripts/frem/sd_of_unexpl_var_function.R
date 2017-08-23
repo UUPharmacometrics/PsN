@@ -23,6 +23,12 @@ sd_unexpl_var <- function(sd_coef_summary,covdata,pardata) {
       }
     }
     
+    #check if uncertanty exists
+    uncertainty <- TRUE
+    if(all(is.na(sd_coef_summary$sd.5th))) {
+      uncertainty <- FALSE
+    }
+    
     # delete "LN" prefixes (if they exist) in the sd_coeficient_summary table
     for (i in 1:nrow(sd_coef_summary)) {
       if (grepl("\\.LN",sd_coef_summary[i,1])) {
@@ -39,7 +45,11 @@ sd_unexpl_var <- function(sd_coef_summary,covdata,pardata) {
       DF[,4] <- as.numeric(DF[,4])
       DF[,1] <- gsub(paste0(parameter_names[j],"."),'',DF[,1])
       
-      DF$expected <- sprintf("%.3G [%.3G, %.3G]",DF$observed.sd,DF$sd.5th,DF$sd.95th)
+      if(uncertainty) {
+        DF$expected <- sprintf("%.3G [%.3G, %.3G]",DF$observed.sd,DF$sd.5th,DF$sd.95th)
+      } else {
+        DF$expected <- sprintf("%.3G",DF$observed.sd)
+      }
       DF$round_obs.sd <- round(DF$observed.sd,3)
       DF$group <- c(rep("all",nrow(DF)))
       # add an empty row to DF

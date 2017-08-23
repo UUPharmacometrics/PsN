@@ -763,7 +763,7 @@ sub put_skipped_omegas_first
                               need_to_move  => { isa => 'Bool', optional => 0 },
                               new_omega_order  => { isa => 'ArrayRef', optional => 0 },
                               input_model_fix_omegas => { isa => 'ArrayRef', optional => 0 },
-                              etas_file => { isa => 'Maybe[Str]', optional => 0 }
+                              etas_file => { isa => 'Maybe[Str]', optional => 1 }
     );
     my $model = $parm{'model'};
     my $problem_index = $parm{'problem_index'};

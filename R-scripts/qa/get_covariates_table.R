@@ -1,10 +1,10 @@
 get_covariates_table <- function(frem_table,scm_table,max_scm_table) {
   covariates_table <- rbind(c("FREM",frem_table[2:3]),max_scm_table,stringsAsFactors=F)
-  if((scm_table$dOFV[1] == "ERROR" || scm_table$dOFV[1] == "NA") && length(scm_table$dOFV)==1) {
-    if(frem_table$dOFV != "ERROR" && frem_table$dOFV != "NA") {
-      covariates_extra_table <- rbind(scm_table,c("FREM",format(round(as.numeric(frem_table$dOFV),2),digits=1,nsmall = 1)),stringsAsFactors=F)
-    } else {
+  if(any(c("ERROR","NA","SKIPPED")==scm_table$dOFV[1]) && length(scm_table$dOFV)==1) {
+    if(any(c("ERROR","NA","SKIPPED")==frem_table$dOFV)) {
       covariates_extra_table <- rbind(scm_table,c("FREM",frem_table$dOFV),stringsAsFactors=F)
+    } else {
+      covariates_extra_table <- rbind(scm_table,c("FREM",format(round(as.numeric(frem_table$dOFV),2),digits=1,nsmall = 1)),stringsAsFactors=F)
     }
     colnames(covariates_extra_table) <- c("Covariate","dOFV")
   } else {

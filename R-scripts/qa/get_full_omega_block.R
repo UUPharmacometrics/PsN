@@ -1,8 +1,8 @@
 get_full_omega_block <- function(directory,dofv_block) {
   #get full omega block extra table
-  if(file.exists(file.path(directory,"fullblock.ext")) && file.exists(file.path(directory,"linearize_run/scm_dir1/derivatives.ext"))) {
+  if(file.exists(file.path(directory,"modelfit_run/fullblock.ext")) && file.exists(file.path(directory,"linearize_run/scm_dir1/derivatives.ext"))) {
     # omega values from fullblock model
-    omega_values <- get_omega_values(ext_file=file.path(directory,"fullblock.ext"),omegas="all")
+    omega_values <- get_omega_values(ext_file=file.path(directory,"modelfit_run/fullblock.ext"),omegas="all")
     # omega values from original model
     deriv_omega_values <- get_omega_values(ext_file=file.path(directory,"/linearize_run/scm_dir1/derivatives.ext"),omegas="all")
     

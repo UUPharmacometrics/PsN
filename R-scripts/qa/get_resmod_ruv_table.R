@@ -1,7 +1,7 @@
-get_resmod_ruv_table <- function(directory, idv_name, dvid_name){
+get_resmod_ruv_table <- function(directory, idv_name, dvid_name, skip){
   resmod_file_exists <- get_resmod_table(directory=directory, idv=idv_name)$resmod_file_exists
   resmod_ruv_table_list <- list()
-  if(resmod_file_exists) {
+  if(resmod_file_exists && all(skip!="resmod")) {
     resmod_table_full <- get_resmod_table(directory, idv_name)$resmod_table 
     if(any(resmod_table_full$dvid!="NA")) {
       dvid_nr <- unique(resmod_table_full$dvid)
@@ -59,7 +59,7 @@ get_resmod_ruv_table <- function(directory, idv_name, dvid_name){
       if(length(dvid_nr) == 1 && dvid_nr=="NA") {
         resmod_ruv_overview <- resmod_ruv_table[c(1:2),c("Model","dOFV","Additional parameters")] #the highest ofv values
       } else {
-        resmod_ruv_overview[k,] <- c(paste0("(",dvid_name,"=",dvid_nr[j],")"),'','')
+        resmod_ruv_overview[k,] <- c(paste0("(",dvid_name," = ",dvid_nr[j],")"),'','')
         resmod_ruv_overview[c(k+1,k+2),] <- resmod_ruv_table[c(1:2),c("Model","dOFV","Additional parameters")] #the highest ofv values
         k <- k + 3
       }
@@ -74,12 +74,38 @@ get_resmod_ruv_table <- function(directory, idv_name, dvid_name){
    # }
    
   } else {
+    if(any(skip=="resmod")) {
+      resmod_ruv_overview <- data.frame("RESMOD","SKIPPED",stringsAsFactors = F)
+      colnames(resmod_ruv_overview) <- c("","dOFV")
+    } else {
+      resmod_ruv_overview <- error_table("RESMOD")
+    }
     resmod_ruv_table_list[[1]] <- error_table(col=1)
-    resmod_ruv_overview <- error_table("RESMOD")
     dvid_nr <- 'NA'
   }
   
-  return(list(resmod_ruv_table_list=resmod_ruv_table_list,
+  if(length(resmod_ruv_table_list)>1) {
+    resmod_row_groups <- as.data.frame(array(0,c(length(dvid_nr),3)),stringsAsFactors=F)
+  j <- 1
+    for(i in 1:length(resmod_ruv_table_list)) {
+      resmod_row_groups[i,1] <- paste0(dvid_name,"=",dvid_nr[i])
+      resmod_row_groups[i,2] <- j
+      j <- j + nrow(resmod_ruv_table_list[[i]])
+      resmod_row_groups[i,3] <- j - 1
+      if(i == 1) {
+        resmod_ruv_table_full <- resmod_ruv_table_list[[i]]
+      } else {
+        resmod_ruv_table_full <- rbind(resmod_ruv_table_full,resmod_ruv_table_list[[i]])
+      }
+    }
+  } else {
+    resmod_row_groups <- data.frame()
+    resmod_ruv_table_full <- resmod_ruv_table_list[[1]]
+  }
+  
+  return(list(resmod_ruv_table_full=resmod_ruv_table_full,
+              resmod_row_groups=resmod_row_groups,
+              resmod_ruv_table_list=resmod_ruv_table_list,
               resmod_ruv_overview=resmod_ruv_overview,
               dvid_nr=dvid_nr))
 }

@@ -1,8 +1,8 @@
-get_ii_table <- function(raw.results.file,skipped.id.file,cutoff,max_rows){
+get_ii_table <- function(raw.results.file,skipped.id.file,cutoff,max_rows,skip){
   cdd_files_exist <- TRUE
   infl_id <- c()
   all_dofv <- c()
-  if(file.exists(raw.results.file) && file.exists(skipped.id.file)) {
+  if(file.exists(raw.results.file) && file.exists(skipped.id.file) && all(skip!="cdd")) {
     data_full <- create.data.full(raw.results.file,skipped.id.file)
     cdd.data.all <- data_full$cdd.data.all
     if(any(colnames(cdd.data.all)=="cdd.delta.ofv")) {
@@ -64,9 +64,16 @@ get_ii_table <- function(raw.results.file,skipped.id.file,cutoff,max_rows){
     }
   } else {
     cdd_files_exist <- FALSE
+    if(any(skip=="cdd")) {
+      cdd_highest_dofv <- data.frame("CDD","SKIPPED",stringsAsFactors = F)
+      colnames(cdd_highest_dofv) <- c("","dOFV")
+      cdd.data <- data.frame("SKIPPED",stringsAsFactors = F)
+      colnames(cdd.data) <- NULL
+    } else {
+      cdd_highest_dofv <- error_table("CDD")
+      cdd.data <- error_table(col=1)
+    }
     ii_table <- error_table(col=1)
-    cdd_highest_dofv <- error_table("CDD")
-    cdd.data <- error_table(col=1)
   }
   
   if(length(infl_id)<=3) {

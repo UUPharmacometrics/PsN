@@ -15,6 +15,7 @@ use math;
 use utils::file;
 use array qw(get_positions any_nonzero);
 use nmtablefile;
+use code_parsing;
 use PsN;
 
 
@@ -1578,9 +1579,9 @@ sub linearize_setup
     );
     my $original_model = $parm{'original_model'};
 
-    my $linearize_only=0;
+    my $linearize_only = 0;
     if ((defined $self->max_steps() and $self->max_steps() == 0) and ($self->step_number()==1) and
-        scalar(keys %{$self->test_relations()}) == 0){
+        scalar(keys %{$self->test_relations()}) == 0) {
         $linearize_only = 1;
         my $base = $original_model->filename();
         $base =~ s/\.(mod|ctl)$//;
@@ -1592,81 +1593,83 @@ sub linearize_setup
     # make check that only one problem for linearize
     my $derivatives_model;
     my %included_relations;
-    %included_relations = %{$self -> included_relations} if
-    (defined $self -> included_relations);
+    %included_relations = %{$self->included_relations} if
+    (defined $self->included_relations);
     my $datafilename;
-    my $part='-part';
+    my $part = '-part';
     my $rerun_derivatives_new_direction = 1;
-    my $stepname='';
-    if ($self->step_number()>1){
-        $stepname = '_'.($self->step_number()-1);
-        if ($self->search_direction() eq 'forward'){
+    my $stepname = '';
+    if ($self->step_number() > 1) {
+        $stepname = '_' . ($self->step_number() - 1);
+        if ($self->search_direction() eq 'forward') {
             $stepname .= 'f';
         }else{
             $stepname .= 'b';
         }
     }
-    if ($self->step_number() == 1){
+    if ($self->step_number() == 1) {
         #if first step then prepare parameter_eta hash
         #assume parameters given and not etas. search code to find which eta goes with each param
         #1.7
-        my $nETA=  $original_model-> nomegas(with_correlations => 0, with_same => 1) -> [0];
-        my $nEPS=  $original_model-> nsigmas(with_correlations => 0, with_same => 1) -> [0];
+        my $nETA=  $original_model->nomegas(with_correlations => 0, with_same => 1)->[0];
+        my $nEPS=  $original_model->nsigmas(with_correlations => 0, with_same => 1)->[0];
 
         my %parameter_eta;
         my %parameter_relation;
         my @code;
         @code = @{$original_model->get_code(record => 'pk')};
-        unless ( $#code > 0 ) {
+        unless ($#code > 0) {
             @code = @{$original_model->get_code(record => 'pred')};
         }
-        if ( $#code <= 0 ) {
+        if ($#code <= 0) {
             croak("Neither PK or PRED defined in " .
-                $original_model -> filename . ", cannot match parameters to ETAs\n" );
+                $original_model->filename . ", cannot match parameters to ETAs\n" );
         }
-        my $n_param=0;
-        open( LOG, ">>".$self -> logfile -> [0] ); #model_number -1
-        foreach my $parameter ( keys %{$self -> test_relations()} ){
+        my $assignments = code_parsing::find_assignments(model => $original_model);
+        my $n_param = 0;
+        open(LOG, ">>" . $self->logfile->[0]); #model_number -1
+        foreach my $parameter (keys %{$self->test_relations()}) {
             $n_param++;
             my $etanum = 0;
-            my $relation='';
+            my $relation = '';
 
-            for ( @code ) {
-                if ( /^\s*(\w+)\s*=\s*/ and $1 eq $parameter ){
+            for (@code) {
+                if (/^\s*(\w+)\s*=\s*/ and $1 eq $parameter) {
                     s/^\s*(\w+)\s*=\s*//;
-                    my ($line,$comment) = split( ';', $_, 2 );
+                    my ($line,$comment) = split(';', $_, 2);
+                    $line = code_parsing::merge_assignments_and_expression(expression => $line, assignments => $assignments);
                     $_ = $line;
                     chomp;
 
-                    if (/\*\s*EXP\s*\(\s*ETA\(([0-9]+)\)/){
+                    if (/\*\s*EXP\s*\(\s*ETA\(([0-9]+)\)/) {
                         $relation = 'exponential';
-                    }elsif (/[^A-Z0-9_]*EXP\s*\(\s*ETA\(([0-9]+)\)/){
+                    } elsif (/[^A-Z0-9_]*EXP\s*\(\s*ETA\(([0-9]+)\)/) {
                         $relation = 'exponential';
-                    }elsif (/[^A-Z0-9_]*EXP\s*\(\s*MU\_([0-9]+)\s*\+\s*ETA\(([0-9]+)\)/){
+                    } elsif (/[^A-Z0-9_]*EXP\s*\(\s*MU\_([0-9]+)\s*\+\s*ETA\(([0-9]+)\)/) {
                         $relation = 'exponential';
-                    }elsif(/[^A-Z0-9_]*TV(\w+)\s*\+\s*ETA\(([0-9]+)\)/){
-                        if ($self->sum_covariates_hash->{$parameter}==1){
+                    } elsif (/[^A-Z0-9_]*TV(\w+)\s*\+\s*ETA\(([0-9]+)\)/) {
+                        if ($self->sum_covariates_hash->{$parameter} == 1) {
                             $relation = 'logit';
-                        }else{
+                        } else {
                             $relation = 'additive';
                         }
-                    }elsif(/[^A-Z0-9_]*TV(\w+)\s*\*\s*ETA\(([0-9]+)\)/){
+                    } elsif (/[^A-Z0-9_]*TV(\w+)\s*\*\s*ETA\(([0-9]+)\)/) {
                         $relation = 'proportional';
-                    }elsif(/[^A-Z0-9_]*ETA\(([0-9]+)\)\s*\*\s*TV(\w+)/){
+                    } elsif (/[^A-Z0-9_]*ETA\(([0-9]+)\)\s*\*\s*TV(\w+)/) {
                         $relation = 'proportional';
-                    }elsif(/\*\s*\(\s*1\s*\+\s*ETA\(([0-9]+)\)/){
+                    } elsif (/\*\s*\(\s*1\s*\+\s*ETA\(([0-9]+)\)/) {
                         $relation = 'proportional';
-                    }elsif(/\*\(\s*ETA\(([0-9]+)\)\s*\+\s*1/){
+                    } elsif (/\*\(\s*ETA\(([0-9]+)\)\s*\+\s*1/) {
                         $relation = 'proportional';
                     }
 
-                    if (s/[^A-Z0-9_]ETA\(([0-9]+)\)//){
+                    if (s/[^A-Z0-9_]ETA\(([0-9]+)\)//) {
                         $etanum = $1;
-                    }else{
+                    } else {
                         last;
                     }
 
-                    if (s/[^A-Z0-9_]ETA\(([0-9]+)\)//){
+                    if (s/[^A-Z0-9_]ETA\(([0-9]+)\)//) {
                         croak("Could not determine the ETA ".
                             "coupled to $parameter,\n".
                             " two ETA(<number>) found ".
@@ -1674,25 +1677,25 @@ sub linearize_setup
                     }
                 }
             }
-            if ( $etanum ) {
-                $parameter_eta{$parameter}=$etanum;
-            }else{
+            if ($etanum) {
+                $parameter_eta{$parameter} = $etanum;
+            } else {
                 my $mes = "Could not determine the ETA coupled to $parameter\n";
-                $mes .= " i.e. no $parameter = (expression with ETA) was ".
-                "found in \$PK or \$PRED\n" ;
-                croak($mes );
+                $mes .= " i.e. no $parameter = (expression with ETA) was " .
+                "found in \$PK or \$PRED\n";
+                croak($mes);
             }
-            if ( length($relation) > 1 ) {
-                $parameter_relation{$parameter}=$relation;
-                if ($relation eq 'logit'){
+            if (length($relation) > 1) {
+                $parameter_relation{$parameter} = $relation;
+                if ($relation eq 'logit') {
                     print "Detected ETA".$parameter_eta{$parameter}." added to the logit $parameter\n";
-                    print LOG "Detected ETA".$parameter_eta{$parameter}.
+                    print LOG "Detected ETA".$parameter_eta{$parameter} .
                     " added to the logit $parameter\n";
-                }else{
+                } else {
                     print "Detected $relation ETA".$parameter_eta{$parameter}." on $parameter\n";
                     print LOG "Detected $relation ETA".$parameter_eta{$parameter}." on $parameter\n";
                 }
-            }else{
+            } else {
                 croak("Could not determine the ETA relation ".
                     "(exponential/additive/proportional) for $parameter\n");
             }
