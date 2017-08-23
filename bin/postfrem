@@ -812,7 +812,7 @@ if (defined $options{'rawres_input'}) {
                 mu => $muvector,
                 lambda => [],
                 delta => [],
-                fast_posdef_check => 1);
+                fast_posdef_checks => 1);
 
             $sampled_params_arr = tool::sir::create_sampled_params_arr(samples_array => $vectorsamples,
                                                                        labels_hash => $parameter_hash,
