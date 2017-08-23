@@ -90,6 +90,7 @@ Getopt::Long::config("auto_abbrev");
 		  "precision:i",
           "so!",
           "zip!",
+          "model_subdir!",
     );
 
 
@@ -1418,6 +1419,15 @@ $help_hash{-rmarkdown} = <<'EOF';
     -rmarkdown
     If it is possible the Rmarkdown file instead of 
 	R file for R plots will be created.
+EOF
+
+$help_hash{-model_subdir} = <<'EOF';
+    -model_subdir
+
+	Use an alternative directory structure for PsN.
+    An extra directory level unique to each model is
+    introduced between the calling directory and
+    the rundirectory.
 EOF
 
     $help_hash{'-h'} = $help_hash{'-?'};

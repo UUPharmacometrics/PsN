@@ -146,6 +146,7 @@ has 'so' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'subset_variable_rplots' => ( is => 'rw', isa => 'Str');
 has 'zip' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'rmarkdown' => ( is => 'rw', isa => 'Bool', default => 1 );
+has 'model_subdir' => ( is => 'rw', isa => 'Bool', default => 0 );
 
 sub BUILDARGS
 {
