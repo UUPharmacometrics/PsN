@@ -1,4 +1,4 @@
-get_param_var_tables <- function(directory,model.filename) {
+get_param_var_tables <- function(directory,model.filename,skip) {
   #for overview table
   fullblock_mod <- FALSE
   boxcox_mod <- FALSE
@@ -90,6 +90,13 @@ get_param_var_tables <- function(directory,model.filename) {
                                  c(dofv_block,dofv_box,dofv_additional_eta,dofv_tdist),
                                  c(add.par_block, add.par_box, add.par_additional_eta,add.par_tdist),stringsAsFactors = F)
     colnames(par_var_models) <- c("","dOFV","Add.params")
+    
+    # check if etas run was skipped
+    if(any(skip=="etas")) {
+      par_var_models <- data.frame(c("Full OMEGA Block", "Box-Cox Transformation","Additional ETA","t-distribution"), 
+                                   c(rep("SKIPPED",4)),stringsAsFactors = F)
+      colnames(par_var_models) <- c("","dOFV")
+    }
   } else {
     par_var_models <- error_table(c("Full OMEGA Block","Box-Cox Transformation","Additional ETA","t-distribution"))
     dofv_block <- "NA"

@@ -1,7 +1,7 @@
-get_resmod_ruv_table <- function(directory, idv_name, dvid_name){
+get_resmod_ruv_table <- function(directory, idv_name, dvid_name, skip){
   resmod_file_exists <- get_resmod_table(directory=directory, idv=idv_name)$resmod_file_exists
   resmod_ruv_table_list <- list()
-  if(resmod_file_exists) {
+  if(resmod_file_exists && all(skip!="resmod")) {
     resmod_table_full <- get_resmod_table(directory, idv_name)$resmod_table 
     if(any(resmod_table_full$dvid!="NA")) {
       dvid_nr <- unique(resmod_table_full$dvid)
@@ -74,8 +74,13 @@ get_resmod_ruv_table <- function(directory, idv_name, dvid_name){
    # }
    
   } else {
+    if(any(skip=="resmod")) {
+      resmod_ruv_overview <- data.frame("RESMOD","SKIPPED",stringsAsFactors = F)
+      colnames(resmod_ruv_overview) <- c("","dOFV")
+    } else {
+      resmod_ruv_overview <- error_table("RESMOD")
+    }
     resmod_ruv_table_list[[1]] <- error_table(col=1)
-    resmod_ruv_overview <- error_table("RESMOD")
     dvid_nr <- 'NA'
   }
   

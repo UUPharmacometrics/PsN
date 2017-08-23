@@ -115,6 +115,10 @@ colnames(str_overview_7) <- c("","dOFV","Add.params")
 str_overview_8 <- data.frame(c("(DVID = 1)","TIME","PRED","(DVID = 2)","TIME","PRED"),c("","NA","NA","","NA","NA"),c("","4","4","","4","4"),
                              stringsAsFactors = F)
 colnames(str_overview_8) <- c("","dOFV","Add.params")
+str_overview_9 <- data.frame("RESMOD","ERROR",stringsAsFactors = F)
+colnames(str_overview_9) <- c("","dOFV")
+str_overview_10 <- data.frame("RESMOD","SKIPPED",stringsAsFactors = F)
+colnames(str_overview_10) <- c("","dOFV")
 #compare
 context("qa, get_structural_overview_table")
 test_that("get structural overview table",{
@@ -126,6 +130,8 @@ test_that("get structural overview table",{
   expect_equal(str_overview_6,get_structural_overview_table(directory=file.path(files.w.dir,"qa_run6"),idv=c("TIME","TAD","PRED"),dvid_name="NA",groups=5))
   expect_equal(str_overview_7,get_structural_overview_table(directory=file.path(files.w.dir,"qa_run7"),idv=c("TIME","PRED"),dvid_name="NA",groups=5))
   expect_equal(str_overview_8,get_structural_overview_table(directory=file.path(files.w.dir,"qa_run8"),idv=c("TIME","PRED"),dvid_name="DVID",groups=5))
+  expect_equal(str_overview_9,get_structural_overview_table(directory=file.path(files.w.dir,"qa_run2"),idv=c(),dvid_name="ORIG",groups=4,skip=c('etas','cdd','frem')))
+  expect_equal(str_overview_10,get_structural_overview_table(directory=file.path(files.w.dir,"qa_run2"),idv=c(),dvid_name="ORIG",groups=4,skip=c('etas','cdd','frem','resmod')))
 })
 
 #...........................  (7) Test function get_omega_values.R .....................................
@@ -147,12 +153,13 @@ test_that("get omega variances and covariances",{
 
 #...........................  (8) Test function get_param_var_tables.R .....................................
 #run function
-param_var_list_1 <- get_param_var_tables(directory=file.path(files.w.dir,"qa_run2"),model.filename="run_100.mod")
-param_var_list_2 <- get_param_var_tables(directory=file.path(files.w.dir,"qa_run1"),model.filename="run_100.mod")
-param_var_list_3 <- get_param_var_tables(directory=file.path(files.w.dir,"qa_run3"),model.filename="run_100.mod")
-param_var_list_4 <- get_param_var_tables(directory=file.path(files.w.dir,"qa_missing_folders_files"),model.filename="r.mod")
-param_var_list_5 <- get_param_var_tables(directory=file.path(files.w.dir,"qa_run4"),model.filename="run_100.mod")
-param_var_list_6 <- get_param_var_tables(directory=file.path(files.w.dir,"qa_missing_folders_files"),model.filename="run_100.mod")
+param_var_list_1 <- get_param_var_tables(directory=file.path(files.w.dir,"qa_run2"),model.filename="run_100.mod",skip=c())
+param_var_list_2 <- get_param_var_tables(directory=file.path(files.w.dir,"qa_run1"),model.filename="run_100.mod",skip=c('cdd','simeval'))
+param_var_list_3 <- get_param_var_tables(directory=file.path(files.w.dir,"qa_run3"),model.filename="run_100.mod",skip=c())
+param_var_list_4 <- get_param_var_tables(directory=file.path(files.w.dir,"qa_missing_folders_files"),model.filename="r.mod",skip=c('resmod'))
+param_var_list_5 <- get_param_var_tables(directory=file.path(files.w.dir,"qa_run4"),model.filename="run_100.mod",skip=c('frem','resmod','scm','cdd','simeval'))
+param_var_list_6 <- get_param_var_tables(directory=file.path(files.w.dir,"qa_missing_folders_files"),model.filename="run_100.mod",skip=c())
+param_var_list_7 <- get_param_var_tables(directory=file.path(files.w.dir,"qa_run4"),model.filename="run_100.mod",skip=c('frem','etas','scm','simeval'))
 #create expected data
 par_var_models_1 <- data.frame(c("Full OMEGA Block", "Box-Cox Transformation","Additional ETA","t-distribution"), 
                              c(-3.73,-0.566,3.41,-1.03),
@@ -178,6 +185,9 @@ par_var_models_6 <- data.frame(c("Full OMEGA Block", "Box-Cox Transformation","A
                                c("NA","NA","NA","NA"),
                                c("","","",""),stringsAsFactors = F)
 colnames(par_var_models_6) <- c("","dOFV","Add.params")
+par_var_models_7 <- data.frame(c("Full OMEGA Block", "Box-Cox Transformation","Additional ETA","t-distribution"), 
+                               c(rep("SKIPPED",4)),stringsAsFactors = F)
+colnames(par_var_models_7) <- c("","dOFV")
 #compare
 context("qa, get_param_var_tables")
 test_that("get parameter variability overview part, get delta ofv values",{
@@ -229,6 +239,7 @@ test_that("get parameter variability overview part, get delta ofv values",{
   expect_equal(FALSE,param_var_list_6$boxcox_mod)
   expect_equal(FALSE,param_var_list_6$add_etas_mod)
   expect_equal(FALSE,param_var_list_6$tdist_mod)
+  expect_equal(par_var_models_7,param_var_list_7$par_var_models)
 })
 
 #...........................  (9) Test function get_full_omega_block.R .....................................
@@ -416,17 +427,29 @@ frem_table_3 <- data.frame("ALL",3.6,6,stringsAsFactors = F)
 colnames(frem_table_3) <- c("","dOFV","Add.params")
 frem_table_4 <- data.frame("ALL",7.1,0,stringsAsFactors = F)
 colnames(frem_table_4) <- c("","dOFV","Add.params")
+frem_table_5 <- data.frame("FREM","SKIPPED","",stringsAsFactors = F)
+colnames(frem_table_5) <- c("","dOFV","Add.params")
 #compare
 context("qa, get_all_covariates")
 test_that("get FREM covariates table",{
-  expect_equal(frem_table_1,get_all_covariates(frem_directory=file.path(files.w.dir,"qa_missing_folders_files/frem_run"),covariates=c('AGE'),categorical=c(),parameters=c(),dofv_full_block=3.5)$frem_table)
-  expect_equal(FALSE,get_all_covariates(frem_directory=file.path(files.w.dir,"qa_missing_folders_files/frem_run"),covariates=c('AGE'),categorical=c(),parameters=c(),dofv_full_block=3.5)$frem_files_exists)
-  expect_equal(frem_table_2,get_all_covariates(frem_directory=file.path(files.w.dir,"qa_run1/frem_run"),covariates=c(),categorical=c(),parameters=c(),dofv_full_block=3.5)$frem_table)
-  expect_equal(FALSE,get_all_covariates(frem_directory=file.path(files.w.dir,"qa_run1/frem_run"),covariates=c(),categorical=c(),parameters=C(),dofv_full_block=3.5)$frem_files_exists)
-  expect_equal(frem_table_3,get_all_covariates(frem_directory=file.path(files.w.dir,"qa_run1/frem_run"),covariates=c('SEX'),categorical=c('AGE','WGT'),parameters=c('K1','K2'),dofv_full_block=3.5)$frem_table)
-  expect_equal(TRUE,get_all_covariates(frem_directory=file.path(files.w.dir,"qa_run1/frem_run"),covariates=c('SEX'),categorical=c('AGE','WGT'),parameters=c('K1','K2'),dofv_full_block=3.5)$frem_files_exists)
-  expect_equal(frem_table_4,get_all_covariates(frem_directory=file.path(files.w.dir,"qa_run1/frem_run"),covariates=c('SEX'),categorical=c('AGE','WGT'),parameters=c(),dofv_full_block='NA')$frem_table)
-  expect_equal(TRUE,get_all_covariates(frem_directory=file.path(files.w.dir,"qa_run1/frem_run"),covariates=c('SEX'),categorical=c('AGE','WGT'),parameters=c(),dofv_full_block='NA')$frem_files_exists)
+  expect_equal(frem_table_1,get_all_covariates(frem_directory=file.path(files.w.dir,"qa_missing_folders_files/frem_run"),covariates=c('AGE'),
+                                               categorical=c(),parameters=c(),dofv_full_block=3.5,skip=c('etas','resmod','scm','cdd','simeval'))$frem_table)
+  expect_equal(FALSE,get_all_covariates(frem_directory=file.path(files.w.dir,"qa_missing_folders_files/frem_run"),covariates=c('AGE'),
+                                        categorical=c(),parameters=c(),dofv_full_block=3.5,skip=c())$frem_files_exists)
+  expect_equal(frem_table_2,get_all_covariates(frem_directory=file.path(files.w.dir,"qa_run1/frem_run"),covariates=c(),categorical=c(),
+                                               parameters=c(),dofv_full_block=3.5,skip=c('resmod','scm','cdd','simeval'))$frem_table)
+  expect_equal(FALSE,get_all_covariates(frem_directory=file.path(files.w.dir,"qa_run1/frem_run"),covariates=c(),categorical=c(),
+                                        parameters=C(),dofv_full_block=3.5,skip=c())$frem_files_exists)
+  expect_equal(frem_table_3,get_all_covariates(frem_directory=file.path(files.w.dir,"qa_run1/frem_run"),covariates=c('SEX'),
+                                               categorical=c('AGE','WGT'),parameters=c('K1','K2'),dofv_full_block=3.5,skip=c())$frem_table)
+  expect_equal(TRUE,get_all_covariates(frem_directory=file.path(files.w.dir,"qa_run1/frem_run"),covariates=c('SEX'),categorical=c('AGE','WGT'),
+                                       parameters=c('K1','K2'),dofv_full_block=3.5,skip=c())$frem_files_exists)
+  expect_equal(frem_table_4,get_all_covariates(frem_directory=file.path(files.w.dir,"qa_run1/frem_run"),covariates=c('SEX'),
+                                               categorical=c('AGE','WGT'),parameters=c(),dofv_full_block='NA',skip=c('resmod'))$frem_table)
+  expect_equal(TRUE,get_all_covariates(frem_directory=file.path(files.w.dir,"qa_run1/frem_run"),covariates=c('SEX'),categorical=c('AGE','WGT'),
+                                       parameters=c(),dofv_full_block='NA',skip=c('etas','resmod','scm','cdd','simeval'))$frem_files_exists)
+  expect_equal(frem_table_5,get_all_covariates(frem_directory=file.path(files.w.dir,"qa_run1/frem_run"),covariates=c('SEX'),
+                                               categorical=c('AGE','WGT'),parameters=c(),dofv_full_block='NA',skip=c('resmod','frem','cdd'))$frem_table)
   
 })
 
@@ -448,40 +471,65 @@ scm_table_4 <- data.frame(c("CLAPGR-4","CLWGT-4","VAPGR-4","VWGT-4"),c(NA,0.47,0
 colnames(scm_table_4) <- c("","dOFV","Coef")
 max_scm_table_4 <- data.frame("CLWGT-4",0.47,1,stringsAsFactors = F)
 colnames(max_scm_table_4) <- c("","dOFV","Add.params")
+max_scm_table_5 <- data.frame("SCM","SKIPPED","",stringsAsFactors = F)
+colnames(max_scm_table_5) <- c("","dOFV","Add.params")
+scm_table_5 <- data.frame("SCM","SKIPPED",stringsAsFactors = F)
+colnames(scm_table_5) <- c("","dOFV")
 
 #compare
 context("qa, get_scm_table")
 test_that("get SCM table",{
   expect_equal(scm_table_1,
-               get_scm_table(rawres_file=file.path(files.w.dir,"qa_missing_folders_files/scm_run/raw_results_scm.csv"),parameters=c('K1','K2'),covariates=c('AGE'),categorical=c())$scm_table)
+               get_scm_table(rawres_file=file.path(files.w.dir,"qa_missing_folders_files/scm_run/raw_results_scm.csv"),
+                             parameters=c('K1','K2'),covariates=c('AGE'),categorical=c(),skip=c())$scm_table)
   expect_equal(max_scm_table_1,
-               get_scm_table(rawres_file=file.path(files.w.dir,"qa_missing_folders_files/scm_run/raw_results_scm.csv"),parameters=c('K1','K2'),covariates=c('AGE'),categorical=c())$max_scm_table)
+               get_scm_table(rawres_file=file.path(files.w.dir,"qa_missing_folders_files/scm_run/raw_results_scm.csv"),
+                             parameters=c('K1','K2'),covariates=c('AGE'),categorical=c(),skip=c())$max_scm_table)
   expect_equal(FALSE,
-               get_scm_table(rawres_file=file.path(files.w.dir,"qa_missing_folders_files/scm_run/raw_results_scm.csv"),parameters=c('K1','K2'),covariates=c('AGE'),categorical=c())$scm_files_exists)
+               get_scm_table(rawres_file=file.path(files.w.dir,"qa_missing_folders_files/scm_run/raw_results_scm.csv"),
+                             parameters=c('K1','K2'),covariates=c('AGE'),categorical=c(),skip=c())$scm_files_exists)
   expect_equal(scm_table_2,
-               get_scm_table(rawres_file=file.path(files.w.dir,"qa_run1/scm_run/raw_results_scm.csv"),parameters=c('K1','K2'),covariates=c(),categorical=c())$scm_table)
+               get_scm_table(rawres_file=file.path(files.w.dir,"qa_run1/scm_run/raw_results_scm.csv"),parameters=c('K1','K2'),
+                             covariates=c(),categorical=c(),skip=c())$scm_table)
   expect_equal(max_scm_table_2,
-               get_scm_table(rawres_file=file.path(files.w.dir,"qa_run1/scm_run/raw_results_scm.csv"),parameters=c('K1','K2'),covariates=c(),categorical=c())$max_scm_table)
+               get_scm_table(rawres_file=file.path(files.w.dir,"qa_run1/scm_run/raw_results_scm.csv"),parameters=c('K1','K2'),
+                             covariates=c(),categorical=c(),skip=c())$max_scm_table)
   expect_equal(FALSE,
-               get_scm_table(rawres_file=file.path(files.w.dir,"qa_run1/scm_run/raw_results_scm.csv"),parameters=c('K1','K2'),covariates=c(),categorical=c())$scm_files_exists)
+               get_scm_table(rawres_file=file.path(files.w.dir,"qa_run1/scm_run/raw_results_scm.csv"),parameters=c('K1','K2'),
+                             covariates=c(),categorical=c(),skip=c())$scm_files_exists)
   expect_equal(scm_table_3,
-               get_scm_table(rawres_file=file.path(files.w.dir,"qa_run1/scm_run/raw_results_scm.csv"),parameters=c('CL','V'),covariates=c('APGR,WGT'),categorical=c())$scm_table)
+               get_scm_table(rawres_file=file.path(files.w.dir,"qa_run1/scm_run/raw_results_scm.csv"),parameters=c('CL','V'),
+                             covariates=c('APGR,WGT'),categorical=c(),skip=c())$scm_table)
   expect_equal(max_scm_table_3,
-               get_scm_table(rawres_file=file.path(files.w.dir,"qa_run1/scm_run/raw_results_scm.csv"),parameters=c('CL','V'),covariates=c('APGR,WGT'),categorical=c())$max_scm_table)
+               get_scm_table(rawres_file=file.path(files.w.dir,"qa_run1/scm_run/raw_results_scm.csv"),parameters=c('CL','V'),
+                             covariates=c('APGR,WGT'),categorical=c(),skip=c())$max_scm_table)
   expect_equal(TRUE,
-               get_scm_table(rawres_file=file.path(files.w.dir,"qa_run1/scm_run/raw_results_scm.csv"),parameters=c('CL','V'),covariates=c('APGR,WGT'),categorical=c())$scm_files_exists)
+               get_scm_table(rawres_file=file.path(files.w.dir,"qa_run1/scm_run/raw_results_scm.csv"),parameters=c('CL','V'),
+                             covariates=c('APGR,WGT'),categorical=c(),skip=c())$scm_files_exists)
   expect_equal(scm_table_3,
-               get_scm_table(rawres_file=file.path(files.w.dir,"qa_run2/scm_run/raw_results_scm.csv"),parameters=c('CL','V'),covariates=c('APGR,WGT'),categorical=c())$scm_table)
+               get_scm_table(rawres_file=file.path(files.w.dir,"qa_run2/scm_run/raw_results_scm.csv"),parameters=c('CL','V'),
+                             covariates=c('APGR,WGT'),categorical=c(),skip=c())$scm_table)
   expect_equal(max_scm_table_3,
-               get_scm_table(rawres_file=file.path(files.w.dir,"qa_run2/scm_run/raw_results_scm.csv"),parameters=c('CL','V'),covariates=c('APGR,WGT'),categorical=c())$max_scm_table)
+               get_scm_table(rawres_file=file.path(files.w.dir,"qa_run2/scm_run/raw_results_scm.csv"),parameters=c('CL','V'),
+                             covariates=c('APGR,WGT'),categorical=c(),skip=c('frem','resmod','etas','cdd','simeval'))$max_scm_table)
   expect_equal(TRUE,
-               get_scm_table(rawres_file=file.path(files.w.dir,"qa_run2/scm_run/raw_results_scm.csv"),parameters=c('CL','V'),covariates=c('APGR,WGT'),categorical=c())$scm_files_exists)
+               get_scm_table(rawres_file=file.path(files.w.dir,"qa_run2/scm_run/raw_results_scm.csv"),parameters=c('CL','V'),
+                             covariates=c('APGR,WGT'),categorical=c(),skip=c('frem','resmod','etas','cdd','simeval'))$scm_files_exists)
   expect_equal(scm_table_4,
-               get_scm_table(rawres_file=file.path(files.w.dir,"qa_run3/scm_run/raw_results_scm.csv"),parameters=c('CL','V'),covariates=c('APGR,WGT'),categorical=c())$scm_table)
+               get_scm_table(rawres_file=file.path(files.w.dir,"qa_run3/scm_run/raw_results_scm.csv"),parameters=c('CL','V'),
+                             covariates=c('APGR,WGT'),categorical=c(),skip=c('frem','resmod','etas','cdd','simeval'))$scm_table)
   expect_equal(max_scm_table_4,
-               get_scm_table(rawres_file=file.path(files.w.dir,"qa_run3/scm_run/raw_results_scm.csv"),parameters=c('CL','V'),covariates=c('APGR,WGT'),categorical=c())$max_scm_table)
+               get_scm_table(rawres_file=file.path(files.w.dir,"qa_run3/scm_run/raw_results_scm.csv"),parameters=c('CL','V'),
+                             covariates=c('APGR,WGT'),categorical=c(),skip=c('frem','resmod','etas','cdd','simeval'))$max_scm_table)
   expect_equal(TRUE,
-               get_scm_table(rawres_file=file.path(files.w.dir,"qa_run3/scm_run/raw_results_scm.csv"),parameters=c('CL','V'),covariates=c('APGR,WGT'),categorical=c())$scm_files_exists)
+               get_scm_table(rawres_file=file.path(files.w.dir,"qa_run3/scm_run/raw_results_scm.csv"),parameters=c('CL','V'),
+                             covariates=c('APGR,WGT'),categorical=c(),skip=c('frem','resmod','etas','cdd','simeval'))$scm_files_exists)
+  expect_equal(max_scm_table_5,
+               get_scm_table(rawres_file=file.path(files.w.dir,"qa_run3/scm_run/raw_results_scm.csv"),parameters=c('CL','V'),
+                             covariates=c('APGR,WGT'),categorical=c(),skip=c('frem','scm'))$max_scm_table)
+  expect_equal(scm_table_5,
+               get_scm_table(rawres_file=file.path(files.w.dir,"qa_run3/scm_run/raw_results_scm.csv"),parameters=c('CL','V'),
+                             covariates=c('APGR,WGT'),categorical=c(),skip=c('frem','scm'))$scm_table)
 })
 
 #...........................  (15) Test function get_covariates_table.R .....................................
@@ -515,6 +563,9 @@ colnames(covariates_table_7) <- c("","dOFV","Add.params")
 covariates_extra_table_7 <- data.frame("Covariate"=c("CLAPGR-4","CLWGT-4","VAPGR-4","VWGT-4","sum(SCMu)","FREM"),
                                        "dOFV"=c("NA","0.5","0.2","0.1","NA","3.6"),
                                        "Coefficient"=c("NA","0.050","0.004","-0.012","",""),stringsAsFactors = F)
+covariates_table_8 <- data.frame(c("FREM","SCM"),c("SKIPPED","SKIPPED"),c("",""),stringsAsFactors = F)
+colnames(covariates_table_8) <- c("","dOFV","Add.params")
+covariates_extra_table_8 <- data.frame("Covariate"=c("SCM","FREM"),"dOFV"=c("SKIPPED","SKIPPED"),stringsAsFactors = F)
 #compare
 context("qa, get_covariates_table")
 test_that("create covariate table (FREM and SCM) and extra table",{
@@ -532,14 +583,17 @@ test_that("create covariate table (FREM and SCM) and extra table",{
   expect_equal(covariates_extra_table_6,get_covariates_table(frem_table=frem_table_4,scm_table=scm_table_1,max_scm_table=max_scm_table_1)$covariates_extra_table)
   expect_equal(covariates_table_7,get_covariates_table(frem_table=frem_table_3,scm_table=scm_table_4,max_scm_table=max_scm_table_4)$covariates_table)
   expect_equal(covariates_extra_table_7,get_covariates_table(frem_table=frem_table_3,scm_table=scm_table_4,max_scm_table=max_scm_table_4)$covariates_extra_table)
+  expect_equal(covariates_table_8,get_covariates_table(frem_table=frem_table_5,scm_table=scm_table_5,max_scm_table=max_scm_table_5)$covariates_table)
+  expect_equal(covariates_extra_table_8,get_covariates_table(frem_table=frem_table_5,scm_table=scm_table_5,max_scm_table=max_scm_table_5)$covariates_extra_table)
 })
 
 #...........................  (16) Test function get_resmod_ruv_table.R .....................................
 #run function
-resmod_list_1 <- get_resmod_ruv_table(directory=file.path(files.w.dir,"qa_run1"),idv_name="TIME",dvid_name="ORIG")
-resmod_list_2 <- get_resmod_ruv_table(directory=file.path(files.w.dir,"qa_run3"),idv_name="TIME",dvid_name="NA")
-resmod_list_3 <- get_resmod_ruv_table(directory=file.path(files.w.dir,"qa_run2"),idv_name="TIME",dvid_name="ORIG")
-resmod_list_4 <- get_resmod_ruv_table(directory=file.path(files.w.dir,"qa_run7"),idv_name="TIME",dvid_name="NA")
+resmod_list_1 <- get_resmod_ruv_table(directory=file.path(files.w.dir,"qa_run1"),idv_name="TIME",dvid_name="ORIG",skip=c())
+resmod_list_2 <- get_resmod_ruv_table(directory=file.path(files.w.dir,"qa_run3"),idv_name="TIME",dvid_name="NA",skip=c('frem','scm','etas','cdd','simeval'))
+resmod_list_3 <- get_resmod_ruv_table(directory=file.path(files.w.dir,"qa_run2"),idv_name="TIME",dvid_name="ORIG",skip=c('etas','cdd','simeval'))
+resmod_list_4 <- get_resmod_ruv_table(directory=file.path(files.w.dir,"qa_run7"),idv_name="TIME",dvid_name="NA",skip=c('frem','simeval'))
+resmod_list_5 <- get_resmod_ruv_table(directory=file.path(files.w.dir,"qa_run3"),idv_name="TIME",dvid_name="NA",skip=c('resmod'))
 #expected data
 resmod_ruv_table_list_1 <- data.frame("ERROR",stringsAsFactors = F)
 colnames(resmod_ruv_table_list_1) <- ""
@@ -577,6 +631,8 @@ resmod_ruv_table_list_4 <- data.frame("Model"=c("IIV on RUV","autocorrelation","
 colnames(resmod_ruv_table_list_4) <- c("Model","dOFV","Additional parameters","Parameter values")
 resmod_ruv_overview_4 <- data.frame(c("RESMOD"),c("NA"),c(""),stringsAsFactors = F)
 colnames(resmod_ruv_overview_4) <- c("","dOFV","Add.params")
+resmod_ruv_overview_5 <- data.frame("RESMOD","SKIPPED",stringsAsFactors = F)
+colnames(resmod_ruv_overview_5) <- c("","dOFV")
 #compare
 context("qa, get_resmod_ruv_table")
 test_that("create resmod ruv table",{
@@ -597,31 +653,35 @@ test_that("create resmod ruv table",{
   expect_equal(resmod_ruv_table_list_4,resmod_list_4$resmod_ruv_table_list[[1]])
   # expect_equal(resmod_ruv_overview_4,resmod_list_4$resmod_ruv_overview)
   expect_equal('NA',resmod_list_4$dvid_nr)
+  expect_equal(resmod_ruv_overview_5,resmod_list_5$resmod_ruv_overview)
 })
 
 #...........................  (17) Test function get_ii_table.R .....................................
 #fun function
 list_ii_1 <- get_ii_table(raw.results.file=file.path(files.w.dir,"qa_missing_folders_files/cdd_run/raw_results_model_linbase.csv"),
                           skipped.id.file=file.path(files.w.dir,"qa_missing_folders_files/cdd_run/skipped_individuals1.csv"),
-                          cutoff=3.84,max_rows=3)
+                          cutoff=3.84,max_rows=3,skip=c('frem','resmod','etas','scm','simeval'))
 list_ii_2 <- get_ii_table(raw.results.file=file.path(files.w.dir,"qa_run2/cdd_run/raw_results_linbase.csv"),
                           skipped.id.file=file.path(files.w.dir,"qa_run2/cdd_run/skipped_individuals1.csv"),
-                          cutoff=3.84,max_rows=3)
+                          cutoff=3.84,max_rows=3,skip=c())
 list_ii_3 <- get_ii_table(raw.results.file=file.path(files.w.dir,"qa_run3/cdd_run/raw_results_linbase.csv"),
                           skipped.id.file=file.path(files.w.dir,"qa_run3/cdd_run/skipped_individuals1.csv"),
-                          cutoff=3.84,max_rows=3)
+                          cutoff=3.84,max_rows=3,skip=c('scm','simeval'))
 list_ii_4 <- get_ii_table(raw.results.file=file.path(files.w.dir,"qa_run1/cdd_run/raw_results_linbase.csv"),
                           skipped.id.file=file.path(files.w.dir,"qa_run1/cdd_run/skipped_individuals1.csv"),
-                          cutoff=1,max_rows=3)
+                          cutoff=1,max_rows=3,skip=c('frem','resmod','etas','scm','simeval'))
 list_ii_5 <- get_ii_table(raw.results.file=file.path(files.w.dir,"qa_run1/cdd_run/raw_results_linbase.csv"),
                           skipped.id.file=file.path(files.w.dir,"qa_run1/cdd_run/skipped_individuals1.csv"),
-                          cutoff=0.1,max_rows=3)
+                          cutoff=0.1,max_rows=3,skip=c())
 list_ii_6 <- get_ii_table(raw.results.file=file.path(files.w.dir,"qa_run1/cdd_run/raw_results_linbase.csv"),
                           skipped.id.file=file.path(files.w.dir,"qa_run1/cdd_run/skipped_individuals1.csv"),
-                          cutoff=0.000001,max_rows=2)
+                          cutoff=0.000001,max_rows=2,skip=c('frem','resmod','etas','scm','simeval'))
 list_ii_7 <- get_ii_table(raw.results.file=file.path(files.w.dir,"qa_run4/cdd_run/raw_results_linbase.csv"),
                           skipped.id.file=file.path(files.w.dir,"qa_run4/cdd_run/skipped_individuals1.csv"),
-                          cutoff=3.84,max_rows=3)
+                          cutoff=3.84,max_rows=3,skip=c('frem','resmod','etas','scm','simeval'))
+list_ii_8 <- get_ii_table(raw.results.file=file.path(files.w.dir,"qa_run4/cdd_run/raw_results_linbase.csv"),
+                          skipped.id.file=file.path(files.w.dir,"qa_run4/cdd_run/skipped_individuals1.csv"),
+                          cutoff=3.84,max_rows=3,skip=c('cdd','scm','simeval'))
 #expected data
 ERROR_table <- data.frame("ERROR",stringsAsFactors = F)
 colnames(ERROR_table) <- ""
@@ -647,6 +707,12 @@ ii_table_7 <- data.frame(c("No influential individuals detected"),stringsAsFacto
 colnames(ii_table_7) <- c("")
 cdd_highest_dofv_7 <- data.frame("None","",stringsAsFactors = F)
 colnames(cdd_highest_dofv_7) <- c("","dOFV")
+cdd_data_8 <- data.frame("SKIPPED",stringsAsFactors = F)
+colnames(cdd_data_8) <- NULL
+ii_table_8 <- data.frame(c("No influential individuals detected"),stringsAsFactors = F)
+colnames(ii_table_8) <- c("")
+cdd_highest_dofv_8 <- data.frame("CDD","SKIPPED",stringsAsFactors = F)
+colnames(cdd_highest_dofv_8) <- c("","dOFV")
 
 #compare
 context("qa, get_ii_table")
@@ -700,26 +766,34 @@ test_that("create influential individuals table",{
   expect_equal(ii_table_7,list_ii_7$ii_table)
   expect_equal(c(),list_ii_7$infl_id)
   expect_equal(5,list_ii_7$fig_height_infl)
+  expect_equal(cdd_data_8,list_ii_8$cdd.data)
+  expect_equal(cdd_highest_dofv_8,list_ii_8$cdd_highest_dofv)
 })
 
 #...........................  (18) Test function get_outliers_table.R .....................................
 #run function
 list_simeval_1 <- get_outliers_table(simeval_directory=file.path(files.w.dir,"qa_missing_folders_files/simeval_run"),
-                                     cdd.data=cdd_data_4)
+                                     cdd.data=cdd_data_4,skip=c('frem','resmod','etas','scm','cdd'))
 list_simeval_2 <- get_outliers_table(simeval_directory=file.path(files.w.dir,"qa_run1/simeval_run"),
-                                     cdd.data=ERROR_table)
+                                     cdd.data=ERROR_table,skip=c())
 list_simeval_3 <- get_outliers_table(simeval_directory=file.path(files.w.dir,"qa_run2/simeval_run"),
-                                     cdd.data=ERROR_table)
+                                     cdd.data=ERROR_table,skip=c('frem','resmod','etas'))
 list_simeval_4 <- get_outliers_table(simeval_directory=file.path(files.w.dir,"qa_run1/simeval_run"),
-                                     cdd.data=data.frame())
+                                     cdd.data=data.frame(),skip=c('frem','cdd'))
 list_simeval_5 <- get_outliers_table(simeval_directory=file.path(files.w.dir,"qa_run2/simeval_run"),
-                                     cdd.data=data.frame())
+                                     cdd.data=data.frame(),skip=c('scm'))
 list_simeval_6 <- get_outliers_table(simeval_directory=file.path(files.w.dir,"qa_run2/simeval_run"),
-                                     cdd.data=cdd_data_4)
+                                     cdd.data=cdd_data_4,skip=c('frem','resmod','etas','scm'))
 list_simeval_7 <- get_outliers_table(simeval_directory=file.path(files.w.dir,"qa_run3/simeval_run"),
-                                     cdd.data=cdd_data_4)
+                                     cdd.data=cdd_data_4,skip=c())
 list_simeval_8 <- get_outliers_table(simeval_directory=file.path(files.w.dir,"qa_run4/simeval_run"),
-                                     cdd.data=cdd_data_4)
+                                     cdd.data=cdd_data_4,skip=c('frem','resmod','etas','scm'))
+list_simeval_9 <- get_outliers_table(simeval_directory=file.path(files.w.dir,"qa_run4/simeval_run"),
+                                     cdd.data=cdd_data_4,skip=c('frem','resmod','simeval','scm'))
+list_simeval_10 <- get_outliers_table(simeval_directory=file.path(files.w.dir,"qa_run4/simeval_run"),
+                                     cdd.data=cdd_data_8,skip=c('frem','resmod','simeval','scm'))
+list_simeval_11 <- get_outliers_table(simeval_directory=file.path(files.w.dir,"qa_run4/simeval_run"),
+                                      cdd.data=cdd_data_8,skip=c('frem','resmod','cdd','scm'))
 #expected data
 max_outlier_table_1 <- data.frame("SIMEVAL","ERROR",stringsAsFactors = F)
 colnames(max_outlier_table_1) <- c("","dOFV")
@@ -746,6 +820,14 @@ outliers_table_8 <- data.frame(Subjects=c("Subject 34","Subject 8","Subject 14",
 max_outlier_table_8 <- data.frame(c("Subject 34"),
                                   c(2.00265),stringsAsFactors = F)
 colnames(max_outlier_table_8) <- c("","dOFV")
+max_outlier_table_9 <- data.frame("SIMEVAL","SKIPPED",stringsAsFactors = F)
+colnames(max_outlier_table_9) <- c("","dOFV")
+max_outlier_table_10 <- data.frame("SIMEVAL","SKIPPED",stringsAsFactors = F)
+colnames(max_outlier_table_10) <- c("","dOFV")
+outliers_table_11 <- data.frame(Subjects=c("Subject 14","Subject 7","Subject 8","Subject 3","Subject 11","Subject 57","Subject 34"),
+                               dOFV=c(rep("",7)),stringsAsFactors = F)
+max_outlier_table_11 <- data.frame("No dOFV values found (skipped CDD)","",stringsAsFactors = F)
+colnames(max_outlier_table_11) <- c("","dOFV")
 #compare
 context("qa, get_outliers_table")
 test_that("create outliers table",{
@@ -789,12 +871,20 @@ test_that("create outliers table",{
   expect_equal(max_outlier_table_8,list_simeval_8$max_outlier_table)
   expect_equal(c(14,7,8,3,11,57,34),list_simeval_8$outlier_ids)
   expect_equal(15,list_simeval_8$fig_height_outl)
+  expect_equal(ERROR_table,list_simeval_9$outliers_table)
+  expect_equal(max_outlier_table_9,list_simeval_9$max_outlier_table)
+  expect_equal(ERROR_table,list_simeval_10$outliers_table)
+  expect_equal(max_outlier_table_10,list_simeval_10$max_outlier_table)
+  expect_equal(outliers_table_11,list_simeval_11$outliers_table)
+  expect_equal(max_outlier_table_11,list_simeval_11$max_outlier_table)
 })
 
 #...........................  (19) Test function get_overview_table.R .....................................
 #input data
-cdd_highest_dofv_extra <- data.frame("Subject 34",0.00265,stringsAsFactors = F)
+cdd_highest_dofv_extra <- data.frame("Subject 34",0.01265,stringsAsFactors = F)
 colnames(cdd_highest_dofv_extra) <- c("","dOFV")
+cdd_highest_dofv_extra_1 <- data.frame("Subject 34",0.00265,stringsAsFactors = F)
+colnames(cdd_highest_dofv_extra_1) <- c("","dOFV")
 #run function
 overview_list_1 <- get_overview_table(structural_overview=str_overview_4,
                                       param_var_overview=par_var_models_4,
@@ -826,6 +916,24 @@ overview_list_5 <- get_overview_table(structural_overview=str_overview_1,
                                       resmod_ruv_overview=resmod_ruv_overview_2,
                                       infl_indiv_overview=cdd_highest_dofv_extra,
                                       outliers_overview=max_outlier_table_6)
+overview_list_6 <- get_overview_table(structural_overview=str_overview_1,
+                                      param_var_overview=par_var_models_1,
+                                      covariates_overview=covariates_table_4,
+                                      resmod_ruv_overview=resmod_ruv_overview_2,
+                                      infl_indiv_overview=cdd_highest_dofv_extra_1,
+                                      outliers_overview=max_outlier_table_6)
+overview_list_7 <- get_overview_table(structural_overview=str_overview_10,
+                                      param_var_overview=par_var_models_7,
+                                      covariates_overview=covariates_table_8,
+                                      resmod_ruv_overview=resmod_ruv_overview_5,
+                                      infl_indiv_overview=cdd_highest_dofv_8,
+                                      outliers_overview=max_outlier_table_9)
+overview_list_8 <- get_overview_table(structural_overview=str_overview_10,
+                                      param_var_overview=par_var_models_3,
+                                      covariates_overview=covariates_table_4,
+                                      resmod_ruv_overview=resmod_ruv_overview_5,
+                                      infl_indiv_overview=cdd_highest_dofv_8,
+                                      outliers_overview=max_outlier_table_11)
 #expected data
 overview_table_1 <- data.frame(c("TIME","TAD","Full OMEGA Block","Box-Cox Transformation","Additional ETA","t-distribution",
                                  "FREM","SCM","RESMOD","CDD","SIMEVAL"),
@@ -853,10 +961,27 @@ overview_table_4 <- data.frame(c("TIME","PRED","Full OMEGA Block","Box-Cox Trans
 colnames(overview_table_4) <- c("","dOFV","Additional parameters")
 overview_table_5 <- data.frame(c("TIME","PRED","Full OMEGA Block","Box-Cox Transformation","Additional ETA","t-distribution",
                                  "FREM","CLAPGR-4","tdist","dtbs","Subject 34","Subject 34"),
-                               c("4.3","4.8","-3.7","-0.6","3.4","-1.0","3.6","2.9","43.6","21.7","0.0","2.0"),
+                               c("4.31","4.80","-3.73","-0.57","3.41","-1.03","3.60","2.87","43.62","21.67","0.01","2.00"),
                                c(rep("4",3),"0","2","0","6","1","1","2","",""),
                                stringsAsFactors = F)
 colnames(overview_table_5) <- c("","dOFV","Additional parameters")
+overview_table_6 <- data.frame(c("TIME","PRED","Full OMEGA Block","Box-Cox Transformation","Additional ETA","t-distribution",
+                                 "FREM","CLAPGR-4","tdist","dtbs","Subject 34","Subject 34"),
+                               c("4.3","4.8","-3.7","-0.6","3.4","-1.0","3.6","2.9","43.6","21.7","0.0","2.0"),
+                               c(rep("4",3),"0","2","0","6","1","1","2","",""),
+                               stringsAsFactors = F)
+colnames(overview_table_6) <- c("","dOFV","Additional parameters")
+overview_table_7 <- data.frame(c("RESMOD","Full OMEGA Block","Box-Cox Transformation","Additional ETA","t-distribution",
+                                 "FREM","SCM","RESMOD","CDD","SIMEVAL"),
+                               c(rep("SKIPPED",10)),c(rep("",10)),
+                               stringsAsFactors = F)
+colnames(overview_table_7) <- c("","dOFV","Additional parameters")
+overview_table_8 <- data.frame(c("RESMOD","Full OMEGA Block","Box-Cox Transformation","Additional ETA","t-distribution",
+                                 "FREM","CLAPGR-4","RESMOD","CDD","No dOFV values found (skipped CDD)"),
+                               c("SKIPPED","ERROR","NA","ERROR","NA","3.6","2.9","SKIPPED","SKIPPED",""),
+                               c(rep("",5),"6","1",rep("",3)),
+                               stringsAsFactors = F)
+colnames(overview_table_8) <- c("","dOFV","Additional parameters")
 #compare
 context("qa, get_overview_table")
 test_that("create an overview table",{
@@ -875,6 +1000,9 @@ test_that("create an overview table",{
   expect_equal(overview_table_5,overview_list_5$overview_table)
   expect_equal(c(2,4,2,2,1,1),overview_list_5$n.rgroup)
   expect_equal(rgroup_names,overview_list_5$rgroup_names)
+  expect_equal(overview_table_6,overview_list_6$overview_table)
+  expect_equal(overview_table_7,overview_list_7$overview_table)
+  expect_equal(overview_table_8,overview_list_8$overview_table)
 })
 
 #...........................  (20) Test function get_tables_for_vpc.R .....................................  

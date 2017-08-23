@@ -1,5 +1,5 @@
-get_structural_overview_table <- function(directory,idv,dvid_name,groups) {
-  if(length(length(idv))!=0) {
+get_structural_overview_table <- function(directory,idv,dvid_name,groups,skip) {
+  if(length(idv)!=0) {
     #check if dvid exist
     resmod_file_exists <- get_resmod_table(directory, idv[1])$resmod_file_exists
     if(resmod_file_exists) {
@@ -54,7 +54,12 @@ get_structural_overview_table <- function(directory,idv,dvid_name,groups) {
     #   structural_overview$Add.params <- rep("",length(structural_overview$Add.params))
     # }
   } else {
-    structural_overview <- error_table("RESMOD")
+    if(any(skip=="resmod")) {
+      structural_overview <- data.frame("RESMOD","SKIPPED",stringsAsFactors = F)
+      colnames(structural_overview) <- c("","dOFV")
+    } else{
+      structural_overview <- error_table("RESMOD")
+    }
   }
 
   return(structural_overview)
