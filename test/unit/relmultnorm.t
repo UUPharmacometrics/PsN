@@ -560,7 +560,7 @@ foreach my $fast_posdef (0,1) {
     my ($accept,$adjusted) = tool::sir::check_blocks_posdef(xvec => $xvec,
                                                             hash_array => $hash_arr,
                                                             adjust_blocks => 0,
-                                                            fast_posdef_check => $fast_posdef);
+                                                            cholesky_decomposition => $fast_posdef);
     is($accept,1,'check blocks posdef accept 1'.$str);
     is($adjusted,0,'check blocks posdef adjusted 1'.$str);
     is_deeply($xvec,$orig_xv,'post xvec 1'.$str);
@@ -568,7 +568,7 @@ foreach my $fast_posdef (0,1) {
     ($accept,$adjusted) = tool::sir::check_blocks_posdef(xvec => $xvec,
                                                          hash_array => $hash_arr,
                                                          adjust_blocks => 1,
-                                                         fast_posdef_check => $fast_posdef);
+                                                         cholesky_decomposition => $fast_posdef);
     is($accept,1,'check blocks posdef accept 2'.$str);
     is($adjusted,0,'check blocks posdef adjusted 2'.$str);
     is_deeply($xvec,$orig_xv,'post xvec 2'.$str);
@@ -579,7 +579,7 @@ foreach my $fast_posdef (0,1) {
     ($accept,$adjusted) = tool::sir::check_blocks_posdef(xvec => $xvec,
                                                          hash_array => $hash_arr,
                                                          adjust_blocks => 0,
-                                                         fast_posdef_check => $fast_posdef);
+                                                         cholesky_decomposition => $fast_posdef);
     is($accept,0,'check blocks posdef accept 3'.$str);
     is($adjusted,0,'check blocks posdef adjusted 3'.$str);
     is_deeply($xvec,$orig_xv,'post xvec 3'.$str);
@@ -587,7 +587,7 @@ foreach my $fast_posdef (0,1) {
     ($accept,$adjusted) = tool::sir::check_blocks_posdef(xvec => $xvec,
                                                          hash_array => $hash_arr,
                                                          adjust_blocks => 1,
-                                                         fast_posdef_check => $fast_posdef);
+                                                         cholesky_decomposition => $fast_posdef);
     is($accept,1,'check blocks posdef accept 4'.$str);
     is($adjusted,1,'check blocks posdef adjusted 4'.$str);
     cmp_float_array($xvec,[1,1,3,0.1,1,0.2,0.3,3,1,0.999999999,1],'post xvec 4'.$str);
@@ -601,7 +601,7 @@ foreach my $fast_posdef (0,1) {
     ($accept,$adjusted) = tool::sir::check_blocks_posdef(xvec => $xvec,
                                                          hash_array => $hash_arr,
                                                          adjust_blocks => 0,
-                                                         fast_posdef_check => $fast_posdef);
+                                                         cholesky_decomposition => $fast_posdef);
     is($accept,1,'check blocks posdef accept 5'.$str);
     is($adjusted,0,'check blocks posdef adjusted 5'.$str);
     is_deeply($xvec,$orig_xv,'post xvec 5'.$str);
@@ -612,7 +612,7 @@ foreach my $fast_posdef (0,1) {
     ($accept,$adjusted) = tool::sir::check_blocks_posdef(xvec => $xvec,
                                                          hash_array => $hash_arr,
                                                          adjust_blocks => 0,
-                                                         fast_posdef_check => $fast_posdef);
+                                                         cholesky_decomposition => $fast_posdef);
     is($accept,0,'check blocks posdef accept 6'.$str);
     is($adjusted,0,'check blocks posdef adjusted 6'.$str);
     is_deeply($xvec,$orig_xv,'post xvec 6'.$str);
@@ -620,7 +620,7 @@ foreach my $fast_posdef (0,1) {
     ($accept,$adjusted) = tool::sir::check_blocks_posdef(xvec => $xvec,
                                                          hash_array => $hash_arr,
                                                          adjust_blocks => 1,
-                                                         fast_posdef_check => $fast_posdef);
+                                                         cholesky_decomposition => $fast_posdef);
     is($accept,0,'check blocks posdef accept 7'.$str);
     is($adjusted,1,'check blocks posdef adjusted 7'.$str);
     cmp_float_array($xvec,[1,1,1,3.00000092e+00,9.99722453e-02,3.00083310e+00,2.99916736e+00,3.00083218e+00,1,0.1,1],'post xvec 7'.$str);
@@ -631,7 +631,7 @@ foreach my $fast_posdef (0,1) {
     ($accept,$adjusted) = tool::sir::check_blocks_posdef(xvec => $xvec,
                                                          hash_array => $hash_arr,
                                                          adjust_blocks => 0,
-                                                         fast_posdef_check => $fast_posdef);
+                                                         cholesky_decomposition => $fast_posdef);
     is($accept,0,'check blocks posdef accept 8'.$str);
     is($adjusted,0,'check blocks posdef adjusted 8'.$str);
     is_deeply($xvec,$orig_xv,'post xvec 8'.$str);
@@ -639,7 +639,7 @@ foreach my $fast_posdef (0,1) {
     ($accept,$adjusted) = tool::sir::check_blocks_posdef(xvec => $xvec,
                                                          hash_array => $hash_arr,
                                                          adjust_blocks => 1,
-                                                         fast_posdef_check => $fast_posdef);
+                                                         cholesky_decomposition => $fast_posdef);
     is($accept,1,'check blocks posdef accept 9'.$str);
     is($adjusted,1,'check blocks posdef adjusted 9'.$str);
     is_deeply($xvec,[1,1,1,3,9.99999999833334e-09,3.0000000005,2.9999999995,3.0000000005,1,0.1,1],'post xvec 9'.$str);
