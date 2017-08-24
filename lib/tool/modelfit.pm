@@ -3150,7 +3150,12 @@ sub move_model_and_output
 	my $use_run = $parm{'use_run'};
 
     my $final_lst;
-	my $outfilename = $model -> outputs -> [0] -> full_name;
+    my $outfilename;
+    if (not $self->model_subdir) {
+	    $outfilename = $model->outputs->[0]->full_name;
+    } else {
+        $outfilename = $self->base_directory . $self->model_subdir_name . $model->outputs->[0]->filename;
+    }
 
 	my ($dir, $model_filename) = OSspecific::absolute_path($model -> directory,
 														   $model -> filename );
@@ -3228,7 +3233,7 @@ sub move_model_and_output
 					$out =~ s/^\.//;
 					if ('.'.$out eq $ext){
                         if ($self->model_subdir) {
-                            cp($filename, $dir . $self->model_subdir_name . $dotless_model_filename . $ext);
+                            cp($filename, $self->base_directory . $self->model_subdir_name . $dotless_model_filename . $ext);
                         } else {
 						    cp($filename, $dir . $dotless_model_filename . $ext);
                         }
@@ -3241,9 +3246,10 @@ sub move_model_and_output
 		next if ($found_ext);
 
         my $destination;
-        $destination .= $dir;
         if ($self->model_subdir) {
-            $destination .= $self->model_subdir_name;
+            $destination = $self->base_directory . $self->model_subdir_name;
+        } else {
+            $destination = $dir;
         }
         if ($self->prepend_model_file_name) {
             $destination .= "$dotless_model_filename.";
