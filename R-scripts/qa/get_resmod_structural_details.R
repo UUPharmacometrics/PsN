@@ -33,8 +33,8 @@ get_resmod_structural_details <- function(directory, suffix, dvid) {
                  bin_min = bin_min_value)
       })%>%
     ungroup() %>%
-    mutate_each(funs(as.numeric), value, bin_min, bin_max) %>%
-    mutate_each(funs(round(.,2)), bin_min, bin_max)
+    mutate_at(c("value", "bin_min", "bin_max"),funs(as.numeric)) %>%
+    mutate_at(c("bin_min", "bin_max"),funs(round(.,2)))
   
   return(resmod_structural_table)
 }
