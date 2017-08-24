@@ -85,8 +85,8 @@ if(fullblock_mod || boxcox_mod || tdist_mod) {
 ```
 
 ```{r boxcox_shape_table_for_plot,results='hide',echo=F,warning=F,message=F}
-eta_table_boxcox <- get_eta_values(working.directory=file.path(working.directory,"modelfit_run"),param_model="boxcox")
 if(exists("boxcox_lambdas_orig")) {
+  eta_table_boxcox <- get_eta_values(working.directory=file.path(working.directory,"modelfit_run"),theta_values=boxcox_lambdas_orig[,1:2],param_model="boxcox")
   list_boxcox_shape <- get_eta_transf_table(input_table=boxcox_lambdas_orig)
   make_boxcox_shape_plot <- list_boxcox_shape$make_eta_transf_plot
   if(make_boxcox_shape_plot) {
@@ -100,8 +100,8 @@ if(exists("boxcox_lambdas_orig")) {
 ```
 
 ```{r tdist_shape_table_for_plot,results='hide',echo=F,warning=F,message=F}
-eta_table_tdist <- get_eta_values(working.directory=file.path(working.directory,"modelfit_run"),param_model="tdist")
 if(exists("tdist_table_orig")) {
+  eta_table_tdist <- get_eta_values(working.directory=file.path(working.directory,"modelfit_run"),theta_values=tdist_table_orig[,1:2],param_model="tdist")
   list_tdist_shape <- get_eta_transf_table(input_table=tdist_table_orig)
   make_tdist_shape_plot <- list_tdist_shape$make_eta_transf_plot
   if(make_tdist_shape_plot) {

@@ -316,21 +316,33 @@ test_that("get full omega block or tdist extra table",{
 })
 
 #...........................  (11) Test function get_eta_values.R .....................................
+#input tables
+theta_values_boxcox <- data.frame(c("ETA(1)","ETA(2)","ETA(3)","ETA(4)"),c(2,0.2,0.4,0.1))
+colnames(theta_values_boxcox) <- c("ETA","Lambda")
+theta_values_tdist <- theta_values_boxcox
+colnames(theta_values_tdist) <- c("ETA","Degrees of freedom")
+# run function
+eta_boxcox <- get_eta_values(working.directory=file.path(files.w.dir,"qa_run1/modelfit_run"),
+                             theta_values=theta_values_boxcox,param_model="boxcox")
+eta_tdist <- get_eta_values(working.directory=file.path(files.w.dir,"qa_run1/modelfit_run"),
+                            theta_values=theta_values_tdist,param_model="tdist")
 #compare
 context("qa, get_eta_values")
 test_that("get eta values from boxcox or tdist phi file",{
-  expect_equal(data.frame("ETA_name"=c(rep("ETA(1)",4),rep("ETA(2)",4),rep("ETA(3)",4),rep("ETA(4)",4)),
-                          "value"=c(0.18,0.22,0.19,0.097,-0.023,0.1,0.89,-0.023,-0.13,-0.4,-0.59,0.14,-0.11,-0.074,0.034,0.042),
-                          stringsAsFactors = F),
-               get_eta_values(working.directory=file.path(files.w.dir,"qa_run1/modelfit_run"),param_model="boxcox"))
+  expect_equal(c("ETA_name","value"),colnames(eta_boxcox))
+  expect_equal(c(rep("ETA(1)",4),rep("ETA(2)",4),rep("ETA(3)",4),rep("ETA(4)",4)),eta_boxcox$ETA_name)
+  expect_equal(c(0.216665,0.276354,0.231142,0.107048,-0.022947,0.101007,0.974127,-0.022947,
+                 -0.126678,-0.369641,-0.525548,0.143994,-0.109397,-0.073727,0.034058,0.042088),round(eta_boxcox$value,6))
   expect_equal(data.frame(),
-               get_eta_values(working.directory=file.path(files.w.dir,"qa_run2/modelfit_run"),param_model="boxcox"))
-  expect_equal(data.frame("ETA_name"=c(rep("ETA(1)",4),rep("ETA(2)",4),rep("ETA(3)",4),rep("ETA(4)",4)),
-                          "value"=c(0.18,0.22,0.19,0.097,-0.023,0.1,0.89,-0.023,-0.13,-0.4,-0.59,0.14,-0.11,-0.074,0.034,0.042),
-                          stringsAsFactors = F),
-               get_eta_values(working.directory=file.path(files.w.dir,"qa_run1/modelfit_run"),param_model="tdist"))
+               get_eta_values(working.directory=file.path(files.w.dir,"qa_run2/modelfit_run"),
+                              theta_values=theta_values_boxcox,param_model="boxcox"))
+  expect_equal(c("ETA_name","value"),colnames(eta_tdist))
+  expect_equal(c(rep("ETA(1)",4),rep("ETA(2)",4),rep("ETA(3)",4),rep("ETA(4)",4)),eta_tdist$ETA_name)
+  expect_equal(c(0.204035,0.249988,0.215493,0.109567,0.042453,-0.174131,10.684607,0.042453,
+                 -0.162517,-0.646372,-1.279824,0.175925,3.482807,2.374547,-1.100379,-1.357668),round(eta_tdist$value,6))
   expect_equal(data.frame(),
-               get_eta_values(working.directory=file.path(files.w.dir,"qa_run2/modelfit_run"),param_model="tdist"))
+               get_eta_values(working.directory=file.path(files.w.dir,"qa_run2/modelfit_run"),
+                              theta_values=theta_values_tdist,param_model="tdist"))
   
  })
 
