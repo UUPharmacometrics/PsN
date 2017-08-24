@@ -3230,7 +3230,7 @@ sub move_model_and_output
                         if ($self->model_subdir) {
                             cp($filename, $dir . $self->model_subdir_name . $dotless_model_filename . $ext);
                         } else {
-						    my $ok = cp( $filename, $dir.$dotless_model_filename.$ext);
+						    cp($filename, $dir . $dotless_model_filename . $ext);
                         }
 						last;
 					}
@@ -3240,10 +3240,10 @@ sub move_model_and_output
 		}
 		next if ($found_ext);
 
-		if ( $self->prepend_model_file_name ) {
-			cp( $filename, $dir . $dotless_model_filename . '.' . $filename );
+		if ($self->prepend_model_file_name) {
+			cp($filename, $dir . $dotless_model_filename . '.' . $filename);
 		} else {
-			cp( $filename, $dir .$filename );
+			cp($filename, $dir . $filename);
 		}
 
 	}
