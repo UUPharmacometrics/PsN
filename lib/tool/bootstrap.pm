@@ -733,19 +733,20 @@ sub general_setup
 			$model -> add_nonparametric_code;
 		}
 
-		my $orig_fit = tool::modelfit ->new( %{common_options::restore_options(@common_options::tool_options)},
-											 base_directory	 => $self ->directory(),
-											 directory		 => $self ->directory().
-											 '/orig_modelfit_dir'.$model_number,
-											 models		 => [$model],
-											 threads               => $subm_threads,
-											 parent_threads        => $own_threads,
-											 parent_tool_id        => $self -> tool_id(),
-											 logfile	         => undef,
-											 raw_results           => undef,
-											 prepared_models       => undef,
-											 top_tool              => 0,
-											 %subargs );
+		my $orig_fit = tool::modelfit->new(
+            %{common_options::restore_options(@common_options::tool_options)},
+            base_directory => $self->directory(),
+            directory => $self->directory() . '/orig_modelfit_dir' . $model_number,
+            models	=> [ $model ],
+            threads => $subm_threads,
+            parent_threads => $own_threads,
+            parent_tool_id => $self->tool_id(),
+            logfile	=> undef,
+            raw_results => undef,
+            prepared_models => undef,
+            top_tool => 0,
+            %subargs,
+        );
 
 		ui -> print( category => 'bootstrap',
 			message => 'Executing base model.' );
