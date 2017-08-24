@@ -3240,12 +3240,16 @@ sub move_model_and_output
 		}
 		next if ($found_ext);
 
-		if ($self->prepend_model_file_name) {
-			cp($filename, $dir . $dotless_model_filename . '.' . $filename);
-		} else {
-			cp($filename, $dir . $filename);
-		}
-
+        my $destination;
+        $destination .= $dir;
+        if ($self->model_subdir) {
+            $destination .= $self->model_subdir_name;
+        }
+        if ($self->prepend_model_file_name) {
+            $destination .= "$dotless_model_filename.";
+        }
+        $destination .= $filename;
+        cp($filename, $destination);
 	}
 
 	trace(tool => 'modelfit', message => "Best retry is $use_run.\nMoved psn-".
