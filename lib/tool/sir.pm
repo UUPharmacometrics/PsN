@@ -38,6 +38,7 @@ has 'boxcox' => ( is => 'rw', isa => 'Bool', default => 1 );
 has 'negative_dofv' => ( is => 'rw', isa => 'ArrayRef', default => sub { [] } );
 has 'recompute' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'with_replacement' => ( is => 'rw', isa => 'Bool', default => 0 );
+has 'fast_posdef_checks' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'cap_resampling' => ( is => 'rw', isa => 'Int', default => 1 );
 has 'cap_correlation' => ( is => 'rw', isa => 'Num', default => 0.8);
 has 'samples' => ( is => 'rw', required => 1, isa => 'ArrayRef' ); #default in bin script
@@ -917,7 +918,8 @@ sub modelfit_setup
 			choleskyform => $self->parameter_hash->{'choleskyform'},
 			mu => $muvector,
 			lambda => $lambda,
-			delta => $delta);
+			delta => $delta,
+            fast_posdef_checks => $self->fast_posdef_checks);
 
 		$sampled_params_arr = create_sampled_params_arr(samples_array => $vectorsamples,
 														labels_hash => $self->parameter_hash,
@@ -2101,7 +2103,7 @@ sub sample_multivariate_normal
 #                              degree => { isa => 'Num', optional => 1 }, #required for uniform
                               lambda => { isa => 'ArrayRef', optional => 1 }, #not allowed for uniform?
                               delta => { isa => 'ArrayRef', optional => 1 }, #not allowed for uniform?
-							  fast_posdef_check => { isa => 'Bool', default=> 0, optional => 1 },
+							  fast_posdef_checks => { isa => 'Bool', default=> 0, optional => 1 },
         );
     my $samples = $parm{'samples'};
     my $adjust_blocks = $parm{'adjust_blocks'};
@@ -2124,7 +2126,7 @@ sub sample_multivariate_normal
 #    my $degree = $parm{'degree'};
     my $lambda = $parm{'lambda'};
     my $delta = $parm{'delta'};
-    my $fast_posdef_check = $parm{'fast_posdef_check'};
+    my $fast_posdef_checks = $parm{'fast_posdef_checks'};
 
     my $dim = scalar(@{$coords});
 
@@ -2225,6 +2227,12 @@ sub sample_multivariate_normal
     $rejections{'boxcox'}=[(0) x $dim];
     $rejections{'zero'}=[(0) x $dim];
 
+    if ($fast_posdef_checks) {
+        print "Using fast cholesky decomposition for positive semi-definiteness checks\n";
+    } else {
+        print "Using full eigenvalue decomposition for positive semi-definiteness checks\n";
+    }
+
     my @samples_array=();
     my @boxcox_samples_array=();
     my $counter=0;
@@ -2288,7 +2296,7 @@ sub sample_multivariate_normal
             ($accept,$this_adjusted) = check_blocks_posdef(xvec => $xvec,
                                                            hash_array => $block_check_array,
                                                            adjust_blocks => $adjust_blocks,
-                                                           fast_posdef_check => $fast_posdef_check);
+                                                           cholesky_decomposition => $fast_posdef_checks);
             unless ($accept){
                 $rejections{'block'}++;
                 $discarded++;
@@ -2395,20 +2403,20 @@ sub check_blocks_posdef{
     #                { 'size' => 3, indices => [5,6,7,8,9,10] },
     #              ]
     #
-    # fast_posdef_check will use cholesky decomposition instead of eigenvalue decomposition to
-    # speed up rejection process (but adjustment will be unaffected)
+    # cholesky_decomposition will use cholesky decomposition instead of eigenvalue decomposition
+    # to speed up rejection process (but adjustment shall remain unaffected)
 
 	my %parm = validated_hash(\@_,
 							  xvec => { isa => 'ArrayRef', optional => 0 },
 							  hash_array => {isa => 'ArrayRef', optional => 0},
 							  adjust_blocks => {isa => 'Bool', optional => 0},
-							  fast_posdef_check => { isa => 'Bool', default => 0, optional => 1 },
+							  cholesky_decomposition => { isa => 'Bool', default => 0, optional => 1 },
 		);
 
 	my $xvec = $parm{'xvec'};
 	my $hash_array = $parm{'hash_array'};
 	my $adjust_blocks = $parm{'adjust_blocks'};
-	my $fast_posdef_check = $parm{'fast_posdef_check'};
+	my $cholesky_decomposition = $parm{'cholesky_decomposition'};
 
 	my $minEigen=0.000000001;
 	my $accept = 1;
@@ -2439,7 +2447,7 @@ sub check_blocks_posdef{
 			}
 		}
         my $cholesky_err = 0;
-        if ($fast_posdef_check) {
+        if ($cholesky_decomposition) {
             # fast pre-check via cholesky decomposition
             # (if fine we don't need to decompose into eigenvalues, saving valuable time)
             $cholesky_err = check_matrix_posdef(matrix => $mat);
@@ -2449,7 +2457,7 @@ sub check_blocks_posdef{
                 last;
             }
         }
-        if (!$fast_posdef_check or ($cholesky_err && $adjust_blocks)) {
+        if (!$cholesky_decomposition or ($cholesky_err && $adjust_blocks)) {
             (my $eigenvalues, my $Q) = linear_algebra::eigenvalue_decomposition($mat);
 
             if (linear_algebra::min($eigenvalues) < $minEigen){
@@ -2477,7 +2485,7 @@ sub check_blocks_posdef{
                     $adjusted = 1;
                     #if band matrix we need to check that setting 0 was ok
                     if ($band_matrix){
-                        if ($fast_posdef_check) {
+                        if ($cholesky_decomposition) {
                             # save time via fast posdef check here also
                             $cholesky_err = check_matrix_posdef(matrix => $newmat);
                             if ($cholesky_err) {
