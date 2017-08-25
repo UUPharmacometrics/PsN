@@ -5951,7 +5951,7 @@ sub preprocess_data
 
 		$filtered_data_model -> add_records( type           => 'table',
 			record_strings => [ join( ' ', @filter_table_header ).
-				' NOAPPEND NOPRINT ONEHEADER FILE='.$datafile]);
+				' NOAPPEND NOPRINT NOTITLE ONEHEADER FILE='.$datafile]);
 	}
 
 
