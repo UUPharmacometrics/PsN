@@ -126,7 +126,7 @@ sub BUILD
 				"Check results carefully.",
 				newline => 1);
 		}
-		unless (defined $self->derivatives_data or $self->skip_filtering){
+		unless ($self->linearize or defined $self->derivatives_data or $self->skip_filtering){
 			$do_filtering = $self -> models->[0]->need_data_filtering();
 		}
 	}
