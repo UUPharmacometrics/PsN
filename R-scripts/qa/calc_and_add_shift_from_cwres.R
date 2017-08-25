@@ -53,6 +53,7 @@
     dvid_column_nr <- which(colnames(mean_shifts_table)== dvid_name)
     mean_shifts_table<- mean_shifts_table[which(mean_shifts_table[,dvid_column_nr] == dvid),]
   }
+  #check if MDV column exists (in PRED models it maybe will not exist)
   mean_shifts <- mean_shifts_table
   if(any(colnames(mean_shifts)=="MDV")) {
     mean_shifts <- mean_shifts %>%
