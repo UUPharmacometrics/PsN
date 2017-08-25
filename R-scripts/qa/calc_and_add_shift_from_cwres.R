@@ -53,8 +53,12 @@
     dvid_column_nr <- which(colnames(mean_shifts_table)== dvid_name)
     mean_shifts_table<- mean_shifts_table[which(mean_shifts_table[,dvid_column_nr] == dvid),]
   }
-  mean_shifts <- mean_shifts_table %>%
-    filter(MDV==0) %>%
+  mean_shifts <- mean_shifts_table
+  if(any(colnames(mean_shifts)=="MDV")) {
+    mean_shifts <- mean_shifts %>%
+      filter(MDV==0)
+  }
+  mean_shifts <- mean_shifts %>%
     bind_cols(idv_df) %>%
     mutate(bin_index = findInterval(unlist(.$idv), structural_details_table$bin_min),  # in which bin did observation go
            bin_value = structural_details_table$value[bin_index]) %>%                    # get value for that bin
