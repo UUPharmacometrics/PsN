@@ -38,60 +38,9 @@ C<< use model; >>
 
 C<< my $model_object = model -> new ( filename => 'pheno.mod' ); >>
 
-=begin html
-
-<pre>
-
-=end html
-
 $model_object -> initial_values ( parameter_type    => 'theta',
                                   parameter_numbers => [[1,3]],
                                   new_values        => [[1.2,34]] );
-
-=begin html
-
-</pre>
-
-=end html
-
-=head1 See also
-
-=begin html
-
-<a HREF="data.html">data</a>, <a HREF="output.html">output</a>
-
-=end html
-
-=begin man
-
-data, output
-
-=end man
-
-=head1 Methods
-
-=cut
-
-=head2 new
-
-Usage:
-
-=for html <pre>
-
-    $model = model -> new( filename => 'run1.mod' )
-
-=for html </pre>
-
-This is the simplest and most common way to create a model
-object and it requires a file on disk.
-
-=for html <pre>
-
-    $model = model -> new( filename => 'run1.mod')
-
-=for html </pre>
-
-
 =cut
 
 has 'problems' => ( is => 'rw', isa => 'ArrayRef[model::problem]' );
