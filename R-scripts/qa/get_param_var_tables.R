@@ -92,7 +92,7 @@ get_param_var_tables <- function(directory,model.filename,skip) {
     colnames(par_var_models) <- c("","dOFV","Add.params")
     
     # check if etas run was skipped
-    if(any(skip=="etas")) {
+    if(any(skip=="transform")) {
       par_var_models <- data.frame(c("Full OMEGA Block", "Box-Cox Transformation","Additional ETA","t-distribution"), 
                                    c(rep("SKIPPED",4)),stringsAsFactors = F)
       colnames(par_var_models) <- c("","dOFV")

@@ -120,7 +120,8 @@ if(exists("tdist_table_orig")) {
 frem_table_list <- get_all_covariates(frem_directory=file.path(working.directory,"frem_run"),covariates,categorical,parameters,list_par_var_models$dofv_block,skip)
 frem_table <- frem_table_list$frem_table
  # 3.2.Covariate (SCM)
-scm_table_list <- get_scm_table(file.path(working.directory,"scm_run/raw_results_scm.csv"),
+scm_table_list <- get_scm_table(scm_directory=file.path(working.directory,"scm_run"),
+                                frem_directory=file.path(working.directory,"frem_run"),
                                 parameters,covariates,categorical,skip)
 scm_table <- scm_table_list$scm_table
 max_scm_table <- scm_table_list$max_scm_table
