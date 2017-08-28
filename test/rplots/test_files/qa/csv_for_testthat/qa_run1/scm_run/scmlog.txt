@@ -1,0 +1,19 @@
+Detected exponential ETA2 on CL
+Detected exponential ETA1 on V
+
+If any of the above ETA relations is not correct all the following results will be wrong.
+--------------------
+The ofv of the nonlinear base model :   587.36644        derivatives.mod
+The ofv of the linearized base model:   587.27205        base_model_with_included_relations.mod
+--------------------
+
+Model directory C:\qa_pheno\scm_run\m1
+
+MODEL            TEST     BASE OFV     NEW OFV         TEST OFV (DROP)    GOAL     dDF    SIGNIFICANT PVAL
+CLAPGR-4         PVAL    587.27205   584.44629              2.82577  >   3.84150    1              0.092763 
+CLWGT-4          PVAL    587.27205   586.80427              0.46778  >   3.84150    1              0.494010 
+VAPGR-4          PVAL    587.27205   587.15646              0.11559  >   3.84150    1              0.733860 
+VWGT-4           PVAL    587.27205   587.15742              0.11463  >   3.84150    1              0.734930 
+
+--------------------
+
