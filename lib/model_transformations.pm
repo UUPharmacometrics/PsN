@@ -203,6 +203,49 @@ sub prepend_code
     $model->set_code(record => $code_record, code => \@model_code);
 }
 
+sub insert_code
+{
+    # Add code after specified line number in $PRED or $PK, or to specific record
+    my %parm = validated_hash(\@_,
+        model => { isa => 'model' },
+        code => { isa => 'ArrayRef' },
+        record => { isa => 'Str', optional => 1 },
+        line => { isa => 'Int' },
+    );
+    my $model = $parm{'model'};
+	my $code = $parm{'code'};
+    my $record = $parm{'record'};
+    my $line = $parm{'line'};
+    
+	my @model_code;
+	my $code_record;
+    if (not defined $record) {
+        if ($model->has_code(record => 'pk')) {
+            @model_code = @{$model->get_code(record => 'pk')};
+            $code_record = 'pk';
+        } elsif ($model->has_code(record => 'pred')) {
+            @model_code = @{$model->get_code(record => 'pred')};
+            $code_record = 'pred';
+        } else {
+            croak("Neither PK nor PRED defined in " . $model->filename . "\n");
+        }
+    } else {
+        @model_code = @{$model->get_code(record => $record)};
+        $code_record = $record;
+    }
+
+    my @result_code;
+    for (my $i = 0; $i <= $line; $i++) {
+        push @result_code, $model_code[$i];
+    }
+	@result_code = (@result_code, @$code); 
+    for (my $i = $line + 1; $i < scalar(@model_code); $i++) {
+        push @result_code, $model_code[$i];
+    }
+
+    $model->set_code(record => $code_record, code => \@result_code);
+}
+
 sub boxcox_etas
 {
     # Boxcox transform all or some ETAs of model
@@ -608,6 +651,58 @@ sub iiv_on_ruv
     }
 
     prepend_code(model => $model, code => \@code, record => 'error');
+}
+
+sub power_on_ruv
+{
+    # Add IPRED**THETA for each epsilon or only to selected epsilons
+	my %parm = validated_hash(\@_,
+        model => { isa => 'model' },
+        epsilons => { isa => 'ArrayRef', optional => 1 },       # An array of the epsilons to transform or unspecified for all epsilons
+    );
+    my $model = $parm{'model'};
+	my $epsilons = $parm{'epsilons'};
+
+    my @error_code = @{$model->get_code(record => 'error')};
+    my $found = 0;
+    for my $line (@error_code) {
+        if ($line =~ /\s*IPRED\s*=/) {
+            $found = 1;
+            last;
+        }
+    }
+    if (not $found) {
+        print "Warning: No IPRED definition found in \$ERROR. No transformation will be done.\n";
+        return;
+    }
+
+    if (not defined $epsilons) {
+        my $nepsilons = $model->nsigmas->[0];
+        return if ($nepsilons == 0);
+        $epsilons = [1 .. $nepsilons];
+    }
+    return if (scalar(@$epsilons) == 0);
+    my $nthetas = $model->nthetas;
+
+    _rename_epsilons(model => $model, epsilons => $epsilons, prefix => 'EPSP');
+    @error_code = @{$model->get_code(record => 'error')};
+
+    my $next_theta = $nthetas + 1;
+    my @code;
+    for my $i (@$epsilons) {
+        push @code, "EPSP$i = EPS($i) * (IPRED ** THETA($next_theta))";
+        $next_theta++;
+        $model->add_records(type => 'theta', record_strings => [ '$THETA 0.01']); 
+    }
+    
+    my @result_code;
+    for my $line (@error_code) {
+        push @result_code, $line;
+        if ($line =~ /\s*IPRED\s*=/) {
+            push @result_code, @code;
+        }
+    }
+    $model->set_code(record => 'error', code => \@result_code);
 }
 
 1;

@@ -42,7 +42,7 @@ my $res = GetOptions( \%options,
     keys(%optional_options) );
 exit unless $res;
 
-my @valid_transformations = ( 'boxcox', 'tdist', 'full_block', 'add_tv', 'remove_iiv', 'remove_iov', 'omit_ids', 'iiv_on_ruv' );
+my @valid_transformations = ( 'boxcox', 'tdist', 'full_block', 'add_tv', 'remove_iiv', 'remove_iov', 'omit_ids', 'iiv_on_ruv', 'power_on_ruv' );
 my $valid_transformations_string = join("\n", @valid_transformations);
 
 my %help_text;
@@ -158,7 +158,7 @@ if (defined $options{'etas'}) {
 }
 
 if (defined $options{'epsilons'}) {
-    if ($transformation ne 'iiv_on_ruv') {
+    if ($transformation ne 'iiv_on_ruv' and $transformation ne 'power_on_ruv') {
         print "Option -epsilons cannot be used together with the $transformation transformation.\n";
         exit;
     }
@@ -286,6 +286,12 @@ if ($transformation eq 'boxcox') {
     } else {
         model_transformations::iiv_on_ruv(model => $model);
     } 
+} elsif ($transformation eq 'power_on_ruv') {
+    if (defined $options{'epsilons'}) {
+        model_transformations::power_on_ruv(model => $model, epsilons => [ split ',', $options{'epsilons'} ]);
+    } else {
+        model_transformations::power_on_ruv(model => $model);
+    }
 }
 
 $model->_write();
