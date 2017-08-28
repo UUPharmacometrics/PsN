@@ -171,25 +171,32 @@ sub _rename_etas
 
 sub prepend_code
 {
-    # Add code to beginning of $PRED or $PK
+    # Add code to beginning of $PRED or $PK, or to specific record
     my %parm = validated_hash(\@_,
         model => { isa => 'model' },
         code => { isa => 'ArrayRef' },
+        record => { isa => 'Str', optional => 1 },
     );
     my $model = $parm{'model'};
 	my $code = $parm{'code'};
+    my $record = $parm{'record'};
 
 	my @model_code;
 	my $code_record;
-	if ($model->has_code(record => 'pk')) {
-		@model_code = @{$model->get_code(record => 'pk')};
-		$code_record = 'pk';
-	} elsif ($model->has_code(record => 'pred')) {
-		@model_code = @{$model->get_code(record => 'pred')};
-		$code_record = 'pred';
-	} else {
-		croak("Neither PK nor PRED defined in " . $model->filename . "\n");
-	}
+    if (not defined $record) {
+        if ($model->has_code(record => 'pk')) {
+            @model_code = @{$model->get_code(record => 'pk')};
+            $code_record = 'pk';
+        } elsif ($model->has_code(record => 'pred')) {
+            @model_code = @{$model->get_code(record => 'pred')};
+            $code_record = 'pred';
+        } else {
+            croak("Neither PK nor PRED defined in " . $model->filename . "\n");
+        }
+    } else {
+        @model_code = @{$model->get_code(record => $record)};
+        $code_record = $record;
+    }
 
 	@model_code = (@$code, @model_code); 
 
@@ -542,6 +549,65 @@ sub omit_ids
         $data_table->_write();
         $data->set_filename(filename => $filename, directory => $model->directory );
     }
+}
+
+sub _rename_epsilons
+{
+    # Rename all or some EPSs of model
+    my %parm = validated_hash(\@_,
+        model => { isa => 'model' },
+        epsilons => { isa => 'ArrayRef', optional => 1 },   # Array of the epsilons to rename or unspecified for all epsilons
+		prefix => { isa => 'Str', default => 'EPST' },	# The name to use for the transformed epsilon
+    );
+    my $model = $parm{'model'};
+	my $epsilons = $parm{'epsilons'};
+	my $prefix = $parm{'prefix'};
+
+    if (not defined $epsilons) {
+        my $neps = $model->nsigmas->[0];
+        $epsilons = [1 .. $neps];
+    }
+
+    for my $eps (@$epsilons) {
+        if ($model->has_code(record => 'error')) {  
+            my $code = $model->get_code(record => 'error');
+            for (my $i = 0; $i < scalar(@$code); $i++) {
+                $code->[$i] =~ s/(?<!\w)(EPS|ERR)\($eps\)/$prefix$eps/g;
+            }
+            $model->set_code(record => 'error', code => $code);
+        }
+	}
+}
+
+sub iiv_on_ruv
+{
+    # Add an eta for each epsilon or only to selected epsilons
+	my %parm = validated_hash(\@_,
+        model => { isa => 'model' },
+        epsilons => { isa => 'ArrayRef', optional => 1 },       # An array of the epsilons to transform or unspecified for all epsilons
+    );
+    my $model = $parm{'model'};
+	my $epsilons = $parm{'epsilons'};
+
+    if (not defined $epsilons) {
+        my $nepsilons = $model->nsigmas->[0];
+        return if ($nepsilons == 0);
+        $epsilons = [1 .. $nepsilons];
+    }
+    return if (scalar(@$epsilons) == 0);
+    my $netas = $model->nomegas->[0];
+
+    _rename_epsilons(model => $model, epsilons => $epsilons, prefix => 'EPST');
+
+    my $next_eta = $netas + 1;
+    my @code;
+    for my $i (@$epsilons) {
+        push @code, "EPST$i = EPS($i) * EXP(ETA($next_eta))";
+        $next_eta++;
+        $model->add_records(type => 'omega', record_strings => [ '$OMEGA 0.01']); 
+    }
+
+    prepend_code(model => $model, code => \@code, record => 'error');
 }
 
 1;

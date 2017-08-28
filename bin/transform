@@ -29,6 +29,7 @@ my %required_options = ();
 my %optional_options = (
     'out:s' => undef,
     'etas:s' => undef,
+    'epsilons:s' => undef,
     'fix!' => undef,
     'parameters:s' => undef,
     'ids:s' => undef,
@@ -41,7 +42,7 @@ my $res = GetOptions( \%options,
     keys(%optional_options) );
 exit unless $res;
 
-my @valid_transformations = ( 'boxcox', 'tdist', 'full_block', 'add_tv', 'remove_iiv', 'remove_iov', 'omit_ids' );
+my @valid_transformations = ( 'boxcox', 'tdist', 'full_block', 'add_tv', 'remove_iiv', 'remove_iov', 'omit_ids', 'iiv_on_ruv' );
 my $valid_transformations_string = join("\n", @valid_transformations);
 
 my %help_text;
@@ -87,6 +88,13 @@ $help_text{-etas} = <<'EOF';
       
       List the etas to transform. Default is all etas.
       This option is valid for the boxcox and tdist transformations.
+EOF
+
+$help_text{-epsilons} = <<'EOF';
+      -epsilons
+      
+      List the epsilons to transform. Default is all epsilons.
+      This option is valid for the iiv_on_ruv transformations.
 EOF
 
 $help_text{-fix} = <<'EOF';
@@ -145,6 +153,13 @@ if (not grep(/$transformation/, @valid_transformations)) {
 if (defined $options{'etas'}) {
     if ($transformation ne 'boxcox' and $transformation ne 'tdist') {
         print "Option -etas cannot be used together with the $transformation transformation.\n";
+        exit;
+    }
+}
+
+if (defined $options{'epsilons'}) {
+    if ($transformation ne 'iiv_on_ruv') {
+        print "Option -epsilons cannot be used together with the $transformation transformation.\n";
         exit;
     }
 }
@@ -265,6 +280,12 @@ if ($transformation eq 'boxcox') {
         $ignore = $options{'ignore'};
     }
     model_transformations::omit_ids(model => $model, ids => [ split ',', $options{'ids'}], ignore => $ignore);
+} elsif ($transformation eq 'iiv_on_ruv') {
+    if (defined $options{'epsilons'}) {
+        model_transformations::iiv_on_ruv(model => $model, epsilons => [ split ',', $options{'epsilons'} ]);
+    } else {
+        model_transformations::iiv_on_ruv(model => $model);
+    } 
 }
 
 $model->_write();

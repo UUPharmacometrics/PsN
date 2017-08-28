@@ -30,6 +30,10 @@ Set a name to use for the output model file.
 List the etas to transform. Default is all etas.
 This option is valid for the boxcox and tdist transformations.
 \nextopt
+    \optname{epsilons}
+      List the epsilons to transform. Default is all epsilons.
+      This option is valid for the iiv\_on\_ruv transformations.
+    \nextopt
     \optname{fix}
       Fix the omegas to zero
       This option is valid for the remove\_iiv and remove\_iov transformations.
@@ -80,5 +84,8 @@ Remove all IOV omegas, replace the corresponding etas in the code with 0 and ren
 
 \subsection{omit\_ids}
 Omit all ids listed by option -ids. The dataset will be updated and a new model will be created to point to the new dataset. If option -index is used the dataset will not be updated and the omitted ids will be added as IGNORE statements to the model.
+
+\subsection{iiv\_on\_ruv}
+Mulitiply EXP(ETA(n)) with each epsilon or with all epsilons listed in the option -epsilons. Add etas as needed.
 
 \end{document}
