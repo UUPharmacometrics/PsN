@@ -49,20 +49,20 @@ sub BUILD
     }
 
     if (scalar(@{$self->only}) > 0) {
-        my %skip_hash = ( 'scm' => 1, 'frem' => 1, 'cdd' => 1, 'simeval' => 1, 'etas' => 1, 'resmod' => 1 );
+        my %skip_hash = ( 'scm' => 1, 'frem' => 1, 'cdd' => 1, 'simeval' => 1, 'transform' => 1, 'resmod' => 1 );
         for my $section (@{$self->only}) {
             if (exists $skip_hash{$section}) {
                 delete $skip_hash{$section};
             } else {
-                die("only: Unknown section $section. Allowed are etas, scm, frem, cdd, simeval and resmod\n");
+                die("only: Unknown section $section. Allowed are transform, scm, frem, cdd, simeval and resmod\n");
             }
         }
         $self->skip([keys %skip_hash]);
     }
 
     for my $skip (@{$self->skip}) {
-        if ($skip !~ /^(etas|scm|frem|cdd|simeval|resmod)$/) {
-            die("skip: Unknown section $skip. Allowed are etas, scm, frem, cdd, simeval and resmod\n");
+        if ($skip !~ /^(transform|scm|frem|cdd|simeval|resmod)$/) {
+            die("skip: Unknown section $skip. Allowed are transform, scm, frem, cdd, simeval and resmod\n");
         }
     }
 }
@@ -136,7 +136,7 @@ sub modelfit_setup
     #    $base_model->_write();
     #}
 
-    if (not $self->_skipped('etas')) {
+    if (not $self->_skipped('transform')) {
         print "*** Running full omega block, add etas, boxcox and tdist models ***\n";
         eval {
             mkdir "modelfit_run";
@@ -418,7 +418,7 @@ sub _skipped
 sub _all_skipped_for_linearize
 {
     my $self = shift;
-    return $self->_skipped('scm') && $self->_skipped('frem') && $self->_skipped('cdd') && $self->_skipped('simeval') && $self->_skipped('etas');
+    return $self->_skipped('scm') && $self->_skipped('frem') && $self->_skipped('cdd') && $self->_skipped('simeval') && $self->_skipped('transform');
 }
 
 sub _create_scm_config
