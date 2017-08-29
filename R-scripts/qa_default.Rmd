@@ -174,10 +174,11 @@ overview_table <- overview_table_list$overview_table
 <!-- #######################   Write Rmarkdown document here   ################################ -->
 ```{r command_text_from_command_line,results='asis',echo=F,warning=F,message=F}
 command_runtime <- command_text(directory=working.directory)
-
-cat(command_runtime$command,"\n\n")
-cat(command_runtime$run_start,"\n\n")
-cat(command_runtime$run_finish,"\n\n")
+if(length(command_runtime$command)>0 && length(command_runtime$run_start)>0 && length(command_runtime$run_finish)>0) {
+  cat(command_runtime$command,"\n\n")
+  cat(command_runtime$run_start,"\n\n")
+  cat(command_runtime$run_finish,"\n\n")
+}
 ```
 
 ```{r draw_ofv_table,results='asis',echo=F,warning=F,message=F}
