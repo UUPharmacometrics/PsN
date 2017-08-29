@@ -10,6 +10,7 @@ use tool::qa;
 use PsN;
 use YAML;
 use model_transformations;
+use List::Util qw(any);
 
 extends 'tool';
 
@@ -69,13 +70,18 @@ sub modelfit_setup
     $qa->print_results();
 
 	my $results = YAML::LoadFile('qa_dir1/results.yaml');
+	my $actions = $results->{'actions'};
 
-	my $choice = $results->{'choice'};
-	if ($choice eq 'boxcox') {
+	if (any { $_ eq 'boxcox' } @$actions) {
 		model_transformations::boxcox_etas(model => $self->models->[0]);
 	} else {
 		model_transformations::full_omega_block(model => $self->models->[0]);
 	}
+    if (any { $_ eq 'iiv_on_ruv' } @$actions) {
+        model_transformations::iiv_on_ruv(model => $self->models->[0]);
+    } else {
+        model_transformations::power_on_ruv(model => $self->models->[0]);
+    }
 
     my $final_qa = tool::qa->new(
         eval( $common_options::parameters ),

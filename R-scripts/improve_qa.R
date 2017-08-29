@@ -7,19 +7,39 @@ for (i in 1:length(rscript)) {
     source(rscript[i])
 }
 list_par_var_models <- get_param_var_tables(directory=working.directory,model.filename,skip)
-tree <- list(dofv=list(full_block=list_par_var_models$dofv_block, boxcox=list_par_var_models$dofv_box))
+resmod_table_list <- get_resmod_ruv_table(directory=working.directory,idv_name,dvid_name,skip)
+resmod_table <- resmod_table_list$resmod_ruv_table_full
+
+tree <- list(
+    dofv=list(
+		etas=list(
+        	full_block=list_par_var_models$dofv_block,
+        	boxcox=list_par_var_models$dofv_box
+		),
+		resmod=list(
+			power=filter(resmod_table, Model == "power")$dOFV,
+			iiv_on_ruv=filter(resmod_table, Model == "IIV on RUV")$dOFV
+		)
+    )
+)
 
 decision <- function(tree) {
 	dofv <- tree$dofv
-	if (dofv$full_block > dofv$boxcox) {
-		choice = "full_block";
+	if (dofv$etas$full_block > dofv$etas$boxcox) {
+		eta_action = "full_block"
 	} else {
-		choice = "boxcox";
+		eta_action = "boxcox"
 	}
-	return(choice);
+
+	if (dofv$resmod$power > dofv$resmod$iiv_on_ruv) {
+		resmod_action = "power"
+	} else {
+		resmod_action = "iiv_on_ruv"
+	}
+	return(c(eta_action, resmod_action));
 }
 
-tree$choice = decision(tree)
+tree$actions = decision(tree)
 
-yaml <- as.yaml(tree)
+yaml <- as.yaml(tree, indent.mapping.sequence=TRUE)
 cat(yaml, file="results.yaml")
