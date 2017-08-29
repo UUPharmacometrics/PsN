@@ -1,2 +1,2 @@
-model,problem,ofv,"seSIGMA(1,1)"
-1,1,745.24,0.0023
+model,problem,ofv,"seSIGMA(1,1)",BSV_APGR,seBSV_APGR,BSV_WGT,BSV_WGTs
+1,1,745.24,0.0023,0.04,0.2341,16,14.224

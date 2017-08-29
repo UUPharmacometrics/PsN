@@ -476,7 +476,7 @@ colnames(scm_table_2) <- c("","dOFV")
 max_scm_table_2 <- data.frame("SCM","NA","",stringsAsFactors = F)
 colnames(max_scm_table_2) <- c("","dOFV","Add.params")
 scm_table_6 <- data.frame(c("CLAPGR-4","CLWGT-4","VAPGR-4","VWGT-4"),c(2.87,0.47,0.17,0.12),c(-0.03,0.05,0.004,-0.012),
-                          c(-0.3,0.5,0.02,-0.06),stringsAsFactors = F)
+                          c(-0.15,0.0125,0.02,-0.003),stringsAsFactors = F)
 colnames(scm_table_6) <- c("","dOFV","Coef","Coef_sd")
 scm_table_3 <- data.frame(c("CLAPGR-4","CLWGT-4","VAPGR-4","VWGT-4"),c(2.87,0.47,0.17,0.12),c(-0.03,0.05,0.004,-0.012),stringsAsFactors = F)
 colnames(scm_table_3) <- c("","dOFV","Coef")
@@ -525,7 +525,7 @@ test_that("get SCM table",{
                get_scm_table(scm_directory=file.path(files.w.dir,"qa_run1/scm_run"),
                              frem_directory=file.path(files.w.dir,"qa_run1/frem_run"),
                              parameters=c('CL','V'),
-                             covariates=c('APGR','WGT'),categorical=c(),skip=c())$scm_table)
+                             covariates=c('APGR','WGT','HGT'),categorical=c('SEX'),skip=c())$scm_table)
   expect_equal(max_scm_table_3,
                get_scm_table(scm_directory=file.path(files.w.dir,"qa_run1/scm_run"),
                              frem_directory=file.path(files.w.dir,"qa_run1/frem_run"),
@@ -538,32 +538,32 @@ test_that("get SCM table",{
                              covariates=c('APGR','WGT'),categorical=c(),skip=c())$scm_files_exists)
   expect_equal(scm_table_3,
                get_scm_table(scm_directory=file.path(files.w.dir,"qa_run2/scm_run"),
-                             frem_directory=file.path(files.w.dir,"qa_run1/frem_run"),
+                             frem_directory=file.path(files.w.dir,"qa_run2/frem_run"),
                              parameters=c('CL','V'),
                              covariates=c('APGR','WGT'),categorical=c(),skip=c())$scm_table)
   expect_equal(max_scm_table_3,
                get_scm_table(scm_directory=file.path(files.w.dir,"qa_run2/scm_run"),
-                             frem_directory=file.path(files.w.dir,"qa_run1/frem_run"),
+                             frem_directory=file.path(files.w.dir,"qa_run2/frem_run"),
                              parameters=c('CL','V'),
                              covariates=c('APGR','WGT'),categorical=c(),skip=c('frem','resmod','transform','cdd','simeval'))$max_scm_table)
   expect_equal(TRUE,
                get_scm_table(scm_directory=file.path(files.w.dir,"qa_run2/scm_run"),
-                             frem_directory=file.path(files.w.dir,"qa_run1/frem_run"),
+                             frem_directory=file.path(files.w.dir,"qa_run2/frem_run"),
                              parameters=c('CL','V'),
                              covariates=c('APGR','WGT'),categorical=c(),skip=c('frem','resmod','transform','cdd','simeval'))$scm_files_exists)
   expect_equal(scm_table_4,
                get_scm_table(scm_directory=file.path(files.w.dir,"qa_run3/scm_run"),
-                             frem_directory=file.path(files.w.dir,"qa_run1/frem_run"),
+                             frem_directory=file.path(files.w.dir,"qa_run2/frem_run"),
                              parameters=c('CL','V'),
                              covariates=c('APGR','WGT'),categorical=c(),skip=c('frem','resmod','transform','cdd','simeval'))$scm_table)
   expect_equal(max_scm_table_4,
                get_scm_table(scm_directory=file.path(files.w.dir,"qa_run3/scm_run"),
-                             frem_directory=file.path(files.w.dir,"qa_run1/frem_run"),
+                             frem_directory=file.path(files.w.dir,"qa_run2/frem_run"),
                              parameters=c('CL','V'),
                              covariates=c('APGR','WGT'),categorical=c(),skip=c('frem','resmod','transform','cdd','simeval'))$max_scm_table)
   expect_equal(TRUE,
                get_scm_table(scm_directory=file.path(files.w.dir,"qa_run3/scm_run"),
-                             frem_directory=file.path(files.w.dir,"qa_run1/frem_run"),
+                             frem_directory=file.path(files.w.dir,"qa_run2/frem_run"),
                              parameters=c('CL','V'),
                              covariates=c('APGR','WGT'),categorical=c(),skip=c('frem','resmod','transform','cdd','simeval'))$scm_files_exists)
   expect_equal(max_scm_table_5,
@@ -615,7 +615,7 @@ covariates_extra_table_8 <- data.frame("Covariate"=c("SCM","FREM"),"dOFV"=c("SKI
 covariates_extra_table_9 <- data.frame(c("CLAPGR-4","CLWGT-4","VAPGR-4","VWGT-4","sum(SCMu)","FREM"),
                                        c("2.9","0.5","0.2","0.1","3.6","3.6"),
                                        c("-0.030","0.050","0.004","-0.012","",""),
-                                       c("-0.30","0.50","0.02","-0.06","",""),stringsAsFactors = F)
+                                       c("-0.150","0.012","0.020","-0.003","",""),stringsAsFactors = F)
 colnames(covariates_extra_table_9) <- c("Covariate","dOFV","Coefficient","Coefficient/SD")
 #compare
 context("qa, get_covariates_table")
