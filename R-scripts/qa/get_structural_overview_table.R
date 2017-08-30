@@ -41,18 +41,10 @@ get_structural_overview_table <- function(directory,idv,dvid_name,groups,skip) {
         } else {
           structural_overview[k,2] <- ofv_value
         }
-        
-        if(get_resmod_table(directory, idv[i])$resmod_file_exists) {
-          structural_overview[k,3] <- groups-1
-        } else {
-          structural_overview[k,3] <- ''
-        }
+        structural_overview[k,3] <- added_structural_param(directory, idv=idv[i], dvid=dvid_nr[j])
         k <- k + 1
       }
     }
-    # if(all(structural_overview$dOFV=="NA")){
-    #   structural_overview$Add.params <- rep("",length(structural_overview$Add.params))
-    # }
   } else {
     if(any(skip=="resmod")) {
       structural_overview <- data.frame("RESMOD","SKIPPED",stringsAsFactors = F)
