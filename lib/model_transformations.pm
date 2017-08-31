@@ -2,6 +2,7 @@ package model_transformations;
 
 use strict;
 use warnings;
+use List::Util qw(any);
 use include_modules;
 use Cwd;
 use model;
@@ -325,7 +326,8 @@ sub remove_iiv
     if ($fix) {
         _fix_omegas(model => $model, omegas => $remove);
     } else {
-        _remove_omegas(model => $model, omegas => $remove);
+        my $etas = _etas_from_omega_records(model => $model, omegas => $remove);
+        _remove_omegas(model => $model, omegas => $etas);
     }
 }
 
@@ -345,7 +347,8 @@ sub remove_iov
     if ($fix) {
         _fix_omegas(model => $model, omegas => $remove);
     } else {
-        _remove_omegas(model => $model, omegas => $remove);
+        my $etas = _etas_from_omega_records(model => $model, omegas => $remove);
+        _remove_omegas(model => $model, omegas => $etas);
     }
 }
 
@@ -380,6 +383,25 @@ sub find_omega_records
     return \@found;
 }
 
+sub find_zero_fix_omegas
+{
+    my %parm = validated_hash(\@_,
+        model => { isa => 'model' },
+    );
+    my $model = $parm{'model'};
+
+    my @found;
+    
+    my $omegas = $model->problems->[0]->omegas;
+    for my $record (@$omegas) {
+        for my $option (@{$record->options}) {
+            if ($option->fix and $option->init == 0) {
+                push @found, $option;
+            }
+        }
+    }
+}
+
 sub _fix_omegas
 {
 	my %parm = validated_hash(\@_,
@@ -409,35 +431,85 @@ sub _remove_omegas
     # removed etas to constant zero.
 	my %parm = validated_hash(\@_,
         model => { isa => 'model' },
-        omegas => { isa => 'ArrayRef[model::problem::omega]' },
+        omegas => { isa => 'ArrayRef[Int]' },
     );
     my $model = $parm{'model'};
     my $omegas = $parm{'omegas'};
 
-    my $etas = _etas_from_omega_records(model => $model, omegas => $omegas);
-    _remove_etas(model => $model, etas => $etas);
+    _remove_etas(model => $model, etas => $omegas);
     _remove_omega_records(model => $model, omegas => $omegas);
 }
 
 sub _remove_omega_records
 {
     # Remove specific omega records from model
-	my %parm = validated_hash(\@_,
+    my %parm = validated_hash(\@_,
         model => { isa => 'model' },
-        omegas => { isa => 'ArrayRef[model::problem::omega]' },
+        omegas => { isa => 'ArrayRef[Int]' },
     );
     my $model = $parm{'model'};
     my $omegas = $parm{'omegas'};
-
-    my @all_omegas = @{$model->problems->[0]->omegas};
-    my @keep;
-    for my $omega (@all_omegas) {
-        if (not grep { $_ == $omega } @$omegas) {
-            push @keep, $omega;
-        } 
+    
+    my @records = @{$model->problems->[0]->omegas};
+    my @kept_records;
+    my $current = 1;
+    for (my $i = 0; $i < scalar(@records); $i++) {
+        my @options = @{$records[$i]->options};
+        my @kept_options;
+        for (my $j = 0; $j < scalar(@options); $j++) {
+            if ($options[$j]->on_diagonal) {
+                if (not any { $_ == $current } @$omegas) {
+                    push @kept_options, $options[$j];
+                }
+                $current++;
+            } else {
+                my $coord = $options[$j]->coordinate_string;
+                $coord =~ /OMEGA\((\d+),(\d+)\)/;
+                if (not any { $_ == $1 or $_ == $2 } @$omegas) {    # Should this correlation be kept?
+                    push @kept_options, $options[$j];
+                }
+            }
+        }
+        if ($records[$i]->same and not any { $_ == $records[$i]->n_previous_rows + 1 } @$omegas) {  # Check if first omega in SAME should be deleted
+            push @kept_records, $records[$i];
+        }
+        if (scalar(@kept_options) > 0) {
+            $records[$i]->options(\@kept_options);
+            push @kept_records, $records[$i];
+        }
     }
+    $model->problems->[0]->omegas(\@kept_records);
 
-    $model->problems->[0]->omegas(\@keep);
+    # Update coordinate_strings, n_previous_rows and size
+    _update_omegas(model => $model);
+}
+
+sub _update_omegas
+{
+    # For each omega update coordinate_strings, n_previous_rows and size
+    my %parm = validated_hash(\@_,
+        model => { isa => 'model' },
+    );
+    my $model = $parm{'model'};
+
+    my $current = 1;
+    for my $record (@{$model->problems->[0]->omegas}) {
+        $record->n_previous_rows($current - 1);
+        my $size = 0;
+        my $col = 1;        # Column in the omega matrix
+        for my $option (@{$record->options}) {
+            if ($option->on_diagonal) {
+                $option->coordinate_string("OMEGA($current,$current)");
+                $size++;
+                $current++;
+                $col = 1;
+            } else {
+                $option->coordinate_string("OMEGA($current,$col)");
+                $col++;
+            }
+        }
+        $record->size($size);
+    }
 }
 
 sub _remove_etas
