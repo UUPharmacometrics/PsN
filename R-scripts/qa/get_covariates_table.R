@@ -8,7 +8,7 @@ get_covariates_table <- function(frem_table,scm_table,max_scm_table) {
     }
     colnames(covariates_extra_table) <- c("Covariate","dOFV")
   } else {
-    sum_scm_dofv <- sum(as.numeric(scm_table$dOFV))
+    sum_scm_dofv <- sum(as.numeric(scm_table$dOFV[!is.na(scm_table$dOFV)]))
     scm_table$Coef <- format(round(scm_table$Coef,3),trim=T,digits=1,nsmall=2,scientific=F)
     if(any(colnames(scm_table)=="Coef_sd")) {
       scm_table$Coef_sd <- format(round(scm_table$Coef_sd,3),trim=T,digits=1,nsmall=2,scientific=F)
