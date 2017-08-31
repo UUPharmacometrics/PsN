@@ -385,6 +385,7 @@ sub find_omega_records
 
 sub find_zero_fix_omegas
 {
+    # Find all DIAGONAL omegas 0 FIX and all BLOCK omegas all 0 FIX
     my %parm = validated_hash(\@_,
         model => { isa => 'model' },
     );
@@ -394,12 +395,32 @@ sub find_zero_fix_omegas
     
     my $omegas = $model->problems->[0]->omegas;
     for my $record (@$omegas) {
-        for my $option (@{$record->options}) {
-            if ($option->fix and $option->init == 0) {
-                push @found, $option;
+        my $current = $record->n_previous_rows + 1;
+        if (defined $record->type and $record->type eq 'BLOCK') {
+            next if $record->same;
+            next if not $record->fix;
+            my $all_zero = 1;
+            for my $option (@{$record->options}) {
+                if ($option->init != 0) {
+                    $all_zero = 0;
+                    next;
+                }
+            }
+            if ($all_zero) {
+                push @found, ($current .. $current + $record->size - 1);
+            }
+        } else {
+            for my $option (@{$record->options}) {
+                if ($option->on_diagonal) {
+                    if ($option->fix and $option->init == 0) {
+                        push @found, $current;
+                    }
+                    $current++;
+                }
             }
         }
     }
+    return \@found;
 }
 
 sub _fix_omegas

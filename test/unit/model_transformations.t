@@ -206,4 +206,15 @@ is ($model->problems->[0]->omegas->[0]->options->[0]->init, 0.1, "_remove_omega_
 is ($model->problems->[0]->omegas->[0]->options->[1]->init, 0.04, "_remove_omega_record init value 1");
 is ($model->problems->[0]->omegas->[0]->options->[2]->init, 0.6, "_remove_omega_record init value 1");
 
+
+#find_zero_fix_omegas
+$omega1 = model::problem::omega->new(record_arr => ['$OMEGA', '0.1 0 FIX']);
+$omega2 = model::problem::omega->new(record_arr => ['$OMEGA BLOCK(2)', '0.25 0.1 0.25'], n_previous_rows => 2);
+$omega3 = model::problem::omega->new(record_arr => ['$OMEGA BLOCK(2) 0 0 0 FIX'], n_previous_rows => 2);
+$model->problems->[0]->omegas([$omega1, $omega2]);
+is_deeply (model_transformations::find_zero_fix_omegas(model => $model), [ 2 ], "find_zero_fix_omegas 1");
+$model->problems->[0]->omegas([$omega1, $omega3]);
+is_deeply (model_transformations::find_zero_fix_omegas(model => $model), [ 2, 3, 4 ], "find_zero_fix_omegas 2");
+
+
 done_testing();
