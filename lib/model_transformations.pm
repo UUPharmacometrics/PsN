@@ -9,6 +9,7 @@ use model;
 use PsN;
 use MooseX::Params::Validate;
 use utils::file;
+use array qw(max);
 
 sub add_tv
 {
@@ -421,6 +422,37 @@ sub find_zero_fix_omegas
         }
     }
     return \@found;
+}
+
+sub remaining_omegas
+{
+    # Given a list of omegas return a list of the remaining omegas in a model
+	my %parm = validated_hash(\@_,
+        model => { isa => 'model' },
+        omegas => { isa => 'ArrayRef[Int]' },
+    );
+    my $model = $parm{'model'};
+    my $omegas = $parm{'omegas'};
+
+    my $nomegas = $model->problems->[0]->nomegas;
+    my @remaining;
+    if (scalar(@$omegas) == 0) {
+        return [ 1 .. $nomegas ];
+    }
+
+    my $max = array::max($omegas);
+
+    for (my $i = 1; $i <= $max; $i++) {
+        if (not any { $_ == $i } @$omegas) {
+            push @remaining, $i;
+        }
+    }
+
+    if ($nomegas > $max) {
+        push @remaining, ($max + 1 .. $nomegas)  
+    }
+
+    return \@remaining;
 }
 
 sub _fix_omegas

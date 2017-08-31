@@ -216,5 +216,9 @@ is_deeply (model_transformations::find_zero_fix_omegas(model => $model), [ 2 ], 
 $model->problems->[0]->omegas([$omega1, $omega3]);
 is_deeply (model_transformations::find_zero_fix_omegas(model => $model), [ 2, 3, 4 ], "find_zero_fix_omegas 2");
 
+#remaining_omegas
+is_deeply (model_transformations::remaining_omegas(model => $model, omegas => [ 1, 2 ]), [ 3, 4 ], "remaining_omegas 1");
+is_deeply (model_transformations::remaining_omegas(model => $model, omegas => [ 3 ]), [ 1, 2, 4 ], "remaining_omegas 2");
+is_deeply (model_transformations::remaining_omegas(model => $model, omegas => [ 2,3,4 ]), [ 1 ], "remaining_omegas 3");
 
 done_testing();
