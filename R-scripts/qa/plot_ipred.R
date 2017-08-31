@@ -10,7 +10,7 @@ plot_ipred <- function(table,idv) {
     geom_vline(aes(xintercept=bin_max), color="darkgray")+
     geom_hline(yintercept=0, linetype="dashed")+
     geom_line()+
-    geom_point(color="darkred")+
+    geom_point(color="blue",aes(size=nobs),show.legend = F)+
     xlab(toupper(idv))+
     theme_bw()
   

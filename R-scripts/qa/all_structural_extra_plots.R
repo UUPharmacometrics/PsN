@@ -24,14 +24,14 @@ all_structural_extra_plots <- function(working.directory,model.filename,resmod_s
       print(first_table)
       cat(resmod_dofv_table_captions)
       second_table <- keep_symbols(resmod_structural_details[[i]]$second_table,type)
-      second_table <- ztable_sub(second_table,type=type,colnames.bold = T,include.rownames = F,longtable = T,align="rlrr")
-      second_table <- addcgroup(second_table,cgroup=c("","Estimated bias"),n.cgroup=c(1,2))
+      second_table <- ztable_sub(second_table,type=type,colnames.bold = T,include.rownames = F,longtable = T,align="rlrrr")
+      second_table <- addcgroup(second_table,cgroup=c("","Estimated bias",""),n.cgroup=c(1,2,1))
       print(second_table)
       cat(structural_bias_tables_captions)
       shift_tab <- resmod_structural_details[[i]]$table
       if(ncol(shift_tab)!=1) {
         cat("\n\n")
-        idv_plot <- plot_ipred(shift_tab,resmod_structural_details[[i]]$idv)
+        idv_plot <- plot_ipred(table=shift_tab,idv=resmod_structural_details[[i]]$idv)
         print(idv_plot)
         cat("\n\n")
         cat(structural_bias_plots_captions)
