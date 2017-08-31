@@ -4,8 +4,15 @@ get_eta_values <- function(working.directory,theta_values,param_model) {
   
   phi_file_path <- file.path(working.directory,paste0(param_model,".phi"))
   if(file.exists(phi_file_path)) {
+    #which etas to select
+    nr <- c()
+    for(i in 1:nrow(theta_values)) {
+      nr[i] <- sub("ETA\\(","",theta_values$ETA[i])
+      nr[i] <- sub("\\)","",nr[i])
+    }
     eta_table <- read.table(phi_file_path,skip=1,header=T,stringsAsFactors = F) %>%
-      select(grep("ETA",colnames(.)))
+      select(unique(grep(paste(paste0("ETA.",nr,"."),collapse="|"),colnames(.))))
+    
     for(i in 1:ncol(eta_table)) {
       eta_name <- sub("\\(",".",theta_values$ETA[i])
       eta_name <- sub("\\)",".",eta_name)
