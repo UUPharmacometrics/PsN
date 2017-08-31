@@ -26,7 +26,7 @@ command_text <- function(directory) {
         run_finish <- as.character(vers_opt_file[i,1])
       }
     }
-    if (!exists("run_finish")) {
+    if (length(run_finish)==0) {
       run_finish <- as.vector(strsplit(as.character(Sys.time())," "))
       run_finish <- paste("Run finished:",run_finish[[1]][1],"at",run_finish[[1]][2])
     }
