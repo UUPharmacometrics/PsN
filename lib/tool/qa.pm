@@ -148,9 +148,13 @@ sub modelfit_setup
                 push @models, $full_block_model;
             }
             my $boxcox_model = $base_model->copy(directory => "modelfit_run", filename => "boxcox.mod", write_copy => 0);
-            model_transformations::boxcox_etas(model => $boxcox_model);
-            $boxcox_model->_write();
-            push @models, $boxcox_model;
+            my $zero_fix_omegas = model_transformations::find_zero_fix_omegas(model => $boxcox_model);
+            my $etas_to_boxcox = model_transformations::remaining_omegas(model => $boxcox_model, omegas => $zero_fix_omegas);
+            if (scalar(@$etas_to_boxcox) > 0) {
+                model_transformations::boxcox_etas(model => $boxcox_model, etas => $etas_to_boxcox);
+                $boxcox_model->_write();
+                push @models, $boxcox_model;
+            }
             my $tdist_model = $base_model->copy(directory => "modelfit_run", filename => "tdist.mod", write_copy => 0);
             model_transformations::tdist_etas(model => $tdist_model);
             $tdist_model->_write();
