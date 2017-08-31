@@ -42,7 +42,7 @@ my $res = GetOptions( \%options,
     keys(%optional_options) );
 exit unless $res;
 
-my @valid_transformations = ( 'boxcox', 'tdist', 'full_block', 'add_tv', 'remove_iiv', 'remove_iov', 'omit_ids', 'iiv_on_ruv', 'power_on_ruv' );
+my @valid_transformations = ( 'boxcox', 'tdist', 'full_block', 'add_tv', 'remove_iiv', 'remove_iov', 'remove_0fix_omegas', 'omit_ids', 'iiv_on_ruv', 'power_on_ruv' );
 my $valid_transformations_string = join("\n", @valid_transformations);
 
 my %help_text;
@@ -274,6 +274,9 @@ if ($transformation eq 'boxcox') {
     } else {
         model_transformations::remove_iov(model => $model);
     }
+} elsif ($transformation eq 'remove_0fix_omegas') {
+    my $zero_fix = model_transformations::find_zero_fix_omegas(model => $model);
+    model_transformations::_remove_omegas(model => $model, omegas => $zero_fix);
 } elsif ($transformation eq 'omit_ids') {
     my $ignore = 0;
     if (defined $options{'ignore'}) {
