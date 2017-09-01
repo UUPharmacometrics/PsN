@@ -7,7 +7,9 @@ get_omega_values <- function(ext_file,omegas){
   omegas_c <- c()
   col.names_c <- c()
   if(ncol(omega_table)>0) {
-    omega_table <- omega_table[,which(omega_table!=0)]
+    col_names <- colnames(omega_table)[which(omega_table!=0)]
+    omega_table <- as.data.frame(omega_table[,which(omega_table!=0)])
+    colnames(omega_table) <- col_names
     for(i in 1:length(omega_table)) {
       numeration <- sub('.*OMEGA.','',colnames(omega_table[i]))
       numeration <- substr(numeration, 1, nchar(numeration)-1) # delete last element in string

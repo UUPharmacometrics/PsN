@@ -16,11 +16,12 @@ get_param_extra_table <- function(directory,dofv,param_model) {
     ext_file <- read.table((ext_file.path),header=TRUE,skip=1,stringsAsFactors = F) %>%
       filter(ITERATION==-1000000000)
     new_omega_values <- ext_file[,grep("^OMEGA",colnames(ext_file))]
-    new_omega_values <- new_omega_values[,which(new_omega_values!=0)]
+    col_names <- colnames(new_omega_values)[which(new_omega_values!=0)]
+    new_omega_values <- as.data.frame(new_omega_values[,which(new_omega_values!=0)])
+    colnames(new_omega_values) <- col_names
     
     #get needed numers of var omegas to filter right theta values
     needed_nr <- c()
-    col_names <- colnames(new_omega_values)
     numeration <- sub("OMEGA.","",col_names)
     numeration <- substr(numeration, 1, nchar(numeration)-1)
     first <- sub('\\..*','',numeration)
