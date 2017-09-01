@@ -14,6 +14,7 @@ use tool::modelfit;
 use output;
 use nmtablefile;
 use PsN;
+use POSIX;
 
 extends 'tool';
 
@@ -732,14 +733,15 @@ sub _build_time_varying_template
     my $self = shift;
     my %parm = validated_hash(\@_,
 		cutoffs => { isa => 'ArrayRef' },
+		min_idv => { isa => 'Str' },
+		max_idv => { isa => 'Str' },
     );
     my $cutoffs = $parm{'cutoffs'};
+	my $min_idv = $parm{'min_idv'};
+	my $max_idv = $parm{'max_idv'};
 	
-	my $start_time = 0;
-	if($cutoffs->[0] < 0) {
-		$start_time = '-inf';
-	}
-
+	my $start_time = $min_idv;
+	my $end_time = $max_idv;
     my @models;
 
     # Create one model for each interval.
@@ -767,7 +769,7 @@ sub _build_time_varying_template
 		
         $hash{'parameters'} = [
             { name => "sdeps_".$start_time."-t0", parameter => "SIGMA(1,1)", recalc => sub { sqrt($_[0]) } },
-            { name => "sdeps_t0-inf", parameter => "SIGMA(2,2)", recalc => sub { sqrt($_[0]) } },
+            { name => "sdeps_t0-".$end_time, parameter => "SIGMA(2,2)", recalc => sub { sqrt($_[0]) } },
             { name => "CUTOFFS", cutoff => $i },
         ];
 
@@ -844,7 +846,7 @@ sub _build_time_varying_template
                 $start = "t$i";
             }
             if ($i == scalar(@$cutoffs)) {
-                $end = 'inf';
+                $end = $max_idv;
             } else {
                 $end = "t" . ($i + 1);
             }
@@ -1237,9 +1239,13 @@ sub _create_model_templates
 
     my @templates = @residual_models;      # A shallow copy
     $self->model_templates(\@templates);
-
-    my $cutoffs = $self->_calculate_quantiles(table => $table->tables->[0], column => $idv_column);  
-    my $time_var_modeltemplates = $self->_build_time_varying_template(cutoffs => $cutoffs);
+	
+    my $cutoffs = $self->_calculate_quantiles(table => $table->tables->[0], column => $idv_column);
+	$cutoffs = array::unique($cutoffs);
+	my $idv_col_order = $table->tables->[0]->header->{$idv_column};
+	my $min_idv = floor(sprintf("%.10g",array::min($table->tables->[0]->columns->[$idv_col_order])));
+	my $max_idv = ceil(sprintf("%.10g",array::max($table->tables->[0]->columns->[$idv_col_order])));
+    my $time_var_modeltemplates = $self->_build_time_varying_template(cutoffs => $cutoffs,min_idv => $min_idv, max_idv => $max_idv);
     push @{$self->model_templates}, @$time_var_modeltemplates;
     $self->cutoffs($cutoffs);
 }
