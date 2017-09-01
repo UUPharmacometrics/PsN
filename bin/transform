@@ -34,6 +34,7 @@ my %optional_options = (
     'parameters:s' => undef,
     'ids:s' => undef,
     'ignore!' => undef,
+    'occ:s' => undef,
 );
 
 my $res = GetOptions( \%options,
@@ -42,7 +43,7 @@ my $res = GetOptions( \%options,
     keys(%optional_options) );
 exit unless $res;
 
-my @valid_transformations = ( 'boxcox', 'tdist', 'full_block', 'add_tv', 'remove_iiv', 'remove_iov', 'remove_0fix_omegas', 'omit_ids', 'iiv_on_ruv', 'power_on_ruv' );
+my @valid_transformations = ( 'boxcox', 'tdist', 'full_block', 'add_tv', 'add_iov', 'remove_iiv', 'remove_iov', 'remove_0fix_omegas', 'omit_ids', 'iiv_on_ruv', 'power_on_ruv' );
 my $valid_transformations_string = join("\n", @valid_transformations);
 
 my %help_text;
@@ -108,7 +109,7 @@ $help_text{-parameters} = <<'EOF';
       -parameters
       
       Specify list of parameters.
-      This option is mandatory for the add_tv transformation.
+      This option is mandatory for the add_tv and add_iov transformations.
 EOF
 
 $help_text{-ids} = <<'EOF';
@@ -116,6 +117,13 @@ $help_text{-ids} = <<'EOF';
       
       Specify a list of ids.
       This option is mandatory for the omit_ids transformation.
+EOF
+
+$help_text{-occ} = <<'EOF';
+      -occ
+      
+      Specify the name of the occasion column.
+      This option is valid for the add_iov transformation. Default is OCC.
 EOF
 
 $help_text{-ignore} = <<'EOF';
@@ -191,13 +199,13 @@ if (defined $options{'ignore'}) {
 }
 
 if (defined $options{'parameters'}) {
-    unless ($transformation eq 'add_tv') {
+    unless ($transformation eq 'add_tv' or $transformation eq 'add_iov') {
         print "Option -parameters cannot be used together with the $transformation transformation.\n";
         exit;
     }
 } else {
-    if ($transformation eq 'add_tv') {
-        print "Option -parameters need to be used together with the add_tv transformation.\n";
+    if ($transformation eq 'add_tv' or $transformation eq 'add_iov') {
+        print "Option -parameters need to be used together with the $transformation transformation.\n";
         exit;
     }
 }
@@ -262,6 +270,14 @@ if ($transformation eq 'boxcox') {
     model_transformations::full_omega_block(model => $model);
 } elsif ($transformation eq 'add_tv') {
     model_transformations::add_tv(model => $model, parameters => [ split ',', $options{'parameters'}]);
+} elsif ($transformation eq 'add_iov') {
+    my $occ;
+    if (defined $options{'occ'}) {
+        $occ = $options{'occ'};
+    } else {
+        $occ = 'OCC';
+    }
+    model_transformations::add_iov(model => $model, occ => $occ, parameters => [split ',', $options{'parameters'}]);
 } elsif ($transformation eq 'remove_iiv') {
     if (defined $options{'fix'}) {
         model_transformations::remove_iiv(model => $model, fix => $options{'fix'});

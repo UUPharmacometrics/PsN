@@ -9,7 +9,8 @@ use model;
 use PsN;
 use MooseX::Params::Validate;
 use utils::file;
-use array qw(max);
+use array qw(max unique);
+use data;
 
 sub add_tv
 {
@@ -54,6 +55,76 @@ sub add_tv
     }
 
     $model->set_code(record => $code_record, code => \@newcode);
+}
+
+sub add_iov
+{
+    # FIXME: Add initial value is 10% of corresponding IIV omega.
+    # Add IOV on each listed parameter
+    # Return 0 if ok and something was added. 1 if no occ column found
+	my %parm = validated_hash(\@_,
+        model => { isa => 'model' },
+        occ => { isa => 'Str', default => 'OCC' },
+        parameters => { isa => 'ArrayRef[Str]' },
+    );
+    my $model = $parm{'model'};
+    my $occ = $parm{'occ'};
+    my $parameters = $parm{'parameters'};
+
+    my $netas = $model->nomegas->[0];
+
+    my $data = data->new(
+        filename => $model->problems->[0]->datas->[0]->get_absolute_filename(),
+        ignoresign => $model->problems->[0]->datas->[0]->ignoresign,
+        idcolumn => $model->idcolumn, 
+    );
+
+    my $occ_column = $data->column_to_array(column => $occ);
+    if (scalar(@$occ_column) == 0) {
+        return 1;
+    }
+    my $unique_occs = array::unique($occ_column);
+
+  	my @model_code;
+	my $code_record;
+    if ($model->has_code(record => 'pk')) {
+        @model_code = @{$model->get_code(record => 'pk')};
+        $code_record = 'pk';
+    } elsif ($model->has_code(record => 'pred')) {
+        @model_code = @{$model->get_code(record => 'pred')};
+        $code_record = 'pred';
+    } else {
+        croak("Neither PK nor PRED defined in " . $model->filename . "\n");
+    }
+
+    my %relation;       # parameter->eta no
+    for my $p (@$parameters) {
+        for my $line (@model_code) {
+            if ($line =~ /^(\s*$p\s*=.*)(ETA\((\d+)\))(.*)/) {
+                $line = $1 . '(' . $2 . " + IOV_$p)" . $4;
+                $relation{$p} = $3;
+            }
+        }
+    }
+    $model->set_code(record => $code_record, code => \@model_code);
+
+    my @pre_code;
+    my $current_eta = $netas;
+    for (my $i = 0; $i < scalar(@$parameters); $i++) {
+        if (exists $relation{$parameters->[$i]}) {
+            push @pre_code, "IOV_" . $parameters->[$i] . " = 0";
+            for my $unique_occ (@$unique_occs) {
+                $current_eta++;
+                push @pre_code, "IF ($occ.EQ.$unique_occ) IOV_" . $parameters->[$i] . " = ETA($current_eta)";
+            }
+            my $init = $model->initial_values(parameter_type => 'omega', parameter_numbers => [[ $relation{$parameters->[$i]} ]]);
+            $model->add_records(type => 'omega', record_strings => [ '$OMEGA ' . $init->[0]->[0] * 0.1]); 
+        }
+    }
+
+    prepend_code(model => $model, code => \@pre_code);
+
+    return 0;
 }
 
 sub full_omega_block
