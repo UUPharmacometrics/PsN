@@ -2435,26 +2435,6 @@ sub correlation_matrix
 	return \@correlation_matrix;
 }
 
-sub raw_sesigmas
-{
-	my $self = shift;
-	my %parm = validated_hash(\@_,
-							  problems => { isa => 'ArrayRef[Int]', optional => 1 },
-							  subproblems => { isa => 'ArrayRef[Int]', optional => 1 }
-		);
-	my @problems = defined $parm{'problems'} ? @{$parm{'problems'}} : ();
-	my @subproblems = defined $parm{'subproblems'} ? @{$parm{'subproblems'}} : ();
-	my @raw_sesigmas = @{$self->access_any(attribute=>'raw_sesigmas',problems=>\@problems,subproblems=>\@subproblems)};
-
-
-    # raw_sesigmas returns the (raw) sigma standard error estimates.
-    # See L</comegas> for details of the method arguments.
-    #
-    # Level:  Sub problem
-    croak("This function cannot be used, is only a placeholder. Rewrite program.");
-	return \@raw_sesigmas;
-}
-
 sub raw_sigmas
 {
 	my $self = shift;
