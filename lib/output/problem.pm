@@ -37,7 +37,6 @@ has 'fixedsigmas' => ( is => 'rw', isa => 'ArrayRef[Bool]', default => sub { [] 
 has 'fixedthetas' => ( is => 'rw', isa => 'ArrayRef[Bool]', default => sub { [] } );
 has 'initomegas' => ( is => 'rw', isa => 'ArrayRef[Num]', default => sub { [] } );
 has 'initsigmas' => ( is => 'rw', isa => 'ArrayRef[Num]', default => sub { [] } );
-has 'initthetas' => ( is => 'rw', isa => 'ArrayRef[Num]', default => sub { [] } );
 has 'lower_theta_bounds' => ( is => 'rw', isa => 'ArrayRef[Num]' );
 has 'lower_omega_bounds' => ( is => 'rw', isa => 'ArrayRef[Num]' );
 has 'lower_sigma_bounds' => ( is => 'rw', isa => 'ArrayRef[Num]' );

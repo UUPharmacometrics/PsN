@@ -40,7 +40,6 @@ has 'npomegas' => ( is => 'rw', isa => 'ArrayRef' );
 has 'npetabars' => ( is => 'rw', isa => 'ArrayRef' );
 has 'npcorr' => ( is => 'rw', isa => 'ArrayRef' );
 has 'nrom' => ( is => 'rw', isa => 'Num' );
-has 'nth' => ( is => 'rw', isa => 'Num' );
 has 'ofvpath' => ( is => 'rw', isa => 'ArrayRef' );
 has 'ofv' => ( is => 'rw', isa => 'Num', clearer => 'clear_ofv' );
 has 'dic' => ( is => 'rw', isa => 'Num' );

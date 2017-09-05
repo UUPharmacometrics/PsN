@@ -1349,25 +1349,6 @@ sub initgrad
 	return \@initgrad;
 }
 
-sub initthetas
-{
-	my $self = shift;
-	my %parm = validated_hash(\@_,
-							  problems => { isa => 'ArrayRef[Int]', optional => 1 },
-							  subproblems => { isa => 'ArrayRef[Int]', optional => 1 }
-		);
-	my @problems = defined $parm{'problems'} ? @{$parm{'problems'}} : ();
-	my @subproblems = defined $parm{'subproblems'} ? @{$parm{'subproblems'}} : ();
-	my @initthetas = @{$self->access_any(attribute=>'initthetas',problems=>\@problems,subproblems=>\@subproblems)};
-
-    # initthetas returns the initial theta values.
-    # See L</comegas> for details of the method arguments.
-    #
-    # Level:  Sub problem
-    croak("This function cannot be used, is only a placeholder. Rewrite program.");
-	return \@initthetas;
-}
-
 sub omega_indexes
 {
 	my $self = shift;
@@ -1600,26 +1581,6 @@ sub npetabars
     #
     # Level:  Sub problem
 	return \@npetabars;
-}
-
-sub nth
-{
-	my $self = shift;
-	my %parm = validated_hash(\@_,
-							  problems => { isa => 'ArrayRef[Int]', optional => 1 },
-							  subproblems => { isa => 'ArrayRef[Int]', optional => 1 }
-		);
-	my @problems = defined $parm{'problems'} ? @{$parm{'problems'}} : ();
-	my @subproblems = defined $parm{'subproblems'} ? @{$parm{'subproblems'}} : ();
-	my @nth = @{$self->access_any(attribute=>'nth',problems=>\@problems,subproblems=>\@subproblems)};
-
-    # nth returns the number of thetas.
-    # See L</comegas> for details of the method arguments.
-    #
-    # Level:  Sub problem
-
-    croak("This function cannot be used, is only a placeholder. Rewrite program.");
-	return \@nth;
 }
 
 sub ofvpath
