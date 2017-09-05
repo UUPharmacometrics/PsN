@@ -3354,25 +3354,6 @@ sub _read_problems
 	$self->parsed(1);
 }
 
-sub initsigmas
-{
-	my $self = shift;
-	my %parm = validated_hash(\@_,
-							  problems => { isa => 'ArrayRef[Int]', optional => 1 },
-							  subproblems => { isa => 'ArrayRef[Int]', optional => 1 }
-		);
-	my @problems = defined $parm{'problems'} ? @{$parm{'problems'}} : ();
-	my @subproblems = defined $parm{'subproblems'} ? @{$parm{'subproblems'}} : ();
-	my @initsigmas = @{$self->access_any(attribute=>'initsigmas',problems=>\@problems,subproblems=>\@subproblems)};
-
-    # initsigmas returns the initial sigma values.
-    # See L</comegas> for details of the method arguments.
-    #
-    # Level:  Sub problem
-    croak("This function cannot be used, is only a placeholder. Rewrite program.");
-	return \@initsigmas;
-}
-
 sub get_nonmem_parameters
 {
 	my %parm = validated_hash(\@_,
