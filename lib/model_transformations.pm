@@ -108,6 +108,10 @@ sub add_iov
     }
     $model->set_code(record => $code_record, code => \@model_code);
 
+    if (scalar(keys %relation) == 0) {
+        return 2;
+    }
+
     my @pre_code;
     my $current_eta = $netas;
     for (my $i = 0; $i < scalar(@$parameters); $i++) {

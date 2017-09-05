@@ -57,7 +57,6 @@ has 'raw_cormatrix' => ( is => 'rw', isa => 'ArrayRef' );
 has 'r_matrix' => ( is => 'rw', isa => 'ArrayRef' );
 has 'correlation_matrix' => ( is => 'rw', isa => 'ArrayRef' );
 has 'raw_covmatrix' => ( is => 'rw', isa => 'ArrayRef' );
-has 'raw_omegas' => ( is => 'rw', isa => 'ArrayRef' );
 has 'raw_seomegas' => ( is => 'rw', isa => 'ArrayRef' );
 has 'raw_sesigmas' => ( is => 'rw', isa => 'ArrayRef' );
 has 'raw_sigmas' => ( is => 'rw', isa => 'ArrayRef' );

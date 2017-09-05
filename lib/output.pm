@@ -2435,27 +2435,6 @@ sub correlation_matrix
 	return \@correlation_matrix;
 }
 
-
-sub raw_omegas
-{
-	my $self = shift;
-	my %parm = validated_hash(\@_,
-							  problems => { isa => 'ArrayRef[Int]', optional => 1 },
-							  subproblems => { isa => 'ArrayRef[Int]', optional => 1 }
-		);
-	my @problems = defined $parm{'problems'} ? @{$parm{'problems'}} : ();
-	my @subproblems = defined $parm{'subproblems'} ? @{$parm{'subproblems'}} : ();
-	my @raw_omegas = @{$self->access_any(attribute=>'raw_omegas',problems=>\@problems,subproblems=>\@subproblems)};
-
-
-    # raw_omegas returns the (raw) omegas.
-    # See L</comegas> for details of the method arguments.
-    #
-    # Level:  Sub problem
-    croak("This function cannot be used, is only a placeholder. Rewrite program.");
-	return \@raw_omegas;
-}
-
 sub raw_seomegas
 {
 	my $self = shift;
