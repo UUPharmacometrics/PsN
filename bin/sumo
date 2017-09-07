@@ -863,7 +863,7 @@ require model;
 					for( my $i = 0; $i <= $#{$row}; $i++ ){
 						my $spaces = $output_matrix_sizes[$i] - length($row -> [$i]);
 						if( $options{'csv'} ){
-							print $row -> [$i], ",";
+							print '"', $row -> [$i], '",';
 						} else {
 							print " " x $spaces, $row -> [$i], "  ";
 						}
