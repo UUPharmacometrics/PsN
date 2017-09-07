@@ -1990,83 +1990,91 @@ sub linearize_setup
         }
 
         #handle second order and linearized epsilon imitate cwres
-        if ($self->second_order() or $self->epsilon()){
+        if ($self->second_order() or $self->epsilon()) {
 
-            my $new_comresno = $nEPS*$nETA;
-            $new_comresno += $nETA*($nETA+1)/2 if ($self->second_order());
+            my $new_comresno = $nEPS * $nETA;
+            $new_comresno += $nETA * ($nETA + 1) / 2 if ($self->second_order());
             my $comresno;
-            if (defined $derivatives_model ->problems->[0]->abbreviateds()
-                    and scalar(@{$derivatives_model ->problems->[0]->abbreviateds()})>0){
+            if (defined $derivatives_model->problems->[0]->abbreviateds()
+                and scalar(@{$derivatives_model->problems->[0]->abbreviateds()}) > 0) {
                 # Get current comres number
-                $comresno = $derivatives_model->get_option_value( option_name => 'COMRES',
-                    record_name => 'abbreviated');
+                $comresno = $derivatives_model->get_option_value(
+                    option_name => 'COMRES',
+                    record_name => 'abbreviated'
+                );
 
-                $new_comresno += $comresno if ( defined $comresno );
-                $derivatives_model->set_option( option_name => 'COMRES',
+                $new_comresno += $comresno if (defined $comresno);
+                $derivatives_model->set_option(
+                    option_name => 'COMRES',
                     record_name => 'abbreviated',
                     fuzzy_match => 1,
-                    option_value => $new_comresno);
-            }else {
+                    option_value => $new_comresno
+                );
+            } else {
                 # Add $ABBREVIATED if necessary
-                $derivatives_model -> add_records( type => 'abbreviated',
-                    record_strings => [ "COMRES=".($new_comresno) ] );
+                $derivatives_model->add_records(
+                    type => 'abbreviated',
+                    record_strings => [ "COMRES=".($new_comresno) ]
+                );
             }
 
             #can look for ADVAN<any number> this way
-            my ($advan,$junk) = $derivatives_model->problems->[0] -> _option_val_pos( record_name => 'subroutine',
+            my ($advan, $junk) = $derivatives_model->problems->[0]->_option_val_pos(
+                record_name => 'subroutine',
                 name => 'ADVAN',
-                exact_match => 0);
+                exact_match => 0
+            );
             my $have_advan = scalar(@{$advan}) > 0;
 
             my $code_records;
-            my $H='H';
-            if( $have_advan ){
+            my $H = 'H';
+            if ($have_advan) {
                 # We have and ADVAN option in $SUBROUTINE, get $ERROR code
-                $code_records = $derivatives_model->problems->[0]-> errors();
-                $H='HH';
+                $code_records = $derivatives_model->problems->[0]->errors();
+                $H = 'HH';
             } else {
                 # No ADVAN subroutine, we should modify $PRED code
-                $code_records = $derivatives_model->problems->[0] -> preds;
+                $code_records = $derivatives_model->problems->[0]->preds;
             }
 
             # Get code array reference, so we can update the code inplace.
-            my $code = $code_records -> [0] -> verbatim_last;
+            my $code = $code_records->[0]->verbatim_last;
 
-            unless( defined $code ){
+            if (not defined $code) {
                 $code = [];
-                $code_records -> [0] -> verbatim_last($code);
+                $code_records->[0]->verbatim_last($code);
             }
 
             my $com = defined $comresno ? $comresno + 1 : 1;
-            for(my $i= 1; $i<=$nEPS;$i++ ){
-                for(my $j= 1; $j<=$nETA;$j++ ){
+            for (my $i = 1; $i <= $nEPS; $i++) {
+                for (my $j = 1; $j <= $nETA;$j++) {
                     if (not $self->nointer) {
-                        push( @{$code},"\"  COM($com)=$H($i,".($j+1).")" );
+                        push(@{$code}, "\"  COM($com)=$H($i," . ($j + 1) . ")");
                     } else {
-                        push( @{$code}, "\"  COM($com) = 0");
+                        push(@{$code}, "\"  COM($com) = 0");
                     }
-                    push( @tablestrings, "COM($com)=D_EPSETA$i"."_$j");
+                    push(@tablestrings, "COM($com)=D_EPSETA$i"."_$j");
                     $table_highprec++;
-                    push( @inputstrings, "D_EPSETA$i"."_$j");
+                    push(@inputstrings, "D_EPSETA$i"."_$j");
                     $com++;
                 }
             }
-            if ($self->second_order()){
-                for(my $i= 1; $i<=$nETA;$i++ ){
-                    for(my $j= 1; $j<=$i;$j++ ){
-                        push( @{$code},"\"  COM($com)=G($i,".($j+1).")" );
-                        push( @tablestrings, "COM($com)=D2_ETA$i"."_$j");
+            if ($self->second_order()) {
+                for (my $i = 1; $i <= $nETA; $i++) {
+                    for (my $j = 1; $j <= $i; $j++) {
+                        push(@{$code}, "\"  COM($com)=G($i,".($j+1).")");
+                        push(@tablestrings, "COM($com)=D2_ETA$i"."_$j");
                         $table_highprec++;
-                        push( @inputstrings, "D2_ETA$i"."_$j");
+                        push(@inputstrings, "D2_ETA$i"."_$j");
                         $com++;
                     }
                 }
             }
         } #end second_order or epsilons
         #1.12
-        push(@tablestrings,@covariates);
+        push(@tablestrings, @covariates);
         $table_highprec = $table_highprec + scalar(@covariates);
-        push(@inputstrings,@covariates);
+        push(@inputstrings, @covariates);
 
         #GZs and GKs are added to code further down, add_code_gfunc
         foreach my $parameter ( keys %{$self -> test_relations()} ){
