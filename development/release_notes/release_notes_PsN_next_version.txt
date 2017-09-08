@@ -118,6 +118,7 @@ A new recommended but not required Perl library for runrecord: YAML::Tiny
 - Do not propagate name of -dir to subtools (i.e. underlying scm directory will always be called scm_dir1)
 - Only evaluate (MAXEVALS=0) the derivatives model. If lst file is available update initial values first.
 - New option nointer to not use interaction
+- Do not use COM in derivatives.mod to avoid name clash
 
    ___nca___
 
