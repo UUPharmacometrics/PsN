@@ -74,13 +74,15 @@
                  bin_index = .$bin_index,
                  ipred = .$OPRED)
     }) %>%
+    
     group_by(bin_index) %>%
     summarise(relative_shift = ifelse((any(mean_shifts_table$OPRED > 0) && any(mean_shifts_table$OPRED < 0)),NA,100*mean(shift/ipred)), 
               shift = mean(shift),nobs=n()) %>%
     mutate(bin_min = structural_details_table$bin_min[bin_index],
            bin_max = structural_details_table$bin_max[bin_index],
            bin_mean = bin_min+(bin_max-bin_min)/2,
-           nobs_pr = .$nobs*100/sum(.$nobs))
+           nobs_pr = .$nobs*100/sum(.$nobs),
+           nobs = .$nobs*6/max(.$nobs))
   
   structural_details_table %>%
     slice(mean_shifts$bin_index) %>%

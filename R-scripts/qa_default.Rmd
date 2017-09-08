@@ -245,6 +245,7 @@ if(make_boxcox_shape_plot) {
   for(i in 1:length(boxcox_shape_plot)) {
     print(boxcox_shape_plot[[i]])
   }
+  cat("\\pagebreak")
 }
 ```
 
