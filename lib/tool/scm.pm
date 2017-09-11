@@ -2631,7 +2631,7 @@ sub linearize_setup
                     for my $record (@{$derivatives_model->problems->[0]->inputs}) {
                         for my $option (@{$record->options}) {
                             if (defined $option->value) {
-                                next if ($option->value eq 'DROP' or $option->value eq 'SKIP' or $option->name eq 'DROP' or $option->name eq 'SKIP');
+                                next if ($option->is_drop());
                                 if ($option->name eq 'DV') {
                                     $synonyms{'DV'} = $option->value;
                                 }
