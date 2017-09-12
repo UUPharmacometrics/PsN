@@ -572,6 +572,17 @@ sub _calculate_quantiles
     @data = sort { $a <=> $b } @data;
 	my $quantiles = array::quantile(numbers => \@data, groups => $self->groups);
 	
+	#if (scalar(@{$quantiles}) < 8) {
+	#	my $data_length = scalar(@data);
+	#	for my $i (0 .. scalar(@{$quantiles}) - 1) {
+	#		my $data_part_length = scalar(grep{$_ < $quantiles[$i]} @data)
+	#		if ($data_part_length/$data_length>0.9) {
+	#			
+	#		}
+	#	}
+	#}
+	
+	
     return $quantiles;
 }
 
@@ -1245,6 +1256,13 @@ sub _create_model_templates
 	my $idv_col_order = $table->tables->[0]->header->{$idv_column};
 	my $min_idv = floor(sprintf("%.10g",array::min($table->tables->[0]->columns->[$idv_col_order])));
 	my $max_idv = ceil(sprintf("%.10g",array::max($table->tables->[0]->columns->[$idv_col_order])));
+	#delete first and last elements of cutoffs if they are equal with min_idv and max_idv
+	if($min_idv==$cutoffs->[0]) {
+		splice (@{$cutoffs},0,1);
+	}
+	if($max_idv==$cutoffs->[scalar(@{$cutoffs})-1]) {
+		splice (@{$cutoffs},scalar(@{$cutoffs})-1,1); 
+	}
     my $time_var_modeltemplates = $self->_build_time_varying_template(cutoffs => $cutoffs,min_idv => $min_idv, max_idv => $max_idv);
     push @{$self->model_templates}, @$time_var_modeltemplates;
     $self->cutoffs($cutoffs);
