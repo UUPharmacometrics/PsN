@@ -82,7 +82,7 @@
            bin_max = structural_details_table$bin_max[bin_index],
            bin_mean = bin_min+(bin_max-bin_min)/2,
            nobs_pr = .$nobs*100/sum(.$nobs),
-           nobs = .$nobs*6/max(.$nobs))
+           nobs = 12*sqrt(.$nobs/3.14)/max(2*sqrt(.$nobs/3.14)))
   
   structural_details_table %>%
     slice(mean_shifts$bin_index) %>%
