@@ -100,7 +100,7 @@ sub BUILD
     my @filtered_covariates;
     my @filtered_categorical;
     for my $column (@{$self->covariates}) {
-        my $colno = $problem->find_data_column(column_name => $column);
+        my $colno = $problem->find_data_column(column_name => $column, ignore_dropped => 0);
         my $column_data = $data->column_to_array(column => $colno);
         if (scalar @{array::unique($column_data)} == 1) {
             print "Warning: Covariate $column excluded because it has only one value for all rows in the dataset.\n";
