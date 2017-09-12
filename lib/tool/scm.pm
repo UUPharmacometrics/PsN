@@ -2629,24 +2629,7 @@ sub linearize_setup
                 if (defined $self->extra_table_columns) {
                     my $synonyms = $derivatives_model->find_input_synonyms(columns => ['DV', 'MDV']);
                     if (scalar(keys %$synonyms) > 0) {
-                        my $filename = $self->basename . '.dta';
-                        open my $sh, '<', $filename;
-                        open my $dh, '>', "$filename.new";
-                        my $first_line = <$sh>;
-                        print $dh $first_line;
-                        my $header = <$sh>;
-                        for my $key (keys %$synonyms) {
-                            my $synonym = $synonyms->{$key};
-                            $header =~ s/\b$synonym\b/$key/;
-                        }
-                        print $dh $header;
-                        while (my $line = <$sh>) {
-                            print $dh $line;
-                        }
-                        close $dh;
-                        close $sh;
-                        unlink $filename;
-                        rename "$filename.new", $filename;
+                        nmtablefile::rename_column_names(filename => $self->basename . '.dta', replacements => $synonyms);
                     }
                 }
             }else{
