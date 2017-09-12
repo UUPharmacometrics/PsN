@@ -30,8 +30,8 @@ all_structural_extra_plots <- function(working.directory,model.filename,resmod_s
       print(first_table)
       cat(resmod_dofv_table_captions)
       second_table <- keep_symbols(resmod_structural_details[[i]]$second_table,type)
-      second_table <- ztable_sub(second_table,type=type,colnames.bold = T,include.rownames = F,longtable = T,align="rlrrr")
-      second_table <- addcgroup(second_table,cgroup=c("","Estimated bias",""),n.cgroup=c(1,2,1))
+      second_table <- ztable_sub(second_table,type=type,colnames.bold = T,include.rownames = F,longtable = T,align="rlrr")
+      second_table <- addcgroup(second_table,cgroup=c("","Estimated bias"),n.cgroup=c(1,2))
       print(second_table)
       cat(structural_bias_tables_captions)
       shift_tab <- resmod_structural_details[[i]]$table

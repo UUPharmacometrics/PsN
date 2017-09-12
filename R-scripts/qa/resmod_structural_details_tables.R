@@ -49,25 +49,16 @@ resmod_structural_details_tables <- function(working.directory,model.filename,CW
           second_table = data.frame(C1=paste0(format(table$bin_min,nsmall=2),"  :  ",format(table$bin_max,nsmall=2)),C2=as.character(format(round(table$value,2),nsmall=2)),
                                     stringsAsFactors = F)
           if(any(is.na(table$relative_shift))) {
-            # second_table = data.frame(C1=paste0(format(table$bin_min,nsmall=2),"  :  ",format(table$bin_max,nsmall=2)),C2=as.character(format(round(table$value,2),nsmall=2)),
-            #                           C3=as.character(format(round(table$shift,2),nsmall=2)),
-            #                             stringsAsFactors = F)
             second_table <- cbind(second_table,C3=as.character(format(round(table$shift,2),nsmall=2)),stringsAsFactors = F)
             colnames(second_table) <- c("Bin","CWRES","CPRED")
           } else {
-            # second_table = data.frame(C1=paste0(format(table$bin_min,nsmall=2),"  :  ",format(table$bin_max,nsmall=2)),C2=as.character(format(round(table$value,2),nsmall=2)),
-            #                           C3=as.character(round(table$relative_shift,0)),
-            #                           stringsAsFactors = F)
             second_table <- cbind(second_table,C3=as.character(round(table$relative_shift,0)),stringsAsFactors = F)
             colnames(second_table) <- c("Bin","CWRES","%CPRED")
           }
-          col_names <- colnames(second_table)
-          second_table <- cbind(second_table,C4=format(table$nobs_pr,digits=0),stringsAsFactors = F)
-          colnames(second_table) <- c(col_names,"%Observed data")
             
         } else {
-          second_table = data.frame(C1="ERROR",C2="ERROR",C3="ERROR",C4="ERROR",stringsAsFactors = F)
-          colnames(second_table) <- c("Bin","CWRES","%CPRED","%Observed data")
+          second_table = data.frame(C1="ERROR",C2="ERROR",C3="ERROR",stringsAsFactors = F)
+          colnames(second_table) <- c("Bin","CWRES","%CPRED")
           table <- error_table(col=1)
         }
           
