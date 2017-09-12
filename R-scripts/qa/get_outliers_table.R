@@ -13,6 +13,10 @@ get_outliers_table <- function(simeval_directory,cdd.data,skip) {
           outliers_table[i,2] <- ifelse(any(cdd.data$id %in% outlier_ids[i]),cdd.data$dOFV[which(cdd.data$id==outlier_ids[i])],NA)
         }
         outliers_table <- outliers_table[order(outliers_table$dOFV,decreasing = T),]
+        if(nrow(outliers_table)>10) {
+          outlier_ids <- as.numeric(sub("Subject ","",outliers_table$Subjects[1:10]))
+          outliers_table <- outliers_table[1:10,]
+        }
         if(!all(is.na(outliers_table$dOFV))) {
           max_outlier_table <- outliers_table[which.max(outliers_table$dOFV),]
           colnames(max_outlier_table) <- c("","dOFV")
@@ -24,6 +28,9 @@ get_outliers_table <- function(simeval_directory,cdd.data,skip) {
         outliers_table$dOFV <- format(round(as.numeric(outliers_table$dOFV), 1),trim=T,digits=1,nsmall=1)
         rownames(outliers_table) <- NULL
       } else {
+        if(length(outlier_ids)>10) {
+          outlier_ids <- outlier_ids[1:10]
+        }
         if(as.character(cdd.data[1,1])=="SKIPPED") {
           outliers_table <- data.frame("Subjects"=paste("Subject",outlier_ids),"dOFV"=rep("",length(outlier_ids)),stringsAsFactors = F)
           max_outlier_table <- data.frame("No dOFV values found (skipped CDD)","",stringsAsFactors = F)
