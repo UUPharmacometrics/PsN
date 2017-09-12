@@ -206,4 +206,9 @@ is_deeply($guess_attributes->{'labels'},['THETA1','THETA2','THETA3','THETA4','TH
 'OMEGA(1,1)','OMEGA(2,1)','OMEGA(2,2)','OMEGA(3,3)','OMEGA(4,4)','OMEGA(5,5)','OMEGA(6,6)','OMEGA(7,7)','OMEGA(9,9)','OMEGA(11,11)','OMEGA(13,13)',
 'SIGMA(1,1)'],'guess estimated attributes  labels 2');
 
+# _replace_names_in_header
+is (nmtablefile::_replace_names_in_header(header => 'ID CONC MDV', replacements => { "DV" => "CONC" }), 'ID DV MDV', "_replace_names_in_header case 1");
+is (nmtablefile::_replace_names_in_header(header => 'ID CONC MDV', replacements => { }), 'ID CONC MDV', "_replace_names_in_header case 2");
+
+
 done_testing();

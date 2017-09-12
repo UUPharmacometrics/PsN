@@ -2623,48 +2623,14 @@ sub linearize_setup
                 }else{
                     print "Warning: could not retrieve OFV from derivatives model.\n";
                 }
-                # Find synonyms to DV and MDV and replace header in extra_table
+                # Find synonyms to DV and MDV and replace header in generated dataset
                 # This is a workaround for a bug in NONMEM causing the synonym names always to be put in the header of tables
                 # Trigger on extra_table_columns to connect it to postprocessing needs of dataset
                 if (defined $self->extra_table_columns) {
-                    my %synonyms;
-                    for my $record (@{$derivatives_model->problems->[0]->inputs}) {
-                        for my $option (@{$record->options}) {
-                            if (defined $option->value) {
-                                next if ($option->is_drop());
-                                if ($option->name eq 'DV') {
-                                    $synonyms{'DV'} = $option->value;
-                                }
-                                if ($option->value eq 'DV') {
-                                    $synonyms{'DV'} = $option->name
-                                }
-                                if ($option->name eq 'MDV') {
-                                    $synonyms{'MDV'} = $option->value;
-                                }
-                                if ($option->value eq 'MDV') {
-                                    $synonyms{'MDV'} = $option->name
-                                }
-                            }
-                        }
+                    my $synonyms = $derivatives_model->find_input_synonyms(columns => ['DV', 'MDV']);
+                    if (scalar(keys %$synonyms) > 0) {
+                        nmtablefile::rename_column_names(filename => $self->basename . '.dta', replacements => $synonyms);
                     }
-                    my $filename = $self->basename . '.dta';
-                    open my $sh, '<', $filename;
-                    open my $dh, '>', "$filename.new";
-                    my $first_line = <$sh>;
-                    print $dh $first_line;
-                    my $header = <$sh>;
-                    for my $key (keys %synonyms) {
-                        my $synonym = $synonyms{$key};
-                        $header =~ s/\b$synonym\b/$key/;
-                    }
-                    print $dh $header;
-                    while (my $line = <$sh>) {
-                        print $dh $line;
-                    }
-                    close $dh;
-                    close $sh;
-                    unlink $filename;
-                    rename "$filename.new", $filename;
                 }
             }else{
                 ui->print (category => 'scm',

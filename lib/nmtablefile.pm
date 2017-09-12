@@ -52,7 +52,6 @@ sub get_table
 	return undef;
 }
 
-
 sub add_table
 {
 	my $self = shift;
@@ -122,6 +121,51 @@ sub read_nmtable
     }
     
     close $fh;
+}
+
+sub _replace_names_in_header
+{
+    # Replace all names in a replacement hash in a table header string
+	my %parm = validated_hash(\@_,
+		header => { isa => 'Str' },
+        replacements => { isa => 'HashRef' },
+	);
+    my $header = $parm{'header'};
+    my $replacements = $parm{'replacements'};
+
+    for my $key (keys %$replacements) {
+        my $replacement = $replacements->{$key};
+        $header =~ s/\b$replacement\b/$key/;
+    }
+
+    return $header;
+}
+
+sub rename_column_names
+{
+    # Function to rename column names of table using a hash of names => replacements
+    # This can be used as a workaround for the NONMEM bug causing synonyms to always show up in table headers
+	my %parm = validated_hash(\@_,
+		filename => { isa => 'Str' },
+        replacements => { isa => 'HashRef' },
+	);
+    my $filename = $parm{'filename'};
+    my $replacements = $parm{'replacements'};
+
+    open my $sh, '<', $filename;
+    open my $dh, '>', "$filename.new";
+    my $first_line = <$sh>;
+    print $dh $first_line;
+    my $header = <$sh>;
+    $header = _replace_names_in_header(header => $header, replacements => $replacements);
+    print $dh $header;
+    while (my $line = <$sh>) {
+        print $dh $line;
+    }
+    close $dh;
+    close $sh;
+    unlink $filename;
+    rename "$filename.new", $filename;
 }
 
 
