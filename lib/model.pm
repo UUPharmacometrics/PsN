@@ -5628,6 +5628,34 @@ sub defined_variable
     return 0;
 }
 
+sub find_input_synonyms
+{
+    # Find synonyms for listed input column names 
+    # Return a hash from all symbols that has synonyms to the synonyms
+    my $self = shift;
+    my %parm = validated_hash(\@_,
+        columns => { isa => 'ArrayRef[Str]' },
+    );
+    my $columns = $parm{'columns'};
+
+    my %synonyms;
+    for my $record (@{$self->problems->[0]->inputs}) {
+        for my $option (@{$record->options}) {
+            if (defined $option->value and $option->value ne '') {
+                next if ($option->is_drop());
+                for my $col (@$columns) {
+                    if ($option->name eq $col) {
+                        $synonyms{$col} = $option->value;
+                    } elsif ($option->value eq $col) {
+                        $synonyms{$col} = $option->name;
+                    }
+                }
+            }
+        }
+    }
+
+    return \%synonyms;
+}
 
 no Moose;
 __PACKAGE__->meta->make_immutable;

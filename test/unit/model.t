@@ -397,4 +397,14 @@ my ($dir,$file)=OSspecific::absolute_path($model->directory.'/model','file');
 my ($dir2,$file2)=OSspecific::absolute_path($flipped->directory,'file'); 
 is($dir,$dir2,'flip_comments output model in subdir');
 
+# Test find_input_synonyms
+$model = model->new(filename => "$modeldir/pheno.mod"); 
+is_deeply ($model->find_input_synonyms(columns => ['DV']), {}, "find_input_synonyms no synonyms");
+$model->problems->[0]->inputs->[0]->options->[0]->name("DV");
+$model->problems->[0]->inputs->[0]->options->[0]->value("CONC");
+is_deeply ($model->find_input_synonyms(columns => ['DV']), { "DV" => "CONC" }, "find_input_synonyms DV synonym");
+$model->problems->[0]->inputs->[0]->options->[0]->name("CONC");
+$model->problems->[0]->inputs->[0]->options->[0]->value("DV");
+is_deeply ($model->find_input_synonyms(columns => ['DV']), { "DV" => "CONC" }, "find_input_synonyms DV synonym reverse");
+
 done_testing();
