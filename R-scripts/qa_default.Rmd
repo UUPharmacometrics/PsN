@@ -89,9 +89,9 @@ if(exists("boxcox_lambdas_orig")) {
   eta_table_boxcox <- get_eta_values(working.directory=file.path(working.directory,"modelfit_run"),theta_values=boxcox_lambdas_orig[,1:2],param_model="boxcox")
   list_boxcox_shape <- get_eta_transf_table(input_table=boxcox_lambdas_orig)
   make_boxcox_shape_plot <- list_boxcox_shape$make_eta_transf_plot
+  fig_height_boxcox <- list_boxcox_shape$fig_height
   if(make_boxcox_shape_plot) {
     boxcox_shape_table <- list_boxcox_shape$eta_transf_table
-    fig_height_boxcox <- list_boxcox_shape$fig_height
   }
 } else {
   fig_height_boxcox <- 15
@@ -104,9 +104,9 @@ if(exists("tdist_table_orig")) {
   eta_table_tdist <- get_eta_values(working.directory=file.path(working.directory,"modelfit_run"),theta_values=tdist_table_orig[,1:2],param_model="tdist")
   list_tdist_shape <- get_eta_transf_table(input_table=tdist_table_orig)
   make_tdist_shape_plot <- list_tdist_shape$make_eta_transf_plot
+  fig_height_tdist <- list_tdist_shape$fig_height
   if(make_tdist_shape_plot) {
     tdist_shape_table <- list_tdist_shape$eta_transf_table
-    fig_height_tdist <- list_tdist_shape$fig_height
   }
 } else {
   fig_height_tdist <- 15
@@ -195,14 +195,10 @@ print(overview_table)
 cat("Overview of possible modifications to different model aspects, expected improvement in OFV as well as number of additional parameters used.")
 ```
 
-```{asis Add_text_for_structural_section_if_not_skipped, echo=all(skip!="resmod")}
-\pagebreak
-
-#Structural
-```
-
 ```{r draw_structural_details_tables,results='asis',echo=F,warning=F,message=F}
 if(all(skip!="resmod")) {
+  cat("\\pagebreak\n\n")
+  cat("#Structural\n\n")
   all_structural_extra_plots(working.directory,model.filename,resmod_structural_details,CWRES_table,idv_all,idv_name,dvid_name,type)
 }
 ```
@@ -213,12 +209,9 @@ if(all(skip!="resmod")) {
 #Parameter Variability Model
 ```
 
-```{asis Add_text_for_fullblock_if_exists_mod_file, echo=fullblock_mod}
-###Full OMEGA Block
-```
-
 ```{r draw_full_omega_block_table,results='asis',echo=F,warning=F,message=F}
 if(fullblock_mod) {
+  cat("###Full OMEGA Block")
   full_omega_block_table <- keep_symbols(full_omega_block_table,type)
   full_omega_block_table <- ztable_sub(full_omega_block_table,type=type,colnames.bold=T,include.rownames=F,longtable=T,align="lrr")
   print(full_omega_block_table)
@@ -226,12 +219,9 @@ if(fullblock_mod) {
 }
 ```
 
-```{asis Add_text_for_boxcox_if_exists_mod_file, echo=boxcox_mod}
-###Box-Cox Transformation
-```
-
 ```{r draw_boxcox_tranformation_table,results='asis',echo=F,warning=F,message=F}
 if(boxcox_mod) {
+  cat("###Box-Cox Transformation")
   boxcox_lambdas_table <- keep_symbols(boxcox_lambdas_table,type)
   boxcox_lambdas_table <- ztable_sub(boxcox_lambdas_table,type=type,colnames.bold=T,include.rownames=F,longtable=T,align="lrrr")
   print(boxcox_lambdas_table)
@@ -245,16 +235,15 @@ if(make_boxcox_shape_plot) {
   for(i in 1:length(boxcox_shape_plot)) {
     print(boxcox_shape_plot[[i]])
   }
-  cat("\\pagebreak")
 }
-```
-
-```{asis Add_text_for_tdist_if_exists_mod_file, echo=tdist_mod}
-###t-distribution
 ```
 
 ```{r draw_tdist_table,results='asis',echo=F,warning=F,message=F}
 if(tdist_mod) {
+  if(make_boxcox_shape_plot) {
+    cat("\\pagebreak\n\n")
+  }
+  cat("###t-distribution")
   tdist_table <- keep_symbols(tdist_table,type)
   tdist_table <- ztable_sub(tdist_table,type=type,colnames.bold=T,include.rownames=F,longtable=T,align="lrrr")
   print(tdist_table)
@@ -270,14 +259,10 @@ if(make_tdist_shape_plot) {
 }
 ```
 
-```{asis Add_text_for_covariates_section_if_not_skipped, echo=(all(skip!="frem")||all(skip!="scm"))}
-\pagebreak
-
-#Covariates
-```
-
 ```{r draw_covariates_table,results='asis',echo=F,warning=F,message=F}
 if(all(skip!="frem")||all(skip!="scm")) {
+  cat("\\pagebreak\n\n")
+  cat("#Covariates")
   covariates_extra_table <- keep_symbols(covariates_extra_table,type)
   align <- paste(c("l",rep("r",ncol(covariates_extra_table)-1)),collapse = '')
   covariates_extra_table <- ztable_sub(covariates_extra_table,type=type,colnames.bold = T,include.rownames = F,longtable = T,align=align)
@@ -292,14 +277,10 @@ if(all(skip!="frem")||all(skip!="scm")) {
 }
 ```
 
-```{asis Add_text_for_residual_error_section_if_not_skipped, echo=all(skip!="resmod")}
-\pagebreak
-
-#Residual Error Model
-```
-
 ```{r draw_resiual_error_model_table,results='asis',echo=F,warning=F,message=F}
 if(all(skip!="resmod")) {
+  cat("\\pagebreak\n\n")
+  cat("#Residual Error Model")
   for (i in 1:length(resmod_ruv_models_table_list)) {
     if(length(dvid_nr) ==1 && dvid_nr == 'NA') {
       resmod_ruv_models_table <- keep_symbols(resmod_ruv_models_table_list[[i]],type)
@@ -318,14 +299,10 @@ if(all(skip!="resmod")) {
 }
 ```
 
-```{asis Add_text_for_infl_indiv_section_if_not_skipped, echo=all(skip!="cdd")}
-\pagebreak
-
-#Influential Individuals
-```
-
 ```{r draw_influential_individuals_table,results='asis',echo=F,warning=F,message=F}
 if(all(skip!="cdd")) {
+  cat("\\pagebreak\n\n")
+  cat("#Influential Individuals")
   value <- T
   if(ncol(ii_table)==1 && nrow(ii_table)==1) value <- F
   ii_table <- keep_symbols(ii_table,type)
@@ -351,14 +328,10 @@ if(all(skip!="cdd")) {
 }
 ```
 
-```{asis Add_text_for_outliers_section_if_not_skipped, echo=all(skip!="simeval")}
-\pagebreak
-
-#Outliers
-```
-
 ```{r draw_outliers_table,results='asis',echo=F,warning=F,message=F}
 if(all(skip!="simeval")) {
+  cat("\\pagebreak\n\n")
+  cat("#Outliers")
   value <- T
   if(ncol(outliers_table)==1 && nrow(outliers_table)==1) value <- F
   outliers_table <- keep_symbols(outliers_table,type)
@@ -389,10 +362,10 @@ if(all(skip!="simeval")) {
   }
 }
 ```
-\pagebreak
 
 ```{r plot_iofv_vs_iofv,results='asis',echo=F,warning=F,message=F,fig.width=9,fig.height=6.5,fig.keep="high",fig.align="center"}
  if(rplots.level > 1) {
+   cat("\\pagebreak\n\n")
    phi1 <- file.path(working.directory,"linearize_run/scm_dir1",paste0(sub('.([^.]*)$','',model.filename),"_linbase.phi"))
    phi2 <- file.path(working.directory,"linearize_run/scm_dir1/derivatives.phi")
    if(file.exists(phi1) && file.exists(phi2)) {
