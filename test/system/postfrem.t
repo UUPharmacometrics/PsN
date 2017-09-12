@@ -91,13 +91,6 @@ for my $i (0..$#commands) {
 	}
 }
 
-print "\n";
-if (Test::More->builder->is_passing)
-{
-    print "all tests succeded!\n";
-	remove_test_dir($temp_dir);
-} else {
-    print "tests failed, execution directory '$temp_dir' not cleaned\n";
-}
+remove_test_dir($temp_dir);
 
 done_testing();
