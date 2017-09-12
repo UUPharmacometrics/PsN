@@ -249,7 +249,7 @@ sub BUILD
         my $first_skip = exists($skip_omegas{1}) ? 1 : 0;
         my $last_skip = exists($skip_omegas{$nom}) ? 1 : 0;
         unless ($first_skip || $last_skip) {
-            print "Skipped OMEGA record(s) must all be positioned first or last (neither first nor last OMEGA record is skipped)"
+            print "Skipped OMEGA record(s) must all be positioned first or last (neither first nor last OMEGA record is skipped)";
             croak "Can't continue due to non-supported skipping pattern";
         }
         for (my $i=2; $i<=(keys %skip_omegas); $i++) {
