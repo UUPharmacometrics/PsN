@@ -2,14 +2,13 @@ package model_transformations;
 
 use strict;
 use warnings;
-use List::Util qw(any);
 use include_modules;
 use Cwd;
 use model;
 use PsN;
 use MooseX::Params::Validate;
 use utils::file;
-use array qw(max unique);
+use array qw(numerical_in max unique);
 use data;
 
 sub add_tv
@@ -518,7 +517,7 @@ sub remaining_omegas
     my $max = array::max($omegas);
 
     for (my $i = 1; $i <= $max; $i++) {
-        if (not any { $_ == $i } @$omegas) {
+        if (not numerical_in($i, $omegas)) {
             push @remaining, $i;
         }
     }
@@ -586,19 +585,19 @@ sub _remove_omega_records
         my @kept_options;
         for (my $j = 0; $j < scalar(@options); $j++) {
             if ($options[$j]->on_diagonal) {
-                if (not any { $_ == $current } @$omegas) {
+                if (not numerical_in($current, $omegas)) {
                     push @kept_options, $options[$j];
                 }
                 $current++;
             } else {
                 my $coord = $options[$j]->coordinate_string;
                 $coord =~ /OMEGA\((\d+),(\d+)\)/;
-                if (not any { $_ == $1 or $_ == $2 } @$omegas) {    # Should this correlation be kept?
+                if (not numerical_in($1, $omegas) and not numerical_in($2, $omegas)) {    # Should this correlation be kept?
                     push @kept_options, $options[$j];
                 }
             }
         }
-        if ($records[$i]->same and not any { $_ == $records[$i]->n_previous_rows + 1 } @$omegas) {  # Check if first omega in SAME should be deleted
+        if ($records[$i]->same and not numerical_in($records[$i]->n_previous_rows + 1, $omegas)) {  # Check if first omega in SAME should be deleted
             push @kept_records, $records[$i];
         }
         if (scalar(@kept_options) > 0) {

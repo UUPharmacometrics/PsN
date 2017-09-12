@@ -14,7 +14,7 @@ use math qw(round);
 
 require Exporter;
 our @ISA = qw(Exporter);
-our %EXPORT_TAGS = ('all' => [ qw(not_empty is_empty diff cumsum max min linspace unique add sum mean median median_and_ci variance stdev is_int quantile percentile is_equal get_array_positions get_positions sem rse any_nonzero count_lower find_zeros get_intersection is_zero) ]);
+our %EXPORT_TAGS = ('all' => [ qw(not_empty is_empty diff cumsum max min linspace unique add sum mean median median_and_ci variance stdev is_int quantile percentile is_equal get_array_positions get_positions sem rse any_nonzero count_lower find_zeros get_intersection is_zero numerical_in) ]);
 our @EXPORT_OK = ( @{ $EXPORT_TAGS{'all'} } );
 
 sub find_zeros
@@ -169,6 +169,20 @@ sub not_empty
 	my $x = shift;
 
 	return defined $x ? scalar @$x : 0;
+}
+
+sub numerical_in
+{
+    # Check if numerical value is in array
+    my $element = shift;
+    my $array = shift;
+
+    for my $e (@$array) {
+        if ($e == $element) {
+            return 1;
+        }
+    }
+    return 0;
 }
 
 sub is_empty
