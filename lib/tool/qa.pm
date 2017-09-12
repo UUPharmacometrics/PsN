@@ -186,6 +186,9 @@ sub modelfit_setup
             $modelfit->run();
             chdir "..";
         };
+        if ($@) {
+            print $@;
+        }
         $self->_to_qa_dir();
     }
 
@@ -224,6 +227,9 @@ sub modelfit_setup
                     #common_options => \@common_options::tool_options
                 );
             };
+            if ($@) {
+                print $@;
+            }
             common_options::set_option('clean', $old_clean);
 
 
@@ -237,6 +243,9 @@ sub modelfit_setup
                         system("postfrem-".$vers." -force_posdef_covmatrix -frem_directory=frem_run -directory=postfrem_run");
                     }
                 };
+                if ($@) {
+                    print $@;
+                }
             }
             $self->_to_qa_dir();
         }
@@ -282,6 +291,9 @@ sub modelfit_setup
 					system("scm-".$vers." config.scm $scm_options $fo $nointer $nonlinear");       # FIXME: system for now
 				}
             };
+            if ($@) {
+                print $@;
+            }
             $self->_to_qa_dir();
         }
     }
@@ -300,6 +312,9 @@ sub modelfit_setup
             );
             $cdd->run();
         };
+        if ($@) {
+            print $@;
+        }
         $self->_to_qa_dir();
     }
 
@@ -320,6 +335,9 @@ sub modelfit_setup
             );
             $simeval->run();
         };
+        if ($@) {
+            print $@;
+        }
         $self->_to_qa_dir();
     }
 
@@ -353,6 +371,7 @@ sub modelfit_setup
                 $resmod_idv->run();
             };
         } else {
+            print $@;
             rmdir "resmod_".$self->idv;
         }
 
@@ -378,6 +397,7 @@ sub modelfit_setup
                 $resmod_tad->run();
             };
         } else {
+            print $@;
             rmdir 'resmod_TAD';
         }
         $self->_to_qa_dir();
@@ -403,6 +423,7 @@ sub modelfit_setup
                 $resmod_pred->run();
             };
         } else {
+            print $@;
             rmdir 'resmod_PRED';
         }
         $self->_to_qa_dir();
