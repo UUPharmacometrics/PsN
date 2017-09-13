@@ -72,6 +72,19 @@ sub modelfit_setup
 	my $self = shift;
     my $model_copy = $self->model->copy(filename => $self->model->filename, directory => $self->model->directory, write_copy => 0, output_same_directory => 1);
     $model_copy->_write(filename => $self->directory . $self->model->filename);
+
+    my @covariates;
+    if (defined $self->covariates) {
+        @covariates = split(',', $self->covariates);
+    }
+    my @categorical;
+    if (defined $self->categorical) {
+        @categorical = split(',', $self->categorical);
+    }
+    my $all_covariates = [ @covariates, @categorical ];
+
+    $model_copy->problems->[0]->undrop_columns(columns => $all_covariates);
+
     $model_copy->phi_file($self->model->get_phi_file());
 
 	my $vers = $PsN::version;
@@ -196,14 +209,6 @@ sub modelfit_setup
         if (not $self->_skipped('frem')) {
             print "\n*** Running FREM ***\n";
             my $frem_model = model->new(filename => $base_model_name);
-            my @covariates;
-            if (defined $self->covariates) {
-                @covariates = split(',', $self->covariates);
-            }
-            my @categorical;
-            if (defined $self->categorical) {
-                @categorical = split(',', $self->categorical);
-            }
 
             my $old_clean = common_options::get_option('clean');    # Hack to set clean further down
             common_options::set_option('clean', 1);
@@ -211,7 +216,7 @@ sub modelfit_setup
                 my $frem = tool::frem->new(
                     %{common_options::restore_options(@common_options::tool_options)},
                     models => [ $frem_model ],
-                    covariates => [ @covariates, @categorical ],
+                    covariates => $all_covariates,
                     categorical => [ @categorical ],
                     directory => 'frem_run',
                     rescale => 1,
@@ -224,7 +229,7 @@ sub modelfit_setup
                 $frem->print_options(   # To get skip_omegas over to postfrem
                     toolname => 'frem',
                     local_options => [ 'skip_omegas' ],
-                    #common_options => \@common_options::tool_options
+                    common_options => \@common_options::tool_options
                 );
             };
             if ($@) {

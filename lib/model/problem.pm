@@ -3825,6 +3825,29 @@ sub find_data_column
     return -1;
 }
 
+sub undrop_columns
+{
+    my $self = shift;
+	my %parm = validated_hash(\@_,
+		columns => { isa => 'ArrayRef[Str]' },
+	);
+	my $columns = $parm{'columns'};
+
+    for my $record (@{$self->inputs}) {
+        for my $option (@{$record->options}) {
+            if ($option->is_drop()) {
+                for my $col (@$columns) {
+                    if ($option->name eq $col) {
+                        $option->value('');
+                    } elsif ($option->value eq $col) {
+                        $option->name('');
+                    }
+                }
+            }
+        }
+    }
+}
+
 no Moose;
 __PACKAGE__->meta->make_immutable;
 1;
