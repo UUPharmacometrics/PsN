@@ -1708,6 +1708,7 @@ sub print_options
 	my $theTime=sprintf "%2.2d:%2.2d:%2.2d",($datearr[2]),($datearr[1]), $datearr[0];
 	my $info_line = "PsN version: ".$PsN::version."\nRun started: $theDate at $theTime\n";
     $self->metadata->{'PsN_version'} = $PsN::version;
+    $self->metadata->{'start_time'} = "$theDate $theTime";
 	print CMD "$info_line";
 	print CMD "version_and_option_info.txt is overwitten if the run is restarted later using option -directory.\n";
 	print CMD "The original file from the first call is saved as original_version_and_option_info.txt.\n\n";
