@@ -1349,25 +1349,6 @@ sub initgrad
 	return \@initgrad;
 }
 
-sub initthetas
-{
-	my $self = shift;
-	my %parm = validated_hash(\@_,
-							  problems => { isa => 'ArrayRef[Int]', optional => 1 },
-							  subproblems => { isa => 'ArrayRef[Int]', optional => 1 }
-		);
-	my @problems = defined $parm{'problems'} ? @{$parm{'problems'}} : ();
-	my @subproblems = defined $parm{'subproblems'} ? @{$parm{'subproblems'}} : ();
-	my @initthetas = @{$self->access_any(attribute=>'initthetas',problems=>\@problems,subproblems=>\@subproblems)};
-
-    # initthetas returns the initial theta values.
-    # See L</comegas> for details of the method arguments.
-    #
-    # Level:  Sub problem
-    croak("This function cannot be used, is only a placeholder. Rewrite program.");
-	return \@initthetas;
-}
-
 sub omega_indexes
 {
 	my $self = shift;
@@ -1600,26 +1581,6 @@ sub npetabars
     #
     # Level:  Sub problem
 	return \@npetabars;
-}
-
-sub nth
-{
-	my $self = shift;
-	my %parm = validated_hash(\@_,
-							  problems => { isa => 'ArrayRef[Int]', optional => 1 },
-							  subproblems => { isa => 'ArrayRef[Int]', optional => 1 }
-		);
-	my @problems = defined $parm{'problems'} ? @{$parm{'problems'}} : ();
-	my @subproblems = defined $parm{'subproblems'} ? @{$parm{'subproblems'}} : ();
-	my @nth = @{$self->access_any(attribute=>'nth',problems=>\@problems,subproblems=>\@subproblems)};
-
-    # nth returns the number of thetas.
-    # See L</comegas> for details of the method arguments.
-    #
-    # Level:  Sub problem
-
-    croak("This function cannot be used, is only a placeholder. Rewrite program.");
-	return \@nth;
 }
 
 sub ofvpath
@@ -2433,87 +2394,6 @@ sub correlation_matrix
 
 
 	return \@correlation_matrix;
-}
-
-
-sub raw_omegas
-{
-	my $self = shift;
-	my %parm = validated_hash(\@_,
-							  problems => { isa => 'ArrayRef[Int]', optional => 1 },
-							  subproblems => { isa => 'ArrayRef[Int]', optional => 1 }
-		);
-	my @problems = defined $parm{'problems'} ? @{$parm{'problems'}} : ();
-	my @subproblems = defined $parm{'subproblems'} ? @{$parm{'subproblems'}} : ();
-	my @raw_omegas = @{$self->access_any(attribute=>'raw_omegas',problems=>\@problems,subproblems=>\@subproblems)};
-
-
-    # raw_omegas returns the (raw) omegas.
-    # See L</comegas> for details of the method arguments.
-    #
-    # Level:  Sub problem
-    croak("This function cannot be used, is only a placeholder. Rewrite program.");
-	return \@raw_omegas;
-}
-
-sub raw_seomegas
-{
-	my $self = shift;
-	my %parm = validated_hash(\@_,
-							  problems => { isa => 'ArrayRef[Int]', optional => 1 },
-							  subproblems => { isa => 'ArrayRef[Int]', optional => 1 }
-		);
-	my @problems = defined $parm{'problems'} ? @{$parm{'problems'}} : ();
-	my @subproblems = defined $parm{'subproblems'} ? @{$parm{'subproblems'}} : ();
-	my @raw_seomegas = @{$self->access_any(attribute=>'raw_seomegas',problems=>\@problems,subproblems=>\@subproblems)};
-
-
-    # raw_seomegas returns the (raw) omega standard error estimates.
-    # See L</comegas> for details of the method arguments.
-    #
-    # Level:  Sub problem
-    croak("This function cannot be used, is only a placeholder. Rewrite program.");
-	return \@raw_seomegas;
-}
-
-sub raw_sesigmas
-{
-	my $self = shift;
-	my %parm = validated_hash(\@_,
-							  problems => { isa => 'ArrayRef[Int]', optional => 1 },
-							  subproblems => { isa => 'ArrayRef[Int]', optional => 1 }
-		);
-	my @problems = defined $parm{'problems'} ? @{$parm{'problems'}} : ();
-	my @subproblems = defined $parm{'subproblems'} ? @{$parm{'subproblems'}} : ();
-	my @raw_sesigmas = @{$self->access_any(attribute=>'raw_sesigmas',problems=>\@problems,subproblems=>\@subproblems)};
-
-
-    # raw_sesigmas returns the (raw) sigma standard error estimates.
-    # See L</comegas> for details of the method arguments.
-    #
-    # Level:  Sub problem
-    croak("This function cannot be used, is only a placeholder. Rewrite program.");
-	return \@raw_sesigmas;
-}
-
-sub raw_sigmas
-{
-	my $self = shift;
-	my %parm = validated_hash(\@_,
-							  problems => { isa => 'ArrayRef[Int]', optional => 1 },
-							  subproblems => { isa => 'ArrayRef[Int]', optional => 1 }
-		);
-	my @problems = defined $parm{'problems'} ? @{$parm{'problems'}} : ();
-	my @subproblems = defined $parm{'subproblems'} ? @{$parm{'subproblems'}} : ();
-	my @raw_sigmas = @{$self->access_any(attribute=>'raw_sigmas',problems=>\@problems,subproblems=>\@subproblems)};
-
-
-    # raw_sigmas returns the (raw) sigmas.
-    # See L</comegas> for details of the method arguments.
-    #
-    # Level:  Sub problem
-    croak("This function cannot be used, is only a placeholder. Rewrite program.");
-	return \@raw_sigmas;
 }
 
 sub raw_tmatrix
@@ -3472,44 +3352,6 @@ sub _read_problems
 	}
 
 	$self->parsed(1);
-}
-
-sub initomegas
-{
-	my $self = shift;
-	my %parm = validated_hash(\@_,
-							  problems => { isa => 'ArrayRef[Int]', optional => 1 },
-							  subproblems => { isa => 'ArrayRef[Int]', optional => 1 }
-		);
-	my @problems = defined $parm{'problems'} ? @{$parm{'problems'}} : ();
-	my @subproblems = defined $parm{'subproblems'} ? @{$parm{'subproblems'}} : ();
-	my @initomegas = @{$self->access_any(attribute=>'initomegas',problems=>\@problems,subproblems=>\@subproblems)};
-    # initomegas returns the initial omega values.
-    # See L</comegas> for details of the method arguments.
-    #
-    # Level:  Sub problem
-    croak("This function cannot be used, is only a placeholder. Rewrite program.");
-
-	return \@initomegas;
-}
-
-sub initsigmas
-{
-	my $self = shift;
-	my %parm = validated_hash(\@_,
-							  problems => { isa => 'ArrayRef[Int]', optional => 1 },
-							  subproblems => { isa => 'ArrayRef[Int]', optional => 1 }
-		);
-	my @problems = defined $parm{'problems'} ? @{$parm{'problems'}} : ();
-	my @subproblems = defined $parm{'subproblems'} ? @{$parm{'subproblems'}} : ();
-	my @initsigmas = @{$self->access_any(attribute=>'initsigmas',problems=>\@problems,subproblems=>\@subproblems)};
-
-    # initsigmas returns the initial sigma values.
-    # See L</comegas> for details of the method arguments.
-    #
-    # Level:  Sub problem
-    croak("This function cannot be used, is only a placeholder. Rewrite program.");
-	return \@initsigmas;
 }
 
 sub get_nonmem_parameters

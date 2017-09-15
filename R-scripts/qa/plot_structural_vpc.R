@@ -2,7 +2,7 @@ plot_structural_vpc <- function(obs,sim,shift_tab,idv) {
   sim_shifted <- sim %>%
     mutate(bin_index = findInterval(unlist(.[[toupper(idv)]]), shift_tab$bin_min),  # in which bin did observation go
            shift = shift_tab$shift[bin_index],
-           DV = DV + shift)
+           DV = DV - shift)
   
   obs_combined <- bind_rows(before = obs, corrected = obs, .id = "type")
   sim_combined <- bind_rows(before = sim, corrected = sim_shifted, .id = "type")
@@ -17,9 +17,9 @@ plot_structural_vpc <- function(obs,sim,shift_tab,idv) {
                    idv = toupper(idv)),
                  bins = "percentiles",
                  n_bins = 10,
-                 stratify = "type"#,
-                 #facet_names = FALSE
+                 stratify = "type"
   )+
     theme_bw() +
+    facet_wrap(~type)+
     theme(axis.text.x = element_text(angle = 90, hjust = 1))
 }  

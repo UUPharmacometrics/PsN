@@ -397,4 +397,8 @@ is($record->options->[0]->init, 0.035443, 'record 1 init 0 degee=2');
 is($record->options->[1]->init, 0, 'record 1 init 1 degree=2');
 is($record->options->[2]->init, 0.02127, 'record 1 init 2 degree=2');
 
+# Multiple FIX in BLOCK
+dies_ok { model::problem::init_record->new(record_arr => ['BLOCK(2) 28 FIX', '19 FIX']) } "Multiple FIX in BLOCK dies";
+lives_ok { model::problem::init_record->new(record_arr => ['BLOCK(2) 28 FIX', '19']) } "One FIX in BLOCK lives";
+
 done_testing();

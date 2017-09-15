@@ -164,7 +164,7 @@ $help_text{-skip} = <<'EOF';
 
       Skip one or more sections of the qa procedure. Takes a list of
       section names to skip. The sections are: scm, frem, cdd, simeval,
-      etas and resmod. This option is intended for testing and
+      transform and resmod. This option is intended for testing and
       development.
 EOF
 
@@ -173,7 +173,7 @@ $help_text{-only} = <<'EOF';
 
       Only run one or more sections of the qa procedure. Takes a list of
       section names to run. The sections are: scm, frem, cdd, simeval,
-      etas and resmod. This option is intended for testing and
+      transform and resmod. This option is intended for testing and
       development.
 EOF
 

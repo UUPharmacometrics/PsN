@@ -27,7 +27,7 @@ my $seed=588549; # important for hash tests
 # }
 my @test_dirs = (
 	"postfrem_covstep",
-	"postfrem_covstep_removed",
+	# "postfrem_covstep_removed",
 	"postfrem_sir",
 );
 my @commands = (
@@ -35,10 +35,11 @@ my @commands = (
 	get_command('postfrem') . " -frem_dir=$model_dir/frem_covstep -dir=$test_dirs[0] -seed=$seed",
 
 	# same frem, but model_4.mod re-executed with $COV step commented out (test point estimate mode)
-	get_command('postfrem') . " -frem_dir=$model_dir/frem_covstep_removed -dir=$test_dirs[1] -seed=$seed",
+    # FIXME: model_1.mod expected for uncertainty propagation, fix and activate when postfrem has better such functionality
+	# get_command('postfrem') . " -frem_dir=$model_dir/frem_covstep_removed -dir=$test_dirs[1] -seed=$seed",
 
 	# same frem, but sir executed with: sir -covmat_input=proposal_density.cov -dir=sir (sir input test)
-	get_command('postfrem') . " -frem_dir=$model_dir/frem_sir -sir_dir=$model_dir/frem_sir/sir/ -dir=$test_dirs[2] -seed=$seed",
+	get_command('postfrem') . " -frem_dir=$model_dir/frem_sir -sir_dir=$model_dir/frem_sir/sir/ -dir=$test_dirs[1] -seed=$seed",
 );
 
 my %hashes = (
@@ -51,16 +52,16 @@ my %hashes = (
 		"pardata.csv"                  =>  "31040d07f6f37c0cd886744bb23a416b859c49d1",
 		"sd_coefficients_summary.csv"  =>  "ea8e70db4286e1b95187a75a4ae4e576e0ba4bbd",
 	},
+	# $test_dirs[1] => {
+    #     "covdata.csv"                  =>  "0f49a89179883ce380f1d6fbde2cb5089092fc38",
+    #     "frem_condvar.csv"             =>  "4c49d12328eca280d5dfcce1aba00ff7fd6144e5",
+    #     "frem_id_ratios.csv"           =>  "1f60d048baff6b6ac82a4e340a988d2bb54c373e",
+    #     "frem_ratio.csv"               =>  "0dbca5f593ac5cbc166a45d794e533c37af7d091",
+    #     "id_covdata.csv"               =>  "64708b1ef82a785ad71e328fd428e12d3c45218c",
+    #     "pardata.csv"                  =>  "31040d07f6f37c0cd886744bb23a416b859c49d1",
+    #     "sd_coefficients_summary.csv"  =>  "a347cdb8227c860ceaa7107de9f956f576d43849",
+	# },
 	$test_dirs[1] => {
-        "covdata.csv"                  =>  "0f49a89179883ce380f1d6fbde2cb5089092fc38",
-        "frem_condvar.csv"             =>  "4c49d12328eca280d5dfcce1aba00ff7fd6144e5",
-        "frem_id_ratios.csv"           =>  "1f60d048baff6b6ac82a4e340a988d2bb54c373e",
-        "frem_ratio.csv"               =>  "0dbca5f593ac5cbc166a45d794e533c37af7d091",
-        "id_covdata.csv"               =>  "64708b1ef82a785ad71e328fd428e12d3c45218c",
-        "pardata.csv"                  =>  "31040d07f6f37c0cd886744bb23a416b859c49d1",
-        "sd_coefficients_summary.csv"  =>  "a347cdb8227c860ceaa7107de9f956f576d43849",
-	},
-	$test_dirs[2] => {
 		"covdata.csv"                  =>  "0f49a89179883ce380f1d6fbde2cb5089092fc38",
 		"frem_condvar.csv"             =>  "b57cc0b0651a2886d4097355eaea4d59df730332",
 		"frem_id_ratios.csv"           =>  "52efebf8f48f7fcae133f2ccea6b93df0e369448",
@@ -90,13 +91,6 @@ for my $i (0..$#commands) {
 	}
 }
 
-print "\n";
-if (Test::More->builder->is_passing)
-{
-    print "all tests succeded!\n";
-	remove_test_dir($temp_dir);
-} else {
-    print "tests failed, execution directory '$temp_dir' not cleaned\n";
-}
+remove_test_dir($temp_dir);
 
 done_testing();

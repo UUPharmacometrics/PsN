@@ -39,7 +39,7 @@ ID_ratio <- function(frem_id,covdata,pardata) {
 
     # change values of categorical covariates based on references in covdata
     for (i in 1:nrow(covdata)) {
-      if (covdata$is.categorical[i] == "1") {
+      if (covdata$is.categorical[i] == "1" && (!is.na(covdata$category.reference[i]) && !is.na(covdata$category.other[i]))) {
         col_nr <- grep(paste0("cov.",covariate[i]),colnames(frem_id))
         categ_col <- frem_id[col_nr]
         for (n in 1:nrow(categ_col))

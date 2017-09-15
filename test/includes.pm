@@ -260,9 +260,15 @@ sub create_test_dir
 sub remove_test_dir
 {
 	my $dir = shift;
-	chdir $tempdir;		# Move out of test directories
-	rmtree([$dir]);
+
+    if (Test::More->builder->is_passing) {
+	    chdir $tempdir;		# Move out of test directories
+	    rmtree([$dir]);
+    } else {
+        print "\ntests failed, execution directory '$dir' not cleaned\n";
+    }
 }
+
 sub is_windows
 {
 	return ($Config{osname} eq 'MSWin32');

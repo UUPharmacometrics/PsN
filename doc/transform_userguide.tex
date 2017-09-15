@@ -30,6 +30,10 @@ Set a name to use for the output model file.
 List the etas to transform. Default is all etas.
 This option is valid for the boxcox and tdist transformations.
 \nextopt
+    \optname{epsilons}
+      List the epsilons to transform. Default is all epsilons.
+      This option is valid for the iiv\_on\_ruv transformations.
+    \nextopt
     \optname{fix}
       Fix the omegas to zero
       This option is valid for the remove\_iiv and remove\_iov transformations.
@@ -72,13 +76,25 @@ Add TV (typical value) to all parameters listed in the -parameters option. Will 
     CL = CL * TVCL
 \end{verbatim}
 
+\subsection{add\_iov}
+Add IOV to all parameters listed in the -parameters option. Occasion column to use should be specified with -occ (default is OCC).
+
 \subsection{remove\_iiv}
 Remove all IIV omegas, replace the corresponding etas in the code with 0 and renumber the remaining etas. If the -fix option is set instead fix all IIV etas to zero.
 
 \subsection{remove\_iov}
 Remove all IOV omegas, replace the corresponding etas in the code with 0 and renumber the remaining etas. If the -fix option is set instead fix all IOV etas to zero.
 
+\subsection{remove\_0fix\_omegas}
+Remove all diagonal omegas set to zero FIX and all fix block omegas with whole block set to zero. Corresponding etas in the code will be replaced with 0 and remaining etas will be renumbered.
+
 \subsection{omit\_ids}
 Omit all ids listed by option -ids. The dataset will be updated and a new model will be created to point to the new dataset. If option -index is used the dataset will not be updated and the omitted ids will be added as IGNORE statements to the model.
+
+\subsection{iiv\_on\_ruv}
+Mulitiply EXP(ETA(n)) with each epsilon or with all epsilons listed in the option -epsilons. Add etas as needed.
+
+\subsection{power\_on\_ruv}
+Multiply (IPRED ** THETA(n)) with each epsilon or with all epsilons listed in the option -epsilons. Add thetas as needed. For this transformation to produce valid code IPRED needs to be defined before each line where epsilon is used.
 
 \end{document}

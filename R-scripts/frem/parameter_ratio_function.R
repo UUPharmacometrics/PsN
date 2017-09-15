@@ -56,9 +56,18 @@ parameter_ratio <- function(inTable_frem,covdata,pardata) {
         m <- rbind(paste0(format(signif(covdata$mean[v], digits=2))," ",covdata$unit[v]),"")
         c <- rbind(covariate[v],"")
       } else {
-        r <- covdata$category.other[v]
+        if(is.na(covdata$category.other[v]) || is.na(covdata$category.reference[v])) {
+          m <- covdata$reference[v]
+          if(covdata$reference[v] == covdata$perc95th[v]) {
+            r <- covdata$perc5th[v]
+          } else {
+            r <- covdata$perc95th[v]
+          }
+        } else {
+          r <- covdata$category.other[v]
+          m <- covdata$category.reference[v]
+        }
         p_color <- "other"
-        m <- covdata$category.reference[v]
         c <- covariate[v]
       }
       list_v[v] <- list(r)

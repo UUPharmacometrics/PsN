@@ -8,6 +8,8 @@ use model;
 use PsN;
 use MooseX::Params::Validate;
 use utils::file;
+use array qw(numerical_in max unique);
+use data;
 
 sub add_tv
 {
@@ -52,6 +54,80 @@ sub add_tv
     }
 
     $model->set_code(record => $code_record, code => \@newcode);
+}
+
+sub add_iov
+{
+    # FIXME: Add initial value is 10% of corresponding IIV omega.
+    # Add IOV on each listed parameter
+    # Return 0 if ok and something was added. 1 if no occ column found
+	my %parm = validated_hash(\@_,
+        model => { isa => 'model' },
+        occ => { isa => 'Str', default => 'OCC' },
+        parameters => { isa => 'ArrayRef[Str]' },
+    );
+    my $model = $parm{'model'};
+    my $occ = $parm{'occ'};
+    my $parameters = $parm{'parameters'};
+
+    my $netas = $model->nomegas->[0];
+
+    my $data = data->new(
+        filename => $model->problems->[0]->datas->[0]->get_absolute_filename(),
+        ignoresign => $model->problems->[0]->datas->[0]->ignoresign,
+        idcolumn => $model->idcolumn, 
+    );
+
+    my $occ_column = $data->column_to_array(column => $occ);
+    if (scalar(@$occ_column) == 0) {
+        return 1;
+    }
+    my $unique_occs = array::unique($occ_column);
+
+  	my @model_code;
+	my $code_record;
+    if ($model->has_code(record => 'pk')) {
+        @model_code = @{$model->get_code(record => 'pk')};
+        $code_record = 'pk';
+    } elsif ($model->has_code(record => 'pred')) {
+        @model_code = @{$model->get_code(record => 'pred')};
+        $code_record = 'pred';
+    } else {
+        croak("Neither PK nor PRED defined in " . $model->filename . "\n");
+    }
+
+    my %relation;       # parameter->eta no
+    for my $p (@$parameters) {
+        for my $line (@model_code) {
+            if ($line =~ /^(\s*$p\s*=.*)(ETA\((\d+)\))(.*)/) {
+                $line = $1 . '(' . $2 . " + IOV_$p)" . $4;
+                $relation{$p} = $3;
+            }
+        }
+    }
+    $model->set_code(record => $code_record, code => \@model_code);
+
+    if (scalar(keys %relation) == 0) {
+        return 2;
+    }
+
+    my @pre_code;
+    my $current_eta = $netas;
+    for (my $i = 0; $i < scalar(@$parameters); $i++) {
+        if (exists $relation{$parameters->[$i]}) {
+            push @pre_code, "IOV_" . $parameters->[$i] . " = 0";
+            for my $unique_occ (@$unique_occs) {
+                $current_eta++;
+                push @pre_code, "IF ($occ.EQ.$unique_occ) IOV_" . $parameters->[$i] . " = ETA($current_eta)";
+            }
+            my $init = $model->initial_values(parameter_type => 'omega', parameter_numbers => [[ $relation{$parameters->[$i]} ]]);
+            $model->add_records(type => 'omega', record_strings => [ '$OMEGA ' . $init->[0]->[0] * 0.1]); 
+        }
+    }
+
+    prepend_code(model => $model, code => \@pre_code);
+
+    return 0;
 }
 
 sub full_omega_block
@@ -171,29 +247,79 @@ sub _rename_etas
 
 sub prepend_code
 {
-    # Add code to beginning of $PRED or $PK
+    # Add code to beginning of $PRED or $PK, or to specific record
     my %parm = validated_hash(\@_,
         model => { isa => 'model' },
         code => { isa => 'ArrayRef' },
+        record => { isa => 'Str', optional => 1 },
     );
     my $model = $parm{'model'};
 	my $code = $parm{'code'};
+    my $record = $parm{'record'};
 
 	my @model_code;
 	my $code_record;
-	if ($model->has_code(record => 'pk')) {
-		@model_code = @{$model->get_code(record => 'pk')};
-		$code_record = 'pk';
-	} elsif ($model->has_code(record => 'pred')) {
-		@model_code = @{$model->get_code(record => 'pred')};
-		$code_record = 'pred';
-	} else {
-		croak("Neither PK nor PRED defined in " . $model->filename . "\n");
-	}
+    if (not defined $record) {
+        if ($model->has_code(record => 'pk')) {
+            @model_code = @{$model->get_code(record => 'pk')};
+            $code_record = 'pk';
+        } elsif ($model->has_code(record => 'pred')) {
+            @model_code = @{$model->get_code(record => 'pred')};
+            $code_record = 'pred';
+        } else {
+            croak("Neither PK nor PRED defined in " . $model->filename . "\n");
+        }
+    } else {
+        @model_code = @{$model->get_code(record => $record)};
+        $code_record = $record;
+    }
 
 	@model_code = (@$code, @model_code); 
 
     $model->set_code(record => $code_record, code => \@model_code);
+}
+
+sub insert_code
+{
+    # Add code after specified line number in $PRED or $PK, or to specific record
+    my %parm = validated_hash(\@_,
+        model => { isa => 'model' },
+        code => { isa => 'ArrayRef' },
+        record => { isa => 'Str', optional => 1 },
+        line => { isa => 'Int' },
+    );
+    my $model = $parm{'model'};
+	my $code = $parm{'code'};
+    my $record = $parm{'record'};
+    my $line = $parm{'line'};
+    
+	my @model_code;
+	my $code_record;
+    if (not defined $record) {
+        if ($model->has_code(record => 'pk')) {
+            @model_code = @{$model->get_code(record => 'pk')};
+            $code_record = 'pk';
+        } elsif ($model->has_code(record => 'pred')) {
+            @model_code = @{$model->get_code(record => 'pred')};
+            $code_record = 'pred';
+        } else {
+            croak("Neither PK nor PRED defined in " . $model->filename . "\n");
+        }
+    } else {
+        @model_code = @{$model->get_code(record => $record)};
+        $code_record = $record;
+    }
+
+    my @result_code;
+    for (my $i = 0; $i <= $line; $i++) {
+        push @result_code, $model_code[$i];
+    }
+	@result_code = (@result_code, @$code); 
+    for (my $i = $line + 1; $i < scalar(@model_code); $i++) {
+        push @result_code, $model_code[$i];
+    }
+
+    $model->set_code(record => $code_record, code => \@result_code);
 }
 
 sub boxcox_etas
@@ -275,7 +401,8 @@ sub remove_iiv
     if ($fix) {
         _fix_omegas(model => $model, omegas => $remove);
     } else {
-        _remove_omegas(model => $model, omegas => $remove);
+        my $etas = _etas_from_omega_records(model => $model, omegas => $remove);
+        _remove_omegas(model => $model, omegas => $etas);
     }
 }
 
@@ -295,7 +422,8 @@ sub remove_iov
     if ($fix) {
         _fix_omegas(model => $model, omegas => $remove);
     } else {
-        _remove_omegas(model => $model, omegas => $remove);
+        my $etas = _etas_from_omega_records(model => $model, omegas => $remove);
+        _remove_omegas(model => $model, omegas => $etas);
     }
 }
 
@@ -330,6 +458,77 @@ sub find_omega_records
     return \@found;
 }
 
+sub find_zero_fix_omegas
+{
+    # Find all DIAGONAL omegas 0 FIX and all BLOCK omegas all 0 FIX
+    my %parm = validated_hash(\@_,
+        model => { isa => 'model' },
+    );
+    my $model = $parm{'model'};
+
+    my @found;
+    
+    my $omegas = $model->problems->[0]->omegas;
+    for my $record (@$omegas) {
+        my $current = $record->n_previous_rows + 1;
+        if (defined $record->type and $record->type eq 'BLOCK') {
+            next if $record->same;
+            next if not $record->fix;
+            my $all_zero = 1;
+            for my $option (@{$record->options}) {
+                if ($option->init != 0) {
+                    $all_zero = 0;
+                    next;
+                }
+            }
+            if ($all_zero) {
+                push @found, ($current .. $current + $record->size - 1);
+            }
+        } else {
+            for my $option (@{$record->options}) {
+                if ($option->on_diagonal) {
+                    if ($option->fix and $option->init == 0) {
+                        push @found, $current;
+                    }
+                    $current++;
+                }
+            }
+        }
+    }
+    return \@found;
+}
+
+sub remaining_omegas
+{
+    # Given a list of omegas return a list of the remaining omegas in a model
+	my %parm = validated_hash(\@_,
+        model => { isa => 'model' },
+        omegas => { isa => 'ArrayRef[Int]' },
+    );
+    my $model = $parm{'model'};
+    my $omegas = $parm{'omegas'};
+
+    my $nomegas = $model->problems->[0]->nomegas;
+    my @remaining;
+    if (scalar(@$omegas) == 0) {
+        return [ 1 .. $nomegas ];
+    }
+
+    my $max = array::max($omegas);
+
+    for (my $i = 1; $i <= $max; $i++) {
+        if (not numerical_in($i, $omegas)) {
+            push @remaining, $i;
+        }
+    }
+
+    if ($nomegas > $max) {
+        push @remaining, ($max + 1 .. $nomegas)  
+    }
+
+    return \@remaining;
+}
+
 sub _fix_omegas
 {
 	my %parm = validated_hash(\@_,
@@ -359,35 +558,85 @@ sub _remove_omegas
     # removed etas to constant zero.
 	my %parm = validated_hash(\@_,
         model => { isa => 'model' },
-        omegas => { isa => 'ArrayRef[model::problem::omega]' },
+        omegas => { isa => 'ArrayRef[Int]' },
     );
     my $model = $parm{'model'};
     my $omegas = $parm{'omegas'};
 
-    my $etas = _etas_from_omega_records(model => $model, omegas => $omegas);
-    _remove_etas(model => $model, etas => $etas);
+    _remove_etas(model => $model, etas => $omegas);
     _remove_omega_records(model => $model, omegas => $omegas);
 }
 
 sub _remove_omega_records
 {
     # Remove specific omega records from model
-	my %parm = validated_hash(\@_,
+    my %parm = validated_hash(\@_,
         model => { isa => 'model' },
-        omegas => { isa => 'ArrayRef[model::problem::omega]' },
+        omegas => { isa => 'ArrayRef[Int]' },
     );
     my $model = $parm{'model'};
     my $omegas = $parm{'omegas'};
-
-    my @all_omegas = @{$model->problems->[0]->omegas};
-    my @keep;
-    for my $omega (@all_omegas) {
-        if (not grep { $_ == $omega } @$omegas) {
-            push @keep, $omega;
-        } 
+    
+    my @records = @{$model->problems->[0]->omegas};
+    my @kept_records;
+    my $current = 1;
+    for (my $i = 0; $i < scalar(@records); $i++) {
+        my @options = @{$records[$i]->options};
+        my @kept_options;
+        for (my $j = 0; $j < scalar(@options); $j++) {
+            if ($options[$j]->on_diagonal) {
+                if (not numerical_in($current, $omegas)) {
+                    push @kept_options, $options[$j];
+                }
+                $current++;
+            } else {
+                my $coord = $options[$j]->coordinate_string;
+                $coord =~ /OMEGA\((\d+),(\d+)\)/;
+                if (not numerical_in($1, $omegas) and not numerical_in($2, $omegas)) {    # Should this correlation be kept?
+                    push @kept_options, $options[$j];
+                }
+            }
+        }
+        if ($records[$i]->same and not numerical_in($records[$i]->n_previous_rows + 1, $omegas)) {  # Check if first omega in SAME should be deleted
+            push @kept_records, $records[$i];
+        }
+        if (scalar(@kept_options) > 0) {
+            $records[$i]->options(\@kept_options);
+            push @kept_records, $records[$i];
+        }
     }
+    $model->problems->[0]->omegas(\@kept_records);
 
-    $model->problems->[0]->omegas(\@keep);
+    # Update coordinate_strings, n_previous_rows and size
+    _update_omegas(model => $model);
+}
+
+sub _update_omegas
+{
+    # For each omega update coordinate_strings, n_previous_rows and size
+    my %parm = validated_hash(\@_,
+        model => { isa => 'model' },
+    );
+    my $model = $parm{'model'};
+
+    my $current = 1;
+    for my $record (@{$model->problems->[0]->omegas}) {
+        $record->n_previous_rows($current - 1);
+        my $size = 0;
+        my $col = 1;        # Column in the omega matrix
+        for my $option (@{$record->options}) {
+            if ($option->on_diagonal) {
+                $option->coordinate_string("OMEGA($current,$current)");
+                $size++;
+                $current++;
+                $col = 1;
+            } else {
+                $option->coordinate_string("OMEGA($current,$col)");
+                $col++;
+            }
+        }
+        $record->size($size);
+    }
 }
 
 sub _remove_etas
@@ -542,6 +791,117 @@ sub omit_ids
         $data_table->_write();
         $data->set_filename(filename => $filename, directory => $model->directory );
     }
+}
+
+sub _rename_epsilons
+{
+    # Rename all or some EPSs of model
+    my %parm = validated_hash(\@_,
+        model => { isa => 'model' },
+        epsilons => { isa => 'ArrayRef', optional => 1 },   # Array of the epsilons to rename or unspecified for all epsilons
+		prefix => { isa => 'Str', default => 'EPST' },	# The name to use for the transformed epsilon
+    );
+    my $model = $parm{'model'};
+	my $epsilons = $parm{'epsilons'};
+	my $prefix = $parm{'prefix'};
+
+    if (not defined $epsilons) {
+        my $neps = $model->nsigmas->[0];
+        $epsilons = [1 .. $neps];
+    }
+
+    for my $eps (@$epsilons) {
+        if ($model->has_code(record => 'error')) {  
+            my $code = $model->get_code(record => 'error');
+            for (my $i = 0; $i < scalar(@$code); $i++) {
+                $code->[$i] =~ s/(?<!\w)(EPS|ERR)\($eps\)/$prefix$eps/g;
+            }
+            $model->set_code(record => 'error', code => $code);
+        }
+	}
+}
+
+sub iiv_on_ruv
+{
+    # Add an eta for each epsilon or only to selected epsilons
+	my %parm = validated_hash(\@_,
+        model => { isa => 'model' },
+        epsilons => { isa => 'ArrayRef', optional => 1 },       # An array of the epsilons to transform or unspecified for all epsilons
+    );
+    my $model = $parm{'model'};
+	my $epsilons = $parm{'epsilons'};
+
+    if (not defined $epsilons) {
+        my $nepsilons = $model->nsigmas->[0];
+        return if ($nepsilons == 0);
+        $epsilons = [1 .. $nepsilons];
+    }
+    return if (scalar(@$epsilons) == 0);
+    my $netas = $model->nomegas->[0];
+
+    _rename_epsilons(model => $model, epsilons => $epsilons, prefix => 'EPST');
+
+    my $next_eta = $netas + 1;
+    my @code;
+    for my $i (@$epsilons) {
+        push @code, "EPST$i = EPS($i) * EXP(ETA($next_eta))";
+        $next_eta++;
+        $model->add_records(type => 'omega', record_strings => [ '$OMEGA 0.01']); 
+    }
+
+    prepend_code(model => $model, code => \@code, record => 'error');
+}
+
+sub power_on_ruv
+{
+    # Add IPRED**THETA for each epsilon or only to selected epsilons
+	my %parm = validated_hash(\@_,
+        model => { isa => 'model' },
+        epsilons => { isa => 'ArrayRef', optional => 1 },       # An array of the epsilons to transform or unspecified for all epsilons
+    );
+    my $model = $parm{'model'};
+	my $epsilons = $parm{'epsilons'};
+
+    my @error_code = @{$model->get_code(record => 'error')};
+    my $found = 0;
+    for my $line (@error_code) {
+        if ($line =~ /\s*IPRED\s*=/) {
+            $found = 1;
+            last;
+        }
+    }
+    if (not $found) {
+        print "Warning: No IPRED definition found in \$ERROR. No transformation will be done.\n";
+        return;
+    }
+
+    if (not defined $epsilons) {
+        my $nepsilons = $model->nsigmas->[0];
+        return if ($nepsilons == 0);
+        $epsilons = [1 .. $nepsilons];
+    }
+    return if (scalar(@$epsilons) == 0);
+    my $nthetas = $model->nthetas;
+
+    _rename_epsilons(model => $model, epsilons => $epsilons, prefix => 'EPSP');
+    @error_code = @{$model->get_code(record => 'error')};
+
+    my $next_theta = $nthetas + 1;
+    my @code;
+    for my $i (@$epsilons) {
+        push @code, "EPSP$i = EPS($i) * (IPRED ** THETA($next_theta))";
+        $next_theta++;
+        $model->add_records(type => 'theta', record_strings => [ '$THETA 0.01']); 
+    }
+    
+    my @result_code;
+    for my $line (@error_code) {
+        push @result_code, $line;
+        if ($line =~ /\s*IPRED\s*=/) {
+            push @result_code, @code;
+        }
+    }
+    $model->set_code(record => 'error', code => \@result_code);
 }
 
 1;

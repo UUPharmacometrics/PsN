@@ -1,7 +1,7 @@
-get_outliers_table <- function(simeval_directory,cdd.data) {
+get_outliers_table <- function(simeval_directory,cdd.data,skip) {
   outlier_ids <- c()
   simeval_files_exist <- file.exists(file.path(simeval_directory, "raw_all_iofv.csv"))
-  if(simeval_files_exist) {
+  if(simeval_files_exist && all(skip!="simeval")) {
     iofv_res <- i_ofv_res(file.path(simeval_directory, "raw_all_iofv.csv"),show.warning=F)
     outlier_ids <- iofv_res$outlier_ID
     if(length(outlier_ids)!=0) {
@@ -13,6 +13,10 @@ get_outliers_table <- function(simeval_directory,cdd.data) {
           outliers_table[i,2] <- ifelse(any(cdd.data$id %in% outlier_ids[i]),cdd.data$dOFV[which(cdd.data$id==outlier_ids[i])],NA)
         }
         outliers_table <- outliers_table[order(outliers_table$dOFV,decreasing = T),]
+        if(nrow(outliers_table)>10) {
+          outlier_ids <- as.numeric(sub("Subject ","",outliers_table$Subjects[1:10]))
+          outliers_table <- outliers_table[1:10,]
+        }
         if(!all(is.na(outliers_table$dOFV))) {
           max_outlier_table <- outliers_table[which.max(outliers_table$dOFV),]
           colnames(max_outlier_table) <- c("","dOFV")
@@ -24,9 +28,18 @@ get_outliers_table <- function(simeval_directory,cdd.data) {
         outliers_table$dOFV <- format(round(as.numeric(outliers_table$dOFV), 1),trim=T,digits=1,nsmall=1)
         rownames(outliers_table) <- NULL
       } else {
-        outliers_table <- data.frame("Subjects"=paste("Subject",outlier_ids),"dOFV"=rep("ERROR",length(outlier_ids)),stringsAsFactors = F)
-        max_outlier_table <- data.frame("No dOFV values found","",stringsAsFactors = F)
-        colnames(max_outlier_table) <- c("","dOFV")
+        if(length(outlier_ids)>10) {
+          outlier_ids <- outlier_ids[1:10]
+        }
+        if(as.character(cdd.data[1,1])=="SKIPPED") {
+          outliers_table <- data.frame("Subjects"=paste("Subject",outlier_ids),"dOFV"=rep("",length(outlier_ids)),stringsAsFactors = F)
+          max_outlier_table <- data.frame("No dOFV values found (skipped CDD)","",stringsAsFactors = F)
+          colnames(max_outlier_table) <- c("","dOFV")
+        } else {
+          outliers_table <- data.frame("Subjects"=paste("Subject",outlier_ids),"dOFV"=rep("ERROR",length(outlier_ids)),stringsAsFactors = F)
+          max_outlier_table <- data.frame("No dOFV values found","",stringsAsFactors = F)
+          colnames(max_outlier_table) <- c("","dOFV")
+        }
       }
     } else {
       outliers_table <- data.frame(c("No outliers detected"),stringsAsFactors = F)
@@ -36,8 +49,13 @@ get_outliers_table <- function(simeval_directory,cdd.data) {
     }
     
   } else {
+    if(any(skip=="simeval")) {
+      max_outlier_table <- data.frame("SIMEVAL","SKIPPED",stringsAsFactors = F)
+      colnames(max_outlier_table) <- c("","dOFV")
+    } else {
+      max_outlier_table <- error_table("SIMEVAL")
+    }
     outliers_table <- error_table(col=1)
-    max_outlier_table <- error_table("SIMEVAL")
   }
   
   if(length(outlier_ids)<=3) {

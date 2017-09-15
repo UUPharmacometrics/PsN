@@ -126,7 +126,7 @@ sub BUILD
 				"Check results carefully.",
 				newline => 1);
 		}
-		unless (defined $self->derivatives_data or $self->skip_filtering){
+		unless ($self->linearize or defined $self->derivatives_data or $self->skip_filtering){
 			$do_filtering = $self -> models->[0]->need_data_filtering();
 		}
 	}
@@ -1990,83 +1990,62 @@ sub linearize_setup
         }
 
         #handle second order and linearized epsilon imitate cwres
-        if ($self->second_order() or $self->epsilon()){
-
-            my $new_comresno = $nEPS*$nETA;
-            $new_comresno += $nETA*($nETA+1)/2 if ($self->second_order());
-            my $comresno;
-            if (defined $derivatives_model ->problems->[0]->abbreviateds()
-                    and scalar(@{$derivatives_model ->problems->[0]->abbreviateds()})>0){
-                # Get current comres number
-                $comresno = $derivatives_model->get_option_value( option_name => 'COMRES',
-                    record_name => 'abbreviated');
-
-                $new_comresno += $comresno if ( defined $comresno );
-                $derivatives_model->set_option( option_name => 'COMRES',
-                    record_name => 'abbreviated',
-                    fuzzy_match => 1,
-                    option_value => $new_comresno);
-            }else {
-                # Add $ABBREVIATED if necessary
-                $derivatives_model -> add_records( type => 'abbreviated',
-                    record_strings => [ "COMRES=".($new_comresno) ] );
-            }
-
+        if ($self->second_order() or $self->epsilon()) {
             #can look for ADVAN<any number> this way
-            my ($advan,$junk) = $derivatives_model->problems->[0] -> _option_val_pos( record_name => 'subroutine',
+            my ($advan, $junk) = $derivatives_model->problems->[0]->_option_val_pos(
+                record_name => 'subroutine',
                 name => 'ADVAN',
-                exact_match => 0);
+                exact_match => 0
+            );
             my $have_advan = scalar(@{$advan}) > 0;
 
             my $code_records;
-            my $H='H';
-            if( $have_advan ){
+            my $H = 'H';
+            if ($have_advan) {
                 # We have and ADVAN option in $SUBROUTINE, get $ERROR code
-                $code_records = $derivatives_model->problems->[0]-> errors();
-                $H='HH';
+                $code_records = $derivatives_model->problems->[0]->errors;
+                $H = 'HH';
             } else {
                 # No ADVAN subroutine, we should modify $PRED code
-                $code_records = $derivatives_model->problems->[0] -> preds;
+                $code_records = $derivatives_model->problems->[0]->preds;
             }
 
             # Get code array reference, so we can update the code inplace.
-            my $code = $code_records -> [0] -> verbatim_last;
+            my $code = $code_records->[0]->verbatim_last;
+            my $abbr_code = $code_records->[0]->code;
 
-            unless( defined $code ){
+            if (not defined $code) {
                 $code = [];
-                $code_records -> [0] -> verbatim_last($code);
+                $code_records->[0]->verbatim_last($code);
             }
 
-            my $com = defined $comresno ? $comresno + 1 : 1;
-            for(my $i= 1; $i<=$nEPS;$i++ ){
-                for(my $j= 1; $j<=$nETA;$j++ ){
+            for (my $i = 1; $i <= $nEPS; $i++) {
+                for (my $j = 1; $j <= $nETA;$j++) {
+                    push @{$abbr_code}, "D_EPSETA$i" . "_$j = 0";
                     if (not $self->nointer) {
-                        push( @{$code},"\"  COM($com)=$H($i,".($j+1).")" );
-                    } else {
-                        push( @{$code}, "\"  COM($com) = 0");
+                        push(@{$code}, "\"  D_EPSETA$i" . "_$j=$H($i," . ($j + 1) . ")");
                     }
-                    push( @tablestrings, "COM($com)=D_EPSETA$i"."_$j");
+                    push(@tablestrings, "D_EPSETA$i"."_$j");
                     $table_highprec++;
-                    push( @inputstrings, "D_EPSETA$i"."_$j");
-                    $com++;
+                    push(@inputstrings, "D_EPSETA$i"."_$j");
                 }
             }
-            if ($self->second_order()){
-                for(my $i= 1; $i<=$nETA;$i++ ){
-                    for(my $j= 1; $j<=$i;$j++ ){
-                        push( @{$code},"\"  COM($com)=G($i,".($j+1).")" );
-                        push( @tablestrings, "COM($com)=D2_ETA$i"."_$j");
+            if ($self->second_order()) {
+                for (my $i = 1; $i <= $nETA; $i++) {
+                    for (my $j = 1; $j <= $i; $j++) {
+                        push @{$abbr_code}, "D2_ETA$i" . "_$j = 0";
+                        push(@{$code}, "\"  D2_ETA$i" . "_$j=G($i," . ($j + 1) . ")");
+                        push(@tablestrings, "D2_ETA$i"."_$j");
                         $table_highprec++;
-                        push( @inputstrings, "D2_ETA$i"."_$j");
-                        $com++;
+                        push(@inputstrings, "D2_ETA$i"."_$j");
                     }
                 }
             }
         } #end second_order or epsilons
         #1.12
-        push(@tablestrings,@covariates);
+        push(@tablestrings, @covariates);
         $table_highprec = $table_highprec + scalar(@covariates);
-        push(@inputstrings,@covariates);
+        push(@inputstrings, @covariates);
 
         #GZs and GKs are added to code further down, add_code_gfunc
         foreach my $parameter ( keys %{$self -> test_relations()} ){
@@ -2643,6 +2622,15 @@ sub linearize_setup
                     $derivatives_name = $derivatives_model ->filename();
                 }else{
                     print "Warning: could not retrieve OFV from derivatives model.\n";
+                }
+                # Find synonyms to DV and MDV and replace header in generated dataset
+                # This is a workaround for a bug in NONMEM causing the synonym names always to be put in the header of tables
+                # Trigger on extra_table_columns to connect it to postprocessing needs of dataset
+                if (defined $self->extra_table_columns) {
+                    my $synonyms = $derivatives_model->find_input_synonyms(columns => ['DV', 'MDV']);
+                    if (scalar(keys %$synonyms) > 0) {
+                        nmtablefile::rename_column_names(filename => $self->basename . '.dta', replacements => $synonyms);
+                    }
                 }
             }else{
                 ui->print (category => 'scm',
@@ -5951,7 +5939,7 @@ sub preprocess_data
 
 		$filtered_data_model -> add_records( type           => 'table',
 			record_strings => [ join( ' ', @filter_table_header ).
-				' NOAPPEND NOPRINT ONEHEADER FILE='.$datafile]);
+				' NOAPPEND NOPRINT NOTITLE ONEHEADER FILE='.$datafile]);
 	}
 
 

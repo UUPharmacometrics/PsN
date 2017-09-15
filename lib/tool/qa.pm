@@ -49,20 +49,20 @@ sub BUILD
     }
 
     if (scalar(@{$self->only}) > 0) {
-        my %skip_hash = ( 'scm' => 1, 'frem' => 1, 'cdd' => 1, 'simeval' => 1, 'etas' => 1, 'resmod' => 1 );
+        my %skip_hash = ( 'scm' => 1, 'frem' => 1, 'cdd' => 1, 'simeval' => 1, 'transform' => 1, 'resmod' => 1 );
         for my $section (@{$self->only}) {
             if (exists $skip_hash{$section}) {
                 delete $skip_hash{$section};
             } else {
-                die("only: Unknown section $section. Allowed are etas, scm, frem, cdd, simeval and resmod\n");
+                die("only: Unknown section $section. Allowed are transform, scm, frem, cdd, simeval and resmod\n");
             }
         }
         $self->skip([keys %skip_hash]);
     }
 
     for my $skip (@{$self->skip}) {
-        if ($skip !~ /^(etas|scm|frem|cdd|simeval|resmod)$/) {
-            die("skip: Unknown section $skip. Allowed are etas, scm, frem, cdd, simeval and resmod\n");
+        if ($skip !~ /^(transform|scm|frem|cdd|simeval|resmod)$/) {
+            die("skip: Unknown section $skip. Allowed are transform, scm, frem, cdd, simeval and resmod\n");
         }
     }
 }
@@ -72,6 +72,19 @@ sub modelfit_setup
 	my $self = shift;
     my $model_copy = $self->model->copy(filename => $self->model->filename, directory => $self->model->directory, write_copy => 0, output_same_directory => 1);
     $model_copy->_write(filename => $self->directory . $self->model->filename);
+
+    my @covariates;
+    if (defined $self->covariates) {
+        @covariates = split(',', $self->covariates);
+    }
+    my @categorical;
+    if (defined $self->categorical) {
+        @categorical = split(',', $self->categorical);
+    }
+    my $all_covariates = [ @covariates, @categorical ];
+
+    $model_copy->problems->[0]->undrop_columns(columns => $all_covariates);
+
     $model_copy->phi_file($self->model->get_phi_file());
 
 	my $vers = $PsN::version;
@@ -136,7 +149,7 @@ sub modelfit_setup
     #    $base_model->_write();
     #}
 
-    if (not $self->_skipped('etas')) {
+    if (not $self->_skipped('transform')) {
         print "*** Running full omega block, add etas, boxcox and tdist models ***\n";
         eval {
             mkdir "modelfit_run";
@@ -148,19 +161,31 @@ sub modelfit_setup
                 push @models, $full_block_model;
             }
             my $boxcox_model = $base_model->copy(directory => "modelfit_run", filename => "boxcox.mod", write_copy => 0);
-            model_transformations::boxcox_etas(model => $boxcox_model);
-            $boxcox_model->_write();
-            push @models, $boxcox_model;
+            my $zero_fix_omegas = model_transformations::find_zero_fix_omegas(model => $boxcox_model);
+            my $etas_to_boxcox_tdist = model_transformations::remaining_omegas(model => $boxcox_model, omegas => $zero_fix_omegas);
+            if (scalar(@$etas_to_boxcox_tdist) > 0) {
+                model_transformations::boxcox_etas(model => $boxcox_model, etas => $etas_to_boxcox_tdist);
+                $boxcox_model->_write();
+                push @models, $boxcox_model;
+            }
             my $tdist_model = $base_model->copy(directory => "modelfit_run", filename => "tdist.mod", write_copy => 0);
-            model_transformations::tdist_etas(model => $tdist_model);
-            $tdist_model->_write();
-            push @models, $tdist_model;
+            if (scalar(@$etas_to_boxcox_tdist) > 0) {
+                model_transformations::tdist_etas(model => $tdist_model, etas => $etas_to_boxcox_tdist);
+                $tdist_model->_write();
+                push @models, $tdist_model;
+            }
             my $add_etas_model = $base_model->copy(directory => "modelfit_run", filename => "add_etas.mod", write_copy => 0);
             my $was_added = $add_etas_model->unfix_omega_0_fix();
             if ($was_added) {
                 $add_etas_model->_write();
                 push @models, $add_etas_model;
             }
+            #my $add_iov_model = $base_model->copy(directory => "modelfit_run", filename => "iov.mod", write_copy => 0);
+            #my $error = model_transformations::add_iov(model => $add_iov_model, parameters => $self->parameters, occ => $self->occ);
+            #if (not $error) {
+            #    $add_iov_model->_write();
+            #    push @models, $add_iov_model;
+            #}
             for my $model (@models) {       # Set output directory so that .lst file gets saved in the rundir
                 $model->outputs->[0]->directory(".");
             }
@@ -174,6 +199,9 @@ sub modelfit_setup
             $modelfit->run();
             chdir "..";
         };
+        if ($@) {
+            print $@;
+        }
         $self->_to_qa_dir();
     }
 
@@ -181,14 +209,6 @@ sub modelfit_setup
         if (not $self->_skipped('frem')) {
             print "\n*** Running FREM ***\n";
             my $frem_model = model->new(filename => $base_model_name);
-            my @covariates;
-            if (defined $self->covariates) {
-                @covariates = split(',', $self->covariates);
-            }
-            my @categorical;
-            if (defined $self->categorical) {
-                @categorical = split(',', $self->categorical);
-            }
 
             my $old_clean = common_options::get_option('clean');    # Hack to set clean further down
             common_options::set_option('clean', 1);
@@ -196,7 +216,7 @@ sub modelfit_setup
                 my $frem = tool::frem->new(
                     %{common_options::restore_options(@common_options::tool_options)},
                     models => [ $frem_model ],
-                    covariates => [ @covariates, @categorical ],
+                    covariates => $all_covariates,
                     categorical => [ @categorical ],
                     directory => 'frem_run',
                     rescale => 1,
@@ -209,9 +229,12 @@ sub modelfit_setup
                 $frem->print_options(   # To get skip_omegas over to postfrem
                     toolname => 'frem',
                     local_options => [ 'skip_omegas' ],
-                    #common_options => \@common_options::tool_options
+                    common_options => \@common_options::tool_options
                 );
             };
+            if ($@) {
+                print $@;
+            }
             common_options::set_option('clean', $old_clean);
 
 
@@ -225,6 +248,9 @@ sub modelfit_setup
                         system("postfrem-".$vers." -force_posdef_covmatrix -frem_directory=frem_run -directory=postfrem_run");
                     }
                 };
+                if ($@) {
+                    print $@;
+                }
             }
             $self->_to_qa_dir();
         }
@@ -270,6 +296,9 @@ sub modelfit_setup
 					system("scm-".$vers." config.scm $scm_options $fo $nointer $nonlinear");       # FIXME: system for now
 				}
             };
+            if ($@) {
+                print $@;
+            }
             $self->_to_qa_dir();
         }
     }
@@ -288,6 +317,9 @@ sub modelfit_setup
             );
             $cdd->run();
         };
+        if ($@) {
+            print $@;
+        }
         $self->_to_qa_dir();
     }
 
@@ -308,6 +340,9 @@ sub modelfit_setup
             );
             $simeval->run();
         };
+        if ($@) {
+            print $@;
+        }
         $self->_to_qa_dir();
     }
 
@@ -341,6 +376,7 @@ sub modelfit_setup
                 $resmod_idv->run();
             };
         } else {
+            print $@;
             rmdir "resmod_".$self->idv;
         }
 
@@ -366,6 +402,7 @@ sub modelfit_setup
                 $resmod_tad->run();
             };
         } else {
+            print $@;
             rmdir 'resmod_TAD';
         }
         $self->_to_qa_dir();
@@ -391,6 +428,7 @@ sub modelfit_setup
                 $resmod_pred->run();
             };
         } else {
+            print $@;
             rmdir 'resmod_PRED';
         }
         $self->_to_qa_dir();
@@ -418,7 +456,7 @@ sub _skipped
 sub _all_skipped_for_linearize
 {
     my $self = shift;
-    return $self->_skipped('scm') && $self->_skipped('frem') && $self->_skipped('cdd') && $self->_skipped('simeval') && $self->_skipped('etas');
+    return $self->_skipped('scm') && $self->_skipped('frem') && $self->_skipped('cdd') && $self->_skipped('simeval') && $self->_skipped('transform');
 }
 
 sub _create_scm_config

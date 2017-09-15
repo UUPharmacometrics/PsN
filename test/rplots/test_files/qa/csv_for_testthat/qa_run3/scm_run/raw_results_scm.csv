@@ -1,0 +1,6 @@
+step.number,action,relation,model,subprob_cov_time,ofv,CLAPGR-4-1,CLWGT-4-1,VAPGR-4-1,VWGT-4-1,"OMEGA(1,1)",seCLAPGR-4-1,EI1,EI4
+0,none,(base) none,0.11,0,587.27,NA,NA,NA,NA,0.0130545,NA,,
+1,added,CLAPGR-4,1,0,NA,NA,NA,NA,NA,0.0233098,NA,,
+1,added,CLWGT-4,2,0,586.8,NA,0.05,NA,NA,0.0299618,NA,,
+1,added,VAPGR-4,3,0,587.1,NA,NA,0.004,NA,0.0298653,NA,,
+1,added,VWGT-4,4,0,587.15,NA,NA,NA,-0.012,0.0297635,NA,,

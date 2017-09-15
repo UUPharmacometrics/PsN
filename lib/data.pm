@@ -2428,7 +2428,11 @@ sub column_to_array
 	my @filter = defined $parm{'filter'} ? @{$parm{'filter'}} : ();
 
 	if (not $column =~ /^\d/) {
-		$column = $self->column_head_indices->{$column} - 1;
+        if (defined $self->column_head_indices->{$column}) {
+		    $column = $self->column_head_indices->{$column} - 1;
+        } else {
+            $column = -1;
+        }
 	}
 
 	if ($column < 0) {  # FIXME: had upper bounds check here or $column > $#{$self->header}) {

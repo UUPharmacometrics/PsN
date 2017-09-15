@@ -24,17 +24,17 @@ get_resmod_structural_details <- function(directory, suffix, dvid) {
           tidyr::separate(variable, c("type","bin"), "_") %>%
           tidyr::extract(bin, into=c("bin_min","bin_max"), '(.*)\\-([^-]+)$') %>%
           left_join(bin_boundaries, c(bin_min = "variable")) %>%
-          mutate(bin_value = ifelse(bin_min=='0', 0, ifelse(bin_min=='-inf', -Inf ,bin_value))) %>%
+          mutate(bin_value = ifelse(is.na(bin_value), paste0(bin_min,".00 "), bin_value)) %>%
           rename(bin_min_value = bin_value) %>%
           left_join(bin_boundaries, c(bin_max = "variable")) %>%
-          mutate(bin_value = ifelse(bin_max=='inf', Inf, bin_value),
+          mutate(bin_value = ifelse(is.na(bin_value), paste0(bin_max,".00 "), bin_value),
                  type = type_labels[type]) %>%
           rename(bin_max = bin_value,
                  bin_min = bin_min_value)
       })%>%
     ungroup() %>%
-    mutate_each(funs(as.numeric), value, bin_min, bin_max) %>%
-    mutate_each(funs(round(.,2)), bin_min, bin_max)
+    mutate_at(c("value", "bin_min", "bin_max"),funs(as.numeric)) %>%
+    mutate_at(c("bin_min", "bin_max"),funs(round(.,2)))
   
   return(resmod_structural_table)
 }

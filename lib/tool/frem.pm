@@ -100,7 +100,7 @@ sub BUILD
     my @filtered_covariates;
     my @filtered_categorical;
     for my $column (@{$self->covariates}) {
-        my $colno = $problem->find_data_column(column_name => $column);
+        my $colno = $problem->find_data_column(column_name => $column, ignore_dropped => 0);
         my $column_data = $data->column_to_array(column => $colno);
         if (scalar @{array::unique($column_data)} == 1) {
             print "Warning: Covariate $column excluded because it has only one value for all rows in the dataset.\n";
@@ -249,12 +249,14 @@ sub BUILD
         my $first_skip = exists($skip_omegas{1}) ? 1 : 0;
         my $last_skip = exists($skip_omegas{$nom}) ? 1 : 0;
         unless ($first_skip || $last_skip) {
-            croak "Skipped OMEGA record(s) must all be positioned first or last (neither first nor last OMEGA record is skipped)"
+            print "Skipped OMEGA record(s) must all be positioned first or last (neither first nor last OMEGA record is skipped)";
+            croak "Can't continue due to non-supported skipping pattern";
         }
         for (my $i=2; $i<=(keys %skip_omegas); $i++) {
             $om_num = $first_skip ? $i : $nom-$i+1; # count forward or backward
             unless (exists($skip_omegas{$om_num})) {
-                croak "Skipped OMEGA records must all be positioned first or last (expected OMEGA record $om_num skipped)";
+                print "Skipped OMEGA records must all be positioned first or last (expected OMEGA record $om_num skipped)";
+            croak "Can't continue due to non-supported skipping pattern";
             }
         }
     }

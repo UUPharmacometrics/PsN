@@ -2,7 +2,13 @@ all_structural_extra_plots <- function(working.directory,model.filename,resmod_s
   if(length(idv_all)!=0) {
     for(i in 1:length(resmod_structural_details)) {
       #tables for vpc plots
-      vpc_tables_list <- get_tables_for_vpc(obs_table=CWRES_table,obs_extra_table=file.path(working.directory,paste0(sub('.([^.]*)$','',model.filename),"_linbase.dta")),sim_table=file.path(working.directory,"/simeval_run/m1/sim_res_table-1.dta"),sim_extra_table=file.path(working.directory,"/simeval_run/m1/orig_pred.dta"),idv_all,resmod_structural_details[[i]]$dvid,dvid_name)
+      vpc_tables_list <- get_tables_for_vpc(obs_table=CWRES_table,
+                                            obs_extra_table=file.path(working.directory,paste0(sub('.([^.]*)$','',model.filename),"_linbase.dta")),
+                                            sim_table=file.path(working.directory,"/simeval_run/m1/sim_res_table-1.dta"),
+                                            sim_extra_table=file.path(working.directory,"/simeval_run/m1/orig_pred.dta"),
+                                            idv_all,
+                                            resmod_structural_details[[i]]$dvid,
+                                            dvid_name)
       make_vpc <- vpc_tables_list$make_vpc
       if(make_vpc) {
         obs <- vpc_tables_list$obs
@@ -31,7 +37,7 @@ all_structural_extra_plots <- function(working.directory,model.filename,resmod_s
       shift_tab <- resmod_structural_details[[i]]$table
       if(ncol(shift_tab)!=1) {
         cat("\n\n")
-        idv_plot <- plot_ipred(shift_tab,resmod_structural_details[[i]]$idv)
+        idv_plot <- plot_ipred(table=shift_tab,idv=resmod_structural_details[[i]]$idv)
         print(idv_plot)
         cat("\n\n")
         cat(structural_bias_plots_captions)

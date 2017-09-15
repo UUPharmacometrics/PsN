@@ -2,7 +2,7 @@
 
 use strict;
 use warnings;
-use Test::More tests=>8;
+use Test::More;
 use FindBin qw($Bin);
 use lib "$Bin/.."; #location of includes.pm
 use includes; #file with paths to PsN packages
@@ -24,5 +24,9 @@ is ($option2->option_string, undef, "Option2->option_string");
 # Test format option
 is ($option1->_format_option, 'TRT=DROP', "Option1->_format_option");
 is ($option2->_format_option, 'ID', "Option2->_format_option");
+
+# Test is_drop()
+ok ($option1->is_drop(), 'Option1 is dropped');
+ok (!$option2->is_drop(), 'Option2 is not dropped');
 
 done_testing();

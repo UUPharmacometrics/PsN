@@ -3800,18 +3800,22 @@ sub get_eta_sets
 sub find_data_column
 {
     # Find the number of a column in the dataset by searching $INPUT
-    # Return -1 if not found
+    # Account for synonyms
+    # Return -1 if not found (or if DROP or SKIP when ignore_dropped is true)
 
     my $self = shift;
 	my %parm = validated_hash(\@_,
-		column_name => { isa => 'Str', optional => 0 }
+		column_name => { isa => 'Str', optional => 0 },
+        ignore_dropped => { isa => 'Bool', default => 1 },
 	);
 	my $column_name = $parm{'column_name'};
+	my $ignore_dropped = $parm{'ignore_dropped'};
 
     my $counter = 0;
     foreach my $record (@{$self->inputs}) {
         foreach my $opt (@{$record->options}) {
-            if ($opt->name eq $column_name) {
+            next if ($ignore_dropped and $opt->is_drop());
+            if ($opt->name eq $column_name or (defined $opt->value and $opt->value eq $column_name)) {
                 return $counter;
             }
             $counter++;
@@ -3819,6 +3823,29 @@ sub find_data_column
     }
 
     return -1;
+}
+
+sub undrop_columns
+{
+    my $self = shift;
+	my %parm = validated_hash(\@_,
+		columns => { isa => 'ArrayRef[Str]' },
+	);
+	my $columns = $parm{'columns'};
+
+    for my $record (@{$self->inputs}) {
+        for my $option (@{$record->options}) {
+            if ($option->is_drop()) {
+                for my $col (@$columns) {
+                    if ($option->name eq $col) {
+                        $option->value('');
+                    } elsif ($option->value eq $col) {
+                        $option->name('');
+                    }
+                }
+            }
+        }
+    }
 }
 
 no Moose;

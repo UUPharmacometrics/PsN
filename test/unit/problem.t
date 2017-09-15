@@ -514,4 +514,8 @@ is ($problem->find_data_column(column_name => 'NOEX'), -1, "find_data_column non
 
 is_deeply($problem->get_msfo_filenames,['phenomsf'],'MSFO filenames 2');
 
+#undrop_columns
+$model = model->new(filename => $includes::testfiledir."/pheno.mod", ignore_missing_data => 1);
+$model->problems->[0]->undrop_columns(columns => [ "DV", "TIME" ]);
+
 done_testing();

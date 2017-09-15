@@ -60,6 +60,8 @@ A new recommended but not required Perl library for runrecord: YAML::Tiny
 
    ___General___
 
+- PsN will now give an error if an OMEGA or SIGMA BLOCK contains multiple FIX
+  This would be inline with what NM-TRAN does.
 
 
    ___common_options___
@@ -108,6 +110,8 @@ A new recommended but not required Perl library for runrecord: YAML::Tiny
 - Linearized scm supports finding parameter-eta relation in two steps i.e.:
     ETA_CL = ETA(1), TVCL = THETA(1), CL = TVCL * EXP(ETA_CL)
     will properly be detected.
+- Bugfix: Models with IGNORE=() and IGNORE=C where C is not @ caused scm to crash
+
 
    ___linearize___
 
@@ -116,6 +120,7 @@ A new recommended but not required Perl library for runrecord: YAML::Tiny
 - Do not propagate name of -dir to subtools (i.e. underlying scm directory will always be called scm_dir1)
 - Only evaluate (MAXEVALS=0) the derivatives model. If lst file is available update initial values first.
 - New option nointer to not use interaction
+- Do not use COM in derivatives.mod to avoid name clash
 
    ___nca___
 
@@ -163,7 +168,7 @@ A new recommended but not required Perl library for runrecord: YAML::Tiny
 
    ___transform___
 
-- Added tdist, full_block, add_tv and omit_ids transformations
+- Added remove_0fix_omegas, tdist, full_block, add_tv, add_iov, iiv_on_ruv, power_on_ruv and omit_ids transformations
 
    ___resmod___ 
 

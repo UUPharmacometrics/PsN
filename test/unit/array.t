@@ -283,4 +283,9 @@ is ($q->[0], 3, "quantile, groups=3, q1");
 is ($q->[1], 5.50, "quantile, groups=3, q2");
 is ($q->[2], 8, "quantile, groups=3, q3");
 
+# numerical_in
+ok (numerical_in(4, [8, 9, 4]), "numerical_in 1");
+ok (!numerical_in(23, [1, 2, 3]), "numerical_in 2");
+ok (!numerical_in(0, []), "numerical_in empty array");
+
 done_testing();

@@ -150,6 +150,12 @@ Value 1 means regular sampling without replacement.
 A value equal to the maximum value of the 'resamples' array will give
 unlimited replacement, but this is not recommended. Any value in between gives limited replacement. 
 \nextopt
+\optname{fast\_posdef\_checks}
+Default not set. Enables experimental fast positive semi-definiteness checks via cholesky
+decomposition. By default sampler uses eigenvalue decomposition (to get subspace which constitute
+valid covariance matrices) which in some cases can be several orders of magnitude slower (especially
+with large matrices). Try this if large covariance matrix and large rejection rate slows down SIR.
+\nextopt
 \optdefault{covmat\_input}{filename}
 Not allowed together with rawres\_input or auto\_rawres. If given, this covariance matrix is
 used in iteration 1

@@ -43,6 +43,19 @@ sub _format_option
 	return $formatted;
 }
 
+sub is_drop
+{
+    # Check if $INPUT item is DROP or SKIP
+    my $self = shift;
+
+    return 1 if ($self->name eq 'SKIP' or $self->name eq 'DROP');
+    if (defined $self->value) {
+        return 1 if ($self->value eq 'SKIP' or $self->value eq 'DROP');
+    }
+
+    return 0;
+}
+
 no Moose;
 __PACKAGE__->meta->make_immutable;
 1;

@@ -53,8 +53,13 @@
     dvid_column_nr <- which(colnames(mean_shifts_table)== dvid_name)
     mean_shifts_table<- mean_shifts_table[which(mean_shifts_table[,dvid_column_nr] == dvid),]
   }
-  mean_shifts <- mean_shifts_table %>%
-    filter(MDV==0) %>%
+  #check if MDV column exists (in PRED models it maybe will not exist)
+  mean_shifts <- mean_shifts_table
+  if(any(colnames(mean_shifts)=="MDV")) {
+    mean_shifts <- mean_shifts %>%
+      filter(MDV==0)
+  }
+  mean_shifts <- mean_shifts %>%
     bind_cols(idv_df) %>%
     mutate(bin_index = findInterval(unlist(.$idv), structural_details_table$bin_min),  # in which bin did observation go
            bin_value = structural_details_table$value[bin_index]) %>%                    # get value for that bin
@@ -69,13 +74,17 @@
                  bin_index = .$bin_index,
                  ipred = .$OPRED)
     }) %>%
+    
     group_by(bin_index) %>%
-    summarise(relative_shift = ifelse((any(mean_shifts_table$OPRED > 0) && any(mean_shifts_table$OPRED < 0)),NA,100*mean(shift/ipred)), shift = mean(shift)) %>%
+    summarise(relative_shift = ifelse((any(mean_shifts_table$OPRED > 0) && any(mean_shifts_table$OPRED < 0)),NA,100*mean(shift/ipred)), 
+              shift = mean(shift),nobs=n()) %>%
     mutate(bin_min = structural_details_table$bin_min[bin_index],
            bin_max = structural_details_table$bin_max[bin_index],
-           bin_mean=ifelse(bin_min==-Inf,-Inf,bin_min+(bin_max-bin_min)/2))
+           bin_mean = bin_min+(bin_max-bin_min)/2,
+           nobs_pr = .$nobs*100/sum(.$nobs),
+           nobs = 12*sqrt(.$nobs/3.14)/max(2*sqrt(.$nobs/3.14)))
   
   structural_details_table %>%
     slice(mean_shifts$bin_index) %>%
-    bind_cols(mean_shifts %>% select(bin_mean, relative_shift, shift))
+    bind_cols(mean_shifts %>% select(bin_mean, relative_shift, shift, nobs, nobs_pr))
 }

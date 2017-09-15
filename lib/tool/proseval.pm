@@ -24,7 +24,7 @@ sub BUILD
     my $self = shift;
 
 	my $model = $self->models()->[0]; 
-    my $evid_column = $model->problems->[0]->find_data_column(column_name => 'EVID'); 
+    my $evid_column = $model->problems->[0]->find_data_column(column_name => 'EVID', ignore_dropped => 0); 
     if ($evid_column == -1) {
         die "Error: There is no EVID column in the dataset\n";
     }

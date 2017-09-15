@@ -1004,10 +1004,9 @@ EOF
     $help_hash{-retries} = <<'EOF';
     -retries='integer'
     The -retries option tells PsN how many times it
-    shall try to rerun a NONMEM job if it fails according to given criterias. In
-    the current version of PsN (2.2), the -retries option is only
-    valid together with -tweak_inits. The default value of the
-    -retries option is 0.
+    shall try to rerun a NONMEM job if it fails according to given criterias.
+    The -retries option is only valid together with -tweak_inits.
+    The default value of the -retries option is 0.
 EOF
 
     $help_hash{-crash_restarts} = <<'EOF';

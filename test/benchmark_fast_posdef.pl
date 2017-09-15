@@ -52,7 +52,7 @@ foreach my $adjust_blocks (0,1) {
             my ($acc,$adj) = tool::sir::check_blocks_posdef(xvec => \@xvec,
                                                             hash_array => $hash_arr,
                                                             adjust_blocks => $adjust_blocks,
-                                                            fast_posdef_check => $fast_posdef);
+                                                            cholesky_decomposition => $fast_posdef);
             my $elapsed = tv_interval($start);
             print ", elapsed time: $elapsed s\n";
             $elapsed[$fast_posdef] = $elapsed;
