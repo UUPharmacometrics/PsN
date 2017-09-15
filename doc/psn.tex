@@ -1,0 +1,32 @@
+\input{inputs/format_header.tex}
+\guidetitle{PsN}{2017-09-15}
+
+\usepackage{tabularx}
+
+
+\begin{document}
+
+
+\maketitle
+\newcommand{\guidetoolname}{<toolname>}
+
+\section{Introduction}
+%This document aims to be a starting point for the PsN documentation and also to contain topics that are common to the different PsN tools.
+This document aims to contain topics that are common to the different PsN tools.
+
+\section{Metadata}
+All PsN tools generate metadata with information about the specific run. The file 'meta.yaml' is, starting with PsN 4.7.8, created in each run directory with the aim of gathering all the interesting metadata in one place. As a yaml-file the meta.yaml is both easy to read for humans and easy to interpret by computer program. Below is a description of all currently available tags in meta.yaml
+
+\begin{center}
+    \begin{tabularx}{\linewidth}{ r X }
+    \hline
+    Tag & Description \\ \hline
+    \verb|command_line| & The command line with the full path to the command \\ \hline
+    \verb|NONMEM_directory| & The full path to were the NONMEM version for this run is stored \\ \hline
+    \verb|NONMEM_version| & The version of NONMEM \\ \hline
+    \verb|PsN_version| & The version of PsN \\ \hline
+    \verb|tool_name| & The name of the tool without version extensions \mbox{('-4.7.8')} or developer version extension ('-dev') \\ \hline
+  \end{tabularx}
+\end{center}
+
+\end{document}

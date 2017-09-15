@@ -5,11 +5,13 @@ use strict;
 use Cwd;
 use File::Copy 'cp';
 use File::Path qw(mkpath rmtree);
+use File::Spec;
 use OSspecific;
 use Math::Random;
 use Archive::Zip;
 use ui;
 use Config;
+use YAML;
 our $AUTOLOAD;
 use log;
 
@@ -146,6 +148,7 @@ has 'so' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'subset_variable_rplots' => ( is => 'rw', isa => 'Str');
 has 'zip' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'rmarkdown' => ( is => 'rw', isa => 'Bool', default => 1 );
+has 'metadata' => ( is => 'rw', isa => 'HashRef', default => sub {{}} );     # Complex data structure for metadata of run to be stored as meta.yaml
 
 sub BUILDARGS
 {
@@ -1685,10 +1688,16 @@ sub print_options
 	}
 
 	#append
-	if ($cmd_line){
+	if ($cmd_line) {
 		open(CMD, ">>", $dir . "/command.txt");
 		print CMD $cmd_line, "\n";
 		close(CMD);
+        $self->metadata->{'command_line'} = $cmd_line;
+        $cmd_line =~ /(.*)\s+/;
+        my $tool_name = $1;
+        (undef, undef, $tool_name) = File::Spec->splitpath($tool_name);
+        my @a = split /-/, $tool_name;
+        $self->metadata->{'tool_name'} = $a[0];
 	}
 
 
@@ -1698,6 +1707,7 @@ sub print_options
 	my $theDate=sprintf "%4.4d-%2.2d-%2.2d",($datearr[5]+1900),($datearr[4]+1),($datearr[3]);
 	my $theTime=sprintf "%2.2d:%2.2d:%2.2d",($datearr[2]),($datearr[1]), $datearr[0];
 	my $info_line = "PsN version: ".$PsN::version."\nRun started: $theDate at $theTime\n";
+    $self->metadata->{'PsN_version'} = $PsN::version;
 	print CMD "$info_line";
 	print CMD "version_and_option_info.txt is overwitten if the run is restarted later using option -directory.\n";
 	print CMD "The original file from the first call is saved as original_version_and_option_info.txt.\n\n";
@@ -1708,6 +1718,8 @@ sub print_options
 
 	PsN::set_nonmem_info($self->nm_version);
 	print CMD "NONMEM:\n" . $PsN::nmdir . "\n\n";
+    $self->metadata->{'NONMEM_directory'} = $PsN::nmdir;
+    $self->metadata->{'NONMEM_version'} = $PsN::nm_major_version . "." . $PsN::nm_minor_version;
 
     # Don't change the string "Actual values optinal". It is used to find the toolname by nmoutput2so 
 	print CMD "Actual values optional $toolname options (undefined values not listed):\n";
@@ -1751,6 +1763,13 @@ sub print_options
 			}
 		}
 	}
+
+    open my $fh, '>', "$dir/meta.yaml";
+    # Sort alphabetically case-insensitive (default key sorting is case sensitive)
+    my @ordered_keys = sort { "\L$a" cmp "\L$b" } keys %{$self->metadata};;
+    YAML::Bless($self->metadata)->keys(\@ordered_keys);
+    print $fh YAML::Dump($self->metadata);
+    close $fh;
 }
 
 sub get_rundir
