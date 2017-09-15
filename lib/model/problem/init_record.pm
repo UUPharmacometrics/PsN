@@ -329,7 +329,8 @@ sub _read_options
 				s/\(\s*/\(/g;
 				my ( $line, $line_comment ) = split( ";", $_, 2 );
 				$_ = $line;
-				$any_fixed++ if /FIXED|FIXE|FIX/;
+                my @fix_match = $_ =~ /FIXED|FIXE|FIX/g;
+                $any_fixed += scalar(@fix_match);   # Increase any_fixed with the number of FIXED on line. any_fixed is now > 1 if too many FIX
 				$any_sd++    if /SD/;
 				$any_sd++    if /STANDARD/;
 				$any_chol++    if /CHOLESKY/;
@@ -366,6 +367,10 @@ sub _read_options
 					( s/COVARIANCE// );
 					( s/VARIANCE// );
 				}
+                
+                if (defined $self->type and $self->type eq 'BLOCK' and $any_fixed > 1) {   # Too many FIX for BLOCK
+                    die("Model parsing error: FIX was specified more than once in BLOCK\n"); 
+                }
 
 				my $print_debug=0;
 				while (/\w/) {
