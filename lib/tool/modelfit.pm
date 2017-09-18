@@ -3208,6 +3208,8 @@ sub move_model_and_output
 
 	# TODO update move_retry_files and use it here?
 
+    $self->metadata->{'copied_files'} = [];
+
 	foreach my $filename ( @output_files, 'compilation_output.txt','psn.'.$self->modext,'nmqual_messages.txt' ){
 
 		my $use_name = get_retry_name( filename => $filename,
@@ -3223,6 +3225,8 @@ sub move_model_and_output
 		if ($filename eq 'psn.lst') {
 			cp($filename, $outfilename); 
             $final_lst = $outfilename;
+            (undef, undef, my $lst_name) = File::Spec->splitpath($outfilename);
+            push @{$self->metadata->{'copied_files'}}, $lst_name;
 			next;
 		}
 		my $found_ext = 0;
@@ -3256,6 +3260,7 @@ sub move_model_and_output
         }
         $destination .= $filename;
         cp($filename, $destination);
+        push @{$self->metadata->{'copied_files'}}, $filename;
 	}
 
 	trace(tool => 'modelfit', message => "Best retry is $use_run.\nMoved psn-".

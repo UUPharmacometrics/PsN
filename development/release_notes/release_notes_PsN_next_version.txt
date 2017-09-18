@@ -62,6 +62,8 @@ A new recommended but not required Perl library for runrecord: YAML::Tiny
 
 - PsN will now give an error if an OMEGA or SIGMA BLOCK contains multiple FIX
   This would be inline with what NM-TRAN does.
+- PsN runs now generate meta.yaml to systematically describe various metadata.
+  See the psn.pdf for documentation.
 
 
    ___common_options___

@@ -782,4 +782,17 @@ sub print
     }
 }
 
+sub remove_NaN
+{
+	my $array = shift;
+
+	my @clean_array=();
+	for (my $i=0; $i<scalar(@{$array}); $i++) {
+		if ($array->[$i] ne 'NaN'){
+			push(@clean_array,$array->[$i]);
+		}
+	}
+	return \@clean_array;
+}
+
 1;

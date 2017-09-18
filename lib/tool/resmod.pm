@@ -1254,8 +1254,8 @@ sub _create_model_templates
     my $cutoffs = $self->_calculate_quantiles(table => $table->tables->[0], column => $idv_column);
 	$cutoffs = array::unique($cutoffs);
 	my $idv_col_order = $table->tables->[0]->header->{$idv_column};
-	my $min_idv = floor(sprintf("%.10g",array::min($table->tables->[0]->columns->[$idv_col_order])));
-	my $max_idv = ceil(sprintf("%.10g",array::max($table->tables->[0]->columns->[$idv_col_order])));
+	my $min_idv = floor(sprintf("%.10g",array::min(array::remove_NaN($table->tables->[0]->columns->[$idv_col_order])))); # delete NaN values if they exist first
+	my $max_idv = ceil(sprintf("%.10g",array::max(array::remove_NaN($table->tables->[0]->columns->[$idv_col_order]))));
 	#delete first and last elements of cutoffs if they are equal with min_idv and max_idv
 	if($min_idv==$cutoffs->[0]) {
 		splice (@{$cutoffs},0,1);

@@ -5,12 +5,14 @@ use strict;
 use Cwd;
 use File::Copy 'cp';
 use File::Path qw(mkpath rmtree);
+use File::Spec;
 use OSspecific;
 use Math::Random;
 use Archive::Zip;
 use utils::file;
 use ui;
 use Config;
+use YAML;
 our $AUTOLOAD;
 use log;
 
@@ -149,6 +151,7 @@ has 'zip' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'rmarkdown' => ( is => 'rw', isa => 'Bool', default => 1 );
 has 'model_subdir' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'model_subdir_name' => ( is => 'rw', isa => 'Str' );
+has 'metadata' => ( is => 'rw', isa => 'HashRef', default => sub {{}} );     # Complex data structure for metadata of run to be stored as meta.yaml
 
 sub BUILDARGS
 {
@@ -743,6 +746,9 @@ sub print_results
         } 
     }
     close $fh;
+
+    $self->metadata->{'finish_time'} = "$theDate $theTime";
+    $self->write_meta();
 }
 
 sub compress_m1
@@ -1621,9 +1627,7 @@ sub create_raw_results_rows
 				}	  
 			}
 
-		} #end foreach category
-
-
+		}
 		#end nonp
 
 	} else {
@@ -1632,8 +1636,8 @@ sub create_raw_results_rows
 
 		my $mes = "Could not parse the output file: ".
 		$model->outputs->[0]->filename;
-		push( @{$return_rows[0]}, ($model_number,(1),(1),($mes)) );
-		push( @{$nonp_return_rows[0]}, ($model_number,(1),(1),($mes)) );
+		push(@{$return_rows[0]}, ($model_number,(1),(1),($mes)) );
+		push(@{$nonp_return_rows[0]}, ($model_number,(1),(1),($mes)) );
 		$raw_line_structure -> {$model_number} -> {'line_numbers'} = scalar @return_rows;
 	}    
 
@@ -1693,10 +1697,16 @@ sub print_options
 	}
 
 	#append
-	if ($cmd_line){
+	if ($cmd_line) {
 		open(CMD, ">>", $dir . "/command.txt");
 		print CMD $cmd_line, "\n";
 		close(CMD);
+        $self->metadata->{'command_line'} = $cmd_line;
+        $cmd_line =~ /(.*)\s+/;
+        my $tool_name = $1;
+        (undef, undef, $tool_name) = File::Spec->splitpath($tool_name);
+        my @a = split /-/, $tool_name;
+        $self->metadata->{'tool_name'} = $a[0];
 	}
 
 
@@ -1706,6 +1716,8 @@ sub print_options
 	my $theDate=sprintf "%4.4d-%2.2d-%2.2d",($datearr[5]+1900),($datearr[4]+1),($datearr[3]);
 	my $theTime=sprintf "%2.2d:%2.2d:%2.2d",($datearr[2]),($datearr[1]), $datearr[0];
 	my $info_line = "PsN version: ".$PsN::version."\nRun started: $theDate at $theTime\n";
+    $self->metadata->{'PsN_version'} = $PsN::version;
+    $self->metadata->{'start_time'} = "$theDate $theTime";
 	print CMD "$info_line";
 	print CMD "version_and_option_info.txt is overwitten if the run is restarted later using option -directory.\n";
 	print CMD "The original file from the first call is saved as original_version_and_option_info.txt.\n\n";
@@ -1716,35 +1728,51 @@ sub print_options
 
 	PsN::set_nonmem_info($self->nm_version);
 	print CMD "NONMEM:\n" . $PsN::nmdir . "\n\n";
+    $self->metadata->{'NONMEM_directory'} = $PsN::nmdir;
+    $self->metadata->{'NONMEM_version'} = $PsN::nm_major_version . "." . $PsN::nm_minor_version;
 
-    # Don't change the string "Actual values optinal". It is used to find the toolname by nmoutput2so 
+    $self->metadata->{'tool_options'} = {};
+    # Don't change the string "Actual values optional". It is used to find the toolname by nmoutput2so 
 	print CMD "Actual values optional $toolname options (undefined values not listed):\n";
 	foreach my $opt (sort(@{$local_options})){
 		$opt =~ s/[!:|].*//g; #get rid of :s |? :i etcetera
 		if (defined $self->{$opt}){
 			if (not ref($self->{$opt})){
 				print CMD "-$opt=".$self->{$opt}."\n";
+                $self->metadata->{'tool_options'}->{$opt} = $self->{$opt}; 
 			} elsif ( ref($self->{$opt}) eq "ARRAY") {
 				if (not ref($self->{$opt}->[0])){
-					print CMD "-$opt=".(join ',',@{$self->{$opt}})."\n";
+                    my $opt_string = join(',', @{$self->{$opt}});
+					print CMD "-$opt=" . $opt_string . "\n";
+                    $self->metadata->{'tool_options'}->{$opt} = $opt_string;
 				}
 			}
 		}
 	}
 
+    $self->metadata->{'common_options'} = {};
 	print CMD "\nActual values optional PsN (common) options (undefined values not listed):\n";
-	print CMD "-silent=1\n" if (ui->silent());
-	foreach my $opt (sort(@{$common_options})){
+    if (ui->silent()) {
+	    print CMD "-silent=1\n";
+        $self->metadata->{'common_options'}->{'silent'} = 1;
+    }
+	foreach my $opt (sort(@{$common_options})) {
 		$opt =~ s/[!:|].*//g; #get rid of :s |? :i etcetera
 		if (defined $self->{$opt}){
 			if (not ref($self->{$opt})){
 				print CMD "-$opt=".$self->{$opt}."\n";
-			} elsif ( $opt eq 'threads') {
+                $self->metadata->{'common_options'}->{$opt} = $self->{$opt};
+			} elsif ($opt eq 'threads') {
 				print CMD "-$opt=".$self->{$opt}->[1]."\n";
-			} elsif ( ref($self->{$opt}) eq "ARRAY") {
-				print CMD "-$opt=".(join ',',@{$self->{$opt}})."\n";
-			} elsif ( ref($self->{$opt}) eq "HASH") {
-				print CMD "-$opt=".(join ',',@{$self->{$opt}})."\n";
+                $self->metadata->{'common_options'}->{$opt} = $self->{$opt}->[1];
+			} elsif (ref($self->{$opt}) eq "ARRAY") {
+                my $opt_string = join(',', @{$self->{$opt}});
+				print CMD "-$opt=" . $opt_string . "\n";
+                $self->metadata->{'common_options'}->{$opt} = $opt_string;
+			} elsif (ref($self->{$opt}) eq "HASH") {
+                my $opt_string = join(',', @{$self->{$opt}});
+				print CMD "-$opt=" . $opt_string . "\n";
+                $self->metadata->{'common_options'}->{$opt} = $opt_string;
 			}
 		}
 	}
@@ -1759,6 +1787,33 @@ sub print_options
 			}
 		}
 	}
+
+    if (defined $self->models) {
+        $self->metadata->{'model_files'} = [];
+        for my $model (@{$self->models}) {
+            push @{$self->metadata->{'model_files'}}, $model->full_name();
+        }
+    }
+
+    $self->write_meta(directory => $dir);
+}
+
+sub write_meta
+{
+    # Write meta.yaml to disk
+    my $self = shift;
+	my %parm = validated_hash(\@_,
+        directory => { isa => 'Str', optional => 1, default => $self->directory },
+        MX_PARAMS_VALIDATE_NO_CACHE => 1,
+    );
+	my $directory = $parm{'directory'};
+
+    open my $fh, '>', "$directory/meta.yaml";
+    # Sort alphabetically case-insensitive (default key sorting is case sensitive)
+    my @ordered_keys = sort { "\L$a" cmp "\L$b" } keys %{$self->metadata};;
+    YAML::Bless($self->metadata)->keys(\@ordered_keys);
+    print $fh YAML::Dump($self->metadata);
+    close $fh;
 }
 
 sub get_rundir
@@ -1899,26 +1954,28 @@ sub create_R_script
 		}
 	}
 		
-	if (-e $template_file){
-		open( FILE, $template_file ) ||
-			croak("Could not open $template_file for reading" );
+	if (-e $template_file) {
+		open(FILE, $template_file) ||
+			croak("Could not open $template_file for reading");
 		
 		my @code = ();
-		foreach my $line (<FILE>){
+		foreach my $line (<FILE>) {
 			chomp($line);
-			push(@code,$line);
+			push(@code, $line);
 		}
-		close( FILE );
-		my $rplot = rplots->new(toolname => $tool_name, 
-								directory => $self->directory,
-								level => $self->rplots,
-								raw_results_file => $self->raw_results_file->[0],
-								tool_results_file => $self->results_file,
-								plotcode => \@code,
-								subset_variable => $self->subset_variable_rplots,
-								model => $self->models->[0],
-								R_markdown => $rmarkdown,
-								rmarkdown_installed => $Rmarkdown_installed);
+		close(FILE);
+		my $rplot = rplots->new(
+            toolname => $tool_name, 
+            directory => $self->directory,
+            level => $self->rplots,
+            raw_results_file => $self->raw_results_file->[0],
+            tool_results_file => $self->results_file,
+            plotcode => \@code,
+            subset_variable => $self->subset_variable_rplots,
+            model => $self->models->[0],
+            R_markdown => $rmarkdown,
+            rmarkdown_installed => $Rmarkdown_installed,
+        );
 
 		$self->create_R_plots_code(rplot => $rplot) if ($self->can("create_R_plots_code"));
 		$rplot->make_plots;
