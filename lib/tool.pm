@@ -1782,6 +1782,13 @@ sub print_options
 		}
 	}
 
+    if (defined $self->models) {
+        $self->metadata->{'models'} = [];
+        for my $model (@{$self->models}) {
+            push @{$self->metadata->{'models'}}, $model->full_name();
+        }
+    }
+
     $self->write_meta(directory => $dir);
 }
 
