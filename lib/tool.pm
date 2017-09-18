@@ -1722,34 +1722,48 @@ sub print_options
     $self->metadata->{'NONMEM_directory'} = $PsN::nmdir;
     $self->metadata->{'NONMEM_version'} = $PsN::nm_major_version . "." . $PsN::nm_minor_version;
 
-    # Don't change the string "Actual values optinal". It is used to find the toolname by nmoutput2so 
+    $self->metadata->{'tool_options'} = {};
+    # Don't change the string "Actual values optional". It is used to find the toolname by nmoutput2so 
 	print CMD "Actual values optional $toolname options (undefined values not listed):\n";
 	foreach my $opt (sort(@{$local_options})){
 		$opt =~ s/[!:|].*//g; #get rid of :s |? :i etcetera
 		if (defined $self->{$opt}){
 			if (not ref($self->{$opt})){
 				print CMD "-$opt=".$self->{$opt}."\n";
+                $self->metadata->{'tool_options'}->{$opt} = $self->{$opt}; 
 			} elsif ( ref($self->{$opt}) eq "ARRAY") {
 				if (not ref($self->{$opt}->[0])){
-					print CMD "-$opt=".(join ',',@{$self->{$opt}})."\n";
+                    my $opt_string = join(',', @{$self->{$opt}});
+					print CMD "-$opt=" . $opt_string . "\n";
+                    $self->metadata->{'tool_options'}->{$opt} = $opt_string;
 				}
 			}
 		}
 	}
 
+    $self->metadata->{'common_options'} = {};
 	print CMD "\nActual values optional PsN (common) options (undefined values not listed):\n";
-	print CMD "-silent=1\n" if (ui->silent());
-	foreach my $opt (sort(@{$common_options})){
+    if (ui->silent()) {
+	    print CMD "-silent=1\n";
+        $self->metadata->{'common_options'}->{'silent'} = 1;
+    }
+	foreach my $opt (sort(@{$common_options})) {
 		$opt =~ s/[!:|].*//g; #get rid of :s |? :i etcetera
 		if (defined $self->{$opt}){
 			if (not ref($self->{$opt})){
 				print CMD "-$opt=".$self->{$opt}."\n";
-			} elsif ( $opt eq 'threads') {
+                $self->metadata->{'common_options'}->{$opt} = $self->{$opt};
+			} elsif ($opt eq 'threads') {
 				print CMD "-$opt=".$self->{$opt}->[1]."\n";
-			} elsif ( ref($self->{$opt}) eq "ARRAY") {
-				print CMD "-$opt=".(join ',',@{$self->{$opt}})."\n";
-			} elsif ( ref($self->{$opt}) eq "HASH") {
-				print CMD "-$opt=".(join ',',@{$self->{$opt}})."\n";
+                $self->metadata->{'common_options'}->{$opt} = $self->{$opt}->[1];
+			} elsif (ref($self->{$opt}) eq "ARRAY") {
+                my $opt_string = join(',', @{$self->{$opt}});
+				print CMD "-$opt=" . $opt_string . "\n";
+                $self->metadata->{'common_options'}->{$opt} = $opt_string;
+			} elsif (ref($self->{$opt}) eq "HASH") {
+                my $opt_string = join(',', @{$self->{$opt}});
+				print CMD "-$opt=" . $opt_string . "\n";
+                $self->metadata->{'common_options'}->{$opt} = $opt_string;
 			}
 		}
 	}
