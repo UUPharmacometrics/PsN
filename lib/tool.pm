@@ -738,6 +738,9 @@ sub print_results
         } 
     }
     close $fh;
+
+    $self->metadata->{'finish_time'} = "$theDate $theTime";
+    $self->write_meta();
 }
 
 sub compress_m1
@@ -1779,7 +1782,20 @@ sub print_options
 		}
 	}
 
-    open my $fh, '>', "$dir/meta.yaml";
+    $self->write_meta(directory => $dir);
+}
+
+sub write_meta
+{
+    # Write meta.yaml to disk
+    my $self = shift;
+	my %parm = validated_hash(\@_,
+        directory => { isa => 'Str', optional => 1, default => $self->directory },
+        MX_PARAMS_VALIDATE_NO_CACHE => 1,
+    );
+	my $directory = $parm{'directory'};
+
+    open my $fh, '>', "$directory/meta.yaml";
     # Sort alphabetically case-insensitive (default key sorting is case sensitive)
     my @ordered_keys = sort { "\L$a" cmp "\L$b" } keys %{$self->metadata};;
     YAML::Bless($self->metadata)->keys(\@ordered_keys);
