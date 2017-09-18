@@ -1785,7 +1785,7 @@ sub print_options
     if (defined $self->models) {
         $self->metadata->{'models'} = [];
         for my $model (@{$self->models}) {
-            push @{$self->metadata->{'models'}}, $model->full_name();
+            push @{$self->metadata->{'model_files'}}, $model->full_name();
         }
     }
 
