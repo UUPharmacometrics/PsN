@@ -1619,9 +1619,7 @@ sub create_raw_results_rows
 				}	  
 			}
 
-		} #end foreach category
-
-
+		}
 		#end nonp
 
 	} else {
@@ -1630,8 +1628,8 @@ sub create_raw_results_rows
 
 		my $mes = "Could not parse the output file: ".
 		$model->outputs->[0]->filename;
-		push( @{$return_rows[0]}, ($model_number,(1),(1),($mes)) );
-		push( @{$nonp_return_rows[0]}, ($model_number,(1),(1),($mes)) );
+		push(@{$return_rows[0]}, ($model_number,(1),(1),($mes)) );
+		push(@{$nonp_return_rows[0]}, ($model_number,(1),(1),($mes)) );
 		$raw_line_structure -> {$model_number} -> {'line_numbers'} = scalar @return_rows;
 	}    
 
@@ -1783,7 +1781,7 @@ sub print_options
 	}
 
     if (defined $self->models) {
-        $self->metadata->{'models'} = [];
+        $self->metadata->{'model_files'} = [];
         for my $model (@{$self->models}) {
             push @{$self->metadata->{'model_files'}}, $model->full_name();
         }
@@ -1815,25 +1813,25 @@ sub get_rundir
 	#static no shift
 	#assume we are in main directory
 	my %parm = validated_hash(\@_,
-							  basename => { isa => 'Str', optional => 0 },
-							  directory_option => { isa => 'Maybe[Str]', optional => 1 },
-							  model_dir_name => { isa => 'Bool', optional => 1, default => 0 },
-							  timestamp => { isa => 'Bool', optional => 1, default => 0 },
-							  modelname => { isa => 'Maybe[Str]', optional => 1 },
-							  create => { isa => 'Bool', optional => 1, default => 1 }
-		);
-	my $basename = $parm{'basename'};
-	my $directory_option = $parm{'directory_option'};
-	my $model_dir_name = $parm{'model_dir_name'};
+        basename => { isa => 'Str', optional => 0 },
+        directory_option => { isa => 'Maybe[Str]', optional => 1 },
+        model_dir_name => { isa => 'Bool', optional => 1, default => 0 },
+        timestamp => { isa => 'Bool', optional => 1, default => 0 },
+        modelname => { isa => 'Maybe[Str]', optional => 1 },
+        create => { isa => 'Bool', optional => 1, default => 1 }
+    );
+    my $basename = $parm{'basename'};
+    my $directory_option = $parm{'directory_option'};
+    my $model_dir_name = $parm{'model_dir_name'};
 	my $modelname = $parm{'modelname'};
 	my $timestamp = $parm{'timestamp'};
 	my $create = $parm{'create'};
 
 	my $rundir;
 
-	if (defined $directory_option and length($directory_option)>0){
+	if (defined $directory_option and length($directory_option) > 0) {
 		my $dirt;
-		($rundir,$dirt) = OSspecific::absolute_path($directory_option,'file');
+		($rundir,$dirt) = OSspecific::absolute_path($directory_option, 'file');
 	}elsif ($timestamp or ($model_dir_name and (defined $modelname) and length($modelname)> 0)) {
 
 		my $return_dir = getcwd();
@@ -1862,21 +1860,20 @@ sub get_rundir
 			my $dirnamebase = $dotless_model_filename.'.dir';
 			$rundir = OSspecific::unique_path( $dirnamebase ,$return_dir);
 		}
-	}else{
+	} else {
 		my $return_dir = getcwd();
-		$rundir = OSspecific::unique_path($basename,$return_dir);
+		$rundir = OSspecific::unique_path($basename, $return_dir);
 	}
 
-	if ($create){
-		unless ( -d $rundir){
-			unless(mkpath( $rundir)){
+	if ($create) {
+		unless (-d $rundir) {
+			unless(mkpath($rundir)) {
 				croak("get_rundir: Failed to create $rundir : $!");
 			}
 		}
 	}
 
 	return $rundir;
-
 }
 
 sub create_R_script
@@ -1926,26 +1923,28 @@ sub create_R_script
 		}
 	}
 		
-	if (-e $template_file){
-		open( FILE, $template_file ) ||
-			croak("Could not open $template_file for reading" );
+	if (-e $template_file) {
+		open(FILE, $template_file) ||
+			croak("Could not open $template_file for reading");
 		
 		my @code = ();
-		foreach my $line (<FILE>){
+		foreach my $line (<FILE>) {
 			chomp($line);
-			push(@code,$line);
+			push(@code, $line);
 		}
-		close( FILE );
-		my $rplot = rplots->new(toolname => $tool_name, 
-								directory => $self->directory,
-								level => $self->rplots,
-								raw_results_file => $self->raw_results_file->[0],
-								tool_results_file => $self->results_file,
-								plotcode => \@code,
-								subset_variable => $self->subset_variable_rplots,
-								model => $self->models->[0],
-								R_markdown => $rmarkdown,
-								rmarkdown_installed => $Rmarkdown_installed);
+		close(FILE);
+		my $rplot = rplots->new(
+            toolname => $tool_name, 
+            directory => $self->directory,
+            level => $self->rplots,
+            raw_results_file => $self->raw_results_file->[0],
+            tool_results_file => $self->results_file,
+            plotcode => \@code,
+            subset_variable => $self->subset_variable_rplots,
+            model => $self->models->[0],
+            R_markdown => $rmarkdown,
+            rmarkdown_installed => $Rmarkdown_installed,
+        );
 
 		$self->create_R_plots_code(rplot => $rplot) if ($self->can("create_R_plots_code"));
 		$rplot->make_plots;
