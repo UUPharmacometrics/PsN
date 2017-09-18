@@ -288,4 +288,13 @@ ok (numerical_in(4, [8, 9, 4]), "numerical_in 1");
 ok (!numerical_in(23, [1, 2, 3]), "numerical_in 2");
 ok (!numerical_in(0, []), "numerical_in empty array");
 
+#remove NaN string from an array
+my $with_NaN = ['NaN','3','56.9','Na','NaN','More'];
+my $no_NaN;
+$no_NaN = array::remove_NaN($with_NaN);
+is (scalar(@$no_NaN), 4, "remove_NaN, length");
+is_deeply ($no_NaN, ['3','56.9','Na','More'], "remove_NaN, equal arrays 1");
+is_deeply (array::remove_NaN(['3','56.9','Na','More']), ['3','56.9','Na','More'], "remove_NaN, equal arrays 2");
+is_deeply (array::remove_NaN([3,6.9]), [3,6.9], "remove_NaN, equal arrays 3");
+
 done_testing();
