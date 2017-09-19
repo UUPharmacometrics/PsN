@@ -99,7 +99,7 @@ sub modelfit_setup
         print "*** Running linearize ***\n";
         ui->category('linearize');
 	
-    	my @table_columns = ( 'ID', $self->idv,'CWRES', 'PRED', 'CIPREDI' );
+    	my @table_columns = ( 'ID', $self->idv,'CWRES', 'PRED', 'CIPREDI','CPRED' );
 	
         if ($model_copy->defined_variable(name => $self->dvid)) {
             push @table_columns, $self->dvid;
