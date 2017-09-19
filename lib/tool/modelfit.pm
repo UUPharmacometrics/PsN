@@ -3232,6 +3232,7 @@ sub move_model_and_output
 					$out =~ s/^\.//;
 					if ('.'.$out eq $ext){
 						my $ok = cp( $filename, $dir.$dotless_model_filename.$ext);
+                        push @{$self->metadata->{'copied_files'}}, $dotless_model_filename.$ext;
 						last;
 					}
 				}
