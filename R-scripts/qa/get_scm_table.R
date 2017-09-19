@@ -61,8 +61,10 @@ get_scm_table <- function(scm_directory,frem_directory,parameters,covariates,cat
             for(i in 1:length(cov)) {
               if(any(grepl(paste0("^",parameters[j],cov[i]),scm_table[,1]))) {
                 nr <- grep(paste0("^",parameters[j],cov[i]),scm_table[,1])
-                frem_sd_nr <- grep(cov[i],colnames(frem_sd_cov))
-                scm_table$Coef_sd[nr] <- as.numeric(scm_table$Coef[nr]/frem_sd_cov[frem_sd_nr])
+                if(any(grepl(cov[i],colnames(frem_sd_cov)))) {
+                  frem_sd_nr <- grep(cov[i],colnames(frem_sd_cov))
+                  scm_table$Coef_sd[nr] <- as.numeric(scm_table$Coef[nr]/frem_sd_cov[frem_sd_nr])
+                }
               }
             }
           }

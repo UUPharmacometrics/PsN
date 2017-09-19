@@ -1,4 +1,4 @@
-get_structural_overview_table <- function(directory,idv,dvid_name,groups,skip) {
+get_structural_overview_table <- function(directory,idv,dvid_name,skip) {
   if(length(idv)!=0) {
     #check if dvid exist
     resmod_file_exists <- get_resmod_table(directory, idv[1])$resmod_file_exists

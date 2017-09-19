@@ -38,6 +38,7 @@
   
   # get table with IDV values
   idv_df <- read.table(CWRES_table, skip = 1, header=T)
+  cpred_column <- idv_df$CPRED
   if(any(colnames(idv_df)== dvid_name)) {
     dvid_column_nr <- which(colnames(idv_df)== dvid_name)
     idv_df <- idv_df[which(idv_df[,dvid_column_nr] == dvid),]
@@ -49,6 +50,7 @@
   
   # get derivatives from linearized model
   mean_shifts_table <- read.table(file.path(working.directory, paste0(sub('.([^.]*)$','',model.filename),"_linbase.dta")), skip = 1, header=T)
+  mean_shifts_table <- cbind(mean_shifts_table,CPRED=cpred_column)
   if(any(colnames(mean_shifts_table)== dvid_name)) {
     dvid_column_nr <- which(colnames(mean_shifts_table)== dvid_name)
     mean_shifts_table<- mean_shifts_table[which(mean_shifts_table[,dvid_column_nr] == dvid),]
@@ -72,11 +74,11 @@
       if(nrow(.)==1) sqrtm <- sqrt
       data.frame(shift = -sqrtm(ICOV) %*% as.matrix(.$bin_value),
                  bin_index = .$bin_index,
-                 ipred = .$OPRED)
+                 ipred = .$CPRED)
     }) %>%
     
     group_by(bin_index) %>%
-    summarise(relative_shift = ifelse((any(mean_shifts_table$OPRED > 0) && any(mean_shifts_table$OPRED < 0)),NA,100*mean(shift/ipred)), 
+    summarise(relative_shift = ifelse((any(mean_shifts_table$CPRED > 0) && any(mean_shifts_table$CPRED < 0)),NA,100*mean(shift/ipred)), 
               shift = mean(shift),nobs=n()) %>%
     mutate(bin_min = structural_details_table$bin_min[bin_index],
            bin_max = structural_details_table$bin_max[bin_index],
