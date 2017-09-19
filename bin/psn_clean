@@ -59,7 +59,7 @@ sub remove_files {
   
   my @files;
   if ($restart){
-    @files = <$dir/psn-*.mod $dir/psn-*.ctl $dir/psn-*.lst $dir/compilation_output-*.txt>;
+    @files = <$dir/psn-*.mod $dir/psn-*.ctl $dir/psn-*.lst>;
     push (@files,<$dir/psn-*.ext $dir/psn-*.cov $dir/psn-*.cor $dir/psn-*.coi $dir/psn-*.phi >);
     push (@files,<$dir/psn-*.phm $dir/psn-*.shk $dir/psn-*.grd $dir/psn-*.xml $dir/psn-*.cnv >);
     push (@files,<$dir/psn-*.smt $dir/psn-*.rmt $dir/psn-*.imp $dir/psn-*.npd $dir/psn-*.npe >);
@@ -102,7 +102,7 @@ sub remove_files {
     remove_list(\@files,$interactive,$topdir);
   }
   if ($messages){
-    @files = <$dir/compilation_output*>;
+    @files = ();
     push (@files,$dir.'nmfe_output.txt') if (-e $dir.'nmfe_output.txt');
     push (@files,$dir.'INTER') if (-e $dir.'INTER');
     push (@files,$dir.'monitoring_of_search.txt') if (-e $dir.'monitoring_of_search.txt');
@@ -241,7 +241,7 @@ Remove all files ending with .csv except stats-runs.csv
 EOF
 $help_text{-messages} = <<'EOF';
 -messages
-Remove INTER, compilation_output.txt,monitoring_of_search.txt,
+Remove INTER, monitoring_of_search.txt,
 psn_nonmem_error_messages.txt, nmfe_output.txt
 EOF
 $help_text{-all_nm} = <<'EOF';

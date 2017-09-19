@@ -1499,8 +1499,7 @@ sub run_nonmem
 		# Create a fake pid and return, do not copy or move files.
 		
 		if( -e 'psn-' . ( $tries + 1 ) . '.lst'){
-			foreach my $filename ( @{$candidate_model -> output_files},'psn.'.$self->modext,'compilation_output.txt',
-								   $self->base_msfo_name){
+			foreach my $filename (@{$candidate_model->output_files}, 'psn.' . $self->modext, $self->base_msfo_name) {
 				next unless (defined $filename);
 				my $new_name = $filename;
 				unless( $new_name =~ s/\.([^.]+)$/-prevrun.$1/ ){
@@ -1523,8 +1522,7 @@ sub run_nonmem
 		# Then let restart_needed move files to numbered retry files.
 		# Create a fake pid and return, do not copy or move any more files.
 		unless( -e 'psn-' . ( $tries + 1 ) . '.lst'){
-			foreach my $filename ( @{$candidate_model -> output_files},'psn.'.$self->modext,'compilation_output.txt',
-								   $self->base_msfo_name){
+			foreach my $filename (@{$candidate_model->output_files}, 'psn.' . $self->modext, $self->base_msfo_name) {
 				next unless (defined $filename);
 				my $new_name = $filename;
 				unless( $new_name =~ s/\.([^.]+)$/-prevrun.$1/ ){
@@ -1631,7 +1629,7 @@ sub run_nonmem
 
 		# TODO update move_retry_files and use it here?
 
-		foreach my $filename ( @{$candidate_model -> output_files},'psn.'.$self->modext,'compilation_output.txt', $self->base_msfo_name) {
+		foreach my $filename (@{$candidate_model->output_files}, 'psn.' . $self->modext, $self->base_msfo_name) {
 			next unless (defined $filename);
 
 			my $retry_name = get_retry_name(filename => $filename, 
@@ -2307,8 +2305,7 @@ sub restart_needed
 	my $candidate_model = $queue_info_ref->{'candidate_model'};
 	my $nmqual = 'nmqual_messages.txt';
 
-	my @outputfilelist = ( @{$candidate_model -> output_files},'psn.'.$self->modext,'compilation_output.txt',
-					 $self->base_msfo_name);
+	my @outputfilelist = (@{$candidate_model->output_files}, 'psn.' . $self->modext, $self->base_msfo_name);
 
 	#this is 1 for regular one $PROB with estimation
 	# 2 if two $PROB with $PRIOR TNPRI in first
@@ -3210,7 +3207,7 @@ sub move_model_and_output
 
     $self->metadata->{'copied_files'} = [];
 
-	foreach my $filename ( @output_files, 'compilation_output.txt','psn.'.$self->modext,'nmqual_messages.txt' ){
+	foreach my $filename (@output_files, 'psn.' . $self->modext, 'nmqual_messages.txt') {
 
 		my $use_name = get_retry_name( filename => $filename,
 									   retry => $use_run-1);
@@ -3241,6 +3238,7 @@ sub move_model_and_output
                         } else {
 						    cp($filename, $dir . $dotless_model_filename . $ext);
                         }
+                        push @{$self->metadata->{'copied_files'}}, $filename;
 						last;
 					}
 				}
@@ -3312,7 +3310,7 @@ sub move_model_and_output
 			$max_retry = $self->min_retries if ($self->min_retries > $max_retry);
 			$max_retry++; #first run with number 1 is not a retry
 			for ( my $i = 1; $i <= $max_retry; $i++ ) {
-				foreach my $filename ( @output_files,'psn.'.$self->modext,'compilation_output.txt','nmqual_messages.txt'){
+				foreach my $filename (@output_files, 'psn.' . $self->modext, 'nmqual_messages.txt') {
 
 					my $use_name = get_retry_name( filename => $filename,
 												   retry => $i-1);
