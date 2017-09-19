@@ -51,7 +51,7 @@ ofv_table <- ofv_summary_table(working.directory,model.filename)
 
 ```{r structural_model_calculations,results='hide',echo=F,warning=F,message=F}
 # 1.Structural models
-structural_overview <- get_structural_overview_table(directory=working.directory,idv=idv_all,dvid_name,groups,skip)
+structural_overview <- get_structural_overview_table(directory=working.directory,idv=idv_all,dvid_name,skip)
 if(all(skip!="resmod")) {
   # get resmod structural details tables
   resmod_structural_details <- resmod_structural_details_tables(working.directory,model.filename,CWRES_table,idv_all,idv_name,dvid_name)
