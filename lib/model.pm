@@ -79,6 +79,7 @@ has 'last_est_complete' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'niter_eonly' => ( is => 'rw', isa => 'Maybe[Int]' );
 has 'annotation' => ( is => 'rw', isa => 'model::annotation' );
 has 'phi_file' => ( is => 'rw', isa => 'Maybe[Str]' );
+has 'output_directory' => ( is => 'rw', isa => 'Maybe[Str]' );
 
 sub BUILD
 {
@@ -182,9 +183,15 @@ sub BUILD
             $self->outputfile($filename);
         }
         $self->outputs([]);
+        my $directory;
+        if (defined $self->output_directory) {      # If a specific output_directory is available use that.
+            $directory = $self->output_directory;   # This would come from the model_subdir tool option
+        } else {
+            $directory = $self->directory;
+        }
         push(@{$self->outputs}, output->new(
             filename => $self->outputfile,
-            directory => $self->directory,
+            directory => $directory,
 				 parse_output => $self->parse_output,
             ignore_missing_files => ($self->ignore_missing_files || $self->ignore_missing_output_files))
         );

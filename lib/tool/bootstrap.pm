@@ -735,7 +735,7 @@ sub general_setup
 
 		my $orig_fit = tool::modelfit->new(
             %{common_options::restore_options(@common_options::tool_options)},
-            base_directory => $self->directory(),
+            base_directory => $self->base_directory,
             directory => $self->directory() . '/orig_modelfit_dir' . $model_number,
             models	=> [ $model ],
             threads => $subm_threads,
@@ -754,8 +754,8 @@ sub general_setup
 		$orig_fit -> run;
 	}
 
-	my $output = $model -> outputs -> [0];
-	unless ( $output -> have_output ) {
+	my $output = $model->outputs->[0];
+	if (not $output->have_output) {
 		if ($self->update_inits){
 			ui -> print( category => 'bootstrap',
 						 message => 'There is no output from the base model, will use base model initial values for bootstrap models.' );

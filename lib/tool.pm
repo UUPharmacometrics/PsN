@@ -273,7 +273,7 @@ sub BUILD
         my $model_subdir_name = utils::file::get_file_stem($self->models->[0]->filename) . '/';
         $self->model_subdir_name($model_subdir_name);
     }
-
+    
 	if( $PsN::config -> {'default_options'} -> {'lsf_pfizer'}){
 		my $apath  = cwd();
 		my $default_jobname;
