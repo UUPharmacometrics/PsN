@@ -5,6 +5,7 @@ use include_modules;
 use Cwd;
 use File::Copy 'cp';
 use File::Spec;
+use File::Basename;
 use Moose;
 use MooseX::Params::Validate;
 use PsN;
@@ -27,6 +28,7 @@ has 'subset_variable' => (is => 'rw', isa => 'Maybe[Str]' );
 has 'R_markdown' => (is => 'rw', isa => 'Bool', default => 0);
 has 'rmarkdown_installed' => (is => 'rw', isa => 'Bool', default => 0);
 has 'model' => (is => 'rw', isa => 'model');
+has 'model_subdir' => (is => 'rw', isa => 'Bool', default => 0 );
 
 our $preambleline = '#WHEN THIS FILE IS USED AS A TEMPLATE THIS LINE MUST LOOK EXACTLY LIKE THIS';
 
@@ -120,11 +122,18 @@ sub setup
 	}
 
 	my $workingdirectory = $self->directory;
+    my $results_dir;
+    if ($self->model_subdir) {
+        $results_dir = dirname($workingdirectory) . File::Spec->catfile('', '');    # Hack to add path separator
+    } else {
+        $results_dir = $modeldir;
+    }
     my $rscripts_path = $PsN::Rscripts_dir;
 	#Replace single backslash with double, assume windows, but do not change if already double
 	$workingdirectory = double_backslashes(string => $workingdirectory);
 	$modeldir = double_backslashes(string => $modeldir);
 	$rscripts_path = double_backslashes(string =>$rscripts_path);
+    $results_dir = double_backslashes(string => $results_dir);
 
 	my @arr =(
 		 'rplots.level <- '.$levelstring,
@@ -134,6 +143,7 @@ sub setup
 		 "pdf.title <- '".$self->pdf_title."'",
 		 "working.directory<-'".$workingdirectory."'",
 		 "model.directory<-'".$modeldir."'",
+		 "results.directory <- '" . $results_dir . "'",
 		 "model.filename<-'".$modelfile."'",
 		 "subset.variable<-".$subsetstring,
 		 "mod.suffix <- '".$modSuffix."'",

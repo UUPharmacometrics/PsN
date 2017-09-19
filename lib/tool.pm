@@ -1975,6 +1975,7 @@ sub create_R_script
             model => $self->models->[0],
             R_markdown => $rmarkdown,
             rmarkdown_installed => $Rmarkdown_installed,
+            model_subdir => $self->model_subdir,
         );
 
 		$self->create_R_plots_code(rplot => $rplot) if ($self->can("create_R_plots_code"));

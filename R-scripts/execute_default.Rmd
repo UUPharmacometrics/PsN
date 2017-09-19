@@ -15,14 +15,14 @@ source(paste0(rscripts.directory,"/execute/plot.obj.obsi.R"),echo=TRUE)
 ```
 
 ```{r Summary_plot,results='hide',echo=FALSE,fig.width=9,fig.height=6.5,fig.keep="high",fig.align="center"}
-xpdb <- xpose.data(xpose.runno,directory=model.directory,tab.suffix=tab.suffix,mod.prefix=mod.prefix,mod.suffix=mod.suffix)
+xpdb <- xpose.data(xpose.runno, directory=results.directory, tab.suffix=tab.suffix, mod.prefix=mod.prefix, mod.suffix=mod.suffix)
 
 #uncomment below to change the idv from TIME to something else such as TAD.
 #Other xpose preferences could also be changed
 #xpdb@Prefs@Xvardef$idv="TAD"
-runsum(xpdb,dir=model.directory,
-         modfile=paste(model.directory,model.filename,sep=""),
-         listfile=paste(model.directory,sub(mod.suffix,".lst",model.filename),sep=""))
+runsum(xpdb, dir=results.directory,
+         modfile=paste(model.directory, model.filename, sep=""),
+         listfile=paste(results.directory, sub(mod.suffix, ".lst", model.filename), sep=""))
 ```
 \pagebreak
 
@@ -132,13 +132,13 @@ if (rplots.level > 1){
 if (rplots.level > 1){
   #check if files exist
   if (res.table != '') {
-    file_1_exists <- file_existence_in_directory(directory=model.directory,file_name=paste0(mod.prefix,xpose.runno,".phi"))
-    file_2_exists <- file_existence_in_directory(directory=model.directory,file_name=res.table)
+    file_1_exists <- file_existence_in_directory(directory=results.directory, file_name=paste0(mod.prefix, xpose.runno, ".phi"))
+    file_2_exists <- file_existence_in_directory(directory=results.directory, file_name=res.table)
     
     if ((file_1_exists == TRUE) && (file_2_exists == TRUE)) {
       # calculate data
-      list_out <- data.obj.obsi(obj.data.dir=paste0(model.directory,mod.prefix,xpose.runno,".phi"),
-                                obsi.data.dir=paste0(model.directory,res.table))
+      list_out <- data.obj.obsi(obj.data.dir=paste0(results.directory, mod.prefix, xpose.runno, ".phi"),
+                                obsi.data.dir=paste0(results.directory, res.table))
       have_needed_columns <- list_out$have_needed_columns
       if(have_needed_columns) {
         OBJ_data <- list_out$OBJ_data
