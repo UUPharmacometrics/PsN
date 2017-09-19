@@ -152,6 +152,7 @@ has 'rmarkdown' => ( is => 'rw', isa => 'Bool', default => 1 );
 has 'model_subdir' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'model_subdir_name' => ( is => 'rw', isa => 'Str' );
 has 'metadata' => ( is => 'rw', isa => 'HashRef', default => sub {{}} );     # Complex data structure for metadata of run to be stored as meta.yaml
+has 'copy_up' => ( is => 'rw', isa => 'Bool' );     # Set for non top-tools to still copy up results files
 
 sub BUILDARGS
 {
@@ -269,9 +270,11 @@ sub BUILD
 	# both for resuming crashed runs as well as for extracting
 	# information form an old run.
 
-    if ($self->model_subdir) {
+    if ($self->model_subdir and ($self->top_tool or $self->copy_up)) {
         my $model_subdir_name = utils::file::get_file_stem($self->models->[0]->filename) . '/';
         $self->model_subdir_name($model_subdir_name);
+    } else {
+        $self->model_subdir(0);
     }
     
 	if( $PsN::config -> {'default_options'} -> {'lsf_pfizer'}){

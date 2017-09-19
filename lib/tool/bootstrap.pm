@@ -746,6 +746,7 @@ sub general_setup
             prepared_models => undef,
             top_tool => 0,
             %subargs,
+            copy_up => 1,
         );
 
 		ui -> print( category => 'bootstrap',
