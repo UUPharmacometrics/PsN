@@ -1062,7 +1062,8 @@ sub general_setup
 			raw_results           => undef,
 			prepared_models       => undef,
 			top_tool              => 0,
-			%subargs ) );
+			%subargs,
+            model_subdir => 0) );
 
 	trace(tool => 'bootstrap', message => "Created a modelfit object to run all the models in ".
 		$self ->directory().'m'.$model_number, level => 1);
@@ -1116,7 +1117,8 @@ sub modelfit_analyze
 													 nonparametric_etas => $self -> nonparametric_etas(),
 													 adaptive         => $self -> adaptive(),
 													 verbose          => $self -> verbose(),
-													 cross_validate   => 0 );
+													 cross_validate   => 0,
+                                                     model_subdir => 0 );
 
 			# Create a checkpoint. Log the samples and individuals.
 			open( DONE, ">".$self ->directory()."/jackknife_done.$model_number" ) ;
@@ -1160,7 +1162,8 @@ sub modelfit_analyze
 													 nonparametric_etas => $self -> nonparametric_etas(),
 													 adaptive         => $self -> adaptive(),
 													 verbose          => $self -> verbose(),
-													 cross_validate   => 0 );
+													 cross_validate   => 0,
+                                                     model_subdir => 0 );
 
 			random_set_seed( @seed );
 			ui -> print( category => 'bootstrap',
@@ -1259,7 +1262,9 @@ sub modelfit_analyze
 												_raw_results_callback => $self ->_dofv_raw_results_callback( model_number => $model_number ),
 												logfile	         => undef,
 												copy_data          => $self->copy_data,
-												threads          => $self->threads);
+												threads          => $self->threads,
+                                                model_subdir => 0);
+
 		$modelfit->run;
 
 		#if clean >=3 this file has been deleted, but the raw_results is ok thanks to explicit setting
