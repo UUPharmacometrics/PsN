@@ -1694,7 +1694,7 @@ sub print_options
 		print CMD $cmd_line, "\n";
 		close(CMD);
         $self->metadata->{'command_line'} = $cmd_line;
-        $cmd_line =~ /(.*)\s+/;
+        $cmd_line =~ /(.*?)\s+/;
         my $tool_name = $1;
         (undef, undef, $tool_name) = File::Spec->splitpath($tool_name);
         my @a = split /-/, $tool_name;
