@@ -746,6 +746,7 @@ sub general_setup
 		}
 
 		my $orig_fit = tool::modelfit ->new( %{common_options::restore_options(@common_options::tool_options)},
+            base_directory => $self->base_directory,
 			models                => [$model],
 			threads               => 1,
 			directory             => $self -> directory.'/orig_modelfit_dir'.$model_number,
@@ -756,16 +757,17 @@ sub general_setup
 			raw_results           => undef,
 			prepared_models       => undef,
 			top_tool              => 0,
-			%subargs );
+			%subargs,
+            copy_up => 1);
 
 		ui -> print( category => 'cdd',
 			message => 'Executing base model.' );
 
 		$orig_fit->add_to_nmoutput(extensions => ['phi','ext','cov','coi']);		
 		$orig_fit -> run;
+        $self->metadata->{'copied_files'} = $orig_fit->metadata->{'copied_files'};
 
 		# }}} orig run
-
 	}
 	
 	unless ( $model -> outputs -> [0] -> have_output ) {
