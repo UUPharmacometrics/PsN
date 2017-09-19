@@ -752,6 +752,7 @@ sub general_setup
 			message => 'Executing base model.' );
 
 		$orig_fit -> run;
+        $self->metadata->{'copied_files'} = $orig_fit->metadata->{'copied_files'};
 	}
 
 	my $output = $model->outputs->[0];
