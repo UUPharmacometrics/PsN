@@ -531,7 +531,8 @@ sub modelfit_setup
 												  %modf_args,
 												  nmtran_skip_model => 2,
 												  copy_data => 0,
-												  directory_name_prefix => 'estimation'
+												  directory_name_prefix => 'estimation',
+                                                  model_subdir => 0,
 						  ) ] );
 		$task = 'estimation';
 	} else{
@@ -540,7 +541,8 @@ sub modelfit_setup
 												  %modf_args,
 												  nmtran_skip_model => 2,
 												  copy_data => 0,
-												  directory_name_prefix => 'prediction'
+												  directory_name_prefix => 'prediction',
+                                                  model_subdir => 0,
 						  ) ] );
 		$task = 'prediction';
 	}
@@ -836,7 +838,8 @@ sub modelfit_post_subtool_analyze
 														 %modelfit_arg,
 														 nmtran_skip_model => 2,
 														 copy_data => 0,
-														 directory_name_prefix => 'prediction'
+														 directory_name_prefix => 'prediction',
+                                                         model_subdir => 0,
 			  ) );
 	}
 }
