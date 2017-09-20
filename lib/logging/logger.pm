@@ -1,5 +1,6 @@
 package logging::logger;
 
+use ext::Carp;
 use Moose;
 use MooseX::Params::Validate;
 
@@ -55,7 +56,12 @@ sub log
     my $msg = shift;
 
     if ($self->level <= $level) {
-        print get_level_name($level) . ":" . $self->name . ":" . $msg . "\n";
+        my $print_string = get_level_name($level) . ":" . $self->name . ":" . $msg . "\n";
+        if ($level >= 50) {
+            croak($print_string);
+        } else {
+            print $print_string;
+        }
     }
 }
 
