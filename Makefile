@@ -1,5 +1,7 @@
 LIBFILES= ui.pm \
 	log.pm \
+	logging.pm \
+	logging/logger.pm \
 	pharmml.pm \
 	so.pm \
 	rplots.pm \

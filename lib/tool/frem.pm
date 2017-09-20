@@ -7,6 +7,7 @@ use Data::Dumper;
 use Config;
 use linear_algebra;
 use ui;
+use logging;
 use File::Copy qw/cp mv/;
 use File::Path 'rmtree';
 use nmtablefile;
@@ -81,6 +82,7 @@ has 'estimate_covariates' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'have_missing_covariates' => ( is => 'rw', isa => 'ArrayRef', default => sub { [] } );
 has 'cholesky' => ( is => 'rw', isa => 'Bool', default => 0 );
 
+my $logger = logging::get_logger("frem");
 
 sub BUILD
 {
@@ -103,7 +105,7 @@ sub BUILD
         my $colno = $problem->find_data_column(column_name => $column, ignore_dropped => 0);
         my $column_data = $data->column_to_array(column => $colno);
         if (scalar @{array::unique($column_data)} == 1) {
-            print "Warning: Covariate $column excluded because it has only one value for all rows in the dataset.\n";
+            $logger->warning("Covariate $column excluded because it has only one value for all rows in the dataset.");
         } else {
             push @filtered_covariates, $column;
             if (grep { $_ eq $column } @{$self->categorical}) {
@@ -130,9 +132,7 @@ sub BUILD
 	foreach my $model ( @{$self -> models} ) {
 		foreach my $problem (@{$model->problems()}){
 			if (defined $problem->nwpri_ntheta()){
-				ui -> print( category => 'all',
-					message => "Warning: frem does not support \$PRIOR NWPRI.",
-					newline => 1);
+                $logger->warning("frem does not support \$PRIOR NWPRI.");
 				last;
 			}
 		}
