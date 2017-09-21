@@ -76,6 +76,7 @@ Y = THETA(1) + ETA(1) + ERR(1) * EXP(ETA(2))
 
 \subsection{Power}
 This model is compared to Base model 1 and is named \verb|power| in results.csv. The power (THETA(2)) is presented.
+If IPRED is not available in the original model the CIPREDI will be used instead.
 
 \begin{verbatim}
 Y = THETA(1) + ETA(1) + ERR(1)*(IPRED)**THETA(2)
@@ -168,7 +169,7 @@ Y=-2*LOG(L)
 \end{verbatim}
 
 \subsection{DTBS base model}
-This model is used as base model for the DTBS model.
+This model is used as base model for the DTBS model. If IPRED is not available in the original model the CIPREDI will be used instead.
 \begin{verbatim}
     IPRT   = THETA(1)*EXP(ETA(1))
 	WA     = THETA(2)
@@ -198,7 +199,7 @@ Lambda and zeta will be fixed to 0.
 
 \subsection{DTBS}
 Named \verb|dtbs| in results.csv. The lambda and zeta parameters (THETA(3) and THETA(4)) will be presented.
-
+If IPRED is not available in the original model the CIPREDI will be used instead.
 This model is same as the base model except that all parameters will be estimated.
 
 \subsection{L2}
