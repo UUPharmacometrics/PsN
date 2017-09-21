@@ -99,11 +99,18 @@ if (scalar(@ARGV)>0){
             die "Error: Could not find command line for $rundir. Is it really a PsN rundirectory?\n"
         }
     } elsif ($ARGV[0] eq 'info') {
-        my $meta = YAML::LoadFile($ARGV[1] . '/meta.yaml');
-        print "Run of PsN ", $meta->{'tool_name'}, "\n";
-        print "Command line: ", $meta->{'command_line'}, "\n";
-        print "Started at: ", $meta->{'start_time'}, "\n";
-        print "Finished at: ", $meta->{'finish_time'}, "\n";
+        my $meta;
+        eval {
+            $meta = YAML::LoadFile($ARGV[1] . '/meta.yaml');
+        };
+        if (defined $meta) {
+            print "Run of PsN ", $meta->{'tool_name'}, "\n";
+            print "Command line: ", $meta->{'command_line'}, "\n";
+            print "Started at: ", $meta->{'start_time'}, "\n";
+            print "Finished at: ", $meta->{'finish_time'}, "\n";
+        } else {
+            print "Cannot find meta.yaml. Is this an old PsN rundirectory?\n";
+        }
     }
 }
 my %help_text;
