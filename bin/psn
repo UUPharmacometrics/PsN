@@ -10,6 +10,7 @@ use PsN;
 use strict;
 use Getopt::Long;
 use common_options;
+use YAML;
 
 ## Configure the command line parsing
 Getopt::Long::config("auto_abbrev");
@@ -97,6 +98,12 @@ if (scalar(@ARGV)>0){
         } else {
             die "Error: Could not find command line for $rundir. Is it really a PsN rundirectory?\n"
         }
+    } elsif ($ARGV[0] eq 'info') {
+        my $meta = YAML::LoadFile($ARGV[1] . '/meta.yaml');
+        print "Run of PsN ", $meta->{'tool_name'}, "\n";
+        print "Command line: ", $meta->{'command_line'}, "\n";
+        print "Started at: ", $meta->{'start_time'}, "\n";
+        print "Finished at: ", $meta->{'finish_time'}, "\n";
     }
 }
 my %help_text;
