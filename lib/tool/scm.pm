@@ -2735,8 +2735,7 @@ sub linearize_setup
 
     # Account for an estimation bug in NONMEM 7.4 by adding a dummy THETA.
     if ($PsN::nm_major_version == 7 and $PsN::nm_minor_version == 4) {
-        $original_model->add_records(type => 'theta', record_strings => [ '$THETA 0.1 ; DUMMY' ]);
-        model_transformations::prepend_code(model => $original_model, code => ['DUMMY__ = THETA(1) ; Workaround for estimation bug in NM 7.4']);
+        $original_model->add_option(record_name => 'estimation', option_name => 'SLOW');
     }
 
     return $original_model;
