@@ -14,6 +14,7 @@ use nmtablefile;
 use utils::phitable;
 use array;
 use tool::sir;
+use input_checking;
 use POSIX ":sys_wait_h"; #for forking
 
 use Moose;
