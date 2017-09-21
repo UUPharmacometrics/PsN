@@ -3788,6 +3788,7 @@ sub modelfit_setup
                                        models                     => [ $sir_model ],
                                        template_file_rplots => 'sir_default.r',
                                        directory => $self->directory.'sir_dir1',
+                                       fast_posdef_checks => 1,
                 );
 
             $sir-> print_options (cmd_line => 'sir final_models/'.$sir_model->filename.' -covmat_input='.$proposal_filename,
