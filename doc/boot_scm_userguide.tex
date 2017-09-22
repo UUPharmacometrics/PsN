@@ -1,5 +1,5 @@
 \input{inputs/format_header.tex}
-\guidetitle{BOOT\_SCM user guide}{2016-04-13}
+\guidetitle{BOOT\_SCM user guide}{2017-09-22}
 
 
 \begin{document}
@@ -21,19 +21,19 @@ boot_scm config_run1_linearize.scm -samples=100  -seed=12345 -methodA
 \end{verbatim}
 
 \section{Input and options}
+
 \subsection{Required input}
 A configuration file is required on the command-line. The format of the configuration file follows the format of the scm configuration file exactly. 
 The input model must be set in the configuration file, it cannot be given on the boot\_scm commandline. 
 In addition to the configuration file, one command-line option is mandatory:
 \begin{optionlist}
-\optdefault{samples}{N}
-The number of bootstrapped datasets to run the scm on. 
+\optdefault{dummy\_covariates}{comma-separated list of covariates}
+Default not set. If used, a new column for each listed covariate will be added to the dataset, 														  
+containing a randomly permuted copy of the original covariate column and with header X\verb|<name of original covariate>|. 
+The dummy covariate will be tested for inclusion in the covariate model exactly like the original covariate. 
+However, a known bug is that boot\_scm will not correctly create a 
+dummy covariate based on a time-varying covariate.
 \nextopt
-\end{optionlist}
-
-\subsection{Optional input}
-These options are specific to boot\_scm, and they can only be given on the command-line, not in the configuration file.
-\begin{optionlist}
 \optname{methodA}
 Default not set. If the scm option linearize=1 is not set in the scm config file, 
 the bootstrap scm non-linear method will be used. If option linearize=1 is set in the scm config file, 
@@ -48,22 +48,23 @@ scm userguide.
 Default not set. If set then boot\_scm will run the final models from each scm on the original dataset and collect the ofv values 
 in the output file ofv\_final.csv   
 \nextopt
-\optdefault{dummy\_covariates}{comma-separated list of covariates}
-Default not used. If used, a new column for each listed covariate will be added to the dataset, 
-containing a randomly permuted copy of the original covariate column and with header X\verb|<name of original covariate>|. 
-The dummy covariate will be tested for inclusion in the covariate model exactly like the original covariate. 
-However, a known bug is that boot\_scm will not correctly create a 
-dummy covariate based on a time-varying covariate.
+\optdefault{samples}{N}
+The number of bootstrapped datasets to run the scm on. 
 \nextopt
 \optdefault{stratify\_on}{item in \$INPUT}
-Default not used. It may be necessary to use stratification in the resampling procedure. For example, if the original data consists of two groups of patients - say 10 patients with full pharmacokinetic profiles and 90 patients with sparse steady state concentration measurements - it may be wise to restrict the resampling procedure to resample within the two groups, producing bootstrap data sets that all contain 10 rich + 90 sparse data patients but with different compositions. 
+Default not used. It may be necessary to use stratification in the resampling procedure. For example, if the original data consists of two groups 
+of patients - say 10 patients with full pharmacokinetic profiles and 90 patients with sparse steady state concentration measurements - it may be 
+wise to restrict the resampling procedure to resample within the two groups, producing bootstrap data sets that all contain 10 rich + 90 sparse 
+data patients but with different compositions. 
 Set -stratify\_on to the column (the name in \$INPUT in the model) that defines the two groups.
 \nextopt
 \end{optionlist}
 
-
+\begin{optionlist}
+\subsection{Optional input}
+These options are specific to boot\_scm, and they can only be given on the command-line, not in the configuration file.
+\end{optionlist}
 \subsection{Some common PsN-options useful with boot\_scm}
-
 For a complete list see common\_options.pdf, or psn\_options -h on the commandline.
 \input{inputs/basic_options.tex}
 \begin{optionlist}
@@ -73,14 +74,17 @@ For a complete list see common\_options.pdf, or psn\_options -h on the commandli
 \section{Algorithm overview}
 
 If IGNORE/ACCEPT is found in \$DATA (not counting single character IGNORE like e.g. IGNORE=@), 
-the data will be filtered using a dummy model run in the preprocess\_data\_dir subdirectory of the boot\_scm directory. The new dataset is called filtered.dta. 
-A modified input model called orig\_model\_filtered\_data.mod is created where the new dataset is used.
+the data will be filtered using a dummy model run in the preprocess\_data\_dir subdirectory of the boot\_scm directory. The new dataset is called
+ filtered.dta. A modified input model called orig\_model\_filtered\_data.mod is created where the new dataset is used.
 
-If -dummy\_covariates is set, a modified input model (based on orig\_model\_filtered\_data.mod or on the original input model if no filtering was done) called model\_with\_xcov.mod is created where the dummy covariates are added in \$INPUT and \$DATA specifies a new dataset called xcov\_$\langle$old data name$\rangle$ where the dummy covariates are added. The new model and dataset is created in preprocess\_data\_dir. 
+If -dummy\_covariates is set, a modified input model (based on orig\_model\_filtered\_data.mod or on the original input model if no filtering was done) 
+called model\_with\_xcov.mod is created where the dummy covariates are added in \$INPUT and \$DATA specifies a new dataset called xcov\_$\langle$old 
+data name$\rangle$ where the dummy covariates are added. The new model and dataset is created in preprocess\_data\_dir. 
 
 When using method A or Non-linear (i.e. if option linearize=1 is not set in the scm config file, 
-or options linearize=1 and boot\_scm option -methodA are both set): The program creates 'samples' bootstrapped datasets from the possibly pre-processed original dataset. 
-Then a regular scm is run on each of these datasets, using the options set in the configuration file. Filtering on IGNORE/ACCEPT is skipped in these scm runs, since filtering was done during preprocessing if necessary. 
+or options linearize=1 and boot\_scm option -methodA are both set): The program creates 'samples' bootstrapped datasets from the possibly pre-processed 
+original dataset. Then a regular scm is run on each of these datasets, using the options set in the configuration file. Filtering on IGNORE/ACCEPT is skipped 
+in these scm runs, since filtering was done during preprocessing if necessary. 
 
 When using method B (i.e. if option linearize=1 is set in the scm config file but not option -methodA on the boot\_scm commandline): 
 The program runs the possibly pre-processed input model with the possibly pre-processed dataset using the options set in the scm configuration 
