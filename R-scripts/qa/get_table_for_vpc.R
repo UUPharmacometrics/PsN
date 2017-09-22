@@ -23,6 +23,7 @@ get_tables_for_vpc <- function(obs_table,obs_extra_table,sim_table,sim_extra_tab
         obs <- cbind(obs,"DV"=extra_obs[,"DV"])
       } else {
         make_vpc <- FALSE # problem with synonyms in PsN, if in model is DV=MYDV, it will produce table with column MYDV, even if in $TABLE is DV
+        return(list(make_vpc=make_vpc))
       }
     } 
 
@@ -31,15 +32,11 @@ get_tables_for_vpc <- function(obs_table,obs_extra_table,sim_table,sim_extra_tab
       if(any(colnames(extra_obs)=="MDV")) {
         obs <- cbind(obs,"MDV"=extra_obs[,"MDV"])
       }
+    }
+    if(any(colnames(obs)=="MDV")) {
       if(any(obs$MDV==1)) {
         obs <- obs[which(obs$MDV==0),]
         rownames(obs) <- NULL
-      }
-      if(any(colnames(extra_obs)=="MDV")) {
-        if(any(extra_obs$MDV==1)) {
-          extra_obs <- extra_obs[which(extra_obs$MDV==0),]
-          rownames(extra_obs) <- NULL
-        }
       }
     }
 

@@ -9,13 +9,16 @@ added_structural_param <- function(directory, idv, dvid) {
       parameters <- resmod_table %>%
         filter(dvid==!!dvid,model=="idv_varying_theta")
     }
-    added_param <- data.frame(str=unlist(stringr::str_split(parameters$parameters, ","))) %>%
-      tidyr::separate(str, c("variable", "value"), "=" ) %>% 
-      filter(!grepl("_", variable)) %>%
-      select(value) %>%
-      unique() %>%
-      nrow()
-    
+    if(!is.na(parameters$parameters) && parameters$parameters != "NA") {
+      added_param <- data.frame(str=unlist(stringr::str_split(parameters$parameters, ","))) %>%
+        tidyr::separate(str, c("variable", "value"), "=" ) %>% 
+        filter(!grepl("_", variable)) %>%
+        select(value) %>%
+        unique() %>%
+        nrow()
+    } else {
+      added_param <- ""
+    }
   } else {
     added_param <- ""
   }
