@@ -92,21 +92,6 @@ $help_text{-bins} = <<'EOF';
       Default value = Number of unique values in the case column.
 EOF
 
-$help_text{-update_inits} = <<'EOF';      
-      -update_inits
-
-      Default true. Update the initial estimates of the cdd models to the 
-      final estimates from the estimation (lst-file) of the base model.
-EOF
-
-$help_text{-selection_method} = <<'EOF';
-      -selection_method='random' or 'consecutive'
-
-      Specifies whether the factors selected for exclusion should be
-      drawn randomly or consecutively from the datafile.
-      Default value = 'consecutive'
-EOF
-
 $help_text{-case_column} = <<'EOF';
       -case_column=column_name|column_number
 
@@ -117,24 +102,38 @@ $help_text{-case_column} = <<'EOF';
       Default is ID.
 EOF
 
+$help_text{-etas} = <<'EOF';
+      -etas
+
+      Use the phi file of the original model as initial estimates for
+      the etas.
+EOF
+
 $help_text{-outside_n_sd_check} = <<'EOF';
       -outside_n_sd_check='number'
 
     Mark the runs with CS-CR outside this many standard deviations of the PCA.    
 EOF
 
+$help_text{-selection_method} = <<'EOF';
+      -selection_method='random' or 'consecutive'
+
+      Specifies whether the factors selected for exclusion should be
+      drawn randomly or consecutively from the datafile.
+      Default value = 'consecutive'
+EOF
+
+$help_text{-update_inits} = <<'EOF';      
+      -update_inits
+
+      Default true. Update the initial estimates of the cdd models to the 
+      final estimates from the estimation (lst-file) of the base model.
+EOF
 $help_text{-xv} = <<'EOF';
       -xv|-no-xv
 
       Turns the cross-validation feature on (-xv) or off (-no-xv). The
       default behaviour is to not run the cross-validation step.
-EOF
-
-$help_text{-etas} = <<'EOF';
-      -etas
-
-      Use the phi file of the original model as initial estimates for
-      the etas.
 EOF
 
 $help_text{Post_help_message} = <<'EOF';
