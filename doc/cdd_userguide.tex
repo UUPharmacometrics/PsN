@@ -1,5 +1,5 @@
 \input{inputs/format_header.tex}
-\guidetitle{CDD user guide}{2016-10-18}
+\guidetitle{CDD user guide}{2017-09-22}
 
 
 \begin{document}
@@ -9,30 +9,47 @@
 
 
 \section{Introduction}
-The Case Deletions Diagnostics (CDD) algorithm is a tool primarily used to identify influential components of the dataset, usually individuals. The CDD works by identifying groups in the data set and creating one new data set for each member of the group, where that member has been removed. The model is run once with each new data set. The PsN implementation of the CDD can take any column as base for the grouping and all rows with the same value in that column will be considered a group as long as no individual contain multiple values in that column.
-One should take care that the grouping creates sensible individual records. PsN will renumber the ID column so that two individuals with the same ID will not end up next to each other.
+The Case Deletion Diagnostics tool is run using the command from the command line with a few mandatory arguments. 
+CDD is run as a diagnostic after a model is regarded finished or at least mature enough to run validation tool on. 
+The Case Deletions Diagnostics (CDD) algorithm is a tool primarily used to identify influential components of the dataset, 
+usually individuals. The CDD works by identifying groups in the data set and creating one new data set for each member 
+of the group, where that member has been removed. The model is run once with each new data set. The PsN implementation 
+of the CDD can take any column as base for the grouping and all rows with the same value in that column will be considered 
+a group as long as no individual contain multiple values in that column.One should take care that the grouping creates sensible 
+individual records. PsN will renumber the ID column so that two individuals with the same ID will not end up next to each other.
 Examples
 \begin{verbatim}
-cdd moxonidine.mod -case_column=1
-cdd pheno.mod -case_column=AGE
+cdd run89.mod -case_column=1
 \end{verbatim}
-
+This will perform a Case Deletion Diagnostic on the model specified in run89.mod based on the factors in column ten. If for example, 
+column ten holds the ids of the seven centersincluded in the study, this command will create seven copies of the dataset, each with 
+individuals included in one specific center deleted. Say that the centers are numbered 1 to 7. Then dataset 1 will have individuals from 
+center 1 excluded, dataset 2 individuals from center 2 and so on.
 \section{Input and options}
 
 \subsection{Required input}
-A model file is required on the command-line.
-
-\begin{optionlist}
-\optdefault{case\_column}{name|number}
-The column on which the case-deletion is done. You can either use the name of the column as specified in the \mbox{\$INPUT} record in the model file or you can use the column number in the \mbox{\$INPUT} record. Numbering starts with 1. Default is ID.
-\nextopt
-\end{optionlist}
-
-\subsection{Optional input}
+A NONMEM model file with successful termination is required on the command-line.
 
 \begin{optionlist}
 \optdefault{bins}{N}
-Sets the number of databins, or cdd datasets, to use. If the number of unique values, or factors, in the case column is higher than N then one or more factors will be deleted in each cdd dataset. Specifying N as higher than the number of factors will have no effect. N is then reset to the number of factors. Default value = Number of unique values in the case column. 
+Sets the number of databins, or cdd datasets, to use. If the number of unique values, or factors, in the case column is higher than N then 
+one or more factors will be deleted in each cdd dataset. Specifying N as higher than the number of factors will have no effect. N is then 
+reset to the number of factors. Default value = Number of unique values in the case column. 
+\nextopt
+\optdefault{case\_column}{name|number}
+Through this flag you set the column on which the case-deletion is done. You can either use the name of the column as specified in the 
+\mbox{\$INPUT} record in the model file or you can use the column number in the \mbox{\$INPUT} record. Numbering starts with 1. 
+Default is ID.
+\nextopt
+\optname{etas}
+Use the phi file of the original model as initial estimates for the etas.
+\nextopt
+\optdefault{outside\_n\_sd\_check}{X}
+Default 2. Mark the runs with Cook score - Covariance ratio outside X standard deviations of
+the principal component analysis (PCA). 
+\nextopt
+\optdefault{selection\_method}{random | consecutive}
+Default consecutive. Specifies whether the factors selected for exclusion should be drawn randomly or consecutively from the datafile. 
 \nextopt
 \optname{update\_inits}
 By default, the initial estimates of the cdd models will be set to the final estimates of the input model if final
@@ -42,17 +59,6 @@ the same as the initial estimates set in the input model, even if final estimate
 \optname{xv}
 Default false. Run the cross-validation step (-xv) or not (-no-xv). 
 \nextopt
-\optdefault{selection\_method}{random | consecutive}
-Default consecutive. Specifies whether the factors selected for exclusion should be drawn randomly or consecutively from the datafile. 
-\nextopt
-\optdefault{outside\_n\_sd\_check}{X}
-Default 2. Mark the runs with Cook score - Covariance ratio outside X standard deviations of
-the principal component analysis (PCA). 
-\nextopt
-\optname{etas}
-      Use the phi file of the original model as initial estimates for
-      the etas.
-\nextopt
 \end{optionlist}
 
 \subsection{Some important common PsN options}
@@ -60,6 +66,7 @@ There are many options that govern how PsN manages NONMEM runs, and
 those options are common to all PsN programs that run NONMEM.
 For a complete list see common\_options.pdf, 
 or psn\_options -h on the commandline.
+\subsection{Optional input}
 \input{inputs/basic_options.tex}
 \begin{optionlist}
 \optname{last\_est\_complete}
@@ -149,6 +156,7 @@ and the relative bias in percent is \[100\cdot\frac{bias}{p_{orig,j}}\].
 
 \section{Known bugs/issues}
 
-If NONMEM6 is used with the cdd and the S matrix is algorithmically singular (message in lst-file, checked also by sumo script) the Cook scores cannot  be trusted. The cdd does not check for this error. 
+If NONMEM6 is used with the cdd and the S matrix is algorithmically singular (message in lst-file, checked also by sumo script) the Cook 
+scores cannot be trusted. The cdd does not check for this error. 
 
 \end{document}

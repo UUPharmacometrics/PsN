@@ -1,5 +1,5 @@
 \input{inputs/format_header.tex}
-\guidetitle{XV\_SCM user guide}{2015-02-26}
+\guidetitle{XV\_SCM user guide}{2017-09-22}
 
 \begin{document}
 
@@ -9,10 +9,11 @@
 \section{Overview}
 The xv\_scm program is an implementation of the method described in \cite{Katsube1} and \cite{Katsube2} 
 
-The xv\_scm program
-depends heavily on the scm program, and all scm options apply also to xv\_scm except that options search\_direction, gof, p\_value, p\_forward, p\_backward and update\_derivatives are ignored,
-and option -base\_ofv cannot be used. Please refer to scm\_userguide.pdf for help on scm options.
-A word of caution: xv\_scm produces many files and takes up much disk space. It is wise to delete all the split\_X subdirectories once the results are collected.
+The Cross-validated Stepwise Covariate Model (xv\_scm) building tool of PsN implements cross-validated model 
+size selection for acovariate model. It relies on the SCM tool of PsN.        
+A configuration file must be written for each xv\_scm run. The format of the configuration file follows the format 
+of the scm configuration file exactly, except that options  search\_direction, gof, p\_value, p\_forward, p\_backward 
+and  update\_derivatives are ignored.
 
 Example xv\_scm call:
 \begin{verbatim}
@@ -22,24 +23,122 @@ xv_scm -config_file=config_xv.scm -groups=5 -splits=3 -seed=12345
 \section{Input and options}
 
 \subsection{Required input}
-A configuration file is required (just as for scm).  The format of the configuration file follows the format of the scm configuration file exactly.
+Name of an scm configuration file, including search path if file is not stored in current directory. 
+The configuration file may contain all scm command-line options and some optional PsN common options.
+If a common option that is *not* listed here is set in the scm configuration file then that option 
+will be ignored.
+The following common options, described in common\_options.pdf,can be set in the configuration file: 
 
+	\mbox{nm\_version}, \mbox{nmfe\_options}, \mbox{abort\_on\_fail}, \mbox{compress}, \mbox{directory}, 
+	\mbox{extra\_data\_files}, \mbox{extra\_files}, \mbox{picky}, \mbox{retries}, \mbox{threads} and 
+	\mbox{tweak\_inits}. 
+	
+As of PsN-3.4.3 it is possible to skip the option name for the configuration file, and call scm with 
+scm config.scm instead of the traditional scm -config_file=config.scm
 \subsection{Optional input}
 
 These options are specific to xv\_scm, and they can only be given on the command-line, not in the configuration file.
 
 \begin{optionlist}
+\optdefault{config\_file} 
+Name of an scm configuration file, including search path if file is not stored in current directory. 
+The configuration file may contain all scm command-line options and some optional PsN common options.
+If a common option that is *not* listed here is set in the scm configuration file then that option 
+will be ignored.
+The following common options, described in common_options.pdf,can be set in the configuration file: 
+	\mbox{nm_version}, \mbox-nmfe_options}, \mbox{abort_on\_fail}, \mbox{compress}, \mbox{directory}, 
+	\mbox{extra\_data\_files}, \mbox{extra\_files}, \mbox{picky}, \mbox{retries}, \mbox{threads} and 
+	\mbox{tweak\_inits}. 
+	
+As of PsN-3.4.3 it is possible to skip the option name for the configuration file, and call scm with
+scm config.scm 
+instead of the traditional
+scm -config_file=config.scm
+\nextopt
+\optdefault{derivatives\_data} 
+Only relevant with linearize method. Give derivatives data as table input
+rather than letting the scm run the nonlinear model to obtain them. Saves time.
+\nextopt
+\optdefault{do\_not\_drop} 
+Default empty string. Since the number of columns are restricted to 20 for NONMEM (50 for NM7) 
+it is necessary to minimize the number of undropped columns. The scm utility uses the '=DROP' 
+syntax of NONMEM to exclude the covariate columns that are not currently tested in a specific 
+candidate model. If some covariates are used in e.g. PK, PRED or TABLE in the basic model you must 
+list them using the do\_not\_drop option to prevent them from being dropped. If the -linearize 
+option is used, do\_not\_drop has a different usage, see the section on the linearization method. 
+\nextopt
+\optdefault{epsilon} 
+Only relevant with linearize method. Linearize with respect to epsilons,
+set by default. Disable with -no-epsilon.
+\nextopt
+\optdefault{error} 
+Only relevant with linearize method, and only if -no-epsilon is set. 
+Use an approximated linearization of the error model instead of an exact.
+Alternatives are add (for additive), prop (for proportional),
+propadd (for proportional plus additive) or user (for user defined).
+The error model must be defined in a particular way when this option is used,
+see the scm userguide for details.
+\nextopt
+\optdefault{foce} 
+Default set. Only relevant with linearize method. Expand around 
+conditional ETA estimates instead of around ETA=0.    
+\nextopt
+\optdefault{global_init}
+Default is 0.001. With global_init option the initial estimates of parameters
+in covariate parameterizations are set to global\_init. If using inits section 
+in configuration file individual initial values are used instead of one global.
+\nextopt
 \optdefault{groups}{N}
-Default 5. The number of cross-validation groups for an N-fold cross-validation. 
+Default 5. The number of cross-validation groups to make an N-fold cross-validation. 	
 \nextopt
-\optdefault{splits}{N}
-Default 1. The number times to perform a complete cross-validation with a new data split. 
+\optdefault{linearize} 
+Add covariate relations to a linearized version of the input model instead of
+to the original nonlinear model.
 \nextopt
-\optdefault{stratify\_on}{variable}
-Default not used. If set, PsN will try to preserve the relative proportions of individuals with different values of the stratification variable when dividing the data into groups during cross-validation. The stratification variable must be found in \$INPUT of the input model file. Headers in the data file will be ignored.
-If the desired stratification variable is continuous it is recommended to first group the values,
-add a group number column to the data set,
-and then stratify on group number instead of the continuous variable. 
+\optdefault{logfile}
+Default scmlog.txt. The name of the logfile.
+\nextopt
+\optdefault{lst_file} 
+Default not set. Update original model with final estimates from this file 
+before running model to obtain derivatives.
+\nextopt
+\optdefault{max\_steps}{N} 
+Do not take more that max\_steps forward steps, even if there are more covariates 
+left to add and a significant inclusion was made in the last step.
+\nextopt
+\optdefault{model}
+Default not set. The name of the basic model file, without any parameter-covariate
+relations included.
+\nextopt
+\optdefault{noabort} 
+Default not set. Only relevant with the linearize method. If set,
+the program will add NOABORT to \$EST of the linearized models.
+\nextopt
+\optdefault{only\_successful} 
+Default not set. Only consider runs with MINIMIZATION SUCCESSFUL 
+(or equivalent for non-classical estimation methods) when 
+selecting the covariate to add/remove in each step.
+\nextopt
+\optdefault{parallel\_states} 
+Default not set. Instead of trying valid\_states sequentially, try all states after the 
+current one simultaneously. It is currently not possible to stop testing a parameter-covariate 
+relation that has been included in an lower state if there are higher states defined. 
+To achieve this the user has to stop the search and restart with a new configuration file where 
+no higher states are tested for the parameter-covariate pair. 
+\nextopt
+\optdefault{splits}{N} 
+Default 1. The number of times to perform a complete cross-validation
+with a new data split. 
+\nextopt
+\optdefault{stratify\_on}{variable} 
+PsN will try to preserve the relative proportions of individuals
+with different values of the stratification variable
+when creating data subsets during cross-validation.
+The stratification variable must be found in the original dataset,
+and there must be at least 'groups' individuals having each
+unique value of the stratification variable. If the stratification
+variable is continuous it is recommended to first group the values
+and then stratify on group number instead of the continuous variable.
 \nextopt
 \end{optionlist}
 
@@ -54,12 +153,21 @@ For each split:
 \item[] For each data subset: 
 \begin{itemize}
 \item[] Call the selected subset the prediction/test data and the remaining 'groups'-1 subsets the estimation/training data. 
-\item[] Run a regular scm on the estimation data, using the scm input option given on the command-line and the configuration file except forcing options search\_direction=forward, p\_forward=1,  gof=p\_value, -no-update\_derivatives. For the base model and for the model selected by the scm in each iteration a  prediction run is performed. The prediction run is  done by copying the model, updating the initial estimates with the final estimates for the same model based on the estimation data, setting MAXEVAL=0 or equivalent for non-classical estimation methods, and running the model with the prediction data. The OFV of the prediction run is then collected and reported in output.
-If the linearization method is used (option -linearize to scm), then a prediction step is needed also for the derivatives model. After running the nonlinear derivatives model on the estimation data, a prediction step is run as above for the derivatives model. Then the derivatives output from the derivatives prediction step replaces the original prediction data in the prediction steps for all the linearized models, including the linearized base model.
+\item[] Run a regular scm on the estimation data, using the scm input option given on the command-line and the 
+configuration file except forcing options search\_direction=forward, p\_forward=1,  gof=p\_value, -no-update\_derivatives. 
+For the base model and for the model selected by the scm in each iteration a  prediction run is performed. The prediction 
+run is  done by copying the model, updating the initial estimates with the final estimates for the same model based on the 
+estimation data, setting MAXEVAL=0 or equivalent for non-classical estimation methods, and running the model with the 
+prediction data. The OFV of the prediction run is then collected and reported in output.
+If the linearization method is used (option -linearize to scm), then a prediction step is needed also for the derivatives model.
+ After running the nonlinear derivatives model on the estimation data, a prediction step is run as above for the derivatives model. 
+ Then the derivatives output from the derivatives prediction step replaces the original prediction data in the prediction steps for 
+ all the linearized models, including the linearized base model.
 \end{itemize}
 \end{itemize}
 \section{Output}
-The files xv\_ofv\_results.csv,  xv\_relation\_rank\_order.csv and xv\_percent\_inclusion\_by\_level.csv contain results and summaries of the runs.
+The files xv\_ofv\_results.csv,  xv\_relation\_rank\_order.csv and xv\_percent\_inclusion\_by\_level.csv contain results and 
+summaries of the runs.
 
 \references
 
