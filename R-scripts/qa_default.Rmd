@@ -19,20 +19,22 @@ library(expm)
 library(vpc)
 library(ggplot2)
 library(xpose)
+library(PEIP)
 library(yaml)
 source(file.path(rscripts.directory, "/common/find_r_files_in_subdir.R"))
 source(file.path(rscripts.directory, "/common/iofv.R"))
 source(file.path(rscripts.directory, "/common/keep_symbols.R"))
 source(file.path(rscripts.directory, "/common/command_text.R"))
 source(file.path(rscripts.directory, "/cdd/create.data.full.R"))
-source(file.path(rscripts.directory, "/simeval/ofv.i_ofv_res.R"))
 source(file.path(rscripts.directory,"/frem/ID_ratio_function.R"))
 source(file.path(rscripts.directory,"/frem/parameter_ratio_function.R"))
 source(file.path(rscripts.directory,"/frem/sd_of_unexpl_var_function.R"))
-source(file.path(rscripts.directory,"/simeval/ofv.i_ofv_res.R"))
-source(file.path(rscripts.directory,"/simeval/boxplot_i_ofv_res.R"))
 #source qa functions
 rscript <- find_r_files_in_subdir(toolname,rscripts.directory)
+for (i in 1:length(rscript)) {
+  source(rscript[i])
+}
+rscript <- find_r_files_in_subdir("simeval",rscripts.directory)
 for (i in 1:length(rscript)) {
   source(rscript[i])
 }
@@ -360,6 +362,25 @@ if(all(skip!="simeval")) {
     outlier_individual_plots <- individual_plots(file_name=file.path(working.directory,"linearize_run/scm_dir1/derivatives.mod"),
                                                  ID_nr=outlier_ids)
     print(outlier_individual_plots)
+  }
+}
+```
+
+```{r add_all_outliers_overall_table,results='asis',echo=F,warning=F,message=F}
+if(all(skip!="simeval")) {
+  if(file.exists(file.path(working.directory,"simeval_run/raw_all_iofv.csv")) && file.exists(file.path(working.directory,"simeval_run/ebe_npde.csv"))) {
+    all_outl_list <- simeval_all_ouliers_table(simeval_directory=file.path(working.directory,"simeval_run"))
+    simeval_overall_outliers_table <- all_outl_list$all_outlier_table
+    cgroup_outl <- all_outl_list$cgroup
+    n.cgroup_outl <- all_outl_list$n.cgroup
+    add_column_names <- all_outl_list$add_column_names
+    simeval_overall_outliers_table <- keep_symbols(simeval_overall_outliers_table,type)
+  simeval_overall_outliers_table <- ztable_sub(simeval_overall_outliers_table,type=type,colnames.bold = add_column_names,include.colnames = add_column_names,include.rownames = F,longtable = T,align="lcccc")
+  if(add_column_names) {
+    simeval_overall_outliers_table <- addcgroup(simeval_overall_outliers_table,cgroup=cgroup_outl,n.cgroup=n.cgroup_outl)
+  }
+    cat("\\pagebreak\n\n")
+    print(simeval_overall_outliers_table)
   }
 }
 ```
