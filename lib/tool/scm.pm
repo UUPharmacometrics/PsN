@@ -1627,6 +1627,7 @@ sub linearize_setup
                 $original_model->filename . ", cannot match parameters to ETAs\n" );
         }
         my $assignments = code_parsing::find_assignments(model => $original_model);
+        my $iov_etas = model_transformations::find_etas(model => $original_model, type => 'iov');
         my $n_param = 0;
         open(LOG, ">>" . $self->logfile->[0]); #model_number -1
         foreach my $parameter (keys %{$self->test_relations()}) {
@@ -1670,11 +1671,21 @@ sub linearize_setup
                         last;
                     }
 
-                    if (s/[^A-Z0-9_]ETA\(([0-9]+)\)//) {
-                        croak("Could not determine the ETA ".
-                            "coupled to $parameter,\n".
-                            " two ETA(<number>) found ".
-                            "on $parameter = ... row\n" );
+                    # Check if more IIV etas are connected to the same parameter. Note that IIV must come before IOV in the parameter definition
+                    while (/[^A-Z0-9_]ETA\((\d+)\)/g) {
+                        my $found = 0;
+                        for my $eta (@$iov_etas) {
+                            if ($1 == $eta) {
+                                $found = 1;
+                                last;
+                            }
+                        }
+                        if (not $found) {   # We have found an eta that is not iov
+                            croak("Could not determine the ETA ".
+                                "coupled to $parameter,\n".
+                                " two ETA(<number>) found ".
+                                "on $parameter = ... row\n" );
+                        }
                     }
                 }
             }

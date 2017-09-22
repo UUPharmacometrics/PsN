@@ -458,6 +458,27 @@ sub find_omega_records
     return \@found;
 }
 
+sub find_etas
+{
+	my %parm = validated_hash(\@_,
+        model => { isa => 'model' },
+        type => { isa => 'Str' },     # Set to either 'iov' or 'iiv'
+    );
+    my $model = $parm{'model'};
+    my $type = $parm{'type'};
+
+    my $omega_records = find_omega_records(model => $model, type => $type);
+
+    my @etas;
+    for my $record (@$omega_records) {
+        for (my $i = 0; $i < $record->size; $i++) {
+            push @etas, $record->n_previous_rows + 1 + $i;
+        }
+    }
+
+    return \@etas;
+}
+
 sub find_zero_fix_omegas
 {
     # Find all DIAGONAL omegas 0 FIX and all BLOCK omegas all 0 FIX
