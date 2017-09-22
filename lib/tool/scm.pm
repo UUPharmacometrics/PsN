@@ -1638,8 +1638,8 @@ sub linearize_setup
             for (@code) {
                 if (/^\s*(\w+)\s*=\s*/ and $1 eq $parameter) {
                     s/^\s*(\w+)\s*=\s*//;
-                    my ($line,$comment) = split(';', $_, 2);
-                    $line = code_parsing::merge_assignments_and_expression(expression => $line, assignments => $assignments);
+                    my ($code_line, $comment) = split(';', $_, 2);
+                    my $line = code_parsing::merge_assignments_and_expression(expression => $code_line, assignments => $assignments);
                     $_ = $line;
                     chomp;
 
@@ -1649,7 +1649,7 @@ sub linearize_setup
                         $relation = 'exponential';
                     } elsif (/[^A-Z0-9_]*EXP\s*\(\s*MU\_([0-9]+)\s*\+\s*ETA\(([0-9]+)\)/) {
                         $relation = 'exponential';
-                    } elsif (/[^A-Z0-9_]*TV(\w+)\s*\+\s*ETA\(([0-9]+)\)/) {
+                    } elsif ($code_line =~ /[^A-Z0-9_]*TV(\w+)\s*\+\s*ETA\(([0-9]+)\)/) {
                         if ($self->sum_covariates_hash->{$parameter} == 1) {
                             $relation = 'logit';
                         } else {
