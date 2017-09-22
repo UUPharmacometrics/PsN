@@ -20,14 +20,6 @@ use ui;
 use File::Copy 'cp';
 # More PsN dependencies included with require further down
 
-################################################################################
-#
-# This is the extended_grid. First the command line options are parsed
-# using Getopt::Long. PsN "common options" are used to fine tune the
-# running.
-#
-################################################################################
-
 # {{{ options handling
 
 my $cmd_line = $0 . " " . join( " ", @ARGV );
@@ -138,12 +130,6 @@ my $eval_string = common_options::model_parameters(\%options);
 
 
 # }}}
-
-################################################################################
-#
-# The original model file is run and simulation started.
-#
-################################################################################
 
 # {{{ Orig + simulation
 
@@ -390,23 +376,6 @@ for( my $row = 0 ; $row <= $loop_end; $row ++ ){
     $error_has_if = 1;
   }
   
-#  $error -> [0] -> [$row] =~ s/ 
-#                              (.)ERR\((\d+)
-#			      (?{$seen_err{$2}=1;$dummy=$2+$nr_of_old_etas;})\)
-#			      /$1ETA($dummy)/gx;
-
-  
-#  if( $error -> [0] -> [$row] =~ /(.*)Y(\s*)=(.*)/ ){
-#
-#    
-#    @{$error -> [0]} = ( @{$error -> [0]}[0..($row-1)],
-#			 '       WT=1/100000',
-#			 '       IF( TYPE.LE.0 ) ' . $error -> [0] -> [$row],
-#			 @{$error -> [0]}[$row+1..$#{$error->[0]}] );
-#    $row++;
-#
-#  }
-  
 }
 
 
@@ -583,21 +552,9 @@ dump_T_csv( 'final_nptab.csv', \@final_nptab );
 
 print "\nextended_grid done\n";
 
-################################################################################
-#
-# We are done for now, code below needs a specification and a review
-#
-################################################################################
 exit;
 
 # {{{ Results handling (Cut'n'Paste from nonp_bootstrap_v2)
-
-################################################################################
-#
-# Do one run per individual initial clearence and get fort.80 from
-# each run.
-#
-################################################################################
 
 # {{{ Fort.80 creation
 
@@ -667,9 +624,6 @@ foreach my $id( 0..($number_of_individuals-1) ){
   
   my $copy = $extended_model -> copy( filename => 'ofv_model_'.($id+1).'.mod' );
   
-  # Not needed ?
-  # $copy -> update_inits( from_output => $extended_model -> outputs -> [0] );
-  
   my @new_values;
   
   for my $parm ( 0..$nomegas-1 ){
@@ -678,28 +632,12 @@ foreach my $id( 0..($number_of_individuals-1) ){
     
   }
 
-#  $copy -> lower_bounds( parameter_type => 'theta',
-#			 parameter_numbers => [[1..$nomegas]],
-#			 new_values => [[(-10000) x $nomegas]]) ;    
-  
-#  $copy -> upper_bounds( parameter_type => 'theta',
-#			 parameter_numbers => [[1..$nomegas]],
-#			 new_values => [[(10000) x $nomegas]]) ;
-  
-#  $copy -> initial_values( parameter_type => 'theta',
-#			   parameter_numbers => [[1..$nomegas]],
-#			   new_values => [\@new_values]) ;
-  
   $copy -> add_records( type => 'contr',
 			record_strings => ['DATA=(ID)'] );
   
   $copy -> add_option( record_name => 'subroutine',
 		       option_name => 'CONTR',
 		       option_value => 'iofvcont.f' );
-
-  #$copy -> add_option( record_name => 'DATA',
-#		       option_name => 'ACCEPT',
-#		       option_value => "ID.LE.$ids" );
 
   $copy -> lower_bounds( parameter_type => 'omega',
 			 parameter_numbers => [[1..$copy -> nomegas -> [0]]],
@@ -708,10 +646,6 @@ foreach my $id( 0..($number_of_individuals-1) ){
   $copy -> initial_values( parameter_type => 'omega',
 			   parameter_numbers => [[1..$copy -> nomegas -> [0]]],
 			   new_values => [[(0) x $copy -> nomegas -> [0]]] );
-
-#  $copy -> initial_values( parameter_type => 'omega',
-#			   parameter_numbers => [[1..$copy -> nomegas -> [0]]],
-#			   new_values => [\@new_values] );
 
   $copy -> fixed( parameter_type => 'theta',
 		  new_values => [[(1) x $copy -> nthetas ]] );
@@ -807,10 +741,7 @@ foreach my $parameter( 0..($nomegas - 1) ){
 
     $big_sum += $sum;
     
-    #push( @{$result[$row]}, $sum );
-    
     push( @sums, $sum );
-	
   }
 
   my @order = 0..scalar(@{$individual_etas[$parameter]})-1 ;
@@ -842,8 +773,6 @@ chdir( '..' );
 dump_T_csv('results.csv', \@etas_and_sums);
 
 # }}}
-
-# {{{ helper routines
 
 sub dump_csv {
   my $file_name = shift;
@@ -877,7 +806,5 @@ sub dump_T_csv {
   
   close( FILE );
 }
-
-# }}}
 
 # }}}
