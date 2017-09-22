@@ -13,6 +13,7 @@ library(PerformanceAnalytics)
 library(grid)
 library(gridExtra)
 library(xpose4)
+library(dplyr)
 #new   
 #library(xtable)
 
@@ -336,7 +337,7 @@ Correlation graph for EBE NPDE IOV
     if (ncol(fortable1) > 1) {
       ebe.npde_outliers <- fortable1[,1:2]
     } else {
-      ebe.npde_outliers <- fortable1
+      ebe.npde_outliers <- data.frame()
     }
     
   } else {
@@ -394,30 +395,17 @@ Residual outlier table
 ```
 
 ```{r calculations_residual_outlier_table,results='hide',echo=FALSE,fig.width=9,fig.height=6,fig.keep="high",fig.align="center"} 
-  if (show_residual_plots) {
-    #------------------------------------------(3)outliertable plot----------------------------------
-    # Use outliertable function to plot outlier tabel
-    list <- outlier.table(residual.outliers.file)
-    outlierframe <- list$outlierframe
-    cwres.iwres_outliers <- list$outliers_count
-  }
+#------------------------------------------(3)outliertable plot----------------------------------
+# Use outliertable function to plot outlier tabel
+list <- outlier.table(residual.outliers.file)
+resudual_outlier_table <- list$outlier_table
+cwres.iwres_outliers <- list$outliers_count
+residual_names <- list$residual_names
 ```
 
 ```{r residual_outlier_table,echo=FALSE,fig.width=9,fig.height=6,fig.keep="high",fig.align="center"} 
   if (show_residual_plots) {
-    # Plot created outlier table on the next page
-    # outlierframe_x <- xtable(outlierframe, caption = "A \\code{longtable} spanning several pages")
-    # add.to.row <- list(pos = list(0), command = NULL)
-    # command <- paste0("\\hline\n\\endhead\n",
-    #                 "\\hline\n",
-    #                 "\\multicolumn{", dim(outlierframe)[2] + 1, "}{l}",
-    #                 "{\\footnotesize Continued on next page}\n",
-    #                 "\\endfoot\n",
-    #                 "\\endlastfoot\n")
-    # add.to.row$command <- command
-    # print(outlierframe_x, hline.after=c(-1), add.to.row = add.to.row,
-    #       tabular.environment = "longtable")
-    plot.table(outlierframe,total_rows_per_page=18)
+    plot.table(resudual_outlier_table,total_rows_per_page=18)
   }
 ```
 
@@ -427,19 +415,14 @@ All outlier report table
 \end{center}
 
 ```{r all_outlier_table,results='hide',echo=FALSE,warning=FALSE,fig.width=9,fig.height=5.8,fig.keep="high",fig.align="center"}
-    if (file.exists(residual.files[1]) && file.exists(residual.files[2]) && file.exists(residual.outliers.file)) {
-      all_outlier_table <- all.outlier.report.table(ofv_outliers,ebe.npde_outliers=ebe.npde_outliers,cwres.iwres_outliers,
-                                                    ID_deleted_ebe,ID_deleted_ofv)
-    
-      # draw the table 
-      plot.all.outlier.table(all_outlier_table,total_rows_per_page=18)
-    } else {
-      all_outlier_table <- all.outlier.report.table(ofv_outliers,ebe.npde_outliers=ebe.npde_outliers,
-                                                  ID_deleted_ebe=ID_deleted_ebe,ID_deleted_ofv=ID_deleted_ofv)
-    
-      # draw the table 
-      plot.table(all_outlier_table,total_rows_per_page=18)
-    }
+all_outlier_table <- all.outlier.report.table(ofv_outliers,ebe.npde_outliers=ebe.npde_outliers,cwres.iwres_outliers,
+                                              residual_names,ID_deleted_ebe=ID_deleted_ebe,ID_deleted_ofv=ID_deleted_ofv)
+# draw the table 
+if(ncol(all_outlier_table)>3) {
+  plot.all.outlier.table(all_outlier_table,total_rows_per_page=18)
+} else {
+  plot.table(all_outlier_table,total_rows_per_page=18)
+}
 ```
 
 \pagebreak
