@@ -92,27 +92,11 @@ $help_text{-bins} = <<'EOF';
       Default value = Number of unique values in the case column.
 EOF
 
-$help_text{-case_column} = <<'EOF';
-      -case_column=column_name|column_number
+$help_text{-update_inits} = <<'EOF';      
+      -update_inits
 
-      Through this flag you set the column on which the case-deletion
-      is done. You can either use the name of the column as specified
-      in the $INPUT record in the model file or you can use the
-      column number. Numbering starts with 1.
-      Default is ID.
-EOF
-
-$help_text{-etas} = <<'EOF';
-      -etas
-
-      Use the phi file of the original model as initial estimates for
-      the etas.
-EOF
-
-$help_text{-outside_n_sd_check} = <<'EOF';
-      -outside_n_sd_check='number'
-
-    Mark the runs with CS-CR outside this many standard deviations of the PCA.    
+      Default true. Update the initial estimates of the cdd models to the 
+      final estimates from the estimation (lst-file) of the base model.
 EOF
 
 $help_text{-selection_method} = <<'EOF';
@@ -123,17 +107,34 @@ $help_text{-selection_method} = <<'EOF';
       Default value = 'consecutive'
 EOF
 
-$help_text{-update_inits} = <<'EOF';      
-      -update_inits
+$help_text{-case_column} = <<'EOF';
+      -case_column=column_name|column_number
 
-      Default true. Update the initial estimates of the cdd models to the 
-      final estimates from the estimation (lst-file) of the base model.
+      Through this flag you set the column on which the case-deletion
+      is done. You can either use the name of the column as specified
+      in the $INPUT record in the model file or you can use the
+      column number. Numbering starts with 1.
+      Default is ID.
 EOF
+
+$help_text{-outside_n_sd_check} = <<'EOF';
+      -outside_n_sd_check='number'
+
+    Mark the runs with CS-CR outside this many standard deviations of the PCA.    
+EOF
+
 $help_text{-xv} = <<'EOF';
       -xv|-no-xv
 
       Turns the cross-validation feature on (-xv) or off (-no-xv). The
       default behaviour is to not run the cross-validation step.
+EOF
+
+$help_text{-etas} = <<'EOF';
+      -etas
+
+      Use the phi file of the original model as initial estimates for
+      the etas.
 EOF
 
 $help_text{Post_help_message} = <<'EOF';
