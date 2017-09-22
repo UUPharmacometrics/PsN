@@ -79,10 +79,10 @@ resmod_table_2 <- data.frame(iteration=rep("NA",25),dvid=c(rep(1,8),rep(2,8),rep
 #compare
 context("qa, get_resmod_table")
 test_that("open and manipulate resmod result table",{
-  expect_equal(TRUE,get_resmod_table(directory=file.path(files.w.dir,"qa_run1"), idv="PRED")$resmod_file_exists)
+  expect_true(get_resmod_table(directory=file.path(files.w.dir,"qa_run1"), idv="PRED")$resmod_file_exists)
   expect_equal(resmod_table_1,get_resmod_table(directory=file.path(files.w.dir,"qa_run1"), idv="PRED")$resmod_table)
-  expect_equal(FALSE,get_resmod_table(directory=file.path(files.w.dir,"qa_run1"), idv="TIME")$resmod_file_exists)
-  expect_equal(FALSE,get_resmod_table(directory=file.path(files.w.dir,"qa_run1"), idv="NEW")$resmod_file_exists)
+  expect_false(get_resmod_table(directory=file.path(files.w.dir,"qa_run1"), idv="TIME")$resmod_file_exists)
+  expect_false(get_resmod_table(directory=file.path(files.w.dir,"qa_run1"), idv="NEW")$resmod_file_exists)
   expect_equal(resmod_table_2,get_resmod_table(directory=file.path(files.w.dir,"qa_run2"), idv="TIME")$resmod_table)
 })
 
@@ -96,23 +96,23 @@ test_that("get dofv value form the resmod table",{
 
 #...........................  (6) Test function get_structural_overview_table.R .....................................  
 #create expected data
-str_overview_1 <- data.frame(c("TIME","PRED"),c(4.314,4.8),c(4,4),stringsAsFactors = F)
+str_overview_1 <- data.frame(c("TIME","PRED"),c(4.314,4.8),c(2,2),stringsAsFactors = F)
 colnames(str_overview_1) <- c("","dOFV","Add.params")
-str_overview_2 <- data.frame(c("(ORIG = 1)","TIME","PRED","(ORIG = 2)","TIME","PRED"),c("","4.51","4.8","","NA","0.4"),c("",3,3,"",3,3),
+str_overview_2 <- data.frame(c("(ORIG = 1)","TIME","PRED","(ORIG = 2)","TIME","PRED"),c("","4.51","4.8","","NA","0.4"),c("",1,1,"",1,1),
                              stringsAsFactors = F)
 colnames(str_overview_2) <- c("","dOFV","Add.params")
-str_overview_3 <- data.frame(c("(ORIG = 1)","TIME","TAD","PRED","(ORIG = 2)","TIME","TAD","PRED"),c("","4.51","ERROR","4.8","","NA","ERROR","0.4"),c("",3,"",3,"",3,"",3),
-                             stringsAsFactors = F)
+str_overview_3 <- data.frame(c("(ORIG = 1)","TIME","TAD","PRED","(ORIG = 2)","TIME","TAD","PRED"),c("","4.51","ERROR","4.8","","NA","ERROR","0.4"),
+                             c("",1,"",1,"",1,"",1),stringsAsFactors = F)
 colnames(str_overview_3) <- c("","dOFV","Add.params")
 str_overview_4 <- data.frame(c("TIME","TAD"),c("ERROR","ERROR"),c("",""),stringsAsFactors = F)
 colnames(str_overview_4) <- c("","dOFV","Add.params")
-str_overview_5 <- data.frame(c("TIME","PRED"),c("NA","4.8"),c(4,4),stringsAsFactors = F)
+str_overview_5 <- data.frame(c("TIME","PRED"),c("NA","4.8"),c(2,2),stringsAsFactors = F)
 colnames(str_overview_5) <- c("","dOFV","Add.params")
-str_overview_6 <- data.frame(c("TIME","TAD","PRED"),c("NA","ERROR","4.8"),c("4","","4"),stringsAsFactors = F)
+str_overview_6 <- data.frame(c("TIME","TAD","PRED"),c("NA","ERROR","4.8"),c("2","","2"),stringsAsFactors = F)
 colnames(str_overview_6) <- c("","dOFV","Add.params")
-str_overview_7 <- data.frame(c("TIME","PRED"),c("NA","NA"),c(4,4),stringsAsFactors = F)
+str_overview_7 <- data.frame(c("TIME","PRED"),c("NA","NA"),c(2,2),stringsAsFactors = F)
 colnames(str_overview_7) <- c("","dOFV","Add.params")
-str_overview_8 <- data.frame(c("(DVID = 1)","TIME","PRED","(DVID = 2)","TIME","PRED"),c("","NA","NA","","NA","NA"),c("","4","4","","4","4"),
+str_overview_8 <- data.frame(c("(DVID = 1)","TIME","PRED","(DVID = 2)","TIME","PRED"),c("","NA","NA","","NA","NA"),c("","","","","",""),
                              stringsAsFactors = F)
 colnames(str_overview_8) <- c("","dOFV","Add.params")
 str_overview_9 <- data.frame("RESMOD","ERROR",stringsAsFactors = F)
@@ -122,16 +122,16 @@ colnames(str_overview_10) <- c("","dOFV")
 #compare
 context("qa, get_structural_overview_table")
 test_that("get structural overview table",{
-  expect_equal(str_overview_1,get_structural_overview_table(directory=file.path(files.w.dir,"qa_run3"),idv=c("TIME","PRED"),dvid_name="NA",groups=5))
-  expect_equal(str_overview_2,get_structural_overview_table(directory=file.path(files.w.dir,"qa_run2"),idv=c("TIME","PRED"),dvid_name="ORIG",groups=4))
-  expect_equal(str_overview_3,get_structural_overview_table(directory=file.path(files.w.dir,"qa_run2"),idv=c("TIME","TAD","PRED"),dvid_name="ORIG",groups=4))
-  expect_equal(str_overview_4,get_structural_overview_table(directory=file.path(files.w.dir,"qa_missing_folders_files"),idv=c("TIME","TAD"),dvid_name="ORIG",groups=5))
-  expect_equal(str_overview_5,get_structural_overview_table(directory=file.path(files.w.dir,"qa_run5"),idv=c("TIME","PRED"),dvid_name="NA",groups=5))
-  expect_equal(str_overview_6,get_structural_overview_table(directory=file.path(files.w.dir,"qa_run6"),idv=c("TIME","TAD","PRED"),dvid_name="NA",groups=5))
-  expect_equal(str_overview_7,get_structural_overview_table(directory=file.path(files.w.dir,"qa_run7"),idv=c("TIME","PRED"),dvid_name="NA",groups=5))
-  expect_equal(str_overview_8,get_structural_overview_table(directory=file.path(files.w.dir,"qa_run8"),idv=c("TIME","PRED"),dvid_name="DVID",groups=5))
-  expect_equal(str_overview_9,get_structural_overview_table(directory=file.path(files.w.dir,"qa_run2"),idv=c(),dvid_name="ORIG",groups=4,skip=c('transform','cdd','frem')))
-  expect_equal(str_overview_10,get_structural_overview_table(directory=file.path(files.w.dir,"qa_run2"),idv=c(),dvid_name="ORIG",groups=4,skip=c('transform','cdd','frem','resmod')))
+  expect_equal(str_overview_1,get_structural_overview_table(directory=file.path(files.w.dir,"qa_run3"),idv=c("TIME","PRED"),dvid_name="NA"))
+  expect_equal(str_overview_2,get_structural_overview_table(directory=file.path(files.w.dir,"qa_run2"),idv=c("TIME","PRED"),dvid_name="ORIG"))
+  expect_equal(str_overview_3,get_structural_overview_table(directory=file.path(files.w.dir,"qa_run2"),idv=c("TIME","TAD","PRED"),dvid_name="ORIG"))
+  expect_equal(str_overview_4,get_structural_overview_table(directory=file.path(files.w.dir,"qa_missing_folders_files"),idv=c("TIME","TAD"),dvid_name="ORIG"))
+  expect_equal(str_overview_5,get_structural_overview_table(directory=file.path(files.w.dir,"qa_run5"),idv=c("TIME","PRED"),dvid_name="NA"))
+  expect_equal(str_overview_6,get_structural_overview_table(directory=file.path(files.w.dir,"qa_run6"),idv=c("TIME","TAD","PRED"),dvid_name="NA"))
+  expect_equal(str_overview_7,get_structural_overview_table(directory=file.path(files.w.dir,"qa_run7"),idv=c("TIME","PRED"),dvid_name="NA"))
+  expect_equal(str_overview_8,get_structural_overview_table(directory=file.path(files.w.dir,"qa_run8"),idv=c("TIME","PRED"),dvid_name="DVID"))
+  expect_equal(str_overview_9,get_structural_overview_table(directory=file.path(files.w.dir,"qa_run2"),idv=c(),dvid_name="ORIG",skip=c('transform','cdd','frem')))
+  expect_equal(str_overview_10,get_structural_overview_table(directory=file.path(files.w.dir,"qa_run2"),idv=c(),dvid_name="ORIG",skip=c('transform','cdd','frem','resmod')))
 })
 
 #...........................  (7) Test function get_omega_values.R .....................................
@@ -195,50 +195,50 @@ test_that("get parameter variability overview part, get delta ofv values",{
   expect_equal(-3.73,param_var_list_1$dofv_block)
   expect_equal(-0.566,param_var_list_1$dofv_box)
   expect_equal(-1.03,param_var_list_1$dofv_tdist)
-  expect_equal(TRUE,param_var_list_1$fullblock_mod)
-  expect_equal(TRUE,param_var_list_1$boxcox_mod)
-  expect_equal(TRUE,param_var_list_1$add_etas_mod)
-  expect_equal(TRUE,param_var_list_1$tdist_mod)
+  expect_true(param_var_list_1$fullblock_mod)
+  expect_true(param_var_list_1$boxcox_mod)
+  expect_true(param_var_list_1$add_etas_mod)
+  expect_true(param_var_list_1$tdist_mod)
   expect_equal(par_var_models_2,param_var_list_2$par_var_models)
   expect_equal("ERROR",param_var_list_2$dofv_block)
   expect_equal(-0.566,param_var_list_2$dofv_box)
   expect_equal("NA",param_var_list_2$dofv_tdist)
-  expect_equal(TRUE,param_var_list_2$fullblock_mod)
-  expect_equal(TRUE,param_var_list_2$boxcox_mod)
-  expect_equal(FALSE,param_var_list_2$add_etas_mod)
-  expect_equal(FALSE,param_var_list_2$tdist_mod)
+  expect_true(param_var_list_2$fullblock_mod)
+  expect_true(param_var_list_2$boxcox_mod)
+  expect_false(param_var_list_2$add_etas_mod)
+  expect_false(param_var_list_2$tdist_mod)
   expect_equal(par_var_models_3,param_var_list_3$par_var_models)
   expect_equal("ERROR",param_var_list_3$dofv_block)
   expect_equal("NA",param_var_list_3$dofv_box)
   expect_equal("NA",param_var_list_3$dofv_tdist)
-  expect_equal(TRUE,param_var_list_3$fullblock_mod)
-  expect_equal(FALSE,param_var_list_3$boxcox_mod)
-  expect_equal(TRUE,param_var_list_3$add_etas_mod)
-  expect_equal(FALSE,param_var_list_3$tdist_mod)
+  expect_true(param_var_list_3$fullblock_mod)
+  expect_false(param_var_list_3$boxcox_mod)
+  expect_true(param_var_list_3$add_etas_mod)
+  expect_false(param_var_list_3$tdist_mod)
   expect_equal(par_var_models_4,param_var_list_4$par_var_models)
   expect_equal("NA",param_var_list_4$dofv_block)
   expect_equal("NA",param_var_list_4$dofv_box)
   expect_equal("NA",param_var_list_4$dofv_tdist)
-  expect_equal(FALSE,param_var_list_4$fullblock_mod)
-  expect_equal(FALSE,param_var_list_4$boxcox_mod)
-  expect_equal(FALSE,param_var_list_4$add_etas_mod)
-  expect_equal(FALSE,param_var_list_4$tdist_mod)
+  expect_false(param_var_list_4$fullblock_mod)
+  expect_false(param_var_list_4$boxcox_mod)
+  expect_false(param_var_list_4$add_etas_mod)
+  expect_false(param_var_list_4$tdist_mod)
   expect_equal(par_var_models_5,param_var_list_5$par_var_models)
   expect_equal(-3.73,param_var_list_5$dofv_block)
   expect_equal("NA",param_var_list_5$dofv_box)
   expect_equal("NA",param_var_list_5$dofv_tdist)
-  expect_equal(TRUE,param_var_list_5$fullblock_mod)
-  expect_equal(FALSE,param_var_list_5$boxcox_mod)
-  expect_equal(TRUE,param_var_list_5$add_etas_mod)
-  expect_equal(FALSE,param_var_list_5$tdist_mod)
+  expect_true(param_var_list_5$fullblock_mod)
+  expect_false(param_var_list_5$boxcox_mod)
+  expect_true(param_var_list_5$add_etas_mod)
+  expect_false(param_var_list_5$tdist_mod)
   expect_equal(par_var_models_6,param_var_list_6$par_var_models)
   expect_equal("NA",param_var_list_6$dofv_block)
   expect_equal("NA",param_var_list_6$dofv_box)
   expect_equal("NA",param_var_list_6$dofv_tdist)
-  expect_equal(FALSE,param_var_list_6$fullblock_mod)
-  expect_equal(FALSE,param_var_list_6$boxcox_mod)
-  expect_equal(FALSE,param_var_list_6$add_etas_mod)
-  expect_equal(FALSE,param_var_list_6$tdist_mod)
+  expect_false(param_var_list_6$fullblock_mod)
+  expect_false(param_var_list_6$boxcox_mod)
+  expect_false(param_var_list_6$add_etas_mod)
+  expect_false(param_var_list_6$tdist_mod)
   expect_equal(par_var_models_7,param_var_list_7$par_var_models)
 })
 
@@ -332,14 +332,14 @@ test_that("get eta values from boxcox or tdist phi file",{
   expect_equal(c("ETA_name","value"),colnames(eta_boxcox))
   expect_equal(c(rep("ETA(1)",4),rep("ETA(2)",4),rep("ETA(3)",4),rep("ETA(4)",4)),eta_boxcox$ETA_name)
   expect_equal(c(0.216665,0.276354,0.231142,0.107048,-0.022947,0.101007,0.974127,-0.022947,
-                 -0.126678,-0.369641,-0.525548,0.143994,-0.109397,-0.073727,0.034058,0.042088),round(eta_boxcox$value,6))
+                 -0.126678,-0.369641,-0.525548,0.143994,-0.109397,-0.073727,0.034058,0.042088),eta_boxcox$value,tolerance=6)
   expect_equal(data.frame(),
                get_eta_values(working.directory=file.path(files.w.dir,"qa_run2/modelfit_run"),
                               theta_values=theta_values_boxcox,param_model="boxcox"))
   expect_equal(c("ETA_name","value"),colnames(eta_tdist))
   expect_equal(c(rep("ETA(1)",4),rep("ETA(2)",4),rep("ETA(3)",4),rep("ETA(4)",4)),eta_tdist$ETA_name)
   expect_equal(c(0.204035,0.249988,0.215493,0.109567,0.042453,-0.174131,10.684607,0.042453,
-                 -0.162517,-0.646372,-1.279824,0.175925,3.482807,2.374547,-1.100379,-1.357668),round(eta_tdist$value,6))
+                 -0.162517,-0.646372,-1.279824,0.175925,3.482807,2.374547,-1.100379,-1.357668),eta_tdist$value,tolerance=6)
   expect_equal(data.frame(),
                get_eta_values(working.directory=file.path(files.w.dir,"qa_run2/modelfit_run"),
                               theta_values=theta_values_tdist,param_model="tdist"))
@@ -394,8 +394,8 @@ test_that("get create input table for transformed density plot",{
   expect_equal(rep(c(rep("ETA",3),rep("ETAT",3)),3),boxcox_shape_table_1$type)
   expect_equal(c(-0.6751095,0,0.6751095,-0.3600795,0,1.4943333,-2.4894512,0,2.4894512,rep(NA,3),
                  -2.1205587,0,2.1205587,-8.9436407,0,0.7997624),
-               round(boxcox_shape_table_1$eta),7)
-  expect_equal(TRUE,make_boxcox_shape_plot_1)
+               boxcox_shape_table_1$eta,tolerance=7)
+  expect_true(make_boxcox_shape_plot_1)
   expect_equal(7,fig_height_boxcox_1)
   expect_equal(c("ETA_name","density","type","eta"),colnames(boxcox_shape_table_2))
   expect_equal(c(54,4),dim(boxcox_shape_table_2))
@@ -403,10 +403,10 @@ test_that("get create input table for transformed density plot",{
                  rep("ETA(4)",6),rep("ETA(5)",6),rep("ETA(6)",6),
                  rep("ETA(7)",6),rep("ETA(8)",6),rep("ETA(9)",6)),boxcox_shape_table_2$ETA_name)
   expect_equal(rep(c(rep("ETA",3),rep("ETAT",3)),9),boxcox_shape_table_2$type)
-  expect_equal(TRUE,make_boxcox_shape_plot_2)
+  expect_true(make_boxcox_shape_plot_2)
   expect_equal(15,fig_height_boxcox_2)
   expect_equal(15,fig_height_boxcox_2)
-  expect_equal(FALSE,make_boxcox_shape_plot_3)
+  expect_false(make_boxcox_shape_plot_3)
   expect_equal(15,fig_height_boxcox_3)
   
   expect_equal(c("ETA_name","density","type","eta"),colnames(tdist_table_1))
@@ -415,8 +415,8 @@ test_that("get create input table for transformed density plot",{
   expect_equal(rep(c(rep("ETA",3),rep("ETAT",3)),3),tdist_table_1$type)
   expect_equal(c(-0.6751095,0,0.6751095,-0.3600795,0,1.4943333,-2.4894512,0,2.4894512,rep(NA,3),
                  -2.1205587,0,2.1205587,-8.9436407,0,0.7997624),
-               round(tdist_table_1$eta),7)
-  expect_equal(TRUE,make_tdist_plot_1)
+               tdist_table_1$eta,tolerance=7)
+  expect_true(make_tdist_plot_1)
   expect_equal(7,fig_height_tdist_1)
   expect_equal(c("ETA_name","density","type","eta"),colnames(tdist_table_2))
   expect_equal(c(54,4),dim(tdist_table_2))
@@ -424,8 +424,7 @@ test_that("get create input table for transformed density plot",{
                  rep("ETA(4)",6),rep("ETA(5)",6),rep("ETA(6)",6),
                  rep("ETA(7)",6),rep("ETA(8)",6),rep("ETA(9)",6)),tdist_table_2$ETA_name)
   expect_equal(rep(c(rep("ETA",3),rep("ETAT",3)),9),tdist_table_2$type)
-  expect_equal(TRUE,make_tdist_plot_2)
-  expect_equal(15,fig_height_tdist_2)
+  expect_true(make_tdist_plot_2)
   expect_equal(15,fig_height_tdist_2)
 })
 
@@ -446,19 +445,19 @@ context("qa, get_all_covariates")
 test_that("get FREM covariates table",{
   expect_equal(frem_table_1,get_all_covariates(frem_directory=file.path(files.w.dir,"qa_missing_folders_files/frem_run"),covariates=c('AGE'),
                                                categorical=c(),parameters=c(),dofv_full_block=3.5,skip=c('transform','resmod','scm','cdd','simeval'))$frem_table)
-  expect_equal(FALSE,get_all_covariates(frem_directory=file.path(files.w.dir,"qa_missing_folders_files/frem_run"),covariates=c('AGE'),
+  expect_false(get_all_covariates(frem_directory=file.path(files.w.dir,"qa_missing_folders_files/frem_run"),covariates=c('AGE'),
                                         categorical=c(),parameters=c(),dofv_full_block=3.5,skip=c())$frem_files_exists)
   expect_equal(frem_table_2,get_all_covariates(frem_directory=file.path(files.w.dir,"qa_run1/frem_run"),covariates=c(),categorical=c(),
                                                parameters=c(),dofv_full_block=3.5,skip=c('resmod','scm','cdd','simeval'))$frem_table)
-  expect_equal(FALSE,get_all_covariates(frem_directory=file.path(files.w.dir,"qa_run1/frem_run"),covariates=c(),categorical=c(),
+  expect_false(get_all_covariates(frem_directory=file.path(files.w.dir,"qa_run1/frem_run"),covariates=c(),categorical=c(),
                                         parameters=C(),dofv_full_block=3.5,skip=c())$frem_files_exists)
   expect_equal(frem_table_3,get_all_covariates(frem_directory=file.path(files.w.dir,"qa_run1/frem_run"),covariates=c('SEX'),
                                                categorical=c('AGE','WGT'),parameters=c('K1','K2'),dofv_full_block=3.5,skip=c())$frem_table)
-  expect_equal(TRUE,get_all_covariates(frem_directory=file.path(files.w.dir,"qa_run1/frem_run"),covariates=c('SEX'),categorical=c('AGE','WGT'),
+  expect_true(get_all_covariates(frem_directory=file.path(files.w.dir,"qa_run1/frem_run"),covariates=c('SEX'),categorical=c('AGE','WGT'),
                                        parameters=c('K1','K2'),dofv_full_block=3.5,skip=c())$frem_files_exists)
   expect_equal(frem_table_4,get_all_covariates(frem_directory=file.path(files.w.dir,"qa_run1/frem_run"),covariates=c('SEX'),
                                                categorical=c('AGE','WGT'),parameters=c(),dofv_full_block='NA',skip=c('resmod'))$frem_table)
-  expect_equal(TRUE,get_all_covariates(frem_directory=file.path(files.w.dir,"qa_run1/frem_run"),covariates=c('SEX'),categorical=c('AGE','WGT'),
+  expect_true(get_all_covariates(frem_directory=file.path(files.w.dir,"qa_run1/frem_run"),covariates=c('SEX'),categorical=c('AGE','WGT'),
                                        parameters=c(),dofv_full_block='NA',skip=c('transform','resmod','scm','cdd','simeval'))$frem_files_exists)
   expect_equal(frem_table_5,get_all_covariates(frem_directory=file.path(files.w.dir,"qa_run1/frem_run"),covariates=c('SEX'),
                                                categorical=c('AGE','WGT'),parameters=c(),dofv_full_block='NA',skip=c('resmod','frem','cdd'))$frem_table)
@@ -502,8 +501,7 @@ test_that("get SCM table",{
                get_scm_table(scm_directory=file.path(files.w.dir,"qa_missing_folders_files/scm_run"),
                              frem_directory=file.path(files.w.dir,"qa_missing_folders_files/frem_run"),
                              parameters=c('K1','K2'),covariates=c('AGE'),categorical=c(),skip=c())$max_scm_table)
-  expect_equal(FALSE,
-               get_scm_table(scm_directory=file.path(files.w.dir,"qa_missing_folders_files/scm_run"),
+  expect_false(get_scm_table(scm_directory=file.path(files.w.dir,"qa_missing_folders_files/scm_run"),
                              frem_directory=file.path(files.w.dir,"qa_missing_folders_files/frem_run"),
                              parameters=c('K1','K2'),covariates=c('AGE'),categorical=c(),skip=c())$scm_files_exists)
   expect_equal(scm_table_2,
@@ -516,8 +514,7 @@ test_that("get SCM table",{
                              frem_directory=file.path(files.w.dir,"qa_run1/frem_run"),
                              parameters=c('K1','K2'),
                              covariates=c(),categorical=c(),skip=c())$max_scm_table)
-  expect_equal(FALSE,
-               get_scm_table(scm_directory=file.path(files.w.dir,"qa_run1/scm_run"),
+  expect_false(get_scm_table(scm_directory=file.path(files.w.dir,"qa_run1/scm_run"),
                              frem_directory=file.path(files.w.dir,"qa_run1/frem_run"),
                              parameters=c('K1','K2'),
                              covariates=c(),categorical=c(),skip=c())$scm_files_exists)
@@ -531,8 +528,7 @@ test_that("get SCM table",{
                              frem_directory=file.path(files.w.dir,"qa_run1/frem_run"),
                              parameters=c('CL','V'),
                              covariates=c('APGR','WGT'),categorical=c(),skip=c())$max_scm_table)
-  expect_equal(TRUE,
-               get_scm_table(scm_directory=file.path(files.w.dir,"qa_run1/scm_run"),
+  expect_true(get_scm_table(scm_directory=file.path(files.w.dir,"qa_run1/scm_run"),
                              frem_directory=file.path(files.w.dir,"qa_run1/frem_run"),
                              parameters=c('CL','V'),
                              covariates=c('APGR','WGT'),categorical=c(),skip=c())$scm_files_exists)
@@ -546,8 +542,7 @@ test_that("get SCM table",{
                              frem_directory=file.path(files.w.dir,"qa_run2/frem_run"),
                              parameters=c('CL','V'),
                              covariates=c('APGR','WGT'),categorical=c(),skip=c('frem','resmod','transform','cdd','simeval'))$max_scm_table)
-  expect_equal(TRUE,
-               get_scm_table(scm_directory=file.path(files.w.dir,"qa_run2/scm_run"),
+  expect_true(get_scm_table(scm_directory=file.path(files.w.dir,"qa_run2/scm_run"),
                              frem_directory=file.path(files.w.dir,"qa_run2/frem_run"),
                              parameters=c('CL','V'),
                              covariates=c('APGR','WGT'),categorical=c(),skip=c('frem','resmod','transform','cdd','simeval'))$scm_files_exists)
@@ -561,8 +556,7 @@ test_that("get SCM table",{
                              frem_directory=file.path(files.w.dir,"qa_run2/frem_run"),
                              parameters=c('CL','V'),
                              covariates=c('APGR','WGT'),categorical=c(),skip=c('frem','resmod','transform','cdd','simeval'))$max_scm_table)
-  expect_equal(TRUE,
-               get_scm_table(scm_directory=file.path(files.w.dir,"qa_run3/scm_run"),
+  expect_true(get_scm_table(scm_directory=file.path(files.w.dir,"qa_run3/scm_run"),
                              frem_directory=file.path(files.w.dir,"qa_run2/frem_run"),
                              parameters=c('CL','V'),
                              covariates=c('APGR','WGT'),categorical=c(),skip=c('frem','resmod','transform','cdd','simeval'))$scm_files_exists)
@@ -607,7 +601,7 @@ covariates_extra_table_6 <- data.frame("Covariate"=c("SCM","FREM"),"dOFV"=c("ERR
 covariates_table_7 <- data.frame(c("FREM","CLWGT-4"),c(3.6,0.47),c(6,1),stringsAsFactors = F)
 colnames(covariates_table_7) <- c("","dOFV","Add.params")
 covariates_extra_table_7 <- data.frame("Covariate"=c("CLAPGR-4","CLWGT-4","VAPGR-4","VWGT-4","sum(SCMu)","FREM"),
-                                       "dOFV"=c("NA","0.5","0.2","0.1","NA","3.6"),
+                                       "dOFV"=c("NA","0.5","0.2","0.1","0.8","3.6"),
                                        "Coefficient"=c("NA","0.050","0.004","-0.012","",""),stringsAsFactors = F)
 covariates_table_8 <- data.frame(c("FREM","SCM"),c("SKIPPED","SKIPPED"),c("",""),stringsAsFactors = F)
 colnames(covariates_table_8) <- c("","dOFV","Add.params")
@@ -769,49 +763,49 @@ colnames(cdd_highest_dofv_8) <- c("","dOFV")
 #compare
 context("qa, get_ii_table")
 test_that("create influential individuals table",{
-  expect_equal(FALSE,list_ii_1$cdd_files_exist)
+  expect_false(list_ii_1$cdd_files_exist)
   expect_equal(c(),list_ii_1$all_dofv)
   expect_equal(ERROR_table,list_ii_1$cdd.data)
   expect_equal(cdd_highest_dofv_1,list_ii_1$cdd_highest_dofv)
   expect_equal(ERROR_table,list_ii_1$ii_table)
   expect_equal(c(),list_ii_1$infl_id)
   expect_equal(5,list_ii_1$fig_height_infl)
-  expect_equal(TRUE,list_ii_2$cdd_files_exist)
+  expect_true(list_ii_2$cdd_files_exist)
   expect_equal(c(),list_ii_2$all_dofv)
   expect_equal(ERROR_table,list_ii_2$cdd.data)
   expect_equal(cdd_highest_dofv_1,list_ii_2$cdd_highest_dofv)
   expect_equal(ERROR_table,list_ii_2$ii_table)
   expect_equal(c(),list_ii_2$infl_id)
   expect_equal(5,list_ii_2$fig_height_infl)
-  expect_equal(TRUE,list_ii_3$cdd_files_exist)
+  expect_true(list_ii_3$cdd_files_exist)
   expect_equal(c(-0.01014,-0.06941,-0.00265,-0.02541,-0.08563),list_ii_3$all_dofv)
   expect_equal(data.frame(),list_ii_3$cdd.data)
   expect_equal(cdd_highest_dofv_3,list_ii_3$cdd_highest_dofv)
   expect_equal(ii_table_3,list_ii_3$ii_table)
   expect_equal(c(),list_ii_3$infl_id)
   expect_equal(5,list_ii_3$fig_height_infl)
-  expect_equal(TRUE,list_ii_4$cdd_files_exist)
+  expect_true(list_ii_4$cdd_files_exist)
   expect_equal(c(0.11014,-0.06941,2.00265,0.12541,0.08563,0.00003,-2.08563,0.01568,1.03525),list_ii_4$all_dofv)
   expect_equal(cdd_data_4,list_ii_4$cdd.data)
   expect_equal(cdd_highest_dofv_4,list_ii_4$cdd_highest_dofv)
   expect_equal(ii_table_4,list_ii_4$ii_table)
   expect_equal(c(34,8),list_ii_4$infl_id)
   expect_equal(5,list_ii_4$fig_height_infl)
-  expect_equal(TRUE,list_ii_5$cdd_files_exist)
+  expect_true(list_ii_5$cdd_files_exist)
   expect_equal(c(0.11014,-0.06941,2.00265,0.12541,0.08563,0.00003,-2.08563,0.01568,1.03525),list_ii_5$all_dofv)
   expect_equal(cdd_data_4,list_ii_5$cdd.data)
   expect_equal(cdd_highest_dofv_4,list_ii_5$cdd_highest_dofv)
   expect_equal(ii_table_5,list_ii_5$ii_table)
   expect_equal(c(34,8,14,11),list_ii_5$infl_id)
   expect_equal(7,list_ii_5$fig_height_infl)
-  expect_equal(TRUE,list_ii_6$cdd_files_exist)
+  expect_true(list_ii_6$cdd_files_exist)
   expect_equal(c(0.11014,-0.06941,2.00265,0.12541,0.08563,0.00003,-2.08563,0.01568,1.03525),list_ii_6$all_dofv)
   expect_equal(cdd_data_4,list_ii_6$cdd.data)
   expect_equal(cdd_highest_dofv_4,list_ii_6$cdd_highest_dofv)
   expect_equal(ii_table_6,list_ii_6$ii_table)
   expect_equal(c(34,8,14,11,57,7,3),list_ii_6$infl_id)
   expect_equal(15,list_ii_6$fig_height_infl)
-  expect_equal(TRUE,list_ii_7$cdd_files_exist)
+  expect_true(list_ii_7$cdd_files_exist)
   expect_equal(c(0.01014,0.06941,0.00265,0.02541,0.08563),list_ii_7$all_dofv)
   expect_equal(cdd_data_7,list_ii_7$cdd.data)
   expect_equal(cdd_highest_dofv_7,list_ii_7$cdd_highest_dofv)
@@ -883,42 +877,42 @@ colnames(max_outlier_table_11) <- c("","dOFV")
 #compare
 context("qa, get_outliers_table")
 test_that("create outliers table",{
-  expect_equal(FALSE,list_simeval_1$simeval_files_exist)
+  expect_false(list_simeval_1$simeval_files_exist)
   expect_equal(ERROR_table,list_simeval_1$outliers_table)
   expect_equal(max_outlier_table_1,list_simeval_1$max_outlier_table)
   expect_equal(c(),list_simeval_1$outlier_ids)
   expect_equal(5,list_simeval_1$fig_height_outl)
-  expect_equal(TRUE,list_simeval_2$simeval_files_exist)
+  expect_true(list_simeval_2$simeval_files_exist)
   expect_equal(outliers_table_2,list_simeval_2$outliers_table)
   expect_equal(max_outlier_table_2,list_simeval_2$max_outlier_table)
   expect_equal(c(),list_simeval_2$outlier_ids)
   expect_equal(5,list_simeval_2$fig_height_outl)
-  expect_equal(TRUE,list_simeval_3$simeval_files_exist)
+  expect_true(list_simeval_3$simeval_files_exist)
   expect_equal(outliers_table_3,list_simeval_3$outliers_table)
   expect_equal(max_outlier_table_3,list_simeval_3$max_outlier_table)
   expect_equal(c(1,12,8,34),list_simeval_3$outlier_ids)
   expect_equal(7,list_simeval_3$fig_height_outl)
-  expect_equal(TRUE,list_simeval_4$simeval_files_exist)
+  expect_true(list_simeval_4$simeval_files_exist)
   expect_equal(outliers_table_2,list_simeval_4$outliers_table)
   expect_equal(max_outlier_table_2,list_simeval_4$max_outlier_table)
   expect_equal(c(),list_simeval_4$outlier_ids)
   expect_equal(5,list_simeval_4$fig_height_outl)
-  expect_equal(TRUE,list_simeval_5$simeval_files_exist)
+  expect_true(list_simeval_5$simeval_files_exist)
   expect_equal(outliers_table_5,list_simeval_5$outliers_table)
   expect_equal(max_outlier_table_3,list_simeval_5$max_outlier_table)
   expect_equal(c(1,12,8,34),list_simeval_5$outlier_ids)
   expect_equal(7,list_simeval_5$fig_height_outl)
-  expect_equal(TRUE,list_simeval_6$simeval_files_exist)
+  expect_true(list_simeval_6$simeval_files_exist)
   expect_equal(outliers_table_6,list_simeval_6$outliers_table)
   expect_equal(max_outlier_table_6,list_simeval_6$max_outlier_table)
   expect_equal(c(1,12,8,34),list_simeval_6$outlier_ids)
   expect_equal(7,list_simeval_6$fig_height_outl)
-  expect_equal(TRUE,list_simeval_7$simeval_files_exist)
+  expect_true(list_simeval_7$simeval_files_exist)
   expect_equal(outliers_table_7,list_simeval_7$outliers_table)
   expect_equal(max_outlier_table_7,list_simeval_7$max_outlier_table)
   expect_equal(c(1,12),list_simeval_7$outlier_ids)
   expect_equal(5,list_simeval_7$fig_height_outl)
-  expect_equal(TRUE,list_simeval_8$simeval_files_exist)
+  expect_true(list_simeval_8$simeval_files_exist)
   expect_equal(outliers_table_8,list_simeval_8$outliers_table)
   expect_equal(max_outlier_table_8,list_simeval_8$max_outlier_table)
   expect_equal(c(14,7,8,3,11,57,34),list_simeval_8$outlier_ids)
@@ -996,31 +990,31 @@ rgroup_names <- c("Structural Model","Parameter Variability Model","Covariates",
                   "Residual Error Model","Influential Individuals","Outliers")
 overview_table_2 <- data.frame(c("TIME","PRED","Full OMEGA Block","Box-Cox Transformation","Additional ETA","t-distribution",
                                  "FREM","SCM","RESMOD","CDD","SIMEVAL"),
-                               c(rep("NA",9),rep("ERROR",2)),c("4","4",rep("",9)),
+                               c(rep("NA",9),rep("ERROR",2)),c("2","2",rep("",9)),
                                stringsAsFactors = F)
 colnames(overview_table_2) <- c("","dOFV","Additional parameters")
 overview_table_3 <- data.frame(c("TIME","PRED","Full OMEGA Block","Box-Cox Transformation","Additional ETA","t-distribution",
                                  "FREM","CLAPGR-4","tdist","dtbs","All dOFV values are negative","No dOFV values found"),
                                c("NA","4.8","ERROR","-0.6","NA","NA","NA","2.9","43.6","21.7","",""),
-                               c("4","4","","3","","","","1","1","2","",""),
+                               c("2","2","","3","","","","1","1","2","",""),
                                stringsAsFactors = F)
 colnames(overview_table_3) <- c("","dOFV","Additional parameters")
 overview_table_4 <- data.frame(c("TIME","PRED","Full OMEGA Block","Box-Cox Transformation","Additional ETA","t-distribution",
                                  "FREM","CLAPGR-4","tdist","dtbs","Subject 34","Subject 34"),
                                c("4.3","4.8","-3.7","-0.6","3.4","-1.0","3.6","2.9","43.6","21.7","2.0","2.0"),
-                               c(rep("4",3),"0","2","0","6","1","1","2","",""),
+                               c(2,2,4,"0","2","0","6","1","1","2","",""),
                                stringsAsFactors = F)
 colnames(overview_table_4) <- c("","dOFV","Additional parameters")
 overview_table_5 <- data.frame(c("TIME","PRED","Full OMEGA Block","Box-Cox Transformation","Additional ETA","t-distribution",
                                  "FREM","CLAPGR-4","tdist","dtbs","Subject 34","Subject 34"),
                                c("4.31","4.80","-3.73","-0.57","3.41","-1.03","3.60","2.87","43.62","21.67","0.01","2.00"),
-                               c(rep("4",3),"0","2","0","6","1","1","2","",""),
+                               c(2,2,4,"0","2","0","6","1","1","2","",""),
                                stringsAsFactors = F)
 colnames(overview_table_5) <- c("","dOFV","Additional parameters")
 overview_table_6 <- data.frame(c("TIME","PRED","Full OMEGA Block","Box-Cox Transformation","Additional ETA","t-distribution",
                                  "FREM","CLAPGR-4","tdist","dtbs","Subject 34","Subject 34"),
                                c("4.3","4.8","-3.7","-0.6","3.4","-1.0","3.6","2.9","43.6","21.7","0.0","2.0"),
-                               c(rep("4",3),"0","2","0","6","1","1","2","",""),
+                               c(2,2,4,"0","2","0","6","1","1","2","",""),
                                stringsAsFactors = F)
 colnames(overview_table_6) <- c("","dOFV","Additional parameters")
 overview_table_7 <- data.frame(c("RESMOD","Full OMEGA Block","Box-Cox Transformation","Additional ETA","t-distribution",
@@ -1151,12 +1145,6 @@ obs_8 <- data.frame(ID=as.factor(c(1,1,2,2,3,4,4,4,5,5,5)),
                     CIPREDI=c(17,28,11,21,28,20,24,30,14,18,23),
                     MDV=c(rep(0,11)),
                     DV=c(17.3,31,9.7,24.6,24.3,23.9,0,31.7,14.2,18.2,20.3))
-obs_9 <- data.frame(ID=as.factor(c(1,1,2,2,3,4,4,4,5,5,5)),
-                    TIME=c(2,112.5,2,63.5,134.3,1.8,59.3,130.8,2,59.5,132),
-                    CWRES=c(-0.401,0.58,-1.27,1.6,-1.5,0.0206,-0.34,0.31,-0.92,-0.702,-1),
-                    PRED=c(17,28,10,18,31,20,24,30,19,23,28),
-                    CIPREDI=c(17,28,11,21,28,20,24,30,14,18,23),
-                    MDV=c(rep(0,11)))
 obs_11 <- data.frame(ID=as.factor(c(1,1,2,2,3,4,4,4,5,5,5)),
                     TIME=c(2,112.5,2,63.5,134.3,1.8,59.3,130.8,2,59.5,132),
                     CWRES=c(-0.401,0.58,-1.27,1.6,-1.5,0.0206,-0.34,0.31,-0.92,-0.702,-1),
@@ -1212,40 +1200,38 @@ sim_13 <- data.frame(ID=as.factor(rep(c(1,1,3,5,5,5),3)),
 #compare
 context("qa, get_tables_for_vpc")
 test_that("get tables for vpc plots",{
-  expect_equal(TRUE,list_vpc_tables_1$make_vpc)
+  expect_true(list_vpc_tables_1$make_vpc)
   expect_equal(obs_1,list_vpc_tables_1$obs)
   expect_equal(sim_1,list_vpc_tables_1$sim)
-  expect_equal(TRUE,list_vpc_tables_2$make_vpc)
+  expect_true(list_vpc_tables_2$make_vpc)
   expect_equal(obs_1,list_vpc_tables_2$obs)
   expect_equal(sim_1,list_vpc_tables_2$sim)
-  expect_equal(FALSE,list_vpc_tables_3$make_vpc)
-  expect_equal(FALSE,list_vpc_tables_4$make_vpc)
-  expect_equal(FALSE,list_vpc_tables_5$make_vpc)
-  expect_equal(TRUE,list_vpc_tables_6$make_vpc)
+  expect_false(list_vpc_tables_3$make_vpc)
+  expect_false(list_vpc_tables_4$make_vpc)
+  expect_false(list_vpc_tables_5$make_vpc)
+  expect_true(list_vpc_tables_6$make_vpc)
   expect_equal(obs_6,list_vpc_tables_6$obs)
   expect_equal(sim_6,list_vpc_tables_6$sim)
-  expect_equal(TRUE,list_vpc_tables_7$make_vpc)
+  expect_true(list_vpc_tables_7$make_vpc)
   expect_equal(obs_1,list_vpc_tables_7$obs)
   expect_equal(sim_1,list_vpc_tables_7$sim)
-  expect_equal(TRUE,list_vpc_tables_8$make_vpc)
+  expect_true(list_vpc_tables_8$make_vpc)
   expect_equal(obs_8,list_vpc_tables_8$obs)
   expect_equal(sim_1,list_vpc_tables_8$sim)
-  expect_equal(FALSE,list_vpc_tables_9$make_vpc)
-  expect_equal(obs_9,list_vpc_tables_9$obs)
-  expect_equal(sim_1,list_vpc_tables_9$sim)
-  expect_equal(TRUE,list_vpc_tables_10$make_vpc)
+  expect_false(list_vpc_tables_9$make_vpc)
+  expect_true(list_vpc_tables_10$make_vpc)
   expect_equal(obs_8,list_vpc_tables_10$obs)
   expect_equal(sim_1,list_vpc_tables_10$sim)
-  expect_equal(TRUE,list_vpc_tables_11$make_vpc)
+  expect_true(list_vpc_tables_11$make_vpc)
   expect_equal(obs_11,list_vpc_tables_11$obs)
   expect_equal(sim_1,list_vpc_tables_11$sim)
-  expect_equal(TRUE,list_vpc_tables_12$make_vpc)
+  expect_true(list_vpc_tables_12$make_vpc)
   expect_equal(obs_12,list_vpc_tables_12$obs)
   expect_equal(sim_12,list_vpc_tables_12$sim)
-  expect_equal(TRUE,list_vpc_tables_13$make_vpc)
+  expect_true(list_vpc_tables_13$make_vpc)
   expect_equal(obs_13,list_vpc_tables_13$obs)
   expect_equal(sim_13,list_vpc_tables_13$sim)
-  expect_equal(TRUE,list_vpc_tables_14$make_vpc)
+  expect_true(list_vpc_tables_14$make_vpc)
   expect_equal(obs_6,list_vpc_tables_14$obs)
   expect_equal(sim_6,list_vpc_tables_14$sim)
 })
