@@ -1,5 +1,5 @@
 \input{inputs/format_header.tex}
-\guidetitle{BOOT\_SCM user guide}{2017-09-26}
+\guidetitle{BOOT\_SCM user guide}{2017-09-22}
 
 
 \begin{document}
@@ -27,12 +27,6 @@ A configuration file is required on the command-line. The format of the configur
 The input model must be set in the configuration file, it cannot be given on the boot\_scm commandline. 
 In addition to the configuration file, one command-line option is mandatory:
 \begin{optionlist}
-\optdefault{samples}{N}
-The number of bootstrapped datasets to run the scm on. 
-\nextopt
-\end{optionlist}
-
-\begin{optionlist}
 \optdefault{dummy\_covariates}{comma-separated list of covariates}
 Default not set. If used, a new column for each listed covariate will be added to the dataset, 														  
 containing a randomly permuted copy of the original covariate column and with header X\verb|<name of original covariate>|. 
@@ -53,6 +47,9 @@ scm userguide.
 \optname{run\_final\_models}
 Default not set. If set then boot\_scm will run the final models from each scm on the original dataset and collect the ofv values 
 in the output file ofv\_final.csv   
+\nextopt
+\optdefault{samples}{N}
+The number of bootstrapped datasets to run the scm on. 
 \nextopt
 \optdefault{stratify\_on}{item in \$INPUT}
 Default not used. It may be necessary to use stratification in the resampling procedure. For example, if the original data consists of two groups 
