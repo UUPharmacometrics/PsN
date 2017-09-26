@@ -29,11 +29,11 @@ input.data <- function(ebe.npde.file,eta.names,show.warning) {
         }
       }
       if(show.warning){
-        message(paste0("WARNING! Removed individuals from csv file \"",ebe.npde.file,"\". No data for ID numbers ",ID_deleted_text,"."))
+        message(paste0("WARNING! No data for ID numbers ",ID_deleted_text,"in the csv file \"",ebe.npde.file,"\"."))
       }
     } else {
       if(show.warning) {
-        message(paste0("WARNING! Removed individual from csv file \"",ebe.npde.file,"\". No data for ID number ",ID_deleted,"."))
+        message(paste0("WARNING! No data for ID number ",ID_deleted,"in the csv file \"",ebe.npde.file,"\"."))
       }
     }
     ebenpde_tmp <- ebenpde_tmp_input[-row_delete,]
