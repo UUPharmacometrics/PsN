@@ -1,12 +1,10 @@
 \input{inputs/format_header.tex}
-\guidetitle{CDD user guide}{2017-09-22}
-
+\guidetitle{CDD user guide}{2017-09-26}
 
 \begin{document}
 
 \maketitle
 \newcommand{\guidetoolname}{cdd}
-
 
 \section{Introduction}
 The Case Deletion Diagnostics tool is run using the command from the command line with a few mandatory arguments. 
@@ -19,7 +17,6 @@ a group as long as no individual contain multiple values in that column.One shou
 individual records. PsN will renumber the ID column so that two individuals with the same ID will not end up next to each other.
 Examples
 \begin{verbatim}
-cdd pheno.mod -case_column=AGE
 cdd run89.mod -case_column=1
 \end{verbatim}
 This will perform a Case Deletion Diagnostic on the model specified in run89.mod based on the factors in column ten. If for example, 
@@ -30,6 +27,8 @@ center 1 excluded, dataset 2 individuals from center 2 and so on.
 
 \subsection{Required input}
 A NONMEM model file with successful termination is required on the command-line.
+
+\subsection {optional input}
 
 \begin{optionlist}
 \optdefault{bins}{N}
@@ -71,7 +70,7 @@ or psn\_options -h on the commandline.
 \input{inputs/basic_options.tex}
 \begin{optionlist}
 \optname{last\_est\_complete}
-is optional and only applies with NONMEM7 and cdd option -xv. 
+is optional and only applies with NONMEM 7 and cdd option -xv. 
 See common\_options.pdf for details.
 \nextopt
 \end{optionlist}
@@ -157,7 +156,7 @@ and the relative bias in percent is \[100\cdot\frac{bias}{p_{orig,j}}\].
 
 \section{Known bugs/issues}
 
-If NONMEM6 is used with the cdd and the S matrix is algorithmically singular (message in lst-file, checked also by sumo script) the Cook 
+If NONMEM 6 is used with the cdd and the S matrix is algorithmically singular (message in lst-file, checked also by sumo script) the Cook 
 scores cannot be trusted. The cdd does not check for this error. 
 
 \end{document}
