@@ -220,7 +220,7 @@ sub modelfit_setup
                     categorical => [ @categorical ],
                     directory => 'frem_run',
                     rescale => 1,
-                    run_sir => 1,
+                    run_sir => 0,
                     rplots => 1,
                     top_tool => 1,
                     clean => 1,
