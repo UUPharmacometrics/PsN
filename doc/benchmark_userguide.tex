@@ -1,5 +1,5 @@
 \input{inputs/format_header.tex}
-\guidetitle{BENCHMARK user guide}{2017-09-22}
+\guidetitle{BENCHMARK user guide}{2017-09-26}
 
 
 \begin{document}
@@ -62,7 +62,7 @@ must be listed with different names in psn.conf, since PsN does not ''know'' abo
 \optname{copy\_data}
 Default set. Disable with -no-copy\_data. By default, PsN will copy the datafile into NM\_run1 and set a local path in psn.mod, 
 the actual modelfile run with NONMEM. If -no-copy\_data is set, PsN will not copy the data to NM\_run1 and instead set a 
-global path to the datafile in psn.mod.
+global path to the datafile in psn.mod. However, NONMEM will not accept a path longer than 80 characters.
 \nextopt
 %\optdefault{dofv\_threshold}{number}
 %Default 1 (percent). If the relative difference between the ofv of two model runs in the same raw\_results file
@@ -97,7 +97,7 @@ If only one alternative is set then this modification will be made to all models
 sense if there are other sets of alternative modifications.
 The option names must be in upper case, unless ``none'' is specified, which is 
 a marker for ``no modification of the record''. Example: \\
--record\_options=estimation:none,FAST means that
+-record\_options=estimation:none, FAST means that
 each model should be run both with option FAST added to \$ESTIMATION and no modification to 
 \$ESTIMATION.
 If more than one record-options combination is desired, the different combinations are 
