@@ -29,7 +29,6 @@ get_resmod_table <- function(directory, idv){
       fields_with_header
     }) %>%
       rename(dOFV=dofv)
-      #mutate(dOFV = -scan(text=paste0(dOFV)))
     
     new_dofv <- c()
     for(i in 1:nrow(resmod_table)) {

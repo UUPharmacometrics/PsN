@@ -2,14 +2,14 @@ get_boxcox_lambda_table <- function(directory,dofv_boxcox) {
   #get lambda values (extra table for box-cox transformation)
   if(file.exists(file.path(directory,"modelfit_run/boxcox.ext")) && file.exists(file.path(directory,"linearize_run/scm_dir1/derivatives.ext"))) {
     ext_file <- read.table((file.path(directory,"modelfit_run/boxcox.ext")),header=TRUE,skip=1,stringsAsFactors = F) %>%
-      filter(ITERATION==-1000000000)
+      dplyr::filter(ITERATION==-1000000000)
     lambdas <- ext_file[grep("^THETA[0-9]+$",colnames(ext_file))]
     new_omega_values <- ext_file[,grep("^OMEGA",colnames(ext_file))]
     #new_omega_values <- new_omega_values[,which(new_omega_values!=0)]
     
     # omega values from original model
     derivatives_table <-read.table((file.path(directory,"linearize_run/scm_dir1/derivatives.ext")),header=TRUE,skip=1,stringsAsFactors = F) %>%
-      filter(ITERATION==-1000000000)
+      dplyr::filter(ITERATION==-1000000000)
     deriv_omega_values <- derivatives_table[,grep("^OMEGA",colnames(derivatives_table))]
     #deriv_omega_values <- deriv_omega_values[,which(deriv_omega_values!=0)]
     

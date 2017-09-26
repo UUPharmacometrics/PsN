@@ -35,7 +35,7 @@ get_param_var_tables <- function(directory,model.filename,skip) {
         dofv_box <- as.numeric(linbase_ofv - linbox_ofv)
         #get nr TH+d
         ext_file <- read.table(file.path(directory,"modelfit_run/boxcox.ext"),header=TRUE,skip=1,stringsAsFactors = F) %>%
-          filter(ITERATION==-1000000000)
+          dplyr::filter(ITERATION==-1000000000)
         TH_values <- ext_file[grep("^THETA+[0-9]$",colnames(ext_file))]
         add.par_box <- length(TH_values[!is.na(TH_values)])
       } else {
@@ -73,7 +73,7 @@ get_param_var_tables <- function(directory,model.filename,skip) {
         dofv_tdist <- as.numeric(linbase_ofv - lintdist_ofv)
         #get nr TH+d
         ext_file <- read.table(file.path(directory,"modelfit_run/tdist.ext"),header=TRUE,skip=1,stringsAsFactors = F) %>%
-          filter(ITERATION==-1000000000)
+          dplyr::filter(ITERATION==-1000000000)
         TH_values <- ext_file[grep("^THETA+[0-9]$",colnames(ext_file))]
         add.par_tdist <- length(TH_values[!is.na(TH_values)])
       } else {

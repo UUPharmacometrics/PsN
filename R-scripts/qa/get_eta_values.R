@@ -11,7 +11,7 @@ get_eta_values <- function(working.directory,theta_values,param_model) {
       nr[i] <- sub("\\)","",nr[i])
     }
     eta_table <- read.table(phi_file_path,skip=1,header=T,stringsAsFactors = F) %>%
-      select(unique(grep(paste(paste0("ETA.",nr,"."),collapse="|"),colnames(.))))
+      dplyr::select(unique(grep(paste(paste0("ETA.",nr,"."),collapse="|"),colnames(.))))
     
     for(i in 1:ncol(eta_table)) {
       eta_name <- sub("\\(",".",theta_values$ETA[i])
@@ -28,8 +28,9 @@ get_eta_values <- function(working.directory,theta_values,param_model) {
                                      +((3*eta^6 + 19*eta^4 + 17*eta^2 - 15)/(384*deg_of_freedom^3)))
       }
     }
-    eta_table <- eta_table %>% gather(ETA_name) %>% 
-      mutate(ETA_name=sub("\\.","(",.$ETA_name)) %>% mutate(ETA_name=sub("[.]$",")",.$ETA_name)) 
+    eta_table <- eta_table %>% tidyr::gather(ETA_name) %>% 
+      dplyr::mutate(ETA_name=sub("\\.","(",.$ETA_name)) %>% 
+      dplyr::mutate(ETA_name=sub("[.]$",")",.$ETA_name)) 
     } else {
     eta_table <- data.frame()
   }

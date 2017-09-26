@@ -22,18 +22,18 @@ get_resmod_ruv_table <- function(directory, idv_name, dvid_name, skip){
     
     k <- 1
     for (j in 1:length(dvid_nr)) {
-      resmod_table <- resmod_table_full %>% filter(dvid==!!dvid_nr[j]) %>% select(-iteration, -dvid)
+      resmod_table <- resmod_table_full %>% dplyr::filter(dvid==!!dvid_nr[j]) %>% dplyr::select(-iteration, -dvid)
       non_time_var <- resmod_table %>%
-        filter(!grepl("idv_varying", model)) %>%
-        mutate(df = stringr::str_count(parameters, "="))
+        dplyr::filter(!grepl("idv_varying", model)) %>%
+        dplyr::mutate(df = stringr::str_count(parameters, "="))
       time_var_cutoff <- resmod_table %>%
-        filter(grepl("idv_varying_RUV_cutoff",model)) %>%
-        mutate(df = 2) %>%
-        arrange(desc(dOFV))
-      resmod_ruv_table <- bind_rows(non_time_var, 
+        dplyr::filter(grepl("idv_varying_RUV_cutoff",model)) %>%
+        dplyr::mutate(df = 2) %>%
+        dplyr::arrange(desc(dOFV))
+      resmod_ruv_table <- dplyr::bind_rows(non_time_var, 
                                     time_var_cutoff %>% 
-                                      slice(1) %>%
-                                      mutate(model = "time varying"))
+                                      dplyr::slice(1) %>%
+                                      dplyr::mutate(model = "time varying"))
       resmod_ruv_table <- resmod_ruv_table[order(resmod_ruv_table$dOFV,decreasing = T),]
       rownames(resmod_ruv_table) <- NULL
       colnames(resmod_ruv_table)[which(colnames(resmod_ruv_table)=="model")] <- "Model"

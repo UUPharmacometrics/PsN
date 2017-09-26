@@ -14,7 +14,7 @@ get_param_extra_table <- function(directory,dofv,param_model) {
   #get THETA values
   if(file.exists(ext_file.path) && file.exists(file.path(directory,"linearize_run/scm_dir1/derivatives.ext"))) {
     ext_file <- read.table((ext_file.path),header=TRUE,skip=1,stringsAsFactors = F) %>%
-      filter(ITERATION==-1000000000)
+      dplyr::filter(ITERATION==-1000000000)
     new_omega_values <- get_omega_values(ext_file=ext_file.path,omegas="var")
     # new_omega_values <- ext_file[,grep("^OMEGA",colnames(ext_file))]
     col_names <- colnames(new_omega_values)[which(new_omega_values!=0)]
@@ -37,13 +37,13 @@ get_param_extra_table <- function(directory,dofv,param_model) {
     
     # omega values from original model
     deriv_omega_values <-read.table((file.path(directory,"linearize_run/scm_dir1/derivatives.ext")),header=TRUE,skip=1,stringsAsFactors = F) %>%
-      filter(ITERATION==-1000000000) %>%
-      select(grep("^OMEGA",colnames(.)))
+      dplyr::filter(ITERATION==-1000000000) %>%
+      dplyr::select(grep("^OMEGA",colnames(.)))
     
     #get theta values
     THETA_values <- ext_file %>%
-      select(grep("^THETA\\d+$",colnames(.))) %>%
-      select(1:length(new_omega_values))
+      dplyr::select(grep("^THETA\\d+$",colnames(.))) %>%
+      dplyr::select(1:length(new_omega_values))
     
     param_extra_table <- as.data.frame(array(0,c(length(THETA_values),4)))
     colnames(param_extra_table) <- c("",table_col_name,"New SD","Old SD")

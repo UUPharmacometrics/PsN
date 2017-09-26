@@ -8,10 +8,10 @@ plot_transformed_density <- function(data_table,eta_table,param_model) {
 
     get_x_min_max <- function(data_table,eta_table,y_pec=0.01) {
       for(i in unique(data_table$ETA_name)) {
-        data_table_per_eta <- data_table %>% filter(ETA_name %in% i)
+        data_table_per_eta <- data_table %>% dplyr::filter(ETA_name %in% i)
         # 1 procent of the density values
         y_min_limit <- min(data_table_per_eta$density) + y_pec*abs(max(data_table_per_eta$density)-min(data_table_per_eta$density))
-        spec <- data_table_per_eta %>% filter(density>y_min_limit)
+        spec <- data_table_per_eta %>% dplyr::filter(density>y_min_limit)
         x_max <- max(spec$eta)
         x_min <- min(spec$eta)
 
@@ -22,7 +22,7 @@ plot_transformed_density <- function(data_table,eta_table,param_model) {
         if(any(eta_table$value < x_min)) {
           x_min <- min(eta_table$value)
         }
-        data_table_per_eta <- data_table_per_eta %>% filter(eta>=x_min,eta<=x_max)
+        data_table_per_eta <- data_table_per_eta %>% dplyr::filter(eta>=x_min,eta<=x_max)
 
         if(i==unique(data_table$ETA_name)[1]) {
           data_table_new <- data_table_per_eta
@@ -46,9 +46,9 @@ plot_transformed_density <- function(data_table,eta_table,param_model) {
         theme(legend.position = "top")
       
       if(length(unique(data_table_new$ETA_name)) > 4) {
-        p[[i]] <- p[[i]] + facet_wrap_paginate(~ETA_name,nrow=4,ncol=3,scales="free",page=i)
+        p[[i]] <- p[[i]] + ggforce::facet_wrap_paginate(~ETA_name,nrow=4,ncol=3,scales="free",page=i)
       } else {
-        p[[i]] <- p[[i]] + facet_wrap_paginate(~ETA_name,ncol=2,scales="free")
+        p[[i]] <- p[[i]] + ggforce::facet_wrap_paginate(~ETA_name,ncol=2,scales="free")
       }
       
       if(!missing(eta_table)) {

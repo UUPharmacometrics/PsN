@@ -9,16 +9,16 @@ get_scm_table <- function(scm_directory,frem_directory,parameters,covariates,cat
     if(length(parameters)!=0 && (length(categorical)!=0 || (length(covariates)!=0))) {
       if(scm_files_exists) {
         scm_table <- read.csv(rawres_file,stringsAsFactors = F) %>%
-          mutate(dOFV = ofv[step.number==0]-ofv) %>%
-          slice(-1) %>%
-          select(relation, dOFV)
+          dplyr::mutate(dOFV = ofv[step.number==0]-ofv) %>%
+          dplyr::slice(-1) %>%
+          dplyr::select(relation, dOFV)
         colnames(scm_table) <- c("","dOFV")
         #max_table
         max_scm_table <- cbind(scm_table[which.max(scm_table$dOFV),],1)
         
         # add coefficient
         scm_table_coef <- read.csv(rawres_file,stringsAsFactors = F) %>%
-          slice(-1)
+          dplyr::slice(-1)
         column_names <- paste0(scm_table_coef$relation,"-1")
         column_names <- gsub("-",".",column_names)
         coef_table <- scm_table_coef[,which(colnames(scm_table_coef) %in% column_names)]
@@ -51,7 +51,7 @@ get_scm_table <- function(scm_directory,frem_directory,parameters,covariates,cat
           # get sd from frem model 4
           needed_columns <- paste0("BSV_",cov)
           frem_sd_cov <- read.csv(file.path(frem_directory,"model4_modelfit_dir1/raw_results.csv")) %>% 
-            select(intersect(needed_columns,colnames(.))) %>%
+            dplyr::select(intersect(needed_columns,colnames(.))) %>%
             sqrt()
           colnames(frem_sd_cov) <- sub("BSV_","",colnames(frem_sd_cov))
           # frem_sd <- sqrt(get_omega_values(file.path(frem_directory,"final_models/model_4.ext"),omegas = "var"))

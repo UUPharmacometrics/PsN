@@ -7,7 +7,7 @@ get_ii_table <- function(raw.results.file,skipped.id.file,cutoff,max_rows,skip){
     cdd.data.all <- data_full$cdd.data.all
     if(any(colnames(cdd.data.all)=="cdd.delta.ofv")) {
       all_dofv <- cdd.data.all$cdd.delta.ofv[-1]
-      cdd.data.all <- cdd.data.all %>% select(c(ID,cdd.delta.ofv)) %>% slice(-1)
+      cdd.data.all <- cdd.data.all %>% dplyr::select(c(ID,cdd.delta.ofv)) %>% slice(-1)
       colnames(cdd.data.all) <- c("id", "dOFV")
       
       #find negative delta ofv values, if exist
@@ -27,7 +27,7 @@ get_ii_table <- function(raw.results.file,skipped.id.file,cutoff,max_rows,skip){
         #get individual with the highest dofv
         cdd_highest_dofv <- cdd.data[which.max(cdd.data$dOFV),]
         cdd_highest_dofv <- cdd_highest_dofv %>%
-          mutate(id=paste("Subject",id))
+          dplyr::mutate(id=paste("Subject",id))
         colnames(cdd_highest_dofv) <- c("","dOFV")
         
         
@@ -38,7 +38,7 @@ get_ii_table <- function(raw.results.file,skipped.id.file,cutoff,max_rows,skip){
           ii_table[,2] <- format(round(as.numeric(ii_table[,2]),1),trim=T,digits=1,nsmall=1)
           infl_id <- as.numeric(ii_table$id)
           ii_table <- ii_table %>%
-            mutate(id=paste("Subject",id))
+            dplyr::mutate(id=paste("Subject",id))
           colnames(ii_table)[which(colnames(ii_table)=="id")] <- "Subjects"
           
           # only cdd max rows
