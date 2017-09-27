@@ -2,8 +2,8 @@ command_text <- function(directory) {
   command <- c()
   run_start <- c()
   run_finish <- c() 
-  if(file.exists(file.path(working.directory,"meta.yaml"))) {
-    yaml_file <- yaml.load_file(file.path(working.directory,"meta.yaml"))
+  if(file.exists(file.path(directory,"meta.yaml"))) {
+    yaml_file <- yaml.load_file(file.path(directory,"meta.yaml"))
     
     if(exists("command_line",yaml_file) && yaml_file$command_line!="") {
       full_command <- strsplit(yaml_file$command_line," ")
