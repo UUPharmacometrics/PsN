@@ -739,8 +739,13 @@ sub print_results
     }
     close $fh;
 
-    $self->metadata->{'finish_time'} = "$theDate $theTime";
-    $self->write_meta();
+    my $yaml_filename = $self->directory . 'meta.yaml';
+    if (-e $yaml_filename) {
+        my $meta_file = YAML::LoadFile($yaml_filename);
+        $self->metadata($meta_file);
+        $self->metadata->{'finish_time'} = "$theDate $theTime";
+        $self->write_meta();
+    }
 }
 
 sub compress_m1
