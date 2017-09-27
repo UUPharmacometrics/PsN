@@ -20,6 +20,7 @@ library(xpose)
 library(PEIP)
 library(yaml)
 library(devtools)
+source(file.path(rscripts.directory, "/common/R_info.R"))
 source(file.path(rscripts.directory, "/common/find_r_files_in_subdir.R"))
 source(file.path(rscripts.directory, "/common/iofv.R"))
 source(file.path(rscripts.directory, "/common/keep_symbols.R"))
@@ -37,10 +38,8 @@ rscript <- find_r_files_in_subdir("simeval",rscripts.directory)
 for (i in 1:length(rscript)) {
   source(rscript[i])
 }
-```
-
-```{r write_R_info,include=F,warning=F,message=F}
-writeLines(yaml::as.yaml(devtools::session_info(),column.major = F),con="R_info.yaml")
+#add R_info to the meta file
+R_info(directory=working.directory)
 ```
 
 <!-- ##############################   Calculations  #################################### -->
