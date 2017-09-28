@@ -42,10 +42,6 @@ for (i in 1:length(rscript)) {
 R_info(directory=working.directory)
 ```
 
-```{r add_R_info,results='asis',echo=F,warning=F,message=F}
-#add R_info to the meta file
-R_info(directory=working.directory)
-```
 <!-- ##############################   Calculations  #################################### -->
 
 ```{r find_resmod_folders,results='hide',echo=F,warning=F,message=F}
