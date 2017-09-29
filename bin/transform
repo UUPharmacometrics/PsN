@@ -43,7 +43,7 @@ my $res = GetOptions( \%options,
     keys(%optional_options) );
 exit unless $res;
 
-my @valid_transformations = ( 'boxcox', 'tdist', 'full_block', 'add_tv', 'add_iov', 'remove_iiv', 'remove_iov', 'remove_0fix_omegas', 'omit_ids', 'iiv_on_ruv', 'power_on_ruv' );
+my @valid_transformations = ( 'boxcox', 'tdist', 'full_block', 'add_tv', 'add_iov', 'remove_iiv', 'remove_iov', 'remove_0fix_omegas', 'omit_ids', 'iiv_on_ruv', 'power_on_ruv', 'diagonal_to_block' );
 my $valid_transformations_string = join("\n", @valid_transformations);
 
 my %help_text;
@@ -109,7 +109,7 @@ $help_text{-parameters} = <<'EOF';
       -parameters
       
       Specify list of parameters.
-      This option is mandatory for the add_tv and add_iov transformations.
+      This option is mandatory for the add_tv transformation.
 EOF
 
 $help_text{-ids} = <<'EOF';
@@ -204,7 +204,7 @@ if (defined $options{'parameters'}) {
         exit;
     }
 } else {
-    if ($transformation eq 'add_tv' or $transformation eq 'add_iov') {
+    if ($transformation eq 'add_tv') {
         print "Option -parameters need to be used together with the $transformation transformation.\n";
         exit;
     }
@@ -277,7 +277,11 @@ if ($transformation eq 'boxcox') {
     } else {
         $occ = 'OCC';
     }
-    model_transformations::add_iov(model => $model, occ => $occ, parameters => [split ',', $options{'parameters'}]);
+    if (defined $options{'parameters'}) {
+        model_transformations::add_iov(model => $model, occ => $occ, parameters => [split ',', $options{'parameters'}]);
+    } else {
+        model_transformations::add_iov(model => $model, occ => $occ);
+    }
 } elsif ($transformation eq 'remove_iiv') {
     if (defined $options{'fix'}) {
         model_transformations::remove_iiv(model => $model, fix => $options{'fix'});
@@ -311,6 +315,8 @@ if ($transformation eq 'boxcox') {
     } else {
         model_transformations::power_on_ruv(model => $model);
     }
+} elsif ($transformation eq 'diagonal_to_block') {
+   model_transformations::diagonal_to_block(model => $model);
 }
 
 $model->_write();
