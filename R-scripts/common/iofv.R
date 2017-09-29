@@ -1,5 +1,3 @@
-library(ggplot2)
-
 iofv_vs_iofv <- function(phi1, phi2) {
   make_plot <- TRUE
     phi1_tab <- read.table(phi1, skip=1, header=T)
@@ -14,8 +12,7 @@ iofv_vs_iofv <- function(phi1, phi2) {
         geom_abline(intercept = 0, slope = 1) +
         xlab(phi1name) +
         ylab(phi2name) +
-        theme_bw() +
-        ggtitle("iOFV vs iOFV")
+        theme_bw() 
       out<-list(plot=p,
                 make_plot=make_plot)
     } else {
