@@ -180,12 +180,12 @@ sub modelfit_setup
                 $add_etas_model->_write();
                 push @models, $add_etas_model;
             }
-            #my $add_iov_model = $base_model->copy(directory => "modelfit_run", filename => "iov.mod", write_copy => 0);
-            #my $error = model_transformations::add_iov(model => $add_iov_model, parameters => $self->parameters, occ => $self->occ);
-            #if (not $error) {
-            #    $add_iov_model->_write();
-            #    push @models, $add_iov_model;
-            #}
+            my $add_iov_model = $base_model->copy(directory => "modelfit_run", filename => "iov.mod", write_copy => 0);
+            my $error = model_transformations::add_iov(model => $add_iov_model, occ => $self->occ);
+            if (not $error) {
+                $add_iov_model->_write();
+                push @models, $add_iov_model;
+            }
             for my $model (@models) {       # Set output directory so that .lst file gets saved in the rundir
                 $model->outputs->[0]->directory(".");
             }
