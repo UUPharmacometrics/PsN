@@ -322,7 +322,8 @@ if(all(skip!="cdd")) {
 
 ```{r histogram_of_cdd_dofv,results='asis',echo=F,warning=F,message=F,fig.width=11,fig.height=6}
 if(all(skip!="cdd")) {
-  hist_of_cdd_dofv(data=all_dofv)
+  cdd_hist <- hist_of_cdd_dofv(values=all_dofv)
+  print(cdd_hist)
   cat("Distribution of OFV improvements (dOFV) when excluding specific subjects during the fit.")
 }
 ```
