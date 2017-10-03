@@ -198,6 +198,7 @@ sub modelfit_setup
                 models => \@models,
                 directory => "modelfit_dir1",
                 top_tool => 1,
+                so => 1,
             );
             $modelfit->run();
             chdir "..";
