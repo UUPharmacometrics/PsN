@@ -199,6 +199,7 @@ sub modelfit_setup
                 directory => "modelfit_dir1",
                 top_tool => 1,
                 so => 1,
+                nm_output => 'ext',
             );
             $modelfit->run();
             chdir "..";
