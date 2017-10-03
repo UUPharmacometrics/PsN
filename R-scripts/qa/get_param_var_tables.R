@@ -84,21 +84,39 @@ get_param_var_tables <- function(directory,model.filename,skip) {
       dofv_tdist <- "NA"
       add.par_tdist <- ''
     }
+    
+    # iov
+    if(file.exists(file.path(directory,"modelfit_run/iov.mod"))) {
+      iov_mod <- TRUE
+      if(file.exists(file.path(directory,"modelfit_run/iov.ext"))) {
+        liniov_ofv <- .get_ext_ofv(file.path(directory,"modelfit_run/iov.ext"))
+        dofv_iov <- as.numeric(linbase_ofv - liniov_ofv)
+        #get nr of var omegas in linearizes model because iov will add same amount of omegas ass it was in the beginning 
+        #BLOCK SAME should not be included
+        add.par_iov <- ncol(get_omega_values(file.path(directory,paste0(sub('.([^.]*)$','',model.filename),"_linbase.ext")),"var"))
+      } else {
+        dofv_iov <- "ERROR"
+        add.par_iov <- ''
+      }
+    } else {
+      dofv_iov <- "NA"
+      add.par_iov <- ''
+    }
 
     
-    par_var_models <- data.frame(c("Full OMEGA Block", "Box-Cox Transformation","Additional ETA","t-distribution"), 
-                                 c(dofv_block,dofv_box,dofv_additional_eta,dofv_tdist),
-                                 c(add.par_block, add.par_box, add.par_additional_eta,add.par_tdist),stringsAsFactors = F)
+    par_var_models <- data.frame(c("Full OMEGA Block", "Box-Cox Transformation","Additional ETA","t-distribution","Interoccasion variability"), 
+                                 c(dofv_block,dofv_box,dofv_additional_eta,dofv_tdist,dofv_iov),
+                                 c(add.par_block, add.par_box, add.par_additional_eta,add.par_tdist,add.par_iov),stringsAsFactors = F)
     colnames(par_var_models) <- c("","dOFV","Add.params")
     
     # check if etas run was skipped
     if(any(skip=="transform")) {
-      par_var_models <- data.frame(c("Full OMEGA Block", "Box-Cox Transformation","Additional ETA","t-distribution"), 
-                                   c(rep("SKIPPED",4)),stringsAsFactors = F)
+      par_var_models <- data.frame(c("Full OMEGA Block", "Box-Cox Transformation","Additional ETA","t-distribution","Interoccasion variability"), 
+                                   c(rep("SKIPPED",5)),stringsAsFactors = F)
       colnames(par_var_models) <- c("","dOFV")
     }
   } else {
-    par_var_models <- error_table(c("Full OMEGA Block","Box-Cox Transformation","Additional ETA","t-distribution"))
+    par_var_models <- error_table(c("Full OMEGA Block","Box-Cox Transformation","Additional ETA","t-distribution","Interoccasion variability"))
     dofv_block <- "NA"
     dofv_box <- "NA"
     dofv_tdist <- "NA"
