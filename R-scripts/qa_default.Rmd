@@ -10,16 +10,18 @@ classoption: a4paper
 
 
 ```{r loading_libraries_and_sourcing_functions,include=F,warning=F,message=F}
-library(tidyverse)
-library(knitr)
-library(methods)
-library(ztable)
+library(devtools)
 library(expm)
+library(gridExtra)
+library(knitr)
+library(labeling)
+library(methods)
+library(PEIP)
+library(tidyverse)
 library(vpc)
 library(xpose)
-library(PEIP)
 library(yaml)
-library(devtools)
+library(ztable)
 source(file.path(rscripts.directory, "/common/R_info.R"))
 source(file.path(rscripts.directory, "/common/find_r_files_in_subdir.R"))
 source(file.path(rscripts.directory, "/common/iofv.R"))
@@ -324,7 +326,9 @@ if(all(skip!="cdd")) {
 if(all(skip!="cdd")) {
   cdd_hist <- hist_of_cdd_dofv(values=all_dofv)
   print(cdd_hist)
-  cat("Distribution of OFV improvements (dOFV) when excluding specific subjects during the fit.")
+  if(length(all_dofv)>0) {
+    cat("Distribution of OFV improvements (dOFV) when excluding specific subjects during the fit.")
+  }
 }
 ```
 
