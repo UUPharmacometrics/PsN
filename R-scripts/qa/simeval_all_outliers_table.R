@@ -54,6 +54,9 @@ simeval_all_ouliers_table <- function(simeval_directory,ebe_npde_outl_crit=-3) {
   #all outlier table
   all_outlier_table <- all.outlier.report.table(ofv_outliers,ebe.npde_outliers,cwres.iwres_outliers,
                                                   residual_names,ID_deleted_ebe,ID_deleted_ofv)
+  if(ncol(all_outlier_table)==1 && nrow(all_outlier_table)==1) {
+    colnames(all_outlier_table) <- ""
+  }
   #just for qa script
   cgroup <- c("","Individual level")
   n.cgroup=c(1,2)
