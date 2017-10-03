@@ -59,8 +59,8 @@ all.outlier.report.table <- function(ofv_outliers,ebe.npde_outliers,cwres.iwres_
           dplyr::arrange(ID) %>%
           dplyr::mutate_all(as.character)
     } else {
-      all_outlier_table <- data.frame(C = c("No outliers detected"))
-      names(all_outlier_table) <- NULL
+      all_outlier_table <- data.frame(c("No outliers detected"),stringsAsFactors = F)
+      colnames(all_outlier_table) <- NULL
     }
   }
   return(all_outlier_table)
