@@ -52,6 +52,9 @@ This list holds information about bugs found in PsN 4.7.0
 	<li>Lower case user defined and reserved words
     Starting with NONMEM 7.2 lower case user defined and reserved words are supported. This is not supported
     by PsN. For example in $INPUT all reserved words have to be upper case.</li>
+    <li>proseval crashes if there is no IGNORE or ACCEPT statement in $DATA. Workaround is to add a dummy IGNORE or ACCEPT.
+        proseval also crashes if an IGNORE statement is written as IGN(VISI&gt;3) instead of IGNORE=(VISI&gt;3)
+    </li>
 </ul>
 
          </div>
