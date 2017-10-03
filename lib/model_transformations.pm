@@ -186,23 +186,51 @@ sub add_etas_to_parameters
         croak("Neither PK nor PRED defined in " . $model->filename . "\n");
     }
 
-    my @new_code;
+    #my @new_code;
 
     my $next_eta = $model->nomegas->[0] + 1;
-    for my $line (@model_code) {
-        for my $p (@$parameters) {
-            if ($line =~ /^\s*$p\s*=.*\bETA\((\d+)\)/) {
-                push @new_code, $line;
-                push @new_code, "$p = $p * EXP(ETA($next_eta))";
-                $model->add_records(type => 'omega', record_strings => [ '$OMEGA 0.0001']); 
-                $next_eta++;
-            } else {
-                push @new_code, $line;
+    for my $p (@$parameters) {
+        my $i;
+        my $found_definition = 0;
+        for ($i = 0; $i < scalar(@model_code); $i++) {
+            if ($model_code[$i] =~ /^\s*$p\s*=.*\bETA\((\d+)\)/) {
+                $found_definition = 1;
+                last;
             }
+        }
+        if ($found_definition) {
+            my $lhs_line_no;
+            for (my $j = $i + 1; $j < scalar(@model_code); $j++) {
+                if ($model_code[$j] =~ /=.*\b$p\b/) {
+                    $lhs_line_no = $j;
+                }
+            }
+            my $code_line = "$p = $p * EXP(ETA($next_eta))";
+            if (defined $lhs_line_no) {
+                splice @model_code, $lhs_line_no, 0, $code_line;
+            } else {
+                push @model_code, $code_line;
+            }
+            $model->add_records(type => 'omega', record_strings => [ '$OMEGA 0.0001']); 
+            $next_eta++;
         }
     }
 
-    $model->set_code(record => $code_record, code => \@new_code);
+    #for my $line (@model_code) {
+    #    for my $p (@$parameters) {
+    #        if ($line =~ /^\s*$p\s*=.*\bETA\((\d+)\)/) {
+    #            push @new_code, $line;
+    #            push @new_code, "$p = $p * EXP(ETA($next_eta))";
+    #            $model->add_records(type => 'omega', record_strings => [ '$OMEGA 0.0001']); 
+    #            $next_eta++;
+    #        } else {
+    #            push @new_code, $line;
+    #        }
+    #    }
+    #}
+
+    #$model->set_code(record => $code_record, code => \@new_code);
+    $model->set_code(record => $code_record, code => \@model_code);
 }
 
 sub diagonal_to_block
