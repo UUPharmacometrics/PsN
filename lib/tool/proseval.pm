@@ -50,9 +50,16 @@ sub modelfit_setup
         $mdv_column = undef;
     }
 
+    my $datafile;
+    if (-e "preprocess_data_dir/filtered.dta") {
+        $datafile = "preprocess_data_dir/filtered.dta";
+    } else {
+        $datafile = $model->problems->[0]->datas->[0]->get_absolute_filename();
+    }
+
     while ($continue) {
         my $data = data->new(
-            filename => "preprocess_data_dir/filtered.dta",
+            filename => $datafile,
             ignoresign => '@',
             missing_data_token => $self->missing_data_token,
             idcolumn => $self->model->idcolumn(),
