@@ -165,6 +165,46 @@ sub add_iov
     return 0;
 }
 
+sub add_etas_to_parameters
+{
+	my %parm = validated_hash(\@_,
+        model => { isa => 'model' },
+        parameters => { isa => 'ArrayRef[Str]', optional => 1 },
+    );
+    my $model = $parm{'model'};
+    my $parameters = $parm{'parameters'};
+
+  	my @model_code;
+	my $code_record;
+    if ($model->has_code(record => 'pk')) {
+        @model_code = @{$model->get_code(record => 'pk')};
+        $code_record = 'pk';
+    } elsif ($model->has_code(record => 'pred')) {
+        @model_code = @{$model->get_code(record => 'pred')};
+        $code_record = 'pred';
+    } else {
+        croak("Neither PK nor PRED defined in " . $model->filename . "\n");
+    }
+
+    my @new_code;
+
+    my $next_eta = $model->nomegas->[0] + 1;
+    for my $line (@model_code) {
+        for my $p (@$parameters) {
+            if ($line =~ /^\s*$p\s*=.*\bETA\((\d+)\)/) {
+                push @new_code, $line;
+                push @new_code, "$p = $p * EXP(ETA($next_eta))";
+                $model->add_records(type => 'omega', record_strings => [ '$OMEGA 0.0001']); 
+                $next_eta++;
+            } else {
+                push @new_code, $line;
+            }
+        }
+    }
+
+    $model->set_code(record => $code_record, code => \@new_code);
+}
+
 sub diagonal_to_block
 {
     # Convert all diagonal omegas into BLOCK(1)

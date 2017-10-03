@@ -34,6 +34,7 @@ has 'nointer' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'nonlinear' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'skip' => ( is => 'rw', isa => 'ArrayRef[Str]', default => sub { [] } );
 has 'only' => ( is => 'rw', isa => 'ArrayRef[Str]', default => sub { [] } );    # Will be transformed into skip in BUILD
+has 'add_etas' => ( is => 'rw', isa => 'ArrayRef[Str]' );
 
 has 'resmod_idv_table' => ( is => 'rw', isa => 'Str' ); # The table used by resmod
 
@@ -174,12 +175,6 @@ sub modelfit_setup
                 $tdist_model->_write();
                 push @models, $tdist_model;
             }
-            my $add_etas_model = $base_model->copy(directory => "modelfit_run", filename => "add_etas.mod", write_copy => 0);
-            my $was_added = $add_etas_model->unfix_omega_0_fix();
-            if ($was_added) {
-                $add_etas_model->_write();
-                push @models, $add_etas_model;
-            }
             my $iov_etas = model_transformations::find_etas(model => $base_model, type => 'iov');
             if (scalar(@$iov_etas) == 0) {      # We don't have iov previously
                 my $add_iov_model = $base_model->copy(directory => "modelfit_run", filename => "iov.mod", write_copy => 0);
@@ -209,6 +204,44 @@ sub modelfit_setup
         }
         $self->_to_qa_dir();
     }
+
+    if (defined $self->add_etas and not $self->_skipped('transform')) {
+        print "\n*** Running add_etas ***\n";
+        mkdir "add_etas_run";
+        my $add_etas_model = $self->model->copy(
+            filename => $self->model->filename,
+            directory => $self->model->directory,
+            write_copy => 0,
+            output_same_directory => 1,
+        );
+        model_transformations::add_etas_to_parameters(model => $add_etas_model, parameters => $self->add_etas);
+        $add_etas_model->filename("add_etas.mod");
+        $add_etas_model->_write(filename => $self->directory . 'add_etas_run/add_etas.mod');
+
+        chdir("add_etas_run");
+        ui->category('linearize');
+        my $old_nm_output = common_options::get_option('nm_output');    # Hack to set clean further down
+        common_options::set_option('nm_output', 'ext');
+        eval {
+            my $linearize = tool::linearize->new(
+                %{common_options::restore_options(@common_options::tool_options)},
+                models => [ $add_etas_model ],
+                directory => 'linearize_run',
+                estimate_fo => $self->fo,
+                nointer => $self->nointer,
+                nm_output => 'ext',
+            );
+            $linearize->run();
+            $linearize->print_results();
+        };
+        if ($@) {
+            print $@;
+        }
+        ui->category('qa');
+        common_options::set_option('nm_output', $old_nm_output);
+    }
+
+    $self->_to_qa_dir();
 
     if (defined $self->covariates or defined $self->categorical) {
         if (not $self->_skipped('frem')) {
