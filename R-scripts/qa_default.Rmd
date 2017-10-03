@@ -22,11 +22,7 @@ library(vpc)
 library(xpose)
 library(yaml)
 library(ztable)
-source(file.path(rscripts.directory, "/common/R_info.R"))
 source(file.path(rscripts.directory, "/common/find_r_files_in_subdir.R"))
-source(file.path(rscripts.directory, "/common/iofv.R"))
-source(file.path(rscripts.directory, "/common/keep_symbols.R"))
-source(file.path(rscripts.directory, "/common/command_text.R"))
 source(file.path(rscripts.directory, "/cdd/create.data.full.R"))
 source(file.path(rscripts.directory,"/frem/ID_ratio_function.R"))
 source(file.path(rscripts.directory,"/frem/parameter_ratio_function.R"))
@@ -37,6 +33,10 @@ for (i in 1:length(rscript)) {
   source(rscript[i])
 }
 rscript <- find_r_files_in_subdir("simeval",rscripts.directory)
+for (i in 1:length(rscript)) {
+  source(rscript[i])
+}
+rscript <- find_r_files_in_subdir("common",rscripts.directory)
 for (i in 1:length(rscript)) {
   source(rscript[i])
 }
@@ -415,3 +415,19 @@ if(all(skip!="simeval")) {
    }
  }
 ```
+
+```{r additional_info,results='asis',echo=F,warning=F,message=F}
+if(file.exists(file.path(working.directory,"meta.yaml"))) {
+  cat("\\pagebreak\n\n")
+  cat("#Additional information\n")
+  add_info <- additional_info(yaml_file=file.path(working.directory,"meta.yaml"))
+  cat("PsN_version:",add_info$PsN_version,"\n\n")
+  cat("NONMEM_version:",add_info$NONMEM_version,"\n\n")
+  cat("R_version:",add_info$R_version,"\n\n")
+  cat("Loaded_R_packages:\n\n")
+  R_packages <- keep_symbols(add_info$R_packages,type)
+  R_packages <- ztable_sub(R_packages,type=type,colnames.bold = T,include.colnames = T,include.rownames = F,longtable = T,digits = 1,align="lll")
+  print(R_packages)
+}
+```
+
