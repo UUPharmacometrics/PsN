@@ -64,7 +64,8 @@ A new recommended but not required Perl library for runrecord: YAML::Tiny
   This would be inline with what NM-TRAN does.
 - PsN runs now generate meta.yaml to systematically describe various metadata.
   See the psn.pdf for documentation.
-
+- Fix bug causing datasets not to be filtered properly if ignore statement was written as IGN(VISI>3),
+  i.e. with no equal sign.
 
    ___common_options___
 
@@ -102,6 +103,10 @@ A new recommended but not required Perl library for runrecord: YAML::Tiny
 
 
    ___frem___
+   
+   ___proseval___
+
+- Bugfix: proseval would crash if no filtering was needed due to no accept or ignore in $DATA
 
 
    ___scm___
