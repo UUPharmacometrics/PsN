@@ -24,7 +24,7 @@ has 'idv' => ( is => 'rw', isa => 'Str', default => 'TIME' );
 has 'dv' => ( is => 'rw', isa => 'Str', default => 'CWRES' );
 has 'dvid' => ( is => 'rw', isa => 'Str', default => 'DVID' );
 has 'occ' => ( is => 'rw', isa => 'Str', default => 'OCC' );
-has 'covariates' => ( is => 'rw', isa => 'Str' );       # A comma separated list of continuous covariate symbols
+has 'continuous' => ( is => 'rw', isa => 'Str' );       # A comma separated list of continuous covariate symbols
 has 'categorical' => ( is => 'rw', isa => 'Str' );       # A comma separated list of categorical covariate symbols
 has 'parameters' => ( is => 'rw', isa => 'Str' );       # A comma separated list of parameter symbols
 has 'fo' => ( is => 'rw', isa => 'Bool', default => 0 );
@@ -76,8 +76,8 @@ sub modelfit_setup
     $model_copy->_write(filename => $self->directory . $self->model->filename);
 
     my @covariates;
-    if (defined $self->covariates) {
-        @covariates = split(',', $self->covariates);
+    if (defined $self->continuous) {
+        @covariates = split(',', $self->continuous);
     }
     my @categorical;
     if (defined $self->categorical) {
@@ -245,7 +245,7 @@ sub modelfit_setup
 
     $self->_to_qa_dir();
 
-    if (defined $self->covariates or defined $self->categorical) {
+    if (defined $self->continuous or defined $self->categorical) {
         if (not $self->_skipped('frem')) {
             print "\n*** Running FREM ***\n";
             my $frem_model = model->new(filename => $base_model_name);
@@ -509,11 +509,9 @@ sub _create_scm_config
 
     open my $fh, '>', 'config.scm';
 
-    #my $model_name = $self->model->full_name();
-
     my $covariates = "";
-    if (defined $self->covariates) {
-        $covariates = "continuous_covariates=" . $self->covariates;
+    if (defined $self->continuous) {
+        $covariates = "continuous_covariates=" . $self->continuous;
     }
 
     my $categorical = "";
@@ -522,12 +520,12 @@ sub _create_scm_config
     }
 
     my $all = "";
-    if (defined $self->categorical and not defined $self->covariates) {
+    if (defined $self->categorical and not defined $self->continuous) {
         $all = $self->categorical;
-    } elsif (not defined $self->categorical and defined $self->covariates) {
-        $all = $self->covariates;
+    } elsif (not defined $self->categorical and defined $self->continuous) {
+        $all = $self->continuous;
     } else {
-        $all = $self->covariates . ',' . $self->categorical;
+        $all = $self->continuous . ',' . $self->categorical;
     }
 
     my $relations;
@@ -582,9 +580,9 @@ sub create_R_plots_code
 
 	$rplot->pdf_title('Quality assurance');
 
-    my @covariates;
-    if (defined $self->covariates) {
-        @covariates = split(/,/, $self->covariates);
+    my @continuous;
+    if (defined $self->continuous) {
+        @continuous = split(/,/, $self->continuous);
     }
     my @categorical;
     if (defined $self->categorical) {
@@ -606,7 +604,7 @@ sub create_R_plots_code
 			"groups <- " . $self->groups,
             "idv_name <- '" . $self->idv . "'",
 			"dvid_name <- '" . $self->dvid . "'",
-            "covariates <- " . rplots::create_r_vector(array => \@covariates),
+            "continuous <- " . rplots::create_r_vector(array => \@continuous),
             "categorical <- " . rplots::create_r_vector(array => \@categorical),
             "parameters <- " . rplots::create_r_vector(array => \@parameters),
             "CWRES_table <- '" . $CWRES_table_path . "'",

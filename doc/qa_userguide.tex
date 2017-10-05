@@ -45,10 +45,10 @@ A model file is required on the command-line.
 
 
 \begin{optionlist}
-\optname{categorical}
+\optname{categorical\_covariates}
 A comma separated list of categorical covariates
 \nextopt
-\optname{covariates}
+\optname{continuous\_covariates}
 A comma separated list of continuous covariates
 \nextopt
 \optname{dv}{CWRES}
@@ -123,7 +123,7 @@ Some limitations and problems will affect the ability to generate any output, ot
 \begin{itemize}
 	\item The SCM requires parameters defined in \verb|-parameter=P| to be associated with the corresponding ETA in the format P=f(ETA(x)), i.e. where the ETA is on the left-hand side of the equation defining the parameter. Parameters need to be defined in \$PK or \$PRED, not \$ERROR.
 
-	\item There is no support in the QA version of SCM to handle multi-category covariates. A work-around is to define them as either continuous or as multiple bivariate covariates. The latter would require changes to the dataset. Naturally the QA investigation could be made more focused by not including these covariates in the evaluation by omitting them in the \verb|-categorical| option.
+	\item There is no support in the QA version of SCM to handle multi-category covariates. A work-around is to define them as either continuous or as multiple bivariate covariates. The latter would require changes to the dataset. Naturally the QA investigation could be made more focused by not including these covariates in the evaluation by omitting them in the \verb|-categorical_covariates| option.
 \end{itemize}
 
 \subsection{FREM}
