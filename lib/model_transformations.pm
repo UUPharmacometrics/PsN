@@ -193,7 +193,7 @@ sub add_etas_to_parameters
         my $i;
         my $found_definition = 0;
         for ($i = 0; $i < scalar(@model_code); $i++) {
-            if ($model_code[$i] =~ /^\s*$p\s*=.*\bETA\((\d+)\)/) {
+            if ($model_code[$i] =~ /^\s*$p\s*=/) {
                 $found_definition = 1;
                 last;
             }
