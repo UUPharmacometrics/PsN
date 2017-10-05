@@ -36,6 +36,7 @@ has 'skip' => ( is => 'rw', isa => 'ArrayRef[Str]', default => sub { [] } );
 has 'only' => ( is => 'rw', isa => 'ArrayRef[Str]', default => sub { [] } );    # Will be transformed into skip in BUILD
 has 'add_etas' => ( is => 'rw', isa => 'ArrayRef[Str]' );
 has 'added_etas' => ( is => 'rw', isa => 'HashRef' );   # What parameters did get added etas and to what etas?
+has 'iov_structure' => ( is => 'rw', isa => 'ArrayRef' );   # The occ/iov structure for the r code
 
 has 'resmod_idv_table' => ( is => 'rw', isa => 'Str' ); # The table used by resmod
 
@@ -152,7 +153,7 @@ sub modelfit_setup
     #}
 
     if (not $self->_skipped('transform')) {
-        print "*** Running full omega block, add etas, boxcox and tdist models ***\n";
+        print "*** Running full omega block, boxcox and tdist models ***\n";
         eval {
             mkdir "modelfit_run";
             my @models;
@@ -183,6 +184,8 @@ sub modelfit_setup
                 if (not $error) {
                     $add_iov_model->_write();
                     push @models, $add_iov_model;
+                    my $iov_structure = model_transformations::find_iov_structure(model => $add_iov_model);
+                    $self->iov_structure($iov_structure);
                 }
             }
             for my $model (@models) {       # Set output directory so that .lst file gets saved in the rundir
@@ -206,7 +209,7 @@ sub modelfit_setup
         $self->_to_qa_dir();
     }
 
-    if (defined $self->add_etas and not $self->_skipped('transform')) {
+    if (defined $self->add_etas and scalar(@{$self->add_etas}) > 0 and not $self->_skipped('transform')) {
         print "\n*** Running add_etas ***\n";
         mkdir "add_etas_run";
         my $add_etas_model = $self->model->copy(
@@ -626,6 +629,17 @@ sub create_R_plots_code
         my $add = 'added_etas <- list(' . join(', ', @content) . ')';
         push @$code, $add;
     }
+
+    if (defined $self->iov_structure) {
+        my @content;
+        for (my $i = 0; $i < scalar(@{$self->iov_structure}); $i++) {
+            my $occ = 'occ' . ($i + 1) . '=' . rplots::create_r_vector(array => $self->iov_structure->[$i], quoted => 0); 
+            push @content, $occ;
+        }
+        my $line = 'iov_etas <- list(' . join(', ', @content). ')';
+        push @$code, $line;
+    }
+
 
     $rplot->add_preamble(code => $code);
 }

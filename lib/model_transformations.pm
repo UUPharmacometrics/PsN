@@ -56,6 +56,31 @@ sub add_tv
     $model->set_code(record => $code_record, code => \@newcode);
 }
 
+sub unique_occs
+{
+    # Get a list of all unique occasions
+    my %parm = validated_hash(\@_,
+        model => { isa => 'model' },
+        occ => { isa => 'Str', default => 'OCC' },
+    );
+    my $model = $parm{'model'};
+    my $occ = $parm{'occ'};
+
+    my $data = data->new(
+        filename => $model->problems->[0]->datas->[0]->get_absolute_filename(),
+        ignoresign => $model->problems->[0]->datas->[0]->ignoresign,
+        idcolumn => $model->idcolumn, 
+    );
+
+    my $occ_column = $data->column_to_array(column => $occ);
+    if (scalar(@$occ_column) == 0) {
+        return;
+    }
+    my $unique_occs = array::unique($occ_column);
+
+    return $unique_occs;
+}
+
 sub add_iov
 {
     # FIXME: Add initial value is 10% of corresponding IIV omega.
@@ -73,17 +98,8 @@ sub add_iov
 
     my $netas = $model->nomegas->[0];
 
-    my $data = data->new(
-        filename => $model->problems->[0]->datas->[0]->get_absolute_filename(),
-        ignoresign => $model->problems->[0]->datas->[0]->ignoresign,
-        idcolumn => $model->idcolumn, 
-    );
-
-    my $occ_column = $data->column_to_array(column => $occ);
-    if (scalar(@$occ_column) == 0) {
-        return 1;
-    }
-    my $unique_occs = array::unique($occ_column);
+    my $unique_occs = unique_occs(model => $model, occ => $occ);
+    return 1 if (not defined $unique_occs);
 
   	my @model_code;
 	my $code_record;
@@ -148,8 +164,7 @@ sub add_iov
                 $current_eta++;
                 $current_iov++;
             }
-            my $model_omegas = $model->problems->[0]->omegas;
-            push @$model_omegas, $record;
+            $model->add_records(type => 'omega', record_strings => $record->_format_record());
             for (my $i = 0; $i < scalar(@$unique_occs) - 1; $i++) {
                 $model->add_records(type => 'omega', record_strings => [ "\$OMEGA BLOCK($size) SAME" ]); 
                 $current_eta += $size;  # Pass BLOCK SAME
@@ -610,6 +625,31 @@ sub find_etas
     }
 
     return \@etas;
+}
+
+sub find_iov_structure
+{
+    # Generate an array of arrays over which iov etas are connected to each occasion
+    my %parm = validated_hash(\@_,
+        model => { isa => 'model' },
+    );
+    my $model = $parm{'model'};
+
+    my $iov_records = find_omega_records(model => $model, type => 'iov');
+    my @structure;
+
+    my $i = 0;
+    for my $record (@$iov_records) {
+        if ($record->same) {
+            $i++; 
+        } else {
+            $i = 0;
+        }
+        $structure[$i] = [] if (not defined $structure[$i]);
+        push @{$structure[$i]}, $record->n_previous_rows + 1 .. $record->n_previous_rows + $record->size;
+    }
+
+    return \@structure;
 }
 
 sub find_zero_fix_omegas

@@ -375,13 +375,20 @@ sub create_r_vector
 {
     # Creates the rcode for a vector given an array
 	my %parm = validated_hash(\@_,
-        array => { isa => 'ArrayRef', optional => 0 }
+        array => { isa => 'ArrayRef', optional => 0 },
+        quoted => { isa => 'Bool', default => 1 },
     );
     my $array = $parm{'array'};
-   
+    my $quoted = $parm{'quoted'};
+  
+    my $quote = "";
+    if ($quoted) {
+        $quote = "'";
+    }
+     
     my $str = "c(";
     if (@$array) {
-        $str .= "'" . join("', '", @{$array}) . "'";
+        $str .= $quote . join("$quote, $quote", @{$array}) . $quote;
     }
     $str .= ')';
 
