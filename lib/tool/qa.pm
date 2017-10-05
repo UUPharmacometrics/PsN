@@ -35,6 +35,7 @@ has 'nonlinear' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'skip' => ( is => 'rw', isa => 'ArrayRef[Str]', default => sub { [] } );
 has 'only' => ( is => 'rw', isa => 'ArrayRef[Str]', default => sub { [] } );    # Will be transformed into skip in BUILD
 has 'add_etas' => ( is => 'rw', isa => 'ArrayRef[Str]' );
+has 'added_etas' => ( is => 'rw', isa => 'HashRef' );   # What parameters did get added etas and to what etas?
 
 has 'resmod_idv_table' => ( is => 'rw', isa => 'Str' ); # The table used by resmod
 
@@ -214,7 +215,8 @@ sub modelfit_setup
             write_copy => 0,
             output_same_directory => 1,
         );
-        model_transformations::add_etas_to_parameters(model => $add_etas_model, parameters => $self->add_etas);
+        my $added_etas = model_transformations::add_etas_to_parameters(model => $add_etas_model, parameters => $self->add_etas);
+        $self->added_etas($added_etas);
         $add_etas_model->filename("add_etas.mod");
         $add_etas_model->_write(filename => $self->directory . 'add_etas_run/add_etas.mod');
 
@@ -598,9 +600,8 @@ sub create_R_plots_code
     } else {
         $CWRES_table_path = "";
     }
-		
-    $rplot->add_preamble(
-        code => [
+
+    my $code =  [
             '# qa specific preamble',
 			"groups <- " . $self->groups,
             "idv_name <- '" . $self->idv . "'",
@@ -613,8 +614,22 @@ sub create_R_plots_code
 			"cdd_max_rows <- 10",
 			"type <- 'latex' # set to 'html' if want to create a html file ",
             "skip <- " . rplots::create_r_vector(array => $self->skip),
-        ]
-    );
+        ];
+
+    if (defined $self->added_etas) {
+        my @content;
+        for my $p (keys %{$self->added_etas}) {
+            my $value = $self->added_etas->{$p};
+            if (not defined $value) {
+                $value = 'NULL';
+            }
+            push @content, "$p=$value";
+        }
+        my $add = 'added_etas <- list(' . join(', ', @content) . ')';
+        push @$code, $add;
+    }
+
+    $rplot->add_preamble(code => $code);
 }
 
 

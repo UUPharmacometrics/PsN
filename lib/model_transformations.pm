@@ -167,9 +167,11 @@ sub add_iov
 
 sub add_etas_to_parameters
 {
+    # Add etas to the parameters listed
+    # Returns a hash of what was added
 	my %parm = validated_hash(\@_,
         model => { isa => 'model' },
-        parameters => { isa => 'ArrayRef[Str]', optional => 1 },
+        parameters => { isa => 'ArrayRef[Str]' },
     );
     my $model = $parm{'model'};
     my $parameters = $parm{'parameters'};
@@ -185,9 +187,7 @@ sub add_etas_to_parameters
     } else {
         croak("Neither PK nor PRED defined in " . $model->filename . "\n");
     }
-
-    #my @new_code;
-
+    my %done;   # List what etas where added to which paramete to which parameter (par->etano|undef)
     my $next_eta = $model->nomegas->[0] + 1;
     for my $p (@$parameters) {
         my $i;
@@ -212,25 +212,15 @@ sub add_etas_to_parameters
                 push @model_code, $code_line;
             }
             $model->add_records(type => 'omega', record_strings => [ '$OMEGA 0.0001']); 
+            $done{$p} = $next_eta;
             $next_eta++;
+        } else {
+            $done{$p} = undef;
         }
     }
 
-    #for my $line (@model_code) {
-    #    for my $p (@$parameters) {
-    #        if ($line =~ /^\s*$p\s*=.*\bETA\((\d+)\)/) {
-    #            push @new_code, $line;
-    #            push @new_code, "$p = $p * EXP(ETA($next_eta))";
-    #            $model->add_records(type => 'omega', record_strings => [ '$OMEGA 0.0001']); 
-    #            $next_eta++;
-    #        } else {
-    #            push @new_code, $line;
-    #        }
-    #    }
-    #}
-
-    #$model->set_code(record => $code_record, code => \@new_code);
     $model->set_code(record => $code_record, code => \@model_code);
+    return \%done;
 }
 
 sub diagonal_to_block
