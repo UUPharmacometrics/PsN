@@ -4,6 +4,7 @@ get_param_var_tables <- function(directory,model.filename,skip) {
   boxcox_mod <- FALSE
   add_etas_mod <- FALSE
   tdist_mod <- FALSE
+  iov_mod <- FALSE
   if(file.exists(file.path(directory,paste0(sub('.([^.]*)$','',model.filename),"_linbase.ext")))) {
     
     linbase_ofv <- .get_ext_ofv(file.path(directory,paste0(sub('.([^.]*)$','',model.filename),"_linbase.ext")))
@@ -48,12 +49,12 @@ get_param_var_tables <- function(directory,model.filename,skip) {
     }
         
     # additional etas
-    if(file.exists(file.path(directory,"modelfit_run/add_etas.mod"))) {
+    if(file.exists(file.path(directory,"add_etas_run/add_etas_linbase.mod"))) {
       add_etas_mod <- TRUE
-      if(file.exists(file.path(directory,"modelfit_run/add_etas.ext"))) {
-        linaddeta_ofv <- .get_ext_ofv(file.path(directory,"modelfit_run/add_etas.ext"))
+      if(file.exists(file.path(directory,"add_etas_run/add_etas_linbase.ext"))) {
+        linaddeta_ofv <- .get_ext_ofv(file.path(directory,"add_etas_run/add_etas_linbase.ext"))
         dofv_additional_eta <- as.numeric(linbase_ofv - linaddeta_ofv)
-        addetas_omegas <- get_omega_values(file.path(directory,"modelfit_run/add_etas.ext"),"var")
+        addetas_omegas <- get_omega_values(file.path(directory,"add_etas_run/add_etas_linbase.ext"),"var")
         linbase_omegas <- get_omega_values(file.path(directory,paste0(sub('.([^.]*)$','',model.filename),"_linbase.ext")),"var")
         add.par_additional_eta <- length(setdiff(colnames(addetas_omegas),colnames(linbase_omegas)))
       } else {
@@ -120,14 +121,19 @@ get_param_var_tables <- function(directory,model.filename,skip) {
     dofv_block <- "NA"
     dofv_box <- "NA"
     dofv_tdist <- "NA"
+    dofv_additional_eta <- "NA"
+    dofv_iov <- "NA"
   }
   
   return(list(par_var_models=par_var_models,
               dofv_block=dofv_block,
               dofv_box=dofv_box,
               dofv_tdist=dofv_tdist,
+              dofv_add_etas=dofv_additional_eta,
+              dofv_iov=dofv_iov,
               fullblock_mod=fullblock_mod,
               boxcox_mod=boxcox_mod,
               add_etas_mod=add_etas_mod,
-              tdist_mod=tdist_mod))
+              tdist_mod=tdist_mod,
+              iov_mod=iov_mod))
 }

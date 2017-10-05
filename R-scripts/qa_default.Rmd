@@ -71,6 +71,8 @@ par_var_models <- list_par_var_models$par_var_models
 fullblock_mod <- list_par_var_models$fullblock_mod
 boxcox_mod <- list_par_var_models$boxcox_mod
 tdist_mod <- list_par_var_models$tdist_mod
+add_etas_mod <- list_par_var_models$add_etas_mod
+iov_mod <- list_par_var_models$iov_mod
 if(fullblock_mod) {
   full_omega_block_table <- get_full_omega_block(working.directory,list_par_var_models$dofv_block)
 }
@@ -84,7 +86,13 @@ if(tdist_mod) {
   tdist_table_orig <- tdist_list$param_extra_table_orig
   tdist_table <- tdist_list$param_extra_table
 }
-if(fullblock_mod || boxcox_mod || tdist_mod) {
+if(add_etas_mod) {
+  add_etas_table <- get_add_etas_table(directory=working.directory,added_etas=added_etas,dofv_add.etas=list_par_var_models$dofv_add_etas)
+}
+if(iov_mod) {
+  iov_table <- get_iov_table(directory=working.directory,iov_etas=iov_etas,dofv_iov=list_par_var_models$dofv_iov)
+}
+if(fullblock_mod || boxcox_mod || tdist_mod || add.etas_mod ||iov_mod) {
   param_sector <- TRUE
 } else {
   param_sector <- FALSE
@@ -124,12 +132,12 @@ if(exists("tdist_table_orig")) {
 ```{r covariate_model_calculations,results='hide',echo=F,warning=F,message=F}
 # 3.Covariate Models
   # 3.1.All (FREM)
-frem_table_list <- get_all_covariates(frem_directory=file.path(working.directory,"frem_run"),covariates,categorical,parameters,list_par_var_models$dofv_block,skip)
+frem_table_list <- get_all_covariates(frem_directory=file.path(working.directory,"frem_run"),contionuous,categorical,parameters,list_par_var_models$dofv_block,skip)
 frem_table <- frem_table_list$frem_table
  # 3.2.Covariate (SCM)
 scm_table_list <- get_scm_table(scm_directory=file.path(working.directory,"scm_run"),
                                 frem_directory=file.path(working.directory,"frem_run"),
-                                parameters,covariates,categorical,skip)
+                                parameters,contionuous,categorical,skip)
 scm_table <- scm_table_list$scm_table
 max_scm_table <- scm_table_list$max_scm_table
   #summary
@@ -189,7 +197,7 @@ if(length(command_runtime$command)>0 && length(command_runtime$run_start)>0 && l
 ```
 
 ```{r draw_ofv_table,results='asis',echo=F,warning=F,message=F}
-ofv_table <- ztable_sub(ofv_table,type=type,include.rownames = F,colnames.bold = T,align="ll",position = "l")
+ofv_table <- ztable_sub(ofv_table,type=type,include.rownames = F,colnames.bold = T,align="ll")
 print(ofv_table)
 ```
 
@@ -246,11 +254,20 @@ if(make_boxcox_shape_plot) {
 }
 ```
 
-```{r draw_tdist_table,results='asis',echo=F,warning=F,message=F}
-if(tdist_mod) {
+```{r draw_add_etas_table,results='asis',echo=F,warning=F,message=F}
+if(add_etas_mod) {
   if(make_boxcox_shape_plot) {
     cat("\\pagebreak\n\n")
   }
+  cat("###Additional etas")
+  add_etas_table <- keep_symbols(add_etas_table,type)
+  add_etas_table <- ztable_sub(add_etas_table,type=type,colnames.bold=T,include.rownames=F,longtable=T,align="lrrr")
+  print(add_etas_table)
+}
+```
+
+```{r draw_tdist_table,results='asis',echo=F,warning=F,message=F}
+if(tdist_mod) {
   cat("###t-distribution")
   tdist_table <- keep_symbols(tdist_table,type)
   tdist_table <- ztable_sub(tdist_table,type=type,colnames.bold=T,include.rownames=F,longtable=T,align="lrrr")
@@ -266,6 +283,16 @@ if(make_tdist_shape_plot) {
     print(tdist_shape_plot[[i]])
     cat("Density of the t-distribution transformed random effect in comparison with the density of the original (untransformed) random effect. The rug below the densities indicates the empirical Bayes estimates for the transformed random effect.")
   }
+}
+```
+
+```{r draw_iov_table,results='asis',echo=F,warning=F,message=F}
+if(iov_mod) {
+  cat("###Interoccasion variability")
+  iov_table <- keep_symbols(iov_table,type)
+  iov_table <- ztable_sub(iov_table,type=type,colnames.bold=T,include.rownames=F,longtable=T,align="llrrr")
+  iov_table <- addcgroup(iov_table,cgroup=c("","New SD",""),n.cgroup=c(1,2,1))
+  print(iov_table)
 }
 ```
 
