@@ -107,6 +107,7 @@ sub _parse_lst_file
                 my $pharmml_name = $self->lst_file;
                 $pharmml_name =~ s/\.lst/.xml/;
                 pharmml::create_minimal_pharmml(model => $outobj->lst_model, filename => $pharmml_name); 
+                $self->so->PharmMLRef($pharmml_name);
             }
 
             my $problems = 0; #TODO check if first $PROB is prior, then should be =1 here, as in e.g. sse script
