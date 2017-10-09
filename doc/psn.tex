@@ -35,4 +35,9 @@ All PsN tools generate metadata with information about the specific run. The fil
   \end{tabularx}
 \end{center}
 
+\section{Non-Supported NM-TRAN constructs}
+
+\subsection{INPUT and \$INPUT}
+The INPUT record is not supported. NM-TRAN allows INPUT without the dollar-sign and PsN will add this as options or code to the previous record potentially causing strange errors or worse. If \$INPUT was used PsN will give a nice error message.
+
 \end{document}
