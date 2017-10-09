@@ -187,6 +187,20 @@ sub get_R_exec
 	return $rexec;
 }
 
+sub get_R_lib_path
+{
+	import(); #read config if not done already
+	
+	my $R_lib_path;
+	#check in PsN config
+	if ( defined $config -> {'_'} -> {'R_LIBS'} ) {
+		$R_lib_path = $config -> {'_'} -> {'R_LIBS'};
+	}else{
+		$R_lib_path = '';
+	}
+	return $R_lib_path;
+}
+
 sub get_default_psn_installation_info
 {
 	my $command = 'psn installation_info 2>/dev/null'; #unix, keep stdout and redirect stderr to /dev/null
