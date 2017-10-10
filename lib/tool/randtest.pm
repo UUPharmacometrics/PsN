@@ -62,7 +62,6 @@ sub BUILD
 	croak("PsN randtest cannot handle IGNORE=C. Use IGNORE=@ instead\n")
 		if ($self->models->[0]->problems->[0]->datas->[0]->ignoresign eq 'C');
 	
-
 	#Find column index of rand column
 	#Find column index of strat column
 	my $counter = 0;
@@ -358,33 +357,6 @@ sub cleanup
 	}
 }
 
-sub calculate_delta_ofv
-{
-	my $self = shift;
-	my %parm = validated_hash(\@_,
-		model_number => { isa => 'Int', optional => 1 }
-	);
-	my $model_number = $parm{'model_number'};
-}
-
-sub modelfit_analyze
-{
-	my $self = shift;
-	my %parm = validated_hash(\@_,
-		model_number => { isa => 'Int', optional => 1 }
-	);
-	my $model_number = $parm{'model_number'};
-}
-
-sub modelfit_post_fork_analyze
-{
-	my $self = shift;
-	my %parm = validated_hash(\@_,
-		model_number => { isa => 'Int', optional => 1 }
-	);
-	my $model_number = $parm{'model_number'};
-}
-
 sub _modelfit_raw_results_callback
 {
 	my $self = shift;
@@ -488,23 +460,6 @@ sub _modelfit_raw_results_callback
 	return $subroutine;
 }
 
-sub _sse_raw_results_callback
-{
-	my $self = shift;
-	my %parm = validated_hash(\@_,
-		model_number => { isa => 'Int', optional => 1 }
-	);
-	my $model_number = $parm{'model_number'};
-	my $subroutine;
-
-	return \&subroutine;
-}
-
-sub sse_read_raw_results
-{
-	my $self = shift;
-}
-
 sub prepare_results
 {
 	my $self = shift;
@@ -537,14 +492,6 @@ sub prepare_results
 	#read raw results if not already in memory
 	#also rawres structure
 	#do nothing if do not have dOFV column
-
-
-
-#	$self -> read_raw_results();
-#	$self -> raw_results($self -> raw_results -> [0]); #each line is one model
-
-#	trace(tool => 'randtest', message => "Read raw results from file", level => 1);
-	#$self -> raw_results());
 
 	unless (defined $self->raw_line_structure){
 		$self->raw_line_structure(ext::Config::Tiny -> read($self->directory.'raw_results_structure'));
@@ -592,7 +539,6 @@ sub prepare_results
 		
 	}
 
-#	print "dofvarray ".join(' ',@dofvarray)."\n";
 	return if (scalar(@dofvarray) < 1);
 	my @sorted = (sort {$a <=> $b} @dofvarray); #sort ascending
 	my $actual_dofv_ref = quantile(probs => \@probs, numbers=> \@sorted);
@@ -658,7 +604,6 @@ sub create_R_plots_code
             "have.base.model <- $have_base_model",
             'extra.thetas <- '.$labelstring,
         ]);
-
 }
 
 no Moose;
