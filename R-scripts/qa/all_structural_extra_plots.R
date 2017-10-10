@@ -24,7 +24,7 @@ all_structural_extra_plots <- function(working.directory,model.filename,resmod_s
       vpc_captions <- all_captions$idv_vpc_captions
       
       #print
-      cat(resmod_structural_details[[i]]$idv_text)
+      cat(paste0("##",resmod_structural_details[[i]]$idv_text))
       first_table <- keep_symbols(resmod_structural_details[[i]]$first_table,type)
       first_table <- ztable_sub(first_table,type=type,include.colnames = F,include.rownames = F,longtable = T,align="lr")
       print(first_table)
@@ -50,7 +50,7 @@ all_structural_extra_plots <- function(working.directory,model.filename,resmod_s
           cat(vpc_captions)
         }
       }
-      cat("\n\\newpage\n")
+      cat("\\pagebreak\n\n")
     }
   } else {
     print(resmod_structural_details)
