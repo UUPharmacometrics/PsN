@@ -9,7 +9,7 @@ our ($dev,$version,$lib_dir,$config_file,$config,$Rscripts_dir);
 #the version line is extracted in Makefile using regular expression
 # /\$version\s*=\s*.[0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*.;/
 # so be careful when you edit!!!
-$version = '4.7.9';
+$version = '4.7.10';
 
 # The following line will be changed by make
 $dev = 1;
@@ -185,6 +185,20 @@ sub get_R_exec
 	}
     $rexec =~ s/\.exe$//;
 	return $rexec;
+}
+
+sub get_R_lib_path
+{
+	import(); #read config if not done already
+	
+	my $R_lib_path;
+	#check in PsN config
+	if ( defined $config -> {'_'} -> {'R_LIB_PATH'} ) {
+		$R_lib_path = $config -> {'_'} -> {'R_LIB_PATH'};
+	}else{
+		$R_lib_path = '';
+	}
+	return $R_lib_path;
 }
 
 sub get_default_psn_installation_info

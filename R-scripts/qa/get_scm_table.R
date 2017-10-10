@@ -1,4 +1,4 @@
-get_scm_table <- function(scm_directory,frem_directory,parameters,covariates,categorical,skip){
+get_scm_table <- function(scm_directory,frem_directory,parameters,continuous,categorical,skip){
   rawres_file <- file.path(scm_directory,"raw_results_scm.csv")
   scm_files_exists <- file.exists(rawres_file)
   if(any(skip=="scm")) {
@@ -6,7 +6,7 @@ get_scm_table <- function(scm_directory,frem_directory,parameters,covariates,cat
     colnames(scm_table) <- c("","dOFV")
     max_scm_table <- cbind(scm_table,"",stringsAsFactors = F)
   } else {
-    if(length(parameters)!=0 && (length(categorical)!=0 || (length(covariates)!=0))) {
+    if(length(parameters)!=0 && (length(categorical)!=0 || (length(continuous)!=0))) {
       if(scm_files_exists) {
         scm_table <- read.csv(rawres_file,stringsAsFactors = F) %>%
           dplyr::mutate(dOFV = ofv[step.number==0]-ofv) %>%
@@ -36,7 +36,7 @@ get_scm_table <- function(scm_directory,frem_directory,parameters,covariates,cat
             #file.exists(file.path(scm_directory,"scmlog.txt")) &&
             #file.size(file.path(scm_directory,"scmlog.txt"))!=0
           # all param cov/cat combination (check if all are in table, skip those that are not)
-          cov <- c(covariates,categorical)
+          cov <- c(continuous,categorical)
           used_cov <- c()
           for(i in 1:length(cov)) {
             comb <- paste0(parameters,cov[i])
@@ -83,7 +83,7 @@ get_scm_table <- function(scm_directory,frem_directory,parameters,covariates,cat
         #       par_cov_combination <- sub('\\-.*',"",scm_table[,1])
         #       for(j in 1:nrow(scm_table)) {
         #         check_cov_cat <- sub(param,"",par_cov_combination[j])
-        #         if(any(categorical==check_cov_cat) || any(covariates==check_cov_cat)){
+        #         if(any(categorical==check_cov_cat) || any(continuous==check_cov_cat)){
         #           scm_table$Coef_sd[j] <- scm_table$Coef_sd[j]/sd
         #         }
         #       }

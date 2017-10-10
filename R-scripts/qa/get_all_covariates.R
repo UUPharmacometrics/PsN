@@ -1,9 +1,9 @@
-get_all_covariates <- function(frem_directory,covariates,categorical,parameters,dofv_full_block,skip) {
+get_all_covariates <- function(frem_directory,continuous,categorical,parameters,dofv_full_block,skip) {
   if(any(skip=="frem")) {
     frem_files_exists <- FALSE
     frem_table <- data.frame("FREM","SKIPPED","",stringsAsFactors = F)
   } else {
-    if(length(categorical)!=0 || (length(covariates)!=0)) {
+    if(length(categorical)!=0 || (length(continuous)!=0)) {
       frem_files_exists <- (file.exists(file.path(frem_directory,"model2_modelfit_dir1/raw_results.csv")) && 
                               file.exists(file.path(frem_directory,"model4_modelfit_dir1/raw_results.csv")))
       if(frem_files_exists) {
@@ -13,7 +13,7 @@ get_all_covariates <- function(frem_directory,covariates,categorical,parameters,
         if(class(dofv_full_block)!="character") {
           dofv_frem <- dofv_frem - dofv_full_block
         }
-        frem_table <- data.frame("ALL",dofv_frem,(length(parameters)*(length(categorical)+length(covariates))),stringsAsFactors = F)
+        frem_table <- data.frame("ALL",dofv_frem,(length(parameters)*(length(categorical)+length(continuous))),stringsAsFactors = F)
       } else {
         frem_table <- cbind(error_table("FREM"),"",stringsAsFactors = F)
       }

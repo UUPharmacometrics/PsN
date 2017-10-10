@@ -24,7 +24,7 @@ has 'idv' => ( is => 'rw', isa => 'Str', default => 'TIME' );
 has 'dv' => ( is => 'rw', isa => 'Str', default => 'CWRES' );
 has 'dvid' => ( is => 'rw', isa => 'Str', default => 'DVID' );
 has 'occ' => ( is => 'rw', isa => 'Str', default => 'OCC' );
-has 'covariates' => ( is => 'rw', isa => 'Str' );       # A comma separated list of continuous covariate symbols
+has 'continuous' => ( is => 'rw', isa => 'Str' );       # A comma separated list of continuous covariate symbols
 has 'categorical' => ( is => 'rw', isa => 'Str' );       # A comma separated list of categorical covariate symbols
 has 'parameters' => ( is => 'rw', isa => 'Str' );       # A comma separated list of parameter symbols
 has 'fo' => ( is => 'rw', isa => 'Bool', default => 0 );
@@ -36,6 +36,7 @@ has 'skip' => ( is => 'rw', isa => 'ArrayRef[Str]', default => sub { [] } );
 has 'only' => ( is => 'rw', isa => 'ArrayRef[Str]', default => sub { [] } );    # Will be transformed into skip in BUILD
 has 'add_etas' => ( is => 'rw', isa => 'ArrayRef[Str]' );
 has 'added_etas' => ( is => 'rw', isa => 'HashRef' );   # What parameters did get added etas and to what etas?
+has 'iov_structure' => ( is => 'rw', isa => 'ArrayRef' );   # The occ/iov structure for the r code
 
 has 'resmod_idv_table' => ( is => 'rw', isa => 'Str' ); # The table used by resmod
 
@@ -76,8 +77,8 @@ sub modelfit_setup
     $model_copy->_write(filename => $self->directory . $self->model->filename);
 
     my @covariates;
-    if (defined $self->covariates) {
-        @covariates = split(',', $self->covariates);
+    if (defined $self->continuous) {
+        @covariates = split(',', $self->continuous);
     }
     my @categorical;
     if (defined $self->categorical) {
@@ -152,7 +153,7 @@ sub modelfit_setup
     #}
 
     if (not $self->_skipped('transform')) {
-        print "*** Running full omega block, add etas, boxcox and tdist models ***\n";
+        print "*** Running full omega block, boxcox and tdist models ***\n";
         eval {
             mkdir "modelfit_run";
             my @models;
@@ -183,6 +184,8 @@ sub modelfit_setup
                 if (not $error) {
                     $add_iov_model->_write();
                     push @models, $add_iov_model;
+                    my $iov_structure = model_transformations::find_iov_structure(model => $add_iov_model);
+                    $self->iov_structure($iov_structure);
                 }
             }
             for my $model (@models) {       # Set output directory so that .lst file gets saved in the rundir
@@ -206,7 +209,7 @@ sub modelfit_setup
         $self->_to_qa_dir();
     }
 
-    if (defined $self->add_etas and not $self->_skipped('transform')) {
+    if (defined $self->add_etas and scalar(@{$self->add_etas}) > 0 and not $self->_skipped('transform')) {
         print "\n*** Running add_etas ***\n";
         mkdir "add_etas_run";
         my $add_etas_model = $self->model->copy(
@@ -245,7 +248,7 @@ sub modelfit_setup
 
     $self->_to_qa_dir();
 
-    if (defined $self->covariates or defined $self->categorical) {
+    if (defined $self->continuous or defined $self->categorical) {
         if (not $self->_skipped('frem')) {
             print "\n*** Running FREM ***\n";
             my $frem_model = model->new(filename => $base_model_name);
@@ -509,11 +512,9 @@ sub _create_scm_config
 
     open my $fh, '>', 'config.scm';
 
-    #my $model_name = $self->model->full_name();
-
     my $covariates = "";
-    if (defined $self->covariates) {
-        $covariates = "continuous_covariates=" . $self->covariates;
+    if (defined $self->continuous) {
+        $covariates = "continuous_covariates=" . $self->continuous;
     }
 
     my $categorical = "";
@@ -522,12 +523,12 @@ sub _create_scm_config
     }
 
     my $all = "";
-    if (defined $self->categorical and not defined $self->covariates) {
+    if (defined $self->categorical and not defined $self->continuous) {
         $all = $self->categorical;
-    } elsif (not defined $self->categorical and defined $self->covariates) {
-        $all = $self->covariates;
+    } elsif (not defined $self->categorical and defined $self->continuous) {
+        $all = $self->continuous;
     } else {
-        $all = $self->covariates . ',' . $self->categorical;
+        $all = $self->continuous . ',' . $self->categorical;
     }
 
     my $relations;
@@ -582,9 +583,9 @@ sub create_R_plots_code
 
 	$rplot->pdf_title('Quality assurance');
 
-    my @covariates;
-    if (defined $self->covariates) {
-        @covariates = split(/,/, $self->covariates);
+    my @continuous;
+    if (defined $self->continuous) {
+        @continuous = split(/,/, $self->continuous);
     }
     my @categorical;
     if (defined $self->categorical) {
@@ -606,7 +607,7 @@ sub create_R_plots_code
 			"groups <- " . $self->groups,
             "idv_name <- '" . $self->idv . "'",
 			"dvid_name <- '" . $self->dvid . "'",
-            "covariates <- " . rplots::create_r_vector(array => \@covariates),
+            "continuous <- " . rplots::create_r_vector(array => \@continuous),
             "categorical <- " . rplots::create_r_vector(array => \@categorical),
             "parameters <- " . rplots::create_r_vector(array => \@parameters),
             "CWRES_table <- '" . $CWRES_table_path . "'",
@@ -628,6 +629,17 @@ sub create_R_plots_code
         my $add = 'added_etas <- list(' . join(', ', @content) . ')';
         push @$code, $add;
     }
+
+    if (defined $self->iov_structure) {
+        my @content;
+        for (my $i = 0; $i < scalar(@{$self->iov_structure}); $i++) {
+            my $occ = 'occ' . ($i + 1) . '=' . rplots::create_r_vector(array => $self->iov_structure->[$i], quoted => 0); 
+            push @content, $occ;
+        }
+        my $line = 'iov_etas <- list(' . join(', ', @content). ')';
+        push @$code, $line;
+    }
+
 
     $rplot->add_preamble(code => $code);
 }

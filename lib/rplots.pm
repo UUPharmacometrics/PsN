@@ -27,6 +27,7 @@ has 'subset_variable' => (is => 'rw', isa => 'Maybe[Str]' );
 has 'R_markdown' => (is => 'rw', isa => 'Bool', default => 0);
 has 'rmarkdown_installed' => (is => 'rw', isa => 'Bool', default => 0);
 has 'model' => (is => 'rw', isa => 'model');
+has 'R_lib_path' => (is => 'rw', isa => 'Str' );
 
 our $preambleline = '#WHEN THIS FILE IS USED AS A TEMPLATE THIS LINE MUST LOOK EXACTLY LIKE THIS';
 
@@ -34,6 +35,7 @@ sub BUILD
 {
 	my $self = shift;
 	$self->set_R_executable();
+	$self->set_R_library_path();
 	$self->setup();
 }
 
@@ -184,7 +186,10 @@ sub setup
 			 'n.eps <- '.$neps
 			);
 	}
-
+	if (length($self->R_lib_path)>0) {
+		push(@arr,
+			".libPaths('".$self->R_lib_path."')");
+	}
 
 	$self->standard_preamble(\@arr);
 
@@ -210,6 +215,14 @@ sub set_R_executable
 	#check in PsN config, or try R --version
 	my $R = PsN::get_R_exec();
 	$self->_R_executable($R) if (defined $R);
+}
+
+sub set_R_library_path
+{
+	my $self = shift;
+	#check in PsN config
+	my $R_lib_path = PsN::get_R_lib_path();
+	$self->R_lib_path($R_lib_path);
 }
 
 sub get_preamble()
@@ -375,13 +388,20 @@ sub create_r_vector
 {
     # Creates the rcode for a vector given an array
 	my %parm = validated_hash(\@_,
-        array => { isa => 'ArrayRef', optional => 0 }
+        array => { isa => 'ArrayRef', optional => 0 },
+        quoted => { isa => 'Bool', default => 1 },
     );
     my $array = $parm{'array'};
-   
+    my $quoted = $parm{'quoted'};
+  
+    my $quote = "";
+    if ($quoted) {
+        $quote = "'";
+    }
+     
     my $str = "c(";
     if (@$array) {
-        $str .= "'" . join("', '", @{$array}) . "'";
+        $str .= $quote . join("$quote, $quote", @{$array}) . $quote;
     }
     $str .= ')';
 

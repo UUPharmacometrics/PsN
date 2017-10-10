@@ -214,6 +214,7 @@ release: main completion rel_dir $(RELFILES) $(PDFFILES)
 	@ mkdir -p PsN-Source/test
 	@ cp -ar test/unit PsN-Source/test
 	@ cp -ar test/system PsN-Source/test
+	@ cp -ar test/rplots PsN-Source/test
 	@ cp -ar test/test_files PsN-Source/test
 	@ cp -ar R-scripts PsN-Source/lib
 	@ cp test/includes.pm PsN-Source/test

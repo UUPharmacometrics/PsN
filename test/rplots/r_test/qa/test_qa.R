@@ -161,31 +161,31 @@ param_var_list_5 <- get_param_var_tables(directory=file.path(files.w.dir,"qa_run
 param_var_list_6 <- get_param_var_tables(directory=file.path(files.w.dir,"qa_missing_folders_files"),model.filename="run_100.mod",skip=c())
 param_var_list_7 <- get_param_var_tables(directory=file.path(files.w.dir,"qa_run4"),model.filename="run_100.mod",skip=c('frem','transform','scm','simeval'))
 #create expected data
-par_var_models_1 <- data.frame(c("Full OMEGA Block", "Box-Cox Transformation","Additional ETA","t-distribution"), 
+par_var_models_1 <- data.frame(c("Full OMEGA Block", "Box-Cox Transformation","Additional ETA","t-distribution"),
                              c(-3.73,-0.566,3.41,-1.03),
                              c(4,0,2,0),stringsAsFactors = F)
 colnames(par_var_models_1) <- c("","dOFV","Add.params")
-par_var_models_2 <- data.frame(c("Full OMEGA Block", "Box-Cox Transformation","Additional ETA","t-distribution"), 
+par_var_models_2 <- data.frame(c("Full OMEGA Block", "Box-Cox Transformation","Additional ETA","t-distribution"),
                                c("ERROR","-0.566000000000001","NA","NA"),
                                c("","3","",""),stringsAsFactors = F)
 colnames(par_var_models_2) <- c("","dOFV","Add.params")
-par_var_models_3 <- data.frame(c("Full OMEGA Block", "Box-Cox Transformation","Additional ETA","t-distribution"), 
+par_var_models_3 <- data.frame(c("Full OMEGA Block", "Box-Cox Transformation","Additional ETA","t-distribution"),
                                c("ERROR","NA","ERROR","NA"),
                                c("","","",""),stringsAsFactors = F)
 colnames(par_var_models_3) <- c("","dOFV","Add.params")
-par_var_models_4 <- data.frame(c("Full OMEGA Block", "Box-Cox Transformation","Additional ETA","t-distribution"), 
+par_var_models_4 <- data.frame(c("Full OMEGA Block", "Box-Cox Transformation","Additional ETA","t-distribution"),
                                c("ERROR","ERROR","ERROR","ERROR"),
                                stringsAsFactors = F)
 colnames(par_var_models_4) <- c("","dOFV")
-par_var_models_5 <- data.frame(c("Full OMEGA Block", "Box-Cox Transformation","Additional ETA","t-distribution"), 
+par_var_models_5 <- data.frame(c("Full OMEGA Block", "Box-Cox Transformation","Additional ETA","t-distribution"),
                                c("-3.73","NA","3.41","NA"),
                                c("0","","0",""),stringsAsFactors = F)
 colnames(par_var_models_5) <- c("","dOFV","Add.params")
-par_var_models_6 <- data.frame(c("Full OMEGA Block", "Box-Cox Transformation","Additional ETA","t-distribution"), 
+par_var_models_6 <- data.frame(c("Full OMEGA Block", "Box-Cox Transformation","Additional ETA","t-distribution"),
                                c("NA","NA","NA","NA"),
                                c("","","",""),stringsAsFactors = F)
 colnames(par_var_models_6) <- c("","dOFV","Add.params")
-par_var_models_7 <- data.frame(c("Full OMEGA Block", "Box-Cox Transformation","Additional ETA","t-distribution"), 
+par_var_models_7 <- data.frame(c("Full OMEGA Block", "Box-Cox Transformation","Additional ETA","t-distribution"),
                                c(rep("SKIPPED",4)),stringsAsFactors = F)
 colnames(par_var_models_7) <- c("","dOFV")
 #compare
@@ -443,23 +443,23 @@ colnames(frem_table_5) <- c("","dOFV","Add.params")
 #compare
 context("qa, get_all_covariates")
 test_that("get FREM covariates table",{
-  expect_equal(frem_table_1,get_all_covariates(frem_directory=file.path(files.w.dir,"qa_missing_folders_files/frem_run"),covariates=c('AGE'),
+  expect_equal(frem_table_1,get_all_covariates(frem_directory=file.path(files.w.dir,"qa_missing_folders_files/frem_run"),continuous=c('AGE'),
                                                categorical=c(),parameters=c(),dofv_full_block=3.5,skip=c('transform','resmod','scm','cdd','simeval'))$frem_table)
-  expect_false(get_all_covariates(frem_directory=file.path(files.w.dir,"qa_missing_folders_files/frem_run"),covariates=c('AGE'),
+  expect_false(get_all_covariates(frem_directory=file.path(files.w.dir,"qa_missing_folders_files/frem_run"),continuous=c('AGE'),
                                         categorical=c(),parameters=c(),dofv_full_block=3.5,skip=c())$frem_files_exists)
-  expect_equal(frem_table_2,get_all_covariates(frem_directory=file.path(files.w.dir,"qa_run1/frem_run"),covariates=c(),categorical=c(),
+  expect_equal(frem_table_2,get_all_covariates(frem_directory=file.path(files.w.dir,"qa_run1/frem_run"),continuous=c(),categorical=c(),
                                                parameters=c(),dofv_full_block=3.5,skip=c('resmod','scm','cdd','simeval'))$frem_table)
-  expect_false(get_all_covariates(frem_directory=file.path(files.w.dir,"qa_run1/frem_run"),covariates=c(),categorical=c(),
+  expect_false(get_all_covariates(frem_directory=file.path(files.w.dir,"qa_run1/frem_run"),continuous=c(),categorical=c(),
                                         parameters=C(),dofv_full_block=3.5,skip=c())$frem_files_exists)
-  expect_equal(frem_table_3,get_all_covariates(frem_directory=file.path(files.w.dir,"qa_run1/frem_run"),covariates=c('SEX'),
+  expect_equal(frem_table_3,get_all_covariates(frem_directory=file.path(files.w.dir,"qa_run1/frem_run"),continuous=c('SEX'),
                                                categorical=c('AGE','WGT'),parameters=c('K1','K2'),dofv_full_block=3.5,skip=c())$frem_table)
-  expect_true(get_all_covariates(frem_directory=file.path(files.w.dir,"qa_run1/frem_run"),covariates=c('SEX'),categorical=c('AGE','WGT'),
+  expect_true(get_all_covariates(frem_directory=file.path(files.w.dir,"qa_run1/frem_run"),continuous=c('SEX'),categorical=c('AGE','WGT'),
                                        parameters=c('K1','K2'),dofv_full_block=3.5,skip=c())$frem_files_exists)
-  expect_equal(frem_table_4,get_all_covariates(frem_directory=file.path(files.w.dir,"qa_run1/frem_run"),covariates=c('SEX'),
+  expect_equal(frem_table_4,get_all_covariates(frem_directory=file.path(files.w.dir,"qa_run1/frem_run"),continuous=c('SEX'),
                                                categorical=c('AGE','WGT'),parameters=c(),dofv_full_block='NA',skip=c('resmod'))$frem_table)
-  expect_true(get_all_covariates(frem_directory=file.path(files.w.dir,"qa_run1/frem_run"),covariates=c('SEX'),categorical=c('AGE','WGT'),
+  expect_true(get_all_covariates(frem_directory=file.path(files.w.dir,"qa_run1/frem_run"),continuous=c('SEX'),categorical=c('AGE','WGT'),
                                        parameters=c(),dofv_full_block='NA',skip=c('transform','resmod','scm','cdd','simeval'))$frem_files_exists)
-  expect_equal(frem_table_5,get_all_covariates(frem_directory=file.path(files.w.dir,"qa_run1/frem_run"),covariates=c('SEX'),
+  expect_equal(frem_table_5,get_all_covariates(frem_directory=file.path(files.w.dir,"qa_run1/frem_run"),continuous=c('SEX'),
                                                categorical=c('AGE','WGT'),parameters=c(),dofv_full_block='NA',skip=c('resmod','frem','cdd'))$frem_table)
   
 })
@@ -496,80 +496,80 @@ test_that("get SCM table",{
   expect_equal(scm_table_1,
                get_scm_table(scm_directory=file.path(files.w.dir,"qa_missing_folders_files/scm_run"),
                              frem_directory=file.path(files.w.dir,"qa_missing_folders_files/frem_run"),
-                             parameters=c('K1','K2'),covariates=c('AGE'),categorical=c(),skip=c())$scm_table)
+                             parameters=c('K1','K2'),continuous=c('AGE'),categorical=c(),skip=c())$scm_table)
   expect_equal(max_scm_table_1,
                get_scm_table(scm_directory=file.path(files.w.dir,"qa_missing_folders_files/scm_run"),
                              frem_directory=file.path(files.w.dir,"qa_missing_folders_files/frem_run"),
-                             parameters=c('K1','K2'),covariates=c('AGE'),categorical=c(),skip=c())$max_scm_table)
+                             parameters=c('K1','K2'),continuous=c('AGE'),categorical=c(),skip=c())$max_scm_table)
   expect_false(get_scm_table(scm_directory=file.path(files.w.dir,"qa_missing_folders_files/scm_run"),
                              frem_directory=file.path(files.w.dir,"qa_missing_folders_files/frem_run"),
-                             parameters=c('K1','K2'),covariates=c('AGE'),categorical=c(),skip=c())$scm_files_exists)
+                             parameters=c('K1','K2'),continuous=c('AGE'),categorical=c(),skip=c())$scm_files_exists)
   expect_equal(scm_table_2,
                get_scm_table(scm_directory=file.path(files.w.dir,"qa_run1/scm_run"),
                              frem_directory=file.path(files.w.dir,"qa_run1/frem_run"),
                              parameters=c('K1','K2'),
-                             covariates=c(),categorical=c(),skip=c())$scm_table)
+                             continuous=c(),categorical=c(),skip=c())$scm_table)
   expect_equal(max_scm_table_2,
                get_scm_table(scm_directory=file.path(files.w.dir,"qa_run1/scm_run"),
                              frem_directory=file.path(files.w.dir,"qa_run1/frem_run"),
                              parameters=c('K1','K2'),
-                             covariates=c(),categorical=c(),skip=c())$max_scm_table)
+                             continuous=c(),categorical=c(),skip=c())$max_scm_table)
   expect_false(get_scm_table(scm_directory=file.path(files.w.dir,"qa_run1/scm_run"),
                              frem_directory=file.path(files.w.dir,"qa_run1/frem_run"),
                              parameters=c('K1','K2'),
-                             covariates=c(),categorical=c(),skip=c())$scm_files_exists)
+                             continuous=c(),categorical=c(),skip=c())$scm_files_exists)
   expect_equal(scm_table_6,
                get_scm_table(scm_directory=file.path(files.w.dir,"qa_run1/scm_run"),
                              frem_directory=file.path(files.w.dir,"qa_run1/frem_run"),
                              parameters=c('CL','V'),
-                             covariates=c('APGR','WGT','HGT'),categorical=c('SEX'),skip=c())$scm_table)
+                             continuous=c('APGR','WGT','HGT'),categorical=c('SEX'),skip=c())$scm_table)
   expect_equal(max_scm_table_3,
                get_scm_table(scm_directory=file.path(files.w.dir,"qa_run1/scm_run"),
                              frem_directory=file.path(files.w.dir,"qa_run1/frem_run"),
                              parameters=c('CL','V'),
-                             covariates=c('APGR','WGT'),categorical=c(),skip=c())$max_scm_table)
+                             continuous=c('APGR','WGT'),categorical=c(),skip=c())$max_scm_table)
   expect_true(get_scm_table(scm_directory=file.path(files.w.dir,"qa_run1/scm_run"),
                              frem_directory=file.path(files.w.dir,"qa_run1/frem_run"),
                              parameters=c('CL','V'),
-                             covariates=c('APGR','WGT'),categorical=c(),skip=c())$scm_files_exists)
+                            continuous=c('APGR','WGT'),categorical=c(),skip=c())$scm_files_exists)
   expect_equal(scm_table_3,
                get_scm_table(scm_directory=file.path(files.w.dir,"qa_run2/scm_run"),
                              frem_directory=file.path(files.w.dir,"qa_run2/frem_run"),
                              parameters=c('CL','V'),
-                             covariates=c('APGR','WGT'),categorical=c(),skip=c())$scm_table)
+                             continuous=c('APGR','WGT'),categorical=c(),skip=c())$scm_table)
   expect_equal(max_scm_table_3,
                get_scm_table(scm_directory=file.path(files.w.dir,"qa_run2/scm_run"),
                              frem_directory=file.path(files.w.dir,"qa_run2/frem_run"),
                              parameters=c('CL','V'),
-                             covariates=c('APGR','WGT'),categorical=c(),skip=c('frem','resmod','transform','cdd','simeval'))$max_scm_table)
+                             continuous=c('APGR','WGT'),categorical=c(),skip=c('frem','resmod','transform','cdd','simeval'))$max_scm_table)
   expect_true(get_scm_table(scm_directory=file.path(files.w.dir,"qa_run2/scm_run"),
                              frem_directory=file.path(files.w.dir,"qa_run2/frem_run"),
                              parameters=c('CL','V'),
-                             covariates=c('APGR','WGT'),categorical=c(),skip=c('frem','resmod','transform','cdd','simeval'))$scm_files_exists)
+                             continuous=c('APGR','WGT'),categorical=c(),skip=c('frem','resmod','transform','cdd','simeval'))$scm_files_exists)
   expect_equal(scm_table_4,
                get_scm_table(scm_directory=file.path(files.w.dir,"qa_run3/scm_run"),
                              frem_directory=file.path(files.w.dir,"qa_run2/frem_run"),
                              parameters=c('CL','V'),
-                             covariates=c('APGR','WGT'),categorical=c(),skip=c('frem','resmod','transform','cdd','simeval'))$scm_table)
+                             continuous=c('APGR','WGT'),categorical=c(),skip=c('frem','resmod','transform','cdd','simeval'))$scm_table)
   expect_equal(max_scm_table_4,
                get_scm_table(scm_directory=file.path(files.w.dir,"qa_run3/scm_run"),
                              frem_directory=file.path(files.w.dir,"qa_run2/frem_run"),
                              parameters=c('CL','V'),
-                             covariates=c('APGR','WGT'),categorical=c(),skip=c('frem','resmod','transform','cdd','simeval'))$max_scm_table)
+                             continuous=c('APGR','WGT'),categorical=c(),skip=c('frem','resmod','transform','cdd','simeval'))$max_scm_table)
   expect_true(get_scm_table(scm_directory=file.path(files.w.dir,"qa_run3/scm_run"),
                              frem_directory=file.path(files.w.dir,"qa_run2/frem_run"),
                              parameters=c('CL','V'),
-                             covariates=c('APGR','WGT'),categorical=c(),skip=c('frem','resmod','transform','cdd','simeval'))$scm_files_exists)
+                             continuous=c('APGR','WGT'),categorical=c(),skip=c('frem','resmod','transform','cdd','simeval'))$scm_files_exists)
   expect_equal(max_scm_table_5,
                get_scm_table(scm_directory=file.path(files.w.dir,"qa_run3/scm_run"),
                              frem_directory=file.path(files.w.dir,"qa_run3/frem_run"),
                              parameters=c('CL','V'),
-                             covariates=c('APGR','WGT'),categorical=c(),skip=c('frem','scm'))$max_scm_table)
+                             continuous=c('APGR','WGT'),categorical=c(),skip=c('frem','scm'))$max_scm_table)
   expect_equal(scm_table_5,
                get_scm_table(scm_directory=file.path(files.w.dir,"qa_run3/scm_run"),
                              frem_directory=file.path(files.w.dir,"qa_run3/frem_run"),
                              parameters=c('CL','V'),
-                             covariates=c('APGR','WGT'),categorical=c(),skip=c('frem','scm'))$scm_table)
+                             continuous=c('APGR','WGT'),categorical=c(),skip=c('frem','scm'))$scm_table)
 })
 
 #...........................  (15) Test function get_covariates_table.R .....................................

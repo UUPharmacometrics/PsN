@@ -31,8 +31,8 @@ my %optional_options = (
     'idv:s' => undef,
     'occ:s' => undef,
     'groups:i' => undef,
-    'covariates:s' => undef,
-    'categorical:s' => undef,
+    'continuous_covariates:s' => undef,
+    'categorical_covariates:s' => undef,
     'parameters:s' => undef,
     'fo!' => undef,
     'lst_file:s' => undef,
@@ -116,14 +116,14 @@ $help_text{-groups} = <<'EOF';
       The default is 10.
 EOF
 
-$help_text{-covariates} = <<'EOF';
-      -covariates
+$help_text{-continuous_covariates} = <<'EOF';
+      -continuous_covariates
 
       A comma separated list of continuous covariates
 EOF
 
-$help_text{-categorical} = <<'EOF';
-      -categorical
+$help_text{-categorical_covariates} = <<'EOF';
+      -categorical_covariates
 
       A comma separated list of categorical covariates
 EOF
@@ -226,8 +226,8 @@ my $qa = tool::qa->new(
     dv => $options{'dv'},
 	occ => $options{'occ'},
     groups => $options{'groups'},
-    covariates => $options{'covariates'},
-    categorical => $options{'categorical'},
+    continuous => $options{'continuous_covariates'},
+    categorical => $options{'categorical_covariates'},
     parameters => $options{'parameters'},
     cmd_line => $cmd_line,
     fo => $options{'fo'},
