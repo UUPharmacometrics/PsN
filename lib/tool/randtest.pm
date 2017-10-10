@@ -79,7 +79,6 @@ sub BUILD
 	croak("Number of samples must be larger than 0") unless ($self->samples()>0);
 }
 
-
 sub modelfit_setup
 {
 	my $self = shift;
@@ -359,7 +358,6 @@ sub cleanup
 	}
 }
 
-
 sub calculate_delta_ofv
 {
 	my $self = shift;
@@ -369,17 +367,6 @@ sub calculate_delta_ofv
 	my $model_number = $parm{'model_number'};
 }
 
-sub general_setup
-{
-	my $self = shift;
-	my %parm = validated_hash(\@_,
-		model_number => { isa => 'Int', optional => 1 },
-		class => { isa => 'Str', optional => 1 }
-	);
-	my $model_number = $parm{'model_number'};
-	my $class = $parm{'class'};
-}
-
 sub modelfit_analyze
 {
 	my $self = shift;
@@ -387,8 +374,6 @@ sub modelfit_analyze
 		model_number => { isa => 'Int', optional => 1 }
 	);
 	my $model_number = $parm{'model_number'};
-
-
 }
 
 sub modelfit_post_fork_analyze
@@ -635,42 +620,44 @@ sub prepare_results
 	close(RES);
 
 }
-sub create_R_plots_code{
-	my $self = shift;
-	my %parm = validated_hash(\@_,
-							  rplot => { isa => 'rplots', optional => 0 }
-		);
-	my $rplot = $parm{'rplot'};
 
-	my $have_base_model = 'FALSE';
-	#we just assume first PROB here
-	my $labelstring = 'c()';
-	if (defined $self->base_model){
-		my @labels = ();
-		$have_base_model = 'TRUE' ;
-		#figure out THETA/label, assume it is the additional theta(s) in full model.
-		#if same number then skip
-		my $basecount = $self->base_model->nthetas();
-		if ($self->models->[0]->nthetas() > $basecount){
-			my $ref = $self->models->[0]->labels(parameter_type => 'theta');
-			if (defined $ref and defined $ref->[0]){
-				for (my $i=$basecount; $i < scalar(@{$ref->[0]}); $i++){
-					push(@labels,$ref->[0]->[$i]);
-				}
-			}
-		}
-		if (scalar(@labels)>0){
-			$labelstring = "c('".join("','",@labels)."')";
-		}
-	}
-	#TODO script only works if $self->base_model is defined 
-	$rplot->add_preamble(code => [
-							 'samples   <-'.$self->samples,
-							 "randomization.column   <-'".$self->randomization_column."'",
-							 "data.diff.table   <-'m1/count_randcol_diff.txt'",
-							 "have.base.model <- $have_base_model",
-							 'extra.thetas <- '.$labelstring,
-						 ]);
+sub create_R_plots_code
+{
+    my $self = shift;
+    my %parm = validated_hash(\@_,
+        rplot => { isa => 'rplots', optional => 0 }
+    );
+    my $rplot = $parm{'rplot'};
+
+    my $have_base_model = 'FALSE';
+    #we just assume first PROB here
+    my $labelstring = 'c()';
+    if (defined $self->base_model){
+        my @labels = ();
+        $have_base_model = 'TRUE' ;
+        #figure out THETA/label, assume it is the additional theta(s) in full model.
+        #if same number then skip
+        my $basecount = $self->base_model->nthetas();
+        if ($self->models->[0]->nthetas() > $basecount){
+            my $ref = $self->models->[0]->labels(parameter_type => 'theta');
+            if (defined $ref and defined $ref->[0]){
+                for (my $i=$basecount; $i < scalar(@{$ref->[0]}); $i++){
+                    push(@labels,$ref->[0]->[$i]);
+                }
+            }
+        }
+        if (scalar(@labels)>0){
+            $labelstring = "c('".join("','",@labels)."')";
+        }
+    }
+    #TODO script only works if $self->base_model is defined 
+    $rplot->add_preamble(code => [
+            'samples   <-'.$self->samples,
+            "randomization.column   <-'".$self->randomization_column."'",
+            "data.diff.table   <-'m1/count_randcol_diff.txt'",
+            "have.base.model <- $have_base_model",
+            'extra.thetas <- '.$labelstring,
+        ]);
 
 }
 
