@@ -10,6 +10,10 @@ classoption: a4paper
 
 
 ```{r loading_libraries_and_sourcing_functions,include=F,warning=F,message=F}
+# get libPaths
+source(file.path(rscripts.directory,"/common/R_info.R"))
+R_info(directory=working.directory,only_libPaths=T)
+#libraries
 library(devtools)
 library(expm)
 library(gridExtra)
@@ -22,6 +26,7 @@ library(vpc)
 library(xpose)
 library(yaml)
 library(ztable)
+#functions
 source(file.path(rscripts.directory, "/common/find_r_files_in_subdir.R"))
 source(file.path(rscripts.directory, "/cdd/create.data.full.R"))
 source(file.path(rscripts.directory,"/frem/ID_ratio_function.R"))
