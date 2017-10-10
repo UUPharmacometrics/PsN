@@ -193,8 +193,8 @@ sub get_R_lib_path
 	
 	my $R_lib_path;
 	#check in PsN config
-	if ( defined $config -> {'_'} -> {'R_LIBS'} ) {
-		$R_lib_path = $config -> {'_'} -> {'R_LIBS'};
+	if ( defined $config -> {'_'} -> {'R_LIB_PATH'} ) {
+		$R_lib_path = $config -> {'_'} -> {'R_LIB_PATH'};
 	}else{
 		$R_lib_path = '';
 	}
