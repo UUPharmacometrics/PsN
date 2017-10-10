@@ -5,6 +5,7 @@ use MooseX::Params::Validate;
 use strict;
 use array qw(:all);
 use Math::Trig;
+use ext::Math::MatrixReal;
 use math;
 use include_modules;
 
@@ -1225,6 +1226,79 @@ sub frobenius_norm {
     }
 
     return sqrt($sum);
+}
+
+sub get_matrix_size {
+    # get matrix (array ref of column array refs) dimensions NxM, return (N,M,errmsg)
+    my %parm = validated_hash(\@_,
+        matrix => { isa => 'ArrayRef', optional => 0 },
+	);
+	my $mat = $parm{'matrix'};
+
+    # empty matrix?
+    my $ncol = scalar @{$mat};
+    if ($ncol == 0) {
+        return (0,0,"empty matrix");
+    }
+
+    # matrix is column vector?
+    my $first_nrow = scalar @{$mat->[0]};
+    if ($ncol == 1) {
+        return ($first_nrow, 1, undef);
+    }
+
+    # matrix has column vector not of first vector length?
+    for (my $col=1; $col<$ncol; $col++) {
+        my $nrow = scalar @{$mat->[$col]};
+        if ($first_nrow != $nrow) {
+            return ($first_nrow, $ncol, "col idx $col has $nrow elements");
+        }
+    }
+
+    # matrix is NxM
+    return ($first_nrow, $ncol, undef);
+}
+
+sub inverse_identity_rmse {
+    # calculate the difference of two square matrices by RMSE (to identity matrix)
+    # of product of first matrix with second matrix inverse
+    my %parm = validated_hash(\@_,
+        matrix1 => { isa => 'ArrayRef', optional => 0 }, # need not be invertible, but square
+        matrix2 => { isa => 'ArrayRef', optional => 0 }, # need to be invertible and of same size
+	);
+	my $matrix1 = $parm{'matrix1'};
+	my $matrix2 = $parm{'matrix2'};
+
+    # validate dimensions
+    (my $ncol1, my $nrow1, my $err1) = get_matrix_size(matrix => $matrix1);
+    (my $ncol2, my $nrow2, my $err2) = get_matrix_size(matrix => $matrix2);
+    if (defined $err1) {
+        croak "matrix1 illegal ($err1)";
+    } elsif (defined $err2) {
+        croak "matrix2 illegal ($err2)";
+    }
+    if ($ncol1 != $nrow1 || $ncol1 != $ncol2) {
+        croak "matrices not square/same size (sizes ${nrow1}x${ncol1} and ${nrow2}x${ncol2})";
+    }
+    my $dim = $ncol1;
+
+    # create matrices and check invertibility
+    my $mat1 = Math::MatrixReal->new_from_cols( $matrix1 );
+    my $mat2 = Math::MatrixReal->new_from_cols( $matrix2 );
+    my $mat2_inv = $mat2->inverse();
+    unless (defined $mat2_inv) {
+        croak "matrix2 is not invertible";
+    }
+
+    # calculate the RMSE (of matrix1*inv(matrix2) and identity matrix)
+    my $idmat = Math::MatrixReal->new_diag( [(1) x $dim] );
+    my $prodmat = $mat1 * $mat2_inv;
+    my $diffmat = $idmat - $prodmat;
+    my $sq_diffmat = $diffmat->each( sub { (shift)**2 } ); # square it elementwise
+    my $norm_sum = $sq_diffmat->norm_sum(); # sum of (abs of) all elements
+    my $mean = $norm_sum/($dim**2);
+
+    return (sqrt $mean);
 }
 
 sub eigenvalue_decomposition

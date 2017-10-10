@@ -753,14 +753,16 @@ if (defined $options{'rawres_input'}) {
                     die "cholesky error $err after get_symmetric_posdef\n";
                 }
 
-                # output the frobenius norm differences
-                my $norm_orig = linear_algebra::frobenius_norm(matrix => $covmatrix);
-                my $norm_forced = linear_algebra::frobenius_norm(matrix => $covmatrix_posdef);
-                my $norm_diff = abs( $norm_orig - $norm_forced );
-                print "Absolute difference of frobenius norms: $norm_diff\n";
-                $norm_diff = linear_algebra::frobenius_norm(matrix => $covmatrix, matrix2 => $covmatrix_posdef);
-                print "Frobenius norm of (element-wise) difference matrix: $norm_diff\n";
-                print "(if large the results might be severely affected by adjustments)\n";
+                # output metrics of adjustment bias
+                # my $norm_orig = linear_algebra::frobenius_norm(matrix => $covmatrix);
+                # my $norm_forced = linear_algebra::frobenius_norm(matrix => $covmatrix_posdef);
+                # my $diff_of_norms = abs( $norm_orig - $norm_forced );
+                my $norm_of_diff = linear_algebra::frobenius_norm(matrix => $covmatrix, matrix2 => $covmatrix_posdef);
+                my $id_diff = linear_algebra::inverse_identity_rmse(matrix1 => $covmatrix, matrix2 => $covmatrix_posdef);
+                # $logger->info("Absolute difference of frobenius norms: $diff_of_norms");
+                $logger->info("Frobenius norm of difference matrix (prop. to RMSE): $norm_of_diff");
+                $logger->warning("RMSE of inverse product to identity matrix: $id_diff");
+                $logger->warning("(if large the results might be severely affected by adjustments)");
 
                 $covmatrix = $covmatrix_posdef;
                 $posdef_err=0;

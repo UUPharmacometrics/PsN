@@ -917,4 +917,61 @@ cmp_float(linear_algebra::frobenius_norm(matrix => $mat2), 207.06220263416, 'fro
 is(linear_algebra::frobenius_norm(matrix => $mat1, matrix2 => $mat1), 0, 'frobenius_norm distance mat1 to mat1');
 cmp_float(linear_algebra::frobenius_norm(matrix => $mat1, matrix2 => $mat2), 408.08372488063, 'frobenius_norm distance mat1 to mat2');
 
+# matrix size getter
+my ($nrow, $ncol);
+($nrow, $ncol, $err) = linear_algebra::get_matrix_size(matrix => []);
+is_deeply( [$nrow, $ncol, $err], [0,0,"empty matrix"], "matrix dimension 0x0" );
+($nrow, $ncol, $err) = linear_algebra::get_matrix_size(matrix => [[0]]);
+is_deeply( [$nrow, $ncol, $err], [1,1,undef], "matrix dimension 1x1" );
+($nrow, $ncol, $err) = linear_algebra::get_matrix_size(matrix => [[1],[2],[3]]);
+is_deeply( [$nrow, $ncol, $err], [1,3,undef], "matrix dimension 1x3" );
+($nrow, $ncol, $err) = linear_algebra::get_matrix_size(matrix => [[1,2,3]]);
+is_deeply( [$nrow, $ncol, $err], [3,1,undef], "matrix dimension 3x1" );
+($nrow, $ncol, $err) = linear_algebra::get_matrix_size(matrix => [[1,2,3],[4,5,6]]);
+is_deeply( [$nrow, $ncol, $err], [3,2,undef], "matrix dimension 3x2" );
+($nrow, $ncol, $err) = linear_algebra::get_matrix_size(matrix => [[1,2,3],[4,5,6],[7,8,9]]);
+is_deeply( [$nrow, $ncol, $err], [3,3,undef], "matrix dimension 3x3" );
+($nrow, $ncol, $err) = linear_algebra::get_matrix_size(matrix => [[1,2],[3,4,5],[5,6]]);
+is_deeply( [$nrow, $ncol, $err], [2,3,"col idx 1 has 3 elements"], "matrix dimension illegal (2,3,2 el)" );
+
+# inverse identity RMSE
+$mat1 = [
+    [63.4, -47, -4.33],
+    [-47, 39.3, -1.23],
+    [-4.33, -1.23, 8.24],
+]; # random with eigenvalues set as 1,10,100, rounded
+$mat2 = $mat1; # testing identity
+my $rmse = 1.30277206904372e-15; # according to R (lower precision than PsN)
+ok( linear_algebra::inverse_identity_rmse(matrix1 => $mat1, matrix2 => $mat2) < $rmse, "inverse identity rmse 1" );
+$mat1 = [
+    [1.59, 0.885, -0.199],
+    [0.885, 2.35, -0.17],
+    [-0.199, -0.17, 2.06],
+]; # random with eigenvalues set as 1,2,3, rounded
+$mat2 = [
+    [1.75, 0.974, -0.219],
+    [0.974, 2.58, -0.187],
+    [-0.219, -0.187, 2.27],
+]; # mat1 with eigenvalues increased 5%, rounded
+$rmse = 0.0524589214612061; # according to R
+cmp_float( linear_algebra::inverse_identity_rmse(matrix1 => $mat1, matrix2 => $mat2), $rmse, "inverse identity rmse 2" );
+$mat1 = [
+    [4.818E-29, -1.38708E-25, -2.01914E-25, -7.8682E-25, 9.7616E-23, -8.11468E-21],
+    [-1.38708E-25, 1.92069E-20, 2.797E-20, 1.23158E-19, 3.48504E-20, 4.53091E-18],
+    [-2.01914E-25, 2.797E-20, 4.07313E-20, 1.79368E-19, 5.08345E-20, 6.59238E-18],
+    [-7.8682E-25, 1.23158E-19, 1.79368E-19, 7.55425E-18, -3.2083E-18, 7.19718E-16],
+    [9.7616E-23, 3.48504E-20, 5.08345E-20, -3.2083E-18, 5.1937E-16, -4.31156E-14],
+    [-8.11468E-21, 4.53091E-18, 6.59238E-18, 7.19718E-16, -4.31156E-14, 3.60653E-12],
+]; # real submatrix (CL,V,Ka) in FREM
+$mat2 = [
+    [1e-10, 2.57935095474379e-29, -1.88356445089885e-29, 6.16297582203915e-33, -6.16297582203915e-33, -9.62964972193618e-35],
+    [5.50353289518266e-31, 1e-10, 1.85493596329502e-26, 1.21484579404036e-28, -5.52202633654708e-29, 9.4909827659403e-31],
+    [-6.20404966352694e-30, 5.62312282896684e-27, 1e-10, -1.33711923434962e-28, -2.67818277322534e-28, 1.39899551160289e-30],
+    [0, 2.84778786784785e-28, 5.85729222126601e-28, 1e-10, -6.46234853557053e-27, 0],
+    [-1.84889274661175e-32, -6.7842037849007e-29, 3.09233474846637e-28, 1.93870456067116e-26, 1e-10, -2.01948391736579e-28],
+    [9.62964972193618e-35, -1.22026921276375e-30, -2.57612389361237e-30, -1.0097419586829e-28, 1.0097419586829e-28, 1e-10],
+]; # adjusted 6 eigenvalues (-1.64E-22,2.86E-29,1.82E-26,5.36E-20,1.13E-17,3.61E-12) to 1.0E-10
+$rmse = 0.4058311067051139; # according to R
+cmp_float( linear_algebra::inverse_identity_rmse(matrix1 => $mat1, matrix2 => $mat2), $rmse, "inverse identity rmse 3" );
+
 done_testing();
