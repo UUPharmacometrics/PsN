@@ -220,7 +220,7 @@ sub set_R_executable
 sub set_R_library_path
 {
 	my $self = shift;
-	#check in PsN config, or try R --vanilla -e .linPaths()
+	#check in PsN config
 	my $R_lib_path = PsN::get_R_lib_path();
 	$self->R_lib_path($R_lib_path);
 }
