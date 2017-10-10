@@ -1,4 +1,4 @@
-boxplot_i_ofv_res <- function(list_i_ofv_res,n.subjects) {
+boxplot_i_ofv_res <- function(list_i_ofv_res,n.subjects,add_title=TRUE) {
   # unlist
   iOFV_res_ord <- list_i_ofv_res$iOFV_res_ord
   id_sorted <- list_i_ofv_res$id_sorted
@@ -27,5 +27,7 @@ boxplot_i_ofv_res <- function(list_i_ofv_res,n.subjects) {
   abline(h=0, lwd=2, lty=3, col="black")
   abline(h=-3, lwd=2, lty=3, col="black") # mark outlier line
   abline(h=3, lwd=2, lty=3, col="black") # mark outlier line
-  title("iOFV RES")
+  if(add_title) {
+    title("iOFV RES")
+  }
 }
