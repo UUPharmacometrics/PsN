@@ -610,7 +610,7 @@ is($err1,1,"qr factorize singular");
 @A =([1,0,0],[0,-0.1,0],[0,0,1]);
 
 
-my ($pos,$diff) = linear_algebra::get_symmetric_posdef(\@A);
+my ($pos,$diff) = linear_algebra::get_symmetric_posdef(matrix => \@A);
 is($diff,1,'get_symmetric_posdef one eignevalue too low');
 cmp_float_matrix($pos,[[1,0,0],[0,0.0000000001,0],[0,0,1]],'ensure diagonal posdef');
 

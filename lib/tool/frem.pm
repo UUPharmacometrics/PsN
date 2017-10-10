@@ -1071,7 +1071,7 @@ sub get_filled_omega_block
 										  low_correlation => $small_correlation);
 	my $rounded = round_off_omega(omega => $newmatrix);
 	#get posdef is necessary, pheno will crash without it
-	my ($posdefmatrix,$count)=linear_algebra::get_symmetric_posdef($rounded);
+	my ($posdefmatrix,$count)=linear_algebra::get_symmetric_posdef(matrix => $rounded);
 
 	return($posdefmatrix,'');
 }
@@ -1543,7 +1543,7 @@ sub set_model2_omega_blocks
 
 
     my $rounded = round_off_omega(omega => $matrix);
-    my ($posdefmatrix, $count) = linear_algebra::get_symmetric_posdef($rounded);
+    my ($posdefmatrix, $count) = linear_algebra::get_symmetric_posdef(matrix => $rounded);
     if ($count > 0) {
         ui->print(category => 'frem',
             message => "\nWarning: The covariate covariance matrix has $count ".
@@ -1809,7 +1809,7 @@ sub	print_proposal_density
 							   partial_covmats => [$covmat1,$covmat2]);
 
 
-	my ($posdefmatrix,$count)=linear_algebra::get_symmetric_posdef($fullmat);
+	my ($posdefmatrix,$count)=linear_algebra::get_symmetric_posdef(matrix => $fullmat);
 
 	my $formatted = tool::format_covmatrix(matrix => $posdefmatrix,
 									 header => $full_strings,

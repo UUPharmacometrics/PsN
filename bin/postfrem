@@ -735,7 +735,10 @@ if (defined $options{'rawres_input'}) {
             if (defined $options{'force_posdef_covmatrix'} or defined $propagated_covmatrix) {
                 # force positive definite
                 print "Forcing matrix positive definite\n";
-                (my $covmatrix_posdef, my $count) = linear_algebra::get_symmetric_posdef($covmatrix);
+                (my $covmatrix_posdef, my $count) = linear_algebra::get_symmetric_posdef(
+                    matrix => $covmatrix,
+                    minEigen => 1E-10,
+                );
                 print "$count eigenvalue(s) adjusted\n";
 
                 # copy and test that this modification is good enough for cholesky decomp
@@ -791,6 +794,7 @@ if (defined $options{'rawres_input'}) {
                 covmatrix => $covmatrix,
                 inflation => [],
                 adjust_blocks => $options{'force_posdef_samples'},
+                minEigen => 1E-10,
                 lower_bound => $parameter_hash->{'lower_bounds'},
                 upper_bound => $parameter_hash->{'upper_bounds'},
                 param => $parameter_hash->{'param'},

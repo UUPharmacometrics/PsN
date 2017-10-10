@@ -1135,15 +1135,26 @@ sub LU_factorization
 
 sub get_symmetric_posdef
 {
-	my $A = shift;
+    # gets a symmetric positive definite matrix from adjusting small or negative negative
+    # eigenvalues to a small, positive number
+    my %parm = validated_hash(\@_,
+        matrix => { isa => 'ArrayRef', optional => 0 },
+        minEigen => { isa => 'Num', optional => 1, default => 1E-10 },
+	);
+	my $A = $parm{'matrix'};
+	my $minEigen = $parm{'minEigen'};
 
     (my $eigenvalues, my $Q) = eigenvalue_decomposition($A);
 
-	my $minEigen=0.0000000001;
 	my $count = count_lower(array => $eigenvalues,limit=>$minEigen);
 
 	if ($count >0){
-		my ($posdef,$diff) = spdarise(matrix => $A,eigenvalues => $eigenvalues, Q => $Q, minEigen => $minEigen); #new A,frob norm diff
+		my ($posdef,$diff) = spdarise(
+            matrix => $A,
+            eigenvalues => $eigenvalues,
+            Q => $Q,
+            minEigen => $minEigen,
+        ); #new A,frob norm diff
 		return ($posdef,$count);
 	}else{
 		return($A,0);
@@ -2243,7 +2254,7 @@ sub frem_conditional_variance
         # try to save calculation by forcing positive-definiteness (likely small numerical problems due to lack of cov-step of NONMEM)
 		print "cholesky error $err in frem_conditional_variance, likely positive semidefinite or numerically close, forcing positive-definite matrix\n";
         my $count;
-        ($matrix,$count) = get_symmetric_posdef($orig_matrix);
+        ($matrix,$count) = get_symmetric_posdef(matrix => $orig_matrix);
         print "$count small eigenvalue(s) adjusted\n";
         $err = cholesky($matrix);
         if ($err > 0) {
@@ -2346,7 +2357,7 @@ sub frem_conditional_coefficients
         # try to save calculation by forcing positive-definiteness (likely small numerical problems due to lack of cov-step of NONMEM)
 		print "invert_symmetric error $error in frem_conditional_coefficients, likely positive semidefinite or numerically close, forcing positive-definite matrix\n";
         my $count;
-        ($matrix,$count) = get_symmetric_posdef($orig_matrix);
+        ($matrix,$count) = get_symmetric_posdef(matrix => $orig_matrix);
         print "$count small eigenvalue(s) adjusted\n";
         $error = invert_symmetric($matrix, $refInv);
         if ($error > 0) {
