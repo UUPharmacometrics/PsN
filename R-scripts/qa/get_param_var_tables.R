@@ -1,17 +1,16 @@
 get_param_var_tables <- function(directory,model.filename,skip) {
   #for overview table
-  fullblock_mod <- FALSE
-  boxcox_mod <- FALSE
-  add_etas_mod <- FALSE
-  tdist_mod <- FALSE
-  iov_mod <- FALSE
+  fullblock_mod <- file.exists(file.path(directory,"modelfit_run/fullblock.mod"))
+  boxcox_mod <- file.exists(file.path(directory,"modelfit_run/boxcox.mod"))
+  add_etas_mod <- file.exists(file.path(directory,"add_etas_run/add_etas_linbase.mod"))
+  tdist_mod <- file.exists(file.path(directory,"modelfit_run/tdist.mod"))
+  iov_mod <- file.exists(file.path(directory,"modelfit_run/iov.mod"))
   if(file.exists(file.path(directory,paste0(sub('.([^.]*)$','',model.filename),"_linbase.ext")))) {
     
     linbase_ofv <- .get_ext_ofv(file.path(directory,paste0(sub('.([^.]*)$','',model.filename),"_linbase.ext")))
 
     #full omega block
-    if(file.exists(file.path(directory,"modelfit_run/fullblock.mod"))) {
-      fullblock_mod <- TRUE
+    if(fullblock_mod) {
       if(file.exists(file.path(directory,"modelfit_run/fullblock.ext"))) {
         linblock_ofv <- .get_ext_ofv(file.path(directory,"modelfit_run/fullblock.ext"))
         dofv_block <- as.numeric(linbase_ofv-linblock_ofv)
@@ -29,8 +28,7 @@ get_param_var_tables <- function(directory,model.filename,skip) {
     }
 
     #boxcox transformation
-    if(file.exists(file.path(directory,"modelfit_run/boxcox.mod"))) {
-      boxcox_mod <- TRUE
+    if(boxcox_mod) {
       if(file.exists(file.path(directory,"modelfit_run/boxcox.ext"))) {
         linbox_ofv <- .get_ext_ofv(file.path(directory,"modelfit_run/boxcox.ext"))
         dofv_box <- as.numeric(linbase_ofv - linbox_ofv)
@@ -49,8 +47,7 @@ get_param_var_tables <- function(directory,model.filename,skip) {
     }
         
     # additional etas
-    if(file.exists(file.path(directory,"add_etas_run/add_etas_linbase.mod"))) {
-      add_etas_mod <- TRUE
+    if(add_etas_mod) {
       if(file.exists(file.path(directory,"add_etas_run/add_etas_linbase.ext"))) {
         linaddeta_ofv <- .get_ext_ofv(file.path(directory,"add_etas_run/add_etas_linbase.ext"))
         dofv_additional_eta <- as.numeric(linbase_ofv - linaddeta_ofv)
@@ -67,8 +64,7 @@ get_param_var_tables <- function(directory,model.filename,skip) {
     }
     
     # t-distribution
-    if(file.exists(file.path(directory,"modelfit_run/tdist.mod"))) {
-      tdist_mod <- TRUE
+    if(tdist_mod) {
       if(file.exists(file.path(directory,"modelfit_run/tdist.ext"))) {
         lintdist_ofv <- .get_ext_ofv(file.path(directory,"modelfit_run/tdist.ext"))
         dofv_tdist <- as.numeric(linbase_ofv - lintdist_ofv)
@@ -87,8 +83,7 @@ get_param_var_tables <- function(directory,model.filename,skip) {
     }
     
     # iov
-    if(file.exists(file.path(directory,"modelfit_run/iov.mod"))) {
-      iov_mod <- TRUE
+    if(iov_mod) {
       if(file.exists(file.path(directory,"modelfit_run/iov.ext"))) {
         liniov_ofv <- .get_ext_ofv(file.path(directory,"modelfit_run/iov.ext"))
         dofv_iov <- as.numeric(linbase_ofv - liniov_ofv)
@@ -118,11 +113,31 @@ get_param_var_tables <- function(directory,model.filename,skip) {
     }
   } else {
     par_var_models <- error_table(c("Full OMEGA Block","Box-Cox Transformation","Additional ETA","t-distribution","Interoccasion variability"))
-    dofv_block <- "NA"
-    dofv_box <- "NA"
-    dofv_tdist <- "NA"
-    dofv_additional_eta <- "NA"
-    dofv_iov <- "NA"
+    if(fullblock_mod) {
+      dofv_block <- "ERROR"
+    } else {
+      dofv_block <- "NA"
+    }
+    if(boxcox_mod) {
+      dofv_box <- "ERROR"
+    } else {
+      dofv_box <- "NA"
+    }
+    if(tdist_mod) {
+      dofv_tdist <- "ERROR"
+    } else {
+      dofv_tdist <- "NA"
+    }
+    if(add_etas_mod) {
+      dofv_additional_eta <- "ERROR"
+    } else {
+      dofv_additional_eta <- "NA"
+    }
+    if(iov_mod) {
+      dofv_iov <- "ERROR"
+    } else {
+      dofv_iov <- "NA"
+    }
   }
   
   return(list(par_var_models=par_var_models,

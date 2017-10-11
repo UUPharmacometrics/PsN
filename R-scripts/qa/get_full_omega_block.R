@@ -1,4 +1,5 @@
 get_full_omega_block <- function(directory,dofv_block) {
+  full_omega_block_error <- FALSE
   #get full omega block extra table
   if(file.exists(file.path(directory,"modelfit_run/fullblock.ext")) && file.exists(file.path(directory,"linearize_run/scm_dir1/derivatives.ext"))) {
     # omega values from fullblock model
@@ -54,16 +55,18 @@ get_full_omega_block <- function(directory,dofv_block) {
       }
       
     }
-    full_omega_block_table[,2] <- format(as.numeric(full_omega_block_table[,2]),digits=1,trim=T,nsmall=1,scientific = F)
-    full_omega_block_table[,3] <- format(as.numeric(full_omega_block_table[,3]),digits=1,trim=T,nsmall=1,scientific = F)
+    full_omega_block_table[,2] <- format(round(as.numeric(full_omega_block_table[,2]),2),digits=1,trim=T,nsmall=2,scientific = F)
+    full_omega_block_table[,3] <- format(round(as.numeric(full_omega_block_table[,3]),2),digits=1,trim=T,nsmall=2,scientific = F)
     
     if(class(dofv_block)!="character") {
-      full_omega_block_table <- rbind(full_omega_block_table,c("dOFV",format(dofv_block,digits=1,scientific=F,nsmall=1),""))
+      full_omega_block_table <- rbind(full_omega_block_table,c("dOFV",format(round(dofv_block,2),digits=1,scientific=F,nsmall=1),""))
     }
     
   } else {
     full_omega_block_table <- error_table(col=1)
+    full_omega_block_error <- TRUE
   }
 
-  return(full_omega_block_table)
+  return(list(full_omega_block_table=full_omega_block_table,
+              full_omega_block_error=full_omega_block_error))
 }
