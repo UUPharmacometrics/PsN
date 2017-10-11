@@ -101,6 +101,7 @@ sub modelfit_setup
         $rand->print_results();
     }
 
+    my @dofv;
     open my $dh, '>', 'raw_results.csv';
     for (my $i = 0; $i < $self->samples; $i++) {
         open my $fh, '<', 'randtest_dir' . ($i + 1) . '/raw_results.csv' or die "Could not open rand_test raw_results file";
@@ -112,12 +113,14 @@ sub modelfit_setup
         <$fh>;
         $line = <$fh>;
         my @a = split ',', $line;
+        push @dofv, $a[20];
         $a[0] = $i + 1;
         $line = join ',', @a;
         print $dh $line;
         close $fh;
     }
     close $dh;
+    tool::randtest::print_dofv_results(dofv => \@dofv, filename => 'boot_randtest_results.csv');
 }
 
 sub modelfit_analyze
