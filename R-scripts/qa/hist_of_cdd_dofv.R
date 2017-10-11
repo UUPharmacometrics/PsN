@@ -5,7 +5,9 @@ hist_of_cdd_dofv <- function(values) {
     p <- ggplot(values_table,aes(values_table$dOFV)) +
       geom_histogram(bins=20,
                      fill='white',
-                     col="black") +
+                     col="black",
+                     closed = "left",
+                     boundary = 0) +
       labs(x="dOFV",y="Frequency") +
       geom_vline(xintercept=3.84,color="red") +
       theme_bw() +
