@@ -437,13 +437,13 @@ if(all(skip!="simeval")) {
 
 ```{r plot_iofv_vs_iofv,results='asis',echo=F,warning=F,message=F,fig.width=11,fig.height=6,fig.keep="high",fig.align="center"}
  if(rplots.level > 1) {
-   cat("\\pagebreak\n\n")
-   cat("#Sanity checks\n\n")
    phi1 <- file.path(working.directory,"linearize_run/scm_dir1",paste0(sub('.([^.]*)$','',model.filename),"_linbase.phi"))
    phi2 <- file.path(working.directory,"linearize_run/scm_dir1/derivatives.phi")
    if(file.exists(phi1) && file.exists(phi2)) {
      make_iofv_plot <- iofv_vs_iofv(phi1,phi2)$make_plot
      if(make_iofv_plot) {
+       cat("\\pagebreak\n\n")
+       cat("#Sanity checks\n\n")
        plot_iofv_vs_iofv <- iofv_vs_iofv(phi1,phi2)$plot
        print(plot_iofv_vs_iofv)
        cat("Agreement in individual OFV contribution (iOFV) between non-linear and linearized model. Deviations from the line of identity indicate problems in the model linearization step and warrant caution when interpreting the results of this report.")
