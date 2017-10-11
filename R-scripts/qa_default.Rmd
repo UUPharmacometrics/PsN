@@ -237,7 +237,7 @@ if(fullblock_mod) {
   print(full_omega_block_table)
   cat("Estimated standard deviation (sd) and correlation (corr) as well as expected improvement in OFV when allowing for a full block correlation structure between subject-level random effects.")
 } else {
-  cat("Model already have full OMEGA Block.")
+  cat("Model already has full OMEGA Block.")
 }
 ```
 
