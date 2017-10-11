@@ -483,21 +483,14 @@ sub prepare_results
 	}
 
 	#make sure that we have valid raw_line_structure and not from crashed run here
-	my ($dofv, $length, $baseofv);
+	my ($dofv, $length);
 	for (my $i = 1; $i <= $self->samples; $i++) {
 		if (defined $self->raw_line_structure()->{$i}->{'deltaofv'}) {
 			($dofv, $length) = split(',', $self->raw_line_structure()->{$i}->{'deltaofv'});
 			last;
 		}
 	}
-
 	return if (not defined $dofv);
-	if (defined $self->raw_line_structure()->{'base'}->{'ofv'}) {
-		($baseofv, $length) = split(',', $self->raw_line_structure()->{'base'}->{'ofv'});
-		1;
-	} else {
-		return;
-	}
 
 	my @dofvarray = ();
 	#we assume here that only have one problem and subproblem in models
