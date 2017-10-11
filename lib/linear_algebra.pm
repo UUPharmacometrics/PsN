@@ -1199,6 +1199,7 @@ sub spdarise
 		}
     }
     my $fNormDiff=0;
+    # TODO: replace by call to frobenius_norm below
     for (my $index1 = 0; $index1 < scalar(@{$matrix}); $index1++) {
         for (my $index2 = 0; $index2 < scalar(@{$matrix}); $index2++) {
 			$posdefmatrix[$index1]->[$index2] =0;
@@ -1217,6 +1218,7 @@ sub frobenius_norm {
     # calculate the frobenius norm of a matrix (or frobenius norm of element-wise difference)
     # TODO: use MatrixReal class instead
     my %parm = validated_hash(\@_,
+        # in *col format*, A->[col][row]
         matrix => { isa => 'ArrayRef', optional => 0 },
         matrix2 => { isa => 'ArrayRef', optional => 1 },
 	);
@@ -1242,6 +1244,7 @@ sub frobenius_norm {
 sub get_matrix_size {
     # get matrix (array ref of column array refs) dimensions NxM, return (N,M,errmsg)
     my %parm = validated_hash(\@_,
+        # in *col format*, A->[col][row]
         matrix => { isa => 'ArrayRef', optional => 0 },
 	);
 	my $mat = $parm{'matrix'};
@@ -1274,6 +1277,7 @@ sub inverse_identity_rmse {
     # calculate the difference of two square matrices by RMSE (to identity matrix)
     # of product of first matrix with second matrix inverse
     my %parm = validated_hash(\@_,
+        # in *col format*, A->[col][row]
         matrix1 => { isa => 'ArrayRef', optional => 0 }, # need not be invertible, but square
         matrix2 => { isa => 'ArrayRef', optional => 0 }, # need to be invertible and of same size
 	);
