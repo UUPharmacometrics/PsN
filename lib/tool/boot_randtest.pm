@@ -100,6 +100,24 @@ sub modelfit_setup
         $rand->prepare_results();
         $rand->print_results();
     }
+
+    open my $dh, '>', 'raw_results.csv';
+    for (my $i = 0; $i < $self->samples; $i++) {
+        open my $fh, '<', 'randtest_dir' . ($i + 1) . '/raw_results.csv' or die "Could not open rand_test raw_results file";
+        my $line = <$fh>;
+        if ($i == 0) {
+            print $dh $line;
+        }
+        <$fh>;
+        <$fh>;
+        $line = <$fh>;
+        my @a = split ',', $line;
+        $a[0] = $i + 1;
+        $line = join ',', @a;
+        print $dh $line;
+        close $fh;
+    }
+    close $dh;
 }
 
 sub modelfit_analyze
