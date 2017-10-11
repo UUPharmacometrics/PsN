@@ -482,51 +482,18 @@ sub prepare_results
 	}
 	return if (not defined $dofv);
 
-	my @dofvarray = ();
+	my @dofvarray;
 	#we assume here that only have one problem and subproblem in models
 	if (defined $self->raw_results) {
-		my $poscount = 0;
-		my $undefcount = 0;
 		for (my $j = 0; $j < scalar @{$self->raw_results}; $j++) { # orig model + prepared_models
-			next if ($self->raw_results->[$j][0] =~ '/(base|input)/');
+			next if ($self->raw_results->[$j][0] =~ /(base|input)/);
+            next if (ref $self->raw_results->[$j][0]);
 			my $val = $self->raw_results->[$j][$dofv];
-			if (defined $val) {
-				if ($val <= 0) {
-					push(@dofvarray, $val);
-				} else {
-					$poscount++;
-					push(@dofvarray, 0);
-				}
-			} else {
-				$undefcount++;
-			}
+            push(@dofvarray, $val);
 		}
 	}
-
-	return if (scalar(@dofvarray) < 1);
 
     print_dofv_results(dofv => \@dofvarray, filename => $self->directory . $self->results_file);
-=cut
-	my @sorted = (sort {$a <=> $b} @dofvarray); #sort ascending
-	my $actual_dofv_ref = quantile(probs => \@probs, numbers=> \@sorted);
-
-#p-value , actual dOFV at percentile, theoretical dOFV for chi2 1df, actual percentile at theoretical dOFV for chi2 1df,theoretical dOFV for chi2 2df, actual percentile at theoretical dOFV for chi2 2df , theoretical dOFV for chi2 3df, actual percentile at theoretical dOFV for chi2 3df 
-# 0.001 , 0.01 , 0.05 , 0.10 , 0.15 ,
-
-	open(RES, ">".$self->directory.$self->results_file()) or die "could not open ".$self->results_file();
-	print RES "p-value,actual.dOFV.at.percentile,theoretical.dOFV.for.chi2.1df,actual.percentile.at.theoretical.dOFV.for.chi2.1df,theoretical.dOFV.for.chi2.2df,actual.percentile.at.theoretical.dOFV.for.chi2.2df.,theoretical.dOFV.for.chi2.3df,actual.percentile.at.theoretical.dOFV.for.chi2.3df\n";
-
-	for (my $i = 0; $i < scalar(@probs); $i++) {
-		my @line = ($probs[$i],$actual_dofv_ref->[$i]);
-		my @testdofv = (-$p_values{$probs[$i]}->{1}, -$p_values{$probs[$i]}->{2}, -$p_values{$probs[$i]}->{3});
-		my $perc = percentile(sorted_numbers => \@sorted, test_values => \@testdofv);
-		for (my $j = 0; $j < scalar(@testdofv); $j++) {
-			push(@line, $testdofv[$j], $perc->[$j]);
-		}
-		print RES join(',', @line) . "\n";
-	}
-	close(RES);
-=cut
 }
 
 sub print_dofv_results
@@ -539,6 +506,32 @@ sub print_dofv_results
     my $dofv = $parm{'dofv'};
     my $filename = $parm{'filename'};
 
+    #preprocess dofv values to find undefs or positives		
+    my @processed_dofv;
+    my $poscount = 0;
+    my $undefcount = 0;
+
+    for my $value (@$dofv) {
+        if (defined $value) {
+            if ($value <= 0) {
+                push @processed_dofv, $value;
+            } else {
+                $poscount++;
+                push @processed_dofv, 0;
+            }
+        } else {
+            $undefcount++;
+        }
+    }
+
+    if ($poscount > 0) {
+        print "Warning: $poscount positive delta ofvs were found and set to zero.\n";
+    }
+    if ($undefcount > 0) {
+        print "Warning: $undefcount undefined delta ofvs were found and set to zero.\n";
+    }
+    return if scalar(@processed_dofv) < 1;
+
     my %p_values;
 	# 1 2 3 degrees of freedom
 	$p_values{0.001} = { 1 => 10.828, 2 => 13.816, 3 => 16.266, };
@@ -548,7 +541,7 @@ sub print_dofv_results
 	$p_values{0.15} = { 1 => 2.0723, 2 => 3.7942, 3 => 5.3171, };
 	my @probs = sort (sort {$a <=> $b} keys %p_values); #sort ascending
 
-	my @sorted = (sort {$a <=> $b} @$dofv); #sort ascending
+	my @sorted = (sort {$a <=> $b} @processed_dofv); #sort ascending
 	my $actual_dofv_ref = quantile(probs => \@probs, numbers=> \@sorted);
 
     #p-value , actual dOFV at percentile, theoretical dOFV for chi2 1df, actual percentile at theoretical dOFV for chi2 1df,
