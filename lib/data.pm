@@ -2478,9 +2478,11 @@ sub _write
 	my $self = shift;
 	my %parm = validated_hash(\@_,
 		filename => { isa => 'Str', default => $self->full_name, optional => 1 },
+        overwrite => { isa => 'Bool', default => 0 },
 		MX_PARAMS_VALIDATE_NO_CACHE => 1
 	);
 	my $filename = $parm{'filename'};
+	my $overwrite = $parm{'overwrite'};
 
 	die "ERROR: data->_write: No filename set in data object.\n" if( $filename eq '' );
 
@@ -2489,7 +2491,7 @@ sub _write
 		croak("Trying to write to $filename, but no individuals in memory");
 	}
 
-	if (-e $filename){
+	if (not $overwrite and -e $filename){
 		croak("Trying to write to $filename, but file already exists");
 	}
 

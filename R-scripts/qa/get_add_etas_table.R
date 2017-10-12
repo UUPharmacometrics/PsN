@@ -15,38 +15,49 @@ get_add_etas_table <- function(directory,added_etas,dofv_add.etas) {
     for(i in 1:length(eta_nr)) {
       add_etas_table[i,1] <- paste0("ETA(",eta_nr[[i]][2],")")
       add_etas_table[i,2] <- "No"
-      add_etas_table[i,3] <- sqrt(new_omega_values[,grep(paste0(".",eta_nr[[i]][2],"."),colnames(new_omega_values))])
-      add_etas_table[i,4] <- sqrt(old_omega_values[,grep(paste0(".",eta_nr[[i]][2],"."),colnames(old_omega_values))])
+      add_etas_table[i,3] <- sqrt(new_omega_values[,grep(paste0("^OMEGA.",eta_nr[[i]][2],".",eta_nr[[i]][2],".$"),colnames(new_omega_values))])
+      add_etas_table[i,4] <- sqrt(old_omega_values[,grep(paste0("^OMEGA.",eta_nr[[i]][2],".",eta_nr[[i]][2],".$"),colnames(old_omega_values))])
     }
-    add_etas_table[,4] <- format(add_etas_table[,4],digits=1,trim=T,scientific = F,nsmall=2)
+    add_etas_table[,4] <- format(round(add_etas_table[,4],2),digits=1,trim=T,scientific = F,nsmall=2)
     # order added_eta values
     added_etas[sapply(added_etas,is.null)] <- NA
     added_etas <- added_etas[order(unlist(added_etas))]
     
     #which omegas goes to added etas on parameters
     j <- nrow(add_etas_table)
-    for (i in 1:length(added_etas)) {
+    n <- 1
+    f <- T
+    for (i in unlist(added_etas)) {
       j <- j + 1
-      if(any(added_etas %in% j)) {
-        add_etas_table[j,1] <- names(added_etas)[[i]]
+      if(!is.na(i)) {
+        add_etas_table[j,1] <- names(added_etas)[[n]]
         add_etas_table[j,2] <- "Yes"
-        add_etas_table[j,3] <- sqrt(new_omega_values[,grep(paste0(".",j,"."),colnames(new_omega_values))])
+        add_etas_table[j,3] <- sqrt(new_omega_values[,grep(paste0("^OMEGA.",i,".",i,"."),colnames(new_omega_values))])
         add_etas_table[j,4] <- ""
       } else {
-        add_etas_table[,3] <- format(add_etas_table[,3],digits=1,trim=T,scientific = F,nsmall=2)
-        add_etas_table[j,1] <- names(added_etas)[[i]]
+        if(f == T) {
+          add_etas_table[,3] <- format(round(add_etas_table[,3],2),digits=1,trim=T,scientific = F,nsmall=2)
+          f <- F
+        }
+        add_etas_table[j,1] <- names(added_etas)[[n]]
         add_etas_table[j,2] <- "Not found"
         add_etas_table[j,3] <- ""
         add_etas_table[j,4] <- ""
       }
+      n <- n + 1
     }
     if(all(!is.na(added_etas))) {
-      add_etas_table[,3] <- format(add_etas_table[,3],digits=1,trim=T,scientific = F,nsmall=2)
+      add_etas_table[,3] <- format(round(add_etas_table[,3],2),digits=1,trim=T,scientific = F,nsmall=2)
     }
 
     if(class(dofv_add.etas)!="character") {
-      add_etas_table <- rbind(add_etas_table,c("dOFV",format(dofv_add.etas,digits=1,scientific=F,nsmall=1),"",""))
+      add_etas_table <- rbind(add_etas_table,c("dOFV",format(round(dofv_add.etas,2),digits=1,scientific=F,nsmall=1),"",""))
     }
-    return(add_etas_table)
+    add_etas_error <- FALSE
+  } else {
+    add_etas_error <- TRUE
+    add_etas_table <- error_table(col=1)
   }
+  return(list(add_etas_table=add_etas_table,
+              add_etas_error=add_etas_error))
 }

@@ -13,6 +13,7 @@ get_param_extra_table <- function(directory,dofv,param_model) {
   ext_file.path <- file.path(directory,"modelfit_run",param_model_name)
   #get THETA values
   if(file.exists(ext_file.path) && file.exists(file.path(directory,"linearize_run/scm_dir1/derivatives.ext"))) {
+    param_extra_table_error <- FALSE
     ext_file <- read.table((ext_file.path),header=TRUE,skip=1,stringsAsFactors = F) %>%
       dplyr::filter(ITERATION==-1000000000)
     new_omega_values <- get_omega_values(ext_file=ext_file.path,omegas="var")
@@ -56,18 +57,20 @@ get_param_extra_table <- function(directory,dofv,param_model) {
     }
     param_extra_table_orig <- param_extra_table
     colnames(param_extra_table_orig) <- c("ETA",table_col_name,"New SD","Old SD")
-    param_extra_table[,2] <- format(as.numeric(param_extra_table[,2]),digits=1,trim=T,scientific = F,nsmall=2)
-    param_extra_table[,3] <- format(as.numeric(param_extra_table[,3]),digits=1,trim=T,scientific = F,nsmall=2)
-    param_extra_table[,4] <- format(as.numeric(param_extra_table[,4]),digits=1,trim=T,scientific = F,nsmall=2)
+    param_extra_table[,2] <- format(round(as.numeric(param_extra_table[,2]),2),digits=1,trim=T,scientific = F,nsmall=2)
+    param_extra_table[,3] <- format(round(as.numeric(param_extra_table[,3]),2),digits=1,trim=T,scientific = F,nsmall=2)
+    param_extra_table[,4] <- format(round(as.numeric(param_extra_table[,4]),2),digits=1,trim=T,scientific = F,nsmall=2)
     if(class(dofv)!="character") {
-      param_extra_table <- rbind(param_extra_table,c("dOFV",format(dofv,digits=1,scientific=F,nsmall=1),"",""))
+      param_extra_table <- rbind(param_extra_table,c("dOFV",format(round(dofv,2),digits=1,scientific=F,nsmall=1),"",""))
     }
     
   } else {
     param_extra_table <- error_table(col=1)
     param_extra_table_orig <- param_extra_table
+    param_extra_table_error <- TRUE
   }
   out <- list(param_extra_table=param_extra_table,
-              param_extra_table_orig=param_extra_table_orig)
+              param_extra_table_orig=param_extra_table_orig,
+              param_extra_table_error=param_extra_table_error)
   return(out)
 }

@@ -47,16 +47,16 @@ $help_text{Pre_help_message} = <<'EOF';
     Bootstrapped stepwise covariate model building from NONMEM models.
 EOF
 
-$help_text{Description} = <<'EOF';
+	$help_text{Description} = <<'EOF';
     The Bootstrap Stepwise Covariate Model (boot_scm) building tool 
     of PsN implements bootstrapped model selection for a
     covariate model, a method presented in
-The bootstrap of Stepwise Covariate Modeling using linear approximations,
-PAGE 20 (2011) Abstr 2161, R Keizer.
+	The bootstrap of Stepwise Covariate Modeling using linear approximations,
+	PAGE 20 (2011) Abstr 2161, R Keizer.
 
 	It relies on the SCM tool of PsN.        
 EOF
-$help_text{Examples} = <<'EOF';    
+	$help_text{Examples} = <<'EOF';    
     boot_scm config_run1.scm -samples=100
 EOF
 
@@ -68,6 +68,12 @@ EOF
 	it cannot be given on the command-line.
 
     The following options are valid:
+EOF
+	$help_text{-samples} = <<'EOF';
+      -samples=N
+
+    Mandatory command-line option.
+	The number of bootstrapped datasets to run the scm on.
 EOF
 
     $help_text{-h} = <<'EOF';
@@ -81,6 +87,34 @@ EOF
 
     With -help boot_scm will print this, longer, help message.
 EOF
+	$help_text{-dummy_covariates} = <<'EOF';
+      -dummy_covariates=list of existing covariates
+
+    Default not set. If used, a new column for each listed covariate will 
+    be added to the dataset, containing a randomly permuted copy of the 
+    original covariate column and with header X<name of original covariate>. 
+    The dummy covariate will be tested for inclusion in the covariate model 
+    exactly like the original covariate.
+	However, a known bug is that boot_scm will not correctly create a dummy 
+	covariate based on a time-varying covariate.
+EOF
+	$help_text{-methodA} = <<'EOF';
+      -methodA
+
+    Default not set. If the scm option linearize=1 is not set in the scm config file, 
+	the bootstrap scm non-linear method will be used. If option linearize=1 is set in the scm config file, 
+	by default the bootstrap scm linear method B (see algorithm description below) will be used. 
+	If option linearize=1 is set together with option -methodA on the boot_scm commandline (no argument to -methodA) 
+	then the bootstrap scm linear method A will be used. If linearize=1 is not set and option -methodA is set this will result in an error message.  
+	Setting linearize=1 in the scm config file by default gives linearization using FOCE, for details see the scm userguide.
+EOF
+	$help_text{-run_final_models} = <<'EOF';
+	-run_final_models
+
+    Default not set. If set then boot_scm will run the final models from 
+    each scm on the original dataset and collect the ofv values in the output 
+    file ofv_final.csv 
+EOF
 
     $help_text{-stratify_on} = <<'EOF';
       -stratify_on=string
@@ -92,43 +126,9 @@ EOF
       measurements - it may be wise to restrict the resampling
       procedure to resample within the two groups, producing bootstrap
       data sets that all contain 10 rich + 90 sparse data patients but
-      with different compositions. The default is not to use
-      stratification.  Set -stratify_on to
-      the column (the name in INPUT in the model) that defines the two groups.
-EOF
-
-$help_text{-samples} = <<'EOF';
-      -samples=N
-
-    The number of bootstrapped datasets to run the scm on.
-EOF
-$help_text{-methodA} = <<'EOF';
-      -methodA
-
-    Default not set. If the scm option linearize is not set in the scm configuration
-	file, the bootstrap scm non-linear method will be used. If option linearize is set, by 
-    default the bootstrap scm linear method B will be used. If option 
-    linearize is set in the scm configuration file together with option -methodA on the
-    boot_scm command line then the bootstrap 
-    scm linear method A will be used. If linearize is not set and option 
-    -methodA is set this will result in an error message.
-EOF
-
-$help_text{-dummy_covariates} = <<'EOF';
-      -dummy_covariates=list of existing covariates
-
-    Default not used. If used, a new column for each listed covariate will 
-    be added to the dataset, containing a randomly permuted copy of the 
-    original covariate column and with header X<name of original covariate>. 
-    The dummy covariate will be tested for inclusion in the covariate model 
-    exactly like the original covariate.
-EOF
-$help_text{-run_final_models} = <<'EOF';
--run_final_models
-
-    Default not set. If set then boot_scm will run the final models from 
-    each scm on the original dataset and collect the ofv values in the output 
-    file ofv_final.csv 
+      with different compositions. The default is not to use stratification.  
+	  Set -stratify_on to the column (the name in INPUT in the model) that 
+	  defines the two groups.
 EOF
 
     $help_text{Post_help_message} = <<'EOF';

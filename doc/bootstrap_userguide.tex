@@ -1,5 +1,5 @@
 \input{inputs/format_header.tex}
-\guidetitle{Bootstrap user guide}{2016-05-30}
+\guidetitle{Bootstrap user guide}{2017-10-11}
 \begin{document}
 
 
@@ -9,10 +9,11 @@
 
 \section{Introduction}
 
-Bootstrap can be used to calculate bias, standard errors and confidence intervals. It does so by resampling with replacement from the data. To compute standard errors for all parameters of a model using the non-parametric bootstrap
-      implemented here, roughly 200 model fits are necessary. To assess
-      95% confidence intervals approximatly 2000 runs will suffice.t \cite{Efron}. 
-See also \cite{Niebecker} for diagnostics using option -dofv.
+Bootstrap can be used to calculate bias, standard errors and confidence intervals. 
+It does so by resampling with replacement from the data. To compute standard errors for 
+all parameters of a model using the non-parametric bootstrap implemented here, roughly 200 
+mmdel fits are necessary. To assess 95\% confidence intervals approximatly 2000 runs will suffice.
+\cite{Efron}. See also \cite{Niebecker} for diagnostics using option -dofv.
 
 Example:
 \begin{verbatim}
@@ -24,86 +25,70 @@ bootstrap run12.mod -samples=500 -seed=12345 -threads=5
 \subsection{Required input}
 A model file is required on the command-line.
 
-\subsection{Bootstrap-specific options}
+\subsection{Optional input}
+	
 \begin{optionlist}
+\optname{allow\_ignore\_id}
+Default not set. When not used, bootstrap will print a message and terminate if an IGNORE or ACCEPT statement based on the ID column is found in the \$DATA record. This is done because it would interfere with the internal renumbering of individuals that the script does, producing errors since the script renumbers individuals before sampling. If -allow\_ignore\_id is used (not recommended), a warning is printed but the program continues execution. 
+
+Note: The IGNORE statement can safely be used in conjunction with any other column than ID.
+\nextopt
+\optname{bca}
+Default not set. When used, the bootstrap utility will calculate the confidence intervals through the BCa method \cite{Efron}. The BCa is intended for calculation of second-order correct confidence intervals. Warning: Using bca is very time-consuming. 
+\nextopt
+\optname{copy\_data}
+Default set. If option is set, the original data file will be copied to the run directory if the input model is to be run. If option is unset using -no-copy\_data, the absolute path to the original data file will be used in \$DATA when the input model is run, and the data file will not be copied which saves disk space.
+\nextopt
+\optname{dofv}
+Default not set. Compute delta-ofv by doing a MAXEVAL=0 run on orginal dataset with the bootstrap parameter estimates.
+\nextopt
+\optname{keep\_covariance}
+By default the \$COVARIANCE will be deleted from the bootstrap models, to save run time. If option -keep\_covariance is set, PsN will instead keep \$COVARIANCE.
+\nextopt
+\optname{keep\_tables}
+By default all \$TABLE will be deleted from the bootstrap models, to save disk space. If option -keep\_tables is set, PsN will instead keep \$TABLE, which can require much disk space.
+\nextopt
+\optdefault{mceta}{N}
+Default not set. If option -dofv is set and NONMEM 7.3 or later is used, setting this option will make PsN set MCETA=N in \$ESTIMATION. It is up to the user to check that the estimation method used can in NONMEM be combined with option MCETA, PsN will not do that.
+\nextopt
+\optname{run\_base\_model}
+By default, the input model will be run unless the lst-file for the input model is found in the same directory as the input model. If -no-run\_base\_model  is set, the input model will not be run even if the lst-file is missing.
+\nextopt
+\optdefault{sample\_size}{M}
+The number of subjects in each bootstrap data set. The default value is set to the number of individuals in the original data set. When the resampling is stratified, the sample\_size option can be used to specify the exact number of samples that should be drawn from each strata. Below follows an example of the syntax that should be used in such a case. Stratification is here done based on the study number, STUD, with the values 1001, 1002 and 1003. -sample\_size=''1001$=>$12,1002$=>$24,1003$=>$10''                          
+Note the double quotes, single quotes will not work in Windows. This example specifies that the bootstrap should use 12 samples from study 1001, 24 samples from 1002 and 10 from study 1003. If only one sample size is used together with stratified resampling (the default case; sample\_size=number of individuals in the data set), the strata are assigned samples in proportion to their size in the data set. Please note that this usage of the sample\_size option does not guarantee that the sum of the samples of the strata is equal to the given sample\_size since PsN needs to round the figures to the closest integer. For a sample size equal to the number of individuals in the data set, the sum will however always be correct. 
+\nextopt
 \optdefault{samples}{N}
 The number of bootstrapped datasets to generate. Default is 200. 
 \nextopt
-\optdefault{sample\_size}{M}
-The number of subjects in each bootstrap data set. The default value is set to the number of individuals in the original data set. When the resampling is stratified, the sample\_size option can be used to specify the exact number of samples that should be drawn from each strata. Below follows an example of the syntax that should be used in such a case. Stratification is here done based on the study number, STUD, with the values 1001, 1002 and 1003.  -sample\_size=''1001$=>$12,1002$=>$24,1003$=>$10''                          
-Note the double quotes, single quotes will not work on Windows.
-This example specifies that the bootstrap should use 12 samples from study 1001, 24 samples from 1002 and 10 from study 1003. If only one sample size is used together with stratified resampling (the default case; sample\_size=number of individuals in the data set), the strata are assigned samples in proportion to their size in the data set. Please note that this usage of the sample\_size option does not guarantee that the sum of the samples of the strata is equal to the given sample\_size since PsN needs to round the figures to the closest integer. For a sample size equal to the number of individuals in the data set, the sum will however always be correct. 
-\nextopt
-\optdefault{stratify\_on}{column name}
-It may be necessary to use stratification in the resampling procedure. For example, if the original data consists of two groups of patients - say 10 patients with full pharmacokinetic profiles and 90 patients with sparse steady state concentration measurements - it may be wise to restrict the resampling procedure to resample within the two groups, producing bootstrap data sets that all contain 10 rich + 90 sparse data patients but with different compositions. The default is not to use stratification. Set -stratify\_on to the column (the name in \$INPUT) that defines the two groups. Note that the option sample\_size has a different behaviour when stratified resampling is used. 
-
-Bootstrapping is always done on entire individuals, so for each ID the data records are either all included or all excluded from a particular bootstrapped data set.
-The algorithm requires that an individual can unambigously be categorized according to the stratification variable. 
-In data file terms, it means that the variable used for stratification must have one and only one value for each individual, otherwise the program will stop with an error message saying that at least one individual has multiple values
-in the stratification column, and therefore this column cannot be used for stratification of the resampling.
-\nextopt
-\optname{run\_base\_model}
-By default, the input model will be run unless the lst-file for the input model is found in the same directory as the input model.
-If the user sets -no-run\_base\_model, the input model will not be run even if the lst-file is missing.
-\optname{update\_inits}
-By default, the initial estimates of the bootstrap models will be set to the final estimates of the input model if final
-estimates are available. If the user sets -no-update\_inits, the initial estimates of the bootstrap models will be
-the same as the initial estimates set in the input model, even if final estimates from the input model are available.
-\optname{keep\_tables}
-By default, all \$TABLE will be deleted from the bootstrap models, to save disk space. If option -keep\_tables is set, 
-PsN will instead keep \$TABLE, which can require much disk space.
-\nextopt
-\optname{keep\_covariance}
-By default the \$COVARIANCE will be deleted from the bootstrap models, 
-to save run time. If option -keep\_covariance is set, 
-PsN will instead keep \$COVARIANCE.
-\nextopt
-\optname{bca}
-Default not used. When used, the bootstrap utility will calculate the confidence intervals through the BCa method \cite{Efron}. The BCa is intended for calculation of second-order correct confidence intervals. Warning: Using bca is very time-consuming. 
-\nextopt
-\optname{skip\_minimization\_terminated}
-Used by default. When used, the bootstrap will skip all samples where the NONMEM run terminated the minimization step. Force disabling with -no-skip\_minimization\_terminated. 
-\nextopt
 \optname{skip\_covariance\_step\_terminated}
-Default not used. With this option enabled, the bootstrap will skip all samples
-      where the NONMEM run terminated the covariance step.
-      Force disabling with -no\-skip\_covariance\_step\_terminated.
-\nextopt
-\optname{skip\_with\_covstep\_warnings}
-Default not used. With this option enabled, the bootstrap will skip all samples
-      where the NONMEM run had warnings from the covariance step.
-      Force disabling with -no\-skip\_with\_covstep\_warnings.
+Default not set. With this option enabled, the bootstrap will skip all samples where the NONMEM run terminated the covariance step.\\
+Force disabling with -no\-skip\_covariance\_step\_terminated.
 \nextopt
 \optname{skip\_estimate\_near\_boundary}
-Used by default. With this option enabled, the bootstrap will skip all samples
-      where the NONMEM run signal that some estimates are near its
-      boundary.
-      Force disabling with  -no-skip\_estimate\_near\_boundary.
+Default set. With this option enabled, the bootstrap will skip all samples where the NONMEM run signal that some estimates are near its boundary.\\
+Force disabling with -no-skip\_estimate\_near\_boundary.
 \nextopt
-\optname{allow\_ignore\_id}
- Default not used. When not used, bootstrap will print a message and terminate if an IGNORE or ACCEPT statement based on the ID column is found in the \$DATA record. 
-	  This is done because it would interfere with the internal renumbering of individuals that the script does, 
-	  producing errors since the script renumbers individuals before sampling.
-	  If -allow\_ignore\_id is used (not recommended), a warning is printed but the program continues execution. 
-	  Note: The IGNORE statement can safely be used in conjunction with any other column than ID.
+\optname{skip\_minimization\_terminated}
+Default set. The bootstrap will skip all samples where the NONMEM run terminated the minimization step.\\ 
+Force disabling with -no-skip\_minimization\_terminated. 
+\nextopt
+\optname{skip\_with\_covstep\_warnings}
+Default not set. With this option enabled, the bootstrap will skip all samples
+where the NONMEM run had warnings from the covariance step.\\
+Force disabling with -no\-skip\_with\_covstep\_warnings.
+\nextopt
+\optdefault{stratify\_on}{column name}
+It may be necessary to use stratification in the resampling procedure. For example, if the original data consists of two groups of patients - say 10 patients with full pharmacokinetic profiles and 90 patients with sparse steady state concentration measurements - it may be wise to restrict the resampling procedure to resample within the two groups, producing bootstrap data sets that all contain 10 rich + 90 sparse data patients but with different compositions. The default is not to use stratification. Set -stratify\_on to the column (the name in \$INPUT) that defines the two groups. Note that the option sample\_size has a different behaviour when stratified resampling is used.\\
+Bootstrapping is always done on entire individuals, so for each ID the data records are either all included or all excluded from a particular bootstrapped data set. The algorithm requires that an individual can unambigously be categorized according to the stratification variable. In data file terms, it means that the variable used for stratification must have one and only one value for each individual, otherwise the program will stop with an error message saying that at least one individual 
+has multiple values in the stratification column, and therefore this column cannot be used for stratification of the resampling.
 \nextopt
 \optname{summarize}
 Default not set. Only allowed when -directory is set to an existing bootstrap run directory and
-the raw\_results file exist in there. Recompute bootstrap\_results based on the existing raw\_results,
-possibly using a different set of exclusion criteria.
+the raw\_results file exist in the directory. Recompute bootstrap\_results based on the existing raw\_results, possibly using a different set of exclusion criteria.
 \nextopt
-\optname{copy\_data}
-Default set. If option is set, the original data file
-will be copied to the run directory if the input model is to be run.
-If option is unset using -no-copy\_data, the absolute path to the original data file will be used in
-\$DATA when the input model is run, and the data file will not be copied. This saves disk space.
-\nextopt
-\optname{dofv}
-Optional, default not used. Evaluate original data with bootstrap parameter estimates and compute delta-ofv. See section Computing delta-ofv. 
-\nextopt
-\optdefault{mceta}{N}
-Default not used. If option -dofv is set and NONMEM version 7.3 or later is used, setting this option will make PsN set MCETA=N in \$ESTIMATION. It is up to the user to check that the estimation method used can in NONMEM be 
-combined with option MCETA, PsN will not do that.
+\optname{update\_inits}
+By default, the initial estimates of the bootstrap models will be set to the final estimates of the input model if final estimates are available. If the user sets -no-update\_inits, the initial estimates of the bootstrap models will be the same as the initial estimates set in the input model, even if the final estimates from the input model are available.
 \nextopt
 \end{optionlist}
 

@@ -1,13 +1,13 @@
 package tool::boot_randtest;
 
-use include_modules;
 use strict;
-use data;
+use include_modules;
+use Moose;
+use MooseX::Params::Validate;
 use log;
 use OSspecific;
 use tool::modelfit;
-use Moose;
-use MooseX::Params::Validate;
+use data;
 use tool::randtest;
 
 extends 'tool';
@@ -16,6 +16,7 @@ has 'samples' => ( is => 'rw', required => 1, isa => 'Int' );
 has 'subjects' => ( is => 'rw', isa => 'HashRef' );
 has 'base_model' => ( is => 'rw', isa => 'model' );
 has 'stratify_on' => ( is => 'rw', isa => 'Str' );
+has 'random_column' => ( is => 'rw', isa => 'Bool', default => 0 );     # Should a dichotomous column be used for randomizing
 
 
 sub BUILD
@@ -69,17 +70,57 @@ sub modelfit_setup
             missing_data_token => $self->missing_data_token,
         );
 
+    if ($self->random_column) {
+        # Add column with 0 and 1 for each individual 50-50
+        for (my $i = 1; $i <= $self->samples; $i++) {
+            my $data = data->new(
+                filename => "bs_$i.dta",
+                directory => 'm1/',
+                ignoresign => '@',
+                missing_data_token => $self->missing_data_token,
+                idcolumn => $model->idcolumn(),
+            );
+            my $ninds = scalar(@{$data->individuals});
+            my $nzeroes = int($ninds / 2);
+            for (my $j = 0; $j < $nzeroes; $j++) {
+                for my $row (@{$data->individuals->[$j]->subject_data}) {
+                    $row .= ",0";
+                }
+            }
+            for (my $j = $nzeroes; $j < $ninds; $j++) {
+                for my $row (@{$data->individuals->[$j]->subject_data}) {
+                    $row .= ",1";
+                }
+            }
+            $data->_write(overwrite => 1);
+        }
+    }
+
+    if ($self->random_column) {
+       $self->base_model->add_option(record_name => 'input', option_name => 'NEW_');
+       $model->add_option(record_name => 'input', option_name => 'NEW_');
+    }
+
     for (my $i = 0; $i < $self->samples; $i++) {
         my $base = $self->base_model;
         $base->directory('m1/');
         $base->filename("base_" . ($i + 1) . ".mod");
         $base->problems->[0]->datas->[0]->set_filename(filename => 'bs_' . ($i + 1) . '.dta', directory => "m1/");
         $base->_write();
+        $base->outputs->[0]->directory("m1/");
+        $base->outputs->[0]->filename("base_" . ($i + 1) . ".lst");
+        $base->outputs->[0]->problems([]);
+
         my $orig = $model;
         $orig->directory('m1/');
         $orig->filename("orig_" . ($i + 1) . ".mod");
         $orig->problems->[0]->datas->[0]->set_filename(filename => 'bs_' . ($i + 1) . '.dta', directory => "m1/");
         $orig->_write();
+
+        my $randomization_column = $self->stratify_on;
+        if ($self->random_column) {
+            $randomization_column = 'NEW_';
+        }
 
         my $rand = tool::randtest->new(
             %{common_options::restore_options(@common_options::tool_options)},
@@ -88,7 +129,7 @@ sub modelfit_setup
             models => [ $orig ],
             samples	=> 1,
             base_model => $base,
-            randomization_column => $self->stratify_on,
+            randomization_column => $randomization_column,
         );
 
         #$rand->print_options (cmd_line => $cmd_line,
@@ -100,6 +141,27 @@ sub modelfit_setup
         $rand->prepare_results();
         $rand->print_results();
     }
+
+    my @dofv;
+    open my $dh, '>', 'raw_results.csv';
+    for (my $i = 0; $i < $self->samples; $i++) {
+        open my $fh, '<', 'randtest_dir' . ($i + 1) . '/raw_results.csv' or die "Could not open rand_test raw_results file";
+        my $line = <$fh>;
+        if ($i == 0) {
+            print $dh $line;
+        }
+        <$fh>;
+        <$fh>;
+        $line = <$fh>;
+        my @a = split ',', $line;
+        push @dofv, $a[20];
+        $a[0] = $i + 1;
+        $line = join ',', @a;
+        print $dh $line;
+        close $fh;
+    }
+    close $dh;
+    tool::randtest::print_dofv_results(dofv => \@dofv, filename => 'boot_randtest_results.csv');
 }
 
 sub modelfit_analyze
