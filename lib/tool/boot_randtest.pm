@@ -107,7 +107,10 @@ sub modelfit_setup
         $base->filename("base_" . ($i + 1) . ".mod");
         $base->problems->[0]->datas->[0]->set_filename(filename => 'bs_' . ($i + 1) . '.dta', directory => "m1/");
         $base->_write();
-        #FIXME: Change output path to base here
+        $base->outputs->[0]->directory("m1/");
+        $base->outputs->[0]->filename("base_" . ($i + 1) . ".lst");
+        $base->outputs->[0]->problems([]);
+
         my $orig = $model;
         $orig->directory('m1/');
         $orig->filename("orig_" . ($i + 1) . ".mod");
