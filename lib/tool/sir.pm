@@ -2084,6 +2084,7 @@ sub sample_multivariate_normal
     my %parm = validated_hash(\@_,
                               samples => { isa => 'Int', optional => 0 },
                               adjust_blocks => { isa => 'Bool', optional => 0},
+                              minEigen => { isa => 'Num', optional => 1, default => 1E-10 },
                               print_summary => { isa => 'Bool', default => 1},
                               check_cholesky_reparameterization => { isa => 'Bool', optional => 0},
                               fix_theta_labels => { isa => 'ArrayRef', optional => 0 },
@@ -2107,6 +2108,7 @@ sub sample_multivariate_normal
         );
     my $samples = $parm{'samples'};
     my $adjust_blocks = $parm{'adjust_blocks'};
+    my $minEigen = $parm{'minEigen'};
     my $print_summary = $parm{'print_summary'};
     my $check_cholesky_reparameterization = $parm{'check_cholesky_reparameterization'};
 #    my $multivariate_normal = $parm{'multivariate_normal'};
@@ -2410,15 +2412,16 @@ sub check_blocks_posdef{
 							  xvec => { isa => 'ArrayRef', optional => 0 },
 							  hash_array => {isa => 'ArrayRef', optional => 0},
 							  adjust_blocks => {isa => 'Bool', optional => 0},
+							  minEigen => {isa => 'Num', optional => 1, default => 1E-09},
 							  cholesky_decomposition => { isa => 'Bool', default => 0, optional => 1 },
 		);
 
 	my $xvec = $parm{'xvec'};
 	my $hash_array = $parm{'hash_array'};
 	my $adjust_blocks = $parm{'adjust_blocks'};
+	my $minEigen = $parm{'minEigen'};
 	my $cholesky_decomposition = $parm{'cholesky_decomposition'};
 
-	my $minEigen=0.000000001;
 	my $accept = 1;
 	my $adjusted = 0;
 

@@ -5,6 +5,7 @@ use MooseX::Params::Validate;
 use strict;
 use array qw(:all);
 use Math::Trig;
+use ext::Math::MatrixReal;
 use math;
 use include_modules;
 
@@ -1134,15 +1135,26 @@ sub LU_factorization
 
 sub get_symmetric_posdef
 {
-	my $A = shift;
+    # gets a symmetric positive definite matrix from adjusting small or negative negative
+    # eigenvalues to a small, positive number
+    my %parm = validated_hash(\@_,
+        matrix => { isa => 'ArrayRef', optional => 0 },
+        minEigen => { isa => 'Num', optional => 1, default => 1E-10 },
+	);
+	my $A = $parm{'matrix'};
+	my $minEigen = $parm{'minEigen'};
 
     (my $eigenvalues, my $Q) = eigenvalue_decomposition($A);
 
-	my $minEigen=0.0000000001;
 	my $count = count_lower(array => $eigenvalues,limit=>$minEigen);
 
 	if ($count >0){
-		my ($posdef,$diff) = spdarise(matrix => $A,eigenvalues => $eigenvalues, Q => $Q, minEigen => $minEigen); #new A,frob norm diff
+		my ($posdef,$diff) = spdarise(
+            matrix => $A,
+            eigenvalues => $eigenvalues,
+            Q => $Q,
+            minEigen => $minEigen,
+        ); #new A,frob norm diff
 		return ($posdef,$count);
 	}else{
 		return($A,0);
@@ -1225,6 +1237,79 @@ sub frobenius_norm {
     }
 
     return sqrt($sum);
+}
+
+sub get_matrix_size {
+    # get matrix (array ref of column array refs) dimensions NxM, return (N,M,errmsg)
+    my %parm = validated_hash(\@_,
+        matrix => { isa => 'ArrayRef', optional => 0 },
+	);
+	my $mat = $parm{'matrix'};
+
+    # empty matrix?
+    my $ncol = scalar @{$mat};
+    if ($ncol == 0) {
+        return (0,0,"empty matrix");
+    }
+
+    # matrix is column vector?
+    my $first_nrow = scalar @{$mat->[0]};
+    if ($ncol == 1) {
+        return ($first_nrow, 1, undef);
+    }
+
+    # matrix has column vector not of first vector length?
+    for (my $col=1; $col<$ncol; $col++) {
+        my $nrow = scalar @{$mat->[$col]};
+        if ($first_nrow != $nrow) {
+            return ($first_nrow, $ncol, "col idx $col has $nrow elements");
+        }
+    }
+
+    # matrix is NxM
+    return ($first_nrow, $ncol, undef);
+}
+
+sub inverse_identity_rmse {
+    # calculate the difference of two square matrices by RMSE (to identity matrix)
+    # of product of first matrix with second matrix inverse
+    my %parm = validated_hash(\@_,
+        matrix1 => { isa => 'ArrayRef', optional => 0 }, # need not be invertible, but square
+        matrix2 => { isa => 'ArrayRef', optional => 0 }, # need to be invertible and of same size
+	);
+	my $matrix1 = $parm{'matrix1'};
+	my $matrix2 = $parm{'matrix2'};
+
+    # validate dimensions
+    (my $ncol1, my $nrow1, my $err1) = get_matrix_size(matrix => $matrix1);
+    (my $ncol2, my $nrow2, my $err2) = get_matrix_size(matrix => $matrix2);
+    if (defined $err1) {
+        croak "matrix1 illegal ($err1)";
+    } elsif (defined $err2) {
+        croak "matrix2 illegal ($err2)";
+    }
+    if ($ncol1 != $nrow1 || $ncol1 != $ncol2) {
+        croak "matrices not square/same size (sizes ${nrow1}x${ncol1} and ${nrow2}x${ncol2})";
+    }
+    my $dim = $ncol1;
+
+    # create matrices and check invertibility
+    my $mat1 = Math::MatrixReal->new_from_cols( $matrix1 );
+    my $mat2 = Math::MatrixReal->new_from_cols( $matrix2 );
+    my $mat2_inv = $mat2->inverse();
+    unless (defined $mat2_inv) {
+        croak "matrix2 is not invertible";
+    }
+
+    # calculate the RMSE (of matrix1*inv(matrix2) and identity matrix)
+    my $idmat = Math::MatrixReal->new_diag( [(1) x $dim] );
+    my $prodmat = $mat1 * $mat2_inv;
+    my $diffmat = $idmat - $prodmat;
+    my $sq_diffmat = $diffmat->each( sub { (shift)**2 } ); # square it elementwise
+    my $norm_sum = $sq_diffmat->norm_sum(); # sum of (abs of) all elements
+    my $mean = $norm_sum/($dim**2);
+
+    return (sqrt $mean);
 }
 
 sub eigenvalue_decomposition
@@ -2169,7 +2254,7 @@ sub frem_conditional_variance
         # try to save calculation by forcing positive-definiteness (likely small numerical problems due to lack of cov-step of NONMEM)
 		print "cholesky error $err in frem_conditional_variance, likely positive semidefinite or numerically close, forcing positive-definite matrix\n";
         my $count;
-        ($matrix,$count) = get_symmetric_posdef($orig_matrix);
+        ($matrix,$count) = get_symmetric_posdef(matrix => $orig_matrix);
         print "$count small eigenvalue(s) adjusted\n";
         $err = cholesky($matrix);
         if ($err > 0) {
@@ -2272,7 +2357,7 @@ sub frem_conditional_coefficients
         # try to save calculation by forcing positive-definiteness (likely small numerical problems due to lack of cov-step of NONMEM)
 		print "invert_symmetric error $error in frem_conditional_coefficients, likely positive semidefinite or numerically close, forcing positive-definite matrix\n";
         my $count;
-        ($matrix,$count) = get_symmetric_posdef($orig_matrix);
+        ($matrix,$count) = get_symmetric_posdef(matrix => $orig_matrix);
         print "$count small eigenvalue(s) adjusted\n";
         $error = invert_symmetric($matrix, $refInv);
         if ($error > 0) {

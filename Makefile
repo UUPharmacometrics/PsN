@@ -169,6 +169,7 @@ LIBFILES= ui.pm \
 	tool/linearize.pm \
 	tool/qa.pm \
 	tool/improve.pm \
+	tool/boot_randtest.pm \
 	utils/file.pm \
 	utils/phitable.pm
 
