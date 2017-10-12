@@ -11,6 +11,7 @@ use lib "$Bin/../lib";
 use Config;
 use strict;
 use Getopt::Long;
+use POSIX qw/floor/;
 # External modules #
 use Math::Random;
 # PsN includes #
@@ -527,7 +528,32 @@ sub remove_params_in_covmatrix
     return $new_covmatrix;
 }
 
+sub neat_num {
+    # format number with four significant digits and sci notation outside [0.001,10000)
+    my $num = shift;
+    my $sig_figs = 4;
+    my $lownum   = 0.001; my $inc_lownum = 1;
+    my $highnum  = 10000; my $inc_highnum = 0;
 
+    return 0 if ($num == 0);
+    # determine if scientific notation shall be used
+    my $sci_notation = 0;
+    my $low_crit  = log(abs($num))/log(10) - log($lownum);
+    my $high_crit = log($highnum) - log(abs($num))/log(10);
+    $sci_notation = 1 if( $low_crit < 0 || ($inc_lownum && $low_crit == 0) );
+    $sci_notation = 1 if( $high_crit < 0 || ($inc_highnum && $high_crit == 0) );
+
+    if ($sci_notation) {
+        my $decimals = $sig_figs-1;
+        $num = sprintf("%.${decimals}E", $num);
+    } else {
+        # determine number of decimal places to keep for sig figs
+        my $decimals = -( floor( log(abs($num))/log(10) ) - ($sig_figs-1) );
+        $decimals = ($decimals < 0) ? 0 : $decimals;
+        $num = sprintf("%.${decimals}f", $num);
+    }
+    return $num
+}
 
 ## Set the automatic renaming of modelfit directory
 my $main_directory = tool::get_rundir(create => 1,
@@ -757,15 +783,25 @@ if (defined $options{'rawres_input'}) {
                 }
 
                 # output metrics of adjustment bias
-                # my $norm_orig = linear_algebra::frobenius_norm(matrix => $covmatrix);
-                # my $norm_forced = linear_algebra::frobenius_norm(matrix => $covmatrix_posdef);
-                # my $diff_of_norms = abs( $norm_orig - $norm_forced );
-                my $norm_of_diff = linear_algebra::frobenius_norm(matrix => $covmatrix, matrix2 => $covmatrix_posdef);
-                my $id_diff = linear_algebra::inverse_identity_rmse(matrix1 => $covmatrix, matrix2 => $covmatrix_posdef);
+                my $norm_of_diff = neat_num( linear_algebra::frobenius_norm(matrix => $covmatrix, matrix2 => $covmatrix_posdef) );
+                my $id_diff = neat_num( linear_algebra::inverse_identity_rmse(matrix1 => $covmatrix, matrix2 => $covmatrix_posdef) );
+                my $cnum_orig = linear_algebra::condition_number($covmatrix);
+                my $cnum_adj = linear_algebra::condition_number($covmatrix_posdef);
+                my $cnum_change = ($cnum_adj/$cnum_orig);
+                if ($cnum_change > 1) {
+                    my $fac = neat_num($cnum_adj/$cnum_orig);
+                    $cnum_change = "$fac times larger";
+                } else {
+                    my $fac = neat_num($cnum_orig/$cnum_adj);
+                    $cnum_change = "$fac times smaller";
+                }
+                $cnum_orig = neat_num($cnum_orig);
+                $cnum_adj = neat_num($cnum_adj);
                 # $logger->info("Absolute difference of frobenius norms: $diff_of_norms");
                 $logger->info("Frobenius norm of difference matrix (prop. to RMSE): $norm_of_diff");
                 $logger->warning("RMSE of inverse product to identity matrix: $id_diff");
-                $logger->warning("(if large the results might be severely affected by adjustments)");
+                $logger->warning("(large norm/RMSE indicate matrix might be severely affected by adjustments)");
+                $logger->warning("Condition number changed from $cnum_orig to $cnum_adj ($cnum_change)");
 
                 $covmatrix = $covmatrix_posdef;
                 $posdef_err=0;

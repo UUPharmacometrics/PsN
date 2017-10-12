@@ -1411,6 +1411,22 @@ sub eigenvalue_decomposition
     return (\@eigenValues, \@G);
 }
 
+sub condition_number
+{
+    # get the 2-norm condition number from the eigenvalue decomposition
+    my $mat = shift;
+
+    (my $values, my $Q) = eigenvalue_decomposition($mat);
+    (my $min, my $max) = ($values->[0], $values->[0]);
+    foreach my $val (@{$values}[1..$#$values]) {
+        $min = $val if (abs($val) < $min);
+        $max = $val if (abs($val) > $max);
+    }
+    my $condition_number = abs($max/$min);
+
+    return $condition_number;
+}
+
 sub lower_triangular_identity_solve
 {
     #input is lower triangular matrix
