@@ -84,14 +84,14 @@ EOF
 $help_text{-dvid} = <<'EOF';
       -dvid
 
-      Name of the dvid column. DVID is default.
+      Name of the dvid column.
       Will only be used for the structural and residual model analysis.
 EOF
 
 $help_text{-occ} = <<'EOF';
       -occ
 
-      Name of the occasion column. OCC is default.
+      Name of the occasion column.
 EOF
 
 $help_text{-idv} = <<'EOF';

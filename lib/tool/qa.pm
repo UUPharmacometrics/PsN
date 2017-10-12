@@ -22,8 +22,8 @@ has 'model' => ( is => 'rw', isa => 'model' );
 has 'groups' => ( is => 'rw', isa => 'Int', default => 10 );       # The number of groups to use for quantiles in the time_varying model
 has 'idv' => ( is => 'rw', isa => 'Str', default => 'TIME' );
 has 'dv' => ( is => 'rw', isa => 'Str', default => 'CWRES' );
-has 'dvid' => ( is => 'rw', isa => 'Str', default => 'DVID' );
-has 'occ' => ( is => 'rw', isa => 'Str', default => 'OCC' );
+has 'dvid' => ( is => 'rw', isa => 'Str' );
+has 'occ' => ( is => 'rw', isa => 'Str' );
 has 'continuous' => ( is => 'rw', isa => 'Str' );       # A comma separated list of continuous covariate symbols
 has 'categorical' => ( is => 'rw', isa => 'Str' );       # A comma separated list of categorical covariate symbols
 has 'parameters' => ( is => 'rw', isa => 'Str' );       # A comma separated list of parameter symbols
@@ -104,7 +104,7 @@ sub modelfit_setup
 	
     	my @table_columns = ( 'ID', $self->idv,'CWRES', 'PRED', 'CIPREDI','CPRED' );
 	
-        if ($model_copy->defined_variable(name => $self->dvid)) {
+        if (defined $self->dvid and $model_copy->defined_variable(name => $self->dvid)) {
             push @table_columns, $self->dvid;
         } 
 	
@@ -177,15 +177,17 @@ sub modelfit_setup
                 $tdist_model->_write();
                 push @models, $tdist_model;
             }
-            my $iov_etas = model_transformations::find_etas(model => $base_model, type => 'iov');
-            if (scalar(@$iov_etas) == 0) {      # We don't have iov previously
-                my $add_iov_model = $base_model->copy(directory => "modelfit_run", filename => "iov.mod", write_copy => 0);
-                my $error = model_transformations::add_iov(model => $add_iov_model, occ => $self->occ);
-                if (not $error) {
-                    $add_iov_model->_write();
-                    push @models, $add_iov_model;
-                    my $iov_structure = model_transformations::find_iov_structure(model => $add_iov_model);
-                    $self->iov_structure($iov_structure);
+            if (defined $self->occ) {
+                my $iov_etas = model_transformations::find_etas(model => $base_model, type => 'iov');
+                if (scalar(@$iov_etas) == 0) {      # We don't have iov previously
+                    my $add_iov_model = $base_model->copy(directory => "modelfit_run", filename => "iov.mod", write_copy => 0);
+                    my $error = model_transformations::add_iov(model => $add_iov_model, occ => $self->occ);
+                    if (not $error) {
+                        $add_iov_model->_write();
+                        push @models, $add_iov_model;
+                        my $iov_structure = model_transformations::find_iov_structure(model => $add_iov_model);
+                        $self->iov_structure($iov_structure);
+                    }
                 }
             }
             for my $model (@models) {       # Set output directory so that .lst file gets saved in the rundir
