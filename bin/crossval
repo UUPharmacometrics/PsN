@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/usr/bin/perl 
 
 use FindBin qw($Bin);
 use lib "$Bin/../lib";
@@ -65,12 +65,12 @@ EOF
 
     With -help crossval will print this, longer, help message.
 EOF
-$help_text{-groups} = <<'EOF';
+	$help_text{-groups} = <<'EOF';
       -groups=N
 
     The number of cross-validation groups in the data set.
 EOF
-$help_text{-msf} = <<'EOF';
+	$help_text{-msf} = <<'EOF';
       -msf
 
     Default not set, which means prediction model THETA/OMEGA/SIGMA are updated 
