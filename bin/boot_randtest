@@ -32,6 +32,7 @@ my %optional_options = (
     "match_transitions!"=>'',
     "copy_data!"=>'',
     "sample_size:s" => undef,
+    "random_column!" => undef,
 );
 
 my $res = GetOptions( \%options, 
@@ -108,6 +109,13 @@ $help_text{-stratify_on} = <<'EOF';
       profiles and 90 patients with sparse steady state concentration
       measurements - it may be wise to restrict the randomization
       procedure to shuffle within the two groups.
+EOF
+$help_text{-random_column} = <<'EOF';
+-random_column
+
+      Generate a new random column to do the randomization on
+      The new column will have the values 0 or 1 distributed randomly
+      (50-50) over the IDs.
 EOF
 
 common_options::online_help('boot_randtest', \%options, \%help_text, \%required_options, \%optional_options);
@@ -188,6 +196,7 @@ my $rand = tool::boot_randtest->new(
     stratify_on => $options{'stratify_on'},
     subjects => $subj_hash,
     base_model => $base_model,
+    random_column => $options{'random_column'},
 );
 
 $rand->print_options(
