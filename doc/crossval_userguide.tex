@@ -1,5 +1,5 @@
 \input{inputs/format_header.tex}
-\guidetitle{CROSSVAL user guide}{2016-10-28}
+\guidetitle{CROSSVAL user guide}{2017-10-12}
 
 \begin{document}
 
@@ -19,22 +19,20 @@ crossval run1.mod -groups=5
 \end{verbatim}
 
 \section{Input and options}
-
+	
 \subsection{Required input}
 A model file is required on the command-line together with the -groups option.
-
-
+		
 \subsection{Optional input}
-
+			
 \begin{optionlist}
 \optname{groups}
 The number of cross-validation groups in the data set.
 \nextopt
 \optname{msf}
-Default not set, which means prediction model THETA/OMEGA/SIGMA are updated
-with final estimates from estimation models.
-If -msf is set, instead use MSFO - MSFI to transfer parameter values
-from estimation models to prediction models.
+Default not set, which means prediction model\\
+THETA/OMEGA/SIGMA are updated with final estimates from estimation models.
+If -msf is set, instead use MSFO - MSFI to transfer parameter values from estimation models to prediction models.
 \nextopt
 \end{optionlist}
 
