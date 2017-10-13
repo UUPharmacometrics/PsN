@@ -20,14 +20,6 @@ use ui;
 use File::Copy 'cp';
 # More PsN dependencies included with require further down
 
-################################################################################
-#
-# This is the extended_grid. First the command line options are parsed
-# using Getopt::Long. PsN "common options" are used to fine tune the
-# running.
-#
-################################################################################
-
 # {{{ options handling
 
 my $cmd_line = $0 . " " . join( " ", @ARGV );
@@ -69,7 +61,7 @@ EOF
 EOF
 
     $help_text{Options} = <<'EOF';
-	A model file is required on the command-line. No other options are required.
+	A model file is required as argument.
 
     The following options are valid:
 EOF
@@ -77,25 +69,26 @@ EOF
 	$help_text{-dv_column} = <<'EOF';
       -dv_column=column_name
 
-      Default DV. The dependent variable column. 
+      The dependent variable column. Default DV.
 EOF
 
 	$help_text{-id_column} = <<'EOF';
       -id_column=column_name
 
-      Default ID. The header of the column marking individuals. 
+      The header of the column marking individuals. Default ID.
 EOF
 
 	$help_text{-ids_to_simulate} = <<'EOF';
       -ids_to_simulate=N
 
-      Default is the number of individuals in the original dataset. The number of individuals to simulate. 
+      The number of individuals to simulate. Default is the number of individuals in the original dataset. 
 EOF
 
 	$help_text{-omega_multiplier} = <<'EOF';
       -omega_multiplier=number
 
-      Default 1. The initial omegas in the simulation model and extended model will be multiplied by this number. This gives 
+      Default 1. The initial omegas in the simulation model and
+      extended model will be multiplied by this number. This gives 
       inflation (or deflation if the multiplier < 1) of the variance.
 EOF
 
