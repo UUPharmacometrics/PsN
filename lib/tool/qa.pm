@@ -41,7 +41,11 @@ has 'iov_structure' => ( is => 'rw', isa => 'ArrayRef' );   # The occ/iov struct
 has 'resmod_idv_table' => ( is => 'rw', isa => 'Str' ); # The table used by resmod
 
 sub BUILD
-{
+{	
+	select(STDERR);
+	$| = 1;
+	select(STDOUT);
+	$| = 1;
     my $self = shift;
 
 	my $model = $self->models()->[0];
@@ -212,7 +216,7 @@ sub modelfit_setup
     }
 
     if (defined $self->add_etas and scalar(@{$self->add_etas}) > 0 and not $self->_skipped('transform')) {
-        print "\n*** Running add_etas ***\n";
+		print "\n*** Running add_etas ***\n";
         mkdir "add_etas_run";
         my $add_etas_model = $self->model->copy(
             filename => $self->model->filename,
@@ -220,11 +224,14 @@ sub modelfit_setup
             write_copy => 0,
             output_same_directory => 1,
         );
+		if ($add_etas_model->is_run()) {
+			$add_etas_model->update_inits(from_output => $add_etas_model->outputs->[0]);
+		}
+		$add_etas_model->outputs(undef);
         my $added_etas = model_transformations::add_etas_to_parameters(model => $add_etas_model, parameters => $self->add_etas);
         $self->added_etas($added_etas);
         $add_etas_model->filename("add_etas.mod");
         $add_etas_model->_write(filename => $self->directory . 'add_etas_run/add_etas.mod');
-
         chdir("add_etas_run");
         ui->category('linearize');
         my $old_nm_output = common_options::get_option('nm_output');    # Hack to set clean further down
@@ -426,31 +433,34 @@ sub modelfit_setup
         }
 
         $self->_to_qa_dir();
-
-        my $resmod_tad;
-        eval {
-            $resmod_tad = tool::resmod->new(
-                %{common_options::restore_options(@common_options::tool_options)},
-                models => [ $resmod_model ],
-                dvid => $self->dvid,
-                idv => 'TAD',
-                dv => $self->dv,
-                occ => $self->occ,
-                groups => $self->groups,
-                iterative => 0,
-                directory => 'resmod_TAD',
-                top_tool => 1,
-            );
-        };
-        if (not $@) {
-            eval {
-                $resmod_tad->run();
-            };
-        } else {
-            print $@;
-            rmdir 'resmod_TAD';
-        }
-        $self->_to_qa_dir();
+		
+		if($resmod_model->defined_variable(name => 'TAD')) {
+			my $resmod_tad;
+			eval {
+				$resmod_tad = tool::resmod->new(
+					%{common_options::restore_options(@common_options::tool_options)},
+					models => [ $resmod_model ],
+					dvid => $self->dvid,
+					idv => 'TAD',
+					dv => $self->dv,
+					occ => $self->occ,
+					groups => $self->groups,
+					iterative => 0,
+					directory => 'resmod_TAD',
+					top_tool => 1,
+				);
+			};
+			if (not $@) {
+				eval {
+					$resmod_tad->run();
+				};
+			} else {
+				print $@;
+				rmdir 'resmod_TAD';
+			}
+			$self->_to_qa_dir();
+		}
+        
 
         my $resmod_pred;
         eval {
@@ -608,7 +618,6 @@ sub create_R_plots_code
             '# qa specific preamble',
 			"groups <- " . $self->groups,
             "idv_name <- '" . $self->idv . "'",
-			"dvid_name <- '" . $self->dvid . "'",
             "continuous <- " . rplots::create_r_vector(array => \@continuous),
             "categorical <- " . rplots::create_r_vector(array => \@categorical),
             "parameters <- " . rplots::create_r_vector(array => \@parameters),
@@ -618,6 +627,11 @@ sub create_R_plots_code
 			"type <- 'latex' # set to 'html' if want to create a html file ",
             "skip <- " . rplots::create_r_vector(array => $self->skip),
         ];
+	my $dvid_line = "dvid_name <- ''";
+	if (defined $self->dvid) {
+		$dvid_line = "dvid_name <- '" . $self->dvid . "'";
+	}
+	push @$code, $dvid_line;
 
     if (defined $self->added_etas) {
         my @content;
