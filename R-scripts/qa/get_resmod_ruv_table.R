@@ -2,18 +2,9 @@ get_resmod_ruv_table <- function(directory, idv_name, dvid_name, skip){
   resmod_file_exists <- get_resmod_table(directory=directory, idv=idv_name)$resmod_file_exists
   resmod_ruv_table_list <- list()
   if(resmod_file_exists && all(skip!="resmod")) {
-    resmod_table_full <- get_resmod_table(directory, idv_name)$resmod_table 
-    if(any(resmod_table_full$dvid!="NA")) {
-      dvid_nr <- unique(resmod_table_full$dvid)
-      if(any(dvid_nr=="sum")) {
-        dvid_nr <- as.numeric(dvid_nr[-which(dvid_nr=="sum")])
-      } else {
-        dvid_nr <- as.numeric(dvid_nr)
-      }
-    } else {
-      dvid_nr <- 'NA'
-    }
-    
+    resmod_table_full <- get_resmod_table(directory, idv_name)$resmod_table
+    dvid_nr <- find_dvid_values(directory,idv=idv_name,dvid_name)
+
     if(length(dvid_nr) == 1 && dvid_nr=="NA"){
       resmod_ruv_overview <- as.data.frame(array(0,c(2,3)))
     } else {
