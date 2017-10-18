@@ -1,3 +1,6 @@
+# get libPaths
+source(file.path(rscripts.directory,"common/R_info.R"))
+R_info(directory=working.directory,only_libPaths=T)
 # randtest plot
 pvalue <- 0.05 #for randtest.hist
 
@@ -24,7 +27,7 @@ library(scales)
 library(MASS)
 library(plotrix)
 library(plyr)
-
+  
 
 # Check if runs with unsuccessful minimization will be ignored
 ignore.usm <- F
@@ -313,6 +316,9 @@ write.table(tabout, file="randtestTable.tsv", sep="\t", row.names=F, col.names=T
 } #end if level>1
 	dev.off()
 }
+
+#add R_info to the meta file
+R_info(directory=working.directory)
 
 
 

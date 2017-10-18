@@ -7,6 +7,9 @@ classoption: landscape
 ---
 
 ```{r loading_libraries_and_sourcing_functions,include = FALSE}
+# get libPaths
+source(file.path(rscripts.directory,"common/R_info.R"))
+R_info(directory=working.directory,only_libPaths=T)
 
 # Used libraries
 library(PerformanceAnalytics)
@@ -14,8 +17,6 @@ library(grid)
 library(gridExtra)
 library(xpose4)
 library(dplyr)
-#new   
-#library(xtable)
 
 residual.outliers.file <- 'residual_outliers.csv'
 # Source ebe npde functions
@@ -45,6 +46,8 @@ source(paste0(rscripts.directory,"/simeval/all.outlier.report.table.R"),echo=TRU
 source(paste0(rscripts.directory,"/simeval/plot.all.outlier.table.R"),echo=TRUE)
 # Source common function
 source(paste0(rscripts.directory,"/common/plot.table.R"),echo=TRUE)
+#add R_info to the meta file
+R_info(directory=working.directory)
 ```
 
 
@@ -435,4 +438,10 @@ for(j in 1:n.vpc){
   print(plots) 
 }
 ```
+
+```{r used_libraries,include = FALSE}
+#add R_info to the meta file
+R_info(directory=working.directory)
+```
+
 
