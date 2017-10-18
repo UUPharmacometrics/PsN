@@ -84,25 +84,51 @@ sub copy_config_file{
 
 
 
+sub setup_model{
+	# must be able to call from asrscm bin script using PsN 4.7.0 with  
+	#my $model = scm_util::setup_model(filename => $config_file->model,
+	#								options => \%options,
+	#								model_parameter_hashref => {eval common_options::model_parameters(\%options)});
+	my %parm = validated_hash(\@_,
+							  filename => {isa => 'Str', optional => 0},
+							  options => {isa => 'HashRef', optional => 0},
+							  model_parameter_hashref => {isa => 'HashRef', optional => 0},
+		);
+	my $filename = $parm{'filename'};
+	my $options = $parm{'options'};
+	my $model_parameter_hashref = $parm{'model_parameter_hashref'};
 
+	my $model = model -> new ( %{$model_parameter_hashref},
+							   filename => $filename);
+
+	if( $options->{'shrinkage'} ) {
+		$model-> shrinkage_stats( enabled => 1 );
+	}
+
+	if( $model-> is_option_set( record => 'abbreviated', name => 'REPLACE' ) ){
+		print "\nWARNING: Option REPLACE used in \$ABBREVIATED. This can lead to serious errors.\n\n";
+	}
+
+	return $model;
+}
 
 sub check_options{
 	# must be able to call from asrscm bin script using PsN 4.7.0 with  
-	#my $model = scm_util::check_options(scriptname => 'asrscm',
+	# scm_util::check_options(scriptname => 'asrscm',
 	#								options => \%options,
 	#								config_file => $config_file,
-	#								model_parameter_hashref => {eval common_options::model_parameters(\%options)});
+	#								require_model => 1)
 
 	my %parm = validated_hash(\@_,
 							  scriptname => {isa => 'Str', optional => 0},
 							  options => {isa => 'HashRef', optional => 0},
+							  require_model => {isa => 'Bool', default => 1},
 							  config_file => {isa => 'tool::scm::config_file', optional => 0},
-							  model_parameter_hashref => {isa => 'HashRef', optional => 0},
 		);
 	my $scriptname = $parm{'scriptname'};
+	my $require_model = $parm{'require_model'};
 	my $options = $parm{'options'};
 	my $config_file = $parm{'config_file'};
-	my $model_parameter_hashref = $parm{'model_parameter_hashref'};
 
 	if (($scriptname eq 'scm') or ($scriptname eq 'asrscm')){ 
 		if (defined $options->{'directory'} and -e $options->{'directory'}) {
@@ -124,10 +150,11 @@ sub check_options{
 		$config_file->model($options->{'model'});
 	}
 
-	if (not defined $config_file->model) {
-		die "Error: No model specified in config file\n";
+	if ($require_model){
+		if (not defined $config_file->model) {
+			die "Error: No model specified in config file\n";
+		}
 	}
-
 	
 	if ($config_file->linearize){
 		die "Option -second_order is currently broken" 
@@ -172,18 +199,6 @@ sub check_options{
 
 
 
-	my $model = model -> new ( %{$model_parameter_hashref},
-							   filename           => $config_file -> model);
-
-	if( $options->{'shrinkage'} ) {
-		$model-> shrinkage_stats( enabled => 1 );
-	}
-
-	if( $model-> is_option_set( record => 'abbreviated', name => 'REPLACE' ) ){
-		print "\nWARNING: Option REPLACE used in \$ABBREVIATED. This can lead to serious errors.\n\n";
-	}
-
-	return $model;
 	
 }
 

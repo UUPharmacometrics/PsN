@@ -294,15 +294,24 @@ if (not defined $options{'config_file'} and (scalar(@ARGV) > 0)) {
     $options{'config_file'} = $ARGV[0];
 }
 
+#options hash might get modified here, e.g. threads set in config file
 my $config_file = scm_util::get_config_object(options => \%options,
 											  common_tool_options =>\@common_options::tool_options);
 
+# we need the modified options hash here, e.g. common options set in config file
+# here we get default options from config
 common_options::setup( \%options, 'scm' ); 
 
-my $model = scm_util::check_options(scriptname => 'scm',
-								   options => \%options,
-								   config_file => $config_file,
-								   model_parameter_hashref => {eval common_options::model_parameters(\%options)});
+#config_file object might get modified here
+scm_util::check_options(scriptname => 'scm',
+						options => \%options,
+						config_file => $config_file,
+						require_model => 1);
+
+
+my $model = scm_util::setup_model(options => \%options,
+								  filename => $config_file->model,
+								  model_parameter_hashref => {eval common_options::model_parameters(\%options)});
 
 
 #scm_options_hashref passes scm options that are not handled via config_file
