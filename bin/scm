@@ -294,15 +294,15 @@ if (not defined $options{'config_file'} and (scalar(@ARGV) > 0)) {
     $options{'config_file'} = $ARGV[0];
 }
 
-#options hash might get modified here, e.g. threads set in config file
+#options hash might get modified here, copy tool options (e.g. threads) set in scm config file
 my $config_file = scm_util::get_config_object(options => \%options,
 											  common_tool_options =>\@common_options::tool_options);
 
-# we need the modified options hash here, e.g. common options set in config file
-# here we get default options from config
+# we need the modified options hash here, e.g. common options set in scm config file
+# here we get default options from psn.conf
 common_options::setup( \%options, 'scm' ); 
 
-#config_file object might get modified here
+#config_file object might get modified here: change filenames to absolute path
 scm_util::check_options(scriptname => 'scm',
 						options => \%options,
 						config_file => $config_file,
