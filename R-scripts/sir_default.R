@@ -1,3 +1,6 @@
+# get libPaths
+source(file.path(rscripts.directory,"common/R_info.R"))
+R_info(directory=working.directory,only_libPaths=T)
 #############################################################################################################
 ### Diagnostics for SIR
 ### Author: AG Dosne
@@ -20,6 +23,9 @@ pkg1 <- c("ggplot2","dplyr","plyr","reshape","tidyr","gridExtra","gplots","RColo
 pkg2 <- paste0("package:",pkg1)
 lapply(pkg1, require, character.only = TRUE)                                               # important to load plyr after dplyr even if get warning
 theme_set(theme_bw(base_size=20))
+
+#add R_info to the meta file
+R_info(directory=working.directory)
 # lapply(pkg2, detach, character.only = TRUE, unload = TRUE)
 
 ### The rest of the code should be left as is (but can be changed if you want to improve the graphical output of course)

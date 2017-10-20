@@ -1,8 +1,13 @@
+# get libPaths
+source(file.path(rscripts.directory,"common/R_info.R"))
+R_info(directory=working.directory,only_libPaths=T)
 # Used libraries
 library(ggplot2)
 
 source(paste0(rscripts.directory, "/npfit/data.npfit.R"))
 source(paste0(rscripts.directory, "/npfit/plot.npfit.R"))
+#add R_info to the meta file
+R_info(directory=working.directory)
 
 raw_nonparametric <- data.npfit(raw.nonparametric.file)
 

@@ -1,22 +1,7 @@
 get_structural_overview_table <- function(directory,idv,dvid_name,skip) {
   if(length(idv)!=0) {
     #check if dvid exist
-    resmod_file_exists <- get_resmod_table(directory, idv[1])$resmod_file_exists
-    if(resmod_file_exists) {
-      resmod_table <- get_resmod_table(directory, idv[1])$resmod_table
-      if(any(resmod_table$dvid!="NA")) {
-        dvid_nr <- unique(resmod_table$dvid)
-        if(any(dvid_nr=="sum")) {
-          dvid_nr <- as.numeric(dvid_nr[-which(dvid_nr=="sum")])
-        } else {
-          dvid_nr <- as.numeric(dvid_nr)
-        }
-      } else {
-        dvid_nr <- 'NA'
-      }
-    } else {
-      dvid_nr <- 'NA'
-    }
+    dvid_nr <- find_dvid_values(directory,idv[i],dvid_name)
     
     if(length(dvid_nr) == 1 && dvid_nr=="NA"){
       structural_overview <- as.data.frame(array(0,c(length(idv),3)))

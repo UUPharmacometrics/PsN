@@ -2,28 +2,14 @@ resmod_structural_details_tables <- function(working.directory,model.filename,CW
   resmod_structural_details_list <- list()
   if(length(idv_all)!=0) {
     #check if dvid exist
-    resmod_file_exists_idv <- c()
     dvid_nr_idv <- list()
+    resmod_file_exists_idv <- list()
+    resmod_table <- list()
     for (i in 1:length(idv_all)) {
       resmod_file_exists_idv[i] <- get_resmod_table(directory=working.directory, idv_all[i])$resmod_file_exists
-      if(resmod_file_exists_idv[i]) {
-        resmod_table <- get_resmod_table(directory=working.directory, idv_all[i])$resmod_table
-        if(any(resmod_table$dvid!="NA")) {
-          dvid_nr <- unique(resmod_table$dvid)
-          if(any(dvid_nr=="sum")) {
-            dvid_nr <- as.numeric(dvid_nr[-which(dvid_nr=="sum")])
-          } else {
-            dvid_nr <- as.numeric(dvid_nr)
-          }
-        } else {
-          dvid_nr <- 'NA'
-        }
-      } else {
-        dvid_nr <- 'NA'
-      }
-      dvid_nr_idv[[i]] <- dvid_nr
+      resmod_table[[i]] <- get_resmod_table(directory=working.directory, idv_all[i])$resmod_table
+      dvid_nr_idv[[i]] <- find_dvid_values(working.directory,idv_all[i],dvid_name)
     }
-
     
     k <- 0
     for(i in 1:length(idv_all)) {
@@ -41,7 +27,7 @@ resmod_structural_details_tables <- function(working.directory,model.filename,CW
           file.exists(file.path(working.directory, paste0(sub('.([^.]*)$','',model.filename),"_linbase.dta"))) &&
           file.exists(CWRES_table) &&
           resmod_file_exists_idv[i]==TRUE &&
-          !all(resmod_table$parameters=="NA")) {
+          !all(resmod_table[[i]]$parameters=="NA")) {
             
           table = get_resmod_structural_details(directory=working.directory, suffix = idv, dvid=dvid_nr_idv[[i]][j]) %>%
             .calc_and_add_shift_from_cwres(working.directory,model.filename,CWRES_table,idv,idv_name, dvid=dvid_nr_idv[[i]][j],dvid_name)

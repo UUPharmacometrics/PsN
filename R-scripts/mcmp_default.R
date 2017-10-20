@@ -1,4 +1,9 @@
+# get libPaths
+source(file.path(rscripts.directory,"common/R_info.R"))
+R_info(directory=working.directory,only_libPaths=T)
 library(ggplot2)
+#add R_info to the meta file
+R_info(directory=working.directory)
 
     pdf(file=pdf.filename,width=10,height=7,title=pdf.title)
 

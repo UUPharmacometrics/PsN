@@ -6,12 +6,17 @@ geometry: margin=1.5cm
 ---
 
 ```{r loading_libraries_and_sourcing_functions,include = FALSE}
+# get libPaths
+source(file.path(rscripts.directory,"common/R_info.R"))
+R_info(directory=working.directory,only_libPaths=T)
 source(paste0(rscripts.directory, "/scm/first.inclusion.step.R"))
 source(paste0(rscripts.directory, "/scm/included.covariates.R"))
 source(paste0(rscripts.directory, "/scm/plot_first.included.step.R"))
 source(paste0(rscripts.directory, "/scm/plot_included.covariates.R"))
 
 library(ggplot2)
+#add R_info to the meta file
+R_info(directory=working.directory)
 ```
 
 ```{r plot_for_included_covariates,results='hide',echo=FALSE,warning=FALSE,fig.width=9,fig.height=6.5,fig.keep="high",fig.align="center"}

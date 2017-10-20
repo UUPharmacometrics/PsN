@@ -180,6 +180,31 @@ sub add_iov
     return 0;
 }
 
+sub marge_two_hashes 
+{
+	#marge two hashes and replace undef values with values from other hash if they are not undef
+	my %parm = validated_hash(\@_,
+        hash_1 => { isa => 'HashRef' },
+        hash_2 => { isa => 'HashRef' },
+    );
+	my $hash_1 = $parm{'hash_1'};
+	my $hash_2 = $parm{'hash_2'};
+	
+	my %hash_1 = %{$hash_1};
+	my %hash_2 = %{$hash_2};
+	my %new_hash = %hash_1;
+	foreach my $keys_2 ( keys %hash_2) {
+		if(exists $hash_1{$keys_2}) {
+			if (not(defined $hash_1{$keys_2}) && defined $hash_2{$keys_2}) {
+				$new_hash{$keys_2} = $hash_2{$keys_2};
+			}
+		} else {
+			$new_hash{$keys_2} = $hash_2{$keys_2};
+		}			
+	}
+	return(\%new_hash);
+}
+
 sub add_etas_to_parameters
 {
     # Add etas to the parameters listed
@@ -191,17 +216,43 @@ sub add_etas_to_parameters
     my $model = $parm{'model'};
     my $parameters = $parm{'parameters'};
 
-  	my @model_code;
-	my $code_record;
-    if ($model->has_code(record => 'pk')) {
-        @model_code = @{$model->get_code(record => 'pk')};
-        $code_record = 'pk';
+  	my $model_code;
+	my $added_etas;
+	if ($model->has_code(record => 'pk')) {
+        my($model_code,$added_etas1) = add_etas_in_model_record(model => $model, parameters => $parameters, code_record => 'pk');
+		$model->set_code(record => 'pk', code => $model_code);
+		$added_etas = $added_etas1;
     } elsif ($model->has_code(record => 'pred')) {
-        @model_code = @{$model->get_code(record => 'pred')};
-        $code_record = 'pred';
+        my($model_code,$added_etas1) = add_etas_in_model_record(model => $model, parameters => $parameters, code_record => 'pred');
+		$model->set_code(record => 'pred', code => $model_code);
+		$added_etas = $added_etas1;
     } else {
         croak("Neither PK nor PRED defined in " . $model->filename . "\n");
     }
+	if ($model->has_code(record => 'error')) {
+		
+        my($model_code,$added_etas2) = add_etas_in_model_record(model => $model, parameters => $parameters, code_record => 'error');
+		$model->set_code(record => 'error', code => $model_code);
+		$added_etas = marge_two_hashes(hash_1 => $added_etas, hash_2 => $added_etas2);
+    }
+	return($added_etas);
+}
+
+sub add_etas_in_model_record
+{
+    # Add etas to the parameters listed in specific record
+    # Returns a hash of what was added, and model code
+	my %parm = validated_hash(\@_,
+        model => { isa => 'model' },
+        parameters => { isa => 'ArrayRef[Str]' },
+		code_record => {isa => 'Str'},
+    );
+    my $model = $parm{'model'};
+    my $parameters = $parm{'parameters'};
+	my $code_record = $parm{'code_record'};
+
+    my @model_code = @{$model->get_code(record => $code_record)};
+
     my %done;   # List what etas where added to which paramete to which parameter (par->etano|undef)
     my $next_eta = $model->nomegas->[0] + 1;
     for my $p (@$parameters) {
@@ -233,9 +284,7 @@ sub add_etas_to_parameters
             $done{$p} = undef;
         }
     }
-
-    $model->set_code(record => $code_record, code => \@model_code);
-    return \%done;
+    return (\@model_code,\%done);
 }
 
 sub diagonal_to_block

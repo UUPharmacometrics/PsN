@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 
-use FindBin qw($Bin);
-use lib "$Bin/../lib";
+use FindBin qw($RealBin);
+use lib "$RealBin/../lib";
 
 # Don't edit the line below, it must look exactly like this.
 # Everything above this line will be replaced #
@@ -12,8 +12,6 @@ use Getopt::Long;
 use Cwd;
 use common_options;
 use ui;
-use OSspecific;
-use File::Copy qw/cp mv/;
 # More PsN dependencies included with require further down
 
 my $cmd_line = $0 . " " . join( " ", @ARGV );
@@ -286,251 +284,59 @@ EOF
 
 common_options::online_help('scm', \%options, \%help_text, \%required_options, \%optional_options);
 
-if (not defined $options{'config_file'} and (scalar(@ARGV) == 1)) {
-    $options{'config_file'} = $ARGV[0];
-}
-if (not defined $options{'config_file'}) {
-    print "Please specify a config file \n";
-    exit;
-}
-
-require file;
 require model;
 require tool::scm;
 require tool::scm::config_file;
 require tool::modelfit;
+require scm_util;
 
-my $config_file;
-if( -e $options{'config_file'} ){
-	my $file = file -> new( name => $options{'config_file'}, path => '.' );
-	$config_file = 'tool::scm::config_file' -> new ( file => $file );
-
-	foreach my $option ( keys %{$config_file -> valid_scalar_options} ){
-		if( defined $options{$option} ) {
-			$config_file -> $option($options{$option});
-		}elsif (defined $config_file -> $option){
-			#store tool_options so that can use common_options::restore in scm
-			foreach my $opt (@common_options::tool_options){
-				$opt =~ s/[!:|].*//g; #get rid of :s |? :i etcetera
-				if ($opt eq $option){
-					$options{$option} = $config_file -> $option;
-					last;
-				}
-			}
-		}
-	}
-
-	foreach my $option ( keys %{$config_file -> valid_code_options} ){
-		if( $options{$option} ){
-			$config_file -> $option(eval($options{$option}));
-		}
-	}
-
-	foreach my $option ( keys %{$config_file -> valid_array_options} ){
-		if( $options{$option} ){
-			my @arr = split( /,/ , $options{$option});
-			$config_file -> $option(\@arr);
-		}
-	}
-
-} else {
-	print "Error: config file $options{'config_file'} is missing.\n" ;
-	exit;
+if (not defined $options{'config_file'} and (scalar(@ARGV) > 0)) {
+    $options{'config_file'} = $ARGV[0];
 }
 
-#calls get_defaults, set_globals etc, initiates random sequence, store tool_options
+#options hash might get modified here, copy tool options (e.g. threads) set in scm config file
+my $config_file = scm_util::get_config_object(options => \%options,
+											  common_tool_options =>\@common_options::tool_options);
+
+# we need the modified options hash here, e.g. common options set in scm config file
+# here we get default options from psn.conf
 common_options::setup( \%options, 'scm' ); 
 
-if (defined $options{'directory'} and -e $options{'directory'}) {
-    die "scm cannot resume a previous run. Please change your -directory.\n";
-}
-
-if ($config_file->linearize){
-	die "Option -second_order is currently broken" 
-		if $config_file->second_order();
-	die "Cannot set option foce to 0, will crash.\n" 
-		if (defined $config_file->foce() and (not $config_file->foce));
-
-	#two new options, linearize and lst-file
-
-	if ($config_file->second_order()){
-		print "Warning: Option -second_order is intended for use together with option -foce\n" 
-			unless $config_file->foce();
-	}
-
-	die "option -linearize only works with NONMEM7" unless ($PsN::nm_major_version == 7);
-
-	if ($config_file->derivatives_data()){
-		my ( $dir, $file ) = OSspecific::absolute_path('',$config_file->derivatives_data());
-		$config_file->derivatives_data($dir . $file);
-	}
-	if ($config_file->lst_file()){
-		my ( $dir, $file ) = OSspecific::absolute_path('',$config_file->lst_file());
-		$config_file->lst_file($dir . $file);
-	}
-
-}else{
-	die "Option -foce is only allowed together with option -linearize" 
-		if $config_file->foce();
-	die "Option -second_order is only allowed together with option -linearize" 
-		if $config_file->second_order();
-	die "Option -lst_file is only allowed together with option -linearize" 
-		if $config_file->lst_file();
-	die "Option -update_derivatives is only allowed together with option -linearize" 
-		if $config_file->update_derivatives();
-	die "Option -error is only allowed together with option -linearize" 
-		if $config_file->error();
-	die "Option -error_code is only allowed together with option -linearize" 
-		if $config_file->error_code();
-	die "Option -derivatives_data is only allowed together with option -linearize" 
-		if $config_file->derivatives_data();
-    die "Option -nointer is only allowed together with option -linearize"
-        if $config_file->nointer();
-}
+#config_file object might get modified here: change filenames to absolute path
+scm_util::check_options(scriptname => 'scm',
+						options => \%options,
+						config_file => $config_file,
+						require_model => 1);
 
 
-my $direction = $config_file -> search_direction;
-die "You need to specify a search direction (forward/backward/both)\n" unless (defined $direction );
-my $eval_string = common_options::model_parameters(\%options);
-
-if (defined $options{'model'}) {    # Special case for model if not in config file. Are there others?
-    $config_file->model($options{'model'});
-}
-
-if (not defined $config_file->model) {
-    die "Error: No model specified\n";
-}
-
-my $models_array = [ model -> new ( eval $eval_string,
-									filename           => $config_file -> model) ] ;
-
-if( $options{'shrinkage'} ) {
-	$models_array->[0] -> shrinkage_stats( enabled => 1 );
-}
-
-if( $models_array->[0] -> is_option_set( record => 'abbreviated', name => 'REPLACE' ) ){
-    print "\nWARNING: Option REPLACE used in \$ABBREVIATED. This can lead to serious errors.\n\n";
-}
-my $scm;
-
-my %base_criteria_values;
-if (defined $options{'base_ofv'}){
-	$base_criteria_values{'ofv'}=$options{'base_ofv'};
-}
+my $model = scm_util::setup_model(options => \%options,
+								  filename => $config_file->model,
+								  model_parameter_hashref => {eval common_options::model_parameters(\%options)});
 
 
-if( $direction eq 'forward' or $direction eq 'both' ){
-	ui -> print( category => 'scm',
-				 message => "Starting scm forward search" );
+#scm_options_hashref passes scm options that are not handled via config_file
 
-	my $orig_ofv;
-	my $orig_p_value;
-	my $ofv_backward=undef;
-	my $p_backward=undef;
-		
-    if( defined $config_file -> ofv_forward ){
-        $orig_ofv = $config_file -> ofv_change;
-        $config_file -> ofv_change($config_file -> ofv_forward);
-    }
+my $scm = scm_util::setup(config_file => $config_file,
+						  options => \%options,
+						  model => $model,
+						  common_options_hashref => {eval( $common_options::parameters )},
+						  scm_options_hashref => {estimate_fo => $options{'estimate_fo'}, 
+												  nointer => $options{'nointer'}},
+	);
 
-    if( defined $config_file -> p_forward ){
-        $orig_p_value = $config_file -> p_value;
-        $config_file -> p_value( $config_file -> p_forward );
-    }
+$scm -> print_options(cmd_line => $cmd_line, 
+					  toolname => 'scm',
+					  local_options => [keys %optional_options],
+					  common_options => \@common_options::tool_options);
 
-    if( defined $config_file -> ofv_backward ){
-        $ofv_backward = $config_file -> ofv_backward ;
-    }elsif (defined $orig_ofv){
-        $ofv_backward = $orig_ofv;
-    }
+scm_util::copy_config_file(options => \%options, directory => $scm->directory);
 
-    if( defined $config_file -> p_backward ){
-        $p_backward = $config_file -> p_backward;
-    }elsif (defined $orig_p_value){
-        $p_backward = $orig_p_value;     
-    }
-	
-	$config_file -> search_direction( 'forward' );
+ui -> print( category => 'scm',
+			 message => "Starting scm ".$scm->search_direction()." search" );
 
-	$scm = 
-		tool::scm->new ( eval( $common_options::parameters ),
-						 models	=> $models_array,
-						 base_criteria_values => \%base_criteria_values,
-						 config_file => $config_file,
-						 both_directions => ($direction eq 'both')? 1 : 0,
-						 p_backward => $p_backward,
-						 ofv_backward => $ofv_backward,
-                         estimate_fo => $options{'estimate_fo'}, 
-                         nointer => $options{'nointer'},
-                     );
-	
-	$scm-> print_options (cmd_line => $cmd_line,
-						  toolname => 'scm',
-						  local_options => [keys %optional_options],
-						  common_options => \@common_options::tool_options);
+$scm -> run;
 
-	#copy config file to rundir
-	my ( $dir, $file ) = OSspecific::absolute_path('',$options{'config_file'});
-	cp($dir.$file,$scm->directory().$file);
-
-	$scm -> run;
-	#for rplots
-	$scm -> print_results(skip_print => 1);
-	
-    if( defined $orig_ofv ){
-        $config_file -> ofv_change( $orig_ofv );
-    }
-		
-    if( defined $orig_p_value ){
-        $config_file -> p_value( $orig_p_value );
-    }
-
-    if( defined $scm -> included_relations ){
-        $config_file -> included_relations( $scm -> included_relations );
-    }
-}
-
-if( $direction eq 'backward' ){
-	
-    if( defined $config_file -> ofv_backward ){
-        $config_file -> ofv_change( $config_file -> ofv_backward );
-    }
-
-    if( defined $config_file -> p_backward ){
-        $config_file -> p_value( $config_file -> p_backward );
-    }
-
-	$config_file -> search_direction( 'backward' );
-
-	my $scm_back = 
-		tool::scm->new( eval( $common_options::parameters ),
-			  base_criteria_values => \%base_criteria_values,
-			  directory   => $options{'directory'},
-			  models	=> $models_array,
-			  config_file => $config_file,
-              estimate_fo => $options{'estimate_fo'},
-              nointer => $options{'nointer'},
-          );
-
-
-	ui -> print( category => 'scm',
-				 message => "Starting scm backward search" );
-	
-	$scm_back-> print_options (cmd_line => $cmd_line,
-							   toolname => 'scm',
-							   local_options => [keys %optional_options],
-							   common_options => \@common_options::tool_options);
-
-	#copy config file to rundir
-	my ( $dir, $file ) = OSspecific::absolute_path('',$options{'config_file'});
-	cp($dir.$file,$scm_back->directory().$file);
-
-
-	$scm_back -> run;
-	#for rplots
-	$scm_back -> print_results(skip_print => 1);
-
-}
+$scm -> print_results(skip_print => 1);
 
 ui -> print( category => 'scm',
 			 message => "scm done\n" );

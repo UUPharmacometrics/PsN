@@ -55,9 +55,9 @@ EOF
 EOF
 
     $help_text{Description} = <<'EOF';
-The extended_grid program implements the method presented in 
-Evaluation of an extended grid method for estimation using nonparametric distributions,
-AAPS J. 2009 Sep;11(3):615-27, RM Savic RM, MO Karlsson.
+	The extended_grid program implements the method presented in 
+	Evaluation of an extended grid method for estimation using nonparametric distributions,
+	AAPS J. 2009 Sep;11(3):615-27, RM Savic RM, MO Karlsson.
 EOF
 
     $help_text{Options} = <<'EOF';
@@ -66,26 +66,25 @@ EOF
     The following options are valid:
 EOF
 
-$help_text{-dv_column} = <<'EOF';
+	$help_text{-dv_column} = <<'EOF';
       -dv_column=column_name
 
       The dependent variable column. Default DV.
 EOF
 
-$help_text{-id_column} = <<'EOF';
+	$help_text{-id_column} = <<'EOF';
       -id_column=column_name
 
       The header of the column marking individuals. Default ID.
 EOF
 
-$help_text{-ids_to_simulate} = <<'EOF';
+	$help_text{-ids_to_simulate} = <<'EOF';
       -ids_to_simulate=N
 
-      The number of individuals to simulate. Default is the number of 
-      individuals in the original dataset.
+      The number of individuals to simulate. Default is the number of individuals in the original dataset. 
 EOF
 
-$help_text{-omega_multiplier} = <<'EOF';
+	$help_text{-omega_multiplier} = <<'EOF';
       -omega_multiplier=number
 
       Default 1. The initial omegas in the simulation model and
@@ -93,7 +92,7 @@ $help_text{-omega_multiplier} = <<'EOF';
       inflation (or deflation if the multiplier < 1) of the variance.
 EOF
 
-$help_text{Post_help_message} = <<'EOF';
+	$help_text{Post_help_message} = <<'EOF';
 EOF
 
 
@@ -130,6 +129,8 @@ my $eval_string = common_options::model_parameters(\%options);
 
 
 # }}}
+
+# The original model file is run and simulation started.
 
 # {{{ Orig + simulation
 
@@ -554,15 +555,18 @@ print "\nextended_grid done\n";
 
 exit;
 
-# {{{ Results handling (Cut'n'Paste from nonp_bootstrap_v2)
+# Results handling (Cut'n'Paste from nonp_bootstrap_v2)
 
-# {{{ Fort.80 creation
+# Do one run per individual initial clearence and get fort.80 from
+# each run.
+
+# Fort.80 creation
 
 my @parameter_P_sums;
 my @result_header;
 my $batch_nr = 0;
 
-# {{{ create iofvcont.f
+# create iofvcont.f
 
 unless( -e 'iofvcont.f' ){
   open(IOFVCONT , '>', 'iofvcont.f');
@@ -584,8 +588,6 @@ C     individual obj. funct. value for indiv. jj = cnt
 EOF
    close( IOFVCONT );
 }
-
-# }}}
 
 # TODO update all initial values
 
@@ -742,6 +744,7 @@ foreach my $parameter( 0..($nomegas - 1) ){
     $big_sum += $sum;
     
     push( @sums, $sum );
+	
   }
 
   my @order = 0..scalar(@{$individual_etas[$parameter]})-1 ;
@@ -772,9 +775,10 @@ chdir( '..' );
 
 dump_T_csv('results.csv', \@etas_and_sums);
 
-# }}}
+# helper routines
 
-sub dump_csv {
+sub dump_csv
+{
   my $file_name = shift;
   my $arr = shift;
 
@@ -788,7 +792,8 @@ sub dump_csv {
   
 }
 
-sub dump_T_csv {
+sub dump_T_csv
+{
   my $file_name = shift;
   my $arr = shift;
   
@@ -806,5 +811,3 @@ sub dump_T_csv {
   
   close( FILE );
 }
-
-# }}}

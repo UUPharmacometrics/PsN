@@ -1,6 +1,11 @@
+# get libPaths
+source(file.path(rscripts.directory,"common/R_info.R"))
+R_info(directory=working.directory,only_libPaths=T)
 library(ggplot2)
 library(plyr)
 source(paste0(rscripts.directory,"/common/plot.table.R"),echo=TRUE)
+#add R_info to the meta file
+R_info(directory=working.directory)
 
 theme_set(theme_bw(12))						# set standard theme
 remove_na_dofvs <- TRUE 					# should dofvs with NA be removed? 

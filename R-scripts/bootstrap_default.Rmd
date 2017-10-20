@@ -6,6 +6,9 @@ geometry: margin=1.5cm
 ---
 
 ```{r loading_libraries_and_sourcing_functions,include = FALSE}
+# get libPaths
+source(file.path(rscripts.directory,"common/R_info.R"))
+R_info(directory=working.directory,only_libPaths=T)
 source(paste0(rscripts.directory, "/bootstrap/cook.cov.calcul.R"))
 source(paste0(rscripts.directory, "/bootstrap/plot.cook.cov.R"))
 source(paste0(rscripts.directory, "/bootstrap/format.dofv.data.R"))
@@ -17,6 +20,8 @@ library(ggplot2)
 library(grid)
 require(plyr)
 require(dplyr)
+#add R_info to the meta file
+R_info(directory=working.directory)
 ```
 
 ```{r fix_column._ames,include = FALSE}
