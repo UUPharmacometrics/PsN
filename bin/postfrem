@@ -59,6 +59,7 @@ my %optional_options = (
     'force_posdef_covmatrix!' => undef,
     'force_m1_propagation!' => undef,
     'force_posdef_samples!' => undef,
+    'print_iter:i' => undef,
 );
 
 my $res = GetOptions( \%options,
@@ -116,6 +117,12 @@ $help_text{-force_posdef_samples} = <<'EOF';
       Default not used. Forces each multivariate normal sample to be positive-definite
       (OMEGA and SIGMA blocks), instead of waiting for posdef samples to get drawn.
 EOF
+$help_text{-print_iter} = <<'EOF';
+      -print_iter=N
+
+      Optional, default is 0 (off). Every N:th (multivariate normal sampling) iteration
+      will be printed with cumulative acceptance and rejection rates.
+EOF
 
 common_options::online_help('postfrem', \%options,\%help_text, \%required_options, \%optional_options);
 common_options::setup( \%options, 'postfrem' ); #calls set_globals etc, initiates random sequence
@@ -165,6 +172,7 @@ if (defined $options{'model'}) {
         $options{'output_format'}="pdf";
     }
 }
+my $print_iter_N = $options{'print_iter'} // 0;
 
 require model;
 
@@ -845,7 +853,8 @@ if (defined $options{'rawres_input'}) {
                 mu => $muvector,
                 lambda => [],
                 delta => [],
-                fast_posdef_checks => 1);
+                fast_posdef_checks => 1,
+                print_iter_N => $print_iter_N);
 
             $sampled_params_arr = tool::sir::create_sampled_params_arr(samples_array => $vectorsamples,
                                                                        labels_hash => $parameter_hash,

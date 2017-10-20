@@ -64,6 +64,7 @@ has 'rse_omega' => ( is => 'rw', isa => 'Str');
 has 'rse_sigma' => ( is => 'rw', isa => 'Str');
 has 'mceta' => ( is => 'rw', isa => 'Int', default => 0 );
 has 'problems_per_file' => ( is => 'rw', isa => 'Maybe[Int]', default => 100 );
+has 'print_iter_N' => ( is => 'rw', isa => 'Int', default => 0 );
 has 'full_rawres_header' => ( is => 'rw', isa => 'ArrayRef' );
 
 has 'minimum_ofv' => ( is => 'rw', isa => 'ArrayRef', default => sub { [] });
@@ -919,7 +920,9 @@ sub modelfit_setup
 			mu => $muvector,
 			lambda => $lambda,
 			delta => $delta,
-            fast_posdef_checks => $self->fast_posdef_checks);
+            fast_posdef_checks => $self->fast_posdef_checks,
+            print_iter_N => $self->print_iter_N,
+        );
 
 		$sampled_params_arr = create_sampled_params_arr(samples_array => $vectorsamples,
 														labels_hash => $self->parameter_hash,
@@ -2104,7 +2107,8 @@ sub sample_multivariate_normal
 #                              degree => { isa => 'Num', optional => 1 }, #required for uniform
                               lambda => { isa => 'ArrayRef', optional => 1 }, #not allowed for uniform?
                               delta => { isa => 'ArrayRef', optional => 1 }, #not allowed for uniform?
-							  fast_posdef_checks => { isa => 'Bool', default=> 0, optional => 1 },
+							  fast_posdef_checks => { isa => 'Bool', default => 0, optional => 1 },
+                              print_iter_N => { isa => 'Int', default => 0, optional => 1 },
         );
     my $samples = $parm{'samples'};
     my $adjust_blocks = $parm{'adjust_blocks'};
@@ -2129,6 +2133,7 @@ sub sample_multivariate_normal
     my $lambda = $parm{'lambda'};
     my $delta = $parm{'delta'};
     my $fast_posdef_checks = $parm{'fast_posdef_checks'};
+    my $print = $parm{'print_iter_N'};
 
     my $dim = scalar(@{$coords});
 
@@ -2240,6 +2245,14 @@ sub sample_multivariate_normal
     my $counter=0;
     my $max_iter=1000;
     my $half_iter = 500;
+    if ($print>0) {
+        print "Starting $max_iter iterations to get $samples samples";
+        if ($adjust_blocks) {
+             print " (forcing all posdef)\n";
+         } else {
+             print " (forcing all posdef at Iter $half_iter)\n";
+         }
+    }
     my $discarded=0;
     my $adjusted = 0;
     my $this_adjusted=0;
@@ -2322,10 +2335,26 @@ sub sample_multivariate_normal
             last if ($counter == $samples);
         }
         last if ($counter == $samples);
-        if (($j > 0) and (($j+1) % 100 == 0) and ($j<($max_iter-1))){
+        my $cand_drawn = (2*($j+1)*$samples);
+        if ($print > 0 and $j == 0 || (($j+1) % $print == 0)) {
+            my $iter = sprintf("Iter%5d", $j+1);
+
+            my $bc_rate = 0;
+            my $bound_rate = 0;
+            my $np_rate = 0;
+            map { $bc_rate += $_ } @{$rejections{'boxcox'}};
+            $bc_rate = $bc_rate/$cand_drawn;
+            map { $bound_rate += $_ } ( @{$rejections{'lower_bound'}}, @{$rejections{'upper_bound'}}, @{$rejections{'zero'}} );
+            $bound_rate = $bound_rate/$cand_drawn;
+            $np_rate = ( $rejections{'block'} + $rejections{'reparameterized_block'} )/$cand_drawn;
+
+            my $acc_rate = sprintf("%.1f", ($counter/$cand_drawn)*100);
+            my $rej_rate = sprintf("%.1f/%.1f/%.1f", $bc_rate*100, $bound_rate*100, $np_rate*100);
+            print "  $iter: $counter/$samples sampled w/ ${acc_rate}% acc. (${rej_rate}% boxcox/bounds/non-posdef rej.)\n";
+        } elsif (($j > 0) and (($j+1) % 100 == 0) and ($j<($max_iter-1))){
             ui->print(category=> 'sir',
                       message => "Only have $counter accepted parameter vectors within the boundaries ".
-                      "after generating ".(2*($j+1)*$samples)." candidates, drawing more candidates\n");
+                      "after generating ".$cand_drawn." candidates, drawing more candidates\n");
         }
         if (($j==$half_iter) and (not $adjust_blocks)){
             ui->print(category=> 'sir',
@@ -2352,7 +2381,7 @@ sub sample_multivariate_normal
     if ($adjusted > 0){
         $extra = "and adjusted $adjusted samples to make blocks positive definite\n";
     }
-    ui->print(category => 'sir',message=> "Redrew $discarded samples that did not fulfill boundary conditions\n".
+    ui->print(category => 'sir',message=> "Redrew $discarded samples that did not fulfill conditions\n".
               "$extra");
     return (\@samples_array,\@boxcox_samples_array);
 

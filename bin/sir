@@ -45,9 +45,10 @@ my %optional_options = (
 	"boxcox!"=>'',
     "fast_posdef_checks!"=>'',
 	"add_iterations"=>'',
-	"copy_data!"=>'');
+	"copy_data!"=>'',
+	"print_iter:i" => 0);
 
-my $res = GetOptions( \%options, 
+my $res = GetOptions( \%options,
 		      @common_options::get_opt_strings,
 		      keys(%required_options),
 		      keys(%optional_options) );
@@ -57,15 +58,15 @@ exit unless $res;
 
 
 my %help_text;
-$help_text{Pre_help_message} = <<'EOF';  
+$help_text{Pre_help_message} = <<'EOF';
       Sampling Importance Resampling.
 EOF
     $help_text{Description} = <<'EOF';
 The sir program calculates uncertainty on model parameters for the input
 model using the Sampling Importance Resampling (SIR) procedure. The SIR
-procedure is described in 
+procedure is described in
 
-Application of Sampling Importance Resampling to estimate parameter 
+Application of Sampling Importance Resampling to estimate parameter
 uncertainty distributions, PAGE 22 (2013) Abstr 2907,
 Dosne AG, Bergstrand M, Karlsson MO.
 
@@ -77,13 +78,13 @@ vectors can be given directly as input and this simulation is skipped. The last
 approach is useful when it is difficult to obtain a (faked) covariance matrix.
 
 Second, each of the simulated parameter vectors will be evaluated on the
-original data (MAXEVAL=0). 
+original data (MAXEVAL=0).
 
-Third, based on these evaluations, weights will be calculated for each 
+Third, based on these evaluations, weights will be calculated for each
 of the parameter vectors and the vectors will be
-resampled according to these weights. 
+resampled according to these weights.
 
-Finally, the uncertainty covariance matrix of the parameters will be 
+Finally, the uncertainty covariance matrix of the parameters will be
 computed from the resampled parameter vectors.
 EOF
     $help_text{Examples} = <<'EOF';
@@ -97,7 +98,7 @@ A model file is required as argument. Also, options
       The following options are valid:
 EOF
 
-    $help_text{-samples} = <<'EOF';      
+    $help_text{-samples} = <<'EOF';
       -samples=M1,M2
 
 	A comma-separated list of integers,
@@ -105,24 +106,24 @@ EOF
 	Default is 1000,1000,1000,2000,2000
 EOF
 
-    $help_text{-resamples} = <<'EOF';      
+    $help_text{-resamples} = <<'EOF';
       -resamples=m1,m2
 
-	A comma-separated list of integers, the number of parameter vectors 
+	A comma-separated list of integers, the number of parameter vectors
 	to resample in each iteration. List length must be equal to list -samples.
 	Default is 200,400,500,1000,1000
 EOF
-    $help_text{-mceta} = <<'EOF';      
+    $help_text{-mceta} = <<'EOF';
       -mceta=N
 
       Only allowed when NM7.3 or later and
       a classical estimation method is used. Set MCETA=N in $ESTIMATION.
 EOF
-$help_text{-cap_correlation} = <<'EOF';      
+$help_text{-cap_correlation} = <<'EOF';
       -cap_correlation=X
 
-      Default 0.8. If set to a number between 0 and 1, at every iteration 
-      ensure that no absolute value of a correlation in the proposal exceeds 
+      Default 0.8. If set to a number between 0 and 1, at every iteration
+      ensure that no absolute value of a correlation in the proposal exceeds
       this number. If some do, they will be changed to X (or –X if negative).
       To turn off this feature, set -cap_correlation=1, which in practice
       means no capping.
@@ -134,9 +135,9 @@ $help_text{-rawres_input} = <<'EOF';
 If rawres_input is given, sir will run an intial 0th iteration in which sir will read all parameter
 vectors from this file, starting on line offset_rawres+1 and skipping any that does not fulfill the filter rules, if set.
 These vectors will be Box-Cox transformed and used to create a proposal density for the next iteration.
-This option is not allowed together with covmat_input. 
+This option is not allowed together with covmat_input.
 
-If the number of vectors read is smaller than 
+If the number of vectors read is smaller than
 the number of estimated parameters (also counting off-diagonals),
 it is not possible to obtain an empirical covariance matrix with full rank.
 In this case sir will append copies of the existing vectors, perturbed using the tweak_inits
@@ -144,12 +145,12 @@ functionality, until the resulting set ov vectors has full rank.
 If option -auto_rawres=degree is set on the command-line, tweak_inits will be done by 'degree',
 otherwise the default degree 0.1 will be used for tweaking.
 
-	  The labels for  THETA/OMEGA/SIGMA 
-      in the file must match the labels in the model given as input 
-      to sir, the theta columns must be directly followed by the omega columns 
+	  The labels for  THETA/OMEGA/SIGMA
+      in the file must match the labels in the model given as input
+      to sir, the theta columns must be directly followed by the omega columns
       which must be directly followed by the sigma columns, and the first or
-	  second column must have header model. Note that is is 
-      possible to generate a file with initial parameter estimates outside 
+	  second column must have header model. Note that is is
+      possible to generate a file with initial parameter estimates outside
 	  of PsN, as long as the file follows the format rules.
 EOF
 $help_text{-offset_rawres} = <<'EOF';
@@ -166,27 +167,27 @@ $help_text{-in_filter} = <<'EOF';
       -in_filter=comma-separated list of conditions
 
       Only relevant in combination with rawres_input. Default not used.
-      The parameter estimates lines in the file can be filtered on values 
-      in the different columns. When specifying which column(s) the filtering 
-      should be based on, the exact column name must be used, 
-      e.g. minimization_successful. Filtering can only be based on columns 
-      with numeric values. The allowed relations are .gt. (greater than), 
-      .lt. (less than) and .eq. (equal to). Conditions are separated with commas. 
-      If the remaining number of lines after filtering is smaller than -samples, 
-      sir will stop with an error message. Then the user must either change the 
-      filtering rules or change -samples. If the user has created a file with 
-      parameter estimates outside of PsN, filtering can be done on any numeric 
-      column in that file. Do not set column headers containing .eq. or .lt. 
-      or .gt.in the user-generated file as this would interfere with the in_filter 
+      The parameter estimates lines in the file can be filtered on values
+      in the different columns. When specifying which column(s) the filtering
+      should be based on, the exact column name must be used,
+      e.g. minimization_successful. Filtering can only be based on columns
+      with numeric values. The allowed relations are .gt. (greater than),
+      .lt. (less than) and .eq. (equal to). Conditions are separated with commas.
+      If the remaining number of lines after filtering is smaller than -samples,
+      sir will stop with an error message. Then the user must either change the
+      filtering rules or change -samples. If the user has created a file with
+      parameter estimates outside of PsN, filtering can be done on any numeric
+      column in that file. Do not set column headers containing .eq. or .lt.
+      or .gt.in the user-generated file as this would interfere with the in_filter
       option syntax.
-    
+
       Example: -in_filter=minimization_successful.eq.1,significant_digits.gt.3.5
 EOF
 $help_text{-auto_rawres} = <<'EOF';
       -auto_rawres=degree
 
 Default not set. Not allowed in combination with covmat_input. If rawres_input is not set,
-this option will make sir use the tweak_inits functionality to automatically create a 
+this option will make sir use the tweak_inits functionality to automatically create a
 rawres_input file with perturbed parameter vectors. If option -auto_rawres is used
 in combination with rawres_input, the 'degree' will be used with tweak_inits
 to augment the given rawres_input file until the matrix has full rank.
@@ -195,12 +196,12 @@ EOF
       -copy_data
     Default set, can be unset with -no-copy_data. By default, the original
 	dataset will be copied to the sir run directory to be used for relevant runs.
-	If -no-copy_data is set, the absolute path to the original dataset will be 
+	If -no-copy_data is set, the absolute path to the original dataset will be
 	used instead.
 EOF
 #$help_text{-with_replacement} = <<'EOF';
 #      -with_replacement
-#Default not set. By default, resampling is performed without replacement, but setting this option gives resampling 
+#Default not set. By default, resampling is performed without replacement, but setting this option gives resampling
 #with unlimited replacement.
 #To cap resampling at e.g. 5, use option -cap_resampling instead.
 #EOF
@@ -214,10 +215,10 @@ EOF
 $help_text{-cap_resampling} = <<'EOF';
       -cap_resampling=N
 
-Default 1. The maximum number of times a single parameter vector can be resampled in each iteration. 
-Value 1 means regular sampling without replacement. 
+Default 1. The maximum number of times a single parameter vector can be resampled in each iteration.
+Value 1 means regular sampling without replacement.
 A value equal to the maximum value of the 'resamples' array will give
-unlimited replacement, but this is not recommended. Any value in between gives limited replacement. 
+unlimited replacement, but this is not recommended. Any value in between gives limited replacement.
 EOF
     $help_text{-recenter} = <<'EOF';
       -recenter
@@ -245,23 +246,23 @@ EOF
     $help_text{-add_iterations} = <<'EOF';
       -add_iterations
 
-Default not set. Iterations can be added to a previous sir run, for example 
-if the diagnostic R plots show that convergence has not been achieved. 
+Default not set. Iterations can be added to a previous sir run, for example
+if the diagnostic R plots show that convergence has not been achieved.
 When option -add_iterations is set, option -directory is required,
 and this directory must contain output from at least one complete sir iteration.
 
-The options set on the commandline pertain to new iterations with the last available 
-iteration as starting point. Options -covmat_input and -rawres_input are forbidden 
-in combination with -add_iterations, the model file does not have to be specified 
-(it will be ignored if it is), otherwise the same sir options are required/optional 
+The options set on the commandline pertain to new iterations with the last available
+iteration as starting point. Options -covmat_input and -rawres_input are forbidden
+in combination with -add_iterations, the model file does not have to be specified
+(it will be ignored if it is), otherwise the same sir options are required/optional
 as in a regular sir run.
 
-If some but not all iterations from the previous run had finished, the new run 
-will start with the output from the last complete iteration, and the old sample 
-and resample counts for the non-finished iterations will be dropped. Example: 
-if the old setting was -samples=1000,1000 and the new with -add_iterations 
+If some but not all iterations from the previous run had finished, the new run
+will start with the output from the last complete iteration, and the old sample
+and resample counts for the non-finished iterations will be dropped. Example:
+if the old setting was -samples=1000,1000 and the new with -add_iterations
 is -samples=2000,2000 and the old run was terminated after the first iteration,
-then after the add\_iterations run has finished there will be three iterations 
+then after the add\_iterations run has finished there will be three iterations
 in total with sample sequence 1000,2000,2000 after the new run has finished.
 EOF
 $help_text{-rse_theta} = <<'EOF';
@@ -279,15 +280,15 @@ $help_text{-rse_omega} = <<'EOF';
 
 Default not used. Used for giving the proposal density as RSE%, e.g. 30 for 30% RSE.
 Not allowed in combination with -inflation, -covmat_input, -rawres_input or -auto_rawres.
-Either a positive vector with length equal to the number of estimated (not FIX) $OMEGA 
-diagonal elements or a positive scalar which will be interpreted as a vector of the required 
-length and all equal values. When this option is used, the variances of omega(i,i) in the 
+Either a positive vector with length equal to the number of estimated (not FIX) $OMEGA
+diagonal elements or a positive scalar which will be interpreted as a vector of the required
+length and all equal values. When this option is used, the variances of omega(i,i) in the
 proposal density will be computed as (rse_omega(i,i)*(final estimate omega (i,i))/100)^2
-The variances of off-diagonal elements will be computed so that the correlation from the 
+The variances of off-diagonal elements will be computed so that the correlation from the
 final estimate is unchanged.
-If -rse_theta is set to a scalar when option -rse_omega is not used, -rse_omega will 
-automatically be set to the same scalar as -rse_theta. If -rse_theta is set to a vector and 
--rse_omega is not set at all, or if -rse_omega is set when -rse_theta is not, then there will 
+If -rse_theta is set to a scalar when option -rse_omega is not used, -rse_omega will
+automatically be set to the same scalar as -rse_theta. If -rse_theta is set to a vector and
+-rse_omega is not set at all, or if -rse_omega is set when -rse_theta is not, then there will
 be an error message.
 EOF
 $help_text{-rse_sigma} = <<'EOF';
@@ -301,13 +302,13 @@ $help_text{-theta_inflation} = <<'EOF';
 
 Either a positive vector with length equal to the number of estimated (not FIX) $THETAs, or
 a positive scalar which will be interpreted as a vector of lenght n($THETA) and all equal values.
-Default is the scalar 1, which is the same as no inflation. 
+Default is the scalar 1, which is the same as no inflation.
 If given, the variance
-of each estimated $THETA 
+of each estimated $THETA
 will in the first iteration be inflated with the factor from the inflation vector
 before the parameter vectors
 are sampled from the truncated multivariate normal distribution.
-The weights will also be computed based the inflated covariance matrix. 
+The weights will also be computed based the inflated covariance matrix.
 Inflation is not used in any but the first iteration.
 EOF
 $help_text{-omega_inflation} = <<'EOF';
@@ -315,17 +316,17 @@ $help_text{-omega_inflation} = <<'EOF';
 
 Either a positive vector with length equal to the number of estimated (not FIX) $OMEGA diagonal elements
 #, both diagonal
-#and off-diagonal, 
+#and off-diagonal,
 or
 a positive scalar which will be interpreted as a vector of the required length and all equal values.
-Default is the scalar 1, which is the same as no inflation. 
+Default is the scalar 1, which is the same as no inflation.
 If given, the variance
 of each estimated $OMEGA element
 will in the first iteration be inflated with the factor from the inflation vector
 before the parameter vectors
 are sampled from the truncated multivariate normal distribution. Inflation for off-diagonal
 elements will be automatically computed based on inflation for diagonals so that the correlation is unchanged.
-The weights will also be computed based the inflated covariance matrix. 
+The weights will also be computed based the inflated covariance matrix.
 Inflation is not used in any but the first iteration.
 EOF
 $help_text{-sigma_inflation} = <<'EOF';
@@ -336,9 +337,14 @@ EOF
       -problems_per_file=N
     Default is 100. The number of $PROBLEM per model file when running
 	MAXEVAL=0 or similar to get ofv:s for parameter vectors. Setting a higher value
-decreases the overhead involved in running each control stream, but increases the 
+decreases the overhead involved in running each control stream, but increases the
 risk of losing many samples in case a model file crashes. Setting -problems_per_file=1
 gives maximum robustness to individual crashes, but also maximum overhead cost.
+EOF
+    $help_text{-print_iter} = <<'EOF';
+      -print_iter=N
+    Optional, default is 0 (off). Every N:th (multivariate normal sampling) iteration
+    will be printed with cumulative acceptance and rejection rates.
 EOF
 
 
@@ -379,7 +385,7 @@ my $model;
 
 if ($dummymodel){
 	$model = model->create_dummy_model;
-}else{ 
+}else{
 	$model = model -> new ( eval( $eval_string ),
 							filename                    => @ARGV[0],
 							ignore_missing_output_files => 1 );
@@ -390,33 +396,34 @@ input_checking::check_options(tool => 'sir', options => \%options, model => $mod
 
 require tool::sir;
 
-my $sir = 
-	tool::sir->new ( eval( $common_options::parameters ),
-					 top_tool => 1,
-					 models				     => [ $model ],
-					 cap_resampling		 => $options{'cap_resampling'},
-					 cap_correlation		 => $options{'cap_correlation'},
-					 samples				     => $options{'samples'},
-					 resamples				     => $options{'resamples'},
-					 mceta				     => $options{'mceta'},
-					 theta_inflation			 => $options{'theta_inflation'},
-					 omega_inflation			 => $options{'omega_inflation'},
-					 sigma_inflation			 => $options{'sigma_inflation'},
-					 rse_theta				     => $options{'rse_theta'},
-					 rse_omega				     => $options{'rse_omega'},
-					 rse_sigma				     => $options{'rse_sigma'},
-					 auto_rawres				     => $options{'auto_rawres'},
-					 covmat_input			 => $options{'covmat_input'},
-					 rawres_input        	=> $options{'rawres_input'},
-					 problems_per_file        	=> $options{'problems_per_file'},
-					 offset_rawres       	=> $options{'offset_rawres'},
-					 recenter       	=> $options{'recenter'},
-					 boxcox       	=> $options{'boxcox'},
-					 add_iterations        => $options{'add_iterations'},
-					 in_filter             => $options{'in_filter'},
-					 copy_data                            => $options{'copy_data'},
-                     fast_posdef_checks    => $options{'fast_posdef_checks'}
-	);
+my $sir =
+    tool::sir->new ( eval( $common_options::parameters ),
+                     top_tool              => 1,
+                     models                => [ $model ],
+                     cap_resampling        => $options{'cap_resampling'},
+                     cap_correlation       => $options{'cap_correlation'},
+                     samples               => $options{'samples'},
+                     resamples             => $options{'resamples'},
+                     mceta                 => $options{'mceta'},
+                     theta_inflation       => $options{'theta_inflation'},
+                     omega_inflation       => $options{'omega_inflation'},
+                     sigma_inflation       => $options{'sigma_inflation'},
+                     rse_theta             => $options{'rse_theta'},
+                     rse_omega             => $options{'rse_omega'},
+                     rse_sigma             => $options{'rse_sigma'},
+                     auto_rawres           => $options{'auto_rawres'},
+                     covmat_input          => $options{'covmat_input'},
+                     rawres_input          => $options{'rawres_input'},
+                     problems_per_file     => $options{'problems_per_file'},
+                     offset_rawres         => $options{'offset_rawres'},
+                     recenter              => $options{'recenter'},
+                     boxcox                => $options{'boxcox'},
+                     add_iterations        => $options{'add_iterations'},
+                     in_filter             => $options{'in_filter'},
+                     copy_data             => $options{'copy_data'},
+                     fast_posdef_checks    => $options{'fast_posdef_checks'},
+                     print_iter_N          => $options{'print_iter'},
+    );
 
 $sir-> print_options (cmd_line => $cmd_line,
 		     toolname => 'sir',

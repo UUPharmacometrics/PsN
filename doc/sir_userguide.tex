@@ -12,25 +12,25 @@
 
 \section{Introduction}
 The sir program calculates uncertainty
-on model parameters for the input model using the Sampling Importance Resampling (SIR) procedure 
+on model parameters for the input model using the Sampling Importance Resampling (SIR) procedure
 \cite{Dosne2013},\cite{Dosne2015}.
-The output of the SIR procedure is a set of parameter vectors representing the uncertainty around 
-model parameters, just like a bootstrap. 
+The output of the SIR procedure is a set of parameter vectors representing the uncertainty around
+model parameters, just like a bootstrap.
 Confidence intervals around the parameters are also computed, based on this set of parameter vectors.
- 
-The SIR procedure gets to the final set of parameter vectors via N successive iterations. 
-Each iteration consists of 3 steps. 
-First, M parameter vectors are simulated from a “proposal” uncertainty. Then, for each parameter vector, 
-an “importance ratio” IR (representing how well the vector represents the uncertainty) is calculated. 
-Finally, m parameter vectors (m<M) are then resampled from the M simulated vectors based on these IR.  
-They are called the “posterior” or SIR uncertainty. This is the end of an iteration. In the next iteration, 
-the m parameter vectors are then used as the new proposal uncertainty, and a new set of M parameter vectors 
-are simulated from this new proposal. 
-IR are evaluated for the new set of parameter vectors and m vectors are resampled based on their IR. 
-In practice, the number of samples (M) and resamples (m) can vary between iterations. The procedure should be 
-repeated until there is no change between the proposal uncertainty and the posterior uncertainty, meaning that 
+
+The SIR procedure gets to the final set of parameter vectors via N successive iterations.
+Each iteration consists of 3 steps.
+First, M parameter vectors are simulated from a “proposal” uncertainty. Then, for each parameter vector,
+an “importance ratio” IR (representing how well the vector represents the uncertainty) is calculated.
+Finally, m parameter vectors (m<M) are then resampled from the M simulated vectors based on these IR.
+They are called the “posterior” or SIR uncertainty. This is the end of an iteration. In the next iteration,
+the m parameter vectors are then used as the new proposal uncertainty, and a new set of M parameter vectors
+are simulated from this new proposal.
+IR are evaluated for the new set of parameter vectors and m vectors are resampled based on their IR.
+In practice, the number of samples (M) and resamples (m) can vary between iterations. The procedure should be
+repeated until there is no change between the proposal uncertainty and the posterior uncertainty, meaning that
 the SIR procedure has converged to the true uncertainty.
-Because the number of iterations is chosen by the user, diagnostics plots have been developed to assess whether 
+Because the number of iterations is chosen by the user, diagnostics plots have been developed to assess whether
 this number of iterations was enough for SIR to converge, and these can be generated via the -rplots option,
 see section Diagnostic sir plots.
 
@@ -44,22 +44,22 @@ There are a number of different ways to obtain the proposal density for the firs
 \begin{enumerate}
 \item The covariance matrix from a successful NONMEM covariance step. If the covariance step was successful, sir will automatically
 read the covariance matrix from NONMEM, e.g. run10.cov,  and use it for the sampling in the first iteration.
-\item If the covariance step was not successful, the precond script, see the precond\_userguide.pdf, 
+\item If the covariance step was not successful, the precond script, see the precond\_userguide.pdf,
 is recommended. It can often recover the covariance step even if it failed when running the original model.
 %\item If precond fails, then the user can compute a proposal covariance matrix $A$ based on the $R$ matrix given by NONMEM,
-%e.g. run10.rmt, using $A=2R^{+}$ where $R^{+}$ is the pseudo-inverse of $R$. If precond has been run, the rmt-file is found in the 
+%e.g. run10.rmt, using $A=2R^{+}$ where $R^{+}$ is the pseudo-inverse of $R$. If precond has been run, the rmt-file is found in the
 %m1 subdirectory of the precond run directory. The $A$ matrix needs to be computed outside of PsN, using e.g. R, and
 %then given as input to sir using option -covmat\_input.
-\item If a bootstrap has been run, the file with simulated parameter vectors can be given as input, instead of 
-a covariance matrix, with option -rawres\_input. 
-Then the sir procedure starts with a 0th iteration where those vectors are treated as the resampled 
-vectors from the third phase (Box-Cox transformation etc). This approach is useful when it is difficult to obtain a (faked) covariance matrix. 
+\item If a bootstrap has been run, the file with simulated parameter vectors can be given as input, instead of
+a covariance matrix, with option -rawres\_input.
+Then the sir procedure starts with a 0th iteration where those vectors are treated as the resampled
+vectors from the third phase (Box-Cox transformation etc). This approach is useful when it is difficult to obtain a (faked) covariance matrix.
 If there are too few bootstrap vectors for full rank, sir will automatically fill in extra vectors using the
 tweak\_inits functionality.
-\item If the user can guess a reasonable RSE for each parameter, then 
+\item If the user can guess a reasonable RSE for each parameter, then
 options -rse\_theta, -rse\_omega and -rse\_sigma can be combined
 to obtain a proposal density without having to create the .cov-file.
-\item If the user can guess a reasonable variance for each parameter, then 
+\item If the user can guess a reasonable variance for each parameter, then
 options -covmat\_input=diagonal,
 -theta\_inflation, -omega\_inflation and -sigma\_inflation can be combined to obtain any diagonal covariance matrix
 without having to create the .cov-file.
@@ -68,19 +68,19 @@ Then sir will create a complete rawres\_input file using the tweak\_inits functi
 \end{enumerate}
 
 \section{Input and options}
-A model file is required on the command-line. 
+A model file is required on the command-line.
 If output file (lst) exists, then it is important that the control stream copy at the top of the lst-file matches the actual input model file
 in terms of which parameters are present and which parameters are FIXED or SAME.
 \begin{optionlist}
 \optdefault{samples}{M1,M2}
 Default 1000,1000,1000,2000,2000.
-A comma-separated list of integers, the number of parameter vectors to 
-generate in each iteration. In each iteration the number needs to be greater than the number 
+A comma-separated list of integers, the number of parameter vectors to
+generate in each iteration. In each iteration the number needs to be greater than the number
 of resamples, unless sampling is with replacement.
 \nextopt
 \optdefault{resamples}{m1,m2}
 Default 200,400,500,1000,1000.
-A comma-separated list of integers, the number of parameter vectors to resample 
+A comma-separated list of integers, the number of parameter vectors to resample
 in each iteration based on the weights
 computed from delta ofv and the pdf. The list length must be equal to list 'samples'.
 \nextopt
@@ -88,9 +88,9 @@ computed from delta ofv and the pdf. The list length must be equal to list 'samp
 If rawres\_input is given, sir will run an intial 0th iteration in which sir will read all parameter
 vectors from this file, starting on line offset\_rawres+1 and skipping any that does not fulfill the filter rules, if set.
 These vectors will be Box-Cox transformed and used to create a proposal density for the next iteration.
-This option is not allowed together with covmat\_input. 
+This option is not allowed together with covmat\_input.
 
-If the number of vectors read is smaller than 
+If the number of vectors read is smaller than
 the number of estimated parameters (also counting off-diagonals),
 it is not possible to obtain an empirical covariance matrix with full rank.
 In this case sir will append copies of the existing vectors, perturbed using the tweak\_inits
@@ -98,21 +98,21 @@ functionality, until the resulting set of vectors has full rank.
 If option -auto\_rawres=degree is set on the command-line, tweak\_inits will be done by 'degree',
 otherwise the default degree 0.1 will be used.
 If $N$ parameter vectors are read from the rawres file,
-the generation of perturbed parameter vector $i$, element $j$, is performed according to 
-init\_ij = init\_kj + rand\_uniform(-degree*init\_kj,+degree*init\_kj) where k=i modulo N and init\_kj is the value of 
-parameter $j$ in original rawres vector $k$. 
+the generation of perturbed parameter vector $i$, element $j$, is performed according to
+init\_ij = init\_kj + rand\_uniform(-degree*init\_kj,+degree*init\_kj) where k=i modulo N and init\_kj is the value of
+parameter $j$ in original rawres vector $k$.
 
-The labels for  THETA/OMEGA/SIGMA 
-in the file must match the labels in the model given as input 
-to sir, the theta columns must be directly followed by the omega columns 
+The labels for  THETA/OMEGA/SIGMA
+in the file must match the labels in the model given as input
+to sir, the theta columns must be directly followed by the omega columns
 which must be directly followed by the sigma columns, and the first or
-second column must have header model. Note that is is 
-possible to generate a file with initial parameter estimates outside 
+second column must have header model. Note that is is
+possible to generate a file with initial parameter estimates outside
 of PsN, as long as the file follows the format rules.
 \nextopt
 \optdefault{offset\_rawres}{N}
-Only relevant in combination with -rawres\_input. Default 1. The number of result lines to skip in the input raw results file before starting to read final parameter estimates. In a regular bootstrap raw\_results file, and also in an initial\_estimates.csv file from an sse run, 
-the first line of estimates refers to the input model with the full dataset, so therefore the default offset is 1. 
+Only relevant in combination with -rawres\_input. Default 1. The number of result lines to skip in the input raw results file before starting to read final parameter estimates. In a regular bootstrap raw\_results file, and also in an initial\_estimates.csv file from an sse run,
+the first line of estimates refers to the input model with the full dataset, so therefore the default offset is 1.
 \nextopt
 \optdefault{in\_filter}{condition on numerical col}
 Only relevant in combination with -rawres\_input. Default not used. The parameter estimates lines in the file can be filtered on values in the different columns. When specifying which column(s) the filtering should be based on, the exact column name must be used, e.g. minimization\_successful. Filtering can only be based on columns with numeric values. The allowed relations are .gt. (greater than), .lt. (less than) and .eq. (equal to). If the value in the filter column is 'NA' then that parameter set will be skipped, regardless of the defined filter relation. Conditions are separated with commas. If the remaining number of lines after filtering is smaller than -samples, sse will stop with an error message. Then the user must either change the filtering rules or change -samples. If the user has created a file with parameter estimates outside of PsN, filtering can be done on any numeric column in that file. Do not set column headers containing .eq. or .lt. or .gt.in the user-generated file as this would interfere with the in\_filter option syntax.
@@ -125,30 +125,30 @@ significant_digits.gt.3.5
 \nextopt
 \optdefault{auto\_rawres}{degree}
 Default not set. Not allowed in combination with covmat\_input. If rawres\_input is not set,
-this option will make sir use the tweak\_inits functionality to automatically create a 
+this option will make sir use the tweak\_inits functionality to automatically create a
 rawres\_input file with perturbed parameter vectors, and these vectors will then be used
-as if read from a real raw\_results file. 
-The generation of perturbed parameter vector $i$, element $j$, is performed according to 
+as if read from a real raw\_results file.
+The generation of perturbed parameter vector $i$, element $j$, is performed according to
 init\_ij = init\_0j + rand\_uniform(-degree*init\_0j,+degree*init\_0j)
-where init\_0j is the final estimate of 
-parameter $j$ in the input model. 
-The tweaking procedure makes sure that boundary conditions, including positive definiteness of 
+where init\_0j is the final estimate of
+parameter $j$ in the input model.
+The tweaking procedure makes sure that boundary conditions, including positive definiteness of
 \$OMEGA and \$SIGMA, are respected.
 
 If option -auto\_rawres is used
-in combination with rawres\_input, tweak\_inits by 'degree' will be used 
+in combination with rawres\_input, tweak\_inits by 'degree' will be used
 to augment the given rawres\_input file until the matrix has full rank, see help text for -rawres\_input.
 \nextopt
 %\optname{with\_replacement}
-%Default not set. By default, resampling is performed without replacement, but setting this option gives resampling 
+%Default not set. By default, resampling is performed without replacement, but setting this option gives resampling
 %with unlimited replacement.
 %To cap resampling at e.g. 5, use option -cap\_resampling.
 \nextopt
 \optdefault{cap\_resampling}{N}
-Default 1. The maximum number of times a single parameter vector can be resampled in each iteration. 
-Value 1 means regular sampling without replacement. 
+Default 1. The maximum number of times a single parameter vector can be resampled in each iteration.
+Value 1 means regular sampling without replacement.
 A value equal to the maximum value of the 'resamples' array will give
-unlimited replacement, but this is not recommended. Any value in between gives limited replacement. 
+unlimited replacement, but this is not recommended. Any value in between gives limited replacement.
 \nextopt
 \optname{fast\_posdef\_checks}
 Default not set. Enables experimental fast positive semi-definiteness checks via cholesky
@@ -160,20 +160,20 @@ with large matrices). Try this if large covariance matrix and large rejection ra
 Not allowed together with rawres\_input or auto\_rawres. If given, this covariance matrix is
 used in iteration 1
 for sampling parameter vectors and for computing the PDF.
-The matrix will not be used in any but the first iteration. 
+The matrix will not be used in any but the first iteration.
 
 If the user wants to input an identity matrix, it is not necessary to create the .cov-file.
 Instead set option -covmat\_input=identity. Option -covmat\_input=identity can be combined
 with inflation to get any diagonal covariance matrix without creating the .cov-file.
 
-If a file is used, the format of the file is similar to a NONMEM-generated .cov-file except 
+If a file is used, the format of the file is similar to a NONMEM-generated .cov-file except
 that the \verb|TABLE NO.| line should be omitted.
-Fixed parameters do not have to be omitted, sir will filter them out. 
+Fixed parameters do not have to be omitted, sir will filter them out.
 The covmat\_input file must be formatted to contain a space- or tab-separated  $N\times N$ symmetric covariance matrix.
-The first line in the file must be a header with labels for THETA/OMEGA/SIGMA written as in a regular NONMEM .cov-file 
-and a leading column called NAME: 
+The first line in the file must be a header with labels for THETA/OMEGA/SIGMA written as in a regular NONMEM .cov-file
+and a leading column called NAME:
 \begin{verbatim}
-NAME THETA1 THETA2 ... SIGMA(1,1) ... OMEGA(1,1) ... 
+NAME THETA1 THETA2 ... SIGMA(1,1) ... OMEGA(1,1) ...
 \end{verbatim}
 The NAME column contains the same parameter labels (to identify the rows).
 The rows and columns must be sorted with THETAs first.
@@ -183,27 +183,27 @@ Please note that there is a PsN script called covmat that can be used to generat
 \optdefault{theta\_inflation}{X}
 Either a positive vector with length equal to the number of \emph{estimated} (not FIX) \$THETAs, or
 a positive scalar which will be interpreted as a vector of the required length and all equal values.
-Default is the scalar 1, which is the same as no inflation. 
+Default is the scalar 1, which is the same as no inflation.
 If given, the variance
-of each estimated \$THETA 
+of each estimated \$THETA
 will in the first iteration be inflated with the factor from the inflation vector
 before the parameter vectors
 are sampled from the truncated multivariate normal distribution.
-The weights will also be computed based the inflated covariance matrix. 
+The weights will also be computed based the inflated covariance matrix.
 Inflation is not used in any but the first iteration.
 %Inflation is always performed so that correlations in the covariance matrix are unchanged.
 Only diagonal elements of the covariance matrix are inflated. Off-diagonals (covariances)
 are unchanged. This means that correlations will decrease.
 \nextopt
 \optdefault{omega\_inflation}{X}
-Either a positive vector with length equal to the number of \emph{estimated} (not FIX) 
+Either a positive vector with length equal to the number of \emph{estimated} (not FIX)
 %\$OMEGA elements, both diagonal
 \$OMEGA \emph{diagonal} elements
 %, both diagonal
-%and off-diagonal, 
+%and off-diagonal,
 or
 a positive scalar which will be interpreted as a vector of the required length and all equal values.
-Default is the scalar 1, which is the same as no inflation. 
+Default is the scalar 1, which is the same as no inflation.
 If given, the variance
 of each estimated \$OMEGA element
 will in the first iteration be inflated with the factor from the inflation vector
@@ -211,11 +211,11 @@ before the parameter vectors
 are sampled from the truncated multivariate normal distribution. Inflation for
 the variance of off-diagonal
 omega elements will be automatically computed based on inflation for diagonals so that the correlation is unchanged.
-For example, the variance of OM(2,1) will be inflated by 
+For example, the variance of OM(2,1) will be inflated by
 \[
 \sqrt{inflation(OM(1,1))}\cdot\sqrt{inflation(OM(2,2))}
 \].
-The weights will also be computed based the inflated covariance matrix. 
+The weights will also be computed based the inflated covariance matrix.
 Inflation is not used in any but the first iteration.
 \nextopt
 \optdefault{sigma\_inflation}{X}
@@ -227,7 +227,7 @@ Not allowed in combination with inflation, -covmat\_input, -rawres\_input or -au
 Either a positive vector with length equal to the number of estimated (not FIX) \$THETAs, or
 a positive scalar which will be interpreted as a vector of the appropriate length and all equal values.
 When this option is used, the variances of theta(i) in the proposal density will be computed
-as 
+as
 \[
 \left(theta(i)*rse_{theta}(i)/100\right)^2
 \]
@@ -235,10 +235,10 @@ as
 \optdefault{rse\_omega}{X}
 Default not used. Used for giving the proposal density as RSE\%, e.g. 30 for 30\% RSE.
 Not allowed in combination with inflation, -covmat\_input, -rawres\_input or -auto\_rawres.
-Either a positive vector with length equal to the number of estimated (not FIX) \$OMEGA 
-diagonal elements or a positive scalar which will be interpreted as a vector of the required 
-length and all equal values. When this option is used, the variances of omega(i,i) in the 
-proposal density will be computed as 
+Either a positive vector with length equal to the number of estimated (not FIX) \$OMEGA
+diagonal elements or a positive scalar which will be interpreted as a vector of the required
+length and all equal values. When this option is used, the variances of omega(i,i) in the
+proposal density will be computed as
 \[
 var_{om(i,i)}=\left(om(i,i)*rse_{om}(i)/100\right)^2
 \]
@@ -259,17 +259,17 @@ where
 %var_{omega(i,j)}=\sqrt{var_{omega(i,i)}}\cdot\sqrt{var_{omega(j,j)}}
 %\cdot\frac{abs(omega(i,j))}{\sqrt{omega(i,i)\cdot omega(j,j)}}
 %\]
-If -rse\_theta is set to a scalar when option -rse\_omega is not given, -rse\_omega will 
-automatically be set to the same scalar as -rse\_theta. If -rse\_theta is set to a vector and 
--rse\_omega is not set at all, or if -rse\_omega is set when -rse\_theta is not, then there will 
+If -rse\_theta is set to a scalar when option -rse\_omega is not given, -rse\_omega will
+automatically be set to the same scalar as -rse\_theta. If -rse\_theta is set to a vector and
+-rse\_omega is not set at all, or if -rse\_omega is set when -rse\_theta is not, then there will
 be an error message.
 \nextopt
 \optdefault{rse\_sigma}{X}
 See help text for rse\_omega.
 \nextopt
 \optdefault{cap\_correlation}{X}
-Default 0.8. If set to a number between 0 and 1, at every iteration 
-ensure that no absolute value of a correlation in the proposal exceeds 
+Default 0.8. If set to a number between 0 and 1, at every iteration
+ensure that no absolute value of a correlation in the proposal exceeds
 this number. If some do, they will be changed to X (or –X if negative).
 To turn off this feature, set -cap\_correlation=1, which in practice
 means no capping.
@@ -278,7 +278,7 @@ means no capping.
 Optional, default 100. The number of \$PROBLEM per model file when evaluating the parameter vectors
 on the original data (running
 MAXEVAL=0 or similar to get ofv:s for parameter vectors). Setting a higher value
-decreases the overhead involved in running each control stream, but increases the 
+decreases the overhead involved in running each control stream, but increases the
 risk of losing many samples in case a model file crashes. Setting -problems\_per\_file=1
 gives maximum robustness to individual crashes, but also maximum overhead cost.
 \nextopt
@@ -299,34 +299,38 @@ If option is unset using -no-recenter, the original parameter vector will be kep
 and a warning will be printed that some vectors had a negative delta-ofv.
 \nextopt
 \optname{boxcox}
-Default set. 
+Default set.
 If option is set, sir will Box-Cox transform parameter vectors before computing
 the covariance matrix used for sampling.
 If option is unset using -no-boxcox, no transformation will be performed before computing covariance matrix
 used for sampling.
 \nextopt
 \optname{add\_iterations}
-Default not set. 
+Default not set.
 Iterations can be added to a previous sir run, for example if the diagnostic R plots show that
-convergence has not been achieved. When option -add\_iterations is set, option -directory 
+convergence has not been achieved. When option -add\_iterations is set, option -directory
 (see the common options section below) is required,
 and this directory must contain output from at least one complete sir iteration.
 
-The options set on the commandline 
+The options set on the commandline
 pertain to \emph{new} iterations with the last available iteration as starting point.
-Options -covmat\_input and -rawres\_input are forbidden in combination with -add\_iterations, 
+Options -covmat\_input and -rawres\_input are forbidden in combination with -add\_iterations,
 the model file does not have to be specified (it will be ignored if it is),
 otherwise the same sir options are required/optional as in a regular sir run.
 
 If some but not all iterations from the previous run had finished, the new run will start with the output
 from the last complete iteration, and the old sample and resample counts for
 the \emph{non-finished} iterations will be dropped. Example: if the old setting was -samples=1000,1000
-and the new with -add\_iterations 
+and the new with -add\_iterations
 is -samples=2000,2000 and the old run was terminated after the first iteration,
 then after the add\_iterations run has finished
-there will be three iterations in total with sample sequence 1000,2000,2000 
+there will be three iterations in total with sample sequence 1000,2000,2000
 after the new run has finished.
 
+\nextopt
+\optdefault{print\_iter}{N}
+Optional, default is 0 (off). Every N:th (multivariate normal sampling) iteration
+will be printed with cumulative acceptance and rejection rates.
 \nextopt
 \end{optionlist}
 
@@ -335,8 +339,8 @@ after the new run has finished.
 \newcommand{\rplotsconditions}{
 See section Output, subsections Basic and Extended diagnostic plots,
 for descriptions of the default sir plots.
-The default sir template 
-requires 
+The default sir template
+requires
 that R libraries
 gplots, ggplot2, plyr, dplyr, reshape, gridExtra, RColorBrewer, tidyr, MCMCpack and stats4 are installed.
 If the conditions are not fulfilled then no pdf will be generated,
@@ -345,22 +349,22 @@ see the .Rout file in the main run directory for error messages.
 
 \input{inputs/rplots_section_body.tex}
 
- 
+
 
 \subsection{Some important common PsN options}
 There are many options that govern how PsN manages NONMEM runs, and
 those options are common to all PsN programs that run NONMEM.
-For a complete list of such options see common\_options.pdf, 
+For a complete list of such options see common\_options.pdf,
 or psn\_options -h on the commandline. A selection of
 the most important common options relevant for sir is found here.
 \input{inputs/basic_options.tex}
 
 
 \section{sir program workflow}
-\subsubsection*{Setup} 
+\subsubsection*{Setup}
 The sir program will run the input model unless the lst-file with results is already present. If the lst-file is present, it
 is important that the control stream copy at the top of the lst-file matches the
-actual input model file in terms of which parameters are estimated, 
+actual input model file in terms of which parameters are estimated,
 FIXED or SAME, otherwise there will be a mis-match between which parameter estimates are read from the
 lst-file and which estimates are needed for the sir procedure.
 
@@ -372,32 +376,32 @@ or by default the .cov-file of the input model run.
 \subsubsection*{For each iteration $i$ (each item in list 'samples'):}
 (NB: If -rawres\_input and/or -auto\_rawres is used there first an iteration 0 that starts at \underline{Step 5})
 \begin{itemize}
-\item[\underline{Step 1}] 
-Simulate 'samples item $i$' parameter vectors from the 
+\item[\underline{Step 1}]
+Simulate 'samples item $i$' parameter vectors from the
 covariance matrix, using Perl function Math::Random::random\_multivariate\_normal.
 
-\noindent If there was a previous iteration, i.e $i>1$ or option -rawres\_input or -auto\_rawres was used, 
+\noindent If there was a previous iteration, i.e $i>1$ or option -rawres\_input or -auto\_rawres was used,
 the covariance matrix used in this step is the
 empirical covariance matrix of (optionally Box-Cox transformed) resampled parameter vectors from
-Step 6 in the previous iteration. 
+Step 6 in the previous iteration.
 If the vectors were Box-Cox transformed then
-sampling is done on Box-Cox scale, and 
+sampling is done on Box-Cox scale, and
 then the samples are back-transformed for boundary checks and evaluation.
 
 \noindent If there was no previous iteration, the covariance matrix is either from
 the .cov-file given by NONMEM or given via option -covmat\_input.
-The sampling is done on the original scale. 
+The sampling is done on the original scale.
 
-\noindent If this is iteration 1, $i==1$, 
-the covariance matrix is inflated before sampling 
+\noindent If this is iteration 1, $i==1$,
+the covariance matrix is inflated before sampling
 if either of options -theta\_inflation, -omega\_inflation or -sigma\_inflation is set.
 
 \noindent If -cap\_correlation is set, the correlations are capped before sampling.
 
 \noindent If a sampled vector (on the original scale) does not fulfill the constraints from \$THETA boundaries
 and positive definiteness of \$OMEGA and
-\$SIGMA blocks (as judged by a PsN-implemented eigenvalue decomposition) 
-then that vector is 
+\$SIGMA blocks (as judged by a PsN-implemented eigenvalue decomposition)
+then that vector is
 discarded and a new one is drawn. If sir detects an automatic Cholesky reparameterization
 by the update\_inits program, sir will also check the validitiy of the back-transformed \$OMEGA or \$SIGMA.
 
@@ -406,15 +410,15 @@ by the update\_inits program, sir will also check the validitiy of the back-tran
 keeping the eigenvectors but increasing the too-low eigenvalues to just large enough.
 This adjustment is not done for automatically Cholesky reparameterized blocks.
 
-\item[\underline{Step 2}] 
-Calculate each vector $x$’s probability 
-given the covariance matrix based on the formula for the probability 
+\item[\underline{Step 2}]
+Calculate each vector $x$’s probability
+given the covariance matrix based on the formula for the probability
 density function (PDF) of a multivariate normal distribution:\\
 \begin{math}
 \frac{1}{\left(2\pi\right)^{k/2}\left(det\left(A\right)\right)^{1/2}} exp\left(-\frac{1}{2}(\left(x-\mu\right)A^{-1} \left(x-\mu\right)^T\right)
 \end{math}
 \\
-where $k$ is the number of dimensions, 
+where $k$ is the number of dimensions,
 $\mu$ is the vector of expectations and $A$ is the (optionally inflated) covariance matrix.
 The values are normalized with the PDF for the vector of expectations $\mu$, giving\\
 \begin{math}
@@ -424,14 +428,14 @@ relPDF=exp\left(-\frac{1}{2}(\left(x-\mu\right)A^{-1} \left(x-\mu\right)^T\right
 NB 1: When the NONMEM covariance matrix is used as input, PsN will compute $relPDF$ without reading the inverse covariance matrix
 output by NONMEM.
 NB 2: If $i>0$ or -rawres\_input is used, the vectors (including $\mu$) and covariance matrix are on Box-Cox scale if option -boxcox was set (the default).
-\item[\underline{Step 3}] 
+\item[\underline{Step 3}]
 Evaluate the (original scale) parameter vectors on the original data.
 Create model files with up to 100 \$PROBLEM based on the original model file but setting MAXEVAL=0
-and replacing inits of nth \$PROBLEM with nth parameter vector on original scale, and also set MCETA if option -mceta was used. Compute dOFV 
+and replacing inits of nth \$PROBLEM with nth parameter vector on original scale, and also set MCETA if option -mceta was used. Compute dOFV
 (delta-OFV, reference is input model ofv) and store in raw results file for this iteration.
-\item[\underline{Step 4}] 
-Calculate the weights as the ratio $\frac{e^{-0.5\cdot dOFV}}{relPDF}$ and store in raw results file for this iteration. 
-Resample 'resamples item $i$' parameter vectors based on these weights, with or without limited replacement depending on option 
+\item[\underline{Step 4}]
+Calculate the weights as the ratio $\frac{e^{-0.5\cdot dOFV}}{relPDF}$ and store in raw results file for this iteration.
+Resample 'resamples item $i$' parameter vectors based on these weights, with or without limited replacement depending on option
 -cap\_resampling.
 Store '-cap\_resampling' copies of each vector in the raw results file for this iteration, with a 1 or 0 in the 'resamples'
 column indicating if the copy was resampled or not.
@@ -443,21 +447,21 @@ If this is iteration $0$, i.e. rawres\_input is used and the procedure starts he
 from file rawres\_input, excluding offset\_rawres and vectors not passing in\_filter (if set).
 
 \noindent Otherwise read the 'resamples item $i$' resampled vectors from the raw results file of Step 4.
-%, using multiple copies for vectors that were 
-%resampled more than once (only possible if -with\_replacement was set). 
+%, using multiple copies for vectors that were
+%resampled more than once (only possible if -with\_replacement was set).
 \item[\underline{Step 6}]
-If \emph{not} last iteration \emph{and} option -boxcox is set (the default): 
+If \emph{not} last iteration \emph{and} option -boxcox is set (the default):
 For each parameter individually, find the Box-Cox transformation that maximizes the correlation (Pearson's r) with the normal density.
 Do not allow $\lambda$ less than -3 or larger than +3. The  $\lambda$ used is allowed to differ from the true optimal  $\lambda$
 by at most $0.2$. The optimization is done with the DIRECT algorithm \cite{direct}.
 Compute the covariance matrix for the Box-Cox transformed resampled parameter vectors, and go to Step 1.
 
-\noindent If \emph{not} last iteration \emph{and} option -boxcox is unset with -no-boxcox: 
+\noindent If \emph{not} last iteration \emph{and} option -boxcox is unset with -no-boxcox:
 Compute the covariance matrix for the resampled parameter vectors on original scale, and go to Step 1.
 
-\noindent If last iteration: 
-Compute the covariance matrix for the resampled parameter vectors on original scale, 
-store in sir\_results.csv. 
+\noindent If last iteration:
+Compute the covariance matrix for the resampled parameter vectors on original scale,
+store in sir\_results.csv.
 Compute univariate confidence intervals and store in sir\_results.csv.
 \end{itemize}
 
@@ -467,7 +471,7 @@ if at least one iteration was completed. This process is invoked automatically
 if option -directory is set to an existing sir run directory containing output from
 at least one complete iteration and option -add\_iterations is \emph{not} set.
 
-When recovering an old run, the model file and all sir-specific options plus common options 
+When recovering an old run, the model file and all sir-specific options plus common options
 -nm\_version and -seed from
 the new commandline \emph{will be ignored}, instead the model and options
 set in the original run will be used.
@@ -475,26 +479,26 @@ set in the original run will be used.
 \section{Adjusting samples and resamples}
 Sometimes the evaluation run fails for some samples, resulting in fewer successful samples (samples with defined ofv)
 than the number of attempted samples. PsN tries to compensate for this loss, and then
-adjust again if the success rate goes up. If PsN has to compensate for loss, option -problems\_per\_file will 
+adjust again if the success rate goes up. If PsN has to compensate for loss, option -problems\_per\_file will
 automatically be reset to 1.
 \subsection{Adjusting samples}
 In iteration 1 the number of attempted samples is always the number of
 samples requested on the commandline with option -samples.
 When the number of successful samples in the previous iteration was less than
-$95\%$ of the attempted samples, the number of attempted samples in the current 
+$95\%$ of the attempted samples, the number of attempted samples in the current
 iteration is adjusted according to\\
 $current.attempted.samples=\frac{current.requested.samples \cdot previous.attempted.samples}{previous.successful.samples}$\\
 The number of attempted samples can be greater, but never smaller, than requested samples.
 
 \subsection{Adjusting resamples}
-When the number of successful samples for the current iteration 
+When the number of successful samples for the current iteration
 differs more than $5\%$ from the original samples count requested on the commandline with option -samples,
-PsN will try to maintain the requested sample-to-resample ratio by 
-adjusting the actual number of resamples for the current iteration 
+PsN will try to maintain the requested sample-to-resample ratio by
+adjusting the actual number of resamples for the current iteration
 according to \\
 $actual.resamples=\frac{requested.resamples\cdot successful.samples}{requested.samples}$\\
-Note that the number of actual resamples can be both greater and smaller than the 
-requested samples, because the attempted samples adjustment can make 
+Note that the number of actual resamples can be both greater and smaller than the
+requested samples, because the attempted samples adjustment can make
 the number of successful samples both greater and smaller
 than requested samples.
 
@@ -522,17 +526,17 @@ In the raw results file there will be '-cap\_resampling' (default 1) almost iden
 the only differences will be in the resamples and sample\_order columns.
 
 \item sir\_results.csv with summary statistics, percentiles and empirical sd-correlation matrix
-\item <modelname>\_sir.cov with the empirical covariance matrix in NONMEM-like format, i.e. 
+\item <modelname>\_sir.cov with the empirical covariance matrix in NONMEM-like format, i.e.
       fixed width space separated with generic headers in order THETA, SIGMA, OMEGA.
 \item if option -rplots>0: A file PsN\_sir\_plots.pdf with diagnostic sir plots.
 \item For all but the last iteration: A file with the Box-Cox $\lambda$ for each parameter, the $\delta$ used to shift
-the values to positive before Box-Cox transformation, the original estimate and the transformed estimate. 
+the values to positive before Box-Cox transformation, the original estimate and the transformed estimate.
 If the $\lambda$ column is empty it means that no transformation was
 needed because the parameter was already close to normally distributed.
-\item For all but the last iteration: A file boxcox\_covmatrix\_iterationi.cov with 
+\item For all but the last iteration: A file boxcox\_covmatrix\_iterationi.cov with
 the Box-Cox space covariance matrix for iteration $i$,
 or, if -no-boxcox was set on commandline, a file untransformed\_covmatrix\_iterationi.cov.
-\item A file summary\_iterations.csv with, for each iteration, 
+\item A file summary\_iterations.csv with, for each iteration,
 the requested samples, attempted samples, successful samples, requested resamples,
 actual resamples, requested samples-resamples ratio, actual samples-resamples ratio, count negative delta-ofv and minimum iteration sample ofv.
 \item A file sample\_rejection\_summary.txt which contains a summary of the causes of sample rejections
@@ -545,8 +549,8 @@ elements further down the list are also outside their respective boundaries.
 \end{itemize}
 
 \subsection{Basic diagnostic plots}
-Basic diagnostic rplots for the last iteration of sir will be generated 
-in file  PsN\_plots\_base.pdf 
+Basic diagnostic rplots for the last iteration of sir will be generated
+in file  PsN\_plots\_base.pdf
 if option -rplots is set >0.
 
 \subsubsection{dOFV plot}
@@ -557,11 +561,11 @@ if option -rplots is set >0.
 \end{description}
 \subsubsection{CI plot}
 \begin{description}
-\item[Purpose] Visualize the estimated uncertainty of the model parameters over all SIR iterations. 
-\item[Description] This plot displays the confidence intervals (colored error bars on the y-axis, default CI95\%) 
+\item[Purpose] Visualize the estimated uncertainty of the model parameters over all SIR iterations.
+\item[Description] This plot displays the confidence intervals (colored error bars on the y-axis, default CI95\%)
 of all model parameters over all iterations of the SIR procedure (on the x-axis). It also includes the CI of the first proposal density, i.e. the SIR starting point (NONMEM’s covariance matrix for example). The points correspond to the median and the horizontal dashed lines to the final estimates of the model (from NONMEM’s .ext file). The final results of the SIR procedure are the last CI on the right in each panel.
-\item[Interpretation] Final median and outer percentiles of a parameter’s CI can be read off this plot. Be \emph{very} 
-careful when looking at trends over iterations (stabilization/increase/decrease), as the number of resamples from which the CI are computed can be very variable. The outer bounds of wide CI (such as the default 95\% here) 
+\item[Interpretation] Final median and outer percentiles of a parameter’s CI can be read off this plot. Be \emph{very}
+careful when looking at trends over iterations (stabilization/increase/decrease), as the number of resamples from which the CI are computed can be very variable. The outer bounds of wide CI (such as the default 95\% here)
 can vary a lot because of random noise, so this pot should in general not be used to diagnose SIR convergence.
 \end{description}
 \subsubsection{RSE - correlation plots for proposal and SIR}
@@ -589,9 +593,9 @@ in file PsN\_plots\_extended.pdf if option -rplots is set >1.
 \subsubsection{Adequacy of proposal density}
 \begin{description}
 \item[Purpose] Evaluate how good the proposal uncertainties describe the true parameter uncertainty (by iteration).
-\item[Description] This plot shows separately for each parameter and each iteration the proportion of resampled parameters (on the y-axis) over different parts of the parameter space defined by the simulated parameters, which is divided into 10 equally sized bins ordered by increasing parameter values on the x-axis. 
-The horizontal dotted line at $\frac{m_{total}}{M_{total}}$ 
-corresponds to the expected value of this proportion were the proposal uncertainty the true uncertainty. The grey shaded area corresponds to stochastic noise, computed as the CI95\% 
+\item[Description] This plot shows separately for each parameter and each iteration the proportion of resampled parameters (on the y-axis) over different parts of the parameter space defined by the simulated parameters, which is divided into 10 equally sized bins ordered by increasing parameter values on the x-axis.
+The horizontal dotted line at $\frac{m_{total}}{M_{total}}$
+corresponds to the expected value of this proportion were the proposal uncertainty the true uncertainty. The grey shaded area corresponds to stochastic noise, computed as the CI95\%
 around the expected proportion.
 \item[Interpretation] 4 types of trends can be observed in this plot. If the observed proportion is within the stochastic noise around the expected proportion for all percentile bins (horizontal trend), it means that the proposal density of the last iteration is close to the true uncertainty. If the observed proportion is higher in the center and lower at the ends (bell-shaped trend), it means that the proposal density is too wide. Oppositely, if the observed proportion is lower in the center and higher at the ends (u-shaped trend), it means that the proposal density is too narrow. Lastly, if the proportion is higher at one end and lower at the other (diagonal trend), it means that the proposal density is not asymmetric enough. No action should be taken based on this plot as it does not tell us whether the resampling was able to compensate for these trends.
 \end{description}
@@ -606,10 +610,10 @@ around the expected proportion.
 \subsubsection{Estimation of degrees of freedom for IIVs }
 \begin{description}
 \item[Purpose] Calculate the uncertainty to use for IIV parameters when they are used as priors (equivalent degrees of freedom in
-inverse Wishart distributions) 
+inverse Wishart distributions)
 \item[Description] This plot shows the distribution of the resampled IIVs (histograms) and the fitted inverse Wishart distributions (colored lines).
 The corresponding number of individuals using the inverse Wishart distribution and using the Normal distribution
-are displayed in the legend. 
+are displayed in the legend.
 \item[Interpretation] In theory, the maximum degree of freedom is the total number of individuals in the dataset.
 An IIV with a degree of freedom equal to the total number of individuals in the dataset is an IIV for which perfect
 information is available (individual Empirical Bayes Estimates have very low standard errors). An IIV with a degree
@@ -622,7 +626,7 @@ distribution is expected to be a better estimate than the number of individuals 
 \subsection*{Mismatch between input files}
 If you use the covmat\_input option and get an error message similar to
 \begin{verbatim}
-Number of parameters 122 in covmat_input does not match 
+Number of parameters 122 in covmat_input does not match
 number 123 of estimated parameters in input model
 \end{verbatim}
 then the most likely cause is that there is a mismatch between the input files. Make sure that the number of
@@ -637,22 +641,22 @@ prior-specific records \$THETAP, \$THETAPV, \$OMEGAP etc, then PsN will not be a
 headers correctly in the raw\_results file. The solution is to always use the prior-specific records for
 encoding the prior information.
 \subsection*{Error in iteration 1 that covariance matrix not positive definite}
-The sir program will use a Cholesky decomposition without pivoting for processing of the covariance matrix. 
+The sir program will use a Cholesky decomposition without pivoting for processing of the covariance matrix.
 This works in most cases, but sometimes this algorithm can fail for a matrix that is mathematically positive definite
-but requires pivoting for Cholesky decomposition to work. Another cause of failure can be rounding. 
-Since NONMEM performs rounding before writing 
+but requires pivoting for Cholesky decomposition to work. Another cause of failure can be rounding.
+Since NONMEM performs rounding before writing
 the covariance matrix to the .cov-file, it can happen that the matrix in the cov-file is not positive definite
 although NONMEM's internally stored covariance matrix was invertible. A third cause of failure
 is when NONMEM writes something other than the covariance matrix, for example the S-matrix, to the .cov-file.
 
-When the sir program's Cholesky decomposition of the covariance matrix fails, 
-sir will stop with an error message saying that the covariance matrix is numerically not positive definite. 
-If this happens in iteration 1 when option -covmat\_input or the default NONMEM covariance matrix was used, 
+When the sir program's Cholesky decomposition of the covariance matrix fails,
+sir will stop with an error message saying that the covariance matrix is numerically not positive definite.
+If this happens in iteration 1 when option -covmat\_input or the default NONMEM covariance matrix was used,
 then the user must manually modify the covariance matrix to improve its numerical properties (for example increase the diagonal elements
 and/or change the order of the parameters so that pivoting is not necessary),
-and then use option -covmat\_input to give the modified matrix as input to sir. 
-If this happens in iteration 1 after a 0th iteration based on -auto\_rawres, or -rawres\_input with augmenting using -auto\_rawres, 
-then it is recommended to either run a new sir with -no-boxcox or a different random seed, or 
+and then use option -covmat\_input to give the modified matrix as input to sir.
+If this happens in iteration 1 after a 0th iteration based on -auto\_rawres, or -rawres\_input with augmenting using -auto\_rawres,
+then it is recommended to either run a new sir with -no-boxcox or a different random seed, or
 try to run sir with -covmat\_input=tweak\_inits.cov where tweak\_inits.cov is found in the failed sir run directory and
 is the empirical covariance matrix from iteration 0 without Box-Cox transformation.
 
@@ -672,32 +676,32 @@ thus the reported total OFV was actually that of a subset of individuals only.
 
 \section{Suggested new workflow}
 NB: if -rawres\_input is specified, then the process starts
-at step 6 using those vectors as the 'resamples\_1' parameter vectors. 
+at step 6 using those vectors as the 'resamples\_1' parameter vectors.
 \begin{itemize}
-\item[\underline{Setup}] The sir program will run the input model unless the lst-file with results is already present. 
+\item[\underline{Setup}] The sir program will run the input model unless the lst-file with results is already present.
 If the lst-file is present, it
 is important that the control stream copy at the top of the lst-file matches the
-actual input model file in terms of which parameters are estimated, 
+actual input model file in terms of which parameters are estimated,
 FIXED or SAME, otherwise there will be a mis-match between which parameter estimates are read from the
 lst-file and which estimates are needed for the sir procedure.
-\item[\underline{Step 1}] Simulate 'samples\_1' parameter vectors from the 
+\item[\underline{Step 1}] Simulate 'samples\_1' parameter vectors from the
 (possibly inflated)
-covariance matrix, i.e. the .cov-file given by NONMEM 
-or the matrix given via option -covmat\_input. PsN uses the Perl function\\ 
+covariance matrix, i.e. the .cov-file given by NONMEM
+or the matrix given via option -covmat\_input. PsN uses the Perl function\\
 Math::Random::random\_multivariate\_normal
 for sampling. If a vector does no fulfill the constraints from \$THETA boundaries
 and positive definiteness of \$OMEGA and
-\$SIGMA blocks (as judged by a PsN-implemented Cholesky decomposition) 
-then that vector is 
+\$SIGMA blocks (as judged by a PsN-implemented Cholesky decomposition)
+then that vector is
 discarded and a new one is drawn.
-\item[\underline{Step 2}] Calculate each vector $x$’s probability 
-given the covariance matrix based on the formula for the probability 
+\item[\underline{Step 2}] Calculate each vector $x$’s probability
+given the covariance matrix based on the formula for the probability
 density function (PDF) of a multivariate normal distribution:\\
 \begin{math}
 \frac{1}{\left(2\pi\right)^{k/2}\left(det\left(A\right)\right)^{1/2}} exp\left(-\frac{1}{2}(\left(x-\mu\right)A^{-1} \left(x-\mu\right)^T\right)
 \end{math}
 \\
-where $k$ is the number of dimensions, 
+where $k$ is the number of dimensions,
 $\mu$ is the vector of expectations and $A$ is the (possibly inflated) covariance matrix.
 The values are normalized with the PDF for the vector of expectations $\mu$, giving\\
 \begin{math}
@@ -708,32 +712,32 @@ NB: NONMEM covariance matrix is used as input, the inverse covariance matrix
 output by NONMEM is not used.
 \item[\underline{Step 3}] evaluate the parameter vectors on the original data.
 Create model files with up to 100 \$PROBLEM based on the original model file but setting MAXEVAL=0
-and replacing inits of nth \$PROBLEM with nth parameter vector, and also set MCETA if option -mceta was used. Compute dOFV 
+and replacing inits of nth \$PROBLEM with nth parameter vector, and also set MCETA if option -mceta was used. Compute dOFV
 (delta-OFV, reference is input model ofv) and store in raw\_results\_1.csv.
 
-\item[\underline{Step 4}] calculate the weights as the ratio $\frac{e^{-0.5\cdot dOFV}}{relPDF}$ and store in 
-raw\_results\_1.csv. 
-\item[\underline{Step 5}] Resample 'resamples\_1' parameter vectors based on weights from above step, 
-with or without replacement depending on option -with\_replacement. 
+\item[\underline{Step 4}] calculate the weights as the ratio $\frac{e^{-0.5\cdot dOFV}}{relPDF}$ and store in
+raw\_results\_1.csv.
+\item[\underline{Step 5}] Resample 'resamples\_1' parameter vectors based on weights from above step,
+with or without replacement depending on option -with\_replacement.
 Store the number of times each vector was resampled in raw\_results\_1.csv.
 \item[\underline{Step 6}] Box-Cox transform each parameter separately based on the samples from Step 5. Do not allow
 $\lambda$ less than -3 or larger than +3. Use the $\lambda$ that maximizes the correlation between the normal distribution and
 the distribution of the transformed parameter. The  $\lambda$ used is allowed to differ from the true optimal  $\lambda$
 by at most $0.2$.
-\item[\underline{Step 7}] Determine the means and empirical variance-covariance matrix of 
+\item[\underline{Step 7}] Determine the means and empirical variance-covariance matrix of
 transformed parameter vectors.
-\item[\underline{Step 8}] (Repeat Step 1) Sample 'samples\_2' parameter vectors 
+\item[\underline{Step 8}] (Repeat Step 1) Sample 'samples\_2' parameter vectors
 with the new covariance matrix and transformed parameters.
 Discard samples that, after back-transformation to original scale, do not
 fulfill \$THETA boundary conditions and \$OMEGA/\$SIGMA positive definiteness, and instead draw new sample.
-\item[\underline{Step 9}] (Repeat Step 2) Calculate each vector's probability, 
+\item[\underline{Step 9}] (Repeat Step 2) Calculate each vector's probability,
 use new covariance matrix and Box-Cox transformed parameter vectors for computing each vector's relPDF.
 \item[\underline{Step 10}] (Repeat Step 3) Evaluate the sampled parameter vectors, in original scale (back-transformed from Box-Cox), on the original data.
-\item[\underline{Step 11}] (Repeat Step 4) Calculate the weights, 
-where weights calculation uses relPDF from step 9 and dOFV from Step 10. 
-Store in raw\_results\_2.csv. 
-\item[\underline{Step 12}] (Repeat Step 5) Resample 'resamples\_2' original scale parameter vectors based on weights from above step, 
-with or without replacement depending on option -with\_replacement. 
+\item[\underline{Step 11}] (Repeat Step 4) Calculate the weights,
+where weights calculation uses relPDF from step 9 and dOFV from Step 10.
+Store in raw\_results\_2.csv.
+\item[\underline{Step 12}] (Repeat Step 5) Resample 'resamples\_2' original scale parameter vectors based on weights from above step,
+with or without replacement depending on option -with\_replacement.
 Store the number of times each vector was resampled in raw\_results\_2.csv.
 \item[\underline{Step 13}] Compute final results from Step 12 (parameter vectors on original scale).
 \end{itemize}
@@ -749,7 +753,7 @@ Store the number of times each vector was resampled in raw\_results\_2.csv.
 Q_i=\Phi^{-1}\left(\frac{i-0.5}{N}\right)
 \right)
 \end{math}
-using built-in Perl functions. Also compute $\frac{\sum_i{Q}}{N}$ and 
+using built-in Perl functions. Also compute $\frac{\sum_i{Q}}{N}$ and
 $\sqrt{\sum_i{Q^2}-\frac{\left(\sum_i{Q}\right)^2}{N}}$\\ Store results.
 \item Sort parameter vector from smallest to largest to get vector $sorted$.
 \item If $sorted[0]\leq 0$ then compute $\Delta=abs\left(sorted[0]+\delta\right)$ and add scalar $\Delta$ to $sorted$.
@@ -791,7 +795,7 @@ x and y do not need to have mean 0. x could Box-Cox transformed (g), y could be 
 r=\frac{\sum{xy}-\frac{\sum{x}\sum{y}}{N}}
 {\sqrt{\sum{x^2}-\frac{\left(\sum{x}\right)^2}{N}}\sqrt{\sum{y^2}-\frac{\left(\sum{y}\right)^2}{N}}}
 \end{math}
-When y is inverse CDF then $\sum_iy_i$ is 0, giving 
+When y is inverse CDF then $\sum_iy_i$ is 0, giving
 \begin{math}
 r=\frac{\sum{xy}}
 {\sqrt{\sum{x^2}-\frac{\left(\sum{x}\right)^2}{N}}\sqrt{\sum{y^2}}}\\
@@ -810,14 +814,14 @@ f(\lambda)=\sum{xy}=\sum_i \left(y_i\frac{p_i^{\lambda}-1}{\lambda}\right)
 
 \begin{math}
 g(\lambda)=
-\left(\sum_i\left(\frac{p_i^{\lambda}-1}{\lambda}\right)^2-\frac{1}{N}\left(\sum_i \frac{p_i^{\lambda}-1}{\lambda}\right)^2  \right)^{0.5} 
+\left(\sum_i\left(\frac{p_i^{\lambda}-1}{\lambda}\right)^2-\frac{1}{N}\left(\sum_i \frac{p_i^{\lambda}-1}{\lambda}\right)^2  \right)^{0.5}
 \sqrt{\sum{y^2}}
 \end{math}
 
 \begin{math}
 \frac{dg(\lambda)}{d\lambda}=
 \sqrt{\sum{y^2}}\cdot
-0.5\cdot\left(\sum_i\left(\frac{p_i^{\lambda}-1}{\lambda}\right)^2-\frac{1}{N}\left(\sum_i \frac{p_i^{\lambda}-1}{\lambda}\right)^2  \right)^{-0.5} 
+0.5\cdot\left(\sum_i\left(\frac{p_i^{\lambda}-1}{\lambda}\right)^2-\frac{1}{N}\left(\sum_i \frac{p_i^{\lambda}-1}{\lambda}\right)^2  \right)^{-0.5}
 \cdot\\
 \left(
 \sum_i2\left(\frac{p_i^{\lambda}-1}{\lambda} \right)\frac{1}{\lambda}\left(p_i^{\lambda}log{p_i}-\frac{p_i^{\lambda}-1}{\lambda}\right)
@@ -828,7 +832,7 @@ g(\lambda)=
 \begin{math}
 =
 \sqrt{\sum{y^2}}\cdot
-\left(\sum_i\left(\frac{p_i^{\lambda}-1}{\lambda}\right)^2-\frac{1}{N}\left(\sum_i \frac{p_i^{\lambda}-1}{\lambda}\right)^2  \right)^{-0.5} 
+\left(\sum_i\left(\frac{p_i^{\lambda}-1}{\lambda}\right)^2-\frac{1}{N}\left(\sum_i \frac{p_i^{\lambda}-1}{\lambda}\right)^2  \right)^{-0.5}
 \cdot\\
 \left(
 \sum_i\left(\frac{p_i^{\lambda}-1}{\lambda} \right)\frac{1}{\lambda}\left(p_i^{\lambda}log{p_i}-\frac{p_i^{\lambda}-1}{\lambda}\right)
@@ -842,18 +846,18 @@ g(\lambda)=
 
 \begin{multline}
 \frac{dr}{d\lambda}=
-\left(\sum_i\left(\frac{p_i^{\lambda}-1}{\lambda}\right)^2-\frac{1}{N}\left(\sum_i \frac{p_i^{\lambda}-1}{\lambda}\right)^2  \right)^{-1} 
+\left(\sum_i\left(\frac{p_i^{\lambda}-1}{\lambda}\right)^2-\frac{1}{N}\left(\sum_i \frac{p_i^{\lambda}-1}{\lambda}\right)^2  \right)^{-1}
 \left(\sum{y^2}\right)^{-1}\cdot  \\
 [
 \left[
 \sum_i\left(\frac{1}{\lambda}\left(p_i^{\lambda}log{p_i}-\frac{p_i^{\lambda}-1}{\lambda}\right)y_i\right)
 \right]  \\
-\left(\sum_i\left(\frac{p_i^{\lambda}-1}{\lambda}\right)^2-\frac{1}{N}\left(\sum_i \frac{p_i^{\lambda}-1}{\lambda}\right)^2  \right)^{0.5} 
+\left(\sum_i\left(\frac{p_i^{\lambda}-1}{\lambda}\right)^2-\frac{1}{N}\left(\sum_i \frac{p_i^{\lambda}-1}{\lambda}\right)^2  \right)^{0.5}
 \sqrt{\sum{y^2}}  \\
 -
 \left[\sum_i \left(y_i\frac{p_i^{\lambda}-1}{\lambda}\right)\right]\cdot\\
 \sqrt{\sum{y^2}}\cdot
-\left(\sum_i\left(\frac{p_i^{\lambda}-1}{\lambda}\right)^2-\frac{1}{N}\left(\sum_i \frac{p_i^{\lambda}-1}{\lambda}\right)^2  \right)^{-0.5} 
+\left(\sum_i\left(\frac{p_i^{\lambda}-1}{\lambda}\right)^2-\frac{1}{N}\left(\sum_i \frac{p_i^{\lambda}-1}{\lambda}\right)^2  \right)^{-0.5}
 \cdot\\
 \left[
 \sum_i\left(\frac{p_i^{\lambda}-1}{\lambda} \right)\frac{1}{\lambda}\left(p_i^{\lambda}log{p_i}-\frac{p_i^{\lambda}-1}{\lambda}\right)
@@ -865,7 +869,7 @@ g(\lambda)=
 
 \begin{multline}
 \frac{dr}{d\lambda}=
-\left(\sum_i\left(\frac{p_i^{\lambda}-1}{\lambda}\right)^2-\frac{1}{N}\left(\sum_i \frac{p_i^{\lambda}-1}{\lambda}\right)^2  \right)^{-0.5} 
+\left(\sum_i\left(\frac{p_i^{\lambda}-1}{\lambda}\right)^2-\frac{1}{N}\left(\sum_i \frac{p_i^{\lambda}-1}{\lambda}\right)^2  \right)^{-0.5}
 \left(\sum_i{y_i^2}\right)^{-0.5}\cdot  \\
 [
 \left[
@@ -873,7 +877,7 @@ g(\lambda)=
 \right]  \\
 -
 \left[\sum_i \left(y_i\frac{p_i^{\lambda}-1}{\lambda}\right)\right]\cdot\\
-\left(\sum_i\left(\frac{p_i^{\lambda}-1}{\lambda}\right)^2-\frac{1}{N}\left(\sum_i \frac{p_i^{\lambda}-1}{\lambda}\right)^2  \right)^{-1} 
+\left(\sum_i\left(\frac{p_i^{\lambda}-1}{\lambda}\right)^2-\frac{1}{N}\left(\sum_i \frac{p_i^{\lambda}-1}{\lambda}\right)^2  \right)^{-1}
 \cdot\\
 \left[
 \sum_i\left(\frac{p_i^{\lambda}-1}{\lambda} \right)\frac{1}{\lambda}\left(p_i^{\lambda}log{p_i}-\frac{p_i^{\lambda}-1}{\lambda}\right)
@@ -883,23 +887,23 @@ g(\lambda)=
 \end{multline}
 
 \begin{math}
-r=\left(\sum_i{x_i^2}-\frac{\left(\sum_i{x_i}\right)^2}{N}\right)^{-0.5} 
+r=\left(\sum_i{x_i^2}-\frac{\left(\sum_i{x_i}\right)^2}{N}\right)^{-0.5}
 \left(\sum_i{y_i^2}\right)^{-0.5}\cdot
 \left(\sum_i{y_ix_i}\right)
 \end{math}
 
 \begin{multline}
 \frac{dr}{d\lambda}=
-\left(\sum_i{x_i^2}-\frac{\left(\sum_i{x_i}\right)^2}{N}\right)^{-0.5} 
+\left(\sum_i{x_i^2}-\frac{\left(\sum_i{x_i}\right)^2}{N}\right)^{-0.5}
 \left(\sum_i{y_i^2}\right)^{-0.5}\cdot\frac{1}{\lambda}\cdot  \\
 [
-\sum_i\left(y_ip_i^{\lambda}log{p_i}\right) -  
+\sum_i\left(y_ip_i^{\lambda}log{p_i}\right) -
 \sum_i\left(x_iy_i\right)
 -\\
 \frac{\left(\sum_i{y_ix_i}\right) \cdot
 \left[
 \sum_i \left(x_ip_i^{\lambda}log{p_i}\right) - \sum_i \left(x_i^2\right)
--\left( \sum_i \left(p_i^{\lambda}log{p_i}\right) -\sum_i \left(x_i\right) \right)\frac{\left(\sum_i{x_i}\right)}{N} 
+-\left( \sum_i \left(p_i^{\lambda}log{p_i}\right) -\sum_i \left(x_i\right) \right)\frac{\left(\sum_i{x_i}\right)}{N}
 \right]}
 {\left(\sum_i{x_i^2}-\frac{\left(\sum_i{x_i}\right)^2}{N}\right)}
 ]
@@ -962,14 +966,14 @@ f(\lambda)=\sum{xy}-\frac{\sum{x}\sum{y}}{N}
 
 \begin{math}
 g(\lambda)=
-\left(\sum_i\left(\frac{p_i^{\lambda}-1}{\lambda}\right)^2-\frac{1}{N}\left(\sum_i \frac{p_i^{\lambda}-1}{\lambda}\right)^2  \right)^{0.5} 
+\left(\sum_i\left(\frac{p_i^{\lambda}-1}{\lambda}\right)^2-\frac{1}{N}\left(\sum_i \frac{p_i^{\lambda}-1}{\lambda}\right)^2  \right)^{0.5}
 \sqrt{\sum{y^2}-\frac{\left(\sum{y}\right)^2}{N}}
 \end{math}
 
 \begin{math}
 \frac{dg(\lambda)}{d\lambda}=
 \sqrt{\sum{y^2}-\frac{\left(\sum{y}\right)^2}{N}}\cdot
-0.5\cdot\left(\sum_i\left(\frac{p_i^{\lambda}-1}{\lambda}\right)^2-\frac{1}{N}\left(\sum_i \frac{p_i^{\lambda}-1}{\lambda}\right)^2  \right)^{-0.5} 
+0.5\cdot\left(\sum_i\left(\frac{p_i^{\lambda}-1}{\lambda}\right)^2-\frac{1}{N}\left(\sum_i \frac{p_i^{\lambda}-1}{\lambda}\right)^2  \right)^{-0.5}
 \cdot\\
 \left(
 \sum_i2\left(\frac{p_i^{\lambda}-1}{\lambda} \right)\frac{1}{\lambda}\left(p_i^{\lambda}log{p_i}-\frac{p_i^{\lambda}-1}{\lambda}\right)
@@ -980,7 +984,7 @@ g(\lambda)=
 \begin{math}
 =
 \sqrt{\sum{y^2}-\frac{\left(\sum{y}\right)^2}{N}}\cdot
-\left(\sum_i\left(\frac{p_i^{\lambda}-1}{\lambda}\right)^2-\frac{1}{N}\left(\sum_i \frac{p_i^{\lambda}-1}{\lambda}\right)^2  \right)^{-0.5} 
+\left(\sum_i\left(\frac{p_i^{\lambda}-1}{\lambda}\right)^2-\frac{1}{N}\left(\sum_i \frac{p_i^{\lambda}-1}{\lambda}\right)^2  \right)^{-0.5}
 \cdot\\
 \left(
 \sum_i\left(\frac{p_i^{\lambda}-1}{\lambda} \right)\frac{1}{\lambda}\left(p_i^{\lambda}log{p_i}-\frac{p_i^{\lambda}-1}{\lambda}\right)
@@ -994,19 +998,19 @@ g(\lambda)=
 
 \begin{multline}
 \frac{dr}{d\lambda}=
-\left(\sum_i\left(\frac{p_i^{\lambda}-1}{\lambda}\right)^2-\frac{1}{N}\left(\sum_i \frac{p_i^{\lambda}-1}{\lambda}\right)^2  \right)^{-1} 
+\left(\sum_i\left(\frac{p_i^{\lambda}-1}{\lambda}\right)^2-\frac{1}{N}\left(\sum_i \frac{p_i^{\lambda}-1}{\lambda}\right)^2  \right)^{-1}
 \left(\sum{y^2}-\frac{\left(\sum{y}\right)^2}{N}\right)^{-1}\cdot  \\
 [
 \left[
-\sum_i\left(\frac{1}{\lambda}\left(p_i^{\lambda}log{p_i}-\frac{p_i^{\lambda}-1}{\lambda}\right)y_i\right) -  
+\sum_i\left(\frac{1}{\lambda}\left(p_i^{\lambda}log{p_i}-\frac{p_i^{\lambda}-1}{\lambda}\right)y_i\right) -
 \left(\sum_i\frac{1}{\lambda}\left(p_i^{\lambda}log{p_i}-\frac{p_i^{\lambda}-1}{\lambda}\right)\right)\left(\sum_iy_i\right)\frac{1}{N}
 \right]  \\
-\left(\sum_i\left(\frac{p_i^{\lambda}-1}{\lambda}\right)^2-\frac{1}{N}\left(\sum_i \frac{p_i^{\lambda}-1}{\lambda}\right)^2  \right)^{0.5} 
+\left(\sum_i\left(\frac{p_i^{\lambda}-1}{\lambda}\right)^2-\frac{1}{N}\left(\sum_i \frac{p_i^{\lambda}-1}{\lambda}\right)^2  \right)^{0.5}
 \sqrt{\sum{y^2}-\frac{\left(\sum{y}\right)^2}{N}}  \\
 -
 \left[\sum_i \left(y_i\frac{p_i^{\lambda}-1}{\lambda}\right) - \left(\sum_i\frac{p_i^{\lambda}-1}{\lambda}\right)\frac{\sum_iy_i}{N}\right]\cdot\\
 \sqrt{\sum{y^2}-\frac{\left(\sum{y}\right)^2}{N}}\cdot
-\left(\sum_i\left(\frac{p_i^{\lambda}-1}{\lambda}\right)^2-\frac{1}{N}\left(\sum_i \frac{p_i^{\lambda}-1}{\lambda}\right)^2  \right)^{-0.5} 
+\left(\sum_i\left(\frac{p_i^{\lambda}-1}{\lambda}\right)^2-\frac{1}{N}\left(\sum_i \frac{p_i^{\lambda}-1}{\lambda}\right)^2  \right)^{-0.5}
 \cdot\\
 \left[
 \sum_i\left(\frac{p_i^{\lambda}-1}{\lambda} \right)\frac{1}{\lambda}\left(p_i^{\lambda}log{p_i}-\frac{p_i^{\lambda}-1}{\lambda}\right)
@@ -1017,16 +1021,16 @@ g(\lambda)=
 
 \begin{multline}
 \frac{dr}{d\lambda}=
-\left(\sum_i\left(\frac{p_i^{\lambda}-1}{\lambda}\right)^2-\frac{1}{N}\left(\sum_i \frac{p_i^{\lambda}-1}{\lambda}\right)^2  \right)^{-0.5} 
+\left(\sum_i\left(\frac{p_i^{\lambda}-1}{\lambda}\right)^2-\frac{1}{N}\left(\sum_i \frac{p_i^{\lambda}-1}{\lambda}\right)^2  \right)^{-0.5}
 \left(\sum_i{y_i^2}-\frac{\left(\sum_i{y_i}\right)^2}{N}\right)^{-0.5}\cdot  \\
 [
 \left[
-\sum_i\left(\frac{1}{\lambda}\left(p_i^{\lambda}log{p_i}-\frac{p_i^{\lambda}-1}{\lambda}\right)y_i\right) -  
+\sum_i\left(\frac{1}{\lambda}\left(p_i^{\lambda}log{p_i}-\frac{p_i^{\lambda}-1}{\lambda}\right)y_i\right) -
 \left(\sum_i\frac{1}{\lambda}\left(p_i^{\lambda}log{p_i}-\frac{p_i^{\lambda}-1}{\lambda}\right)\right)\frac{\left(\sum_iy_i\right)}{N}
 \right]  \\
 -
 \left[\sum_i \left(y_i\frac{p_i^{\lambda}-1}{\lambda}\right) - \left(\sum_i\frac{p_i^{\lambda}-1}{\lambda}\right)\frac{\left(\sum_iy_i\right)}{N}\right]\cdot\\
-\left(\sum_i\left(\frac{p_i^{\lambda}-1}{\lambda}\right)^2-\frac{1}{N}\left(\sum_i \frac{p_i^{\lambda}-1}{\lambda}\right)^2  \right)^{-1} 
+\left(\sum_i\left(\frac{p_i^{\lambda}-1}{\lambda}\right)^2-\frac{1}{N}\left(\sum_i \frac{p_i^{\lambda}-1}{\lambda}\right)^2  \right)^{-1}
 \cdot\\
 \left[
 \sum_i\left(\frac{p_i^{\lambda}-1}{\lambda} \right)\frac{1}{\lambda}\left(p_i^{\lambda}log{p_i}-\frac{p_i^{\lambda}-1}{\lambda}\right)
@@ -1038,28 +1042,28 @@ g(\lambda)=
 \newpage
 
 \begin{math}
-r=\left(\sum_i{x_i^2}-\frac{\left(\sum_i{x_i}\right)^2}{N}\right)^{-0.5} 
+r=\left(\sum_i{x_i^2}-\frac{\left(\sum_i{x_i}\right)^2}{N}\right)^{-0.5}
 \left(\sum_i{y_i^2}-\frac{\left(\sum_i{y_i}\right)^2}{N}\right)^{-0.5}\cdot
 \left(\sum_i{y_ix_i} - \frac{\left(\sum_ix_i\right)\left(\sum_iy_i\right)}{N}\right)
 \end{math}
 
 \begin{multline}
 \frac{dr}{d\lambda}=
-\left(\sum_i{x_i^2}-\frac{\left(\sum_i{x_i}\right)^2}{N}\right)^{-0.5} 
+\left(\sum_i{x_i^2}-\frac{\left(\sum_i{x_i}\right)^2}{N}\right)^{-0.5}
 \left(\sum_i{y_i^2}-\frac{\left(\sum_i{y_i}\right)^2}{N}\right)^{-0.5}\cdot\frac{1}{\lambda}\cdot  \\
 [
 \left[
-\sum_i\left(y_ip_i^{\lambda}log{p_i}\right) -  
-\sum_i\left(x_iy_i\right) -  
+\sum_i\left(y_ip_i^{\lambda}log{p_i}\right) -
+\sum_i\left(x_iy_i\right) -
 \left( \sum_i\left(p_i^{\lambda}log{p_i}\right) - \sum_i\left(x_i\right)  \right)\frac{\left(\sum_iy_i\right)}{N}
 \right]  \\
 -
 \left(\sum_i{y_ix_i} - \frac{\left(\sum_ix_i\right)\left(\sum_iy_i\right)}{N}\right)\cdot
-\left(\sum_i{x_i^2}-\frac{\left(\sum_i{x_i}\right)^2}{N}\right)^{-1} 
+\left(\sum_i{x_i^2}-\frac{\left(\sum_i{x_i}\right)^2}{N}\right)^{-1}
 \cdot\\
 \left[
 \sum_i \left(x_ip_i^{\lambda}log{p_i}\right) - \sum_i \left(x_i^2\right)
--\left( \sum_i \left(p_i^{\lambda}log{p_i}\right) -\sum_i \left(x_i\right) \right)\frac{\left(\sum_i{x_i}\right)}{N} 
+-\left( \sum_i \left(p_i^{\lambda}log{p_i}\right) -\sum_i \left(x_i\right) \right)\frac{\left(\sum_i{x_i}\right)}{N}
 \right]
 ]
 \end{multline}
