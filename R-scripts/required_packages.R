@@ -1,3 +1,26 @@
+# input arguments from command line
+args <- commandArgs(TRUE)
+
+if(length(args) < 1) {
+  message("Error: Please specify path where to install R libraries! R library installation will not continue!")
+  quit()
+}
+path <- as.character(args[1])
+#check if path exists
+if(is.na(file.info(path)$isdir)) {
+  message(paste0("Error: Given path ",path," does not exist! R library installation will not continue!"))
+  quit()
+}
+
+local({
+  r <- getOption("repos")
+  r["CRAN"] <- "https://cran.r-project.org"
+  options(repos = r)
+})
+
+# set path where to install libraries
+.libPaths(path)
+# install packages
 install.packages("caTools", dependencies=TRUE)
 install.packages("expm", dependencies=TRUE)
 install.packages("gplots", dependencies=TRUE)
