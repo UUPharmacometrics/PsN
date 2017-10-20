@@ -1414,6 +1414,7 @@ sub eigenvalue_decomposition
 sub condition_number
 {
     # get the 2-norm condition number from the eigenvalue decomposition
+    # (return undef if singular matrix)
     my $mat = shift;
 
     (my $values, my $Q) = eigenvalue_decomposition($mat);
@@ -1422,9 +1423,11 @@ sub condition_number
         $min = $val if (abs($val) < $min);
         $max = $val if (abs($val) > $max);
     }
-    my $condition_number = abs($max/$min);
-
-    return $condition_number;
+    if ($min != 0) {
+        return abs($max/$min);
+    } else {
+        return undef;
+    }
 }
 
 sub lower_triangular_identity_solve
