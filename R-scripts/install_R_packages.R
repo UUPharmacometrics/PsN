@@ -1,6 +1,11 @@
 # input arguments from command line
 args <- commandArgs(TRUE)
 
+if(length(args) > 1) {
+  message(paste0("Error: Too many arguments passed! R library installation will not continue!"))
+  quit()
+}
+
 if(length(args) == 1) {
   path <- as.character(args[1])
   #check if path exists
