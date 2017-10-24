@@ -30,7 +30,7 @@ ID_ratio <- function(frem_id,covdata,pardata) {
     # delete "LN" prefixes (if they exist) from any of colnames in frem_id data frame
     col_names <- colnames(frem_id)
     for (i in 1:length(col_names)) {
-      if (grepl("^cov.LN",col_names[i])) {
+      if (grepl("^cov\\.LN",col_names[i])) {
         col_names[i] <- gsub("\\LN","",col_names[i])
         frem_id[i] <- exp(frem_id[i])
       }
@@ -40,7 +40,7 @@ ID_ratio <- function(frem_id,covdata,pardata) {
     # change values of categorical covariates based on references in covdata
     for (i in 1:nrow(covdata)) {
       if (covdata$is.categorical[i] == "1" && (!is.na(covdata$category.reference[i]) && !is.na(covdata$category.other[i]))) {
-        col_nr <- grep(paste0("cov.",covariate[i]),colnames(frem_id))
+        col_nr <- grep(paste0("cov\\.",covariate[i]),colnames(frem_id))
         categ_col <- frem_id[col_nr]
         for (n in 1:nrow(categ_col))
           if (categ_col[n,] == covdata$reference[i]) {
@@ -55,7 +55,7 @@ ID_ratio <- function(frem_id,covdata,pardata) {
     # round values to reasonable amount of significant figures (4 as maximum)
     for (i in 1:nrow(covdata)) {
       if (covdata$is.categorical[i] == "0") {
-        col_nr <- grep(paste0("cov.",covariate[i]),colnames(frem_id))
+        col_nr <- grep(paste0("cov\\.",covariate[i]),colnames(frem_id))
         cont_col <- frem_id[col_nr]
         for (n in 1:length(cont_col)) {
             cont_col[n] <- signif(cont_col[n], digits=4)
