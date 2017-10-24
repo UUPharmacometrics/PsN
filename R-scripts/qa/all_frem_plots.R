@@ -23,7 +23,7 @@ all_frem_plots <- function(working.directory) {
       sd_coef_summary <- read.csv(file.path(working.directory,"postfrem_run","sd_coefficients_summary.csv"), header = T, as.is = T)
       sd_unexpl_var_plots <- sd_unexpl_var(sd_coef_summary,covdata,pardata)$plots
       grid::grid.draw(gridExtra::marrangeGrob(sd_unexpl_var_plots,nrow=2,ncol=1,top=''))
-      # cat("")
+      cat("Amount of unexplained variability (on standard deviation scale) remaining in the parameters after knowledge of no covariates, each covariate separately and all covariates simultaneously.")
       grid::grid.newpage()
     }
     
