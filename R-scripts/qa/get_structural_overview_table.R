@@ -1,7 +1,7 @@
 get_structural_overview_table <- function(directory,idv,dvid_name,skip) {
   if(length(idv)!=0) {
     #check if dvid exist
-    dvid_nr <- find_dvid_values(directory,idv[i],dvid_name)
+    dvid_nr <- find_dvid_values(directory,idv[1],dvid_name)
     
     if(length(dvid_nr) == 1 && dvid_nr=="NA"){
       structural_overview <- as.data.frame(array(0,c(length(idv),3)))
