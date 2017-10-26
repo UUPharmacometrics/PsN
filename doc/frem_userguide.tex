@@ -15,7 +15,7 @@ Covariates are entered into the data set as observed variables, and their multiv
 as random effects. A full covariance matrix between random effects for parameters and covariates is estimated
 together with the other model components.
 
-It can be difficult to get successful estimation of the full covariance matrix if all FREM components are entered directly. 
+It can be difficult to get successful estimation of the full covariance matrix if all FREM components are entered directly.
 The frem program builds the full model in a sequence of steps, using estimates from one step as initial estimates for the next.
 
 Example call
@@ -30,7 +30,7 @@ The m1 subdirectory of the frem run directory will contain intermediate models a
 
 \section{Input and options}
 A model file is required on the command-line.
-	
+
 \subsection{Options}
 \begin{optionlist}
 \optname{always\_proposal\_density}
@@ -40,7 +40,7 @@ Unset with -no-always\_proposal\_density.
 \optdefault{categorical}{list}
 Default empty. A comma-separated list of non-ordered categorical covariates. These will be automatically transformed from
 one covariate with Y categories into Y-1 bivariate covariates, if Y>2. Missing values are not counted as a category.
-The -categorical list must be a subset of the -covariate list. If any covariate listed with option -categorical is not 
+The -categorical list must be a subset of the -covariate list. If any covariate listed with option -categorical is not
 in the list -covariates there will be an error message. There must be no covariate listed with both -categorical and -log.
 \nextopt
 \optname{check}
@@ -62,22 +62,22 @@ Default 60. If the number of ETAs in model 2 is larger than this number then\\
 %the data file header is ignored.
 %\nextopt
 \optname{estimate\_covariates}
-Default not set. By default FREM will not estimate the variances and covariances of the covariates until the final FREM model estimation, 
-but instead evaluate the EBEs (in Model 2) assuming the same variances and covariances as in covariate data. 
-These estimates should not differ unless covariates have missing data (which might warrant this option to be set). 
+Default not set. By default FREM will not estimate the variances and covariances of the covariates until the final FREM model estimation,
+but instead evaluate the EBEs (in Model 2) assuming the same variances and covariances as in covariate data.
+These estimates should not differ unless covariates have missing data (which might warrant this option to be set).
 Setting this means that Model 2 is estimated which in some cases can be time-consuming.
 \nextopt
 \optname{estimate\_means}
-Default set. By default frem will estimate the mean values of the covariates which have any 
-missing observations in the FREM dataset. Note that the FREM dataset contains covariate 
+Default set. By default frem will estimate the mean values of the covariates which have any
+missing observations in the FREM dataset. Note that the FREM dataset contains covariate
 observations only from the first original data observation record for each individual.
 If no covariate observations are missing in the frem dataset then the mean will not be estimated,
-even if option -estimate\_means is set. If -no-estimate\_means is set, frem will not estimate 
+even if option -estimate\_means is set. If -no-estimate\_means is set, frem will not estimate
 any means even if there are missing observations.
 \nextopt
 %\optdefault{estimate}{number}
-%Default 3. The number (0, 1, 2 or 3) of the last model to estimate in the frem sequence. All models with a higher number 
-%will still be created, but not estimated. When restarting in an existing frem run directory, estimation of models that have an existing 
+%Default 3. The number (0, 1, 2 or 3) of the last model to estimate in the frem sequence. All models with a higher number
+%will still be created, but not estimated. When restarting in an existing frem run directory, estimation of models that have an existing
 %lst-file will be skipped even if the -estimate option is set to a higher number.
 %\nextopt
 %\optname{estimate\_regular\_final\_model}
@@ -93,9 +93,9 @@ Only relevant if output objects are very, very large.
 %\optdefault{invariant}{list}
 %\nextopt
 \optdefault{log}{list}
-Default empty. A comma-separated list of covariates	that should have the natural logarithm of the input data 
-set value as the observed value in the DV column of the frem dataset. The -log list must be a subset of the 
--covariate list. If any covariate listed with option -log is not in the list -covariates there will be an 
+Default empty. A comma-separated list of covariates	that should have the natural logarithm of the input data
+set value as the observed value in the DV column of the frem dataset. The -log list must be a subset of the
+-covariate list. If any covariate listed with option -log is not in the list -covariates there will be an
 error message. There must be no covariate listed with both log and -categorical.
 \nextopt
 \optdefault{mceta}{number}
@@ -103,8 +103,8 @@ Default not set. If NONMEM 7.3 or later is used, and the last estimation record 
 in the last \$EST of Model 2 and later.
 \nextopt
 \optname{mu}
-Default not set. If set then use mu-modelling for frem-added covariate THETAs and ETAs. Pre-existing 
-mu-modelling is not compatible with reordering of skipped omegas, because frem will then renumber ETAs 
+Default not set. If set then use mu-modelling for frem-added covariate THETAs and ETAs. Pre-existing
+mu-modelling is not compatible with reordering of skipped omegas, because frem will then renumber ETAs
 but not MU variables, so if mu-modelling is used, the user must ensure that omegas are already ordered
 so that any skipped omegas come first.
 \nextopt
@@ -129,9 +129,12 @@ Default set. Rescale covariate ETAs in Model 2 to SD close to 1. Unset with -no-
 \optdefault{rse}{number}
 Default 30\%.
 If the covariance step of both Model 4 and either/both of Model 1 and Model 2 fails, then this is the guess of the
-relative standard error that will be used for parameters for which there is no other information that can be used 
+relative standard error that will be used for parameters for which there is no other information that can be used
 to guess the variance needed for a proposal density for a sir run with Model 4.
 \nextopt
+\optname{imp\_covariance}
+Default set. If set run Model 4b with updated inits and additional importance sampling, expectation only,
+step before covariance step to attain uncertainty (if Model 4 covariance step fails).
 \optname{run\_sir}
 Default not set. If set and covariance step of Model 4 fails, run sir to obtain standard errors of parameters.
 If covariance step of Model 4 is successful, sir will not be run even if option -run\_sir is set.

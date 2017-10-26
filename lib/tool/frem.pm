@@ -37,6 +37,7 @@ my $name_model_2_updated = 'model_2_updated.mod';
 my $name_model_3 = 'model_3.mod';
 my $name_model_3_updated = 'model_3_updated.mod';
 my $name_model_4 = 'model_4.mod';
+my $name_model_4b = 'model_4b.mod';
 my $name_model_7 = 'model_7.mod';
 
 has 'tool_child_id' => (is => 'rw', isa => 'Int', default => 0);
@@ -82,6 +83,7 @@ has 'estimate_means' => ( is => 'rw', isa => 'Bool', default => 1 );
 has 'estimate_covariates' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'have_missing_covariates' => ( is => 'rw', isa => 'ArrayRef', default => sub { [] } );
 has 'cholesky' => ( is => 'rw', isa => 'Bool', default => 0 );
+has 'imp_covariance' => ( is => 'rw', isa => 'Bool', default => 1 );
 
 my $logger = logging::get_logger("frem");
 
@@ -2911,6 +2913,7 @@ sub prepare_model4
     my $self = shift;
     my %parm = validated_hash(\@_,
     						  model => { isa => 'model', optional => 0 },
+                              imp_covariance_eval => { isa => 'Bool', optional => 0 },
     						  start_omega_record => { isa => 'Int', optional => 0 },
     						  parcov_blocks => { isa => 'ArrayRef', optional => 0},
     						  est_records => { isa => 'ArrayRef', optional => 0},
@@ -2919,6 +2922,7 @@ sub prepare_model4
                               etas_file => { isa => 'Maybe[Str]', optional => 0 },
     );
     my $model = $parm{'model'};
+    my $imp_covariance_eval = $parm{'imp_covariance_eval'};
     my $start_omega_record = $parm{'start_omega_record'};
     my $parcov_blocks = $parm{'parcov_blocks'};
     my $est_records = $parm{'est_records'};
@@ -2926,27 +2930,31 @@ sub prepare_model4
     my $update_existing_model_files = $parm{'update_existing_model_files'};
     my $etas_file = $parm{'etas_file'};
 
-    my $modnum=4;
-
+    my $modnum = 4;
     my $name_model = $name_model_4;
+    if ($imp_covariance_eval) {
+        $modnum = "4b";
+        $name_model = $name_model_4b;
+    }
+
     my $frem_model;
 
     cleanup_outdated_model(modelname => $self -> directory().'final_models/'.$name_model,
-    					   need_update => $update_existing_model_files);
+                           need_update => $update_existing_model_files);
 
     unless (-e $self -> directory().'final_models/'.$name_model){
-    	# input model  inits have already been updated
-    	$frem_model = $model ->  copy( filename    => $self -> directory().'final_models/'.$name_model,
-    								   output_same_directory => 1,
-    								   write_copy => 0,
-    								   copy_datafile   => 0,
-    								   copy_output => 0);
+        # input model  inits have already been updated
+        $frem_model = $model->copy( filename    => $self->directory().'final_models/'.$name_model,
+                                    output_same_directory => 1,
+                                    write_copy => 0,
+                                    copy_datafile   => 0,
+                                    copy_output => 0);
 
         # if $ETAS FILE= used, M4 needs M3 phi output
         if ($etas_file) {
             # TODO: breakout into function since M2, M3 and M4 does pretty much the same things
             unless (-f $etas_file) {
-                croak "\$ETAS file $etas_file could not be read for model 4, this is a bug";
+                croak "\$ETAS file $etas_file could not be read for model $modnum, this is a bug";
             }
 
             # copy M3 output to M4 input phi file
@@ -2963,53 +2971,60 @@ sub prepare_model4
             $etas_file = $fin_dir.$phi_filename;
         }
 
-    	get_or_set_fix(model => $frem_model,
-    				   type => 'thetas',
-    				   set_array => $self->input_model_fix_thetas);
-    	get_or_set_fix(model => $frem_model,
-    				   type => 'sigmas',
-    				   set_array => $self->input_model_fix_sigmas);
+        if ($imp_covariance_eval) {
+            # model must come from M4, so we set M4b up (importance sampling, expectation only, to get covariance step)
+            my $last_est = $est_records->[-1];
+            push @{$est_records}, model::problem::estimation->new(
+                record_arr => ['METHOD=IMPMAP MAPITER=0 ISAMPLE=3000 NITER=5 EONLY=1 PRINT=1']
+            );
+        } else {
+            # model must come from M3, so we set M4 up
+            get_or_set_fix(model => $frem_model,
+                           type => 'thetas',
+                           set_array => $self->input_model_fix_thetas);
+            get_or_set_fix(model => $frem_model,
+                           type => 'sigmas',
+                           set_array => $self->input_model_fix_sigmas);
 
-    	get_or_set_fix(model => $frem_model,
-    				   type => 'omegas',
-    				   set_array => $self->input_model_fix_omegas);
+            get_or_set_fix(model => $frem_model,
+                           type => 'omegas',
+                           set_array => $self->input_model_fix_omegas);
 
 
-    	my @omega_records = ();
-    	for (my $i=0; $i< ($start_omega_record-1);$i++){
-    		#if start_omega_record is 1 we will push nothing
-    		push(@omega_records,$frem_model-> problems -> [0]->omegas->[$i]);
-    	}
+            my @omega_records = ();
+            for (my $i=0; $i< ($start_omega_record-1);$i++){
+                #if start_omega_record is 1 we will push nothing
+                push(@omega_records,$frem_model-> problems -> [0]->omegas->[$i]);
+            }
 
-    	for (my $i=0; $i< scalar(@{$parcov_blocks}); $i++){
-    		push(@omega_records,$parcov_blocks->[$i]);
-    	}
+            for (my $i=0; $i< scalar(@{$parcov_blocks}); $i++){
+                push(@omega_records,$parcov_blocks->[$i]);
+            }
 
-    	$frem_model -> problems -> [0]->omegas(\@omega_records);
-    	$frem_model -> problems -> [0]->estimations($est_records);
+            $frem_model -> problems -> [0]->omegas(\@omega_records);
+        }
 
-        # if OMITTED was on $COV line, remove it for M4 covariance step (and add UNCONDITIONAL)
         my $new_cov_records = [];
+        # if OMITTED was on $COV line, remove it for M4 covariance step (and add UNCONDITIONAL)
         my $uncond;
         foreach my $opt (@{$cov_records}) {
             if ($opt =~ /^OMIT/) {
-                print "Removed '$opt' from \$COV in Model 4\n";
+                $logger->info("Removed OMIT option from \$COV in $name_model\n");
             } else {
                 push @{$new_cov_records}, $opt;
             }
             $uncond = 1 if ($opt =~ /^UNC/);
         }
         unless ($uncond) {
-            print "Added 'UNCONDITIONAL' to \$COV in Model 4\n";
             push @{$new_cov_records}, "UNCONDITIONAL";
+            $logger->info("Added UNCONDITIONAL option to \$COV in $name_model");
         }
-        $frem_model -> problems -> [0]->add_records( record_strings => $new_cov_records,
-                                                     type => 'covariance' );
+        $frem_model->problems->[0]->estimations($est_records);
+        $frem_model->problems->[0]->add_records( record_strings => $new_cov_records,
+                                                 type => 'covariance' );
         $frem_model->_write();
-
     }
-
-
+	return ($etas_file);
 }
 
 sub prepare_model5
@@ -3311,10 +3326,33 @@ sub run_unless_run
 										models		 => \@models,
 										top_tool              => 0);
 		$run->add_to_nmoutput(extensions => ['phi','ext','cov']);
-		my $text = 'Estimating ';
-		$text = 'Evaluating ' if ($numbers->[0] == 3 or $numbers->[0] == 7 or ($numbers->[0] == 2 && !$self->estimate_covariates));
-		$text .= 'Model '.join(' and ',@{$numbers});
-		ui -> print( category => 'all', message =>  $text);
+
+		# output message
+		my @msg;
+		for (my $i=0; $i< scalar(@models); $i++){
+			my $msg = $numbers->[$i];
+			my $eval_only = 1;
+			foreach my $est (@{$models[$i]->problems->[0]->estimations}) {
+				if (!defined $est->is_eval_only) {
+					$eval_only = undef;
+					last;
+				} elsif (!$est->is_eval_only) {
+					$eval_only = 0;
+					last;
+				}
+			}
+			if (!defined $eval_only) {
+				$msg = "Running model ".$msg;
+			} elsif ($eval_only) {
+				$msg = "Evaluating model ".$msg;
+			} else {
+				$msg = "Estimating model ".$msg;
+			}
+			push @msg, $msg;
+		}
+		my $text = join(' and ', @msg);
+		ui->print(category => 'all', message => $text);
+
 		$run-> run;
 		$update_existing = 1; #any later models in sequence need to be recreated
 	}
@@ -3670,13 +3708,14 @@ sub modelfit_setup
 
     mkdir($finaldir) unless (-d $finaldir);
 
-    $self->prepare_model4(model => $frem_model3,
-                          start_omega_record => $self->start_omega_record,
-                          parcov_blocks => $mod4_parcov_block,
-                          est_records => $est_records,
-                          cov_records => $cov_records,
-                          update_existing_model_files => $update_existing_model_files,
-                          etas_file => $etas_file,
+    ($etas_file) = $self->prepare_model4(model => $frem_model3,
+                                         imp_covariance_eval => 0,
+                                         start_omega_record => $self->start_omega_record,
+                                         parcov_blocks => $mod4_parcov_block,
+                                         est_records => $est_records,
+                                         cov_records => $cov_records,
+                                         update_existing_model_files => $update_existing_model_files,
+                                         etas_file => $etas_file,
         );
 
     #fixme subtool instead?
@@ -3735,19 +3774,36 @@ sub modelfit_setup
         ($error,$message) = check_covstep(output => $final_models->[0]->outputs->[0]);
 
         if ($error){
-            ui->print(category => 'frem',
-                      message => 'covariance step of model 4 not successful. trying to create proposal density to use in sir with '.
-                      $sir_model_text);
+            $logger->warning('Covariance step of model 4 NOT successful');
             $do_print_proposal=1;
-        }else{
+            if ($self->imp_covariance and defined $mod4ofv) {
+                $logger->info('Will use IMP sampling to get covariance step');
+				unless ($self->mu) {
+					$logger->warning('MU referencing (not used) can speed up sampling');
+				}
+                $final_models->[0]->update_inits(from_output => $final_models->[0]->outputs->[0]);
+                $self->prepare_model4(model => $final_models->[0],
+                                      imp_covariance_eval => 1,
+                                      start_omega_record => $self->start_omega_record,
+                                      parcov_blocks => $mod4_parcov_block,
+                                      est_records => $est_records,
+                                      cov_records => $cov_records,
+                                      update_existing_model_files => $update_existing_model_files,
+                                      etas_file => $etas_file,
+                );
+                push(@final_numbers,'4b');
+                (my $model_4b,$mes) = $self->run_unless_run(numbers => ['4b'],
+                                                            subdirectory => 'final_models',
+                                                            final => 1);
+                push(@{$final_models}, $model_4b);
+            } elsif ($self->imp_covariance) {
+                $logger->warning('Model 4 failed to give OFV value, IMP sampling not applicable');
+            }
+        } else {
+            $logger->info('Covariance step of model 4 was successful');
             if ($self->always_proposal_density){
                 $do_print_proposal=1;
-                ui->print(category => 'frem',
-                          message => 'covariance step of model 4 was successful. will create alternative proposal density for model 4 sir');
-            }else{
-                $do_print_proposal=0;
-                ui->print(category => 'frem',
-                          message => 'covariance step of model 4 was successful.');
+                $logger->info('Will create alternative proposal density for model 4 sir');
             }
         }
 
