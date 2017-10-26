@@ -122,8 +122,12 @@ sub modelfit_setup
             $randomization_column = 'NEW_';
         }
 
+        my %restored_options = %{common_options::restore_options(@common_options::tool_options)};
+        delete $restored_options{'directory'};
+
         my $rand = tool::randtest->new(
-            %{common_options::restore_options(@common_options::tool_options)},
+            %restored_options,
+            #%{common_options::restore_options(@common_options::tool_options)},
             top_tool => 0,
             prepend_model_file_name => 1,
             models => [ $orig ],
