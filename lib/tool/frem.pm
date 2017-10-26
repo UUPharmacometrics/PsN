@@ -2147,11 +2147,14 @@ sub do_model1
 
     my $etas_file = $model->get_or_set_etas_file(problem_number => 1); # absolute path if present
 
-	if (-e $self -> directory().'intermediate_models/'.$name_model){
+	my $im_dir = $self->directory().'intermediate_models/';
+	if (-e $self -> directory().'intermediate_models/'.$name_model) {
 		$frem_model = model->new( %{common_options::restore_options(@common_options::model_options)},
-								  filename                    => 'intermediate_models/'.$name_model,
+								  filename                    => $im_dir.$name_model,
 								  parse_output => 0,
 								  ignore_missing_output_files => 1 );
+		(my $phi_filename = $name_model) =~ s/(.*)\..*/$1.phi/;
+		$etas_file = $im_dir.$phi_filename;
 	}else{
 		$frem_model = $model ->  copy( filename    => $self -> directory().'intermediate_models/'.$name_model,
 									   output_same_directory => 1,
@@ -2160,7 +2163,6 @@ sub do_model1
 									   copy_output => 0);
 
         # copy base model lst, cov and ext to intermediate models (postfrem needs them)
-        my $im_dir = $self->directory().'intermediate_models/';
         my $model_dir = $model->directory();
         my $model_filename = $model->filename();
         my @extra_extensions = (".lst", ".cov", ".ext", ".phi");
@@ -2684,7 +2686,8 @@ sub prepare_model2
     }
     my $est_records = $frem_model->problems->[0]->estimations;
 
-	unless (-e $self -> directory().'intermediate_models/'.$name_model){
+	my $im_dir = $self->directory().'intermediate_models/';
+	unless (-e $im_dir.$name_model) {
 		# input model  inits have already been updated
 		#omegas have been reordered
 
@@ -2700,7 +2703,6 @@ sub prepare_model2
             # add new ETAs and construct new filename and path
             $phi->add_zero_etas(num_etas => $num_new_etas);
             ($etas_file = $name_model) =~ s/(.*)\..*/$1_input.phi/;
-            my $im_dir = $self->directory().'intermediate_models/';
             my (undef, $etas_filename) = OSspecific::absolute_path($im_dir, $etas_file);
 
             # update FILE in model to new path (just filename since same directory) and write file to disk
@@ -2815,7 +2817,9 @@ sub prepare_model2
         }
 
 		$frem_model->_write();
-
+	} else {
+		(my $phi_filename = $name_model) =~ s/(.*)\..*/$1.phi/;
+		$etas_file = $im_dir.$phi_filename;
 	}
 
 	return ($est_records,$ntheta,$epsnum,$etas_file);
@@ -2854,7 +2858,8 @@ sub prepare_model3
     cleanup_outdated_model(modelname => $self -> directory().'intermediate_models/'.$name_model,
                            need_update => $update_existing_model_files);
 
-    unless (-e $self -> directory().'intermediate_models/'.$name_model){
+	my $im_dir = $self->directory().'intermediate_models/';
+    unless (-e $im_dir.$name_model) {
         # input model  inits have already been updated
         $frem_model = $model ->  copy( filename    => $self -> directory().'intermediate_models/'.$name_model,
                                        output_same_directory => 1,
@@ -2870,7 +2875,6 @@ sub prepare_model3
 
             # copy M2 output to M3 input phi file
             (my $etas_filename = $name_model) =~ s/(.*)\..*/$1_input.phi/;
-            my $im_dir = $self->directory().'intermediate_models/';
             cp($etas_file, $im_dir.$etas_filename);
             (undef, $etas_filename) = OSspecific::absolute_path($im_dir, $etas_filename);
 
@@ -2901,8 +2905,10 @@ sub prepare_model3
         $frem_model->problems->[0] -> remove_records(type => 'covariance' );
 
         $frem_model->_write();
-
-    }
+    } else {
+		(my $phi_filename = $name_model) =~ s/(.*)\..*/$1.phi/;
+		$etas_file = $im_dir.$phi_filename;
+	}
 
     return ($est_records,$covrecordref,$etas_file);
 
@@ -2942,7 +2948,8 @@ sub prepare_model4
     cleanup_outdated_model(modelname => $self -> directory().'final_models/'.$name_model,
                            need_update => $update_existing_model_files);
 
-    unless (-e $self -> directory().'final_models/'.$name_model){
+	my $fin_dir = $self->directory().'final_models/';
+    unless (-e $fin_dir.$name_model) {
         # input model  inits have already been updated
         $frem_model = $model->copy( filename    => $self->directory().'final_models/'.$name_model,
                                     output_same_directory => 1,
@@ -2957,16 +2964,15 @@ sub prepare_model4
                 croak "\$ETAS file $etas_file could not be read for model $modnum, this is a bug";
             }
 
-            # copy M3 output to M4 input phi file
+            # copy M3/M4 output to M4/M4b input phi file
             (my $etas_filename = $name_model) =~ s/(.*)\..*/$1_input.phi/;
-            my $fin_dir = $self->directory().'final_models/';
             cp($etas_file, $fin_dir.$etas_filename);
             (undef, $etas_filename) = OSspecific::absolute_path($fin_dir, $etas_filename);
 
             # update FILE in model to new path (just filename since same directory)
             $frem_model->get_or_set_etas_file(problem_number => 1, new_file => $etas_filename);
 
-            # update etas file to model 4 output (no further downstream usage)
+            # update etas file to model 4/4b output (no further downstream usage)
             (my $phi_filename = $name_model) =~ s/(.*)\..*/$1.phi/;
             $etas_file = $fin_dir.$phi_filename;
         }
@@ -3023,7 +3029,11 @@ sub prepare_model4
         $frem_model->problems->[0]->add_records( record_strings => $new_cov_records,
                                                  type => 'covariance' );
         $frem_model->_write();
-    }
+    } else {
+		(my $phi_filename = $name_model) =~ s/(.*)\..*/$1.phi/;
+		$etas_file = $fin_dir.$phi_filename;
+	}
+
 	return ($etas_file);
 }
 
@@ -3487,6 +3497,7 @@ sub modelfit_setup
         $self->submit_child;
     }
 
+	$DB::single = 1;
     if ($self->tool_child_id == 0){ #this is true if no forking and main process, or with fork and child process
         #this runs input model, if necessary, and updates inits
         ($frem_model1,$output_model1,$need_update,$etas_file) = $self->do_model1(model => $model);
@@ -3577,6 +3588,7 @@ sub modelfit_setup
                   "##########################################################################\n\n");
     }
 
+	$DB::single = 1;
     ($skip_etas,$fix_omegas,$parameter_etanumbers,$etas_file) =
         put_skipped_omegas_first(model => $frem_model1,
                                  start_omega_record =>$self->start_omega_record,
@@ -3594,6 +3606,7 @@ sub modelfit_setup
                                                          with_same => 1);
     $covariate_etanumbers = [(($maxeta+1) .. ($maxeta+scalar(@{$self->covariates})))] ;
 
+	$DB::single = 1;
     ($est_records,$ntheta,$epsnum,$etas_file) = $self->prepare_model2(model => $frem_model1,
                                                                       fremdataname => $frem_datasetname,
                                                                       skip_etas => $self->skip_etas,
@@ -3651,6 +3664,7 @@ sub modelfit_setup
         $mod3_parcov_block = \@tmp_parcov_block;
     }
 
+	$DB::single = 1;
     ($est_records,$cov_records,$etas_file) = $self->prepare_model3(model => $frem_model2,
                                                                    start_omega_record => $self->start_omega_record,
                                                                    parcov_blocks => $mod3_parcov_block,
@@ -3708,6 +3722,7 @@ sub modelfit_setup
 
     mkdir($finaldir) unless (-d $finaldir);
 
+	$DB::single = 1;
     ($etas_file) = $self->prepare_model4(model => $frem_model3,
                                          imp_covariance_eval => 0,
                                          start_omega_record => $self->start_omega_record,
@@ -3782,14 +3797,15 @@ sub modelfit_setup
 					$logger->warning('MU referencing (not used) can speed up sampling');
 				}
                 $final_models->[0]->update_inits(from_output => $final_models->[0]->outputs->[0]);
-                $self->prepare_model4(model => $final_models->[0],
-                                      imp_covariance_eval => 1,
-                                      start_omega_record => $self->start_omega_record,
-                                      parcov_blocks => $mod4_parcov_block,
-                                      est_records => $est_records,
-                                      cov_records => $cov_records,
-                                      update_existing_model_files => $update_existing_model_files,
-                                      etas_file => $etas_file,
+				$DB::single = 1;
+                ($etas_file) = $self->prepare_model4(model => $final_models->[0],
+                                                     imp_covariance_eval => 1,
+                                                     start_omega_record => $self->start_omega_record,
+                                                     parcov_blocks => $mod4_parcov_block,
+                                                     est_records => $est_records,
+                                                     cov_records => $cov_records,
+                                                     update_existing_model_files => $update_existing_model_files,
+                                                     etas_file => $etas_file,
                 );
                 push(@final_numbers,'4b');
                 (my $model_4b,$mes) = $self->run_unless_run(numbers => ['4b'],
