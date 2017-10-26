@@ -51,7 +51,7 @@ sub modelfit_setup
     
     my $stratify_on;
     if (defined $self->stratify_on) {
-        my $stratify_on = $model->problems->[0]->find_data_column(column_name => $self->stratify_on);
+        $stratify_on = $model->problems->[0]->find_data_column(column_name => $self->stratify_on);
         if ($stratify_on == -1) {
             croak("Could not find -stratify_on column ". $self->stratify_on . " in \$INPUT of model.\n");
         }
