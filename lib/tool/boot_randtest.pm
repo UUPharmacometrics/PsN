@@ -63,7 +63,7 @@ sub modelfit_setup
             name_stub => 'bs',
             samples => $self->samples,
             subjects => $self->subjects,
-            stratify_on => $stratify_on,
+            stratify_on => $stratify_on + 1,    # Counted from 1
             input_filename => $model->problems->[0]->datas->[0]->get_absolute_filename(),
             ignoresign => $model->ignoresigns->[0],
             idcolumn => $model->problems->[0]->find_data_column(column_name => 'ID') + 1,
