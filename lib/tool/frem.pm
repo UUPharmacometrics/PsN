@@ -3805,13 +3805,15 @@ sub modelfit_setup
                 (my $model_4b,$mes) = $self->run_unless_run(numbers => ['4b'],
                                                             subdirectory => 'final_models',
                                                             final => 1);
-                push(@{$final_models}, $model_4b);
-                $DB::single = 1;
+                push(@{$final_models}, $model_4b->[0]);
+                ($error,$message) = check_covstep(output => $model_4b->[0]->outputs->[0]);
+                $logger->warning('Covariance step of model 4b NOT successful') if ($error);
             } elsif ($self->imp_covariance) {
                 $logger->warning('Model 4 failed to give OFV value, IMP sampling not applicable');
             }
-        } else {
-            $logger->info('Covariance step of model 4 was successful');
+        }
+        unless ($error) {
+            $logger->info('Covariance step was successful!');
             if ($self->always_proposal_density){
                 $do_print_proposal=1;
                 $logger->info('Will create alternative proposal density for model 4 sir');

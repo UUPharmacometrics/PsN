@@ -145,6 +145,12 @@ if (defined $options{'model'}) {
     }
     $options{'option_file'}=$options{'frem_directory'}.'/version_and_option_info.txt';
     $options{'model'}=$options{'frem_directory'}.'/final_models/model_4.mod';
+    $options{'model_impeval'}=$options{'frem_directory'}.'/final_models/model_4b.mod';
+    if (-f $options{'model_impeval'}) {
+        $logger->info("Model 4b (importance sampling evaluation) found");
+    } else {
+        $options{'model_impeval'} = undef;
+    }
 
     # find base model (FREM only copies base model results into dir if base model was not pre-executed)
     $options{'base_model'}=$options{'frem_directory'}.'/intermediate_models/model_1.mod';
@@ -583,6 +589,12 @@ my $NA_string = ""; # for values missing when no uncertainty (point estimates on
 my $model = model->new ( eval( $eval_string ),
                          filename => $options{'model'},
                          ignore_missing_output_files => 1 );
+my $model_impeval;
+if (defined $options{'model_impeval'}) {
+    $model_impeval = model->new( eval( $eval_string ),
+                                 filename => $options{'model_impeval'},
+                                 ignore_missing_output_files => 1 );
+}
 unless (defined $options{'frem_dataset'}) {
     $options{'frem_dataset'} = $model->problems->[0]->datas->[0]->get_absolute_filename();
     $logger->info("Using FREM dataset ".$options{'frem_dataset'});
@@ -668,8 +680,14 @@ if (defined $options{'rawres_input'}) {
     my $covmatrix;
     if ($model->outputs->[0]->get_single_value(attribute => 'covariance_step_successful')) {
 	    $covmatrix = tool::sir::get_nonmem_covmatrix(output => $model->outputs->[0]);
-    } else {
-        print "Covariance step was not succesful\n";
+    } elsif (defined $model_impeval) {
+        if ($model_impeval->outputs->[0]->get_single_value(attribute => 'covariance_step_successful')) {
+            $covmatrix = tool::sir::get_nonmem_covmatrix(output => $model_impeval->outputs->[0]);
+            $logger->info("Model 4b (importance sampling evaluation) covariance matrix read");
+        }
+    }
+    unless (defined $covmatrix) {
+        $logger->warning("Covariance step was not succesful\n");
     }
 
     # M1 uncertainty can be propagated down as a fallback for missing M4 uncertainty
