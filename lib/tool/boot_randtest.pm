@@ -9,6 +9,7 @@ use OSspecific;
 use tool::modelfit;
 use data;
 use tool::randtest;
+use model_transformations;
 
 extends 'tool';
 
@@ -16,7 +17,7 @@ has 'samples' => ( is => 'rw', required => 1, isa => 'Int' );
 has 'subjects' => ( is => 'rw', isa => 'HashRef' );
 has 'base_model' => ( is => 'rw', isa => 'model' );
 has 'stratify_on' => ( is => 'rw', isa => 'Str' );
-has 'random_column' => ( is => 'rw', isa => 'Bool', default => 0 );     # Should a dichotomous column be used for randomizing
+has 'random_column' => ( is => 'rw', isa => 'Str' );     # Column to replace with a dichotomous column for randomizing
 
 
 sub BUILD
@@ -70,7 +71,7 @@ sub modelfit_setup
             missing_data_token => $self->missing_data_token,
         );
 
-    if ($self->random_column) {
+    if (defined $self->random_column) {
         # Add column with 0 and 1 for each individual 50-50
         for (my $i = 1; $i <= $self->samples; $i++) {
             my $data = data->new(
@@ -94,11 +95,9 @@ sub modelfit_setup
             }
             $data->_write(overwrite => 1);
         }
-    }
 
-    if ($self->random_column) {
-       $self->base_model->add_option(record_name => 'input', option_name => 'NEW_');
-       $model->add_option(record_name => 'input', option_name => 'NEW_');
+        $model->add_option(record_name => 'input', option_name => 'NEW_');
+        model_transformations::rename_symbol(model => $model, from => $self->random_column, to => 'NEW_');
     }
 
     for (my $i = 0; $i < $self->samples; $i++) {

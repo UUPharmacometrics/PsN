@@ -442,6 +442,28 @@ sub _rename_etas
 	}
 }
 
+sub rename_symbol
+{
+    my %parm = validated_hash(\@_,
+        model => { isa => 'model' },
+        from => { isa => 'Str' },
+        to => { isa => 'Str' },
+    );
+    my $model = $parm{'model'};
+    my $from = $parm{'from'};
+    my $to = $parm{'to'};
+
+    for my $record (('pk', 'pred', 'error', 'des', 'aes', 'aesinitial', 'mix', 'infn')) {
+        if ($model->has_code(record => $record)) {  
+            my $code = $model->get_code(record => $record);
+            for (my $i = 0; $i < scalar(@$code); $i++) {
+                $code->[$i] =~ s/\b$from\b/$to/g;
+            }
+            $model->set_code(record => $record, code => $code);
+        }
+    }
+}
+
 sub prepend_code
 {
     # Add code to beginning of $PRED or $PK, or to specific record
