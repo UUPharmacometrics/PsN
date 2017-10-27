@@ -51,7 +51,7 @@ sub modelfit_setup
     
     my $stratify_on;
     if (defined $self->stratify_on) {
-        my $stratify_on = $model->problems->[0]->find_data_column(column_name => $self->stratify_on);
+        $stratify_on = $model->problems->[0]->find_data_column(column_name => $self->stratify_on);
         if ($stratify_on == -1) {
             croak("Could not find -stratify_on column ". $self->stratify_on . " in \$INPUT of model.\n");
         }
@@ -63,7 +63,7 @@ sub modelfit_setup
             name_stub => 'bs',
             samples => $self->samples,
             subjects => $self->subjects,
-            stratify_on => $stratify_on,
+            stratify_on => $stratify_on + 1,    # Counted from 1
             input_filename => $model->problems->[0]->datas->[0]->get_absolute_filename(),
             ignoresign => $model->ignoresigns->[0],
             idcolumn => $model->problems->[0]->find_data_column(column_name => 'ID') + 1,
@@ -122,8 +122,12 @@ sub modelfit_setup
             $randomization_column = 'NEW_';
         }
 
+        my %restored_options = %{common_options::restore_options(@common_options::tool_options)};
+        delete $restored_options{'directory'};
+
         my $rand = tool::randtest->new(
-            %{common_options::restore_options(@common_options::tool_options)},
+            %restored_options,
+            #%{common_options::restore_options(@common_options::tool_options)},
             top_tool => 0,
             prepend_model_file_name => 1,
             models => [ $orig ],
