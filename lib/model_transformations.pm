@@ -164,7 +164,11 @@ sub add_iov
                 $current_eta++;
                 $current_iov++;
             }
-            $model->add_records(type => 'omega', record_strings => $record->_format_record());
+            my $record_clone = Storable::dclone($record);
+            for my $option (@{$record_clone->options}) {
+                $option->init($option->init * 0.1);
+            }
+            $model->add_records(type => 'omega', record_strings => $record_clone->_format_record());
             for (my $i = 0; $i < scalar(@$unique_occs) - 1; $i++) {
                 $model->add_records(type => 'omega', record_strings => [ "\$OMEGA BLOCK($size) SAME" ]); 
                 $current_eta += $size;  # Pass BLOCK SAME
