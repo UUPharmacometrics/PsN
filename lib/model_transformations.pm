@@ -10,6 +10,7 @@ use MooseX::Params::Validate;
 use utils::file;
 use array qw(numerical_in max unique);
 use data;
+use Storable;
 
 sub add_tv
 {
@@ -139,7 +140,10 @@ sub add_iov
                     push @pre_code, "IF ($occ.EQ.$unique_occ) IOV_" . $parameters->[$i] . " = ETA($current_eta)";
                 }
                 my $init = $model->initial_values(parameter_type => 'omega', parameter_numbers => [[ $relation{$parameters->[$i]} ]]);
-                $model->add_records(type => 'omega', record_strings => [ '$OMEGA ' . $init->[0]->[0] * 0.1]); 
+                $model->add_records(type => 'omega', record_strings => [ '$OMEGA BLOCK(1) ' . $init->[0]->[0] * 0.1]); 
+                for (my $i = 0; $i < scalar(@$unique_occs) - 1; $i++) {
+                    $model->add_records(type => 'omega', record_strings => [ "\$OMEGA BLOCK(1) SAME" ]); 
+                }
             }
         }
 
