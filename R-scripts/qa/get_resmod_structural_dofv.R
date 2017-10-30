@@ -1,7 +1,7 @@
-get_resmod_structural_dofv <- function(directory, idv, dvid) {
+get_resmod_structural_dofv <- function(directory, idv, dvid="NA") {
   resmod_file_exists <- get_resmod_table(directory, idv)$resmod_file_exists
   if(resmod_file_exists) {
-    if(missing(dvid) || dvid=='NA') {
+    if(dvid=='NA') {
       resmod_structural_dofv <- get_resmod_table(directory, idv)$resmod_table %>%
         dplyr::filter(model=="idv_varying_theta") %>%
         dplyr::select(dOFV) %>%
