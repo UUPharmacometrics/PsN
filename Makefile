@@ -25,6 +25,7 @@ LIBFILES= ui.pm \
 	filter_data.pm \
 	boxcox.pm \
 	include_modules.pm \
+	scm_util.pm \_util.pm \
 	ext/Math/SigFigs.pm \
 	ext/Math/MatrixReal.pm \
 	ext/Statistics/Distributions.pm \
