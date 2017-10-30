@@ -34,8 +34,19 @@ plot_transformed_density <- function(data_table,eta_table,param_model) {
     }
     data_table_new <- get_x_min_max(data_table,eta_table)
     
-    #make a plot
+    #make shore that will not get only one plot in last page. 
     n_pages <- ceiling(length(unique(data_table_new$ETA_name))/12)
+    if(length(unique(data_table_new$ETA_name)) > 12) {
+      plots_in_page <- length(unique(data_table_new$ETA_name))/n_pages
+      if(plots_in_page < 9) {
+        nrow <- 3
+      } else {
+        nrow <- 4
+      }
+    } else {
+      nrow <- 4
+    }
+    #make a plot
     p <- list()
     for(i in seq_len(n_pages)) {
       p[[i]] <- ggplot(data_table_new,aes(x=eta,y=density,fill=type)) +
@@ -46,7 +57,7 @@ plot_transformed_density <- function(data_table,eta_table,param_model) {
         theme(legend.position = "top")
       
       if(length(unique(data_table_new$ETA_name)) > 4) {
-        p[[i]] <- p[[i]] + ggforce::facet_wrap_paginate(~ETA_name,nrow=4,ncol=3,scales="free",page=i)
+        p[[i]] <- p[[i]] + ggforce::facet_wrap_paginate(~ETA_name,nrow=nrow,ncol=3,scales="free",page=i)
       } else {
         p[[i]] <- p[[i]] + ggforce::facet_wrap_paginate(~ETA_name,ncol=2,scales="free")
       }
