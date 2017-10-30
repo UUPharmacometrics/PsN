@@ -204,7 +204,7 @@ sub modelfit_setup
                 directory => "modelfit_dir1",
                 top_tool => 1,
                 so => 1,
-                nm_output => 'ext',
+                nm_output => 'ext,phi',
             );
             $modelfit->run();
             chdir "..";
@@ -243,7 +243,7 @@ sub modelfit_setup
                 directory => 'linearize_run',
                 estimate_fo => $self->fo,
                 nointer => $self->nointer,
-                nm_output => 'ext',
+                nm_output => 'ext,phi',
             );
             $linearize->run();
             $linearize->print_results();
