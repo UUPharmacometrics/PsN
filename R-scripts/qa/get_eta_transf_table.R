@@ -29,7 +29,7 @@ get_eta_transf_table <- function(input_table,seq_length.out=1000) {
     
     #count unique ETAs
     if(length(unique(eta_transf_table$ETA_name)) <= 8) {
-      fig_height <- 7
+      fig_height <- 6.25
     }
     out <- list(eta_transf_table=eta_transf_table,
                 make_eta_transf_plot=make_eta_transf_plot,
