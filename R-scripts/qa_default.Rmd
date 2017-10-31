@@ -277,6 +277,7 @@ if(all(skip!="transform")) {
     add_etas_table <- keep_symbols(add_etas_table,type)
     add_etas_table <- ztable_sub(add_etas_table,type=type,colnames.bold=T,include.colnames=!add_etas_error,include.rownames=F,longtable=T,align="lrrr")
     print(add_etas_table)
+    cat("Consequences of including additional subject-level random effects on selected parameters in terms of estimated standard deviation (SD) of new and existing random effect parameters as well as expected improvement in OFV.")
   } else {
     cat("No additional etas were added.")
   }
@@ -316,6 +317,7 @@ if(all(skip!="transform")) {
       iov_table <- addcgroup(iov_table,cgroup=c("","New SD",""),n.cgroup=c(1,2,1))
     }
     print(iov_table)
+    cat("Consequences of including inter-occasion variability in terms of estimated standard deviation (SD) for inter-individual (IIV) and inter-occasion variability (IOV) as well as expected improvement in OFV.")
   } else {
     cat("No interoccasion variability was added.")
   }
