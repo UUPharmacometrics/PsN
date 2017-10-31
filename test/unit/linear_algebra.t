@@ -944,7 +944,7 @@ my $cnum_evd = 1.003153723616E+02; # my $cnum_svd = 1.157012038524E+02;
 cmp_float( linear_algebra::condition_number($mat1), $cnum_evd, "condition number 1" );
 $mat2 = $mat1; # testing identity
 my $rmse = 1.30277206904372e-15; # according to R (lower precision than PsN)
-ok( linear_algebra::inverse_identity_rmse(matrix1 => $mat1, matrix2 => $mat2) < $rmse, "inverse identity rmse 1" );
+ok( linear_algebra::matrix_rmse(matrix1 => $mat1, matrix2 => $mat2, method => 2) < $rmse, "inverse identity rmse 1" );
 $mat1 = [
     [1.59, 0.885, -0.199],
     [0.885, 2.35, -0.17],
@@ -960,7 +960,7 @@ $mat2 = [
 $cnum_evd = 2.996697229202E+00; # $cnum_svd = 3.326499870422E+00;
 cmp_float( linear_algebra::condition_number($mat2), $cnum_evd, "condition number 3" );
 $rmse = 0.0524589214612061;
-cmp_float( linear_algebra::inverse_identity_rmse(matrix1 => $mat1, matrix2 => $mat2), $rmse, "inverse identity rmse 2" );
+cmp_float( linear_algebra::matrix_rmse(matrix1 => $mat1, matrix2 => $mat2, method => 2), $rmse, "inverse identity rmse 2" );
 $mat1 = [
     [4.818E-29, -1.38708E-25, -2.01914E-25, -7.8682E-25, 9.7616E-23, -8.11468E-21],
     [-1.38708E-25, 1.92069E-20, 2.797E-20, 1.23158E-19, 3.48504E-20, 4.53091E-18],
@@ -985,6 +985,39 @@ $mat2 = [
 $cnum_evd = 1.000000000000E+00; # $cnum_svd = 1.000000000000E+00; # (all eigenvalues were adjusted)
 cmp_float( linear_algebra::condition_number($mat2), $cnum_evd, "condition number 5" );
 $rmse = 0.4058311067051139;
-cmp_float( linear_algebra::inverse_identity_rmse(matrix1 => $mat1, matrix2 => $mat2), $rmse, "inverse identity rmse 3" );
+cmp_float( linear_algebra::matrix_rmse(matrix1 => $mat1, matrix2 => $mat2, method => 2), $rmse, "inverse identity rmse 3" );
+
+# simple difference RMSE (reference: R script)
+cmp_float( linear_algebra::matrix_rmse(matrix1 => [[0]], matrix2 => [[0]], method => 1), 0, "simple difference rmse 0" );
+$mat1 = [
+    [-7, 0, -83, -1],
+    [0, 3, 100, -146],
+    [-83, 100, -35, -239],
+    [-1, -146, -239, 15],
+];
+$mat2 = [
+    [96, 17, -247, 54],
+    [17, -137, -87, 93],
+    [-247, -87, -67, 40],
+    [54, 93, 40, 19],
+];
+$rmse = 1.49855347382753;
+cmp_float( linear_algebra::matrix_rmse(matrix1 => $mat1, matrix2 => $mat2, method => 1), $rmse, "simple difference rmse 1" );
+$mat1 = [
+    [7, 28, 16, -10],
+    [28, -7, -17, -4],
+    [16, -17, -13, -3],
+    [-10, -4, -3, 6],
+];
+$mat2 = [
+    [2142532, 1242735, -114632, 892625],
+    [1242735, 212820, -152941, 475296],
+    [-114632, -152941, -137320, 520768],
+    [892625, 475296, 520768, -349730],
+];
+$rmse = 57255.8331992804;
+cmp_float( linear_algebra::matrix_rmse(matrix1 => $mat1, matrix2 => $mat2, method => 1), $rmse, "simple difference rmse 2" );
+$rmse = 0.999994343923935;
+cmp_float( linear_algebra::matrix_rmse(matrix1 => $mat2, matrix2 => $mat1, method => 1), $rmse, "simple difference rmse 2 rev" );
 
 done_testing();

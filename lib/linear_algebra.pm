@@ -1273,16 +1273,19 @@ sub get_matrix_size {
     return ($first_nrow, $ncol, undef);
 }
 
-sub inverse_identity_rmse {
-    # calculate the difference of two square matrices by RMSE (to identity matrix)
-    # of product of first matrix with second matrix inverse
+sub matrix_rmse {
+    # calculate the difference of two sq matrices by RMSE, two methods:
+    # 1 RMSE of direct difference (relative to first matrix)
+    # 2 RMSE of identity matrix (product of first matrix with second matrix inverse)
     my %parm = validated_hash(\@_,
         # in *col format*, A->[col][row]
-        matrix1 => { isa => 'ArrayRef', optional => 0 }, # need not be invertible, but square
-        matrix2 => { isa => 'ArrayRef', optional => 0 }, # need to be invertible and of same size
+        matrix1 => { isa => 'ArrayRef', optional => 0 }, # need not be invertible but square
+        matrix2 => { isa => 'ArrayRef', optional => 0 }, # need to be same size (and invertible for method 2)
+        method => { isa => 'Int', optional => 1, default => 1 } # method above
 	);
 	my $matrix1 = $parm{'matrix1'};
 	my $matrix2 = $parm{'matrix2'};
+	my $method = $parm{'method'};
 
     # validate dimensions
     (my $ncol1, my $nrow1, my $err1) = get_matrix_size(matrix => $matrix1);
@@ -1300,18 +1303,36 @@ sub inverse_identity_rmse {
     # create matrices and check invertibility
     my $mat1 = Math::MatrixReal->new_from_cols( $matrix1 );
     my $mat2 = Math::MatrixReal->new_from_cols( $matrix2 );
-    my $mat2_inv = $mat2->inverse();
-    unless (defined $mat2_inv) {
-        croak "matrix2 is not invertible";
+    my $mat2_inv;
+    if ($method == 2) {
+        $mat2_inv = $mat2->inverse();
+        unless (defined $mat2_inv) {
+            croak "matrix2 is not invertible";
+        }
     }
 
-    # calculate the RMSE (of matrix1*inv(matrix2) and identity matrix)
-    my $idmat = Math::MatrixReal->new_diag( [(1) x $dim] );
-    my $prodmat = $mat1 * $mat2_inv;
-    my $diffmat = $idmat - $prodmat;
-    my $sq_diffmat = $diffmat->each( sub { (shift)**2 } ); # square it elementwise
-    my $norm_sum = $sq_diffmat->norm_sum(); # sum of (abs of) all elements
-    my $mean = $norm_sum/($dim**2);
+    my $mean = 0;
+    if ($method == 1) {
+        # calculate the RMSE (of relative, to sq(mat1), squared difference)
+        #   EQ: RMSE = SQRT(SUM( ([mat1]_ij-[mat2]_ij)^2 ) / SUM( [mat1]_ij^2 ))
+        my $diffmat = $mat1 - $mat2;
+        my $sq_diffmat = $diffmat->each( sub { (shift)**2 } );
+        my $sq_mat1 = $mat1->each( sub { (shift)**2 } );
+        my $norm_sum_diff = $sq_diffmat->norm_sum();
+        my $norm_sum_mat1 = $sq_mat1->norm_sum();
+        $mean = ($norm_sum_mat1 == 0) ? 0 : $norm_sum_diff / $norm_sum_mat1;
+    } elsif ($method == 2) {
+        # calculate the RMSE (of matrix1*inv(matrix2) and identity matrix)
+        #   EQ: RMSE = SQRT(SUM( ([I]_ij-[mat1*inv(mat2)]_ij)^2 ))
+        my $idmat = Math::MatrixReal->new_diag( [(1) x $dim] );
+        my $prodmat = $mat1 * $mat2_inv;
+        my $diffmat = $idmat - $prodmat;
+        my $sq_diffmat = $diffmat->each( sub { (shift)**2 } ); # square it elementwise
+        my $norm_sum = $sq_diffmat->norm_sum(); # sum of (abs of) all elements
+        $mean = $norm_sum/($dim**2);
+    } else {
+        croak "method ".$method." is unknown";
+    }
 
     return (sqrt $mean);
 }
