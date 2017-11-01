@@ -2532,19 +2532,19 @@ sub get_pred_error_pk_code
     my @eta_labels=();
     my @eta_strings=();
     my @rescale_strings=();
+    my @rescale_factors=();
 
     for (my $j=0; $j< scalar(@{$covariates}); $j++){
         my $label = 'BSV_'.$covariates->[$j];
-        my $sd = '';
-        if ($rescale){
-            my $number = sprintf("%.12G",sqrt($invariant_covmatrix->[$j][$j]));
-            $sd = '*'.$number;
-            push(@rescale_strings,$number);
-        }else{
-            push(@rescale_strings,'1');
+        my $etanum = ($maxeta+1+$j);
+        my $sd = '1';
+        if ($rescale) {
+            $sd = sprintf("%.12G",sqrt($invariant_covmatrix->[$j][$j]));
         }
-        push(@eta_strings,['ETA('.($maxeta+1+$j).')'.$sd]);
-        push (@eta_labels, $label);
+        push(@rescale_factors,$sd);
+        push(@rescale_strings,'SDC'.$etanum);
+        push(@eta_strings, ['ETA('.$etanum.')']);
+        push(@eta_labels, $label);
     }
 
     my $newtheta = 0;
@@ -2567,29 +2567,44 @@ sub get_pred_error_pk_code
         push(@theta_strings,'THETA('.$num.')');
     }
 
-    if ($mu){
+    my @code;
+    if ($rescale) {
+        my @rescalecode=();
+        for (my $j=0; $j< scalar(@{$covariates}); $j++) {
+            push(@rescalecode,$indent.$rescale_strings[$j].' = '.$rescale_factors[$j]);
+        }
+        push(@code,@rescalecode);
+    }
+    if ($mu) {
         #PK/PRED changes for mu modelling
         my @mucode=();
         for (my $j=0; $j< scalar(@{$covariates}); $j++){
             my $etanum = ($maxeta+1+$j);
-            push(@mucode,$indent.'MU_'.$etanum.' = '.$theta_strings[$j]);
-            push(@mucode,$indent.'COV'.$etanum.' = MU_'.$etanum.' + '.$eta_strings[$j]->[0]);
+            if ($rescale) {
+                push(@mucode,$indent.'MU_'.$etanum.' = '.$theta_strings[$j].'/SDC'.$etanum);
+                push(@mucode,$indent.'COV'.$etanum.' = (MU_'.$etanum.' + '.$eta_strings[$j]->[0].')*SDC'.$etanum);
+            } else {
+                push(@mucode,$indent.'MU_'.$etanum.' = '.$theta_strings[$j]);
+                push(@mucode,$indent.'COV'.$etanum.' = MU_'.$etanum.' + '.$eta_strings[$j]->[0]);
+            }
         }
-        if ($use_pred){
-            push(@pred_error_code,@mucode);
-        }else{
-            push(@pkcode,@mucode);
-        }
+        push(@code,@mucode);
+    }
+    if ($use_pred) {
+        push(@pred_error_code,@code);
+    } else {
+        push(@pkcode,@code);
     }
 
     for (my $i=0; $i< scalar(@{$covariates}); $i++){
         for (my $j=0; $j< $N_parameter_blocks; $j++){
-            my $comment = ';'.$indent.'  '.$covariates->[$i].'  '.$rescale_strings[$i];
+            my $comment = ';'.$indent.'  '.$covariates->[$i].'  '.$rescale_factors[$i];
             my $ipred;
             if ($mu){ #no iov handled
                 $ipred = 'COV'.($maxeta+1+$i);
             }else{
-                $ipred = $theta_strings[$i].' + '.$eta_strings[$i]->[$j];
+                my $rescale_expr = $rescale ? '*'.$rescale_strings[$i] : '';
+                $ipred = $theta_strings[$i].' + '.$eta_strings[$i]->[$j].$rescale_expr;
             }
             if ($N_parameter_blocks > 1){
                 $comment .= ' occasion '.($j+1);
@@ -4426,7 +4441,7 @@ sub do_model_vpc2
 
 }
 
-sub    add_pred_error_code
+sub add_pred_error_code
 {
     my %parm = validated_hash(\@_,
                               model => { isa => 'model', optional => 0 },
@@ -4451,12 +4466,13 @@ sub    add_pred_error_code
                 croak("pk code should be defined when use_pred is false. this is a bug");
             }
         }
-    }else{
-        if (scalar(@{$pk_code})>0){
-            croak("pk code should be empty when mu not set. this is a bug");
-        }
     }
 
+    if (scalar(@{$pk_code}) > 0) {
+        my @pk = @{$model->get_code(record => 'pk')};
+        push(@pk,@{$pk_code});
+        $model->set_code(record => 'pk', code => \@pk);
+    }
     my @code;
     if ($use_pred){
         @code = @{$model->get_code(record => 'pred')};
@@ -4466,16 +4482,11 @@ sub    add_pred_error_code
         @code = @{$model->get_code(record => 'error')};
         push(@code,@{$pred_error_code});
         $model->set_code(record => 'error', code => \@code);
-        if ($mu){
-            my @pk = @{$model->get_code(record => 'pk')};
-            push(@pk,@{$pk_code});
-            $model->set_code(record => 'pk', code => \@pk);
-        }
     }
 
 }
 
-sub    add_pk_pred_error_code
+sub add_pk_pred_error_code
 { #not used
     my %parm = validated_hash(\@_,
                               model => { isa => 'model', optional => 0 },
