@@ -76,7 +76,6 @@ has 'categorical' => ( is => 'rw', isa => 'ArrayRef', default => sub { [] } );
 has 'log' => ( is => 'rw', isa => 'ArrayRef', default => sub { [] } );
 has 'regular' => ( is => 'rw', isa => 'ArrayRef', default => sub { [] } );
 has 'logfile' => ( is => 'rw', isa => 'ArrayRef', default => sub { ['frem.log'] } );
-has 'results_file' => ( is => 'rw', isa => 'Str', default => 'frem_results.csv' );
 has 'use_pred' => ( is => 'rw', isa => 'Bool', default => 1 );
 has 'estimate_regular_final_model' => ( is => 'rw', isa => 'Bool', default => 1 ); #no commandline option currently
 has 'estimate_means' => ( is => 'rw', isa => 'Bool', default => 1 );
@@ -84,6 +83,12 @@ has 'estimate_covariates' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'have_missing_covariates' => ( is => 'rw', isa => 'ArrayRef', default => sub { [] } );
 has 'cholesky' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'imp_covariance' => ( is => 'rw', isa => 'Bool', default => 1 );
+
+has 'results_file' => ( is => 'rw', isa => 'Str', default => 'frem_results.csv' );
+has 'reordered_model_1' => ( is => 'rw', isa => 'model' );
+has 'model_2' => ( is => 'rw', isa => 'model' );
+has 'final_numbers' => ( is => 'rw', isa => 'ArrayRef[Int]', default => sub { [] } );
+has 'final_models' => ( is => 'rw', isa => 'ArrayRef[model]', default => sub { [] } );
 
 my $logger = logging::get_logger("frem");
 
@@ -1744,7 +1749,7 @@ sub    join_covmats
     return \@full_covmat;
 }
 
-sub    print_proposal_density
+sub print_proposal_density
 {
     my %parm = validated_hash(\@_,
                               partial_outputs => { isa => 'ArrayRef', optional => 0 },
@@ -1953,6 +1958,178 @@ sub perfect_individuals
         $is_output1=0;
     }
     return \%hash;
+}
+
+sub prepare_results
+{
+    my $self = shift;
+
+    $logger->info("Preparing and printing results");
+    my $directory = $self->directory;
+    my $input_model = $self->models->[0];
+    my $base_model = $self->reordered_model_1;
+    my $model_2 = $self->model_2;
+    my @final_models = @{$self->final_models};
+    my @final_numbers = @{$self->final_numbers};
+
+    # make sure old results file is not overwritten if re-run
+    if (-e $self->directory.$self->results_file) {
+        (my $filename = $self->results_file) =~ s/\.csv$//;
+        my $num = 2;
+        while (-e $self->directory."$filename.$num".'.csv'){
+            $num++;
+        }
+        $filename = "$filename.$num".'.csv';
+        $self->results_file($filename);
+    }
+
+    # check that final model is supported (4/4b only for now)
+    if (scalar(@final_models) == 0 or scalar(@final_models) != scalar(@final_numbers)) {
+        $logger->critical("No final models known (prepare_results), this is a bug"); die;
+    }
+    my ($full_model, $full_model_num);
+    for (my $i=0; $i<scalar(@final_models); $i++) {
+        if ($final_numbers[$i] =~ /^4b?$/) {
+            $full_model = $final_models[$i];
+            $full_model_num = $final_numbers[$i];
+        }
+    }
+
+    # check that all models and outputs necessary exists
+    if (!defined $base_model) {
+        $logger->critical("Reordered base model does not exist (prepare_results), this is a bug"); die;
+    } elsif (!defined $model_2) {
+        $logger->critical("Model 2 does not exist (prepare_results), this is a bug"); die;
+    } elsif (!defined $full_model) {
+        $logger->critical("Full model 4/4b does not exist (prepare_results), can't continue"); die;
+    }
+    my ($base_model_output, $model_2_output, $full_model_output);
+    if (defined $base_model->outputs and defined $base_model->outputs->[0]) {
+        $base_model_output = $base_model->outputs->[0];
+    } else {
+        $logger->critical("No output base model (prepare_results), this is a bug"); die;
+    }
+    if (defined $model_2->outputs and defined $model_2->outputs->[0]) {
+        $model_2_output = $model_2->outputs->[0];
+    } else {
+        $logger->critical("No output model 2 (prepare_results), this is a bug"); die;
+    }
+    if (defined $full_model->outputs and defined $full_model->outputs->[0]) {
+        $full_model_output = $full_model->outputs->[0];
+    } else {
+        $logger->critical("No output model 4/4b (prepare_results), can't continue"); die;
+    }
+
+    # return section (input model name, date and versions)
+	my %return_section;
+	$return_section{'name'} = 'FREM run info';
+	$return_section{'labels'} = [[],['Date','model','PsN version','NONMEM version']];
+    my @datearr=localtime;
+    my $the_date=($datearr[5]+1900).'-'.($datearr[4]+1).'-'.($datearr[3]);
+    $return_section{'values'} = [[$the_date, $input_model->filename(), 'v'.$PsN::version, $self->nm_version]];
+    push(@{$self->results->[0]{'own'}}, \%return_section);
+
+    # get FREM post-processing data (# subjects, covariate data, number of parameters, etc.)
+    my ($cov_names,$cov_rescale,$omegaindex,$par_names,$size,$means) = get_post_processing_data(model => $full_model);
+    my @cov_rescale = @{$cov_rescale};
+    my @cov_names = @{$cov_names};
+    my @par_names = @{$par_names};
+    my @cov_means = @{$means};
+    my $npar = scalar(@par_names);
+    my $ncov = scalar(@cov_names);
+    my @rescale = (1) x $npar;
+    push(@rescale,@cov_rescale);
+
+    # model 1: base model (after possible reordering)
+    my $base_coords = $base_model->problems->[0]->get_estimated_attributes(parameter => 'all', attribute => 'coordinate_strings');
+    my $base_inits  = $base_model->problems->[0]->get_estimated_attributes(parameter => 'all', attribute => 'inits');
+    my $base_values = $base_model->outputs->[0]->get_filtered_values(category => 'estimate',
+                                                                      parameter => 'all',
+                                                                      problem_index => 0,
+                                                                      subproblem_index => 0);
+
+    # model 2: covariate model
+    my $m2_coords = $model_2->problems->[0]->get_estimated_attributes(parameter => 'all', attribute => 'coordinate_strings');
+    my $m2_inits  = $model_2->problems->[0]->get_estimated_attributes(parameter => 'all', attribute => 'inits');
+    my $m2_values = $model_2->outputs->[0]->get_filtered_values(category => 'estimate',
+                                                                 parameter => 'all',
+                                                                 problem_index => 0,
+                                                                 subproblem_index => 0);
+    my $m2_covmat  = get_covmatrix(output => $model_2_output, omega_order => []);
+
+    # final FREM model
+    my $full_coords = $full_model->problems->[0]->get_estimated_attributes(parameter => 'all', attribute => 'coordinate_strings');
+    my $full_inits  = $full_model->problems->[0]->get_estimated_attributes(parameter => 'all', attribute => 'inits');
+    my $full_labels = $full_model->problems->[0]->get_estimated_attributes(parameter => 'all', attribute => 'labels');
+    my $full_values = $full_model->outputs->[0]->get_filtered_values(category => 'estimate',
+                                                                     parameter => 'all',
+                                                                     problem_index => 0,
+                                                                     subproblem_index => 0);
+    my $have_estimates = (defined $full_values and scalar(@{$full_values})>0 and defined $full_values->[0]) ? 1 : 0;
+    my ($varcov, $error, $cond_covar, $coeff, $covmat, $posdef_err);
+    if ($have_estimates) {
+        # calculate coefficients and conditional variability
+        $varcov = $full_model->problems->[0]->omegas->[$omegaindex]->get_matrix;
+        ($error,$cond_covar,$coeff) = linear_algebra::conditional_covariance_coefficients(varcov => $varcov,
+                                                                                          rescaling => \@rescale,
+                                                                                          cov_index_first => $npar,
+                                                                                          cov_index_last => ($size-1),
+                                                                                          par_index_first => 0,
+                                                                                          par_index_last => ($npar-1));
+        # get final covariance matrix (if available)
+        ($error, my $message) = check_covstep(output => $full_model->outputs->[0]);
+        $covmat = get_covmatrix(output => $full_model->outputs->[0], omega_order => []) unless ($error);
+        $posdef_err = tool::sir::check_matrix_posdef(matrix => $covmat);
+    }
+
+    # raw estimates section
+    my %est_section;
+    $est_section{'name'}='Raw inits & estimates';
+    my @header = ("type", @{$full_labels});
+    $est_section{'labels'}=[
+        [ ("M1 (base model)") x 2,
+          ("M2 (covariates)") x 2,
+          ("M$full_model_num (full FREM)") x 2,
+        ], \@header,
+    ];
+    my $params = [
+        ["init"], ["estimate"],
+        ["init"], ["estimate"],
+        ["init"], ["estimate"],
+    ];
+    for (my $i=0; $i<scalar(@{$full_coords}); $i++) {
+        my $coord = $full_coords->[$i];
+        # base model
+        my ($base_init, $base_est);
+        for (my $j=0; $j<scalar(@{$base_coords}); $j++) {
+            if ($base_coords->[$j] eq $coord) {
+                $base_init = $base_inits->[$j];
+                $base_est = $base_values->[$j];
+                last;
+            }
+        }
+        push(@{$params->[0]}, $base_init);
+        push(@{$params->[1]}, $base_est);
+        # model 2
+        my ($m2_init, $m2_est);
+        for (my $j=0; $j<scalar(@{$m2_coords}); $j++) {
+            if ($m2_coords->[$j] eq $coord) {
+                $m2_init = $m2_inits->[$j];
+                $m2_est = $m2_values->[$j];
+                last;
+            }
+        }
+        push(@{$params->[2]}, $m2_init);
+        push(@{$params->[3]}, $m2_est);
+        # final model
+        my $full_init = $full_inits->[$i];
+        my $full_est = $have_estimates ? $full_values->[$i] : '';
+        push(@{$params->[4]}, $full_init);
+        push(@{$params->[5]}, $full_est);
+    }
+    $est_section{'values'} = $params;
+    push(@{$self->results->[0]{'own'}}, \%est_section);
+    $DB::single = 1;
 }
 
 sub old_set_model2_omega_blocks
@@ -3493,11 +3670,10 @@ sub modelfit_setup
     my $covresultref;
     my ($mod4_parcov_block,$mod4ofv);
     my $finaldir= $self->directory.'final_models';
-    my ($final_models,$mes,$sir_model, $sir_model_text);
+    my ($mes,$sir_model, $sir_model_text);
     my ($error,$message,$fh);
     my $do_print_proposal=0;
     my $proposal_filename = 'proposal_density.cov';
-    my @final_numbers = ();
     my $recovery_filename = 'child_process_variables';
     my $update_existing_model_files = 0;
     my $need_update;
@@ -3541,7 +3717,7 @@ sub modelfit_setup
         ($output_model1,$frem_model1) = restore_fork(outputname => $output_model1_fullname,
                                                      modelname => 'intermediate_models/'.$name_model_1_updated);
     }
-
+    $self->reordered_model_1($frem_model1); # used by prepare_results
 
     if ($self->fork_runs){
         $self->submit_child;
@@ -3675,6 +3851,7 @@ sub modelfit_setup
         }
         $mod3_parcov_block = \@tmp_parcov_block;
     }
+    $self->model_2($frem_model2); # used by prepare_results
 
     ($est_records,$cov_records,$etas_file) = $self->prepare_model3(model => $frem_model2,
                                                                    start_omega_record => $self->start_omega_record,
@@ -3745,7 +3922,7 @@ sub modelfit_setup
 
     #fixme subtool instead?
 
-    push(@final_numbers,4) if $self->estimate_regular_final_model;
+    push(@{$self->final_numbers},4) if $self->estimate_regular_final_model;
 
     if ($self->cholesky){
         $self->prepare_model5(start_omega_record => $self->start_omega_record,
@@ -3766,21 +3943,22 @@ sub modelfit_setup
                                   update_existing_model_files => ($need_update or $update_existing_model_files)
                 );
 
-            push(@final_numbers,6);
+            push(@{$self->final_numbers},6);
         }
     }
 
-    ($final_models,$mes) = $self->run_unless_run(numbers => \@final_numbers,
-                                                 subdirectory => 'final_models',
-                                                 final => 1) if (scalar(@final_numbers)>0);
+    (my $final_models, $mes) = $self->run_unless_run(numbers => $self->final_numbers,
+                                                     subdirectory => 'final_models',
+                                                     final => 1) if (scalar(@{$self->final_numbers})>0);
+    push(@{$self->final_models}, @{$final_models});
 
     if ($self->estimate_regular_final_model){
         #model 4
-        $mod4ofv = $final_models->[0]->outputs->[0]->get_single_value(attribute => 'ofv');
+        $mod4ofv = $self->final_models->[0]->outputs->[0]->get_single_value(attribute => 'ofv');
         if (not defined $mod4ofv){
             ui->print(category => 'frem',
                       message => 'estimation of model 4 failed to give ofv value. creating model 7.');
-            $self->prepare_model7(model => $final_models->[0],update_existing_model_files => $update_existing_model_files);
+            $self->prepare_model7(model => $self->final_models->[0],update_existing_model_files => $update_existing_model_files);
             ($frem_model7,$message,$need_update) = $self->run_unless_run(numbers => [7],
                                                                          subdirectory => 'final_models');
             if (defined $message){
@@ -3792,11 +3970,11 @@ sub modelfit_setup
                 $sir_model_text = 'model 7';
             }
         }else{
-            $sir_model = $final_models->[0];
+            $sir_model = $self->final_models->[0];
             $sir_model_text = 'model 4';
         }
 
-        ($error,$message) = check_covstep(output => $final_models->[0]->outputs->[0]);
+        ($error,$message) = check_covstep(output => $self->final_models->[0]->outputs->[0]);
 
         if ($error){
             $logger->warning('Covariance step of model 4 NOT successful');
@@ -3806,8 +3984,8 @@ sub modelfit_setup
                 unless ($self->mu) {
                     $logger->warning('MU referencing (not used) can speed up sampling');
                 }
-                $final_models->[0]->update_inits(from_output => $final_models->[0]->outputs->[0]);
-                ($etas_file) = $self->prepare_model4(model => $final_models->[0],
+                $self->final_models->[0]->update_inits(from_output => $self->final_models->[0]->outputs->[0]);
+                ($etas_file) = $self->prepare_model4(model => $self->final_models->[0],
                                                      imp_covariance_eval => 1,
                                                      start_omega_record => $self->start_omega_record,
                                                      parcov_blocks => $mod4_parcov_block,
@@ -3816,11 +3994,11 @@ sub modelfit_setup
                                                      update_existing_model_files => $update_existing_model_files,
                                                      etas_file => $etas_file,
                 );
-                push(@final_numbers,'4b');
+                push(@{$self->final_numbers},'4b');
                 (my $model_4b,$mes) = $self->run_unless_run(numbers => ['4b'],
                                                             subdirectory => 'final_models',
                                                             final => 1);
-                push(@{$final_models}, $model_4b->[0]);
+                push(@{$self->final_models}, @{$model_4b});
                 ($error,$message) = check_covstep(output => $model_4b->[0]->outputs->[0]);
                 $logger->warning('Covariance step of model 4b NOT successful') if ($error);
             } elsif ($self->imp_covariance) {
@@ -3836,15 +4014,15 @@ sub modelfit_setup
         }
 
 
-        if ($do_print_proposal){
-            my $output_2;
-            if (defined $output_model2_fullname){
-                $output_2 = output -> new (filename =>$output_model2_fullname, parse_output => 0);
-            }else{
-                $output_2 = $frem_model2->outputs->[0];
-            }
+        my $output_model2;
+        if (defined $output_model2_fullname) {
+            $output_model2 = output->new(filename =>$output_model2_fullname, parse_output => 0);
+        } else {
+            $output_model2 = $frem_model2->outputs->[0];
+        }
+        if ($do_print_proposal) {
             print_proposal_density(omega_orders => [$new_omega_order,[]],
-                       partial_outputs => [$output_model1,$output_2],
+                       partial_outputs => [$output_model1,$output_model2],
                        full_model => $sir_model,# not updated, but may have estimates of everything
                        reordered_model1 => $frem_model1,
                        rse => $self->rse,
@@ -3854,7 +4032,7 @@ sub modelfit_setup
                   message => 'printed proposal density for sir -covmat_input option to '.
                   $proposal_filename.' in frem rundir '.$self->directory);
         }
-        if ($error and $self->run_sir){
+        if ($error and $self->run_sir) {
             #                chdir($self->directory);
             ui->print(category => 'frem',
                       message => 'starting sir');
@@ -3959,14 +4137,6 @@ sub modelfit_analyze
          model_number => { isa => 'Int', optional => 1 }
     );
     my $model_number = $parm{'model_number'};
-
-
-}
-
-sub prepare_results
-{
-    my $self = shift;
-
 
 
 }

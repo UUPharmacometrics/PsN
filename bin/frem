@@ -325,6 +325,10 @@ $frem->print_options(
 );
 
 $frem->run;
+if ($frem->estimate_regular_final_model and !$frem->cholesky) {
+    $frem->prepare_results();
+    $frem->print_results();
+}
 
 if ($frem->vpc and -e $frem->directory . 'frem_vpc.mod') {
     ui->print(category => 'frem', message => "The prepared frem vpc model is " . $frem->directory . "frem_vpc.mod\n");
