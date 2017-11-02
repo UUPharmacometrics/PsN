@@ -38,9 +38,11 @@ estimation_failures <- list_cook.cov$estimation_failures
 samples <- list_cook.cov$samples
 
 #plot cook scores and cov ratios to find influential individuals
-gt <- plot_cook_cov(data_plots,failed_cov_ID,samples,estimation_failures)
-#plot
-grid.draw(gt)
+if (rplots.level > 1) {
+    gt <- plot_cook_cov(data_plots,failed_cov_ID,samples,estimation_failures)
+    #plot
+    grid.draw(gt)
+}
 ```
 \pagebreak
 
