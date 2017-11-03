@@ -2029,6 +2029,12 @@ sub prepare_results
     $return_section{'values'} = [[$the_date, $input_model->filename(), 'v'.$PsN::version, $self->nm_version]];
     push(@{$self->results->[0]{'own'}}, \%return_section);
 
+    # space section (2 empty lines)
+    my %space_section;
+    $space_section{'name'}= '';
+    $space_section{'labels'}= [];
+    $space_section{'values'}= [[]];
+
     # get FREM post-processing data (# subjects, covariate data, number of parameters, etc.)
     my ($cov_names,$cov_rescale,$omegaindex,$par_names,$size,$means) = get_post_processing_data(model => $full_model);
     my @cov_rescale = @{$cov_rescale};
@@ -2065,21 +2071,9 @@ sub prepare_results
                                                                      parameter => 'all',
                                                                      problem_index => 0,
                                                                      subproblem_index => 0);
-    my $have_estimates = (defined $full_values and scalar(@{$full_values})>0 and defined $full_values->[0]) ? 1 : 0;
-    my ($varcov, $error, $cond_covar, $coeff, $covmat, $posdef_err);
-    if ($have_estimates) {
-        # calculate coefficients and conditional variability
-        $varcov = $full_model->problems->[0]->omegas->[$omegaindex]->get_matrix;
-        ($error,$cond_covar,$coeff) = linear_algebra::conditional_covariance_coefficients(varcov => $varcov,
-                                                                                          rescaling => \@rescale,
-                                                                                          cov_index_first => $npar,
-                                                                                          cov_index_last => ($size-1),
-                                                                                          par_index_first => 0,
-                                                                                          par_index_last => ($npar-1));
-        # get final covariance matrix (if available)
-        ($error, my $message) = check_covstep(output => $full_model->outputs->[0]);
-        $covmat = get_covmatrix(output => $full_model->outputs->[0], omega_order => []) unless ($error);
-        $posdef_err = tool::sir::check_matrix_posdef(matrix => $covmat);
+    my $full_has_estimates = 0;
+    if (defined $full_values and scalar(@{$full_values})>0 and defined $full_values->[0]) {
+        $full_has_estimates = 1;
     }
 
     # raw estimates section
@@ -2123,13 +2117,78 @@ sub prepare_results
         push(@{$params->[3]}, $m2_est);
         # final model
         my $full_init = $full_inits->[$i];
-        my $full_est = $have_estimates ? $full_values->[$i] : '';
+        my $full_est = $full_has_estimates ? $full_values->[$i] : '';
         push(@{$params->[4]}, $full_init);
         push(@{$params->[5]}, $full_est);
     }
     $est_section{'values'} = $params;
     push(@{$self->results->[0]{'own'}}, \%est_section);
-    $DB::single = 1;
+
+    # (cond) coefficients and covar section
+    my (%coeff_section, %covar_section);
+    $coeff_section{'name'}='FREM parameter-covariate coefficients';
+    $covar_section{'name'}='FREM parameter (unexplained) variability';
+    $coeff_section{'labels'}=[ [], ["cond on cov", "", @cov_names] ];
+    $covar_section{'labels'}=[ [], ["cond on cov", "", @par_names] ];
+    my $varcov;
+    if ($full_has_estimates) {
+        my ($error, $covar, $coeff);
+        $varcov = $full_model->problems->[0]->omegas->[$omegaindex]->get_matrix;
+        # get coeffs and cond variability, multiconditional (cond on all)
+        ($error,$covar,$coeff) = linear_algebra::conditional_covariance_coefficients(varcov => $varcov,
+                                                                                     rescaling => \@rescale,
+                                                                                     cov_index_first => $npar,
+                                                                                     cov_index_last => ($size-1),
+                                                                                     par_index_first => 0,
+                                                                                     par_index_last => ($npar-1));
+
+        if ($error) {
+            $logger->error("Numerical error: (cond all) coefficients/variability from M$full_model_num omega mat");
+        } else {
+            for (my $par=0; $par<scalar(@{$par_names}); $par++) {
+                # fill multiconditional coefficients and variance for each par
+                my $par_name = $par_names->[$par];
+                push(@{$coeff_section{'labels'}->[0]}, "");
+                push(@{$covar_section{'labels'}->[0]}, "");
+                push(@{$coeff_section{'values'}}, ["all", $par_name, @{$coeff->[$par]}]);
+                push(@{$covar_section{'values'}}, ["all", $par_name, @{$covar->[$par]}]);
+            }
+            foreach my $par_name (@par_names) {
+                # prepare uniconditional coefficient fill by initializing $npar rows
+                push(@{$coeff_section{'labels'}->[0]}, "");
+                push(@{$coeff_section{'values'}}, ["each", $par_name]);
+            }
+            for (my $cov=0; $cov<scalar(@{$cov_names}); $cov++) {
+                my $cov_name = $cov_names->[$cov];
+                # get coeffs and cond variability, uniconditional (cond on each cov separetely)
+                ($error,$covar,$coeff) = linear_algebra::conditional_covariance_coefficients(varcov => $varcov,
+                                                                                             rescaling => \@rescale,
+                                                                                             cov_index_first => $npar+$cov,
+                                                                                             cov_index_last => $npar+$cov,
+                                                                                             par_index_first => 0,
+                                                                                             par_index_last => ($npar-1));
+                if ($error) {
+                    $logger->error("Numerical error: (cond $cov_name) coefficients/variability from M$full_model_num subset omega mat");
+                } else {
+                    for (my $par=0; $par<scalar(@{$par_names}); $par++) {
+                        # fill uniconditional coefficients and variance for each par (note: only one coeff per cov)
+                        my $par_name = $par_names->[$par];
+                        push(@{$coeff_section{'values'}->[$par+$npar]}, $coeff->[$par]->[0]);
+                        push(@{$covar_section{'labels'}->[0]}, "");
+                        push(@{$covar_section{'values'}}, [$cov_name, $par_name, @{$covar->[$par]}]);
+                    }
+                }
+            }
+        }
+        push(@{$self->results->[0]{'own'}}, \%space_section);
+        push(@{$self->results->[0]{'own'}}, \%coeff_section);
+        push(@{$self->results->[0]{'own'}}, \%covar_section);
+
+        # get final covariance matrix (if available)
+        my ($full_has_covmat, $msg) = check_covstep(output => $full_model->outputs->[0]);
+        my $full_covmat = get_covmatrix(output => $full_model->outputs->[0], omega_order => []) unless ($full_has_covmat);
+        my $posdef_err = tool::sir::check_matrix_posdef(matrix => $full_covmat);
+    }
 }
 
 sub old_set_model2_omega_blocks
