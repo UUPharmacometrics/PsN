@@ -605,7 +605,7 @@ unless (-f $options{'frem_dataset'}) {
 
 
 # get FREM post-processing data (# subjects, covariate data, number of parameters, etc.)
-my ($covn,$resc,$omegaindex,$parn,$size,$means) = tool::frem::get_post_processing_data(model => $model);
+my ($covn,$resc,$omegaindex,$parn,$size,$means,$variances) = tool::frem::get_post_processing_data(model => $model);
 
 my @tvpar = ();
 my @cov_reference = ();
@@ -615,6 +615,7 @@ my @cov_rescale = @{$resc};
 my @covnames = @{$covn};
 my @parnames = @{$parn};
 my @cov_means = @{$means};
+my @cov_variances = @{$variances};
 my $npar = scalar(@parnames);
 my $ncov = scalar(@covnames);
 

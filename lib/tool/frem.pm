@@ -445,11 +445,16 @@ sub read_covdata
 
 sub get_post_processing_data
 {
+    # Get post-processing data from final FREM model.
+    # If cov_model (model 2) is defined, get cov means and variances
+    # from inits here instead of (possibly estimated) final FREM.
     my %parm = validated_hash(\@_,
-                              model => { isa => 'model', optional => 0 },
+        model => { isa => 'model', optional => 0 },
+        cov_model => { isa => 'model', optional => 1 },
     );
 
     my $model = $parm{'model'};
+    my $cov_model = $parm{'cov_model'};
 
     my $omegaindex = scalar(@{$model->problems->[0]->omegas})-1;
     my $size = $model->problems->[0]->omegas->[$omegaindex]->size;
@@ -556,14 +561,39 @@ sub get_post_processing_data
         croak("Did not find FREM tags in model code");
     }
 
-    my $thetavalues = $model ->get_hash_values_to_labels(category => 'theta');
-
+    # get means from inits of covariate thetas
+    my $thetavalues;
+    if (defined $cov_model) {
+        $thetavalues = $cov_model->get_hash_values_to_labels(category => 'theta');
+    } else {
+        # fallback on final FREM model if no cov_model (model 2)
+        $thetavalues = $model->get_hash_values_to_labels(category => 'theta');
+    }
     my @cov_means = ();
     foreach my $cn (@covnames){
         unless (defined $thetavalues->[0]->{'theta'}->{'TV_'.$cn}){
             croak("could not find theta value for TV_".$cn);
         }
         push(@cov_means,$thetavalues->[0]->{'theta'}->{'TV_'.$cn});
+    }
+
+    # get variances from inits of covariate omegas (times rescale)
+    my $omegavalues;
+    if (defined $cov_model) {
+        $omegavalues = $cov_model->get_hash_values_to_labels(category => 'omega');
+    } else {
+        # fallback on final FREM model if no cov_model (model 2)
+        $omegavalues = $model->get_hash_values_to_labels(category => 'omega');
+    }
+    my @cov_var = ();
+    for (my $i=0; $i<scalar(@covnames); $i++) {
+        my $cn = $covnames[$i];
+        my $resc = $rescaling[$i];
+        unless (defined $omegavalues->[0]->{'omega'}->{'BSV_'.$cn}) {
+            croak("could not find omega value for BSV_".$cn);
+        }
+        my $var = $resc * $omegavalues->[0]->{'omega'}->{'BSV_'.$cn};
+        push(@cov_var, $var);
     }
 
     my $npar = $size - scalar(@covnames);
@@ -589,9 +619,7 @@ sub get_post_processing_data
         last if (scalar(@parnames)==$npar);
     }
 
-    return(\@covnames,\@rescaling,$omegaindex,\@parnames,$size,\@cov_means);
-
-
+    return(\@covnames,\@rescaling,$omegaindex,\@parnames,$size,\@cov_means,\@cov_var);
 }
 
 sub get_or_set_fix
@@ -2036,11 +2064,12 @@ sub prepare_results
     $space_section{'values'}= [[]];
 
     # get FREM post-processing data (# subjects, covariate data, number of parameters, etc.)
-    my ($cov_names,$cov_rescale,$omegaindex,$par_names,$size,$means) = get_post_processing_data(model => $full_model);
+    my ($cov_names,$cov_rescale,$omegaindex,$par_names,$size,$means,$variances) = get_post_processing_data(model => $full_model, cov_model => $model_2);
     my @cov_rescale = @{$cov_rescale};
     my @cov_names = @{$cov_names};
     my @par_names = @{$par_names};
     my @cov_means = @{$means};
+    my @cov_var = @{$variances};
     my $npar = scalar(@par_names);
     my $ncov = scalar(@cov_names);
     my @rescale = (1) x $npar;
@@ -2079,12 +2108,12 @@ sub prepare_results
     # raw estimates section
     my %est_section;
     $est_section{'name'}='Raw inits & estimates';
-    my @header = ("type", @{$full_labels});
+    my @est_header = ("type", @{$full_labels});
     $est_section{'labels'}=[
         [ ("M1 (base model)") x 2,
           ("M2 (covariates)") x 2,
           ("M$full_model_num (full FREM)") x 2,
-        ], \@header,
+        ], \@est_header,
     ];
     my $params = [
         ["init"], ["estimate"],
@@ -2123,6 +2152,25 @@ sub prepare_results
     }
     $est_section{'values'} = $params;
     push(@{$self->results->[0]{'own'}}, \%est_section);
+    push(@{$self->results->[0]{'own'}}, \%space_section);
+
+    # covariates section
+    $DB::single = 1;
+    my %cov_section;
+    $cov_section{'name'} = 'Covariates';
+    my @cov_header = ("source", @cov_names);
+    $cov_section{'labels'} = [
+        [ "mean", "mean",
+          "variance", "variance",
+        ], \@cov_header,
+    ];
+    $cov_section{'values'} = [
+        [ "data", @cov_means ], [ "estimate" ],
+        [ "data", @cov_var ], [ "estimate" ],
+    ];
+    push(@{$self->results->[0]{'own'}}, \%cov_section);
+    push(@{$self->results->[0]{'own'}}, \%space_section);
+
 
     # (cond) coefficients and covar section
     my (%coeff_section, %covar_section);
@@ -2180,7 +2228,6 @@ sub prepare_results
                 }
             }
         }
-        push(@{$self->results->[0]{'own'}}, \%space_section);
         push(@{$self->results->[0]{'own'}}, \%coeff_section);
         push(@{$self->results->[0]{'own'}}, \%covar_section);
 
