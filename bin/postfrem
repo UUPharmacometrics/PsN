@@ -1002,7 +1002,7 @@ close $idfh;
 open( FILE1, '>'.$pardatafile );
 print FILE1 'parname'."\n";
 for (my $i=0; $i< scalar(@parnames); $i++){
-	print FILE1 $parnames[$i]."\n";
+	print FILE1 '"'.$parnames[$i].'"'."\n";
 }
 close FILE1;
 
@@ -1041,15 +1041,15 @@ my $varheader='sample';
 #2. per cov
 #3. all
 for (my $i=0;$i<$npar; $i++){
-	$varheader .= ',CONDVAR.par.'.$labels[$i].'.given.none';
+	$varheader .= ',"CONDVAR.par.'.$labels[$i].'.given.none"';
 }
 for (my $j=$npar;$j<$size; $j++){
 	for (my $i=0;$i<$npar; $i++){
-		$varheader .= ',CONDVAR.par.'.$labels[$i].'.given.cov.'.$labels[$j];
+		$varheader .= ',"CONDVAR.par.'.$labels[$i].'.given.cov.'.$labels[$j].'"';
 	}
 }
 for (my $i=0;$i<$npar; $i++){
-	$varheader .= ',CONDVAR.par.'.$labels[$i].'.given.allcov';
+	$varheader .= ',"CONDVAR.par.'.$labels[$i].'.given.allcov"';
 }
 
 
@@ -1060,11 +1060,11 @@ for (my $j=$npar;$j<$size; $j++){
 	my $covindex  = $j-$npar;
 	for (my $i=0;$i<$npar; $i++){
 		if ($categorical->[$covindex]){
-#			$ratioheader .= ',RATIO.par.'.$labels[$i].'.given.reference.'.$labels[$j];
-			$ratioheader .= ',RATIO.par.'.$labels[$i].'.given.other.'.$labels[$j];
+#			$ratioheader .= ',"RATIO.par.'.$labels[$i].'.given.reference.'.$labels[$j].'"';
+			$ratioheader .= ',"RATIO.par.'.$labels[$i].'.given.other.'.$labels[$j].'"';
 		}else{
-			$ratioheader .= ',RATIO.par.'.$labels[$i].'.given.cov5th.'.$labels[$j];
-			$ratioheader .= ',RATIO.par.'.$labels[$i].'.given.cov95th.'.$labels[$j];
+			$ratioheader .= ',"RATIO.par.'.$labels[$i].'.given.cov5th.'.$labels[$j].'"';
+			$ratioheader .= ',"RATIO.par.'.$labels[$i].'.given.cov95th.'.$labels[$j].'"';
 		}
 	}
 }
@@ -1207,9 +1207,9 @@ for (my $j=0;$j<($size-$npar); $j++){ #foreach covariate
 
 
 for (my $i=0;$i<$npar; $i++){
-	$header .= ','.$parnames[$i].'.observed';
+	$header .= ',"'.$parnames[$i].'.observed"';
 	for (my $l=0; $l<scalar(@probs); $l++){
-		$header .= ','.$parnames[$i].'.'.($probs[$l]*100).'th';
+		$header .= ',"'.$parnames[$i].'.'.($probs[$l]*100).'th"';
 	}
 }
 my $idratiosfile = 'frem_id_ratios.csv';
@@ -1275,7 +1275,7 @@ for (my $i=0;$i<$npar; $i++){
 	for (my $k=0; $k<scalar(@types); $k++){
 		my $type = $types[$k];
 		my $observed = shift(@{$variance_arrays{$par}->{$type}});
-		my $line = $par.'.'.$type.','.sqrt($observed);
+		my $line = '"'.$par.'.'.$type.'",'.sqrt($observed);
         if ($have_uncertainty) {
             my @sorted = (sort {$a <=> $b} @{$variance_arrays{$par}->{$type}});
             my $quantref = quantile(probs => \@probs, numbers=> \@sorted);
