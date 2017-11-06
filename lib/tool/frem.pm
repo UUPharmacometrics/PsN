@@ -456,11 +456,24 @@ sub get_post_processing_data
     my $model = $parm{'model'};
     my $cov_model = $parm{'cov_model'};
 
+    # figure out $OMEGA index of FREM block, size of it and ETAs before
+    # (skipped and not a part of the final FREM block)
     my $omegaindex = scalar(@{$model->problems->[0]->omegas})-1;
     my $size = $model->problems->[0]->omegas->[$omegaindex]->size;
-    my $code = $model->get_code(record => 'error');
+    my $etas_before_omega = 0;
+    if ($omegaindex > 0) {
+        my $etas_per_omega = model::problem::etas_per_omega(problem => $model->problems->[0]);
+        foreach my $eta_arr (@{$etas_per_omega}[0..$omegaindex-1]) {
+            $etas_before_omega = $etas_before_omega + scalar(@{$eta_arr});
+        }
+    }
+
+    my $pred_code = $model->get_code(record => 'pred');
+    my $pk_code = $model->get_code(record => 'pk');
+    my $error_code = $model->get_code(record => 'error');
+    my $code = $error_code;
     unless (scalar(@{$code}) > 0) {
-        $code = $model->get_code(record => 'pred');
+        $code = $pred_code;
     }
     if ( scalar(@{$code}) <= 0 ) {
         croak("Neither ERROR or PRED defined in post-processing model");
@@ -476,9 +489,9 @@ sub get_post_processing_data
         }
     }
     unless ($compact_frem){
-        $code = $model->get_code(record => 'pk');
+        $code = $pk_code;
         unless (scalar(@{$code}) > 0) {
-            $code = $model->get_code(record => 'pred');
+            $code = $pred_code;
         }
         if ( scalar(@{$code}) <= 0 ) {
             croak("Neither PK or PRED defined in post-processing model");
@@ -598,19 +611,66 @@ sub get_post_processing_data
 
     my $npar = $size - scalar(@covnames);
 
+    # get parameter labels
     my $row=1;
     my $col=1;
     my @parnames=();
+    my %parnames=();
     foreach my $opt (@{$model->problems->[0]->omegas->[$omegaindex]->options}){
         if ($row == $col){
             my $lab = $opt->label;
-            unless (defined $lab and length($lab)>0){
-                $lab = 'PAR'.(scalar(@parnames)+1);
+            my $etanum = $etas_before_omega + scalar(@parnames)+1;
+
+            if (defined $lab) {
+                # strip leading non-alpha chars and trailing whitespace
+                $lab =~ s/^[^a-zA-z]+|\s+$//g;
+                # strip quotation marks (") and replace whitespace with underscore (_)
+                if ($lab =~ /[\s"]+/) {
+                    $lab =~ s/\s+/_/g;
+                    $lab =~ s/"+//g;
+                    if (length($lab)>0) {
+                        $logger->warning("Comment on OMEGA row contains whitespace or \" chars, using '$lab' for ETA($etanum)");
+                    }
+                }
             }
-            $lab =~ s/^\s*(\d+)\s*//;
-            $lab =~ s/\s*$//;
-            $lab =~ s/\s+/_/g;
-            push(@parnames,$lab);
+            unless (defined $lab and length($lab)>0){
+                $lab = '';
+
+                # try to get LHS of ETA(N) usage
+                my @code;
+                push @code, @{$pred_code}  if (defined $pred_code);
+                push @code, @{$pk_code}    if (defined $pk_code);
+                push @code, @{$error_code} if (defined $error_code);
+                foreach my $line (@code) {
+                    if ($line =~ /[^;]+=.*(?<!TH)ETA\($etanum\)/) {
+                        chomp $line;
+                        (my $lhs = $line) =~ s/\W*(\w+)\W*=.+/$1/;
+                        if (length($lhs)>0) {
+                            ($lab = $lhs) =~ s/^(TV|POP)_*//;
+                            $logger->info("No comment on OMEGA row but found LHS '$lhs', considering '$lab' for ETA($etanum)");
+                            last unless (exists $parnames{$lab});
+                        }
+                    }
+                }
+
+                if (length($lab) == 0) {
+                    # generate "PAR2" style label if none now exists
+                    $lab = 'PAR'.(scalar(@parnames)+1);
+                    $logger->warning("No label for OMEGA, using '$lab' for ETA($etanum)");
+                }
+            }
+            # iterate label if collision (e.g. "CL"->"CL_2")
+            my $newparam = $lab;
+            my $num = 2;
+            while (exists $parnames{$newparam}) {
+                $newparam = $lab."_$num";
+            }
+            if ($newparam ne $lab) {
+                $logger->warning("OMEGA label (n=$num) collision, using '$newparam' for ETA($etanum)");
+            }
+
+            push(@parnames,$newparam);
+            $parnames{$newparam} = 1;
             $col=1;
             $row++;
         }else{
@@ -2155,7 +2215,6 @@ sub prepare_results
     push(@{$self->results->[0]{'own'}}, \%space_section);
 
     # covariates section
-    $DB::single = 1;
     my %cov_section;
     $cov_section{'name'} = 'Covariates';
     my @cov_header = ("source", @cov_names);
