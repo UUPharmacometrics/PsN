@@ -70,7 +70,7 @@ sub BUILD
 	$self->directory($directory);
 	$self->filename($filename);
 
-	unless ( array::not_empty($self->header) or array::not_empty($self->individuals) ) { 
+	unless ( array::not_empty($self->header) or array::not_empty($self->individuals) ) {
 		#if empty
 		if ( -e $self->full_name ) {
 			$self->_read_header;
@@ -104,7 +104,7 @@ sub add_randomized_input_data
     my $missing_data_token = $parm{'missing_data_token'};
     my @xcolumn_names;
 
-    #first prob only 
+    #first prob only
     #in array column_headers
     #in scalar datafilename, modelfilename
     #out array xcolumn_names
@@ -118,7 +118,7 @@ sub add_randomized_input_data
     @xcolumn_names = @{$data_obj -> add_randomized_columns(
     filename => $filename,
     directory => $model->directory,
-    column_headers => \@column_headers)}; 
+    column_headers => \@column_headers)};
     #writes to own filename
     #after changing it to directory/filename
 
@@ -130,7 +130,7 @@ sub add_randomized_input_data
     $model -> datafiles(problem_numbers =>[1],
         new_names => [$model->directory.$filename]);
     $model->relative_data_path(1);
-    $model->_write(); 
+    $model->_write();
 
     return \@xcolumn_names;
 }
@@ -192,7 +192,7 @@ sub _bootstrap
 						   stratify_on => $stratify_on);
 	  push( @included_keys, $incl_key_ref );
 	  push( @incl_individuals, $incl_ind_ref );
-	  push( @boot_samples, $new_name ); 
+	  push( @boot_samples, $new_name );
 	  if( $status_bar->tick() ){
 		  ui->print( category => 'bootstrap',
 					 message => $status_bar->print_step,
@@ -264,7 +264,7 @@ sub _bootstrap_from_keys
 	my @boot_samples;
 
 	# The bootstrap_from_keys method draws I<samples> number of bootstrap
-	# samples from the data set based on input keys reference generated 
+	# samples from the data set based on input keys reference generated
 	#by bootstrap method on same dataset (assumed).
 	# returns references to one array: I<boot_samples>,
 	# which holds the names of bootstrap data files
@@ -308,7 +308,7 @@ sub append_binary_columns
 	my $baseline_only = $parm{'baseline_only'};
 	my $start_header = $parm{'start_header'};
 	my $mdv_evid_indices = $parm{'mdv_evid_indices'};
-	
+
 	unless (defined $start_header){
 		$start_header = $self->header;
 	}
@@ -319,9 +319,9 @@ sub append_binary_columns
 	unless (scalar(@{$start_header}) == $column_count){
 		croak("column count is $column_count but input header length is ".scalar(@{$start_header}));
 	}
-	
+
 	my @mapping = (); #at each index pos have ref of array of old value that translates to non-zero in appended
-	my @new_indices = (); 
+	my @new_indices = ();
 	my $any_change = 0;
 	my @new_header = @{$start_header};
 	my @new_categorical = ();
@@ -334,7 +334,7 @@ sub append_binary_columns
 			$new_header[$index] = $label;
 		}
 		my @col_mapping = ();
-		my %factors; 
+		my %factors;
 		if ($baseline_only){
 			unless (defined $mdv_evid_indices){
 				croak("must set mdv evid index array when checking baseline factors");
@@ -349,7 +349,7 @@ sub append_binary_columns
 		}else{
 			%factors = %{$self->factors(column => $index+1, #column number in data set
 										return_occurences => 1,
-										unique_in_individual => 0,									   
+										unique_in_individual => 0,
 										ignore_missing => 1)};
 		}
 		#check if more than two non-missing. If not then empty colmap If yes then set mapping
@@ -390,7 +390,7 @@ sub append_binary_columns
 		}
 		$self->header(\@new_header);
 	}
-	
+
 	return (\@mapping,\@new_indices,\@new_categorical,\@baseline_and_multiple);
 }
 
@@ -460,11 +460,11 @@ sub frem_compute_covariate_properties
 
         #key is the factor, e.g. occasion 1. Value is the number of occurences
         my @temp=();
-        #sort occasions ascending 
+        #sort occasions ascending
         foreach my $key (sort {$a <=> $b} keys (%{$factors})){
             push(@temp,sprintf("%.12G",$key));
         }
-        $results->{'occasionlist'}=\@temp; 
+        $results->{'occasionlist'}=\@temp;
     }
 
     $filtered_data -> directory($directory);
@@ -474,7 +474,7 @@ sub frem_compute_covariate_properties
 
     #this writes new data to disk
     #only missing invariant for now!
-    ($invariant_matrix,$timevar_matrix,$results->{'have_missing_covariates'}) = 
+    ($invariant_matrix,$timevar_matrix,$results->{'has_missingness'}) =
     $filtered_data->add_frem_lines( occ_index => $occ_index,
         evid_index => $evid_index,
         mdv_index => $mdv_index,
@@ -673,7 +673,7 @@ sub cdd_create_datasets
     if (!$data->have_unique_ids()) {
         print("Warning: The dataset does not have unique IDs. There is a risk that individuals will be merged together.\n");
     }
-	
+
 	my ($new_datas, $skip_ids, $skip_keys, $skip_values, $remainders, $pr_bins ) =
 		$data -> _case_deletion( case_column => $case_column,
 								selection   => $selection_method,
@@ -797,7 +797,7 @@ sub _case_deletion
 									filename    => $newname,
 									ignore_missing_files => 1 );
 		$newdata->_write;
-		
+
 		my $delname = $directory . 'rem_' . ($k + 1) . '.dta';
 		my $deldata = data -> new ( header      => \@header,
 									ignoresign  => $self->ignoresign,
@@ -1065,11 +1065,11 @@ sub factors
 		my @ifactors = keys %{$individual->factors( column => $column )};
 		if ( scalar @ifactors > 1 and $unique_in_individual ) {
 			#do not set non-unique if only two and one of them is missing data
-			unless (scalar @ifactors == 2 and $ignore_missing and 
+			unless (scalar @ifactors == 2 and $ignore_missing and
 					($ifactors[0] eq '.' ||
 					 $ifactors[1] eq '.' ||
 					 $ifactors[0] == $self->missing_data_token ||
-					 $ifactors[1] == $self->missing_data_token)){ 
+					 $ifactors[1] == $self->missing_data_token)){
 				$factors{'Non-unique values found'} = 1;
 				print "Individual ".$individual->idnumber." factors ".join(',',@ifactors)."\n" if ($verbose);
 			}
@@ -1168,11 +1168,11 @@ sub fractions
 	my $unique_in_individual = $parm{'unique_in_individual'};
 	my %fractions;
 
-	my %factors = $self->factors( 'return_occurences' => 1, 
+	my %factors = $self->factors( 'return_occurences' => 1,
 			'unique_in_individual' => $unique_in_individual,
 			'column_head' => $column_head,
 			'column' => $column);
-	
+
 	my $sum = 0;
 	while (my ($factor, $amount) = each %factors) {
 		if ( $factor == $self->missing_data_token && $ignore_missing ) {
@@ -1213,7 +1213,7 @@ sub max
     # future, if it turns out to be a bottleneck
 
 	  my $first_id = $self->individuals()->[0];
-	  croak("data->max: No individuals defined in data object based on " . 
+	  croak("data->max: No individuals defined in data object based on " .
 			$self->full_name ) unless defined $first_id;
 
 	  my @data_row = split( /,/ , $first_id->subject_data ->[0] );
@@ -1251,7 +1251,7 @@ sub median
 		 column => { isa => 'Maybe[Int]', optional => 1 },
 		 column_head => { isa => 'Str', optional => 1 },
 		 unique_in_individual => { isa => 'Bool', default => 0, optional => 1 },
-		 global_median => { isa => 'Bool', default => 0, optional => 1 }							  
+		 global_median => { isa => 'Bool', default => 0, optional => 1 }
 	);
 	my $column = $parm{'column'};
 	my $column_head = $parm{'column_head'};
@@ -1280,14 +1280,14 @@ sub median
 		my @individual_array = ();
 		if( $unique_in_individual ) {
 			my $ifactors = $individual->factors( 'column' => $column );
-			
+
 			foreach ( keys %{$ifactors} ) {
 				next if ( $_ == $self->missing_data_token );
 				push( @individual_array, $_ );
 			}
 		} else {
 			my $ifactors = $individual->subject_data;
-			
+
 			for (my $i = 0; $i <= $#{$ifactors}; $i++ ) {
 				my @data_row = split( /,/ , $ifactors->[$i] );
 				next if ( ($data_row[$column-1] eq '.') or ($data_row[$column-1] == $self->missing_data_token) );
@@ -1302,7 +1302,7 @@ sub median
 	}
 
 	$return_value = array::median(\@median_array);
-	
+
 	$self->_median->[$column] = $return_value;
 
 	return $return_value;
@@ -1462,7 +1462,7 @@ sub sd
 		$mean = $self->mean(column   => $column,
 			hi_cutoff => $hi_cutoff,
 			global_mean => $global_sd );
-	} elsif (defined $low_cutoff) {	  
+	} elsif (defined $low_cutoff) {
 		$mean = $self->mean(column   => $column,
 			low_cutoff => $low_cutoff,
 			global_mean => $global_sd );
@@ -1712,9 +1712,9 @@ sub resample
 		  @header = @{$self->header()};
 		  $individuals = $self->individuals();
 		  my @factorlist = sort { $a <=> $b } keys %strata;
-		  
+
 		  foreach my $factor (@factorlist) {
-			  my $key_list = $strata{$factor};	
+			  my $key_list = $strata{$factor};
 			  my $keys;
 			  if ( defined $subjects{$factor} ) {
 				  $keys = $subjects{$factor};
@@ -1780,7 +1780,7 @@ sub resample
 				push( @incl_individuals, $individuals->[ $key_ref ]->idnumber );
 				push( @bs_id_ids, $id_ids[ $key_ref ] );
 			}
-			
+
 			$boot = data->new( header      => \@header,
 							   idcolumn    => $self->idcolumn,
 							   ignoresign  => $self->ignoresign,
@@ -1788,7 +1788,7 @@ sub resample
 							   individuals => \@bs_inds,
 							   filename    => $new_name,
 							   ignore_missing_files => 1);
-			
+
 			$boot->_renumber_ascending;
 			$boot->_write;
 
@@ -1798,7 +1798,7 @@ sub resample
 			for ( my $i = 1; $i <= $size; $i++ ) {
 				random_uniform_integer(1,0,scalar @{$individuals}-1)
 			}
-		}	
+		}
 	}
 
 	return \@incl_individuals, \@included_keys;
@@ -1906,7 +1906,7 @@ sub subsets
 		while ( my ($factor, $rnd_ids ) = each %rnd_ids_hash ) {
 			#Sort individuals in each factor group according to assigned random number.
 			#Deal, like a deck of cards,  individuals from each factor groups to bins.
-			#If there are not enough 'cards' to give each bin equal number then 
+			#If there are not enough 'cards' to give each bin equal number then
 			#whichever bin was next in turn will get the first individual from the next factor.
 			#Individuals that should be ignored based on ignoresign are not filtered here,
 			#so sorting may be more uneven after ignoring.
@@ -2004,7 +2004,7 @@ sub split_vertically
 	my @stratify_values;
 
 	#split data set on column with index $split_index and extract stratification col
-	#and return left_side_individuals and right_side_individuals as two arrays of individual objects, 
+	#and return left_side_individuals and right_side_individuals as two arrays of individual objects,
 	#and split_values as ref of array of refs of arrays
 	# and stratification values as array
 	#without changing $self object. split values returned as array of array over individuals
@@ -2122,8 +2122,8 @@ sub create_randomized_data
     #files are written in _randomize_data
     my $filenames = $data->_randomize_data(name_stub   => $name_stub,
         samples     => $samples,
-        stratify_index => $stratify_index, 
-        rand_index => $rand_index, 
+        stratify_index => $stratify_index,
+        rand_index => $rand_index,
         equal_obs => $equal_obs,
         directory => $output_directory);
     $data = undef;
@@ -2158,7 +2158,7 @@ sub _randomize_data
 	#return array of data file names including dir
 
 	#setup
-	my ($left_side_individuals,$right_side_individuals,$rand_values,$stratify_values) = 
+	my ($left_side_individuals,$right_side_individuals,$rand_values,$stratify_values) =
 	$self->split_vertically(split_index => $rand_index,
 		stratify_index => $stratify_index);
 
@@ -2195,7 +2195,7 @@ sub _randomize_data
 					$individual_is_changed = 0;
 				}elsif (scalar(@{$rand_values->[$base_index]}) == scalar(@{$rand_values->[$rand_index]})){
 					my $found_diff=0;
-					for (my $tmp=0; $tmp < scalar(@{$rand_values->[$base_index]}); $tmp++){ 
+					for (my $tmp=0; $tmp < scalar(@{$rand_values->[$base_index]}); $tmp++){
 						if ($rand_values->[$base_index]->[$tmp] != $rand_values->[$rand_index]->[$tmp]){#warning non-numeric
 							$found_diff=1;
 							last;
@@ -2211,7 +2211,7 @@ sub _randomize_data
 		$count_changed_individual_data[$i] = $changed_count;
 		my $newdata = data->new( header      => \@header,
 								 idcolumn    => $self->idcolumn,
-								 missing_data_token => $self->missing_data_token,			 
+								 missing_data_token => $self->missing_data_token,
 								 ignoresign  => $self->ignoresign,
 								 individuals => \@new_individuals,
 								 filename    => $new_name,
@@ -2223,7 +2223,7 @@ sub _randomize_data
 
 	my $filename = 'count_randcol_diff.txt';
 	$filename = $directory.'/'.$filename if (defined $directory);
-	open(FILE,">$filename") || 
+	open(FILE,">$filename") ||
 	die "Could not create $filename\n";
 	print FILE join("\n",@count_changed_individual_data )."\n";
 	close(FILE);
@@ -2252,7 +2252,7 @@ sub reconcile_column
 	#if new_values is longer then do last observation carry forward. If new_values is shorter
 	#then just skip last values in template_values
 	#if equal_obs is not true (equal_switch is true) then create array value_sequence from template_values
-	#copy first value from template_values to new_values. Then for each new 
+	#copy first value from template_values to new_values. Then for each new
 	#position compare old_value at this pos with previous pos
 	#if equal then set new_values at this pos to same as previous pos
 	#if different then set new_values at this pos to next value in value_sequence.
@@ -2318,7 +2318,7 @@ sub reconcile_column
 					($template_values->[$i] != $self->missing_data_token())){
 					push(@value_sequence,$template_values->[$i]);
 					$index++;
-				} 
+				}
 			}elsif(math::usable_number($template_values->[$i]) or math::usable_number($value_sequence[$index])){
 				#one is numeric, then must be different
 				push(@value_sequence,$template_values->[$i]);
@@ -2413,7 +2413,7 @@ sub get_eta_matrix
 			}
 			push( @eta_matrix, \@new_row );
 		}
-	}  
+	}
 
 	return \@eta_matrix;
 }
@@ -2450,7 +2450,7 @@ sub column_to_array
 				my @row = split(/,/, $individual_row);
 				push(@array, $row[$column]);
 			}
-		}  
+		}
 	} else {
 		my $index = 0;
 		foreach my $individual (@{$self->individuals}) {
@@ -2495,7 +2495,7 @@ sub _write
 		croak("Trying to write to $filename, but file already exists");
 	}
 
-	open(FILE,">$filename") || 
+	open(FILE,">$filename") ||
 	die "Could not create $filename\n";
 	my $data_ref = $self->format_data;
 	my @data = @{$data_ref};
@@ -2531,7 +2531,7 @@ sub _read_header
 	my $ignoresign = $self->ignoresign;
 	my ( @data, @new_record, $row, $tmp_row, @header, $hdrstring );
 	$row=0;
-	open(DATAFILE,"$filename") || 
+	open(DATAFILE,"$filename") ||
 	die "Could not open $filename for reading";
 	my $found_data=0;
 	while (<DATAFILE>) {
@@ -2539,7 +2539,7 @@ sub _read_header
 		#skip spaces after commas
 		s/\,\s*/\,/g;
 		$tmp_row    = $_;
-		
+
 		my $is_header=0;
 
 		if (defined $ignoresign and length($ignoresign)>0){
@@ -2574,7 +2574,7 @@ sub _read_header
 		"in which case the workaround is to run mac2unix on " . $self->filename . "\n" unless $found_data;
 
 	$hdrstring = pop(@data); #last value of array
-	chomp($hdrstring) if (defined $hdrstring); 
+	chomp($hdrstring) if (defined $hdrstring);
 	#	print "headerstring $hdrstring\n";
 	@header = ();
 	@header = split(/\,\s*|\s+/, $hdrstring) if (defined $hdrstring);
@@ -2660,7 +2660,7 @@ sub _read_individuals
 		s/\,[ ]+/\,/g;  # remove spaces after original and new commas (TABs absorb spaces coming after, but not before)
 		s/[ ]+/\,/g;    # replace sequence of spaces with commas
 
-		my @new_row	= split(/\,/); 
+		my @new_row	= split(/\,/);
 		my $is_data = 1;
 
 		if (defined $ignoresign and length($ignoresign)>0){
@@ -2710,8 +2710,8 @@ sub _read_individuals
 			$old_ID = $new_ID if ( not defined $old_ID );
 
 			#If we have not yet found first individual to read, then
-			#count each time new individual found. If new individual is 
-			#first individual to read, then reset old_ID so that 
+			#count each time new individual found. If new individual is
+			#first individual to read, then reset old_ID so that
 			#the individual's lines will be read before new individual is pushed.
 			#If we have not found first individual to read then skip to next line in file
 
@@ -2786,7 +2786,7 @@ sub create_row_filter
 		$index++;
 	}
 
-	#if no columns to filter on were found, return empty filter array 
+	#if no columns to filter on were found, return empty filter array
 	#which means "keep everything". Otherwise enter loop below.
 
 	unless (scalar(keys %index_hash) < 1){
@@ -2939,7 +2939,7 @@ sub lasso_get_categorical_statistics
         # (the factor that most subjects have)
     }else{
         $statistics{'most_common'} = $sorted[1];
-    } 
+    }
 
     my %sd_sums;
     foreach my $factor (keys %factors){
@@ -3155,7 +3155,7 @@ sub scm_calculate_categorical_statistics
         # (the factor that most subjects have)
     }else{
         $median = $sorted[1];
-    } 
+    }
     #max and min ignores missing data
     $max = $self -> max( column => $column_number );
     $min = $self -> min( column => $column_number );
@@ -3207,7 +3207,7 @@ sub scm_calculate_continuous_statistics
                     message => "\nWarning: Individuals were found to have multiple values ".
                     "in the $covariate column, but $covariate was not set as time_varying in the ".
                     "configuration file. Mean and median may not be computed correctly for $covariate. ") unless $return_after_derivatives_done;
-            }	
+            }
         }
     }
 

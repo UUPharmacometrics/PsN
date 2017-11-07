@@ -132,9 +132,9 @@ my $logger = logging::get_logger("postfrem");
 # base files and folders
 if (defined $options{'model'}) {
     if (defined $options{'frem_directory'}) {
-        $logger->warning("Option -frem_directory ignored with -frem_model");
+        $logger->warning("Option -frem_directory ignored with -model");
     } elsif (defined $options{'sir_directory'}) {
-        $logger->warning("Option -sir_directory ignored with -frem_model");
+        $logger->warning("Option -sir_directory ignored with -model");
     }
     if (not -f $options{'model'}) {
         $logger->critical("must set -model to existing (final) FREM model\n"); die;
@@ -603,25 +603,38 @@ unless (-f $options{'frem_dataset'}) {
     $logger->critical("Could not read FREM dataset ".$options{'frem_dataset'}); die;
 }
 
+# set covariate summary file (will replace re-calculation of covariate stats)
+my $file = 'covariates_summary.csv';
+my ($vol, $dir, undef) = File::Spec->splitpath($options{'frem_dataset'});
+$cov_summary = File::Spec->catpath($vol, $dir, $file);
+unless (-f $cov_summary) {
+    $logger->critical("Could not read $cov_summary"); die;
+}
 
 # get FREM post-processing data (# subjects, covariate data, number of parameters, etc.)
-my ($covn,$resc,$omegaindex,$parn,$size,$means,$variances) = tool::frem::get_post_processing_data(model => $model);
-
-my @tvpar = ();
-my @cov_reference = ();
-my @cov_units=();
-
+my ($covn,$resc,$omegaindex,$parn,$size,$emean,$evar) = tool::frem::get_post_processing_data(model => $model);
 my @cov_rescale = @{$resc};
 my @covnames = @{$covn};
 my @parnames = @{$parn};
-my @cov_means = @{$means};
-my @cov_variances = @{$variances};
+my @est_cov_means = @{$emeans};
+my @est_cov_variances = @{$evar};
 my $npar = scalar(@parnames);
 my $ncov = scalar(@covnames);
+
+# get covariate statistics post-processing data (TODO: shall start to replace read_covdata below)
+my $covdata = tool::frem::read_covresults(covariates => @covnames, filename => $cov_summary);
+unless (defined $covdata) {
+    $logger->critical("covariate summary read error, can't continue"); die;
+}
+my @cov_means = @{ $covdata->{'invariant_mean'} };
 
 my ($cov_5th,$cov_95th,$id_covariate_vectors,$categorical,$categoryinfo) =
 	tool::frem::read_covdata(covnames => \@covnames,
 							 filename => $options{'frem_dataset'});
+
+my @tvpar = ();
+my @cov_reference = ();
+my @cov_units=();
 
 for (my $i=0; $i<$ncov; $i++){
 	my $cn = $covnames[$i];

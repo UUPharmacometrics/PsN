@@ -80,7 +80,7 @@ has 'use_pred' => ( is => 'rw', isa => 'Bool', default => 1 );
 has 'estimate_regular_final_model' => ( is => 'rw', isa => 'Bool', default => 1 ); #no commandline option currently
 has 'estimate_means' => ( is => 'rw', isa => 'Bool', default => 1 );
 has 'estimate_covariates' => ( is => 'rw', isa => 'Bool', default => 0 );
-has 'have_missing_covariates' => ( is => 'rw', isa => 'ArrayRef', default => sub { [] } );
+has 'has_missingness' => ( is => 'rw', isa => 'ArrayRef', default => sub { [] } );
 has 'cholesky' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'imp_covariance' => ( is => 'rw', isa => 'Bool', default => 1 );
 
@@ -89,6 +89,7 @@ has 'reordered_model_1' => ( is => 'rw', isa => 'model' );
 has 'model_2' => ( is => 'rw', isa => 'model' );
 has 'final_numbers' => ( is => 'rw', isa => 'ArrayRef[Int]', default => sub { [] } );
 has 'final_models' => ( is => 'rw', isa => 'ArrayRef[model]', default => sub { [] } );
+has 'cov_summary' => ( is => 'rw', isa => 'Str' );
 
 my $logger = logging::get_logger("frem");
 
@@ -453,8 +454,13 @@ sub get_post_processing_data
         cov_model => { isa => 'model', optional => 1 },
     );
 
+    # TODO: don't update inits just to get estimates, get them directly
     my $model = $parm{'model'};
+    $model->update_inits(from_output => $model->outputs->[0]);
     my $cov_model = $parm{'cov_model'};
+    if (defined $cov_model) {
+        $model->update_inits(from_output => $model->outputs->[0]);
+    }
 
     # figure out $OMEGA index of FREM block, size of it and ETAs before
     # (skipped and not a part of the final FREM block)
@@ -2059,6 +2065,8 @@ sub prepare_results
     my $model_2 = $self->model_2;
     my @final_models = @{$self->final_models};
     my @final_numbers = @{$self->final_numbers};
+    my $cov_summary = $self->cov_summary;
+    $logger->critical("no cov summary file known, this is a bug") unless (defined $cov_summary);
 
     # make sure old results file is not overwritten if re-run
     if (-e $self->directory.$self->results_file) {
@@ -2067,8 +2075,9 @@ sub prepare_results
         while (-e $self->directory."$filename.$num".'.csv'){
             $num++;
         }
-        $filename = "$filename.$num".'.csv';
-        $self->results_file($filename);
+        my $new_filename = "$filename.$num".'.csv';
+        $self->results_file($new_filename);
+        $logger->warning("Old results file exists, writing to '$new_filename' to avoid overwrite");
     }
 
     # check that final model is supported (4/4b only for now)
@@ -2122,18 +2131,6 @@ sub prepare_results
     $space_section{'name'}= '';
     $space_section{'labels'}= [];
     $space_section{'values'}= [[]];
-
-    # get FREM post-processing data (# subjects, covariate data, number of parameters, etc.)
-    my ($cov_names,$cov_rescale,$omegaindex,$par_names,$size,$means,$variances) = get_post_processing_data(model => $full_model, cov_model => $model_2);
-    my @cov_rescale = @{$cov_rescale};
-    my @cov_names = @{$cov_names};
-    my @par_names = @{$par_names};
-    my @cov_means = @{$means};
-    my @cov_var = @{$variances};
-    my $npar = scalar(@par_names);
-    my $ncov = scalar(@cov_names);
-    my @rescale = (1) x $npar;
-    push(@rescale,@cov_rescale);
 
     # model 1: base model (after possible reordering)
     my $base_coords = $base_model->problems->[0]->get_estimated_attributes(parameter => 'all', attribute => 'coordinate_strings');
@@ -2214,6 +2211,24 @@ sub prepare_results
     push(@{$self->results->[0]{'own'}}, \%est_section);
     push(@{$self->results->[0]{'own'}}, \%space_section);
 
+    # get covariate and FREM post-processing data (# subjects, covariate data, number of parameters, etc.)
+    my ($cov_names,$cov_rescale,$omegaindex,$par_names,$size,$emeans,$evars) = get_post_processing_data(model => $full_model, cov_model => $model_2);
+    my @cov_rescale = @{$cov_rescale};
+    my @cov_names = @{$cov_names};
+    my @par_names = @{$par_names};
+    my @estcov_means = @{$emeans};
+    my @estcov_var = @{$evars};
+    my $npar = scalar(@par_names);
+    my $ncov = scalar(@cov_names);
+    my @rescale = (1) x $npar;
+    push(@rescale,@cov_rescale);
+    my $covdata = read_covresults(covnames => $cov_names, filename => $cov_summary);
+    unless (defined $covdata) {
+        $logger->critical("covariate summary read error, can't continue"); die;
+    }
+    my @cov_means = @{ $covdata->{'invariant_mean'} };
+    my @cov_var = @{ $covdata->{'invariant_variance'} };
+
     # covariates section
     my %cov_section;
     $cov_section{'name'} = 'Covariates';
@@ -2224,12 +2239,11 @@ sub prepare_results
         ], \@cov_header,
     ];
     $cov_section{'values'} = [
-        [ "data", @cov_means ], [ "estimate" ],
-        [ "data", @cov_var ], [ "estimate" ],
+        [ "data", @cov_means ], [ "estimate", @estcov_means ],
+        [ "data", @cov_var ], [ "estimate", @estcov_var ],
     ];
     push(@{$self->results->[0]{'own'}}, \%cov_section);
     push(@{$self->results->[0]{'own'}}, \%space_section);
-
 
     # (cond) coefficients and covar section
     my (%coeff_section, %covar_section);
@@ -3000,8 +3014,8 @@ sub prepare_model2
 
     my @estimate_mean = ();
     if ($self->estimate_means){
-        if (scalar(@{$self->have_missing_covariates}) == scalar(@{$self->covariates})){
-            @estimate_mean = @{$self->have_missing_covariates};
+        if (scalar(@{$self->has_missingness}) == scalar(@{$self->covariates})){
+            @estimate_mean = @{$self->has_missingness};
         }else{
             croak("No information about missing covariate values, this is a bug");
         }
@@ -3743,30 +3757,152 @@ sub run_unless_run
     }
 }
 
-sub save_covresults{
+sub save_covresults {
     my $self = shift;
     my $resultref = shift;
-    if (defined $resultref){
-        $self->have_missing_covariates($resultref->{'have_missing_covariates'}) if (defined $resultref->{'have_missing_covariates'});
-        $self->occasionlist($resultref->{'occasionlist'}) if (defined $resultref->{'occasionlist'});
-        if (defined $resultref->{'invariant_mean'}){
-            $self->invariant_mean($resultref->{'invariant_mean'}) ;
-            for (my $i=0; $i< scalar(@{$self->covariates}); $i++){
-                if (abs($resultref->{'invariant_mean'}->[$i])<0.01){
-                    ui -> print( category => 'all', message => 'Warning: abs(mean) for '.$self->covariates->[$i].
-                                 ' is '.abs($resultref->{'invariant_mean'}->[$i]).
-                                 ', the additive error may not be appropriate for this covariate'."\n");
+    my @covnames = @{$self->covariates};
+
+    # open file for storing covariate summary (for post-processing usage)
+    my $filename = $self->directory.'covariates_summary.csv';
+    $self->cov_summary($filename);
+    my $header = join ',', ('', @covnames);
+    unless (open(FILE, '>', $filename)) {
+        $logger->critical("cannot open $filename: $!"); die;
+    }
+    print FILE "summary_statistics\n";
+    print FILE "$header\n";
+
+    if (defined $resultref) {
+        if (defined $resultref->{'has_missingness'}) {
+            my $missing = $resultref->{'has_missingness'};
+            $self->has_missingness($missing);
+            print FILE join(',', ("has_missingness", @{$missing}))."\n";
+        }
+        if (defined $resultref->{'occasionlist'}) {
+            $self->occasionlist($resultref->{'occasionlist'});
+        }
+        my ($covmat, @variance, @stdev);
+        if (defined $resultref->{'invariant_covmatrix'}) {
+            $covmat = $resultref->{'invariant_covmatrix'};
+            $self->invariant_covmatrix($covmat);
+            for (my $i=0; $i<scalar(@covnames); $i++) {
+                push @variance, $covmat->[$i]->[$i];
+                push @stdev, sqrt($covmat->[$i]->[$i]);
+            }
+        } else {
+            $logger->critical("Cannot save covresults (invariant covmat undef), this is a bug"); die;
+        }
+        if (defined $resultref->{'invariant_mean'} and defined $resultref->{'invariant_median'}) {
+            my $mean = $resultref->{'invariant_mean'};
+            my $median = $resultref->{'invariant_median'};
+            for (my $i=0; $i<scalar(@covnames); $i++) {
+                my $amean = abs($resultref->{'invariant_mean'}->[$i]);
+                if ($amean < 0.01) {
+                    $logger->warning("Warning: abs(mean) for $self->covariates->[$i] is $amean,".
+                                     "the additive error may not be appropriate for this covariate");
                 }
             }
-        }else{
-            croak('cannot save covresults, invariant mean undef');
+            $self->invariant_mean($mean);
+            $self->invariant_mean($median);
+            print FILE join(',', ("invariant_mean", @{$mean}))."\n";
+            print FILE join(',', ("invariant_median", @{$median}))."\n";
+            print FILE join(',', ("invariant_variance", @variance))."\n";
+            print FILE join(',', ("invariant_stdev", @stdev))."\n";
+        } else {
+            $logger->critical("Cannot save covresults (invariant mean undef), this is a bug"); die;
         }
-        $self->invariant_covmatrix($resultref->{'invariant_covmatrix'}) if (defined $resultref->{'invariant_covmatrix'});
-        $self->timevar_median($resultref->{'timevar_median'}) if (defined $resultref->{'timevar_median'});
-        $self->timevar_covmatrix($resultref->{'timevar_covmatrix'}) if (defined $resultref->{'timevar_covmatrix'});
-    }else{
-        croak('cannot save covresults, resultref undef');
+        if (defined $resultref->{'timevar_median'}) {
+            $self->timevar_median($resultref->{'timevar_median'});
+        }
+        if (defined $resultref->{'timevar_covmatrix'}) {
+            $self->timevar_covmatrix($resultref->{'timevar_covmatrix'});
+        }
+
+        print FILE "\ninvariant_covmatrix\n";
+        print FILE join(',', ("", @covnames))."\n";
+        for (my $i=0; $i<scalar(@covnames); $i++) {
+            print FILE join(',', ($covnames[$i], @{$covmat->[$i]}))."\n";
+        }
+        close(FILE);
+    } else {
+        $logger->critical("Cannot save covresults (resultref undef), this is a bug"); die;
     }
+}
+
+sub read_covresults {
+    # read file for covariate stat summary (see save_covresults), needed by post-processing
+    # TODO: Merge with read_covdata (ideally, all empirical covstats should be written out by save_covresults)
+    my %parm = validated_hash(\@_,
+        covnames => { isa => 'ArrayRef', optional => 0 },
+        filename => { isa => 'Str', optional => 0 },
+    );
+    my @covnames = @{ $parm{'covnames'} }; # must match covariates in file
+    my $ncov = scalar(@covnames);
+    my $filename = $parm{'filename'};
+
+    unless (open(FILE, '<', $filename)) {
+        $logger->error("cannot open $filename: $!");
+        return undef;
+    }
+
+    my (%res, $stat, $cmat);
+    while (my $line = <FILE>) {
+        chomp $line;
+        my @fields = split ',', $line;
+        if (scalar(@fields) == 0) { # ignore empty lines
+            next;
+        } elsif (scalar(@fields) == 1) { # single header => section
+            if ($fields[0] eq "summary_statistics") {
+                $stat = 1; $cmat = 0;
+                next;
+            } elsif ($fields[0] eq "invariant_covmatrix") {
+                $stat = 0; $cmat = 1;
+                next;
+            } else {
+                $logger->error("read error $filename: unknown section '$fields[0]', ignoring");
+                $stat = 0; $cmat = 0;
+                next;
+            }
+        } else { # multiple columns => data in section
+            if ($stat) {
+                if ($fields[0] eq "") { # covariate header
+                    shift @fields;
+                    my $nfields = scalar(@fields);
+                    unless ($ncov == $nfields) {
+                        $logger->error("read error $filename: $nfields covariates but $ncov expected");
+                        return undef;
+                    }
+                    for (my $i=0; $i<$ncov; $i++) {
+                        unless ($covnames[$i] eq $fields[$i]) {
+                            $logger->error("read error $filename: cov $fields[$i] but $covnames[$i] expected");
+                            return undef;
+                        }
+                    }
+                } else { # per-covariate data
+                    my $covdata = shift @fields;
+                    $res{$covdata} = \@fields;
+                }
+            } elsif ($cmat) {
+                if ($fields[0] eq "") { # covmat col header
+                    $res{'invariant_covmatrix'} = [];
+                } else {
+                    shift @fields; # covmat row header
+                    push @{ $res{'invariant_covmatrix'} }, \@fields;
+                }
+            }
+        }
+    }
+    close(FILE);
+
+    # check mandatory reads
+    my @mandatory_keys = qw/has_missingness invariant_mean invariant_median invariant_variance invariant_stdev invariant_covmatrix/;
+    foreach my $key (@mandatory_keys) {
+        if (!exists $res{$key}) {
+            $logger->error("read error $filename: could not read '$key'");
+            return undef;
+        }
+    }
+    return \%res;
 }
 
 sub get_recovery_string
@@ -4145,9 +4281,9 @@ sub modelfit_setup
             $logger->warning('Covariance step of model 4 NOT successful');
             $do_print_proposal=1;
             if ($self->imp_covariance and defined $mod4ofv) {
-                $logger->info('Will use IMP sampling to get covariance step');
+                $logger->info('Will use IMP sampling to get covariance step (model 4b)');
                 unless ($self->mu) {
-                    $logger->warning('MU referencing (not used) can speed up sampling');
+                    $logger->warning('MU referencing (not used) can speed up model 4b sampling');
                 }
                 $self->final_models->[0]->update_inits(from_output => $self->final_models->[0]->outputs->[0]);
                 ($etas_file) = $self->prepare_model4(model => $self->final_models->[0],
