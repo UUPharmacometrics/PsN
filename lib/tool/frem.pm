@@ -16,6 +16,7 @@ use array;
 use tool::sir;
 use input_checking;
 use POSIX ":sys_wait_h"; #for forking
+use POSIX qw/floor/;
 
 use Moose;
 use MooseX::Params::Validate;
@@ -459,7 +460,7 @@ sub get_post_processing_data
     $model->update_inits(from_output => $model->outputs->[0]);
     my $cov_model = $parm{'cov_model'};
     if (defined $cov_model) {
-        $model->update_inits(from_output => $model->outputs->[0]);
+        $cov_model->update_inits(from_output => $cov_model->outputs->[0]);
     }
 
     # figure out $OMEGA index of FREM block, size of it and ETAs before
@@ -611,7 +612,7 @@ sub get_post_processing_data
         unless (defined $omegavalues->[0]->{'omega'}->{'BSV_'.$cn}) {
             croak("could not find omega value for BSV_".$cn);
         }
-        my $var = $resc * $omegavalues->[0]->{'omega'}->{'BSV_'.$cn};
+        my $var = $resc * $resc * $omegavalues->[0]->{'omega'}->{'BSV_'.$cn};
         push(@cov_var, $var);
     }
 
@@ -2068,6 +2069,10 @@ sub prepare_results
     my $cov_summary = $self->cov_summary;
     $logger->critical("no cov summary file known, this is a bug") unless (defined $cov_summary);
 
+    # constants
+    my $warn_perc_badest = 2.5;
+    my $warn_perc_badest_missing = 5;
+
     # make sure old results file is not overwritten if re-run
     if (-e $self->directory.$self->results_file) {
         (my $filename = $self->results_file) =~ s/\.csv$//;
@@ -2077,7 +2082,7 @@ sub prepare_results
         }
         my $new_filename = "$filename.$num".'.csv';
         $self->results_file($new_filename);
-        $logger->warning("Old results file exists, writing to '$new_filename' to avoid overwrite");
+        $logger->warning("Old results file(s) exists, writing to '$new_filename' to avoid overwrite");
     }
 
     # check that final model is supported (4/4b only for now)
@@ -2211,8 +2216,8 @@ sub prepare_results
     push(@{$self->results->[0]{'own'}}, \%est_section);
     push(@{$self->results->[0]{'own'}}, \%space_section);
 
-    # get covariate and FREM post-processing data (# subjects, covariate data, number of parameters, etc.)
-    my ($cov_names,$cov_rescale,$omegaindex,$par_names,$size,$emeans,$evars) = get_post_processing_data(model => $full_model, cov_model => $model_2);
+    # get FREM post-processing data
+    my ($cov_names,$cov_rescale,$omegaindex,$par_names,$size,$emeans,$evars) = get_post_processing_data(model => $full_model);
     my @cov_rescale = @{$cov_rescale};
     my @cov_names = @{$cov_names};
     my @par_names = @{$par_names};
@@ -2222,12 +2227,34 @@ sub prepare_results
     my $ncov = scalar(@cov_names);
     my @rescale = (1) x $npar;
     push(@rescale,@cov_rescale);
+
+    # get covariate post-processing data
     my $covdata = read_covresults(covnames => $cov_names, filename => $cov_summary);
     unless (defined $covdata) {
         $logger->critical("covariate summary read error, can't continue"); die;
     }
     my @cov_means = @{ $covdata->{'invariant_mean'} };
     my @cov_var = @{ $covdata->{'invariant_variance'} };
+    my @has_missingness = @{ $covdata->{'has_missingness'} };
+    my (@perc_deviance_means, @perc_deviance_var);
+    for (my $i=0; $i<$ncov; $i++) {
+        push @perc_deviance_means, ($estcov_means[$i]/$cov_means[$i])*100-100;
+        push @perc_deviance_var, ($estcov_var[$i]/$cov_var[$i])*100-100;
+        my $perc_deviance_crit = $warn_perc_badest;
+        my $missing_info = "";
+        if ($has_missingness[$i]) {
+            $perc_deviance_crit = $warn_perc_badest_missing;
+            $missing_info = " (has missingness)";
+        }
+        if (abs($perc_deviance_means[$i]) > $perc_deviance_crit) {
+            $logger->warning("FREM est of mean[$cov_names[$i]]".$missing_info.
+                             " differ by ".neat_num(num=>$perc_deviance_means[$i],sig=>3)."% from empirical value");
+        }
+        if (abs($perc_deviance_var[$i]) > $perc_deviance_crit) {
+            $logger->warning("FREM est of var[$cov_names[$i]]".$missing_info.
+                             " differ by ".neat_num(num=>$perc_deviance_var[$i],sig=>3)."% from empirical value");
+        }
+    }
 
     # covariates section
     my %cov_section;
@@ -2309,6 +2336,42 @@ sub prepare_results
         my $full_covmat = get_covmatrix(output => $full_model->outputs->[0], omega_order => []) unless ($full_has_covmat);
         my $posdef_err = tool::sir::check_matrix_posdef(matrix => $full_covmat);
     }
+}
+
+sub neat_num {
+    # format number with 4 significant digits and sci notation outside [0.001,10000)
+    my %parm = validated_hash(\@_,
+          num => {isa => 'Num', optional => 0},
+          sig => {isa => 'Int', optional => 1, default => 4},
+    );
+    my $num = $parm{'num'};
+    my $sig = $parm{'sig'};
+    if ($sig <=0 ) {
+        croak("sig must be non-zero & positive");
+    }
+    my $lownum   = 10**(1-$sig); # 0.001 for sig=4
+    my $highnum  = 10**($sig); # 10000 for sig=4
+    my $include_lownum = 1;
+    my $include_highnum = 0;
+
+    return 0 if ($num == 0);
+    # determine if scientific notation shall be used
+    my $sci_notation = 0;
+    my $low_crit  = log(abs($num))/log(10) - log($lownum);
+    my $high_crit = log($highnum) - log(abs($num))/log(10);
+    $sci_notation = 1 if( $low_crit < 0 || ($include_lownum && $low_crit == 0) );
+    $sci_notation = 1 if( $high_crit < 0 || ($include_highnum && $high_crit == 0) );
+
+    if ($sci_notation) {
+        my $decimals = $sig-1;
+        $num = sprintf("%.${decimals}E", $num);
+    } else {
+        # determine number of decimal places to keep for sig figs
+        my $decimals = -( floor( log(abs($num))/log(10) ) - ($sig-1) );
+        $decimals = ($decimals < 0) ? 0 : $decimals;
+        $num = sprintf("%.${decimals}f", $num);
+    }
+    return $num
 }
 
 sub old_set_model2_omega_blocks
@@ -3803,7 +3866,7 @@ sub save_covresults {
                 }
             }
             $self->invariant_mean($mean);
-            $self->invariant_mean($median);
+            $self->invariant_median($median);
             print FILE join(',', ("invariant_mean", @{$mean}))."\n";
             print FILE join(',', ("invariant_median", @{$median}))."\n";
             print FILE join(',', ("invariant_variance", @variance))."\n";
