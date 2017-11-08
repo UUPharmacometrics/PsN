@@ -10,28 +10,31 @@ classoption: a4paper
 
 
 ```{r loading_libraries_and_sourcing_functions,include=F,warning=F,message=F}
-# get libPaths
-source(file.path(rscripts.directory,"common/R_info.R"))
-R_info(directory=working.directory,only_libPaths=T)
-#libraries
-library(devtools)
-library(expm)
-library(gridExtra)
-library(knitr)
-library(labeling)
-library(methods)
-library(PEIP)
 library(tidyverse)
+library(knitr)
+library(methods)
+library(ztable)
+library(expm)
 library(vpc)
 library(xpose)
+library(PEIP)
 library(yaml)
-library(ztable)
-#functions
-source(file.path(rscripts.directory, "common/find_r_files_in_subdir.R"))
-source(file.path(rscripts.directory, "cdd/create.data.full.R"))
-source(file.path(rscripts.directory,"frem/ID_ratio_function.R"))
-source(file.path(rscripts.directory,"frem/parameter_ratio_function.R"))
-source(file.path(rscripts.directory,"frem/sd_of_unexpl_var_function.R"))
+library(devtools)
+#check needed package versions
+source(file.path(rscripts.directory, "/common/check_package_versions.R"))
+check_package_versions(pkg=c("tidyverse","vpc","xpose","ztable","expm","PEIP","yaml","devtools"),
+                       versions=c("1.1.1","0.9.1","0.3","0.1.5","0.999-1","2.0-1","2.1.14","1.13.3"),
+                       toolname)
+#load functions
+source(file.path(rscripts.directory, "/common/R_info.R"))
+source(file.path(rscripts.directory, "/common/find_r_files_in_subdir.R"))
+source(file.path(rscripts.directory, "/common/iofv.R"))
+source(file.path(rscripts.directory, "/common/keep_symbols.R"))
+source(file.path(rscripts.directory, "/common/command_text.R"))
+source(file.path(rscripts.directory, "/cdd/create.data.full.R"))
+source(file.path(rscripts.directory,"/frem/ID_ratio_function.R"))
+source(file.path(rscripts.directory,"/frem/parameter_ratio_function.R"))
+source(file.path(rscripts.directory,"/frem/sd_of_unexpl_var_function.R"))
 #source qa functions
 rscript <- find_r_files_in_subdir(toolname,rscripts.directory)
 for (i in 1:length(rscript)) {
@@ -41,10 +44,9 @@ rscript <- find_r_files_in_subdir("simeval",rscripts.directory)
 for (i in 1:length(rscript)) {
   source(rscript[i])
 }
-rscript <- find_r_files_in_subdir("common",rscripts.directory)
-for (i in 1:length(rscript)) {
-  source(rscript[i])
-}
+```
+
+```{r add_info_to_meta_yaml_file, include=F}
 #add R_info to the meta file
 R_info(directory=working.directory)
 ```
