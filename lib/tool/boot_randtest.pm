@@ -124,6 +124,10 @@ sub modelfit_setup
         my %restored_options = %{common_options::restore_options(@common_options::tool_options)};
         delete $restored_options{'directory'};
 
+        my $clean_level = $self->clean;
+        if ($self->clean > 2) {     # Cap clean level at 2 for randtests
+            $clean_level = 2;
+        }
         eval {
             my $rand = tool::randtest->new(
                 %restored_options,
@@ -134,6 +138,7 @@ sub modelfit_setup
                 base_model => $base,
                 randomization_column => $randomization_column,
                 update_inits => 0,
+                clean => $clean_level,
             );
 
             $rand->run();
