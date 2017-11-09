@@ -649,7 +649,7 @@ sub get_post_processing_data
                 push @code, @{$pk_code}    if (defined $pk_code);
                 push @code, @{$error_code} if (defined $error_code);
                 foreach my $line (@code) {
-                    if ($line =~ /[^;]+=.*(?<!TH)ETA\($etanum\)/) {
+                    if ($line =~ /[^;]+=.*\bETA\($etanum\)/) {
                         chomp $line;
                         (my $lhs = $line) =~ s/\W*(\w+)\W*=.+/$1/;
                         if (length($lhs)>0) {

@@ -244,9 +244,9 @@ my ($covnames,$rescaling,$omegaindex,$parnames,$size,$cov_means,$cov_var)=tool::
 is_deeply($covnames,['WT','SEX'],'frem post covnames 1');
 is_deeply($rescaling,[1,1],'frem post rescale 1');
 is($omegaindex,0,'frem post omegaindex 1');
-is_deeply($parnames,['PAR1','PAR2','KA'],'frem post parnames 1');
+is_deeply($parnames,['CL','V','KA'],'frem post parnames 1');
 is($size,5,'frem post size 1');
-is_deeply($cov_means,[78.5076,1.20272],'frem post covmeans 1');
+is_deeply($cov_means,[78.5141,1.20268],'frem post covmeans 1');
 
 $model = model->new(filename => "$modeldir/frem/hamren_4.mod",
                        ignore_missing_data => 1);
@@ -265,7 +265,7 @@ my $compact_model = model->new(filename => "$modeldir/frem/compact.mod",
 is_deeply($covnames,['AGE','SEX'],'frem post covnames 3');
 is_deeply($rescaling,[7.82226906804,0.404756978659],'frem post rescale 3');
 is($omegaindex,0,'frem post omegaindex 3');
-is_deeply($parnames,['PAR1','PAR2','KA'],'frem post parnames 3');
+is_deeply($parnames,['CL','V','KA'],'frem post parnames 3');
 is($size,5,'frem post size 3');
 is_deeply($cov_means,[65.1756756757,1.2027027027],'frem post covmeans 3');
 
