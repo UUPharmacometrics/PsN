@@ -97,64 +97,62 @@ sub modelfit_setup
 		$base_mod_ofv=$self->base_model->outputs->[0]->get_single_value(attribute=> 'ofv'); 
 	}
 
-	unless ($model->is_run and 
-			 ((not defined $self->base_model) or $self->base_model->is_run) 
-		) {
+	unless ($model->is_run and ((not defined $self->base_model) or $self->base_model->is_run)) {
 		my %subargs = ();
-		if ( defined $self -> subtool_arguments() ) {
+		if (defined $self->subtool_arguments()) {
 			%subargs = %{$self -> subtool_arguments()};
 		}
 
-		if( $self -> nonparametric_etas() or
-			$self -> nonparametric_marginals() ) {
-			$model -> add_nonparametric_code unless ($model->is_run);
-			$self->base_model -> add_nonparametric_code if (defined $self->base_model and not $self->base_model->is_run);
+		if($self->nonparametric_etas() or $self->nonparametric_marginals()) {
+			$model->add_nonparametric_code unless ($model->is_run);
+			$self->base_model->add_nonparametric_code if (defined $self->base_model and not $self->base_model->is_run);
 		}
-		my @models=();
+		my @models = ();
 		my $message = "Executing ";
-		unless ($model->is_run ){
-			push(@models,$model) ;
+		unless ($model->is_run) {
+			push(@models, $model);
 			$message .= "input model";
 		}
-		if (defined $self->base_model and not $self->base_model->is_run){
-			if (scalar(@models)<1){
+		if (defined $self->base_model and not $self->base_model->is_run) {
+			if (scalar(@models) < 1) {
 				$message .= "base model";
-			}else{
+			} else {
 				$message .= "and base model";
 			}
-			push(@models,$self->base_model) ;
+			push(@models,$self->base_model);
 		}
 
-		my $orig_fit = tool::modelfit ->new( %{common_options::restore_options(@common_options::tool_options)},
-											 base_directory	 => $self ->directory(),
-											 directory		 => $self ->directory().
-											 '/orig_modelfit_dir'.$model_number,
-											 models		 => \@models,
-											 threads               => $self->threads,
-											 reduced_model_ofv => $base_mod_ofv, #can be undef
-											 logfile	         => undef,
-											 raw_results           => undef,
-											 prepared_models       => undef,
-											 copy_data            => $self->copy_data,
-											 top_tool              => 0,
-											 %subargs );
+		my $orig_fit = tool::modelfit->new(
+            %{common_options::restore_options(@common_options::tool_options)},
+            base_directory => $self->directory(),
+            directory => $self->directory() .  '/orig_modelfit_dir' . $model_number,
+            models => \@models,
+            threads => $self->threads,
+            reduced_model_ofv => $base_mod_ofv, #can be undef
+            logfile	=> undef,
+            raw_results => undef,
+            prepared_models => undef,
+            copy_data => $self->copy_data,
+            top_tool => 0,
+            %subargs
+        );
 
-		ui -> print( category => 'randtest',
-			message => $message );
+		ui->print( category => 'randtest', message => $message);
 
-		$orig_fit -> run;
-
+		$orig_fit->run;
 	}
 
-	if (defined $self->base_model and $self->base_model->is_run){
-		$base_mod_ofv=$self->base_model->outputs->[0]->get_single_value(attribute=> 'ofv'); 
+	if (defined $self->base_model and $self->base_model->is_run) {
+		$base_mod_ofv = $self->base_model->outputs->[0]->get_single_value(attribute=> 'ofv'); 
 	}
 
-	my $template_model = $model ->  copy( filename    => $self -> directory().'m'.$model_number.'/template.mod',
-										  output_same_directory => 1,
-										  copy_datafile   => 0,
-										  copy_output => 0,
-										  write_copy => 0);
+	my $template_model = $model->copy(
+        filename => $self->directory() . 'm' . $model_number . '/template.mod',
+        output_same_directory => 1,
+        copy_datafile => 0,
+        copy_output => 0,
+        write_copy => 0
+    );
 
 	if ($self->update_inits) {
 
