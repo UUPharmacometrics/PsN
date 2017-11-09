@@ -15,8 +15,8 @@ get_add_etas_table <- function(directory,added_etas,dofv_add.etas) {
     for(i in 1:length(eta_nr)) {
       add_etas_table[i,1] <- paste0("ETA(",eta_nr[[i]][2],")")
       add_etas_table[i,2] <- "No"
-      add_etas_table[i,3] <- sqrt(new_omega_values[,grep(paste0("^OMEGA.",eta_nr[[i]][2],".",eta_nr[[i]][2],".$"),colnames(new_omega_values))])
-      add_etas_table[i,4] <- sqrt(old_omega_values[,grep(paste0("^OMEGA.",eta_nr[[i]][2],".",eta_nr[[i]][2],".$"),colnames(old_omega_values))])
+      add_etas_table[i,3] <- sqrt(new_omega_values[,grep(paste0("^OMEGA\\.",eta_nr[[i]][2],"\\.",eta_nr[[i]][2],"\\.$"),colnames(new_omega_values))])
+      add_etas_table[i,4] <- sqrt(old_omega_values[,grep(paste0("^OMEGA\\.",eta_nr[[i]][2],"\\.",eta_nr[[i]][2],"\\.$"),colnames(old_omega_values))])
     }
     add_etas_table[,4] <- format(round(add_etas_table[,4],2),digits=1,trim=T,scientific = F,nsmall=2)
     # order added_eta values
@@ -32,7 +32,7 @@ get_add_etas_table <- function(directory,added_etas,dofv_add.etas) {
       if(!is.na(i)) {
         add_etas_table[j,1] <- names(added_etas)[[n]]
         add_etas_table[j,2] <- "Yes"
-        add_etas_table[j,3] <- sqrt(new_omega_values[,grep(paste0("^OMEGA.",i,".",i,"."),colnames(new_omega_values))])
+        add_etas_table[j,3] <- sqrt(new_omega_values[,grep(paste0("^OMEGA\\.",i,"\\.",i,"\\."),colnames(new_omega_values))])
         add_etas_table[j,4] <- ""
       } else {
         if(f == T) {

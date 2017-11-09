@@ -11,7 +11,7 @@ get_full_omega_block <- function(directory,dofv_block) {
     full_omega_block_table <- as.data.frame(array(0,c(length(omega_values),3)))
     colnames(full_omega_block_table) <- c("","New","Old")
     for(i in 1:length(omega_values)) {
-      numeration <- sub('.*OMEGA.','',colnames(omega_values[i]))
+      numeration <- sub('.*OMEGA\\.','',colnames(omega_values[i]))
       numeration <- substr(numeration, 1, nchar(numeration)-1) # delete last element in string
       first <- sub('\\..*','',numeration)
       second <- sub('.*\\.','',numeration)
@@ -30,24 +30,24 @@ get_full_omega_block <- function(directory,dofv_block) {
       } else {
         full_omega_block_table[i,1] <- paste0("corr(",max(first,second),",",min(first,second),")")
         if(any(colnames(omega_values)==paste0("OMEGA.",max(first,second),".",min(first,second),"."))) {
-          cov_xy <- as.numeric(omega_values[,grep(paste0("OMEGA.",max(first,second),".",min(first,second),"."),colnames(omega_values))])
+          cov_xy <- as.numeric(omega_values[,grep(paste0("OMEGA\\.",max(first,second),"\\.",min(first,second),"\\."),colnames(omega_values))])
         } else {
-          cov_xy <- as.numeric(omega_values[,grep(paste0("OMEGA.",min(first,second),".",max(first,second),"."),colnames(omega_values))])
+          cov_xy <- as.numeric(omega_values[,grep(paste0("OMEGA\\.",min(first,second),"\\.",max(first,second),"\\."),colnames(omega_values))])
         }
-        var_x <- as.numeric(omega_values[,grep(paste0("OMEGA.",min(first,second),".",min(first,second),"."),colnames(omega_values))])
-        var_y <- as.numeric(omega_values[,grep(paste0("OMEGA.",max(first,second),".",max(first,second),"."),colnames(omega_values))])
+        var_x <- as.numeric(omega_values[,grep(paste0("OMEGA\\.",min(first,second),"\\.",min(first,second),"\\."),colnames(omega_values))])
+        var_y <- as.numeric(omega_values[,grep(paste0("OMEGA\\.",max(first,second),"\\.",max(first,second),"\\."),colnames(omega_values))])
         full_omega_block_table[i,2] <- cov_xy/(sqrt(var_x)*sqrt(var_y))
         
         #add original omega values column
         if(any(colnames(deriv_omega_values)==colnames(omega_values)[i])) {
           col_nr <- which(colnames(deriv_omega_values)==colnames(omega_values)[i])
           if(any(colnames(deriv_omega_values)==paste0("OMEGA.",max(first,second),".",min(first,second),"."))) {
-            cov_xy <- as.numeric(deriv_omega_values[,grep(paste0("OMEGA.",max(first,second),".",min(first,second),"."),colnames(deriv_omega_values))])
+            cov_xy <- as.numeric(deriv_omega_values[,grep(paste0("OMEGA\\.",max(first,second),"\\.",min(first,second),"\\."),colnames(deriv_omega_values))])
           } else {
-            cov_xy <- as.numeric(deriv_omega_values[,grep(paste0("OMEGA.",min(first,second),".",max(first,second),"."),colnames(deriv_omega_values))])
+            cov_xy <- as.numeric(deriv_omega_values[,grep(paste0("OMEGA\\.",min(first,second),"\\.",max(first,second),"\\."),colnames(deriv_omega_values))])
           }
-          var_x <- as.numeric(deriv_omega_values[,grep(paste0("OMEGA.",min(first,second),".",min(first,second),"."),colnames(deriv_omega_values))])
-          var_y <- as.numeric(deriv_omega_values[,grep(paste0("OMEGA.",max(first,second),".",max(first,second),"."),colnames(deriv_omega_values))])
+          var_x <- as.numeric(deriv_omega_values[,grep(paste0("OMEGA\\.",min(first,second),"\\.",min(first,second),"\\."),colnames(deriv_omega_values))])
+          var_y <- as.numeric(deriv_omega_values[,grep(paste0("OMEGA\\.",max(first,second),"\\.",max(first,second),"\\."),colnames(deriv_omega_values))])
           full_omega_block_table[i,3] <- cov_xy/(sqrt(var_x)*sqrt(var_y))
         } else {
           full_omega_block_table[i,3] <- as.numeric(NA)

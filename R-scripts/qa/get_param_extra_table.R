@@ -24,7 +24,7 @@ get_param_extra_table <- function(directory,dofv,param_model) {
     
     #get needed numers of var omegas to filter right theta values
     needed_nr <- c()
-    numeration <- sub("OMEGA.","",col_names)
+    numeration <- sub("OMEGA\\.","",col_names)
     numeration <- substr(numeration, 1, nchar(numeration)-1)
     first <- sub('\\..*','',numeration)
     second <- sub('.*\\.','',numeration)

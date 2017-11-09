@@ -11,11 +11,11 @@ get_eta_values <- function(working.directory,theta_values,param_model) {
       nr[i] <- sub("\\)","",nr[i])
     }
     eta_table <- read.table(phi_file_path,skip=1,header=T,stringsAsFactors = F) %>%
-      dplyr::select(unique(grep(paste(paste0("ETA.",nr,"."),collapse="|"),colnames(.))))
+      dplyr::select(unique(grep(paste(paste0("ETA.",nr,"\\."),collapse="|"),colnames(.))))
     
     for(i in 1:ncol(eta_table)) {
-      eta_name <- sub("\\(",".",theta_values$ETA[i])
-      eta_name <- sub("\\)",".",eta_name)
+      eta_name <- sub("\\(","\\.",theta_values$ETA[i])
+      eta_name <- sub("\\)","\\.",eta_name)
       if(param_model=="boxcox") {
         lambda <- as.numeric(theta_values$Lambda[i])
         eta <- eta_table[,eta_name]
@@ -29,8 +29,8 @@ get_eta_values <- function(working.directory,theta_values,param_model) {
       }
     }
     eta_table <- eta_table %>% tidyr::gather(ETA_name) %>% 
-      dplyr::mutate(ETA_name=sub("\\.","(",.$ETA_name)) %>% 
-      dplyr::mutate(ETA_name=sub("[.]$",")",.$ETA_name)) 
+      dplyr::mutate(ETA_name=sub("\\.","\\(",.$ETA_name)) %>% 
+      dplyr::mutate(ETA_name=sub("[.]$","\\)",.$ETA_name)) 
     } else {
     eta_table <- data.frame()
   }
