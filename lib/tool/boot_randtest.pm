@@ -124,22 +124,16 @@ sub modelfit_setup
         my %restored_options = %{common_options::restore_options(@common_options::tool_options)};
         delete $restored_options{'directory'};
 
-
-        #$rand->print_options (cmd_line => $cmd_line,
-        #    toolname => 'randtest',
-        #    local_options => [keys %optional_options],
-        #    common_options => \@common_options::tool_options);
-
         eval {
             my $rand = tool::randtest->new(
                 %restored_options,
-                #%{common_options::restore_options(@common_options::tool_options)},
                 top_tool => 0,
                 prepend_model_file_name => 1,
                 models => [ $orig ],
                 samples	=> 1,
                 base_model => $base,
                 randomization_column => $randomization_column,
+                update_inits => 0,
             );
 
             $rand->run();
