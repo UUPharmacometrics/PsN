@@ -2070,8 +2070,8 @@ sub prepare_results
     $logger->critical("no cov summary file known, this is a bug") unless (defined $cov_summary);
 
     # constants
-    my $warn_perc_badest = 2.5;
-    my $warn_perc_badest_missing = 5;
+    my $warn_perc_badest = 5;
+    my $warn_perc_badest_missing = 10;
 
     # make sure old results file is not overwritten if re-run
     if (-e $self->directory.$self->results_file) {
@@ -2089,12 +2089,16 @@ sub prepare_results
     if (scalar(@final_models) == 0 or scalar(@final_models) != scalar(@final_numbers)) {
         $logger->critical("No final models known (prepare_results), this is a bug"); die;
     }
-    my ($full_model, $full_model_num);
+    my ($full_model, $full_model_cov);
     for (my $i=0; $i<scalar(@final_models); $i++) {
-        if ($final_numbers[$i] =~ /^4b?$/) {
+        if ($final_numbers[$i] eq "4") {
             $full_model = $final_models[$i];
-            $full_model_num = $final_numbers[$i];
+        } elsif ($final_numbers[$i] eq "4b") {
+            $full_model_cov = $final_models[$i];
         }
+    }
+    unless (defined $full_model_cov) {
+        $full_model_cov = $full_model;
     }
 
     # check that all models and outputs necessary exists
@@ -2103,7 +2107,7 @@ sub prepare_results
     } elsif (!defined $model_2) {
         $logger->critical("Model 2 does not exist (prepare_results), this is a bug"); die;
     } elsif (!defined $full_model) {
-        $logger->critical("Full model 4/4b does not exist (prepare_results), can't continue"); die;
+        $logger->critical("Full FREM (model 4) does not exist (prepare_results), can't continue"); die;
     }
     my ($base_model_output, $model_2_output, $full_model_output);
     if (defined $base_model->outputs and defined $base_model->outputs->[0]) {
@@ -2119,7 +2123,7 @@ sub prepare_results
     if (defined $full_model->outputs and defined $full_model->outputs->[0]) {
         $full_model_output = $full_model->outputs->[0];
     } else {
-        $logger->critical("No output model 4/4b (prepare_results), can't continue"); die;
+        $logger->critical("No output model 4 (prepare_results), can't continue"); die;
     }
 
     # return section (input model name, date and versions)
@@ -2174,7 +2178,7 @@ sub prepare_results
     $est_section{'labels'}=[
         [ ("M1 (base model)") x 2,
           ("M2 (covariates)") x 2,
-          ("M$full_model_num (full FREM)") x 2,
+          ("M4 (full FREM)") x 2,
         ], \@est_header,
     ];
     my $params = [
@@ -2223,23 +2227,28 @@ sub prepare_results
     my @par_names = @{$par_names};
     my @estcov_means = @{$emeans};
     my @estcov_var = @{$evars};
+    my @estcov_sd;
+    foreach my $var (@estcov_var) {
+        push @estcov_sd, sqrt($var);
+    }
     my $npar = scalar(@par_names);
     my $ncov = scalar(@cov_names);
     my @rescale = (1) x $npar;
     push(@rescale,@cov_rescale);
 
-    # get covariate post-processing data
+    # get covariate post-processing data (and warn if off)
     my $covdata = read_covresults(covnames => $cov_names, filename => $cov_summary);
     unless (defined $covdata) {
         $logger->critical("covariate summary read error, can't continue"); die;
     }
     my @cov_means = @{ $covdata->{'invariant_mean'} };
     my @cov_var = @{ $covdata->{'invariant_variance'} };
+    my @cov_sd = @{ $covdata->{'invariant_stdev'} };
     my @has_missingness = @{ $covdata->{'has_missingness'} };
-    my (@perc_deviance_means, @perc_deviance_var);
+    my (@perc_deviance_means, @perc_deviance_sd);
     for (my $i=0; $i<$ncov; $i++) {
         push @perc_deviance_means, ($estcov_means[$i]/$cov_means[$i])*100-100;
-        push @perc_deviance_var, ($estcov_var[$i]/$cov_var[$i])*100-100;
+        push @perc_deviance_sd, ($estcov_sd[$i]/$cov_sd[$i])*100-100;
         my $perc_deviance_crit = $warn_perc_badest;
         my $missing_info = "";
         if ($has_missingness[$i]) {
@@ -2250,9 +2259,9 @@ sub prepare_results
             $logger->warning("FREM est of mean[$cov_names[$i]]".$missing_info.
                              " differ by ".neat_num(num=>$perc_deviance_means[$i],sig=>3)."% from empirical value");
         }
-        if (abs($perc_deviance_var[$i]) > $perc_deviance_crit) {
-            $logger->warning("FREM est of var[$cov_names[$i]]".$missing_info.
-                             " differ by ".neat_num(num=>$perc_deviance_var[$i],sig=>3)."% from empirical value");
+        if (abs($perc_deviance_sd[$i]) > $perc_deviance_crit) {
+            $logger->warning("FREM est of SD[$cov_names[$i]]".$missing_info.
+                             " differ by ".neat_num(num=>$perc_deviance_sd[$i],sig=>3)."% from empirical value");
         }
     }
 
@@ -2262,12 +2271,12 @@ sub prepare_results
     my @cov_header = ("source", @cov_names);
     $cov_section{'labels'} = [
         [ "mean", "mean",
-          "variance", "variance",
+          "stdev", "stdev",
         ], \@cov_header,
     ];
     $cov_section{'values'} = [
         [ "data", @cov_means ], [ "estimate", @estcov_means ],
-        [ "data", @cov_var ], [ "estimate", @estcov_var ],
+        [ "data", @cov_sd ], [ "estimate", @estcov_sd ],
     ];
     push(@{$self->results->[0]{'own'}}, \%cov_section);
     push(@{$self->results->[0]{'own'}}, \%space_section);
@@ -2291,7 +2300,7 @@ sub prepare_results
                                                                                      par_index_last => ($npar-1));
 
         if ($error) {
-            $logger->error("Numerical error: (cond all) coefficients/variability from M$full_model_num omega mat");
+            $logger->error("Numerical error: (cond all) coefficients/variability from M4 omega mat");
         } else {
             for (my $par=0; $par<scalar(@{$par_names}); $par++) {
                 # fill multiconditional coefficients and variance for each par
@@ -2316,7 +2325,7 @@ sub prepare_results
                                                                                              par_index_first => 0,
                                                                                              par_index_last => ($npar-1));
                 if ($error) {
-                    $logger->error("Numerical error: (cond $cov_name) coefficients/variability from M$full_model_num subset omega mat");
+                    $logger->error("Numerical error: (cond $cov_name) coefficients/variability from M4 subset omega mat");
                 } else {
                     for (my $par=0; $par<scalar(@{$par_names}); $par++) {
                         # fill uniconditional coefficients and variance for each par (note: only one coeff per cov)
@@ -2332,8 +2341,8 @@ sub prepare_results
         push(@{$self->results->[0]{'own'}}, \%covar_section);
 
         # get final covariance matrix (if available)
-        my ($full_has_covmat, $msg) = check_covstep(output => $full_model->outputs->[0]);
-        my $full_covmat = get_covmatrix(output => $full_model->outputs->[0], omega_order => []) unless ($full_has_covmat);
+        my ($full_has_covmat, $msg) = check_covstep(output => $full_model_cov->outputs->[0]);
+        my $full_covmat = get_covmatrix(output => $full_model_cov->outputs->[0], omega_order => []) unless ($full_has_covmat);
         my $posdef_err = tool::sir::check_matrix_posdef(matrix => $full_covmat);
     }
 }
