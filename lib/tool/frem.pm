@@ -104,7 +104,7 @@ sub BUILD
         filename => $datafiles->[0],
         ignoresign => defined $model->ignoresigns ? $model->ignoresigns->[0] : undef,
         missing_data_token => $self->missing_data_token,
-        idcolumn => $problem->find_data_column(column_name => 'ID') + 1,
+        idcolumn => $model->idcolumns->[0],
     );
 
     # Check if any covariate column has all same value
