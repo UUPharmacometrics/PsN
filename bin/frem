@@ -326,8 +326,13 @@ $frem->print_options(
 
 $frem->run;
 if ($frem->estimate_regular_final_model and !$frem->cholesky) {
-    $frem->prepare_results();
-    $frem->print_results();
+    my $err = $frem->prepare_results();
+    if ($err) {
+        print("Result generation err (no file could be generated):\n");
+        print("$err\n");
+    } else {
+        $frem->print_results();
+    }
 }
 
 if ($frem->vpc and -e $frem->directory . 'frem_vpc.mod') {

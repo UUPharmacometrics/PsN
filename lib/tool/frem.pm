@@ -2058,6 +2058,7 @@ sub perfect_individuals
 sub prepare_results
 {
     my $self = shift;
+    my $err = '';
 
     $logger->info("Preparing and printing results");
     my $directory = $self->directory;
@@ -2082,7 +2083,7 @@ sub prepare_results
         }
         my $new_filename = "$filename.$num".'.csv';
         $self->results_file($new_filename);
-        $logger->warning("Old results file(s) exists, writing to '$new_filename' to avoid overwrite");
+        $logger->info("Old results file(s) exists, writing to '$new_filename' to avoid overwrite");
     }
 
     # check that final model is supported (4/4b only for now)
@@ -2112,16 +2113,22 @@ sub prepare_results
     my ($base_model_output, $model_2_output, $full_model_output);
     if (defined $base_model->outputs and defined $base_model->outputs->[0]) {
         $base_model_output = $base_model->outputs->[0];
+        $err = $base_model_output->load;
+        return $err if ($err);
     } else {
         $logger->critical("No output base model (prepare_results), this is a bug"); die;
     }
     if (defined $model_2->outputs and defined $model_2->outputs->[0]) {
         $model_2_output = $model_2->outputs->[0];
+        $err = $model_2_output->load;
+        return $err if ($err);
     } else {
         $logger->critical("No output model 2 (prepare_results), this is a bug"); die;
     }
     if (defined $full_model->outputs and defined $full_model->outputs->[0]) {
         $full_model_output = $full_model->outputs->[0];
+        $err = $full_model_output->load;
+        return $err if ($err);
     } else {
         $logger->critical("No output model 4 (prepare_results), can't continue"); die;
     }
@@ -2220,6 +2227,31 @@ sub prepare_results
     push(@{$self->results->[0]{'own'}}, \%est_section);
     push(@{$self->results->[0]{'own'}}, \%space_section);
 
+    # Base model compared to FREM model
+    my %basechange_section;
+    $basechange_section{'name'}='Base vs. FREM model';
+    if ($full_has_estimates) {
+        $basechange_section{'labels'}=[ ["base parameter change (%) by M4"], [] ];
+        $basechange_section{'values'}=[ [] ];
+        # check base parameter move (found new minima?)
+        for (my $i=0; $i<scalar(@{$full_coords}); $i++) {
+            my $base_est = $params->[1]->[1+$i];
+            my $full_est = $params->[5]->[1+$i];
+            if (defined $base_est) {
+                my $label = $full_labels->[$i];
+                my $perc_deviance = ($base_est/$full_est)*100-100;
+                if (abs($perc_deviance) > $warn_perc_badest) {
+                    $logger->warning("FREM est of parameter differ by ".neat_num(num=>$perc_deviance,sig=>3,plus=>1).
+                                     "% from base model ($label)");
+                }
+                push @{$basechange_section{'labels'}->[1]}, $label;
+                push @{$basechange_section{'values'}->[0]}, $perc_deviance;
+            }
+        }
+    }
+    push(@{$self->results->[0]{'own'}}, \%basechange_section);
+    push(@{$self->results->[0]{'own'}}, \%space_section);
+
     # get FREM post-processing data
     my ($cov_names,$cov_rescale,$omegaindex,$par_names,$size,$emeans,$evars) = get_post_processing_data(model => $full_model);
     my @cov_rescale = @{$cov_rescale};
@@ -2253,15 +2285,15 @@ sub prepare_results
         my $missing_info = "";
         if ($has_missingness[$i]) {
             $perc_deviance_crit = $warn_perc_badest_missing;
-            $missing_info = " (has missingness)";
+            $missing_info = ", has missingness";
         }
         if (abs($perc_deviance_means[$i]) > $perc_deviance_crit) {
-            $logger->warning("FREM est of mean[$cov_names[$i]]".$missing_info.
-                             " differ by ".neat_num(num=>$perc_deviance_means[$i],sig=>3)."% from empirical value");
+            $logger->warning("FREM est of covariate mean differ by ".neat_num(num=>$perc_deviance_means[$i],sig=>3,plus=>1).
+                             "% from empirical value ($cov_names[$i]$missing_info)");
         }
         if (abs($perc_deviance_sd[$i]) > $perc_deviance_crit) {
-            $logger->warning("FREM est of SD[$cov_names[$i]]".$missing_info.
-                             " differ by ".neat_num(num=>$perc_deviance_sd[$i],sig=>3)."% from empirical value");
+            $logger->warning("FREM est of covariate SD differ by ".neat_num(num=>$perc_deviance_sd[$i],sig=>3,plus=>1).
+                             "% from empirical value ($cov_names[$i]$missing_info)");
         }
     }
 
@@ -2345,6 +2377,8 @@ sub prepare_results
         my $full_covmat = get_covmatrix(output => $full_model_cov->outputs->[0], omega_order => []) unless ($full_has_covmat);
         my $posdef_err = tool::sir::check_matrix_posdef(matrix => $full_covmat);
     }
+
+    return $err;
 }
 
 sub neat_num {
@@ -2352,9 +2386,11 @@ sub neat_num {
     my %parm = validated_hash(\@_,
           num => {isa => 'Num', optional => 0},
           sig => {isa => 'Int', optional => 1, default => 4},
+          plus => {isa => 'Bool', optional => 1, default => 0}, # always show + sign
     );
     my $num = $parm{'num'};
     my $sig = $parm{'sig'};
+    my $always_plus = $parm{'plus'};
     if ($sig <=0 ) {
         croak("sig must be non-zero & positive");
     }
@@ -2379,6 +2415,9 @@ sub neat_num {
         my $decimals = -( floor( log(abs($num))/log(10) ) - ($sig-1) );
         $decimals = ($decimals < 0) ? 0 : $decimals;
         $num = sprintf("%.${decimals}f", $num);
+    }
+    if ($always_plus and $num >= 0) {
+        $num = "+$num";
     }
     return $num
 }
@@ -4402,8 +4441,7 @@ sub modelfit_setup
                        directory => $self->directory,
                        filename => $proposal_filename);
             ui->print(category => 'frem',
-                  message => 'printed proposal density for sir -covmat_input option to '.
-                  $proposal_filename.' in frem rundir '.$self->directory);
+                  message => "printed $proposal_filename for sir -covmat_input option");
         }
         if ($error and $self->run_sir) {
             #                chdir($self->directory);
