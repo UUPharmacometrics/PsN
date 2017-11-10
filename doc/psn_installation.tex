@@ -135,7 +135,19 @@ explained above. This is a new feature of PsN4 when installing on Windows.
 
 \section{Rplots}
 
-The automatic rplots functionality in PsN (via the -rplots option) require that R (at least version 3.1.2 is required) is installed and that some specific R packages along with their dependencies are installed in R. The R-scripts/required\_packages.R can be run to install all needed R-packages. Some of these packages need some external dependencies be installed before installing in R.
+The automatic rplots functionality in PsN (via the -rplots option) require that R (at least version 3.1.2 is required) is installed and that some specific R packages along with their dependencies are installed in R. The R-scripts/install\_R\_packages.R can be run to install all needed R-packages in given path. Open terminal, go to the R-scripts directory, type "Rscript install\_R\_packages.R" and full path where to install, for example
+
+\begin{verbatim}
+Rscript install_R_packages.R C:\R\library
+\end{verbatim}
+
+To make PsN always use specific R library path, add R library path to the psn.conf file, for example
+
+\begin{verbatim}
+R_LIB_PATH=C:\R\library
+\end{verbatim}
+
+Some of these packages need some external dependencies be installed before installing in R.
 
 \subsection{Ubuntu/Debian}
 \begin{verbatim}
