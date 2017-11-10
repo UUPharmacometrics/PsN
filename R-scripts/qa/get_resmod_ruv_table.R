@@ -38,9 +38,9 @@ get_resmod_ruv_table <- function(directory, idv_name, dvid_name, skip){
       colnames(resmod_ruv_table) <- c("Model","dOFV","Additional parameters","Parameter values")
       
       #replace symbol "_" with the space
-      nr_rows <- grep("_",resmod_ruv_table[,1])
+      nr_rows <- grep("\\_",resmod_ruv_table[,1])
       for(i in 1:length(nr_rows)) {
-        resmod_ruv_table[nr_rows[i],1] <- gsub("_"," ",resmod_ruv_table[nr_rows[i],1])
+        resmod_ruv_table[nr_rows[i],1] <- gsub("\\_"," ",resmod_ruv_table[nr_rows[i],1])
       }
       
       if(length(dvid_nr) == 1 && dvid_nr=="NA") {
@@ -58,11 +58,11 @@ get_resmod_ruv_table <- function(directory, idv_name, dvid_name, skip){
       resmod_ruv_table_list[[j]] <- resmod_ruv_table
     }
    colnames(resmod_ruv_overview) <- c("","dOFV","Add.params")
-   # #if all dOFV values are NA
-   # if(all(is.na(resmod_ruv_overview$dOFV))) {
-   #   resmod_ruv_overview <- data.frame("RESMOD","NA","",stringsAsFactors = F)
-   #   colnames(resmod_ruv_overview) <- c("","dOFV","Add.params")
-   # }
+   
+   #if all dOFV values are NA
+   if(all(is.na(resmod_ruv_overview$dOFV))) {
+     resmod_ruv_overview$dOFV <- format(resmod_ruv_overview$dOFV)
+   }
    
   } else {
     if(any(skip=="resmod")) {
