@@ -6,7 +6,7 @@
   # populate omega from .ext file
   omega_values <- final_estimates %>% dplyr::select(starts_with("OMEGA")) 
   # create omega matrix
-  numeration <- sub('.*OMEGA.','',colnames(omega_values)) %>% substr(., 1, nchar(.)-1)
+  numeration <- sub('.*OMEGA\\.','',colnames(omega_values)) %>% substr(., 1, nchar(.)-1)
   dim_omega <- length(unique(as.numeric(sub('\\..*','',numeration))))
   omega_matrix <- matrix(0, dim_omega, dim_omega)
   for(i in 1:length(numeration)) {
@@ -22,7 +22,7 @@
   
   # populate sigma from ext file
   sigma_values <- final_estimates %>% dplyr::select(starts_with("SIGMA"))
-  numeration <- sub('.*SIGMA.','',colnames(sigma_values)) %>% substr(., 1, nchar(.)-1)
+  numeration <- sub('.*SIGMA\\.','',colnames(sigma_values)) %>% substr(., 1, nchar(.)-1)
   dim_sigma <- length(unique(as.numeric(sub('\\..*','',numeration))))
   sigma_matrix <- matrix(0, dim_sigma, dim_sigma)
   for(i in 1:length(numeration)) {

@@ -117,52 +117,52 @@ test_that("get dofv value form the resmod table",{
 
 #...........................  (6) Test function get_structural_overview_table.R .....................................  
 #create expected data
-str_overview_1 <- data.frame(c("TIME","PRED"),c(4.314,4.8),c(2,2),stringsAsFactors = F)
-colnames(str_overview_1) <- c("","dOFV","Add.params")
-str_overview_2 <- data.frame(c("(ORIG = 1)","TIME","PRED","(ORIG = 2)","TIME","PRED"),c("","4.51","4.8","","NA","0.4"),c("",1,1,"",1,1),
+exp_str_overview_1 <- data.frame(c("TIME","PRED"),c(4.314,4.8),c(2,2),stringsAsFactors = F)
+colnames(exp_str_overview_1) <- c("","dOFV","Add.params")
+exp_str_overview_2 <- data.frame(c("(ORIG = 1)","TIME","PRED","(ORIG = 2)","TIME","PRED"),c("","4.51","4.8","","NA","0.4"),c("",1,1,"",1,1),
                              stringsAsFactors = F)
-colnames(str_overview_2) <- c("","dOFV","Add.params")
-str_overview_3 <- data.frame(c("(ORIG = 1)","TIME","TAD","PRED","(ORIG = 2)","TIME","TAD","PRED"),c("","4.51","ERROR","4.8","","NA","ERROR","0.4"),
+colnames(exp_str_overview_2) <- c("","dOFV","Add.params")
+exp_str_overview_3 <- data.frame(c("(ORIG = 1)","TIME","TAD","PRED","(ORIG = 2)","TIME","TAD","PRED"),c("","4.51","ERROR","4.8","","NA","ERROR","0.4"),
                              c("",1,"",1,"",1,"",1),stringsAsFactors = F)
-colnames(str_overview_3) <- c("","dOFV","Add.params")
-str_overview_4 <- data.frame(c("TIME","TAD"),c("ERROR","ERROR"),c("",""),stringsAsFactors = F)
-colnames(str_overview_4) <- c("","dOFV","Add.params")
-str_overview_5 <- data.frame(c("TIME","PRED"),c("NA","4.8"),c(2,2),stringsAsFactors = F)
-colnames(str_overview_5) <- c("","dOFV","Add.params")
-str_overview_6 <- data.frame(c("TIME","TAD","PRED"),c("NA","ERROR","4.8"),c("2","","2"),stringsAsFactors = F)
-colnames(str_overview_6) <- c("","dOFV","Add.params")
-str_overview_7 <- data.frame(c("TIME","PRED"),c("NA","NA"),c(2,2),stringsAsFactors = F)
-colnames(str_overview_7) <- c("","dOFV","Add.params")
-str_overview_8 <- data.frame(c("(DVID = 1)","TIME","PRED","(DVID = 2)","TIME","PRED"),c("","NA","NA","","NA","NA"),c("","","","","",""),
+colnames(exp_str_overview_3) <- c("","dOFV","Add.params")
+exp_str_overview_4 <- data.frame(c("TIME","TAD"),c("ERROR","ERROR"),c("",""),stringsAsFactors = F)
+colnames(exp_str_overview_4) <- c("","dOFV","Add.params")
+exp_str_overview_5 <- data.frame(c("TIME","PRED"),c("NA","4.8"),c(2,2),stringsAsFactors = F)
+colnames(exp_str_overview_5) <- c("","dOFV","Add.params")
+exp_str_overview_6 <- data.frame(c("TIME","TAD","PRED"),c("NA","ERROR","4.8"),c("2","","2"),stringsAsFactors = F)
+colnames(exp_str_overview_6) <- c("","dOFV","Add.params")
+exp_str_overview_7 <- data.frame(c("TIME","PRED"),c("NA","NA"),c(2,2),stringsAsFactors = F)
+colnames(exp_str_overview_7) <- c("","dOFV","Add.params")
+exp_str_overview_8 <- data.frame(c("(DVID = 1)","TIME","PRED","(DVID = 2)","TIME","PRED"),c("","NA","NA","","NA","NA"),c("","","","","",""),
                              stringsAsFactors = F)
-colnames(str_overview_8) <- c("","dOFV","Add.params")
-str_overview_9 <- data.frame("RESMOD","ERROR",stringsAsFactors = F)
-colnames(str_overview_9) <- c("","dOFV")
-str_overview_10 <- data.frame("RESMOD","SKIPPED",stringsAsFactors = F)
-colnames(str_overview_10) <- c("","dOFV")
+colnames(exp_str_overview_8) <- c("","dOFV","Add.params")
+exp_str_overview_9 <- data.frame("RESMOD","ERROR",stringsAsFactors = F)
+colnames(exp_str_overview_9) <- c("","dOFV")
+exp_str_overview_10 <- data.frame("RESMOD","SKIPPED",stringsAsFactors = F)
+colnames(exp_str_overview_10) <- c("","dOFV")
 #compare
 context("qa, get_structural_overview_table")
 test_that("get structural overview table",{
-  expect_equal(get_structural_overview_table(directory=file.path(files.w.dir,"qa_run3"),idv=c("TIME","PRED"),dvid_name="NA"),
-               str_overview_1)  # no dvid values, all resmod runs found, all dofv nubers
-  expect_equal(get_structural_overview_table(directory=file.path(files.w.dir,"qa_run2"),idv=c("TIME","PRED"),dvid_name="ORIG"),
-               str_overview_2) # with dvid, dofv one NA
-  expect_equal(get_structural_overview_table(directory=file.path(files.w.dir,"qa_run2"),idv=c("TIME","TAD","PRED"),dvid_name="ORIG"),
-               str_overview_3) #with dvid, TAD resmod run not exist
-  expect_equal(get_structural_overview_table(directory=file.path(files.w.dir,"qa_missing_folders_files"),idv=c("TIME","TAD"),dvid_name="ORIG"),
-               str_overview_4) #resmod runs not found, with dvid
-  expect_equal(get_structural_overview_table(directory=file.path(files.w.dir,"qa_run5"),idv=c("TIME","PRED"),dvid_name="NA"),
-               str_overview_5) # no dvid values, all resmod runs found, some NA dofv
-  expect_equal(get_structural_overview_table(directory=file.path(files.w.dir,"qa_run6"),idv=c("TIME","TAD","PRED"),dvid_name="NA"),
-               str_overview_6) # resmod TAD run not exist, no dvids
-  expect_equal(get_structural_overview_table(directory=file.path(files.w.dir,"qa_run7"),idv=c("TIME","PRED"),dvid_name="NA"),
-               str_overview_7) # all ofv values NA, no dvid
-  expect_equal(get_structural_overview_table(directory=file.path(files.w.dir,"qa_run8"),idv=c("TIME","PRED"),dvid_name="DVID"),
-               str_overview_8) # all ofv values NA, with dvid
-  expect_equal(get_structural_overview_table(directory=file.path(files.w.dir,"qa_run2"),idv=c(),dvid_name="ORIG",skip=c('transform','cdd','frem')),
-               str_overview_9) # no idv, produces error table
-  expect_equal(get_structural_overview_table(directory=file.path(files.w.dir,"qa_run2"),idv=c(),dvid_name="ORIG",skip=c('transform','cdd','frem','resmod')),
-               str_overview_10) # no idv, produces Skipped table
+  expect_equal(exp_str_overview_1,
+               get_structural_overview_table(directory=file.path(files.w.dir,"qa_run3"),idv=c("TIME","PRED"),dvid_name="NA"))  # no dvid values, all resmod runs found, all dofv nubers
+  expect_equal(exp_str_overview_2,
+               get_structural_overview_table(directory=file.path(files.w.dir,"qa_run2"),idv=c("TIME","PRED"),dvid_name="ORIG")) # with dvid, dofv one NA
+  expect_equal(exp_str_overview_3,
+               get_structural_overview_table(directory=file.path(files.w.dir,"qa_run2"),idv=c("TIME","TAD","PRED"),dvid_name="ORIG")) #with dvid, TAD resmod run not exist
+  expect_equal(exp_str_overview_4,
+               get_structural_overview_table(directory=file.path(files.w.dir,"qa_missing_folders_files"),idv=c("TIME","TAD"),dvid_name="ORIG")) #resmod runs not found, with dvid
+  expect_equal(exp_str_overview_5,
+               get_structural_overview_table(directory=file.path(files.w.dir,"qa_run5"),idv=c("TIME","PRED"),dvid_name="NA")) # no dvid values, all resmod runs found, some NA dofv
+  expect_equal(exp_str_overview_6,
+               get_structural_overview_table(directory=file.path(files.w.dir,"qa_run6"),idv=c("TIME","TAD","PRED"),dvid_name="NA")) # resmod TAD run not exist, no dvids
+  expect_equal(exp_str_overview_7,
+               get_structural_overview_table(directory=file.path(files.w.dir,"qa_run7"),idv=c("TIME","PRED"),dvid_name="NA")) # all ofv values NA, no dvid
+  expect_equal(exp_str_overview_8,
+               get_structural_overview_table(directory=file.path(files.w.dir,"qa_run8"),idv=c("TIME","PRED"),dvid_name="DVID")) # all ofv values NA, with dvid
+  expect_equal(exp_str_overview_9,
+               get_structural_overview_table(directory=file.path(files.w.dir,"qa_run2"),idv=c(),dvid_name="ORIG",skip=c('transform','cdd','frem'))) # no idv, produces error table
+  expect_equal(exp_str_overview_10,
+               get_structural_overview_table(directory=file.path(files.w.dir,"qa_run2"),idv=c(),dvid_name="ORIG",skip=c('transform','cdd','frem','resmod'))) # no idv, produces Skipped table
 })
 
 #...........................  (7) Test function find_dvid_values.R .....................................
@@ -683,809 +683,854 @@ test_that("get create input table for transformed density plot",{
 })
 
 #...........................  (15) Test function get_all_covariates.R .....................................
+# run function
+list_all_cov1 <- get_all_covariates(frem_directory=file.path(files.w.dir,"qa_missing_folders_files/frem_run"),continuous=c('AGE'),
+                                    categorical=c(),parameters=c(),dofv_full_block=3.5,skip=c('transform','resmod','scm','cdd','simeval'))
+frem_files_exists_1 <- list_all_cov1$frem_files_exists
+frem_table_1 <- list_all_cov1$frem_table
+
+list_all_cov2 <- get_all_covariates(frem_directory=file.path(files.w.dir,"qa_run1/frem_run"),continuous=c(),categorical=c(),
+                                    parameters=c(),dofv_full_block=3.5,skip=c('resmod','scm','cdd','simeval'))
+frem_files_exists_2 <- list_all_cov2$frem_files_exists
+frem_table_2 <- list_all_cov2$frem_table
+
+list_all_cov3 <- get_all_covariates(frem_directory=file.path(files.w.dir,"qa_run1/frem_run"),continuous=c('SEX'),
+                                    categorical=c('AGE','WGT'),parameters=c('K1','K2'),dofv_full_block=3.5,skip=c())
+frem_files_exists_3 <- list_all_cov3$frem_files_exists
+frem_table_3 <- list_all_cov3$frem_table
+
+list_all_cov4 <- get_all_covariates(frem_directory=file.path(files.w.dir,"qa_run1/frem_run"),continuous=c('SEX'),
+                                    categorical=c('AGE','WGT'),parameters=c(),dofv_full_block='NA',skip=c('resmod'))
+frem_files_exists_4 <- list_all_cov4$frem_files_exists
+frem_table_4 <- list_all_cov4$frem_table
+
+list_all_cov5 <- get_all_covariates(frem_directory=file.path(files.w.dir,"qa_run1/frem_run"),continuous=c('SEX'),
+                                    categorical=c('AGE','WGT'),parameters=c(),dofv_full_block='NA',skip=c('resmod','frem','cdd'))
+frem_files_exists_5 <- list_all_cov5$frem_files_exists
+frem_table_5 <- list_all_cov5$frem_table
 #expected data
-frem_table_1 <- data.frame("FREM","ERROR","",stringsAsFactors = F)
-colnames(frem_table_1) <- c("","dOFV","Add.params")
-frem_table_2 <- data.frame("FREM","NA","",stringsAsFactors = F)
-colnames(frem_table_2) <- c("","dOFV","Add.params")
-frem_table_3 <- data.frame("ALL",3.6,6,stringsAsFactors = F)
-colnames(frem_table_3) <- c("","dOFV","Add.params")
-frem_table_4 <- data.frame("ALL",7.1,0,stringsAsFactors = F)
-colnames(frem_table_4) <- c("","dOFV","Add.params")
-frem_table_5 <- data.frame("FREM","SKIPPED","",stringsAsFactors = F)
-colnames(frem_table_5) <- c("","dOFV","Add.params")
+exp_frem_table_1 <- data.frame("FREM","ERROR","",stringsAsFactors = F)
+colnames(exp_frem_table_1) <- c("","dOFV","Add.params")
+exp_frem_table_2 <- data.frame("FREM","NA","",stringsAsFactors = F)
+colnames(exp_frem_table_2) <- c("","dOFV","Add.params")
+exp_frem_table_3 <- data.frame("ALL",3.6,6,stringsAsFactors = F)
+colnames(exp_frem_table_3) <- c("","dOFV","Add.params")
+exp_frem_table_4 <- data.frame("ALL",7.1,0,stringsAsFactors = F)
+colnames(exp_frem_table_4) <- c("","dOFV","Add.params")
+exp_frem_table_5 <- data.frame("FREM","SKIPPED","",stringsAsFactors = F)
+colnames(exp_frem_table_5) <- c("","dOFV","Add.params")
 #compare
 context("qa, get_all_covariates")
 test_that("get FREM covariates table",{
-  expect_equal(frem_table_1,get_all_covariates(frem_directory=file.path(files.w.dir,"qa_missing_folders_files/frem_run"),continuous=c('AGE'),
-                                               categorical=c(),parameters=c(),dofv_full_block=3.5,skip=c('transform','resmod','scm','cdd','simeval'))$frem_table)
-  expect_false(get_all_covariates(frem_directory=file.path(files.w.dir,"qa_missing_folders_files/frem_run"),continuous=c('AGE'),
-                                        categorical=c(),parameters=c(),dofv_full_block=3.5,skip=c())$frem_files_exists)
-  expect_equal(frem_table_2,get_all_covariates(frem_directory=file.path(files.w.dir,"qa_run1/frem_run"),continuous=c(),categorical=c(),
-                                               parameters=c(),dofv_full_block=3.5,skip=c('resmod','scm','cdd','simeval'))$frem_table)
-  expect_false(get_all_covariates(frem_directory=file.path(files.w.dir,"qa_run1/frem_run"),continuous=c(),categorical=c(),
-                                        parameters=C(),dofv_full_block=3.5,skip=c())$frem_files_exists)
-  expect_equal(frem_table_3,get_all_covariates(frem_directory=file.path(files.w.dir,"qa_run1/frem_run"),continuous=c('SEX'),
-                                               categorical=c('AGE','WGT'),parameters=c('K1','K2'),dofv_full_block=3.5,skip=c())$frem_table)
-  expect_true(get_all_covariates(frem_directory=file.path(files.w.dir,"qa_run1/frem_run"),continuous=c('SEX'),categorical=c('AGE','WGT'),
-                                       parameters=c('K1','K2'),dofv_full_block=3.5,skip=c())$frem_files_exists)
-  expect_equal(frem_table_4,get_all_covariates(frem_directory=file.path(files.w.dir,"qa_run1/frem_run"),continuous=c('SEX'),
-                                               categorical=c('AGE','WGT'),parameters=c(),dofv_full_block='NA',skip=c('resmod'))$frem_table)
-  expect_true(get_all_covariates(frem_directory=file.path(files.w.dir,"qa_run1/frem_run"),continuous=c('SEX'),categorical=c('AGE','WGT'),
-                                       parameters=c(),dofv_full_block='NA',skip=c('transform','resmod','scm','cdd','simeval'))$frem_files_exists)
-  expect_equal(frem_table_5,get_all_covariates(frem_directory=file.path(files.w.dir,"qa_run1/frem_run"),continuous=c('SEX'),
-                                               categorical=c('AGE','WGT'),parameters=c(),dofv_full_block='NA',skip=c('resmod','frem','cdd'))$frem_table)
-
+  expect_false(frem_files_exists_1) # files does not exist
+  expect_equal(frem_table_1,exp_frem_table_1)
+  expect_false(frem_files_exists_2) # covariate length are 0
+  expect_equal(frem_table_2,exp_frem_table_2)
+  expect_true(frem_files_exists_3) # files exist, add dofv value, round values
+  expect_equal(frem_table_3,exp_frem_table_3)
+  expect_true(frem_files_exists_4) # files exist, not add dofv value, round values
+  expect_equal(frem_table_4,exp_frem_table_4)
+  expect_false(frem_files_exists_5) # frem skilpped
+  expect_equal(frem_table_5,exp_frem_table_5)
 })
 
-# #...........................  (16) Test function get_scm_table.R .....................................
-# #expected data
-# scm_table_1 <- data.frame("SCM","ERROR",stringsAsFactors = F)
-# colnames(scm_table_1) <- c("","dOFV")
-# max_scm_table_1 <- data.frame("SCM","ERROR","",stringsAsFactors = F)
-# colnames(max_scm_table_1) <- c("","dOFV","Add.params")
-# scm_table_2 <- data.frame("SCM","NA",stringsAsFactors = F)
-# colnames(scm_table_2) <- c("","dOFV")
-# max_scm_table_2 <- data.frame("SCM","NA","",stringsAsFactors = F)
-# colnames(max_scm_table_2) <- c("","dOFV","Add.params")
-# scm_table_6 <- data.frame(c("CLAPGR-4","CLWGT-4","VAPGR-4","VWGT-4"),c(2.87,0.47,0.17,0.12),c(-0.03,0.05,0.004,-0.012),
-#                           c(-0.15,0.0125,0.02,-0.003),stringsAsFactors = F)
-# colnames(scm_table_6) <- c("","dOFV","Coef","Coef_sd")
-# scm_table_3 <- data.frame(c("CLAPGR-4","CLWGT-4","VAPGR-4","VWGT-4"),c(2.87,0.47,0.17,0.12),c(-0.03,0.05,0.004,-0.012),stringsAsFactors = F)
-# colnames(scm_table_3) <- c("","dOFV","Coef")
-# max_scm_table_3 <- data.frame("CLAPGR-4",2.87,1,stringsAsFactors = F)
-# colnames(max_scm_table_3) <- c("","dOFV","Add.params")
-# scm_table_4 <- data.frame(c("CLAPGR-4","CLWGT-4","VAPGR-4","VWGT-4"),c(NA,0.47,0.17,0.12),c(NA,0.05,0.004,-0.012),stringsAsFactors = F)
-# colnames(scm_table_4) <- c("","dOFV","Coef")
-# max_scm_table_4 <- data.frame("CLWGT-4",0.47,1,stringsAsFactors = F)
-# colnames(max_scm_table_4) <- c("","dOFV","Add.params")
-# max_scm_table_5 <- data.frame("SCM","SKIPPED","",stringsAsFactors = F)
-# colnames(max_scm_table_5) <- c("","dOFV","Add.params")
-# scm_table_5 <- data.frame("SCM","SKIPPED",stringsAsFactors = F)
-# colnames(scm_table_5) <- c("","dOFV")
-# 
-# #compare
-# context("qa, get_scm_table")
-# test_that("get SCM table",{
-#   expect_equal(scm_table_1,
-#                get_scm_table(scm_directory=file.path(files.w.dir,"qa_missing_folders_files/scm_run"),
-#                              frem_directory=file.path(files.w.dir,"qa_missing_folders_files/frem_run"),
-#                              parameters=c('K1','K2'),continuous=c('AGE'),categorical=c(),skip=c())$scm_table)
-#   expect_equal(max_scm_table_1,
-#                get_scm_table(scm_directory=file.path(files.w.dir,"qa_missing_folders_files/scm_run"),
-#                              frem_directory=file.path(files.w.dir,"qa_missing_folders_files/frem_run"),
-#                              parameters=c('K1','K2'),continuous=c('AGE'),categorical=c(),skip=c())$max_scm_table)
-#   expect_false(get_scm_table(scm_directory=file.path(files.w.dir,"qa_missing_folders_files/scm_run"),
-#                              frem_directory=file.path(files.w.dir,"qa_missing_folders_files/frem_run"),
-#                              parameters=c('K1','K2'),continuous=c('AGE'),categorical=c(),skip=c())$scm_files_exists)
-#   expect_equal(scm_table_2,
-#                get_scm_table(scm_directory=file.path(files.w.dir,"qa_run1/scm_run"),
-#                              frem_directory=file.path(files.w.dir,"qa_run1/frem_run"),
-#                              parameters=c('K1','K2'),
-#                              continuous=c(),categorical=c(),skip=c())$scm_table)
-#   expect_equal(max_scm_table_2,
-#                get_scm_table(scm_directory=file.path(files.w.dir,"qa_run1/scm_run"),
-#                              frem_directory=file.path(files.w.dir,"qa_run1/frem_run"),
-#                              parameters=c('K1','K2'),
-#                              continuous=c(),categorical=c(),skip=c())$max_scm_table)
-#   expect_false(get_scm_table(scm_directory=file.path(files.w.dir,"qa_run1/scm_run"),
-#                              frem_directory=file.path(files.w.dir,"qa_run1/frem_run"),
-#                              parameters=c('K1','K2'),
-#                              continuous=c(),categorical=c(),skip=c())$scm_files_exists)
-#   expect_equal(scm_table_6,
-#                get_scm_table(scm_directory=file.path(files.w.dir,"qa_run1/scm_run"),
-#                              frem_directory=file.path(files.w.dir,"qa_run1/frem_run"),
-#                              parameters=c('CL','V'),
-#                              continuous=c('APGR','WGT','HGT'),categorical=c('SEX'),skip=c())$scm_table)
-#   expect_equal(max_scm_table_3,
-#                get_scm_table(scm_directory=file.path(files.w.dir,"qa_run1/scm_run"),
-#                              frem_directory=file.path(files.w.dir,"qa_run1/frem_run"),
-#                              parameters=c('CL','V'),
-#                              continuous=c('APGR','WGT'),categorical=c(),skip=c())$max_scm_table)
-#   expect_true(get_scm_table(scm_directory=file.path(files.w.dir,"qa_run1/scm_run"),
-#                              frem_directory=file.path(files.w.dir,"qa_run1/frem_run"),
-#                              parameters=c('CL','V'),
-#                             continuous=c('APGR','WGT'),categorical=c(),skip=c())$scm_files_exists)
-#   expect_equal(scm_table_3,
-#                get_scm_table(scm_directory=file.path(files.w.dir,"qa_run2/scm_run"),
-#                              frem_directory=file.path(files.w.dir,"qa_run2/frem_run"),
-#                              parameters=c('CL','V'),
-#                              continuous=c('APGR','WGT'),categorical=c(),skip=c())$scm_table)
-#   expect_equal(max_scm_table_3,
-#                get_scm_table(scm_directory=file.path(files.w.dir,"qa_run2/scm_run"),
-#                              frem_directory=file.path(files.w.dir,"qa_run2/frem_run"),
-#                              parameters=c('CL','V'),
-#                              continuous=c('APGR','WGT'),categorical=c(),skip=c('frem','resmod','transform','cdd','simeval'))$max_scm_table)
-#   expect_true(get_scm_table(scm_directory=file.path(files.w.dir,"qa_run2/scm_run"),
-#                              frem_directory=file.path(files.w.dir,"qa_run2/frem_run"),
-#                              parameters=c('CL','V'),
-#                              continuous=c('APGR','WGT'),categorical=c(),skip=c('frem','resmod','transform','cdd','simeval'))$scm_files_exists)
-#   expect_equal(scm_table_4,
-#                get_scm_table(scm_directory=file.path(files.w.dir,"qa_run3/scm_run"),
-#                              frem_directory=file.path(files.w.dir,"qa_run2/frem_run"),
-#                              parameters=c('CL','V'),
-#                              continuous=c('APGR','WGT'),categorical=c(),skip=c('frem','resmod','transform','cdd','simeval'))$scm_table)
-#   expect_equal(max_scm_table_4,
-#                get_scm_table(scm_directory=file.path(files.w.dir,"qa_run3/scm_run"),
-#                              frem_directory=file.path(files.w.dir,"qa_run2/frem_run"),
-#                              parameters=c('CL','V'),
-#                              continuous=c('APGR','WGT'),categorical=c(),skip=c('frem','resmod','transform','cdd','simeval'))$max_scm_table)
-#   expect_true(get_scm_table(scm_directory=file.path(files.w.dir,"qa_run3/scm_run"),
-#                              frem_directory=file.path(files.w.dir,"qa_run2/frem_run"),
-#                              parameters=c('CL','V'),
-#                              continuous=c('APGR','WGT'),categorical=c(),skip=c('frem','resmod','transform','cdd','simeval'))$scm_files_exists)
-#   expect_equal(max_scm_table_5,
-#                get_scm_table(scm_directory=file.path(files.w.dir,"qa_run3/scm_run"),
-#                              frem_directory=file.path(files.w.dir,"qa_run3/frem_run"),
-#                              parameters=c('CL','V'),
-#                              continuous=c('APGR','WGT'),categorical=c(),skip=c('frem','scm'))$max_scm_table)
-#   expect_equal(scm_table_5,
-#                get_scm_table(scm_directory=file.path(files.w.dir,"qa_run3/scm_run"),
-#                              frem_directory=file.path(files.w.dir,"qa_run3/frem_run"),
-#                              parameters=c('CL','V'),
-#                              continuous=c('APGR','WGT'),categorical=c(),skip=c('frem','scm'))$scm_table)
-# })
-# 
-# #...........................  (15) Test function get_covariates_table.R .....................................
-# #expected data
-# covariates_table_1 <- data.frame(c("FREM","SCM"),c("ERROR","ERROR"),c("",""),stringsAsFactors = F)
-# colnames(covariates_table_1) <- c("","dOFV","Add.params")
-# covariates_extra_table_1 <- data.frame("Covariate"=c("SCM","FREM"),"dOFV"=c("ERROR","ERROR"),stringsAsFactors = F)
-# covariates_table_2 <- data.frame(c("FREM","SCM"),c("NA","NA"),c("",""),stringsAsFactors = F)
-# colnames(covariates_table_2) <- c("","dOFV","Add.params")
-# covariates_extra_table_2 <- data.frame("Covariate"=c("SCM","FREM"),"dOFV"=c("NA","NA"),stringsAsFactors = F)
-# covariates_table_3 <- data.frame(c("FREM","CLAPGR-4"),c("NA","2.87"),c("","1"),stringsAsFactors = F)
-# colnames(covariates_table_3) <- c("","dOFV","Add.params")
-# covariates_extra_table_3 <- data.frame("Covariate"=c("CLAPGR-4","CLWGT-4","VAPGR-4","VWGT-4","sum(SCMu)","FREM"),
-#                                        "dOFV"=c("2.9","0.5","0.2","0.1","3.6","NA"),
-#                                        "Coefficient"=c("-0.030","0.050","0.004","-0.012","",""),stringsAsFactors = F)
-# covariates_table_4 <- data.frame(c("FREM","CLAPGR-4"),c(3.6,2.87),c(6,1),stringsAsFactors = F)
-# colnames(covariates_table_4) <- c("","dOFV","Add.params")
-# covariates_extra_table_4 <- data.frame("Covariate"=c("CLAPGR-4","CLWGT-4","VAPGR-4","VWGT-4","sum(SCMu)","FREM"),
-#                                        "dOFV"=c("2.9","0.5","0.2","0.1","3.6","3.6"),
-#                                        "Coefficient"=c("-0.030","0.050","0.004","-0.012","",""),stringsAsFactors = F)
-# covariates_table_5 <- data.frame(c("FREM","CLAPGR-4"),c("ERROR","2.87"),c("","1"),stringsAsFactors = F)
-# colnames(covariates_table_5) <- c("","dOFV","Add.params")
-# covariates_extra_table_5 <- data.frame("Covariate"=c("CLAPGR-4","CLWGT-4","VAPGR-4","VWGT-4","sum(SCMu)","FREM"),
-#                                        "dOFV"=c("2.9","0.5","0.2","0.1","3.6","ERROR"),
-#                                        "Coefficient"=c("-0.030","0.050","0.004","-0.012","",""),stringsAsFactors = F)
-# covariates_table_6 <- data.frame(c("FREM","SCM"),c("7.1","ERROR"),c("0",""),stringsAsFactors = F)
-# colnames(covariates_table_6) <- c("","dOFV","Add.params")
-# covariates_extra_table_6 <- data.frame("Covariate"=c("SCM","FREM"),"dOFV"=c("ERROR","7.1"),stringsAsFactors = F)
-# covariates_table_7 <- data.frame(c("FREM","CLWGT-4"),c(3.6,0.47),c(6,1),stringsAsFactors = F)
-# colnames(covariates_table_7) <- c("","dOFV","Add.params")
-# covariates_extra_table_7 <- data.frame("Covariate"=c("CLAPGR-4","CLWGT-4","VAPGR-4","VWGT-4","sum(SCMu)","FREM"),
-#                                        "dOFV"=c("NA","0.5","0.2","0.1","0.8","3.6"),
-#                                        "Coefficient"=c("NA","0.050","0.004","-0.012","",""),stringsAsFactors = F)
-# covariates_table_8 <- data.frame(c("FREM","SCM"),c("SKIPPED","SKIPPED"),c("",""),stringsAsFactors = F)
-# colnames(covariates_table_8) <- c("","dOFV","Add.params")
-# covariates_extra_table_8 <- data.frame("Covariate"=c("SCM","FREM"),"dOFV"=c("SKIPPED","SKIPPED"),stringsAsFactors = F)
-# covariates_extra_table_9 <- data.frame(c("CLAPGR-4","CLWGT-4","VAPGR-4","VWGT-4","sum(SCMu)","FREM"),
-#                                        c("2.9","0.5","0.2","0.1","3.6","3.6"),
-#                                        c("-0.030","0.050","0.004","-0.012","",""),
-#                                        c("-0.150","0.012","0.020","-0.003","",""),stringsAsFactors = F)
-# colnames(covariates_extra_table_9) <- c("Covariate","dOFV","Coefficient","Coefficient/SD")
-# #compare
-# context("qa, get_covariates_table")
-# test_that("create covariate table (FREM and SCM) and extra table",{
-#   expect_equal(covariates_table_1,get_covariates_table(frem_table=frem_table_1,scm_table=scm_table_1,max_scm_table=max_scm_table_1)$covariates_table)
-#   expect_equal(covariates_extra_table_1,get_covariates_table(frem_table=frem_table_1,scm_table=scm_table_1,max_scm_table=max_scm_table_1)$covariates_extra_table)
-#   expect_equal(covariates_table_2,get_covariates_table(frem_table=frem_table_2,scm_table=scm_table_2,max_scm_table=max_scm_table_2)$covariates_table)
-#   expect_equal(covariates_extra_table_2,get_covariates_table(frem_table=frem_table_2,scm_table=scm_table_2,max_scm_table=max_scm_table_2)$covariates_extra_table)
-#   expect_equal(covariates_table_3,get_covariates_table(frem_table=frem_table_2,scm_table=scm_table_3,max_scm_table=max_scm_table_3)$covariates_table)
-#   expect_equal(covariates_extra_table_3,get_covariates_table(frem_table=frem_table_2,scm_table=scm_table_3,max_scm_table=max_scm_table_3)$covariates_extra_table)
-#   expect_equal(covariates_table_4,get_covariates_table(frem_table=frem_table_3,scm_table=scm_table_3,max_scm_table=max_scm_table_3)$covariates_table)
-#   expect_equal(covariates_extra_table_4,get_covariates_table(frem_table=frem_table_3,scm_table=scm_table_3,max_scm_table=max_scm_table_3)$covariates_extra_table)
-#   expect_equal(covariates_table_5,get_covariates_table(frem_table=frem_table_1,scm_table=scm_table_3,max_scm_table=max_scm_table_3)$covariates_table)
-#   expect_equal(covariates_extra_table_5,get_covariates_table(frem_table=frem_table_1,scm_table=scm_table_3,max_scm_table=max_scm_table_3)$covariates_extra_table)
-#   expect_equal(covariates_table_6,get_covariates_table(frem_table=frem_table_4,scm_table=scm_table_1,max_scm_table=max_scm_table_1)$covariates_table)
-#   expect_equal(covariates_extra_table_6,get_covariates_table(frem_table=frem_table_4,scm_table=scm_table_1,max_scm_table=max_scm_table_1)$covariates_extra_table)
-#   expect_equal(covariates_table_7,get_covariates_table(frem_table=frem_table_3,scm_table=scm_table_4,max_scm_table=max_scm_table_4)$covariates_table)
-#   expect_equal(covariates_extra_table_7,get_covariates_table(frem_table=frem_table_3,scm_table=scm_table_4,max_scm_table=max_scm_table_4)$covariates_extra_table)
-#   expect_equal(covariates_table_8,get_covariates_table(frem_table=frem_table_5,scm_table=scm_table_5,max_scm_table=max_scm_table_5)$covariates_table)
-#   expect_equal(covariates_extra_table_8,get_covariates_table(frem_table=frem_table_5,scm_table=scm_table_5,max_scm_table=max_scm_table_5)$covariates_extra_table)
-#   expect_equal(covariates_extra_table_9,get_covariates_table(frem_table=frem_table_3,scm_table=scm_table_6,max_scm_table=max_scm_table_3)$covariates_extra_table)
-# })
-# 
-# #...........................  (16) Test function get_resmod_ruv_table.R .....................................
-# #run function
-# resmod_list_1 <- get_resmod_ruv_table(directory=file.path(files.w.dir,"qa_run1"),idv_name="TIME",dvid_name="ORIG",skip=c())
-# resmod_list_2 <- get_resmod_ruv_table(directory=file.path(files.w.dir,"qa_run3"),idv_name="TIME",dvid_name="NA",skip=c('frem','scm','transform','cdd','simeval'))
-# resmod_list_3 <- get_resmod_ruv_table(directory=file.path(files.w.dir,"qa_run2"),idv_name="TIME",dvid_name="ORIG",skip=c('transform','cdd','simeval'))
-# resmod_list_4 <- get_resmod_ruv_table(directory=file.path(files.w.dir,"qa_run7"),idv_name="TIME",dvid_name="NA",skip=c('frem','simeval'))
-# resmod_list_5 <- get_resmod_ruv_table(directory=file.path(files.w.dir,"qa_run3"),idv_name="TIME",dvid_name="NA",skip=c('resmod'))
-# #expected data
-# resmod_ruv_table_list_1 <- data.frame("ERROR",stringsAsFactors = F)
-# colnames(resmod_ruv_table_list_1) <- ""
-# resmod_ruv_overview_1 <- data.frame("RESMOD","ERROR",stringsAsFactors = F)
-# colnames(resmod_ruv_overview_1) <- c("","dOFV")
-# resmod_ruv_table_list_2 <- data.frame("Model"=c("tdist","dtbs","IIV on RUV","power","time varying","autocorrelation"),
-#                                       "dOFV"=c("43.6","21.7","10.6","0.9","0.6","0.0"),
-#                                       "Additional parameters"=c(1,2,1,1,2,1),
-#                                       "Parameter values"=c("Df=2.550","lambda=-0.136,Zeta=0.09","%CV=7.2","delta_power=0.094","sdeps_0-t0=1.069,sdeps_t0-inf=0.981,t0=0.68","half-life=1.000"),
-#                                       stringsAsFactors = F)
-# colnames(resmod_ruv_table_list_2) <- c("Model","dOFV","Additional parameters","Parameter values")
-# resmod_ruv_overview_2 <- data.frame(c("tdist","dtbs"),c(43.62,21.67),c(1,2),stringsAsFactors = F)
-# colnames(resmod_ruv_overview_2) <- c("","dOFV","Add.params")
-# resmod_ruv_table_list_3_a <- data.frame("Model"=c("tdist","IIV on RUV","time varying","autocorrelation"),
-#                                       "dOFV"=c("5.0","2.7","0.8","0.0"),
-#                                       "Additional parameters"=c(1,1,2,1),
-#                                       "Parameter values"=c("df=9.238","%CV=14.973","sdeps_0-t0=0.868,sdeps_t0-inf=0.999,t0=7.00","half-life=0.011"),
-#                                       stringsAsFactors = F)
-# colnames(resmod_ruv_table_list_3_a) <- c("Model","dOFV","Additional parameters","Parameter values")
-# resmod_ruv_table_list_3_b <- data.frame("Model"=c("time varying","IIV on RUV","tdist","autocorrelation"),
-#                                         "dOFV"=c("1.65","1.05","0.02","0.00"),
-#                                         "Additional parameters"=c(2,1,1,1),
-#                                         "Parameter values"=c("sdeps_0-t0=0.868,sdeps_t0-inf=1.020,t0=7.00","%CV=15.214","df=119.865","half-life=0.011"),
-#                                         stringsAsFactors = F)
-# colnames(resmod_ruv_table_list_3_b) <- c("Model","dOFV","Additional parameters","Parameter values")
-# resmod_ruv_overview_3 <- data.frame(c("(ORIG = 1)","tdist","IIV on RUV","(ORIG = 2)","time varying","IIV on RUV"),
-#                                     c("","5.02","2.68","","1.65","1.05"),
-#                                     c("","1","1","","2","1"),stringsAsFactors = F)
-# colnames(resmod_ruv_overview_3) <- c("","dOFV","Add.params")
-# resmod_ruv_table_list_4 <- data.frame("Model"=c("IIV on RUV","autocorrelation","dtbs","power","tdist","time varying"),
-#                                       "dOFV"=c("NA","NA","NA","NA","NA","NA"),
-#                                       "Additional parameters"=c(rep("",6)),
-#                                       "Parameter values"=c(rep("",6)),
-#                                       stringsAsFactors = F)
-# colnames(resmod_ruv_table_list_4) <- c("Model","dOFV","Additional parameters","Parameter values")
-# resmod_ruv_overview_4 <- data.frame(c("RESMOD"),c("NA"),c(""),stringsAsFactors = F)
-# colnames(resmod_ruv_overview_4) <- c("","dOFV","Add.params")
-# resmod_ruv_overview_5 <- data.frame("RESMOD","SKIPPED",stringsAsFactors = F)
-# colnames(resmod_ruv_overview_5) <- c("","dOFV")
-# #compare
-# context("qa, get_resmod_ruv_table")
-# test_that("create resmod ruv table",{
-#   expect_equal(1,length(resmod_list_1$resmod_ruv_table_list))
-#   expect_equal(resmod_ruv_table_list_1,resmod_list_1$resmod_ruv_table_list[[1]])
-#   expect_equal(resmod_ruv_overview_1,resmod_list_1$resmod_ruv_overview)
-#   expect_equal('NA',resmod_list_1$dvid_nr)
-#   expect_equal(1,length(resmod_list_2$resmod_ruv_table_list))
-#   expect_equal(resmod_ruv_table_list_2,resmod_list_2$resmod_ruv_table_list[[1]])
-#   expect_equal(resmod_ruv_overview_2,resmod_list_2$resmod_ruv_overview)
-#   expect_equal('NA',resmod_list_2$dvid_nr)
-#   expect_equal(2,length(resmod_list_3$resmod_ruv_table_list))
-#   expect_equal(resmod_ruv_table_list_3_a,resmod_list_3$resmod_ruv_table_list[[1]])
-#   expect_equal(resmod_ruv_table_list_3_b,resmod_list_3$resmod_ruv_table_list[[2]])
-#   expect_equal(resmod_ruv_overview_3,resmod_list_3$resmod_ruv_overview)
-#   expect_equal(c(1,2),resmod_list_3$dvid_nr)
-#   expect_equal(1,length(resmod_list_4$resmod_ruv_table_list))
-#   expect_equal(resmod_ruv_table_list_4,resmod_list_4$resmod_ruv_table_list[[1]])
-#   # expect_equal(resmod_ruv_overview_4,resmod_list_4$resmod_ruv_overview)
-#   expect_equal('NA',resmod_list_4$dvid_nr)
-#   expect_equal(resmod_ruv_overview_5,resmod_list_5$resmod_ruv_overview)
-# })
-# 
-# #...........................  (17) Test function get_ii_table.R .....................................
-# #fun function
-# list_ii_1 <- get_ii_table(raw.results.file=file.path(files.w.dir,"qa_missing_folders_files/cdd_run/raw_results_model_linbase.csv"),
-#                           skipped.id.file=file.path(files.w.dir,"qa_missing_folders_files/cdd_run/skipped_individuals1.csv"),
-#                           cutoff=3.84,max_rows=3,skip=c('frem','resmod','transform','scm','simeval'))
-# list_ii_2 <- get_ii_table(raw.results.file=file.path(files.w.dir,"qa_run2/cdd_run/raw_results_linbase.csv"),
-#                           skipped.id.file=file.path(files.w.dir,"qa_run2/cdd_run/skipped_individuals1.csv"),
-#                           cutoff=3.84,max_rows=3,skip=c())
-# list_ii_3 <- get_ii_table(raw.results.file=file.path(files.w.dir,"qa_run3/cdd_run/raw_results_linbase.csv"),
-#                           skipped.id.file=file.path(files.w.dir,"qa_run3/cdd_run/skipped_individuals1.csv"),
-#                           cutoff=3.84,max_rows=3,skip=c('scm','simeval'))
-# list_ii_4 <- get_ii_table(raw.results.file=file.path(files.w.dir,"qa_run1/cdd_run/raw_results_linbase.csv"),
-#                           skipped.id.file=file.path(files.w.dir,"qa_run1/cdd_run/skipped_individuals1.csv"),
-#                           cutoff=1,max_rows=3,skip=c('frem','resmod','transform','scm','simeval'))
-# list_ii_5 <- get_ii_table(raw.results.file=file.path(files.w.dir,"qa_run1/cdd_run/raw_results_linbase.csv"),
-#                           skipped.id.file=file.path(files.w.dir,"qa_run1/cdd_run/skipped_individuals1.csv"),
-#                           cutoff=0.1,max_rows=3,skip=c())
-# list_ii_6 <- get_ii_table(raw.results.file=file.path(files.w.dir,"qa_run1/cdd_run/raw_results_linbase.csv"),
-#                           skipped.id.file=file.path(files.w.dir,"qa_run1/cdd_run/skipped_individuals1.csv"),
-#                           cutoff=0.000001,max_rows=2,skip=c('frem','resmod','transform','scm','simeval'))
-# list_ii_7 <- get_ii_table(raw.results.file=file.path(files.w.dir,"qa_run4/cdd_run/raw_results_linbase.csv"),
-#                           skipped.id.file=file.path(files.w.dir,"qa_run4/cdd_run/skipped_individuals1.csv"),
-#                           cutoff=3.84,max_rows=3,skip=c('frem','resmod','transform','scm','simeval'))
-# list_ii_8 <- get_ii_table(raw.results.file=file.path(files.w.dir,"qa_run4/cdd_run/raw_results_linbase.csv"),
-#                           skipped.id.file=file.path(files.w.dir,"qa_run4/cdd_run/skipped_individuals1.csv"),
-#                           cutoff=3.84,max_rows=3,skip=c('cdd','scm','simeval'))
-# #expected data
-# ERROR_table <- data.frame("ERROR",stringsAsFactors = F)
-# colnames(ERROR_table) <- ""
-# cdd_highest_dofv_1 <- data.frame("CDD","ERROR",stringsAsFactors = F)
-# colnames(cdd_highest_dofv_1) <- c("","dOFV")
-# ii_table_3 <- data.frame("All dOFV values are negative",stringsAsFactors = F)
-# colnames(ii_table_3) <- ""
-# cdd_highest_dofv_3 <- data.frame("All dOFV values are negative","",stringsAsFactors = F)
-# colnames(cdd_highest_dofv_3) <- c("","dOFV")
-# cdd_data_4 <- data.frame(id=c(11,34,14,57,3,7,8),
-#                          dOFV=c(0.11014,2.00265,0.12541,0.08563,0.00003,0.01568,1.03525))
-# ii_table_4 <- data.frame(c("Subject 34","Subject 8"),c("2.0","1.0"),stringsAsFactors = F)
-# colnames(ii_table_4) <- c("Subjects","dOFV")
-# cdd_highest_dofv_4 <- data.frame("Subject 34",2.00265,stringsAsFactors = F)
-# colnames(cdd_highest_dofv_4) <- c("","dOFV")
-# ii_table_5 <- data.frame(c("Subject 34","Subject 8","Subject 14"),c("2.0","1.0","0.1"),stringsAsFactors = F)
-# colnames(ii_table_5) <- c("Subjects","dOFV")
-# ii_table_6 <- data.frame(c("Subject 34","Subject 8"),c("2.0","1.0"),stringsAsFactors = F)
-# colnames(ii_table_6) <- c("Subjects","dOFV")
-# cdd_data_7 <- data.frame(id=c(11,12,34,14,57),
-#                          dOFV=c(0.01014,0.06941,0.00265,0.02541,0.08563))
-# ii_table_7 <- data.frame(c("No influential individuals detected"),stringsAsFactors = F)
-# colnames(ii_table_7) <- c("")
-# cdd_highest_dofv_7 <- data.frame("None","",stringsAsFactors = F)
-# colnames(cdd_highest_dofv_7) <- c("","dOFV")
-# cdd_data_8 <- data.frame("SKIPPED",stringsAsFactors = F)
-# colnames(cdd_data_8) <- NULL
-# ii_table_8 <- data.frame(c("No influential individuals detected"),stringsAsFactors = F)
-# colnames(ii_table_8) <- c("")
-# cdd_highest_dofv_8 <- data.frame("CDD","SKIPPED",stringsAsFactors = F)
-# colnames(cdd_highest_dofv_8) <- c("","dOFV")
-# 
-# #compare
-# context("qa, get_ii_table")
-# test_that("create influential individuals table",{
-#   expect_false(list_ii_1$cdd_files_exist)
-#   expect_equal(c(),list_ii_1$all_dofv)
-#   expect_equal(ERROR_table,list_ii_1$cdd.data)
-#   expect_equal(cdd_highest_dofv_1,list_ii_1$cdd_highest_dofv)
-#   expect_equal(ERROR_table,list_ii_1$ii_table)
-#   expect_equal(c(),list_ii_1$infl_id)
-#   expect_equal(5,list_ii_1$fig_height_infl)
-#   expect_true(list_ii_2$cdd_files_exist)
-#   expect_equal(c(),list_ii_2$all_dofv)
-#   expect_equal(ERROR_table,list_ii_2$cdd.data)
-#   expect_equal(cdd_highest_dofv_1,list_ii_2$cdd_highest_dofv)
-#   expect_equal(ERROR_table,list_ii_2$ii_table)
-#   expect_equal(c(),list_ii_2$infl_id)
-#   expect_equal(5,list_ii_2$fig_height_infl)
-#   expect_true(list_ii_3$cdd_files_exist)
-#   expect_equal(c(-0.01014,-0.06941,-0.00265,-0.02541,-0.08563),list_ii_3$all_dofv)
-#   expect_equal(data.frame(),list_ii_3$cdd.data)
-#   expect_equal(cdd_highest_dofv_3,list_ii_3$cdd_highest_dofv)
-#   expect_equal(ii_table_3,list_ii_3$ii_table)
-#   expect_equal(c(),list_ii_3$infl_id)
-#   expect_equal(5,list_ii_3$fig_height_infl)
-#   expect_true(list_ii_4$cdd_files_exist)
-#   expect_equal(c(0.11014,-0.06941,2.00265,0.12541,0.08563,0.00003,-2.08563,0.01568,1.03525),list_ii_4$all_dofv)
-#   expect_equal(cdd_data_4,list_ii_4$cdd.data)
-#   expect_equal(cdd_highest_dofv_4,list_ii_4$cdd_highest_dofv)
-#   expect_equal(ii_table_4,list_ii_4$ii_table)
-#   expect_equal(c(34,8),list_ii_4$infl_id)
-#   expect_equal(5,list_ii_4$fig_height_infl)
-#   expect_true(list_ii_5$cdd_files_exist)
-#   expect_equal(c(0.11014,-0.06941,2.00265,0.12541,0.08563,0.00003,-2.08563,0.01568,1.03525),list_ii_5$all_dofv)
-#   expect_equal(cdd_data_4,list_ii_5$cdd.data)
-#   expect_equal(cdd_highest_dofv_4,list_ii_5$cdd_highest_dofv)
-#   expect_equal(ii_table_5,list_ii_5$ii_table)
-#   expect_equal(c(34,8,14,11),list_ii_5$infl_id)
-#   expect_equal(7,list_ii_5$fig_height_infl)
-#   expect_true(list_ii_6$cdd_files_exist)
-#   expect_equal(c(0.11014,-0.06941,2.00265,0.12541,0.08563,0.00003,-2.08563,0.01568,1.03525),list_ii_6$all_dofv)
-#   expect_equal(cdd_data_4,list_ii_6$cdd.data)
-#   expect_equal(cdd_highest_dofv_4,list_ii_6$cdd_highest_dofv)
-#   expect_equal(ii_table_6,list_ii_6$ii_table)
-#   expect_equal(c(34,8,14,11,57,7,3),list_ii_6$infl_id)
-#   expect_equal(15,list_ii_6$fig_height_infl)
-#   expect_true(list_ii_7$cdd_files_exist)
-#   expect_equal(c(0.01014,0.06941,0.00265,0.02541,0.08563),list_ii_7$all_dofv)
-#   expect_equal(cdd_data_7,list_ii_7$cdd.data)
-#   expect_equal(cdd_highest_dofv_7,list_ii_7$cdd_highest_dofv)
-#   expect_equal(ii_table_7,list_ii_7$ii_table)
-#   expect_equal(c(),list_ii_7$infl_id)
-#   expect_equal(5,list_ii_7$fig_height_infl)
-#   expect_equal(cdd_data_8,list_ii_8$cdd.data)
-#   expect_equal(cdd_highest_dofv_8,list_ii_8$cdd_highest_dofv)
-# })
-# 
-# #...........................  (18) Test function get_outliers_table.R .....................................
-# #run function
-# list_simeval_1 <- get_outliers_table(simeval_directory=file.path(files.w.dir,"qa_missing_folders_files/simeval_run"),
-#                                      cdd.data=cdd_data_4,skip=c('frem','resmod','transform','scm','cdd'))
-# list_simeval_2 <- get_outliers_table(simeval_directory=file.path(files.w.dir,"qa_run1/simeval_run"),
-#                                      cdd.data=ERROR_table,skip=c())
-# list_simeval_3 <- get_outliers_table(simeval_directory=file.path(files.w.dir,"qa_run2/simeval_run"),
-#                                      cdd.data=ERROR_table,skip=c('frem','resmod','transform'))
-# list_simeval_4 <- get_outliers_table(simeval_directory=file.path(files.w.dir,"qa_run1/simeval_run"),
-#                                      cdd.data=data.frame(),skip=c('frem','cdd'))
-# list_simeval_5 <- get_outliers_table(simeval_directory=file.path(files.w.dir,"qa_run2/simeval_run"),
-#                                      cdd.data=data.frame(),skip=c('scm'))
-# list_simeval_6 <- get_outliers_table(simeval_directory=file.path(files.w.dir,"qa_run2/simeval_run"),
-#                                      cdd.data=cdd_data_4,skip=c('frem','resmod','transform','scm'))
-# list_simeval_7 <- get_outliers_table(simeval_directory=file.path(files.w.dir,"qa_run3/simeval_run"),
-#                                      cdd.data=cdd_data_4,skip=c())
-# list_simeval_8 <- get_outliers_table(simeval_directory=file.path(files.w.dir,"qa_run4/simeval_run"),
-#                                      cdd.data=cdd_data_4,skip=c('frem','resmod','transform','scm'))
-# list_simeval_9 <- get_outliers_table(simeval_directory=file.path(files.w.dir,"qa_run4/simeval_run"),
-#                                      cdd.data=cdd_data_4,skip=c('frem','resmod','simeval','scm'))
-# list_simeval_10 <- get_outliers_table(simeval_directory=file.path(files.w.dir,"qa_run4/simeval_run"),
-#                                      cdd.data=cdd_data_8,skip=c('frem','resmod','simeval','scm'))
-# list_simeval_11 <- get_outliers_table(simeval_directory=file.path(files.w.dir,"qa_run4/simeval_run"),
-#                                       cdd.data=cdd_data_8,skip=c('frem','resmod','cdd','scm'))
-# #expected data
-# max_outlier_table_1 <- data.frame("SIMEVAL","ERROR",stringsAsFactors = F)
-# colnames(max_outlier_table_1) <- c("","dOFV")
-# outliers_table_2 <- data.frame("No outliers detected",stringsAsFactors = F)
-# colnames(outliers_table_2) <- c("")
-# max_outlier_table_2 <- data.frame("No outliers detected","",stringsAsFactors = F)
-# colnames(max_outlier_table_2) <- c("","dOFV")
-# outliers_table_3 <- data.frame(Subjects=c("Subject 1","Subject 12","Subject 8","Subject 34"),
-#                                dOFV=c(rep("ERROR",4)),stringsAsFactors = F)
-# max_outlier_table_3 <- data.frame("No dOFV values found","",stringsAsFactors = F)
-# colnames(max_outlier_table_3) <- c("","dOFV")
-# outliers_table_5 <- data.frame(Subjects=c("Subject 1","Subject 12","Subject 8","Subject 34"),
-#                                dOFV=c(rep("NA",4)),stringsAsFactors = F)
-# outliers_table_6 <- data.frame(Subjects=c("Subject 34","Subject 8","Subject 1","Subject 12"),
-#                                dOFV=c("2.0","1.0","NA","NA"),stringsAsFactors = F)
-# max_outlier_table_6 <- data.frame("Subject 34",2.00265,stringsAsFactors = F)
-# colnames(max_outlier_table_6) <- c("","dOFV")
-# outliers_table_7 <- data.frame(Subjects=c("Subject 1","Subject 12"),
-#                                dOFV=c("NA","NA"),stringsAsFactors = F)
-# max_outlier_table_7 <- data.frame("No dOFV values found","",stringsAsFactors = F)
-# colnames(max_outlier_table_7) <- c("","dOFV")
-# outliers_table_8 <- data.frame(Subjects=c("Subject 34","Subject 8","Subject 14","Subject 11","Subject 57","Subject 7","Subject 3"),
-#                                dOFV=c("2.0","1.0","0.1","0.1","0.1","0.0","0.0"),stringsAsFactors = F)
-# max_outlier_table_8 <- data.frame(c("Subject 34"),
-#                                   c(2.00265),stringsAsFactors = F)
-# colnames(max_outlier_table_8) <- c("","dOFV")
-# max_outlier_table_9 <- data.frame("SIMEVAL","SKIPPED",stringsAsFactors = F)
-# colnames(max_outlier_table_9) <- c("","dOFV")
-# max_outlier_table_10 <- data.frame("SIMEVAL","SKIPPED",stringsAsFactors = F)
-# colnames(max_outlier_table_10) <- c("","dOFV")
-# outliers_table_11 <- data.frame(Subjects=c("Subject 14","Subject 7","Subject 8","Subject 3","Subject 11","Subject 57","Subject 34"),
-#                                dOFV=c(rep("",7)),stringsAsFactors = F)
-# max_outlier_table_11 <- data.frame("No dOFV values found (skipped CDD)","",stringsAsFactors = F)
-# colnames(max_outlier_table_11) <- c("","dOFV")
-# #compare
-# context("qa, get_outliers_table")
-# test_that("create outliers table",{
-#   expect_false(list_simeval_1$simeval_files_exist)
-#   expect_equal(ERROR_table,list_simeval_1$outliers_table)
-#   expect_equal(max_outlier_table_1,list_simeval_1$max_outlier_table)
-#   expect_equal(c(),list_simeval_1$outlier_ids)
-#   expect_equal(5,list_simeval_1$fig_height_outl)
-#   expect_true(list_simeval_2$simeval_files_exist)
-#   expect_equal(outliers_table_2,list_simeval_2$outliers_table)
-#   expect_equal(max_outlier_table_2,list_simeval_2$max_outlier_table)
-#   expect_equal(c(),list_simeval_2$outlier_ids)
-#   expect_equal(5,list_simeval_2$fig_height_outl)
-#   expect_true(list_simeval_3$simeval_files_exist)
-#   expect_equal(outliers_table_3,list_simeval_3$outliers_table)
-#   expect_equal(max_outlier_table_3,list_simeval_3$max_outlier_table)
-#   expect_equal(c(1,12,8,34),list_simeval_3$outlier_ids)
-#   expect_equal(7,list_simeval_3$fig_height_outl)
-#   expect_true(list_simeval_4$simeval_files_exist)
-#   expect_equal(outliers_table_2,list_simeval_4$outliers_table)
-#   expect_equal(max_outlier_table_2,list_simeval_4$max_outlier_table)
-#   expect_equal(c(),list_simeval_4$outlier_ids)
-#   expect_equal(5,list_simeval_4$fig_height_outl)
-#   expect_true(list_simeval_5$simeval_files_exist)
-#   expect_equal(outliers_table_5,list_simeval_5$outliers_table)
-#   expect_equal(max_outlier_table_3,list_simeval_5$max_outlier_table)
-#   expect_equal(c(1,12,8,34),list_simeval_5$outlier_ids)
-#   expect_equal(7,list_simeval_5$fig_height_outl)
-#   expect_true(list_simeval_6$simeval_files_exist)
-#   expect_equal(outliers_table_6,list_simeval_6$outliers_table)
-#   expect_equal(max_outlier_table_6,list_simeval_6$max_outlier_table)
-#   expect_equal(c(1,12,8,34),list_simeval_6$outlier_ids)
-#   expect_equal(7,list_simeval_6$fig_height_outl)
-#   expect_true(list_simeval_7$simeval_files_exist)
-#   expect_equal(outliers_table_7,list_simeval_7$outliers_table)
-#   expect_equal(max_outlier_table_7,list_simeval_7$max_outlier_table)
-#   expect_equal(c(1,12),list_simeval_7$outlier_ids)
-#   expect_equal(5,list_simeval_7$fig_height_outl)
-#   expect_true(list_simeval_8$simeval_files_exist)
-#   expect_equal(outliers_table_8,list_simeval_8$outliers_table)
-#   expect_equal(max_outlier_table_8,list_simeval_8$max_outlier_table)
-#   expect_equal(c(14,7,8,3,11,57,34),list_simeval_8$outlier_ids)
-#   expect_equal(15,list_simeval_8$fig_height_outl)
-#   expect_equal(ERROR_table,list_simeval_9$outliers_table)
-#   expect_equal(max_outlier_table_9,list_simeval_9$max_outlier_table)
-#   expect_equal(ERROR_table,list_simeval_10$outliers_table)
-#   expect_equal(max_outlier_table_10,list_simeval_10$max_outlier_table)
-#   expect_equal(outliers_table_11,list_simeval_11$outliers_table)
-#   expect_equal(max_outlier_table_11,list_simeval_11$max_outlier_table)
-# })
-# 
-# #...........................  (19) Test function get_overview_table.R .....................................
-# #input data
-# cdd_highest_dofv_extra <- data.frame("Subject 34",0.01265,stringsAsFactors = F)
-# colnames(cdd_highest_dofv_extra) <- c("","dOFV")
-# cdd_highest_dofv_extra_1 <- data.frame("Subject 34",0.00265,stringsAsFactors = F)
-# colnames(cdd_highest_dofv_extra_1) <- c("","dOFV")
-# #run function
-# overview_list_1 <- get_overview_table(structural_overview=str_overview_4,
-#                                       param_var_overview=par_var_models_4,
-#                                       covariates_overview=covariates_table_1,
-#                                       resmod_ruv_overview=resmod_ruv_overview_1,
-#                                       infl_indiv_overview=cdd_highest_dofv_1,
-#                                       outliers_overview=max_outlier_table_1)
-# overview_list_2 <- get_overview_table(structural_overview=str_overview_7,
-#                                       param_var_overview=par_var_models_6,
-#                                       covariates_overview=covariates_table_2,
-#                                       resmod_ruv_overview=resmod_ruv_overview_4,
-#                                       infl_indiv_overview=cdd_highest_dofv_1,
-#                                       outliers_overview=max_outlier_table_1)
-# overview_list_3 <- get_overview_table(structural_overview=str_overview_5,
-#                                       param_var_overview=par_var_models_2,
-#                                       covariates_overview=covariates_table_3,
-#                                       resmod_ruv_overview=resmod_ruv_overview_2,
-#                                       infl_indiv_overview=cdd_highest_dofv_3,
-#                                       outliers_overview=max_outlier_table_3)
-# overview_list_4 <- get_overview_table(structural_overview=str_overview_1,
-#                                       param_var_overview=par_var_models_1,
-#                                       covariates_overview=covariates_table_4,
-#                                       resmod_ruv_overview=resmod_ruv_overview_2,
-#                                       infl_indiv_overview=cdd_highest_dofv_4,
-#                                       outliers_overview=max_outlier_table_6)
-# overview_list_5 <- get_overview_table(structural_overview=str_overview_1,
-#                                       param_var_overview=par_var_models_1,
-#                                       covariates_overview=covariates_table_4,
-#                                       resmod_ruv_overview=resmod_ruv_overview_2,
-#                                       infl_indiv_overview=cdd_highest_dofv_extra,
-#                                       outliers_overview=max_outlier_table_6)
-# overview_list_6 <- get_overview_table(structural_overview=str_overview_1,
-#                                       param_var_overview=par_var_models_1,
-#                                       covariates_overview=covariates_table_4,
-#                                       resmod_ruv_overview=resmod_ruv_overview_2,
-#                                       infl_indiv_overview=cdd_highest_dofv_extra_1,
-#                                       outliers_overview=max_outlier_table_6)
-# overview_list_7 <- get_overview_table(structural_overview=str_overview_10,
-#                                       param_var_overview=par_var_models_7,
-#                                       covariates_overview=covariates_table_8,
-#                                       resmod_ruv_overview=resmod_ruv_overview_5,
-#                                       infl_indiv_overview=cdd_highest_dofv_8,
-#                                       outliers_overview=max_outlier_table_9)
-# overview_list_8 <- get_overview_table(structural_overview=str_overview_10,
-#                                       param_var_overview=par_var_models_3,
-#                                       covariates_overview=covariates_table_4,
-#                                       resmod_ruv_overview=resmod_ruv_overview_5,
-#                                       infl_indiv_overview=cdd_highest_dofv_8,
-#                                       outliers_overview=max_outlier_table_11)
-# #expected data
-# overview_table_1 <- data.frame(c("TIME","TAD","Full OMEGA Block","Box-Cox Transformation","Additional ETA","t-distribution",
-#                                  "FREM","SCM","RESMOD","CDD","SIMEVAL"),
-#                                c(rep("ERROR",11)),c(rep("",11)),
-#                                stringsAsFactors = F)
-# colnames(overview_table_1) <- c("","dOFV","Additional parameters")
-# rgroup_names <- c("Structural Model","Parameter Variability Model","Covariates",
-#                   "Residual Error Model","Influential Individuals","Outliers")
-# overview_table_2 <- data.frame(c("TIME","PRED","Full OMEGA Block","Box-Cox Transformation","Additional ETA","t-distribution",
-#                                  "FREM","SCM","RESMOD","CDD","SIMEVAL"),
-#                                c(rep("NA",9),rep("ERROR",2)),c("2","2",rep("",9)),
-#                                stringsAsFactors = F)
-# colnames(overview_table_2) <- c("","dOFV","Additional parameters")
-# overview_table_3 <- data.frame(c("TIME","PRED","Full OMEGA Block","Box-Cox Transformation","Additional ETA","t-distribution",
-#                                  "FREM","CLAPGR-4","tdist","dtbs","All dOFV values are negative","No dOFV values found"),
-#                                c("NA","4.8","ERROR","-0.6","NA","NA","NA","2.9","43.6","21.7","",""),
-#                                c("2","2","","3","","","","1","1","2","",""),
-#                                stringsAsFactors = F)
-# colnames(overview_table_3) <- c("","dOFV","Additional parameters")
-# overview_table_4 <- data.frame(c("TIME","PRED","Full OMEGA Block","Box-Cox Transformation","Additional ETA","t-distribution",
-#                                  "FREM","CLAPGR-4","tdist","dtbs","Subject 34","Subject 34"),
-#                                c("4.3","4.8","-3.7","-0.6","3.4","-1.0","3.6","2.9","43.6","21.7","2.0","2.0"),
-#                                c(2,2,4,"0","2","0","6","1","1","2","",""),
-#                                stringsAsFactors = F)
-# colnames(overview_table_4) <- c("","dOFV","Additional parameters")
-# overview_table_5 <- data.frame(c("TIME","PRED","Full OMEGA Block","Box-Cox Transformation","Additional ETA","t-distribution",
-#                                  "FREM","CLAPGR-4","tdist","dtbs","Subject 34","Subject 34"),
-#                                c("4.31","4.80","-3.73","-0.57","3.41","-1.03","3.60","2.87","43.62","21.67","0.01","2.00"),
-#                                c(2,2,4,"0","2","0","6","1","1","2","",""),
-#                                stringsAsFactors = F)
-# colnames(overview_table_5) <- c("","dOFV","Additional parameters")
-# overview_table_6 <- data.frame(c("TIME","PRED","Full OMEGA Block","Box-Cox Transformation","Additional ETA","t-distribution",
-#                                  "FREM","CLAPGR-4","tdist","dtbs","Subject 34","Subject 34"),
-#                                c("4.3","4.8","-3.7","-0.6","3.4","-1.0","3.6","2.9","43.6","21.7","0.0","2.0"),
-#                                c(2,2,4,"0","2","0","6","1","1","2","",""),
-#                                stringsAsFactors = F)
-# colnames(overview_table_6) <- c("","dOFV","Additional parameters")
-# overview_table_7 <- data.frame(c("RESMOD","Full OMEGA Block","Box-Cox Transformation","Additional ETA","t-distribution",
-#                                  "FREM","SCM","RESMOD","CDD","SIMEVAL"),
-#                                c(rep("SKIPPED",10)),c(rep("",10)),
-#                                stringsAsFactors = F)
-# colnames(overview_table_7) <- c("","dOFV","Additional parameters")
-# overview_table_8 <- data.frame(c("RESMOD","Full OMEGA Block","Box-Cox Transformation","Additional ETA","t-distribution",
-#                                  "FREM","CLAPGR-4","RESMOD","CDD","No dOFV values found (skipped CDD)"),
-#                                c("SKIPPED","ERROR","NA","ERROR","NA","3.6","2.9","SKIPPED","SKIPPED",""),
-#                                c(rep("",5),"6","1",rep("",3)),
-#                                stringsAsFactors = F)
-# colnames(overview_table_8) <- c("","dOFV","Additional parameters")
-# #compare
-# context("qa, get_overview_table")
-# test_that("create an overview table",{
-#   expect_equal(overview_table_1,overview_list_1$overview_table)
-#   expect_equal(c(2,4,2,1,1,1),overview_list_1$n.rgroup)
-#   expect_equal(rgroup_names,overview_list_1$rgroup_names)
-#   expect_equal(overview_table_2,overview_list_2$overview_table)
-#   expect_equal(c(2,4,2,1,1,1),overview_list_2$n.rgroup)
-#   expect_equal(rgroup_names,overview_list_2$rgroup_names)
-#   expect_equal(overview_table_3,overview_list_3$overview_table)
-#   expect_equal(c(2,4,2,2,1,1),overview_list_3$n.rgroup)
-#   expect_equal(rgroup_names,overview_list_3$rgroup_names)
-#   expect_equal(overview_table_4,overview_list_4$overview_table)
-#   expect_equal(c(2,4,2,2,1,1),overview_list_4$n.rgroup)
-#   expect_equal(rgroup_names,overview_list_4$rgroup_names)
-#   expect_equal(overview_table_5,overview_list_5$overview_table)
-#   expect_equal(c(2,4,2,2,1,1),overview_list_5$n.rgroup)
-#   expect_equal(rgroup_names,overview_list_5$rgroup_names)
-#   expect_equal(overview_table_6,overview_list_6$overview_table)
-#   expect_equal(overview_table_7,overview_list_7$overview_table)
-#   expect_equal(overview_table_8,overview_list_8$overview_table)
-# })
-# 
-# #...........................  (20) Test function get_tables_for_vpc.R .....................................  
-# #run function
-# list_vpc_tables_1 <- get_tables_for_vpc(obs_table=file.path(files.w.dir,"qa_run1/linearize_run/scm_dir1/extra_table"),
-#                                         obs_extra_table=file.path(files.w.dir,"qa_run1/linbase.dta"),
-#                                         sim_table=file.path(files.w.dir,"qa_run1/simeval_run/m1/sim_res_table-1.dta"),
-#                                         sim_extra_table=file.path(files.w.dir,"qa_run1/simeval_run/m1/orig_pred.dta"),
-#                                         idv_all=c("TIME","PRED"),dvid="NA",dvid_name="DVID")
-# list_vpc_tables_2 <- get_tables_for_vpc(obs_table=file.path(files.w.dir,"qa_run1/linearize_run/scm_dir1/extra_table"),
-#                                         obs_extra_table=file.path(files.w.dir,"qa_run1/linbase.dta"),
-#                                         sim_table=file.path(files.w.dir,"qa_run1/simeval_run/m1/sim_res_table-1.dta"),
-#                                         sim_extra_table=file.path(files.w.dir,"qa_missing_folders_files/simeval_run/m1/orig_pred.dta"),
-#                                         idv_all=c("TIME","PRED"),dvid="NA",dvid_name="DVID")
-# list_vpc_tables_3 <- get_tables_for_vpc(obs_table=file.path(files.w.dir,"qa_missing_folders_files/linearize_run/scm_dir1/extra_table"),
-#                                         obs_extra_table=file.path(files.w.dir,"qa_run1/linbase.dta"),
-#                                         sim_table=file.path(files.w.dir,"qa_run1/simeval_run/m1/sim_res_table-1.dta"),
-#                                         sim_extra_table=file.path(files.w.dir,"qa_run1/simeval_run/m1/orig_pred.dta"),
-#                                         idv_all=c("TIME","PRED"),dvid="NA",dvid_name="DVID")
-# list_vpc_tables_4 <- get_tables_for_vpc(obs_table=file.path(files.w.dir,"qa_run1/linearize_run/scm_dir1/extra_table"),
-#                                         obs_extra_table=file.path(files.w.dir,"qa_run1/linbase.dta"),
-#                                         sim_table=file.path(files.w.dir,"qa_run1/simeval_run/m1/sim_res_table-1.dta"),
-#                                         sim_extra_table=file.path(files.w.dir,"qa_missing_folders_files/simeval_run/m1/orig_pred.dta"),
-#                                         idv_all=c("TIME","PRED"),dvid="1",dvid_name="ORIG")
-# list_vpc_tables_5 <- get_tables_for_vpc(obs_table=file.path(files.w.dir,"qa_run2/linearize_run/scm_dir1/extra_table"),
-#                                         obs_extra_table=file.path(files.w.dir,"qa_run2/linbase.dta"),
-#                                         sim_table=file.path(files.w.dir,"qa_run2/simeval_run/m1/sim_res_table-1.dta"),
-#                                         sim_extra_table=file.path(files.w.dir,"qa_missing_folders_files/simeval_run/m1/orig_pred.dta"),
-#                                         idv_all=c("TIME","PRED"),dvid="NA",dvid_name="DVID")
-# list_vpc_tables_6 <- get_tables_for_vpc(obs_table=file.path(files.w.dir,"qa_run1/linearize_run/scm_dir1/extra_table_5"),
-#                                         obs_extra_table=file.path(files.w.dir,"qa_run1/linbase_7.dta"),
-#                                         sim_table=file.path(files.w.dir,"qa_run1/simeval_run/m1/sim_res_table-3.dta"),
-#                                         sim_extra_table=file.path(files.w.dir,"qa_run1/simeval_run/m1/orig_pred.dta"),
-#                                         idv_all=c("TIME","PRED"),dvid="2",dvid_name="ORIG")
-# list_vpc_tables_7 <- get_tables_for_vpc(obs_table=file.path(files.w.dir,"qa_run1/linearize_run/scm_dir1/extra_table_2"),
-#                                         obs_extra_table=file.path(files.w.dir,"qa_run1/linbase_2.dta"),
-#                                         sim_table=file.path(files.w.dir,"qa_run1/simeval_run/m1/sim_res_table-1.dta"),
-#                                         sim_extra_table=file.path(files.w.dir,"qa_run1/simeval_run/m1/orig_pred.dta"),
-#                                         idv_all=c("TIME","PRED"),dvid="NA",dvid_name="DVID")
-# list_vpc_tables_8 <- get_tables_for_vpc(obs_table=file.path(files.w.dir,"qa_run1/linearize_run/scm_dir1/extra_table_3"),
-#                                         obs_extra_table=file.path(files.w.dir,"qa_run1/linbase_2.dta"),
-#                                         sim_table=file.path(files.w.dir,"qa_run1/simeval_run/m1/sim_res_table-1.dta"),
-#                                         sim_extra_table=file.path(files.w.dir,"qa_run1/simeval_run/m1/orig_pred.dta"),
-#                                         idv_all=c("TIME","PRED"),dvid="NA",dvid_name="DVID")
-# list_vpc_tables_9 <- get_tables_for_vpc(obs_table=file.path(files.w.dir,"qa_run1/linearize_run/scm_dir1/extra_table_4"),
-#                                         obs_extra_table=file.path(files.w.dir,"qa_run1/linbase_3.dta"),
-#                                         sim_table=file.path(files.w.dir,"qa_run1/simeval_run/m1/sim_res_table-1.dta"),
-#                                         sim_extra_table=file.path(files.w.dir,"qa_run1/simeval_run/m1/orig_pred.dta"),
-#                                         idv_all=c("TIME","PRED"),dvid="NA",dvid_name="DVID")
-# list_vpc_tables_10 <- get_tables_for_vpc(obs_table=file.path(files.w.dir,"qa_run1/linearize_run/scm_dir1/extra_table_4"),
-#                                         obs_extra_table=file.path(files.w.dir,"qa_run1/linbase.dta"),
-#                                         sim_table=file.path(files.w.dir,"qa_run1/simeval_run/m1/sim_res_table-1.dta"),
-#                                         sim_extra_table=file.path(files.w.dir,"qa_run1/simeval_run/m1/orig_pred.dta"),
-#                                         idv_all=c("TIME","PRED"),dvid="NA",dvid_name="DVID")
-# list_vpc_tables_11 <- get_tables_for_vpc(obs_table=file.path(files.w.dir,"qa_run1/linearize_run/scm_dir1/extra_table_2"),
-#                                         obs_extra_table=file.path(files.w.dir,"qa_run1/linbase_4.dta"),
-#                                         sim_table=file.path(files.w.dir,"qa_run1/simeval_run/m1/sim_res_table-1.dta"),
-#                                         sim_extra_table=file.path(files.w.dir,"qa_run1/simeval_run/m1/orig_pred.dta"),
-#                                         idv_all=c("TIME","PRED"),dvid="NA",dvid_name="DVID")
-# list_vpc_tables_12 <- get_tables_for_vpc(obs_table=file.path(files.w.dir,"qa_run1/linearize_run/scm_dir1/extra_table"),
-#                                          obs_extra_table=file.path(files.w.dir,"qa_run1/linbase_5.dta"),
-#                                          sim_table=file.path(files.w.dir,"qa_run1/simeval_run/m1/sim_res_table-2.dta"),
-#                                          sim_extra_table=file.path(files.w.dir,"qa_run1/simeval_run/m1/orig_pred.dta"),
-#                                          idv_all=c("TIME","PRED"),dvid="NA",dvid_name="DVID")
-# list_vpc_tables_13 <- get_tables_for_vpc(obs_table=file.path(files.w.dir,"qa_run1/linearize_run/scm_dir1/extra_table_6"),
-#                                         obs_extra_table=file.path(files.w.dir,"qa_run1/linbase_6.dta"),
-#                                         sim_table=file.path(files.w.dir,"qa_run1/simeval_run/m1/sim_res_table-4.dta"),
-#                                         sim_extra_table=file.path(files.w.dir,"qa_run1/simeval_run/m1/orig_pred_1.dta"),
-#                                         idv_all=c("TIME","PRED"),dvid="2",dvid_name="ORIG")
-# list_vpc_tables_14 <- get_tables_for_vpc(obs_table=file.path(files.w.dir,"qa_run1/linearize_run/scm_dir1/extra_table_5"),
-#                                         obs_extra_table=file.path(files.w.dir,"qa_run1/linbase_7.dta"),
-#                                         sim_table=file.path(files.w.dir,"qa_run1/simeval_run/m1/sim_res_table-5.dta"),
-#                                         sim_extra_table=file.path(files.w.dir,"qa_run1/simeval_run/m1/orig_pred.dta"),
-#                                         idv_all=c("TIME","PRED"),dvid="2",dvid_name="ORIG")
-# #expected_data
-# obs_1 <- data.frame(ID=as.factor(c(1,1,2,2,3,4,4,4,5,5,5)),
-#                     TIME=c(2,112.5,2,63.5,134.3,1.8,59.3,130.8,2,59.5,132),
-#                     CWRES=c(-0.401,0.58,-1.27,1.6,-1.5,0.0206,-0.34,0.31,-0.92,-0.702,-1),
-#                     PRED=c(17,28,10,18,31,20,24,30,19,23,28),
-#                     CIPREDI=c(17,28,11,21,28,20,24,30,14,18,23),
-#                     DV=c(17.3,31,9.7,24.6,24.3,23.9,0,31.7,14.2,18.2,20.3),
-#                     MDV=c(rep(0,11)))
-# sim_1 <- data.frame(ID=as.factor(rep(c(1,1,2,2,3,4,4,4,5,5,5),3)),
-#                     DV=c(25,34,10.9,28,27,20,21,34,22,29,40,20,27.8,25,32,36,19,26,39.1,21,19,34,16,30.1,17,30.8,26,18,19,28,21,24.1,28),
-#                     MDV=c(rep(0,33)),
-#                     CWRES=c(1.8,0.73,-0.18,0.42,-0.9,0.13,-1.2,1.07,0.27,1.1,2.4,0.84,-0.37,1.2,0.87,1,-0.85,0.047,1.8,0.96,-1.3,1.4,-0.503,0.45,-1.06,1.1,1.4,-0.045,-1.3,-0.16,0.82,0.2,-0.13),
-#                     IPRED=c(22,33,11,28,29,20.2,24,30.5,22,27,33,18,29,23,32,33,21,26,32,20,24,29,17,28,20.8,28,23,17,21,27,19,23,29),
-#                     TIME=rep(c(2,112.5,2,63.5,134.3,1.8,59.3,130.8,2,59.5,132),3),
-#                     PRED=rep(c(17,28,10,18,31,20,24,30,19,23,28),3))
-# obs_8 <- data.frame(ID=as.factor(c(1,1,2,2,3,4,4,4,5,5,5)),
-#                     TIME=c(2,112.5,2,63.5,134.3,1.8,59.3,130.8,2,59.5,132),
-#                     CWRES=c(-0.401,0.58,-1.27,1.6,-1.5,0.0206,-0.34,0.31,-0.92,-0.702,-1),
-#                     PRED=c(17,28,10,18,31,20,24,30,19,23,28),
-#                     CIPREDI=c(17,28,11,21,28,20,24,30,14,18,23),
-#                     MDV=c(rep(0,11)),
-#                     DV=c(17.3,31,9.7,24.6,24.3,23.9,0,31.7,14.2,18.2,20.3))
-# obs_11 <- data.frame(ID=as.factor(c(1,1,2,2,3,4,4,4,5,5,5)),
-#                     TIME=c(2,112.5,2,63.5,134.3,1.8,59.3,130.8,2,59.5,132),
-#                     CWRES=c(-0.401,0.58,-1.27,1.6,-1.5,0.0206,-0.34,0.31,-0.92,-0.702,-1),
-#                     PRED=c(17,28,10,18,31,20,24,30,19,23,28),
-#                     CIPREDI=c(17,28,11,21,28,20,24,30,14,18,23),
-#                     DV=c(17.3,31,9.7,24.6,24.3,20.8,23.9,31.7,14.2,18.2,20.3))
-# obs_12 <- data.frame(ID=factor(c(1,1,3,5,5,5),levels = c(1,2,3,4,5)),
-#                     TIME=c(2,112.5,134.3,2,59.5,132),
-#                     CWRES=c(-0.401,0.58,-1.5,-0.92,-0.702,-1),
-#                     PRED=c(17,28,31,19,23,28),
-#                     CIPREDI=c(17,28,28,14,18,23),
-#                     DV=c(17.3,31,24.3,14.2,18.2,20.3),
-#                     MDV=c(rep(0,6)))
-# sim_12 <- data.frame(ID=as.factor(rep(c(1,1,3,5,5,5),3)),
-#                     DV=c(25,34,27,22,29,40,20,27.8,36,21,19,34,16,30.1,26,21,24.1,28),
-#                     MDV=c(rep(0,18)),
-#                     CWRES=c(1.8,0.73,-0.9,0.27,1.1,2.4,0.84,-0.37,1,0.96,-1.3,1.4,-0.503,0.45,1.4,0.82,0.2,-0.13),
-#                     IPRED=c(22,33,29,22,27,33,18,29,33,20,24,29,17,28,23,19,23,29),
-#                     TIME=rep(c(2,112.5,134.3,2,59.5,132),3),
-#                     PRED=rep(c(17,28,31,19,23,28),3))
-# obs_6 <- data.frame(ID=as.factor(c(1,1,2,2,3,4,4,4,5,5,5)),
-#                     TIME=c(2,112.5,2,63.5,134.3,1.8,59.3,130.8,2,59.5,132),
-#                     CWRES=c(-0.401,0.58,-1.27,1.6,-1.5,0.0206,-0.34,0.31,-0.92,-0.702,-1),
-#                     PRED=c(17,28,10,18,31,20,24,30,19,23,28),
-#                     CIPREDI=c(17,28,11,21,28,20,24,30,14,18,23),
-#                     ORIG=c(rep(2,11)),
-#                     DV=c(17.3,31,9.7,24.6,24.3,23.9,0,31.7,14.2,18.2,20.3),
-#                     MDV=c(rep(0,11)))
-# sim_6 <- data.frame(ID=as.factor(rep(c(1,1,2,2,3,4,4,4,5,5,5),3)),
-#                     DV=c(25,34,10.9,28,27,20,21,34,22,29,40,20,27.8,25,32,36,19,26,39.1,21,19,34,16,30.1,17,30.8,26,18,19,28,21,24.1,28),
-#                     MDV=c(rep(0,33)),
-#                     CWRES=c(1.8,0.73,-0.18,0.42,-0.9,0.13,-1.2,1.07,0.27,1.1,2.4,0.84,-0.37,1.2,0.87,1,-0.85,0.047,1.8,0.96,-1.3,1.4,-0.503,0.45,-1.06,1.1,1.4,-0.045,-1.3,-0.16,0.82,0.2,-0.13),
-#                     IPRED=c(22,33,11,28,29,20.2,24,30.5,22,27,33,18,29,23,32,33,21,26,32,20,24,29,17,28,20.8,28,23,17,21,27,19,23,29),
-#                     ORIG=rep(2,33),
-#                     TIME=rep(c(2,112.5,2,63.5,134.3,1.8,59.3,130.8,2,59.5,132),3),
-#                     PRED=rep(c(17,28,10,18,31,20,24,30,19,23,28),3))
-# obs_13 <- data.frame(ID=as.factor(c(1,1,3,5,5,5)),
-#                      TIME=c(2,112.5,134.3,2,59.5,132),
-#                      CWRES=c(-0.401,0.58,-1.5,-0.92,-0.702,-1),
-#                      PRED=c(17,28,31,19,23,28),
-#                      CIPREDI=c(17,28,28,14,18,23),
-#                      ORIG=rep(2,6),
-#                      DV=c(17.3,31,24.3,14.2,18.2,20.3),
-#                      MDV=c(rep(0,6)))
-# sim_13 <- data.frame(ID=as.factor(rep(c(1,1,3,5,5,5),3)),
-#                      DV=c(25,34,27,22,29,40,20,27.8,36,21,19,34,16,30.1,26,21,24.1,28),
-#                      MDV=c(rep(0,18)),
-#                      CWRES=c(1.8,0.73,-0.9,0.27,1.1,2.4,0.84,-0.37,1,0.96,-1.3,1.4,-0.503,0.45,1.4,0.82,0.2,-0.13),
-#                      IPRED=c(22,33,29,22,27,33,18,29,33,20,24,29,17,28,23,19,23,29),
-#                      ORIG=rep(2,18),
-#                      TIME=rep(c(2,112.5,134.3,2,59.5,132),3),
-#                      PRED=rep(c(17,28,31,19,23,28),3))
-# #compare
-# context("qa, get_tables_for_vpc")
-# test_that("get tables for vpc plots",{
-#   expect_true(list_vpc_tables_1$make_vpc)
-#   expect_equal(obs_1,list_vpc_tables_1$obs)
-#   expect_equal(sim_1,list_vpc_tables_1$sim)
-#   expect_true(list_vpc_tables_2$make_vpc)
-#   expect_equal(obs_1,list_vpc_tables_2$obs)
-#   expect_equal(sim_1,list_vpc_tables_2$sim)
-#   expect_false(list_vpc_tables_3$make_vpc)
-#   expect_false(list_vpc_tables_4$make_vpc)
-#   expect_false(list_vpc_tables_5$make_vpc)
-#   expect_true(list_vpc_tables_6$make_vpc)
-#   expect_equal(obs_6,list_vpc_tables_6$obs)
-#   expect_equal(sim_6,list_vpc_tables_6$sim)
-#   expect_true(list_vpc_tables_7$make_vpc)
-#   expect_equal(obs_1,list_vpc_tables_7$obs)
-#   expect_equal(sim_1,list_vpc_tables_7$sim)
-#   expect_true(list_vpc_tables_8$make_vpc)
-#   expect_equal(obs_8,list_vpc_tables_8$obs)
-#   expect_equal(sim_1,list_vpc_tables_8$sim)
-#   expect_false(list_vpc_tables_9$make_vpc)
-#   expect_true(list_vpc_tables_10$make_vpc)
-#   expect_equal(obs_8,list_vpc_tables_10$obs)
-#   expect_equal(sim_1,list_vpc_tables_10$sim)
-#   expect_true(list_vpc_tables_11$make_vpc)
-#   expect_equal(obs_11,list_vpc_tables_11$obs)
-#   expect_equal(sim_1,list_vpc_tables_11$sim)
-#   expect_true(list_vpc_tables_12$make_vpc)
-#   expect_equal(obs_12,list_vpc_tables_12$obs)
-#   expect_equal(sim_12,list_vpc_tables_12$sim)
-#   expect_true(list_vpc_tables_13$make_vpc)
-#   expect_equal(obs_13,list_vpc_tables_13$obs)
-#   expect_equal(sim_13,list_vpc_tables_13$sim)
-#   expect_true(list_vpc_tables_14$make_vpc)
-#   expect_equal(obs_6,list_vpc_tables_14$obs)
-#   expect_equal(sim_6,list_vpc_tables_14$sim)
-# })
+#...........................  (16) Test function get_scm_table.R .....................................
+#run functions
+list_scm_run_1 <- get_scm_table(scm_directory=file.path(files.w.dir,"qa_missing_folders_files/scm_run"),
+                              frem_directory=file.path(files.w.dir,"qa_missing_folders_files/frem_run"),
+                              parameters=c('K1','K2'),continuous=c('AGE'),categorical=c(),skip=c())
+scm_table_1 <- list_scm_run_1$scm_table
+max_scm_table_1 <- list_scm_run_1$max_scm_table
+scm_files_exists_1 <- list_scm_run_1$scm_files_exists
+
+list_scm_run_2 <- get_scm_table(scm_directory=file.path(files.w.dir,"qa_run1/scm_run"),
+                                frem_directory=file.path(files.w.dir,"qa_run1/frem_run"),
+                                parameters=c('K1','K2'),
+                                continuous=c(),categorical=c(),skip=c())
+scm_table_2 <- list_scm_run_2$scm_table
+max_scm_table_2 <- list_scm_run_2$max_scm_table
+scm_files_exists_2 <- list_scm_run_2$scm_files_exists
+
+list_scm_run_3 <- get_scm_table(scm_directory=file.path(files.w.dir,"qa_run2/scm_run"),
+                                frem_directory=file.path(files.w.dir,"qa_run2/frem_run"),
+                                parameters=c('CL','V'),
+                                continuous=c('APGR','WGT'),categorical=c(),skip=c())
+scm_table_3 <- list_scm_run_3$scm_table
+max_scm_table_3 <- list_scm_run_3$max_scm_table
+scm_files_exists_3 <- list_scm_run_3$scm_files_exists
+
+list_scm_run_4 <- get_scm_table(scm_directory=file.path(files.w.dir,"qa_run3/scm_run"),
+                                frem_directory=file.path(files.w.dir,"qa_run2/frem_run"),
+                                parameters=c('CL','V'),
+                                continuous=c('APGR','WGT'),categorical=c(),skip=c('frem','resmod','transform','cdd','simeval'))
+scm_table_4 <- list_scm_run_4$scm_table
+max_scm_table_4 <- list_scm_run_4$max_scm_table
+scm_files_exists_4 <- list_scm_run_4$scm_files_exists
+
+list_scm_run_5 <- get_scm_table(scm_directory=file.path(files.w.dir,"qa_run3/scm_run"),
+                                frem_directory=file.path(files.w.dir,"qa_run3/frem_run"),
+                                parameters=c('CL','V'),
+                                continuous=c('APGR','WGT'),categorical=c(),skip=c('frem','scm'))
+scm_table_5 <- list_scm_run_5$scm_table
+max_scm_table_5 <- list_scm_run_5$max_scm_table
+scm_files_exists_5 <- list_scm_run_5$scm_files_exists
+
+#expected data
+exp_scm_table_1 <- data.frame("SCM","ERROR",stringsAsFactors = F)
+colnames(exp_scm_table_1) <- c("","dOFV")
+exp_max_scm_table_1 <- data.frame("SCM","ERROR","",stringsAsFactors = F)
+colnames(exp_max_scm_table_1) <- c("","dOFV","Add.params")
+exp_scm_table_2 <- data.frame("SCM","NA",stringsAsFactors = F)
+colnames(exp_scm_table_2) <- c("","dOFV")
+exp_max_scm_table_2 <- data.frame("SCM","NA","",stringsAsFactors = F)
+colnames(exp_max_scm_table_2) <- c("","dOFV","Add.params")
+exp_scm_table_3 <- data.frame(c("CLAPGR-4","CLWGT-4","VAPGR-4","VWGT-4"),c(2.87,0.47,0.17,0.12),c(-0.03,0.05,0.004,-0.012),stringsAsFactors = F)
+colnames(exp_scm_table_3) <- c("","dOFV","Coef")
+exp_max_scm_table_3 <- data.frame("CLAPGR-4",2.87,1,stringsAsFactors = F)
+colnames(exp_max_scm_table_3) <- c("","dOFV","Add.params")
+exp_scm_table_4 <- data.frame(c("CLAPGR-4","CLWGT-4","VAPGR-4","VWGT-4"),c(NA,0.47,0.17,0.12),c(NA,0.05,0.004,-0.012),stringsAsFactors = F)
+colnames(exp_scm_table_4) <- c("","dOFV","Coef")
+exp_max_scm_table_4 <- data.frame("CLWGT-4",0.47,1,stringsAsFactors = F)
+colnames(exp_max_scm_table_4) <- c("","dOFV","Add.params")
+exp_max_scm_table_5 <- data.frame("SCM","SKIPPED","",stringsAsFactors = F)
+colnames(exp_max_scm_table_5) <- c("","dOFV","Add.params")
+exp_scm_table_5 <- data.frame("SCM","SKIPPED",stringsAsFactors = F)
+colnames(exp_scm_table_5) <- c("","dOFV")
+
+#compare
+context("qa, get_scm_table")
+test_that("get SCM table",{
+  expect_equal(scm_table_1,exp_scm_table_1) # files not exist
+  expect_equal(max_scm_table_1,exp_max_scm_table_1)
+  expect_false(scm_files_exists_1)
+  expect_equal(scm_table_2,exp_scm_table_2) # files exist, no covariates
+  expect_equal(max_scm_table_2,exp_max_scm_table_2)
+  expect_false(scm_files_exists_2)
+  expect_equal(scm_table_3,exp_scm_table_3) # files exist, covariates exist, round values
+  expect_equal(max_scm_table_3,exp_max_scm_table_3) 
+  expect_true(scm_files_exists_3)
+  expect_equal(scm_table_4,exp_scm_table_4) # files exist, covariates exist, first value is NA,round values
+  expect_equal(max_scm_table_4,exp_max_scm_table_4)
+  expect_true(scm_files_exists_4)
+  expect_equal(scm_table_5,exp_scm_table_5) # skipped
+  expect_equal(max_scm_table_5,exp_max_scm_table_5)
+})
+
+#...........................  (17) Test function get_covariates_table.R .....................................
+#input data (not using calculated frem_table_4 because of floating point missmatch)
+frem_table_4 <- data.frame("ALL",7.1,0,stringsAsFactors = F)
+colnames(frem_table_4) <- c("","dOFV","Add.params")
+#run function
+list_covariate_table_1 <- get_covariates_table(frem_table=frem_table_1,scm_table=scm_table_1,max_scm_table=max_scm_table_1)
+covariates_table_1 <- list_covariate_table_1$covariates_table
+covariates_extra_table_1 <- list_covariate_table_1$covariates_extra_table
+
+list_covariate_table_2 <- get_covariates_table(frem_table=frem_table_2,scm_table=scm_table_2,max_scm_table=max_scm_table_2)
+covariates_table_2 <- list_covariate_table_2$covariates_table
+covariates_extra_table_2 <- list_covariate_table_2$covariates_extra_table
+
+list_covariate_table_3 <- get_covariates_table(frem_table=frem_table_2,scm_table=scm_table_3,max_scm_table=max_scm_table_3)
+covariates_table_3 <- list_covariate_table_3$covariates_table
+covariates_extra_table_3 <- list_covariate_table_3$covariates_extra_table
+
+list_covariate_table_4 <- get_covariates_table(frem_table=frem_table_3,scm_table=scm_table_3,max_scm_table=max_scm_table_3)
+covariates_table_4 <- list_covariate_table_4$covariates_table
+covariates_extra_table_4 <- list_covariate_table_4$covariates_extra_table
+
+list_covariate_table_5 <- get_covariates_table(frem_table=frem_table_1,scm_table=scm_table_3,max_scm_table=max_scm_table_3)
+covariates_table_5 <- list_covariate_table_5$covariates_table
+covariates_extra_table_5 <- list_covariate_table_5$covariates_extra_table
+
+list_covariate_table_6 <- get_covariates_table(frem_table=frem_table_4,scm_table=scm_table_1,max_scm_table=max_scm_table_1)
+covariates_table_6 <- list_covariate_table_6$covariates_table
+covariates_extra_table_6 <- list_covariate_table_6$covariates_extra_table
+
+list_covariate_table_7 <- get_covariates_table(frem_table=frem_table_3,scm_table=scm_table_4,max_scm_table=max_scm_table_4)
+covariates_table_7 <- list_covariate_table_7$covariates_table
+covariates_extra_table_7 <- list_covariate_table_7$covariates_extra_table
+
+list_covariate_table_8 <- get_covariates_table(frem_table=frem_table_5,scm_table=scm_table_5,max_scm_table=max_scm_table_5)
+covariates_table_8 <- list_covariate_table_8$covariates_table
+covariates_extra_table_8 <- list_covariate_table_8$covariates_extra_table
+
+list_covariate_table_9 <- get_covariates_table(frem_table=frem_table_5,scm_table=scm_table_3,max_scm_table=max_scm_table_3)
+covariates_table_9 <- list_covariate_table_9$covariates_table
+covariates_extra_table_9 <- list_covariate_table_9$covariates_extra_table
+
+list_covariate_table_10 <- get_covariates_table(frem_table=frem_table_4,scm_table=scm_table_5,max_scm_table=max_scm_table_5)
+covariates_table_10 <- list_covariate_table_10$covariates_table
+covariates_extra_table_10 <- list_covariate_table_10$covariates_extra_table
+
+#expected data
+exp_covariates_table_1 <- data.frame(c("FREM","SCM"),c("ERROR","ERROR"),c("",""),stringsAsFactors = F)
+colnames(exp_covariates_table_1) <- c("","dOFV","Add.params")
+exp_covariates_extra_table_1 <- data.frame("Covariate"=c("SCM","FREM"),"dOFV"=c("ERROR","ERROR"),stringsAsFactors = F)
+exp_covariates_table_2 <- data.frame(c("FREM","SCM"),c("NA","NA"),c("",""),stringsAsFactors = F)
+colnames(exp_covariates_table_2) <- c("","dOFV","Add.params")
+exp_covariates_extra_table_2 <- data.frame("Covariate"=c("SCM","FREM"),"dOFV"=c("NA","NA"),stringsAsFactors = F)
+exp_covariates_table_3 <- data.frame(c("FREM","CLAPGR-4"),c("NA","2.87"),c("","1"),stringsAsFactors = F)
+colnames(exp_covariates_table_3) <- c("","dOFV","Add.params")
+exp_covariates_extra_table_3 <- data.frame("Covariate"=c("CLAPGR-4","CLWGT-4","VAPGR-4","VWGT-4","sum(SCMu)","FREM"),
+                                       "dOFV"=c("2.9","0.5","0.2","0.1","3.6","NA"),
+                                       "Coefficient"=c("-0.030","0.050","0.004","-0.012","",""),stringsAsFactors = F)
+exp_covariates_table_4 <- data.frame(c("FREM","CLAPGR-4"),c(3.6,2.87),c(6,1),stringsAsFactors = F)
+colnames(exp_covariates_table_4) <- c("","dOFV","Add.params")
+exp_covariates_extra_table_4 <- data.frame("Covariate"=c("CLAPGR-4","CLWGT-4","VAPGR-4","VWGT-4","sum(SCMu)","FREM"),
+                                       "dOFV"=c("2.9","0.5","0.2","0.1","3.6","3.6"),
+                                       "Coefficient"=c("-0.030","0.050","0.004","-0.012","",""),stringsAsFactors = F)
+exp_covariates_table_5 <- data.frame(c("FREM","CLAPGR-4"),c("ERROR","2.87"),c("","1"),stringsAsFactors = F)
+colnames(exp_covariates_table_5) <- c("","dOFV","Add.params")
+exp_covariates_extra_table_5 <- data.frame("Covariate"=c("CLAPGR-4","CLWGT-4","VAPGR-4","VWGT-4","sum(SCMu)","FREM"),
+                                       "dOFV"=c("2.9","0.5","0.2","0.1","3.6","ERROR"),
+                                       "Coefficient"=c("-0.030","0.050","0.004","-0.012","",""),stringsAsFactors = F)
+exp_covariates_table_6 <- data.frame(c("FREM","SCM"),c("7.1","ERROR"),c("0",""),stringsAsFactors = F)
+colnames(exp_covariates_table_6) <- c("","dOFV","Add.params")
+exp_covariates_extra_table_6 <- data.frame("Covariate"=c("SCM","FREM"),"dOFV"=c("ERROR","7.1"),stringsAsFactors = F)
+exp_covariates_table_7 <- data.frame(c("FREM","CLWGT-4"),c(3.6,0.47),c(6,1),stringsAsFactors = F)
+colnames(exp_covariates_table_7) <- c("","dOFV","Add.params")
+exp_covariates_extra_table_7 <- data.frame("Covariate"=c("CLAPGR-4","CLWGT-4","VAPGR-4","VWGT-4","sum(SCMu)","FREM"),
+                                       "dOFV"=c("NA","0.5","0.2","0.1","0.8","3.6"),
+                                       "Coefficient"=c("NA","0.050","0.004","-0.012","",""),stringsAsFactors = F)
+exp_covariates_table_8 <- data.frame(c("FREM","SCM"),c("SKIPPED","SKIPPED"),c("",""),stringsAsFactors = F)
+colnames(exp_covariates_table_8) <- c("","dOFV","Add.params")
+exp_covariates_extra_table_8 <- data.frame("Covariate"=c("SCM","FREM"),"dOFV"=c("SKIPPED","SKIPPED"),stringsAsFactors = F)
+exp_covariates_table_9 <- data.frame(c("FREM","CLAPGR-4"),c("SKIPPED","2.87"),c("","1"),stringsAsFactors = F)
+colnames(exp_covariates_table_9) <- c("","dOFV","Add.params")
+exp_covariates_extra_table_9 <- data.frame("Covariate"=c("CLAPGR-4","CLWGT-4","VAPGR-4","VWGT-4","sum(SCMu)","FREM"),
+                                           "dOFV"=c("2.9","0.5","0.2","0.1","3.6","SKIPPED"),
+                                           "Coefficient"=c("-0.030","0.050","0.004","-0.012","",""),stringsAsFactors = F)
+exp_covariates_table_10 <- data.frame(c("FREM","SCM"),c("7.1","SKIPPED"),c("0",""),stringsAsFactors = F)
+colnames(exp_covariates_table_10) <- c("","dOFV","Add.params")
+exp_covariates_extra_table_10 <- data.frame("Covariate"=c("SCM","FREM"),"dOFV"=c("SKIPPED","7.1"),stringsAsFactors = F)
+#compare
+context("qa, get_covariates_table")
+test_that("create covariate table (FREM and SCM) and extra table",{
+  expect_equal(covariates_table_1,exp_covariates_table_1) #both scm and frem are errors
+  expect_equal(covariates_extra_table_1,exp_covariates_extra_table_1)
+  expect_equal(covariates_table_2,exp_covariates_table_2) # both NA (no covar and param where passes to the run)
+  expect_equal(covariates_extra_table_2,exp_covariates_extra_table_2) 
+  expect_equal(covariates_table_3,exp_covariates_table_3) # Frem NA, SCM a number
+  expect_equal(covariates_extra_table_3,exp_covariates_extra_table_3)
+  expect_equal(covariates_table_4,exp_covariates_table_4) # both numbers, round values
+  expect_equal(covariates_extra_table_4,exp_covariates_extra_table_4)
+  expect_equal(covariates_table_5,exp_covariates_table_5) # Frem error, scm number
+  expect_equal(covariates_extra_table_5,exp_covariates_extra_table_5)
+  expect_equal(covariates_table_6,exp_covariates_table_6) # frem number, scm error
+  expect_equal(covariates_extra_table_6,exp_covariates_extra_table_6)
+  expect_equal(covariates_table_7,exp_covariates_table_7) # both numbers, scm has NA value (first)
+  expect_equal(covariates_extra_table_7,exp_covariates_extra_table_7)
+  expect_equal(covariates_table_8,exp_covariates_table_8) # both skipped
+  expect_equal(covariates_extra_table_8,exp_covariates_extra_table_8)
+  expect_equal(covariates_table_9,exp_covariates_table_9) # only frem skipped
+  expect_equal(covariates_extra_table_9,exp_covariates_extra_table_9)
+  expect_equal(covariates_table_10,exp_covariates_table_10) # only scm skipped
+  expect_equal(covariates_extra_table_10,exp_covariates_extra_table_10)
+})
+
+#...........................  (18) Test function get_resmod_ruv_table.R .....................................
+#run function
+resmod_list_1 <- get_resmod_ruv_table(directory=file.path(files.w.dir,"qa_run1"),idv_name="TIME",dvid_name="ORIG",skip=c())
+resmod_list_2 <- get_resmod_ruv_table(directory=file.path(files.w.dir,"qa_run3"),idv_name="TIME",dvid_name="NA",skip=c('frem','scm','transform','cdd','simeval'))
+resmod_list_3 <- get_resmod_ruv_table(directory=file.path(files.w.dir,"qa_run2"),idv_name="TIME",dvid_name="ORIG",skip=c('transform','cdd','simeval'))
+resmod_list_4 <- get_resmod_ruv_table(directory=file.path(files.w.dir,"qa_run7"),idv_name="TIME",dvid_name="NA",skip=c('frem','simeval'))
+resmod_list_5 <- get_resmod_ruv_table(directory=file.path(files.w.dir,"qa_run3"),idv_name="TIME",dvid_name="NA",skip=c('resmod'))
+#expected data
+exp_resmod_ruv_table_list_1 <- data.frame("ERROR",stringsAsFactors = F)
+colnames(exp_resmod_ruv_table_list_1) <- ""
+exp_resmod_ruv_overview_1 <- data.frame("RESMOD","ERROR",stringsAsFactors = F)
+colnames(exp_resmod_ruv_overview_1) <- c("","dOFV")
+exp_resmod_ruv_table_list_2 <- data.frame("Model"=c("tdist","dtbs","IIV on RUV","power","time varying","autocorrelation"),
+                                      "dOFV"=c("43.6","21.7","10.6","0.9","0.6","0.0"),
+                                      "Additional parameters"=c(1,2,1,1,2,1),
+                                      "Parameter values"=c("Df=2.550","lambda=-0.136,Zeta=0.09","%CV=7.2","delta_power=0.094","sdeps_0-t0=1.069,sdeps_t0-inf=0.981,t0=0.68","half-life=1.000"),
+                                      stringsAsFactors = F)
+colnames(exp_resmod_ruv_table_list_2) <- c("Model","dOFV","Additional parameters","Parameter values")
+exp_resmod_ruv_overview_2 <- data.frame(c("tdist","dtbs"),c(43.62,21.67),c(1,2),stringsAsFactors = F)
+colnames(exp_resmod_ruv_overview_2) <- c("","dOFV","Add.params")
+exp_resmod_ruv_table_list_3_a <- data.frame("Model"=c("tdist","IIV on RUV","time varying","autocorrelation"),
+                                      "dOFV"=c("5.0","2.7","0.8","0.0"),
+                                      "Additional parameters"=c(1,1,2,1),
+                                      "Parameter values"=c("df=9.238","%CV=14.973","sdeps_0-t0=0.868,sdeps_t0-inf=0.999,t0=7.00","half-life=0.011"),
+                                      stringsAsFactors = F)
+colnames(exp_resmod_ruv_table_list_3_a) <- c("Model","dOFV","Additional parameters","Parameter values")
+exp_resmod_ruv_table_list_3_b <- data.frame("Model"=c("time varying","IIV on RUV","tdist","autocorrelation"),
+                                        "dOFV"=c("1.65","1.05","0.02","0.00"),
+                                        "Additional parameters"=c(2,1,1,1),
+                                        "Parameter values"=c("sdeps_0-t0=0.868,sdeps_t0-inf=1.020,t0=7.00","%CV=15.214","df=119.865","half-life=0.011"),
+                                        stringsAsFactors = F)
+colnames(exp_resmod_ruv_table_list_3_b) <- c("Model","dOFV","Additional parameters","Parameter values")
+exp_resmod_ruv_overview_3 <- data.frame(c("(ORIG = 1)","tdist","IIV on RUV","(ORIG = 2)","time varying","IIV on RUV"),
+                                    c("","5.02","2.68","","1.65","1.05"),
+                                    c("","1","1","","2","1"),stringsAsFactors = F)
+colnames(exp_resmod_ruv_overview_3) <- c("","dOFV","Add.params")
+exp_resmod_ruv_table_list_4 <- data.frame("Model"=c("IIV on RUV","autocorrelation","dtbs","power","tdist","time varying"),
+                                      "dOFV"=c("NA","NA","NA","NA","NA","NA"),
+                                      "Additional parameters"=c(rep("",6)),
+                                      "Parameter values"=c(rep("",6)),
+                                      stringsAsFactors = F)
+colnames(exp_resmod_ruv_table_list_4) <- c("Model","dOFV","Additional parameters","Parameter values")
+exp_resmod_ruv_overview_4 <- data.frame(c("IIV on RUV","autocorrelation"),c("NA","NA"),c("",""),stringsAsFactors = F)
+colnames(exp_resmod_ruv_overview_4) <- c("","dOFV","Add.params")
+exp_resmod_ruv_overview_5 <- data.frame("RESMOD","SKIPPED",stringsAsFactors = F)
+colnames(exp_resmod_ruv_overview_5) <- c("","dOFV")
+#compare
+context("qa, get_resmod_ruv_table")
+test_that("create resmod ruv table",{
+  expect_equal(length(resmod_list_1$resmod_ruv_table_list),1) # files does not exist
+  expect_equal(resmod_list_1$resmod_ruv_table_list[[1]],exp_resmod_ruv_table_list_1) 
+  expect_equal(resmod_list_1$resmod_ruv_overview,exp_resmod_ruv_overview_1) 
+  expect_equal(resmod_list_1$dvid_nr,"NA")
+  expect_equal(length(resmod_list_2$resmod_ruv_table_list),1) # file exists, dvid is NA
+  expect_equal(resmod_list_2$resmod_ruv_table_list[[1]],exp_resmod_ruv_table_list_2)
+  expect_equal(resmod_list_2$resmod_ruv_overview,exp_resmod_ruv_overview_2)
+  expect_equal(resmod_list_2$dvid_nr,"NA")
+  expect_equal(length(resmod_list_3$resmod_ruv_table_list),2) # files exist, dvid is 1,2 
+  expect_equal(resmod_list_3$resmod_ruv_table_list[[1]],exp_resmod_ruv_table_list_3_a)
+  expect_equal(resmod_list_3$resmod_ruv_table_list[[2]],exp_resmod_ruv_table_list_3_b)
+  expect_equal(resmod_list_3$resmod_ruv_overview,exp_resmod_ruv_overview_3)
+  expect_equal(resmod_list_3$dvid_nr,c(1,2))
+  expect_equal(length(resmod_list_4$resmod_ruv_table_list),1) # file exists, dvid is NA, all dOFV values ar NA
+  expect_equal(resmod_list_4$resmod_ruv_table_list[[1]],exp_resmod_ruv_table_list_4)
+  expect_equal(resmod_list_4$resmod_ruv_overview,exp_resmod_ruv_overview_4)
+  expect_equal(resmod_list_4$dvid_nr,'NA')
+  expect_equal(resmod_list_5$resmod_ruv_overview,exp_resmod_ruv_overview_5) #skipped
+})
+
+#...........................  (19) Test function get_ii_table.R .....................................
+#fun function
+list_ii_1 <- get_ii_table(raw.results.file=file.path(files.w.dir,"qa_missing_folders_files/cdd_run/raw_results_model_linbase.csv"),
+                          skipped.id.file=file.path(files.w.dir,"qa_missing_folders_files/cdd_run/skipped_individuals1.csv"),
+                          cutoff=3.84,max_rows=3,skip=c('frem','resmod','transform','scm','simeval'))
+list_ii_2 <- get_ii_table(raw.results.file=file.path(files.w.dir,"qa_run2/cdd_run/raw_results_linbase.csv"),
+                          skipped.id.file=file.path(files.w.dir,"qa_run2/cdd_run/skipped_individuals1.csv"),
+                          cutoff=3.84,max_rows=3,skip=c())
+list_ii_3 <- get_ii_table(raw.results.file=file.path(files.w.dir,"qa_run3/cdd_run/raw_results_linbase.csv"),
+                          skipped.id.file=file.path(files.w.dir,"qa_run3/cdd_run/skipped_individuals1.csv"),
+                          cutoff=3.84,max_rows=3,skip=c('scm','simeval'))
+list_ii_4 <- get_ii_table(raw.results.file=file.path(files.w.dir,"qa_run1/cdd_run/raw_results_linbase.csv"),
+                          skipped.id.file=file.path(files.w.dir,"qa_run1/cdd_run/skipped_individuals1.csv"),
+                          cutoff=1,max_rows=3,skip=c('frem','resmod','transform','scm','simeval'))
+list_ii_5 <- get_ii_table(raw.results.file=file.path(files.w.dir,"qa_run1/cdd_run/raw_results_linbase.csv"),
+                          skipped.id.file=file.path(files.w.dir,"qa_run1/cdd_run/skipped_individuals1.csv"),
+                          cutoff=0.1,max_rows=3,skip=c())
+list_ii_6 <- get_ii_table(raw.results.file=file.path(files.w.dir,"qa_run1/cdd_run/raw_results_linbase.csv"),
+                          skipped.id.file=file.path(files.w.dir,"qa_run1/cdd_run/skipped_individuals1.csv"),
+                          cutoff=0.000001,max_rows=2,skip=c('frem','resmod','transform','scm','simeval'))
+list_ii_7 <- get_ii_table(raw.results.file=file.path(files.w.dir,"qa_run4/cdd_run/raw_results_linbase.csv"),
+                          skipped.id.file=file.path(files.w.dir,"qa_run4/cdd_run/skipped_individuals1.csv"),
+                          cutoff=3.84,max_rows=3,skip=c('frem','resmod','transform','scm','simeval'))
+list_ii_8 <- get_ii_table(raw.results.file=file.path(files.w.dir,"qa_run4/cdd_run/raw_results_linbase.csv"),
+                          skipped.id.file=file.path(files.w.dir,"qa_run4/cdd_run/skipped_individuals1.csv"),
+                          cutoff=3.84,max_rows=3,skip=c('cdd','scm','simeval'))
+list_ii_9 <- get_ii_table(raw.results.file=file.path(files.w.dir,"qa_missing_folders_files/cdd_run/raw_results_model_linbase.csv"),
+                          skipped.id.file=file.path(files.w.dir,"qa_missing_folders_files/cdd_run/skipped_individuals1.csv"),
+                          cutoff=3.84,max_rows=3,skip=c('cdd'))
+#expected data
+ERROR_table <- data.frame("ERROR",stringsAsFactors = F)
+colnames(ERROR_table) <- ""
+exp_cdd_highest_dofv_1 <- data.frame("CDD","ERROR",stringsAsFactors = F)
+colnames(exp_cdd_highest_dofv_1) <- c("","dOFV")
+exp_ii_table_3 <- data.frame("All dOFV values are negative",stringsAsFactors = F)
+colnames(exp_ii_table_3) <- ""
+exp_cdd_highest_dofv_3 <- data.frame("All dOFV values are negative","",stringsAsFactors = F)
+colnames(exp_cdd_highest_dofv_3) <- c("","dOFV")
+exp_cdd_data_4 <- data.frame(id=c(11,34,14,57,3,7,8),
+                         dOFV=c(0.11014,2.00265,0.12541,0.08563,0.00003,0.01568,1.03525))
+exp_ii_table_4 <- data.frame(c("Subject 34","Subject 8"),c("2.0","1.0"),stringsAsFactors = F)
+colnames(exp_ii_table_4) <- c("Subjects","dOFV")
+exp_cdd_highest_dofv_4 <- data.frame("Subject 34",2.00265,stringsAsFactors = F)
+colnames(exp_cdd_highest_dofv_4) <- c("","dOFV")
+exp_ii_table_5 <- data.frame(c("Subject 34","Subject 8","Subject 14"),c("2.0","1.0","0.1"),stringsAsFactors = F)
+colnames(exp_ii_table_5) <- c("Subjects","dOFV")
+exp_ii_table_6 <- data.frame(c("Subject 34","Subject 8"),c("2.0","1.0"),stringsAsFactors = F)
+colnames(exp_ii_table_6) <- c("Subjects","dOFV")
+exp_cdd_data_7 <- data.frame(id=c(11,12,34,14,57),
+                         dOFV=c(0.01014,0.06941,0.00265,0.02541,0.08563))
+exp_ii_table_7 <- data.frame(c("No influential individuals detected"),stringsAsFactors = F)
+colnames(exp_ii_table_7) <- c("")
+exp_cdd_highest_dofv_7 <- data.frame("None","",stringsAsFactors = F)
+colnames(exp_cdd_highest_dofv_7) <- c("","dOFV")
+exp_cdd_data_8 <- data.frame("SKIPPED",stringsAsFactors = F)
+colnames(exp_cdd_data_8) <- NULL
+exp_ii_table_8 <- data.frame(c("No influential individuals detected"),stringsAsFactors = F)
+colnames(exp_ii_table_8) <- c("")
+exp_cdd_highest_dofv_8 <- data.frame("CDD","SKIPPED",stringsAsFactors = F)
+colnames(exp_cdd_highest_dofv_8) <- c("","dOFV")
+
+#compare
+context("qa, get_ii_table")
+test_that("create influential individuals table",{
+  expect_false(list_ii_1$cdd_files_exist) # files not exist
+  expect_equal(list_ii_1$all_dofv,c())
+  expect_equal(list_ii_1$cdd.data,ERROR_table)
+  expect_equal(list_ii_1$cdd_highest_dofv,exp_cdd_highest_dofv_1)
+  expect_equal(list_ii_1$ii_table,ERROR_table)
+  expect_equal(list_ii_1$infl_id,c())
+  expect_equal(list_ii_1$fig_height_infl,5)
+  expect_true(list_ii_2$cdd_files_exist) # no dofv column found in csv file
+  expect_equal(list_ii_2$all_dofv,c())
+  expect_equal(list_ii_2$cdd.data,ERROR_table)
+  expect_equal(list_ii_2$cdd_highest_dofv,exp_cdd_highest_dofv_1)
+  expect_equal(list_ii_2$ii_table,ERROR_table)
+  expect_equal(list_ii_2$infl_id,c())
+  expect_equal(list_ii_2$fig_height_infl,5)
+  expect_true(list_ii_3$cdd_files_exist) # all dofv values are negative
+  expect_equal(list_ii_3$all_dofv,c(-0.01014,-0.06941,-0.00265,-0.02541,-0.08563))
+  expect_equal(list_ii_3$cdd.data,data.frame())
+  expect_equal(list_ii_3$cdd_highest_dofv,exp_cdd_highest_dofv_3)
+  expect_equal(list_ii_3$ii_table,exp_ii_table_3)
+  expect_equal(list_ii_3$infl_id,c())
+  expect_equal(list_ii_3$fig_height_infl,5)
+  expect_true(list_ii_4$cdd_files_exist) # files exist, some dofv values are negative, plot hight 5
+  expect_equal(list_ii_4$all_dofv,c(0.11014,-0.06941,2.00265,0.12541,0.08563,0.00003,-2.08563,0.01568,1.03525))
+  expect_equal(list_ii_4$cdd.data,exp_cdd_data_4)
+  expect_equal(list_ii_4$cdd_highest_dofv,exp_cdd_highest_dofv_4)
+  expect_equal(list_ii_4$ii_table,exp_ii_table_4)
+  expect_equal(list_ii_4$infl_id,c(34,8))
+  expect_equal(list_ii_4$fig_height_infl,5)
+  expect_true(list_ii_5$cdd_files_exist) # files exist, some dofv values are negative, plot hight 7
+  expect_equal(list_ii_5$all_dofv,c(0.11014,-0.06941,2.00265,0.12541,0.08563,0.00003,-2.08563,0.01568,1.03525))
+  expect_equal(list_ii_5$cdd.data,exp_cdd_data_4)
+  expect_equal(list_ii_5$cdd_highest_dofv,exp_cdd_highest_dofv_4)
+  expect_equal(list_ii_5$ii_table,exp_ii_table_5)
+  expect_equal(list_ii_5$infl_id,c(34,8,14,11))
+  expect_equal(list_ii_5$fig_height_infl,7)
+  expect_true(list_ii_6$cdd_files_exist) # files exist, some dofv values are negative, plot hight full page
+  expect_equal(list_ii_6$all_dofv,c(0.11014,-0.06941,2.00265,0.12541,0.08563,0.00003,-2.08563,0.01568,1.03525))
+  expect_equal(list_ii_6$cdd.data,exp_cdd_data_4)
+  expect_equal(list_ii_6$cdd_highest_dofv,exp_cdd_highest_dofv_4)
+  expect_equal(list_ii_6$ii_table,exp_ii_table_6)
+  expect_equal(list_ii_6$infl_id,c(34,8,14,11,57,7,3))
+  expect_equal(list_ii_6$fig_height_infl,15)
+  expect_true(list_ii_7$cdd_files_exist) # files exist, no influential id detected
+  expect_equal(list_ii_7$all_dofv,c(0.01014,0.06941,0.00265,0.02541,0.08563))
+  expect_equal(list_ii_7$cdd.data,exp_cdd_data_7)
+  expect_equal(list_ii_7$cdd_highest_dofv,exp_cdd_highest_dofv_7)
+  expect_equal(list_ii_7$ii_table,exp_ii_table_7)
+  expect_equal(list_ii_7$infl_id,c())
+  expect_equal(list_ii_7$fig_height_infl,5)
+  expect_equal(list_ii_8$cdd.data,exp_cdd_data_8) # files exist but cdd skipped
+  expect_equal(list_ii_8$cdd_highest_dofv,exp_cdd_highest_dofv_8)
+  expect_equal(list_ii_9$cdd.data,exp_cdd_data_8) # files does not exist and cdd skipped
+  expect_equal(list_ii_9$cdd_highest_dofv,exp_cdd_highest_dofv_8)
+})
+
+#...........................  (20) Test function get_outliers_table.R .....................................
+#run function
+list_simeval_1 <- get_outliers_table(simeval_directory=file.path(files.w.dir,"qa_missing_folders_files/simeval_run"),
+                                     cdd.data=exp_cdd_data_4,skip=c('frem','resmod','transform','scm','cdd'))
+list_simeval_2 <- get_outliers_table(simeval_directory=file.path(files.w.dir,"qa_run1/simeval_run"),
+                                     cdd.data=ERROR_table,skip=c())
+list_simeval_3 <- get_outliers_table(simeval_directory=file.path(files.w.dir,"qa_run2/simeval_run"),
+                                     cdd.data=ERROR_table,skip=c('frem','resmod','transform'))
+list_simeval_4 <- get_outliers_table(simeval_directory=file.path(files.w.dir,"qa_run1/simeval_run"),
+                                     cdd.data=data.frame(),skip=c('frem','cdd'))
+list_simeval_5 <- get_outliers_table(simeval_directory=file.path(files.w.dir,"qa_run2/simeval_run"),
+                                     cdd.data=data.frame(),skip=c('scm'))
+list_simeval_6 <- get_outliers_table(simeval_directory=file.path(files.w.dir,"qa_run2/simeval_run"),
+                                     cdd.data=exp_cdd_data_4,skip=c('frem','resmod','transform','scm'))
+list_simeval_7 <- get_outliers_table(simeval_directory=file.path(files.w.dir,"qa_run3/simeval_run"),
+                                     cdd.data=exp_cdd_data_4,skip=c())
+list_simeval_8 <- get_outliers_table(simeval_directory=file.path(files.w.dir,"qa_run4/simeval_run"),
+                                     cdd.data=exp_cdd_data_4,skip=c('frem','resmod','transform','scm'))
+list_simeval_9 <- get_outliers_table(simeval_directory=file.path(files.w.dir,"qa_run4/simeval_run"),
+                                     cdd.data=exp_cdd_data_4,skip=c('frem','resmod','simeval','scm'))
+list_simeval_10 <- get_outliers_table(simeval_directory=file.path(files.w.dir,"qa_run4/simeval_run"),
+                                     cdd.data=exp_cdd_data_8,skip=c('frem','resmod','simeval','scm'))
+list_simeval_11 <- get_outliers_table(simeval_directory=file.path(files.w.dir,"qa_run4/simeval_run"),
+                                      cdd.data=exp_cdd_data_8,skip=c('frem','resmod','cdd','scm'))
+#expected data
+exp_max_outlier_table_1 <- data.frame("SIMEVAL","ERROR",stringsAsFactors = F)
+colnames(exp_max_outlier_table_1) <- c("","dOFV")
+exp_outliers_table_2 <- data.frame("No outliers detected",stringsAsFactors = F)
+colnames(exp_outliers_table_2) <- c("")
+exp_max_outlier_table_2 <- data.frame("No outliers detected","",stringsAsFactors = F)
+colnames(exp_max_outlier_table_2) <- c("","dOFV")
+exp_outliers_table_3 <- data.frame(Subjects=c("Subject 1","Subject 12","Subject 8","Subject 34"),
+                               dOFV=c(rep("ERROR",4)),stringsAsFactors = F)
+exp_max_outlier_table_3 <- data.frame("No dOFV values found","",stringsAsFactors = F)
+colnames(exp_max_outlier_table_3) <- c("","dOFV")
+exp_outliers_table_5 <- data.frame(Subjects=c("Subject 1","Subject 12","Subject 8","Subject 34"),
+                               dOFV=c(rep("NA",4)),stringsAsFactors = F)
+exp_outliers_table_6 <- data.frame(Subjects=c("Subject 34","Subject 8","Subject 1","Subject 12"),
+                               dOFV=c("2.0","1.0","NA","NA"),stringsAsFactors = F)
+exp_max_outlier_table_6 <- data.frame("Subject 34",2.00265,stringsAsFactors = F)
+colnames(exp_max_outlier_table_6) <- c("","dOFV")
+exp_outliers_table_7 <- data.frame(Subjects=c("Subject 1","Subject 12"),
+                               dOFV=c("NA","NA"),stringsAsFactors = F)
+exp_max_outlier_table_7 <- data.frame("No dOFV values found","",stringsAsFactors = F)
+colnames(exp_max_outlier_table_7) <- c("","dOFV")
+exp_outliers_table_8 <- data.frame(Subjects=c("Subject 34","Subject 8","Subject 14","Subject 11","Subject 57","Subject 7","Subject 3"),
+                               dOFV=c("2.0","1.0","0.1","0.1","0.1","0.0","0.0"),stringsAsFactors = F)
+exp_max_outlier_table_8 <- data.frame(c("Subject 34"),
+                                  c(2.00265),stringsAsFactors = F)
+colnames(exp_max_outlier_table_8) <- c("","dOFV")
+exp_max_outlier_table_9 <- data.frame("SIMEVAL","SKIPPED",stringsAsFactors = F) 
+colnames(exp_max_outlier_table_9) <- c("","dOFV")
+exp_max_outlier_table_10 <- data.frame("SIMEVAL","SKIPPED",stringsAsFactors = F)
+colnames(exp_max_outlier_table_10) <- c("","dOFV")
+exp_outliers_table_11 <- data.frame(Subjects=c("Subject 14","Subject 7","Subject 8","Subject 3","Subject 11","Subject 57","Subject 34"),
+                               dOFV=c(rep("",7)),stringsAsFactors = F)
+exp_max_outlier_table_11 <- data.frame("No dOFV values found (skipped CDD)","",stringsAsFactors = F)
+colnames(exp_max_outlier_table_11) <- c("","dOFV")
+#compare
+context("qa, get_outliers_table")
+test_that("create outliers table",{
+  expect_false(list_simeval_1$simeval_files_exist) # files not exist
+  expect_equal(list_simeval_1$outliers_table,ERROR_table)
+  expect_equal(list_simeval_1$max_outlier_table,exp_max_outlier_table_1)
+  expect_equal(list_simeval_1$outlier_ids,c())
+  expect_equal(list_simeval_1$fig_height_outl,5)
+  expect_true(list_simeval_2$simeval_files_exist) # files exist, no outliers detected, cdd error
+  expect_equal(list_simeval_2$outliers_table,exp_outliers_table_2)
+  expect_equal(list_simeval_2$max_outlier_table,exp_max_outlier_table_2)
+  expect_equal(list_simeval_2$outlier_ids,c())
+  expect_equal(list_simeval_2$fig_height_outl,5)
+  expect_true(list_simeval_3$simeval_files_exist) # files exist, outliers found, cdd error
+  expect_equal(list_simeval_3$outliers_table,exp_outliers_table_3)
+  expect_equal(list_simeval_3$max_outlier_table,exp_max_outlier_table_3)
+  expect_equal(list_simeval_3$outlier_ids,c(1,12,8,34))
+  expect_equal(list_simeval_3$fig_height_outl,7)
+  expect_true(list_simeval_4$simeval_files_exist) # files exist, no outliers detected, cdd empty
+  expect_equal(list_simeval_4$outliers_table,exp_outliers_table_2)
+  expect_equal(list_simeval_4$max_outlier_table,exp_max_outlier_table_2)
+  expect_equal(list_simeval_4$outlier_ids,c())
+  expect_equal(list_simeval_4$fig_height_outl,5)
+  expect_true(list_simeval_5$simeval_files_exist) # files exist, outliers found, cdd empty
+  expect_equal(list_simeval_5$outliers_table,exp_outliers_table_5)
+  expect_equal(list_simeval_5$max_outlier_table,exp_max_outlier_table_3)
+  expect_equal(list_simeval_5$outlier_ids,c(1,12,8,34))
+  expect_equal(list_simeval_5$fig_height_outl,7)
+  expect_true(list_simeval_6$simeval_files_exist) # files exist, ouliers found, cdd not empty, but some dofv values NA (because negative)
+  expect_equal(list_simeval_6$outliers_table,exp_outliers_table_6)
+  expect_equal(list_simeval_6$max_outlier_table,exp_max_outlier_table_6)
+  expect_equal(list_simeval_6$outlier_ids,c(1,12,8,34))
+  expect_equal(list_simeval_6$fig_height_outl,7)
+  expect_true(list_simeval_7$simeval_files_exist) # files exist, ouliers found, cdd not empty, but all dofv values NA (because negative)
+  expect_equal(list_simeval_7$outliers_table,exp_outliers_table_7)
+  expect_equal(list_simeval_7$max_outlier_table,exp_max_outlier_table_7)
+  expect_equal(list_simeval_7$outlier_ids,c(1,12))
+  expect_equal(list_simeval_7$fig_height_outl,5)
+  expect_true(list_simeval_8$simeval_files_exist) # files exist, ouliers found, cdd not empty, all dofv values positive
+  expect_equal(list_simeval_8$outliers_table,exp_outliers_table_8)
+  expect_equal(list_simeval_8$max_outlier_table,exp_max_outlier_table_8)
+  expect_equal(list_simeval_8$outlier_ids,c(14,7,8,3,11,57,34))
+  expect_equal(list_simeval_8$fig_height_outl,15)
+  expect_equal(list_simeval_9$outliers_table,ERROR_table) # simeval skipped, but cdd not skipped
+  expect_equal(list_simeval_9$max_outlier_table,exp_max_outlier_table_9)
+  expect_equal(list_simeval_10$outliers_table,ERROR_table) # simeval skipped and cdd skipped
+  expect_equal(list_simeval_10$max_outlier_table,exp_max_outlier_table_10)
+  expect_equal(list_simeval_11$outliers_table,exp_outliers_table_11) # files exist, outliers found, but cdd skipped
+  expect_equal(list_simeval_11$max_outlier_table,exp_max_outlier_table_11)
+})
+
+#...........................  (21) Test function get_overview_table.R .....................................
+#input data
+cdd_highest_dofv_extra <- data.frame("Subject 34",0.01265,stringsAsFactors = F)
+colnames(cdd_highest_dofv_extra) <- c("","dOFV")
+cdd_highest_dofv_extra_1 <- data.frame("Subject 34",0.00265,stringsAsFactors = F)
+colnames(cdd_highest_dofv_extra_1) <- c("","dOFV")
+#run function
+overview_list_1 <- get_overview_table(structural_overview=exp_str_overview_4,
+                                      param_var_overview=exp_par_var_models_4,
+                                      covariates_overview=exp_covariates_table_1,
+                                      resmod_ruv_overview=exp_resmod_ruv_overview_1,
+                                      infl_indiv_overview=exp_cdd_highest_dofv_1,
+                                      outliers_overview=exp_max_outlier_table_1)
+overview_list_2 <- get_overview_table(structural_overview=exp_str_overview_7,
+                                      param_var_overview=exp_par_var_models_6,
+                                      covariates_overview=exp_covariates_table_2,
+                                      resmod_ruv_overview=exp_resmod_ruv_overview_4,
+                                      infl_indiv_overview=exp_cdd_highest_dofv_1,
+                                      outliers_overview=exp_max_outlier_table_1)
+overview_list_3 <- get_overview_table(structural_overview=exp_str_overview_5,
+                                      param_var_overview=exp_par_var_models_2,
+                                      covariates_overview=exp_covariates_table_3,
+                                      resmod_ruv_overview=exp_resmod_ruv_overview_2,
+                                      infl_indiv_overview=exp_cdd_highest_dofv_3,
+                                      outliers_overview=exp_max_outlier_table_3)
+overview_list_4 <- get_overview_table(structural_overview=exp_str_overview_1,
+                                      param_var_overview=exp_par_var_models_1,
+                                      covariates_overview=exp_covariates_table_4,
+                                      resmod_ruv_overview=exp_resmod_ruv_overview_2,
+                                      infl_indiv_overview=exp_cdd_highest_dofv_4,
+                                      outliers_overview=exp_max_outlier_table_6)
+overview_list_5 <- get_overview_table(structural_overview=exp_str_overview_1,
+                                      param_var_overview=exp_par_var_models_1,
+                                      covariates_overview=exp_covariates_table_4,
+                                      resmod_ruv_overview=exp_resmod_ruv_overview_2,
+                                      infl_indiv_overview=cdd_highest_dofv_extra,
+                                      outliers_overview=exp_max_outlier_table_6)
+overview_list_6 <- get_overview_table(structural_overview=exp_str_overview_1,
+                                      param_var_overview=exp_par_var_models_1,
+                                      covariates_overview=exp_covariates_table_4,
+                                      resmod_ruv_overview=exp_resmod_ruv_overview_2,
+                                      infl_indiv_overview=cdd_highest_dofv_extra_1,
+                                      outliers_overview=exp_max_outlier_table_6)
+overview_list_7 <- get_overview_table(structural_overview=exp_str_overview_10,
+                                      param_var_overview=exp_par_var_models_7,
+                                      covariates_overview=exp_covariates_table_8,
+                                      resmod_ruv_overview=exp_resmod_ruv_overview_5,
+                                      infl_indiv_overview=exp_cdd_highest_dofv_8,
+                                      outliers_overview=exp_max_outlier_table_9)
+overview_list_8 <- get_overview_table(structural_overview=exp_str_overview_10,
+                                      param_var_overview=exp_par_var_models_3,
+                                      covariates_overview=exp_covariates_table_4,
+                                      resmod_ruv_overview=exp_resmod_ruv_overview_5,
+                                      infl_indiv_overview=exp_cdd_highest_dofv_8,
+                                      outliers_overview=exp_max_outlier_table_11)
+#expected data
+exp_overview_table_1 <- data.frame(c("TIME","TAD","Full OMEGA Block","Box-Cox Transformation","Additional ETA","t-distribution",
+                                 "Interoccasion variability","FREM","SCM","RESMOD","CDD","SIMEVAL"),
+                               c(rep("ERROR",12)),c(rep("",12)),
+                               stringsAsFactors = F)
+colnames(exp_overview_table_1) <- c("","dOFV","Additional parameters")
+exp_rgroup_names <- c("Structural Model","Parameter Variability Model","Covariates",
+                  "Residual Error Model","Influential Individuals","Outliers")
+exp_overview_table_2 <- data.frame(c("TIME","PRED","Full OMEGA Block","Box-Cox Transformation","Additional ETA","t-distribution",
+                                     "Interoccasion variability","FREM","SCM","IIV on RUV","autocorrelation","CDD","SIMEVAL"),
+                               c(rep("NA",11),rep("ERROR",2)),c("2","2",rep("",11)),
+                               stringsAsFactors = F)
+colnames(exp_overview_table_2) <- c("","dOFV","Additional parameters")
+exp_overview_table_3 <- data.frame(c("TIME","PRED","Full OMEGA Block","Box-Cox Transformation","Additional ETA","t-distribution",
+                                     "Interoccasion variability","FREM","CLAPGR-4","tdist","dtbs","All dOFV values are negative","No dOFV values found"),
+                               c("NA","4.8","ERROR","-0.6","NA","NA","NA","NA","2.9","43.6","21.7","",""),
+                               c("2","2","","3","","","","","1","1","2","",""),
+                               stringsAsFactors = F)
+colnames(exp_overview_table_3) <- c("","dOFV","Additional parameters")
+exp_overview_table_4 <- data.frame(c("TIME","PRED","Full OMEGA Block","Box-Cox Transformation","Additional ETA","t-distribution",
+                                     "Interoccasion variability","FREM","CLAPGR-4","tdist","dtbs","Subject 34","Subject 34"),
+                               c("4.3","4.8","-3.7","-0.6","3.4","-1.0","-2.0","3.6","2.9","43.6","21.7","2.0","2.0"),
+                               c(2,2,4,"0","2","0",3,"6","1","1","2","",""),
+                               stringsAsFactors = F)
+colnames(exp_overview_table_4) <- c("","dOFV","Additional parameters")
+exp_overview_table_5 <- data.frame(c("TIME","PRED","Full OMEGA Block","Box-Cox Transformation","Additional ETA","t-distribution",
+                                     "Interoccasion variability","FREM","CLAPGR-4","tdist","dtbs","Subject 34","Subject 34"),
+                               c("4.31","4.80","-3.73","-0.57","3.41","-1.03","-2.03","3.60","2.87","43.62","21.67","0.01","2.00"),
+                               c(2,2,4,"0","2","0",3,"6","1","1","2","",""),
+                               stringsAsFactors = F)
+colnames(exp_overview_table_5) <- c("","dOFV","Additional parameters")
+exp_overview_table_6 <- data.frame(c("TIME","PRED","Full OMEGA Block","Box-Cox Transformation","Additional ETA","t-distribution",
+                                     "Interoccasion variability","FREM","CLAPGR-4","tdist","dtbs","Subject 34","Subject 34"),
+                               c("4.3","4.8","-3.7","-0.6","3.4","-1.0","-2.0","3.6","2.9","43.6","21.7","0.0","2.0"),
+                               c(2,2,4,"0","2","0",3,"6","1","1","2","",""),
+                               stringsAsFactors = F)
+colnames(exp_overview_table_6) <- c("","dOFV","Additional parameters")
+exp_overview_table_7 <- data.frame(c("RESMOD","Full OMEGA Block","Box-Cox Transformation","Additional ETA","t-distribution",
+                                     "Interoccasion variability","FREM","SCM","RESMOD","CDD","SIMEVAL"),
+                               c(rep("SKIPPED",11)),c(rep("",11)),
+                               stringsAsFactors = F)
+colnames(exp_overview_table_7) <- c("","dOFV","Additional parameters")
+exp_overview_table_8 <- data.frame(c("RESMOD","Full OMEGA Block","Box-Cox Transformation","Additional ETA","t-distribution",
+                                     "Interoccasion variability","FREM","CLAPGR-4","RESMOD","CDD","No dOFV values found (skipped CDD)"),
+                               c("SKIPPED","ERROR","NA","ERROR","NA","NA","3.6","2.9","SKIPPED","SKIPPED",""),
+                               c(rep("",6),"6","1",rep("",3)),
+                               stringsAsFactors = F)
+colnames(exp_overview_table_8) <- c("","dOFV","Additional parameters")
+#compare
+context("qa, get_overview_table")
+test_that("create an overview table",{
+  expect_equal(overview_list_1$overview_table,exp_overview_table_1) # all Error
+  expect_equal(overview_list_1$n.rgroup,c(2,5,2,1,1,1))
+  expect_equal(overview_list_1$rgroup_names,exp_rgroup_names)
+  expect_equal(overview_list_2$overview_table,exp_overview_table_2) # Error and NA
+  expect_equal(overview_list_2$n.rgroup,c(2,5,2,2,1,1))
+  expect_equal(overview_list_2$rgroup_names,exp_rgroup_names)
+  expect_equal(overview_list_3$overview_table,exp_overview_table_3) # Error, NA, values, empty space
+  expect_equal(overview_list_3$n.rgroup,c(2,5,2,2,1,1))
+  expect_equal(overview_list_3$rgroup_names,exp_rgroup_names)
+  expect_equal(overview_list_4$overview_table,exp_overview_table_4) # all values, rounded to one dec digit
+  expect_equal(overview_list_4$n.rgroup,c(2,5,2,2,1,1))
+  expect_equal(overview_list_4$rgroup_names,exp_rgroup_names)
+  expect_equal(overview_list_5$overview_table,exp_overview_table_5) # all values, rounded to two dec digits
+  expect_equal(overview_list_5$n.rgroup,c(2,5,2,2,1,1))
+  expect_equal(overview_list_5$rgroup_names,exp_rgroup_names)
+  expect_equal(overview_list_6$overview_table,exp_overview_table_6) # all values, rounded to one dec digit 
+  expect_equal(overview_list_7$overview_table,exp_overview_table_7) # all Skipped
+  expect_equal(overview_list_8$overview_table,exp_overview_table_8) # mix of all
+})
+
+#...........................  (22) Test function get_tables_for_vpc.R .....................................
+#run function
+list_vpc_tables_1 <- get_tables_for_vpc(obs_table=file.path(files.w.dir,"qa_run1/linearize_run/scm_dir1/extra_table"),
+                                        obs_extra_table=file.path(files.w.dir,"qa_run1/linbase.dta"),
+                                        sim_table=file.path(files.w.dir,"qa_run1/simeval_run/m1/sim_res_table-1.dta"),
+                                        sim_extra_table=file.path(files.w.dir,"qa_run1/simeval_run/m1/orig_pred.dta"),
+                                        idv_all=c("TIME","PRED"),dvid="NA",dvid_name="DVID")
+list_vpc_tables_2 <- get_tables_for_vpc(obs_table=file.path(files.w.dir,"qa_run1/linearize_run/scm_dir1/extra_table"),
+                                        obs_extra_table=file.path(files.w.dir,"qa_run1/linbase.dta"),
+                                        sim_table=file.path(files.w.dir,"qa_run1/simeval_run/m1/sim_res_table-1.dta"),
+                                        sim_extra_table=file.path(files.w.dir,"qa_missing_folders_files/simeval_run/m1/orig_pred.dta"),
+                                        idv_all=c("TIME","PRED"),dvid="NA",dvid_name="DVID")
+list_vpc_tables_3 <- get_tables_for_vpc(obs_table=file.path(files.w.dir,"qa_missing_folders_files/linearize_run/scm_dir1/extra_table"),
+                                        obs_extra_table=file.path(files.w.dir,"qa_run1/linbase.dta"),
+                                        sim_table=file.path(files.w.dir,"qa_run1/simeval_run/m1/sim_res_table-1.dta"),
+                                        sim_extra_table=file.path(files.w.dir,"qa_run1/simeval_run/m1/orig_pred.dta"),
+                                        idv_all=c("TIME","PRED"),dvid="NA",dvid_name="DVID")
+list_vpc_tables_4 <- get_tables_for_vpc(obs_table=file.path(files.w.dir,"qa_run1/linearize_run/scm_dir1/extra_table"),
+                                        obs_extra_table=file.path(files.w.dir,"qa_run1/linbase.dta"),
+                                        sim_table=file.path(files.w.dir,"qa_run1/simeval_run/m1/sim_res_table-1.dta"),
+                                        sim_extra_table=file.path(files.w.dir,"qa_missing_folders_files/simeval_run/m1/orig_pred.dta"),
+                                        idv_all=c("TIME","PRED"),dvid="1",dvid_name="ORIG")
+list_vpc_tables_5 <- get_tables_for_vpc(obs_table=file.path(files.w.dir,"qa_run2/linearize_run/scm_dir1/extra_table"),
+                                        obs_extra_table=file.path(files.w.dir,"qa_run2/linbase.dta"),
+                                        sim_table=file.path(files.w.dir,"qa_run2/simeval_run/m1/sim_res_table-1.dta"),
+                                        sim_extra_table=file.path(files.w.dir,"qa_missing_folders_files/simeval_run/m1/orig_pred.dta"),
+                                        idv_all=c("TIME","PRED"),dvid="NA",dvid_name="DVID")
+list_vpc_tables_6 <- get_tables_for_vpc(obs_table=file.path(files.w.dir,"qa_run1/linearize_run/scm_dir1/extra_table_5"),
+                                        obs_extra_table=file.path(files.w.dir,"qa_run1/linbase_7.dta"),
+                                        sim_table=file.path(files.w.dir,"qa_run1/simeval_run/m1/sim_res_table-3.dta"),
+                                        sim_extra_table=file.path(files.w.dir,"qa_run1/simeval_run/m1/orig_pred.dta"),
+                                        idv_all=c("TIME","PRED"),dvid="2",dvid_name="ORIG")
+list_vpc_tables_7 <- get_tables_for_vpc(obs_table=file.path(files.w.dir,"qa_run1/linearize_run/scm_dir1/extra_table_2"),
+                                        obs_extra_table=file.path(files.w.dir,"qa_run1/linbase_2.dta"),
+                                        sim_table=file.path(files.w.dir,"qa_run1/simeval_run/m1/sim_res_table-1.dta"),
+                                        sim_extra_table=file.path(files.w.dir,"qa_run1/simeval_run/m1/orig_pred.dta"),
+                                        idv_all=c("TIME","PRED"),dvid="NA",dvid_name="DVID")
+list_vpc_tables_8 <- get_tables_for_vpc(obs_table=file.path(files.w.dir,"qa_run1/linearize_run/scm_dir1/extra_table_3"),
+                                        obs_extra_table=file.path(files.w.dir,"qa_run1/linbase_2.dta"),
+                                        sim_table=file.path(files.w.dir,"qa_run1/simeval_run/m1/sim_res_table-1.dta"),
+                                        sim_extra_table=file.path(files.w.dir,"qa_run1/simeval_run/m1/orig_pred.dta"),
+                                        idv_all=c("TIME","PRED"),dvid="NA",dvid_name="DVID")
+list_vpc_tables_9 <- get_tables_for_vpc(obs_table=file.path(files.w.dir,"qa_run1/linearize_run/scm_dir1/extra_table_4"),
+                                        obs_extra_table=file.path(files.w.dir,"qa_run1/linbase_3.dta"),
+                                        sim_table=file.path(files.w.dir,"qa_run1/simeval_run/m1/sim_res_table-1.dta"),
+                                        sim_extra_table=file.path(files.w.dir,"qa_run1/simeval_run/m1/orig_pred.dta"),
+                                        idv_all=c("TIME","PRED"),dvid="NA",dvid_name="DVID")
+list_vpc_tables_10 <- get_tables_for_vpc(obs_table=file.path(files.w.dir,"qa_run1/linearize_run/scm_dir1/extra_table_4"),
+                                        obs_extra_table=file.path(files.w.dir,"qa_run1/linbase.dta"),
+                                        sim_table=file.path(files.w.dir,"qa_run1/simeval_run/m1/sim_res_table-1.dta"),
+                                        sim_extra_table=file.path(files.w.dir,"qa_run1/simeval_run/m1/orig_pred.dta"),
+                                        idv_all=c("TIME","PRED"),dvid="NA",dvid_name="DVID")
+list_vpc_tables_11 <- get_tables_for_vpc(obs_table=file.path(files.w.dir,"qa_run1/linearize_run/scm_dir1/extra_table_2"),
+                                        obs_extra_table=file.path(files.w.dir,"qa_run1/linbase_4.dta"),
+                                        sim_table=file.path(files.w.dir,"qa_run1/simeval_run/m1/sim_res_table-1.dta"),
+                                        sim_extra_table=file.path(files.w.dir,"qa_run1/simeval_run/m1/orig_pred.dta"),
+                                        idv_all=c("TIME","PRED"),dvid="NA",dvid_name="DVID")
+list_vpc_tables_12 <- get_tables_for_vpc(obs_table=file.path(files.w.dir,"qa_run1/linearize_run/scm_dir1/extra_table"),
+                                         obs_extra_table=file.path(files.w.dir,"qa_run1/linbase_5.dta"),
+                                         sim_table=file.path(files.w.dir,"qa_run1/simeval_run/m1/sim_res_table-2.dta"),
+                                         sim_extra_table=file.path(files.w.dir,"qa_run1/simeval_run/m1/orig_pred.dta"),
+                                         idv_all=c("TIME","PRED"),dvid="NA",dvid_name="DVID")
+list_vpc_tables_13 <- get_tables_for_vpc(obs_table=file.path(files.w.dir,"qa_run1/linearize_run/scm_dir1/extra_table_6"),
+                                        obs_extra_table=file.path(files.w.dir,"qa_run1/linbase_6.dta"),
+                                        sim_table=file.path(files.w.dir,"qa_run1/simeval_run/m1/sim_res_table-4.dta"),
+                                        sim_extra_table=file.path(files.w.dir,"qa_run1/simeval_run/m1/orig_pred_1.dta"),
+                                        idv_all=c("TIME","PRED"),dvid="2",dvid_name="ORIG")
+list_vpc_tables_14 <- get_tables_for_vpc(obs_table=file.path(files.w.dir,"qa_run1/linearize_run/scm_dir1/extra_table_5"),
+                                        obs_extra_table=file.path(files.w.dir,"qa_run1/linbase_7.dta"),
+                                        sim_table=file.path(files.w.dir,"qa_run1/simeval_run/m1/sim_res_table-5.dta"),
+                                        sim_extra_table=file.path(files.w.dir,"qa_run1/simeval_run/m1/orig_pred.dta"),
+                                        idv_all=c("TIME","PRED"),dvid="2",dvid_name="ORIG")
+#expected_data
+exp_obs_1 <- data.frame(ID=as.factor(c(1,1,2,2,3,4,4,4,5,5,5)),
+                    TIME=c(2,112.5,2,63.5,134.3,1.8,59.3,130.8,2,59.5,132),
+                    CWRES=c(-0.401,0.58,-1.27,1.6,-1.5,0.0206,-0.34,0.31,-0.92,-0.702,-1),
+                    PRED=c(17,28,10,18,31,20,24,30,19,23,28),
+                    CIPREDI=c(17,28,11,21,28,20,24,30,14,18,23),
+                    DV=c(17.3,31,9.7,24.6,24.3,23.9,0,31.7,14.2,18.2,20.3),
+                    MDV=c(rep(0,11)))
+exp_sim_1 <- data.frame(ID=as.factor(rep(c(1,1,2,2,3,4,4,4,5,5,5),3)),
+                    DV=c(25,34,10.9,28,27,20,21,34,22,29,40,20,27.8,25,32,36,19,26,39.1,21,19,34,16,30.1,17,30.8,26,18,19,28,21,24.1,28),
+                    MDV=c(rep(0,33)),
+                    CWRES=c(1.8,0.73,-0.18,0.42,-0.9,0.13,-1.2,1.07,0.27,1.1,2.4,0.84,-0.37,1.2,0.87,1,-0.85,0.047,1.8,0.96,-1.3,1.4,-0.503,0.45,-1.06,1.1,1.4,-0.045,-1.3,-0.16,0.82,0.2,-0.13),
+                    IPRED=c(22,33,11,28,29,20.2,24,30.5,22,27,33,18,29,23,32,33,21,26,32,20,24,29,17,28,20.8,28,23,17,21,27,19,23,29),
+                    TIME=rep(c(2,112.5,2,63.5,134.3,1.8,59.3,130.8,2,59.5,132),3),
+                    PRED=rep(c(17,28,10,18,31,20,24,30,19,23,28),3))
+exp_obs_8 <- data.frame(ID=as.factor(c(1,1,2,2,3,4,4,4,5,5,5)),
+                    TIME=c(2,112.5,2,63.5,134.3,1.8,59.3,130.8,2,59.5,132),
+                    CWRES=c(-0.401,0.58,-1.27,1.6,-1.5,0.0206,-0.34,0.31,-0.92,-0.702,-1),
+                    PRED=c(17,28,10,18,31,20,24,30,19,23,28),
+                    CIPREDI=c(17,28,11,21,28,20,24,30,14,18,23),
+                    MDV=c(rep(0,11)),
+                    DV=c(17.3,31,9.7,24.6,24.3,23.9,0,31.7,14.2,18.2,20.3))
+exp_obs_11 <- data.frame(ID=as.factor(c(1,1,2,2,3,4,4,4,5,5,5)),
+                    TIME=c(2,112.5,2,63.5,134.3,1.8,59.3,130.8,2,59.5,132),
+                    CWRES=c(-0.401,0.58,-1.27,1.6,-1.5,0.0206,-0.34,0.31,-0.92,-0.702,-1),
+                    PRED=c(17,28,10,18,31,20,24,30,19,23,28),
+                    CIPREDI=c(17,28,11,21,28,20,24,30,14,18,23),
+                    DV=c(17.3,31,9.7,24.6,24.3,20.8,23.9,31.7,14.2,18.2,20.3))
+exp_obs_12 <- data.frame(ID=factor(c(1,1,3,5,5,5),levels = c(1,2,3,4,5)),
+                    TIME=c(2,112.5,134.3,2,59.5,132),
+                    CWRES=c(-0.401,0.58,-1.5,-0.92,-0.702,-1),
+                    PRED=c(17,28,31,19,23,28),
+                    CIPREDI=c(17,28,28,14,18,23),
+                    DV=c(17.3,31,24.3,14.2,18.2,20.3),
+                    MDV=c(rep(0,6)))
+exp_sim_12 <- data.frame(ID=as.factor(rep(c(1,1,3,5,5,5),3)),
+                    DV=c(25,34,27,22,29,40,20,27.8,36,21,19,34,16,30.1,26,21,24.1,28),
+                    MDV=c(rep(0,18)),
+                    CWRES=c(1.8,0.73,-0.9,0.27,1.1,2.4,0.84,-0.37,1,0.96,-1.3,1.4,-0.503,0.45,1.4,0.82,0.2,-0.13),
+                    IPRED=c(22,33,29,22,27,33,18,29,33,20,24,29,17,28,23,19,23,29),
+                    TIME=rep(c(2,112.5,134.3,2,59.5,132),3),
+                    PRED=rep(c(17,28,31,19,23,28),3))
+exp_obs_6 <- data.frame(ID=as.factor(c(1,1,2,2,3,4,4,4,5,5,5)),
+                    TIME=c(2,112.5,2,63.5,134.3,1.8,59.3,130.8,2,59.5,132),
+                    CWRES=c(-0.401,0.58,-1.27,1.6,-1.5,0.0206,-0.34,0.31,-0.92,-0.702,-1),
+                    PRED=c(17,28,10,18,31,20,24,30,19,23,28),
+                    CIPREDI=c(17,28,11,21,28,20,24,30,14,18,23),
+                    ORIG=c(rep(2,11)),
+                    DV=c(17.3,31,9.7,24.6,24.3,23.9,0,31.7,14.2,18.2,20.3),
+                    MDV=c(rep(0,11)))
+exp_sim_6 <- data.frame(ID=as.factor(rep(c(1,1,2,2,3,4,4,4,5,5,5),3)),
+                    DV=c(25,34,10.9,28,27,20,21,34,22,29,40,20,27.8,25,32,36,19,26,39.1,21,19,34,16,30.1,17,30.8,26,18,19,28,21,24.1,28),
+                    MDV=c(rep(0,33)),
+                    CWRES=c(1.8,0.73,-0.18,0.42,-0.9,0.13,-1.2,1.07,0.27,1.1,2.4,0.84,-0.37,1.2,0.87,1,-0.85,0.047,1.8,0.96,-1.3,1.4,-0.503,0.45,-1.06,1.1,1.4,-0.045,-1.3,-0.16,0.82,0.2,-0.13),
+                    IPRED=c(22,33,11,28,29,20.2,24,30.5,22,27,33,18,29,23,32,33,21,26,32,20,24,29,17,28,20.8,28,23,17,21,27,19,23,29),
+                    ORIG=rep(2,33),
+                    TIME=rep(c(2,112.5,2,63.5,134.3,1.8,59.3,130.8,2,59.5,132),3),
+                    PRED=rep(c(17,28,10,18,31,20,24,30,19,23,28),3))
+exp_obs_13 <- data.frame(ID=as.factor(c(1,1,3,5,5,5)),
+                     TIME=c(2,112.5,134.3,2,59.5,132),
+                     CWRES=c(-0.401,0.58,-1.5,-0.92,-0.702,-1),
+                     PRED=c(17,28,31,19,23,28),
+                     CIPREDI=c(17,28,28,14,18,23),
+                     ORIG=rep(2,6),
+                     DV=c(17.3,31,24.3,14.2,18.2,20.3),
+                     MDV=c(rep(0,6)))
+exp_sim_13 <- data.frame(ID=as.factor(rep(c(1,1,3,5,5,5),3)),
+                     DV=c(25,34,27,22,29,40,20,27.8,36,21,19,34,16,30.1,26,21,24.1,28),
+                     MDV=c(rep(0,18)),
+                     CWRES=c(1.8,0.73,-0.9,0.27,1.1,2.4,0.84,-0.37,1,0.96,-1.3,1.4,-0.503,0.45,1.4,0.82,0.2,-0.13),
+                     IPRED=c(22,33,29,22,27,33,18,29,33,20,24,29,17,28,23,19,23,29),
+                     ORIG=rep(2,18),
+                     TIME=rep(c(2,112.5,134.3,2,59.5,132),3),
+                     PRED=rep(c(17,28,31,19,23,28),3))
+#compare
+context("qa, get_tables_for_vpc")
+test_that("get tables for vpc plots",{
+  expect_true(list_vpc_tables_1$make_vpc)
+  expect_equal(list_vpc_tables_1$obs,exp_obs_1)
+  expect_equal(list_vpc_tables_1$sim,exp_sim_1)
+  expect_true(list_vpc_tables_2$make_vpc)
+  expect_equal(list_vpc_tables_2$obs,exp_obs_1)
+  expect_equal(list_vpc_tables_2$sim,exp_sim_1)
+  expect_false(list_vpc_tables_3$make_vpc)
+  expect_false(list_vpc_tables_4$make_vpc)
+  expect_false(list_vpc_tables_5$make_vpc)
+  expect_true(list_vpc_tables_6$make_vpc)
+  expect_equal(list_vpc_tables_6$obs,exp_obs_6)
+  expect_equal(list_vpc_tables_6$sim,exp_sim_6)
+  expect_true(list_vpc_tables_7$make_vpc)
+  expect_equal(list_vpc_tables_7$obs,exp_obs_1)
+  expect_equal(list_vpc_tables_7$sim,exp_sim_1)
+  expect_true(list_vpc_tables_8$make_vpc)
+  expect_equal(list_vpc_tables_8$obs,exp_obs_8)
+  expect_equal(list_vpc_tables_8$sim,exp_sim_1)
+  expect_false(list_vpc_tables_9$make_vpc)
+  expect_true(list_vpc_tables_10$make_vpc)
+  expect_equal(list_vpc_tables_10$obs,exp_obs_8)
+  expect_equal(list_vpc_tables_10$sim,exp_sim_1)
+  expect_true(list_vpc_tables_11$make_vpc)
+  expect_equal(list_vpc_tables_11$obs,exp_obs_11)
+  expect_equal(list_vpc_tables_11$sim,exp_sim_1)
+  expect_true(list_vpc_tables_12$make_vpc)
+  expect_equal(list_vpc_tables_12$obs,exp_obs_12)
+  expect_equal(list_vpc_tables_12$sim,exp_sim_12)
+  expect_true(list_vpc_tables_13$make_vpc)
+  expect_equal(list_vpc_tables_13$obs,exp_obs_13)
+  expect_equal(list_vpc_tables_13$sim,exp_sim_13)
+  expect_true(list_vpc_tables_14$make_vpc)
+  expect_equal(list_vpc_tables_14$obs,exp_obs_6)
+  expect_equal(list_vpc_tables_14$sim,exp_sim_6)
+})
