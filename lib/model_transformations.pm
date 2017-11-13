@@ -157,7 +157,7 @@ sub add_iov
         my $current_eta = $netas + 1;
         my $current_iov = 1;
         for my $record (@$records) {
-            my $size = $record->size;
+            my $size = $record->get_size();
             for (my $i = 0; $i < $size; $i++) {
                 push @pre_code, "IOV_$current_iov = 0";
                 my $current_iov_eta = $current_eta;
@@ -306,8 +306,10 @@ sub diagonal_to_block
     my $omegas = $model->problems->[0]->omegas;
     my @records;
     for my $omega (@$omegas) {
-        if ($omega->type ne 'BLOCK') {
-            my $i = 0;
+        if ($omega->is_block()) {
+			push @records, $omega;
+        } else {
+			my $i = 0;
             for my $option (@{$omega->options}) {
                 my $new_record = model::problem::omega->new(
                     corr => $omega->corr,
@@ -325,9 +327,7 @@ sub diagonal_to_block
                 );
                 $i++;
                 push @records, $new_record;
-            }
-        } else {
-            push @records, $omega;
+            }   
         }
     }
 
@@ -697,7 +697,7 @@ sub find_etas
 
     my @etas;
     for my $record (@$omega_records) {
-        for (my $i = 0; $i < $record->size; $i++) {
+        for (my $i = 0; $i < $record->get_size(); $i++) {
             push @etas, $record->n_previous_rows + 1 + $i;
         }
     }
@@ -724,7 +724,7 @@ sub find_iov_structure
             $i = 0;
         }
         $structure[$i] = [] if (not defined $structure[$i]);
-        push @{$structure[$i]}, $record->n_previous_rows + 1 .. $record->n_previous_rows + $record->size;
+        push @{$structure[$i]}, $record->n_previous_rows + 1 .. $record->n_previous_rows + $record->get_size();
     }
 
     return \@structure;
@@ -956,12 +956,8 @@ sub _number_of_etas
 
     my $num_etas = 0;
     for my $omega (@all_omegas) {
-        my $record_size;
-        if (defined $omega->size) {
-            $record_size = $omega->size;
-        } else {
-            $record_size = scalar(@{$omega->options});
-        }
+        my $record_size = $omega->get_size();
+
         $num_etas += $record_size;
     }
     return $num_etas;
@@ -983,12 +979,7 @@ sub _etas_from_omega_records
     my $current_eta = 1;
     my $remove_index = 0;
     for my $record (@all_omegas) {
-        my $record_size;
-        if (defined $record->size) {
-            $record_size = $record->size;
-        } else {
-            $record_size = scalar(@{$record->options});
-        }
+        my $record_size = $record->get_size();
         for my $remove_record (@$omegas) {
             if ($remove_record == $record) {
                 push @etas, $current_eta .. $current_eta + $record_size - 1;
