@@ -119,8 +119,8 @@ my @utilities = (
 	'precond','covmat','nmoutput2so', 'benchmark','postfrem','npfit', 'resmod', 'cddsimeval', 'qa', 'transform', 'improve', 'boot_randtest'
 	);
 
-my @win_modules = ('Moose', 'MooseX::Params::Validate', 'Math::Random');
-my @nix_modules = ('Moose', 'MooseX::Params::Validate', 'Math::Random', 'Storable');
+my @win_modules = ('Moose', 'MooseX::Params::Validate', 'Math::Random', 'YAML');
+my @nix_modules = ('Moose', 'MooseX::Params::Validate', 'Math::Random', 'Storable', 'YAML');
 my @recommended_modules = ('Archive::Zip','Statistics::Distributions','YAML::Tiny');
 
 my @modules;
