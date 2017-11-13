@@ -309,7 +309,6 @@ sub _read_options
 	my ( $any_fixed, $any_sd, $any_corr, $block_sd, $block_corr, $block_fixed, $any_chol, $block_chol ) = ( 0, 0, 0, 0, 0, 0, 0, 0 );
 	my @class_names = split('::',ref($self));
 	my $parameter = uc(pop(@class_names));
-
 	if (defined $self->record_arr) {
 		for (@{$self->record_arr}) {
 			my $whole_row = $_;
@@ -556,6 +555,10 @@ sub _read_options
 			$global_row++;
 			$global_column++;
 		}
+	}
+	unless (defined $self->type) { # if not 'BLOCK' and word 'DIAGONAL' not added, then it is 'DIAGONAL' anyway
+		$self->type('DIAGONAL');
+		$self->size($#digits+1);
 	}
 
 	if ($any_chol or $any_sd or $any_corr){
