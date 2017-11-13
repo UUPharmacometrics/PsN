@@ -21,11 +21,15 @@ $PsN::nm_major_version = 6; #affects formatting in init_option.pm
 ui -> silent(1);
 # Test new and read_option
 my $record = model::problem::init_record->new(record_arr => ['2']);
+use Data::Dumper;
+print Dumper($record);
 my $r = $record->_format_record;
+print Dumper($r);
 my @str = split /\s+/, $$r[0];
 is ($str[0], '$INIT_RECORD', "record->_format_record");
 is ($str[1], '2', "record->_format_record");
 is($record->is_block,0, 'anonymous record is_block');
+is ($record->get_size(),1, 'record size is 1');
 
 random_set_seed_from_phrase('12345');
 
@@ -56,6 +60,7 @@ is ($record->fix,0,'record unfix');
 
 $record = model::problem::sigma->new(record_arr => ['DIAGONAL(2) 0.02','0.01']);
 is($record->is_block,0, 'diagonal sigma record is_block');
+is($record->get_size(),2,'record size is 2');
 
 is_deeply($record->get_estimated_coordinate_strings,['SIGMA(1,1)','SIGMA(2,2)'],
 		  'estimated coordinate strings 2');
@@ -87,7 +92,7 @@ is_deeply($record->get_estimated_coordinate_strings(only_eta_eps => 1),
 $matrix = $record->get_matrix();
 is_deeply($matrix,[[0.02,-0.002,0.003],[-0.002,0.5,-0.005],[0.003,-0.005,1]],"get matrix 2");
 
-
+is ($record->get_size(),3,'record size is 3');
 is ($record->options->[0]->init,0.02,'record 3 init 0');
 is ($record->options->[1]->init,-0.002,'record 3 init 1');
 is ($record->options->[2]->init,0.5,'record 3 init 2');
@@ -307,6 +312,7 @@ $record = model::problem::omega->new(record_arr => [ '$OMEGA 0.4 0.25 FIXED' ]);
 ok (!$record->fix, 'DIAGONAL case 1 dim 2 1 FIX rec ');
 ok (!$record->options->[0]->fix, "DIAGONAL case 1 dim 2 1 FIX opt 1");
 ok ($record->options->[1]->fix, "DIAGONAL case 1 dim 2 1 FIX opt 2"); 
+is ($record->get_size(),2,'record size is 2');
 
 #case2
 $record = model::problem::omega->new(record_arr => [ '$OMEGA (0.4 FIXED) 0.25 ' ]);
