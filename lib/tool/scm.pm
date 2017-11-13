@@ -5041,17 +5041,17 @@ sub get_covariate_code
 sub get_covariate_theta_bounds_inits
 {
 	my %parm = validated_hash(\@_,
-							  bounds => { isa => 'HashRef', optional => 0 },
-							  inits => { isa => 'ArrayRef', optional => 0 },
-							  max => { isa => 'Num', optional => 0 },
-							  min => { isa => 'Num', optional => 0 },
-							  median => { isa => 'Num', optional => 0 },
-							  fraction => { isa => 'Maybe[Num]', optional => 1 },
-							  ntheta => { isa => 'Int', optional => 0 },
-							  type => { isa => 'Str', optional => 0 },
-							  sum_covariates => { isa => 'Bool', optional => 0 },
-							  linearize => {isa => 'Bool', optional => 0},
-							  global_init => {isa => 'Num', optional => 0},
+        bounds => { isa => 'HashRef', optional => 0 },
+        inits => { isa => 'ArrayRef', optional => 0 },
+        max => { isa => 'Num', optional => 0 },
+        min => { isa => 'Num', optional => 0 },
+        median => { isa => 'Num', optional => 0 },
+        fraction => { isa => 'Maybe[Num]', optional => 1 },
+        ntheta => { isa => 'Int', optional => 0 },
+        type => { isa => 'Str', optional => 0 },
+        sum_covariates => { isa => 'Bool', optional => 0 },
+        linearize => {isa => 'Bool', optional => 0},
+        global_init => {isa => 'Num', optional => 0},
 	);
 	my $max = $parm{'max'};
 	my $min = $parm{'min'};
@@ -5065,130 +5065,128 @@ sub get_covariate_theta_bounds_inits
 	my $inits = $parm{'inits'};
 	my $global_init = $parm{'global_init'};
 
-	if ($linearize and ($type eq 'categorical') and (not defined $fraction)){
+	if ($linearize and ($type eq 'categorical') and (not defined $fraction)) {
 		croak("must define fraction if linearize and categorical");
 	}
 
-	unless ( defined $bounds->{'upper'} and defined $bounds->{'upper'}[0] ) {
-		if ($sum_covariates){
-			for ( my $i = 0; $i < $ntheta; $i++ ) {
+	unless (defined $bounds->{'upper'} and defined $bounds->{'upper'}[0]) {
+		if ($sum_covariates) {
+			for (my $i = 0; $i < $ntheta; $i++) {
 				$bounds->{'upper'}[$i] = 20;
 			}
-		}elsif ($type eq 'linear'){
+		} elsif ($type eq 'linear') {
 			my $upper_bound;
-			if ( $median-$min == 0 ) {
-				$upper_bound=100000;
-			} else{
-				$upper_bound     = 1/($median-$min);
-				$upper_bound = sprintf("%.3f",$upper_bound);
-				$upper_bound     = '0' if eval($upper_bound) == 0;
+			if ($median-$min == 0) {
+				$upper_bound = 100000;
+			} else {
+				$upper_bound = 1 / ($median - $min);
+				$upper_bound = sprintf("%.3f", $upper_bound);
+				$upper_bound = '0' if eval($upper_bound) == 0;
 			}
 			$bounds->{'upper'}[0] = $upper_bound;
-		}elsif ($type eq 'categorical'){
-			for ( my $i = 0; $i < $ntheta; $i++ ) {
-				if ($linearize and ($fraction != 1)){
-					my $bound = 1/(1-$fraction);
-					$bound = sprintf("%.3f",$bound);
-					$bound     = '0' if eval($bound) == 0;
+		} elsif ($type eq 'categorical') {
+			for (my $i = 0; $i < $ntheta; $i++) {
+				if ($linearize and ($fraction != 1)) {
+					my $bound = 1 / (1 - $fraction);
+					$bound = sprintf("%.3f", $bound);
+					$bound = '0' if eval($bound) == 0;
 					$bounds->{'upper'}[$i] = $bound;
-				}else{
+				} else {
 					$bounds->{'upper'}[$i] = 5;
 				}
 			}
-		}elsif ($type eq 'hockey-stick'){
-			if ($median == $min){
+		} elsif ($type eq 'hockey-stick') {
+			if ($median == $min) {
 				croak("the median and min are equal ($min) for covariate, cannot use hockey-stick parameterization.")
 			}
-			my $upper_bound     = 1/($median-$min);
-			$upper_bound = sprintf("%.3f",$upper_bound);
-			$upper_bound     = '0' if eval($upper_bound) == 0;
+			my $upper_bound = 1 / ($median - $min);
+			$upper_bound = sprintf("%.3f", $upper_bound);
+			$upper_bound = '0' if eval($upper_bound) == 0;
 			$bounds->{'upper'}[0] = $upper_bound;
 			$bounds->{'upper'}[1] = 100000;
-		}elsif ($type eq 'power'){
+		} elsif ($type eq 'power') {
 			$bounds->{'upper'}[0] = 100000;
-		}elsif ($type eq 'exponential'){
+		} elsif ($type eq 'exponential') {
 			$bounds->{'upper'}[0] = 100000;
-		}elsif ($type eq 'user'){
-			for ( my $i = 0; $i < $ntheta; $i++ ) {
+		} elsif ($type eq 'user') {
+			for (my $i = 0; $i < $ntheta; $i++) {
 				$bounds->{'upper'}[$i] = 100000;
 			}
-		}elsif ($type eq 'none'){
-			$bounds->{'upper'}=[];
-		}else{
+		} elsif ($type eq 'none') {
+			$bounds->{'upper'} = [];
+		} else {
 			croak("unknown type $type");
 		}
 	}
 
-	unless ( defined $bounds->{'lower'} and defined $bounds->{'lower'}[0] ) {
-		if ($sum_covariates){
-			for ( my $i = 0; $i < $ntheta; $i++ ) {
+	unless (defined $bounds->{'lower'} and defined $bounds->{'lower'}[0]) {
+		if ($sum_covariates) {
+			for (my $i = 0; $i < $ntheta; $i++) {
 				$bounds->{'lower'}[$i] = -20;
 			}
-		}elsif ($type eq 'linear'){
+		} elsif ($type eq 'linear') {
 			my $lower_bound;
-			if ( $median-$max == 0 ) {
-				$lower_bound=-100000;
-			}else{
-				$lower_bound     = 1/($median - $max);
-				$lower_bound = sprintf("%.3f",$lower_bound);
-				$lower_bound     = '0' if eval($lower_bound) == 0;
+			if ($median-$max == 0) {
+				$lower_bound = -100000;
+			} else {
+				$lower_bound = 1 / ($median - $max);
+				$lower_bound = sprintf("%.3f", $lower_bound);
+				$lower_bound = '0' if eval($lower_bound) == 0;
 			}
 			$bounds->{'lower'}[0] = $lower_bound;
-		}elsif ($type eq 'categorical'){
-			for ( my $i = 0; $i < $ntheta; $i++ ) {
-				if ($linearize and ($fraction != 1)){
-					my $bound = (-1/$fraction);
-					$bound = sprintf("%.3f",$bound);
-					$bound     = '0' if eval($bound) == 0;
+		} elsif ($type eq 'categorical') {
+			for (my $i = 0; $i < $ntheta; $i++) {
+				if ($linearize and ($fraction != 1)) {
+					my $bound = (-1 / $fraction);
+					$bound = sprintf("%.3f", $bound);
+					$bound = '0' if eval($bound) == 0;
 					$bounds->{'lower'}[$i] = $bound;
-				}else{
+				} else {
 					$bounds->{'lower'}[$i] = -1;
 				}
 			}
-		}elsif ($type eq 'hockey-stick'){
+		} elsif ($type eq 'hockey-stick') {
 			$bounds->{'lower'}[0] = -100000;
-			if ($median == $max){
+			if ($median == $max) {
 				croak("the median and max are equal ($max) for covariate, cannot use hockey-stick parameterization.") ;
 			}
-			my $lower_bound     = 1/($median - $max);
-			$lower_bound = sprintf("%.3f",$lower_bound);
-			$lower_bound     = '0' if eval($lower_bound) == 0;
+			my $lower_bound = 1 / ($median - $max);
+			$lower_bound = sprintf("%.3f", $lower_bound);
+			$lower_bound = '0' if eval($lower_bound) == 0;
 			$bounds->{'lower'}[1] = $lower_bound;
-		}elsif ($type eq 'power'){
+		} elsif ($type eq 'power') {
 			$bounds->{'lower'}[0] = -100;
-		}elsif ($type eq 'exponential'){
+		} elsif ($type eq 'exponential') {
 			$bounds->{'lower'}[0] = -100;
-		}elsif ($type eq 'user'){
-			for ( my $i = 0; $i < $ntheta; $i++ ) {
+		} elsif ($type eq 'user') {
+			for (my $i = 0; $i < $ntheta; $i++) {
 				$bounds->{'lower'}[$i] = -100000;
 			}
-		}elsif ($type eq 'none'){
-			$bounds->{'lower'}=[];
-		}else{
+		} elsif ($type eq 'none') {
+			$bounds->{'lower'} = [];
+		} else {
 			croak("unknown type $type");
 		}
 	}
 
-	for ( my $i = 0; $i < $ntheta; $i++ ) {
-		unless ( defined $inits->[$i] ){
+	for (my $i = 0; $i < $ntheta; $i++) {
+		if (not defined $inits->[$i]) {
 			my $tmp;
-			if (($type eq 'power') or ($type eq 'exponential') or ($type eq 'user')){
+			if (($type eq 'power') or ($type eq 'exponential') or ($type eq 'user')) {
 				$tmp = $global_init;
-			}elsif( ( abs($bounds->{'upper'}[$i]) >= 100000 or not defined $bounds->{'upper'}[$i] ) and
-					( abs($bounds->{'lower'}[$i]) >= 100000 or not defined $bounds->{'lower'}[$i] ) ) {
-				$tmp = 100*$global_init;
+			} elsif ((abs($bounds->{'upper'}[$i]) >= 100000 or not defined $bounds->{'upper'}[$i]) and
+					(abs($bounds->{'lower'}[$i]) >= 100000 or not defined $bounds->{'lower'}[$i])) {
+				$tmp = 100 * $global_init;
 			} else {
-				if ( abs($bounds->{'upper'}[$i]) <= abs($bounds->{'lower'}[$i]) ) {
-					$tmp = $bounds->{'upper'}[$i] == 0 ? $bounds->{'lower'}[$i]*$global_init : $bounds->{'upper'}[$i]*$global_init;
+				if (abs($bounds->{'upper'}[$i]) <= abs($bounds->{'lower'}[$i])) {
+					$tmp = $bounds->{'upper'}[$i] == 0 ? $bounds->{'lower'}[$i] * $global_init : $bounds->{'upper'}[$i] * $global_init;
 				} else {
-					$tmp = $bounds->{'lower'}[$i] == 0 ? $bounds->{'upper'}[$i]*$global_init : $bounds->{'lower'}[$i]*$global_init;
+					$tmp = $bounds->{'lower'}[$i] == 0 ? $bounds->{'upper'}[$i] * $global_init : $bounds->{'lower'}[$i] * $global_init;
 				}
 			}
 			$inits->[$i] = $tmp;
 		}
 	}
-
-
 }
 
 sub write_log
