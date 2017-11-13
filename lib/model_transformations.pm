@@ -304,7 +304,6 @@ sub diagonal_to_block
     my $model = $parm{'model'};
 
     my $omegas = $model->problems->[0]->omegas;
-
     my @records;
     for my $omega (@$omegas) {
         if ($omega->type ne 'BLOCK') {
@@ -316,7 +315,7 @@ sub diagonal_to_block
                     prior => $omega->prior,
                     sd => $omega->sd,
                     chol => $omega->chol,
-                    fix => $omega->fix,
+                    fix => $option->fix,
                     same => 0,
                     comment => [],
                     type => 'BLOCK',
