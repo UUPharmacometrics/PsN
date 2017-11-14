@@ -5069,6 +5069,24 @@ sub get_covariate_theta_bounds_inits
 		croak("must define fraction if linearize and categorical");
 	}
 
+    # Want dynamic bounds for exponential
+    # 0.01 < exp(theta*(WT-meanWT)) < 100
+    my $upper_bound;
+    my $lower_bound;
+    if ($type eq 'exponential') {
+        my $min_diff = $min - $median;
+        my $max_diff = $max - $median;
+        my $low_exp_bound = 0.01;
+        my $high_exp_bound = 100;
+        if ($min_diff == 0 or $max_diff == 0) {     # No difference from median. We can set any bounds
+            $upper_bound = 0.01;
+            $lower_bound = 100;
+        } else {
+            $upper_bound = array::min((log($low_exp_bound) / $min_diff), log($high_exp_bound) / $max_diff);
+            $lower_bound = array::max((log($low_exp_bound) / $max_diff), log($high_exp_bound) / $min_diff);
+        }
+    }
+
 	unless (defined $bounds->{'upper'} and defined $bounds->{'upper'}[0]) {
 		if ($sum_covariates) {
 			for (my $i = 0; $i < $ntheta; $i++) {
@@ -5107,7 +5125,7 @@ sub get_covariate_theta_bounds_inits
 		} elsif ($type eq 'power') {
 			$bounds->{'upper'}[0] = 100000;
 		} elsif ($type eq 'exponential') {
-			$bounds->{'upper'}[0] = 100000;
+			$bounds->{'upper'}[0] = $upper_bound;
 		} elsif ($type eq 'user') {
 			for (my $i = 0; $i < $ntheta; $i++) {
 				$bounds->{'upper'}[$i] = 100000;
@@ -5157,7 +5175,7 @@ sub get_covariate_theta_bounds_inits
 		} elsif ($type eq 'power') {
 			$bounds->{'lower'}[0] = -100;
 		} elsif ($type eq 'exponential') {
-			$bounds->{'lower'}[0] = -100;
+			$bounds->{'lower'}[0] = $lower_bound;
 		} elsif ($type eq 'user') {
 			for (my $i = 0; $i < $ntheta; $i++) {
 				$bounds->{'lower'}[$i] = -100000;
@@ -5172,8 +5190,14 @@ sub get_covariate_theta_bounds_inits
 	for (my $i = 0; $i < $ntheta; $i++) {
 		if (not defined $inits->[$i]) {
 			my $tmp;
-			if (($type eq 'power') or ($type eq 'exponential') or ($type eq 'user')) {
+			if (($type eq 'power') or ($type eq 'user')) {
 				$tmp = $global_init;
+            } elsif ($type eq 'exponential') {
+                if ($global_init > $lower_bound and $global_init < $upper_bound) {
+                    $tmp = $global_init;
+                } else {
+                    $tmp = ($upper_bound - $lower_bound) / 2;
+                }
 			} elsif ((abs($bounds->{'upper'}[$i]) >= 100000 or not defined $bounds->{'upper'}[$i]) and
 					(abs($bounds->{'lower'}[$i]) >= 100000 or not defined $bounds->{'lower'}[$i])) {
 				$tmp = 100 * $global_init;
