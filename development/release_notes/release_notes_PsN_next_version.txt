@@ -116,7 +116,7 @@ A new recommended but not required Perl library for runrecord: YAML::Tiny
 - New option nointer to not use interaction for linearized scm
 - Linearized scm supports finding parameter-eta relation in two steps i.e.:
     ETA_CL = ETA(1), TVCL = THETA(1), CL = TVCL * EXP(ETA_CL)
-    will properly be detected.
+    will properly be detected. Search is also done in $ERROR
 - Bugfix: Models with IGNORE=() and IGNORE=C where C is not @ caused scm to crash
 - Changed boundaries for covariate effect theta on exponential effect to be adaptive given an effect size within 0.01 and 100
   This to reduce the risk of overflow.

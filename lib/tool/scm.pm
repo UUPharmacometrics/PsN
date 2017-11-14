@@ -1623,9 +1623,11 @@ sub linearize_setup
             @code = @{$original_model->get_code(record => 'pred')};
         }
         if ($#code <= 0) {
-            croak("Neither PK or PRED defined in " .
-                $original_model->filename . ", cannot match parameters to ETAs\n" );
+            croak("Neither PK or PRED defined in " . $original_model->filename . ", cannot match parameters to ETAs\n");
         }
+        my @error_code = @{$original_model->get_code(record => 'error')};
+        push @code, @error_code;
+
         my $assignments = code_parsing::find_assignments(model => $original_model);
         my $iov_etas = model_transformations::find_etas(model => $original_model, type => 'iov');
         my $n_param = 0;
@@ -1694,7 +1696,7 @@ sub linearize_setup
             } else {
                 my $mes = "Could not determine the ETA coupled to $parameter\n";
                 $mes .= " i.e. no $parameter = (expression with ETA) was " .
-                "found in \$PK or \$PRED\n";
+                "found in \$PK, \$PRED or \$ERROR\n";
                 croak($mes);
             }
             if (length($relation) > 1) {
