@@ -323,6 +323,7 @@ sub read_covdata
     my $id_index=-1;
     my $header_row = <$fh>;
     chomp($header_row);
+    $header_row =~ s/\r//; # remove CR
     my @fields = split(',',$header_row);
     for (my $i=0; $i< scalar(@fields); $i++){
         if($fields[$i] eq $dv){
