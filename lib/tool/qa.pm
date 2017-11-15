@@ -42,7 +42,7 @@ has 'resmod_idv_table' => ( is => 'rw', isa => 'Str' ); # The table used by resm
 
 sub BUILD
 {	
-	select(STDERR);
+	select(STDERR);     # Turn on autoflush to simplify fault-finding
 	$| = 1;
 	select(STDOUT);
 	$| = 1;
@@ -50,6 +50,8 @@ sub BUILD
 
 	my $model = $self->models()->[0];
     $self->model($model);
+
+    $self->check_nonsupported_modelfeatures();
 
     if (scalar(@{$self->skip}) > 0 and scalar(@{$self->only}) > 0) {
         die("Cannot have both skip and only\n");
@@ -587,6 +589,17 @@ sub _to_qa_dir
     my $self = shift;
 
     chdir $self->directory;
+}
+
+sub check_nonsupported_modelfeatures
+{
+    my $self = shift;
+
+    my $model = $self->model;
+
+    if (defined $model->problems->[0]->mixs) {
+        die("Error: Mixture models are not supported by qa.\n");
+    }
 }
 
 sub create_R_plots_code
