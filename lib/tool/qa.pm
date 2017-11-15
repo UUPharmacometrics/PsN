@@ -233,31 +233,54 @@ sub modelfit_setup
 		if ($add_etas_model->is_run()) {
 			$add_etas_model->update_inits(from_output => $add_etas_model->outputs->[0]);
 		}
-		$add_etas_model->outputs(undef);
+        if ($self->nonlinear) {
+            $add_etas_model->outputs->[0]->filename_root('add_etas');
+            $add_etas_model->outputs->[0]->filename('add_etas.lst');
+            $add_etas_model->outputs->[0]->directory($self->directory . '/add_etas_run');
+            $add_etas_model->directory($self->directory . '/add_etas_run');
+        } else {
+            $add_etas_model->outputs(undef);
+        }
         my $added_etas = model_transformations::add_etas_to_parameters(model => $add_etas_model, parameters => $self->add_etas);
         $self->added_etas($added_etas);
         $add_etas_model->filename("add_etas.mod");
         $add_etas_model->_write(filename => $self->directory . 'add_etas_run/add_etas.mod');
         chdir("add_etas_run");
-        ui->category('linearize');
         my $old_nm_output = common_options::get_option('nm_output');    # Hack to set clean further down
         common_options::set_option('nm_output', 'ext');
-        eval {
-            my $linearize = tool::linearize->new(
-                %{common_options::restore_options(@common_options::tool_options)},
-                models => [ $add_etas_model ],
-                directory => 'linearize_run',
-                estimate_fo => $self->fo,
-                nointer => $self->nointer,
-                nm_output => 'ext,phi',
-            );
-            $linearize->run();
-            $linearize->print_results();
-        };
-        if ($@) {
-            print $@;
+        if ($self->nonlinear) {
+            eval {
+                my $modelfit = tool::modelfit->new(
+                    %{common_options::restore_options(@common_options::tool_options)},
+                    models => [ $add_etas_model ],
+                    directory => "modelfit_dir1",
+                    top_tool => 1,
+                    nm_output => 'ext,phi',
+                );
+                $modelfit->run();
+            };
+            if ($@) {
+                print $@;
+            }
+        } else {
+            ui->category('linearize');
+            eval {
+                my $linearize = tool::linearize->new(
+                    %{common_options::restore_options(@common_options::tool_options)},
+                    models => [ $add_etas_model ],
+                    directory => 'linearize_run',
+                    estimate_fo => $self->fo,
+                    nointer => $self->nointer,
+                    nm_output => 'ext,phi',
+                );
+                $linearize->run();
+                $linearize->print_results();
+            };
+            if ($@) {
+                print $@;
+            }
+            ui->category('qa');
         }
-        ui->category('qa');
         common_options::set_option('nm_output', $old_nm_output);
     }
 
