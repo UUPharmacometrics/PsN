@@ -150,6 +150,10 @@ sub modelfit_setup
     } else {
         $base_model = $model_copy;
     }
+	
+	if ($self->nonlinear && not $self->_skipped('resmod')) { # resmod should be skipped when nonlinear 
+		push @{$self->skip}, 'resmod';
+	}
 
     #if ($self->fo) {
     #    $base_model->remove_option(record_name => 'estimation', option_name => 'METHOD');
@@ -626,6 +630,7 @@ sub create_R_plots_code
 			"cdd_max_rows <- 10",
 			"type <- 'latex' # set to 'html' if want to create a html file ",
             "skip <- " . rplots::create_r_vector(array => $self->skip),
+			"nonlinear <- " . $self->nonlinear,
         ];
 	my $dvid_line = "dvid_name <- ''";
 	if (defined $self->dvid) {

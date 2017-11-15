@@ -29,6 +29,20 @@ sub is_block
 		return 0;
 	}
 }
+
+sub get_size
+{
+    my $self = shift;
+	
+	my $size;
+	if ($self->is_block()){
+		$size = $self->size;
+	}else{
+		$size = scalar(@{$self->options});
+	}
+	return $size
+}
+
 sub get_estimated_coordinate_strings
 {
     my $self = shift;
@@ -555,10 +569,6 @@ sub _read_options
 			$global_row++;
 			$global_column++;
 		}
-	}
-	unless (defined $self->type) { # if not 'BLOCK' and word 'DIAGONAL' not added, then it is 'DIAGONAL' anyway
-		$self->type('DIAGONAL');
-		$self->size($#digits+1);
 	}
 
 	if ($any_chol or $any_sd or $any_corr){
