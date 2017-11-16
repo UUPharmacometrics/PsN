@@ -51,175 +51,235 @@ exit unless $res;
 
 my %help_text;
 
-$help_text{Pre_help_message} = <<'EOF';
-    LASSO method for covariate model selection.
+	$help_text{Pre_help_message} = <<'EOF';
+    LASSO tool for covariate model selection.
 EOF
-$help_text{Description} = <<'EOF';
-Covariate models for population pharmacokinetics and pharmacodynamics
-are often built with a stepwise covariate modelling procedure (SCM, avail-
-able in PsN). When analysing a small dataset this method may produce
-a covariate model that suffers from selection bias and poor predictive 
-performance. The lasso is a method suggested to remedy these problems.
-It may also be faster than SCM and provide a validation of the covariate
-model. In the lasso all covariates must be standardised to have zero mean
-and standard deviation one. Subsequently, the model containing all potential
-covariate–parameter relations is fitted with a restriction: the sum of the ab-
-solute covariate coefficients must be smaller than a value, t. The restriction
-will force some coefficients towards zero while the others are estimated with
-shrinkage. This means in practice that when fitting the model the covariate
-relations are tested for inclusion at the same time as the included relations
-are estimated. For a given SCM analysis, the model size depends on the
-P-value required for selection. In the lasso the model size instead depends
-on the value of t which can be estimated using cross-validation.
+	$help_text{Description} = <<'EOF';
+	Covariate models for population pharmacokinetics and pharmacodynamics are often built 
+	with a stepwise covariate modelling procedure (scm tool, available in PsN). When 
+	analysing a small dataset this method may produce a covariate model that suffers 
+	from selection bias and poor predictive performance. The lasso tool is a method 
+	suggested to remedy these problems. It may also be faster than the scm tool and 
+	provide a validation of the covariate model. 
+	In the lasso tool all covariates must be standardised to have zero mean and standard 
+	deviation one. Subsequently, the model containing all potential covariate-parameter 
+	relations is fitted with a restriction: the sum of the absolute covariate coefficients
+	must be smaller than a value, t. The restriction will force some coefficients towards 
+	zero while the others are estimated with shrinkage. This means in practice that when 
+	fitting the model the covariate relations are tested for inclusion at the same time 
+	as the included relations are estimated. For a given scm analysis, the model size 
+	depends on the P-value required for selection. In the lasso tool the model size 
+	instead depends on the value of t which can be estimated using cross-validation.
 
-Jakob Ribbing, Joakim Nyberg, Ola Caster, E. Niclas Jonsson, 
-The lasso—a novel method for predictive covariate model building in nonlinear
-mixed effects models, C. J Pharmacokinet Pharmacodyn (2007) 34:485–51
+	Jakob Ribbing, Joakim Nyberg, Ola Caster, E. Niclas Jonsson, The lasso - a novel 
+	method for predictive covariate model building in nonlinear mixed effects models, 
+	C. J Pharmacokinet Pharmacodyn (2007) 34:485-51
 EOF
-$help_text{Examples} = <<'EOF';
- lasso run2.mod -relations=CL:CLCR-2,WT-3,,V:WT-2 
+	$help_text{Examples} = <<'EOF';
+	lasso run2.mod -relations=CL:CLCR-2,WT-3,,V:WT-2 
 
 EOF
 
-$help_text{Options} = <<'EOF';      
-	A model file is required as argument, and at least the
-	-relations option. 
-
+	$help_text{Options} = <<'EOF';      
+	A model file is required on the command line. Each parameter, e.g. CL and V, listed 
+	with the option -relations (required) must in the model have the typical value encoded 
+	as TV-parameters, e.g. TVCL and TVV. The covariate effects will be added multiplicatively 
+	to the TV variables, see the example lasso model code below. If option -log_scale is set, then instead the logarithm of the typical value must be encoded as LNTV-parameter
+	e.g. LNTVCL, and the covariate effects will be added additively to the LNTV variables.
+	The lasso tool does not support $PRIOR in the output model.
+	
       The following options are valid:
 EOF
 
-$help_text{-h} = <<'EOF';
+	$help_text{-h} = <<'EOF';
       -h | -?
       
       With -h or -? lasso will print a list of options and exit.
 EOF
       
-$help_text{-help} = <<'EOF';      
+	$help_text{-help} = <<'EOF';      
       -help
       
       With -help lasso will print this, longer, help message.
 EOF
 
-$help_text{-run_final_model} = <<'EOF';
-      -run_final_model
-
-    Default not set. If set, the input model will be run with covariate
-	relations added and THETAs fixed to estimates from the lasso procedure.
-EOF
-$help_text{-adaptive} = <<'EOF';
+	$help_text{-adaptive} = <<'EOF';
       -adaptive
 
-    Default not set. If set, run adaptive lasso algorithm.
+    Default not set. If set, run adaptive lasso algorithm. This option will be set automatically 
+	if option -adjusted is set. See section Lasso procedure for a description of the extra 
+	steps run when this option is set.
 EOF
-$help_text{-adjusted} = <<'EOF';
+
+	$help_text{-adjusted} = <<'EOF';
       -adjusted
 
-    Default not set. If set, run adjusted adaptive lasso algorithm.
+    Default not set. If set, run adjusted adaptive lasso algorithm. See section Lasso 
+	procedure for a description of the extra steps run when this option is set.
 EOF
-$help_text{-al_coefficients} = <<'EOF';
+	$help_text{-al_coefficients} = <<'EOF';
       -al_coefficients
 
-    Default not used, only allowed with adjusted adaptive lasso algorithm.
-    A comma-separated list of absolute value of full model coefficient estimate
-    divided by the standard error of the estimate.
-    The values must be in the same order as the coefficients in the auto-generated
-    full model. This vector will be used instead of values from an estimation of the full model.
-EOF
-$help_text{-log_scale} = <<'EOF';
-      -log_scale
-
-    Default not set. If set, assume parameters on log scale, covariates added on log scale.
-EOF
-$help_text{-normalize} = <<'EOF';
-      -normalize
-
-    Default set. If unset with -no-normalize, PsN will not normalize covariates to mean 0 variance 1.
-EOF
-$help_text{-step_t} = <<'EOF';
-      -step_t=X
-
-    The steplength for t in the cross-validation. Default is 0.05. The 
-    step-length can be negative if start_t is larger than stop_t.
-EOF
-$help_text{-stratify_on} = <<'EOF';
-      -stratify_on=variable
-
-    Default not used. If the option is set, PsN will try to preserve the 
-    relative proportions of the values of this variable when creating the 
-    cross-validation datasets. The variable must be in the dataset (not in 
-    an extra data file or in the model).
+    Default not set. Only allowed with adjusted adaptive lasso algorithm. A comma-separated
+	list of absolute value of full model coefficient estimate divided by the standard error
+	of the estimate. The values must be in the same order as the coefficients in the 
+	auto-generated full model. This vector will be used instead of values from an estimation 
+	of the full model. Values must only be give for the lasso coefficients, no other THETAs.
 EOF
 
-$help_text{-start_t} = <<'EOF';
-      -start_t=X
+	$help_text{-convergence} = <<'EOF';
+      -convergence=FIRSTMIN | HALT | REACHMAX
 
-    The first t-value. Default is 0.
+    Default is "FIRSTMIN'. The convergence criterion. 
+	The alternatives are: 
+    'FIRSTMIN': Stop when predicted ofv increases from previous value (or when stop_t is 
+	reached). This is the default. 
+    'HALT': Stop when program crashes or when one model cannot terminate.
+	'REACHMAX': Stop when program reaches max (stop_t), then best t-value is selected.
 EOF
 
-$help_text{-stop_t} = <<'EOF';
-      -stop_t=X
-
-    The last t-value. Default is 1.
-EOF
-
-$help_text{-cutoff} = <<'EOF';
+	$help_text{-cutoff} = <<'EOF';
       -cutoff=X
 
-    The theta cutoff, if the absolute value of the estimated covariate 
-    theta is below cutoff then the theta will be fixed to zero. Default 
-    is 0.005.
+    Default is 0.005. The theta cutoff, if the absolute value of the estimated covariate 
+	theta is below cutoff then the theta will be fixed to zero.
 EOF
 
-$help_text{-convergence} = <<'EOF';
-      -convergence
-
-    The convergence criterion. Alternatives are 
-    'REACHMAX': Stop when program reaches max (stop_t), then best t-value is 
-    selected.     
-    'FIRSTMIN': Stop when predicted ofv increases from previous value (or 
-    when stop_t is reached). This is the default. 
-    'HALT': Stop when program crashes or when one model cannot terminate.
-EOF
-
-$help_text{-groups} = <<'EOF';
-      -groups=N
-
-    The number of validation groups in the cross-validation. Default 5, 
-    must be in the range 2-number of individuals in dataset. The larger 
-    the number the longer the cross-validation run-time.
-EOF
-$help_text{-external_data} = <<'EOF';
+	$help_text{-external_data} = <<'EOF';
       -external_data=filename
 
-	Default not used. A filename for external validation of the final model.
+	Default not set. A filename for external validation of the final model.
+EOF
+
+	$help_text{-groups} = <<'EOF';
+      -groups=N
+
+    Default 5, must be in the range 2-number of individuals in dataset. The number of validation
+	groups in the cross-validation. The larger the number the longer the cross-validation 
+	run-time. The value set for the common option -threads will have no effect if set to 
+	something larger than the number of groups (cross-validation data sets). 
+EOF
+
+	$help_text{-log_scale} = <<'EOF';
+      -log_scale
+
+    Default not set. If set, covariates will be added to LNTV instead of multiplied with TV. 
+	For example, if the input model has
+	LNTVCL=THETA(1)
+	then the lasso tool will get
+	LNTVCL=THETA(1)
+	LNTVCL=LNTVCL+CLCOV
+	where CLCOV is a sum of covariate effects.
+EOF
+
+	$help_text{-maxevals} = <<'EOF';
+      -maxevals=N
+
+    This common option is important for lasso, since the difficult minimizations in the 
+	cross-validation may require many evaluations. In the template psn.conf maxevals is set 
+	to 50000. Will only work for classical estimation methods. NONMEM only allows 9999 
+	function evaluations. PsN can expand this limit by adding an MSFO option to $ESTIMATION. 
+	Later when NONMEM hits the max number of function evaluations allowed by NONMEM (9999) 
+	PsN will remove initial estimates from the model-file and add $MSFI and restart NONMEM. 
+	This will be repeated until the number of function evaluations specified with option 
+	-maxevals has been reached.
+EOF
+
+	$help_text{-normalize} = <<'EOF';
+      -normalize
+
+    Default set. If unset with -no-normalize, PsN will not normalize covariates to mean 0 
+	variance 1.
 EOF
 
 $help_text{-pred_ofv_start_t} = <<'EOF';
       -pred_ofv_start_t=X
 
-    Default not used. The total predicted ofv for the model with t=start_t.  
-    If the option is not set PsN will run the lasso model with t=start_t. 
-    If the value is given this will save time.
+    Default not set. The total predicted ofv for the model with t=start_t. If the option is 
+	not set PsN will run the lasso model with t=start_t. If the value is given this will save
+	time.
 EOF
 
-$help_text{-relations} = <<'EOF';
+	$help_text{-relations} = <<'EOF';
       -relations
 
-    The relations option is required. The parameter-covariate pairs to test 
-    and the parameterizations to use. The parameterizations are: 
-    1)categorical covariate (treated as nominal scale), 2)linear continuous 
-    covariate, 3)piece-wise linear "hockey-stick" for continuous covariate.
-    The syntax is sensitive and must follow the form below. Note colons, 
-    commas. There must be no spaces in the list of relations. There are double 
-    commas before a new parameter. It is optional to input the breakpoint for 
-    the piece-wise linear relation (3), the number is then set after a second 
-    dash (-) as in WGT-3-45.2. Example (everything should be on the same line):
+    The relations input is required. The parameter-covariate pairs to test and the parameterizations 
+	to use. The parameterizations are: 
+    1)categorical covariate (treated as nominal scale), 
+	2)linear continuous covariate, 
+	3)piece-wise linear "hockey-stick" for continuous covariate.
+    The syntax is sensitive and must be followed exactly. Note colons and commas. 
+	There must be no spaces in the list of relations. There are double commas before a new 
+	parameter. It is optional to input the breakpoint for the piece-wise linear relation (3),
+	the number is then set after a second dash (-) as in WGT-3-45.2. 
+	
+	Example:
 		
     -relations=CL:WGT-2,SEX-1,RACE-1,,V:WGT-3-45.2,,KA:WGT-3,APGR-2
-
 EOF
 
-$help_text{Post_help_message} = <<'EOF';
+$help_text{-retries} = <<'EOF';
+      -retries=N
+
+    Using this common option PsN can do a retry with cut thetas (only lasso) and/or randomly 
+	tweaked inits if minimization is not successful. For extreme examples with lasso option 
+	retries may have to be as much as 20. On the other hand, -retries=0 is generally enough 
+	if rounding errors are acceptable (see option significant\_digits\_accept).
+EOF
+
+	$help_text{-run_final_model} = <<'EOF';
+      -run_final_model
+
+    Default not set. If set, the input model will be run with covariate relations added and 
+	THETAs fixed to estimates from the lasso procedure.
+EOF
+
+	$help_text{-significant_digits_accept} = <<'EOF';
+      -significant_digits_accept=N
+
+	Default not set. Setting this common option may reduce run times considerably. Normally 
+	lasso tries new initial estimates unless MINIMIZATION SUCCESSFUL is found in the NONMEM 
+	output file. With the -significant_digits_accept, lasso will only rerun if the resulting 
+	significant digits is lower than the value specified with this option. It may or may not 
+	affect the final results. 	
+EOF
+
+	$help_text{-start_t} = <<'EOF';
+      -start_t=X
+
+    Default is 0. The first t-value.
+EOF
+
+	$help_text{-step_t} = <<'EOF';
+      -step_t=X
+
+    Default is 0.05. The steplength for t in the cross-validation. The step length can be 
+	negative if start_t is larger than stop_t.
+EOF
+
+	$help_text{-stop_t} = <<'EOF';
+      -stop_t=X
+
+     Default is 1. The last t-value. 
+EOF
+
+	$help_text{-stratify_on} = <<'EOF';
+      -stratify_on=variable
+
+    Default not set. If the option is set, PsN will try to preserve the relative proportions 
+	of the values of this variable when creating the cross-validation datasets. The variable 
+	must be in the dataset (not in an extra data file or in the model).
+EOF
+
+	$help_text{-threads} = <<'EOF';
+      -threads=integer
+
+    The number of parallel processes to start for the model runs on a parallel computer. Setting 
+	this value to something larger than the number of groups (cross-validation data sets) will 
+	have no effect. 
+EOF
+
+	$help_text{Post_help_message} = <<'EOF';
     Also see 'psn_options -h' for a description of common PsN options.
 EOF
 
