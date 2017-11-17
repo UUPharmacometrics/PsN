@@ -505,6 +505,40 @@ sub prepend_code
     $model->set_code(record => $code_record, code => \@model_code);
 }
 
+sub append_code
+{
+    # Add code to the end of $PRED or $PK, or to specific record
+    my %parm = validated_hash(\@_,
+        model => { isa => 'model' },
+        code => { isa => 'ArrayRef' },
+        record => { isa => 'Str', optional => 1 },
+    );
+    my $model = $parm{'model'};
+	my $code = $parm{'code'};
+    my $record = $parm{'record'};
+
+	my @model_code;
+	my $code_record;
+    if (not defined $record) {
+        if ($model->has_code(record => 'pk')) {
+            @model_code = @{$model->get_code(record => 'pk')};
+            $code_record = 'pk';
+        } elsif ($model->has_code(record => 'pred')) {
+            @model_code = @{$model->get_code(record => 'pred')};
+            $code_record = 'pred';
+        } else {
+            croak("Neither PK nor PRED defined in " . $model->filename . "\n");
+        }
+    } else {
+        @model_code = @{$model->get_code(record => $record)};
+        $code_record = $record;
+    }
+
+	@model_code = (@model_code, @$code); 
+
+    $model->set_code(record => $code_record, code => \@model_code);
+}
+
 sub insert_code
 {
     # Add code after specified line number in $PRED or $PK, or to specific record
