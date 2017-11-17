@@ -1,5 +1,5 @@
 \input{inputs/format_header.tex}
-\guidetitle{LINEARIZE user guide}{2017-03-02}
+\guidetitle{LINEARIZE user guide}{2017-11-17}
 
 
 \begin{document}
@@ -9,47 +9,25 @@
 
 
 \section{Introduction}
-The linearize script is a PsN tool that allows you to automatically create a linearized version of a model and obtain the dataset including
-individual predictions and derivatives necessary for further estimation of extensions implemented in the linearized model. Command:
+The linearize tool allows you to automatically create a linearized version of a model and obtain the dataset including
+individual predictions and derivatives necessary for further estimation of extensions implemented in the linearized model.\\ 
+Example:
 \begin{verbatim}
-linearize runX.mod
+linearize run10.mod
 \end{verbatim}
 
-\noindent There are a few addtional options that are intended only for research and method exploration.
-It is recommended to not use them.
+The linearization was developed with the aim to facilitate the development of nonlinear mixed effects models by establishing a diagnostic method for evaluation of stochastic model components. A full description of the methodology and its performance 
+is presented in \cite{Svensson}. The online supplementary material includes a comprehensive code example. 
+The methodology utilizes first order Taylor expansions and substantially shortens run times. Examples of extensions that can be evaluated with the linearized model are addition of inter individual or inter occasion variability parameters, correlation structures and more complex residual error models.
 
-The linearization was developed with the aim to facilitate the development of nonlinear mixed effects models by establishing a 
-diagnostic method for evaluation of stochastic model components. A full description of the methodology and it's performance is presented in
-\cite{Svensson}. The online supplementary 
-material includes a comprehensive code example. 
-The methodology utilizes first order Taylor expansions and substantially shortens run times \cite{Khandelwal}. 
-Examples of extensions  that can be evaluated with the linearized model are addition of inter individual or inter occasion variability parameters, 
-correlation structures and more complex residual error models. 
-
-Before proceeding with implementation and evaluation of extensions, it is important to check that the OFV value of the nonlinear and linearized 
-version of the base model agrees (printed in the command window and in the linlog.txt file generated in the linearization folder). 
-If the OFV-values differ more than a few points, this can depend on the occurrence of local minima in the MAP estimation. During the development of the methodology 
-this was observed several times for models with a proportional or combined residual error structure. The problems are caused by the shape distortion
-of the individual EBE likelihood profiles sometimes are introduced by the interaction term in the linearized model. The problem can easily be solved either by
-transformation to log-scale (rendering proportional residual errors additive and thence interaction term is zero) or by use of the MCETA option 
-available in NONMEM  from version 7.3.0. MCETA allows the user to define a number of vectors containing random samples drawn from the 
-variance-covariance matrix OMEGA to be tested as initial ETA-values. Whichever supplies the lowest OFV will be used in the estimation. With a large 
-enough number of initial values tested, the probability of the estimation to end up in a local minimum can be decreased.
-
-If extensions including new random effects should be evaluated, the code for these should be included already in the base nonlinear model but with an 
-exceedingly small and fixed OMEGA value (i.e. 0.00001 FIX). This is to enable calculation of the derivative with respect to the new parameter so these can 
-be outputted in the generated dataset. If the value is fixed to zero, NONMEM will not calculate the derivative. 
-
-The linearization is a diagnostics to identify the best extensions of a models stochastic components. Values of fixed effects cannot change in a linearized
-model and the structural model must be reasonably good to make evaluation of stochastic components meaningful. Once the best extended model is identified, 
-it is recommended to implement these in the nonlinear version of the model and reestimate all parameters.
-
+Before proceeding with implementation and evaluation of extensions, it is important to check that the OFV value of the nonlinear and linearized version of the base model agrees (printed in the command window and in the linlog.txt file generated in the linearization folder). If the OFV-values differ more than a few points, this can depend on the occurrence 
+of local minima in the MAP estimation. 
 
 \subsection{Workflow}
 \begin{enumerate}
 \item Select a base model with an acceptable structural component and potentially the most influential stochastic parameters included.
 \item If investigating additional ETAs, include in base model but with OMEGA fixed to small value (i.e. 0.00001 FIX) to get derivatives in output dataset.
-\item Run PsN command: linearize runX.mod.
+\item Run linearize run10.mod.
 \item Check OFV agreement. Disagreement indicates local minima in MAP estimation (solve by log-transformation to get additive error or set MCETA=1000 in \$ESTIMATION).
 \item Add extensions to the linearized model manually and evaluate.
 \item When decided which extension to include, implement in standard nonlinear format and reestimate.
@@ -60,49 +38,42 @@ If the original model has a phi file this will be used in a \$ETAS record in the
 
 \section{Input and options}
 \subsection{Required input}
-A model file (the nonlinear base model) is required on the command-line.
+A model file is required on the command line.
 
 \subsection{Optional input}
-These option are intended only for research and method exploration.
-It is recommended to not use them.
+The following options are valid but intended only for research and method exploration. It is recommended to not use them.
 \begin{optionlist}
 \optname{epsilon}
-Linearize with respect to epsilon, set by default. Disable with -no-epsilon.
+Default set. Linearize with respect to epsilon. Disable with -no-epsilon.
 \nextopt
-\optname{error}
-Only relevant if -no-epsilon is set. 
-Use an approximate linearization of the error model instead of an exact.
-Alternatives are add (for additive), prop (for proportional) or
-propadd (for proportional plus additive).
-The error model must be defined in a particular way when this option is used,
-see the scm userguide for details.
+\optdefault{error}{add | prop | propadd}
+Only relevant if -no-epsilon is set. Use an approximate linearization of the error model instead of an exact.\\
+Alternatives are;
+\begin{itemize}
+\item add (for additive
+\item prop (for proportional)
+\item propadd (for proportional plus additive)
+\end{itemize}
+The error model must be defined in a particular way when this option is used. See the scm\_userguide.pdf for details.
 \nextopt
 \optname{foce}
-Set by default. 
+Default set. Expand around conditional ETA estimates instead of around ETA=0.  
 \nextopt
 \optname{keep\_covariance}
-      By default the \$COVARIANCE will be deleted from the bootstrap models, 
-	  to save run time. If option -keep\_covariance is set, 
-	  PsN will instead keep \$COVARIANCE.
+The default setting will delete \$COVARIANCE from the bootstrap models, to save run time. If option -keep\_covariance is set, PsN will instead keep \$COVARIANCE.
 \nextopt
-    \optname{nointer}
-        Don't use interaction. Default is off.
-    \nextopt
-EOF
-
+\optname{nointer}
+Default off. Don't use interaction. 
+\nextopt
 \end{optionlist}
 
 \subsection{Some important common PsN options}
-There are many options that govern how PsN manages NONMEM runs, and
-those options are common to all PsN programs that run NONMEM.
-For a complete list of such options see common\_options.pdf, 
-or psn\_options -h on the commandline. A selection of
+There are many options that govern how PsN manages NONMEM runs, and those options are common to all PsN programs that run NONMEM. For a complete list of such options see common\_options.pdf, or psn\_options -h on the command line. A selection of
 the most important common options is found here.
 \input{inputs/basic_options.tex}
 
-
 \section{Output}
-Linearized model file with name runX\_linbase.mod and data file with name runX\_linbase.dta.
+Linearized model file with name run10\_linbase.mod and data file with name run10\_linbase.dta.
 
 \references
 
