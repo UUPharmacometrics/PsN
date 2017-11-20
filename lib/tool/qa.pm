@@ -101,23 +101,38 @@ sub modelfit_setup
 
     $model_copy->set_records(type => 'covariance', record_strings => [ "OMITTED" ]);
 
+    my @table_columns = ( 'ID', $self->idv,'CWRES', 'PRED', 'CIPREDI','CPRED' );
+	
+    if (defined $self->dvid and $model_copy->defined_variable(name => $self->dvid)) {
+        push @table_columns, $self->dvid;
+    } 
+	
+    if ($model_copy->defined_variable(name => 'TAD')) {
+        push @table_columns, 'TAD';
+    }
+
     my $base_model_name = $self->model->filename;
-    if (not $self->nonlinear) {
+    if ($self->nonlinear) {
+        my $eval_model = $self->model->copy(filename => $self->model->filename, directory => $self->directory, write_copy => 0, output_same_directory => 0);
+        my @extra_tablestrings = ( @table_columns, 'NOPRINT', 'NOAPPEND', 'ONEHEADER', 'FILE=extra_table' );
+        $eval_model->add_records(type => 'table', record_strings => \@extra_tablestrings);
+        $eval_model->set_maxeval_zero();
+        $eval_model->_write(filename => $self->directory . $self->model->filename);
+        $eval_model->outputs->[0]->directory($self->directory);
+        my $modelfit = tool::modelfit->new(
+            %{common_options::restore_options(@common_options::tool_options)},
+            models => [ $eval_model ],
+            directory => "eval_run",
+            top_tool => 1,
+            nm_output => 'ext,phi',
+        );
+        $modelfit->run();
+    } else {
         $base_model_name =~ s/(\.[^.]+)$/_linbase.mod/;
     
         print "*** Running linearize ***\n";
         ui->category('linearize');
 	
-    	my @table_columns = ( 'ID', $self->idv,'CWRES', 'PRED', 'CIPREDI','CPRED' );
-	
-        if (defined $self->dvid and $model_copy->defined_variable(name => $self->dvid)) {
-            push @table_columns, $self->dvid;
-        } 
-	
-        if ($model_copy->defined_variable(name => 'TAD')) {
-            push @table_columns, 'TAD';
-        }
-
         my $lst_file;
         if (defined $self->lst_file) {
             $lst_file = '../../../' . $self->lst_file;
