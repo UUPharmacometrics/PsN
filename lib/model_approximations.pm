@@ -82,6 +82,36 @@ sub second_order_approximation_model
 
     my $netas = $model->nomegas->[0];
 
+    my $input = "\$INPUT ID DV TIME MYY ";
+    for (my $i = 1; $i <= $netas; $i++) {
+        $input .= "EBE$i ";
+    }
+    for (my $i = 1; $i <= $netas; $i++) {
+        $input .= "DYDETA$i ";
+    }
+    for (my $i = 1; $i <= $netas; $i++) {
+        for (my $j = 1; $j <= $i; $j++) {
+            $input .= "D2YDETA$j$i ";
+        }
+    }
+
+    my $problem = model::problem->new(
+        ignore_missing_files=> 1,
+        prob_arr => [
+            '$PROBLEM Second order approximation', 
+            '$DATA 2nd_order.dta IGNORE=@ IGNORE=(EVID.GT.0)',
+            $input,
+        ],
+    );
+    my $approximation_model = model->new(
+        filename => 'approximated.mod',
+        problems => [ $problem ],
+        ignore_missing_files => 1,
+    );
+    
+    $approximation_model->add_records(type => 'estimation', record_strings => [ 'MAXEVAL=9999 METHOD=1 LAPLACE -2LL' ]);
+    $approximation_model->problems->[0]->omegas($model->problems->[0]->omegas);
+
     my @pred;
 
     push @pred, "Y = 0  ; No contribution to log like for the other rows\n";
@@ -120,8 +150,9 @@ sub second_order_approximation_model
 
     push @pred, "ENDIF\n"; 
 
-    use Data::Dumper;
-    print Dumper(\@pred);
+    $approximation_model->add_records(type => 'pred', record_strings => \@pred); 
+
+    return $approximation_model;
 }
 
 1;

@@ -19,7 +19,8 @@ my $derivatives_model = model_approximations::second_order_derivatives_model(mod
 is (scalar(@{$derivatives_model->problems->[0]->pks->[0]->code}), 14, "2nd order Derivatives model reset");
 is (scalar(@{$derivatives_model->problems->[0]->errors->[0]->code}), 19, "2nd order Derivatives model error");
 
-model_approximations::second_order_approximation_model(model => $model);
+my $approximation_model = model_approximations::second_order_approximation_model(model => $model);
+
 
 
 done_testing();
