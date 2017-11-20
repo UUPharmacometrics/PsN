@@ -27,6 +27,7 @@ sub second_order_derivatives_model
             push @reset_code, "    D2YDETA$j${i}_ = 0\n";
         }
     }
+    push @reset_code, "    MYY_ = 0\n";
     push @reset_code, "ENDIF\n";
 
     model_transformations::prepend_code(model => $derivatives_model, code => \@reset_code);
