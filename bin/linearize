@@ -30,6 +30,7 @@ my %optional_options = (
     "error:s"=> undef,
     "keep_covariance!" => undef,
     "nointer!" => undef,
+    "second_order!" => undef,
 );
 
 my $res = GetOptions(
@@ -130,6 +131,12 @@ EOF
 
       Default off. Don't use interaction. 
 EOF
+	
+$help_text{-second_order} = <<'EOF';
+      -second_order
+
+      Default off. Use second order (laplace) approximation. 
+EOF
 
 	$help_text{Post_help_message} = <<'EOF';
     Also see 'psn_options -h' for a description of common options.
@@ -165,6 +172,7 @@ my $linearize = tool::linearize->new(
     error => $options{'error'},
     keep_covariance => $options{'keep_covariance'},
     nointer => $options{'nointer'},
+    second_order => $options{'second_order'},
 );
 
 $linearize->run();
