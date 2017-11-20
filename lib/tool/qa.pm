@@ -168,10 +168,6 @@ sub modelfit_setup
         $base_model = $model_copy;
     }
 	
-	if ($self->nonlinear && not $self->_skipped('resmod')) { # resmod should be skipped when nonlinear 
-		push @{$self->skip}, 'resmod';
-	}
-
     #if ($self->fo) {
     #    $base_model->remove_option(record_name => 'estimation', option_name => 'METHOD');
     #    $base_model->_write();
