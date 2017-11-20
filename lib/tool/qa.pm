@@ -115,6 +115,7 @@ sub modelfit_setup
     if ($self->nonlinear) {
         my $eval_model = $self->model->copy(filename => $self->model->filename, directory => $self->directory, write_copy => 0, output_same_directory => 0);
         my @extra_tablestrings = ( @table_columns, 'NOPRINT', 'NOAPPEND', 'ONEHEADER', 'FILE=extra_table' );
+        $eval_model->remove_records(type => 'table');
         $eval_model->add_records(type => 'table', record_strings => \@extra_tablestrings);
         $eval_model->set_maxeval_zero();
         $eval_model->_write(filename => $self->directory . $self->model->filename);
