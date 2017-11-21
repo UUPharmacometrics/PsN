@@ -49,7 +49,13 @@ sub second_order_derivatives_model
     push @derivatives_code, "\"        MYY_ = MYY_ + TMP2_  ! The log likelihood\n";
     push @derivatives_code, "\"    ENDIF\n";
 
-    model_transformations::append_code(model => $derivatives_model, code => \@derivatives_code, record => 'error');
+    my $code_record;
+    if ($model->has_code(record => 'pk')) {
+        $code_record = 'error';
+    } else {
+        $code_record = 'pred';
+    }
+    model_transformations::append_code(model => $derivatives_model, code => \@derivatives_code, record => $code_record);
 
     $derivatives_model->remove_records(type => 'estimation');
     $derivatives_model->add_records(type => 'estimation', record_strings => [ "MAXEVAL=0 METHOD=1 LAPLACE -2LL" ]);
