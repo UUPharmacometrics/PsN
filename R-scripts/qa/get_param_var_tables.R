@@ -18,9 +18,9 @@ get_param_var_tables <- function(directory,base_model,skip) {
         fullblock_ofv <- .get_ext_ofv(file.path(directory,"modelfit_run/fullblock.ext"))
         dofv_block <- as.numeric(base_ofv-fullblock_ofv)
         # how many omega cov omegas were added
-        boxcox_omegas <- get_omega_values(file.path(directory,"modelfit_run/fullblock.ext"),"cov")
+        fullbock_omegas <- get_omega_values(file.path(directory,"modelfit_run/fullblock.ext"),"cov")
         base_omegas <- get_omega_values(base_ext_file,"cov")
-        add.par_block <- length(setdiff(colnames(boxcox_omegas),colnames(base_omegas)))
+        add.par_block <- length(setdiff(colnames(fullbock_omegas),colnames(base_omegas)))
       } else {
         dofv_block <- "ERROR"
         add.par_block <- ''
@@ -36,10 +36,9 @@ get_param_var_tables <- function(directory,base_model,skip) {
         boxcox_ofv <- .get_ext_ofv(file.path(directory,"modelfit_run/boxcox.ext"))
         dofv_box <- as.numeric(base_ofv - boxcox_ofv)
         #get nr TH+d
-        ext_file <- read.table(file.path(directory,"modelfit_run/boxcox.ext"),header=TRUE,skip=1,stringsAsFactors = F) %>%
-          dplyr::filter(ITERATION==-1000000000)
-        TH_values <- ext_file[grep("^THETA+[0-9]$",colnames(ext_file))]
-        add.par_box <- length(TH_values[!is.na(TH_values)])
+        boxcox_thetas <- count_thetas(filename=file.path(directory,"modelfit_run/boxcox.ext"))
+        base_thetas <- count_thetas(filename=base_ext_file)
+        add.par_box <- boxcox_thetas - boxcox_thetas
       } else {
         dofv_box <- "ERROR"
         add.par_box <- ''
@@ -72,10 +71,9 @@ get_param_var_tables <- function(directory,base_model,skip) {
         tdist_ofv <- .get_ext_ofv(file.path(directory,"modelfit_run/tdist.ext"))
         dofv_tdist <- as.numeric(base_ofv - tdist_ofv)
         #get nr TH+d
-        ext_file <- read.table(file.path(directory,"modelfit_run/tdist.ext"),header=TRUE,skip=1,stringsAsFactors = F) %>%
-          dplyr::filter(ITERATION==-1000000000)
-        TH_values <- ext_file[grep("^THETA+[0-9]$",colnames(ext_file))]
-        add.par_tdist <- length(TH_values[!is.na(TH_values)])
+        tdist_thetas <- count_thetas(filename=file.path(directory,"modelfit_run/tdist.ext"))
+        base_thetas <- count_thetas(filename=base_ext_file)
+        add.par_tdist <-  tdist_thetas - base_thetas
       } else {
         dofv_tdist <- "ERROR"
         add.par_tdist <- ''
