@@ -2619,9 +2619,7 @@ sub linearize_setup
                 newline => 1);
             $derivatives_fit -> run;
 
-            if (defined $derivatives_model->outputs() and
-                defined $derivatives_model->outputs()->[0] and
-                $derivatives_model->outputs()->[0]-> have_output()){
+            if ($derivatives_model->have_output()) {
                 $self->run_xv_pred_step(estimation_model => $derivatives_model,
                                         model_name => 'xv_pred_derivatives',
                                         derivatives_run => 1)
