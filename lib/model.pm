@@ -5662,7 +5662,7 @@ sub find_input_synonyms
 sub have_output
 {
     my $self = shift;
-    return defined $self->outputs and defined $self->outputs->[0] and $self->outputs->[0]->have_output();
+    return (defined $self->outputs and defined $self->outputs->[0] and $self->outputs->[0]->have_output());
 }
 
 no Moose;

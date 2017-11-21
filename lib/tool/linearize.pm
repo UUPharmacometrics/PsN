@@ -97,13 +97,28 @@ sub modelfit_setup
         cp($scm->basename . '.coi', '../' . $scm->basename . '.coi');
     } else {
         my $derivatives_model = model_approximations::second_order_derivatives_model(model => $model);
-        my $derivatives_fit = tool::modelfit -> new(
+        my $derivatives_fit = tool::modelfit->new(
             %{common_options::restore_options(@common_options::tool_options)},
             base_directory => $self->directory,
-            directory => $self->directory.'/derivatives_modelfit_dir/',
+            directory => $self->directory . '/derivatives_modelfit_dir/',
             models => [ $derivatives_model ],
-            top_tool => 0);
+            top_tool => 0,
+        );
         $derivatives_fit->run();
+        if (not $derivatives_model->have_output()) {
+            croak("Derivatives model has no output. Terminating.");
+        }
+        my $approximation_model = model_approximations::second_order_approximation_model(model => $model);
+        my $approximation_fit = tool::modelfit->new(
+            %{common_options::restore_options(@common_options::tool_options)},
+            base_directory => $self->directory,
+            directory => $self->directory . '/approximation_modelfit_dir/',
+            models => [ $approximation_model ],
+            top_tool => 0,
+        );
+        use Data::Dumper;
+        print Dumper($approximation_model);
+        $approximation_fit->run();
     }
 }
 

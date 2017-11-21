@@ -102,6 +102,12 @@ sub second_order_approximation_model
         }
     }
 
+    my $sh_mod = model::shrinkage_module->new(
+        nomegas => 1,
+        directory => '',
+        problem_number => 1
+    );
+
     my $problem = model::problem->new(
         ignore_missing_files=> 1,
         prob_arr => [
@@ -109,6 +115,7 @@ sub second_order_approximation_model
             '$DATA 2nd_order.dta IGNORE=@ IGNORE=(EVID.GT.0)',
             $input,
         ],
+        shrinkage_module => $sh_mod,
     );
     my $approximation_model = model->new(
         filename => 'approximated.mod',
@@ -158,6 +165,7 @@ sub second_order_approximation_model
     push @pred, "ENDIF\n"; 
 
     $approximation_model->add_records(type => 'pred', record_strings => \@pred); 
+
 
     return $approximation_model;
 }
