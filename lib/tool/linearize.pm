@@ -108,6 +108,7 @@ sub modelfit_setup
         if (not $derivatives_model->have_output()) {
             croak("Derivatives model has no output. Terminating.");
         }
+        my $derivatives_ofv = $derivatives_model->outputs->[0]->get_single_value(attribute => 'ofv');
         my $approximation_model = model_approximations::second_order_approximation_model(model => $model);
         my $approximation_fit = tool::modelfit->new(
             %{common_options::restore_options(@common_options::tool_options)},
@@ -117,6 +118,11 @@ sub modelfit_setup
             top_tool => 0,
         );
         $approximation_fit->run();
+        my $approximation_ofv = $approximation_model->outputs->[0]->get_single_value(attribute => 'ofv');
+
+        print "\n";
+        print "Base model OFV: " . $derivatives_ofv . "\n";
+        print "Approximation model OFV: " . $approximation_ofv . "\n";
     }
 }
 
