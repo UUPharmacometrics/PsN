@@ -116,8 +116,6 @@ sub modelfit_setup
             models => [ $approximation_model ],
             top_tool => 0,
         );
-        use Data::Dumper;
-        print Dumper($approximation_model);
         $approximation_fit->run();
     }
 }

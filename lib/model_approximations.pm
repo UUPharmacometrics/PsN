@@ -73,6 +73,9 @@ sub second_order_derivatives_model
             push @table, "D2YDETA$j${i}_";
         }
     }
+    if ($model->has_code(record => 'pk')) {
+        push @table, "EVID";
+    }
     push @table, "NOPRINT", "ONEHEADER", "FILE=2nd_order.dta";
     $derivatives_model->add_records(type => 'table', record_strings => [ join ' ', @table ]);
 
@@ -101,6 +104,7 @@ sub second_order_approximation_model
             $input .= "D2YDETA$j$i ";
         }
     }
+    $input .= "EVID";
 
     my $sh_mod = model::shrinkage_module->new(
         nomegas => 1,
@@ -108,11 +112,16 @@ sub second_order_approximation_model
         problem_number => 1
     );
 
+    my $ignore = ""; 
+    if ($model->has_code(record => 'pk')) {
+        $ignore = " IGNORE=(EVID.GT.0)";
+    }
+
     my $problem = model::problem->new(
         ignore_missing_files=> 1,
         prob_arr => [
             '$PROBLEM Second order approximation', 
-            '$DATA 2nd_order.dta IGNORE=@ IGNORE=(EVID.GT.0)',
+            '$DATA 2nd_order.dta IGNORE=@' . $ignore,
             $input,
         ],
         shrinkage_module => $sh_mod,
