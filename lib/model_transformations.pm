@@ -530,6 +530,14 @@ sub append_code
             croak("Neither PK nor PRED defined in " . $model->filename . "\n");
         }
     } else {
+        my $precord = $record . 's';
+        my $record_array = $model->problems->[0]->$precord;
+        if (defined $record_array and scalar @{$record_array} > 0) {
+            @model_code = @{$model->get_code(record => $record)};
+        } else {
+            $model->add_records(type => $record, record_strings => []); 
+        }
+
         @model_code = @{$model->get_code(record => $record)};
         $code_record = $record;
     }
