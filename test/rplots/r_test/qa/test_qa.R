@@ -215,7 +215,7 @@ test_that("finds omega variances and covariances",{
 
 #...........................  (10) Test function get_param_var_tables.R .....................................
 #run function
-param_var_list_1 <- get_param_var_tables(directory=file.path(files.w.dir,"qa_run2"),model.filename="run_100.mod",skip=c())
+param_var_list_1 <- get_param_var_tables(directory=file.path(files.w.dir,"qa_run2"),base_model=file.path(files.w.dir,"qa_run2/run_100_linbase.mod"),skip=c())
 par_var_models_1 <- param_var_list_1$par_var_models
 dofv_block_1 <- param_var_list_1$dofv_block
 dofv_box_1 <- param_var_list_1$dofv_box
@@ -224,7 +224,7 @@ fullblock_mod_1 <- param_var_list_1$fullblock_mod
 boxcox_mod_1 <- param_var_list_1$boxcox_mod
 add_etas_mod_1 <- param_var_list_1$add_etas_mod
 tdist_mod_1 <- param_var_list_1$tdist_mod
-param_var_list_2 <- get_param_var_tables(directory=file.path(files.w.dir,"qa_run1"),model.filename="run_100.mod",skip=c('cdd','simeval'))
+param_var_list_2 <- get_param_var_tables(directory=file.path(files.w.dir,"qa_run1"),base_model=file.path(files.w.dir,"qa_run1/run_100_linbase.mod"),skip=c('cdd','simeval'))
 par_var_models_2 <- param_var_list_2$par_var_models
 dofv_block_2 <- param_var_list_2$dofv_block
 dofv_box_2 <- param_var_list_2$dofv_box
@@ -233,7 +233,7 @@ fullblock_mod_2 <- param_var_list_2$fullblock_mod
 boxcox_mod_2 <- param_var_list_2$boxcox_mod
 add_etas_mod_2 <- param_var_list_2$add_etas_mod
 tdist_mod_2 <- param_var_list_2$tdist_mod
-param_var_list_3 <- get_param_var_tables(directory=file.path(files.w.dir,"qa_run3"),model.filename="run_100.mod",skip=c())
+param_var_list_3 <- get_param_var_tables(directory=file.path(files.w.dir,"qa_run3"),base_model=file.path(files.w.dir,"qa_run3/run_100_linbase.mod"),skip=c())
 par_var_models_3 <- param_var_list_3$par_var_models
 dofv_block_3 <- param_var_list_3$dofv_block
 dofv_box_3 <- param_var_list_3$dofv_box
@@ -242,7 +242,7 @@ fullblock_mod_3 <- param_var_list_3$fullblock_mod
 boxcox_mod_3 <- param_var_list_3$boxcox_mod
 add_etas_mod_3 <- param_var_list_3$add_etas_mod
 tdist_mod_3 <- param_var_list_3$tdist_mod
-param_var_list_4 <- get_param_var_tables(directory=file.path(files.w.dir,"qa_missing_folders_files"),model.filename="r.mod",skip=c('resmod'))
+param_var_list_4 <- get_param_var_tables(directory=file.path(files.w.dir,"qa_missing_folders_files"),base_model=file.path(files.w.dir,"qa_missing_folders_files/r_linbase.mod"),skip=c('resmod'))
 par_var_models_4 <- param_var_list_4$par_var_models
 dofv_block_4 <- param_var_list_4$dofv_block
 dofv_box_4 <- param_var_list_4$dofv_box
@@ -251,7 +251,7 @@ fullblock_mod_4 <- param_var_list_4$fullblock_mod
 boxcox_mod_4 <- param_var_list_4$boxcox_mod
 add_etas_mod_4 <- param_var_list_4$add_etas_mod
 tdist_mod_4 <- param_var_list_4$tdist_mod
-param_var_list_5 <- get_param_var_tables(directory=file.path(files.w.dir,"qa_run4"),model.filename="run_100.mod",skip=c('frem','resmod','scm','cdd','simeval'))
+param_var_list_5 <- get_param_var_tables(directory=file.path(files.w.dir,"qa_run4"),base_model=file.path(files.w.dir,"qa_run4/run_100_linbase.mod"),skip=c('frem','resmod','scm','cdd','simeval'))
 par_var_models_5 <- param_var_list_5$par_var_models
 dofv_block_5 <- param_var_list_5$dofv_block
 dofv_box_5 <- param_var_list_5$dofv_box
@@ -260,7 +260,7 @@ fullblock_mod_5 <- param_var_list_5$fullblock_mod
 boxcox_mod_5 <- param_var_list_5$boxcox_mod
 add_etas_mod_5 <- param_var_list_5$add_etas_mod
 tdist_mod_5 <- param_var_list_5$tdist_mod
-param_var_list_6 <- get_param_var_tables(directory=file.path(files.w.dir,"qa_run6"),model.filename="run_100.mod",skip=c())
+param_var_list_6 <- get_param_var_tables(directory=file.path(files.w.dir,"qa_run6"),base_model=file.path(files.w.dir,"qa_run6/run_100_linbase.mod"),skip=c())
 par_var_models_6 <- param_var_list_6$par_var_models
 dofv_block_6 <- param_var_list_6$dofv_block
 dofv_box_6 <- param_var_list_6$dofv_box
@@ -269,7 +269,7 @@ fullblock_mod_6 <- param_var_list_6$fullblock_mod
 boxcox_mod_6 <- param_var_list_6$boxcox_mod
 add_etas_mod_6 <- param_var_list_6$add_etas_mod
 tdist_mod_6 <- param_var_list_6$tdist_mod
-param_var_list_7 <- get_param_var_tables(directory=file.path(files.w.dir,"qa_run2"),model.filename="run_100.mod",skip=c('frem','transform','scm','simeval'))
+param_var_list_7 <- get_param_var_tables(directory=file.path(files.w.dir,"qa_run2"),base_model=file.path(files.w.dir,"qa_run2/run_100_linbase.mod"),skip=c('frem','transform','scm','simeval'))
 par_var_models_7 <- param_var_list_7$par_var_models
 #create expected data
 exp_par_var_models_1 <- data.frame(c("Full OMEGA Block", "Box-Cox Transformation","Additional ETA","t-distribution","Interoccasion variability"),
@@ -354,13 +354,13 @@ test_that("get parameter variability overview part, get delta ofv values",{
 
 #...........................  (11) Test function get_full_omega_block.R .....................................
 #run function
-full_omega_block_fun_run_1 <- get_full_omega_block(directory=file.path(files.w.dir,"qa_run4"),dofv_block=3.0014)
+full_omega_block_fun_run_1 <- get_full_omega_block(original_max0_model=file.path(files.w.dir,"qa_run4/linearize_run/scm_dir1/derivatives.mod"),fullblock_model=file.path(files.w.dir,"qa_run4/modelfit_run/fullblock.ext"),dofv_block=3.0014)
 full_omega_block_table_1 <- full_omega_block_fun_run_1$full_omega_block_table
 full_omega_block_error_1 <- full_omega_block_fun_run_1$full_omega_block_error
-full_omega_block_fun_run_2 <- get_full_omega_block(directory=file.path(files.w.dir,"qa_run4"),dofv_block="NA")
+full_omega_block_fun_run_2 <- get_full_omega_block(original_max0_model=file.path(files.w.dir,"qa_run4/linearize_run/scm_dir1/derivatives.mod"),fullblock_model=file.path(files.w.dir,"qa_run4/modelfit_run/fullblock.ext"),dofv_block="NA")
 full_omega_block_table_2 <- full_omega_block_fun_run_2$full_omega_block_table
 full_omega_block_error_2 <- full_omega_block_fun_run_2$full_omega_block_error
-full_omega_block_fun_run_3 <- get_full_omega_block(directory=file.path(files.w.dir,"qa_missing_folders_files"),dofv_block=3.3414)
+full_omega_block_fun_run_3 <- get_full_omega_block(original_max0_model=file.path(files.w.dir,"qa_missing_folders_files/linearize_run/scm_dir1/derivatives.mod"),fullblock_model=file.path(files.w.dir,"qa_missing_folders_files/modelfit_run/fullblock.mod"),dofv_block=3.3414)
 full_omega_block_table_3 <- full_omega_block_fun_run_3$full_omega_block_table
 full_omega_block_error_3 <- full_omega_block_fun_run_3$full_omega_block_error
 
@@ -388,27 +388,27 @@ test_that("get full omega block, extra table",{
 
 #...........................  (12) Test function get_param_extra_table.R .....................................
 #run function
-param_extra_fun_run_1 <- get_param_extra_table(directory=file.path(files.w.dir,"qa_run1"),dofv=3.0014,param_model="boxcox")
+param_extra_fun_run_1 <- get_param_extra_table(original_max0_model=file.path(files.w.dir,"qa_run1/linearize_run/scm_dir1/derivatives.mod"),param_model=file.path(files.w.dir,"qa_run1/modelfit_run/boxcox.mod"),dofv=3.0014)
 boxcox_lambdas_table_1 <- param_extra_fun_run_1$param_extra_table
 boxcox_lambdas_table_orig_1 <- param_extra_fun_run_1$param_extra_table_orig
 
-param_extra_fun_run_2 <- get_param_extra_table(directory=file.path(files.w.dir,"qa_run1"),dofv="ERROR",param_model="boxcox")
+param_extra_fun_run_2 <- get_param_extra_table(original_max0_model=file.path(files.w.dir,"qa_run1/linearize_run/scm_dir1/derivatives.mod"),param_model=file.path(files.w.dir,"qa_run1/modelfit_run/boxcox.mod"),dofv="ERROR")
 boxcox_lambdas_table_2 <- param_extra_fun_run_2$param_extra_table
 boxcox_lambdas_table_orig_2 <- param_extra_fun_run_2$param_extra_table_orig
 
-param_extra_fun_run_3 <- get_param_extra_table(directory=file.path(files.w.dir,"qa_missing_folders_files"),dofv=3.3414,param_model="boxcox")
+param_extra_fun_run_3 <- get_param_extra_table(original_max0_model=file.path(files.w.dir,"qa_missing_folders_files/linearize_run/scm_dir1/derivatives.mod"),param_model=file.path(files.w.dir,"qa_missing_folders_files/modelfit_run/boxcox.mod"),dofv=3.3414)
 boxcox_lambdas_table_3 <- param_extra_fun_run_3$param_extra_table
 boxcox_lambdas_table_orig_3 <- param_extra_fun_run_3$param_extra_table_orig
 
-param_extra_fun_run_4 <- get_param_extra_table(directory=file.path(files.w.dir,"qa_run1"),dofv=3.0014,param_model="tdist")
+param_extra_fun_run_4 <- get_param_extra_table(original_max0_model=file.path(files.w.dir,"qa_run1/linearize_run/scm_dir1/derivatives.mod"),param_model=file.path(files.w.dir,"qa_run1/modelfit_run/tdist.mod"),dofv=3.0014)
 tdist_table_1 <- param_extra_fun_run_4$param_extra_table
 tdist_table_orig_1 <- param_extra_fun_run_4$param_extra_table_orig
 
-param_extra_fun_run_5 <- get_param_extra_table(directory=file.path(files.w.dir,"qa_run1"),dofv="ERROR",param_model="tdist")
+param_extra_fun_run_5 <- get_param_extra_table(original_max0_model=file.path(files.w.dir,"qa_run1/linearize_run/scm_dir1/derivatives.mod"),param_model=file.path(files.w.dir,"qa_run1/modelfit_run/tdist.mod"),dofv="ERROR")
 tdist_table_2 <- param_extra_fun_run_5$param_extra_table
 tdist_table_orig_2 <- param_extra_fun_run_5$param_extra_table_orig
 
-param_extra_fun_run_6 <- get_param_extra_table(directory=file.path(files.w.dir,"qa_missing_folders_files"),dofv=3.3414,param_model="tdist")
+param_extra_fun_run_6 <- get_param_extra_table(original_max0_model=file.path(files.w.dir,"qa_missing_folders_files/linearize_run/scm_dir1/derivatives.mod"),param_model=file.path(files.w.dir,"qa_missing_folders_files/modelfit_run/tdist.mod"),dofv=3.3414)
 tdist_table_3 <- param_extra_fun_run_6$param_extra_table
 tdist_table_orig_3 <- param_extra_fun_run_6$param_extra_table_orig
 
@@ -469,19 +469,19 @@ test_that("get full omega block or tdist extra table",{
 
 #...........................  (13) Test function get_add_etas_table.R .....................................
 #run function
-add_etas_fun_run_1 <- get_add_etas_table(directory=file.path(files.w.dir,"qa_run2"),added_etas=list(A=6,D=NULL,C=4,E=NULL),dofv_add.etas=3.481502)
+add_etas_fun_run_1 <- get_add_etas_table(original_max0_model=file.path(files.w.dir,"qa_run2/linearize_run/scm_dir1/derivatives.mod"),add_etas_dir=file.path(files.w.dir,"qa_run2/add_etas_run"),added_etas=list(A=6,D=NULL,C=4,E=NULL),dofv_add.etas=3.481502,nonlinear=F)
 add_etas_table_1 <- add_etas_fun_run_1$add_etas_table
 add_etas_error_1 <- add_etas_fun_run_1$add_etas_error
 
-add_etas_fun_run_2 <- get_add_etas_table(directory=file.path(files.w.dir,"qa_run5"),added_etas=list(A=6,D=NULL,C=4,E=NULL),dofv_add.etas=3.481502)
+add_etas_fun_run_2 <- get_add_etas_table(original_max0_model=file.path(files.w.dir,"qa_run5/linearize_run/scm_dir1/derivatives.mod"),add_etas_dir=file.path(files.w.dir,"qa_run5/add_etas_run"),added_etas=list(A=6,D=NULL,C=4,E=NULL),dofv_add.etas=3.481502,nonlinear=F)
 add_etas_table_2 <- add_etas_fun_run_2$add_etas_table
 add_etas_error_2 <- add_etas_fun_run_2$add_etas_error
 
-add_etas_fun_run_3 <- get_add_etas_table(directory=file.path(files.w.dir,"qa_run2"),added_etas=list(A=6,C=4),dofv_add.etas="ERROR")
+add_etas_fun_run_3 <- get_add_etas_table(original_max0_model=file.path(files.w.dir,"qa_run2/linearize_run/scm_dir1/derivatives.mod"),add_etas_dir=file.path(files.w.dir,"qa_run2/add_etas_run"),added_etas=list(A=6,C=4),dofv_add.etas="ERROR",nonlinear=F)
 add_etas_table_3 <- add_etas_fun_run_3$add_etas_table
 add_etas_error_3 <- add_etas_fun_run_3$add_etas_error
 
-add_etas_fun_run_4 <- get_add_etas_table(directory=file.path(files.w.dir,"qa_run2"),added_etas=list(),dofv_add.etas=3.481502)
+add_etas_fun_run_4 <- get_add_etas_table(original_max0_model=file.path(files.w.dir,"qa_run2/linearize_run/scm_dir1/derivatives.mod"),add_etas_dir=file.path(files.w.dir,"qa_run2/add_etas_run"),added_etas=list(),dofv_add.etas=3.481502,nonlinear=F)
 add_etas_table_4 <- add_etas_fun_run_4$add_etas_table
 add_etas_error_4 <- add_etas_fun_run_4$add_etas_error
 
@@ -515,15 +515,15 @@ test_that("creates add estas table",{
 
 #...........................  (14) Test function get_iov_table.R .....................................
 #run function
-iov_fun_run_1 <- get_iov_table(directory=file.path(files.w.dir,"qa_run5"),iov_etas=list(o1=c(4,6,7),o2=c(5,8,9)),dofv_iov=-0.002234)
+iov_fun_run_1 <- get_iov_table(original_max0_model=file.path(files.w.dir,"qa_run5/linearize_run/scm_dir1/derivatives.mod"),iov_model=file.path(files.w.dir,"qa_run5/modelfit_run/iov.mod"),iov_etas=list(o1=c(4,6,7),o2=c(5,8,9)),dofv_iov=-0.002234)
 iov_table_1 <- iov_fun_run_1$iov_table
 iov_error_1 <- iov_fun_run_1$iov_error
 
-iov_fun_run_2 <- get_iov_table(directory=file.path(files.w.dir,"qa_run7"),iov_etas=list(o1=c(4,7),o2=c(5,9)),dofv_iov="NA")
+iov_fun_run_2 <- get_iov_table(original_max0_model=file.path(files.w.dir,"qa_run7/linearize_run/scm_dir1/derivatives.mod"),iov_model=file.path(files.w.dir,"qa_run7/modelfit_run/iov.mod"),iov_etas=list(o1=c(4,7),o2=c(5,9)),dofv_iov="NA")
 iov_table_2 <- iov_fun_run_2$iov_table
 iov_error_2 <- iov_fun_run_2$iov_error
 
-iov_fun_run_3 <- get_iov_table(directory=file.path(files.w.dir,"qa_run5"),iov_etas=list(),dofv_iov=-0.002234)
+iov_fun_run_3 <- get_iov_table(original_max0_model=file.path(files.w.dir,"qa_run5/linearize_run/scm_dir1/derivatives.mod"),iov_model=file.path(files.w.dir,"qa_run5/modelfit_run/iov.mod"),iov_etas=list(),dofv_iov=-0.002234)
 iov_table_3 <- iov_fun_run_3$iov_table
 iov_error_3 <- iov_fun_run_3$iov_error
 
@@ -558,10 +558,10 @@ theta_values_boxcox <- data.frame("ETA"=c("ETA(1)","ETA(2)","ETA(3)","ETA(4)"),"
 theta_values_tdist <- theta_values_boxcox
 colnames(theta_values_tdist) <- c("ETA","Degrees of freedom")
 # run function
-eta_boxcox <- get_eta_values(working.directory=file.path(files.w.dir,"qa_run1/modelfit_run"),
-                             theta_values=theta_values_boxcox,param_model="boxcox")
-eta_tdist <- get_eta_values(working.directory=file.path(files.w.dir,"qa_run1/modelfit_run"),
-                            theta_values=theta_values_tdist,param_model="tdist")
+eta_boxcox <- get_eta_values(param_model=file.path(files.w.dir,"qa_run1/modelfit_run/boxcox.mod"),
+                             theta_values=theta_values_boxcox)
+eta_tdist <- get_eta_values(param_model=file.path(files.w.dir,"qa_run1/modelfit_run/tdist.mod"),
+                            theta_values=theta_values_tdist)
 #compare
 context("qa, get_eta_values")
 test_that("get eta values from boxcox or tdist phi file",{
@@ -571,8 +571,8 @@ test_that("get eta values from boxcox or tdist phi file",{
                                     -0.126678,-0.369641,-0.525548,0.143994,-0.109397,-0.073727,0.034058,0.042088),
                           stringsAsFactors = F),
                tolerance=6)
-  expect_equal(get_eta_values(working.directory=file.path(files.w.dir,"qa_run2/modelfit_run"),
-                              theta_values=theta_values_boxcox,param_model="boxcox"),
+  expect_equal(get_eta_values(param_model=file.path(files.w.dir,"qa_run2/modelfit_run/boxcox.mod"),
+                              theta_values=theta_values_boxcox),
                data.frame()) # boxcox file does not exist
   
   expect_equal(data.frame("ETA_name"=c(rep("ETA(1)",4),rep("ETA(2)",4),rep("ETA(3)",4),rep("ETA(4)",4)),
@@ -582,8 +582,8 @@ test_that("get eta values from boxcox or tdist phi file",{
                eta_tdist,
                tolerance=6)
 
-  expect_equal(get_eta_values(working.directory=file.path(files.w.dir,"qa_run2/modelfit_run"),
-                              theta_values=theta_values_tdist,param_model="tdist"),
+  expect_equal(get_eta_values(param_model=file.path(files.w.dir,"qa_run2/modelfit_run/tdist.mod"),
+                              theta_values=theta_values_tdist),
                data.frame()) # tdist file does not exist
   
  })
@@ -737,14 +737,12 @@ test_that("get FREM covariates table",{
 #...........................  (16) Test function get_scm_table.R .....................................
 #run functions
 list_scm_run_1 <- get_scm_table(scm_directory=file.path(files.w.dir,"qa_missing_folders_files/scm_run"),
-                              frem_directory=file.path(files.w.dir,"qa_missing_folders_files/frem_run"),
-                              parameters=c('K1','K2'),continuous=c('AGE'),categorical=c(),skip=c())
+                                parameters=c('K1','K2'),continuous=c('AGE'),categorical=c(),skip=c())
 scm_table_1 <- list_scm_run_1$scm_table
 max_scm_table_1 <- list_scm_run_1$max_scm_table
 scm_files_exists_1 <- list_scm_run_1$scm_files_exists
 
 list_scm_run_2 <- get_scm_table(scm_directory=file.path(files.w.dir,"qa_run1/scm_run"),
-                                frem_directory=file.path(files.w.dir,"qa_run1/frem_run"),
                                 parameters=c('K1','K2'),
                                 continuous=c(),categorical=c(),skip=c())
 scm_table_2 <- list_scm_run_2$scm_table
@@ -752,7 +750,6 @@ max_scm_table_2 <- list_scm_run_2$max_scm_table
 scm_files_exists_2 <- list_scm_run_2$scm_files_exists
 
 list_scm_run_3 <- get_scm_table(scm_directory=file.path(files.w.dir,"qa_run2/scm_run"),
-                                frem_directory=file.path(files.w.dir,"qa_run2/frem_run"),
                                 parameters=c('CL','V'),
                                 continuous=c('APGR','WGT'),categorical=c(),skip=c())
 scm_table_3 <- list_scm_run_3$scm_table
@@ -760,7 +757,6 @@ max_scm_table_3 <- list_scm_run_3$max_scm_table
 scm_files_exists_3 <- list_scm_run_3$scm_files_exists
 
 list_scm_run_4 <- get_scm_table(scm_directory=file.path(files.w.dir,"qa_run3/scm_run"),
-                                frem_directory=file.path(files.w.dir,"qa_run2/frem_run"),
                                 parameters=c('CL','V'),
                                 continuous=c('APGR','WGT'),categorical=c(),skip=c('frem','resmod','transform','cdd','simeval'))
 scm_table_4 <- list_scm_run_4$scm_table
@@ -768,7 +764,6 @@ max_scm_table_4 <- list_scm_run_4$max_scm_table
 scm_files_exists_4 <- list_scm_run_4$scm_files_exists
 
 list_scm_run_5 <- get_scm_table(scm_directory=file.path(files.w.dir,"qa_run3/scm_run"),
-                                frem_directory=file.path(files.w.dir,"qa_run3/frem_run"),
                                 parameters=c('CL','V'),
                                 continuous=c('APGR','WGT'),categorical=c(),skip=c('frem','scm'))
 scm_table_5 <- list_scm_run_5$scm_table
@@ -998,33 +993,42 @@ test_that("create resmod ruv table",{
 
 #...........................  (19) Test function get_ii_table.R .....................................
 #fun function
-list_ii_1 <- get_ii_table(raw.results.file=file.path(files.w.dir,"qa_missing_folders_files/cdd_run/raw_results_model_linbase.csv"),
-                          skipped.id.file=file.path(files.w.dir,"qa_missing_folders_files/cdd_run/skipped_individuals1.csv"),
-                          cutoff=3.84,max_rows=3,skip=c('frem','resmod','transform','scm','simeval'))
-list_ii_2 <- get_ii_table(raw.results.file=file.path(files.w.dir,"qa_run2/cdd_run/raw_results_linbase.csv"),
-                          skipped.id.file=file.path(files.w.dir,"qa_run2/cdd_run/skipped_individuals1.csv"),
-                          cutoff=3.84,max_rows=3,skip=c())
-list_ii_3 <- get_ii_table(raw.results.file=file.path(files.w.dir,"qa_run3/cdd_run/raw_results_linbase.csv"),
-                          skipped.id.file=file.path(files.w.dir,"qa_run3/cdd_run/skipped_individuals1.csv"),
-                          cutoff=3.84,max_rows=3,skip=c('scm','simeval'))
-list_ii_4 <- get_ii_table(raw.results.file=file.path(files.w.dir,"qa_run1/cdd_run/raw_results_linbase.csv"),
-                          skipped.id.file=file.path(files.w.dir,"qa_run1/cdd_run/skipped_individuals1.csv"),
-                          cutoff=1,max_rows=3,skip=c('frem','resmod','transform','scm','simeval'))
-list_ii_5 <- get_ii_table(raw.results.file=file.path(files.w.dir,"qa_run1/cdd_run/raw_results_linbase.csv"),
-                          skipped.id.file=file.path(files.w.dir,"qa_run1/cdd_run/skipped_individuals1.csv"),
-                          cutoff=0.1,max_rows=3,skip=c())
-list_ii_6 <- get_ii_table(raw.results.file=file.path(files.w.dir,"qa_run1/cdd_run/raw_results_linbase.csv"),
-                          skipped.id.file=file.path(files.w.dir,"qa_run1/cdd_run/skipped_individuals1.csv"),
-                          cutoff=0.000001,max_rows=2,skip=c('frem','resmod','transform','scm','simeval'))
-list_ii_7 <- get_ii_table(raw.results.file=file.path(files.w.dir,"qa_run4/cdd_run/raw_results_linbase.csv"),
-                          skipped.id.file=file.path(files.w.dir,"qa_run4/cdd_run/skipped_individuals1.csv"),
-                          cutoff=3.84,max_rows=3,skip=c('frem','resmod','transform','scm','simeval'))
-list_ii_8 <- get_ii_table(raw.results.file=file.path(files.w.dir,"qa_run4/cdd_run/raw_results_linbase.csv"),
-                          skipped.id.file=file.path(files.w.dir,"qa_run4/cdd_run/skipped_individuals1.csv"),
-                          cutoff=3.84,max_rows=3,skip=c('cdd','scm','simeval'))
-list_ii_9 <- get_ii_table(raw.results.file=file.path(files.w.dir,"qa_missing_folders_files/cdd_run/raw_results_model_linbase.csv"),
-                          skipped.id.file=file.path(files.w.dir,"qa_missing_folders_files/cdd_run/skipped_individuals1.csv"),
-                          cutoff=3.84,max_rows=3,skip=c('cdd'))
+list_ii_1 <- get_ii_table(cdd_directory=file.path(files.w.dir,"qa_missing_folders_files/cdd_run/"),
+                          model.filename = "lr.mod",
+                          cutoff=3.84,max_rows=3,skip=c('frem','resmod','transform','scm','simeval'),
+                          nonlinear=FALSE)
+list_ii_2 <- get_ii_table(cdd_directory=file.path(files.w.dir,"qa_run2/cdd_run/"),
+                          model.filename = "r.mod",
+                          cutoff=3.84,max_rows=3,skip=c(),
+                          nonlinear=FALSE)
+list_ii_3 <- get_ii_table(cdd_directory=file.path(files.w.dir,"qa_run3/cdd_run/"),
+                          model.filename = "r.mod",
+                          cutoff=3.84,max_rows=3,skip=c('scm','simeval'),
+                          nonlinear=FALSE)
+list_ii_4 <- get_ii_table(cdd_directory=file.path(files.w.dir,"qa_run1/cdd_run/"),
+                          model.filename = "r.mod",
+                          cutoff=1,max_rows=3,skip=c('frem','resmod','transform','scm','simeval'),
+                          nonlinear=T)
+list_ii_5 <- get_ii_table(cdd_directory=file.path(files.w.dir,"qa_run1/cdd_run/"),
+                          model.filename = "r.mod",
+                          cutoff=0.1,max_rows=3,skip=c(),
+                          nonlinear=TRUE)
+list_ii_6 <- get_ii_table(cdd_directory=file.path(files.w.dir,"qa_run1/cdd_run/"),
+                          model.filename = "r.mod",
+                          cutoff=0.000001,max_rows=2,skip=c('frem','resmod','transform','scm','simeval'),
+                          nonlinear=T)
+list_ii_7 <- get_ii_table(cdd_directory=file.path(files.w.dir,"qa_run4/cdd_run/"),
+                          model.filename = "r.mod",
+                          cutoff=3.84,max_rows=3,skip=c('frem','resmod','transform','scm','simeval'),
+                          nonlinear=FALSE)
+list_ii_8 <- get_ii_table(cdd_directory=file.path(files.w.dir,"qa_run4/cdd_run/"),
+                          model.filename = "r.mod",
+                          cutoff=3.84,max_rows=3,skip=c('cdd','scm','simeval'),
+                          nonlinear=FALSE)
+list_ii_9 <- get_ii_table(cdd_directory=file.path(files.w.dir,"qa_missing_folders_files/cdd_run/"),
+                          model.filename = "r.mod",
+                          cutoff=3.84,max_rows=3,skip=c('cdd'),
+                          nonlinear=FALSE)
 #expected data
 ERROR_table <- data.frame("ERROR",stringsAsFactors = F)
 colnames(ERROR_table) <- ""
@@ -1081,21 +1085,21 @@ test_that("create influential individuals table",{
   expect_equal(list_ii_3$ii_table,exp_ii_table_3)
   expect_equal(list_ii_3$infl_id,c())
   expect_equal(list_ii_3$fig_height_infl,5)
-  expect_true(list_ii_4$cdd_files_exist) # files exist, some dofv values are negative, plot hight 5
+  expect_true(list_ii_4$cdd_files_exist) # files exist, some dofv values are negative, plot hight 5,nonlinear=TRUE
   expect_equal(list_ii_4$all_dofv,c(0.11014,-0.06941,2.00265,0.12541,0.08563,0.00003,-2.08563,0.01568,1.03525))
   expect_equal(list_ii_4$cdd.data,exp_cdd_data_4)
   expect_equal(list_ii_4$cdd_highest_dofv,exp_cdd_highest_dofv_4)
   expect_equal(list_ii_4$ii_table,exp_ii_table_4)
   expect_equal(list_ii_4$infl_id,c(34,8))
   expect_equal(list_ii_4$fig_height_infl,5)
-  expect_true(list_ii_5$cdd_files_exist) # files exist, some dofv values are negative, plot hight 7
+  expect_true(list_ii_5$cdd_files_exist) # files exist, some dofv values are negative, plot hight 7, nonlinear=TRUE
   expect_equal(list_ii_5$all_dofv,c(0.11014,-0.06941,2.00265,0.12541,0.08563,0.00003,-2.08563,0.01568,1.03525))
   expect_equal(list_ii_5$cdd.data,exp_cdd_data_4)
   expect_equal(list_ii_5$cdd_highest_dofv,exp_cdd_highest_dofv_4)
   expect_equal(list_ii_5$ii_table,exp_ii_table_5)
   expect_equal(list_ii_5$infl_id,c(34,8,14,11))
   expect_equal(list_ii_5$fig_height_infl,7)
-  expect_true(list_ii_6$cdd_files_exist) # files exist, some dofv values are negative, plot hight full page
+  expect_true(list_ii_6$cdd_files_exist) # files exist, some dofv values are negative, plot hight full page, nonlinear=TRUE
   expect_equal(list_ii_6$all_dofv,c(0.11014,-0.06941,2.00265,0.12541,0.08563,0.00003,-2.08563,0.01568,1.03525))
   expect_equal(list_ii_6$cdd.data,exp_cdd_data_4)
   expect_equal(list_ii_6$cdd_highest_dofv,exp_cdd_highest_dofv_4)
