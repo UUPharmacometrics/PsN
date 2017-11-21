@@ -51,4 +51,6 @@ install.packages("devtools", dependencies=TRUE,lib = path)
 install.packages("yaml", dependencies=TRUE,lib = path)
 install.packages("formatR", dependencies=TRUE,lib = path)
 install.packages("vpc", dependencies=TRUE,lib = path)
-devtools::install_github("UUPharmacometrics/xpose")
+install.packages("xpose", dependencies=TRUE,lib = path)
+install.packages("mvtnorm", dependencies=TRUE,lib = path)
+
