@@ -37,7 +37,9 @@ has 'only' => ( is => 'rw', isa => 'ArrayRef[Str]', default => sub { [] } );    
 has 'add_etas' => ( is => 'rw', isa => 'ArrayRef[Str]' );
 has 'added_etas' => ( is => 'rw', isa => 'HashRef' );   # What parameters did get added etas and to what etas?
 has 'iov_structure' => ( is => 'rw', isa => 'ArrayRef' );   # The occ/iov structure for the r code
-
+has 'orig_max0_model_path' => ( is => 'rw', isa => 'Str' );
+has 'base_model_path' => ( is => 'rw', isa => 'Str' );
+has 'base_dataset_path' => ( is => 'rw', isa => 'Str' );
 has 'resmod_idv_table' => ( is => 'rw', isa => 'Str' ); # The table used by resmod
 
 sub BUILD
@@ -128,9 +130,12 @@ sub modelfit_setup
             nm_output => 'ext,phi',
         );
         $modelfit->run();
+		
+		$self->base_model_path($eval_model->directory . $eval_model->filename);
+		$self->orig_max0_model_path($self->base_model_path);
     } else {
         $base_model_name =~ s/(\.[^.]+)$/_linbase.mod/;
-    
+
         print "*** Running linearize ***\n";
         ui->category('linearize');
 	
@@ -165,9 +170,13 @@ sub modelfit_setup
         $base_model = model->new(
             filename => $base_model_name,
         );
+		
+		$self->base_model_path($base_model->directory . $base_model->filename);
+		$self->orig_max0_model_path($base_model->directory . 'linearize_run/scm_dir1/derivatives.mod');
     } else {
         $base_model = $model_copy;
     }
+	$self->base_dataset_path($base_model->problems->[0]->datas->[0]->get_absolute_filename());
 	
     #if ($self->fo) {
     #    $base_model->remove_option(record_name => 'estimation', option_name => 'METHOD');
@@ -447,7 +456,8 @@ sub modelfit_setup
         } else {
             $resmod_model = $model_copy;
         }
-
+		
+		
         my $resmod_idv;
         eval {
             $resmod_idv = tool::resmod->new(
@@ -665,6 +675,20 @@ sub create_R_plots_code
     } else {
         $CWRES_table_path = "";
     }
+	
+	my $orig_max0_model_path = $self->orig_max0_model_path;
+	$orig_max0_model_path =~ s/\\/\//g;
+	my $base_model_path = $self->base_model_path;
+	$base_model_path =~ s/\\/\//g;
+	my $base_dataset_path = $self->base_dataset_path;
+	$base_dataset_path =~ s/\\/\//g;
+	
+	my $nonlinear_run;
+	if($self->nonlinear) {
+		$nonlinear_run = "TRUE";
+	} else {
+		$nonlinear_run = "FALSE";
+	}
 
     my $code =  [
             '# qa specific preamble',
@@ -678,7 +702,10 @@ sub create_R_plots_code
 			"cdd_max_rows <- 10",
 			"type <- 'latex' # set to 'html' if want to create a html file ",
             "skip <- " . rplots::create_r_vector(array => $self->skip),
-			"nonlinear <- " . $self->nonlinear,
+			"nonlinear <- " . $nonlinear_run,
+			"original_max0_model <- '" . $orig_max0_model_path . "'",
+			"base_model <- '" . $base_model_path . "'",
+			"base_dataset <- '" . $base_dataset_path . "'",
         ];
 	my $dvid_line = "dvid_name <- ''";
 	if (defined $self->dvid) {
