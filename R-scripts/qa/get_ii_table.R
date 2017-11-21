@@ -1,4 +1,11 @@
-get_ii_table <- function(raw.results.file,skipped.id.file,cutoff,max_rows,skip){
+get_ii_table <- function(cdd_directory,model.filename,cutoff,max_rows,skip,nonlinear){
+  skipped.id.file=file.path(cdd_directory,"skipped_individuals1.csv")
+  if(!nonlinear) {
+    raw.results.file=file.path(cdd_directory,paste0("raw_results_",sub('.([^.]*)$','',model.filename),"_linbase.csv"))
+  } else {
+    raw.results.file=file.path(cdd_directory,paste0("raw_results_",sub('.([^.]*)$','',model.filename),".csv"))
+  }
+  
   cdd_files_exist <- TRUE
   infl_id <- c()
   all_dofv <- c()

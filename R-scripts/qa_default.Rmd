@@ -60,7 +60,7 @@ R_info(directory=working.directory)
 idv_all <- which_resmod_folders(directory=working.directory,idv_name)
 ```
 
-```{r summary_about_ofv_values,results='asis',echo=F,warning=F,message=F}
+```{r summary_about_ofv_values,results='asis',echo=F,warning=F,message=F,eval=!nonlinear}
 ofv_table <- ofv_summary_table(working.directory,model.filename)
 ```
 
@@ -69,13 +69,13 @@ ofv_table <- ofv_summary_table(working.directory,model.filename)
 structural_overview <- get_structural_overview_table(directory=working.directory,idv=idv_all,dvid_name,skip)
 if(all(skip!="resmod")) {
   # get resmod structural details tables
-  resmod_structural_details <- resmod_structural_details_tables(working.directory,model.filename,CWRES_table,idv_all,idv_name,dvid_name)
+  resmod_structural_details <- resmod_structural_details_tables(working.directory,base_dataset,original_max0_model=original_max0_model,CWRES_table,idv_all,idv_name,dvid_name,nonlinear)
 }
 ```
 
 ```{r parameter_model_calculations,results='hide',echo=F,warning=F,message=F}
 # 2.Parameter Variability Models
-list_par_var_models <- get_param_var_tables(directory=working.directory,model.filename,skip)
+list_par_var_models <- get_param_var_tables(directory=working.directory,base_model,skip)
 par_var_models <- list_par_var_models$par_var_models
 fullblock_mod <- list_par_var_models$fullblock_mod
 boxcox_mod <- list_par_var_models$boxcox_mod
@@ -83,29 +83,42 @@ tdist_mod <- list_par_var_models$tdist_mod
 add_etas_mod <- list_par_var_models$add_etas_mod
 iov_mod <- list_par_var_models$iov_mod
 if(fullblock_mod) {
-  full_omega_block_list <- get_full_omega_block(working.directory,list_par_var_models$dofv_block)
-  full_omega_block_table <- get_full_omega_block(working.directory,list_par_var_models$dofv_block)$full_omega_block_table
+  full_omega_block_list <- get_full_omega_block(original_max0_model=original_max0_model,
+                                                fullblock_model=file.path(working.directory,"modelfit_run/fullblock.mod"),
+                                                dofv_block=list_par_var_models$dofv_block)
+  full_omega_block_table <- full_omega_block_list$full_omega_block_table
   full_omega_block_error <- full_omega_block_list$full_omega_block_error
 }
 if(boxcox_mod) {
-  boxcox_lambdas_list <- get_param_extra_table(directory=working.directory,dofv=list_par_var_models$dofv_box,param_model="boxcox")
+  boxcox_lambdas_list <- get_param_extra_table(original_max0_model=original_max0_model,
+                                               param_model=file.path(working.directory,"modelfit_run/boxcox.mod"),
+                                               dofv=list_par_var_models$dofv_box)
   boxcox_lambdas_orig <- boxcox_lambdas_list$param_extra_table_orig
   boxcox_lambdas_table <- boxcox_lambdas_list$param_extra_table
   boxcox_lambdas_error <- boxcox_lambdas_list$param_extra_table_error
 }
 if(tdist_mod) {
-  tdist_list <- get_param_extra_table(directory=working.directory,dofv=list_par_var_models$dofv_tdist,param_model="tdist")
+  tdist_list <- get_param_extra_table(original_max0_model=original_max0_model,
+                                      param_model=file.path(working.directory,"modelfit_run/tdist.mod"),
+                                      dofv=list_par_var_models$dofv_tdist)
   tdist_table_orig <- tdist_list$param_extra_table_orig
   tdist_table <- tdist_list$param_extra_table
   tdist_error <- tdist_list$param_extra_table_error
 }
 if(add_etas_mod) {
-  add_etas_list <- get_add_etas_table(directory=working.directory,added_etas=added_etas,dofv_add.etas=list_par_var_models$dofv_add_etas)
+  add_etas_list <- get_add_etas_table(original_max0_model=original_max0_model,
+                                      add_etas_dir=file.path(working.directory,"add_etas_run"),
+                                      added_etas=added_etas,
+                                      dofv_add.etas=list_par_var_models$dofv_add_etas,
+                                      nonlinear)
   add_etas_table <- add_etas_list$add_etas_table
   add_etas_error <- add_etas_list$add_etas_error
 }
 if(iov_mod) {
-  iov_list <- get_iov_table(directory=working.directory,iov_etas=iov_etas,dofv_iov=list_par_var_models$dofv_iov)
+  iov_list <- get_iov_table(original_max0_model=original_max0_model,
+                            iov_model=file.path(working.directory,"modelfit_run/iov.mod"),
+                            iov_etas=iov_etas,
+                            dofv_iov=list_par_var_models$dofv_iov)
   iov_table <- iov_list$iov_table
   iov_error <- iov_list$iov_error
 }
@@ -113,7 +126,7 @@ if(iov_mod) {
 
 ```{r boxcox_shape_table_for_plot,results='hide',echo=F,warning=F,message=F}
 if(exists("boxcox_lambdas_orig") && !boxcox_lambdas_error) {
-  eta_table_boxcox <- get_eta_values(working.directory=file.path(working.directory,"modelfit_run"),theta_values=boxcox_lambdas_orig[,1:2],param_model="boxcox")
+  eta_table_boxcox <- get_eta_values(param_model=file.path(working.directory,"modelfit_run/boxcox.mod"),theta_values=boxcox_lambdas_orig[,1:2])
   list_boxcox_shape <- get_eta_transf_table(input_table=boxcox_lambdas_orig)
   make_boxcox_shape_plot <- list_boxcox_shape$make_eta_transf_plot
   fig_height_boxcox <- list_boxcox_shape$fig_height
@@ -128,7 +141,7 @@ if(exists("boxcox_lambdas_orig") && !boxcox_lambdas_error) {
 
 ```{r tdist_shape_table_for_plot,results='hide',echo=F,warning=F,message=F}
 if(exists("tdist_table_orig") && !tdist_error) {
-  eta_table_tdist <- get_eta_values(working.directory=file.path(working.directory,"modelfit_run"),theta_values=tdist_table_orig[,1:2],param_model="tdist")
+  eta_table_tdist <- get_eta_values(param_model=file.path(working.directory,"modelfit_run/tdist.mod"),theta_values=tdist_table_orig[,1:2])
   list_tdist_shape <- get_eta_transf_table(input_table=tdist_table_orig)
   make_tdist_shape_plot <- list_tdist_shape$make_eta_transf_plot
   fig_height_tdist <- list_tdist_shape$fig_height
@@ -148,7 +161,6 @@ frem_table_list <- get_all_covariates(frem_directory=file.path(working.directory
 frem_table <- frem_table_list$frem_table
  # 3.2.Covariate (SCM)
 scm_table_list <- get_scm_table(scm_directory=file.path(working.directory,"scm_run"),
-                                frem_directory=file.path(working.directory,"frem_run"),
                                 parameters,continuous,categorical,skip)
 scm_table <- scm_table_list$scm_table
 max_scm_table <- scm_table_list$max_scm_table
@@ -168,11 +180,12 @@ dvid_nr <- resmod_table_list$dvid_nr
 
 ```{r influential_individuals_calculations,results='hide',echo=F,warning=F,message=F}
 # 5.Influential individuals (CDD)
-ii_list <- get_ii_table(raw.results.file=file.path(working.directory,"cdd_run",paste0("raw_results_",sub('.([^.]*)$','',model.filename),"_linbase.csv")),
-                        skipped.id.file=file.path(working.directory,"cdd_run/skipped_individuals1.csv"),
+ii_list <- get_ii_table(cdd_directory=file.path(working.directory,"cdd_run"),
+                        model.filename=model.filename,
                         cutoff=cdd_dofv_cutoff,
                         max_rows=cdd_max_rows,
-                        skip)
+                        skip,
+                        nonlinear)
 all_dofv <- ii_list$all_dofv
 cdd.data <- ii_list$cdd.data
 cdd_highest_dofv <- ii_list$cdd_highest_dofv
@@ -208,7 +221,7 @@ if(length(command_runtime$command)>0 && length(command_runtime$run_start)>0 && l
 }
 ```
 
-```{r draw_ofv_table,results='asis',echo=F,warning=F,message=F}
+```{r draw_ofv_table,results='asis',echo=F,warning=F,message=F,eval=!nonlinear}
 ofv_table <- ztable_sub(ofv_table,type=type,include.rownames = F,colnames.bold = T,align="ll")
 print(ofv_table)
 ```
@@ -226,7 +239,8 @@ cat("Overview of possible modifications to different model aspects, expected imp
 if(all(skip!="resmod")) {
   cat("\\pagebreak\n\n")
   cat("#Structural\n\n")
-  all_structural_extra_plots(working.directory,model.filename,resmod_structural_details,CWRES_table,idv_all,idv_name,dvid_name,type)
+  all_structural_extra_plots(simeval_directory=file.path(working.directory,"simeval_run"),base_dataset,resmod_structural_details,
+                             CWRES_table,idv_all,idv_name,dvid_name,type,nonlinear)
 }
 ```
 
@@ -391,8 +405,7 @@ if(all(skip!="cdd")) {
 ```{r add_infl_indiv_individual_plots,results='asis',echo=F,warning=F,message=F,fig.width=11,fig.height=fig_height_infl}
 if(all(skip!="cdd")) {
   if(length(infl_id)>0) {
-    infl.ind_individual_plots <- individual_plots(file_name=file.path(working.directory,"linearize_run/scm_dir1/derivatives.mod"),
-                                              ID_nr=infl_id[1:10])
+    infl.ind_individual_plots <- individual_plots(file_name=original_max0_model,ID_nr=infl_id[1:10])
     print(infl.ind_individual_plots)
     cat("Observations (DV), individual predictions (IPRED) and population predictions (PRED) versus time for subjects identified as influential.")
   }
@@ -427,8 +440,7 @@ if(all(skip!="simeval")) {
 ```{r add_outliers_individual_plots,results='asis',echo=F,warning=F,message=F,fig.width=11,fig.height=fig_height_outl}
 if(all(skip!="simeval")) {
   if(length(outlier_ids)>0) {
-    outlier_individual_plots <- individual_plots(file_name=file.path(working.directory,"linearize_run/scm_dir1/derivatives.mod"),
-                                                 ID_nr=outlier_ids)
+    outlier_individual_plots <- individual_plots(file_name=original_max0_model,ID_nr=outlier_ids)
     print(outlier_individual_plots)
     cat("Observations (DV), individual predictions (IPRED) and population predictions (PRED) versus time for subjects identified as outliers.")
   }
@@ -437,14 +449,14 @@ if(all(skip!="simeval")) {
 
 ```{r add_all_outliers_overall_table,results='asis',echo=F,warning=F,message=F}
 if(all(skip!="simeval")) {
-  if(file.exists(file.path(working.directory,"simeval_run/raw_all_iofv.csv")) && file.exists(file.path(working.directory,"simeval_run/ebe_npde.csv"))) {
-    all_outl_list <- simeval_all_ouliers_table(simeval_directory=file.path(working.directory,"simeval_run"))
+  all_outl_list <- simeval_all_ouliers_table(simeval_directory=file.path(working.directory,"simeval_run"))
+  if(all_outl_list$files_exist) {
     simeval_overall_outliers_table <- all_outl_list$all_outlier_table
     cgroup_outl <- all_outl_list$cgroup
     n.cgroup_outl <- all_outl_list$n.cgroup
     add_column_names <- all_outl_list$add_column_names
     simeval_overall_outliers_table <- keep_symbols(simeval_overall_outliers_table,type)
-  simeval_overall_outliers_table <- ztable_sub(simeval_overall_outliers_table,type=type,colnames.bold = add_column_names,include.colnames = add_column_names,include.rownames = F,longtable = T,align="lcccc")
+  simeval_overall_outliers_table <- ztable_sub(simeval_overall_outliers_table,type=type,colnames.bold = add_column_names,include.colnames = add_column_names,include.rownames = F,longtable = T,align="lccccc")
   if(add_column_names) {
     simeval_overall_outliers_table <- addcgroup(simeval_overall_outliers_table,cgroup=cgroup_outl,n.cgroup=n.cgroup_outl)
   }

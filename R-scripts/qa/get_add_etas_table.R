@@ -1,13 +1,17 @@
-get_add_etas_table <- function(directory,added_etas,dofv_add.etas) {
-  if(length(added_etas)>0 && 
-     file.exists(file.path(directory,"add_etas_run/add_etas_linbase.ext")) && 
-     file.exists(file.path(directory,"linearize_run/scm_dir1/derivatives.ext"))) {
+get_add_etas_table <- function(original_max0_model,add_etas_dir,added_etas,dofv_add.etas,nonlinear) {
+  original_ext_file <- sub("(\\.[^.]+)$",".ext",original_max0_model)
+  if(!nonlinear) {
+    add_etas_ext_file <- file.path(add_etas_dir,"add_etas_linbase.ext")
+  } else {
+    add_etas_ext_file <- file.path(add_etas_dir,"add_etas.ext")
+  }
+  if(length(added_etas)>0 && file.exists(add_etas_ext_file) && file.exists(original_ext_file)) {
     #old SD
-    old_omega_values <- get_omega_values(ext_file=file.path(directory,"linearize_run/scm_dir1/derivatives.ext"),omegas="var")
+    old_omega_values <- get_omega_values(ext_file=original_ext_file,omegas="var")
     #get nr for etas
     eta_nr <- strsplit(colnames(old_omega_values),"[.]")
     #new SD
-    new_omega_values <- get_omega_values(ext_file=file.path(directory,"add_etas_run/add_etas_linbase.ext"),omegas="var")
+    new_omega_values <- get_omega_values(ext_file=add_etas_ext_file,omegas="var")
     
     #create a table
     add_etas_table <- as.data.frame(array(0,c(length(eta_nr),4)))

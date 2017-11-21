@@ -1,23 +1,26 @@
-get_param_var_tables <- function(directory,model.filename,skip) {
+get_param_var_tables <- function(directory,base_model,skip) {
   #for overview table
   fullblock_mod <- file.exists(file.path(directory,"modelfit_run/fullblock.mod"))
   boxcox_mod <- file.exists(file.path(directory,"modelfit_run/boxcox.mod"))
   add_etas_mod <- file.exists(file.path(directory,"add_etas_run/add_etas_linbase.mod"))
   tdist_mod <- file.exists(file.path(directory,"modelfit_run/tdist.mod"))
   iov_mod <- file.exists(file.path(directory,"modelfit_run/iov.mod"))
-  if(file.exists(file.path(directory,paste0(sub('.([^.]*)$','',model.filename),"_linbase.ext")))) {
-    
-    linbase_ofv <- .get_ext_ofv(file.path(directory,paste0(sub('.([^.]*)$','',model.filename),"_linbase.ext")))
+  
+  #base model ext filename
+  base_ext_file <- sub("(\\.[^.]+)$",".ext",base_model)
+  
+  if(file.exists(base_ext_file)) {
+    base_ofv <- .get_ext_ofv(base_ext_file)
 
     #full omega block
     if(fullblock_mod) {
       if(file.exists(file.path(directory,"modelfit_run/fullblock.ext"))) {
-        linblock_ofv <- .get_ext_ofv(file.path(directory,"modelfit_run/fullblock.ext"))
-        dofv_block <- as.numeric(linbase_ofv-linblock_ofv)
+        fullblock_ofv <- .get_ext_ofv(file.path(directory,"modelfit_run/fullblock.ext"))
+        dofv_block <- as.numeric(base_ofv-fullblock_ofv)
         # how many omega cov omegas were added
         boxcox_omegas <- get_omega_values(file.path(directory,"modelfit_run/fullblock.ext"),"cov")
-        linbase_omegas <- get_omega_values(file.path(directory,paste0(sub('.([^.]*)$','',model.filename),"_linbase.ext")),"cov")
-        add.par_block <- length(setdiff(colnames(boxcox_omegas),colnames(linbase_omegas)))
+        base_omegas <- get_omega_values(base_ext_file,"cov")
+        add.par_block <- length(setdiff(colnames(boxcox_omegas),colnames(base_omegas)))
       } else {
         dofv_block <- "ERROR"
         add.par_block <- ''
@@ -30,8 +33,8 @@ get_param_var_tables <- function(directory,model.filename,skip) {
     #boxcox transformation
     if(boxcox_mod) {
       if(file.exists(file.path(directory,"modelfit_run/boxcox.ext"))) {
-        linbox_ofv <- .get_ext_ofv(file.path(directory,"modelfit_run/boxcox.ext"))
-        dofv_box <- as.numeric(linbase_ofv - linbox_ofv)
+        boxcox_ofv <- .get_ext_ofv(file.path(directory,"modelfit_run/boxcox.ext"))
+        dofv_box <- as.numeric(base_ofv - boxcox_ofv)
         #get nr TH+d
         ext_file <- read.table(file.path(directory,"modelfit_run/boxcox.ext"),header=TRUE,skip=1,stringsAsFactors = F) %>%
           dplyr::filter(ITERATION==-1000000000)
@@ -49,11 +52,11 @@ get_param_var_tables <- function(directory,model.filename,skip) {
     # additional etas
     if(add_etas_mod) {
       if(file.exists(file.path(directory,"add_etas_run/add_etas_linbase.ext"))) {
-        linaddeta_ofv <- .get_ext_ofv(file.path(directory,"add_etas_run/add_etas_linbase.ext"))
-        dofv_additional_eta <- as.numeric(linbase_ofv - linaddeta_ofv)
+        addeta_ofv <- .get_ext_ofv(file.path(directory,"add_etas_run/add_etas_linbase.ext"))
+        dofv_additional_eta <- as.numeric(base_ofv - addeta_ofv)
         addetas_omegas <- get_omega_values(file.path(directory,"add_etas_run/add_etas_linbase.ext"),"var")
-        linbase_omegas <- get_omega_values(file.path(directory,paste0(sub('.([^.]*)$','',model.filename),"_linbase.ext")),"var")
-        add.par_additional_eta <- length(setdiff(colnames(addetas_omegas),colnames(linbase_omegas)))
+        base_omegas <- get_omega_values(base_ext_file,"var")
+        add.par_additional_eta <- length(setdiff(colnames(addetas_omegas),colnames(base_omegas)))
       } else {
         dofv_additional_eta <- "ERROR"
         add.par_additional_eta <- ''
@@ -66,8 +69,8 @@ get_param_var_tables <- function(directory,model.filename,skip) {
     # t-distribution
     if(tdist_mod) {
       if(file.exists(file.path(directory,"modelfit_run/tdist.ext"))) {
-        lintdist_ofv <- .get_ext_ofv(file.path(directory,"modelfit_run/tdist.ext"))
-        dofv_tdist <- as.numeric(linbase_ofv - lintdist_ofv)
+        tdist_ofv <- .get_ext_ofv(file.path(directory,"modelfit_run/tdist.ext"))
+        dofv_tdist <- as.numeric(base_ofv - tdist_ofv)
         #get nr TH+d
         ext_file <- read.table(file.path(directory,"modelfit_run/tdist.ext"),header=TRUE,skip=1,stringsAsFactors = F) %>%
           dplyr::filter(ITERATION==-1000000000)
@@ -85,11 +88,11 @@ get_param_var_tables <- function(directory,model.filename,skip) {
     # iov
     if(iov_mod) {
       if(file.exists(file.path(directory,"modelfit_run/iov.ext"))) {
-        liniov_ofv <- .get_ext_ofv(file.path(directory,"modelfit_run/iov.ext"))
-        dofv_iov <- as.numeric(linbase_ofv - liniov_ofv)
+        iov_ofv <- .get_ext_ofv(file.path(directory,"modelfit_run/iov.ext"))
+        dofv_iov <- as.numeric(base_ofv - iov_ofv)
         #get nr of var omegas in linearizes model because iov will add same amount of omegas ass it was in the beginning 
         #BLOCK SAME should not be included
-        add.par_iov <- ncol(get_omega_values(file.path(directory,paste0(sub('.([^.]*)$','',model.filename),"_linbase.ext")),"var"))
+        add.par_iov <- ncol(get_omega_values(base_ext_file,"var"))
       } else {
         dofv_iov <- "ERROR"
         add.par_iov <- ''

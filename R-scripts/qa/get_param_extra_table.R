@@ -1,23 +1,17 @@
-get_param_extra_table <- function(directory,dofv,param_model) {
-  
-  #param_model should be "boxcox" or "tdist" only!
-  
-  if(param_model == "boxcox") {
+get_param_extra_table <- function(original_max0_model,param_model,dofv) {
+  if(grepl("boxcox",param_model)) {
     table_col_name <- "Lambda"
   }
-  if(param_model == "tdist") {
+  if(grepl("tdist",param_model)) {
     table_col_name <- "Degrees of freedom"
   }
+  original_ext_file <- sub("(\\.[^.]+)$",".ext",original_max0_model)
+  param_model_ext_file <- sub("(\\.[^.]+)$",".ext",param_model)
   
-  param_model_name <- paste0(param_model,".ext")
-  ext_file.path <- file.path(directory,"modelfit_run",param_model_name)
   #get THETA values
-  if(file.exists(ext_file.path) && file.exists(file.path(directory,"linearize_run/scm_dir1/derivatives.ext"))) {
+  if(file.exists(param_model_ext_file) && file.exists(original_ext_file)) {
     param_extra_table_error <- FALSE
-    ext_file <- read.table((ext_file.path),header=TRUE,skip=1,stringsAsFactors = F) %>%
-      dplyr::filter(ITERATION==-1000000000)
-    new_omega_values <- get_omega_values(ext_file=ext_file.path,omegas="var")
-    # new_omega_values <- ext_file[,grep("^OMEGA",colnames(ext_file))]
+    new_omega_values <- get_omega_values(ext_file=param_model_ext_file,omegas="var")
     col_names <- colnames(new_omega_values)[which(new_omega_values!=0)]
     new_omega_values <- as.data.frame(new_omega_values[,which(new_omega_values!=0)])
     colnames(new_omega_values) <- col_names
@@ -37,12 +31,13 @@ get_param_extra_table <- function(directory,dofv,param_model) {
     }
     
     # omega values from original model
-    deriv_omega_values <-read.table((file.path(directory,"linearize_run/scm_dir1/derivatives.ext")),header=TRUE,skip=1,stringsAsFactors = F) %>%
+    deriv_omega_values <-read.table(original_ext_file,header=TRUE,skip=1,stringsAsFactors = F) %>%
       dplyr::filter(ITERATION==-1000000000) %>%
       dplyr::select(grep("^OMEGA",colnames(.)))
     
     #get theta values
-    THETA_values <- ext_file %>%
+    THETA_values <- read.table((param_model_ext_file),header=TRUE,skip=1,stringsAsFactors = F) %>%
+      dplyr::filter(ITERATION==-1000000000) %>%
       dplyr::select(grep("^THETA\\d+$",colnames(.))) %>%
       dplyr::select(1:length(new_omega_values))
     

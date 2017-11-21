@@ -1,14 +1,14 @@
-get_iov_table <- function(directory,iov_etas,dofv_iov) {
+get_iov_table <- function(original_max0_model,iov_model,iov_etas,dofv_iov) {
+  original_ext_file <- sub("(\\.[^.]+)$",".ext",original_max0_model)
+  iov_ext_file <- sub("(\\.[^.]+)$",".ext",iov_model)
   # calculate how many omegas goes to each block (which goes to iiv and which to iov)
-  if(length(iov_etas)>0 && 
-     file.exists(file.path(directory,"modelfit_run/iov.ext")) && 
-     file.exists(file.path(directory,"linearize_run/scm_dir1/derivatives.ext"))) { # we need this table only if we have iov
+  if(length(iov_etas)>0 && file.exists(iov_ext_file) && file.exists(original_ext_file)) { # we need this table only if we have iov
     
-    omegas <- colnames(get_omega_values(ext_file=file.path(directory,"linearize_run/scm_dir1/derivatives.ext"),omegas="var"))
+    omegas <- colnames(get_omega_values(ext_file=original_ext_file,omegas="var"))
     iiv_etas_nr <- as.data.frame(strsplit(omegas,split="\\."),stringsAsFactors = F) %>%
       dplyr::slice(2) %>%
       as.numeric()
-    new_omega_values <- get_omega_values(ext_file=file.path(directory,"modelfit_run/iov.ext"),omegas="var")
+    new_omega_values <- get_omega_values(ext_file=iov_ext_file,omegas="var")
     #which omega columns to iiv
     iiv_omegas <- new_omega_values %>%
       dplyr::select((grep(paste(paste0("^OMEGA\\.",iiv_etas_nr,"\\.",iiv_etas_nr,"\\.$"),collapse = "|"),colnames(.)))) %>%
@@ -19,7 +19,7 @@ get_iov_table <- function(directory,iov_etas,dofv_iov) {
       as.numeric() %>%
       sqrt()
     
-    old_omega_values <- get_omega_values(ext_file=file.path(directory,"linearize_run/scm_dir1/derivatives.ext"),omegas="var") %>%
+    old_omega_values <- get_omega_values(ext_file=original_ext_file,omegas="var") %>%
       as.numeric() %>%
       sqrt()
     # make table

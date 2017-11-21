@@ -1,4 +1,4 @@
-resmod_structural_details_tables <- function(working.directory,model.filename,CWRES_table,idv_all,idv_name,dvid_name) {
+resmod_structural_details_tables <- function(working.directory,base_dataset,original_max0_model,CWRES_table,idv_all,idv_name,dvid_name,nonlinear) {
   resmod_structural_details_list <- list()
   if(length(idv_all)!=0) {
     #check if dvid exist
@@ -23,14 +23,15 @@ resmod_structural_details_tables <- function(working.directory,model.filename,CW
         }
         dOFV = get_resmod_structural_dofv(working.directory, idv,dvid=dvid_nr_idv[[i]][j])
         first_table = data.frame(C1=c("DV","IDV","dOFV"),C2=c("CWRES",idv,dOFV),stringsAsFactors = F)
-        if(file.exists(paste0(working.directory, "linearize_run/scm_dir1/derivatives.ext")) &&
-          file.exists(file.path(working.directory, paste0(sub('.([^.]*)$','',model.filename),"_linbase.dta"))) &&
-          file.exists(CWRES_table) &&
+        
+        orig_ext_file <- sub("(\\.[^.]+)$",".ext",original_max0_model)
+        if(file.exists(orig_ext_file) && file.exists(base_dataset) && file.exists(CWRES_table) &&
           resmod_file_exists_idv[i]==TRUE &&
-          !all(resmod_table[[i]]$parameters=="NA")) {
+          !all(resmod_table[[i]]$parameters=="NA") &&
+          nonlinear==FALSE) {
             
           table = get_resmod_structural_details(directory=working.directory, suffix = idv, dvid=dvid_nr_idv[[i]][j]) %>%
-            .calc_and_add_shift_from_cwres(working.directory,model.filename,CWRES_table,idv,idv_name, dvid=dvid_nr_idv[[i]][j],dvid_name)
+            .calc_and_add_shift_from_cwres(orig_ext_file,base_dataset,CWRES_table,idv,idv_name, dvid=dvid_nr_idv[[i]][j],dvid_name)
             
           second_table = data.frame(C1=paste0(format(table$bin_min,nsmall=2),"  :  ",format(table$bin_max,nsmall=2)),C2=as.character(format(round(table$value,2),nsmall=2)),
                                     stringsAsFactors = F)

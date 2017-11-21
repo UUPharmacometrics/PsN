@@ -1,6 +1,6 @@
-.calc_and_add_shift_from_cwres <- function(structural_details_table, working.directory, model.filename, CWRES_table, idv, idv_name, dvid, dvid_name){
+.calc_and_add_shift_from_cwres <- function(structural_details_table, orig_ext_file, base_dataset, CWRES_table, idv, idv_name, dvid, dvid_name){
   # .ext file with the final estimates
-  final_estimates <- read.table(paste0(working.directory,"linearize_run/scm_dir1/derivatives.ext"), skip=1, header=T) %>%
+  final_estimates <- read.table(orig_ext_file, skip=1, header=T) %>%
     dplyr::filter(ITERATION==-1000000000)
   
   # populate omega from .ext file
@@ -49,7 +49,7 @@
     dplyr::rename_(idv=idv)
   
   # get derivatives from linearized model
-  mean_shifts_table <- read.table(file.path(working.directory, paste0(sub('.([^.]*)$','',model.filename),"_linbase.dta")), skip = 1, header=T) %>%
+  mean_shifts_table <- read.table(base_dataset, skip = 1, header=T) %>%
     dplyr::mutate(CPRED=cpred_column)
   if(any(colnames(mean_shifts_table)== dvid_name)) {
     dvid_column_nr <- which(colnames(mean_shifts_table)== dvid_name)
