@@ -14,6 +14,11 @@ sub second_order_derivatives_model
     );
     my $model = $parm{'model'};
 
+    my $have_evid = $model->problems->[0]->inputs->[0]->have_column(column => 'EVID');
+    if ($model->has_code(record => 'pk')) {
+        $have_evid = 1;
+    }
+
     my $derivatives_model = $model->copy(filename => 'derivatives.mod', write_copy => 0);
     my $netas = $derivatives_model->nomegas->[0];
 
@@ -32,11 +37,12 @@ sub second_order_derivatives_model
 
     model_transformations::prepend_code(model => $derivatives_model, code => \@reset_code);
 
-
     my @derivatives_code;
     push @derivatives_code, "TMP2_ = Y\n";
     push @derivatives_code, "\"LAST\n";
-    push @derivatives_code, "\"    IF (EVID.EQ.0) THEN !Only obs records\n";
+    if ($have_evid) {
+        push @derivatives_code, "\"    IF (EVID.EQ.0) THEN !Only obs records\n";
+    }
     for (my $i = 1; $i <= $netas; $i++) {
         push @derivatives_code, "\"        DYDETA${i}_ = DYDETA${i} + G($i,1)\n";
     }
@@ -47,7 +53,9 @@ sub second_order_derivatives_model
     }
 
     push @derivatives_code, "\"        MYY_ = MYY_ + TMP2_  ! The log likelihood\n";
-    push @derivatives_code, "\"    ENDIF\n";
+    if ($have_evid) {
+        push @derivatives_code, "\"    ENDIF\n";
+    }
 
     my $code_record;
     if ($model->has_code(record => 'pk')) {
@@ -73,7 +81,7 @@ sub second_order_derivatives_model
             push @table, "D2YDETA$j${i}_";
         }
     }
-    if ($model->has_code(record => 'pk')) {
+    if ($have_evid) {
         push @table, "EVID";
     }
     push @table, "NOPRINT", "ONEHEADER", "FILE=2nd_order.dta";
@@ -90,6 +98,11 @@ sub second_order_approximation_model
     );
     my $model = $parm{'model'};
 
+    my $have_evid = $model->problems->[0]->inputs->[0]->have_column(column => 'EVID');
+    if ($model->has_code(record => 'pk')) {
+        $have_evid = 1;
+    }
+
     my $netas = $model->nomegas->[0];
 
     my $input = "\$INPUT ID DV TIME MYY ";
@@ -104,7 +117,9 @@ sub second_order_approximation_model
             $input .= "D2YDETA$j$i ";
         }
     }
-    $input .= "EVID";
+    if ($have_evid) {
+        $input .= "EVID";
+    }
 
     my $sh_mod = model::shrinkage_module->new(
         nomegas => 1,
@@ -113,7 +128,7 @@ sub second_order_approximation_model
     );
 
     my $ignore = ""; 
-    if ($model->has_code(record => 'pk')) {
+    if ($have_evid) {
         $ignore = " IGNORE=(EVID.GT.0)";
     }
 
@@ -121,8 +136,8 @@ sub second_order_approximation_model
         ignore_missing_files=> 1,
         prob_arr => [
             '$PROBLEM Second order approximation', 
-            '$DATA 2nd_order.dta IGNORE=@' . $ignore,
             $input,
+            '$DATA 2nd_order.dta IGNORE=@' . $ignore,
         ],
         shrinkage_module => $sh_mod,
     );
@@ -130,6 +145,7 @@ sub second_order_approximation_model
         filename => 'approximated.mod',
         problems => [ $problem ],
         ignore_missing_files => 1,
+        psn_record_order => 1,
     );
     
     $approximation_model->add_records(type => 'estimation', record_strings => [ 'MAXEVAL=9999 METHOD=1 LAPLACE -2LL' ]);

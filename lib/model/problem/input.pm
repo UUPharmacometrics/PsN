@@ -23,6 +23,7 @@ sub BUILD
 		}
 	}
 }
+
 sub remove_drop_column_names
 {
 	my $self = shift;
@@ -34,6 +35,7 @@ sub remove_drop_column_names
 	}
 
 }
+
 sub get_nonskipped_columns
 {
 	my $self = shift;
@@ -47,6 +49,24 @@ sub get_nonskipped_columns
 	}
 
 	return \@option_list;
+}
+
+sub have_column
+{
+    # Do we have a certain symbol?
+    my $self = shift;
+    my %parm = validated_hash(\@_,
+        column => { isa => 'Str' },
+    );
+    my $column = $parm{'column'};
+
+
+    my $cols = $self->get_nonskipped_columns();
+
+    for my $col (@$cols) {
+        return 1 if ($col eq $column)
+    }
+    return 0;
 }
 
 sub get_filter_table_names
