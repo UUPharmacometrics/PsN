@@ -11,7 +11,7 @@ require OSspecific;
 
 sub setup
 {
-	# must be able to call from asrscm.pm using PsN and scm 4.7.0 with  
+	# must be able to call from scmplus.pm using PsN and scm 4.7.0 with  
 	#scm_util::setup( common_options_hashref => $common_options_hashref,
 	#							config_file => $config_file,
 	#							options => $options,
@@ -68,7 +68,7 @@ sub setup
 
 
 sub copy_config_file{
-	#call from asrscm bin script with PsN 4.7.0 and
+	#call from scmplus bin script with PsN 4.7.0 and
 	#scm_util::copy_config_file(options => \%options, directory => $asr->directory);
 
 	my %parm = validated_hash(\@_,
@@ -85,7 +85,7 @@ sub copy_config_file{
 
 
 sub setup_model{
-	# must be able to call from asrscm bin script using PsN 4.7.0 with  
+	# must be able to call from scmplus bin script using PsN 4.7.0 with  
 	#my $model = scm_util::setup_model(filename => $config_file->model,
 	#								options => \%options,
 	#								model_parameter_hashref => {eval common_options::model_parameters(\%options)});
@@ -113,8 +113,8 @@ sub setup_model{
 }
 
 sub check_options{
-	# must be able to call from asrscm bin script using PsN 4.7.0 with  
-	# scm_util::check_options(scriptname => 'asrscm',
+	# must be able to call from scmplus bin script using PsN 4.7.0 with  
+	# scm_util::check_options(scriptname => 'scmplus',
 	#								options => \%options,
 	#								config_file => $config_file,
 	#								require_model => 1)
@@ -130,7 +130,7 @@ sub check_options{
 	my $options = $parm{'options'};
 	my $config_file = $parm{'config_file'};
 
-	if (($scriptname eq 'scm') or ($scriptname eq 'asrscm')){ 
+	if (($scriptname eq 'scm') or ($scriptname eq 'scmplus')){ 
 		if (defined $options->{'directory'} and -e $options->{'directory'}) {
 			die "$scriptname cannot resume a previous run. Please change your -directory.\n";
 		}
@@ -139,9 +139,9 @@ sub check_options{
 	my $direction = $config_file -> search_direction;
 	die "You need to specify a search direction (forward/backward/both)\n" unless (defined $direction );
 
-	if ($scriptname eq 'asrscm'){ 
+	if ($scriptname eq 'scmplus'){ 
 		unless (($direction eq 'forward') or ($direction eq 'both')){
-			die(" asrscm does not support search_direction $direction ");
+			die(" scmplus does not support search_direction $direction ");
 		}
 	}
 	
@@ -287,7 +287,7 @@ sub setup_config_forward
 	
 sub get_config_object
 {
-	# must be able to call from asrscm bin script using PsN 4.7.0 with  
+	# must be able to call from scmplus bin script using PsN 4.7.0 with  
 	#my $config_file = scm_util::get_config_object(options => \%options,common_tool_options =>\@common_options::tool_options);
 
 	my %parm = validated_hash(\@_,
