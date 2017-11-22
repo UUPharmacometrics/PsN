@@ -39,11 +39,14 @@ vpc_mixtures <- function(obs, sim, numsims, mixcol="MIXNUM", dv="DV", phm) {
     for (i in 1:numsubs) {
         subobs <- filter_(obs, paste0(mixcol, "==", i))
         subsim <- filter_(sim, paste0(mixcol, "==", i))
+        if (nrow(subsim) == 0) {
+            next
+        }
         vpc <- vpc::vpc(obs=subobs, sim=subsim, obs_cols=list(dv=dv), sim_cols=list(dv=dv))
 
         obs_ids <- length(unique(subobs$ID))
         perc_obs_ids <- (obs_ids / num_ids) * 100
-
+    
         ids_per_sim <- subsim %>% group_by(sim) %>% summarise(count=length(unique(ID)))
         sim_ids <- sum(ids_per_sim$count)
         perc_sim_ids <- (sim_ids / (numsims * num_ids)) * 100
