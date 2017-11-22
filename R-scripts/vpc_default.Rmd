@@ -5,7 +5,7 @@ classoption: landscape
 geometry: margin=1.5cm
 ---
 
-```{r loading_libraries,include = FALSE}
+```{r loading_libraries, warning=FALSE, message=FALSE, include = FALSE}
 # get libPaths
 source(file.path(rscripts.directory,"common/R_info.R"))
 R_info(directory=working.directory,only_libPaths=T)
@@ -14,7 +14,7 @@ library(xpose4)
 R_info(directory=working.directory)
 ```
 
-```{r vpc_plots,results='hide',echo=FALSE,fig.width=9,fig.height=6.5,fig.keep="high",fig.align="center"}
+```{r vpc_plots, warning=FALSE, message=FALSE, results='hide',echo=FALSE,fig.width=9,fig.height=6.5,fig.keep="high",fig.align="center"}
 if (!exists('mix')) {     # A mixture model is a special case
     if (is.tte) {
         #data is in the model directory, go there to read input
