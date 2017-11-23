@@ -1471,7 +1471,6 @@ sub modelfit_setup
 			$start_model->outputs()->[0]-> have_output() and
 			defined $start_model-> outputs -> [0] -> get_single_value(attribute=> 'ofv')) {
 			my $start_ofv = $start_model -> outputs -> [0] -> get_single_value(attribute=> 'ofv');
-			my $ofvname = 'ofv';
 			my $start_name = $start_model->filename;
 			#change base criteria values unless it is defined already (to override start value)
 			if (($self->linearize() and $self->step_number() > 1)
@@ -1485,7 +1484,7 @@ sub modelfit_setup
 				my $ofv = sprintf("%12.5f",$start_ofv);
 				open( LOG, ">>".$self -> logfile -> [$model_number-1] );
 				if ($self->update_derivatives() and $self->step_number()>1){
-					print LOG "The $ofvname of the updated linearized base model:$ofv        $start_name\n";
+					print LOG "The ofv of the updated linearized base model:$ofv        $start_name\n";
 				} else {
                     if ($self->from_linearize) {
                         my $initial_ofv;
@@ -1496,7 +1495,7 @@ sub modelfit_setup
                         if (defined $initial_ofv) {
 				            my $initial_ofv = sprintf("%12.5f", $initial_ofv);
                             ui->print(category => 'linearize',
-                                message => "\nThe $ofvname of the linearized base model before estimation:$initial_ofv\n");
+                                message => "\nThe ofv of the linearized base model before estimation:$initial_ofv\n");
                         }
                         my $datafile = $start_model->datafiles(problem_numbers => [ 1 ], absolute_path => 1)->[0];
                         my $has_interaction = _check_interaction(datafile => $datafile, model => $self->original_nonlinear_model);
@@ -1508,9 +1507,9 @@ sub modelfit_setup
                                 message => "NOTE: The model does NOT have interaction");
                         }
                     }
-					print LOG "The $ofvname of the linearized base model:$ofv        $start_name\n";
+					print LOG "The ofv of the linearized base model:$ofv        $start_name\n";
 					ui -> print(category => 'linearize',
-						message =>"\nThe $ofvname of the linearized base model:$ofv        $start_name\n");
+						message =>"\nThe ofv of the linearized base model:$ofv        $start_name\n");
 				}
 				print LOG "--------------------\n\n";
 				close LOG;
