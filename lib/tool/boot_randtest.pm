@@ -13,7 +13,7 @@ use model_transformations;
 
 extends 'tool';
 
-has 'samples' => ( is => 'rw', required => 1, isa => 'Int' );
+has 'samples' => ( is => 'rw', isa => 'Int' );
 has 'subjects' => ( is => 'rw', isa => 'HashRef' );
 has 'base_model' => ( is => 'rw', isa => 'model' );
 has 'stratify_on' => ( is => 'rw', isa => 'Str' );
@@ -38,7 +38,9 @@ sub BUILD
     #croak("Could not find stratification column " . $self->stratify_on() . " in \$INPUT")
     #unless ((not defined $self->stratify_on) or (defined $self->strat_index));
 
-	croak("Number of samples must be larger than 0") unless ($self->samples() > 0);
+    if (not $self->summarize) {
+        croak("Number of samples must be larger than 0") unless ($self->samples() > 0);
+    }
 }
 
 sub modelfit_setup

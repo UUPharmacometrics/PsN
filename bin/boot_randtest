@@ -21,11 +21,11 @@ Getopt::Long::config("auto_abbrev");
 ## Declare the options
 my %options;
 
-my %required_options = (
+my %required_options = ();
+
+my %optional_options = (
     "samples:i" => '',
     "base_model:s"=>'',
-);
-my %optional_options = (
     "stratify_on:s"=>'',
     "update_inits!"=>'',
     "full_model_inits!"=>'',
@@ -66,11 +66,13 @@ $help_text{-base_model} = <<'EOF';
 -base_model
 
       Run the original data set with this model, to use as reference when computing delta-ofv.
+      This option is required if not using -summarize.
 EOF
 $help_text{-samples} = <<'EOF';      
 -samples
 
       The number of randomized datasets to generate.
+      This option is required if not using -summarize.
 EOF
     $help_text{-sample_size} = <<'EOF';
       -sample_size
@@ -130,23 +132,25 @@ EOF
 common_options::online_help('boot_randtest', \%options, \%help_text, \%required_options, \%optional_options);
 common_options::setup(\%options, 'boot_randtest'); #calls set_globals etc, initiates random sequence
 
-## Check that we do have a model file
-if (scalar(@ARGV) < 1) {
-  print "A model file must be specified. Use 'boot_randtest -h' for help.\n";
-  exit;
-}
 
 if (scalar(@ARGV) > 1) {
   print "boot_randtest can only handle one modelfile. Use 'boot_randtest -h' for help.\n";
   exit;
 }
 
-foreach my $required (keys %required_options){
-	$required =~ s/:[^:]*$//;
-	$required =~ s/!$//;
-	unless (defined $options{$required}){
-		die("Option $required is required");
-	}
+if (not $options{'summarize'}) {
+    if (scalar(@ARGV) < 1) {
+        print "A model file must be specified. Use 'boot_randtest -h' for help.\n";
+        exit;
+    }
+    if (not defined $options{'samples'}) {
+        print "boot_randtest: The samples option is required";
+        exit;
+    }
+    if (not defined $options{'base_model'}) {
+        print "boot_randtest: The base_model option is required";
+        exit;
+    }
 }
 
 require model;
@@ -154,60 +158,71 @@ require tool::boot_randtest;
 
 my $eval_string = common_options::model_parameters(\%options);
 
-my $model = model->new(eval($eval_string), filename => @ARGV[0], ignore_missing_output_files => 1);
+my $rand;
+if (not defined $options{'summarize'}) {
+    my $model = model->new(eval($eval_string), filename => @ARGV[0], ignore_missing_output_files => 1);
 
-unless (defined $options{'copy_data'} and (not $options{'copy_data'})) {
-    $options{'copy_data'} = 1;
-}
+    unless (defined $options{'copy_data'} and (not $options{'copy_data'})) {
+        $options{'copy_data'} = 1;
+    }
 
-if (not $model->is_run) {
-	#we will only run this model if not done already, path length matters only if we run
-	unless ($model->copy_data_setting_ok(copy_data => $options{'copy_data'})){
-		die("Cannot set -no-copy_data, absolute data file path is too long.");
-	} 
-	if (defined $options{'copy_data'} and (not $options{'copy_data'})){
-		$model->relative_data_path(0);
-	}
-}
-
-
-my $base_model;
-if (defined $options{'base_model'}) {
-    $base_model = model->new( eval( $eval_string ),
-        filename => $options{'base_model'},
-        ignore_missing_output_files => 1);
-    unless ($base_model -> is_run) {
-        unless ($base_model->copy_data_setting_ok(copy_data => $options{'copy_data'})){
+    if (not $model->is_run) {
+        #we will only run this model if not done already, path length matters only if we run
+        unless ($model->copy_data_setting_ok(copy_data => $options{'copy_data'})){
             die("Cannot set -no-copy_data, absolute data file path is too long.");
         } 
         if (defined $options{'copy_data'} and (not $options{'copy_data'})){
-            $base_model->relative_data_path(0);
+            $model->relative_data_path(0);
         }
     }
+
+
+    my $base_model;
+    if (defined $options{'base_model'}) {
+        $base_model = model->new( eval( $eval_string ),
+            filename => $options{'base_model'},
+            ignore_missing_output_files => 1);
+        unless ($base_model -> is_run) {
+            unless ($base_model->copy_data_setting_ok(copy_data => $options{'copy_data'})){
+                die("Cannot set -no-copy_data, absolute data file path is too long.");
+            } 
+            if (defined $options{'copy_data'} and (not $options{'copy_data'})){
+                $base_model->relative_data_path(0);
+            }
+        }
+    }
+
+    my $subj_hash ={};
+    if (defined $options{'sample_size'}) {
+        $options{'sample_size'} = 'default=>'.$options{'sample_size'} if( $options{'sample_size'} =~ /^\d+$/ );
+        %{$subj_hash} = eval($options{'sample_size'});
+        if ($@) {
+            die $@."\nThe sample_size option must be either a single number or of the format 'strata1=>12,strata2=>34, ...' etc" ;
+        }
+    } 
+
+    $rand = tool::boot_randtest->new(
+        eval( $common_options::parameters ),
+        top_tool => 1,
+        prepend_model_file_name => 1,
+        models => [ $model ],
+        samples	=> $options{'samples'},
+        base_model => $base_model,
+        stratify_on => $options{'stratify_on'},
+        subjects => $subj_hash,
+        base_model => $base_model,
+        random_column => $options{'random_column'},
+        summarize => $options{'summarize'},
+    );
+} else {
+    $rand = tool::boot_randtest->new(
+        eval( $common_options::parameters ),
+        top_tool => 1,
+        prepend_model_file_name => 1,
+        models => [ model::create_dummy_model() ],
+        summarize => $options{'summarize'},
+    );
 }
-
-my $subj_hash ={};
-if (defined $options{'sample_size'}) {
-  $options{'sample_size'} = 'default=>'.$options{'sample_size'} if( $options{'sample_size'} =~ /^\d+$/ );
-  %{$subj_hash} = eval($options{'sample_size'});
-  if ($@) {
-	  die $@."\nThe sample_size option must be either a single number or of the format 'strata1=>12,strata2=>34, ...' etc" ;
-  }
-} 
-
-my $rand = tool::boot_randtest->new(
-    eval( $common_options::parameters ),
-    top_tool => 1,
-    prepend_model_file_name => 1,
-    models => [ $model ],
-    samples	=> $options{'samples'},
-    base_model => $base_model,
-    stratify_on => $options{'stratify_on'},
-    subjects => $subj_hash,
-    base_model => $base_model,
-    random_column => $options{'random_column'},
-    summarize => $options{'summarize'},
-);
 
 $rand->print_options(
     cmd_line => $cmd_line,
