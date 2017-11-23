@@ -97,6 +97,9 @@ sub modelfit_setup
         cp($scm->basename . '.coi', '../' . $scm->basename . '.coi');
     } else {
         my $derivatives_model = model_approximations::second_order_derivatives_model(model => $model);
+        if ($model->is_run()) {
+            $derivatives_model->update_inits(from_output => $model->outputs->[0]);
+        }
         my $derivatives_fit = tool::modelfit->new(
             %{common_options::restore_options(@common_options::tool_options)},
             base_directory => $self->directory,
