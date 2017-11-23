@@ -18,6 +18,7 @@ has 'subjects' => ( is => 'rw', isa => 'HashRef' );
 has 'base_model' => ( is => 'rw', isa => 'model' );
 has 'stratify_on' => ( is => 'rw', isa => 'Str' );
 has 'random_column' => ( is => 'rw', isa => 'Str' );     # Column to replace with a dichotomous column for randomizing
+has 'summarize' => ( is => 'rw', isa => 'Bool', default => 0 );
 
 
 sub BUILD
@@ -47,6 +48,10 @@ sub modelfit_setup
 		model_number => { isa => 'Int', optional => 1 }
 	);
 	my $model_number = $parm{'model_number'};
+
+    if ($self->summarize) {
+        return;
+    }
 
 	my $model = $self->models->[$model_number - 1];
     
@@ -149,10 +154,23 @@ sub modelfit_setup
             print "error in randtest run $i: $@\n";
         }
     }
+}
+
+sub modelfit_analyze
+{
+    my $self = shift;
+
+    my $samples;
+    if ($self->summarize) {
+        my @randtestdirs = glob 'randtest_dir*';
+        $samples = scalar(@randtestdirs);
+    } else {
+        $samples = $self->samples;
+    }
 
     my @dofv;
     open my $dh, '>', 'raw_results.csv';
-    for (my $i = 0; $i < $self->samples; $i++) {
+    for (my $i = 0; $i < $samples; $i++) {
         open my $fh, '<', 'randtest_dir' . ($i + 1) . '/raw_results.csv' or next;
         my $line = <$fh>;
         if ($i == 0) {
@@ -170,11 +188,6 @@ sub modelfit_setup
     }
     close $dh;
     tool::randtest::print_dofv_results(dofv => \@dofv, filename => 'boot_randtest_results.csv');
-}
-
-sub modelfit_analyze
-{
-    my $self = shift;
 }
 
 no Moose;
