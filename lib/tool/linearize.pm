@@ -123,9 +123,19 @@ sub modelfit_setup
         $approximation_fit->run();
         my $approximation_ofv = $approximation_model->outputs->[0]->get_single_value(attribute => 'ofv');
 
+        my $initial_ofv;
+        my $ofv_path = $approximation_model->outputs->[0]->get_single_value(attribute => 'ofvpath');
+        if (defined $ofv_path) {
+            $initial_ofv = $ofv_path->[0];
+        }
+        if (defined $initial_ofv) {
+            $initial_ofv = sprintf("%12.5f", $initial_ofv);
+        }
+
         print "\n";
         print "Base model OFV: " . $derivatives_ofv . "\n";
-        print "Approximation model OFV: " . $approximation_ofv . "\n";
+        print "Approximation model initial OFV: " . $initial_ofv . "\n";
+        print "Approximation model estimated OFV: " . $approximation_ofv . "\n";
     }
 }
 
