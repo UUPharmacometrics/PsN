@@ -2584,7 +2584,6 @@ sub linearize_setup
 
     if ($self->step_number()==1 or $self->update_derivatives()){
         my $derivatives_ofv;
-        my $ofvname = 'ofv';
         my $derivatives_name = '';
         my $reused=0;
         #set name of datafile before creating it so that will not read data here
@@ -2656,8 +2655,6 @@ sub linearize_setup
                 newline => 1);
             if ( defined $self->derivatives_output() ->  get_single_value(attribute=> 'ofv') ) {
                 $derivatives_ofv = $self->derivatives_output()-> get_single_value(attribute=> 'ofv');
-                #$ofvname = 'DIC' if
-                #      (defined $self->derivatives_output()->get_single_value(attribute=>'dic')); #error
                 $derivatives_name = $self->derivatives_output()->filename();
                 $derivatives_name =~ s/\.lst$/\.mod/;
                 open( LOG, ">>".$self -> logfile -> [0] ); #model_number -1
@@ -2677,14 +2674,14 @@ sub linearize_setup
         if ($self->run_linearized_base()){
             open( LOG, ">>".$self -> logfile -> [0] ); #model_number -1
             if ($self->step_number()==1){
-                print LOG "The $ofvname of the nonlinear base model :$ofv        $derivatives_name\n";
+                print LOG "The ofv of the nonlinear base model :$ofv        $derivatives_name\n";
                 ui->print(category => 'linearize',
-                    message =>"\nThe $ofvname of the nonlinear base model :$ofv        $derivatives_name\n");
+                    message =>"\nThe ofv of the nonlinear base model :$ofv        $derivatives_name\n");
             }else{
                 if ($reused){
-                    print LOG "The $ofvname of the nonlinear model              :$ofv        $derivatives_name\n";
+                    print LOG "The ofv of the nonlinear model              :$ofv        $derivatives_name\n";
                 }else{
-                    print LOG "The $ofvname of the updated nonlinear model      :$ofv        $derivatives_name\n";
+                    print LOG "The ofv of the updated nonlinear model      :$ofv        $derivatives_name\n";
                 }
             }
             close LOG;
