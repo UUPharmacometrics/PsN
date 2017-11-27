@@ -6,6 +6,7 @@ which_resmod_folders <- function(directory,idv_name) {
   
   #order TIME,TAD,PRED
   order <- c(idv_name,"TAD","PRED")
+  order <- unique(order)
   
   all_idvs <- c()
   j <- 1
