@@ -1,4 +1,4 @@
-get_eta_values <- function(param_model,theta_values) {
+get_eta.etat_values <- function(param_model,theta_values) {
   param_phi_file <- sub("(\\.[^.]+)$",".phi",param_model)
   if(file.exists(param_phi_file)) {
     #which etas to select
