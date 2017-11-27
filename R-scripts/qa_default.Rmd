@@ -178,12 +178,6 @@ resmod_ruv_overview <- resmod_table_list$resmod_ruv_overview
 dvid_nr <- resmod_table_list$dvid_nr
 ```
 
-```{r residual_error_table_for_extra_plots,results='hide',echo=F,warning=F,message=F,eval=!nonlinear}
-xpdb <- xpose_data(file = sub("(\\.[^.]+)$",".lst",original_max0_model)) %>%
-   qa_data(resmod_folder=file.path(working.directory,paste0("resmod_",idv_name)),derivatives_model=original_max0_model)
-```
-
-
 ```{r influential_individuals_calculations,results='hide',echo=F,warning=F,message=F}
 # 5.Influential individuals (CDD)
 ii_list <- get_ii_table(cdd_directory=file.path(working.directory,"cdd_run"),
