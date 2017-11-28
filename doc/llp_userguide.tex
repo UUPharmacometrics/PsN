@@ -1,5 +1,5 @@
 \input{inputs/format_header.tex}
-\guidetitle{LLP user guide}{2015-04-15}
+\guidetitle{LLP user guide}{2017-11-28}
 
 \begin{document}
 
@@ -8,62 +8,61 @@
 
 
 \section{Introduction}
-The Log Likelihood Profiling (LLP) tool is used to calculate confidence intervals of parameter values. Without the LLP the confidence intervals can be calculated with the standard errors of the parameters under the assumption that the parameter values are normally distributed. The LLP, however, makes no assumption of the shape of the distribution.
-The LLP tool will calculate the confidence intervals for any number of parameters in the model, working with one parameter at a time. By first fitting the original model and then fixing the parameter at values close to the NONMEM estimate, the LLP obtains the difference in likelihood between the original model and new, reduced model. The logarithm of the difference in likelihood is chi2 distributed and when that value is 3.84, the parameter value is at the 95\% confidence limit. The search for the limit is done on both sides of the original parameter value, and thus the LLP makes no assumption of symmetry or the parameter value distribution.
-Examples
+The llp (Log Likelihood Profiling) tool is used to calculate confidence intervals of parameter estimates. Without the llp the confidence intervals can be calculated with the standard errors (SE) of the parameters under the assumption that the parameter values are normally distributed. The llp tool, however, makes no assumption of the shape of the distribution and will calculate the confidence intervals for any number of parameters in the model, working with one parameter at a time. By first fitting the original model and then fixing the parameter at values close to the NONMEM estimate, the llp tool obtains the difference in likelihood between the original model and new, reduced model. The logarithm of the difference in likelihood is chi2 distributed and when that value is 3.84, the parameter value is at the 95\% confidence limit. The search for the limit is done on both sides of the original parameter value, and thus the llp tool makes no assumption of symmetry or the parameter value distribution.\\
+Examples:
+\begin{verbatim}
+llp run89.mod -thetas=1,2
+\end{verbatim}
+This will make the llp tool try to estimate the confidence intervals for thetas one and two of the model in run89.mod. It will base the first guesses on the SE estimates from run89.lst.
 \begin{verbatim}
 llp run89.mod -thetas=1,2 -rse_thetas=20,30
 \end{verbatim}
-
+In this example, we explicitly specify the relative SE which is necessary if we do not have an output file with SE estimates.
 \section{Input and options}
 
 \subsection{Required input}
-A model file is required on the command-line. Then, at least one of the options -thetas, -omegas or -sigmas must be specified, see below. If an lst-file with standard error estimates already exists, no more input is needed. Otherwise, for each specified $\langle$parameter$\rangle$ (theta/omega/sigma) there must be a corresponding rse-value given by option -rse\_$\langle$parameter$\rangle$, see below. 
+A model file is required on the command line. Then, at least one of the options -omegas, -sigmas or -thetas must be specified. If an lst-file with SE estimates already exists, no more input is needed. Otherwise, for each specified $\langle$parameter$\rangle$ (theta/omega/sigma) there must be a corresponding rse-value given by option -rse\_$\langle$parameter$\rangle$. 
 
 \begin{optionlist}
-\optdefault{thetas}{theta number list}
+\optdefault{omegas}{comma-separated list of parameter numbers}
+A comma-separated list, specifying the omegas for which the llp should try to assess confidence intervals. The numbers refer to the order number of the initial values in the model file. For example, if first there is a block record with size 2 (3 initial values) and then there is a diagonal record with size 3, then the numbers 4,5 and 6 refer to the diagonal elements.
+\nextopt
+\optdefault{sigmas}{comma-separated list of parameter numbers}
+A comma-separated list, specifying the sigmas for which the llp should try to assess confidence intervals. The numbers refer to the order number of the initial values in the model file. For example, if first there is a block record with size 2 (3 initial values) and then there is a diagonal record with size 3, then the numbers 4, 5 and 6 refer to the diagonal elements.
+\nextopt
+\optdefault{thetas}{comma-separated list of parameter numbers}
 A comma-separated list, specifying the thetas for which the llp should try to assess confidence intervals. 
-\nextopt
-\optdefault{omegas}{omega number list}
-A comma-separated list, specifying the omegas for which the llp should try to assess confidence intervals. 
-The numbers refer to the order number of the initial values in the model file. For example, if first there is 
-a block record with size 2 (3 initial values) and then there is a diagonal record with size 3, then
-numbers 4,5 and 6 refer to the diagonal elements.
-\nextopt
-\optdefault{sigmas}{sigma number list}
-A comma-separated list, specifying the sigmas for which the llp should try to assess confidence intervals. 
-The numbers refer to the order number of the initial values in the model file. For example, if first there is 
-a block record with size 2 (3 initial values) and then there is a diagonal record with size 3, then
-numbers 4,5 and 6 refer to the diagonal elements.
 \nextopt
 \end{optionlist}
 
 \subsection{Optional input}
 
 \begin{optionlist}
-\optdefault{rse\_thetas}{list}
-A comma-separated list of the relative standard error, specified in percent (\%), for each theta listed by option -thetas. 
-\nextopt
-\optdefault{rse\_omegas}{list}
-A comma-separated list of the relative standard error, specified in percent (\%), for each omega listed by option -omegas. 
-\nextopt
-\optdefault{rse\_sigmas}{list}
-A comma-separated list of the relative standard error, specified in percent (\%), for each sigma listed by option -sigmas. 
-\nextopt
+
 \optdefault{max\_iterations}{N}
 Default value is 10. This number limits the number of search iterations for each interval limit. If the llp has not found the upper limit for a parameter after max\_iteration number of guesses it terminates. 
 \nextopt
 \optdefault{normq}{X}
-Default value 1.96. The value is used for calculating the first guess of the confidence interval limits. If the standard errors (SE) exist, the guess will be maximum-likelihood estimate $\pm$ normq * SE, otherwise it will be MLE $\pm$ normq * rse\_parameter/100 * MLE, where rse\_parameter is rse\_thetas, rse\_omegas or rse\_sigmas (optional input parameters). The default value or normq is 1.96 which translates to a 95\% confidence interval assuming normal distribution of the parameter estimates. 
-\nextopt
-\optdefault{outputfile}{filename}
-The name of the NONMEM output file. The default name is the name of the model file with '.mod' substituted with '.lst'. Example: if the modelfile is run89.mod, LLP will by default look for the outputfile run89.lst. If the name of the output file does not follow this standard, the name must be specifed with this option. 
+Default value is 1.96. The value is used for calculating the first guess of the confidence interval limits. If the SE exist, the guess will be maximum-likelihood estimate (MLE) $\pm$ normq * SE, otherwise it will be MLE $\pm$ normq * rse\_parameter/100 * MLE, where rse\_parameter is rse\_thetas, rse\_omegas or rse\_sigmas (optional input parameters). The default value of normq translates to a 95\% confidence interval assuming normal distribution of the parameter estimates. 
 \nextopt
 \optdefault{ofv\_increase}{X}
-Default value 3.84. The increase in objective function value associated with the desired confidence interval. 
+Default value is 3.84. The increase in the objective function value associated with the desired confidence interval. 
+\nextopt
+\optdefault{outputfile}{filename}
+The name of the NONMEM output file. The default name is the name of the model file with '.mod' substituted with '.lst'.\\
+Example: if the modelfile is run89.mod, llp will by default look for the outputfile run89.lst. If the name of the output file does not follow this standard, the name must be specifed with this option. 
+\nextopt
+\optdefault{rse\_omegas}{comma-separated list of relative standard errors}
+A comma-separated list specified in percent (\%), for each omega listed by option -omegas. 
+\nextopt
+\optdefault{rse\_sigmas}{comma-separated list of relative standard errors}
+A comma-separated list specified in percent (\%), for each sigma listed by option -sigmas. 
+\nextopt
+\optdefault{rse\_thetas}{comma-separated list of relative standard errors}
+A comma-separated list specified in percent (\%), for each theta listed by option -thetas. 
 \nextopt
 \optdefault{significant\_digits}{N}
-Default 3. Specifies the number of significant digits that is required for the test of the increase in objective function value. The default is 3, which means that the method will stop once the difference in objective function value is between 3.835 and 3.845 if -ofv\_increase is set to 3.84 (default). 
+Default 3. Specifies the number of significant digits that are required for the test of the increase in objective function value. With the default 3, the method will stop once the difference in objective function value is between 3.835 and 3.845 if\\ -ofv\_increase is set to its default value 3.84. 
 \nextopt
 \end{optionlist}
 
