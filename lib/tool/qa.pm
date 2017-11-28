@@ -119,8 +119,8 @@ sub modelfit_setup
         my @extra_tablestrings = ( @table_columns, 'NOPRINT', 'NOAPPEND', 'ONEHEADER', 'FILE=extra_table' );
         $eval_model->remove_records(type => 'table');
         $eval_model->add_records(type => 'table', record_strings => \@extra_tablestrings);
-        $eval_model->set_maxeval_zero();
         $eval_model->_write(filename => $self->directory . $self->model->filename);
+        $eval_model->set_maxeval_zero();
         $eval_model->outputs->[0]->directory($self->directory);
         my $modelfit = tool::modelfit->new(
             %{common_options::restore_options(@common_options::tool_options)},
@@ -407,7 +407,7 @@ sub modelfit_setup
 
     if (not $self->_skipped('cdd')) {
         print "\n*** Running cdd ***\n";
-        my $cdd_model = model->new(filename => $base_model_name);
+        my $cdd_model = model->new(filename => $self->base_model_path);
         eval {
             my $cdd = tool::cdd->new(
                 %{common_options::restore_options(@common_options::tool_options)},
