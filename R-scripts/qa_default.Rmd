@@ -364,12 +364,13 @@ if(all(skip!="frem")||all(skip!="scm")) {
 if(all(skip!="resmod")) {
   cat("\\pagebreak\n\n")
   cat("#Residual Error Model\n\n")
-  if(!nonlinear) {
+  if(!nonlinear && file.exists(sub("(\\.[^.]+)$",".lst",original_max0_model)) &&
+     file.exists(file.path(working.directory,paste0("resmod_",idv_name),"results.csv"))) {
     xpdb_data <- xpose_data(file = sub("(\\.[^.]+)$",".lst",original_max0_model)) %>%
       qa_data(resmod_folder=file.path(working.directory,paste0("resmod_",idv_name)),derivatives_model=original_max0_model)
   }
   for (i in 1:length(dvid_nr)) {
-    if(!nonlinear) {
+    if(!nonlinear && exists("xpdb_data")) {
       xpdb <- xpdb_data %>% add_resmod_xpdbs(resmod_folder=file.path(working.directory,paste0("resmod_",idv_name)),  dvid_value=dvid_nr[i])
     }
     if(dvid_nr[i] != 'NA') {
@@ -379,7 +380,7 @@ if(all(skip!="resmod")) {
     resmod_ruv_models_table <- ztable_sub(resmod_ruv_models_table,type=type,colnames.bold = T,include.rownames = F,longtable = T,align="lrcl")
     print(resmod_ruv_models_table)
     cat("Residual error model, resulting expected improvement in OFV, required additional model parameters as well as their estimates.\n\n\n\n")
-    if(!nonlinear) {
+    if(!nonlinear && exists("xpdb")) {
       res_var_attribution <- resmod_variability_attribution(xpdb,dvid_col_name=dvid_name,dvid_value=dvid_nr[i])
       print(res_var_attribution)
       cat("\n\n Attribution of variability to between-subject random effects and residual unexplained variability (RUV) versus independent variable under different residual error models.")
@@ -389,7 +390,8 @@ if(all(skip!="resmod")) {
       align <- paste(c("l",rep("r",ncol(res_param_uncertainty)-1)),collapse = '')
       res_param_uncertainty <- ztable_sub(res_param_uncertainty,type=type,colnames.bold=T,include.colnames=T,include.rownames=F,longtable=T,align=align)
       print(res_param_uncertainty)
-      cat("Attribution of variability to between-subject random effects and residual unexplained variability (RUV) versus independent variable under different residual error models.\n\n\n\n")
+      cat("Attribution of variability to between-subject random effects and residual unexplained variability (RUV) versus independent variable under different residual error models.\n\n")
+      cat("WARNING: CALCULATIONS ASSUME EXPONENTIAL ETAs AND CORRESPONDENCE BETWEEN ETA AND THETA NUMBERS!\n\n\n\n")
       res_shrinkage <- resmod_shrinkage(xpdb,dvid_col_name=dvid_name,dvid_value=dvid_nr[i])
       res_shrinkage <- keep_symbols(res_shrinkage,type)
       align <- paste(c("l",rep("r",ncol(res_shrinkage)-1)),collapse = '')

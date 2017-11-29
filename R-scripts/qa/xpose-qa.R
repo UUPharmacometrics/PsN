@@ -1,5 +1,5 @@
-qa_data <- function(xpdb, resmod_folder, derivatives_model, quiet = TRUE){
-  #if(!dir.exists(qa_folder)) stop("Could not find qa folder")
+qa_data <- function(xpdb, resmod_folder, derivatives_model) {
+  
   derivatives_lst <- sub("(\\.[^.]+)$",".lst",derivatives_model)
   
   xpdb_derivatives <- xpose::xpose_data(file = derivatives_lst, quiet = T)
@@ -17,31 +17,11 @@ qa_data <- function(xpdb, resmod_folder, derivatives_model, quiet = TRUE){
     tidyr::unnest() %>% 
     dplyr::filter(dvid!="sum") %>%
     tidyr::separate(parameters, c("parameter", "value"), sep = "=", convert = T)
-
-  # resmod_estimates <- file.path(resmod_folder, "m1") %>%
-  #   list.files(pattern = "\\.lst$", full.names = T) %>%
-  #   purrr::map(~xpose::xpose_data(file = .x, quiet = T, ignore = c('data'), extra_files = c('.ext'))) %>%
-  #   purrr::set_names(purrr::map(., ~.x$summary$value[.x$summary$label == "run"])) %>%
-  #   purrr::map_df(~get_file(.x, ext = "ext") %>% dplyr::filter(`ITERATION`==-1E9) %>% dplyr::select(-ITERATION, -OBJ), .id = "name") %>%
-  #   tidyr::gather("parameter", "value", -name, na.rm = T)
-
-  # if(dvid_value[1]!="NA") {
-  #   m1_folder_path <- file.path(resmod_folder,paste0("resmod_DVID_",dvid_value),"m1")
-  # } else {
-  #   m1_folder_path <- file.path(resmod_folder, "m1")
-  # }
-  # resmod_xpdbs <- m1_folder_path %>%
-  #   list.files(pattern = "\\.lst$", full.names = T) %>%
-  #   stringi::stri_subset_regex(., "l2\\.",negate=TRUE) %>%
-  #   purrr::map(~xpose::xpose_data(file = .x, quiet = T, ignore = c('data'), extra_files = c('.ext', '.phi'))) %>%
-  #   purrr::set_names(purrr::map_chr(., ~.x$summary$value[.x$summary$label == "run"]))
   
   qa_data <- tibble::tibble(problem = NA, method = "qa", type = "default", modified = F, 
                     data = list(list(derivatives = xpdb_derivatives,
                                 resmod = list(
-                                  summary = resmod_results#,
-                                  # estimates = resmod_estimates,
-                                  # xpdbs = resmod_xpdbs
+                                  summary = resmod_results
                                 )
                             ))
   )
@@ -63,7 +43,7 @@ add_resmod_xpdbs <- function(xpdb, resmod_folder,  dvid_value) {
   }
   resmod_xpdbs <- m1_folder_path %>%
     list.files(pattern = "\\.lst$", full.names = T) %>%
-    stringi::stri_subset_regex(., "l2\\.",negate=TRUE) %>%
+    stringi::stri_subset_regex(., "l2\\.",negate=T) %>%
     purrr::map(~xpose::xpose_data(file = .x, quiet = T, ignore = c('data'), extra_files = c('.ext', '.phi'))) %>%
     purrr::set_names(purrr::map_chr(., ~.x$summary$value[.x$summary$label == "run"]))
 
@@ -141,7 +121,7 @@ resmod_parameter_uncertainty <- function(xpdb,dvid_col_name,dvid_value){
   
   omega_matrix <- get_omega_matrix(xpdb)
   
-  mu_models <- sprintf("log(THETA%i)", seq(1, NROW(omega_matrix))) 
+  mu_models <- sprintf("log(THETA%i)", seq(1, min(NROW(omega_matrix),NROW(get_theta_estimates(xpdb))))) 
   
   table <- dplyr::left_join(calc_iiv_contribution(xpdb, dvid_col_name, dvid_value), calc_resmod_ruv_contribution(xpdb, dvid_col_name, dvid_value), by = "ID") %>%
     {dplyr::bind_rows(., dplyr::filter(., name == first(name)) %>% 
@@ -155,6 +135,7 @@ resmod_parameter_uncertainty <- function(xpdb,dvid_col_name,dvid_value){
            fim = purrr::map2(var_y, df_deta, ~t(.y) %*% solve(.x) %*% .y)) %>% 
     dplyr::group_by(name) %>% 
     dplyr::summarise(pfim = list(purrr::reduce(fim, `+`))) %>% 
+    dplyr::mutate(pfim = purrr::map(pfim, ~.x[seq_along(mu_models), seq_along(mu_models)])) %>% 
     mutate(
       dmu_dtheta = list(calc_dmu_dtheta(mu_models, xpdb)),
       theta_cov = purrr::map2(dmu_dtheta, pfim, ~ t(.x) %*% .y %*% .x %>% MASS::ginv()),
@@ -201,10 +182,10 @@ resmod_shrinkage <- function(xpdb,dvid_col_name,dvid_value){
       ruv_var = dplyr::case_when(name == "original" ~ ruv_var,
                           TRUE ~ resmod_ruv_var),
       fim = purrr::map2(ruv_var, df_deta, ~t(.y) %*% MASS::ginv(.x) %*% .y),
-      bfim = purrr::map(fim, ~.x + solve(omega_matrix))
+      bfim = purrr::map(fim, ~.x + MASS::ginv(omega_matrix))
       ) %>% 
     dplyr::mutate(
-      shrinkage = purrr::map(bfim, ~1-sqrt(1-diag(solve(.x))/diag(omega_matrix))),
+      shrinkage = purrr::map(bfim, ~1-sqrt(1-diag(MASS::ginv(.x))/diag(omega_matrix))),
       eta_name = list(eta_names)
     ) %>% 
     tidyr::unnest(shrinkage, eta_name) %>%  
@@ -403,7 +384,7 @@ as_resmod_name_factor <- function(resmod_names){
 }
 
 get_qa_data <- function(xpdb){
-  if(!any(xpdb$special$method == "qa")) stop("The xpdb does not contain the necessary data.")
+  #if(!any(xpdb$special$method == "qa")) stop("The xpdb does not contain the necessary data.")
   
   dplyr::filter(xpdb$special, method == 'qa') %>% 
     purrr::pluck("data", 1)
@@ -413,7 +394,6 @@ get_eta_density <- function(xpdb, dvid_col_name, dvid_value){
   eta_values <- get_eta_values(xpdb, dvid_col_name, dvid_value) 
   
   omega_matrix <- get_omega_matrix(xpdb)
-  
   eta_density <- eta_values %>% 
     tidyr::spread(eta, eta_value) %>% 
     tidyr::nest(-ID) %>% 
@@ -427,7 +407,7 @@ get_eta_values <- function(xpdb,dvid_col_name, dvid_value){
   qa_data$derivatives %>% 
     xpose::fetch_data(.problem = 1, .subprob = 0, quiet = T) %>% 
     filter_dvid(.,dvid_col_name,dvid_value) %>%
-    dplyr::select(ID, starts_with("ETA")) %>% 
+    dplyr::select(ID, matches("^(ETA\\d|ET\\d+)$")) %>% 
     dplyr::group_by(ID) %>% 
     dplyr::slice(1) %>% 
     dplyr::ungroup() %>% 
