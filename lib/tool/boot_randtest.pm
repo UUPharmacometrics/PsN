@@ -19,11 +19,18 @@ has 'base_model' => ( is => 'rw', isa => 'model' );
 has 'stratify_on' => ( is => 'rw', isa => 'Str' );
 has 'random_column' => ( is => 'rw', isa => 'Str' );     # Column to replace with a dichotomous column for randomizing
 has 'summarize' => ( is => 'rw', isa => 'Bool', default => 0 );
+has 'replacement' => ( is => 'rw', isa => 'Bool', default => 0 );
 
 
 sub BUILD
 {
 	my $self  = shift;
+
+    my $repl_text = " no";
+    if ($self->replacement) {
+        $repl_text = "";
+    }
+    print "boot_randtest is bootstrapping with$repl_text replacement.\n";
 
 	#Find column index of rand column
 	#Find column index of strat column
@@ -76,7 +83,7 @@ sub modelfit_setup
             ignoresign => $model->ignoresigns->[0],
             idcolumn => $model->problems->[0]->find_data_column(column_name => 'ID') + 1,
             missing_data_token => $self->missing_data_token,
-            replacement => 0,
+            replacement => $self->replacement,
         );
 
     if (defined $self->random_column) {

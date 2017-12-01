@@ -34,6 +34,7 @@ my %optional_options = (
     "sample_size:s" => undef,
     "random_column:s" => undef,
     "summarize!" => undef,
+    "replacement!" => undef,
 );
 
 my $res = GetOptions( \%options, 
@@ -129,6 +130,13 @@ $help_text{-summarize} = <<'EOF';
       Default off
 EOF
 
+$help_text{-replacement} = <<'EOF';
+-replacement
+
+      Should the bootstrapping be done with replacement?
+      Default is no replacement
+EOF
+
 common_options::online_help('boot_randtest', \%options, \%help_text, \%required_options, \%optional_options);
 common_options::setup(\%options, 'boot_randtest'); #calls set_globals etc, initiates random sequence
 
@@ -213,6 +221,7 @@ if (not defined $options{'summarize'}) {
         base_model => $base_model,
         random_column => $options{'random_column'},
         summarize => $options{'summarize'},
+        replacement => $options{'replacement'},
     );
 } else {
     $rand = tool::boot_randtest->new(
