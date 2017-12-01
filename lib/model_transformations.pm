@@ -620,6 +620,36 @@ sub boxcox_etas
     prepend_code(model => $model, code => \@code);
 }
 
+sub uniform_etas
+{
+    # Change all or some ETAs to a uniform distribution
+
+	my %parm = validated_hash(\@_,
+        model => { isa => 'model' },
+        etas => { isa => 'ArrayRef', optional => 1 },       # An array of the etas to transform or unspecified for all etas
+    );
+    my $model = $parm{'model'};
+	my $etas = $parm{'etas'};
+
+    if (not defined $etas) {
+        my $netas = $model->nomegas->[0];
+        $etas = [1 .. $netas];
+    }
+    my $nthetas = $model->nthetas;
+
+    _rename_etas(model => $model, etas => $etas, prefix => 'ETAU');
+
+    my $next_theta = $nthetas + 1;
+    my @code;
+    for my $i (@$etas) {
+        push @code, "ETAU$i = (PHI(ETA($i)) - 0.5*) * THETA($next_theta)";
+        $next_theta++;
+        $model->add_records(type => 'theta', record_strings => [ '$THETA (-3, 0.01, 3)']); 
+    }
+
+    prepend_code(model => $model, code => \@code);
+}
+
 sub tdist_etas
 {
     # Tdist transform all or some ETAs of model
