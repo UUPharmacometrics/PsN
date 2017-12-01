@@ -145,6 +145,7 @@ sub _bootstrap
 		 resume => { isa => 'Bool', default => 0, optional => 1 },
 		 samples => { isa => 'Int', default => 200, optional => 1 },
 		 subjects => { isa => 'HashRef[Num]', default => $self->count_ind, optional => 1 },
+         replacement => { isa => 'Bool', default => 1 },
 		 MX_PARAMS_VALIDATE_NO_CACHE => 1
 	);
 	my $directory = $parm{'directory'};
@@ -152,6 +153,8 @@ sub _bootstrap
 	my $stratify_on = $parm{'stratify_on'};
 	my $resume = $parm{'resume'};
 	my $samples = $parm{'samples'};
+	my $replacement = $parm{'replacement'};
+
 	my %subjects = defined $parm{'subjects'} ? %{$parm{'subjects'}} : ();
 	my @boot_samples;
 	my @incl_individuals;
@@ -189,7 +192,8 @@ sub _bootstrap
 		  $self->resample( subjects    => \%subjects,
 						   resume      => $resume,
 						   new_name    => $new_name,
-						   stratify_on => $stratify_on);
+						   stratify_on => $stratify_on,
+                           replacement => $replacement);
 	  push( @included_keys, $incl_key_ref );
 	  push( @incl_individuals, $incl_ind_ref );
 	  push( @boot_samples, $new_name );
@@ -588,7 +592,8 @@ sub bootstrap_create_datasets
         output_directory => { isa => 'Str', optional => 0 },
         ignoresign => { isa => 'Str', optional => 1 },
         missing_data_token => { isa => 'Maybe[Num]', optional => 1 },
-        idcolumn => { isa => 'Int', optional => 0 }
+        idcolumn => { isa => 'Int', optional => 0 },
+        replacement => { isa => 'Bool', default => 1 },
     );
     my $input_filename = $parm{'input_filename'};
     my $input_directory = $parm{'input_directory'};
@@ -600,6 +605,7 @@ sub bootstrap_create_datasets
     my $ignoresign = $parm{'ignoresign'};
     my $missing_data_token = $parm{'missing_data_token'};
     my $idcolumn = $parm{'idcolumn'};
+    my $replacement = $parm{'replacement'};
 
     unless (-d $output_directory) {
         croak("output directory $output_directory is not a directory/does not exist");
@@ -628,7 +634,8 @@ sub bootstrap_create_datasets
         name_stub   => $name_stub,
         samples     => $samples,
         subjects    => \%subjects,
-        stratify_on => $stratify_on);
+        stratify_on => $stratify_on,
+        replacement => $replacement );
     $data = undef;
     return ($new_datas, $incl_ids, $incl_keys,\%subjects, $count, \@all_individuals);
 }
@@ -1663,145 +1670,175 @@ sub _renumber_ascending
 
 sub resample
 {
-	my $self = shift;
-	my %parm = validated_hash(\@_,
+    my $self = shift;
+    my %parm = validated_hash(\@_,
         new_name => { isa => 'Str', optional => 0 },
         stratify_on => { isa => 'Maybe[Int]', optional => 1 },
         resume => { isa => 'Bool', default => 0, optional => 1 },
         subjects => { isa => 'HashRef[Int]', default => $self->count_ind, optional => 1 },
+        replacement => { isa => 'Bool', default => 1 },     # Should sampling be with or without replacement
         MX_PARAMS_VALIDATE_NO_CACHE => 1
     );
-	my $new_name = $parm{'new_name'};
-	my $stratify_on = $parm{'stratify_on'};
-	my $resume = $parm{'resume'};
-	my %subjects = defined $parm{'subjects'} ? %{$parm{'subjects'}} : ();
-	my $boot;
-	my @incl_individuals;
-	my @included_keys;
+    my $new_name = $parm{'new_name'};
+    my $stratify_on = $parm{'stratify_on'};
+    my $resume = $parm{'resume'};
+    my %subjects = defined $parm{'subjects'} ? %{$parm{'subjects'}} : ();
+    my $replacement = $parm{'replacement'};
+    my $boot;
+    my @incl_individuals;
+    my @included_keys;
 
-	my ( @header, $individuals, @bs_inds, $key_ref, @id_ids, @bs_id_ids );
+    my ( @header, $individuals, @bs_inds, $key_ref, @id_ids, @bs_id_ids );
 
-	my @subj_keys = keys( %subjects );
-	if ( $#subj_keys < 0 ) {
-	  croak("sample_size must be defined" );
-	}
-	if ( defined $stratify_on ) {
-	  my %strata;
-	  if( $stratify_on =~ /\D/ ) {
-	    %strata = %{$self->factors( column_head => $stratify_on )};
-	    if ( _have_non_unique_values(\%strata) ) {
-	      croak("At least one individual was found to have multiple values in the $stratify_on column. ".
-			    "The column $stratify_on cannot be used for stratification of the resampling." );
-	    }
-	  } else {
-	    %strata = %{$self->factors( column => $stratify_on )};
-	    if (  _have_non_unique_values(\%strata) ) {
-	      croak("At least one individual was found to have multiple values in column number $stratify_on. ".
-			    "Column $stratify_on cannot be used for stratification of the resampling." );
-	    }
-	  }
-	  if ( scalar keys( %subjects) != scalar keys( %strata ) and
-	       not ( $#subj_keys == 0 and defined $subjects{'default'} ) ) {
-	    croak("sample_size must be defined using one default value ".
-			  "or exactly one value per strata:\n".
-			  "resampling per STUD=1001,1002,1003\n".
-			  "use -sample_size='1001=>10,1002=>25,1003=>12' or ".
-			  "-sample_size='default=>10'");
-	  }
- 	  unless ( $resume and -e $new_name ) {
-		  @header = @{$self->header()};
-		  $individuals = $self->individuals();
-		  my @factorlist = sort { $a <=> $b } keys %strata;
+    my @subj_keys = keys( %subjects );
+    if ( $#subj_keys < 0 ) {
+        croak("sample_size must be defined" );
+    }
+    if ( defined $stratify_on ) {
+        my %strata;
+        if( $stratify_on =~ /\D/ ) {
+            %strata = %{$self->factors( column_head => $stratify_on )};
+            if ( _have_non_unique_values(\%strata) ) {
+                croak("At least one individual was found to have multiple values in the $stratify_on column. ".
+                    "The column $stratify_on cannot be used for stratification of the resampling." );
+            }
+        } else {
+            %strata = %{$self->factors( column => $stratify_on )};
+            if (  _have_non_unique_values(\%strata) ) {
+                croak("At least one individual was found to have multiple values in column number $stratify_on. ".
+                    "Column $stratify_on cannot be used for stratification of the resampling." );
+            }
+        }
+        if ( scalar keys( %subjects) != scalar keys( %strata ) and
+            not ( $#subj_keys == 0 and defined $subjects{'default'} ) ) {
+            croak("sample_size must be defined using one default value ".
+                "or exactly one value per strata:\n".
+                "resampling per STUD=1001,1002,1003\n".
+                "use -sample_size='1001=>10,1002=>25,1003=>12' or ".
+                "-sample_size='default=>10'");
+        }
+        unless ( $resume and -e $new_name ) {
+            @header = @{$self->header()};
+            $individuals = $self->individuals();
+            my @factorlist = sort { $a <=> $b } keys %strata;
 
-		  foreach my $factor (@factorlist) {
-			  my $key_list = $strata{$factor};
-			  my $keys;
-			  if ( defined $subjects{$factor} ) {
-				  $keys = $subjects{$factor};
-			  } elsif( defined $subjects{'default'} ) {
-				  $keys = sprintf( "%.0f",($subjects{'default'}*
-										   (scalar(@{$key_list})) / ($self->count_ind())) );
-			  } else {
-				  croak("A sample size for strata $factor could not be found ".
-						"and no default sample size was set" );
-			  }
-			  for ( my $i = 0; $i < $keys; $i++ ) {
-				  my $list_ref = random_uniform_integer(1,0,(scalar(@{$key_list}) - 1));
-				  push( @bs_inds, $individuals -> [ $key_list->[$list_ref] ]->copy );
-				  push( @included_keys, $key_list->[$list_ref] );
-				  push( @incl_individuals, $individuals -> [ $key_list->[$list_ref] ]->idnumber );
-				  push( @bs_id_ids, $id_ids[ $key_list->[$list_ref] ] );
-			  }
-		  }
+            foreach my $factor (@factorlist) {
+                my $key_list = $strata{$factor};	
+                my @key_list_copy = @$key_list;
+                my $keys;
+                if ( defined $subjects{$factor} ) {
+                    $keys = $subjects{$factor};
+                } elsif( defined $subjects{'default'} ) {
+                    $keys = sprintf( "%.0f",($subjects{'default'}*
+                            (scalar(@{$key_list})) / ($self->count_ind())) );
+                } else {
+                    croak("A sample size for strata $factor could not be found ".
+                        "and no default sample size was set" );
+                }
+                for ( my $i = 0; $i < $keys; $i++ ) {
+                    if ($replacement) { 
+                        my $list_ref = random_uniform_integer(1, 0, (scalar(@{$key_list}) - 1));
+                        push( @bs_inds, $individuals -> [ $key_list->[$list_ref] ]->copy );
+                        push( @included_keys, $key_list->[$list_ref] );
+                        push( @incl_individuals, $individuals -> [ $key_list->[$list_ref] ]->idnumber );
+                        push( @bs_id_ids, $id_ids[ $key_list->[$list_ref] ] );
+                    } else {
+                        if (scalar(@key_list_copy) == 0) {
+                            print "Warning: Strata $factor ran out of samples\n";
+                            last;
+                        }
+                        my $list_index = random_uniform_integer(1, 0, scalar(@key_list_copy) - 1);
+                        push(@bs_inds, $individuals->[$key_list_copy[$list_index]]->copy );
+                        push(@included_keys, $key_list_copy[$list_index]);
+                        push(@incl_individuals, $individuals->[$key_list_copy[$list_index]]->idnumber);
+                        push(@bs_id_ids, $id_ids[$key_list_copy[$list_index]]);
+                        splice(@key_list_copy, $list_index, 1);
+                    }
+                }
+            }
 
-		  $boot = data->new( header      => \@header,
-							 idcolumn    => $self->idcolumn,
-							 ignoresign  => $self->ignoresign,
-							 missing_data_token => $self->missing_data_token,
-							 individuals => \@bs_inds,
-							 filename    => $new_name,
-							 ignore_missing_files => 1);
-		  $boot->_renumber_ascending;
-		  $boot->_write;
- 	  } else {
-		  # If we are resuming, we still need to generate the
-		  # pseudo-random sequence and initiate a data object
-		  while( my ( $factor, $key_list ) = each %strata ) {
-			  my $keys;
-			  if ( defined $subjects{$factor} ) {
-				  $keys = $subjects{$factor};
-			  } elsif( defined $subjects{'default'} ) {
-				  $keys = sprintf( "%.0f",($subjects{'default'}*
-										   (scalar(@{$key_list})) / ($self->count_ind())) );
-			  } else {
-				  croak("A sample size for strata $factor could not be found ".
-						"and no default sample size was set" );
-			  }
-			  for ( my $i = 0; $i < $keys; $i++ ) {
-				  my $list_ref = random_uniform_integer(1,0,(scalar(@{$key_list}) - 1));
-			  }
-		  }
-	  }
-	} else {
-		my $size;
-		if( defined $subjects{'default'} ) {
-			$size = $subjects{'default'};
-		} else {
-			croak("No default sample size was set" );
-		}
-		unless ( $resume and -e $new_name ) {
-			@header = @{$self->header()};
-			$self->individuals([]) unless defined $self->individuals; # FIXME
-			$individuals = $self->individuals;
-			for ( my $i = 1; $i <= $size; $i++ ) {
-				$key_ref = random_uniform_integer(1, 0, scalar @{$individuals} - 1);
-				push( @bs_inds, $individuals->[$key_ref]->copy );
-				push( @included_keys, $key_ref );
-				push( @incl_individuals, $individuals->[ $key_ref ]->idnumber );
-				push( @bs_id_ids, $id_ids[ $key_ref ] );
-			}
+            $boot = data->new( header      => \@header,
+                idcolumn    => $self->idcolumn,
+                ignoresign  => $self->ignoresign,
+                missing_data_token => $self->missing_data_token,
+                individuals => \@bs_inds,
+                filename    => $new_name,
+                ignore_missing_files => 1);
+            $boot->_renumber_ascending;
+            $boot->_write;
+        } else {
+            # If we are resuming, we still need to generate the
+            # pseudo-random sequence and initiate a data object
+            while( my ( $factor, $key_list ) = each %strata ) {
+                my $keys;
+                if ( defined $subjects{$factor} ) {
+                    $keys = $subjects{$factor};
+                } elsif( defined $subjects{'default'} ) {
+                    $keys = sprintf( "%.0f",($subjects{'default'}*
+                            (scalar(@{$key_list})) / ($self->count_ind())) );
+                } else {
+                    croak("A sample size for strata $factor could not be found ".
+                        "and no default sample size was set" );
+                }
+                for ( my $i = 0; $i < $keys; $i++ ) {
+                    my $list_ref = random_uniform_integer(1,0,(scalar(@{$key_list}) - 1));
+                }
+            }
+        }
+    } else {
+        my $size;
+        if( defined $subjects{'default'} ) {
+            $size = $subjects{'default'};
+        } else {
+            croak("No default sample size was set" );
+        }
+        unless ( $resume and -e $new_name ) {
+            @header = @{$self->header()};
+            $self->individuals([]) unless defined $self->individuals; # FIXME
+            $individuals = $self->individuals;
+            my @individuals_copy = @$individuals;
+            for ( my $i = 1; $i <= $size; $i++ ) {
+                if ($replacement) {
+                    $key_ref = random_uniform_integer(1, 0, scalar @{$individuals} - 1);
+                    push( @bs_inds, $individuals->[$key_ref]->copy );
+                    push( @included_keys, $key_ref );
+                    push( @incl_individuals, $individuals->[ $key_ref ]->idnumber );
+                    push( @bs_id_ids, $id_ids[ $key_ref ] );
+                } else {
+                    if (scalar(@individuals_copy) == 0) {
+                        print "Warning: Ran out of individuals\n";
+                        last;
+                    }
+                    my $list_index = random_uniform_integer(1, 0, scalar(@individuals_copy) - 1);
+                    push(@bs_inds, $individuals->[$list_index]->copy);
+                    push(@included_keys, $list_index);
+                    push(@incl_individuals, $individuals->[$list_index]->idnumber);
+                    push(@bs_id_ids, $id_ids[$list_index]);
+                    splice(@individuals_copy, $list_index, 1);
+                }
+            }
 
-			$boot = data->new( header      => \@header,
-							   idcolumn    => $self->idcolumn,
-							   ignoresign  => $self->ignoresign,
-							   missing_data_token => $self->missing_data_token,
-							   individuals => \@bs_inds,
-							   filename    => $new_name,
-							   ignore_missing_files => 1);
+            $boot = data->new( header      => \@header,
+                idcolumn    => $self->idcolumn,
+                ignoresign  => $self->ignoresign,
+                missing_data_token => $self->missing_data_token,
+                individuals => \@bs_inds,
+                filename    => $new_name,
+                ignore_missing_files => 1);
 
-			$boot->_renumber_ascending;
-			$boot->_write;
+            $boot->_renumber_ascending;
+            $boot->_write;
 
-		} else {
-			# If we are resuming, we still need to generate the
-			# pseudo-random sequence
-			for ( my $i = 1; $i <= $size; $i++ ) {
-				random_uniform_integer(1,0,scalar @{$individuals}-1)
-			}
-		}
-	}
+        } else {
+            # If we are resuming, we still need to generate the
+            # pseudo-random sequence
+            for ( my $i = 1; $i <= $size; $i++ ) {
+                random_uniform_integer(1,0,scalar @{$individuals}-1)
+            }
+        }	
+    }
 
-	return \@incl_individuals, \@included_keys;
+    return \@incl_individuals, \@included_keys;
 }
 
 sub resample_from_keys

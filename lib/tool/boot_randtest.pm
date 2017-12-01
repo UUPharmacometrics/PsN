@@ -76,6 +76,7 @@ sub modelfit_setup
             ignoresign => $model->ignoresigns->[0],
             idcolumn => $model->problems->[0]->find_data_column(column_name => 'ID') + 1,
             missing_data_token => $self->missing_data_token,
+            replacement => 0,
         );
 
     if (defined $self->random_column) {
