@@ -1,98 +1,101 @@
 \input{inputs/format_header.tex}
-\guidetitle{nmoutput2so user guide}{2016-05-13}
-
+\guidetitle{NMOUTPUT2SO user guide}{2017-11-29}
 \begin{document}
 
 \maketitle
 
 \section{Introduction}
-The nmoutput2so script creates and populates a DDMoRe Standard Output 
-\cite{Terranova}
-xml file given the output from one or more NONMEM runs. 
-It is necessary that the format of the model file and other files follow a set of requirements (see below) for this to work. The Perl module XML::LibXML is required by nmoutput2so, but not PsN in general. Make sure that it is installed before using nmoutput2so (If you are using ActivePerl on Windows please read the section on installation below). See the PsN installation guide for intructions.
-
-
-Examples
+The nmoutput2so tool creates and populates a DDMoRe standard output \cite{Terranova} xml file given the output from one or more NONMEM runs. It is necessary that the format of the model file and other files follow a set of requirements for this to work. \\
+The Perl module XML::LibXML is required by nmoutput2so, but not PsN in general. Make sure that it is installed before using nmoutput2so (If you are using ActivePerl on Windows please read the section on installation below). See the PsN installation guide for intructions.\\
+Examples:
 \begin{verbatim}
-nmoutput2so model.lst
+nmoutput2so run1.lst run2.lst
 \end{verbatim}
-
+This will add the NONMEM output from run1.lst in an SOBlock called run1 and the output from run2.lst to an SOBlock called run2. All information that is possible to extract and that is supported will be added to the generated SO file, which will be called run1.SO.xml. 
+\begin{verbatim}
+nmoutput2so -bootstrap_results=bootstrap_results.csv
+-so_filename=res.SO.xml
+\end{verbatim}
+This will add the PsN bootstrap results to a lone SOBlock in the file called res.SO.xml.
 \section{Input and options}
 
 \subsection{Required input}
-Required argument is a list of nonmem results files (.lst). Wildcards will work (i.e. *.lst)
-
+One or more NONMEM results files (.lst) and or -bootstrap\_results and or -vpc\_results (see those options) is mandatory. One SOBlock will be created for each .lst file and the bootstrap/vpc results will be added to the first SOBlock or in it 
+own block if no .lst files were specified. Wildcards will work (i.e. *.lst).
 
 \subsection{Optional input}
 
 \begin{optionlist}
 \optname{bootstrap\_results}
-A PsN bootstrap\_results.csv file to use for filling the Bootstrap elements.
-\nextopt
-\optname{use\_tables}
-Default set. Will use table files (sdtab, patab and cotab) to populate the elements of the SO that needs these. Use -no-use\_tables to not use any table files.
-\nextopt
-\optname{exclude\_elements}
-Set a comma separated list of simple XPaths relative the SOBlock to exclude from the SO.
-For example:
-\begin{verbatim}
--exclude_elements=Estimation/PopulationEstimates
-\end{verbatim}
-\nextopt
-\optname{only\_include\_elements}
-Set a comma separated list of simple XPaths relative the SOBlock. These elements will be the only ones used.
-For example: 
-\begin{verbatim}
--only_include_elements=Estimation/Predictions
-\end{verbatim}
-\nextopt
-\optname{message}
-Specify a string to be added as an information message in the TaskInformation of the first SOBlock.
-\nextopt
-\optname{error}
-Specify a string to be added as an error message in the TaskInformation of the first SOBlock.
-\nextopt
-\optname{toolname}
-The toolname to use for messages. Default is 'NONMEM'
-\nextopt
-\optname{max\_replicates}
-Set a maximum number of simulation replicates to add. Default is to add all replicates
-\nextopt
-\optname{pretty}
-Set if SO should be output with indentations and newlines.
-Default is to not add intentations and thus to generate as compact xml files as possible.
+A bootstrap\_results file as output from PsN to add to the SO.
 \nextopt
 \optname{compress}
 Set to automatically gzip compress the output SO file.
 \nextopt
-\optname{so\_filename}
+\optdefault{error}{string}
+Specify a string to be added as an error message in the TaskInformation of the first SOBlock.
+\nextopt
+\optname{exclude\_elements}
+A comma separated list of simple XPaths relative the SOBlock to exclude from the SO.\\
+Example:
+\begin{verbatim}
+-exclude_elements=Estimation/PopulationEstimates
+\end{verbatim}
+\nextopt
+\optname{external\_tables}
+Set option to create external table files for the simulation results.
+\nextopt
+\optname{extra\_output}
+A comma separated list of tabulated model variables to add a separate SimulatedProfiles element.
+\nextopt
+\optname{generate\_pharmml}
+Generate and connect a minimal companion PharmML to the SO. This ca be used to automatically extract for example the parameter variability levels.
+\nextopt
+\optname{include\_fixed\_params}
+Set option to include estimates of all fixed parameters.
+\nextopt
+\optdefault{max\_replicates}{integer}
+Default is to add all replicates. Set a maximum number of simulation replicates to add. 
+\nextopt
+\optdefault{message}{string}
+Specify a string to be added as an information message in the TaskInformation of the first SOBlock.
+\nextopt
+\optname{only\_include\_elements}
+A comma separated list of XPaths relative the SOBlock. These elements will be the only ones used.\\
+Example: 
+\begin{verbatim}
+-only_include_elements=Estimation/Predictions
+\end{verbatim}
+\nextopt
+\optname{pharmml}
+Set a name of the pharmml file used to generate the SO in the PharmMLRef element.
+\nextopt
+\optname{pretty}
+Default is to not add intentations and thus to generate as compact xml files as possible. Set if SO should be output with indentations and newlines.
+\nextopt
+\optname{psn\_connector}
+Do not use! Only for internal use by the PsN connector.
+\nextopt
+\optname{rundir}
+Use to point to a PsN run directory to automatically extract results from.\\ The following PsN tools are not (yet) supported;\\ bootstrap, sse, vpc, execute and nca. 
+\nextopt
+\optdefault{so\_filename}{string}
 Set a filename for the resulting SO xml file. If this is not set the file stem of the first .lst file will be used.
 \nextopt
 \optname{so\_version}
-Set the version of the so file to create. Default is 0.3
+Default is 0.3. Set the version of the SO file to create. 
 \nextopt
-\optname{pharmml}
-Set a name of the pharmml file used to generate the SO
-in the PharmMLRef element.
+\optdefault{toolname}{string}
+Default is NONMEM. The toolname to use for messages. 
 \nextopt
-\optname{extra\_output}
-A comma separated list of table columns to be used as extra output variables. Currently the option will only be used for simulation
-in which case the columns will be put in a separate SimulatedProfiles element.
+\optname{use\_tables}
+Default set. Will use table files (sdtab, patab and cotab) to populate the elements of the SO that needs these. \\Use -no-use\_tables to not use any table files.
 \nextopt
 \optname{verbose}
 Set to print information, such as all errors and warnings, during conversion to stdout.
 \nextopt
-\optname{external\_tables}
-Set to create external table files for the simulation results
-\nextopt
-\optname{include\_fixed\_params}
-Set to include estimates of all fixed parameters.
-\nextopt
-\optname{rundir}
-Extract results from a PsN rundir. Currently supports bootstrap, sse and vpc
-\nextopt
-\optname{psn\_connector}
-Do not use! Only for internal use by the PsN connector.
+\optdefault{vpc\_results}{filename}
+A vpc\_results file as output from PsN to add to the SO.
 \nextopt
 \end{optionlist}
 
@@ -108,26 +111,27 @@ $OMEGA BLOCK(2)
  0.1     ; PPV_V
         \end{verbatim}
         Paramaters without labels will get a mangled name i.e. THETA(1) becomes THETA\_1\_
-    \item To be able to populate the Residuals and the Predictions entries (or SimulatedProfiles for simulations) an sdtab table must be specified. The names but not the order of the columns is important. ID and TIME must be in the table. Other columns are optional. The example below shows an sdtab with all columns. The name of the file must start with "sdtab" Example:
+    \item To be able to populate the Residuals and the Predictions entries (or SimulatedProfiles for simulations) an sdtab table must be specified. The names but not the order of the columns is important. ID and TIME must be in the table. Other columns are optional. The example below shows an sdtab with all columns. The name of the file must start with "sdtab".\\ Example:
         \begin{verbatim}
-$TABLE ID TIME MDV DV PRED IPRED RES IRES WRES IWRES CWRES NOAPPEND FILE=sdtab2
+$TABLE ID TIME MDV DV PRED IPRED RES IRES WRES IWRES CWRES
+NOAPPEND FILE=sdtab2
         \end{verbatim}
-    \item To be able to populate the IndividualEstimates (or the IndivParameters for simulations) entry a patab table must be specified. NOAPPEND must be used and the order of the columns is important. The first column must be ID, then comes all individual parameters followed by the ETAs (see below). Example:
+    \item To be able to populate the IndividualEstimates (or the IndivParameters for simulations) entry a patab table must be specified. NOAPPEND must be used and the order of the columns is important. The first column must be ID, then comes all individual parameters followed by the ETAs (see below).\newpage Example:
         \begin{verbatim}
 $TABLE ID CL V ETA_CL ETA_V NOAPPEND FILE=patab
         \end{verbatim}
-    \item To be able to populate the Covariates entry in Simulation a cotab table must be specified. The names but not the order of the columns are important. ID and TIME must be in the table. Other columns are covariates. The name of the file must start with "cotab". Example:
+    \item To be able to populate the Covariates entry in Simulation a cotab table must be specified. The names but not the order of the columns are important. ID and TIME must be in the table. Other columns are covariates. The name of the file must start with "cotab".\\ Example:
         \begin{verbatim}
 $TABLE ID TIME WGT NOPRINT NOAPPEND FILE=cotab
         \end{verbatim}
-    \item To be able to populate the RandomEffects entries all ETAs must be defined in the main code block (\$PK or \$PRED). One ETA should be defined per row with nothing more on the row (except for spaces) than one assignment. Example:
+    \item To be able to populate the RandomEffects entries all ETAs must be defined in the main code block (\$PK or \$PRED). One ETA should be defined per row with nothing more on the row (except for spaces) than one assignment.\\ Example:
         \begin{verbatim}
  ETA_CL = ETA(1)
  ETA_V = ETA(2)
         \end{verbatim}
     \item ETAs used for interoccasion variability must be handled like this:
         \begin{itemize}
-            \item The \$OMEGA record describing the first occation is a normal omega BLOCK record and the following occasions are BLOCK SAME. Currently SAME(n) is not supported so each occasion must have its separate \$OMEGA record. Example for three different occasions:
+            \item The \$OMEGA record describing the first occation is a normal omega BLOCK record and the following occasions are BLOCK SAME. Currently SAME(n) is not supported so each occasion must have its separate \$OMEGA record.\\ Example for three different occasions:
             \begin{verbatim}
 $OMEGA BLOCK(4)
 0.1 ; BOV_CL
@@ -166,7 +170,7 @@ ETA_BOV_TL = ETA(OCC_ETA_BOV_TL)
 
 \subsection{Requirements on other files}
 \begin{itemize}
-    \item All nonmem result files must have the same filename (excluding extension) as the .lst file. If not it is impossible to pick up the results from the .ext, .cov, .cor files etc.
+    \item All NONMEM	 result files must have the same filename (excluding extension) as the .lst file. If not it is impossible to pick up the results from the .ext, .cov, .cor files etc.
 \end{itemize}
 
 \section{Known limitations}
@@ -346,7 +350,7 @@ SO/
 \end{verbatim}
 
 \section{Installation on Windows and ActivePerl}
-If you are running windows and ActivePerl installation is a bit more involved and can only be recommended for people highly skilled in perl package installation and in manual installation of dll:s in Windows. It is strongly recommended to use Strawberry perl instead of ActivePerl if you intend to run nmoutput2so.
+If you are running windows and ActivePerl installation is a bit more complicated and can only be recommended for people highly skilled in perl package installation and in manual installation of dll:s in Windows. It is strongly recommended to use Strawberry perl instead of ActivePerl if you intend to run nmoutput2so.
 
 \begin{itemize}
     \item Not all versions of the ppm system comes with XML-LibXML precompiled. If not you'll need to compile it yourself either manually or by installing from cpan.
