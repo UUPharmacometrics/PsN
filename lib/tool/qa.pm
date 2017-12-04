@@ -471,6 +471,7 @@ sub modelfit_setup
                 iterative => 0,
                 directory => 'resmod_'.$self->idv,
                 top_tool => 1,
+				clean => 2,
             );
             $self->resmod_idv_table($resmod_idv->table_file);
         };
@@ -499,6 +500,7 @@ sub modelfit_setup
 					iterative => 0,
 					directory => 'resmod_TAD',
 					top_tool => 1,
+					clean => 2,
 				);
 			};
 			if (not $@) {
@@ -526,7 +528,7 @@ sub modelfit_setup
                 iterative => 0,
                 directory => 'resmod_PRED',
                 top_rool => 1,
-                clean => 0,         # Should not be need as top_tool is 1, but top_tool gets reset somehow for this run
+                clean => 2,
             );
         };
         if (not $@) {
