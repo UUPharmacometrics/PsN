@@ -43,7 +43,7 @@ my $res = GetOptions( \%options,
     keys(%optional_options) );
 exit unless $res;
 
-my @valid_transformations = ( 'boxcox', 'tdist', 'full_block', 'add_tv', 'add_iov', 'remove_iiv', 'remove_iov', 'remove_0fix_omegas', 'omit_ids', 'iiv_on_ruv', 'power_on_ruv', 'diagonal_to_block', 'add_etas' );
+my @valid_transformations = ( 'boxcox', 'tdist', 'full_block', 'add_tv', 'add_iov', 'remove_iiv', 'remove_iov', 'remove_0fix_omegas', 'omit_ids', 'iiv_on_ruv', 'power_on_ruv', 'diagonal_to_block', 'add_etas', 'uniform' );
 my $valid_transformations_string = join("\n", @valid_transformations);
 
 my %help_text;
@@ -159,7 +159,7 @@ if (not grep(/$transformation/, @valid_transformations)) {
 }
 
 if (defined $options{'etas'}) {
-    if ($transformation ne 'boxcox' and $transformation ne 'tdist') {
+    if ($transformation ne 'boxcox' and $transformation ne 'tdist' and $transformation ne 'uniform') {
         print "Option -etas cannot be used together with the $transformation transformation.\n";
         exit;
     }
@@ -265,6 +265,12 @@ if ($transformation eq 'boxcox') {
         model_transformations::tdist_etas(model => $model, etas => [split ',', $options{'etas'}]);
     } else {
         model_transformations::tdist_etas(model => $model);
+    }
+} elsif ($transformation eq 'uniform') {
+    if (defined $options{'etas'}) {
+        model_transformations::uniform_etas(model => $model, etas => [split ',', $options{'etas'}]);
+    } else {
+        model_transformations::uniform_etas(model => $model);
     }
 } elsif ($transformation eq 'full_block') {
     model_transformations::full_omega_block(model => $model);

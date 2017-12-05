@@ -221,4 +221,10 @@ is_deeply (model_transformations::remaining_omegas(model => $model, omegas => [ 
 is_deeply (model_transformations::remaining_omegas(model => $model, omegas => [ 3 ]), [ 1, 2, 4 ], "remaining_omegas 2");
 is_deeply (model_transformations::remaining_omegas(model => $model, omegas => [ 2,3,4 ]), [ 1 ], "remaining_omegas 3");
 
+# omega_options_from_etas
+$model = model->new(filename => "$modeldir/pheno.mod", ignore_missing_data => 1);
+my $options = model_transformations::omega_options_from_etas(model => $model, etas => [ 2 ]);
+is (scalar(@$options), 1, "omega_options_from_etas size");
+is ($options->[0]->coordinate_string, "OMEGA(2,2)", "omega_options_from_etas 1");
+
 done_testing();

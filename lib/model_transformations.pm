@@ -639,12 +639,23 @@ sub uniform_etas
 
     _rename_etas(model => $model, etas => $etas, prefix => 'ETAU');
 
+    my $omega_options = omega_options_from_etas(model => $model, etas => $etas);
+    my @inits;
+    for my $option (@$omega_options) {
+        push @inits, $option->init;
+        $option->init(0.29 * 0.29);
+        $option->fix(1);
+    }
+
     my $next_theta = $nthetas + 1;
     my @code;
+    my $index = 0;
     for my $i (@$etas) {
-        push @code, "ETAU$i = (PHI(ETA($i)) - 0.5*) * THETA($next_theta)";
+        push @code, "ETAU$i = (PHI(ETA($i)) - 0.5) * THETA($next_theta)";
         $next_theta++;
-        $model->add_records(type => 'theta', record_strings => [ '$THETA (-3, 0.01, 3)']); 
+        my $init = $inits[$index] / 0.29;
+        $model->add_records(type => 'theta', record_strings => [ "\$THETA $init"]); 
+        $index++;
     }
 
     prepend_code(model => $model, code => \@code);
@@ -1061,6 +1072,34 @@ sub _etas_from_omega_records
     }
 
     return \@etas;
+}
+
+sub omega_options_from_etas
+{
+    # Return a list of omega options from a list of eta/omega numbers
+    my %parm = validated_hash(\@_,
+        model => { isa => 'model' },
+        etas => { isa => 'ArrayRef[Int]' },
+    );
+    my $model = $parm{'model'};
+    my $etas = $parm{'etas'};
+
+    my @omegas;
+    my $current_eta = 1;
+    for my $record (@{$model->problems->[0]->omegas}) {
+        if (defined $record->options) {
+            for my $option (@{$record->options}) {
+                if (numerical_in($current_eta, $etas)) {
+                    push @omegas, $option;
+                }
+                $current_eta++;
+            }
+        } else {
+            $current_eta += $record->get_size();
+        }
+    }
+
+    return \@omegas;
 }
 
 sub omit_ids
