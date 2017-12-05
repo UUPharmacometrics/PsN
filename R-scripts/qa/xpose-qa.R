@@ -56,7 +56,7 @@ resmod_variability_attribution <- function(xpdb, dvid_col_name, dvid_value, idv 
   
   qa_data <- get_qa_data(xpdb)
   idv_data <- qa_data$derivatives %>% 
-    xpose::fetch_data(., filter = xpose::only_obs(., .problem = 1, quiet = T), .problem = 1, .subprob = 0, quiet = T) %>%
+    xpose::fetch_data(., filter = only_obs_cwres(., .problem = 1, quiet = T), .problem = 1, .subprob = 0, quiet = T) %>%
     filter_dvid(.,dvid_col_name,dvid_value) %>%
     dplyr::select(ID, !!idv) %>% 
     tidyr::nest(-ID, .key = "idv")
@@ -219,7 +219,7 @@ calc_ruv_contribution <- function(xpdb, dvid_col_name, dvid_value){
   sigma_matrix <- get_sigma_matrix(xpdb, problem = 1, subprob = 0)
   omega_matrix <- get_omega_matrix(xpdb, problem = 1, subprob = 0)
   dxpdb <- qa_data$derivatives %>% 
-    xpose::fetch_data(., filter = xpose::only_obs(., .problem = 1, quiet = T), .problem = 1, .subprob = 0, quiet = T) %>%
+    xpose::fetch_data(., filter = only_obs_cwres(., .problem = 1, quiet = T), .problem = 1, .subprob = 0, quiet = T) %>%
     filter_dvid(.,dvid_col_name,dvid_value) %>%
     dplyr::group_by(ID) %>% 
     dplyr::do(var_matrix = {
@@ -283,9 +283,9 @@ calc_resmod_ruv_contribution <- function(xpdb, dvid_col_name, dvid_value){
     purrr::map("result") %>% 
     purrr::compact() %>% 
     dplyr::bind_rows(.id = "name") %>% 
+    dplyr::filter(ID %in% original_matricies$ID) %>% 
     dplyr::mutate(sd_i = exp(`ETA(2)`),
-                  `ETA(2)` = NULL,
-                  ID = as.factor(ID))
+                  `ETA(2)` = NULL)
   
   res_matricies <- resmod_data$summary %>% 
     filter_dvid(.,"dvid",dvid_value) %>%
@@ -328,7 +328,7 @@ calc_iiv_contribution <- function(xpdb, dvid_col_name, dvid_value, per_eta = F){
   etas <- seq_len(NROW(omega_matrix)) 
   
   iiv_contribution <- qa_data$derivatives %>%
-    xpose::fetch_data(filter = xpose::only_obs(., .problem = 1, quiet = T), .problem = 1, .subprob = 0, quiet = T) %>%
+    xpose::fetch_data(filter = only_obs_cwres(., .problem = 1, quiet = T), .problem = 1, .subprob = 0, quiet = T) %>%
     filter_dvid(.,dvid_col_name,dvid_value) %>%
     dplyr::select(ID, matches("G\\d{3}")) %>% 
     tidyr::nest(-ID, .key = "df_deta") %>% 
@@ -357,7 +357,7 @@ calc_percent_eta_contribution <- function(xpdb, dvid_col_name, dvid_value){
   omega_matrix <- diag(diag(omega_matrix), nrow = max(etas))
   
   table <- qa_data$derivatives %>%
-    xpose::fetch_data(filter = xpose::only_obs(., .problem = 1, quiet = T), .problem = 1, .subprob = 0, quiet = T) %>%
+    xpose::fetch_data(filter = only_obs_cwres(., .problem = 1, quiet = T), .problem = 1, .subprob = 0, quiet = T) %>%
     filter_dvid(.,dvid_col_name,dvid_value) %>%
     dplyr::select(ID, matches("G\\d{3}")) %>% 
     tidyr::nest(-ID, .key = "df_deta") %>% 
@@ -405,7 +405,7 @@ get_eta_density <- function(xpdb, dvid_col_name, dvid_value){
 get_eta_values <- function(xpdb,dvid_col_name, dvid_value){
   qa_data <- get_qa_data(xpdb)
   qa_data$derivatives %>% 
-    xpose::fetch_data(.problem = 1, .subprob = 0, quiet = T) %>% 
+    xpose::fetch_data(filter = only_obs_cwres(., .problem = 1, quiet = T), .problem = 1, .subprob = 0, quiet = T) %>% 
     filter_dvid(.,dvid_col_name,dvid_value) %>%
     dplyr::select(ID, matches("^(ETA\\d|ET\\d+)$")) %>% 
     dplyr::group_by(ID) %>% 
@@ -417,7 +417,7 @@ get_eta_values <- function(xpdb,dvid_col_name, dvid_value){
 
 get_df_eta <- function(xpdb, dvid_col_name, dvid_value){
   get_qa_data(xpdb)$derivatives %>%
-    xpose::fetch_data(filter = xpose::only_obs(., .problem = 1, quiet = T), .problem = 1, .subprob = 0, quiet = T) %>% 
+    xpose::fetch_data(filter = only_obs_cwres(., .problem = 1, quiet = T), .problem = 1, .subprob = 0, quiet = T) %>% 
     filter_dvid(.,dvid_col_name,dvid_value) %>%
     dplyr::select(ID, matches("G\\d{3}")) %>% 
     tidyr::nest(-ID, .key = "df_deta") %>% 
@@ -476,5 +476,12 @@ filter_dvid <- function(data,dvid_name,dvid_value) {
     data %>% dplyr::filter(UQ(dvid_column_name)==!!dvid_value)
   } else {
     return(data)
+  }
+}
+
+only_obs_cwres <- function(xpdb, .problem, quiet){
+  function(x){
+    x[x[,"CWRES"]!= 0, ] %>% 
+      dplyr::mutate(ID = as.numeric(as.character(ID)))
   }
 }
