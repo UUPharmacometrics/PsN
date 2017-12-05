@@ -119,6 +119,9 @@ sub modelfit_setup
         my @extra_tablestrings = ( @table_columns, 'NOPRINT', 'NOAPPEND', 'ONEHEADER', 'FILE=extra_table' );
         $eval_model->remove_records(type => 'table');
         $eval_model->add_records(type => 'table', record_strings => \@extra_tablestrings);
+        if ($self->model->is_run()) {
+            $eval_model->update_inits(from_output => $self->model->outputs->[0]);
+        }
         $eval_model->_write(filename => $self->directory . $self->model->filename);
         $eval_model->set_maxeval_zero();
         $eval_model->outputs->[0]->directory($self->directory);
