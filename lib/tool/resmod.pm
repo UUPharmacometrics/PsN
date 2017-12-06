@@ -166,6 +166,7 @@ sub modelfit_setup
                 table => $self->table,
                 negative_ipred => $self->negative_ipred,
                 obs_column => $self->obs_column,
+				clean => $self->clean,
             );
             $resmod->run();
         }
