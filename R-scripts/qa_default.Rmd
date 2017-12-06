@@ -380,7 +380,7 @@ if(all(skip!="resmod")) {
     resmod_ruv_models_table <- ztable_sub(resmod_ruv_models_table,type=type,colnames.bold = T,include.rownames = F,longtable = T,align="lrcl")
     print(resmod_ruv_models_table)
     cat("Residual error model, resulting expected improvement in OFV, required additional model parameters as well as their estimates.\n\n\n\n")
-    if(!nonlinear && exists("xpdb")) {
+    if(!nonlinear && exists("xpdb") && file.exists(file.path(working.directory,paste0("resmod_",idv_name),paste0("resmod_DVID_",dvid_nr[i]),"m1"))) {
       res_var_attribution <- resmod_variability_attribution(xpdb,dvid_col_name=dvid_name,dvid_value=dvid_nr[i])
       print(res_var_attribution)
       cat("\n\n Attribution of variability to between-subject random effects and residual unexplained variability (RUV) versus independent variable under different residual error models.")
