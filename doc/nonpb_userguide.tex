@@ -1,5 +1,5 @@
 \input{inputs/format_header.tex}
-\guidetitle{NONPB and PIND user guides}{2013-12-04}
+\guidetitle{NONPB and PIND user guides}{2017-12-07}
 
 
 \begin{document}
@@ -10,9 +10,16 @@
 
 \section{Introduction}
 
-When parameter estimates are used in predictions or decisions, it is important to consider the magnitude of imprecision associated with the estimation. The nonpb\cite{Baverel} is a resampling-based method for estimating imprecision in nonparametric distribution (NPD) estimates obtained in NONMEM. Imprecision in the NPD can be estimated by means of two different resampling procedures. The full method, -nonpb\_version=2, relies on bootstrap sampling from the raw data and a re-estimation of both the preceding parametric (FOCE) and the nonparametric step. The simplified method, -nonpb\_version=1, relies on bootstrap sampling of individual nonparametric probability distributions. Nonparametric confidence intervals are computed. In addition of providing information about the precision of nonparametric parameter estimates, the nonpb methods can serve as diagnostic tools for the detection of misspecified parameter distributions.
-The P individuals method is availabe as a separate PsN script pind.
-Examples
+The nonpb tool is a resampling-based method for estimating imprecision in nonparametric distribution (NPD) estimates obtained in NONMEM. Imprecision in the NPD can be estimated by means of two different resampling procedures. \cite{Baverel}.
+
+The simplified method, -nonpb\_version=1, is the default and relies on bootstrap sampling of individual nonparametric probability distributions. 
+
+The full method, -nonpb\_version=2, relies on bootstrap sampling from the raw data and a re-estimation of both the preceding parametric (FOCE) and the nonparametric step.
+
+Nonparametric confidence intervals are computed. In addition of providing information about the precision of nonparametric parameter estimates, the nonpb methods can serve as diagnostic tools for the detection of misspecified parameter distributions.
+
+The P individuals method is availabe as a separate PsN tool, pind.\\
+Examples:
 \begin{verbatim}
 nonpb run12.mod -samples=500
 
@@ -20,36 +27,47 @@ pind run12.mod …
 \end{verbatim}
 
 \section{Input and options}
-\subsection{Options to nonpb}
-A model file is required on the command-line.
+\subsection{Required input nonpb}
+A model file is required on the command line as well as the option -samples.
 \begin{optionlist}
 \optdefault{samples}{N}
-The samples option is required. The number of samples in the bootstrap. 
+The number of samples in the bootstrap. 
 \nextopt
+\end{optionlist}
+\subsection{Optional input nonpb}
+\begin{optionlist}
 \optdefault{lst\_file}{file.lst}
-Name of the lst-file with estimates for the input model. Default is the name of the input model with a .mod extension	replaced with .lst. 
+Default is the same name as the model file but with .mod replaced with .lst. The 
+lst-file from where to read initial parameter estimates. 
 \nextopt
-\optdefault{nonpb\_version}{X}
-The version of the nonpb method. Default is 1, the simplified version. Version can also be set to 2, the full version. 
+\optdefault{nonpb\_version}{1 | 2}
+Default is 1, the simplified version. Version 2 is the full version. The version of 
+the script to run.
 \nextopt
 \end{optionlist}
 
-\subsection{Options to pind}
-A model file is required on the command-line.
+\subsection{Required input pind}
+A model file is required on the command line.
+\subsection{Optional input pind}
 \begin{optionlist}
-\optdefault{lst\_file}{file.lst}
-Name of  of the lst-file with estimates for the input model. Default is the name of the input model with a .mod extension replaced with .lst. 
+\optdefault{ignore\_individuals\_above}{integer}
+Experimental. Only allowed together with -njd, in that case the default value is 100. Option adds line IGNORE=(ID.GT.X) to DATA record, where X is option value. If the IGNORE statement should not be changed even though option -njd is used, set 
+-ignore\_individuals\_above=0.
 \nextopt
-\optdefault{ind\_param}{eta or theta}
-Optional, default eta. The parameter to set in individual ofv model files. Possibilities are eta or theta. 
+\optdefault{-ind\_param}{eta | theta}
+Default eta. The parameter to set in individual ofv model files. Possibilities are eta or theta.
+\nextopt
+\optdefault{lst\_file}{file.lst}
+Default is the name of the input model with a .mod extension replaced with .lst. Name of the lst-file with estimates for the input model. 
+\nextopt
+\optdefault{njd}{filename}
+Default not set. Experimental. Filename for new joint density column.
 \nextopt
 \end{optionlist}
 
 \subsection{Some important common PsN options}
-For a complete list see common\_options.pdf, 
-or psn\_options -h on the commandline.
+For a complete list see common\_options.pdf, or psn\_options -h on the command line. 
 \input{inputs/basic_options.tex}
-
 
 \section{Output}
 Intermediate files written during the procedure are found in the intermediate\_files subdirectory of the nonpb run directory. In the result\_files subdirectory the files CI\_results\_ETAk.csv are found, where k=1,...,(number of ETAs). CI\_results\_ETAj.csv contains the mean, median, 25th, 50th, 90th and 95th confidence intervals.
@@ -72,7 +90,7 @@ Intermediate files written during the procedure are found in the intermediate\_f
 	\item Output file(s) (X files for each j) called bootstrap\_CBJD\_ETAk\_j.csv which will contain 3 	columns: ID, ETA\_k, cumulative bootstrapped JD (CBJD))
 \end{itemize}
 \item For each ETA\_k, create a final file row1\_results\_ETA\_k.csv. From the file bootstrap\_CBJD\_ETAk\_j.csv, copy columns ETA\_k and CBJD and rename them ETAk\_j and CBJD\_j (will refer to these two columns as jth column pair in following text)
-\item From a file row1\_results\_ETA\_k.csv, create a new file, bootstrap\_CBJD\_ETAk\_adjusted.csv in which each ETAk\_j vector will be replaced with the ETA\_k vector from the original.patab from step 3 (sorted ascending) and each CBJD\_j vector will be adjusted so (CBJD\_j\_adjusted), that for each element of the ETA\_k vector in the Xth column, CBJD\_j value corresponding for the first lower element (first ETAk\_j value lower than ETAk value) of the ETAk\_j column will be chosen. 
+\item From a file row1\_results\_ETA\_k.csv, create a new file,\\ bootstrap\_CBJD\_ETAk\_adjusted.csv in which each ETAk\_j vector will be replaced with the ETA\_k vector from the original.patab from step 3 (sorted ascending).\\Each CBJD\_j vector will be adjusted so (CBJD\_j\_adjusted), that for each element of the ETA\_k vector in the Xth column, CBJD\_j value corresponding for the first lower element (first ETAk\_j value lower than ETAk value) of the ETAk\_j column will be chosen. 
 \item Compute confidence intervals (3*X files): a) Sort ascending ETAk values from original.patab from step 3 b) For each ETAk create a file called row2\_results\_ETAk.csv which will contain S+1 columns and i rows. First column contains ascending original ETAi values from step a). S columns contain X values of and CBJD\_j\_adjusted found in step 9, each row represents results for each ETAk\_i.
 \item For each ETAk: For each ETAi (row) in file row2\_results\_ETAk.csv, read out the mean, median, 25th, 50th, 90th and 95th confidence intervals (based on N values). Store results in CI\_results\_ETAk.csv which will contain 11 columns and I rows
 \end{enumerate}
