@@ -1,5 +1,5 @@
 \input{inputs/format_header.tex}
-\guidetitle{NCA user guide}{2016-09-01}
+\guidetitle{NCA user guide}{2017-12-07}
 
 \newcommand{\guidetoolname}{nca}
 
@@ -8,37 +8,37 @@
 \maketitle
 
 \section{Introduction}
-The nca script prepares input for the ncappc R package for non-compartmental analysis \cite{Chayan}. 
-To be able to create the plots the user must install the ncappc package from CRAN.
-\section{Running NCA}
+The nca tool prepares input for the ncappc R package for non-compartmental analysis \cite{Chayan}. To be able to create the plots the user must install the ncappc package from CRAN. Two modified modelfiles are created, one for generating original data table output and one for generating simulated data table output. The model parameters will never be re-estimated. Unless an lst- or msfo-file is given as input or an lst-file is found by replacing .mod with .lst in the modelfile name, the initial parameter estimates from the modelfile will be used for the simulations.\\
 Example:
-
 \begin{verbatim}
-nca run1.mod -samples=1000
+nca run1.mod -samples=1000 -columns=CL,V
 \end{verbatim}
+Simulate 1000 data sets using run1.mod with the CL and V columns added.
 
-Input: a modelfile is required.
+\section{Options and input}
 
+\subsection{Required input}
+A modelfile is required on the command line.
 \begin{optionlist}
-\optdefault{samples}{number}
-The number of simulated datasets to generate. This option is by default set to 300 and must be 20 or higher. 
+\optdefault{samples}{N}
+Default set to 300 and must be 20 or higher. The number of simulated datasets to generate. 
 \nextopt
-\optdefault{msfo}{file}
-is optional, unless the model has \$NONP record then an msfo-file	is required. Use final parameter estimates from msfo-file instead of initial estimates from modelfile when simulating.
-\nextopt
-\optdefault{lst}{file}
-is optional, but forbidden together with -msfo. Use final parameter estimates from this lst-file for the simulation. By default PsN will look for a file with the same name as the regular input model, or the simulation model if option -sim\_model is used, but with suffix .lst instead of .mod. If such a file is found then option -lst=$<$modelfile$>$.lst is set automatically.
-\nextopt
+\end{optionlist}
+
+\subsection{Optional input}
+\begin{optionlist}
 \optdefault{columns}{var1,var2,...}
-is optional. The columns option is a comma-separated list of variable names. All listed variables will be added to the nca table output.
+A comma separated list of variables to add to the nca tables.
 \nextopt
-\optdefault{sim\_model}{file}
-is optional. Cannot be used together with -flip\_comments, -keep\_estimation or -noprediction. By default PsN will create a simulation model based on the required input model, but by using option -sim\_model it is possible to use a separate input model for the simulations. PsN will remove \$COV and \$TABLE, change SEED and NSUBS in \$SIM, add a new \$TABLE and  update initial estimates if option -lst is set or add \$MSFI if option -msfo is used, but otherwise no changes will be made to the user defined simulation model. See section Modified models. Note that -lst will be set automatically if a file with the same name as the regular input model but with suffix lst intead of mod is found. 
+\optname{copy\_data}
+Default set. Disable with -no-copy\_data. By default PsN will copy the data file into NM\_run1 and set a local path in psn.mod, the actual model file run with NONMEM. If -no-copy\_data is set, PsN will not copy the data to NM\_run1 but instead set a global path to the data file in psn.mod. However, NONMEM does not accept a path with more than 80 characters.
 \nextopt
+\optdefault{dv}{variable}
+Default is DV. Name of dependent variable. Case sensitive, must be exactly the same case and spelling as in modelfile. Maximum of 4 letters because of NONMEM limitation, unless either IPRED or IWRES. If a synonym for DV is set in \$INPUT, the synonym must be set as the dependent variable on the commandline, -dv=$<$synonym$>$. 
+\nextopt	
 \optname{flip\_comments}
-is optional. Cannot be used together with -sim\_model, -keep\_estimation or -noprediction. By default PsN will create a simulation model based on the required input model, but option -flip\_comments invokes a method for handling user-defined simulation code in the required input model. If option is set, PsN will create the simulation model by flipping comments (commented lines will be uncommented and vice versa) between the tags
-
-
+By default PsN will create a simulation model based on the required input model, but option -flip\_comments invokes a method for handling user-defined simulation code in the required input model. Cannot be used together with -sim\_model, -keep\_estimation or -noprediction. \\
+If option is set, PsN will create the simulation model by flipping comments (commented lines will be uncommented and vice versa) between the tags
 \begin{verbatim}
 ;Sim_start
 \end{verbatim}
@@ -46,6 +46,7 @@ and
 \begin{verbatim}
 ;Sim_end
 \end{verbatim}
+\newpage
 For example, if the required input model has lines
 \begin{verbatim}
 ;Sim_start 
@@ -58,31 +59,36 @@ then the MAXEVAL=0 model will be run as such and the simulation model will inste
 ;IGNORE(TYPE.EQ.1)
 ACCEPT(TYPE.EQ.1) 
 \end{verbatim}
-The tags may appear multiple times. Note that the tags must look exactly  as above or the editing will fail. When creating the simulation model PsN will remove \$COV and \$TABLE, change SEED and NSUBS in \$SIM, add a new \$TABLE and  update initial estimates if option -lst is set or add \$MSFI if option -msfo is used, but otherwise no changes will be made to the code. See section Modified models.\\
-\nextopt
-\optdefault{dv}{variable}
-is optional, default is DV. If a synonym for DV is set in \$INPUT, the synonym must be set as the dependent variable on the commandline, -dv=$<$synonym$>$. 
-\nextopt
-\optname{keep\_estimation}
-is optional, by default not set. If this option is set, a post-hoc evaluation step is performed for each simulated dataset (\$ESTIMATION is kept and MAXEVALS is set to 0). Note that in this case variables such as IPRED(F) are based on the re-estimated post-hoc parameters. Also note that in earlier program versions keep\_estimation was set or unset automatically, see section Additional rules and logic 3). 
-\nextopt
-\optname{noprediction}
-is optional, by default not set. If set, NOPREDICTION will be added to the \$SIMULATION record of the simulation model, in addition to ONLYSIMULATION. This option is generally recommended with likelihood models for odd type data (i.e. -2LOGLIKELIHOOD or LIKELIHOOD in \$ESTIMATION). It is not allowed to use -noprediction in combination with the option \mbox{-keep\_estimation}. 
+The tags may appear multiple times. Note that the tags must look exactly  as above or the editing will fail. When creating the simulation model PsN will remove \$COV and \$TABLE, change SEED and NSUBS in \$SIM, add a new \$TABLE and  update initial estimates if option -lst is set or add \$MSFI if option -msfo is used, but otherwise no changes will be made to the code. 
 \nextopt
 \optdefault{idv}{variable}
-optional, default TIME, the independent variable. 
-\nextopt
-\optdefault{rawres\_input}{filename}
-A simple way to simulate with uncertainty. Instead of using identical parameter estimates for simulation of each new dataset, take parameter estimates from a raw\_results.csv file, e.g. from a bootstrap run or the intial\_estimates.csv file from a previous sse run with \$PRIOR in the simulation model. The raw results file must be comma-separated and contain at least as many samples as the input -samples to sse, the labels for THETA/OMEGA/SIGMA in the file must match the labels in the simulation model given as input to sse, the theta columns must be directly followed by the omega columns which must be directly followed by the sigma columns, and the column header must be model either in the first column just as in a bootstrap raw\_results file or in the second or third column as in a sse raw\_results file. If a column header contains a comma, e.g. OMEGA(2,2), then that header must be enclosed in double quotes. This is done automatically in PsN raw results files. Note that is is possible to generate a file with initial parameter estimates outside of PsN, as long as the file follows the format rules. 
-\nextopt
-\optdefault{offset\_rawres}{N}
-Only relevant in combination with -rawres\_input. Default 1. The number of result lines to skip in the input raw results file before starting to read final parameter estimates. In a regular bootstrap raw\_results file the first line of estimates refers to the input model with the full dataset, so therefore the default offset is 1. 
+Default is TIME, the independent variable. 
 \nextopt
 \optname{include\_all\_columns}
 If set all columns in \$INPUT, that are not marked as skipped or dropped, will be included in the tables.
 \nextopt
+\optname{keep\_estimation}
+Default not set. If this option is set, a post-hoc evaluation step is performed for each simulated dataset (\$ESTIMATION is kept and MAXEVALS is set to 0). Note that in this case variables such as IPRED(F) are based on the re-estimated post-hoc parameters. Also note that in earlier program versions keep\_estimation was set or unset automatically. 
+\nextopt
+\optdefault{lst}{filename}
+The nca will update initial parameter estimates in the model to the final values in the lst file. Cannot be used together with -msfo\_file option nor with a model containing a \$NONPARAMETRIC record.
+\nextopt
+\optdefault{msfo}{filename}
+The nca will use the NONMEM state defined in the update file. Cannot be used together with -lst\_file option. If the modelfile contains a \$NONPARAMETRIC record this parameter is required.
+\nextopt
+\optname{noprediction}
+Default not set. If set, NOPREDICTION will be added to the \$SIMULATION record of the simulation model, in addition to ONLYSIMULATION. This option is generally recommended with likelihood models for odd type data (i.e. -2LOG-LIKELIHOOD or LIKELIHOOD in \$ESTIMATION). It is not allowed to use -noprediction in combination with the option \mbox{-keep\_estimation}. 
+\nextopt
+\optdefault{offset\_rawres}{N}
+Default is 1. Only relevant in combination with -rawres\_input. The number of result lines to skip in the input raw results file before starting to read final parameter estimates. In a regular bootstrap raw\_results file the first line of estimates refers to the input model with the full dataset, so therefore the default offset is 1. 
+\nextopt
+\optdefault{rawres\_input}{filename}
+A simple way to simulate with uncertainty. Instead of using identical parameter estimates for simulation of each new dataset, take parameter estimates from a raw\_results.csv file, e.g. from a bootstrap run or the intial\_estimates.csv file from a previous sse run with \$PRIOR in the simulation model. The raw results file must be comma separated and contain at least as many samples as the input -samples to nca, the labels for THETA/OMEGA/SIGMA in the file must match the labels in the (simulation) model given as input to nca, the theta columns must be directly followed by the omega columns which must be directly followed by the sigma columns, and the first column must have header model just as a bootstrap raw\_results file. Note that is is possible to generate a file with initial parameter estimates outside of PsN, as long as the file follows the format rules. 
+\nextopt
+\optdefault{sim\_model}{filename}
+By default PsN will create a simulation model based on the required input model, but by using option -sim\_model it is possible to use a separate input model for the simulations. Cannot be used together with -flip\_comments, -keep\_estimation or -noprediction. PsN will remove \$COV and \$TABLE, change SEED and NSUBS in \$SIM, add a new \$TABLE and  update initial estimates if option -lst is set or add \$MSFI if option -msfo is used, but otherwise no changes will be made to the user defined simulation model. Note that -lst will be set automatically if a file with the same name as the regular input model but with suffix lst intead of mod is found. 
+\nextopt
 \end{optionlist}
-
 
 
 \subsection{Simulation input details}
@@ -91,7 +97,7 @@ The option -samples is required. The scripts does not allow -samples to be small
 \begin{enumerate}
 	\item Default: the initial estimates from the lst-file with the same name as the modelfile but with .mod replaced with .lst, e.g. run123.lst if the modelfile is run123.mod. If no such lst-file exists the estimates from the modelfile are used.
 	\item the final estimates from a lst-file whose name is not the modelfile name with .mod replaced with .lst: use command-line option -lst=$\langle$filename$\rangle$
-	\item the final estimates from an msfo-file: use command-line option -msfo=$<$filename$>$
+	\item the final estimates from an msfo-file: use command-line option\\ -msfo=$<$filename$>$
 	\item final estimates from a raw\_results file, e.g. from a bootstrap. This method implies using a different set of estimates for each sample. 
 	\item parameter estimates drawn from a prior distribution defined using \$PRIOR in the input/simulation model.
 \end{enumerate}
