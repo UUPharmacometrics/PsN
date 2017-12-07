@@ -120,6 +120,7 @@ A new recommended but not required Perl library for runrecord: YAML::Tiny
 - Bugfix: Models with IGNORE=() and IGNORE=C where C is not @ caused scm to crash
 - Changed boundaries for covariate effect theta on exponential effect to be adaptive given an effect size within 0.01 and 100
   This to reduce the risk of overflow.
+- Fix formatting of OFV values in scm log to avoid two numbers be put directly next to each other
 
    ___linearize___
 

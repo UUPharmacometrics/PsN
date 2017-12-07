@@ -3332,7 +3332,7 @@ sub gof_ofv
 								$step_relations[$i]{'covariate'}.'-'.
 								$step_relations[$i]{'state'}).
 								sprintf("%12s","$ofvname  ").
-								sprintf("%12.5f",$base_ofv).
+								sprintf("%12.5f",$base_ofv) . ' ' .
 								$ofv.
 								$test_val. '  >'.
 								sprintf("%10.5f",$change);
@@ -3536,12 +3536,12 @@ sub gof_pval
 		my $log_text = sprintf("%-16s",$step_relations[$i]{'parameter'}.
 			$step_relations[$i]{'covariate'}.'-'.
 			$step_relations[$i]{'state'}).
-		sprintf("%6s"," PVAL ").
-		sprintf("%12.5f",$base_ofv).
-		$ofv.
-		$test_val. '  >'.
-		sprintf("%10.5f",$change).
-		sprintf("%5s",$n_param_diff);
+            sprintf("%6s"," PVAL ").
+            sprintf("%12.5f",$base_ofv) . ' ' .
+            $ofv.
+            $test_val. '  >'.
+            sprintf("%10.5f",$change).
+            sprintf("%5s",$n_param_diff);
 		print LOG $log_text;
 		# Significant ?
 		if( ($change eq '-inf') or
@@ -5272,7 +5272,7 @@ sub write_log
 						$continuous = 0 if ( $cov eq $cat );
 					}
 				}
-				print LOG sprintf("%-8s",$cov.'-'.$included_relations -> {$par}{$cov}{'state'});
+				print LOG sprintf("%-17s",$cov.'-'.$included_relations -> {$par}{$cov}{'state'});
 			}
 			print LOG "\n";
 		}
