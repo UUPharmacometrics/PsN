@@ -38,7 +38,7 @@ get_param_var_tables <- function(directory,base_model,skip) {
         #get nr TH+d
         boxcox_thetas <- count_thetas(filename=file.path(directory,"modelfit_run/boxcox.ext"))
         base_thetas <- count_thetas(filename=base_ext_file)
-        add.par_box <- boxcox_thetas - boxcox_thetas
+        add.par_box <- boxcox_thetas - base_thetas
       } else {
         dofv_box <- "ERROR"
         add.par_box <- ''
