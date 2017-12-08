@@ -1835,6 +1835,8 @@ sub linearize_setup
                                                        write_copy => 0,
                                                        copy_output => 0);
 
+        model_transformations::add_missing_etas(model => $derivatives_model);
+
         if ($self->from_linearize) {
             if (PsN::minimum_nonmem_version(7, 3)) {
                 my $mceta = $original_model->get_option_value(record_name => 'estimation',

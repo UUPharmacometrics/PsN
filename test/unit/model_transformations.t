@@ -227,4 +227,8 @@ my $options = model_transformations::omega_options_from_etas(model => $model, et
 is (scalar(@$options), 1, "omega_options_from_etas size");
 is ($options->[0]->coordinate_string, "OMEGA(2,2)", "omega_options_from_etas 1");
 
+# list_etas_used_in_code
+$model = model->new(filename => "$modeldir/pheno.mod", ignore_missing_data => 1);
+is_deeply (model_transformations::list_etas_used_in_code(model => $model), { '1' => 1, '2' => 1 }, "list_etas_used_in_code 1");
+
 done_testing();

@@ -130,6 +130,7 @@ A new recommended but not required Perl library for runrecord: YAML::Tiny
 - Only evaluate (MAXEVALS=0) the derivatives model. If lst file is available update initial values first.
 - New option nointer to not use interaction
 - Do not use COM in derivatives.mod to avoid name clash
+- Avoid NONMEM crash by adding dummy thetas for omegas that have not ETA(X) in code.
 
    ___nca___
 

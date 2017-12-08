@@ -767,6 +767,69 @@ sub find_omega_records
     return \@found;
 }
 
+sub add_missing_etas
+{
+    # Add dummy ETAs for omegas that does not have ETAs in code
+   	my %parm = validated_hash(\@_,
+        model => { isa => 'model' },
+    );
+    my $model = $parm{'model'};
+
+    my $code_etas = list_etas_used_in_code(model => $model);
+    my $nomegas = $model->problems->[0]->nomegas;
+    my @missing_etas;
+
+    for (my $i = 1; $i <= $nomegas; $i++) {
+        if (not $code_etas->{$i}) {
+            push @missing_etas, $i;
+        }
+    }
+
+    add_dummy_etas(model => $model, etas => \@missing_etas);
+}
+
+sub add_dummy_etas
+{
+    # Adds dummy variables using listed etas
+   	my %parm = validated_hash(\@_,
+        model => { isa => 'model' },
+        etas => { isa => 'ArrayRef' },
+    );
+    my $model = $parm{'model'};
+    my $etas = $parm{'etas'};
+
+    my @code;
+
+    for my $eta (@$etas) {
+        push @code, "DMYETA_$eta = ETA($eta)";
+    }
+
+    prepend_code(model => $model, code => \@code);
+}
+
+sub list_etas_used_in_code
+{
+    # Finds all etas used in any code block and puts into a hash
+	my %parm = validated_hash(\@_,
+        model => { isa => 'model' },
+    );
+    my $model = $parm{'model'};
+
+    my %etas;
+    for my $record (('pk', 'pred', 'error', 'des', 'aes', 'aesinitial', 'mix', 'infn')) {
+        if ($model->has_code(record => $record)) {
+            my $code = $model->get_code(record => $record);
+            for my $line (@$code) {
+                while ($line =~ /\bETA\((\d+)\)/g) {
+                    $etas{$1} = 1;
+                }
+            }
+        }
+    }
+
+    return \%etas;
+}
+
 sub find_etas
 {
 	my %parm = validated_hash(\@_,
