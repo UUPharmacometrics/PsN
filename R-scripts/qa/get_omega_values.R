@@ -1,7 +1,5 @@
 get_omega_values <- function(ext_file,omegas){
-  omega_table <- read.table(ext_file,header=TRUE,skip=1,stringsAsFactors = F) %>%
-    dplyr::filter(ITERATION==-1000000000)
-  omega_table <- omega_table[grep("^OMEGA",colnames(omega_table))]
+  omega_table <- get_initial_estimates_from_ext(filename=ext_file,select="omega")
   omegas_v <- c()
   col.names_v <- c()
   omegas_c <- c()
