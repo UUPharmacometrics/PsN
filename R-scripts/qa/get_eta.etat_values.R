@@ -2,17 +2,13 @@ get_eta.etat_values <- function(param_model,theta_values) {
   param_phi_file <- sub("(\\.[^.]+)$",".phi",param_model)
   if(file.exists(param_phi_file)) {
     #which etas to select
-    nr <- c()
-    for(i in 1:nrow(theta_values)) {
-      nr[i] <- sub("ETA\\(","",theta_values$ETA[i])
-      nr[i] <- sub("\\)","",nr[i])
-    }
+    nr <- gsub("\\D","",theta_values$ETA)
+    
     eta_table <- read.table(param_phi_file,skip=1,header=T,stringsAsFactors = F) %>%
       dplyr::select(unique(grep(paste(paste0("ETA.",nr,"\\."),collapse="|"),colnames(.))))
     
     for(i in 1:ncol(eta_table)) {
-      eta_name <- sub("\\(","\\.",theta_values$ETA[i])
-      eta_name <- sub("\\)","\\.",eta_name)
+      eta_name <- gsub("[\\(|\\)]","\\.",theta_values$ETA[i])
       if(grepl("boxcox",param_model)) {
         lambda <- as.numeric(theta_values$Lambda[i])
         eta <- eta_table[,eta_name]
