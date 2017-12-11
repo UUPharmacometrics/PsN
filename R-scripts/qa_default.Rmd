@@ -26,17 +26,18 @@ check_package_versions(pkg=c("tidyverse","xpose","ztable","expm","PEIP","yaml","
                        versions=c("1.1.1","0.4.0","0.1.5","0.999-1","2.0-1","2.1.14","1.13.3"),
                        toolname)
 #load functions
-source(file.path(rscripts.directory, "/common/R_info.R"))
-source(file.path(rscripts.directory, "/common/find_r_files_in_subdir.R"))
-source(file.path(rscripts.directory, "/common/iofv.R"))
-source(file.path(rscripts.directory, "/common/keep_symbols.R"))
-source(file.path(rscripts.directory, "/common/command_text.R"))
-source(file.path(rscripts.directory, "/common/additional_info.R"))
-source(file.path(rscripts.directory, "/common/break_text.R"))
-source(file.path(rscripts.directory, "/cdd/create.data.full.R"))
-source(file.path(rscripts.directory,"/frem/ID_ratio_function.R"))
-source(file.path(rscripts.directory,"/frem/parameter_ratio_function.R"))
-source(file.path(rscripts.directory,"/frem/sd_of_unexpl_var_function.R"))
+source(file.path(rscripts.directory, "common/R_info.R"))
+source(file.path(rscripts.directory, "common/find_r_files_in_subdir.R"))
+source(file.path(rscripts.directory, "common/iofv.R"))
+source(file.path(rscripts.directory, "common/keep_symbols.R"))
+source(file.path(rscripts.directory, "common/command_text.R"))
+source(file.path(rscripts.directory, "common/additional_info.R"))
+source(file.path(rscripts.directory, "common/break_text.R"))
+source(file.path(rscripts.directory, "common/get_initial_estimates_from_ext.R"))
+source(file.path(rscripts.directory, "cdd/create.data.full.R"))
+source(file.path(rscripts.directory,"frem/ID_ratio_function.R"))
+source(file.path(rscripts.directory,"frem/parameter_ratio_function.R"))
+source(file.path(rscripts.directory,"frem/sd_of_unexpl_var_function.R"))
 #source qa functions
 rscript <- find_r_files_in_subdir(toolname,rscripts.directory)
 for (i in 1:length(rscript)) {
@@ -56,7 +57,7 @@ R_info(directory=working.directory)
 <!-- ##############################   Calculations  #################################### -->
 
 ```{r find_resmod_folders,results='hide',echo=F,warning=F,message=F}
-#which resmod_ folders are in the working directory
+#which "resmod_ ..." folders are in the working directory
 idv_all <- which_resmod_folders(directory=working.directory,idv_name)
 ```
 
@@ -76,63 +77,44 @@ if(all(skip!="resmod")) {
 ```{r parameter_model_calculations,results='hide',echo=F,warning=F,message=F}
 # 2.Parameter Variability Models
 list_par_var_models <- get_param_var_tables(directory=working.directory,base_model,skip)
-par_var_models <- list_par_var_models$par_var_models
-fullblock_mod <- list_par_var_models$fullblock_mod
-boxcox_mod <- list_par_var_models$boxcox_mod
-tdist_mod <- list_par_var_models$tdist_mod
-add_etas_mod <- list_par_var_models$add_etas_mod
-iov_mod <- list_par_var_models$iov_mod
-if(fullblock_mod) {
+if(list_par_var_models$fullblock_mod) {
   full_omega_block_list <- get_full_omega_block(original_max0_model=original_max0_model,
                                                 fullblock_model=file.path(working.directory,"modelfit_run/fullblock.mod"),
                                                 dofv_block=list_par_var_models$dofv_block)
-  full_omega_block_table <- full_omega_block_list$full_omega_block_table
-  full_omega_block_error <- full_omega_block_list$full_omega_block_error
 }
-if(boxcox_mod) {
+if(list_par_var_models$boxcox_mod) {
   boxcox_lambdas_list <- get_param_extra_table(original_max0_model=original_max0_model,
                                                param_model=file.path(working.directory,"modelfit_run/boxcox.mod"),
                                                dofv=list_par_var_models$dofv_box)
   boxcox_lambdas_orig <- boxcox_lambdas_list$param_extra_table_orig
-  boxcox_lambdas_table <- boxcox_lambdas_list$param_extra_table
-  boxcox_lambdas_error <- boxcox_lambdas_list$param_extra_table_error
 }
-if(tdist_mod) {
+if(list_par_var_models$tdist_mod) {
   tdist_list <- get_param_extra_table(original_max0_model=original_max0_model,
                                       param_model=file.path(working.directory,"modelfit_run/tdist.mod"),
                                       dofv=list_par_var_models$dofv_tdist)
   tdist_table_orig <- tdist_list$param_extra_table_orig
-  tdist_table <- tdist_list$param_extra_table
-  tdist_error <- tdist_list$param_extra_table_error
 }
-if(add_etas_mod) {
+if(list_par_var_models$add_etas_mod) {
   add_etas_list <- get_add_etas_table(original_max0_model=original_max0_model,
                                       add_etas_dir=file.path(working.directory,"add_etas_run"),
                                       added_etas=added_etas,
                                       dofv_add.etas=list_par_var_models$dofv_add_etas,
                                       nonlinear)
-  add_etas_table <- add_etas_list$add_etas_table
-  add_etas_error <- add_etas_list$add_etas_error
 }
-if(iov_mod) {
+if(list_par_var_models$iov_mod) {
   iov_list <- get_iov_table(original_max0_model=original_max0_model,
                             iov_model=file.path(working.directory,"modelfit_run/iov.mod"),
                             iov_etas=iov_etas,
                             dofv_iov=list_par_var_models$dofv_iov)
-  iov_table <- iov_list$iov_table
-  iov_error <- iov_list$iov_error
 }
 ```
 
 ```{r boxcox_shape_table_for_plot,results='hide',echo=F,warning=F,message=F}
-if(exists("boxcox_lambdas_orig") && !boxcox_lambdas_error) {
+if(exists("boxcox_lambdas_orig") && !boxcox_lambdas_list$param_extra_table_error) {
   eta_table_boxcox <- get_eta.etat_values(param_model=file.path(working.directory,"modelfit_run/boxcox.mod"),theta_values=boxcox_lambdas_orig[,1:2])
   list_boxcox_shape <- get_eta_transf_table(input_table=boxcox_lambdas_orig)
   make_boxcox_shape_plot <- list_boxcox_shape$make_eta_transf_plot
   fig_height_boxcox <- list_boxcox_shape$fig_height
-  if(make_boxcox_shape_plot) {
-    boxcox_shape_table <- list_boxcox_shape$eta_transf_table
-  }
 } else {
   fig_height_boxcox <- 15
   make_boxcox_shape_plot <- FALSE
@@ -140,14 +122,11 @@ if(exists("boxcox_lambdas_orig") && !boxcox_lambdas_error) {
 ```
 
 ```{r tdist_shape_table_for_plot,results='hide',echo=F,warning=F,message=F}
-if(exists("tdist_table_orig") && !tdist_error) {
+if(exists("tdist_table_orig") && !tdist_list$param_extra_table_error) {
   eta_table_tdist <- get_eta.etat_values(param_model=file.path(working.directory,"modelfit_run/tdist.mod"),theta_values=tdist_table_orig[,1:2])
   list_tdist_shape <- get_eta_transf_table(input_table=tdist_table_orig)
   make_tdist_shape_plot <- list_tdist_shape$make_eta_transf_plot
   fig_height_tdist <- list_tdist_shape$fig_height
-  if(make_tdist_shape_plot) {
-    tdist_shape_table <- list_tdist_shape$eta_transf_table
-  }
 } else {
   fig_height_tdist <- 15
   make_tdist_shape_plot <- FALSE
@@ -158,24 +137,16 @@ if(exists("tdist_table_orig") && !tdist_error) {
 # 3.Covariate Models
   # 3.1.All (FREM)
 frem_table_list <- get_all_covariates(frem_directory=file.path(working.directory,"frem_run"),continuous,categorical,parameters,list_par_var_models$dofv_block,skip)
-frem_table <- frem_table_list$frem_table
  # 3.2.Covariate (SCM)
 scm_table_list <- get_scm_table(scm_directory=file.path(working.directory,"scm_run"),
                                 parameters,continuous,categorical,skip)
-scm_table <- scm_table_list$scm_table
-max_scm_table <- scm_table_list$max_scm_table
-  #summary
-covariates_table_list <- get_covariates_table(frem_table,scm_table,max_scm_table)
-covariates_extra_table <- covariates_table_list$covariates_extra_table
-covariates_table <- covariates_table_list$covariates_table
+# summary
+covariates_table_list <- get_covariates_table(frem_table_list$frem_table,scm_table_list$scm_table,scm_table_list$max_scm_table)
 ```
 
 ```{r residual_error_model_calculations,results='hide',echo=F,warning=F,message=F}
 #4.create residual error model table (extra table)
 resmod_table_list <- get_resmod_ruv_table(directory=working.directory,idv_name,dvid_name,skip)
-resmod_ruv_models_table_list <- resmod_table_list$resmod_ruv_table_list
-resmod_ruv_overview <- resmod_table_list$resmod_ruv_overview
-dvid_nr <- resmod_table_list$dvid_nr
 ```
 
 ```{r influential_individuals_calculations,results='hide',echo=F,warning=F,message=F}
@@ -186,29 +157,21 @@ ii_list <- get_ii_table(cdd_directory=file.path(working.directory,"cdd_run"),
                         max_rows=cdd_max_rows,
                         skip,
                         nonlinear)
-all_dofv <- ii_list$all_dofv
-cdd.data <- ii_list$cdd.data
-cdd_highest_dofv <- ii_list$cdd_highest_dofv
-ii_table <- ii_list$ii_table
-infl_id <- ii_list$infl_id
-fig_height_infl <- ii_list$fig_height_infl
 ```
 
 ```{r outliers_calculations,results='hide',echo=F,warning=F,message=F}
 # 6.Outliers (Simeval)
-outlier_table_list <- get_outliers_table(simeval_directory=file.path(working.directory, "simeval_run"),cdd.data,skip)
-outliers_table <- outlier_table_list$outliers_table
-max_outlier_table <- outlier_table_list$max_outlier_table
-outlier_ids <- outlier_table_list$outlier_ids
-fig_height_outl <- outlier_table_list$fig_height_outl
+outlier_table_list <- get_outliers_table(simeval_directory=file.path(working.directory, "simeval_run"),ii_list$cdd.data,skip)
 ```
 
 ```{r make_overview_table,results='hide',echo=F,warning=F,message=F}
 # get overview table
-overview_table_list <- get_overview_table(structural_overview=structural_overview,param_var_overview=par_var_models,covariates_overview=covariates_table,resmod_ruv_overview=resmod_ruv_overview,infl_indiv_overview=cdd_highest_dofv,outliers_overview=max_outlier_table)
-rgroup_names <- overview_table_list$rgroup_names
-n.rgroup <- overview_table_list$n.rgroup
-overview_table <- overview_table_list$overview_table
+overview_table_list <- get_overview_table(structural_overview=structural_overview,
+                                          param_var_overview=list_par_var_models$par_var_models,
+                                          covariates_overview=covariates_table_list$covariates_table,
+                                          resmod_ruv_overview=resmod_table_list$resmod_ruv_overview,
+                                          infl_indiv_overview=ii_list$cdd_highest_dofv,
+                                          outliers_overview=outlier_table_list$max_outlier_table)
 ```
 
 <!-- #######################   Write Rmarkdown document here   ################################ -->
@@ -228,285 +191,246 @@ print(ofv_table)
 
 ```{r draw_overview_table,results='asis',echo=F,warning=F,message=F}
 cat("#Overview\n\n")
-overview_table <- keep_symbols(overview_table,type)
+overview_table <- keep_symbols(overview_table_list$overview_table,type)
 overview_table <- ztable_sub(overview_table,type=type,include.rownames = F,colnames.bold = T,align="lrc")
-overview_table <- addrgroup(overview_table,rgroup=rgroup_names,n.rgroup=n.rgroup,cspan.rgroup=1)
+overview_table <- addrgroup(overview_table,rgroup=overview_table_list$rgroup_names,n.rgroup=overview_table_list$n.rgroup,cspan.rgroup=1)
 print(overview_table)
 cat("Overview of possible modifications to different model aspects, expected improvement in OFV as well as number of additional parameters used.")
 ```
 
-```{r draw_structural_details_tables,results='asis',echo=F,warning=F,message=F,fig.width=11,fig.height=6.5,fig.keep="high",fig.align="center"}
-if(all(skip!="resmod")) {
+```{r draw_structural_details_tables,eval=all(skip!="resmod"),results='asis',echo=F,warning=F,message=F,fig.width=11,fig.height=6.5,fig.keep="high",fig.align="center"}
+cat("\\pagebreak\n\n")
+cat("#Structural\n\n")
+all_structural_extra_plots(simeval_directory=file.path(working.directory,"simeval_run"),base_dataset,resmod_structural_details,
+                           CWRES_table,idv_all,idv_name,dvid_name,type,nonlinear)
+```
+
+```{r Add_text_for_parameter_section_if_exist_mod_files,eval=all(skip!="transform"),results='asis',echo=F,warning=F,message=F}
+cat("\\pagebreak\n\n")
+cat("#Parameter Variability Model\n\n")
+```
+
+```{r draw_full_omega_block_table,eval=all(skip!="transform"),results='asis',echo=F,warning=F,message=F}
+cat("##Full OMEGA Block\n\n")
+if(list_par_var_models$fullblock_mod) {
+  full_omega_block_table <- keep_symbols(full_omega_block_list$full_omega_block_table,type)
+  full_omega_block_table <- ztable_sub(full_omega_block_table,type=type,colnames.bold=T,include.colnames=!full_omega_block_list$full_omega_block_error,include.rownames=F,longtable=T,align="lrr")
+  print(full_omega_block_table)
+  cat("Estimated standard deviation (sd) and correlation (corr) as well as expected improvement in OFV when allowing for a full block correlation structure between subject-level random effects.")
+} else {
+  cat("Model already has full OMEGA Block.")
+}
+```
+
+```{r draw_boxcox_tranformation_table,eval=all(skip!="transform"),results='asis',echo=F,warning=F,message=F}
+cat("##Box-Cox Transformation\n\n")
+boxcox_lambdas_table <- keep_symbols(boxcox_lambdas_list$param_extra_table,type)
+boxcox_lambdas_table <- ztable_sub(boxcox_lambdas_table,type=type,colnames.bold=T,include.colnames=!boxcox_lambdas_list$param_extra_table_error,include.rownames=F,longtable=T,align="lrrr")
+print(boxcox_lambdas_table)
+cat("Estimated shape parameters (Lambda) as well as expected improvement in OFV when estimating a Box-Cox transformation for each subject-level random effect.")
+```
+
+```{r plot_boxcox_shape,eval=(make_boxcox_shape_plot && all(skip!="transform")), results='asis',echo=F,warning=F,message=F,fig.width=11,fig.height=fig_height_boxcox,fig.keep="high",fig.align="center"}
+boxcox_shape_plot <- plot_transformed_density(data_table=list_boxcox_shape$eta_transf_table,eta_table_boxcox,param_model="boxcox")
+for(i in 1:length(boxcox_shape_plot)) {
+  print(boxcox_shape_plot[[i]])
+  cat("Density of the Box-Cox transformed random effect in comparison with the density of the original (untransformed) random effect. The rug below the densities indicates the empirical Bayes estimates for the transformed random effect.")
+}
+```
+
+```{r draw_add_etas_table,eval=all(skip!="transform"),results='asis',echo=F,warning=F,message=F}
+if(!boxcox_lambdas_list$param_extra_table_error) {
   cat("\\pagebreak\n\n")
-  cat("#Structural\n\n")
-  all_structural_extra_plots(simeval_directory=file.path(working.directory,"simeval_run"),base_dataset,resmod_structural_details,
-                             CWRES_table,idv_all,idv_name,dvid_name,type,nonlinear)
+}
+cat("##Additional etas\n\n")
+if(list_par_var_models$add_etas_mod) {
+  add_etas_table <- keep_symbols(add_etas_list$add_etas_table,type)
+  add_etas_table <- ztable_sub(add_etas_table,type=type,colnames.bold=T,include.colnames=!add_etas_list$add_etas_error,include.rownames=F,longtable=T,align="lrrr")
+  print(add_etas_table)
+  cat("Consequences of including additional subject-level random effects on selected parameters in terms of estimated standard deviation (SD) of new and existing random effect parameters as well as expected improvement in OFV.")
+} else {
+  cat("No additional etas were added.")
 }
 ```
 
-```{r Add_text_for_parameter_section_if_exist_mod_files,results='asis',echo=F,warning=F,message=F}
-if(all(skip!="transform")) {
+```{r draw_tdist_table,eval=all(skip!="transform"),results='asis',echo=F,warning=F,message=F}
+cat("##t-distribution\n\n")
+tdist_table <- keep_symbols(tdist_list$param_extra_table,type)
+tdist_table <- ztable_sub(tdist_table,type=type,colnames.bold=T,include.colnames=!tdist_list$param_extra_table_error,include.rownames=F,longtable=T,align="lrrr")
+print(tdist_table)
+cat("Estimated degrees of freedom as well as expected improvement in OFV when estimating a t-distribution transformation for each subject-level random effect.")
+```
+
+```{r plot_tdist_shape,eval=(make_tdist_shape_plot && all(skip!="transform")), results='asis',echo=F,warning=F,message=F,fig.width=11,fig.height=fig_height_tdist,fig.keep="high",fig.align="center"}
+tdist_shape_plot <- plot_transformed_density(data_table=list_tdist_shape$eta_transf_table,eta_table_tdist,param_model="tdist")
+for(i in 1:length(tdist_shape_plot)) {
+  print(tdist_shape_plot[[i]])
+  cat("Density of the t-distribution transformed random effect in comparison with the density of the original (untransformed) random effect. The rug below the densities indicates the empirical Bayes estimates for the transformed random effect.")
+}
+```
+
+```{r draw_iov_table,eval=all(skip!="transform"),results='asis',echo=F,warning=F,message=F}
+if(make_tdist_shape_plot && (list_par_var_models$add_etas_mod || list_par_var_models$iov_mod)) {
   cat("\\pagebreak\n\n")
-  cat("#Parameter Variability Model\n\n")
 }
-```
-
-```{r draw_full_omega_block_table,results='asis',echo=F,warning=F,message=F}
-if(all(skip!="transform")) {
-  cat("##Full OMEGA Block\n\n")
-  if(fullblock_mod) {
-    full_omega_block_table <- keep_symbols(full_omega_block_table,type)
-    full_omega_block_table <- ztable_sub(full_omega_block_table,type=type,colnames.bold=T,include.colnames=!full_omega_block_error,include.rownames=F,longtable=T,align="lrr")
-    print(full_omega_block_table)
-    cat("Estimated standard deviation (sd) and correlation (corr) as well as expected improvement in OFV when allowing for a full block correlation structure between subject-level random effects.")
-  } else {
-    cat("Model already has full OMEGA Block.")
+cat("##Interoccasion variability\n\n")
+if(list_par_var_models$iov_mod) {
+  iov_table <- keep_symbols(iov_list$iov_table,type)
+  iov_table <- ztable_sub(iov_table,type=type,colnames.bold=T,include.rownames=F,include.colnames=!iov_list$iov_error,longtable=T,align="llrrr")
+  if(!iov_list$iov_error) {
+    iov_table <- addcgroup(iov_table,cgroup=c("","New SD",""),n.cgroup=c(1,2,1))
   }
+  print(iov_table)
+  cat("Consequences of including inter-occasion variability in terms of estimated standard deviation (SD) for inter-individual (IIV) and inter-occasion variability (IOV) as well as expected improvement in OFV.")
+} else {
+  cat("No interoccasion variability was added.")
 }
 ```
 
-```{r draw_boxcox_tranformation_table,results='asis',echo=F,warning=F,message=F}
-if(all(skip!="transform")) {
-  cat("##Box-Cox Transformation\n\n")
-  boxcox_lambdas_table <- keep_symbols(boxcox_lambdas_table,type)
-  boxcox_lambdas_table <- ztable_sub(boxcox_lambdas_table,type=type,colnames.bold=T,include.colnames=!boxcox_lambdas_error,include.rownames=F,longtable=T,align="lrrr")
-  print(boxcox_lambdas_table)
-  cat("Estimated shape parameters (Lambda) as well as expected improvement in OFV when estimating a Box-Cox transformation for each subject-level random effect.")
-}
+```{r draw_covariates_table,eval=(all(skip!="frem")||all(skip!="scm")),results='asis',echo=F,warning=F,message=F}
+cat("\\pagebreak\n\n")
+cat("#Covariates\n\n")
+covariates_extra_table <- keep_symbols(covariates_table_list$covariates_extra_table,type)
+align <- paste(c("l",rep("r",ncol(covariates_extra_table)-1)),collapse = '')
+covariates_extra_table <- ztable_sub(covariates_extra_table,type=type,colnames.bold = T,include.rownames = F,longtable = T,align=align)
+print(covariates_extra_table)
+cat("Model parameter covariate relationship, resulting improvement in OFV and estimated covariate coefficient. Furthermore, the sum of all univariate improvements in OFV ignoring between covariate correlations (sum(SCMu)), as well as joint improvement in OFV when taking correlations into account (FREM).")
 ```
 
-```{r plot_boxcox_shape,results='asis',echo=F,warning=F,message=F,fig.width=11,fig.height=fig_height_boxcox,fig.keep="high",fig.align="center"}
-if(make_boxcox_shape_plot && all(skip!="transform")) {
-   boxcox_shape_plot <- plot_transformed_density(data_table=boxcox_shape_table,eta_table_boxcox,param_model="boxcox")
-  for(i in 1:length(boxcox_shape_plot)) {
-    print(boxcox_shape_plot[[i]])
-    cat("Density of the Box-Cox transformed random effect in comparison with the density of the original (untransformed) random effect. The rug below the densities indicates the empirical Bayes estimates for the transformed random effect.")
+```{r draw_frem_plots,eval=(all(skip!="frem")||all(skip!="scm")),results='asis',echo=F,warning=F,message=F,fig.width=11,fig.height=14.5,fig.keep="high",fig.align="center"}
+all_frem_plots(working.directory)
+```
+
+```{r draw_resiual_error_model_table,eval=all(skip!="resmod"),results='asis',echo=F,warning=F,message=F,fig.width=8,fig.height=6,fig.keep="high",fig.align="center"}
+cat("\\pagebreak\n\n")
+cat("#Residual Error Model\n\n")
+if(!nonlinear && file.exists(sub("(\\.[^.]+)$",".lst",original_max0_model)) &&
+   file.exists(file.path(working.directory,paste0("resmod_",idv_name),"results.csv"))) {
+  xpdb_data <- xpose_data(file = sub("(\\.[^.]+)$",".lst",original_max0_model)) %>%
+    qa_data(resmod_folder=file.path(working.directory,paste0("resmod_",idv_name)),derivatives_model=original_max0_model)
+}
+for (i in 1:length(resmod_table_list$dvid_nr)) {
+  if(!nonlinear && exists("xpdb_data")) {
+    xpdb <- xpdb_data %>% add_resmod_xpdbs(resmod_folder=file.path(working.directory,paste0("resmod_",idv_name)),  dvid_value=resmod_table_list$dvid_nr[i])
   }
-}
-```
-
-```{r draw_add_etas_table,results='asis',echo=F,warning=F,message=F}
-if(all(skip!="transform")) {
-  if(!boxcox_lambdas_error) {
+  if(resmod_table_list$dvid_nr[i] != 'NA') {
+    cat(paste0("##",dvid_name,"=",resmod_table_list$dvid_nr[i],"\n\n"))
+  }
+  resmod_ruv_models_table <- keep_symbols(resmod_table_list$resmod_ruv_table_list[[i]],type)
+  resmod_ruv_models_table <- ztable_sub(resmod_ruv_models_table,type=type,colnames.bold = T,include.rownames = F,longtable = T,align="lrcl")
+  print(resmod_ruv_models_table)
+  cat("Residual error model, resulting expected improvement in OFV, required additional model parameters as well as their estimates.\n\n\n\n")
+  if(!nonlinear && exists("xpdb")) {
+    res_var_attribution <- resmod_variability_attribution(xpdb,dvid_col_name=dvid_name,dvid_value=resmod_table_list$dvid_nr[i])
+    print(res_var_attribution)
+    cat("\n\n Attribution of variability to between-subject random effects and residual unexplained variability (RUV) versus independent variable under different residual error models.")
     cat("\\pagebreak\n\n")
-  }
-  cat("##Additional etas\n\n")
-  if(add_etas_mod) {
-    add_etas_table <- keep_symbols(add_etas_table,type)
-    add_etas_table <- ztable_sub(add_etas_table,type=type,colnames.bold=T,include.colnames=!add_etas_error,include.rownames=F,longtable=T,align="lrrr")
-    print(add_etas_table)
-    cat("Consequences of including additional subject-level random effects on selected parameters in terms of estimated standard deviation (SD) of new and existing random effect parameters as well as expected improvement in OFV.")
-  } else {
-    cat("No additional etas were added.")
-  }
-}
-```
-
-```{r draw_tdist_table,results='asis',echo=F,warning=F,message=F}
-if(all(skip!="transform")) {
-  cat("##t-distribution\n\n")
-  tdist_table <- keep_symbols(tdist_table,type)
-  tdist_table <- ztable_sub(tdist_table,type=type,colnames.bold=T,include.colnames=!tdist_error,include.rownames=F,longtable=T,align="lrrr")
-  print(tdist_table)
-  cat("Estimated degrees of freedom as well as expected improvement in OFV when estimating a t-distribution transformation for each subject-level random effect.")
-}
-```
-
-```{r plot_tdist_shape,results='asis',echo=F,warning=F,message=F,fig.width=11,fig.height=fig_height_tdist,fig.keep="high",fig.align="center"}
-if(make_tdist_shape_plot && all(skip!="transform")) {
-   tdist_shape_plot <- plot_transformed_density(data_table=tdist_shape_table,eta_table_tdist,param_model="tdist")
-  for(i in 1:length(tdist_shape_plot)) {
-    print(tdist_shape_plot[[i]])
-    cat("Density of the t-distribution transformed random effect in comparison with the density of the original (untransformed) random effect. The rug below the densities indicates the empirical Bayes estimates for the transformed random effect.")
+    # res_param_uncertainty <- resmod_parameter_uncertainty(xpdb,dvid_col_name=dvid_name,dvid_value=resmod_table_list$dvid_nr[i])
+    # res_param_uncertainty <- keep_symbols(res_param_uncertainty,type)
+    # align <- paste(c("l",rep("r",ncol(res_param_uncertainty)-1)),collapse = '')
+    # res_param_uncertainty <- ztable_sub(res_param_uncertainty,type=type,colnames.bold=T,include.colnames=T,include.rownames=F,longtable=T,align=align)
+    # print(res_param_uncertainty)
+    # cat("Attribution of variability to between-subject random effects and residual unexplained variability (RUV) versus independent variable under different residual error models.\n\n")
+    # cat("WARNING: CALCULATIONS ASSUME EXPONENTIAL ETAs AND CORRESPONDENCE BETWEEN ETA AND THETA NUMBERS!\n\n\n\n")
+    res_shrinkage <- resmod_shrinkage(xpdb,dvid_col_name=dvid_name,dvid_value=resmod_table_list$dvid_nr[i])
+    res_shrinkage <- keep_symbols(res_shrinkage,type)
+    align <- paste(c("l",rep("r",ncol(res_shrinkage)-1)),collapse = '')
+    res_shrinkage <- ztable_sub(res_shrinkage,type=type,colnames.bold=T,include.colnames=T,include.rownames=F,longtable=T,align=align)
+    print(res_shrinkage)
+    cat("Expected shrinkage for between-subject random effects under different residual error models.\n\n")
+  cat("\\pagebreak\n\n")
   }
 }
 ```
 
-```{r draw_iov_table,results='asis',echo=F,warning=F,message=F}
-if(all(skip!="transform")) {
-  if(make_tdist_shape_plot && (add_etas_mod || iov_mod)) {
+```{r draw_influential_individuals_table,eval=all(skip!="cdd"),results='asis',echo=F,warning=F,message=F}
+cat("\\pagebreak\n\n")
+cat("#Influential Individuals\n\n")
+value <- T
+if(ncol(ii_list$ii_table)==1 && nrow(ii_list$ii_table)==1) value <- F
+ii_table <- keep_symbols(ii_list$ii_table,type)
+ii_table <- ztable_sub(ii_table,type=type,colnames.bold=value,include.colnames=value,include.rownames=F,longtable=T,digits=1,align="lr")
+print(ii_table)
+cat("Subjects identified as significantly influencing the model fit for all other subjects and their influence in terms of improvement in OFV for other subjects when excluding them during the fit.")
+```
+
+```{r histogram_of_cdd_dofv,eval=all(skip!="cdd"),results='asis',echo=F,warning=F,message=F,fig.width=11,fig.height=6}
+cdd_hist <- hist_of_cdd_dofv(values=ii_list$all_dofv)
+print(cdd_hist)
+if(length(ii_list$all_dofv)>0) {
+  cat("Distribution of OFV improvements (dOFV) when excluding specific subjects during the fit.")
+}
+```
+
+```{r add_infl_indiv_individual_plots,eval=all(skip!="cdd"),results='asis',echo=F,warning=F,message=F,fig.width=11,fig.height=ii_list$fig_height_infl}
+if(length(ii_list$infl_id)>0) {
+  infl.ind_individual_plots <- individual_plots(file_name=original_max0_model,ID_nr=ii_list$infl_id[1:10])
+  print(infl.ind_individual_plots)
+  cat("Observations (DV), individual predictions (IPRED) and population predictions (PRED) versus time for subjects identified as influential.")
+}
+```
+
+```{r draw_outliers_table,eval=all(skip!="simeval"),results='asis',echo=F,warning=F,message=F}
+cat("\\pagebreak\n\n")
+cat("#Outliers\n\n")
+value <- T
+if(ncol(outlier_table_list$outliers_table)==1 && nrow(outlier_table_list$outliers_table)==1) value <- F
+outliers_table <- keep_symbols(outlier_table_list$outliers_table,type)
+outliers_table_z <- ztable_sub(outliers_table,type=type,colnames.bold = value,include.colnames = value,include.rownames = F,longtable = T,digits = 1,align="lr")
+print(outliers_table_z)
+cat("Subjects identified as outliers based on a worse than expected model fit and the corresponding improvement in OFV when excluding them during the fit.")
+```
+
+```{r plot_outliers,eval=all(skip!="simeval"),results='asis',echo=F,warning=F,message=F,fig.width=11,fig.height=6}
+if(file.exists(file.path(working.directory,"simeval_run/raw_all_iofv.csv"))) {
+  list_i_ofv_res <- i_ofv_res(file.path(working.directory,"simeval_run/raw_all_iofv.csv"),show.warning=F)# calculation
+  n.subjects <- list_i_ofv_res$n.subjects
+  # Make a boxplot
+  boxplot_i_ofv_res(list_i_ofv_res,n.subjects,add_title=FALSE)
+  cat("Range of deviation of individual OFVs between observed and simulated data for all subjects in standard deviations from the expected fit (iOFV RES).  High iOFV RES values indicate subjects for which the model describe the data worse than expected.")
+}
+```
+
+```{r add_outliers_individual_plots,eval=all(skip!="simeval"),results='asis',echo=F,warning=F,message=F,fig.width=11,fig.height=outlier_table_list$fig_height_outl}
+if(length(outlier_table_list$outlier_ids)>0) {
+  outlier_individual_plots <- individual_plots(file_name=original_max0_model,ID_nr=outlier_table_list$outlier_ids)
+  print(outlier_individual_plots)
+  cat("Observations (DV), individual predictions (IPRED) and population predictions (PRED) versus time for subjects identified as outliers.")
+}
+```
+
+```{r add_all_outliers_overall_table,eval=all(skip!="simeval"),results='asis',echo=F,warning=F,message=F}
+all_outl_list <- simeval_all_ouliers_table(simeval_directory=file.path(working.directory,"simeval_run"))
+if(all_outl_list$files_exist) {
+  simeval_overall_outliers_table <- all_outl_list$all_outlier_table
+  cgroup_outl <- all_outl_list$cgroup
+  n.cgroup_outl <- all_outl_list$n.cgroup
+  add_column_names <- all_outl_list$add_column_names
+  simeval_overall_outliers_table <- keep_symbols(simeval_overall_outliers_table,type)
+simeval_overall_outliers_table <- ztable_sub(simeval_overall_outliers_table,type=type,colnames.bold = add_column_names,include.colnames = add_column_names,include.rownames = F,longtable = T,align="lccccc")
+if(add_column_names) {
+  simeval_overall_outliers_table <- addcgroup(simeval_overall_outliers_table,cgroup=cgroup_outl,n.cgroup=n.cgroup_outl)
+}
+  cat("\\pagebreak\n\n")
+  print(simeval_overall_outliers_table)
+  cat("Subjects marked as outliers and the metrics used to identify them: (1) OFV outliers have a worse than expected fit, (2) EBE NPDE outliers show significant deviation in their empirical Bayes estimates and (3) CWRES outliers have observations with worse than expected residuals.")
+}
+```
+
+```{r plot_iofv_vs_iofv,eval=(rplots.level > 1),results='asis',echo=F,warning=F,message=F,fig.width=11,fig.height=6,fig.keep="high",fig.align="center"}
+phi1 <- file.path(working.directory,"linearize_run/scm_dir1",paste0(sub('.([^.]*)$','',model.filename),"_linbase.phi"))
+phi2 <- file.path(working.directory,"linearize_run/scm_dir1/derivatives.phi")
+if(file.exists(phi1) && file.exists(phi2)) {
+  make_iofv_plot <- iofv_vs_iofv(phi1,phi2)$make_plot
+  if(make_iofv_plot) {
     cat("\\pagebreak\n\n")
-  }
-  cat("##Interoccasion variability\n\n")
-  if(iov_mod) {
-    iov_table <- keep_symbols(iov_table,type)
-    iov_table <- ztable_sub(iov_table,type=type,colnames.bold=T,include.rownames=F,include.colnames=!iov_error,longtable=T,align="llrrr")
-    if(!iov_error) {
-      iov_table <- addcgroup(iov_table,cgroup=c("","New SD",""),n.cgroup=c(1,2,1))
-    }
-    print(iov_table)
-    cat("Consequences of including inter-occasion variability in terms of estimated standard deviation (SD) for inter-individual (IIV) and inter-occasion variability (IOV) as well as expected improvement in OFV.")
-  } else {
-    cat("No interoccasion variability was added.")
+    cat("#Sanity checks\n\n")
+    plot_iofv_vs_iofv <- iofv_vs_iofv(phi1,phi2)$plot
+    print(plot_iofv_vs_iofv)
+    cat("Agreement in individual OFV contribution (iOFV) between non-linear and linearized model. Deviations from the line of identity indicate problems in the model linearization step and warrant caution when interpreting the results of this report.")
   }
 }
-```
 
-```{r draw_covariates_table,results='asis',echo=F,warning=F,message=F}
-if(all(skip!="frem")||all(skip!="scm")) {
-  cat("\\pagebreak\n\n")
-  cat("#Covariates\n\n")
-  covariates_extra_table <- keep_symbols(covariates_extra_table,type)
-  align <- paste(c("l",rep("r",ncol(covariates_extra_table)-1)),collapse = '')
-  covariates_extra_table <- ztable_sub(covariates_extra_table,type=type,colnames.bold = T,include.rownames = F,longtable = T,align=align)
-  print(covariates_extra_table)
-  cat("Model parameter covariate relationship, resulting improvement in OFV and estimated covariate coefficient. Furthermore, the sum of all univariate improvements in OFV ignoring between covariate correlations (sum(SCMu)), as well as joint improvement in OFV when taking correlations into account (FREM).")
-}
-```
-
-```{r draw_frem_plots,results='asis',echo=F,warning=F,message=F,fig.width=11,fig.height=14.5,fig.keep="high",fig.align="center"}
-if(all(skip!="frem")||all(skip!="scm")) {
-  all_frem_plots(working.directory)
-}
-```
-
-```{r draw_resiual_error_model_table,results='asis',echo=F,warning=F,message=F,fig.width=8,fig.height=6,fig.keep="high",fig.align="center"}
-if(all(skip!="resmod")) {
-  cat("\\pagebreak\n\n")
-  cat("#Residual Error Model\n\n")
-  if(!nonlinear && file.exists(sub("(\\.[^.]+)$",".lst",original_max0_model)) &&
-     file.exists(file.path(working.directory,paste0("resmod_",idv_name),"results.csv"))) {
-    xpdb_data <- xpose_data(file = sub("(\\.[^.]+)$",".lst",original_max0_model)) %>%
-      qa_data(resmod_folder=file.path(working.directory,paste0("resmod_",idv_name)),derivatives_model=original_max0_model)
-  }
-  for (i in 1:length(dvid_nr)) {
-    if(!nonlinear && exists("xpdb_data")) {
-      xpdb <- xpdb_data %>% add_resmod_xpdbs(resmod_folder=file.path(working.directory,paste0("resmod_",idv_name)),  dvid_value=dvid_nr[i])
-    }
-    if(dvid_nr[i] != 'NA') {
-      cat(paste0("##",dvid_name,"=",dvid_nr[i],"\n\n"))
-    }
-    resmod_ruv_models_table <- keep_symbols(resmod_ruv_models_table_list[[i]],type)
-    resmod_ruv_models_table <- ztable_sub(resmod_ruv_models_table,type=type,colnames.bold = T,include.rownames = F,longtable = T,align="lrcl")
-    print(resmod_ruv_models_table)
-    cat("Residual error model, resulting expected improvement in OFV, required additional model parameters as well as their estimates.\n\n\n\n")
-    if(!nonlinear && exists("xpdb") && file.exists(file.path(working.directory,paste0("resmod_",idv_name),paste0("resmod_DVID_",dvid_nr[i]),"m1"))) {
-      res_var_attribution <- resmod_variability_attribution(xpdb,dvid_col_name=dvid_name,dvid_value=dvid_nr[i])
-      print(res_var_attribution)
-      cat("\n\n Attribution of variability to between-subject random effects and residual unexplained variability (RUV) versus independent variable under different residual error models.")
-      cat("\\pagebreak\n\n")
-      # res_param_uncertainty <- resmod_parameter_uncertainty(xpdb,dvid_col_name=dvid_name,dvid_value=dvid_nr[i])
-      # res_param_uncertainty <- keep_symbols(res_param_uncertainty,type)
-      # align <- paste(c("l",rep("r",ncol(res_param_uncertainty)-1)),collapse = '')
-      # res_param_uncertainty <- ztable_sub(res_param_uncertainty,type=type,colnames.bold=T,include.colnames=T,include.rownames=F,longtable=T,align=align)
-      # print(res_param_uncertainty)
-      # cat("Attribution of variability to between-subject random effects and residual unexplained variability (RUV) versus independent variable under different residual error models.\n\n")
-      # cat("WARNING: CALCULATIONS ASSUME EXPONENTIAL ETAs AND CORRESPONDENCE BETWEEN ETA AND THETA NUMBERS!\n\n\n\n")
-      res_shrinkage <- resmod_shrinkage(xpdb,dvid_col_name=dvid_name,dvid_value=dvid_nr[i])
-      res_shrinkage <- keep_symbols(res_shrinkage,type)
-      align <- paste(c("l",rep("r",ncol(res_shrinkage)-1)),collapse = '')
-      res_shrinkage <- ztable_sub(res_shrinkage,type=type,colnames.bold=T,include.colnames=T,include.rownames=F,longtable=T,align=align)
-      print(res_shrinkage)
-      cat("Expected shrinkage for between-subject random effects under different residual error models.\n\n")
-    cat("\\pagebreak\n\n")
-    }
-  }
-}
-```
-
-```{r draw_influential_individuals_table,results='asis',echo=F,warning=F,message=F}
-if(all(skip!="cdd")) {
-  cat("\\pagebreak\n\n")
-  cat("#Influential Individuals\n\n")
-  value <- T
-  if(ncol(ii_table)==1 && nrow(ii_table)==1) value <- F
-  ii_table <- keep_symbols(ii_table,type)
-  ii_table <- ztable_sub(ii_table,type=type,colnames.bold=value,include.colnames=value,include.rownames=F,longtable=T,digits=1,align="lr")
-  print(ii_table)
-  cat("Subjects identified as significantly influencing the model fit for all other subjects and their influence in terms of improvement in OFV for other subjects when excluding them during the fit.")
-}
-```
-
-```{r histogram_of_cdd_dofv,results='asis',echo=F,warning=F,message=F,fig.width=11,fig.height=6}
-if(all(skip!="cdd")) {
-  cdd_hist <- hist_of_cdd_dofv(values=all_dofv)
-  print(cdd_hist)
-  if(length(all_dofv)>0) {
-    cat("Distribution of OFV improvements (dOFV) when excluding specific subjects during the fit.")
-  }
-}
-```
-
-```{r add_infl_indiv_individual_plots,results='asis',echo=F,warning=F,message=F,fig.width=11,fig.height=fig_height_infl}
-if(all(skip!="cdd")) {
-  if(length(infl_id)>0) {
-    infl.ind_individual_plots <- individual_plots(file_name=original_max0_model,ID_nr=infl_id[1:10])
-    print(infl.ind_individual_plots)
-    cat("Observations (DV), individual predictions (IPRED) and population predictions (PRED) versus time for subjects identified as influential.")
-  }
-}
-```
-
-```{r draw_outliers_table,results='asis',echo=F,warning=F,message=F}
-if(all(skip!="simeval")) {
-  cat("\\pagebreak\n\n")
-  cat("#Outliers\n\n")
-  value <- T
-  if(ncol(outliers_table)==1 && nrow(outliers_table)==1) value <- F
-  outliers_table <- keep_symbols(outliers_table,type)
-  outliers_table_z <- ztable_sub(outliers_table,type=type,colnames.bold = value,include.colnames = value,include.rownames = F,longtable = T,digits = 1,align="lr")
-  print(outliers_table_z)
-  cat("Subjects identified as outliers based on a worse than expected model fit and the corresponding improvement in OFV when excluding them during the fit.")
-}
-```
-
-```{r plot_outliers,results='asis',echo=F,warning=F,message=F,fig.width=11,fig.height=6}
-if(all(skip!="simeval")) {
-  if(file.exists(file.path(working.directory,"simeval_run/raw_all_iofv.csv"))) {
-    list_i_ofv_res <- i_ofv_res(file.path(working.directory,"simeval_run/raw_all_iofv.csv"),show.warning=F)# calculation
-    n.subjects <- list_i_ofv_res$n.subjects
-    # Make a boxplot
-    boxplot_i_ofv_res(list_i_ofv_res,n.subjects,add_title=FALSE)
-    cat("Range of deviation of individual OFVs between observed and simulated data for all subjects in standard deviations from the expected fit (iOFV RES).  High iOFV RES values indicate subjects for which the model describe the data worse than expected.")
-  }
-}
-```
-
-```{r add_outliers_individual_plots,results='asis',echo=F,warning=F,message=F,fig.width=11,fig.height=fig_height_outl}
-if(all(skip!="simeval")) {
-  if(length(outlier_ids)>0) {
-    outlier_individual_plots <- individual_plots(file_name=original_max0_model,ID_nr=outlier_ids)
-    print(outlier_individual_plots)
-    cat("Observations (DV), individual predictions (IPRED) and population predictions (PRED) versus time for subjects identified as outliers.")
-  }
-}
-```
-
-```{r add_all_outliers_overall_table,results='asis',echo=F,warning=F,message=F}
-if(all(skip!="simeval")) {
-  all_outl_list <- simeval_all_ouliers_table(simeval_directory=file.path(working.directory,"simeval_run"))
-  if(all_outl_list$files_exist) {
-    simeval_overall_outliers_table <- all_outl_list$all_outlier_table
-    cgroup_outl <- all_outl_list$cgroup
-    n.cgroup_outl <- all_outl_list$n.cgroup
-    add_column_names <- all_outl_list$add_column_names
-    simeval_overall_outliers_table <- keep_symbols(simeval_overall_outliers_table,type)
-  simeval_overall_outliers_table <- ztable_sub(simeval_overall_outliers_table,type=type,colnames.bold = add_column_names,include.colnames = add_column_names,include.rownames = F,longtable = T,align="lccccc")
-  if(add_column_names) {
-    simeval_overall_outliers_table <- addcgroup(simeval_overall_outliers_table,cgroup=cgroup_outl,n.cgroup=n.cgroup_outl)
-  }
-    cat("\\pagebreak\n\n")
-    print(simeval_overall_outliers_table)
-    cat("Subjects marked as outliers and the metrics used to identify them: (1) OFV outliers have a worse than expected fit, (2) EBE NPDE outliers show significant deviation in their empirical Bayes estimates and (3) CWRES outliers have observations with worse than expected residuals.")
-  }
-}
-```
-
-```{r plot_iofv_vs_iofv,results='asis',echo=F,warning=F,message=F,fig.width=11,fig.height=6,fig.keep="high",fig.align="center"}
- if(rplots.level > 1) {
-   phi1 <- file.path(working.directory,"linearize_run/scm_dir1",paste0(sub('.([^.]*)$','',model.filename),"_linbase.phi"))
-   phi2 <- file.path(working.directory,"linearize_run/scm_dir1/derivatives.phi")
-   if(file.exists(phi1) && file.exists(phi2)) {
-     make_iofv_plot <- iofv_vs_iofv(phi1,phi2)$make_plot
-     if(make_iofv_plot) {
-       cat("\\pagebreak\n\n")
-       cat("#Sanity checks\n\n")
-       plot_iofv_vs_iofv <- iofv_vs_iofv(phi1,phi2)$plot
-       print(plot_iofv_vs_iofv)
-       cat("Agreement in individual OFV contribution (iOFV) between non-linear and linearized model. Deviations from the line of identity indicate problems in the model linearization step and warrant caution when interpreting the results of this report.")
-     }
-   }
- }
 ```
 
 ```{r additional_info,results='asis',echo=F,warning=F,message=F}
