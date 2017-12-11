@@ -28,7 +28,7 @@ center 1 excluded, dataset 2 individuals from center 2 and so on.
 \section{Input and options}
 
 \subsection{Required input}
-A NONMEM model file with successful termination is required on the command-line.
+A NONMEM model file with successful termination is required on the command-line. If the model was not run (missing lst-file) or there is no phi-file available it will be run to produce these files.
 \begin{optionlist}
 \optdefault{case\_column}{name|number}
 Through this flag you set the column on which the case-deletion is done. You can either use the name of the column as specified in the 

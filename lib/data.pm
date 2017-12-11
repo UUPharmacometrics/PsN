@@ -652,7 +652,8 @@ sub cdd_create_datasets
 		output_directory => { isa => 'Str', optional => 0 },
 		ignoresign => { isa => 'Str', optional => 1 },
 		missing_data_token => { isa => 'Maybe[Num]', optional => 1 },
-		idcolumn => { isa => 'Int', optional => 0 }
+		idcolumn => { isa => 'Int', optional => 0 },
+        model => { isa => 'model', optional => 1 },     # Model is needed to filter out individuals that were filtered after run
 	);
 	my $input_filename = $parm{'input_filename'};
 	my $input_directory = $parm{'input_directory'};
@@ -663,6 +664,7 @@ sub cdd_create_datasets
 	my $ignoresign = $parm{'ignoresign'};
 	my $missing_data_token = $parm{'missing_data_token'};
 	my $idcolumn = $parm{'idcolumn'};
+	my $model = $parm{'model'};
 
 	unless (-d $output_directory){
 		croak("output directory $output_directory is not a directory/does not exist");
@@ -671,11 +673,30 @@ sub cdd_create_datasets
 	$output_directory = $tmp1; #to get with /
 
 	#data will be parsed here
-	my $data = data->new(filename => $input_filename,
-						 directory => $input_directory,
-						 ignoresign => $ignoresign,
-						 missing_data_token => $missing_data_token,
-						 idcolumn => $idcolumn);
+	my $data = data->new(
+        filename => $input_filename,
+        directory => $input_directory,
+        ignoresign => $ignoresign,
+        missing_data_token => $missing_data_token,
+        idcolumn => $idcolumn,
+    );
+
+    if (defined $model) {
+        # Keep only individuals available in phi file. I.e. those that haven't been filtered out
+        my $phi_filename = $model->outputs->[0]->problems->[0]->full_name_NM7_file(file_type => 'phi');
+        if (length($phi_filename) <= 0) {
+            croak("Could not open phi-file $phi_filename\n");
+        }
+        my $phi_table = nmtablefile->new(filename => $phi_filename);
+        my $ids = $phi_table->tables->[-1]->get_column(name=> 'ID');
+        my @kept_individuals;
+        for my $individual (@{$data->individuals}) {
+            if (array::numerical_in($individual->idnumber, $ids)) {
+                push @kept_individuals, $individual;
+            }
+        }
+        $data->individuals(\@kept_individuals);
+    }
 
     if (!$data->have_unique_ids()) {
         print("Warning: The dataset does not have unique IDs. There is a risk that individuals will be merged together.\n");
@@ -793,6 +814,7 @@ sub _case_deletion
 			}
 			push( @cd_inds, $individuals->[ $key ]->copy );
 		}
+
 		#here we simply write to file and then delete objects again
 		#we only return file names, not data objects
 		my $newname = $directory . 'cdd_' . ($k + 1) . '.dta';

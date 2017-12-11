@@ -729,12 +729,9 @@ sub general_setup
 	# between the processes when creating directories for model fits. Therefore
 	# the directory attribute is given explicitly below.
 
+	if (not $model->is_run or not -e $model->outputs->[0]->problems->[0]->full_name_NM7_file(file_type => 'phi')) {
 
-	unless ($model->is_run) {
-
-		# -----------------------  Run original run  ------------------------------
-
-		# {{{ orig run
+		# Run original run
 
 		my %subargs = ();
 		if ( defined $self -> subtool_arguments ) {
@@ -763,9 +760,6 @@ sub general_setup
 
 		$orig_fit->add_to_nmoutput(extensions => ['phi','ext','cov','coi']);		
 		$orig_fit -> run;
-
-		# }}} orig run
-
 	}
 	
 	unless ( $model -> outputs -> [0] -> have_output ) {
@@ -887,14 +881,17 @@ sub general_setup
 		# {{{ create new
 		my $output_directory = $self -> directory.'/m'.$model_number;
 		($new_datas, $skip_ids, $skip_keys, $skip_values, $remainders) = 
-			data::cdd_create_datasets(input_filename => $datafiles->[0],
-									  bins => $self->bins,
-									  case_column => $self->case_column, 
-									  selection_method => $self->selection_method,
-									  output_directory => $output_directory,
-									  ignoresign => $ignoresign,
-									  idcolumn => $idcol->[0][0],  #number not index
-									  missing_data_token => $self->missing_data_token);
+			data::cdd_create_datasets(
+                input_filename => $datafiles->[0],
+                bins => $self->bins,
+                case_column => $self->case_column, 
+                selection_method => $self->selection_method,
+                output_directory => $output_directory,
+                ignoresign => $ignoresign,
+                idcolumn => $idcol->[0][0],  #number not index
+                missing_data_token => $self->missing_data_token,
+                model => $model,
+            );
 
 		my $ndatas = scalar @{$new_datas};
 		$self->actual_bins($ndatas);
