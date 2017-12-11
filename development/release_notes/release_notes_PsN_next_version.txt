@@ -165,6 +165,7 @@ A new recommended but not required Perl library for runrecord: YAML::Tiny
 
    ___cdd___
 
+- Fix critical bug (#50) casusing dofv to be calculated in a wrong way if any individual was ignored.
 - Do not propagate -dir to subtools (i.e. subdir of modelfit of cdd runs will always be 'modelfit_dir1') 
 
 
