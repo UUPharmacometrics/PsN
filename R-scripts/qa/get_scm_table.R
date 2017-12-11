@@ -14,7 +14,11 @@ get_scm_table <- function(scm_directory,parameters,continuous,categorical,skip){
           dplyr::select(relation, dOFV)
         colnames(scm_table) <- c("","dOFV")
         #max_table
-        max_scm_table <- cbind(scm_table[which.max(scm_table$dOFV),],1)
+        if(all(is.na(scm_table$dOFV))) {
+          max_scm_table <- cbind(error_table("SCM"),"",stringsAsFactors = F)
+        } else {
+          max_scm_table <- cbind(scm_table[which.max(scm_table$dOFV),],1)
+        }
         
         # add coefficient
         scm_table_coef <- read.csv(rawres_file,stringsAsFactors = F) %>%
