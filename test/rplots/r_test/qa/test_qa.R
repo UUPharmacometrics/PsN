@@ -552,26 +552,26 @@ test_that("creates iov table",{
   expect_true(iov_error_3)
 })
 
-#...........................  (15) Test function get_eta_values.R .....................................
+#...........................  (15) Test function get_eta.etat_values.R .....................................
 #input tables
 theta_values_boxcox <- data.frame("ETA"=c("ETA(1)","ETA(2)","ETA(3)","ETA(4)"),"Lambda"=c(2,0.2,0.4,0.1))
 theta_values_tdist <- theta_values_boxcox
 colnames(theta_values_tdist) <- c("ETA","Degrees of freedom")
 # run function
-eta_boxcox <- get_eta_values(param_model=file.path(files.w.dir,"qa_run1/modelfit_run/boxcox.mod"),
+eta_boxcox <- get_eta.etat_values(param_model=file.path(files.w.dir,"qa_run1/modelfit_run/boxcox.mod"),
                              theta_values=theta_values_boxcox)
-eta_tdist <- get_eta_values(param_model=file.path(files.w.dir,"qa_run1/modelfit_run/tdist.mod"),
+eta_tdist <- get_eta.etat_values(param_model=file.path(files.w.dir,"qa_run1/modelfit_run/tdist.mod"),
                             theta_values=theta_values_tdist)
 #compare
-context("qa, get_eta_values")
-test_that("get eta values from boxcox or tdist phi file",{
+context("qa, get_eta.etat_values")
+test_that("get eta.etat values from boxcox or tdist phi file",{
   expect_equal(eta_boxcox,
                data.frame("ETA_name"=c(rep("ETA(1)",4),rep("ETA(2)",4),rep("ETA(3)",4),rep("ETA(4)",4)),
                           "value"=c(0.216665,0.276354,0.231142,0.107048,-0.022947,0.101007,0.974127,-0.022947,
                                     -0.126678,-0.369641,-0.525548,0.143994,-0.109397,-0.073727,0.034058,0.042088),
                           stringsAsFactors = F),
                tolerance=6)
-  expect_equal(get_eta_values(param_model=file.path(files.w.dir,"qa_run2/modelfit_run/boxcox.mod"),
+  expect_equal(get_eta.etat_values(param_model=file.path(files.w.dir,"qa_run2/modelfit_run/boxcox.mod"),
                               theta_values=theta_values_boxcox),
                data.frame()) # boxcox file does not exist
   
@@ -582,7 +582,7 @@ test_that("get eta values from boxcox or tdist phi file",{
                eta_tdist,
                tolerance=6)
 
-  expect_equal(get_eta_values(param_model=file.path(files.w.dir,"qa_run2/modelfit_run/tdist.mod"),
+  expect_equal(get_eta.etat_values(param_model=file.path(files.w.dir,"qa_run2/modelfit_run/tdist.mod"),
                               theta_values=theta_values_tdist),
                data.frame()) # tdist file does not exist
   
