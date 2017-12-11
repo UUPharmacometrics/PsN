@@ -402,14 +402,10 @@ if(length(outlier_table_list$outlier_ids)>0) {
 ```{r add_all_outliers_overall_table,eval=all(skip!="simeval"),results='asis',echo=F,warning=F,message=F}
 all_outl_list <- simeval_all_ouliers_table(simeval_directory=file.path(working.directory,"simeval_run"))
 if(all_outl_list$files_exist) {
-  simeval_overall_outliers_table <- all_outl_list$all_outlier_table
-  cgroup_outl <- all_outl_list$cgroup
-  n.cgroup_outl <- all_outl_list$n.cgroup
-  add_column_names <- all_outl_list$add_column_names
-  simeval_overall_outliers_table <- keep_symbols(simeval_overall_outliers_table,type)
-simeval_overall_outliers_table <- ztable_sub(simeval_overall_outliers_table,type=type,colnames.bold = add_column_names,include.colnames = add_column_names,include.rownames = F,longtable = T,align="lccccc")
-if(add_column_names) {
-  simeval_overall_outliers_table <- addcgroup(simeval_overall_outliers_table,cgroup=cgroup_outl,n.cgroup=n.cgroup_outl)
+  simeval_overall_outliers_table <- keep_symbols(all_outl_list$all_outlier_table,type)
+  simeval_overall_outliers_table <- ztable_sub(simeval_overall_outliers_table,type=type,colnames.bold = all_outl_list$add_column_names,include.colnames = all_outl_list$add_column_names,include.rownames = F,longtable = T,align="lccccc")
+if(all_outl_list$add_column_names) {
+  simeval_overall_outliers_table <- addcgroup(simeval_overall_outliers_table,cgroup=all_outl_list$cgroup,n.cgroup=all_outl_list$n.cgroup)
 }
   cat("\\pagebreak\n\n")
   print(simeval_overall_outliers_table)
