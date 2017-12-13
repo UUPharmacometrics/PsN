@@ -57,24 +57,16 @@ simeval_all_ouliers_table <- function(simeval_directory,ebe_npde_outl_crit=-3) {
     #all outlier table
     all_outlier_table <- all.outlier.report.table(ofv_outliers,ebe.npde_outliers,cwres.iwres_outliers,
                                                   residual_names,ID_deleted_ebe,ID_deleted_ofv)
-    if(ncol(all_outlier_table)==1 && nrow(all_outlier_table)==1) {
-      colnames(all_outlier_table) <- ""
-    }
-    #just for qa script
-    cgroup <- c("","Individual level")
-    n.cgroup=c(1,2)
+    
+    add_header_above <- c(" "=1,"Individual level"=2)
     if(length(residual_names)>0) {
-      cgroup <- c(cgroup,"Observation level")
-      n.cgroup=c(n.cgroup,length(residual_names))
+      add_header_above <- c(" "=1,"Individual level"=2,"Observation level"=length(residual_names))
     }
-    add_column_names <- TRUE
     if(ncol(all_outlier_table)==1) {
-      add_column_names <- FALSE
+      add_header_above <- NULL
     }
     out <- list(all_outlier_table=all_outlier_table,
-                cgroup=cgroup,
-                n.cgroup=n.cgroup,
-                add_column_names=add_column_names,
+                add_header_above=add_header_above,
                 files_exist=TRUE)
   } else {
     out <- list(files_exist=FALSE)

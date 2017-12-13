@@ -22,7 +22,8 @@ resmod_structural_details_tables <- function(working.directory,base_dataset,orig
           idv_text <- paste0(idv_all[i]," (",dvid_name,"=",dvid_nr_idv[[i]][j],")")
         }
         dOFV = get_resmod_structural_dofv(working.directory, idv,dvid=dvid_nr_idv[[i]][j])
-        first_table = data.frame(C1=c("DV","IDV","dOFV"),C2=c("CWRES",idv,dOFV),stringsAsFactors = F)
+        first_table = data.frame(c("DV","IDV","dOFV"),c("CWRES",idv,dOFV),stringsAsFactors = F)
+        colnames(first_table) <- NULL
         
         orig_ext_file <- sub("(\\.[^.]+)$",".ext",original_max0_model)
         if(file.exists(orig_ext_file) && file.exists(base_dataset) && file.exists(CWRES_table) &&

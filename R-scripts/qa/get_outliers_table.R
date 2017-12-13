@@ -43,7 +43,7 @@ get_outliers_table <- function(simeval_directory,cdd.data,skip) {
       }
     } else {
       outliers_table <- data.frame(c("No outliers detected"),stringsAsFactors = F)
-      colnames(outliers_table) <- ""
+      colnames(outliers_table) <- NULL
       max_outlier_table <- data.frame("No outliers detected","",stringsAsFactors = F)
       colnames(max_outlier_table) <- c("","dOFV")
     }

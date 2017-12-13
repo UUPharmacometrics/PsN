@@ -54,7 +54,7 @@ get_ii_table <- function(cdd_directory,model.filename,cutoff,max_rows,skip,nonli
           }
         } else {
           ii_table <- data.frame(c("No influential individuals detected"),stringsAsFactors = F)
-          colnames(ii_table) <- ""
+          colnames(ii_table) <- NULL
           cdd_highest_dofv <- data.frame("None","",stringsAsFactors = F)
           colnames(cdd_highest_dofv) <- c("","dOFV")
         }
@@ -62,7 +62,7 @@ get_ii_table <- function(cdd_directory,model.filename,cutoff,max_rows,skip,nonli
         cdd_highest_dofv <- data.frame("All dOFV values are negative","",stringsAsFactors = F)
         colnames(cdd_highest_dofv) <- c("","dOFV")
         ii_table <- data.frame(c("All dOFV values are negative"),stringsAsFactors = F)
-        colnames(ii_table) <- ""
+        colnames(ii_table) <- NULL
       }
     } else {
       ii_table <- error_table(col=1)

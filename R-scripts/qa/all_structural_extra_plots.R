@@ -15,11 +15,6 @@ all_structural_extra_plots <- function(simeval_directory,base_dataset,resmod_str
       } else {
         make_vpc <- FALSE
       }
-      if(make_vpc) {
-        obs <- vpc_tables_list$obs
-        sim <- vpc_tables_list$sim
-      }
-      
       perc <- resmod_structural_details[[i]]$perc
       #captions
       all_captions <- captions_structural(idv_all,idv_name,resmod_structural_details[[i]]$idv,perc)
@@ -30,14 +25,16 @@ all_structural_extra_plots <- function(simeval_directory,base_dataset,resmod_str
       
       #print
       cat(paste0("##",resmod_structural_details[[i]]$idv_text,"\n\n"))
-      first_table <- keep_symbols(resmod_structural_details[[i]]$first_table,type)
-      first_table <- ztable_sub(first_table,type=type,include.colnames = F,include.rownames = F,longtable = T,align="lr")
+      first_table <- kable(resmod_structural_details[[i]]$first_table,booktabs=T,align = c("l","r"),linesep="") %>%
+        kable_styling(position="c") %>%
+        column_spec(1,bold=T)
       print(first_table)
       cat(resmod_dofv_table_captions)
       if(!nonlinear) {
-        second_table <- keep_symbols(resmod_structural_details[[i]]$second_table,type)
-        second_table <- ztable_sub(second_table,type=type,colnames.bold = T,include.rownames = F,longtable = T,align="rlrr")
-        second_table <- addcgroup(second_table,cgroup=c("","Estimated bias"),n.cgroup=c(1,2))
+        second_table <- kable(resmod_structural_details[[i]]$second_table,booktabs=T,longtable=T,align = c("l","r","r"),linesep="") %>%
+          row_spec(0,bold=T) %>%
+          kable_styling(position="c") %>% 
+          add_header_above(c(" "=1,"Estimated bias"=2),bold=T)
         print(second_table)
         cat(structural_bias_tables_captions)
       }
@@ -51,7 +48,7 @@ all_structural_extra_plots <- function(simeval_directory,base_dataset,resmod_str
         if(make_vpc) {
           cat("\n\n")
           #vpc plots
-          vpc_plot <- plot_structural_vpc(obs,sim,shift_tab,idv=resmod_structural_details[[i]]$idv)
+          vpc_plot <- plot_structural_vpc(vpc_tables_list$obs,vpc_tables_list$sim,shift_tab,idv=resmod_structural_details[[i]]$idv)
           print(vpc_plot)
           cat("\n\n")
           cat(vpc_captions)
