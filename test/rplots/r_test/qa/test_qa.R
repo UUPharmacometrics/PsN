@@ -374,7 +374,7 @@ exp_full_omega_block_table_2 <- data.frame(c("sd(1)","corr(2,1)","sd(2)","sd(3)"
                                        c("0.10","NA","0.77","NA","NA"),stringsAsFactors = F)
 colnames(exp_full_omega_block_table_2) <- c("","New","Old")
 exp_full_omega_block_table_3 <- data.frame("ERROR",stringsAsFactors = F)
-colnames(exp_full_omega_block_table_3) <- c("")
+colnames(exp_full_omega_block_table_3) <- NULL
 #compare
 context("qa, get_full_omega_block")
 test_that("get full omega block, extra table",{
@@ -429,9 +429,9 @@ exp_boxcox_lambdas_table_2 <- data.frame(c("ETA(1)","ETA(2)","ETA(3)","ETA(4)"),
                                      c("0.13","0.77","0.00","0.00"),stringsAsFactors = F)
 colnames(exp_boxcox_lambdas_table_2) <- c("","Lambda","New SD","Old SD")
 exp_boxcox_lambdas_table_3 <- data.frame("ERROR",stringsAsFactors = F)
-colnames(exp_boxcox_lambdas_table_3) <- c("")
+colnames(exp_boxcox_lambdas_table_3) <- NULL
 exp_boxcox_lambdas_orig_3 <- data.frame("ERROR",stringsAsFactors = F)
-colnames(exp_boxcox_lambdas_orig_3) <- c("")
+colnames(exp_boxcox_lambdas_orig_3) <- NULL
 
 exp_tdist_table_1 <- data.frame(c("ETA(1)","ETA(2)","ETA(3)","ETA(4)","dOFV"),
                                      c("2.11","NA","-1.14","-0.82","3.0"),
@@ -449,7 +449,7 @@ exp_tdist_table_2 <- data.frame(c("ETA(1)","ETA(2)","ETA(3)","ETA(4)"),
                                      c("0.13","0.77","0.00","0.00"),stringsAsFactors = F)
 colnames(exp_tdist_table_2) <- c("","Degrees of freedom","New SD","Old SD")
 exp_tdist_table_3 <- data.frame("ERROR",stringsAsFactors = F)
-colnames(exp_tdist_table_3) <- c("")
+colnames(exp_tdist_table_3) <- NULL
 #compare
 context("qa, get_param_extra_table")
 test_that("get full omega block or tdist extra table",{
@@ -493,7 +493,7 @@ exp_add_etas_table_1 <- data.frame(c("ETA(1)","ETA(3)","C","A","D","E","dOFV"),
                                stringsAsFactors = F)
 colnames(exp_add_etas_table_1) <- c("","Added","New SD","Old SD")
 exp_add_etas_table_2 <- data.frame("ERROR",stringsAsFactors = F)
-colnames(exp_add_etas_table_2) <- c("")
+colnames(exp_add_etas_table_2) <- NULL
 exp_add_etas_table_3 <- data.frame(c("ETA(1)","ETA(3)","C","A"),
                                c("No","No","Yes","Yes"),
                                c("0.32","0.37","0.77","0.51"),
@@ -539,7 +539,7 @@ exp_iov_table_2 <- data.frame(c("ETA(1)","ETA(3)"),
                           c(0.42,"0.48"),stringsAsFactors = F)
 colnames(exp_iov_table_2) <- colnames(exp_iov_table_1)
 exp_iov_table_3 <- data.frame("ERROR",stringsAsFactors = F)
-colnames(exp_iov_table_3) <- ""
+colnames(exp_iov_table_3) <- NULL
 
 #compare
 context("qa, get_iov_table")
@@ -931,7 +931,7 @@ resmod_list_4 <- get_resmod_ruv_table(directory=file.path(files.w.dir,"qa_run7")
 resmod_list_5 <- get_resmod_ruv_table(directory=file.path(files.w.dir,"qa_run3"),idv_name="TIME",dvid_name="NA",skip=c('resmod'))
 #expected data
 exp_resmod_ruv_table_list_1 <- data.frame("ERROR",stringsAsFactors = F)
-colnames(exp_resmod_ruv_table_list_1) <- ""
+colnames(exp_resmod_ruv_table_list_1) <- NULL
 exp_resmod_ruv_overview_1 <- data.frame("RESMOD","ERROR",stringsAsFactors = F)
 colnames(exp_resmod_ruv_overview_1) <- c("","dOFV")
 exp_resmod_ruv_table_list_2 <- data.frame("Model"=c("tdist","dtbs","IIV on RUV","power","time varying","autocorrelation"),
@@ -1031,11 +1031,11 @@ list_ii_9 <- get_ii_table(cdd_directory=file.path(files.w.dir,"qa_missing_folder
                           nonlinear=FALSE)
 #expected data
 ERROR_table <- data.frame("ERROR",stringsAsFactors = F)
-colnames(ERROR_table) <- ""
+colnames(ERROR_table) <- NULL
 exp_cdd_highest_dofv_1 <- data.frame("CDD","ERROR",stringsAsFactors = F)
 colnames(exp_cdd_highest_dofv_1) <- c("","dOFV")
 exp_ii_table_3 <- data.frame("All dOFV values are negative",stringsAsFactors = F)
-colnames(exp_ii_table_3) <- ""
+colnames(exp_ii_table_3) <- NULL
 exp_cdd_highest_dofv_3 <- data.frame("All dOFV values are negative","",stringsAsFactors = F)
 colnames(exp_cdd_highest_dofv_3) <- c("","dOFV")
 exp_cdd_data_4 <- data.frame(id=c(11,34,14,57,3,7,8),
@@ -1051,13 +1051,13 @@ colnames(exp_ii_table_6) <- c("Subjects","dOFV")
 exp_cdd_data_7 <- data.frame(id=c(11,12,34,14,57),
                          dOFV=c(0.01014,0.06941,0.00265,0.02541,0.08563))
 exp_ii_table_7 <- data.frame(c("No influential individuals detected"),stringsAsFactors = F)
-colnames(exp_ii_table_7) <- c("")
+colnames(exp_ii_table_7) <- NULL
 exp_cdd_highest_dofv_7 <- data.frame("None","",stringsAsFactors = F)
 colnames(exp_cdd_highest_dofv_7) <- c("","dOFV")
 exp_cdd_data_8 <- data.frame("SKIPPED",stringsAsFactors = F)
 colnames(exp_cdd_data_8) <- NULL
 exp_ii_table_8 <- data.frame(c("No influential individuals detected"),stringsAsFactors = F)
-colnames(exp_ii_table_8) <- c("")
+colnames(exp_ii_table_8) <- NULL
 exp_cdd_highest_dofv_8 <- data.frame("CDD","SKIPPED",stringsAsFactors = F)
 colnames(exp_cdd_highest_dofv_8) <- c("","dOFV")
 
@@ -1147,7 +1147,7 @@ list_simeval_11 <- get_outliers_table(simeval_directory=file.path(files.w.dir,"q
 exp_max_outlier_table_1 <- data.frame("SIMEVAL","ERROR",stringsAsFactors = F)
 colnames(exp_max_outlier_table_1) <- c("","dOFV")
 exp_outliers_table_2 <- data.frame("No outliers detected",stringsAsFactors = F)
-colnames(exp_outliers_table_2) <- c("")
+colnames(exp_outliers_table_2) <- NULL
 exp_max_outlier_table_2 <- data.frame("No outliers detected","",stringsAsFactors = F)
 colnames(exp_max_outlier_table_2) <- c("","dOFV")
 exp_outliers_table_3 <- data.frame(Subjects=c("Subject 1","Subject 12","Subject 8","Subject 34"),
