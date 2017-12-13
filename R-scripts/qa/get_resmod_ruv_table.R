@@ -11,6 +11,12 @@ get_resmod_ruv_table <- function(directory, idv_name, dvid_name, skip){
       resmod_ruv_overview <- as.data.frame(array(0,c((2*length(dvid_nr)+length(dvid_nr)),3)))
     }
     
+    #get TAD results file if exists
+    tad_exists <- get_resmod_table(directory=directory, idv="TAD")$resmod_file_exists
+    if(tad_exists) {
+      tad_table <- get_resmod_table(directory, idv="TAD")$resmod_table
+    }
+    
     k <- 1
     for (j in 1:length(dvid_nr)) {
       resmod_table <- resmod_table_full %>% dplyr::filter(dvid==!!dvid_nr[j]) %>% dplyr::select(-iteration, -dvid)
@@ -20,11 +26,23 @@ get_resmod_ruv_table <- function(directory, idv_name, dvid_name, skip){
       time_var_cutoff <- resmod_table %>%
         dplyr::filter(grepl("idv_varying_RUV_cutoff",model)) %>%
         dplyr::mutate(df = 2) %>%
-        dplyr::arrange(desc(dOFV))
+        dplyr::arrange(desc(dOFV)) %>%
+        dplyr::slice(1) %>%
+        dplyr::mutate(model = "time varying")
       resmod_ruv_table <- dplyr::bind_rows(non_time_var, 
-                                    time_var_cutoff %>% 
-                                      dplyr::slice(1) %>%
-                                      dplyr::mutate(model = "time varying"))
+                                           time_var_cutoff)
+      #add tad varying row, if exists time after dose
+      if(tad_exists) {
+        tad_varying <- tad_table %>% dplyr::filter(dvid==!!dvid_nr[j]) %>% dplyr::select(-iteration, -dvid) %>%
+          dplyr::filter(grepl("idv_varying_RUV_cutoff",model)) %>%
+          dplyr::mutate(df = 2) %>%
+          dplyr::arrange(desc(dOFV)) %>%
+          dplyr::slice(1) %>%
+          dplyr::mutate(model = "tad varying")
+        resmod_ruv_table <- dplyr::bind_rows(resmod_ruv_table,
+                                             tad_varying)
+      }
+      
       resmod_ruv_table <- resmod_ruv_table[order(resmod_ruv_table$dOFV,decreasing = T),]
       rownames(resmod_ruv_table) <- NULL
       colnames(resmod_ruv_table)[which(colnames(resmod_ruv_table)=="model")] <- "Model"
