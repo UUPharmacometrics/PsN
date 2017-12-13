@@ -10,17 +10,17 @@ plot_transformed_density <- function(data_table,eta_table,param_model) {
       for(i in unique(data_table$ETA_name)) {
         data_table_per_eta <- data_table %>% dplyr::filter(ETA_name %in% i)
         # 1 procent of the density values
-        y_min_limit <- min(data_table_per_eta$density) + y_pec*abs(max(data_table_per_eta$density)-min(data_table_per_eta$density))
+        y_min_limit <- min(data_table_per_eta$density,na.rm=TRUE) + y_pec*abs(max(data_table_per_eta$density,na.rm=TRUE)-min(data_table_per_eta$density,na.rm=TRUE))
         spec <- data_table_per_eta %>% dplyr::filter(density>y_min_limit)
-        x_max <- max(spec$eta)
-        x_min <- min(spec$eta)
+        x_max <- max(spec$eta,na.rm=TRUE)
+        x_min <- min(spec$eta,na.rm=TRUE)
 
         # check if y_min_limit should be smaller because of the real eta values
-        if(any(eta_table$value > x_max)) {
-          x_max <- max(eta_table$value)
+        if(any(!is.na(eta_table$value) > x_max)) {
+          x_max <- max(eta_table$value,na.rm=TRUE)
         }
-        if(any(eta_table$value < x_min)) {
-          x_min <- min(eta_table$value)
+        if(any(!is.na(eta_table$value) < x_min)) {
+          x_min <- min(eta_table$value,na.rm=TRUE)
         }
         data_table_per_eta <- data_table_per_eta %>% dplyr::filter(eta>=x_min,eta<=x_max)
 
