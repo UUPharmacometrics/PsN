@@ -25,15 +25,14 @@ all_structural_extra_plots <- function(simeval_directory,base_dataset,resmod_str
       
       #print
       cat(paste0("##",resmod_structural_details[[i]]$idv_text,"\n\n"))
-      first_table <- kable(resmod_structural_details[[i]]$first_table,booktabs=T,align = c("l","r"),linesep="") %>%
-        kable_styling(position="c",full_width = F) %>%
+      first_table <- kable_table(resmod_structural_details[[i]]$first_table,format=type,booktabs=T,align = c("l","r"),linesep="") %>%
+        kableExtra::kable_styling(position="c",full_width = F) %>%
         column_spec(1,bold=T)
       print(first_table)
       cat(resmod_dofv_table_captions)
       if(!nonlinear) {
-        second_table <- kable(resmod_structural_details[[i]]$second_table,booktabs=T,longtable=T,align = c("l","r","r"),linesep="") %>%
-          row_spec(0,bold=T) %>%
-          kable_styling(position="c",full_width = F) %>% 
+        second_table <- kable_table(resmod_structural_details[[i]]$second_table,format=type,booktabs=T,longtable=T,align = c("l","r","r"),linesep="") %>%
+          kableExtra::kable_styling(position="c",full_width = F) %>%
           add_header_above(c(" "=1,"Estimated bias"=2),bold=T)
         print(second_table)
         cat(structural_bias_tables_captions)
