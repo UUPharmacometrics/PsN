@@ -36,18 +36,25 @@ exit unless $res;
 
 
 my %help_text;
-$help_text{Pre_help_message} = <<'EOF';  
-Perform a prospective evaluation.
+
+	$help_text{Pre_help_message} = <<'EOF';  
+	  Perform a prospective evaluation.
 EOF
-$help_text{Description} = <<'EOF';
-Prospective evaluation
+
+	$help_text{Description} = <<'EOF';
+	  The proseval (prospective evaluation) tool runs successive evaluations on a model, each with 
+	  an increased number of observations per individual.
 EOF
-$help_text{Examples} = <<'EOF';
+
+	$help_text{Examples} = <<'EOF';
       proseval run89.mod
 EOF
 
-$help_text{Options} = <<'EOF';
-      A model file is required as argument
+	$help_text{Options} = <<'EOF';
+    
+	  A model file is required on the command line.
+	  The first table of the modelfile should include ID, EVID, TIME and all interesting columns. These columns will be used to
+	  construct the result table.
 EOF
 
 
