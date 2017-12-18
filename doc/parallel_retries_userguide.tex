@@ -1,5 +1,5 @@
 \input{inputs/format_header.tex}
-\guidetitle{PARALLEL\_RETRIES user guide}{2016-10-20}
+\guidetitle{PARALLEL\_RETRIES user guide}{2017-12-18}
 
 \begin{document}
 
@@ -8,93 +8,64 @@
 
 
 \section{Introduction}
-The parallel\_retries script is a PsN tool that allows you to run 
-multiple copies of
-a single model with tweaked initial estimates in parallel.
-In PsN terminology it is called a retry to (re)run a model with tweaked 
-initial estimates.
+The parallel\_retries tool allows you to run multiple copies of a single model with tweaked initial estimates in parallel.
+In PsN terminology it is called a retry to (re)run a model with tweaked initial estimates.
 
-The retries, see details below, 
-are always done serially in execute and other PsN programs. 
-The parallel\_retries script is a help script that takes a single model 
-as input, creates 'min\_retries' extra copies of this model 
-with tweaked initial estimates, and then runs the original plus 
-the extra models in parallel in separate NM\_run subdirectories. 
-Results are summarized in raw\_results.csv and parallel\_retries\_results.csv
-in the run directory. 
-The script will select the best retry using the same criteria as execute,
-and copy back output files (NONMEM files, table files) from the selected retry to the
-input model's directory.
+The retries are always done serially in execute and other PsN tools. The parallel\_retries tool is a help script that takes a single model as input, creates 'min\_retries' extra copies of this model with tweaked initial estimates, and then runs the original plus the extra models in parallel in separate NM\_run subdirectories. Results are summarized in raw\_results.csv and parallel\_retries\_results.csv in the run directory. The tool will select the best retry using the same criteria as execute, and copy back output files (NONMEM files, table files) from the selected retry to the input model's directory.
 
-The script parallel\_retries accept all
-options in common\_options.pdf. 
+The parallel\_retries tool accepts all options in common\_options.pdf.\\ 
 
-Example
+Example:
 \begin{verbatim}
 parallel_retries run33.mod -min_retries=4 -threads=5 -seed=12345
 \end{verbatim}
 
 \section{Input and options}
 \subsection{Required input}
-A model file is required on the command-line. 
-In addition, either -min\_retries or -rawres\_input is required, see below.
-
-\subsection{Optional input}
+A model file is required on the command line. In addition, either -min\_retries or -rawres\_input is required. The tool takes the same input as the execute tool, see execute -h.
 \begin{optionlist}
 \optdefault{min\_retries}{integer}
-The number of model copies with tweaked initial estimates to run. 
-If this option is not used then -rawres\_input must be set.
+The number of model copies with tweaked initial estimates to run. If this option is not used then -rawres\_input must be set.
 \nextopt
 \optdefault{rawres\_input}{filename}
-Default not used. If this option is not used then -min\_retries must be used.
-An alternative way to estimate with different initial estimates. 
-Instead of using initial estimates from a random perturbation, take parameter initial values from a raw\_results-like file.
-The raw results file must contain at least as many samples as the input -samples to parallel\_retries, the labels for  THETA/OMEGA/SIGMA 
-in the file must match the labels in the simulation model given as input to parallel\_retries, 
-the theta columns must be directly followed by the omega columns which must be directly followed by the sigma columns, and the first column 
-must have header model just as a bootstrap raw\_results file. Note that is is possible to generate a file with initial parameter estimates outside of PsN, 
-as long as the file follows the format rules.
+Default not set. An alternative way to estimate with different initial estimates. Instead of using initial estimates from a random perturbation, take parameter initial values from a raw\_results-like file. The raw results file must contain at least as many samples as the input -samples to parallel\_retries, the labels for  THETA/OMEGA/SIGMA in the file must match the labels in the simulation model given as input to parallel\_retries, the theta columns must be directly followed by the omega columns which must be directly followed by the sigma columns, and the first column must have header model just as a bootstrap raw\_results file. Note that is is possible to generate a file with initial parameter estimates outside of PsN, as long as the file follows the format rules.
 \nextopt
-\optname{update\_fix}
-Only relevant in combination with rawres\_input. Default not set.
-By default, FIX values in the input model are not updated based
-on the rawres\_input file, but if -update\_fix is set then also
-FIX values will be updated.
-\nextopt
-\optdefault{samples}{N}
-Only valid in combination with -rawres\_input, see above. The number of
-parameter sets to use from the rawres\_input file. 
-Default is to use all sets after skipping the first 'offset\_rawres' sets.
-\nextopt
-\optdefault{offset\_rawres}{N}
-Only valid in combination with -rawres\_input, see above. Default 1.
-The number of result lines to skip in the input raw results file before starting to read final parameter estimates. In a regular
-bootstrap raw\_results file the first line of estimates refers to the input model with the full dataset, so therefore the default offset is 1.
-\nextopt
-\optname{keep\_table\_files}
-Default not set. If set then do not clean table files for the not-chosen
-retry models from the main run directory.
+\end{optionlist}
+\subsection{Optional input}
+\begin{optionlist}
+\optdefault{in\_filter}{comma separated list of conditions}
+Default not set. Only relevant in combination with rawres\_input. The parameter estimates lines in the file can be filtered on values in the different columns. When specifying which column(s) the filtering should be based on, the exact column name must be used, e.g. minimization\_successful. Filtering can only be based on columns with numeric values. The allowed relations are .gt. (greater than), .lt. (less than) and .eq. (equal to). Conditions are separated with commas. If the remaining number of lines after filtering is smaller than -samples, parallel\_retries will stop with an error message. Then the user must either change the filtering rules or change -samples. If the user has created a file with parameter estimates outside of PsN, filtering can be done on any numeric column in that file. Do not set column headers containing .eq. or .lt. or .gt.in the user-generated file as this would interfere with the in\_filter option syntax.
+
+Example (all code on the same line):
+\begin{verbatim}
+-in_filter=minimization_successful.eq.1,
+significant_digits.gt.3.5
+\end{verbatim}
 \nextopt
 \optname{keep\_nm\_output}
-Default not set. If set then do not clean nm\_output files for the not-chosen
-retry models from the main run directory.
-\optname{model\_dir\_name}
-Default not used. This option changes the basename of the run directory from 
-parallel\_retries\_dir to $\langle$modelfile$\rangle$.dir. where $\langle$modelfile$\rangle$ 
-is the name of the (first) input model file, without the extension. 
-The directories will be numbered starting from 1, increasing the number each time parallel\_retries 
-is run with a model file with the 
-same name. If the option directory is used it will override -model\_dir\_name.
+Default not set. If set then do not clean nm\_output files for the non-chosen retry models from the main run directory.
 \nextopt
-\optname{timestamp}
-Default not used. This option changes the name of the run directory to $\langle$modelfile$\rangle$-PsN-$\langle$date$\rangle$
-where $\langle$modelfile$\rangle$ is the name of the first model file in the list given as arguments, without the extension,
-and $\langle$date$\rangle$ is the time and date the run was started. 
-Example: directory name run1-PsN-2014-06-12-152502 for a run that was started at 15:25:02 June 12th in year 2014.
-If the option directory is used it will override -timestamp.
+\optname{keep\_table\_files}
+Default not set. If set then do not clean table files for the non-chosen retry models from the main run directory.
+\nextopt
+\optname{model\_dir\_name}
+Default not set. This option changes the basename of the run directory from parallel\_retries\_dir to $\langle$modelfile$\rangle$.dir. where $\langle$modelfile$\rangle$ is the name of the (first) input model file, without the extension. The directories will be numbered starting from 1, increasing the number each time parallel\_retries is run with a model file with the same name. If the option directory is used it will override -model\_dir\_name.
+\nextopt
+\optdefault{offset\_rawres}{N}
+Default is 1. Only valid in combination with -rawres\_input. The number of result lines to skip in the input raw results file before starting to read final parameter estimates. In a regular bootstrap raw\_results file the first line of estimates refers to the input model with the full dataset, so therefore the default offset is 1.
 \nextopt
 \optname{prepend\_options\_to\_lst}
-Default not used. This option makes PsN prepend the final lst-file (which is copied back to the directory from which parallel\_retries was called) with the file version\_and\_option\_info.txt which contains run information, including     all actual values of optional PsN options. PsN can still parse the lst-file with the options prepended, so the file can still be used it as input to e.g. sumo, vpc or update\_inits. Disabled with -no-prepend\_options\_to\_lst if set in psn.conf.
+Default not set. This option makes PsN prepend the final lst-file (which is copied back to the directory from which parallel\_retries was called) with the file version\_and\_option\_info.txt which contains run information, including all actual values of optional PsN options. PsN can still parse the lst-file with the options prepended, so the file can still be used it as input to e.g. sumo, vpc or update\_inits.\\ Disabled with -no-prepend\_options\_to\_lst if set in psn.conf.
+\nextopt
+\optdefault{samples}{N}
+Default is to use all sets after skipping the first 'offset\_rawres' sets. Only valid in combination with -rawres\_input. The number of parameter sets to use from the rawres\_input file. 
+\nextopt
+\optname{timestamp}
+Default not set. Automatically set the run directory name with a time stamp and the stem of the model name.\\
+Example: directory name run1-PsN-2014-06-12-152502 for a run that was started at 15:25:02 June 12th in year 2014. If the option directory is used it will override -timestamp.
+\nextopt
+\optname{update\_fix}
+Default not set. Only relevant in combination with rawres\_input. By default, FIX values in the input model are not updated based on the rawres\_input file, but if -update\_fix is set then also FIX values will be updated.
 \nextopt
 \end{optionlist}
 
@@ -102,16 +73,10 @@ Default not used. This option makes PsN prepend the final lst-file (which is cop
 \input{inputs/retries_section_body.tex}
 
 \subsection{Some important common PsN options}
-All options listed in document common\_options.pdf apply to parallel\_retries. 
-Below is a set of basic options. For a complete list see common\_options.pdf, 
-or psn\_options -h on the commandline.
+All options listed in document common\_options.pdf apply to parallel\_retries. Below is a set of basic options. For a complete list see common\_options.pdf or psn\_options -h on the command line.
 \input{inputs/basic_options.tex}
 
 \section{Output}
-When the NONMEM runs are finished, the raw\_results file 
-and parallel\_retries\_results.csv
-in the
-main run directory will contain a summary of the results of the 
-retries.
+When the NONMEM runs are finished, a summary of the results of the retries are found in the raw\_results file and parallel\_retries\_results.csv in the main run directory.
 
 \end{document}
