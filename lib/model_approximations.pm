@@ -44,7 +44,7 @@ sub second_order_derivatives_model
         push @derivatives_code, "\"    IF (EVID.EQ.0) THEN !Only obs records\n";
     }
     for (my $i = 1; $i <= $netas; $i++) {
-        push @derivatives_code, "\"        DYDETA${i}_ = DYDETA${i} + G($i,1)\n";
+        push @derivatives_code, "\"        DYDETA${i}_ = DYDETA${i}_ + G($i,1)\n";
     }
     for (my $i = 1; $i <= $netas; $i++) {
         for (my $j = 1; $j <= $i; $j++) {
