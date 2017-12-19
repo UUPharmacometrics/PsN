@@ -1782,11 +1782,8 @@ sub linearize_setup
 
         $self->data_items($num);
 
-        my $use_tableformat = 0;
-
         if($self->data_items() > $self->max_data_items){
             if ($PsN::nm_minor_version >= 2){
-                $use_tableformat = 1;
                 my $max = $self->data_items();
 
                 my $pdt_value = $original_model->get_option_value( option_name => 'PDT',
@@ -1924,21 +1921,16 @@ sub linearize_setup
         #1.9
         my @tablestrings = ('ID','DV');
         my @inputstrings = ('ID','DV');
-        my $table_highprec=1;
-        my $table_lowprec=0;
 
         if ( should_add_mdv(model => $derivatives_model) ){
             push(@tablestrings,'MDV');
-            $table_highprec++;
         }
         #1.10
 
         if ($self->foce()){
             push(@tablestrings,'IPRED=OPRED');
-            $table_highprec++;
         }else{
             push(@tablestrings,'PREDI=OPRED');
-            $table_highprec++;
         }
 
         push(@inputstrings,'OPRED');
@@ -1947,32 +1939,25 @@ sub linearize_setup
             for (my $j=1; $j<=$nEPS; $j++){
                 if ($j<10){
                     push(@tablestrings,('H0'.$j.'1'));
-                    $table_highprec++;
                 }else{
                     push(@tablestrings,'H'.$j.'1');
-                    $table_highprec++;
                 }
                 push(@inputstrings,'D_EPS'.$j);
             }
         }else{
             if ($self->error eq 'propadd'){
                 push(@tablestrings,'WP');
-                $table_highprec++;
                 push(@inputstrings,'OWP');
                 push(@tablestrings,'WA');
-                $table_highprec++;
                 push(@inputstrings,'OWA');
             }elsif ($self->error eq 'add'){
                 push(@tablestrings,'W');
-                $table_highprec++;
                 push(@inputstrings,'OW');
             }elsif ($self->error eq 'prop'){
                 push(@tablestrings,'W');
-                $table_highprec++;
                 push(@inputstrings,'OW');
             }elsif ($self->error eq 'exp'){
                 push(@tablestrings,'WE');
-                $table_highprec++;
                 push(@inputstrings,'OWE');
             }elsif ($self->error eq 'user'){
                 1;
@@ -1982,23 +1967,19 @@ sub linearize_setup
         }
         #these may be needed for user error code, or for IGNORE
         push(@tablestrings,@extra_parameters);
-        $table_highprec = $table_highprec+scalar(@extra_parameters);
         push(@inputstrings,@extra_parameters);
 
         for (my $i=1;$i<=$nETA;$i++){
             if ($i<10){
                 push(@tablestrings,('G0'.$i.'1'));
-                $table_highprec++;
             }else{
                 push(@tablestrings,('G'.$i.'1'));
-                $table_highprec++;
             }
             push(@inputstrings,('D_ETA'.$i));
         }
         if ($self->foce()){
             for (my $i=1;$i<=$nETA;$i++){
                 push(@tablestrings,('ETA'.$i));
-                $table_highprec++;
                 push(@inputstrings,('OETA'.$i));
             }
         }
@@ -2040,7 +2021,6 @@ sub linearize_setup
                         push(@{$code}, "\"  D_EPSETA$i" . "_$j=$H($i," . ($j + 1) . ")");
                     }
                     push(@tablestrings, "D_EPSETA$i"."_$j");
-                    $table_highprec++;
                     push(@inputstrings, "D_EPSETA$i"."_$j");
                 }
             }
@@ -2050,7 +2030,6 @@ sub linearize_setup
                         push @{$abbr_code}, "D2_ETA$i" . "_$j = 0";
                         push(@{$code}, "\"  D2_ETA$i" . "_$j=G($i," . ($j + 1) . ")");
                         push(@tablestrings, "D2_ETA$i"."_$j");
-                        $table_highprec++;
                         push(@inputstrings, "D2_ETA$i"."_$j");
                     }
                 }
@@ -2058,16 +2037,13 @@ sub linearize_setup
         } #end second_order or epsilons
         #1.12
         push(@tablestrings, @covariates);
-        $table_highprec = $table_highprec + scalar(@covariates);
         push(@inputstrings, @covariates);
 
         #GZs and GKs are added to code further down, add_code_gfunc
         foreach my $parameter ( keys %{$self -> test_relations()} ){
             push(@tablestrings,'OGZ_'.$parameter);
-            $table_lowprec++;
             push(@inputstrings,'OGZ_'.$parameter);
             push(@tablestrings,'OGK_'.$parameter);
-            $table_lowprec++;
             push(@inputstrings,'OGK_'.$parameter);
         }
 
@@ -2087,27 +2063,7 @@ sub linearize_setup
             my @extra_tablestrings = ( @{$self->extra_table_columns}, 'NOPRINT', 'NOAPPEND', 'ONEHEADER', 'FILE=extra_table' );
             $derivatives_model->add_records(type => 'table', record_strings => \@extra_tablestrings);
         }
-=cut
-        if ((scalar(@tablestrings)-4) == (1+$table_highprec+$table_lowprec)){
-            if ($use_tableformat){
-                #more than 50 items, try to reduce field width to not hit 999 limit in NM7.2
-                #do not use RFORMAT with space in specification, can get line break there.
-                if ( ($table_lowprec+$table_highprec)*12> 999){
-                    #default format will give too long line
-                    #figure out how wide fields are ok
-                    my $width = int(999/($table_lowprec+$table_highprec)); #round down towards 0
-                    my $form = 's1PE'.$width.'.4'; #just hope this will work
-                    $derivatives_model -> add_option(record_name => 'table',
-                        option_name => 'FORMAT',
-                        option_value=> $form);
-                }
-            }
 
-        }else{
-            croak("Bug in setting table format when preparing derivatives model, please report\n".
-                "highprec $table_highprec lowprec $table_lowprec items ".(scalar(@tablestrings)-4));
-        }
-=cut
         if ($self->update_derivatives()){
             #store derivatives_base_model if update_derivatives
             $self->derivatives_base_model($derivatives_model ->
