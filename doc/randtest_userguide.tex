@@ -1,5 +1,5 @@
 \input{inputs/format_header.tex}
-\guidetitle{RANDTEST user guide}{2016-05-10}
+\guidetitle{RANDTEST user guide}{2017-12-19}
 
 \begin{document}
 
@@ -9,103 +9,75 @@
 
 \section{Introduction}
 
-Randtest is a tool for computing actual significance levels \cite{Wahlby}, \cite{Deng}. 
-The program will shuffle the values in the randomization 
-column 'samples' times and run the model with each of the new datasets. The results will be summarized in the csv-format 
-raw\_results-file and randtest\_results.csv.
-Example command
+The randtest (randomization test) tool is used for computing actual significance levels. The method is described in \cite{Wahlby}, \cite{Deng}. 
+The tool will shuffle the values in the randomization column ’samples’ times and run the input (full) model with each of the new datasets. Provided that a base (reduced) model is given as input, the delta-ofv:s will be computed and the actual signficance levels will be found in output file randtest\_results.csv.\\
+Example: (on the same line)
 \begin{verbatim}
-randtest run1.mod -samples=1000 -randomization_col=DGRP -base_model=run0.mod
+randtest -samples=1000 -randomization_column=DOSE 
+run89.mod -base_model=run0.mod
 \end{verbatim}
 
 \section{Input and options}
-\subsection{Input specific to randtest}
-A model file for the full model is required on the command-line.
+\subsection{Required input}
+A model file for the full model is required on the command line as well as the number of randomized datasets to generate and the name of the column to randomize.
 \begin{optionlist}
+\optdefault{randomization\_column}{col}	The name of the column to randomize. The column name is taken from the model file's \$INPUT record. Column names in the data file are ignored. 
+\nextopt
 \optdefault{samples}{N}
-The number of randomized datasets to generate, required. 
+The number of randomized datasets to generate. 
 \nextopt
-\optdefault{randomization\_column}{col}
-The name of the column to randomize, required. The column name is taken from the model file's \$INPUT record. Column names in the data file are ignored. 
-\nextopt
-\optdefault{stratify\_on}{column}
-Optional, default not used. Restrict randomization of the data to within stratification groups, so that individuals in one stratification group cannot be assigned randomization column values from another stratification group. 
+\end{optionlist}
+
+\subsection{Optional input}
+\begin{optionlist}
+\optdefault{accepted\_ofv\_difference}{N}
+Default is 0.5. A retry will not be initiated if the ofv of the current sample is only 'accepted\_ofv\_difference' worse 
+than the base model ofv.
 \nextopt
 \optdefault{base\_model}{filename}
-Optional. Name of model to estimate with original data and use as reference when computing delta-ofv. 
-\nextopt
-\optname{match\_transitions}
-Not used by default. Method for copying randomization column values from one individual to another during shuffling. See details in section Shuffling the randomization column.     
-\nextopt
-\optname{full\_model\_inits}
-Default false. Only relevant when -update\_inits is true. If true, use final estimates from
-the full model as initial estimates for the randomized data models. If false,
-final estimates from the base model are used instead.
-\nextopt
-\optname{update\_inits}
-Default true. Update the initial estimates of the 
-full model to the final estimates from the estimation (lst-file) of either the base model,
-or, if option -full\_model\_inits is set, of the full model.
-If estimates from the base model is used (option -full\_model\_inits is not set)
-only update for those parameters that are estimated (non-fix) in the base model AND are found,
-based on THETA/OMEGA/SIGMA numbering, both in the base and full model.
+Run the original data set with this model, to use as reference when computing delta-ofv. 
 \nextopt
 \optname{copy\_data}
-Default set. If option is set, the data file
-will be copied to the run directory if the input and/or base model is run.
-If option is unset using -no-copy\_data, the absolute path to the original data file(s) will be used in
-\$DATA, and the data file will not be copied. This saves disk space.
+Default set, unset with -no-copy\_data. By default, the base model is run with a copy of the dataset in NMrun. If -no-copy\_data is used, the data set is not copied to NMrun and an absolute path is used in \$DATA. 
+\nextopt
+\optname{full\_model\_inits}
+Default false. Only relevant when -update\_inits is true. If true, use final estimates from the full model as initial estimates for the randomized data models. If false, final estimates from the base model are used instead.
+\nextopt
+\optname{match\_transitions}
+Default not set. Default not set. Alternative method for copying randomization column values from one individual to 
+another during shuffling.     
+\nextopt
+\optdefault{retries}{N}
+Default is 0. The number of times to try running each sample with slightly perturbed initial estimates if the first attempt is not successful. The randtest tool will, if -base\_model is used, check that the ofv of each sample is at least as good as the ofv of the base model, within 'accepted\_ofv\_difference'. If not then a retry is initiated. The default value of the number of retries is 0, so to enable the retry feature for randtest the option -retries must be set larger than 0. 
+\nextopt
+\optdefault{stratify\_on}{integer | string}
+Default not set. It may be necessary to use stratification in the randomization procedure. For example, if the original data consists of two groups of patients - say 10 patients with full pharmacokinetic profiles and 90 patients with sparse steady state concentration measurements - it may be wise to restrict the randomization procedure to shuffle within the two groups.
+\nextopt
+\optname{update\_inits}
+Default true. Update the initial estimates of the full model to the final estimates from the estimation (lst-file) of either the base model, or, if option -full\_model\_inits is set, of the full model. If estimates from the base model are used (option -full\_model\_inits is not set) only update for those parameters that are estimated (non-fix) in the base model AND are found, based on THETA/OMEGA/SIGMA numbering, both in the base and full model.
 \nextopt
 \end{optionlist}
 
 \subsection{Some important common PsN options}
-For a complete list see common\_options.pdf, 
-or psn\_options -h on the commandline.
+For a complete list see common\_options.pdf, or psn\_options -h on the  command line. 
 \input{inputs/basic_options.tex}
-\begin{optionlist}
-\optdefault{retries}{N}
-Default 0. The number of times to try running each sample with slightly perturbed initial estimates if the first attempt is not successful.
-The randtest program will, if -base\_model is used, check that the ofv of each sample is at least as good as the ofv of
-the base model, within 'accepted\_ofv\_difference'. If not then a retry is initiated. The default value of the number of
-retries is 0, so to enable the retry feature for randtest the option -retries must be set larger than 0. 
-\nextopt
-\optdefault{accepted\_ofv\_difference}{number}
-Default 0.5. A retry will not be initiated if the ofv of the current sample is only 'accepted\_ofv\_difference' worse than
-the base model ofv.
-\nextopt
-\end{optionlist}
 
-
-\subsection{Randtest R-plots}
-\newcommand{\rplotsconditions}{
-See section Output, subsections Basic and Extended plots,
-for descriptions of the default randtest plots.
-The default randtest template 
-requires that option -base\_model was used, 
-that input (full) model has more THETAs than base (reduced) model,
-and that the additional THETAs are the ones relevant for the
-randomization column.
-For basic plots it is required that R libraries xpose4 and grid are installed.
-Extended plots also require  
-that R libraries
-ggplot2, reshape2, gridExtra, scales, MASS and plotrix are installed.
-If the conditions are not fulfilled then no pdf will be generated,
-see the .Rout file in the main run directory for error messages.}
+\subsection{randtest R-plots}
+\newcommand{\rplotsconditions}{See section Output, subsections Basic and Extended plots, for descriptions of the default randtest plots. The default randtest template requires that option -base\_model was used, that input (full) model has more THETAs than base (reduced) model, and that the additional THETAs are the ones relevant for the randomization column. For basic plots it is required that R libraries xpose4 and grid are installed. Extended plots also require that R libraries
+ggplot2, reshape2, gridExtra, scales, MASS and plotrix are installed. If the conditions are not fulfilled then no pdf will be generated, see the .Rout file in the main run directory for error messages.}
 \input{inputs/rplots_section_body.tex}
-
 
 \section{Shuffling the randomization column}
 
 The only column that will change during shuffling is the randomization column. All other columns will be intact, and the order and numbering of individuals will be preserved. Shuffling can only be done on the level of individuals. If stratification is requested via option -stratify\_on, then shuffling will be done separately within the groups defined by unique values in the stratification column. PsN will only look at the value of the stratification column for the first record of each individual. If other records for the same individual have a different stratification value, PsN will print a warning and then ignore the new value.
 During shuffling the sequence of randomization column values from the records of one individual will be copied to another individual. PsN will handle copying also when the number of data set records differs between individuals.
 
-PsN will not filter the data set based on any IGNORE/ACCEPT statements in the NONMEM model file before randomization. This means that
-during shuffling the
-values in the randomization column of an IGNOREd data record can be copied to a record that is not IGNOREd, and vice versa.
+PsN will not filter the data set based on any IGNORE/ACCEPT statements in the NONMEM model file before randomization. This means that during shuffling the values in the randomization column of an IGNOREd data record can be copied to a record that is not IGNOREd, and vice versa.
 
 \subsection{If -match\_transitions is not set, the default}
 
-By default, when option -match\_transitions is not set, PsN will copy values record by record. If the sequence of 'copy-from' values is shorter than 'copy-to' then PsN will do 'last-observation-carry-forward'. Example: 
+By default, when option -match\_transitions is not set, PsN will copy values record by record. If the sequence of 'copy-from' values is shorter than 'copy-to' then PsN will do 'last-observation-carry-forward'. \\
+Example:\\ 
 Copying [0,1,1] to [0,0,2,2] will give result [0,1,1,1] when -match\_transitions is not set. Missing data marked by e.g. -99 or values that are '.' (a dot) will be handled like any other value. 
 
 \subsection{If match\_transitions is set}
@@ -153,35 +125,20 @@ with undefined ofv \emph{and} the Xpose version is less than 4.5.3.9001.
 Therefore the script will skip the basic plots if Xpose version is less than 4.5.3.9001, and instead generate the extended plots.
 
 \subsection{Extended plots}
-The extended plots will be generated if -rplots>1, and start on the
-second page of the pdf-output.
-The second page shows
-histograms of delta-ofv and the extra THETAs in the input (full) model.
-Panel 1 excludes all positive valued deltaOFV (if any) 
-and then plots the distribution of deltaOFV. 
-Panel 2 converts all positive valued deltaOFV (if any) to 0, 
-hence modified deltaOFV or mod.delOFV, 
-and then plots the distribution of mod.deltaOFV. 
-So, if there is no positive deltaOFV, these two panels are the same.
-Panel 3 and above are histograms of the extra THETAs in the input (full) model.
+The extended plots will be generated if -rplots>1, and start on the second page of the pdf-output. The second page shows
+histograms of delta-ofv and the extra THETAs in the input (full) model. Panel 1 excludes all positive valued deltaOFV (if any) and then plots the distribution of deltaOFV. Panel 2 converts all positive valued deltaOFV (if any) to 0, hence modified deltaOFV or mod.delOFV, and then plots the distribution of mod.deltaOFV. So, if there is no positive deltaOFV, these two panels are the same. Panel 3 and above are histograms of the extra THETAs in the input (full) model.
 
-On the followin page, top left panel: comparison of the cumulative distribution functions (CDF) 
-of the empirical distribution (absolute values of deltaOFV after randtest) in 
-orange and the theoretical distribution (Chi-sq distribution closest to the 
-empirical distribution) in olive green. The vertical dashed blue and solid 
-green lines represent 95 percentile cutoff for the empirical and theoretical 
-distributions, respectively. The vertical dashed purple line shows the absolute
-value of the true deltaOFV.
+On the following page, top left panel: comparison of the cumulative distribution functions (CDF) of the empirical distribution (absolute values of deltaOFV after randtest) in orange and the theoretical distribution (Chi-sq distribution closest to the empirical distribution) in olive green. The vertical dashed blue and solid green lines represent 95 percentile cutoff for the empirical and theoretical distributions, respectively. The vertical dashed purple line shows the absolute value of the true deltaOFV.
 
-Bottom left panel: Comparison of the probability distribution functions (PDF) 
-of the empirical distribution (absolute values of deltaOFV after randtest) in 
-red and the theoretical distribution (Chi-sq distribution closest to the 
-empirical distribution) in blue. The vertical dashed red and blue lines 
-represent 95 percentile cutoff for the empirical and theoretical distributions,
-respectively.
+Bottom left panel: Comparison of the probability distribution functions (PDF) of the empirical distribution (absolute values of deltaOFV after randtest) in red and the theoretical distribution (Chi-sq distribution closest to the empirical  distribution) in blue. The vertical dashed red and blue lines represent 95 percentile cutoff for the empirical and theoretical distributions, respectively.
 
-The top and bottom panels on the right represent the similar comparisons for 
-the modified deltaOFV (mod.deltaOFV).
+The top and bottom panels on the right represent the similar comparisons for the modified deltaOFV (mod.deltaOFV).
+
+\section{Technical overview of algorithm}
+
+PsN will rerun the input (full) model if the lst-file of the input model (run1.lst if the input model file is called run1.mod) is not present in the same directory as the model file. 
+If the model file has the extension .mod and the lst-file is present then PsN will simply read the estimates from that file. Similar for the base model.
+The randtest tool creates N (N=number of samples), datasets of size M (M=sample\_size) by shuffling the values in the randomization column between individuals. The tool creates N new NONMEM modelfiles which are identical to the original modelfile with the exception that each uses a different randomized dataset and that the initial parameter estimates are the final estimates from the base model run. The model parameters are estimated with each dataset.
 
 
 \section{Known bugs and problems}
@@ -192,11 +149,6 @@ The script will skip the basic plots if Xpose version is less than 4.5.3.9001, a
 It is recommented to remove all \$TABLE from the modelfile, otherwise there will be much extra output produced. For the same reason it is recommended to remove PRINT options from \$ESTIMATION. 
 The results of two runs will be different even if the seed is the same if the lst-file of the input model and base modle are present at the start of one run but not the other. Running the input model changes the state of the random number generator, and therefore the datasets will be different depending on if the input model is run or not before generating the  new datasets.
 
-\section{Technical overview of algorithm}
-
-PsN will rerun the input (full) model if the lst-file of the input model (run1.lst if the input model file is called run1.mod) is not present in the same directory as the model file. 
-If the model file has the extension .mod and the lst-file is present then PsN will simply read the estimates from that file. Similar for the base model.
-The program creates N (N=number of samples), datasets of size M (M=sample\_size) by shuffling the values in the randomization column between individuals. The program creates N new NONMEM modelfiles which are identical to the original modelfile with the exception that each uses a different randomized dataset and that the initial parameter estimates are the final estimates from the base model run. The model parameters are estimated with each dataset.
 
 \references
 
