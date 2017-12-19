@@ -50,130 +50,94 @@ exit unless $res;
 
 my %help_text;
 
-$help_text{Pre_help_message} = <<'EOF';
+	$help_text{Pre_help_message} = <<'EOF';
     Stochastic Simulation and Estimation of NONMEM models.
 EOF
 
-$help_text{Description} = <<'EOF';
-SSE is a tool for model comparison and hypothesis testing. First, using the
-input model, a number of simulated datasets are generated. Then the input
-model and a set of alternative models are fitted to the simulated data.
-Finally, a set of statistical measures are computed for the parameter
-estimates and objective function values of the various models. 
+	$help_text{Description} = <<'EOF';
+	
+	  The sse (stochastic simulation and estimation) tool is for model comparison and 
+	  hypothesis testing.
+	  First, using the input model, a number of simulated datasets are generated. 
+	  Second, the input model and a set of alternative models are fitted to the simulated 
+	  data.
+	  Finally, a set of statistical measures are computed for the parameter estimates and 
+	  objective function values of the various models.
 EOF
 
-$help_text{Examples} = <<'EOF';
-sse run1.mod -samples=1000 -alternative_models=alt1.mod,alt2.mod
+	$help_text{Examples} = <<'EOF';
+	sse run1.mod -samples=1000 -alternative_models=alt1.mod,alt2.mod
 EOF
 
-$help_text{Options} = <<'EOF';
-A simulation model and -samples are mandatory on the command-line.
+	$help_text{Options} = <<'EOF';
+	A simulation model and the option -samples are required on the command line.
 
-The following options are valid:
+	   The following options are valid:
 EOF
 
-$help_text{-alternative_models} = <<'EOF';
+	$help_text{-add_models} = <<'EOF';
+      -add_models
+
+      This option tells PsN to add the alternative models listed with option 
+      -alternative_models to an old sse run. All models given via option
+      -alternative_models will be estimated from scratch, so the alternatives from
+      the old run should not be listed again. The -add_models option requires that 
+      the old sse run has been completed without errors. It is necessary to also set 
+      the general PsN option -directory to the sse directory of the old run, 
+      e.g. -directory=sse_dir50.
+      The user must ensure that the -samples option in the new sse run is 
+      equal to or smaller than in the old run. If some simulated datasets are 
+      missing it will result in an error. 
+      The simulation model must still be given as input on the command line.
+      If the option -estimate_simulation is set (it is set by default) old estimation 
+      results will be reloaded if existing, otherwise the simulation model will be
+      estimated.
+      The numbering of the extra models will start at the number of the last old
+      alternative plus 1.
+	  Results for the added models are in file sse_results_add1.csv.
+EOF
+
+	$help_text{-alternative_models} = <<'EOF';
       -alternative_models=alt1.mod,alt2.mod,...
 
-      Optional. Comma-separated list of one or more alternative models 
-      to use for estimation with simulated datasets. 
+      A comma-separated list of one or more alternative models to use for estimation 
+	  with simulated datasets. If not given, only the input model will be fitted to 
+	  the simulated data.  
 EOF
 
-$help_text{-samples} = <<'EOF';
-      -samples=N
+	$help_text{-append_columns} = <<'EOF';
+      -append_columns=col1,col2,...
 
-      The number of simulated datasets to generate. Must be at least 1.
+    A comma-separated list of one or more data columns to append to the simulated 
+	data sets. These variables must be defined in the simulation model, otherwise 
+	all the simulation models will crash with an NMtran-error. PsN will not check 
+	that the variables are defined, but simply append them to the $TABLE generating 
+	the simulated datasets. This option cannot be used in combination with 
+	-add_models, since in that case no simulations will be run. The user must 
+	ensure that the estimation models have these columns properly included in $INPUT,
+	PsN will not add them.
 EOF
 
-$help_text{-estimate_simulation} = <<'EOF';
+	$help_text{-estimate_simulation} = <<'EOF';
       -estimate_simulation
 
-      By default, the simulation model is also used for estimation with
+      Default set. By default, the simulation model is also used for estimation with
       the simulated datasets. The resulting OFV values are used as reference
       when evaluating the estimation results of alternative models. By setting
       -no-estimate_simulation the estimation of the simulation model is turned
       off, and the first alternative model is used as reference instead. See
       also -ref_ofv.
+	  Regardless of how option -no-estimate_simulation is set, the initial 
+	  estimates in the simulation model will be used as reference when computing 
+	  bias, rmse and rsebias for theta, omega and sigma. If simulating with 
+	  uncertainty then the reference values will be different for each simulated 
+	  dataset. 
 EOF
 
-$help_text{-keep_tables} = <<'EOF';
-      -keep_tables
-
-      By default, all $TABLE will be deleted from the simulation and 
-	  alternative models, to save disk space. If option -keep_tables is set, 
-	  PsN will instead keep $TABLE and number the file names according to
-	  the sample number.
-EOF
-
-$help_text{-update_fix} = <<'EOF';
-      -update_fix
-
-      Default not set. Only relevant in combination with -rawres_input.
-      If update_fix is set, FIXED initial estimates in models will
-      be updated to values from the rawres_input file. If update_fix is 
-      not set, the default, FIXED initial estimates will not be changed.
-EOF
-
-$help_text{-ref_ofv} = <<'EOF';
-      -ref_ofv=500
-
-      Instead of using the OFV values from the estimation of a model as
-      reference when evaluating the other estimation results,
-      it is possible to set a fixed reference OFV value. If using ref_ofv,
-      it is not allowed to also estimate the simulation model. 
-EOF
-
-$help_text{-parallel_simulations} = <<'EOF';
-      -parallel_simulations=1
-
-      The number of parallel processes to start for the simulation step 
-      (not the estimation step) on a parallel computer. Default is the same
-      value as set for option -threads.
-EOF
-
-$help_text{-rawres_input} = <<'EOF';
-      -rawres_input=filename
-
-      A simple way to simulate with uncertainty. Instead of using identical 
-      parameter estimates for simulation of each new dataset, take parameter 
-      estimates from a raw_results.csv file, e.g. from a bootstrap run or the 
-      initial_estimates.csv file from a previous sse run with $PRIOR in the 
-      simulation model. The raw results file must contain at least as many 
-      samples as the input -samples to sse, the labels for THETA/OMEGA/SIGMA 
-      in the file must match the labels in the simulation model given as input 
-      to sse, and the theta columns must be directly followed by the omega columns 
-      which must be directly followed by the sigma column. Note that is is 
-      possible to generate a file with initial parameter estimates outside of PsN, 
-      as long as the file follows the format rules.
-EOF
-
-$help_text{-append_columns} = <<'EOF';
-      -append_columns=COL1,COL2,...
-
-      Optional. Comma-separated list of one or more data columns to append
-    to the simulated data sets. These variables must be defined in the simulation
-    model, otherwise all the simulation models will crash with an NMtran-error. 
-    PsN will not check that the variables are defined, but simply append them
-    to the $TABLE generating the simulated datasets. This option cannot be used
-    in combination with -add_models, since in that case no simulations will be run.
-    The user must ensure that the estimation models have these columns properly
-    included in $INPUT, PsN will not add them.
-EOF
-
-$help_text{-offset_rawres} = <<'EOF';
-      -offset_rawres=N
-
-      Only relevant in combination with rawres_input. Default 1.
-      The number of result lines to skip in the input raw results file
-      before starting to read final parameter estimates. In a regular
-      bootstrap raw_results file the first line of estimates refers to the
-      input model with the full dataset, so therefore the default offset is 1.
-EOF
-
-$help_text{-in_filter} = <<'EOF';
+	$help_text{-in_filter} = <<'EOF';
       -in_filter=comma-separated list of conditions
 
-      Only relevant in combination with rawres_input. Default not used.
+      Default not set. Option is only relevant in combination with rawres_input. 
       The parameter estimates lines in the file can be filtered on values 
       in the different columns. When specifying which column(s) the filtering 
       should be based on, the exact column name must be used, 
@@ -191,59 +155,51 @@ $help_text{-in_filter} = <<'EOF';
       Example: -in_filter=minimization_successful.eq.1,significant_digits.gt.3.5
 EOF
 
-$help_text{-out_filter} = <<'EOF';
+	$help_text{-keep_tables} = <<'EOF';
+      -keep_tables
+
+      By default, all pre-existing $TABLE will be deleted from the simulation and 
+	  alternative models, to save disk space. If option -keep_tables is set, PsN will 
+	  instead keep $TABLE and number the file names according to the sample number.
+EOF
+
+	$help_text{-offset_rawres} = <<'EOF';
+      -offset_rawres=N
+
+      Default is 1. Only relevant in combination with rawres_input. The number of 
+	  result lines to skip in the input raw results file before starting to read 
+	  final parameter estimates. In a regular bootstrap raw_results file the first 
+	  line of estimates refers to the input model with the full dataset, so 
+	  therefore the default offset is 1.
+EOF
+
+	$help_text{-out_filter} = <<'EOF';
       -out_filter=comma-separated list of conditions
 
-      Default not used. The user may choose to only compute results based on 
+      Default not set. The user may choose to only compute results based on 
       estimations which fulfill certain conditions. The default is to only skip 
       runs where the ofv cannot be read from the lst-file or is equal to 0. 
       Filtering of output can be done on any numeric column in a standard sse 
       raw_results file, for example minimization_successful, significant_digits 
       and covariance_step_successful. The allowed relations are .gt. (greater than), 
-      .lt. (less than) and .eq. (equal to). Conditions are separated with commas. 
-      If the remaining number of estimation results after filtering is less than 2, 
-      sse will stop with an error message.
+      .lt. (less than) and .eq. (equal to). If the value in the filter column is 
+	  'NA' then that parameter set will be skipped, regardless of the defined filter 
+	  relation. Conditions are separated with commas. If the remaining number of 
+	  estimation results after filtering is less than 2, sse will stop with an error 
+	  message.
     
       Example: -out_filter=minimization_successful.eq.1,significant_digits.gt.3.5
 EOF
 
-$help_text{-recompute} = <<'EOF';
-      -recompute=raw results filename, including directory name
+	$help_text{-parallel_simulations} = <<'EOF';
+      -parallel_simulations=X
 
-      Default not set. Setting this option makes PsN recompute output statistics based on 
-      the specified raw_results file. No simulations or estimations will be run.
-	  Note that the filename must be given including the 
-      directory name. The user may change the -out_filter settings for the recomputation. 
-      Apart from -out_filter, the input model must be set, and -samples. 
-      Alternative models are not needed, information about them will be read from the raw results file.
-      Option -directory will be ignored, instead the directory specified as part of the file 
-      path will be used.
-
-      Example: -recompute=sse_dir12/raw_results_run1.csv
+      Default is the same value as set for option -threads. The number of parallel 
+	  processes to start for the simulation step (not the estimation step) on a 
+	  parallel computer. 
 EOF
 
-$help_text{-add_models} = <<'EOF';
-      -add_models
-
-      This option tells PsN to add the alternative models listed with option 
-      -alternative_models to an old sse run. All models given via option
-      -alternative_models will be estimated from scratch, so the alternatives from
-      the old run should not be listed again. The -add_models option requires that 
-      the old sse run has been completed without errors. It is necessary to also set 
-      the general PsN option -directory to the sse directory of the old run, 
-      e.g. -directory=sse_dir50.
-      The user must ensure that the -samples option in the new sse run is 
-      equal to or smaller than in the old run. If some simulated datasets are 
-      missing it will result in an error. 
-      The simulation model must still be given as input on the command-line.
-      If the option -estimate_simulation is set (it is set by default) old estimation 
-      results will be reloaded if existing, otherwise the simulation model will be
-      estimated.
-      The numbering of the extra models will start at the number of the last old
-      alternative plus 1.
-EOF
-
-$help_text{-random_estimation_inits} = <<'EOF';
+	$help_text{-random_estimation_inits} = <<'EOF';
       -random_estimation_inits
 
 	This option can only be used in combination with -rawres_input. It turns off 
@@ -251,6 +207,63 @@ $help_text{-random_estimation_inits} = <<'EOF';
 	rawres_input file as initial values for the estimation step. When this 
 	option is not used, the estimation initial values will be the values
 	used for simulating data.
+EOF
+
+	$help_text{-rawres_input} = <<'EOF';
+      -rawres_input=filename
+
+      A simple way to simulate with uncertainty. Instead of using identical 
+      parameter estimates for simulation of each new dataset, take parameter 
+      estimates from a raw_results.csv file, e.g. from a bootstrap run or the 
+      initial_estimates.csv file from a previous sse run with $PRIOR in the 
+      simulation model. 
+	  The raw results file must contain at least as many samples as the input 
+	  -samples to sse, the labels for THETA/OMEGA/SIGMA in the file must match 
+	  the labels in the simulation model given as input to sse, and the theta 
+	  columns must be directly followed by the omega columns which must be 
+	  directly followed by the sigma column. Note that it is possible to 
+	  generate a file with initial parameter estimates outside of PsN, as long 
+	  as the file follows the format rules.
+EOF
+
+	$help_text{-recompute} = <<'EOF';
+      -recompute=raw results filename, including directory name
+
+      Default not set. Setting this option makes PsN recompute output statistics based on 
+      the specified raw_results file. No simulations or estimations will be run.
+	  Note that the filename must be given including the 
+      directory name. The user may change the -out_filter settings for the recomputation. 
+      Apart from -out_filter, the input model must be set, as well as the option -samples. 
+      Alternative models are not needed, information about them will be read from the raw results file.
+      Option -directory will be ignored, instead the directory specified as part of the file 
+      path will be used.
+
+      Example: -recompute=sse_dir12/raw_results_run1.csv
+EOF
+
+	$help_text{-ref_ofv} = <<'EOF';
+      -ref_ofv=500
+
+      Instead of using the OFV values from the estimation of a model as
+      reference when evaluating the other estimation results,
+      it is possible to set a fixed reference OFV value. If using ref_ofv,
+      it is not allowed to also estimate the simulation model. 
+EOF
+
+	$help_text{-samples} = <<'EOF';
+      -samples=N
+
+      The number of simulated datasets to generate is a required option. N must be 
+	  greater or equal to 1.
+EOF
+
+	$help_text{-update_fix} = <<'EOF';
+      -update_fix
+
+      Default not set. Option is only relevant in combination with -rawres_input.
+      If update_fix is set, FIXED initial estimates in models will be updated to
+	  values from the rawres_input file. If update_fix is not set, the default, 
+	  FIXED initial estimates will not be changed.
 EOF
 
 common_options::online_help( 'sse', \%options, \%help_text, \%required_options, \%optional_options);
