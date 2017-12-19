@@ -52,92 +52,125 @@ my $eval_string = common_options::model_parameters(\%options);
 
 my %help_text;
 
-$help_text{Pre_help_message} = <<'EOF';
+	$help_text{Pre_help_message} = <<'EOF';
     Perl script for creation of run records
 EOF
-$help_text{Post_help_message} = <<'EOF';
-EOF
-$help_text{Description} = <<'EOF';
-RunRecord is a PsN script that facilitates the creation of run records for
-NONMEM runs. It takes a range of run numbers as input, extracts information
-and generates a txt file that can be imported into Excel for further
-manipulation. The information extracted includes parameter estimates,
-standard errors, condition number, objective function value (OFV),
-parameter names and information about model components. Some of this comes
-from the NONMEM output files while some parts are extracted from
-user-supplied information in the NONMEM model file.
-EOF
-$help_text{Examples} = <<'EOF';
-runrecord -root=run -mod_ext=mod -out_ext=lst -from=1 -to=10
 
-summarizes the output from files run1.mod to run10.mod with
-output files run1.lst to run10.lst
+	$help_text{Post_help_message} = <<'EOF';
 EOF
-$help_text{Options} = <<'EOF';
-The only required option is -to.
 
-The following options are valid:
+	$help_text{Description} = <<'EOF';
+	The runrecord tool facilitates the creation of run records for NONMEM runs. It takes 
+	a range of run numbers as input, extracts information and generates a .txt file that 
+	can be imported into Excel for further manipulation. The information extracted includes 
+	parameter estimates, standard errors, condition number, objective function value (OFV), 
+	parameter names and information about model components. Some of this comes from the 
+	NONMEM output files while some parts are extracted from user-supplied information in 
+	the NONMEM model file. In the simplest form, runrecord is run in the following way in 
+	a folder that contains run results.
 EOF
-$help_text{-from} = <<'EOF';
-    -from
-Run number to start processing from. Default is 1.
+
+	$help_text{Examples} = <<'EOF';
+	runrecord -root=run -mod_ext=mod -out_ext=lst -from=1 -to=10
+	summarizes the output from files run1.mod to run10.mod with output files run1.lst to 
+	run10.lst
 EOF
-$help_text{-root} = <<'EOF';
-    -root
-"root" name of the model files
+
+	$help_text{Options} = <<'EOF';
+	The only required option is -to.
+
+	The following options are valid:	
 EOF
-$help_text{-res_file} = <<'EOF';
-    -res_file
-Name of the results file. Default is AAruninfo.txt
+
+	$help_text{-child_col} = <<'EOF';
+    -child_col=column name
+
+	Default is Run Child. Name of the run child columns.
 EOF
-$help_text{-res_format} = <<'EOF';
-    -res_format
-The output format for the results file, either txt, csv or yaml.  
-By default this is detected from the extension of -res_file, 
-where .csv gives csv-format with a text header, .csvy gives csv-format with 
-a yaml header and all others give text format with a text header.
+
+	$help_text{-from} = <<'EOF';
+    -from=N
+	
+	Default is 1. Run number to start processing from. 
 EOF
-$help_text{-mod_ext} = <<'EOF';
-    -mod_ext
-NONMEM model file extension
+
+	$help_text{-max_lvl} = <<'EOF';
+    -max_lvl=N
+	Default is automatic detection. Max number of model children levels.
 EOF
-$help_text{-out_ext} = <<'EOF';
-    -out_ext
-NONMEM output file extension
+
+	$help_text{-mod_ext} = <<'EOF';
+    -mod_ext=string
+	
+	Default is .mod, e.g. run1.mod. NONMEM model file extension.
 EOF
-$help_text{-sep} = <<'EOF';
-    -sep
-Separator between fields in runrecord output file. This option may
-only be set if -res_format is txt, otherwise the -sep option will be ignored 
-and the separator is , (comma). The default is ; for text format.
+
+	$help_text{-out_ext} = <<'EOF';
+    -out_ext=string
+	
+	Default is .list, e.g. run1.lst. NONMEM output file extension
 EOF
-$help_text{-rsep} = <<'EOF';
-    -rsep
-Separator between comment rows read from the model file, this is pasted 
-between rows -within fields- in the output file *if* -res_format is txt.
-This option may only be set if -res_format is txt, otherwise the -rsep option 
-will be ignored and rsep is emtpy. The default is empty separator for text format.
+
+	$help_text{-res_file} = <<'EOF';
+    -res_file=filename
+
+	Default is AAruninfo.txt. Name of the results file.
 EOF
-$help_text{-max_lvl} = <<'EOF';
-    -max_lvl
-Max number of model children levels. Default is automatic detection.
+
+	$help_text{-res_format} = <<'EOF';
+    -res_format=format of output
+
+	By default this is detected from the extension of res_file, where .csv gives csv-format 
+	with a text header, .csvy gives csv-format with a yaml header and all others give text 
+	format with a text header. The yaml header requires the YAML::Tiny Perl library, if it 
+	is not installed the header will have text format. The output format for the results 
+	file, either .txt (text), .csv or .yaml.
 EOF
-$help_text{-child_col} = <<'EOF';
-    -child_col
-Name of the run child columns (default: 'Run Child')
+
+	$help_text{-root} = <<'EOF';
+    -root=string
+	
+	Default is "run", e.g. run1.mod. The "root" name of the model files.
 EOF
-$help_text{-var} = <<'EOF';
-    -var
-    Report omegas and sigmas as variances or sd. Default is 'no'.
+
+	$help_text{-rse} = <<'EOF';
+    -rse=yes | no
+	
+	Default is yes. Whether standard errors should be reported as relative SEs or not. 
 EOF
-$help_text{-rse} = <<'EOF';
-    -rse
-Whether standard errors should be reported as relative SEs or not. The default is 'yes'.
+
+	$help_text{-rsep} = <<'EOF';
+    -rsep=sign
+
+	Default is empty separator for text format.Separator between comment rows read from the 
+	model file, this is pasted between rows -within fields- in the output file *if* 
+	-res_format is txt. This option may only be set if -res_format is .txt, otherwise the 
+	-rsep option will be ignored and rsep is emtpy. 
 EOF
-$help_text{-to} = <<'EOF';
-    -to
-The highest run number to process. Default is the highest run number found in an 
-uninterrupted sequence of files <root>1.<mod_ext>, <root>2.<mod_ext>,... etc.
+
+
+	$help_text{-sep} = <<'EOF';
+    -sep=sign
+	
+	Default is ; (semicolon) for text format. Separator between fields in runrecord output 
+	file. This option may only be set if -res_format is txt, otherwise the -sep option will 
+	be ignored and the separator is , (comma). 
+EOF
+
+	$help_text{-to} = <<'EOF';
+    -to=N
+
+	Required option. Default is the highest run number found in an uninterrupted sequence 
+	of files <root>1.<mod\_ext>, <root>2.<mod\_ext>,... etc. The highest run number to process.
+
+	Example: If root=run and mod_ext=mod, and files present are run1.mod, run2.mod, run3.mod 
+	and run6.mod, then the default value of -to is 3.
+EOF
+
+	$help_text{-var} = <<'EOF';
+    -var=yes | no
+    
+	Default is no. Report omegas and sigmas as variances or sd. 
 EOF
 
 common_options::online_help('runrecord', \%options, \%help_text, \%required_options, \%optional_options);
