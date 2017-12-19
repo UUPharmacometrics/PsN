@@ -1,5 +1,5 @@
 \input{inputs/format_header.tex}
-\guidetitle{RESMOD user guide}{2017-05-04}
+\guidetitle{RESMOD user guide}{2017-12-19}
 
 \begin{document}
 
@@ -8,9 +8,8 @@
 
 
 \section{Overview}
-The residual modelling tool performs modelling of the conditional weighted residual output of a model run. Different types of models are run and changes in OFV will be recorded together with some parameters of interest. Resmod is not compatible with NONMEM 7.2 or older versions.
-
-Example
+The resmod (residual modelling) tool performs modelling of the conditional weighted residual output of a model run. Different types of models are run and changes in OFV will be recorded together with some parameters of interest. The resmod tool is not compatible with NONMEM 7.2 or older versions.\\
+Example:
 \begin{verbatim}
 resmod run1.mod
 \end{verbatim}
@@ -18,40 +17,39 @@ resmod run1.mod
 \section{Input and options}
 
 \subsection{Required input}
-A model file is required on the command-line.
+A model file is required on the command line.
 
 \subsection{Optional input}
 
 \begin{optionlist}
-\optdefault{dvid}{DVID}
-Name of the dvid column. DVID is default.
+\optdefault{dv}{dependent variable}
+Default CWRES. Name of the dependent variable. 
 \nextopt
-\optdefault{idv}{TIME}
-Name of the independent variable. Set to TIME by default. If set to PRED
-PsN will rename it appropriately so that it can be used in \$INPUT.
+\optdefault{dvid}{DVID column name}
+Default DVID. Name of the dvid column. 
 \nextopt
-    \optdefault{dv}{CWRES}
-        Name of the dependent variable. Set to CWRES by default.
-    \nextopt
-\optdefault{occ}{OCC}
-Name of the occasion column. Set to OCC by default.
+\optdefault{groups}{N}
+Default is 4. Set the number of groups to use for the time varying models. Quantiles using this number will be calculated.
 \nextopt
-\optdefault{groups}{4}
-      Set the number of groups to use for the time varying models.     
-      Quantiles using this number will be calculated.
-      The default is 4.
+\optname{idv}
+Default TIME. Name of the independent variable. If set to PRED PsN will rename it appropriately so that it can be used in \$INPUT.
 \nextopt
-    \optname{iterative}
-        Iterate by selecting the best model and rerun all models with the output from that model.
-    \nextopt
-    \optname{max\_iterations}
-        Default is to iterate until all models have been selected, but this option makes it possible
-        to stop the iteration earlier.
-    \nextopt
+\optname{iterative}
+Set if an iterative process is wanted. The iteration is to pick the model with best dOFV and rerun all models with the CWRES output from that model etc until all models have been picked.
+\nextopt
+\optname{max\_iterations}
+Default is no limit. Limit the maximum number of steps in the iterative procedure. 
+\nextopt
+\optname{obs\_column}
+The default is the same as -dv. Use this column to ignore non-observations. All zero entries in this column will be interpreted as a non-observation.
+\nextopt
+\optname{occ}
+Default OCC. Name of the occasion column. 
+\nextopt
 \end{optionlist}
 
 \section{Iteration}
-If the option -iterate has been selected the model with the lowest dOFV will be selected. The output from this model
+If the option -iterative has been selected the model with the lowest dOFV will be selected. The output from this model
 will be used to rerun all the models once more etc. The iteration will stop when either the -max\_iterations has been
 reached or when all models have been selected. The iteration will be done for each DVID separately.
 
@@ -83,8 +81,7 @@ Y = THETA(1) + ETA(1) + ERR(1)*(IPRED)**THETA(2)
 \end{verbatim}
 
 \subsection{Time varying RUV}
-This model is compared to Base model 1 and is named \verb|time_varying_RUV| in results.csv. The <idv> below will be replaced with the name of the independent variable. The <q1>, <q2> and <q3> below will be replaced with the quartiles of the independent variable
-for all observations combined. I.e. from the data set remove all records for which CWRES = 0 then calculate the quartiles of the idv column. The standard deviations of the epsilons and the time cutoff values are presented in the results.csv.
+This model is compared to Base model 1 and is named \verb|time_varying_RUV| in results.csv. The <idv> below will be replaced with the name of the independent variable. The <q1>, <q2> and <q3> below will be replaced with the quartiles of the independent variable for all observations combined. I.e. from the data set remove all records for which CWRES = 0 then calculate the quartiles of the idv column. The standard deviations of the epsilons and the time cutoff values are presented in the results.csv.
 \begin{verbatim}
 Y = THETA(1) + ETA(1) + ERR(4)
 IF (<idv>.LT.<q1>) THEN
@@ -124,6 +121,7 @@ This model is compared to Base model 1 and is named \verb|autocorrelation| in re
 "  ENDDO
 Y = THETA(1) + ETA(1) + EPS(1)
 \end{verbatim}
+\newpage
 
 \subsection{T-distribution base model}
 This model is used as base model for the t-distribution model.
@@ -142,7 +140,7 @@ This model is used as base model for the t-distribution model.
 Using the Laplace estimation method.
 
 \subsection{T-distribution 2LL}
-Named \verb|tdist_2ll_dfest| in results.csv. The degrees of freedom is estimated and presented in results.csv.
+Named \verb|tdist_2ll_dfest| in results.csv. The degree of freedom is estimated and presented in results.csv.
 
 \begin{verbatim}
 IPRED = THETA(1) + ETA(1)
@@ -198,14 +196,10 @@ This model is used as base model for the DTBS model. If IPRED is not available i
 Lambda and zeta will be fixed to 0.
 
 \subsection{DTBS}
-Named \verb|dtbs| in results.csv. The lambda and zeta parameters (THETA(3) and THETA(4)) will be presented.
-If IPRED is not available in the original model the CIPREDI will be used instead.
-This model is same as the base model except that all parameters will be estimated.
+Named \verb|dtbs| in results.csv. The lambda and zeta parameters (THETA(3) and THETA(4)) will be presented. If IPRED is not available in the original model the CIPREDI will be used instead. This model is same as the base model except that all parameters will be estimated.
 
 \subsection{L2}
-Name \verb|L2| in results.csv. The L2 model will be tried only if the original model has multiple DVs. The L2 data column will
-be taken to be a copy of the TIME column. Resulting delta ofv will be the difference between the sum of the OFVs of the base models for all DVIDs and
-the OFV of the L2 model.
+Name \verb|L2| in results.csv. The L2 model will be tried only if the original model has multiple DVs. The L2 data column will be taken to be a copy of the TIME column. Resulting delta ofv will be the difference between the sum of the OFVs of the base models for all DVIDs and the OFV of the L2 model.
 \begin{verbatim}
 IF(DVID.EQ.1) Y = THETA(1) + ETA(1) + ERR(1)
 IF(DVID.EQ.2) Y = THETA(2) + ETA(2) + ERR(2)
