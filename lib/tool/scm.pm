@@ -1929,7 +1929,6 @@ sub linearize_setup
 
         if ( should_add_mdv(model => $derivatives_model) ){
             push(@tablestrings,'MDV');
-            push(@inputstrings,'MDV');
             $table_highprec++;
         }
         #1.10
@@ -2080,6 +2079,7 @@ sub linearize_setup
 
         push(@tablestrings,'NOPRINT','NOAPPEND','ONEHEADER');
         push(@tablestrings,'FILE='.$datafilename);
+        push(@tablestrings, 'FORMAT=s1PE15.8');
         $derivatives_model->set_records(type => 'table', record_strings => \@tablestrings);
 
         # An extra table was requested
@@ -2087,7 +2087,7 @@ sub linearize_setup
             my @extra_tablestrings = ( @{$self->extra_table_columns}, 'NOPRINT', 'NOAPPEND', 'ONEHEADER', 'FILE=extra_table' );
             $derivatives_model->add_records(type => 'table', record_strings => \@extra_tablestrings);
         }
-
+=cut
         if ((scalar(@tablestrings)-4) == (1+$table_highprec+$table_lowprec)){
             if ($use_tableformat){
                 #more than 50 items, try to reduce field width to not hit 999 limit in NM7.2
@@ -2107,7 +2107,7 @@ sub linearize_setup
             croak("Bug in setting table format when preparing derivatives model, please report\n".
                 "highprec $table_highprec lowprec $table_lowprec items ".(scalar(@tablestrings)-4));
         }
-
+=cut
         if ($self->update_derivatives()){
             #store derivatives_base_model if update_derivatives
             $self->derivatives_base_model($derivatives_model ->
@@ -2736,13 +2736,26 @@ sub linearize_setup
     # Remove IGN or ACC in $DATA. Might crash future runs
     $original_model->problems->[0]->datas->[0]->remove_ignore_accept();
 
-    # If have MDV ignore all MDV != 0
-    if (should_add_mdv(model => $original_model)) {
-        $original_model->add_option(record_name => 'data', option_name => 'IGNORE(MDV.NEN.0)');
-        $original_model->problems->[0]->psn_record_order(1);   # In case $DATA was before $INPUT
-    }
+    my $data = data->new(
+        filename => $datafilename,
+        ignoresign => '@',
+        missing_data_token => $self->missing_data_token,
+        ignore_missing_files => 0,
+        parse_header => 1,
+        space_separated => 1);
 
-    # Account for an estimation bug in NONMEM 7.4 by adding a dummy THETA.
+    # If have MDV remove all MDV != 0
+    #if (should_add_mdv(model => $original_model)) {
+    my $was_filtered = $data->filter_column(colname => 'MDV', value => 1);
+    if ($was_filtered) {
+        $data->_write(overwrite => 1);
+    }
+        #}
+    # To account for bug in NONMEM causing it to not handle datasets bigger than 1000 characters wide
+    my $numcols = scalar(@{$data->header});
+    $original_model->add_option(record_name => 'data', option_name => "($numcols(1X,E15.8))");
+
+    # Account for an estimation bug in NONMEM 7.4
     if ($PsN::nm_major_version == 7 and $PsN::nm_minor_version == 4) {
         $original_model->add_option(record_name => 'estimation', option_name => 'SLOW');
     }

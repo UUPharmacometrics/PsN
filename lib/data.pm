@@ -28,6 +28,7 @@ has 'ignore_missing_files' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'ignoresign' => ( is => 'rw', isa => 'Maybe[Str]');
 has 'missing_data_token' => ( is => 'rw', isa => 'Maybe[Num]', default => -99 );
 has 'parse_header' => ( is => 'rw', isa => 'Bool', default => 0 );
+has 'space_separated' => ( is => 'rw', isa => 'Bool', default => 0 );
 has '_median' => ( is => 'rw', isa => 'ArrayRef[numbers]', default => sub { [] } );
 has '_range' => ( is => 'rw', isa => 'ArrayRef[numbers]', default => sub { [] } );
 
@@ -1013,14 +1014,28 @@ sub format_data
 		}
 	}
 
-	if ( $have_header) {
-		push( @form_data, join(',',@{$self->header()})."\n" );
-	}
-	foreach my $individual ( @{$self->individuals()} ) {
-		foreach my $row ( @{$individual->subject_data} ) {
-			push(@form_data, $row ."\n");
-		}
-	}
+    if (not $self->space_separated) {
+        if ( $have_header) {
+            push( @form_data, join(',',@{$self->header()})."\n" );
+        }
+        foreach my $individual ( @{$self->individuals()} ) {
+            foreach my $row ( @{$individual->subject_data} ) {
+                push(@form_data, $row ."\n");
+            }
+        }
+    } else {
+        if ($have_header) {
+            push(@form_data, ' ' . join(' ', @{$self->header()}) . "\n");
+        }
+        foreach my $individual (@{$self->individuals()}) {
+            foreach my $row (@{$individual->subject_data}) {
+                my $line = $row;
+                $line =~ s/,-/ -/g;
+                $line =~ s/,/  /g;
+                push(@form_data, "  $line\n");
+            }
+        }
+    }
 
 	return \@form_data;
 }
@@ -2869,6 +2884,57 @@ sub create_row_filter
 	}
 
 	return \@filter;
+}
+
+sub filter_column
+{
+    # Filter out all values from colname. If any individual gets empty remove it.
+    # If more than one column with colname exists take the first
+    # Returns an indicator of whether dataset was filtered or not
+	my $self = shift;
+	my %parm = validated_hash(\@_,
+		colname => { isa => 'Str' },
+        value => { isa => 'Num' },
+	);
+	my $colname = $parm{'colname'};
+	my $value = $parm{'value'};
+
+	my $ninds = scalar(@{$self->individuals});
+	my $index = 0;
+    my $found = 0;
+
+	foreach my $column_name (@{$self->header}) {
+		if ($column_name =~ /^($colname)$/){
+			$found = 1;
+            last;
+		}
+		$index++;
+	}
+    if (not $found) {
+        return 0;
+    }
+
+    my @keep_individuals;
+    foreach my $individual (@{$self->individuals}) {
+        my @keep;
+        foreach my $datarow (@{$individual->subject_data}) {
+            my @row = split(/,/, $datarow);
+            if ($row[$index] != $value) {
+                splice(@row, $index, 1);
+                my $new_row = join(',', @row);
+                push @keep, $new_row;
+            }
+        }
+        if (scalar(@keep) > 0) {
+            $individual->subject_data(\@keep);
+            push @keep_individuals, $individual;
+        }
+    }
+    $self->individuals(\@keep_individuals);
+    my @new_header = @{$self->header};
+    splice(@new_header, $index, 1);
+    $self->header(\@new_header);
+    return 1;
 }
 
 sub lasso_calculate_covariate_statistics
