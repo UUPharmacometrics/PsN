@@ -44,11 +44,15 @@ sub setup
 	my $self = shift;
 
 	unless (defined $self->filename){
+		if ($self->toolname eq "qa") { # tools that need rmarkdown file to get a report
+			$self->R_markdown(1);
+			$self->rmarkdown_installed(1);
+		}
 		if($self->R_markdown && $self->rmarkdown_installed) {
 			$self->filename('PsN_'.$self->toolname.'_plots.Rmd');
 		} else {
 			$self->filename('PsN_'.$self->toolname.'_plots.R');
-		}	
+		}
 	}
 
 	if (defined $self->raw_results_file){
