@@ -1,4 +1,4 @@
-get_add_etas_table <- function(original_max0_model,add_etas_dir,added_etas,dofv_add.etas,nonlinear) {
+get_add_etas_table <- function(original_max0_model,add_etas_dir,added_etas,dofv_add.etas,nonlinear,quiet=F) {
   original_ext_file <- sub("(\\.[^.]+)$",".ext",original_max0_model)
   if(!nonlinear) {
     add_etas_ext_file <- file.path(add_etas_dir,"add_etas_linbase.ext")
@@ -59,6 +59,15 @@ get_add_etas_table <- function(original_max0_model,add_etas_dir,added_etas,dofv_
     }
     add_etas_error <- FALSE
   } else {
+    if(!file.exists(add_etas_ext_file) && !quiet) {
+      message("WARNING: File ",add_etas_ext_file," not found!")
+    }
+    if(!file.exists(original_ext_file) && !quiet) {
+      message("WARNING: File ",original_ext_file," not found!")
+    }
+    if(length(added_etas)==0 && !quiet) {
+      message("WARNING: Added_etas vector is empty!")
+    }
     add_etas_error <- TRUE
     add_etas_table <- error_table(col=1)
   }

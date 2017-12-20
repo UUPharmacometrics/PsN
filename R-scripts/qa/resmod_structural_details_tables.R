@@ -1,4 +1,4 @@
-resmod_structural_details_tables <- function(working.directory,base_dataset,original_max0_model,CWRES_table,idv_all,idv_name,dvid_name,nonlinear) {
+resmod_structural_details_tables <- function(working.directory,base_dataset,original_max0_model,CWRES_table,idv_all,idv_name,dvid_name,nonlinear,quiet=F) {
   resmod_structural_details_list <- list()
   if(length(idv_all)!=0) {
     #check if dvid exist
@@ -6,8 +6,9 @@ resmod_structural_details_tables <- function(working.directory,base_dataset,orig
     resmod_file_exists_idv <- list()
     resmod_table <- list()
     for (i in 1:length(idv_all)) {
-      resmod_file_exists_idv[i] <- get_resmod_table(directory=working.directory, idv_all[i])$resmod_file_exists
-      resmod_table[[i]] <- get_resmod_table(directory=working.directory, idv_all[i])$resmod_table
+      resmod_table_list <- get_resmod_table(directory=working.directory, idv_all[i])
+      resmod_file_exists_idv[i] <- resmod_table_list$resmod_file_exists
+      resmod_table[[i]] <- resmod_table_list$resmod_table
       dvid_nr_idv[[i]] <- find_dvid_values(working.directory,idv_all[i],dvid_name)
     }
     
@@ -50,7 +51,6 @@ resmod_structural_details_tables <- function(working.directory,base_dataset,orig
           table <- error_table(col=1)
         }
           
-          
         perc <- FALSE
         if(any(colnames(second_table)=="%CPRED")) {
           perc <- TRUE
@@ -65,8 +65,21 @@ resmod_structural_details_tables <- function(working.directory,base_dataset,orig
                                                     table=table,
                                                     perc=perc)
       }
+      #print a message
+      if(resmod_file_exists_idv[i]==TRUE && all(resmod_table[[i]]$parameters=="NA") && !quiet) {
+        message("WARNING: In the file ",file.path(working.directory, paste0("resmod_", idv_all[[i]]), "results.csv")," all parameter values are 'NA'!")
+      }
     }
-    
+    #print messages if file not exist
+    if(!file.exists(orig_ext_file) && !quiet) {
+      message("WARNING: File ",orig_ext_file," not found!")
+    }
+    if(!file.exists(base_dataset) && !quiet) {
+      message("WARNING: File ",base_dataset," not found!")
+    }
+    if(!file.exists(CWRES_table) && !quiet) {
+      message("WARNING: File ",CWRES_table," not found!")
+    }
     
     #organize results
     dvid_nr_unique <- unique(unlist(dvid_nr_idv))

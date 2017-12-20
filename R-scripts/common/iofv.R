@@ -1,8 +1,9 @@
-iofv_vs_iofv <- function(phi1, phi2) {
-  make_plot <- TRUE
+iofv_vs_iofv <- function(phi1, phi2,quiet=F) {
+  if(file.exists(phi1) && file.exists(phi2)) {
+    make_plot <- TRUE
     phi1_tab <- read.table(phi1, skip=1, header=T)
     phi2_tab <- read.table(phi2, skip=1, header=T)
-
+    
     phi1name <- basename(phi1)
     phi2name <- basename(phi2)
     
@@ -16,8 +17,21 @@ iofv_vs_iofv <- function(phi1, phi2) {
       out<-list(plot=p,
                 make_plot=make_plot)
     } else {
+      if(!quiet) {
+        message("WARNING: Length of ID numbers in files ",phi1," and ",phi2," are not equal!")
+      }
       make_plot <- FALSE
       out <- list(make_plot=make_plot)
     }
+  } else {
+    if(!file.exists(phi1) && !quiet) {
+      message("WARNING: File ",phi1," not found!")
+    }
+    if(!file.exists(phi2) && !quiet) {
+      message("WARNING: File ",phi2," not found!")
+    }
+    make_plot <- FALSE
+    out <- list(make_plot=make_plot)
+  }
     return(out)
 }

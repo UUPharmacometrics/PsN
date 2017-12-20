@@ -1,4 +1,4 @@
-get_all_covariates <- function(frem_directory,continuous,categorical,parameters,dofv_full_block,skip) {
+get_all_covariates <- function(frem_directory,continuous,categorical,parameters,dofv_full_block,skip,quiet=F) {
   if(any(skip=="frem")) {
     frem_files_exists <- FALSE
     frem_table <- data.frame("FREM","SKIPPED","",stringsAsFactors = F)
@@ -19,9 +19,18 @@ get_all_covariates <- function(frem_directory,continuous,categorical,parameters,
         }
         frem_table <- data.frame("ALL",dofv_frem,(length(parameters)*(length(categorical)+length(continuous))),stringsAsFactors = F)
       } else {
+        if(!file.exists(file.path(frem_directory,"model2_modelfit_dir1/raw_results.csv")) && !quiet) {
+          message("WARNING: File ",file.path(frem_directory,"model2_modelfit_dir1/raw_results.csv")," not found!")
+        }
+        if(!file.exists(file.path(frem_directory,"model4_modelfit_dir1/raw_results.csv")) && !quiet) {
+          message("WARNING: File ",file.path(frem_directory,"model4_modelfit_dir1/raw_results.csv")," not found!")
+        }
         frem_table <- cbind(error_table("FREM"),"",stringsAsFactors = F)
       }
     } else {
+      if(!quiet) {
+        message("WARNING: Both continuous and categorical covariate vectors are empty!")
+      }
       frem_files_exists <- FALSE
       frem_table <- data.frame("FREM","NA","",stringsAsFactors = F)
     }

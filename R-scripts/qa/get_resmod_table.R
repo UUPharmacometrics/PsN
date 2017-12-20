@@ -1,5 +1,5 @@
 # get resmod result.csv files (can't open like usually, besause there are more column than column names)
-get_resmod_table <- function(directory, idv){
+get_resmod_table <- function(directory, idv,quiet=F){
   resmod_file_exists <- file.exists(file.path(directory, paste0("resmod_", idv), "results.csv"))
   if(resmod_file_exists) {
     path <- file.path(directory, paste0("resmod_", idv), "results.csv") 
@@ -47,6 +47,9 @@ get_resmod_table <- function(directory, idv){
     return(list(resmod_file_exists=resmod_file_exists,
                 resmod_table=resmod_table))
   } else {
+    if(!quiet) {
+      message("WARNING: File ",file.path(directory, paste0("resmod_", idv), "results.csv")," not found!")
+    }
     return(list(resmod_file_exists=resmod_file_exists))
   }
 }

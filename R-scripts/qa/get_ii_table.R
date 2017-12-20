@@ -1,9 +1,9 @@
-get_ii_table <- function(cdd_directory,model.filename,cutoff,max_rows,skip,nonlinear){
-  skipped.id.file=file.path(cdd_directory,"skipped_individuals1.csv")
+get_ii_table <- function(cdd_directory,model.filename,cutoff,max_rows,skip,nonlinear,quiet=F){
+  skipped.id.file <- file.path(cdd_directory,"skipped_individuals1.csv")
   if(!nonlinear) {
-    raw.results.file=file.path(cdd_directory,paste0("raw_results_",sub('.([^.]*)$','',model.filename),"_linbase.csv"))
+    raw.results.file <- file.path(cdd_directory,paste0("raw_results_",sub('.([^.]*)$','',model.filename),"_linbase.csv"))
   } else {
-    raw.results.file=file.path(cdd_directory,paste0("raw_results_",sub('.([^.]*)$','',model.filename),".csv"))
+    raw.results.file <- file.path(cdd_directory,paste0("raw_results_",sub('.([^.]*)$','',model.filename),".csv"))
   }
   
   cdd_files_exist <- TRUE
@@ -65,6 +65,9 @@ get_ii_table <- function(cdd_directory,model.filename,cutoff,max_rows,skip,nonli
         colnames(ii_table) <- NULL
       }
     } else {
+      if(!quiet) {
+        message("WARNING: No column 'cdd.delta.ofv' found in the file ",raw.results.file,"!")
+      }
       ii_table <- error_table(col=1)
       cdd_highest_dofv <- error_table("CDD")
       cdd.data <- error_table(col=1)
@@ -77,6 +80,12 @@ get_ii_table <- function(cdd_directory,model.filename,cutoff,max_rows,skip,nonli
       cdd.data <- data.frame("SKIPPED",stringsAsFactors = F)
       colnames(cdd.data) <- NULL
     } else {
+      if(!file.exists(raw.results.file) && !quiet) {
+        message("WARNING: File ",raw.results.file," not found!")
+      }
+      if(!file.exists(skipped.id.file) && !quiet) {
+        message("WARNING: File ",skipped.id.file," not found!")
+      }
       cdd_highest_dofv <- error_table("CDD")
       cdd.data <- error_table(col=1)
     }

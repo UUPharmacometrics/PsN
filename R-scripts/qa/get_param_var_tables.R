@@ -1,4 +1,4 @@
-get_param_var_tables <- function(directory,base_model,skip) {
+get_param_var_tables <- function(directory,base_model,skip,quiet=F) {
   #for overview table
   fullblock_mod <- file.exists(file.path(directory,"modelfit_run/fullblock.mod"))
   boxcox_mod <- file.exists(file.path(directory,"modelfit_run/boxcox.mod"))
@@ -22,6 +22,9 @@ get_param_var_tables <- function(directory,base_model,skip) {
         base_omegas <- get_omega_values(base_ext_file,"cov")
         add.par_block <- length(setdiff(colnames(fullbock_omegas),colnames(base_omegas)))
       } else {
+        if(!quiet) {
+          message("WARNING: File ",file.path(directory,"modelfit_run/fullblock.ext")," not found!")
+        }
         dofv_block <- "ERROR"
         add.par_block <- ''
       }
@@ -40,6 +43,9 @@ get_param_var_tables <- function(directory,base_model,skip) {
         base_thetas <- count_thetas(filename=base_ext_file)
         add.par_box <- boxcox_thetas - base_thetas
       } else {
+        if(!quiet) {
+          message("WARNING: File ",file.path(directory,"modelfit_run/boxcox.ext")," not found!")
+        }
         dofv_box <- "ERROR"
         add.par_box <- ''
       }
@@ -57,6 +63,9 @@ get_param_var_tables <- function(directory,base_model,skip) {
         base_omegas <- get_omega_values(base_ext_file,"var")
         add.par_additional_eta <- length(setdiff(colnames(addetas_omegas),colnames(base_omegas)))
       } else {
+        if(!quiet) {
+          message("WARNING: File ",file.path(directory,"add_etas_run/add_etas_linbase.ext")," not found!")
+        }
         dofv_additional_eta <- "ERROR"
         add.par_additional_eta <- ''
       }
@@ -75,6 +84,9 @@ get_param_var_tables <- function(directory,base_model,skip) {
         base_thetas <- count_thetas(filename=base_ext_file)
         add.par_tdist <-  tdist_thetas - base_thetas
       } else {
+        if(!quiet) {
+          message("WARNING: File ",file.path(directory,"modelfit_run/tdist.ext")," not found!")
+        }
         dofv_tdist <- "ERROR"
         add.par_tdist <- ''
       }
@@ -92,6 +104,9 @@ get_param_var_tables <- function(directory,base_model,skip) {
         #BLOCK SAME should not be included
         add.par_iov <- ncol(get_omega_values(base_ext_file,"var"))
       } else {
+        if(!quiet) {
+          message("WARNING: File ",file.path(directory,"modelfit_run/iov.ext")," not found!")
+        }
         dofv_iov <- "ERROR"
         add.par_iov <- ''
       }
@@ -107,6 +122,9 @@ get_param_var_tables <- function(directory,base_model,skip) {
     colnames(par_var_models) <- c("","dOFV","Add.params")
     
   } else {
+    if(!quiet) {
+      message("WARNING: File ",base_ext_file," not found!")
+    }
     if(fullblock_mod) {
       dofv_block <- "ERROR"
     } else {
