@@ -1,5 +1,5 @@
 \input{inputs/format_header.tex}
-\guidetitle{PRECOND user guide}{2016-05-13}
+\guidetitle{PRECOND user guide}{2017-12-20}
 \usepackage{color}
 \usepackage{amsmath}
 \usepackage{tikz}
@@ -12,17 +12,14 @@
 
 \section{Introduction}
 
-In order to increase the numerical stability of the variance covariance matrix computation, the precond script creates and runs a linearly re-parameterised model of the original model that is less sensitive to rounding errors.  We refer to this process as preconditioning and the created model as the preconditioned model.  Through numerical experiments\cite{Aoki} using published nonlinear mixed effect models, it has been found that the preconditioning can reduce the computational environment dependency, increase the chance of successful covariance computation, and unveil un-identifiability of the model parameters.
+>The precond tool creates and runs a linearly re-parameterised model of the original model that is less sensitive to rounding errors in order to increase the numerical stability of the variance covariance matrix computation. We refer to this process as preconditioning and the created model as the preconditioned model. Through numerical experiments\cite{Aoki} using published nonlinear mixed effect models, it has been found that preconditioning can reduce the computational environment dependency, increase the chance of successful covariance computation, and unveil un-identifiability of the model parameters.
 
-Preconditioning will automatically first run the model normally and if the covariance step fails get the R-matrix from that run using that to precondition the model. Obtained R-matrix is decomposed using eigendecomposition and used to linearly re-parameterise the model in a way that the R-matrix of the preconditioned model is close to an identity matrix.  This will reduce the influence of the rounding error for the computation of R matrix and often avoid the R-matrix appearing to be non-positive semi-definite.  The precond script will initiate the modelfit of the preconditioned model and then convert back the obtained estimated parameter and covariance matrix to the parameter scale of the original model.
+Preconditioning will automatically first run the model normally and if the covariance step fails, use the R-matrix from that run to precondition the model. The obtained R-matrix is decomposed using eigendecomposition and used to linearly re-parameterise the model in a way that the R-matrix of the preconditioned model is close to an identity matrix.  This will reduce the influence of the rounding error for the computation of R matrix and often avoid the R-matrix appearing to be non-positive semi-definite. The precond tool will initiate the modelfit of the preconditioned model and then convert back the obtained estimated parameter and covariance matrix to the parameter scale of the original model.
 
 Preconditioning can also be used for the modelfits with successful covariance step to verify that the resulting computation is not influenced by the computational error.
 
 Preconditioning of the model will only help to stabilise the computation so that if the model is fundamentally unidentifiable (or have other issues) then the covariance step of the preconditioned model should not be successful.\\
-
-
-Example 
-
+Example:
 \begin{verbatim}
      precond run1.mod
 \end{verbatim}
@@ -30,28 +27,28 @@ Example
 \section{Input and options}
 
 \subsection{Required input}
-The only required argument is a model file.
+A model file is required on the command line.
 
 \subsection{Optional input}
 
 \begin{optionlist}
-\optname{perturb}
-After the model is preconditioned the initial estimate is perturbed to the direction of the eigenvector that is corresponding negative eigenvalue of the R-matrix.  This will increase the chance of finding the final parameter estimate that is not at the saddle point so that the R-matrix of the preconditioned model will be a positive semi-definite matrix.
+\optname{copy\_data}
+Default set. Disable with -no-copy\_data. By default PsN will copy the data file into NM\_run1 and set a local path in psn.mod, the actual model file run with NONMEM. If -no-copy\_data is set, PsN will not copy the data to NM\_run1 but instead set a global path to the data file in psn.mod. However, NONMEM will not accept a path longer than 80 characters.
 \nextopt
 \optname{notalways}
-Continue onto preconditioning only if the covariance step of the original model fails.  (without this option, precond script will always continue onto preconditioning to improve the the accuracy of the covariance matrix computation and also to potentially unveil the non-estimability of the model parameters)  Note that the previously available option {\bf -always} was replaced by {\bf -notalways} as to always precondition is now the default. The {\bf -always} option is still kept as a dummy option for backwards compatibility.
+Continue onto preconditioning only if the covariance step of the original model fails. (without this option, the precond tool will always continue onto preconditioning to improve the the accuracy of the covariance matrix computation and also to potentially unveil the non-estimability of the model parameters). Note that the previously available option -always was replaced by -notalways as to always precondition is now the default. The -always option is still kept as a dummy option for backwards compatibility.
+\nextopt
+\optname{perturb}
+After the model is preconditioned the initial estimate is perturbed to the direction of the eigenvector that is corresponding negative eigenvalue of the R-matrix. This will increase the chance of finding the final parameter estimate that is not at the saddle point so that the R-matrix of the preconditioned model will be a positive semi-definite matrix.
 \nextopt
 \optdefault{pre}{precond\_dir1}
-With this option the user can also specify a directory.  If the modelfit directory is specified then the R-matrix is automatically extracted.  If precond directory is specified then we can precondition the already preconditioned model.  This will allow us to iteratively precondition deeply ill-conditioned model.  In order for the iterative preconditioning to work properly, ``precMatrix" file should be unmodified and available in the specified precond directory.
+With this option the user can specify a directory. If the modelfit directory is specified then the R-matrix is automatically extracted. If precond directory is specified then we can precondition the already preconditioned model. This will allow us to iteratively precondition deeply ill-conditioned model. In order for the iterative preconditioning to work properly, "precMatrix" file should be unmodified and available in the specified precond directory.
 \nextopt
 \optdefault{pre}{run1.rmt}
-With this option the user can manually specify the R-matrix that will be used for preconditioning.  In addition, a modelfit directory created by the execute command of PsN can be specified and R-matrix will be extracted from the directory.  In addition, any symmetric matrix can be provided as a .csv file or NONMEM matrix file; however, the specified matrix needs to be similar to R-matrix to improve the computational stability (i.e., using covariance matrix will reduce the computational stability).
+With this option the user can manually specify the R-matrix that will be used for preconditioning. In addition, a modelfit directory created by the execute command of PsN can be specified and R-matrix will be extracted from the directory. In addition, any symmetric matrix can be provided as a .csv file or NONMEM matrix file.
 \nextopt
 \optdefault{update\_model}{filename}
-Copy the model with updated inital thetas to your work directory	
-\nextopt
-\optname{copy\_data}
-Default set. Disable with -no-copy\_data. By default, PsN will copy the datafile into NM\_run1 and set a local path in psn.mod, the actual modelfile run with NONMEM. If -no-copy\_data is set, PsN will not copy the data to NM\_run1 and instead set a global path to the datafile in psn.mod.
+Set a filename to store the original model with updated inital values for the parameters.	
 \nextopt
 \end{optionlist}
 
@@ -59,20 +56,37 @@ Default set. Disable with -no-copy\_data. By default, PsN will copy the datafile
 
 \begin{optionlist}
 \optname{cholesky}
-Use cholesky decomposition of the preconditioning matrix instead of eigendecomposition.  With this option the preconditioning matrix provided by -pre option should be similar to variance covariance matrix or the inverse of R matrix.  (i.e., R matrix should not be used with this option)
+Use cholesky decomposition of the preconditioning matrix instead of eigendecomposition. With this option the preconditioning matrix provided by -pre option should be similar to variance covariance matrix or the inverse of R matrix. (i.e., R matrix should not be used with this option).
 \nextopt
 \optdefault{cov}{result.cov}
-This option will break the normal execution flow and only perform a conversion of a covariance matrix of the preconditioned model to the covariance matrix of the original model.
-If this option is set no model will be run.
+This option will break the normal execution flow and only perform a conversion of a covariance matrix of the preconditioned model to the covariance matrix of the original model. If this option is set no model will be run.
 \nextopt
 \optname{eigen\_comp\_only}
 With this option, precond will not execute any NONMEM run.  It will only compute the eigenvalues of the matrix that were to be used for the preconditioning.  Use this option with {\bf-verbose} option.
+\nextopt
+\optdefault{in\_filter}{comma separated list of conditions}
+Default not set. Only relevant in combination with rawres\_input. The parameter estimates lines in the file can be filtered on values in the different columns. When specifying which column(s) the filtering should be based on, the exact column name must be used, e.g. minimization\_successful. Filtering can only be based on columns with numeric values.
+The allowed relations are
+\begin{itemize} 
+	\item .gt. (greater than)
+	\item .lt. (less than)
+	\item .eq. (equal to) 
+\end{itemize}
+Conditions are separated with commas. If the remaining number of lines after filtering is smaller than 2, covmat will stop with an error message. If the user has created a file with parameter estimates outside of PsN, filtering can be done on any numeric column in that file. Do not set column headers containing .eq. or .lt. or .gt.in the user-generated file as this would interfere with the in\_filter option syntax.\\
+Example (there must be no linebreaks in the actual command):
+\begin{verbatim}
+-in_filter=minimization_successful.eq.1,
+significant_digits.gt.3.5
+\end{verbatim}
 \nextopt	
 \optname{lu}
-Use LU decomposition of the preconditioning matrix instead of eigendecomposition.  With this option the preconditioning matrix provided by -pre option should be similar to variance covariance matrix or the inverse of R matrix.  (i.e., R matrix should not be used with this option)
+Use lu decomposition of the preconditioning matrix instead of eigendecomposition. With this option the preconditioning matrix provided by -pre option should be similar to variance covariance matrix or the inverse of R matrix (i.e., R matrix should not be used with this option).
 \nextopt
 \optname{nodec}
 Turn off decomposition of preconditioning matrix.
+\nextopt
+\optdefault{offset\_rawres}{N}
+Default is 1. Only relevant in combination with -rawres\_input. The number of result lines to skip in the input raw results file before starting to read final parameter estimates. In a regular bootstrap raw\_results file, and also in an initial\_estimates.csv file from an sse run, the first line of estimates refers to the input model with the full dataset, so therefore the default offset is 1.
 \nextopt
 \optdefault{output\_model}{run1\_repara.mod}
 This option will break the normal execution flow and have precond only create the preconditioned model without running it.
@@ -81,39 +95,27 @@ The model will be created with the specified name.
 \optname{perturb}
 After the model is preconditioned the initial estimate is perturbed to the direction of the eigenvector that is corresponding negative eigenvalue of the R-matrix.  This will increase the chance of finding the final parameter estimate that is not at the saddle point so that the R-matrix of the preconditioned model will be a positive semi-definite matrix.
 \nextopt
-\optname{verbose}
-Print the eigenvalues of the matrix that will be used to precondition the model.
-\nextopt
 \optdefault{rawres\_input}{filename}
 Create the preconditioning matrix from the supplied raw\_results file.
 \nextopt
-\optdefault{offset\_rawres}{N}
-Only relevant in combination with -rawres\_input. Default 1. The number of result lines to skip in the input raw results file before starting to read final parameter estimates. In a regular bootstrap raw\_results file, and also in an initial\_estimates.csv file from an sse run, the first line of estimates refers to the input model with the full dataset, so therefore the default offset is 1.
-\nextopt
-\optdefault{in\_filter}{comma separated list of conditions}
-Only relevant in combination with -rawres\_input. Default not used. The parameter estimates lines in the file can be filtered on values in the different columns. When specifying which column(s) the filtering should be based on, the exact column name must be used, e.g. minimization\_successful. Filtering can only be based on columns with numeric values. The allowed relations are .gt. (greater than), .lt. (less than) and .eq. (equal to). If the value in the filter column is 'NA' then that parameter set will be skipped, regardless of the defined filter relation. Conditions are separated with commas. If the remaining number of lines after filtering is smaller than -samples, sse will stop with an error message. Then the user must either change the filtering rules or change -samples. If the user has created a file with parameter estimates outside of PsN, filtering can be done on any numeric column in that file. Do not set column headers containing .eq. or .lt. or .gt. in the user-generated file as this would interfere with the in\_filter option syntax.
+\optname{verbose}
+Print the eigenvalues of the matrix that will be used to precondition the model.
 \nextopt
 \end{optionlist}
 
 \section{Output}
-Output of the first normal run will copied as if running a regular execute to the model directory. The raw\_results can be found
-in the precond directory under the name base\_raw\_results.csv
-If the preconditioning step was run the results from that run will not be copied to your model directory but can be found
-in the precond directory:
-
+Output of the first normal run will copied as if running a regular execute to the model directory. The raw\_results can be found in the precond directory under the name base\_raw\_results.csv. If the preconditioning step was run the results from that run will not be copied to your model directory but can be found in the precond directory:
 \begin{itemize}
     \item The covariance matrix of the preconditioned run can be found in the <modelname>.cov file
     \item Rawresults of the precondition run with parameters on the original scale are in the raw\_results\_<modelname>.csv
     \item A copy of the model with updated initial estimates can be found in updated\_model.mod
 \end{itemize}
- 
-
-In the terminal window, the precond script printout the condition number of the R matrix that will be used to precondition.  A larger condition number means a more computationally unstable original model. If the covariance step of the preconditioned model fails then the precond script will display the eigenvalues of the R matrix of the preconditioned model with the condition number and number of negative eigenvalues.  
+In the terminal window, the precond tool printout the condition number of the R matrix that will be used to precondition.  A larger condition number means a more computationally unstable original model. If the covariance step of the preconditioned model fails then the precond script will display the eigenvalues of the R matrix of the preconditioned model with the condition number and number of negative eigenvalues.  
 
 \section{NONMEM techniques that can be useful}
-The current implementation of  preconditioning in PsN can only precondition fixed effect parameters.  Additionally, all the bounds for the parameters will be removed.  To accommodate these limitations, the following tricks for the NONMEM model file can be useful.
-\subsection{Re-parameterisation of OMEGA by THETA} \label{app::repara}
-In order to precondition the random effects portion of the nonlinear mixed effects model using the PsN script, we need to rewrite the variance and covariance of the inter individual variability ("OMEGA block") in terms of the fixed effect parameters ("THETAs").  The individual parameters ("ETAs") can be re-parameterized as follows (an example of three random effect parameters with correlation):\\
+The current implementation of preconditioning in PsN can only precondition fixed effect parameters. Additionally, all the bounds for the parameters will be removed.  To accommodate these limitations, the following tricks for the NONMEM model file can be useful.
+\subsection{Re-parameterization of OMEGA by THETA} \label{app::repara}
+In order to precondition the random effects portion of the nonlinear mixed effects model using the precond tool, we need to rewrite the variance and covariance of the inter individual variability ("OMEGA block") in terms of the fixed effect parameters ("THETAs").  The individual parameters ("ETAs") can be re-parameterized as follows (an example of three random effect parameters with correlation):\\
 \$PRED, \$PK etc.\\
 ETA\_1=THETA(18)*ETA(1)\\
 ETA\_2=THETA(19)*ETA(1)+THETA(20)*ETA(2)\\
@@ -123,11 +125,11 @@ ETA\_3=THETA(21)*ETA(1)+THETA(22)*ETA(2)+THETA(23)*ETA(3)\\
  1  FIX\\
  1  FIX\\
  \\
-This gives THETA(18,...23) to be the Cholesky decomposition of the variance-covariance matrix of the inter-individual variability (OMEGA matrix).  Similar re-parameterisation can be done for the variances of the residual errors (SIGMA).
+This gives THETA(18,...23) to be the Cholesky decomposition of the variance-covariance matrix of the inter-individual variability (OMEGA matrix). Similar re-parameterization can be done for the variances of the residual errors (SIGMA).
 
 \subsection{Boundary of the parameter} \label{app::abs}
 The boundaries of the models are treated using nonlinear transformations of the parameter space internally in NONMEM.  We have observed that this nonlinear transformation can introduce additional computational instability including computational environment dependencies. Thus we have removed all the boundaries on the fixed effect parameters when running the numerical experiments.
-In order to avoid  termination of  parameter estimation due to having the "incorrect" sign of one of the variables (e.g., NONMEM implicitly requires clearance and volume to be positive real values in the predefined models of ADVAN 1-4 and if these variables become negative during  parameter estimation, the parameter estimation terminates), we can impose the positivity of the variables and parameters by taking the absolute values.  If this technique is used for a parameter, the final estimate of the parameter may be negative; however, the correctly signed parameter estimate can be obtained by taking the absolute value of the final estimate.  For example we can force a clearance value to be positive, independent of the sign of estimated parameter value for THETA(1), as follows:\\
+In order to avoid  termination of parameter estimation due to having the "incorrect" sign of one of the variables (e.g., NONMEM implicitly requires clearance and volume to be positive real values in the predefined models of ADVAN 1-4 and if these variables become negative during parameter estimation, the parameter estimation terminates), we can impose the positivity of the variables and parameters by taking the absolute values.  If this technique is used for a parameter, the final estimate of the parameter may be negative; however, the correctly signed parameter estimate can be obtained by taking the absolute value of the final estimate.  For example we can force a clearance value to be positive, independent of the sign of estimated parameter value for THETA(1), as follows:\\
 \$PK\\
 CL     = ABS(THETA(1))*EXP(ETA(1)).\\
 \\
@@ -139,9 +141,9 @@ CL     = ABS(THETA(1))*EXP(ETA(1)).\\
 \begin{itemize}
     \item The current implementation cannot handle the model file with \$MIX record.
 
-    \item Preconditioning does not honour the original parameter bounds hence the NONMEM run can fail if there are some implicit assumption on the range of the parameters.  For the parameters that need to be positive (or negative) we suggest the users to absolute value of the parameter, e.g., abs(THETA(1)).
+    \item Preconditioning does not honour the original parameter bounds hence the NONMEM run can fail if there are some implicit assumption on the range of the parameters.  For the parameters that need to be positive (or negative) we suggest the users to use the absolute value of the parameter, e.g., abs(THETA(1)).
 
-    \item The current implementation of precond script only precondition THETA variables, if the user wishes to precondition also the ETA and EPS variables, we suggest the users to code ETA and EPS variables using THETA, e.g., THETA(11)*EPS(1), \$SIGMA 1 FIX.
+    \item The current implementation of the precond tool only precondition THETA variables, if the user wishes to precondition also the ETA and EPS variables, we suggest the users to code ETA and EPS variables using THETA, e.g., THETA(11)*EPS(1), \$SIGMA 1 FIX.
 
     \item Using the option \$COV MATRIX=R in the model will currently not work.  The user can use PRINT=R option to obtain R matrix and then calculate $2R^{-1}$ outside of NONMEM (e.g., using R).
 \end{itemize}
@@ -154,7 +156,7 @@ CL     = ABS(THETA(1))*EXP(ETA(1)).\\
 %
 %Every time the covariance matrix cannot be obtained through preconditioning, a message on the command line would suggest the next option to try.  In addition, after every preconditioning, compare the raw\_results files in the original model fit directory and the precond directory to make sure that OFV and esimated parameters are approximately the same.  If OFVs are similar and a parameter is significantly different, then the model is most likely to be an unidentifiable model and no further attempt to obtain the covariance matrix should be made.
 
-\section{PRECOND Script Workflow}
+\section{precond tool workflow}
 \begin{enumerate}
     \item Read in the model file <model\_name>.mod (we refer to it as the "original model").
     \item Estimate the model parameters and variance-covariance matrix of the original model using NONMEM and obtain the $R$-matrix (note again that the $R$-matrix is relatively problem free to calculate, the inverse is the step that may give problems).  The estimated parameters and their standard errors (if the variance-covariance matrix computation is successful) are saved as a text file.
@@ -187,8 +189,6 @@ CL     = ABS(THETA(1))*EXP(ETA(1)).\\
 	\item If $\hat{M}$ was obtained, then the variance-covariance matrix of the original model $M$ is calculated and saved as a text file. Standard errors of $\boldsymbol{\theta}$ are computed from $M$ and saved to the file created in the previous step.
 \end{enumerate}
 
-
-
 \section{Description}
 
 Below is a simple diagram of the internal automated precond workflow for when -notalways is in use. By default the preconditioning will not be skipped. Some automatic minor modifications of the model will be made before precond will do its first run to make sure that the R-matrix will be created.
@@ -202,6 +202,7 @@ Below is a simple diagram of the internal automated precond workflow for when -n
     minimum height=2em]
     
 \begin{tikzpicture}[node distance = 2.5cm, auto]
+\hspace{1.65in}
     \node [block] (add) {add COV, PRINT=R, FORMAT and UNCONDITIONAL to model};
     \node [block, below of=add, node distance=4cm] (run) {run model};
     \node [decision, below of=run] (covsuccess) {covariance step successful?};
@@ -217,8 +218,5 @@ Below is a simple diagram of the internal automated precond workflow for when -n
     \path [line] (covsuccess.east) |- node {yes} (done.east);
 
 \end{tikzpicture}
-
 \references
-
-
 \end{document}
