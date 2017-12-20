@@ -5,33 +5,6 @@ plot_transformed_density <- function(data_table,eta_table,param_model) {
   if(param_model=="tdist") {
     labels=c("Untransformed density","t-distribution transformed density")
   }
-
-    get_x_min_max <- function(data_table,eta_table,y_pec=0.01) {
-      for(i in unique(data_table$ETA_name)) {
-        data_table_per_eta <- data_table %>% dplyr::filter(ETA_name %in% i)
-        # 1 procent of the density values
-        y_min_limit <- min(data_table_per_eta$density,na.rm=TRUE) + y_pec*abs(max(data_table_per_eta$density,na.rm=TRUE)-min(data_table_per_eta$density,na.rm=TRUE))
-        spec <- data_table_per_eta %>% dplyr::filter(density>y_min_limit)
-        x_max <- max(spec$eta,na.rm=TRUE)
-        x_min <- min(spec$eta,na.rm=TRUE)
-
-        # check if y_min_limit should be smaller because of the real eta values
-        if(any(!is.na(eta_table$value) > x_max)) {
-          x_max <- max(eta_table$value,na.rm=TRUE)
-        }
-        if(any(!is.na(eta_table$value) < x_min)) {
-          x_min <- min(eta_table$value,na.rm=TRUE)
-        }
-        data_table_per_eta <- data_table_per_eta %>% dplyr::filter(eta>=x_min,eta<=x_max)
-
-        if(i==unique(data_table$ETA_name)[1]) {
-          data_table_new <- data_table_per_eta
-        } else {
-          data_table_new <- rbind(data_table_new,data_table_per_eta)
-        }
-      }
-      return(data_table_new)
-    }
     data_table_new <- get_x_min_max(data_table,eta_table)
     
     #make shore that will not get only one plot in last page. 
@@ -70,4 +43,31 @@ plot_transformed_density <- function(data_table,eta_table,param_model) {
     }
 
   return(p)
+}
+
+get_x_min_max <- function(data_table,eta_table,y_pec=0.01) {
+  for(i in unique(data_table$ETA_name)) {
+    data_table_per_eta <- data_table %>% dplyr::filter(ETA_name %in% i)
+    # 1 procent of the density values
+    y_min_limit <- min(data_table_per_eta$density,na.rm=TRUE) + y_pec*abs(max(data_table_per_eta$density,na.rm=TRUE)-min(data_table_per_eta$density,na.rm=TRUE))
+    spec <- data_table_per_eta %>% dplyr::filter(density>y_min_limit)
+    x_max <- max(spec$eta,na.rm=TRUE)
+    x_min <- min(spec$eta,na.rm=TRUE)
+    
+    # check if y_min_limit should be smaller because of the real eta values
+    if(any(!is.na(eta_table$value) > x_max)) {
+      x_max <- max(eta_table$value,na.rm=TRUE)
+    }
+    if(any(!is.na(eta_table$value) < x_min)) {
+      x_min <- min(eta_table$value,na.rm=TRUE)
+    }
+    data_table_per_eta <- data_table_per_eta %>% dplyr::filter(eta>=x_min,eta<=x_max)
+    
+    if(i==unique(data_table$ETA_name)[1]) {
+      data_table_new <- data_table_per_eta
+    } else {
+      data_table_new <- rbind(data_table_new,data_table_per_eta)
+    }
+  }
+  return(data_table_new)
 }

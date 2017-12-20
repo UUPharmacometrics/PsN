@@ -1,4 +1,4 @@
-get_param_extra_table <- function(original_max0_model,param_model,dofv) {
+get_param_extra_table <- function(original_max0_model,param_model,dofv,quiet=F) {
   if(grepl("boxcox",param_model)) {
     table_col_name <- "Lambda"
   }
@@ -52,6 +52,12 @@ get_param_extra_table <- function(original_max0_model,param_model,dofv) {
     }
     
   } else {
+    if(!file.exists(param_model_ext_file) && !quiet) {
+      message("WARNING: File ",param_model_ext_file," not found!")
+    }
+    if(!file.exists(original_ext_file) && !quiet) {
+      message("WARNING: File ",original_ext_file," not found!")
+    }
     param_extra_table <- error_table(col=1)
     param_extra_table_orig <- param_extra_table
     param_extra_table_error <- TRUE

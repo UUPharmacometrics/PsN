@@ -1,4 +1,4 @@
-get_outliers_table <- function(simeval_directory,cdd.data,skip) {
+get_outliers_table <- function(simeval_directory,cdd.data,skip,quiet=F) {
   outlier_ids <- c()
   simeval_files_exist <- file.exists(file.path(simeval_directory, "raw_all_iofv.csv"))
   if(simeval_files_exist && all(skip!="simeval")) {
@@ -53,6 +53,9 @@ get_outliers_table <- function(simeval_directory,cdd.data,skip) {
       max_outlier_table <- data.frame("SIMEVAL","SKIPPED",stringsAsFactors = F)
       colnames(max_outlier_table) <- c("","dOFV")
     } else {
+      if(!quiet) {
+        message("WARNING: File ",file.path(simeval_directory, "raw_all_iofv.csv")," not found!")
+      }
       max_outlier_table <- error_table("SIMEVAL")
     }
     outliers_table <- error_table(col=1)

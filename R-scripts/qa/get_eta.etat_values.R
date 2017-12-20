@@ -1,4 +1,4 @@
-get_eta.etat_values <- function(param_model,theta_values) {
+get_eta.etat_values <- function(param_model,theta_values,quiet=F) {
   param_phi_file <- sub("(\\.[^.]+)$",".phi",param_model)
   if(file.exists(param_phi_file)) {
     #which etas to select
@@ -25,6 +25,9 @@ get_eta.etat_values <- function(param_model,theta_values) {
       dplyr::mutate(ETA_name=sub("\\.","\\(",.$ETA_name)) %>% 
       dplyr::mutate(ETA_name=sub("[.]$","\\)",.$ETA_name)) 
   } else {
+    if(!quiet) {
+      message("WARNING: File ",param_phi_file," not found!")
+    }
     eta_table <- data.frame()
   }
   return(eta_table)

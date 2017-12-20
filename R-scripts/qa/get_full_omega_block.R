@@ -1,4 +1,4 @@
-get_full_omega_block <- function(original_max0_model,fullblock_model,dofv_block) {
+get_full_omega_block <- function(original_max0_model,fullblock_model,dofv_block,quiet=F) {
   full_omega_block_error <- FALSE
   original_ext_file <- sub("(\\.[^.]+)$",".ext",original_max0_model)
   fullblock_ext_file <- sub("(\\.[^.]+)$",".ext",fullblock_model)
@@ -66,6 +66,12 @@ get_full_omega_block <- function(original_max0_model,fullblock_model,dofv_block)
     }
     
   } else {
+    if(!file.exists(fullblock_ext_file) && !quiet) {
+      message("WARNING: File ",fullblock_ext_file," not found!")
+    }
+    if(!file.exists(original_ext_file) && !quiet) {
+      message("WARNING: File ",original_ext_file," not found!")
+    }
     full_omega_block_table <- error_table(col=1)
     full_omega_block_error <- TRUE
   }

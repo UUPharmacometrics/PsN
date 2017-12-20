@@ -1,4 +1,4 @@
-get_scm_table <- function(scm_directory,parameters,continuous,categorical,skip){
+get_scm_table <- function(scm_directory,parameters,continuous,categorical,skip,quiet=F){
   rawres_file <- file.path(scm_directory,"raw_results_scm.csv")
   scm_files_exists <- file.exists(rawres_file)
   if(any(skip=="scm")) {
@@ -15,6 +15,9 @@ get_scm_table <- function(scm_directory,parameters,continuous,categorical,skip){
         colnames(scm_table) <- c("","dOFV")
         #max_table
         if(all(is.na(scm_table$dOFV))) {
+          if(!quiet) {
+            message("WARNING: In file ",rawres_file," all dofv values are NA.")
+          }
           max_scm_table <- cbind(error_table("SCM"),"",stringsAsFactors = F)
         } else {
           max_scm_table <- cbind(scm_table[which.max(scm_table$dOFV),],1)
@@ -35,10 +38,16 @@ get_scm_table <- function(scm_directory,parameters,continuous,categorical,skip){
         }
         colnames(scm_table) <- c("","dOFV","Coef")
       } else {
+        if(!quiet) {
+          message("WARNING: File ",rawres_file," not found!")
+        }
         scm_table <- error_table("SCM")
         max_scm_table <- cbind(scm_table,"",stringsAsFactors = F)
       }
     } else {
+      if(!quiet) {
+        message("WARNING: Parameters and covariates vectors are empty!")
+      }
       scm_files_exists <- FALSE
       scm_table <- data.frame("SCM","NA",stringsAsFactors = F)
       colnames(scm_table) <- c("","dOFV")

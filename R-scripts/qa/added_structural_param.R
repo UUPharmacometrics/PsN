@@ -1,7 +1,8 @@
 added_structural_param <- function(directory, idv, dvid="NA") {
-  resmod_file_exists <- get_resmod_table(directory, idv)$resmod_file_exists
+  resmod_table_list <- get_resmod_table(directory, idv)
+  resmod_file_exists <- resmod_table_list$resmod_file_exists
   if(resmod_file_exists) {
-    resmod_table <- get_resmod_table(directory, idv)$resmod_table
+    resmod_table <- resmod_table_list$resmod_table
     if(dvid=='NA') {
       parameters <- resmod_table %>%
         dplyr::filter(model=="idv_varying_theta")

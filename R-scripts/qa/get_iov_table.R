@@ -1,4 +1,4 @@
-get_iov_table <- function(original_max0_model,iov_model,iov_etas,dofv_iov) {
+get_iov_table <- function(original_max0_model,iov_model,iov_etas,dofv_iov,quiet=F) {
   original_ext_file <- sub("(\\.[^.]+)$",".ext",original_max0_model)
   iov_ext_file <- sub("(\\.[^.]+)$",".ext",iov_model)
   # calculate how many omegas goes to each block (which goes to iiv and which to iov)
@@ -36,6 +36,15 @@ get_iov_table <- function(original_max0_model,iov_model,iov_etas,dofv_iov) {
     iov_error <- FALSE
     
   } else {
+    if(!file.exists(iov_ext_file) && !quiet) {
+      message("WARNING: File ",iov_ext_file," not found!")
+    }
+    if(!file.exists(original_ext_file) && !quiet) {
+      message("WARNING: File ",original_ext_file," not found!")
+    }
+    if(length(iov_etas)==0 && !quiet) {
+      message("WARNING: iov_etas vector is empty!")
+    }
     iov_error <- TRUE
     iov_table <- error_table(col=1)
   }

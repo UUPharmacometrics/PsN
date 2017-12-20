@@ -1,4 +1,4 @@
-simeval_all_ouliers_table <- function(simeval_directory,ebe_npde_outl_crit=-3) {
+simeval_all_ouliers_table <- function(simeval_directory,ebe_npde_outl_crit=-3,quiet=F) {
   if(file.exists(file.path(working.directory,"simeval_run/raw_all_iofv.csv")) 
      && file.exists(file.path(working.directory,"simeval_run/ebe_npde.csv"))) {
     
@@ -69,6 +69,12 @@ simeval_all_ouliers_table <- function(simeval_directory,ebe_npde_outl_crit=-3) {
                 add_header_above=add_header_above,
                 files_exist=TRUE)
   } else {
+    if(!file.exists(file.path(working.directory,"simeval_run/raw_all_iofv.csv")) && !quiet) {
+      message("WARNING: File ",file.path(working.directory,"simeval_run/raw_all_iofv.csv")," not found!")
+    }
+    if(!file.exists(file.path(working.directory,"simeval_run/ebe_npde.csv")) && !quiet) {
+      message("WARNING: File ",file.path(working.directory,"simeval_run/ebe_npde.csv")," not found!")
+    }
     out <- list(files_exist=FALSE)
   }
   

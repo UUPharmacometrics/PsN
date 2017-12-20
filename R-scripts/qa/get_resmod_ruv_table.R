@@ -1,8 +1,9 @@
 get_resmod_ruv_table <- function(directory, idv_name, dvid_name, skip){
-  resmod_file_exists <- get_resmod_table(directory=directory, idv=idv_name)$resmod_file_exists
+  resmod_table_list <- get_resmod_table(directory=directory, idv=idv_name)
+  resmod_file_exists <- resmod_table_list$resmod_file_exists
   resmod_ruv_table_list <- list()
   if(resmod_file_exists && all(skip!="resmod")) {
-    resmod_table_full <- get_resmod_table(directory, idv_name)$resmod_table
+    resmod_table_full <- resmod_table_list$resmod_table
     dvid_nr <- find_dvid_values(directory,idv=idv_name,dvid_name)
 
     if(length(dvid_nr) == 1 && dvid_nr=="NA"){
@@ -12,9 +13,10 @@ get_resmod_ruv_table <- function(directory, idv_name, dvid_name, skip){
     }
     
     #get TAD results file if exists
-    tad_exists <- get_resmod_table(directory=directory, idv="TAD")$resmod_file_exists
+    tad_resmod_table_list <- get_resmod_table(directory=directory, idv="TAD",quiet=T)
+    tad_exists <- tad_resmod_table_list$resmod_file_exists
     if(tad_exists) {
-      tad_table <- get_resmod_table(directory, idv="TAD")$resmod_table
+      tad_table <- tad_resmod_table_list$resmod_table
     }
     
     k <- 1
