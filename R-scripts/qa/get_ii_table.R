@@ -19,15 +19,22 @@ get_ii_table <- function(cdd_directory,model.filename,cutoff,max_rows,skip,nonli
       
       #find negative delta ofv values, if exist
       fail_ID <- c()
-      if (any(cdd.data.all$dOFV < 0)) {
-        negat.delta.row <- which(cdd.data.all$dOFV < 0)
-        fail_ID <- cdd.data.all$id[negat.delta.row]
-        cdd.data <- as.data.frame(cdd.data.all[-negat.delta.row,])
-        if(nrow(cdd.data)==0) {
-          cdd.data <- data.frame()
+      if(!all(is.na(cdd.data.all$dOFV))) {
+        if (any(cdd.data.all$dOFV < 0)) {
+          negat.delta.row <- which(cdd.data.all$dOFV < 0)
+          fail_ID <- cdd.data.all$id[negat.delta.row]
+          cdd.data <- as.data.frame(cdd.data.all[-negat.delta.row,])
+          if(nrow(cdd.data)==0) {
+            cdd.data <- data.frame()
+          }
+        } else {
+          cdd.data <- as.data.frame(cdd.data.all)
         }
       } else {
-        cdd.data <- as.data.frame(cdd.data.all)
+        if(!quiet) {
+          message("ERROR: In the file ",raw.results.file," all dofv values are NA!")
+        }
+        cdd.data <- data.frame()
       }
       
       if(nrow(cdd.data)!=0) {

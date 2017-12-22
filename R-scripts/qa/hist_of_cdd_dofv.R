@@ -1,4 +1,5 @@
 hist_of_cdd_dofv <- function(values,quiet=F) {
+  values <- values[!is.na(values)]
   values_table <- data.frame(dOFV=values,stringsAsFactors = F)
   if(length(values)>0) {
     x_scaling <- rbind(values_table,3.84)
@@ -15,7 +16,7 @@ hist_of_cdd_dofv <- function(values,quiet=F) {
     return(p)
   } else {
     if(!quiet) {
-      message("WARNING: In function hist_of_cdd_dofv values vector is empty!")
+      message("WARNING: In function hist_of_cdd_dofv values vector is empty or all values are NA!")
     }
   }
 }
