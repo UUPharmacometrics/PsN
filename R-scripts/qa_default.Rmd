@@ -365,8 +365,8 @@ cat("Subjects identified as significantly influencing the model fit for all othe
 
 ```{r histogram_of_cdd_dofv,eval=all(skip!="cdd"),results='asis',echo=F,warning=F,message=F,fig.width=11,fig.height=6}
 cdd_hist <- hist_of_cdd_dofv(values=ii_list$all_dofv)
-print(cdd_hist)
 if(length(ii_list$all_dofv)>0) {
+  print(cdd_hist)
   cat("Distribution of OFV improvements (dOFV) when excluding specific subjects during the fit.")
 }
 ```
