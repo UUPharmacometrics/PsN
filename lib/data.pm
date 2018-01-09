@@ -825,7 +825,8 @@ sub _case_deletion
 									idcolumn    => $self->idcolumn,
 									individuals => \@cd_inds,
 									filename    => $newname,
-									ignore_missing_files => 1 );
+									ignore_missing_files => 1,
+                                    space_separated => 1, );
 		$newdata->_write;
 
 		my $delname = $directory . 'rem_' . ($k + 1) . '.dta';
