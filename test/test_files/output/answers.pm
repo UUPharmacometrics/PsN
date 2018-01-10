@@ -1714,6 +1714,12 @@ sub read_answers
 	$answer_hashes[$index]->{answers}->{0}->{0}->{'npomegas'}=[1.66E-01,9.29E-02,2.47E-01];
 	$answer_hashes[$index]->{answers}->{0}->{0}->{'npcorr'}=[4.08E-01,4.59E-01,4.97E-01];
 
+    $index++;
+	$answer_hashes[$index]={};
+	$answer_hashes[$index]->{file}='nm74/sparse_matrix_bug.lst';
+	$answer_hashes[$index]->{parsed_successfully}=1;
+	$answer_hashes[$index]->{answers}->{0}->{0}->{'ofv'}=4331.5650;
+
 	$index++;
 	$answer_hashes[$index]={};
 	$answer_hashes[$index]->{file}='nm73/theo_nonp.lst';
