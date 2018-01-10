@@ -3210,7 +3210,7 @@ sub _read_sparse_matrixoestimates
 			}
 			last;
 		}
-		if ( /^\s*(TH|OM|SG)\s*\d+\s*|\s*(TH|OM|SG)/  ) {	  # sparse format
+		if ( /^\s*(TH|OM|SG)\s*\d+\s*|^\s*(TH|OM|SG)/  ) {	  # sparse format
 
 			s/(TH)\s+(\d+)/$1$2/g ; #make sure th index attached to TH
 			chomp;				# Get rid of line-feed
