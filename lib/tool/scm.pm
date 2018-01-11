@@ -2700,13 +2700,12 @@ sub linearize_setup
         parse_header => 1,
         space_separated => 1);
 
-    # If have MDV remove all MDV != 0
-    #if (should_add_mdv(model => $original_model)) {
+    # Remove all MDV != 0
     my $was_filtered = $data->filter_column(colname => 'MDV', value => 1);
     if ($was_filtered) {
         $data->_write(overwrite => 1, as_table => 1);
     }
-        #}
+
     # To account for bug in NONMEM causing it to not handle datasets bigger than 1000 characters wide
     my $numcols = scalar(@{$data->header});
     $original_model->add_option(record_name => 'data', option_name => "($numcols(1X,E15.8))");
