@@ -2707,18 +2707,20 @@ sub linearize_setup
     }
 
     #Also filter extra_table to keep it of same length as the dataset
-    my $extra_table_data = data->new(
-        filename => 'extra_table',
-        ignoresign => '@',
-        missing_data_token => $self->missing_data_token,
-        ignore_missing_files => 0,
-        parse_header => 1,
-        space_separated => 1);
+    if (defined $self->extra_table_columns) {
+        my $extra_table_data = data->new(
+            filename => 'extra_table',
+            ignoresign => '@',
+            missing_data_token => $self->missing_data_token,
+            ignore_missing_files => 0,
+            parse_header => 1,
+            space_separated => 1);
 
-    # Remove all MDV != 0
-    $was_filtered = $extra_table_data->filter_column(colname => 'MDV', value => 1);
-    if ($was_filtered) {
-        $extra_table_data->_write(overwrite => 1, as_table => 1);
+        # Remove all MDV != 0
+        $was_filtered = $extra_table_data->filter_column(colname => 'MDV', value => 1);
+        if ($was_filtered) {
+            $extra_table_data->_write(overwrite => 1, as_table => 1);
+        }
     }
 
     # To account for bug in NONMEM causing it to not handle datasets bigger than 1000 characters wide
