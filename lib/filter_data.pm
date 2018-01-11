@@ -19,7 +19,7 @@ sub filter_dataset
 {
 	my %parm = validated_hash(\@_,
         model => { isa => 'model', optional => 0 },
-        force => { isa => 'bool', default => 0 },
+        force => { isa => 'Bool', default => 0 },
 	);
 	my $model = $parm{'model'};
 	my $force = $parm{'force'};
