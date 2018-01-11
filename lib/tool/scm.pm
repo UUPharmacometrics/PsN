@@ -2704,7 +2704,7 @@ sub linearize_setup
     #if (should_add_mdv(model => $original_model)) {
     my $was_filtered = $data->filter_column(colname => 'MDV', value => 1);
     if ($was_filtered) {
-        $data->_write(overwrite => 1);
+        $data->_write(overwrite => 1, as_table => 1);
     }
         #}
     # To account for bug in NONMEM causing it to not handle datasets bigger than 1000 characters wide
