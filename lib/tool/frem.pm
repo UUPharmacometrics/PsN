@@ -3220,12 +3220,14 @@ sub prepare_model2
 
 
         #SIGMA changes
-        foreach my $record (@{$frem_model-> problems -> [0]->sigmas}){
-            if ($record->is_block){
-                $record->fix(1) unless ($record->same);
-            }else{
-                for (my $j=0; $j< scalar(@{$record->options}); $j++){
-                    $record->options->[$j]->fix(1);
+        if (defined $frem_model->problems->[0]->sigmas) {
+            foreach my $record (@{$frem_model-> problems -> [0]->sigmas}){
+                if ($record->is_block){
+                    $record->fix(1) unless ($record->same);
+                }else{
+                    for (my $j=0; $j< scalar(@{$record->options}); $j++){
+                        $record->options->[$j]->fix(1);
+                    }
                 }
             }
         }
@@ -3556,15 +3558,18 @@ sub prepare_model5
                                        copy_output => 0);
 
         #SIGMA fix all existing
-        foreach my $record (@{$frem_model-> problems -> [0]->sigmas}){
-            if ($record->is_block){
-                $record->fix(1) unless ($record->same);
-            }else{
-                for (my $j=0; $j< scalar(@{$record->options}); $j++){
-                    $record->options->[$j]->fix(1);
+        if (defined $frem_model->problems->[0]->sigmas) {
+            foreach my $record (@{$frem_model-> problems -> [0]->sigmas}){
+                if ($record->is_block){
+                    $record->fix(1) unless ($record->same);
+                }else{
+                    for (my $j=0; $j< scalar(@{$record->options}); $j++){
+                        $record->options->[$j]->fix(1);
+                    }
                 }
             }
         }
+
         #OMEGA fix all before $start_omega
         for (my $i=0; $i<($start_omega_record-1); $i++){
             my $record = $frem_model-> problems -> [0]->omegas->[$i];
@@ -4717,7 +4722,7 @@ sub create_data2_model
 
 }
 
-sub do_model_vpc1
+sub do_model_vpc3
 { #not used
     my $self = shift;
     my %parm = validated_hash(\@_,
