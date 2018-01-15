@@ -332,7 +332,7 @@ for (i in 1:length(resmod_table_list$dvid_nr)) {
   print(resmod_ruv_models_table)
   cat("Residual error model, resulting expected improvement in OFV, required additional model parameters as well as their estimates.\n\n\n\n")
   if(!nonlinear && exists("xpdb")) {
-    res_var_attribution <- resmod_variability_attribution(xpdb,dvid_col_name=dvid_name,dvid_value=resmod_table_list$dvid_nr[i])
+    res_var_attribution <- resmod_variability_attribution(xpdb,dvid_col_name=dvid_name,dvid_value=resmod_table_list$dvid_nr[i],smooth=TRUE)
     print(res_var_attribution)
     cat("\n\n Attribution of variability to between-subject random effects and residual unexplained variability (RUV) versus independent variable under different residual error models.")
     cat("\\pagebreak\n\n")
