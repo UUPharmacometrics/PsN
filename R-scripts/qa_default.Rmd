@@ -188,7 +188,7 @@ if(length(command_runtime$command)>0 && length(command_runtime$run_start)>0 && l
 
 ```{r draw_ofv_table,results='asis',echo=F,warning=F,message=F,eval=!nonlinear}
 ofv_table <- kable_table(ofv_table,format=type,booktabs=T,longtable=T,align=c("l","l"),linesep="") %>%
-  kableExtra::kable_styling(position="l",full_width = F)
+  kableExtra::kable_styling(position="c",full_width = F)
 print(ofv_table)
 ```
 
