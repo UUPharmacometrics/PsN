@@ -188,7 +188,7 @@ EOF
       means no capping.
 EOF
 
-§$help_text{-cap_resampling} = <<'EOF';
+$help_text{-cap_resampling} = <<'EOF';
       -cap_resampling=N
 
 	  Default is 1. The maximum number of times a single parameter vector can be resampled in each 
