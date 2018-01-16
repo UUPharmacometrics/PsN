@@ -213,11 +213,11 @@ EOF
     Default not set. If this option is set, use first order method to estimate the linearized model.
 EOF
 
-#	$help_text{-foce} = <<'EOF';
-#	-foce
-#    Set by default. Only relevant with linearize method. Expand around conditional ETA estimates 
-#	instead of around ETA=0.    
-#EOF
+	$help_text{-foce} = <<'EOF';
+	-foce
+    Set by default. Only relevant with linearize method. Expand around conditional ETA estimates 
+	instead of around ETA=0.    
+EOF
 
 	$help_text{-global_init} = <<'EOF';
 	-global_init=N
