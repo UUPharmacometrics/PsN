@@ -261,6 +261,12 @@ EOF
 
     A vpc_results file as output from PsN to add to the SO.
 EOF
+	
+    $help_text{-version} = <<'EOF';
+    -version
+
+    Print out the version of nmoutput2so (and PsN)
+EOF
 
 common_options::online_help('nmoutput2so', \%options, \%help_text, \%required_options, \%optional_options);
 
