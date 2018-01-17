@@ -101,6 +101,7 @@ has 'keep_covariance' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'estimate_fo' => ( is => 'rw', isa => 'Bool', default => 0 );   # If linearizing use FO to estimate the linearized model
 has 'extra_table_columns' => ( is => 'rw', isa => 'ArrayRef[Str]' ); # Set to array of colnames to add to an extra data table output by derivatives.mod
 has 'nointer' => ( is => 'rw', isa => 'Bool', default => 0 );   # Set to not use interaction columns in linearization (set D_EPSETA to 0)
+has 'use_data_format' => ( is => 'rw', isa => 'Bool', default => 0 );   # Should we use the workaround for big datasets
 
 
 sub BUILD
@@ -1926,6 +1927,9 @@ sub linearize_setup
 
         if ( should_add_mdv(model => $derivatives_model) ){
             push(@tablestrings,'MDV');
+            if (not $self->use_data_format) {
+                push(@inputstrings, 'MDV');
+            }
         }
         #1.10
 
@@ -2691,27 +2695,12 @@ sub linearize_setup
         }
     } #end if first step or update derivatives
 
-    # Remove IGN or ACC in $DATA. Might crash future runs
-    $original_model->problems->[0]->datas->[0]->remove_ignore_accept();
+    if ($self->use_data_format and defined $datafilename) {       # To account for bug in NONMEM for 1000+ charcolumn data sets
+        # Remove IGN or ACC in $DATA. Might crash future runs
+        $original_model->problems->[0]->datas->[0]->remove_ignore_accept();
 
-    my $data = data->new(
-        filename => $datafilename,
-        ignoresign => '@',
-        missing_data_token => $self->missing_data_token,
-        ignore_missing_files => 0,
-        parse_header => 1,
-        space_separated => 1);
-
-    # Remove all MDV != 0
-    my $was_filtered = $data->filter_column(colname => 'MDV', value => 1);
-    if ($was_filtered) {
-        $data->_write(overwrite => 1, as_table => 1);
-    }
-
-    #Also filter extra_table to keep it of same length as the dataset
-    if (defined $self->extra_table_columns) {
-        my $extra_table_data = data->new(
-            filename => 'extra_table',
+        my $data = data->new(
+            filename => $datafilename,
             ignoresign => '@',
             missing_data_token => $self->missing_data_token,
             ignore_missing_files => 0,
@@ -2719,15 +2708,37 @@ sub linearize_setup
             space_separated => 1);
 
         # Remove all MDV != 0
-        $was_filtered = $extra_table_data->filter_column(colname => 'MDV', value => 1);
+        my $was_filtered = $data->filter_column(colname => 'MDV', value => 1);
         if ($was_filtered) {
-            $extra_table_data->_write(overwrite => 1, as_table => 1);
+            $data->_write(overwrite => 1, as_table => 1);
+        }
+
+        #Also filter extra_table to keep it of same length as the dataset
+        if (defined $self->extra_table_columns) {
+            my $extra_table_data = data->new(
+                filename => 'extra_table',
+                ignoresign => '@',
+                missing_data_token => $self->missing_data_token,
+                ignore_missing_files => 0,
+                parse_header => 1,
+                space_separated => 1);
+
+            # Remove all MDV != 0
+            $was_filtered = $extra_table_data->filter_column(colname => 'MDV', value => 1);
+            if ($was_filtered) {
+                $extra_table_data->_write(overwrite => 1, as_table => 1);
+            }
+        }
+
+        my $numcols = scalar(@{$data->header});
+        $original_model->add_option(record_name => 'data', option_name => "($numcols(1X,E15.8))");
+    } else {
+        # If have MDV ignore all MDV != 0
+        if (should_add_mdv(model => $original_model)) {
+            $original_model->add_option(record_name => 'data', option_name => 'IGNORE(MDV.NEN.0)');
+            $original_model->problems->[0]->psn_record_order(1);   # In case $DATA was before $INPUT
         }
     }
-
-    # To account for bug in NONMEM causing it to not handle datasets bigger than 1000 characters wide
-    my $numcols = scalar(@{$data->header});
-    $original_model->add_option(record_name => 'data', option_name => "($numcols(1X,E15.8))");
 
     # Account for an estimation bug in NONMEM 7.4
     if ($PsN::nm_major_version == 7 and $PsN::nm_minor_version == 4) {

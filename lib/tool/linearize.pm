@@ -71,6 +71,7 @@ sub modelfit_setup
             extra_table_columns => $self->extra_table_columns,
             nointer => $self->nointer,
             nm_output => $self->nm_output,
+            use_data_format => 1,
         );
 
         $scm->run;
