@@ -41,6 +41,7 @@ has 'diagnostic_parameters' => ( is => 'rw', isa => 'ArrayRef[Str]', default =>
 	sub { ['covariance_step_run','minimization_successful','covariance_step_successful','covariance_step_warnings',
 			'estimate_near_boundary','rounding_errors','zero_gradients','final_zero_gradients','hessian_reset','s_matrix_singular',
 			'significant_digits','condition_number','est_methods','model_run_time','subprob_est_time','subprob_cov_time'] }  );
+has 'dirtemplate' => ( is => 'rw' );
 has 'directory' => ( is => 'rw' );
 has 'grid_batch_size' => ( is => 'rw', isa => 'Int', default => 1 );
 has 'logfile' => ( is => 'rw', isa => 'ArrayRef[Str]', default => sub {  ['psn_logfile.csv'] }  );
@@ -292,9 +293,9 @@ sub BUILD
 
 	# The directory is the folder where the tools stores temporary data and 
 	# runs subtools (or in the modelfit case, runs NONMEM)
+	my $dir;
 	if ( defined $parm{'directory'} ) {
 		my $dummy;
-		my $dir;
 		( $dir, $dummy ) = OSspecific::absolute_path( $parm{'directory'}, '');
 		$self->directory($dir);
         # Unzip if m1 if zipped
@@ -307,7 +308,12 @@ sub BUILD
 			my @tool_name_full = split('::', ref $self);
 			$tool_name = $tool_name_full[$#tool_name_full];
 		}
-		$self->directory(OSspecific::unique_path($tool_name . '_dir', $self->base_directory));
+		if ( defined $parm{'dirtemplate'} ) {
+			$dir = $parm{'dirtemplate'};
+		} else {
+			$dir = $tool_name . '_dir';
+		}
+		$self->directory(OSspecific::unique_path($dir, $self->base_directory));
 	}
 	if (ui->silent() and not defined ui->logfile()){
 		ui->logfile($self->directory . 'run_messages.txt');
