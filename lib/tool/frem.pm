@@ -4716,7 +4716,7 @@ sub create_data2_model
 
     $filtered_data_model -> add_records( type           => 'table',
         record_strings => [ join( ' ', @filter_table_header ).
-            ' NOAPPEND NOPRINT ONEHEADER FORMAT=sG15.7 FILE='.$filtered_datafile]);
+            ' NOAPPEND NOPRINT ONEHEADER FORMAT=sG15.9 FILE='.$filtered_datafile]);
 
     return ($filtered_data_model,\@filter_table_header,$extra_input_items,$message);
 
