@@ -827,10 +827,11 @@ sub _scan_to_meth
 					 and $check_next_to_last_method) {
 				$found_next_to_last_method = 1;
 			}
-#	    } elsif ((not $found_any_meth) and $self->simulationstep and /\(EVALUATION\)/ ) {
-#			#when simulation step sometimes no meth printed, do not look for it
-#			$self->estimation_step_run(0);
-#			last;
+        } elsif (/^0HESSIAN OF POSTERIOR DENSITY IS NON-POSITIVE-DEFINITE DURING SEARCH/) { # Special case
+            $self->next_to_last_step_successful(0);
+			$self->estimation_step_run(0);
+			$self->estimation_step_initiated(0);
+            last;
 	    } elsif ($self->simulationstep and /$objt_exp/ ) {
 			if ($objt_has_meth){
 				#no problem, just reset variable
