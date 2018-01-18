@@ -1268,7 +1268,7 @@ sub update_raw_results
 				$row_str .= format_score($val);
 			}
 		}else{
-			$row_str .= ',' x (5+2*scalar(@{$self->labels_parameter_cook_scores}));
+			$row_str .= ',' x (5 + scalar(@{$self->labels_parameter_cook_scores}));
 		}
 		$row_str .= "\n";
 		print RRES $row_str;
