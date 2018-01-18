@@ -209,29 +209,6 @@ sub BUILD
 	delete $self -> {'lstfile'};
 }
 
-
-
-
-sub tableobject
-{
-	my $self = shift;
-	my $table;
-
-	return $table;
-}
-
-sub access_any
-{
-	my $self = shift;
-	my %parm = validated_hash(\@_,
-		 attribute => { isa => 'Str', optional => 1 }
-	);
-	my $attribute = $parm{'attribute'};
-	my $return_value;
-
-	return;
-}
-
 sub parsing_error
 {
 	my $self = shift;
@@ -240,8 +217,8 @@ sub parsing_error
 	);
 	my $message = $parm{'message'};
 
-	$self->parsed_successfully( 0 );
-	$self->parsing_error_message( $message );
+	$self->parsed_successfully(0);
+	$self->parsing_error_message($message);
 }
 
 sub _read_covmatrix
@@ -2197,7 +2174,6 @@ sub thetas
 	return \@values;
 }
 
-
 sub thetanames
 {
 	my $self = shift;
@@ -2260,10 +2236,9 @@ sub sdcorrform_omegas
 	return \@values;
 }
 
-
-# Comparison method for omeganames, sigmanames and thetanames
 sub cmp_coords
 {
+    # Comparison method for omeganames, sigmanames and thetanames
 	if ($a =~ /THETA/) {
 		return substr($a,5) <=> substr($b,5);
 	} else {
@@ -2430,7 +2405,6 @@ sub sdcorrform_sigmas
 
 	return \@values;
 }
-
 
 sub sigmanames
 {
@@ -2851,7 +2825,8 @@ sub not_used_get_NM7_tables_all_types
 	return \@raw_table ,\@cov_table ,\@cor_table ,\@coi_table ,\@phi_table;
 }
 
-sub _get_value{
+sub _get_value
+{
 	#static method, translate text in NM7 ext,cov, coi etc to either number or undef
 	my %parm = validated_hash(\@_,
 							  val => { isa => 'Any', optional => 0 }
@@ -3122,18 +3097,6 @@ sub _isdiagonal
 
 	return $isdiagonal;
 }
-
-sub _return_function
-{
-	my $self = shift;
-	my %parm = validated_hash(\@_,
-		 hash => { isa => 'HashRef', optional => 1 },
-		 scalar_return => { isa => 'Bool', default => 0, optional => 1 }
-	);
-	my $scalar_return = $parm{'scalar_return'};
-}
-
-
 
 sub _get_sparse_indices
 {
