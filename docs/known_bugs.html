@@ -1,0 +1,60 @@
+<!DOCTYPE html PUBLIC -//W3C//DTD XHTML 1.0 Strict//EN   http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd>
+<html>
+<head>
+    <title>PsN :: Known Bugs</title>
+    <link rel="stylesheet" type="text/css" href="style/style.css">
+    		<style type="text/css">
+
+a { text-decoration: none; }
+a:hover { text-decoration: underline; text-decoration-style: dashed; }
+
+</style>
+	<script type="text/javascript" src="javascript/jquery.js"></script>
+    <script>
+        // @license magnet:?xt=urn:btih:e95b018ef3580986a04669f1b5879592219e2a7a&dn=public-domain.txt
+        $(function() {
+            $("#nav").load("menu.html");
+            $("#footer").load("footer.html");
+        });
+        // @license-end
+    </script> 
+</head>
+<body>
+    <div id="wrap">
+        <div id="header"></div>
+        <div id="nav"></div>
+        <div id="main">
+
+<h2 class="heading1">Known Bugs</h2>
+<p>The most common source of errors is problems with psn.conf. Instructions about how to make correct settings can be found in 
+<a href='https://github.com/UUPharmacometrics/PsN/releases/download/4.7.0/psn_configuration.pdf'>PsN Configuration.pdf</a>.</p>
+<p> Like all software, PsN has bugs. Some unfixed bugs and known workarounds can be found in the document 
+<a href='https://github.com/UUPharmacometrics/PsN/releases/download/4.7.0/known_bugs_and_workarounds.pdf'>Known Bugs and Workarounds.pdf</a>. 
+
+<h3>Known Bugs in PsN 4.7.0 </h3>
+
+<ul>
+	<li>sse will use the wrong simulated data for reestimation if the simulation model file has more than one $INPUT statement. The table file with 
+	simulated data used for reestimation will only include the items from the last $INPUT. Note: It works fine to split $INPUT over several lines, 
+	as long as the text $INPUT only appears once.</li><br>
+
+	<li>Data values with more than five significant digits in sse. The simulated datasets used in sse are \$TABLE output from NONMEM, and NONMEM rounds 
+	off values when printing tables. In NONMEM 6 1013201 is rounded to 1013200 (five significant digits), and if this makes a significant change to the 
+	model estimation, for example if the value is a covariate, then the sse results will be wrong. In NONMEM 7 it is possible to set the FORMAT option 
+	in $TABLE to make sure no important information is lost. With NONMEM 6 the user must make sure the rounding to five significant digits does not harm 
+	the results.</li><br>
+
+	<li>Lower case user defined and reserved words. Starting with NONMEM 7.2 lower case user defined and reserved words are supported. This is <b>not</b> 
+	supported by PsN. For example in $INPUT all reserved words have to be upper case.</li><br>
+    <li>proseval crashes if there is no IGNORE or ACCEPT statement in $DATA. Workaround is to add a dummy IGNORE or ACCEPT. proseval also crashes if an 
+	IGNORE statement is written as IGN(VISI&gt;3) instead of IGNORE=(VISI&gt;3).
+    </li><br>
+</ul>
+You can also check the latest <a target="_blank" href=https://github.com/UUPharmacometrics/PsN/issues?utf8=%E2%9C%93&q=label%3A%22critical+bug%22+milestone%3A4.7.0+earlier">reported issues</a>.
+You can browse the issues by using the label tab as well as the Milestone tab (for different versions of PsN) at the PsN Github repository.
+
+         </div>
+        <div id="footer" style="padding-top:2px;padding-right:2px;padding-left:2px;"></div>
+    </div>
+</body>
+</html>

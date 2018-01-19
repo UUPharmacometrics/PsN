@@ -1,7 +1,13 @@
 <!DOCTYPE html PUBLIC -//W3C//DTD XHTML 1.0 Strict//EN   http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd>
 <html>
 <head>
-    <title>PsN :: Home</title>
+    <title>PsN :: Install</title>
+	<style type="text/css">
+
+a { text-decoration: none; }
+a:hover { text-decoration: underline; text-decoration-style: dashed; }
+
+</style>
     <link rel="stylesheet" type="text/css" href="style/style.css">
     <script type="text/javascript" src="javascript/jquery.js"></script>
     <script> 
@@ -12,6 +18,7 @@
         });
         // @license-end
     </script> 
+	
 </head>
 <body>
     <div id="wrap">
@@ -21,126 +28,276 @@
 
 
 <h2>Installation</h2>
-<p>
-Before you install PsN, you should make sure that the following programs/modules are installed on your computer. 
 
-<ul>
-<li><a target="_blank" href="https://nonmem.iconplc.com/">NONMEM</a><p>
-PsN4 supports standard and NMQual8 installations of NONMEM. 
-You must verify that all NONMEM installations you intend to
-use can be run directly via the nmfe/autolog scripts and that they 
-produce complete output files. If you plan to use the parallelization features 
-of NONMEM you must also verify that you can run NONMEM in parallel directly 
-with the nmfe script, for example nmfe73. <p>
-If running NONMEM with nmfe/autolog.pl does not work then PsN will not work.
-</li>
-<li>Perl5 version 5.10.1<p>
-PsN4 requires at least Perl5 version 5.10.1. Please note that users of the free version of ActiveState Perl need an even higher version to be able to download the needed Perl packages (see note below). 
-Users who are already running an older version of PsN should check if they need to upgrade Perl before installing PsN4. The Perl version can be checked with the command <pre>perl --version</pre><p>
-<li> <b>Windows</b><p>
-We recommend
-<a target="_blank" href="http://strawberryperl.com/">Strawberry Perl</a>, and Windows users who are installing Perl for the first time should choose Strawberry Perl because of the easier installation of necessary Perl modules.<p>
-<a target="_blank" href="http://www.activestate.com/activeperl/downloads/">ActiveState Perl</a>
-also works even though some Perl modules might be more difficult to install. If ActiveState is selected it is important to select a version which supports the extra Perl modules needed for PsN, see the next bullet point.
-On May 10th 2016 the recommended ActiveState Perl version was 5.18.<p> </li>
-<li> <b>Mac </b><p>
-The version of Perl needs to be 5.10.1 or above. For older versions of MacOS
-Perl needs to be upgraded. This can be done by installing ActiveState Perl (and installing the needed packages with ppm install).</li>
-</li>
-<li>Perl modules MooseX::Params::Validate, Math::Random, Statistics::Distributions, Archive::Zip and File::Copy::Recursive <p> 
-PsN can be run without the modules Statistics::Distributions, Archive::Zip and File::Copy::Recursive 
-but some features and bugfixes will not be available.
-For updated information 
-on which modules are available for which Perl version in ActiveState Perl see 
-package information pages for 
-<a target="_blank" href="http://code.activestate.com/ppm/Math-Random/">Math::Random</a>, 
-<a target="_blank" href="http://code.activestate.com/ppm/File-Copy-Recursive/">File::Copy::Recursive</a>, 
-<a target="_blank" href="http://code.activestate.com/ppm/Archive-Zip/">Archive::Zip</a>,
-<a target="_blank" href="http://code.activestate.com/ppm/MooseX-Params-Validate">MooseX::Params::Validate</a> 
-and
-<a target="_blank" href="http://code.activestate.com/ppm/Statistics-Distributions/">Statistics::Distributions</a> </br>
-</li>
-<li>Perl module Storable (needed for Unix only, installation as Math::Random)</li>
-</ul>
-</p>
 
-<h3>Installing Perl modules</h3>
-You must have internet access for the installation procedure to work.
-<h4>Windows (Strawberry Perl)</h4>
+<h3>Required Software</h3>
+
+Before you install PsN, you should make sure that the following programs and the required modules are installed on your computer. 
+<hr COLOR="darkred">
+
+<h3>NONMEM</h3>
+
+PsN 4 supports standard and NMQual 8 installations of <a target="_blank" href="https://nonmem.iconplc.com/">NONMEM</a>. <br>
+Verify that all NONMEM installations you intend to use can be run directly via the nmfe/autolog scripts and that they produce complete output files.<br>
+If running NONMEM with nmfe/autolog.pl does not work then PsN will not work either.<br>
+If you plan to use the parallelization features of NONMEM you must also 
+verify that you can run NONMEM in parallel directly with the nmfe script, for example nmfe73.<br>
+</li>
+
+<hr COLOR="darkred">
+<h3>Perl 5, version 5.10.1 or higher</h3>
+The Perl version can be checked with the command<br>
+<code>perl --version</code><p>
+
+
+<h4>Perl Modules</h4>
+The only Perl modules required to be able to run PsN are:<br> <code>Maths::Random<br> Moose<br>MooseX::Params:Validate</code><br>but without the recommended modules (listed below for each OS), 
+some scm and vpc features, nmoutput2so and a scm bugfix are not available.<p>
+
+The following paragraphs describe the setup procedure for different operating systems. You need internet access for the installation procedure to work because
+the packages are downloaded from the web. Pay attention to any warning message about internet connection problmes, as such problems must be solved before completing the installations.<br>
+
+
+<h4>Perl for Windows users</h4><p>
+We recommend <a target="_blank" href="http://strawberryperl.com/">Strawberry Perl</a> for Windows users who are installing 
+Perl for the first time, because of the easier installation and the wider selection of Perl modules.<p> 
+<a target="_blank" href="http://www.activestate.com/activeperl/downloads/">ActivePerl</a> also works fine even though some Perl 
+modules might be more difficult to install. If ActivePerl is selected it is important to select a version which supports the 
+extra Perl modules needed for PsN.
+</li>
+
+
+<h4>Installing Strawberry Perl Modules on Windows</h4>
+
 <ol>
-<li>Start a DOS command window.</li>
-<li>Run the following commands (hit Enter after each command):<br>
-cpan Math::Random<br>
-cpan Statistics::Distributions<br>
+<li>Open a DOS command window<br> (Start&#8594;Run, type <code>cmd</code> &#8629; <br>or <br> <i>In Windows 10</i>: Start&#8594;All apps&#8594;Windows System&#8594; Command Prompt).</li><p>
+<li>Run the following commands (hit &#8629; after each command):<br>
+<code>cpan Math::Random<br>
 cpan MooseX::Params::Validate<br>
+cpan Statistics::Distributions<br>
+cpan XML::LibXML</code><br>
 </li>
 </ol>
-<h4>Windows (ActivePerl)</h4>
+
+
+<h4>Installing ActivePerl Modules on Windows</h4>
+<b>&#9755; Note</b>: ActivePerl (unlike Strawberry Perl) does <b>not</b> come with libxml2, which is a dependency of the XML-LibXML package, bundled. If you intend to run nmoutput2so you will need to install 
+the appropriate dll:s manually. The <a target="_blank" href="http://xmlsoft.org">libxml2 webpage</a> has information on how to do this.
 <ol>
-<li>Start a DOS command window.</li>
-<li>Run the following commands (hit Enter after each command):<br>
-ppm install math-random<br>
+<li>Open a DOS command window <br>(Start&#8594;Run, type <code>cmd</code> &#8629; <br>or <br><i>In Windows 10</i>: Start&#8594;All apps&#8594;Windows System&#8594; Command Prompt).</li><p>
+<li>Run the following commands (hit &#8629; after each command):<br>
+<code>ppm install math-random<br>
+ppm install moosex-params-validate<br>
 ppm install statistics-distributions<br>
 ppm install archive-zip<br>
 ppm install file-copy-recursive<br>
-ppm install moosex-params-validate
+ppm install XML-LibXML</code>
 </li>
 </ol>
-<h4>Linux/Unix/MacOS</h4>
+
+
+<h4>Perl for Mac OS users</h4><p>
+The version of Perl needs to be 5.10.1 or above. For older versions of Mac OS, Perl needs to be upgraded. This can be done by 
+installing ActivePerl (and installing the needed packages with ppm install).</li>
+</li>
+<p>For updated information on which modules are available for which Perl version in ActivePerl see package information pages for<br><code>
+<a target="_blank" href="http://code.activestate.com/ppm/Math-Random/">Math::Random</a><br>
+<a target="_blank" href="http://code.activestate.com/ppm/MooseX-Params-Validate">MooseX::Params::Validate</a><br>
+<a target="_blank" href="http://code.activestate.com/ppm/File-Copy-Recursive/">File::Copy::Recursive</a><br> 
+<a target="_blank" href="http://code.activestate.com/ppm/Archive-Zip/">Archive::Zip</a><br>
+ <a target="_blank" href="http://code.activestate.com/ppm/Statistics-Distributions/">Statistics::Distributions</a><br>
+</code>and <br> <code>
+<a target="_blank" href="https://code.activestate.com/ppm/XML-LibXML/">XML::LibXML.</a> </br> </p>
+</li></code></p>
+
+
+<h4>Installing Perl modules on Linux/Unix/Mac OS</h4>
 You might need to answer some questions interactively when using the cpan command.
 <ol>
-<li>Start a command window.</li>
-<li>Run the following commands (hit Enter after each command), prepend sudo if necessary:<br>
-cpan Math::Random<br>
+<li>Open a terminal.</li><p>
+<li>Run the following commands (hit &#8629; after each command), prepend sudo if necessary:<br>
+<code>cpan Math::Random<br>
+cpan Moose<br>
+cpan MooseX::Params::Validate<br>
 cpan Statistics::Distributions<br>
 cpan Archive::Zip<br>
 cpan File::Copy::Recursive<br>
-cpan Storable<br>
-cpan Moose<br>
-cpan MooseX::Params::Validate<br>
+cpan Storable<br></code>
 </li>
-</ol>
+</ol> 
+<hr COLOR="darkred">
 
-<h3>PsN installation</h3> 
-<ol>
-  <li>
-    <p>Unpack the file you downloaded from psn.sf.net. It will create a directory
-       called <tt>PsN-Source.</tt></p>
-  </li>
-  <li>
-    <div style="text-align: justify;">
-
-    <p align="justify">Run the installation script from within <tt>PsN-Source</tt>.
-       If you are running windows and have ActiveState Perl
-      installed you should be able to double-click on
-      <tt>setup.pl</tt>. Otherwise open a command line window (Windows Start-&gt;Run, type 'cmd'), go to
-      the <tt>PsN-Source </tt>directory and type: </p> 
-    </div>
-    <p><tt>perl setup.pl</tt></p>
-    <p>Unix/Mac users should open their favorite terminal, cd to the <tt>PsN-Source</tt> directory and type: </p>
-    <p><tt>sudo perl setup.pl</tt></p>
-    <p>sudo can be skipped if you already have write permissions in the installation directories you intend to use.</p>
-  </li>
-  <li>
-    Read all messages carefully and answer the questions on screen. The default is probably the
-       best for most users, except on <a href="install_4_6_0_mac.txt" target="_blank">Mac Os</a></dt>.
-	   It is recommended to let the installation script automatically create psn.conf.
-  </li>
-  <li> If you did not let the installation script create a configuration file <tt>psn.conf</tt> for you, 
-or if you are running NONMEM via NMQual or on a cluster, you need to edit <tt>psn.conf</tt> 
-in the PsN installation directory. 
-The document <a href='https://github.com/UUPharmacometrics/PsN/releases/download/4.7.0/psn_configuration.pdf'>PsN configuration.pdf</a> in 
-PsN-Source/doc describes how to make correct settings in the psn.conf file. 
-The document is also found under <a href="docs.html">Documentation</a> .
-  </li>
-  <li>When the installation is done you can safely remove the <tt>PsN-Source</tt>
-    directory.
+<h2>PsN Installation</h2> 
+<ol type="A">
+<li>
+<p>Unpack the file you downloaded from the <a target="_blank" href="https://uupharmacometrics.github.io/PsN/download.html">PsN Download Page</a>.  
+It will create a directory called <code>PsN-Source.</code></p>
 </li>
-</ol>
+<li>
+<div style="text-align: justify;">
+
+<p align="justify">Run the installation script from within <code>PsN-Source</code>.
+
+
+<h3>Windows</h3>
+<p>User of <b>Strawberry Perl</b>, open a DOS command window <br>(Start&#8594;Run, type <code>cmd</code> &#8629;<br> or <br><i>In Windows 10</i>: Start&#8594;All apps&#8594;Windows System&#8594; Command Prompt)<br>
+</i>and go to the <code>PsN-Source </code>directory and type: <code>perl setup.pl</code> and &#8629;.</p></p> 
+<p>If you have <b>ActivePerl</b> installed you should be able to double-click <code>setup.pl</code> for the installation to start. Otherwise, open a command prompt, go to the <code>PsN-Source 
+</code>directory and type: <code>perl setup.pl</code> and &#8629;.</p></p>
+</div>
+
+    
+<h3>Linux/Unix/Mac OS</h3> 
+Open a terminal, cd to the <code>PsN-Source</code> directory and type: <code>sudo perl setup.pl</code> and &#8629;.</p>
+<p>sudo can be skipped if you already have write permissions in the installation directories you intend to use. <br><br>
+</li>
+<li>
+Read all messages carefully and answer the questions on screen. 
+
+	
+<h3> Windows </h3>
+The default settings are probably the best for most users. It is <b>highly</b> recommended to let the installation script create <code>psn.conf.</code> automatically unless 
+you are experienced in installing and configuring PsN.<br>
+For convenience you should also check that the directory where the utilities are installed is in your $PATH. (Right-click on My Computer&#8594; Choose Advanced system settings &#8594; Environment variables &#8594; Mark path and click Edit and make the changes needed).
+</li>
+
+
+<h3>Mac OS</h3>
+Mac users with the latest version(s) of Mac Os <b>cannot</b> accept the default installation folder for PsN utilities, even when installing as root.<sup>1</sup>
+<br>Do the following:<br>
+Run <code>setup.pl</code> as root. <p>
+When setup.pl prompts for the PsN Utilities directory like this:<br>
+<code>PsN Utilities installation directory [/usr/bin]:</code><br>
+type <code>/usr/local/bin</code> and &#8629;.<br><p>
+The other default settings can be accepted.<br> 
+If there is a message about PsN already being installed this message is misleading,
+what it should say is that PsN is already *partially* installed. This is not an error,
+just say yes to continue.</p>
+<li> If you did not let the installation script create the configuration file <code>psn.conf</code> for you, or if you are running NONMEM via NMQual or 
+on a cluster, you need to edit <code>psn.conf</code> in the PsN installation directory. <br>
+The document <a target="_blank" href="https://github.com/UUPharmacometrics/PsN/releases/download/4.7.0/psn_configuration.pdf">PsN Configuration.pdf</a> describes how to make the correct settings in the psn.conf file. 
+</li><br>
+<li>When the installation is done you can safely remove the <tt>PsN-Source</tt> directory.  </li></ol><p>
+<sup>1</sup><small> The default installation folder cannot be used with the latest versions of Mac OS as not even root has write permissions in /usr/bin and 
+therefore setup.pl cannot install anything there. What we want to do is use a directory which is already in $PATH *and* where root has write permission.</small> 
+
+<hr COLOR="darkred">
+ 
+<h2>Portable PsN installations</h2>
+This functionality is intended for advanced users only. The setup.pl script takes an optional argument 'relative': <br>
+<code>setup.pl relative </code><br>
+If this argument is given, the bin scripts (PsN Utilities) will use a relative path when including the lib modules (PsN Core and Toolkit). 
+This makes the PsN installation directory movable, as long as the relative position between the bin scripts and lib modules remains the same.<br>
+In addition the <code>[nm_versions]</code> section in psn.conf can list the name of the nmfe executables instead of the full path to the NONMEM installation directories 
+<b>if at runtime</b> the nmfe executable, chosen by default or with option -nm_version, is in the user $PATH, see documentation in 
+<a target="_blank" href="https://github.com/UUPharmacometrics/PsN/releases/download/4.7.0/psn_configuration.pdf">PsN Configuration.pdf</a>.
+<br>The test package, if installed, will not be portable even if setup.pl is run with argument relative. If the test package is moved, the file 
+<code>test/includes.pm</code> must be edited manually before any tests are run.
+
+
+<hr COLOR="darkred">
+
+<h2>Multiple PsN installations</h2> 
+It is possible to have several installations of PsN and use them in parallel. The default version of PsN may be changed every time a new installation is made.
+To check which PsN version is the default use the command<br>
+<code>psn -version</code><br>
+A specific version may be called with its version number, for example<br>
+<code>execute-3.7.6  -help</code><br>
+<b>&#9755; Note</b>: When installing PsN 4 on Windows all previously installed versions (installed with the same bin directory,
+including PsN 3-versions) are fixed automatically so that they are callable with a specific version as explained above. This is a new feature of PsN 4 when installing on Windows.
+
+
+<hr COLOR="darkred">
+
+<h2>R-plots</h2>
+The automatic rplots functionality in PsN (via the <code>-rplots</code> option) require that <a target="_blank" href="https://cloud.r-project.org"s>R</a> (at least version 3.1.2 is required) 
+is installed and that some specific R packages along with their dependencies are installed in R. <br>
+The R-scripts/install_R_packages.R can be run to install all needed R-packages in the given path. 
+Open a terminal, go to the R-scripts directory, type<br>
+<code>Rscript install_R_packages.R</code><br>
+and the full path to where to install.<br>
+Example: <br>
+<code>Rscript install_R_packages.R C:\R\library</code><br>
+To make PsN always use a specific R library path, add the R library path to the <code>psn.conf file</code>.<br>
+Example:<br>
+<code>R_LIB_PATH=C:\R\library</code>
+<br>
+Some of these packages need some external dependencies to be installed before installing in R.
+
+
+
+<h3>Ubuntu/Debian</h3>
+<code>
+apt install libpq-dev<br>
+apt install libcairo2-dev<br>
+apt install libssl-dev<br>
+apt install libcurl4-openssl-dev<br>
+apt install libmariadb-client-lgpl-dev<br>
+apt install libgmp-dev<br>
+apt install libmpfr-dev<br>
+apt install libxml2-dev<br>
+apt install libudunits2-dev<br></code>
+ 
+
+ 
+<h3>CentOS/Fedora</h3>
+<code>
+yum install openssl-devel<br>
+yum install libcurl-devel<br>
+yum install cairo-devel<br>
+yum install mariadb-devel<br>
+yum install libxml2-devel<br>
+</code>
+
+
+
+<h3>Mac Os</h3>
+For Mac OS one option is to install the following packages via brew:<br>
+<code>openssl@1.1<br>
+cairo<br></code>
+<code>and<br>
+mariadb-connector-c.</code>
 <br>
 
-        </div>
-        <div id="footer" style="padding-top:2px;padding-right:2px;padding-left:2px;"></div>
-    </div>
+
+<hr COLOR="darkred">
+
+<h2>R Markdown</h2>
+
+Some of the PsN tools support using R Markdown to plot. Then you need to install R&nbsp;Markdown in R together with its dependencies. 
+When using Rstudio, the installation will be taken care of behind the scenes.
+
+
+
+<h4>Ubuntu/Debian</h4>
+
+For Ubuntu and Debian Linux, apart from installing the R Markdown package, the following commands are needed to install the dependencies:
+<br><code>
+apt install pandoc<br>
+apt install texlive<br>
+apt install texlive-latex-extra<br>
+</code>
+
+
+
+<h4>Windows</h4>
+
+The recommended option is to install RStudio and MiKTeX.<br>
+Download and install the latest version of RStudio from <a target="_blank"href="https://www.rstudio.com/products/rstudio/download/"s>Rstudio.</a><br>
+Download the Basic MiKTeX Installer from <a target="_blank" href="https://miktex.org/download">MiKTeX.</a><br>
+Download and install pandoc from <a  target="_blank"href="pandoc.org">pandoc.</a><br>
+Before you actually can work with R Markdown, you need to install a few packages. 
+RStudio automatically detects which packages are needed if you create a new R Markdown file. 
+<br>To create a new R Markdown file you need to <br>
+open RStudio <br>
+click <i>File</i> in the menu <br>
+then <i>New File</i> <br>
+and finally <i>R Markdown.</i><br>
+RStudio detects that you miss some packages and asks if you want to install them. 
+Click Yes. RStudio then installs the required packages.
+
+</div>
+<div id="footer" style="padding-top:2px;padding-right:2px;padding-left:2px;"></div>
+</div>
 </body>
 </html>
