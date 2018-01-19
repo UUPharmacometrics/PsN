@@ -1272,8 +1272,6 @@ sub create_R_plots_code
 		push(@all_eta_numbers,$1);
 	}
 
-	my $succ = $self->successful_samples;
-	$succ = 2 if ($succ == 0);
 	my $outlying = 'outlying_criteria <- '.-3;
 
 	my @residual_files = ($cwres_file);
@@ -1304,8 +1302,6 @@ sub create_R_plots_code
 							 "residual.files <- c('".join("','",@residual_files)."')",
 							 "residual.names <- c('".join("','",@residual_names)."')",
 							 "all.iofv.file <- '".$all_iofv_file."'",
-#							 "all.iwres.file <- '".$all_iwres_file."'",
-#							 "all.cwres.file <- '".$all_cwres_file."'",
 							 'occasions   <-'.$self->occasions,
 							 "all.eta.names <-  c('".join("','",@all_eta)."')",
 							 'all.eta.numbers <-  c('.join(',',@all_eta_numbers).')',
