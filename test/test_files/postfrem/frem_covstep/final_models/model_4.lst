@@ -1,4 +1,4 @@
-mån  8 maj 2017 16:30:13 CEST
+Wed Jan 17 09:15:32 CET 2018
 $PROBLEM    MOXONIDINE PK ANALYSIS
 $INPUT      ID VISI DROP DGRP DOSE DROP DROP DROP DROP NEUY SCR AGE
             SEX DROP WT DROP ACE DIG DIU DROP TAD TIME DROP CRCL AMT
@@ -6,7 +6,11 @@ $INPUT      ID VISI DROP DGRP DOSE DROP DROP DROP DROP NEUY SCR AGE
 $DATA      ../../frem_dataset.dta IGNORE=@
 $ABBREVIATED DERIV2=NO COMRES=6
 $SUBROUTINE ADVAN2 TRANS1
-$PK    
+$PK
+
+
+
+
 ;----------IOV--------------------
 
    KPLAG = 0
@@ -24,7 +28,14 @@ $PK
    K     = CL/V
    S2    = V
 
-$ERROR    
+     SDC4 = 15.8063999898
+     SDC5 = 0.471317247899
+     SDC6 = 0.480651168826
+$ERROR
+
+
+
+
 
      IPRED = LOG(.025)
      W     = THETA(5)
@@ -37,18 +48,18 @@ $ERROR
 ;;;DO NOT MODIFY
      IF (FREMTYPE.EQ.100) THEN
 ;       WT  15.8063999898
-        Y = THETA(6) + ETA(4)*15.8063999898 + EPS(2)
-        IPRED = THETA(6) + ETA(4)*15.8063999898
+        Y = THETA(6) + ETA(4)*SDC4 + EPS(2)
+        IPRED = THETA(6) + ETA(4)*SDC4
      END IF
      IF (FREMTYPE.EQ.200) THEN
 ;       DGRP_9  0.471317247899
-        Y = THETA(7) + ETA(5)*0.471317247899 + EPS(2)
-        IPRED = THETA(7) + ETA(5)*0.471317247899
+        Y = THETA(7) + ETA(5)*SDC5 + EPS(2)
+        IPRED = THETA(7) + ETA(5)*SDC5
      END IF
      IF (FREMTYPE.EQ.300) THEN
 ;       DGRP_8  0.480651168826
-        Y = THETA(8) + ETA(6)*0.480651168826 + EPS(2)
-        IPRED = THETA(8) + ETA(6)*0.480651168826
+        Y = THETA(8) + ETA(6)*SDC6 + EPS(2)
+        IPRED = THETA(8) + ETA(6)*SDC6
      END IF
 ;;;FREM CODE END COMPACT
 $THETA  (0,32.9048)
@@ -70,7 +81,7 @@ $SIGMA  1  FIX
 $SIGMA  1E-07  FIX  ;     EPSCOV
 $ESTIMATION MAXEVALS=9990 PRINT=10 METHOD=CONDITIONAL NONINFETA=1
             MCETA=50
-$COVARIANCE PRINT=E
+$COVARIANCE PRINT=E UNCONDITIONAL
 
 
 NM-TRAN MESSAGES
@@ -80,21 +91,21 @@ NM-TRAN MESSAGES
  (WARNING  2) NM-TRAN INFERS THAT THE DATA ARE POPULATION.
 Note: The following floating-point exceptions are signalling: IEEE_INVALID_FLAG IEEE_DIVIDE_BY_ZERO
 
-License Registered to: Pharmetheus AB
-Expiration Date:    14 DEC 2017
-Current Date:        8 MAY 2017
-Days until program expires : 216
+License Registered to: Uppsala University
+Expiration Date:    14 MAR 2018
+Current Date:       17 JAN 2018
+Days until program expires :  57
 1NONLINEAR MIXED EFFECTS MODEL PROGRAM (NONMEM) VERSION 7.3.0
  ORIGINALLY DEVELOPED BY STUART BEAL, LEWIS SHEINER, AND ALISON BOECKMANN
  CURRENT DEVELOPERS ARE ROBERT BAUER, ICON DEVELOPMENT SOLUTIONS,
  AND ALISON BOECKMANN. IMPLEMENTATION, EFFICIENCY, AND STANDARDIZATION
  PERFORMED BY NOUS INFOSYSTEMS.
-
+ 
  PROBLEM NO.:         1
- MOXONIDINE PK ANALYSIS
-0DATA CHECKOUT RUN:              NO
+ MOXONIDINE PK ANALYSIS                                                  
+0DATA CHECKOUT RUN:              NO 
  DATA SET LOCATED ON UNIT NO.:    2
- THIS UNIT TO BE REWOUND:        NO
+ THIS UNIT TO BE REWOUND:        NO 
  NO. OF DATA RECS IN DATA SET:     1388
  NO. OF DATA ITEMS IN DATA SET:  22
  ID DATA ITEM IS DATA ITEM NO.:   1
@@ -105,12 +116,12 @@ Days until program expires : 216
 0LABELS FOR DATA ITEMS:
  ID VISI DGRP DOSE NEUY SCR AGE SEX WT ACE DIG DIU TAD TIME CRCL AMT SS II DV MDV FREMTYPE EVID
 0FORMAT FOR DATA:
- (3(6E12.0/),3E12.0,1F2.0)
-
+ (3(6E12.0/),3E12.0,1F2.0)                                                       
+ 
  TOT. NO. OF OBS RECS:     1244
  TOT. NO. OF INDIVIDUALS:     74
 0LENGTH OF THETA:   8
-0DEFAULT THETA BOUNDARY TEST OMITTED:    NO
+0DEFAULT THETA BOUNDARY TEST OMITTED:    NO 
 0OMEGA HAS BLOCK FORM:
   1
   1  1
@@ -118,9 +129,9 @@ Days until program expires : 216
   1  1  1  1
   1  1  1  1  1
   1  1  1  1  1  1
-0DEFAULT OMEGA BOUNDARY TEST OMITTED:    NO
+0DEFAULT OMEGA BOUNDARY TEST OMITTED:    NO 
 0SIGMA HAS SIMPLE DIAGONAL FORM WITH DIMENSION:   2
-0DEFAULT SIGMA BOUNDARY TEST OMITTED:    NO
+0DEFAULT SIGMA BOUNDARY TEST OMITTED:    NO 
 0INITIAL ESTIMATE OF THETA:
  LOWER BOUND    INITIAL EST    UPPER BOUND
   0.0000E+00     0.3290E+02     0.1000E+07
@@ -133,7 +144,7 @@ Days until program expires : 216
   0.3514E+00     0.3514E+00     0.3514E+00
 0INITIAL ESTIMATE OF OMEGA:
  BLOCK SET NO.   BLOCK                                                                    FIXED
-        1                                                                                   NO
+        1                                                                                   NO 
                   0.4124E+00
                   0.6650E+00   0.1114E+01
                   0.3025E-02   0.4971E-02   0.2219E+00
@@ -144,29 +155,29 @@ Days until program expires : 216
  0.1000E+01
  0.0000E+00   0.1000E-06
 0SIGMA CONSTRAINED TO BE THIS INITIAL ESTIMATE
-0COVARIANCE STEP OMITTED:        NO
- EIGENVLS. PRINTED:             YES
- SPECIAL COMPUTATION:            NO
- COMPRESSED FORMAT:              NO
+0COVARIANCE STEP OMITTED:        NO 
+ EIGENVLS. PRINTED:             YES 
+ SPECIAL COMPUTATION:            NO 
+ COMPRESSED FORMAT:              NO 
 1DOUBLE PRECISION PREDPP VERSION 7.3.0
-
+ 
  ONE COMPARTMENT MODEL WITH FIRST-ORDER ABSORPTION (ADVAN2)
 0MAXIMUM NO. OF BASIC PK PARAMETERS:   3
 0BASIC PK PARAMETERS (AFTER TRANSLATION):
    ELIMINATION RATE (K) IS BASIC PK PARAMETER NO.:  1
    ABSORPTION RATE (KA) IS BASIC PK PARAMETER NO.:  3
-
-0COMPARTMENT ATTRIBUTES
+ 
+0COMPARTMENT ATTRIBUTES 
  COMPT. NO.   FUNCTION   INITIAL    ON/OFF      DOSE      DEFAULT    DEFAULT
                          STATUS     ALLOWED    ALLOWED    FOR DOSE   FOR OBS.
-    1         DEPOT        OFF        YES        YES        YES        NO
+    1         DEPOT        OFF        YES        YES        YES        NO 
     2         CENTRAL      ON         NO         YES        NO         YES
-    3         OUTPUT       OFF        YES        NO         NO         NO
+    3         OUTPUT       OFF        YES        NO         NO         NO 
 1
  ADDITIONAL PK PARAMETERS - ASSIGNMENT OF ROWS IN GG
  COMPT. NO.                             INDICES
               SCALE      BIOAVAIL.   ZERO-ORDER  ZERO-ORDER  ABSORB
-                         FRACTION    RATE        DURATION    LAG
+                         FRACTION    RATE        DURATION    LAG  
     1            *           *           *           *           4
     2            5           *           *           *           *
     3            *           -           -           -           -
@@ -179,7 +190,7 @@ Days until program expires : 216
    DOSE AMOUNT DATA ITEM IS DATA ITEM NO.:  16
    STEADY STATE DATA ITEM IS DATA ITEM NO.: 17
    INTERVAL DATA ITEM IS DATA ITEM NO.:     18
-
+ 
 0PK SUBROUTINE CALLED WITH EVERY EVENT RECORD.
  PK SUBROUTINE NOT CALLED AT NONEVENT (ADDITIONAL OR LAGGED) DOSE TIMES.
 0ERROR SUBROUTINE CALLED WITH EVERY EVENT RECORD.
@@ -326,8 +337,8 @@ Days until program expires : 216
  EPSshrink(%):   8.6388E+00  9.9935E+01
 
  #TERE:
- Elapsed estimation time in seconds:    28.20
- Elapsed covariance time in seconds:    13.21
+ Elapsed estimation time in seconds:    27.69
+ Elapsed covariance time in seconds:    12.83
 1
  
  
@@ -1016,6 +1027,6 @@ Days until program expires : 216
           5.98E-01  6.15E-01  9.16E-01  9.39E-01  1.07E+00  1.24E+00  1.30E+00  1.54E+00  1.61E+00  1.94E+00  2.28E+00  2.71E+00
          3.15E+00  3.54E+00
  
- #CPUT: Total CPU Time in Seconds,       41.440
+ #CPUT: Total CPU Time in Seconds,       40.540
 Stop Time:
-mån  8 maj 2017 16:30:58 CEST
+Wed Jan 17 09:16:13 CET 2018

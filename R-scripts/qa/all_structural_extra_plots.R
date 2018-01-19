@@ -9,7 +9,7 @@ all_structural_extra_plots <- function(simeval_directory,base_dataset,resmod_str
                                               sim_table=file.path(simeval_directory,"/m1/sim_res_table-1.dta"),
                                               sim_extra_table=file.path(simeval_directory,"/m1/orig_pred.dta"),
                                               idv_all,
-                                              resmod_structural_details[[i]]$dvid,
+                                              dvid=resmod_structural_details[[i]]$dvid,
                                               dvid_name)
         make_vpc <- vpc_tables_list$make_vpc
       } else {

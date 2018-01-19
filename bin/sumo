@@ -232,7 +232,7 @@ EOF
 	significant digits. 
 EOF
 
-$help_text{-ci} = $help_text{-confidence_interval};
+$help_text{-confidence_interval} = $help_text{-ci};
 
 delete $optional_options{'ci'};     # Remove to get online_help right
 common_options::online_help( 'sumo', \%options, \%help_text, \%required_options, \%optional_options);

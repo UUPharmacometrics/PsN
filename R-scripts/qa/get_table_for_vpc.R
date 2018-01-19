@@ -21,6 +21,14 @@ get_tables_for_vpc <- function(obs_table,obs_extra_table,sim_table,sim_extra_tab
       rownames(extra_obs) <- NULL
     }
     
+    # Filter observations in obs table
+    if(any(colnames(obs)=="MDV")) {
+      if(any(obs$MDV==1)) {
+        obs <- obs[which(obs$MDV==0),]
+        rownames(obs) <- NULL
+      }
+    }
+    
     if(all(colnames(obs)!="DV")) {
       if(any(colnames(extra_obs)=="DV")) {  
         obs <- cbind(obs,"DV"=extra_obs[,"DV"])
@@ -39,12 +47,7 @@ get_tables_for_vpc <- function(obs_table,obs_extra_table,sim_table,sim_extra_tab
         obs <- cbind(obs,"MDV"=extra_obs[,"MDV"])
       }
     }
-    if(any(colnames(obs)=="MDV")) {
-      if(any(obs$MDV==1)) {
-        obs <- obs[which(obs$MDV==0),]
-        rownames(obs) <- NULL
-      }
-    }
+
 
     add_cols <- obs[,c(idv_all)]
     sim <- xpose::read_nm_tables(sim_table,quiet = TRUE)

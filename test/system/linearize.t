@@ -4,7 +4,7 @@ use strict;
 use warnings;
 use File::Path;
 use File::Spec;
-use Test::More tests=>18;
+use Test::More;
 use File::Copy 'cp';
 use FindBin qw($Bin);
 use lib "$Bin/.."; #location of includes.pm
@@ -18,7 +18,7 @@ my $model_dir = $includes::testfiledir;
 my @models = (
     "mox1.mod",
     "mox1_etasfile.mod",
-    "space path/mox1_etasfile_spacepath.mod"
+#    "space path/mox1_etasfile_spacepath.mod"
 );
 
 # get commands and working directories

@@ -44,13 +44,11 @@ my @commands = (
 
 my %hashes = (
 	$test_dirs[0] => {
-		"covdata.csv"                  =>  "0f49a89179883ce380f1d6fbde2cb5089092fc38",
-		"frem_condvar.csv"             =>  "80da908280c1cf19ce7a950a478797c8ca82b0f5",
-		"frem_id_ratios.csv"           =>  "91e08b904639701d5a3a0c491a25fe9fd0ac7c5e",
-		"frem_ratio.csv"               =>  "45754b1ec8656aea383e7e3384a34f31f73a4bf3",
+		"covdata.csv"                  =>  "8103ecd8f582e04d67d8b2930fe33cae8b114c7f",
+		"frem_condvar.csv"             =>  "3d6ef6f5d3f2053ba3f8f532a9d8dc3bd985b8f5",
 		"id_covdata.csv"               =>  "64708b1ef82a785ad71e328fd428e12d3c45218c",
-		"pardata.csv"                  =>  "31040d07f6f37c0cd886744bb23a416b859c49d1",
-		"sd_coefficients_summary.csv"  =>  "ea8e70db4286e1b95187a75a4ae4e576e0ba4bbd",
+		"pardata.csv"                  =>  "8075ff01b0b886ba9a2484a4b9b335880dad380a",
+		"sd_coefficients_summary.csv"  =>  "6a2a773720f3f6a84585a838d1c5f7a325231384",
 	},
 	# $test_dirs[1] => {
     #     "covdata.csv"                  =>  "0f49a89179883ce380f1d6fbde2cb5089092fc38",
@@ -62,13 +60,13 @@ my %hashes = (
     #     "sd_coefficients_summary.csv"  =>  "a347cdb8227c860ceaa7107de9f956f576d43849",
 	# },
 	$test_dirs[1] => {
-		"covdata.csv"                  =>  "0f49a89179883ce380f1d6fbde2cb5089092fc38",
-		"frem_condvar.csv"             =>  "b57cc0b0651a2886d4097355eaea4d59df730332",
-		"frem_id_ratios.csv"           =>  "52efebf8f48f7fcae133f2ccea6b93df0e369448",
-		"frem_ratio.csv"               =>  "18c92027fe883e151dfbd12e9a2a08657457574e",
+		"covdata.csv"                  =>  "8103ecd8f582e04d67d8b2930fe33cae8b114c7f",
+		"frem_condvar.csv"             =>  "98b4268c1c33a67d52e5e7edd11591c1b24dd683",
+		"frem_id_ratios.csv"           =>  "8ac2780b5a45b59dbb5f4b7773cf9ac3a56e4bb7",
+		"frem_ratio.csv"               =>  "1a9936646f753c9f3fa55cc1de4340acced66709",
 		"id_covdata.csv"               =>  "64708b1ef82a785ad71e328fd428e12d3c45218c",
-		"pardata.csv"                  =>  "31040d07f6f37c0cd886744bb23a416b859c49d1",
-		"sd_coefficients_summary.csv"  =>  "d4d23c20626ef905f0039b00ac0ebb9b77e124fe",
+		"pardata.csv"                  =>  "8075ff01b0b886ba9a2484a4b9b335880dad380a",
+		"sd_coefficients_summary.csv"  =>  "d050af5fe21b6f460b7765bb42e138765f26aa5f",
 	},
 );
 
@@ -86,7 +84,7 @@ for my $i (0..$#commands) {
 		plan 'skip_all' unless $postfrem_passed;
 		foreach my $file (keys %{$hashes{$test_dir}}) {
 			my $file_to_hash = "$test_dir/$file";
-			ok ($hashes{$test_dir}->{$file} eq digest_file_hex($file_to_hash, "SHA-1"), "hash eq test : ".$file_to_hash);
+			is (digest_file_hex($file_to_hash, "SHA-1"), $hashes{$test_dir}->{$file}, "hash eq test : ".$file_to_hash);
 		}
 	}
 }

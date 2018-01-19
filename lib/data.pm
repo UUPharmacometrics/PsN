@@ -2554,10 +2554,12 @@ sub _write
 	my %parm = validated_hash(\@_,
 		filename => { isa => 'Str', default => $self->full_name, optional => 1 },
         overwrite => { isa => 'Bool', default => 0 },
+        as_table => { isa => 'Bool', default => 0 },
 		MX_PARAMS_VALIDATE_NO_CACHE => 1
 	);
 	my $filename = $parm{'filename'};
 	my $overwrite = $parm{'overwrite'};
+	my $as_table = $parm{'as_table'};
 
 	die "ERROR: data->_write: No filename set in data object.\n" if( $filename eq '' );
 
@@ -2570,10 +2572,12 @@ sub _write
 		croak("Trying to write to $filename, but file already exists");
 	}
 
-	open(FILE,">$filename") ||
-	die "Could not create $filename\n";
+	open(FILE,">$filename") || die "Could not create $filename\n";
 	my $data_ref = $self->format_data;
 	my @data = @{$data_ref};
+    if ($as_table) {
+        print FILE "TABLE NO.  1\n";
+    }
 	for ( @data ) {
 		print ( FILE );
 	}

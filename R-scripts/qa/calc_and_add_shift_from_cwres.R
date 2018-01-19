@@ -37,7 +37,8 @@
   }
   
   # get table with IDV values
-  idv_df <- read.table(CWRES_table, skip = 1, header=T)
+  idv_df <- read.table(CWRES_table, skip = 1, header=T) %>%
+    dplyr::filter(CWRES!=0)
   cpred_column <- idv_df$CPRED
   if(any(colnames(idv_df)== dvid_name)) {
     dvid_column_nr <- which(colnames(idv_df)== dvid_name)
@@ -49,7 +50,8 @@
     dplyr::rename_(idv=idv)
   
   # get derivatives from linearized model
-  mean_shifts_table <- read.table(base_dataset, skip = 1, header=T) %>%
+  #mean_shifts_table <- read.table(base_dataset, header=T) %>%
+  mean_shifts_table <- read.table(base_dataset, header=T, skip=1) %>%
     dplyr::mutate(CPRED=cpred_column)
   if(any(colnames(mean_shifts_table)== dvid_name)) {
     dvid_column_nr <- which(colnames(mean_shifts_table)== dvid_name)

@@ -443,29 +443,6 @@ for( my $run = $from; $run <= $to; $run++ ){
 
             my $output = $outputs[0];
 
-            ## Loop over each lst file and extract the elapsed estimation
-            ## and covariance times. This is an ugly hack and should be
-            ## replaced my an accessor e.g. $output -> est_time();
-            my $my_lst = $output -> filename();
-            open LST, $my_lst || die "Couldn't open $my_lst\n";
-            while (<LST>) {
-
-                ## Find the elapsed estimation time inseconds and convert it to minutes
-                if(/Elapsed estimation time in seconds:/) {
-                    chomp;
-                    s/\s+//;
-                    $info{$run}{est_time} += sprintf "%6.2f",(split ":")[1]/60;
-                }
-                
-                ## Find the elapsed estimation time inseconds and convert it to minutes
-                if(/Elapsed covariance time in seconds:/) {
-                    chomp;
-                    s/\s+//;
-                    $info{$run}{cov_time} = sprintf "%6.2f",(split ":")[1]/60;
-                }
-            }
-            close LST;
-
             ## Extract information from the output object using accessors.
             my @problems = defined $output -> problems() ? @{$output -> problems()} : ();
             if( scalar @problems > 0 and defined $problems[0] ) {
@@ -483,6 +460,8 @@ for( my $run = $from; $run <= $to; $run++ ){
                         $subproblem -> minimization_successful()? "Successful":"Failed";
                     $info{$run}{'Covariance Step Status'} =
                         $subproblem -> covariance_step_successful()? "Successful":"Failed";
+                    $info{$run}{'est_time'} += sprintf("%6.2f", $subproblem->sum_estimation_time / 60);       # Time in minutes
+                    $info{$run}{'cov_time'} += sprintf("%6.2f", $subproblem->sum_covariance_time / 60);
                 }
             }
         }

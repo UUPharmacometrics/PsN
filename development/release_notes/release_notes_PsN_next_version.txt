@@ -146,8 +146,12 @@ A new recommended but not required Perl library for runrecord: YAML::Tiny
 
 
    ___simeval___
+   
+
+   ___runrecord___
 
 
+- Fix bug causing est_time and cov_time to not be added to table for NONMEM 7.4
 
    ___update_inits___
 
