@@ -66,6 +66,8 @@ A new recommended but not required Perl library for runrecord: YAML::Tiny
   See the psn.pdf for documentation.
 - Fix bug causing datasets not to be filtered properly if ignore statement was written as IGN(VISI>3),
   i.e. with no equal sign.
+- The psn_installation.pdf has been removed and all information it contained has been merged
+  into the installation section of the webpage.
 
    ___common_options___
 
