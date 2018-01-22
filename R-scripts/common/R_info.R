@@ -3,25 +3,27 @@ R_info <- function(directory,only_libPaths=F) {
     if(file.exists(file.path(directory,"meta.yaml"))) {
       yaml_file <- yaml::yaml.load_file(file.path(directory,"meta.yaml"))
       if(!exists("R_LIB_PATHS",yaml_file)) {
-        cat(yaml::as.yaml(list(R_LIB_PATHS=.libPaths()),
-                          column.major = F,
-                          indent.mapping.sequence = TRUE),
-            file=file.path(directory,"meta.yaml"),
-            append = TRUE)
+        yaml_file <- yaml::as.yaml(list(R_LIB_PATHS=.libPaths()),
+                                   column.major = F,
+                                   indent.mapping.sequence = TRUE)
+        yaml_file <- delete_linebreaks_in_command_line(yaml_file)
+        cat(yaml_file,file=file.path(directory,"meta.yaml"),append = TRUE)
       } else {
         yaml_file$R_LIB_PATHS <- NULL
         yaml_file$R_LIB_PATHS <- .libPaths()
-        cat(yaml::as.yaml(yaml_file,
+        yaml_file <- yaml::as.yaml(yaml_file,
                           column.major = F,
-                          indent.mapping.sequence = TRUE),
-            file=file.path(directory,"meta.yaml"))
+                          indent.mapping.sequence = TRUE)
+        yaml_file <- delete_linebreaks_in_command_line(yaml_file)    
+        cat(yaml_file,file=file.path(directory,"meta.yaml"))
       }
       
     } else {
-      cat(yaml::as.yaml(list(R_LIB_PATHS=.libPaths()),
-                        column.major = F,
-                        indent.mapping.sequence = TRUE),
-          file=file.path(directory,"meta.yaml"))
+      yaml_file <- yaml::as.yaml(list(R_LIB_PATHS=.libPaths()),
+                                 column.major = F,
+                                 indent.mapping.sequence = TRUE)
+      yaml_file <- delete_linebreaks_in_command_line(yaml_file)
+      cat(yaml_file,file=file.path(directory,"meta.yaml"))
     }
   } else {
     #get loaded R packages
@@ -36,13 +38,13 @@ R_info <- function(directory,only_libPaths=F) {
     if(file.exists(file.path(directory,"meta.yaml"))) {
       yaml_file <- yaml::yaml.load_file(file.path(directory,"meta.yaml"))
       if(!exists("R_version",yaml_file)) {
-        cat(yaml::as.yaml(list(R_version=strsplit(devtools::session_info()[[1]]$version," ")[[1]][3],
-                               R_system=devtools::session_info()[[1]]$system,
-                               R_packages=R_packages),
-                          column.major = F,
-                          indent.mapping.sequence = TRUE),
-            file=file.path(directory,"meta.yaml"),
-            append = TRUE)
+        yaml_file <- yaml::as.yaml(list(R_version=strsplit(devtools::session_info()[[1]]$version," ")[[1]][3],
+                                        R_system=devtools::session_info()[[1]]$system,
+                                        R_packages=R_packages),
+                                   column.major = F,
+                                   indent.mapping.sequence = TRUE)
+        yaml_file <- delete_linebreaks_in_command_line(yaml_file)
+        cat(yaml_file,file=file.path(directory,"meta.yaml"),append = TRUE)
       } else {
         yaml_file$R_packages <- NULL
         yaml_file$R_system <- NULL
@@ -62,19 +64,37 @@ R_info <- function(directory,only_libPaths=F) {
           new_yaml_file[[tag_names[i]]] <- yaml_file[[tag_names[i]]]
         }
         #write in the file
-        cat(yaml::as.yaml(new_yaml_file,
-                          column.major = F,
-                          indent.mapping.sequence = TRUE),
-            file=file.path(directory,"meta.yaml"))
+        yaml_file <- yaml::as.yaml(new_yaml_file,
+                                   column.major = F,
+                                   indent.mapping.sequence = TRUE)
+        yaml_file <- delete_linebreaks_in_command_line(yaml_file)
+        cat(yaml_file,file=file.path(directory,"meta.yaml"))
       }
     } else {
-      cat(yaml::as.yaml(list(R_LIB_PATHS=.libPaths(),
-                             R_packages=R_packages,
-                             R_system=devtools::session_info()[[1]]$system,
-                             R_version=strsplit(devtools::session_info()[[1]]$version," ")[[1]][3]),
-                        column.major = F,
-                        indent.mapping.sequence = TRUE),
-          file=file.path(directory,"meta.yaml"))
+      yaml_file <- yaml::as.yaml(list(R_LIB_PATHS=.libPaths(),
+                                      R_packages=R_packages,
+                                      R_system=devtools::session_info()[[1]]$system,
+                                      R_version=strsplit(devtools::session_info()[[1]]$version," ")[[1]][3]),
+                                 column.major = F,
+                                 indent.mapping.sequence = TRUE)
+      yaml_file <- delete_linebreaks_in_command_line(yaml_file)
+      cat(yaml_file,file=file.path(directory,"meta.yaml"))
     }
+    # check if yaml package has not added some line breaks in the command_line record
+    
+  }
+}
+
+delete_linebreaks_in_command_line <- function(string) {
+  spitted_text <- strsplit(string,"\n\\S")[[1]]
+  for(i in 1:length(spitted_text)) {
+    if(grepl("^command_line:",spitted_text[i])) {
+      command_line_orig <- spitted_text[i]
+      break
+    }
+  }
+  if(exists("command_line_orig")) {
+    command_line_new <- gsub("\n\\s","",command_line_orig)
+    gsub(command_line_orig,command_line_new,string,fixed=TRUE)
   }
 }
