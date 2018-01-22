@@ -107,7 +107,7 @@ has 'logfile' => ( is => 'rw', isa => 'ArrayRef[Str]', default => sub { ['npc.lo
 has 'results_file' => ( is => 'rw', isa => 'Str', default => 'npc_results.csv' );
 has 'nca' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'mix' => ( is => 'rw', isa => 'Str' );
-has 'mix_random' => ( is => 'rw', isa => 'Bool' );
+has 'mix_random' => ( is => 'rw', isa => 'Bool', default => 0 );
 
 sub BUILD
 {
@@ -1592,7 +1592,7 @@ sub modelfit_setup
 				  "by the user, PsN will not add \$SIM.");
 			
 		}
-		unless ($self->keep_estimation or $user_sim_model){
+		unless ($self->keep_estimation or $user_sim_model or defined $self->mix or $self->mix_random) {
 			push (@simrec_strings,('ONLYSIMULATION'));
 		}
 		if (($self->noprediction or $nopred_is_set )and (not $user_sim_model)){
