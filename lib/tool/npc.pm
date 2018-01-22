@@ -5582,7 +5582,7 @@ sub create_R_plots_code
 
     if (defined $self->mix) {
         push @code, "mix <- '" . $self->mix . "'";
-        if (defined $self->mix_random) {
+        if ($self->mix_random) {
             push @code, "mix_random <- TRUE";
             push @code, "phm_file <- 'm1/vpc_original.phm'";
         } else {
