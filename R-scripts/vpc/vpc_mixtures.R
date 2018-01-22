@@ -49,9 +49,9 @@ vpc_mixtures <- function(obs, sim, numsims, mixcol="MIXNUM", dv="DV", phm) {
     
         ids_per_sim <- subsim %>% group_by(sim) %>% summarise(count=length(unique(ID)))
         sim_ids <- sum(ids_per_sim$count)
-        perc_sim_ids <- (sim_ids / (numsims * num_ids)) * 100
+        fract_sim_ids <- (sim_ids / (numsims * num_ids))
 
-        ci <- simpasym(numsims * num_ids, perc_sim_ids / 100)
+        ci <- simpasym(numsims * num_ids, fract_sim_ids)
 
         title <- sprintf("MIXTURE VPC ORIGID=%.1f%% SIMID=[%.1f%%, %.1f%%] (95%% CI)", perc_obs_ids, ci[[1]] * 100, ci[[2]] * 100)
         vpc <- vpc + ggtitle(title)

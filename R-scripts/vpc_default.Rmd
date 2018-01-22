@@ -37,8 +37,8 @@ if (!exists('mix')) {     # A mixture model is a special case
         observations_tablefile <- paste0(working.directory, '/m1/vpc_original.npctab.dta')
         simulations_tablefile <- paste0(working.directory, '/m1/vpc_simulation.1.npctab.dta')
 
-        obs <- read_table_nm(observations_tablefile)
-        sim <- read_table_nm(simulations_tablefile)
+        obs <- vpc::read_table_nm(observations_tablefile)
+        sim <- vpc::read_table_nm(simulations_tablefile)
         if (!mix_random) {
             plots <- vpc_mixtures(obs=obs, sim=sim, numsims=samples, mixcol=mix, dv=dv)
         } else {
