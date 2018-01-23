@@ -3,22 +3,6 @@ suppressMessages(library(dplyr))
 library(ggplot2)
 library(xpose)
 
-#The Simple Asymtotic Method:
-#Where n is the sample size,
-#p is the proportion,
-#z is the z value for the % interval (i.e. 1.96 provides the 95% CI)
-#and cc is whether a continuity correction should be applied.
-simpasym <- function(n, p, z=1.96, cc=TRUE) {
-    out <- list()
-    if (cc) {
-        out$lb <- p - z*sqrt((p*(1-p))/n) - 0.5/n
-        out$ub <- p + z*sqrt((p*(1-p))/n) + 0.5/n
-    } else {
-        out$lb <- p - z*sqrt((p*(1-p))/n)
-        out$ub <- p + z*sqrt((p*(1-p))/n)
-    }
-    out
-}
 
 vpc_mixtures <- function(obs, sim, numsims, mixcol="MIXNUM", dv="DV", phm) {
     # Put in replicate numbers in sim table
@@ -26,18 +10,18 @@ vpc_mixtures <- function(obs, sim, numsims, mixcol="MIXNUM", dv="DV", phm) {
 
     if (!missing(phm)) {
         phm_table <- subpopulations_from_nonmem_phm(phm, numsims)
-        sim <- full_join(sim, phm_table)
+        sim <- dplyr::full_join(sim, phm_table)
         names(obs)[names(obs) == mixcol] <- 'SUBPOP'    # rename mixcol in obs
         mixcol <- 'SUBPOP'
     }
 
     num_ids <- length(unique(obs$ID))
 
-    numsubs <- max(max(obs[mixcol]), max(sim[mixcol]))
+    unique_subpops <- sort(unique(c(obs[[mixcol]], sim[[mixcol]])))
 
     table_list <- list()
 
-    for (i in 1:numsubs) {
+    for (i in unique_subpops) {
         subobs <- filter_(obs, paste0(mixcol, "==", i))
         subsim <- filter_(sim, paste0(mixcol, "==", i))
         if (nrow(subsim) == 0) {
@@ -49,12 +33,10 @@ vpc_mixtures <- function(obs, sim, numsims, mixcol="MIXNUM", dv="DV", phm) {
         perc_obs_ids <- (obs_ids / num_ids) * 100
     
         ids_per_sim <- subsim %>% group_by(sim) %>% summarise(count=length(unique(ID)))
-        sim_ids <- sum(ids_per_sim$count)
-        fract_sim_ids <- (sim_ids / (numsims * num_ids))
+        ids_per_sim <- ids_per_sim$count
 
-        ci <- simpasym(numsims * num_ids, fract_sim_ids)
-
-        title <- sprintf("MIXTURE VPC ORIGID=%.1f%% SIMID=[%.1f%%, %.1f%%] (95%% CI)", perc_obs_ids, ci[[1]] * 100, ci[[2]] * 100)
+        title <- sprintf("MIXTURE VPC SUBPOP=%d ORIGID=%.1f%% SIMID=[%.1f, %.1f] (5%%, 95%% percentiles)",
+                         i, perc_obs_ids, quantile(ids_per_sim, probs=0.05), quantile(ids_per_sim, probs=0.95))
         vpc <- vpc + ggtitle(title)
         table_list[[i]] <- vpc
     }
