@@ -13,6 +13,9 @@ vpc_mixtures <- function(obs, sim, numsims, mixcol="MIXNUM", dv="DV", phm) {
         sim <- dplyr::full_join(sim, phm_table)
         names(obs)[names(obs) == mixcol] <- 'SUBPOP'    # rename mixcol in obs
         mixcol <- 'SUBPOP'
+        method <- ' (phm randomization)'
+    } else {
+        method <- ''
     }
 
     num_ids <- length(unique(obs$ID))
@@ -35,8 +38,8 @@ vpc_mixtures <- function(obs, sim, numsims, mixcol="MIXNUM", dv="DV", phm) {
         ids_per_sim <- subsim %>% group_by(sim) %>% summarise(count=length(unique(ID)))
         ids_per_sim <- ids_per_sim$count
 
-        title <- sprintf("MIXTURE VPC SUBPOP=%d ORIGID=%.1f%% SIMID=[%.1f, %.1f] (5%%, 95%% percentiles)",
-                         i, perc_obs_ids, quantile(ids_per_sim, probs=0.05), quantile(ids_per_sim, probs=0.95))
+        title <- sprintf("MIXTURE VPC%s SUBPOP=%d ORIGID=%.1f%% SIMID=[%.1f, %.1f] (5%%, 95%% percentiles)",
+                         method, i, perc_obs_ids, quantile(ids_per_sim, probs=0.05), quantile(ids_per_sim, probs=0.95))
         vpc <- vpc + ggtitle(title)
         table_list[[i]] <- vpc
     }
