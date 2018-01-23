@@ -1,6 +1,7 @@
 suppressMessages(library(vpc))
 suppressMessages(library(dplyr))
 library(ggplot2)
+library(xpose)
 
 #The Simple Asymtotic Method:
 #Where n is the sample size,
@@ -69,14 +70,16 @@ vpc_mixtures <- function(obs, sim, numsims, mixcol="MIXNUM", dv="DV", phm) {
 # phm can either be a file name of a phm file or a data.frame
 subpopulations_from_nonmem_phm <- function(phm, nrep) {
     if (is.character(phm)) {
-        phm <- read.table(name, skip=1, header=TRUE)
+        phm_table <- xpose::read_nm_files(file=phm)
+    } else {
+        phm_table <- phm
     }
 
-    phm <- data.frame(ID=phm$ID, SUBPOP=phm$SUBPOP, PMIX=phm$PMIX)  # Keep only interesting columns
-    phm <- phm[rep(seq_len(nrow(phm)), nrep),]  # One phm per replicate
-    phm$sim <- rep(1:nrep, each=nrow(phm) / nrep) # put in the SIM column
+    ind_table <- dplyr::bind_rows(phm_table[['data']])   # One table for all replicates
+    ind_table <- data.frame(ID=ind_table$ID, SUBPOP=ind_table$SUBPOP, PMIX=ind_table$PMIX)  # Keep only interesting columns
+    ind_table$sim <- rep(1:nrep, each=nrow(ind_table) / nrep) # number the replicates
 
-    result <- data.frame(phm %>% group_by(sim, ID) %>% summarize(SUBPOP=sample(SUBPOP, size=1, prob=PMIX)))
+    result <- data.frame(ind_table %>% group_by(sim, ID) %>% summarize(SUBPOP=sample(SUBPOP, size=1, prob=PMIX)))
 
     return(result)
 }
