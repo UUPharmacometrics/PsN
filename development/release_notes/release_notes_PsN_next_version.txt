@@ -54,7 +54,6 @@ Known issues
 Changes and bug fixes from PsN 4.7.0 to x.x.x
 *********************************************
 
-A new recommended but not required Perl library for runrecord: YAML::Tiny 
 
 
 
