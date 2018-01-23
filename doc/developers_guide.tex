@@ -194,29 +194,17 @@ These warnings are from NONMEM and can be ignored.
     must be edited to include the new path to PsN core and toolkit. 
 \end{itemize} 
 
-\section{Help scripts for SourceForge webpage}
+\section{Help scripts for releases}
 
 \begin{description}
-\item[putdoc] Run at every internal release, i.e. every time new default
-version on Uppsala cluster. Must be run from the directory where it is
-(some local file paths in the script). This script will upload doc/*.pdf to \\
-\verb|http://psn.sourceforge.net/internal_release_pdfdocs/| \\
-and the .tar.gz and .zip install packages to\\
-\verb|http://psn.sourceforge.net/internal_release_install_packages/|
-The wiki links for documentation and install package for latest
-release are pointing to these web places, so this is important to
-do for each internal release.
-\item[putwebpage] Run whenever web page php files are updated in between
-external releases (when putrelease is run instead).
-Will upload home.php, docs.php, download.php, install.php, list.php and
-buglist.php to SourceForge, where they are immediately visible.
-\item[putrelease] Run at external release. Not well tested since run very
-infrequently. Will upload same php-files as putwebpage. Then will
-upload doc/*.pdf and zippped/packed documentation packages (from PsN-Source)
-to \\
-\verb|http://psn.sourceforge.net/pdfdocs/|\\
-Currently does not upload bug\_list\_at\_next\_release.
+\item[internal\_release.pl] Run at every internal release, i.e. every time new default
+version on Uppsala cluster. Takes the version as argument. The script will only create
+a new release and upload the files to github.
+\item[dev\_release] Run for every development release. Will do everything: make, make release,
+    upload files to cluster, run setup.pl and change permissions to files.
 \end{description}
+
+
 \section{R plots}
 \input{inputs/rplots_development.tex}
 
