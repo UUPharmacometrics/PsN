@@ -59,6 +59,7 @@ Changes and bug fixes from PsN 4.7.0 to x.x.x
 
    ___General___
 
+- New required perl module YAML::XS
 - PsN will now give an error if an OMEGA or SIGMA BLOCK contains multiple FIX
   This would be inline with what NM-TRAN does.
 - PsN runs now generate meta.yaml to systematically describe various metadata.
@@ -90,6 +91,7 @@ Changes and bug fixes from PsN 4.7.0 to x.x.x
 
    ___runrecord___
 
+- No longer requires YAML::Tiny for csvy output. Will use the required YAML::XS
 
 
    ___sumo___
