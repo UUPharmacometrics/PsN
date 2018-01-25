@@ -9,6 +9,7 @@ LIBFILES= ui.pm \
 	PsN.pm \
 	model_transformations.pm \
 	model_approximations.pm \
+	code.pm \
 	code_parsing.pm \
 	common_options.pm \
 	influential_individuals.pm \
