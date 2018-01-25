@@ -68,6 +68,9 @@ Changes and bug fixes from PsN 4.7.0 to x.x.x
   i.e. with no equal sign.
 - The psn_installation.pdf has been removed and all information it contained has been merged
   into the installation section of the webpage.
+- The PsN_and_NONMEM7.pdf has been removed and all information it contained has been moved to PsN.pdf and
+  other documentation.
+
 
    ___common_options___
 

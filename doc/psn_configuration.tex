@@ -237,5 +237,18 @@ which will make PsN check for finished jobs every 2 seconds.
 There is a possibility to configure the format of the raw results files via the \verb|output_style| configuration option. This option should
 be set before the first \verb|[section_name]| and can be set to either SPLUS, MATLAB or EXCEL. The setting will control how missing data and the header row is handled in the raw results table. Missing data will be added as NA for SPLUS, NaN for MATLAB and empty for EXCEL. The header row will not be added for MATLAB but for EXCEL and SPLUS.
 
+\section{Parallel execution of single models in NONMEM 7.2 and higher}
+PsN4 supports the parallel execution feature of NONMEM. PsN will not check that an mpi daemon is running, or that any other necessary parallelization preparations have been done. Therefore the user must make sure it is possible to run parallel NONMEM with the nmfe script before trying to do it through PsN.
+
+It is required that the NONMEM version number 7.2 or later is properly set in psn.conf. 
+The parallelization feature is invoked by using PsN option -parafile=$\langle$file$\rangle$, and optionally -nodes=N, where $\langle$file$\rangle$ is the name of a NONMEM parafile. PsN will copy the parafile down to the run directory and pass on the name and the nodes option as input to nmfe. PsN can currently only handle one parafile at a time. The parafile option is further described in common\_options.pdf.
+
+A defaults.pnm file can be copied down to the NM run directory by setting PsN option -extra\_files, see common\_options.pdf.
+
+The -threads option does not affect and is not affected by any parallel execution of a single model. The -threads option governs how many models PsN will submit for execution (by e.g. nmfe72) at a time. The user must ensure that the number of threads multiplied by the number of nodes used for a single model does not exceed what is desired. 
+
+If running on a cluster the user must set flags necessary for parallel execution, e.g. -pe for SGE, using the existing PsN options, e.g. -sge\_prepend\_flags, -lsf\_options or -slurm\_prepend\_flags. PsN does not do this automatically. 
+
+
 \end{document}
 
