@@ -185,7 +185,8 @@ sub second_order_approximation_model
             push @second_order2, $term;
         }
     } 
-    push @pred, "Y = TMP2 + " . join(" + ", @second_order2) . "\n";
+    unshift @second_order2, 'TMP2';
+    push @pred, "Y=" . join("+", @second_order2) . "\n";
 
     push @pred, "ENDIF\n"; 
 
