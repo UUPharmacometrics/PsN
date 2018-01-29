@@ -679,7 +679,7 @@ sub BUILD
 						$self -> included_relations->{$par}{$cov}{'bounds'} =
 						$self -> relations->{$par}{$cov}{'bounds'}{$state};
 					}
-				} #end loop over valid states
+				}
 				$first = 0;
 				#check that no included relations for invalid states
 				if ( defined $self->included_relations() and
@@ -695,8 +695,8 @@ sub BUILD
 						"be set as the state for relation $par-$cov in included_relations.")
 					unless ($found);
 				}
-			} #end loop over cov
-		} # end loop over par
+			}
+		}
 
 		#check that no included relations for covariates not in test_relations
 		foreach my $par ( sort keys %{$self -> included_relations} ) {
@@ -721,7 +721,7 @@ sub BUILD
 		$Data::Dumper::Purity = 0;
 		close( RELATIONS );
 
-	}#end loop models
+	}
 }
 
 sub add_config_file
@@ -1249,7 +1249,7 @@ sub _raw_results_callback
 							}
 						}
 					}
-				} #end if theta
+				}
 
 			}
 			unshift( @{$raw_results}, \@orig_res );
@@ -1308,7 +1308,7 @@ sub _raw_results_callback
 			}
 			$self->raw_line_structure -> write( $dir.'raw_results_structure' );
 
-		} #end if step_number == 1
+		}
 
 	};
 	return $subroutine;
@@ -1524,7 +1524,6 @@ sub modelfit_setup
 				model_name => 'base');
 		}
 		$self -> initial_estimates_model($start_model);
-		#end if rerun start_model
 	}
 
 	my $temp_step_relations;
@@ -2040,7 +2039,7 @@ sub linearize_setup
                     }
                 }
             }
-        } #end second_order or epsilons
+        }
         #1.12
         push(@tablestrings, @covariates);
         push(@inputstrings, @covariates);
@@ -2261,7 +2260,7 @@ sub linearize_setup
                         '+(ETA('.$i.')-OETA'.$i.')*OGK_'.$paramj.'*(GZ_'.$paramj.'-OGZ_'.$paramj.'))');
                 }
             }
-        } #end if second_order
+        }
 
         my $sum_count=1;
         my $sum_string='CSUM'.$sum_count;
@@ -2345,7 +2344,7 @@ sub linearize_setup
                         $string .= '+';
                     }
                     $string .= $line;
-                }#end inner loop eta
+                }
                 $string .= ')'."\n";
                 push(@pred_block,$string);
                 if ($cov_count>0){
@@ -2370,8 +2369,8 @@ sub linearize_setup
                     }
                     $string .= ")\n";
                     push(@pred_block,$string);
-                }#end if cov_count>0
-            } #end loop over eps
+                }
+            }
 
             my $sum_count=1;
             my $sum_string='ESUM'.$sum_count;
@@ -2429,7 +2428,6 @@ sub linearize_setup
             }
         }
 
-        #end if step_number == 1
     }elsif ($self->update_derivatives()){
         $datafilename = 'derivatives_covariates'.$stepname.'.dta';
         if ($self->step_number() == 2 and $self->both_directions()
@@ -2542,8 +2540,8 @@ sub linearize_setup
                 unless ($self->derivatives_data());
             }
             $derivatives_model ->_write();
-        } #end if rerun_derivatives
-    } #end elsif update_derivatives
+        }
+    }
 
     if ($self->step_number()==1 or $self->update_derivatives()){
         my $derivatives_ofv;
@@ -2693,7 +2691,7 @@ sub linearize_setup
         }else{
             $original_model -> _write() unless ($self->return_after_derivatives_done());
         }
-    } #end if first step or update derivatives
+    }
 
     if ($self->use_data_format and defined $datafilename) {       # To account for bug in NONMEM for 1000+ charcolumn data sets
         # Remove IGN or ACC in $DATA. Might crash future runs
