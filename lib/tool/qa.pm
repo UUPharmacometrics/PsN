@@ -110,7 +110,7 @@ sub modelfit_setup
         push @table_columns, $self->dvid;
     } 
 	
-    if ($model_copy->defined_variable(name => 'TAD')) {
+    if ($model_copy->defined_variable(name => 'TAD') && !("TAD" ~~ @table_columns)) {
         push @table_columns, 'TAD';
     }
 
