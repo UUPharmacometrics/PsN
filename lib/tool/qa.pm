@@ -104,16 +104,22 @@ sub modelfit_setup
 
     $model_copy->set_records(type => 'covariance', record_strings => [ "OMITTED" ]);
 
-    my @table_columns = ( 'ID', $self->idv,'CWRES', 'PRED', 'CIPREDI','CPRED' );
+    my @table_columns = ( 'ID', 'CWRES', 'PRED', 'CIPREDI','CPRED' );
+	
+	if ($model_copy->defined_variable(name => 'TIME')) {
+        push @table_columns, 'TIME';
+    }
+	if ($model_copy->defined_variable(name => 'TAD')) {
+        push @table_columns, 'TAD';
+    }
+	if (($self->idv ne 'TIME') and ($self->idv ne 'TAD')) {
+        push @table_columns, $self->idv;
+    } 
 	
     if (defined $self->dvid and $model_copy->defined_variable(name => $self->dvid)) {
         push @table_columns, $self->dvid;
     } 
 	
-    if ($model_copy->defined_variable(name => 'TAD') && !("TAD" ~~ @table_columns)) {
-        push @table_columns, 'TAD';
-    }
-
     my $base_model_name = $self->model->filename;
     if ($self->nonlinear) {
         my $eval_model = $self->model->copy(filename => $self->model->filename, directory => $self->directory, write_copy => 0, output_same_directory => 0);
@@ -463,35 +469,34 @@ sub modelfit_setup
         } else {
             $resmod_model = $model_copy;
         }
-		
-		
-        my $resmod_idv;
-        eval {
-            $resmod_idv = tool::resmod->new(
-                %{common_options::restore_options(@common_options::tool_options)},
-                models => [ $resmod_model ],
-                dvid => $self->dvid,
-                idv => $self->idv,
-                dv => $self->dv,
-                occ => $self->occ,
-                groups => $self->groups,
-                iterative => 0,
-                directory => 'resmod_'.$self->idv,
-                top_tool => 1,
-				clean => 2,
-            );
-            $self->resmod_idv_table($resmod_idv->table_file);
-        };
-        if (not $@) {
-            eval {
-                $resmod_idv->run();
-            };
-        } else {
-            print $@;
-            rmdir "resmod_".$self->idv;
-        }
-
-        $self->_to_qa_dir();
+				
+		if($resmod_model->defined_variable(name => 'TIME')) {
+			my $resmod_time;
+			eval {
+				$resmod_time = tool::resmod->new(
+					%{common_options::restore_options(@common_options::tool_options)},
+					models => [ $resmod_model ],
+					dvid => $self->dvid,
+					idv => 'TIME',
+					dv => $self->dv,
+					occ => $self->occ,
+					groups => $self->groups,
+					iterative => 0,
+					directory => 'resmod_TIME',
+					top_tool => 1,
+					clean => 2,
+				);
+			};
+			if (not $@) {
+				eval {
+					$resmod_time->run();
+				};
+			} else {
+				print $@;
+				rmdir 'resmod_TIME';
+			}
+			$self->_to_qa_dir();
+		}
 		
 		if($resmod_model->defined_variable(name => 'TAD')) {
 			my $resmod_tad;
@@ -547,6 +552,35 @@ sub modelfit_setup
             rmdir 'resmod_PRED';
         }
         $self->_to_qa_dir();
+		
+		if(($self->idv ne "TIME") and ($self->idv ne "TAD")) {
+			my $resmod_idv;
+			eval {
+				$resmod_idv = tool::resmod->new(
+					%{common_options::restore_options(@common_options::tool_options)},
+					models => [ $resmod_model ],
+					dvid => $self->dvid,
+					idv => $self->idv,
+					dv => $self->dv,
+					occ => $self->occ,
+					groups => $self->groups,
+					iterative => 0,
+					directory => 'resmod_'.$self->idv,
+					top_tool => 1,
+					clean => 2,
+				);
+				$self->resmod_idv_table($resmod_idv->table_file);
+			};
+			if (not $@) {
+				eval {
+					$resmod_idv->run();
+				};
+			} else {
+				print $@;
+				rmdir "resmod_".$self->idv;
+			}
+			$self->_to_qa_dir();
+		}
     }
 }
 
