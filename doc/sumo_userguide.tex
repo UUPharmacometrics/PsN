@@ -2,7 +2,7 @@
 \setlength{\evensidemargin}{0pt}
 \setlength{\oddsidemargin}{0pt}
 
-\guidetitle{SUMO user guide}{2018-01-10}
+\guidetitle{SUMO user guide}{2018-01-31}
 
 \begin{document}
 
@@ -10,7 +10,7 @@
 
 
 \section{Introduction}
-The sumo tool is used to summarize output from a NONMEM run and print it to screen. It takes a lst-file as input.\\
+The sumo tool is used to summarize output from a NONMEM run and print it to screen. It takes a .lst-file as input.\\
 Example:
 \begin{verbatim}
 sumo run33.lst
@@ -19,13 +19,13 @@ sumo run33.lst
 \section{Input and options}
 
 \subsection{Required input}
-An lst-file is required on the command line.
+An .lst-file is required on the command line.
 
 \subsection{Optional input}
 
 \begin{optionlist}
 \optdefault{c\_level}{N}
-Default is 95. This option specifies the coverage of the confidence interval computed by the -ci option (see below). Allowed values are 90, 95, 99 and 99.5. 
+Default is 95. This option specifies the coverage of the confidence interval computed by the -ci option. Allowed values are 90, 95, 99 and 99.5. 
 \nextopt
 \optname{check\_run}
 Default set. When unset with -no-check\_run the initial run diagnostic output of sumo will be suppressed. 
@@ -38,7 +38,8 @@ NO. OF FUNCTION EVALUATIONS USED:  172
 NO. OF SIG. DIGITS IN FINAL EST.:  3.4
 
 ETABAR IS THE ARITHMETIC MEAN OF THE ETA-ESTIMATES,
-AND THE P-VALUE IS GIVEN FOR THE NULL HYPOTHESIS THAT THE TRUE MEAN IS 0.
+AND THE P-VALUE IS GIVEN FOR THE NULL HYPOTHESIS THAT 
+THE TRUE MEAN IS 0.
 
 ETABAR:  -0.41E-01  0.59E-03  0.30E-01
 SE:       0.35E+00  0.25E-02  0.18E+00
@@ -61,13 +62,14 @@ With this option the parameter estimates reported in the OMEGA and SIGMA columns
 Default is 1000. The cut-off for issuing a warning for a high condition number. The test will only be made if the \$COV step has been requested in the NMtran control stream and NONMEM has been asked to report eigenvalues (\$COV PRINT=E).
 \nextopt
 \optdefault{correlation\_limit}{N}
-Default is 0.9. The cut-off for issuing a warning for high correlations between the parameter estimates. This test will only be made if the \$COV step has been requested in the NMtran control stream. The default is set in psn.conf. 
+Default is 0.9. The cut-off for issuing a warning for high correlations between the parameter estimates. This test will only be made if the \$COV step has been requested in the NMtran control stream. \\
+The default is set in psn.conf. 
 \nextopt
 \optname{csv}
 Default not set. The option produces output in which the columns of the parameters estimates and standard errors are comma separated. This option can be used if you wish to import the sumo output into a spreadsheet programs, such as MS Excel. (Something like this is probably what you would want to do in that case: sumo -csv run1.lst > sumooutput.csv). 
 \nextopt
 \optdefault{debug}{N}
-Default is 0. This is mainly for developers who wish to debug PsN. By default N is 0 but you can set it to 1 to enable warnings.
+Default is 0. By default N is 0 but you can set it to 1 to enable warnings. This is mainly for developers who wish to debug PsN.
 \nextopt
 \optdefault{max\_problem\_num}{integer}
 Default is 1. By default sumo reports the results for the first \$PROBLEM only. PsN divides NONMEM output into problems and subproblems.
@@ -146,7 +148,7 @@ Relative standard errors are not displayed unless NONMEM reports the standard er
 
 If the user has set labels for the parameters in the control stream, those labels are used instead of the
 generic THETA1, OMEGA(1,1) etc. Parameters that are FIXED or SAME are excluded from the table.
-PsN will read the control stream copy at the top of the lst-file to investigate which parameters are estimated. It is a known
+PsN will read the control stream copy at the top of the .lst-file to investigate which parameters are estimated. It is a known
 bug that if the control stream has \$MSFI, and hence no \$THETA, \$OMEGA or \$SIGMA records, the table with population parameters will be empty.
 
 \end{document}

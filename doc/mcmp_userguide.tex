@@ -1,5 +1,5 @@
 \input{inputs/format_header.tex}
-\guidetitle{MCMP user guide}{2017-11-29}
+\guidetitle{MCMP user guide}{2018-01-31}
 
 
 \begin{document}
@@ -90,27 +90,25 @@ Default is 98. If the whole power curve is generated (option -curve is set), the
 \nextopt
 \end{optionlist}
 
-\subsection{Some important common PsN options}
-For a complete list see common\_options.pdf, 
-or psn\_options -h on the commandline.
-\input{inputs/basic_options.tex}
+\subsection{PsN common options}
+For a complete list see common\_options.pdf or type psn\_options -h on the command line.
 
-\subsection{Auto-generated R-plots from PsN}
+\subsection{Auto-generated R plots from PsN}
 \newcommand{\rplotsconditions}{The default mcmp template requires the R libraries ggplot2 and plyr.
 If the packages are not installed no pdf will be generated, see the .Rout file in the main run directory for error messages.}
 \input{inputs/rplots_section_body.tex}
 
-\subsubsection*{Basic plots}
-A basic mcmp rplot will be generated in file PsN\_mcmp\_plots.pdf if option -rplots is set >0, and the general rplots conditions fulfilled, see above.
-The basic plot is the mcmp-generated power curve for the signficance level chosen with option -significance\_level, with a mark at the sample size required for 80\% power.
-\subsubsection*{Extended plots}
-Extended mcmp rplots will be generated in file PsN\_mcmp\_plots.pdf if option -rplots is set >1, and the general rplots conditions fulfilled, see above.
-The first extended plot shows a power versus sample size parametric power estimation (PPE) curve together with the mcmp-generated power curve for the signficance level chosen with option -significance\_level. Parametric power estimation allows to generate data for full power versus sample size curve(s) based on simulation and reestimation with full and reduced models performed with a single sample size.
+\subsubsection*{Basic R plots}
+A basic mcmp R plot will be generated in file PsN\_mcmp\_plots.pdf if option -rplots is set >0, and the general R plots conditions are fulfilled, see above.
+The basic R plot is the mcmp-generated power curve for the signficance level chosen with option -significance\_level, with a mark at the sample size required for 80\% power.
+\subsubsection*{Extended R plots}
+Extended mcmp R plots will be generated in file PsN\_mcmp\_plots.pdf if option -rplots is set >1, and the general R plots conditions are fulfilled, see above.
+The first extended R plot shows a power versus sample size parametric power estimation (PPE) curve together with the mcmp-generated power curve for the signficance level chosen with option -significance\_level. Parametric power estimation allows to generate data for full power versus sample size curve(s) based on simulation and reestimation with full and reduced models performed with a single sample size.
 The procedure is described in \cite{Ueckert}. 
 
-The second extended plot is the the mcmp-generated power curves for each of the significance levels, with a mark of the sample size required for 80\% power.
+The second extended R plot is the the mcmp-generated power curves for each of the significance levels, with a mark of the sample size required for 80\% power.
 
-The third extended plot is a histogram of the individual full-reduced delta-ofv. 
+The third extended R plot is a histogram of the individual full-reduced delta-ofv. 
 
 \section{Output}
 The output from each mcmp is mcmp\_results.csv which contains a table with header total\_X, power at 20\%, power at 15\%, power at 10\%, power at 5\%, power at 1\%, power at 0.1\%, (headers for N from each stratum). 
@@ -166,7 +164,7 @@ The user can also choose to set start\_size to manipulate the sample sizes, but 
 \begin{enumerate}
 \item If NONMEM 6 is used, then the iofv option to PsN is set automatically. If NONMEM 7 is used, no extra settings are needed.
 \item PsN checks that the requirements on the options are fulfilled (see list of options above).
-\item Look-up critical ofv if not given on command-line, then make sure sign is +.
+\item Look-up critical ofv if not given on command line, then make sure sign is +.
 \item Unless option simdata is given, or both table\_reduced and table\_full are given, simulate the simulation model with a random number seed in \$SIM which set by PsN.
 \item If -reduced\_model is specified, PsN will add a \$TABLE to the first \$PROBLEM with ID $\langle$stratify\_on$\rangle$ FIRSTONLY NOAPPEND ONEHEADER NOPRINT FILE=strata.tab. PsN does not check that it is possible to request $\langle$stratify\_on$\rangle$ in \$TABLE, so the user have to either have it present in \$INPUT or define it in \$PK/\$PRED/\$ERROR.
 \newpage

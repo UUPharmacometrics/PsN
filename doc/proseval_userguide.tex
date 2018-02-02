@@ -1,5 +1,5 @@
 \input{inputs/format_header.tex}
-\guidetitle{PROSEVAL user guide}{2017-12-18}
+\guidetitle{PROSEVAL user guide}{2018-01-31}
 
 \newcommand{\guidetoolname}{proseval}
 
@@ -22,15 +22,15 @@ A model file is required on the command line.
 
 The first table of the modelfile should include ID, EVID, TIME and all interesting columns. These columns will be used to
 construct the result table.
+%\subsection{Optional input}
 
-\subsection{Optional input}
-
-\begin{optionlist}
-\optdefault{ignore}{expr1,expr2,...}
-	A comma separated list of expressions. If any expression is true for a row in the dataset the row
-    will be left without changes to EVID. An expression can only be of the form COLNAME==<value>
-\nextopt
-\end{optionlist}
+%\begin{optionlist}
+%\optdefault{samples}{n}
+%Number of simulated datasets to generate. Default is 100.
+%\nextopt
+%\optname{models}
+%If this option is present on the command line a list of model files can be passed as arguments instead of an scm logfile. For example \verb|pvar -models run1.mod run2.mod -parameters=CL,V|
+%\end{optionlist}
 
 \section{Description}
 The proseval tool creates a number of new data sets for which the EVID columns have been altered according to the following:
