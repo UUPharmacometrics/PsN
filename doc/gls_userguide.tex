@@ -1,5 +1,5 @@
 \input{inputs/format_header.tex}
-\guidetitle{GLS user guide}{2017-10-23}
+\guidetitle{GLS user guide}{2018-01-31}
 
 \begin{document}
 
@@ -11,30 +11,31 @@
 During the modelling process one may encounter scenarios where first-order conditional estimation with $\epsilon - \eta$ 
 interaction (FOCEI) is indicated but may be prohibitively time consuming or unstable. Also, it may be a concern that a misspecification 
 of the residual error model may translate to bias in structural or inter-individual variability parameters. These two problems may be 
-overcome by using a generalised least squares (GLS) type approach where dependent variable predictions are obtained from a 
-previous model fit and then used in the residual error model. The gls program automates this procedure, which is further described 
-in \cite{Ivaturi2}
-Using the gls program requires that the model is encoded in "the Uppsala way".
+overcome by using a gls (generalised least squares) type approach where dependent variable predictions are obtained from a 
+previous model fit and then used in the residual error model. The gls tool automates this procedure, which is further described 
+in \cite{Ivaturi2}.
+Using the gls tool requires that the model is encoded in "the Uppsala way", see below.
 
-In summary the GLS method amounts to the following: Run the original model. In a second step IPRED is replaced with GLSP in 
+In summary the gls method amounts to the following: Run the original model. In a second step IPRED is replaced with GLSP in 
 the definition of W where GLSP is computed as 
 PRED$_{orig}$·iwres\_shrinkage + (1-iwres\_shrinkage$_{orig}$)*IPRED$_{orig}$, 
 
 where  PRED$_{orig}$ and IPRED$_{orig}$ are obtained from running the original model and iwres\_shrinkage is either a population 
 shrinkage obtained from the original model run or a per-observation shrinkage based on simulations.
 The modified gls model is then estimated.
-Example
+
+Example:
 \begin{verbatim}
 gls run1.mod
 \end{verbatim}
 
-\subsubsection*{Uppsala way}
+\subsubsection*{The Uppsala way}
 \input{inputs/uppsala_way.tex}
 
 \section{Input and options}
 
 \subsection{Required input}
-A model file is required on the command-line.
+A model file is required on the command line.
 
 
 \subsection{Optional input}
@@ -46,30 +47,26 @@ The error is added by changing W=SQRT($\langle$expression$\rangle$) to W=SQRT(TH
 gls model, where T is the order number of new \$THETA XX FIX added to the model. 
 \nextopt
 \optname{gls\_model}
-Default not set. Only possible together with option -iwres\_shrinkage or -ind-shrinkage. This option is to be used when a datafile with all
-data needed for the gls model run is already available, i.e. all input for the original model plus columns with PRED and IPRED from the 
-original model run, and if -ind\_shrinkage is set also a ISHR column with per observation shrinkage values. The option indicates that \$DATA 
-specifies the file with the gls input data, and that \$INPUT lists the parameters in the datafile. In \$INPUT the columns PPRE and PIPR must 
-be present as headers for PRED and IPRED values, plus ISHR for the shrinkage column if -ind\_shrinkage is set. 
+Default not set. Only possible together with -iwres\_shrinkage or -ind-shrinkage. This option is to be used when a datafile with all data needed for the gls model run is already available, i.e. all input for the original model plus columns with PRED and IPRED from the original model run, and if -ind\_shrinkage is set also a ISHR column with per observation shrinkage values. The option indicates that \$DATA specifies the file with the gls input data, and that \$INPUT lists the parameters in the datafile. In \$INPUT the columns PPRE and PIPR must be present as headers for PRED and IPRED values, plus ISHR for the shrinkage column if -ind\_shrinkage is set. 
 Then PsN will add the GLSP code to the gls model and run it directly, saving the original model run.
-Note that a run with the simeval program will automatically generate a complete input file for gls (including PRED IPRED and per-observation 
-shrinkage).
+Note that a run with the simeval tool will automatically generate a complete input file for gls (including PRED IPRED and per-observation shrinkage).
 \nextopt
 \optname{ind\_shrinkage}
 Default not set. Compute per-observation iwres-shrinkage based on simulations. 
 \nextopt
 \optdefault{iwres\_shrinkage}{X}
-Default not set. Forbidden in combination with -ind\_shrinkage. If the population iwres shrinkage from the input model run is already available, 
-or if a special values such as 0 or 1 is desired, the user can give the value as input on the command-line. Important note: PsN reports shrinkage
+Default not set. Forbidden in combination with -ind\_shrinkage. If the population iwres shrinkage from the input model run is already available, or if a special values such as 0 or 1 is desired, the user can give the value as input on the command line. Important note: PsN reports shrinkage
 in percent in the raw\_results file, so if using the value from raw\_results as input that value must be divided by 100.   
 \nextopt
 \optname{reminimize}
 Default not set. Only relevant if -ind\_shrinkage is set and -gls\_model is not set. By default, simulated datasets will be run with MAXEVAL=0 
 (or equivalent for non-classical estimation methods). If option -reminimize is set then the same \$EST as in the input model will be used. 
 \nextopt
+\newpage
 \optdefault{samples}{N}
 Default not set. Only relevant if -ind\_shrinkage is set and -gls\_model is not set. Creates N copies of the input model with different seeds in \$SIM. 
 Run to get N IWRES values for each data point yij. 
+
 Compute iwres\_shrinkage\_ij =1-stdev(IWRES\_ij(1:N))
 \nextopt
 \optname{set\_simest}
@@ -96,10 +93,8 @@ simulation model.
 \nextopt
 \end{optionlist}
 
-\subsection{Some important common PsN options}
-For a complete list see common\_options.pdf, 
-or psn\_options -h on the commandline.
-\input{inputs/basic_options.tex}
+\subsection{PsN common options}
+For a complete list see common\_options.pdf or type psn\_options -h on the command line.
 
 \section{Output}
 

@@ -1,5 +1,5 @@
 \input{inputs/format_header.tex}
-\guidetitle{SIR user guide}{2017-12-19}
+\guidetitle{SIR user guide}{2018-01-31}
 \usepackage{amsmath}
 
 \begin{document}
@@ -23,7 +23,7 @@ resampled according to these weights.
 \end{itemize}
 IR are evaluated for the new set of parameter vectors and m vectors are resampled based on their IR. In practice, the number of samples (M) and resamples (m) can vary between iterations. The procedure should be repeated until there is no change between the proposal uncertainty and the posterior uncertainty, meaning that the sir procedure has converged to the true uncertainty.
 
-Because the number of iterations is chosen by the user, diagnostics plots have been developed to assess whether this number of iterations was enough for sir to converge, and these can be generated via the -rplots option, see section Diagnostic sir plots.\\
+Because the number of iterations is chosen by the user, diagnostics R plots have been developed to assess whether this number of iterations was enough for sir to converge, and these can be generated via the -rplots option, see section Diagnostic sir R plots.\\
 Example:
 \begin{verbatim}
 sir -samples=1000,2000 -resamples=500,1000 run89.mod
@@ -31,7 +31,7 @@ sir -samples=1000,2000 -resamples=500,1000 run89.mod
 
 \section{Input and options}
 \subsection{Required input}
-A model file is required on the command line. If output file (lst) exists, then it is important that the control stream copy at the top of the lst-file matches the actual input model file in terms of which parameters are present and which parameters are FIXED or SAME.
+A model file is required on the command line. If output file (.lst) exists, then it is important that the control stream copy at the top of the .lst-file matches the actual input model file in terms of which parameters are present and which parameters are FIXED or SAME.
 \subsection{Optional input}
 \begin{optionlist}
 \optname{add\_iterations}
@@ -45,14 +45,14 @@ If some but not all iterations from the previous run had finished, the new run w
 Example: if the old setting was -samples=1000,1000 	and the new with -add\_iterations is -samples=2000,2000 and the old run was terminated after the first iteration, then after the add\_iterations run has finished there will be three iterations in total with sample sequence 1000,2000,2000 after the new run has finished.
 \nextopt
 \optdefault{auto\_rawres}{degree}
-Default not set. Not allowed in combination with covmat\_input. If rawres\_input is not set, this option will make sir use the tweak\_inits functionality to automatically create a rawres\_input file with perturbed parameter vectors, and these vectors will then be used as if read from a real raw\_results file.	The generation of perturbed parameter vector $i$, element $j$, is performed according to\\
-init\_ij = init\_0j + rand\_uniform(-degree*init\_0j,+degree*init\_0j) where init\_0j is the final estimate of parameter $j$ in the input model.	The tweaking procedure makes sure that boundary conditions, including positive definiteness of \$OMEGA and \$SIGMA, are respected.
+Default not set. Not allowed in combination with covmat\_input. If rawres\_input is not set, this option will make sir use the tweak\_inits functionality to automatically create a rawres\_input file with perturbed parameter vectors, and these vectors will then be used as if read from a real raw\_results file.	The generation of perturbed parameter vector $i$, element $j$, is performed according to init\_ij = init\_0j + rand\_uniform(-degree*init\_0j,\\+degree*init\_0j) where init\_0j is the final estimate of parameter $j$ in the input model.	The tweaking procedure makes sure that boundary conditions, including positive definiteness of \$OMEGA and \$SIGMA, are respected.
 If option -auto\_rawres is used	in combination with rawres\_input, tweak\_inits by 'degree' will be used to augment the given rawres\_input file until the matrix has full rank, see help text for -rawres\_input. 
 \nextopt
 \optname{boxcox}
 Default set. If option is set, sir will Box-Cox transform parameter vectors before computing the covariance matrix used for sampling. If option is unset using -no-boxcox, no transformation will be performed before computing covariance matrix
 used for sampling.
 \nextopt
+\newpage
 \optdefault{cap\_correlation}{X}
 Default is 0.8. If set to a number between 0 and 1, at every iteration ensure that no absolute value of a correlation in the proposal exceeds this number. If some do, they will be changed to X (or –X if negative). 
 
@@ -97,7 +97,7 @@ significant_digits.gt.3.5
 \end{verbatim} \\
 \nextopt
 \optdefault{mceta}{N}
-Only allowed when NONMEM 7.3 or later and a classical estimation method is used. Set MCETA=N in \$ESTIMATION.
+Only allowed when NONMEM 7.3 or a later version and a classical estimation method is used. Set MCETA=N in \$ESTIMATION.
 \nextopt
 \optdefault{offset\_rawres}{N}
 Default is 1. Only relevant in combination with -rawres\_input. The number of result lines to skip in the input raw results file before starting to read final parameter estimates. In a regular bootstrap raw\_results file, and also in an initial\_estimates.csv file from an sse run, the first line of estimates refers to the input model with the full dataset, so therefore the default offset is 1.
@@ -106,7 +106,7 @@ Default is 1. Only relevant in combination with -rawres\_input. The number of re
 Default is the scalar 1, which is the same as no inflation. Either a positive vector with length equal to the number of estimated (not FIX) \$OMEGA diagonal elements \#, both diagonal \# and off-diagonal, or a positive scalar which will be interpreted as a vector of the required length and all equal values. If given, the variance of each estimated \$OMEGA element will in the first iteration be inflated with the factor from the inflation vector before the parameter vectors are sampled from the truncated multivariate normal distribution. Inflation for off-diagonal elements will be automatically computed based on inflation for diagonals so that the correlation is unchanged. The weights will also be computed based the inflated covariance matrix. Inflation is not used in any but the first iteration.
 \nextopt
 \optdefault{print\_iter}{N}
-Default is 0 (off). Every N:th (multivariate normal sampling) iteration will be printed with cumulative acceptance and rejection rates.
+Default is 0 (off). Every N\textsuperscript{th} (multivariate normal sampling) iteration will be printed with cumulative acceptance and rejection rates.
 \nextopt
 \optdefault{problems\_per\_file}{N}
 Default is 100. The number of \$PROBLEM per model file when running MAXEVAL=0 or similar to get ofv:s for parameter vectors. Setting a higher value decreases the overhead involved in running each control stream, but increases the risk of losing many samples in case a model file crashes. Setting -problems\_per\_file=1 gives maximum robustness to individual crashes, but also maximum overhead cost.
@@ -116,8 +116,7 @@ If rawres\_input is given, sir will run an intial 0th iteration in which sir wil
 
 If the number of vectors read is smaller than the number of estimated parameters (also counting off-diagonals), it is not possible to obtain an empirical covariance matrix with full rank. In this case sir will append copies of the existing vectors, perturbed using the tweak\_inits functionality, until the resulting set of vectors has full rank. If option -auto\_rawres=degree is set on the command line, tweak\_inits will be done by 'degree', otherwise the default degree 0.1 will be used.
 
-If $N$ parameter vectors are read from the rawres file, the generation of perturbed parameter vector $i$, element $j$, is performed according to\\
- init\_ij = init\_kj + rand\_uniform(-degree*init\_kj,+degree*init\_kj) where k=i modulo N and init\_kj is the value of parameter $j$ in original rawres vector $k$.
+If $N$ parameter vectors are read from the rawres file, the generation of perturbed parameter vector $i$, element $j$, is performed according to  init\_ij = init\_kj + rand\_uniform(-degree*init\_kj,\\+degree*init\_kj) where k=i modulo N and init\_kj is the value of parameter $j$ in original rawres vector $k$.
 
 The labels for  THETA/OMEGA/SIGMA in the file must match the labels in the model given as input to sir, the theta columns must be directly followed by the omega columns which must be directly followed by the sigma columns, and the first or
 second column must have header model. Note that is is possible to generate a file with initial parameter estimates outside
@@ -181,10 +180,8 @@ If given, the variance of each estimated \$THETA will in the first iteration be 
 %To cap resampling at e.g. 5, use option -cap\_resampling.
 \nextopt
 \end{optionlist}
-\subsection{Some important common PsN options}
-There are many options that govern how PsN manages NONMEM runs, and those options are common to all PsN programs that run NONMEM. For a complete list of such options see common\_options.pdf, or psn\_options -h on the command line. A selection of
-the most important common options relevant for sir is found here. 
-\input{inputs/basic_options.tex}
+\subsection{PsN common options}
+For a complete list see common\_options.pdf or type psn\_options -h on the command line.
 \section{Obtaining a proposal uncertainty}
 There are a number of different ways to obtain the proposal density for the first iteration.
 \begin{enumerate}
@@ -200,16 +197,16 @@ There are a number of different ways to obtain the proposal density for the firs
 	without having to create the .cov-file.
 	\item If none of the above alternatives are possible, the -auto\_rawres option can be used.	Then sir will create a complete rawres\_input file using the tweak\_inits functionality.
 \end{enumerate}
-\section{Diagnostic sir plots}
+\section{Diagnostic sir R plots}
 \newcommand{\rplotsconditions}{
-See section Output, subsections Basic and Extended diagnostic plots, for descriptions of the default sir plots. The default sir template requires that R libraries gplots, ggplot2, plyr, dplyr, reshape, gridExtra, RColorBrewer, tidyr, MCMCpack and stats4 are installed. If the conditions are not fulfilled then no pdf will be generated, see the .Rout file in the main run directory for error messages.}
+See section Output, subsections Basic and Extended diagnostic  R plots, for descriptions of the default sir R plots. The default sir template requires that R libraries gplots, ggplot2, plyr, dplyr, reshape, gridExtra, RColorBrewer, tidyr, MCMCpack and stats4 are installed. If the conditions are not fulfilled then no pdf will be generated, see the .Rout file in the main run directory for error messages.}
 
 \input{inputs/rplots_section_body.tex}
 
 \section{sir tool workflow}
 \subsubsection*{Setup}
-The sir tool will run the input model unless the lst-file with results is already present. If the lst-file is present, it
-is important that the control stream copy at the top of the lst-file matches the actual input model file in terms of which parameters are estimated, FIXED or SAME, otherwise there will be a mis-match between which parameter estimates are read from the lst-file and which estimates are needed for the sir procedure.
+The sir tool will run the input model unless the .lst-file with results is already present. If the .lst-file is present, it
+is important that the control stream copy at the top of the .lst-file matches the actual input model file in terms of which parameters are estimated, FIXED or SAME, otherwise there will be a mis-match between which parameter estimates are read from the .lst-file and which estimates are needed for the sir procedure.
 
 Unless option -rawres\_input and/or -auto\_rawres is used, read the covariance matrix to be used in iteration 1. The covariance matrix file name is either explicitly given with option -covmat\_input or by default the .cov-file of the input model run.
 
@@ -277,7 +274,9 @@ the new command line \emph{will be ignored}, instead the model and options set i
 
 \section{Adjusting samples and resamples}
 Sometimes the evaluation run fails for some samples, resulting in fewer successful samples (samples with defined ofv)
-than the number of attempted samples. PsN tries to compensate for this loss, and then adjust again if the success rate goes up. If PsN has to compensate for loss, option -problems\_per\_file will automatically be reset to 1.
+than the number of attempted samples. PsN tries to compensate for this loss, and then adjust again if the success rate goes up. 
+
+If PsN has to compensate for loss, option -problems\_per\_file will automatically be reset to 1.
 \subsection{Adjusting samples}
 In iteration 1 the number of attempted samples is always the number of samples requested on the command line with option -samples. When the number of successful samples in the previous iteration was less than $95\%$ of the attempted samples, the number of attempted samples in the current iteration is adjusted according to\\
 $current.attempted.samples=\frac{current.requested.samples \cdot previous.attempted.samples}{previous.successful.samples}$\\
@@ -312,68 +311,67 @@ will be that new vector.
 In the raw results file there will be '-cap\_resampling' (default 1) almost identical line(s) for each parameter vector,
 the only differences will be in the resamples and sample\_order columns.
 
-\item sir\_results.csv with summary statistics, percentiles and empirical sd-correlation matrix 
-\item <modelname>\_sir.cov with the empirical covariance matrix in NONMEM-like format, i.e. fixed width space separated with generic headers in order THETA, SIGMA, OMEGA.
-\item if option -rplots>0: A file PsN\_sir\_plots.pdf with diagnostic sir plots.
+\item sir\_results.csv with summary statistics, percentiles and empirical sd-correlation matrix. 
+\item <modelname>\_sir.cov with the empirical covariance matrix in NON-\\MEM-like format, i.e. fixed width space separated with generic headers in order THETA, SIGMA, OMEGA.
+\item if option -rplots>0: A file PsN\_sir\_plots.pdf with diagnostic sir R plots.
 \item For all but the last iteration: A file with the Box-Cox $\lambda$ for each parameter, the $\delta$ used to shift
 the values to positive before Box-Cox transformation, the original estimate and the transformed estimate. If the $\lambda$ column is empty it means that no transformation was needed because the parameter was already close to normally distributed.
-\item For all but the last iteration: A file boxcox\_covmatrix\_iterationi.cov with the Box-Cox space covariance matrix for iteration $i$, or, if -no-boxcox was set on command line, a file untransformed\_covmatrix\_iterationi.cov.
+\item For all but the last iteration: A file boxcox\_covmatrix\_iterationi.cov with the Box-Cox space covariance matrix for iteration $i$ or, if -no-boxcox was set on the command line, a file untransformed\_covmatrix\_\\iterationi.cov.
 \item A file summary\_iterations.csv with, for each iteration, the requested samples, attempted samples, successful samples, requested resamples, actual resamples, requested samples-resamples ratio, actual samples-resamples ratio, count negative delta-ofv and minimum iteration sample ofv.
 \item A file sample\_rejection\_summary.txt which contains a summary of the causes of sample rejections for the most recent iteration. If sir terminates due to failure to generate enough samples that fulfill boundary conditions, this file
 is important for diagnosing what went wrong. Note: Each sample rejection is only recorded once in the summary file.
 Only the first encountered boundary violation will be counted even if additional elements further down the list are also outside their respective boundaries.
 \end{itemize}
 
-\subsection{Basic diagnostic plots}
-Basic diagnostic rplots for the last iteration of sir will be generated in file  PsN\_plots\_base.pdf if option -rplots is set >0.
+\subsection{Basic diagnostic R plots}
+Basic diagnostic R plots for the last iteration of sir will be generated in file  PsN\_plots\_base.pdf if option -rplots is set >0.
 
-\subsubsection{dOFV plot}
+\subsubsection{dOFV R plot}
 \begin{description}
 \item[Purpose] Determine whether the sir procedure has converged, i.e. whether sir results are final.
-\item[Description] This plot shows the distribution of the dOFV for the N proposal (PROPOSAL, dotted colored lines) and N posterior uncertainties (sir, full colored lines) of the sir procedure. The distributions are represented by plotting the value of the dOFV (on the y-axis) for the different quantiles (on the x-axis). The colors correspond to the iterations. A reference distribution corresponding to a chi-square distribution with degrees of freedom equal to the total number of estimated parameters is displayed (full grey line). The shaded areas correspond to resampling noise over the last 2 iterations. The estimated degree of freedom for each distribution is displayed at the bottom right.
+\item[Description] This R plot shows the distribution of the dOFV for the N proposal (PROPOSAL, dotted colored lines) and N posterior uncertainties (sir, full colored lines) of the sir procedure. The distributions are represented by plotting the value of the dOFV (on the y-axis) for the different quantiles (on the x-axis). The colors correspond to the iterations. A reference distribution corresponding to a chi-square distribution with degrees of freedom equal to the total number of estimated parameters is displayed (full grey line). The shaded areas correspond to resampling noise over the last 2 iterations. The estimated degree of freedom for each distribution is displayed at the bottom right.
 \item[Interpretation] sir results are final if the two last sir posterior uncertainties are similar, i.e. within resampling noise. If this is not the case, further iterations should be performed until it is the case. The dOFV curve of the final posterior uncertainty should resemble a chi-square distribution with degree of freedom equal or less than the total number of estimated parameters, i.e. be below the reference chi-square.
 \end{description}
-\subsubsection{CI plot}
+\subsubsection{CI R plot}
 \begin{description}
 \item[Purpose] Visualize the estimated uncertainty of the model parameters over all sir iterations.
-\item[Description] This plot displays the confidence intervals (colored error bars on the y-axis, default CI95\%)
+\item[Description] This R plot displays the confidence intervals (colored error bars on the y-axis, default CI95\%)
 of all model parameters over all iterations of the sir procedure (on the x-axis). It also includes the CI of the first proposal density, i.e. the sir starting point (NONMEM’s covariance matrix for example). The points correspond to the median and the horizontal dashed lines to the final estimates of the model (from NONMEM’s .ext file). The final results of the sir procedure are the last CI on the right in each panel.
-\item[Interpretation] Final median and outer percentiles of a parameter’s CI can be read off this plot. Be \emph{very}
+\item[Interpretation] Final median and outer percentiles of a parameter’s CI can be read off this R plot. Be \emph{very}
 careful when looking at trends over iterations (stabilization/increase/decrease), as the number of resamples from which the CI are computed can be very variable. The outer bounds of wide CI (such as the default 95\% here)
 can vary a lot because of random noise, so this pot should in general not be used to diagnose sir convergence.
 \end{description}
-\subsubsection{RSE - correlation plots for proposal and sir}
+\subsubsection{RSE - correlation R plots for proposal and sir}
 \begin{description}
 \item[Purpose] Visualize parameter uncertainty before and after sir in terms of the relative standard errors (RSE) of each parameter, asymmetry in the confidence intervals (CI) and correlations between parameter uncertainties.
-\item[Description] This plot shows the variance-covariance matrix of parameter uncertainty obtained before sir (i.e. from the proposal) and after sir. The numbers on the diagonal are RSE in \%. Their color corresponds to the degree of asymmetry in the obtained confidence interval as measured by the asymmetry factor, calculated as the distance between the upper bound and the  median of the CI divided by the distance between the lower bound and the median of the CI. For example, high asymmetry factors (greater than 2 or lower than 0.5) correspond to CI for which one of the sides (distance between median and CI bound) is twice the length of the other. The numbers in the off-diagonals correspond to the correlations between parameters, and the color code indicates the correlation level.
-\item[Interpretation] This plot is primarily a visualization tool to better understand the uncertainty of the proposal and of sir. However, if the RSE of the proposal appear very low, or the correlations very high, it is advised to make sure that the proposal was not too restrictive by looking carefully at the other diagnostics (dOFV below chi-square, trends in spatial and/or temporal trend plots).
+\item[Description] This R plot shows the variance-covariance matrix of parameter uncertainty obtained before sir (i.e. from the proposal) and after sir. The numbers on the diagonal are RSE in \%. Their color corresponds to the degree of asymmetry in the obtained confidence interval as measured by the asymmetry factor, calculated as the distance between the upper bound and the  median of the CI divided by the distance between the lower bound and the median of the CI. For example, high asymmetry factors (greater than 2 or lower than 0.5) correspond to CI for which one of the sides (distance between median and CI bound) is twice the length of the other. The numbers in the off-diagonals correspond to the correlations between parameters, and the color code indicates the correlation level.
+\item[Interpretation] This R plot is primarily a visualization tool to better understand the uncertainty of the proposal and of sir. However, if the RSE of the proposal appear very low, or the correlations very high, it is advised to make sure that the proposal was not too restrictive by looking carefully at the other diagnostics (dOFV below chi-square, trends in spatial and/or temporal trend R plots).
 \end{description}
 
 
-\subsection{Extended diagnostic plots}
-Extended diagnostic plots will be generated in file PsN\_plots\_extended.pdf if option -rplots is set >1.
+\subsection{Extended diagnostic R plots}
+Extended diagnostic R plots will be generated in file PsN\_plots\_extended.pdf if option -rplots is set >1.
 
 \subsubsection{Adequacy of proposal density}
 \begin{description}
 \item[Purpose] Evaluate how good the proposal uncertainties describe the true parameter uncertainty (by iteration).
-\item[Description] This plot shows separately for each parameter and each iteration the proportion of resampled parameters (on the y-axis) over different parts of the parameter space defined by the simulated parameters, which is divided into 10 equally sized bins ordered by increasing parameter values on the x-axis.
+\item[Description] This R plot shows separately for each parameter and each iteration the proportion of resampled parameters (on the y-axis) over different parts of the parameter space defined by the simulated parameters, which is divided into 10 equally sized bins ordered by increasing parameter values on the x-axis.
 The horizontal dotted line at $\frac{m_{total}}{M_{total}}$
-corresponds to the expected value of this proportion were the proposal uncertainty the true uncertainty. The grey shaded area corresponds to stochastic noise, computed as the CI95\%
-around the expected proportion.
-\item[Interpretation] 4 types of trends can be observed in this plot. If the observed proportion is within the stochastic noise around the expected proportion for all percentile bins (horizontal trend), it means that the proposal density of the last iteration is close to the true uncertainty. If the observed proportion is higher in the center and lower at the ends (bell-shaped trend), it means that the proposal density is too wide. Oppositely, if the observed proportion is lower in the center and higher at the ends (u-shaped trend), it means that the proposal density is too narrow. Lastly, if the proportion is higher at one end and lower at the other (diagonal trend), it means that the proposal density is not asymmetric enough. No action should be taken based on this plot as it does not tell us whether the resampling was able to compensate for these trends.
+corresponds to the expected value of this proportion were the proposal uncertainty the true uncertainty. The grey shaded area corresponds to stochastic noise, computed as the CI95\% around the expected proportion.
+\item[Interpretation] 4 types of trends can be observed in this R plot. If the observed proportion is within the stochastic noise around the expected proportion for all percentile bins (horizontal trend), it means that the proposal density of the last iteration is close to the true uncertainty. If the observed proportion is higher in the center and lower at the ends (bell-shaped trend), it means that the proposal density is too wide. Oppositely, if the observed proportion is lower in the center and higher at the ends (u-shaped trend), it means that the proposal density is too narrow. Lastly, if the proportion is higher at one end and lower at the other (diagonal trend), it means that the proposal density is not asymmetric enough. No action should be taken based on this R plot as it does not tell us whether the resampling was able to compensate for these trends.
 \end{description}
 
-\subsubsection{Exhaustion of samples (2 plots: by parameter, and over all parameters)}
+\subsubsection{Exhaustion of samples (2 R plots: by parameter, and over all parameters)}
 \begin{description}
 \item[Purpose] Support determination of whether the sir procedure has converged, i.e. whether sir results are final.
-\item[Description] These 2 plots show the number of resampled parameters (on the y-axis) that belong to “sample bin X” over different parts of the parameter space defined by the resampled parameters (on the x-axis). The resampled parameter space is divided into 5 equally sized “resample” bins ordered by resampling order. For each parameter, the focus is only on the sample bin with the highest proportion identified in the previous plot (“sample bin X”) as this is the limiting factor for sir to converge. The first plot looks at the exhaustion of samples separately for each parameter and the second plot at the exhaustion of samples over all parameters. In the first plot, the horizontal dotted line corresponds to the observed number of resamples in resample bin X divided by 5 (mbinX/5) and the grey shaded area corresponds to stochastic noise, computed as the CI95\% around the number of resamples. In the second plot, the blue line corresponds to a smooth of the number of parameters resampled over all parameters.
-\item[Interpretation] Only 1 type of trend needs to be detected in this plot. If the number of resampled vectors decreases over the resample bins (diagonal downward trend), it means that there were not enough samples in the sir procedure to fully correct the proposal uncertainty. Further sir iterations should thus be performed.
+\item[Description] These 2 R plots show the number of resampled parameters (on the y-axis) that belong to “sample bin X” over different parts of the parameter space defined by the resampled parameters (on the x-axis). The resampled parameter space is divided into 5 equally sized “resample” bins ordered by resampling order. For each parameter, the focus is only on the sample bin with the highest proportion identified in the previous R plot (“sample bin X”) as this is the limiting factor for sir to converge. The first R plot looks at the exhaustion of samples separately for each parameter and the second R plot at the exhaustion of samples over all parameters. In the first R plot, the horizontal dotted line corresponds to the observed number of resamples in resample bin X divided by 5 (mbinX/5) and the grey shaded area corresponds to stochastic noise, computed as the CI95\% around the number of resamples. In the second R plot, the blue line corresponds to a smooth of the number of parameters resampled over all parameters.
+\item[Interpretation] Only 1 type of trend needs to be detected in this R plot. If the number of resampled vectors decreases over the resample bins (diagonal downward trend), it means that there were not enough samples in the sir procedure to fully correct the proposal uncertainty. Further sir iterations should thus be performed.
 \end{description}
 
-\subsubsection{Estimation of degrees of freedom for IIVs }
+\subsubsection{Estimation of degrees of freedom for IIVs}
 \begin{description}
 \item[Purpose] Calculate the uncertainty to use for IIV parameters when they are used as priors (equivalent degrees of freedom in inverse Wishart distributions) 
-\item[Description] This plot shows the distribution of the resampled IIVs (histograms) and the fitted inverse Wishart distributions (colored lines). The corresponding number of individuals using the inverse Wishart distribution and using the Normal distribution are displayed in the legend.
+\item[Description] This R plot shows the distribution of the resampled IIVs (histograms) and the fitted inverse Wishart distributions (colored lines). The corresponding number of individuals using the inverse Wishart distribution and using the Normal distribution are displayed in the legend.
 \item[Interpretation] In theory, the maximum degree of freedom is the total number of individuals in the dataset. An IIV with a degree of freedom equal to the total number of individuals in the dataset is an IIV for which perfect information is available (individual Empirical Bayes Estimates have very low standard errors). An IIV with a degree of freedom much lower than the total number of individuals is an IIV with imperfect information (individual Empirical Bayes Estimates have very high standard errors). When available, the number of individuals based on the Wishart distribution is expected to be a better estimate than the number of individuals based on the Normal distribution.
 \end{description}
 

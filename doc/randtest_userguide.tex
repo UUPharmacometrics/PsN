@@ -1,5 +1,5 @@
 \input{inputs/format_header.tex}
-\guidetitle{RANDTEST user guide}{2017-12-19}
+\guidetitle{RANDTEST user guide}{2018-01-31}
 
 \begin{document}
 
@@ -11,7 +11,7 @@
 
 The randtest (randomization test) tool is used for computing actual significance levels. The method is described in \cite{Wahlby}, \cite{Deng}. 
 The tool will shuffle the values in the randomization column ’samples’ times and run the input (full) model with each of the new datasets. Provided that a base (reduced) model is given as input, the delta-ofv:s will be computed and the actual signficance levels will be found in output file randtest\_results.csv.\\
-Example: (on the same line)
+Example: (all code on the same line)
 \begin{verbatim}
 randtest -samples=1000 -randomization_column=DOSE 
 run89.mod -base_model=run0.mod
@@ -58,30 +58,26 @@ Default true. Update the initial estimates of the full model to the final estima
 \nextopt
 \end{optionlist}
 
-\subsection{Some important common PsN options}
-For a complete list see common\_options.pdf, or psn\_options -h on the  command line. 
-\input{inputs/basic_options.tex}
+\subsection{PsN common options}
+For a complete list see common\_options.pdf or type psn\_options -h on the command line.
 
-\subsection{randtest R-plots}
-\newcommand{\rplotsconditions}{See section Output, subsections Basic and Extended plots, for descriptions of the default randtest plots. The default randtest template requires that option -base\_model was used, that input (full) model has more THETAs than base (reduced) model, and that the additional THETAs are the ones relevant for the randomization column. For basic plots it is required that R libraries xpose4 and grid are installed. Extended plots also require that R libraries
+\subsection{randtest R plots}
+\newcommand{\rplotsconditions}{See section Output, subsections Basic and Extended R plots, for descriptions of the default randtest R plots. The default randtest template requires that option -base\_model was used, that input (full) model has more THETAs than base (reduced) model, and that the additional THETAs are the ones relevant for the randomization column. For basic R plots it is required that R libraries xpose4 and grid are installed. Extended R plots also require that R libraries
 ggplot2, reshape2, gridExtra, scales, MASS and plotrix are installed. If the conditions are not fulfilled then no pdf will be generated, see the .Rout file in the main run directory for error messages.}
 \input{inputs/rplots_section_body.tex}
 
 \section{Shuffling the randomization column}
-
 The only column that will change during shuffling is the randomization column. All other columns will be intact, and the order and numbering of individuals will be preserved. Shuffling can only be done on the level of individuals. If stratification is requested via option -stratify\_on, then shuffling will be done separately within the groups defined by unique values in the stratification column. PsN will only look at the value of the stratification column for the first record of each individual. If other records for the same individual have a different stratification value, PsN will print a warning and then ignore the new value.
 During shuffling the sequence of randomization column values from the records of one individual will be copied to another individual. PsN will handle copying also when the number of data set records differs between individuals.
 
 PsN will not filter the data set based on any IGNORE/ACCEPT statements in the NONMEM model file before randomization. This means that during shuffling the values in the randomization column of an IGNOREd data record can be copied to a record that is not IGNOREd, and vice versa.
 
 \subsection{If -match\_transitions is not set, the default}
-
 By default, when option -match\_transitions is not set, PsN will copy values record by record. If the sequence of 'copy-from' values is shorter than 'copy-to' then PsN will do 'last-observation-carry-forward'. \\
 Example:\\ 
 Copying [0,1,1] to [0,0,2,2] will give result [0,1,1,1] when -match\_transitions is not set. Missing data marked by e.g. -99 or values that are '.' (a dot) will be handled like any other value. 
 
 \subsection{If match\_transitions is set}
-
 If option -match\_transitions is set, PsN will match transitions instead of records in the sequence of values. The 'copy-from' sequence determines the values after each transition, while the 'copy-to' sequence determines where the transitions should be. Example: 
 \begin{itemize}
 \item Copying [0,1,1] to [0,0,2,2] will give result [0,0,1,1], i.e. the resulting sequence has 0 before the first transition and 1 after the first transition. 
@@ -104,29 +100,20 @@ If option -match\_transitions is set, PsN will match transitions instead of reco
 \end{itemize}
 
 \section{Output}
-
 The raw\_results file is almost a standard PsN file containing raw result data for termination status, parameter estimates, uncertainty estimates etc. for all model estimations. The first row is for the base model, if any, estimated with the original dataset. The next row is the input model with the original dataset. The following are the input model with the randomized datasets. If a base model was given an extra column with header deltaofv is inserted next to the ofv-column. This column contains the ofv-value of the current model minus ofv for the base model.
 
-If a base-model was given, a file randtest\_results.csv will also be produced, 
-containing summary information about the empirical distribution of the
-delta-ofv values.
+If a base-model was given, a file randtest\_results.csv will also be produced, containing summary information about the empirical distribution of the delta-ofv values.
 
-\subsection{Basic plot}
-A basic rplot will be generated in file PsN\_randtest\_plots.pdf if option -rplots is set >0,
-and the general rplots conditions fulfilled, see above in section Input and options, subsection Randtest R-plots.
-The basic plot is a histogram of delta-ofv between the basic model on the original data and
-the full model on the randomized data. 
-There are vertical lines for delta-ofv of the extended model on the original data,
-and also for the
-nominal and empirical delta-ofv cutoff for p=0.05 with degrees of freedom equal to the number of extra THETAs in
-the full model.
-Note: Generation of basic diagnostic plots will fail if there are some samples
-with undefined ofv \emph{and} the Xpose version is less than 4.5.3.9001.
-Therefore the script will skip the basic plots if Xpose version is less than 4.5.3.9001, and instead generate the extended plots.
+\subsection{Basic R plot}
+A basic R plot will be generated in file PsN\_randtest\_plots.pdf if option -rplots is set >0,
+and the general rplots conditions fulfilled, see above in section Input and options, subsection Randtest R plots.
+The basic R plot is a histogram of delta-ofv between the basic model on the original data and the full model on the randomized data. There are vertical lines for delta-ofv of the extended model on the original data, and also for the nominal and empirical delta-ofv cutoff for p=0.05 with degrees of freedom equal to the number of extra THETAs in the full model.
+Note: Generation of basic diagnostic R plots will fail if there are some samples with undefined ofv \emph{and} the Xpose version is less than 4.5.3.9001.
+Therefore the script will skip the basic R plots if Xpose version is less than 4.5.3.9001, and instead generate the extended R plots.
 
-\subsection{Extended plots}
-The extended plots will be generated if -rplots>1, and start on the second page of the pdf-output. The second page shows
-histograms of delta-ofv and the extra THETAs in the input (full) model. Panel 1 excludes all positive valued deltaOFV (if any) and then plots the distribution of deltaOFV. Panel 2 converts all positive valued deltaOFV (if any) to 0, hence modified deltaOFV or mod.delOFV, and then plots the distribution of mod.deltaOFV. So, if there is no positive deltaOFV, these two panels are the same. Panel 3 and above are histograms of the extra THETAs in the input (full) model.
+\subsection{Extended R plots}
+The extended R plots will be generated if -rplots>1, and start on the second page of the pdf-output. The second page shows
+histograms of delta-ofv and the extra THETAs in the input (full) model. Panel 1 excludes all positive valued deltaOFV (if any) and then R plots the distribution of deltaOFV. Panel 2 converts all positive valued deltaOFV (if any) to 0, hence modified deltaOFV or mod.delOFV, and then R plots the distribution of mod.deltaOFV. So, if there is no positive deltaOFV, these two panels are the same. Panel 3 and above are histograms of the extra THETAs in the input (full) model.
 
 On the following page, top left panel: comparison of the cumulative distribution functions (CDF) of the empirical distribution (absolute values of deltaOFV after randtest) in orange and the theoretical distribution (Chi-sq distribution closest to the empirical distribution) in olive green. The vertical dashed blue and solid green lines represent 95 percentile cutoff for the empirical and theoretical distributions, respectively. The vertical dashed purple line shows the absolute value of the true deltaOFV.
 
@@ -142,9 +129,7 @@ The randtest tool creates N (N=number of samples), datasets of size M (M=sample\
 
 
 \section{Known bugs and problems}
-Generation of basic diagnostic plots will fail if there are some samples
-with undefined ofv \emph{and} the Xpose version is less than 4.5.3.9001.
-The script will skip the basic plots if Xpose version is less than 4.5.3.9001, and instead generate the extended plots.
+Generation of basic diagnostic R plots will fail if there are some samples with undefined ofv \emph{and} the Xpose version is less than 4.5.3.9001. The tool will skip the basic R plots if Xpose version is less than 4.5.3.9001, and instead generate the extended R plots.
 
 It is recommented to remove all \$TABLE from the modelfile, otherwise there will be much extra output produced. For the same reason it is recommended to remove PRINT options from \$ESTIMATION. 
 The results of two runs will be different even if the seed is the same if the lst-file of the input model and base modle are present at the start of one run but not the other. Running the input model changes the state of the random number generator, and therefore the datasets will be different depending on if the input model is run or not before generating the  new datasets.

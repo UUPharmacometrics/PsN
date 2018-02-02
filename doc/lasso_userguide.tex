@@ -1,5 +1,5 @@
 \input{inputs/format_header.tex}
-\guidetitle{LASSO user guide}{2017-11-16}
+\guidetitle{LASSO user guide}{2018-01-31}
 
 
 
@@ -9,7 +9,9 @@
 \newcommand{\guidetoolname}{lasso}
 
 \section{Introduction}
-Covariate models for population pharmacokinetics and pharmacodynamics are often built with a stepwise covariate modelling procedure (scm tool, available in PsN). When analysing a small dataset this method may produce a covariate model that suffers from selection bias and poor predictive performance. The lasso tool \cite{Ribbing} is a method suggested to remedy these problems. It may also be faster than the scm tool and provide a validation of the covariate model. 
+Covariate models for population pharmacokinetics and pharmacodynamics are often built with a stepwise covariate modelling procedure (scm tool, also available in PsN). When analysing a small dataset this method may produce a covariate model that suffers from selection bias and poor predictive performance. 
+
+The lasso tool \cite{Ribbing} is a method suggested to remedy these problems. It may also be faster than the scm tool and provide a validation of the covariate model. 
 
 In the lasso tool all covariates must be standardised to have zero mean and standard deviation one. Subsequently, the model containing all potential covariate–parameter relations is fitted with a restriction: the sum of the absolute covariate coefficients must be smaller than a value, t. The restriction will force some coefficients towards zero while the others are estimated with shrinkage. This means in practice that when fitting the model the covariate relations are tested for inclusion at the same time as the included relations are estimated. For a given scm analysis, the model size depends on the P-value required for selection. In the lasso tool the model size instead depends on the value of t which can be estimated using cross-validation.
 \\Example:
@@ -20,7 +22,7 @@ lasso run2.mod -relations=CL:CLCR-2,WT-3,,V:WT-2
 \section{Input and options}
 
 \subsection{Required input}
-A model file is required on the command line. Each parameter, e.g. CL and V, listed with the option -relations (see below) must  have the typical value encoded as TV\emph{parameters} in the model e.g. TVCL and TVV. The covariate effects will be added multiplicatively to the TV variables, see the example lasso model code below. If option -log\_scale is set, then instead the logarithm of the typical value must be encoded as LNTV\emph{parameter}, e.g. LNTVCL, and the covariate effects will be added additively to the LNTV variables.
+A model file is required on the command line. Each parameter, e.g. CL and V, listed with the mandatory option -relations must  have the typical value encoded as TV\emph{parameters} in the model e.g. TVCL and TVV. The covariate effects will be added multiplicatively to the TV variables, see the example lasso model code below. If option -log\_scale is set, then instead the logarithm of the typical value must be encoded as LNTV\emph{parameter}, e.g. LNTVCL, and the covariate effects will be added additively to the LNTV variables.
 
 The lasso tool does not support \$PRIOR in the input model.
 \begin{optionlist}
@@ -114,18 +116,15 @@ Default not set. If the option is set, PsN will try to preserve the relative pro
 \nextopt
 \end{optionlist}
 Note: Do not set common option \emph{\textbf{min\_retries}} with lasso as it may interfere with the handling of runs with rounding errors.
-\subsection{Some important common PsN options}
-For a complete list see common\_options.pdf, 
-or psn\_options -h on the commandline.
+\subsection{PsN common options}
+For a complete list see common\_options.pdf or type psn\_options -h on the command line.
 
+\subsection{Minimization and Retries}
 The high dimensionality of a lasso model can make minimization more difficult. Therefore lasso has some special methods for handling minimization terminated due to rounding errors, and minimization terminated due to max number of evaluations exceeded.
 
 Retries in lasso work slightly differently from retries in other PsN tools. Before doing a retry in lasso, if minimization is terminated due to rounding errors then PsN will set thetas below cutoff to 0. Initial estimates will not be tweaked at the first retry, when thetas are cut for the first time. Instead the initial estimates will be set to the final estimates of the first try. If repeated retries are required then thetas will be cut again and then initial estimates will be tweaked. As with any PsN tool the total number of retries is governed by the -retries option. 
 
 Picking the best retry results is done as in other PsN tools, see details in common\_options.pdf. It does not matter if some retries have thetas that are set to zero.
-
-\input{inputs/basic_options.tex}
- 
 
 \section{Output}
 The raw\_results csv-file contains the parameter estimates of the final lasso model(s), as well as the FACTOR and

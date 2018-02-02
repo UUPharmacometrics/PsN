@@ -1,5 +1,5 @@
 \input{inputs/format_header.tex}
-\guidetitle{XV\_SCM user guide}{2015-02-26}
+\guidetitle{XV\_SCM user guide}{2018-01-31}
 
 \begin{document}
 
@@ -7,14 +7,13 @@
 
 
 \section{Overview}
-The xv\_scm program is an implementation of the method described in \cite{Katsube1} and \cite{Katsube2} 
+The xv\_scm tool is an implementation of the method described in \cite{Katsube1} and \cite{Katsube2}. 
 
-The xv\_scm program
-depends heavily on the scm program, and all scm options apply also to xv\_scm except that options search\_direction, gof, p\_value, p\_forward, p\_backward and update\_derivatives are ignored,
-and option -base\_ofv cannot be used. Please refer to scm\_userguide.pdf for help on scm options.
+The xv\_scm tool depends heavily on the scm tool, and all scm options apply also to xv\_scm, except these options which cannot be used:
+search\_direction, gof, p\_value, p\_forward, p\_backward and update\_derivatives are ignored, and option -base\_ofv.. Please refer to scm\_userguide.pdf for help on scm options.
 A word of caution: xv\_scm produces many files and takes up much disk space. It is wise to delete all the split\_X subdirectories once the results are collected.
 
-Example xv\_scm call:
+Example:
 \begin{verbatim}
 xv_scm -config_file=config_xv.scm -groups=5 -splits=3 -seed=12345
 \end{verbatim}
@@ -26,35 +25,33 @@ A configuration file is required (just as for scm).  The format of the configura
 
 \subsection{Optional input}
 
-These options are specific to xv\_scm, and they can only be given on the command-line, not in the configuration file.
+These options are specific to xv\_scm, and they can only be given on the command line, not in the configuration file.
 
 \begin{optionlist}
 \optdefault{groups}{N}
-Default 5. The number of cross-validation groups for an N-fold cross-validation. 
+Default is 5. The number of cross-validation groups for an N-fold cross-validation. 
 \nextopt
 \optdefault{splits}{N}
-Default 1. The number times to perform a complete cross-validation with a new data split. 
+Default is 1. The number times to perform a complete cross-validation with a new data split. 
 \nextopt
 \optdefault{stratify\_on}{variable}
-Default not used. If set, PsN will try to preserve the relative proportions of individuals with different values of the stratification variable when dividing the data into groups during cross-validation. The stratification variable must be found in \$INPUT of the input model file. Headers in the data file will be ignored.
+Default not set. If set, PsN will try to preserve the relative proportions of individuals with different values of the stratification variable when dividing the data into groups during cross-validation. The stratification variable must be found in \$INPUT of the input model file. Headers in the data file will be ignored.
 If the desired stratification variable is continuous it is recommended to first group the values,
 add a group number column to the data set,
 and then stratify on group number instead of the continuous variable. 
 \nextopt
 \end{optionlist}
 
-Do not set scm option -only\_successful in xv\_scm. That option would interfere with the xv\_scm algorithm.
-
+\textbf{Note}: Do not set scm option -only\_successful in xv\_scm. That option would interfere with the xv\_scm algorithm.
 
 \section{Algorithm overview}
-
 For each split: 
 \begin{itemize}
 \item[] Divide the dataset into 'groups' equally sized subsets, using stratification if option -stratify\_on is set.
 \item[] For each data subset: 
 \begin{itemize}
 \item[] Call the selected subset the prediction/test data and the remaining 'groups'-1 subsets the estimation/training data. 
-\item[] Run a regular scm on the estimation data, using the scm input option given on the command-line and the configuration file except forcing options search\_direction=forward, p\_forward=1,  gof=p\_value, -no-update\_derivatives. For the base model and for the model selected by the scm in each iteration a  prediction run is performed. The prediction run is  done by copying the model, updating the initial estimates with the final estimates for the same model based on the estimation data, setting MAXEVAL=0 or equivalent for non-classical estimation methods, and running the model with the prediction data. The OFV of the prediction run is then collected and reported in output.
+\item[] Run a regular scm on the estimation data, using the scm input option given on the command line and the configuration file except forcing options search\_direction=forward, p\_forward=1,  gof=p\_value, -no-update\_derivatives. For the base model and for the model selected by the scm in each iteration a  prediction run is performed. The prediction run is  done by copying the model, updating the initial estimates with the final estimates for the same model based on the estimation data, setting MAXEVAL=0 or equivalent for non-classical estimation methods, and running the model with the prediction data. The OFV of the prediction run is then collected and reported in output.
 If the linearization method is used (option -linearize to scm), then a prediction step is needed also for the derivatives model. After running the nonlinear derivatives model on the estimation data, a prediction step is run as above for the derivatives model. Then the derivatives output from the derivatives prediction step replaces the original prediction data in the prediction steps for all the linearized models, including the linearized base model.
 \end{itemize}
 \end{itemize}

@@ -1,5 +1,5 @@
 \input{inputs/format_header.tex}
-\guidetitle{RUNRECORD user guide}{2017-12-19}
+\guidetitle{RUNRECORD user guide}{2018-01-31}
 
 \begin{document}
 
@@ -44,7 +44,7 @@ Default is “lst”, e.g. run1.lst. NONMEM output file extension.
 Default is AAruninfo.txt. The name of the results file.  
 \nextopt
 \optdefault{res\_format}{format of output}
-By default this is detected from the extension of res\_file, where .csv gives csv-format with a text header, .csvy gives csv-format with a yaml header and all others give text format with a text header.\\ The output format for the results file, either .txt (text), .csv or .yaml.
+By default this is detected from the extension of res\_file, where .csv gives csv-format with a text header, .csvy gives csv-format with a yaml header and all others give text format with a text header.\\ The yaml header requires the YAML::Tiny Perl library, if it is not installed the header will have text format. The output format for the results file, either .txt (text), .csv or .yaml.
 \nextopt
 \optdefault{root}{string}
 Default is “run”, e.g. run1.mod. The "root" name of the model files. 

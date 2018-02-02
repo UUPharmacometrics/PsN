@@ -1,5 +1,5 @@
 \input{inputs/format_header.tex}
-\guidetitle{Extended grid user guide}{2017-10-13}
+\guidetitle{EXTENDED GRID user guide}{2018-01-31}
 
 
 \begin{document}
@@ -9,43 +9,40 @@
 
 
 \section{Introduction}
-The extended\_grid program implements the method presented in \cite{Savic}
+The extended\_grid tool implements the method presented in \cite{Savic}
 
-Example call:
+Example:
 \begin{verbatim}
 extended_grid run1.mod
 \end{verbatim}
 
-This will create a new directory extended\_grid\_dirX where X is a number increased every time you run the program. Inside that
+This will create a new directory extended\_grid\_dirX where X is a number increased every time you run the tool. Inside that
 directory it will create a new model file for each OMEGA in the file. You will be able to retrieve the results from the
 corresponding table file.
 
 \section{Input and options}
 
 \subsection{Required input}
-A model file is required on the command-line. No other options are required.
+A model file is required on the command line. No other options are required.
 	
 \subsection{Optional input}	
 \begin{optionlist}
 \optdefault{dv\_column}{column\_name}
-The dependent variable column. Default DV. 
+Default is DV.The dependent variable column.  
 \nextopt
 \optdefault{id\_column}{column\_name}
-The header of the column marking individuals. Default ID.
+Default is ID.The header of the column marking individuals. 
 \nextopt
 \optdefault{ids\_to\_simulate}{N}
-The number of individuals to simulate. Default is the number of individuals in the original dataset.   
+Default is the number of individuals in the original dataset. The number of individuals to simulate.  
 \nextopt
 \optdefault{omega\_multiplier}{number}
-Default 1. The initial omegas in the simulation model and extended model will be multiplied by this number. This gives inflation (or deflation if the multiplier \verb|<| 1) of the variance.
-
+Default is 1. The initial omegas in the simulation model and extended model will be multiplied by this number. This gives inflation (or deflation if the multiplier \verb|<| 1) of the variance.
 \nextopt
 \end{optionlist}
 
-\subsection{Some important common PsN options}
-For a complete list see common\_options.pdf, 
-or psn\_options -h on the commandline.
-\input{inputs/basic_options.tex}
+\subsection{PsN common options}
+For a complete list see common\_options.pdf or type psn\_options -h on the command line.
 
 \section{Output}
 	
@@ -60,9 +57,8 @@ or psn\_options -h on the commandline.
 	\begin{enumerate}
 		\item A run directory extended\_grid\_dirN is created (unless option -dir is set to something different).
 		\item The input model, without any changes, is run in the orig\_modelfit\_dir subdirectory. It is not checked that the input model does not contain NONP. Improvement: Add check that input model does not contain NONP.
-		\item The input model is copied to the simulation model called simulation.mod, along with the original dataset where the copy is called simulation.dta. 
-																											   
-										 
+		\item The input model is copied to the simulation model called simulation.mod, along with the original dataset where the copy is called simulation.dta. \newpage										
+																						    
 		\item Modifications in the simulation model:
 		\begin{enumerate}
 			\item The initial estimates are updated with the final estimates from the input model run.
@@ -74,12 +70,7 @@ or psn\_options -h on the commandline.
 			\item Count the number of OMEGAs and set 
 			\$TABLE ID ETA1 ETA2 ... ETA$\langle$nOMEGA$\rangle$ FIRSTONLY FILE=sim
 			Note: 'ID' in set to option id\_column.
-			\item If option -ids\_to\_simulate=N is set: If the number is smaller than or equal to the number of individuals in the dataset then all but the N first individuals are removed from simulation.dta. Else (N is larger than the number of individuals in the dataset) then the first individual in simulation.dta is copied N-$\langle$original number of ids$\rangle$ times and those individuals are appended so that simulation.dta contains N individuals in total. After modifications the IDs are renumbered ascending.
-																												  
-																												  
-																												
-																 
-			Note: Handling of individuals is not affected by option id\_column, so it is likely that option -ids\_to\_simulate will fail if id\_column is not 'ID'. 
+			\item If option -ids\_to\_simulate=N is set: If the number is smaller than or equal to the number of individuals in the dataset then all but the N first individuals are removed from simulation.dta. Else (N is larger than the number of individuals in the dataset) then the first individual in simulation.dta is copied N-$\langle$original number of ids$\rangle$ times and those individuals are appended so that simulation.dta contains N individuals in total. After modifications the IDs are renumbered ascending. Note: Handling of individuals is not affected by option id\_column, so it is likely that option -ids\_to\_simulate will fail if id\_column is not 'ID'. 
 			Improvement: Add support for -id\_column and -ids\_to\_simulate in combination
 		\end{enumerate}
 		\item The simulation model is run in the simulation\_dir subdirectory.

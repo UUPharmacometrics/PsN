@@ -1,5 +1,5 @@
 \input{inputs/format_header.tex}
-\guidetitle{SCM user guide}{2018-01-10}
+\guidetitle{SCM user guide}{2018-01-31}
 
 \begin{document}
 
@@ -21,7 +21,7 @@ Execute scm using parameters set in the configuration file 'phenobarbital.scm'.
 scm -config_file=phenobarbital.scm
 \end{verbatim}
 
-Execute an SCM using parameters set in the configuration file 'phenobarbital.scm', but override the retries and the seed
+Execute scm using parameters set in the configuration file 'phenobarbital.scm', but override the retries and the seed
 parameter. 
 \begin{verbatim}
 scm -config_file=phenobarbital.scm -retries=5 -seed=12345 pheno-
@@ -29,7 +29,7 @@ barbital.mod
 \end{verbatim}
 
 \section{Input and options}
-There are so many options to scm that it is unpractical to specify them all on the command line. The only option required on the command line is the name of a configuration file, where other options are specified. 
+There are so many options to scm that it is impractical to specify them all on the command line. The only option required on the command line is the name of a configuration file, where other options are specified. 
 
 Additional options are required, but may be specified either on the command line or in the configuration file. If an option is specified both on the command line and in the configuration file, the choice on the command line has precedence. 
 
@@ -58,10 +58,10 @@ scm -config_file=config.scm
 When set in the configuration file, all these options must be set \emph{before} the first  \verb|[section]|. Note also that the leading '-' must be omitted if the option is set in the configuration file.
 \begin{optionlist}
 \optdefault{categorical\_covariates}{comma-separated list}
-A comma separated list of the categorical covariates to be tested. The listed covariates must be found in \$INPUT of the model file. Headers in the data file will be ignored. This list may be omitted if continuous\_covariates is specified. 
+A comma-separated list of the categorical covariates to be tested. The listed covariates must be found in \$INPUT of the model file. Headers in the data file will be ignored. This list may be omitted if continuous\_covariates is specified. 
 \nextopt
 \optdefault{continuous\_covariates}{comma-separated list}
-A comma separated list of the continuous covariates to be tested. The listed covariates must be found in \$INPUT of the model file. Headers in the data file will be ignored. This list may be omitted if categorical\_covariates is specified. 
+A comma-separated list of the continuous covariates to be tested. The listed covariates must be found in \$INPUT of the model file. Headers in the data file will be ignored. This list may be omitted if categorical\_covariates is specified. 
 \nextopt
 \optdefault{model}{filename}
 Default not set. The name of the basic model file. 
@@ -120,7 +120,7 @@ Default not set. Instead of trying valid\_states sequentially, try all states af
 When set, all these options must be set \emph{before} the first \verb|[section]|.
 \begin{optionlist}
 \optconfig{logit}{comma-separated list of parameters}
-By default the value of the covariate function for a parameter is a product of individual functions of the included covariates, and the typical value (TV) of the parameter is multiplied with the product. With option -logit the user can specify a list of parameters which should be treated as logit transformations, i.e. the value of the covariate function is a sum of individual functions, the sum should be added to the typical value of the parameter, and the value of each individual covariate function should be 0, not 1, when the corresponding THETA is 0. The thetas in a linear or hockey-stick relation on a logit parameter will be given lower and upper boundaries -20 and 20 by default. Important note: When a parameter is a logit transformation, the power and exponential covariate relations are not appropriate to add on this parameter. 
+By default the value of the covariate function for a parameter is a product of individual functions of the included covariates, and the typical value (TV) of the parameter is multiplied with the product. With option -logit the user can specify a list of parameters which should be treated as logit transformations, i.e. the value of the covariate function is a sum of individual functions, the sum should be added to the typical value of the parameter, and the value of each individual covariate function should be 0, not 1, when the corresponding THETA is 0. The thetas in a linear or hockey-stick relation on a logit parameter will be given lower and upper boundaries -20 and 20 by default. \textbf{Note}: When a parameter is a logit transformation, the power and exponential covariate relations are not appropriate to add on this parameter. 
 \nextopt
 \optconfig{time\_varying}{list of covariates}
 Handle time-varying covariates when computing median and mean of covariates.
@@ -192,7 +192,7 @@ The options below are listed using the syntax that should be used when setting t
 Can only be set in the configuration file. It is possible to reuse the derivatives data from a previous run, the file derivatives\_covariates.dta, provided that the nonlinear model, the included\_relations, the list of covariates and the do\_not\_drop list are the same. PsN does not check that these conditions are fulfilled, so if they are violated NMtran will fail or the output will be incorrect. Saves time.
 \nextopt
 \optconfig{do\_not\_drop}{list of parameters in INPUT}
-If the -linearize option is used, do\_not\_drop has a different usage. There you must set do\_not\_drop for all \$INPUT items except ID DV and MDV used in an IGNORE/ACCEPT statement, and, if option -error\_code is used, parameters except IPRED and EPS that are used in error\_code. Do *not* list parameters used in PK or PRED if -linearize is used.
+If the -linearize option is used, do\_not\_drop has a different usage. There you must set do\_not\_drop for all \$INPUT items except ID DV and MDV used in an IGNORE/ACCEPT statement, and, if option -error\_code is used, parameters except IPRED and EPS that are used in error\_code. Do *not* list parameters set in PK or PRED if -linearize is used.
 \nextopt
 \optconfig{epsilon}{0}
 Default set. Linearize with respect to epsilons in addition to etas. Disable with epsilon=0 in the configuration file or -no-epsilon on the command line, then no linearization with respect to epsilon is performed. 
@@ -251,11 +251,8 @@ Default not set. Only relevant with linearize method. Run nonlinear model with n
 \end{optionlist}
 \emph{Note}: The two options \textbf{-foce} and \textbf{-second\_order}, described in earlier versions of the smc user guide, do not work and must \emph{not} be used.
 
-\subsection{Some optional general PsN options}
-\begin{optionlist}
-	\input{inputs/data_options.tex}
-\end{optionlist}
-\input{inputs/basic_options.tex}
+\subsection{PsN common options}
+For a complete list see common\_options.pdf or type psn\_options -h on the command line.
 
 \section{Data file}
 If the data file has a header it will be ignored. Only the names set in \$INPUT of the input model will be used.
@@ -278,7 +275,7 @@ At the top of the configuration file you can specify any scm command line option
 
 These options can still be given on the command line and will then override any options set in the configuration file. \emph{\textbf{Important note:}} All command line options that the user chooses to set in the configuration file must come \emph{before} all bracket-header sections (\verb|[section]|) in the configuration file, otherwise the command line options will be ignored.
 
-You can place a comment anywhere in the file by prefixing the line with a semicolon. \emph{Do not} add comments at the end of lines, always put comments on separate lines.
+You can place a comment anywhere in the file by prefixing the line with a semicolon (;). \emph{Do not} add comments at the end of lines, always put comments on separate lines.
 
 \section{Configuration file sections}
 All sections have a header enclosed by square brackets. The sections must come after the single line options.
@@ -372,7 +369,7 @@ V:SMOK-2=1/(median-minimum)
 CL:*-2=200
 \end{verbatim}
 
-The left hand side is of the form “PARAMETER:COVARIATE-STATE”. Both PARAMETER and COVARIATE can be an asterisk (*), which is a wildcard and is the same as repeating the line for each parameter and/or covariate. The STATE can be any one of 2-5 or a new state defined by the user in the code section. For the “inits” section the right hand side is a comma separated list of initial values for theta parameters put into the abbreviated code corresponding to the combination. Unless the states are redefined using the code option, for continuous variables the list for state 2 should be one value, for state 3 two values and for states 4 and 5 one value. 
+The left hand side is of the form “PARAMETER:COVARIATE-STATE”. Both PARAMETER and COVARIATE can be an asterisk (*), which is a wildcard and is the same as repeating the line for each parameter and/or covariate. The STATE can be any one of 2-5 or a new state defined by the user in the code section. For the “inits” section the right hand side is a comma-separated list of initial values for theta parameters put into the abbreviated code corresponding to the combination. Unless the states are redefined using the code option, for continuous variables the list for state 2 should be one value, for state 3 two values and for states 4 and 5 one value. 
 
 For categorical covariates where STATE can only be 2 it is the number of categories that decides the number of initial values. The lower\_bounds and upper\_bounds sections follows the same rules and corresponds to the bounds for the theta parameters put into the abbreviated code. If you specify too few or too many values, those you exclude will be replaced by defaults and the extraneous will be ignored. 
 

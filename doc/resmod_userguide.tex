@@ -1,5 +1,5 @@
 \input{inputs/format_header.tex}
-\guidetitle{RESMOD user guide}{2017-12-19}
+\guidetitle{RESMOD user guide}{2018-01-31}
 
 \begin{document}
 
@@ -23,16 +23,16 @@ A model file is required on the command line.
 
 \begin{optionlist}
 \optdefault{dv}{dependent variable}
-Default CWRES. Name of the dependent variable. 
+Default is CWRES. Name of the dependent variable. 
 \nextopt
 \optdefault{dvid}{DVID column name}
-Default DVID. Name of the dvid column. 
+Default is DVID. Name of the dvid column. 
 \nextopt
 \optdefault{groups}{N}
 Default is 4. Set the number of groups to use for the time varying models. Quantiles using this number will be calculated.
 \nextopt
 \optname{idv}
-Default TIME. Name of the independent variable. If set to PRED PsN will rename it appropriately so that it can be used in \$INPUT.
+Default is TIME. Name of the independent variable. If set to PRED PsN will rename it appropriately so that it can be used in \$INPUT.
 \nextopt
 \optname{iterative}
 Set if an iterative process is wanted. The iteration is to pick the model with best dOFV and rerun all models with the CWRES output from that model etc until all models have been picked.
@@ -41,10 +41,10 @@ Set if an iterative process is wanted. The iteration is to pick the model with b
 Default is no limit. Limit the maximum number of steps in the iterative procedure. 
 \nextopt
 \optname{obs\_column}
-The default is the same as -dv. Use this column to ignore non-observations. All zero entries in this column will be interpreted as a non-observation.
+Default is the same as -dv. Use this column to ignore non-observations. All zero entries in this column will be interpreted as a non-observation.
 \nextopt
 \optname{occ}
-Default OCC. Name of the occasion column. 
+Default is OCC. Name of the occasion column. 
 \nextopt
 \end{optionlist}
 

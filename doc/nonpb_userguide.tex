@@ -1,5 +1,5 @@
 \input{inputs/format_header.tex}
-\guidetitle{NONPB and PIND user guides}{2017-12-07}
+\guidetitle{NONPB and PIND user guides}{2018-01-31}
 
 
 \begin{document}
@@ -10,7 +10,7 @@
 
 \section{Introduction}
 
-The nonpb tool is a resampling-based method for estimating imprecision in nonparametric distribution (NPD) estimates obtained in NONMEM. Imprecision in the NPD can be estimated by means of two different resampling procedures. \cite{Baverel}.
+The nonpb tool is a resampling-based method for estimating imprecision in nonparametric distribution (npd) estimates obtained in NONMEM. Imprecision in the npd can be estimated by means of two different resampling procedures. \cite{Baverel}.
 
 The simplified method, -nonpb\_version=1, is the default and relies on bootstrap sampling of individual nonparametric probability distributions. 
 
@@ -65,12 +65,11 @@ Default not set. Experimental. Filename for new joint density column.
 \nextopt
 \end{optionlist}
 
-\subsection{Some important common PsN options}
-For a complete list see common\_options.pdf, or psn\_options -h on the command line. 
-\input{inputs/basic_options.tex}
+\subsection{PsN common options}
+For a complete list see common\_options.pdf or type psn\_options -h on the command line.
 
 \section{Output}
-Intermediate files written during the procedure are found in the intermediate\_files subdirectory of the nonpb run directory. In the result\_files subdirectory the files CI\_results\_ETAk.csv are found, where k=1,...,(number of ETAs). CI\_results\_ETAj.csv contains the mean, median, 25th, 50th, 90th and 95th confidence intervals.
+Intermediate files written during the procedure are found in the intermediate\_files subdirectory of the nonpb run directory. In the result\_files subdirectory the files CI\_results\_ETAk.csv are found, where k=1,...,(number of ETAs). CI\_results\_ETAj.csv contains the mean, median, 25\textsuperscript{th}, 50\textsuperscript{th}, 90\textsuperscript{th} and 95\textsuperscript{th} confidence intervals.
 
 \section{Technical overview of algorithm}
 \begin{enumerate}
