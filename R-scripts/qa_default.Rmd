@@ -178,7 +178,7 @@ overview_table_list <- get_overview_table(structural_overview=structural_overvie
 
 <!-- #######################   Write Rmarkdown document here   ################################ -->
 ```{r command_text_from_command_line,results='asis',echo=F,warning=F,message=F}
-command_runtime <- command_text(directory=working.directory)
+command_runtime <- command_start.finish.time(yaml_file=file.path(working.directory,"meta.yaml"))
 if(length(command_runtime$command)>0 && length(command_runtime$run_start)>0 && length(command_runtime$run_finish)>0) {
   cat(break_text(command_runtime$command,max_symb=95),"\n\n")
   cat(command_runtime$run_start,"\n\n")
