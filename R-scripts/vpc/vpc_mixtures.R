@@ -13,7 +13,6 @@ vpc_mixtures <- function(obs, sim, numsims, mixcol="MIXNUM", dv="DV", phm_obs, p
         sim <- dplyr::full_join(sim, phm_table)
         phm_table_obs <- subpopulations_from_nonmem_phm(phm_obs, 1)
         obs <- dplyr::full_join(obs, phm_table_obs)
-        #names(obs)[names(obs) == mixcol] <- 'SUBPOP'    # rename mixcol in obs
         mixcol <- 'SUBPOP'
         method <- 'Randomized Mixture'
     } else {

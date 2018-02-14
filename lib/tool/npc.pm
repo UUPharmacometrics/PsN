@@ -1669,12 +1669,6 @@ sub modelfit_analyze
 		);
 	my $model_number = $parm{'model_number'};
 
-    # Exit if -mix
-    if ($self->mix) {
-        print("Simulation for mixture model done.\n");
-        return;
-    }
-
 	# If we ran an nca move data files and return
 	if ($self->nca) {
 		chdir 'm1';
