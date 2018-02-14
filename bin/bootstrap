@@ -133,18 +133,21 @@ EOF
 EOF
     $help_text{-mceta} = <<'EOF';      
       -mceta
-	Default not set. If option -dofv is set and NONMEM 7.3 or later is used, setting this option will make PsN
+
+    Default not set. If option -dofv is set and NONMEM 7.3 or later is used, setting this option will make PsN
 	set MCETA=N in $ESTIMATION. It is up to the user to check that the estimation method used can in NONMEM be 
 	combined with option MCETA, PsN will not do that.																			 
 EOF
     $help_text{-run_base_model} = <<'EOF';      
       -run_base_model
-	By default, the input model will be run unless the lst-file for the input model is found in the same directory as the input model.
+
+    By default, the input model will be run unless the lst-file for the input model is found in the same directory as the input model.
 	If the user sets -no-run_base_model, the input model will not be run even if the lst-file is missing.															
 EOF
     $help_text{-sample_size} = <<'EOF';
       -sample_size
-	The number of subjects in each bootstrap data set. The default value is set to the number of individuals 
+
+    The number of subjects in each bootstrap data set. The default value is set to the number of individuals 
 	in the original data set. When the resampling is stratified, the sample_size option can be used to specify 
 	the exact number of samples that should be drawn from each strata. Below follows an example of the 
 	syntax that should be used in such a case. Stratification is here done based on the study number, STUD, 
@@ -180,7 +183,8 @@ EOF
 EOF
     $help_text{-skip_minimization_terminated} = <<'EOF';
       -skip_minimization_terminated
-	Default set. Bootstrap will skip all samples where the NONMEM run terminated the minimization step. 
+
+    Default set. Bootstrap will skip all samples where the NONMEM run terminated the minimization step. 
 	Force disabling with -no-skip_minimization_terminated.												 																																														   
 EOF
     $help_text{-skip_with_covstep_warnings} = <<'EOF';
