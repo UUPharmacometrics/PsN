@@ -4,14 +4,16 @@ library(ggplot2)
 library(xpose)
 
 
-vpc_mixtures <- function(obs, sim, numsims, mixcol="MIXNUM", dv="DV", phm) {
+vpc_mixtures <- function(obs, sim, numsims, mixcol="MIXNUM", dv="DV", phm_obs, phm_sim) {
     # Put in replicate numbers in sim table
     sim$sim <- rep(1:numsims, each=nrow(sim) / numsims)
 
-    if (!missing(phm)) {
-        phm_table <- subpopulations_from_nonmem_phm(phm, numsims)
+    if (!missing(phm_sim)) {
+        phm_table <- subpopulations_from_nonmem_phm(phm_sim, numsims)
         sim <- dplyr::full_join(sim, phm_table)
-        names(obs)[names(obs) == mixcol] <- 'SUBPOP'    # rename mixcol in obs
+        phm_table_obs <- subpopulations_from_nonmem_phm(phm_obs, 1)
+        obs <- dplyr::full_join(obs, phm_table_obs)
+        #names(obs)[names(obs) == mixcol] <- 'SUBPOP'    # rename mixcol in obs
         mixcol <- 'SUBPOP'
         method <- 'Randomized Mixture'
     } else {

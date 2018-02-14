@@ -5581,7 +5581,8 @@ sub create_R_plots_code
 
     if (defined $self->mix) {
         push @code, "mix <- '" . $self->mix . "'";
-        push @code, "phm_file <- 'm1/vpc_simulation.1.phm'";
+        push @code, "phm_obs_file <- 'm1/vpc_original.phm'";
+        push @code, "phm_sim_file <- 'm1/vpc_simulation.1.phm'";
     }
 
 	$rplot->add_preamble(code => \@code);
