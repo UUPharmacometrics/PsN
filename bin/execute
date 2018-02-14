@@ -172,9 +172,9 @@ EOF
 	$help_text{-timestamp} = <<'EOF';
     -timestamp
     
-	Default not set. This option changes the name of the run directory to $langle$modelfile$rangle$-PsN-$langle$date$rangle$
-	where $langle$modelfile$rangle$ is the name of the first model file in the list given as arguments, without the extension,
-	and $\langle$date$\rangle$ is the time and date the run was started. 
+	Default not set. This option changes the name of the run directory to <modelfile>-PsN-<date>
+	where <modelfile> is the name of the first model file in the list given as arguments, without the extension,
+	and <date> is the time and date the run was started. 
 	Example: directory name run1-PsN-2014-06-12-152502 for a run that was started at 15:25:02 June 12th in year 2014.
 	This option is specific to execute.
 	If the option directory is used it will override -timestamp.
