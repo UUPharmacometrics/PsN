@@ -5577,6 +5577,10 @@ sub create_R_plots_code
         push @code, "mix <- '" . $self->mix . "'";
         push @code, "phm_obs_file <- 'm1/vpc_original.phm'";
         push @code, "phm_sim_file <- 'm1/vpc_simulation.1.phm'";
+        my @bins;
+        push @bins, $self->bin_floors->[0]->[0];        # No other stratification possible
+        push @bins, @{$self->bin_ceilings->[0]};
+        push @code, "bin_boundaries <- c(" . join(", ", @bins) . ")";
     }
 
 	$rplot->add_preamble(code => \@code);

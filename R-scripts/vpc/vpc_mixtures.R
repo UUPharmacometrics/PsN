@@ -4,7 +4,7 @@ library(ggplot2)
 library(xpose)
 
 
-vpc_mixtures <- function(obs, sim, numsims, mixcol="MIXNUM", dv="DV", phm_obs, phm_sim) {
+vpc_mixtures <- function(obs, sim, numsims, mixcol="MIXNUM", dv="DV", phm_obs, phm_sim, bins) {
     # Put in replicate numbers in sim table
     sim$sim <- rep(1:numsims, each=nrow(sim) / numsims)
 
@@ -31,7 +31,11 @@ vpc_mixtures <- function(obs, sim, numsims, mixcol="MIXNUM", dv="DV", phm_obs, p
         if (nrow(subsim) == 0) {
             next
         }
-        vpc <- vpc::vpc(obs=subobs, sim=subsim, obs_cols=list(dv=dv), sim_cols=list(dv=dv))
+        if (missing(bins)) {
+            vpc <- vpc::vpc(obs=subobs, sim=subsim, obs_cols=list(dv=dv), sim_cols=list(dv=dv))
+        } else {
+            vpc <- vpc::vpc(obs=subobs, sim=subsim, obs_cols=list(dv=dv), sim_cols=list(dv=dv), bins=bins)
+        }
 
         obs_ids <- length(unique(subobs$ID))
         perc_obs_ids <- (obs_ids / num_ids) * 100
