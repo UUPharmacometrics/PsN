@@ -41,7 +41,6 @@ has 'iov_structure' => ( is => 'rw', isa => 'ArrayRef' );   # The occ/iov struct
 has 'orig_max0_model_path' => ( is => 'rw', isa => 'Str' );
 has 'base_model_path' => ( is => 'rw', isa => 'Str' );
 has 'base_dataset_path' => ( is => 'rw', isa => 'Str' );
-has 'resmod_idv_table' => ( is => 'rw', isa => 'Str' ); # The table used by resmod
 
 sub BUILD
 {	
@@ -569,7 +568,6 @@ sub modelfit_setup
 					top_tool => 1,
 					clean => 2,
 				);
-				$self->resmod_idv_table($resmod_idv->table_file);
 			};
 			if (not $@) {
 				eval {
@@ -712,12 +710,11 @@ sub create_R_plots_code
     if (defined $self->parameters) {
         @parameters = split(/,/, $self->parameters);
     }
-	my $CWRES_table_path = $self->resmod_idv_table;
-    if (defined $CWRES_table_path) {
-	    $CWRES_table_path =~ s/\\/\//g;
-    } else {
-        $CWRES_table_path = "";
+	my $extra_table_path = $self->directory . 'linearize_run/scm_dir1/extra_table';
+    if ($self->nonlinear) {
+        $extra_table_path = $self->directory . 'extra_table';
     }
+    $extra_table_path =~ s/\\/\//g;
 	
 	my $orig_max0_model_path = $self->orig_max0_model_path;
 	$orig_max0_model_path =~ s/\\/\//g;
@@ -740,7 +737,7 @@ sub create_R_plots_code
             "continuous <- " . rplots::create_r_vector(array => \@continuous),
             "categorical <- " . rplots::create_r_vector(array => \@categorical),
             "parameters <- " . rplots::create_r_vector(array => \@parameters),
-            "CWRES_table <- '" . $CWRES_table_path . "'",
+            "extra_table <- '" . $extra_table_path . "'",
 			"cdd_dofv_cutoff <- 3.84 ",
 			"cdd_max_rows <- 10",
 			"type <- 'latex' # set to 'html' if want to create a html file ",
