@@ -43,166 +43,172 @@ exit unless $res;
 my %help_text;
 
 $help_text{Description} = <<'EOF';
-		The benchmark tool is intended for systematic comparison of run times, 
-		ofv and parameter estimates across NONMEM versions and/or alternative 
-		settings of NONMEM options.
-		For each model file given on the command-line, PsN will create one copy 
-		for each possible combination of the modifications listed on the 
-		command-line (option -record_options), and then each model copy will be 
-		run first with the nonmem version given with option -nm_version (as with 
-		any PsN tool) and then also with each of the nonmem versions listed with 
-		option -alt_nonmem (if any).
-		Each model run will be repeated if option -replicates is set larger than 1.
+
+    The benchmark tool is intended for systematic comparison of run times, ofv	
+	and parameter estimates across NONMEM versions and/or alternative settings 
+	of NONMEM options.
+	For each model file given on the command-line, PsN will create one copy for 
+	each possible combination of the modifications listed on the command line 
+	(option -record_options), and then each model copy will be run first with 
+	the nonmem version given with option -nm_version (as with any PsN tool) and 
+	then also with each of the nonmem versions listed with option -alt_nonmem 
+	(if any).
+	Each model run will be repeated if option -replicates is set larger than 1.
 EOF
+
 $help_text{Pre_help_message} = <<'EOF';
-		benchmark tool for systematic comparisons of NONMEM runs.
+	benchmark tool for systematic comparisons of NONMEM runs.
 EOF
 
 $help_text{Examples} = <<'EOF';
-		benchmark run1.mod run2.mod -nm_version=nm74alpha -record_options=estimation:none,FAST
+	benchmark run1.mod run2.mod -nm_version=nm74alpha -record_options=estimation:none,FAST
 
-	
-		benchmark run3.mod -nm_version=nm73gfortran4 -alt_nonmem=nm73gfortran5 -merge_rawreults
+	benchmark run3.mod -nm_version=nm73gfortran4 -alt_nonmem=nm73gfortran5 -merge_rawreults
 EOF
 $help_text{Options} = <<'EOF';      
-		A model file is required on the command-line. 
-	
-		Also, there must additional options resulting in at least two NONMEM runs that can be compared. This can be
-		achieved by setting at least one alternative NONMEM version or at least one record modification listed,
-		or giving at least two model files as input and setting option -merge_rawresults.
+	A model file is required on the command-line. 
 
-      The following options are valid:
+	Also, there must additional options resulting in at least two NONMEM runs 
+	that can be compared. This can be achieved by setting at least one 
+	alternative NONMEM version or at least one record modification listed,
+	or giving at least two model files as input and setting option 
+	-merge_rawresults.
+
+    The following options are valid:
 EOF
 
 $help_text{-h} = <<'EOF';
-      -h | -?
+    -h | -?
       
-		With -h or -? benchmark will print a list of options and exit.
+	With -h or -? benchmark will print a list of options and exit.
 EOF
       
 $help_text{-help} = <<'EOF';      
-      -help
+    -help
       
-		With -help benchmark will print this, longer, help message.
+	With -help benchmark will print this, longer, help message.
 EOF
 
 $help_text{-alt_nonmem} = <<'EOF';
-      -alt_nonmem=comma-separated list
+    -alt_nonmem=comma-separated list
 
-		A comma-separated list of NONMEM versions, as named in psn.conf to run all, 
-		possibly modified, models with **in addition to** the NONMEM version set with 
-		PsN common option -nm_version.
-		If different compilers for the same NONMEM version are to be compared, 
-		then the same NONMEM version compiled with different compilers
-		must be listed with different names in psn.conf, since PsN does not 
-		``know'' about compilers.
+	A comma-separated list of NONMEM versions, as named in psn.conf to run all, 
+	possibly modified, models with **in addition to** the NONMEM version set 
+	with PsN common option -nm_version. If different compilers for the same 
+	NONMEM version are to be compared, then the same NONMEM version compiled 
+	with different compilers must be listed with different names in psn.conf, 
+	since PsN does not ``know'' about compilers.
 EOF
 
 $help_text{-copy_data} = <<'EOF';
-		-copy_data
-    
-		Default set. Disable with -no-copy_data. By default, PsN will copy the datafile into NM_run1 and 
-		set a local path in psn.mod, the actual modelfile run with NONMEM. If -no-copy_data is set, PsN 
-		will not copy the data to NM_run1 and instead set a global path to the datafile in psn.mod.
-		However, NONMEM will not accept a path longer than 80 characters.
+	-copy_data
+	   
+	Default set. Disable with -no-copy_data. By default, PsN will copy the 
+	data	file into NM_run1 and set a local path in psn.mod, the actual 
+	modelfile run with NONMEM. If -no-copy_data is set, PsN will not copy the 
+	data to NM_run1 and instead set a global path to the datafile in psn.mod. 
+	However, NONMEM will not accept a path longer than 80 characters.
 EOF
 
 #$help_text{-dofv_threshold} = <<'EOF';
-#      -dofv_threshold=X
+#   -dofv_threshold=X
 #
-#    	Default 1 (percent). If the relative difference between the ofv of two model runs in the same raw\_results file
-#       is greater than this threshold, these models will be flagged in an extra column in the raw\_results file.
+#   Default 1 (percent). If the relative difference between the ofv of two 
+#	model runs in the same raw\_results file is greater than this threshold, 
+#	these models will be flagged in an extra column in the raw\_results file.
 #EOF
 
 #$help_text{-parameter_threshold} = <<'EOF';
-#      -parameter_threshold=X
+#   -parameter_threshold=X
 #
-#    	Default 5 (percent). If the relative difference between the parameter estimates of two model runs 
-#     	in the same raw\_results file is greater than this threshold, these models will be flagged 
-#	 	in an extra column in the raw\_results file.
+#   Default 5 (percent). If the relative difference between the parameter 
+#	estimates of two model runs in the same raw\_results file is greater than 
+#	this threshold, these models will be flagged in an extra column in the 
+#	raw\_results file.
 #EOF
 
 $help_text{-merge_rawresults} = <<'EOF';
-      -merge_rawresults
+    -merge_rawresults
 
-		Default not set. The default is to create a separate raw_results file for each input model,
-		where results for all the variants resulting from -record_options and -alt_nonmem
-		are collected. Creating separate raw_results files for each input model is done because
-		it cannot be assumed that the models and sets of population parameters are the same and comparable,
-		so an investigation of the stability of e.g. parameter estimates across different input models
-		is not meaningful and the headers in the raw_results file can be completely wrong for some models. 
-		However, the user can choose to override the default procedure with option -merge_rawresults, 
-		resulting in all runs being reported in the same raw_results file, and the rplots processing 
-		being performed for all models as a single group.
+	Default not set. The default is to create a separate raw_results file for 
+	each input model, where results for all the variants resulting from 
+	-record_options and -alt_nonmem	are collected. Creating separate 
+	raw_results files for each input model is done because it cannot be assumed 
+	that the models and sets of population parameters are the same and 
+	comparable,	so an investigation of the stability of e.g. parameter 
+	estimates across different input models	is not meaningful and the headers 
+	in the raw_results file can be completely wrong for some models. 
+	However, the user can choose to override the default procedure with option 
+	-merge_rawresults, resulting in all runs being reported in the same 
+	raw_results file, and the rplots processing being performed for all models 
+	as a single group.
 EOF
 
 $help_text{-record_options} = <<'EOF';
-      -record_options=list
+    -record_options=list
 	
-		Default not set. 
-		A structured list of the control stream records to modify, and the options to set. 
-		The record names can be abbreviated and written in lower or upper case,
-		as long as they are correct abbreviations of the complete record names. 
-		For example: estimation, EST and estim are correct while ESIMATION
-		is wrong. After the record name there must be colon (:), and then
-		a comma-separated list of two or more alternative options.
-		If only one alternative is set, this modification will be made to all 
-		models, which only makes sense if there are other sets of alternative 
-		modifications.
-		The option names must be in upper case, unless ``none'' is specified, which is 
-		a marker for ``no modification of the record''. Example: 
-		-record_options=estimation:none, FAST means that
-		each model should be run both with option FAST added to $ESTIMATION and no 
-		modification to $ESTIMATION.
-		If more than one record-options combination is desired, the different 
-		combinations are separated with double comma (,,). Example: 
-		-record_options=est:none,FAST,,est:ATOL=10,ATOL=8,ATOL=12 
-		which would result in six (2 times 3) variants of each model.
+	Default not set. 
+	A structured list of the control stream records to modify, and the options 
+	to set. The record names can be abbreviated and written in lower or upper 
+	case, as long as they are correct abbreviations of the complete record 
+	names. 
+	For example: estimation, EST and estim are correct while ESIMATION is wrong. 
+	After the record name there must be colon (:), and then	a comma-separated 
+	list of two or more alternative options. If only one alternative is set, 
+	this modification will be made to all models, which only makes sense if 
+	there are other sets of alternative modifications.
+	The option names must be in upper case, unless ``none'' is specified, which 
+	is a marker for ``no modification of the record''. 
+	Example: -record_options=estimation:none, FAST means that each model should 
+	be run both with option FAST added to $ESTIMATION and no modification to 
+	$ESTIMATION.
+	If more than one record-options combination is desired, the different 
+	combinations are separated with double comma (,,). 
+	Example: -record_options=est:none,FAST,,est:ATOL=10,ATOL=8,ATOL=12 which 
+	would result in six (2 times 3) variants of each model.
 EOF
 
 $help_text{-reference_lst} = <<'EOF';
-      -reference_lst=list of lst files
+    -reference_lst=list of lst files
 
-		Add the results from one or more pre-existing .lst files to all raw_results.
-		Saves time if reference results already are available, e.g. when comparing results
-		from older NONMEM versions to a newly installed version.
+	Add the results from one or more pre-existing .lst files to all raw_results.
+	Saves time if reference results already are available, e.g. when comparing 
+	results	from older NONMEM versions to a newly installed version.
 EOF
 
 $help_text{-replicates} = <<'EOF';
-      -replicates=N
+     -replicates=N
 
-		Default 1. Can be set larger than 1 e.g. for run time comparisons.
-		See note in user guide about user responsibility in ensuring run times 
-		are comparable.
+	Default 1. Can be set larger than 1 e.g. for run time comparisons. 
+	See note in user guide about user responsibility in ensuring run times are 
+	comparable.
 EOF
 
 $help_text{-theta_inits} = <<'EOF';
-      -theta_inits=list
+    -theta_inits=list
 
-		Default not set. 
-
-		A structured list of the $THETA initial estimates to modify. If used, the 
-		$THETAs in question will be modified regardless of whether they are FIXED in 
-		the control stream.
-		In the list, the $THETAs are identified by their order number, where numbering 
-		starts at 1, or by their PsN format label, as CL in this example:
+	Default not set. 
+	A structured list of the $THETA initial estimates to modify. If used, the 
+	$THETAs in question will be modified regardless of whether they are FIXED 
+	in the control stream. In the list, the $THETAs are identified by their 
+	order number, where numbering starts at 1, or by their PsN format label, 
+	as CL in this example:
 	
-		$THETA (0,1.005) ; CL
+	$THETA (0,1.005) ; CL
 
-		In the list, after the theta label/number there must be a colon and then a 
-		comma-separated list of numbers to set as initial estimates. If 'none' is set 
-		it means do not change the input model.
-		If an additional theta is to be modified, then a double comma separates 
-		the two sub-lists. If no $THETA pre-exists with the label given in the list,
-		a $THETA will be added with that initial estimate and label. 
-		If $THETA number is used but no $THETA exists with that number then benchmark 
-		will halt with an error message.
-		If the same theta is referred to with both label and theta number, this will 
-		not be detected by benchmark and will result in incorrect results.
-		Example, using both label and theta number:
+	In the list, after the theta label/number there must be a colon and then a 
+	comma-separated list of numbers to set as initial estimates. If 'none' is 
+	set it means do not change the input model.
+	If an additional theta is to be modified, then a double comma separates the 
+	two sub-lists. If no $THETA pre-exists with the label given in the list, a 
+	$THETA will be added with that initial estimate and label. 
+	If $THETA number is used but no $THETA exists with that number then benchmark 
+	will halt with an error message. If the same theta is referred to with both 
+	label and theta number, this will not be detected by benchmark and will 
+	result in incorrect results.
+	Example, using both label and theta number:
 
-		-theta_inits=CL:none,1.5,1.0,,5:8.5,12
-
+	-theta_inits=CL:none,1.5,1.0,,5:8.5,12
 EOF
 
 $help_text{Post_help_message} = <<'EOF';
