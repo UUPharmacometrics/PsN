@@ -44,7 +44,7 @@ my %help_text;
 
 $help_text{Description} = <<'EOF';
 
-    The benchmark tool is intended for systematic comparison of run times, ofv	
+    The benchmark tool is intended for systematic comparison of run times, ofv 
 	and parameter estimates across NONMEM versions and/or alternative settings 
 	of NONMEM options.
 	For each model file given on the command-line, PsN will create one copy for 
@@ -104,7 +104,7 @@ $help_text{-copy_data} = <<'EOF';
 	-copy_data
 	   
 	Default set. Disable with -no-copy_data. By default, PsN will copy the 
-	data	file into NM_run1 and set a local path in psn.mod, the actual 
+	data file into NM_run1 and set a local path in psn.mod, the actual 
 	modelfile run with NONMEM. If -no-copy_data is set, PsN will not copy the 
 	data to NM_run1 and instead set a global path to the datafile in psn.mod. 
 	However, NONMEM will not accept a path longer than 80 characters.
@@ -132,11 +132,11 @@ $help_text{-merge_rawresults} = <<'EOF';
 
 	Default not set. The default is to create a separate raw_results file for 
 	each input model, where results for all the variants resulting from 
-	-record_options and -alt_nonmem	are collected. Creating separate 
+	-record_options and -alt_nonmem are collected. Creating separate 
 	raw_results files for each input model is done because it cannot be assumed 
 	that the models and sets of population parameters are the same and 
-	comparable,	so an investigation of the stability of e.g. parameter 
-	estimates across different input models	is not meaningful and the headers 
+	comparable, so an investigation of the stability of e.g. parameter 
+	estimates across different input models is not meaningful and the headers 
 	in the raw_results file can be completely wrong for some models. 
 	However, the user can choose to override the default procedure with option 
 	-merge_rawresults, resulting in all runs being reported in the same 
@@ -153,7 +153,7 @@ $help_text{-record_options} = <<'EOF';
 	case, as long as they are correct abbreviations of the complete record 
 	names. 
 	For example: estimation, EST and estim are correct while ESIMATION is wrong. 
-	After the record name there must be colon (:), and then	a comma-separated 
+	After the record name there must be colon (:), and then a comma-separated 
 	list of two or more alternative options. If only one alternative is set, 
 	this modification will be made to all models, which only makes sense if 
 	there are other sets of alternative modifications.
@@ -173,7 +173,7 @@ $help_text{-reference_lst} = <<'EOF';
 
 	Add the results from one or more pre-existing .lst files to all raw_results.
 	Saves time if reference results already are available, e.g. when comparing 
-	results	from older NONMEM versions to a newly installed version.
+	results from older NONMEM versions to a newly installed version.
 EOF
 
 $help_text{-replicates} = <<'EOF';
