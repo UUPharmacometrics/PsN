@@ -1,4 +1,4 @@
-.calc_and_add_shift_from_cwres <- function(structural_details_table, orig_ext_file, base_dataset, CWRES_table, idv, dvid, dvid_name){
+.calc_and_add_shift_from_cwres <- function(structural_details_table, orig_ext_file, base_dataset, extra_table, idv, dvid, dvid_name){
   # .ext file with the final estimates
   final_estimates <- read.table(orig_ext_file, skip=1, header=T) %>%
     dplyr::filter(ITERATION==-1000000000)
@@ -37,7 +37,7 @@
   }
   
   # get table with IDV values
-  idv_df <- read.table(CWRES_table, skip = 1, header=T) %>%
+  idv_df <- read.table(extra_table, skip = 1, header=T) %>%
     dplyr::filter(CWRES!=0)
   cpred_column <- idv_df$CPRED
   if(any(colnames(idv_df)== dvid_name)) {

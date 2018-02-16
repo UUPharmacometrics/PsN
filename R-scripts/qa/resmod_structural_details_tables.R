@@ -1,4 +1,4 @@
-resmod_structural_details_tables <- function(working.directory,base_dataset,original_max0_model,CWRES_table,idv_all,dvid_name,nonlinear,quiet=F) {
+resmod_structural_details_tables <- function(working.directory,base_dataset,original_max0_model,extra_table,idv_all,dvid_name,nonlinear,quiet=F) {
   resmod_structural_details_list <- list()
   if(length(idv_all)!=0) {
     #check if dvid exist
@@ -27,13 +27,13 @@ resmod_structural_details_tables <- function(working.directory,base_dataset,orig
         colnames(first_table) <- NULL
         
         orig_ext_file <- sub("(\\.[^.]+)$",".ext",original_max0_model)
-        if(file.exists(orig_ext_file) && file.exists(base_dataset) && file.exists(CWRES_table) &&
+        if(file.exists(orig_ext_file) && file.exists(base_dataset) && file.exists(extra_table) &&
           resmod_file_exists_idv[i]==TRUE &&
           !all(resmod_table[[i]]$parameters=="NA") &&
           nonlinear==FALSE) {
             
           table = get_resmod_structural_details(directory=working.directory, suffix = idv, dvid=dvid_nr_idv[[i]][j]) %>%
-            .calc_and_add_shift_from_cwres(orig_ext_file,base_dataset,CWRES_table,idv,dvid=dvid_nr_idv[[i]][j],dvid_name)
+            .calc_and_add_shift_from_cwres(orig_ext_file,base_dataset,extra_table,idv,dvid=dvid_nr_idv[[i]][j],dvid_name)
             
           second_table = data.frame(C1=paste0(format(table$bin_min,nsmall=2),"  :  ",format(table$bin_max,nsmall=2)),C2=as.character(format(round(table$value,2),nsmall=2)),
                                     stringsAsFactors = F)
@@ -72,13 +72,13 @@ resmod_structural_details_tables <- function(working.directory,base_dataset,orig
     }
     #print messages if file not exist
     if(!file.exists(orig_ext_file) && !quiet) {
-      message("WARNING: File ",orig_ext_file," not found!")
+      message("WARNING: File orig_ext_file=",orig_ext_file," not found!")
     }
     if(!file.exists(base_dataset) && !quiet) {
-      message("WARNING: File ",base_dataset," not found!")
+      message("WARNING: File base_dataset=",base_dataset," not found!")
     }
-    if(!file.exists(CWRES_table) && !quiet) {
-      message("WARNING: File ",CWRES_table," not found!")
+    if(!file.exists(extra_table) && !quiet) {
+      message("WARNING: File extra_table=",extra_table," not found!")
     }
     
     #organize results

@@ -1,10 +1,10 @@
 all_structural_extra_plots <- function(simeval_directory,base_dataset,resmod_structural_details,
-                                       CWRES_table,idv_all,idv_name,dvid_name,type,nonlinear) {
+                                       extra_table,idv_all,idv_name,dvid_name,type,nonlinear) {
   if(length(idv_all)!=0) {
     for(i in 1:length(resmod_structural_details)) {
       #tables for vpc plots
       if(!nonlinear) {
-        vpc_tables_list <- get_tables_for_vpc(obs_table=CWRES_table,
+        vpc_tables_list <- get_tables_for_vpc(obs_table=extra_table,
                                               obs_extra_table=base_dataset,
                                               sim_table=file.path(simeval_directory,"/m1/sim_res_table-1.dta"),
                                               sim_extra_table=file.path(simeval_directory,"/m1/orig_pred.dta"),

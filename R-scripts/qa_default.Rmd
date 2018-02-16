@@ -72,7 +72,7 @@ ofv_table <- ofv_summary_table(working.directory,model.filename)
 structural_overview <- get_structural_overview_table(directory=working.directory,idv=idv_all,dvid_name,skip)
 if(all(skip!="resmod")) {
   # get resmod structural details tables
-  resmod_structural_details <- resmod_structural_details_tables(working.directory,base_dataset,original_max0_model=original_max0_model,CWRES_table,idv_all,dvid_name,nonlinear)
+  resmod_structural_details <- resmod_structural_details_tables(working.directory,base_dataset,original_max0_model=original_max0_model,extra_table,idv_all,dvid_name,nonlinear)
 }
 ```
 
@@ -207,7 +207,7 @@ cat("Overview of possible modifications to different model aspects, expected imp
 cat("\\pagebreak\n\n")
 cat("#Structural\n\n")
 all_structural_extra_plots(simeval_directory=file.path(working.directory,"simeval_run"),base_dataset,resmod_structural_details,
-                           CWRES_table,idv_all,idv_name,dvid_name,type,nonlinear)
+                           extra_table,idv_all,idv_name,dvid_name,type,nonlinear)
 ```
 
 ```{r Add_text_for_parameter_section_if_exist_mod_files,eval=all(skip!="transform"),results='asis',echo=F,warning=F,message=F}
