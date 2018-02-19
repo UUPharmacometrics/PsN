@@ -65,207 +65,210 @@ foreach my $opt (keys(%optional_options)) {
 
 my %help_text;
 
-	$help_text{Pre_help_message} = <<'EOF';
-    Perl script for creation of a standard output xml file from the nonmem output. 
+$help_text{Pre_help_message} = <<'EOF';
+	Perl script for creation of a standard output xml file from the nonmem output.
 EOF
 
-	$help_text{Post_help_message} = <<'EOF';
+$help_text{Post_help_message} = <<'EOF';
 EOF
 
-	$help_text{-h} = <<'EOF';
--h | -?
+$help_text{-h} = <<'EOF';
+	-h | -?
 
-    With -h or -? the script prints the list of available options 
-    and exit.
+	With -h or -? the script prints the list of available options and exit.
 EOF
 
-	$help_text{-help} = <<'EOF';
+$help_text{-help} = <<'EOF';
 	-help
 
-    With -help a longer help message will be printed.
+	With -help a longer help message will be printed.
 EOF
 
-	$help_text{Description} = <<'EOF';
-    The nmoutput2so tool creates and populates a DDMoRe standard output [Terranova] xml 
-	file given the output from one or more NONMEM runs. It is necessary that the format 
-	of the model file and other files follow a set of requirements for this to work. 
-	The Perl module XML::LibXML is required by nmoutput2so, but not PsN in general. 
-	Make sure that it is installed before using nmoutput2so (If you are using ActivePerl 
-	on Windows please read the section on installation below). See the PsN installation 
-	guide for intructions.
+$help_text{Description} = <<'EOF';
+
+	The nmoutput2so tool creates and populates a DDMoRe standard output
+	[Terranova] xml file given the output from one or more NONMEM runs. It is
+	necessary that the format of the model file and other files follow a set of
+	requirements for this to work. The Perl module XML::LibXML is required by
+	nmoutput2so, but not PsN in general. Make sure that it is installed before
+	sing nmoutput2so (If you are using ActivePerl on Windows please read the
+	section on installation below). See the PsN installation guide for intructions.
 EOF
 
-	$help_text{Options} = <<'EOF';
-    One or more NONMEM results files (.lst) and or -bootstrap_results and or -vpc_results 
-	(see those options) is mandatory. One SOBlock will be created for each .lst file and 
-	the bootstrap/vpc results will be added to the first SOBlock or in it own block if 
-	no .lst files were specified. Wildcards will work (i.e. *.lst).
+$help_text{Options} = <<'EOF';
+
+	One or more NONMEM results files (.lst) and or -bootstrap_results and or
+	-vpc_results (see those options) is mandatory. One SOBlock will be created
+	for each .lst file and the bootstrap/vpc results will be added to the first
+	SOBlock or in it own block if no .lst files were specified. Wildcards will
+	work (i.e. *.lst).
 
 	The following options are valid:
 EOF
 
-	$help_text{Examples} = <<'EOF';
-    nmoutput2so run1.lst run2.lst
-    
-    This will add the NONMEM output from run1.lst in an SOBlock called run1 and the output
-	from run2.lst to an SOBlock called run2. All information that is possible to extract 
-	and that is supported will be added to the generated SO file, which will be called 
-	run1.SO.xml.
+$help_text{Examples} = <<'EOF';
+	nmoutput2so run1.lst run2.lst
 
-    nmoutput2so -bootstrap_results=bootstrap_results.csv
-    -so_filename=res.SO.xml
+	This will add the NONMEM output from run1.lst in an SOBlock called run1 and
+	the output from run2.lst to an SOBlock called run2. All information that is
+	possible to extract and that is supported will be added to the generated SO
+	file, which will be called run1.SO.xml.
 
-    This will add the PsN bootstrap results to a lone SOBlock in the file called 
+	nmoutput2so -bootstrap_results=bootstrap_results.csv -so_filename=res.SO.xml
+
+	This will add the PsN bootstrap results to a lone SOBlock in the file called 
 	res.SO.xml.
 EOF
 
-	$help_text{-bootstrap_results} = <<'EOF';
-    -bootstrap_results=file
+$help_text{-bootstrap_results} = <<'EOF';
+	-bootstrap_results=file
 
-    A bootstrap_results file as output from PsN to add to the SO.
+	A bootstrap_results file as output from PsN to add to the SO.
 EOF
 
-	$help_text{-compress} = <<'EOF';
-    -compress
+$help_text{-compress} = <<'EOF';
+	-compress
 
-    Set to automatically gzip compress the output SO file.
+	Set to automatically gzip compress the output SO file.
 EOF
 
-	$help_text{-error} = <<'EOF';
-    -error=string
+$help_text{-error} = <<'EOF';
+	-error=string
 
-    Specify a string to be added as an error message in the TaskInformation of the first 
-	SOBlock.
+Specify a string to be added as an error message in the TaskInformation of the
+first SOBlock.
 EOF
 
-	$help_text{-exclude_elements} = <<'EOF';
-    -exclude_elements 
+$help_text{-exclude_elements} = <<'EOF';
+	-exclude_elements 
 
-    A comma separated list of simple XPaths for elements to exclude.
-	Example: 
+	A comma separated list of simple XPaths for elements to exclude.
+	Example:
 	-exclude_elements=Estimation/PopulationEstimates
 EOF
 
-	$help_text{-external_tables} = <<'EOF';
-    -external_tables
+$help_text{-external_tables} = <<'EOF';
+	-external_tables
 
-    Set option to create external table files for the simulation results.
+	Set option to create external table files for the simulation results.
 EOF
 
-	$help_text{-extra_output} = <<'EOF';
-    -extra_output
+$help_text{-extra_output} = <<'EOF';
+	-extra_output
 
-    A comma separated list of tabulated model variables to add a separate 
+	A comma separated list of tabulated model variables to add a separate 
 	SimulatedProfiles element.
 EOF
 
-	$help_text{-generate_pharmml} = <<'EOF';
-    -generate_pharmml
+$help_text{-generate_pharmml} = <<'EOF';
+	-generate_pharmml
 
-    Generate and connect a minimal companion PharmML to the SO. This can be used to 
+Generate and connect a minimal companion PharmML to the SO. This can be used to
 	automatically extract for example the parameter variability levels.
 EOF
 
-	$help_text{-include_fixed_params} = <<'EOF';
-    -include_fixed_params
+$help_text{-include_fixed_params} = <<'EOF';
+	-include_fixed_params
 
-    Set option to include estimates of all fixed parameters.
+	Set option to include estimates of all fixed parameters.
 EOF
 
-	$help_text{-max_replicates} = <<'EOF';
-    -max_replicates=integer 
+$help_text{-max_replicates} = <<'EOF';
+	-max_replicates=integer 
 
-    Default is to add all replicates.
-	Set a maximum number of simulation replicates to add.
-    
+	Default is to add all replicates. Set a maximum number of simulation
+	replicates to add.
 EOF
 
-	$help_text{-message} = <<'EOF';
-    -message=string 
+$help_text{-message} = <<'EOF';
+	-message=string 
 
-    Specify a string to be added as an information message in the TaskInformation 
+	Specify a string to be added as an information message in the TaskInformation
 	of the first SOBlock.
 EOF
 
-	$help_text{-only_include_elements} = <<'EOF';
-    -only_include_elements 
+$help_text{-only_include_elements} = <<'EOF';
+	-only_include_elements 
 
-    A comma separated list of XPaths relative to the SOBlock. 
-	These elements will be the only ones used.
-    
-    Example: 
+	A comma-separated list of XPaths relative to the SOBlock. These elements will
+	be the only ones used.
+
+	Example:
 	-only_include_elements=Estimation/Predictions
 EOF
 
-	$help_text{-pharmml} = <<'EOF';
-    -pharmml='string'
+$help_text{-pharmml} = <<'EOF';
+	-pharmml='string'
 
-    Set a name of the pharmml file used to generate the SO in the PharmMLRef element.
+	Set a name of the pharmml file used to generate the SO in the PharmMLRef
+	element.
 EOF
 
-	$help_text{-pretty} = <<'EOF';
-    -pretty
+$help_text{-pretty} = <<'EOF';
+	-pretty
 
-    Default is to not add intentations and thus to generate as compact xml files as 
-	possible. Set if SO should be output with indentations and newlines.
+	Default is to not add intentations and thus to generate as compact xml files
+	as possible. Set if SO should be output with indentations and newlines.
 EOF
 
-	$help_text{-psn_connector} = <<'EOF';
-    -psn_connector
+$help_text{-psn_connector} = <<'EOF';
+	-psn_connector
 
-    Do not use! Only for internal use by the PsN connector.
+	Do not use! Only for internal use by the PsN connector.
 EOF
 
-	$help_text{-rundir} = <<'EOF';
-    -rundir
+$help_text{-rundir} = <<'EOF';
+	-rundir
 
-    Use to point to a PsN run directory to automatically extract results from.
-	The following PsN tools are not (yet) supported; bootstrap, sse, vpc, execute and nca. 
+	Use to point to a PsN run directory to automatically extract results from.
+	The following PsN tools are not (yet) supported; bootstrap, sse, vpc, execute
+	and nca.
 EOF
 
-	$help_text{-so_filename} = <<'EOF';
-    -so_filename=string
+$help_text{-so_filename} = <<'EOF';
+	-so_filename=string
 
-    Set a filename for the resulting SO xml file. If this is not set, the file stem of 
-	the first .lst file will be used.
+	Set a filename for the resulting SO xml file. If this is not set, the file
+	stem of the first .lst file will be used.
 EOF
 
-	$help_text{-so_version} = <<'EOF';
-    -so_version
+$help_text{-so_version} = <<'EOF';
+	-so_version
 
-    Default is 0.3. Set the version of the SO file to create.
+	Default is 0.3. Set the version of the SO file to create.
 EOF
 
-	$help_text{-toolname} = <<'EOF';
-    -toolname=string 
+$help_text{-toolname} = <<'EOF';
+	-toolname=string 
 
-    Default is NONMEM. The toolname to use for messages. 
+	Default is NONMEM. The toolname to use for messages. 
 EOF
 
-	$help_text{-use_tables} = <<'EOF';
-    -use_tables
+$help_text{-use_tables} = <<'EOF';
+	-use_tables
 
-    Default set. Will use table files (sdtab, patab and cotab) to populate the elements 
-	of the SO that needs these. Use -no-use_tables to not use any table files.
+	Default set. Will use table files (sdtab, patab and cotab) to populate the
+	elements of the SO that needs these. Use -no-use_tables to not use any
+	table files.
 EOF
 
-	$help_text{-verbose} = <<'EOF';
-    -verbose
+$help_text{-verbose} = <<'EOF';
+	-verbose
 
-    Set to print information, such as all errors and warnings, during conversion
-    to stdout.
+	Set to print information, such as all errors and warnings, during conversion
+	to stdout.
 EOF
 
-	$help_text{-vpc_results} = <<'EOF';
-    -vpc_results=filename
+$help_text{-vpc_results} = <<'EOF';
+	-vpc_results=filename
 
-    A vpc_results file as output from PsN to add to the SO.
+	A vpc_results file as output from PsN to add to the SO.
 EOF
-	
-    $help_text{-version} = <<'EOF';
-    -version
 
-    Print out the version of nmoutput2so (and PsN)
+$help_text{-version} = <<'EOF';
+	-version
+
+	Print out the version of nmoutput2so (and PsN)
 EOF
 
 common_options::online_help('nmoutput2so', \%options, \%help_text, \%required_options, \%optional_options);

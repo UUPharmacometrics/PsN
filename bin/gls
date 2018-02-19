@@ -42,13 +42,15 @@ exit unless $res;
 
 my %help_text;
 
-	$help_text{Pre_help_message} = <<'EOF';
-   	Generalised Least Squares method for
-	Individual Observation-Shrinkage Scaling of Residuals
+$help_text{Pre_help_message} = <<'EOF';
+	Generalised Least Squares method for Individual Observation-Shrinkage Scaling
+	of Residuals.
 EOF
-	$help_text{Examples} = <<'EOF';
-    gls run2.mod
+
+$help_text{Examples} = <<'EOF';
+	gls run2.mod
 EOF
+
 $help_text{Description} = <<'EOF';
 	During the modelling process one may encounter scenarios where first-order
 	conditional estimation with eps-eta interaction (FOCEI) is indicated but may
@@ -60,130 +62,134 @@ $help_text{Description} = <<'EOF';
 	and then used in the residual error model. The gls program automates this
 	procedure, which is further described in 
 
-	Individual Observation-Shrinkage Scaling of Residuals in a 
-	Generalized Least Square Type of Estimation in NONMEM, 
-	PAGE 21 (2012) Abstr 2586, V Ivaturi.
+	Individual Observation-Shrinkage Scaling of Residuals in a Generalized Least
+	Square Type of Estimation in NONMEM, PAGE 21 (2012) Abstr 2586, V Ivaturi.
 
 	Using the gls program requires that the model is encoded in "the Uppsala way".
 	
-	In summary the GLS method amounts to the following: Run the original
-	model. In a second step IPRED is replaced with GLSP in the definition of
-	W where GLSP is computed as
+	In summary the GLS method amounts to the following: Run the original model.
+	In a second step IPRED is replaced with GLSP in the definition of W where
+	GLSP is computed as
 
 	PREDorig · iwres_shrinkage + (1-iwres_shrinkage_orig )*IPREDorig,
 
-
-	where PREDorig and IPREDorig are obtained from running the original
-	model and iwres_shrinkage is either a population shrinkage obtained from
-	the original model run or a per-observation shrinkage based on simulations.
-	The modified gls model is then estimated.
+	where PREDorig and IPREDorig are obtained from running the original model and
+	iwres_shrinkage is either a population shrinkage obtained from the original
+	model run or a per-observation shrinkage based on simulations. The modified
+	gls model is then estimated.
 EOF
+
 $help_text{Options} = <<'EOF';      
 	A model file is required as argument.
 
-      The following options are valid:
+	The following options are valid:
 EOF
-      $help_text{-h} = <<'EOF';
-      -h | -?
-      
-      With -h or -? gls will print a list of options and exit.
+
+$help_text{-h} = <<'EOF';
+	-h | -?
+
+	With -h or -? gls will print a list of options and exit.
 EOF
-      $help_text{-help} = <<'EOF';      
-      -help
-      
-      With -help gls will print this, longer, help message.
+
+$help_text{-help} = <<'EOF';      
+	-help
+
+	With -help gls will print this, longer, help message.
 EOF
+
 $help_text{-additive_theta} = <<'EOF';
-      -additive_theta=XX
+	-additive_theta=XX
 
-      Default not set. In the gls model, add a small and fix additive error in W. 
-      The error is added by changing W=SQRT(<expression>) to 
-      W=SQRT(THETA(T)**2+<expression>) in the gls model, where T is the order 
-      number of new $THETA XX FIX added to the model.
+	Default not set. In the gls model, add a small and fix additive error in W.
+	The error is added by changing W=SQRT(<expression>) to W=SQRT(THETA(T)**2+
+	<expression>) in the gls model, where T is the order number of new $THETA
+	XX FIX added to the model.
 EOF
+
 $help_text{-gls_model} = <<'EOF';
-      -gls_model
+	-gls_model
 
-      Default not set. Only possible together with option -iwres_shrinkage 
-      or -ind-shrinkage. This option is to be used when a datafile with all data 
-      needed for the gls model run is already available, i.e. all input for the 
-      original model plus columns with PRED and IPRED from the original model run, 
-      and if -ind_shrinkage is set also a ISHR column with 
-      per observation shrinkage values. The option indicates that $DATA specifies 
-      the file with the gls input data, and that $INPUT lists the parameters in the 
-      datafile. In $INPUT the columns PPRE and PIPR must be present as headers for 
-      PRED and IPRED values, plus ISHR as header for the shrinkage column if 
-      -ind_shrinkage is set.
-      Then PsN will add the GLSP code to the gls model and run it directly, saving 
-      the original model run.
+	Default not set. Only possible together with option -iwres_shrinkage or
+	-ind-shrinkage. This option is to be used when a datafile with all data 
+	needed for the gls model run is already available, i.e. all input for the 
+	original model plus columns with PRED and IPRED from the original model run, 
+	and if -ind_shrinkage is set also a ISHR column with per observation shrinkage
+	values. The option indicates that $DATA specifies the file with the gls input
+	data, and that $INPUT lists the parameters in the datafile. In $INPUT the
+	columns PPRE and PIPR must be present as headers for PRED and IPRED values,
+	plus ISHR as header for the shrinkage column if -ind_shrinkage is set. Then
+	PsN will add the GLSP code to the gls model and run it directly, saving the
+	original model run.
 
-      Note that a run with the simeval program will automatically generate
-      a complete input file for gls (including PRED IPRED and per-observation shrinkage).
+	Note that a run with the simeval program will automatically generate a complete
+	input file for gls (including PRED IPRED and per-observation shrinkage).
 EOF
+xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 $help_text{-ind_shrinkage} = <<'EOF';
-      -ind_shrinkage
+	-ind_shrinkage
 
-      Default not set. Compute per-observation iwres-shrinkage based on simulations. 
+	Default not set. Compute per-observation iwres-shrinkage based on simulations. 
 EOF
+
 $help_text{-iwres_shrinkage} = <<'EOF';
-      -iwres_shrinkage=X
+	-iwres_shrinkage=X
 
-      Default not set. Forbidden in combination with -ind_shrinkage. If the 
-      population iwres shrinkage from the input model run is already available, 
-      or if a special values such as 0 or 1 is desired, the user can give the 
-      value as input on the command-line. Important note: PsN reports shrinkage 
-      in percent in the raw_results file, so if using the value from raw_results 
-      as input that value must be divided by 100. 
+	Default not set. Forbidden in combination with -ind_shrinkage. If the
+	population iwres shrinkage from the input model run is already available, or
+	if a special values such as 0 or 1 is desired, the user can give the value as
+	input on the command line. Important note: PsN reports shrinkage in percent
+	in the raw_results file, so if using the value from raw_results as input that
+	value must be divided by 100.
 EOF
+
 $help_text{-reminimize} = <<'EOF';
-      -reminimize
+	-reminimize
 
-      Default not set. Only relevant if -ind_shrinkage is set and -gls_model is 
-      not set. By default, simulated datasets will be run with MAXEVAL=0 
-      (or equivalent for non-classical estimation methods). If option -reminimize 
-      is set then the same $EST as in the input model will be the used.
+	Default not set. Only relevant if -ind_shrinkage is set and -gls_model is not
+	set. By default, simulated datasets will be run with MAXEVAL=0 (or equivalent
+	for non-classical estimation methods). If option -reminimize is set then the
+	same $EST as in the input model will be the used.
 EOF
+
 $help_text{-samples} = <<'EOF';
-      -samples=N
+	-samples=N
 
-      Default not set. Only relevant if -ind_shrinkage is set and -gls_model 
-      is not set. Creates N copies of the input model with different seeds in $SIM. 
-      Run to get N IWRES values for each data point y_ij. Compute 
-      iwres_shrinkage_ij =1-stdev(IWRES_ij(1:N))
+	Default not set. Only relevant if -ind_shrinkage is set and -gls_model is not
+	set. Creates N copies of the input model with different seeds in $SIM. Run to
+	get N IWRES values for each data point y_ij.
+	Compute iwres_shrinkage_ij =1-stdev(IWRES_ij(1:N))
 EOF
+
 $help_text{-set_simest} = <<'EOF';
-      -set_simest
+	-set_simest
 
-      Default not set. Only relevant if -gls_model is not set. 
-      Change $SIM and $EST in simulation model (if used) and $EST in gls model 
-      based on tags in the input model.
-	  All lines starting with the tag
-
-		;gls-final
-
-	  will be collected. The tag will be removed, and then PsN will check that the lines define a single $EST record. This $EST record will be set in the final 
-	  model, instead of the one in the input model. If no ;gls-final tag is found the $EST record in the final model will be the same as in the input model. 
-	  All lines starting with the tag
-
-		;gls-sim
-
-	  will also be collected, the tag will be removed, and then PsN will check that the lines define either a single $EST or a single $SIM, or one of each. 
-	  If a $SIM record is defined this will be used in the simulation model instead of any $SIM found in the input model. If a $EST record is defined this 
-	  will be used in the simulation model instead of the $EST found in the input model.
+	Default not set. Only relevant if -gls_model is not set. Change $SIM and $EST
+	in simulation model (if used) and $EST in gls model based on tags in the input
+	model. All lines starting with the tag ;gls-final will be collected. The tag
+	will be removed, and then PsN will check that the lines define a single $EST
+	record. This $EST record will be set in the final model, instead of the one
+	in the input model. If no ;gls-final tag is found the $EST record in the final
+	model will be the same as in the input model. All lines starting with the tag
+	;gls-sim will also be collected, the tag will be removed, and then PsN will
+	check that the lines define either a single $EST or a single $SIM, or one of
+	each. If a $SIM record is defined this will be used in the simulation model
+	instead of any $SIM found in the input model. If a $EST record is defined this 
+	  will be used in the simulation model instead of the $EST found in the input
+	  model.
 EOF
+
 $help_text{-sim_table} = <<'EOF';
-      -sim_table
+	-sim_table
 
-      Default not set. Only relevant if -ind_shrinkage is set and -gls_model
-      is not set. PsN will delete all existing $TABLE in the simulation models 
-      before adding a $TABLE for per-observation IWRES values, but if option 
-      -sim_table is set then an extra $TABLE with diagnostic output is added 
-      to each simulation model.
+	Default not set. Only relevant if -ind_shrinkage is set and -gls_model is not
+	set. PsN will delete all existing $TABLE in the simulation models before
+	adding a $TABLE for per-observation IWRES values, but if option -sim_table is
+	set then an extra $TABLE with diagnostic output is added to each simulation
+	model.
 EOF
-
 
 $help_text{Post_help_message} = <<'EOF';
-    Also see 'psn_options -h' for a description of common PsN options.
+	Also see 'psn_options -h' for a description of common PsN options.
 EOF
 
 common_options::online_help( 'gls', \%options, \%help_text, \%required_options, \%optional_options);

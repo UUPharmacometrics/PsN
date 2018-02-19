@@ -70,44 +70,44 @@ foreach my $opt ( keys(%optional_options) ){
 
 my %help_text;
 
-	$help_text{Pre_help_message} = <<'EOF';
-    Perl script for summarizing output data.
+$help_text{Pre_help_message} = <<'EOF';
+	Perl script for summarizing output data.
 EOF
 
-	$help_text{Description} = <<'EOF';
-    The sumo tool is used to summarize output from a NONMEM run 
-	and print it to screen. It takes a lst-file as input.
+$help_text{Description} = <<'EOF';
+	The sumo tool is used to summarize output from a NONMEM run and print
+	it to screen. It takes a lst-file as input.
 EOF
 
-	$help_text{Examples} = <<'EOF';
-    sumo run1.lst
+$help_text{Examples} = <<'EOF';
+	sumo run1.lst
 EOF
 
-	$help_text{Options} = <<'EOF';
+$help_text{Options} = <<'EOF';
 	An lst-file is required on the command line.
 
-The following options are valid:
+	The following options are valid:
 EOF
 
-	$help_text{-c_level} = <<'EOF';
-    -c_level=N
+$help_text{-c_level} = <<'EOF';
+	-c_level=N
 
-    Default is 95. This option specifies the coverage of the confidence 
-	interval computed by the -ci option (see below). Allowed values are 
-	90, 95, 99 and 99.5.
+	Default is 95. This option specifies the coverage of the confidence 
+	interval computed by the -ci option (see below). Allowed values are 90,
+	95, 99 and 99.5.
 EOF
 
-	$help_text{-check_run} = <<'EOF';
-    -check_run
+$help_text{-check_run} = <<'EOF';
+	-check_run
 
-    Default set. When unset with -no-check_run the initial run diagnostic 
+	Default set. When unset with -no-check_run the initial run diagnostic 
 	output of sumo will be suppressed.
 EOF
 
-	$help_text{-ci} = <<'EOF';
-    -confidence_interval, -ci
+$help_text{-ci} = <<'EOF';
+	-confidence_interval, -ci
 
-    Default not set. This option computes and reports the traditional 
+	Default not set. This option computes and reports the traditional 
 	confidence intervals for the parameter estimates instead of the relative 
 	standard errors: CI = estimate +/- c_level*SE. 
 
@@ -138,98 +138,98 @@ EOF
     i.e. no transformation to CVs or correlations is performed.
 EOF
 
-	$help_text{-condition_number_limit} = <<'EOF';
-    -condition_number_limit='number'
+$help_text{-condition_number_limit} = <<'EOF';
+	-condition_number_limit='number'
 
-    Default is 1000. The cut-off for issuing a warning for a high condition 
+	Default is 1000. The cut-off for issuing a warning for a high condition 
 	number. The test will only be made if the $COV step has been requested in 
 	the NMtran control stream and NONMEM has been asked to report eigenvalues 
 	($COV PRINT=E).
 EOF
 
-	$help_text{-correlation_limit} = <<'EOF';
-    -correlation_limit='number'
+$help_text{-correlation_limit} = <<'EOF';
+	-correlation_limit='number'
 
-    Default 0.9
-
-    The cut-off for issuing a warning for high correlations between
-    the parameter estimates. This test will only be made if the $COV
+	Default 0.9. The cut-off for issuing a warning for high correlations
+	between the parameter estimates. This test will only be made if the $COV
     step has been requested in the NMtran control stream.
 EOF
 
-	$help_text{-csv} = <<'EOF';
-    -csv
+$help_text{-csv} = <<'EOF';
+	-csv
 
-    Default not set. The option produces output in which the columns of 
-	the parameters estimates and standard errors are comma separated. This 
-	option can be used if you wish to import the sumo output into a 
-	spreadsheet programs, such as MS Excel. (Something like this is probably 
-	what you would want to do in that case: sumo -csv run1.lst > sumooutput.csv).
+	Default not set. The option produces output in which the columns of the
+	parameters estimates and standard errors are comma separated. This option
+	can be used if you wish to import the sumo output into a spreadsheet
+	programs, such as MS Excel. (Something like this is probably what you
+	would want to do in that case: sumo -csv run1.lst > sumooutput.csv).
 EOF
 
-	$help_text{-debug} = <<'EOF';
-    -debug=N
+$help_text{-debug} = <<'EOF';
+	-debug=N
 
-    Default is 0. This is mainly for developers who wish to debug PsN. 
-	By default N is 0 but you can set it to 1 to enable warnings.
+	By default N is 0 but you can set it to 1 to enable warnings.. This is
+	mainly for developers who wish to debug PsN. 
 EOF
 
-	$help_text{-max_problem_num} = <<'EOF';
-    -max_problem_num=integer
+$help_text{-max_problem_num} = <<'EOF';
+	-max_problem_num=integer
 
-    Default is 1. By default sumo reports the results for the first $PROBLEM 
+	Default is 1. By default sumo reports the results for the first $PROBLEM 
 	only. PsN divides NONMEM output into problems and subproblems.
 EOF
 
-	$help_text{-max_subproblem_num} = <<'EOF';
-    -max_subproblem_num=integer
 
-    Default is 1. By default sumo reports the results only for the first 
-	subproblem of the selected problems. Each problem contains at least one 
-	subproblem. Should $SIMULATION be used there will be as many subproblems 
+$help_text{-max_subproblem_num} = <<'EOF';
+	-max_subproblem_num=integer
+
+	Default is 1. By default sumo reports the results only for the first
+	subproblem of the selected problems. Each problem contains at least one
+	subproblem. Should $SIMULATION be used there will be as many subproblems
 	as the value of NSUBS. 
 EOF
 
-	$help_text{-near_bound_sign_digits} = <<'EOF';
-    -near_bound_sign_digits=integer
+$help_text{-near_bound_sign_digits} = <<'EOF';
+	-near_bound_sign_digits=integer
 
-    Default is 2. When a parameter estimates is equal to a boundary with these 
-	many significant digits, a warning will be issued. The default is for 
-	NONMEM to report if parameter estimates are close to a boundary value but 
-	this can be turned off. The boundary test in sumo is independent of the 
-	way NONMEM is configured and will report these types of issues in output 
+	Default is 2. When a parameter estimates is equal to a boundary with these
+	many significant digits, a warning will be issued. The default is for
+	NONMEM to report if parameter estimates are close to a boundary value but
+	this can be turned off. The boundary test in sumo is independent of the
+	way NONMEM is configured and will report these types of issues in output
 	from NONMEM. 
 EOF
 
-	$help_text{-near_zero_boundary_limit} = <<'EOF';
-    -near_zero_boundary_limit=N
+$help_text{-near_zero_boundary_limit} = <<'EOF';
+	-near_zero_boundary_limit=N
 
-    Default is 0.001. If the bound is 0, the boundary test will issue a warning
-	if the estimate is this close to zero.
+	Default is 0.001. If the bound is 0, the boundary test will issue a
+	warning if the estimate is this close to zero.
 EOF
 
-	$help_text{-precision} = <<'EOF';
-    -precision=integer
+$help_text{-precision} = <<'EOF';
+	-precision=integer
 
-    Default is 4. Precision in output.  
+	Default is 4. Precision in output.  
 EOF
 
-	$help_text{-sd_rse} = <<'EOF';
-    -sd_rse
+$help_text{-sd_rse} = <<'EOF';
+-	sd_rse
 
-    Default set. If sd\_rse is set, sumo will report these on the (approximate)
-	standard deviation scale: (SE/variance estimate)/2. If sd\_rse is not set 
-	sumo will report the relative standard errors for the random effects 
-	parameters (omega and sigma) on the variance scale (SE/variance estimate).
+	Default set. If sd\_rse is set, sumo will report these on the
+	(approximate) standard deviation scale: (SE/variance estimate)/2. If
+	sd\_rse is not set sumo will report the relative standard errors for
+	the random effects parameters (omega and sigma) on the variance scale
+	(SE/variance estimate).
 EOF
 
 	$help_text{-sign_digits_off_diagonals} = <<'EOF';
-    -sign_digits_off_diagonals=integer 
+	-sign_digits_off_diagonals=integer 
 
-    Default is 2. The boundary test for off-diagonal omega elements are 
-	performed by first converting the covariances to the corresponding 
-	correlations and then check if they are close to +/-1 with this many 
-	significant digits. 
+	Default is 2. The boundary test for off-diagonal omega elements are
+	performed by first converting the covariances to the corresponding
+	correlations and then check if they are close to +/-1 with this many
+	significant digits.
 EOF
 
 $help_text{-confidence_interval} = $help_text{-ci};
