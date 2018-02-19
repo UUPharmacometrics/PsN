@@ -42,54 +42,55 @@ exit unless $res;
 my %help_text;
 
 $help_text{Pre_help_message} = <<'EOF';  
-      Non-parametric estimation on the extended grid.
-EOF
-    $help_text{Examples} = <<'EOF';
-      extended_grid pheno.mod
-
-       This will create a new directory extended_grid_dirX where X is a
-       number increased every time you run the program. Inside that
-       directory it will create a new model file for each OMEGA in the
-       file. You will be able to retrieve the results from the
-       corresponding table file.
+	Non-parametric estimation on the extended grid.
 EOF
 
-    $help_text{Description} = <<'EOF';
-	The extended_grid program implements the method presented in 
-	Evaluation of an extended grid method for estimation using nonparametric distributions,
+$help_text{Examples} = <<'EOF';
+	extended_grid pheno.mod
+
+	This will create a new directory extended_grid_dirX where X is a number
+	increased every time you run the program. Inside that directory it will
+	create a new model file for each OMEGA in the file. You will be able to
+	retrieve the results from the corresponding table file.
+EOF
+
+$help_text{Description} = <<'EOF';
+	The extended_grid program implements the method presented in Evaluation of an
+	extended grid method for estimation using nonparametric distributions,
 	AAPS J. 2009 Sep;11(3):615-27, RM Savic RM, MO Karlsson.
 EOF
 
-    $help_text{Options} = <<'EOF';
+$help_text{Options} = <<'EOF';
 	A model file is required as argument.
 
-    The following options are valid:
+	The following options are valid:
 EOF
 
-	$help_text{-dv_column} = <<'EOF';
-      -dv_column=column_name
+$help_text{-dv_column} = <<'EOF';
+	-dv_column=column_name
 
-      The dependent variable column. Default DV.
+	The dependent variable column. Default DV.
 EOF
 
-	$help_text{-id_column} = <<'EOF';
-      -id_column=column_name
+$help_text{-id_column} = <<'EOF';
+	-id_column=column_name
 
-      The header of the column marking individuals. Default ID.
+	The header of the column marking individuals. Default ID.
 EOF
 
-	$help_text{-ids_to_simulate} = <<'EOF';
-      -ids_to_simulate=N
+$help_text{-ids_to_simulate} = <<'EOF';
+	-ids_to_simulate=N
 
-      The number of individuals to simulate. Default is the number of individuals in the original dataset. 
+	The number of individuals to simulate. Default is the number of individuals
+	in the original dataset.
 EOF
 
-	$help_text{-omega_multiplier} = <<'EOF';
-      -omega_multiplier=number
+$help_text{-omega_multiplier} = <<'EOF';
+	-omega_multiplier=number
 
-      Default 1. The initial omegas in the simulation model and
-      extended model will be multiplied by this number. This gives 
-      inflation (or deflation if the multiplier < 1) of the variance.
+	Default 1. The initial omegas in the simulation model and extended model
+	will be multiplied by this number. This gives inflation (or deflation if
+	the multiplier < 1) of the variance.
 EOF
 
 	$help_text{Post_help_message} = <<'EOF';

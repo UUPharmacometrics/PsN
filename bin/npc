@@ -64,184 +64,239 @@ if (defined $options{'msfo_file'}){
 
 my %help_text;
 
-	$help_text{Pre_help_message} = <<'EOF';
-		Numerical Predictive Check.
+$help_text{Pre_help_message} = <<'EOF';
+	Numerical Predictive Check.
 EOF
 
-	$help_text{Description} = <<'EOF';
-		NPC - Numerical Predictive Check - is a model diagnostics tool. A set of simulated datasets are generated using the model to be evaluated.
-		Afterwards the real data observations are compared with the distribution of the simulated observations. By default no model estimation is ever
-		performed. The input to the NPC script is the model to be evaluated, the number of samples (simulated datasets) to generate, parameter values
-		options for the simulations, and stratification options for the evaluation.
+$help_text{Description} = <<'EOF';
+	NPC - Numerical Predictive Check - is a model diagnostics tool. A set of
+	simulated datasets are generated using the model to be evaluated.
+	Afterwards the real data observations are compared with the distribution of
+	the simulated observations. By default no model estimation is ever performed.
+	The input to the NPC script is the model to be evaluated, the number of
+	samples (simulated datasets) to generate, parameter values options for the
+	simulations, and stratification options for the evaluation.
 EOF
 
-	$help_text{Examples} = <<'EOF';
-		npc run1.mod -samples=20
+$help_text{Examples} = <<'EOF';
+	npc run1.mod -samples=20
 EOF
 
-	$help_text{Options} = <<'EOF';
-		A model file must be specified (unless -sim_table and -orig_table are both specified).
-		-samples must be specified and be at least 20.
-	
+$help_text{Options} = <<'EOF';
+
+	A model file must be specified (unless -sim_table and -orig_table are both
+	specified).-samples must be specified and be at least 20.
+
 	The following options are valid:
 EOF
 
-	$help_text{-censor} = <<'EOF';
-		-censor=VARIABLE
+$help_text{-censor} = <<'EOF';
+	-censor=VARIABLE
 
-		Name of variable which defines whether the observation of the dependent variable is missing, e.g. due to drop-out. 1 means the observation is censored, 
-		0 means the observation is not censored. The variable must be requestable in $TABLE.
+	Name of variable which defines whether the observation of the dependent
+	variable is missing, e.g. due to drop-out. 1 means the observation is censored,
+	0 means the observation is not censored. The variable must be requestable in
+	$TABLE.
 EOF
 
-	$help_text{-confidence_interval} = <<'EOF';
-		-confidence_interval=number
+$help_text{-confidence_interval} = <<'EOF';
+	-confidence_interval=number
 
-		Default is 95. An integer between 1 and 99 specifying the confidence interval in percent.
+	Default is 95. An integer between 1 and 99 specifying the confidence interval
+	in percent.
 EOF
 
-	$help_text{-copy_data} = <<'EOF';
-		-copy_data
-		Set by default. Disable with -no-copy_data. By default PsN will copy the data file into NM_run1 and set a local path in psn.mod, the actual
-		model file run with NONMEM. If -no-copy_data is set, PsN will not copy the data to NM_run1 but instead set a global path to the data file in
-		psn.mod. However, NONMEM does not allow more than 80 characters in the path.
+$help_text{-copy_data} = <<'EOF';
+	-copy_data
+
+	Set by default. Disable with -no-copy_data. By default PsN will copy the data
+	file into NM_run1 and set a local path in psn.mod, the actual model file run
+	with NONMEM. If -no-copy_data is set, PsN will not copy the data to NM_run1
+	but instead set a global path to the data file in psn.mod. However, NONMEM
+	does not allow more than 80 characters in the path.
 EOF
 
-	$help_text{-dv} = <<'EOF';
-		-dv=VARIABLE
+$help_text{-dv} = <<'EOF';
+	-dv=VARIABLE
 
-		Name of dependent variable. Default is DV. Case sensitive, must be exactly the same case and spelling as in modelfile.
-		Maximum of 4 letters because of NONMEM limitation, unless either IPRED or IWRES.
+	Name of dependent variable. Default is DV. Case sensitive, must be exactly the
+	same case and spelling as in modelfile. Maximum of 4 letters because of NONMEM
+	limitation, unless either IPRED or IWRES.
 EOF
 
-	$help_text{-flip_comments} = <<'EOF';
-		-flip_comments
+$help_text{-flip_comments} = <<'EOF';
+	-flip_comments
 
-		Method for handling user-defined simulation code in the model. If this option is set, PsN will create the simulation model by flipping comments (commented lines will be
-		uncommented and vice versa) between the tags 
-		;Sim_start 
-		and 
-		;Sim_end
-		Note that the tags must look exactly like that or the editing will fail. After creating the simulation model PsN will remove $COV and $TABLE, change SEED, NSUBS 
-		and MAXEVAL in $SIM, and add a new $TABLE, but otherwise no changes will be made.
+	Method for handling user-defined simulation code in the model. If this option
+	is set, PsN will create the simulation model by flipping comments (commented
+	lines will be uncommented and vice versa) between the tags 
+	;Sim_start 
+	and 
+	;Sim_end
+	Note that the tags must look exactly like that or the editing will fail.
+	After creating the simulation model PsN will remove $COV and $TABLE, change
+	SEED, NSUBS and MAXEVAL in $SIM, and add a new $TABLE, but otherwise no
+	changes will be made.
 EOF
 
-	$help_text{-stratify_on} = <<'EOF';
-		-stratify_on=VARIABLE
+$help_text{-stratify_on} = <<'EOF';
+	-stratify_on=VARIABLE
 
-		Name of variable to stratify on. The npc will stratify the data on unique values in the specified column, and perform separate analyses on each set. Stratification 
-		may also be done on a parameter defined in the model. The stratification variable must be requestable in $TABLE. -stratify_on may be a comma-separated list
-		of multiple variables, then the first variable will be used for stratification and the rest simply added to $TABLE.
+	Name of variable to stratify on. The npc will stratify the data on unique
+	values in the specified column, and perform separate analyses on each set.
+	Stratification may also be done on a parameter defined in the model. The
+	stratification variable must be requestable in $TABLE. -stratify_on may be
+	a comma-separated list of multiple variables, then the first variable will be
+	used for stratification and the rest simply added to $TABLE.
 EOF
 
-	$help_text{-in_filter} = <<'EOF';
-		-in_filter=comma-separated list of conditions
+$help_text{-in_filter} = <<'EOF';
+	-in_filter=comma-separated list of conditions
 
-		Default not set. Only relevant in combination with rawres_input. The parameter estimates lines in the file can be filtered on values 
-		in the different columns. When specifying which column(s) the filtering should be based on, the exact column name must be used, e.g. minimization_successful. 
-		Filtering can only be based on columns with numeric values. The allowed relations are .gt. (greater than), .lt. (less than) and .eq. (equal to). Conditions are separated with commas. 
-		If the remaining number of lines after filtering is smaller than -samples, the program will stop with an error message. Then the user must either change the 
-		filtering rules or change -samples. If the user has created a file with parameter estimates outside of PsN, filtering can be done on any numeric column in that file. 
-		Do not set column headers containing .eq. or .lt. or .gt.in the user-generated file as this would interfere with the in_filter option syntax.
-    
-      Example: -in_filter=minimization_successful.eq.1,significant_digits.gt.3.5
+	Default not set. Only relevant in combination with rawres_input. The parameter
+	estimates lines in the file can be filtered on values in the different columns.
+	When specifying which column(s) the filtering should be based on, the exact
+	column name must be used, e.g. minimization_successful. Filtering can only
+	be based on columns with numeric values. The allowed relations are .gt.
+	(greater than), .lt. (less than) and .eq. (equal to). Conditions are separated
+	with commas. If the remaining number of lines after filtering is smaller than
+	-samples, the program will stop with an error message. Then the user must
+	either change the filtering rules or change -samples. If the user has created
+	a file with parameter estimates outside of PsN, filtering can be done on any
+	numeric column in that file. Do not set column headers containing .eq. or .lt.
+	or .gt.in the user-generated file as this would interfere with the in_filter
+	option syntax.
+
+	Example: -in_filter=minimization_successful.eq.1,significant_digits.gt.3.5
 EOF
 
-	$help_text{-irep} = <<'EOF';
-		-irep=VARIABLE
+$help_text{-irep} = <<'EOF';
+	-irep=VARIABLE
 
-		Name of variable holding the number of the current replication for simulation data, obtained via IREP in NONMEM. This option is only used together with -sim_table,
-		otherwise ignored.
+	Name of variable holding the number of the current replication for simulation
+	data, obtained via IREP in NONMEM. This option is only used together with
+	-sim_table, otherwise ignored.
 EOF
 
-	$help_text{-keep_estimation} = <<'EOF';
-		-keep_estimation
-      
-		Perform post-hoc evalutaion step for each simulated dataset, i.e. keep the $ESTIMATION record and set MAXEVALS to 0. In this case variables such as IPRED(F) are based on 
-		the re-estimated post-hoc parameters.      
+$help_text{-keep_estimation} = <<'EOF';
+	-keep_estimation
+
+	Perform post-hoc evalutaion step for each simulated dataset, i.e. keep the
+	$ESTIMATION record and set MAXEVALS to 0. In this case variables such as
+	IPRED(F) are based on the re-estimated post-hoc parameters.      
 EOF
 
-	$help_text{-lst_file} = <<'EOF';
-		-lst_file=file
+$help_text{-lst_file} = <<'EOF';
+	-lst_file=file
 
-		The npc will update initial parameter estimates in the model to the final values in the lst-file. Optional parameter. Cannot be used together with -msfo_file option nor with a model
-		containing a $NONPARAMETRIC record.
+	The npc will update initial parameter estimates in the model to the final
+	values in the lst-file. Optional parameter. Cannot be used together with
+	-msfo_file option nor with a model containing a $NONPARAMETRIC record.
 EOF
 
-	$help_text{-msfo_file} = <<'EOF';
-		-msfo_file=file
+$help_text{-msfo_file} = <<'EOF';
+	-msfo_file=file
 
-		The npc will use the NONMEM state defined in the update file. Cannot be used together with -lst_file option. If the modelfile contains a $NONPARAMETRIC record this parameter
-		is required, otherwise it is optional.
+	The npc will use the NONMEM state defined in the update file. Cannot be used
+	together with -lst_file option. If the modelfile contains a $NONPARAMETRIC
+	record this parameter is required, otherwise it is optional.
 EOF
 
-	$help_text{-n_simulation_models} = <<'EOF';
-		-n_simulation_models=N
+$help_text{-n_simulation_models} = <<'EOF';
+	-n_simulation_models=N
 
-		Default 1, which means all simulations are run in the same modelfile. By setting this option to a number N greater than 1, the 'samples' simulations will be split equally between 
-		N model files, which can be run in parallel. This option cannot be used together with option -sim_table or, if the NONMEM version < 7, together with -dv=CWRES.
+	Default 1, which means all simulations are run in the same modelfile. By
+	setting this option to a number N greater than 1, the 'samples' simulations
+	will be split equally between N model files, which can be run in parallel.
+	This option cannot be used together with option -sim_table or, if the
+	NONMEM version < 7, together with -dv=CWRES.
 EOF
 
-	$help_text{-no_of_strata} = <<'EOF';
-		-no_of_strata=number
+$help_text{-no_of_strata} = <<'EOF';
+	-no_of_strata=number
 
-		Only allowed together with -stratify_on. An integer requesting the number of strata. The number must be equal to or less than the number of unique values in the stratification column.
-		If the number is smaller than the number of unique values, the observations will be grouped so that the number of observations in each group/strata is approximately equal.
+	Only allowed together with -stratify_on. An integer requesting the number of
+	strata. The number must be equal to or less than the number of unique values
+	in the stratification column. If the number is smaller than the number of
+	unique values, the observations will be grouped so that the number of
+	observations in each group/strata is approximately equal.
 EOF
 
-	$help_text{-noprediction} = <<'EOF';
-		-noprediction
-      
-		Add NOPREDICTION to the $SIMULATION record of the simulation model in addition to ONLYSIMULATION. This option is generally recommended with likelihood models for odd type data.
+$help_text{-noprediction} = <<'EOF';
+	-noprediction
+
+	Add NOPREDICTION to the $SIMULATION record of the simulation model in addition
+	to ONLYSIMULATION. This option is generally recommended with likelihood models
+	for odd type data.
 EOF
 
-	$help_text{-offset_rawres} = <<'EOF';
-		-offset_rawres=N
+$help_text{-offset_rawres} = <<'EOF';
+	-offset_rawres=N
 
-		Default 1. Only relevant in combination with rawres_input. The number of result lines to skip in the input raw results file  before starting to read final parameter estimates. In a regular
-		bootstrap raw_results file the first line of estimates refers to the input model with the full dataset, so therefore the default offset is 1.
+	Default 1. Only relevant in combination with rawres_input. The number of result
+	lines to skip in the input raw results file  before starting to read final
+	parameter estimates. In a regular bootstrap raw_results file the first line
+	of estimates refers to the input model with the full dataset, so therefore
+	the default offset is 1.
 EOF
 
-	$help_text{-orig_table} = <<'EOF';
-		-orig_table=file
-	
-		Use an already created tablefile with original data, instead of letting the program create it. This option can only be used together with -sim_table.
+$help_text{-orig_table} = <<'EOF';
+	-orig_table=file
+
+	Use an already created tablefile with original data, instead of letting the
+	program create it. This option can only be used together with -sim_table.
 EOF
 
-	$help_text{-rawres_input} = <<'EOF';
-		-rawres_input=filename
+$help_text{-rawres_input} = <<'EOF';
+	-rawres_input=filename
 
-		A simple way to simulate with uncertainty. Note that it is normally not appropriate to do this in a vpc or npc. Instead of using identical parameter estimates for simulation of each 
-		new dataset, take parameter estimates from a raw_results.csv file, e.g. from a bootstrap run. The raw results file must contain at least as many samples as the input -samples to vpc, 
-		the labels for THETA/OMEGA/SIGMA in the file must match the labels in the (simulation) model given as input to vpc, the theta columns must be directly followed by the omega 
-		columns which must be directly followed by the sigma columns, and the first column must have header model just as a bootstrap raw_results file. Note that is is possible to generate 
-		a file with initial parameter estimates outside of PsN, as long as the file follows the format rules.
+	A simple way to simulate with uncertainty. Note that it is normally not
+	appropriate to do this in a vpc or npc. Instead of using identical parameter
+	estimates for simulation of each new dataset, take parameter estimates from
+	a raw_results.csv file, e.g. from a bootstrap run. The raw results file must
+	contain at least as many samples as the input -samples to vpc, the labels
+	for THETA/OMEGA/SIGMA in the file must match the labels in the (simulation)
+	model given as input to vpc, the theta columns must be directly followed by
+	the omega columns which must be directly followed by the sigma columns, and
+	the first column must have header model just as a bootstrap raw_results file.
+	Note that is is possible to generate a file with initial parameter estimates
+	outside of PsN, as long as the file follows the format rules.
 EOF
 
-	$help_text{-refstrat} = <<'EOF';
-		-refstrat=number
+$help_text{-refstrat} = <<'EOF';
+	-refstrat=number
 
-		Only allowed together with -stratify_on. Illegal together with -no_of_strata. A number indicating the value of the stratification variable in the reference stratum used when computing delta-means.
+	Only allowed together with -stratify_on. Illegal together with -no_of_strata.
+	A number indicating the value of the stratification variable in the reference
+	stratum used when computing delta-means.
 EOF
 
-	$help_text{-samples} = <<'EOF';
-		-samples=number
+$help_text{-samples} = <<'EOF';
+	-samples=number
 
-		Number of simulated datasets to generate, required. Must be at least 20.
+	Number of simulated datasets to generate, required. Must be at least 20.
 EOF
 
-	$help_text{-sim_model} = <<'EOF';
-		-sim_model=file
+$help_text{-sim_model} = <<'EOF';
+	-sim_model=file
 
-		Cannot be used together with -flip_comments, -keep_estimation or -noprediction. By default PsN will create a simulation model based on the  required input model, but by using option -sim_model it is 
-      possible to use a separate input model for the simulations. PsN will remove $COV and $TABLE, change SEED and NSUBS in $SIM, add a new $TABLE and  update initial estimates if option -lst is set or add 
-	  $MSFI if option -msfo is used, but otherwise no changes will be made to the user defined simulation model. See section Modified models. Note that -lst will be set automatically if a file with 
-      the same name as the regular input model but with suffix lst intead of mod is found.
+	Cannot be used together with -flip_comments, -keep_estimation or -noprediction.
+	By default PsN will create a simulation model based on the  required input
+	model, but by using option -sim_model it is possible to use a separate input
+	model for the simulations. PsN will remove $COV and $TABLE, change SEED and
+	NSUBS in $SIM, add a new $TABLE and  update initial estimates if option -lst
+	is set or add $MSFI if option -msfo is used, but otherwise no changes will
+	be made to the user defined simulation model. See section Modified models.
+	Note that -lst will be set automatically if a file with the same name as
+	the regular input model but with suffix lst intead of mod is found.
 EOF
 
-	$help_text{-sim_table} = <<'EOF';
-		-sim_table=file
+$help_text{-sim_table} = <<'EOF';
+	-sim_table=file
 
-		Use an already created tablefile with simulated data, instead of letting the program run the simulations. This option can only be used together with -orig_table.
+	Use an already created tablefile with simulated data, instead of letting the
+	program run the simulations. This option can only be used together with
+	-orig_table.
 EOF
 
 common_options::online_help( 'npc', \%options, \%help_text, \%required_options, \%optional_options);

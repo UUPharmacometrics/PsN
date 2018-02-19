@@ -44,115 +44,120 @@ exit unless $res;
 
 my %help_text;
 
-	$help_text{Pre_help_message} = <<'EOF';
-    Multiple imputation using PsN.
+$help_text{Pre_help_message} = <<'EOF';
+	Multiple imputation using PsN.
 EOF
 
-    $help_text{Description} = <<'EOF';
-	The mimp tool implements the multiple imputation method:
-	Åsa Johansson, Comparison of methods for handling missing covariate	data, 
-	www.page-meeting.org/?abstract=1982, PAGE 20 Abstract 1982, 2011
+$help_text{Description} = <<'EOF';
+	The mimp tool implements the multiple imputation method: Åsa Johansson,
+	Comparison of methods for handling missing covariate data,
+	www.page-meeting.org/?abstract=1982, PAGE 20 Abstract 1982, 2011.
 EOF
 
-	$help_text{Examples} = <<'EOF';    
-    mimp -base_model=run1.mod -reg_model=run2.mod -mi_model=run3.mod
+$help_text{Examples} = <<'EOF';    
+	mimp -base_model=run1.mod -reg_model=run2.mod -mi_model=run3.mod
 EOF
 
-    $help_text{Options} = <<'EOF';
+$help_text{Options} = <<'EOF';
 	Options -base_model, -reg_model and -mi_model are required.
 
-    The following options are valid:
+	The following options are valid:
 EOF
 
-    $help_text{-h} = <<'EOF';
-    -h | -?
-    With -h or -? mimp will print a list of options and exit.
+$help_text{-h} = <<'EOF';
+	-h | -?
+	With -h or -? mimp will print a list of options and exit.
 EOF
 
-    $help_text{-help} = <<'EOF';
-    -help
+$help_text{-help} = <<'EOF';
+	-help
 
-    With -help mimp will print this, longer, help message.
+	With -help mimp will print this, longer, help message.
 EOF
 
-	$help_text{-alt_models} = <<'EOF';
+$help_text{-alt_models} = <<'EOF';
 	-alt_models=model_1,model_2,...
-	
+
 	A comma-separated list of filenames of alternative models.
 EOF
 
-	$help_text{-base_model} = <<'EOF';
+$help_text{-base_model} = <<'EOF';
 	-base_model=filename
  
-	Base model. This is the model without the code snippet describing the effect of the covariate
-	(that is partly missing) on the parameters. The individual parameter (empirical Bayes) 
-	estimates the parameter(s) on which the covariate has an effect, contains information about 
-	the individual response. The individual parameter estimates should be printed in $TABLE of 
-	the base model. The model must contain a complete $TABLE containing items exactly matching 
-	$INPUT of the next model in the sequence. PsN does not check that $TABLE is correctly defined.
+	Base model. This is the model without the code snippet describing the effect
+	of the covariate (that is partly missing) on the parameters. The individual
+	parameter (empirical Bayes) estimates the parameter(s) on which the covariate
+	has an effect, contains information about the individual response. The
+	individual parameter estimates should be printed in $TABLE of the base model.
+	The model must contain a complete $TABLE containing items exactly matching
+	$INPUT of the next model in the sequence. PsN does not check that $TABLE is
+	correctly defined.
 EOF
 
-	$help_text{-chain_models} = <<'EOF';
+$help_text{-chain_models} = <<'EOF';
 	-chain_models=model1,model2,...
-    
-	An ordered list of chain models. These models can be used if there is a need for additional 
-	estimation models in between the base model and the regression model. The models must
-	be listed in the order in which they are to be estimated. Each model must contain a complete
-	$TABLE containing items exactly matching $INPUT of the next model in the sequence (the
-	next chain model or the regression model if it is the last chain model). PsN does not check 
-	that $TABLE is correctly defined.
+
+	An ordered list of chain models. These models can be used if there is a need
+	for additional estimation models in between the base model and the regression
+	model. The models must be listed in the order in which they are to be
+	estimated. Each model must contain a complete $TABLE containing items exactly
+	matching $INPUT of the next model in the sequence (the next chain model or the
+	regression model if it is the last chain model). PsN does not check that $TABLE
+	is correctly defined.
 EOF
 
-	$help_text{-frac_model} = <<'EOF';
+$help_text{-frac_model} = <<'EOF';
 	-frac_model=string
-    
+
 	Fraction model.
 EOF
 
-	$help_text{-imputations} = <<'EOF';
+$help_text{-imputations} = <<'EOF';
 	-imputations=N
-    
+
 	Default is 6. The number of imputations to perform for each dataset.
 EOF
 
-	$help_text{-mi_model} = <<'EOF';
+$help_text{-mi_model} = <<'EOF';
 	-mi_model=filename
-    
-	Multiple imputation mode. This model must contain one simulation part and one estimation 
-	part, followed by both a $SIM and a $EST record. The simulation part should contain the
-	code for imputation of the missing covariate while the estimation part should be the final 
-	model including the code for the effect of the covariate on the parameters.
+
+	Multiple imputation mode. This model must contain one simulation part and
+	one estimation part, followed by both a $SIM and a $EST record. The simulation
+	part should contain the code for imputation of the missing covariate while
+	the estimation part should be the final model including the code for the
+	effect of the covariate on the parameters.
 EOF
 
-	$help_text{-reg_model} = <<'EOF';
+$help_text{-reg_model} = <<'EOF';
 	-reg_model=filename
-    
-	Regression model. The regression model estimates the relationship between the partly missing
-	covariate, the response (individual parameter estimates from the base model) and other 
-	(completely observed) covariates that carry information about the missing covariate. The 
-	partly missing covariate will be the dependent variable (DV) in this model and the column 
-	in the dataset that depicts if the covariate is missing or observed will be the missing 
-	dependent variable (MDV). The regression model must contain a complete $TABLE containing 
+
+	Regression model. The regression model estimates the relationship between the
+	partly missing covariate, the response (individual parameter estimates from
+	the base model) and other (completely observed) covariates that carry
+	information about the missing covariate. The partly missing covariate will be
+	the dependent variable (DV) in this model and the column in the dataset that
+	depicts if the covariate is missing or observed will be the missing dependent
+	variable (MDV). The regression model must contain a complete $TABLE containing
 	items exactly matching $INPUT of the multiple imputation model.
 EOF
 
-	$help_text{-samples} = <<'EOF';
+$help_text{-samples} = <<'EOF';
 	-samples=N	
 
-    Number of datasets to simulate. Only relevant together with option -sim_model, required if 
-	sim_model is given.
+	Number of datasets to simulate. Only relevant together with option -sim_model,
+	required if sim_model is given.
 EOF
 
-	$help_text{-sim_model} = <<'EOF';
+$help_text{-sim_model} = <<'EOF';
 	-sim_model='string'
-    
-	Simulation model. This model must contain a correct $SIM record and a complete $TABLE 
-	containing items exactly matching $INPUT of the base model. PsN does not check that 
-	$TABLE is correctly defined.
+
+	Simulation model. This model must contain a correct $SIM record and a complete
+	$TABLE containing items exactly matching $INPUT of the base model. PsN does
+	not check that $TABLE is correctly defined.
 EOF
 
-	$help_text{Post_help_message} = <<'EOF';
-    Also see 'psn_options -h' for a description of common options.
+$help_text{Post_help_message} = <<'EOF';
+	Also see 'psn_options -h' for a description of common options.
 EOF
 
 common_options::online_help( 'mimp', \%options, \%help_text, \%required_options, \%optional_options);

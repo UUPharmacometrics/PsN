@@ -59,161 +59,164 @@ exit unless $res;
 my %help_text;
 
 $help_text{Pre_help_message} = <<'EOF';
-    Stepwise covariate model building from NONMEM models.
+
+	Stepwise covariate model building from NONMEM models.
 EOF
 
+
 $help_text{Description} = <<'EOF';
-    The Cross-validated Stepwise Covariate Model (XV_SCM) building tool 
-    of PsN implements cross-validated model size selection for a
-    covariate model. It relies on the SCM tool of PsN.
-        
-    A configuration file must be written for each xv_scm run. The 
-    format of the configuration file follows the format of the scm
-    configuration file exactly, except that options 
-    search_direction, gof, p_value, p_forward, p_backward and 
-    update_derivatives are ignored.
+	
+	The Cross-validated Stepwise Covariate Model (XV_SCM) building tool of
+	PsN implements cross-validated model size selection for a covariate model.
+	It relies on the SCM tool of PsN.
+	A configuration file must be written for each xv_scm run. The format of
+	the configuration file follows the format of the scm configuration file
+	exactly, except that options search_direction, gof, p_value, p_forward,
+	p_backward and update_derivatives are ignored.
 EOF
 
 $help_text{Examples} = <<'EOF';
-    Execute an XV_SCM using parameters set in the config file
-    'phenobarbital.scm'.
+	Execute an XV_SCM using parameters set in the config file
+	'phenobarbital.scm'.
 
-    xv_scm -config_file=phenobarbital.scm
+	xv_scm -config_file=phenobarbital.scm
 
-    Execute an XV_SCM using parameters set in the config file
-    'phenobarbital.scm'. But override the retries and the seed
-    parameter.
+	Execute an XV_SCM using parameters set in the config file
+	'phenobarbital.scm'. But override the retries and the seed parameter.
 
-    xv_scm -config_file=phenobarbital.scm -retries=5 -seed=12345 phenobarbital.mod
+	xv_scm -config_file=phenobarbital.scm -retries=5 -seed=12345 phenobarbital.mod
 EOF
 	
 $help_text{Options} = <<'EOF';
-    -config_file is mandatory
+	-config_file is mandatory
 
-The following options are valid.
+	The following options are valid.
 EOF
 
 $help_text{-config_file} = <<'EOF';
-    -config_file
+	-config_file
 
-    File name of an scm configuration file.
-EOF
-
-$help_text{-global_init} = << 'EOF';
-    -global_init
-
-    Use scm -help global_init for information on this option.
-EOF
-
-$help_text{-noabort} = <<'EOF';
-    -noabort
-
-    Use scm -help noabort for information on this option.
-EOF
-
-$help_text{-logfile} = << 'EOF';
-    -logfile
-
-    Default scmlog.txt. The name of the logfile.
-EOF
-
-$help_text{-groups} = <<'EOF';
-      -groups=N
-
-    Default 5. The number of validation groups to make an N-fold cross-validation.  
-EOF
-
-$help_text{-splits} = <<'EOF';
-      -splits=N
-
-    Default 1. The number times to perform a complete cross-validation
-    with a new data split. 
-EOF
-
-$help_text{-max_steps} = <<'EOF';
-      -max_steps=N
-
-    Do not take more that max_steps forward steps,
-    even if there are more covariates left to add and a significant
-    inclusion was made in the last step.
-EOF
-
-    $help_text{-model} = << 'EOF';
-    -model
-
-    The name of the basic model file, without any parameter-covariate
-    relations included.
-EOF
-
-$help_text{-stratify_on} = <<'EOF';
-      -stratify_on=variable
-
-    PsN will try to preserve the relative proportions of individuals
-    with different values of the stratification variable
-    when creating data subsets during cross-validation.
-    The stratification variable must be found in the original dataset,
-    and there must be at least 'groups' individuals having each
-    unique value of the stratification variable. If the stratification
-    variable is continuous it is recommended to first group the values
-    and then stratify on group number instead of the continuous variable.
-EOF
-
-$help_text{-do_not_drop} = << 'EOF';
-    -do_not_drop
-
-    Use scm -help do_not_drop for information on this option.
-EOF
-
-$help_text{-linearize} = <<'EOF';
-    -linearize
-
-    Use scm -help linearize for information on this option.
-EOF
-
-$help_text{-foce} = <<'EOF';
-    -foce
-
-    Use scm -help foce for information on this option.
+	File name of an scm configuration file.
 EOF
 
 $help_text{-derivatives_data} = <<'EOF';
-    -derivatives_data
+	-derivatives_data
 
-    Use scm -help derivatives_data for information on this option.
+	Use scm -help derivatives_data for information on this option.
+EOF
+
+$help_text{-do_not_drop} = << 'EOF';
+	-do_not_drop
+
+	Use scm -help do_not_drop for information on this option.
 EOF
 
 $help_text{-epsilon} = <<'EOF';
-    -epsilon
+	-epsilon
 
-    Use scm -help epsilon for information on this option.
+	Use scm -help epsilon for information on this option.
 EOF
-$help_text{-error} = <<'EOF';
-    -error
 
-    Use scm -help error for information on this option.
+$help_text{-error} = <<'EOF';
+	-error
+
+	Use scm -help error for information on this option.
+EOF
+
+$help_text{-foce} = <<'EOF';
+	-foce
+
+	Use scm -help foce for information on this option.
+EOF
+
+$help_text{-global_init} = << 'EOF';
+	-global_init
+
+	Use scm -help global_init for information on this option.
+EOF
+
+$help_text{-groups} = <<'EOF';
+	-groups=N
+
+	Default 5. The number of validation groups to make an N-fold cross-
+	validation.  
+EOF
+
+$help_text{-linearize} = <<'EOF';
+	-linearize
+
+	Use scm -help linearize for information on this option.
+EOF
+
+$help_text{-logfile} = << 'EOF';
+	-logfile
+
+	Default scmlog.txt. The name of the logfile.
 EOF
 
 $help_text{-lst_file} = <<'EOF';
-    -lst_file
+	-lst_file
 
-    Use scm -help lst_file for information on this option.
+		Use scm -help lst_file for information on this option.
+EOF
+
+$help_text{-max_steps} = <<'EOF';
+	-max_steps=N
+
+	Do not take more that max_steps forward steps, even if there are more
+	covariates left to add and a significant inclusion was made in the last
+	step.
+EOF
+
+$help_text{-model} = << 'EOF';
+	-model
+
+	The name of the basic model file, without any parameter-covariate
+	relations included.
+EOF
+
+$help_text{-noabort} = <<'EOF';
+	-noabort
+
+	Use scm -help noabort for information on this option.
 EOF
 
 $help_text{-only_successful} = <<'EOF';
-    -only_successful
+	-only_successful
 
-    Use scm -help only_successful for information on this option.
+	Use scm -help only_successful for information on this option.
 EOF
 
 $help_text{-parallel_states} = <<'EOF';
-    -parallel_states
+	-parallel_states
 
-    Use scm -help parallel_states for information on this option.
+	Use scm -help parallel_states for information on this option.
 EOF
 
+$help_text{-splits} = <<'EOF';
+	-splits=N
+
+	Default 1. The number times to perform a complete cross-validation with
+	a new data split. 
+EOF
+
+$help_text{-stratify_on} = <<'EOF';
+	-stratify_on=variable
+
+	PsN will try to preserve the relative proportions of individuals with 
+	different values of the stratification variable when creating data
+	subsets during cross-validation. The stratification variable must be
+	found in the original dataset, and there must be at least 'groups'
+	individuals having each unique value of the stratification variable.
+	If the stratification variable is continuous it is recommended to first
+	group the values and then stratify on group number instead of the
+	continuous variable.
+EOF
+ 
 $help_text{Post_help_message} = <<'EOF';
-    Also see 'scm -h' for a list of scm options,
-    and 'psn_options -h' for a description of common options.
+
+	Also see 'scm -h' for a list of scm options, and 'psn_options -h' for a
+	description of common options.
 EOF
 
 common_options::online_help( 'xv_scm', \%options, \%help_text, \%required_options, \%optional_options);

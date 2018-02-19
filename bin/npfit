@@ -40,29 +40,36 @@ exit unless $res;
 my %help_text;
 
 $help_text{Pre_help_message} = <<'EOF';
-Run multiple copies of a single model, one for each value i of npsupp, with
-$NONPARAMETRIC UNCONDITIONAL NPSUPP=i
+
+	Run multiple copies of a single model, one for each value i of npsupp, with
+	$NONPARAMETRIC UNCONDITIONAL NPSUPP=i
 EOF
+
 $help_text{Description} = <<'EOF';
-    Running a modelfile with $NONPARAMETRIC UNCONDITIONAL and
-	different values of NPSUPP.
+	Running a modelfile with $NONPARAMETRIC UNCONDITIONAL and different values
+	of NPSUPP.
 EOF
+
 $help_text{Options} = <<'EOF';
-A model file is required, as well as a list of npsupp values. NONMEM requires 
-that the $ESTIMATION record is present with the conditional method or POSTHOC:
+
+	A model file is required, as well as a list of npsupp values. NONMEM requires 
+	that the $ESTIMATION record is present with the conditional method or POSTHOC:
 
 
-The following options are valid:
+	The following options are valid:
 EOF
+
 $help_text{Examples} = <<'EOF';
-npfit run1.mod -npsupp=50,100,200
+	npfit run1.mod -npsupp=50,100,200
 EOF
+
 $help_text{-npsupp} = <<'EOF';
-    -npsupp
-    A comma-separated list of non-negative integers. For each value N a new copy 
+	-npsupp
+
+	A comma-separated list of non-negative integers. For each value N a new copy
 	of the input model will be run with $NONPARAMETRIC UNCONDITIONAL NPSUPP=N.
 	See the NONMEM documentation on $NONPARAMETRIC for interpretation of NPSUPP.
-	All values in the list should be equal to or greater than the number of 
+	All values in the list should be equal to or greater than the number of
 	individuals in the data set.
 EOF
 

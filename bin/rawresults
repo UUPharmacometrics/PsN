@@ -46,32 +46,44 @@ exit unless $res;
 my %help_text;
 
 $help_text{Pre_help_message} = <<'EOF';
-    Getting a raw results file from all model files with results in a directory path
+	Getting a raw results file from all model files with results in a directory
+	path.
 EOF
+
 $help_text{-h} = <<'EOF';
-      -h | -?
-      
-      With -h or -? rawresults will print a list of options and exit.
+	-h | -?
+
+	With -h or -? rawresults will print a list of options and exit.
 EOF
+
 $help_text{-help} = <<'EOF';      
-      -help
-      
-      With -help rawresults will print this, longer, help message.
+	-help
+
+	With -help rawresults will print this, longer, help message.
 EOF
+
 $help_text{-path} = <<'EOF';
-    -path='string'
-    The directory that holds the model files and lst-files. Default current directory.
+	-path='string'
+
+	The directory that holds the model files and lst-files. Default current
+	directory.
 EOF
+
 $help_text{-outfile} = <<'EOF';
-    -outfile='string'
-    Name of output file.
+	-outfile='string'
+
+	Name of output file.
 EOF
+
 $help_text{-nm_version} = <<'EOF';
-    Name of nm_version. Only needed if no default version defined in psn.conf
+
+	Name of nm_version. Only needed if no default version defined in psn.conf
 EOF
+
 $help_text{-silent} = <<'EOF';
-    Suppress PsN log messages.
+	Suppress PsN log messages.
 EOF
+
 $help_text{Post_help_message} = <<'EOF';
 EOF
 

@@ -70,57 +70,68 @@ exit unless $res;
 
 my %help_text;
 $help_text{Pre_help_message} = <<'EOF';
-Postprocessing for frem
+	Postprocessing for frem
 EOF
+
 $help_text{Description} = <<'EOF';
-   model plus raw_results from sir
+	model plus raw_results from sir
 EOF
+
 $help_text{Options} = <<'EOF';
 
-The following options are valid:
+	The following options are valid:
 EOF
+
 $help_text{Examples} = <<'EOF';
-postfrem -model=model_4.mod rawres_input=raw_results_model_4.mod -in_filter=resamples.gt.0
+	postfrem -model=model_4.mod rawres_input=raw_results_model_4.mod -in_filter=resamples.gt.0
 EOF
+
 $help_text{-offset_rawres} = <<'EOF';
-      -offset_rawres=N
+	-offset_rawres=N
 
-      Default is 1, i.e. first line is minimum. Do not set to 0.
+	Default is 1, i.e. first line is minimum. Do not set to 0.
 EOF
+
 $help_text{-output_format} = <<'EOF';
-      -output_format=format
+	-output_format=format
 
-      Default is pdf. Supported formats are pdf, png, svg and jpg.
-      svg requires library(svglite).
+	Default is pdf. Supported formats are pdf, png, svg and jpg.svg requires
+	library(svglite).
 EOF
-$help_text{-in_filter} = <<'EOF';
-      -in_filter=comma-separated list of conditions
 
-    Default not used.
+$help_text{-in_filter} = <<'EOF';
+	-in_filter=comma-separated list of conditions
+
+	Default not used.
 	If full sir run then set to resamples.gt.0, otherwise skip.
 EOF
+
 $help_text{-force_posdef_covmatrix} = <<'EOF';
-      -force_posdef_covmatrix
+	-force_posdef_covmatrix
 
-      Default not used. Forces covariance matrix to be positive-definite.
+	Default not used. Forces covariance matrix to be positive-definite.
 EOF
+
 $help_text{-force_m1_propagation} = <<'EOF';
-      -force_m1_propagation
+	-force_m1_propagation
 
-      Default not used. Forces the propagation of model 1 uncertainty, even when
-      covariance step from model 4 was succesful (mainly useful for debugging/research).
+	Default not used. Forces the propagation of model 1 uncertainty, even when
+	covariance step from model 4 was succesful (mainly useful for debugging/research).
 EOF
+
 $help_text{-force_posdef_samples} = <<'EOF';
-      -force_posdef_samples
+	-force_posdef_samples
 
-      Default not used. Forces each multivariate normal sample to be positive-definite
-      (OMEGA and SIGMA blocks), instead of waiting for posdef samples to get drawn.
+	Default not used. Forces each multivariate normal sample to be positive-
+	definite (OMEGA and SIGMA blocks), instead of waiting for posdef samples to
+	get drawn.
 EOF
-$help_text{-print_iter} = <<'EOF';
-      -print_iter=N
 
-      Optional, default is 0 (off). Every N:th (multivariate normal sampling) iteration
-      will be printed with cumulative acceptance and rejection rates.
+$help_text{-print_iter} = <<'EOF';
+	-print_iter=N
+
+	Optional, default is 0 (off). Every N:th (multivariate normal sampling)
+	iteration will be printed with cumulative acceptance and rejection rates.
 EOF
 
 common_options::online_help('postfrem', \%options,\%help_text, \%required_options, \%optional_options);

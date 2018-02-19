@@ -52,80 +52,85 @@ if ( scalar( @ARGV ) < 1 and !($opt_help or $opt_long_help) ){
 
 my %help_text;
 $help_text{Pre_help_message} = <<'EOF';  
-Basic statistics on a data file
+	Basic statistics on a data file
 EOF
-$help_text{Post_help_message} = '';
 
-    $help_text{Description} = <<'EOF';
-    data_stats calculates and prints simple statistics for data
-    files. Simple stastics are max, min, mean, median, range and
-    standard deviation for each column.
+$help_text{-help} = <<'EOF';      
+	-help
+
+	Print this, longer, help message.
+EOF
+
+$help_text{-h} = <<'EOF';      
+	-h
+
+	Print a list of options.
+EOF
+
+$help_text{Description} = <<'EOF';
+
+	data_stats calculates and prints simple statistics for data files. Simple
+	statistics are max, min, mean, median, range and standard deviation for
+	each column.
 EOF
 
 $help_text{Examples} = <<'EOF';
-    Calculate statistics for all columns in file.dta
-    
-    data_stats file.dta
 
-    Calculate statistics for all columns except WGT and AGE.
-    
-    data_stats --ignore_columns=WGT,AGE file.dta
+	Calculate statistics for all columns in file.dta data_stats file.dta
+	Calculate statistics for all columns except WGT and AGE.
+	data_stats --ignore_columns=WGT,AGE file.dta
 
-    Calculate statistics for WGT and AGE only
-
-    data_stats --columns=WGT,AGE file.dta
+	Calculate statistics for WGT and AGE only data_stats --columns=WGT,AGE
+	file.dta
 EOF
-    $help_text{Options} = <<'EOF';
+
+$help_text{Options} = <<'EOF';
 	A data file is required as argument.
 
-      The following options are valid:
+	The following options are valid:
+EOF
+
+$help_text{-global} = <<'EOF';      
+	-global
+
+	Default not set. If set, compute mean, median and sd treating all records
+	equally, which means individuals with many records will have more influence.
+	If not set, compute those metrics by first computing one value per individual,
+	and then computing over individuals, meaning that all individuals will have
+	equal influence.
 EOF
 
 $help_text{-columns} = <<'EOF';      
-    -columns='strings'
+	-columns='strings'
 
-    By default data_stats prints statistics for all columns of the
-    data set. But if you give a comma separated list of column headers
-    or column numbers with the -columns option, then data_stats will
-    print statistics for those columns only.
+	By default data_stats prints statistics for all columns of the data set. But
+	if you give a comma separated list of column headers or column numbers with
+	the -columns option, then data_stats will print statistics for those columns
+	only.
 EOF
+
 $help_text{-ignore_columns} = <<'EOF';      
-    -ignore_columns='strings'
+	-ignore_columns='strings'
 
-    ignore_columns work the oposite way of -columns, it lets you
-    select column headers or column numbers for which data_stats
-    should not print statistcs. It also takes a comma separated list.
+	ignore_columns work the oposite way of -columns, it lets you select column
+	headers or column numbers for which data_stats should not print statistcs.
+	It also takes a comma separated list.
 EOF
+
 $help_text{-ignoresign} = <<'EOF';      
-    -ignoresign='string'
+	-ignoresign='string'
 
-    If the data file contains a header then that lines needs to be ignored by setting ignoresign.
-	Default is '@', i.e. ignore letters A-Z a-z.
+	Default is '@', i.e. ignore letters A-Z a-z. If the data file contains a header
+	then that lines needs to be ignored by setting ignoresign.
 EOF
+
 $help_text{-missing_data_token} = <<'EOF';      
-    -missing_data_token=number
+	-missing_data_token=number
 
-    Number denoting missing data. Default -99.
+Default -99. Number denoting missing data.
 EOF
-$help_text{-global} = <<'EOF';      
-    -global
 
-    Default not set. If set, compute mean, median and sd treating all
-	records equally, which means individuals with many records will have 
-	more influence. If not set, compute those metrics by first computing
-	one value per individual, and then computing over individuals, meaning
-	that all individuals will have equal influence.
-EOF
-$help_text{-help} = <<'EOF';      
--help
-
-    Print this, longer, help message.
-EOF
-$help_text{-h} = <<'EOF';      
--h
-
-    Print a list of options.
-EOF
+$help_text{Post_help_message} = '';
 
 	my $help;
 my $indentation = '    ';
