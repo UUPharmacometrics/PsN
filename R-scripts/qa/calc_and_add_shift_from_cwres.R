@@ -37,8 +37,8 @@
   }
   
   # get table with IDV values
-  idv_df <- read.table(extra_table, skip = 1, header=T) %>%
-    dplyr::filter(CWRES!=0)
+  idv_df <- read.table(extra_table, skip = 1, header=T) #%>%
+    #dplyr::filter(CWRES!=0)
   cpred_column <- idv_df$CPRED
   if(any(colnames(idv_df)== dvid_name)) {
     dvid_column_nr <- which(colnames(idv_df)== dvid_name)
