@@ -24,6 +24,7 @@ my %options;
 my %required_options = (
 );
 my %optional_options = (
+    'ignore:s' => undef,
 );
 
 my $res = GetOptions( \%options, 
@@ -37,26 +38,33 @@ exit unless $res;
 
 my %help_text;
 
-	$help_text{Pre_help_message} = <<'EOF';  
-	  Perform a prospective evaluation.
+$help_text{Pre_help_message} = <<'EOF';  
+	Perform a prospective evaluation.
 EOF
 
-	$help_text{Description} = <<'EOF';
-	  The proseval (prospective evaluation) tool runs successive evaluations on a model, each with 
-	  an increased number of observations per individual.
+$help_text{Description} = <<'EOF';
+	The proseval (prospective evaluation) tool runs successive evaluations on a
+	model, each with an increased number of observations per individual.
 EOF
 
-	$help_text{Examples} = <<'EOF';
-      proseval run89.mod
+$help_text{Examples} = <<'EOF';
+	proseval run89.mod
 EOF
 
-	$help_text{Options} = <<'EOF';
-    
-	  A model file is required on the command line.
-	  The first table of the modelfile should include ID, EVID, TIME and all interesting columns. These columns will be used to
-	  construct the result table.
+$help_text{Options} = <<'EOF';
+
+	A model file is required on the command line. The first table of the model
+	file should include ID, EVID, TIME and all interesting columns. These columns
+	will be used to construct the result table.
 EOF
 
+$help_text{-ignore} = <<'EOF';
+	-ignore=expr1,expr2,...
+
+	A comma separated list of expressions. If any expression is true for a row
+	in the dataset the row will be left without changes to EVID. An expression
+	can only be of the form COLNAME==<value>
+EOF
 
 common_options::online_help('proseval',\%options, \%help_text, \%required_options, \%optional_options);
 common_options::setup( \%options, 'proseval' ); #calls set_globals etc, initiates random sequence
@@ -96,6 +104,7 @@ unless ( $model -> is_run){
 my $tool = tool::proseval->new(eval( $common_options::parameters),
     top_tool => 1,
     models => [ $model ],
+    ignore => $options{'ignore'},
 );
 
 $tool->print_options(

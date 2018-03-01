@@ -5,6 +5,84 @@ use warnings;
 use include_modules;
 use MooseX::Params::Validate;
 use model_transformations;
+use code;
+
+sub linearize_error_terms
+{
+    # Create the error terms for a linearized model 
+    my %parm = validated_hash(\@_,
+        neta => { isa => 'Int' },
+        neps => { isa => 'Int' },
+    );
+    my $neta = $parm{'neta'};
+    my $neps = $parm{'neps'};
+
+    my @code;
+    for (my $i = 1; $i <= $neps; $i++) {
+        push @code, "ERR${i}_0 = D_EPS_${i}"; 
+        for (my $j = 1; $j <= $neta; $j++) {
+            push @code, "ERR${i}_${j} = D_EPSETA${i}_${j} * (ETA(${j}) - OETA${j})";
+        }
+    }
+
+    return \@code;
+}
+
+sub linearize_covariate_error_terms
+{
+    # Create the covariate error terms for a linearized model
+    my %parm = validated_hash(\@_,
+        neps => { isa => 'Int' },
+        eta_parameter => { isa => 'HashRef' },      # Hash from eta-number to parameter name
+    );
+    my $neps = $parm{'neps'};
+    my $eta_parameter = $parm{'eta_parameter'};
+
+    my @code;
+    my @keys = sort keys %$eta_parameter;
+
+    for (my $i = 1; $i <= $neps; $i++) {
+        for my $j (@keys) {
+            my $param = $eta_parameter->{$j};
+            next if not defined($param) or ($param eq "ETA$j");
+            push @code, "ERRC${i}_${j} = D_EPSETA${i}_${j} * OGK_$param * (GZ_$param - OGZ_$param)";
+        }
+    }
+
+    return \@code;
+}
+
+sub linearize_error_sums
+{
+    # Sum error terms for each epsilon
+    my %parm = validated_hash(\@_,
+        neps => { isa => 'Int' },
+        neta => { isa => 'Int' },
+        eta_parameter => { isa => 'HashRef' },      # Hash from eta-number to parameter name
+    );
+    my $neps = $parm{'neps'};
+    my $neta = $parm{'neta'};
+    my $eta_parameter = $parm{'eta_parameter'};
+
+    my @keys = sort keys %$eta_parameter;
+
+    my @code; 
+    for (my $i = 1; $i <= $neps; $i++) {
+        my @addends = ();
+        push @addends, "ERR${i}_0";
+        for (my $j = 1; $j <= $neta; $j++) {
+            push @addends, "ERR${i}_${j}";
+        }
+
+        for my $key (@keys) {
+            push @addends, "ERRC${i}_$key";
+        }
+
+        push @code, code::generate_sum(name => "ESUM$i", terms => \@addends);
+    }
+
+    return \@code;
+}
 
 sub second_order_derivatives_model
 {
@@ -185,7 +263,8 @@ sub second_order_approximation_model
             push @second_order2, $term;
         }
     } 
-    push @pred, "Y = TMP2 + " . join(" + ", @second_order2) . "\n";
+    unshift @second_order2, 'TMP2';
+    push @pred, "Y=" . join("+", @second_order2) . "\n";
 
     push @pred, "ENDIF\n"; 
 

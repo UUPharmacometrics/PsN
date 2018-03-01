@@ -43,11 +43,12 @@ exit unless $res;
 
 my %help_text;
 
-	$help_text{Pre_help_message} = <<'EOF';
+$help_text{Pre_help_message} = <<'EOF';
 	Parametric variability.
 EOF
 
-	$help_text{Description} = <<'EOF';
+$help_text{Description} = <<'EOF';
+
 	The pvar (parametric variability) tool calculates how much of parameter 
 	variabilty that a model explains (Hennig). For every parameter listed on 
 	the command line PsN will calculate the total variance, the explained 
@@ -56,7 +57,8 @@ EOF
 	estimates.
 EOF
 
-	$help_text{Options} = <<'EOF';
+$help_text{Options} = <<'EOF';
+
 	Required arguments are either an scm log file or a list of model files 
 	and a list of parameters. If an scm log file is to be used the scm run 
 	cannot have been made with -clean=3 otherwise files needed for pvar 
@@ -65,36 +67,34 @@ EOF
 	The following options are valid:
 EOF
 
-	$help_text{Examples} = <<'EOF';
-	  pvar scmlog1.txt -parameters=CL,V
-	
-	  Check parametric variability of models generated in an scm run.
+$help_text{Examples} = <<'EOF';
+	pvar scmlog1.txt -parameters=CL,V
 
-	  pvar -models run1.mod run2.mod -parameters=CL,V
-
-	  Use specific models.
+	Check parametric variability of models generated in an scm run.
+	pvar -models run1.mod run2.mod -parameters=CL,V
+	Use specific models.
 EOF
 
-	$help_text{-models} = <<'EOF';
+$help_text{-models} = <<'EOF';
 	-models
-    
-      If this option is present on the command line a list of model files 
-	  can be passed as arguments instead of an scm logfile.
-	  Example:
-	  pvar -models run1.mod run2.mod -parameters=CL,V
+
+	If this option is present on the command line a list of model files can be
+	passed as arguments instead of an scm logfile.
+	Example:
+	pvar -models run1.mod run2.mod -parameters=CL,V
 EOF
 
-	$help_text{-parameters} = <<'EOF';
+$help_text{-parameters} = <<'EOF';
 	-parameters
-	
-      A mandatory comma separated list of parameter to investigate.
+
+	A mandatory comma separated list of parameter to investigate.
 EOF
 
-	$help_text{-samples} = <<'EOF';
+$help_text{-samples} = <<'EOF';
 	-samples
-      
-	  Number of simulated datasets to generate.
-      Default 100.
+
+	Number of simulated datasets to generate.
+	Default 100.
 EOF
 
 common_options::online_help('pvar', \%options, \%help_text, \%required_options, \%optional_options);

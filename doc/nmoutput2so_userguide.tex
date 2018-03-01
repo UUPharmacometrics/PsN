@@ -1,12 +1,13 @@
 \input{inputs/format_header.tex}
-\guidetitle{NMOUTPUT2SO user guide}{2017-11-29}
+\guidetitle{NMOUTPUT2SO user guide}{2018-01-31}
 \begin{document}
 
 \maketitle
 
 \section{Introduction}
 The nmoutput2so tool creates and populates a DDMoRe standard output \cite{Terranova} xml file given the output from one or more NONMEM runs. It is necessary that the format of the model file and other files follow a set of requirements for this to work. \\
-The Perl module XML::LibXML is required by nmoutput2so, but not PsN in general. Make sure that it is installed before using nmoutput2so (If you are using ActivePerl on Windows please read the section on installation below). See the PsN installation guide for intructions.\\
+The Perl module XML::LibXML is required by nmoutput2so, but not PsN in general. Make sure that it is installed before using nmoutput2so (If you are using ActivePerl on Windows please read the installation section of the PsN homepage:
+\texttt{https://uupharmacometrics.github.io/PsN/install.html}.\\ 
 Examples:
 \begin{verbatim}
 nmoutput2so run1.lst run2.lst
@@ -116,7 +117,9 @@ $OMEGA BLOCK(2)
 $TABLE ID TIME MDV DV PRED IPRED RES IRES WRES IWRES CWRES
 NOAPPEND FILE=sdtab2
         \end{verbatim}
-    \item To be able to populate the IndividualEstimates (or the IndivParameters for simulations) entry a patab table must be specified. NOAPPEND must be used and the order of the columns is important. The first column must be ID, then comes all individual parameters followed by the ETAs (see below).\newpage Example:
+    \item To be able to populate the IndividualEstimates (or the IndivParameters for simulations) entry a patab table must be specified. NOAPPEND must be used and the order of the columns is important. The first column must be ID, then comes all individual parameters followed by the ETAs (see below).
+    
+    Example:
         \begin{verbatim}
 $TABLE ID CL V ETA_CL ETA_V NOAPPEND FILE=patab
         \end{verbatim}
@@ -124,7 +127,8 @@ $TABLE ID CL V ETA_CL ETA_V NOAPPEND FILE=patab
         \begin{verbatim}
 $TABLE ID TIME WGT NOPRINT NOAPPEND FILE=cotab
         \end{verbatim}
-    \item To be able to populate the RandomEffects entries all ETAs must be defined in the main code block (\$PK or \$PRED). One ETA should be defined per row with nothing more on the row (except for spaces) than one assignment.\\ Example:
+    \item To be able to populate the RandomEffects entries all ETAs must be defined in the main code block (\$PK or \$PRED). One ETA should be defined per row with nothing more on the row (except for spaces) than one assignment.\newpage 
+     Example:
         \begin{verbatim}
  ETA_CL = ETA(1)
  ETA_V = ETA(2)
@@ -166,8 +170,6 @@ ETA_BOV_TL = ETA(OCC_ETA_BOV_TL)
         \end{itemize}
     \item If multiple DVs are to be used a DVID column must be set in the sdtab.
 \end{itemize}
-
-
 \subsection{Requirements on other files}
 \begin{itemize}
     \item All NONMEM	 result files must have the same filename (excluding extension) as the .lst file. If not it is impossible to pick up the results from the .ext, .cov, .cor files etc.
@@ -348,16 +350,6 @@ SO/
                 RandomEffects
                 RawResultsFile
 \end{verbatim}
-
-\section{Installation on Windows and ActivePerl}
-If you are running windows and ActivePerl installation is a bit more complicated and can only be recommended for people highly skilled in perl package installation and in manual installation of dll:s in Windows. It is strongly recommended to use Strawberry perl instead of ActivePerl if you intend to run nmoutput2so.
-
-\begin{itemize}
-    \item Not all versions of the ppm system comes with XML-LibXML precompiled. If not you'll need to compile it yourself either manually or by installing from cpan.
-    \item ActivePerl (unlike Strawberry perl) does not come with libxml2, which is a dependency of the XML-LibXML package, bundled. You will need to install the appropriate dll:s manually. The libxml2 webpage has information on how to do this.
-\end{itemize}
-
-Describing any of the above procedures is beyond the scope of this documentation.
 
 \references
 

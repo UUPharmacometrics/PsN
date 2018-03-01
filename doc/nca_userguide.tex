@@ -1,5 +1,5 @@
 \input{inputs/format_header.tex}
-\guidetitle{NCA user guide}{2017-12-07}
+\guidetitle{NCA user guide}{2018-01-31}
 
 \newcommand{\guidetoolname}{nca}
 
@@ -8,7 +8,7 @@
 \maketitle
 
 \section{Introduction}
-The nca tool prepares input for the ncappc R package for non-compartmental analysis \cite{Chayan}. To be able to create the plots the user must install the ncappc package from CRAN. Two modified modelfiles are created, one for generating original data table output and one for generating simulated data table output. The model parameters will never be re-estimated. Unless an lst- or msfo-file is given as input or an lst-file is found by replacing .mod with .lst in the modelfile name, the initial parameter estimates from the modelfile will be used for the simulations.\\
+The nca tool prepares the input for the ncappc R package for non-compartmental analysis \cite{Chayan}. To be able to create the plots the user must install the ncappc package from CRAN. Two modified modelfiles are created, one for generating original data table output and one for generating simulated data table output. The model parameters will never be re-estimated. Unless an lst- or msfo-file is given as input or an lst-file is found by replacing .mod with .lst in the modelfile name, the initial parameter estimates from the modelfile will be used for the simulations.\\
 Example:
 \begin{verbatim}
 nca run1.mod -samples=1000 -columns=CL,V

@@ -1,5 +1,5 @@
 \input{inputs/format_header.tex}
-\guidetitle{CROSSVAL user guide}{2017-10-12}
+\guidetitle{CROSSVAL user guide}{2018-01-31}
 
 \begin{document}
 
@@ -9,7 +9,7 @@
 
 \section{Overview}
 
-The crossval tools divides the NONMEM data set into 'groups' that are equally sized parts.
+The crossval tool divides the NONMEM data set into 'groups' that are equally sized parts.
 For each part i, the remaining groups-1 parts are used for estimation,
 and then part i is used for prediction.
 
@@ -21,14 +21,16 @@ crossval run1.mod -groups=5
 \section{Input and options}
 	
 \subsection{Required input}
-A model file is required on the command-line together with the -groups option.
-		
-\subsection{Optional input}
-			
+A model file is required on the command line together with the -groups option.
 \begin{optionlist}
 \optname{groups}
 The number of cross-validation groups in the data set.
-\nextopt
+\nextopt		
+\end{optionlist}
+
+\subsection{Optional input}
+			
+\begin{optionlist}
 \optname{msf}
 Default not set, which means prediction model\\
 THETA/OMEGA/SIGMA are updated with final estimates from estimation models.
@@ -36,14 +38,11 @@ If -msf is set, instead use MSFO - MSFI to transfer parameter values from estima
 \nextopt
 \end{optionlist}
 
-\subsection{Some important common PsN options}
-For a complete list see common\_options.pdf, 
-or psn\_options -h on the commandline.
-\input{inputs/basic_options.tex}
+\subsection{PsN common options}
+For a complete list see common\_options.pdf or type psn\_options -h on the command line.
 
 \section{Output}
 
-The output is the file xv\_result.txt with prediction model OFVs and
-corresponding estimation model OFVs.
+The output is the file xv\_result.txt with prediction model OFVs and corresponding estimation model OFVs.
 
 \end{document}

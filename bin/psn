@@ -10,7 +10,7 @@ use PsN;
 use strict;
 use Getopt::Long;
 use common_options;
-use YAML;
+use YAML::XS;
 
 ## Configure the command line parsing
 Getopt::Long::config("auto_abbrev");
@@ -101,7 +101,7 @@ if (scalar(@ARGV)>0){
     } elsif ($ARGV[0] eq 'info') {
         my $meta;
         eval {
-            $meta = YAML::LoadFile($ARGV[1] . '/meta.yaml');
+            $meta = YAML::XS::LoadFile($ARGV[1] . '/meta.yaml');
         };
         if (defined $meta) {
             print "Run of PsN ", $meta->{'tool_name'}, "\n";

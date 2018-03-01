@@ -8,7 +8,7 @@ use include_modules;
 use log;
 use tool::qa;
 use PsN;
-use YAML;
+use YAML::XS;
 use model_transformations;
 use List::Util qw(any);
 
@@ -69,7 +69,7 @@ sub modelfit_setup
     $qa->run();
     $qa->print_results();
 
-	my $results = YAML::LoadFile('qa_dir1/results.yaml');
+	my $results = YAML::XS::LoadFile('qa_dir1/results.yaml');
 	my $actions = $results->{'actions'};
 
 	if (any { $_ eq 'boxcox' } @$actions) {

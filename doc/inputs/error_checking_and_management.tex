@@ -1,20 +1,13 @@
 \begin{optionlist}
 \optname{abort\_on\_fail}
-Default not used. If the -abort\_on\_fail option is set and one of the NONMEM runs
-fails, PsN will stop with an error message. This option
-is mostly for the system tests, where it is known beforehand that no
-NONMEM runs should fail if there are no bugs in PsN.
+Default not set. If the -abort\_on\_fail option is set and one of the NONMEM runs fails, PsN will stop with an error message. This option is mostly for the system tests, where it is known beforehand that no NONMEM runs should fail if there are no bugs in PsN.
 \nextopt
 \optname{check\_nmtran}
-Default not used. 
-Make PsN run NMtran on the model file before submitting the complete nmfe run to a cluster/grid or forking on a local computer. This adds a bit of overhead but on a cluster this still saves time in the case of syntax errors in the model file, since the user does not have to wait for a slot on the cluster/grid before the error is detected. On a local computer the error handling is improved.
+Default not set. Make PsN run NMtran on the model file before submitting the complete nmfe run to a cluster/grid or forking on a local computer. This adds a bit of overhead but on a cluster this still saves time in the case of syntax errors in the model file, since the user does not have to wait for a slot on the cluster/grid before the error is detected. On a local computer the error handling is improved.
 
 When running multiple copies of a model with different data sets, e.g. in a bootstrap, only the first model will be checked. 
 
-If the model contains verbatim Fortran code NMTRAN will not be able to detect undefined variables in abbreviated code. This can potentially lead to
-    errors that are very hard to detect. If the model contains verbatim code and this option is set PsN will try to detect
-undefined variables in abbreviated code for you. If a variable is suspected to be undefined PsN will print a warning telling the user to double check that the variable is defined. If the variable is defined in verbatim code then the warning will be printed even 
-if all is well, but this information is included in the warning. 
+If the model contains verbatim Fortran code NMTRAN will not be able to detect undefined variables in abbreviated code. This can potentially lead to errors that are very hard to detect. If the model contains verbatim code and this option is set PsN will try to detect undefined variables in abbreviated code for you. If a variable is suspected to be undefined PsN will print a warning telling the user to double check that the variable is defined. If the variable is defined in verbatim code then the warning will be printed even if all is well, but this information is included in the warning. 
 
 The nmtran check requires that it is the installation directory to NONMEM that is set in psn.conf, rather than the full path to an executable script. If the path to a script is given instead of an NM install directory the nmtran check will not be performed.
 \nextopt
@@ -22,37 +15,29 @@ The nmtran check requires that it is the installation directory to NONMEM that i
 %\optname{compress }
 %Default not used. PsN will compress the contents of 'NM\_runX' to the file 'nonmem\_files.tgz' if the -compress option is used and if you have the archive and compress programs tar and gzip installed. If you use the -clean options, run files will be removed before the compression.  
 %\nextopt
-\optname{handle\_crashes}
-Default used. Disable with -no-handle\_crashes. PsN tries to recognize if a NONMEM run has crashed for
-%FIXME add description of logic for crash detection
-a reason where submitting the run again might help. Such a reason might be
-a computer crash, run being killed by system due to job timeout, or nmfe failing to even start due to file sync errors on a cluster.
-If handle\_crashes is set and the number of actual crash restarts is smaller than the setting of option
--crash\_restarts, PsN will restart those runs. The crash handling machinery is independent of the retries machinery.
-
-If option -handle\_msfo was also set \emph{and} lst-file and msfo-file from the crashed run are found, PsN will automatically use the
-msfo file in \$MSFI of a modified control stream file, and then restart the run from the state that was saved in the msfo-file.
-This functionality is useful on clusters where there is a hard run time limit for jobs.
-
-If option -handle\_msfo was \emph{not} set, or if no lst-file or other sign that nmfe even started are found,
-PsN will simply try to run the same control stream again. Initial parameter estimates are not changed.  
-
-Note: If a NONMEM run is intentionally killed, e.g. with scancel on slurm, and PsN was started
-with -handle\_crashes set, then PsN will try to restart that run. To prevent PsN restarting
-an intentionally killed NONMEM run, the user must either make sure -handle\_crashes is not set
-or kill the main PsN process before killing the NONMEM run.
-\nextopt
-\optdefault{crash\_restarts}{'integer'}
-Default 4. The number of times PsN will restart a crashed run. Initial estimates are not tweaked in a crash restart, see option
+\optdefault{crash\_restarts}{integer}
+Default is 4. The number of times PsN will restart a crashed run. Initial estimates are not tweaked in a crash restart, see option
 -handle\_crashes.
 \nextopt
+\optname{handle\_crashes}
+Default set. Disable with -no-handle\_crashes. PsN tries to recognize if a NONMEM run has crashed for 
+%FIXME add description of logic for crash detection
+a reason where submitting the run again might help. Such a reason might be a computer crash, run being killed by system due to job timeout, or nmfe failing to even start due to file sync errors on a cluster. If handle\_crashes is set and the number of actual crash restarts is smaller than the setting of option -crash\_restarts, PsN will restart those runs. The crash handling machinery is independent of the retries machinery.
+
+If option -handle\_msfo was also set \emph{and} lst-file and msfo-file from the crashed run are found, PsN will automatically use the msfo file in \$MSFI of a modified control stream file, and then restart the run from the state that was saved in the msfo-file.
+This functionality is useful on clusters where there is a hard run time limit for jobs.
+
+If option -handle\_msfo was \emph{not} set, or if no lst-file or other sign that nmfe even started are found, PsN will simply try to run the same control stream again. Initial parameter estimates are not changed.  
+
+Note: If a NONMEM run is intentionally killed, e.g. with scancel on slurm, and PsN was started with -handle\_crashes set, then PsN will try to restart that run. To prevent PsN restarting an intentionally killed NONMEM run, the user must either make sure -handle\_crashes is not set or kill the main PsN process before killing the NONMEM run.
+\nextopt
 \optname{handle\_msfo}
-Default not used. Feature for handling resumes using msfo and msfi files. 
+Default not set. Feature for handling resumes using msfo and msfi files. 
 \nextopt
 \optname{maxevals}
-Default not used. Will only work for classical estimation methods. NONMEM only allows 9999 function evaluations. PsN can expand this limit by adding an MSFO option to \$ESTIMATION. Later when NONMEM hits the max number of function evaluations allowed by NONMEM (9999) PsN will remove initial estimates from the model-file and add \$MSFI and restart NONMEM. This will be repeated until the number of function evaluations specified with option -maxevals has been reached. Note: PsN does not change the MAXEVALS setting in the model-file, therefore the number of evaluations set on the command-line may be exceeded before PsN performs the check if the run should be restarted with msfi or not. 
+Default not set. Will only work for classical estimation methods. NONMEM only allows 9999 function evaluations. PsN can expand this limit by adding an MSFO option to \$ESTIMATION. Later when NONMEM hits the max number of function evaluations allowed by NONMEM (9999) PsN will remove initial estimates from the model-file and add \$MSFI and restart NONMEM. This will be repeated until the number of function evaluations specified with option -maxevals has been reached. Note: PsN does not change the MAXEVALS setting in the model-file, therefore the number of evaluations set on the command-line may be exceeded before PsN performs the check if the run should be restarted with msfi or not. 
 \nextopt
-\optdefault{nice}{'integer'}
-Default 19. This option only has effect on Unix like operating systems. It  sets the priority (or nice value) on a process. You can give any value that is legal for the "nice" command, likely it is between 0 and 19, where 0 is the highest priority. Execute "man nice" on the Unix system for details. 
+\optdefault{nice}{integer}
+Default is 19. This option only has effect on Unix like operating systems. It  sets the priority (or nice value) on a process. You can give any value that is legal for the "nice" command, likely it is between 0 and 19, where 0 is the highest priority. Execute "man nice" on the Unix system for details. 
 \nextopt
 \end{optionlist}

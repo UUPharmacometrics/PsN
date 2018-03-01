@@ -1,9 +1,13 @@
-command_text <- function(directory) {
+#' Get command line text, start and finish time of the run
+#' 
+#' @param yaml_file A yaml file name
+#' @return A list of three elements: command, run_start, run_finish
+command_start.finish.time <- function(yaml_file) {
   command <- c()
   run_start <- c()
   run_finish <- c() 
-  if(file.exists(file.path(directory,"meta.yaml"))) {
-    yaml_file <- yaml.load_file(file.path(directory,"meta.yaml"))
+  if(file.exists(yaml_file)) {
+    yaml_file <- yaml.load_file(yaml_file)
     
     if(exists("command_line",yaml_file) && yaml_file$command_line!="") {
       full_command <- strsplit(yaml_file$command_line," ")

@@ -3814,7 +3814,10 @@ sub find_data_column
     my $counter = 0;
     foreach my $record (@{$self->inputs}) {
         foreach my $opt (@{$record->options}) {
-            next if ($ignore_dropped and $opt->is_drop());
+            if ($ignore_dropped and $opt->is_drop()) {
+                $counter++;
+                next;
+            }
             if ($opt->name eq $column_name or (defined $opt->value and $opt->value eq $column_name)) {
                 return $counter;
             }

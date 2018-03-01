@@ -30,22 +30,22 @@ exit unless $res;
 my %help_text;
 
 $help_text{Pre_help_message} = <<'EOF';
-    Common options for PsN, Perl speaks NONMEM.
+	Common options for PsN, Perl speaks NONMEM.
 
-    Use 'psn_options -h "option"' for help on a specific option,
-    for example 'psn_options -h directory'.
+	Use 'psn_options -h "option"' for help on a specific option,
+	for example 'psn_options -h directory'.
 EOF
 
 $help_text{-h} = <<'EOF';
-      -h | -?
-      
-      With -h or -? psn_options will print a list of options and exit.
+	-h | -?
+
+	With -h or -? psn_options will print a list of options and exit.
 EOF
-      
+
 $help_text{-help} = <<'EOF';      
-      -help
-      
-      With -help psn_options will print this, more descriptive, list of options and exit.
+	-help
+
+	With -help psn_options will print this, more descriptive, list of options and exit.
 EOF
 
 $help_text{Post_help_message} = <<'EOF';

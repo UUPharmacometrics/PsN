@@ -1,5 +1,5 @@
 \input{inputs/format_header.tex}
-\guidetitle{Common options PsN}{2017-03-14}
+\guidetitle{PsN Common options}{2018-01-31}
 
 \begin{document}
 
@@ -7,30 +7,20 @@
 \newcommand{\guidetoolname}{<toolname>}
 
 \section{Introduction}
-This document lists the options that govern how PsN manages NONMEM runs.
-Since (almost) all PsN tools run NONMEM, these options are 
-are accepted by all PsN tools. 
-However, depending on the tool, a particular option may have little effect. 
-For example, option -threads will not change the execution time unless 
-more than one model is run. 
+This document lists the options that govern how PsN manages NONMEM runs. Since (almost) all PsN tools run NONMEM, these options are 
+are accepted by all PsN tools. However, depending on the tool, a particular option may have little effect. For example, option -threads will not change the execution time unless more than one model is run. 
 
-The default value for each option can be changed by setting a different default in the psn.conf file, see 
-psn\_configuration.pdf. A value set on the command-line will override the default.
+The default value for each option can be changed by setting a different default in the psn.conf file, see psn\_configuration.pdf. A value set on the command line will override the default.
 
 \section{Basic options}
 The following options are the ones most commonly used, and relevant for almost every run.
 \input{inputs/basic_options.tex}
 
 \section{Advanced options}
-\subsection{Auto-generated R-plots from PsN}
+\subsection{Auto-generated R plots from PsN}
 \newcommand{\rplotsconditions}{
-Most default templates depend on a couple of R libraries. 
-The R-scripts subdirectory contains, in addition to 
-all the default templates,
-a script required\_packages.R that can be run to install all the packages used
-by one or more of the default templates.
-If the required R libraries for a particular template are not installed then
-no pdf will be generated. Check the .Rout file in the main run directory for error messages.
+Most default templates depend on a couple of R libraries. The R-scripts subdirectory contains, in addition to all the default templates, a script required\_packages.R that can be run to install all the packages used by one or more of the default templates.
+If the required R libraries for a particular template are not installed then no pdf will be generated. Check the .Rout file in the main run directory for error messages.
 }
 \input{inputs/general_rplots_section_body.tex}
 
@@ -41,12 +31,7 @@ no pdf will be generated. Check the .Rout file in the main run directory for err
 \input{inputs/output_processing.tex}
 
 \subsection{Running the nmfe script}
-PsN always runs NONMEM via the nmfe script (or NMQual). 
-The following options govern input for
-nmfe, allowing the user to set options, such as -parafile, on the PsN commandline that
-are passed on unchanged to the nmfe script.
-Please refer to the NONMEM documentation for the meaning and appropriate use
-of the nmfe script options.
+PsN always runs NONMEM via the nmfe script (or NMQual). The following options govern input for nmfe, allowing the user to set options, such as -parafile, on the PsN command line that are passed on unchanged to the nmfe script. Please refer to the NONMEM documentation for the meaning and appropriate use of the nmfe script options.
 \input{inputs/nmfe_interface.tex}
 
 \subsection{Run progress messages}
@@ -70,11 +55,7 @@ of the nmfe script options.
 
 
 \subsection{Options for grid/cluster execution}
-Which of these options can be used depend on the system on which PsN and NONMEM is installed.
-Usually the person installing PsN and NONMEM should set suitable defaults for a relevant set
-of these
-options in the psn.conf file, and then the users should not have to worry about them,
-except perhaps when choosing a non-default queue.
+Which of these options can be used depend on the system on which PsN and NONMEM is installed. Usually the person installing PsN and NONMEM should set suitable defaults for a relevant set of these options in the psn.conf file, and then the users should not have to worry about them, except perhaps when choosing a non-default queue.
 \input{inputs/grid_options.tex}
 
 \subsection{PsN information}

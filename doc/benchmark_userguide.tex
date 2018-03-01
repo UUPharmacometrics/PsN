@@ -1,5 +1,5 @@
 \input{inputs/format_header.tex}
-\guidetitle{BENCHMARK user guide}{2017-10-10}
+\guidetitle{BENCHMARK user guide}{2018-01-31}
 
 
 \begin{document}
@@ -11,8 +11,8 @@
 \section{Introduction}
 The benchmark tool is intended for systematic comparison of run times, ofv and parameter estimates
 across NONMEM versions and/or alternative settings of NONMEM options.
-For each model file given on the command-line, PsN will create one copy for each possible combination
-of the modifications listed on the command-line (option -record\_options), and
+For each model file given on the command line, PsN will create one copy for each possible combination
+of the modifications listed on the command line (option -record\_options), and
 then each model copy will be run first with the nonmem version given
 with option -nm\_version (as with any PsN tool) and then also with
 each of the nonmem versions listed with option -alt\_nonmem (if any).
@@ -21,7 +21,7 @@ Each model run will be repeated if option -replicates is set larger than 1.
 There will be one raw\_results file produced for each input model, and each raw\_results file will contain 
 'replicates' row(s)
 for each combination of model modifications and NONMEM version. 
-%The rplots functionality is used to
+%The R plots functionality is used to
 %read the raw\_results files and
 %visualize the run times (as reported by NONMEM in the lst-files), the stability of ofv values and of estimates.
 
@@ -44,7 +44,7 @@ See below for explanation of each option.
 	\section{Input and options}
 
 		\subsection{Required input}
-		A model file is required on the command-line. 
+		A model file is required on the command line. 
 		Also, there must additional options resulting in at least two NONMEM runs that can be compared. This can be
 		achieved by setting at least one alternative NONMEM version or at least one record modification listed,
 		or giving at least two model files as input and setting option -merge\_rawresults. 
@@ -84,7 +84,10 @@ See below for explanation of each option.
 			is not meaningful and the headers in the raw\_results file can be completely wrong for some models. 
 			However, the user can choose to override the default procedure
 			with option -merge\_rawresults, resulting in all runs being reported in the same raw\_results file,
-			and the rplots processing being performed for all models as a single group.
+			and the R plots processing being performed for all models as a single group.
+			\nextopt
+			\optname{prepend\_model\_file\_name}
+			Default not set. Set if you want to keep and compare table files.
 			\nextopt
 			\optdefault{record\_options}{list}
 			Default not set.
@@ -103,7 +106,7 @@ See below for explanation of each option.
 			\$ESTIMATION.
 			If more than one record-options combination is desired, the different combinations are 
 			separated with double comma (,,). Example: \\
-			-record\_options=est:none,FAST,,est:ATOL=10,ATOL=8,ATOL=12 
+			-record\_options=est:none,FAST,,est:ATOL=10,ATOL=8,\\ATOL=12 
 			which would result in six (2 times 3) variants of each model.
 			\nextopt
 			\optdefault{reference\_lst}{list}
@@ -112,7 +115,7 @@ See below for explanation of each option.
 			from old NONMEM versions to a newly installed version.
 			\nextopt
 			\optdefault{replicates}{N}
-			Default 1. Can be set larger than 1 e.g. for run time comparisons.
+			Default is 1. Can be set larger than 1 e.g. for run time comparisons.
 			See note about user responsibility in ensuring run times are comparable.
 			\nextopt
 			\optdefault{theta\_inits}{list}
@@ -137,23 +140,18 @@ See below for explanation of each option.
 			\begin{verbatim}
 			-theta_inits=CL:none,1.5,1.0,,5:8.5,12
 			\end{verbatim}
-			\end{optionlist}
+			\nextopt
+			\optdefault{threads}{integer}
+			Default is 5 (if the default psn.conf is used). Use the threads option to enable parallel execution of multiple models. This option decides how many models PsN will run at the same time, and it is completely independent of whether the individual models are run with serial NONMEM or parallel NONMEM. If you want to run a single model in parallel you must use options -parafile and -nodes. On a desktop computer it is recommended to not set -threads higher the number of CPUs in the system plus one. 
+			
+			You can specify more threads, but it will probably not increase the performance. If you are running on a computer cluster, you should consult your system administrator to find out how many threads you can specify.
+			
+			This option must be set carefully in benchmark if the run time of models is to be investigated. Comparison of run times will be meaningless if the individual NONMEM runs are not performed under the same conditions. 
+			\nextopt
+						\end{optionlist}
 
-\subsection{Some important common PsN options}
-There are many options that govern how PsN manages NONMEM runs, and
-those options are common to all PsN programs that run NONMEM.
-For a complete list see common\_options.pdf, 
-or psn\_options -h on the commandline.
-
-The -threads option, see below, must be set carefully in benchmark if the run time
-of models is to be investigated. Comparison of run times will be meaningless
-if the individual NONMEM runs are not performed under the same conditions.
-\input{inputs/basic_options.tex}
-\begin{optionlist}
-\optname{prepend\_model\_file\_name}
-Default not set. If want to keep and compare table files.
-\end{optionlist}
-
+\subsection{PsN common options}
+For a complete list see common\_options.pdf or type psn\_options -h on the command line.
 
 \section{Output}
 The output from benchmark is
@@ -172,21 +170,21 @@ number if -replicates was set.
 
 \end{document}
 
-\subsection{Auto-generated R-plots from PsN}
+\subsection{Auto-generated R plots from PsN}
 \newcommand{\rplotsconditions}{The default benchmark template 
 requires no special R libraries.
 If no pdf is generated,
 see the .Rout file in the main run directory for error messages.}
 \input{inputs/rplots_section_body.tex}
 
-\subsubsection*{Basic plots}
-Basic diagnostic rplots for each input model, or all input models together if -merge\_rawresults was set, 
+\subsubsection*{Basic R plots}
+Basic diagnostic R plots for each input model, or all input models together if -merge\_rawresults was set, 
 will be generated if option -rplots is set >0.
-The basic plots show differences in total run time, estimation time, covariance time and ofv.
+The basic R plots show differences in total run time, estimation time, covariance time and ofv.
 If the ofv-difference between any two runs is greater than a threshold (see option -dofv\_threshold), this is flagged. 
 
-\subsubsection*{Extended plots}
-Extended diagnostic rplots for each input model, or all input models together if -merge\_rawresults was set, 
+\subsubsection*{Extended R plots}
+Extended diagnostic R plots for each input model, or all input models together if -merge\_rawresults was set, 
 will be generated if option -rplots is set >1.
-The extended plots show differences in parameter estimates and standard errors.
+The extended R plots show differences in parameter estimates and standard errors.
 If the estimate difference is greater than a threshold (see option -parameter\_threshold) then this is flagged.

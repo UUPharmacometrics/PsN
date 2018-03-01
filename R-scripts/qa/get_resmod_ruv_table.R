@@ -14,8 +14,8 @@ get_resmod_ruv_table <- function(directory, idv_name, dvid_name, skip){
     
     #get TAD results file if exists
     tad_resmod_table_list <- get_resmod_table(directory=directory, idv="TAD",quiet=T)
-    tad_exists <- tad_resmod_table_list$resmod_file_exists
-    if(tad_exists) {
+    add_tad_varying <- tad_resmod_table_list$resmod_file_exists & idv_name!="TAD"
+    if(add_tad_varying) {
       tad_table <- tad_resmod_table_list$resmod_table
     }
     
@@ -34,7 +34,7 @@ get_resmod_ruv_table <- function(directory, idv_name, dvid_name, skip){
       resmod_ruv_table <- dplyr::bind_rows(non_time_var, 
                                            time_var_cutoff)
       #add tad varying row, if exists time after dose
-      if(tad_exists) {
+      if(add_tad_varying) {
         tad_varying <- tad_table %>% dplyr::filter(dvid==!!dvid_nr[j]) %>% dplyr::select(-iteration, -dvid) %>%
           dplyr::filter(grepl("idv_varying_RUV_cutoff",model)) %>%
           dplyr::mutate(df = 2) %>%

@@ -1,5 +1,5 @@
 \input{inputs/format_header.tex}
-\guidetitle{Bootstrap user guide}{2017-10-11}
+\guidetitle{Bootstrap user guide}{2018-01-31}
 \begin{document}
 
 
@@ -9,7 +9,7 @@
 
 \section{Introduction}
 
-Bootstrap can be used to calculate bias, standard errors and confidence intervals. 
+The bootstrap tool can be used to calculate bias, standard errors and confidence intervals. 
 It does so by resampling with replacement from the data. To compute standard errors for 
 all parameters of a model using the non-parametric bootstrap implemented here, roughly 200 
 mmdel fits are necessary. To assess 95\% confidence intervals approximatly 2000 runs will suffice.
@@ -23,7 +23,7 @@ bootstrap run12.mod -samples=500 -seed=12345 -threads=5
 \section{Input and options}
 
 \subsection{Required input}
-A model file is required on the command-line.
+A model file is required on the command line.
 
 \subsection{Optional input}
 	
@@ -94,8 +94,8 @@ By default, the initial estimates of the bootstrap models will be set to the fin
 
 \subsection{Diagnostic R plots}
 \newcommand{\rplotsconditions}{
-See section Output, subsections Basic and Extended plots,
-for descriptions of the default bootstrap plots.
+See section Output, subsections Basic and Extended R plots,
+for descriptions of the default bootstrap R plots.
 The default bootstrap template 
 requires the xpose4 R library of at least version 4.5.0,
 and that R libraries ggplot2, plyr, dplyr are installed.
@@ -104,13 +104,8 @@ see the .Rout file in the main run directory for error messages.
 }
 \input{inputs/rplots_section_body.tex}
 
-\subsection{Some important common PsN options}
-There are many options that govern how PsN manages NONMEM runs, and
-those options are common to all PsN programs that run NONMEM.
-For a complete list of such options see common\_options.pdf, 
-or psn\_options -h on the commandline. A selection of
-the most important common options is found here.
-\input{inputs/basic_options.tex}
+\subsection{PsN common options}
+For a complete list see common\_options.pdf or type psn\_options -h on the command line.
 
 
 \section{Output}
@@ -153,10 +148,9 @@ The row order is consistent between the files raw\_results, included\_individual
 
 all\_individuals1.csv: A list of all the individuals of the original dataset in the original order.
 
-\subsection{Basic plots}
-A basic bootstrap rplot will be generated in file PsN\_bootstrap\_plots.pdf
-if option -rplots is set >0,
-and the general rplots conditions fulfilled, see above.
+\subsection{Basic R plots}
+A basic bootstrap R plot will be generated in file PsN\_bootstrap\_plots.pdf
+if option -rplots is set >0, and the general R plots conditions fulfilled, see above.
 The plot is created using the xpose4 boot.hist function
 and shows histograms of each parameter in the model.
 
@@ -173,28 +167,29 @@ model (blue full line).
 \end{enumerate}
 In theory the bootstrap dOFV distribution should be at or below the reference chi-square. If it is not, another method for estimating parameter uncertainty, such as SIR, should be considered. Differences between the 2 red curves indicate that bootstrap results are likely to differ depending on whether the termination status is taken into account or not. 
 
-\subsection{Extended plots}
-Extended bootstrap rplots will be generated in file PsN\_bootstrap\_plots.pdf
+\subsection{Extended R plots}
+Extended bootstrap R plots will be generated in file PsN\_bootstrap\_plots.pdf
 if option -rplots is set >1,
-and the general rplots conditions fulfilled, see above.
-The plots are created using the xpose4 boot.hist function
+and the general R plots conditions fulfilled, see above.
+The R plots are created using the xpose4 boot.hist function
 and show histograms of standard errors, ofv and, if available
 from NONMEM output, eigenvalues.
 Be aware of the difference between OFV in the extended ofv plot,
 that correspond to OFV obtained by estimation on the bootstrap datasets,
-and the dOFV in Basic plots.
+and the dOFV in Basic R plots.
 
 
 \subsection{Computing a covariance matrix}
 It is possible to use the covmat program to compute a covariance matrix based on the bootstrap samples. The -in\_filter option of covmat must be set to match the settings of bootstrap options -skip\_covariance\_step\_terminated,
--skip\_estimate\_near\_boundary, -skip\_minimization\_terminated and
+-skip\_estimate\_near\_boundary, -skip\_minimization\_terminated and\\
 -skip\_with\_covstep\_warnings. The settings of those options can be checked in the version\_and\_option\_info.txt file in
 the bootstrap run directory.
 
 Option -in\_filter is a comma-separated list of conditions.
-If bootstrap option -skip\_minimization\_terminated was true, then add 
+If bootstrap option -skip\_minimization\_terminated was true, then add\\ 
 \verb|minimization_successful.eq.1|
 to -in\_filter. 
+
 If bootstrap option -skip\_estimate\_near\_boundary was true, then add 
 \verb|estimate_near_boundary.eq.0| 
 to -in\_filter. 
@@ -209,14 +204,15 @@ covariance\_step\_warnings.
 
 Example: If the bootstrap was run with
 \begin{verbatim}
-bootstrap run12.mod -samples=500 -dir=boot_run12 -skip_estimate_near_boundary 
--skip_minimization_terminated
+bootstrap run12.mod -samples=500 -dir=boot_run12 -skip_estimate_
+near_boundary -skip_minimization_terminated
 \end{verbatim}
 and run12.mod does \emph{not} have \$COV, then a covariance matrix can be obtained with (all in one command)
 
 \begin{verbatim}
-covmat run12.mod -rawres_input=boot_run12/raw_results_run12.csv -offset=1 
--in_filter=minimization_successful.eq.1,estimate_near_boundary.eq.0
+covmat run12.mod -rawres_input=boot_run12/raw_results_run12.csv 
+-offset=1 -in_filter=minimization_successful.eq.1,estimate_near_
+boundary.eq.0
 \end{verbatim}
 
 By default the matrix is printed to screen, but it can be redirected to a file using the > operator.
@@ -227,8 +223,7 @@ By default the matrix is printed to screen, but it can be redirected to a file u
 It is recommended to remove PRINT options from \$ESTIMATION, to save disk space.
 
 PsN renumbers the individuals during bootstrapping. Therefore ACCEPT/IGNORE statements based on ID and also abbreviated code using ID will cause errors. 
-There is an input check for this, but it is recommended to not rely on this check. Also, model code that relies on ID numbers will also lead to
-errors.
+There is an input check for this, but it is recommended to not rely on this check. Also, model code that relies on ID numbers will lead to errors.
 
 The dataset is not filtered on IGNORE/ACCEPT statements before bootstrapping,
 and all IGNORE/ACCEPT are left in the control stream, so some bootstrap
@@ -240,13 +235,8 @@ The results of two runs will be different even if the seed is the same if the ls
 \section{Technical overview of algorithm}
 
 PsN will rerun the base model if the lst-file of the input model (run1.lst if the input model file is called run1.mod) is not present in the same directory as the model file 
-and the user has not set -no-run\_base\_model. If the lst-file is present then PsN will simply read the estimates from that file.
-
-The program creates N (N=number of samples), datasets of size M (M=sample\_size) by randomly drawing individuals with replacement from the original dataset.
-The original dataset is not filtered on IGNORE/ACCEPT before bootstrapping.
-The program creates N new NONMEM modelfiles which are identical to the original modelfile with the exception that each uses a different  bootstrapped dataset and, 
-unless the user has set -no-update\_inits,
-that the initial parameter estimates are the final estimates from the original run. 
+and the user has not set -no-run\_base\_model. If the .lst-file is present then PsN will simply read the estimates from that file.
+The tool creates N (N=number of samples), datasets of size M (M=sample\_size) by randomly drawing individuals with replacement from the original dataset. The original dataset is not filtered on IGNORE/ACCEPT before bootstrapping. The tool creates N new NONMEM modelfiles which are identical to the original modelfile with the exception that each uses a different  bootstrapped dataset and, unless the user has set -no-update\_inits, that the initial parameter estimates are the final estimates from the original run. 
 The model parameters are estimated with each dataset, including the original, resulting in N+1 estimates for each parameter.
 
 \section{Computing delta-ofv}
@@ -256,7 +246,7 @@ diagnostic of the bootstrap \cite{Niebecker}.
 If option -dofv is set, PsN will perform a MAXEVAL=0 run for each set of bootstrap parameter estimates using the original model and data. This is done after all other runs and computations are completed, including any Bca step. The results will be printed to a csv file called delta\_ofv.csv where the first column is bootstrap data id and the second delta-ofv which is computed as 
 $\mathrm{ofv}_{bs,maxev=0}$ – $\mathrm{ofv}_{original}$. 
 If option -rplots is set >0, a plot with the delta-ofv distribution is
-generated, see Basic plots in section Auto-generated R-plots from PsN. 
+generated, see Basic R plots in section Auto-generated R plots from PsN. 
 
 If option -mceta=N is set and NM7.3 or later is used and the estimation method is classical then option MCETA=N will be set in \$ESTIMATION. There will be up to 200 \$PROBLEMs defined in each model file (control stream) to reduce PsN overhead when calling NONMEM.
 

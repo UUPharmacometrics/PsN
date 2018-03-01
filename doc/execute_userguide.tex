@@ -1,5 +1,5 @@
 \input{inputs/format_header.tex}
-\guidetitle{EXECUTE user guide}{2017-10-12}
+\guidetitle{EXECUTE user guide}{2018-01-31}
 
 
 \begin{document}
@@ -9,10 +9,9 @@
 
 
 \section{Introduction}
-The execute program is a PsN tool that allows you to run multiple modelfiles either sequentially or in parallel. 
-It is an nmfe replacement with advanced extra functionality.
+The execute tool allows you to run multiple modelfiles either sequentially or in parallel. It is an nmfe replacement with advanced extra functionality.
 
-The execute program creates subdirectories where it puts NONMEMs input and output files, to make sure that parallel 
+The execute tool creates subdirectories where it puts NONMEMs input and output files, to make sure that parallel 
 NONMEM runs do not interfere with each other. The top directory is by default named 'modelfit\_dirX' where 'X' is a 
 number that starts at 1 and is increased by one each time you run the execute program. When the NONMEM runs are 
 finished, the output and table files will be copied to the directory where execute started in which means that you can 
@@ -20,8 +19,7 @@ normaly ignore the 'modelfit\_dirX' directory. If you need to access any special
 'modelfit\_dirX'. Inside the 'modelfit\_dirX' you find a few subdirectories named 'NM\_runY'. For each model file you 
 specified on the command line there will be one 'NM\_runY' directory in which the actual NONMEM execution takes place. 
 The order of the 'NM\_runY' directories corresponds to the order of the modelfiles given on the command line. The first run 
-will take place inside 'NM\_run1', the second in 'NM\_run2' and so on. The execute script is a PsN tool that allows you to run 
-multiple modelfiles either sequentially or in parallel. It is an nmfe replacement with advanced extra functionality.\\
+will take place inside 'NM\_run1', the second in 'NM\_run2' and so on.\\
 Examples:\\
 Run one model file and accept all default values.
 
@@ -48,16 +46,8 @@ place inside 'NM\_run1', the second in 'NM\_run2' etc.
 A model file is required as argument.
 	
 \section{Optional input}
-All options listed in the document common\_options.pdf, apply to execute. Those options govern how NONMEM runs are managed, 
-and hence apply to all PsN scripts that run NONMEM. A large selection of those options are included in this document,
-together with the options that only apply to execute. 
+All options listed in the document common\_options.pdf, apply to execute. Listed below are the options that only apply to execute. 
 		
-\renewcommand{\guidetoolname}{modelfit}
-		
-\subsection{Basic options}
-The following options are the ones most commonly used. 
-\input{inputs/basic_options.tex}
-
 \renewcommand{\guidetoolname}{execute}
 			
 \begin{optionlist}
@@ -105,18 +95,12 @@ If the conditions for creating the plots are not fulfilled then no pdf will be g
 see the .Rout file in the main run directory for error messages.}
 \input{inputs/rplots_section_body.tex}
 
-\subsubsection*{Basic plots}
-A pdf-file with 
-basic execute rplots will be generated if option -rplots is set >0,
-and the general rplots conditions fulfilled, see above.
-The basic plots are created with the xpose4 functions
-basic.gof, ranpar.hist, ranpar.qq and a few others. Please
-refer to the xpose4 documentation for details regarding these
-plots.
+\subsubsection*{Basic R plots}
+A pdf-file with basic execute R plots will be generated if option -rplots is set >0, and the general R plots conditions fulfilled, see above.
+The basic Rplots are created with the xpose4 functions basic.gof, ranpar.hist, ranpar.qq and a few others. Please refer to the xpose4 documentation for details regarding these plots.
 
-\subsubsection*{Extended plots}
-Extended execute rplots will be generated if option -rplots is set >1.
-These are individiual plots of ten randomly chosen IDs.
+\subsubsection*{Extended R plots}
+Extended execute R plots will be generated if option -rplots is set >1.These are individiual R plots of ten randomly chosen IDs.
 
 \subsection{Retries}
 \input{inputs/retries_section_body.tex}
@@ -135,7 +119,7 @@ the lst-file with the options prepended, so the file can still be used it as inp
 \subsection{Running the nmfe script}
 PsN always runs NONMEM via the nmfe script (or NMQual). 
 The following options govern input for
-nmfe, allowing the user to set options, such as \mbox{-parafile}, on the PsN commandline that
+nmfe, allowing the user to set options, such as \mbox{-parafile}, on the PsN command line that
 are passed on unchanged to the nmfe script.
 Please refer to the NONMEM documentation for the meaning and appropriate use
 of the nmfe script options.

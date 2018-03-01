@@ -13,6 +13,7 @@ use array;
 
 extends 'tool';
 
+has 'ignore' => ( is => 'rw', isa => 'Str' );
 has 'model' => ( is => 'rw', isa => 'model' ); 
 has 'evid_column' => ( is => 'rw', isa => 'Int' ); 
 has 'numobs_indiv' => ( is => 'rw', isa => 'HashRef', default => sub { {} } );
@@ -170,7 +171,7 @@ sub set_evid
         my $indiv_set_evid_two = 0;     # Did we set any evid to two for this individual?
         for my $row (@{$individual->subject_data}) {
             my @a = split /,/, $row;
-            if ($a[$evid_column] == 0) {
+            if ($a[$evid_column] == 0 and not $self->ignore_row(row => \@a)) {
                 if ($skipped_zeros < $numzeros) {
                     $skipped_zeros++;
                 } else {
@@ -191,6 +192,37 @@ sub set_evid
 
     return $set_evid_two;
 }
+
+sub ignore_row
+{
+    # Decide if row should be ignored or not based on the ignore attribute
+    my $self = shift;
+	my %parm = validated_hash(\@_,
+		row => { isa => 'ArrayRef' },
+	);
+	my $row = $parm{'row'};
+
+    if (not defined $self->ignore) {
+        return 0;
+    }
+
+    my @ignore = split /,/, $self->ignore;
+    foreach my $expr (@ignore) {
+        (my $colname, my $value) = split /==/, $expr;
+
+        my $column = $self->model->problems->[0]->find_data_column(column_name => $colname, ignore_dropped => 0); 
+        if ($column == -1) {
+            die "Error: There is no colum $colname to ignore\n";
+        }
+
+        if ($row->[$column] == $value) {
+            return 1;
+        }
+    }
+
+    return 0;
+}
+
 
 no Moose;
 __PACKAGE__->meta->make_immutable;

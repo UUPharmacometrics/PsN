@@ -826,7 +826,7 @@ sub _case_deletion
 									individuals => \@cd_inds,
 									filename    => $newname,
 									ignore_missing_files => 1,
-                                    space_separated => 1, );
+                                );
 		$newdata->_write;
 
 		my $delname = $directory . 'rem_' . ($k + 1) . '.dta';
@@ -1026,11 +1026,14 @@ sub format_data
         }
     } else {
         if ($have_header) {
-            push(@form_data, ' ' . join(' ', @{$self->header()}) . "\n");
+            push(@form_data, join(' ', @{$self->header()}) . "\n");
         }
         foreach my $individual (@{$self->individuals()}) {
             foreach my $row (@{$individual->subject_data}) {
                 my $line = $row;
+                $line =~ s/^,/0,/;
+                $line =~ s/,$/,0/;
+                $line =~ s/,(?=,)/,0/g;
                 $line =~ s/,-/ -/g;
                 $line =~ s/,/  /g;
                 push(@form_data, "  $line\n");

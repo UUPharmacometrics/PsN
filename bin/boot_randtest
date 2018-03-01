@@ -48,93 +48,89 @@ exit unless $res;
 
 my %help_text;
 $help_text{Pre_help_message} = <<'EOF';  
-Perform multiple randomization over bootstrapped datasets.
+	Perform multiple randomization over bootstrapped datasets.
 EOF
+
 $help_text{Description} = <<'EOF';
 EOF
+
 $help_text{Examples} = <<'EOF';
-      boot_randtest -samples=1000 -stratify_on=DOSE run89.mod -base_model=run0.mod
+	boot_randtest -samples=1000 -stratify_on=DOSE run89.mod -base_model=run0.mod
 EOF
 
 $help_text{Options} = <<'EOF';
-      A model file is required as argument, and options -samples and
-	-stratify_on are also required. 
+	A model file is required as argument, and options -samples and -stratify_on
+	are also required. 
 
-The following options are valid:
+	The following options are valid:
 EOF
 
 $help_text{-base_model} = <<'EOF'; 
--base_model
+	-base_model
 
-      Run the original data set with this model, to use as reference when computing delta-ofv.
-      This option is required if not using -summarize.
+	Run the original data set with this model, to use as reference when computing
+	delta-ofv.
+	This option is required if not using -summarize.
 EOF
 $help_text{-samples} = <<'EOF';      
--samples
+	-samples
 
-      The number of randomized datasets to generate.
-      This option is required if not using -summarize.
+	The number of randomized datasets to generate.
+	This option is required if not using -summarize.
 EOF
-    $help_text{-sample_size} = <<'EOF';
-      -sample_size
+$help_text{-sample_size} = <<'EOF';
+	-sample_size
 
-      The number of subjects in each bootstrap data set. The default
-      value is set to the number of individuals in the original data
-      set.
-
-      When the resampling is stratified, the sample_size option can be
-      used to specify the exact number of samples that should be drawn
-      from each strata. Below follows an example of the syntax that
-      should be used in such a case. Stratification is here done based
-      on the study number, STUD, with the values 1001, 1002 and 1003.
-
-      -sample_size='1001=>12,1002=>24,1003=>10'
-	  Note the double quotes, single quotes will not work on Windows.
-
-      This example specifies that the bootstrap should use 12 samples
-      from study 1001, 24 samples from 1002 and 10 from study 1003.
-
-      If only one sample size is used together with stratified
-      resampling (the default case; sample_size=number of individuals
-      in the data set), the strata are assigned samples in proportion
-      to their size in the data set. Please note that this usage of
-      the sample_size option does not guarantee that the sum of the
-      samples of the strata is equal to the given sample_size since
-      PsN needs to round the figures to the closest integer. For a
-      sample size equal to the number of individuals in the data set,
-      the sum will however always be correct.
+	The number of subjects in each bootstrap data set. The default value is set
+	to the number of individuals in the original data set.
+	When the resampling is stratified, the sample_size option can be used to 
+	specify the exact number of samples that should be drawn from each strata.
+	Below follows an example of the syntax that should be used in such a case.
+	Stratification is here done based on the study number, STUD, with the 
+	values 1001, 1002 and 1003.
+	-sample_size='1001=>12,1002=>24,1003=>10'
+	Note the double quotes, single quotes will not work on Windows. This example
+	specifies that the bootstrap should use 12 samples from study 1001, 24 samples
+	from 1002 and 10 from study 1003.
+	If only one sample size is used together with stratified resampling (the 
+	default case; sample_size=number of individuals in the data set), the
+	strata are assigned samples in proportion to their size in the data set.
+	Please note that this usage of the sample_size option does not guarantee
+	that the sum of the samples of the strata is equal to the given sample_size
+	since  PsN needs to round the figures to the closest integer. For a sample 
+	size equal to the number of individuals in the data set, the sum will however
+	always be correct.
 EOF
+
 $help_text{-stratify_on} = <<'EOF';
--stratify_on=integer|string
+	-stratify_on=integer|string
 
-      It may be necessary to use stratification in the randomization
-      procedure. For example, if the original data consists of two
-      groups of patients - say 10 patients with full pharmacokinetic
-      profiles and 90 patients with sparse steady state concentration
-      measurements - it may be wise to restrict the randomization
-      procedure to shuffle within the two groups.
+	It may be necessary to use stratification in the randomization procedure.
+	For example, if the original data consists of two groups of patients - say
+	10 patients with full pharmacokinetic profiles and 90 patients with sparse
+	steady state concentration measurements - it may be wise to restrict the
+	randomization procedure to shuffle within the two groups.
 EOF
-$help_text{-random_column} = <<'EOF';
--random_column=col
 
-      Replace the given column with a new generated
-      random column to do the randomization on
-      The new column will have the values 0 or 1 distributed randomly
-      (50-50) over the IDs.
+$help_text{-random_column} = <<'EOF';
+	-random_column=col
+
+	Replace the given column with a new generated random column to do the
+	randomization on the new column will have the values 0 or 1 distributed
+	randomly (50-50) over the IDs.
 EOF
 
 $help_text{-summarize} = <<'EOF';
--summarize
+	-summarize
 
-      Only gather the results and create the results tables
-      Default off
+	Default off. Only gather the results and create the results tables.
 EOF
 
 $help_text{-replacement} = <<'EOF';
--replacement
+	-replacement
 
-      Should the bootstrapping be done with replacement?
-      Default is no replacement
+	Default is no replacement. Used when the bootstrapping is to be done with
+	replacement.
 EOF
 
 common_options::online_help('boot_randtest', \%options, \%help_text, \%required_options, \%optional_options);

@@ -1,5 +1,5 @@
 \input{inputs/format_header.tex}
-\guidetitle{Developer's guide}{2016-09-14}
+\guidetitle{Developer's guide}{2018-01-31}
 \usepackage{hyperref}
 
 \begin{document}
@@ -41,16 +41,16 @@ perl setup.pl
 \section{Running the development version of PsN without installation to make contributions to the code}
 \begin{itemize}
 \item Install git \cite{git}. 
-\item Do git clone in a suitable place on your computer. On linux:
+\item Do git clone in a suitable place on your computer. On Linux:
 \begin{verbatim}
 cd ~
 git clone https://github.com/UUPharmacometrics/PsN.git PsN
 
 \end{verbatim}
-\noindent Then do the following (assuming linux):
+\noindent Then do the following (assuming Linux):
 \item Add the PsN/bin directory to your \$PATH variable, so that you can call PsN scripts without including the path.
 \item Unless you already have a psn.conf file in the location set in PsN.pm, put one there. 
-You can use PsN/lib/psn.conf\_template as a template and just fill in the [nm\_version] section,
+You can use PsN/lib/psn.conf\_template as a template and just fill in the [nm\_versions] section,
 according to psn\_configuration.pdf.
 \item Make sure you have the required Perl modules listed in PsN/README.txt installed.
 \end{itemize}
@@ -75,11 +75,11 @@ The more important the feature you are contributing is the more help with the ab
 \section{Testing}
 When installing PsN the user has the option to install the test suite in a specified directory. The default directory is in the lib directory. If working from a cloned git repository all tests are in the PsN/test directory. Unit tests are in unit subdirectory and system tests in the system subdirectory.  
 Unit tests are defined as tests that do not involve \emph{running} NONMEM, while system tests are tests involving running NONMEM.
-Tests can be run by using the command \verb|prove| (which is bundled with perl). 
+Tests can be run by using the command \verb|prove| (which is bundled with Perl). 
 
 \subsection{Prerequisites for testing}
 The additional Perl package Test::Exception needs to be installed.
-Running the rplots tests requires "pdfinfo" to be installed on Linux and Mac. In Ubuntu this is bundled in the poppler-utils package
+Running the R plots tests requires "pdfinfo" to be installed on Linux and Mac. In Ubuntu this is bundled in the poppler-utils package.
 
 \subsection{Running tests}
 The unit tests can be run by issuing the command (if the current directory is the test directory).
@@ -92,7 +92,7 @@ and the system tests can be run with
 prove -r system
 \end{verbatim}
 
-To suppress PsN log messages during system tests, use option -silent:
+To suppress PsN log messages during system tests, use the option -silent:
 \begin{verbatim}
 prove -r system :: -silent
 \end{verbatim}
@@ -121,16 +121,16 @@ slurm_account=admin
 slurm_partition=development
 \end{verbatim}
 
-If a test fails, you can get more detailed output information by running it
-with perl instead of prove, e.g.
+If a test fails, you can get more detailed output information by running it with Perl instead of prove, e.g.
 \begin{verbatim}
 perl bootstrap.t
 \end{verbatim}
 
 \subsection{System tests for multiple NONMEM versions}
-Multiple versions of NONMEM can be tested automatically with the \verb|runsystem| perl script. This script takes
+Multiple versions of NONMEM can be tested automatically with the Perl script \verb|runsystem|. This script takes
 an array of NONMEM versions as arguments and all arguments staring with "-" will be tunnelled through to prove.
-The following example will run all system tests once for nm72 and once for nm73 using 4 parallel threads
+The following example will run all system tests once for nm72 and once for nm73 using 4 parallel threads.
+
 Note that 'threads' in this context means four test scripts in parallel, which is different from the
 threads option to PsN. Running several test scripts in parallel will cause PsN's log messages to be intermixed.
 \begin{verbatim}
@@ -167,7 +167,7 @@ vpc.
 Tests are excellent for tool-specific features of precond, sir, parallel\_retries, randtest, sse and sumo. 
 For vpc we have good coverage for the basic vpc features (extracting numbers from NONMEM tables, binning data and 
 computing intervals without censoring or prediction correction), but we have only very basic crash tests for the 
-more advanced features. The bootstrap program has tests for dataset generation and calculation of results.
+more advanced features. The bootstrap tool has tests for dataset generation and calculation of results.
 %bootstrap needs more detailed dataset unit tests, with and without stratification
 scm has many crash tests, and tests to ensure that the computed means/medians/max/min of covariates are correct, 
 but not of control stream manipulation.
@@ -188,35 +188,22 @@ Warning: Line truncated at (1)
 FSUBS.f90:10.132:
 \end{verbatim}
 These warnings are from NONMEM and can be ignored.
-	\item	The PsN developers have not run the test suite with NONMEM 6. There are serveral tests that are known to fail with NONMEM 6. If you are a user of NONMEM 6 and wish to run the test suite please give it a try and send your findings to any of the developers or the mailing list.
+	\item	The PsN developers have not run the test suite with NONMEM 6. There are serveral tests that are known to fail with NONMEM 6. If you use NONMEM 6 and wish to run the test suite please give it a try and send your findings to any of the developers or the mailing list.
 	\item If any test fails using any version of NONMEM 7 this is most likely a bug. Please report this so that it can be fixed.
     \item If the PsN installation directory is moved after the initial installation of the test suite, the file includes.pm in the top level of the test directory
     must be edited to include the new path to PsN core and toolkit. 
 \end{itemize} 
 
-\section{Help scripts for SourceForge webpage}
+\section{Help scripts for releases}
 
 \begin{description}
-\item[putdoc] Run at every internal release, i.e. every time new default
-version on Uppsala cluster. Must be run from the directory where it is
-(some local file paths in the script). This script will upload doc/*.pdf to \\
-\verb|http://psn.sourceforge.net/internal_release_pdfdocs/| \\
-and the .tar.gz and .zip install packages to\\
-\verb|http://psn.sourceforge.net/internal_release_install_packages/|
-The wiki links for documentation and install package for latest
-release are pointing to these web places, so this is important to
-do for each internal release.
-\item[putwebpage] Run whenever web page php files are updated in between
-external releases (when putrelease is run instead).
-Will upload home.php, docs.php, download.php, install.php, list.php and
-buglist.php to SourceForge, where they are immediately visible.
-\item[putrelease] Run at external release. Not well tested since run very
-infrequently. Will upload same php-files as putwebpage. Then will
-upload doc/*.pdf and zippped/packed documentation packages (from PsN-Source)
-to \\
-\verb|http://psn.sourceforge.net/pdfdocs/|\\
-Currently does not upload bug\_list\_at\_next\_release.
+\item[internal\_release.pl] Run at every internal release, i.e. every time new default
+version on Uppsala cluster. Takes the version as argument. The script will only create
+a new release and upload the files to github.
+\item[dev\_release] Run for every development release. Will do everything: make, make release,
+    upload files to cluster, run setup.pl and change permissions to files.
 \end{description}
+
 \section{R plots}
 \input{inputs/rplots_development.tex}
 
@@ -235,8 +222,8 @@ This is a checklist for things to check when support for a new NONMEM version is
 
 
 \section{Build environment}
-The documentation is made in \LaTeX and pdfs can be generated with \verb|make doc|. The
-packages texlive-extra-util, texlive-latex-extra, texlive-generic-extra, texlive-bibtex-extra, biber, texlive-science and texlive-pictures are needed to build all documents.
+The documentation is made in \LaTeX\ and pdfs can be generated with \verb|make doc|. The
+packages texlive-extra-util, texlive-latex-extra, texlive-generic-extra, biber, texlive-bibtex-extra, texlive-science and texlive-pictures are needed to build all documents.
 The Makefile use \verb|latexmk| to speed up rebuilding all documentation.
 
 \section{Revision control}
@@ -269,7 +256,7 @@ Remember the construction order in Moose. If we have a superclass called parent 
 \subsection{Methods}
 
 \subsubsection{Parameter validation}
-All methods should validate their parameters with validated\_hash in \mbox{MooseX::Params::Validate}
+All methods should validate their parameters with validated\_hash in\\ \mbox{MooseX::Params::Validate}
 
 \begin{verbatim}
 use MooseX::Params::Validate;
@@ -310,10 +297,10 @@ sub _this_is_a_private_method
 
 }
 \end{verbatim}
-
+\newpage
 
 \subsection{Attributes}
-triggers should be named \_attribute\_set
+Triggers should be named \_attribute\_set
 \begin{verbatim}
 has 'filename' => (is => 'rw', isa => 'Str', trigger => \&_filename_set );
 
@@ -329,7 +316,7 @@ sub _filename_set
 }
 \end{verbatim}
 
-clearers should be named clear\_attribute
+Clearers should be named clear\_attribute
 \begin{verbatim}
 has 'filenames' => (is => 'rw', isa => 'ArrayRef[Str]', clearer => 'clear_filenames' );
 
@@ -338,7 +325,7 @@ if ($need_to_delete) {
 }
 \end{verbatim}
 
-predicates should be named has\_attribute
+Predicates should be named has\_attribute
 \begin{verbatim}
 has 'filename' => (is => 'rw', isa => 'Str', predicate => 'has_filename' );
 
@@ -349,7 +336,7 @@ if ($self->has_filename) {
 
 \subsection{External modules}
 
-As a workaround for a bug in the Carp package \verb|use include_modules;| should be used instead of \verb|use Carp;|. All the ordinary Carp methods will be exported.
+A workaround for the bug in the Carp package is to use \verb|use include_modules;| instead of \verb|use Carp;|. All the ordinary Carp methods will be exported.
 
 
 \section{Data class}
@@ -376,22 +363,22 @@ skip\_parsing, synced, target, mdv\_column, dv\_column, individual\_ids.
 target\_set, diff, flush, single\_valued\_data.
 
 \subsubsection{Old methods renamed}
-The following methods have been made private ( underscore added in sub name): 
-\_bootstrap, \_bootstrap\_from\_keys, \_case\_deletion, \_renumber\_ascending, \_randomize\_data.
+The following methods have been made private (underscore added in sub name):\\ 
+\_bootstrap, \_bootstrap\_from\_keys, \_case\_deletion, \_renumber\_ascending, \\\_randomize\_data.
 
 \subsection{New data class methods}
 \begin{description} 
-\item[add\_randomized\_input\_data] For boot\_scm if option -dummy\_covariates set
-\item[bootstrap\_create\_datasets] standard bootstrap data generation, uses private \_bootstrap, \_renumber\_ascending methods
-\item[bootstrap\_create\_datasets\_from\_keys] special bootstrap data generation, uses private \_bootstrap\_from\_keys, \_renumber\_ascending
+\item[add\_randomized\_input\_data] For boot\_scm if the option -dummy\_covariates is set.
+\item[bootstrap\_create\_datasets] standard bootstrap data generation, uses private \_bootstrap, \_renumber\_ascending methods.
+\item[bootstrap\_create\_datasets\_from\_keys] special bootstrap data generation, uses private \_bootstrap\_from\_keys, \_renumber\_ascending.
 \item[frem\_compute\_covariate\_properties]
-\item[cdd\_create\_datasets] uses private \_case\_deletion
-\item[create\_randomized\_data] for randtest, uses private \_randomize\_data
+\item[cdd\_create\_datasets] uses private \_case\_deletion.
+\item[create\_randomized\_data] for randtest, uses private \_randomize\_data.
 \item[lasso\_calculate\_covariate\_statistics]
 \item[lasso\_get\_categories]
-\item[scm\_calculate\_covariate\_statistics] main covariate statistics method
-\item[scm\_calculate\_categorical\_statistics] helper method to scm\_calculate\_covariate\_statistics
-\item[scm\_calculate\_continuous\_statistics] helper method to scm\_calculate\_covariate\_statistics
+\item[scm\_calculate\_covariate\_statistics] main covariate statistics method.
+\item[scm\_calculate\_categorical\_statistics] helper method to scm\_calculate\\ \_covariate\_statistics.
+\item[scm\_calculate\_continuous\_statistics] helper method to scm\_calculate\\ \_covariate\_statistics.
 \end{description}
 \section{model::problem::data record class}
 In PsN 4.3 the data record class has been extended. It handles the data file of the model, in the sense that it keeps track
@@ -422,10 +409,9 @@ the input \$DATA record lines from the original model file, the data file info i
 (see the BUILD code). The stored filename and directory are used when writing a model to disk, see
 the overloaded \_format\_record method.
 
-The programmer must not set the ignoresign via the data record options. The ignoresign accessor must be used instead. However,
-for ignore lists (logical expressions enclosed by parentheses) the record options must be used.
+For ignore lists (logical expressions enclosed by parentheses) the record options must be used.
 The typical case when ignoresign should be set is when a NONMEM \$TABLE file is used as a data file for 
-a new model. Then the programmer can for example set \verb|$model->problems->[0]->datas->[0]->ignoresign('@')|
+a new model. Then the programmer can for example set:\\ \verb|$model->problems->[0]->datas->[0]->ignoresign('@')|
 
 The \_format\_record method, and the helper method format\_filename, take mandatory input options Bool relative\_data\_path and
 string write\_directory. 
@@ -497,32 +483,25 @@ Option relative\_data\_path to \_write method can be used to override the model 
 deciding whether relative or absolute data file path should be used in \$DATA.
 Normally the default, decided by the model attribute, should be used for relative\_data\_path.
 
-\section{copy\_data command-line option and modelfit/tool subclass attribute}
-A few scripts has copy\_data as a command-line option (execute, bootstrap, vpc, npc, nca, sir, randtest). 
+\section{copy\_data command line option and modelfit/tool subclass attribute}
+A few tools has copy\_data as a command line option (execute, bootstrap, vpc, npc, nca, sir, randtest). 
 By default copy\_data is always true. On the
-command-line copy\_data shall mean, to be consistent across scripts: 
+command line copy\_data shall mean, to be consistent across tools: 
 use a copy of the \emph{original} data when models needing the \emph{original}
-data file are run. If command-line option copy\_data is unset with -no-copy\_data, this means: always use the 
+data file are run. If the command line option copy\_data is unset with -no-copy\_data, this means: always use the 
 original data file with absolute path in \$DATA when running models that use the original data set. Setting -no-copy\_data
 is popular for studies with high requirements on traceability, it is easier to show that the data is not corrupted 
 if the same file is always used, rather than copies.
 
-The command-line meaning of copy\_data was for bootstrap, sir and randtest in PsN 4.2, then it was related to using a relative path 
-to data in m1 or not, but this option was not widely known or used. In PsN 4.3 the meaning is changed, for consistency across scripts.
+The command line meaning of copy\_data was for bootstrap, sir and randtest in PsN 4.2, then it was related to using a relative path to data in m1 or not, but this option was not widely known or used. In PsN 4.3 the meaning is changed, for consistency across tools.
 
-If command-line copy\_data was unset using -no-copy\_data, 
-then the bin script should ensure that using an absolute path is not too long for NONMEM (there is a subroutine for this, see example in bin/bootstrap)
-and then that the input model objects have attribute relative\_data\_path set to false (see bin/bootstrap).
-Also the modelfit object(s) used to run these models (or copies of these models using the same data) 
-should have copy\_data set to the same as the user gave on the commandline, otherwise it is a programming error. See bootstrap.pm, 
-modelfit that runs the base model and the dofv-models: 
+If command line copy\_data was unset using -no-copy\_data, then the bin script should ensure that using an absolute path is not too long for NONMEM (there is a subroutine for this, see example in bin/bootstrap) and then that the input model objects have attribute relative\_data\_path set to false (see bin/bootstrap).
+Also the modelfit object(s) used to run these models (or copies of these models using the same data) should have copy\_data set to the same as the user gave on the command line, otherwise it is a programming error. See bootstrap.pm, modelfit that runs the base model and the dofv-models: 
 \begin{verbatim}
 copy_data => $self->copy_data
 \end{verbatim}
 
-The copy\_data option set on the commandline shall always be passed on to the 
-tool subclass object created in the bin script, but inside the various tool subclass objects (bootstrap, npc, randtest... objects),
-the command\_line setting of copy\_data (\$self->copy\_data) is not always passed on again to modelfit or other tool objects
+The copy\_data option set on the command line shall always be passed on to the tool subclass object created in the bin script, but inside the various tool subclass objects (bootstrap, npc, randtest... objects), the command line setting of copy\_data (\$self->copy\_data) is not always passed on again to modelfit or other tool objects
 that are created. See bootstrap example.
 
 Attribute copy\_data to the modelfit class is used in the following way:

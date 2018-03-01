@@ -1,59 +1,52 @@
 suppressMessages(library(vpc))
 suppressMessages(library(dplyr))
 library(ggplot2)
+library(xpose)
 
-#The Simple Asymtotic Method:
-#Where n is the sample size,
-#p is the proportion,
-#z is the z value for the % interval (i.e. 1.96 provides the 95% CI)
-#and cc is whether a continuity correction should be applied.
-simpasym <- function(n, p, z=1.96, cc=TRUE) {
-    out <- list()
-    if (cc) {
-        out$lb <- p - z*sqrt((p*(1-p))/n) - 0.5/n
-        out$ub <- p + z*sqrt((p*(1-p))/n) + 0.5/n
-    } else {
-        out$lb <- p - z*sqrt((p*(1-p))/n)
-        out$ub <- p + z*sqrt((p*(1-p))/n)
-    }
-    out
-}
 
-vpc_mixtures <- function(obs, sim, numsims, mixcol="MIXNUM", dv="DV", phm) {
+vpc_mixtures <- function(obs, sim, numsims, mixcol="MIXNUM", dv="DV", phm_obs, phm_sim, bins) {
     # Put in replicate numbers in sim table
     sim$sim <- rep(1:numsims, each=nrow(sim) / numsims)
 
-    if (!missing(phm)) {
-        phm_table <- subpopulations_from_nonmem_phm(phm, numsims)
-        sim <- full_join(sim, phm_table)
-        names(obs)[names(obs) == mixcol] <- 'SUBPOP'    # rename mixcol in obs
+    if (!missing(phm_sim)) {
+        phm_table <- subpopulations_from_nonmem_phm(phm_sim, numsims)
+        sim <- dplyr::full_join(sim, phm_table)
+        phm_table_obs <- subpopulations_from_nonmem_phm(phm_obs, 1)
+        obs <- dplyr::full_join(obs, phm_table_obs)
         mixcol <- 'SUBPOP'
+        method <- 'Randomized Mixture'
+    } else {
+        method <- 'MIXEST Mixture'
     }
 
     num_ids <- length(unique(obs$ID))
 
-    numsubs <- max(max(obs[mixcol]), max(sim[mixcol]))
+    unique_subpops <- sort(unique(c(obs[[mixcol]], sim[[mixcol]])))
 
     table_list <- list()
 
-    for (i in 1:numsubs) {
+    for (i in unique_subpops) {
         subobs <- filter_(obs, paste0(mixcol, "==", i))
         subsim <- filter_(sim, paste0(mixcol, "==", i))
         if (nrow(subsim) == 0) {
             next
         }
-        vpc <- vpc::vpc(obs=subobs, sim=subsim, obs_cols=list(dv=dv), sim_cols=list(dv=dv))
+        if (missing(bins)) {
+            vpc <- vpc::vpc(obs=subobs, sim=subsim, obs_cols=list(dv=dv), sim_cols=list(dv=dv))
+        } else {
+            vpc <- vpc::vpc(obs=subobs, sim=subsim, obs_cols=list(dv=dv), sim_cols=list(dv=dv), bins=bins)
+        }
 
         obs_ids <- length(unique(subobs$ID))
         perc_obs_ids <- (obs_ids / num_ids) * 100
     
         ids_per_sim <- subsim %>% group_by(sim) %>% summarise(count=length(unique(ID)))
-        sim_ids <- sum(ids_per_sim$count)
-        perc_sim_ids <- (sim_ids / (numsims * num_ids)) * 100
+        ids_per_sim <- ids_per_sim$count
+        lower_quantile <- (quantile(ids_per_sim, probs=0.05) / num_ids) * 100
+        upper_quantile <- (quantile(ids_per_sim, probs=0.95) / num_ids) * 100
 
-        ci <- simpasym(numsims * num_ids, perc_sim_ids / 100)
-
-        title <- sprintf("MIXTURE VPC ORIGID=%.1f%% SIMID=[%.1f%%, %.1f%%] (95%% CI)", perc_obs_ids, ci[[1]] * 100, ci[[2]] * 100)
+        title <- sprintf("%s SUBPOP=%d\nORIGID=%.1f%% SIMID=[%.0f%%, %.0f%%] (5%%, 95%% percentiles)",
+                         method, i, perc_obs_ids, lower_quantile, upper_quantile)
         vpc <- vpc + ggtitle(title)
         table_list[[i]] <- vpc
     }
@@ -69,14 +62,16 @@ vpc_mixtures <- function(obs, sim, numsims, mixcol="MIXNUM", dv="DV", phm) {
 # phm can either be a file name of a phm file or a data.frame
 subpopulations_from_nonmem_phm <- function(phm, nrep) {
     if (is.character(phm)) {
-        phm <- read.table(name, skip=1, header=TRUE)
+        phm_table <- xpose::read_nm_files(file=phm)
+    } else {
+        phm_table <- phm
     }
 
-    phm <- data.frame(ID=phm$ID, SUBPOP=phm$SUBPOP, PMIX=phm$PMIX)  # Keep only interesting columns
-    phm <- phm[rep(seq_len(nrow(phm)), nrep),]  # One phm per replicate
-    phm$sim <- rep(1:nrep, each=nrow(phm) / nrep) # put in the SIM column
+    ind_table <- dplyr::bind_rows(phm_table[['data']])   # One table for all replicates
+    ind_table <- data.frame(ID=ind_table$ID, SUBPOP=ind_table$SUBPOP, PMIX=ind_table$PMIX)  # Keep only interesting columns
+    ind_table$sim <- rep(1:nrep, each=nrow(ind_table) / nrep) # number the replicates
 
-    result <- data.frame(phm %>% group_by(sim, ID) %>% summarize(SUBPOP=sample(SUBPOP, size=1, prob=PMIX)))
+    result <- data.frame(ind_table %>% group_by(sim, ID) %>% summarize(SUBPOP=sample(SUBPOP, size=1, prob=PMIX)))
 
     return(result)
 }

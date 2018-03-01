@@ -31,7 +31,7 @@ source(file.path(rscripts.directory, "common/R_info.R"))
 source(file.path(rscripts.directory, "common/find_r_files_in_subdir.R"))
 source(file.path(rscripts.directory, "common/iofv.R"))
 source(file.path(rscripts.directory, "common/keep_symbols.R"))
-source(file.path(rscripts.directory, "common/command_text.R"))
+source(file.path(rscripts.directory, "common/command_start.finish.time.R"))
 source(file.path(rscripts.directory, "common/additional_info.R"))
 source(file.path(rscripts.directory, "common/break_text.R"))
 source(file.path(rscripts.directory, "common/get_initial_estimates_from_ext.R"))
@@ -72,7 +72,7 @@ ofv_table <- ofv_summary_table(working.directory,model.filename)
 structural_overview <- get_structural_overview_table(directory=working.directory,idv=idv_all,dvid_name,skip)
 if(all(skip!="resmod")) {
   # get resmod structural details tables
-  resmod_structural_details <- resmod_structural_details_tables(working.directory,base_dataset,original_max0_model=original_max0_model,CWRES_table,idv_all,idv_name,dvid_name,nonlinear)
+  resmod_structural_details <- resmod_structural_details_tables(working.directory,base_dataset,original_max0_model=original_max0_model,extra_table,idv_all,dvid_name,nonlinear)
 }
 ```
 
@@ -178,7 +178,7 @@ overview_table_list <- get_overview_table(structural_overview=structural_overvie
 
 <!-- #######################   Write Rmarkdown document here   ################################ -->
 ```{r command_text_from_command_line,results='asis',echo=F,warning=F,message=F}
-command_runtime <- command_text(directory=working.directory)
+command_runtime <- command_start.finish.time(yaml_file=file.path(working.directory,"meta.yaml"))
 if(length(command_runtime$command)>0 && length(command_runtime$run_start)>0 && length(command_runtime$run_finish)>0) {
   cat(break_text(command_runtime$command,max_symb=95),"\n\n")
   cat(command_runtime$run_start,"\n\n")
@@ -207,7 +207,7 @@ cat("Overview of possible modifications to different model aspects, expected imp
 cat("\\pagebreak\n\n")
 cat("#Structural\n\n")
 all_structural_extra_plots(simeval_directory=file.path(working.directory,"simeval_run"),base_dataset,resmod_structural_details,
-                           CWRES_table,idv_all,idv_name,dvid_name,type,nonlinear)
+                           extra_table,idv_all,idv_name,dvid_name,type,nonlinear)
 ```
 
 ```{r Add_text_for_parameter_section_if_exist_mod_files,eval=all(skip!="transform"),results='asis',echo=F,warning=F,message=F}

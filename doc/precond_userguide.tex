@@ -1,5 +1,5 @@
 \input{inputs/format_header.tex}
-\guidetitle{PRECOND user guide}{2017-12-12}
+\guidetitle{PRECOND user guide}{2018-01-31}
 \usepackage{color}
 \usepackage{amsmath}
 \usepackage{tikz}
@@ -16,9 +16,9 @@ In order to increase the numerical stability of the variance covariance matrix c
 
 Through numerical experiments \cite{Aoki} using published nonlinear mixed effect models, it has been found that the preconditioning can reduce the computational environment dependency, increase the chance of successful covariance computation, and unveil un-identifiability of the model parameters.
 
-Preconditioning will automatically first run the model normally and if the covariance step fails, get the R-matrix from that run using that to precondition the model. The obtained R-matrix is decomposed using eigendecomposition and used to linearly re-parameterise the model in a way that the R-matrix of the preconditioned model is close to an identity matrix.  This will reduce the influence of the rounding error for the computation of R matrix and often avoid the R-matrix appearing to be non-positive semi-definite.  The precond tool will initiate the modelfit of the preconditioned model and then convert back the obtained estimated parameter and covariance matrix to the parameter scale of the original model.
+The precond tool will automatically first run the model normally and if the covariance step fails, get the R matrix from that run using that to precondition the model. The obtained R matrix is decomposed using eigendecomposition and used to linearly re-parameterise the model in a way that the R matrix of the preconditioned model is close to an identity matrix.  This will reduce the influence of the rounding error for the computation of R matrix and often avoid the R matrix appearing to be non-positive semi-definite.  The precond tool will initiate the modelfit of the preconditioned model and then convert back the obtained estimated parameter and covariance matrix to the parameter scale of the original model.
 
-Preconditioning can also be used for the modelfits with successful covariance step to verify that the resulting computation is not influenced by the computational error.
+The precond tool can also be used for the modelfits with successful covariance step to verify that the resulting computation is not influenced by the computational error.
 
 Preconditioning of the model will only help to stabilise the computation so that if the model is fundamentally unidentifiable (or have other issues) then the covariance step of the preconditioned model should not be successful.
 
@@ -47,12 +47,12 @@ Default set. Disable with -no-copy\_data. By default PsN will copy the data file
 Continue onto preconditioning only if the covariance step of the original model fails (without this option, the precond tool will always continue onto preconditioning to improve the the accuracy of the covariance matrix computation and also to potentially unveil the non-estimability of the model parameters). Note that the previously available option {\bf -always} was replaced by {\bf -notalways} as to always precondition now is the default. The {\bf -always} option is still kept as a dummy option for backwards compatibility.
 \nextopt
 \optname{perturb}
-After the model is preconditioned the initial estimate is perturbed to the direction of the eigenvector that is corresponding negative eigenvalue of the R-matrix.  This will increase the chance of finding the final parameter estimate that is not at the saddle point so that the R-matrix of the preconditioned model will be a positive semi-definite matrix.
+After the model is preconditioned the initial estimate is perturbed to the direction of the eigenvector that is corresponding negative eigenvalue of the R matrix.  This will increase the chance of finding the final parameter estimate that is not at the saddle point so that the R matrix of the preconditioned model will be a positive semi-definite matrix.
 \nextopt
 \optdefault{pre}{file or directory}
-With this option the user can manually specify the R-matrix that will be used for preconditioning. In addition, a modelfit directory created by the execute command of PsN can be specified and R-matrix will be extracted from the directory.  In addition, any symmetric matrix can be provided as a .csv file or NONMEM matrix file; however, the specified matrix needs to be similar to R-matrix to improve the computational stability (i.e., using covariance matrix will reduce the computational stability).
+With this option the user can manually specify the R matrix that will be used for preconditioning. In addition, a modelfit directory created by the execute command of PsN can be specified and R matrix will be extracted from the directory.  In addition, any symmetric matrix can be provided as a .csv file or NONMEM matrix file; however, the specified matrix needs to be similar to R matrix to improve the computational stability (i.e., using covariance matrix will reduce the computational stability).
 
-With this option the user can also specify a directory. If the modelfit directory is specified, the R-matrix is automatically extracted.  If the precond directory is specified we can precondition the already preconditioned model. This will allow us to iteratively precondition deeply ill-conditioned model. In order for the iterative preconditioning to work properly, "precMatrix" file should be unmodified and available in the specified precond directory.
+With this option the user can also specify a directory. If the modelfit directory is specified, the R matrix is automatically extracted.  If the precond directory is specified we can precondition the already preconditioned model. This will allow us to iteratively precondition deeply ill-conditioned model. In order for the iterative preconditioning to work properly, "precMatrix" file should be unmodified and available in the specified precond directory.
 \nextopt
 \optdefault{update\_model}{filename}
 Set a filename to store the original model with updated inital values for the parameters.	
@@ -119,7 +119,7 @@ In the terminal window, the precond tool printout the condition number of the R 
 
 \section{NONMEM techniques that can be useful}
 The current implementation of  preconditioning in PsN can only precondition fixed effect parameters. Additionally, all the bounds for the parameters will be removed. To accommodate these limitations, the following tricks for the NONMEM model file can be useful.
-\subsection{Re-parameterisation of OMEGA by THETA} \label{app::repara}
+\subsection{Re-parameterization of OMEGA by THETA} \label{app::repara}
 In order to precondition the random effects portion of the nonlinear mixed effects model using the precond tool, we need to rewrite the variance and covariance of the inter individual variability ("OMEGA block") in terms of the fixed effect parameters ("THETAs"). The individual parameters ("ETAs") can be re-parameterized as follows (an example of three random effect parameters with correlation):\\
 \$PRED, \$PK etc.\\
 ETA\_1=THETA(18)*ETA(1)\\
@@ -142,13 +142,13 @@ CL     = ABS(THETA(1))*EXP(ETA(1)).\\
 \$THETA 0.1\\
 \$OMEGA 0.1\\
 
-\section{PRECOND Script Workflow}
+\section{precond tool Workflow}
 \begin{enumerate}
     \item Read in the model file <model\_name>.mod (we refer to it as the "original model").
-    \item Estimate the model parameters and variance-covariance matrix of the original model using NONMEM and obtain the $R$-matrix (note again that the $R$-matrix is relatively problem free to calculate, the inverse is the step that may give problems).  The estimated parameters and their standard errors (if the variance-covariance matrix computation is successful) are saved as a text file.
+    \item Estimate the model parameters and variance-covariance matrix of the original model using NONMEM and obtain the $R$ matrix (note again that the $R$ matrix is relatively problem free to calculate, the inverse is the step that may give problems).  The estimated parameters and their standard errors (if the variance-covariance matrix computation is successful) are saved as a text file.
  %   If the variance-covariance matrix computation of the original model is successful, then the script terminates and will not proceed to the following steps.
-   % \item Pad or truncate the $R$-matrix so that it will be a full rank $n \times n$ matrix, where $n$ is the number of fixed effect parameters as the $R$-matrix obtained from NONMEM can contain zero rows and columns if the parameters are fixed to a value.
-    \item Create preconditioning matrix P from the $R$-matrix of the original model.
+   % \item Pad or truncate the $R$ matrix so that it will be a full rank $n \times n$ matrix, where $n$ is the number of fixed effect parameters as the $R$ matrix obtained from NONMEM can contain zero rows and columns if the parameters are fixed to a value.
+    \item Create preconditioning matrix P from the $R$ matrix of the original model.
     \item Fixed effect parameters are reparametrized as $\boldsymbol{\theta} = P \,\hat{\boldsymbol{\theta}}$, where $\boldsymbol{\theta}$ is the vector of fixed effect parameters of the original model and $\hat{\boldsymbol{\theta}}$ is the vector of the fixed effect parameters of the preconditioned model.
      For example considering an original model with two fixed effect parameters, this reparameterization can be found in the preconditioned model as follows:\\
 \\
@@ -179,7 +179,7 @@ CL     = ABS(THETA(1))*EXP(ETA(1)).\\
 
 \section{Description}
 
-Below is a simple diagram of the internal automated precond workflow for when -notalways is in use. By default the preconditioning will not be skipped. Some automatic minor modifications of the model will be made before precond will do its first run to make sure that the R-matrix will be created.
+Below is a simple diagram of the internal automated precond workflow for when -notalways is in use. By default the preconditioning will not be skipped. Some automatic minor modifications of the model will be made before precond will do its first run to make sure that the R matrix will be created.
 
 \tikzstyle{decision} = [diamond, draw, fill=blue!20, 
     text width=8em, text badly centered, node distance=4cm, inner sep=0pt]
@@ -194,7 +194,7 @@ Below is a simple diagram of the internal automated precond workflow for when -n
     \node [block] (add) {add COV, PRINT=R, FORMAT and UNCONDITIONAL to model};
     \node [block, below of=add, node distance=4cm] (run) {run model};
     \node [decision, below of=run] (covsuccess) {covariance step successful?};
-    \node [block, below of=covsuccess, node distance=4cm] (getR) {get R-matrix from run};
+    \node [block, below of=covsuccess, node distance=4cm] (getR) {get R matrix from run};
     \node [block, below of=getR] (precond) {precondition model};
     \node [block, below of=precond] (done) {done};
 

@@ -15,37 +15,38 @@ R_info(directory=working.directory)
 ```
 
 ```{r vpc_plots, warning=FALSE, message=FALSE, results='hide',echo=FALSE,fig.width=9,fig.height=6.5,fig.keep="high",fig.align="center"}
-if (!exists('mix')) {     # A mixture model is a special case
-    if (is.tte) {
-        #data is in the model directory, go there to read input
-        setwd(model.directory)
-        xpdb <- xpose.data(xpose.runno)
-        plots <- kaplan.plot(object=xpdb, VPC=T)
-        #go back to vpc directory 
-        setwd(working.directory)
-    } else if (is.categorical) { 
-        plots <- xpose.VPC.categorical(vpc.info=tool.results.file, vpctab=vpctab)
-    } else if (have.loq.data | have.censored) {
-        plots <- xpose.VPC.both(vpc.info=tool.results.file, vpctab=vpctab)
-    } else {
-        plots <- xpose.VPC(vpc.info=tool.results.file, vpctab=vpctab)
-    }
-    print(plots) 
+
+if (is.tte) {
+    #data is in the model directory, go there to read input
+    setwd(model.directory)
+    xpdb <- xpose.data(xpose.runno)
+    plots <- kaplan.plot(object=xpdb, VPC=T)
+    #go back to vpc directory 
+    setwd(working.directory)
+} else if (is.categorical) { 
+    plots <- xpose.VPC.categorical(vpc.info=tool.results.file, vpctab=vpctab)
+} else if (have.loq.data | have.censored) {
+    plots <- xpose.VPC.both(vpc.info=tool.results.file, vpctab=vpctab)
 } else {
+    plots <- xpose.VPC(vpc.info=tool.results.file, vpctab=vpctab)
+}
+print(plots) 
+
+if (exists('mix')) {     # A mixture model is a special case
     if (require("vpc")) {
         source(paste0(rscripts.directory, "/vpc/vpc_mixtures.R"))
         observations_tablefile <- paste0(working.directory, '/m1/vpc_original.npctab.dta')
         simulations_tablefile <- paste0(working.directory, '/m1/vpc_simulation.1.npctab.dta')
 
-        obs <- read_table_nm(observations_tablefile)
-        sim <- read_table_nm(simulations_tablefile)
-        if (!mix_random) {
-            plots <- vpc_mixtures(obs=obs, sim=sim, numsims=samples, mixcol=mix, dv=dv)
-        } else {
-            plots <- vpc_mixtures(obs=obs, sim=sim, numsims=samples, mixcol=mix, dv=dv, phm=phm_file)
-        }
+        obs <- vpc::read_table_nm(observations_tablefile)
+        sim <- vpc::read_table_nm(simulations_tablefile)
+        plots_plain <- vpc_mixtures(obs=obs, sim=sim, numsims=samples, mixcol=mix, dv=dv, bins=bin_boundaries)
+        plots_phm <- vpc_mixtures(obs=obs, sim=sim, numsims=samples, mixcol=mix, dv=dv, phm_obs=phm_obs_file, phm_sim=phm_sim_file, bins=bin_boundaries)
 
-        for (p in plots) {
+        for (p in plots_plain) {
+            print(p)
+        }
+        for (p in plots_phm) {
             print(p)
         }
     }

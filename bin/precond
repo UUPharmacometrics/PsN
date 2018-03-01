@@ -56,194 +56,197 @@ exit unless $res;
 
 my %help_text;
 
-	$help_text{Pre_help_message} = <<'EOF';
+$help_text{Pre_help_message} = <<'EOF';
 	Model preconditioning to stabilize covariance calculations.
 EOF
 
-	$help_text{Description} = <<'EOF';
-	In order to increase the numerical stability of the variance covariance matrix 
-	computation, the precond tool creates and runs a linearly re-parameterised model 
-	of the original model that is less sensitive to rounding errors. We refer to 
-	this process as preconditioning and the created model as the preconditioned model.
-	Through numerical experiments \cite{Aoki} using published nonlinear mixed effect 
-	models, it has been found that the preconditioning can reduce the computational 
-	environment dependency, increase the chance of successful covariance computation, 
-	and unveil un-identifiability of the model parameters.
-	Preconditioning will automatically first run the model normally and if the 
-	covariance step fails, get the R-matrix from that run using that to precondition 
-	the model. The obtained R-matrix is decomposed using eigendecomposition and used 
-	to linearly re-parameterise the model in a way that the R-matrix of the 
-	preconditioned model is close to an identity matrix. This will reduce the influence
-	of the rounding error for the computation of R matrix and often avoid the R-matrix
-	appearing to be non-positive semi-definite.  The precond tool will initiate the 
-	modelfit of the preconditioned model and then convert back the obtained estimated 
-	parameter and covariance matrix to the parameter scale of the original model.
-	Preconditioning can also be used for the modelfits with successful covariance step
-	to verify that the resulting computation is not influenced by the computational 
-	error.
-	Preconditioning of the model will only help to stabilise the computation so that 
-	if the model is fundamentally unidentifiable (or have other issues) then the 
-	covariance step of the preconditioned model should not be successful. 
+$help_text{Description} = <<'EOF';
+	In order to increase the numerical stability of the variance covariance
+	matrix computation, the precond tool creates and runs a linearly
+	re-parameterised model of the original model that is less sensitive to
+	rounding errors. We refer to this process as preconditioning and the
+	created model as the preconditioned model.Through numerical experiments
+	\cite{Aoki} using published nonlinear mixed effect models, it has been
+	found that the preconditioning can reduce the computational environment
+	dependency, increase the chance of successful covariance computation, and
+	unveil un-identifiability of the model parameters. Preconditioning will
+	automatically first run the model normally and if the covariance step fails,
+	get the R-matrix from that run using that to precondition the model. The
+	obtained R-matrix is decomposed using eigendecomposition and used to linearly
+	re-parameterise the model in a way that the R-matrix of the preconditioned
+	model is close to an identity matrix. This will reduce the influence of the
+	rounding error for the computation of R matrix and often avoid the R-matrix
+	appearing to be non-positive semi-definite.The precond tool will initiate
+	the modelfit of the preconditioned model and then convert back the obtained
+	estimated parameter and covariance matrix to the parameter scale of the
+	original model.Preconditioning can also be used for the modelfits with
+	successful covariance stepto verify that the resulting computation is not
+	influenced by the computational error. Preconditioning of the model will
+	only help to stabilise the computation so that if the model is fundamentally
+	unidentifiable (or have other issues) then the covariance step of the
+	preconditioned model should not be successful. 
 EOF
 
-	$help_text{Examples} = <<'EOF';
+$help_text{Examples} = <<'EOF';
 	precond run1.mod
 
-	Runs the model normally and, if the covariance step fails, preconditions it and 
-	runs it again.
+	Runs the model normally and, if the covariance step fails, preconditions it
+	and runs it again.
 EOF
 
-	$help_text{Options} = <<'EOF';
-	A model file is required on the command-line.
+$help_text{Options} = <<'EOF';
+	A model file is required on the command line.
 
 	The following options are valid:
 EOF
 
-	$help_text{-always} = <<'EOF';
-    -always
+$help_text{-always} = <<'EOF';
+	-always
 
-      Default set. Always do preconditioning. 
+	Default set. Always do preconditioning. 
 EOF
 
-	$help_text{-copy_data} = <<'EOF';
-    -copy_data
-    Default set. Disable with -no-copy_data. By default PsN will copy the data file into NM_run1 
-	and set a local path in psn.mod, the actual model file run with NONMEM. If -no-copy_data is set, 
-	PsN will not copy the data to NM_run1 but instead set a global path to the data file in
-    psn.mod. However, NONMEM will not accept a path longer than 80 characters.
+$help_text{-copy_data} = <<'EOF';
+	-copy_data
+
+	Default set. Disable with -no-copy_data. By default PsN will copy the data file
+	into NM_run1 and set a local path in psn.mod, the actual model file run with
+	NONMEM. If -no-copy_data is set, PsN will not copy the data to NM_run1 but
+	instead set a global path to the data file in psn.mod. However, NONMEM will not
+	accept a path longer than 80 characters.
 EOF
 
-	$help_text{-cov} = <<'EOF';
-    -cov
+$help_text{-cov} = <<'EOF';
+	-cov
 
-      Explicitly set the covariance matrix to use.
-      If this option is used only the post processing step will be done.
+	Explicitly set the covariance matrix to use.
+	If this option is used only the post processing step will be done.
 EOF
 
-	$help_text{-cholesky} = <<'EOF';
-    -cholesky
+$help_text{-cholesky} = <<'EOF';
+	-cholesky
 
-      Use cholesky decomposition of the preconditioning matrix instead of eigendecomposition.  
-	  With this option the preconditioning matrix provided by -pre option should be similar 
-	  to variance covariance matrix or the inverse of R matrix (i.e., R matrix should not be 
-	  used with this option).
+	Use cholesky decomposition of the preconditioning matrix instead of
+	eigendecomposition. Wiith this option the preconditioning matrix provided by
+	-pre option should be similar to variance covariance matrix or the inverse
+	of R matrix (i.e., R matrix should not be used with this option).
 EOF
 
-	$help_text{-eigen_comp_only} = <<'EOF';
-    -eigen_comp_only
+$help_text{-eigen_comp_only} = <<'EOF';
+	-eigen_comp_only
 
-      With this option, precond will not execute any NONMEM run.  It will only compute the 
-	  eigenvalues of the matrix that were to be used for the preconditioning.  Use this option
-	  with the -verbose option.
+	With this option, precond will not execute any NONMEM run.  It will only
+	compute the eigenvalues of the matrix that were to be used for the
+	preconditioning.  Use this option with the -verbose option.
 EOF
 
-	$help_text{-in_filter} = <<'EOF';
-      -in_filter=comma-separated list of conditions
+$help_text{-in_filter} = <<'EOF';
+	-in_filter=comma-separated list of conditions
 
-      Default not set. Only relevant in combination with rawres_input. The parameter 
-	  estimates lines in the file can be filtered on values in the different columns. 
-	  When specifying which column(s) the filtering should be based on, the exact 
-	  column name must be used, e.g. minimization_successful. Filtering can only be 
-	  based on columns with numeric values. The allowed relations are .gt. (greater 
-	  than), .lt. (less than) and .eq. (equal to). Conditions are separated with 
-	  commas. If the remaining number of lines after filtering is smaller than 2, 
-      covmat will stop with an error message. If the user has created a file with 
-      parameter estimates outside of PsN, filtering can be done on any numeric 
-      column in that file. Do not set column headers containing .eq. or .lt. 
-      or .gt.in the user-generated file as this would interfere with the in_filter 
-      option syntax.
-    
-      Example: -in_filter=minimization_successful.eq.1,significant_digits.gt.3.5
+	Default not set. Only relevant in combination with rawres_input. The parameter
+	estimates lines in the file can be filtered on values in the different columns.
+	When specifying which column(s) the filtering should be based on, the exact
+	column name must be used, e.g. minimization_successful. Filtering can only be
+	based on columns with numeric values. The allowed relations are .gt. (greater
+	than), .lt. (less than) and .eq. (equal to). Conditions are separated with
+	commas. If the remaining number of lines after filtering is smaller than 2,
+	covmat will stop with an error message. If the user has created a file with
+	parameter estimates outside of PsN, filtering can be done on any numeric
+	column in that file. Do not set column headers containing .eq. or .lt.
+	or .gt.in the user-generated file as this would interfere with the in_filter
+	option syntax.
+
+	Example: -in_filter=minimization_successful.eq.1,significant_digits.gt.3.5
 EOF
 
-	$help_text{-lu} = <<'EOF';
-    -lu
+$help_text{-lu} = <<'EOF';
+	-lu
 
-      Use lu decomposition of the preconditioning matrix instead of eigendecomposition.
-	  With this option the preconditioning matrix provided by -pre option should be similar
-	  to variance covariance matrix or the inverse of R matrix. (i.e., R matrix should not 
-	  be used with this option)
+	Use lu decomposition of the preconditioning matrix instead of eigendecomposition.
+	With this option the preconditioning matrix provided by -pre option should
+	be similar to variance covariance matrix or the inverse of R matrix. (i.e.,
+	R matrix should not be used with this option)
 EOF
 
-	$help_text{-nodec} = <<'EOF';
-    -nodec
+$help_text{-nodec} = <<'EOF';
+	-nodec
 
-      Turn off decomposition of preconditioning matrix.
+Turn off decomposition of preconditioning matrix.
 EOF
 
-	$help_text{-notalways} = <<'EOF';
-    -notalways
+$help_text{-notalways} = <<'EOF';
+	-notalways
 
-    Continue onto preconditioning only if the covariance step of the original model fails
-	(without this option, the precond tool will always continue onto preconditioning to 
-	improve the the accuracy of the covariance matrix computation and also to potentially 
-	unveil the non-estimability of the model parameters). 
-	Note that the previously available option -always was replaced by -notalways as to always 
-	precondition is now the default. The -always option is still kept as a dummy option for
-    backwards compatibility.
+	Continue onto preconditioning only if the covariance step of the original
+	model fails (without this option, the precond tool will always continue onto
+	preconditioning to improve the the accuracy of the covariance matrix
+	computation and also to potentially unveil the non-estimability of the model
+	parameters). Note that the previously available option -always was replaced
+	by -notalways as to always precondition is now the default. The -always
+	option is still kept as a dummy option for backwards compatibility.
 EOF
 
-	$help_text{-offset_rawres} = <<'EOF';
-    -offset_rawres=N
+$help_text{-offset_rawres} = <<'EOF';
+	-offset_rawres=N
 
-      Default 0. The number of result lines to skip in the input raw results file
-      before starting to read final parameter estimates. 
+	Default 0. The number of result lines to skip in the input raw results file
+	before starting to read final parameter estimates. 
 EOF
 
-	$help_text{-output_model} = <<'EOF';
-    -output_model=filename
+$help_text{-output_model} = <<'EOF';
+	-output_model=filename
 
-      This option will break the normal execution flow and have precond only create 
-	  the preconditioned model without running it. The model will be created with the 
-	  specified name.
+	This option will break the normal execution flow and have precond only create
+	the preconditioned model without running it. The model will be created with
+	the specified name.
 EOF
 
-	$help_text{-perturb} = <<'EOF';
-    -perturb 
+$help_text{-perturb} = <<'EOF';
+	-perturb 
 
-      After the model is preconditioned the initial estimate is perturbed to the direction of 
-	  the eigenvector that is corresponding negative eigenvalue of the R-matrix. This will 
-	  increase the chance of finding the final parameter estimate that is not at the saddle 
-	  point so that the R-matrix of the preconditioned model will be a positive semi-definite
-      matrix.
+	After the model is preconditioned the initial estimate is perturbed to the
+	direction of the eigenvector that is corresponding negative eigenvalue of
+	the R-matrix. This will increase the chance of finding the final parameter
+	estimate that is not at the saddle point so that the R-matrix of the
+	preconditioned model will be a positive semi-definite matrix.
 EOF
 
-	$help_text{-pre} = <<'EOF';
-    -pre=file or directory
+$help_text{-pre} = <<'EOF';
+	-pre=file or directory
 
-      With this option the user can manually specify the R-matrix that will be used 
-	  for preconditioning. In addition, a modelfit directory created by the execute 
-	  command of PsN can be specified and R-matrix will be extracted from the 
-	  directory.  In addition, any symmetric matrix can be provided as a .csv file or 
-	  NONMEM matrix file; however, the specified matrix needs to be similar to 
-	  R-matrix to improve the computational stability (i.e., using covariance matrix 
-	  will reduce the computational stability).
+	With this option the user can manually specify the R-matrix that will be used
+	for preconditioning. In addition, a modelfit directory created by the execute
+	command of PsN can be specified and R-matrix will be extracted from the
+	directory.  In addition, any symmetric matrix can be provided as a .csv file
+	or NONMEM matrix file; however, the specified matrix needs to be similar to
+	R-matrix to improve the computational stability (i.e., using covariance
+	matrix will reduce the computational stability).
 
-	  With this option the user can also specify a directory. If the modelfit directory 
-	  is specified, the R-matrix is automatically extracted. If the precond directory 
-	  is specified we can precondition the already preconditioned model. This will allow
-	  us to iteratively precondition deeply ill-conditioned model. In order for the 
-	  iterative preconditioning to work properly, "precMatrix" file should be unmodified
-	  and available in the specified precond directory.
+	With this option the user can also specify a directory. If the modelfit
+	directory is specified, the R-matrix is automatically extracted. If the precond
+	directory is specified we can precondition the already preconditioned model.
+	This will allow us to iteratively precondition deeply ill-conditioned model.
+	In order for the iterative preconditioning to work properly, "precMatrix"
+	file should be unmodified and available in the specified precond directory.
 EOF
 
-	$help_text{-rawres_input} = <<'EOF';
-    -rawres_input=rawresults file
+$help_text{-rawres_input} = <<'EOF';
+	-rawres_input=rawresults file
 
-      Use a rawresults file to create the preconditioning matrix.
+	Use a rawresults file to create the preconditioning matrix.
 EOF
 
-	$help_text{-update_model} = <<'EOF';
-    -update_model=filename
+$help_text{-update_model} = <<'EOF';
+	-update_model=filename
 
-      Set a filename to store the original model with updated inital values for the 
-	  parameters.
+	Set a filename to store the original model with updated inital values for the 
+	parameters.
 EOF
 
-	$help_text{-verbose} = <<'EOF';
-    -verbose
+$help_text{-verbose} = <<'EOF';
+	-verbose
 
-      Print the eigenvalues of the matrix that will be used to precondition the model.
+	Print the eigenvalues of the matrix that will be used to precondition the model.
 EOF
 
 

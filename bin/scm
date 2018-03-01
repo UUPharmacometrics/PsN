@@ -56,125 +56,135 @@ exit unless $res;
 
 my %help_text;
 
-	$help_text{Pre_help_message} = <<'EOF';
+$help_text{Pre_help_message} = <<'EOF';
 	Stepwise covariate model building from NONMEM models.
 EOF
 
-	$help_text{Description} = <<'EOF';
-    The scm tool (Stepwise Covariate Model) implements Forward Selection and 
-	Backward Elimination of covariates to a model. In short, one model for each relevant 
-	parameter-covariate relationship is prepared and tested in an univariate manner. 
-
-	In the first step the model that gives the best fit of the data according to some 
-	criteria is retained and taken forward to the next step. 
-
-	In the following steps all remaining parameter-covariate combinations are tested until 
-	no more covariates meet the criteria for being included into the model. The Forward 
-	Selection can be followed by Backward Elimination, which proceeds as the Forward 
-	Selection but reversely, using stricter criteria for model improvement. 
+$help_text{Description} = <<'EOF';
+	The scm tool (Stepwise Covariate Model) implements Forward Selection and
+	Backward Elimination of covariates to a model. In short, one model for
+	each relevant parameter-covariate relationship is prepared and tested
+	in an univariate manner. In the first step the model that gives the
+	best fit of the data according to some criteria is retained and taken
+	forward to the next step. In the following steps all remaining parameter-
+	covariate combinations are tested until no more covariates meet the
+	criteria for being included into the model. The Forward Selection can
+	be followed by Backward Elimination, which proceeds as the Forward
+	Selection but reversely, using stricter criteria for model improvement.
 EOF
 
-	$help_text{Examples} = <<'EOF';
-    Execute an SCM using parameters set in the config file
-    'phenobarbital.scm'.
-    
+$help_text{Examples} = <<'EOF';
+	Execute an SCM using parameters set in the config file
+
+	'phenobarbital.scm'.
+
 	scm -config_file=phenobarbital.scm
 
-    Execute an SCM using parameters set in the config file
-    'phenobarbital.scm'. But override the retries and the seed
-    parameter.
+	Execute an SCM using parameters set in the config file 'phenobarbital.scm'.
+	But override the retries and the seed parameter.
 
 	scm -config_file=phenobarbital.scm -retries=5 -seed=12345 phenobarbital.mod
 EOF
 
-	$help_text{Options} = <<'EOF';
-	There are so many options to scm that it is unpractical to specify them all on the command line. 
-	The only option required on the command line is the name of a configuration file, where other 
-	options are specified. 
-	Additional options are required, but may be specified either on the command line or in the 
-	configuration file. If an option is specified both on the command line and in the configuration 
-	file, the choice on the command line has precedence. 
-	There are also options, of which some are required, that can only be specified in the configuration 
-	file. On the command line options always begin with -, but in the configuration file the '-' must 
-	always be omitted.
+$help_text{Options} = <<'EOF';
 
-    The following options are valid:
+	There are so many options to scm that it is unpractical to specify them
+	all on the command line. The only option required on the command line is
+	the name of a configuration file, where other options are specified. 
+	Additional options are required, but may be specified either on the command
+	line or in the configuration file. If an option is specified both on the
+	command line and in the configuration file, the choice on the command line
+	has precedence. There are also options, of which some are required, that
+	can only be specified in the configuration file. On the command line options
+	always begin with -, but in the configuration file the '-' must always be
+	omitted.
+
+	The following options are valid:
 EOF
 
-	$help_text{-base_ofv} = <<'EOF';
+$help_text{-base_ofv} = <<'EOF';
 	-base_ofv=N
 
-    By default the base model will be run with any included relations to get the base ofv value 
-	to use as reference when evaluating the candidate models. If option -base_ofv is set on the 
-	command line, the base model will not be run, and this value will be used instead.
+	By default the base model will be run with any included relations to get
+	the base ofv value to use as reference when evaluating the candidate
+	models. If option -base_ofv is set on the command line, the base model
+	will not be run, and this value will be used instead.
 EOF
 
-	$help_text{-categorical_covariates} = <<'EOF';
+$help_text{-categorical_covariates} = <<'EOF';
 	-categorical_covariates=comma-separated list
 
-    A comma separated list of the categorical covariates to be tested. The listed covariates 
-	must be found in $INPUT of the model file. Headers in the data file will be ignored. This 
-	list may be omitted if continuous_covariates is specified.
+	A comma separated list of the categorical covariates to be tested. The
+	listed covariates must be found in $INPUT of the model file. Headers in
+	the data file will be ignored. This list may be omitted if
+	continuous_covariates is specified.
 EOF
 
-	$help_text{-config_file} = <<'EOF';
+$help_text{-config_file} = <<'EOF';
 	-config_file
 	
-	Name of an scm configuration file, including search path if the file is not 
-	stored in the current directory. The configuration file may contain all scm 
-	command line options and some optional PsN common options.
+	Name of an scm configuration file, including search path if the file is
+	not stored in the current directory. The configuration file may contain
+	all scm command line options and some optional PsN common options.
 	If a common option that is not listed here is set in the scm configuration 
 	file then that option will be ignored.
 
-	The following common options, described in common_options.pdf, can be set in 
-	the configuration file: -nm_version, -nmfe_options, -abort_on_fail, -compress, 
-	-directory, -extra_data_files, -extra_files, -picky, -retries, -threads and 
-	-tweak_inits.
+	The following common options, described in common_options.pdf, can be set
+	in the configuration file: -nm_version, -nmfe_options, -abort_on_fail,
+	-compress, -directory, -extra_data_files, -extra_files, -picky, -retries,
+	-threads and -tweak_inits.
 EOF
 
-	$help_text{-continuous_covariates} = <<'EOF';
+$help_text{-continuous_covariates} = <<'EOF';
 	-continous_covariates=comma-separated list
 
-    A comma separated list of the continuous covariates to be tested. The listed covariates must 
-	be found in $INPUT of the model file. Headers in the data file will be ignored. This list may 
-	be omitted if categorical_covariates is specified.
+	A comma-separated list of the continuous covariates to be tested. The
+	listed covariates must be found in $INPUT of the model file. Headers in
+	the data file will be ignored. This list may be omitted if the option
+	categorical_covariates is specified.
 EOF
 
-	$help_text{-derivatives_data} = <<'EOF';
+$help_text{-derivatives_data} = <<'EOF';
 	-derivatives_data=filename
 
-    Can only be set in the configuration file. It is possible to reuse the derivatives data from a 
-	previous run, the file derivatives_covariates.dta, provided that the nonlinear model, the 
-	included_relations, the list of covariates and the do_not_drop list are the same. PsN does 
-	not check that these conditions are fulfilled, so if they are violated NMtran will fail or the 
-	output will be incorrect. Saves time.
+	Can only be set in the configuration file. It is possible to reuse the
+	derivatives data from a previous run, the file derivatives_covariates.dta,
+	provided that the nonlinear model, the included_relations, the list of
+	covariates and the do_not_drop list are the same. PsN does not check that
+	these conditions are fulfilled, so if they are violated NMtran will fail
+	or the output will be incorrect. Saves time.
 EOF
 
-	$help_text{-do_not_drop} = <<'EOF';
+$help_text{-do_not_drop} = <<'EOF';
 	-do_not_drop=comma-separated list of parameters in INPUT
 
-    Default is an empty string. Since the number of columns are restricted to 20 for NONMEM (50 for 
-	NONMEM 7). To save memory it is desirable to minimize the number of undropped columns in the 
-	candidate models. The scm tool uses the '=DROP' syntax of NONMEM to exclude the covariate 
-	columns that are not currently tested in a specific candidate model. If some covariates are 
-	used in the PK or PRED code in the basic model or in an IGNORE/ACCEPT statement you must list 
-	them using the do\_not\_drop option to prevent them from being dropped in candidate models 
-	where they are not tested for inclusion. If the -linearize option is used, do_not_drop has a 
-	different usage. There you must set do_not_drop for all $INPUT items except ID DV and MDV used 
-	in an IGNORE/ACCEPT statement, and, if option -error_code is used, parameters except IPRED and 
-	EPS that are used in error_code. Do *not* list parameters used in PK or PRED if -linearize is used.
+	Default is an empty string. Since the number of columns are restricted
+	to 20 for NONMEM (50 for NONMEM 7). To save memory it is desirable to
+	minimize the number of undropped columns in the candidate models. The
+	scm tool uses the '=DROP' syntax of NONMEM to exclude the covariate
+	columns that are not currently tested in a specific candidate model. If
+	some covariates are used in the PK or PRED code in the basic model or
+	in an IGNORE/ACCEPT statement you must list them using the option
+	do\_not\_drop option to prevent them from being dropped in candidate
+	models 	where they are not tested for inclusion. If the -linearize
+	option is used, do_not_drop has a different usage. There you must set
+	do_not_drop for all $INPUT items except ID DV and MDV used in an
+	IGNORE/ACCEPT statement, and, if option -error_code is used, parameters
+	except IPRED and EPS that are used in error_code. Do *not* list
+	parameters used in PK or PRED if -linearize is used.
 EOF
 
-	$help_text{-error} = <<'EOF';
+$help_text{-error} = <<'EOF';
 	-error=add | prop | propadd | user
 
-    Only relevant with linearize method, and only if -no-epsilon is set. Use an approximated linearization 
-	of the error model instead of an exact. Alternatives are add (for additive), prop (for proportional),
-    propadd (for proportional plus additive) or user (for user defined). The error model must be defined 
-	in a particular way when this option is used.    
+	Only relevant with linearize method, and only if -no-epsilon is set.
+	Use an approximated linearization of the error model instead of an exact.
+	Alternatives are add (for additive), prop (for proportional),propadd
+	(for proportional plus additive) or user (for user defined). The error
+	model must be defined in a particular way when this option is used.    
 	
-	For additive and proportional error (add and prop) it is required that the original model defines a 
-	variable W for weighting of EPS(1), 
+	For additive and proportional error (add and prop) it is required that
+	the original model defines a variable W for weighting of EPS(1), 
 	for add
 	
 	W=THETA(x)
@@ -185,156 +195,169 @@ EOF
 	W=THETA(x)*IPRED
 	Y=IPRED + W*EPS(1)
 
-	For proportional plus additive error (propadd) it is required that two variables WA and WP are defined 
-	so that the following holds 
+	For proportional plus additive error (propadd) it is required that two
+	variables WA and WP are defined so that the following holds 
 
 	WA=THETA(x)
 	WP=THETA(y)
 	W=SQRT(WA**2+(WP*IPRED)**2)
 	Y=IPRED + W*EPS(1)
 
-	If -error=user then the option -error_code must be defined in the configuration file, and probably also 
-	do_not_drop.The code can only use IPRED, EPS(x) and parameters listed with do_not_drop. IPRED must be used. 
-	F cannot be used. The code must have a \ (backslash) at the end of each line, except the last which cannot 
-	have a backslash. The code must not contain blank lines or comments.
+	If -error=user then the option -error_code must be defined in the
+	configuration file, and probably also do_not_drop.The code can only use
+	IPRED, EPS(x) and parameters listed with do_not_drop. IPRED must be used.
+	F cannot be used. The code must have a \ (backslash) at the end of each
+	line, except the last which cannot have a backslash. The code must not
+	contain blank lines or comments.
 EOF
 
-	$help_text{-epsilon} = <<'EOF';
+$help_text{-epsilon} = <<'EOF';
 	-epsilon=0
 
-    Default set. Linearize with respect to epsilons in addition to etas. Disable with epsilon=0 in the 
-	configuration file or -no-epsilon on the command line, then no linearization with respect to epsilon 
-	is performed. 
+	Default set. Linearize with respect to epsilons in addition to etas.
+	Disable with epsilon=0 in the configuration file or -no-epsilon on the
+	command line, then no linearization with respect to epsilon is performed. 
 EOF
 
-	$help_text{-estimate_fo} = <<'EOF';
+$help_text{-estimate_fo} = <<'EOF';
 	-estimate_fo=0
 
-    Default not set. If this option is set, use first order method to estimate the linearized model.
+	Default not set. If this option is set, use first order method to estimate
+	the linearized model.
 EOF
 
-	$help_text{-foce} = <<'EOF';
+$help_text{-foce} = <<'EOF';
 	-foce
-    Set by default. Only relevant with linearize method. Expand around conditional ETA estimates 
-	instead of around ETA=0.    
+
+	Set by default. Only relevant with linearize method. Expand around
+	conditional ETA estimates instead of around ETA=0.    
 EOF
 
-	$help_text{-global_init} = <<'EOF';
+$help_text{-global_init} = <<'EOF';
 	-global_init=N
 
-    Default is 0.001. With the global_init option the initial estimates of parameters in covariate 
-	function parameterizations are set to global_init. If using inits section in configuration file 
-	individual initial values are used instead of one global. 
+	Default is 0.001. With the global_init option the initial estimates of
+	parameters in covariate function parameterizations are set to global_init.
+	If using inits section in configuration file individual initial values
+	are used instead of one global. 
 EOF
 
-	$help_text{-gof} = <<'EOF';
+$help_text{-gof} = <<'EOF';
 	-gof=goodness-of-fit criterium
 
-    Default is 'p_value', other alternative is 'ofv'. Option decides which goodness-of-fit criterium 
-	should be used for deciding which model is better when comparing. If -gof=ofv is used then the 
-	user will probably want to use [ofv_forward] and/or [ofv_backward] in the configuration file. 
+	Default is 'p_value', other alternative is 'ofv'. Option decides which
+	goodness-of-fit criterium should be used for deciding which model is
+	better when comparing. If -gof=ofv is used then the user will probably
+	want to use [ofv_forward] and/or [ofv_backward] in the configuration file. 
 EOF
 
-	$help_text{-linearize} = <<'EOF';
+$help_text{-linearize} = <<'EOF';
 	-linearize=1
 
-    Default not set. Add covariate relations to a linearized version of the input model instead of to 
-	the original nonlinear model.
+	Default not set. Add covariate relations to a linearized version of the
+	input model instead of to the original nonlinear model.
 EOF
 
-	$help_text{-logfile} = <<'EOF';
+$help_text{-logfile} = <<'EOF';
 	-logfile=filename
 
-    Default is scmlog.txt.
+Default is scmlog.txt.
 EOF
 
-	$help_text{-lst_file} = <<'EOF';
+$help_text{-lst_file} = <<'EOF';
 	-lst_file=filename
 
-    Default not set. Update original model with final estimates from this file before running model 
-	to obtain derivatives.
+	Default not set. Update original model with final estimates from this
+	file before running model to obtain derivatives.
 EOF
 
-	$help_text{-max_steps} = <<'EOF';
+$help_text{-max_steps} = <<'EOF';
 	-max_steps=N
 
-    Do not take more that max_steps forward steps, even if there are more covariates left to add and 
-	a significant inclusion was made in the last step.
+	Do not take more that max_steps forward steps, even if there are more
+	covariates left to add and a significant inclusion was made in the last
+	step.
 EOF
 
-	$help_text{-model} = <<'EOF';
+$help_text{-model} = <<'EOF';
 	-model=filename
 
-    Default not set. The name of the basic model file. 
+	Default not set. The name of the basic model file. 
 EOF
 
-	$help_text{-noabort} = <<'EOF';
+$help_text{-noabort} = <<'EOF';
 	-noabort
 
-    Default not set. Only relevant with the linearize method. If set, the tool will add NOABORT 
-	to $EST of the linearized models.
+	Default not set. Only relevant with the linearize method. If set, the
+	tool will add NOABORT to $EST of the linearized models.
 EOF
 
-	$help_text{-nointer} = <<'EOF';
+$help_text{-nointer} = <<'EOF';
 	-nointer
 
-    Default is off. Set to not use interaction in linearization.
+	Default is off. Set to not use interaction in linearization.
 EOF
 
-	$help_text{-only_successful} = <<'EOF';
+$help_text{-only_successful} = <<'EOF';
 	-only_successful
 
-    Default not set. Only consider runs with MINIMIZATION SUCCESSFUL (or equivalent for non-classical 
-	estimation methods) when selecting the covariate to add/remove in each step. 
+	Default not set. Only consider runs with MINIMIZATION SUCCESSFUL
+	(or equivalent for non-classical estimation methods) when selecting
+	the covariate to add/remove in each step. 
 EOF
 
-	$help_text{-p_backward} = <<'EOF';
+$help_text{-p_backward} = <<'EOF';
 	-p_backward=N
 
-    Default is 0.05. Using the p\_backward option, you can specify the p-value to use for the backward deletion. 
+	Default is 0.05. Using the p\_backward option, you can specify the p-value
+	to use for the backward deletion. 
 EOF
 
-	$help_text{-p_forward} = <<'EOF';
+$help_text{-p_forward} = <<'EOF';
 	-p_forward=N
 
-    Default is 0.05. Using the p_forward option, you can specify the p-value to use for the forward selection. 
-	Used when an improvement is good enough for including parameters.  
+	Default is 0.05. Using the p_forward option, you can specify the p-value
+	to use for the forward selection. Used when an improvement is good enough
+	for including parameters.  
 EOF
 
-	$help_text{-p_value} = <<'EOF';
+$help_text{-p_value} = <<'EOF';
 	-p_value=N
 
-    Use this option to set the p_value for both forward and backward steps. 
+	Use this option to set the p_value for both forward and backward steps. 
 EOF
 
-	$help_text{-parallel_states} = <<'EOF';
+$help_text{-parallel_states} = <<'EOF';
 	-parallel_states
 
-    Default not set. Instead of trying valid_states sequentially, try all states after the current one simultaneously. 
-	It is currently not possible to stop testing a parameter-covariate relation that has been included in an lower 
-	state if there are higher states defined. To achieve this the user has to stop the search and restart with a new 
-	configuration file where no higher states are tested for the parameter-covariate pair. 
+	Default not set. Instead of trying valid_states sequentially, try all
+	states after the current one simultaneously. It is currently not possible
+	to stop testing a parameter-covariate relation that has been included in
+	an lower state if there are higher states defined. To achieve this the
+	user has to stop the search and restart with a new configuration file
+	where no higher states are tested for the parameter-covariate pair.
 EOF
 
-	$help_text{-search_direction} = <<'EOF';
+$help_text{-search_direction} = <<'EOF';
 	-search_direction=forward | backward | both
 
-    Default not set. Possible choices are 'forward', 'backward' or 'both'. If backward is chosen, 
-	included_relations is required input in the configuration file. 
+	Default not set. Possible choices are 'forward', 'backward' or 'both'.
+	If backward is chosen, included_relations is required input in the
+	configuration file. 
 EOF
 
-#	$help_text{-second_order} = <<'EOF';
+#$help_text{-second_order} = <<'EOF';
 #	-second_order
-#   Only relevant with linearize method. Use second order Taylor expansion around ETAs instead of 
-#    default first order expansion. The user must ensure that CONDITIONAL LAPLACIAN is set in $EST.
+#	Only relevant with linearize method. Use second order Taylor expansion around ETAs instead of 
+#	default first order expansion. The user must ensure that CONDITIONAL LAPLACIAN is set in $EST.
 #EOF
 
-	$help_text{-update_derivatives} = <<'EOF';
+$help_text{-update_derivatives} = <<'EOF';
 	-update_derivatives
 
-    Default not set. Only relevant with linearize method. Run nonlinear model with new covariate added 
-	to get updated derivates after each iteration, instead of reusing derivatives from model without 
-	covariates.
+	Default not set. Only relevant with linearize method. Run nonlinear
+	model with new covariate added to get updated derivates after each
+	iteration, instead of reusing derivatives from model without covariates.
 EOF
 
 common_options::online_help('scm', \%options, \%help_text, \%required_options, \%optional_options);
