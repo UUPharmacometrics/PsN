@@ -6,6 +6,7 @@
 use strict;
 use warnings;
 use Test::More tests => 50;
+use Test::Deep;
 use Test::Exception;
 use FindBin qw($Bin);
 use lib "$Bin/.."; #location of includes.pm
@@ -66,7 +67,7 @@ my @negB_result = qw(-9944.2643508978 -6633.93930200631 -6331.86101749057 -3901.
 my $negB = binning::calcNegB(\@N, \@meanIdv, $totMeanIdv);
 
 foreach my $i (0..@$negB - 1) {
-	is ($$negB[$i], $negB_result[$i], "negB $i");
+	cmp_deeply ($$negB[$i], fnum($negB_result[$i]), "negB $i");
 }
 
 done_testing();

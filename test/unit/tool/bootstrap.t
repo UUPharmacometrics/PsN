@@ -3,6 +3,7 @@
 use strict;
 use warnings;
 use Test::More;
+use Test::Deep;
 use Test::Exception;
 use File::Copy qw(cp);
 use FindBin qw($Bin);
@@ -617,28 +618,28 @@ cp("$test_files/bootstrap/some_covstep_fail/raw_results_structure", $tempdir);
 
 $bootstrap->prepare_results();
 
-cmp_float_array($bootstrap->result_parameters->{'means'}[0][0],
+cmp_deeply($bootstrap->result_parameters->{'means'}[0][0],
 [
-'-596.9881162915',
-'32.7712909091',
-'22.2971909091',
-'0.2944600909',
-'0.0741762727',
-'0.3300864545',
-'0.3848421818',
-'1.0535450909',
-'0.1362522618',
-'0.2472101818',
-'1',
-'2.4218914286',
-'3.7750871429',
-'0.0203821429',
-'0.0388025857',
-'0.00845522857',
-'0.0679633286',
-'0.2562745714',
-'0.0875501571',
-'0.0503794429'
+fnum(-596.9881162915),
+fnum(32.7712909091),
+fnum(22.2971909091),
+fnum(0.2944600909),
+fnum(0.0741762727),
+fnum(0.3300864545),
+fnum(0.3848421818),
+fnum(1.0535450909),
+fnum(0.1362522618),
+fnum(0.2472101818),
+fnum(1),
+fnum(2.4218914286),
+fnum(3.7750871429),
+fnum(0.0203821429),
+fnum(0.0388025857),
+fnum(0.00845522857),
+fnum(0.0679633286),
+fnum(0.2562745714),
+fnum(0.0875501571),
+fnum(0.0503794429)
 ], "bootstrap means summarize some covstep fail ");
 
 cmp_float_array($bootstrap->result_parameters->{'medians'}[0][0],

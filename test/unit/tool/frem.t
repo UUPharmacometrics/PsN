@@ -3,6 +3,7 @@
 use strict;
 use warnings;
 use Test::More;
+use Test::Deep;
 use Test::Exception;
 use FindBin qw($Bin);
 use lib "$Bin/../.."; #location of includes.pm
@@ -319,12 +320,11 @@ my $imp_model = model->new(filename => "$modeldir/frem/mox_imp_4.mod",
                                                                end_eta_2 => 5,
                                                                model => $imp_model);
 
-$ans=[[0.1989847636,0.5241788523,0.5297193498],
-      [0.5241788523,1.3696569641,0.2012698903],
-      [0.5297193498,0.2012698903,0.8842831035 ]];
+$ans=[[fnum(0.1989847636),fnum(0.5241788523),fnum(0.5297193498)],
+      [fnum(0.5241788523),fnum(1.3696569641),fnum(0.2012698903)],
+      [fnum(0.5297193498),fnum(0.2012698903),fnum(0.8842831035)]];
 
-
-cmp_float_matrix($corr,$ans,'get_correlation_matrix_from_phi 3, importance sampling two est');
+cmp_deeply($corr,$ans,'get_correlation_matrix_from_phi 3, importance sampling two est');
 is (length($message),0,'no error get_correlation_matrix 3');
 
 
