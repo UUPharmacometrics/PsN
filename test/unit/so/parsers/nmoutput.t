@@ -3,6 +3,7 @@
 use strict;
 use warnings;
 use Test::More;
+use Test::Deep;
 use FindBin qw($Bin);
 use lib "$Bin/../../.."; #location of includes.pm
 use includes; #file with paths to PsN packages
@@ -253,7 +254,13 @@ SKIP: {
     is_deeply($so->SOBlock->[0]->Estimation->PrecisionPopulationEstimates->MLE->RelativeStandardError->columnId, [ 'Parameter', 'RSE' ], "Pheno: RelativeStandardError names");
     is_deeply($so->SOBlock->[0]->Estimation->PrecisionPopulationEstimates->MLE->RelativeStandardError->columnType, [ ('undefined') x 2 ], "Pheno: RelativeStandardError column types");
     is_deeply($so->SOBlock->[0]->Estimation->PrecisionPopulationEstimates->MLE->RelativeStandardError->valueType, [ 'string', 'real' ], "Pheno: RelativeStandardError value types");
-    is_deeply($so->SOBlock->[0]->Estimation->PrecisionPopulationEstimates->MLE->RelativeStandardError->columns, [ [ 'CL', 'V', 'IVCL', 'IVV', 'SIGMA_1_1_' ], [ 7.11711711711712, 5.96268656716418, 63.1578947368421, 24.5774647887324, 20.6707317073171 ]  ], "Pheno: RelativeStandardError columns");
+    cmp_deeply($so->SOBlock->[0]->Estimation->PrecisionPopulationEstimates->MLE->RelativeStandardError->columns, [ [ 'CL', 'V', 'IVCL', 'IVV', 'SIGMA_1_1_' ], [
+      fnum(7.11711711711712),
+    , fnum(5.96268656716418)
+    , fnum(63.1578947368421)
+    , fnum(24.5774647887324)
+    , fnum(20.6707317073171)
+] ], "Pheno: RelativeStandardError columns");
 
     is($so->SOBlock->[0]->Estimation->OFMeasures->Deviance, 742.051, "Pheno: Deviance");
     is_deeply($so->SOBlock->[0]->Estimation->OFMeasures->IndividualContribToLL->columnId, [ 'ID', 'ICtoLL' ], "Pheno: ICTOLL columnIds");

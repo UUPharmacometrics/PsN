@@ -4,6 +4,7 @@
 use strict;
 use warnings;
 use Test::More;
+use Test::Deep;
 use Test::Exception;
 use File::Path 'rmtree';
 use FindBin qw($Bin);
@@ -380,11 +381,14 @@ cmp_float($refm->problems->[0]->thetas->[6]->options->[0]->init,$init,'setup_opt
 
 $sd =sprintf("%.5f",$statistics->{'ACE'}{1}{'sd'}{0});
 $init = exp(1-($abssum/0.1))*$finalhash{'theta'}->{'TH8 VACE0'}/($sd);
-is($refm->problems->[0]->thetas->[7]->options->[0]->init,$init,'setup_optimal_model init 8'); #VACE0
+cmp_deeply($refm->problems->[0]->thetas->[7]->options->[0]->init,
+	fnum($init, $refm->problems->[0]->thetas->[7]->options->[0]->init),
+	'setup_optimal_model init 8'); #VACE0
 
 $sd =sprintf("%.5f",$statistics->{'AGE'}{2}{'sd'});
 $init = exp(1-($abssum/0.1))*$finalhash{'theta'}->{'TH9 VAGE'}/($sd);
-is($refm->problems->[0]->thetas->[8]->options->[0]->init,$init,'setup_optimal_model init 9'); #VAGE
+cmp_deeply($refm->problems->[0]->thetas->[8]->options->[0]->init,
+	fnum($init, $refm->problems->[0]->thetas->[8]->options->[0]->init),'setup_optimal_model init 9'); #VAGE
 
 my $lassocoeff={
 	'CLAGE' => (0.01)*$factor,

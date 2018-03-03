@@ -4,6 +4,7 @@
 use strict;
 use warnings;
 use Test::More tests=>5;
+use Test::Deep;
 use Test::Exception;
 use File::Path 'rmtree';
 use FindBin qw($Bin);
@@ -38,7 +39,7 @@ my $ref = get_cov();
 #foreach my $line (@{$ref}){
 #	print join(' ',@{$line})."\n";
 #}
-cmp_ok($ref->[0]->[0],'==',1.46167231816964,"cov 1,1");
+cmp_deeply($ref->[0]->[0], fnum(1.46167231816964),"cov 1,1");
 cmp_ok($ref->[0]->[1],'==',$ref->[1]->[0],"cov 1,2 2,1");
 cmp_ok($ref->[2]->[3],'==',$ref->[3]->[2],"cov 3,4 4,3");
 cmp_ok($ref->[3]->[4],'==',1.43639675,"cov 4,5");

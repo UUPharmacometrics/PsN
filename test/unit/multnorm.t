@@ -3,6 +3,7 @@
 use strict;
 use warnings;
 use Test::More;
+use Test::Deep;
 #use Test::More;
 use Test::Exception;
 use FindBin qw($Bin);
@@ -175,16 +176,16 @@ my $inflated=tool::sir::inflate_covmatrix(matrix => $covar,
 										  inflation => [2,2,2,2,2,2,2,2]);
 
 
-cmp_ok($covar->[0]->[0],'==',6.10693E+00,'covar element 1,1 after inflation not changed');
-cmp_ok($covar->[1]->[5],'==',1.18743E-02,'covar element 2,6 after inflation not changed');
-cmp_ok($covar->[2]->[2],'==',3.75907E-04,'covar element 3,3 after inflation not changed');
-cmp_ok($covar->[3]->[1],'==',-4.02777E-02,'covar element 4,2 after inflation not changed');
-cmp_ok($covar->[4]->[7],'==',6.19395E-05,'covar element 5,8 after inflation not changed');
-cmp_ok($covar->[7]->[0],'==',1.53110E-02,'covar element 8,1 after inflation not changed');
-cmp_ok($covar->[6]->[5],'==',7.25938E-03,'covar element 7,6 after inflation not changed');
-cmp_ok($covar->[7]->[7],'==',1.69362E-03,'covar element 8,8 after inflation not changed');
-cmp_ok($covar->[6]->[3],'==',2.75131E-03,'covar element 7,4 after inflation not changed');
-cmp_ok($covar->[4]->[6],'==',-3.05686E-04,'covar element 5,7 after inflation not changed');
+cmp_deeply($covar->[0]->[0], fnum(6.10693E+00),'covar element 1,1 after inflation not changed');
+cmp_deeply($covar->[1]->[5], fnum(1.18743E-02),'covar element 2,6 after inflation not changed');
+cmp_deeply($covar->[2]->[2], fnum(3.75907E-04),'covar element 3,3 after inflation not changed');
+cmp_deeply($covar->[3]->[1], fnum(-4.02777E-02),'covar element 4,2 after inflation not changed');
+cmp_deeply($covar->[4]->[7], fnum(6.19395E-05),'covar element 5,8 after inflation not changed');
+cmp_deeply($covar->[7]->[0], fnum(1.53110E-02),'covar element 8,1 after inflation not changed');
+cmp_deeply($covar->[6]->[5], fnum(7.25938E-03),'covar element 7,6 after inflation not changed');
+cmp_deeply($covar->[7]->[7], fnum(1.69362E-03),'covar element 8,8 after inflation not changed');
+cmp_deeply($covar->[6]->[3], fnum(2.75131E-03),'covar element 7,4 after inflation not changed');
+cmp_deeply($covar->[4]->[6], fnum(-3.05686E-04),'covar element 5,7 after inflation not changed');
 
 
 
