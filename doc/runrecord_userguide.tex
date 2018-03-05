@@ -1,9 +1,12 @@
 \input{inputs/format_header.tex}
-\guidetitle{RUNRECORD user guide}{2018-01-31}
-
+\guidetitle{RUNRECORD user guide}{2018-03-02}
+\usepackage{hyperref}
 \begin{document}
 
 \maketitle
+\tableofcontents
+\newpage
+\section{Introduction}
 
 The runrecord tool facilitates the creation of run records for NONMEM runs. It takes a range of run numbers as input, extracts information and generates a .txt file that can be imported into Excel for further manipulation. The information extracted includes parameter estimates, standard errors, condition number, objective function value (OFV), parameter names and information about model components. Some of this comes from the NONMEM output files while some parts are extracted from user-supplied information in the NONMEM model file. 
 

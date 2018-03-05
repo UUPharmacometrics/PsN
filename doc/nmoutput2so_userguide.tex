@@ -1,9 +1,11 @@
 \input{inputs/format_header.tex}
-\guidetitle{NMOUTPUT2SO user guide}{2018-01-31}
+\guidetitle{NMOUTPUT2SO user guide}{2018-03-02}
+\usepackage{hyperref}
 \begin{document}
 
 \maketitle
-
+\tableofcontents
+\newpage
 \section{Introduction}
 The nmoutput2so tool creates and populates a DDMoRe standard output \cite{Terranova} xml file given the output from one or more NONMEM runs. It is necessary that the format of the model file and other files follow a set of requirements for this to work. \\
 The Perl module XML::LibXML is required by nmoutput2so, but not PsN in general. Make sure that it is installed before using nmoutput2so (If you are using ActivePerl on Windows please read the installation section of the PsN homepage:

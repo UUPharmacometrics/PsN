@@ -1,13 +1,16 @@
 \input{inputs/format_header.tex}
-\guidetitle{QA user guide}{2018-01-31}
+\guidetitle{QA user guide}{2018-03-02}
 
+\usepackage{hyperref}
 \begin{document}
 
 \maketitle
 \newcommand{\guidetoolname}{qa}
+\tableofcontents
+\newpage
 
 
-\section{Overview}
+\section{Introduction}
 Quality assurance (qa) is a tool to assess the quality of a final model. The analysis is not done directly on the final model, but on certain model proxies to speed up the analysis time.
 The proxies include a linearized version of the model to be qa:ed as well as additional modeling of the residuals from that model \cite{Khandelwal, Svensson, Ibrahim}. The idea is that these simplified models will provide similar improvement in goodness-of-it (OFV) and similar parameter estimates with a model change as if the same model change had been done directly on the non-linear model. The model proxies however are running much faster and are more robust. 
 
