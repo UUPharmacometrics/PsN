@@ -1,12 +1,13 @@
 \input{inputs/format_header.tex}
-\guidetitle{BENCHMARK user guide}{2018-01-31}
+\guidetitle{BENCHMARK user guide}{2018-03-02}
 
-
+\usepackage{hyperref}
 \begin{document}
 
 \maketitle
 \newcommand{\guidetoolname}{benchmark}
-
+\tableofcontents
+\newpage
 
 \section{Introduction}
 The benchmark tool is intended for systematic comparison of run times, ofv and parameter estimates
@@ -168,8 +169,6 @@ number if -replicates was set.
 %\end{itemize}
 
 
-\end{document}
-
 \subsection{Auto-generated R plots from PsN}
 \newcommand{\rplotsconditions}{The default benchmark template 
 requires no special R libraries.
@@ -188,3 +187,4 @@ Extended diagnostic R plots for each input model, or all input models together i
 will be generated if option -rplots is set >1.
 The extended R plots show differences in parameter estimates and standard errors.
 If the estimate difference is greater than a threshold (see option -parameter\_threshold) then this is flagged.
+\end{document}

@@ -1,15 +1,16 @@
 \input{inputs/format_header.tex}
 \setlength{\evensidemargin}{0pt}
 \setlength{\oddsidemargin}{0pt}
-
-\guidetitle{UPDATE\_INITS user guide}{2018-01-11}
+\usepackage{hyperref}
+\guidetitle{UPDATE\_INITS user guide}{2018-03-02}
 
 \begin{document}
 
 \maketitle
+\tableofcontents
+\newpage
 
-
-\section{Overview}
+\section{Introduction}
 The update\_inits tool is used to update inital estimates in a model file with final estimates from NONMEM output. It can also be used to, for example, update file names in \$TABLE, reparameterize the \$OMEGAs or to ``flip comments''. The later operations can be performed in combination with or without updating initial estimates.
 
 If updating initial estimates, the final estimates will either be taken from a lst-file given explicitly as the second command line argument after the model file name, from another model file given with option -from\_model, or from the lst-file with the same file stem as the model file. For example, if no lst-file is given as argument and the model file is called run1.mod then the program will try to read output from run1.lst. If run1.ext also exists then final estimates with higher precision will be read from there, 

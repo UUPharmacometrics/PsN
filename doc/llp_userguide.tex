@@ -1,11 +1,12 @@
 \input{inputs/format_header.tex}
-\guidetitle{LLP user guide}{2018-01-31}
-
+\guidetitle{LLP user guide}{2018-03-02}
+\usepackage{hyperref}
 \begin{document}
 
 \maketitle
 \newcommand{\guidetoolname}{llp}
-
+\tableofcontents
+\newpage
 
 \section{Introduction}
 The llp (Log Likelihood Profiling) tool is used to calculate confidence intervals of parameter estimates. Without the llp the confidence intervals can be calculated with the standard errors (SE) of the parameters under the assumption that the parameter values are normally distributed. The llp tool, however, makes no assumption of the shape of the distribution and will calculate the confidence intervals for any number of parameters in the model, working with one parameter at a time. By first fitting the original model and then fixing the parameter at values close to the NONMEM estimate, the llp tool obtains the difference in likelihood between the original model and new, reduced model. The logarithm of the difference in likelihood is chi2 distributed and when that value is 3.84, the parameter value is at the 95\% confidence limit. The search for the limit is done on both sides of the original parameter value, and thus the llp tool makes no assumption of symmetry or the parameter value distribution.\\
