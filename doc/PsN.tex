@@ -43,7 +43,7 @@
 	\section{NONMEM compatibility}
 	
 	This section describes all known cases where PsN is not entirely compatible with a construct in NONMEM or NM-TRAN.
-	
+
 	\subsection{CHAIN method and parallel\_retries}
 	
 	There is a PsN tool for running a set of copies of a model file with tweaked initial estimates in parallel. The script is called parallel\_retries and is described in parallel\_retries\_userguide.pdf.
@@ -60,7 +60,10 @@
 	
 	\subsection{Control stream in mixed case}
 	In NONMEM 7.2 and higher it is possible to write the control stream in mixed case. PsN does not support this. It is likely that options written in lower case will not be recognized correctly, which can cause errors in scripts which need to modify certain options.
-	
+
+    \subsection{== and /= in \$DATA IGNORE and ACCEPT}
+    PsN does not in general support the == and /= in the ACCEPT or IGNORE options of \$. Use .EQ., .EQN., .NE. or .NEN. instead.
+
 	\subsection{INCLUDE and \$INCLUDE}
 	The INCLUDE record is not supported. NM-TRAN allows INCLUDE without the dollar-sign and PsN will add this as options or code to the previous record potentially causing strange errors or worse. If \$INCLUDE was used PsN will give a nice error message.
 	

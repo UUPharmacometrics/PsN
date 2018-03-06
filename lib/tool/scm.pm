@@ -2058,6 +2058,16 @@ sub linearize_setup
             $datafilename = $self->basename.'.dta';
         }
 
+        # Make sure that all ignored or accepted columns get added
+        my $ignored_columns = $derivatives_model->problems->[0]->ignored_or_accepted_columns();
+
+        for my $colname (@$ignored_columns) {
+            if (not array::string_in($colname, \@tablestrings) and not array::string_in($colname, \@inputstrings)) {
+                push @tablestrings, $colname;
+                push @inputstrings, $colname;
+            }
+        }
+
         push(@tablestrings,'NOPRINT','NOAPPEND','ONEHEADER');
         push(@tablestrings,'FILE='.$datafilename);
         push(@tablestrings, 'FORMAT=s1PE15.8');
