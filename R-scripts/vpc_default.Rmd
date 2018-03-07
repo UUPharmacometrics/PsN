@@ -38,15 +38,17 @@ if (exists('mix')) {     # A mixture model is a special case
         observations_tablefile <- paste0(working.directory, '/m1/vpc_original.npctab.dta')
         simulations_tablefile <- paste0(working.directory, '/m1/vpc_simulation.1.npctab.dta')
 
-        obs <- vpc::read_table_nm(observations_tablefile)
-        sim <- vpc::read_table_nm(simulations_tablefile)
-        plots_plain <- vpc_mixtures(obs=obs, sim=sim, numsims=samples, mixcol=mix, dv=dv, bins=bin_boundaries)
-        plots_phm <- vpc_mixtures(obs=obs, sim=sim, numsims=samples, mixcol=mix, dv=dv, phm_obs=phm_obs_file, phm_sim=phm_sim_file, bins=bin_boundaries)
+        obs <- read_nonmem_table(observations_tablefile)
+        sim <- read_nonmem_table(simulations_tablefile)
+        obs_phm <- read_nonmem_table(phm_obs_file)
+        sim_phm <- read_nonmem_table(phm_sim_file)
+        plots_mixest <- mixture_vpc(obs, sim, obs_phm, sim_phm, dv=dv, bins=bin_boundaries)
+        plots_randomized <- mixture_vpc(obs, sim, obs_phm, sim_phm, dv=dv, bins=bin_boundaries)
 
-        for (p in plots_plain) {
+        for (p in plots_mixest) {
             print(p)
         }
-        for (p in plots_phm) {
+        for (p in plots_randomized) {
             print(p)
         }
     }

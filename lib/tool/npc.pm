@@ -106,7 +106,7 @@ has 'original_model' => ( is => 'rw', isa => 'model' );
 has 'logfile' => ( is => 'rw', isa => 'ArrayRef[Str]', default => sub { ['npc.lop'] } );
 has 'results_file' => ( is => 'rw', isa => 'Str', default => 'npc_results.csv' );
 has 'nca' => ( is => 'rw', isa => 'Bool', default => 0 );
-has 'mix' => ( is => 'rw', isa => 'Str' );
+has 'mix' => ( is => 'rw', isa => 'Bool', default => 0 );
 
 sub BUILD
 {
@@ -1169,12 +1169,6 @@ sub modelfit_setup
 		push(@rec_strings,$self->irep) if (defined $self->irep);
 	}
 	
-    # Add MIXEST column
-    if (defined $self->mix) {
-        push @sim_strings, $self->mix;
-        push @rec_strings, $self->mix;
-    }
-
 	# Remove duplicate columns
 	my @rec_strings2;
 	my %column_seen;

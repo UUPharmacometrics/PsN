@@ -66,7 +66,7 @@ my %optional_options = ( 'idv:s' => undef,
     'auto_bin:s' => undef,
     'min_points_in_bin:i' => undef,
     'so!' => undef,
-    'mix:s' => undef,
+    'mix!' => undef,
 );
 
 my $res = GetOptions( \%options,
@@ -384,12 +384,9 @@ $help_text{-mirrors} = <<'EOF';
 EOF
 
 $help_text{-mix} = <<'EOF';
-	-mix=VARIABLE
+	-mix
 
-	Set a variable to be used for MIXEST in mixture models. Easiest is to set
-	'MIXOUT=MIXEST' in abbreviated code and use -mix=MIXOUT. Note that MIXEST
-	cannot directly be addressed from a $TABLE. When using -mix the vpc will
-	quit before doing the postprocessing.
+	Set to perform a mixture vpc.
 EOF
 
 $help_text{-msfo_file} = <<'EOF';

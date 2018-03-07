@@ -210,10 +210,7 @@ The number of mirror plot data sets to produce. Specific for vpc.
 If the model has a \$NONP record then an msfo-file is required, otherwise it is optional. Use final parameter estimates from msfo-file instead of initial estimates from modelfile when simulating. vpc does not perform estimation. 
 \nextopt
 \optname{mix}
-Set a variable to be used for MIXEST in mixture models. Easiest is to set 'MIXOUT=MIXEST' in abbreviated code and use -mix=MIXOUT. Note that MIXEST cannot directly be addressed from a \$TABLE. When using -mix vpc will quit before doing the postprocessing.
-\nextopt
-\optname{mix\_random}
-Used for randomizing the subpopulation for each individual from the estimated probabilities of each subpopulation given by the .phm-file.
+Set to perform a mixture vpc.
 \nextopt
 \optdefault{n\_simulation\_models}{N}
 Default is 1 which means all simulations are run in the same modelfile. By setting this option to a number N greater than 1, the 'samples' simulations will be split equally between N model files, which can be run in parallel. This option cannot be used together with option \mbox{-sim\_table} or, if the NONMEM version $<$ 7, together with -dv=CWRES. Important: Two runs will give different results if -n\_simulation\_models are set to different numbers even if the -seed option is the same. This is because the random number generator of NONMEM will change state when reading the seed from the \$SIM record from a new simulation modelfile. This state change does not occur when NONMEM simply continues simulating from the same modelfile. 
