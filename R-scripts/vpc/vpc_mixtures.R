@@ -6,10 +6,10 @@ suppressMessages(library(vpc))
 # Currently assumes that there is a header and the regular TABLE lines.
 # Adds a "replicate" column with the number of the replicate counting from 1
 # This is not optimized for speed or for memory.
-# There is a similar better function in xpose, but we don't want that dependency
+# Using xpose (again)
 read_nonmem_table <- function(filename) {
     lines <- readLines(filename)
-    header <- lines[2]
+#    header <- lines[2]
 
     numreplicates <- 0
     for (line in lines) {
@@ -17,12 +17,12 @@ read_nonmem_table <- function(filename) {
             numreplicates <- numreplicates + 1
         }
     }
+    table <- xpose::read_nm_tables(filename)
+#    filter_fn <- function(line) { !startsWith(line, "TABLE") && line != header }
+#    lines <- Filter(filter_fn, lines)
 
-    filter_fn <- function(line) { !startsWith(line, "TABLE") && line != header }
-    lines <- Filter(filter_fn, lines)
-
-    column_names <- strsplit(header, "\\s+")[[1]][-1]  # Get array of column names
-    table <- read.table(text=lines, col.names=column_names)
+#    column_names <- strsplit(header, "\\s+")[[1]][-1]  # Get array of column names
+#    table <- read.table(text=lines, col.names=column_names)
     table$replicate <- rep(1:numreplicates, each=nrow(table) / numreplicates)
 
     return(table)
