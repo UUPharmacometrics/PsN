@@ -1640,6 +1640,9 @@ sub linearize_setup
                 if (/^\s*(\w+)\s*=\s*/ and $1 eq $parameter) {
                     s/^\s*(\w+)\s*=\s*//;
                     my ($code_line, $comment) = split(';', $_, 2);
+                    if ($code_line =~ /[^A-Z0-9_]*EXP\s*\(\s*MU\_([0-9]+)\s*\+\s*ETA\(([0-9]+)\)/) {    # Check this here before we loose MU_ information
+                        $relation = 'exponential';
+                    }
                     my $line = code_parsing::merge_assignments_and_expression(expression => $code_line, assignments => $assignments);
                     $_ = $line;
                     chomp;
