@@ -43,7 +43,7 @@ if (exists('mix')) {     # A mixture model is a special case
         obs_phm <- read_nonmem_table(phm_obs_file)
         sim_phm <- read_nonmem_table(phm_sim_file)
         plots_mixest <- mixture_vpc(obs, sim, obs_phm, sim_phm, dv=dv, bins=bin_boundaries)
-        plots_randomized <- mixture_vpc(obs, sim, obs_phm, sim_phm, dv=dv, bins=bin_boundaries)
+        plots_randomized <- mixture_vpc(obs, sim, obs_phm, sim_phm, dv=dv, bins=bin_boundaries, randomize=TRUE)
 
         for (p in plots_mixest) {
             print(p)
