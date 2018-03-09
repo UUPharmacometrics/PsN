@@ -5086,8 +5086,8 @@ sub get_covariate_theta_bounds_inits
         my $low_exp_bound = 0.01;
         my $high_exp_bound = 100;
         if ($min_diff == 0 or $max_diff == 0) {     # No difference from median. We can set any bounds
-            $upper_bound = 0.01;
-            $lower_bound = 100;
+            $lower_bound = 0.01;
+            $upper_bound = 100;
         } else {
             $upper_bound = array::min((log($low_exp_bound) / $min_diff), log($high_exp_bound) / $max_diff);
             $lower_bound = array::max((log($low_exp_bound) / $max_diff), log($high_exp_bound) / $min_diff);
