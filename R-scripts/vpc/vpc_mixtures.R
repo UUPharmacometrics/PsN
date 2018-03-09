@@ -74,7 +74,6 @@ mixture_vpc <- function(obs, sim, obs_mixture, sim_mixture, bins, dv="DV", rando
         obs <- dplyr::full_join(obs, randomized_obs)
         mixcol <- 'SUBPOP'
         method_name <- 'Randomized Mixture'
-        mean_probs <- average_probability_per_mixture_subpops(obs_mixture)
     } else {
         mixest_sim <- most_probable_mixture_subpop(sim_mixture)
         sim <- dplyr::full_join(sim, mixest_sim)
@@ -107,17 +106,14 @@ mixture_vpc <- function(obs, sim, obs_mixture, sim_mixture, bins, dv="DV", rando
         lower_quantile <- (quantile(ids_per_sim, probs=0.05) / num_ids) * 100
         upper_quantile <- (quantile(ids_per_sim, probs=0.95) / num_ids) * 100
 
-        if (randomize) {
-            orig_text <- 'PMIX='
-            orig_value <- mean_probs$PMIX[i] * 100
-        } else {
-            orig_text <- 'ORIGID='
-            obs_ids <- length(unique(subobs$ID))
-            orig_value <- (obs_ids / num_ids) * 100
-        }
+        mean_probs <- average_probability_per_mixture_subpops(obs_mixture)
+        pmix_value <- mean_probs$PMIX[i] * 100
 
-        title <- sprintf("%s SUBPOP=%d\n%s%.1f%% SIMID=[%.0f%%, %.0f%%] (5%%, 95%% percentiles)",
-                         method_name, i, orig_text, orig_value, lower_quantile, upper_quantile)
+        obs_ids <- length(unique(subobs$ID))
+        orig_value <- (obs_ids / num_ids) * 100
+
+        title <- sprintf("%s SUBPOP=%d     PMIX=%.1f%%\nORIGID=%.1f%% SIMID=[%.0f%%, %.0f%%] (5%%, 95%% percentiles)",
+                         method_name, i, pmix_value, orig_value, lower_quantile, upper_quantile)
         vpc <- vpc + ggtitle(title)
         table_list[[i]] <- vpc
     }
