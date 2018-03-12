@@ -1,6 +1,6 @@
 package code;
 
-# Module to generate (and potentially parse) abbreviated code
+# Module to generate abbreviated code
 
 use strict;
 use warnings;

@@ -1663,7 +1663,7 @@ sub linearize_setup
                         } else {
                             $relation = 'additive';
                         }
-                    } elsif ($code_line =~ /\bTHETA\(\d+\)\s*\+\s*ETA\(([0-9]+)\)/) {   # Special case for automatically added TV
+                    } elsif (code_parsing::check_additive_eta(expression => $line)) {
                         $relation = 'additive';
                     } elsif (/[^A-Z0-9_]*TV(\w+)\s*\*\s*ETA\(([0-9]+)\)/) {
                         $relation = 'proportional';

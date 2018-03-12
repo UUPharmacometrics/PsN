@@ -48,4 +48,24 @@ sub merge_assignments_and_expression
     return $expression;
 }
 
+sub check_additive_eta
+{
+    # Check if we have an additive relationship between theta and eta in expression
+    # The check will check if the expression is on the form EXPR + ETA(n) or ETA(n) + EXPR where EXPR contains at least one THETA
+    # Return 0 if not an additive relationship and the number of the involved eta otherwise (which is a true value)
+	my %parm = validated_hash(\@_,
+        expression => { isa => 'Str' },
+    );
+    my $expression = $parm{'expression'};
+
+    if ($expression =~ /\bTHETA\(\d+\).*\+\s*ETA\((\d+)\)/) {
+        return $1;
+    }
+    if ($expression =~ /\bETA\((\d+)\)\s*\+.*THETA\(\d+\)/) {
+        return $1;
+    }
+
+    return 0;
+}
+
 1;
