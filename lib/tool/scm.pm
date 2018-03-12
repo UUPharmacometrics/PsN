@@ -299,6 +299,12 @@ sub BUILD
 		my @continuous = defined $self->continuous_covariates() ? @{$self->continuous_covariates()} : ();
 		my @categorical = defined $self->categorical_covariates() ? @{$self->categorical_covariates()} : ();
 
+        my $undropped_columns = $self->models->[0]->problems->[0]->undrop_columns(columns => [@continuous, @categorical]);
+        if (scalar(@$undropped_columns)) {
+            print "The following data columns were undropped from the \$INPUT because they were requested as covariates:\n";
+            print "   ", join(', ', @$undropped_columns), "\n";
+        }
+
 		my @not_found = ();
 		my @nonskipped = ();
 		foreach my $input (@{$self->models->[0]->problems->[0]->inputs}) {
@@ -320,8 +326,7 @@ sub BUILD
 			}
 		}
 		if (scalar @not_found) {
-			croak("Covariate(s) [ " . join(',', @not_found) . " ] either DROPPED or not defined in " .
-				$self->models->[0]->filename);
+			croak("Covariate(s) [ " . join(',', @not_found) . " ] was not defined in " . $self->models->[0]->filename);
 		}
 	}
 

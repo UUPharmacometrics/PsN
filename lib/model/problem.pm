@@ -3830,11 +3830,14 @@ sub find_data_column
 
 sub undrop_columns
 {
+    # Remove DROP or SKIP for a list of colnames and return those that were actually undropped
     my $self = shift;
 	my %parm = validated_hash(\@_,
 		columns => { isa => 'ArrayRef[Str]' },
 	);
 	my $columns = $parm{'columns'};
+
+    my @undropped_columns;
 
     for my $record (@{$self->inputs}) {
         for my $option (@{$record->options}) {
@@ -3842,13 +3845,17 @@ sub undrop_columns
                 for my $col (@$columns) {
                     if ($option->name eq $col) {
                         $option->value('');
+                        push @undropped_columns, $col;
                     } elsif ($option->value eq $col) {
                         $option->name('');
+                        push @undropped_columns, $col;
                     }
                 }
             }
         }
     }
+
+    return \@undropped_columns;
 }
 
 sub ignored_or_accepted_columns
