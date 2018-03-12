@@ -294,35 +294,34 @@ sub BUILD
 
 	# check the validity of the covariates and the relations to be tested
 
-	if ( defined $self -> continuous_covariates() or defined $self -> categorical_covariates() ) {
+	if (defined $self->continuous_covariates() or defined $self->categorical_covariates()) {
 
-		my @continuous = defined $self -> continuous_covariates() ? @{$self -> continuous_covariates()} : ();
-		my @categorical = defined $self -> categorical_covariates() ? @{$self -> categorical_covariates()} : ();
+		my @continuous = defined $self->continuous_covariates() ? @{$self->continuous_covariates()} : ();
+		my @categorical = defined $self->categorical_covariates() ? @{$self->categorical_covariates()} : ();
 
 		my @not_found = ();
 		my @nonskipped = ();
-		foreach my $input (@{$self -> models->[0] ->problems->[0]->inputs}){
-			next unless (defined $input);
-			push(@nonskipped,@{$input->get_nonskipped_columns});
+		foreach my $input (@{$self->models->[0]->problems->[0]->inputs}) {
+			next if (not defined $input);
+			push(@nonskipped, @{$input->get_nonskipped_columns});
 		}
-		foreach my $cov ( @continuous, @categorical ) {
+		foreach my $cov (@continuous, @categorical) {
 			#check if reserved words
-			if (($cov eq 'PAR') or ($cov eq 'COV')){
+			if (($cov eq 'PAR') or ($cov eq 'COV')) {
 				croak("PAR and COV are reserved words in scm and must not be ".
 					  "used as name for a covariate.");
 			}
 		}
-		my @covs = ( @continuous, @categorical );
-		my $positions = get_positions(target => \@nonskipped,
-									  keys => \@covs);
-		for (my $i=0; $i< scalar(@covs); $i++){
-			unless (defined $positions->[$i]){
-				push( @not_found, $covs[$i] );
+		my @covs = (@continuous, @categorical);
+		my $positions = get_positions(target => \@nonskipped, keys => \@covs);
+		for (my $i = 0; $i < scalar(@covs); $i++) {
+			if (not defined $positions->[$i]) {
+				push(@not_found, $covs[$i]);
 			}
 		}
-		if ( scalar @not_found ){
-			croak("Covariate(s) [ ". join(',', @not_found). " ] either DROPPED or not defined in " .
-				$self ->  models->[0] -> filename );
+		if (scalar @not_found) {
+			croak("Covariate(s) [ " . join(',', @not_found) . " ] either DROPPED or not defined in " .
+				$self->models->[0]->filename);
 		}
 	}
 
