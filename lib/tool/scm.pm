@@ -2200,6 +2200,7 @@ sub linearize_setup
         } else {
             push(@eststrings, 'METHOD=ZERO');
         }
+        push(@eststrings, 'MAXEVALS=9999999');
         push(@eststrings,$self->format) if (defined $self->format());
         if ($self->noabort()){
             push(@eststrings,'NOABORT');
