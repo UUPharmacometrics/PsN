@@ -1690,11 +1690,10 @@ sub linearize_setup
                                 last;
                             }
                         }
-                        if (not $found) {   # We have found an eta that is not iov
-                            croak("Could not determine the ETA ".
-                                "coupled to $parameter,\n".
-                                " two ETA(<number>) found ".
-                                "on $parameter = ... row\n" );
+                        if (not $found) {   # We have found an eta that is not iov. Select the first ETA and warn
+                            /[^A-Z0-9_]ETA\((\d+)\)/;
+                            print "Warning: More than one ETA associatied with $parameter. Selecting ETA($1)\n";
+                            $etanum = $1;
                         }
                     }
                 }
