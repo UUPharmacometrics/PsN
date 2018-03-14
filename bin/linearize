@@ -163,6 +163,17 @@ require file;
 require model;
 require tool::linearize;
 
+my $main_directory = tool::get_rundir(
+    create => 0,
+    basename => 'linearize_dir',
+    model_dir_name => $options{'model_dir_name'},
+    timestamp => $options{'timestamp'},
+    modelname => $ARGV[0],
+    directory_option => $options{'directory'},
+    model_subdir => $options{'model_subdir'},
+);
+$options{'directory'} = $main_directory;
+
 my $eval_string = common_options::model_parameters(\%options);
 
 my $model = model -> new ( eval( $eval_string ),
