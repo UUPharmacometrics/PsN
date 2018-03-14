@@ -139,19 +139,12 @@ $help_text{-covariates} = <<'EOF';
 	$INPUT, the data file headers are ignored.
 EOF
 
-#Optional if -time_varying is given, not allowed if restarting an old run, otherwise required.
-
 $help_text{-deriv2_nocommon_maxeta} = <<'EOF';
 	-deriv2_nocommon_maxeta=N
 
 	Default 60. If the number of ETAs in model 2 is larger than this number then
 	$ABBREVIATED DERIV2=NOCOMMON will be set in the control stream.
 EOF
-#$help_text{-dv} = <<'EOF';
-#-dv=name
-#Default is DV. The name of the dependent variable. This must be the name used in $INPUT,
-#the data file header is ignored.
-#EOF
 
 $help_text{-estimate_covariates} = <<'EOF';
 	-estimate_covariates
@@ -177,18 +170,6 @@ $help_text{-estimate_means} = <<'EOF';
 	estimate any means even if there are missing observations.
 EOF
 
-#$help_text{-estimate} = <<'EOF';
-#-estimate=number
-#Default 3. The number (0, 1, 2 or 3) of the last model to estimate in the frem sequence. All models with a higher number
-#will still be created, but not estimated. When restarting in an existing frem run directory, estimation of models that have an existing
-#st-file will be skipped even if the -estimate option is set to a higher number.
-#EOF
-#$help_text{-estimate_regular_final_model} = <<'EOF';
-#-estimate_regular_final_model
-#Default set. If set then script will estimate the final regular parameterization frem model,
-#otherwise the model will be created but not estimated.
-#EOF
-
 $help_text{-fork_runs} = <<'EOF';
 	-fork_runs
 
@@ -196,10 +177,6 @@ $help_text{-fork_runs} = <<'EOF';
 	only work on unix-like systems. Only relevant if output objects are very,
 	very large.
 EOF
-
-#$help_text{-invariant} = <<'EOF';
-#-invariant=list
-#EOF
 
 $help_text{-log} = <<'EOF';
 	-log=list
@@ -230,34 +207,12 @@ $help_text{-mu} = <<'EOF';
     so that any skipped omegas come first.
 EOF
 
-#$help_text{-occasion} = <<'EOF';
-#-occation=name
-#Default OCC. The name of the column that defines occasions. Name used in $INPUT.
-#Needed if -time_varying is set, otherwise ignored.
-#EOF
-
-#$help_text{ordered}{?}
-#{\Large \texttt{TODO special case for ordered categorical}}
-#EOF
-
-#$help_text{-parameters_bov} = <<'EOF';
-#-parameters_bov=list
-#A comma-separated list of model parameters that should have between-occasion variability.
-#Required if -time_varying is set, otherwise not allowed.
-#EOF
-
 $help_text{-rescale} = <<'EOF';
 	-rescale
 
 	Default set. Rescale covariate ETAs in Model 2 to SD close to 1. Unset with
 	-no-rescale.
 EOF
-#help_text {-rplots} = <<'EOF';
-#-rplots=level
-#in order to facilitate estimation.
-#$help_text{rplots}{level}
-#{Large texttt{Later}}
-#EOF
 
 $help_text{-rse} = <<'EOF';
 	-rse=number
@@ -296,17 +251,6 @@ $help_text{-skip_omegas} = <<'EOF';
 	not set.
 EOF
 
-#$help_text{time\_varying} = <<'EOF';
-#-time_varying=list
-#A comma-separated list of time-varying covariates.
-#Names used in $INPUT. Optional if -invariant is given, not allowed if restarting an old run, otherwise required.
-#EOF
-#$help_text{-vpc} = <<'EOF';
-#-vpc
-#Default not set. If set then script will create a frem model that
-#can be run with the vpc script (in a separate call to the vpc
-#script).
-#EOF
 $help_text{Post_help_message} = <<'EOF';
 	Also see 'psn_options -h' for a description of common PsN options.
 EOF
