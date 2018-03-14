@@ -155,6 +155,17 @@ ui -> silent(1) if ($options{'silent'});
 require model;
 require tool::resmod;
 
+my $main_directory = tool::get_rundir(
+    create => 0,
+    basename => 'resmod_dir',
+    model_dir_name => $options{'model_dir_name'},
+    timestamp => $options{'timestamp'},
+    modelname => $ARGV[0],
+    directory_option => $options{'directory'},
+    model_subdir => $options{'model_subdir'},
+);
+$options{'directory'} = $main_directory;
+
 my $eval_string = common_options::model_parameters(\%options);
 
 my $model = model->new(
