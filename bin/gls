@@ -124,7 +124,7 @@ $help_text{-gls_model} = <<'EOF';
 	Note that a run with the simeval program will automatically generate a complete
 	input file for gls (including PRED IPRED and per-observation shrinkage).
 EOF
-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+
 $help_text{-ind_shrinkage} = <<'EOF';
 	-ind_shrinkage
 
@@ -246,6 +246,17 @@ if ((defined $options{'gls_model'}) and (defined $options{'set_simest'})){
 
 require model;
 require tool::gls;
+
+my $main_directory = tool::get_rundir(
+    create => 0,
+    basename => 'gls_dir',
+    model_dir_name => $options{'model_dir_name'},
+    timestamp => $options{'timestamp'},
+    modelname => $ARGV[0],
+    directory_option => $options{'directory'},
+    model_subdir => $options{'model_subdir'},
+);
+$options{'directory'} = $main_directory;
 
 my $eval_string = common_options::model_parameters(\%options);
 
