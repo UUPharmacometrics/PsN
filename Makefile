@@ -1,11 +1,15 @@
 LIBFILES= ui.pm \
 	log.pm \
+	logging.pm \
+	logging/logger.pm \
 	pharmml.pm \
 	so.pm \
 	rplots.pm \
 	math.pm \
 	PsN.pm \
 	model_transformations.pm \
+	model_approximations.pm \
+	code.pm \
 	code_parsing.pm \
 	common_options.pm \
 	influential_individuals.pm \
@@ -23,6 +27,7 @@ LIBFILES= ui.pm \
 	filter_data.pm \
 	boxcox.pm \
 	include_modules.pm \
+	scm_util.pm \
 	ext/Math/SigFigs.pm \
 	ext/Math/MatrixReal.pm \
 	ext/Statistics/Distributions.pm \
@@ -167,6 +172,7 @@ LIBFILES= ui.pm \
 	tool/linearize.pm \
 	tool/qa.pm \
 	tool/improve.pm \
+	tool/boot_randtest.pm \
 	utils/file.pm \
 	utils/phitable.pm
 
@@ -212,6 +218,7 @@ release: main completion rel_dir $(RELFILES) $(PDFFILES)
 	@ mkdir -p PsN-Source/test
 	@ cp -ar test/unit PsN-Source/test
 	@ cp -ar test/system PsN-Source/test
+	@ cp -ar test/rplots PsN-Source/test
 	@ cp -ar test/test_files PsN-Source/test
 	@ cp -ar R-scripts PsN-Source/lib
 	@ cp test/includes.pm PsN-Source/test

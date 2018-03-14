@@ -1,29 +1,34 @@
 \begin{optionlist}
+\optname{d2u}
+Default not set. If set then run dos2unix on model files and regular data files.
+\nextopt
+\optname{last\_est\_complete}
+
+Default not set. Only applies for models with multiple \$ESTIMATION (NONMEM 7 only). Only affects 
+\begin{itemize}
+\item vpc
+\item cdd if option -xv is set
+\item and execute if option -mirror\_plots or -predict\_model is set.
+\end{itemize} 
+Indicates that no options needed for the last \$EST are carried over from previous \$EST, all options are set explicitly in that record. See PsN\_and\_ NONMEM7.pdf for details. 
+\nextopt
+\optdefault{niter\_eonly}{integer}
+Default undefined. Only applies to NONMEM 7 and if last \$EST is IMP or IMPMAP.  Only affects
+\begin{itemize}
+	\item vpc
+	\item cdd if option -xv is set
+	\item and execute if option -mirror\_plots or -predict\_model is set.
+\end{itemize}
+User-chosen value of NITER when estimation is turned off by setting EONLY=1. See PsN\_and\_NONMEM7.pdf for details. 
+
+\nextopt
 \optname{omega\_before\_pk}
-Default not set. In PsN version 3.4.4 and earlier, \$OMEGA was always printed before \$PK. The new default is to keep the record order of the input model file. To use the old print order, set option -omega\_before\_pk
+Default not set. In PsN version 3.4.4 and earlier, \$OMEGA was always printed before \$PK. The new default is to keep the record order of the input model file. To use the old print order, set option -omega\_before\_pk.
 \nextopt
 \optname{psn\_record\_order}
 Default not set. In PsN 4.3.3 and earlier, PsN used an internal record order. The new default is to keep the record order of the input model file. Set this option to use the old order.
 \nextopt
 \optname{sde}
-Default not set. In PsN version 3.4.4 and earlier, this option made PsN print the records
-in a particular order suitable for SDE models.
-The new default is to keep the record order of the input model file. To use the old SDE print order, 
-set option -sde.
-\nextopt
-\optname{d2u}
-Default not set. If set then run dos2unix on model files and regular data files.
-\nextopt
-\optname{last\_est\_complete}
-Default not set. Only applies for models with multiple \$ESTIMATION (NONMEM7 only). 
-Only affects vpc,  cdd if option -xv is set, and execute if option -mirror\_plots or
--predict\_model is set. Indicates that no options needed for the last \$EST 
-are carried over from previous \$EST, all options are set explicitly in that record. See PsN\_and\_NONMEM7.pdf 
-for details. 
-\nextopt
-\optdefault{niter\_eonly}{'integer'}
-Default undefined. Only applies for NONMEM7 and if last \$EST is IMP or IMPMAP. 
-Only affects vpc,  cdd if option -xv is set, and execute if option -mirror\_plots or -predict\_model is set. 
-User-chosen value of NITER when estimation is turned off by setting EONLY=1. See PsN\_and\_NONMEM7.pdf for details. 
+Default not set. In PsN version 3.4.4 and earlier, this option made PsN print the records in a particular order suitable for SDE models. The new default is to keep the record order of the input model file. To use the old SDE print order, set option -sde.
 \nextopt
 \end{optionlist}

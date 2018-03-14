@@ -146,6 +146,7 @@ sub modelfit_setup
         for (my $i = 0; $i < $self->numdvid; $i++) {
             my $resmod = tool::resmod->new(
 			    %{common_options::restore_options(@common_options::tool_options)},
+                directory => 'resmod_DVID_' . int($self->unique_dvid->[$i]),
                 models => [ $self->model ],
                 idv => $self->idv,
                 dv => $self->dv,
@@ -165,6 +166,7 @@ sub modelfit_setup
                 table => $self->table,
                 negative_ipred => $self->negative_ipred,
                 obs_column => $self->obs_column,
+				clean => $self->clean,
             );
             $resmod->run();
         }

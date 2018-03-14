@@ -1,58 +1,70 @@
 \input{inputs/format_header.tex}
-\guidetitle{PVAR user guide}{2014-06-23}
-
+\guidetitle{PVAR user guide}{2018-03-02}
+\usepackage{hyperref}
 \newcommand{\guidetoolname}{pvar}
 
 \begin{document}
 
 \maketitle
+\tableofcontents
+\newpage
 
 
 \section{Introduction}
-Parametric variability is a tool that calculates how much of parameter variabilty that a model explains \cite{Hennig}.
-
-Examples
+The pvar (parametric variability) tool calculates how much of parameter variabilty that a model explains \cite{Hennig}. For every parameter listed on the command line PsN will calculate the total variance, the explained variance and the unexplained variance. The resulting table can be found in the result.csv. The input models to pvar must have final parameter estimates.\\
+Examples:
 \begin{verbatim}
 pvar scmlog1.txt -parameters=CL,V
+\end{verbatim}
+Check parametric variability of models generated in an scm run.
+\begin{verbatim}
 pvar -models run1.mod run2.mod -parameters=CL,V
 \end{verbatim}
-
+Use specific models.
 \section{Input and options}
 
 \subsection{Required input}
 Required arguments are either an scm log file or a list of model files and a list of parameters. If an scm log file is to be used the scm run cannot have been made with -clean=3 otherwise files needed for pvar will be deleted.
 
 \begin{optionlist}
-
 \optdefault{parameters}{CL,V,...}
-A comma separated list of parameters.
+A mandatory comma-separated list of parameters to investigate.
 \nextopt
 \end{optionlist}
 
 \subsection{Optional input}
 
 \begin{optionlist}
-\optdefault{samples}{n}
-Number of simulated datasets to generate. Default is 100.
-\nextopt
 \optname{models}
-If this option is present on the command line a list of model files can be passed as arguments instead of an scm logfile. For example \verb|pvar -models run1.mod run2.mod -parameters=CL,V|
+If this option is present on the command line a list of model files can be passed as arguments instead of an scm logfile.\\ Example:
+\begin{verbatim}
+pvar -models run1.mod run2.mod -parameters=CL,V
+\end{verbatim}
+\optdefault{samples}{N}
+Default is 100. Number of simulated datasets to generate. 
+\nextopt
 \end{optionlist}
 
-\section{Description}
-
-Parametric variability can calculate how much of the variability of a parameter that is explained by the model. For every parameter listed on the command line PsN will calculate the total variance, the explained variance and the unexplained variance. The resulting table can be found in the result.csv. The input models to pvar must have final parameter estimates.
-
-\subsection{Run pvar from an scm}
-The pvar script can be run for all the intermediate models of an scm run. For this to work the scm must have been run with a clean option less than or equal to two (i.e. -clean=0, -clean=1 or -clean=2). The scm log file of the scm run must be specified as an argument to the pvar run. From the log file pvar will find which models to use. Note that they will be numbered in the results file in the order they appeared in the log file. The base model of the scm will always be run as the first model (number 0). Pvar can not be run on a linearized scm. 
+\section{Run pvar from a scm}
+The pvar tool can be run for all the intermediate models of a scm run. For this to work the scm must have been run with a clean option less than or equal to two (i.e. -clean=0, -clean=1 or -clean=2). The scm log file of the scm run must be specified as an argument to the pvar run. From the log file pvar will find which models to use. Note that they will be numbered in the results file in the order they appeared in the log file. The base model of the scm will always be run as the first model (number 0). pvar can not be run on a linearized scm. 
 
 \section{Result}
 
 The result.csv is formatted as follows:
 
 The first row is the header explaining the columns.
-The first column is the type of variability (EPV for explained, UPV for unexplained and PV for total). The second column is the number of the model starting with zero. They will come in the order of the scmlog or in the order specified on the command line when using the models option. The third column is the name of the model. The following columns until the last column are the variances for the parameters. The last column is the OFV for this model.
+\begin{verbatim}
+Type,Model number,Model name,Run number,CL,V,OFV
+\end{verbatim}
+\begin{itemize}
+	\item The first column is the type of variability (EPV for explained, UPV for unexplained and PV for total). 
+	\item The second column is the number of the model starting with zero. They will come in the order of the scmlog or in the order specified on the command line when using the models option.
+	\item The third column is the name of the model. 
+	\item The following columns until the last column are the variances for the parameters. 
+	\item The last column is the OFV for this model.
+\end{itemize}
 
+Example of result.csv:
 \begin{verbatim}
 Type,Model number,Model name,Run number,CL,V,OFV
 EPV,0,run101.mod,101,1.64942442067797e-06,0.0620681720338984,527.08
@@ -63,17 +75,12 @@ UPV,1,run103.mod,103,1.75795164007126e-06,0.387259333476643,591.443
 PV,1,run103.mod,103,1.69889004003343e-05,0.43413671313766,591.443
 \end{verbatim}
 
-\subsection{Auto-generated R-plots from PsN}
-\newcommand{\rplotsconditions}{The default pvar template 
-requires no extra R libraries.}
+\subsection{Auto-generated R plots from PsN}
+\newcommand{\rplotsconditions}{The default pvar template requires no extra R libraries.}
 \input{inputs/rplots_section_body.tex}
 
 \subsubsection*{Basic plot}
-Basic rplots will be generated if option -rplots is set > 0,
-and the general rplots conditions fulfilled, see above.
-The generated set of plots are barplots for each parameter
-that shows the explained and unexplained variabilty for each
-model.
+Basic rplots will be generated if option -rplots is set > 0, and the general rplots conditions fulfilled. The generated set of plots are barplots for each parameter that shows the explained and unexplained variabilty for each model.
 
 
 \section{Algorithm}
@@ -84,16 +91,16 @@ Simulate each model in one original version to get the total variability and one
 	\item Input: List of models.
 	\item For each model:
 	\begin{enumerate}
-		\item Create two new models. One for EPV and one for PV
+		\item Create two new models. One for EPV and one for PV.
 		\item If model has been run update the initial values from results.
-		\item Remove \$EST
-		\item If model already contain \$SIMULATION give a warning but keep \$SIMULATION
-		\item Add \$SIMULATION (<seed>) NSUBS=<samples> ONLYSIM
+		\item Remove \$EST.
+		\item If model already contain \$SIMULATION give a warning but keep \$SIMULATION.
+		\item Add \$SIMULATION (<seed>) NSUBS=<samples> ONLYSIM.
 		\item Add \$TABLE NOPRINT NOAPPEND FIRSTONLY ONEHEADER ID FILE=<EPV|PV><n>.tab <par1> <par2> ...
-		\item Set \$OMEGA 0 FIX for the EPV model
+		\item Set \$OMEGA 0 FIX for the EPV model.
 	\end{enumerate}
-	\item Run models
-	\item Loop through table-files to calculate the variances
+	\item Run models.
+	\item Loop through table-files to calculate the variances.
 \end{enumerate}
 
 \references

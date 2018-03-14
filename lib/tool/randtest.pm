@@ -62,7 +62,6 @@ sub BUILD
 	croak("PsN randtest cannot handle IGNORE=C. Use IGNORE=@ instead\n")
 		if ($self->models->[0]->problems->[0]->datas->[0]->ignoresign eq 'C');
 	
-
 	#Find column index of rand column
 	#Find column index of strat column
 	my $counter = 0;
@@ -78,7 +77,6 @@ sub BUILD
 
 	croak("Number of samples must be larger than 0") unless ($self->samples()>0);
 }
-
 
 sub modelfit_setup
 {
@@ -99,64 +97,62 @@ sub modelfit_setup
 		$base_mod_ofv=$self->base_model->outputs->[0]->get_single_value(attribute=> 'ofv'); 
 	}
 
-	unless ($model->is_run and 
-			 ((not defined $self->base_model) or $self->base_model->is_run) 
-		) {
+	unless ($model->is_run and ((not defined $self->base_model) or $self->base_model->is_run)) {
 		my %subargs = ();
-		if ( defined $self -> subtool_arguments() ) {
+		if (defined $self->subtool_arguments()) {
 			%subargs = %{$self -> subtool_arguments()};
 		}
 
-		if( $self -> nonparametric_etas() or
-			$self -> nonparametric_marginals() ) {
-			$model -> add_nonparametric_code unless ($model->is_run);
-			$self->base_model -> add_nonparametric_code if (defined $self->base_model and not $self->base_model->is_run);
+		if($self->nonparametric_etas() or $self->nonparametric_marginals()) {
+			$model->add_nonparametric_code unless ($model->is_run);
+			$self->base_model->add_nonparametric_code if (defined $self->base_model and not $self->base_model->is_run);
 		}
-		my @models=();
+		my @models = ();
 		my $message = "Executing ";
-		unless ($model->is_run ){
-			push(@models,$model) ;
+		unless ($model->is_run) {
+			push(@models, $model);
 			$message .= "input model";
 		}
-		if (defined $self->base_model and not $self->base_model->is_run){
-			if (scalar(@models)<1){
+		if (defined $self->base_model and not $self->base_model->is_run) {
+			if (scalar(@models) < 1) {
 				$message .= "base model";
-			}else{
+			} else {
 				$message .= "and base model";
 			}
-			push(@models,$self->base_model) ;
+			push(@models,$self->base_model);
 		}
 
-		my $orig_fit = tool::modelfit ->new( %{common_options::restore_options(@common_options::tool_options)},
-											 base_directory	 => $self ->directory(),
-											 directory		 => $self ->directory().
-											 '/orig_modelfit_dir'.$model_number,
-											 models		 => \@models,
-											 threads               => $self->threads,
-											 reduced_model_ofv => $base_mod_ofv, #can be undef
-											 logfile	         => undef,
-											 raw_results           => undef,
-											 prepared_models       => undef,
-											 copy_data            => $self->copy_data,
-											 top_tool              => 0,
-											 %subargs );
+		my $orig_fit = tool::modelfit->new(
+            %{common_options::restore_options(@common_options::tool_options)},
+            base_directory => $self->directory(),
+            directory => $self->directory() .  '/orig_modelfit_dir' . $model_number,
+            models => \@models,
+            threads => $self->threads,
+            reduced_model_ofv => $base_mod_ofv, #can be undef
+            logfile	=> undef,
+            raw_results => undef,
+            prepared_models => undef,
+            copy_data => $self->copy_data,
+            top_tool => 0,
+            %subargs
+        );
 
-		ui -> print( category => 'randtest',
-			message => $message );
+		ui->print( category => 'randtest', message => $message);
 
-		$orig_fit -> run;
-
+		$orig_fit->run;
 	}
 
-	if (defined $self->base_model and $self->base_model->is_run){
-		$base_mod_ofv=$self->base_model->outputs->[0]->get_single_value(attribute=> 'ofv'); 
+	if (defined $self->base_model and $self->base_model->is_run) {
+		$base_mod_ofv = $self->base_model->outputs->[0]->get_single_value(attribute=> 'ofv'); 
 	}
 
-	my $template_model = $model ->  copy( filename    => $self -> directory().'m'.$model_number.'/template.mod',
-										  output_same_directory => 1,
-										  copy_datafile   => 0,
-										  copy_output => 0,
-										  write_copy => 0);
+	my $template_model = $model->copy(
+        filename => $self->directory() . 'm' . $model_number . '/template.mod',
+        output_same_directory => 1,
+        copy_datafile => 0,
+        copy_output => 0,
+        write_copy => 0
+    );
 
 	if ($self->update_inits) {
 
@@ -359,47 +355,6 @@ sub cleanup
 	}
 }
 
-
-sub calculate_delta_ofv
-{
-	my $self = shift;
-	my %parm = validated_hash(\@_,
-		model_number => { isa => 'Int', optional => 1 }
-	);
-	my $model_number = $parm{'model_number'};
-}
-
-sub general_setup
-{
-	my $self = shift;
-	my %parm = validated_hash(\@_,
-		model_number => { isa => 'Int', optional => 1 },
-		class => { isa => 'Str', optional => 1 }
-	);
-	my $model_number = $parm{'model_number'};
-	my $class = $parm{'class'};
-}
-
-sub modelfit_analyze
-{
-	my $self = shift;
-	my %parm = validated_hash(\@_,
-		model_number => { isa => 'Int', optional => 1 }
-	);
-	my $model_number = $parm{'model_number'};
-
-
-}
-
-sub modelfit_post_fork_analyze
-{
-	my $self = shift;
-	my %parm = validated_hash(\@_,
-		model_number => { isa => 'Int', optional => 1 }
-	);
-	my $model_number = $parm{'model_number'};
-}
-
 sub _modelfit_raw_results_callback
 {
 	my $self = shift;
@@ -503,175 +458,147 @@ sub _modelfit_raw_results_callback
 	return $subroutine;
 }
 
-sub _sse_raw_results_callback
-{
-	my $self = shift;
-	my %parm = validated_hash(\@_,
-		model_number => { isa => 'Int', optional => 1 }
-	);
-	my $model_number = $parm{'model_number'};
-	my $subroutine;
-
-	return \&subroutine;
-}
-
-sub sse_read_raw_results
-{
-	my $self = shift;
-}
-
 sub prepare_results
 {
 	my $self = shift;
-
-	my %p_values;
-	# 1 2 3 degrees of freedom
-	$p_values{0.001} = {1 => 10.828,
-						  2 => 13.816,
-						  3 => 16.266,
-	};
-	$p_values{0.01} = {1 => 6.6349,
-						 2 => 9.2103,
-						 3 => 11.345,
-	};
-	$p_values{0.05} = {1 => 3.8415,
-						 2 => 5.9915,
-						 3 => 7.8147,
-	};
-	$p_values{0.10} = {1 => 2.7055,
-						2 => 4.6052,
-						3 => 6.2514,
-	};
-	$p_values{0.15} = {1 => 2.0723,
-						 2 => 3.7942,
-						 3 => 5.3171,
-	};
-
-	my @probs = sort (sort {$a <=> $b} keys %p_values ); #sort ascending
 
 	#read raw results if not already in memory
 	#also rawres structure
 	#do nothing if do not have dOFV column
 
-
-
-#	$self -> read_raw_results();
-#	$self -> raw_results($self -> raw_results -> [0]); #each line is one model
-
-#	trace(tool => 'randtest', message => "Read raw results from file", level => 1);
-	#$self -> raw_results());
-
-	unless (defined $self->raw_line_structure){
-		$self->raw_line_structure(ext::Config::Tiny -> read($self->directory.'raw_results_structure'));
+	unless (defined $self->raw_line_structure) {
+		$self->raw_line_structure(ext::Config::Tiny->read($self->directory.'raw_results_structure'));
 	}
 
 	#make sure that we have valid raw_line_structure and not from crashed run here
-	my ($dofv,$length,$baseofv);
-	for (my $i=1;$i <= $self->samples; $i++){
-		if (defined $self->raw_line_structure()->{$i}->{'deltaofv'}){
-			($dofv,$length) = split(',',$self->raw_line_structure()->{$i}->{'deltaofv'});
+	my ($dofv, $length);
+	for (my $i = 1; $i <= $self->samples; $i++) {
+		if (defined $self->raw_line_structure()->{$i}->{'deltaofv'}) {
+			($dofv, $length) = split(',', $self->raw_line_structure()->{$i}->{'deltaofv'});
 			last;
-		}else{
-			#print "rawline $i not ok!\n";
 		}
 	}
-
 	return if (not defined $dofv);
-	if (defined $self->raw_line_structure()->{'base'}->{'ofv'}){
-		($baseofv,$length) = split(',',$self->raw_line_structure()->{'base'}->{'ofv'});
-		1;
-	}else{
-		return;
-	}
 
-	my @dofvarray=();
+	my @dofvarray;
 	#we assume here that only have one problem and subproblem in models
-	if ( defined $self -> raw_results ) {
-		my $poscount=0;
-		my $undefcount=0;
-		for ( my $j = 0; $j < scalar @{$self->raw_results}; $j++ ) { # orig model + prepared_models
-			next if ($self->raw_results->[$j][0] =~ '/(base|input)/');
+	if (defined $self->raw_results) {
+		for (my $j = 0; $j < scalar @{$self->raw_results}; $j++) { # orig model + prepared_models
+			next if ($self->raw_results->[$j][0] =~ /(base|input)/);
+            next if (ref $self->raw_results->[$j][0]);
 			my $val = $self->raw_results->[$j][$dofv];
-			if (defined $val){
-				if ($val <= 0){
-					push(@dofvarray,$val);
-				}else{
-					$poscount++;
-					push(@dofvarray,0);
-				}
-			}else{
-				$undefcount++;
-			}
-
+            push(@dofvarray, $val);
 		}
-		
 	}
 
-#	print "dofvarray ".join(' ',@dofvarray)."\n";
-	return if (scalar(@dofvarray) < 1);
-	my @sorted = (sort {$a <=> $b} @dofvarray); #sort ascending
+    print_dofv_results(dofv => \@dofvarray, filename => $self->directory . $self->results_file);
+}
+
+sub print_dofv_results
+{
+    # Print the randtest dofv results to a table file
+    my %parm = validated_hash(\@_,
+        dofv => { isa => 'ArrayRef[Num]' },
+        filename => { isa => 'Str' },
+    );
+    my $dofv = $parm{'dofv'};
+    my $filename = $parm{'filename'};
+
+    #preprocess dofv values to find undefs or positives		
+    my @processed_dofv;
+    my $poscount = 0;
+    my $undefcount = 0;
+
+    for my $value (@$dofv) {
+        if (defined $value) {
+            if ($value <= 0) {
+                push @processed_dofv, $value;
+            } else {
+                $poscount++;
+                push @processed_dofv, 0;
+            }
+        } else {
+            $undefcount++;
+        }
+    }
+
+    if ($poscount > 0) {
+        print "Warning: $poscount positive delta ofvs were found and set to zero.\n";
+    }
+    if ($undefcount > 0) {
+        print "Warning: $undefcount undefined delta ofvs were found and set to zero.\n";
+    }
+    return if scalar(@processed_dofv) < 1;
+
+    my %p_values;
+	# 1 2 3 degrees of freedom
+	$p_values{0.001} = { 1 => 10.828, 2 => 13.816, 3 => 16.266, };
+	$p_values{0.01} = { 1 => 6.6349, 2 => 9.2103, 3 => 11.345, };
+	$p_values{0.05} = { 1 => 3.8415, 2 => 5.9915, 3 => 7.8147, };
+	$p_values{0.10} = { 1 => 2.7055, 2 => 4.6052, 3 => 6.2514, };
+	$p_values{0.15} = { 1 => 2.0723, 2 => 3.7942, 3 => 5.3171, };
+	my @probs = sort (sort {$a <=> $b} keys %p_values); #sort ascending
+
+	my @sorted = (sort {$a <=> $b} @processed_dofv); #sort ascending
 	my $actual_dofv_ref = quantile(probs => \@probs, numbers=> \@sorted);
 
-#p-value , actual dOFV at percentile, theoretical dOFV for chi2 1df, actual percentile at theoretical dOFV for chi2 1df,theoretical dOFV for chi2 2df, actual percentile at theoretical dOFV for chi2 2df , theoretical dOFV for chi2 3df, actual percentile at theoretical dOFV for chi2 3df 
-# 0.001 ,
-# 0.01 ,
-# 0.05 ,
-# 0.10 ,
-# 0.15 ,
+    #p-value , actual dOFV at percentile, theoretical dOFV for chi2 1df, actual percentile at theoretical dOFV for chi2 1df,
+    # theoretical dOFV for chi2 2df, actual percentile at theoretical dOFV for chi2 2df , theoretical dOFV for chi2 3df,
+    # actual percentile at theoretical dOFV for chi2 3df 
+    # 0.001 , 0.01 , 0.05 , 0.10 , 0.15 ,
 
-	open( RES, ">".$self->directory.$self->results_file()) or die "could not open ".$self->results_file();
+	open(RES, ">" . $filename) or die "could not open " . $filename . " for writing";
 	print RES "p-value,actual.dOFV.at.percentile,theoretical.dOFV.for.chi2.1df,actual.percentile.at.theoretical.dOFV.for.chi2.1df,theoretical.dOFV.for.chi2.2df,actual.percentile.at.theoretical.dOFV.for.chi2.2df.,theoretical.dOFV.for.chi2.3df,actual.percentile.at.theoretical.dOFV.for.chi2.3df\n";
 
-	for (my $i=0; $i<scalar(@probs); $i++){
+	for (my $i = 0; $i < scalar(@probs); $i++) {
 		my @line = ($probs[$i],$actual_dofv_ref->[$i]);
-		my @testdofv = (-$p_values{$probs[$i]}->{1},-$p_values{$probs[$i]}->{2},-$p_values{$probs[$i]}->{3});
-		my $perc = percentile(sorted_numbers => \@sorted,
-							  test_values => \@testdofv);
-		for (my $j=0; $j<scalar(@testdofv); $j++){
-			push(@line,$testdofv[$j],$perc->[$j]);
+		my @testdofv = (-$p_values{$probs[$i]}->{1}, -$p_values{$probs[$i]}->{2}, -$p_values{$probs[$i]}->{3});
+		my $perc = percentile(sorted_numbers => \@sorted, test_values => \@testdofv);
+		for (my $j = 0; $j < scalar(@testdofv); $j++) {
+			push(@line, $testdofv[$j], $perc->[$j]);
 		}
-		print RES join(',',@line)."\n";
+		print RES join(',', @line) . "\n";
 	}
 	close(RES);
-
 }
-sub create_R_plots_code{
-	my $self = shift;
-	my %parm = validated_hash(\@_,
-							  rplot => { isa => 'rplots', optional => 0 }
-		);
-	my $rplot = $parm{'rplot'};
 
-	my $have_base_model = 'FALSE';
-	#we just assume first PROB here
-	my $labelstring = 'c()';
-	if (defined $self->base_model){
-		my @labels = ();
-		$have_base_model = 'TRUE' ;
-		#figure out THETA/label, assume it is the additional theta(s) in full model.
-		#if same number then skip
-		my $basecount = $self->base_model->nthetas();
-		if ($self->models->[0]->nthetas() > $basecount){
-			my $ref = $self->models->[0]->labels(parameter_type => 'theta');
-			if (defined $ref and defined $ref->[0]){
-				for (my $i=$basecount; $i < scalar(@{$ref->[0]}); $i++){
-					push(@labels,$ref->[0]->[$i]);
-				}
-			}
-		}
-		if (scalar(@labels)>0){
-			$labelstring = "c('".join("','",@labels)."')";
-		}
-	}
-	#TODO script only works if $self->base_model is defined 
-	$rplot->add_preamble(code => [
-							 'samples   <-'.$self->samples,
-							 "randomization.column   <-'".$self->randomization_column."'",
-							 "data.diff.table   <-'m1/count_randcol_diff.txt'",
-							 "have.base.model <- $have_base_model",
-							 'extra.thetas <- '.$labelstring,
-						 ]);
+sub create_R_plots_code
+{
+    my $self = shift;
+    my %parm = validated_hash(\@_,
+        rplot => { isa => 'rplots', optional => 0 }
+    );
+    my $rplot = $parm{'rplot'};
 
+    my $have_base_model = 'FALSE';
+    #we just assume first PROB here
+    my $labelstring = 'c()';
+    if (defined $self->base_model){
+        my @labels = ();
+        $have_base_model = 'TRUE' ;
+        #figure out THETA/label, assume it is the additional theta(s) in full model.
+        #if same number then skip
+        my $basecount = $self->base_model->nthetas();
+        if ($self->models->[0]->nthetas() > $basecount){
+            my $ref = $self->models->[0]->labels(parameter_type => 'theta');
+            if (defined $ref and defined $ref->[0]){
+                for (my $i=$basecount; $i < scalar(@{$ref->[0]}); $i++){
+                    push(@labels,$ref->[0]->[$i]);
+                }
+            }
+        }
+        if (scalar(@labels)>0){
+            $labelstring = "c('".join("','",@labels)."')";
+        }
+    }
+    #TODO script only works if $self->base_model is defined 
+    $rplot->add_preamble(code => [
+            'samples   <-'.$self->samples,
+            "randomization.column   <-'".$self->randomization_column."'",
+            "data.diff.table   <-'m1/count_randcol_diff.txt'",
+            "have.base.model <- $have_base_model",
+            'extra.thetas <- '.$labelstring,
+        ]);
 }
 
 no Moose;

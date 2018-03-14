@@ -88,16 +88,16 @@ parameter_ratio <- function(inTable_frem,covdata,pardata) {
     for (j in 1:length(parameter_names)) {
       for (i in 1:length(covariate)) {
         if (covdata$is.categorical[i] != "1") {
-          part_5th <- inTable_frem[ , grepl(paste0("^RATIO.par.",parameter_names[j],".given.cov5th.",covariate[i],"$"), names(inTable_frem))]
+          part_5th <- inTable_frem[ , grepl(paste0("^RATIO\\.par\\.",parameter_names[j],"\\.given\\.cov5th\\.",covariate[i],"$"), names(inTable_frem))]
           name_5th <- paste0(covariate[i],".cov5th")
-          part_95th <- inTable_frem[ , grepl(paste0("^RATIO.par.",parameter_names[j],".given.cov95th.",covariate[i],"$"), names(inTable_frem))]
+          part_95th <- inTable_frem[ , grepl(paste0("^RATIO\\.par\\.",parameter_names[j],"\\.given\\.cov95th\\.",covariate[i],"$"), names(inTable_frem))]
           name_95th <- paste0(covariate[i],".cov95th")
           part <- cbind(part_5th,part_95th)
           name <- cbind(name_5th,name_95th)
           list_part[i] <- list(part)
           list_colnames[i] <- list(name)
         } else {
-          part <- inTable_frem[ , grepl(paste0("^RATIO.par.",parameter_names[j],".given.other.",covariate[i],"$"), names(inTable_frem))]
+          part <- inTable_frem[ , grepl(paste0("^RATIO\\.par\\.",parameter_names[j],"\\.given\\.other\\.",covariate[i],"$"), names(inTable_frem))]
           name <- paste0(covariate[i],".other")
           list_part[i] <- list(part)
           list_colnames[i] <- list(name)
@@ -114,9 +114,9 @@ parameter_ratio <- function(inTable_frem,covdata,pardata) {
 
       # summaryze dataframe and calculate mean, quantile for each group (for each column in DF)
       outTable <- DF_melt %>% group_by(variable) %>%
-      summarise(mean = value[1],
-                ci_low = quantile(value[-1], probs=c(0.05),type=2),
-                ci_high = quantile(value[-1], probs=c(0.95),type=2))
+      summarise(mean = mean(value),
+                ci_low = quantile(value, probs=c(0.05),type=2),
+                ci_high = quantile(value, probs=c(0.95),type=2))
       # calculating procentage of outTable
       outTablet_proc <- t(round(t((outTable[, 2:ncol(outTable)])-1) * 100, 2))
       outTable <- cbind(outTable[1],outTablet_proc)

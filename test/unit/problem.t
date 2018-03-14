@@ -518,4 +518,21 @@ is_deeply($problem->get_msfo_filenames,['phenomsf'],'MSFO filenames 2');
 $model = model->new(filename => $includes::testfiledir."/pheno.mod", ignore_missing_data => 1);
 $model->problems->[0]->undrop_columns(columns => [ "DV", "TIME" ]);
 
+#ignored_or_accepted_columns
+$model = model->new(filename => $includes::testfiledir . "/ignore/single_ignore.mod", ignore_missing_data => 1);
+$problem = $model->problems->[0];
+is_deeply ($problem->ignored_or_accepted_columns(), [ "WGT" ], "ignored_or_accepted_columns single_ignore");
+
+$model = model->new(filename => $includes::testfiledir . "/ignore/list_ignore.mod", ignore_missing_data => 1);
+$problem = $model->problems->[0];
+my $array = $problem->ignored_or_accepted_columns();
+my @sorted = sort { lc($a) cmp lc($b) } @$array;
+is_deeply (\@sorted, [ "APGR", "WGT" ], "ignored_or_accepted_columns list_ignore");
+
+$model = model->new(filename => $includes::testfiledir . "/ignore/multiple_ignore.mod", ignore_missing_data => 1);
+$problem = $model->problems->[0];
+$array = $problem->ignored_or_accepted_columns();
+@sorted = sort { lc($a) cmp lc($b) } @$array;
+is_deeply (\@sorted, [ "ID", "WGT" ], "ignored_or_accepted_columns multiple_ignore");
+
 done_testing();

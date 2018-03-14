@@ -33,11 +33,11 @@ i_ofv_res <- function(all.iofv.file,n.subjects,samples,show.warning=TRUE) {
         }
       }
       if(show.warning) {
-        message(paste0("WARNING! Removed individuals from csv file \"",all.iofv.file,"\". No data for ID numbers ",ID_deleted_ofv_text,"."))
+        message(paste0("WARNING! No data for ID numbers ",ID_deleted_ofv_text," in the csv file \"",all.iofv.file,"\"."))
       }
     } else {
       if(show.warning) {
-        message(paste0("WARNING! Removed individual from csv file \"",all.iofv.file,"\". No data for ID number ",ID_deleted_ofv,"."))
+        message(paste0("WARNING! No data for ID number ",ID_deleted_ofv," in the csv file \"",all.iofv.file,"\"."))
       }
     }
     all.iOFV_sim <- all.iOFV_sim[-deleted_rows,]

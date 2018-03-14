@@ -44,40 +44,57 @@ exit unless $res;
 my %help_text;
 
 $help_text{Pre_help_message} = <<'EOF';
-Parametric variability
+	Parametric variability.
 EOF
+
 $help_text{Description} = <<'EOF';
-Parametric variability is a tool that calculates how much of parameter variabilty that a model explains.
+
+	The pvar (parametric variability) tool calculates how much of parameter 
+	variabilty that a model explains (Hennig). For every parameter listed on 
+	the command line PsN will calculate the total variance, the explained 
+	variance and the unexplained variance. The resulting table can be found 
+	in the result.csv. The input models to pvar must have final parameter 
+	estimates.
 EOF
+
 $help_text{Options} = <<'EOF';
-Either a list of models with -models or an scmlog file is required.
-The -parameters option must also be used.
 
-The following options are valid:
+	Required arguments are either an scm log file or a list of model files 
+	and a list of parameters. If an scm log file is to be used the scm run 
+	cannot have been made with -clean=3 otherwise files needed for pvar 
+	will be deleted.
+
+	The following options are valid:
 EOF
+
 $help_text{Examples} = <<'EOF';
-pvar scmlog1.txt -parameters=CL,V
+	pvar scmlog1.txt -parameters=CL,V
 
-Check parametric variability of models generated in an scm run.
+	Check parametric variability of models generated in an scm run.
+	pvar -models run1.mod run2.mod -parameters=CL,V
+	Use specific models.
+EOF
 
-pvar -models run1.mod run2.mod -parameters=CL,V
-
-Use specific models
-EOF
-$help_text{-samples} = <<'EOF';
--samples
-      Number of simulated datasets to generate.
-      Default 100.
-EOF
-$help_text{-parameters} = <<'EOF';
--parameters
-      Comma separated list of parameter to investigate.
-			Mandatory.
-EOF
 $help_text{-models} = <<'EOF';
--models
-      Expect a list of models as command arguments instead of an scm logfile.
-			Optional.
+	-models
+
+	If this option is present on the command line a list of model files can be
+	passed as arguments instead of an scm logfile.
+	Example:
+	pvar -models run1.mod run2.mod -parameters=CL,V
+EOF
+
+$help_text{-parameters} = <<'EOF';
+	-parameters
+
+	A mandatory comma separated list of parameter to investigate.
+EOF
+
+$help_text{-samples} = <<'EOF';
+	-samples
+
+	Number of simulated datasets to generate.
+	Default 100.
 EOF
 
 common_options::online_help('pvar', \%options, \%help_text, \%required_options, \%optional_options);

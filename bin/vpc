@@ -66,8 +66,7 @@ my %optional_options = ( 'idv:s' => undef,
     'auto_bin:s' => undef,
     'min_points_in_bin:i' => undef,
     'so!' => undef,
-    'mix:s' => undef,
-    'mix_random!' => undef,
+    'mix!' => undef,
 );
 
 my $res = GetOptions( \%options,
@@ -88,444 +87,517 @@ if (defined $options{'msfo_file'}){
 my %help_text;
 
 $help_text{Pre_help_message} = <<'EOF';
-    Visual Predictive Check.
+	Visual Predictive Check.
 EOF
 
-$help_text{Description} = <<'EOF';
-    VPC – is a diagnostics tool. A set of simulated datasets are generated
-    using the model to be evaluated. Afterwards the real data observations
-    are compared with the distribution of the simulated observations.
-    By default no model estimation is performed.
+	$help_text{Description} = <<'EOF';
+
+	VPC - Visual Predictive Check - is a diagnostics tool. A set of simulated
+	datasets are generated using the model to be evaluated. Afterwards the
+	real data observations are compared with the distribution of the simulated
+	observations. By default no model estimation is ever performed. The input
+	to the NPC script is the model to be evaluated, the number of samples
+	(simulated datasets) to generate, parameter values options for the
+	simulations, and stratification options for the evaluation. It is also
+	possible to skip the simulation step entirely by giving two already created
+	tablefiles as input. The input to the VPC script is the input to NPC plus
+	an additional set of options. A large portion of the processing is
+	identical between the scripts.
 EOF
 
 $help_text{Examples} = <<'EOF';
-vpc  run32.mod -samples=500 -auto_bin=5 -rplots=1
-Run a vpc with 500 samples using 5 bins and output the plots.
+	vpc  run32.mod -samples=500 -auto_bin=5 -rplots=1
+
+	Run a vpc with 500 samples using 5 bins and output the plots.
 EOF
 
 $help_text{Options} = <<'EOF';
-A modelfile and -samples are mandatory.
+
+	A modelfile is required, unless option -sim_table and -orig_table are
+	both specified. The number of simulated datasets to generate is also
+	required, see -samples.
 
 The following options are valid:
 EOF
 
-$help_text{-samples} = <<'EOF';
-      -samples=number
+$help_text{-auto_bin} = <<'EOF';
+	-auto_bin=auto
+	-auto_bin=min,max
+	-auto_bin=N
+	-auto_bin=unique
 
-      Number of simulated datasets to generate, required.
-      Must be at least 20.
-EOF
+	Default is auto. Automatic binning. The parameter gives how to search for
+	the number of bins. Forbidden to use more than one of these combinations.
+	* "auto" means to try to estimate the number of bins needed automatically.
+	* min,max means to search for the number of bins between min and max,
+	e.g. -auto_bin=5,15 If stratification is used it is possible to use
+	different min and max values for the different stratas by specifying an
+	array here, e.g. -auto_bin=5,15:10,15 If only one pair is specified this
+	will be used for all stratas. * A single number forces binning into N
+	bins, e.g. -auto_bin=7 If stratification is used it is possible to use
+	a different bin count for different stratas by specifying an array here,
+	e.g. -auto_bin=5:10:3 If only one value is specified this will be used
+	for all stratas.* unique bins on unique values of the indpendent variable.
+	This option can be used in conjunction with the min_points_in_bin option
+	but not with any other binning options.
 
-$help_text{-idv} = <<'EOF';
-      -idv=VARIABLE
-
-      Name of independent variable, optional, default TIME.
-      The vpc will bin the observations based on the independent 
-      variable, either by an automatic search (default),
-      or according to selected binning options.
-EOF
-
-$help_text{-censor} = <<'EOF';
-      -censor=VARIABLE
-
-      Name of variable which defines whether DV or similar is missing, e.g. due to drop-out.
-      1 means the observation is censored, 0 means the observation is not censored.
-      The variable must be requestable in $TABLE.
-EOF
-
-$help_text{-irep} = <<'EOF';
-      -irep=VARIABLE
-
-      Name of variable holding the number of the current replication for simulation data, 
-	  obtained via IREP in NONMEM. This option is only used together with -sim_table,
-	  otherwise ignored.
-EOF
-
-$help_text{-bin_by_count} = <<'EOF';
-      -bin_by_count= 1 | 0
-
-      Decide whether binning should be done based on the number of 
-      observations (1) in each bin or the width of the binning interval (0).
-      Required unless only the independent variable is specified without any
-      binning options, then forbidden.
-EOF
-
-$help_text{-no_of_bins} = <<'EOF';
-      -no_of_bins=N
-
-      Number of bins of approximately equal size to create. Optional.
-      The number must be larger than 1.
-      If used, the option -bin_by_count is required, while all other
-      binning options are forbidden.
-EOF
-
-$help_text{-single_bin_size} = <<'EOF';
-      -single_bin_size=X
-
-      A scalar specifying the size of individual bins. The number 
-      either specifies the number of observations in each bin or 
-      the width of the binning interval, depending on whether the 
-      option -bin_by_count is 1 or 0. If used, the option 
-      -bin_by_count is required and -overlap_percent is optional,
-      while all other binning options are forbidden.
-EOF
-
-$help_text{-overlap_percent} = <<'EOF';
-      -overlap_percent=Y
-
-      An integer specifying the percent overlap between consecutive bins. 
-      If used, the options -bin_by_count and -single_bin_size are required,
-      while all other binning options are forbidden.
-EOF
-
-$help_text{-boxcox_lambda} = <<'EOF';
-      -boxcox_lambda=Y
-
-      Setting this variable indicates that data is Box-Cox transformed. 
-      Data will be transformed to normal scale for eventual prediction correction,
-      and retransformed to Box-Cox before analysis and output.
-      Option cannot be used with lnDV.
+	-auto_bin=auto   (default)
+	-auto_bin={number of bins} (recommended)
+	-auto\_bin={start_range},{stop_range}
+	-auto\_bin=unique
+	-bin\by\count=0 -bin_array={boundary1,boundary2,...}
+	-bin\by_count=1 -bin_array={count1,count2,...}
+	-bin\by_count=0 -no_of_bins=X
+	-bin\by_count=1 -no_of_bins=X
+	-bin\by_count=0 -single_bin_size=X -overlap=Y
+	-bin\by_count=1 -single_bin_size=X -overlap=Y
+	-bin\by_count=0 -single_bin_size=X
+	-bin\by_count=1 -single_bin_size=X
 EOF
 
 $help_text{-bin_array} = <<'EOF';
-      -bin_array=x1,x2,...
-      
-      A comma-separated list of either the number of observations in each
-      bin or the boundaries between bins, depending on whether the option 
-      -bin_by_count is 1 or 0. If binning is done by count, the list 
-      must contain at least 2 numbers, otherwise 1 number is enough.
-      If used, the option -bin_by_count is required, while all other
-      binning options are forbidden. If different values are wanted for
-      different stratas multiple arrays can be specified separated with
-      a colon, i.e. 1,2,3:4,5,6
+	-bin_array=x1,x2,...
+
+	A comma-separated list of either the number of observations in each	bin
+	or the boundaries between bins, depending on whether the option
+	-bin_by_count is 1 or 0. If binning is done by count, the list must
+	contain at least 2 numbers, otherwise 1 number is enough.If used, the
+	option -bin_by_count is required, while all other binning options are
+	forbidden. If different values are wanted for different stratas multiple
+	arrays can be specified separated with a colon, i.e. 1,2,3:4,5,6.
 EOF
 
-$help_text{-stratify_on} = <<'EOF';
-      -stratify_on=VARIABLE
+$help_text{-bin_by_count} = <<'EOF';
+	-bin_by_count= 1 | 0
 
-      Variable to stratify on. The variable must be independent, i.e. be
-      the same for all simulations of a particular observation.
-      The vpc will stratify the data on unique values of the specified
-      variable, and perform separate analyses on each set. Stratification 
-      may also be done on parameter defined in the model.
-      The stratification variable must be requestable in $TABLE.
-      -stratify_on may be a comma-separated list
-      of multiple variables, then the first variable will be used for
-	  stratification and the rest simply added to $TABLE.
+	Decide whether binning should be done based on the number of observations
+	(1) in each bin or the width of the binning interval (0). Required unless
+	only the independent variable is specified without any binning options,
+	then forbidden.
 EOF
 
-$help_text{-no_of_strata} = <<'EOF';
-      -no_of_strata=number
+$help_text{-boxcox_lambda} = <<'EOF';
+	-boxcox_lambda=X
 
-      Only allowed together with -stratify_on.
-      An integer requesting the number of strata.
-      The number must be equal to or less than the number of unique 
-      values of the stratification variable.
-      If the number is smaller than the number of unique values, the 
-      observations will be grouped so that the number of observations in
-      each group/strata is approximately equal.
+	Setting this variable indicates that data is Box-Cox transformed. Data
+	will be transformed to normal scale for eventual prediction correction,
+	and retransformed to Box-Cox before analysis and output. Option cannot
+	be used with lnDV. The transformation is (DV*lambda+1)**(1/lambda) for
+	Box-Cox to normal, and (DV**lambda-1)/lambda for normal to Box-Cox.
 EOF
 
-$help_text{-refstrat} = <<'EOF';
-      -refstrat=number
-
-      Only allowed together with -stratify_on.
-      Illegal together with -no_of_strata.
-      A number indicating the value of the stratification variable in the 
-      reference stratum used when computing delta-means.
-EOF
-
-$help_text{-fine_pi} = <<'EOF';
-      -fine_pi
-
-      Compute a finer grid of prediction intervals. If fine_pi is not set, the set of
-      prediction intervals is 0,40,80,90 and 95 percent. If fine_pi is set, the set of
-      intervals is 0,10,20,30,40,50,60,70,80,90 and 95 percent.
+$help_text{-censor} = <<'EOF';
+	-censor=VARIABLE
+	
+	Default not set. Name of variable which defines whether the observation
+	of the dependent variable is missing, e.g. due to drop-out. 1 means the
+	observation is censored, 0 means the observation is not censored. The
+	variable must be requestable in $TABLE. This option is not applicable
+	for time-to-event data, please read the section 'VPC for time-to-event
+	models'. This option should not be used for observations that are above
+	or below the level of quantification, then options \mbox{-lloq} and
+	-uloq should be used in combination with a special simulation model and,
+	possibly, a modified input data set, see section Handling BQL data.
 EOF
 
 $help_text{-confidence_interval} = <<'EOF';
-      -confidence_interval=number
+	-confidence_interval=number
 
-      An integer between 1 and 99 specifying the confidence interval in percent.
-      Default is 95.
+	Default is 95. An integer between 1 and 99 specifying the confidence
+	interval in percent.
 EOF
 
 $help_text{-copy_data} = <<'EOF';
-    -copy_data
-    Set by default. Disable with -no-copy_data. By default PsN will copy
-    the data file into NM_run1 and set a local path in psn.mod, the actual
-    model file run with NONMEM. If -no-copy_data is set, PsN will not copy 
-    the data to NM_run1 but instead set a global path to the data file in
-    psn.mod. However, NONMEM does not allow the global path to be longer 
-	than 80 characters.
-EOF
+	-copy_data
 
-$help_text{-lst_file} = <<'EOF';
-      -lst_file=file
-
-      The vpc will update initial parameter estimates in the model to
-      the final values in the lst file. Optional parameter.
-      Cannot be used together with -msfo_file option nor with a model
-      containing a $NONPARAMETRIC record.
-EOF
-
-$help_text{-msfo_file} = <<'EOF';
-      -msfo_file=file
-
-      The vpc will use the NONMEM state defined in the update file.
-      Cannot be used together with -lst_file option.
-      If the modelfile contains a $NONPARAMETRIC record this parameter
-      is required, otherwise it is optional.
-EOF
-
-$help_text{-mirrors} = <<'EOF';
-      -mirrors=N
-
-      Generate output data for N mirror plots.
+	Default set. Disable with -no-copy_data. By default, PsN will copy the
+	datafile into NM_run1 and set a local path in psn.mod, the actual modelfile
+	run with NONMEM. If -no-copy_data is set, PsN will not copy the data to
+	NM_run1 and instead set the absolute path in $DATA in psn.mod. However,
+	the absolute path must not be too long, since NONMEM will not accept more
+	than 80 characters for the filename in $DATA.
 EOF
 
 $help_text{-dv} = <<'EOF';
-      -dv=VARIABLE
+	-dv=VARIABLE
 
-      Name of dependent variable. Default is DV.
-      Case sensitive, must be exactly the same case and spelling as in modelfile.
-      Maximum of 4 letters because of NONMEM limitation, unless either IPRED or IWRES.
+	Default is DV. If a synonym for DV is set in \mbox{$INPUT}, the synonym
+	must be set as the dependent variable on the commandline, -dv=$<$synonym$>$.
+	Case sensitive, must be exactly the same case and spelling as in modelfile.
+	Maximum of 4 letters because of NONMEM limitation, unless either IPRED or
+	IWRES.
 EOF
+$help_text{-fine_pi} = <<'EOF';
+	-fine_pi
 
-$help_text{-sim_table} = <<'EOF';
-      -sim_table=file
-
-      Use an already created tablefile with simulated data,
-      instead of letting the program run the simulations.
-      This option can only be used together with -orig_table.
-EOF
-
-$help_text{-tte} = <<'EOF';
-      -tte=VARIABLE
-
-      Assume a time-to-event type model. PsN will add the tte-variable to $TABLE
-      of the simulation model (not the original data model), and format the output
-      differently compared to a regular vpc. The value in the tte-columns should
-      be equal to 0 if there was not an event, and non-zero otherwise. 
-      Check npc_vpc_userguide.pdf for details.
-EOF
-
-$help_text{-sim_model} = <<'EOF';
-      -sim_model=file
-
-      Use a separate input model for the simulations. 
-      See the userguide for details.
+	Default not set. Compute a finer grid of prediction intervals. If fine_pi
+	is not set, the set of prediction intervals is 0,40,80,90 and 95 percent.
+	If fine_pi is set, the set of intervals is 0,10,20,30,40,50,60,70,80,90
+	and 95 percent.
 EOF
 
 $help_text{-flip_comments} = <<'EOF';
-      -flip_comments
+	-flip_comments
 
-      Method for handling user-defined simulation code in the model. If this option is set,
-      PsN will create the simulation model by flipping comments (commented lines will be
-      uncommented and vice versa) between the tags 
-      ;Sim_start 
-      and 
-      ;Sim_end
-      Note that the
-      tags must look exactly like that or the editing will fail. After creating
-      the simulation model PsN will remove $COV and $TABLE, change SEED, NSUBS 
-      and MAXEVAL in $SIM, and add a new $TABLE, but otherwise no changes will be made.
-      See the userguide for details.
+	By default PsN will create a simulation model based on the required input
+	model, but option -flip_comments invokes a method for handling user-defined
+	simulation code in the required input model. If option is set, PsN will
+	create the simulation model by flipping comments (commented lines will
+	be uncommented and vice versa) between the tags. Cannot be used together
+	with -sim_model, -keep_estimation or -noprediction.
+	;Sim_start
+	and 
+	;Sim_end
+	For example, if the required input model has the lines
+	;Sim_start 
+	IGNORE(TYPE.EQ.1)
+	;ACCEPT(TYPE.EQ.1) 
+	;Sim_end
+	then the MAXEVAL=0 model will be run as such and the simulation model
+	will instead have lines
+
+	;IGNORE(TYPE.EQ.1)
+	ACCEPT(TYPE.EQ.1) 
+
+	The tags may appear multiple times. Note that the tags must look exactly
+	as above or the editing will fail. When creating the simulation model
+	PsN will remove $COV and $TABLE, change SEED and NSUBS in $SIM, add a
+	new $TABLE and  update initial estimates if option -lst_file is set or
+	add $MSFI if option -msfo_file is used, but otherwise no changes will be
+	made to the code. See section Modified models.
 EOF
 
-$help_text{-orig_table} = <<'EOF';
-      -orig_table=file
+$help_text{-idv} = <<'EOF';
+	-idv=VARIABLE
 
-      Use an already created tablefile with original data,
-      instead of letting the program create it.
-      This option can only be used together with -sim_table.
-EOF
-
-$help_text{-levels} = <<'EOF';
-      -levels=level1,level2,...
-      
-      A comma-separated list of the boundaries for a categorization.
-      First category <= level1 < second category <= level2 etc.
-EOF
-
-$help_text{-lloq} = <<'EOF';
-      -lloq=number
-      
-      Lower Limit Of Quantification for left censored data.
-      See the userguide for details.
-EOF
-
-$help_text{-uloq} = <<'EOF';
-      -uloq=number
-      
-      Upper Limit Of Quantification for right censored data.
-      See the userguide for details.
-EOF
-
-$help_text{-keep_estimation} = <<'EOF';
-      -keep_estimation
-      
-      Perform post-hoc evalutaion step for each simulated dataset,
-      i.e. keep the $ESTIMATION record and set MAXEVALS to 0. In this case
-      variables such as IPRED(F) are based on the re-estimated post-hoc 
-      parameters.      
-EOF
-
-$help_text{-rawres_input} = <<'EOF';
-      -rawres_input=filename
-
-      A simple way to simulate with uncertainty. Note that it is normally not 
-      appropriate to do this in a vpc or npc. Instead of using identical parameter 
-      estimates for simulation of each new dataset, take parameter estimates from a 
-      raw_results.csv file, e.g. from a bootstrap run. The raw results file must 
-      contain at least as many samples as the input -samples to vpc, the labels for 
-      THETA/OMEGA/SIGMA in the file must match the labels in the (simulation) model 
-      given as input to vpc, the theta columns must be directly followed by the omega 
-      columns which must be directly followed by the sigma columns, and the first 
-      column must have header model just as a bootstrap raw_results file. Note that 
-      is is possible to generate a file with initial parameter estimates outside of 
-      PsN, as long as the file follows the format rules.
-EOF
-
-$help_text{-offset_rawres} = <<'EOF';
-      -offset_rawres=N
-
-      Only relevant in combination with rawres_input. Default 1.
-      The number of result lines to skip in the input raw results file
-      before starting to read final parameter estimates. In a regular
-      bootstrap raw_results file the first line of estimates refers to the
-      input model with the full dataset, so therefore the default offset is 1.
+	Default is TIME, the independent variable to bin on. Specific for VPC.
+	(old  option was -bin_on, without default value) 
 EOF
 
 $help_text{-in_filter} = <<'EOF';
-      -in_filter=comma-separated list of conditions
+	-in_filter=comma-separated list of conditions
 
-      Only relevant in combination with rawres_input. Default not used.
-      The parameter estimates lines in the file can be filtered on values 
-      in the different columns. When specifying which column(s) the filtering 
-      should be based on, the exact column name must be used, 
-      e.g. minimization_successful. Filtering can only be based on columns 
-      with numeric values. The allowed relations are .gt. (greater than), 
-      .lt. (less than) and .eq. (equal to). Conditions are separated with commas. 
-      If the remaining number of lines after filtering is smaller than -samples, 
-      the program will stop with an error message. Then the user must either change the 
-      filtering rules or change -samples. If the user has created a file with 
-      parameter estimates outside of PsN, filtering can be done on any numeric 
-      column in that file. Do not set column headers containing .eq. or .lt. 
-      or .gt.in the user-generated file as this would interfere with the in_filter 
-      option syntax.
-    
-      Example: -in_filter=minimization_successful.eq.1,significant_digits.gt.3.5
+	Default not set. Only relevant in combination with -rawres_input. The
+	parameter estimates lines in the file can be filtered on values in the
+	different columns. When specifying which column(s) the filtering should
+	be based on, the exact column name must be used, e.g. minimization_successful.
+	Filtering can only be based on columns with numeric values. The allowed
+	relations are .gt. (greater than), .lt. (less than) and .eq. (equal to).
+	If the value in the filter column is 'NA' then that parameter set will be
+	skipped, regardless of the defined filter relation. Conditions are
+	separated with commas. If the remaining number of lines after filtering
+	is smaller than -samples, the program will stop with an error message.
+	Then the user must either change the filtering rules or change -samples.
+	If the user has created a file with parameter estimates outside of PsN,
+	filtering can be done on any numeric column in that file. Do not set
+	column headers containing .eq. or .lt. or .gt.in the user-generated file
+	as this would interfere with the in_filter option syntax.
+	Example:
+	-in_filter=minimization_successful.eq.1,significant_digits.gt.3.5
 EOF
 
-$help_text{-noprediction} = <<'EOF';
-      -noprediction
-      
-      Add NOPREDICTION to the $SIMULATION record of the simulation model
-      in addition to ONLYSIMULATION. This option is generally recommended
-      with likelihood models for odd type data.
+$help_text{-irep} = <<'EOF';
+	-irep=VARIABLE
+
+	When both -orig_table and -sim_table are used, option -irep may be used
+	to give the header of the -sim_table column that contains the number of
+	the current simulation replication, variable IREP in NONMEM. This option
+	should only be used when -sim_table has a single header at the beginning
+	of the file, not when -sim_table has one header per simulated dataset.
+When -sim_table and -orig_table are not used, this option will cause PsN to
+add the given variable to the simulated table, which requires the user to
+have defined it in the input (simulation) model, but the variable will be
+ignored in the analysis.
 EOF
 
-$help_text{-predcorr} = <<'EOF';
-      -predcorr
-      
-      Perform prediction correction on dependent variable values before computing vpc results.
-      If option -varcorr is used simultaneously, prediction correction is performed first.
-      See userguide for details.
+$help_text{-keep_estimation} = <<'EOF';
+	-keep_estimation
+
+	Default not set. If this option is set, a post-hoc evaluation step is
+	performed for each simulated dataset (\mbox{$ESTIMATION} is kept and
+	MAXEVALS is set to 0). Note that in this case variables such as IPRED(F)
+	are based on the re-estimated post-hoc parameters. Also note that in
+	earlier program versions keep_estimation was set or unset automatically.
+EOF
+
+$help_text{-levels} = <<'EOF';
+	-levels=level1,level2,...
+ 
+	The boundaries for a categorization. Category 1 $leq$ number1 $<$ category
+	2 $leq$ number2, etc. Specific for VPC. 
+EOF
+
+$help_text{-lloq} = <<'EOF';
+	-lloq=number
+
+	The lower limit of quantification for left censored data. Specific for
+	VPC. 
 EOF
 
 $help_text{-lnDV} = <<'EOF';
-      -lnDV=0, 1 or 2
-      
-      lnDV=0 is the default. PsN will not exponentiate DV values. If option -predcorr is used,
-             PsN will assume that values are on the normal scale.
-      lnDV=1 PsN exponentiates all DV values (and PRED values if these are needed)
-             before analysis (but after prediction/variability correction).
-      lnDV=2 is only allowed together with option -predcorr. PsN will assume DV and PRED are 
-             log-transformed but will not exponentiate.
-      lnDV=3 PsN log transforms all DV values (and PRED values if these are needed)
-             before analysis (and before prediction/variability correction).
+	-lnDV=0, 1, 2 or 3
+	
+	Default 0. Mainly for use with -predcorr. lnDV=0 or 1 or 3 may be used
+	without setting -predcorr, but -lnDV=2 is only allowed together with
+	predcorr. Variable to indicate if the dependent variable is log-transformed
+	(ln(DV)) or not and how that should be handled. lnDV=0 Default. No
+	exponentiation of DV will be performed. When used in combination with
+	-predcorr -lnDV=0 indicates that DV is untransformed. lnDV=1 DV and PRED
+	values will be exponentiated. Indicates log-transformed DV and that VPC
+	results should be presented on normal scale. May be used without setting
+	-predcorr. lnDV=2 Only allowed in combination with -predcorr. Indicates
+	log-transformed DV that should be maintained. lnDV=3 DV and PRED values
+	will be log-transformed. May be used without setting \mbox{-predcorr}.
 EOF
 
 $help_text{-lower_bound} = <<'EOF';
-      -lower_bound=number or variable
-      
-      Only allowed together with option -predcorr, and when lnDV= 0 or 1. Value can be either
-      a number or an independent variable present in $INPUT or defined in the modelfile.
-      See userguide for details.
+	-lower_bound=number or variable
+
+	Only allowed together with option -predcorr, and when lnDV= 0 or 1. Value
+	can be either	a number or an independent variable present in $INPUT or
+	defined in the modelfile.
 EOF
 
-$help_text{-varcorr} = <<'EOF';
-      -varcorr
-      
-      Perform variability correction on dependent variable values before computing vpc results.
-      If option -predcorr is used simultaneously, prediction correction is performed first.
-      See userguide for details.
-EOF
+$help_text{-lst_file} = <<'EOF';
+	-lst_file=file
 
-$help_text{-n_simulation_models} = <<'EOF';
-      -n_simulation_models=N
-
-      Default 1, which means all simulations are run in the same modelfile.
-      By setting this option to a number N greater than 1, the 'samples' simulations
-      will be split equally between N model files, which can be run in parallel.
-      This option cannot be used together with option -sim_table or, if 
-      the NONMEM version < 7, together with -dv=CWRES.
-EOF
-
-$help_text{-auto_bin} = <<'EOF';
-      -auto_bin=auto
-      -auto_bin=min,max
-      -auto_bin=N
-      -auto_bin=unique
-
-      Automatic binning. The parameter gives how to search for the number of bins.
-      * "auto" means to try to estimate the number of bins needed automatically.
-      * min,max means to search for the number of bins between min and max, e.g. -auto_bin=5,15
-        If stratification is used it is possible to use different min and max values for the
-        different stratas by specifying an array here, e.g. -auto_bin=5,15:10,15
-        If only one pair is specified this will be used for all stratas.
-      * A single number forces binning into N bins, e.g. -auto_bin=7
-        If stratification is used it is possible to use a different bin count for different
-        stratas by specifying an array here, e.g. -auto_bin=5:10:3
-        If only one value is specified this will be used for all stratas.
-      * unique bins on unique values of the indpendent variable.
-      Default is auto.
-      This option can be used in conjunction with the min_points_in_bin option but not
-      with any other binning options.
+	Not allowed together with -msfo_file. Use final parameter estimates from
+	this lst-file for the simulation. By default PsN will look for a file with
+	the same name as the regular input model, or the simulation model if option
+	-sim_model is used, but with suffix .lst instead of .mod. If such a file
+	is found then option -lst_file=$<$modelfile$>$.lst is set automatically.
+	VPC does not perform estimation. 
 EOF
 
 $help_text{-min_points_in_bin} = <<'EOF';
-      -min_points_in_bin=N
+	-min_points_in_bin=N
 
-      Sets a constraint on the minimum allowed number of points in a bin when using
-      autobinning. This option cannot be used in conjunction with any other binning
-		options.
+	Default is 10. Used only if -auto_bin (except -auto_bin=unique) is selected.
+	Set to disallow bins of size smaller than N. This option cannot be used in
+	conjunction with any other binning options.
 EOF
 
-$help_text{-so} = <<'EOF';
-      -so
+$help_text{-mirrors} = <<'EOF';
+	-mirrors=number
 
-      Default not selected. Create a standard output xml file
-      containing the original table and the simulated tables
+	The number of mirror plot data sets to produce. Specific VPC.	
 EOF
 
 $help_text{-mix} = <<'EOF';
-      -mix=VARIABLE
+	-mix
 
-      Set a variable to be used for MIXEST in mixture models.
-      Easiest is to set 'MIXOUT=MIXEST' in abbreviated code
-      and use -mix=MIXOUT. Note that MIXEST cannot directly
-      be addressed from a $TABLE. When using -mix the vpc
-      will quit before doing the postprocessing.
+	Set to perform a mixture vpc.
 EOF
 
-$help_text{-mix_random} = <<'EOF';
-    -mix_random
+$help_text{-msfo_file} = <<'EOF';
+	-msfo_file=filename
 
-    Option to randomize the subpopulation for each individual
-    from the estimated probabilities of each subpopulation
-    given by the phm-file.
+	If the model has a $NONP record then an msfo-file is required, otherwise
+	optional. Use final parameter estimates from msfo-file instead of initial
+	estimates from modelfile when simulating. VPC does not perform estimation.
+EOF
+
+$help_text{-n_simulation_models} = <<'EOF';
+	-n_simulation_models=number
+
+	Default is 1 which means all simulations are run in the same modelfile.
+	By setting this option to a number N greater than 1, the 'samples'
+	simulations will be split equally between N model files, which can be run
+	in parallel. This option cannot be used together with option
+	\mbox{-sim_table} or, if the NONMEM version $<$ 7, together with -dv=CWRES. 
+	Important: Two runs will give different results if -n_simulation_models
+	are set to different numbers even if the -seed option is the same. This
+	is because the random number generator of NONMEM will change state when
+	reading the seed from the $SIM record from a new simulation modelfile.
+	This state change does not occur when NONMEM simply continues simulating
+	from the same modelfile.
+EOF
+
+$help_text{-no_of_bins} = <<'EOF';
+	-no_of_bins=number
+
+	Number of bins of approximately equal size to create. The number must be
+	larger than 1. If used, the option -bin_by_count is required, while all
+	other binning options are forbidden.
+EOF
+
+$help_text{-no_of_strata} = <<'EOF';
+	-no_of_strata=number
+
+	Only allowed together with -stratify_on. An integer requesting the number
+	of strata. The number must be equal to or less than the number of unique
+	values of the stratification variable. If the number is smaller than the
+	number of unique values, the observations will be grouped so that the
+	number of observations in each group/strata is approximately equal.
+EOF
+
+$help_text{-noprediction} = <<'EOF';
+	-noprediction
+ 
+	Default not set. If set, NOPREDICTION will be added to the $SIMULATION
+	record of the simulation model, in addition to ONLYSIMULATION. This
+	option is generally recommended with likelihood models for odd type data
+	(i.e. -2LOGLIKELIHOOD or LIKELIHOOD in $ESTIMATION). It is not allowed
+	to use -noprediction in combination with the option \mbox{-keep_estimation}. 
+EOF
+
+$help_text{-offset_rawres} = <<'EOF';
+	-offset_rawres=number
+
+	Default 1. Only relevant in combination with -rawres_input. The number
+	of result lines to skip in the input raw results file before starting to
+	read final parameter estimates. In a regular bootstrap raw_results file
+	the first line of estimates refers to the input model with the full
+	dataset, so therefore the default offset is 1.
+EOF
+
+$help_text{-orig_table} = <<'EOF';
+	-orig_table=filename
+
+	Give tablefile with original data as input directly instead of letting
+	the program generate them.The file must have a header, the first column
+	must be ID and the file must be space separated. This option can only
+	be used together with -sim_table.
+EOF
+
+$help_text{-overlap_percent} = <<'EOF';
+	-overlap_percent=Y
+
+	An integer specifying the percent overlap between consecutive bins. If
+	used, the options -bin_by_count and -single_bin_size are required, while
+	all other binning options are forbidden.
+EOF
+
+$help_text{-predcorr} = <<'EOF';
+	-predcorr
+
+	Perform prediction correction of dependent variable values. Specific for
+	VPC. If the dependent variable is log transformed or has a lower bound
+	not equal to 0 it can be important to specify the optional variables
+	-lnDV and lower_bound. The predcorr feature will not work well if there
+	is an upper bound, e.g. when the dependent variable is logit transformed.
+EOF
+
+$help_text{-rawres_input} = <<'EOF';
+	-rawres_input=filename
+
+	A simple way to simulate with uncertainty. Instead of using identical
+	parameter estimates for simulation of each new dataset, take parameter
+	estimates from a raw_results.csv file, e.g. from a bootstrap run or the
+	intial_estimates.csv file from a previous sse run with $PRIOR in the
+	simulation model. The raw results file must be comma-separated and
+	contain at least as many samples as the input -samples to sse, the
+	labels for THETA/OMEGA/SIGMA in the file must match the labels in the
+	simulation model given as input to sse, the theta columns must be
+	directly followed by the omega columns which must be directly followed
+	by the sigma columns, and the column header must be model either in the
+	first column just as in a bootstrap raw_results file or in the second
+	or third column as in a sse raw_results file. If a column header contains
+	a comma, e.g. OMEGA(2,2), then that header must be enclosed in double
+	quotes. This is done automatically in PsN raw results files. Note that
+	it is possible to generate a file with initial parameter estimates
+	outside of PsN, as long as the file follows the format rules.
+EOF
+
+$help_text{-refstrat} = <<'EOF';
+	-refstrat=number
+
+	Only allowed together with -stratify_on. Not allowed together with
+	-no_of_strata. A number indicating the value of the stratification variable
+	in the reference stratum used when computing delta-means.
+EOF
+
+$help_text{-samples} = <<'EOF';
+	-samples=number
+
+	The number of simulated datasets to generate is required. 20 is the
+	minimum accepted value.
+EOF
+
+$help_text{-sim_model} = <<'EOF';
+	-sim_model=filename
+
+	Cannot be used together with -flip_comments, \mbox{-keep_estimation} or
+	-noprediction. By default PsN will create a simulation model based on the
+	required input model, but by using option -sim_model it is possible to
+	use a separate input model for the simulations. PsN will remove $COV and
+	\mbox{$TABLE}, change SEED and NSUBS in $SIM, add a new \mbox{$TABLE}
+	and  update initial estimates if option -lst_file is set or add $MSFI
+	if option -msfo_file is used, but otherwise no changes will be made to
+	the user defined simulation model. See section Modified models. Note that
+	-lst_file will be set automatically if a file with the same name as the
+	regular input model but with suffix lst intead of mod is found.
+EOF
+
+$help_text{-sim_table} = <<'EOF';
+	-sim_table=filename or comma-separated list of filenames
+
+	Only allowed when -orig_table is also used. Give file(s) with simulated
+	data as input directly instead of letting the program generate them.
+	The file must have a header, the first column must be ID and the file
+	must be space separated. Either each simulation dataset must have a new
+	header, as when the file is generated with $TABLE in NONMEM with NSUBS>0,
+	or option -irep must be used.
+EOF
+
+$help_text{-single_bin_size} = <<'EOF';
+	-single_bin_size=X
+
+	A scalar specifying the size of individual bins. The number either
+	specifies the number of observations in each bin or the width of the
+	binning interval, depending on whether the option -bin_by_count is 1 or 0.
+	If used, the option -bin_by_count is required and -overlap_percent is
+	optional, while all other binning options are forbidden.
+EOF
+
+$help_text{-so} = <<'EOF';
+	-so
+
+	Default not set. Create a standard output xml file containing the original
+	table and the simulated tables.
+EOF
+
+$help_text{-stratify_on} = <<'EOF';
+	-stratify_on=VARIABLE
+
+	Variable to stratify on. The variable must be independent, i.e. be the
+	same for all simulations of a particular observation. VPC will stratify
+	the data on unique values of the specified variable, and perform separate
+	analyses on each set. Stratification may also be done on parameter
+	defined in the model. The stratification variable must be requestable
+	in $TABLE. -stratify_on may be a comma-separated list of multiple
+	variables, then the first variable will be used for stratification
+	and the rest simply added to $TABLE. Note that is is not possible to
+	stratify on a variable that differs between simulations. 
+EOF
+
+$help_text{-tte} = <<'EOF';
+	-tte=VARIABLE
+
+	An optional argument, but it is required to assume (repeated) time-to-event
+	type models. Cannot be used together with option -mirror, -censor,
+	-predcorr, -varcorr,  -lnDV, -uloq, -lloq or -boxcox_lambda. The tte-
+	variable needs to be defined in the simulation model and must take the
+	value 0 if the observation is not an event and non-zero if it is an event
+	(including events and censored events). PsN will add the tte-variable to
+	\mbox{$TABLE} of the simulation model (not the original data model). PsN
+	will format the output differently compared to a regular vpc, to
+	specifically suit the kaplan.plot functionality in Xpose (e.g. filtering
+	of simulation output based on tte-variable). 
+EOF
+
+$help_text{-uloq} = <<'EOF';
+	-uloq=number
+
+	The upper limit of quantification for right censored data. Specific for VPC. 
+EOF
+
+$help_text{-varcorr} = <<'EOF';
+	-varcorr
+
+	Perform variability correction on dependent variable values before computing
+	vpc results. If option -predcorr is used simultaneously, prediction correction
+	is performed first.
 EOF
 
 common_options::online_help( 'vpc', \%options, \%help_text, \%required_options, \%optional_options);
@@ -628,7 +700,6 @@ my $vpc =
 	  min_points_in_bin	 => $options{'min_points_in_bin'},
 	  directory_name_prefix => 'vpc',
       mix 				 => $options{'mix'},
-      mix_random         => $options{'mix_random'},
 	  );
 
 $vpc-> print_options (cmd_line => $cmd_line,

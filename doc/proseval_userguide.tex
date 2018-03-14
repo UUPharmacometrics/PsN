@@ -1,17 +1,17 @@
 \input{inputs/format_header.tex}
-\guidetitle{PROSEVAL user guide}{2016-08-31}
-
+\guidetitle{PROSEVAL user guide}{2018-03-02}
+\usepackage{hyperref}
 \newcommand{\guidetoolname}{proseval}
 
 \begin{document}
 
 \maketitle
-
+\tableofcontents
+\newpage
 
 \section{Introduction}
-Prospective evaluation is a tool that runs successive evaluations on a model each with an increased number of observations per individual.
-
-Examples
+The proseval (prospective evaluation) tool runs successive evaluations on a model, each with an increased number of observations per individual.\\
+Example:
 \begin{verbatim}
 proseval run28.mod
 \end{verbatim}
@@ -19,7 +19,7 @@ proseval run28.mod
 \section{Input and options}
 
 \subsection{Required input}
-A model file
+A model file is required on the command line.
 
 The first table of the modelfile should include ID, EVID, TIME and all interesting columns. These columns will be used to
 construct the result table.
@@ -33,24 +33,21 @@ construct the result table.
 %If this option is present on the command line a list of model files can be passed as arguments instead of an scm logfile. For example \verb|pvar -models run1.mod run2.mod -parameters=CL,V|
 %\end{optionlist}
 
-\section{Result}
-
-The result.csv contains these columns: ID, TIME, EVID, IPRED, WRES, IWRES and OBS where
-OBS is the number of observations that was used for evaluating that line in the results.
-
 \section{Description}
-
-Proseval creates a number of new data sets for which the EVID columns have been altered according to the following:
+The proseval tool creates a number of new data sets for which the EVID columns have been altered according to the following:
 
 \begin{enumerate}
     \item Start with $n=1$
     \item Keep $n$ observations for each individual and ignore the rest. I.e. keep the $n$ first EVID=0 and change the rest to EVID=2 for each individual. Don't change any values of EVID that was non-zero in the original data set.
-    \item Increase $n$
+    \item Increase $n$.
     \item Repeat if some individual had observations ignored from the last iteration.
 \end{enumerate}
 
 Evaluation runs for all data sets are performed and a result table is gathered (see Result).
 
+\section{Result}
+
+The result.csv contains these columns: ID, TIME, EVID, IPRED, WRES, IWRES and OBS where OBS is the number of observations that was used for evaluating that line in the results.
 %\references
 
 \end{document}

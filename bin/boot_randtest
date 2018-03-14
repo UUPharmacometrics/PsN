@@ -1,0 +1,244 @@
+#!/usr/bin/perl
+
+use FindBin qw($Bin);
+use lib "$Bin/../lib";
+
+# Don't edit the line below, it must look exactly like this.
+# Everything above this line will be replaced #
+
+use PsN;
+use strict;
+use ui;
+use Getopt::Long;
+use common_options;
+# More PsN dependencies included with require further down
+
+my $cmd_line = $0 . " " . join( " ", @ARGV );
+
+## Configure the command line parsing
+Getopt::Long::config("auto_abbrev");
+
+## Declare the options
+my %options;
+
+my %required_options = ();
+
+my %optional_options = (
+    "samples:i" => '',
+    "base_model:s"=>'',
+    "stratify_on:s"=>'',
+    "update_inits!"=>'',
+    "full_model_inits!"=>'',
+    "match_transitions!"=>'',
+    "copy_data!"=>'',
+    "sample_size:s" => undef,
+    "random_column:s" => undef,
+    "summarize!" => undef,
+    "replacement!" => undef,
+);
+
+my $res = GetOptions( \%options, 
+    @common_options::get_opt_strings,
+    keys(%required_options),
+    keys(%optional_options) );
+
+exit unless $res;
+
+
+
+my %help_text;
+$help_text{Pre_help_message} = <<'EOF';  
+	Perform multiple randomization over bootstrapped datasets.
+EOF
+
+$help_text{Description} = <<'EOF';
+EOF
+
+$help_text{Examples} = <<'EOF';
+	boot_randtest -samples=1000 -stratify_on=DOSE run89.mod -base_model=run0.mod
+EOF
+
+$help_text{Options} = <<'EOF';
+	A model file is required as argument, and options -samples and -stratify_on
+	are also required. 
+
+	The following options are valid:
+EOF
+
+$help_text{-base_model} = <<'EOF'; 
+	-base_model
+
+	Run the original data set with this model, to use as reference when computing
+	delta-ofv.
+	This option is required if not using -summarize.
+EOF
+$help_text{-samples} = <<'EOF';      
+	-samples
+
+	The number of randomized datasets to generate.
+	This option is required if not using -summarize.
+EOF
+$help_text{-sample_size} = <<'EOF';
+	-sample_size
+
+	The number of subjects in each bootstrap data set. The default value is set
+	to the number of individuals in the original data set.
+	When the resampling is stratified, the sample_size option can be used to 
+	specify the exact number of samples that should be drawn from each strata.
+	Below follows an example of the syntax that should be used in such a case.
+	Stratification is here done based on the study number, STUD, with the 
+	values 1001, 1002 and 1003.
+	-sample_size='1001=>12,1002=>24,1003=>10'
+	Note the double quotes, single quotes will not work on Windows. This example
+	specifies that the bootstrap should use 12 samples from study 1001, 24 samples
+	from 1002 and 10 from study 1003.
+	If only one sample size is used together with stratified resampling (the 
+	default case; sample_size=number of individuals in the data set), the
+	strata are assigned samples in proportion to their size in the data set.
+	Please note that this usage of the sample_size option does not guarantee
+	that the sum of the samples of the strata is equal to the given sample_size
+	since  PsN needs to round the figures to the closest integer. For a sample 
+	size equal to the number of individuals in the data set, the sum will however
+	always be correct.
+EOF
+
+$help_text{-stratify_on} = <<'EOF';
+	-stratify_on=integer|string
+
+	It may be necessary to use stratification in the randomization procedure.
+	For example, if the original data consists of two groups of patients - say
+	10 patients with full pharmacokinetic profiles and 90 patients with sparse
+	steady state concentration measurements - it may be wise to restrict the
+	randomization procedure to shuffle within the two groups.
+EOF
+
+$help_text{-random_column} = <<'EOF';
+	-random_column=col
+
+	Replace the given column with a new generated random column to do the
+	randomization on the new column will have the values 0 or 1 distributed
+	randomly (50-50) over the IDs.
+EOF
+
+$help_text{-summarize} = <<'EOF';
+	-summarize
+
+	Default off. Only gather the results and create the results tables.
+EOF
+
+$help_text{-replacement} = <<'EOF';
+	-replacement
+
+	Default is no replacement. Used when the bootstrapping is to be done with
+	replacement.
+EOF
+
+common_options::online_help('boot_randtest', \%options, \%help_text, \%required_options, \%optional_options);
+common_options::setup(\%options, 'boot_randtest'); #calls set_globals etc, initiates random sequence
+
+
+if (scalar(@ARGV) > 1) {
+  print "boot_randtest can only handle one modelfile. Use 'boot_randtest -h' for help.\n";
+  exit;
+}
+
+if (not $options{'summarize'}) {
+    if (scalar(@ARGV) < 1) {
+        print "A model file must be specified. Use 'boot_randtest -h' for help.\n";
+        exit;
+    }
+    if (not defined $options{'samples'}) {
+        print "boot_randtest: The samples option is required";
+        exit;
+    }
+    if (not defined $options{'base_model'}) {
+        print "boot_randtest: The base_model option is required";
+        exit;
+    }
+}
+
+require model;
+require tool::boot_randtest;
+
+my $eval_string = common_options::model_parameters(\%options);
+
+my $rand;
+if (not defined $options{'summarize'}) {
+    my $model = model->new(eval($eval_string), filename => @ARGV[0], ignore_missing_output_files => 1);
+
+    unless (defined $options{'copy_data'} and (not $options{'copy_data'})) {
+        $options{'copy_data'} = 1;
+    }
+
+    if (not $model->is_run) {
+        #we will only run this model if not done already, path length matters only if we run
+        unless ($model->copy_data_setting_ok(copy_data => $options{'copy_data'})){
+            die("Cannot set -no-copy_data, absolute data file path is too long.");
+        } 
+        if (defined $options{'copy_data'} and (not $options{'copy_data'})){
+            $model->relative_data_path(0);
+        }
+    }
+
+
+    my $base_model;
+    if (defined $options{'base_model'}) {
+        $base_model = model->new( eval( $eval_string ),
+            filename => $options{'base_model'},
+            ignore_missing_output_files => 1);
+        unless ($base_model -> is_run) {
+            unless ($base_model->copy_data_setting_ok(copy_data => $options{'copy_data'})){
+                die("Cannot set -no-copy_data, absolute data file path is too long.");
+            } 
+            if (defined $options{'copy_data'} and (not $options{'copy_data'})){
+                $base_model->relative_data_path(0);
+            }
+        }
+    }
+
+    my $subj_hash ={};
+    if (defined $options{'sample_size'}) {
+        $options{'sample_size'} = 'default=>'.$options{'sample_size'} if( $options{'sample_size'} =~ /^\d+$/ );
+        %{$subj_hash} = eval($options{'sample_size'});
+        if ($@) {
+            die $@."\nThe sample_size option must be either a single number or of the format 'strata1=>12,strata2=>34, ...' etc" ;
+        }
+    } 
+
+    $rand = tool::boot_randtest->new(
+        eval( $common_options::parameters ),
+        top_tool => 1,
+        prepend_model_file_name => 1,
+        models => [ $model ],
+        samples	=> $options{'samples'},
+        base_model => $base_model,
+        stratify_on => $options{'stratify_on'},
+        subjects => $subj_hash,
+        base_model => $base_model,
+        random_column => $options{'random_column'},
+        summarize => $options{'summarize'},
+        replacement => $options{'replacement'},
+    );
+} else {
+    $rand = tool::boot_randtest->new(
+        eval( $common_options::parameters ),
+        top_tool => 1,
+        prepend_model_file_name => 1,
+        models => [ model::create_dummy_model() ],
+        summarize => $options{'summarize'},
+    );
+}
+
+$rand->print_options(
+    cmd_line => $cmd_line,
+    toolname => 'randtest',
+    local_options => [keys %optional_options],
+    common_options => \@common_options::tool_options
+);
+
+
+$rand->run;
+#$rand->prepare_results();
+$rand->print_results();
+
+ui->print(category => 'boot_randtest', message  => "\nboot_randtest done.\n");

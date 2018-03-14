@@ -1,7 +1,10 @@
-get_tables_for_vpc <- function(obs_table,obs_extra_table,sim_table,sim_extra_table,idv_all,dvid,dvid_name) {
+get_tables_for_vpc <- function(obs_table,obs_extra_table,sim_table,sim_extra_table,idv_all,dvid,dvid_name,quiet=F) {
   make_vpc <- (file.exists(obs_table) && file.exists(obs_extra_table) && file.exists(sim_table))
   if(dvid!="NA"){
     make_vpc <- make_vpc && file.exists(sim_extra_table)
+    if(!file.exists(sim_extra_table) && !quiet) {
+      message("WARNING: File ",sim_extra_table," not found!")
+    }
   }
   
   if(make_vpc) {
@@ -22,7 +25,11 @@ get_tables_for_vpc <- function(obs_table,obs_extra_table,sim_table,sim_extra_tab
       if(any(colnames(extra_obs)=="DV")) {  
         obs <- cbind(obs,"DV"=extra_obs[,"DV"])
       } else {
+        if(!quiet) {
+          message("WARNING: In the file ",obs_extra_table," DV column not found!")
+        }
         make_vpc <- FALSE # problem with synonyms in PsN, if in model is DV=MYDV, it will produce table with column MYDV, even if in $TABLE is DV
+        return(list(make_vpc=make_vpc))
       }
     } 
 
@@ -31,17 +38,16 @@ get_tables_for_vpc <- function(obs_table,obs_extra_table,sim_table,sim_extra_tab
       if(any(colnames(extra_obs)=="MDV")) {
         obs <- cbind(obs,"MDV"=extra_obs[,"MDV"])
       }
+    }
+    
+    # Filter observations in obs table
+    if(any(colnames(obs)=="MDV")) {
       if(any(obs$MDV==1)) {
         obs <- obs[which(obs$MDV==0),]
         rownames(obs) <- NULL
       }
-      if(any(colnames(extra_obs)=="MDV")) {
-        if(any(extra_obs$MDV==1)) {
-          extra_obs <- extra_obs[which(extra_obs$MDV==0),]
-          rownames(extra_obs) <- NULL
-        }
-      }
     }
+
 
     add_cols <- obs[,c(idv_all)]
     sim <- xpose::read_nm_tables(sim_table,quiet = TRUE)
@@ -62,6 +68,15 @@ get_tables_for_vpc <- function(obs_table,obs_extra_table,sim_table,sim_extra_tab
                 sim=sim,
                 make_vpc=make_vpc)
   } else {
+    if(!file.exists(obs_table) && !quiet) {
+      message("WARNING: File ",obs_table," not found!")
+    }
+    if(!file.exists(obs_extra_table) && !quiet) {
+      message("WARNING: File ",obs_extra_table," not found!")
+    }
+    if(!file.exists(sim_table) && !quiet) {
+      message("WARNING: File ",sim_table," not found!")
+    }
     out <- list(make_vpc=make_vpc)
   }
   return(out)

@@ -19,10 +19,12 @@ sub filter_dataset
 {
 	my %parm = validated_hash(\@_,
         model => { isa => 'model', optional => 0 },
+        force => { isa => 'Bool', default => 0 },
 	);
 	my $model = $parm{'model'};
+	my $force = $parm{'force'};
 
-    if ($model->need_data_filtering()) {
+    if ($force or $model->need_data_filtering()) {
 
         my $preprocessdir = 'preprocess_data_dir';
         if (not -d $preprocessdir) {

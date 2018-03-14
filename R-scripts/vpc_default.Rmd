@@ -5,44 +5,54 @@ classoption: landscape
 geometry: margin=1.5cm
 ---
 
-```{r loading_libraries,include = FALSE}
+```{r loading_libraries, warning=FALSE, message=FALSE, include = FALSE}
+# get libPaths
+source(file.path(rscripts.directory,"common/R_info.R"))
+R_info(directory=working.directory,only_libPaths=T)
 library(xpose4)
+#add R_info to the meta file
+R_info(directory=working.directory)
 ```
 
-```{r vpc_plots,results='hide',echo=FALSE,fig.width=9,fig.height=6.5,fig.keep="high",fig.align="center"}
-if (!exists('mix')) {     # A mixture model is a special case
-    if (is.tte) {
-        #data is in the model directory, go there to read input
-        setwd(model.directory)
-        xpdb <- xpose.data(xpose.runno)
-        plots <- kaplan.plot(object=xpdb, VPC=T)
-        #go back to vpc directory 
-        setwd(working.directory)
-    } else if (is.categorical) { 
-        plots <- xpose.VPC.categorical(vpc.info=tool.results.file, vpctab=vpctab)
-    } else if (have.loq.data | have.censored) {
-        plots <- xpose.VPC.both(vpc.info=tool.results.file, vpctab=vpctab)
-    } else {
-        plots <- xpose.VPC(vpc.info=tool.results.file, vpctab=vpctab)
-    }
-    print(plots) 
+```{r vpc_plots, warning=FALSE, message=FALSE, results='hide',echo=FALSE,fig.width=9,fig.height=6.5,fig.keep="high",fig.align="center"}
+
+if (is.tte) {
+    #data is in the model directory, go there to read input
+    setwd(model.directory)
+    xpdb <- xpose.data(xpose.runno)
+    plots <- kaplan.plot(object=xpdb, VPC=T)
+    #go back to vpc directory 
+    setwd(working.directory)
+} else if (is.categorical) { 
+    plots <- xpose.VPC.categorical(vpc.info=tool.results.file, vpctab=vpctab)
+} else if (have.loq.data | have.censored) {
+    plots <- xpose.VPC.both(vpc.info=tool.results.file, vpctab=vpctab)
 } else {
+    plots <- xpose.VPC(vpc.info=tool.results.file, vpctab=vpctab)
+}
+print(plots) 
+
+if (exists('mix')) {     # A mixture model is a special case
     if (require("vpc")) {
         source(paste0(rscripts.directory, "/vpc/vpc_mixtures.R"))
         observations_tablefile <- paste0(working.directory, '/m1/vpc_original.npctab.dta')
         simulations_tablefile <- paste0(working.directory, '/m1/vpc_simulation.1.npctab.dta')
 
-        obs <- read_table_nm(observations_tablefile)
-        sim <- read_table_nm(simulations_tablefile)
-        if (!mix_random) {
-            plots <- vpc_mixtures(obs=obs, sim=sim, numsims=samples, mixcol=mix, dv=dv)
-        } else {
-            plots <- vpc_mixtures(obs=obs, sim=sim, numsims=samples, mixcol=mix, dv=dv, phm=phm_file)
-        }
+        obs <- read_nonmem_table(observations_tablefile)
+        sim <- read_nonmem_table(simulations_tablefile)
+        obs_phm <- read_nonmem_table(phm_obs_file)
+        sim_phm <- read_nonmem_table(phm_sim_file)
+        plots_mixest <- mixture_vpc(obs, sim, obs_phm, sim_phm, dv=dv, bins=bin_boundaries)
+        plots_randomized <- mixture_vpc(obs, sim, obs_phm, sim_phm, dv=dv, bins=bin_boundaries, randomize=TRUE)
 
-        for (p in plots) {
+        for (p in plots_mixest) {
+            print(p)
+        }
+        for (p in plots_randomized) {
             print(p)
         }
     }
 }
+#add R_info to the meta file
+R_info(directory=working.directory)
 ```

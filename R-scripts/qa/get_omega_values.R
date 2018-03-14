@@ -1,7 +1,5 @@
 get_omega_values <- function(ext_file,omegas){
-  omega_table <- read.table(ext_file,header=TRUE,skip=1,stringsAsFactors = F) %>%
-    filter(ITERATION==-1000000000)
-  omega_table <- omega_table[grep("^OMEGA",colnames(omega_table))]
+  omega_table <- get_initial_estimates_from_ext(filename=ext_file,select="omega")
   omegas_v <- c()
   col.names_v <- c()
   omegas_c <- c()
@@ -11,7 +9,7 @@ get_omega_values <- function(ext_file,omegas){
     omega_table <- as.data.frame(omega_table[,which(omega_table!=0)])
     colnames(omega_table) <- col_names
     for(i in 1:length(omega_table)) {
-      numeration <- sub('.*OMEGA.','',colnames(omega_table[i]))
+      numeration <- sub('.*OMEGA\\.','',colnames(omega_table[i]))
       numeration <- substr(numeration, 1, nchar(numeration)-1) # delete last element in string
       first <- sub('\\..*','',numeration)
       second <- sub('.*\\.','',numeration)

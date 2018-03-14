@@ -19,7 +19,7 @@ get_eta_transf_table <- function(input_table,seq_length.out=1000) {
                      +((3*eta^6 + 19*eta^4 + 17*eta^2 - 15)/(384*deg_of_freedom^3)))
       }
       table_per_eta <- data.frame(ETA_name=input_table$ETA[i],ETA=eta,density=density,ETAT=ETAT,stringsAsFactors = F)
-      table_per_eta <- table_per_eta %>% gather(type,eta,-ETA_name,-density)
+      table_per_eta <- table_per_eta %>% tidyr::gather(type,eta,-ETA_name,-density)
       if(i > 1) {
         eta_transf_table <- rbind(eta_transf_table,table_per_eta)
       } else {
@@ -29,7 +29,7 @@ get_eta_transf_table <- function(input_table,seq_length.out=1000) {
     
     #count unique ETAs
     if(length(unique(eta_transf_table$ETA_name)) <= 8) {
-      fig_height <- 7
+      fig_height <- 6.25
     }
     out <- list(eta_transf_table=eta_transf_table,
                 make_eta_transf_plot=make_eta_transf_plot,

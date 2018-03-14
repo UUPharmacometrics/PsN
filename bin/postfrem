@@ -17,6 +17,7 @@ use Math::Random;
 use PsN;
 use common_options;
 use ui;
+use logging;
 use Cwd;
 use File::Copy qw/cp mv/;
 use File::Glob;
@@ -46,16 +47,18 @@ my $cmd_line = $0 . " " . join( " ", @ARGV );
 
 my %options;
 
-my %required_options = ('frem_directory:s' => undef,
-	);
+my %required_options = ();
 my %optional_options = (
     'offset_rawres:i' => undef,
     'in_filter:s' => undef,
     'output_format:s' => undef,
+    'model:s' => undef,
+    'frem_directory:s' => undef,
     'sir_directory:s' => undef,
     'force_posdef_covmatrix!' => undef,
     'force_m1_propagation!' => undef,
     'force_posdef_samples!' => undef,
+    'print_iter:i' => undef,
 );
 
 my $res = GetOptions( \%options,
@@ -65,122 +68,127 @@ my $res = GetOptions( \%options,
 
 exit unless $res;
 
-# base files and folders
-if( not defined $options{'frem_directory'} or (not -d $options{'frem_directory'}))  {
-	die "must set -frem_directory to existing directory\n";
-}
-$options{'option_file'}=$options{'frem_directory'}.'/version_and_option_info.txt';
-$options{'model'}=$options{'frem_directory'}.'/final_models/model_4.mod';
-
-# find base model (FREM only copies base model results into dir if base model was not pre-executed)
-$options{'base_model'}=$options{'frem_directory'}.'/intermediate_models/model_1.mod';
-$options{'base_model'} // croak "Could not find base model $options{'base_model'}";
-$options{'base_model_lst'}=$options{'frem_directory'}.'/intermediate_models/model_1.lst';
-$options{'base_model_lst'} // croak "Could not find base model results $options{'base_model_lst'}";
-$options{'base_model_cov'}=$options{'frem_directory'}.'/intermediate_models/model_1.cov';
-# unless (-f $options{'base_model_lst'}) {
-#     my $orig_model;
-#     if (-f $options{'option_file'}) {
-#         open my $fh, '<', $options{'option_file'};
-#         my $frem_cmd;
-#         while (my $line = <$fh>) {
-#             if ($frem_cmd) {
-#                 if ($line ne "") {
-#                     chomp($line);
-#                     my @words = split(/ +/, $line);
-#                     foreach my $word (@words[1..$#words]) {
-#                          if ($word =~ /^[^-].*/) {
-#                              $orig_model = $word;
-#                              last;
-#                          }
-#                     }
-#                 }
-#                 last;
-#             }
-#             $frem_cmd = 1 if ($line =~ /^Command:/);
-#         }
-#         close $fh;
-#     } else {
-#         croak "Could not read option file $options{'option_file'} (for finding base model execution results)";
-#     }
-#     if (defined $orig_model) {
-#         $options{'base_model'} = $orig_model;
-#         $options{'base_model_lst'} = ($orig_model =~ s/(\..*)$/.lst/r);
-#         $options{'base_model_cov'} = ($orig_model =~ s/(\..*)$/.cov/r);
-#     }
-#     croak "Could not read base model ($options{'base_model'}) and lst" unless (-f $options{'base_model_lst'});
-# }
-$options{'frem_dataset'} = $options{'frem_directory'}.'/frem_dataset.dta';
-
-if( defined $options{'sir_directory'} and (-d $options{'sir_directory'}))  {
-	$options{'rawres_input'}=$options{'sir_directory'}.'/raw_results_model_4.csv';
-	$options{'in_filter'}='resamples.gt.0';
-    if (defined $options{'force_posdef_covmatrix'}) {
-        warn "option -force_posdef_covmatrix not applicable to sir directory uncertainty";
-    }
-    if (defined $options{'force_m1_propagation'}) {
-        warn "option -force_m1_propagation not applicable to sir directory uncertainty";
-    }
-}
-if (defined $options{'output_format'}){
-	unless ($options{'output_format'} =~ /^(pdf|png|svg|jpg)$/){
-		die "Unsupported output format ".$options{'output_format'}."\n";
-	}
-}else{
-	$options{'output_format'}="pdf";
-}
 my %help_text;
-
 $help_text{Pre_help_message} = <<'EOF';
-Postprocessing for frem
+	Postprocessing for frem
 EOF
+
 $help_text{Description} = <<'EOF';
-   model plus raw_results from sir
+	model plus raw_results from sir
 EOF
+
 $help_text{Options} = <<'EOF';
 
-The following options are valid:
+	The following options are valid:
 EOF
+
 $help_text{Examples} = <<'EOF';
-postfrem -model=model_4.mod rawres_input=raw_results_model_4.mod -in_filter=resamples.gt.0
+	postfrem -model=model_4.mod rawres_input=raw_results_model_4.mod -in_filter=resamples.gt.0
 EOF
+
 $help_text{-offset_rawres} = <<'EOF';
-      -offset_rawres=N
+	-offset_rawres=N
 
-      Default is 1, i.e. first line is minimum. Do not set to 0.
+	Default is 1, i.e. first line is minimum. Do not set to 0.
 EOF
+
 $help_text{-output_format} = <<'EOF';
-      -output_format=format
+	-output_format=format
 
-      Default is pdf. Supported formats are pdf, png, svg and jpg.
-      svg requires library(svglite).
+	Default is pdf. Supported formats are pdf, png, svg and jpg.svg requires
+	library(svglite).
 EOF
-$help_text{-in_filter} = <<'EOF';
-      -in_filter=comma-separated list of conditions
 
-    Default not used.
+$help_text{-in_filter} = <<'EOF';
+	-in_filter=comma-separated list of conditions
+
+	Default not used.
 	If full sir run then set to resamples.gt.0, otherwise skip.
 EOF
+
 $help_text{-force_posdef_covmatrix} = <<'EOF';
-      -force_posdef_covmatrix
+	-force_posdef_covmatrix
 
-      Default not used. Forces covariance matrix to be positive-definite.
+	Default not used. Forces covariance matrix to be positive-definite.
 EOF
+
 $help_text{-force_m1_propagation} = <<'EOF';
-      -force_m1_propagation
+	-force_m1_propagation
 
-      Default not used. Forces the propagation of model 1 uncertainty, even when
-      covariance step from model 4 was succesful (mainly useful for debugging/research).
+	Default not used. Forces the propagation of model 1 uncertainty, even when
+	covariance step from model 4 was succesful (mainly useful for debugging/research).
 EOF
-$help_text{-force_posdef_samples} = <<'EOF';
-      -force_posdef_samples
 
-      Default not used. Forces each multivariate normal sample to be positive-definite
-      (OMEGA and SIGMA blocks), instead of waiting for posdef samples to get drawn.
+$help_text{-force_posdef_samples} = <<'EOF';
+	-force_posdef_samples
+
+	Default not used. Forces each multivariate normal sample to be positive-
+	definite (OMEGA and SIGMA blocks), instead of waiting for posdef samples to
+	get drawn.
+EOF
+
+$help_text{-print_iter} = <<'EOF';
+	-print_iter=N
+
+	Optional, default is 0 (off). Every N:th (multivariate normal sampling)
+	iteration will be printed with cumulative acceptance and rejection rates.
 EOF
 
 common_options::online_help('postfrem', \%options,\%help_text, \%required_options, \%optional_options);
 common_options::setup( \%options, 'postfrem' ); #calls set_globals etc, initiates random sequence
+
+my $logger = logging::get_logger("postfrem");
+
+# base files and folders
+if (defined $options{'model'}) {
+    if (defined $options{'frem_directory'}) {
+        $logger->warning("Option -frem_directory ignored with -model");
+    } elsif (defined $options{'sir_directory'}) {
+        $logger->warning("Option -sir_directory ignored with -model");
+    }
+    if (not -f $options{'model'}) {
+        $logger->critical("must set -model to existing (final) FREM model\n"); die;
+    }
+} else {
+    if(not defined $options{'frem_directory'} or (not -d $options{'frem_directory'}))  {
+        die "must set -frem_directory to existing directory\n";
+    }
+    $options{'option_file'}=$options{'frem_directory'}.'/version_and_option_info.txt';
+    $options{'model'}=$options{'frem_directory'}.'/final_models/model_4.mod';
+    $options{'model_impeval'}=$options{'frem_directory'}.'/final_models/model_4b.mod';
+    if (-f $options{'model_impeval'}) {
+        $logger->info("Model 4b (importance sampling evaluation) found");
+    } else {
+        $options{'model_impeval'} = undef;
+    }
+
+    # find base model (FREM only copies base model results into dir if base model was not pre-executed)
+    $options{'base_model'}=$options{'frem_directory'}.'/intermediate_models/model_1.mod';
+    $options{'base_model'} // croak "Could not find base model $options{'base_model'}";
+    $options{'base_model_lst'}=$options{'frem_directory'}.'/intermediate_models/model_1.lst';
+    $options{'base_model_lst'} // croak "Could not find base model results $options{'base_model_lst'}";
+    $options{'base_model_cov'}=$options{'frem_directory'}.'/intermediate_models/model_1.cov';
+    $options{'frem_dataset'} = $options{'frem_directory'}.'/frem_dataset.dta';
+
+    if( defined $options{'sir_directory'} and (-d $options{'sir_directory'}))  {
+        $options{'rawres_input'}=$options{'sir_directory'}.'/raw_results_model_4.csv';
+        $options{'in_filter'}='resamples.gt.0';
+        if (defined $options{'force_posdef_covmatrix'}) {
+            warn "option -force_posdef_covmatrix not applicable to sir directory uncertainty";
+        }
+        if (defined $options{'force_m1_propagation'}) {
+            warn "option -force_m1_propagation not applicable to sir directory uncertainty";
+        }
+    }
+    if (defined $options{'output_format'}){
+        unless ($options{'output_format'} =~ /^(pdf|png|svg|jpg)$/){
+            die "Unsupported output format ".$options{'output_format'}."\n";
+        }
+    }else{
+        $options{'output_format'}="pdf";
+    }
+}
+my $print_iter_N = $options{'print_iter'} // 0;
 
 require model;
 
@@ -544,10 +552,7 @@ sub remove_params_in_covmatrix
     return $new_covmatrix;
 }
 
-
-
 ## Set the automatic renaming of modelfit directory
-
 my $main_directory = tool::get_rundir(create => 1,
 				  basename => 'postfrem',
 				  modelname => $options{'model'},
@@ -561,38 +566,58 @@ my $eval_string = common_options::model_parameters(\%options);
 if( scalar @ARGV > 0 ) {
   die "missing -optionsname?\n";
 }
-if( not defined $options{'model'})  {
-  die "must set -model\n";
-}
-
-if( not defined $options{'frem_dataset'})  {
-  die "must set -frem_dataset\n";
-}
 
 my $NA_string = ""; # for values missing when no uncertainty (point estimates only)
 
 my $model = model->new ( eval( $eval_string ),
                          filename => $options{'model'},
                          ignore_missing_output_files => 1 );
+my $model_impeval;
+if (defined $options{'model_impeval'}) {
+    $model_impeval = model->new( eval( $eval_string ),
+                                 filename => $options{'model_impeval'},
+                                 ignore_missing_output_files => 1 );
+}
+unless (defined $options{'frem_dataset'}) {
+    $options{'frem_dataset'} = $model->problems->[0]->datas->[0]->get_absolute_filename();
+    $logger->info("Using FREM dataset ".$options{'frem_dataset'});
+}
+unless (-f $options{'frem_dataset'}) {
+    $logger->critical("Could not read FREM dataset ".$options{'frem_dataset'}); die;
+}
 
+# set covariate summary file (will replace re-calculation of covariate stats)
+my $file = 'covariates_summary.csv';
+my ($vol, $dir, undef) = File::Spec->splitpath($options{'frem_dataset'});
+my $cov_summary = File::Spec->catpath($vol, $dir, $file);
+unless (-f $cov_summary) {
+    $logger->critical("Could not read $cov_summary"); die;
+}
 
 # get FREM post-processing data (# subjects, covariate data, number of parameters, etc.)
-my ($covn,$resc,$omegaindex,$parn,$size,$means) = tool::frem::get_post_processing_data(model => $model);
-
-my @tvpar = ();
-my @cov_reference = ();
-my @cov_units=();
-
+my ($covn,$resc,$omegaindex,$parn,$size,$emeans,$evar) = tool::frem::get_post_processing_data(model => $model);
 my @cov_rescale = @{$resc};
 my @covnames = @{$covn};
 my @parnames = @{$parn};
-my @cov_means = @{$means};
+my @est_cov_means = @{$emeans};
+my @est_cov_variances = @{$evar};
 my $npar = scalar(@parnames);
 my $ncov = scalar(@covnames);
+
+# get covariate statistics post-processing data (TODO: shall start to replace read_covdata below)
+my $covdata = tool::frem::read_covresults(covnames => $covn, filename => $cov_summary);
+unless (defined $covdata) {
+    $logger->critical("covariate summary read error, can't continue"); die;
+}
+my @cov_means = @{ $covdata->{'invariant_mean'} };
 
 my ($cov_5th,$cov_95th,$id_covariate_vectors,$categorical,$categoryinfo) =
 	tool::frem::read_covdata(covnames => \@covnames,
 							 filename => $options{'frem_dataset'});
+
+my @tvpar = ();
+my @cov_reference = ();
+my @cov_units=();
 
 for (my $i=0; $i<$ncov; $i++){
 	my $cn = $covnames[$i];
@@ -640,9 +665,9 @@ if (defined $options{'rawres_input'}) {
 	$match_labels=0;
 	#i.e. did not set sir_directory
 	#check if have covstep of model 4
-	print "Trying to use covariance step results from frem model_4\n";
-	unless (defined $model->outputs and defined $model->outputs->[0]){
-		die "No output from model_4 in frem directory";
+	$logger->info("Trying to use covariance step results from FREM model");
+	unless (defined $model->outputs and defined $model->outputs->[0] and -f $model->outputs->[0]->full_name){
+		$logger->critical("No output from FREM model"); die;
 	}
 	$model->update_inits( from_output => $model->outputs->[0],
 						  ensure_posdef => 0,
@@ -652,89 +677,99 @@ if (defined $options{'rawres_input'}) {
     my $covmatrix;
     if ($model->outputs->[0]->get_single_value(attribute => 'covariance_step_successful')) {
 	    $covmatrix = tool::sir::get_nonmem_covmatrix(output => $model->outputs->[0]);
-    } else {
-        print "Covariance step was not succesful\n";
+    } elsif (defined $model_impeval) {
+        if ($model_impeval->outputs->[0]->get_single_value(attribute => 'covariance_step_successful')) {
+            $covmatrix = tool::sir::get_nonmem_covmatrix(output => $model_impeval->outputs->[0]);
+            $logger->info("Model 4b (importance sampling evaluation) covariance matrix read");
+        }
+    }
+    unless (defined $covmatrix) {
+        $logger->warning("Covariance step was not succesful\n");
     }
 
     # M1 uncertainty can be propagated down as a fallback for missing M4 uncertainty
     if (!defined $covmatrix or $options{'force_m1_propagation'}) {
-		print "Trying to propagate model_1 (base model) uncertainty\n";
-		my $base_model = model->new( eval( $eval_string ),
-									 filename => $options{'base_model'},
-									 ignore_missing_output_files => 1 );
-		if (defined $base_model->outputs and defined $base_model->outputs->[0]) {
-			$base_model->update_inits( from_output => $base_model->outputs->[0],
-									   ensure_posdef => 0,
-									   ignore_missing_parameters => 0,
-									   update_fix => 0 );
+        unless (defined $options{'base_model'}) {
+            $logger->warning("No base model to propagate uncertainty from");
+        } else {
+            print "Trying to propagate model_1 (base model) uncertainty\n";
+            my $base_model = model->new( eval( $eval_string ),
+                                         filename => $options{'base_model'},
+                                         ignore_missing_output_files => 1 );
+            if (defined $base_model->outputs and defined $base_model->outputs->[0]) {
+                $base_model->update_inits( from_output => $base_model->outputs->[0],
+                                           ensure_posdef => 0,
+                                           ignore_missing_parameters => 0,
+                                           update_fix => 0 );
 
-			my $base_covmatrix;
-			if ($base_model->outputs->[0]->get_single_value(attribute => 'covariance_step_successful') && -f $options{'base_model_cov'}) {
-				$base_covmatrix = tool::sir::get_nonmem_covmatrix(output => $base_model->outputs->[0]);
-				my $posdef_err = tool::sir::check_matrix_posdef(matrix => $base_covmatrix);
-				if ($posdef_err == 1) {
-					print "Covariance matrix is numerically not positive definite (check that model_1 covariance step is OK)\n".
-						  "(as checked with Cholesky decomposition without pivoting)\n";
-				} else {
-					# M1 has good uncertainty which we'll try to use
-					my $opt_file = $options{'option_file'};
-					my $opt_read;
-					my @skip_omegas;
-					if (-e $opt_file) {
-						open my $fh, '<', $opt_file;
-						while (<$fh>) {
-							if (/^-skip_omegas=(.*)$/) {
-								if ($1 ne "") {
-									chomp($1);
-									@skip_omegas = split(/,/, $1);
-								}
-								$opt_read = 1;
-							}
-						}
-						close $fh;
-					}
-                    if ($opt_read) {
-                        # get full SE matrix of M1 in table form (needed to not remove 0-rows and -cols) and create array matrix form
-                        my $m1_covmat_table = nmtablefile->new(filename => $options{'base_model_cov'})->get_table(index => 0);
-                        my $m1_covmat_size = scalar(@{$m1_covmat_table->columns})-1; # skip NAME column
-                        my $m1_covmat = [];
-                        for (my $i=1; $i<=$m1_covmat_size; $i++) {
-                            push @{$m1_covmat}, $m1_covmat_table->get_column(index => $i);
-                        }
-
-                        # get full omega matrices of M4 (including 0:s where none were estimated)
-                        my $m4_omegas = $model->problems->[0]->get_matrix(type => 'omega', start_row => 1);
-
-                        $propagated_covmatrix = propagate_m1_to_m4_covmatrix(
-                            m1_covmat => $m1_covmat,
-                            m4_omegas => $m4_omegas,
-                            npar => $npar,
-                            ncov => $ncov,
-                            thetas => $m4_nthetas,
-                            sigmas => $m4_nsigmas,
-                            omegas => $m4_nomegas,
-                            nsubjects => $id_count,
-                            skip_omegas => \@skip_omegas,
-                        );
+                my $base_covmatrix;
+                if ($base_model->outputs->[0]->get_single_value(attribute => 'covariance_step_successful') && -f $options{'base_model_cov'}) {
+                    $base_covmatrix = tool::sir::get_nonmem_covmatrix(output => $base_model->outputs->[0]);
+                    my $posdef_err = tool::sir::check_matrix_posdef(matrix => $base_covmatrix);
+                    if ($posdef_err == 1) {
+                        print "Covariance matrix is numerically not positive definite (check that model_1 covariance step is OK)\n".
+                              "(as checked with Cholesky decomposition without pivoting)\n";
                     } else {
-                        print "Could not read skipped omegas information from $options{'option_file'}; skipping\n";
+                        # M1 has good uncertainty which we'll try to use
+                        my $opt_file = $options{'option_file'};
+                        my $opt_read;
+                        my @skip_omegas;
+                        if (-e $opt_file) {
+                            open my $fh, '<', $opt_file;
+                            while (<$fh>) {
+                                if (/^-skip_omegas=(.*)$/) {
+                                    if ($1 ne "") {
+                                        chomp($1);
+                                        @skip_omegas = split(/,/, $1);
+                                    }
+                                    $opt_read = 1;
+                                }
+                            }
+                            close $fh;
+                        }
+                        if ($opt_read) {
+                            # get full SE matrix of M1 in table form (needed to not remove 0-rows and -cols) and create array matrix form
+                            my $m1_covmat_table = nmtablefile->new(filename => $options{'base_model_cov'})->get_table(index => 0);
+                            my $m1_covmat_size = scalar(@{$m1_covmat_table->columns})-1; # skip NAME column
+                            my $m1_covmat = [];
+                            for (my $i=1; $i<=$m1_covmat_size; $i++) {
+                                push @{$m1_covmat}, $m1_covmat_table->get_column(index => $i);
+                            }
+
+                            # get full omega matrices of M4 (including 0:s where none were estimated)
+                            my $m4_omegas = $model->problems->[0]->get_matrix(type => 'omega', start_row => 1);
+
+                            $propagated_covmatrix = propagate_m1_to_m4_covmatrix(
+                                m1_covmat => $m1_covmat,
+                                m4_omegas => $m4_omegas,
+                                npar => $npar,
+                                ncov => $ncov,
+                                thetas => $m4_nthetas,
+                                sigmas => $m4_nsigmas,
+                                omegas => $m4_nomegas,
+                                nsubjects => $id_count,
+                                skip_omegas => \@skip_omegas,
+                            );
+                        } else {
+                            print "Could not read skipped omegas information from $options{'option_file'}; skipping\n";
+                        }
+                        if (defined $propagated_covmatrix) {
+                            # remove fixed parameters
+                            $covmatrix = remove_params_in_covmatrix(
+                                covmatrix => $propagated_covmatrix,
+                                thetas => $model->fillblock_fixed(parameter_type => 'theta')->[0],
+                                sigmas => $model->fillblock_fixed(parameter_type => 'sigma')->[0],
+                                omegas => $model->fillblock_fixed(parameter_type => 'omega')->[0],
+                            );
+                        }
                     }
-                    if (defined $propagated_covmatrix) {
-                        # remove fixed parameters
-                        $covmatrix = remove_params_in_covmatrix(
-                            covmatrix => $propagated_covmatrix,
-                            thetas => $model->fillblock_fixed(parameter_type => 'theta')->[0],
-                            sigmas => $model->fillblock_fixed(parameter_type => 'sigma')->[0],
-                            omegas => $model->fillblock_fixed(parameter_type => 'omega')->[0],
-                        );
-                    }
-				}
-			} else {
-				print "Covariance step of model_1 was not succesful, not run or .cov file not found\n";
-			}
-		} else {
-			die "No output from model_1 in frem directory";
-		}
+                } else {
+                    print "Covariance step of model_1 was not succesful, not run or .cov file not found\n";
+                }
+            } else {
+                die "No output from model_1 in frem directory";
+            }
+        }
     }
 	if (defined $covmatrix)	{
 		my $posdef_err = tool::sir::check_matrix_posdef(matrix => $covmatrix);
@@ -749,7 +784,10 @@ if (defined $options{'rawres_input'}) {
             if (defined $options{'force_posdef_covmatrix'} or defined $propagated_covmatrix) {
                 # force positive definite
                 print "Forcing matrix positive definite\n";
-                (my $covmatrix_posdef, my $count) = linear_algebra::get_symmetric_posdef($covmatrix);
+                (my $covmatrix_posdef, my $count) = linear_algebra::get_symmetric_posdef(
+                    matrix => $covmatrix,
+                    minEigen => 1E-10,
+                );
                 print "$count eigenvalue(s) adjusted\n";
 
                 # copy and test that this modification is good enough for cholesky decomp
@@ -767,14 +805,33 @@ if (defined $options{'rawres_input'}) {
                     die "cholesky error $err after get_symmetric_posdef\n";
                 }
 
-                # output the frobenius norm differences
-                my $norm_orig = linear_algebra::frobenius_norm(matrix => $covmatrix);
-                my $norm_forced = linear_algebra::frobenius_norm(matrix => $covmatrix_posdef);
-                my $norm_diff = abs( $norm_orig - $norm_forced );
-                print "Absolute difference of frobenius norms: $norm_diff\n";
-                $norm_diff = linear_algebra::frobenius_norm(matrix => $covmatrix, matrix2 => $covmatrix_posdef);
-                print "Frobenius norm of (element-wise) difference matrix: $norm_diff\n";
-                print "(if large the results might be severely affected by adjustments)\n";
+                # output metrics of adjustment bias
+                my $norm_of_diff = tool::frem::neat_num( num=>linear_algebra::frobenius_norm(matrix => $covmatrix, matrix2 => $covmatrix_posdef) );
+                my $direct_diff = tool::frem::neat_num( num=>linear_algebra::matrix_rmse(matrix1 => $covmatrix, matrix2 => $covmatrix_posdef, method => 1) );
+                my $id_diff = tool::frem::neat_num( num=>linear_algebra::matrix_rmse(matrix1 => $covmatrix, matrix2 => $covmatrix_posdef, method => 2) );
+                my $cnum_orig = linear_algebra::condition_number($covmatrix);
+                my $cnum_adj = linear_algebra::condition_number($covmatrix_posdef);
+                my $cnum_change = "";
+                if (defined $cnum_orig) {
+                    $cnum_change = ($cnum_adj/$cnum_orig);
+                    if ($cnum_change > 1) {
+                        my $fac = tool::frem::neat_num(num=>$cnum_adj/$cnum_orig);
+                        $cnum_change = "($fac times larger)";
+                    } else {
+                        my $fac = tool::frem::neat_num(num=>$cnum_orig/$cnum_adj);
+                        $cnum_change = "($fac times smaller)";
+                    }
+                    $cnum_orig = tool::frem::neat_num(num=>$cnum_orig);
+                } else {
+                    $cnum_orig = "[NA]";
+                }
+                $cnum_adj = tool::frem::neat_num(num=>$cnum_adj);
+                # $logger->info("Absolute difference of frobenius norms: $diff_of_norms");
+                $logger->info("Frobenius norm of difference matrix (prop. to RMSE): $norm_of_diff");
+                $logger->warning("RMSE of adjustments: $direct_diff");
+                $logger->warning("RMSE of inverse product to identity matrix: $id_diff");
+                $logger->warning("(large values indicate matrix might be severely affected by adjustments)");
+                $logger->warning("Condition number changed from $cnum_orig to $cnum_adj $cnum_change");
 
                 $covmatrix = $covmatrix_posdef;
                 $posdef_err=0;
@@ -803,6 +860,7 @@ if (defined $options{'rawres_input'}) {
                 covmatrix => $covmatrix,
                 inflation => [],
                 adjust_blocks => $options{'force_posdef_samples'},
+                minEigen => 1E-10,
                 lower_bound => $parameter_hash->{'lower_bounds'},
                 upper_bound => $parameter_hash->{'upper_bounds'},
                 param => $parameter_hash->{'param'},
@@ -812,7 +870,8 @@ if (defined $options{'rawres_input'}) {
                 mu => $muvector,
                 lambda => [],
                 delta => [],
-                fast_posdef_checks => 1);
+                fast_posdef_checks => 1,
+                print_iter_N => $print_iter_N);
 
             $sampled_params_arr = tool::sir::create_sampled_params_arr(samples_array => $vectorsamples,
                                                                        labels_hash => $parameter_hash,
@@ -939,7 +998,7 @@ close $idfh;
 open( FILE1, '>'.$pardatafile );
 print FILE1 'parname'."\n";
 for (my $i=0; $i< scalar(@parnames); $i++){
-	print FILE1 $parnames[$i]."\n";
+	print FILE1 '"'.$parnames[$i].'"'."\n";
 }
 close FILE1;
 
@@ -978,15 +1037,15 @@ my $varheader='sample';
 #2. per cov
 #3. all
 for (my $i=0;$i<$npar; $i++){
-	$varheader .= ',CONDVAR.par.'.$labels[$i].'.given.none';
+	$varheader .= ',"CONDVAR.par.'.$labels[$i].'.given.none"';
 }
 for (my $j=$npar;$j<$size; $j++){
 	for (my $i=0;$i<$npar; $i++){
-		$varheader .= ',CONDVAR.par.'.$labels[$i].'.given.cov.'.$labels[$j];
+		$varheader .= ',"CONDVAR.par.'.$labels[$i].'.given.cov.'.$labels[$j].'"';
 	}
 }
 for (my $i=0;$i<$npar; $i++){
-	$varheader .= ',CONDVAR.par.'.$labels[$i].'.given.allcov';
+	$varheader .= ',"CONDVAR.par.'.$labels[$i].'.given.allcov"';
 }
 
 
@@ -997,11 +1056,11 @@ for (my $j=$npar;$j<$size; $j++){
 	my $covindex  = $j-$npar;
 	for (my $i=0;$i<$npar; $i++){
 		if ($categorical->[$covindex]){
-#			$ratioheader .= ',RATIO.par.'.$labels[$i].'.given.reference.'.$labels[$j];
-			$ratioheader .= ',RATIO.par.'.$labels[$i].'.given.other.'.$labels[$j];
+#			$ratioheader .= ',"RATIO.par.'.$labels[$i].'.given.reference.'.$labels[$j].'"';
+			$ratioheader .= ',"RATIO.par.'.$labels[$i].'.given.other.'.$labels[$j].'"';
 		}else{
-			$ratioheader .= ',RATIO.par.'.$labels[$i].'.given.cov5th.'.$labels[$j];
-			$ratioheader .= ',RATIO.par.'.$labels[$i].'.given.cov95th.'.$labels[$j];
+			$ratioheader .= ',"RATIO.par.'.$labels[$i].'.given.cov5th.'.$labels[$j].'"';
+			$ratioheader .= ',"RATIO.par.'.$labels[$i].'.given.cov95th.'.$labels[$j].'"';
 		}
 	}
 }
@@ -1144,9 +1203,9 @@ for (my $j=0;$j<($size-$npar); $j++){ #foreach covariate
 
 
 for (my $i=0;$i<$npar; $i++){
-	$header .= ','.$parnames[$i].'.observed';
+	$header .= ',"'.$parnames[$i].'.observed"';
 	for (my $l=0; $l<scalar(@probs); $l++){
-		$header .= ','.$parnames[$i].'.'.($probs[$l]*100).'th';
+		$header .= ',"'.$parnames[$i].'.'.($probs[$l]*100).'th"';
 	}
 }
 my $idratiosfile = 'frem_id_ratios.csv';
@@ -1212,7 +1271,7 @@ for (my $i=0;$i<$npar; $i++){
 	for (my $k=0; $k<scalar(@types); $k++){
 		my $type = $types[$k];
 		my $observed = shift(@{$variance_arrays{$par}->{$type}});
-		my $line = $par.'.'.$type.','.sqrt($observed);
+		my $line = '"'.$par.'.'.$type.'",'.sqrt($observed);
         if ($have_uncertainty) {
             my @sorted = (sort {$a <=> $b} @{$variance_arrays{$par}->{$type}});
             my $quantref = quantile(probs => \@probs, numbers=> \@sorted);

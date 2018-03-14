@@ -116,12 +116,12 @@ my @utilities = (
 	'pind','nonpb','extended_grid','psn','psn_options','psn_clean',
 	'runrecord','mcmp','lasso','mimp','xv_scm','parallel_retries',
 	'boot_scm','gls','simeval','frem','randtest','linearize', 'crossval', 'pvar', 'nca', 'proseval', 'vpctable','sir','rawresults',
-	'precond','covmat','nmoutput2so', 'benchmark','postfrem','npfit', 'resmod', 'cddsimeval', 'qa', 'transform', 'improve'
+	'precond','covmat','nmoutput2so', 'benchmark','postfrem','npfit', 'resmod', 'cddsimeval', 'qa', 'transform', 'improve', 'boot_randtest'
 	);
 
-my @win_modules = ('Moose', 'MooseX::Params::Validate', 'Math::Random');
-my @nix_modules = ('Moose', 'MooseX::Params::Validate', 'Math::Random', 'Storable');
-my @recommended_modules = ('Archive::Zip','Statistics::Distributions','YAML::Tiny');
+my @win_modules = ('Moose', 'MooseX::Params::Validate', 'Math::Random', 'YAML::XS');
+my @nix_modules = ('Moose', 'MooseX::Params::Validate', 'Math::Random', 'Storable', 'YAML::XS');
+my @recommended_modules = ('Archive::Zip','Statistics::Distributions');
 
 my @modules;
 

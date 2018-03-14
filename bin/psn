@@ -10,6 +10,7 @@ use PsN;
 use strict;
 use Getopt::Long;
 use common_options;
+use YAML::XS;
 
 ## Configure the command line parsing
 Getopt::Long::config("auto_abbrev");
@@ -79,6 +80,38 @@ if (scalar(@ARGV)>0){
 		print '$current_version='."'".$PsN::version."';\n";
 		exit;
 	}
+    if ($ARGV[0] eq 'rerun') {
+        my $rundir = $ARGV[1];
+        my $command_line;
+        if (-e "$rundir/command.txt") {
+            open my $fh, '<', "$rundir/command.txt";
+            $command_line = <$fh>;
+            chomp $command_line;
+            close $fh;
+        } # Could also look for the YAML here when command.txt is deprecated
+        shift @ARGV;
+        shift @ARGV;
+        $command_line .= ' ' . join(' ', @ARGV);
+        if (defined $command_line) {
+            print "Executing $command_line\n";
+            exec $command_line;
+        } else {
+            die "Error: Could not find command line for $rundir. Is it really a PsN rundirectory?\n"
+        }
+    } elsif ($ARGV[0] eq 'info') {
+        my $meta;
+        eval {
+            $meta = YAML::XS::LoadFile($ARGV[1] . '/meta.yaml');
+        };
+        if (defined $meta) {
+            print "Run of PsN ", $meta->{'tool_name'}, "\n";
+            print "Command line: ", $meta->{'command_line'}, "\n";
+            print "Started at: ", $meta->{'start_time'}, "\n";
+            print "Finished at: ", $meta->{'finish_time'}, "\n";
+        } else {
+            print "Cannot find meta.yaml. Is this an old PsN rundirectory?\n";
+        }
+    }
 }
 my %help_text;
 

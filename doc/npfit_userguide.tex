@@ -1,17 +1,18 @@
 \input{inputs/format_header.tex}
-\guidetitle{NPFIT user guide}{2016-09-20}
-
+\guidetitle{NPFIT user guide}{2018-03-02}
+\usepackage{hyperref}
 \newcommand{\guidetoolname}{npfit}
 
 \begin{document}
 
 \maketitle
-
+\tableofcontents
+\newpage
 
 \section{Introduction}
-Nonparametric estimation using a range of NPSUPP values.
 
-Examples
+The npfit tool runs a modelfile with \$NONPARAMETRIC UNCONDITIONAL and different values of NPSUPP.
+Example:
 \begin{verbatim}
 npfit run1.mod -npsupp=50,100,200
 \end{verbatim}
@@ -19,41 +20,31 @@ npfit run1.mod -npsupp=50,100,200
 \section{Input and options}
 
 \subsection{Required input}
-A model file is required, and a list of npsupp-values.
-NONMEM requires that the \$ESTIMATION record is present with the conditional method or POSTHOC.
-%\subsection{Optional input}
-
-\subsection{Options}
+A model file is required, as well as a list of npsupp-values. NONMEM requires that the \$ESTIMATION record is present with the conditional method or POSTHOC.
 \begin{optionlist}
 \optdefault{npsupp}{50,100,200}
-Required. A comma-separated list of non-negative integers.
-For each value N a new copy of the input model will be run with
-\$NONPARAMETRIC UNCONDITIONAL NPSUPP=N
-See the NONMEM documentation on \$NONPARAMETRIC for interpretation of NPSUPP.
-All values in the list should be equal to or greater than the number
-of individuals in the data set.
+A comma-separated list of non-negative integers. For each value N a new copy of the input model will be run with \$NONPARAMETRIC UNCONDITIONAL NPSUPP=N.\\ See the NONMEM documentation on \$NONPARAMETRIC for interpretation of NPSUPP.
+All values in the list should be equal to or greater than the number of individuals in the data set.
 \nextopt
+\end{optionlist}
+%\subsection{Optional input}
+
+
+
 %\optname{copy\_data}
 %\nextopt
 %\optname{keep\_tables}
 %\nextopt
 %\optdefault{rplots}{level}
 %\nextopt
-\end{optionlist}
 
-\subsection{Some important common PsN options}
-There are many options that govern how PsN manages NONMEM runs, and
-those options are common to all PsN programs that run NONMEM.
-For a complete list of such options see common\_options.pdf, 
-or psn\_options -h on the commandline. A selection of
-the most important common options relevant for npfit is found here.
-\input{inputs/basic_options.tex}
+
+\subsection{PsN common options}
+For a complete list see common\_options.pdf or type psn\_options -h on the command line.
 
 \section{Results}
 
-The file raw\_nonparametric\_modelname.csv, for example raw\_nonparametric\_run1.csv,
-contains the parametric and nonparametric ofv, the npsupp value used,
-and the nonparametric ETAs.
+The file raw\_nonparametric\_modelname.csv, contains the parametric and nonparametric ofv, the npsupp value used, and the nonparametric ETAs.
 
 \section{Internal npfit workflow}
 
@@ -62,7 +53,7 @@ and the nonparametric ETAs.
 \item Input checking, i.e. verify that required options are set and valid and that requirements on the input model
 are satisfied.
 \begin{enumerate}
-\item The nonmem version must be 7.4 or later.
+\item The NONMEM version must be 7.4 or later.
 \item The model must have \$ESTIMATION in at least one \$PROBLEM. The first \$PROBLEM with \$ESTIMATION will be the
 only one being updated in the following procedure.
 \item If METHOD is not conditional then \$ESTIMATION must specify POSTHOC.
@@ -76,11 +67,10 @@ to the step below where the old process stopped.
 i.e. the number of individuals after any IGNORE/ACCEPT. If $N_{ind}$ is larger than any of the npsupp values
 then print a warning.
 \item Update initial estimates with the final estimates from the estimation.
-\item If the estimation method is classical set MAXEVAL=1 in \$ESTIMATION 
-\item For each value i of npsupp, copy the updated model and set \$NONPARAMETRIC UNCONDITIONAL NPSUPP=i
-Any pre-existing \$NONPARAMETRIC will be removed.
+\item If the estimation method is classical set MAXEVAL=1 in \$ESTIMATION. 
+\item For each value i of npsupp, copy the updated model and set \$NONPARAMETRIC UNCONDITIONAL NPSUPP=i. Any pre-existing\\ \$NONPARAMETRIC will be removed.
 Write the model copy in the m1 subfolder of the run directory.
-\item Run models with NONMEM
+\item Run models with NONMEM.
 \item In the raw\_nonparametric results file, add a column with the npsupp values. 
 \item Create, and possibly run, R script.
 \end{enumerate}

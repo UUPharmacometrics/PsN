@@ -5,6 +5,7 @@ use MooseX::Params::Validate;
 use strict;
 use array qw(:all);
 use Math::Trig;
+use ext::Math::MatrixReal;
 use math;
 use include_modules;
 
@@ -1134,15 +1135,26 @@ sub LU_factorization
 
 sub get_symmetric_posdef
 {
-	my $A = shift;
+    # gets a symmetric positive definite matrix from adjusting small or negative negative
+    # eigenvalues to a small, positive number
+    my %parm = validated_hash(\@_,
+        matrix => { isa => 'ArrayRef', optional => 0 },
+        minEigen => { isa => 'Num', optional => 1, default => 1E-10 },
+	);
+	my $A = $parm{'matrix'};
+	my $minEigen = $parm{'minEigen'};
 
     (my $eigenvalues, my $Q) = eigenvalue_decomposition($A);
 
-	my $minEigen=0.0000000001;
 	my $count = count_lower(array => $eigenvalues,limit=>$minEigen);
 
 	if ($count >0){
-		my ($posdef,$diff) = spdarise(matrix => $A,eigenvalues => $eigenvalues, Q => $Q, minEigen => $minEigen); #new A,frob norm diff
+		my ($posdef,$diff) = spdarise(
+            matrix => $A,
+            eigenvalues => $eigenvalues,
+            Q => $Q,
+            minEigen => $minEigen,
+        ); #new A,frob norm diff
 		return ($posdef,$count);
 	}else{
 		return($A,0);
@@ -1187,6 +1199,7 @@ sub spdarise
 		}
     }
     my $fNormDiff=0;
+    # TODO: replace by call to frobenius_norm below
     for (my $index1 = 0; $index1 < scalar(@{$matrix}); $index1++) {
         for (my $index2 = 0; $index2 < scalar(@{$matrix}); $index2++) {
 			$posdefmatrix[$index1]->[$index2] =0;
@@ -1205,6 +1218,7 @@ sub frobenius_norm {
     # calculate the frobenius norm of a matrix (or frobenius norm of element-wise difference)
     # TODO: use MatrixReal class instead
     my %parm = validated_hash(\@_,
+        # in *col format*, A->[col][row]
         matrix => { isa => 'ArrayRef', optional => 0 },
         matrix2 => { isa => 'ArrayRef', optional => 1 },
 	);
@@ -1225,6 +1239,102 @@ sub frobenius_norm {
     }
 
     return sqrt($sum);
+}
+
+sub get_matrix_size {
+    # get matrix (array ref of column array refs) dimensions NxM, return (N,M,errmsg)
+    my %parm = validated_hash(\@_,
+        # in *col format*, A->[col][row]
+        matrix => { isa => 'ArrayRef', optional => 0 },
+	);
+	my $mat = $parm{'matrix'};
+
+    # empty matrix?
+    my $ncol = scalar @{$mat};
+    if ($ncol == 0) {
+        return (0,0,"empty matrix");
+    }
+
+    # matrix is column vector?
+    my $first_nrow = scalar @{$mat->[0]};
+    if ($ncol == 1) {
+        return ($first_nrow, 1, undef);
+    }
+
+    # matrix has column vector not of first vector length?
+    for (my $col=1; $col<$ncol; $col++) {
+        my $nrow = scalar @{$mat->[$col]};
+        if ($first_nrow != $nrow) {
+            return ($first_nrow, $ncol, "col idx $col has $nrow elements");
+        }
+    }
+
+    # matrix is NxM
+    return ($first_nrow, $ncol, undef);
+}
+
+sub matrix_rmse {
+    # calculate the difference of two sq matrices by RMSE, two methods:
+    # 1 RMSE of direct difference (relative to first matrix)
+    # 2 RMSE of identity matrix (product of first matrix with second matrix inverse)
+    my %parm = validated_hash(\@_,
+        # in *col format*, A->[col][row]
+        matrix1 => { isa => 'ArrayRef', optional => 0 }, # need not be invertible but square
+        matrix2 => { isa => 'ArrayRef', optional => 0 }, # need to be same size (and invertible for method 2)
+        method => { isa => 'Int', optional => 1, default => 1 } # method above
+	);
+	my $matrix1 = $parm{'matrix1'};
+	my $matrix2 = $parm{'matrix2'};
+	my $method = $parm{'method'};
+
+    # validate dimensions
+    (my $ncol1, my $nrow1, my $err1) = get_matrix_size(matrix => $matrix1);
+    (my $ncol2, my $nrow2, my $err2) = get_matrix_size(matrix => $matrix2);
+    if (defined $err1) {
+        croak "matrix1 illegal ($err1)";
+    } elsif (defined $err2) {
+        croak "matrix2 illegal ($err2)";
+    }
+    if ($ncol1 != $nrow1 || $ncol1 != $ncol2) {
+        croak "matrices not square/same size (sizes ${nrow1}x${ncol1} and ${nrow2}x${ncol2})";
+    }
+    my $dim = $ncol1;
+
+    # create matrices and check invertibility
+    my $mat1 = Math::MatrixReal->new_from_cols( $matrix1 );
+    my $mat2 = Math::MatrixReal->new_from_cols( $matrix2 );
+    my $mat2_inv;
+    if ($method == 2) {
+        $mat2_inv = $mat2->inverse();
+        unless (defined $mat2_inv) {
+            croak "matrix2 is not invertible";
+        }
+    }
+
+    my $mean = 0;
+    if ($method == 1) {
+        # calculate the RMSE (of relative, to sq(mat1), squared difference)
+        #   EQ: RMSE = SQRT(SUM( ([mat1]_ij-[mat2]_ij)^2 ) / SUM( [mat1]_ij^2 ))
+        my $diffmat = $mat1 - $mat2;
+        my $sq_diffmat = $diffmat->each( sub { (shift)**2 } );
+        my $sq_mat1 = $mat1->each( sub { (shift)**2 } );
+        my $norm_sum_diff = $sq_diffmat->norm_sum();
+        my $norm_sum_mat1 = $sq_mat1->norm_sum();
+        $mean = ($norm_sum_mat1 == 0) ? 0 : $norm_sum_diff / $norm_sum_mat1;
+    } elsif ($method == 2) {
+        # calculate the RMSE (of matrix1*inv(matrix2) and identity matrix)
+        #   EQ: RMSE = SQRT(SUM( ([I]_ij-[mat1*inv(mat2)]_ij)^2 ))
+        my $idmat = Math::MatrixReal->new_diag( [(1) x $dim] );
+        my $prodmat = $mat1 * $mat2_inv;
+        my $diffmat = $idmat - $prodmat;
+        my $sq_diffmat = $diffmat->each( sub { (shift)**2 } ); # square it elementwise
+        my $norm_sum = $sq_diffmat->norm_sum(); # sum of (abs of) all elements
+        $mean = $norm_sum/($dim**2);
+    } else {
+        croak "method ".$method." is unknown";
+    }
+
+    return (sqrt $mean);
 }
 
 sub eigenvalue_decomposition
@@ -1320,6 +1430,25 @@ sub eigenvalue_decomposition
     transpose(\@G);
 
     return (\@eigenValues, \@G);
+}
+
+sub condition_number
+{
+    # get the 2-norm condition number from the eigenvalue decomposition
+    # (return undef if singular matrix)
+    my $mat = shift;
+
+    (my $values, my $Q) = eigenvalue_decomposition($mat);
+    (my $min, my $max) = ($values->[0], $values->[0]);
+    foreach my $val (@{$values}[1..$#$values]) {
+        $min = $val if (abs($val) < $min);
+        $max = $val if (abs($val) > $max);
+    }
+    if ($min != 0) {
+        return abs($max/$min);
+    } else {
+        return undef;
+    }
 }
 
 sub lower_triangular_identity_solve
@@ -2169,7 +2298,7 @@ sub frem_conditional_variance
         # try to save calculation by forcing positive-definiteness (likely small numerical problems due to lack of cov-step of NONMEM)
 		print "cholesky error $err in frem_conditional_variance, likely positive semidefinite or numerically close, forcing positive-definite matrix\n";
         my $count;
-        ($matrix,$count) = get_symmetric_posdef($orig_matrix);
+        ($matrix,$count) = get_symmetric_posdef(matrix => $orig_matrix);
         print "$count small eigenvalue(s) adjusted\n";
         $err = cholesky($matrix);
         if ($err > 0) {
@@ -2272,7 +2401,7 @@ sub frem_conditional_coefficients
         # try to save calculation by forcing positive-definiteness (likely small numerical problems due to lack of cov-step of NONMEM)
 		print "invert_symmetric error $error in frem_conditional_coefficients, likely positive semidefinite or numerically close, forcing positive-definite matrix\n";
         my $count;
-        ($matrix,$count) = get_symmetric_posdef($orig_matrix);
+        ($matrix,$count) = get_symmetric_posdef(matrix => $orig_matrix);
         print "$count small eigenvalue(s) adjusted\n";
         $error = invert_symmetric($matrix, $refInv);
         if ($error > 0) {

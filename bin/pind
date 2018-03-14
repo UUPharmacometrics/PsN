@@ -42,76 +42,74 @@ if (defined $options{'njd'}){
 }
 
 
-
 my %help_text;
 
 $help_text{Pre_help_message} = <<'EOF';
-    Individual probabilities.
+	Individual probabilities.
 EOF
+
 $help_text{Description} = <<'EOF';      
-The pind script implements part of the procedure, the individual probabilities,
-described in
 
-	Two bootstrapping routines for obtaining imprecision estimates for 
-	nonparametric parameter distributions in nonlinear mixed effects models, 
-	Paul G. Baverel, Radojka M. Savic, Mats O. Karlsson,
-	J Pharmacokinet Pharmacodyn, 2010
+	The pind script implements part of the procedure, the individual probabilities,
+	described in "Two bootstrapping routines for obtaining imprecision estimates for 
+	nonparametric parameter distributions in nonlinear mixed effects models",Paul
+	G. Baverel, Radojka M. Savic, Mats O. Karlsson, J Pharmacokinet Pharmacodyn, 
+	2010
 EOF
+
 $help_text{Examples} = <<'EOF';      
-pind run1.mod
+	pind run12.mod
 EOF
-$help_text{Options} = <<'EOF';      
-A model must be given as argument.
 
-      The following options are valid:
+$help_text{Options} = <<'EOF';      
+	A model file is required on the command line.
+
+	The following options are valid:
 EOF
 
 $help_text{-h} = <<'EOF';
-      -h | -?
-      
-      With -h or -? pind will print a list of options and exit.
+-h | -?
+
+	With -h or -? pind will print a list of options and exit.
 EOF
-      
+
 $help_text{-help} = <<'EOF';      
-      -help
-      
-      With -help pind will print this, longer, help message.
-EOF
+	-help
 
-$help_text{-lst_file} = <<'EOF';
-      -lst_file='filename'
-
-      Optional, the lst-file from where to read initial parameter estimates. 
-      Default is the same name as the model file but with .mod replaced with .lst.
-EOF
-
-$help_text{-njd} = <<'EOF';
-      -njd='filename'
-
-      Experimental. Optional, by default not used. Filename for 
-      new joint density column.
+	With -help pind will print this, longer, help message.
 EOF
 
 $help_text{-ignore_individuals_above} = <<'EOF';
-      -ignore_individuals_above='integer'
+	-ignore_individuals_above=integer
 
-      Experimental. Only allowed together with -njd, in that case
-      default value is 100. Option adds line 
-      IGNORE=(ID.GT.X) to DATA record, where X is option value.
-      If the IGNORE statement should not be changed even though 
-      option -njd is used, set -ignore_individuals_above=0.
+	Experimental. Only allowed together with -njd, in that case the default value
+	is 100. Option adds line IGNORE=(ID.GT.X) to DATA record, where X is option
+	value. If the IGNORE statement should not be changed even though option -njd
+	is used, set -ignore_individuals_above=0.
 EOF
 
 $help_text{-ind_param} = <<'EOF';
-      -ind_param=eta|theta
+	-ind_param=eta|theta
 
-      Optional, default eta. The parameter to set in individual ofv model files.
-      Possibilities are eta or theta.
+	Default eta. The parameter to set in individual ofv model files. Possibilities
+	are eta or theta.
 EOF
 
+$help_text{-lst_file} = <<'EOF';
+	-lst_file='filename'
+
+	Default is the same name as the model file but with .mod replaced with .lst. 
+	The lst-file from where to read initial parameter estimates.
+EOF
+
+$help_text{-njd} = <<'EOF';
+	-njd='filename'
+
+	Default not set. Experimental. Filename for new joint density column.
+EOF
 
 $help_text{Post_help_message} = <<'EOF';
-      Also see 'psn_options -h' for a description of common options.
+	Also see 'psn_options -h' for a description of common options.
 EOF
 
 common_options::online_help( 'pind', \%options, \%help_text, \%required_options, \%optional_options);

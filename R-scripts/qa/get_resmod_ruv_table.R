@@ -1,39 +1,50 @@
 get_resmod_ruv_table <- function(directory, idv_name, dvid_name, skip){
-  resmod_file_exists <- get_resmod_table(directory=directory, idv=idv_name)$resmod_file_exists
+  resmod_table_list <- get_resmod_table(directory=directory, idv=idv_name)
+  resmod_file_exists <- resmod_table_list$resmod_file_exists
   resmod_ruv_table_list <- list()
   if(resmod_file_exists && all(skip!="resmod")) {
-    resmod_table_full <- get_resmod_table(directory, idv_name)$resmod_table 
-    if(any(resmod_table_full$dvid!="NA")) {
-      dvid_nr <- unique(resmod_table_full$dvid)
-      if(any(dvid_nr=="sum")) {
-        dvid_nr <- as.numeric(dvid_nr[-which(dvid_nr=="sum")])
-      } else {
-        dvid_nr <- as.numeric(dvid_nr)
-      }
-    } else {
-      dvid_nr <- 'NA'
-    }
-    
+    resmod_table_full <- resmod_table_list$resmod_table
+    dvid_nr <- find_dvid_values(directory,idv=idv_name,dvid_name)
+
     if(length(dvid_nr) == 1 && dvid_nr=="NA"){
       resmod_ruv_overview <- as.data.frame(array(0,c(2,3)))
     } else {
       resmod_ruv_overview <- as.data.frame(array(0,c((2*length(dvid_nr)+length(dvid_nr)),3)))
     }
     
+    #get TAD results file if exists
+    tad_resmod_table_list <- get_resmod_table(directory=directory, idv="TAD",quiet=T)
+    add_tad_varying <- tad_resmod_table_list$resmod_file_exists & idv_name!="TAD"
+    if(add_tad_varying) {
+      tad_table <- tad_resmod_table_list$resmod_table
+    }
+    
     k <- 1
     for (j in 1:length(dvid_nr)) {
-      resmod_table <- resmod_table_full %>% filter(dvid==!!dvid_nr[j]) %>% select(-iteration, -dvid)
+      resmod_table <- resmod_table_full %>% dplyr::filter(dvid==!!dvid_nr[j]) %>% dplyr::select(-iteration, -dvid)
       non_time_var <- resmod_table %>%
-        filter(!grepl("idv_varying", model)) %>%
-        mutate(df = stringr::str_count(parameters, "="))
+        dplyr::filter(!grepl("idv_varying", model)) %>%
+        dplyr::mutate(df = stringr::str_count(parameters, "="))
       time_var_cutoff <- resmod_table %>%
-        filter(grepl("idv_varying_RUV_cutoff",model)) %>%
-        mutate(df = 2) %>%
-        arrange(desc(dOFV))
-      resmod_ruv_table <- bind_rows(non_time_var, 
-                                    time_var_cutoff %>% 
-                                      slice(1) %>%
-                                      mutate(model = "time varying"))
+        dplyr::filter(grepl("idv_varying_RUV_cutoff",model)) %>%
+        dplyr::mutate(df = 2) %>%
+        dplyr::arrange(desc(dOFV)) %>%
+        dplyr::slice(1) %>%
+        dplyr::mutate(model = "time varying")
+      resmod_ruv_table <- dplyr::bind_rows(non_time_var, 
+                                           time_var_cutoff)
+      #add tad varying row, if exists time after dose
+      if(add_tad_varying) {
+        tad_varying <- tad_table %>% dplyr::filter(dvid==!!dvid_nr[j]) %>% dplyr::select(-iteration, -dvid) %>%
+          dplyr::filter(grepl("idv_varying_RUV_cutoff",model)) %>%
+          dplyr::mutate(df = 2) %>%
+          dplyr::arrange(desc(dOFV)) %>%
+          dplyr::slice(1) %>%
+          dplyr::mutate(model = "tad varying")
+        resmod_ruv_table <- dplyr::bind_rows(resmod_ruv_table,
+                                             tad_varying)
+      }
+      
       resmod_ruv_table <- resmod_ruv_table[order(resmod_ruv_table$dOFV,decreasing = T),]
       rownames(resmod_ruv_table) <- NULL
       colnames(resmod_ruv_table)[which(colnames(resmod_ruv_table)=="model")] <- "Model"
@@ -47,13 +58,9 @@ get_resmod_ruv_table <- function(directory, idv_name, dvid_name, skip){
       colnames(resmod_ruv_table) <- c("Model","dOFV","Additional parameters","Parameter values")
       
       #replace symbol "_" with the space
-      nr_rows <- grep("_",resmod_ruv_table[,1])
+      nr_rows <- grep("\\_",resmod_ruv_table[,1])
       for(i in 1:length(nr_rows)) {
-        resmod_ruv_table[nr_rows[i],1] <- gsub("_"," ",resmod_ruv_table[nr_rows[i],1])
-      }
-      
-      if(all(is.na(resmod_ruv_table$dOFV))) {
-        resmod_ruv_table$dOFV <- format(resmod_ruv_table$dOFV)
+        resmod_ruv_table[nr_rows[i],1] <- gsub("\\_"," ",resmod_ruv_table[nr_rows[i],1])
       }
       
       if(length(dvid_nr) == 1 && dvid_nr=="NA") {
@@ -63,15 +70,19 @@ get_resmod_ruv_table <- function(directory, idv_name, dvid_name, skip){
         resmod_ruv_overview[c(k+1,k+2),] <- resmod_ruv_table[c(1:2),c("Model","dOFV","Additional parameters")] #the highest ofv values
         k <- k + 3
       }
-      resmod_ruv_table$dOFV <- format(round(resmod_ruv_table$dOFV,2),digits=1,trim=T,nsmall=1,scientific = F)
+      if(all(is.na(resmod_ruv_table$dOFV))) {
+        resmod_ruv_table$dOFV <- format(resmod_ruv_table$dOFV)
+      } else {
+        resmod_ruv_table$dOFV <- format(round(resmod_ruv_table$dOFV,2),digits=1,trim=T,nsmall=1,scientific = F)
+      }
       resmod_ruv_table_list[[j]] <- resmod_ruv_table
     }
    colnames(resmod_ruv_overview) <- c("","dOFV","Add.params")
-   # #if all dOFV values are NA
-   # if(all(is.na(resmod_ruv_overview$dOFV))) {
-   #   resmod_ruv_overview <- data.frame("RESMOD","NA","",stringsAsFactors = F)
-   #   colnames(resmod_ruv_overview) <- c("","dOFV","Add.params")
-   # }
+   
+   #if all dOFV values are NA
+   if(all(is.na(resmod_ruv_overview$dOFV))) {
+     resmod_ruv_overview$dOFV <- format(resmod_ruv_overview$dOFV)
+   }
    
   } else {
     if(any(skip=="resmod")) {

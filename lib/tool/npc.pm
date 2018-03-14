@@ -106,8 +106,7 @@ has 'original_model' => ( is => 'rw', isa => 'model' );
 has 'logfile' => ( is => 'rw', isa => 'ArrayRef[Str]', default => sub { ['npc.lop'] } );
 has 'results_file' => ( is => 'rw', isa => 'Str', default => 'npc_results.csv' );
 has 'nca' => ( is => 'rw', isa => 'Bool', default => 0 );
-has 'mix' => ( is => 'rw', isa => 'Str' );
-has 'mix_random' => ( is => 'rw', isa => 'Bool' );
+has 'mix' => ( is => 'rw', isa => 'Bool', default => 0 );
 
 sub BUILD
 {
@@ -1170,12 +1169,6 @@ sub modelfit_setup
 		push(@rec_strings,$self->irep) if (defined $self->irep);
 	}
 	
-    # Add MIXEST column
-    if (defined $self->mix) {
-        push @sim_strings, $self->mix;
-        push @rec_strings, $self->mix;
-    }
-
 	# Remove duplicate columns
 	my @rec_strings2;
 	my %column_seen;
@@ -1592,7 +1585,7 @@ sub modelfit_setup
 				  "by the user, PsN will not add \$SIM.");
 			
 		}
-		unless ($self->keep_estimation or $user_sim_model){
+		unless ($self->keep_estimation or $user_sim_model or defined $self->mix) {
 			push (@simrec_strings,('ONLYSIMULATION'));
 		}
 		if (($self->noprediction or $nopred_is_set )and (not $user_sim_model)){
@@ -1641,7 +1634,7 @@ sub modelfit_setup
             copy_data => $self->copy_data,
             prepend_model_file_name => 1,
 		);
-        if (defined $self->mix_random) {
+        if (defined $self->mix) {
             $modfit->add_to_nmoutput(extensions => ['phm']);
         }
 		$self->searchdir($modfit->directory);
@@ -1669,12 +1662,6 @@ sub modelfit_analyze
 							  model_number => { isa => 'Num', optional => 1 }
 		);
 	my $model_number = $parm{'model_number'};
-
-    # Exit if -mix
-    if ($self->mix) {
-        print("Simulation for mixture model done.\n");
-        return;
-    }
 
 	# If we ran an nca move data files and return
 	if ($self->nca) {
@@ -5582,14 +5569,13 @@ sub create_R_plots_code
 
     if (defined $self->mix) {
         push @code, "mix <- '" . $self->mix . "'";
-        if (defined $self->mix_random) {
-            push @code, "mix_random <- TRUE";
-            push @code, "phm_file <- 'm1/vpc_original.phm'";
-        } else {
-            push @code, "mix_random <- FALSE";
-        }
+        push @code, "phm_obs_file <- 'm1/vpc_original.phm'";
+        push @code, "phm_sim_file <- 'm1/vpc_simulation.1.phm'";
+        my @bins;
+        push @bins, $self->bin_floors->[0]->[0];        # No other stratification possible
+        push @bins, @{$self->bin_ceilings->[0]};
+        push @code, "bin_boundaries <- c(" . join(", ", @bins) . ")";
     }
-
 
 	$rplot->add_preamble(code => \@code);
 }

@@ -18,6 +18,8 @@ doc/*-blx.bib
 doc/*.xml
 doc/*.fdb_latexmk
 doc/*.fls
+doc/*.toc
+doc/*.out
 development/todo/*.aux
 development/todo/*.log
 development/todo/*.pdf

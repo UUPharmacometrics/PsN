@@ -1,98 +1,67 @@
-all.outlier.report.table <- function(ofv_outliers,ebe.npde_outliers,cwres.iwres_outliers,ID_deleted_ebe,ID_deleted_ofv) {
-  if(missing(cwres.iwres_outliers)) {
-    col_amount <- 3
-  } else {
-    col_amount <- 5
-  }
-  
-  # ID numbers of all ourliers if they exist
-  id <- c()
-  if (ncol(ofv_outliers) > 1) {
-    ofv_ID <- ofv_outliers$ID
-    id <- ofv_ID
-  } 
-  if (ncol(ebe.npde_outliers) > 1) {
-    ebe.npde_ID <- ebe.npde_outliers$ID
-    id <- c(id,ebe.npde_ID)
-  }
-  if(col_amount == 5) {
-    if (ncol(cwres.iwres_outliers) > 1) {
-      cwres.iwres_ID <- as.numeric(as.vector(cwres.iwres_outliers$ID))
-      id <- c(id,cwres.iwres_ID)
+all.outlier.report.table <- function(ofv_outliers,ebe.npde_outliers,cwres.iwres_outliers,residual_names,ID_deleted_ebe=NULL,ID_deleted_ofv=NULL) {
+  if(ncol(cwres.iwres_outliers)>0 && length(residual_names)>0) {
+    #organize data so that CWRES would always be first
+    residual_names <- sort(residual_names)
+    cwres.iwres_table_order <- cwres.iwres_outliers
+    j <- 0
+    for (i in 2:ncol(cwres.iwres_outliers)) {
+      j <- j + 1
+      cwres.iwres_table_order[,i] <- cwres.iwres_outliers[,grep(residual_names[j],colnames(cwres.iwres_outliers))]
     }
+    cwres.iwres_outliers <- cwres.iwres_table_order
   }
 
-  # create outlier table (if exists)
-  if (length(id) > 0) {
-    # Unique ID numbers
-    id_unique <- unique(id)
-    id_unique <- sort(id_unique)
-    
-    # create all outlier table
-    all_outlier_table <- array("", c(length(id_unique),col_amount))
-    for (n in 1:length(id_unique)) {
-      col_nr <- 1
-      id_nr <- id_unique[n]
-      all_outlier_table[n,col_nr] <- id_nr
-      
-      col_nr <- col_nr + 1
-      #ofv deleted id if exists
-      if(length(ID_deleted_ofv)>0) {
-        if(any(ID_deleted_ofv %in% id_nr)) {
-          all_outlier_table[n,col_nr] <- "NA"
-        }
-      }
-      
-      # Add OFV values
-      if (exists("ofv_ID")) {
-        if (any(ofv_ID %in% id_nr)) {
-          ofv_value_row <- which(ofv_ID == id_nr)
-          all_outlier_table[n,col_nr] <- round(ofv_outliers[ofv_value_row,2],3)
-        }
-      }
-      
-      col_nr <- col_nr + 1
-      #ebe deleted id if exists
-      if(length(ID_deleted_ebe)>0) {
-        if(any(ID_deleted_ebe %in% id_nr)) {
-          all_outlier_table[n,col_nr] <- "NA"
-        }
-      }
-      # Add EBE NPDE values
-      if (exists("ebe.npde_ID")) {
-        if (any(ebe.npde_ID %in% id_nr)) {
-          ebe.npde_value_row <- which(ebe.npde_ID == id_nr)
-          all_outlier_table[n,col_nr] <- ebe.npde_outliers[ebe.npde_value_row,2]
-        }
-      }
-      
-      if(col_amount == 5) {
-        col_nr <- col_nr + 1
-        # Add CWRES and IWRES values
-        if (exists("cwres.iwres_ID")) {
-          if (any(cwres.iwres_ID %in% id_nr)) {
-            residual_value_row <- which(cwres.iwres_ID == id_nr)
-            cwres.iwres_outliers$OUTLIERS.IWRES <- as.vector(cwres.iwres_outliers$OUTLIERS.IWRES)
-            cwres.iwres_outliers$OUTLIERS.CWRES <- as.vector(cwres.iwres_outliers$OUTLIERS.CWRES)
-            all_outlier_table[n,col_nr] <- cwres.iwres_outliers$OUTLIERS.IWRES[residual_value_row]
-            all_outlier_table[n,col_nr+1] <- cwres.iwres_outliers$OUTLIERS.CWRES[residual_value_row]
-          }
-        }
-      }
-
-    }
-    all_outlier_table <- as.data.frame(all_outlier_table)
-    # save as character
-    all_outlier_table <- data.frame(lapply(all_outlier_table, as.character), stringsAsFactors=FALSE) 
-    if(col_amount == 5) {
-      colnames(all_outlier_table) <- c("ID","OFV outliers (SD)","EBE NPDE outliers (ETA numbers)","IWRES outliers","CWRES outliers")
+  if(ncol(ofv_outliers)>1) {
+    ofv_outliers[,2] <- as.character(round(ofv_outliers[,2],3))
+    if(ncol(ebe.npde_outliers)>1) {
+      all_outlier_table <- dplyr::full_join(ofv_outliers,ebe.npde_outliers,by="ID")
     } else {
-      colnames(all_outlier_table) <- c("ID","OFV outliers (SD)","EBE NPDE outliers (ETA numbers)")
+      all_outlier_table <- cbind(ofv_outliers,as.character(rep(NA,nrow(ofv_outliers))),stringsAsFactors = F)
     }
-    
   } else {
-    all_outlier_table <- data.frame(C = c("No outliers detected"))
-    names(all_outlier_table) <- NULL
+    if(ncol(ebe.npde_outliers)>1) {
+      all_outlier_table <- data.frame(ebe.npde_outliers$ID,as.character(rep(NA,nrow(ebe.npde_outliers))),ebe.npde_outliers[,2],stringsAsFactors = F)
+    } else {
+      all_outlier_table <- data.frame()
+    }
+  }
+  if(ncol(all_outlier_table)>0) {
+    new_names <- c("ID","OFV outliers (SD)","EBE NPDE outliers (ETA numbers)")
+    all_outlier_table <- all_outlier_table %>%
+      setNames(c("ID","ofv","ebe_npde"))
+    if(length(residual_names)>0) {
+      new_names <- c(new_names,paste(residual_names,"outliers"))
+      if(ncol(cwres.iwres_outliers)>0) {
+        all_outlier_table <- dplyr::full_join(all_outlier_table,cwres.iwres_outliers,by="ID",stringsAsFactors=FALSE)
+      } else {
+        all_outlier_table <- all_outlier_table %>%
+          cbind(.,as.data.frame(array("",c(nrow(all_outlier_table),length(residual_names))),stringsAsFactors=FALSE))
+      }
+    }
+    all_outlier_table <- all_outlier_table %>%
+      dplyr::mutate_at("ofv",funs(ifelse(ID %in% ID_deleted_ofv,"NA",.))) %>%
+      dplyr::mutate_at("ebe_npde",funs(ifelse(ID %in% ID_deleted_ebe,"NA",.))) %>%
+      dplyr::mutate_all(funs(ifelse(is.na(.),"",.))) %>%
+      setNames(new_names) %>%
+      dplyr::arrange(ID) %>%
+      dplyr::mutate_all(as.character)
+  } else {
+    if(ncol(cwres.iwres_outliers)>0 && length(residual_names)>0) {
+        new_names <- c("ID","OFV outliers (SD)","EBE NPDE outliers (ETA numbers)",paste(residual_names,"outliers"))
+        all_outlier_table <- cbind(cwres.iwres_outliers$ID,
+                                   as.data.frame(array("",c(nrow(cwres.iwres_outliers),2)),stringsAsFactors=FALSE)) %>%
+          setNames(c("ID","ofv","ebe_npde")) %>%
+          cbind(.,cwres.iwres_outliers[2:ncol(cwres.iwres_outliers)],stringsAsFactors=FALSE) %>%
+          dplyr::mutate_at("ofv",funs(ifelse(ID %in% ID_deleted_ofv,"NA",.))) %>%
+          dplyr::mutate_at("ebe_npde",funs(ifelse(ID %in% ID_deleted_ebe,"NA",.))) %>%
+          dplyr::mutate_all(funs(ifelse(is.na(.),"",.))) %>%
+          setNames(new_names) %>%
+          dplyr::arrange(ID) %>%
+          dplyr::mutate_all(as.character)
+    } else {
+      all_outlier_table <- data.frame(c("No outliers detected"),stringsAsFactors = F)
+      colnames(all_outlier_table) <- NULL
+    }
   }
   return(all_outlier_table)
 }

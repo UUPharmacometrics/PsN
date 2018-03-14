@@ -132,6 +132,35 @@ sub format_filename
 	return $string;
 }
 
+sub _is_ignore_accept
+{
+    my $name = shift;
+    my $value = shift;
+    if ($name =~ /^(IGNORE|IGNOR|IGNO|IGN|ACCEPT|ACCEP|ACCE|ACC)(\()?/) {
+        if (defined $2) {
+            return 1;
+        } else {
+            if ($value =~ /^\(/) {
+                return 1;
+            }
+        }
+    }
+    return 0;
+}
+
+sub have_ignore_accept
+{
+    # Do we have any ignore or accept?
+    my $self = shift;
+
+    for my $option (@{$self->options}) {
+        if (_is_ignore_accept($option->name, $option->value)) {
+            return 1;
+        } 
+    }
+    return 0;
+}
+
 sub remove_ignore_accept
 {
     # Remove all IGNORE=() and ACCEPT=() statements

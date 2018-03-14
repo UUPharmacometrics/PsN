@@ -1,135 +1,107 @@
 \input{inputs/format_header.tex}
-\guidetitle{SIMEVAL user guide}{2016-10-31}
-
+\guidetitle{SIMEVAL user guide}{2018-03-02}
+\usepackage{hyperref}
 \begin{document}
 
 \maketitle
 \newcommand{\guidetoolname}{simeval}
-
+\tableofcontents
+\newpage
 
 \section{Overview}
 
-The simeval program is a tool for simulation-evaluation based diagnostics that aims to identify model misspecification and outliers.
-%based on objective functiuon value (OFV), individual function value (iOFV)
-%and empirical Bayes estimates (EBEs). 
-The principle is 
+The simeval tool is for simulation-evaluation based diagnostics that aims to identify model misspecification and outliers.\\
+%based on objective functiuon value (OFV), individual function value (iOFV) and empirical Bayes estimates (EBEs). 
+The principle is:
 \begin{enumerate}
-\item Simulate N data sets from final estimates of the model
-\item Apply final model to each data set
-(simple evaluation given the population final parameter estimates or full estimation with
-population parameters that are re-estimated for each simulated data set)
-\item Extract output for diagnostics
+\item Simulate N data sets from final estimates of the model.
+\item Apply final model to each data set.
+(simple evaluation given the population final parameter estimates or full estimation with population parameters that are re-estimated for each simulated data set).
+\item Extract output for diagnostics.
 \begin{description}
-\item[pOFV] population objective function value
-\item[iOFV] individual objective function value
-\item[EBE] parameter individual estimates (empirical bayesian estimates)
-\item[IWRES] individual weighted residual
-\item[CWRES] conditional weighted residual
+\item[pOFV] population objective function value.
+\item[iOFV] individual objective function value.
+\item[EBE] parameter individual estimates (empirical bayesian estimates).
+\item[IWRES] individual weighted residual.
+\item[CWRES] conditional weighted residual.
 \end{description}
-\item Provide reference distributions for ”observed” pOFV, iOFV, EBE, CWRES and IWRES (calculated on the real dataset)
+\item Provide reference distributions for ”observed” pOFV, iOFV, EBE, CWRES and IWRES (calculated on the real dataset).
 \end{enumerate}
-The program computes normalized prediction distribution errors for iOFV, EBE, CWRES and IWRES 
-using the procedure described in \cite{Comets}, with example use in \cite{Keizer} and \cite{Largajolli}.
-It also performs further diagnostics based on posterior predictive check (PPC) principle that are later on introduced in the section Output. Diagnostics plots are created via the -rplots option, see section 
-Auto-generated R-plots from PsN.
+The program computes normalized prediction distribution errors for iOFV, EBE, CWRES and IWRES, using the procedure described in \cite{Comets}, with example use in \cite{Keizer} and \cite{Largajolli}. It also performs further diagnostics based on posterior predictive check (PPC) principle that are later on introduced in the section Output. Diagnostics plots are created via the -rplots option, see section Auto-generated R-plots from PsN.\\
 
-Example call
+Example:
 \begin{verbatim}
 simeval run1.mod -rplots=1
 \end{verbatim}
-Note: If any IDs in the data set do not have any observation records, then those IDs must be
-IGNOREd in \$DATA, otherwise simeval will not produce all output.
+Note: If any IDs in the data set do not have any observation records, then those IDs must be IGNOREd in \$DATA, otherwise simeval will not produce all output.
 
 \section{Input and options}
 
 \subsection{Required input}
-
-A model file is required on the command-line.
+A model file is required on the command line.
 
 \subsection{Optional input}
 
 \begin{optionlist}
-\optdefault{lst\_file}{filename}
-Default not set. By default PsN will, before copying the input model to the simulation models, look for an output file with final estimates for the input model and if found update the initial estimates in the simulation models. If option -lsf\_file is set Psn will instead use the final estimates in the given file. If option is not set and no output file is found PsN will not update the estimates but instead rerun the input model, if option -estimate\_input is set. 
+\optdefault{dv}{variable}
+Default is DV. Name of dependent variable for DV vs PRED plot.
 \nextopt
 \optname{estimate\_input}
 Default set. By default, PsN will rerun the input model to get parameter estimates unless an output file is found or option -lst\_file is set. But if option -estimate\_input is unset with -no-estimate\_input and no lst-file is found then the parameter estimates set in the input model will be used for simulations. 
 \nextopt
-\optdefault{samples}{N}
-Default 300. The number of simulations and reestimations/evaluations to run. 
-\nextopt
-\optdefault{n\_simulation\_models}{N}
-Default equal to the number of threads.
-By setting this option to a number N greater than 1, the 'samples' simulations and evaluations
-will be split equally between N model files, which can be run in parallel.
-\nextopt
-\optname{reminimize}
-Default not set. By default, simulated datasets will be run with MAXEVAL=0 (or equivalent for non-classical estimation methods). If option -reminimize is set then \$EST will be the same as in the input model. We advise the user to use together with MAXEVAL=0 the MCETA option in order to avoid local minima at the individual level.
+\optdefault{extra\_variables}{comma-separated list}
+Default empty. A comma-separated list of extra variables to add to \$TABLE of simulation models.
 \nextopt
 \optdefault{gls\_data\_file}{filename}
 Default gls\_data.dta. A file with input data for the gls program is always generated. This option changes the name of that file. After this file is created, the gls program can be run with option \mbox{-gls\_model} and -ind\_shrinkage with minimum runtime, see gls\_userguide.pdf 
 \nextopt
-\optdefault{extra\_variables}{comma-separated list}
-Default empty. A comma-separated list of extra variables to add to \$TABLE of simulation models.
-\nextopt
 \optdefault{idv}{variable}
-Default TIME. Independent variable for DV vs idv plot.
+Default variable TIME. Independent variable for DV vs idv plot.
 \nextopt
-\optdefault{dv}{variable}
-Default is DV. Name of dependent variable for DV vs PRED plot.
+\optdefault{lst\_file}{filename}
+Default not set. By default PsN will, before copying the input model to the simulation models, look for an output file with final estimates for the input model and if found update the initial estimates in the simulation models. If option -lsf\_file is set Psn will instead use the final estimates in the given file. If option is not set and no output file is found PsN will not update the estimates but instead rerun the input model, if option -estimate\_input is set. 
+\nextopt
+\optdefault{n\_simulation\_models}{N}
+Default equal to the number of threads. By setting this option to a number N greater than 1, the 'samples' simulations and evaluations will be split equally between N model files, which can be run in parallel.
+\nextopt
+\optname{reminimize}
+Default not set. By default, simulated datasets will be run with MAXEVAL=0 (or equivalent for non-classical estimation methods). If option -reminimize is set then \$EST will be the same as in the input model. We advise the user to use together with MAXEVAL=0 the MCETA option in order to avoid local minima at the individual level.
+\nextopt
+\optdefault{samples}{N}
+Default is 300. The number of simulations and reestimations/evaluations to run. 
 \nextopt
 \end{optionlist}
 
 \subsection{Some important common PsN options}
-For a complete list see common\_options.pdf, 
-or psn\_options -h on the command line.
+For a complete list see common\_options.pdf, or psn\_options -h on the command line.
 \input{inputs/basic_options.tex}
 
 \subsection{Diagnostic plots}
 \newcommand{\rplotsconditions}{
-See section Output, subsections Basic and Extended diagnostic plots,
-for descriptions of the default simeval plots.
-The default simeval template 
-requires that libraries gridExtra, PEIP and PerformanceAnalytics are installed.
-If the conditions are not fulfilled then no pdf will be generated,
-see the .Rout file in the main run directory for error messages.}
+See section Output, subsections Basic and Extended diagnostic plots, for descriptions of the default simeval plots. The default simeval template requires that libraries gridExtra, PEIP and PerformanceAnalytics are installed. If the conditions are not fulfilled then no pdf will be generated, see the .Rout file in the main run directory for error messages.}
 \input{inputs/rplots_section_body.tex}
 
-
 \section{Output}
-
 \subsection{Basic diagnostic plots}
-Basic diagnostic rplots will be generated 
-if option -rplots is set >0.
+Basic diagnostic rplots will be generated if option -rplots is set >0.
 
 \subsubsection{Population and individual OFV}
 \noindent The file PsN\_OFV\_plots.pdf contains
 \begin{enumerate}
-\item A posterior predictive check of population OFV. The plot shows
-observed pOFV (pOFVobs) and the reference
-distribution of pOFV based on simulated data (pOFVsim). If the pOFVobs stands outside the pOFVsim distribution the diagnostic is picking up a misspecification. Note that 
-this is a global model diagnostic
-that can identify major model misspecification but not which part of the model
-is inadequate.
-\item A histogram of npde of individual OFV (iOFV), together with the expected
-normal distribution. If there is no model misspecification, the npde iOFV should
-be normally distributed with mean 0 and variance 1.
-\item PPC of individual OFV for outlier individuals, i.e.
-individuals where observed OFV (iOFVobs) is above entire
+\item A posterior predictive check of population OFV. The plot shows observed pOFV (pOFVobs) and the reference distribution of pOFV based on simulated data (pOFVsim). If the pOFVobs stands outside the pOFVsim distribution the diagnostic is picking up a misspecification. Note that this is a global model diagnostic that can identify major model misspecification but not which part of the model is inadequate.
+\item A histogram of npde of individual OFV (iOFV), together with the expected normal distribution. If there is no model misspecification, the npde iOFV should be normally distributed with mean 0 and variance 1.
+\item PPC of individual OFV for outlier individuals, i.e. individuals where observed OFV (iOFVobs) is above entire
 distribution of its corresponding simulated individual OFV. If no outliers are found then there will be no individual OFV PPC plots.
 \item individual OFV residuals are calculated in the following way:
 $RES_{iOFVjk}=\frac{(iOFVobs_{j} - iOFVsim(k)_{j})}{std(iOFVsim(k)_{j})}$
-where k=1,...,N and N is the number of simulations and where j=1,...,L and L is the number of subjects. 
-Misspecification in the model can be detected if the distribution of $RES_{IOFVj}$ is not uniformly split above and below the zero line. Positive $RES_{IOFVj}$ indicate worse fit of the observed with respect to the simulated reference distribution. Potential outliers can be detected for those IDs with $RES_{IOFVj}$ exceeding the +3SD line. 
+where k=1,...,N and N is the number of simulations and where j=1,...,L and L is the number of subjects. Misspecification in the model can be detected if the distribution of $RES_{IOFVj}$ is not uniformly split above and below the zero line. Positive $RES_{IOFVj}$ indicate worse fit of the observed with respect to the simulated reference distribution. Potential outliers can be detected for those IDs with $RES_{IOFVj}$ exceeding the +3SD line. 
 \end{enumerate}
 
 \subsubsection{EBE npde}
 \noindent The file PsN\_ebe\_npde\_plots.pdf contains
 \begin{enumerate}
-\item A table with mean and variance of npde of each EBE. If there is no model
-misspecification the npde should have mean 0 variance 1.
-\item A correlation chart with histograms of individual EBE npde and their
-correlations. The expectation around the EBE npde is no correlations, high correlations indicate model misspecification in the omega matrix declaration.
+\item A table with mean and variance of npde of each EBE. If there is no model misspecification the npde should have mean 0 variance 1.
+\item A correlation chart with histograms of individual EBE npde and their correlations. The expectation around the EBE npde is no correlations, high correlations indicate model misspecification in the omega matrix declaration.
 \item A table of the individuals that are outliers with respect to their set of EBE npde and consequently also with respect to their set of EBE. The criteria to define an outlier individual with respect to its EBE is based on the calculation of the following robust multivariate distance for each individual:
 $(d_{j})^2=\frac{(EBEnpde_{j} - E[EBEnpde])^2}{var(EBEnpde)}$
 where j=1,...,L and L is the number of subjects. Note that the mean and the variance of the EBE npde is known a priori as they follow N(0,1) and this makes the calculation of the distance robust as no estimation is needed. The multivariate distance of each individual follows a chi-squared distribution and this allows us to determine outlier individuals and discern them from simply the extreme ones in the distribution.
@@ -146,47 +118,34 @@ where j=1,...,L and L is the number of subjects. Note that the mean and the vari
 \subsubsection{Residuals}
 \noindent The file PsN\_residual\_plots.pdf contains
 \begin{enumerate}
-\item A histogram of npde of IWRES, together with the expected
-normal distribution. If there is no model misspecification, the npde should
-be normally distributed with mean 0 and variance 1.
-\item A histogram of npde of CWRES, together with the expected
-normal distribution. If there is no model misspecification, the npde should
-be normally distributed with mean 0 and variance 1.
+\item A histogram of npde of IWRES, together with the expected normal distribution. If there is no model misspecification, the npde should be normally distributed with mean 0 and variance 1.
+\item A histogram of npde of CWRES, together with the expected normal distribution. If there is no model misspecification, the npde should be normally distributed with mean 0 and variance 1.
 \item A table with mean and variance of IWRES npde and CWRES npde.
-\item A table with ID, TIME, DV and PRED for data records where observed IWRES or CWRES (not npde)
-lies completely above or below the simulated IWRES/CWRES distribution.
+\item A table with ID, TIME, DV and PRED for data records where observed IWRES or CWRES (not npde) lies completely above or below the simulated IWRES/CWRES distribution.
 \end{enumerate}
 
 
 \subsection{Extended diagnostic plots}
-Extended diagnostic plots will be generated
-if option -rplots is set >1.
-In file PsN\_OFV\_plots.pdf will be added
+Extended diagnostic plots will be generated if option -rplots is set >1. In file PsN\_OFV\_plots.pdf will be added
 \begin{enumerate}
 \item KLD of the individual OFV distribution in the observed dataset (iOFVobs) with respect to the average distribution of the iOFV simulated distribution (iOFVsim). The KLD is a measure of the divergence between two distributions (the iOFVobs and the average iOFVsim). In particular in this exercise we are looking if the same divergence calculated in the observed is reproduced using the simulated dataset. The reference distribution of KLD is constructed by calculating the KLD between each simulated dataset iOFV distribution and the average distribution of the iOFV simulated. If it is not reproduced the same level of divergence a misspecification in the model is present or there are outliers that are driving the difference. 
 
 \end{enumerate}
 
-
-
 \subsection{Numeric output}
 \begin{description}
-\item[ebe\_npde.csv] NPDE of EBE. One row per subject. Columns: ID,
-standardized observed EBE (a scalar) where 
+\item[ebe\_npde.csv] NPDE of EBE. One row per subject. Columns: ID, standardized observed EBE (a scalar) where 
 $ebe_{standardized}= \\
 \left(\overline{ebe}_{obs} - mean (\overline{ebe}_{sim})\right)\left((cov(\overline{ebe}_{sim})\right)^{-1}
 \left(\overline{ebe}_{obs} - mean (\overline{ebe}_{sim})\right)^T$,\\ 
 NPDE:s for each EBE
 \item[summary\_iwres.csv] NPDE of IWRES. One row per data record. Columns: ID, MDV, observed IWRES, NPDE for IWRES, OUTLIER (true or false)
 \item[summary\_cwres.csv] NPDE of CWRES. One row per data record. Columns: ID, MDV, observed CWRES, NPDE for CWRES, OUTLIER (true or false)
-\item[summary\_iofv.csv] One row per subject. Columns: ID, observed iOFV,
-mean of iOFV for evaluation of simulated data,
-standard deviation of iOFV for evaluation of simulated data,
-standardized observed iOFV where
+\item[summary\_iofv.csv] One row per subject. Columns: ID, observed iOFV, mean of iOFV for evaluation of simulated data,
+standard deviation of iOFV for evaluation of simulated data, standardized observed iOFV where
 $iOFV_{standardized}=\frac{(iOFV_{observed} - mean (iOFV_{simulated}))^2}{variance(iOFV_{simulated})}$, NPDE of iOFV
 \item[raw\_results\_<model>.csv] e.g. raw\_results\_run1.csv with ofv for evaluation of simulated data
-\item[residual\_outliers.csv] A table with ID, TIME, DV, PRED, observed IWRES and observed CWRES for records
-where observed IWRES or CWRES (not npde) is outside the simulated distribution.
+\item[residual\_outliers.csv] A table with ID, TIME, DV, PRED, observed IWRES and observed CWRES for records where observed IWRES or CWRES (not npde) is outside the simulated distribution.
 \end{description}
 
 \subsubsection*{Additional output}

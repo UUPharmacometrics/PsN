@@ -3814,7 +3814,10 @@ sub find_data_column
     my $counter = 0;
     foreach my $record (@{$self->inputs}) {
         foreach my $opt (@{$record->options}) {
-            next if ($ignore_dropped and $opt->is_drop());
+            if ($ignore_dropped and $opt->is_drop()) {
+                $counter++;
+                next;
+            }
             if ($opt->name eq $column_name or (defined $opt->value and $opt->value eq $column_name)) {
                 return $counter;
             }
@@ -3827,11 +3830,14 @@ sub find_data_column
 
 sub undrop_columns
 {
+    # Remove DROP or SKIP for a list of colnames and return those that were actually undropped
     my $self = shift;
 	my %parm = validated_hash(\@_,
 		columns => { isa => 'ArrayRef[Str]' },
 	);
 	my $columns = $parm{'columns'};
+
+    my @undropped_columns;
 
     for my $record (@{$self->inputs}) {
         for my $option (@{$record->options}) {
@@ -3839,13 +3845,53 @@ sub undrop_columns
                 for my $col (@$columns) {
                     if ($option->name eq $col) {
                         $option->value('');
+                        push @undropped_columns, $col;
                     } elsif ($option->value eq $col) {
                         $option->name('');
+                        push @undropped_columns, $col;
                     }
                 }
             }
         }
     }
+
+    return \@undropped_columns;
+}
+
+sub ignored_or_accepted_columns
+{
+    # Get an array of all columns that are either ignored or accepted in $DATA
+    # The format in $DATA is:
+    # ([col][op][value],...)
+    # col is the name of the column
+    # op can be one of .EQN., .NEN., .EQ., .NE., .GT., .GE., .LT., .LE., ==, /=, <, <=, >, >= and only space
+    # value is a numeric value
+    my $self = shift;
+
+    my %cols;
+
+    my $data = $self->datas->[0];
+
+    for my $option (@{$data->options}) {
+        if (model::problem::data::_is_ignore_accept($option->name, $option->value)) {
+            my $expression;
+            if ($option->name =~ /\((.*)\)/) {
+                $expression = $1;
+            } else {
+                $option->value =~ /\((.*)\)/;
+                $expression = $1;
+            }
+            my @comparisons = split /,/, $expression;
+            for my $comp (@comparisons) {
+                $comp =~ /^(\w+)\b/;
+                my $colname = $1;
+                $cols{$colname} = 1;
+            }
+        }
+    }
+
+    my @array = keys %cols;
+    return \@array;
 }
 
 no Moose;

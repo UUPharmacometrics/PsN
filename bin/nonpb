@@ -41,68 +41,69 @@ exit unless $res;
 my %help_text;
 
 $help_text{Pre_help_message} = <<'EOF';
-  Non-Parametric Bootstrap
+	Non-Parametric Bootstrap
 EOF
-    
-$help_text{Description} = <<'EOF';
-	The nonpb is a resampling-based method for estimating imprecision 
-	in nonparametric distribution (NPD) estimates obtained in NONMEM.
-	Imprecision in the NPD can be estimated by means of two different 
-	resampling procedures. The full method, -nonpb_version=2, relies on 
-	bootstrap sampling from the raw data and a re-estimation of both the preceding
-	parametric (FOCE) and the nonparametric step. The simplified method, 
-	-nonpb_version=1, is the default and relies on bootstrap sampling of individual nonparametric
-	probability distributions. Nonparametric confidence intervals are computed.
-	In addition of providing information about the precision of nonparametric 
-	parameter estimates, the nonpb methods can serve as diagnostic tools for the
-	detection of misspecified parameter distributions. The P individuals method
-	is availabe as a separate PsN script pind. 
 
-  Reference:
-	Two bootstrapping routines for obtaining imprecision estimates for 
-	nonparametric parameter distributions in nonlinear mixed effects models, 
-	Paul G. Baverel, Radojka M. Savic, Mats O. Karlsson,
-	J Pharmacokinet Pharmacodyn, 2010
+$help_text{Description} = <<'EOF';
+	The nonpb is a resampling-based method for estimating imprecision in
+	nonparametric distribution (NPD) estimates obtained in NONMEM. Imprecision
+	in the NPD can be estimated by means of two different resampling procedures. 
+	The full method, -nonpb_version=2, relies on bootstrap sampling from the raw
+	data and a re-estimation of both the preceding parametric (FOCE) and the
+	nonparametric step. 
+	The simplified method, -nonpb_version=1, is the default and relies on
+	bootstrap sampling of individual nonparametric probability distributions.
+	Nonparametric confidence intervals are computed. In addition of providing
+	information about the precision of nonparametric parameter estimates, the
+	nonpb methods can serve as diagnostic tools for the detection of misspecified
+	parameter distributions. The P individuals method is available as a separate 
+	sN tool, pind.
+	Reference:
+	Two bootstrapping routines for obtaining imprecision estimates for
+	nonparametric parameter distributions in nonlinear mixed effects models,
+	Paul G. Baverel, Radojka M. Savic, Mats O. Karlsson, J Pharmacokinet
+	Pharmacodyn, 2010.
 EOF
+
 $help_text{Examples} = <<'EOF';
-nonpb run12.mod -samples=500
+	nonpb run12.mod -samples=500
 EOF
+
 $help_text{Options} = <<'EOF';
-	A model file is required as argument, 
-	and option -samples is also required.
+	A model file is required on the command line, as well as the option -samples.
 
 	The following options are valid:
 EOF
+
 $help_text{-h} = <<'EOF';
-      -h | -?
-      
-      With -h or -? nonpb will print a list of options and exit.
+	-h | -?
+
+	With -h or -? nonpb will print a list of options and exit.
 EOF
-      
+
 $help_text{-help} = <<'EOF';      
-      -help
-      
-      With -help nonpb will print this, longer, help message.
-EOF
+	-help
 
-$help_text{-samples} = <<'EOF';
-      -samples=N
-
-      Required option. The number of samples for the bootstrap.
+	With -help nonpb will print this, longer, help message.
 EOF
 
 $help_text{-lst_file} = <<'EOF';
-      -lst_file=<filename>
+	-lst_file=<filename>
 
-      Optional, the lst-file from where to read initial parameter estimates. 
-      Default is the same name as the model file but with .mod replaced with .lst.
+	Default is the same name as the model file but with .mod replaced with .lst.
+	The lst-file from where to read initial parameter estimates. 
 EOF
 
 $help_text{-nonpb_version} = <<'EOF';
-      -nonpb_version=1|2
+	-nonpb_version=1|2
 
-      Optional, the version of the script to run. Default is 1, the simplified version.
-      Version 2 is the full version.
+	Default is 1, the simplified version. Version 2 is the full version. The
+	version of the script to run. 
+EOF
+$help_text{-samples} = <<'EOF';
+	-samples=N
+
+	Required option. The number of samples for the bootstrap.
 EOF
 
 common_options::online_help( 'nonpb', \%options, \%help_text, \%required_options, \%optional_options);

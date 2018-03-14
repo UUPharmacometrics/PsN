@@ -44,15 +44,16 @@ exit unless $res;
 my %help_text;
 
 $help_text{Pre_help_message} = <<'EOF';
-Simulation evaluation model diagnostics
+	Simulation evaluation model diagnostics
 EOF
-$help_text{Description} = <<'EOF';      
-The simeval program computes normalised prediction distribution errors for
-the empirical Bayes estimates, similar to the procedure described in
 
-Comets, Computing normalised prediction distribution errors
-to evaluate nonlinear mixed-effect models: The npde add-on package for R,
-J CMPB 90(2008) 154–166.
+$help_text{Description} = <<'EOF';      
+
+	The simeval program computes normalised prediction distribution errors
+	for the empirical Bayes estimates, similar to the procedure described
+	in Comets,Computing normalised prediction distribution errors to evaluate
+	nonlinear mixed-effect models: The npde add-on package for R, J CMPB 90
+	(2008) 154–166.
 
 EOF
 $help_text{Examples} = <<'EOF';      
@@ -60,95 +61,102 @@ $help_text{Examples} = <<'EOF';
 EOF
 
 $help_text{Options} = <<'EOF';      
-A model file is required as argument.
+	A model file is required on the command line.
+	
+	Note: If any IDs in the data set do not have any observation records, then 
+	those IDs must be IGNOREd in $DATA, otherwise simeval will not produce all 
+	output.
 
    The following options are valid:
 EOF
 
 $help_text{-h} = <<'EOF';
-      -h | -?
-      
-      With -h or -? simeval will print a list of options and exit.
+	-h | -?
+
+	With -h or -? simeval will print a list of options and exit.
 EOF
-      
+
 $help_text{-help} = <<'EOF';      
-      -help
-      
-      With -help simeval will print this, longer, help message.
-EOF
+	-help
 
-$help_text{-samples} = <<'EOF';
-      -samples=N
-
-      Default 300. The number of simulations and reestimations to perform.
-EOF
-
-$help_text{-lst_file} = <<'EOF';
-      -lst_file=filename
-
-      Default not set. By default PsN will, before copying the input model to the 
-      simulation models, look for an output file with final estimates for the input 
-      model and if found update the initial estimates in the simulation models. If 
-      option -lst_file is set Psn will instead use the final estimates in the given 
-      file. If option is not set and no output file is found PsN will not update the 
-      estimates but instead rerun the input model, if option -estimate_input is set.
-EOF
-
-$help_text{-estimate_input} = <<'EOF';
-      -estimate_input
-
-      Default set. By default, PsN will rerun the input model to get parameter 
-      estimates unless an output file is found or option -lst_file is set. But 
-      if option -estimate_input is unset with -no-estimate_input and no lst-file 
-      is found then the parameter estimates set in the input model will be used
-      for simulations.
-EOF
-
-$help_text{-n_simulation_models} = <<'EOF';
-      -n_simulation_models=N
-
-      Default equal to the number of threads.
-      By setting this option to a number N greater than 1, the 'samples' simulations
-      will be split equally between N model files, which can be run in parallel.
-EOF
-
-$help_text{-reminimize} = <<'EOF';
-      -reminimize
-
-      Default not set. By default, simulated datasets will be run with MAXEVAL=0 
-      (or equivalent for non-classical estimation methods). If option -reminimize 
-      is set then $EST will be the same as in the input model.
-EOF
-
-$help_text{-gls_data_file} = <<'EOF';
-      -gls_data_file=filename
-
-      Default gls_data.dta. A file with input data for the gls program is always 
-      generated. This option changes the name of that file. After this file is 
-      created, the gls program can be run with option -gls_model and -ind_shrinkage 
-      with minimum runtime, see gls_userguide.pdf
-EOF
-
-$help_text{-idv} = <<'EOF';
-      -idv=variable
-
-      Default TIME. Independent variable for DV vs idv plot.
+	With -help simeval will print this, longer, help message.
 EOF
 
 $help_text{-dv} = <<'EOF';
-      -dv=VARIABLE
+	-dv=VARIABLE
 
-      Default is DV. Name of dependent variable for DV vs PRED plot.
+	Default is DV. Name of dependent variable for DV vs PRED plot.
+EOF
+
+$help_text{-estimate_input} = <<'EOF';
+	-estimate_input
+
+	Default set. By default, PsN will rerun the input model to get parameter
+	estimates unless an output file is found or option -lst_file is set. But
+	if option -estimate_input is unset with -no-estimate_input and no lst-file
+	is found then the parameter estimates set in the input model will be used
+	for simulations.
 EOF
 
 $help_text{-extra_variables} = <<'EOF';
-      -extra_variables=comma-separated list
+	-extra_variables=comma-separated list
 
-    Default empty. A comma-separated list of extra variables to add to 
-    $TABLE of simulation models.
+	Default empty. A comma-separated list of extra variables to add to $TABLE
+	of simulation models.
 EOF
 
-$help_text{Post_help_message} = <<'EOF';
+$help_text{-gls_data_file} = <<'EOF';
+	-gls_data_file=filename
+
+	Default gls_data.dta. A file with input data for the gls tool is always
+	generated. This option changes the name of that file. After this file is
+	created, the gls program can be run with option -gls_model and -ind_shrinkage 
+	with minimum runtime, see gls_userguide.pdf
+EOF
+
+$help_text{-idv} = <<'EOF';
+	-idv=variable
+
+	Default set variable TIME. Independent variable for DV vs idv plot.
+EOF
+
+$help_text{-lst_file} = <<'EOF';
+	-lst_file=filename
+
+	Default not set. By default PsN will, before copying the input model to
+	the simulation models, look for an output file with final estimates for
+	the input model and if found update the initial estimates in the
+	simulation models. If option -lst_file is set Psn will instead use the
+	final estimates in the given file. If option is not set and no output
+	file is found PsN will not update the estimates but instead rerun the
+	input model, if option -estimate_input is set.
+EOF
+
+$help_text{-n_simulation_models} = <<'EOF';
+	-n_simulation_models=N
+
+	Default equal to the number of threads. By setting this option to a
+	number N greater than 1, the 'samples' simulations will be split equally
+	between N model files, which can be run in parallel.
+EOF
+
+$help_text{-reminimize} = <<'EOF';
+	-reminimize
+
+	Default not set. By default, simulated datasets will be run with MAXEVAL=0
+	(or equivalent for non-classical estimation methods). If option -reminimize
+	is set then $EST will be the same as in the input model. We advise the user 
+	to use together with MAXEVAL=0 the MCETA option in order to avoid local
+	 minima at the individual level.
+EOF
+
+$help_text{-samples} = <<'EOF';
+	-samples=N
+
+	Default is 300. The number of simulations and reestimations to perform.
+EOF
+
+	$help_text{Post_help_message} = <<'EOF';
     Also see 'psn_options -h' for a description of common PsN options.
 EOF
 

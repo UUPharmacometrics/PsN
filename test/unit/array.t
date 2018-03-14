@@ -288,6 +288,11 @@ ok (numerical_in(4, [8, 9, 4]), "numerical_in 1");
 ok (!numerical_in(23, [1, 2, 3]), "numerical_in 2");
 ok (!numerical_in(0, []), "numerical_in empty array");
 
+# string_in
+ok (string_in("WGT", [ "II", "DV", "WGT"]), "string_in 1");
+ok (!string_in("WGT3", [ "II", "DV", "WGT2"]), "string_in 2");
+ok (!string_in("A", []), "string_in 3");
+
 #remove NaN string from an array
 my $with_NaN = ['NaN','3','56.9','Na','NaN','More'];
 my $no_NaN;

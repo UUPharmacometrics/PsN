@@ -1,150 +1,122 @@
 \input{inputs/format_header.tex}
-\guidetitle{MCMP user guide}{2016-10-31}
-
+\guidetitle{MCMP user guide}{2018-03-02}
+\usepackage{hyperref}
 
 \begin{document}
 
 \maketitle
 \newcommand{\guidetoolname}{mcmp}
-
+\tableofcontents
+\newpage
 
 \section{Introduction}
-MCMP – Monte-Carlo Mapped Power \cite{Vong}  – is a tool for power computations.
-The method is based on the use of individual Objective Function Values (iOFV) 
-and aims to provide a fast and accurate prediction of the power and sample size 
-relationship without any need for adjustment of the significance criterion.
-The principle of the method is as follows:
+The mcmp tool (Monte-Carlo Mapped Power method described in \cite{Vong}) is a tool for power computations.
+The method is based on the use of individual Objective Function Values (iOFV) and aims to provide a fast and accurate prediction of the power and sample size relationship without any need for adjustment of the significance criterion.
+The principle of the iOFV method is as follows:
 \begin{enumerate}
-\item a large dataset (e.g. 1000 individuals) is simulated with a full model, or a separate simulation model if model misspecification will be taken into account. Note: The user must create the large NONMEM template dataset with the desired covariates and design, and set it in \$DATA of the simulation model
-(or \$DATA of the full model if the simulation model and the full model are
-the same).
-PsN will run the simulation, and attempt to automatically convert the full model to a simulation model if
-the full model is to be used for simulation, but the simulated data set will have the same size as the data set given in
-\$DATA of the simulation/full model. No individuals will be added by PsN. 
-\item the full and reduced models are re-estimated with the simulated data set
+\item a large dataset (e.g. 1000 individuals) is simulated with a full model and subsequently the full and reduced models are re-estimated with this data set. 
 \item $iOFV$:s are extracted from the NONMEM .phi-files, and for each subject the difference in $iOFV$ between the full and reduced model is computed ($\Delta iOFV$)
 \item $\Delta iOFV$:s are sampled according to the design for which power is to be calculated and a starting sample size (N)
 \item the $\Delta iOFV$ sum for each sample is calculated ($\sum_i{\Delta iOFV}$) 
-\item steps 4 and 5 are repeated many times 
-\item the percentage of $\sum_i{\Delta iOFV}$ greater than the significance criterion (e.g. 3.84 for one degree of freedom and $\alpha=0.05$) 
-is taken as the power for sample size N, 
-\item steps 4-7 are repeated with increasing N to provide the power at all sample sizes of interest.
+\item steps 3 and 4 are repeated many times 
+\item the percentage of $\sum_i{\Delta iOFV}$ greater than the significance criterion (e.g. 3.84 for one degree of freedom and $\alpha=0.05$) is taken as the power for sample size N, 
+\item steps 3-6 are repeated with increasing N to provide the power at all sample sizes of interest.
 \end{enumerate}
 
 \section{Input and options}
 
-\noindent Example command
+\noindent Example:
 \begin{verbatim}
-mcmp -simulation_model=sim.mod -full_model=mod1.mod -reduced_model=mod2.mod 
+mcmp -full_model=mod1.mod -stratify_on=DOSE -reduced_model=mod2.mod 
 \end{verbatim}
 
-\subsection{Mcmp-specific input}
+\subsection{Required input}
 \begin{optionlist}
-\optdefault{simulation\_model}{sim.mod}
-The filename of the simulation model, optional. 
-Default is the -full\_model filename. PsN will modify this model, removing \$EST and adding \$SIM, if it is not already a simulation model.
-If both -table\_reduced and -table\_full are specified, then option -simulation\_model will be ignored. Cannot be used with option -simdata.
-\nextopt
 \optdefault{full\_model}{full.mod}
-The filename of the full model is required, unless -table\_full (see below) is used. This must be an estimation model.
+The filename of the full model is required, unless -table\_full is used. This must be an estimation model.
 \nextopt
 \optdefault{reduced\_model}{red.mod}
-The name of the reduced model is required, unless -table\_reduced (see below) is used. This must be an estimation model.
+The name of the reduced model is required, unless -table\_reduced is used. This must be an estimation model.
 \nextopt
-\optdefault{stratify\_on}{column}
-The name of the variable to stratify on, optional. Must be all uppercase and (unless NM7) at most 4 characters. 
-Unless -table\_strata is specified, the variable must be possible to request in \$TABLE, i.e. either present in \$INPUT or defined in \$PK/\$PRED/\$ERROR. PsN does not check that the variable is defined. If -reduced\_model is specified then PsN will set \$TABLE there, otherwise \$TABLE will be set in the full model. The stratification table will not be generated from the simulation model. PsN will set \$TABLE ID $\langle$stratify\_on$\rangle$ FIRSTONLY NOAPPEND NOPRINT ONEHEADER FILE=strata.tab 
+\end{optionlist}
+\subsection{
+	Optional input}
+\begin{optionlist}
+\optname{critical\_ofv}
+Default not set. If specified, -critical\_ofv will override the setting of -df. PsN will work with positive values internally (delta\_ofv=reduced-full, check if delta\_ofv $>$ critical\_ofv), but will automatically change the sign if the user gives a negative value. 
 \nextopt
 \optname{curve}
-Set by default. Can be disabled with -no-curve. This option controls whether the complete power curve up to the target power should be generated, or if the program should only compute the sample size required to achieve the target power. 
-\nextopt
-\optdefault{start\_size}{N}
-First total sample size (sum of samples from all strata) to test. Optional, default is 3*increment (see below). 
-\nextopt
-\optdefault{increment}{N}
-Optional, default is the number of strata (1 if stratification is not used). Only consider setting this option if the stratification groups do not have equal size (the design is not balanced). Option -increment is the stepsize for the total sample size (sum of samples from all strata), i.e. the distance on the x-axis between the points in a total sample size vs. power plot. See section Discussion on strata sample sizes for a more detailed discussion of this option. 
-\nextopt
-\optdefault{max\_size}{N}
-The largest total sample size to plot for, optional, default equal to number of individuals in dataset. 
-\nextopt
-\optdefault{target\_power}{X}
-Default 98. If the whole power curve is generated (option -curve is set), the computations will stop when the computed power exceeds the target power 3 times in a row, even if max\_size is not reached. If option curve is not set, then the program determines the sample size only for the target power. 
-\nextopt
-\optdefault{table\_full}{filename}
-Optional. The name of the table containing iofv for the full model. If this option is used, PsN will skip the estimation of the full model and read the table directly instead. For this option, iotab tables generated using PsN with option -iofv and NONMEM6 will work, as well as .phi-files generated with NONMEM7. Files generated in other ways must follow the following rules: There must be exactly one row per individual, all other lines (headers) must start with a non-number, the columns must be space or tab separated, and iofv must come in the last column. 
-\nextopt
-\optdefault{table\_reduced}{filename}
-Optional. The name of the table containing iofv for the reduced model. If this option is used, PsN will skip the estimation of the reduced model and read the table directly instead. The file must have the format defined above in the -table\_full help text. 
-\nextopt
-\optdefault{simdata}{filename}
-Optional. The name of a previously generated file with simulated data. Cannot be used together with option -simulation\_model. If this option is set, no simulation will be performed by mcmp. Instead the file simdata will be used as the datafile when estimating the full and reduced model. 
-\nextopt
-\optdefault{table\_strata}{filename}
-Optional unless both -table\_full and -table\_reduced is used and stratify\_on is set, then required. Table with stratification column. Must have only one row per individual, i.e. for example generated in NONMEM with FIRSTONLY (see option -stratify\_on), and must have a header with ID and stratification variable name. Option -table\_strata may be used even if neither of -table\_full or -table\_reduced are used, then the stratification column in -table\_strata will be used instead of a table generated from the estimation of the full or reduced model. 
-\nextopt
-\optdefault{n\_bootstrap}{N}
-Optional, default 10000. The number of bootstrapped delta-ofv:s to generate for each total sample size. 
+Default set. Can be disabled with -no-curve. This option controls whether the complete power curve up to the target power should be generated, or if the program should only compute the sample size required to achieve the target power. 
 \nextopt
 \optdefault{df}{N}
-Optional, default 1. The number of degrees of freedom for the chi-square test. Allowed values are 1-20.
-PsN will compute the power for significance levels 20\%, 15\%, 10\%, 5\%, 1\% and 0.1\% 
-for the number of degrees of freedom. 
+Default is 1. The number of degrees of freedom for the chi-square test. Allowed values are 1-20. PsN will compute the power for significance levels 20\%, 15\%, 10\%, 5\%, 1\% and 0.1\% for the number of degrees of freedom. 
+\nextopt
+\optdefault{increment}{N}
+Default is the number of strata (1 if stratification is not used). Only consider setting this option if the stratification groups do not have equal size (the design is not balanced). Option -increment is the stepsize for the total sample size (sum of samples from all strata), i.e. the distance on the x-axis between the points in a total sample size vs. power plot. See section Discussion on strata sample sizes for a more detailed discussion of this option. 
+\nextopt
+\optdefault{max\_size}{N}
+Default equal to the number of individuals in dataset. The largest total sample size to plot for.  
+\nextopt
+\optdefault{n\_bootstrap}{N}
+Default is 10000. The number of bootstrapped delta-ofv:s to generate for each total sample size. 
 \nextopt
 \optname{significance\_level}
-Optional, default 5 (percent). Permitted values are 20, 15, 10, 5, 1 and 0.1. 
-Convergence check will be based on critical ofv for this significance level. 
+Default is 5 (\%). Permitted values are 20, 15, 10, 5, 1 and 0.1. Convergence check will be based on critical ofv for this significance level. 
 \nextopt
-\optname{critical\_ofv}
-Optional, no default. If specified, -critical\_ofv will override the setting of -df. PsN will work with positive values internally (delta\_ofv=reduced-full, check if delta\_ofv $>$ critical\_ofv), but will automatically change the sign if the user gives a negative value. 
+\optdefault{simdata}{filename}
+The name of a previously generated file with simulated data. Cannot be used together with option -simulation\_model. If this option is set, no simulation will be performed by mcmp. Instead the file simdata will be used as the datafile when estimating the full and reduced model. 
+\nextopt
+\optdefault{simulation\_model}{sim.mod}
+Default filename of the simulation model is the -full\_model filename. PsN will modify this model, removing \$EST and adding \$SIM, if it is not already a simulation model. \\If both -table\_reduced and -table\_full are specified, then option -simulation\_model will be ignored. Cannot be used with option -simdata.	
+\nextopt
+\newpage
+\optdefault{start\_size}{N}
+Default is 3*increment. First total sample size (sum of samples from all strata) to test. 
+\nextopt
+\optdefault{stratify\_on}{variable}
+The name of the variable to stratify on. Must be all uppercase and (unless NONMEM 7) at most 4 characters. 
+Unless -table\_strata is specified, the variable must be possible to request in \$TABLE, i.e. either present in \$INPUT or defined in \$PK/\$PRED/\$ERROR. PsN does not check that the variable is defined. If -reduced\_model is specified then PsN will set \$TABLE there, otherwise \$TABLE will be set in the full model. The stratification table will not be generated from the simulation model. PsN will set \$TABLE ID $\langle$stratify\_on$\rangle$ FIRSTONLY NOAPPEND NOPRINT ONEHEADER FILE=\\strata.tab. 
+\nextopt
+\optdefault{table\_full}{filename}
+The name of the table containing iofv for the full model. If this option is set, PsN will skip the estimation of the full model and read the table directly instead. For this option, iotab tables generated using PsN with option -iofv and NONMEM 6 will work, as well as .phi-files generated with NONMEM 7. Files generated in other ways must follow the following rules: There must be exactly one row per individual, all other lines (headers) must start with a non-number, the columns must be space or tab separated, and iofv must come in the last column. 
+\nextopt
+\optdefault{table\_reduced}{filename}
+The name of the table containing iofv for the reduced model. If this option is set, PsN will skip the estimation of the reduced model and read the table directly instead. The file must have the format defined in the -table\_full help text. 
+\nextopt
+\optdefault{table\_strata}{filename}
+Optional unless both -table\_full and -table\_reduced are set and stratify\_on is set, then required. Table with stratification column. Must have only one row per individual, i.e. for example generated in NONMEM with FIRSTONLY (see option -stratify\_on), and must have a header with ID and stratification variable name. Option -table\_strata may be used even if neither of -table\_full or -table\_reduced are used, then the stratification column in -table\_strata will be used instead of a table generated from the estimation of the full or reduced model. 
+\nextopt
+\optdefault{target\_power}{X}
+Default is 98. If the whole power curve is generated (option -curve is set), the computations will stop when the computed power exceeds the target power 3 times in a row, even if max\_size is not reached. If option curve is not set, then the program determines the sample size only for the target power. 
 \nextopt
 \end{optionlist}
 
-\subsection{Some important common PsN options}
-For a complete list see common\_options.pdf, 
-or psn\_options -h on the commandline.
-\input{inputs/basic_options.tex}
+\subsection{PsN common options}
+For a complete list see common\_options.pdf or type psn\_options -h on the command line.
 
-\subsection{Auto-generated R-plots from PsN}
-\newcommand{\rplotsconditions}{The default mcmp template 
-requires the R libraries ggplot2 and plyr.
-If the packages are not installed no pdf will be generated,
-see the .Rout file in the main run directory for error messages.}
+\subsection{Auto-generated R plots from PsN}
+\newcommand{\rplotsconditions}{The default mcmp template requires the R libraries ggplot2 and plyr.
+If the packages are not installed no pdf will be generated, see the .Rout file in the main run directory for error messages.}
 \input{inputs/rplots_section_body.tex}
 
-\subsubsection*{Basic plots}
-A basic mcmp rplot will be generated in file PsN\_mcmp\_plots.pdf if option -rplots is set >0,
-and the general rplots conditions fulfilled, see above.
-The basic plot is the mcmp-generated power curve for
-the signficance level chosen with option -significance\_level, with a mark at the sample size 
-required for 80\% power.
-\subsubsection*{Extended plots}
-Extended mcmp rplots will be generated in file PsN\_mcmp\_plots.pdf if option -rplots is set >1,
-and the general rplots conditions fulfilled, see above.
-
-The first extended plot shows a power versus sample size
-parametric power estimation (PPE) curve 
-together with the mcmp-generated power curve for
-the signficance level chosen with option -significance\_level.
-Parametric power estimation allows to generate data for full power
-versus sample size curve(s) 
-based on simulation and reestimation
-with full and reduced models performed with a single sample size.
+\subsubsection*{Basic R plots}
+A basic mcmp R plot will be generated in file PsN\_mcmp\_plots.pdf if option -rplots is set >0, and the general R plots conditions are fulfilled, see above.
+The basic R plot is the mcmp-generated power curve for the signficance level chosen with option -significance\_level, with a mark at the sample size required for 80\% power.
+\subsubsection*{Extended R plots}
+Extended mcmp R plots will be generated in file PsN\_mcmp\_plots.pdf if option -rplots is set >1, and the general R plots conditions are fulfilled, see above.
+The first extended R plot shows a power versus sample size parametric power estimation (PPE) curve together with the mcmp-generated power curve for the signficance level chosen with option -significance\_level. Parametric power estimation allows to generate data for full power versus sample size curve(s) based on simulation and reestimation with full and reduced models performed with a single sample size.
 The procedure is described in \cite{Ueckert}. 
 
-The second extended plot is the the mcmp-generated power curves for
-each of the significance levels, with a mark of the sample size 
-required for 80\% power.
+The second extended R plot is the the mcmp-generated power curves for each of the significance levels, with a mark of the sample size required for 80\% power.
 
-The third extended plot is a histogram of the individual full-reduced delta-ofv. 
+The third extended R plot is a histogram of the individual full-reduced delta-ofv. 
 
 \section{Output}
-The output from each mcmp is mcmp\_results.csv which contains a table with header 
-total\_X,power at 20\%,power at 15\%,power at 10\%,power at 5\%,power at 1\%,power at 0.1\%, (headers for N from each stratum). 
+The output from each mcmp is mcmp\_results.csv which contains a table with header total\_X, power at 20\%, power at 15\%, power at 10\%, power at 5\%, power at 1\%, power at 0.1\%, (headers for N from each stratum). 
 One row for each total sample size (total\_X). The table can be plotted in excel. The results are also printed to screen as they are produced, and the user can terminate the run with Ctrl-C if the obtained power is deemed sufficient. The file mcmp\_results.csv will contain the values that were computed before the interruption. If mcmp is rerun the previous result file will be copied and kept.
 
 \section{Known bugs}
-If estimation of the full and/or reduced model fails but NONMEM 7 still produces a .phi-file with the initial individual ofv-values, 
-then PsN will not detect the failed estimation but continue to bootstrap from the .phi-file. Then the power curves will be completely wrong.
+If estimation of the full and/or reduced model fails but NONMEM 7 still produces a .phi-file with the initial individual ofv-values, then PsN will not detect the failed estimation but continue to bootstrap from the .phi-file. Then the power curves will be completely wrong.
 
 \section{Recovering a crashed/stopped mcmp}
 If the simulation finished but none of the estimations finished, then start over in a new run directory but use option -simdata with the dataset from the simulation step. If one or two of the estimations finished, then start in new directory using option -table\_reduced and/or -table\_full and possibly -table\_strata. 
@@ -177,8 +149,10 @@ PsN must be able to handle all cases, keep as good a balance as possible between
 
 PsN uses the following algorithm:
 \begin{enumerate}
-	\item Compute the desired total sample size $X_{desired_total}$=start\_size+(i-1)*increment, where i, i=1,2,3... 	is the iteration number, increment has default equal the number of strata but can be set by the 	user, and start\_size has default 3*increment but can be set by the user.
-	\item Compute the number of individuals Xi to sample from stratum i using the following formula: 	Xi =round\_to\_nearest\_integer($X_{desired_total}$*$N_i$/$N_{total}$). 
+	\item Compute the desired total sample size\\
+	 $X_{desired_total}$=start\_size+(i-1)*increment, where i, i=1,2,3... 	is the iteration number, increment has default equal the number of strata but can be set by the 	user, and start\_size has default 3*increment but can be set by the user.
+	\item Compute the number of individuals Xi to sample from stratum i using the following formula:\\
+	Xi =round\_to\_nearest\_integer($X_{desired_total}$*$N_i$/$N_{total}$). 
 \end{enumerate}
 With the formula in step 2 stratum i:s fraction of the total sample size will always be as close as possible to the fraction of stratum i in the original population. The rounding is necessary since the division often has a non-zero remainder, and it is important to note that the actual total sample size $X_{actual_total}$, which is the sum of the individual sample sizes Xi, can differ slightly from $X_{desired_total}$ because of the necessary rounding. If the increment is small it can happen that $X_{actual_total}$ is the same in two consecutive iterations, without there being any error. PsN always reports $X_{actual_total}$ in all output. $X_{desired_total}$ is an internal variable and is never displayed.
 
@@ -189,11 +163,12 @@ The user can also choose to set start\_size to manipulate the sample sizes, but 
 \section{Technical overview of algorithm}
 
 \begin{enumerate}
-\item If NONMEM6 is used, then the iofv option to PsN is set automatically. If NONMEM7 is used, no extra settings are needed.
+\item If NONMEM 6 is used, then the iofv option to PsN is set automatically. If NONMEM 7 is used, no extra settings are needed.
 \item PsN checks that the requirements on the options are fulfilled (see list of options above).
-\item Look-up critical ofv if not given on command-line, then make sure sign is +.
+\item Look-up critical ofv if not given on command line, then make sure sign is +.
 \item Unless option simdata is given, or both table\_reduced and table\_full are given, simulate the simulation model with a random number seed in \$SIM which set by PsN.
-\item If -reduced\_model is specified, PsN will add a \$TABLE to the first \$PROBLEM with ID $\langle$stratify\_on$\rangle$ FIRSTONLY NOAPPEND ONEHEADER NOPRINT FILE=strata.tab. PsN does not check that it is possible to request $\langle$stratify\_on$\rangle$ in \$TABLE, so it is the responsibility of the user to either have it in \$INPUT or define it in \$PK/\$PRED/\$ERROR.
+\item If -reduced\_model is specified, PsN will add a \$TABLE to the first \$PROBLEM with ID $\langle$stratify\_on$\rangle$ FIRSTONLY NOAPPEND ONEHEADER NOPRINT FILE=strata.tab. PsN does not check that it is possible to request $\langle$stratify\_on$\rangle$ in \$TABLE, so the user have to either have it present in \$INPUT or define it in \$PK/\$PRED/\$ERROR.
+\newpage
 \item If -reduced\_model is not specified but -full\_model is, then  PsN will add a \$TABLE to the first \$PROBLEM with ID $\langle$stratify\_on$\rangle$ FIRSTONLY NOAPPEND ONEHEADER NOPRINT FILE=strata.tab.
 \item In both the reduced and full model, set \$DATA to the simulated data file.
 \item Estimate the reduced model unless -table\_reduced is specified.
@@ -202,9 +177,9 @@ The user can also choose to set start\_size to manipulate the sample sizes, but 
 \item Stratify delta-iofv-table based on strata.tab/-table\_stratify.
 \item Loop over total sample size starting on -start\_size and incrementing with -increment in each step, continuing as long as total sample size does not exceed -max\_size. For each total sample size and each stratum, compute the number of samples to draw from this stratum using the formula
 Z=round\begin{math}
-(total.sample.size\cdot\frac{n.individuals.in.stratum}{n.individuals.in.total})
+(total.sample.size\cdot\frac{n.individuals.in.stratum}{n.individuals.in.total}).
 \end{math}
-. Draw Z samples from the stratum, randomly with replacement. Repeat n\_bootstrap times, sum delta\_iofv for the samples from all strata to generate n\_bootstrap delta\_ofv:s. Compute percentage of delta\_ofv $>$ critical\_ofv=power. In output table, write line with total\_sample\_size, power, sample\_sizes from each stratum. Halt if power exceeds target\_power \% three times in a row.
+Draw Z samples from the stratum, randomly with replacement. Repeat n\_bootstrap times, sum delta\_iofv for the samples from all strata to generate n\_bootstrap delta\_ofv:s. Compute percentage of delta\_ofv $>$ critical\_ofv=power. In output table, write line with total\_sample\_size, power, sample\_sizes from each stratum. Halt if power exceeds target\_power \% three times in a row.
 \end{enumerate}
 
 \references

@@ -74,47 +74,53 @@ exit unless $res;
 my %help_text;
 
 $help_text{Pre_help_message} = <<'EOF';
-    Update a model file with final estimates from NONMEM output.
+	Update a model file with final estimates from NONMEM output.
 EOF
 
 $help_text{Post_help_message} = <<'EOF';
 EOF
 
+
 $help_text{Description} = <<'EOF';
-The final estimates will either be taken from an lst-file given explicitly as the second 
-command-line argument after the model file name, from another model file given with option -from\_model, 
-or from the lst-file with the same file stem as the model file.
+
+	The update_inits tool is used to update inital estimates in a model file
+	with final estimates from NONMEM output. It can also be used to, for
+	example, update file names in $TABLE, reparameterize the $OMEGAs or to
+	``flip comments''. The later operations can be performed in combination
+	with or without updating initial estimates. If updating initial estimates,
+	the final estimates will either be taken from a lst-file given explicitly
+	as the second command line argument after the model file name, from
+	another model file given with option -from_model, or from the lst-file
+	with the same file stem as the model file. For example, if no lst-file
+	is given as argument and the model file is called run1.mod then the
+	program will try to read output from run1.lst. If run1.ext also exists
+	then final estimates with higher precision will be read from there, but
+	only if run1.lst is also present. If there are multiple $PROBLEM then
+	update_inits will try to update $PROBLEM by $PROBLEM.
+
+	The command update can be used as a synonym to update_inits.
 EOF
 
 $help_text{Examples} = <<'EOF';
-update_inits run1.mod run1abc.lst -output_model=run2.mod
 
-Update a copy of run1.mod with estimates from run1abc.lst.
+	Update a copy of run1.mod with estimates from run1abc.lst.
+	update_inits run1.mod run1abc.lst -output_model=run2.mod
 
-update_inits run22.mod -out=run23.mod
+	Update a copy of run22.mod and call the new file run23.mod. This requires
+	that run22.lst exists.
+	update_inits run22.mod -out=run23.mod
 
-Update a copy of run22.mod and call the new file run23.mod. This requires that run22.lst exists.
+	Modify file run33.mod and copy original to run33.mod.org. This requires
+	that run33.lst exists.
+	update_inits run33.mod
 
-update_inits run33.mod
-
-Modify file run33.mod and copy original to run33.mod.org. This requires that run33.lst exists.
-
-update run3.mod -from_model=run4.mod -out=run6.mod
-
-Use parameters estimates from a model file instead of a lst-file.
+	Use parameters estimates from a model file instead of a lst-file:
+	update run3.mod -from_model=run4.mod -out=run6.mod
 EOF
+	$help_text{-h} = <<'EOF';
+	-h | -?
 
-$help_text{Options} = <<'EOF';
-A modelfile to update must be specified.
-
-The following options are valid:
-EOF
-
-$help_text{-h} = <<'EOF';
--h | -?
-
-    With -h or -? the script prints the list of available options 
-    and exit.
+    With -h or -? the script prints the list of available options and exit.
 EOF
 
 $help_text{-help} = <<'EOF';
@@ -123,276 +129,272 @@ $help_text{-help} = <<'EOF';
     With -help a longer help message will be printed.
 EOF
 
-$help_text{-output_model} = <<'EOF';
--output_model=file
+$help_text{Options} = <<'EOF';
+	The name of a model file (a control stream file) is required on the command
+	line.
 
-    The name of the model file to create. If this options is omitted, a copy of
-	the original model file with extension .org is created, and the original 
-	file is modified.
+	The following options are valid:
 EOF
 
-$help_text{-rawres_input} = <<'EOF';
-      -rawres_input=filename
 
-      The name of a raw results file to read parameter estimates from. 
-      The first line in the file after offset_rawres that passes the in_filter criteria
-      will be used when updating initial estimates.
-EOF
-$help_text{-offset_rawres} = <<'EOF';
-      -offset_rawres=N
 
-      Only relevant in combination with rawres_input. Default 0.
-      The number of result lines to skip in the input raw results file
-      before reading final parameter estimates.
-EOF
-$help_text{-in_filter} = <<'EOF';
-      -in_filter=comma-separated list of conditions
 
-      Only relevant in combination with rawres_input. Default not used.
-      The parameter estimates lines in the file can be filtered on values 
-      in the different columns. When specifying which column(s) the filtering 
-      should be based on, the exact column name must be used, 
-      e.g. minimization_successful. Filtering can only be based on columns 
-      with numeric values. The allowed relations are .gt. (greater than), 
-      .lt. (less than) and .eq. (equal to). Conditions are separated with commas. 
-    
-      Example: -in_filter=model.eq.2
-EOF
+$help_text{-add_prior} = <<'EOF';
+	-add_prior=df1,df2,...
 
-$help_text{-ignore_missing_parameters} = <<'EOF';
--ignore_missing_parameters
-
-	Default not set
-	
-	If set, update_inits will not require a 1-to-1 matching of parameter names 
-	and indexes between the model to update and the source 	of new estimates 
-	(lst-file or other model file).
-EOF
-
-$help_text{-update_fix} = <<'EOF';
--update_fix
-
-	Default not set
-	
-	If set, update_inits will update parameters that are FIX in the model. The
-	default is to not update parameters that are fixed.
-EOF
-
-$help_text{-correlation_cutoff} = <<'EOF';
--correlation_cutoff=number
-
-    Default 0. Ignored unless option -cholesky is set. Value range 0-1.
-
-    If, during cholesky reparameterization, the absolute value of a correlation 
-	in a block $OMEGA or $SIGMA is lower than or equal to this cutoff, then set
-	the $THETA for estimation of this correlation to 0 FIX.
-EOF
-
-$help_text{-sigdig} = <<'EOF';
--sigdig=number
-
-    Default not used. Only applicable for NONMEM7. If set, the initial estimates
-	of the updated model will be printed with this many significant digits, in
-	either decimal or scientific notation, whichever is more compact.
-EOF
-
-$help_text{-cholesky} = <<'EOF';
--cholesky=records|inverse
-
-	Default not set
- 	
-	If set, update_inits will use cholesky reparameterization to replace the requested
-	$SIGMA and $OMEGA with FIXED identity matrices and a set of THETAs for estimation
-	of standard deviations and (for blocks only) correlations, OR, if -cholesky=inverse is set
-	back-transformation of a previously reparameterized model will be performed.
-
-  Examples using category input:
-	-cholesky=all                 Reparameterize both $OMEGA and $SIGMA, both BLOCK and DIAGONAL, both FIX and estimated
-	-cholesky=omega               Reparameterize only $OMEGA, only BLOCK, only estimated
-	-cholesky=omega,fix           Reparameterize only $OMEGA, only BLOCK, both FIX and estimated
-	-cholesky=omega,diagonal      Reparameterize only $OMEGA, both BLOCK and diagonal, only estimated
-	-cholesky=omega,diagonal,fix  Reparameterize only $OMEGA, both BLOCK and diagonal, both FIX and estimated
-	-cholesky=sigma,diagonal      Reparameterize only $SIGMA, both BLOCK and diagonal, only estimated
-	-cholesky=diagonal            Reparameterize only $OMEGA (omitting parameter name implies omega), both BLOCK and diagonal,
-	                              only estimated 
-
-  Examples using record list input, cannot be combined with category input:
-	-cholesky=o2,o5,s1               Reparameterize $OMEGA record number 2 and 5, $SIGMA record number 1
-
-	See also related options -correlation_cutoff and -bounded_theta.
-
-	Correct handling of priors encoded using $OMEGA/$SIGMA is not implemented, priors must 
-	be encoded using special records $OMEGAPD etc.
-EOF
-
-$help_text{-bounded_theta} = <<'EOF';
--bounded_theta
-
-Default set. Ignored unless option -cholesky is set. 
-If the option is set, then the standard deviations and correlations will be equal to bounded untransformed THETAs.
-If the option is unset with -no-bounded_theta, the THETAs introduced during Cholesky reparameterization
-will be unbounded (natural logarithm of standard deviation, logit of shifted and scaled correlation),
-and transformations will be used to restrict standard deviations to positive values
-and correlations between -1 and 1.
-EOF
-
-$help_text{-fix_thetas} = <<'EOF';
--fix_thetas
-
-	Default not set
- 	
-	If set, update_inits will set all THETAs that are not part of a prior to FIX.
-EOF
-
-$help_text{-unfix_thetas} = <<'EOF';
--unfix_thetas
-
-	Default not set
-
-	If set, update_inits will remove FIX, if present, from all THETAs that are not part of a prior.
-EOF
-
-$help_text{-silent} = <<'EOF';
--silent
-
-	Default not set
-
-	If set, do not print any information messages.
-EOF
-
-$help_text{-from_model} = <<'EOF';
--from_model=filename
-
-	Default not used
-
-    The name of a model file to copy initial estimates from, instead of a lst-file. 
-	Cannot be used together with a named lst-file or rawres_input on the command-line.
-EOF
-
-$help_text{-comment} = <<'EOF';
--comment=text
-
-    Default not used.
-
-	If the option is used, a new line with <text> will be inserted 
-	directly following the $PROBLEM row.
-	The comment text must be enclosed with quotes (double quotes on Windows) 
-	if it contains spaces.
-EOF
-
-$help_text{-degree} = <<'EOF';
--degree=fraction
-
-    Default not set
-
-    After updating the initial estimates in the output file, randomly
-	perturb them by degree=fraction, i.e. change estimate to a value
-	randomly chosen in the range estimate +/- estimate*fraction while
-	respecting upper and lower boundaries, if set in the model file.
-	Degree is set to 0.1, a 10% perturbation, when option tweak_inits is set in execute.
+	Default not set. Add $PRIOR NWPRI based on the NONMEM output. Option
+	will automatically read estimates and covariances from output and use
+	them to define the prior. df should be the degrees 	of freedom, a comma-
+	separated list with one integer per omega block. This feature is highly
+	experimental, and you must check $PRIOR in the new model file manually 
+	before using it. Option -add_prior cannot be used together with option
+	-from_model. Also note that the informative record names $THETAP,
+	$THETAPV etc are used, so the resulting model can 	only be run with a
+	NONMEM version that supports this.
 EOF
 
 $help_text{-add_tags} = <<'EOF';
--add_tags
+	-add_tags
 
-    Default not set
-
-    Add all runrecord tags, see runrecord user guide. update_inits will not check if any tags 
-	are already present.
-EOF
-
-$help_text{-flip_comments} = <<'EOF';
--flip_comments
-
-    Default not set
-
-	Between each tag line
-	;Sim_start
-	and
-	;Sim_end
-    remove the first ; on each line that has ; as the first non-blank
-	character, and prepend with ; at each line that does not
-	have a ; as the first non-blank character.
-	This processing will be done as the very first step, so lines
-	that are commented out by this procedure will not be updated any more.
-EOF
-
-$help_text{-ensure_posdef} = <<'EOF';
--ensure_posdef
-
-    Default not set
-
-    NONMEM sometimes prints OMEGA or SIGMA matrices
-	in the lst-file which are not positive definite, and the 
-	ensure_posdef option offers a way to fix this.
-	If option is set then PsN will make a cholesky decomposition of
-	each OMEGA and SIGMA block to check positive definiteness, and
-	inflate the diagonal elements of the block with 5% in each iteration where the cholesky fails.
-EOF
-
-$help_text{-add_prior} = <<'EOF';
--add_prior=df1,df2,...
-
-    Default not set
-
-    Add $PRIOR NWPRI based on the NONMEM output. Will automatically read
-	estimates and covariances from output and use them to define the 
-	prior. df should be the degrees of freedom, a comma-separated list
-	with one integer per omega block.
-	This feature is highly experimental, and you must check $PRIOR 
-	in the new model file manually before using it.
-	Option -add_prior cannot be used together with option -from_model. 
-	Also note that the informative record names $THETAP, $THETAPV etc are used,
-	so the resulting model can only be run with a NONMEM version that 
-	supports this.
-EOF
-
-$help_text{-nm_version} = <<'EOF';
-    -nm_version='string'
-Default is 'default'. The formatting of the initial estimates will depend on the
-major version number of NONMEM (e.g. 6 or 7) set in psn.conf for the
-NM version chosen.
-EOF
-
-$help_text{-seed} = <<'EOF';
--seed=some string
-
-    The random seed for perturbation if option -degree is set. 
+	Default not set. Add all runrecord tags, see runrecord user guide.
+	update_inits will not check if any tags are already present.
 EOF
 
 $help_text{-based_on} = <<'EOF';
- -based_on=number
+	-based_on=number
 
-    If the -based_on option is used, update_inits will set 
-	the runrecord 'Based on' tag (if present, or if option -add_tags is used) 
-	to that number. If option -based_on is not used, update_inits will by default try to extract 
-	a run number from the original model file name and use that instead in the tag.
-	If a number cannot be extracted then nothing will be set. 
+	If the -based_on option is used, update_inits will set 	the runrecord
+	'Based on' tag (if present, or if option -add_tags is used) to that
+	number. If option -based_on is not used, update_inits will by default
+	try to extract a run number from the original model file name and use
+	that instead in the tag. If a number cannot be extracted then nothing
+	will be set. 
 EOF
 
-$help_text{-renumber} = <<'EOF';
--renumber='new number'
+$help_text{-bounded_theta} = <<'EOF';
+	-bounded_theta
 
-    Default extracted from the -output_model file name.	If -output_model=runY.mod 
-	is set where Y is a number then -renumber=Y will be set automatically.
-	Provided that 'new number' is not 0,
-	the FILE option of all $TABLE will get <any number up to optional dot> 
-	replaced with <new number>,
-	the MSFO option of all $ESTIMATION will get <any number up to optional dot> 
-	replaced with <new number>,
-	and $MSFI filename of second and later $PROB will get 
-	<any number up to optional dot> replaced with <new number>
+	Default set. Ignored unless option -cholesky is set. If the option is
+	set, then the standard deviations and correlations will be equal to
+	bounded untransformed THETAs. If the option is unset with -no-bounded_theta,
+	the THETAs introduced during Cholesky reparameterization will be unbounded
+	(natural logarithm of standard deviation, logit of shifted and scaled
+	correlation),and transformations will be used to restrict standard
+	deviations to positive values and correlations between -1 and 1.
+EOF
 
-	Set option -renumber=0 to prevent automatic renumbering in $TABLE and $EST and $MSFI.
+$help_text{-cholesky} = <<'EOF';
+	-cholesky=records|inverse
+
+	Default not set. If set, update_inits will use cholesky reparameterization
+	to replace the requested $SIGMA and $OMEGA with FIXED identity matrices
+	and a set of THETAs for estimation of standard deviations and (for blocks
+	only) correlations, OR, if -cholesky=inverse is set back-transformation
+	of a previously reparameterized model will be performed.
+	Examples using category input:
+	-cholesky=all					Reparameterize both $OMEGA and $SIGMA,
+									both BLOCK and DIAGONAL, both FIX and
+									estimated
+	-cholesky=omega					Reparameterize only $OMEGA, only BLOCK,
+									only estimated
+	-cholesky=omega,fix				Reparameterize only $OMEGA, only BLOCK,
+									both FIX and estimated
+	-cholesky=omega,diagonal		Reparameterize only $OMEGA, both BLOCK
+									and diagonal, only estimated
+	-cholesky=omega,diagonal,fix	Reparameterize only $OMEGA, both BLOCK
+									and diagonal, both FIX and estimated
+	-cholesky=sigma,diagonal		Reparameterize only $SIGMA, both BLOCK
+									and diagonal, only estimated
+	-cholesky=diagonal				Reparameterize only $OMEGA (omitting
+									parameter name implies omega), both
+									BLOCK and diagonal, only estimated 
+
+	Examples using record list input, cannot be combined with category input:
+	-cholesky=o2,o5,s1 				Reparameterize $OMEGA record number 2
+									and 5, $SIGMA record number 1
+	See also related options -correlation_cutoff and -bounded_theta.
+
+	Correct handling of priors encoded using $OMEGA/$SIGMA is not implemented,
+	priors must be encoded using special records $OMEGAPD etc.
+EOF
+
+$help_text{-comment} = <<'EOF';
+	-comment=text
+
+	Default not set. If the option is used, a new line with <comment> will
+	be inserted directly following the $PROBLEM row. The comment text must
+	be enclosed with quotes (double quotes on Windows) if it contains spaces.
+EOF
+
+$help_text{-correlation_cutoff} = <<'EOF';
+	-correlation_cutoff=number
+
+	Default is 0. Ignored unless option -cholesky is set. Value range 0-1.
+	If, during cholesky reparameterization, the absolute value of a
+	correlation in a block $OMEGA or $SIGMA is lower than or equal to this
+	cutoff, then set the $THETA for estimation of this correlation to 0 FIX.
+EOF
+
+$help_text{-degree} = <<'EOF';
+	-degree=fraction
+
+	Default not set. After updating the initial estimates in the output file,
+	randomly perturb them by degree=fraction, i.e. change estimate to a value
+	randomly chosen in the range estimate +/- estimate*fraction while
+	respecting upper and lower boundaries, if set in the model file. Degree
+	is set to 0.1, a 10% perturbation, when option tweak_inits is set in
+	execute.
+EOF
+
+$help_text{-ensure_posdef} = <<'EOF';
+	-ensure_posdef
+
+	Default not set. NONMEM sometimes prints OMEGA or SIGMA matrices in the
+	lst-file which are not positive definite, and the ensure_posdef option
+	offers a way to fix this. If option is set then PsN will make a cholesky
+	decomposition of each OMEGA and SIGMA block to check positive
+	definiteness, and, if the cholesky fails, inflate the diagonal elements
+	of the block with 5% be3fore updating the model.
 EOF
 
 $help_text{-etas} = <<'EOF';
--etas
+	-etas
 
-    Default not set
+	Default not set. Add $ETAS to the model using the phi file of the model.
+	Also add the necessary MCETA=1 to $EST.
+EOF
 
-    Add $ETAS to the model using the phi file of the model.
-    Also add the necessary MCETA=1 to $EST
+$help_text{-fix_thetas} = <<'EOF';
+	-fix_thetas
+
+	Default not set. If set, update_inits will set all THETAs that are not
+	part of a prior to FIX.
+EOF
+
+$help_text{-flip_comments} = <<'EOF';
+	-flip_comments
+
+	Default not set. Between each pair of tag lines
+	;Sim_start
+	and
+	;Sim_end
+    remove the first ; on each line that has ; as the first non-blank character,
+	and prepend with ; at each line that does not	have a ; as the first
+	non-blank character. This processing will be done as the very first step,
+	so lines that are commented out by this procedure will not be updated any
+	more.
+EOF
+
+$help_text{-from_model} = <<'EOF';
+	-from_model=filename
+
+	Default not set. The name of a model file to copy initial estimates from,
+	instead of a lst-file. Cannot be used together with a named lst-file or
+	rawres_input on the command line.
+EOF
+
+$help_text{-ignore_missing_parameters} = <<'EOF';
+	-ignore_missing_parameters
+
+	Default not set. If set, update_inits will not require a 1-to-1 matching
+	of parameter names and indexes between the model to update and the source
+	of new estimates (lst-file or other model file).
+EOF
+
+$help_text{-in_filter} = <<'EOF';
+	-in_filter=comma-separated list of conditions
+
+	Default not set. Only relevant in combination with rawres_input. The
+	parameter estimates lines in the file can be filtered on values in the
+	different columns. When specifying which column(s) the filtering should
+	be based on, the exact column name must be used, e.g.
+	minimization_successful. Filtering can only be based on columns with
+	numeric values. The allowed relations are .gt. (greater than), .lt. (less
+	than) and .eq. (equal to). Conditions are separated with commas.
+	Example:
+	-in_filter=model.eq.2
+EOF
+
+$help_text{-nm_version} = <<'EOF';
+	-nm_version='string'
+
+	Default is 'default'. The formatting of the initial estimates will depend
+	on the major version number of NONMEM (e.g. 6 or 7) set in psn.conf for
+	the NONMEM version chosen.
+EOF
+
+$help_text{-offset_rawres} = <<'EOF';
+	-offset_rawres=N
+
+	Default is 0. Option is only relevant in combination with rawres_input.
+	The number of result lines to skip in the input raw results file before
+	reading final parameter estimates.
+EOF
+
+$help_text{-output_model} = <<'EOF';
+	-output_model=file
+
+	The name of the model file to create. If this options is omitted, a copy
+	of the original model file with extension .org is created, and the
+	original file is modified.
+EOF
+
+$help_text{-rawres_input} = <<'EOF';
+	-rawres_input=filename
+
+	The name of a raw results file to read parameter estimates from. The first
+	line in the file after offset_rawres that passes the in_filter criteria
+	will be used when updating initial estimates. Cannot be used together
+	with a named lst-file on the command line or -from_model.
+EOF
+
+$help_text{-renumber} = <<'EOF';
+	-renumber=new number
+
+	Default extracted from the -output_model file name.
+	If -output_model=runY.mod is set where Y is a number then -renumber=Y
+	will be set automatically. Provided that 'new number' is not 0, the FILE
+	option of all $TABLE will get <any number up to optional dot> replaced
+	with <new number>, the MSFO option of all $ESTIMATION will get <any
+	number up to optional dot> replaced with <new number>, and 	$MSFI filename
+	of second and later $PROB will get <any number up to optional dot> replaced
+	with 	<new number>. Set option -renumber=0 to prevent automatic
+	renumbering in $TABLE and $EST and $MSFI.
+EOF
+
+$help_text{-seed} = <<'EOF';
+	-seed=some string
+
+	The random seed for perturbation if option -degree is set. 
+EOF
+
+$help_text{-sigdig} = <<'EOF';
+	-sigdig=number
+
+	Default not set. Option has only effect with NONMEM 7 and later and if
+	set to a number <15. Print parameter estimates with this many
+	significant digits in the new model file, with either scientific or
+	decimal notation depending on which is more compact.
+EOF
+
+$help_text{-silent} = <<'EOF';
+	-silent
+
+	Default not set. If set, all log messages from PsN are suppressed.
+EOF
+
+$help_text{-unfix_thetas} = <<'EOF';
+	-unfix_thetas
+
+	Default not set. If set, update_inits will remove FIX, if present, from
+	all THETAs that are not part of a prior.
+EOF
+
+$help_text{-update_fix} = <<'EOF';
+	-update_fix
+
+Default not set. If set, update_inits will update parameters that are FIX
+in the model. The default is to not update parameters that are fixed.
 EOF
 
 common_options::online_help('update_inits', \%options, \%help_text, \%required_options, \%optional_options);

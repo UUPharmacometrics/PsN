@@ -1,22 +1,15 @@
-
-PsN can automatically generate R plots to visualize results for 
-\guidetoolname, using a default template found in the R-scripts subdirectory of the installation directory.
-The user can also create a custom template, see more details in section 
-``Auto-generated R-plots from PsN'' in common\_options.pdf.
+PsN can automatically generate R plots to visualize results for \guidetoolname, using a default template found in the R-scripts subdirectory of the installation directory. The user can also create a custom template, see more details in the section Auto-generated R plots from PsN in common\_options.pdf.
 
 \rplotsconditions
 
 \begin{optionlist}
 \optdefault{rplots}{level}
--rplots<0 means R script is not generated\\ 
--rplots=0 (default) means R script is generated but not run\\ 
--rplots=1 means basic plots are generated\\													  
--rplots=2 means basic and extended plots are generated\\													  
+-rplots<0 means R-script is not generated\\ 
+-rplots=0 (default) means R-script is generated but not run\\ 
+-rplots=1 means basic R plots are generated\\													  
+-rplots=2 means basic and extended R plots are generated\\													  
 \nextopt
 \end{optionlist}
 
 \subsubsection*{Troubleshooting}
-If no pdf was generated even if a template file is available and the appropriate options
-were set, check the .Rout-file in the main run directory for error messages.
-If no .Rout-file exists then check that R is properly installed,
-and that either command 'R' is available or that R is configured in psn.conf.
+If no .pdf was generated even if a template file is available and the appropriate options were set, check the .Rout-file in the main run directory for error messages. If no .Rout-file exists, then check that R is properly installed, and that either command 'R' is available or that R is configured in psn.conf.

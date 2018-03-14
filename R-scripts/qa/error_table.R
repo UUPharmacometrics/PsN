@@ -1,7 +1,7 @@
 error_table <- function(first_column="",col=2,column_names) {
   if(missing(column_names)) {
     if(col>=2) column_names <- c("","dOFV",rep("",(col-2)))
-    if(col<2) column_names <- ""
+    if(col<2) column_names <- NULL
   }
   nr_rows <- length(first_column)
   if(col > 2) {

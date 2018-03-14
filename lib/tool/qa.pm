@@ -7,6 +7,7 @@ use File::Copy 'cp';
 use include_modules;
 use log;
 use model_transformations;
+use filter_data;
 use utils::file;
 use tool::modelfit;
 use tool::resmod;
@@ -22,9 +23,9 @@ has 'model' => ( is => 'rw', isa => 'model' );
 has 'groups' => ( is => 'rw', isa => 'Int', default => 10 );       # The number of groups to use for quantiles in the time_varying model
 has 'idv' => ( is => 'rw', isa => 'Str', default => 'TIME' );
 has 'dv' => ( is => 'rw', isa => 'Str', default => 'CWRES' );
-has 'dvid' => ( is => 'rw', isa => 'Str', default => 'DVID' );
-has 'occ' => ( is => 'rw', isa => 'Str', default => 'OCC' );
-has 'covariates' => ( is => 'rw', isa => 'Str' );       # A comma separated list of continuous covariate symbols
+has 'dvid' => ( is => 'rw', isa => 'Str' );
+has 'occ' => ( is => 'rw', isa => 'Str' );
+has 'continuous' => ( is => 'rw', isa => 'Str' );       # A comma separated list of continuous covariate symbols
 has 'categorical' => ( is => 'rw', isa => 'Str' );       # A comma separated list of categorical covariate symbols
 has 'parameters' => ( is => 'rw', isa => 'Str' );       # A comma separated list of parameter symbols
 has 'fo' => ( is => 'rw', isa => 'Bool', default => 0 );
@@ -34,15 +35,25 @@ has 'nointer' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'nonlinear' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'skip' => ( is => 'rw', isa => 'ArrayRef[Str]', default => sub { [] } );
 has 'only' => ( is => 'rw', isa => 'ArrayRef[Str]', default => sub { [] } );    # Will be transformed into skip in BUILD
-
-has 'resmod_idv_table' => ( is => 'rw', isa => 'Str' ); # The table used by resmod
+has 'add_etas' => ( is => 'rw', isa => 'ArrayRef[Str]' );
+has 'added_etas' => ( is => 'rw', isa => 'HashRef' );   # What parameters did get added etas and to what etas?
+has 'iov_structure' => ( is => 'rw', isa => 'ArrayRef' );   # The occ/iov structure for the r code
+has 'orig_max0_model_path' => ( is => 'rw', isa => 'Str' );
+has 'base_model_path' => ( is => 'rw', isa => 'Str' );
+has 'base_dataset_path' => ( is => 'rw', isa => 'Str' );
 
 sub BUILD
-{
+{	
+	select(STDERR);     # Turn on autoflush to simplify fault-finding
+	$| = 1;
+	select(STDOUT);
+	$| = 1;
     my $self = shift;
 
 	my $model = $self->models()->[0];
     $self->model($model);
+
+    $self->check_nonsupported_modelfeatures();
 
     if (scalar(@{$self->skip}) > 0 and scalar(@{$self->only}) > 0) {
         die("Cannot have both skip and only\n");
@@ -74,8 +85,8 @@ sub modelfit_setup
     $model_copy->_write(filename => $self->directory . $self->model->filename);
 
     my @covariates;
-    if (defined $self->covariates) {
-        @covariates = split(',', $self->covariates);
+    if (defined $self->continuous) {
+        @covariates = split(',', $self->continuous);
     }
     my @categorical;
     if (defined $self->categorical) {
@@ -92,23 +103,53 @@ sub modelfit_setup
 
     $model_copy->set_records(type => 'covariance', record_strings => [ "OMITTED" ]);
 
+    my @table_columns = ( 'ID', 'CWRES', 'PRED', 'CIPREDI','CPRED' );
+	
+	if ($model_copy->defined_variable(name => 'TIME')) {
+        push @table_columns, 'TIME';
+    }
+	if ($model_copy->defined_variable(name => 'TAD')) {
+        push @table_columns, 'TAD';
+    }
+	if (($self->idv ne 'TIME') and ($self->idv ne 'TAD')) {
+        push @table_columns, $self->idv;
+    } 
+	
+    if (defined $self->dvid and $model_copy->defined_variable(name => $self->dvid)) {
+        push @table_columns, $self->dvid;
+    } 
+	
     my $base_model_name = $self->model->filename;
-    if (not $self->nonlinear) {
+    if ($self->nonlinear) {
+        my $eval_model = $self->model->copy(filename => $self->model->filename, directory => $self->directory, write_copy => 0, output_same_directory => 0);
+        my @extra_tablestrings = ( @table_columns, 'NOPRINT', 'NOAPPEND', 'ONEHEADER', 'FILE=extra_table' );
+        $eval_model->remove_records(type => 'table');
+        $eval_model->add_records(type => 'table', record_strings => \@extra_tablestrings);
+        if ($self->model->is_run()) {
+            $eval_model->update_inits(from_output => $self->model->outputs->[0]);
+        }
+        $eval_model->_write(filename => $self->directory . $self->model->filename);
+        $eval_model->set_maxeval_zero();
+        $eval_model->outputs->[0]->directory($self->directory);
+        my $modelfit = tool::modelfit->new(
+            %{common_options::restore_options(@common_options::tool_options)},
+            models => [ $eval_model ],
+            directory => "eval_run",
+            top_tool => 1,
+            nm_output => 'ext,phi',
+        );
+        $modelfit->run();
+		
+		$self->base_model_path($eval_model->directory . $eval_model->filename);
+		$self->orig_max0_model_path($self->base_model_path);
+
+        filter_data::filter_dataset(model => $eval_model, force => 1);
+    } else {
         $base_model_name =~ s/(\.[^.]+)$/_linbase.mod/;
-    
+
         print "*** Running linearize ***\n";
         ui->category('linearize');
 	
-    	my @table_columns = ( 'ID', $self->idv,'CWRES', 'PRED', 'CIPREDI','CPRED' );
-	
-        if ($model_copy->defined_variable(name => $self->dvid)) {
-            push @table_columns, $self->dvid;
-        } 
-	
-        if ($model_copy->defined_variable(name => 'TAD')) {
-            push @table_columns, 'TAD';
-        }
-
         my $lst_file;
         if (defined $self->lst_file) {
             $lst_file = '../../../' . $self->lst_file;
@@ -140,17 +181,22 @@ sub modelfit_setup
         $base_model = model->new(
             filename => $base_model_name,
         );
+		
+		$self->base_model_path($base_model->directory . $base_model->filename);
+		$self->orig_max0_model_path($base_model->directory . 'linearize_run/scm_dir1/derivatives.mod');
+	    $self->base_dataset_path($base_model->problems->[0]->datas->[0]->get_absolute_filename());
     } else {
         $base_model = $model_copy;
+        $self->base_dataset_path($self->directory . 'preprocess_data_dir/filtered.dta');
     }
-
+	
     #if ($self->fo) {
     #    $base_model->remove_option(record_name => 'estimation', option_name => 'METHOD');
     #    $base_model->_write();
     #}
 
     if (not $self->_skipped('transform')) {
-        print "*** Running full omega block, add etas, boxcox and tdist models ***\n";
+        print "*** Running full omega block, boxcox and tdist models ***\n";
         eval {
             mkdir "modelfit_run";
             my @models;
@@ -174,18 +220,19 @@ sub modelfit_setup
                 $tdist_model->_write();
                 push @models, $tdist_model;
             }
-            my $add_etas_model = $base_model->copy(directory => "modelfit_run", filename => "add_etas.mod", write_copy => 0);
-            my $was_added = $add_etas_model->unfix_omega_0_fix();
-            if ($was_added) {
-                $add_etas_model->_write();
-                push @models, $add_etas_model;
+            if (defined $self->occ) {
+                my $iov_etas = model_transformations::find_etas(model => $base_model, type => 'iov');
+                if (scalar(@$iov_etas) == 0) {      # We don't have iov previously
+                    my $add_iov_model = $base_model->copy(directory => "modelfit_run", filename => "iov.mod", write_copy => 0);
+                    my $error = model_transformations::add_iov(model => $add_iov_model, occ => $self->occ);
+                    if (not $error) {
+                        $add_iov_model->_write();
+                        push @models, $add_iov_model;
+                        my $iov_structure = model_transformations::find_iov_structure(model => $add_iov_model);
+                        $self->iov_structure($iov_structure);
+                    }
+                }
             }
-            #my $add_iov_model = $base_model->copy(directory => "modelfit_run", filename => "iov.mod", write_copy => 0);
-            #my $error = model_transformations::add_iov(model => $add_iov_model, parameters => $self->parameters, occ => $self->occ);
-            #if (not $error) {
-            #    $add_iov_model->_write();
-            #    push @models, $add_iov_model;
-            #}
             for my $model (@models) {       # Set output directory so that .lst file gets saved in the rundir
                 $model->outputs->[0]->directory(".");
             }
@@ -195,6 +242,8 @@ sub modelfit_setup
                 models => \@models,
                 directory => "modelfit_dir1",
                 top_tool => 1,
+                so => 1,
+                nm_output => 'ext,phi',
             );
             $modelfit->run();
             chdir "..";
@@ -205,7 +254,72 @@ sub modelfit_setup
         $self->_to_qa_dir();
     }
 
-    if (defined $self->covariates or defined $self->categorical) {
+    if (defined $self->add_etas and scalar(@{$self->add_etas}) > 0 and not $self->_skipped('transform')) {
+		print "\n*** Running add_etas ***\n";
+        mkdir "add_etas_run";
+        my $add_etas_model = $self->model->copy(
+            filename => $self->model->filename,
+            directory => $self->model->directory,
+            write_copy => 0,
+            output_same_directory => 1,
+        );
+		if ($add_etas_model->is_run()) {
+			$add_etas_model->update_inits(from_output => $add_etas_model->outputs->[0]);
+		}
+        if ($self->nonlinear) {
+            $add_etas_model->outputs->[0]->filename_root('add_etas');
+            $add_etas_model->outputs->[0]->filename('add_etas.lst');
+            $add_etas_model->outputs->[0]->directory($self->directory . '/add_etas_run');
+            $add_etas_model->directory($self->directory . '/add_etas_run');
+        } else {
+            $add_etas_model->outputs(undef);
+        }
+        my $added_etas = model_transformations::add_etas_to_parameters(model => $add_etas_model, parameters => $self->add_etas);
+        $self->added_etas($added_etas);
+        $add_etas_model->filename("add_etas.mod");
+        $add_etas_model->_write(filename => $self->directory . 'add_etas_run/add_etas.mod');
+        chdir("add_etas_run");
+        my $old_nm_output = common_options::get_option('nm_output');    # Hack to set clean further down
+        common_options::set_option('nm_output', 'ext');
+        if ($self->nonlinear) {
+            eval {
+                my $modelfit = tool::modelfit->new(
+                    %{common_options::restore_options(@common_options::tool_options)},
+                    models => [ $add_etas_model ],
+                    directory => "modelfit_dir1",
+                    top_tool => 1,
+                    nm_output => 'ext,phi',
+                );
+                $modelfit->run();
+            };
+            if ($@) {
+                print $@;
+            }
+        } else {
+            ui->category('linearize');
+            eval {
+                my $linearize = tool::linearize->new(
+                    %{common_options::restore_options(@common_options::tool_options)},
+                    models => [ $add_etas_model ],
+                    directory => 'linearize_run',
+                    estimate_fo => $self->fo,
+                    nointer => $self->nointer,
+                    nm_output => 'ext,phi',
+                );
+                $linearize->run();
+                $linearize->print_results();
+            };
+            if ($@) {
+                print $@;
+            }
+            ui->category('qa');
+        }
+        common_options::set_option('nm_output', $old_nm_output);
+    }
+
+    $self->_to_qa_dir();
+
+    if (defined $self->continuous or defined $self->categorical) {
         if (not $self->_skipped('frem')) {
             print "\n*** Running FREM ***\n";
             my $frem_model = model->new(filename => $base_model_name);
@@ -220,7 +334,7 @@ sub modelfit_setup
                     categorical => [ @categorical ],
                     directory => 'frem_run',
                     rescale => 1,
-                    run_sir => 1,
+                    run_sir => 0,
                     rplots => 1,
                     top_tool => 1,
                     clean => 1,
@@ -305,7 +419,7 @@ sub modelfit_setup
 
     if (not $self->_skipped('cdd')) {
         print "\n*** Running cdd ***\n";
-        my $cdd_model = model->new(filename => $base_model_name);
+        my $cdd_model = model->new(filename => $self->base_model_path);
         eval {
             my $cdd = tool::cdd->new(
                 %{common_options::restore_options(@common_options::tool_options)},
@@ -354,58 +468,63 @@ sub modelfit_setup
         } else {
             $resmod_model = $model_copy;
         }
-
-        my $resmod_idv;
-        eval {
-            $resmod_idv = tool::resmod->new(
-                %{common_options::restore_options(@common_options::tool_options)},
-                models => [ $resmod_model ],
-                dvid => $self->dvid,
-                idv => $self->idv,
-                dv => $self->dv,
-                occ => $self->occ,
-                groups => $self->groups,
-                iterative => 0,
-                directory => 'resmod_'.$self->idv,
-                top_tool => 1,
-            );
-            $self->resmod_idv_table($resmod_idv->table_file);
-        };
-        if (not $@) {
-            eval {
-                $resmod_idv->run();
-            };
-        } else {
-            print $@;
-            rmdir "resmod_".$self->idv;
-        }
-
-        $self->_to_qa_dir();
-
-        my $resmod_tad;
-        eval {
-            $resmod_tad = tool::resmod->new(
-                %{common_options::restore_options(@common_options::tool_options)},
-                models => [ $resmod_model ],
-                dvid => $self->dvid,
-                idv => 'TAD',
-                dv => $self->dv,
-                occ => $self->occ,
-                groups => $self->groups,
-                iterative => 0,
-                directory => 'resmod_TAD',
-                top_tool => 1,
-            );
-        };
-        if (not $@) {
-            eval {
-                $resmod_tad->run();
-            };
-        } else {
-            print $@;
-            rmdir 'resmod_TAD';
-        }
-        $self->_to_qa_dir();
+				
+		if($resmod_model->defined_variable(name => 'TIME')) {
+			my $resmod_time;
+			eval {
+				$resmod_time = tool::resmod->new(
+					%{common_options::restore_options(@common_options::tool_options)},
+					models => [ $resmod_model ],
+					dvid => $self->dvid,
+					idv => 'TIME',
+					dv => $self->dv,
+					occ => $self->occ,
+					groups => $self->groups,
+					iterative => 0,
+					directory => 'resmod_TIME',
+					top_tool => 1,
+					clean => 2,
+				);
+			};
+			if (not $@) {
+				eval {
+					$resmod_time->run();
+				};
+			} else {
+				print $@;
+				rmdir 'resmod_TIME';
+			}
+			$self->_to_qa_dir();
+		}
+		
+		if($resmod_model->defined_variable(name => 'TAD')) {
+			my $resmod_tad;
+			eval {
+				$resmod_tad = tool::resmod->new(
+					%{common_options::restore_options(@common_options::tool_options)},
+					models => [ $resmod_model ],
+					dvid => $self->dvid,
+					idv => 'TAD',
+					dv => $self->dv,
+					occ => $self->occ,
+					groups => $self->groups,
+					iterative => 0,
+					directory => 'resmod_TAD',
+					top_tool => 1,
+					clean => 2,
+				);
+			};
+			if (not $@) {
+				eval {
+					$resmod_tad->run();
+				};
+			} else {
+				print $@;
+				rmdir 'resmod_TAD';
+			}
+			$self->_to_qa_dir();
+		}
+        
 
         my $resmod_pred;
         eval {
@@ -420,7 +539,7 @@ sub modelfit_setup
                 iterative => 0,
                 directory => 'resmod_PRED',
                 top_rool => 1,
-                clean => 0,         # Should not be need as top_tool is 1, but top_tool gets reset somehow for this run
+                clean => 2,
             );
         };
         if (not $@) {
@@ -432,6 +551,34 @@ sub modelfit_setup
             rmdir 'resmod_PRED';
         }
         $self->_to_qa_dir();
+		
+		if(($self->idv ne "TIME") and ($self->idv ne "TAD")) {
+			my $resmod_idv;
+			eval {
+				$resmod_idv = tool::resmod->new(
+					%{common_options::restore_options(@common_options::tool_options)},
+					models => [ $resmod_model ],
+					dvid => $self->dvid,
+					idv => $self->idv,
+					dv => $self->dv,
+					occ => $self->occ,
+					groups => $self->groups,
+					iterative => 0,
+					directory => 'resmod_'.$self->idv,
+					top_tool => 1,
+					clean => 2,
+				);
+			};
+			if (not $@) {
+				eval {
+					$resmod_idv->run();
+				};
+			} else {
+				print $@;
+				rmdir "resmod_".$self->idv;
+			}
+			$self->_to_qa_dir();
+		}
     }
 }
 
@@ -469,11 +616,9 @@ sub _create_scm_config
 
     open my $fh, '>', 'config.scm';
 
-    #my $model_name = $self->model->full_name();
-
     my $covariates = "";
-    if (defined $self->covariates) {
-        $covariates = "continuous_covariates=" . $self->covariates;
+    if (defined $self->continuous) {
+        $covariates = "continuous_covariates=" . $self->continuous;
     }
 
     my $categorical = "";
@@ -482,12 +627,12 @@ sub _create_scm_config
     }
 
     my $all = "";
-    if (defined $self->categorical and not defined $self->covariates) {
+    if (defined $self->categorical and not defined $self->continuous) {
         $all = $self->categorical;
-    } elsif (not defined $self->categorical and defined $self->covariates) {
-        $all = $self->covariates;
+    } elsif (not defined $self->categorical and defined $self->continuous) {
+        $all = $self->continuous;
     } else {
-        $all = $self->covariates . ',' . $self->categorical;
+        $all = $self->continuous . ',' . $self->categorical;
     }
 
     my $relations;
@@ -532,6 +677,17 @@ sub _to_qa_dir
     chdir $self->directory;
 }
 
+sub check_nonsupported_modelfeatures
+{
+    my $self = shift;
+
+    my $model = $self->model;
+
+    if (defined $model->problems->[0]->mixs) {
+        die("Error: Mixture models are not supported by qa.\n");
+    }
+}
+
 sub create_R_plots_code
 {
 	my $self = shift;
@@ -542,9 +698,9 @@ sub create_R_plots_code
 
 	$rplot->pdf_title('Quality assurance');
 
-    my @covariates;
-    if (defined $self->covariates) {
-        @covariates = split(/,/, $self->covariates);
+    my @continuous;
+    if (defined $self->continuous) {
+        @continuous = split(/,/, $self->continuous);
     }
     my @categorical;
     if (defined $self->categorical) {
@@ -554,29 +710,74 @@ sub create_R_plots_code
     if (defined $self->parameters) {
         @parameters = split(/,/, $self->parameters);
     }
-	my $CWRES_table_path = $self->resmod_idv_table;
-    if (defined $CWRES_table_path) {
-	    $CWRES_table_path =~ s/\\/\//g;
-    } else {
-        $CWRES_table_path = "";
+	my $extra_table_path = $self->directory . 'linearize_run/scm_dir1/extra_table';
+    if ($self->nonlinear) {
+        $extra_table_path = $self->directory . 'extra_table';
     }
-		
-    $rplot->add_preamble(
-        code => [
+    $extra_table_path =~ s/\\/\//g;
+	
+	my $orig_max0_model_path = $self->orig_max0_model_path;
+	$orig_max0_model_path =~ s/\\/\//g;
+	my $base_model_path = $self->base_model_path;
+	$base_model_path =~ s/\\/\//g;
+	my $base_dataset_path = $self->base_dataset_path;
+	$base_dataset_path =~ s/\\/\//g;
+	
+	my $nonlinear_run;
+	if($self->nonlinear) {
+		$nonlinear_run = "TRUE";
+	} else {
+		$nonlinear_run = "FALSE";
+	}
+
+    my $code =  [
             '# qa specific preamble',
 			"groups <- " . $self->groups,
             "idv_name <- '" . $self->idv . "'",
-			"dvid_name <- '" . $self->dvid . "'",
-            "covariates <- " . rplots::create_r_vector(array => \@covariates),
+            "continuous <- " . rplots::create_r_vector(array => \@continuous),
             "categorical <- " . rplots::create_r_vector(array => \@categorical),
             "parameters <- " . rplots::create_r_vector(array => \@parameters),
-            "CWRES_table <- '" . $CWRES_table_path . "'",
+            "extra_table <- '" . $extra_table_path . "'",
 			"cdd_dofv_cutoff <- 3.84 ",
 			"cdd_max_rows <- 10",
 			"type <- 'latex' # set to 'html' if want to create a html file ",
             "skip <- " . rplots::create_r_vector(array => $self->skip),
-        ]
-    );
+			"nonlinear <- " . $nonlinear_run,
+			"original_max0_model <- '" . $orig_max0_model_path . "'",
+			"base_model <- '" . $base_model_path . "'",
+			"base_dataset <- '" . $base_dataset_path . "'",
+        ];
+	my $dvid_line = "dvid_name <- ''";
+	if (defined $self->dvid) {
+		$dvid_line = "dvid_name <- '" . $self->dvid . "'";
+	}
+	push @$code, $dvid_line;
+
+    if (defined $self->added_etas) {
+        my @content;
+        for my $p (keys %{$self->added_etas}) {
+            my $value = $self->added_etas->{$p};
+            if (not defined $value) {
+                $value = 'NULL';
+            }
+            push @content, "$p=$value";
+        }
+        my $add = 'added_etas <- list(' . join(', ', @content) . ')';
+        push @$code, $add;
+    }
+
+    if (defined $self->iov_structure) {
+        my @content;
+        for (my $i = 0; $i < scalar(@{$self->iov_structure}); $i++) {
+            my $occ = 'occ' . ($i + 1) . '=' . rplots::create_r_vector(array => $self->iov_structure->[$i], quoted => 0); 
+            push @content, $occ;
+        }
+        my $line = 'iov_etas <- list(' . join(', ', @content). ')';
+        push @$code, $line;
+    }
+
+
+    $rplot->add_preamble(code => $code);
 }
 
 

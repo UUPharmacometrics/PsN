@@ -1,5 +1,6 @@
 library(testthat)
 suppressMessages(library(PerformanceAnalytics))
+suppressMessages(library(dplyr))
 tool = 'simeval'
 
 #####################    1.Source functions which are going to be testet   ##################
@@ -22,6 +23,8 @@ residual.files <- c(paste0(files.w.dir,'summary_cwres.csv'),paste0(files.w.dir,'
 residual.files_1 <- c(paste0(files.w.dir,'summary_cwres_1.csv'),paste0(files.w.dir,'summary_iwres.csv'))
 residual.outliers.file <- paste0(files.w.dir,'residual_outliers.csv')
 residual.outliers.file.1 <- paste0(files.w.dir,'residual_outliers_1.csv')
+residual.outliers.file.3 <- paste0(files.w.dir,'residual_outliers_3.csv')
+residual.outliers.file.4 <- paste0(files.w.dir,'residual_outliers_4.csv')
 residual.names <- c('CWRES','IWRES')
 
 ###################################     3. Make tests     ###################################
@@ -95,25 +98,37 @@ test_that("If function summary.table works as expected",{
 #...............................  (3) Test function outlier.tablee  ...............................
 out_list <- outlier.table(residual.outliers.file)
 out_list_1 <- outlier.table(residual.outliers.file.1)
+out_list_3 <- outlier.table(residual.outliers.file.3)
+out_list_4 <- outlier.table(residual.outliers.file.4)
+out_list_5 <- outlier.table(paste0(files.w.dir,'residual_outliers_not_exist.csv'))
 
-# unlist 
-outlierframe <- out_list$outlierframe
-outliers_count <- out_list$outliers_count
-outlierframe_1 <- out_list_1$outlierframe
-outliers_count_1 <- out_list_1$outliers_count
 # Create expected data set
 exp_outlierframe <- data.frame(C = c("No residual outliers detected"))
 names(exp_outlierframe) <- NULL
-exp_outliers_count <- data.frame()
 exp_outlierframe_1 <- data.frame(ID=c(24,24,42),TIME=c(176,61.5,95.5),DV=c("38.1","16.7","13.9"),
                                  PRED=c("116.400","17.707","52.912"),IWRES=c("-0.3635","-0.2838","-0.4272"),
                                  CWRES=c("-2.1581","-2.4754","-2.3480"),OUTLIER.IWRES=c(1,0,1),OUTLIER.CWRES=c(1,1,0),stringsAsFactors = F)
-exp_outliers_count_1 <- data.frame(ID=as.factor(c(24,42)),OUTLIERS.IWRES=as.factor(c(1,1)),OUTLIERS.CWRES= as.factor(c(2,"")))
+exp_outliers_count_1 <- data.frame(ID=c(24,42),OUTLIER.CWRES=c(2,""),OUTLIER.IWRES=c(1,1),stringsAsFactors = F)
+exp_outlierframe_4 <- data.frame(ID=c(1,56,56),TIME=c(176,61.5,95.5),DV=c("38.1","16.7","13.9"),
+                                 PRED=c("116.400","17.707","52.912"),CWRES=c("-2.1581","-2.4754","-2.3480"),
+                                 OUTLIER.CWRES=c(1,1,1),stringsAsFactors = F)
+exp_outliers_count_4 <- data.frame(ID=c(1,56),OUTLIER.CWRES=c(1,2))
 # Compare expected data with real data
 context("Simeval, residuals, function outlier.table")
 test_that("If function outlier.table works as expected",{
-  expect_equal(exp_outlierframe,outlierframe)
-  expect_equal(exp_outliers_count,outliers_count)
-  expect_equal(exp_outlierframe_1,outlierframe_1)
-  expect_equal(exp_outliers_count_1,outliers_count_1)
+  expect_equal(exp_outlierframe,out_list$outlier_table)
+  expect_equal(data.frame(),out_list$outliers_count)
+  expect_equal(c("CWRES","IWRES"),out_list$residual_names)
+  expect_equal(exp_outlierframe_1,out_list_1$outlier_table)
+  expect_equal(exp_outliers_count_1,out_list_1$outliers_count)
+  expect_equal(c("CWRES","IWRES"),out_list_1$residual_names)
+  expect_equal(exp_outlierframe,out_list_3$outlier_table)
+  expect_equal(data.frame(),out_list_3$outliers_count)
+  expect_equal(c("CWRES"),out_list_3$residual_names)
+  expect_equal(exp_outlierframe_4,out_list_4$outlier_table)
+  expect_equal(exp_outliers_count_4,out_list_4$outliers_count)
+  expect_equal(c("CWRES"),out_list_4$residual_names)
+  expect_equal(data.frame(),out_list_5$outlier_table)
+  expect_equal(data.frame(),out_list_5$outliers_count)
+  expect_equal(NULL,out_list_5$residual_names)
 })

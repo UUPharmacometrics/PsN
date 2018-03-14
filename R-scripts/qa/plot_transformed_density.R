@@ -5,37 +5,21 @@ plot_transformed_density <- function(data_table,eta_table,param_model) {
   if(param_model=="tdist") {
     labels=c("Untransformed density","t-distribution transformed density")
   }
-
-    get_x_min_max <- function(data_table,eta_table,y_pec=0.01) {
-      for(i in unique(data_table$ETA_name)) {
-        data_table_per_eta <- data_table %>% filter(ETA_name %in% i)
-        # 1 procent of the density values
-        y_min_limit <- min(data_table_per_eta$density) + y_pec*abs(max(data_table_per_eta$density)-min(data_table_per_eta$density))
-        spec <- data_table_per_eta %>% filter(density>y_min_limit)
-        x_max <- max(spec$eta)
-        x_min <- min(spec$eta)
-
-        # check if y_min_limit should be smaller because of the real eta values
-        if(any(eta_table$value > x_max)) {
-          x_max <- max(eta_table$value)
-        }
-        if(any(eta_table$value < x_min)) {
-          x_min <- min(eta_table$value)
-        }
-        data_table_per_eta <- data_table_per_eta %>% filter(eta>=x_min,eta<=x_max)
-
-        if(i==unique(data_table$ETA_name)[1]) {
-          data_table_new <- data_table_per_eta
-        } else {
-          data_table_new <- rbind(data_table_new,data_table_per_eta)
-        }
-      }
-      return(data_table_new)
-    }
     data_table_new <- get_x_min_max(data_table,eta_table)
     
-    #make a plot
+    #make shore that will not get only one plot in last page. 
     n_pages <- ceiling(length(unique(data_table_new$ETA_name))/12)
+    if(length(unique(data_table_new$ETA_name)) > 12) {
+      plots_in_page <- length(unique(data_table_new$ETA_name))/n_pages
+      if(plots_in_page < 9) {
+        nrow <- 3
+      } else {
+        nrow <- 4
+      }
+    } else {
+      nrow <- 4
+    }
+    #make a plot
     p <- list()
     for(i in seq_len(n_pages)) {
       p[[i]] <- ggplot(data_table_new,aes(x=eta,y=density,fill=type)) +
@@ -46,9 +30,9 @@ plot_transformed_density <- function(data_table,eta_table,param_model) {
         theme(legend.position = "top")
       
       if(length(unique(data_table_new$ETA_name)) > 4) {
-        p[[i]] <- p[[i]] + facet_wrap_paginate(~ETA_name,nrow=4,ncol=3,scales="free",page=i)
+        p[[i]] <- p[[i]] + ggforce::facet_wrap_paginate(~ETA_name,nrow=nrow,ncol=3,scales="free",page=i)
       } else {
-        p[[i]] <- p[[i]] + facet_wrap_paginate(~ETA_name,ncol=2,scales="free")
+        p[[i]] <- p[[i]] + ggforce::facet_wrap_paginate(~ETA_name,ncol=2,scales="free")
       }
       
       if(!missing(eta_table)) {
@@ -59,4 +43,31 @@ plot_transformed_density <- function(data_table,eta_table,param_model) {
     }
 
   return(p)
+}
+
+get_x_min_max <- function(data_table,eta_table,y_pec=0.01) {
+  for(i in unique(data_table$ETA_name)) {
+    data_table_per_eta <- data_table %>% dplyr::filter(ETA_name %in% i)
+    # 1 procent of the density values
+    y_min_limit <- min(data_table_per_eta$density,na.rm=TRUE) + y_pec*abs(max(data_table_per_eta$density,na.rm=TRUE)-min(data_table_per_eta$density,na.rm=TRUE))
+    spec <- data_table_per_eta %>% dplyr::filter(density>y_min_limit)
+    x_max <- max(spec$eta,na.rm=TRUE)
+    x_min <- min(spec$eta,na.rm=TRUE)
+    
+    # check if y_min_limit should be smaller because of the real eta values
+    if(any(!is.na(eta_table$value) > x_max)) {
+      x_max <- max(eta_table$value,na.rm=TRUE)
+    }
+    if(any(!is.na(eta_table$value) < x_min)) {
+      x_min <- min(eta_table$value,na.rm=TRUE)
+    }
+    data_table_per_eta <- data_table_per_eta %>% dplyr::filter(eta>=x_min,eta<=x_max)
+    
+    if(i==unique(data_table$ETA_name)[1]) {
+      data_table_new <- data_table_per_eta
+    } else {
+      data_table_new <- rbind(data_table_new,data_table_per_eta)
+    }
+  }
+  return(data_table_new)
 }

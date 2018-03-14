@@ -143,10 +143,24 @@ END
 
     print_population_parameters(file => $file, model => $model);
     print_random_variables(file => $file, model => $model);
+    print_correlations(file => $file, model => $model);
 
 print $file <<'END';
         </ParameterModel>
 END
+}
+
+sub get_name
+{
+    my $option = shift;
+    my $name = $option->label;
+    if (not defined $name) {
+        $name = $option->coordinate_string;
+    }
+    if (not so::xml::match_symbol_idtype($name)) {
+        $name = so::xml::mangle_symbol_idtype($name);
+    }
+    return $name;
 }
 
 sub print_population_parameters
@@ -160,14 +174,7 @@ sub print_population_parameters
 
     for my $record (@{$model->problems->[0]->thetas}, @{$model->problems->[0]->omegas}, @{$model->problems->[0]->sigmas}) {
         for my $option (@{$record->options}) {
-            my $name = $option->label;
-            if (not defined $name) {
-                $name = $option->coordinate_string;
-            }
-            if (not so::xml::match_symbol_idtype($name)) {
-                $name = so::xml::mangle_symbol_idtype($name);
-            }
-
+            my $name = get_name($option);
             print $file '            <PopulationParameter symbId="' . $name . '"/>' . "\n"; # FIXME if no label and symbol washing
         }
     }
@@ -186,15 +193,19 @@ sub print_random_variables
     for my $record (@{$model->problems->[0]->omegas}, @{$model->problems->[0]->sigmas}) {
         for my $option (@{$record->options}) {
             if ($option->on_diagonal) {
-                my $variance = $option->init; 
+                my $symbol = get_name($option);
                 my $name = "ETA";
+                my $var_blkId = "vm_eta";
+                my $var_symbId = "ID";
                 if ($option->coordinate_string =~ /SIGMA/) {
                     $n = 1;
                     $name = "EPS";
+                    $var_blkId = "vm_err";
+                    $var_symbId = "DV";
                 }
                 print $file ' ' x 12, "<RandomVariable symbId=\"$name$n\">\n";
                 print $file ' ' x 16, "<ct:VariabilityReference>\n";
-                print $file ' ' x 20, "<ct:SymbRef blkIdRef=\"vm_eta\" symbIdRef=\"ID\"/>\n";
+                print $file ' ' x 20, "<ct:SymbRef blkIdRef=\"$var_blkId\" symbIdRef=\"$var_symbId\"/>\n";
                 print $file ' ' x 16, "</ct:VariabilityReference>\n";
                 print $file ' ' x 16, "<Distribution>\n";
                 print $file ' ' x 20, "<ProbOnto xmlns=\"http://www.pharmml.org/probonto/ProbOnto\" name=\"Normal2\">\n";   # FIXME: Does not support SD
@@ -205,13 +216,75 @@ sub print_random_variables
                 print $file ' ' x 24, "</Parameter>\n";
                 print $file ' ' x 24, "<Parameter name=\"var\">\n";
                 print $file ' ' x 28, "<ct:Assign>\n";
-                print $file ' ' x 32, "<ct:Real>$variance</ct:Real>\n";
+                print $file ' ' x 32, "<ct:SymbRef symbIdRef=\"$symbol\"/>\n";
                 print $file ' ' x 28, "</ct:Assign>\n";
                 print $file ' ' x 24, "</Parameter>\n";
                 print $file ' ' x 20, "</ProbOnto>\n";
                 print $file ' ' x 16, "</Distribution>\n";
                 print $file ' ' x 12, "</RandomVariable>\n";
                 $n++;
+            }
+        }
+    }
+}
+
+sub print_correlations
+{
+    my %parm = validated_hash(\@_,
+        file => { isa => 'Ref' },
+        model => { isa => 'model' },
+    );
+    my $file = $parm{'file'};
+    my $model = $parm{'model'};
+
+    my %diag;       # Coordstring to symbol
+
+    for my $record (@{$model->problems->[0]->omegas}, @{$model->problems->[0]->sigmas}) {
+        for my $option (@{$record->options}) {
+            if ($option->on_diagonal) {
+                my $symbol = get_name($option);
+                $diag{$option->coordinate_string} = $symbol;
+            }
+        }
+    }
+
+    for my $record (@{$model->problems->[0]->omegas}, @{$model->problems->[0]->sigmas}) {
+        for my $option (@{$record->options}) {
+            if (not $option->on_diagonal) {
+                my $symbol = get_name($option);
+                $option->coordinate_string =~ /(\d+),(\d+)/;
+                my $first = $1;
+                my $second = $2;
+                $option->coordinate_string =~ /(\w+)/;
+                my $type = $1;
+                my $first_diag = "$type($first,$first)"; 
+                my $second_diag = "$type($second,$second)";
+                my $first_diag_name = $diag{$first_diag};
+                my $second_diag_name = $diag{$second_diag};
+                my $var_blkId = "vm_eta";
+                my $var_symbId = "ID";
+                if ($option->coordinate_string =~ /SIGMA/) {
+                    $var_blkId = "vm_err";
+                    $var_symbId = "DV";
+                }
+                print $file ' ' x 12, "<Correlation>\n";
+                print $file ' ' x 16, "<ct:VariabilityReference>\n";
+                print $file ' ' x 20, "<ct:SymbRef blkIdRef=\"$var_blkId\" symbIdRef=\"$var_symbId\"/>\n";
+                print $file ' ' x 16, "</ct:VariabilityReference>\n";
+                print $file ' ' x 16, "<Pairwise>\n";
+                print $file ' ' x 20, "<RandomVariable1>\n";
+                print $file ' ' x 24, "<ct:SymbRef symbIdRef=\"$first_diag_name\"/>\n";
+                print $file ' ' x 20, "</RandomVariable1>\n";
+                print $file ' ' x 20, "<RandomVariable2>\n";
+                print $file ' ' x 24, "<ct:SymbRef symbIdRef=\"$second_diag_name\"/>\n";
+                print $file ' ' x 20, "</RandomVariable2>\n";
+                print $file ' ' x 20, "<CorrelationCoefficient>\n";
+                print $file ' ' x 24, "<ct:Assign>\n";
+                print $file ' ' x 28, "<ct:SymbRef symbIdRef=\"$symbol\"/>\n";
+                print $file ' ' x 24, "</ct:Assign>\n";
+                print $file ' ' x 20, "</CorrelationCoefficient>\n";
+                print $file ' ' x 16, "</Pairwise>\n";
+                print $file ' ' x 12, "</Correlation>\n";
             }
         }
     }
@@ -226,65 +299,36 @@ sub print_trial_design
     my $file = $parm{'file'};
     my $model = $parm{'model'};
 
+    my $columns = $model->problems->[0]->inputs->[0]->get_nonskipped_columns();
+    my $data_file = $model->problems->[0]->datas->[0]->get_absolute_filename();
+
     print $file ' ' x 4, "<design:TrialDesign>\n";
     print $file ' ' x 8, "<design:ExternalDataSet toolName=\"NONMEM\" oid=\"nm_ds\">\n";
+    for my $col (@$columns) {
+        print $file ' ' x 12, "<design:ColumnMapping>\n";
+        print $file ' ' x 16, "<ds:ColumnRef columnIdRef=\"$col\"/>\n";
+        print $file ' ' x 16, "<ct:SymbRef symbIdRef=\"$col\"/>\n";
+        print $file ' ' x 12, "</design:ColumnMapping>\n";
+    }
+    print $file ' ' x 12, "<DataSet xmlns=\"http://www.pharmml.org/pharmml/0.8/Dataset\">\n";
+    print $file ' ' x 16, "<Definition>\n";
+    my $num = 1;
+    for my $col (@$columns) {
+        my $columnType = "undefined";
+        $columnType = 'id' if ($col eq 'ID');
+        $columnType = 'dv' if ($col eq 'DV');
+        print $file ' ' x 20, "<Column columnId=\"$col\" columnType=\"$columnType\" valueType=\"real\" columnNum=\"$num\"/>\n";
+        $num++;
+    }
+    print $file ' ' x 16, "</Definition>\n";
+    print $file ' ' x 16, "<ExternalFile oid=\"dataset_id\">\n";
+    print $file ' ' x 20, "<path>$data_file</path>\n";
+    print $file ' ' x 16, "</ExternalFile>\n";
+    print $file ' ' x 12, "</DataSet>\n";
     print $file ' ' x 8, "</design:ExternalDataSet>\n";
     print $file ' ' x 4, "</design:TrialDesign>\n";
 }
 
-=cut
-            <design:ColumnMapping>
-				<ColumnRef xmlns="http://www.pharmml.org/pharmml/0.8/Dataset" columnIdRef="ID"/>
-				<ct:SymbRef blkIdRef="vm_mdl" symbIdRef="ID"/>
-			</design:ColumnMapping>
-			<design:ColumnMapping>
-				<ColumnRef xmlns="http://www.pharmml.org/pharmml/0.8/Dataset" columnIdRef="TIME"/>
-				<ct:SymbRef  symbIdRef="T"/>
-			</design:ColumnMapping>
-			<design:ColumnMapping>
-				<ColumnRef xmlns="http://www.pharmml.org/pharmml/0.8/Dataset" columnIdRef="AMT"/>
-				<Piecewise xmlns="http://www.pharmml.org/pharmml/0.8/Dataset">
-					<math:Piece>
-						<ct:SymbRef blkIdRef="sm" symbIdRef="GUT"/>
-						<math:Condition>
-							<math:LogicBinop op="gt">
-								<ColumnRef columnIdRef="AMT"/>
-								<ct:Int>0</ct:Int>
-							</math:LogicBinop>
-						</math:Condition>
-					</math:Piece>
-				</Piecewise>
-			</design:ColumnMapping>
-			<design:ColumnMapping>
-				<ColumnRef xmlns="http://www.pharmml.org/pharmml/0.8/Dataset" columnIdRef="DV"/>
-				<ct:SymbRef blkIdRef="om1" symbIdRef="Y"/>
-			</design:ColumnMapping>
-			<design:ColumnMapping>
-				<ColumnRef xmlns="http://www.pharmml.org/pharmml/0.8/Dataset" columnIdRef="logtWT"/>
-				<ct:SymbRef blkIdRef="cm" symbIdRef="logtWT"/>
-			</design:ColumnMapping>
-
-            <DataSet xmlns="http://www.pharmml.org/pharmml/0.8/Dataset">
-				<Definition>
-					<Column columnId="ID" columnType="id" valueType="int" columnNum="1"/>
-					<Column columnId="TIME" columnType="idv" valueType="real" columnNum="2"/>
-					<Column columnId="WT" columnType="undefined" valueType="real" columnNum="3"/>
-					<Column columnId="AMT" columnType="dose" valueType="real" columnNum="4"/>
-					<Column columnId="DVID" columnType="dvid" valueType="int" columnNum="5"/>
-					<Column columnId="DV" columnType="dv" valueType="real" columnNum="6"/>
-					<Column columnId="MDV" columnType="mdv" valueType="int" columnNum="7"/>
-					<Column columnId="logtWT" columnType="covariate" valueType="real" columnNum="8"/>
-				</Definition>
-				<ExternalFile oid="id">
-					<path>warfarin_conc.csv</path>
-					<format>CSV</format>
-					<delimiter>COMMA</delimiter>
-				</ExternalFile>
-			</DataSet>
-=cut
-
-# Correlation between ETAs in correlation block
-# Dataset connection to id and dv columns
 # Filter out SAME and FIX?
 
 1;

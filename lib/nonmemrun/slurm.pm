@@ -98,26 +98,26 @@ sub submit
 	}	
 	system("echo sbatch $flags $command \"2>&1\" > sbatchcommand");
 
-	for (my $i = 0; $i < 10; $i++) {
+	for (my $i = 0; $i < 30; $i++) {
 		#make sure input file psn.mod is visible, i.e. files are synced, before calling nmfe
 		#also make sure psn.lst is NOT here, i.e. moving of old output is finished
 		my $outp = readpipe("sbatch $flags 2>&1 <<EOF
 #!/bin/bash  -l
 printenv | sed \'/^HOSTNAME=/!d; s///;q\' > hostname 
 
-for J in 1 2 3 4 5 6 7 8 9 10
+for J in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20
 do
 if test -f $lstfile 
 then
 echo \"found $lstfile, wait\"
-sleep 1
+sleep 0.5
 else
 echo \"did not find $lstfile, ok\"
 break
 fi
 done
 
-for J in 1 2 3 4 5 6 7 8 9 10
+for J in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20
 do
 if test -f $modfile -a -r $modfile
 then
@@ -125,7 +125,7 @@ echo \"found $modfile, ok\"
 break
 else
 echo \"did not find $modfile, wait\"
-sleep 1
+sleep 0.5
 fi
 done
 $command
@@ -138,11 +138,11 @@ EOF
 			last;
 		} elsif($outp =~ /Socket timed out/) {
 			#try again. jobId is -1 by initiation 
-			sleep(3);
+			sleep(1);
 			next;
 		} elsif($outp =~ /Invalid user id/) {
 			#try again. jobId is -1 by initiation 
-			sleep(3);
+			sleep(1);
 			next;
 		} else {
 			print "Slurm submit failed.\nSystem error message: $outp\nConsidering this model failed.\n";
@@ -156,7 +156,6 @@ EOF
 	$self->job_id($jobId);
 	return $jobId;
 }
-
 
 sub monitor
 {

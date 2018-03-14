@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/usr/bin/perl 
 
 # Only for Development
 use FindBin qw($Bin);
@@ -52,160 +52,163 @@ exit unless $res;
 my %help_text;
 
 $help_text{Pre_help_message} = <<'EOF';
-    Running one or more modelfiles using PsN.
+	Running one or more modelfiles using PsN.
 EOF
 
-    $help_text{Description} = <<'EOF';
-    The execute program is a Perl script that allows you to run multiple
-    modelfiles either sequentially or in parallel. It is an nmfe replacement
-    with advanced extra functionality.
+$help_text{Description} = <<'EOF';
 
-    The execute program creates subdirectories where it puts NONMEMs
-    input and output files, to make sure that parallel NONMEM runs do not
-    interfere with each other. The top directory is by default named
-    'modelfit_dirX' where 'X' is a number that starts at 1 and is
-    increased by one each time you run the execute program.
-
-    When the NONMEM runs are finished, the output and table files will be
-    copied to the directory where execute started in which means that you
-    can normaly ignore the 'modelfit_dirX' directory. If you need to
-    access any special files you can find them inside the
-    'modelfit_dirX'. Inside the 'modelfit_dirX' you find a few
-    subdirectories named 'NM_runY'. For each model file you
-    specified on the command line there will be one 'NM_runY' directory in
-    which the actual NONMEM execution takes place. The order of the
-    'NM_runY' directories corresponds to the order of the modelfiles given
-    on the command line. The first run will take place inside 'NM_run1',
-    the second in 'NM_run2' and so on.
+	The execute program is a PsN tool that allows you to run multiple modelfiles
+	either sequentially or in parallel. It is an nmfe replacement with advanced
+	extra functionality. The execute program creates subdirectories where it puts
+	NONMEMs input and output files, to make sure that parallel NONMEM runs do not
+	interfere with each other. The top directory is by default named
+	'modelfit_dirX' where 'X' is a number that starts at 1 and is increased by one
+	each time you run the execute program. When the NONMEM runs are finished, the
+	output and table files will be copied to the directory where execute started
+	in which means that you can normaly ignore the 'modelfit_dirX' directory. If
+	you need to access any special files you can find them inside the
+	'modelfit_dirX'. Inside the 'modelfit_dirX' you find a few subdirectories
+	named 'NM_runY'. For each model file you specified on the command line there
+	will be one 'NM_runY' directory in which the actual NONMEM execution takes
+	place. The order of the 'NM_runY' directories corresponds to the order of the
+	modelfiles given on the command line. The first run will take place inside
+	'NM_run1', the second in 'NM_run2' and so on. The execute script is a PsN
+	tool that allows you to run multiple modelfiles either sequentially or in
+	parallel. It is an nmfe replacement with advanced extra functionality.
 EOF
 
-    $help_text{Examples} = <<'EOF';    
-    Run one model file and accepts all default values:
-    execute pheno.mod
+$help_text{Examples} = <<'EOF';    
+	Run one model file and accepts all default values:
+	execute pheno.mod
 
-Run two model files in parallel using 5 possible retries:
-    execute -threads=2  -retries=5 phenobarbital.mod pheno_alternate.mod
-
+	Run two model files in parallel using 5 possible retries:
+	execute -threads=2  -retries=5 phenobarbital.mod pheno_alternate.mod
 EOF
 
-    $help_text{Options} = <<'EOF';
+$help_text{Options} = <<'EOF';
 	A model file is required as argument.
 
-    The following options are valid:
-EOF
-
-$help_text{-predict_data} = <<'EOF';
-    -predict_data='string'
-    Only allowed in combination with -predict_model.
-	Create copy of model with new file named predict_model, turn off estimation 
-	(MAXEVAL=0 or corresponding), change data file to -predict_data and then run.
-EOF
-
-$help_text{-predict_model} = <<'EOF';
-    -predict_model='string'
-    Only allowed in combination with -predict_data.
-	Create copy of model with new file named predict_model, turn off estimation 
-	(MAXEVAL=0 or corresponding), change data file to -predict_data and then run.
-EOF
-
-$help_text{-timestamp} = <<'EOF';
-    -timestamp
-    Default not used. Automatically set the run directory name with a 
-	time stamp and the stem of the model name.
-  Example: execute run1.mod -timestamp
-	gives run directory name run1-PsN-2014-06-12-152502 for a run 
-   that was started at 15:25:02 June 12th in year 2014
-EOF
-
-$help_text{-reduced_model_ofv} = <<'EOF';
-    -reduced_model_ofv=reference_ofv
-    Default not used. When this option is used, the behaviour of
-	the retries functionality of PsN is modified to keep adding retries
-	until either a lower ofv than -reduced_model_ofv is obtained, or
-	until the maximum number of retries (option -retries) is reached.
-EOF
-
-$help_text{-copy_data} = <<'EOF';
-    -copy_data
-    Set by default. Disable with -no-copy_data. By default PsN will copy
-    the data file into NM_run1 and set a local path in psn.mod, the actual
-    model file run with NONMEM. If -no-copy_data is set, PsN will not copy 
-    the data to NM_run1 but instead set a global path to the data file in
-    psn.mod. However, NONMEM will not accept a path longer than 80
-	characters.
-EOF
-
-$help_text{-model_dir_name} = <<'EOF';
-    -model_dir_name
-    Default not used. This option changes the basename of the run directory 
-    from modelfit_dir to modelfile.dir. where modelfile is the name of 
-    the first model file in the list given as arguments to execute. The 
-    directories will be numbered starting from 1, increasing the number 
-    each time execute is run with a model file with the same name. If the 
-    option directory is used it will override -model_dir_name.
-EOF
-
-    $help_text{-prepend_options_to_lst} = <<'EOF';
-    -prepend_options_to_lst
-    This option makes PsN prepend the final lst-file (which is copied 
-    back to the directory from which execute was called) with the 
-    file version_and_option_info.txt which contains run information, including
-    all actual values of optional PsN options. PsN can still parse the  
-    lst-file with the options prepended, so the file can still be used it as 
-    input to e.g. sumo, vpc or update_inits. Option can be disabled with 
-    -no-prepend_options_to_lst if it is set in psn.conf. 
-EOF
-
-    $help_text{-tail_output} = <<'EOF';
-    -tail_output
-    This option only works for execute under Windows.
-    tail_output specifies that execute
-    should invoke a program (tail) that displays the output file,
-    including the gradients, during minmization. The tail program is started
-    automatically but it is up to the user to terminate the program.
-
-    For the tail_output option to work, a third party
-    tail program must be installed. Tail programs that are known to work
-    are WinTail and Tail for Win32.  The latter is recommended and can
-    be downloaded at http://tailforwin32.sourceforge.net. It
-    is also necessary to have correct settings of the variables 
-    wintail_exe, which is the path to the tail program, and wintail_command,
-    which is the command for the tail program. 
-    An example, which works for the Tail for Win32 package, is
-    wintail_exe = 'C:\Program Files\Tail-4.2.12\Tail.exe'
-    and
-    wintail_command = 'tail OUTPUT'
-    These two variables must be set in psn.conf, or given on the command-line,
-    using the form shown here, including quotation marks.
-EOF
-
-$help_text{-wintail_exe} = <<'EOF';
-    -wintail_exe='string'
-    Only for Windows. See execute -h tail_output for description.
-EOF
-
-$help_text{-wintail_command} = <<'EOF';
-    -wintail_command='string'
-    Only for Windows. See execute -h tail_output for description.
+	The following options are valid:
 EOF
 
 $help_text{-boxcox} = <<'EOF';
-    -boxcox
-    
-    Set to boxcox transform all ETAs before running. Cannot be used
-    on models with multiple $PROBLEMs
+	-boxcox
+
+	Set to boxcox transform all ETAs before running. Cannot be used on models
+	with multiple $PROBLEMs.
+EOF
+
+$help_text{-copy_data} = <<'EOF';
+	-copy_data
+
+	Default set. By default PsN will copy the data file into NM_run1 and set a
+	local path in psn.mod, the actual model file run with NONMEM. Disable with
+	-no-copy_data. If -no-copy_data is set, PsN will not copy the data to NM_run1
+	but instead set a global path to the data file in psn.mod. However, NONMEM
+	will not accept a path longer than 80 characters.
 EOF
 
 $help_text{-etas} = <<'EOF';
-    -etas
-    
-    If available use the phi-file of the previous run as initial estimates
-    for the etas. The phi-file will be used in $ETAS.
+	-etas
+
+	If available, use the phi-file of the previous run as initial estimates for
+	the etas. The phi-file will be used in $ETAS.
 EOF
 
-$help_text{Post_help_message} = <<'EOF';
+$help_text{-model_dir_name} = <<'EOF';
+	-model_dir_name
+
+	Default not set. This option changes the basename of the run directory from
+	modelfit_dir to modelfile.dir. where modelfile is the name of the first model
+	file in the list given as arguments to execute. The directories will be
+	numbered starting from 1, increasing the number each time execute is run with
+	a model file with the same name. If the option directory is used it will
+	override -model_dir_name.
 EOF
 
+$help_text{-predict_data} = <<'EOF';
+	-predict_data='string'
+
+	Only allowed in combination with -predict_model. Create copy of model with new
+	file named predict_model, turn off estimation (MAXEVAL=0 or corresponding),
+	change data file to -predict_data and then run.
+EOF
+
+$help_text{-predict_model} = <<'EOF';
+	-predict_model='string'
+
+	Only allowed in combination with -predict_data. Create copy of model with new
+	file named predict_model, turn off estimation (MAXEVAL=0 or corresponding),
+	change data file to -predict_data and then run.
+EOF
+
+$help_text{-prepend_options_to_lst} = <<'EOF';
+-prepend_options_to_lst
+
+	This option makes PsN prepend the final lst-file (which is copied back to the
+	directory from which execute was called) with the file version_and_option_info.txt
+	which contains run information, including all actual values of optional PsN
+	options. PsN can still parse the lst-file with the options prepended, so the file
+	can still be used it as input to e.g. sumo, vpc or update_inits. Option can be
+	disabled with -no-prepend_options_to_lst if it is set in psn.conf. 
+EOF
+
+$help_text{-reduced_model_ofv} = <<'EOF';
+	-reduced_model_ofv=reference_ofv
+
+	Default not set. When this option is used, the behaviour of the retries
+	functionality of PsN is modified to keep adding retries until either a lower
+	ofv than -reduced_model_ofv is obtained, or until the maximum number of
+	retries (option -retries) is reached.
+EOF
+
+$help_text{-tail_output} = <<'EOF';
+	-tail_output
+
+	This option only works for execute under Windows. tail_output specifies that
+	execute should invoke a program (tail) that displays the output file,
+	including the gradients, during minmization. The tail program is started
+	automatically but it is up to the user to terminate the program.
+
+	For the tail_output option to work, a third party tail program must be
+	installed. Tail programs that are known to work are WinTail and Tail for
+	Win32. The latter is recommended and can be downloaded at
+	http://tailforwin32.sourceforge.net. It is also necessary to have correct
+	settings of the variables wintail_exe, which is the path to the tail program,
+	and wintail_command, which is the command for the tail program. An example,
+	which works for the Tail for Win32 package, is 
+	wintail_exe = 'C:\Program Files\Tail-4.2.12\Tail.exe'
+	and
+	wintail_command = 'tail OUTPUT'
+	These two variables must be set in psn.conf, or given on the command line,
+	using the form shown here, including quotation marks.
+EOF
+
+$help_text{-timestamp} = <<'EOF';
+	-timestamp
+
+	Default not set. This option changes the name of the run directory to
+	<modelfile>-PsN-<date> where <modelfile> is the name of the first model file
+	in the list given as arguments, without the extension, and <date> is the time
+	and date the run was started. Example: directory name run1-PsN-2014-06-12-152502
+	for a run that was started at 15:25:02 June 12th in year 2014. This option is
+	specific to execute. If the option directory is used it will override -timestamp.
+EOF
+
+$help_text{-wintail_command} = <<'EOF';
+	-wintail_command='string'
+
+	Only for Windows. See execute -h tail_output for description.
+EOF
+
+$help_text{-wintail_exe} = <<'EOF';
+	-wintail_exe='string'
+
+	Only for Windows. See execute -h tail_output for description.
+EOF
+
+	$help_text{Post_help_message} = <<'EOF';
+EOF
 
 common_options::online_help('execute', \%options,\%help_text, \%required_options, \%optional_options);
 common_options::setup( \%options, 'execute' ); #calls set_globals etc, initiates random sequence

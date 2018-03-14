@@ -30,6 +30,7 @@ my %optional_options = (
     "error:s"=> undef,
     "keep_covariance!" => undef,
     "nointer!" => undef,
+    "second_order!" => undef,
 );
 
 my $res = GetOptions(
@@ -44,102 +45,106 @@ exit unless $res;
 
 my %help_text;
 $help_text{Pre_help_message} = <<'EOF';
-  Linearization of a model
+	Linearization of a model.
 EOF
 
 $help_text{Description} = <<'EOF';
-    The linearize script is a PsN tool that allows you to automatically create
-	a linearized version of a model and obtain the dataset including individual
-	predictions and derivatives necessary for further estimation of extensions
-	implemented in the linearized model. 
 
-The linearization was developed with the aim to facilitate the development of
-nonlinear mixed effects models by establishing a diagnostic method for evalu-
-ation of stochastic model components. A full description of the methodology
-and it’s performance is presented in 
+	The linearize tool allows you to automatically create a linearized version 
+	of a model and obtain the dataset including individual predictions and
+	derivatives necessary for further estimation of extensions implemented in
+	the linearized model.
+	The linearization was developed with the aim to facilitate the development
+	of nonlinear mixed effects models by establishing a diagnostic method for
+	evaluation of stochastic model components. A full description of the
+	methodology and its performance is presented in "Use of a linearization
+	approximation facilitating stochastic model building", J PKPD (2014) EM
+	Svensson and MO Karlsson.
 
-Use of a linearization approximation facilitating stochastic model building, 
-J PKPD (2014) EM Svensson and MO Karlsson. 
+	The online supplementary material includes a comprehensive code example.
+	The methodology utilizes first order Taylor expansions and substantially
+	shortens run times. Examples of extensions that can be evaluated with the
+	linearized model are addition of inter individual or inter occasion variability
+	parameters, correlation structures and more complex residual error models.
 
-The online supplementary material includes a comprehensive code
-example. The methodology utilizes first order Taylor expansions and sub-
-stantially shortens run times. Examples of extensions that can be evaluated
-with the linearized model are addition of inter individual or inter occasion
-variability parameters, correlation structures and more complex residual er-
-ror models.
-
-Before proceeding with implementation and evaluation of extensions, it
-is important to check that the OFV value of the nonlinear and linearized
-version of the base model agrees (printed in the command window and in
-the linlog.txt file generated in the linearization folder). If the OFV-values
-differ more than a few points, this can depend on the occurrence of local
-minima in the MAP estimation. See further details in linearize_userguide.pdf.
+	Before proceeding with implementation and evaluation of extensions, it is
+	important to check that the OFV value of the nonlinear and linearized version
+	of the base model agrees (printed in the command window and in the linlog.txt
+	file generated in the linearization folder). If the OFV-values differ more
+	than a few points, this can depend on the occurrence of local minima in the
+	MAP estimation. See further information in linerize_userguide.pdf.
 EOF
 
 $help_text{Examples} = <<'EOF';
-linearize run10.mod
+	linearize run10.mod
 EOF
 
 $help_text{Options} = <<'EOF';
-	A model file is required as argument.
+	A model file is required on the command line.
 
-    The following options are valid:
+	The following options are valid, but intended only for research and method
+	exploration. It is recommended not to use them:
 EOF
 
 $help_text{-h} = <<'EOF';
-    -h | -?
+	-h | -?
 
-    With -h or -? linearize will print a list of options and exit.
+	With -h or -? linearize will print a list of options and exit.
 EOF
 
 $help_text{-help} = <<'EOF';
-    -help
+	-help
 
-    With -help linearize will print this, longer, help message.
-EOF
-
-$help_text{-foce} = <<'EOF';
-    -foce
-
-    Set by default. Expand around 
-    conditional ETA estimates instead of around ETA=0.    
-EOF
-
-$help_text{-error} = <<'EOF';
-    -error
-
-    Only relevant if -no-epsilon is set. 
-    Use an approximated linearization of the error model instead of an exact.
-
-    Alternatives are add (for additive), prop (for proportional) or
-    propadd (for proportional plus additive).
-    The error model must be defined in a particular way when this option is used,
-    see the scm userguide for details.
+	With -help linearize will print this, longer, help message.
 EOF
 
 $help_text{-epsilon} = <<'EOF';
-    -epsilon
+-epsilon
 
-    Linearize with respect to epsilons,
-    set by default. Disable with -no-epsilon.
+	Default set. Linearize with respect to epsilons, Disable with -no-epsilon.
+EOF
+
+$help_text{-error} = <<'EOF';
+	-error=add | prop | propadd
+
+	Only relevant if -no-epsilon is set. Use an approximated linearization of
+	the error model instead of an exact. Alternatives are;
+	add	(for additive)
+	prop (for proportional)
+	propadd (for proportional plus additive)
+
+	The error model must be defined in a particular way when this option is used,
+	see the scm user guide for details.
+EOF
+
+$help_text{-foce} = <<'EOF';
+	-foce
+
+	Default set. Expand around conditional ETA estimates instead of around ETA=0.    
 EOF
 
 $help_text{-keep_covariance} = <<'EOF';
-      -keep_covariance
+	-keep_covariance
 
-      By default the $COVARIANCE will be deleted from the bootstrap models, 
-	  to save run time. If option -keep_covariance is set, 
-	  PsN will instead keep $COVARIANCE.
+	The default setting will delete $COVARIANCE from the bootstrap models, to
+	save run time. If option -keep_covariance is set, PsN will instead keep
+	$COVARIANCE.
 EOF
 
 $help_text{-nointer} = <<'EOF';
-      -nointer
+	-nointer
 
-      Don't use interaction. Default is off.
+	Default off. Don't use interaction. 
+EOF
+	
+$help_text{-second_order} = <<'EOF';
+	-second_order
+
+	Default off. Use second order (laplace) approximation. 
 EOF
 
 $help_text{Post_help_message} = <<'EOF';
-    Also see 'psn_options -h' for a description of common options.
+	Also see 'psn_options -h' for a description of common options.
 EOF
 
 common_options::online_help( 'linearize', \%options, \%help_text, \%required_options, \%optional_options);
@@ -148,7 +153,7 @@ common_options::online_help( 'linearize', \%options, \%help_text, \%required_opt
 common_options::setup( \%options, 'linearize' ); 
 
 
-die "linearize only works with NONMEM7" unless ($PsN::nm_major_version == 7);
+die "linearize only works with NONMEM 7" unless ($PsN::nm_major_version == 7);
 
 if ( scalar( @ARGV ) < 1 ) {
    croak("A model file must be specified. Use linearize -help for help");
@@ -172,6 +177,7 @@ my $linearize = tool::linearize->new(
     error => $options{'error'},
     keep_covariance => $options{'keep_covariance'},
     nointer => $options{'nointer'},
+    second_order => $options{'second_order'},
 );
 
 $linearize->run();

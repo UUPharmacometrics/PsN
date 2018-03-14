@@ -670,7 +670,7 @@ EOF
       vpc (any options), cdd (if option -xv) and execute (if option -mirror_plots). 
 	  Undefined by default.
       User-chosen value of NITER in IMP or IMPMAP when estimation is turned off
-      by setting EONLY=1. See PsN_and_NONMEM7.pdf for details.
+      by setting EONLY=1. See PsN.pdf for details.
 EOF
 
     $help_hash{-last_est_complete} = <<'EOF';

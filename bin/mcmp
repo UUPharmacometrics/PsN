@@ -60,34 +60,35 @@ if (defined $options{'simdata'}){
 my %help_text;
 
 $help_text{Pre_help_message} = <<'EOF';
-  Monte-Carlo Mapped Power
+	Monte-Carlo Mapped Power
 EOF
 
 $help_text{Description} = <<'EOF';
-The mcmp program implements the method described in
+	The mcmp tool (Monte-Carlo Mapped Power method described in Rapid sample
+	size calculations for a defined likelihood ratio test-based power in mixed
+	effects models, Camille Vong, Martin Bergstrand, Mats O. Karlsson, PAGE 19
+	(2010) Abstr 1863 [www.page-meeting.org/?abstract=1863])is a tool for power
+	computations.
 
-Rapid sample size calculations for a defined 
-likelihood ratio test-based power in mixed effects models, 
-Camille Vong, Martin Bergstrand, Mats O. Karlsson, 
-PAGE 19 (2010) Abstr 1863 [www.page-meeting.org/?abstract=1863]
+	The method is based on the use of individual Objective Function Values
+	(iOFV) and aims to provide a fast and accurate prediction of the power and
+	sample size relationship.
 
-The method is based on the use of individual Objective Function Values (iOFV) 
-and aims to provide a fast and accurate prediction of the power and sample size 
-relationship.
-
-The principle of the iOFV sampling method is as follows: 
-(i) a large dataset (e.g. 1000 individuals) is simulated with a full model 
-and subsequently the full and reduced models are re-estimated with this data set, 
-(ii) iOFVs are extracted and for each subject the difference in iOFV between 
-the full and reduced models is computed (ΔiOFV), 
-(iii) ΔiOFVs are sampled according to the design for which power is to be 
-calculated and a starting sample size (N), 
-(iv) the ΔiOFVs sum for each sample is calculated (∑ΔiOFVs), 
-(v) steps iii and iv are repeated many times, 
-(vi) the percentage of ∑ΔiOFVs greater than the significance criterion (e.g. 3.84 
-for one degree of freedom and α=0.05) is taken as the power for sample size N, 
-(vii) steps iii-vi are repeated with increasing N to provide the power at all 
-sample sizes of interest. 
+	The principle of the iOFV sampling method is as follows: 
+	(1) a large dataset (e.g. 1000 individuals) is simulated with a full model 
+	and subsequently the full and reduced models are re-estimated with this data
+	set, 
+	(2) iOFVs are extracted from the NONMEM .phi-files and for each subject the
+	difference in iOFV between the full and reduced models is computed (ΔiOFV),
+	(3) ΔiOFVs are sampled according to the design for which power is to be 
+	calculated and a starting sample size (N), 
+	(4) the ΔiOFVs sum for each sample is calculated (∑ΔiOFVs), 
+	(5) steps 3 and 4 are repeated many times, 
+	(6) the percentage of ∑ΔiOFVs greater than the significance criterion (e.g.
+	.84 for one degree of freedom and α=0.05) is taken as the power for sample
+	size N,
+	(7) steps 3-6 are repeated with increasing N to provide the power at all
+	sample sizes of interest.
 EOF
 
 $help_text{Examples} = <<'EOF';
@@ -95,182 +96,181 @@ $help_text{Examples} = <<'EOF';
 EOF
 
 $help_text{Options} = <<'EOF';      
-	Option -full_model or -table_full is required, plus either -reduced_model or -table_reduced.
+	Option -full_model or -table_full is required, plus either -reduced_model or
+	-table_reduced.
 
-      The following options are valid:
+	The following options are valid:
 EOF
 
-$help_text{-h} = <<'EOF';
-      -h | -?
-      
-      With -h or -? mcmp will print a list of options and exit.
-EOF
-      
-$help_text{-help} = <<'EOF';      
-      -help
-      
-      With -help mcmp will print this, longer, help message.
+	$help_text{-h} = <<'EOF';
+	-h | -?
+
+	With -h or -? mcmp will print a list of options and exit.
 EOF
 
-$help_text{-reduced_model} = <<'EOF';
-      -reduced_model=file
+$help_text{-help} = <<'EOF';
+	-help
 
-      The reduced model. Required, unless -table_reduced is used.
-EOF
-
-$help_text{-full_model} = <<'EOF';
-      -full_model=file
-
-      The full model. Required, unless -table_full is used.
-EOF
-
-$help_text{-simulation_model} = <<'EOF';
-      -simulation_model=file
-
-      The filename of the simulation model, optional. Default is the 
-      -full_model filename. If both -table_reduced and -table_full are 
-      specified, then option -simulation_model will be ignored. Cannot be 
-      used with option -simdata.
-EOF
-
-$help_text{-simdata} = <<'EOF';
-      -simdata=file
-
-      Optional. The name of a previously generated file with simulated data. 
-      Cannot be used together with option -simulation_model. If this option 
-      is set, no simulation will be performed by mcmp. Instead the file simdata
-      will be used as the datafile when estimating the full and reduced model.
-EOF
-
-$help_text{-n_bootstrap} = <<'EOF';
-      -n_bootstrap=number
-
-      Optional, default 10000. The number of bootstrapped delta-ofv:s to 
-      generate for each total sample size.
-EOF
-
-$help_text{-start_size} = <<'EOF';
-      -start_size=number
-
-      First total sample size (sum of samples from all strata) to test. 
-      Optional, default is 3*increment
-EOF
-
-$help_text{-max_size} = <<'EOF';
-      -max_size=number
-
-      The largest total sample size to plot for, optional, default equal to 
-      number of individuals in dataset.
-EOF
-
-$help_text{-increment} = <<'EOF';
-      -increment=number
-
-      Optional, default is the number of strata (1 if stratification is not 
-      used). Only consider setting this option if the stratification groups 
-      do not have equal size (the design is not balanced). Option -increment 
-      is the stepsize for the total sample size (sum of samples from all strata)
-      i.e. the distance on the x-axis between the points in a total sample size
-      vs. power plot.
-EOF
-
-$help_text{-df} = <<'EOF';
-      -df=number
-
-      Optional, default 1. The number of degrees of freedom for the chi-square 
-      test. Allowed values are 1-20. PsN will compute the power for 
-	  significance levels 20%, 15%, 10%, 5%, 1% and 0.1% for 
-      the number of degrees of freedom.
-EOF
-
-$help_text{-significance_level} = <<'EOF';
-      -significance_level=number
-
-      Significance level for the chi-square test.
-      Default 5 (%). Permitted values are 20, 15, 10, 5, 1 and 0.1.
+	With -help mcmp will print this, longer, help message.
 EOF
 
 $help_text{-critical_ofv} = <<'EOF';
-      -critical_ofv=number
+	-critical_ofv=number
 
-      Optional, no default. If specified, -critical_ofv will override the 
-      setting of -df. PsN will work with positive values internally 
-      (delta_ofv=reduced-full, check if delta_ofv > critical_ofv), but will 
-      automatically change the sign if the user gives a negative value.
-EOF
-
-$help_text{-target_power} = <<'EOF';
-      -target_power=number
-
-      The highest power for which the program will determine the
-      required sample size. Default 98.
+	Default not set. If specified, -critical_ofv will override the setting of -df. 
+	PsN will work with positive values internally (delta_ofv=reduced-full, check 
+	if delta_ofv > critical_ofv), but will automatically change the sign if the 
+	user gives a negative value.
 EOF
 
 $help_text{-curve} = <<'EOF';
-      -curve
+	-curve
 
-      Default set. Can be disabled with -no-curve. This option controls whether
-      the complete power curve up to the target power should be generated, 
-      or if the program should only compute the sample size required to achieve 
-      the target power.
+	Default set. Can be disabled with -no-curve. This option controls whether
+	the complete power curve up to the target power should be generated, or if
+	the program should only compute the sample size required to achieve the target
+	power.
+EOF
+
+$help_text{-df} = <<'EOF';
+	-df=N
+
+	Default is 1. The number of degrees of freedom for the chi-square test. 
+	Allowed values are 1-20. PsN will compute the power for significance levels 
+	20%, 15%, 10%, 5%, 1% and 0.1% for the number of degrees of freedom.
+EOF
+
+$help_text{-full_model} = <<'EOF';
+	-full_model=full.mod
+
+The filename of the full model is required unless -table_full is used. This must
+	be an estimation model.
+EOF
+
+$help_text{-increment} = <<'EOF';
+	-increment=N
+
+	Default is the number of strata (1 if stratification is not used). Only
+	consider setting this option if the stratification groups do not have equal
+	size (the design is not balanced). Option -increment is the stepsize for the
+	total sample size (sum of samples from all strata) i.e. the distance on the
+	x-axis between the points in a total sample size vs. power plot.
+EOF
+
+$help_text{-max_size} = <<'EOF';
+	-max_size=N
+
+	The largest total sample size to plot for, optional, default equal to the
+	number of individuals in dataset.
+EOF
+
+$help_text{-n_bootstrap} = <<'EOF';
+	-n_bootstrap=N
+
+	Default is 10000. The number of bootstrapped delta-ofv:s to generate for each 
+	total sample size.
+EOF
+
+$help_text{-reduced_model} = <<'EOF';
+	-reduced_model=red.mod
+
+	The name of the reduced model is required unless -table_reduced is used. This
+	must be an estimation model.
+EOF
+
+$help_text{-significance_level} = <<'EOF';
+	-significance_level=number
+
+	Default is 5 (%). Permitted values are 20, 15, 10, 5, 1 and 0.1. Convergence
+	check will be based on critical ofv for this significance level.
+EOF
+
+$help_text{-simdata} = <<'EOF';
+	-simdata=file
+
+	The name of a previously generated file with simulated data. Cannot be used
+	together with option -simulation_model. If this option is set, no simulation
+	will be performed by mcmp. Instead the file simdata will be used as the
+	datafile when estimating the full and reduced model.
+EOF
+
+$help_text{-simulation_model} = <<'EOF';
+	-simulation_model=sim.mod
+
+	Default filename of the simulation model is the -full_model filename. PsN
+	will modify this model, removing $EST and adding $SIM, if it is not already
+	a simulation model. If both -table_reduced and -table_full are specified,
+	then option -simulation_model will be ignored. Cannot be used with option
+	-simdata.
+EOF
+
+$help_text{-start_size} = <<'EOF';
+	-start_size=N
+
+	Default is 3*increment. First total sample size (sum of samples from all
+	strata) to test.
 EOF
 
 $help_text{-stratify_on} = <<'EOF';
-      -stratify_on=VARIABLE
+	-stratify_on=VARIABLE
 
-      The name of the variable to stratify on, optional. Must be all uppercase 
-      and (unless NM7) at most 4 characters. Unless -table_strata is specified,
-      the variable must be possible to request in $TABLE, i.e. either present 
-      in $INPUT or defined in $PK/$PRED/$ERROR. PsN does not check that the 
-      variable is defined. If -reduced_model is specified then PsN will set 
-      $TABLE there, otherwise $TABLE will be set in the full model. The 
-      stratification table will not be generated from the simulation model. 
-      PsN will set $TABLE ID <stratify_on> FIRSTONLY NOAPPEND NOPRINT 
-      ONEHEADER FILE=strata.tab
+	The name of the variable to stratify on. Must be all uppercase and (unless
+	NONMEM 7) at most 4 characters. Unless -table_strata is specified, the
+	variable must be possible to request in $TABLE, i.e. either present in
+	$INPUT or defined in $PK/$PRED/$ERROR. PsN does not check that the variable
+	is defined. If -reduced_model is specified then PsN will set $TABLE there,
+	otherwise $TABLE will be set in the full model. The stratification table
+	will not be generated from the simulation model. PsN will set $TABLE ID
+	<stratify_on> FIRSTONLY NOAPPEND NOPRINT ONEHEADER FILE=strata.tab
 EOF
 
 $help_text{-table_full} = <<'EOF';
-      -table_full=file
+	-table_full=file
 
-      Optional. The name of the table containing iofv for the full model. 
-      If this option is used, PsN will skip the estimation of the full model 
-      and read the table directly instead. For this option, iotab tables 
-      generated using PsN with option -iofv and NONMEM6 will work, as well 
-      as .phi-files generated with NONMEM7. Files generated in other ways 
-      must follow the following rules: There must be exactly one row per 
-      individual, all other lines (headers) must start with a non-number, 
-      the columns must be space or tab separated, and iofv must come in the 
-      last column.
+	The name of the table containing iofv for the full model. If this option is
+	set, PsN will skip the estimation of the full model and read the table
+	directly instead. For this option, iotab tables generated using PsN with
+	option -iofv and NONMEM 6 will work, as well as .phi-files generated with
+	NONMEM 7. Files generated in other ways must follow the following rules:
+	There must be exactly one row per individual, all other lines (headers) must
+	start with a non-number, the columns must be space or tab separated, and
+	iofv must come in the last column.
 EOF
 
 $help_text{-table_reduced} = <<'EOF';
-      -table_reduced=file
+	-table_reduced=file
 
-      Optional. The name of the table containing iofv for the reduced model. 
-      If this option is used, PsN will skip the estimation of the reduced 
-      model and read the table directly instead. The file must have the format 
-      defined in the -table_full help text.
+	The name of the table containing iofv for the reduced model. If this option
+	is set, PsN will skip the estimation of the reduced model and read the table
+	directly instead. The file must have the format defined in the -table_full
+	help text.
 EOF
+
 $help_text{-table_strata} = <<'EOF';
-      -table_strata=file
+	-table_strata=file
 
-      Optional unless both -table_full and -table_reduced is used and 
-      stratify_on is set, then required. Table with stratification column. 
-      Must have only one row per individual, i.e. for example generated in 
-      NONMEM with FIRSTONLY (see option -stratify_on), must have ID as the first column
-	  and the stratification variable as the second column, and must have a header 
-      with ID and stratification variable name. Option -table_strata may be 
-      used even if neither of -table_full or -table_reduced are used, then the 
-      stratification column in -table_strata will be used instead of a table 
-      generated from the estimation of the full or reduced model.
+	Optional unless both -table_full and -table_reduced are set and stratify_on
+	is set, then required. Table with stratification column. Must have only one
+	row per individual, i.e. for example generated in NONMEM with FIRSTONLY
+	(see option -stratify_on), must have ID as the first column and the
+	stratification variable as the second column, and must have a header with
+	ID and stratification variable name. Option -table_strata may be used even
+	if neither of -table_full or -table_reduced are used, then the stratification
+	column in -table_strata will be used instead of a table generated from the
+	estimation of the full or reduced model.
 EOF
 
+$help_text{-target_power} = <<'EOF';
+	-target_power=number
 
-
+	Default is 98. If the whole power curve is generated (option -curve is set),
+	the computations will stop when the computed power exceeds the target power
+	3 times in a row, even if max_size is not reached. If option curve is not set,
+	then the program determines the sample size only for the target power.
+EOF
 
 $help_text{Post_help_message} = <<'EOF';
-
-    Also see 'psn_options -h' for a description of PsN common options.
+	Also see 'psn_options -h' for a description of PsN common options.
 EOF
 
 common_options::online_help( 'mcmp', \%options, \%help_text, \%required_options, \%optional_options);

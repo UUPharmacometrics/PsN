@@ -1,1 +1,1 @@
-../../../bin/frem -covar=WT,DGRP -categorical=DGRP -no-check mox_frem.mod -no-run_sir -mceta=50
+/home/rikard/PsN4/bin/frem -covar=WT,DGRP -categorical=DGRP -no-check mox_frem.mod -no-run_sir -mceta=50 -dir=postfrem/frem_covstep -clean=3

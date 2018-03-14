@@ -5,6 +5,10 @@ input.data <- function(ebe.npde.file,eta.names,show.warning) {
 
   # read in data
   ebenpde_tmp_input <- read.csv(ebe.npde.file) # load csv file
+  
+  if(missing(eta.names)) {
+    eta.names <- colnames(ebenpde_tmp_input)[grep("^ETA.\\d+.$",colnames(ebenpde_tmp_input))]
+  }
   # check if there are some individuals where all Eta values are NA (delete them)
   n_eta <-length(eta.names)
   ebenpde_tmp_input_etas <- as.data.frame(ebenpde_tmp_input[,eta.names])
@@ -25,11 +29,11 @@ input.data <- function(ebe.npde.file,eta.names,show.warning) {
         }
       }
       if(show.warning){
-        message(paste0("WARNING! Removed individuals from csv file \"",ebe.npde.file,"\". No data for ID numbers ",ID_deleted_text,"."))
+        message(paste0("WARNING! No data for ID numbers ",ID_deleted_text,"in the csv file \"",ebe.npde.file,"\"."))
       }
     } else {
       if(show.warning) {
-        message(paste0("WARNING! Removed individual from csv file \"",ebe.npde.file,"\". No data for ID number ",ID_deleted,"."))
+        message(paste0("WARNING! No data for ID number ",ID_deleted,"in the csv file \"",ebe.npde.file,"\"."))
       }
     }
     ebenpde_tmp <- ebenpde_tmp_input[-row_delete,]
@@ -56,6 +60,7 @@ input.data <- function(ebe.npde.file,eta.names,show.warning) {
               ebenpde_tmp=ebenpde_tmp,
               n.subjects=n.subjects,
               ebenpde_obs=ebenpde_obs,
-              ID_deleted=ID_deleted)
+              ID_deleted=ID_deleted,
+              eta.names=eta.names)
   return(out)
 }

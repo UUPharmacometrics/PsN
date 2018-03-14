@@ -10,6 +10,7 @@ use MooseX::Params::Validate;
 use utils::file;
 use array qw(numerical_in max unique);
 use data;
+use Storable;
 
 sub add_tv
 {
@@ -56,21 +57,15 @@ sub add_tv
     $model->set_code(record => $code_record, code => \@newcode);
 }
 
-sub add_iov
+sub unique_occs
 {
-    # FIXME: Add initial value is 10% of corresponding IIV omega.
-    # Add IOV on each listed parameter
-    # Return 0 if ok and something was added. 1 if no occ column found
-	my %parm = validated_hash(\@_,
+    # Get a list of all unique occasions
+    my %parm = validated_hash(\@_,
         model => { isa => 'model' },
         occ => { isa => 'Str', default => 'OCC' },
-        parameters => { isa => 'ArrayRef[Str]' },
     );
     my $model = $parm{'model'};
     my $occ = $parm{'occ'};
-    my $parameters = $parm{'parameters'};
-
-    my $netas = $model->nomegas->[0];
 
     my $data = data->new(
         filename => $model->problems->[0]->datas->[0]->get_absolute_filename(),
@@ -80,9 +75,32 @@ sub add_iov
 
     my $occ_column = $data->column_to_array(column => $occ);
     if (scalar(@$occ_column) == 0) {
-        return 1;
+        return;
     }
     my $unique_occs = array::unique($occ_column);
+
+    return $unique_occs;
+}
+
+sub add_iov
+{
+    # FIXME: Add initial value is 10% of corresponding IIV omega.
+    # Add IOV on each listed parameter
+    # If no parameters listed add iov on all iiv etas
+    # Return 0 if ok and something was added. 1 if no occ column found
+	my %parm = validated_hash(\@_,
+        model => { isa => 'model' },
+        occ => { isa => 'Str', default => 'OCC' },
+        parameters => { isa => 'ArrayRef[Str]', optional => 1 },
+    );
+    my $model = $parm{'model'};
+    my $occ = $parm{'occ'};
+    my $parameters = $parm{'parameters'};
+
+    my $netas = $model->nomegas->[0];
+
+    my $unique_occs = unique_occs(model => $model, occ => $occ);
+    return 1 if (not defined $unique_occs);
 
   	my @model_code;
 	my $code_record;
@@ -96,38 +114,224 @@ sub add_iov
         croak("Neither PK nor PRED defined in " . $model->filename . "\n");
     }
 
-    my %relation;       # parameter->eta no
-    for my $p (@$parameters) {
-        for my $line (@model_code) {
-            if ($line =~ /^(\s*$p\s*=.*)(ETA\((\d+)\))(.*)/) {
-                $line = $1 . '(' . $2 . " + IOV_$p)" . $4;
-                $relation{$p} = $3;
+    if (defined $parameters) {
+        my %relation;       # parameter->eta no
+        for my $p (@$parameters) {
+            for my $line (@model_code) {
+                if ($line =~ /^(\s*$p\s*=.*)(ETA\((\d+)\))(.*)/) {
+                    $line = $1 . '(' . $2 . " + IOV_$p)" . $4;
+                    $relation{$p} = $3;
+                }
             }
         }
-    }
-    $model->set_code(record => $code_record, code => \@model_code);
+        $model->set_code(record => $code_record, code => \@model_code);
 
-    if (scalar(keys %relation) == 0) {
-        return 2;
-    }
+        if (scalar(keys %relation) == 0) {
+            return 2;
+        }
 
-    my @pre_code;
-    my $current_eta = $netas;
-    for (my $i = 0; $i < scalar(@$parameters); $i++) {
-        if (exists $relation{$parameters->[$i]}) {
-            push @pre_code, "IOV_" . $parameters->[$i] . " = 0";
-            for my $unique_occ (@$unique_occs) {
+        my @pre_code;
+        my $current_eta = $netas;
+        for (my $i = 0; $i < scalar(@$parameters); $i++) {
+            if (exists $relation{$parameters->[$i]}) {
+                push @pre_code, "IOV_" . $parameters->[$i] . " = 0";
+                for my $unique_occ (@$unique_occs) {
+                    $current_eta++;
+                    push @pre_code, "IF ($occ.EQ.$unique_occ) IOV_" . $parameters->[$i] . " = ETA($current_eta)";
+                }
+                my $init = $model->initial_values(parameter_type => 'omega', parameter_numbers => [[ $relation{$parameters->[$i]} ]]);
+                $model->add_records(type => 'omega', record_strings => [ '$OMEGA BLOCK(1) ' . $init->[0]->[0] * 0.1]); 
+                for (my $i = 0; $i < scalar(@$unique_occs) - 1; $i++) {
+                    $model->add_records(type => 'omega', record_strings => [ "\$OMEGA BLOCK(1) SAME" ]); 
+                }
+            }
+        }
+
+        prepend_code(model => $model, code => \@pre_code);
+    } else {
+        diagonal_to_block(model => $model);
+        my $records = find_omega_records(model => $model, type => 'iiv');
+        my $etas = find_etas(model => $model, type => 'iiv');
+        _rename_etas(model => $model, etas => $etas, prefix => 'ETAI');
+        my @pre_code;
+        my $current_eta = $netas + 1;
+        my $current_iov = 1;
+        for my $record (@$records) {
+            my $size = $record->get_size();
+            for (my $i = 0; $i < $size; $i++) {
+                push @pre_code, "IOV_$current_iov = 0";
+                my $current_iov_eta = $current_eta;
+                for my $unique_occ (@$unique_occs) {
+                    push @pre_code, "IF ($occ.EQ.$unique_occ) IOV_$current_iov = ETA($current_iov_eta)";
+                    $current_iov_eta += $size;
+                }
                 $current_eta++;
-                push @pre_code, "IF ($occ.EQ.$unique_occ) IOV_" . $parameters->[$i] . " = ETA($current_eta)";
+                $current_iov++;
             }
-            my $init = $model->initial_values(parameter_type => 'omega', parameter_numbers => [[ $relation{$parameters->[$i]} ]]);
-            $model->add_records(type => 'omega', record_strings => [ '$OMEGA ' . $init->[0]->[0] * 0.1]); 
+            my $record_clone = Storable::dclone($record);
+            for my $option (@{$record_clone->options}) {
+                $option->init($option->init * 0.1);
+            }
+            $model->add_records(type => 'omega', record_strings => $record_clone->_format_record());
+            for (my $i = 0; $i < scalar(@$unique_occs) - 1; $i++) {
+                $model->add_records(type => 'omega', record_strings => [ "\$OMEGA BLOCK($size) SAME" ]); 
+                $current_eta += $size;  # Pass BLOCK SAME
+            }
         }
-    }
 
-    prepend_code(model => $model, code => \@pre_code);
+        for (my $i = 0; $i < scalar(@$etas); $i++) {
+            push @pre_code, 'ETAI' . $etas->[$i] . ' = ETA(' . $etas->[$i] . ')' . ' + IOV_' . ($i + 1);
+        }
+        prepend_code(model => $model, code => \@pre_code);
+    }
 
     return 0;
+}
+
+sub marge_two_hashes 
+{
+	#marge two hashes and replace undef values with values from other hash if they are not undef
+	my %parm = validated_hash(\@_,
+        hash_1 => { isa => 'HashRef' },
+        hash_2 => { isa => 'HashRef' },
+    );
+	my $hash_1 = $parm{'hash_1'};
+	my $hash_2 = $parm{'hash_2'};
+	
+	my %hash_1 = %{$hash_1};
+	my %hash_2 = %{$hash_2};
+	my %new_hash = %hash_1;
+	foreach my $keys_2 ( keys %hash_2) {
+		if(exists $hash_1{$keys_2}) {
+			if (not(defined $hash_1{$keys_2}) && defined $hash_2{$keys_2}) {
+				$new_hash{$keys_2} = $hash_2{$keys_2};
+			}
+		} else {
+			$new_hash{$keys_2} = $hash_2{$keys_2};
+		}			
+	}
+	return(\%new_hash);
+}
+
+sub add_etas_to_parameters
+{
+    # Add etas to the parameters listed
+    # Returns a hash of what was added
+	my %parm = validated_hash(\@_,
+        model => { isa => 'model' },
+        parameters => { isa => 'ArrayRef[Str]' },
+    );
+    my $model = $parm{'model'};
+    my $parameters = $parm{'parameters'};
+
+  	my $model_code;
+	my $added_etas;
+	if ($model->has_code(record => 'pk')) {
+        my($model_code,$added_etas1) = add_etas_in_model_record(model => $model, parameters => $parameters, code_record => 'pk');
+		$model->set_code(record => 'pk', code => $model_code);
+		$added_etas = $added_etas1;
+    } elsif ($model->has_code(record => 'pred')) {
+        my($model_code,$added_etas1) = add_etas_in_model_record(model => $model, parameters => $parameters, code_record => 'pred');
+		$model->set_code(record => 'pred', code => $model_code);
+		$added_etas = $added_etas1;
+    } else {
+        croak("Neither PK nor PRED defined in " . $model->filename . "\n");
+    }
+	if ($model->has_code(record => 'error')) {
+		
+        my($model_code,$added_etas2) = add_etas_in_model_record(model => $model, parameters => $parameters, code_record => 'error');
+		$model->set_code(record => 'error', code => $model_code);
+		$added_etas = marge_two_hashes(hash_1 => $added_etas, hash_2 => $added_etas2);
+    }
+	return($added_etas);
+}
+
+sub add_etas_in_model_record
+{
+    # Add etas to the parameters listed in specific record
+    # Returns a hash of what was added, and model code
+	my %parm = validated_hash(\@_,
+        model => { isa => 'model' },
+        parameters => { isa => 'ArrayRef[Str]' },
+		code_record => {isa => 'Str'},
+    );
+    my $model = $parm{'model'};
+    my $parameters = $parm{'parameters'};
+	my $code_record = $parm{'code_record'};
+
+    my @model_code = @{$model->get_code(record => $code_record)};
+
+    my %done;   # List what etas where added to which paramete to which parameter (par->etano|undef)
+    my $next_eta = $model->nomegas->[0] + 1;
+    for my $p (@$parameters) {
+        my $i;
+        my $found_definition = 0;
+        for ($i = 0; $i < scalar(@model_code); $i++) {
+            if ($model_code[$i] =~ /^\s*$p\s*=/) {
+                $found_definition = 1;
+                last;
+            }
+        }
+        if ($found_definition) {
+            my $lhs_line_no;
+            for (my $j = $i + 1; $j < scalar(@model_code); $j++) {
+                if ($model_code[$j] =~ /=.*\b$p\b/) {
+                    $lhs_line_no = $j;
+                }
+            }
+            my $code_line = "$p = $p * EXP(ETA($next_eta))";
+            if (defined $lhs_line_no) {
+                splice @model_code, $lhs_line_no, 0, $code_line;
+            } else {
+                push @model_code, $code_line;
+            }
+            $model->add_records(type => 'omega', record_strings => [ '$OMEGA 0.0001']); 
+            $done{$p} = $next_eta;
+            $next_eta++;
+        } else {
+            $done{$p} = undef;
+        }
+    }
+    return (\@model_code,\%done);
+}
+
+sub diagonal_to_block
+{
+    # Convert all diagonal omegas into BLOCK(1)
+	my %parm = validated_hash(\@_,
+        model => { isa => 'model' },
+    );
+    my $model = $parm{'model'};
+
+    my $omegas = $model->problems->[0]->omegas;
+    my @records;
+    for my $omega (@$omegas) {
+        if ($omega->is_block()) {
+			push @records, $omega;
+        } else {
+			my $i = 0;
+            for my $option (@{$omega->options}) {
+                my $new_record = model::problem::omega->new(
+                    corr => $omega->corr,
+                    size => 1,
+                    prior => $omega->prior,
+                    sd => $omega->sd,
+                    chol => $omega->chol,
+                    fix => $option->fix,
+                    same => 0,
+                    comment => [],
+                    type => 'BLOCK',
+                    n_previous_rows => $omega->n_previous_rows + $i,
+                    print_order => $omega->print_order,
+                    options => [ $option ],
+                );
+                $i++;
+                push @records, $new_record;
+            }   
+        }
+    }
+
+    $model->problems->[0]->omegas(\@records);
 }
 
 sub full_omega_block
@@ -245,6 +449,28 @@ sub _rename_etas
 	}
 }
 
+sub rename_symbol
+{
+    my %parm = validated_hash(\@_,
+        model => { isa => 'model' },
+        from => { isa => 'Str' },
+        to => { isa => 'Str' },
+    );
+    my $model = $parm{'model'};
+    my $from = $parm{'from'};
+    my $to = $parm{'to'};
+
+    for my $record (('pk', 'pred', 'error', 'des', 'aes', 'aesinitial', 'mix', 'infn')) {
+        if ($model->has_code(record => $record)) {  
+            my $code = $model->get_code(record => $record);
+            for (my $i = 0; $i < scalar(@$code); $i++) {
+                $code->[$i] =~ s/\b$from\b/$to/g;
+            }
+            $model->set_code(record => $record, code => $code);
+        }
+    }
+}
+
 sub prepend_code
 {
     # Add code to beginning of $PRED or $PK, or to specific record
@@ -275,6 +501,48 @@ sub prepend_code
     }
 
 	@model_code = (@$code, @model_code); 
+
+    $model->set_code(record => $code_record, code => \@model_code);
+}
+
+sub append_code
+{
+    # Add code to the end of $PRED or $PK, or to specific record
+    my %parm = validated_hash(\@_,
+        model => { isa => 'model' },
+        code => { isa => 'ArrayRef' },
+        record => { isa => 'Str', optional => 1 },
+    );
+    my $model = $parm{'model'};
+	my $code = $parm{'code'};
+    my $record = $parm{'record'};
+
+	my @model_code;
+	my $code_record;
+    if (not defined $record) {
+        if ($model->has_code(record => 'pk')) {
+            @model_code = @{$model->get_code(record => 'pk')};
+            $code_record = 'pk';
+        } elsif ($model->has_code(record => 'pred')) {
+            @model_code = @{$model->get_code(record => 'pred')};
+            $code_record = 'pred';
+        } else {
+            croak("Neither PK nor PRED defined in " . $model->filename . "\n");
+        }
+    } else {
+        my $precord = $record . 's';
+        my $record_array = $model->problems->[0]->$precord;
+        if (defined $record_array and scalar @{$record_array} > 0) {
+            @model_code = @{$model->get_code(record => $record)};
+        } else {
+            $model->add_records(type => $record, record_strings => []); 
+        }
+
+        @model_code = @{$model->get_code(record => $record)};
+        $code_record = $record;
+    }
+
+	@model_code = (@model_code, @$code); 
 
     $model->set_code(record => $code_record, code => \@model_code);
 }
@@ -347,6 +615,47 @@ sub boxcox_etas
         push @code, "ETAB$i = (EXP(ETA($i))**THETA($next_theta) - 1) / (THETA($next_theta))";
         $next_theta++;
         $model->add_records(type => 'theta', record_strings => [ '$THETA (-3, 0.01, 3)']); 
+    }
+
+    prepend_code(model => $model, code => \@code);
+}
+
+sub uniform_etas
+{
+    # Change all or some ETAs to a uniform distribution
+
+	my %parm = validated_hash(\@_,
+        model => { isa => 'model' },
+        etas => { isa => 'ArrayRef', optional => 1 },       # An array of the etas to transform or unspecified for all etas
+    );
+    my $model = $parm{'model'};
+	my $etas = $parm{'etas'};
+
+    if (not defined $etas) {
+        my $netas = $model->nomegas->[0];
+        $etas = [1 .. $netas];
+    }
+    my $nthetas = $model->nthetas;
+
+    _rename_etas(model => $model, etas => $etas, prefix => 'ETAU');
+
+    my $omega_options = omega_options_from_etas(model => $model, etas => $etas);
+    my @inits;
+    for my $option (@$omega_options) {
+        push @inits, $option->init;
+        $option->init(0.29 * 0.29);
+        $option->fix(1);
+    }
+
+    my $next_theta = $nthetas + 1;
+    my @code;
+    my $index = 0;
+    for my $i (@$etas) {
+        push @code, "ETAU$i = (PHI(ETA($i)) - 0.5) * THETA($next_theta)";
+        $next_theta++;
+        my $init = $inits[$index] / 0.29;
+        $model->add_records(type => 'theta', record_strings => [ "\$THETA $init"]); 
+        $index++;
     }
 
     prepend_code(model => $model, code => \@code);
@@ -456,6 +765,115 @@ sub find_omega_records
     }
 
     return \@found;
+}
+
+sub add_missing_etas
+{
+    # Add dummy ETAs for omegas that does not have ETAs in code
+   	my %parm = validated_hash(\@_,
+        model => { isa => 'model' },
+    );
+    my $model = $parm{'model'};
+
+    my $code_etas = list_etas_used_in_code(model => $model);
+    my $nomegas = $model->problems->[0]->nomegas;
+    my @missing_etas;
+
+    for (my $i = 1; $i <= $nomegas; $i++) {
+        if (not $code_etas->{$i}) {
+            push @missing_etas, $i;
+        }
+    }
+
+    add_dummy_etas(model => $model, etas => \@missing_etas);
+}
+
+sub add_dummy_etas
+{
+    # Adds dummy variables using listed etas
+   	my %parm = validated_hash(\@_,
+        model => { isa => 'model' },
+        etas => { isa => 'ArrayRef' },
+    );
+    my $model = $parm{'model'};
+    my $etas = $parm{'etas'};
+
+    my @code;
+
+    for my $eta (@$etas) {
+        push @code, "DMYETA_$eta = ETA($eta)";
+    }
+
+    prepend_code(model => $model, code => \@code);
+}
+
+sub list_etas_used_in_code
+{
+    # Finds all etas used in any code block and puts into a hash
+	my %parm = validated_hash(\@_,
+        model => { isa => 'model' },
+    );
+    my $model = $parm{'model'};
+
+    my %etas;
+    for my $record (('pk', 'pred', 'error', 'des', 'aes', 'aesinitial', 'mix', 'infn')) {
+        if ($model->has_code(record => $record)) {
+            my $code = $model->get_code(record => $record);
+            for my $line (@$code) {
+                while ($line =~ /\bETA\((\d+)\)/g) {
+                    $etas{$1} = 1;
+                }
+            }
+        }
+    }
+
+    return \%etas;
+}
+
+sub find_etas
+{
+	my %parm = validated_hash(\@_,
+        model => { isa => 'model' },
+        type => { isa => 'Str' },     # Set to either 'iov' or 'iiv'
+    );
+    my $model = $parm{'model'};
+    my $type = $parm{'type'};
+
+    my $omega_records = find_omega_records(model => $model, type => $type);
+
+    my @etas;
+    for my $record (@$omega_records) {
+        for (my $i = 0; $i < $record->get_size(); $i++) {
+            push @etas, $record->n_previous_rows + 1 + $i;
+        }
+    }
+
+    return \@etas;
+}
+
+sub find_iov_structure
+{
+    # Generate an array of arrays over which iov etas are connected to each occasion
+    my %parm = validated_hash(\@_,
+        model => { isa => 'model' },
+    );
+    my $model = $parm{'model'};
+
+    my $iov_records = find_omega_records(model => $model, type => 'iov');
+    my @structure;
+
+    my $i = 0;
+    for my $record (@$iov_records) {
+        if ($record->same) {
+            $i++; 
+        } else {
+            $i = 0;
+        }
+        $structure[$i] = [] if (not defined $structure[$i]);
+        push @{$structure[$i]}, $record->n_previous_rows + 1 .. $record->n_previous_rows + $record->get_size();
+    }
+
+    return \@structure;
 }
 
 sub find_zero_fix_omegas
@@ -684,12 +1102,8 @@ sub _number_of_etas
 
     my $num_etas = 0;
     for my $omega (@all_omegas) {
-        my $record_size;
-        if (defined $omega->size) {
-            $record_size = $omega->size;
-        } else {
-            $record_size = scalar(@{$omega->options});
-        }
+        my $record_size = $omega->get_size();
+
         $num_etas += $record_size;
     }
     return $num_etas;
@@ -711,12 +1125,7 @@ sub _etas_from_omega_records
     my $current_eta = 1;
     my $remove_index = 0;
     for my $record (@all_omegas) {
-        my $record_size;
-        if (defined $record->size) {
-            $record_size = $record->size;
-        } else {
-            $record_size = scalar(@{$record->options});
-        }
+        my $record_size = $record->get_size();
         for my $remove_record (@$omegas) {
             if ($remove_record == $record) {
                 push @etas, $current_eta .. $current_eta + $record_size - 1;
@@ -726,6 +1135,34 @@ sub _etas_from_omega_records
     }
 
     return \@etas;
+}
+
+sub omega_options_from_etas
+{
+    # Return a list of omega options from a list of eta/omega numbers
+    my %parm = validated_hash(\@_,
+        model => { isa => 'model' },
+        etas => { isa => 'ArrayRef[Int]' },
+    );
+    my $model = $parm{'model'};
+    my $etas = $parm{'etas'};
+
+    my @omegas;
+    my $current_eta = 1;
+    for my $record (@{$model->problems->[0]->omegas}) {
+        if (defined $record->options) {
+            for my $option (@{$record->options}) {
+                if (numerical_in($current_eta, $etas)) {
+                    push @omegas, $option;
+                }
+                $current_eta++;
+            }
+        } else {
+            $current_eta += $record->get_size();
+        }
+    }
+
+    return \@omegas;
 }
 
 sub omit_ids

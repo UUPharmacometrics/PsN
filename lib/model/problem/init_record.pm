@@ -29,6 +29,20 @@ sub is_block
 		return 0;
 	}
 }
+
+sub get_size
+{
+    my $self = shift;
+	
+	my $size;
+	if ($self->is_block()){
+		$size = $self->size;
+	}else{
+		$size = scalar(@{$self->options});
+	}
+	return $size
+}
+
 sub get_estimated_coordinate_strings
 {
     my $self = shift;
@@ -309,7 +323,6 @@ sub _read_options
 	my ( $any_fixed, $any_sd, $any_corr, $block_sd, $block_corr, $block_fixed, $any_chol, $block_chol ) = ( 0, 0, 0, 0, 0, 0, 0, 0 );
 	my @class_names = split('::',ref($self));
 	my $parameter = uc(pop(@class_names));
-
 	if (defined $self->record_arr) {
 		for (@{$self->record_arr}) {
 			my $whole_row = $_;

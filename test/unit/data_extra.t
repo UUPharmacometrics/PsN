@@ -31,7 +31,7 @@ cp($includes::testfiledir.'/frem_filtered_nomdv.dta',$tempdir);
 
 
 my $filtered_data_nomdv = data->new(filename => $tempdir.'frem_filtered_nomdv.dta',
-							  ignoresign => '@', 
+							  ignoresign => '@',
 							  idcolumn => 1,
 							  missing_data_token => -99);
 
@@ -52,11 +52,11 @@ is_deeply($resultref->{'invariant_median'},[70.5],'frem median WT');
 cmp_float_array($resultref->{'invariant_mean'},[6.95833333e+01],'frem mean WT');
 
 cmp_float($resultref->{'invariant_covmatrix'}->[0]->[0],90.308787878788,'frem inv covmatrix nomdv 1,1');
-is_deeply($resultref->{'have_missing_covariates'},[0],'frem missing covariates nomdv');
+is_deeply($resultref->{'has_missingness'},[0],'frem missing covariates nomdv');
 
 
 my $filtered_data = data->new(filename => $tempdir.'frem_filtered_data.dta',
-							  ignoresign => '@', 
+							  ignoresign => '@',
 							  idcolumn => 1,
 							  missing_data_token => -99);
 
@@ -86,10 +86,10 @@ cmp_float($resultref->{'invariant_covmatrix'}->[1]->[0],-0.013698630136986,'frem
 cmp_float($resultref->{'invariant_covmatrix'}->[1]->[1],0.657534246575342,'frem inv covmatrix 2,2');
 is($resultref->{'timevar_median'}->[0],77.5,'frem median WT');
 cmp_float($resultref->{'timevar_covmatrix'}->[0]->[0],241.6312939651981,'frem var covmatrix 1,1');
-is_deeply($resultref->{'have_missing_covariates'},[0,0],'frem missing covariates 1');
+is_deeply($resultref->{'has_missingness'},[0,0],'frem missing covariates 1');
 
 $filtered_data->missing_data_token(9);
-	
+
 $resultref = data::frem_compute_covariate_properties(filtered_data => $filtered_data,
 													 invariant_covariates => ['SEX','DGRP'],
 													 directory => $filtered_data->directory,
@@ -99,7 +99,7 @@ $resultref = data::frem_compute_covariate_properties(filtered_data => $filtered_
 													 dv_index => 30,
 													 type_index => 33,
 													 N_parameter_blocks => 1,
-													 cov_indices => [12,3], #SEX DGRP 
+													 cov_indices => [12,3], #SEX DGRP
 													 is_log => [0,0]);
 
 
@@ -107,7 +107,7 @@ is_deeply($resultref->{'invariant_median'},[1,8],'frem median SEX, DGRP');
 cmp_float_array($resultref->{'invariant_mean'},[1.20270270,7.52],'frem median SEX, DGRP');
 
 cmp_float($resultref->{'invariant_covmatrix'}->[0]->[0],0.163828211773417,'frem inv covmatrix 1,1');
-is_deeply($resultref->{'have_missing_covariates'},[0,1],'frem missing covariates 2');
+is_deeply($resultref->{'has_missingness'},[0,1],'frem missing covariates 2');
 
 
 remove_test_dir($tempdir);
@@ -116,7 +116,7 @@ remove_test_dir($tempdir);
 #require model directory as input to new
 
 
-my $model = model->new(filename => $includes::testfiledir.'/pheno.mod'); 
+my $model = model->new(filename => $includes::testfiledir.'/pheno.mod');
 my ($dir,$file)=OSspecific::absolute_path($includes::testfiledir,'pheno.dta');
 is($model->datafiles(absolute_path => 1)->[0],$dir.$file,' datafilename abspath');
 is($model->datafiles(absolute_path => 0)->[0],'pheno.dta',' datafilename bare');
@@ -128,7 +128,7 @@ is($datarec ->get_directory,$dir,'data record dir double quotes space');
 is($datarec ->get_filename,'file.csv','data record filename double quotes space');
 
 my $dirsep='/';
-if( $dir =~ /\\$/ ){ 
+if( $dir =~ /\\$/ ){
 	#windows
 	$dirsep="\\";
 }
@@ -274,7 +274,7 @@ my @idcolnum = (2,1,3,1,2);
 for( my $i=0; $i<scalar(@inputs); $i++){
 	my $dummy_prob = model::problem->new(ignore_missing_files=> 1,
 										 prob_arr       => ['$PROB',$inputs[$i],'$DATA dummy.txt']);
-	
+
 	my $model = model->new(filename => 'dummy',
 						   problems => [$dummy_prob],
 						   ignore_missing_files => 1);
@@ -292,7 +292,7 @@ dies_ok {$model->idcolumn(problem_number=>1)} "PAT=ID in \$INPUT";
 for( my $i=0; $i<scalar(@inputs); $i++){
 	my $dummy_prob = model::problem->new(ignore_missing_files=> 1,
 										 prob_arr       => ['$PROB',$inputs[$i],'$DATA dummy.txt']);
-	
+
 	my $model = model->new(filename => 'dummy',
 						   problems => [$dummy_prob],
 						   ignore_missing_files => 1);
@@ -335,8 +335,8 @@ my $problem;
 
 
 foreach my $test_hash (@datafiletests) {
-	$problem = model::problem->new(ignore_missing_files => 1, 
-								   prob_arr => ['$PROB', '$INPUT ' . $test_hash->{'input'}, 
+	$problem = model::problem->new(ignore_missing_files => 1,
+								   prob_arr => ['$PROB', '$INPUT ' . $test_hash->{'input'},
 												'$DATA ' . $datadir . $test_hash->{'filename'} . ' ' . $test_hash->{'data'}] );
 	$model = model->new(filename => 'dummy',
 						problems => [$problem],
@@ -344,7 +344,7 @@ foreach my $test_hash (@datafiletests) {
 	my $ignoresign = $problem->datas->[0]->ignoresign;
 	my $idcol = $model->idcolumn(problem_number=>1);
 	my $dataname = $model->datafiles(problem_numbers => [1],
-									 absolute_path =>1)->[0]; 
+									 absolute_path =>1)->[0];
 	my $data;
 	if (not $test_hash->{'crash'}) {
 		$data = data->new(filename => $dataname,
@@ -356,7 +356,7 @@ foreach my $test_hash (@datafiletests) {
 		}
 		dies_ok { data->new(filename => $dataname, idcolumn => $idcol, ignoresign => $ignoresign) }
 		"bad ignore " . $test_hash->{'filename'};
-		
+
 	}
 
 	if (not $test_hash->{'crash'}) {

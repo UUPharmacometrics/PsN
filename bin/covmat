@@ -47,138 +47,131 @@ exit unless $res;
 my %help_text;
 
 $help_text{Pre_help_message} = <<'EOF';
-    Create an empirical covariance matrix from a raw_results file
+	Create an empirical covariance matrix from a raw_results file
 EOF
 
 $help_text{Examples} = <<'EOF';    
-    Use parameter labels from the raw_results file:
-    covmat -rawres_input=bootstrap_dir33/raw_results_run33.csv
+	Use parameter labels from the raw_results file:
+	covmat -rawres_input=bootstrap_dir33/raw_results_run33.csv
 
 	Use generic labels:
 	covmat -rawres_input=raw_results_run5.csv run5.mod
 
 	The covmat script prints output to screen, but the output can be
-	redirected to a file using >. Example
-
+	redirected to a file using >.
+	Example
 	covmat -rawres_input=raw_results_run5.csv run5.mod > run5_empirical.cov
 
 EOF
 
 $help_text{Options} = <<'EOF';      
-The -rawres_input option is required.
+	The -rawres_input option is required.
 
-    covmat needs to read the names and counts of parameters from somewhere.
-    By default covmat will look for a raw_results_structure file in the same
-	directory as the rawres_input file. Alternatively the user can
-	give a model file name on the command-line, or set option raw_results_structure
+	covmat needs to read the names and counts of parameters from somewhere.
+	By default covmat will look for a raw_results_structure file in the same
+	directory as the rawres_input file. Alternatively the user can give a model
+	file name on the command-line, or set option raw_results_structure.
 
-      The following options are valid:
+	The following options are valid:
 EOF
 
 $help_text{-h} = <<'EOF';
-      -h | -?
-      
-      With -h or -? covmat will print a list of options and exit.
+	-h | -?
+
+	With -h or -? covmat will print a list of options and exit.
 EOF
-      
+
 $help_text{-help} = <<'EOF';      
-      -help
-      
-      With -help covmat will print this, longer, help message.
-EOF
+	-help
 
-$help_text{-raw_results_structure} = <<'EOF';
-      -raw_results_structure=filename
-
-      Instead of giving the model file coupled to the rawres file as input, it is possible
-	  to use the raw_results_structure file for finding the parameter columns.
-EOF
-$help_text{-rawres_input} = <<'EOF';
-      -rawres_input=filename
-
-      A raw_results file. After filtering and skipping offset it must contain at least 2 samples.
-      The labels for  THETA/OMEGA/SIGMA 
-      in the file must match the labels in the model given as input, if any, and
-      the theta columns must be directly followed by the omega columns 
-      which must be directly followed by the sigma columns. Note that is is 
-      possible to generate a file with initial parameter estimates outside of PsN, 
-      as long as the file follows the format rules.
-EOF
-$help_text{-offset_rawres} = <<'EOF';
-      -offset_rawres=N
-
-      Default 0.
-      The number of result lines to skip in the input raw results file
-      before starting to read final parameter estimates. 
-EOF
-$help_text{-header} = <<'EOF';
-      -header
-
-      Default set.
-      By default the covariance matrix is printed with headers. 
-Setting -no-header skips the headers in the output.
-$help_text{-require_numeric_ofv} = <<'EOF';
-      -require_numeric_ofv
-
-      Default set.
-      By default the covmat program assumes there is a column with header ofv in the raw results file,
-	and that all lines that do not have a number in that column should be filtered out (because the run crashed).
-	However, if the input file comes from another source than a PsN run and does not have an ofv column, the user 
-	must set -no-require_numeric_ofv, otherwise covmat will crash with an error message saying that the ofv column cannot be found.
+	With -help covmat will print this, longer, help message.
 EOF
 
 $help_text{-comma} = <<'EOF';
-      -comma
+	-comma
 
-      Default not set.
-      By default the covariance matrix is printed with space separation 
-and fixed width of the numeric fields.
-	Setting -comma changes the format to comma-separated variable width.
+	Default not set. By default the covariance matrix is printed with space
+	separation and fixed width of the numeric fields. Setting -comma changes 
+	he format to comma-separated variable width.
 EOF
-$help_text{-require_numeric_ofv} = <<'EOF';
-      -require_numeric_ofv
 
-      Default set, unset with -no-require_numeric_ofv
-      By default the script will assume the raw_results file has a column
-	named ofv, and will filter out all rows where the ofv column does not
-	have a numeric value, as would be the case e.g. for crashed bootstrap
-	samples. If the raw_results file does not have an ofv column, or
-	if non-numeric ofv rows should be kept, run covmat with -no-require_numeric_ofv.
+$help_text{-header} = <<'EOF';
+	-header
+
+	Default set. By default the covariance matrix is printed with headers. 
+	Setting -no-header skips the headers in the output.
 EOF
 
 #this is not yet implemented for the values, only for the headers
 #$help_text{-parameters} = <<'EOF';
-#      -parameters=comma-separated list of parameters
+#	-parameters=comma-separated list of parameters
 #
-#      Default is -parameters=theta,omega,sigma
-#      A comma-separated list of the sets of parameters to include in the computations, and their order.
-#	  Only theta, omega and sigma may be included, all lower case and without indices.
-#      Examples: -parameters=theta,sigma,omega   
-#	            -parameters=theta
+#	Default is -parameters=theta,omega,sigma A comma-separated list of the sets
+#of parameters to include in the computations, and their order. Only theta,
+#omega and sigma may be included, all lower case and without indices. Examples:
+#-parameters=theta,sigma,omega
+#-parameters=theta
 #EOF
 
 $help_text{-in_filter} = <<'EOF';
-      -in_filter=comma-separated list of conditions
+	-in_filter=comma-separated list of conditions
 
-      Only relevant in combination with rawres_input. Default not used.
-      The parameter estimates lines in the file can be filtered on values 
-      in the different columns. When specifying which column(s) the filtering 
-      should be based on, the exact column name must be used, 
-      e.g. minimization_successful. Filtering can only be based on columns 
-      with numeric values. The allowed relations are .gt. (greater than), 
-      .lt. (less than) and .eq. (equal to). Conditions are separated with commas. 
-      If the remaining number of lines after filtering is smaller than 2, 
-      covmat will stop with an error message. 
-      If the user has created a file with 
-      parameter estimates outside of PsN, filtering can be done on any numeric 
-      column in that file. Do not set column headers containing .eq. or .lt. 
-      or .gt.in the user-generated file as this would interfere with the in_filter 
-      option syntax.
-    
-      Example: -in_filter=minimization_successful.eq.1,significant_digits.gt.3.5
-
+	Default not used. Only relevant in combination with rawres_input. The
+	parameter estimates lines in the file can be filtered on values in the
+	different columns. When specifying which column(s) the filtering should be
+	based on, the exact column name must be used, e.g. minimization_successful.
+	Filtering can only be based on columns with numeric values. The allowed
+	relations are .gt. (greater than), lt. (less than) and .eq. (equal to).
+	Conditions are separated with commas. If the remaining number of lines
+	after filtering is smaller than 2, covmat will stop with an error message.
+	If the user has created a file with parameter estimates outside of PsN,
+	filtering can be done on any numeric column in that file. Do not set column
+	headers containing .eq. or .lt. or .gt.in the user-generated file as this
+	would interfere with the in_filter option syntax.
+	Example: -in_filter=minimization_successful.eq.1,significant_digits.gt.3.5
 EOF
-	$help_text{Post_help_message} = <<'EOF';
+
+$help_text{-offset_rawres} = <<'EOF';
+	-offset_rawres=N
+
+	Default 0.
+	The number of result lines to skip in the input raw results file before
+	starting to read final parameter estimates.
+EOF
+
+$help_text{-raw_results_structure} = <<'EOF';
+	-raw_results_structure=filename
+
+	Instead of giving the model file coupled to the rawres file as input, it is
+	possible to use the raw_results_structure file for finding the parameter
+	columns.
+EOF
+
+$help_text{-rawres_input} = <<'EOF';
+	-rawres_input=filename
+
+	A raw_results file. After filtering and skipping offset it must contain at
+	least 2 samples. The labels for  THETA/OMEGA/SIGMA in the file must match
+	the labels in the model given as input, if any, and the theta columns must
+	be directly followed by the omega columns which must be directly followed
+	by the sigma columns. Note that is is possible to generate a file with
+	initial parameter estimates outside of PsN, as long as the file follows
+	the format rules.
+EOF
+
+$help_text{-require_numeric_ofv} = <<'EOF';
+	-require_numeric_ofv
+
+	Default set. By default the covmat program assumes there is a column with
+	header ofv in the raw results file, and that all lines that do not have a
+	number in that column should be filtered out (because the run crashed).
+	However, if the input file comes from another source than a PsN run and
+	does not have an ofv column, the user must set -no-require_numeric_ofv,
+	otherwise covmat will crash with an error message saying that the ofv
+	column cannot be found.
+EOF
+
+$help_text{Post_help_message} = <<'EOF';
 
 EOF
 

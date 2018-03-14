@@ -209,29 +209,6 @@ sub BUILD
 	delete $self -> {'lstfile'};
 }
 
-
-
-
-sub tableobject
-{
-	my $self = shift;
-	my $table;
-
-	return $table;
-}
-
-sub access_any
-{
-	my $self = shift;
-	my %parm = validated_hash(\@_,
-		 attribute => { isa => 'Str', optional => 1 }
-	);
-	my $attribute = $parm{'attribute'};
-	my $return_value;
-
-	return;
-}
-
 sub parsing_error
 {
 	my $self = shift;
@@ -240,8 +217,8 @@ sub parsing_error
 	);
 	my $message = $parm{'message'};
 
-	$self->parsed_successfully( 0 );
-	$self->parsing_error_message( $message );
+	$self->parsed_successfully(0);
+	$self->parsing_error_message($message);
 }
 
 sub _read_covmatrix
@@ -850,10 +827,11 @@ sub _scan_to_meth
 					 and $check_next_to_last_method) {
 				$found_next_to_last_method = 1;
 			}
-#	    } elsif ((not $found_any_meth) and $self->simulationstep and /\(EVALUATION\)/ ) {
-#			#when simulation step sometimes no meth printed, do not look for it
-#			$self->estimation_step_run(0);
-#			last;
+        } elsif (/^0HESSIAN OF POSTERIOR DENSITY IS NON-POSITIVE-DEFINITE DURING SEARCH/) { # Special case
+            $self->next_to_last_step_successful(0);
+			$self->estimation_step_run(0);
+			$self->estimation_step_initiated(0);
+            last;
 	    } elsif ($self->simulationstep and /$objt_exp/ ) {
 			if ($objt_has_meth){
 				#no problem, just reset variable
@@ -2197,7 +2175,6 @@ sub thetas
 	return \@values;
 }
 
-
 sub thetanames
 {
 	my $self = shift;
@@ -2260,10 +2237,9 @@ sub sdcorrform_omegas
 	return \@values;
 }
 
-
-# Comparison method for omeganames, sigmanames and thetanames
 sub cmp_coords
 {
+    # Comparison method for omeganames, sigmanames and thetanames
 	if ($a =~ /THETA/) {
 		return substr($a,5) <=> substr($b,5);
 	} else {
@@ -2430,7 +2406,6 @@ sub sdcorrform_sigmas
 
 	return \@values;
 }
-
 
 sub sigmanames
 {
@@ -2851,7 +2826,8 @@ sub not_used_get_NM7_tables_all_types
 	return \@raw_table ,\@cov_table ,\@cor_table ,\@coi_table ,\@phi_table;
 }
 
-sub _get_value{
+sub _get_value
+{
 	#static method, translate text in NM7 ext,cov, coi etc to either number or undef
 	my %parm = validated_hash(\@_,
 							  val => { isa => 'Any', optional => 0 }
@@ -3123,18 +3099,6 @@ sub _isdiagonal
 	return $isdiagonal;
 }
 
-sub _return_function
-{
-	my $self = shift;
-	my %parm = validated_hash(\@_,
-		 hash => { isa => 'HashRef', optional => 1 },
-		 scalar_return => { isa => 'Bool', default => 0, optional => 1 }
-	);
-	my $scalar_return = $parm{'scalar_return'};
-}
-
-
-
 sub _get_sparse_indices
 {
 	#static no shift
@@ -3210,7 +3174,7 @@ sub _read_sparse_matrixoestimates
 			}
 			last;
 		}
-		if ( /^\s*(TH|OM|SG)\s*\d+\s*|\s*(TH|OM|SG)/  ) {	  # sparse format
+		if ( /^\s*(TH|OM|SG)\s*\d+\s*|^\s*(TH|OM|SG)/  ) {	  # sparse format
 
 			s/(TH)\s+(\d+)/$1$2/g ; #make sure th index attached to TH
 			chomp;				# Get rid of line-feed

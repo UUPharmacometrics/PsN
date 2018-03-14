@@ -12,7 +12,7 @@ use Archive::Zip;
 use utils::file;
 use ui;
 use Config;
-use YAML;
+use YAML::XS;
 our $AUTOLOAD;
 use log;
 
@@ -750,8 +750,13 @@ sub print_results
     }
     close $fh;
 
-    $self->metadata->{'finish_time'} = "$theDate $theTime";
-    $self->write_meta();
+    my $yaml_filename = $self->directory . 'meta.yaml';
+    if (-e $yaml_filename) {
+        my $meta_file = YAML::XS::LoadFile($yaml_filename);
+        $self->metadata($meta_file);
+        $self->metadata->{'finish_time'} = "$theDate $theTime";
+        $self->write_meta();
+    }
 }
 
 sub compress_m1
@@ -1811,12 +1816,7 @@ sub write_meta
     );
 	my $directory = $parm{'directory'};
 
-    open my $fh, '>', "$directory/meta.yaml";
-    # Sort alphabetically case-insensitive (default key sorting is case sensitive)
-    my @ordered_keys = sort { "\L$a" cmp "\L$b" } keys %{$self->metadata};;
-    YAML::Bless($self->metadata)->keys(\@ordered_keys);
-    print $fh YAML::Dump($self->metadata);
-    close $fh;
+    YAML::XS::DumpFile("$directory/meta.yaml", $self->metadata);
 }
 
 sub get_rundir

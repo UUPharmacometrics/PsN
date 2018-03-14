@@ -6,12 +6,17 @@ geometry: margin=1.5cm
 ---
 
 ```{r load_libraries_and_source_functions,include = FALSE}
+# get libPaths
+source(file.path(rscripts.directory,"common/R_info.R"))
+R_info(directory=working.directory,only_libPaths=T)
 # Used libraries
 library(xpose4)
 
 source(paste0(rscripts.directory,"/common/file_existence_in_directory.R"),echo=TRUE)
 source(paste0(rscripts.directory,"/execute/data.obj.obsi.R"),echo=TRUE) 
 source(paste0(rscripts.directory,"/execute/plot.obj.obsi.R"),echo=TRUE)
+#add R_info to the meta file
+R_info(directory=working.directory)
 ```
 
 ```{r Summary_plot,results='hide',echo=FALSE,fig.width=9,fig.height=6.5,fig.keep="high",fig.align="center"}

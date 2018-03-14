@@ -1,15 +1,17 @@
 \input{inputs/format_header.tex}
-\guidetitle{TRANSFORM user guide}{2017-05-09}
-
+\guidetitle{TRANSFORM user guide}{2018-03-02}
+\usepackage{hyperref}
 \begin{document}
 
 \maketitle
 \newcommand{\guidetoolname}{transform}
-
+\tableofcontents
+\newpage
 
 \section{Overview}
-This tool will transform or change one model into another given certain rules. The first argument on the command line is the name of one of the available transformations (listed and explained in the Transformations section below) and the second is the name of the model to transform.
+The transform tool will transform or change one model into another given certain rules. The first argument on the command line is the name of one of the available transformations (listed and explained in the Transformations section) and the second is the name of the model to transform.
 
+Example:
 \begin{verbatim}
 transform boxcox run1.mod
 \end{verbatim}
@@ -17,67 +19,70 @@ transform boxcox run1.mod
 \section{Input and options}
 
 \subsection{Required input}
-The name of the transformation and a model file is required on the command-line.
-
+The name of the transformation and a model file is required on the command line.
 
 \subsection{Optional input}
 
 \begin{optionlist}
+
+\optname{epsilons}
+Default is all epsilons. List the epsilons to transform. This option is valid for the iiv\_on\_ruv transformations.
+\nextopt
+\optname{etas}
+Default is all etas. List the etas to transform. This option is valid for the boxcox, tdist and uniform transformations.
+\nextopt
+\optname{fix}
+Fix the omegas to zero. This option is valid for the remove\_iiv and remove\_iov transformations.
+\nextopt
+\optname{ids}
+Specify a list of ids.This option is mandatory for the omit\_ids transformation.
+\nextopt
+\optname{ignore}
+Default the option is not set and changes are done to the dataset. Omit ids by using IGNORE statements in the model. This option is only valid for the omit\_ids transformation.
+\nextopt
 \optname{out}
 Set a name to use for the output model file. 
 \nextopt
-\optname{etas}
-List the etas to transform. Default is all etas.
-This option is valid for the boxcox and tdist transformations.
+\optname{parameters}
+Specify list of parameters. This option is mandatory for the add\_tv transformation.
 \nextopt
-    \optname{epsilons}
-      List the epsilons to transform. Default is all epsilons.
-      This option is valid for the iiv\_on\_ruv transformations.
-    \nextopt
-    \optname{fix}
-      Fix the omegas to zero
-      This option is valid for the remove\_iiv and remove\_iov transformations.
-    \nextopt
-    \optname{parameters}
-      Specify list of parameters.
-      This option is mandatory for the add\_tv transformation.
-    \nextopt
-    \optname{ids}
-      Specify a list of ids.
-      This option is mandatory for the omit\_ids transformation.
-    \nextopt
-    \optname{ignore}
-      Omit ids by using IGNORE statements in the model.
-      Default the option is not set and changes are done to the dataset.
-      This option is only valid for the omit\_ids transformation.
-    \nextopt
 \end{optionlist}
 
 \section{Output}
-
-The output of transform will be an updated model file. If the -out option was specified this name will be used otherwise if the file was using the run number nomenclature (runxx.mod or runxx.ctl) the next higher available run number will be used for the output model.
+The output of transform is an updated model file. If the -out option was specified this name will be used, otherwise, if the file was using the run number nomenclature (runxx.mod or runxx.ctl) the next higher available run number will be used for the output model.
 
 \section{Transformations}
+\subsection{add\_eta}
+Adds an exponentiated eta to all parameters listed in the -parameters option.
 
-\subsection{boxcox}
-The boxcox transformation will boxcox transform all etas and add thetas for the lambdas. The -etas option can be used to specify a list of etas that should be transformed. Default is to transform all etas in the model.
-
-\subsection{tdist}
-The tdist transformation will transform all etas to follow a t-distribution. The degree of freedom parameters will be added as THETAs to be estimated. The -etas option can be used to specify a list of etas that should be transformed. Default is to transfor all etas in the model.
-
-\subsection{full\_block}
-Transform all omegas up to the first FIX or SAME block into one big full block record.
+\subsection{add\_iov}
+Add IOV to all parameters listed in the -parameters option or if -parameters was not specified to all IIV etas. Occasion column to use should be specified with -occ (default is OCC).
 
 \subsection{add\_tv}
 Add TV (typical value) to all parameters listed in the -parameters option. Will add nothing for parameters that already have TV defined. If TV is not already defined for a model the transformation will add:
 \begin{verbatim}
-    TVCL = 1
-    CL = ...
-    CL = CL * TVCL
+TVCL = 1
+CL = ...
+CL = CL * TVCL
 \end{verbatim}
 
-\subsection{add\_iov}
-Add IOV to all parameters listed in the -parameters option. Occasion column to use should be specified with -occ (default is OCC).
+\subsection{boxcox}
+The boxcox transformation will boxcox transform all etas and add thetas for the lambdas. The -etas option can be used to specify a list of etas that should be transformed. Default is to transform all etas in the model.
+
+\subsection{full\_block}
+Transform all omegas up to the first FIX or SAME block into one big full block record.
+
+\subsection{iiv\_on\_ruv}
+Mulitiply EXP(ETA(n)) with each epsilon or with all epsilons listed in the option -epsilons. Add etas as needed.
+
+\subsection{omit\_ids}
+Omit all ids listed by option -ids. The dataset will be updated and a new model will be created to point to the new dataset. If option -index is used the dataset will not be updated and the omitted ids will be added as IGNORE statements to the model.
+
+\subsection{power\_on\_ruv}
+Multiply (IPRED ** THETA(n)) with each epsilon or with all epsilons listed in the option -epsilons. Add thetas as needed. For this transformation to produce valid code IPRED needs to be defined before each line where epsilon is used.
+
+\subsection{remove\_0fix\_omegas}
+Remove all diagonal omegas set to zero FIX and all fix block omegas with whole block set to zero. Corresponding etas in the code will be replaced with 0 and remaining etas will be renumbered.
 
 \subsection{remove\_iiv}
 Remove all IIV omegas, replace the corresponding etas in the code with 0 and renumber the remaining etas. If the -fix option is set instead fix all IIV etas to zero.
@@ -85,16 +90,10 @@ Remove all IIV omegas, replace the corresponding etas in the code with 0 and ren
 \subsection{remove\_iov}
 Remove all IOV omegas, replace the corresponding etas in the code with 0 and renumber the remaining etas. If the -fix option is set instead fix all IOV etas to zero.
 
-\subsection{remove\_0fix\_omegas}
-Remove all diagonal omegas set to zero FIX and all fix block omegas with whole block set to zero. Corresponding etas in the code will be replaced with 0 and remaining etas will be renumbered.
+\subsection{tdist}
+The tdist transformation will transform all etas to follow a t-distribution. The degree of freedom parameters will be added as THETAs to be estimated. The -etas option can be used to specify a list of etas that should be transformed. Default is to transfor all etas in the model.
 
-\subsection{omit\_ids}
-Omit all ids listed by option -ids. The dataset will be updated and a new model will be created to point to the new dataset. If option -index is used the dataset will not be updated and the omitted ids will be added as IGNORE statements to the model.
-
-\subsection{iiv\_on\_ruv}
-Mulitiply EXP(ETA(n)) with each epsilon or with all epsilons listed in the option -epsilons. Add etas as needed.
-
-\subsection{power\_on\_ruv}
-Multiply (IPRED ** THETA(n)) with each epsilon or with all epsilons listed in the option -epsilons. Add thetas as needed. For this transformation to produce valid code IPRED needs to be defined before each line where epsilon is used.
+\subsection{uniform}
+Will transform all or some etas to a uniform distribution by changing the code and adding a THETA and fixing the OMEGA. Note that if the OMEGA of an ETA to be transformed is in a BLOCK it will not be FIXed properly.
 
 \end{document}

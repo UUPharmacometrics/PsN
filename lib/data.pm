@@ -28,6 +28,7 @@ has 'ignore_missing_files' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'ignoresign' => ( is => 'rw', isa => 'Maybe[Str]');
 has 'missing_data_token' => ( is => 'rw', isa => 'Maybe[Num]', default => -99 );
 has 'parse_header' => ( is => 'rw', isa => 'Bool', default => 0 );
+has 'space_separated' => ( is => 'rw', isa => 'Bool', default => 0 );
 has '_median' => ( is => 'rw', isa => 'ArrayRef[numbers]', default => sub { [] } );
 has '_range' => ( is => 'rw', isa => 'ArrayRef[numbers]', default => sub { [] } );
 
@@ -70,7 +71,7 @@ sub BUILD
 	$self->directory($directory);
 	$self->filename($filename);
 
-	unless ( array::not_empty($self->header) or array::not_empty($self->individuals) ) { 
+	unless ( array::not_empty($self->header) or array::not_empty($self->individuals) ) {
 		#if empty
 		if ( -e $self->full_name ) {
 			$self->_read_header;
@@ -91,48 +92,48 @@ sub BUILD
 
 sub add_randomized_input_data
 {
-	#static method no shift
-	my %parm = validated_hash(\@_,
-							  column_headers => { isa => 'ArrayRef[Str]', optional => 1 },
-							  filename => { isa => 'Str', optional => 0 },
-							  model => { isa => 'model', optional => 0 },
-							  missing_data_token => { isa => 'Maybe[Num]', optional => 1 }
-	);
-	my @column_headers = defined $parm{'column_headers'} ? @{$parm{'column_headers'}} : ();
-	my $filename = $parm{'filename'};
-	my $model = $parm{'model'};
-	my $missing_data_token = $parm{'missing_data_token'};
-	my @xcolumn_names;
+    #static method no shift
+    my %parm = validated_hash(\@_,
+        column_headers => { isa => 'ArrayRef[Str]', optional => 1 },
+        filename => { isa => 'Str', optional => 0 },
+        model => { isa => 'model', optional => 0 },
+        missing_data_token => { isa => 'Maybe[Num]', optional => 1 }
+    );
+    my @column_headers = defined $parm{'column_headers'} ? @{$parm{'column_headers'}} : ();
+    my $filename = $parm{'filename'};
+    my $model = $parm{'model'};
+    my $missing_data_token = $parm{'missing_data_token'};
+    my @xcolumn_names;
 
-	#first prob only 
-	#in array column_headers
-	#in scalar datafilename, modelfilename
-	#out array xcolumn_names
+    #first prob only
+    #in array column_headers
+    #in scalar datafilename, modelfilename
+    #out array xcolumn_names
 
-	my $dataname = $model->datafiles(problem_numbers => [1],
-									 absolute_path => 1);
-	my $data_obj = data->new(filename => $dataname->[0],
-							 idcolumn => $model->idcolumn(problem_number => 1),
-							 ignoresign => $model->ignoresigns->[0],
-							 missing_data_token => $missing_data_token);
-	@xcolumn_names = @{$data_obj -> add_randomized_columns(
-						   filename => $filename,
-						   directory => $model->directory,
-						   column_headers => \@column_headers)}; 
-	#writes to own filename
-	#after changing it to directory/filename
-	
-	foreach my $xcol (@xcolumn_names){
-		$model -> add_option( record_name  => 'input',
-							  problem_numbers => [1],
-							  option_name  => $xcol);
-	}
-	$model -> datafiles(problem_numbers =>[1],
-						new_names => [$model->directory.$filename]);
-	$model->relative_data_path(1);
-	$model->_write(); 
-	
-	return \@xcolumn_names;
+    my $dataname = $model->datafiles(problem_numbers => [1],
+        absolute_path => 1);
+    my $data_obj = data->new(filename => $dataname->[0],
+        idcolumn => $model->idcolumn(problem_number => 1),
+        ignoresign => $model->ignoresigns->[0],
+        missing_data_token => $missing_data_token);
+    @xcolumn_names = @{$data_obj -> add_randomized_columns(
+    filename => $filename,
+    directory => $model->directory,
+    column_headers => \@column_headers)};
+    #writes to own filename
+    #after changing it to directory/filename
+
+    foreach my $xcol (@xcolumn_names){
+        $model -> add_option( record_name  => 'input',
+            problem_numbers => [1],
+            option_name  => $xcol);
+    }
+    $model -> datafiles(problem_numbers =>[1],
+        new_names => [$model->directory.$filename]);
+    $model->relative_data_path(1);
+    $model->_write();
+
+    return \@xcolumn_names;
 }
 
 sub _bootstrap
@@ -145,6 +146,7 @@ sub _bootstrap
 		 resume => { isa => 'Bool', default => 0, optional => 1 },
 		 samples => { isa => 'Int', default => 200, optional => 1 },
 		 subjects => { isa => 'HashRef[Num]', default => $self->count_ind, optional => 1 },
+         replacement => { isa => 'Bool', default => 1 },
 		 MX_PARAMS_VALIDATE_NO_CACHE => 1
 	);
 	my $directory = $parm{'directory'};
@@ -152,6 +154,8 @@ sub _bootstrap
 	my $stratify_on = $parm{'stratify_on'};
 	my $resume = $parm{'resume'};
 	my $samples = $parm{'samples'};
+	my $replacement = $parm{'replacement'};
+
 	my %subjects = defined $parm{'subjects'} ? %{$parm{'subjects'}} : ();
 	my @boot_samples;
 	my @incl_individuals;
@@ -189,10 +193,11 @@ sub _bootstrap
 		  $self->resample( subjects    => \%subjects,
 						   resume      => $resume,
 						   new_name    => $new_name,
-						   stratify_on => $stratify_on);
+						   stratify_on => $stratify_on,
+                           replacement => $replacement);
 	  push( @included_keys, $incl_key_ref );
 	  push( @incl_individuals, $incl_ind_ref );
-	  push( @boot_samples, $new_name ); 
+	  push( @boot_samples, $new_name );
 	  if( $status_bar->tick() ){
 		  ui->print( category => 'bootstrap',
 					 message => $status_bar->print_step,
@@ -206,46 +211,47 @@ sub _bootstrap
 	return \@boot_samples ,\@incl_individuals ,\@included_keys;
 }
 
-sub bootstrap_create_datasets_from_keys{
-	#static method no shift
-	my %parm = validated_hash(\@_,
-							  input_filename => { isa => 'Str', optional => 0 },
-							  input_directory => { isa => 'Maybe[Str]', optional => 1 },
-							  name_stub   => { isa => 'Str', optional => 1 },
-							  output_directory => { isa => 'Str', optional => 0 },
-							  key_references => { isa => 'ArrayRef', optional => 0 },
-							  ignoresign => { isa => 'Str', optional => 1 },
-							  missing_data_token => { isa => 'Maybe[Num]', optional => 1 },
-							  idcolumn => { isa => 'Int', optional => 0 }
-	);
-	my $input_filename = $parm{'input_filename'};
-	my $input_directory = $parm{'input_directory'};
-	my $name_stub = $parm{'name_stub'};
-	my $output_directory = $parm{'output_directory'};
-	my @key_references = defined $parm{'key_references'} ? @{$parm{'key_references'}} : ();
-	my $ignoresign = $parm{'ignoresign'};
-	my $missing_data_token = $parm{'missing_data_token'};
-	my $idcolumn = $parm{'idcolumn'};
+sub bootstrap_create_datasets_from_keys
+{
+    #static method no shift
+    my %parm = validated_hash(\@_,
+        input_filename => { isa => 'Str', optional => 0 },
+        input_directory => { isa => 'Maybe[Str]', optional => 1 },
+        name_stub   => { isa => 'Str', optional => 1 },
+        output_directory => { isa => 'Str', optional => 0 },
+        key_references => { isa => 'ArrayRef', optional => 0 },
+        ignoresign => { isa => 'Str', optional => 1 },
+        missing_data_token => { isa => 'Maybe[Num]', optional => 1 },
+        idcolumn => { isa => 'Int', optional => 0 }
+    );
+    my $input_filename = $parm{'input_filename'};
+    my $input_directory = $parm{'input_directory'};
+    my $name_stub = $parm{'name_stub'};
+    my $output_directory = $parm{'output_directory'};
+    my @key_references = defined $parm{'key_references'} ? @{$parm{'key_references'}} : ();
+    my $ignoresign = $parm{'ignoresign'};
+    my $missing_data_token = $parm{'missing_data_token'};
+    my $idcolumn = $parm{'idcolumn'};
 
-	unless (-d $output_directory){
-		croak("output directory $output_directory is not a directory/does not exist");
-	}
-	my ($tmp1, $tmp2) = OSspecific::absolute_path($output_directory,'hej');
-	$output_directory = $tmp1; #to get with /
+    unless (-d $output_directory){
+        croak("output directory $output_directory is not a directory/does not exist");
+    }
+    my ($tmp1, $tmp2) = OSspecific::absolute_path($output_directory,'hej');
+    $output_directory = $tmp1; #to get with /
 
-	#data will be parsed here
-	my $data = data->new(filename => $input_filename,
-						 directory => $input_directory,
-						 ignoresign => $ignoresign,
-						 missing_data_token => $missing_data_token,
-						 idcolumn => $idcolumn);
+    #data will be parsed here
+    my $data = data->new(filename => $input_filename,
+        directory => $input_directory,
+        ignoresign => $ignoresign,
+        missing_data_token => $missing_data_token,
+        idcolumn => $idcolumn);
 
-	my $new_datas = $data -> _bootstrap_from_keys( directory   => $output_directory,
-												  name_stub   => $name_stub,
-												  key_references => \@key_references);
+    my $new_datas = $data -> _bootstrap_from_keys( directory   => $output_directory,
+        name_stub   => $name_stub,
+        key_references => \@key_references);
 
-	$data = undef;
-	return $new_datas;
+    $data = undef;
+    return $new_datas;
 }
 
 sub _bootstrap_from_keys
@@ -263,7 +269,7 @@ sub _bootstrap_from_keys
 	my @boot_samples;
 
 	# The bootstrap_from_keys method draws I<samples> number of bootstrap
-	# samples from the data set based on input keys reference generated 
+	# samples from the data set based on input keys reference generated
 	#by bootstrap method on same dataset (assumed).
 	# returns references to one array: I<boot_samples>,
 	# which holds the names of bootstrap data files
@@ -307,7 +313,7 @@ sub append_binary_columns
 	my $baseline_only = $parm{'baseline_only'};
 	my $start_header = $parm{'start_header'};
 	my $mdv_evid_indices = $parm{'mdv_evid_indices'};
-	
+
 	unless (defined $start_header){
 		$start_header = $self->header;
 	}
@@ -318,9 +324,9 @@ sub append_binary_columns
 	unless (scalar(@{$start_header}) == $column_count){
 		croak("column count is $column_count but input header length is ".scalar(@{$start_header}));
 	}
-	
+
 	my @mapping = (); #at each index pos have ref of array of old value that translates to non-zero in appended
-	my @new_indices = (); 
+	my @new_indices = ();
 	my $any_change = 0;
 	my @new_header = @{$start_header};
 	my @new_categorical = ();
@@ -333,7 +339,7 @@ sub append_binary_columns
 			$new_header[$index] = $label;
 		}
 		my @col_mapping = ();
-		my %factors; 
+		my %factors;
 		if ($baseline_only){
 			unless (defined $mdv_evid_indices){
 				croak("must set mdv evid index array when checking baseline factors");
@@ -348,7 +354,7 @@ sub append_binary_columns
 		}else{
 			%factors = %{$self->factors(column => $index+1, #column number in data set
 										return_occurences => 1,
-										unique_in_individual => 0,									   
+										unique_in_individual => 0,
 										ignore_missing => 1)};
 		}
 		#check if more than two non-missing. If not then empty colmap If yes then set mapping
@@ -389,132 +395,132 @@ sub append_binary_columns
 		}
 		$self->header(\@new_header);
 	}
-	
+
 	return (\@mapping,\@new_indices,\@new_categorical,\@baseline_and_multiple);
 }
 
 sub frem_compute_covariate_properties
 {
-	#static method, no self
-	#one unit test in data_extra.t
-	my %parm = validated_hash(\@_,
-							  filtered_data => { isa => 'data', optional => 0 },
-							  N_parameter_blocks => { isa => 'Int', optional => 0 },
-							  invariant_covariates => { isa => 'ArrayRef', optional => 0},
-							  is_log => { isa => 'ArrayRef', optional => 0},
-							  occ_index => { isa => 'Maybe[Int]', optional => 1 },
-							  data2name => { isa => 'Str', optional => 0 },
-							  directory => { isa => 'Str', optional => 0 },
-							  evid_index => { isa => 'Maybe[Int]', optional => 1 },
-							  mdv_index => { isa => 'Maybe[Int]', optional => 1 },
-							  type_index => { isa => 'Int', optional => 0 },
-							  dv_index => { isa => 'Int', optional => 0 },
-							  cov_indices => { isa => 'ArrayRef', optional => 0 },
-							  first_timevar_type => { isa => 'Int', optional => 1 },
-		);
-	#ref of hash of cov names to column numbers
-	my $filtered_data = $parm{'filtered_data'};
-	my $N_parameter_blocks = $parm{'N_parameter_blocks'};
-	my $invariant_covariates =  $parm{'invariant_covariates'};
-	my $is_log =  $parm{'is_log'};
-	my $occ_index = $parm{'occ_index'};
-	my $data2name = $parm{'data2name'};
-	my $directory = $parm{'directory'};
-	my $evid_index = $parm{'evid_index'};
-	my $mdv_index = $parm{'mdv_index'};
-	my $type_index = $parm{'type_index'};
-	my $dv_index = $parm{'dv_index'};
-	my $cov_indices = $parm{'cov_indices'};
-	my $first_timevar_type = $parm{'first_timevar_type'};
+    #static method, no self
+    #one unit test in data_extra.t
+    my %parm = validated_hash(\@_,
+        filtered_data => { isa => 'data', optional => 0 },
+        N_parameter_blocks => { isa => 'Int', optional => 0 },
+        invariant_covariates => { isa => 'ArrayRef', optional => 0},
+        is_log => { isa => 'ArrayRef', optional => 0},
+        occ_index => { isa => 'Maybe[Int]', optional => 1 },
+        data2name => { isa => 'Str', optional => 0 },
+        directory => { isa => 'Str', optional => 0 },
+        evid_index => { isa => 'Maybe[Int]', optional => 1 },
+        mdv_index => { isa => 'Maybe[Int]', optional => 1 },
+        type_index => { isa => 'Int', optional => 0 },
+        dv_index => { isa => 'Int', optional => 0 },
+        cov_indices => { isa => 'ArrayRef', optional => 0 },
+        first_timevar_type => { isa => 'Int', optional => 1 },
+    );
+    #ref of hash of cov names to column numbers
+    my $filtered_data = $parm{'filtered_data'};
+    my $N_parameter_blocks = $parm{'N_parameter_blocks'};
+    my $invariant_covariates =  $parm{'invariant_covariates'};
+    my $is_log =  $parm{'is_log'};
+    my $occ_index = $parm{'occ_index'};
+    my $data2name = $parm{'data2name'};
+    my $directory = $parm{'directory'};
+    my $evid_index = $parm{'evid_index'};
+    my $mdv_index = $parm{'mdv_index'};
+    my $type_index = $parm{'type_index'};
+    my $dv_index = $parm{'dv_index'};
+    my $cov_indices = $parm{'cov_indices'};
+    my $first_timevar_type = $parm{'first_timevar_type'};
 
-	my $results={};
+    my $results={};
 
-	unless (defined $first_timevar_type){
-		unless (scalar(@{$invariant_covariates}) == scalar(@{$cov_indices})){
-			croak("cov names count and cov indices count are different");
-		}
-		$first_timevar_type = scalar(@{$cov_indices});
-	}
-	
-	for (my $i=0; $i<scalar(@{$invariant_covariates}); $i++){
-		my $covariate = $invariant_covariates->[$i]; #cov name
-		my $column = ($cov_indices->[$i])+1;
-		my %strata = %{$filtered_data->factors(column => $column, #column number in data set
-											   return_occurences => 1,
-											   verbose => 0,
-											   unique_in_individual => 1,
-											   ignore_missing => 1)};
-		if ( _have_non_unique_values(\%strata)) {
-			ui -> print( category => 'all',
-						 message => "\nWarning: Individuals were found to have multiple values in the $covariate column,".
-						 " but the frem script will only use the value in the individual's first observation record.\n");
-		}
-	}
+    unless (defined $first_timevar_type){
+        unless (scalar(@{$invariant_covariates}) == scalar(@{$cov_indices})){
+            croak("cov names count and cov indices count are different");
+        }
+        $first_timevar_type = scalar(@{$cov_indices});
+    }
 
-	if (defined $occ_index){
-		my $factors = $filtered_data -> factors( column => ($occ_index+1),
-												 ignore_missing =>1,
-												 unique_in_individual => 0,
-												 return_occurences => 1 );
+    for (my $i=0; $i<scalar(@{$invariant_covariates}); $i++){
+        my $covariate = $invariant_covariates->[$i]; #cov name
+        my $column = ($cov_indices->[$i])+1;
+        my %strata = %{$filtered_data->factors(column => $column, #column number in data set
+        return_occurences => 1,
+        verbose => 0,
+        unique_in_individual => 1,
+        ignore_missing => 1)};
+        if ( _have_non_unique_values(\%strata)) {
+            ui -> print( category => 'all',
+                message => "\nWarning: Individuals were found to have multiple values in the $covariate column,".
+                " but the frem script will only use the value in the individual's first observation record.\n");
+        }
+    }
 
-		#key is the factor, e.g. occasion 1. Value is the number of occurences
-		my @temp=();
-		#sort occasions ascending 
-		foreach my $key (sort {$a <=> $b} keys (%{$factors})){
-			push(@temp,sprintf("%.12G",$key));
-		}
-		$results->{'occasionlist'}=\@temp; 
-	}
+    if (defined $occ_index){
+        my $factors = $filtered_data -> factors( column => ($occ_index+1),
+            ignore_missing =>1,
+            unique_in_individual => 0,
+            return_occurences => 1 );
 
-	$filtered_data -> directory($directory);
-	$filtered_data -> filename($data2name); #change name so that when writing to disk get new file
-	my $invariant_matrix; #array of arrays
-	my $timevar_matrix; #array of arrays of arrays
+        #key is the factor, e.g. occasion 1. Value is the number of occurences
+        my @temp=();
+        #sort occasions ascending
+        foreach my $key (sort {$a <=> $b} keys (%{$factors})){
+            push(@temp,sprintf("%.12G",$key));
+        }
+        $results->{'occasionlist'}=\@temp;
+    }
 
-	#this writes new data to disk
-	#only missing invariant for now!
-	($invariant_matrix,$timevar_matrix,$results->{'have_missing_covariates'}) = 
-		$filtered_data->add_frem_lines( occ_index => $occ_index,
-										evid_index => $evid_index,
-										mdv_index => $mdv_index,
-										dv_index => $dv_index,
-										type_index => $type_index,
-										cov_indices => $cov_indices,
-										is_log => $is_log,
-										N_parameter_blocks => $N_parameter_blocks,
-										first_timevar_type => $first_timevar_type);
+    $filtered_data -> directory($directory);
+    $filtered_data -> filename($data2name); #change name so that when writing to disk get new file
+    my $invariant_matrix; #array of arrays
+    my $timevar_matrix; #array of arrays of arrays
 
-	$results->{'invariant_median'}= [];
-	$results->{'invariant_mean'}= [];
-	$results->{'invariant_covmatrix'}= [];
-	$results->{'timevar_median'} = [];
-	$results->{'timevar_mean'} = [];
-	$results->{'timevar_covmatrix'} = [];
+    #this writes new data to disk
+    #only missing invariant for now!
+    ($invariant_matrix,$timevar_matrix,$results->{'has_missingness'}) =
+    $filtered_data->add_frem_lines( occ_index => $occ_index,
+        evid_index => $evid_index,
+        mdv_index => $mdv_index,
+        dv_index => $dv_index,
+        type_index => $type_index,
+        cov_indices => $cov_indices,
+        is_log => $is_log,
+        N_parameter_blocks => $N_parameter_blocks,
+        first_timevar_type => $first_timevar_type);
 
-	my $err = linear_algebra::row_cov_median_mean($invariant_matrix,
-												  $results->{'invariant_covmatrix'},
-												  $results->{'invariant_median'},
-												  $results->{'invariant_mean'},
-												  $filtered_data->missing_data_token);
-	if ($err != 0){
-		print "failed to compute invariant covariates covariance\n";
-		$results->{'invariant_median'}= [];
-		$results->{'invariant_mean'}= [];
-		$results->{'invariant_covmatrix'}= [];
-	}
+    $results->{'invariant_median'}= [];
+    $results->{'invariant_mean'}= [];
+    $results->{'invariant_covmatrix'}= [];
+    $results->{'timevar_median'} = [];
+    $results->{'timevar_mean'} = [];
+    $results->{'timevar_covmatrix'} = [];
 
-	$err = linear_algebra::row_cov_median_mean($timevar_matrix,
-											   $results->{'timevar_covmatrix'},
-											   $results->{'timevar_median'},
-											   $results->{'timevar_mean'},
-											   $filtered_data->missing_data_token);
-	if ($err != 0){
-		print "failed to compute time-varying covariates covariance\n";
-		$results->{'timevar_median'} = [];
-		$results->{'timevar_covmatrix'} = [];
-	}
-	$filtered_data = undef;
-	return $results;
+    my $err = linear_algebra::row_cov_median_mean($invariant_matrix,
+        $results->{'invariant_covmatrix'},
+        $results->{'invariant_median'},
+        $results->{'invariant_mean'},
+        $filtered_data->missing_data_token);
+    if ($err != 0){
+        print "failed to compute invariant covariates covariance\n";
+        $results->{'invariant_median'}= [];
+        $results->{'invariant_mean'}= [];
+        $results->{'invariant_covmatrix'}= [];
+    }
+
+    $err = linear_algebra::row_cov_median_mean($timevar_matrix,
+        $results->{'timevar_covmatrix'},
+        $results->{'timevar_median'},
+        $results->{'timevar_mean'},
+        $filtered_data->missing_data_token);
+    if ($err != 0){
+        print "failed to compute time-varying covariates covariance\n";
+        $results->{'timevar_median'} = [];
+        $results->{'timevar_covmatrix'} = [];
+    }
+    $filtered_data = undef;
+    return $results;
 }
 
 sub add_frem_lines
@@ -576,63 +582,67 @@ sub add_frem_lines
 
 sub bootstrap_create_datasets
 {
-	#static method no self
-	my %parm = validated_hash(\@_,
-							  input_filename => { isa => 'Str', optional => 0 },
-							  input_directory => { isa => 'Maybe[Str]', optional => 1 },
-							  subjects => { isa => 'Maybe[HashRef]', optional => 1 },
-							  name_stub   => { isa => 'Str', optional => 1 },
-							  samples     => { isa => 'Int', optional => 0 },
-							  stratify_on => { isa => 'Maybe[Int]', optional => 1 },
-							  output_directory => { isa => 'Str', optional => 0 },
-							  ignoresign => { isa => 'Str', optional => 1 },
-							  missing_data_token => { isa => 'Maybe[Num]', optional => 1 },
-							  idcolumn => { isa => 'Int', optional => 0 }
-	);
-	my $input_filename = $parm{'input_filename'};
-	my $input_directory = $parm{'input_directory'};
-	my %subjects = (defined $parm{'subjects'})? %{$parm{'subjects'}}: ();
-	my $name_stub = $parm{'name_stub'};
-	my $samples = $parm{'samples'};
-	my $stratify_on = $parm{'stratify_on'};
-	my $output_directory = $parm{'output_directory'};
-	my $ignoresign = $parm{'ignoresign'};
-	my $missing_data_token = $parm{'missing_data_token'};
-	my $idcolumn = $parm{'idcolumn'};
+    #static method no self
+    my %parm = validated_hash(\@_,
+        input_filename => { isa => 'Str', optional => 0 },
+        input_directory => { isa => 'Maybe[Str]', optional => 1 },
+        subjects => { isa => 'Maybe[HashRef]', optional => 1 },
+        name_stub   => { isa => 'Str', optional => 1 },
+        samples     => { isa => 'Int', optional => 0 },
+        stratify_on => { isa => 'Maybe[Int]', optional => 1 },
+        output_directory => { isa => 'Str', optional => 0 },
+        ignoresign => { isa => 'Str', optional => 1 },
+        missing_data_token => { isa => 'Maybe[Num]', optional => 1 },
+        idcolumn => { isa => 'Int', optional => 0 },
+        replacement => { isa => 'Bool', default => 1 },
+    );
+    my $input_filename = $parm{'input_filename'};
+    my $input_directory = $parm{'input_directory'};
+    my %subjects = (defined $parm{'subjects'})? %{$parm{'subjects'}}: ();
+    my $name_stub = $parm{'name_stub'};
+    my $samples = $parm{'samples'};
+    my $stratify_on = $parm{'stratify_on'};
+    my $output_directory = $parm{'output_directory'};
+    my $ignoresign = $parm{'ignoresign'};
+    my $missing_data_token = $parm{'missing_data_token'};
+    my $idcolumn = $parm{'idcolumn'};
+    my $replacement = $parm{'replacement'};
 
-	unless (-d $output_directory) {
-		croak("output directory $output_directory is not a directory/does not exist");
-	}
-	my ($tmp1, $tmp2) = OSspecific::absolute_path($output_directory, 'hej');
-	$output_directory = $tmp1; #to get with /
+    unless (-d $output_directory) {
+        croak("output directory $output_directory is not a directory/does not exist");
+    }
+    my ($tmp1, $tmp2) = OSspecific::absolute_path($output_directory, 'hej');
+    $output_directory = $tmp1; #to get with /
 
-	#data will be parsed here
-	my $data = data->new(filename => $input_filename,
-						 directory => $input_directory,
-						 ignoresign => $ignoresign,
-						 missing_data_token => $missing_data_token,
-						 idcolumn => $idcolumn);
+    #data will be parsed here
+    my $data = data->new(filename => $input_filename,
+        directory => $input_directory,
+        ignoresign => $ignoresign,
+        missing_data_token => $missing_data_token,
+        idcolumn => $idcolumn);
 
     my @all_individuals;
     for my $id (@{$data->individuals}) {
         push @all_individuals, $id->idnumber;
     }
 
-	my $count = $data->count_ind;
-	unless (scalar(keys %subjects) > 0) {
-		$subjects{'default'} = $count;
-	}
+    my $count = $data->count_ind;
+    unless (scalar(keys %subjects) > 0) {
+        $subjects{'default'} = $count;
+    }
 
-	my ($new_datas, $incl_ids, $incl_keys) = $data->_bootstrap( directory   => $output_directory,
-															   name_stub   => $name_stub,
-															   samples     => $samples,
-															   subjects    => \%subjects,
-															   stratify_on => $stratify_on);
-	$data = undef;
-	return ($new_datas, $incl_ids, $incl_keys,\%subjects, $count, \@all_individuals);
+    my ($new_datas, $incl_ids, $incl_keys) = $data->_bootstrap( directory   => $output_directory,
+        name_stub   => $name_stub,
+        samples     => $samples,
+        subjects    => \%subjects,
+        stratify_on => $stratify_on,
+        replacement => $replacement );
+    $data = undef;
+    return ($new_datas, $incl_ids, $incl_keys,\%subjects, $count, \@all_individuals);
 }
 
-sub cdd_create_datasets{
+sub cdd_create_datasets
+{
 	#static method no shift
 	my %parm = validated_hash(\@_,
 		input_filename => { isa => 'Str', optional => 0 },
@@ -643,7 +653,8 @@ sub cdd_create_datasets{
 		output_directory => { isa => 'Str', optional => 0 },
 		ignoresign => { isa => 'Str', optional => 1 },
 		missing_data_token => { isa => 'Maybe[Num]', optional => 1 },
-		idcolumn => { isa => 'Int', optional => 0 }
+		idcolumn => { isa => 'Int', optional => 0 },
+        model => { isa => 'model', optional => 1 },     # Model is needed to filter out individuals that were filtered after run
 	);
 	my $input_filename = $parm{'input_filename'};
 	my $input_directory = $parm{'input_directory'};
@@ -654,6 +665,7 @@ sub cdd_create_datasets{
 	my $ignoresign = $parm{'ignoresign'};
 	my $missing_data_token = $parm{'missing_data_token'};
 	my $idcolumn = $parm{'idcolumn'};
+	my $model = $parm{'model'};
 
 	unless (-d $output_directory){
 		croak("output directory $output_directory is not a directory/does not exist");
@@ -662,16 +674,35 @@ sub cdd_create_datasets{
 	$output_directory = $tmp1; #to get with /
 
 	#data will be parsed here
-	my $data = data->new(filename => $input_filename,
-						 directory => $input_directory,
-						 ignoresign => $ignoresign,
-						 missing_data_token => $missing_data_token,
-						 idcolumn => $idcolumn);
+	my $data = data->new(
+        filename => $input_filename,
+        directory => $input_directory,
+        ignoresign => $ignoresign,
+        missing_data_token => $missing_data_token,
+        idcolumn => $idcolumn,
+    );
+
+    if (defined $model) {
+        # Keep only individuals available in phi file. I.e. those that haven't been filtered out
+        my $phi_filename = $model->outputs->[0]->problems->[0]->full_name_NM7_file(file_type => 'phi');
+        if (length($phi_filename) <= 0) {
+            croak("Could not open phi-file $phi_filename\n");
+        }
+        my $phi_table = nmtablefile->new(filename => $phi_filename);
+        my $ids = $phi_table->tables->[-1]->get_column(name=> 'ID');
+        my @kept_individuals;
+        for my $individual (@{$data->individuals}) {
+            if (array::numerical_in($individual->idnumber, $ids)) {
+                push @kept_individuals, $individual;
+            }
+        }
+        $data->individuals(\@kept_individuals);
+    }
 
     if (!$data->have_unique_ids()) {
         print("Warning: The dataset does not have unique IDs. There is a risk that individuals will be merged together.\n");
     }
-	
+
 	my ($new_datas, $skip_ids, $skip_keys, $skip_values, $remainders, $pr_bins ) =
 		$data -> _case_deletion( case_column => $case_column,
 								selection   => $selection_method,
@@ -684,9 +715,9 @@ sub cdd_create_datasets{
 sub _have_non_unique_values
 {
 	my $factors = shift;
-	if ( defined $factors->{'Non-unique values found'} and ($factors->{'Non-unique values found'} eq '1' )) {
+	if (defined $factors->{'Non-unique values found'} and ($factors->{'Non-unique values found'} eq '1')) {
 		return 1;
-	}else{
+	} else {
 		return 0;
 	}
 }
@@ -784,6 +815,7 @@ sub _case_deletion
 			}
 			push( @cd_inds, $individuals->[ $key ]->copy );
 		}
+
 		#here we simply write to file and then delete objects again
 		#we only return file names, not data objects
 		my $newname = $directory . 'cdd_' . ($k + 1) . '.dta';
@@ -793,9 +825,10 @@ sub _case_deletion
 									idcolumn    => $self->idcolumn,
 									individuals => \@cd_inds,
 									filename    => $newname,
-									ignore_missing_files => 1 );
+									ignore_missing_files => 1,
+                                );
 		$newdata->_write;
-		
+
 		my $delname = $directory . 'rem_' . ($k + 1) . '.dta';
 		my $deldata = data -> new ( header      => \@header,
 									ignoresign  => $self->ignoresign,
@@ -982,14 +1015,31 @@ sub format_data
 		}
 	}
 
-	if ( $have_header) {
-		push( @form_data, join(',',@{$self->header()})."\n" );
-	}
-	foreach my $individual ( @{$self->individuals()} ) {
-		foreach my $row ( @{$individual->subject_data} ) {
-			push(@form_data, $row ."\n");
-		}
-	}
+    if (not $self->space_separated) {
+        if ( $have_header) {
+            push( @form_data, join(',',@{$self->header()})."\n" );
+        }
+        foreach my $individual ( @{$self->individuals()} ) {
+            foreach my $row ( @{$individual->subject_data} ) {
+                push(@form_data, $row ."\n");
+            }
+        }
+    } else {
+        if ($have_header) {
+            push(@form_data, join(' ', @{$self->header()}) . "\n");
+        }
+        foreach my $individual (@{$self->individuals()}) {
+            foreach my $row (@{$individual->subject_data}) {
+                my $line = $row;
+                $line =~ s/^,/0,/;
+                $line =~ s/,$/,0/;
+                $line =~ s/,(?=,)/,0/g;
+                $line =~ s/,-/ -/g;
+                $line =~ s/,/  /g;
+                push(@form_data, "  $line\n");
+            }
+        }
+    }
 
 	return \@form_data;
 }
@@ -1063,11 +1113,11 @@ sub factors
 		my @ifactors = keys %{$individual->factors( column => $column )};
 		if ( scalar @ifactors > 1 and $unique_in_individual ) {
 			#do not set non-unique if only two and one of them is missing data
-			unless (scalar @ifactors == 2 and $ignore_missing and 
+			unless (scalar @ifactors == 2 and $ignore_missing and
 					($ifactors[0] eq '.' ||
 					 $ifactors[1] eq '.' ||
 					 $ifactors[0] == $self->missing_data_token ||
-					 $ifactors[1] == $self->missing_data_token)){ 
+					 $ifactors[1] == $self->missing_data_token)){
 				$factors{'Non-unique values found'} = 1;
 				print "Individual ".$individual->idnumber." factors ".join(',',@ifactors)."\n" if ($verbose);
 			}
@@ -1166,11 +1216,11 @@ sub fractions
 	my $unique_in_individual = $parm{'unique_in_individual'};
 	my %fractions;
 
-	my %factors = $self->factors( 'return_occurences' => 1, 
+	my %factors = $self->factors( 'return_occurences' => 1,
 			'unique_in_individual' => $unique_in_individual,
 			'column_head' => $column_head,
 			'column' => $column);
-	
+
 	my $sum = 0;
 	while (my ($factor, $amount) = each %factors) {
 		if ( $factor == $self->missing_data_token && $ignore_missing ) {
@@ -1211,7 +1261,7 @@ sub max
     # future, if it turns out to be a bottleneck
 
 	  my $first_id = $self->individuals()->[0];
-	  croak("data->max: No individuals defined in data object based on " . 
+	  croak("data->max: No individuals defined in data object based on " .
 			$self->full_name ) unless defined $first_id;
 
 	  my @data_row = split( /,/ , $first_id->subject_data ->[0] );
@@ -1249,7 +1299,7 @@ sub median
 		 column => { isa => 'Maybe[Int]', optional => 1 },
 		 column_head => { isa => 'Str', optional => 1 },
 		 unique_in_individual => { isa => 'Bool', default => 0, optional => 1 },
-		 global_median => { isa => 'Bool', default => 0, optional => 1 }							  
+		 global_median => { isa => 'Bool', default => 0, optional => 1 }
 	);
 	my $column = $parm{'column'};
 	my $column_head = $parm{'column_head'};
@@ -1278,14 +1328,14 @@ sub median
 		my @individual_array = ();
 		if( $unique_in_individual ) {
 			my $ifactors = $individual->factors( 'column' => $column );
-			
+
 			foreach ( keys %{$ifactors} ) {
 				next if ( $_ == $self->missing_data_token );
 				push( @individual_array, $_ );
 			}
 		} else {
 			my $ifactors = $individual->subject_data;
-			
+
 			for (my $i = 0; $i <= $#{$ifactors}; $i++ ) {
 				my @data_row = split( /,/ , $ifactors->[$i] );
 				next if ( ($data_row[$column-1] eq '.') or ($data_row[$column-1] == $self->missing_data_token) );
@@ -1300,7 +1350,7 @@ sub median
 	}
 
 	$return_value = array::median(\@median_array);
-	
+
 	$self->_median->[$column] = $return_value;
 
 	return $return_value;
@@ -1460,7 +1510,7 @@ sub sd
 		$mean = $self->mean(column   => $column,
 			hi_cutoff => $hi_cutoff,
 			global_mean => $global_sd );
-	} elsif (defined $low_cutoff) {	  
+	} elsif (defined $low_cutoff) {
 		$mean = $self->mean(column   => $column,
 			low_cutoff => $low_cutoff,
 			global_mean => $global_sd );
@@ -1661,178 +1711,208 @@ sub _renumber_ascending
 
 sub resample
 {
-	my $self = shift;
-	my %parm = validated_hash(\@_,
+    my $self = shift;
+    my %parm = validated_hash(\@_,
         new_name => { isa => 'Str', optional => 0 },
         stratify_on => { isa => 'Maybe[Int]', optional => 1 },
         resume => { isa => 'Bool', default => 0, optional => 1 },
         subjects => { isa => 'HashRef[Int]', default => $self->count_ind, optional => 1 },
+        replacement => { isa => 'Bool', default => 1 },     # Should sampling be with or without replacement
         MX_PARAMS_VALIDATE_NO_CACHE => 1
     );
-	my $new_name = $parm{'new_name'};
-	my $stratify_on = $parm{'stratify_on'};
-	my $resume = $parm{'resume'};
-	my %subjects = defined $parm{'subjects'} ? %{$parm{'subjects'}} : ();
-	my $boot;
-	my @incl_individuals;
-	my @included_keys;
+    my $new_name = $parm{'new_name'};
+    my $stratify_on = $parm{'stratify_on'};
+    my $resume = $parm{'resume'};
+    my %subjects = defined $parm{'subjects'} ? %{$parm{'subjects'}} : ();
+    my $replacement = $parm{'replacement'};
+    my $boot;
+    my @incl_individuals;
+    my @included_keys;
 
-	my ( @header, $individuals, @bs_inds, $key_ref, @id_ids, @bs_id_ids );
+    my ( @header, $individuals, @bs_inds, $key_ref, @id_ids, @bs_id_ids );
 
-	my @subj_keys = keys( %subjects );
-	if ( $#subj_keys < 0 ) {
-	  croak("sample_size must be defined" );
-	}
-	if ( defined $stratify_on ) {
-	  my %strata;
-	  if( $stratify_on =~ /\D/ ) {
-	    %strata = %{$self->factors( column_head => $stratify_on )};
-	    if ( _have_non_unique_values(\%strata) ) {
-	      croak("At least one individual was found to have multiple values in the $stratify_on column. ".
-			    "The column $stratify_on cannot be used for stratification of the resampling." );
-	    }
-	  } else {
-	    %strata = %{$self->factors( column => $stratify_on )};
-	    if (  _have_non_unique_values(\%strata) ) {
-	      croak("At least one individual was found to have multiple values in column number $stratify_on. ".
-			    "Column $stratify_on cannot be used for stratification of the resampling." );
-	    }
-	  }
-	  if ( scalar keys( %subjects) != scalar keys( %strata ) and
-	       not ( $#subj_keys == 0 and defined $subjects{'default'} ) ) {
-	    croak("sample_size must be defined using one default value ".
-			  "or exactly one value per strata:\n".
-			  "resampling per STUD=1001,1002,1003\n".
-			  "use -sample_size='1001=>10,1002=>25,1003=>12' or ".
-			  "-sample_size='default=>10'");
-	  }
- 	  unless ( $resume and -e $new_name ) {
-		  @header = @{$self->header()};
-		  $individuals = $self->individuals();
-		  my @factorlist = sort { $a <=> $b } keys %strata;
-		  
-		  foreach my $factor (@factorlist) {
-			  my $key_list = $strata{$factor};	
-			  my $keys;
-			  if ( defined $subjects{$factor} ) {
-				  $keys = $subjects{$factor};
-			  } elsif( defined $subjects{'default'} ) {
-				  $keys = sprintf( "%.0f",($subjects{'default'}*
-										   (scalar(@{$key_list})) / ($self->count_ind())) );
-			  } else {
-				  croak("A sample size for strata $factor could not be found ".
-						"and no default sample size was set" );
-			  }
-			  for ( my $i = 0; $i < $keys; $i++ ) {
-				  my $list_ref = random_uniform_integer(1,0,(scalar(@{$key_list}) - 1));
-				  push( @bs_inds, $individuals -> [ $key_list->[$list_ref] ]->copy );
-				  push( @included_keys, $key_list->[$list_ref] );
-				  push( @incl_individuals, $individuals -> [ $key_list->[$list_ref] ]->idnumber );
-				  push( @bs_id_ids, $id_ids[ $key_list->[$list_ref] ] );
-			  }
-		  }
+    my @subj_keys = keys( %subjects );
+    if ( $#subj_keys < 0 ) {
+        croak("sample_size must be defined" );
+    }
+    if ( defined $stratify_on ) {
+        my %strata;
+        if( $stratify_on =~ /\D/ ) {
+            %strata = %{$self->factors( column_head => $stratify_on )};
+            if ( _have_non_unique_values(\%strata) ) {
+                croak("At least one individual was found to have multiple values in the $stratify_on column. ".
+                    "The column $stratify_on cannot be used for stratification of the resampling." );
+            }
+        } else {
+            %strata = %{$self->factors( column => $stratify_on )};
+            if (  _have_non_unique_values(\%strata) ) {
+                croak("At least one individual was found to have multiple values in column number $stratify_on. ".
+                    "Column $stratify_on cannot be used for stratification of the resampling." );
+            }
+        }
+        if ( scalar keys( %subjects) != scalar keys( %strata ) and
+            not ( $#subj_keys == 0 and defined $subjects{'default'} ) ) {
+            croak("sample_size must be defined using one default value ".
+                "or exactly one value per strata:\n".
+                "resampling per STUD=1001,1002,1003\n".
+                "use -sample_size='1001=>10,1002=>25,1003=>12' or ".
+                "-sample_size='default=>10'");
+        }
+        unless ( $resume and -e $new_name ) {
+            @header = @{$self->header()};
+            $individuals = $self->individuals();
+            my @factorlist = sort { $a <=> $b } keys %strata;
 
-		  $boot = data->new( header      => \@header,
-							 idcolumn    => $self->idcolumn,
-							 ignoresign  => $self->ignoresign,
-							 missing_data_token => $self->missing_data_token,
-							 individuals => \@bs_inds,
-							 filename    => $new_name,
-							 ignore_missing_files => 1);
-		  $boot->_renumber_ascending;
-		  $boot->_write;
- 	  } else {
-		  # If we are resuming, we still need to generate the
-		  # pseudo-random sequence and initiate a data object
-		  while( my ( $factor, $key_list ) = each %strata ) {
-			  my $keys;
-			  if ( defined $subjects{$factor} ) {
-				  $keys = $subjects{$factor};
-			  } elsif( defined $subjects{'default'} ) {
-				  $keys = sprintf( "%.0f",($subjects{'default'}*
-										   (scalar(@{$key_list})) / ($self->count_ind())) );
-			  } else {
-				  croak("A sample size for strata $factor could not be found ".
-						"and no default sample size was set" );
-			  }
-			  for ( my $i = 0; $i < $keys; $i++ ) {
-				  my $list_ref = random_uniform_integer(1,0,(scalar(@{$key_list}) - 1));
-			  }
-		  }
-	  }
-	} else {
-		my $size;
-		if( defined $subjects{'default'} ) {
-			$size = $subjects{'default'};
-		} else {
-			croak("No default sample size was set" );
-		}
-		unless ( $resume and -e $new_name ) {
-			@header = @{$self->header()};
-			$self->individuals([]) unless defined $self->individuals; # FIXME
-			$individuals = $self->individuals;
-			for ( my $i = 1; $i <= $size; $i++ ) {
-				$key_ref = random_uniform_integer(1, 0, scalar @{$individuals} - 1);
-				push( @bs_inds, $individuals->[$key_ref]->copy );
-				push( @included_keys, $key_ref );
-				push( @incl_individuals, $individuals->[ $key_ref ]->idnumber );
-				push( @bs_id_ids, $id_ids[ $key_ref ] );
-			}
-			
-			$boot = data->new( header      => \@header,
-							   idcolumn    => $self->idcolumn,
-							   ignoresign  => $self->ignoresign,
-							   missing_data_token => $self->missing_data_token,
-							   individuals => \@bs_inds,
-							   filename    => $new_name,
-							   ignore_missing_files => 1);
-			
-			$boot->_renumber_ascending;
-			$boot->_write;
+            foreach my $factor (@factorlist) {
+                my $key_list = $strata{$factor};	
+                my @key_list_copy = @$key_list;
+                my $keys;
+                if ( defined $subjects{$factor} ) {
+                    $keys = $subjects{$factor};
+                } elsif( defined $subjects{'default'} ) {
+                    $keys = sprintf( "%.0f",($subjects{'default'}*
+                            (scalar(@{$key_list})) / ($self->count_ind())) );
+                } else {
+                    croak("A sample size for strata $factor could not be found ".
+                        "and no default sample size was set" );
+                }
+                for ( my $i = 0; $i < $keys; $i++ ) {
+                    if ($replacement) { 
+                        my $list_ref = random_uniform_integer(1, 0, (scalar(@{$key_list}) - 1));
+                        push( @bs_inds, $individuals -> [ $key_list->[$list_ref] ]->copy );
+                        push( @included_keys, $key_list->[$list_ref] );
+                        push( @incl_individuals, $individuals -> [ $key_list->[$list_ref] ]->idnumber );
+                        push( @bs_id_ids, $id_ids[ $key_list->[$list_ref] ] );
+                    } else {
+                        if (scalar(@key_list_copy) == 0) {
+                            print "Warning: Strata $factor ran out of samples\n";
+                            last;
+                        }
+                        my $list_index = random_uniform_integer(1, 0, scalar(@key_list_copy) - 1);
+                        push(@bs_inds, $individuals->[$key_list_copy[$list_index]]->copy );
+                        push(@included_keys, $key_list_copy[$list_index]);
+                        push(@incl_individuals, $individuals->[$key_list_copy[$list_index]]->idnumber);
+                        push(@bs_id_ids, $id_ids[$key_list_copy[$list_index]]);
+                        splice(@key_list_copy, $list_index, 1);
+                    }
+                }
+            }
 
-		} else {
-			# If we are resuming, we still need to generate the
-			# pseudo-random sequence
-			for ( my $i = 1; $i <= $size; $i++ ) {
-				random_uniform_integer(1,0,scalar @{$individuals}-1)
-			}
-		}	
-	}
+            $boot = data->new( header      => \@header,
+                idcolumn    => $self->idcolumn,
+                ignoresign  => $self->ignoresign,
+                missing_data_token => $self->missing_data_token,
+                individuals => \@bs_inds,
+                filename    => $new_name,
+                ignore_missing_files => 1);
+            $boot->_renumber_ascending;
+            $boot->_write;
+        } else {
+            # If we are resuming, we still need to generate the
+            # pseudo-random sequence and initiate a data object
+            while( my ( $factor, $key_list ) = each %strata ) {
+                my $keys;
+                if ( defined $subjects{$factor} ) {
+                    $keys = $subjects{$factor};
+                } elsif( defined $subjects{'default'} ) {
+                    $keys = sprintf( "%.0f",($subjects{'default'}*
+                            (scalar(@{$key_list})) / ($self->count_ind())) );
+                } else {
+                    croak("A sample size for strata $factor could not be found ".
+                        "and no default sample size was set" );
+                }
+                for ( my $i = 0; $i < $keys; $i++ ) {
+                    my $list_ref = random_uniform_integer(1,0,(scalar(@{$key_list}) - 1));
+                }
+            }
+        }
+    } else {
+        my $size;
+        if( defined $subjects{'default'} ) {
+            $size = $subjects{'default'};
+        } else {
+            croak("No default sample size was set" );
+        }
+        unless ( $resume and -e $new_name ) {
+            @header = @{$self->header()};
+            $self->individuals([]) unless defined $self->individuals; # FIXME
+            $individuals = $self->individuals;
+            my @individuals_copy = @$individuals;
+            for ( my $i = 1; $i <= $size; $i++ ) {
+                if ($replacement) {
+                    $key_ref = random_uniform_integer(1, 0, scalar @{$individuals} - 1);
+                    push( @bs_inds, $individuals->[$key_ref]->copy );
+                    push( @included_keys, $key_ref );
+                    push( @incl_individuals, $individuals->[ $key_ref ]->idnumber );
+                    push( @bs_id_ids, $id_ids[ $key_ref ] );
+                } else {
+                    if (scalar(@individuals_copy) == 0) {
+                        print "Warning: Ran out of individuals\n";
+                        last;
+                    }
+                    my $list_index = random_uniform_integer(1, 0, scalar(@individuals_copy) - 1);
+                    push(@bs_inds, $individuals->[$list_index]->copy);
+                    push(@included_keys, $list_index);
+                    push(@incl_individuals, $individuals->[$list_index]->idnumber);
+                    push(@bs_id_ids, $id_ids[$list_index]);
+                    splice(@individuals_copy, $list_index, 1);
+                }
+            }
 
-	return \@incl_individuals, \@included_keys;
+            $boot = data->new( header      => \@header,
+                idcolumn    => $self->idcolumn,
+                ignoresign  => $self->ignoresign,
+                missing_data_token => $self->missing_data_token,
+                individuals => \@bs_inds,
+                filename    => $new_name,
+                ignore_missing_files => 1);
+
+            $boot->_renumber_ascending;
+            $boot->_write;
+
+        } else {
+            # If we are resuming, we still need to generate the
+            # pseudo-random sequence
+            for ( my $i = 1; $i <= $size; $i++ ) {
+                random_uniform_integer(1,0,scalar @{$individuals}-1)
+            }
+        }	
+    }
+
+    return \@incl_individuals, \@included_keys;
 }
 
 sub resample_from_keys
 {
-	my $self = shift;
-	my %parm = validated_hash(\@_,
-							  new_name => { isa => 'Str', default => 'resampled.dta', optional => 1 },
-							  key_arr => { isa => 'ArrayRef[Int]', optional => 0 }
-	);
-	my $new_name = $parm{'new_name'};
-	my @key_arr = defined $parm{'key_arr'} ? @{$parm{'key_arr'}} : ();
-	my $boot;
+    my $self = shift;
+    my %parm = validated_hash(\@_,
+        new_name => { isa => 'Str', default => 'resampled.dta', optional => 1 },
+        key_arr => { isa => 'ArrayRef[Int]', optional => 0 }
+    );
+    my $new_name = $parm{'new_name'};
+    my @key_arr = defined $parm{'key_arr'} ? @{$parm{'key_arr'}} : ();
+    my $boot;
 
-	my (@header, $individuals, @bs_inds);
-	@header = @{$self->header};
-	$individuals = $self->individuals;
-	for (my $i = 0; $i < scalar(@key_arr); $i++) {
-	  push(@bs_inds, $individuals->[$key_arr[$i]]->copy);
-	}
+    my (@header, $individuals, @bs_inds);
+    @header = @{$self->header};
+    $individuals = $self->individuals;
+    for (my $i = 0; $i < scalar(@key_arr); $i++) {
+        push(@bs_inds, $individuals->[$key_arr[$i]]->copy);
+    }
 
-	$boot = data->new(
-		header      => \@header,
-		idcolumn    => $self->idcolumn,
-		ignoresign  => $self->ignoresign,
-		missing_data_token => $self->missing_data_token,
-		individuals => \@bs_inds,
-		filename    => $new_name,
-		ignore_missing_files => 1
-	);
-	$boot->_renumber_ascending;
-	$boot->_write;
-	$boot = undef;
-	return $new_name;
+    $boot = data->new(
+        header      => \@header,
+        idcolumn    => $self->idcolumn,
+        ignoresign  => $self->ignoresign,
+        missing_data_token => $self->missing_data_token,
+        individuals => \@bs_inds,
+        filename    => $new_name,
+        ignore_missing_files => 1
+    );
+    $boot->_renumber_ascending;
+    $boot->_write;
+    $boot = undef;
+    return $new_name;
 }
 
 sub subsets
@@ -1904,7 +1984,7 @@ sub subsets
 		while ( my ($factor, $rnd_ids ) = each %rnd_ids_hash ) {
 			#Sort individuals in each factor group according to assigned random number.
 			#Deal, like a deck of cards,  individuals from each factor groups to bins.
-			#If there are not enough 'cards' to give each bin equal number then 
+			#If there are not enough 'cards' to give each bin equal number then
 			#whichever bin was next in turn will get the first individual from the next factor.
 			#Individuals that should be ignored based on ignoresign are not filtered here,
 			#so sorting may be more uneven after ignoring.
@@ -2002,7 +2082,7 @@ sub split_vertically
 	my @stratify_values;
 
 	#split data set on column with index $split_index and extract stratification col
-	#and return left_side_individuals and right_side_individuals as two arrays of individual objects, 
+	#and return left_side_individuals and right_side_individuals as two arrays of individual objects,
 	#and split_values as ref of array of refs of arrays
 	# and stratification values as array
 	#without changing $self object. split values returned as array of array over individuals
@@ -2078,54 +2158,54 @@ sub split_vertically
 
 sub create_randomized_data
 {
-	#static, no shift
-	my %parm = validated_hash(\@_,
-							  rand_index => { isa => 'Int', optional => 0 },
-							  stratify_index => { isa => 'Maybe[Int]', optional => 1 },
-							  name_stub => { isa => 'Str', optional => 1 },
-							  samples => { isa => 'Int', optional => 0 },
-							  equal_obs => { isa => 'Bool', optional => 0 },
-							  input_filename => { isa => 'Str', optional => 0 },
-							  input_directory => { isa => 'Maybe[Str]', optional => 1 },
-							  output_directory => { isa => 'Str', optional => 0 },
-							  ignoresign => { isa => 'Str', optional => 1 },
-							  missing_data_token => { isa => 'Maybe[Num]', optional => 1 },
-							  idcolumn => { isa => 'Int', optional => 0 }
-		);
-	my $rand_index = $parm{'rand_index'};
-	my $stratify_index = $parm{'stratify_index'};
-	my $name_stub = $parm{'name_stub'};
-	my $samples = $parm{'samples'};
-	my $equal_obs = $parm{'equal_obs'};
-	my $input_filename = $parm{'input_filename'};
-	my $input_directory = $parm{'input_directory'};
-	my $output_directory = $parm{'output_directory'};
-	my $ignoresign = $parm{'ignoresign'};
-	my $missing_data_token = $parm{'missing_data_token'};
-	my $idcolumn = $parm{'idcolumn'};
+    #static, no shift
+    my %parm = validated_hash(\@_,
+        rand_index => { isa => 'Int', optional => 0 },
+        stratify_index => { isa => 'Maybe[Int]', optional => 1 },
+        name_stub => { isa => 'Str', optional => 1 },
+        samples => { isa => 'Int', optional => 0 },
+        equal_obs => { isa => 'Bool', optional => 0 },
+        input_filename => { isa => 'Str', optional => 0 },
+        input_directory => { isa => 'Maybe[Str]', optional => 1 },
+        output_directory => { isa => 'Str', optional => 0 },
+        ignoresign => { isa => 'Str', optional => 1 },
+        missing_data_token => { isa => 'Maybe[Num]', optional => 1 },
+        idcolumn => { isa => 'Int', optional => 0 }
+    );
+    my $rand_index = $parm{'rand_index'};
+    my $stratify_index = $parm{'stratify_index'};
+    my $name_stub = $parm{'name_stub'};
+    my $samples = $parm{'samples'};
+    my $equal_obs = $parm{'equal_obs'};
+    my $input_filename = $parm{'input_filename'};
+    my $input_directory = $parm{'input_directory'};
+    my $output_directory = $parm{'output_directory'};
+    my $ignoresign = $parm{'ignoresign'};
+    my $missing_data_token = $parm{'missing_data_token'};
+    my $idcolumn = $parm{'idcolumn'};
 
-	unless (-d $output_directory){
-		croak("output directory $output_directory is not a directory/does not exist");
-	}
-	my ($tmp1, $tmp2) = OSspecific::absolute_path($output_directory,'hej');
-	$output_directory = $tmp1; #to get with /
+    unless (-d $output_directory){
+        croak("output directory $output_directory is not a directory/does not exist");
+    }
+    my ($tmp1, $tmp2) = OSspecific::absolute_path($output_directory,'hej');
+    $output_directory = $tmp1; #to get with /
 
-	#data will be parsed here
-	my $data = data->new(filename => $input_filename,
-						 directory => $input_directory,
-						 ignoresign => $ignoresign,
-						 missing_data_token => $missing_data_token,
-						 idcolumn => $idcolumn);
+    #data will be parsed here
+    my $data = data->new(filename => $input_filename,
+        directory => $input_directory,
+        ignoresign => $ignoresign,
+        missing_data_token => $missing_data_token,
+        idcolumn => $idcolumn);
 
-	#files are written in _randomize_data
-	my $filenames = $data->_randomize_data(name_stub   => $name_stub,
-										   samples     => $samples,
-										   stratify_index => $stratify_index, 
-										   rand_index => $rand_index, 
-										   equal_obs => $equal_obs,
-										   directory => $output_directory);
-	$data = undef;
-	return $filenames;
+    #files are written in _randomize_data
+    my $filenames = $data->_randomize_data(name_stub   => $name_stub,
+        samples     => $samples,
+        stratify_index => $stratify_index,
+        rand_index => $rand_index,
+        equal_obs => $equal_obs,
+        directory => $output_directory);
+    $data = undef;
+    return $filenames;
 }
 
 sub _randomize_data
@@ -2156,7 +2236,7 @@ sub _randomize_data
 	#return array of data file names including dir
 
 	#setup
-	my ($left_side_individuals,$right_side_individuals,$rand_values,$stratify_values) = 
+	my ($left_side_individuals,$right_side_individuals,$rand_values,$stratify_values) =
 	$self->split_vertically(split_index => $rand_index,
 		stratify_index => $stratify_index);
 
@@ -2193,7 +2273,7 @@ sub _randomize_data
 					$individual_is_changed = 0;
 				}elsif (scalar(@{$rand_values->[$base_index]}) == scalar(@{$rand_values->[$rand_index]})){
 					my $found_diff=0;
-					for (my $tmp=0; $tmp < scalar(@{$rand_values->[$base_index]}); $tmp++){ 
+					for (my $tmp=0; $tmp < scalar(@{$rand_values->[$base_index]}); $tmp++){
 						if ($rand_values->[$base_index]->[$tmp] != $rand_values->[$rand_index]->[$tmp]){#warning non-numeric
 							$found_diff=1;
 							last;
@@ -2209,7 +2289,7 @@ sub _randomize_data
 		$count_changed_individual_data[$i] = $changed_count;
 		my $newdata = data->new( header      => \@header,
 								 idcolumn    => $self->idcolumn,
-								 missing_data_token => $self->missing_data_token,			 
+								 missing_data_token => $self->missing_data_token,
 								 ignoresign  => $self->ignoresign,
 								 individuals => \@new_individuals,
 								 filename    => $new_name,
@@ -2221,7 +2301,7 @@ sub _randomize_data
 
 	my $filename = 'count_randcol_diff.txt';
 	$filename = $directory.'/'.$filename if (defined $directory);
-	open(FILE,">$filename") || 
+	open(FILE,">$filename") ||
 	die "Could not create $filename\n";
 	print FILE join("\n",@count_changed_individual_data )."\n";
 	close(FILE);
@@ -2250,7 +2330,7 @@ sub reconcile_column
 	#if new_values is longer then do last observation carry forward. If new_values is shorter
 	#then just skip last values in template_values
 	#if equal_obs is not true (equal_switch is true) then create array value_sequence from template_values
-	#copy first value from template_values to new_values. Then for each new 
+	#copy first value from template_values to new_values. Then for each new
 	#position compare old_value at this pos with previous pos
 	#if equal then set new_values at this pos to same as previous pos
 	#if different then set new_values at this pos to next value in value_sequence.
@@ -2316,7 +2396,7 @@ sub reconcile_column
 					($template_values->[$i] != $self->missing_data_token())){
 					push(@value_sequence,$template_values->[$i]);
 					$index++;
-				} 
+				}
 			}elsif(math::usable_number($template_values->[$i]) or math::usable_number($value_sequence[$index])){
 				#one is numeric, then must be different
 				push(@value_sequence,$template_values->[$i]);
@@ -2411,7 +2491,7 @@ sub get_eta_matrix
 			}
 			push( @eta_matrix, \@new_row );
 		}
-	}  
+	}
 
 	return \@eta_matrix;
 }
@@ -2448,7 +2528,7 @@ sub column_to_array
 				my @row = split(/,/, $individual_row);
 				push(@array, $row[$column]);
 			}
-		}  
+		}
 	} else {
 		my $index = 0;
 		foreach my $individual (@{$self->individuals}) {
@@ -2476,9 +2556,13 @@ sub _write
 	my $self = shift;
 	my %parm = validated_hash(\@_,
 		filename => { isa => 'Str', default => $self->full_name, optional => 1 },
+        overwrite => { isa => 'Bool', default => 0 },
+        as_table => { isa => 'Bool', default => 0 },
 		MX_PARAMS_VALIDATE_NO_CACHE => 1
 	);
 	my $filename = $parm{'filename'};
+	my $overwrite = $parm{'overwrite'};
+	my $as_table = $parm{'as_table'};
 
 	die "ERROR: data->_write: No filename set in data object.\n" if( $filename eq '' );
 
@@ -2487,14 +2571,16 @@ sub _write
 		croak("Trying to write to $filename, but no individuals in memory");
 	}
 
-	if (-e $filename){
+	if (not $overwrite and -e $filename){
 		croak("Trying to write to $filename, but file already exists");
 	}
 
-	open(FILE,">$filename") || 
-	die "Could not create $filename\n";
+	open(FILE,">$filename") || die "Could not create $filename\n";
 	my $data_ref = $self->format_data;
 	my @data = @{$data_ref};
+    if ($as_table) {
+        print FILE "TABLE NO.  1\n";
+    }
 	for ( @data ) {
 		print ( FILE );
 	}
@@ -2527,7 +2613,7 @@ sub _read_header
 	my $ignoresign = $self->ignoresign;
 	my ( @data, @new_record, $row, $tmp_row, @header, $hdrstring );
 	$row=0;
-	open(DATAFILE,"$filename") || 
+	open(DATAFILE,"$filename") ||
 	die "Could not open $filename for reading";
 	my $found_data=0;
 	while (<DATAFILE>) {
@@ -2535,7 +2621,7 @@ sub _read_header
 		#skip spaces after commas
 		s/\,\s*/\,/g;
 		$tmp_row    = $_;
-		
+
 		my $is_header=0;
 
 		if (defined $ignoresign and length($ignoresign)>0){
@@ -2570,7 +2656,7 @@ sub _read_header
 		"in which case the workaround is to run mac2unix on " . $self->filename . "\n" unless $found_data;
 
 	$hdrstring = pop(@data); #last value of array
-	chomp($hdrstring) if (defined $hdrstring); 
+	chomp($hdrstring) if (defined $hdrstring);
 	#	print "headerstring $hdrstring\n";
 	@header = ();
 	@header = split(/\,\s*|\s+/, $hdrstring) if (defined $hdrstring);
@@ -2656,7 +2742,7 @@ sub _read_individuals
 		s/\,[ ]+/\,/g;  # remove spaces after original and new commas (TABs absorb spaces coming after, but not before)
 		s/[ ]+/\,/g;    # replace sequence of spaces with commas
 
-		my @new_row	= split(/\,/); 
+		my @new_row	= split(/\,/);
 		my $is_data = 1;
 
 		if (defined $ignoresign and length($ignoresign)>0){
@@ -2706,8 +2792,8 @@ sub _read_individuals
 			$old_ID = $new_ID if ( not defined $old_ID );
 
 			#If we have not yet found first individual to read, then
-			#count each time new individual found. If new individual is 
-			#first individual to read, then reset old_ID so that 
+			#count each time new individual found. If new individual is
+			#first individual to read, then reset old_ID so that
 			#the individual's lines will be read before new individual is pushed.
 			#If we have not found first individual to read then skip to next line in file
 
@@ -2782,7 +2868,7 @@ sub create_row_filter
 		$index++;
 	}
 
-	#if no columns to filter on were found, return empty filter array 
+	#if no columns to filter on were found, return empty filter array
 	#which means "keep everything". Otherwise enter loop below.
 
 	unless (scalar(keys %index_hash) < 1){
@@ -2806,6 +2892,57 @@ sub create_row_filter
 	}
 
 	return \@filter;
+}
+
+sub filter_column
+{
+    # Filter out all values from colname. If any individual gets empty remove it.
+    # If more than one column with colname exists take the first
+    # Returns an indicator of whether dataset was filtered or not
+	my $self = shift;
+	my %parm = validated_hash(\@_,
+		colname => { isa => 'Str' },
+        value => { isa => 'Num' },
+	);
+	my $colname = $parm{'colname'};
+	my $value = $parm{'value'};
+
+	my $ninds = scalar(@{$self->individuals});
+	my $index = 0;
+    my $found = 0;
+
+	foreach my $column_name (@{$self->header}) {
+		if ($column_name =~ /^($colname)$/){
+			$found = 1;
+            last;
+		}
+		$index++;
+	}
+    if (not $found) {
+        return 0;
+    }
+
+    my @keep_individuals;
+    foreach my $individual (@{$self->individuals}) {
+        my @keep;
+        foreach my $datarow (@{$individual->subject_data}) {
+            my @row = split(/,/, $datarow);
+            if ($row[$index] != $value) {
+                splice(@row, $index, 1);
+                my $new_row = join(',', @row);
+                push @keep, $new_row;
+            }
+        }
+        if (scalar(@keep) > 0) {
+            $individual->subject_data(\@keep);
+            push @keep_individuals, $individual;
+        }
+    }
+    $self->individuals(\@keep_individuals);
+    my @new_header = @{$self->header};
+    splice(@new_header, $index, 1);
+    $self->header(\@new_header);
+    return 1;
 }
 
 sub lasso_calculate_covariate_statistics
@@ -2862,362 +2999,362 @@ sub lasso_calculate_covariate_statistics
 
 sub lasso_get_categorical_statistics
 {
-	#unit tests in data.t
-	my $self = shift;
-	my %parm = validated_hash(\@_,
-							  column_number => { isa => 'Int', optional => 0 },
-							  missing_data_token => { isa => 'Maybe[Num]', optional => 0 }
-		);
-	my $column_number = $parm{'column_number'};
-	my $missing_data_token = $parm{'missing_data_token'};
+    #unit tests in data.t
+    my $self = shift;
+    my %parm = validated_hash(\@_,
+        column_number => { isa => 'Int', optional => 0 },
+        missing_data_token => { isa => 'Maybe[Num]', optional => 0 }
+    );
+    my $column_number = $parm{'column_number'};
+    my $missing_data_token = $parm{'missing_data_token'};
 
-	my %statistics;
+    my %statistics;
 
-	my %sums;
-	my %factors;
+    my %sums;
+    my %factors;
 
-	my @individuals = @{$self->individuals};
-	my $first_id = $individuals[0];
-	croak("data -> factor: No individuals defined in data object based on ",
-		  $self->filename,"\n") unless defined $first_id;
+    my @individuals = @{$self->individuals};
+    my $first_id = $individuals[0];
+    croak("data -> factor: No individuals defined in data object based on ",
+        $self->filename,"\n") unless defined $first_id;
 
-	my $n_ind = scalar(@individuals);
-	my @individual_sums =();
-	
-	foreach my $individual ( @individuals ) {
-		my $ifactors = $individual -> subject_data;
-		my $count = scalar(@{$ifactors});
-		push(@individual_sums,{});
-		my $weight=1;
-		if ($count > 0){
-			$weight = 1/$count;
-		}
-		for(my $i=0; $i< $count; $i++ ) {
-			my @recor = split(',', $ifactors -> [$i], $column_number+1);
-			my $type = $recor[$column_number-1];
-			if (exists $sums{$type}){
-				$sums{$type}+=$weight;
-			} else {
-				$sums{$type}=$weight;
-			}
-			if (exists $individual_sums[-1]->{$type}){
-				$individual_sums[-1]->{$type}+=$weight;
-			} else {
-				$individual_sums[-1]->{$type}=$weight;
-			}
-		}
-	}
+    my $n_ind = scalar(@individuals);
+    my @individual_sums =();
 
-	#here we may have floating point categories. Redefine to integer
-	my $all_integer=1;
-	foreach my $fact (keys %sums){
-		my $tmp = sprintf("%.0f",$fact);
-		$all_integer = 0 unless ($tmp == $fact);
-	}
-	unless ($all_integer){
-		croak("the lasso can currently not handle non-integer categorical values for covariates. ".
-			  "You need to change your dataset so that all categorical covariates only have integer values.");
-	}
+    foreach my $individual ( @individuals ) {
+        my $ifactors = $individual -> subject_data;
+        my $count = scalar(@{$ifactors});
+        push(@individual_sums,{});
+        my $weight=1;
+        if ($count > 0){
+            $weight = 1/$count;
+        }
+        for(my $i=0; $i< $count; $i++ ) {
+            my @recor = split(',', $ifactors -> [$i], $column_number+1);
+            my $type = $recor[$column_number-1];
+            if (exists $sums{$type}){
+                $sums{$type}+=$weight;
+            } else {
+                $sums{$type}=$weight;
+            }
+            if (exists $individual_sums[-1]->{$type}){
+                $individual_sums[-1]->{$type}+=$weight;
+            } else {
+                $individual_sums[-1]->{$type}=$weight;
+            }
+        }
+    }
 
-	my %oldkeys;
-	foreach my $fact (keys %sums){
-		my $integerkey = sprintf("%.0f",$fact);
-		$oldkeys{$integerkey}=$fact;
-		$factors{$integerkey}=$sums{$fact};
-	}
-	
-	$statistics{'cat_hash'} = \%factors;
+    #here we may have floating point categories. Redefine to integer
+    my $all_integer=1;
+    foreach my $fact (keys %sums){
+        my $tmp = sprintf("%.0f",$fact);
+        $all_integer = 0 unless ($tmp == $fact);
+    }
+    unless ($all_integer){
+        croak("the lasso can currently not handle non-integer categorical values for covariates. ".
+            "You need to change your dataset so that all categorical covariates only have integer values.");
+    }
 
-	#sort most first
-	my @sorted = sort {$factors{$b}<=>$factors{$a}} keys (%factors);
-	if ($sorted[0] ne $missing_data_token or (scalar (@sorted)==1 )){
-		$statistics{'most_common'} = $sorted[0]; # First element of the sorted array
-		# (the factor that most subjects have)
-	}else{
-		$statistics{'most_common'} = $sorted[1];
-	} 
+    my %oldkeys;
+    foreach my $fact (keys %sums){
+        my $integerkey = sprintf("%.0f",$fact);
+        $oldkeys{$integerkey}=$fact;
+        $factors{$integerkey}=$sums{$fact};
+    }
 
-	my %sd_sums;
-	foreach my $factor (keys %factors){
-		$statistics{'mean'}{$factor} = $factors{$factor}/$n_ind;
-		$sd_sums{$factor} = 0;
-	}
+    $statistics{'cat_hash'} = \%factors;
 
-	for (my $ind=0; $ind<scalar(@individual_sums); $ind++){
-		foreach my $factor (keys %factors){
-			my $type = $oldkeys{$factor};
-			if (exists $individual_sums[$ind]->{$type}){
-				$sd_sums{$factor} += ($individual_sums[$ind]->{$type}-$statistics{'mean'}{$factor})**2;
-			}else{
-				$sd_sums{$factor} += (0-$statistics{'mean'}{$factor})**2;
-			}
-		}
-	}
-	foreach my $factor (keys %factors){
-		$statistics{'sd'}{$factor} = sqrt($sd_sums{$factor}/($n_ind-1));
-	}
+    #sort most first
+    my @sorted = sort {$factors{$b}<=>$factors{$a}} keys (%factors);
+    if ($sorted[0] ne $missing_data_token or (scalar (@sorted)==1 )){
+        $statistics{'most_common'} = $sorted[0]; # First element of the sorted array
+        # (the factor that most subjects have)
+    }else{
+        $statistics{'most_common'} = $sorted[1];
+    }
 
-	return \%statistics;
+    my %sd_sums;
+    foreach my $factor (keys %factors){
+        $statistics{'mean'}{$factor} = $factors{$factor}/$n_ind;
+        $sd_sums{$factor} = 0;
+    }
+
+    for (my $ind=0; $ind<scalar(@individual_sums); $ind++){
+        foreach my $factor (keys %factors){
+            my $type = $oldkeys{$factor};
+            if (exists $individual_sums[$ind]->{$type}){
+                $sd_sums{$factor} += ($individual_sums[$ind]->{$type}-$statistics{'mean'}{$factor})**2;
+            }else{
+                $sd_sums{$factor} += (0-$statistics{'mean'}{$factor})**2;
+            }
+        }
+    }
+    foreach my $factor (keys %factors){
+        $statistics{'sd'}{$factor} = sqrt($sd_sums{$factor}/($n_ind-1));
+    }
+
+    return \%statistics;
 }
 
 sub scm_calculate_covariate_statistics
 {
-	#unit test indirectly via scm->new in unit/scm.t
-	my $self = shift;
-	my %parm = validated_hash(\@_,
-							  categorical_covariates => { isa => 'Maybe[ArrayRef]', optional => 1},
-							  continuous_covariates => { isa => 'Maybe[ArrayRef]', optional => 1},
-							  model_column_numbers => { isa => 'HashRef', optional => 0},
-							  time_varying => { isa => 'Maybe[ArrayRef]', optional => 1},
-							  linearize => { isa => 'Bool', optional => 0 },
-							  return_after_derivatives_done => { isa => 'Bool', optional => 0 },
-							  gof => { isa => 'Str', optional => 0 },
-							  missing_data_token => { isa => 'Maybe[Num]', optional => 0 }
-		);
-	#ref of hash of cov names to column numbers
-	my %model_column_numbers = (defined $parm{'model_column_numbers'})? %{$parm{'model_column_numbers'}}: ();
-	my @categorical_covariates = (defined $parm{'categorical_covariates'})? @{$parm{'categorical_covariates'}}: ();
-	my @continuous_covariates = (defined $parm{'continuous_covariates'})? @{$parm{'continuous_covariates'}}: ();
-	my $missing_data_token = $parm{'missing_data_token'};
-	my $gof = $parm{'gof'};
-	my $linearize = $parm{'linearize'};
-	my @time_varying = (defined $parm{'time_varying'})? @{$parm{'time_varying'}}: ();;
-	my $return_after_derivatives_done = $parm{'return_after_derivatives_done'};
-	my $results={};
+    #unit test indirectly via scm->new in unit/scm.t
+    my $self = shift;
+    my %parm = validated_hash(\@_,
+        categorical_covariates => { isa => 'Maybe[ArrayRef]', optional => 1},
+        continuous_covariates => { isa => 'Maybe[ArrayRef]', optional => 1},
+        model_column_numbers => { isa => 'HashRef', optional => 0},
+        time_varying => { isa => 'Maybe[ArrayRef]', optional => 1},
+        linearize => { isa => 'Bool', optional => 0 },
+        return_after_derivatives_done => { isa => 'Bool', optional => 0 },
+        gof => { isa => 'Str', optional => 0 },
+        missing_data_token => { isa => 'Maybe[Num]', optional => 0 }
+    );
+    #ref of hash of cov names to column numbers
+    my %model_column_numbers = (defined $parm{'model_column_numbers'})? %{$parm{'model_column_numbers'}}: ();
+    my @categorical_covariates = (defined $parm{'categorical_covariates'})? @{$parm{'categorical_covariates'}}: ();
+    my @continuous_covariates = (defined $parm{'continuous_covariates'})? @{$parm{'continuous_covariates'}}: ();
+    my $missing_data_token = $parm{'missing_data_token'};
+    my $gof = $parm{'gof'};
+    my $linearize = $parm{'linearize'};
+    my @time_varying = (defined $parm{'time_varying'})? @{$parm{'time_varying'}}: ();;
+    my $return_after_derivatives_done = $parm{'return_after_derivatives_done'};
+    my $results={};
 
-	my $category='scm';
+    my $category='scm';
 
-	unless( defined $self->individuals()  and (scalar(@{$self->individuals}) > 0)) {
-		croak("empty data in scm_calculate_covariate_statistics");
-	}
+    unless( defined $self->individuals()  and (scalar(@{$self->individuals}) > 0)) {
+        croak("empty data in scm_calculate_covariate_statistics");
+    }
 
-	if (scalar(@continuous_covariates)>0) {
-		ui -> print( category => $category,
-					 message  => "Calculating continuous covariate statistics",
-					 newline => 1);
+    if (scalar(@continuous_covariates)>0) {
+        ui -> print( category => $category,
+            message  => "Calculating continuous covariate statistics",
+            newline => 1);
 
-		my $ncov = scalar(@continuous_covariates);
-		my $status_bar = status_bar -> new( steps => $ncov );
-		ui -> print( category => $category,
-					 message  => $status_bar -> print_step(),
-					 newline  => 0);
+        my $ncov = scalar(@continuous_covariates);
+        my $status_bar = status_bar -> new( steps => $ncov );
+        ui -> print( category => $category,
+            message  => $status_bar -> print_step(),
+            newline  => 0);
 
-		foreach my $cov (@continuous_covariates){
-			# Factors
-			unless (defined $model_column_numbers{$cov}){
-				croak("Could not find continuous covariate $cov in \$INPUT of model:\n".
-					  join(' ',(keys %model_column_numbers)));
-			}
-			$results->{$cov}{'factors'} = $self -> factors( column => $model_column_numbers{$cov},
-													   unique_in_individual => 0,
-													   return_occurences => 1 );
-			# Statistics
-			$results->{$cov}{'have_missing_data'} = _have_missing_values(factors => $results->{$cov}{'factors'},
-																		 missing_data_token => $missing_data_token); #$self???
+        foreach my $cov (@continuous_covariates){
+            # Factors
+            unless (defined $model_column_numbers{$cov}){
+                croak("Could not find continuous covariate $cov in \$INPUT of model:\n".
+                    join(' ',(keys %model_column_numbers)));
+            }
+            $results->{$cov}{'factors'} = $self -> factors( column => $model_column_numbers{$cov},
+                unique_in_individual => 0,
+                return_occurences => 1 );
+            # Statistics
+            $results->{$cov}{'have_missing_data'} = _have_missing_values(factors => $results->{$cov}{'factors'},
+                missing_data_token => $missing_data_token); #$self???
 
-			($results->{$cov}{'median'},$results->{$cov}{'min'},$results->{$cov}{'max'},$results->{$cov}{'mean'}) =
-				$self -> scm_calculate_continuous_statistics(covariate => $cov,
-															 column_number => $model_column_numbers{$cov},
-															 time_varying => \@time_varying,
-															 linearize => $linearize,
-															 return_after_derivatives_done => $return_after_derivatives_done);
+            ($results->{$cov}{'median'},$results->{$cov}{'min'},$results->{$cov}{'max'},$results->{$cov}{'mean'}) =
+            $self -> scm_calculate_continuous_statistics(covariate => $cov,
+                column_number => $model_column_numbers{$cov},
+                time_varying => \@time_varying,
+                linearize => $linearize,
+                return_after_derivatives_done => $return_after_derivatives_done);
 
-			my $prob = "This will probably cause errors later in the run.";
-			unless (math::usable_number($results->{$cov}{'min'})){
-				if (defined $results->{$cov}{'min'}){
-					ui->print(category => 'all',"\n WARNING: Minimum value for $cov is ".$results->{$cov}{'min'}.
-							  " which is not a usable number. $prob" );
-				}else{
-					ui->print(category => 'all',"\n WARNING: Minimum value for $cov is undefined. $prob" );
-				}
-			}
-			unless (math::usable_number($results->{$cov}{'max'})){
-				if (defined $results->{$cov}{'max'}){
-					ui->print(category => 'all',"\n WARNING: Maximum value for $cov is ".$results->{$cov}{'max'}." which is not a usable number. $prob" );
-				}else{
-					ui->print(category => 'all',"\n WARNING: Maximum value for $cov is undefined. $prob" );
-				}
-			}
-				
-			if( $status_bar -> tick () ){
-				ui -> print( category => $category,
-							 message  => $status_bar -> print_step(),
-							 wrap     => 0,
-							 newline  => 0 );
-			}
-		}
-		ui -> print( category => $category,
-					 message  => " ... done",newline => 1 );
-		
-		
-	}
-	if (scalar(@categorical_covariates)>0) {
-		ui -> print( category => $category,
-					 message  => "Calculating categorical covariate statistics",
-					 newline => 1);
-		my $ncov = scalar(@categorical_covariates);
+            my $prob = "This will probably cause errors later in the run.";
+            unless (math::usable_number($results->{$cov}{'min'})){
+                if (defined $results->{$cov}{'min'}){
+                    ui->print(category => 'all',"\n WARNING: Minimum value for $cov is ".$results->{$cov}{'min'}.
+                        " which is not a usable number. $prob" );
+                }else{
+                    ui->print(category => 'all',"\n WARNING: Minimum value for $cov is undefined. $prob" );
+                }
+            }
+            unless (math::usable_number($results->{$cov}{'max'})){
+                if (defined $results->{$cov}{'max'}){
+                    ui->print(category => 'all',"\n WARNING: Maximum value for $cov is ".$results->{$cov}{'max'}." which is not a usable number. $prob" );
+                }else{
+                    ui->print(category => 'all',"\n WARNING: Maximum value for $cov is undefined. $prob" );
+                }
+            }
 
-		my $status_bar = status_bar -> new( steps => $ncov );
-		ui -> print( category => $category,
-					 message  => $status_bar -> print_step(),
-					 newline  => 0);
-
-		foreach my $cov (@categorical_covariates){
-			unless (defined $model_column_numbers{$cov}){
-				croak("Could not find categorical covariate $cov in \$INPUT of model:\n".
-					  join(' ',(keys %model_column_numbers)));
-			}
-			# Factors
-			$results->{$cov}{'factors'} = $self -> factors( column => $model_column_numbers{$cov},
-															unique_in_individual => 0,
-															return_occurences => 1 );
-			# Statistics
-			$results->{$cov}{'have_missing_data'} = _have_missing_values(factors => $results->{$cov}{'factors'},
-																		 missing_data_token => $missing_data_token); #$self???
+            if( $status_bar -> tick () ){
+                ui -> print( category => $category,
+                    message  => $status_bar -> print_step(),
+                    wrap     => 0,
+                    newline  => 0 );
+            }
+        }
+        ui -> print( category => $category,
+            message  => " ... done",newline => 1 );
 
 
-			( $results->{$cov}{'median'},$results->{$cov}{'min'},	$results->{$cov}{'max'} ) =
-				$self -> scm_calculate_categorical_statistics(covariate => $cov,
-															  column_number => $model_column_numbers{$cov},
-															  missing_data_token => $missing_data_token,
-															  factors => $results->{$cov}{'factors'},
-															  gof => $gof,
-															  linearize => $linearize);
-			
-			if( $status_bar -> tick () ){
-				ui -> print( category => $category,
-							 message  => $status_bar -> print_step(),
-							 wrap     => 0,
-							 newline  => 0 );
-			}
-		}
-		ui -> print( category => $category,
-					 message  => " ... done",
-					 newline => 1);
-	}
-	return $results;
+    }
+    if (scalar(@categorical_covariates)>0) {
+        ui -> print( category => $category,
+            message  => "Calculating categorical covariate statistics",
+            newline => 1);
+        my $ncov = scalar(@categorical_covariates);
+
+        my $status_bar = status_bar -> new( steps => $ncov );
+        ui -> print( category => $category,
+            message  => $status_bar -> print_step(),
+            newline  => 0);
+
+        foreach my $cov (@categorical_covariates){
+            unless (defined $model_column_numbers{$cov}){
+                croak("Could not find categorical covariate $cov in \$INPUT of model:\n".
+                    join(' ',(keys %model_column_numbers)));
+            }
+            # Factors
+            $results->{$cov}{'factors'} = $self -> factors( column => $model_column_numbers{$cov},
+                unique_in_individual => 0,
+                return_occurences => 1 );
+            # Statistics
+            $results->{$cov}{'have_missing_data'} = _have_missing_values(factors => $results->{$cov}{'factors'},
+                missing_data_token => $missing_data_token); #$self???
+
+
+            ( $results->{$cov}{'median'},$results->{$cov}{'min'},	$results->{$cov}{'max'} ) =
+            $self -> scm_calculate_categorical_statistics(covariate => $cov,
+                column_number => $model_column_numbers{$cov},
+                missing_data_token => $missing_data_token,
+                factors => $results->{$cov}{'factors'},
+                gof => $gof,
+                linearize => $linearize);
+
+            if( $status_bar -> tick () ){
+                ui -> print( category => $category,
+                    message  => $status_bar -> print_step(),
+                    wrap     => 0,
+                    newline  => 0 );
+            }
+        }
+        ui -> print( category => $category,
+            message  => " ... done",
+            newline => 1);
+    }
+    return $results;
 }
 
 sub scm_calculate_categorical_statistics
 {
-	my $self = shift;
-	my %parm = validated_hash(\@_,
-							  covariate => { isa => 'Str', optional => 0 },
-							  column_number => { isa => 'Int', optional => 0 },
-							  missing_data_token => { isa => 'Maybe[Num]', optional => 0 },
-							  factors => { isa => 'HashRef', optional => 0 },
-							  gof => { isa => 'Str', optional => 0 },
-							  linearize => { isa => 'Bool', optional => 0 }
-	);
-	my $covariate = $parm{'covariate'};
-	my $column_number = $parm{'column_number'};
-	my $linearize = $parm{'linearize'};
-	my $missing_data_token = $parm{'missing_data_token'};
-	my $gof = $parm{'gof'};
-	my %factors = defined $parm{'factors'} ? %{$parm{'factors'}} : ();
+    my $self = shift;
+    my %parm = validated_hash(\@_,
+        covariate => { isa => 'Str', optional => 0 },
+        column_number => { isa => 'Int', optional => 0 },
+        missing_data_token => { isa => 'Maybe[Num]', optional => 0 },
+        factors => { isa => 'HashRef', optional => 0 },
+        gof => { isa => 'Str', optional => 0 },
+        linearize => { isa => 'Bool', optional => 0 }
+    );
+    my $covariate = $parm{'covariate'};
+    my $column_number = $parm{'column_number'};
+    my $linearize = $parm{'linearize'};
+    my $missing_data_token = $parm{'missing_data_token'};
+    my $gof = $parm{'gof'};
+    my %factors = defined $parm{'factors'} ? %{$parm{'factors'}} : ();
 
-	my $median;
-	my $min;
-	my $max;
+    my $median;
+    my $min;
+    my $max;
 
-	my %strata = %{$self-> factors( column => $column_number,
-									return_occurences =>1,
-									unique_in_individual => 1,
-									ignore_missing => 1)};
-	
-	if (  _have_non_unique_values(\%strata) ) {
-		if ($linearize){
-			ui -> print( category => 'all',
-				message => "\nWarning: Individuals were found to have multiple values ".
-				"in the $covariate column, this renders the linearization inappropriate for this covariate. ".
-				"Consider terminating this run and setting ".
-				"covariate $covariate as continuous and time-varying in the configuration file.\n" );
-		}
-	}
+    my %strata = %{$self-> factors( column => $column_number,
+    return_occurences =>1,
+    unique_in_individual => 1,
+    ignore_missing => 1)};
 
-	# Sort by frequency
-	my @sorted = sort {$factors{$b}<=>$factors{$a}} keys (%factors); #switched a b Kajsa bugfix
-	if (scalar(@sorted) > 11){
-		ui-> print (category => 'scm',
-			"\n\n***Warning:***\nMore than 11 categories found for a categorical ".
-			"covariate. The program can only handle changes by 10 degrees of freedom.".
-			"\n",newline => 1) unless ( lc($gof) eq 'p_value' );
+    if (  _have_non_unique_values(\%strata) ) {
+        if ($linearize){
+            ui -> print( category => 'all',
+                message => "\nWarning: Individuals were found to have multiple values ".
+                "in the $covariate column, this renders the linearization inappropriate for this covariate. ".
+                "Consider terminating this run and setting ".
+                "covariate $covariate as continuous and time-varying in the configuration file.\n" );
+        }
+    }
 
-	}
+    # Sort by frequency
+    my @sorted = sort {$factors{$b}<=>$factors{$a}} keys (%factors); #switched a b Kajsa bugfix
+    if (scalar(@sorted) > 11){
+        ui-> print (category => 'scm',
+            "\n\n***Warning:***\nMore than 11 categories found for a categorical ".
+            "covariate. The program can only handle changes by 10 degrees of freedom.".
+            "\n",newline => 1) unless ( lc($gof) eq 'p_value' );
 
-	# These lines will set the most common value in $medians{$cov}
-	if ($sorted[0] ne $missing_data_token or (scalar (@sorted)==1 )){
-		$median = $sorted[0]; # First element of the sorted array
-		# (the factor that most subjects have)
-	}else{
-		$median = $sorted[1];
-	} 
-	#max and min ignores missing data
-	$max = $self -> max( column => $column_number );
-	$min = $self -> min( column => $column_number );
+    }
 
-	return $median ,$min ,$max;
+    # These lines will set the most common value in $medians{$cov}
+    if ($sorted[0] ne $missing_data_token or (scalar (@sorted)==1 )){
+        $median = $sorted[0]; # First element of the sorted array
+        # (the factor that most subjects have)
+    }else{
+        $median = $sorted[1];
+    }
+    #max and min ignores missing data
+    $max = $self -> max( column => $column_number );
+    $min = $self -> min( column => $column_number );
+
+    return $median ,$min ,$max;
 }
 
 sub scm_calculate_continuous_statistics
 {
-	my $self = shift;
-	my %parm = validated_hash(\@_,
-							  covariate => { isa => 'Str', optional => 0 },
-							  column_number => { isa => 'Int', optional => 0 },
-							  time_varying => { isa => 'Maybe[ArrayRef]', optional => 1},
-							  linearize => { isa => 'Bool', optional => 0 },
-							  return_after_derivatives_done => { isa => 'Bool', optional => 0 }
-	);
-	my $covariate = $parm{'covariate'};
-	my $column_number = $parm{'column_number'};
-	my $linearize = $parm{'linearize'};
-	my @time_varying = (defined $parm{'time_varying'})? @{$parm{'time_varying'}}: ();;
-	my $return_after_derivatives_done = $parm{'return_after_derivatives_done'};
+    my $self = shift;
+    my %parm = validated_hash(\@_,
+        covariate => { isa => 'Str', optional => 0 },
+        column_number => { isa => 'Int', optional => 0 },
+        time_varying => { isa => 'Maybe[ArrayRef]', optional => 1},
+        linearize => { isa => 'Bool', optional => 0 },
+        return_after_derivatives_done => { isa => 'Bool', optional => 0 }
+    );
+    my $covariate = $parm{'covariate'};
+    my $column_number = $parm{'column_number'};
+    my $linearize = $parm{'linearize'};
+    my @time_varying = (defined $parm{'time_varying'})? @{$parm{'time_varying'}}: ();;
+    my $return_after_derivatives_done = $parm{'return_after_derivatives_done'};
 
-	my $median;
-	my $min;
-	my $max;
-	my $mean;
+    my $median;
+    my $min;
+    my $max;
+    my $mean;
 
-	my %strata = %{$self-> factors( column => $column_number,
-									return_occurences =>1,
-									unique_in_individual => 1,
-									ignore_missing => 1)};
-	
-	if (  _have_non_unique_values(\%strata)) {
-		my $found=0;
-		foreach my $tv (@time_varying){
-			$found =1 if ($tv eq $covariate);
-		}
-		unless ($found){
-			if ($linearize){
-				ui -> print( category => 'all',
-					message => "\nWarning: Individuals were found to have multiple ".
-					"values in the $covariate column, this renders the linearization ".
-					"inappropriate for this covariate. Consider terminating this run and ".
-					"setting covariate $covariate as time-varying in the configuration ".
-					"file.\n" ) unless $return_after_derivatives_done;
-			}else{
-				ui -> print( category => 'all',
-					message => "\nWarning: Individuals were found to have multiple values ".
-					"in the $covariate column, but $covariate was not set as time_varying in the ".
-					"configuration file. Mean and median may not be computed correctly for $covariate. ") unless $return_after_derivatives_done;
-			}	
-		}
-	}
+    my %strata = %{$self-> factors( column => $column_number,
+    return_occurences =>1,
+    unique_in_individual => 1,
+    ignore_missing => 1)};
 
-	$median = $self-> median( column => $column_number);
+    if (  _have_non_unique_values(\%strata)) {
+        my $found=0;
+        foreach my $tv (@time_varying){
+            $found =1 if ($tv eq $covariate);
+        }
+        unless ($found){
+            if ($linearize){
+                ui -> print( category => 'all',
+                    message => "\nWarning: Individuals were found to have multiple ".
+                    "values in the $covariate column, this renders the linearization ".
+                    "inappropriate for this covariate. Consider terminating this run and ".
+                    "setting covariate $covariate as time-varying in the configuration ".
+                    "file.\n" ) unless $return_after_derivatives_done;
+            }else{
+                ui -> print( category => 'all',
+                    message => "\nWarning: Individuals were found to have multiple values ".
+                    "in the $covariate column, but $covariate was not set as time_varying in the ".
+                    "configuration file. Mean and median may not be computed correctly for $covariate. ") unless $return_after_derivatives_done;
+            }
+        }
+    }
 
-	$max = $self -> max(column => $column_number );
-	$min = $self -> min(column => $column_number );
-	$mean = $self -> mean(column => $column_number );
+    $median = $self-> median( column => $column_number);
+
+    $max = $self -> max(column => $column_number );
+    $min = $self -> min(column => $column_number );
+    $mean = $self -> mean(column => $column_number );
 
 
-	$median = sprintf("%.2f", $median );
-	$mean = sprintf("%.2f", $mean );
+    $median = sprintf("%.2f", $median );
+    $mean = sprintf("%.2f", $mean );
 
-	return $median ,$min ,$max ,$mean;
+    return $median ,$min ,$max ,$mean;
 }
 
 sub have_unique_ids

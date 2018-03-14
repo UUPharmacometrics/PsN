@@ -1,16 +1,76 @@
 \input{inputs/format_header.tex}
-\guidetitle{RUNRECORD user guide}{2016-08-31}
-
+\guidetitle{RUNRECORD user guide}{2018-03-02}
+\usepackage{hyperref}
 \begin{document}
 
 \maketitle
+\tableofcontents
+\newpage
+\section{Introduction}
 
-RunRecord is a PsN based script that facilitates the creation of run records for NONMEM runs. It takes a range of run numbers as input, extracts information and generates a txt file that can be imported into Excel for further manipulation. The information extracted includes parameter estimates, standard errors, condition number, objective function value (OFV), parameter names and information about model components. Some of this comes from the NONMEM output files while some parts are extracted from user-supplied information in the NONMEM model file.
+The runrecord tool facilitates the creation of run records for NONMEM runs. It takes a range of run numbers as input, extracts information and generates a .txt file that can be imported into Excel for further manipulation. The information extracted includes parameter estimates, standard errors, condition number, objective function value (OFV), parameter names and information about model components. Some of this comes from the NONMEM output files while some parts are extracted from user-supplied information in the NONMEM model file. 
+
+In the simplest form, runrecord is run in the following way in a folder that contains run results.\\
+Example:
+\begin{verbatim}
+runrecord -root=run -mod_ext=mod -out_ext=lst -from=1 -to=10
+\end{verbatim}
+summarizes the output from files run1.mod to run10.mod with output files run1.lst to run10.lst.
+\newpage
+
+\section{Input and options}
+\subsection{Required input}
+\begin{optionlist}
+\optdefault{to}{N}
+Default is the highest run number found in an uninterrupted sequence of files <root>1.<mod\_ext>, <root>2.<mod\_ext>,... etc. The highest run number to process.\\
+Example: If root=run and mod\_ext=mod, and files present are run1.mod, run2.mod, run3.mod and run6.mod, then the default value of -to is 3.
+\nextopt
+\end{optionlist}
+\subsection{Optional input}
+\begin{optionlist}
+\optdefault{child\_col}{column name(s)}
+Default is Run Child. Name of the run child columns.
+\nextopt
+\optdefault{from}{N}
+Default is 1. Run number to start processing from.  
+\nextopt
+\optdefault{max\_lvl}{N}
+Default is automatic detection. Max number of model children levels. 
+\nextopt
+\optdefault{mod\_ext}{string}
+Default is “mod”, e.g. run1.mod. NONMEM model file extension. 
+\nextopt
+\optdefault{out\_ext}{string}
+Default is “lst”, e.g. run1.lst. NONMEM output file extension. 
+\nextopt
+\optdefault{res\_file}{filename}
+Default is AAruninfo.txt. The name of the results file.  
+\nextopt
+\optdefault{res\_format}{format of output}
+By default this is detected from the extension of res\_file, where .csv gives csv-format with a text header, .csvy gives csv-format with a yaml header and all others give text format with a text header.\\ The yaml header requires the YAML::Tiny Perl library, if it is not installed the header will have text format. The output format for the results file, either .txt (text), .csv or .yaml.
+\nextopt
+\optdefault{root}{string}
+Default is “run”, e.g. run1.mod. The "root" name of the model files. 
+\nextopt
+\optdefault{rse}{yes | no}
+Default is yes. Whether standard errors should be reported as relative SEs or not. 
+\nextopt
+\optdefault{rsep}{sign}
+Default is an empty separator for text format.	Separator between comment rows read from the model file. This is pasted between rows -within fields- in the output file \emph{if} res\_format is txt. This option may only be set if res\_format is txt, otherwise the rsep option will be ignored and the separator is emtpy. 
+\nextopt
+\optdefault{sep}{sign}
+Default is \textbf{;} (semicolon) for text format. Separator between fields in runrecord output file. This option may
+only be set if res\_format is txt, otherwise the -sep option will be ignored and the separator is \textbf{,} (comma).
+\nextopt
+\optdefault{var}{yes | no}
+Default is no. Report omegas and sigmas as variances or sd.
+\nextopt
+\end{optionlist}
 
 \section{Information from the NONMEM output}
 For each run in the range of run numbers the following information is extracted from the NONMEM output files: OFV, condition number, minimization status, covariance step status, number of individuals, number of observations, estimation step time, covariance step time, parameter estimates and standard errors. 
 
-Diagonal omegas and sigmas are reported as standard deviations, off-diagonal omegas and sigmas are reported as correlations. Standard errors are reported as relative standard errors- RSE (SE/estimate). For omegas and sigmas, RSEs are computed for the variances and covariances. By supplying the appropriate options to the runrecord script, this can be changed to variances/covariances and standard errors, respectively (see below).
+Diagonal omegas and sigmas are reported as standard deviations, off-diagonal omegas and sigmas are reported as correlations. Standard errors are reported as relative standard errors- RSE (SE/estimate). For omegas and sigmas, RSEs are computed for the variances and covariances. By supplying the appropriate options to the runrecord tool, this can be changed to variances/covariances and standard errors, respectively (see below).
 
 \section{Information from the NONMEM model file}
 It is assumed that the user specifies certain information, in a certain way, in the model file. Below is an example model file (for run number 2):
@@ -84,121 +144,52 @@ Just below the \$PROBLEM statement are lines that begin with two semi-colon, whi
 \hline
 Information tag & Description/Purpose \\
 \hline
-Based on & Specifies the run number of the parent run (used for computing delta OFV). Should be left empty if there is no parent run. If [nodOFV] is specified after the parent run number, no delta OFV will be computed, i.e. the current run is based on the parent but it is not relevant to compute a delta OFV.\\
+\textbf{Based on} & Specifies the run number of the parent run (used for computing delta OFV). Should be left empty if there is no parent run. If [nodOFV] is specified after the parent run number, no delta OFV will be computed, i.e. the current run is based on the parent but it is not relevant to compute a delta OFV.\\
 \hline
-Description & Should include a brief description of the run. For example what has been changed from the parent run. \\
+\textbf{Description} & Should include a brief description of the run. For example what has been changed from the parent run. \\
 \hline
-Label & This is a name for the model. It is meant to make it easier to identify model versions or stages in the run record. For example, runs 1-8 may be labeled Basic model while 8-20 may be labeled Full model (the latter indicating that covariates are being included into the model). The final model could, obviously, be labeled Final model. \\
+\textbf{Label} & This is a name for the model. It is meant to make it easier to identify model versions or stages in the run record. For example, runs 1-8 may be labeled Basic model while 8-20 may be labeled Full model (the latter indicating that covariates are being included into the model). The final model could, obviously, be labeled Final model. \\
 \hline
-Structural model & A description of the structural model. \\
+\textbf{Structural model} & A description of the structural model. \\
 \hline
-Covariate model & A description of the covariate model. \\
+\textbf{Covariate model} & A description of the covariate model. \\
 \hline
-Interindividual variability & A description of how between subject variability is modeled. \\
+\textbf{Interindividual variability} & A description of how between subject variability is modeled. \\
 \hline
-Interoccasion variability & A description of how within subject, between occasion variability is modeled. \\
+\textbf{Interoccasion variability} & A description of how within subject, between occasion variability is modeled. \\
 \hline
-Residual \mbox{variability} & A description of how the residual variability is modeled. \\
+\textbf{Residual variability} & A description of how the residual variability is modeled. \\
 \hline
-Estimation & A description of the estimation options used. \\
+\textbf{Estimation} & A description of the estimation options used. \\
 \hline
 \end{longtable}
 
 \begin{itemize}
-\item Note that it is only Based on: that expects information on the same line. The other information tags are placeholders for the line just below it until the line of the next information tag.
-\item An information tag may be empty, but it is a good idea to still keep the tag in the model file.  If a tag should be empty (like Inter-occasion variability: if no IOV is in the model), only include the line with the tag, not the empty information line below it.
+\item Note that it is only \textbf{Based on:} that expects information on the same line. The other information tags are placeholders for the line just below it until the line of the next information tag.
+\item An information tag may be empty, but it is a good idea to still keep the tag in the model file.  If a tag should be empty (like \textbf{Interoccasion variability:} if no IOV is in the model), only include the line with the tag, not the empty information line below it.
 \item The order of the tags is irrelevant.
 \item The number of the tags (as in the example above) is irrelevant. As a matter of fact, the numbering is not necessary at all but may be a good way to impose some order.
 \item The colon (:) after the tag is required, as is the exact spelling.
 \end{itemize}
 \section{Parameter labels}
-Each initial parameter estimate can optionally have an associated label. This is specified by adding a semi-colon and the label after the initial parameter estimate. When constructing  the txt file, the runrecord script indexes the parameter estimates after the labels. This means that, for example, THETA(1) may be CL in one run and V and the second as long as the label is correctly specified. It also means that parameters should be given consistent labels across runs.
+Each initial parameter estimate can optionally have an associated label. This is specified by adding a semi-colon and the label after the initial parameter estimate. When constructing  the txt file, the runrecord tool indexes the parameter estimates after the labels. This means that, for example, THETA(1) may be CL in one run and V and the second as long as the label is correctly specified. It also means that parameters should be given consistent labels across runs.
 
-\section{Running runrecord}
 
-In the simplest form, runrecord is run in the following way in a folder that contains run results:
-\begin{verbatim}
-runrecord
-\end{verbatim}
-This will make runrecord extract information from run 1 to N, where N is the highest run number found in an uninterrupted sequence
-of files run1.mod, run2.mod,... etc,
-and put it in a file called AArunInfo.txt. 
-
-The behavior of run record can be influenced by options:
-
-\begin{optionlist}
-\optdefault{from}{N}
-Run number to start processing from. Default is 1. 
-\nextopt
-\optdefault{root}{string}
-"root" name of the model files. Defaults to “run”, e.g. run1.mod 
-\nextopt
-\optdefault{mod\_ext}{string}
-NONMEM model file extension. Defaults to “mod”, e.g. run1.mod. 
-\nextopt
-\optdefault{to}{N}
-The highest run number to process. Default is the highest run number found in an uninterrupted sequence of files
-<root>1.<mod\_ext>, <root>2.<mod\_ext>,... etc.
-Example: If root=run and mod\_ext=mod, and files present are run1.mod, run2.mod, run3.mod and run6.mod,
-then the default value of to is 3.
-\nextopt
-\optdefault{res\_file}{file name}
-The name of the results file. The default is “AAruninfo.txt”. 
-\nextopt
-\optdefault{res\_format}{format}
-The output format for the results file, either txt (text), csv or yaml.  
-By default this is detected from the extension of res\_file, 
-where .csv gives csv-format with a text header, .csvy gives csv-format with 
-a yaml header and all others give text format with a text header.
-The yaml header requires the YAML::Tiny Perl library,
-if it is not installed the header will have text format.
-\optdefault{out\_ext}{string}
-NONMEM output file extension. Defaults to “lst”, e.g. run1.lst. 
-\nextopt
-\optdefault{sep}{sign}
-Separator between fields in runrecord output file. This option may
-only be set if res\_format is txt, otherwise the -sep option will be ignored 
-and the separator is , (comma). The default is ; (semicolon) for text format.
-\nextopt
-\optdefault{rsep}{sign}
-Separator between comment rows read from the model file, this is pasted 
-between rows -within fields- in the output file \emph{if} res\_format is txt.
-This option may only be set if res\_format is txt, otherwise the rsep option 
-will be ignored and the separator is emtpy. The default is empty separator for text format.
-\nextopt
-\optdefault{max\_lvl}{N}
-Max number of model children levels (default is automatic detection). 
-\nextopt
-\optdefault{var}{yes or no}
-Whether omegas and sigmas should be reported as variances or sd. Default is 'no'. 
-\nextopt
-\optdefault{rse}{yes or no}
-Whether standard errors should be reported as relative SEs or not. The default is 'yes'. 
-\nextopt
-\optdefault{child\_col}{text}
-Name of the run child columns (default: 'Run Child')
-\nextopt
-\end{optionlist}
 
 \section{Importing the txt file into Excel}
-The txt file can just be opened in Excel using the standard File-$>$Open procedure. This will open an unformatted version of the txt file. However, to improve readability and consistency, it may be more convenient to use the Data-$>$Get external data command instead. This will create a connection between the spread sheet and the AArunInfo.txt file that can easily be updated without loosing carefully applied formatting. The following procedure is proposed:
+The .txt file can just be opened in Excel using the standard File-$>$Open procedure. This will open an unformatted version of the .txt file. However, to improve readability and consistency, it may be more convenient to use the Data-$>$Get external data command instead. This will create a connection between the spread sheet and the AArunInfo.txt file that can easily be updated without loosing carefully applied formatting. The following procedure is proposed:
 \begin{enumerate}
 	\item Create a first version of the AArunInfo.txt file based on one or two runs.
 	\item Open an empty spreadsheet in Excel.
-	\item Select Data-$>$Get External Data-$>$Import Text File
+	\item Select Data-$>$Get External Data-$>$Import Text File.
 	\item Select the AArunInfo.txt file, press Next, select Semicolon as delimeter and press Finish.
 	\item In the Import Data dialog, select Properties:
-	\item Under\\
-    {\bf If the number of rows in the data range changes upon refresh}\\
-    make sure that\\
-    ``Overwrite existing cells with new data, clear unused cells''\\
-    is selected and the other alternatives are deselected. 
+	\item Under {\bf If the number of rows in the data range changes upon refresh} make sure that ``Overwrite existing cells with new data, clear unused cells'' is selected and the other alternatives are deselected. 
 	\item Press OK twice, and the data is in the spreadsheet.
 	\item Format the information as desired.
-	\item There is an External Data toolbar that is handy when new runs are to be added to the run record:
+	\item There is an External Data Toolbar that is handy when new runs are to be added to the run record:
 By pressing the red exclamation mark, the contents of the spreadsheet is updated to include the current information of the AArunInfo.txt file. So, if the runrecord script has been run to include more NONMEM runs in the AArunInfo.txt file, it is just to open the Excel spreadsheet and press the red exclamation mark to include the new information.
-	\item There seems to be one bug in the Refresh Data procedure in the previous bullet - line heights are reset to the default:
-Fortunately, this is easily fixed. Select the whole spreadsheet (ctrl-A in Windows or cmd-A on the Mac) and Select Format-$>$Cells, select the Aligment tab:
+	\item There seems to be a bug in the Refresh Data procedure in the previous bullet - line heights are reset to the default, but fortunately this is easily fixed. Select the whole spreadsheet (ctrl-A in Windows or cmd-A on the Mac) and Select Format-$>$Cells, select the Aligment tab:
 and click three times in the Wrap text check box! (It is silly, but it works!)
 \end{enumerate}
 

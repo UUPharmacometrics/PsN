@@ -43,21 +43,21 @@ my $res = GetOptions( \%options,
     keys(%optional_options) );
 exit unless $res;
 
-my @valid_transformations = ( 'boxcox', 'tdist', 'full_block', 'add_tv', 'add_iov', 'remove_iiv', 'remove_iov', 'remove_0fix_omegas', 'omit_ids', 'iiv_on_ruv', 'power_on_ruv' );
+my @valid_transformations = ( 'boxcox', 'tdist', 'full_block', 'add_tv', 'add_iov', 'remove_iiv', 'remove_iov', 'remove_0fix_omegas', 'omit_ids', 'iiv_on_ruv', 'power_on_ruv', 'diagonal_to_block', 'add_etas', 'uniform' );
 my $valid_transformations_string = join("\n", @valid_transformations);
 
 my %help_text;
 
 $help_text{Pre_help_message} = <<"EOF";
-  Model transformation
+	Model transformation
 
-  The following transformations are supported:
-  $valid_transformations_string
+	The following transformations are supported:
+	$valid_transformations_string
 
 EOF
     
 $help_text{Examples} = <<'EOF';
-transform boxcox run1.mod
+	transform boxcox run1.mod
 EOF
 
 $help_text{Options} = <<"EOF";
@@ -67,71 +67,71 @@ $help_text{Options} = <<"EOF";
 EOF
 
 $help_text{-h} = <<'EOF';
-      -h | -?
-      
-      With -h or -? resmod will print a list of options and exit.
-EOF
-      
-$help_text{-help} = <<'EOF';      
-      -help
-      
-      With -help resmod will print this, longer, help message.
+	-h | -?
+
+	With -h or -? resmod will print a list of options and exit.
 EOF
 
-$help_text{-out} = <<'EOF';
-      -out
-      
-      Specify a filename for the output model
+$help_text{-help} = <<'EOF';      
+	-help
+
+	With -help resmod will print this, longer, help message.
 EOF
 
 $help_text{-etas} = <<'EOF';
-      -etas
-      
-      List the etas to transform. Default is all etas.
-      This option is valid for the boxcox and tdist transformations.
+	-etas
+
+	List the etas to transform. Default is all etas. This option is valid
+	for the boxcox and tdist transformations.
 EOF
 
 $help_text{-epsilons} = <<'EOF';
-      -epsilons
-      
-      List the epsilons to transform. Default is all epsilons.
-      This option is valid for the iiv_on_ruv transformations.
+	-epsilons
+
+	List the epsilons to transform. Default is all epsilons. This option is
+	valid for the iiv_on_ruv transformations.
 EOF
 
 $help_text{-fix} = <<'EOF';
-      -fix
-      
-      Fix the omegas to zero
-      This option is valid for the remove_iiv and remove_iov transformations.
-EOF
+	-fix
 
-$help_text{-parameters} = <<'EOF';
-      -parameters
-      
-      Specify list of parameters.
-      This option is mandatory for the add_tv and add_iov transformations.
+	Fix the omegas to zero. This option is valid for the remove_iiv and
+	remove_iov transformations.
 EOF
 
 $help_text{-ids} = <<'EOF';
-      -ids
-      
-      Specify a list of ids.
-      This option is mandatory for the omit_ids transformation.
-EOF
+	-ids
 
-$help_text{-occ} = <<'EOF';
-      -occ
-      
-      Specify the name of the occasion column.
-      This option is valid for the add_iov transformation. Default is OCC.
+	Specify a list of ids. This option is mandatory for the omit_ids
+	transformation.
 EOF
 
 $help_text{-ignore} = <<'EOF';
-      -ignore
-      
-      Omit ids by using IGNORE statements in the model.
-      Default the option is not set and changes are done to the dataset.
-      This option is only valid for the omit_ids transformation.
+	-ignore
+
+	Default the option is not set and changes are done to the dataset. Omit
+	ids by using IGNORE statements in the model. This option is only valid
+	for the omit_ids transformation.
+EOF
+
+$help_text{-occ} = <<'EOF';
+	-occ
+
+	Default is OCC. Specify the name of the occasion column. This option is
+	valid for the add_iov transformation. 
+EOF
+
+$help_text{-out} = <<'EOF';
+	-out
+
+	Specify a filename for the output model.
+EOF
+
+$help_text{-parameters} = <<'EOF';
+	-parameters
+
+	Specify list of parameters. This option is mandatory for the add_tv
+	transformation.
 EOF
 
 common_options::online_help( 'transform', \%options, \%help_text, \%required_options, \%optional_options);
@@ -159,7 +159,7 @@ if (not grep(/$transformation/, @valid_transformations)) {
 }
 
 if (defined $options{'etas'}) {
-    if ($transformation ne 'boxcox' and $transformation ne 'tdist') {
+    if ($transformation ne 'boxcox' and $transformation ne 'tdist' and $transformation ne 'uniform') {
         print "Option -etas cannot be used together with the $transformation transformation.\n";
         exit;
     }
@@ -199,12 +199,12 @@ if (defined $options{'ignore'}) {
 }
 
 if (defined $options{'parameters'}) {
-    unless ($transformation eq 'add_tv' or $transformation eq 'add_iov') {
+    unless ($transformation eq 'add_tv' or $transformation eq 'add_iov' or $transformation eq 'add_etas') {
         print "Option -parameters cannot be used together with the $transformation transformation.\n";
         exit;
     }
 } else {
-    if ($transformation eq 'add_tv' or $transformation eq 'add_iov') {
+    if ($transformation eq 'add_tv' or $transformation eq 'add_etas') {
         print "Option -parameters need to be used together with the $transformation transformation.\n";
         exit;
     }
@@ -266,6 +266,12 @@ if ($transformation eq 'boxcox') {
     } else {
         model_transformations::tdist_etas(model => $model);
     }
+} elsif ($transformation eq 'uniform') {
+    if (defined $options{'etas'}) {
+        model_transformations::uniform_etas(model => $model, etas => [split ',', $options{'etas'}]);
+    } else {
+        model_transformations::uniform_etas(model => $model);
+    }
 } elsif ($transformation eq 'full_block') {
     model_transformations::full_omega_block(model => $model);
 } elsif ($transformation eq 'add_tv') {
@@ -277,7 +283,13 @@ if ($transformation eq 'boxcox') {
     } else {
         $occ = 'OCC';
     }
-    model_transformations::add_iov(model => $model, occ => $occ, parameters => [split ',', $options{'parameters'}]);
+    if (defined $options{'parameters'}) {
+        model_transformations::add_iov(model => $model, occ => $occ, parameters => [split ',', $options{'parameters'}]);
+    } else {
+        model_transformations::add_iov(model => $model, occ => $occ);
+    }
+} elsif ($transformation eq 'add_etas') {
+    model_transformations::add_etas_to_parameters(model => $model, parameters => [split ',', $options{'parameters'}]);
 } elsif ($transformation eq 'remove_iiv') {
     if (defined $options{'fix'}) {
         model_transformations::remove_iiv(model => $model, fix => $options{'fix'});
@@ -311,6 +323,8 @@ if ($transformation eq 'boxcox') {
     } else {
         model_transformations::power_on_ruv(model => $model);
     }
+} elsif ($transformation eq 'diagonal_to_block') {
+   model_transformations::diagonal_to_block(model => $model);
 }
 
 $model->_write();

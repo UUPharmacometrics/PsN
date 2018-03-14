@@ -318,8 +318,8 @@ tool::scm::get_covariate_theta_bounds_inits(bounds => $bounds,
 									  linearize => 0,
 									  sum_covariates => 0);
 
-is_deeply($bounds->{'lower'},[-100],'lower bound neg median exponential');
-is_deeply($bounds->{'upper'},[100000],'upper bound neg median exponential');
+is_deeply($bounds->{'lower'},[-1.82744848650321],'lower bound neg median exponential');
+is_deeply($bounds->{'upper'},[1.82744848650321],'upper bound neg median exponential');
 is_deeply($inits,[0.001],'exponential inits');
 
 

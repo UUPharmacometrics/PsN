@@ -42,149 +42,159 @@ exit unless $res;
 my %help_text;
 
 $help_text{Pre_help_message} = <<'EOF';
-      Log-likelihood Profiling
+	Log-likelihood Profiling
 EOF
 
 $help_text{Description} = <<'EOF';
-      The Log-likelihood Profiling tool can be used to assess
-      confidence interval limits for parameter estimates. The
-      -2*log-likelihood of hierarchical models are chi-square
-      distributed. Fixing a parameter reduces the number of parameters
-      of the model by one. To be able to say, for a given level of
-      confidence, that there is a higher likelihood that the data has
-      been produced by a system described by the full model than by one
-      described by the reduced, the difference in the -2*log-likelihood
-      should be at least X. For example, using a confidence level of
-      95%, the difference (or X above) should be at least 3.84. The
-      minimal number of arguments include a modelfile name and a
-      listing of parameters, given that an output file with standard
-      error estimates exist.
+
+	The llp (Log Likelihood Profiling) tool is used to calculate confidence
+	intervals of parameter estimates. Without the llp tool the confidence
+	intervals can be calculated with the standard errors (SE) of the parameters
+	under the assumption that the parameter values are normally distributed.
+	The llp tool, however, makes no assumption of the shape of the distribution.
+	The llp tool will calculate the confidence intervals for any number of
+	parameters in the model, working with one parameter at a time. By first
+	fitting the original model and then fixing the parameter at values close to
+	the NONMEM estimate, the llp tool obtains the difference in likelihood between
+	the original model and new, reduced model. The logarithm of the difference
+	in likelihood is chi2 distributed and when that value is 3.84, the parameter
+	value is at the 95% confidence limit. The search for the limit is done on
+	both sides of the original parameter value, and thus the llp tool makes no
+	assumption of symmetry or the parameter value distribution.  
 EOF
 
 $help_text{Examples} = <<'EOF';
-llp run89.mod -thetas=1,2
+	llp run89.mod -thetas=1,2
 
-      This will make the llp tool try to estimate the confidence
-      intervals for thetas one and two of the model in run89.mod. It
-      will base the first guesses on the standard error estimates from
-      run89.lst.
+	This will make the llp tool try to estimate the confidence intervals for
+	thetas one and two of the model in run89.mod. It will base the first guesses
+	on the SE estimates from run89.lst.
 
-llp run89.mod -thetas=1,2 -rse_thetas=20,30
+	llp run89.mod -thetas=1,2 -rse_thetas=20,30
 
-      In this example, we explicitly specify the relative standard
-      errors which is necessary if we do not have an output file with
-      standard error estimates.
+	In this example, we explicitly specify the relative SE which is necessary 
+	if we do not have an output file with SE estimates.
 EOF
 
 $help_text{Options} = <<'EOF';
-A model file is required as argument, and a (set of) parameter(s)
-to evaluate.
 
-      The following options are valid:
+	A model file is required on the command line. Then, at least one of the options
+	-omegas, -sigmas or -thetas must be specified. If an lst-file with SE estimates
+	already exists, no more input is needed. Otherwise, for each specified (parameter)
+	(theta/omega/sigma) there must be a corresponding rse-value given by option -rse
+	(parameter).
+
+	The following options are valid:
 EOF
 
 $help_text{-h} = <<'EOF';
-      -h | -?
+	-h | -?
 
-      With -h or -? llp will print a list of options and exit.
+	With -h or -? llp will print a list of options and exit.
 EOF
 
 $help_text{-help} = <<'EOF';
-      -help
-      
-      With -help llp will print this, longer, help message.
-EOF
+	-help
 
-$help_text{-outputfile} = <<'EOF';
-      -outputfile=filename
-
-      The name of the NONMEM output file. The default value is the
-      name of the model file with the extension substituted with
-      '.lst'. Example: if the modelfile is run89.mod, the default name
-      of the output file is run89.lst. If the
-      name of your output file does not follow this standard, you have
-      to specify it with this option. 
-EOF
-      
-$help_text{-thetas} = <<'EOF';
-      -thetas=comma-separated list of parameter numbers
-
-      A comma-separated list, specifying the thetas for which the llp should 
-      try to assess confidence intervals.
-EOF
-
-$help_text{-rse_thetas} = <<'EOF';
-      -rse_thetas=comma-separated list of relative standard errors
-
-      A comma-separated list of the relative standard error, specified in 
-      percent (%), for each theta listed by option -thetas.
-EOF
-
-$help_text{-rse_omegas} = <<'EOF';
-      -rse_omegas=comma-separated list of relative standard errors
-
-      A comma-separated list of the relative standard error, specified in 
-      percent (%), for each omega listed by option -omegas.
-EOF
-
-$help_text{-rse_sigmas} = <<'EOF';
-      -rse_sigmas=comma-separated list of relative standard errors
-
-      A comma-separated list of the relative standard error, specified in 
-      percent (%), for each sigma listed by option -sigmas.
+	With -help llp will print this, longer, help message.
 EOF
 
 $help_text{-max_iterations} = <<'EOF';
-      -max_iterations=integer
+	-max_iterations=N
 
-      Default value is 10. This number limits the number of search iterations 
-      for each interval limit. If the llp has not found the upper limit for a 
-      parameter after max_iteration number of guesses it terminates.
+	Default value is 10. This number limits the number of search iterations for
+	each interval limit. If the llp has not found the upper limit for a parameter
+	after max_iteration number of guesses it terminates.
 EOF
 
-    $help_text{-significant_digits} = <<'EOF';
-      -significant_digits=integer
+$help_text{-normq} = <<'EOF';
+	-normq=X
 
-      Default 3. Specifies the number of significant digits that is required 
-      for the test of the increase in objective function value. The default 
-      is 3, which means that the method will stop once the difference in 
-      objective function value is between 3.835 and 3.845 if -ofv_increase 
-      is set to 3.84 (default).
-EOF
-    $help_text{-normq} = <<'EOF';
-      -normq=number
-
-      Default value 1.96. The value is used for calculating the first guess of 
-      the confidence interval limits. If the standard errors (SE) exist, the 
-      guess will be maximum-likelihood estimate ± normq * SE, otherwise it 
-      will be MLE ± normq * rse_parameter/100 * MLE, where rse_parameter is 
-      rse_thetas, rse_omegas or rse_sigmas (optional input parameters). The 
-      default value or normq is 1.96 which translates to a 95% confidence 
-      interval assuming normal distribution of the parameter estimates.
+	Default value is 1.96. The value is used for calculating the first guess of
+	the confidence interval limits. If the SE exist, the guess will be maximum
+	likelihood estimate ± normq * SE, otherwise it will be
+	MLE ± normq * rse_parameter/100 * MLE, where rse_parameter is rse_thetas, 
+	rse_omegas or rse_sigmas (optional input parameters). The default value of
+	normq translates to a 95% confidence interval assuming normal distribution
+	of the parameter estimates.
 EOF
 
-    $help_text{-ofv_increase} = <<'EOF';
-      -ofv_increase
+$help_text{-ofv_increase} = <<'EOF';
+	-ofv_increase=X
 
-      The increase in objective function value associated with the
-      desired confidence interval. The default value is 3.84.
-EOF
-    $help_text{-omegas} = <<'EOF';
-      -omegas=comma-separated list of parameter numbers
-
-      A comma-separated list, specifying the omegas for which the llp should 
-      try to assess confidence intervals.
+	Default value is 3.84.The increase in objective function value associated with
+	the desired confidence interval. 
 EOF
 
-    $help_text{-sigmas} = <<'EOF';
-      -sigmas=comma-separated list of parameter numbers
+$help_text{-omegas} = <<'EOF';
+	-omegas=comma-separated list of parameter numbers
 
-      A comma-separated list, specifying the sigmas for which the llp should 
-      try to assess confidence intervals.
+	A comma-separated list, specifying the omegas for which the llp should try to
+	assess confidence intervals. The numbers refer to the order number of the
+	initial values in the model file. For example, if first there is a block record
+	with size 2 (3 initial values) and then there is a diagonal record with size 3,
+	then the numbers 4,5 and 6 refer to the diagonal elements.
 EOF
 
-    $help_text{Post_help_message} = <<'EOF';
-      Also see 'psn_options -h' for a description of common options.
+$help_text{-outputfile} = <<'EOF';
+	-outputfile=filename
+
+	The name of the NONMEM output file. The default value is the name of the model
+	file with the extension substituted with '.lst'. 
+	  Example: if the modelfile is run89.mod, llp will by default look for the
+	  outputfile run89.lst. If the name of the output file does not follow this
+	  standard, the name must be specifed with this option. 
+EOF
+
+$help_text{-rse_omegas} = <<'EOF';
+	-rse_omegas=comma-separated list of relative standard errors
+
+	A comma-separated list specified in percent (%), for each omega listed by
+	option -omegas.
+EOF
+
+$help_text{-rse_sigmas} = <<'EOF';
+	-rse_sigmas=comma-separated list of relative standard errors
+
+	A comma-separated list specified in percent (%), for each sigma listed by
+	option -sigmas.
+EOF
+$help_text{-rse_thetas} = <<'EOF';
+	-rse_thetas=comma-separated list of relative standard errors
+
+	A comma-separated list specified in percent (%), for each theta listed by
+	option -thetas.
+EOF
+
+$help_text{-sigmas} = <<'EOF';
+	-sigmas=comma-separated list of parameter numbers
+
+	A comma-separated list, specifying the sigmas for which the llp should try
+	to assess confidence intervals. The numbers refer to the order number of the
+	initial values in the model file. For example, if first there is a block
+	record with size 2 (3 initial values) and then there is a diagonal record
+	with size 3, then the numbers 4, 5 and 6 refer to the diagonal elements.
+EOF
+
+$help_text{-significant_digits} = <<'EOF';
+	-significant_digits=X
+
+	Default 3. Specifies the number of significant digits that are required for
+	the test of the increase in objective function value. The default is 3, which
+	means that the method will stop once the difference in objective function
+	value is between 3.835 and 3.845 if -ofv_increase is set to its default value
+	3.84.
+EOF
+
+$help_text{-thetas} = <<'EOF';
+	-thetas=comma-separated list of parameter numbers
+
+	A comma-separated list, specifying the thetas for which the llp should try
+	to assess confidence intervals.
+EOF
+
+$help_text{Post_help_message} = <<'EOF';
+Also see 'psn_options -h' for a description of common options.
 EOF
 
 common_options::online_help( 'llp', \%options, \%help_text, \%required_options, \%optional_options);

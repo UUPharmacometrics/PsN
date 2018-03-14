@@ -17,6 +17,7 @@ use array qw(get_positions any_nonzero);
 use nmtablefile;
 use code_parsing;
 use PsN;
+use model_transformations;
 
 
 extends 'tool';
@@ -100,6 +101,7 @@ has 'keep_covariance' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'estimate_fo' => ( is => 'rw', isa => 'Bool', default => 0 );   # If linearizing use FO to estimate the linearized model
 has 'extra_table_columns' => ( is => 'rw', isa => 'ArrayRef[Str]' ); # Set to array of colnames to add to an extra data table output by derivatives.mod
 has 'nointer' => ( is => 'rw', isa => 'Bool', default => 0 );   # Set to not use interaction columns in linearization (set D_EPSETA to 0)
+has 'use_data_format' => ( is => 'rw', isa => 'Bool', default => 0 );   # Should we use the workaround for big datasets
 
 
 sub BUILD
@@ -292,35 +294,39 @@ sub BUILD
 
 	# check the validity of the covariates and the relations to be tested
 
-	if ( defined $self -> continuous_covariates() or defined $self -> categorical_covariates() ) {
+	if (defined $self->continuous_covariates() or defined $self->categorical_covariates()) {
 
-		my @continuous = defined $self -> continuous_covariates() ? @{$self -> continuous_covariates()} : ();
-		my @categorical = defined $self -> categorical_covariates() ? @{$self -> categorical_covariates()} : ();
+		my @continuous = defined $self->continuous_covariates() ? @{$self->continuous_covariates()} : ();
+		my @categorical = defined $self->categorical_covariates() ? @{$self->categorical_covariates()} : ();
+
+        my $undropped_columns = $self->models->[0]->problems->[0]->undrop_columns(columns => [@continuous, @categorical]);
+        if (scalar(@$undropped_columns)) {
+            print "The following data columns were undropped from the \$INPUT because they were requested as covariates:\n";
+            print "   ", join(', ', @$undropped_columns), "\n";
+        }
 
 		my @not_found = ();
 		my @nonskipped = ();
-		foreach my $input (@{$self -> models->[0] ->problems->[0]->inputs}){
-			next unless (defined $input);
-			push(@nonskipped,@{$input->get_nonskipped_columns});
+		foreach my $input (@{$self->models->[0]->problems->[0]->inputs}) {
+			next if (not defined $input);
+			push(@nonskipped, @{$input->get_nonskipped_columns});
 		}
-		foreach my $cov ( @continuous, @categorical ) {
+		foreach my $cov (@continuous, @categorical) {
 			#check if reserved words
-			if (($cov eq 'PAR') or ($cov eq 'COV')){
+			if (($cov eq 'PAR') or ($cov eq 'COV')) {
 				croak("PAR and COV are reserved words in scm and must not be ".
 					  "used as name for a covariate.");
 			}
 		}
-		my @covs = ( @continuous, @categorical );
-		my $positions = get_positions(target => \@nonskipped,
-									  keys => \@covs);
-		for (my $i=0; $i< scalar(@covs); $i++){
-			unless (defined $positions->[$i]){
-				push( @not_found, $covs[$i] );
+		my @covs = (@continuous, @categorical);
+		my $positions = get_positions(target => \@nonskipped, keys => \@covs);
+		for (my $i = 0; $i < scalar(@covs); $i++) {
+			if (not defined $positions->[$i]) {
+				push(@not_found, $covs[$i]);
 			}
 		}
-		if ( scalar @not_found ){
-			croak("Covariate(s) [ ". join(',', @not_found). " ] either DROPPED or not defined in " .
-				$self ->  models->[0] -> filename );
+		if (scalar @not_found) {
+			croak("Covariate(s) [ " . join(',', @not_found) . " ] was not defined in " . $self->models->[0]->filename);
 		}
 	}
 
@@ -677,7 +683,7 @@ sub BUILD
 						$self -> included_relations->{$par}{$cov}{'bounds'} =
 						$self -> relations->{$par}{$cov}{'bounds'}{$state};
 					}
-				} #end loop over valid states
+				}
 				$first = 0;
 				#check that no included relations for invalid states
 				if ( defined $self->included_relations() and
@@ -693,8 +699,8 @@ sub BUILD
 						"be set as the state for relation $par-$cov in included_relations.")
 					unless ($found);
 				}
-			} #end loop over cov
-		} # end loop over par
+			}
+		}
 
 		#check that no included relations for covariates not in test_relations
 		foreach my $par ( sort keys %{$self -> included_relations} ) {
@@ -719,7 +725,7 @@ sub BUILD
 		$Data::Dumper::Purity = 0;
 		close( RELATIONS );
 
-	}#end loop models
+	}
 }
 
 sub add_config_file
@@ -1247,7 +1253,7 @@ sub _raw_results_callback
 							}
 						}
 					}
-				} #end if theta
+				}
 
 			}
 			unshift( @{$raw_results}, \@orig_res );
@@ -1306,7 +1312,7 @@ sub _raw_results_callback
 			}
 			$self->raw_line_structure -> write( $dir.'raw_results_structure' );
 
-		} #end if step_number == 1
+		}
 
 	};
 	return $subroutine;
@@ -1470,7 +1476,6 @@ sub modelfit_setup
 			$start_model->outputs()->[0]-> have_output() and
 			defined $start_model-> outputs -> [0] -> get_single_value(attribute=> 'ofv')) {
 			my $start_ofv = $start_model -> outputs -> [0] -> get_single_value(attribute=> 'ofv');
-			my $ofvname = 'ofv';
 			my $start_name = $start_model->filename;
 			#change base criteria values unless it is defined already (to override start value)
 			if (($self->linearize() and $self->step_number() > 1)
@@ -1484,7 +1489,7 @@ sub modelfit_setup
 				my $ofv = sprintf("%12.5f",$start_ofv);
 				open( LOG, ">>".$self -> logfile -> [$model_number-1] );
 				if ($self->update_derivatives() and $self->step_number()>1){
-					print LOG "The $ofvname of the updated linearized base model:$ofv        $start_name\n";
+					print LOG "The ofv of the updated linearized base model:$ofv        $start_name\n";
 				} else {
                     if ($self->from_linearize) {
                         my $initial_ofv;
@@ -1495,7 +1500,7 @@ sub modelfit_setup
                         if (defined $initial_ofv) {
 				            my $initial_ofv = sprintf("%12.5f", $initial_ofv);
                             ui->print(category => 'linearize',
-                                message => "\nThe $ofvname of the linearized base model before estimation:$initial_ofv\n");
+                                message => "\nThe ofv of the linearized base model before estimation:$initial_ofv\n");
                         }
                         my $datafile = $start_model->datafiles(problem_numbers => [ 1 ], absolute_path => 1)->[0];
                         my $has_interaction = _check_interaction(datafile => $datafile, model => $self->original_nonlinear_model);
@@ -1507,9 +1512,9 @@ sub modelfit_setup
                                 message => "NOTE: The model does NOT have interaction");
                         }
                     }
-					print LOG "The $ofvname of the linearized base model:$ofv        $start_name\n";
+					print LOG "The ofv of the linearized base model:$ofv        $start_name\n";
 					ui -> print(category => 'linearize',
-						message =>"\nThe $ofvname of the linearized base model:$ofv        $start_name\n");
+						message =>"\nThe ofv of the linearized base model:$ofv        $start_name\n");
 				}
 				print LOG "--------------------\n\n";
 				close LOG;
@@ -1523,7 +1528,6 @@ sub modelfit_setup
 				model_name => 'base');
 		}
 		$self -> initial_estimates_model($start_model);
-		#end if rerun start_model
 	}
 
 	my $temp_step_relations;
@@ -1622,10 +1626,13 @@ sub linearize_setup
             @code = @{$original_model->get_code(record => 'pred')};
         }
         if ($#code <= 0) {
-            croak("Neither PK or PRED defined in " .
-                $original_model->filename . ", cannot match parameters to ETAs\n" );
+            croak("Neither PK or PRED defined in " . $original_model->filename . ", cannot match parameters to ETAs\n");
         }
+        my @error_code = @{$original_model->get_code(record => 'error')};
+        push @code, @error_code;
+
         my $assignments = code_parsing::find_assignments(model => $original_model);
+        my $iov_etas = model_transformations::find_etas(model => $original_model, type => 'iov');
         my $n_param = 0;
         open(LOG, ">>" . $self->logfile->[0]); #model_number -1
         foreach my $parameter (keys %{$self->test_relations()}) {
@@ -1636,8 +1643,11 @@ sub linearize_setup
             for (@code) {
                 if (/^\s*(\w+)\s*=\s*/ and $1 eq $parameter) {
                     s/^\s*(\w+)\s*=\s*//;
-                    my ($line,$comment) = split(';', $_, 2);
-                    $line = code_parsing::merge_assignments_and_expression(expression => $line, assignments => $assignments);
+                    my ($code_line, $comment) = split(';', $_, 2);
+                    if ($code_line =~ /[^A-Z0-9_]*EXP\s*\(\s*MU\_([0-9]+)\s*\+\s*ETA\(([0-9]+)\)/) {    # Check this here before we loose MU_ information
+                        $relation = 'exponential';
+                    }
+                    my $line = code_parsing::merge_assignments_and_expression(expression => $code_line, assignments => $assignments);
                     $_ = $line;
                     chomp;
 
@@ -1647,12 +1657,14 @@ sub linearize_setup
                         $relation = 'exponential';
                     } elsif (/[^A-Z0-9_]*EXP\s*\(\s*MU\_([0-9]+)\s*\+\s*ETA\(([0-9]+)\)/) {
                         $relation = 'exponential';
-                    } elsif (/[^A-Z0-9_]*TV(\w+)\s*\+\s*ETA\(([0-9]+)\)/) {
+                    } elsif ($code_line =~ /[^A-Z0-9_]*TV(\w+)\s*\+\s*ETA\(([0-9]+)\)/) {
                         if ($self->sum_covariates_hash->{$parameter} == 1) {
                             $relation = 'logit';
                         } else {
                             $relation = 'additive';
                         }
+                    } elsif (code_parsing::check_additive_eta(expression => $line)) {
+                        $relation = 'additive';
                     } elsif (/[^A-Z0-9_]*TV(\w+)\s*\*\s*ETA\(([0-9]+)\)/) {
                         $relation = 'proportional';
                     } elsif (/[^A-Z0-9_]*ETA\(([0-9]+)\)\s*\*\s*TV(\w+)/) {
@@ -1669,11 +1681,20 @@ sub linearize_setup
                         last;
                     }
 
-                    if (s/[^A-Z0-9_]ETA\(([0-9]+)\)//) {
-                        croak("Could not determine the ETA ".
-                            "coupled to $parameter,\n".
-                            " two ETA(<number>) found ".
-                            "on $parameter = ... row\n" );
+                    # Check if more IIV etas are connected to the same parameter. Note that IIV must come before IOV in the parameter definition
+                    while (/[^A-Z0-9_]ETA\((\d+)\)/g) {
+                        my $found = 0;
+                        for my $eta (@$iov_etas) {
+                            if ($1 == $eta) {
+                                $found = 1;
+                                last;
+                            }
+                        }
+                        if (not $found) {   # We have found an eta that is not iov. Select the first ETA and warn
+                            /[^A-Z0-9_]ETA\((\d+)\)/;
+                            print "Warning: More than one ETA associatied with $parameter. Selecting ETA($1)\n";
+                            $etanum = $1;
+                        }
                     }
                 }
             }
@@ -1682,7 +1703,7 @@ sub linearize_setup
             } else {
                 my $mes = "Could not determine the ETA coupled to $parameter\n";
                 $mes .= " i.e. no $parameter = (expression with ETA) was " .
-                "found in \$PK or \$PRED\n";
+                "found in \$PK, \$PRED or \$ERROR\n";
                 croak($mes);
             }
             if (length($relation) > 1) {
@@ -1769,11 +1790,8 @@ sub linearize_setup
 
         $self->data_items($num);
 
-        my $use_tableformat = 0;
-
         if($self->data_items() > $self->max_data_items){
             if ($PsN::nm_minor_version >= 2){
-                $use_tableformat = 1;
                 my $max = $self->data_items();
 
                 my $pdt_value = $original_model->get_option_value( option_name => 'PDT',
@@ -1821,6 +1839,8 @@ sub linearize_setup
                                                        copy_datafile => 0,
                                                        write_copy => 0,
                                                        copy_output => 0);
+
+        model_transformations::add_missing_etas(model => $derivatives_model);
 
         if ($self->from_linearize) {
             if (PsN::minimum_nonmem_version(7, 3)) {
@@ -1909,22 +1929,19 @@ sub linearize_setup
         #1.9
         my @tablestrings = ('ID','DV');
         my @inputstrings = ('ID','DV');
-        my $table_highprec=1;
-        my $table_lowprec=0;
 
         if ( should_add_mdv(model => $derivatives_model) ){
             push(@tablestrings,'MDV');
-            push(@inputstrings,'MDV');
-            $table_highprec++;
+            if (not $self->use_data_format) {
+                push(@inputstrings, 'MDV');
+            }
         }
         #1.10
 
         if ($self->foce()){
             push(@tablestrings,'IPRED=OPRED');
-            $table_highprec++;
         }else{
             push(@tablestrings,'PREDI=OPRED');
-            $table_highprec++;
         }
 
         push(@inputstrings,'OPRED');
@@ -1933,32 +1950,25 @@ sub linearize_setup
             for (my $j=1; $j<=$nEPS; $j++){
                 if ($j<10){
                     push(@tablestrings,('H0'.$j.'1'));
-                    $table_highprec++;
                 }else{
                     push(@tablestrings,'H'.$j.'1');
-                    $table_highprec++;
                 }
                 push(@inputstrings,'D_EPS'.$j);
             }
         }else{
             if ($self->error eq 'propadd'){
                 push(@tablestrings,'WP');
-                $table_highprec++;
                 push(@inputstrings,'OWP');
                 push(@tablestrings,'WA');
-                $table_highprec++;
                 push(@inputstrings,'OWA');
             }elsif ($self->error eq 'add'){
                 push(@tablestrings,'W');
-                $table_highprec++;
                 push(@inputstrings,'OW');
             }elsif ($self->error eq 'prop'){
                 push(@tablestrings,'W');
-                $table_highprec++;
                 push(@inputstrings,'OW');
             }elsif ($self->error eq 'exp'){
                 push(@tablestrings,'WE');
-                $table_highprec++;
                 push(@inputstrings,'OWE');
             }elsif ($self->error eq 'user'){
                 1;
@@ -1968,23 +1978,19 @@ sub linearize_setup
         }
         #these may be needed for user error code, or for IGNORE
         push(@tablestrings,@extra_parameters);
-        $table_highprec = $table_highprec+scalar(@extra_parameters);
         push(@inputstrings,@extra_parameters);
 
         for (my $i=1;$i<=$nETA;$i++){
             if ($i<10){
                 push(@tablestrings,('G0'.$i.'1'));
-                $table_highprec++;
             }else{
                 push(@tablestrings,('G'.$i.'1'));
-                $table_highprec++;
             }
             push(@inputstrings,('D_ETA'.$i));
         }
         if ($self->foce()){
             for (my $i=1;$i<=$nETA;$i++){
                 push(@tablestrings,('ETA'.$i));
-                $table_highprec++;
                 push(@inputstrings,('OETA'.$i));
             }
         }
@@ -2026,7 +2032,6 @@ sub linearize_setup
                         push(@{$code}, "\"  D_EPSETA$i" . "_$j=$H($i," . ($j + 1) . ")");
                     }
                     push(@tablestrings, "D_EPSETA$i"."_$j");
-                    $table_highprec++;
                     push(@inputstrings, "D_EPSETA$i"."_$j");
                 }
             }
@@ -2036,24 +2041,20 @@ sub linearize_setup
                         push @{$abbr_code}, "D2_ETA$i" . "_$j = 0";
                         push(@{$code}, "\"  D2_ETA$i" . "_$j=G($i," . ($j + 1) . ")");
                         push(@tablestrings, "D2_ETA$i"."_$j");
-                        $table_highprec++;
                         push(@inputstrings, "D2_ETA$i"."_$j");
                     }
                 }
             }
-        } #end second_order or epsilons
+        }
         #1.12
         push(@tablestrings, @covariates);
-        $table_highprec = $table_highprec + scalar(@covariates);
         push(@inputstrings, @covariates);
 
         #GZs and GKs are added to code further down, add_code_gfunc
         foreach my $parameter ( keys %{$self -> test_relations()} ){
             push(@tablestrings,'OGZ_'.$parameter);
-            $table_lowprec++;
             push(@inputstrings,'OGZ_'.$parameter);
             push(@tablestrings,'OGK_'.$parameter);
-            $table_lowprec++;
             push(@inputstrings,'OGK_'.$parameter);
         }
 
@@ -2063,34 +2064,25 @@ sub linearize_setup
             $datafilename = $self->basename.'.dta';
         }
 
+        # Make sure that all ignored or accepted columns get added
+        my $ignored_columns = $derivatives_model->problems->[0]->ignored_or_accepted_columns();
+
+        for my $colname (@$ignored_columns) {
+            if (not array::string_in($colname, \@tablestrings) and not array::string_in($colname, \@inputstrings)) {
+                push @tablestrings, $colname;
+                push @inputstrings, $colname;
+            }
+        }
+
         push(@tablestrings,'NOPRINT','NOAPPEND','ONEHEADER');
         push(@tablestrings,'FILE='.$datafilename);
+        push(@tablestrings, 'FORMAT=s1PE15.8');
         $derivatives_model->set_records(type => 'table', record_strings => \@tablestrings);
 
         # An extra table was requested
         if (defined $self->extra_table_columns) {
-            my @extra_tablestrings = ( @{$self->extra_table_columns}, 'NOPRINT', 'NOAPPEND', 'ONEHEADER', 'FILE=extra_table' );
+            my @extra_tablestrings = ( @{$self->extra_table_columns}, 'MDV', 'NOPRINT', 'NOAPPEND', 'ONEHEADER', 'FILE=extra_table' );
             $derivatives_model->add_records(type => 'table', record_strings => \@extra_tablestrings);
-        }
-
-        if ((scalar(@tablestrings)-4) == (1+$table_highprec+$table_lowprec)){
-            if ($use_tableformat){
-                #more than 50 items, try to reduce field width to not hit 999 limit in NM7.2
-                #do not use RFORMAT with space in specification, can get line break there.
-                if ( ($table_lowprec+$table_highprec)*12> 999){
-                    #default format will give too long line
-                    #figure out how wide fields are ok
-                    my $width = int(999/($table_lowprec+$table_highprec)); #round down towards 0
-                    my $form = 's1PE'.$width.'.4'; #just hope this will work
-                    $derivatives_model -> add_option(record_name => 'table',
-                        option_name => 'FORMAT',
-                        option_value=> $form);
-                }
-            }
-
-        }else{
-            croak("Bug in setting table format when preparing derivatives model, please report\n".
-                "highprec $table_highprec lowprec $table_lowprec items ".(scalar(@tablestrings)-4));
         }
 
         if ($self->update_derivatives()){
@@ -2207,6 +2199,7 @@ sub linearize_setup
         } else {
             push(@eststrings, 'METHOD=ZERO');
         }
+        push(@eststrings, 'MAXEVALS=9999999');
         push(@eststrings,$self->format) if (defined $self->format());
         if ($self->noabort()){
             push(@eststrings,'NOABORT');
@@ -2284,7 +2277,7 @@ sub linearize_setup
                         '+(ETA('.$i.')-OETA'.$i.')*OGK_'.$paramj.'*(GZ_'.$paramj.'-OGZ_'.$paramj.'))');
                 }
             }
-        } #end if second_order
+        }
 
         my $sum_count=1;
         my $sum_string='CSUM'.$sum_count;
@@ -2368,7 +2361,7 @@ sub linearize_setup
                         $string .= '+';
                     }
                     $string .= $line;
-                }#end inner loop eta
+                }
                 $string .= ')'."\n";
                 push(@pred_block,$string);
                 if ($cov_count>0){
@@ -2393,8 +2386,8 @@ sub linearize_setup
                     }
                     $string .= ")\n";
                     push(@pred_block,$string);
-                }#end if cov_count>0
-            } #end loop over eps
+                }
+            }
 
             my $sum_count=1;
             my $sum_string='ESUM'.$sum_count;
@@ -2452,7 +2445,6 @@ sub linearize_setup
             }
         }
 
-        #end if step_number == 1
     }elsif ($self->update_derivatives()){
         $datafilename = 'derivatives_covariates'.$stepname.'.dta';
         if ($self->step_number() == 2 and $self->both_directions()
@@ -2565,12 +2557,11 @@ sub linearize_setup
                 unless ($self->derivatives_data());
             }
             $derivatives_model ->_write();
-        } #end if rerun_derivatives
-    } #end elsif update_derivatives
+        }
+    }
 
     if ($self->step_number()==1 or $self->update_derivatives()){
         my $derivatives_ofv;
-        my $ofvname = 'ofv';
         my $derivatives_name = '';
         my $reused=0;
         #set name of datafile before creating it so that will not read data here
@@ -2605,9 +2596,7 @@ sub linearize_setup
                 newline => 1);
             $derivatives_fit -> run;
 
-            if (defined $derivatives_model->outputs() and
-                defined $derivatives_model->outputs()->[0] and
-                $derivatives_model->outputs()->[0]-> have_output()){
+            if ($derivatives_model->have_output()) {
                 $self->run_xv_pred_step(estimation_model => $derivatives_model,
                                         model_name => 'xv_pred_derivatives',
                                         derivatives_run => 1)
@@ -2644,8 +2633,6 @@ sub linearize_setup
                 newline => 1);
             if ( defined $self->derivatives_output() ->  get_single_value(attribute=> 'ofv') ) {
                 $derivatives_ofv = $self->derivatives_output()-> get_single_value(attribute=> 'ofv');
-                #$ofvname = 'DIC' if
-                #      (defined $self->derivatives_output()->get_single_value(attribute=>'dic')); #error
                 $derivatives_name = $self->derivatives_output()->filename();
                 $derivatives_name =~ s/\.lst$/\.mod/;
                 open( LOG, ">>".$self -> logfile -> [0] ); #model_number -1
@@ -2665,14 +2652,14 @@ sub linearize_setup
         if ($self->run_linearized_base()){
             open( LOG, ">>".$self -> logfile -> [0] ); #model_number -1
             if ($self->step_number()==1){
-                print LOG "The $ofvname of the nonlinear base model :$ofv        $derivatives_name\n";
+                print LOG "The ofv of the nonlinear base model :$ofv        $derivatives_name\n";
                 ui->print(category => 'linearize',
-                    message =>"\nThe $ofvname of the nonlinear base model :$ofv        $derivatives_name\n");
+                    message =>"\nThe ofv of the nonlinear base model :$ofv        $derivatives_name\n");
             }else{
                 if ($reused){
-                    print LOG "The $ofvname of the nonlinear model              :$ofv        $derivatives_name\n";
+                    print LOG "The ofv of the nonlinear model              :$ofv        $derivatives_name\n";
                 }else{
-                    print LOG "The $ofvname of the updated nonlinear model      :$ofv        $derivatives_name\n";
+                    print LOG "The ofv of the updated nonlinear model      :$ofv        $derivatives_name\n";
                 }
             }
             close LOG;
@@ -2721,15 +2708,56 @@ sub linearize_setup
         }else{
             $original_model -> _write() unless ($self->return_after_derivatives_done());
         }
-    } #end if first step or update derivatives
+    }
 
-    # Remove IGN or ACC in $DATA. Might crash future runs
-    $original_model->problems->[0]->datas->[0]->remove_ignore_accept();
+    if ($self->use_data_format and defined $datafilename) {       # To account for bug in NONMEM for 1000+ charcolumn data sets
+        # Remove IGN or ACC in $DATA. Might crash future runs
+        $original_model->problems->[0]->datas->[0]->remove_ignore_accept();
 
-    # If have MDV ignore all MDV != 0
-    if (should_add_mdv(model => $original_model)) {
-        $original_model->add_option(record_name => 'data', option_name => 'IGNORE(MDV.NEN.0)');
-        $original_model->problems->[0]->psn_record_order(1);   # In case $DATA was before $INPUT
+        my $data = data->new(
+            filename => $datafilename,
+            ignoresign => '@',
+            missing_data_token => $self->missing_data_token,
+            ignore_missing_files => 0,
+            parse_header => 1,
+            space_separated => 1);
+
+        # Remove all MDV != 0
+        my $was_filtered = $data->filter_column(colname => 'MDV', value => 1);
+        if ($was_filtered) {
+            $data->_write(overwrite => 1, as_table => 1);
+        }
+
+        #Also filter extra_table to keep it of same length as the dataset
+        if (defined $self->extra_table_columns) {
+            my $extra_table_data = data->new(
+                filename => 'extra_table',
+                ignoresign => '@',
+                missing_data_token => $self->missing_data_token,
+                ignore_missing_files => 0,
+                parse_header => 1,
+                space_separated => 1);
+
+            # Remove all MDV != 0
+            $was_filtered = $extra_table_data->filter_column(colname => 'MDV', value => 1);
+            if ($was_filtered) {
+                $extra_table_data->_write(overwrite => 1, as_table => 1);
+            }
+        }
+
+        my $numcols = scalar(@{$data->header});
+        $original_model->add_option(record_name => 'data', option_name => "($numcols(1X,E15.8))");
+    } else {
+        # If have MDV ignore all MDV != 0
+        if (should_add_mdv(model => $original_model)) {
+            $original_model->add_option(record_name => 'data', option_name => 'IGNORE(MDV.NEN.0)');
+            $original_model->problems->[0]->psn_record_order(1);   # In case $DATA was before $INPUT
+        }
+    }
+
+    # Account for an estimation bug in NONMEM 7.4
+    if ($PsN::nm_major_version == 7 and $PsN::nm_minor_version == 4) {
+        $original_model->add_option(record_name => 'estimation', option_name => 'SLOW');
     }
 
     return $original_model;
@@ -3319,7 +3347,7 @@ sub gof_ofv
 								$step_relations[$i]{'covariate'}.'-'.
 								$step_relations[$i]{'state'}).
 								sprintf("%12s","$ofvname  ").
-								sprintf("%12.5f",$base_ofv).
+								sprintf("%12.5f",$base_ofv) . ' ' .
 								$ofv.
 								$test_val. '  >'.
 								sprintf("%10.5f",$change);
@@ -3523,12 +3551,12 @@ sub gof_pval
 		my $log_text = sprintf("%-16s",$step_relations[$i]{'parameter'}.
 			$step_relations[$i]{'covariate'}.'-'.
 			$step_relations[$i]{'state'}).
-		sprintf("%6s"," PVAL ").
-		sprintf("%12.5f",$base_ofv).
-		$ofv.
-		$test_val. '  >'.
-		sprintf("%10.5f",$change).
-		sprintf("%5s",$n_param_diff);
+            sprintf("%6s"," PVAL ").
+            sprintf("%12.5f",$base_ofv) . ' ' .
+            $ofv.
+            $test_val. '  >'.
+            sprintf("%10.5f",$change).
+            sprintf("%5s",$n_param_diff);
 		print LOG $log_text;
 		# Significant ?
 		if( ($change eq '-inf') or
@@ -5024,17 +5052,17 @@ sub get_covariate_code
 sub get_covariate_theta_bounds_inits
 {
 	my %parm = validated_hash(\@_,
-							  bounds => { isa => 'HashRef', optional => 0 },
-							  inits => { isa => 'ArrayRef', optional => 0 },
-							  max => { isa => 'Num', optional => 0 },
-							  min => { isa => 'Num', optional => 0 },
-							  median => { isa => 'Num', optional => 0 },
-							  fraction => { isa => 'Maybe[Num]', optional => 1 },
-							  ntheta => { isa => 'Int', optional => 0 },
-							  type => { isa => 'Str', optional => 0 },
-							  sum_covariates => { isa => 'Bool', optional => 0 },
-							  linearize => {isa => 'Bool', optional => 0},
-							  global_init => {isa => 'Num', optional => 0},
+        bounds => { isa => 'HashRef', optional => 0 },
+        inits => { isa => 'ArrayRef', optional => 0 },
+        max => { isa => 'Num', optional => 0 },
+        min => { isa => 'Num', optional => 0 },
+        median => { isa => 'Num', optional => 0 },
+        fraction => { isa => 'Maybe[Num]', optional => 1 },
+        ntheta => { isa => 'Int', optional => 0 },
+        type => { isa => 'Str', optional => 0 },
+        sum_covariates => { isa => 'Bool', optional => 0 },
+        linearize => {isa => 'Bool', optional => 0},
+        global_init => {isa => 'Num', optional => 0},
 	);
 	my $max = $parm{'max'};
 	my $min = $parm{'min'};
@@ -5048,130 +5076,152 @@ sub get_covariate_theta_bounds_inits
 	my $inits = $parm{'inits'};
 	my $global_init = $parm{'global_init'};
 
-	if ($linearize and ($type eq 'categorical') and (not defined $fraction)){
+	if ($linearize and ($type eq 'categorical') and (not defined $fraction)) {
 		croak("must define fraction if linearize and categorical");
 	}
 
-	unless ( defined $bounds->{'upper'} and defined $bounds->{'upper'}[0] ) {
-		if ($sum_covariates){
-			for ( my $i = 0; $i < $ntheta; $i++ ) {
+    # Want dynamic bounds for exponential
+    # 0.01 < exp(theta*(WT-meanWT)) < 100
+    my $upper_bound;
+    my $lower_bound;
+    if ($type eq 'exponential') {
+        my $min_diff = $min - $median;
+        my $max_diff = $max - $median;
+        my $low_exp_bound = 0.01;
+        my $high_exp_bound = 100;
+        if ($min_diff == 0 or $max_diff == 0) {     # No difference from median. We can set any bounds
+            $lower_bound = 0.01;
+            $upper_bound = 100;
+        } else {
+            $upper_bound = array::min((log($low_exp_bound) / $min_diff), log($high_exp_bound) / $max_diff);
+            $lower_bound = array::max((log($low_exp_bound) / $max_diff), log($high_exp_bound) / $min_diff);
+        }
+    }
+
+	unless (defined $bounds->{'upper'} and defined $bounds->{'upper'}[0]) {
+		if ($sum_covariates) {
+			for (my $i = 0; $i < $ntheta; $i++) {
 				$bounds->{'upper'}[$i] = 20;
 			}
-		}elsif ($type eq 'linear'){
+		} elsif ($type eq 'linear') {
 			my $upper_bound;
-			if ( $median-$min == 0 ) {
-				$upper_bound=100000;
-			} else{
-				$upper_bound     = 1/($median-$min);
-				$upper_bound = sprintf("%.3f",$upper_bound);
-				$upper_bound     = '0' if eval($upper_bound) == 0;
+			if ($median-$min == 0) {
+				$upper_bound = 100000;
+			} else {
+				$upper_bound = 1 / ($median - $min);
+				$upper_bound = sprintf("%.3f", $upper_bound);
+				$upper_bound = '0' if eval($upper_bound) == 0;
 			}
 			$bounds->{'upper'}[0] = $upper_bound;
-		}elsif ($type eq 'categorical'){
-			for ( my $i = 0; $i < $ntheta; $i++ ) {
-				if ($linearize and ($fraction != 1)){
-					my $bound = 1/(1-$fraction);
-					$bound = sprintf("%.3f",$bound);
-					$bound     = '0' if eval($bound) == 0;
+		} elsif ($type eq 'categorical') {
+			for (my $i = 0; $i < $ntheta; $i++) {
+				if ($linearize and ($fraction != 1)) {
+					my $bound = 1 / (1 - $fraction);
+					$bound = sprintf("%.3f", $bound);
+					$bound = '0' if eval($bound) == 0;
 					$bounds->{'upper'}[$i] = $bound;
-				}else{
+				} else {
 					$bounds->{'upper'}[$i] = 5;
 				}
 			}
-		}elsif ($type eq 'hockey-stick'){
-			if ($median == $min){
+		} elsif ($type eq 'hockey-stick') {
+			if ($median == $min) {
 				croak("the median and min are equal ($min) for covariate, cannot use hockey-stick parameterization.")
 			}
-			my $upper_bound     = 1/($median-$min);
-			$upper_bound = sprintf("%.3f",$upper_bound);
-			$upper_bound     = '0' if eval($upper_bound) == 0;
+			my $upper_bound = 1 / ($median - $min);
+			$upper_bound = sprintf("%.3f", $upper_bound);
+			$upper_bound = '0' if eval($upper_bound) == 0;
 			$bounds->{'upper'}[0] = $upper_bound;
 			$bounds->{'upper'}[1] = 100000;
-		}elsif ($type eq 'power'){
+		} elsif ($type eq 'power') {
 			$bounds->{'upper'}[0] = 100000;
-		}elsif ($type eq 'exponential'){
-			$bounds->{'upper'}[0] = 100000;
-		}elsif ($type eq 'user'){
-			for ( my $i = 0; $i < $ntheta; $i++ ) {
+		} elsif ($type eq 'exponential') {
+			$bounds->{'upper'}[0] = $upper_bound;
+		} elsif ($type eq 'user') {
+			for (my $i = 0; $i < $ntheta; $i++) {
 				$bounds->{'upper'}[$i] = 100000;
 			}
-		}elsif ($type eq 'none'){
-			$bounds->{'upper'}=[];
-		}else{
+		} elsif ($type eq 'none') {
+			$bounds->{'upper'} = [];
+		} else {
 			croak("unknown type $type");
 		}
 	}
 
-	unless ( defined $bounds->{'lower'} and defined $bounds->{'lower'}[0] ) {
-		if ($sum_covariates){
-			for ( my $i = 0; $i < $ntheta; $i++ ) {
+	unless (defined $bounds->{'lower'} and defined $bounds->{'lower'}[0]) {
+		if ($sum_covariates) {
+			for (my $i = 0; $i < $ntheta; $i++) {
 				$bounds->{'lower'}[$i] = -20;
 			}
-		}elsif ($type eq 'linear'){
+		} elsif ($type eq 'linear') {
 			my $lower_bound;
-			if ( $median-$max == 0 ) {
-				$lower_bound=-100000;
-			}else{
-				$lower_bound     = 1/($median - $max);
-				$lower_bound = sprintf("%.3f",$lower_bound);
-				$lower_bound     = '0' if eval($lower_bound) == 0;
+			if ($median-$max == 0) {
+				$lower_bound = -100000;
+			} else {
+				$lower_bound = 1 / ($median - $max);
+				$lower_bound = sprintf("%.3f", $lower_bound);
+				$lower_bound = '0' if eval($lower_bound) == 0;
 			}
 			$bounds->{'lower'}[0] = $lower_bound;
-		}elsif ($type eq 'categorical'){
-			for ( my $i = 0; $i < $ntheta; $i++ ) {
-				if ($linearize and ($fraction != 1)){
-					my $bound = (-1/$fraction);
-					$bound = sprintf("%.3f",$bound);
-					$bound     = '0' if eval($bound) == 0;
+		} elsif ($type eq 'categorical') {
+			for (my $i = 0; $i < $ntheta; $i++) {
+				if ($linearize and ($fraction != 1)) {
+					my $bound = (-1 / $fraction);
+					$bound = sprintf("%.3f", $bound);
+					$bound = '0' if eval($bound) == 0;
 					$bounds->{'lower'}[$i] = $bound;
-				}else{
+				} else {
 					$bounds->{'lower'}[$i] = -1;
 				}
 			}
-		}elsif ($type eq 'hockey-stick'){
+		} elsif ($type eq 'hockey-stick') {
 			$bounds->{'lower'}[0] = -100000;
-			if ($median == $max){
+			if ($median == $max) {
 				croak("the median and max are equal ($max) for covariate, cannot use hockey-stick parameterization.") ;
 			}
-			my $lower_bound     = 1/($median - $max);
-			$lower_bound = sprintf("%.3f",$lower_bound);
-			$lower_bound     = '0' if eval($lower_bound) == 0;
+			my $lower_bound = 1 / ($median - $max);
+			$lower_bound = sprintf("%.3f", $lower_bound);
+			$lower_bound = '0' if eval($lower_bound) == 0;
 			$bounds->{'lower'}[1] = $lower_bound;
-		}elsif ($type eq 'power'){
+		} elsif ($type eq 'power') {
 			$bounds->{'lower'}[0] = -100;
-		}elsif ($type eq 'exponential'){
-			$bounds->{'lower'}[0] = -100;
-		}elsif ($type eq 'user'){
-			for ( my $i = 0; $i < $ntheta; $i++ ) {
+		} elsif ($type eq 'exponential') {
+			$bounds->{'lower'}[0] = $lower_bound;
+		} elsif ($type eq 'user') {
+			for (my $i = 0; $i < $ntheta; $i++) {
 				$bounds->{'lower'}[$i] = -100000;
 			}
-		}elsif ($type eq 'none'){
-			$bounds->{'lower'}=[];
-		}else{
+		} elsif ($type eq 'none') {
+			$bounds->{'lower'} = [];
+		} else {
 			croak("unknown type $type");
 		}
 	}
 
-	for ( my $i = 0; $i < $ntheta; $i++ ) {
-		unless ( defined $inits->[$i] ){
+	for (my $i = 0; $i < $ntheta; $i++) {
+		if (not defined $inits->[$i]) {
 			my $tmp;
-			if (($type eq 'power') or ($type eq 'exponential') or ($type eq 'user')){
+			if (($type eq 'power') or ($type eq 'user')) {
 				$tmp = $global_init;
-			}elsif( ( abs($bounds->{'upper'}[$i]) >= 100000 or not defined $bounds->{'upper'}[$i] ) and
-					( abs($bounds->{'lower'}[$i]) >= 100000 or not defined $bounds->{'lower'}[$i] ) ) {
-				$tmp = 100*$global_init;
+            } elsif ($type eq 'exponential') {
+                if ($global_init > $lower_bound and $global_init < $upper_bound) {
+                    $tmp = $global_init;
+                } else {
+                    $tmp = ($upper_bound - $lower_bound) / 2;
+                }
+			} elsif ((abs($bounds->{'upper'}[$i]) >= 100000 or not defined $bounds->{'upper'}[$i]) and
+					(abs($bounds->{'lower'}[$i]) >= 100000 or not defined $bounds->{'lower'}[$i])) {
+				$tmp = 100 * $global_init;
 			} else {
-				if ( abs($bounds->{'upper'}[$i]) <= abs($bounds->{'lower'}[$i]) ) {
-					$tmp = $bounds->{'upper'}[$i] == 0 ? $bounds->{'lower'}[$i]*$global_init : $bounds->{'upper'}[$i]*$global_init;
+				if (abs($bounds->{'upper'}[$i]) <= abs($bounds->{'lower'}[$i])) {
+					$tmp = $bounds->{'upper'}[$i] == 0 ? $bounds->{'lower'}[$i] * $global_init : $bounds->{'upper'}[$i] * $global_init;
 				} else {
-					$tmp = $bounds->{'lower'}[$i] == 0 ? $bounds->{'upper'}[$i]*$global_init : $bounds->{'lower'}[$i]*$global_init;
+					$tmp = $bounds->{'lower'}[$i] == 0 ? $bounds->{'upper'}[$i] * $global_init : $bounds->{'lower'}[$i] * $global_init;
 				}
 			}
 			$inits->[$i] = $tmp;
 		}
 	}
-
-
 }
 
 sub write_log
@@ -5237,7 +5287,7 @@ sub write_log
 						$continuous = 0 if ( $cov eq $cat );
 					}
 				}
-				print LOG sprintf("%-8s",$cov.'-'.$included_relations -> {$par}{$cov}{'state'});
+				print LOG sprintf("%-17s",$cov.'-'.$included_relations -> {$par}{$cov}{'state'});
 			}
 			print LOG "\n";
 		}

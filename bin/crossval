@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/usr/bin/perl 
 
 use FindBin qw($Bin);
 use lib "$Bin/../lib";
@@ -34,52 +34,53 @@ exit unless $res;
 
 my %help_text;
 $help_text{Pre_help_message} = <<'EOF';
-    Cross-validation
+	Cross-validation
 EOF
+
 $help_text{Description} = <<'EOF';
-    The crossval tools divides the NONMEM data set into 'groups' equally sized
+
+	The crossval tools divides the NONMEM data set into 'groups' equally sized
 	parts. For each part i, the remaining groups-1 parts are used for estimation,
 	and then part i is used for prediction.
-
 	The output is the file xv_result.txt with prediction model OFVs and
-corresponding estimation model OFVs.
-EOF
-$help_text{Examples} = <<'EOF';    
-    crossval run1.mod -groups=5
+	corresponding estimation model OFVs.
 EOF
 
-    $help_text{Options} = <<'EOF';
-	A model file is required as argument, and the
-	-groups option is also required.
+$help_text{Examples} = <<'EOF';    
+	crossval run1.mod -groups=5
+EOF
+
+$help_text{Options} = <<'EOF';
+	A model file is required as argument, and the -groups option is also required.
 
     The following options are valid:
 EOF
 
-    $help_text{-h} = <<'EOF';
-    -h | -?
+$help_text{-h} = <<'EOF';
+-h | -?
 
-    With -h or -? crossval will print a list of options and exit.
+	With -h or -? crossval will print a list of options and exit.
 EOF
 
-    $help_text{-help} = <<'EOF';
-    -help
+$help_text{-help} = <<'EOF';
+	-help
 
-    With -help crossval will print this, longer, help message.
+	With -help crossval will print this, longer, help message.
 EOF
+
 $help_text{-groups} = <<'EOF';
-      -groups=N
+	-groups=N
 
-    The number of cross-validation groups in the data set.
+The number of cross-validation groups in the data set.
 EOF
 $help_text{-msf} = <<'EOF';
-      -msf
+	-msf
 
-    Default not set, which means prediction model THETA/OMEGA/SIGMA are updated 
-    with final estimates from estimation models.
-    If -msf is set, instead use MSFO - MSFI to transfer parameter values
-    from estimation models to prediction models.
+	Default not set, which means prediction model THETA/OMEGA/SIGMA are updated 
+	with final estimates from estimation models. If -msf is set, instead use
+	MSFO - MSFI to transfer parameter values from estimation models to
+	prediction models.
 EOF
-
 
 common_options::online_help( 'crossval', \%options, \%help_text, \%required_options, \%optional_options);
 

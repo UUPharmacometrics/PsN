@@ -12,19 +12,20 @@
 \usepackage{soul}
 \usepackage[normalem]{ulem}
 \newcommand{\hilight}[1]{\colorbox{yellow}{#1}}
+\usepackage{hyperref}
 
-\guidetitle{VPC automatic binning algorithm}{2015-02-27}
+\guidetitle{VPC automatic binning algorithm}{2018-03-02}
 
 \begin{document}
 
 \maketitle
+\tableofcontents
+\newpage
 
 \section{Introduction}
-This is a description of the automatic binning algorithm used in PsN. The algorithm was created in a undergraduate project \cite{Sonehag} and later included as the default binning of the vpc program.
+This is a description of the automatic binning algorithm used in PsN. The algorithm was created in a undergraduate project \cite{Sonehag} and later included as the default binning of the vpc tool.
 
-In summary, the automatic algorithm is successful in automatically placing the 
-bin boundaries, but it is recommended to manually choose the number of bins
-when running a vpc.
+In summary, the automatic algorithm is successful in automatically placing the bin boundaries, but it is recommended to manually choose the number of bins when running a vpc.
 
 \section{Binning Method}
 The algorithm is based on K-means clustering \cite{KMeans}, which was first used for vpc binning by Lavielle and Bleakley \cite{Lavielle}.
