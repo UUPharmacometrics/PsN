@@ -14,7 +14,7 @@ library(xpose4)
 R_info(directory=working.directory)
 ```
 
-```{r vpc_plots, warning=FALSE, message=FALSE, results='hide',echo=FALSE,fig.width=9,fig.height=6.5,fig.keep="high",fig.align="center"}
+```{r vpc_plots, warning=FALSE, message=FALSE, results='asis',echo=FALSE,fig.width=9,fig.height=6.5,fig.keep="high",fig.align="center"}
 
 if (is.tte) {
     #data is in the model directory, go there to read input
@@ -45,11 +45,14 @@ if (exists('mix')) {     # A mixture model is a special case
         plots_mixest <- mixture_vpc(obs, sim, obs_phm, sim_phm, dv=dv, bins=bin_boundaries)
         plots_randomized <- mixture_vpc(obs, sim, obs_phm, sim_phm, dv=dv, bins=bin_boundaries, randomize=TRUE)
 
-        for (p in plots_mixest) {
-            print(p)
-        }
-        for (p in plots_randomized) {
-            print(p)
+        for (p in c(plots_mixest, plots_randomized)) {
+            if (is.character(p)) {      # An error message instead of a plot
+                cat("\\pagebreak\n\n")
+                cat(p)
+                cat("\\pagebreak")
+            } else {
+                print(p)
+            }
         }
     }
 }

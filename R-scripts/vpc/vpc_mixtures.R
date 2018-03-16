@@ -64,8 +64,9 @@ randomize_mixture_subpops <- function(df) {
 #   dv - name of dv. default DV
 #   randomize - Default is to only use the subpop with maximum probability for each ID
 #               This option randomizes using the probabilities in the input
+# Can return error message instead of plot for a subpopulation
 mixture_vpc <- function(obs, sim, obs_mixture, sim_mixture, bins, dv="DV", randomize=FALSE) {
-    numsims <- unique(sim_mixture$replicate)
+    #numsims <- unique(sim_mixture$replicate)
     
     if (randomize) {
         randomized_sim <- randomize_mixture_subpops(sim_mixture)
@@ -93,6 +94,11 @@ mixture_vpc <- function(obs, sim, obs_mixture, sim_mixture, bins, dv="DV", rando
         subobs <- filter_(obs, paste0(mixcol, "==", i))
         subsim <- filter_(sim, paste0(mixcol, "==", i))
         if (nrow(subsim) == 0) {
+            table_list[[i]] <- paste0("There are no individuals simulated to belong to subpopulation ", i)
+            next
+        }
+        if (nrow(subobs) == 0) {
+            table_list[[i]] <- paste0("There are no individuals in subpopulation ", i, " in the original model")
             next
         }
         if (missing(bins)) {
