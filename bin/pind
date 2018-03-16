@@ -12,6 +12,7 @@ use Getopt::Long;
 use common_options;
 use Cwd;
 use ui;
+use File::Basename;
 # More PsN dependencies included with require further down
 
 my $cmd_line = $0 . " " . join( " ", @ARGV );
@@ -126,13 +127,32 @@ if( scalar(@ARGV) > 1 ){
   exit;
 }
 
+require model;
+require tool::pind;
+
+my $main_directory = tool::get_rundir(
+    create => 0,
+    basename => 'pind_dir',
+    model_dir_name => $options{'model_dir_name'},
+    timestamp => $options{'timestamp'},
+    modelname => $ARGV[0],
+    directory_option => $options{'directory'},
+    model_subdir => $options{'model_subdir'},
+);
+$options{'directory'} = $main_directory;
+
 my $lst_file;
-if (defined $options{'lst_file'}){
-  $lst_file=$options{'lst_file'};
+if (defined $options{'lst_file'}) {
+  $lst_file = $options{'lst_file'};
 } else {
+    if ($options{'model_subdir'}) {
+        $lst_file = dirname($options{'directory'}) . '/';     # Parent directory
+    } else {
+        $lst_file = "";
+    }
   #assume modelfile ends with .mod
-  $lst_file = (substr ($ARGV[0],0,-3)).'lst'; #keep from beginning, skip last four characters
-  unless ( -e $lst_file ){
+  $lst_file .= (substr ($ARGV[0],0,-3)) . 'lst'; #keep from beginning, skip last four characters
+  if (not -e $lst_file) {
     print "When option -lst_file is omitted, the name of the lst-file is assumed to be the same\n".
 	"as the modelfile except that the last three letters are lst. Cannot find file $lst_file.\n";
     exit;
@@ -146,9 +166,6 @@ unless ( defined $options{'clean'} ){
   # Clean may be changed by default 
   $options{'clean'} = 1;
 }
-
-require model;
-require tool::pind;
 
 my $eval_string = common_options::model_parameters(\%options);
 
@@ -172,10 +189,6 @@ $pind->print_options (cmd_line => $cmd_line,
 		       common_options => \@common_options::tool_options);
 
 $pind->run;
-
-open( TMP, ">", 'ofv.done' );
-print TMP "1"; 
-close( TMP );
 
 ui -> print( category => 'pind',
 	     message => "pind done" );
