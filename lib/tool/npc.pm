@@ -1303,22 +1303,23 @@ sub modelfit_setup
 
 ###update initial estimates/input data, if given###
 
-
-	if (defined $self->lst_file){
-		#create output object to check that can be parsed correctly, and to 
-		#extract data for error checking
-		my $outputObject= output -> new(filename => '../' . $self->lst_file);
+	if (defined $self->lst_file) {
+		#create output object to check that can be parsed correctly, and to extract data for error checking
+        my $lst_name;
+        if (File::Spec->file_name_is_absolute($self->lst_file)) {
+            $lst_name = $self->lst_file;
+        } else {
+            $lst_name = $self->base_directory . $self->lst_file;
+        }
+		my $outputObject = output->new(filename => $lst_name);
 		unless ($outputObject->parsed_successfully()){
 			croak("lst file ${\$self->lst_file} could not be parsed.");
 		}
-		#update initial values in model
-		# sim_model defined then only update this one
-		$model_orig -> update_inits ( from_output => $outputObject,
-									  problem_number => $self->origprobnum())
+		#update initial values in model sim_model defined then only update this one
+		$model_orig->update_inits(from_output => $outputObject, problem_number => $self->origprobnum())
 			unless (defined $self->sim_model());
-		if (defined $model_simulation){
-			$model_simulation -> update_inits ( from_output => $outputObject,
-												problem_number => $self->simprobnum());
+		if (defined $model_simulation) {
+			$model_simulation->update_inits(from_output => $outputObject, problem_number => $self->simprobnum());
 		}
 
 	} elsif (defined $self->msfo_file) {
