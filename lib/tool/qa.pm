@@ -81,7 +81,17 @@ sub BUILD
 sub modelfit_setup
 {
 	my $self = shift;
-    my $model_copy = $self->model->copy(filename => $self->model->filename, directory => $self->model->directory, write_copy => 0, output_same_directory => 1);
+
+    $self->default_update_inits(lst_file => $self->lst_file, model => $self->model);
+
+    my $model_copy = $self->model->copy(
+        filename => $self->model->filename,
+        directory => $self->model->directory,
+        write_copy => 0,
+        copy_output => 1,
+        output_same_directory => 1
+    );
+
     $model_copy->_write(filename => $self->directory . $self->model->filename);
 
     my @covariates;
@@ -119,15 +129,13 @@ sub modelfit_setup
         push @table_columns, $self->dvid;
     } 
 	
+
     my $base_model_name = $self->model->filename;
     if ($self->nonlinear) {
         my $eval_model = $self->model->copy(filename => $self->model->filename, directory => $self->directory, write_copy => 0, output_same_directory => 0);
         my @extra_tablestrings = ( @table_columns, 'NOPRINT', 'NOAPPEND', 'ONEHEADER', 'FILE=extra_table' );
         $eval_model->remove_records(type => 'table');
         $eval_model->add_records(type => 'table', record_strings => \@extra_tablestrings);
-        if ($self->model->is_run()) {
-            $eval_model->update_inits(from_output => $self->model->outputs->[0]);
-        }
         $eval_model->_write(filename => $self->directory . $self->model->filename);
         $eval_model->set_maxeval_zero();
         $eval_model->outputs->[0]->directory($self->directory);
@@ -150,11 +158,6 @@ sub modelfit_setup
         print "*** Running linearize ***\n";
         ui->category('linearize');
 	
-        my $lst_file;
-        if (defined $self->lst_file) {
-            $lst_file = '../../../' . $self->lst_file;
-        }
-
         my $old_nm_output = common_options::get_option('nm_output');    # Hack to set clean further down
         common_options::set_option('nm_output', 'phi,ext,cov,cor,coi');
         my $linearize = tool::linearize->new(
@@ -163,7 +166,6 @@ sub modelfit_setup
             directory => 'linearize_run',
             estimate_fo => $self->fo,
             extra_table_columns => \@table_columns,
-            lst_file => $lst_file,
             nointer => $self->nointer,
             keep_covariance => 1,
             nm_output => 'phi,ext,cov,cor,coi',

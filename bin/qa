@@ -9,6 +9,7 @@ use lib "$Bin/../lib";
 use PsN;
 use strict;
 use Getopt::Long;
+use File::Basename;
 use common_options;
 use Cwd;
 use ui;
@@ -209,6 +210,21 @@ ui->silent(1) if ($options{'silent'});
 require model;
 require tool::qa;
 
+my $main_directory = tool::get_rundir(
+    create => 0,
+    basename => 'qa_dir',
+    model_dir_name => $options{'model_dir_name'},
+    timestamp => $options{'timestamp'},
+    modelname => $ARGV[0],
+    directory_option => $options{'directory'},
+    model_subdir => $options{'model_subdir'},
+);
+$options{'directory'} = $main_directory;
+my $output_directory;
+if ($options{'model_subdir'}) {
+    $output_directory = dirname($main_directory);
+}
+
 my $eval_string = common_options::model_parameters(\%options);
 
 my $model = model->new(
@@ -216,6 +232,7 @@ my $model = model->new(
     filename => $ARGV[0],
     ignore_missing_output_files => 1,
     ignore_missing_data => 1,
+    output_directory => $output_directory,
 );
 
 my $qa = tool::qa->new(

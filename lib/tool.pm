@@ -1986,6 +1986,35 @@ sub create_R_script
 	}
 }
 
+sub default_update_inits
+{
+    # Update initial estimates of model either from lst_file if available or from lst file from the model run
+	my $self = shift;
+	my %parm = validated_hash(\@_,
+        lst_file => { isa => 'Maybe[Str]', optional => 1 },
+        model => { isa => 'model', optional => 0 },
+        problem => { isa => 'Int', default => 1 },
+    );
+	my $lst_file = $parm{'ĺst_file'};
+	my $model = $parm{'model'};
+	my $problem = $parm{'problem'};
+
+    if (defined $lst_file) {
+        my $lst_name;
+        if (File::Spec->file_name_is_absolute($lst_file)) {
+            $lst_name = $lst_file;
+        } else {
+            $lst_name = $self->base_directory . $lst_file;
+        }
+        print "Updating initial estimates from: ", $lst_name, "\n";
+        $model->update_inits(from_output_file => $lst_name, problem_number => $problem);
+    } elsif ($model->is_run()) {
+        print "Updating initial estimates from: ", $model->outputs->[0]->full_name(), "\n";
+        $model->update_inits(from_output => $model->outputs->[0], problem_number => $problem);
+    }
+}
+
+
 no Moose;
 __PACKAGE__->meta->make_immutable;
 1;
