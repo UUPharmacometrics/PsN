@@ -218,40 +218,55 @@ my $eval_string = common_options::model_parameters(\%options);
 my $ignore_missing_base_data = 0;
 $ignore_missing_base_data = 1 if (defined $options{'sim_model'});
 
-$sim = model -> new ( eval( $eval_string ),
-					  filename                    => $options{'sim_model'},
-					  ignore_missing_output_files => 1 ) if (defined $options{'sim_model'});
+if (defined $options{'sim_model'}) {
+    $sim = model->new(
+        eval($eval_string),
+        filename => $options{'sim_model'},
+        ignore_missing_output_files => 1
+    );
+}
 
-my $mi = model -> new ( eval( $eval_string ),
-						filename                    => $options{'mi_model'},
-						ignore_missing_output_files => 1 ,
-						ignore_missing_data => 1 );
+my $mi = model->new(
+    eval($eval_string),
+    filename => $options{'mi_model'},
+    ignore_missing_output_files => 1,
+    ignore_missing_data => 1
+);
 
-my $base = model -> new ( eval( $eval_string ),
-						  filename                    => $options{'base_model'},
-						  ignore_missing_output_files => 1,
-						  ignore_missing_data => $ignore_missing_base_data);
+my $base = model->new(
+    eval($eval_string),
+    filename => $options{'base_model'},
+    ignore_missing_output_files => 1,
+    ignore_missing_data => $ignore_missing_base_data
+);
 
-my $reg = model -> new ( eval( $eval_string ),
-						 filename                    => $options{'reg_model'},
-						 ignore_missing_output_files => 1,
-						 ignore_missing_data => 1);
+my $reg = model->new(
+    eval($eval_string),
+    filename => $options{'reg_model'},
+    ignore_missing_output_files => 1,
+    ignore_missing_data => 1
+);
+
 my @alternatives;
-if (defined $options{'alt_models'}){
-	foreach my $altfile (split(/,/,$options{'alt_models'})){
-		push(@alternatives, model -> new ( eval( $eval_string ),
-										   filename                    => $altfile,
-										   ignore_missing_output_files => 1,
-										   ignore_missing_data => 1));
+if (defined $options{'alt_models'}) {
+    foreach my $altfile (split(/,/, $options{'alt_models'})) {
+        push(@alternatives, model->new(
+                eval($eval_string),
+                filename => $altfile,
+                ignore_missing_output_files => 1,
+                ignore_missing_data => 1)
+        );
 	}
 }
 my @chain_models;
-if (defined $options{'chain_models'}){
-	foreach my $chainfile (split(/,/,$options{'chain_models'})){
-		push(@chain_models, model -> new ( eval( $eval_string ),
-										   filename                    => $chainfile,
-										   ignore_missing_output_files => 1,
-										   ignore_missing_data => 1));
+if (defined $options{'chain_models'}) {
+	foreach my $chainfile (split(/,/, $options{'chain_models'})) {
+		push(@chain_models, model->new(
+                eval($eval_string),
+                filename => $chainfile,
+                ignore_missing_output_files => 1,
+                ignore_missing_data => 1)
+        );
 	}
 }
 
@@ -262,25 +277,24 @@ chdir($newdir);
 ############################
 
 my @simdatanames;
-if (defined $options{'sim_model'}){
+if (defined $options{'sim_model'}) {
 	my $simulation_models;
 	my $datafilesref;
-	for(my $sample=1; $sample<= $options{'samples'}; $sample++){
-		my $sim_name='sim_'.$sample.'.mod';
-		my $sim_model = $sim -> copy( filename    => $sim_name,
+	for (my $sample = 1; $sample <= $options{'samples'}; $sample++) {
+		my $sim_name = 'sim_' . $sample . '.mod';
+		my $sim_model = $sim->copy(filename => $sim_name,
 									  copy_datafile   => ($sample == 1), #if first sample then copy, otherwise not
 									  write_copy => 0,
 									  copy_output => 0);
-		if ($sample == 1){
+		if ($sample == 1) {
 			$datafilesref = $sim_model->datafiles(absolute_path => 1);
-		}else{
+		} else {
 			$sim_model->datafiles(new_names => $datafilesref);
 		}
 
 		#set seed
-		my $prob = $sim_model -> problems -> [0];
-		my $sim_record = $sim_model -> record( problem_number => 1,
-											   record_name => 'simulation' );
+		my $prob = $sim_model->problems->[0];
+		my $sim_record = $sim_model->record(problem_number => 1, record_name => 'simulation');
 		
 		my @new_record;
 		foreach my $sim_line ( @{$sim_record -> [0]} ){
