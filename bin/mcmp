@@ -312,6 +312,17 @@ if (defined $options{'table_strata'}){
 require model;
 require tool::mcmp;
 
+my $main_directory = tool::get_rundir(
+    create => 0,
+    basename => 'mcmp_dir',
+    model_dir_name => $options{'model_dir_name'},
+    timestamp => $options{'timestamp'},
+    modelname => $options{'full_model'},
+    directory_option => $options{'directory'},
+    model_subdir => $options{'model_subdir'},
+);
+$options{'directory'} = $main_directory;
+
 my $eval_string = common_options::model_parameters(\%options);
 
 my $full_model;
