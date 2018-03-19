@@ -9,6 +9,7 @@ use lib "$Bin/../lib";
 use PsN;
 use strict;
 use Getopt::Long;
+use File::Basename;
 use common_options;
 use ui;
 use Math::Random;
@@ -405,6 +406,21 @@ if (defined $options{'sim_model'}){
 require model;
 require tool::npc;
 
+my $main_directory = tool::get_rundir(
+    create => 0,
+    basename => 'npc_dir',
+    model_dir_name => $options{'model_dir_name'},
+    timestamp => $options{'timestamp'},
+    modelname => $ARGV[0],
+    directory_option => $options{'directory'},
+    model_subdir => $options{'model_subdir'},
+);
+$options{'directory'} = $main_directory;
+my $output_directory;
+if ($options{'model_subdir'}) {
+    $output_directory = dirname($main_directory);
+}
+
 my $eval_string = common_options::model_parameters(\%options);
 
 my $model;
@@ -412,10 +428,12 @@ my $model;
 if ($dummymodel){
 	$model = model->create_dummy_model;
 }else{ 
-	$model = model -> new ( eval( $eval_string ),
-			   filename                    => $ARGV[0],
-			   ignore_missing_output_files => 1 ,
-			   cwres                       => (($options{'dv'} eq 'CWRES')and ($PsN::nm_major_version < 7)) );
+	$model = model->new(eval($eval_string),
+        filename => $ARGV[0],
+        ignore_missing_output_files => 1 ,
+        cwres => (($options{'dv'} eq 'CWRES')and ($PsN::nm_major_version < 7)),
+        output_directory => $output_directory,
+    );
 
 	unless ($model->copy_data_setting_ok(copy_data => $options{'copy_data'})){
 		die("Cannot set -no-copy_data, absolute data file path is too long.");
