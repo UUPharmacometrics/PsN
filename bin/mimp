@@ -18,6 +18,7 @@ use PsN;
 use common_options;
 use ui;
 use Cwd;
+use File::Path;
 # More PsN dependencies included with require further down
 
 my $cmd_line = $0 . " " . join( " ", @ARGV );
@@ -196,15 +197,20 @@ if ( defined $options{'sim_model'}){
 require tool::modelfit;
 require model;
 
-my $main_directory = tool::get_rundir(create => 1,
-									  basename => 'mimp_dir',
-									  model_dir_name => 0,
-									  directory_option => $options{'directory'});
+my $main_directory = tool::get_rundir(
+    create => 0,
+    basename => 'mimp_dir',
+    model_dir_name => $options{'model_dir_name'},
+    timestamp => $options{'timestamp'},
+    modelname => $options{'base_model'},
+    directory_option => $options{'directory'},
+    model_subdir => $options{'model_subdir'},
+);
 $options{'directory'} = $main_directory;
 
 my ($newdir, $newfile) = OSspecific::absolute_path( $options{'directory'} .  '/m1', '' );
 unless (-e $newdir){
-	mkdir( $newdir );
+    File::Path::make_path($newdir);
 }
 
 my $sim;
