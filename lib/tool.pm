@@ -1939,7 +1939,9 @@ sub create_R_script
 	# check if tool default R file is a Rmarkdown file
 	my $rmarkdown = 0; # FALSE
 	my $Rmarkdown_installed = 0;
+    my $file_type = 'R';
 	if($template_file =~ /\.Rmd$/) {
+        $file_type = 'Rmd';
 		$rmarkdown = 1; #TRUE
 		if($self->rmarkdown) { # check if option -no-rmarkdown is used, then Rmarkdown file will not be created
 					#check if rmarkdown/pandoc(version 1.12.3 or higher)/latex are installed
@@ -1979,6 +1981,7 @@ sub create_R_script
             R_markdown => $rmarkdown,
             rmarkdown_installed => $Rmarkdown_installed,
             model_subdir => $self->model_subdir,
+            file_type => $file_type,
         );
 
 		$self->create_R_plots_code(rplot => $rplot) if ($self->can("create_R_plots_code"));

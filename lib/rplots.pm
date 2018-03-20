@@ -30,6 +30,7 @@ has 'rmarkdown_installed' => (is => 'rw', isa => 'Bool', default => 0);
 has 'model' => (is => 'rw', isa => 'model');
 has 'model_subdir' => (is => 'rw', isa => 'Bool', default => 0 );
 has 'R_lib_path' => (is => 'rw', isa => 'Str' );
+has 'file_type' => (is => 'rw', isa => 'Str' );
 
 our $preambleline = '#WHEN THIS FILE IS USED AS A TEMPLATE THIS LINE MUST LOOK EXACTLY LIKE THIS';
 
@@ -45,8 +46,8 @@ sub setup
 {
 	my $self = shift;
 
-	unless (defined $self->filename){
-		if ($self->toolname eq "qa") { # tools that need rmarkdown file to get a report
+	if (not defined $self->filename) {
+		if ($self->toolname eq "qa" and $self->file_type ne 'R') { # tools that need rmarkdown file to get a report
 			$self->R_markdown(1);
 			$self->rmarkdown_installed(1);
 		}
@@ -239,7 +240,7 @@ sub set_R_library_path
 	$self->R_lib_path($R_lib_path);
 }
 
-sub get_preamble()
+sub get_preamble
 {
 	my $self=shift;
 
@@ -263,7 +264,6 @@ sub get_preamble()
 		 "\n############################################################################",
 		 "#END OF AUTO-GENERATED PREAMBLE",
 		 "$preambleline\n");
-	
 	
 	return \@arr;
 }
@@ -319,11 +319,6 @@ sub print_R_script
 				}
 				if($value == 1 || $value == 2) {
 					push(@printcode_first,$line);
-					#if($value == 1 && $add_subtitle == 1 && not($line =~ /^--- *$/)) {
-					#	my $subtitle = "subtitle: 'Model filename: ".$modelfile."; Input datafile: ".$datafile."'"; # add model name and data file name
-					#	push(@printcode_first,$subtitle);
-					#	$add_subtitle = 0;
-					#}
 				}
 				if ($value == 2) {
 					$value = 0;
