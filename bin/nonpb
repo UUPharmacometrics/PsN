@@ -123,8 +123,8 @@ if (scalar(@ARGV) > 1) {
 }
 
 my $lst_file;
-if (defined $options{'lst'}) {
-  $lst_file = $options{'lst'};
+if (defined $options{'lst_file'}) {
+  $lst_file = $options{'lst_file'};
 } else {
   #assume modelfile ends with .mod
   $lst_file = (substr ($ARGV[0], 0, -3)) . 'lst'; #keep from beginning, skip last four characters
