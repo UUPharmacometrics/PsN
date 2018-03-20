@@ -68,8 +68,6 @@ my $res = GetOptions( \%options,
 					  keys(%optional_options) );
 
 exit unless $res;
-#print "seed ".$options{'seed'}."\n";
-#print "nm_vesrion ".$options{'nm_version'}."\n";
 
 my %help_text;
 
@@ -79,7 +77,6 @@ EOF
 
 $help_text{Post_help_message} = <<'EOF';
 EOF
-
 
 $help_text{Description} = <<'EOF';
 
@@ -117,7 +114,8 @@ $help_text{Examples} = <<'EOF';
 	Use parameters estimates from a model file instead of a lst-file:
 	update run3.mod -from_model=run4.mod -out=run6.mod
 EOF
-	$help_text{-h} = <<'EOF';
+
+$help_text{-h} = <<'EOF';
 	-h | -?
 
     With -h or -? the script prints the list of available options and exit.
@@ -135,9 +133,6 @@ $help_text{Options} = <<'EOF';
 
 	The following options are valid:
 EOF
-
-
-
 
 $help_text{-add_prior} = <<'EOF';
 	-add_prior=df1,df2,...
@@ -400,24 +395,24 @@ EOF
 common_options::online_help('update_inits', \%options, \%help_text, \%required_options, \%optional_options);
 common_options::setup( \%options, 'update_inits' ); #calls set_globals etc, initiates random sequence, sets nm_version
 
-if ( scalar( @ARGV ) < 1 ){
+if (scalar(@ARGV) < 1) {
   die "A model file must be specified. Use 'update_inits -h' for help.\n";
 }
 
-my $ignore_missing_parameters=0;
-if ( defined $options{'ignore_missing_parameters'} ){
-	$ignore_missing_parameters=1;
+my $ignore_missing_parameters = 0;
+if (defined $options{'ignore_missing_parameters'}) {
+	$ignore_missing_parameters = 1;
 }
-my $update_fix=0;
-if ( defined $options{'update_fix'} ){
-	$update_fix=$options{'update_fix'};
+my $update_fix = 0;
+if (defined $options{'update_fix'}) {
+	$update_fix = $options{'update_fix'};
 }
 
 
-unless( $ARGV[0] ){
+if (not $ARGV[0]) {
 	die "You must at least enter a model file name\n";
 }
-unless( -e $ARGV[0] ){
+if (not -e $ARGV[0]) {
 	die "No such file: $ARGV[0]\n";
 }
 
@@ -428,24 +423,24 @@ my $input_run_number;
 $input_run_number = model::get_run_number_string(filename => $ARGV[0]) if ($ARGV[0]);
 
 my $output_run_number;
-my $auto_renumber=0;
+my $auto_renumber = 0;
 if (defined $options{'renumber'}) {
-	$output_run_number=$options{'renumber'} if ($options{'renumber'} != 0);
-}elsif( $options{'output_model'} ){
-	$output_run_number = model::get_run_number_string(filename => $options{'output_model'});
-	if (defined $output_run_number){
-		$options{'renumber'}=$output_run_number;
-		$auto_renumber=1;
-	}  
+    $output_run_number=$options{'renumber'} if ($options{'renumber'} != 0);
+} elsif( $options{'output_model'}) {
+    $output_run_number = model::get_run_number_string(filename => $options{'output_model'});
+    if (defined $output_run_number) {
+        $options{'renumber'} = $output_run_number;
+        $auto_renumber = 1;
+    }  
 }
 
-my $sources=0;
+my $sources = 0;
 $sources++ if ($ARGV[1]);
 $sources++ if (defined $options{'from_model'});
 $sources++ if (defined $options{'rawres_input'});
 
-if( $sources > 1){
-	die "Ambiguous input: Can only specify one of lst-file, rawres_input or from_model.\n";
+if ($sources > 1) {
+    die "Ambiguous input: Can only specify one of lst-file, rawres_input or from_model.\n";
 }
 
 if( $options{'add_prior'})  {
@@ -453,31 +448,34 @@ if( $options{'add_prior'})  {
 	die "Cannot specify both -add_prior and -from_model.\n" if($options{'from_model'});
 }
 
-my $ignore_missing_files=1;
-$ignore_missing_files = 0 unless ( $ARGV[1] );
-my $model = model -> new ( filename => $ARGV[0],
-						   ignore_missing_files => $ignore_missing_files,
-						   ignore_missing_data =>1);
+my $ignore_missing_files = 1;
+$ignore_missing_files = 0 if (not $ARGV[1]);
+my $model = model->new(
+    filename => $ARGV[0],
+    ignore_missing_files => $ignore_missing_files,
+    ignore_missing_data =>1,
+);
 
 my $model_copy;
 
-if ($options{'flip_comments'}){
-	ui->print(category => 'all',
-			  message => "Flipping comments\n");
+if ($options{'flip_comments'}) {
+	ui->print(category => 'all', message => "Flipping comments\n");
 	#flip_comments must be done as very first step, because later processing might
 	#add or modify records so that tags do not do the right thing anymore
 	$model_copy = model::flip_comments(from_model =>$model,
 									   new_file_name => $ARGV[0].'.flipped',
 									   write => 0);
 
-}else{
-	$model_copy = model -> new ( filename => $ARGV[0],
-								 ignore_missing_output_files => 1,
-								 ignore_missing_data=>1);
+} else {
+	$model_copy = model->new(
+        filename => $ARGV[0],
+        ignore_missing_output_files => 1,
+        ignore_missing_data=>1,
+    );
 }
 
 my $mismatch = $model_copy->msfo_to_msfi_mismatch;
-if ($mismatch){
+if ($mismatch) {
 	ui->print(category => 'all',
 			  message => "Warning: \$MSFI of \$PROBLEM number $mismatch in ".$ARGV[0].
 			  " does not match previous \$EST MSFO. Check results carefully.\n");
@@ -690,7 +688,7 @@ if ( $options{'cholesky'} ){
 		$model_copy -> check_and_set_sizes(LTH => 1); #set LTH if too many thetas. TODO make dependent on nm_version
 		if ($warnings > 0){
 			ui->print(category => 'all',
-					  message => "\n"."Warning: Found $warning instance(s) of high correlations ".
+					  message => "\n"."Warning: Found $warning instance(s) of high correlations " .
 					  "during cholesky reparameterization\n");
 		}
 	}
@@ -706,24 +704,22 @@ if (defined $options{'degree'}) {
 
 
 if ($options{'fix_thetas'}){
-	ui->print(category => 'all',
-				  message => "Fixing THETAs\n");
-	for (my $j=0; $j< scalar(@{$model_copy->problems}); $j++){
+	ui->print(category => 'all', message => "Fixing THETAs\n");
+	for (my $j = 0; $j < scalar(@{$model_copy->problems}); $j++) {
 		next unless (defined $model_copy ->problems()->[$j]->thetas());
-		foreach my $rec (@{$model_copy ->problems()->[$j]->thetas()}){
+		foreach my $rec (@{$model_copy ->problems()->[$j]->thetas()}) {
 			next if $rec->prior();
-			foreach my $opt (@{$rec->options()}){
+			foreach my $opt (@{$rec->options()}) {
 				$opt->fix(1);
 			}
 		}
 	}
 }
 if ($options{'unfix_thetas'}){
-	ui->print(category => 'all',
-				  message => "Unfixing THETAs\n");
-	for (my $j=0; $j< scalar(@{$model_copy->problems}); $j++){
+	ui->print(category => 'all', message => "Unfixing THETAs\n");
+	for (my $j = 0; $j < scalar(@{$model_copy->problems}); $j++) {
 		next unless (defined $model_copy ->problems()->[$j]->thetas());
-		foreach my $rec (@{$model_copy ->problems()->[$j]->thetas()}){
+		foreach my $rec (@{$model_copy ->problems()->[$j]->thetas()}) {
 			next if $rec->prior();
 			foreach my $opt (@{$rec->options()}){
 				$opt->fix(0);
@@ -733,47 +729,44 @@ if ($options{'unfix_thetas'}){
 }
 
 
-if ($options{'add_prior'}){
-	ui->print(category => 'all',
-				  message => "Adding prior\n");
-	$model_copy -> problems()->[0]->add_prior_distribution(from_output => $output,
+if ($options{'add_prior'}) {
+	ui->print(category => 'all', message => "Adding prior\n");
+	$model_copy->problems()->[0]->add_prior_distribution(from_output => $output,
 														   problem_number => 1,
 														   df_string => $options{'add_prior'});
 }	
 
-if (defined $options{'renumber'} and $options{'renumber'} != 0){
-	my @probtab=();
+if (defined $options{'renumber'} and $options{'renumber'} != 0) {
+	my @probtab = ();
 	my ($probmsfo,$probmsfi) = $model_copy->renumber_msfo_msfi(numberstring => $output_run_number);
-	for (my $j=0; $j< scalar(@{$model_copy->problems}); $j++){
+	for (my $j = 0; $j < scalar(@{$model_copy->problems}); $j++) {
 		#handle table
-		if (defined $model_copy->problems->[$j]->tables){
-			push (@probtab,($j+1));
-			foreach my $tab (@{$model_copy->problems->[$j]->tables}){
+		if (defined $model_copy->problems->[$j]->tables) {
+			push (@probtab, ($j + 1));
+			foreach my $tab (@{$model_copy->problems->[$j]->tables}) {
 				$tab->renumber_file (numberstring => $output_run_number);
 			}
 		}
 	}
-	if (scalar(@probtab)+scalar(@{$probmsfo})+scalar(@{$probmsfi})){
+	if (scalar(@probtab) + scalar(@{$probmsfo}) + scalar(@{$probmsfi})) {
 		my $message = 'Renumbering ';
-		if(scalar(@probtab) > 0){
-			$message .= '$TABLE FILE= in $PROB '.join(',',@probtab)."\n";
+		if (scalar(@probtab) > 0) {
+			$message .= '$TABLE FILE= in $PROB ' . join(',', @probtab) . "\n";
 		}
-		if(scalar(@probmsfo) > 0){
-			$message .= '$EST/$NONPAR MSFO= in $PROB '.join(',',@probmsfo)."\n";
+		if (scalar(@probmsfo) > 0){
+			$message .= '$EST/$NONPAR MSFO= in $PROB ' . join(',', @probmsfo) . "\n";
 		}
-		if(scalar(@probmsfi) > 0){
-			$message .= '$MSFI <file> in $PROB '.join(',',@probmsfi)."\n";
+		if (scalar(@probmsfi) > 0){
+			$message .= '$MSFI <file> in $PROB ' . join(',', @probmsfi) . "\n";
 		}
-		ui->print(category => 'all',
-				  message => $message);
+		ui->print(category => 'all', message => $message);
 	}
 
 }
 
 #handle PROBLEM update_tags add_tags add_comment
 if ($options{'add_tags'}) {
-	ui->print(category => 'all',
-				  message => "Adding tags\n");
+	ui->print(category => 'all', message => "Adding tags\n");
     $model_copy->annotation->add_empty_tags();
 }
 
