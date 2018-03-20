@@ -88,8 +88,9 @@ Changes and bug fixes from PsN 4.7.0 to x.x.x
 
 
 
-   ___execute___
+   ___nonpb___
 
+- Fix broken -lst_file option
 
 
    ___runrecord___
