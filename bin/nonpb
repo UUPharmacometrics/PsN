@@ -25,7 +25,7 @@ my %options;
 my %required_options = ( 'samples:i' => '200');
 
 #option etas is not implemented, bootstrap always done on all etas
-my %optional_options = (#"etas:i"=>'',
+my %optional_options = (
 			"lst_file:s"=>'',
 			'nonpb_version:s' => ''
 			);
@@ -100,6 +100,7 @@ $help_text{-nonpb_version} = <<'EOF';
 	Default is 1, the simplified version. Version 2 is the full version. The
 	version of the script to run. 
 EOF
+
 $help_text{-samples} = <<'EOF';
 	-samples=N
 
@@ -110,39 +111,39 @@ common_options::online_help( 'nonpb', \%options, \%help_text, \%required_options
 common_options::setup( \%options, 'nonpb' ); #calls set_globals etc, initiates random sequence
 
 ## Check that we do have a model file
-if ( scalar(@ARGV) < 1 ) {
+if (scalar(@ARGV) < 1) {
   print "A simulation model file must be specified. Use 'nonpb -h' for help.\n";
   exit;
 }
 
-if( scalar(@ARGV) > 1 ){
+if (scalar(@ARGV) > 1) {
   print "NONPB can only handle one modelfile, you listed: ",
-  join(',',@ARGV),". Use 'nonpb -h' for help.\n";die;
-  exit;
+  join(',',@ARGV),". Use 'nonpb -h' for help.\n";
+  die;
 }
 
 my $lst_file;
-if (defined $options{'lst'}){
-  $lst_file=$options{'lst'};
+if (defined $options{'lst'}) {
+  $lst_file = $options{'lst'};
 } else {
   #assume modelfile ends with .mod
-  $lst_file = (substr ($ARGV[0],0,-3)).'lst'; #keep from beginning, skip last four characters
-  unless ( -e $lst_file ){
+  $lst_file = (substr ($ARGV[0], 0, -3)) . 'lst'; #keep from beginning, skip last four characters
+  if (not -e $lst_file) {
     print "When option -lst is omitted, the name of the lst-file is assumed to be the same\n".
 	"as the modelfile except that the last three letters are lst. Cannot find file $lst_file\n";
     exit;
   }
 }
-my ($dir,$file)=OSspecific::absolute_path(cwd(),$lst_file);
+my ($dir, $file)=OSspecific::absolute_path(cwd(), $lst_file);
 $lst_file = $dir . $file;
 
-if ( defined $options{'clean'} and $options{'clean'}>2){
+if (defined $options{'clean'} and $options{'clean'} > 2) {
   print "Using clean above 2 is not possible, required files would be deleted.\n";
   exit;
 }
 
-ui -> category( 'nonpb' );
-ui -> silent(1) if( $options{'silent'} );
+ui->category('nonpb');
+ui->silent(1) if ($options{'silent'});
 
 require model;
 require tool::nonpb;
@@ -150,87 +151,87 @@ require tool::bootstrap;
 
 my $eval_string = common_options::model_parameters(\%options);
 
-my $model = model -> new ( eval( $eval_string ),
-			   filename                    => $ARGV[0],
-			   ignore_missing_output_files => 1 );
+my $model = model->new(
+    eval($eval_string),
+    filename => $ARGV[0],
+    ignore_missing_output_files => 1,
+);
 
-my $nonpb = 
-	tool::nonpb->new( eval( $common_options::parameters ),
-					  models	     => [$model],
-					  lst_file           => $lst_file,
-					  samples            => $options{'samples'},
-					  etas               => $options{'etas'},
-					  nonpb_version            => $options{'nonpb_version'});
-
-
-$nonpb-> print_options (cmd_line => $cmd_line,
-		       toolname => 'nonpb',
-		       local_options => [keys %optional_options],
-		       common_options => \@common_options::tool_options);
+my $nonpb = tool::nonpb->new(
+    eval($common_options::parameters),
+    models => [ $model ],
+    lst_file => $lst_file,
+    samples => $options{'samples'},
+    etas => $options{'etas'},
+    nonpb_version => $options{'nonpb_version'},
+);
 
 
+$nonpb->print_options(
+    cmd_line => $cmd_line,
+    toolname => 'nonpb',
+    local_options => [ keys %optional_options ],
+    common_options => \@common_options::tool_options,
+);
 
-unless( -d $nonpb -> directory . "/intermediate_files" ){
-  mkdir( $nonpb -> directory . "/intermediate_files" );
+
+if (not -d $nonpb->directory . "/intermediate_files") {
+  mkdir($nonpb -> directory . "/intermediate_files");
 }
-unless( -d $nonpb -> directory . "/result_files" ){
-  mkdir( $nonpb -> directory . "/result_files" );
+if (not -d $nonpb -> directory . "/result_files" ) {
+  mkdir($nonpb -> directory . "/result_files");
 }
 
 
-chdir( $nonpb -> directory );
-if ($nonpb ->nonpb_version() == 2){
+chdir($nonpb->directory);
+if ($nonpb->nonpb_version() == 2) {
+    # this is sec 1 and 2 of URS nonp_bootstrap_v2
+    # individual step 1a,1b,2a done by bootstrap tool, can simply collect results
+    # from bootstrap object
 
-  #this is sec 1 and 2 of URS nonp_bootstrap_v2
-  #individual step 1a,1b,2a done by bootstrap tool, can simply collect results
-  #from bootstrap object
+    # do the bootstrap in a specific sub-directory of  nonpb_dirY : 'bootstrap'
+    # must carry a whole hash of options here, can lump them together according to Pontus, 
 
-  #1.0
-  ##do the bootstrap in a specific sub-directory of  nonpb_dirY : 'bootstrap'
-  #must carry a whole hash of options here, can lump them together according to Pontus, 
+    my $type = defined $options{'bca'} ? 'bca' : undef;
 
-  my $type = defined $options{'bca'} ? 'bca' : undef;
+    my $bs = tool::bootstrap->new(
+        eval($common_options::parameters),
+        directory => 'bootstrap',
+        subjects=> {},
+        model	=> [ $model ],
+        samples => $options{'samples'},
+    );
+    $bs->run;
+    $bs->prepare_results();
+    $bs->print_results();
 
-  my $bs = 
-	  tool::bootstrap->new( eval( $common_options::parameters ),
-			directory => 'bootstrap',
-			subjects	=> {},
-			models	=> [ $model ],
-			samples	=> $options{'samples'}
-	  );
-  $bs -> run;
-  $bs -> prepare_results();
-  $bs -> print_results();
-  
 
-  $nonpb->start_bs_models($bs->prepared_models->[0]{'own'});
-  $bs = undef;
+    $nonpb->start_bs_models($bs->prepared_models->[0]{'own'});
+    $bs = undef;
 } else {
-  # version 1: run regular pind on original model
-  # URS section 1 and 2
-	#FIXME pass on common options here
-  my $pind = 
-	  tool::pind->new ( eval( $common_options::parameters ),
-						models	     => [$model],
-						modelname      => 'original',
-						tablename      => 'original.patab',
-						ind_param      => 'eta',
-						lst_file       => $lst_file,
-						directory      => 'pind_dir1'
-	  );
+    # version 1: run regular pind on original model
+    # URS section 1 and 2
+    #FIXME pass on common options here
+    my $pind = tool::pind->new(
+        eval( $common_options::parameters),
+        models => [$model],
+        modelname => 'original',
+        tablename => 'original.patab',
+        ind_param => 'eta',
+        lst_file => $lst_file,
+        directory => 'pind_dir1'
+    );
 
-  $pind -> run;
-  $nonpb->n_individuals($pind->n_individuals);
-  $nonpb->pind_directories(['pind_dir1/']);
+    $pind->run;
+    $nonpb->n_individuals($pind->n_individuals);
+    $nonpb->pind_directories(['pind_dir1/']);
 
-  open( TMP, ">", 'ofv.done' );
-  print TMP "1"; 
-  close( TMP );
-  $pind = undef;
+    open(TMP, ">", 'ofv.done');
+    print TMP "1"; 
+    close(TMP);
+    $pind = undef;
 }
 
-$nonpb -> run;
-1;
+$nonpb->run;
 
-ui -> print( category => 'nonpb',
-	     message  => "Non-parametric bootstrap done.\n");
+ui->print(category => 'nonpb', message  => "Non-parametric bootstrap done.\n");
