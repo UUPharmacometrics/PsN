@@ -9,6 +9,7 @@ use lib "$Bin/../lib";
 use PsN;
 use strict;
 use Getopt::Long;
+use File::Basename;
 use common_options;
 use Cwd;
 use ui;
@@ -122,20 +123,6 @@ if (scalar(@ARGV) > 1) {
   die;
 }
 
-my $lst_file;
-if (defined $options{'lst_file'}) {
-  $lst_file = $options{'lst_file'};
-} else {
-  #assume modelfile ends with .mod
-  $lst_file = (substr ($ARGV[0], 0, -3)) . 'lst'; #keep from beginning, skip last four characters
-  if (not -e $lst_file) {
-    print "When option -lst is omitted, the name of the lst-file is assumed to be the same\n".
-	"as the modelfile except that the last three letters are lst. Cannot find file $lst_file\n";
-    exit;
-  }
-}
-my ($dir, $file)=OSspecific::absolute_path(cwd(), $lst_file);
-$lst_file = $dir . $file;
 
 if (defined $options{'clean'} and $options{'clean'} > 2) {
   print "Using clean above 2 is not possible, required files would be deleted.\n";
@@ -149,12 +136,48 @@ require model;
 require tool::nonpb;
 require tool::bootstrap;
 
+my $main_directory = tool::get_rundir(
+    create => 0,
+    basename => 'nonpb_dir',
+    model_dir_name => $options{'model_dir_name'},
+    timestamp => $options{'timestamp'},
+    modelname => $ARGV[0],
+    directory_option => $options{'directory'},
+    model_subdir => $options{'model_subdir'},
+);
+$options{'directory'} = $main_directory;
+my $output_directory;
+if ($options{'model_subdir'}) {
+    $output_directory = dirname($main_directory);
+}
+
+my $lst_file;
+if (defined $options{'lst_file'}) {
+  $lst_file = $options{'lst_file'};
+} else {
+    if ($options{'model_subdir'}) {
+        $lst_file = dirname($options{'directory'}) . '/';     # Parent directory
+    } else {
+        $lst_file = "";
+    }
+  #assume modelfile ends with .mod
+  $lst_file .= (substr ($ARGV[0],0,-3)) . 'lst'; #keep from beginning, skip last four characters
+  if (not -e $lst_file) {
+    print "When option -lst_file is omitted, the name of the lst-file is assumed to be the same\n".
+	"as the modelfile except that the last three letters are lst. Cannot find file $lst_file.\n";
+    exit;
+  }
+}
+my ($dir,$file)=OSspecific::absolute_path(cwd(),$lst_file);
+$lst_file = $dir . $file;
+
 my $eval_string = common_options::model_parameters(\%options);
 
 my $model = model->new(
     eval($eval_string),
     filename => $ARGV[0],
     ignore_missing_output_files => 1,
+    output_directory => $output_directory,
 );
 
 my $nonpb = tool::nonpb->new(
