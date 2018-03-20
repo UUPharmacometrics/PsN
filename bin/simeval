@@ -9,6 +9,7 @@ use lib "$Bin/../lib";
 use PsN;
 use strict;
 use Getopt::Long;
+use File::Basename;
 use common_options;
 use Cwd;
 use OSspecific;
@@ -190,12 +191,19 @@ my $main_directory = tool::get_rundir(
     model_subdir => $options{'model_subdir'},
 );
 $options{'directory'} = $main_directory;
+my $output_directory;
+if ($options{'model_subdir'}) {
+    $output_directory = dirname($main_directory);
+}
 
 my $eval_string = common_options::model_parameters(\%options);
 
-my $model = model -> new ( eval( $eval_string ),
-			   filename                    => $ARGV[0],
-			   ignore_missing_output_files => 1);
+my $model = model->new(
+    eval($eval_string),
+    filename => $ARGV[0],
+    ignore_missing_output_files => 1,
+    output_directory => $output_directory,
+);
 
 input_checking::check_options(tool => 'simeval', options => \%options, model => $model);
 

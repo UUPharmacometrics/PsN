@@ -219,21 +219,27 @@ sub modelfit_setup
 	$self->iov_eta($ref->{'iov'});
 	$self->occasions(scalar(@{$ref->{'iov'}}));
 	my $orig_model_output;
-	if (defined  $self->lst_file()) {
-		$orig_model_output= output -> new(filename => '../'.$self->lst_file);
-		unless ($orig_model_output->parsed_successfully()){
-			croak("lst file " . $self->lst_file . " could not be parsed.");
+	if (defined $self->lst_file()) {
+        my $lst_name;
+        if (File::Spec->file_name_is_absolute($self->lst_file)) {
+            $lst_name = $self->lst_file;
+        } else {
+            $lst_name = $self->base_directory . $self->lst_file;
+        }
+		$orig_model_output = output->new(filename => $lst_name);
+		if (not $orig_model_output->parsed_successfully()) {
+			croak("lst file " . $self->lst_name . " could not be parsed.");
 		}
+        print "Updating initial estimates from $lst_name\n";
 		$orig_model -> update_inits ( from_output => $orig_model_output,
 									  problem_number => $self->probnum());
 		$orig_model -> _write();
 		push( @orig_and_sim_models, $orig_model );
 		$simdirname='orig_and_simulation_dir'; 
-	} elsif (defined $model ->outputs() and 
-			defined $model->outputs()->[0] and
-			$model->outputs()->[0]-> have_output()){
+	} elsif (defined $model->outputs() and defined $model->outputs()->[0] and $model->outputs()->[0]->have_output()) {
 		#we do not need to run original before sims, because already have final ests
 		$orig_model_output = $model->outputs()->[0];
+        print "Updating initial estimates from " . $orig_model_output->full_name() . "\n";
 		$orig_model -> update_inits ( from_output => $orig_model_output,
 									  problem_number => $self->probnum(),
 									  ignore_missing_parameters => 1);
