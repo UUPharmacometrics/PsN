@@ -206,6 +206,22 @@ if( -e $options{'config_file'} ){
 #calls get_defaults, set_globals etc, initiates random sequence, store tool_options
 common_options::setup( \%options, 'boot_scm' ); 
 
+my $model_subdir = 0;
+if ($options{'model_subdir'} or $config_file->{'model_subdir'}) {
+    $model_subdir = 1;
+}
+my $main_directory = tool::get_rundir(
+    create => 0,
+    basename => 'boot_scm_dir',
+    model_dir_name => $config_file->{'model_dir_name'},
+    timestamp => $config_file->{'timestamp'},
+    modelname => $config_file->{'model'},
+    directory_option => $config_file->{'directory'},
+    model_subdir => $model_subdir,
+);
+$config_file->{'directory'} = $main_directory;
+$options{'directory'} = $main_directory;
+
 if (defined $options{'directory'} and -e $options{'directory'}) {
     die "boot_scm cannot resume a previous run. Please change your -directory.\n";
 }
