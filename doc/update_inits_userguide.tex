@@ -49,7 +49,7 @@ The name of the lst-file to read final estimates from is optional. It is given d
 
 \begin{optionlist}
 \optdefault{add\_prior}{df1,df2,...}
-Default not set. Add \$PRIOR NWPRI based on output object. Option will automatically read estimates and covariances from output and use them to define the prior. df should be the degrees of freedom, a comma-separated list with one integer per omega block. This feature is highly experimental, and you must check \$PRIOR in the new model file manually before using it. Option -add\_prior cannot be used together with option -from\_model. Also note that the informative record names \$THETAP, \$THETAPV etc are used,
+Default not set. Add \$PRIOR NWPRI based on output object. Option will automatically read estimates and covariances from output and use them to define the prior. df should be the degrees of freedom, a comma-separated list with one integer per omega block. This feature is highly experimental, and you must check \$PRIOR in the new model file manually before using it. It is for example known to not work when one or more parameters are fixed. Option -add\_prior cannot be used together with option -from\_model. Also note that the informative record names \$THETAP, \$THETAPV etc are used,
 so the resulting model can only be run with a NONMEM version that supports this.
 \nextopt
 \optname{add\_tags}
