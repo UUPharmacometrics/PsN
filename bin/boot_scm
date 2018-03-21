@@ -601,9 +601,7 @@ if (defined $options{'dummy_covariates'}){
 				}
 			}
 		}
-
 		#what about included relations? Does not make sense to use it there
-
 	}
 
 	$config_file->write(filename => $preprocessdir.'/updated_config.scm');
@@ -729,7 +727,6 @@ if ($need_extra_boot_data){
 															 input_filename => $model->datafiles(problem_numbers => [1],
 																								 absolute_path => 1)->[0]
 		);
-#															 input_directory => $model->datas()->[0] ->directory);
 }
 
 #print included individuals
@@ -797,7 +794,6 @@ $start_j=0 if ($options{'run_final_models'});
 for ( my $j = $start_j; $j <= $options{'samples'}; $j++ ) {
 	chdir($main_directory);
 	$config_file -> included_relations($original_included) if (defined $original_included);
-#	$config_file -> base_criteria_values($original_base) if (defined $original_base);
 
 	my ($model_dir, $filename) = OSspecific::absolute_path( $modeldir, 
 															'bsmod_'.$j.'.mod' );
@@ -815,7 +811,6 @@ for ( my $j = $start_j; $j <= $options{'samples'}; $j++ ) {
 		$new_mod -> shrinkage_modules( $model -> shrinkage_modules );
 	}
 
-#	print "setting datafiles in new_mod\n";
 	if ((not $config_file->linearize) or $options{'methodA'}){
 		if ($j>0){
 			$new_mod -> datafiles ( new_names => [$new_datas -> [$j-1]] );#might not be in memory here
@@ -833,7 +828,6 @@ for ( my $j = $start_j; $j <= $options{'samples'}; $j++ ) {
 			$config_file->derivatives_data($main_directory.'/compute_derivatives_dir/derivatives_covariates.dta');
 		}
 	}
-#	print "writing new_mode to ".$new_mod->full_name."\n";
 	$new_mod -> _write;
 	
 	my $scmdir = $main_directory.'/scm_dir'.$j;
