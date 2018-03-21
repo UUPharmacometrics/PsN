@@ -39,7 +39,6 @@ my $minimum = 100;
 my %categorytext=();
 $categorytext{'SEX'}={1=>'male',2=>'female'}; #hamren
 my %units = ('AGE'=> 'years','WGT'=>'kg','WT'=>'kg','LBW'=>'kg','CRCO'=> 'ml/min','CLCR'=> 'ml/min','NEUY'=> 'mg'); #hamren
-#my %units = ('AGE'=> 'years','WGT'=>'kg','LBW'=>'kg'); #temp
 
 #FIXME optional input units and categorytexts
 
@@ -934,19 +933,6 @@ my $index=0;
 unless (scalar(@labels)==$size){
 	croak("size is $size but label count is ".scalar(@labels));
 }
-#for (my $i=0;$i<$size; $i++){
-#	$varheader .= ',STDEV.'.$labels[$i];
-#}
-#for (my $i=0;$i<$size; $i++){
-#	for (my $j=0;$j<$i; $j++){
-#		$header .= ',CORREL.'.$labels[$i].'.'.$labels[$j];
-#	}
-#}
-#for (my $i=0;$i<$npar; $i++){
-#	for (my $j=$npar;$j<$size; $j++){
-#		$header .= ',COEFF.par.'.$labels[$i].'.cov.'.$labels[$j];
-#	}
-#}
 
 chdir($main_directory); #created by tool::get_rundir
 
@@ -1056,7 +1042,6 @@ for (my $j=$npar;$j<$size; $j++){
 	my $covindex  = $j-$npar;
 	for (my $i=0;$i<$npar; $i++){
 		if ($categorical->[$covindex]){
-#			$ratioheader .= ',"RATIO.par.'.$labels[$i].'.given.reference.'.$labels[$j].'"';
 			$ratioheader .= ',"RATIO.par.'.$labels[$i].'.given.other.'.$labels[$j].'"';
 		}else{
 			$ratioheader .= ',"RATIO.par.'.$labels[$i].'.given.cov5th.'.$labels[$j].'"';
@@ -1074,23 +1059,16 @@ print VARFILE "$varheader\n";
 # calculate from distribution of samples
 my $nsamples = $have_uncertainty ? scalar(@{$sampled_params_arr}) : 0;
 for (my $k=0;$k<=$nsamples; $k++){
-    if ($k==0){
-        # first "sample" is point estimates
-        # $model -> update_inits(from_hash => $center_params_arr->[0]); # center
-    } else {
+    if ($k != 0) {
         $model -> update_inits(from_hash => $sampled_params_arr->[$k-1],
                                match_labels => $match_labels);
     }
     my $varcov = $model->problems->[0]->omegas->[$omegaindex]->get_matrix;
     my $error;
-    #my $sdcorr=[];
-    #my $error =linear_algebra::covar2sdcorr($varcov,$sdcorr);
-    #croak("numerr index $k ") unless ($error == 0);
 
     my $ratiovec = "$k";
     my $variancevec = "$k";
     for (my $i=0;$i<$npar; $i++){
-        #		$varheader .= ',CONDVAR.par.'.$labels[$i].'.given.none';
         $variancevec .= ','.$varcov->[$i]->[$i];
         push(@{$variance_arrays{$labels[$i]}->{'none'}},$varcov->[$i]->[$i]);
     }
@@ -1106,16 +1084,11 @@ for (my $k=0;$k<=$nsamples; $k++){
         my $covindex  = $j-$npar;
         for (my $i=0;$i<$npar; $i++){
             if ($categorical->[$covindex]){
-#				$ratioheader .= ',RATIO.par.'.$labels[$i].'.given.other.'.$labels[$j];
-#				$ratiovec .= ',1';
                 $ratiovec .= ','.exp(($categoryinfo->{$labels[$j]}->{'diff'})*($coeff->[$i]->[0]));
             }else{
-            #		$ratioheader .= ',RATIO.par.'.$labels[$i].'.given.cov5th.'.$labels[$j];
-            #		$ratioheader .= ',RATIO.par.'.$labels[$i].'.given.cov95th.'.$labels[$j];
                 $ratiovec .= ','.exp(($cov_5th->[$covindex]-$cov_means[$covindex])*($coeff->[$i]->[0]));
                 $ratiovec .= ','.exp(($cov_95th->[$covindex]-$cov_means[$covindex])*($coeff->[$i]->[0]));
             }
-            #		$varheader .= ',CONDVAR.par.'.$labels[$i].'.given.cov.'.$labels[$j];
             $variancevec .= ','.$cond_covar->[$i]->[$i];
             push(@{$variance_arrays{$labels[$i]}->{$labels[$j]}},$cond_covar->[$i]->[$i]);
             if ($k==0){
@@ -1135,7 +1108,6 @@ for (my $k=0;$k<=$nsamples; $k++){
                                                                                       par_index_last => ($npar-1));
     croak("cond covar coeff failed") if ($error != 0);
     for (my $i=0;$i<$npar; $i++){
-        #	$varheader .= ',CONDVAR.par.'.$labels[$i].'.given.allcov';
         $variancevec .= ','.$cond_covar->[$i]->[$i];
         push(@{$variance_arrays{$labels[$i]}->{'all'}},$cond_covar->[$i]->[$i]);
         if ($k==0){
@@ -1151,49 +1123,21 @@ for (my $k=0;$k<=$nsamples; $k++){
             }
             push(@{$coeff_arrays{$labels[$i]}->{'all'}},$str);
         }
-#		my $idvec = "$k";
         for (my $l=0; $l<$id_count; $l++){
-            #	$idheader .= ',RATIO.id.'.$id_covariate_vectors->[$l]->[0];
             my $num=0;
             for (my $j=0;$j<($size-$npar); $j++){ #foreach covariate
                 $num += ($id_covariate_vectors->[$l]->[$j+1]-$cov_reference[$j] )*($coeff->[$i]->[$j]);
             }
-#			$idvec .= ','.exp($num);
             push(@{$id_ratio_arrays{$labels[$i]}->{$id_covariate_vectors->[$l]->[0]}},exp($num));
         }
-
-#		print {$parameter_filehandles[$i]} "$idvec\n";
     }
-
-#	for (my $i=0;$i<$size; $i++){
-#		$numvec .= ','.($rescale[$i])*($sdcorr->[$i]->[$i]);   #',STDEV.'$lab;
-#	}
-#	for (my $i=0;$i<$size; $i++){
-#		for (my $j=0;$j<$i; $j++){
-#			$numvec .= ','.$sdcorr->[$i]->[$j];  #',CORREL.'.$labels[$i].'.'.$labels[$j];
-#		}
-#	}
-    #covariate coefficients
-#	for (my $i=0;$i<$npar; $i++){
-#		for (my $j=$npar;$j<$size; $j++){
-#			# cov(par,cov)/var(cov) plus rescale
-#			$numvec .= ','.($varcov->[$i]->[$j])/(($rescale[$j])*($varcov->[$j]->[$j]));
-            #',COEFF.par.'.$labels[$i].'.cov.'.$labels[$j];
-#		}
-#	}
-
-
-#my ($cov_5th,$cov_95th)
 
     print RATIOFILE "$ratiovec\n";
     print VARFILE "$variancevec\n";
-#	push(@sdcorr_array,$numvec);
-#	last;
 }
 close( RATIOFILE );
 close( VARFILE );
 
-#my @probs = (0.05,0.10,0.5,0.90,0.95);
 my @probs = (0.05,0.95);
 my $header = 'ID';
 
@@ -1214,8 +1158,6 @@ open($parfh,'>',$idratiosfile) or die "cannot open < $idratiosfile: $!";
 print {$parfh} "$header\n";
 
 for (my $l=0; $l<$id_count; $l++){
-	#	$header .= ',RATIO.id.'.$id_covariate_vectors->[$l]->[0];
-	#push(@{$id_ratio_arrays{$par}->{$id_covariate_vectors->[$l]->[0]}},exp($num));
 	my $idnum = $id_covariate_vectors->[$l]->[0];
 	my $idline = $idnum;
 	for (my $j=0;$j<($size-$npar); $j++){ #foreach covariate
@@ -1249,9 +1191,7 @@ close($parfh);
 sub get_cv{
 	my $var=shift;
 	my $est = shift;
-#	return 100*(exp(0.5*$var)*sqrt(exp($var)-1))/$est; #SD/est
 	return 100*(exp(0.5*$var)*sqrt(exp($var)-1)); #SD
-#	return 100*(exp($var)*(exp($var)-1))/$est; #variance over est
 }
 
 
@@ -1285,7 +1225,6 @@ for (my $i=0;$i<$npar; $i++){
 		if ($type eq 'none'){
 			$line .= ',' x (1+scalar(@covnames));
 		}elsif($type eq 'all'){
-			#				push(@{$coeff_arrays{$labels[$i]}->{'all'}},join(',',@{$coeff->[$i]})); # a string
 			$line .= ','.$coeff_arrays{$par}->{'all'}->[0].','.$coeff_arrays{$par}->{'all'}->[1];
 		}else{
 			$line .= ','x $k ; #1 or more
