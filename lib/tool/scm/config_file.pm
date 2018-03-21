@@ -76,6 +76,7 @@ has 'lsf_job_name' => ( is => 'rw', isa => 'Str|Ref', default => sub { \'' } );
 has 'lsf_ttl' => ( is => 'rw', isa => 'Str|Ref', default => sub { \'' } );
 has 'lsf_options' => ( is => 'rw', isa => 'Str|Ref', default => sub { \'' } );
 has 'run_on_torque' => ( is => 'rw', isa => 'Bool|Ref', default => sub { \'1,0' } );
+has 'model_subdir' => ( is => 'rw', isa => 'Bool|Ref', default => sub { \'1,0' } );
 
 sub BUILD
 {

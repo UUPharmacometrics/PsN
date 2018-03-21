@@ -375,6 +375,21 @@ if (not defined $options{'config_file'} and (scalar(@ARGV) > 0)) {
 #options hash might get modified here, copy tool options (e.g. threads) set in scm config file
 my $config_file = scm_util::get_config_object(options => \%options,
 											  common_tool_options =>\@common_options::tool_options);
+my $model_subdir = 0;
+if ($options{'model_subdir'} or $config_file->{'model_subdir'}) {
+    $model_subdir = 1;
+}
+my $main_directory = tool::get_rundir(
+    create => 0,
+    basename => 'scm_dir',
+    model_dir_name => $config_file->{'model_dir_name'},
+    timestamp => $config_file->{'timestamp'},
+    modelname => $config_file->{'model'},
+    directory_option => $config_file->{'directory'},
+    model_subdir => $model_subdir,
+);
+$config_file->{'directory'} = $main_directory;
+$options{'directory'} = $main_directory;
 
 # we need the modified options hash here, e.g. common options set in scm config file
 # here we get default options from psn.conf
