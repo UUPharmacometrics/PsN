@@ -456,7 +456,6 @@ for (my $i=0; $i< scalar(@{$mod_array->[$selected-1]->output_files}); $i++){
 if ($modelfit->clean > 1){
 	#datafile
 	my $file = $mod_array->[0]->datafiles(absolute_path=>1)->[0];
-#	ui -> print( category => 'parallel_retries', message => "cleaning $file\n" );
 	unlink($file);
 }
 if ($modelfit->clean > 2){
@@ -468,13 +467,11 @@ if ($modelfit->clean > 2){
 			my $tabfrom = $mod->directory.$filestem.'.'.$mod->output_files->[$i];
 			if (-e $from){
 				unlink($from) unless ($options{'keep_nm_output'});
-#				ui -> print( category => 'parallel_retries', message => "cleaning $from\n" );
 			}elsif(-e $tabfrom){
 				unlink($tabfrom) unless ($options{'keep_table_files'});
-#				ui -> print( category => 'parallel_retries', message => "cleaning $tabfrom\n" );
 			}
 		}
 	}
 }
-ui -> print( category => 'parallel_retries',
-	     message => "\nparallel_retries done\n" );
+
+ui->print(category => 'parallel_retries', message => "\nparallel_retries done\n");
