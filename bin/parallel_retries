@@ -11,6 +11,7 @@ use lib "$Bin/../lib";
 use Config;
 use strict;
 use Getopt::Long;
+use File::Basename;
 # External modules #
 use Math::Random;
 # PsN includes #
@@ -204,13 +205,6 @@ unless (defined $options{'degree'}){
 require tool::modelfit;
 require model;
 
-## Set the automatic renaming of modelfit directory
-
-my $main_directory = tool::get_rundir(create => 1,
-									  basename => 'parallel_retries_dir',
-									  model_dir_name => $options{'model_dir_name'},
-									  modelname => $ARGV[0],
-									  directory_option => $options{'directory'});
 
 my @outputfiles;
 
@@ -235,6 +229,20 @@ if( ((defined $options{'min_retries'}) and ($options{'min_retries'}>0)) and (def
   die "Cannot use both -min_retries>0 and -rawres_input\n";
 }
 
+my $main_directory = tool::get_rundir(
+    create => 1,
+    basename => 'parallel_retries_dir',
+    model_dir_name => $options{'model_dir_name'},
+    timestamp => $options{'timestamp'},
+    modelname => $ARGV[0],
+    directory_option => $options{'directory'},
+    model_subdir => $options{'model_subdir'},
+);
+my $output_directory;
+if ($options{'model_subdir'}) {
+    $output_directory = dirname($main_directory);
+}
+
 
 foreach my $model_name ( @ARGV ){  
   my $outputfile = shift @outputfiles;
@@ -243,7 +251,8 @@ foreach my $model_name ( @ARGV ){
   $model = model -> new ( eval( $eval_string ),
 			  outputfile                  => $outputfile,
 			  filename                    => $model_name,
-			  ignore_missing_output_files => 1 );
+			  ignore_missing_output_files => 1,
+         output_directory => $output_directory, );
   
   if( $options{'nonparametric_etas'} or
       $options{'nonparametric_marginals'} ) {
@@ -365,15 +374,17 @@ if (defined $options{'rawres_input'}){
 	}
 }
 #basedirect $main_directory
-$modelfit = 
-	tool::modelfit->new( eval( $common_options::parameters ),
-	  prepend_model_file_name => 1,
-	  prepend_options_to_lst => $options{'prepend_options_to_lst'},
-	  directory => undef,
-	  min_retries => 0,
-	  retries =>0,
-	  copy_data =>0,
-	  models => $mod_array );  
+$modelfit = tool::modelfit->new(
+    eval($common_options::parameters),
+    prepend_model_file_name => 1,
+    prepend_options_to_lst => $options{'prepend_options_to_lst'},
+    directory => undef,
+    min_retries => 0,
+    retries => 0,
+    copy_data => 0,
+    models => $mod_array,
+    model_subdir => 0,
+);
 
 $modelfit-> print_options (cmd_line => $cmd_line,
 			   directory => $main_directory,
@@ -437,7 +448,7 @@ $selected_filestem =~ s/\.[^.]+$//; #last dot and extension
 for (my $i=0; $i< scalar(@{$mod_array->[$selected-1]->output_files}); $i++){
 	my $from = $mod_array->[$selected-1]->directory.$mod_array->[$selected-1]->output_files->[$i];
 	my $tabfrom = $mod_array->[$selected-1]->directory.$selected_filestem.'.'.$mod_array->[$selected-1]->output_files->[$i];
-	my $to = $models_array->[0]->directory.$models_array->[0]->output_files->[$i];
+	my $to = $models_array->[0]->outputs->[0]->directory . $models_array->[0]->output_files->[$i];
 	if( $options{'prepend_model_file_name'}){
 		$to = $models_array->[0]->directory.$filestem.'.'.$models_array->[0]->output_files->[$i];
 	}
