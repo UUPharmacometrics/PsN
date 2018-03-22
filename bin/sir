@@ -10,6 +10,7 @@ use PsN;
 use strict;
 use ui;
 use Getopt::Long;
+use File::Basename;
 use common_options;
 use Cwd;
 # More PsN dependencies included with require further down
@@ -487,6 +488,23 @@ if( scalar(@ARGV) > 1 ){
 
 require input_checking;
 require model;
+require tool;
+
+my $main_directory = tool::get_rundir(
+    create => 0,
+    basename => 'sir_dir',
+    model_dir_name => $options{'model_dir_name'},
+    timestamp => $options{'timestamp'},
+    modelname => $ARGV[0],
+    directory_option => $options{'directory'},
+    model_subdir => $options{'model_subdir'},
+);
+$options{'directory'} = $main_directory;
+my $output_directory;
+if ($options{'model_subdir'}) {
+    $output_directory = dirname($main_directory);
+}
+
 
 my $eval_string = common_options::model_parameters(\%options);
 
@@ -494,10 +512,13 @@ my $model;
 
 if ($dummymodel){
 	$model = model->create_dummy_model;
-}else{
-	$model = model -> new ( eval( $eval_string ),
-							filename                    => @ARGV[0],
-							ignore_missing_output_files => 1 );
+} else {
+	$model = model->new(
+        eval($eval_string),
+        filename => @ARGV[0],
+        ignore_missing_output_files => 1,
+        output_directory => $output_directory,
+    );
 }
 
 input_checking::check_options(tool => 'sir', options => \%options, model => $model);
