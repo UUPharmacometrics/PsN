@@ -110,7 +110,12 @@ Changes and bug fixes from PsN 4.7.0 to x.x.x
 
 
    ___frem___
-   
+
+- Postfrem now always creates its directory in the frem directory
+- The option -model to postfrem was removed.
+- The option -final_model was added to postfrem
+  
+ 
    ___proseval___
 
 - Bugfix: proseval would crash if no filtering was needed due to no accept or ignore in $DATA
