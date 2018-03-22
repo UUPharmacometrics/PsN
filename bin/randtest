@@ -10,6 +10,7 @@ use PsN;
 use strict;
 use ui;
 use Getopt::Long;
+use File::Basename;
 use common_options;
 # More PsN dependencies included with require further down
 
@@ -182,11 +183,29 @@ foreach my $required (keys %required_options){
 require model;
 require tool::randtest;
 
+my $main_directory = tool::get_rundir(
+    create => 0,
+    basename => 'randtest_dir',
+    model_dir_name => $options{'model_dir_name'},
+    timestamp => $options{'timestamp'},
+    modelname => $ARGV[0],
+    directory_option => $options{'directory'},
+    model_subdir => $options{'model_subdir'},
+);
+$options{'directory'} = $main_directory;
+my $output_directory;
+if ($options{'model_subdir'}) {
+    $output_directory = dirname($main_directory);
+}
+
 my $eval_string = common_options::model_parameters(\%options);
 
-my $model = model -> new ( eval( $eval_string ),
-						   filename                    => @ARGV[0],
-						   ignore_missing_output_files => 1 );
+my $model = model->new(
+    eval($eval_string),
+    filename => @ARGV[0],
+    ignore_missing_output_files => 1,
+    output_directory => $output_directory,
+);
 unless (defined $options{'copy_data'} and (not $options{'copy_data'})) {
     $options{'copy_data'} = 1;
 }
@@ -208,9 +227,12 @@ if( $options{'shrinkage'} ) {
 
 my $base_model;
 if (defined $options{'base_model'}){
-    $base_model = model->new( eval( $eval_string ),
-	      filename => $options{'base_model'},
-	      ignore_missing_output_files => 1);
+    $base_model = model->new(
+        eval($eval_string),
+        filename => $options{'base_model'},
+        ignore_missing_output_files => 1,
+        output_directory => $output_directory,
+    );
 	unless ( $base_model -> is_run){
 		unless ($base_model->copy_data_setting_ok(copy_data => $options{'copy_data'})){
 			die("Cannot set -no-copy_data, absolute data file path is too long.");
