@@ -309,7 +309,7 @@ cat("Model parameter covariate relationship, resulting improvement in OFV and es
 ```
 
 ```{r draw_frem_plots,eval=(all(skip!="frem")||all(skip!="scm")),results='asis',echo=F,warning=F,message=F,fig.width=11,fig.height=14.5,fig.keep="high",fig.align="center"}
-all_frem_plots(working.directory)
+all_frem_plots(file.path(working.directory, 'frem_run', 'postfrem_run'))
 ```
 
 ```{r draw_resiual_error_model_table,eval=all(skip!="resmod"),results='asis',echo=F,warning=F,message=F,fig.width=8,fig.height=6,fig.keep="high",fig.align="center"}

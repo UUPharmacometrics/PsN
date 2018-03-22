@@ -565,6 +565,7 @@ chdir($options{'frem_directory'});
 my $main_directory = tool::get_rundir(
     create => 1,
     basename => 'postfrem',
+    directory_option => $options{'directory'},
 );
 chdir("..");
 
