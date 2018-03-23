@@ -10,6 +10,8 @@ use lib "$Bin/../lib";
 use PsN;
 use Getopt::Long;
 use File::Copy qw/cp mv/;
+use File::Basename;
+use File::Spec;
 use common_options;
 use Math::Random;
 use ui;
@@ -62,6 +64,7 @@ my %optional_options = (
 	'offset_rawres:i' => undef,
 	'in_filter:s' => undef,
     'etas!' => undef,
+    'model_subdir!' => undef,
 	);
 
 my $res = GetOptions( \%options,
@@ -311,6 +314,14 @@ $help_text{-in_filter} = <<'EOF';
 	-in_filter=model.eq.2
 EOF
 
+$help_text{-model_subdir} = <<'EOF';
+	-model_subdir
+
+Default not set. If set all lst-files will be searched for as if generated
+by tools that were using the -model_subdir option. I.e. in the model
+subdirectory.
+EOF
+
 $help_text{-nm_version} = <<'EOF';
 	-nm_version='string'
 
@@ -451,10 +462,19 @@ if( $options{'add_prior'})  {
 
 my $ignore_missing_files = 1;
 $ignore_missing_files = 0 if (not $ARGV[1]);
+
+my $output_directory;
+if ($options{'model_subdir'}) {
+    (undef, undef, my $filename) = File::Spec->splitpath($ARGV[0]);
+    $filename =~ s/\.mod$|\.ctl$//;
+    $output_directory = File::Spec->catpath(dirname($ARGV[0]), $filename);
+}
+
 my $model = model->new(
     filename => $ARGV[0],
     ignore_missing_files => $ignore_missing_files,
-    ignore_missing_data =>1,
+    ignore_missing_data => 1,
+    output_directory => $output_directory,
 );
 
 my $model_copy;
@@ -610,8 +630,8 @@ if (defined $options{'from_model'}) {
 			die "Failed to parse $ARGV[1]: ".$output -> parsing_error_message();
 		}
 		$update_inits=1;
-	}elsif( defined $model->outputs and -e $model ->outputs -> [0] -> filename ){
-		$output = $model -> outputs -> [0];
+	}elsif(defined $model->outputs and -e $model->outputs->[0]->full_name()) {
+		$output = $model->outputs->[0];
 		unless ($output->parsed_successfully()){
 			die "Failed to parse ".$model ->outputs -> [0] -> filename.": ".
 				$output -> parsing_error_message();

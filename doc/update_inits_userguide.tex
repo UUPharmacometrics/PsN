@@ -107,6 +107,11 @@ Default not set. If set, update\_inits will not require a 1-to-1 matching of par
 Default not set. Option is only relevant in combination with rawres\_input. The parameter estimates lines in the file can be filtered on values in the different columns. When specifying which column(s) the filtering should be based on, the exact column name must be used, e.g. minimization\_successful. Filtering can only be based on columns with numeric values. The allowed relations are .gt. (greater than), .lt. (less than) and .eq. (equal to). Conditions are separated with commas. \\
 Example: -in\_filter=model.eq.2
 \nextopt
+\optname{model\_subdir}
+Default not set. If set all lst-files will be searched for as if generated
+by tools that were using the -model\_subdir option. I.e. in the model
+subdirectory.
+\nextopt
 \optdefault{nm\_version}{string}
 Default is 'default'. The formatting of the initial estimates will depend on the major version number of NONMEM (e.g. 6 or 7) set in psn.conf for the NONMEM version chosen.
 \nextopt
