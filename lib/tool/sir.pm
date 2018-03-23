@@ -213,7 +213,8 @@ sub setup_covmatrix_from_variancevec
 	return $covmatrix;
 }
 
-sub get_offdiagonal_variance{
+sub get_offdiagonal_variance
+{
 	my %parm = validated_hash(\@_,
 							  covariance => {isa => 'Num', optional => 0},
 							  rse_i => {isa => 'Num', optional => 0},
@@ -247,7 +248,6 @@ sub get_offdiagonal_variance{
 	return $variance;
 
 }
-
 
 sub setup_variancevec_from_rse
 {
@@ -358,7 +358,6 @@ sub setup_variancevec_from_rse
 	return \@variancevec;
 
 }
-
 
 sub setup_inflation
 {
@@ -1270,8 +1269,8 @@ sub save_restart_information
 
 }
 
-
-sub get_min_ofv_values{
+sub get_min_ofv_values
+{
 	#static, no shift
 	my %parm = validated_hash(\@_,
 							  sampled_params_arr => { isa => 'ArrayRef', optional => 0 },
@@ -1299,7 +1298,8 @@ sub get_min_ofv_values{
 	return ($errors,$lowest_ofv,$new_center);
 }
 
-sub params_arr_full_rank{
+sub params_arr_full_rank
+{
 	#static, no shift
 	my %parm = validated_hash(\@_,
 							  sampled_params_arr => { isa => 'ArrayRef', optional => 0 },
@@ -1320,7 +1320,6 @@ sub params_arr_full_rank{
 	return linear_algebra::full_rank(\@Amatrix);
 
 }
-
 
 sub get_vector_from_sampled_params_arr
 {
@@ -1349,7 +1348,9 @@ sub get_vector_from_sampled_params_arr
 	return (\@vector,\@errors);
 
 }
-sub mvnpdf{
+
+sub mvnpdf
+{
 	#Note: this sub is not used in current sir procedure
 	#inflation should be vector
 	my %parm = validated_hash(\@_,
@@ -1410,7 +1411,8 @@ sub mvnpdf{
 	return \@pdf_array;
 }
 
-sub check_matrix_posdef{
+sub check_matrix_posdef
+{
 	my %parm = validated_hash(\@_,
 							  matrix => { isa => 'ArrayRef', optional => 0 },
 		);
@@ -1422,7 +1424,8 @@ sub check_matrix_posdef{
 
 }
 
-sub compute_weights{
+sub compute_weights
+{
 
 	#weight is same as importance_ratio
 	my %parm = validated_hash(\@_,
@@ -1465,7 +1468,8 @@ sub compute_weights{
 	return \%hash;
 }
 
-sub recompute_weights{
+sub recompute_weights
+{
 	my %parm = validated_hash(\@_,
 							  weight_hash => { isa => 'HashRef', optional => 0 },
 							  reset_index => { isa => 'Int', optional => 0 }
@@ -1488,7 +1492,8 @@ sub recompute_weights{
 	$weight_hash->{'sum_weights'}=$cumsum;
 }
 
-sub weighted_sample{
+sub weighted_sample
+{
 	my %parm = validated_hash(\@_,
 							  cdf => { isa => 'ArrayRef', optional => 0 }
 		);
@@ -1504,7 +1509,8 @@ sub weighted_sample{
 
 }
 
-sub empirical_statistics{
+sub empirical_statistics
+{
 	my %parm = validated_hash(\@_,
 							  sampled_params_arr => { isa => 'ArrayRef', optional => 0 },
 							  labels_hash => { isa => 'HashRef', optional => 0 },
@@ -1705,9 +1711,6 @@ sub empirical_statistics{
 	return \%resulthash;
 }
 
-
-
-
 sub get_determinant_factor
 {
 	#Note not used
@@ -1742,7 +1745,8 @@ sub get_determinant_factor
 
 }
 
-sub check_auto_cholesky_blocks_posdef{
+sub check_auto_cholesky_blocks_posdef
+{
 	#static, no shift
 	my %parm = validated_hash(\@_,
 							  xvec => { isa => 'ArrayRef', optional => 0 },
@@ -2094,9 +2098,7 @@ sub sample_multivariate_normal
                               check_cholesky_reparameterization => { isa => 'Bool', optional => 0},
                               fix_theta_labels => { isa => 'ArrayRef', optional => 0 },
                               fix_theta_values => { isa => 'ArrayRef', optional => 0 },
-#                              multivariate_normal  => { isa => 'Bool', optional => 1, default => 1},
                               covmatrix => { isa => 'ArrayRef[ArrayRef]', optional => 0 }, #required for multnorm
-#                              bootstrap_samples => { isa => 'ArrayRef', optional => 1 }, #required for uniform
                               labels => { isa => 'ArrayRef', optional => 0 },
                               lower_bound => { isa => 'ArrayRef', optional => 0 },
                               upper_bound => { isa => 'ArrayRef', optional => 0 },
@@ -2106,7 +2108,6 @@ sub sample_multivariate_normal
                               coords => { isa => 'ArrayRef', optional => 0 },
                               mu => { isa => 'Math::MatrixReal', optional => 0 }, #required for multnorm
                               inflation => { isa => 'ArrayRef', optional => 0 }, #required for multnorm
-#                              degree => { isa => 'Num', optional => 1 }, #required for uniform
                               lambda => { isa => 'ArrayRef', optional => 1 }, #not allowed for uniform?
                               delta => { isa => 'ArrayRef', optional => 1 }, #not allowed for uniform?
 							  fast_posdef_checks => { isa => 'Bool', default => 0, optional => 1 },
@@ -2117,9 +2118,7 @@ sub sample_multivariate_normal
     my $minEigen = $parm{'minEigen'};
     my $print_summary = $parm{'print_summary'};
     my $check_cholesky_reparameterization = $parm{'check_cholesky_reparameterization'};
-#    my $multivariate_normal = $parm{'multivariate_normal'};
     my $covmatrix = $parm{'covmatrix'};
-#    my $bootstrap_samples = $parm{'bootstrap_samples'};
     my $labels = $parm{'labels'};
     my $fix_theta_labels = $parm{'fix_theta_labels'};
     my $fix_theta_values = $parm{'fix_theta_values'};
@@ -2131,7 +2130,6 @@ sub sample_multivariate_normal
     my $coords = $parm{'coords'};
     my $mu = $parm{'mu'};
     my $inflation = $parm{'inflation'};
-#    my $degree = $parm{'degree'};
     my $lambda = $parm{'lambda'};
     my $delta = $parm{'delta'};
     my $fast_posdef_checks = $parm{'fast_posdef_checks'};
@@ -2173,7 +2171,6 @@ sub sample_multivariate_normal
 
     my @muvec=();
     my $use_covmatrix;
-#    if ($multivariate_normal){
     unless (defined $covmatrix ){
         croak("Input error sample_multivariate_normal: covmatrix is required for multivariate normal");
     }
@@ -2204,16 +2201,6 @@ sub sample_multivariate_normal
     }else{
         $use_covmatrix = $covmatrix;
     }
-#    }else{
-        #uniform
-#        unless (defined $bootstrap_samples ){
-#            croak("Input error sample_multivariate_normal: bootstrap_samples is required for uniform");
-#        }
-#        unless (defined $degree ){
-#            croak("Input error sample_multivariate_normal: degree is required for uniform");
-#        }
-        #TODO rawres_hash_array-> array of vectors in plain format
-#    }
 
     my $block_check_array = setup_block_posdef_check(block_number => $block_number,
                                                      choleskyform => $choleskyform,
@@ -2262,9 +2249,7 @@ sub sample_multivariate_normal
     for (my $j=0; $j<$max_iter; $j++){
         #we will probably discard some samples, generate twice needed amount to start with
         my @candidate_samples;
-#        if ($multivariate_normal){
         @candidate_samples = Math::Random::random_multivariate_normal((2*$samples), @muvec, @{$use_covmatrix});
-#        }
 
         for (my $cand=0; $cand < scalar(@candidate_samples); $cand++){
             my $xvec;
@@ -2389,7 +2374,8 @@ sub sample_multivariate_normal
 
 }
 
-sub print_rejections{
+sub print_rejections
+{
 	my %parm = validated_hash(\@_,
 							  rejections => {isa => 'HashRef', optional => 0},
 							  labels => {isa => 'ArrayRef', optional => 0},
@@ -2424,7 +2410,8 @@ sub print_rejections{
 	close RES;
 }
 
-sub check_blocks_posdef{
+sub check_blocks_posdef
+{
 	#static, no shift
 
     # Check multiple matrices (blocks) for positive definiteness and adjust them (if desired).
@@ -2543,7 +2530,8 @@ sub check_blocks_posdef{
 	return ($accept,$adjusted);
 }
 
-sub tweak_inits_sampling{
+sub tweak_inits_sampling
+{
 	#static, no shift
 	my %parm = validated_hash(\@_,
 							  sampled_params_arr => { isa => 'ArrayRef', optional => 0 }, #can be empty
@@ -2654,8 +2642,8 @@ sub tweak_inits_sampling{
 	return \@Amatrix;
 }
 
-
-sub create_sampled_params_arr{
+sub create_sampled_params_arr
+{
 	#to be used in update_inits (from_hash=> $sampled_params_arr->[$k],ignore_missing_parameters=>1);
 	my %parm = validated_hash(\@_,
 							  samples_array => { isa => 'ArrayRef[ArrayRef]', optional => 0 },
@@ -2828,11 +2816,6 @@ sub get_nonmem_inverse_covmatrix
 	return $icm;
 }
 
-
-
-
-
-
 sub modelfit_analyze
 {
 	my $self = shift;
@@ -2876,9 +2859,6 @@ sub modelfit_analyze
 		);
 
 }
-
-
-
 
 sub _modelfit_raw_results_callback
 {
@@ -3245,8 +3225,6 @@ sub do_resampling
 	return $ok_resamples;
 }
 
-
-
 sub update_actual_resamples
 {
 	#static
@@ -3447,10 +3425,8 @@ sub print_empirical_covmatrix
 
 }
 
-
-
-
-sub create_R_plots_code{
+sub create_R_plots_code
+{
 	my $self = shift;
 	my %parm = validated_hash(\@_,
 							  rplot => { isa => 'rplots', optional => 0 }
