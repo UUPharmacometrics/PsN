@@ -275,15 +275,25 @@ $parameter_names{'cvsesigmas'} = [];
 require model;
 
 for( my $run = $from; $run <= $to; $run++ ){
-    next unless( -e $root.$run.".".$mod_ext and -e $root.$run.".".$out_ext);
+    my $model_name = $root . $run . '.' . $mod_ext;
+
+    my $output_directory;
+    if ($options{'model_subdir'}) {
+        $output_directory = $root . $run;
+    }
+
+    next unless( -e $model_name and -e $model_name);
     $info{$run}{'Run'} = $run;
     my $model;
     my $output;
 
-    $model = model -> new(eval( $eval_string ),
-                          filename=>$root.$run.".".$mod_ext,
-                          ignore_missing_output_files => 1,
-                          ignore_missing_data => 1);
+    $model = model->new(
+        eval($eval_string),
+        filename => $model_name,
+        ignore_missing_output_files => 1,
+        ignore_missing_data => 1,
+        output_directory => $output_directory,
+    );
 
     my @outputs = defined $model -> outputs() ? @{$model -> outputs()} : ();
     my $have_output = 0;
