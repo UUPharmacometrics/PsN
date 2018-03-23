@@ -8,6 +8,7 @@ use lib "$Bin/../lib";
 
 use PsN;
 use strict;
+use File::Basename;
 use ui;
 use Getopt::Long;
 use common_options;
@@ -83,11 +84,28 @@ if (scalar(@ARGV) > 1) {
 require model;
 require tool::proseval;
 
+my $main_directory = tool::get_rundir(
+    create => 0,
+    basename => 'proseval_dir',
+    model_dir_name => $options{'model_dir_name'},
+    timestamp => $options{'timestamp'},
+    modelname => $ARGV[0],
+    directory_option => $options{'directory'},
+    model_subdir => $options{'model_subdir'},
+);
+$options{'directory'} = $main_directory;
+my $output_directory;
+if ($options{'model_subdir'}) {
+    $output_directory = dirname($main_directory);
+}
+
 my $eval_string = common_options::model_parameters(\%options);
 
-my $model = model->new(eval($eval_string),
-    filename                    => @ARGV[0],
-    ignore_missing_output_files => 1
+my $model = model->new(
+    eval($eval_string),
+    filename => @ARGV[0],
+    ignore_missing_output_files => 1,
+    output_directory => $output_directory,
 );
 
 unless ( $model -> is_run){
