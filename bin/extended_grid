@@ -11,6 +11,7 @@ use lib "$Bin/../lib";
 # Perl includes #
 use strict;
 use Getopt::Long;
+use File::Basename;
 # External modules #
 use Math::Random;
 # PsN includes #
@@ -120,10 +121,20 @@ require tool::modelfit;
 require model;
 require data;
 
-my $directory = tool::get_rundir(create => 1,
-								 basename => 'extended_grid_dir',
-								 model_dir_name => 0,
-								 directory_option => $options{'directory'});
+my $directory = tool::get_rundir(
+    create => 1,
+    basename => 'extended_grid_dir',
+    model_dir_name => $options{'model_dir_name'},
+    timestamp => $options{'timestamp'},
+    modelname => $ARGV[0],
+    directory_option => $options{'directory'},
+    model_subdir => $options{'model_subdir'},
+);
+$options{'directory'} = $directory;
+my $output_directory;
+if ($options{'model_subdir'}) {
+    $output_directory = dirname($directory);
+}
 
 
 my $eval_string = common_options::model_parameters(\%options);
@@ -137,9 +148,12 @@ my $eval_string = common_options::model_parameters(\%options);
 
 my $model;
   
-$model = model -> new ( eval( $eval_string ),
-			filename                    => $ARGV[0],
-			ignore_missing_output_files => 1 );
+$model = model->new(
+    eval($eval_string),
+    filename => $ARGV[0],
+    ignore_missing_output_files => 1,
+    output_directory => $output_directory,
+);
 
 my $model_col_num = 1;
 my %model_column_numbers;
@@ -159,11 +173,20 @@ chdir( $directory );
 
 unless ($model->is_run){
 	my $modelfit;
-	
+    my $base_dir;
+    if (defined $output_directory) {
+        $base_dir = dirname($output_directory) . '/';
+    }
+
 	$modelfit = 
-		tool::modelfit -> new ( eval( $common_options::parameters ),
-								directory => 'orig_modelfit_dir',
-								models => [$model] );  
+		tool::modelfit->new(
+            eval($common_options::parameters),
+            base_directory => $base_dir,
+            top_tool => 0,
+            copy_up => 1,
+            directory => File::Spec->catdir($directory, 'orig_modelfit_dir'),
+            models => [ $model ],
+        );
 	
 	$modelfit-> print_options (directory => '.',
 							   cmd_line => $cmd_line,
@@ -252,14 +275,17 @@ if( defined $options{'ids_to_simulate'} ){
 	$n_id_to_simulate = scalar @{$data_set -> individuals};
 }
 
-my $modelfit = 
-	tool::modelfit -> new ( eval( $common_options::parameters ),
-							directory => 'simulation_dir',
-							models => [$model_copy] );  
+my $modelfit = tool::modelfit->new(
+    eval($common_options::parameters),
+    directory => 'simulation_dir',
+    models => [ $model_copy ],
+    model_subdir => 0,
+    top_tool => 0,
+);
 
 print "Running the simulation model in simulation_dir\n";
 
-$modelfit -> run;
+$modelfit->run;
 
 # }}}
 
@@ -458,15 +484,18 @@ $extended_model -> extra_output( ['nptab'] );
 
 $extended_model -> _write;
 
-$modelfit = 
-	tool::modelfit ->new ( eval( $common_options::parameters ),
-						   prepend_model_file_name => 1,
-						   directory => 'extended_dir',
-						   models => [$extended_model] );  
+$modelfit = tool::modelfit->new(
+    eval($common_options::parameters),
+    prepend_model_file_name => 1,
+    directory => 'extended_dir',
+    models => [ $extended_model ],
+    model_subdir => 0,
+    top_tool => 0,
+);  
 
 print "Running the extended model in extended_dir\n";
 
-$modelfit -> run;
+$modelfit->run;
 
 # }}}
 
