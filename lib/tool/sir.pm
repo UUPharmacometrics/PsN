@@ -13,6 +13,7 @@ use MooseX::Params::Validate;
 use ext::Math::MatrixReal;# qw(all);
 use Math::Trig;	# For pi
 use Math::Random;
+use File::Spec;
 use output;
 use array qw(:all);
 use math qw(usable_number round);
@@ -2112,6 +2113,7 @@ sub sample_multivariate_normal
                               delta => { isa => 'ArrayRef', optional => 1 }, #not allowed for uniform?
 							  fast_posdef_checks => { isa => 'Bool', default => 0, optional => 1 },
                               print_iter_N => { isa => 'Int', default => 0, optional => 1 },
+                              directory => { isa => 'Str', optional => 1 },     # Directory for log file
         );
     my $samples = $parm{'samples'};
     my $adjust_blocks = $parm{'adjust_blocks'};
@@ -2134,6 +2136,7 @@ sub sample_multivariate_normal
     my $delta = $parm{'delta'};
     my $fast_posdef_checks = $parm{'fast_posdef_checks'};
     my $print = $parm{'print_iter_N'};
+    my $directory = $parm{'directory'};
 
     my $dim = scalar(@{$coords});
 
@@ -2351,6 +2354,9 @@ sub sample_multivariate_normal
     }
 
     my $fname = 'sample_rejection_summary.txt';
+    if (defined $directory) {
+        $fname = File::Spec->catdir($directory, $fname);
+    }
     print_rejections(rejections => \%rejections,
                      labels => $labels,
                      file => $fname,
