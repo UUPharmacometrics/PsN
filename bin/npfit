@@ -11,6 +11,7 @@ use lib "$Bin/../lib";
 use Config;
 use strict;
 use Getopt::Long;
+use File::Basename;
 # External modules #
 use Math::Random;
 # PsN includes #
@@ -83,6 +84,20 @@ require model;
 require input_checking;
 require tool::nonparametric;
 
+my $main_directory = tool::get_rundir(
+    create => 0,
+    basename => 'npfit_dir',
+    model_dir_name => $options{'model_dir_name'},
+    timestamp => $options{'timestamp'},
+    modelname => $ARGV[0],
+    directory_option => $options{'directory'},
+    model_subdir => $options{'model_subdir'},
+);
+$options{'directory'} = $main_directory;
+my $output_directory;
+if ($options{'model_subdir'}) {
+    $output_directory = dirname($main_directory);
+}
 
 my $eval_string = common_options::model_parameters(\%options);
 
@@ -96,9 +111,12 @@ if( scalar(@ARGV) == 0 ) {
 }
 
 my $input_model;
-$input_model = model -> new ( eval( $eval_string ),
-							  filename => $ARGV[0],
-							  ignore_missing_output_files => 1 );
+$input_model = model->new(
+    eval($eval_string),
+    filename => $ARGV[0],
+    ignore_missing_output_files => 1,
+    output_directory => $output_directory,
+);
 							  
 input_checking::check_options(tool => 'npfit', options => \%options, model => $input_model);							  
 

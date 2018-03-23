@@ -28,12 +28,15 @@ sub modelfit_setup
 
 	# if there are no estimation results available for the input model, then run the input model and read the estimation results
 	unless ($input_model->is_run) {
-		my $orig_fit = tool::modelfit->new( %{common_options::restore_options(@common_options::tool_options)},
-											base_directory => $self -> directory(),
-											directory => undef,
-											models => [$input_model],
-											raw_results => undef,
-											top_tool => 0 );
+		my $orig_fit = tool::modelfit->new(
+            %{common_options::restore_options(@common_options::tool_options)},
+            base_directory => $self->base_directory,
+            directory => File::Spec->catdir($self->directory, 'orig_modelfit'),
+            models => [ $input_model ],
+            raw_results => undef,
+            top_tool => 0,
+            copy_up => 1,
+        );
 		$orig_fit->add_to_nmoutput(extensions => ['ext','cov']);		
 		ui -> print( category => 'all',	message => 'Running input model' );
 		$orig_fit -> run;
