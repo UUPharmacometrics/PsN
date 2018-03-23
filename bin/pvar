@@ -11,6 +11,7 @@ use lib "$Bin/../lib";
 use Config;
 use strict;
 use Getopt::Long;
+use File::Basename;
 # External modules #
 use Math::Random;
 # PsN includes #
@@ -127,6 +128,21 @@ if ($options{'models'}) {
 }
 
 my @parameters = split(',', $options{'parameters'});
+
+my $main_directory = tool::get_rundir(
+    create => 0,
+    basename => 'pvar_dir',
+    model_dir_name => $options{'model_dir_name'},
+    timestamp => $options{'timestamp'},
+    modelname => $ARGV[0],
+    directory_option => $options{'directory'},
+    model_subdir => $options{'model_subdir'},
+);
+$options{'directory'} = $main_directory;
+my $output_directory;
+if ($options{'model_subdir'}) {
+    $output_directory = dirname($main_directory);
+}
 
 # Create the model objects
 my @models;
