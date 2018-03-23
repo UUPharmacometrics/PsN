@@ -105,8 +105,8 @@ sub modelfit_setup
 		my $orig_fit = tool::modelfit ->new( %{common_options::restore_options(@common_options::tool_options)},
 											 models                => [$model],
 											 threads               => $mfit_threads,
-											 base_directory        => $self ->directory,
-											 directory             => $self ->directory.'/orig_modelfit_dir'.$model_number,
+											 base_directory => $self->base_directory,
+											 directory             => $self->directory.'/orig_modelfit_dir'.$model_number,
 											 subtools              => [],
 											 top_tool              => 0,
 											 parent_threads        => $own_threads,
@@ -114,7 +114,8 @@ sub modelfit_setup
 											 logfile	         => undef,
 											 raw_results           => undef,
 											 prepared_models       => undef,
-											 %subargs );
+											 %subargs,
+                                        copy_up => 1, );
 		ui -> print( category => 'llp',
 					 message  => "Evaluating basic model" ) unless $self -> parent_threads > 1;
 		$orig_fit -> run;

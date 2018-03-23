@@ -9,6 +9,7 @@ use lib "$Bin/../lib";
 use PsN;
 use strict;
 use Getopt::Long;
+use File::Basename;
 use common_options;
 use ui;
 # More PsN dependencies included with require further down
@@ -240,11 +241,29 @@ foreach my $param ( 'thetas', 'omegas', 'sigmas' ) {
 require model;
 require tool::llp;
 
+my $main_directory = tool::get_rundir(
+    create => 0,
+    basename => 'llp_dir',
+    model_dir_name => $options{'model_dir_name'},
+    timestamp => $options{'timestamp'},
+    modelname => $ARGV[0],
+    directory_option => $options{'directory'},
+    model_subdir => $options{'model_subdir'},
+);
+$options{'directory'} = $main_directory;
+my $output_directory;
+if ($options{'model_subdir'}) {
+    $output_directory = dirname($main_directory);
+}
+
 my $eval_string = common_options::model_parameters(\%options);
 
-my $model = model -> new ( eval( $eval_string ),
-			   filename                    => $ARGV[0],
-			   ignore_missing_output_files => 1);
+my $model = model->new(
+    eval($eval_string),
+    filename => $ARGV[0],
+    ignore_missing_output_files => 1,
+    output_directory => $output_directory,
+);
 
 if( $options{'nonparametric_etas'} or
     $options{'nonparametric_marginals'} ) {
