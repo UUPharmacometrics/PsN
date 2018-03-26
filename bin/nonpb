@@ -221,7 +221,7 @@ if ($nonpb->nonpb_version() == 2) {
         eval($common_options::parameters),
         directory => 'bootstrap',
         subjects=> {},
-        model	=> [ $model ],
+        models	=> [ $model ],
         samples => $options{'samples'},
     );
     $bs->run;
