@@ -34,7 +34,7 @@ for (my $si=0; $si<scalar(@edge_text); $si++){
 		my $input = 'test'.$base.'.dta';
 		my $nonmemtable = 'answer'.$base.'.dta'; #basic space separated, 
 
-		my $command = get_command('execute')." $model -mod -clean=3 -nm_output=cov";
+		my $command = get_command('execute')." $model -model_dir_name -clean=3 -nm_output=cov";
 		print "Running $command\n";
 		my $rc = system($command);
 		$rc = $rc >> 8;
@@ -80,7 +80,7 @@ for (my $si=0; $si<scalar(@edge_text); $si++){
 	my $input = 'test'.$base.'.dta';
 	my $nonmemtable = 'answer'.$base.'.dta'; #basic space separated, 
 
-	my $command = get_command('execute')." $model -mod -clean=3 -nm_output=cov";
+	my $command = get_command('execute')." $model -model_dir_name -clean=3 -nm_output=cov";
 	print "Running $command\n";
 	my $rc = system($command);
 	$rc = $rc >> 8;
