@@ -145,6 +145,7 @@ sub modelfit_setup
             directory => "eval_run",
             top_tool => 1,
             nm_output => 'ext,phi',
+            model_subdir => 0,
         );
         $modelfit->run();
 		
@@ -236,7 +237,7 @@ sub modelfit_setup
                 }
             }
             for my $model (@models) {       # Set output directory so that .lst file gets saved in the rundir
-                $model->outputs->[0]->directory(".");
+                $model->outputs->[0]->directory('.');
             }
             chdir "modelfit_run";
             my $modelfit = tool::modelfit->new(
@@ -246,6 +247,7 @@ sub modelfit_setup
                 top_tool => 1,
                 so => 1,
                 nm_output => 'ext,phi',
+                model_subdir => 0,
             );
             $modelfit->run();
             chdir "..";
@@ -291,6 +293,7 @@ sub modelfit_setup
                     directory => "modelfit_dir1",
                     top_tool => 1,
                     nm_output => 'ext,phi',
+                    model_subdir => 0,
                 );
                 $modelfit->run();
             };
