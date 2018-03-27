@@ -5,6 +5,7 @@
 use strict;
 use warnings;
 use File::Path 'rmtree';
+use File::Copy::Recursive qw(dircopy);
 #use Test::More tests=>1;
 use Test::More;
 
@@ -19,12 +20,16 @@ my $interactive=0;
 our $temp_dir = create_test_dir('system_postfrem');
 chdir($temp_dir);
 my $model_dir = $includes::testfiledir."/postfrem";
+dircopy("$model_dir/frem_covstep", "frem_covstep");
+dircopy("$model_dir/frem_sir", "frem_sir");
 
 my $seed=588549; # important for hash tests
 
-# my ($major,$minor,$dirt) = get_major_minor_nm_version();
-# if ($major < 7 or ($major == 7 and $minor < 3)){
-# }
+my @frem_dirs = (
+    "frem_covstep",
+    "frem_sir",
+);
+
 my @test_dirs = (
 	"postfrem_covstep",
 	# "postfrem_covstep_removed",
@@ -32,14 +37,14 @@ my @test_dirs = (
 );
 my @commands = (
 	# frem executed with: frem -covar=WT,DGRP -categorical=DGRP -no-check mox_frem.mod -no-run_sir -mceta=50
-	get_command('postfrem') . " -frem_dir=$model_dir/frem_covstep -dir=$test_dirs[0] -seed=$seed",
+	get_command('postfrem') . " -frem_dir=frem_covstep -dir=$test_dirs[0] -seed=$seed",
 
 	# same frem, but model_4.mod re-executed with $COV step commented out (test point estimate mode)
     # FIXME: model_1.mod expected for uncertainty propagation, fix and activate when postfrem has better such functionality
 	# get_command('postfrem') . " -frem_dir=$model_dir/frem_covstep_removed -dir=$test_dirs[1] -seed=$seed",
 
 	# same frem, but sir executed with: sir -covmat_input=proposal_density.cov -dir=sir (sir input test)
-	get_command('postfrem') . " -frem_dir=$model_dir/frem_sir -sir_dir=$model_dir/frem_sir/sir/ -dir=$test_dirs[1] -seed=$seed",
+	get_command('postfrem') . " -frem_dir=frem_sir -sir_dir=frem_sir/sir/ -dir=$test_dirs[1] -seed=$seed",
 );
 
 my %hashes = (
@@ -73,6 +78,7 @@ my %hashes = (
 for my $i (0..$#commands) {
 	my $command = $commands[$i];
 	my $test_dir = $test_dirs[$i];
+    my $frem_dir = $frem_dirs[$i];
 
 	my  $rc = system($command);
 	$rc = $rc >> 8;
@@ -83,7 +89,7 @@ for my $i (0..$#commands) {
 	subtest "$test_dir hash tests" => sub {
 		plan 'skip_all' unless $postfrem_passed;
 		foreach my $file (keys %{$hashes{$test_dir}}) {
-			my $file_to_hash = "$test_dir/$file";
+			my $file_to_hash = "$frem_dir/$test_dir/$file";
 			is (digest_file_hex($file_to_hash, "SHA-1"), $hashes{$test_dir}->{$file}, "hash eq test : ".$file_to_hash);
 		}
 	}
