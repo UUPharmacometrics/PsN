@@ -2375,8 +2375,10 @@ sub linearize_setup
                             my $line = 'D_EPSETA'.$i.'_'.$j.'*OGK_'.$param.'*(GZ_'.$param.'-OGZ_'.$param.')';
                             if (length($string.$line) >= 63){
                                 $string .= ')'."\n";
-                                push(@pred_block,$string);
-                                $err_count++;
+                                if ($string !~ /\(\)/) {        # Workaround to fix bug with ()
+                                    push(@pred_block,$string);
+                                    $err_count++;
+                                }
                                 $string = 'ERR'.$err_count.'='.$eps.'*(';
                             }else{
                                 $string .= '+' if (length($string) > 15);
