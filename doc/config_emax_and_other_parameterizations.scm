@@ -41,7 +41,7 @@ categorical = 1,2
 ;Redefine state 3 for all parameters with covariate AGE
 ;Hockey-stick with estimated breakpoint instead of break at median
 *:AGE-3=BP=THETA(1)\
-PARAGE=1+(THETA(2)*BP**99/(BP**99+AGE**99)+THETA(3)*AGE**99/(BP**99+AGE**99))*(AGE-median)
+PARAGE=1+(THETA(2)*BP**99/(BP**99+AGE**99)+THETA(3)*AGE**99/(BP**99+AGE**99))*(AGE-BP)
 
 ;Example 3
 ;Define new state 7 as Emax model for all parameter-covariate pairs
