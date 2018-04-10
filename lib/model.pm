@@ -5514,7 +5514,7 @@ sub get_phi_file
         return $self->phi_file;
     }
 
-    my $name = $self->full_name;
+    my $name = $self->outputs->[0]->full_name;
     $name = utils::file::replace_extension($name, 'phi');
 
     if (not -e $name) {
