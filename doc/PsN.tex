@@ -3,7 +3,7 @@
 
 \usepackage{tabularx}
 \usepackage{hyperref}
-
+\usepackage{dirtree}
 
 \begin{document}
 	
@@ -16,7 +16,55 @@
 	\section{Introduction}
 	%This document aims to be a starting point for the PsN documentation and also to contain topics that are common to the different PsN tools.
 	This document aims to contain topics that are common to the different PsN tools.
-	
+
+    \section{The PsN directory structure}
+One major task of PsN is to organize the files from NONMEM runs and from runs of the different PsN tools. PsN has two options for directory organization, one default flatter structure and another optional deeper structure. Both will be explained below.
+\subsection{The default directory structure}
+Let us start in a directory containing one model file and one dataset, like this:
+\\
+\dirtree{%
+    .1 mydir/.
+    .2 run1.csv.
+    .2 run1.mod.
+    }
+~\\
+The model can be executed using the \verb|execute run1.mod| command. This will create a modelfit rundirectory and the appropriate result files (the lst-file, the generated table files and any other NONMEM result file requested using the \verb|-nm_output| option) will be copied to the model directory. For example:
+\\
+\dirtree{%
+    .1 mydir/.
+    .2 modelfit\_dir1/.
+    .2 run1.csv.
+    .2 run1.lst.
+    .2 run1.mod.
+    .2 sdtab.
+}
+
+\subsection{The -model\_subdir directory structure}
+This directory structure is centered around the models and will create a specific subdirectory for each model. It can be activated by using the \verb|-model_subdir| option. To change it to the default structure set this option in the psn.conf. The created subdirectory will contain all result related to tools run on that model and the model directory will be kept untouched. Starting from the same directory as in the previous section and executing the model would then generate the following directory structure:
+\\
+\dirtree{%
+    .1 mydir/.
+    .2 run1/.
+    .3 modelfit\_dir1/.
+    .3 run1.lst.
+    .3 sdtab.
+    .2 run1.csv.
+    .2 run1.mod.
+    }
+~\\
+If next running a bootstrap on the same model the bootstrap results will also be put in the model subdirectory:
+\\
+\dirtree{%
+    .1 mydir/.
+    .2 run1/.
+    .3 bootstrap\_dir1/.
+    .3 modelfit\_dir1/.
+    .3 run1.lst.
+    .3 sdtab.
+    .2 run1.csv.
+    .2 run1.mod.
+    }
+
 	\section{Metadata}
 	All PsN tools generate metadata with information about the specific run. The file 'meta.yaml' is, starting with PsN 4.7.8, created in each run directory with the aim of gathering all the interesting metadata in one place. As a yaml-file the meta.yaml is both easy to read for humans and easy to interpret by computer program. Below is a description of all currently available tags in meta.yaml
 	

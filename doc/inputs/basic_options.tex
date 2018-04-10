@@ -22,6 +22,13 @@ where N will start at 1 and be increased by one each time you run the script. Th
 
 will run NONMEM and where PsN-generated output files will be stored. You do not have to create the directory,  it will be done for you. If you set -directory to a the name of a directory that already exists, PsN will run in the existing directory, except for scm, boot\_scm and xv\_scm that cannot be started in an existing directory.
 \nextopt
+\optname{model\_subdir}
+	Use an alternative directory structure for PsN. An extra directory
+    level unique to each model is introduced between the calling
+    directory and the rundirectory. More information about this option can
+    be found in PsN.pdf.
+\nextopt
+   
 \optdefault{nm\_version}{string}
 Default is 'default'. 
 If you have more than one NONMEM version installed you can use option -nm\_version to choose which one to use, as long as it is 
