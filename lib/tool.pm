@@ -270,6 +270,10 @@ sub BUILD
 	# both for resuming crashed runs as well as for extracting
 	# information form an old run.
 
+    if (defined $self->parafile) {
+        $self->parafile(File::Spec->rel2abs($self->parafile));
+    }
+
     if ($self->model_subdir and ($self->top_tool or $self->copy_up)) {
         my $model_subdir_name = utils::file::get_file_stem($self->models->[0]->filename) . '/';
         $self->model_subdir_name($model_subdir_name);
