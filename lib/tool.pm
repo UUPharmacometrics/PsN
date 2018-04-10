@@ -270,7 +270,7 @@ sub BUILD
 	# both for resuming crashed runs as well as for extracting
 	# information form an old run.
 
-    if (defined $self->parafile) {
+    if ($self->parafile ne 'none') {
         $self->parafile(File::Spec->rel2abs($self->parafile));
     }
 
