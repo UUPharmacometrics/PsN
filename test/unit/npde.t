@@ -121,18 +121,6 @@ cmp_ok(abs($mean_matrix->[1]->[3]-0.0576/3),'<',$diff,'mean ETA2 ind 4');
 cmp_ok(abs($mean_matrix->[1]->[4]-(-0.204386/3)),'<',$diff,'mean ETA2 ind 5');
 
 
-if (0){
-	for (my $i=0;$i < scalar(@{$est_matrix->[0]}); $i++){
-		for (my $k=0;$k < scalar(@{$est_matrix->[0]->[$i]}); $k++){
-			for (my $j=0;$j < scalar(@{$est_matrix}); $j++){
-				print $est_matrix->[$j]->[$i]->[$k]." ";
-			}
-			print "\n";
-		}
-		print "\n";
-	}
-}
-
 my $decorr = [];
 my $shrink =[];
 my @missing_matrix =();
@@ -192,17 +180,6 @@ cmp_ok(abs($decorr->[1]->[3]->[3]-(-0.748626468429881)),'<',$diff,'decorr sim3 E
 cmp_ok(abs($decorr->[0]->[4]->[3]-(-0.046093664205007)),'<',$diff,'decorr sim3 ETA1 ind 5');
 cmp_ok(abs($decorr->[1]->[4]->[3]-(1.153780181600242)),'<',$diff,'decorr sim3 ETA2 ind 5');
 
-if (0){
-	for (my $i=0;$i < scalar(@{$decorr->[0]}); $i++){
-		for (my $k=0;$k < scalar(@{$decorr->[0]->[$i]}); $k++){
-			for (my $j=0;$j < scalar(@{$decorr}); $j++){
-				print $decorr->[$j]->[$i]->[$k]." ";
-			}
-			print "\n";
-		}
-		print "\n";
-	}
-}
 my $npde = [];
 my $pde = [];
 $ok = simeval_util::npde_comp($decorr, $pde, $npde);
@@ -220,16 +197,6 @@ cmp_relative($npde->[0]->[0],0.430727299295457,4,'npde ETA1 first ID');
 cmp_relative($npde->[1]->[0],0.430727299295457,4,'npde ETA2 first ID');
 cmp_relative($npde->[0]->[3],0.430727299295457,4,'npde ETA1 4th ID');
 cmp_relative($npde->[1]->[3],-0.430727299295458,4,'npde ETA2 4th ID');
-
-
-if(0){
-	for (my $i=0;$i < scalar(@{$npde->[0]}); $i++) {
-		for (my $j=0;$j < scalar(@{$npde}); $j++) {
-			print $npde->[$j]->[$i].' ';
-		}
-		print "\n";
-	}
-}
 
 
 @file_array=($filedir.'original.phi',$filedir.'sim-two.phi',$filedir.'sim-3.phi');
@@ -341,18 +308,6 @@ for (my $i=0; $i<scalar(@{$est_matrix}); $i++){
 ($ok,$message) = simeval_util::decorrelation($est_matrix,$mean_matrix,$decorr,$shrink,\@missing_matrix);
 is ($ok, 0, "decorrelation iwres return status");
 is ($message,'','decorrelation iwres message');
-if (0){
-	for (my $i=0;$i < scalar(@{$decorr->[0]}); $i++){
-#		for (my $k=0;$k < scalar(@{$decorr->[0]->[$i]}); $k++){
-		my $k=0;
-			for (my $j=0;$j < scalar(@{$decorr}); $j++){
-				print $i.' '.$decorr->[$j]->[$i]->[$k]." ";
-			}
-			print "\n";
-#		}
-#		print "\n";
-	}
-}
 
 cmp_ok(abs($decorr->[0]->[1]->[0]-(0.638611548099674)),'<',$diff,'decorr iwres orig obs 2');
 cmp_ok(abs($decorr->[0]->[11]->[0]-(-0.736694095480004)),'<',$diff,'decorr iwres orig obs 12');

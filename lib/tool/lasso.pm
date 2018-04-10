@@ -2192,12 +2192,6 @@ sub _optimal_lasso_raw_results_callback
 				$lasso_coefficients = [(undef) x scalar(@estimates) ];
 			}
 			$row = [@oldrow[0 .. ($thetaindex-1)],$factor,@{$lasso_coefficients},@oldrow[$thetaindex .. $#oldrow]]; 
-
-			if (0){
-				print "callback\n";
-				print "factor\t tvalue\t inits\n";
-				print "$factor\t"."$tval\t".join("\t",@estimates)."\n";
-			}
 		}
 		my @old_header = @{$modelfit -> raw_results_header()};
 		my @newlabel =();

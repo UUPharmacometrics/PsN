@@ -205,13 +205,8 @@ my ($strings,$inits,$code,$warnings)=linear_algebra::string_cholesky_block(value
 																		   bounded_theta => 0,
 																		   testing=>1,
 																		   fix=>0);
-#print "\n";
 
-#for (my $i=0; $i<scalar(@{$params}); $i++){
-#	print 'my '.$params->[$i]." ".$inits->[$i]."\n";
-#}
-
-my ($SD_A1,$SD_A2,$SD_A3,$SD_A4,$SD_A5);
+                                                                       my ($SD_A1,$SD_A2,$SD_A3,$SD_A4,$SD_A5);
 my ($COR_A21,$COR_A31,$COR_A41,$COR_A51,$COR_A32,$COR_A42,$COR_A52);
 my ($COR_A43,$COR_A53,$COR_A54);
 my ($CH_A22,$CH_A32,$CH_A42,$CH_A52,$CH_A33,$CH_A43,$CH_A53,$CH_A44,$CH_A54,$CH_A55);
@@ -219,8 +214,6 @@ my ($CH_A22,$CH_A32,$CH_A42,$CH_A52,$CH_A33,$CH_A43,$CH_A53,$CH_A44,$CH_A54,$CH_
 
 
 eval(join(' ',@{$inits}));
-#print (join("\n",@{$code}))."\n";
-#exit;
 eval(join(' ',@{$code}));
 
 @matrix=();
@@ -232,7 +225,6 @@ for(my $i=0;$i<scalar(@{$strings});$i++){
 		my $value = eval($strings->[$j]->[$i]);
 		$matrix[$i]->[$j]=$value;
 	}
-#	print join(' ',@{$matrix[$i]})."\n";
 }
 
 for(my $i=0;$i<scalar(@{$strings});$i++){
@@ -243,7 +235,6 @@ for(my $i=0;$i<scalar(@{$strings});$i++){
 		}
 		cmp_relative($sum,$omega->[$i]->[$j],12,"unbounded cholesky product element $i,$j is ".$omega->[$i]->[$j]);
 	}
-#	print join(' ',@{$matrix[$i]})."\n";
 }
 
 
@@ -252,17 +243,8 @@ for(my $i=0;$i<scalar(@{$strings});$i++){
 																		   theta_count=>1,
 																		   testing=>1,
 																		   fix=>0);
-#print "\n";
-
-#for (my $i=0; $i<scalar(@{$params}); $i++){
-#	print 'my '.$params->[$i]." ".$inits->[$i]."\n";
-#}
-
-
 
 eval(join(' ',@{$inits}));
-#print (join("\n",@{$code}))."\n";
-#exit;
 eval(join(' ',@{$code}));
 
 @matrix=();
@@ -274,7 +256,6 @@ for(my $i=0;$i<scalar(@{$strings});$i++){
 		my $value = eval($strings->[$j]->[$i]);
 		$matrix[$i]->[$j]=$value;
 	}
-#	print join(' ',@{$matrix[$i]})."\n";
 }
 
 for(my $i=0;$i<scalar(@{$strings});$i++){
@@ -321,16 +302,6 @@ is($inits->[0],'(0,1) ; SD_C1','string cholesky init block 1');
 is($inits->[1],'(0,2.236068) ; SD_C2','string cholesky init block 2');
 is($inits->[2],'(-1,0.089442719,1) ; COR_C21','string cholesky init block 3');
 
-if (0){
-	print join("\n",@{$code})."\n\n";
-	print join("\n",@{$inits})."\n";
-	for(my $i=0;$i<scalar(@{$strings});$i++){
-		for (my $j=0; $j<=$i; $j++){
-			print $strings->[$i]->[$j]."\t";
-		}
-		print "\n";
-	}
-}
 my $count;
 my $etalist;
 ($count,$code,$etalist)=linear_algebra::eta_cholesky_code(
@@ -384,7 +355,6 @@ for(my $i=0;$i<scalar(@{$strings});$i++){
 		}
 		cmp_float($sum,$omega6->[$i]->[$j],"cholesky product element $i,$j is ".$omega6->[$i]->[$j]);
 	}
-#	print join(' ',@{$matrix[$i]})."\n";
 }
 
 

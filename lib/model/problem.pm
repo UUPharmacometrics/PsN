@@ -2548,24 +2548,7 @@ sub get_matrix
 	} else {
 		croak('Unknown parameter type '.$type.' in problem->get_matrix');
 	}
-	if (0) {
-		my @formatted=();
-		my $count=0;
-		foreach my $record (@{$self->$accessor}) {
-			$count++;
-			my $arr;
-			if ($count == 3){
-				$arr = $record ->  _format_record();
-				push( @formatted,  @{$arr} );
-				print join (' ',@formatted)."\n";
-				print "options ".scalar(@{$record->options})."\n";
-				print "comment rec ".join(',',@{$record->comment})."\n";
-				print "label opt ".$record->options->[0]->label."\n";
-				print "unit opt ".$record->options->[0]->unit."\n";
-			}
-		}
-	}
-	
+
 	my $sa = 'n'.$accessor;
 	my $old_size = $self->$sa(with_correlations => 0, with_same => 1);
 	if ($old_size < $start_row) {

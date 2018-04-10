@@ -355,10 +355,6 @@ sub direct_search_maximize
 		$eval_count += 2*scalar(@{$indices});
 	}
 	my ($smallest,$best) = get_smallest_best_index(\@matrix);
-	if (0){
-		report_matrix(\@matrix);
-		print "best=[best; ".$matrix[$best]->[-1]->[1]."\t".$matrix[$best]->[-1]->[0]."];\n";
-	}
 	return $matrix[$best]->[-1]; #the y and x value
 }
 
