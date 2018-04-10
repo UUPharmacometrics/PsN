@@ -27,7 +27,6 @@ my %required_options = ('rawres_input:s' => '');
 my %optional_options = (
 	'offset_rawres:i' => '',
 	'in_filter:s' => '',
-#	'parameters:s' => '',
 	'raw_results_structure:s' => '',
 	'require_numeric_ofv!' => '',
 	'header!' => '',
@@ -102,17 +101,6 @@ $help_text{-header} = <<'EOF';
 	Setting -no-header skips the headers in the output.
 EOF
 
-#this is not yet implemented for the values, only for the headers
-#$help_text{-parameters} = <<'EOF';
-#	-parameters=comma-separated list of parameters
-#
-#	Default is -parameters=theta,omega,sigma A comma-separated list of the sets
-#of parameters to include in the computations, and their order. Only theta,
-#omega and sigma may be included, all lower case and without indices. Examples:
-#-parameters=theta,sigma,omega
-#-parameters=theta
-#EOF
-
 $help_text{-in_filter} = <<'EOF';
 	-in_filter=comma-separated list of conditions
 
@@ -175,8 +163,6 @@ $help_text{Post_help_message} = <<'EOF';
 
 EOF
 
-#common_options::setup( \%options, 'covmat' ); #calls set_globals etc, initiates random sequence
-
 common_options::online_help('covmat',\%options, \%help_text, \%required_options, \%optional_options);
 
 if( scalar(@ARGV) > 1 ){
@@ -198,24 +184,6 @@ unless (-e $options{'rawres_input'}){
 }
 
 my @list_parameters=('theta','sigma','omega'); #order in sir is theta sigma omega
-#my @list_parameters=('theta','omega','sigma'); #order in sir is theta sigma omega
-
-if (0){
-	if (defined $options{'parameters'}){
-		@list_parameters=split(/,/,$options{'parameters'});
-		my $num = scalar(@list_parameters);
-		if ($num < 1 or $num > 3){
-			die "Error option parameters, $num items found after splitting ".$options{'parameters'}." on comma\n";
-		}
-		for (my $i=0; $i< $num; $i++){
-			unless ($list_parameters[$i] =~ /^(theta|omega|sigma)$/){
-				die "Unrecognized item ".$list_parameters[$i]." in option -parameters\n";
-			}
-		}
-
-	}
-
-}
 
 require model;
 require tool;
