@@ -48,6 +48,7 @@ my %optional_options = (
 			 'psn_clean' => '',
 			 'psn_options' => '',
 			 'pvar' => '',
+             'qa' => '',
 			 'randtest' => '',
 			 'rawresults' => '',
 			 'runrecord' => '',
@@ -270,6 +271,11 @@ EOF
 $help_text{-pvar} = <<'EOF';
     pvar - Parametric variability. Calculation of total, explained and unexplained variability for different parameters.
 	See pvar_userguide.pdf for details.
+EOF
+
+$help_text{-qa} = <<'EOF';
+    qa - Quality assurance
+	See qa_userguide.pdf for details.
 EOF
 
 $help_text{-runrecord} = <<'EOF';
