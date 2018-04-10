@@ -141,8 +141,6 @@ if($opt_help or $opt_long_help) {
 			$help .= common_options::format_help_text(\%help_text,$indentation,'-'.$option);
           } 
 		
-#		$help =~ s/<\?.*\?>//g;
-#		$help =~ s/<[^>]*>//g;
 		print $help;
 		exit;
 	}
@@ -191,15 +189,10 @@ if($opt_help or $opt_long_help) {
           $help .= common_options::format_help_text(\%help_text,$indentation,'Post_help_message');
       } 
 
-#      $help =~ s/<\?.*\?>//g;
-#      $help =~ s/<[^>]*>//g;
       print $help;
 
       exit;
 }
-
-
-
 
 my $ignoresign='@';
 if( $opt_ignoresign ){
@@ -264,6 +257,5 @@ foreach my $function ( ' 'x8, 'Min', 'Max', 'Mean', 'Median', 'Range', 'SD', ){
 	$first = 0;
 	print "\n";
 }
-
 
 print "\n";
