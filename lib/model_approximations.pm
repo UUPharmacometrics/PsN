@@ -170,7 +170,7 @@ sub second_order_derivatives_model
 
 sub second_order_approximation_model
 {
-    # Create a model that can generate the second order derivatives
+    # Create the second order approximation of a model
     my %parm = validated_hash(\@_,
         model => { isa => 'model' },
     );
