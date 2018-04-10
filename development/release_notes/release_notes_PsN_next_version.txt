@@ -74,6 +74,7 @@ Changes and bug fixes from PsN 4.7.0 to x.x.x
 
    ___common_options___
 
+- New option -model_subdir to use an extra directory level between the calling directory and the run directory.
 
 
    ___NONMEM output parsing___
