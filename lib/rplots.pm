@@ -232,6 +232,25 @@ sub set_R_executable
 	$self->_R_executable($R) if (defined $R);
 }
 
+sub check_R_executable
+{
+	my $self = shift;
+    my $executable = shift;
+
+    my $null = '/dev/null';
+    if ($Config{osname} eq 'MSWin32') {
+        $null = 'NUL';
+    }
+
+    my $rc = system("$executable --version >$null 2>&1");
+    $rc = $rc >> 8;
+    if ($rc == 0) {
+        return 1;
+    } else {
+        return 0;
+    }
+}
+
 sub set_R_library_path
 {
 	my $self = shift;
@@ -279,10 +298,22 @@ sub make_plots
 	#sometimes run script - need high enough level and defined R executable
 	if ($self->level > 0 and defined ($self->_R_executable)){
 		ui->print(category=> 'all',message => "\nRunning ".$self->filename."...\n");
+        my $executable;
+        if ($self->R_markdown && $self->rmarkdown_installed) {
+            $executable = $self->_R_executable . "script";
+        } else {
+            $executable = $self->_R_executable;
+        }
+        my $available = $self->check_R_executable($executable);
+        if (not $available) {
+            chdir($basedir);
+            print "Unable to find R executable: " . $executable . "  not in path?";
+            return;
+        }
 		if($self->R_markdown && $self->rmarkdown_installed) {
-			system($self->_R_executable."script -e \"rmarkdown::render(input='".$self->filename."')\" > PsN_".$self->toolname()."_plots.Rout 2>&1");
+			system($executable . " -e \"rmarkdown::render(input='".$self->filename."')\" > PsN_".$self->toolname()."_plots.Rout 2>&1");
 		} else {
-			system($self->_R_executable." CMD BATCH ".$self->filename);
+			system($executable . " CMD BATCH ".$self->filename);
 		}
 		unlink('.RData');
 	}
