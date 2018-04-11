@@ -50,12 +50,12 @@ sub _format_record
         push( @formatted, @{$self->verbatim_last} );
     }
     if (scalar(@formatted)>0){
-        if ($formatted[0] =~/^\s*\(/ && $formatted[0] =~ /\)\s*$/){
-            # join first line with $ if it's a pseudo-assignment in (..) form
-            $formatted[0] = $fname.' '.$formatted[0];
-        } else {
-            unshift(@formatted,$fname);
-        }
+        if (defined $self->pseudo_assignments) { #$formatted[0] =~/^\s*\(/ && $formatted[0] =~ /\)\s*$/) {
+            # join first line with $ if it's a pseudo-assignment in (..) form using an extra space.
+                $formatted[0] = $fname . ' ' . $formatted[0];
+            } else {
+                $formatted[0] = $fname . $formatted[0];
+            }
     }
 
     return \@formatted;
@@ -75,12 +75,12 @@ sub _read_options
                 # get rid of $RECORD and unwanted spaces
                 s/^\s*\$\w+//;
                 # skip empty line (if $RECORD was on lone line)
-                next if( $_ eq '');
+                #next if( $_ eq '');
             }
             if ( /\" (\w+) = EVTREC\((\d+),(\d+)\)/ ) {
                 next;
             }
-            if ( ! $have_nonverbatim and /^\s*\(/ && /\)\s*$/ || /^\s*CALLFL\s*=/ || /^\s*COMRES\s*=/ ) {
+            if ( (! $have_nonverbatim and /^\s*\(/ && /\)\s*$/) or /^\s*CALLFL\s*=/ or /^\s*COMRES\s*=/ ) {
                 # found pseudo-assignment statement: (..) or CALLFL=.. or COMRES=..
                 # this is NOT code and should not be treated as such
                 # (exception: after non-verbatim code; likely expected to stay put)
