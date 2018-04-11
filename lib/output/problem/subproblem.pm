@@ -1797,10 +1797,10 @@ sub _read_thomsi
 	  if( $thetarea and /^\s*-?\d*\.\d*/ ) {
 		  @T = split(' ',$_);
 		  for $i (0..(@T-1)) {
-			  if($T[$i] ne '.........') {
-				  $tmp = eval($T[$i]);
-			  } else {
+			  if ($T[$i] eq '.........' or $T[$i] eq 'NaN') {
 				  $tmp = 'NA';
+			  } else {
+				  $tmp = eval($T[$i]);
 			  }
 			  $T[$i] = $tmp ;
 		  }
@@ -1810,10 +1810,10 @@ sub _read_thomsi
 		  @T = split(' ',$_);
 		  shift @T if $T[0] eq '+';
 		  for  $i (0..(@T-1)) {
-			  if($T[$i] ne '.........') {
-				  $tmp = eval($T[$i]);
-			  } else {
+			  if ($T[$i] eq '.........' or $T[$i] eq 'NaN') {
 				  $tmp = 'NA';
+			  } else {
+				  $tmp = eval($T[$i]);
 			  }
 			  $T[$i] = $tmp ;
 		  }
@@ -1823,12 +1823,12 @@ sub _read_thomsi
 		  @T = split(' ',$_);
 		  shift @T if $T[0] eq '+';
 		  for  $i (0..(@T-1)) {
-			  if($T[$i] ne '.........') {
-				  $tmp = eval($T[$i]);
-			  } else {
+			  if ($T[$i] eq '.........' or $T[$i] eq 'NaN') {
 				  $tmp = 'NA';
+			  } else {
+				  $tmp = eval($T[$i]);
 			  }
-			  $T[$i] = $tmp ;
+			  $T[$i] = $tmp;
 		  }
 		  push(@sdcorrform_raw_omega,@T);
 	  } elsif($sigmarea and /^(\+|\s{2,})/) {
@@ -1837,12 +1837,12 @@ sub _read_thomsi
 		  @T = split(' ',$_);
 		  shift @T if $T[0] eq '+';
 		  for  $i (0..(@T-1)) {
-			  if($T[$i] ne '.........') {
-				  $tmp = eval($T[$i]);
-			  } else {
+			  if ($T[$i] eq '.........' or $T[$i] eq 'NaN') {
 				  $tmp = 'NA';
+			  } else {
+				  $tmp = eval($T[$i]);
 			  }
-			  $T[$i] = $tmp ;
+			  $T[$i] = $tmp;
 		  }
 		  push(@raw_sigma, @T);
 		  
@@ -1852,10 +1852,10 @@ sub _read_thomsi
 		  @T = split(' ',$_);
 		  shift @T if $T[0] eq '+';
 		  for  $i (0..(@T-1)) {
-			  if($T[$i] ne '.........') {
-				  $tmp = eval($T[$i]);
-			  } else {
+			  if ($T[$i] eq '.........' or $T[$i] eq 'NaN') {
 				  $tmp = 'NA';
+			  } else {
+				  $tmp = eval($T[$i]);
 			  }
 			  $T[$i] = $tmp ;
 		  }

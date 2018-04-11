@@ -81,7 +81,8 @@ Changes and bug fixes from PsN 4.7.0 to x.x.x
 
    ___NONMEM output parsing___
 
-  
+- Fix bug causing warnings when any parameter estimate was 'NaN' 
+
 
    ___Cluster/Grid___
 
