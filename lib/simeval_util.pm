@@ -7,10 +7,9 @@ use nmtablefile;
 use array qw(any_nonzero max min find_zeros unique get_positions get_intersection is_zero);
 
 our $missing=-99;
-#	$ret = simeval_util::read_table_files(\@found_files,\@eta_headers,$est_matrix,$mean_matrix,1);
-# add id matrix, always return that
 
-sub find_zero_etas{
+sub find_zero_etas
+{
 	my %parm = validated_hash(\@_,
 							  filename => { isa => 'Str', optional => 0 },
 							  eta_headers => { isa => 'ArrayRef', optional => 0 },
@@ -57,10 +56,10 @@ sub find_zero_etas{
 	$diagnostics{'is_zero'}=\@is_zero;
 		
 	return \%diagnostics;
-	
 }
 
-sub get_nmtabledata{
+sub get_nmtabledata
+{
 	my %parm = validated_hash(\@_,
 							  filenames => { isa => 'ArrayRef', optional => 0 },
 							  header_strings_array => { isa => 'ArrayRef', optional => 0 },
@@ -131,18 +130,18 @@ sub get_nmtabledata{
 		}
 	}
 	return 0;
-	
 }
 
-sub add_columns_ids_samples{
+sub add_columns_ids_samples
+{
 	my %parm = validated_hash(\@_,
-							  nmtablefile => { isa => 'nmtablefile', optional => 0 },
-							  header_strings => { isa => 'ArrayRef', optional => 0 },
-							  values_matrix => { isa => 'ArrayRef', optional => 0 },
-							  sum_matrix => { isa => 'Maybe[ArrayRef]', optional => 1 },
-							  filter_all_zero => { isa => 'Bool', optional => 0 },
-							  init => { isa => 'Bool', optional => 0 },
-		);
+        nmtablefile => { isa => 'nmtablefile', optional => 0 },
+        header_strings => { isa => 'ArrayRef', optional => 0 },
+        values_matrix => { isa => 'ArrayRef', optional => 0 },
+        sum_matrix => { isa => 'Maybe[ArrayRef]', optional => 1 },
+        filter_all_zero => { isa => 'Bool', optional => 0 },
+        init => { isa => 'Bool', optional => 0 },
+    );
 	my $nmtablefile = $parm{'nmtablefile'};
 	my $header_strings = $parm{'header_strings'};
 	my $values_matrix = $parm{'values_matrix'};
@@ -197,23 +196,20 @@ sub add_columns_ids_samples{
 		}
 	}
 
-
 	return 0;
-
-
 }
 
-
-sub decorrelation_and_npde_records_by_id{
+sub decorrelation_and_npde_records_by_id
+{
 	my ($estimate_matrix,$mean_matrix,$id_mdv_matrix,$have_mdv,$npde_vector,$original_outlier) = 
 		pos_validated_list(\@_,
-						   { isa => 'ArrayRef' },
-						   { isa => 'ArrayRef' },
-						   { isa => 'ArrayRef' },
-						   { isa => 'Bool' },
-						   { isa => 'ArrayRef' },
-						   { isa => 'ArrayRef' },
-		);
+            { isa => 'ArrayRef' },
+            { isa => 'ArrayRef' },
+            { isa => 'ArrayRef' },
+            { isa => 'Bool' },
+            { isa => 'ArrayRef' },
+            { isa => 'ArrayRef' },
+        );
 	#this is for things like iwres and cwres, mulitple per ID
 	#$estimate_matrix
 	# reference to array  [over records][over samples/files]
@@ -327,17 +323,18 @@ sub decorrelation_and_npde_records_by_id{
 		}
 	}
 	return (0,$message);
-
 }
-sub decorrelation{
+
+sub decorrelation
+{
 	#has unit tests
 	my ($estimate_matrix,$mean_matrix,$decorrelated_estmatrix,$stdev_arr,$missing_matrix) = pos_validated_list(\@_,
-																							   { isa => 'ArrayRef' },
-																							   { isa => 'ArrayRef' },
-																							   { isa => 'ArrayRef' },
-																							   { isa => 'ArrayRef' },
-																							   { isa => 'ArrayRef' },
-		);
+        { isa => 'ArrayRef' },
+        { isa => 'ArrayRef' },
+        { isa => 'ArrayRef' },
+        { isa => 'ArrayRef' },
+        { isa => 'ArrayRef' },
+    );
 	#$estimate_matrix
 	# reference to array  [over columns][over individuals][over samples/files]
 	# $mean_matrix 
@@ -350,7 +347,6 @@ sub decorrelation{
 	#$missing_matrix 1 if missing 0 otherwise
 	# reference to array  [over params][over individuals]
 
-	
     my $input_error = 2;
     my $numerical_error = 1;
 	my $message = '';
@@ -371,7 +367,7 @@ sub decorrelation{
 		$result = $input_error;
 		$message .= "number of samples (3rd dim in estimate matrix) is not > 1\n";
 	}
-#	print "parm $nparm id $individuals samples $samples\n";
+
 	return ($result,$message) if ($result);
 
 	my $have_filter = 0;
@@ -393,7 +389,6 @@ sub decorrelation{
 
 			push(@{$stdev_arr},$stdev);
 
-#			if (($stdev > 0) and (not ($origval==0))) {
 			if ($stdev > 0) {
 				my $original = ($origval-$mean)/$stdev;
 				$decorrelated_estmatrix->[0]->[$i]=[$original];
@@ -523,15 +518,14 @@ sub decorrelation{
 		} #end loop over id
 	}
 	return (0,$message);
-	
 }
 
 sub pde
 {
 	#has unit tests
 	my ($vector) = pos_validated_list(\@_,
-									  { isa => 'ArrayRef' },
-		);
+        { isa => 'ArrayRef' },
+    );
 	
 	my $pde;
 	my $original = $vector->[0];
@@ -555,14 +549,15 @@ sub pde
 	return $pde;
 }
 
-sub npde_comp{
+sub npde_comp
+{
 	#has unit tests
 	#in matrix over params -> inds -> samples
 	my ($decorrelated,$pde_matrix,$npde_matrix) = pos_validated_list(\@_,
-									  { isa => 'ArrayRef' },
-									  { isa => 'ArrayRef' },
-									  { isa => 'ArrayRef' },
-		);
+        { isa => 'ArrayRef' },
+        { isa => 'ArrayRef' },
+        { isa => 'ArrayRef' },
+    );
 	#decorrelated matrix, empty matrix, empty matrix
 
 	my $have_CDF=0;
@@ -592,9 +587,6 @@ sub npde_comp{
 		}
 	}
 	return 0;
-
 }
-
-
 
 1;
