@@ -23,7 +23,6 @@ sub r_of_lambda
    my $numerr = 0;
    $numerr = 1 unless (defined $r);
    return ($r,$drdlambda,$numerr);
-
 }
 
 sub compute_r
@@ -83,9 +82,7 @@ sub compute_r
    my $squared_x_term = ($sum_xsquare-($sum_x**2)/$N);
    return (undef, undef) unless ($squared_x_term > 0); #numerical error
    my $root_squared_x_term = sqrt($squared_x_term);
-#   my $root_squared_y_term = sqrt($sum_ysquare-($sum_y**2)/$N); sum_y is 0 
    my $root_squared_y_term = sqrt($sum_ysquare); 
-   #my $xy_cross_term = ($sum_xy-($sum_x*$sum_y/$N)); sum_y is 0
    my $xy_cross_term = ($sum_xy);
 
    return (undef, undef) unless (($root_squared_x_term*$root_squared_y_term) > 0); #numerical error
@@ -120,7 +117,6 @@ sub get_lambda_delta
    my $bestp = direct_search_maximize($absmax,$maxpow,$maxeval,\%extra);
    return (undef,0,1) unless (defined $bestp->[0]); #not any r computable
 
-#   print "best y ".$bestp->[0]." lam ".$bestp->[1]." \n";
    return($bestp->[1],$delta,0); #best lambda -3 to 3
 }
 
@@ -161,7 +157,6 @@ sub insert_sort_ascending
 		}
 		splice(@{$array},$place,0,$new);
 	}
-
 }
 
 sub make_splits
@@ -180,8 +175,6 @@ sub make_splits
 
 	foreach my $index (@sorted){
 		my $point = pop(@{$matrix->[$index]}); #last in arr, highest ofv
-		#my $oldsize = $range/(3**($index));
-		#olddist to edge = $range/(2*(3**($index)));
 		my $step= $range/(3**($index+1));
 		my $newx = $point->[1]+$step;
 		my ($y,$deriv,$numerr) = evaluate($newx,$extra_args);
@@ -191,7 +184,6 @@ sub make_splits
 		insert_sort_ascending($matrix->[$index+1],[$y,$newx],$ypos) unless ($numerr);
 		insert_sort_ascending($matrix->[$index+1],$point,$ypos) if (defined $point->[$ypos]); #in first iter can have undef here 
 	}
-
 }
 
 sub turn
@@ -230,7 +222,6 @@ sub get_split_indices
 	}
 	croak("bug in get ind") unless ($candidates[-1] == $best);
 
-#	print "candidates ".join(' ',@candidates)."\n";
 	if (scalar(@candidates)>2){
 		my $done = 0;
 		my $index1 = pop(@candidates);
@@ -287,7 +278,7 @@ sub get_split_indices
 			push(@split,$smallest);
 		}
 	}
-#	print "split ".join(' ',@split)."\n";
+
 	return \@split;
 }
 
@@ -372,12 +363,10 @@ sub report_matrix
 		}
 	}
 
-#	print "\n"."A(:,:,index)=[";
 	foreach my $p (@arr){
 		print $p->[1]."\t".$p->[0]."\n";
 	}
 	print "];\n";
-
 }
 
 sub grid_search_maximize
@@ -399,9 +388,6 @@ sub grid_search_maximize
 		if ((not $numerr) and ((not defined $best[0]) or ($best[0]<$y))){
 			@best = ($y,$next_x,$deriv);
 		}
-#		unless ($numerr){
-#			print "y $y x $next_x deriv $deriv\n";
-#		}
 
 		$next_x += $grid_step;
 	}
@@ -493,10 +479,8 @@ sub secant_method_maximize
 			}
 		}			
 	}
-#	print "y ".$best[0]." x ".$best[1]." iter ".scalar(@xvec)."\n";
-	return ($best[1],0); #numerr is 0
-	
 
+	return ($best[1],0); #numerr is 0
 }
 
 sub next_secant_step
@@ -545,7 +529,6 @@ sub inverse_box_cox
 	}
 
 	return \@transformed;
-
 }
 
 sub shift_and_box_cox
@@ -614,7 +597,6 @@ sub shift_and_box_cox
 		}
 		return \@result;
 	}
-
 }
 
 sub box_cox
@@ -695,23 +677,15 @@ sub get_quantile_data
 
 	for (my $i=1; $i<= $number; $i++){
 		my $y=($i-0.5)/$number;
-#		my $val = qnorm($y);
 		my $val = udistr((1-$y));
 		#on 32bit windows have seen that udistr(0.5), which should be simply 0, returns NaN
 		if ((2*$i -1) == $number){
 			$val = 0;
 		}
-#		if ($cdf){
-#			$val = qnorm($y);
-#		}else{
-#			$val = udistr((1-$y)):
-#		}
 		push(@vector,$val);
 	}
 
 	return \@vector;
-
-
 }
 
 1;
