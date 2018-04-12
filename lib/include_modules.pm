@@ -1,5 +1,4 @@
 package include_modules;
-use Moose::Util::TypeConstraints;
 use ext::Carp;
 use ui;
 require Exporter;
@@ -7,7 +6,9 @@ our @ISA = qw(Exporter);
 our @EXPORT = qw(cluck longmess shortmess carp croak debugmessage warn_once);
 
 our $debuglevel=0;
-sub debugmessage{
+
+sub debugmessage
+{
 	my $messagelevel=shift;
 	my $message = shift;
 	if ($messagelevel <= $debuglevel){
@@ -28,11 +29,5 @@ sub warn_once
         ui->print(category => 'all', message => $message);
     }
 }
-
-subtype 'PositiveInt',
-	as 'Int',
-	where { $_ > 0 },
-	message { "This number ($_) is not a positive integer" };
-no Moose::Util::TypeConstraints;
 
 1;
