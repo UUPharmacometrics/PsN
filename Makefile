@@ -29,7 +29,6 @@ LIBFILES= ui.pm \
 	scm_util.pm \
 	ext/Math/SigFigs.pm \
 	ext/Math/MatrixReal.pm \
-	ext/Statistics/Distributions.pm \
 	ext/Config/Tiny.pm \
 	ext/File/HomeDir.pm \
 	status_bar.pm \
