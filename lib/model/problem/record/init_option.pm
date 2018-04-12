@@ -1,6 +1,5 @@
 package model::problem::record::init_option;
 
-#use Carp;
 use include_modules;
 use Math::Random;
 use Moose;

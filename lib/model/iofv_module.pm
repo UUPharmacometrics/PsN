@@ -91,7 +91,6 @@
 
 package model::iofv_module;
 
-#use Carp;
 use include_modules;
 use Config;
 use Moose;

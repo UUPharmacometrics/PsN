@@ -10,8 +10,6 @@ package model::mirror_plot_module;
 # The tables will be renamed from *tab1 to *tab1sim
 
 
-
-#use Carp;
 use include_modules;
 use Math::Random;
 use Moose;

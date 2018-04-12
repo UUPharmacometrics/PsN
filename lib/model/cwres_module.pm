@@ -1,6 +1,5 @@
 package model::cwres_module;
 
-#use Carp;
 use include_modules;
 use Moose;
 use MooseX::Params::Validate;
