@@ -27,14 +27,14 @@ $record = model::problem::code_record->new(record_arr => ['$PK (ONLY OBSERVATION
 unshift(@{$record->code}, "; inserted first");
 $r = $record->_format_record;
 # (ONLY OBSERVATIONS) should remain first (and join with $CODE_RECORD)
-is ($$r[0], '$CODE_RECORD  (ONLY OBSERVATIONS)', "record->_format_record pseudo-assignment");
+is ($$r[0], '$CODE_RECORD (ONLY OBSERVATIONS)', "record->_format_record pseudo-assignment");
 
 # Test _format_record pseudo-assignment order with "FIRST code
 $record = model::problem::code_record->new(record_arr => ['$PK (ONLY OBSERVATIONS)', '; pre-verbatim comment', '"FIRST', '"ANY=SOUP']);
 unshift(@{$record->code}, "; code inserted first");
 $r = $record->_format_record;
 # (ONLY OBSERVATIONS) should still be first after code prefix insertion, and inserted comment after (including pre-verbatim and verbatim)
-is_deeply ($r, ['$CODE_RECORD  (ONLY OBSERVATIONS)',
+is_deeply ($r, ['$CODE_RECORD (ONLY OBSERVATIONS)',
                 '; pre-verbatim comment',
                 '"FIRST',
                 '"ANY=SOUP',

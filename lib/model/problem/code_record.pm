@@ -50,12 +50,13 @@ sub _format_record
         push( @formatted, @{$self->verbatim_last} );
     }
     if (scalar(@formatted)>0){
-        if (defined $self->pseudo_assignments) { #$formatted[0] =~/^\s*\(/ && $formatted[0] =~ /\)\s*$/) {
-            # join first line with $ if it's a pseudo-assignment in (..) form using an extra space.
-                $formatted[0] = $fname . ' ' . $formatted[0];
+            my $space;
+            if ($formatted[0] !~ /^\s/ and $formatted[0] ne "") {
+                $space = ' ';
             } else {
-                $formatted[0] = $fname . $formatted[0];
+                $space = '';
             }
+            $formatted[0] = $fname . $space . $formatted[0];
     }
 
     return \@formatted;
