@@ -34,9 +34,6 @@ LIBFILES= ui.pm \
 	ext/Config/Tiny.pm \
 	ext/File/HomeDir.pm \
 	ext/Carp.pm \
-	matlab/bca.m \
-	matlab/histograms.m \
-	matlab/profiles.m \
 	status_bar.pm \
 	nonmemrun.pm \
 	nonmemrun/localunix.pm \
@@ -327,9 +324,6 @@ completion: development/completion_files
 
 PsN-Source/setup.pl: bin/setup.pl
 	@ cp bin/setup.pl $@
-
-PsN-Source/lib/matlab/% : matlab/%
-	@ cp matlab/$* $@
 
 PsN-Source/%: %
 	@ cp -ar $* $@
