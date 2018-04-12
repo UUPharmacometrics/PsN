@@ -26,7 +26,6 @@ my %optional_options = (
 			 'cdd' => '',
 			 'covmat' => '',
 			 'crossval' => '',
-			 'data_stats' => '',
 			 'execute' =>'',
 			 'extended_grid' => '',
 			 'frem' => '',
@@ -156,11 +155,6 @@ EOF
 $help_text{-crossval} = <<'EOF';
     crossval - Cross-validation
 	See crossval_userguide.pdf for details.
-EOF
-
-$help_text{-data_stats} = <<'EOF';
-    data_stats - Print simple statistics for dataset columns.
-	Run 'data_stats -help' for details.
 EOF
 
 $help_text{-simeval} = <<'EOF';
