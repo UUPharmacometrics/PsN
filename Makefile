@@ -12,7 +12,6 @@ LIBFILES= ui.pm \
 	code.pm \
 	code_parsing.pm \
 	common_options.pm \
-	influential_individuals.pm \
 	input_checking.pm \
 	linear_algebra.pm \
 	simeval_util.pm \
