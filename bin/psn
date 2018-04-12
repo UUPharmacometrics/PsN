@@ -60,7 +60,6 @@ my %optional_options = (
 			 'update' => '',
 			 'update_inits' => '',
 			 'vpc' => '',
-			 'vpctable' => '',
 			 'xv_scm' => '',
 			 );
 
@@ -327,11 +326,6 @@ EOF
 $help_text{-vpc} = <<'EOF';
     vpc - Visual Predictive Check
 	See vpc_npc_userguide.pdf for details.
-EOF
-
-$help_text{-vpctable} = <<'EOF';
-    vpctable - Utility to convert single header data files into multiple header table files.
-	Run 'vpctable -help' for details.
 EOF
 
 $help_text{-gls} = <<'EOF';

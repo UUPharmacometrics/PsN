@@ -71,6 +71,7 @@ Changes and bug fixes from PsN 4.7.0 to x.x.x
 - The PsN_and_NONMEM7.pdf has been removed and all information it contained has been moved to PsN.pdf and
   other documentation.
 - All userguides now have a table of content
+- The vpctable script was removed from PsN
 
 
    ___common_options___
