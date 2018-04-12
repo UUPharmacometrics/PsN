@@ -1604,7 +1604,7 @@ sub run_nonmem
 
 		$nonmem_run->model($queue_info->{'model'});
 		$nonmem_run->nodes($self->nodes);
-		$nonmem_run->parafile($self->parafile ne 'none' ? $self->parafile : undef);
+		$nonmem_run->parafile($self->parafile);
 		$nonmem_run->nmfe_options($self->nmfe_options);
 		$nonmem_run->nmqual($self->nmqual);
 		$nonmem_run->nmqual_xml($self->nmqual_xml);

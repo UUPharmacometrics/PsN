@@ -80,7 +80,7 @@ has 'significant_digits_accept' => ( is => 'rw', isa => 'Num', default => 0 );
 has 'subtools' => ( is => 'rw', isa => 'ArrayRef[Str]', default => sub { ['modelfit'] });
 has 'subtool_arguments' => ( is => 'rw', isa => 'HashRef' );
 has 'threads' => ( is => 'rw', isa => 'Int', default => 1 );
-has 'parafile' => ( is => 'rw', isa => 'Str', default => 'none' );
+has 'parafile' => ( is => 'rw', isa => 'Str' );
 has 'nodes' => ( is => 'rw', isa => 'Int', default => 0 );
 has 'nmfe_options' => ( is => 'rw', isa => 'Maybe[Str]' );
 has 'nm_output' => ( is => 'rw', isa => 'Str' );
@@ -270,7 +270,7 @@ sub BUILD
 	# both for resuming crashed runs as well as for extracting
 	# information form an old run.
 
-    if ($self->parafile ne 'none') {
+    if (defined $self->parafile) {
         $self->parafile(File::Spec->rel2abs($self->parafile));
     }
 

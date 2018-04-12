@@ -80,6 +80,7 @@ Changes and bug fixes from PsN 4.7.0 to x.x.x
 
 - New option -model_subdir to use an extra directory level between the calling directory and the run directory.
 - The parafile option can now take non-trivial relative paths
+- When the parafile option is not used it will no longer be shown as 'none' in version_and_option_info.txt or meta.yaml
 
 
    ___NONMEM output parsing___
