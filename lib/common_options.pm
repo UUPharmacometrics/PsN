@@ -217,7 +217,7 @@ sub set_globals
   PsN::set_nonmem_info($version);
 
   $PsN::warnings_enabled = $options{'debug'} if (defined $options{'debug'});
-	$ext::Carp::Verbose = $options{'warn_with_trace'};
+	$Carp::Verbose = $options{'warn_with_trace'};
     $log::stop_motion = $options{'stop_motion'};
 }
 

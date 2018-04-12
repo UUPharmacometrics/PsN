@@ -8,7 +8,7 @@ package Math::MatrixReal;
 
 use strict;
 use warnings;
-use ext::Carp; #Kajsa 2014-02-25
+use Carp;
 use Data::Dumper;
 use Scalar::Util qw/reftype/;
 use vars qw(@ISA @EXPORT @EXPORT_OK %EXPORT_TAGS $VERSION);

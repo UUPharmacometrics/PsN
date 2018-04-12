@@ -1,6 +1,6 @@
 package logging::logger;
 
-use ext::Carp;
+use Carp;
 use Moose;
 use MooseX::Params::Validate;
 

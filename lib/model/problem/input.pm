@@ -2,7 +2,7 @@ package model::problem::input;
 
 use Moose;
 use MooseX::Params::Validate;
-use ext::Carp;
+use Carp;
 
 extends 'model::problem::record';
 

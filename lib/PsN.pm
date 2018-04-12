@@ -1,5 +1,5 @@
 package PsN;
-use ext::Carp;
+use Carp;
 use File::Spec;
 use Cwd;
 use Config;

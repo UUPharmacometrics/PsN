@@ -32,7 +32,6 @@ LIBFILES= ui.pm \
 	ext/Statistics/Distributions.pm \
 	ext/Config/Tiny.pm \
 	ext/File/HomeDir.pm \
-	ext/Carp.pm \
 	status_bar.pm \
 	nonmemrun.pm \
 	nonmemrun/localunix.pm \
