@@ -72,6 +72,7 @@ Changes and bug fixes from PsN 4.7.0 to x.x.x
   other documentation.
 - All userguides now have a table of content
 - The vpctable script was removed from PsN
+- The -d2u common option was removed. PsN should support all encodings and dos2unix can be used separately if needed
 
 
    ___common_options___

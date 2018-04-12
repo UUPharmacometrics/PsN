@@ -48,7 +48,6 @@ has 'outputs' => ( is => 'rw', isa => 'Maybe[ArrayRef[output]]', clearer => 'cle
 has 'nonparametric_modules' => ( is => 'rw', isa => 'ArrayRef[model::nonparametric_module]' );
 has 'iofv_modules' => ( is => 'rw', isa => 'ArrayRef[model::iofv_module]' );
 has 'active_problems' => ( is => 'rw', isa => 'Maybe[ArrayRef[Bool]]' );
-has 'd2u' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'is_dummy' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'maxevals' => ( is => 'rw', isa => 'Maybe[Int]', default => 0 );
 has 'cwres' => ( is => 'rw', isa => 'Bool', default => 0 );
@@ -4758,16 +4757,11 @@ sub _read_problems
 		croak("The model file " . $self->filename . " in ".
 			$self->directory()." does not exist.");
 	} else {
-		if ($self->d2u) {
-			system("dos2unix -q $file");
-		}
-
 		open( FILE, "$file" ) ||
 		croak("Model -> _read_problems: Could not open $file for reading" );
 
 		@modelfile = <FILE>;
 		close( FILE );
-
 	}
 	foreach (@modelfile){
 		#remove any windows line feed if we are running a dos format file on unix

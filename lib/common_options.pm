@@ -96,7 +96,6 @@ Getopt::Long::config("auto_abbrev");
 
 @model_options = ("extra_files:s",
 				  "extra_output:s",
-				  "d2u!",
 				  "maxevals:i",
 				  "missing_data_token:i",
 				  "tbs!",
@@ -712,11 +711,6 @@ EOF
     -nmfe_options="-xmloff -prdefault"
     or in psn.conf 
     nmfe_options=-xmloff -prdefault
-EOF
-
-    $help_hash{-d2u} = <<'EOF';
-  -d2u
-Default not set. If set then run dos2unix on model files and regular data files.
 EOF
 
     $help_hash{-nmqual} = <<'EOF';
