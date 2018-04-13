@@ -9,7 +9,6 @@ suppressMessages(library(vpc))
 # Using xpose (again)
 read_nonmem_table <- function(filename) {
     lines <- readLines(filename)
-#    header <- lines[2]
 
     numreplicates <- 0
     for (line in lines) {
@@ -18,11 +17,6 @@ read_nonmem_table <- function(filename) {
         }
     }
     table <- xpose::read_nm_tables(filename)
-#    filter_fn <- function(line) { !startsWith(line, "TABLE") && line != header }
-#    lines <- Filter(filter_fn, lines)
-
-#    column_names <- strsplit(header, "\\s+")[[1]][-1]  # Get array of column names
-#    table <- read.table(text=lines, col.names=column_names)
     table$replicate <- rep(1:numreplicates, each=nrow(table) / numreplicates)
 
     return(table)
@@ -65,9 +59,7 @@ randomize_mixture_subpops <- function(df) {
 #   randomize - Default is to only use the subpop with maximum probability for each ID
 #               This option randomizes using the probabilities in the input
 # Can return error message instead of plot for a subpopulation
-mixture_vpc <- function(obs, sim, obs_mixture, sim_mixture, bins, dv="DV", randomize=FALSE) {
-    #numsims <- unique(sim_mixture$replicate)
-    
+mixture_vpc <- function(obs, sim, obs_mixture, sim_mixture, bins, dv="DV", stratify_on, randomize=FALSE) {
     if (randomize) {
         randomized_sim <- randomize_mixture_subpops(sim_mixture)
         sim <- dplyr::full_join(sim, randomized_sim)
@@ -102,9 +94,17 @@ mixture_vpc <- function(obs, sim, obs_mixture, sim_mixture, bins, dv="DV", rando
             next
         }
         if (missing(bins)) {
-            vpc <- vpc::vpc(obs=subobs, sim=subsim, obs_cols=list(dv=dv), sim_cols=list(dv=dv))
+            if (missing(stratify_on)) {
+                vpc <- vpc::vpc(obs=subobs, sim=subsim, obs_cols=list(dv=dv), sim_cols=list(dv=dv))
+            } else {
+                vpc <- vpc::vpc(obs=subobs, sim=subsim, obs_cols=list(dv=dv), sim_cols=list(dv=dv), stratify=stratify_on)
+            }
         } else {
-            vpc <- vpc::vpc(obs=subobs, sim=subsim, obs_cols=list(dv=dv), sim_cols=list(dv=dv), bins=bins)
+            if (missing(stratify_on)) {
+                vpc <- vpc::vpc(obs=subobs, sim=subsim, obs_cols=list(dv=dv), sim_cols=list(dv=dv), bins=bins)
+            } else {
+                vpc <- vpc::vpc(obs=subobs, sim=subsim, obs_cols=list(dv=dv), sim_cols=list(dv=dv), stratify=stratify_on, bins=bins)
+            }
         }
 
         ids_per_sim <- subsim %>% dplyr::group_by(sim) %>% dplyr::summarise(count=length(unique(ID)))

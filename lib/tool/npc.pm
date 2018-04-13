@@ -5576,6 +5576,9 @@ sub create_R_plots_code
         push @bins, $self->bin_floors->[0]->[0];        # No other stratification possible
         push @bins, @{$self->bin_ceilings->[0]};
         push @code, "bin_boundaries <- c(" . join(", ", @bins) . ")";
+        if (defined $self->stratify_on) {
+            push @code, "stratify_on <- c('" . $self->stratify_on . "')";
+        }
     }
 
 	$rplot->add_preamble(code => \@code);
