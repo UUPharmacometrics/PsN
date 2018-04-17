@@ -1586,7 +1586,7 @@ sub modelfit_setup
 				  "by the user, PsN will not add \$SIM.");
 			
 		}
-		unless ($self->keep_estimation or $user_sim_model or defined $self->mix) {
+		unless ($self->keep_estimation or $user_sim_model or $self->mix) {
 			push (@simrec_strings,('ONLYSIMULATION'));
 		}
 		if (($self->noprediction or $nopred_is_set )and (not $user_sim_model)){
@@ -1635,7 +1635,7 @@ sub modelfit_setup
             copy_data => $self->copy_data,
             prepend_model_file_name => 1,
 		);
-        if (defined $self->mix) {
+        if ($self->mix) {
             $modfit->add_to_nmoutput(extensions => ['phm']);
         }
 		$self->searchdir($modfit->directory);
