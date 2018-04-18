@@ -2747,8 +2747,8 @@ sub _read_individuals
 
 		if (defined $ignoresign and length($ignoresign)>0){
 			if ($ignoresign eq '@'){
-				#A-Z a-z and #
-				if (/^[A-Za-z#]/){
+				#A-Z a-z and # and @
+				if (/^[A-Za-z#@]/){
 					$is_data=0;
 				}
 			}else{
@@ -2757,12 +2757,12 @@ sub _read_individuals
 					$is_data=0;
 				}
 			}
-			if ($is_data and (/^[A-Za-c#;]/)){
+			if ($is_data and (/^[A-Za-c@#;]/)){
 				croak("Error: We have IGNORE=".$ignoresign." so the data set line\n".$_.
 					  "is not filtered out, but it looks like a header/comment.\n");
 			}
 		}else{
-			if (/^[A-Za-z#;]/){
+			if (/^[A-Za-z#@;]/){
 				$is_data=0;
 			}
 		}
