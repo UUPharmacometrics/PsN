@@ -42,13 +42,14 @@ if (exists('mix')) {     # A mixture model is a special case
         sim <- read_nonmem_table(simulations_tablefile)
         obs_phm <- read_nonmem_table(phm_obs_file)
         sim_phm <- read_nonmem_table(phm_sim_file)
-        if (exists('stratify_on')) {
-            plots_mixest <- mixture_vpc(obs, sim, obs_phm, sim_phm, dv=dv, bins=bin_boundaries, stratify_on=stratify_on)
-            plots_randomized <- mixture_vpc(obs, sim, obs_phm, sim_phm, dv=dv, bins=bin_boundaries, stratify_on=stratify_on, randomize=TRUE)
-        } else {
-            plots_mixest <- mixture_vpc(obs, sim, obs_phm, sim_phm, dv=dv, bins=bin_boundaries)
-            plots_randomized <- mixture_vpc(obs, sim, obs_phm, sim_phm, dv=dv, bins=bin_boundaries, randomize=TRUE)
+        if (!exists('stratify_on')) {
+            stratify_on <- NULL
         }
+        
+        vpc <- vpc::vpc(obs=obs, sim=sim, obs_cols=list(dv=dv), sim_cols=list(dv=dv), stratify=stratify_on, bins=bin_boundaries)
+        print(vpc)
+        plots_mixest <- mixture_vpc(obs, sim, obs_phm, sim_phm, dv=dv, bins=bin_boundaries, stratify_on=stratify_on)
+        plots_randomized <- mixture_vpc(obs, sim, obs_phm, sim_phm, dv=dv, bins=bin_boundaries, stratify_on=stratify_on, randomize=TRUE)
 
         for (p in c(plots_mixest, plots_randomized)) {
             if (is.character(p)) {      # An error message instead of a plot
