@@ -445,6 +445,7 @@ ui -> print( category => 'parallel_retries',
 #copy actual from directory $main_directory files $mod_array->output_files
 my $selected_filestem = $mod_array->[$selected-1]->filename;
 $selected_filestem =~ s/\.[^.]+$//; #last dot and extension
+my @copied;
 for (my $i=0; $i< scalar(@{$mod_array->[$selected-1]->output_files}); $i++){
 	my $from = $mod_array->[$selected-1]->directory.$mod_array->[$selected-1]->output_files->[$i];
 	my $tabfrom = $mod_array->[$selected-1]->directory.$selected_filestem.'.'.$mod_array->[$selected-1]->output_files->[$i];
@@ -454,14 +455,20 @@ for (my $i=0; $i< scalar(@{$mod_array->[$selected-1]->output_files}); $i++){
 	}
 	if (-e $from){
 		cp($from,$to);
+        push @copied, basename($to);
 		ui -> print( category => 'parallel_retries',
 					 message => "copying $from to $to\n" );
 	}elsif(-e $tabfrom){
 		cp($tabfrom,$to);
+        push @copied, basename($to);
 		ui -> print( category => 'parallel_retries',
 					 message => "copying $tabfrom to $to\n" );
 	}
 }
+
+$modelfit->metadata->{'copied_files'} = \@copied;
+$modelfit->directory("./"); # Hackery
+$modelfit->update_meta();
 
 #cleanup?
 if ($modelfit->clean > 1){

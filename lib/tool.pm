@@ -754,6 +754,18 @@ sub print_results
     }
     close $fh;
 
+    $self->update_meta();
+}
+
+sub update_meta
+{
+	my $self = shift;
+
+    # Update the meta.yaml file after tool finished
+    my @datearr = localtime;        # This is duplicated from above. Better solution?
+	my $theDate = sprintf "%4.4d-%2.2d-%2.2d",($datearr[5]+1900),($datearr[4]+1),($datearr[3]);
+	my $theTime = sprintf "%2.2d:%2.2d:%2.2d",($datearr[2]),($datearr[1]), $datearr[0];
+
     my $yaml_filename = $self->directory . 'meta.yaml';
     if (-e $yaml_filename) {
         my $meta_file = YAML::XS::LoadFile($yaml_filename);
