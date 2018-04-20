@@ -15,11 +15,6 @@ extends 'tool';
 has 'npsupp' => ( is => 'rw', isa => 'ArrayRef');
 has 'n_individuals' => ( is => 'rw', isa => 'Int' );
 
-sub BUILD
-{
-    my $self = shift;
-}
-
 sub modelfit_setup
 {
 	my $self = shift;
