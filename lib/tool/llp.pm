@@ -95,9 +95,6 @@ sub modelfit_setup
 	unless ( $model -> is_run ) {
 
 		# -----------------------  Run original run  ------------------------------
-
-		# {{{ orig run
-
 		my %subargs = ();
 		if ( defined $self -> subtool_arguments ) {
 			%subargs = %{$self -> subtool_arguments};
@@ -119,9 +116,7 @@ sub modelfit_setup
 		ui -> print( category => 'llp',
 					 message  => "Evaluating basic model" ) unless $self -> parent_threads > 1;
 		$orig_fit -> run;
-
-		# }}} orig run
-
+        $self->metadata->{'copied_files'} = $orig_fit->metadata->{'copied_files'};
 	}
 
 	my $first = 0;

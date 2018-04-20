@@ -35,6 +35,7 @@ sub modelfit_setup
 		$orig_fit->add_to_nmoutput(extensions => ['ext','cov']);		
 		ui -> print( category => 'all',	message => 'Running input model' );
 		$orig_fit -> run;
+        $self->metadata->{'copied_files'} = $orig_fit->metadata->{'copied_files'};
 	}
 	
 	# check output model

@@ -141,6 +141,7 @@ sub modelfit_setup
 		ui->print( category => 'randtest', message => $message);
 
 		$orig_fit->run;
+        $self->metadata->{'copied_files'} = $orig_fit->metadata->{'copied_files'};
 	}
 
 	if (defined $self->base_model and $self->base_model->is_run) {

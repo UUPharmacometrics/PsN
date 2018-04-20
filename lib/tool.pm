@@ -757,7 +757,11 @@ sub print_results
     my $yaml_filename = $self->directory . 'meta.yaml';
     if (-e $yaml_filename) {
         my $meta_file = YAML::XS::LoadFile($yaml_filename);
-        $self->metadata($meta_file);
+        for my $key (keys %{$meta_file}) {      # Merge $self->metadata with file prefering $self->metadata
+            if (not exists $self->metadata->{$key}) {
+                $self->metadata->{$key} = $meta_file->{$key};
+            }
+        }
         $self->metadata->{'finish_time'} = "$theDate $theTime";
         $self->write_meta();
     }

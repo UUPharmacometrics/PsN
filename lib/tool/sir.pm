@@ -531,11 +531,10 @@ sub modelfit_setup
 									 %subargs,
                                 copy_up => 1, );
 
-			ui -> print( category => 'sir',
-						 message => $message );
+			ui->print(category => 'sir', message => $message);
 
-			$orig_fit -> run;
-
+			$orig_fit->run;
+            $self->metadata->{'copied_files'} = $orig_fit->metadata->{'copied_files'};
 		}
 
 		$output = $model -> outputs -> [0];
