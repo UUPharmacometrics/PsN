@@ -87,6 +87,7 @@ has 'imp_covariance' => ( is => 'rw', isa => 'Bool', default => 1 );
 
 has 'results_file' => ( is => 'rw', isa => 'Str', default => 'frem_results.csv' );
 has 'reordered_model_1' => ( is => 'rw', isa => 'model' );
+has 'omega_output_order' => ( is => 'rw', isa => 'ArrayRef' );
 has 'model_2' => ( is => 'rw', isa => 'model' );
 has 'final_numbers' => ( is => 'rw', isa => 'ArrayRef[Int]', default => sub { [] } );
 has 'final_models' => ( is => 'rw', isa => 'ArrayRef[model]', default => sub { [] } );
@@ -937,8 +938,22 @@ sub put_skipped_omegas_first
 
     }
 
+    # calculate cumulative number of previous omega estimates (diagonals AND covariances), for each original omega record
+    my @cumulative_values = (0);
+    for (my $i=0; $i<scalar(@{$etas_per_omega}); $i++) {
+        my $etas = $etas_per_omega->[$i];
+        my $last = $cumulative_values[-1];
+        my $values = scalar @{$etas};
+        if ( $model->problems->[0]->omegas->[$i]->is_block ) {
+            my $covars = (scalar(@{$etas})**2 - scalar(@{$etas}))/2;
+            $values = $values + $covars;
+        }
+        push @cumulative_values, ($last + $values);
+    }
+
     #reorder omega records and check non-skipped are not diagonal size > 1
     my @new_records = ();
+    my @omega_output_order = (); # permutation vector for mapping (original) estimates to reordered model
     my $n_previous_rows = 0;
     for (my $k=0; $k<scalar(@{$new_omega_order}); $k++){
         if ($k==($start_omega_record-1)){ #    $start_omega_record = scalar(@{$skip_omegas})+1;
@@ -967,6 +982,7 @@ sub put_skipped_omegas_first
                 $n_previous_rows++;
             }
         }
+        push @omega_output_order, ( $cumulative_values[$i]..($cumulative_values[$i+1] - 1) );
     }
     $model -> problems -> [0]-> omegas(\@new_records);
 
@@ -980,7 +996,7 @@ sub put_skipped_omegas_first
         push(@parameter_etanumbers,$etas_per_omega->[$j]);
     }
 
-    return $skip_etas,\@fix_omegas,\@parameter_etanumbers,$etas_file;
+    return $skip_etas,\@fix_omegas,\@parameter_etanumbers,\@omega_output_order,$etas_file;
 }
 
 sub get_reordered_coordinate_strings{
@@ -1839,6 +1855,7 @@ sub prepare_results
     my $directory = $self->directory;
     my $input_model = $self->models->[0];
     my $base_model = $self->reordered_model_1;
+    my $base_output_order = $self->omega_output_order;
     my $model_2 = $self->model_2;
     my @final_models = @{$self->final_models};
     my @final_numbers = @{$self->final_numbers};
@@ -1923,13 +1940,17 @@ sub prepare_results
     $space_section{'labels'}= [];
     $space_section{'values'}= [[]];
 
-    # model 1: base model (after possible reordering)
+    # model 1: base model (after reordering model, but not estimates; we reorder estimates here)
     my $base_coords = $base_model->problems->[0]->get_estimated_attributes(parameter => 'all', attribute => 'coordinate_strings');
     my $base_inits  = $base_model->problems->[0]->get_estimated_attributes(parameter => 'all', attribute => 'inits');
-    my $base_values = $base_model->outputs->[0]->get_filtered_values(category => 'estimate',
-                                                                      parameter => 'all',
-                                                                      problem_index => 0,
-                                                                      subproblem_index => 0);
+    my $base_thetas = $base_model->outputs->[0]->get_filtered_values(category => 'estimate', parameter => 'theta', problem_index => 0, subproblem_index => 0);
+    my $base_omegas_original = $base_model->outputs->[0]->get_filtered_values(category => 'estimate', parameter => 'omega', problem_index => 0, subproblem_index => 0);
+    my $base_omegas_reordered;
+    foreach my $pos (@{$base_output_order}) {
+        push(@{$base_omegas_reordered}, $base_omegas_original->[$pos]);
+    }
+    my $base_sigmas = $base_model->outputs->[0]->get_filtered_values(category => 'estimate', parameter => 'sigma', problem_index => 0, subproblem_index => 0);
+    my $base_values = [ @{$base_thetas}, @{$base_omegas_reordered}, @{$base_sigmas} ];
 
     # model 2: covariate model
     my $m2_coords = $model_2->problems->[0]->get_estimated_attributes(parameter => 'all', attribute => 'coordinate_strings');
@@ -3794,14 +3815,15 @@ sub modelfit_setup
                   "##########################################################################\n\n");
     }
 
-    ($skip_etas,$fix_omegas,$parameter_etanumbers,$etas_file) =
+    my $omega_output_order;
+    ($skip_etas,$fix_omegas,$parameter_etanumbers,$omega_output_order,$etas_file) =
         put_skipped_omegas_first(model => $frem_model1,
                                  start_omega_record =>$self->start_omega_record,
                                  new_omega_order =>$new_omega_order,
                                  need_to_move =>$need_to_move_omegas,
                                  input_model_fix_omegas => $self->input_model_fix_omegas,
                                  etas_file => $etas_file);
-
+    $self->omega_output_order($omega_output_order); # permutation vector (of omega estimates), used by prepare_results
     #now model1 is reordered, and diagonal n -> n block 1
 
     $self->input_model_fix_omegas($fix_omegas);
