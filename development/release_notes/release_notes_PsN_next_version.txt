@@ -141,6 +141,8 @@ Changes and bug fixes from PsN 4.7.0 to x.x.x
 - Changed boundaries for covariate effect theta on exponential effect to be adaptive given an effect size within 0.01 and 100
   This to reduce the risk of overflow.
 - Fix formatting of OFV values in scm log to avoid two numbers be put directly next to each other
+- Add support for categorical covariates with more levels than 2 for linearized scm
+
 
    ___linearize___
 
