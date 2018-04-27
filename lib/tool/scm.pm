@@ -214,7 +214,15 @@ sub BUILD
         my ($mapping, $new_indices, $new_categorical, $warn_multiple) =
             $data->append_binary_columns(indices => $positions, baseline_only => 0);
 
-        if (scalar(@$new_categorical) > 0) {
+        # Workaround to check if anything was added.
+        my $added = 0;
+        for my $newcat (@$new_categorical) {
+            if (not array::string_in($newcat, $self->categorical_covariates)) {
+                $added = 1;
+            }
+        }
+
+        if ($added) {
             my $dataset_name = 'data_with_updated_categoricals';
             $data->filename($dataset_name);
             $data->directory($self->directory);
