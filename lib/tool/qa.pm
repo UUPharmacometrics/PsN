@@ -693,6 +693,34 @@ sub check_nonsupported_modelfeatures
     }
 }
 
+sub get_scm_categorical
+{
+    my $self = shift;
+
+    my @categorical;
+
+    # Warning: nasty code ahead.
+    # Figure out which catcovs that were actually used in scm i.e. in case of splitting of categoricals with more than two levels.
+    open my $fh, '<', $self->directory . 'scm_run/covariate_statistics.txt' or return $self->categorical;
+    my $covcode = do { local $/ = undef; <$fh> };
+    my $VAR1;       # Gets filled by eval
+    eval $covcode;
+    my @scm_covs = keys %$VAR1;
+    for my $cat (split ',', $self->categorical) {
+        for my $scmcov (@scm_covs) {
+            if ($cat eq $scmcov) {
+                push @categorical, $cat;
+                last;
+            } elsif ($scmcov =~ /^${cat}_\d+$/) {
+                push @categorical, $scmcov;
+            }
+        }
+    }
+    close $fh;
+
+    return \@categorical;
+}
+
 sub create_R_plots_code
 {
 	my $self = shift;
@@ -735,12 +763,15 @@ sub create_R_plots_code
 		$nonlinear_run = "FALSE";
 	}
 
+    my $scm_categorical = $self->get_scm_categorical();
+
     my $code =  [
             '# qa specific preamble',
 			"groups <- " . $self->groups,
             "idv_name <- '" . $self->idv . "'",
             "continuous <- " . rplots::create_r_vector(array => \@continuous),
             "categorical <- " . rplots::create_r_vector(array => \@categorical),
+            "scm_categorical <- " . rplots::create_r_vector(array => $scm_categorical),
             "parameters <- " . rplots::create_r_vector(array => \@parameters),
             "extra_table <- '" . $extra_table_path . "'",
 			"cdd_dofv_cutoff <- 3.84 ",
