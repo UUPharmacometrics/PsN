@@ -2240,8 +2240,10 @@ sub do_model1
                                   filename                    => $im_dir.$name_model,
                                   parse_output => 0,
                                   ignore_missing_output_files => 1 );
-        (my $phi_filename = $name_model) =~ s/(.*)\..*/$1.phi/;
-        $etas_file = $im_dir.$phi_filename;
+        if (defined $etas_file) {
+	    (my $phi_filename = $name_model) =~ s/(.*)\..*/$1.phi/;
+            $etas_file = $im_dir.$phi_filename;
+        }
     }else{
         $frem_model = $model ->  copy( filename    => $self -> directory().'intermediate_models/'.$name_model,
                                        output_same_directory => 1,
@@ -2922,8 +2924,10 @@ sub prepare_model2
 
         $frem_model->_write();
     } else {
-        (my $phi_filename = $name_model) =~ s/(.*)\..*/$1.phi/;
-        $etas_file = $im_dir.$phi_filename;
+        if (defined $etas_file) {
+	    (my $phi_filename = $name_model) =~ s/(.*)\..*/$1.phi/;
+	    $etas_file = $im_dir.$phi_filename;
+        }
     }
 
     return ($est_records,$ntheta,$epsnum,$etas_file);
@@ -3010,8 +3014,10 @@ sub prepare_model3
 
         $frem_model->_write();
     } else {
-        (my $phi_filename = $name_model) =~ s/(.*)\..*/$1.phi/;
-        $etas_file = $im_dir.$phi_filename;
+	if (defined $etas_file) {
+	    (my $phi_filename = $name_model) =~ s/(.*)\..*/$1.phi/;
+	    $etas_file = $im_dir.$phi_filename;
+	}
     }
 
     return ($est_records,$covrecordref,$etas_file);
@@ -3134,8 +3140,10 @@ sub prepare_model4
                                                  type => 'covariance' );
         $frem_model->_write();
     } else {
-        (my $phi_filename = $name_model) =~ s/(.*)\..*/$1.phi/;
-        $etas_file = $fin_dir.$phi_filename;
+	if (defined $etas_file) {
+	    (my $phi_filename = $name_model) =~ s/(.*)\..*/$1.phi/;
+	    $etas_file = $fin_dir.$phi_filename;
+	}
     }
 
     return ($etas_file);
