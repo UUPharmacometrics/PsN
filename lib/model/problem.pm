@@ -3841,6 +3841,26 @@ sub undrop_columns
     return \@undropped_columns;
 }
 
+sub columns_list
+{
+    # Get an array of all columns in $INPUT. For dropped and skipped columns use "DROP"
+    my $self = shift;
+
+    my @columns;
+
+    for my $record (@{$self->inputs}) {
+        for my $option (@{$record->options}) {
+            if ($option->is_drop()) {
+                push @columns, "DROP";
+            } else {
+                push @columns, $option->name;
+            }
+        }
+    }
+
+    return \@columns;
+}
+
 sub ignored_or_accepted_columns
 {
     # Get an array of all columns that are either ignored or accepted in $DATA

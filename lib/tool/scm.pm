@@ -198,6 +198,84 @@ sub BUILD
 	croak("Option p_value (p_forward/p_backward) must be in the range 0-1")
 	unless ($self->p_value >= 0 and $self->p_value <=1);
 
+
+    # Pre-process non-bivariate categoricals for linearized scm
+    if ($self->linearize and $self->step_number == 1 and defined $self->categorical_covariates) {
+        my $model = $self->models->[0];
+        my $columns = $model->problems->[0]->columns_list();
+        my $positions = array::get_positions(target => $columns, keys => $self->categorical_covariates);
+        my $data = data->new(
+            filename => $model->problems->[0]->datas->[0]->get_absolute_filename(),
+            ignoresign => $model->problems->[0]->datas->[0]->ignoresign,
+            idcolumn => $model->idcolumns->[0],
+            missing_data_token => $self->missing_data_token
+        );
+        my $original_dataset_numcols = $data->column_count();
+        my ($mapping, $new_indices, $new_categorical, $warn_multiple) =
+            $data->append_binary_columns(indices => $positions, baseline_only => 0);
+
+        # Workaround to check if anything was added.
+        my $added = 0;
+        for my $newcat (@$new_categorical) {
+            if (not array::string_in($newcat, $self->categorical_covariates)) {
+                $added = 1;
+            }
+        }
+
+        if ($added) {
+            my $dataset_name = 'data_with_updated_categoricals';
+            $data->filename($dataset_name);
+            $data->directory($self->directory);
+            $data->_write();
+            $model->problems->[0]->datas->[0]->set_filename(filename => $dataset_name, directory => $self->directory);
+            my $inputs = $model->problems->[0]->inputs;
+            my $no_inputs = scalar(@$inputs);
+            # Add DROP for extra columns already in dataset but not in $INPUT
+            my $input_numcols = 0;
+            for my $inp (@$inputs) {
+                $input_numcols += scalar(@{$inp->options});
+            }
+            for (my $i = 0; $i < $original_dataset_numcols - $input_numcols; $i++) {
+                $inputs->[$no_inputs - 1]->_add_option(option_string => 'DROP');
+            }
+            # Add new columns to $INPUT
+            for my $colname (@$new_categorical) {
+                $inputs->[$no_inputs - 1]->_add_option(option_string => $colname);
+            }
+            my %colhash;
+            for my $newcol (@$new_categorical) {
+                my $replace = $newcol;
+                $replace =~ s/_\d+$//;
+                $colhash{$replace} = 1;
+            }
+            my @newcat;
+            for my $categorical (@{$self->categorical_covariates}) {
+                if (not $colhash{$categorical}) {
+                    push @newcat, $categorical;
+                }
+            }
+            push @newcat, @$new_categorical;
+            $self->categorical_covariates(\@newcat);
+            # Update the test_relations
+            for my $param (keys %{$self->test_relations}) {
+                my @newrel;
+                for my $cov (@{$self->test_relations->{$param}}) {
+                    if (not $colhash{$cov}) {
+                        push @newrel, $cov;
+                    } else {
+                        # Add only the new covariates for this particular old covariate
+                        for my $newcov (@$new_categorical) {
+                            if ($newcov =~ /^${cov}_\d+$/) {
+                                push @newrel, $newcov;
+                            }
+                        }
+                    }
+                }
+                $self->test_relations->{$param} = \@newrel;
+            }
+        }
+    }
+
 	if (scalar(@{$self -> models}) > 1){
 		if ($self->linearize){
 			croak("scm object with option linearize can only be generated with a single model");
@@ -1348,6 +1426,7 @@ sub modelfit_setup
             );
             $self->original_nonlinear_model($tmp_orig);
 		}
+
 	}
 
 

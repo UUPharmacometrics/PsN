@@ -3376,6 +3376,37 @@ sub have_unique_ids
     return 1;
 }
 
+sub remove_nonobs
+{
+    # A crude method to remove individuals that does not have any observations
+    # Currently only checks for DV=0
+    my $self = shift;
+    my %parm = validated_hash(\@_,
+        dvcol => { isa => 'Str', optional => 0 },
+    );
+    my $dvcol = $parm{'dvcol'};
+
+    my @newinds;
+
+    for my $ind (@{$self->individuals}) {
+        my $remove = 1;
+        for my $row (@{$ind->subject_data}) {
+            my @content = split(/,/, $row);
+            if ($content[$dvcol] != 0) {
+                $remove = 0;
+                last;
+            }
+        }
+        print "QQ: $remove\n";
+        if (not $remove) {
+            push @newinds, $ind;
+        }
+    }
+
+    $self->individuals(\@newinds);
+}
+
+
 no Moose;
 __PACKAGE__->meta->make_immutable;
 1;

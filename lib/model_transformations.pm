@@ -1230,6 +1230,33 @@ sub omit_ids
     }
 }
 
+sub remove_nonobs
+{
+    # Remove IDs that don't have any observations and create a new dataset
+	my %parm = validated_hash(\@_,
+        model => { isa => 'model' },
+        dv => { isa => 'Str' },
+    );
+    my $model = $parm{'model'};
+    my $dv = $parm{'dv'};
+
+    my $dvcol = $model->problems->[0]->find_data_column(column_name => $dv);
+
+    my $data = $model->problems->[0]->datas->[0];
+    my $data_table = data->new(
+        directory => $data->get_directory,
+        filename => $data->get_filename,
+        ignoresign => $data->ignoresign,
+        parse_header => 1,
+    );
+
+    $data_table->remove_nonobs(dvcol => $dvcol);
+    my $filename = utils::file::replace_extension($model->filename, "dta");
+    $data_table->filename($filename);
+    $data_table->_write();
+    $data->set_filename(filename => $filename, directory => $model->directory);
+}
+
 sub _rename_epsilons
 {
     # Rename all or some EPSs of model

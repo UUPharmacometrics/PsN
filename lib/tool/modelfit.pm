@@ -664,7 +664,11 @@ sub run
 							or ($pid =~ /^rerun_/)
 							or ($pid =~ /^fail_/)
 						); #psn.lst exists or will never appear
-					sleep(6);
+				    if (defined $PsN::config->{'_'}->{'file_polling_interval'} and $PsN::config->{'_'}->{'file_polling_interval'} >= 0) {
+					    sleep($PsN::config->{'_'}->{'file_polling_interval'});
+                    } else {
+					    sleep(6);
+                    }
 				}
 
 				#we do this before restart_needed so post-processed tables are properly handled
