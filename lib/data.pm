@@ -3397,7 +3397,6 @@ sub remove_nonobs
                 last;
             }
         }
-        print "QQ: $remove\n";
         if (not $remove) {
             push @newinds, $ind;
         }
