@@ -35,6 +35,7 @@ my %optional_options = (
     'ids:s' => undef,
     'ignore!' => undef,
     'occ:s' => undef,
+    'dv:s' => undef,
 );
 
 my $res = GetOptions( \%options,
@@ -43,7 +44,7 @@ my $res = GetOptions( \%options,
     keys(%optional_options) );
 exit unless $res;
 
-my @valid_transformations = ( 'boxcox', 'tdist', 'full_block', 'add_tv', 'add_iov', 'remove_iiv', 'remove_iov', 'remove_0fix_omegas', 'omit_ids', 'iiv_on_ruv', 'power_on_ruv', 'diagonal_to_block', 'add_etas', 'uniform' );
+my @valid_transformations = ( 'boxcox', 'tdist', 'full_block', 'add_tv', 'add_iov', 'remove_iiv', 'remove_iov', 'remove_0fix_omegas', 'omit_ids', 'iiv_on_ruv', 'power_on_ruv', 'diagonal_to_block', 'add_etas', 'uniform', 'remove_nonobs' );
 my $valid_transformations_string = join("\n", @valid_transformations);
 
 my %help_text;
@@ -132,6 +133,13 @@ $help_text{-parameters} = <<'EOF';
 
 	Specify list of parameters. This option is mandatory for the add_tv
 	transformation.
+EOF
+
+$help_text{-dv} = <<'EOF';
+	-dv
+
+	Specify the dependent variable. Default is DV. This option can only be used for the
+    remove_nonobs transformation.
 EOF
 
 common_options::online_help( 'transform', \%options, \%help_text, \%required_options, \%optional_options);
@@ -324,7 +332,13 @@ if ($transformation eq 'boxcox') {
         model_transformations::power_on_ruv(model => $model);
     }
 } elsif ($transformation eq 'diagonal_to_block') {
-   model_transformations::diagonal_to_block(model => $model);
+    model_transformations::diagonal_to_block(model => $model);
+} elsif ($transformation eq 'remove_nonobs') {
+    my $dv = 'DV';
+    if (defined $options{'dv'}) {
+        $dv = $options{'dv'};
+    }
+    model_transformations::remove_nonobs(model => $model, dv => $dv);
 }
 
 $model->_write();

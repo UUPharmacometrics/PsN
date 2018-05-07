@@ -205,7 +205,7 @@ Changes and bug fixes from PsN 4.7.0 to x.x.x
 
    ___transform___
 
-- Added remove_0fix_omegas, tdist, full_block, add_tv, add_iov, iiv_on_ruv, power_on_ruv and omit_ids transformations
+- Added remove_0fix_omegas, tdist, full_block, add_tv, add_iov, iiv_on_ruv, power_on_ruv, remove_nonobs and omit_ids transformations
 
    ___resmod___ 
 

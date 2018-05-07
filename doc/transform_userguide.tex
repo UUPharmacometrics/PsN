@@ -90,6 +90,11 @@ Remove all IIV omegas, replace the corresponding etas in the code with 0 and ren
 \subsection{remove\_iov}
 Remove all IOV omegas, replace the corresponding etas in the code with 0 and renumber the remaining etas. If the -fix option is set instead fix all IOV etas to zero.
 
+\subsection{remove\_nonobs}
+Remove all individuals that does not have any observations from the dataset. Note: The method for determining if a data record is an observation is currently crude, it only considers non-zero DV. The dataset will be updated and a new model will be created to point to the new dataset. The option -dv can be used to
+change the dv column used.
+
+
 \subsection{tdist}
 The tdist transformation will transform all etas to follow a t-distribution. The degree of freedom parameters will be added as THETAs to be estimated. The -etas option can be used to specify a list of etas that should be transformed. Default is to transfor all etas in the model.
 
