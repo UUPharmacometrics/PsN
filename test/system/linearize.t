@@ -2,7 +2,7 @@
 
 use strict;
 use warnings;
-use File::Path;
+use File::Path qw(make_path);
 use File::Spec;
 use Test::More;
 use File::Copy 'cp';
@@ -25,10 +25,12 @@ my @models = (
 my @commands = ();
 my @run_dirs = ();
 foreach my $model (@models) {
-    push @commands, get_command('linearize')." \"".File::Spec->catdir($model_dir, $model)."\"";
+	  my $command = get_command('linearize') . " \"".File::Spec->catdir($model_dir, $model)."\"";
+    push @commands, $command;
     (my $vol, my $path, my $file) = File::Spec->splitpath($model);
-    my $wd = File::Spec->catdir($vol, $tempdir, $path);
-    File::Path->make_path($wd) unless (-d $wd);
+    my $wd = File::Spec->catdir($vol, $tempdir, $file);
+		$wd = $tempdir . $file;
+    make_path($wd) unless (-d $wd);
     push @run_dirs, $wd;
 }
 
@@ -72,7 +74,7 @@ for my $i (0 .. $#commands) {
 				$est_correct = $line;
 			}
 			# test $ETAS record for existence and FILE= set by linearize
-			if ($line =~ /\$ETAS.+FILE=.+$etas_file/) {
+			if ($line =~ /FILE=.+$etas_file/) {     # Not checking for $ETAS as it can appear on separate line
 				$etas_correct = $line;
 			}
 		}
