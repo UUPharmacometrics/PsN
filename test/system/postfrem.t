@@ -15,6 +15,7 @@ use Digest::file qw(digest_file_hex);
 use FindBin qw($Bin);
 use lib "$Bin/.."; #location of includes.pm
 use includes; #file with paths to PsN packages and $path variable definition
+use PsN;
 
 my $interactive=0;
 our $temp_dir = create_test_dir('system_postfrem');
@@ -86,13 +87,15 @@ for my $i (0..$#commands) {
 	my $postfrem_passed = ok ($rc == 0, "$command");
 
 	# execute deterministic file hashing tests if postfrem succeeded
-	subtest "$test_dir hash tests" => sub {
-		plan 'skip_all' unless $postfrem_passed;
-		foreach my $file (keys %{$hashes{$test_dir}}) {
-			my $file_to_hash = "$frem_dir/$test_dir/$file";
-			is (digest_file_hex($file_to_hash, "SHA-1"), $hashes{$test_dir}->{$file}, "hash eq test : ".$file_to_hash);
-		}
-	}
+    if ($PsN::dev) {
+	    subtest "$test_dir hash tests" => sub {
+		    plan 'skip_all' unless $postfrem_passed;
+		    foreach my $file (keys %{$hashes{$test_dir}}) {
+			    my $file_to_hash = "$frem_dir/$test_dir/$file";
+			    is (digest_file_hex($file_to_hash, "SHA-1"), $hashes{$test_dir}->{$file}, "hash eq test : ".$file_to_hash);
+		    }
+	    }
+    }
 }
 
 remove_test_dir($temp_dir);
