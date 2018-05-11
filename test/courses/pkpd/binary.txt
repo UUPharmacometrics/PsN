@@ -1,5 +1,5 @@
 # Task 1
-execute run36.mod -mod
+execute run36.mod -model_dir_name
 # Task 1 sumo
 sumo run36.lst
 # Task 2 no strat
@@ -9,4 +9,4 @@ vpc run36.mod -samples=20 -dir=vpc_36 -lst=run36.lst -levels=1.5 -dv=SMXH -auto_
 # Task 2 update
 update_inits run36.mod -flip_comments -out=run36sim.mod
 # Task 2 sim
-execute run36sim.mod -rplots=1 -template_file=binary.R -mod
+execute run36sim.mod -rplots=1 -template_file=binary.R -model_dir_name
