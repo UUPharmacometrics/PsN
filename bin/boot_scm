@@ -684,7 +684,9 @@ if ((not $config_file->linearize) or $options{'methodA'}){
 									   models	=> [$linBmodel],
 									   both_directions => 0,
 									   skip_filtering => 1,
-									   return_after_derivatives_done => 1); #end scm prematurely
+									   return_after_derivatives_done => 1,
+                                    from_bootscm => 1,
+                                ); #end scm prematurely
 
 	$deriv_scm -> run;
 	$config_file->time_varying($time_varying); #reset
@@ -869,7 +871,8 @@ for ( my $j = $start_j; $j <= $options{'samples'}; $j++ ) {
 				  both_directions => ($direction eq 'both')? 1 : 0,
 				  p_backward => $p_backward,
 				  ofv_backward => $ofv_backward,
-				  skip_filtering => 1);
+				  skip_filtering => 1,
+              from_bootscm => 1,);
 		
 		ui->category('scm');
 		$scm -> run;
@@ -904,7 +907,8 @@ for ( my $j = $start_j; $j <= $options{'samples'}; $j++ ) {
 				  directory => $scmdir,
 				  models	=> [$new_mod],
 				  config_file => $config_file,
-				  skip_filtering => 1);
+				  skip_filtering => 1,
+              from_bootscm => 1,);
 
 		ui -> print( category => 'boot_scm',
 					 message => "Starting bootstrap scm backward search $samp",

@@ -102,6 +102,7 @@ has 'estimate_fo' => ( is => 'rw', isa => 'Bool', default => 0 );   # If lineari
 has 'extra_table_columns' => ( is => 'rw', isa => 'ArrayRef[Str]' ); # Set to array of colnames to add to an extra data table output by derivatives.mod
 has 'nointer' => ( is => 'rw', isa => 'Bool', default => 0 );   # Set to not use interaction columns in linearization (set D_EPSETA to 0)
 has 'use_data_format' => ( is => 'rw', isa => 'Bool', default => 0 );   # Should we use the workaround for big datasets
+has 'from_bootscm' => ( is => 'rw', isa => 'Bool', default => 0 );  # Are we called from a bootscm. This is a hack to fix a specific bug with non-binary catcovs under linearization
 
 
 sub BUILD
@@ -200,7 +201,7 @@ sub BUILD
 
 
     # Pre-process non-bivariate categoricals for linearized scm
-    if ($self->linearize and $self->step_number == 1 and defined $self->categorical_covariates) {
+    if (not $self->from_bootscm and $self->linearize and $self->step_number == 1 and defined $self->categorical_covariates) {
         my $model = $self->models->[0];
         my $columns = $model->problems->[0]->columns_list();
         my $positions = array::get_positions(target => $columns, keys => $self->categorical_covariates);
