@@ -201,7 +201,7 @@ sub BUILD
 
 
     # Pre-process non-bivariate categoricals for linearized scm
-    if (not $self->from_bootscm and $self->linearize and $self->step_number == 1 and defined $self->categorical_covariates) {
+    if (not $self->from_linearize and not $self->from_bootscm and $self->linearize and $self->step_number == 1 and defined $self->categorical_covariates) {
         my $model = $self->models->[0];
         my $columns = $model->problems->[0]->columns_list();
         my $positions = array::get_positions(target => $columns, keys => $self->categorical_covariates);
