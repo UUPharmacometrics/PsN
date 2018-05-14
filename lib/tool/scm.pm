@@ -215,6 +215,11 @@ sub BUILD
         my ($mapping, $new_indices, $new_categorical, $warn_multiple) =
             $data->append_binary_columns(indices => $positions, baseline_only => 0);
 
+        # Workaround to uppercase all covariates
+        for my $newcat (@$new_categorical) {
+            $newcat = uc($newcat);
+        }
+
         # Workaround to check if anything was added.
         my $added = 0;
         for my $newcat (@$new_categorical) {
