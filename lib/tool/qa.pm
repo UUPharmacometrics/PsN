@@ -703,22 +703,30 @@ sub get_scm_categorical
 
     # Warning: nasty code ahead.
     # Figure out which catcovs that were actually used in scm i.e. in case of splitting of categoricals with more than two levels.
-    open my $fh, '<', $self->directory . 'scm_run/covariate_statistics.txt' or return [split /,/, $self->categorical];
-    my $covcode = do { local $/ = undef; <$fh> };
-    my $VAR1;       # Gets filled by eval
-    eval $covcode;
-    my @scm_covs = keys %$VAR1;
-    for my $cat (split ',', $self->categorical) {
-        for my $scmcov (@scm_covs) {
-            if ($cat eq $scmcov) {
-                push @categorical, $cat;
-                last;
-            } elsif ($scmcov =~ /^${cat}_\d+$/) {
-                push @categorical, $scmcov;
+    my $covariate_statistics_filename = $self->directory . 'scm_run/covariate_statistics.txt';
+
+    if (not -e $covariate_statistics_filename) {
+        if (defined $self->categorical) {
+            @categorical = split /,/, $self->categorical;
+        }
+    } else {
+        open my $fh, '<', $covariate_statistics_filename;
+        my $covcode = do { local $/ = undef; <$fh> };
+        my $VAR1;       # Gets filled by eval
+        eval $covcode;
+        my @scm_covs = keys %$VAR1;
+        for my $cat (split ',', $self->categorical) {
+            for my $scmcov (@scm_covs) {
+                if ($cat eq $scmcov) {
+                    push @categorical, $cat;
+                    last;
+                } elsif ($scmcov =~ /^${cat}_\d+$/) {
+                    push @categorical, $scmcov;
+                }
             }
         }
+        close $fh;
     }
-    close $fh;
 
     return \@categorical;
 }
