@@ -703,7 +703,7 @@ sub get_scm_categorical
 
     # Warning: nasty code ahead.
     # Figure out which catcovs that were actually used in scm i.e. in case of splitting of categoricals with more than two levels.
-    open my $fh, '<', $self->directory . 'scm_run/covariate_statistics.txt' or return $self->categorical;
+    open my $fh, '<', $self->directory . 'scm_run/covariate_statistics.txt' or return [split /,/, $self->categorical];
     my $covcode = do { local $/ = undef; <$fh> };
     my $VAR1;       # Gets filled by eval
     eval $covcode;

@@ -300,6 +300,24 @@ sub column_count
 	}
 }
 
+sub check_columns_equally_wide
+{
+    my $self = shift;
+
+    my $length;
+    for my $ind (@{$self->individuals}) {
+        for my $line (@{$ind->subject_data}) {
+            my @row = split /,/, $line;
+            if (not defined $length) {
+                $length = scalar(@row);
+            }
+            if (scalar(@row) != $length) {
+                croak("Error: The rows of the data set doesn't have the same number of columns. This is not supported when binarizing categorical covariates\n");
+            }
+        }
+    }
+}
+
 sub append_binary_columns
 {
 	my $self = shift;
@@ -313,6 +331,8 @@ sub append_binary_columns
 	my $baseline_only = $parm{'baseline_only'};
 	my $start_header = $parm{'start_header'};
 	my $mdv_evid_indices = $parm{'mdv_evid_indices'};
+
+    $self->check_columns_equally_wide();     # Does the dataset have the same number of columns throughout? If not we must bail out.
 
 	unless (defined $start_header){
 		$start_header = $self->header;
