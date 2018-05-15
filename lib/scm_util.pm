@@ -143,6 +143,10 @@ sub check_options{
 		unless (($direction eq 'forward') or ($direction eq 'both')){
 			die(" scmplus does not support search_direction $direction ");
 		}
+		if ((defined $options->{'linearize'} and $options->{'linearize'}==1) ||
+			(defined $config_file->linearize() and $config_file->linearize()==1)){
+			die "$scriptname does not support option -linearize";
+		}
 	}
 	
 
