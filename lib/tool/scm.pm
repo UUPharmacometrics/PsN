@@ -1934,13 +1934,12 @@ sub linearize_setup
                     fuzzy_match => 1
                 );
                 $DB::single = 1;
-                my $phi_file;
                 my $etas_records = $original_model->record(record_name => 'etas');
                 my $etas_file = $original_model->get_or_set_etas_file();
                 if ($original_model->is_run()) {
                     $derivatives_model->update_inits(from_output => $original_model->outputs->[0]);
-                    $phi_file = $original_model->get_phi_file();
                 }
+                my $phi_file = $original_model->get_phi_file();
                 if (defined $phi_file) {
                     # use phi file from original execution as input
                     print "Original model has phi output file; will use to initialize ETAs\n";

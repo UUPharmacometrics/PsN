@@ -269,6 +269,8 @@ sub modelfit_setup
         );
 		if ($add_etas_model->is_run()) {
 			$add_etas_model->update_inits(from_output => $add_etas_model->outputs->[0]);
+            my $phi_file = $add_etas_model->get_phi_file();
+            $add_etas_model->phi_file($phi_file);
 		}
         if ($self->nonlinear) {
             $add_etas_model->outputs->[0]->filename_root('add_etas');
@@ -764,6 +766,10 @@ sub create_R_plots_code
 	}
 
     my $scm_categorical = $self->get_scm_categorical();
+    # FIXME: Could for some reason get undef
+    if (not defined $scm_categorical) {
+        $scm_categorical = [];
+    }
 
     my $code =  [
             '# qa specific preamble',
