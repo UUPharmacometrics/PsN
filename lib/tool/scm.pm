@@ -213,7 +213,7 @@ sub BUILD
         );
         my $original_dataset_numcols = $data->column_count();
         my ($mapping, $new_indices, $new_categorical, $warn_multiple) =
-            $data->append_binary_columns(indices => $positions, baseline_only => 0);
+            $data->append_binary_columns(start_header => $columns, indices => $positions, baseline_only => 0);
 
         # Workaround to uppercase all covariates
         for my $newcat (@$new_categorical) {
@@ -232,6 +232,7 @@ sub BUILD
             my $dataset_name = 'data_with_updated_categoricals';
             $data->filename($dataset_name);
             $data->directory($self->directory);
+            $data->header([]);
             $data->_write();
             $model->problems->[0]->datas->[0]->set_filename(filename => $dataset_name, directory => $self->directory);
             my $inputs = $model->problems->[0]->inputs;
