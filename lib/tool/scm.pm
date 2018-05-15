@@ -215,18 +215,18 @@ sub BUILD
         my ($mapping, $new_indices, $new_categorical, $warn_multiple) =
             $data->append_binary_columns(start_header => $columns, indices => $positions, baseline_only => 0);
 
-        # Workaround to uppercase all covariates
-        for my $newcat (@$new_categorical) {
-            $newcat = uc($newcat);
-        }
-
-        # Workaround to check if anything was added.
-        my $added = 0;
-        for my $newcat (@$new_categorical) {
-            if (not array::string_in($newcat, $self->categorical_covariates)) {
-                $added = 1;
+        # For some reason append_binary_column retains covariates that was already binary. Remove them here.
+        my @only_new;
+        for my $cov (@{$self->categorical_covariates}) {
+            for my $newcov (@$new_categorical) {
+                if ($newcov =~ /^${cov}_\d+$/) {
+                    push @only_new, $newcov;
+                }
             }
         }
+        my $added = 0;
+        $added = 1 if (scalar(@only_new) > 0);
+        $new_categorical = \@only_new;
 
         if ($added) {
             my $dataset_name = 'data_with_updated_categoricals';
@@ -249,7 +249,7 @@ sub BUILD
             for my $colname (@$new_categorical) {
                 $inputs->[$no_inputs - 1]->_add_option(option_string => $colname);
             }
-            my %colhash;
+            my %colhash;    # Which original catcovs have been binarized?
             for my $newcol (@$new_categorical) {
                 my $replace = $newcol;
                 $replace =~ s/_\d+$//;

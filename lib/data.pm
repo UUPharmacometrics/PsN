@@ -3212,7 +3212,6 @@ sub scm_calculate_covariate_statistics
             $results->{$cov}{'have_missing_data'} = _have_missing_values(factors => $results->{$cov}{'factors'},
                 missing_data_token => $missing_data_token); #$self???
 
-
             ( $results->{$cov}{'median'},$results->{$cov}{'min'},	$results->{$cov}{'max'} ) =
             $self -> scm_calculate_categorical_statistics(covariate => $cov,
                 column_number => $model_column_numbers{$cov},
