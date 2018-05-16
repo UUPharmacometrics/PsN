@@ -212,6 +212,9 @@ sub BUILD
             missing_data_token => $self->missing_data_token
         );
         my $original_dataset_numcols = $data->column_count();
+        for (my $i = 0; $i < $original_dataset_numcols - scalar(@$columns); $i++) {     # Pad column vector if dataset is actually bigger
+            push @$columns, 'DROP';
+        }
         my ($mapping, $new_indices, $new_categorical, $warn_multiple) =
             $data->append_binary_columns(start_header => $columns, indices => $positions, baseline_only => 0);
 
