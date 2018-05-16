@@ -61,11 +61,22 @@ resmod_variability_attribution <- function(xpdb, idv = quo(TIME), dvid_col_name,
     dplyr::mutate(value = 1-value/sum(value)) %>% 
     dplyr::filter(source == "RUV")  
   
+  if(length(levels(resmod_attribution_data$source))>12) {
+    gg_color_hue <- function(n) {
+      hues = seq(15, 375, length = n + 1)
+      hcl(h = hues, l = 65, c = 100)[1:n]
+    }
+    fct_colors <- gg_color_hue(length(levels(resmod_attribution_data$source))) %>% 
+      purrr::set_names(levels(resmod_attribution_data$source))
+    fct_colors["RUV"] <- "darkgray"
+  } else { # to keep nicer colors if there are less than 11 etas + ruv (because RColorBrewer::brewer.pal has max 12 colors)
+    fct_colors <- RColorBrewer::brewer.pal(length(levels(resmod_attribution_data$source)), "Set3") %>% 
+      purrr::set_names(levels(resmod_attribution_data$source))
+    fct_colors["RUV"] <- "darkgray"
+  }
+
   
-  
-  fct_colors <- RColorBrewer::brewer.pal(length(levels(resmod_attribution_data$source)), "Set3") %>% 
-    purrr::set_names(levels(resmod_attribution_data$source))
-  fct_colors["RUV"] <- "darkgray"
+
   
   ggplot(resmod_attribution_data, aes_string(idv_name, "value", fill = "source"))+
     geom_area(position = position_fill(reverse = T))+
