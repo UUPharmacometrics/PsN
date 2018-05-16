@@ -3843,16 +3843,22 @@ sub undrop_columns
 
 sub columns_list
 {
-    # Get an array of all columns in $INPUT. For dropped and skipped columns use "DROP"
+    # Get an array of all columns in $INPUT. For anonymous dropped and skipped columns with no name use "DROP"
     my $self = shift;
 
     my @columns;
 
     for my $record (@{$self->inputs}) {
         for my $option (@{$record->options}) {
-            if ($option->is_drop()) {
-                push @columns, "DROP";
-            } else {
+            my $name = $option->name;
+            my $value = $option->value;
+            if ($name eq 'DROP' or $name eq 'SKIP') {
+                if (defined $value) {
+                    push @columns, $value;
+                } else {
+                    push @columns, "DROP";
+                }
+            } else {        # If value is DROP/SKIP or synonym
                 push @columns, $option->name;
             }
         }
