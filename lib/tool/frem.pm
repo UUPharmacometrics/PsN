@@ -670,8 +670,9 @@ sub get_post_processing_data
             }
             # iterate label if collision (e.g. "CL"->"CL_2")
             my $newparam = $lab;
-            my $num = 2;
+            my $num = 1;
             while (exists $parnames{$newparam}) {
+                $num++;
                 $newparam = $lab."_$num";
             }
             if ($newparam ne $lab) {
