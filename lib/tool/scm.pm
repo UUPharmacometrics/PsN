@@ -1830,7 +1830,7 @@ sub linearize_setup
 
 
         #1.8
-        my $singles = 3; # ID DV IPRED
+        my $singles = 4; # ID DV IPRED MDV
         if ($self->epsilon()){
             #Hi1+Hi2+...+Hi(1+$nETA), i=1...$nEPS
             $singles = $singles + (1 + $nETA)*$nEPS;
