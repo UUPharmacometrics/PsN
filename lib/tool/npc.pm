@@ -371,10 +371,18 @@ sub BUILD
 		if ($self->predcorr) {
 			ui -> print (category => 'vpc',
 						 message => "Warning: When -censor/-lloq/-uloq is used in combination with -predcorr/-varcorr, ".
-						 "the prediction/variability correction is performed based on all PRED and all simulated ".
-						 "dependent variables, including those that are censored in later analyses. Therefore it ".
+						 "the transformation function for prediction/variability correction is based on all PRED and all simulated ".
+						 "dependent variables, before censoring. Therefore it ".
 						 "is important to simulate reasonable values for the dependent variable ".
-						 "even, for example, after drop-out.");
+						 "even, for example, after drop-out." .
+                     );
+            if (defined $self->lloq || defined $self->uloq) {
+                ui->print(category => 'vpc',
+                    message => "The transformation is applied after censoring. Therefore it could happen" .
+                    "that some values which are originally within the boundaries of ".
+                    "-lloq and -ulow appear to be outside these boundaries after the correction."
+                );
+            }
 		}
 	}
 
@@ -390,16 +398,6 @@ sub BUILD
 		if (defined $self->lower_bound) {
 			croak("Option -lower_bound is only allowed together with -predcorr.") 
 				unless ($self->predcorr);
-		}
-
-		if ((defined $self->lloq ) || (defined $self->uloq) ) {
-			if ($self->predcorr) {
-				ui -> print (category => 'vpc', 
-							 message => "Warning: When -lloq/-uloq is used in combination with -predcorr, ".
-							 "the censoring is performed before prediction correction. ".
-							 "Therefore it could happen that some values which are originally within the boundaries of ".
-							 "-lloq and -uloq appear to be outside these boundaries after the correction.");
-			}
 		}
 
 		if (defined $self->lnDV and ($self->lnDV > 0)) {
