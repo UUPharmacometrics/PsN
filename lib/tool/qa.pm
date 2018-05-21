@@ -701,6 +701,8 @@ sub get_scm_categorical
 
     my @categorical;
 
+    return \@categorical if not defined $self->categorical;
+
     # Warning: nasty code ahead.
     # Figure out which catcovs that were actually used in scm i.e. in case of splitting of categoricals with more than two levels.
     my $covariate_statistics_filename = $self->directory . 'scm_run/covariate_statistics.txt';
