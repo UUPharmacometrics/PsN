@@ -374,7 +374,7 @@ sub BUILD
 						 "the transformation function for prediction/variability correction is based on all PRED and all simulated ".
 						 "dependent variables, before censoring. Therefore it ".
 						 "is important to simulate reasonable values for the dependent variable ".
-						 "even, for example, after drop-out." .
+						 "even, for example, after drop-out."
                      );
             if (defined $self->lloq || defined $self->uloq) {
                 ui->print(category => 'vpc',
