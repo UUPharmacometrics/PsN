@@ -3242,7 +3242,7 @@ sub move_model_and_output
                         } else {
 						    cp($filename, $dir . $dotless_model_filename . $ext);
                         }
-                        push @{$self->metadata->{'copied_files'}}, $filename;
+                        push @{$self->metadata->{'copied_files'}}, $dotless_model_filename . $ext;
 						last;
 					}
 				}
