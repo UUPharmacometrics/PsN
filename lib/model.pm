@@ -434,6 +434,7 @@ sub create_maxeval_zero_models_array
 			#TODO what about omegapd, thetap thetapv... for priors??
 			foreach my $record ('table','simulation','pk','pred','error','covariance','scatter','msfi','subroutine',
 								'abbreviated','sizes','prior','model','tol','infn','aesinitial',
+								'bind',
 								'aes','des','mix','nonparametric'){
 				$dummymodel -> remove_records (problem_numbers => [1],
 											   keep_last => 0,
