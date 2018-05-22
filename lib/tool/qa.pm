@@ -148,7 +148,11 @@ sub modelfit_setup
             model_subdir => 0,
         );
         $modelfit->run();
-		
+        
+        # Add phi file generated from evaluation run to model
+        $eval_model->init_etas();
+        $eval_model->_write(filename => $self->directory . $self->model->filename);
+
 		$self->base_model_path($eval_model->directory . $eval_model->filename);
 		$self->orig_max0_model_path($self->base_model_path);
 
