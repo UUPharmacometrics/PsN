@@ -51,7 +51,7 @@ Known issues
   is installed *before* (re)running the installation script setup.pl
 
 *********************************************
-Changes and bug fixes from PsN 4.7.0 to x.x.x
+Changes and bug fixes from PsN 4.8.0 to x.x.x
 *********************************************
 
 
@@ -59,33 +59,14 @@ Changes and bug fixes from PsN 4.7.0 to x.x.x
 
    ___General___
 
-- New required perl module YAML::XS
-- PsN will now give an error if an OMEGA or SIGMA BLOCK contains multiple FIX
-  This would be inline with what NM-TRAN does.
-- PsN runs now generate meta.yaml to systematically describe various metadata.
-  See the psn.pdf for documentation.
-- Fix bug causing datasets not to be filtered properly if ignore statement was written as IGN(VISI>3),
-  i.e. with no equal sign.
-- The psn_installation.pdf has been removed and all information it contained has been merged
-  into the installation section of the webpage.
-- The PsN_and_NONMEM7.pdf has been removed and all information it contained has been moved to PsN.pdf and
-  other documentation.
-- All userguides now have a table of content
-- The vpctable script was removed from PsN
-- The data_stats script was removed from PsN
-- The -d2u common option was removed. PsN should support all encodings and dos2unix can be used separately if needed
 
 
    ___common_options___
 
-- New option -model_subdir to use an extra directory level between the calling directory and the run directory.
-- The parafile option can now take non-trivial relative paths
-- When the parafile option is not used it will no longer be shown as 'none' in version_and_option_info.txt or meta.yaml
 
 
    ___NONMEM output parsing___
 
-- Fix bug causing warnings when any parameter estimate was 'NaN' 
 
 
    ___Cluster/Grid___
@@ -98,12 +79,9 @@ Changes and bug fixes from PsN 4.7.0 to x.x.x
 
    ___nonpb___
 
-- Fix broken -lst_file option
 
 
    ___runrecord___
-
-- No longer requires YAML::Tiny for csvy output. Will use the required YAML::XS
 
 
    ___sumo___
@@ -119,45 +97,20 @@ Changes and bug fixes from PsN 4.7.0 to x.x.x
 
    ___frem___
 
-- Postfrem now always creates its directory in the frem directory
-- The option -model to postfrem was removed.
-- The option -final_model was added to postfrem
   
  
    ___proseval___
 
-- Bugfix: proseval would crash if no filtering was needed due to no accept or ignore in $DATA
 
 
    ___scm___
 
-- Bugfix: Remove IGNORE or ACCEPT statements for linearized models that would else crash.
-- Linearized scm will always evaluate the derivatives model and not estimate it.
-- New option nointer to not use interaction for linearized scm
-- Linearized scm supports finding parameter-eta relation in two steps i.e.:
-    ETA_CL = ETA(1), TVCL = THETA(1), CL = TVCL * EXP(ETA_CL)
-    will properly be detected. Search is also done in $ERROR
-- Bugfix: Models with IGNORE=() and IGNORE=C where C is not @ caused scm to crash
-- Changed boundaries for covariate effect theta on exponential effect to be adaptive given an effect size within 0.01 and 100
-  This to reduce the risk of overflow.
-- Fix formatting of OFV values in scm log to avoid two numbers be put directly next to each other
-- Add support for categorical covariates with more levels than 2 for linearized scm
 
 
    ___linearize___
 
-- Ignore all MDV!=0 in linear model if MDV obtainable
-- Support models with extension .ctl
-- Do not propagate name of -dir to subtools (i.e. underlying scm directory will always be called scm_dir1)
-- Only evaluate (MAXEVALS=0) the derivatives model. If lst file is available update initial values first.
-- New option nointer to not use interaction
-- Do not use COM in derivatives.mod to avoid name clash
-- Avoid NONMEM crash by adding dummy thetas for omegas that have not ETA(X) in code.
 
    ___nca___
-
-- Set number of samples to default 300.
-
 
 
    ___xv_scm___
@@ -173,7 +126,6 @@ Changes and bug fixes from PsN 4.7.0 to x.x.x
    ___runrecord___
 
 
-- Fix bug causing est_time and cov_time to not be added to table for NONMEM 7.4
 
    ___update_inits___
 
@@ -186,27 +138,18 @@ Changes and bug fixes from PsN 4.7.0 to x.x.x
 
    ___precond___
 
-- Give error if model does not have any THETAS (i.e. linearized model)
-
 
    ___cdd___
 
-- Fix critical bug (#50) casusing dofv to be calculated in a wrong way if any individual was ignored.
-- Do not propagate -dir to subtools (i.e. subdir of modelfit of cdd runs will always be 'modelfit_dir1') 
 
 
    ___rplots___
 
    ___nmoutput2so___
 
-- Bugfixes for simulation results that caused nmoutput2so to crash
-- Change columnType for TIME in SimulatedProfiles from time to idv
-
 
    ___transform___
 
-- Added remove_0fix_omegas, tdist, full_block, add_tv, add_iov, iiv_on_ruv, power_on_ruv, remove_nonobs and omit_ids transformations
 
    ___resmod___ 
 
-- Don't run dtbs and power for models giving negative IPRED

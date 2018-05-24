@@ -1,0 +1,171 @@
+This PsN version has been tested on the following systems:
+
+Windows 10 64-bit with Strawberry Perl 5.22.3 , gfortran 4.9.2 and NONMEM 7.3.0 and 7.4.3
+Windows 7 64-bit with Strawberry Perl 5.24.1, gfortran 4.9.2 and NONMEM 7.3.0 and 7.4.3
+MacOS X 10.6.6 with ActiveState Perl 5.16.3, ifort 12.0.0 and NONMEM 7.2.0, 7.3.0 and 7.4.0
+Ubuntu Linux 17.04 with Perl 5.24.1, gfortran 6.3 and NONMEM 7.3.0 and 7.4.3
+CentOS 7 with Perl 5.16.3, gfortran 5.1.0 and NONMEM 7.3.0 and 7.4.3
+
+
+************************
+Installation
+************************
+
+Follow the installation instructions on
+https://uupharmacometrics.github.io/PsN/install.html
+
+************************
+Documentation
+************************
+All documentation is found in the doc subdirectory of the PsN 
+installation directory. During installation it is also possible 
+to have all documentation copied to a user-specified directory.
+
+All documentation can also be downloaded from
+the PsN website https://uupharmacometrics.github.io/PsN/docs.html
+
+************************
+Dependencies 
+************************
+
+- It is recommended to use Xpose version 4.5.3 or later for the -cwres functionality 
+  and the default execute, vpc and bootstrap R plots.
+
+- Each userguide lists the R packages required to obtain the diagnostic R plots.
+
+************************
+Known issues 
+************************
+
+- Windows users need to be careful to choose 
+  a Perl version where the extra modules needed for PsN are available. 
+  For new Perl installations the PsN team recommends Strawberry Perl
+  See the instructions on https://uupharmacometrics.github.io/PsN/install.html
+
+- Installation problem on some Windows systems where 
+  perl 'system' command does not work. Make sure perl module File::Copy::Recursive
+  is installed *before* (re)running the installation script setup.pl
+
+*********************************************
+Changes and bug fixes from PsN 4.7.0 to 4.8.0
+*********************************************
+
+
+   ___General___
+
+- New required perl module YAML::XS
+- PsN will now give an error if an OMEGA or SIGMA BLOCK contains multiple FIX
+  This would be inline with what NM-TRAN does.
+- PsN runs now generate meta.yaml to systematically describe various metadata.
+  See the psn.pdf for documentation.
+- Fix bug causing datasets not to be filtered properly if ignore statement was written as IGN(VISI>3),
+  i.e. with no equal sign.
+- The psn_installation.pdf has been removed and all information it contained has been merged
+  into the installation section of the webpage.
+- The PsN_and_NONMEM7.pdf has been removed and all information it contained has been moved to PsN.pdf and
+  other documentation.
+- All userguides now have a table of content
+- The vpctable script was removed from PsN
+- The data_stats script was removed from PsN
+- The -d2u common option was removed. PsN should support all encodings and dos2unix can be used separately if needed
+
+
+   ___common_options___
+
+- New option -model_subdir to use an extra directory level between the calling directory and the run directory.
+- The parafile option can now take non-trivial relative paths
+- When the parafile option is not used it will no longer be shown as 'none' in version_and_option_info.txt or meta.yaml
+
+
+   ___NONMEM output parsing___
+
+- Fix bug causing warnings when any parameter estimate was 'NaN' 
+
+
+   ___nonpb___
+
+- Fix broken -lst_file option
+
+
+   ___runrecord___
+
+- No longer requires YAML::Tiny for csvy output. Will use the required YAML::XS
+
+
+
+   ___frem___
+
+- Postfrem now always creates its directory in the frem directory
+- The option -model to postfrem was removed.
+- The option -final_model was added to postfrem
+  
+ 
+   ___proseval___
+
+- Bugfix: proseval would crash if no filtering was needed due to no accept or ignore in $DATA
+
+
+   ___scm___
+
+- Bugfix: Remove IGNORE or ACCEPT statements for linearized models that would else crash.
+- Linearized scm will always evaluate the derivatives model and not estimate it.
+- New option nointer to not use interaction for linearized scm
+- Linearized scm supports finding parameter-eta relation in two steps i.e.:
+    ETA_CL = ETA(1), TVCL = THETA(1), CL = TVCL * EXP(ETA_CL)
+    will properly be detected. Search is also done in $ERROR
+- Bugfix: Models with IGNORE=() and IGNORE=C where C is not @ caused scm to crash
+- Changed boundaries for covariate effect theta on exponential effect to be adaptive given an effect size within 0.01 and 100
+  This to reduce the risk of overflow.
+- Fix formatting of OFV values in scm log to avoid two numbers be put directly next to each other
+- Add support for categorical covariates with more levels than 2 for linearized scm
+
+
+   ___linearize___
+
+- Ignore all MDV!=0 in linear model if MDV obtainable
+- Support models with extension .ctl
+- Do not propagate name of -dir to subtools (i.e. underlying scm directory will always be called scm_dir1)
+- Only evaluate (MAXEVALS=0) the derivatives model. If lst file is available update initial values first.
+- New option nointer to not use interaction
+- Do not use COM in derivatives.mod to avoid name clash
+- Avoid NONMEM crash by adding dummy thetas for omegas that have not ETA(X) in code.
+
+   ___nca___
+
+- Set number of samples to default 300.
+
+
+   ___runrecord___
+
+- Fix bug causing est_time and cov_time to not be added to table for NONMEM 7.4
+
+   
+   ___precond___
+
+- Give error if model does not have any THETAS (i.e. linearized model)
+
+
+   ___cdd___
+
+- Fix critical bug (#50) casusing dofv to be calculated in a wrong way if any individual was ignored.
+- Do not propagate -dir to subtools (i.e. subdir of modelfit of cdd runs will always be 'modelfit_dir1') 
+
+
+   ___nmoutput2so___
+
+- Bugfixes for simulation results that caused nmoutput2so to crash
+- Change columnType for TIME in SimulatedProfiles from time to idv
+
+
+   ___transform___
+
+- Added remove_0fix_omegas, tdist, full_block, add_tv, add_iov, iiv_on_ruv, power_on_ruv, remove_nonobs and omit_ids transformations
+
+
+   ___resmod___ 
+
+- Don't run dtbs and power for models giving negative IPRED
+
+   ___qa___
+
+- New tool
