@@ -32,7 +32,7 @@ a:hover { text-decoration: underline; text-decoration-style: dashed; }
 <a href='https://github.com/UUPharmacometrics/PsN/releases/download/4.7.0/known_bugs_and_workarounds.pdf'>Known Bugs and Workarounds.pdf</a>. 
 
 <hr COLOR="darkred">
-<h3>Known Bugs in PsN 4.7.0 </h3>
+<h3>Known Bugs in PsN 4.8.0 </h3>
 
 <ul>
 	<li>sse will use the wrong simulated data for reestimation if the simulation model file has more than one $INPUT statement. The table file with 
@@ -47,9 +47,6 @@ a:hover { text-decoration: underline; text-decoration-style: dashed; }
 
 	<li>Lower case user defined and reserved words. Starting with NONMEM 7.2 lower case user defined and reserved words are supported. This is <b>not</b> 
 	supported by PsN. For example in $INPUT all reserved words have to be upper case.</li><br>
-    <li>proseval crashes if there is no IGNORE or ACCEPT statement in $DATA. Workaround is to add a dummy IGNORE or ACCEPT. proseval also crashes if an 
-	IGNORE statement is written as IGN(VISI&gt;3) instead of IGNORE=(VISI&gt;3).
-    </li><br>
 </ul>
 You can also check the latest <a target="_blank" href=https://github.com/UUPharmacometrics/PsN/issues?utf8=%E2%9C%93&q=label%3A%22critical+bug%22+milestone%3A4.7.0+earlier">reported issues</a>.
 You can browse the issues by using the label tab as well as the Milestone tab (for different versions of PsN) at the PsN Github repository.<p>
