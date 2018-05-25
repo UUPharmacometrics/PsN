@@ -2,7 +2,7 @@ This PsN version has been tested on the following systems:
 
 Windows 10 64-bit with Strawberry Perl 5.22.3 , gfortran 4.9.2 and NONMEM 7.3.0 and 7.4.3
 Windows 7 64-bit with Strawberry Perl 5.24.1, gfortran 4.9.2 and NONMEM 7.3.0 and 7.4.3
-MacOS X 10.6.6 with ActiveState Perl 5.16.3, ifort 12.0.0 and NONMEM 7.2.0, 7.3.0 and 7.4.0
+MacOS X 10.13.4 with Perl 5.18.2, gfortran 6.3.0 and NONMEM 7.4.3
 Ubuntu Linux 17.04 with Perl 5.24.1, gfortran 6.3 and NONMEM 7.3.0 and 7.4.3
 CentOS 7 with Perl 5.16.3, gfortran 5.1.0 and NONMEM 7.3.0 and 7.4.3
 
