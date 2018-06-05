@@ -66,8 +66,7 @@ msir_spec$variable <- factor(msir_spec$variable,labels=c("m","M"),levels=c("NRES
 msir_spec$ITERATION<- factor(msir_spec$ITERATION,levels=seq(0,length(ALL.RESAMPLES)),labels=c("REF",seq(length(ALL.RESAMPLES))))
 
 rawres     <- dplyr::left_join(rawres,sir_spec)
-mrawres    <- reshape::melt(rawres,measure.vars=parnames,variable_name="Parameter")
-mrawres_new    <- tidyr::gather(rawres,key="Parameter",value, parnames,factor_key=TRUE)
+mrawres    <- tidyr::gather(rawres,key="Parameter",value, parnames,factor_key=TRUE)
 
 
 ### Parameter CI
