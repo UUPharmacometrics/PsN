@@ -201,14 +201,11 @@ sub setup
 			 'n.eps <- '.$neps
 			);
 	}
-	if (length($self->R_lib_path)>0) {
-		push(@arr,
-			".libPaths('".$self->R_lib_path."')");
+	if (length($self->R_lib_path) > 0) {
+		push(@arr, ".libPaths('".$self->R_lib_path."')");
 	}
 
 	$self->standard_preamble(\@arr);
-
-
 }
 
 sub double_backslashes
@@ -310,8 +307,14 @@ sub make_plots
             print "Unable to find R executable: " . $executable . "  not in path?";
             return;
         }
+
+        my $rlib = "";      # Set the libpath in the Rscript call to have it before rmarkdown etc are loaded
+        if (length($self->R_lib_path) > 0) {
+			$rlib = ".libPaths('" . $self->R_lib_path . "');";
+	    }
+
 		if($self->R_markdown && $self->rmarkdown_installed) {
-			system($executable . " -e \"rmarkdown::render(input='".$self->filename."')\" > PsN_".$self->toolname()."_plots.Rout 2>&1");
+			system($executable . " -e \"$rlib rmarkdown::render(input='".$self->filename."')\" > PsN_".$self->toolname()."_plots.Rout 2>&1");
 		} else {
 			system($executable . " CMD BATCH ".$self->filename);
 		}
