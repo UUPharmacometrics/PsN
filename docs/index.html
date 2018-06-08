@@ -35,8 +35,8 @@ methods. PsN includes stand-alone tools for the end-user as well as development 
 under Documentation and also learn about Known Bugs, how to submit a new bug and how to become a part of the PsN mailing list.</p>
 
 
-<h2>Latest release PsN 4.8.0</h2>
-<i>(Released on May 25<sup>th</sup> 2018)</i>.
+<h2>Latest release PsN 4.8.1</h2>
+<i>(Released on June 8<sup>th</sup> 2018)</i>.
 <br>
 New features in this version include;<br>
 <ul>
@@ -47,6 +47,15 @@ New features in this version include;<br>
     <li>Second order approximation added to the linearize tool</li>
     <li>The presentation of meta data in a new file, <strong>meta.yaml</strong>, which is in a both human and computer readable format</li>
 </ul>
+
+<h2>News</h2>
+<h3>PsN 4.8.1 released</h3>
+This version is a very minor upgrade from 4.8.0. To simplify installation of all R packages needed for qa and rplots an R-script was added. It has an option to install the needed R packages into a separate library. Then a setting in psn.conf can set this library to be the default for PsN. When having problems with getting R plots out from PsN it is recommended to use this script to get the right versions of all R packages.
+
+<br><br><code>Rscript PsN/R-scripts/install_R_packages.R myRlib</code>
+<br><br>In psn-conf add:
+<br><code>R_LIB_PATH=myRlib</code>
+
 
 <hr COLOR="darkred"><small><p>
 Perl-speaks-NONMEM<br>
