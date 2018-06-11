@@ -546,6 +546,10 @@ sub print_results
 	);
 	my $skip_print = $parm{'skip_print'};
 
+    if ($self->clean == 5) {        # Highest clean level. Remove the whole run directory
+        rmtree([$self->directory]);
+        exit;
+    }
 
 	# Print results created by 'prepare_results' methods specific to the
 	# tools. prepare_results and print_results are usually called from

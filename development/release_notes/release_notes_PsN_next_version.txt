@@ -63,6 +63,7 @@ Changes and bug fixes from PsN 4.8.0 to x.x.x
 
    ___common_options___
 
+- New clean level 5 to remove entire rundirectory
 
 
    ___NONMEM output parsing___

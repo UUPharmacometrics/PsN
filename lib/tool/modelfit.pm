@@ -1054,6 +1054,15 @@ sub select_best_model
 					rmdir( 'temp_dir' );
 				}
 			}
+            if ($self->clean == 5) {        # Copy even failed psn.lst up for clean=5
+                my $outfilename;
+                if (not $self->model_subdir) {
+                    $outfilename = $model->outputs->[0]->full_name;
+                } else {
+                    $outfilename = $self->base_directory . $self->model_subdir_name . $model->outputs->[0]->filename;
+                }
+                cp("psn.lst", $outfilename);
+            }
 		} else {
 			my @raw_results_rows = @{$queue_info_ref -> {'raw_results'} -> [$selected-1]};
 
