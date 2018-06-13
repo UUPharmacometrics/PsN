@@ -392,6 +392,8 @@ sub modelfit_setup
             my %tool_options = %{common_options::restore_options(@common_options::tool_options)};
             my $scm_options = "";
             for my $cmd (split /\s+/, $self->cmd_line) {
+                next if $cmd =~ /^--?dir/;
+                next if $cmd =~ /^--?rpl/;
                 if ($cmd =~ /^--?/) {
                     my $option = $cmd;
                     $option =~ s/^--?(no-)?(.*)/$2/;
@@ -401,6 +403,7 @@ sub modelfit_setup
                     }
                 }
             }
+
             my $fo = "";
             if ($self->fo) {
                 $fo = "-estimate_fo";
