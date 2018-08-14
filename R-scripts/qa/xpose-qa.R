@@ -32,6 +32,7 @@ qa_data <- function(xpdb, resmod_folder, derivatives_model) {
     xpdb$special <- qa_data
   }
 
+  class(xpdb) <- c("xpose_data", "uneval")
   return(xpdb)
 }
 
@@ -48,6 +49,7 @@ add_resmod_xpdbs <- function(xpdb, resmod_folder,  dvid_value) {
     purrr::set_names(purrr::map_chr(., ~.x$summary$value[.x$summary$label == "run"]))
 
   xpdb$special$data[[1]]$resmod$xpdbs <- resmod_xpdbs
+  class(xpdb) <- c("xpose_data", "uneval")
   return(xpdb)
 }
 
@@ -507,8 +509,10 @@ as_resmod_name_factor <- function(resmod_names){
 
 get_qa_data <- function(xpdb){
   #if(!any(xpdb$special$method == "qa")) stop("The xpdb does not contain the necessary data.")
-  
-  dplyr::filter(xpdb$special, method == 'qa') %>% 
+
+    special <- xpdb$special
+    class(xpdb) <- c("xpose_data", "uneval")
+  dplyr::filter(special, method == 'qa') %>% 
     purrr::pluck("data", 1)
 }
 
