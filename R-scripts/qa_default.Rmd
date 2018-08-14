@@ -357,9 +357,13 @@ for (i in 1:length(resmod_table_list$dvid_nr)) {
 ```{r draw_influential_individuals_table,eval=all(skip!="cdd"),results='asis',echo=F,warning=F,message=F}
 cat("\\pagebreak\n\n")
 cat("#Influential Individuals\n\n")
-ii_table <- kable_table(ii_list$ii_table,booktabs=T,longtable=T,align = c("l","r"),linesep="",format=type) %>%
+if(ncol(ii_list$ii_table)==1 && nrow(ii_list$ii_table)==1) {
+  cat(ii_list$ii_table[1,1])
+} else {
+  ii_table <- kable_table(ii_list$ii_table,booktabs=T,longtable=T,align = c("l","r"),linesep="",format=type) %>%
   kableExtra::kable_styling(position="c",full_width = F)
 print(ii_table)
+}
 cat("Subjects identified as significantly influencing the model fit for all other subjects and their influence in terms of improvement in OFV for other subjects when excluding them during the fit.")
 ```
 
@@ -382,9 +386,13 @@ if(length(ii_list$infl_id)>0) {
 ```{r draw_outliers_table,eval=all(skip!="simeval"),results='asis',echo=F,warning=F,message=F}
 cat("\\pagebreak\n\n")
 cat("#Outliers\n\n")
-outliers_table <- kable_table(outlier_table_list$outliers_table,format=type,booktabs=T,longtable=T,align = c("l","r"),linesep="") %>%
+if(ncol(outlier_table_list$outliers_table)==1 && nrow(outlier_table_list$outliers_table)==1) {
+  cat(outlier_table_list$outliers_table[1,1])
+} else {
+  outliers_table <- kable_table(outlier_table_list$outliers_table,format=type,booktabs=T,longtable=T,align = c("l","r"),linesep="") %>%
   kableExtra::kable_styling(position="c",full_width = F)
 print(outliers_table)
+}
 cat("Subjects identified as outliers based on a worse than expected model fit and the corresponding improvement in OFV when excluding them during the fit.")
 ```
 
