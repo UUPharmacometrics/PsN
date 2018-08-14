@@ -358,7 +358,7 @@ for (i in 1:length(resmod_table_list$dvid_nr)) {
 cat("\\pagebreak\n\n")
 cat("#Influential Individuals\n\n")
 if(ncol(ii_list$ii_table)==1 && nrow(ii_list$ii_table)==1) {
-  cat(ii_list$ii_table[1,1])
+  cat(paste0(as.character(ii_list$ii_table[1,1]),"."),"\n\n")
 } else {
   ii_table <- kable_table(ii_list$ii_table,booktabs=T,longtable=T,align = c("l","r"),linesep="",format=type) %>%
   kableExtra::kable_styling(position="c",full_width = F)
@@ -387,7 +387,7 @@ if(length(ii_list$infl_id)>0) {
 cat("\\pagebreak\n\n")
 cat("#Outliers\n\n")
 if(ncol(outlier_table_list$outliers_table)==1 && nrow(outlier_table_list$outliers_table)==1) {
-  cat(outlier_table_list$outliers_table[1,1])
+  cat(paste0(as.character(outlier_table_list$outliers_table[1,1]),"."),"\n\n")
 } else {
   outliers_table <- kable_table(outlier_table_list$outliers_table,format=type,booktabs=T,longtable=T,align = c("l","r"),linesep="") %>%
   kableExtra::kable_styling(position="c",full_width = F)
