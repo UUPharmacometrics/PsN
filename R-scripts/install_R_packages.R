@@ -54,7 +54,3 @@ install.packages("xpose", dependencies=TRUE,lib = path)
 install.packages("yaml", dependencies=TRUE,lib = path)
 install.packages("withr", dependencies=TRUE, lib=path)
 install.packages("kableExtra", dependencies=TRUE, lib=path)
-
-# require(devtools)
-# require(withr)
-# withr::with_libpaths(new=path, devtools::install_version("kableExtra", version="0.7.0"))
