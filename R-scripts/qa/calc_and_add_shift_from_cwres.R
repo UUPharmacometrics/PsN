@@ -44,8 +44,10 @@
     dvid_column_nr <- which(colnames(idv_df)== dvid_name)
     idv_df <- idv_df[which(idv_df[,dvid_column_nr] == dvid),]
   }
-  idv_df <-  idv_df %>%
-    dplyr::filter(CWRES!=0) %>%
+  if (any(colnames(idv_df) == "MDV")) {
+    idv_df <- dplyr::filter(idv_df, MDV==0)
+  }
+  idv_df <- idv_df %>%
     dplyr::select_(idv) %>%
     dplyr::rename_(idv=idv)
   
