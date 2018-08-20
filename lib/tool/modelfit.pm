@@ -3233,10 +3233,12 @@ sub move_model_and_output
 		# Don't prepend the model file name to psn.lst, but use the name
 		# from the $model object.
 		if ($filename eq 'psn.lst') {
-			cp($filename, $outfilename); 
+			my $success = cp($filename, $outfilename); 
             $final_lst = $outfilename;
             (undef, undef, my $lst_name) = File::Spec->splitpath($outfilename);
-            push @{$self->metadata->{'copied_files'}}, $lst_name;
+            if ($success) {
+                push @{$self->metadata->{'copied_files'}}, $lst_name;
+            }
 			next;
 		}
 		my $found_ext = 0;
@@ -3246,12 +3248,15 @@ sub move_model_and_output
 				foreach my $out (@nmout){
 					$out =~ s/^\.//;
 					if ('.'.$out eq $ext){
+                        my $success;
                         if ($self->model_subdir) {
-                            cp($filename, $self->base_directory . $self->model_subdir_name . $dotless_model_filename . $ext);
+                            $success = cp($filename, $self->base_directory . $self->model_subdir_name . $dotless_model_filename . $ext);
                         } else {
-						    cp($filename, $dir . $dotless_model_filename . $ext);
+						    $success = cp($filename, $dir . $dotless_model_filename . $ext);
                         }
-                        push @{$self->metadata->{'copied_files'}}, $dotless_model_filename . $ext;
+                        if ($success) {
+                            push @{$self->metadata->{'copied_files'}}, $dotless_model_filename . $ext;
+                        }
 						last;
 					}
 				}
