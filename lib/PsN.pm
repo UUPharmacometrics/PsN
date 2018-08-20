@@ -36,7 +36,7 @@ our $factorize_strings;
 our $warnings_enabled=0;
 our @nm7_extensions = ('.ext','.cov','.cor','.coi','.phi','.phm', '.shk','.grd','.xml','.cnv','.smt','.rmt',
 					   '.imp','.npd','.npe','.npi','.fgh','.log.xml','.cpu','.shm','.agh',
-					   '.vpd','.clt','.npl'); #nm74
+					   '.vpd','.clt','.npl', '.ets'); #nm74
 
 # Default disable all warnings except those coming from Getopt
 # Enable all warnings if $warnings_enabled is set
