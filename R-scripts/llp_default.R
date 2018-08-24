@@ -67,7 +67,8 @@ pdf(file=pdf.filename,title=pdf.title)
       geom_line() +                                                                       # connect points with line
       geom_point(data=llp.all[llp.all$Side=="orig",],color="red",size=3) +                # ML estimate in red  for LLP CI 
       geom_point(data=llp.all[llp.all$Side=="orig",],aes(y=-0.5),color="blue",size=3) +   # ML estimate in blue for initial CI  
-      geom_vline(aes(xintercept=c(lower,upper)),linetype=2,color="darkgrey") +            # gridlines for CI bounds        
+      geom_vline(aes(xintercept=c(lower)),linetype=2,color="darkgrey") +            # gridlines for CI bounds        
+      geom_vline(aes(xintercept=c(upper)),linetype=2,color="darkgrey") +
       geom_hline(yintercept=refofv,linetype=2,color="darkgrey") +                         # gridline for refofv
       geom_text(aes(x=lower,y=refofv,label=signif(lower,3)),hjust=-0.5,vjust=0) +          # paste value of lower bound
       geom_text(aes(x=upper,y=refofv,label=signif(upper,3)),hjust=1.25,vjust=0) +          # paste value of upper bound
