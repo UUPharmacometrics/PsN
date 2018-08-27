@@ -118,12 +118,12 @@ mixture_vpc <- function(obs, sim, obs_mixture, sim_mixture, bins, dv="DV", strat
         obs_ids <- length(unique(subobs$ID))
         orig_value <- (obs_ids / num_ids) * 100
 
-        title_text1 <- sprintf("%s SUBPOP=%d     ", method_name, i)
-        title_text2 <- sprintf("= %.1f%%", pmix_value)
-        subtitle_text <- sprintf("ORIGID=%.1f%% SIMID=[%.0f%%, %.0f%%] (5%%, 95%% percentiles)",
-                            orig_value, lower_quantile, upper_quantile)
-        vpc <- vpc + labs(title=bquote(.(title_text1) ~ P[MIX] ~ .(title_text2)), subtitle=subtitle_text)
-        vpc <- vpc + theme(axis.text=element_text(size=14))
+        title_text <- sprintf("%s (SUBPOP=%d)", method_name, i)
+        subtitle_text <- sprintf("=%.1f%%  ORIGID=%.1f%%  SIMID=[%.1f%%, %.1f%%]",#  (5%%, 95%% percentiles)",
+                            pmix_value, orig_value, lower_quantile, upper_quantile)
+        vpc <- vpc + labs(title=title_text, subtitle=bquote(P[mix] ~ .(subtitle_text) ~ "(" ~ 5^th ~ ", " ~ 95^th ~ " percentiles)"))
+        vpc <- vpc + theme(axis.text=element_text(size=13))
+        vpc <- vpc + theme(plot.subtitle=element_text(size=14))
         table_list[[i]] <- vpc
     }
     
