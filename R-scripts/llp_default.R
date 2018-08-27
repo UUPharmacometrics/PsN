@@ -2,7 +2,7 @@
 source(file.path(rscripts.directory,"common/R_info.R"))
 R_info(directory=working.directory,only_libPaths=T)
 library(ggplot2)
-library(plyr)
+library(dplyr)
 #add R_info to the meta file
 R_info(directory=working.directory)
 
@@ -26,7 +26,8 @@ pdf(file=pdf.filename,title=pdf.title)
     names(llp.res)     <- c("Parameter","lower","ML.estimate","upper","interval.ratio","near.bound","max.iterations")
     llp.res$Parameter  <- levels(llp.data$Parameter)
     
-    llp.all            <- join(llp.data,llp.res[,c("Parameter","lower","upper","ML.estimate","interval.ratio")]) # Combine both results files
+    llp.res$Parameter <- as.factor(llp.res$Parameter)
+    llp.all            <- dplyr::full_join(llp.data,llp.res[,c("Parameter","lower","upper","ML.estimate","interval.ratio")]) # Combine both results files
     llp.all$strip.text <- factor(paste(llp.all$Parameter," (IR=",round(llp.all$interval.ratio,1),")",sep=""),levels=paste(levels(llp.all$Parameter)," (IR=",round(unique(llp.all$interval.ratio),1),")",sep="")) 
     
     ## Identify first guess of CI
@@ -35,7 +36,7 @@ pdf(file=pdf.filename,title=pdf.title)
     llp.first      <- llp.data[seq((nparam+1),3*nparam),]                                   # first iterations use MLE +/- NORMQ*SE 
     llp.first.wide <- reshape(llp.first[,-grep("OFV",names(llp.first))],v.names="Value",timevar="Side",idvar="Parameter",direction="wide")
     
-    llp.all        <- join(llp.all,llp.first.wide)
+    llp.all        <- dplyr::full_join(llp.all, llp.first.wide)
     
     ## Calculate smooth to link llp points together 
     
