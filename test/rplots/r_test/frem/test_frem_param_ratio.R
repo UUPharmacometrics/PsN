@@ -2,7 +2,6 @@
 library(testthat)
 library(grid)
 library(gridExtra)
-library(reshape2)
 library(dplyr)
 library(ggplot2)
 tool = 'frem'
@@ -133,52 +132,6 @@ test_that("If function parameter_data works as expected",{
   expect_equal(exp_DF_2,DF_2)
   expect_equal(exp_DF_1,DF_3)
   expect_equal(exp_DF_2,DF_4)
-})
-
-#...........................  (5) Test function param_plot_data.R .....................................  
-list_outTable <- param_plot_data(list_DF_1,point_names=point_names,point_color=point_color,
-                                 MEAN=MEAN,COVARIATE=COVARIATE)
-
-# unlist
-outTable_1 <- list_outTable[[1]]
-outTable_2 <- list_outTable[[2]]
-
-# Create expected input data
-exp_outTable_1 <- data.frame('variable'=factor(c(NA,'WT.cov5th','WT.cov95th','AGE.cov5th',
-                                                  'AGE.cov95th','SEX.other','ACE.other'),
-                                                levels=c('WT.cov5th','WT.cov95th','AGE.cov5th',
-                                                         'AGE.cov95th','SEX.other','ACE.other')),
-                              'mean'=c(NA,-21,20.9,16,-17,-6,-15),
-                              'ci_low'=c(NA,-20,15,17,-21,-4,-23),
-                              'ci_high'=c(NA,-16,20,22,-18,1,-9),
-                              'EXPECTED'=c(NA,'-21 %  [-20, -16]','+20.9 %  [+15, +20]','+16 %  [+17, +22]',
-                                           '-17 %  [-21, -18]','-6 %  [-4, +1]','-15 %  [-23, -9]'),
-                              'points'=c(NA,'3.97','4.654','55','77','female','0'),
-                              'group'=c(NA,'cov5th','cov95th','cov5th','cov95th','other','other'),
-                              'MEAN'=c(NA,'4.3 ','','65 years','','male','1'),
-                              'COVARIATE'=c(NA,'WT','','AGE','','SEX','ACE'),
-                              stringsAsFactors = F)
-exp_outTable_2 <- data.frame('variable'=factor(c(NA,'WT.cov5th','WT.cov95th','AGE.cov5th',
-                                                 'AGE.cov95th','SEX.other','ACE.other'),
-                                               levels=c('WT.cov5th','WT.cov95th','AGE.cov5th',
-                                                        'AGE.cov95th','SEX.other','ACE.other')),
-                             'mean'=c(NA,-26,27,7,-8,-19.1,-6),
-                             'ci_low'=c(NA,-29,19,6,-14,-20,-12),
-                             'ci_high'=c(NA,-19.5,31,13,-8,-12,0.2),
-                             'EXPECTED'=c(NA,'-26 %  [-29, -19.5]','+27 %  [+19, +31]','+7 %  [+6, +13]',
-                                          '-8 %  [-14, -8]','-19.1 %  [-20, -12]','-6 %  [-12, +0.2]'),
-                             'points'=c(NA,'3.97','4.654','55','77','female','0'),
-                             'group'=c(NA,'cov5th','cov95th','cov5th','cov95th','other','other'),
-                             'MEAN'=c(NA,'4.3 ','','65 years','','male','1'),
-                             'COVARIATE'=c(NA,'WT','','AGE','','SEX','ACE'),
-                             stringsAsFactors = F)
- 
-# Compare expected input data with real input data
-context("Test function param_plot_data")
-test_that("If function param_plot_data works as expected",{
-  expect_equal(exp_outTable_1,outTable_1)
-  expect_equal(exp_outTable_2,outTable_2)
-
 })
 
 #...........................  (6) Test function param_plot_text.R .....................................  
