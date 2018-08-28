@@ -30,7 +30,7 @@ my ($dirt1,$dirt2,$nmvers) = get_major_minor_nm_version;
 sub get_stats
 {
 	open( STAT, '<'."$dir/covariate_statistics.txt" );
-	my $tmp;
+	my $tmp = "";
 	for ( <STAT> ) {
 		$tmp = $tmp.$_;
 	}
