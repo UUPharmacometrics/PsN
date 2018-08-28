@@ -1,7 +1,6 @@
 delta_plot <- function(csv_file_directory,parameter,EPV,UPV,PV,page_title,page_units,palette,model_names){
   library(ggplot2)
   library(gridExtra)
-  library(reshape2)
   library("grid")
   library("ggthemes")
   
