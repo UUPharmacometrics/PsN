@@ -6,7 +6,6 @@ ID_ratio <- function(frem_id,covdata,pardata) {
 
     library(grid)
     library(gridExtra)
-    library(reshape2)
     library(dplyr)
     library(ggplot2)
 

@@ -5,9 +5,9 @@ parameter_ratio <- function(inTable_frem,covdata,pardata) {
   if (files_exist) {
     library(grid)
     library(gridExtra)
-    library(reshape2)
     library(dplyr)
     library(ggplot2)
+    library(tidyr)
 
     # in case if column names consist of not valid symbols, for example, "("
     parameter_names <- pardata[,1]
@@ -110,7 +110,7 @@ parameter_ratio <- function(inTable_frem,covdata,pardata) {
 
       # PREPARE DATA FRAME FOR PLOTTING ----------------------------------------
       # Create long data set
-      DF_melt <- melt(DF)
+      DF_melt <- tidyr::gather(DF, variable, value)
 
       # summaryze dataframe and calculate mean, quantile for each group (for each column in DF)
       outTable <- DF_melt %>% group_by(variable) %>%

@@ -4,7 +4,6 @@ sd_unexpl_var <- function(sd_coef_summary,covdata,pardata) {
   if (files_exist) {
     library(grid)
     library(gridExtra)
-    library(reshape2)
     library(dplyr)
     library(ggplot2)
     
