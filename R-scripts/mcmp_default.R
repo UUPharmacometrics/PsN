@@ -107,7 +107,7 @@ R_info(directory=working.directory)
       }
       
       
-      # Rearrange the rawres file (without having to use the package reshape2)
+      # Rearrange the rawres file
       Power       = c(rawres$power.at.20.,rawres$power.at.15.,rawres$power.at.10.,rawres$power.at.5., rawres$power.at.1., rawres$power.at.0.1.)
       Sample_size = rep(rawres$total_X,6) #3
       Type        = c(rep('20 %',length(rawres[,1])),rep('15 %',length(rawres[,1])),rep('10 %',length(rawres[,1])),rep('5 %',length(rawres[,1])),rep('1 %',length(rawres[,1])),rep('0.1 %',length(rawres[,1])))
