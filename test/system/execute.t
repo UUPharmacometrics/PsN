@@ -21,7 +21,7 @@ our $tempdir = create_test_dir('system_execute');
 
 my $model_dir = $includes::testfiledir;
 #put pheno.mod in testdir so that .ext etc in testfiledir are not modified
-copy_test_files($tempdir,["pheno.mod", "pheno.dta","notable.mod"]);
+copy_test_files($tempdir,["pheno.mod", "pheno.dta","notable.mod","tbs1.mod", "tbs1a.mod", "mox_sim_tbs.dta"]);
 
 
 #test spaces in file path
@@ -52,15 +52,15 @@ my @command_line = (
 	get_command('execute') . " pheno.mod -min_retries=2 ",
 	get_command('execute') . " pheno.mod -mirror_plots=2 -mirror_from_lst ",
 	get_command('execute') . " pheno.mod -mirror_plots=2  ",
-	get_command('execute') . " $model_dir/tbs1.mod -tbs  ", #prop
-	get_command('execute') . " $model_dir/tbs1.mod -dtbs  ", #prop
-	get_command('execute') . " $model_dir/tbs1a.mod -tbs  ", #add
-	get_command('execute') . " $model_dir/tbs1a.mod -dtbs  ", #add
-	get_command('execute') . " $model_dir/tbs1.mod -tbs_delta='(-1,0.01,1)'  ",
-	get_command('execute') . " $model_dir/tbs1a.mod -tbs_delta='(-1,0.01,1)'  ",
-	get_command('execute') . " $model_dir/tbs1a.mod -tbs_zeta='(-1,0.01,1)'  ",
-	get_command('execute') . " $model_dir/tbs1.mod -tbs_lambda='(-2,1,2)'  ",
-	get_command('execute') . " $model_dir/tbs1.mod -tbs_lambda='(-2,1,2)' -dtbs  ",
+	get_command('execute') . " tbs1.mod -tbs  ", #prop
+	get_command('execute') . " tbs1.mod -dtbs  ", #prop
+	get_command('execute') . " tbs1a.mod -tbs  ", #add
+	get_command('execute') . " tbs1a.mod -dtbs  ", #add
+	get_command('execute') . " tbs1.mod -tbs_delta='(-1,0.01,1)'  ",
+	get_command('execute') . " tbs1a.mod -tbs_delta='(-1,0.01,1)'  ",
+	get_command('execute') . " tbs1a.mod -tbs_zeta='(-1,0.01,1)'  ",
+	get_command('execute') . " tbs1.mod -tbs_lambda='(-2,1,2)'  ",
+	get_command('execute') . " tbs1.mod -tbs_lambda='(-2,1,2)' -dtbs  ",
 );
 
 # If we are running on Windows remove ' in command line
