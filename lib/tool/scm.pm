@@ -455,7 +455,7 @@ sub BUILD
 
 	if (-e $self->covariate_statistics_file) {
 		open(STAT, '<' . $self->covariate_statistics_file);
-		my $tmp;
+		my $tmp = "";
 		for (<STAT>) {
 			$tmp = $tmp . $_;
 		}
