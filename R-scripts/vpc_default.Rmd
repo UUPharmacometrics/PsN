@@ -31,7 +31,9 @@ if (is.tte) {
     plots <- xpose.VPC(vpc.info=tool.results.file, vpctab=vpctab)
 }
 print(plots) 
+```
 
+```{r mix_plots, warning=FALSE, message=FALSE, results='asis',echo=FALSE,fig.width=17,fig.height=12,fig.keep="high",fig.align="center"}
 if (exists('mix')) {     # A mixture model is a special case
     if (require("vpc")) {
         source(paste0(rscripts.directory, "/vpc/vpc_mixtures.R"))
@@ -50,16 +52,20 @@ if (exists('mix')) {     # A mixture model is a special case
         print(vpc)
         plots_mixest <- mixture_vpc(obs, sim, obs_phm, sim_phm, dv=dv, bins=bin_boundaries, stratify_on=stratify_on)
         plots_randomized <- mixture_vpc(obs, sim, obs_phm, sim_phm, dv=dv, bins=bin_boundaries, stratify_on=stratify_on, randomize=TRUE)
-
-        for (p in c(plots_mixest, plots_randomized)) {
-            if (is.character(p)) {      # An error message instead of a plot
+        plots <- list()
+        for (i in 1:length(plots_mixest)) {
+            mixest <- plots_mixest[[i]]
+            randomized <- plots_randomized[[i]]
+            if (is.character(mixest) || is.character(randomized)) {     # An error message instead of plot
                 cat("\\pagebreak\n\n")
                 cat(p)
                 cat("\\pagebreak")
             } else {
-                print(p)
+                plots[[2*i - 1]] <- mixest
+                plots[[2*i]] <- randomized
             }
         }
+        gridExtra::marrangeGrob(plots, nrow=2, ncol=2, top=NULL, padding=0)
     }
 }
 #add R_info to the meta file
