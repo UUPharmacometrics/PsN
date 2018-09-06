@@ -218,12 +218,14 @@ sub modelfit_setup
             my $etas_to_boxcox_tdist = model_transformations::remaining_omegas(model => $boxcox_model, omegas => $zero_fix_omegas);
             if (scalar(@$etas_to_boxcox_tdist) > 0) {
                 model_transformations::boxcox_etas(model => $boxcox_model, etas => $etas_to_boxcox_tdist);
+                model_transformations::set_size(model => $boxcox_model, size => 'DIMNEW', value => -10000);
                 $boxcox_model->_write();
                 push @models, $boxcox_model;
             }
             my $tdist_model = $base_model->copy(directory => "modelfit_run", filename => "tdist.mod", write_copy => 0);
             if (scalar(@$etas_to_boxcox_tdist) > 0) {
                 model_transformations::tdist_etas(model => $tdist_model, etas => $etas_to_boxcox_tdist);
+                model_transformations::set_size(model => $tdist_model, size => 'DIMNEW', value => -10000);
                 $tdist_model->_write();
                 push @models, $tdist_model;
             }

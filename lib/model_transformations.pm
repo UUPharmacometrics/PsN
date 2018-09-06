@@ -1368,4 +1368,20 @@ sub power_on_ruv
     $model->set_code(record => 'error', code => \@result_code);
 }
 
+sub set_size
+{
+    # Set a $SIZES entry to a specific value
+    # We would actually want autodetection for when this is needed.
+	my %parm = validated_hash(\@_,
+        model => { isa => 'model' },
+        size => { isa => 'Str' },
+        value => { isa => 'Int' },
+    );
+    my $model = $parm{'model'};
+	my $size = $parm{'size'};
+	my $value = $parm{'value'};
+
+    $model->add_records(type => 'sizes', record_strings => [ "$size=$value" ]);
+}
+
 1;
