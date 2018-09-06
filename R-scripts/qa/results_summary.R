@@ -1,5 +1,4 @@
 yaml_summary <- function(ofv_table,
-                         list_par_var_models,
                          resmod_structural_details,
                          full_omega_block_list,
                          boxcox_lambdas_list,
@@ -12,7 +11,9 @@ yaml_summary <- function(ofv_table,
                          ii_list,
                          outlier_table_list,
                          overview_table_list,
-                         dvid_name
+                         dvid_name,
+                         skip,
+                         idv_all
                          ) {
   #function to check varables existance
   check_argument_existance <- function(x) {
@@ -30,6 +31,7 @@ yaml_summary <- function(ofv_table,
   tdist_list <- check_argument_existance(tdist_list)
   add_etas_list <- check_argument_existance(add_etas_list)
   iov_list <- check_argument_existance(iov_list)
+  all_outl_list <- check_argument_existance(all_outl_list)
   
   #add nonlinear and linearized ofv values to the tree
   tree <- list(
@@ -46,6 +48,8 @@ yaml_summary <- function(ofv_table,
   } else {
     tree$dvid_exists <- FALSE
   }
+  tree$skip <- skip
+  tree$all_idv <- idv_all
   
   #overview table
   ovw_table <- overview_table_list$overview_table
@@ -170,59 +174,76 @@ yaml_summary <- function(ofv_table,
   } 
   
   #parameter variability tables
-  tree$parameter_variability <- list()
-  if(!is.null(full_omega_block_list)) {
-    tree$parameter_variability$full_omega_block_table <- full_omega_block_list$full_omega_block_table
-  }
-  if(!is.null(boxcox_lambdas_list)) {
-    tree$parameter_variability$boxcox_table <- boxcox_lambdas_list$param_extra_table_orig
-  }
-  if(!is.null(tdist_list)) {
-    tree$parameter_variability$tdist_table <- tdist_list$param_extra_table_orig
-  }
-  if(!is.null(add_etas_list)) {
-    #################   check  #################
-  }
-  if(!is.null(iov_list)) {
-    #################   check  #################
+  if(all(skip!="transform")) {
+    tree$parameter_variability <- list()
+    if(!is.null(full_omega_block_list)) {
+      tree$parameter_variability$full_omega_block_table <- full_omega_block_list
+    }
+    if(!is.null(boxcox_lambdas_list)) {
+      tree$parameter_variability$boxcox_table <- boxcox_lambdas_list
+    }
+    if(!is.null(tdist_list)) {
+      tree$parameter_variability$tdist_table <- tdist_list
+    }
+    if(!is.null(add_etas_list)) {
+      tree$parameter_variability$add_etas_table <- add_etas_list
+    }
+    if(!is.null(iov_list)) {
+      tree$parameter_variability$add_etas_table <- iov_list
+    }
   }
   
   #frem table
-  tree$frem <- frem_table_list
-  
-  #scm tables
-  tree$scm <- scm_table_list
-  
-  #resmod tables
-  tree$resmod <- list()
-  if(tree$dvid_exists==TRUE) {
-    for(i in 1:length(resmod_table_list$dvid_nr)) {
-      tree$resmod[[i]] <- list()
-      tree$resmod[[i]]$dvid_value <- resmod_table_list$dvid_nr[i]
-      tree$resmod[[i]]$resmod_ruv_table  <- resmod_table_list$resmod_ruv_table_list[[i]]
-    }
-  } else {
-    tree$resmod[[1]]$resmod_ruv_table  <- resmod_table_list$resmod_ruv_table_list
+  if(all(skip!="frem")) {
+    tree$frem <- frem_table_list
   }
   
+  #scm tables
+  if(all(skip!="scm")) {
+    tree$scm <- scm_table_list
+  }
+  
+  #resmod tables
+  if(all(skip!="resmod")) {
+    tree$resmod <- list()
+    if(tree$dvid_exists==TRUE) {
+      for(i in 1:length(resmod_table_list$dvid_nr)) {
+        tree$resmod[[i]] <- list()
+        tree$resmod[[i]]$dvid_value <- resmod_table_list$dvid_nr[i]
+        tree$resmod[[i]]$resmod_ruv_table  <- resmod_table_list$resmod_ruv_table_list[[i]]
+      }
+    } else {
+      tree$resmod[[1]] <- list()
+      tree$resmod[[1]]$resmod_ruv_table  <- resmod_table_list$resmod_ruv_table_list[[1]]
+    }
+  }
+
   #influential id tables
-  ii_list_modified <- ii_list
-  ii_list_modified$all_dofv <- NULL
-  ii_list_modified$cdd.data <- NULL
-  ii_list_modified$cdd_highest_dofv <- NULL
-  ii_list_modified$fig_height_infl <- NULL
-  tree$cdd <- ii_list_modified
+  if(all(skip!="cdd")) {
+    tree$cdd <- list()
+    tree$cdd$files_exist <- ii_list$cdd_files_exist
+    tree$cdd$ii_table <- ii_list$ii_table
+    tree$cdd$infl_id <- ii_list$infl_id
+  }
   
   #outliers tables
-  outlier_table_list_modified <- outlier_table_list
-  outlier_table_list_modified$fig_height_outl <- NULL
-  tree$simeval <- outlier_table_list_modified
- 
-  #overall outliers table
-  all_outl_list_modified <- all_outl_list
-  all_outl_list_modified$add_header_above <- NULL
-  tree$overall_outliers <- all_outl_list_modified
-  
+  if(all(skip!="simeval")) {
+    outlier_table_list_modified <- outlier_table_list
+    outlier_table_list_modified$fig_height_outl <- NULL
+    tree$simeval <- outlier_table_list_modified
+    
+    #overall outliers table
+    if(!is.null(all_outl_list)) {
+      all_outl_list_modified <- all_outl_list
+      if(all_outl_list$files_exist) {
+        all_outl_list_modified$add_header_above <- NULL
+        tree$overall_outliers <- all_outl_list_modified
+      } else {
+        tree$overall_outliers <- all_outl_list
+      }
+    }
+  }
+
   #create a yaml file
   yaml <- as.yaml(tree, indent.mapping.sequence=TRUE)
   cat(yaml, file="results_summary.yaml")
