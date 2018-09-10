@@ -1,4 +1,5 @@
-yaml_summary <- function(ofv_table,
+yaml_summary <- function(model.filename,
+                         ofv_table,
                          resmod_structural_details,
                          full_omega_block_list,
                          boxcox_lambdas_list,
@@ -35,6 +36,7 @@ yaml_summary <- function(ofv_table,
   
   #add nonlinear and linearized ofv values to the tree
   tree <- list(
+    model_filename = model.filename,
     nonlinear_base_model_ofv = ofv_table[1,2],
     linearized_base_model_ofv_before_estimation = ofv_table[2,2],
     linearized_base_model_ofv_after_estimation = ofv_table[3,2],

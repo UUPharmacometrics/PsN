@@ -457,7 +457,8 @@ if(file.exists(file.path(working.directory,"meta.yaml"))) {
 ```
 
 ```{r yaml_summary,results='asis',echo=F,warning=F,message=F}
-yaml_summary(ofv_table,
+yaml_summary(model.filename,
+             ofv_table,
              resmod_structural_details,
              full_omega_block_list,
              boxcox_lambdas_list,
