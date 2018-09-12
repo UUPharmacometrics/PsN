@@ -3,12 +3,18 @@ iofv_vs_iofv <- function(phi1, phi2,quiet=F) {
     make_plot <- TRUE
     phi1_tab <- read.table(phi1, skip=1, header=T)
     phi2_tab <- read.table(phi2, skip=1, header=T)
-    
+
     phi1name <- basename(phi1)
     phi2name <- basename(phi2)
-    
-    if(length(phi1_tab$OBJ) == length(phi2_tab$OBJ)) {
-      p <- ggplot(data=NULL, aes(x=phi1_tab$OBJ, y=phi2_tab$OBJ)) +
+
+    phi1_obj <- phi1_tab$OBJ        # Remove all individuals without observations
+    phi1_obj <- phi1_obj[phi1_obj != 0]
+
+    phi2_obj <- phi2_tab$OBJ
+    phi2_obj <- phi2_obj[phi2_obj != 0]
+
+    if(length(phi1_obj) == length(phi2_obj)) {
+      p <- ggplot(data=NULL, aes(x=phi1_obj, y=phi2_obj)) +
         geom_point(shape=1) +
         geom_abline(intercept = 0, slope = 1) +
         xlab(phi1name) +
