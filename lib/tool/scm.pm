@@ -1592,13 +1592,19 @@ sub modelfit_setup
                                 message => "\nThe ofv of the linearized base model before estimation:$initial_ofv\n");
                         }
                         my $datafile = $start_model->datafiles(problem_numbers => [ 1 ], absolute_path => 1)->[0];
-                        my $has_interaction = _check_interaction(datafile => $datafile, model => $self->original_nonlinear_model);
-                        if ($has_interaction) {
-                            ui->print(category => 'linearize',
-                                message => "NOTE: The model has interaction");
+                        my $inter_in_model = _inter_in_model(datafile => $datafile, model => $self->original_nonlinear_model);
+                        my $inter_in_est = _inter_in_est(model => $self->original_nonlinear_model);
+                        print('Interaction in model (have non-zero D_EPSETA): ');
+                        if ($inter_in_model) {
+                            print("YES\n");
                         } else {
-                            ui->print(category => 'linearize',
-                                message => "NOTE: The model does NOT have interaction");
+                            print("NO\n");
+                        }
+                        print('Interaction in $EST: ');
+                        if ($inter_in_est) {
+                            print("YES\n");
+                        } else {
+                            print("NO\n");
                         }
                     }
 					print LOG "The ofv of the linearized base model:$ofv        $start_name\n";
@@ -6263,6 +6269,20 @@ sub _check_interaction
 	my $datafile = $parm{'datafile'};
 	my $model = $parm{'model'};
 
+    return _inter_in_model(datafile => $datafile, model => $model) && _inter_in_est(model => $model);
+}
+
+sub _inter_in_model
+{
+    # Check if a model has interaction in its code
+    # this is done by checking if there is D_EPSETA in the dataset
+	my %parm = validated_hash(\@_,
+        datafile => { isa => 'Str' },
+        model => { isa => 'model' },
+    );
+	my $datafile = $parm{'datafile'};
+	my $model = $parm{'model'};
+
     my $table_file = nmtablefile->new(filename => $datafile);
     my $table = $table_file->tables->[0];
 
@@ -6274,9 +6294,20 @@ sub _check_interaction
         }
     }
 
+    return $nonzero;
+}
+
+sub _inter_in_est
+{
+    # Check if a model has INTER in $EST
+	my %parm = validated_hash(\@_,
+        model => { isa => 'model' },
+    );
+	my $model = $parm{'model'};
+    
     my $inter = $model->is_option_set(record => 'estimation', name => 'INTERACTION', fuzzy_match => 1);
 
-    return $nonzero && $inter;
+    return $inter;
 }
 
 
