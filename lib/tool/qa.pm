@@ -188,7 +188,14 @@ sub modelfit_setup
         $base_model = model->new(
             filename => $base_model_name,
         );
-		
+ 
+        my $outobj = $base_model->outputs->[0];
+		my ($failed, undef) = $outobj->nonmem_run_failed;
+        if ($failed) {
+            print "\nERROR: Linearization failed. Stopping qa.\n";
+            exit;
+        }
+
 		$self->base_model_path($base_model->directory . $base_model->filename);
 		$self->orig_max0_model_path($base_model->directory . 'linearize_run/scm_dir1/derivatives.mod');
 	    $self->base_dataset_path($base_model->problems->[0]->datas->[0]->get_absolute_filename());
@@ -201,6 +208,7 @@ sub modelfit_setup
     #    $base_model->remove_option(record_name => 'estimation', option_name => 'METHOD');
     #    $base_model->_write();
     #}
+
 
     if (not $self->_skipped('transform')) {
         print "*** Running full omega block, boxcox and tdist models ***\n";
