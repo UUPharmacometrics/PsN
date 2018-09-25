@@ -2861,6 +2861,9 @@ sub linearize_setup
         $original_model->add_option(record_name => 'estimation', option_name => 'SLOW');
     }
 
+    # Set PRINT=1 to facilitate fault finding
+    $original_model->add_option(record_name => 'estimation', option_name => 'PRINT', option_value => '1');
+
     return $original_model;
 }
 
