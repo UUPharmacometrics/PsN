@@ -28,6 +28,7 @@ our $nm_version;
 our $nmdir;
 our $nm_major_version;
 our $nm_minor_version;
+our $nm_patch_version;
 
 our $out_miss_data;
 our $output_header;
@@ -131,6 +132,7 @@ sub get_nmversion_info
     my @version_list = split(/\./, $version);
     my $major_version = shift(@version_list);
     my $minor_version = shift(@version_list);
+    my $patch_version = shift(@version_list);
 
     #make sure minor version is one character
     $minor_version = substr($minor_version, 0, 1) if (defined $minor_version);
@@ -141,7 +143,7 @@ sub get_nmversion_info
             "\" in psn.conf. Format should be: name=directory,version");
     }
 
-    return ($dir, $major_version, $minor_version);
+    return ($dir, $major_version, $minor_version, $patch_version);
 }
 
 sub set_nonmem_info
@@ -152,7 +154,7 @@ sub set_nonmem_info
     }
     $nm_version = $version_label;
 
-    ($nmdir, $nm_major_version, $nm_minor_version) = get_nmversion_info($version_label);
+    ($nmdir, $nm_major_version, $nm_minor_version, $nm_patch_version) = get_nmversion_info($version_label);
 
     #now handle $nmdir that is just name of executable, when in path. Only for run local
     #this is when no slashes, forward or backward, in $nmdir

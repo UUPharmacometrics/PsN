@@ -2445,7 +2445,12 @@ sub linearize_setup
                 $err_count++;
                 my $string = 'ERR'.$err_count.'='.$eps.'*(D_EPS'.$i;
                 for (my $j=1; $j<= $nETA; $j++){
-                    my $line = 'D_EPSETA'.$i.'_'.$j.'*(ETA('.$j.')-OETA'.$j.')';
+                    my $line;
+                    if ($self->foce) {
+                        $line = 'D_EPSETA'.$i.'_'.$j.'*(ETA('.$j.')-OETA'.$j.')';
+                    } else {
+                        $line = 'D_EPSETA'.$i.'_'.$j.'*ETA('.$j.')';
+                    }
                     if (length($string.$line) >= 63){
                         $string .= ')'."\n";
                         push(@pred_block,$string);
@@ -2851,8 +2856,8 @@ sub linearize_setup
         }
     }
 
-    # Account for an estimation bug in NONMEM 7.4
-    if ($PsN::nm_major_version == 7 and $PsN::nm_minor_version == 4) {
+    # Account for an estimation bug in NONMEM 7.4.0 and 7.4.1
+    if ($PsN::nm_major_version == 7 and $PsN::nm_minor_version == 4 and (not defined $PsN::nm_patch_version or $PsN::nm_patch_version == 0 or $PsN::nm_patch_version == 1)) {
         $original_model->add_option(record_name => 'estimation', option_name => 'SLOW');
     }
 
