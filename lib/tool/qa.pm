@@ -281,6 +281,9 @@ sub modelfit_setup
             write_copy => 0,
             output_same_directory => 1,
         );
+
+        $add_etas_model->set_records(type => 'covariance', record_strings => [ "OMITTED" ]);
+
 		if ($add_etas_model->is_run()) {
 			$add_etas_model->update_inits(from_output => $add_etas_model->outputs->[0]);
             my $phi_file = $add_etas_model->get_phi_file();
