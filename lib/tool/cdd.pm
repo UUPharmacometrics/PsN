@@ -961,7 +961,7 @@ sub general_setup
                     }
                     my @expressions;
                     for my $id (@{$skip_ids->[$j - 1]}) {
-                        push @expressions, "ID.EQ.$id", 
+                        push @expressions, "ID.EQN." . int($id);    #Assume integer IDs 
                     }
                     my $expression_list = join ",", @expressions;
                     my $statement = "($expression_list)";
