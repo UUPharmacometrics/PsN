@@ -455,6 +455,7 @@ sub modelfit_setup
                 rplots => 1,
                 etas => 1,
                 top_tool => 1,
+                ignore => 1,   # Always use IGNORE instead of generating new datasets
             );
             $cdd->run();
         };
