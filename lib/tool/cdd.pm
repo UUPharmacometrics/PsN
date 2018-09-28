@@ -41,6 +41,7 @@ has 'cross_validate' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'outside_n_sd_check' => ( is => 'rw', isa => 'Num', default => 2 );
 has 'update_inits' => ( is => 'rw', isa => 'Bool', default => 1 );
 has 'etas' => ( is => 'rw', isa => 'Bool', default => 0 );      # If to add $ETAs from original model on all cdd models
+has 'ignore' => ( is => 'rw', isa => 'Bool', default => 0 );    # Use IGNORE instead of generating new datasets
 
 sub BUILD
 {
@@ -894,6 +895,7 @@ sub general_setup
                 idcolumn => $idcol->[0][0],  #number not index
                 missing_data_token => $self->missing_data_token,
                 model => $model,
+                ignore => $self->ignore,
             );
 
 		my $ndatas = scalar @{$new_datas};
@@ -907,6 +909,7 @@ sub general_setup
 		if ($model->outputs->[0]->have_output and $self->update_inits){
 			$templatemodel -> update_inits( from_output => $model->outputs->[0] );
 		}
+        #$templatemodel->problems->[0]->own_print_order
 
 		for ( my $j = 1; $j <= $ndatas; $j++ ) {
 			my @datasets = ( $new_datas -> [$j-1], $remainders -> [$j-1] );
@@ -920,13 +923,50 @@ sub general_setup
                     write_copy => 0,
                     copy_output => 0
                 );
+                if ($self->ignore) {        # Check if we need to reverse INPUT and DATA
+                    my $need_swap = 0;
+                    my $found_input;
+                    for my $record (@{$newmodel->problems->[0]->own_print_order}) {
+                        if ($record eq 'input') {
+                            $found_input = 1;
+                        }
+                        if ($record eq 'data' and not $found_input) {
+                            $need_swap = 1;
+                        }
+                    }
+                    if ($need_swap) {
+                        for my $record (@{$newmodel->problems->[0]->own_print_order}) {
+                            if ($record eq 'input') {
+                               $record = 'data';
+                           } elsif ($record eq 'data') {
+                                $record = 'input';
+                           } 
+                        }
+                    }
+                }
                 if ($self->etas) {
                     my $phi_file = $model->get_phi_file();
                     if (defined $phi_file) {
                        $newmodel->init_etas(phi_name => $phi_file);
                     }
                 }
-				$newmodel -> datafiles( new_names => [$set] );
+                if (not $self->ignore) {
+				    $newmodel -> datafiles( new_names => [$set] );
+                } else {
+                    my $verb;
+                    if ($i == 0) {
+                        $verb = 'IGNORE';
+                    } else {
+                        $verb = 'ACCEPT';
+                    }
+                    my @expressions;
+                    for my $id (@{$skip_ids->[$j - 1]}) {
+                        push @expressions, "ID.EQ.$id", 
+                    }
+                    my $expression_list = join ",", @expressions;
+                    my $statement = "($expression_list)";
+                    $newmodel->add_option(record_name => 'data', option_name => $verb, option_value => $statement); 
+                }
 				if ($i == 1) {
 					# set MAXEVAL=0. Again, CDD will only work for one $PROBLEM
 					my $warn = 0;

@@ -28,7 +28,8 @@ my %optional_options = ( "bins:i"               => '',
 						 "xv!"                  => '',
 						 "selection_method:s"   => '\'random\'|\'consecutive\'',
 						 "outside_n_sd_check:f" => '',
-                         "etas!",
+                         "etas!" => '',
+                         "ignore!" => '',
                      );
 
 my $res = GetOptions( \%options,
@@ -117,6 +118,12 @@ $help_text{-etas} = <<'EOF';
 	Use the phi file of the original model as initial estimates for the etas.
 EOF
 
+$help_text{-ignore} = <<'EOF';
+	-ignore
+
+	Instead of generating new datasets use IGNORE statements in $DATA. Default is off.
+EOF
+
 $help_text{-outside_n_sd_check} = <<'EOF';
 -outside_n_sd_check='number'
 
@@ -170,6 +177,11 @@ if (defined $options{'dummy_data'}) {
   $options{'dummy_data'} = 0;
 }
 
+# Ignore option default off
+if (not defined $options{'ignore'}) {
+    $options{'ignore'} = 0;
+}
+
 require model;
 require tool::cdd;
 
@@ -211,6 +223,7 @@ my $cdd = tool::cdd->new(
     outside_n_sd_check => $options{'outside_n_sd_check'},
     cross_validate => $options{'xv'},
     etas => $options{'etas'},
+    ignore => $options{'ignore'},
 );
 
 $cdd->print_options(

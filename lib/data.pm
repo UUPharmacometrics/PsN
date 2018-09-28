@@ -675,6 +675,7 @@ sub cdd_create_datasets
 		missing_data_token => { isa => 'Maybe[Num]', optional => 1 },
 		idcolumn => { isa => 'Int', optional => 0 },
         model => { isa => 'model', optional => 1 },     # Model is needed to filter out individuals that were filtered after run
+        ignore => { isa => 'Bool', default => 0 },        # If datasets should not be generated or IGNORE would be used instead
 	);
 	my $input_filename = $parm{'input_filename'};
 	my $input_directory = $parm{'input_directory'};
@@ -686,6 +687,7 @@ sub cdd_create_datasets
 	my $missing_data_token = $parm{'missing_data_token'};
 	my $idcolumn = $parm{'idcolumn'};
 	my $model = $parm{'model'};
+	my $ignore = $parm{'ignore'};
 
 	unless (-d $output_directory){
 		croak("output directory $output_directory is not a directory/does not exist");
@@ -727,7 +729,8 @@ sub cdd_create_datasets
 		$data -> _case_deletion( case_column => $case_column,
 								selection   => $selection_method,
 								bins        => $bins,
-								directory   => $output_directory );
+								directory   => $output_directory,
+                                ignore => $ignore, );
 	$data = undef;
 	return $new_datas, $skip_ids, $skip_keys, $skip_values, $remainders, $pr_bins;
 }
@@ -769,12 +772,15 @@ sub _case_deletion
 		bins => { isa => 'Maybe[Num]', optional => 1 },
 		case_column => { isa => 'Int', optional => 0 },
 		selection => { isa => 'Maybe[Str]', default => 'consecutive', optional => 1 },
-		directory => { isa => 'Str', optional => 0 }
-	);
+		directory => { isa => 'Str', optional => 0 },
+        ignore => { isa => 'Bool', default => 0 },
+	
+    );
 	my $bins = $parm{'bins'};
 	my $case_column = $parm{'case_column'};
 	my $selection = $parm{'selection'};
 	my $directory = $parm{'directory'};
+	my $ignore = $parm{'ignore'};
 
 	my @subsets;
 	my @skipped_ids;
@@ -839,7 +845,8 @@ sub _case_deletion
 		#here we simply write to file and then delete objects again
 		#we only return file names, not data objects
 		my $newname = $directory . 'cdd_' . ($k + 1) . '.dta';
-		my $newdata = data -> new ( header      => \@header,
+        if (not $ignore) {
+		    my $newdata = data -> new ( header      => \@header,
 									ignoresign  => $self->ignoresign,
 									missing_data_token => $self->missing_data_token,
 									idcolumn    => $self->idcolumn,
@@ -847,17 +854,20 @@ sub _case_deletion
 									filename    => $newname,
 									ignore_missing_files => 1,
                                 );
-		$newdata->_write;
+		    $newdata->_write;
+        }
 
 		my $delname = $directory . 'rem_' . ($k + 1) . '.dta';
-		my $deldata = data -> new ( header      => \@header,
+        if (not $ignore) {
+		    my $deldata = data -> new ( header      => \@header,
 									ignoresign  => $self->ignoresign,
 									missing_data_token => $self->missing_data_token,
 									idcolumn    => $self->idcolumn,
 									individuals => \@del_inds,
 									filename    => $delname,
 									ignore_missing_files => 1 );
-		$deldata->_write;
+		    $deldata->_write;
+        }
 		push( @subsets,  $newname);
 		push( @remainders, $delname );
 	}

@@ -142,6 +142,7 @@ Changes and bug fixes from PsN 4.8.0 to x.x.x
 
    ___cdd___
 
+- New option 'ignore' that would let cdd use IGNORE statements instead of generating new datasets. This will save alot of disk space.
 
 
    ___rplots___
