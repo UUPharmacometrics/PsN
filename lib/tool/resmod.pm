@@ -80,6 +80,7 @@ sub BUILD
         my @columns_in_table = @{$cwres_table->columns()};
         my $have_dvid = grep { $_ eq $self->dvid } @columns_in_table;
 
+        $table->tables->[0]->set_header_from_array(header => \@columns_in_table);
         my %table_header = %{$table->tables->[0]->header};
         if (not (exists $table_header{'ID'} and exists $table_header{$self->idv} and exists $table_header{$self->dv})) {
             die "Error original model has no table containing ID, " .$self->idv ." and " . $self->dv. "\n";

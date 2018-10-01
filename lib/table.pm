@@ -36,6 +36,25 @@ sub set_header
     $self->header(\%hash);
 }
 
+sub set_header_from_array
+{
+    # Set the header from an array
+    my $self = shift;
+	my %parm = validated_hash(\@_,
+		header => { isa => 'ArrayRef[Str]' },
+	);
+    my $header = $parm{'header'};
+
+    my %hash;
+    my $i = 0;
+    foreach my $e (@$header) {
+        $hash{$e} = $i++;
+    }
+
+    $self->header_array($header);
+    $self->header(\%hash);
+}
+
 sub get_header
 {
 	my $self = shift;
