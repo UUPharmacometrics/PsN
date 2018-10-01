@@ -54,7 +54,7 @@ sub BUILD
     my $self = shift;
 
     if ($PsN::nm_major_version < 7 or ($PsN::nm_major_version == 7 and $PsN::nm_minor_version < 3)) {
-        croak("resmod need at least NONMEM 7.3.0 or newer");
+        croak("resmod needs at least NONMEM 7.3.0 or newer");
     }
 
     if (defined $self->obs_column) {
