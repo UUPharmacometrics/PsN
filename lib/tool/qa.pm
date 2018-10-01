@@ -41,6 +41,8 @@ has 'iov_structure' => ( is => 'rw', isa => 'ArrayRef' );   # The occ/iov struct
 has 'orig_max0_model_path' => ( is => 'rw', isa => 'Str' );
 has 'base_model_path' => ( is => 'rw', isa => 'Str' );
 has 'base_dataset_path' => ( is => 'rw', isa => 'Str' );
+has 'extra_table_columns' => ( is => 'rw', isa => 'ArrayRef[Str]' );
+
 
 sub BUILD
 {	
@@ -128,7 +130,8 @@ sub modelfit_setup
     if (defined $self->dvid and $model_copy->defined_variable(name => $self->dvid)) {
         push @table_columns, $self->dvid;
     } 
-	
+
+    $self->extra_table_columns(\@table_columns);
 
     my $base_model_name = $self->model->filename;
     if ($self->nonlinear) {
@@ -811,6 +814,7 @@ sub create_R_plots_code
             "scm_categorical <- " . rplots::create_r_vector(array => $scm_categorical),
             "parameters <- " . rplots::create_r_vector(array => \@parameters),
             "extra_table <- '" . $extra_table_path . "'",
+            "extra_table_columns <- " . rplots::create_r_vector(array => $self->extra_table_columns),
 			"cdd_dofv_cutoff <- 3.84 ",
 			"cdd_max_rows <- 10",
 			"type <- 'latex' # set to 'html' if want to create a html file ",
