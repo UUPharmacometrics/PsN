@@ -757,6 +757,32 @@ sub get_scm_categorical
     return \@categorical;
 }
 
+sub mend_extra_table_names
+{
+    my $self = shift;
+    my $colnames = shift; 
+
+    my $directory = $self->directory . 'linearize_run/scm_dir1/';
+
+    open my $fh, '<', $directory . 'extra_table' or return;
+    open my $dh, '>', $directory . 'extra_table.temp' or return;
+
+    my $table_line = <$fh>;
+    print $dh $table_line;
+    <$fh>;
+    print $dh ' ' . join('      ', @$colnames) . "\n";
+    while (my $line = <$fh>) {
+        print $dh $line;
+    }
+
+    close $dh;
+    close $fh;
+
+    unlink "${directory}extra_table";
+    rename "${directory}extra_table.temp", "${directory}/extra_table";
+}
+
+
 sub create_R_plots_code
 {
 	my $self = shift;
@@ -805,6 +831,9 @@ sub create_R_plots_code
         $scm_categorical = [];
     }
 
+    my @extra_table_columns = (@{$self->extra_table_columns}, 'MDV');
+    $self->mend_extra_table_names(\@extra_table_columns);
+
     my $code =  [
             '# qa specific preamble',
 			"groups <- " . $self->groups,
@@ -814,7 +843,7 @@ sub create_R_plots_code
             "scm_categorical <- " . rplots::create_r_vector(array => $scm_categorical),
             "parameters <- " . rplots::create_r_vector(array => \@parameters),
             "extra_table <- '" . $extra_table_path . "'",
-            "extra_table_columns <- " . rplots::create_r_vector(array => $self->extra_table_columns),
+            "extra_table_columns <- " . rplots::create_r_vector(array => \@extra_table_columns),
 			"cdd_dofv_cutoff <- 3.84 ",
 			"cdd_max_rows <- 10",
 			"type <- 'latex' # set to 'html' if want to create a html file ",

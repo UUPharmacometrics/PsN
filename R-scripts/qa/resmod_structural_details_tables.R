@@ -1,4 +1,4 @@
-resmod_structural_details_tables <- function(working.directory,base_dataset,original_max0_model,extra_table,idv_all,dvid_name,nonlinear,quiet=F) {
+resmod_structural_details_tables <- function(working.directory,base_dataset,original_max0_model,extra_table,extra_table_colnames,idv_all,dvid_name,nonlinear,quiet=F) {
   resmod_structural_details_list <- list()
   if(length(idv_all)!=0) {
     #check if dvid exist
@@ -33,7 +33,7 @@ resmod_structural_details_tables <- function(working.directory,base_dataset,orig
           nonlinear==FALSE) {
             
           table = get_resmod_structural_details(directory=working.directory, suffix = idv, dvid=dvid_nr_idv[[i]][j]) %>%
-            .calc_and_add_shift_from_cwres(orig_ext_file,base_dataset,extra_table,idv,dvid=dvid_nr_idv[[i]][j],dvid_name)
+            .calc_and_add_shift_from_cwres(orig_ext_file,base_dataset,extra_table,extra_table_colnames,idv,dvid=dvid_nr_idv[[i]][j],dvid_name)
             
           second_table = data.frame(C1=paste0(format(table$bin_min,nsmall=2),"  :  ",format(table$bin_max,nsmall=2)),C2=as.character(format(round(table$value,2),nsmall=2)),
                                     stringsAsFactors = F)
