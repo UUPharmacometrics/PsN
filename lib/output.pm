@@ -273,7 +273,6 @@ sub get_estimation_evaluation_problem_number
 	return $evaluation_probnum;
 }
 
-
 sub get_problem_count
 {
 	my $self = shift;
@@ -440,7 +439,6 @@ sub high_correlations
 	}
 }
 
-
 sub large_standard_errors
 {
 	my $self = shift;
@@ -568,7 +566,6 @@ sub perfect_individual_count
 	}
 	return \%individual_count;
 }
-
 
 sub near_bounds
 {
@@ -1115,7 +1112,6 @@ sub estimated_omegas
 	return \@estimatedomegas;
 }
 
-
 sub estnames
 {
 	my $self = shift;
@@ -1161,7 +1157,6 @@ sub estnames
 	return \@estnames;
 }
 
-
 sub est_thetanames
 {
 	my $self = shift;
@@ -1206,7 +1201,6 @@ sub est_sigmanames
 						   subproblems => $subproblems,
 						   parameter => 'sigma');
 }
-
 
 sub fixedsigmas
 {
@@ -1947,7 +1941,6 @@ sub get_filtered_values
 
 	return \@values;
 }
-
 
 sub get_single_value
 {
@@ -3381,7 +3374,6 @@ sub get_nonmem_parameters
 	return \%hash;
 
 }
-
 
 sub set_runtime
 {
