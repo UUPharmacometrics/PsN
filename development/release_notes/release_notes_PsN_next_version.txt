@@ -120,6 +120,8 @@ Changes and bug fixes from PsN 4.8.0 to x.x.x
 
    ___sse___ 
 
+- New option -special_table to let the user handle the table generation in the simulation model
+
 
    ___simeval___
    
