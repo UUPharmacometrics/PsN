@@ -9,6 +9,7 @@ use Math::Random;
 use Config;
 use Moose;
 use MooseX::Params::Validate;
+use File::Copy qw(copy);
 use math qw(usable_number);
 use array qw(median);
 
@@ -39,6 +40,8 @@ has 'update_fix' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'probnum' => ( is => 'rw', isa => 'Int', default => 1 );
 has 'logfile' => ( is => 'rw', isa => 'ArrayRef[Str]', default => sub { ['sse.log'] } );
 has 'results_file' => ( is => 'rw', isa => 'Str', default => 'sse_results.csv' );
+has 'special_table' => ( is => 'rw', isa => 'Str' );
+
 
 sub BUILD
 {
@@ -929,6 +932,15 @@ sub modelfit_setup
 			trace(tool => 'sse', message => "Getting ready to run all the simulation models in ".
 									$self -> directory.'m'.$model_number, level => 1);
 
+            if (defined $self->special_table) { # Remove all tables as table output is handled manually
+                for my $model (@sim_models) {
+                    for my $problem (@{$model->problems}) {
+                        $problem->tables([]);
+                    }
+                }
+                $model->_write(relative_data_path => 1); 
+            }
+
 			my $mod_sim = 
 				tool::modelfit -> new(  %{common_options::restore_options(@common_options::tool_options)},
 										top_tool         => 0,
@@ -946,6 +958,13 @@ sub modelfit_setup
 										abort_on_fail => $self->abort_on_fail);
 			
 			$mod_sim -> run;
+            if (defined $self->special_table) {     # If we have a manually handled table. Move it and rename it properly
+                for (my $i = 1; $i <= scalar(@sim_models); $i++) {
+                    my $dir = $self->directory . 'simulation_dir' . $model_number . '/NM_run' . $i . '/';
+                    my $source = $dir . $self->special_table;
+                    copy($source, $self->directory . 'm' . $model_number . '/mc-sim-' . $i . '.dat');
+                }
+            }
 			if ($self->have_nwpri() or $self->have_tnpri()){
 				#parse inits_sims
 				for (my $i=1;$i<=$self->samples();$i++){
