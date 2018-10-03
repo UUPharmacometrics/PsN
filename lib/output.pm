@@ -3071,6 +3071,22 @@ sub _read_problems
 
 	debugmessage(2,"Parsing output: " . $self->full_name );
 	my @lstfile = utils::file::slurp_file($self->full_name);
+
+    # Get rid of SIR results. When needed send to separate parser
+    my @newlst;
+    my $skip = 0;
+    for my $line (@lstfile) {
+        if ($line =~ /^SIR SAMPLING ITERATION/) {
+            $skip = 1;
+        } elsif ($line =~ /^ #CPUT:/) {
+            $skip = 0;
+        }
+        if (not $skip) {
+            push @newlst, $line;
+        }
+    }
+    @lstfile = @newlst;
+
 	if ($self->append_nm_OUTPUT and -e $self->directory.'OUTPUT'){
 		my @extra = utils::file::slurp_file($self->directory.'OUTPUT');
 		push(@lstfile,@extra);
