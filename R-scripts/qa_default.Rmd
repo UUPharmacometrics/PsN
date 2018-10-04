@@ -10,7 +10,7 @@ classoption: a4paper
 
 ```{r loading_libraries_and_sourcing_functions,include=F,warning=F,message=F}
 library(PsNR)
-# library(tidyverse)
+library(tidyverse)
 # library(knitr)
 # library(methods)
 # library(expm)
@@ -318,7 +318,7 @@ cat("\\pagebreak\n\n")
 cat("#Residual Error Model\n\n")
 if(!nonlinear && file.exists(sub("(\\.[^.]+)$",".lst",original_max0_model)) &&
    file.exists(file.path(working.directory,paste0("resmod_",idv_name),"results.csv"))) {
-  xpdb_data <- xpose_data(file = sub("(\\.[^.]+)$",".lst",original_max0_model)) %>%
+  xpdb_data <- xpose::xpose_data(file = sub("(\\.[^.]+)$",".lst",original_max0_model)) %>%
     qa_data(resmod_folder=file.path(working.directory,paste0("resmod_",idv_name)),derivatives_model=original_max0_model)
 }
 for (i in 1:length(resmod_table_list$dvid_nr)) {
