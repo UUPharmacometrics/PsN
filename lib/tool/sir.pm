@@ -902,6 +902,17 @@ sub modelfit_setup
 			$self->problems_per_file(1);
 		}
 		my $sampled_params_arr;
+
+        # Forcing the covariance matrix to be positive definite
+	    my $err = check_matrix_posdef(matrix => $covmatrix);
+        if ($err == 1) {
+            ui->print(category => "sir", message => "Forcing covariance matrix used by sampler to be positive definite");
+            ($covmatrix, my $count) = linear_algebra::get_symmetric_posdef(
+                matrix => $covmatrix,
+                minEigen => 1E-10,
+            );
+        }
+
 		my ($vectorsamples,$boxcox_samples) = sample_multivariate_normal(
 			check_cholesky_reparameterization => $self->check_cholesky_reparameterization,
 			fix_theta_labels => $fix_theta_labels,
