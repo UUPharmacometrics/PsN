@@ -9,47 +9,47 @@ classoption: a4paper
 ---
 
 ```{r loading_libraries_and_sourcing_functions,include=F,warning=F,message=F}
-# library(PsNR)
-library(tidyverse)
-library(knitr)
-library(methods)
-library(expm)
-library(vpc)
-library(xpose)
-library(PEIP)
-library(yaml)
-library(devtools)
-library(mvtnorm)
-library(kableExtra)
+library(PsNR)
+# library(tidyverse)
+# library(knitr)
+# library(methods)
+# library(expm)
+# library(vpc)
+# library(xpose)
+# library(PEIP)
+# library(yaml)
+# library(devtools)
+# library(mvtnorm)
+# library(kableExtra)
 options(knitr.table.format=type)
-#check needed package versions
-source(file.path(rscripts.directory, "/common/check_package_versions.R"))
-check_package_versions(pkg=c("tidyverse","xpose","kableExtra","expm","PEIP","yaml","devtools"),
-                       versions=c("1.1.1","0.4.0","0.6.1","0.999-1","2.0-1","2.1.14","1.13.3"),
-                       toolname)
-#load functions
-source(file.path(rscripts.directory, "common/R_info.R"))
-source(file.path(rscripts.directory, "common/find_r_files_in_subdir.R"))
-source(file.path(rscripts.directory, "common/iofv.R"))
-source(file.path(rscripts.directory, "common/keep_symbols.R"))
-source(file.path(rscripts.directory, "common/command_start.finish.time.R"))
-source(file.path(rscripts.directory, "common/additional_info.R"))
-source(file.path(rscripts.directory, "common/break_text.R"))
-source(file.path(rscripts.directory, "common/get_initial_estimates_from_ext.R"))
-source(file.path(rscripts.directory, "common/kable_table.R"))
-source(file.path(rscripts.directory, "cdd/create.data.full.R"))
-source(file.path(rscripts.directory,"frem/ID_ratio_function.R"))
-source(file.path(rscripts.directory,"frem/parameter_ratio_function.R"))
-source(file.path(rscripts.directory,"frem/sd_of_unexpl_var_function.R"))
-#source qa functions
-rscript <- find_r_files_in_subdir(toolname,rscripts.directory)
-for (i in 1:length(rscript)) {
-  source(rscript[i])
-}
-rscript <- find_r_files_in_subdir("simeval",rscripts.directory)
-for (i in 1:length(rscript)) {
-  source(rscript[i])
-}
+# check needed package versions
+# source(file.path(rscripts.directory, "/common/check_package_versions.R"))
+# check_package_versions(pkg=c("tidyverse","xpose","kableExtra","expm","PEIP","yaml","devtools"),
+#                        versions=c("1.1.1","0.4.0","0.6.1","0.999-1","2.0-1","2.1.14","1.13.3"),
+#                        toolname)
+# #load functions
+# source(file.path(rscripts.directory, "common/R_info.R"))
+# source(file.path(rscripts.directory, "common/find_r_files_in_subdir.R"))
+# source(file.path(rscripts.directory, "common/iofv.R"))
+# source(file.path(rscripts.directory, "common/keep_symbols.R"))
+# source(file.path(rscripts.directory, "common/command_start.finish.time.R"))
+# source(file.path(rscripts.directory, "common/additional_info.R"))
+# source(file.path(rscripts.directory, "common/break_text.R"))
+# source(file.path(rscripts.directory, "common/get_initial_estimates_from_ext.R"))
+# source(file.path(rscripts.directory, "common/kable_table.R"))
+# source(file.path(rscripts.directory, "cdd/create.data.full.R"))
+# source(file.path(rscripts.directory,"frem/ID_ratio_function.R"))
+# source(file.path(rscripts.directory,"frem/parameter_ratio_function.R"))
+# source(file.path(rscripts.directory,"frem/sd_of_unexpl_var_function.R"))
+# #source qa functions
+# rscript <- find_r_files_in_subdir(toolname,rscripts.directory)
+# for (i in 1:length(rscript)) {
+#   source(rscript[i])
+# }
+# rscript <- find_r_files_in_subdir("simeval",rscripts.directory)
+# for (i in 1:length(rscript)) {
+#   source(rscript[i])
+# }
 ```
 
 ```{r add_info_to_meta_yaml_file, include=F}
