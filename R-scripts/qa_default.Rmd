@@ -9,6 +9,7 @@ classoption: a4paper
 ---
 
 ```{r loading_libraries_and_sourcing_functions,include=F,warning=F,message=F}
+# library(PsNR)
 library(tidyverse)
 library(knitr)
 library(methods)
@@ -197,7 +198,7 @@ cat("#Overview\n\n")
 overview_table <- kable_table(overview_table_list$overview_table,format=type,booktabs=T,longtable=T,align=c("l","r","c"),linesep="") %>%
   kableExtra::kable_styling(position="c",full_width = F)
 for(i in 1:nrow(overview_table_list$row_groups)) {
-  overview_table <- overview_table %>% group_rows(overview_table_list$row_groups[i,1],overview_table_list$row_groups[i,2],overview_table_list$row_groups[i,3])
+  overview_table <- overview_table %>% kableExtra::group_rows(overview_table_list$row_groups[i,1],overview_table_list$row_groups[i,2],overview_table_list$row_groups[i,3])
 }
 print(overview_table)
 cat("Overview of possible modifications to different model aspects, expected improvement in OFV as well as number of additional parameters used.")
@@ -220,7 +221,7 @@ cat("##Full OMEGA Block\n\n")
 if(list_par_var_models$fullblock_mod) {
   full_omega_block_table <- kable_table(full_omega_block_list$full_omega_block_table,format=type,booktabs=T,longtable=T,align = c("l","r","r"),linesep="") %>%
     kableExtra::kable_styling(position="c",full_width = F) %>%
-    row_spec(nrow(full_omega_block_list$full_omega_block_table),bold=T)
+    kableExtra::row_spec(nrow(full_omega_block_list$full_omega_block_table),bold=T)
   print(full_omega_block_table)
   cat("Estimated standard deviation (sd) and correlation (corr) as well as expected improvement in OFV when allowing for a full block correlation structure between subject-level random effects.")
 } else {
@@ -232,7 +233,7 @@ if(list_par_var_models$fullblock_mod) {
 cat("##Box-Cox Transformation\n\n")
 boxcox_lambdas_table <- kable_table(boxcox_lambdas_list$param_extra_table,format=type,booktabs=T,longtable=T,align = c("l","r","r","r"),linesep="") %>%
   kableExtra::kable_styling(position="c",full_width = F) %>%
-  row_spec(nrow(boxcox_lambdas_list$param_extra_table),bold=T)
+  kableExtra::row_spec(nrow(boxcox_lambdas_list$param_extra_table),bold=T)
 print(boxcox_lambdas_table)
 cat("Estimated shape parameters (Lambda) as well as expected improvement in OFV when estimating a Box-Cox transformation for each subject-level random effect.")
 ```
@@ -253,7 +254,7 @@ cat("##Additional etas\n\n")
 if(list_par_var_models$add_etas_mod) {
   add_etas_table <- kable_table(add_etas_list$add_etas_table,format=type,booktabs=T,longtable=T,align = c("l","r","r","r"),linesep="") %>%
     kableExtra::kable_styling(position="c",full_width = F) %>%
-    row_spec(nrow(add_etas_list$add_etas_table),bold=T)
+    kableExtra::row_spec(nrow(add_etas_list$add_etas_table),bold=T)
   print(add_etas_table)
   cat("Consequences of including additional subject-level random effects on selected parameters in terms of estimated standard deviation (SD) of new and existing random effect parameters as well as expected improvement in OFV.")
 } else {
@@ -265,7 +266,7 @@ if(list_par_var_models$add_etas_mod) {
 cat("##t-distribution\n\n")
 tdist_table <- kable_table(tdist_list$param_extra_table,format=type,booktabs=T,longtable=T,align = c("l","r","r","r"),linesep="") %>%
   kableExtra::kable_styling(position="c",full_width = F) %>%
-  row_spec(nrow(tdist_list$param_extra_table),bold=T)
+  kableExtra::row_spec(nrow(tdist_list$param_extra_table),bold=T)
 print(tdist_table)
 cat("Estimated degrees of freedom as well as expected improvement in OFV when estimating a t-distribution transformation for each subject-level random effect.")
 ```
@@ -286,9 +287,9 @@ cat("##Interoccasion variability\n\n")
 if(list_par_var_models$iov_mod) {
   iov_table <- kable_table(iov_list$iov_table,format=type,booktabs=T,longtable=T,align = c("l","r","r","r"),linesep="") %>%
     kableExtra::kable_styling(position="c",full_width = F) %>%
-    row_spec(nrow(iov_list$iov_table),bold=T)
+    kableExtra::row_spec(nrow(iov_list$iov_table),bold=T)
   if(!iov_list$iov_error) {
-    iov_table <- iov_table %>% add_header_above(c(" "=1,"New SD"=2," "=1))
+    iov_table <- iov_table %>% kableExtra::add_header_above(c(" "=1,"New SD"=2," "=1))
   }
   print(iov_table)
   cat("Consequences of including inter-occasion variability in terms of estimated standard deviation (SD) for inter-individual (IIV) and inter-occasion variability (IOV) as well as expected improvement in OFV.")
@@ -303,7 +304,7 @@ cat("#Covariates\n\n")
 align <- paste(c("l",rep("r",ncol(covariates_table_list$covariates_extra_table)-1)),collapse = '')
 covariates_extra_table <- kable_table(covariates_table_list$covariates_extra_table,format=type,booktabs=T,longtable=T,linesep="",align = align) %>%
   kableExtra::kable_styling(position="c",full_width = F) %>%
-  row_spec((nrow(covariates_table_list$covariates_extra_table)-1):nrow(covariates_table_list$covariates_extra_table),bold=T)
+  kableExtra::row_spec((nrow(covariates_table_list$covariates_extra_table)-1):nrow(covariates_table_list$covariates_extra_table),bold=T)
 print(covariates_extra_table)
 cat("Model parameter covariate relationship, resulting improvement in OFV and estimated covariate coefficient. Furthermore, the sum of all univariate improvements in OFV ignoring between covariate correlations (sum(SCMu)), as well as joint improvement in OFV when taking correlations into account (FREM).")
 ```
@@ -413,7 +414,7 @@ if(all_outl_list$files_exist) {
   simeval_overall_outliers_table <- kable_table(all_outl_list$all_outlier_table,booktabs=T,format=type,longtable=T,align = c("l","c","c","c","c","c"),linesep="") %>%
     kableExtra::kable_styling(position="c",full_width = F)
 if(!(is.null(all_outl_list$add_header_above))) {
-  simeval_overall_outliers_table <- simeval_overall_outliers_table %>% add_header_above(all_outl_list$add_header_above,bold=T)
+  simeval_overall_outliers_table <- simeval_overall_outliers_table %>% kableExtra::add_header_above(all_outl_list$add_header_above,bold=T)
 }
   cat("\\pagebreak\n\n")
   print(simeval_overall_outliers_table)
