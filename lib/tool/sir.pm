@@ -726,14 +726,18 @@ sub modelfit_setup
 		$covmatrix = get_nonmem_covmatrix(output => $output);
 	}
 
-	if (defined $covmatrix ){
+	if (defined $covmatrix) {
 		my $err = check_matrix_posdef(matrix => $covmatrix);
-		if ($err == 1){
-			croak("\nERROR: covariance matrix is numerically not positive definite\n".
-				  "(as checked with Cholesky decomposition without pivoting). Cannot proceed with sir.\n");
+		if ($err == 1) {
+            ($covmatrix, my $count) = linear_algebra::get_symmetric_posdef(
+                matrix => $covmatrix,
+                minEigen => 1E-10,
+            );
+
+			ui->print(category => 'sir', message => "\nWARNING the input covariance matrix is numerically not positive definite\n".
+				  "(as checked with Cholesky decomposition without pivoting). Will proceed after forcing positive definiteness.\n");
 		}
 	}
-
 
 	my $user_labels=0; #always use generic labels
 	my ($resampled_params_arr,$resamp_href);

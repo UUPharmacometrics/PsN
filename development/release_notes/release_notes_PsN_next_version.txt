@@ -138,6 +138,7 @@ Changes and bug fixes from PsN 4.8.0 to x.x.x
 
    ___sir___
 	
+- Force input cov matrix to be positive definite after giving a warning.
 - Force matrix used for sampling to be positive definite.
 
    ___precond___
