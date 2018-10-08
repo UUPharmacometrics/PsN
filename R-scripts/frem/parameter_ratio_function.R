@@ -116,7 +116,8 @@ parameter_ratio <- function(inTable_frem,covdata,pardata) {
       outTable <- DF_melt %>% group_by(variable) %>%
       summarise(mean = mean(value),
                 ci_low = quantile(value, probs=c(0.05),type=2),
-                ci_high = quantile(value, probs=c(0.95),type=2))
+                ci_high = quantile(value, probs=c(0.95),type=2)) %>%
+      arrange(order(unique(DF_melt$variable)))
       # calculating procentage of outTable
       outTablet_proc <- t(round(t((outTable[, 2:ncol(outTable)])-1) * 100, 2))
       outTable <- cbind(outTable[1],outTablet_proc)
