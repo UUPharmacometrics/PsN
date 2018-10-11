@@ -1255,9 +1255,9 @@ close($parfh);
 
 
 my @templatecode = (
-	"source(file.path(rscripts.directory,'frem','ID_ratio_function.R',".'fsep = .Platform$file.sep))',
-	"source(file.path(rscripts.directory,'frem','parameter_ratio_function.R',".'fsep = .Platform$file.sep))',
-	"source(file.path(rscripts.directory,'frem','sd_of_unexpl_var_function.R',".'fsep = .Platform$file.sep))',
+	"library(PsNR)",
+	"library(magrittr)",
+	"library(methods)",
 	"output.format <- 'pdf'",
 
 	"if((file.exists(idfile) || file.exists(frem.ratio)) && ",
@@ -1270,7 +1270,7 @@ my @templatecode = (
 	"		indiv_for_param_plots <- ID_ratio(frem_id,covdata,pardata)\$plots",
 	"		param <- ID_ratio(frem_id,covdata,pardata)\$param",
 	"		for (i in 1:length(param)) {",
-	"			ggsave(filename = paste0(param[[i]],'.',output.format), plot = indiv_for_param_plots[[i]], width=11.69, height=8.27)",
+	"			ggplot2::ggsave(filename = paste0(param[[i]],'.',output.format), plot = indiv_for_param_plots[[i]], width=11.69, height=8.27)",
 	"		}",
 	"	}",
 	"",
@@ -1279,7 +1279,7 @@ my @templatecode = (
 	"		cov_effect_on_param_plots <- parameter_ratio(inTable_frem,covdata,pardata)\$plots",
 	"		param <- parameter_ratio(inTable_frem,covdata,pardata)\$param",
 	"		for (i in 1:length(param)) {",
-	"			ggsave(filename = paste0(param[[i]],'.',output.format), plot = cov_effect_on_param_plots[[i]], width=11.69, height=8.27)",
+	"			ggplot2::ggsave(filename = paste0(param[[i]],'.',output.format), plot = cov_effect_on_param_plots[[i]], width=11.69, height=8.27)",
 	"		}",
 	"	}",
 	"",
@@ -1289,7 +1289,7 @@ my @templatecode = (
 	"  		sd_unexpl_var_plots <- sd_unexpl_var(sd_coef_summary,covdata,pardata)\$plots ",
 	"  		param <- sd_unexpl_var(sd_coef_summary,covdata,pardata)\$param",
 	"  		for (i in 1:length(param)) {",
-	"    		ggsave(filename = paste0(param[[i]],'.',output.format), plot = sd_unexpl_var_plots[[i]], width=11.69, height=8.27)",
+	"    			ggplot2::ggsave(filename = paste0(param[[i]],'.',output.format), plot = sd_unexpl_var_plots[[i]], width=11.69, height=8.27)",
 	"  		}",
 	"	}",
 	"}",
