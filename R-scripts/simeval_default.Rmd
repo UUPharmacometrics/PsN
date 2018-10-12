@@ -7,46 +7,11 @@ classoption: landscape
 ---
 
 ```{r loading_libraries_and_sourcing_functions,include = FALSE}
-# get libPaths
-source(file.path(rscripts.directory,"common/R_info.R"))
-R_info(directory=working.directory,only_libPaths=T)
-
-# Used libraries
-library(PerformanceAnalytics)
-library(grid)
-library(gridExtra)
-library(xpose4)
-library(dplyr)
-
 residual.outliers.file <- 'residual_outliers.csv'
-# Source ebe npde functions
-source(paste0(rscripts.directory,"/simeval/ebe.npde.all.R"),echo=TRUE)
-source(paste0(rscripts.directory,"/simeval/ebe.npde.all.eta.names.R"),echo=TRUE)
-source(paste0(rscripts.directory,"/simeval/ebe.npde.input.data.R"),echo=TRUE)
-source(paste0(rscripts.directory,"/simeval/ebe.npde.summary.table.R"),echo=TRUE)
-source(paste0(rscripts.directory,"/simeval/ebe.npde.empirical.distance.R"),echo=TRUE)
-source(paste0(rscripts.directory,"/simeval/ebe.npde.data.for.plots.R"),echo=TRUE)
-source(paste0(rscripts.directory,"/simeval/ebe.npde.plot_1.R"),echo=TRUE)
-source(paste0(rscripts.directory,"/simeval/ebe.npde.plot_2.R"),echo=TRUE)
-source(paste0(rscripts.directory,"/simeval/ebe.npde.outlier.table.R"),echo=TRUE)
-# Source residual functions
-source(paste0(rscripts.directory,"/simeval/residuals.histograms.R"),echo=TRUE)
-source(paste0(rscripts.directory,"/simeval/residuals.summary.table.R"),echo=TRUE)
-source(paste0(rscripts.directory,"/simeval/residuals.outlier.table.R"),echo=TRUE)
-# Source ofv functions
-source(paste0(rscripts.directory,"/simeval/ofv.p_ofv_ppc.R"),echo=TRUE)
-source(paste0(rscripts.directory,"/simeval/ofv.i_ofv_npde.R"),echo=TRUE)
-source(paste0(rscripts.directory,"/simeval/ofv.summary.table.R"),echo=TRUE)
-source(paste0(rscripts.directory,"/simeval/ofv.i_ofv_res.R"),echo=TRUE)
-source(paste0(rscripts.directory,"/simeval/ofv.i_ofv_ppc.R"),echo=TRUE)
-source(paste0(rscripts.directory,"/simeval/ofv.kld_i_ofv.R"),echo=TRUE)
-source(paste0(rscripts.directory,"/simeval/boxplot_i_ofv_res.R"),echo=TRUE)
-# Source all outliers report functions
-source(paste0(rscripts.directory,"/simeval/all.outlier.report.table.R"),echo=TRUE)
-source(paste0(rscripts.directory,"/simeval/plot.all.outlier.table.R"),echo=TRUE)
-# Source common function
-source(paste0(rscripts.directory,"/common/plot.table.R"),echo=TRUE)
-#add R_info to the meta file
+library(PsNR)
+library(magrittr)
+library(methods)
+R_info(directory=working.directory,only_libPaths=T)
 R_info(directory=working.directory)
 ```
 
@@ -230,7 +195,7 @@ Correlation graph for EBE NPDE IIV
   ebenpde_obs_iiv <- ebenpde_obs[,iiv.eta.names]
 
   if(ncol(ebenpde_obs_iiv) > 1) {
-    chart.Correlation(ebenpde_obs_iiv, histogram = TRUE, method = c("spearman"))
+    PerformanceAnalytics::chart.Correlation(ebenpde_obs_iiv, histogram = TRUE, method = c("spearman"))
   }
 
 ```
@@ -272,7 +237,7 @@ Correlation graph for EBE NPDE IOV
     # create EBE-NPDE IOV correlation graph
       if(!(any(is.na(ebenpde_obs_iov_sect)))) {
         if(ncol(ebenpde_obs_iov_sect) > 1) {
-          chart.Correlation(ebenpde_obs_iov_sect, histogram = TRUE, method = c("spearman"))
+          PerformanceAnalytics::chart.Correlation(ebenpde_obs_iov_sect, histogram = TRUE, method = c("spearman"))
         }
       }
   }
@@ -281,7 +246,6 @@ Correlation graph for EBE NPDE IOV
 
 ```{r QQplots_ebe_npde,results='hide',echo=FALSE,warning=FALSE,message=FALSE,fig.width=8,fig.height=6,fig.keep="high",fig.align="center"}
 # create outlier grafs and tables
-  if (require("PEIP") == TRUE){
     plot_ETA <- TRUE
     #...........................................(3)emp_distance....................................................    
     # Calsulate empirical distance
@@ -316,17 +280,12 @@ Correlation graph for EBE NPDE IOV
     vector_theor_dist <- list_plot_2$vector_theor_dist
     noutlier <- list_plot_2$noutlier
     outlier_id_row <- list_plot_2$outlier_id_row
-  } else {
-    plot_ETA <- FALSE
-    print("library PEIP not installed, cannot create outlier results for ebe npde")
-  }
 ```
 \pagebreak
 
 ```{r ebe_npde_outlier_table,results='hide',echo=FALSE,warning=FALSE,message=FALSE,fig.width=10,fig.height=5.5,fig.keep="high",fig.align="center"}
 # create outlier grafs and tables
-  if (require("PEIP") == TRUE){
-    
+
     #............................................(7)outlier_table......................................................    
     #CREATE FINAL TABLE (use function outlier_table to create a table fortable1)
     fortable1 <- outlier.table.ebe.npde(ebenpde_tmp,eta.names,outlier_id_row)
@@ -342,10 +301,6 @@ Correlation graph for EBE NPDE IOV
     } else {
       ebe.npde_outliers <- data.frame()
     }
-    
-  } else {
-    print("library PEIP not installed, cannot create outlier results for ebe npde")
-  }
 ```
 \pagebreak
 
@@ -434,7 +389,7 @@ if(ncol(all_outlier_table)>3) {
 #plots for vpc:s DV vs PRED, CWRES vs idv
 n.vpc <- length(vpctab.filenames)
 for(j in 1:n.vpc){  
-  plots <- xpose.VPC(vpc.info=vpc.result.files[j],vpctab=vpctab.filenames[j])
+  plots <- xpose4::xpose.VPC(vpc.info=vpc.result.files[j],vpctab=vpctab.filenames[j])
   print(plots) 
 }
 ```
