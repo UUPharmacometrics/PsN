@@ -157,7 +157,7 @@ print(ofv_table_print)
 ```
 
 ```{r draw_overview_table,results='asis',echo=F,warning=F,message=F}
-cat("#Overview\n\n")
+cat("# Overview\n\n")
 overview_table <- kable_table(overview_table_list$overview_table,format=type,booktabs=T,longtable=T,align=c("l","r","c"),linesep="") %>%
   kableExtra::kable_styling(position="c",full_width = F)
 for(i in 1:nrow(overview_table_list$row_groups)) {
@@ -169,18 +169,18 @@ cat("Overview of possible modifications to different model aspects, expected imp
 
 ```{r draw_structural_details_tables,eval=all(skip!="resmod"),results='asis',echo=F,warning=F,message=F,fig.width=11,fig.height=6.5,fig.keep="high",fig.align="center"}
 cat("\\pagebreak\n\n")
-cat("#Structural\n\n")
+cat("# Structural\n\n")
 all_structural_extra_plots(simeval_directory=file.path(working.directory,"simeval_run"),base_dataset,resmod_structural_details,
                            extra_table,idv_all,idv_name,dvid_name,type,nonlinear)
 ```
 
 ```{r Add_text_for_parameter_section_if_exist_mod_files,eval=all(skip!="transform"),results='asis',echo=F,warning=F,message=F}
 cat("\\pagebreak\n\n")
-cat("#Parameter Variability Model\n\n")
+cat("# Parameter Variability Model\n\n")
 ```
 
 ```{r draw_full_omega_block_table,eval=all(skip!="transform"),results='asis',echo=F,warning=F,message=F}
-cat("##Full OMEGA Block\n\n")
+cat("## Full OMEGA Block\n\n")
 if(list_par_var_models$fullblock_mod) {
   full_omega_block_table <- kable_table(full_omega_block_list$full_omega_block_table,format=type,booktabs=T,longtable=T,align = c("l","r","r"),linesep="") %>%
     kableExtra::kable_styling(position="c",full_width = F) %>%
@@ -193,7 +193,7 @@ if(list_par_var_models$fullblock_mod) {
 ```
 
 ```{r draw_boxcox_tranformation_table,eval=all(skip!="transform"),results='asis',echo=F,warning=F,message=F}
-cat("##Box-Cox Transformation\n\n")
+cat("## Box-Cox Transformation\n\n")
 boxcox_lambdas_table <- kable_table(boxcox_lambdas_list$param_extra_table,format=type,booktabs=T,longtable=T,align = c("l","r","r","r"),linesep="") %>%
   kableExtra::kable_styling(position="c",full_width = F) %>%
   kableExtra::row_spec(nrow(boxcox_lambdas_list$param_extra_table),bold=T)
@@ -213,7 +213,7 @@ for(i in 1:length(boxcox_shape_plot)) {
 if(!boxcox_lambdas_list$param_extra_table_error) {
   cat("\\pagebreak\n\n")
 }
-cat("##Additional etas\n\n")
+cat("## Additional etas\n\n")
 if(list_par_var_models$add_etas_mod) {
   add_etas_table <- kable_table(add_etas_list$add_etas_table,format=type,booktabs=T,longtable=T,align = c("l","r","r","r"),linesep="") %>%
     kableExtra::kable_styling(position="c",full_width = F) %>%
@@ -226,7 +226,7 @@ if(list_par_var_models$add_etas_mod) {
 ```
 
 ```{r draw_tdist_table,eval=all(skip!="transform"),results='asis',echo=F,warning=F,message=F}
-cat("##t-distribution\n\n")
+cat("## t-distribution\n\n")
 tdist_table <- kable_table(tdist_list$param_extra_table,format=type,booktabs=T,longtable=T,align = c("l","r","r","r"),linesep="") %>%
   kableExtra::kable_styling(position="c",full_width = F) %>%
   kableExtra::row_spec(nrow(tdist_list$param_extra_table),bold=T)
@@ -246,7 +246,7 @@ for(i in 1:length(tdist_shape_plot)) {
 if(make_tdist_shape_plot && (list_par_var_models$add_etas_mod || list_par_var_models$iov_mod)) {
   cat("\\pagebreak\n\n")
 }
-cat("##Interoccasion variability\n\n")
+cat("## Interoccasion variability\n\n")
 if(list_par_var_models$iov_mod) {
   iov_table <- kable_table(iov_list$iov_table,format=type,booktabs=T,longtable=T,align = c("l","r","r","r"),linesep="") %>%
     kableExtra::kable_styling(position="c",full_width = F) %>%
@@ -263,7 +263,7 @@ if(list_par_var_models$iov_mod) {
 
 ```{r draw_covariates_table,eval=(all(skip!="frem")||all(skip!="scm")),results='asis',echo=F,warning=F,message=F}
 cat("\\pagebreak\n\n")
-cat("#Covariates\n\n")
+cat("# Covariates\n\n")
 align <- paste(c("l",rep("r",ncol(covariates_table_list$covariates_extra_table)-1)),collapse = '')
 covariates_extra_table <- kable_table(covariates_table_list$covariates_extra_table,format=type,booktabs=T,longtable=T,linesep="",align = align) %>%
   kableExtra::kable_styling(position="c",full_width = F) %>%
@@ -278,7 +278,7 @@ all_frem_plots(file.path(working.directory, 'frem_run', 'postfrem_run'))
 
 ```{r draw_resiual_error_model_table,eval=all(skip!="resmod"),results='asis',echo=F,warning=F,message=F,fig.width=8,fig.height=6,fig.keep="high",fig.align="center"}
 cat("\\pagebreak\n\n")
-cat("#Residual Error Model\n\n")
+cat("# Residual Error Model\n\n")
 if(!nonlinear && file.exists(sub("(\\.[^.]+)$",".lst",original_max0_model)) &&
    file.exists(file.path(working.directory,paste0("resmod_",idv_name),"results.csv"))) {
   xpdb_data <- xpose::xpose_data(file = sub("(\\.[^.]+)$",".lst",original_max0_model)) %>%
@@ -313,7 +313,7 @@ for (i in 1:length(resmod_table_list$dvid_nr)) {
 
 ```{r draw_influential_individuals_table,eval=all(skip!="cdd"),results='asis',echo=F,warning=F,message=F}
 cat("\\pagebreak\n\n")
-cat("#Influential Individuals\n\n")
+cat("# Influential Individuals\n\n")
 if(ncol(ii_list$ii_table)==1 && nrow(ii_list$ii_table)==1) {
   cat(paste0(as.character(ii_list$ii_table[1,1]),"."),"\n\n")
 } else {
@@ -342,7 +342,7 @@ if(length(ii_list$infl_id)>0) {
 
 ```{r draw_outliers_table,eval=all(skip!="simeval"),results='asis',echo=F,warning=F,message=F}
 cat("\\pagebreak\n\n")
-cat("#Outliers\n\n")
+cat("# Outliers\n\n")
 if(ncol(outlier_table_list$outliers_table)==1 && nrow(outlier_table_list$outliers_table)==1) {
   cat(paste0(as.character(outlier_table_list$outliers_table[1,1]),"."),"\n\n")
 } else {
@@ -391,7 +391,7 @@ phi2 <- file.path(working.directory,"linearize_run/scm_dir1/derivatives.phi")
 make_iofv_plot <- iofv_vs_iofv(phi1,phi2)$make_plot
 if(make_iofv_plot) {
   cat("\\pagebreak\n\n")
-  cat("#Sanity checks\n\n")
+  cat("# Sanity checks\n\n")
   plot_iofv_vs_iofv <- iofv_vs_iofv(phi1,phi2)$plot
   print(plot_iofv_vs_iofv)
   cat("Agreement in individual OFV contribution (iOFV) between non-linear and linearized model. Deviations from the line of identity indicate problems in the model linearization step and warrant caution when interpreting the results of this report.")
@@ -401,7 +401,7 @@ if(make_iofv_plot) {
 ```{r additional_info,results='asis',echo=F,warning=F,message=F}
 if(file.exists(file.path(working.directory,"meta.yaml"))) {
   cat("\\pagebreak\n\n")
-  cat("#Additional information\n\n")
+  cat("# Additional information\n\n")
   add_info <- additional_info(yaml_file=file.path(working.directory,"meta.yaml"))
   cat("PsN_version:",add_info$PsN_version,"\n\n")
   cat("NONMEM_version:",add_info$NONMEM_version,"\n\n")
