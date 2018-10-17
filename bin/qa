@@ -42,6 +42,7 @@ my %optional_options = (
     'skip:s' => undef,
     'only:s' => undef,
     'add_etas:s' => undef,
+    'nm_parallel:s' => undef,
 );
 
 my $res = GetOptions( \%options,
@@ -144,6 +145,17 @@ $help_text{-lst_file} = <<'EOF';
 	Default is to use an lst-file with the same name as the model. Set a NONMEM
 	output file to be used for initial estimates.
 EOF
+
+$help_text{-nm_parallel} = <<'EOF';
+	-nm_parallel
+
+	Select a special NONMEM version to be used for the steps
+    that run one NONMEM run at a time. Currently linearize
+    and frem. The value of the threads option will be used for
+    the number of nodes for these tools and threads will be set
+    to one.
+EOF
+
 $help_text{-nointer} = <<'EOF';
 	-nointer
 
@@ -254,6 +266,7 @@ my $qa = tool::qa->new(
     skip => [split /,/, $options{'skip'}],
     only => [split /,/, $options{'only'}],
     add_etas => [split /,/, $options{'add_etas'}],
+    nm_parallel => $options{'nm_parallel'},
 );
 
 $qa->print_options(
