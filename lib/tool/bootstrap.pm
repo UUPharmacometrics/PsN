@@ -1255,13 +1255,15 @@ sub modelfit_analyze
         #Handle $ETAS
         my $phi_file = $model->get_phi_file();
         if (defined $phi_file) {
-            my @extra_files;
-            if (defined $model->extra_files) {
-                @extra_files = @{$self->extra_files};   
-            }
+            for my $model (@$modelsarr) {
+                my @extra_files;
+                if (defined $model->extra_files) {
+                    @extra_files = @{$self->extra_files};   
+                }
 
-            @extra_files = ( @extra_files, $phi_file );
-            $modelsarr->[0]->extra_files(\@extra_files);
+                @extra_files = ( @extra_files, $phi_file );
+                $model->extra_files(\@extra_files);
+            }
         }
 
 		#we use original data set here, use input copy_data
