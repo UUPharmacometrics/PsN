@@ -91,6 +91,7 @@ Changes and bug fixes from PsN 4.8.0 to x.x.x
 
    ___bootstrap___
 
+- Phi files from $ETAS will be used for dOFV calculation runs
 
 
    ___vpc/npc___
