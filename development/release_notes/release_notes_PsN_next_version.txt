@@ -87,6 +87,7 @@ Changes and bug fixes from PsN 4.8.0 to x.x.x
 
    ___sumo___
 
+- New option -parameters to only show parameter estimates
 
 
    ___bootstrap___

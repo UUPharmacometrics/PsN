@@ -36,6 +36,7 @@ my %optional_options = (
     'near_bound_sign_digits:i'    => undef,
     'near_zero_boundary_limit:f'  => undef,
     'sign_digits_off_diagonals:i' => undef,
+    'parameters!' => undef,
 );
 
 
@@ -60,6 +61,7 @@ $defaults{'condition_number_limit'}    = 1000;
 $defaults{'near_bound_sign_digits'}    = 2;
 $defaults{'near_zero_boundary_limit'}  = 0.001;
 $defaults{'sign_digits_off_diagonals'} = 2;
+$defaults{'parameters'} = 0;
 
 foreach my $opt ( keys(%optional_options) ){
   $opt =~ s/[!:|].*//g; #get rid of :s |? :i etcetera
@@ -179,7 +181,6 @@ $help_text{-max_problem_num} = <<'EOF';
 	only. PsN divides NONMEM output into problems and subproblems.
 EOF
 
-
 $help_text{-max_subproblem_num} = <<'EOF';
 	-max_subproblem_num=integer
 
@@ -230,6 +231,13 @@ EOF
 	performed by first converting the covariances to the corresponding
 	correlations and then check if they are close to +/-1 with this many
 	significant digits.
+EOF
+	
+$help_text{-parameters} = <<'EOF';
+	-parameters
+
+    Default is off. Only show the parameter estimates to more easily
+    be able to compare model runs.
 EOF
 
 $help_text{-confidence_interval} = $help_text{-ci};
@@ -428,7 +436,7 @@ require model;
 				my $corr_mess;
 				my @large_corrs;
 				
-				if($options{'check_run'}) {
+				if($options{'check_run'} and not $options{'parameters'}) {
 					## Start check termination
 
 					if ( $min_success eq '1' ) {
@@ -730,7 +738,7 @@ require model;
 				print "Sub-problem: ",$sub_problems+1,"\n" if $options{'max_subproblem_num'} > 1;
 				print "\n";
 
-				if($options{'check_run'}) {
+				if ($options{'check_run'} and not $options{'parameters'}) {
 					## Print the check_termination output
 					print $minim_mess,"\n";
 					print $round_mess,"\n";
@@ -765,71 +773,72 @@ require model;
 					print "\n";
 				}
 
-				if( $runtime ){
-					print "Total run time for model (hours:min:sec):                  $runtime\n";
-				}
-				if( $esttime ){
-					print "Estimation time for subproblem, sum over \$EST (seconds):   $esttime\n";
-				}
-				if( $covtime ){
-					print "Covariance time for subproblem, sum over \$EST (seconds):   $covtime\n";
-				}
-				print "\n";
-				if (defined $ofv) {
-					if (defined $dic){
-						print "DIC (Bayesian OBJV+OBJS^2/2): ",sprintf "%."."$options{'precision'}"."f",$ofv;
-						print"\n\n";
-					} else {
-						if ($nmversion < 7){
-							print "Objective function value: ",$ofv,"\n\n";
-						} else {
-							print "Objective function value: ", sprintf("%." . "$options{'precision'}" . "f", $ofv);
-							print "\n";
-                            # try to print delta-ofv
-                            my $annotation = $model->annotation;
-                            if (defined $annotation) {
-                                if (defined $annotation->get_based_on()) {
-                                    my $base_name = 'run' . $annotation->get_based_on() . '.lst';
-                                    if (-e $base_name) {
-                                        my $base_output = output->new(filename => $base_name);
-                                        if ($base_output->parsed_successfully) {
-                                            my $base_ofv = $base_output->get_single_value(attribute => 'ofv',
-                                                problem_index => $problems,
-                                                subproblem_index => $sub_problems);
-                                            if (defined $base_ofv) {
-                                                my $dofv = $ofv - $base_ofv;
-                                                print "Delta ofv (from run" . $annotation->get_based_on()  . "): ", sprintf("%." . "$options{'precision'}" . "f", $dofv), "\n";
+                if (not $options{'parameters'}) {
+                    if( $runtime ){
+                        print "Total run time for model (hours:min:sec):                  $runtime\n";
+                    }
+                    if( $esttime ){
+                        print "Estimation time for subproblem, sum over \$EST (seconds):   $esttime\n";
+                    }
+                    if( $covtime ){
+                        print "Covariance time for subproblem, sum over \$EST (seconds):   $covtime\n";
+                    }
+                    print "\n";
+                    if (defined $ofv) {
+                        if (defined $dic){
+                            print "DIC (Bayesian OBJV+OBJS^2/2): ",sprintf "%."."$options{'precision'}"."f",$ofv;
+                            print"\n\n";
+                        } else {
+                            if ($nmversion < 7){
+                                print "Objective function value: ",$ofv,"\n\n";
+                            } else {
+                                print "Objective function value: ", sprintf("%." . "$options{'precision'}" . "f", $ofv);
+                                print "\n";
+                                # try to print delta-ofv
+                                my $annotation = $model->annotation;
+                                if (defined $annotation) {
+                                    if (defined $annotation->get_based_on()) {
+                                        my $base_name = 'run' . $annotation->get_based_on() . '.lst';
+                                        if (-e $base_name) {
+                                            my $base_output = output->new(filename => $base_name);
+                                            if ($base_output->parsed_successfully) {
+                                                my $base_ofv = $base_output->get_single_value(attribute => 'ofv',
+                                                    problem_index => $problems,
+                                                    subproblem_index => $sub_problems);
+                                                if (defined $base_ofv) {
+                                                    my $dofv = $ofv - $base_ofv;
+                                                    print "Delta ofv (from run" . $annotation->get_based_on()  . "): ", sprintf("%." . "$options{'precision'}" . "f", $dofv), "\n";
+                                                }
                                             }
                                         }
                                     }
                                 }
+                                print "\n";
                             }
-                            print "\n";
-						}
-					}
-				} else {
-					print "Objective function value: UNDEFINED\n\n";
-				}
-				
-				if(defined $condno) {
-					print "Condition number: ",sprintf $form,$condno;
-					print "\n\n";
-				}
+                        }
+                    } else {
+                        print "Objective function value: UNDEFINED\n\n";
+                    }
 
-				if (scalar(@etashrinkage)>0){
-					print "ETA shrinkage: ".join(" ",@etashrinkage)."\n";
-				}
-				if (scalar(@epsshrinkage)>0){
-					print "EPS shrinkage: ".join(" ",@epsshrinkage)."\n\n";
-				}
+                    if(defined $condno) {
+                        print "Condition number: ",sprintf $form,$condno;
+                        print "\n\n";
+                    }
 
-				if (defined $observation_records -> [$problems]){
-					print "Number of observation records: ".$observation_records -> [$problems]."\n";
-				}
-				if (defined $individuals -> [$problems]){
-					print "Number of individuals: ".$individuals -> [$problems]."\n\n";
-				}
+                    if (scalar(@etashrinkage)>0){
+                        print "ETA shrinkage: ".join(" ",@etashrinkage)."\n";
+                    }
+                    if (scalar(@epsshrinkage)>0){
+                        print "EPS shrinkage: ".join(" ",@epsshrinkage)."\n\n";
+                    }
 
+                    if (defined $observation_records -> [$problems]){
+                        print "Number of observation records: ".$observation_records -> [$problems]."\n";
+                    }
+                    if (defined $individuals -> [$problems]){
+                        print "Number of individuals: ".$individuals -> [$problems]."\n\n";
+                    }
+                }
 				foreach my $row ( @output_matrix ){
 					for( my $i = 0; $i <= $#{$row}; $i++ ){
 						my $spaces = $output_matrix_sizes[$i] - length($row -> [$i]);
@@ -846,7 +855,7 @@ require model;
 			}
 		}
 
-		unless( $options{'confidence_interval'} or $options{'csv'}) {
+		if (not ($options{'confidence_interval'} or $options{'csv'}) and not $options{'parameters'}) {
 			if( !$options{'sd_rse'} ) {
 				print "\nThe relative standard errors for omega and sigma are reported on the variance scale\n".
 					"(SE/variance estimate).\n";
