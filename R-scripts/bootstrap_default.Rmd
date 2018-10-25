@@ -8,24 +8,10 @@ geometry: margin=1.5cm
 ---
 
 ```{r loading_libraries_and_sourcing_functions,include = FALSE}
-# get libPaths
-# source(file.path(rscripts.directory,"common/R_info.R"))
-# R_info(directory=working.directory,only_libPaths=T)
-# source(paste0(rscripts.directory, "/bootstrap/cook.cov.calcul.R"))
-# source(paste0(rscripts.directory, "/bootstrap/plot.cook.cov.R"))
-# source(paste0(rscripts.directory, "/bootstrap/format.dofv.data.R"))
-# source(paste0(rscripts.directory, "/bootstrap/plot.dofv.R"))
-# source(paste0(rscripts.directory, "/common/fix.column.names.R"))
-
 library(PsNR)
 library(magrittr)
 library(methods)
 library(plyr)
-# library(xpose4)
-# library(ggplot2)
-# library(grid)
-# library(plyr)
-# library(dplyr)
 #add R_info to the meta file
 R_info(directory=working.directory)
 ```
