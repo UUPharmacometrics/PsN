@@ -3,7 +3,7 @@
 my $version = $ARGV[0];
 
 my $user = 'rikno764';
-my $host = 'farmbio-n43.farmbio.uu.se';
+my $host = 'fbv-n67.farmbio.uu.se';
 
 chdir "../..";
 

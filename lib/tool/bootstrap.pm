@@ -1252,6 +1252,20 @@ sub modelfit_analyze
 			$samples_done++;
 		}
 
+        #Handle $ETAS
+        my $phi_file = $model->get_phi_file();
+        if (defined $phi_file) {
+            for my $model (@$modelsarr) {
+                my @extra_files;
+                if (defined $model->extra_files) {
+                    @extra_files = @{$self->extra_files};   
+                }
+
+                @extra_files = ( @extra_files, $phi_file );
+                $model->extra_files(\@extra_files);
+            }
+        }
+
 		#we use original data set here, use input copy_data
 		my $modelfit = tool::modelfit -> new(	%{common_options::restore_options(@common_options::tool_options)},
 												top_tool         => 0,
@@ -1265,7 +1279,8 @@ sub modelfit_analyze
 												logfile	         => undef,
 												copy_data          => $self->copy_data,
 												threads          => $self->threads,
-                                                model_subdir => 0);
+                                                model_subdir => 0,
+                                            );
 
 		$modelfit->run;
 

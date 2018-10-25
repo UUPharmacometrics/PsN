@@ -80,6 +80,13 @@ Name of the occasion column. The IOV functionality is not yet implemented.
 \optname{parameters}
 A comma-separated list of parameters.
 \nextopt
+\optname{nm\_parallel}
+	Select a special NONMEM version to be used for the steps
+    that run one NONMEM run at a time. Currently linearize
+    and frem. The value of the threads option will be used for
+    the number of nodes for these tools and threads will be set
+    to one.
+\nextopt
 \optname{nointer}
 Default is off. Don't use interaction. 
 \nextopt

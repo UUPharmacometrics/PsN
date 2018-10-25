@@ -58,7 +58,7 @@ sub _format_option
 	  $init = sprintf("$form",$init);
 	}
 
-	if ( ( defined $self->upbnd ) or ( defined $self->lobnd ) ) {
+	if ((defined $self->upbnd and $self->upbnd ne "") or (defined $self->lobnd and $self->lobnd ne "")) {
 	  $formatted = $formatted."(". $self->lobnd.",";
 	  $formatted = $formatted.$init;
 	  $formatted = $formatted.",".$self->upbnd if ( defined $self->upbnd );

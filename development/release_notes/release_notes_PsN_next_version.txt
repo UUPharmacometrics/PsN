@@ -87,10 +87,12 @@ Changes and bug fixes from PsN 4.8.0 to x.x.x
 
    ___sumo___
 
+- New option -parameters to only show parameter estimates
 
 
    ___bootstrap___
 
+- Phi files from $ETAS will be used for dOFV calculation runs
 
 
    ___vpc/npc___
@@ -140,6 +142,7 @@ Changes and bug fixes from PsN 4.8.0 to x.x.x
 	
 - Force input cov matrix to be positive definite after giving a warning.
 - Force matrix used for sampling to be positive definite.
+- Phi files from $ETAS will be used for dOFV calculation runs
 
    ___precond___
 

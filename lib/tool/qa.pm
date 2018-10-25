@@ -42,6 +42,8 @@ has 'orig_max0_model_path' => ( is => 'rw', isa => 'Str' );
 has 'base_model_path' => ( is => 'rw', isa => 'Str' );
 has 'base_dataset_path' => ( is => 'rw', isa => 'Str' );
 has 'extra_table_columns' => ( is => 'rw', isa => 'ArrayRef[Str]' );
+has 'nm_parallel' => ( is => 'rw', isa => 'Str' );  # Should a special NONMEM version be used for frem and linearize?
+has '_parallel_cores' => ( is => 'rw', isa => 'Maybe[Int]', default => undef );     # The number of -node to use for frem and linearize
 
 
 sub BUILD
@@ -76,6 +78,18 @@ sub BUILD
     for my $skip (@{$self->skip}) {
         if ($skip !~ /^(transform|scm|frem|cdd|simeval|resmod)$/) {
             die("skip: Unknown section $skip. Allowed are transform, scm, frem, cdd, simeval and resmod\n");
+        }
+    }
+
+    if (defined $self->nm_parallel) {
+        if (defined $self->threads) {
+            $self->_parallel_cores($self->threads);
+        }
+    } else {
+        if (defined $self->nm_version) {
+            $self->nm_parallel($self->nm_version);
+        } else {
+            $self->nm_parallel('default');
         }
     }
 }
@@ -149,6 +163,8 @@ sub modelfit_setup
             top_tool => 1,
             nm_output => 'ext,phi',
             model_subdir => 0,
+            nm_version => $self->nm_parallel,
+            nodes => $self->_parallel_cores,
         );
         $modelfit->run();
         
@@ -177,6 +193,8 @@ sub modelfit_setup
             nointer => $self->nointer,
             keep_covariance => 1,
             nm_output => 'phi,ext,cov,cor,coi',
+            nm_version => $self->nm_parallel,
+            nodes => $self->_parallel_cores,
         );
 
         $linearize->run();
@@ -365,6 +383,8 @@ sub modelfit_setup
                     rplots => 1,
                     top_tool => 1,
                     clean => 1,
+                    nm_version => $self->nm_parallel,
+                    nodes => $self->_parallel_cores,
                 );
                 $frem->run();
                 $frem->print_options(   # To get skip_omegas over to postfrem

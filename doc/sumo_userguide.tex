@@ -2,7 +2,7 @@
 \setlength{\evensidemargin}{0pt}
 \setlength{\oddsidemargin}{0pt}
 
-\guidetitle{SUMO user guide}{2018-03-02}
+\guidetitle{SUMO user guide}{2018-10-24}
 \usepackage{hyperref}
 \begin{document}
 
@@ -84,6 +84,10 @@ Default is 2. When a parameter estimates is equal to a boundary with these many 
 \nextopt
 \optdefault{near\_zero\_boundary\_limit}{N}
 Default is 0.001. If the bound is 0, the boundary test will issue a warning if the estimate is this close to zero. 
+\nextopt
+\optname{parameters}
+    Default is off. Only show the parameter estimates to more easily
+    be able to compare model runs.
 \nextopt
 \optdefault{precision}{integer}
 Default is 4. Precision in output.  
