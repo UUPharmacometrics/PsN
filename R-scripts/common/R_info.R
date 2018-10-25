@@ -25,7 +25,13 @@ R_info <- function(directory,only_libPaths=F) {
     }
   } else {
     #get loaded R packages
-    R_packages <- as.data.frame(devtools::session_info()[[2]])[,c("package","version","source")]
+    R_packages <- as.data.frame(devtools::session_info()[[2]])
+    if(any(colnames(R_packages)=="version")) {
+      R_packages <- R_packages[,c("package","version","source")]
+    } else {
+      R_packages <- R_packages[,c("package","loadedversion","source")] %>%
+        dplyr::rename(version=loadedversion)
+    }
     R_packages_vec <- paste0(R_packages$package[1],"-",R_packages$version[1]," from ",R_packages$source[1])
     for(i in 2:nrow(R_packages)) {
       R_packages_vec <- c(R_packages_vec,paste0(R_packages$package[i],"-",R_packages$version[i]," from ",R_packages$source[i]))
