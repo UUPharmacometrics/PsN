@@ -88,7 +88,7 @@ if (rplots.level > 1) {
 ```{r correlation_plot,results='hide',echo=FALSE,fig.width=10,fig.height=7,fig.keep="high",fig.align="center"}
 if(file.exists("raw_results_dofv.csv")) {
   df <- read.csv("raw_results_dofv.csv",stringsAsFactors = F)
-  needed_column <- fix_column_names(c("dofv", ESTIMATED.PARAMS))
+  needed_column <- fix_column_names(c("deltaofv", ESTIMATED.PARAMS))
   if(nrow(df)>1) {
     df <- df %>% 
       dplyr::select(!!needed_column) %>%
