@@ -1486,7 +1486,7 @@ sub _read_term
 			$success = 1;
 			next;
 		}
-		if ( /(PORTION|OPTIMIZATION|BURN-IN|EXPECTATION ONLY PROCESS)( WAS | )COMPLETED/ ) {
+		if ( /(PORTION|OPTIMIZATION|BURN-IN|EXPECTATION ONLY PROCESS)( STATISTICALLY | WAS | )COMPLETED/ ) {
 			$self -> minimization_successful(1) unless ($found_fail or $no_check_minim );
 			$self->lstfile_pos($start_pos - 1) unless ($success);
 			$success = 1;
