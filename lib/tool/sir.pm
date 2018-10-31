@@ -973,7 +973,7 @@ sub modelfit_setup
 		$message = "Running iteration ".$self->iteration()." evaluation models";
 
         #Handle $ETAS
-        my $phi_file = $model->get_phi_file();
+        my $phi_file = $model->get_or_set_etas_file();
         if (defined $phi_file) {
             for my $model (@$modelsarr) {
                 my @extra_files;
@@ -985,7 +985,6 @@ sub modelfit_setup
                 $model->extra_files(\@extra_files);
             }
         }
-
 		my $iteration_evaluation =
 			tool::modelfit ->new( %{common_options::restore_options(@common_options::tool_options)},
 								  models		 => $modelsarr,
