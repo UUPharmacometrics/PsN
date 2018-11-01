@@ -180,12 +180,16 @@ cat("# Parameter Variability Model\n\n")
 ```
 
 ```{r draw_full_omega_block_table,eval=all(skip!="transform"),results='asis',echo=F,warning=F,message=F}
-cat("## Full OMEGA Block\n\n")
+cat("##Full OMEGA Block\n\n")
 if(list_par_var_models$fullblock_mod) {
-  full_omega_block_table <- kable_table(full_omega_block_list$full_omega_block_table,format=type,booktabs=T,longtable=T,align = c("l","r","r"),linesep="") %>%
-    kableExtra::kable_styling(position="c",full_width = F) %>%
-    kableExtra::row_spec(nrow(full_omega_block_list$full_omega_block_table),bold=T)
-  print(full_omega_block_table)
+  if(full_omega_block_list$full_omega_block_error) {
+    cat(paste0(as.character(full_omega_block_list$full_omega_block_table[1,1]),"."),"\n\n")
+  } else {
+    full_omega_block_table <- kable_table(full_omega_block_list$full_omega_block_table,format=type,booktabs=T,longtable=T,align = c("l","r","r"),linesep="") %>%
+      kableExtra::kable_styling(position="c",full_width = F) %>%
+      kableExtra::row_spec(nrow(full_omega_block_list$full_omega_block_table),bold=T)
+    print(full_omega_block_table)
+  }
   cat("Estimated standard deviation (sd) and correlation (corr) as well as expected improvement in OFV when allowing for a full block correlation structure between subject-level random effects.")
 } else {
   cat("Model already has full OMEGA Block.")
@@ -193,11 +197,15 @@ if(list_par_var_models$fullblock_mod) {
 ```
 
 ```{r draw_boxcox_tranformation_table,eval=all(skip!="transform"),results='asis',echo=F,warning=F,message=F}
-cat("## Box-Cox Transformation\n\n")
-boxcox_lambdas_table <- kable_table(boxcox_lambdas_list$param_extra_table,format=type,booktabs=T,longtable=T,align = c("l","r","r","r"),linesep="") %>%
-  kableExtra::kable_styling(position="c",full_width = F) %>%
-  kableExtra::row_spec(nrow(boxcox_lambdas_list$param_extra_table),bold=T)
-print(boxcox_lambdas_table)
+cat("##Box-Cox Transformation\n\n")
+if(boxcox_lambdas_list$param_extra_table_error) {
+    cat(paste0(as.character(boxcox_lambdas_list$param_extra_table[1,1]),"."),"\n\n")
+} else {
+  boxcox_lambdas_table <- kable_table(boxcox_lambdas_list$param_extra_table,format=type,booktabs=T,longtable=T,align = c("l","r","r","r"),linesep="") %>%
+    kableExtra::kable_styling(position="c",full_width = F) %>%
+    kableExtra::row_spec(nrow(boxcox_lambdas_list$param_extra_table),bold=T)
+  print(boxcox_lambdas_table)
+}
 cat("Estimated shape parameters (Lambda) as well as expected improvement in OFV when estimating a Box-Cox transformation for each subject-level random effect.")
 ```
 
@@ -213,12 +221,16 @@ for(i in 1:length(boxcox_shape_plot)) {
 if(!boxcox_lambdas_list$param_extra_table_error) {
   cat("\\pagebreak\n\n")
 }
-cat("## Additional etas\n\n")
+cat("##Additional etas\n\n")
 if(list_par_var_models$add_etas_mod) {
-  add_etas_table <- kable_table(add_etas_list$add_etas_table,format=type,booktabs=T,longtable=T,align = c("l","r","r","r"),linesep="") %>%
-    kableExtra::kable_styling(position="c",full_width = F) %>%
-    kableExtra::row_spec(nrow(add_etas_list$add_etas_table),bold=T)
-  print(add_etas_table)
+  if(add_etas_list$add_etas_error) {
+    cat(paste0(as.character(add_etas_list$add_etas_table[1,1]),"."),"\n\n")
+  } else {
+    add_etas_table <- kable_table(add_etas_list$add_etas_table,format=type,booktabs=T,longtable=T,align = c("l","r","r","r"),linesep="") %>%
+      kableExtra::kable_styling(position="c",full_width = F) %>%
+      kableExtra::row_spec(nrow(add_etas_list$add_etas_table),bold=T)
+    print(add_etas_table)
+  }
   cat("Consequences of including additional subject-level random effects on selected parameters in terms of estimated standard deviation (SD) of new and existing random effect parameters as well as expected improvement in OFV.")
 } else {
   cat("No additional etas were added.")
@@ -226,11 +238,15 @@ if(list_par_var_models$add_etas_mod) {
 ```
 
 ```{r draw_tdist_table,eval=all(skip!="transform"),results='asis',echo=F,warning=F,message=F}
-cat("## t-distribution\n\n")
-tdist_table <- kable_table(tdist_list$param_extra_table,format=type,booktabs=T,longtable=T,align = c("l","r","r","r"),linesep="") %>%
-  kableExtra::kable_styling(position="c",full_width = F) %>%
-  kableExtra::row_spec(nrow(tdist_list$param_extra_table),bold=T)
-print(tdist_table)
+cat("##t-distribution\n\n")
+if(tdist_list$param_extra_table_error) {
+    cat(paste0(as.character(tdist_list$param_extra_table[1,1]),"."),"\n\n")
+} else {
+  tdist_table <- kable_table(tdist_list$param_extra_table,format=type,booktabs=T,longtable=T,align = c("l","r","r","r"),linesep="") %>%
+    kableExtra::kable_styling(position="c",full_width = F) %>%
+    kableExtra::row_spec(nrow(tdist_list$param_extra_table),bold=T)
+  print(tdist_table)
+}
 cat("Estimated degrees of freedom as well as expected improvement in OFV when estimating a t-distribution transformation for each subject-level random effect.")
 ```
 
@@ -246,15 +262,19 @@ for(i in 1:length(tdist_shape_plot)) {
 if(make_tdist_shape_plot && (list_par_var_models$add_etas_mod || list_par_var_models$iov_mod)) {
   cat("\\pagebreak\n\n")
 }
-cat("## Interoccasion variability\n\n")
+cat("##Interoccasion variability\n\n")
 if(list_par_var_models$iov_mod) {
-  iov_table <- kable_table(iov_list$iov_table,format=type,booktabs=T,longtable=T,align = c("l","r","r","r"),linesep="") %>%
-    kableExtra::kable_styling(position="c",full_width = F) %>%
-    kableExtra::row_spec(nrow(iov_list$iov_table),bold=T)
-  if(!iov_list$iov_error) {
-    iov_table <- iov_table %>% kableExtra::add_header_above(c(" "=1,"New SD"=2," "=1))
+  if(iov_list$iov_error) {
+    cat(paste0(as.character(iov_list$iov_table[1,1]),"."),"\n\n")
+  } else {
+    iov_table <- kable_table(iov_list$iov_table,format=type,booktabs=T,longtable=T,align = c("l","r","r","r"),linesep="") %>%
+      kableExtra::kable_styling(position="c",full_width = F) %>%
+      kableExtra::row_spec(nrow(iov_list$iov_table),bold=T)
+    if(!iov_list$iov_error) {
+      iov_table <- iov_table %>% kableExtra::add_header_above(c(" "=1,"New SD"=2," "=1))
+    }
+    print(iov_table)
   }
-  print(iov_table)
   cat("Consequences of including inter-occasion variability in terms of estimated standard deviation (SD) for inter-individual (IIV) and inter-occasion variability (IOV) as well as expected improvement in OFV.")
 } else {
   cat("No interoccasion variability was added.")
@@ -374,14 +394,16 @@ if(length(outlier_table_list$outlier_ids)>0) {
 ```{r add_all_outliers_overall_table,eval=all(skip!="simeval"),results='asis',echo=F,warning=F,message=F}
 all_outl_list <- simeval_all_ouliers_table(simeval_directory=file.path(working.directory,"simeval_run"))
 if(all_outl_list$files_exist) {
-  simeval_overall_outliers_table <- kable_table(all_outl_list$all_outlier_table,booktabs=T,format=type,longtable=T,align = c("l","c","c","c","c","c"),linesep="") %>%
-    kableExtra::kable_styling(position="c",full_width = F)
-if(!(is.null(all_outl_list$add_header_above))) {
-  simeval_overall_outliers_table <- simeval_overall_outliers_table %>% kableExtra::add_header_above(all_outl_list$add_header_above,bold=T)
-}
-  cat("\\pagebreak\n\n")
-  print(simeval_overall_outliers_table)
-  cat("Subjects marked as outliers and the metrics used to identify them: (1) OFV outliers have a worse than expected fit, (2) EBE NPDE outliers show significant deviation in their empirical Bayes estimates and (3) CWRES outliers have observations with worse than expected residuals.")
+  if(ncol(all_outl_list$all_outlier_table)>1 && nrow(all_outl_list$all_outlier_table)>1) {
+    simeval_overall_outliers_table <- kable_table(all_outl_list$all_outlier_table,booktabs=T,format=type,longtable=T,align = c("l","c","c","c","c","c"),linesep="") %>%
+      kableExtra::kable_styling(position="c",full_width = F)
+    if(!(is.null(all_outl_list$add_header_above))) {
+      simeval_overall_outliers_table <- simeval_overall_outliers_table %>% kableExtra::add_header_above(all_outl_list$add_header_above,bold=T)
+    }
+    cat("\\pagebreak\n\n")
+    print(simeval_overall_outliers_table)
+    cat("Subjects marked as outliers and the metrics used to identify them: (1) OFV outliers have a worse than expected fit, (2) EBE NPDE outliers show significant deviation in their empirical Bayes estimates and (3) CWRES outliers have observations with worse than expected residuals.")
+  }
 }
 ```
 
