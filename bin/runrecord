@@ -313,17 +313,17 @@ for( my $run = $from; $run <= $to; $run++ ){
         if ($have_output){
             #get_values_to_labels only works on defined output and if successful parsing
             if($param =~/^omega/ and $var eq 'no') {
-                $params     = $model -> get_values_to_labels(category => 'comega');
+                $params     = $model -> get_values_to_labels(category => 'comega', onlywarn => 1);
             } elsif($param =~/^sigma/ and $var eq 'no') {
-                $params     = $model -> get_values_to_labels(category => 'csigma');
+                $params     = $model -> get_values_to_labels(category => 'csigma', onlywarn => 1);
             } elsif($param =~/^setheta/ and $rse eq 'yes') {
-                $params     = $model -> get_values_to_labels(category => 'cvsetheta');
+                $params     = $model -> get_values_to_labels(category => 'cvsetheta', onlywarn => 1);
             } elsif($param =~/^seomega/ and $rse eq 'yes') {
-                $params     = $model -> get_values_to_labels(category => 'cvseomega');
+                $params     = $model -> get_values_to_labels(category => 'cvseomega', onlywarn => 1);
             } elsif($param =~/^sesigma/ and $rse eq 'yes') {
-                $params     = $model -> get_values_to_labels(category => 'cvsesigma');
+                $params     = $model -> get_values_to_labels(category => 'cvsesigma', onlywarn => 1);
             } else {
-                $params     = $model -> get_values_to_labels(category => $param);
+                $params     = $model -> get_values_to_labels(category => $param, onlywarn => 1);
             }
         }
 

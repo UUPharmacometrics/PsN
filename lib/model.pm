@@ -1329,11 +1329,13 @@ sub get_values_to_labels
 	my %parm = validated_hash(\@_,
 		 category => { isa => 'Str', optional => 0 },
 		 label_model => { isa => 'Maybe[model]', optional => 1 },
-		 output_object => { isa => 'Maybe[output]', optional => 1 }
+		 output_object => { isa => 'Maybe[output]', optional => 1 },
+		 onlywarn => { optional => 1, default => 0 },
 	);
 	my $category = $parm{'category'};
 	my $label_model = $parm{'label_model'};
 	my $output_object = $parm{'output_object'};
+	my $onlywarn = $parm{'onlywarn'};
 	my @out_values;
 
 	# Usage:$modobj -> get_values_to_labels ( category => $categ);
@@ -1344,11 +1346,18 @@ sub get_values_to_labels
 	unless (defined $output_object){
 		$output_object = $self -> outputs -> [0];
 	}
+	unless (defined $onlywarn){
+	    $onlywarn = 0;
+	}
 	unless (defined $output_object){
 	 croak("get_values_to_labels can only be called where output object exists");
 	}
 	my $error = $output_object ->load;
-	if ( $error ) {
+	if ( ($error) && ($onlywarn) ) {
+	    carp("model->get_values_to_labels cannot be run, output file error: \n".$error);
+	    my $empty = [];
+	    return $empty;
+	} elsif ( $error ) {
 	    croak("model->get_values_to_labels cannot be run, output file error: \n".$error);
 	}
 
