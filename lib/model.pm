@@ -3,6 +3,7 @@ package model;
 use include_modules;
 use Cwd;
 use File::Copy 'cp';
+use File::Basename;
 use File::Spec qw(splitpath catfile);
 use Config;
 use OSspecific;
@@ -592,6 +593,7 @@ sub copy
 							  filename => { isa => 'Str', optional => 0 },
 							  write_copy => { isa => 'Bool', default => 1, optional => 1 },
 							  copy_output => { isa => 'Bool', default => 0, optional => 1 },
+							  copy_etas => { isa => 'Bool', default => 0, optional => 1 },
 							  copy_datafile => { isa => 'Bool', default => 0, optional => 1 },
 							  copy_msfi => { isa => 'Bool', default => 0, optional => 1 },
 							  output_same_directory => { isa => 'Bool', default => 0, optional => 1 },
@@ -602,6 +604,7 @@ sub copy
 	my $filename = $parm{'filename'};
 	my $write_copy = $parm{'write_copy'};
 	my $copy_output = $parm{'copy_output'};
+	my $copy_etas = $parm{'copy_etas'};
 	my $copy_datafile = $parm{'copy_datafile'};
 	my $copy_msfi = $parm{'copy_msfi'};
 	my $output_same_directory = $parm{'output_same_directory'};
@@ -681,6 +684,15 @@ sub copy
 		$new_model->datafiles(new_names => \@new_names);
 		$new_model->relative_data_path(1);
 	}
+
+    if ($copy_etas) {
+        my $phi_file = $self->get_or_set_etas_file();
+        if (defined $phi_file) {
+            cp($phi_file, $directory);
+            $new_model->get_or_set_etas_file(new_file => basename($phi_file));
+        }
+    }
+
 	$new_model->_write(copy_msfi => $copy_msfi) if ($write_copy);
 	return $new_model;
 }

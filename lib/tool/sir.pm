@@ -485,6 +485,7 @@ sub modelfit_setup
 									   write_copy => 1,
 									   copy_datafile   => 0,
 									   copy_output => 0,
+                                       copy_etas => 1,
 									   directory => $self->directory);
 	}
 	if ($self->recover and $self->done){
