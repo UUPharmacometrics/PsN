@@ -784,42 +784,45 @@ require model;
                         print "Covariance time for subproblem, sum over \$EST (seconds):   $covtime\n";
                     }
                     print "\n";
-                    if (defined $ofv) {
-                        if (defined $dic){
-                            print "DIC (Bayesian OBJV+OBJS^2/2): ",sprintf "%."."$options{'precision'}"."f",$ofv;
-                            print"\n\n";
+                }
+
+                if (defined $ofv) {
+                    if (defined $dic){
+                        print "DIC (Bayesian OBJV+OBJS^2/2): ",sprintf "%."."$options{'precision'}"."f",$ofv;
+                        print"\n\n";
+                    } else {
+                        if ($nmversion < 7){
+                            print "Objective function value: ",$ofv,"\n\n";
                         } else {
-                            if ($nmversion < 7){
-                                print "Objective function value: ",$ofv,"\n\n";
-                            } else {
-                                print "Objective function value: ", sprintf("%." . "$options{'precision'}" . "f", $ofv);
-                                print "\n";
-                                # try to print delta-ofv
-                                my $annotation = $model->annotation;
-                                if (defined $annotation) {
-                                    if (defined $annotation->get_based_on()) {
-                                        my $base_name = 'run' . $annotation->get_based_on() . '.lst';
-                                        if (-e $base_name) {
-                                            my $base_output = output->new(filename => $base_name);
-                                            if ($base_output->parsed_successfully) {
-                                                my $base_ofv = $base_output->get_single_value(attribute => 'ofv',
-                                                    problem_index => $problems,
-                                                    subproblem_index => $sub_problems);
-                                                if (defined $base_ofv) {
-                                                    my $dofv = $ofv - $base_ofv;
-                                                    print "Delta ofv (from run" . $annotation->get_based_on()  . "): ", sprintf("%." . "$options{'precision'}" . "f", $dofv), "\n";
-                                                }
+                            print "Objective function value: ", sprintf("%." . "$options{'precision'}" . "f", $ofv);
+                            print "\n";
+                            # try to print delta-ofv
+                            my $annotation = $model->annotation;
+                            if (defined $annotation) {
+                                if (defined $annotation->get_based_on()) {
+                                    my $base_name = 'run' . $annotation->get_based_on() . '.lst';
+                                    if (-e $base_name) {
+                                        my $base_output = output->new(filename => $base_name);
+                                        if ($base_output->parsed_successfully) {
+                                            my $base_ofv = $base_output->get_single_value(attribute => 'ofv',
+                                                problem_index => $problems,
+                                                subproblem_index => $sub_problems);
+                                            if (defined $base_ofv) {
+                                                my $dofv = $ofv - $base_ofv;
+                                                print "Delta ofv (from run" . $annotation->get_based_on()  . "): ", sprintf("%." . "$options{'precision'}" . "f", $dofv), "\n";
                                             }
                                         }
                                     }
                                 }
-                                print "\n";
                             }
+                            print "\n";
                         }
-                    } else {
-                        print "Objective function value: UNDEFINED\n\n";
                     }
+                } else {
+                    print "Objective function value: UNDEFINED\n\n";
+                }
 
+                if (not $options{'parameters'}) {
                     if(defined $condno) {
                         print "Condition number: ",sprintf $form,$condno;
                         print "\n\n";
