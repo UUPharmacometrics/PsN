@@ -27,24 +27,6 @@ extends 'tool';
     # the prediction and the estimation datasets.
 #end synopsis
 
-#start see_also
-    # =begin html
-    #
-    # <a HREF="../data.html">data</a>, <a
-    # HREF="../model.html">model</a> <a
-    # HREF="../output.html">output</a>, <a
-    # HREF="../tool.html">tool</a>
-    #
-    # =end html
-    #
-    # =begin man
-    #
-    # data, model, output, tool
-    #
-    # =end man
-#end see_also
-
-		
 has 'nr_validation_groups' => ( is => 'rw', isa => 'Int', default => 5 );
 has 'stratify_on' => ( is => 'rw', isa => 'Str' );
 has 'cutoff' => ( is => 'rw', isa => 'Num' ); #for lasso
