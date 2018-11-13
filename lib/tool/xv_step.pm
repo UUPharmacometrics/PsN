@@ -708,7 +708,7 @@ sub create_data_sets
 		$have_data = 0;
 		# Create subsets of the dataobject.
 		($subsets,$array) = $data_obj->subsets(bins => $self->nr_validation_groups,
-											   stratify_on => $self->stratify_on());
+											   stratify_on => $self->stratify_on);
 		
 		trace(tool => 'xv_step_subs', message => "create data", level => 1);
 	} else {

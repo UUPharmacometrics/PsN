@@ -1950,7 +1950,7 @@ sub subsets
 	my $self = shift;
 	my %parm = validated_hash(\@_,
 		bins => { isa => 'Int', optional => 1 },
-		stratify_on => { isa => 'Maybe[Int]', optional => 1 },
+		stratify_on => { isa => 'Maybe[Int|Str]', optional => 1 },
 		MX_PARAMS_VALIDATE_NO_CACHE => 1
 	);
 	my $bins = $parm{'bins'};
@@ -1961,8 +1961,6 @@ sub subsets
 	#this is used in xv_step_subs.pm and nowhere else
 	#returns data objects which are not written to disk
 	#input is integer bins integer stratify_on
-	#add possibility to have stratify_on $column_head which is then translated to column number
-	#or make it only on column head instead of column number
 
 	my @header  = @{$self->header()};
 	my @comment = defined $self->comment() ? @{$self->comment()} : ();

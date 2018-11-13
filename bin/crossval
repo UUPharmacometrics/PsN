@@ -23,7 +23,10 @@ Getopt::Long::config("auto_abbrev");
 my %options;
 
 my %required_options = ( "groups:i"=> undef );
-my %optional_options = ( "msf!" => undef);
+my %optional_options = (
+    "msf!" => undef,
+    "stratify_on:s" => undef,
+);
 
 my $res = GetOptions( \%options, 
 		      @common_options::get_opt_strings,
@@ -73,6 +76,7 @@ $help_text{-groups} = <<'EOF';
 
 The number of cross-validation groups in the data set.
 EOF
+
 $help_text{-msf} = <<'EOF';
 	-msf
 
@@ -80,6 +84,14 @@ $help_text{-msf} = <<'EOF';
 	with final estimates from estimation models. If -msf is set, instead use
 	MSFO - MSFI to transfer parameter values from estimation models to
 	prediction models.
+EOF
+
+$help_text{-stratify_on} = <<'EOF';
+	-stratify_on=column
+
+	Used to stratify on a certain column. The proportions of individuals
+    will be kept the same for the cross validation groups as for the 
+    full dataset.
 EOF
 
 common_options::online_help( 'crossval', \%options, \%help_text, \%required_options, \%optional_options);
@@ -150,6 +162,7 @@ my $xv =  tool::xv_step -> new( eval( $common_options::parameters ),
 								is_nonparametric => $is_nonparametric,
 								msf => $options{'msf'},
 								models => \@models,
+                                stratify_on => $options{'stratify_on'},
 								subtool_arguments => { modelfit => { eval( $common_options::parameters ),
 																	 directory => undef} },
     );

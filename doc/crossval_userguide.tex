@@ -1,5 +1,5 @@
 \input{inputs/format_header.tex}
-\guidetitle{CROSSVAL user guide}{2018-03-02}
+\guidetitle{CROSSVAL user guide}{2018-11-13}
 
 \usepackage{hyperref}
 
@@ -39,6 +39,11 @@ Default not set, which means prediction model\\
 THETA/OMEGA/SIGMA are updated with final estimates from estimation models.
 If -msf is set, instead use MSFO - MSFI to transfer parameter values from estimation models to prediction models.
 \nextopt
+    \optname{stratify\_on}
+	Used to stratify on a certain column. The proportions of individuals
+    will be kept the same for the cross validation groups as for the 
+    full dataset.
+    \nextopt
 \end{optionlist}
 
 \subsection{PsN common options}
