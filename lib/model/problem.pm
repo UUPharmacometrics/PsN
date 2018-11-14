@@ -3886,9 +3886,10 @@ sub ignored_or_accepted_columns
             my $expression;
             if ($option->name =~ /\((.*)\)/) {
                 $expression = $1;
-            } else {
-                $option->value =~ /\((.*)\)/;
+            } elsif ($option->value =~ /\((.*)\)/) {
                 $expression = $1;
+            } else {
+                next;
             }
             my @comparisons = split /,/, $expression;
             for my $comp (@comparisons) {
