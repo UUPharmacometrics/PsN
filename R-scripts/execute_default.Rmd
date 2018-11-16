@@ -7,6 +7,7 @@ geometry: margin=1.5cm
 
 ```{r load_libraries_and_source_functions,include = FALSE}
 # get libPaths
+library(magrittr)
 source(file.path(rscripts.directory,"common/R_info.R"))
 R_info(directory=working.directory,only_libPaths=T)
 # Used libraries
