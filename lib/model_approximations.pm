@@ -7,6 +7,78 @@ use MooseX::Params::Validate;
 use model_transformations;
 use code;
 
+sub derivatives_model
+{
+    # Create a model that can generate the first order derivatives
+    my %parm = validated_hash(\@_,
+        model => { isa => 'model' },
+    );
+    my $model = $parm{'model'};
+
+    my $derivatives_model = $model;#->copy(filename => 'derivatives.mod', write_copy => 0);
+
+    #can look for ADVAN<any number> this way
+    my ($advan, $junk) = $derivatives_model->problems->[0]->_option_val_pos(
+        record_name => 'subroutine',
+        name => 'ADVAN',
+        exact_match => 0
+    );
+    my $have_advan = scalar(@{$advan}) > 0;
+
+    my $code_record_name;
+    my $H;
+    if ($have_advan) {
+        # We have and ADVAN option in $SUBROUTINE, get $ERROR code
+        $code_record_name = 'error';
+        $H = 'HH';
+    } else {
+        # No ADVAN subroutine, we should modify $PRED code
+        $code_record_name = 'pred';
+        $H = 'H';
+    }
+
+    my $nETA = $derivatives_model->nomegas(with_correlations => 0, with_same => 1)->[0];
+    my $nEPS = $derivatives_model->nsigmas(with_correlations => 0, with_same => 1)->[0];
+
+    my @tablestrings;
+    for (my $j = 1; $j <= $nEPS; $j++) {
+        if ($j < 10) {
+            push(@tablestrings, "H0${j}1");
+        } else {
+            push(@tablestrings, "H${j}1");
+        }
+    }
+
+    for (my $i = 1; $i <= $nETA; $i++) {
+        if ($i < 10) {
+            push(@tablestrings, "G0${i}1");
+        } else {
+            push(@tablestrings, "G${i}1");
+        }
+    }
+
+    # Get code array reference, so we can update the code inplace.
+    my @abbreviated_code;
+    my @verbatim_code;
+    for (my $i = 1; $i <= $nEPS; $i++) {
+        for (my $j = 1; $j <= $nETA; $j++) {
+            push @abbreviated_code, "D_EPSETA${i}_$j = 0";
+            push(@verbatim_code, "D_EPSETA${i}_$j=$H($i," . ($j + 1) . ")");
+            push(@tablestrings, "D_EPSETA${i}_$j");
+        }
+    }
+
+    model_transformations::append_code(model => $derivatives_model, code => \@abbreviated_code, record => $code_record_name);
+    code::append_verbatim_code(model => $derivatives_model, code_record => $code_record_name, pos => 'LAST', code => \@verbatim_code);
+
+    push(@tablestrings, 'NOPRINT','NOAPPEND','ONEHEADER');
+    push(@tablestrings, 'FILE=derivatives.tab');
+    push(@tablestrings, 'FORMAT=s1PE15.8');
+    $derivatives_model->add_records(type => 'table', record_strings => \@tablestrings);
+
+    return $derivatives_model;
+}
+
 sub linearize_error_terms
 {
     # Create the error terms for a linearized model 

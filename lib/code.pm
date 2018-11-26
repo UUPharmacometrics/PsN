@@ -35,7 +35,7 @@ sub append_verbatim_code
         $record = $code_array->[0];
         $verbatim_code = $record->verbatim_first;
     } else {
-        $record = $code_array->[scalar(@$code_record) - 1];
+        $record = $code_array->[scalar(@$code_array) - 1];
         $verbatim_code = $record->verbatim_last;
     }
 

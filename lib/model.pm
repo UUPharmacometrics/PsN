@@ -5625,6 +5625,12 @@ sub get_pk_or_pred_code
     return ($code_record, \@code);
 }
 
+sub get_last_main_code_record
+{
+
+}
+
+
 sub defined_variable
 {
     # Check if a variable is defined in code or in $INPUT

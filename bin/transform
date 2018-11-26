@@ -13,6 +13,7 @@ use common_options;
 use Cwd;
 use ui;
 use model_transformations;
+use model_approximations;
 # More PsN dependencies included with require further down
 
 my $cmd_line = $0 . " " . join( " ", @ARGV );
@@ -44,7 +45,7 @@ my $res = GetOptions( \%options,
     keys(%optional_options) );
 exit unless $res;
 
-my @valid_transformations = ( 'boxcox', 'tdist', 'full_block', 'add_tv', 'add_iov', 'remove_iiv', 'remove_iov', 'remove_0fix_omegas', 'omit_ids', 'iiv_on_ruv', 'power_on_ruv', 'diagonal_to_block', 'add_etas', 'uniform', 'remove_nonobs' );
+my @valid_transformations = ( 'boxcox', 'tdist', 'full_block', 'add_tv', 'add_iov', 'remove_iiv', 'remove_iov', 'remove_0fix_omegas', 'omit_ids', 'iiv_on_ruv', 'power_on_ruv', 'diagonal_to_block', 'add_etas', 'uniform', 'remove_nonobs', 'derivatives' );
 my $valid_transformations_string = join("\n", @valid_transformations);
 
 my %help_text;
@@ -339,6 +340,8 @@ if ($transformation eq 'boxcox') {
         $dv = $options{'dv'};
     }
     model_transformations::remove_nonobs(model => $model, dv => $dv);
+} elsif ($transformation eq 'derivatives') {
+    model_approximations::derivatives_model(model => $model);
 }
 
 $model->_write();
