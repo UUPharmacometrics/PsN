@@ -2831,6 +2831,10 @@ sub get_tte_data
 
 	my $remove_after_zip=1;
 	my $done_zip=0;
+    my $target_directory = $self->models->[0]->directory;
+    if ($self->model_subdir) {
+        $target_directory = $self->base_directory . $self->model_subdir_name;
+    }
 	if(eval("require Archive::Zip")){
 
 		unless ($self->clean() > 2){
@@ -2846,7 +2850,7 @@ sub get_tte_data
 			unlink($sim_data) if ($remove_after_zip==1);
 			$done_zip=1;
 			if (length($tabno)>0){
-				mv($sim_data.'.zip',$self->models->[0]->directory().$sim_data.'.zip');
+				mv($sim_data . '.zip', $target_directory . $sim_data . '.zip');
 			}else{
 				mv($sim_data.'.zip',$sim_data.'1.zip');
 			}
@@ -2856,7 +2860,7 @@ sub get_tte_data
 		ui -> print (category=>'vpc', message=>"\nCould not zip file $sim_data. ".
 					 "It must be zipped manually before creating Kaplan-Meier plots with Xpose.\n");
 		if (length($tabno)>0){
-			mv($sim_data, $self->models->[0]->directory().$sim_data);
+			mv($sim_data, $target_directory . $sim_data);
 		}else{
 			mv($sim_data,$sim_data.'1');
 		}

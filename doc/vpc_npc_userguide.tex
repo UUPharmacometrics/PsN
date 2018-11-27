@@ -1,5 +1,5 @@
 \input{inputs/format_header.tex}
-\guidetitle{VPC and NPC user guide}{2018-03-02}
+\guidetitle{VPC and NPC user guide}{2018-11-27}
 \usepackage{hyperref}
 \begin{document}
 
@@ -459,7 +459,7 @@ The model parameters will never be reestimated. If an .lst-file is given as inpu
 
 The two modified models are run using PsN. The real data is only filtered on already present ACCEPT/IGNORE statements in the input model, and the table is named mytab$<$runno$>$ to suit the automatic data reading of Xpose. If -stratify\_on has been used, then all variables defined will be included in mytab<runno>. The simulation output is filtered on the variable specified using option -tte: all lines where the value in the tte column is equal to 0 are removed. Variables given using option stratify\_on will be included in simulation output. Also, three additional columns are created: one for the accumulated number of events for the (simulated) individual, one for the order number of the simulated individual (a number between 1 and “samples”*N\_individuals), and one for the order number of the simulation (a number between 1 and “samples”).  Finally the formatted simulated output is zipped. If PsN fails to zip the file it must be done manually before Xpose can be used to produce the final plots using the command kaplan.plot.
 
-If the regular input model file name has the form run<runno>.mod, where $<$runno$>$ is a number, PsN will move the zipped simulated data simtab$<$runno$>$.zip up to the calling directory, to simplify data reading using Xpose. The real data table mytab$<$runno$>$ is copied to the calling directory. If a file with the same name already exists the original file will be renamed mytab$<$runno$>$\_original, unless mytab$<$runno$>$\_original already exists in which case the old mytab$<$runno$>$ is overwritten. 
+If the regular input model file name has the form run<runno>.mod, where $<$runno$>$ is a number, PsN will move the zipped simulated data simtab$<$runno$>$.zip up to the calling directory (or the model subdirectory if the option -model\_subdir was used.), to simplify data reading using Xpose. The real data table mytab$<$runno$>$ is copied to the calling directory. If a file with the same name already exists the original file will be renamed mytab$<$runno$>$\_original, unless mytab$<$runno$>$\_original already exists in which case the old mytab$<$runno$>$ is overwritten. 
 
 If the regular input model file name does not have the form run$<$runno$>$.mod, PsN will not move or copy anything to the calling directory but keep the output files in the vpc run directory and name them simtab1.zip and mytab1. 
 

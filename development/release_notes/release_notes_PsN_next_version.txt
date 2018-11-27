@@ -99,6 +99,7 @@ Changes and bug fixes from PsN 4.8.0 to x.x.x
 
    ___vpc/npc___
 
+- Fix bug causing simulation tables after a tte run being copied to the wrong directory when using the -model_subdir option
 
    ___frem___
 
