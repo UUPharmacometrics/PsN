@@ -516,6 +516,28 @@ sub frem_compute_covariate_properties
     $results->{'timevar_median'} = [];
     $results->{'timevar_mean'} = [];
     $results->{'timevar_covmatrix'} = [];
+    
+    # Check that no covariate has only one value in the baseline
+    my @values;
+    my @diff;
+    for (my $j = 0; $j < scalar(@$invariant_matrix); $j++) {
+        my $row = $invariant_matrix->[$j];
+        for (my $i = 0; $i < scalar(@$row); $i++) {
+            if ($j == 0) {
+                $values[$i] = $row->[$i];
+                $diff[$i] = 0;
+            } else {
+                if ($values[$i] != $row->[$i]) {
+                    $diff[$i] = 1;
+                }
+            }
+        }
+    }
+    for (my $i = 0; $i < scalar(@diff); $i++) {
+        if (not $diff[$i]) {
+            croak("The covariate " . $invariant_covariates->[$i] . " has the same value at baseline for all individuals. Please remove this covariate and run again.");
+        }
+    }
 
     my $err = linear_algebra::row_cov_median_mean($invariant_matrix,
         $results->{'invariant_covmatrix'},
