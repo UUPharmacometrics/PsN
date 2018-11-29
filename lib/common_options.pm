@@ -91,6 +91,7 @@ Getopt::Long::config("auto_abbrev");
           "so!",
           "zip!",
           "model_subdir!",
+          "debug_rmd!",
     );
 
 
@@ -779,6 +780,11 @@ EOF
     value that is legal for the "nice" command, likely it is between 0
     and 19, where 0 is the highest priority. Check "man nice" for
     details.
+EOF
+
+    $help_hash{-debug_rmd} = <<'EOF';
+    -debug_rmd
+    Turn on to have rplots retain the .tex file for debugging.
 EOF
 
     $help_hash{-display_iterations} = <<'EOF';

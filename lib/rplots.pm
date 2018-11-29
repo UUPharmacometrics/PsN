@@ -31,6 +31,7 @@ has 'model' => (is => 'rw', isa => 'model');
 has 'model_subdir' => (is => 'rw', isa => 'Bool', default => 0 );
 has 'R_lib_path' => (is => 'rw', isa => 'Str' );
 has 'file_type' => (is => 'rw', isa => 'Str' );
+has 'debug_rmd' => (is => 'rw', isa => 'Bool', default => 0 );
 
 our $preambleline = '#WHEN THIS FILE IS USED AS A TEMPLATE THIS LINE MUST LOOK EXACTLY LIKE THIS';
 
@@ -312,6 +313,26 @@ sub make_plots
         if (length($self->R_lib_path) > 0) {
 			$rlib = ".libPaths('" . $self->R_lib_path . "');";
 	    }
+
+        if ($self->debug_rmd) {
+            open my $fh, '<', $self->filename;
+            my @arr = <$fh>;
+            close $fh; 
+            my @new;
+            for my $line (@arr) {
+                if ($line =~ /output: pdf_document/) {
+                    push @new, ( "output:\n", "    pdf_document:\n", "        keep_tex: true\n" );
+                } else {
+                    push @new, $line;
+                }
+            }
+            unlink $self->filename;
+            open $fh, '>', $self->filename;
+            for my $line (@new) {
+                print $fh $line;
+            }
+            close $fh;
+        }
 
 		if($self->R_markdown && $self->rmarkdown_installed) {
 			system($executable . " -e \"$rlib rmarkdown::render(input='".$self->filename."')\" > PsN_".$self->toolname()."_plots.Rout 2>&1");

@@ -153,6 +153,7 @@ has 'model_subdir' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'model_subdir_name' => ( is => 'rw', isa => 'Str' );
 has 'metadata' => ( is => 'rw', isa => 'HashRef', default => sub {{}} );     # Complex data structure for metadata of run to be stored as meta.yaml
 has 'copy_up' => ( is => 'rw', isa => 'Bool' );     # Set for non top-tools to still copy up results files
+has 'debug_rmd' => ( is => 'rw', isa => 'Bool', default => 0 );
 
 sub BUILDARGS
 {
@@ -2006,6 +2007,7 @@ sub create_R_script
             rmarkdown_installed => $Rmarkdown_installed,
             model_subdir => $self->model_subdir,
             file_type => $file_type,
+            debug_rmd => $self->debug_rmd,
         );
 
 		$self->create_R_plots_code(rplot => $rplot) if ($self->can("create_R_plots_code"));
