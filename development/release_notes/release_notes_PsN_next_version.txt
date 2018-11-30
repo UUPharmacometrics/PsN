@@ -104,6 +104,7 @@ Changes and bug fixes from PsN 4.8.0 to x.x.x
    ___frem___
 
 - Give useful error message if a covariate has zero variance at baseline.
+- Add OFV for M1-M4 in frem_results
 
  
    ___proseval___
