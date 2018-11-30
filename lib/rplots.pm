@@ -314,6 +314,7 @@ sub make_plots
 			$rlib = ".libPaths('" . $self->R_lib_path . "');";
 	    }
 
+        my $debug_option = "";
         if ($self->debug_rmd) {
             open my $fh, '<', $self->filename;
             my @arr = <$fh>;
@@ -332,10 +333,11 @@ sub make_plots
                 print $fh $line;
             }
             close $fh;
+            $debug_option = ", clean=FALSE";
         }
 
 		if($self->R_markdown && $self->rmarkdown_installed) {
-			system($executable . " -e \"$rlib rmarkdown::render(input='".$self->filename."')\" > PsN_".$self->toolname()."_plots.Rout 2>&1");
+			system($executable . " -e \"$rlib rmarkdown::render(input='" . $self->filename . "'$debug_option)\" > PsN_".$self->toolname()."_plots.Rout 2>&1");
 		} else {
 			system($executable . " CMD BATCH ".$self->filename);
 		}
