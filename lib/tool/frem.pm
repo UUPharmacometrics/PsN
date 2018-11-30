@@ -89,6 +89,7 @@ has 'results_file' => ( is => 'rw', isa => 'Str', default => 'frem_results.csv' 
 has 'reordered_model_1' => ( is => 'rw', isa => 'model' );
 has 'omega_output_order' => ( is => 'rw', isa => 'ArrayRef' );
 has 'model_2' => ( is => 'rw', isa => 'model' );
+has 'model_3' => ( is => 'rw', isa => 'model' );
 has 'final_numbers' => ( is => 'rw', isa => 'ArrayRef[Int]', default => sub { [] } );
 has 'final_models' => ( is => 'rw', isa => 'ArrayRef[model]', default => sub { [] } );
 has 'cov_summary' => ( is => 'rw', isa => 'Str' );
@@ -2175,6 +2176,16 @@ sub prepare_results
         my $posdef_err = tool::sir::check_matrix_posdef(matrix => $full_covmat);
     }
 
+    my %ofv_section;
+    $ofv_section{'name'} = 'OFV';
+    my $m1_ofv = $base_model->outputs->[0]->get_single_value(attribute => 'ofv');
+    my $m2_ofv = $model_2->outputs->[0]->get_single_value(attribute => 'ofv');
+    my $m3_ofv = $self->model_3->outputs->[0]->get_single_value(attribute => 'ofv');
+    my $m4_ofv = $full_model->outputs->[0]->get_single_value(attribute => 'ofv');
+    $ofv_section{'labels'} = [ [], [ 'M1', 'M2', 'M3', 'M4' ] ];
+    $ofv_section{'values'} = [ [ $m1_ofv, $m2_ofv, $m3_ofv, $m4_ofv ] ];
+    push(@{$self->results->[0]{'own'}}, \%ofv_section);
+
     return $err;
 }
 
@@ -3014,6 +3025,7 @@ sub prepare_model3
         $frem_model->problems->[0] -> remove_records(type => 'covariance' );
 
         $frem_model->_write();
+        $self->model_3($frem_model);
     } else {
 	if (defined $etas_file) {
 	    (my $phi_filename = $name_model) =~ s/(.*)\..*/$1.phi/;
