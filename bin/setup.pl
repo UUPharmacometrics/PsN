@@ -668,6 +668,11 @@ sub copy_documentation
 	}
 }
 
+sub install_psnr
+{
+    system("Rscript -e \"devtools::install_github('UUPharmacometrics/PsNR')\"")
+}
+
 sub create_directory
 {
 	my $directory_name = shift;
@@ -1023,6 +1028,11 @@ foreach my $file (@utilities) {
 if (running_on_windows()) {
 	require Win32;
 	$library_dir = Win32::GetShortPathName($library_dir);
+}
+
+print "\nThis step requires that you have R and devtools installed. If not you can always select 'n' and do the installation manually.\nWould you like to install the PsNR R package that is needed for the rplots functionality? PsNR will be installed in your default R library. [y/n] ";
+if (confirm()) {
+    install_psnr();
 }
 
 print "\nWould you like to copy the PsN documentation to a file system location of your choice?  [y/n] ";
