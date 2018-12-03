@@ -956,9 +956,10 @@ EOF
 $help_hash{-parafile} = <<'EOF';
     -parafile='filename'
     NONMEM 7.2 (or later) parafile. Appends "-parafile=filename"
-    to the nmfe call, and makes PsN copy 'filename' to the NM_run directory.
+    to the nmfe call, and makes PsN copy 'filename' to the NM\_run directory.
     Only works if option nmfe or nmqual is set. Note that -nmfe is sometimes set 
     automatically, see help for -nmfe.
+    Note that the filename must have a full path to work with some tools (i.e. scm).
 EOF
 
 $help_hash{-nodes} = <<'EOF';
