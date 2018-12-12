@@ -1159,8 +1159,7 @@ if ($configuration_done) {
 	print "\nInstallation partially complete. You still have to create psn.conf before you can run PsN.\n";
 	print "A template psn.conf to edit is found in\n";
 	print "$library_dir"."$directory_separator"."PsN_$name_safe_version\n"; 
-	print "Detailed instructions are found in ";
-	print "$library_dir$directory_separator"."PsN_$name_safe_version$directory_separator"."doc$directory_separator"."psn_configuration.pdf"."\n"; 
+	print "Detailed instructions are found in psn_configuration.pdf";
 }
 
 print "\n\nPress ENTER to exit the installation program.\n";
