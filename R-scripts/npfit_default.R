@@ -3,6 +3,8 @@ source(file.path(rscripts.directory,"common/R_info.R"))
 R_info(directory=working.directory,only_libPaths=T)
 # Used libraries
 library(ggplot2)
+library(magrittr)
+library(methods)
 
 source(paste0(rscripts.directory, "/npfit/data.npfit.R"))
 source(paste0(rscripts.directory, "/npfit/plot.npfit.R"))

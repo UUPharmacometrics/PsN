@@ -3,6 +3,7 @@ source(file.path(rscripts.directory,"common/R_info.R"))
 R_info(directory=working.directory,only_libPaths=T)
 library(ggplot2)
 library(dplyr)
+library(methods)
 #add R_info to the meta file
 R_info(directory=working.directory)
 

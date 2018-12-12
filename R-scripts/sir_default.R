@@ -23,6 +23,7 @@ library(ggplot2)
 library(dplyr)
 library(RColorBrewer)
 library(stats4)
+library(methods)
 
 theme_set(theme_bw(base_size=20))
 

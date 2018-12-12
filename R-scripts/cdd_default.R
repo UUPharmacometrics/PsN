@@ -15,6 +15,8 @@ source(paste0(rscripts.directory,"/common/plot.table.R"))
 source(paste0(rscripts.directory,"/cdd/all.infl.indiv.table.R"))
 
 library(gridExtra)
+library(magrittr)
+library(methods)
 #add R_info to the meta file
 R_info(directory=working.directory)
 
