@@ -10,6 +10,7 @@ use OSspecific;
 use Math::Random;
 use Archive::Zip;
 use utils::file;
+use PsN;
 use ui;
 use Config;
 use YAML::XS;
@@ -1974,7 +1975,14 @@ sub create_R_script
 			open ( SCRIPT, ">" . $test_file );
 			print SCRIPT join("\n",'experiment')."\n";
 			close SCRIPT;
-			system("Rscript -e \"rmarkdown::render(input='".$test_file."',output_format='pdf_document',output_file='test_file_rmarkdown_installed.pdf')\" > test_file_rmarkdown_installed.Rout 2>&1");
+
+            my $rlib = "";
+	        my $R_lib_path = PsN::get_R_lib_path();
+            if (length($R_lib_path) > 0) {
+		    	$rlib = ".libPaths('" . $R_lib_path . "');";
+	        }
+	        my $rscript = PsN::get_R_exec() . 'script';
+			system("$rscript -e \"$rlib rmarkdown::render(input='".$test_file."',output_format='pdf_document',output_file='test_file_rmarkdown_installed.pdf')\" > test_file_rmarkdown_installed.Rout 2>&1");
 			if (-e 'test_file_rmarkdown_installed.pdf') {
 				$Rmarkdown_installed = 1;
 				unlink('test_file_rmarkdown_installed.pdf'); # delete test files
