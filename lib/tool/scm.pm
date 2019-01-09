@@ -1746,7 +1746,7 @@ sub linearize_setup
                     $_ = $line;
                     chomp;
 
-                    if (/\*\s*EXP\s*\(\s*ETA\(([0-9]+)\)/) {
+                    if (/\*\s*EXP\s*\(\s*-?ETA\(([0-9]+)\)/) {  # -? To allow for the rare case of a minus sign
                         $relation = 'exponential';
                     } elsif (/[^A-Z0-9_]*EXP\s*\(\s*ETA\(([0-9]+)\)/) {
                         $relation = 'exponential';
