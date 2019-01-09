@@ -1937,59 +1937,55 @@ sub linearize_setup
 
         model_transformations::add_missing_etas(model => $derivatives_model);
 
-        if ($self->from_linearize) {
-            if (PsN::minimum_nonmem_version(7, 3)) {
-                my $mceta = $original_model->get_option_value(record_name => 'estimation',
-                    option_name => 'MCETA',
-                    fuzzy_match => 1
-                );
-                $DB::single = 1;
-                my $etas_records = $original_model->record(record_name => 'etas');
-                my $etas_file = $original_model->get_or_set_etas_file();
-                if ($original_model->is_run()) {
-                    $derivatives_model->update_inits(from_output => $original_model->outputs->[0]);
-                }
-                my $phi_file = $original_model->get_phi_file();
-                if (defined $phi_file) {
-                    # use phi file from original execution as input
-                    print "Original model has phi output file; will use to initialize ETAs\n";
-                    $etas_file = $phi_file;
-                } elsif ($etas_file && -f $etas_file) {
-                    # use $ETAS FILE= in abscence of original execution phi file
-                    print "Original model has no phi output but has \$ETAS file; will use to initialize ETAs\n";
-                }
-                if (defined $etas_file) {
-                    if (!defined $mceta or $mceta < 1) {
-                        $mceta = '1';
-                        print "> Setting MCETA=$mceta\n";
-                        $derivatives_model->add_option(
-                             record_name => 'estimation',
-                             option_name => 'MCETA',
-                             option_value => $mceta,
-                             add_record => 1,
-                        );
-                    }
-                    if (scalar @{ $etas_records } > 0 and $phi_file and ($phi_file ne $etas_file)) {
-                        print "> Overwriting previous \$ETAS records with phi output file\n";
-                    }
-                    $derivatives_model->set_records(type => 'etas', record_strings => [ "FILE=$etas_file" ]);
-                    if (not defined $derivatives_model->extra_files) {
-                        $derivatives_model->extra_files([]);
-                    }
-                    push @{$derivatives_model->extra_files}, $etas_file;
-                } elsif (defined $mceta and $mceta > 1) {
-                    print "Original model has no phi output nor \$ETAS file record, but has MCETA=$mceta (can be slow)\n";
-                } else {
-                    print "Warning: Original model has no phi output, \$ETAS file nor MCETA>1; ETAs will be initialized at 0\n";
-                }
-                if (!defined $phi_file) {
-                    print "> If OFV differ (due to shape-distortion of EBE profiles) consider executing original model for phi output file\n";
-                }
+        if (PsN::minimum_nonmem_version(7, 3)) {
+            my $mceta = $original_model->get_option_value(record_name => 'estimation',
+                option_name => 'MCETA',
+                fuzzy_match => 1
+            );
+            $DB::single = 1;
+            my $etas_records = $original_model->record(record_name => 'etas');
+            my $etas_file = $original_model->get_or_set_etas_file();
+            if ($original_model->is_run()) {
+                $derivatives_model->update_inits(from_output => $original_model->outputs->[0]);
             }
-            # } else {
-            #     print "ETA initializement not available (requires NONMEM >= 7.3)\n";
-            # }
+            my $phi_file = $original_model->get_phi_file();
+            if (defined $phi_file) {
+                # use phi file from original execution as input
+                print "Original model has phi output file; will use to initialize ETAs\n";
+                $etas_file = $phi_file;
+            } elsif ($etas_file && -f $etas_file) {
+                # use $ETAS FILE= in abscence of original execution phi file
+                print "Original model has no phi output but has \$ETAS file; will use to initialize ETAs\n";
+            }
+            if (defined $etas_file) {
+                if (!defined $mceta or $mceta < 1) {
+                    $mceta = '1';
+                    print "> Setting MCETA=$mceta\n";
+                    $derivatives_model->add_option(
+                        record_name => 'estimation',
+                        option_name => 'MCETA',
+                        option_value => $mceta,
+                        add_record => 1,
+                    );
+                }
+                if (scalar @{ $etas_records } > 0 and $phi_file and ($phi_file ne $etas_file)) {
+                    print "> Overwriting previous \$ETAS records with phi output file\n";
+                }
+                $derivatives_model->set_records(type => 'etas', record_strings => [ "FILE=$etas_file" ]);
+                if (not defined $derivatives_model->extra_files) {
+                    $derivatives_model->extra_files([]);
+                }
+                push @{$derivatives_model->extra_files}, $etas_file;
+            } elsif (defined $mceta and $mceta > 1) {
+                print "Original model has no phi output nor \$ETAS file record, but has MCETA=$mceta (can be slow)\n";
+            } else {
+                print "Warning: Original model has no phi output, \$ETAS file nor MCETA>1; ETAs will be initialized at 0\n";
+            }
+            if (!defined $phi_file) {
+                print "> If OFV differ (due to shape-distortion of EBE profiles) consider executing original model for phi output file\n";
+            }
         }
+
         $derivatives_model->set_maxeval_zero(
             print_warning => 1,
             last_est_complete => $self->last_est_complete(),
