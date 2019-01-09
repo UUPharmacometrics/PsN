@@ -2258,7 +2258,7 @@ sub linearize_setup
 
         $original_model->set_records(type => 'input', record_strings => \@inputstrings);
 
-        if ($self->from_linearize and PsN::minimum_nonmem_version(7, 3)) {
+        if (PsN::minimum_nonmem_version(7, 3)) {
             # replicate phi file usage as done for derivatives model earlier (see above)
             my $phi_file = $original_model->get_phi_file();
             my $etas_records = $original_model->record(record_name => 'etas');
@@ -4002,6 +4002,30 @@ sub _create_models
 							update_sigmas => 1,
 							ignore_missing_parameters => 1 )
 						unless (not $self->run_linearized_base());
+                        $applicant_model->remove_records(type => 'etas');
+                        #if ($self->step_number == 1) {
+                            my $phi_file = $initial_estimates_model->get_phi_file();
+
+                            my $mceta = $initial_estimates_model->get_option_value(record_name => 'estimation',
+                                option_name => 'MCETA',
+                                fuzzy_match => 1
+                            );
+                            if (defined $phi_file) {
+                                if (not defined $mceta or $mceta < 1) {
+                                    $applicant_model->add_option(
+                                        record_name => 'estimation',
+                                        option_name => 'MCETA',
+                                        option_value => 1,
+                                        add_record => 1,
+                                    );
+                                }
+                                $applicant_model->set_records(type => 'etas', record_strings => [ "FILE=$phi_file" ]);
+                                if (not defined $applicant_model->extra_files) {
+                                    $applicant_model->extra_files([]);
+                                }
+                                push @{$applicant_model->extra_files}, $phi_file;
+                            }
+                            #}
 					} else {
 						$applicant_model -> update_inits( from_model    => $orig_model,
 							update_thetas => 1,
@@ -4118,6 +4142,7 @@ sub _create_models
 			message  => " ... done." );
 	}
 	push( @{$self -> results->[$model_number-1]{'own'}},\%return_section );
+
 
 	return \@new_models ,\@step_relations;
 }
