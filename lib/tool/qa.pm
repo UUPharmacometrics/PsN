@@ -421,6 +421,10 @@ sub modelfit_setup
             my $scm_model = $self->model->copy(filename => "m1/scm.mod");
             if ($self->model->is_run()) {
                 cp($self->model->outputs->[0]->full_name(), 'm1/scm.lst');
+                my $phi_file = $self->model->get_phi_file;
+                if (defined $phi_file and -e $phi_file) {
+                    cp($phi_file, 'm1/scm.phi');
+                }
             }
             model_transformations::add_tv(model => $scm_model, parameters => [split /,/, $self->parameters]);
             $scm_model->_write();
