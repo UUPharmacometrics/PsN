@@ -59,6 +59,8 @@ Changes and bug fixes from PsN 4.8.0 to x.x.x
 
    ___General___
 
+- Dots in datasets will always be seen by PsN as zero, which is the same way NM-TRAN handles dots.
+
 
    ___common_options___
 
