@@ -312,6 +312,7 @@ sub check_columns_equally_wide
                 $length = scalar(@row);
             }
             if (scalar(@row) != $length) {
+                use Data::Dumper; print Dumper(\@row);
                 croak("Error: The rows of the data set doesn't have the same number of columns. This is not supported when binarizing categorical covariates\n");
             }
         }

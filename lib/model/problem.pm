@@ -284,6 +284,11 @@ sub BUILD
 
 		$self -> tbs_transform();
 	}
+
+	if ($self->is_option_set(record => 'data', name => 'NULL')) {
+        warn_once('DATA_NULL', 'WARNING: The option NULL is used in $DATA. ' . 
+            'This is not supported my PsN in general and will not give the expected results for PsN tools that use the dataset in any way.');
+    }
 }
 
 sub add_prior_distribution
