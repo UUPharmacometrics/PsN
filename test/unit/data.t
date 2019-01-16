@@ -354,7 +354,7 @@ print $fh ",,  1\n";
 close $fh;
 
 my $data_spec = data->new(filename => $filename_spec, directory => $tempdir, ignoresign => '@',parse_header =>1);
-is_deeply ($data_spec->individuals->[0]->subject_data, ['1,0,1', ',0,1', ',,1'], "data->new starts with commas");
+is_deeply ($data_spec->individuals->[0]->subject_data, ['1,0,1', '0,0,1', '0,0,1'], "data->new starts with commas");
 
 
 # New

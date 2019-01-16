@@ -312,7 +312,6 @@ sub check_columns_equally_wide
                 $length = scalar(@row);
             }
             if (scalar(@row) != $length) {
-                use Data::Dumper; print Dumper(\@row);
                 croak("Error: The rows of the data set doesn't have the same number of columns. This is not supported when binarizing categorical covariates\n");
             }
         }
@@ -2789,6 +2788,9 @@ sub _read_individuals
 		s/[\t]/\,/g;    # replace tabs with commas
 		s/\,[ ]+/\,/g;  # remove spaces after original and new commas (TABs absorb spaces coming after, but not before)
 		s/[ ]+/\,/g;    # replace sequence of spaces with commas
+        s/,(?=,)/,0/g;       # Put a zero within consecutive commas
+        s/^,/0,/;       # Insert zero before comma at start of a line 
+        s/,$/,0/;       # Insert zero after comma at end of line
 
 		my @new_row	= split(/\,/);
 		my $is_data = 1;
