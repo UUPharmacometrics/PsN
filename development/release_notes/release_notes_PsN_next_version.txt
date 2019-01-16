@@ -59,6 +59,10 @@ Changes and bug fixes from PsN 4.8.0 to x.x.x
 
    ___General___
 
+- Dots in datasets will always be seen by PsN as zero, which is the same way NM-TRAN handles dots. This will
+  change the behaviour of transitions in randtest.
+- Empty items between commas in data set will be interpreted as zero (this is default NM-TRAN interpretation)
+
 
    ___common_options___
 
@@ -91,6 +95,10 @@ Changes and bug fixes from PsN 4.8.0 to x.x.x
 
 - New option -parameters to only show parameter estimates
 
+   ___mcmp___
+
+- Fix bug causing columns with names ending with DATE to become removed
+
 
    ___bootstrap___
 
@@ -113,6 +121,7 @@ Changes and bug fixes from PsN 4.8.0 to x.x.x
 
    ___scm___
 
+- linearized scm will now initialize etas with phi file of base model for each iteration.
 
 
    ___linearize___

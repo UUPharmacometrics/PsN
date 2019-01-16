@@ -47,15 +47,15 @@ is_deeply($dotdata->factors(column=> 3, unique_in_individual => 0),{ 0 =>[0,1,2,
 is_deeply($dotdata->factors(column=> 3, return_occurences => 1, unique_in_individual =>0), 
 		  {0 =>  10,1=>10,2=> 10, 3=>10}, 'factors e');
 
-is_deeply($dotdata->factors(column=> 2),{ 0 =>[0,1,2,3,4,5,6,7,8,9],'.' =>[0,1,2], 
+is_deeply($dotdata->factors(column=> 2),{ 0 =>[0,1,2,3,4,5,6,7,8,9], 
 										  30 =>[3],40 =>[4],50 =>[5],60 =>[6],70 =>[7],80 =>[8],90 =>[9],
 										  'Non-unique values found' => 1},'factors f');
 
-is_deeply($dotdata->factors(column=> 2,ignore_missing => 1),{ 0 =>[0,1,2,3,4,5,6,7,8,9],'.' =>[0,1,2], 
+is_deeply($dotdata->factors(column=> 2,ignore_missing => 1),{ 0 =>[0,1,2,3,4,5,6,7,8,9], 
 															  30 =>[3],40 =>[4],50 =>[5],60 =>[6],70 =>[7],80 =>[8],90 =>[9],
 															  'Non-unique values found' => 1},'factors g');
 
-is_deeply($dotdata->factors(column=> 2,ignore_missing => 1, unique_in_individual => 0),{ 0 =>[0,1,2,3,4,5,6,7,8,9],'.' =>[0,1,2], 
+is_deeply($dotdata->factors(column=> 2,ignore_missing => 1, unique_in_individual => 0),{ 0 =>[0,1,2,3,4,5,6,7,8,9], 
 										  30 =>[3],40 =>[4],50 =>[5],60 =>[6],70 =>[7],80 =>[8],90 =>[9]},'factors h');
 
 my @parts = @{$dotdata->individuals()}[0 .. 2];
@@ -71,10 +71,10 @@ my $dotpartdata = data->new(
 	);
 
 is_deeply($dotpartdata->factors(column=> 2,ignore_missing => 1, unique_in_individual => 1),
-		  { 0 =>[0,1,2],'.' =>[0,1,2]},'factors i');
+		  { 0 =>[0,1,2] },'factors i');
 
 is_deeply($dotpartdata->factors(column=> 2,ignore_missing => 0, unique_in_individual => 1),
-		  { 0 =>[0,1,2],'.' =>[0,1,2],'Non-unique values found' => 1},'factors j');
+		  { 0 =>[0,1,2] },'factors j');
 
 # Test of reconcile_column
 is_deeply ($data->reconcile_column(template_values=>[1,2,3,4], old_values=> [1,1,1], equal_obs =>1), [1,2,3], 
@@ -160,15 +160,14 @@ $newdata = data ->new(
 	ignore_missing_files => 0);
 
 is_deeply ($newdata->individuals()->[0]->subject_data(),['1,0,0,207.53,0,57,1,1,1',
-							'1,70,1,227.64,0,57,1,1,1',
-							'1,70,2,256.08,0,57,1,1,1',
-							'1,70,3,262.82,0,57,1,1,1'],"randomized dot data indiv 0");
+							'1,0,1,227.64,0,57,1,1,1',
+							'1,0,2,256.08,0,57,1,1,1',
+							'1,0,3,262.82,0,57,1,1,1'],"randomized dot data indiv 0");
 
-is_deeply ($newdata->individuals()->[3]->subject_data(),['4,.,0,110.44,0,84,1,1,1',
+is_deeply ($newdata->individuals()->[3]->subject_data(),['4,0,0,110.44,0,84,1,1,1',
 							'4,0,1,96.554,0,84,1,1,1',
 							'4,0,2,104.34,0,84,1,1,1',
 							'4,0,3,123.64,0,84,1,1,1'],"randomized dot data indiv 3");
-
 unlink("$tempdir/$filename");
 
 #this is for frem helper functions
@@ -355,7 +354,7 @@ print $fh ",,  1\n";
 close $fh;
 
 my $data_spec = data->new(filename => $filename_spec, directory => $tempdir, ignoresign => '@',parse_header =>1);
-is_deeply ($data_spec->individuals->[0]->subject_data, ['1,0,1', ',0,1', ',,1'], "data->new starts with commas");
+is_deeply ($data_spec->individuals->[0]->subject_data, ['1,0,1', '0,0,1', '0,0,1'], "data->new starts with commas");
 
 
 # New

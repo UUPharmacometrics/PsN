@@ -1,6 +1,7 @@
 use strict;
 use Config;
 use File::Spec;
+use File::Copy qw(cp);
 use File::Path qw(mkpath);
 use File::Glob;
 use lib 'lib';
@@ -1156,11 +1157,12 @@ warn_about_local_configuration();
 if ($configuration_done) {
 	print "\nInstallation complete.\n";
 } else {
-	print "\nInstallation partially complete. You still have to create psn.conf before you can run PsN.\n";
-	print "A template psn.conf to edit is found in\n";
-	print "$library_dir"."$directory_separator"."PsN_$name_safe_version\n"; 
-	print "Detailed instructions are found in ";
-	print "$library_dir$directory_separator"."PsN_$name_safe_version$directory_separator"."doc$directory_separator"."psn_configuration.pdf"."\n"; 
+    my $path = "$library_dir" . "$directory_separator" . "PsN_$name_safe_version"; 
+    cp($path . '/psn.conf_template', $path . '/psn.conf');
+	print "\nInstallation partially complete. You still have to add NONMEM settings to psn.conf before you can run PsN.\n";
+	print "A psn.conf to edit is found in\n";
+	print "$path\n"; 
+	print "Detailed instructions are found in psn_configuration.pdf";
 }
 
 print "\n\nPress ENTER to exit the installation program.\n";

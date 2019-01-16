@@ -358,7 +358,7 @@ sub modelfit_setup
 				push( @table_header, $option -> name ) unless 
 					(($option -> value eq 'DROP' or $option -> value eq 'SKIP'
 					  or $option -> name eq 'DROP' or $option -> name eq 'SKIP') ||
-					 ($option -> name =~ /DAT(E|1|2|3)/) ||
+					 ($option -> name =~ /^DAT(E|1|2|3)/) ||
 					 ((not $time_in_input) && ($option -> name =~ /TIME/)));
 			}
 			if ((not $time_in_input) && ($datx_in_input )){

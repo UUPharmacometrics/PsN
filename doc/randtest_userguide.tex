@@ -1,5 +1,5 @@
 \input{inputs/format_header.tex}
-\guidetitle{RANDTEST user guide}{2018-03-02}
+\guidetitle{RANDTEST user guide}{2019-01-10}
 
 \usepackage{hyperref}
 \begin{document}
@@ -77,7 +77,7 @@ PsN will not filter the data set based on any IGNORE/ACCEPT statements in the NO
 \subsection{If -match\_transitions is not set, the default}
 By default, when option -match\_transitions is not set, PsN will copy values record by record. If the sequence of 'copy-from' values is shorter than 'copy-to' then PsN will do 'last-observation-carry-forward'. \\
 Example:\\ 
-Copying [0,1,1] to [0,0,2,2] will give result [0,1,1,1] when -match\_transitions is not set. Missing data marked by e.g. -99 or values that are '.' (a dot) will be handled like any other value. 
+Copying [0,1,1] to [0,0,2,2] will give result [0,1,1,1] when -match\_transitions is not set. Missing data marked by e.g. -99 or values will be handled like any other value. Dots '.' will as usual be converted to zero. 
 
 \subsection{If match\_transitions is set}
 If option -match\_transitions is set, PsN will match transitions instead of records in the sequence of values. The 'copy-from' sequence determines the values after each transition, while the 'copy-to' sequence determines where the transitions should be. Example: 
@@ -96,10 +96,7 @@ If option -match\_transitions is set, PsN will match transitions instead of reco
 \item Copying [-99,1,1,0] to [0,0,2,2] will give result [1,1,0,0]. 
 \end{itemize}
 
-\noindent Non-numeric values, e.g. . (a dot) will be lumped together and treated as any non-missing value, so going from an observation to a dot will be considered a transition. Example:
-\begin{itemize}
-\item Copying [0,0,1,1] to  [.,0,0,0] will give result [0,1,1,1] 
-\end{itemize}
+\noindent Remember that dots in the data will be treated as zero.
 
 \section{Output}
 The raw\_results file is almost a standard PsN file containing raw result data for termination status, parameter estimates, uncertainty estimates etc. for all model estimations. The first row is for the base model, if any, estimated with the original dataset. The next row is the input model with the original dataset. The following are the input model with the randomized datasets. If a base model was given an extra column with header deltaofv is inserted next to the ofv-column. This column contains the ofv-value of the current model minus ofv for the base model.

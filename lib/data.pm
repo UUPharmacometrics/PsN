@@ -1166,10 +1166,7 @@ sub factors
 		if ( scalar @ifactors > 1 and $unique_in_individual ) {
 			#do not set non-unique if only two and one of them is missing data
 			unless (scalar @ifactors == 2 and $ignore_missing and
-					($ifactors[0] eq '.' ||
-					 $ifactors[1] eq '.' ||
-					 $ifactors[0] == $self->missing_data_token ||
-					 $ifactors[1] == $self->missing_data_token)){
+					($ifactors[0] == $self->missing_data_token || $ifactors[1] == $self->missing_data_token)) {
 				$factors{'Non-unique values found'} = 1;
 				print "Individual ".$individual->idnumber." factors ".join(',',@ifactors)."\n" if ($verbose);
 			}
@@ -2791,6 +2788,9 @@ sub _read_individuals
 		s/[\t]/\,/g;    # replace tabs with commas
 		s/\,[ ]+/\,/g;  # remove spaces after original and new commas (TABs absorb spaces coming after, but not before)
 		s/[ ]+/\,/g;    # replace sequence of spaces with commas
+        s/,(?=,)/,0/g;       # Put a zero within consecutive commas
+        s/^,/0,/;       # Insert zero before comma at start of a line 
+        s/,$/,0/;       # Insert zero after comma at end of line
 
 		my @new_row	= split(/\,/);
 		my $is_data = 1;
@@ -2818,6 +2818,11 @@ sub _read_individuals
 		}
 
 		if ( $is_data ) {
+            for my $item (@new_row) {       # Replace all dots with 0
+                if ($item eq '.') {
+                    $item = 0;
+                }
+            }
 			if ( defined $self->cont_column ) {
 				if ( $new_row[$self->cont_column - 1] == 1 ) {
 					if ( not $self->table_file ) { # Skip the CONT=1 rows if this is a table file

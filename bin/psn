@@ -87,10 +87,10 @@ if (scalar(@ARGV)>0){
             $command_line = <$fh>;
             chomp $command_line;
             close $fh;
+            shift @ARGV;
+            shift @ARGV;
+            $command_line .= ' ' . join(' ', @ARGV);
         } # Could also look for the YAML here when command.txt is deprecated
-        shift @ARGV;
-        shift @ARGV;
-        $command_line .= ' ' . join(' ', @ARGV);
         if (defined $command_line) {
             print "Executing $command_line\n";
             exec $command_line;
