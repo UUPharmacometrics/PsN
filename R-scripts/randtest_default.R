@@ -10,7 +10,6 @@ library(ggplot2)
 library(gridExtra)
 library(scales)
 library(MASS)
-library(plotrix)
 library(plyr)
 library(tidyr)
 
@@ -280,7 +279,7 @@ if (have.base.model) {
 
         # Plot the distributions using ggplot
         p0 <- ggplot(mdf,aes(value))+geom_histogram(fill="white",color="black")+ggOpt+
-            geom_vline(data=vdf, aes(xintercept=value, color=factor(model)), show_guide=T, size=1)+
+            geom_vline(data=vdf, aes(xintercept=value, color=factor(model)), show.legend = T, size=1)+
             facet_wrap(~variable,scales="free",ncol=2)+
             ggtitle(paste("Distribution of deltaOFV and model parameter\n",mod,"\n",
                           paste("No. of positive deltaOFV is ",nposdofv," out of ",nrow(na.omit(df[-c(1:2),])),sep=""),"\n",sep=""))
