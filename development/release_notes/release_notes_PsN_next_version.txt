@@ -61,6 +61,7 @@ Changes and bug fixes from PsN 4.8.0 to x.x.x
 
 - Dots in datasets will always be seen by PsN as zero, which is the same way NM-TRAN handles dots. This will
   change the behaviour of transitions in randtest.
+- Empty items between commas in data set will be interpreted as zero (this is default NM-TRAN interpretation)
 
 
    ___common_options___
