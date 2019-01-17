@@ -38,19 +38,37 @@ sub add_tv
     }
 
     my @newcode;
+    my @deferred_lines;
+    my $if_nesting = 0;
     for my $line (@$code) {
+        if ($line =~ /^\s*IF.*THEN/) {
+            $if_nesting++;
+        } elsif ($line =~ /^\s*ENDIF/) {
+            $if_nesting--;
+        }
         my $found = 0;
         for my $param (@add_params) {
             if ($line =~ /^(\s*)$param\s*=/) {
                 push @newcode, "$1TV$param = 1";
                 push @newcode, $line;
-                push @newcode, "$1$param = $param * TV$param";
+                my $new_line = "$1$param = $param * TV$param";
+                if ($if_nesting == 0) {     # Else must put reassignment after IF block
+                    push @newcode, $new_line;
+                } else {
+                    if (not array::string_in($new_line, \@deferred_lines)) {        # To not duplicate line
+                        push @deferred_lines, $new_line;
+                    }
+                }
                 $found = 1;
                 last;
             }
         } 
         if (not $found) {
             push @newcode, $line;
+        }
+        if ($if_nesting == 0 and scalar(@deferred_lines) > 0) {
+            push @newcode, @deferred_lines;
+            @deferred_lines = ();
         }
     }
 
