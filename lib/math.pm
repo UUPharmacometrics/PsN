@@ -9,7 +9,7 @@ use include_modules;
 
 require Exporter;
 our @ISA = qw(Exporter);
-our %EXPORT_TAGS = ('all' => [ qw(fortran_number_to_string round eps inf usable_number to_precision convert_float_string logit inverse_logit correlation2unbounded unbounded2correlation) ]);
+our %EXPORT_TAGS = ('all' => [ qw(fortran_number_to_string round eps inf usable_number to_precision convert_float_string logit inverse_logit correlation2unbounded unbounded2correlation trinum) ]);
 our @EXPORT_OK = ( @{ $EXPORT_TAGS{'all'} } );
 
 sub fortran_number_to_string
@@ -208,6 +208,14 @@ sub convert_float_string
     } else {
         return "$sign$integer.$decimal";
     }
+}
+
+sub trinum
+{
+    # Give the n:th triangular number
+    my $n = shift;
+
+    return ($n * ($n + 1)) / 2;
 }
 
 1;

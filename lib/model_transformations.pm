@@ -11,6 +11,8 @@ use utils::file;
 use array qw(numerical_in max unique);
 use data;
 use Storable;
+use math qw(trinum);
+
 
 sub add_tv
 {
@@ -1401,5 +1403,292 @@ sub set_size
 
     $model->add_records(type => 'sizes', record_strings => [ "$size=$value" ]);
 }
+
+sub rename_symbols_in_code
+{
+    # Rename multiple symbols in all code blocks of a model 
+    my %parm = validated_hash(\@_,
+        model => { isa => 'model' },
+        renaming => { isa => 'HashRef' },      # Hash from old symbol to new symbol
+    );
+    my $model = $parm{'model'};
+    my $renaming = $parm{'order'};
+
+    for my $from (keys %$renaming) {
+        rename_symbol(model => $model, from => $from, to => $renaming->{$from});
+    }
+}
+
+=cut
+sub _shift_coordstring
+{
+    my $coordstring = shift;
+    my $row_shift = shift;
+    my $col_shift = shift;
+
+    $coordstring =~ /(\w+)\((\d+),(\d+)\)/;
+    return "$1(" . ($2 - $row_shift) . "," . ($3 - $col_shift) . ")";
+}
+=cut
+# FIXME: This is not needed!
+=cut
+sub split_omega_record
+{
+    # Will split out a part of an omega record. The part must be consecutive
+    # Put new record just before the old
+    my %parm = validated_hash(\@_,
+        record => { isa => 'model::problem::record' },
+        start => { isa => 'Int' },      # The first eta of the section to split out
+        end => { isa => 'Int' },
+    );
+    my $record = $parm{'record'};
+    my $start = $parm{'start'};
+    my $end = $parm{'end'};
+
+    my $netas = $end - $start + 1;
+    my $size = $record->get_size();
+    my $record_start = $record->n_previous_rows + 1;
+    my $record_end = $record_start + $size - 1;
+    my @options = @{$record->options};
+    my @kept_options;   # Options to keep in the incoming record
+    my $new_record;
+
+    if (not $record->is_block()) {
+        my $start_index = $start - $record_start;
+        my @split_options = @options[$start_index .. $start_index + $length - 1];
+        $new_record = model::problem::omega->new(size => $netas, n_previous_rows => $record->n_previous_rows, fix => 0, options => \@split_options);
+        @kept_options = @options;
+        splice @kept_options, $start_index, $netas;
+    } elsif ($record->same) {
+        $new_record = model::problem::omega->new(size => $netas, n_previous_rows => $record->n_previous_rows, options => [], same => 1);
+    } else {    # FIXME: Could do one big loop here?
+        my $netas_first_section = $start - $record_start; 
+        my $noptions_first_section = trinum($netas_first_section);     # Triangular number
+        my @new_options;    # Options to split out to the new record
+        if ($netas_first_section > 0) {
+            @kept_options = @options[0 .. $noptions_first_section];
+        }
+        my $option_index = $noptions_first_section;
+        my $row_length = $netas_first_option + 1;
+        for (my $i = 0; $i < $netas; $i++) {
+            for (my $col = 0; $col < $row_length; $col++) {
+                if ($col >= $netas_first_section) {
+                    my $option = $options[$option_index];
+                    $option->coordinate_string(_shift_coordstring($option->coordinate_string, $netas_first_section, $netas_first_section));
+                    push @new_options, $option;
+                }
+                $option_index++;
+            }
+            $row_length++;
+        }
+        my $netas_last_section = $records_end - $end;
+        if ($netas_last_section > 0) {
+            $option_index = trinum($netas_first_option + $netas);
+            $row_length = $netas_first_section + $netas + 1;
+            for (my $row = $size - $netas_last_section; $row < $size; $row++) {
+                for (my $col = 0; $col < $row_length; $col++) {
+                    if ($col < $netas_first_section or $col >= $netas_first_section + $netas) {
+                        my $option = $options[$option_index];
+                        if ($col < $netas_first_section) {
+                            $option->coordinate_string(_shift_coordstring($option->coordinate_string, $netas, 0));
+                        } else {
+                            $option->coordinate_string(_shift_coordstring($option->coordinate_string, $netas, $netas));
+                        }
+                        push @kept_options, $option;
+                    }
+                    $option_index++;
+                }
+                $row_length++;
+            }
+        }
+        $new_record = model::problem::omega->new(size => $netas, n_previous_rows => $record->n_previous_rows, fix => $record->fix, options => \@new_options);
+    }
+
+    $record->options(\@kept_options);
+    $record->size($size - $netas);
+    $record->n_previous_rows($record->n_previous_rows + $netas);
+
+    return $new_record;
+}
+=cut
+sub get_omega_element
+{
+    # Get an option from an omega block record using relative row, col (one counted)
+    # Will handle cases where col > row
+    my %parm = validated_hash(\@_,
+        record => { isa => 'model::problem::init_record' },
+        row => { isa => 'Int' },
+        col => { isa => 'Int' },
+    );
+    my $record = $parm{'record'};
+    my $row = $parm{'row'};
+    my $col = $parm{'col'};
+
+    if ($col > $row) {
+        my $temp = $col;
+        $col = $row;
+        $row = $temp;
+    }
+
+    my $index = trinum($row - 1) + $col - 1;
+
+    return $record->options->[$index];
+}
+
+sub update_coordstring
+{
+    my %parm = validated_hash(\@_,
+        option => { isa => 'model::problem::record::init_option' },
+        row => { isa => 'Int' },
+        col => { isa => 'Int' },
+    );
+    my $option = $parm{'option'};
+    my $row = $parm{'row'};
+    my $col = $parm{'col'};
+
+    $option->coordinate_string =~ /^(\w+)/;
+    my $record_type = $1;
+    $option->coordinate_string("$record_type($row,$col)");
+}
+
+sub reorder_omega_record
+{
+    # Do a reorder and/or subsetting of one omega record. The mapping must be from etas defined by this record. Missing etas will be taken out.
+    my %parm = validated_hash(\@_,
+        record => { isa => 'model::problem::init_record' },
+        order => { isa => 'HashRef' },      # Hash from eta number in record to eta number in reordered record
+    );
+    my $record = $parm{'record'};
+    my $order = $parm{'order'};
+
+    my $n_previous_rows = (sort values %$order)[0] - 1;     # Value for the reordered record
+
+    my %new_to_old = reverse %$order;
+    my @new_etas = sort keys %new_to_old;
+
+    if ($record->same) {
+        $record->n_previous_rows($n_previous_rows);
+        $record->size(scalar(@new_etas));
+        return;
+    }
+
+    my @new_options;
+    my $start_old_eta = $record->n_previous_rows + 1;
+    my $first_new_eta = $new_etas[0];
+    my $final_new_eta = $new_etas[-1];
+    if (not $record->is_block()) {
+        for (my $current_eta = $first_new_eta; $current_eta <= $final_new_eta; $current_eta++) {
+            my $old_eta = $new_to_old{$current_eta};
+            my $old_option_index = $old_eta - $start_old_eta;
+            my $old_option = $record->options->[$old_option_index];
+            update_coordstring(option => $old_option, row => $current_eta, col => $current_eta);
+            push @new_options, $old_option;
+        }
+    } else {
+        for (my $row = 1; $row <= scalar(@new_etas); $row++) {
+            for (my $col = 1; $col <= $row; $col++) {
+                my $oldrow = $new_to_old{$row + $n_previous_rows} - $record->n_previous_rows;
+                my $oldcol = $new_to_old{$col + $n_previous_rows} - $record->n_previous_rows;
+                my $omega = get_omega_element(record => $record, row => $oldrow, col => $oldcol);
+                update_coordstring(option => $omega, row => $row + $n_previous_rows, col => $col + $n_previous_rows);
+                push @new_options, $omega;
+            }
+        }
+    }
+
+    $record->n_previous_rows($n_previous_rows);
+    $record->size(scalar(@new_etas));
+    $record->options(\@new_options);
+}
+
+sub find_omega_record_for_eta
+{
+    my %parm = validated_hash(\@_,
+        model => { isa => 'model' },
+        eta => { isa => 'Int' },
+    );
+    my $model = $parm{'model'};
+    my $eta = $parm{'eta'};
+
+    for my $record (@{$model->problems->[0]->omegas}) {
+        if ($eta > $record->n_previous_rows and $eta <= $record->n_previous_rows + $record->get_size()) {
+            return $record;
+        }
+    }
+    croak("eta not found in find_omega_record_for_eta");
+}
+
+sub hash_slice
+{
+    # Slices a hash by creating a sub hash containing only the key value pairs where the key is in the key_array
+    my $hash = shift;
+    my $key_array = shift;
+
+    my %sliced;
+    for my $key (@$key_array) {
+        if (exists $hash->{$key}) {
+            $sliced{$key} = $hash->{$key};
+        }
+    }
+
+    return \%sliced;
+}
+
+sub reorder_etas
+{
+    # Reorders the omegas records of a model and connected output object
+    # All etas must be in the order hash. Could easily be changed by adding missing etas in this function. 
+    my %parm = validated_hash(\@_,
+        model => { isa => 'model' },
+        order => { isa => 'HashRef' },      # Hash from eta number in base model to eta number in reordered model
+    );
+    my $model = $parm{'model'};
+    my $order = $parm{'order'};
+
+    my %symbol_rename;
+    for my $key (keys %$order) {
+        $symbol_rename{"ETA($key)"} = "ETA(" . $order->{$key} . ")";
+        $symbol_rename{"MU_$key"} = "MU_" . $order->{$key} . ")";
+    }
+    rename_symbols_in_code(model => $model, renaming => \%symbol_rename);
+
+    my @old_omega_records = @{$model->problems->[0]->omegas};
+    my %old_to_new = %$order;
+    my @new_records = ();
+    my %new_to_old = reverse %old_to_new;
+
+
+    my $netas = $model->nomegas->[0];
+    my @current_etas;
+    my $containing_record;
+    for (my $new_eta = 1; $new_eta <= $netas; $new_eta++) {
+        my $old_eta = $new_to_old{$new_eta};
+        my $new_containing_record = find_omega_record_for_eta(model => $model, eta => $old_eta); 
+        if (not defined $containing_record) {
+            $containing_record = $new_containing_record;
+            push @current_etas, $old_eta;
+            continue;
+        } elsif (refaddr($containing_record) == refaddr($new_containing_record)) {
+            push @current_etas, $old_eta;
+            if ($new_eta != $netas) {       # This is not the final iteration.
+                continue;
+            }
+        } else {
+            $new_eta--;
+        }
+     
+        # Here are @current_etas all part of the $containing_record
+        my $cloned_record = dclone($containing_record);
+        my $record_order = hash_slice(\%old_to_new, \@current_etas);
+        reorder_omega_record(record => $cloned_record, order => $record_order);
+        push @new_records, $cloned_record;
+      
+        $containing_record = undef;
+        @current_etas = ();
+    }
+
+    $model->problems->[0]->omegas = \@new_records;
+}
+
 
 1;
