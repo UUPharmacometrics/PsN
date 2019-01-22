@@ -10,8 +10,9 @@ use MooseX::Params::Validate;
 use utils::file;
 use array qw(numerical_in max unique);
 use data;
-use Storable;
+use Storable qw(dclone);
 use math qw(trinum);
+use Scalar::Util qw(refaddr);
 
 
 sub add_tv
@@ -1667,11 +1668,11 @@ sub reorder_etas
         if (not defined $containing_record) {
             $containing_record = $new_containing_record;
             push @current_etas, $old_eta;
-            continue;
+            next;
         } elsif (refaddr($containing_record) == refaddr($new_containing_record)) {
             push @current_etas, $old_eta;
             if ($new_eta != $netas) {       # This is not the final iteration.
-                continue;
+                next;
             }
         } else {
             $new_eta--;
@@ -1687,7 +1688,7 @@ sub reorder_etas
         @current_etas = ();
     }
 
-    $model->problems->[0]->omegas = \@new_records;
+    $model->problems->[0]->omegas(\@new_records);
 }
 
 

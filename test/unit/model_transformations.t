@@ -274,7 +274,7 @@ is ($record->options->[2]->init, 0.02, "reorder_omega_record full block 2 init 2
 is ($record->options->[2]->coordinate_string, 'OMEGA(2,2)', "reorder_omega_record full block 2 coord 2");
 
 $record = model::problem::omega->new(record_arr => ['BLOCK(3) 0.02','0 0.01 4 9 3']);
-my %order = ( 1 => 22, 3 => 21 );
+%order = ( 1 => 22, 3 => 21 );
 model_transformations::reorder_omega_record(record => $record, order => \%order);
 is ($record->size, 2, "reorder_omega_record partial block 3 size");
 is ($record->n_previous_rows, 20, "reorder_omega_record partial block 3 n_prev");
@@ -286,7 +286,7 @@ is ($record->options->[2]->init, 0.02, "reorder_omega_record partial block 3 ini
 is ($record->options->[2]->coordinate_string, 'OMEGA(22,22)', "reorder_omega_record partial block 3 coord 2");
 
 $record = model::problem::omega->new(record_arr => ['BLOCK(5) 1 ;CL', '3 4', '8 9 10', '14 15 16 17', '23 ;CL-V', '24 25 26', '27 ;V']);
-my %order = ( 1 => 3, 3 => 2, 5 => 4 );
+%order = ( 1 => 3, 3 => 2, 5 => 4 );
 model_transformations::reorder_omega_record(record => $record, order => \%order);
 is ($record->size, 3, "reorder_omega_record block 5 size");
 is ($record->n_previous_rows, 1, "reorder_omega_record block 5 n_prev");
@@ -306,8 +306,17 @@ is ($record->options->[5]->init, 27, "reorder_omega_record block 5 init 5");
 is ($record->options->[5]->coordinate_string, 'OMEGA(4,4)', "reorder_omega_record block 5 coords 5");
 is ($record->options->[5]->label, 'V', "reorder_omega_record block 5 label 5");
 
+$record = model::problem::omega->new(record_arr => ['BLOCK(5) 1 ;CL', '3 4', '8 9 10', '14 15 16 17', '23 ;CL-V', '24 25 26', '27 ;V']);
+%order = ( 5 => 1 );
+model_transformations::reorder_omega_record(record => $record, order => \%order);
+is ($record->size, 1, "reorder_omega_record block 5to1 size");
+is ($record->n_previous_rows, 0, "reorder_omega_record block 5to1 n_prev");
+is ($record->options->[0]->init, 27, "reorder_omega_record block 5to1 init 0");
+is ($record->options->[0]->coordinate_string, 'OMEGA(1,1)', "reorder_omega_record block 5to1 coords 0");
+
+
 $record = model::problem::omega->new(record_arr => ['0.02 0 0.01 4 9 3']);
-my %order = ( 5 => 14, 6 => 13, 2 => 15 );
+%order = ( 5 => 14, 6 => 13, 2 => 15 );
 model_transformations::reorder_omega_record(record => $record, order => \%order);
 is ($record->size, 3, "reorder_omega_record diag size");
 is ($record->n_previous_rows, 12, "reorder_omega_record diag n_prev");
@@ -319,7 +328,7 @@ is ($record->options->[2]->init, 0, "reorder_omega_record diag init 2");
 is ($record->options->[2]->coordinate_string, 'OMEGA(15,15)', "reorder_omega_record diag coord 2");
 
 $record = model::problem::omega->new(record_arr => ['BLOCK(10) SAME']);
-my %order = ( 5 => 14, 6 => 13, 2 => 15 );
+%order = ( 5 => 14, 6 => 13, 2 => 15 );
 model_transformations::reorder_omega_record(record => $record, order => \%order);
 is ($record->size, 3, "reorder_omega_record block same size");
 is ($record->n_previous_rows, 12, "reorder_omega_record block same n_prev");
@@ -343,5 +352,33 @@ is_deeply($record, $model->problems->[0]->omegas->[1], "find_omega_record_for_et
 $record = model_transformations::find_omega_record_for_eta(model => $model, eta => 3);
 is_deeply($record, $model->problems->[0]->omegas->[2], "find_omega_record_for_eta 3");
 
+# hash_slice
+my $hash = { 1 => 2, 3 => 5, 6 => 7 };
+my $key_array = [ 1, 6 ];
+my $result_hash = model_transformations::hash_slice($hash, $key_array);
+is_deeply($result_hash, { 1 => 2, 6 => 7 }, "hash_slice 1");
+
+# reorder_etas
+$model = model->new(filename => "$modeldir/pheno.mod", ignore_missing_data => 1);
+my $model_orig = model->new(filename => "$modeldir/pheno.mod", ignore_missing_data => 1);
+%order = (1 => 2, 2 => 1);
+model_transformations::reorder_etas(model => $model, order => \%order);
+is_deeply($model->problems->[0]->omegas->[0]->options->[0]->init, $model_orig->problems->[0]->omegas->[0]->options->[1]->init, "reorder_etas pheno 1");
+is_deeply($model->problems->[0]->omegas->[0]->options->[1]->init, $model_orig->problems->[0]->omegas->[0]->options->[0]->init, "reorder_etas pheno 2");
+is_deeply($model->problems->[0]->omegas->[0]->options->[0]->label, $model_orig->problems->[0]->omegas->[0]->options->[1]->label, "reorder_etas pheno 3");
+is_deeply($model->problems->[0]->omegas->[0]->options->[1]->label, $model_orig->problems->[0]->omegas->[0]->options->[0]->label, "reorder_etas pheno 4");
+is_deeply($model->problems->[0]->omegas->[0]->options->[0]->coordinate_string, $model_orig->problems->[0]->omegas->[0]->options->[0]->coordinate_string, "reorder_etas pheno 5");
+is_deeply($model->problems->[0]->omegas->[0]->options->[1]->coordinate_string, $model_orig->problems->[0]->omegas->[0]->options->[1]->coordinate_string, "reorder_etas pheno 6");
+
+$record = model::problem::omega->new(record_arr => ['BLOCK(3) 2 4 6 8 10 12']);
+my $record2 = model::problem::omega->new(record_arr => ['19 20'], n_previous_rows => 3);
+$model->problems->[0]->omegas([$record, $record2]);
+%order = (1 => 4, 2 => 5, 3 => 3, 4 => 2, 5 => 1);      # Note that this order does not require splitting
+model_transformations::reorder_etas(model => $model, order => \%order);
+is (scalar(@{$model->problems->[0]->omegas}), 2, "reorder_etas example 1 no records");
+is ($model->problems->[0]->omegas->[0]->is_block(), 0, "reorder_etas example 1 rec 0 type");
+is ($model->problems->[0]->omegas->[0]->get_size(), 2, "reorder_etas example 1 rec 0 size");
+is ($model->problems->[0]->omegas->[1]->is_block(), 1, "reorder_etas example 1 rec 1 type");
+is ($model->problems->[0]->omegas->[1]->get_size(), 3, "reorder_etas example 1 rec 1 size");
 
 done_testing();
