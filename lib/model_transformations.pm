@@ -1668,7 +1668,9 @@ sub reorder_etas
         if (not defined $containing_record) {
             $containing_record = $new_containing_record;
             push @current_etas, $old_eta;
-            next;
+            if ($new_eta != $netas) {
+                next;
+            }
         } elsif (refaddr($containing_record) == refaddr($new_containing_record)) {
             push @current_etas, $old_eta;
             if ($new_eta != $netas) {       # This is not the final iteration.
