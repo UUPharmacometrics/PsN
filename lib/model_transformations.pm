@@ -1420,98 +1420,6 @@ sub rename_symbols_in_code
     }
 }
 
-=cut
-sub _shift_coordstring
-{
-    my $coordstring = shift;
-    my $row_shift = shift;
-    my $col_shift = shift;
-
-    $coordstring =~ /(\w+)\((\d+),(\d+)\)/;
-    return "$1(" . ($2 - $row_shift) . "," . ($3 - $col_shift) . ")";
-}
-=cut
-# FIXME: This is not needed!
-=cut
-sub split_omega_record
-{
-    # Will split out a part of an omega record. The part must be consecutive
-    # Put new record just before the old
-    my %parm = validated_hash(\@_,
-        record => { isa => 'model::problem::record' },
-        start => { isa => 'Int' },      # The first eta of the section to split out
-        end => { isa => 'Int' },
-    );
-    my $record = $parm{'record'};
-    my $start = $parm{'start'};
-    my $end = $parm{'end'};
-
-    my $netas = $end - $start + 1;
-    my $size = $record->get_size();
-    my $record_start = $record->n_previous_rows + 1;
-    my $record_end = $record_start + $size - 1;
-    my @options = @{$record->options};
-    my @kept_options;   # Options to keep in the incoming record
-    my $new_record;
-
-    if (not $record->is_block()) {
-        my $start_index = $start - $record_start;
-        my @split_options = @options[$start_index .. $start_index + $length - 1];
-        $new_record = model::problem::omega->new(size => $netas, n_previous_rows => $record->n_previous_rows, fix => 0, options => \@split_options);
-        @kept_options = @options;
-        splice @kept_options, $start_index, $netas;
-    } elsif ($record->same) {
-        $new_record = model::problem::omega->new(size => $netas, n_previous_rows => $record->n_previous_rows, options => [], same => 1);
-    } else {    # FIXME: Could do one big loop here?
-        my $netas_first_section = $start - $record_start; 
-        my $noptions_first_section = trinum($netas_first_section);     # Triangular number
-        my @new_options;    # Options to split out to the new record
-        if ($netas_first_section > 0) {
-            @kept_options = @options[0 .. $noptions_first_section];
-        }
-        my $option_index = $noptions_first_section;
-        my $row_length = $netas_first_option + 1;
-        for (my $i = 0; $i < $netas; $i++) {
-            for (my $col = 0; $col < $row_length; $col++) {
-                if ($col >= $netas_first_section) {
-                    my $option = $options[$option_index];
-                    $option->coordinate_string(_shift_coordstring($option->coordinate_string, $netas_first_section, $netas_first_section));
-                    push @new_options, $option;
-                }
-                $option_index++;
-            }
-            $row_length++;
-        }
-        my $netas_last_section = $records_end - $end;
-        if ($netas_last_section > 0) {
-            $option_index = trinum($netas_first_option + $netas);
-            $row_length = $netas_first_section + $netas + 1;
-            for (my $row = $size - $netas_last_section; $row < $size; $row++) {
-                for (my $col = 0; $col < $row_length; $col++) {
-                    if ($col < $netas_first_section or $col >= $netas_first_section + $netas) {
-                        my $option = $options[$option_index];
-                        if ($col < $netas_first_section) {
-                            $option->coordinate_string(_shift_coordstring($option->coordinate_string, $netas, 0));
-                        } else {
-                            $option->coordinate_string(_shift_coordstring($option->coordinate_string, $netas, $netas));
-                        }
-                        push @kept_options, $option;
-                    }
-                    $option_index++;
-                }
-                $row_length++;
-            }
-        }
-        $new_record = model::problem::omega->new(size => $netas, n_previous_rows => $record->n_previous_rows, fix => $record->fix, options => \@new_options);
-    }
-
-    $record->options(\@kept_options);
-    $record->size($size - $netas);
-    $record->n_previous_rows($record->n_previous_rows + $netas);
-
-    return $new_record;
-}
-=cut
 sub get_omega_element
 {
     # Get an option from an omega block record using relative row, col (one counted)
@@ -1555,6 +1463,7 @@ sub update_coordstring
 sub reorder_omega_record
 {
     # Do a reorder and/or subsetting of one omega record. The mapping must be from etas defined by this record. Missing etas will be taken out.
+    # Changes are done inplace and a coordstring conversion hash is returned
     my %parm = validated_hash(\@_,
         record => { isa => 'model::problem::init_record' },
         order => { isa => 'HashRef' },      # Hash from eta number in record to eta number in reordered record
@@ -1573,6 +1482,7 @@ sub reorder_omega_record
         return;
     }
 
+    my %coords_conversion;
     my @new_options;
     my $start_old_eta = $record->n_previous_rows + 1;
     my $first_new_eta = $new_etas[0];
@@ -1582,7 +1492,9 @@ sub reorder_omega_record
             my $old_eta = $new_to_old{$current_eta};
             my $old_option_index = $old_eta - $start_old_eta;
             my $old_option = $record->options->[$old_option_index];
+            my $old_coord = $old_option->coordinate_string;
             update_coordstring(option => $old_option, row => $current_eta, col => $current_eta);
+            $coords_conversion{$old_coord} = $old_option->coordinate_string;
             push @new_options, $old_option;
         }
     } else {
@@ -1591,7 +1503,9 @@ sub reorder_omega_record
                 my $oldrow = $new_to_old{$row + $n_previous_rows} - $record->n_previous_rows;
                 my $oldcol = $new_to_old{$col + $n_previous_rows} - $record->n_previous_rows;
                 my $omega = get_omega_element(record => $record, row => $oldrow, col => $oldcol);
+                my $old_coord = $omega->coordinate_string;
                 update_coordstring(option => $omega, row => $row + $n_previous_rows, col => $col + $n_previous_rows);
+                $coords_conversion{$old_coord} = $omega->coordinate_string;
                 push @new_options, $omega;
             }
         }
@@ -1600,6 +1514,8 @@ sub reorder_omega_record
     $record->n_previous_rows($n_previous_rows);
     $record->size(scalar(@new_etas));
     $record->options(\@new_options);
+
+    return \%coords_conversion;
 }
 
 sub find_omega_record_for_eta
@@ -1635,6 +1551,26 @@ sub hash_slice
     return \%sliced;
 }
 
+sub reorder_coordvals_hash
+{
+    # Reorder a coordvals hash using a conversion hash. Return the reordered hash
+    my %parm = validated_hash(\@_,
+        coordvals => { isa => 'HashRef' },
+        conversion => { isa => 'HashRef' },
+    );
+    my $coordvals = $parm{'coordvals'};
+    my $conversion = $parm{'conversion'};
+
+    my %new;
+    for my $key (keys %$conversion) {
+        if (defined $coordvals->{$key}) {
+            $new{$conversion->{$key}} = $coordvals->{$key};         
+        }
+    }
+
+    return \%new;
+}
+
 sub reorder_etas
 {
     # Reorders the omegas records of a model and connected output object
@@ -1642,9 +1578,11 @@ sub reorder_etas
     my %parm = validated_hash(\@_,
         model => { isa => 'model' },
         order => { isa => 'HashRef' },      # Hash from eta number in base model to eta number in reordered model
+        reorder_output => { isa => 'Bool', default => 1 },      # Should we reorder the output or not.
     );
     my $model = $parm{'model'};
     my $order = $parm{'order'};
+    my $reorder_output = $parm{'reorder_output'};
 
     my %symbol_rename;
     for my $key (keys %$order) {
@@ -1658,10 +1596,10 @@ sub reorder_etas
     my @new_records = ();
     my %new_to_old = reverse %old_to_new;
 
-
     my $netas = $model->nomegas->[0];
     my @current_etas;
     my $containing_record;
+    my %coords_conversion;
     for (my $new_eta = 1; $new_eta <= $netas; $new_eta++) {
         my $old_eta = $new_to_old{$new_eta};
         my $new_containing_record = find_omega_record_for_eta(model => $model, eta => $old_eta); 
@@ -1683,7 +1621,10 @@ sub reorder_etas
         # Here are @current_etas all part of the $containing_record
         my $cloned_record = dclone($containing_record);
         my $record_order = hash_slice(\%old_to_new, \@current_etas);
-        reorder_omega_record(record => $cloned_record, order => $record_order);
+        my $record_coords_conversion = reorder_omega_record(record => $cloned_record, order => $record_order);
+        if (defined $record_coords_conversion) {
+            %coords_conversion = (%coords_conversion, %$record_coords_conversion);
+        }
         push @new_records, $cloned_record;
       
         $containing_record = undef;
@@ -1691,6 +1632,55 @@ sub reorder_etas
     }
 
     $model->problems->[0]->omegas(\@new_records);
+
+    # Reorder the output
+    if ($reorder_output and defined $model->outputs) {
+        for my $output (@{$model->outputs}) {
+            if (defined $output->lst_model) {
+                reorder_etas(model => $output->lst_model, order => $order, reorder_output => 0);
+            }
+            if (defined $output->problems) {
+                my $problem = $output->problems->[0];       # Only support one $PROBLEM
+                if (defined $problem->subproblems) {
+                    for my $subprob (@{$problem->subproblems}) {
+                        my $reordered_omegacoordval = reorder_coordvals_hash(coordvals => $subprob->omegacoordval, conversion => \%coords_conversion);
+                        $subprob->omegacoordval($reordered_omegacoordval);
+                        my $reordered_seomegacoordval = reorder_coordvals_hash(coordvals => $subprob->seomegacoordval, conversion => \%coords_conversion);
+                        $subprob->seomegacoordval($reordered_seomegacoordval);
+                        my $reordered_sdcorrform_seomegacoordval = reorder_coordvals_hash(coordvals => $subprob->sdcorrform_seomegacoordval, conversion => \%coords_conversion);
+                        $subprob->sdcorrform_seomegacoordval($reordered_sdcorrform_seomegacoordval);
+                        my $reordered_sdcorrform_omegacoordval = reorder_coordvals_hash(coordvals => $subprob->sdcorrform_omegacoordval, conversion => \%coords_conversion);
+                        $subprob->sdcorrform_omegacoordval($reordered_sdcorrform_omegacoordval);
+
+                        # Non supported stuff
+                        $subprob->raw_covmatrix([]);
+                        $subprob->finalparam([]);
+                        $subprob->ext_table(undef);
+                        $subprob->inverse_covariance_matrix([]);
+                        $subprob->correlation_matrix([]);
+                        $subprob->eigens([]);
+                        $subprob->final_gradients([]);
+                        $subprob->parameter_path([]);
+                        $subprob->nm_output_files({});
+                        $subprob->raw_cormatrix([]);
+                        $subprob->raw_tmatrix([]);
+                        $subprob->comegas([]);
+                        $subprob->initgrad([]);
+                        $subprob->covariance_matrix([]);
+                        $subprob->cvseomegas([]);
+                        $subprob->estimated_omegas([]);
+                        $subprob->t_matrix([]);
+                        $subprob->keep_labels_hash({});
+                    }
+                }
+                # Non supported stuff
+                $problem->nm_output_files({});
+                $problem->ext_file(undef);
+                $problem->estimatedomegas([]);
+                $problem->input_problem->estimated_parameters_hash({});
+            }
+        }
+    }
 }
 
 

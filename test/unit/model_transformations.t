@@ -370,11 +370,12 @@ is_deeply($model->problems->[0]->omegas->[0]->options->[1]->label, $model_orig->
 is_deeply($model->problems->[0]->omegas->[0]->options->[0]->coordinate_string, $model_orig->problems->[0]->omegas->[0]->options->[0]->coordinate_string, "reorder_etas pheno 5");
 is_deeply($model->problems->[0]->omegas->[0]->options->[1]->coordinate_string, $model_orig->problems->[0]->omegas->[0]->options->[1]->coordinate_string, "reorder_etas pheno 6");
 
+
 $record = model::problem::omega->new(record_arr => ['BLOCK(3) 2 4 6 8 10 12']);
 my $record2 = model::problem::omega->new(record_arr => ['19 20'], n_previous_rows => 3);
 $model->problems->[0]->omegas([$record, $record2]);
 %order = (1 => 4, 2 => 5, 3 => 3, 4 => 2, 5 => 1);      # Note that this order does not require splitting
-model_transformations::reorder_etas(model => $model, order => \%order);
+model_transformations::reorder_etas(model => $model, order => \%order, reorder_output => 0);
 is (scalar(@{$model->problems->[0]->omegas}), 2, "reorder_etas example 1 no records");
 is ($model->problems->[0]->omegas->[0]->is_block(), 0, "reorder_etas example 1 rec 0 type");
 is ($model->problems->[0]->omegas->[0]->get_size(), 2, "reorder_etas example 1 rec 0 size");
@@ -403,7 +404,7 @@ $record = model::problem::omega->new(record_arr => ['BLOCK(3) 2 4 6 8 10 12']);
 $record2 = model::problem::omega->new(record_arr => ['19 20'], n_previous_rows => 3);
 $model->problems->[0]->omegas([$record, $record2]);
 %order = (4 => 1, 1 => 2, 2 => 3, 5 => 4, 3 => 5);      # Note that this order does require splitting
-model_transformations::reorder_etas(model => $model, order => \%order);
+model_transformations::reorder_etas(model => $model, order => \%order, reorder_output => 0);
 is (scalar(@{$model->problems->[0]->omegas}), 4, "reorder_etas example 2 no records");
 is ($model->problems->[0]->omegas->[0]->is_block(), 0, "reorder_etas example 2 rec 0 type");
 is ($model->problems->[0]->omegas->[0]->get_size(), 1, "reorder_etas example 2 rec 0 size");
@@ -435,7 +436,7 @@ $record2 = model::problem::omega->new(record_arr => ['BLOCK(2) 11 13 15'], n_pre
 my $record3 = model::problem::omega->new(record_arr => ['BLOCK(2) SAME'], n_previous_rows => 4);
 $model->problems->[0]->omegas([$record, $record2, $record3]);
 %order = (3 => 1, 5 => 2, 1 => 3, 2 => 4, 4 => 5, 6 => 6);      # Note that this order does require splitting of SAME block
-model_transformations::reorder_etas(model => $model, order => \%order);
+model_transformations::reorder_etas(model => $model, order => \%order, reorder_output => 0);
 is (scalar(@{$model->problems->[0]->omegas}), 5, "reorder_etas example 3 no records");
 is ($model->problems->[0]->omegas->[0]->is_block(), 1, "reorder_etas example 3 rec 0 type");
 is ($model->problems->[0]->omegas->[0]->get_size(), 1, "reorder_etas example 3 rec 0 size");
@@ -465,6 +466,14 @@ is ($model->problems->[0]->omegas->[2]->options->[1]->init, 7, "reorder_etas exa
 is ($model->problems->[0]->omegas->[2]->options->[1]->coordinate_string, 'OMEGA(4,4)', "reorder_etas example 3 rec 2 opt 1 coord");
 is ($model->problems->[0]->omegas->[3]->options->[0]->init, 15, "reorder_etas example 3 rec 3 opt 0 init");
 is ($model->problems->[0]->omegas->[3]->options->[0]->coordinate_string, 'OMEGA(5,5)', "reorder_etas example 3 rec 3 opt 0 coord");
+
+
+$model = model->new(filename => "$modeldir/pheno.mod", ignore_missing_data => 1);
+%order = (1 => 2, 2 => 1);
+model_transformations::reorder_etas(model => $model, order => \%order);
+$model->update_inits(from_output => $model->outputs->[0]);
+is ($model->problems->[0]->omegas->[0]->options->[0]->init, 0.141581, "reorder_etas update_inits 1");
+is ($model->problems->[0]->omegas->[0]->options->[1]->init, 0.247074, "reorder_etas update_inits 2");
 
 
 done_testing();
