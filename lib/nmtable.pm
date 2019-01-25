@@ -20,6 +20,7 @@ has 'iteration1' => ( is => 'rw', isa => 'Maybe[Int]' );
 has 'superproblem2' => ( is => 'rw', isa => 'Maybe[Int]' );
 has 'iteration2' => ( is => 'rw', isa => 'Maybe[Int]' );
 
+
 sub read_table_row
 {
     # Parses the TABLE NO. row
@@ -92,6 +93,7 @@ sub get_iteration_lookup
 	return \%index;
 
 }
+
 sub parse_ext_table
 {
     my $self = shift;
@@ -273,7 +275,8 @@ sub guess_estimated_attributes
 	return \%hash;
 }
 
-sub _get_value{
+sub _get_value
+{
 	#static method, translate text in NM7 ext,cov, coi etc to either number or undef
 	my $val = shift;
 	my $no_value = 10000000000;
@@ -283,6 +286,7 @@ sub _get_value{
 	}
     return $answer;
 }
+
 
 no Moose;
 __PACKAGE__->meta->make_immutable;
