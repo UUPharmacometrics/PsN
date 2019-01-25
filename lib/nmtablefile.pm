@@ -6,6 +6,8 @@ use include_modules;
 use Moose;
 use MooseX::Params::Validate;
 use nmtable;
+use math qw(trinum);
+
 
 has 'filename' => ( is => 'rw', isa => 'Str' );
 has 'tables' => ( is => 'rw', isa => 'ArrayRef[nmtable]', default => sub { [] } );
@@ -13,6 +15,7 @@ has 'is_ext_file' => ( is => 'rw', isa => 'Bool', default => 0);
 has 'has_evaluation' => ( is => 'rw', isa => 'Bool', default => 0);
 has 'table_lookup' => ( is => 'rw', isa => 'HashRef', default => sub { {} } );
 has 'problem_lookup' => ( is => 'rw', isa => 'HashRef', default => sub { {} } );
+
 
 sub BUILD
 {
@@ -221,6 +224,44 @@ sub write
 
     close $fh;
 }
+
+sub rearrange_etas
+{
+    # Will rearrange all ETAs in a phi file using a hash from old eta numbers to new.
+    # Reordering hash must be complete, i.e. cover all etas
+    # This is specific to phi files and could be put in a subclass in the future
+    my $self = shift;
+	my %parm = validated_hash(\@_,
+        order => { isa => 'HashRef' },
+	);
+    my $order = $parm{'order'};
+
+    my %new_to_old = reverse %$order;
+    my $netas = scalar(keys %new_to_old);
+
+    for my $nmtable (@{$self->tables}) {
+        my $old_columns = $nmtable->columns;
+        my @new_columns = ($nmtable->columns->[0], $nmtable->columns->[1]);     # SUBJECT_NO and ID
+        for (my $new_eta = 1; $new_eta <= $netas; $new_eta++) {                 # ETA columns            
+            my $old_eta = $new_to_old{$new_eta};
+            push @new_columns, $nmtable->columns->[1 + $old_eta];
+        }
+        for (my $new_row = 1; $new_row <= $netas; $new_row++) {                 # ETC columns
+            for (my $new_col = 1; $new_col <= $new_row; $new_col++) {
+                my $old_row = $new_to_old{$new_row};
+                my $old_col = $new_to_old{$new_col};
+                if ($old_col > $old_row) {              # Did we end up in upper triangle?
+                    ($old_row, $old_col) = ($old_col, $old_row);
+                }
+                my $index = trinum($old_row - 1) + $old_col - 1;
+                push @new_columns, $nmtable->columns->[2 + $netas + $index];
+            }
+        }
+        push @new_columns, $nmtable->columns->[-1];
+        $nmtable->columns(\@new_columns);
+    }
+}
+
 
 no Moose;
 __PACKAGE__->meta->make_immutable;

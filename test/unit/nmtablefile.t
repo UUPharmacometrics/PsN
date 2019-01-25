@@ -222,6 +222,23 @@ my @contents1 = utils::file::slurp_file("out.phi");
 my @contents2 = utils::file::slurp_file("mox_no_bov.phi");
 is_deeply (\@contents1, \@contents2, "write phi file");
 
-#remove_test_dir($tempdir);
+my $t2 = nmtablefile->new(filename => "mox_no_bov.phi");
+$t2->rearrange_etas(order => { 1 => 3, 2 => 2, 3 => 1 });
+my $oldcols = $t->tables->[0]->columns;
+my $newcols = $t2->tables->[0]->columns;
+is_deeply($newcols->[0], $oldcols->[0], "rearrange_etas col 1");
+is_deeply($newcols->[1], $oldcols->[1], "rearrange_etas col 2");
+is_deeply($newcols->[2], $oldcols->[4], "rearrange_etas col 3");
+is_deeply($newcols->[3], $oldcols->[3], "rearrange_etas col 4");
+is_deeply($newcols->[4], $oldcols->[2], "rearrange_etas col 5");
+is_deeply($newcols->[5], $oldcols->[10], "rearrange_etas col 6");
+is_deeply($newcols->[6], $oldcols->[9], "rearrange_etas col 7");
+is_deeply($newcols->[7], $oldcols->[7], "rearrange_etas col 8");
+is_deeply($newcols->[8], $oldcols->[8], "rearrange_etas col 9");
+is_deeply($newcols->[9], $oldcols->[6], "rearrange_etas col 10");
+is_deeply($newcols->[10], $oldcols->[5], "rearrange_etas col 11");
+is_deeply($newcols->[11], $oldcols->[11], "rearrange_etas col 12");
+
+remove_test_dir($tempdir);
 
 done_testing();

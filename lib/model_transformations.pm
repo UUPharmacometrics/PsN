@@ -1434,9 +1434,7 @@ sub get_omega_element
     my $col = $parm{'col'};
 
     if ($col > $row) {
-        my $temp = $col;
-        $col = $row;
-        $row = $temp;
+        ($row, $col) = ($col, $row);
     }
 
     my $index = trinum($row - 1) + $col - 1;
