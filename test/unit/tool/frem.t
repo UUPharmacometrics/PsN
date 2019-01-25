@@ -294,8 +294,8 @@ my ($corr,$message) = tool::frem::get_correlation_matrix_from_phi(start_eta_1 =>
                                                                   end_eta_1 => 3,
                                                                   model => $model);
 $ans=[[0.6389949068,0.9566914852,0.1573687298],
-         [0.9566914852, 0.996786336,0.0799357334 ],
-         [0.1573687298, 0.0799357334, 0.4438842175]];
+         [0.9566914852, 0.996786336,0.0799357319 ],
+         [0.1573687298, 0.0799357319, 0.4438842175]];
 
 cmp_float_matrix($corr,$ans,'get_correlation_matrix_from_phi 1');
 is (length($message),0,'no error get_correlation_matrix 1');

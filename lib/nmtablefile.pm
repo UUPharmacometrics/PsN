@@ -168,6 +168,59 @@ sub rename_column_names
     rename "$filename.new", $filename;
 }
 
+sub write
+{
+    # Write the NONMEM tablefile to disk. Currently only supports phi files
+    # WARNING: Assuming that columns contain the original strings
+    my $self = shift;
+	my %parm = validated_hash(\@_,
+		filename => { isa => 'Str' },
+	);
+    my $filename = $parm{'filename'};
+
+    open my $fh, '>', $filename or croak "Could not open $filename for writing";
+
+    for my $nmtable (@{$self->tables}) {
+        printf $fh "TABLE NO.%6s: %s: Problem=%d Subproblem=%d Superproblem1=%d Iteration1=%d Superproblem2=%d Iteration2=%d\n",
+            $nmtable->table_number, $nmtable->method, $nmtable->problem, $nmtable->subproblem, $nmtable->superproblem1,
+            $nmtable->iteration1, $nmtable->superproblem2, $nmtable->iteration2;
+
+        my @header = @{$nmtable->header_array};
+        print $fh ' ';
+        for my $colname (@header[0..($#header - 1)]) {
+            printf $fh "%-13s", $colname;
+        }
+        print $fh $header[-1], "\n";
+
+        for (my $row = 0; $row < scalar(@{$nmtable->columns->[0]}); $row++) {
+            for (my $col = 0; $col < scalar(@{$nmtable->columns}); $col++) {
+                my $item = $nmtable->columns->[$col]->[$row];
+                if ($col <= 1) {    # Integer format
+                    printf $fh "%13d", $item;
+                } elsif ($col < scalar(@{$nmtable->columns}) - 1) {
+                    if ($item > 0) {
+                        print $fh "  ";
+                    } else {
+                        print $fh " ";
+                    }
+                    printf $fh $item;
+                } else {        # OBJ column
+                    if ($item < 0 and $item > -1) {
+                        print $fh "  ";
+                    } elsif ($item > 1) {
+                        print $fh "    ";
+                    } else {
+                        print $fh "   ";
+                    }
+                    print $fh $item;
+                }
+            }
+            print $fh "\n";
+        }
+    }
+
+    close $fh;
+}
 
 no Moose;
 __PACKAGE__->meta->make_immutable;

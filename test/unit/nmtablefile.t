@@ -8,6 +8,7 @@ use lib "$Bin/.."; #location of includes.pm
 use includes; #file with paths to PsN packages
 
 use nmtablefile;
+use utils::file;
 
 my $dir = $includes::testfiledir;
 
@@ -210,5 +211,17 @@ is_deeply($guess_attributes->{'labels'},['THETA1','THETA2','THETA3','THETA4','TH
 is (nmtablefile::_replace_names_in_header(header => 'ID CONC MDV', replacements => { "DV" => "CONC" }), 'ID DV MDV', "_replace_names_in_header case 1");
 is (nmtablefile::_replace_names_in_header(header => 'ID CONC MDV', replacements => { }), 'ID CONC MDV', "_replace_names_in_header case 2");
 
+# write
+our $tempdir = create_test_dir('unit_nmtablefile');
+copy_test_files($tempdir, ["mox_no_bov.phi"]);
+chdir($tempdir);
+
+$t = nmtablefile->new(filename => "mox_no_bov.phi");
+$t->write(filename => "out.phi");
+my @contents1 = utils::file::slurp_file("out.phi");
+my @contents2 = utils::file::slurp_file("mox_no_bov.phi");
+is_deeply (\@contents1, \@contents2, "write phi file");
+
+#remove_test_dir($tempdir);
 
 done_testing();
