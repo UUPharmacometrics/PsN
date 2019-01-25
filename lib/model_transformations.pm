@@ -1576,10 +1576,12 @@ sub reorder_etas
     my %parm = validated_hash(\@_,
         model => { isa => 'model' },
         order => { isa => 'HashRef' },      # Hash from eta number in base model to eta number in reordered model
+        phi_file => { isa => 'Str', optional => 1 },            # Specify this together with reorder_output to get a new phi file 
         reorder_output => { isa => 'Bool', default => 1 },      # Should we reorder the output or not.
     );
     my $model = $parm{'model'};
     my $order = $parm{'order'};
+    my $phi_file = $parm{'phi_file'};
     my $reorder_output = $parm{'reorder_output'};
 
     my %symbol_rename;
@@ -1678,6 +1680,14 @@ sub reorder_etas
                 $problem->input_problem->estimated_parameters_hash({});
             }
         }
+    }
+
+    # Reorder the phi file and save as a new file
+    if ($reorder_output and defined $phi_file) {
+        my $phiname = $model->get_phi_file();
+        my $phitable = nmtablefile->new(filename => $phiname);
+        $phitable->rearrange_etas(order => $order);
+        $phitable->write(filename => $phi_file);
     }
 }
 

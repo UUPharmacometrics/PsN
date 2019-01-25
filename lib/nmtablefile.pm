@@ -201,7 +201,7 @@ sub write
                 if ($col <= 1) {    # Integer format
                     printf $fh "%13d", $item;
                 } elsif ($col < scalar(@{$nmtable->columns}) - 1) {
-                    if ($item > 0) {
+                    if ($item >= 0) {
                         print $fh "  ";
                     } else {
                         print $fh " ";

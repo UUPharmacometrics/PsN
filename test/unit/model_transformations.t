@@ -359,17 +359,20 @@ my $result_hash = model_transformations::hash_slice($hash, $key_array);
 is_deeply($result_hash, { 1 => 2, 6 => 7 }, "hash_slice 1");
 
 # reorder_etas
+our $tempdir = create_test_dir('unit_model_transformations');
+copy_test_files($tempdir, ["pheno.mod", "pheno.phi"]);
+chdir($tempdir);
 $model = model->new(filename => "$modeldir/pheno.mod", ignore_missing_data => 1);
 my $model_orig = model->new(filename => "$modeldir/pheno.mod", ignore_missing_data => 1);
 %order = (1 => 2, 2 => 1);
-model_transformations::reorder_etas(model => $model, order => \%order);
+model_transformations::reorder_etas(model => $model, order => \%order, phi_file => "new.phi");
 is_deeply($model->problems->[0]->omegas->[0]->options->[0]->init, $model_orig->problems->[0]->omegas->[0]->options->[1]->init, "reorder_etas pheno 1");
 is_deeply($model->problems->[0]->omegas->[0]->options->[1]->init, $model_orig->problems->[0]->omegas->[0]->options->[0]->init, "reorder_etas pheno 2");
 is_deeply($model->problems->[0]->omegas->[0]->options->[0]->label, $model_orig->problems->[0]->omegas->[0]->options->[1]->label, "reorder_etas pheno 3");
 is_deeply($model->problems->[0]->omegas->[0]->options->[1]->label, $model_orig->problems->[0]->omegas->[0]->options->[0]->label, "reorder_etas pheno 4");
 is_deeply($model->problems->[0]->omegas->[0]->options->[0]->coordinate_string, $model_orig->problems->[0]->omegas->[0]->options->[0]->coordinate_string, "reorder_etas pheno 5");
 is_deeply($model->problems->[0]->omegas->[0]->options->[1]->coordinate_string, $model_orig->problems->[0]->omegas->[0]->options->[1]->coordinate_string, "reorder_etas pheno 6");
-
+#remove_test_dir($tempdir);
 
 $record = model::problem::omega->new(record_arr => ['BLOCK(3) 2 4 6 8 10 12']);
 my $record2 = model::problem::omega->new(record_arr => ['19 20'], n_previous_rows => 3);
