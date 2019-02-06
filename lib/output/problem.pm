@@ -845,7 +845,7 @@ sub _read_subproblems
 						unless ($self -> {'ignore_missing_files'} or (not $self -> estimation_step_initiated())
 								or ((not $self -> estimation_step_run()) and $self->simulation_step_run()  )); 
 					}
-					if ((defined $last_method_string) and $last_method_string =~ /(Stochastic|Importance|Iterative|MCMC)/) {
+					if ((defined $last_method_string) and $last_method_string =~ /(Stochastic|Importance|Iterative|MCMC|NUTS)/) {
 						$classical_method = 0;
 					}
 				}
