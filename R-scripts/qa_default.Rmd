@@ -28,7 +28,7 @@ idv_all <- which_resmod_folders(directory=working.directory,idv_name)
 ```
 
 ```{r summary_about_ofv_values,results='asis',echo=F,warning=F,message=F,eval=!nonlinear}
-ofv_table <- ofv_summary_table(working.directory,model.filename)
+ofv_table <- ofv_summary_table(directory=file.path(working.directory,"linearize_run/scm_dir1/"),model.filename)
 ```
 
 ```{r structural_model_calculations,results='hide',echo=F,warning=F,message=F}
@@ -46,7 +46,7 @@ list_par_var_models <- get_param_var_tables(directory=working.directory,base_mod
 if(list_par_var_models$fullblock_mod) {
   full_omega_block_list <- get_full_omega_block(original_max0_model=original_max0_model,
                                                 fullblock_model=file.path(working.directory,"modelfit_run/fullblock.mod"),
-                                                dofv_block=list_par_var_models$dofv_block)
+                                                dofv=list_par_var_models$dofv_block)
 }
 if(list_par_var_models$boxcox_mod) {
   boxcox_lambdas_list <- get_param_extra_table(original_max0_model=original_max0_model,
@@ -102,10 +102,11 @@ if(exists("tdist_table_orig") && !tdist_list$param_extra_table_error) {
 ```{r covariate_model_calculations,results='hide',echo=F,warning=F,message=F}
 # 3.Covariate Models
   # 3.1.All (FREM)
-frem_table_list <- get_all_covariates(frem_directory=file.path(working.directory,"frem_run"),continuous,categorical,parameters,list_par_var_models$dofv_block,skip)
+frem_table_list <- get_all_covariates(frem_directory=file.path(working.directory,"frem_run"),nr_cov=(length(continuous)+length(categorical)),
+                                      nr_param=length(parameters),list_par_var_models$dofv_block,skip)
  # 3.2.Covariate (SCM)
-scm_table_list <- get_scm_table(scm_directory=file.path(working.directory,"scm_run"),
-                                parameters,continuous,scm_categorical,skip)
+scm_table_list <- get_scm_table(scm_directory=file.path(working.directory,"scm_run"),nr_cov=(length(continuous)+length(scm_categorical)),
+                                nr_param=length(parameters),skip)
 # summary
 covariates_table_list <- get_covariates_table(frem_table_list$frem_table,scm_table_list$scm_table,scm_table_list$max_scm_table)
 ```
