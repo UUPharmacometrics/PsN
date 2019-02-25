@@ -366,7 +366,7 @@ require model;
 					$ses{$param} = \@values;
 				}
 
-				if(defined $ses{'theta'} and scalar(@{$ses{'theta'}}>0)) {
+				if (defined $ses{'theta'} and scalar(@{$ses{'theta'}} > 0) or defined $ses{'omega'} and scalar(@{$ses{'omega'}}) > 0 or defined $ses{'sigma'} and scalar(@{$ses{'sigma'}}) > 0) {
 					foreach my $param ('theta','omega','sigma'){
 						my $ref = $outobj->get_filtered_values(problem_index => $problems,
 															   subproblem_index => $sub_problems,

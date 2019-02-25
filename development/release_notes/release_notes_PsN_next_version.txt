@@ -62,6 +62,7 @@ Changes and bug fixes from PsN 4.8.0 to x.x.x
 - Dots in datasets will always be seen by PsN as zero, which is the same way NM-TRAN handles dots. This will
   change the behaviour of transitions in randtest.
 - Empty items between commas in data set will be interpreted as zero (this is default NM-TRAN interpretation)
+- Code for rplots is behing moved to the new R-package PsNR
 
 
    ___common_options___
@@ -94,6 +95,8 @@ Changes and bug fixes from PsN 4.8.0 to x.x.x
    ___sumo___
 
 - New option -parameters to only show parameter estimates
+- Fix bug causing RSEs not to be shown if no THETAs were estimated
+
 
    ___mcmp___
 
