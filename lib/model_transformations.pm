@@ -492,6 +492,31 @@ sub rename_symbol
     }
 }
 
+sub rename_column
+{
+    # Rename a column in $INPUT (for first problem)
+    my %parm = validated_hash(\@_,
+        model => { isa => 'model' },
+        from => { isa => 'Str' },
+        to => { isa => 'Str' },
+    );
+    my $model = $parm{'model'};
+    my $from = $parm{'from'};
+    my $to = $parm{'to'};
+
+    foreach my $record (@{$model->problems->[0]->inputs}) {
+        foreach my $opt (@{$record->options}) {
+            if ($opt->name eq $from) {
+                $opt->name($to);
+                return;
+            } elsif (defined $opt->value and $opt->value eq $from) {
+                $opt->value($to);
+                return;
+            }
+        }
+    }
+}
+
 sub prepend_code
 {
     # Add code to beginning of $PRED or $PK, or to specific record

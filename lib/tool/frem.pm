@@ -4276,8 +4276,14 @@ sub create_data2_model
             $filtered_data_model -> remove_records(type => $remove_rec);
         }
 
-        $filtered_data_model -> add_records(type => 'pred',
-                                            record_strings => [$fremtype.'=0','Y=THETA(1)+ETA(1)+EPS(1)']);
+        my @predcode = ("$fremtype=0", 'Y=THETA(1)+ETA(1)+EPS(1)');
+        if ($filtered_data_model->problems->[0]->find_data_column(column_name => 'L2') != -1) {     # Do we have L2?
+            my $dummy_name = 'DMY6142';
+            model_transformations::rename_column(model => $filtered_data_model, from => 'L2', to => $dummy_name); 
+            push @predcode, "L2=$dummy_name";
+        }
+
+        $filtered_data_model -> add_records(type => 'pred', record_strings => \@predcode);
 
         $filtered_data_model -> add_records(type => 'theta',
                                             record_strings => ['1']);
