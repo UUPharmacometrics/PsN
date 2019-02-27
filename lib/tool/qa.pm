@@ -427,6 +427,7 @@ sub modelfit_setup
                 }
             }
             model_transformations::add_tv(model => $scm_model, parameters => [split /,/, $self->parameters]);
+            $scm_model->set_records(type => 'covariance', record_strings => [ "OMITTED" ]);
             $scm_model->_write();
             $self->_create_scm_config(model_name => "m1/scm.mod");
             my %tool_options = %{common_options::restore_options(@common_options::tool_options)};
