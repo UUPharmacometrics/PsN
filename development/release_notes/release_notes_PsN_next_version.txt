@@ -125,6 +125,7 @@ Changes and bug fixes from PsN 4.8.0 to x.x.x
    ___scm___
 
 - linearized scm will now initialize etas with phi file of base model for each iteration.
+- The ext file of the final model is also copied to final_models directory to retain the full precision of estimates
 
 
    ___linearize___

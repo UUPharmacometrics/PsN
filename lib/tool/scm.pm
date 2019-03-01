@@ -5493,6 +5493,7 @@ sub write_final_models
 	$fname =~ s/\.mod/\.lst/;
 	return unless (-e $final_model->outputfile); #unless lst-file exists (could have crashed)
 	cp($final_model->outputfile, "$fdir$fname");
+    cp(utils::file::replace_extension($final_model->outputfile, 'ext'), utils::file::replace_extension("$fdir$fname", "ext"));     # Also copy the ext file to get better precision on inits
 	my $prob_num = undef;
 	$final_model->update_inits(
         from_output => $final_model->outputs->[0],
