@@ -875,8 +875,10 @@ sub modelfit_setup
 	my $model_orig = $self->models->[0]->copy(filename => $type . '_original.mod', 
 											  directory => 'm1',
 											  copy_output => 0,
+                                              output_same_directory => 1,
 											  write_copy => 0,
 											  copy_datafile => 0);
+
 	my $model_simulation;
 	my $model_simulation_output;
 	if (defined $self->sim_model()) {
