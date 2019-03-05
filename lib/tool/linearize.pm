@@ -40,10 +40,16 @@ sub modelfit_setup
 
         my @keep;
         foreach my $option (@{$model->problems->[0]->inputs->[0]->options()}){
-            push (@keep, $option->name() ) if ( not ($option -> value eq 'DROP' or $option -> value eq 'SKIP'
-                        or $option -> name eq 'DROP' or $option -> name eq 'SKIP'
+            if (not ($option->value eq 'DROP' or $option->value eq 'SKIP'
+                        or $option->name eq 'DROP' or $option->name eq 'SKIP'
                         or $option->name eq 'ID' or $option->name eq 'DV' 
-                        or $option->name eq 'MDV'));
+                        or $option->name eq 'MDV')) {
+                if ($option->value eq 'TIME') {      # Special case for TIME. Keep it instead of synonym
+                    push @keep, $option->value;
+                } else {
+                    push @keep, $option->name;
+                }
+            }
         }
         #set do not drop to everything undropped in model
 
