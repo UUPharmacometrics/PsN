@@ -68,4 +68,29 @@ sub check_additive_eta
     return 0;
 }
 
+sub defined_symbol
+{
+    # Is this symbol defined in any code record?
+	my %parm = validated_hash(\@_,
+        model => { isa => 'model' },
+        symbol => { isa => 'Str' },
+    );
+    my $model = $parm{'model'};
+    my $symbol = $parm{'symbol'};
+
+    for my $record (('pk', 'pred', 'error', 'des', 'aes', 'aesinitial', 'mix', 'infn')) {
+        if ($model->has_code(record => $record)) {  
+            my $code = $model->get_code(record => $record);
+            for my $line (@$code) {
+                if ($line =~ /^\s*(\w+)\s*=/) {
+                    if ($1 eq $symbol) {
+                        return 1;
+                    }
+                }
+            }
+        }
+    }
+    return 0;
+}
+
 1;
