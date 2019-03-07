@@ -1904,8 +1904,7 @@ sub linearize_setup
                 if (defined $pd_value){
                     $max=$pd_value if ($pd_value > $max);
                 }
-                $self->sizes_pd($max);
-
+                $self->sizes_pd($max + 20);     # Added margin
 
                 if (defined $original_model ->problems->[0]->sizess()
                         and scalar(@{$original_model ->problems->[0]->sizess()})>0){
@@ -1917,7 +1916,7 @@ sub linearize_setup
 
                 }else{
                     $original_model -> add_records( type => 'sizes',
-                        record_strings => [ " PD=".$max ] );
+                        record_strings => [ " PD=" . $self->sizes_pd ] );
                 }
 
             }else{
@@ -1996,7 +1995,7 @@ sub linearize_setup
 
         $derivatives_model->remove_records( type => 'table' );
 
-        if ($self->sizes_pd() > 0){
+        if ($self->sizes_pd() > 50 and not PsN::minimum_nonmem_version(7, 3) or $self->sizes_pd() > 500) {
             #need to set $SIZES PDT
             if (defined $derivatives_model ->problems->[0]->sizess()
                     and scalar(@{$derivatives_model ->problems->[0]->sizess()})>0){
@@ -2167,7 +2166,7 @@ sub linearize_setup
 
         push(@tablestrings,'NOPRINT','NOAPPEND','ONEHEADER');
         push(@tablestrings,'FILE='.$datafilename);
-        push(@tablestrings, 'FORMAT=s1PE15.8');
+        push(@tablestrings, 'FORMAT=s1PE24.17');
         $derivatives_model->set_records(type => 'table', record_strings => \@tablestrings);
 
         # An extra table was requested
