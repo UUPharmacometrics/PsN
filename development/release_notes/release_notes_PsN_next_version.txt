@@ -96,6 +96,7 @@ Changes and bug fixes from PsN 4.8.0 to x.x.x
 
 - New option -parameters to only show parameter estimates
 - Fix bug causing RSEs not to be shown if no THETAs were estimated
+- Fix bug causing a display of ERROR when the covariance step was OMITTED
 
 
    ___mcmp___

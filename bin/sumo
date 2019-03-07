@@ -509,7 +509,9 @@ require model;
 						}
 					}
 
-					if ( $outobj -> covariance_step_run -> [$problems] ) {
+                    if ($outobj->problems->[$problems]->covariance_step_omitted) {
+					    $cov_mess = acknowledge('Covariance step', 'OMITTED');
+                    } elsif ($outobj->covariance_step_run->[$problems]) {
 						if (  $outobj -> covariance_step_successful -> [$problems][$sub_problems] eq '0' ) {
 							$cov_mess = acknowledge( 'Covariance step', 'ERROR');
 						} else {

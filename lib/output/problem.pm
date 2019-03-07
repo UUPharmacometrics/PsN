@@ -28,6 +28,7 @@ has 'nm_output_files' => ( is => 'rw', isa => 'HashRef' );
 has 'filename_root' => ( is => 'rw', isa => 'Str' );
 has 'directory' => ( is => 'rw', isa => 'Str' );
 has 'covariance_step_run' => ( is => 'rw', isa => 'Bool', default => 0 );
+has 'covariance_step_omitted' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'estimatedsigmas' => ( is => 'rw', isa => 'ArrayRef[Bool]', default => sub { [] } );
 has 'estimatedthetas' => ( is => 'rw', isa => 'ArrayRef[Bool]', default => sub { [] } );
 has 'estimatedomegas' => ( is => 'rw', isa => 'ArrayRef[Bool]', default => sub { [] } );
@@ -85,6 +86,7 @@ sub BUILD
 {
 	my $self = shift;
 
+    $self->_read_covstep();
 	# Read Global data
 	$self->_read_nrecs;
 	$self->_read_nobs if ( $self -> parsed_successfully and not $self -> finished_parsing );
@@ -648,20 +650,14 @@ sub _read_nonpstep
 sub _read_covstep
 {
 	my $self = shift;
-	my %parm = validated_hash(\@_,
-		 prob_arr => { isa => 'ArrayRef[Str]', optional => 1 }
-	);
-	my @prob_arr = defined $parm{'prob_arr'} ? @{$parm{'prob_arr'}} : ();
 
 	my $start_pos = $self->lstfile_pos;
-	my $success  = 0;
 
 	while ( $_ = @{$self->lstfile}[ $start_pos++ ] ) {
 
 	  if (/0COVARIANCE STEP OMITTED:\s*\b(.*)\b/) {
-	    $self->covariance_step_run(0) if $1 eq 'YES';
-	    $self->covariance_step_run(1) if $1 eq 'NO';
-	    $success = 1;
+	    $self->covariance_step_omitted(1) if $1 eq 'YES';
+	    $self->covariance_step_omitted(0) if $1 eq 'NO';
 	    last;
 	  }
 	  if ( /^ PROBLEM.*SUBPROBLEM/ or /^ PROBLEM NO\.:\s+\d/ or /^0ITERATION NO./ or /^0MINIMIZATION/) {
@@ -669,13 +665,6 @@ sub _read_covstep
 	    last;
 	  }
 	}
-
-	unless ( $success ) {
-		debugmessage(3,"rewinding to first position..." );
-	} else {
-		$self->lstfile_pos($start_pos);
-	}
-
 }
 
 sub _read_arbitrary
