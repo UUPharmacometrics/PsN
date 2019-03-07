@@ -2166,7 +2166,7 @@ sub linearize_setup
 
         push(@tablestrings,'NOPRINT','NOAPPEND','ONEHEADER');
         push(@tablestrings,'FILE='.$datafilename);
-        push(@tablestrings, 'FORMAT=s1PE24.17');
+        push(@tablestrings, 'FORMAT=s1PE15.8');
         $derivatives_model->set_records(type => 'table', record_strings => \@tablestrings);
 
         # An extra table was requested
