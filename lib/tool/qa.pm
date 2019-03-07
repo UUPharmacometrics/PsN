@@ -211,7 +211,12 @@ sub modelfit_setup
         );
  
         my $outobj = $base_model->outputs->[0];
-		my ($failed, undef) = $outobj->nonmem_run_failed;
+        my $failed = 0;
+        if (not defined $outobj->problems) {
+            $failed = 1;
+        } else {
+		    ($failed, undef) = $outobj->nonmem_run_failed;
+        }
         if ($failed) {
             print "\nERROR: Linearization failed. Stopping qa.\n";
             exit;

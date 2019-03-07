@@ -432,6 +432,11 @@ sub decorrelation
 			my $Rmat = [];
 			my $numerr;
 			if ($acolumns > 0){
+                #for (my $i = 0; $i < scalar(@Amat); $i++) {
+                #    for (my $j = 0; $j < scalar(@{$Amat[$i]}); $j++) {
+                #        $Amat[$i]->[$j] = 0.0 if ($Amat[$i]->[$j] < 1e-15);
+                #    }
+                #}
 				$numerr = linear_algebra::QR_factorize(\@Amat,$Rmat);
 				unless ($numerr == 0){
 					$result = $numerr;
