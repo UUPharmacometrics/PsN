@@ -2497,28 +2497,32 @@ sub linearize_setup
                 }
             }
 
-            my $sum_count=1;
-            my $sum_string='ESUM'.$sum_count;
-            my $err_string='ERROR_TERMS='.$sum_string;
-            $sum_string .= '=';
-            for (my $i=1;$i<=$err_count;$i++){
-                $sum_string .= 'ERR'.$i;
-                if ($i<$err_count){
-                    if (length($sum_string) >= 63){
-                        push(@pred_block,$sum_string);
-                        $sum_count++;
-                        $sum_string='ESUM'.$sum_count;
-                        $err_string .= '+'.$sum_string ;
-                        $sum_string .= '=';
-                    }else{
-                        $sum_string .= '+';
+            if ($nsigmas > 0) {
+                my $sum_count=1;
+                my $sum_string='ESUM'.$sum_count;
+                my $err_string='ERROR_TERMS='.$sum_string;
+                $sum_string .= '=';
+                for (my $i=1;$i<=$err_count;$i++){
+                    $sum_string .= 'ERR'.$i;
+                    if ($i<$err_count){
+                        if (length($sum_string) >= 63){
+                            push(@pred_block,$sum_string);
+                            $sum_count++;
+                            $sum_string='ESUM'.$sum_count;
+                            $err_string .= '+'.$sum_string ;
+                            $sum_string .= '=';
+                        }else{
+                            $sum_string .= '+';
+                        }
                     }
                 }
-            }
-            push(@pred_block,$sum_string);
-            push(@pred_block,$err_string);
+                push(@pred_block,$sum_string);
+                push(@pred_block,$err_string);
 
-            push(@pred_block,'Y=IPRED+ERROR_TERMS'."\n");
+                push(@pred_block,'Y=IPRED+ERROR_TERMS'."\n");
+            } else {
+                push @pred_block, "Y=IPRED\n";
+            }
         }else{
             if ($self->error eq 'add'){
                 push(@pred_block,'Y=IPRED+OW*EPS(1)'."\n");
@@ -2860,8 +2864,15 @@ sub linearize_setup
     } else {
         # If have MDV ignore all MDV != 0
         if (should_add_mdv(model => $original_model)) {
-            $original_model->add_option(record_name => 'data', option_name => 'IGNORE(MDV.NEN.0)');
-            $original_model->problems->[0]->psn_record_order(1);   # In case $DATA was before $INPUT
+            my $ign_acc = $original_model->problems->[0]->datas->[0]->have_ignore_accept();
+            if ($ign_acc != 2) {
+                $original_model->add_option(record_name => 'data', option_name => 'IGNORE(MDV.NEN.0)');
+            } else {
+                $original_model->add_option(record_name => 'data', option_name => 'ACCEPT(MDV.EQN.0)');
+            }
+            if ($ign_acc == 0) {        # If adding an ignore or accept we might need to reorder
+                $original_model->problems->[0]->psn_record_order(1);   # In case $DATA was before $INPUT
+            }
         }
     }
 
