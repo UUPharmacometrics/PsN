@@ -1681,7 +1681,7 @@ sub linearize_setup
 
     # Check if there are omegas or sigmas defined but not in code.
     my $nsigmas = $original_model->problems->[0]->nsigmas();
-    if (not (code_parsing::used_symbol(model => $original_model, symbol => "EPS($nsigmas)") or
+    if ($nsigmas > 0 and not (code_parsing::used_symbol(model => $original_model, symbol => "EPS($nsigmas)") or
         code_parsing::used_symbol(model => $original_model, symbol => "ERR($nsigmas)"))) {
         croak("SIGMA($nsigmas) is defined but ERR($nsigmas) or EPS($nsigmas) is not used in the model code. Linearize cannot handle this for the SIGMA with the highest index.");
     }
