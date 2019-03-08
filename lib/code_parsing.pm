@@ -93,4 +93,33 @@ sub defined_symbol
     return 0;
 }
 
+sub used_symbol
+{
+    # Check if a symbol is used in any LHS or RHS
+	my %parm = validated_hash(\@_,
+        model => { isa => 'model' },
+        symbol => { isa => 'Str' },
+    );
+    my $model = $parm{'model'};
+    my $symbol = $parm{'symbol'};
+
+    my $symbol_escaped = quotemeta($symbol);
+    if (substr($symbol_escaped, -1) =~ /\w/) {      # Need word boundary here. Cannot add for ex ETA(1)
+        $symbol_escaped .= '\b';
+    }
+
+    for my $record (('pk', 'pred', 'error', 'des', 'aes', 'aesinitial', 'mix', 'infn')) {
+        if ($model->has_code(record => $record)) {  
+            my $code = $model->get_code(record => $record);
+            for my $line (@$code) {
+                my @a = split /;/, $line;       # Don't match in comments
+                if ($a[0] =~ /\b$symbol_escaped/) {
+                    return 1;
+                }
+            }
+        }
+    }
+    return 0;
+}
+
 1;

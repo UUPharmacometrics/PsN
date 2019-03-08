@@ -1679,6 +1679,13 @@ sub linearize_setup
     );
     my $original_model = $parm{'original_model'};
 
+    # Check if there are omegas or sigmas defined but not in code.
+    my $nsigmas = $original_model->problems->[0]->nsigmas();
+    if (not (code_parsing::used_symbol(model => $original_model, symbol => "EPS($nsigmas)") or
+        code_parsing::used_symbol(model => $original_model, symbol => "ERR($nsigmas)"))) {
+        croak("SIGMA($nsigmas) is defined but ERR($nsigmas) or EPS($nsigmas) is not used in the model code. Linearize cannot handle this for the SIGMA with the highest index.");
+    }
+
     my $linearize_only = 0;
     if ((defined $self->max_steps() and $self->max_steps() == 0) and ($self->step_number()==1) and
         scalar(keys %{$self->test_relations()}) == 0) {
