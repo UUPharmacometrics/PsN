@@ -199,15 +199,19 @@ if(list_par_var_models$fullblock_mod) {
 
 ```{r draw_boxcox_tranformation_table,eval=all(skip!="transform"),results='asis',echo=F,warning=F,message=F}
 cat("##Box-Cox Transformation\n\n")
-if(boxcox_lambdas_list$param_extra_table_error) {
+if(list_par_var_models$boxcox_mod) {
+  if(boxcox_lambdas_list$param_extra_table_error) {
     cat(paste0(as.character(boxcox_lambdas_list$param_extra_table[1,1]),"."),"\n\n")
+  } else {
+    boxcox_lambdas_table <- kable_table(boxcox_lambdas_list$param_extra_table,format=type,booktabs=T,longtable=T,align = c("l","r","r","r"),linesep="") %>%
+      kableExtra::kable_styling(position="c",full_width = F) %>%
+      kableExtra::row_spec(nrow(boxcox_lambdas_list$param_extra_table),bold=T)
+    print(boxcox_lambdas_table)
+  }
+  cat("Estimated shape parameters (Lambda) as well as expected improvement in OFV when estimating a Box-Cox transformation for each subject-level random effect.")
 } else {
-  boxcox_lambdas_table <- kable_table(boxcox_lambdas_list$param_extra_table,format=type,booktabs=T,longtable=T,align = c("l","r","r","r"),linesep="") %>%
-    kableExtra::kable_styling(position="c",full_width = F) %>%
-    kableExtra::row_spec(nrow(boxcox_lambdas_list$param_extra_table),bold=T)
-  print(boxcox_lambdas_table)
+  cat("Box-cox model run error.")
 }
-cat("Estimated shape parameters (Lambda) as well as expected improvement in OFV when estimating a Box-Cox transformation for each subject-level random effect.")
 ```
 
 ```{r plot_boxcox_shape,eval=(make_boxcox_shape_plot && all(skip!="transform")), results='asis',echo=F,warning=F,message=F,fig.width=11,fig.height=fig_height_boxcox,fig.keep="high",fig.align="center"}
@@ -240,15 +244,19 @@ if(list_par_var_models$add_etas_mod) {
 
 ```{r draw_tdist_table,eval=all(skip!="transform"),results='asis',echo=F,warning=F,message=F}
 cat("##t-distribution\n\n")
-if(tdist_list$param_extra_table_error) {
+if(list_par_var_models$tdist_mod) {
+  if(tdist_list$param_extra_table_error) {
     cat(paste0(as.character(tdist_list$param_extra_table[1,1]),"."),"\n\n")
+  } else {
+    tdist_table <- kable_table(tdist_list$param_extra_table,format=type,booktabs=T,longtable=T,align = c("l","r","r","r"),linesep="") %>%
+      kableExtra::kable_styling(position="c",full_width = F) %>%
+      kableExtra::row_spec(nrow(tdist_list$param_extra_table),bold=T)
+    print(tdist_table)
+  }
+  cat("Estimated degrees of freedom as well as expected improvement in OFV when estimating a t-distribution transformation for each subject-level random effect.")
 } else {
-  tdist_table <- kable_table(tdist_list$param_extra_table,format=type,booktabs=T,longtable=T,align = c("l","r","r","r"),linesep="") %>%
-    kableExtra::kable_styling(position="c",full_width = F) %>%
-    kableExtra::row_spec(nrow(tdist_list$param_extra_table),bold=T)
-  print(tdist_table)
+  cat("t-distribution model run error.")
 }
-cat("Estimated degrees of freedom as well as expected improvement in OFV when estimating a t-distribution transformation for each subject-level random effect.")
 ```
 
 ```{r plot_tdist_shape,eval=(make_tdist_shape_plot && all(skip!="transform")), results='asis',echo=F,warning=F,message=F,fig.width=11,fig.height=fig_height_tdist,fig.keep="high",fig.align="center"}
