@@ -1379,7 +1379,7 @@ sub modelfit_setup
 	my $nopred_is_set=0;
 	unless (defined $model_simulation){
 		$nopred_is_set = $model_orig -> is_option_set( record => 'simulation',
-													   name => 'noprediction',
+													   name => 'NOPREDICTION',
 													   fuzzy_match => 1,
 													   problem_number => $self->origprobnum());
 		

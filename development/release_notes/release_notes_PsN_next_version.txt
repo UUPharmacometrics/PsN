@@ -113,6 +113,7 @@ Changes and bug fixes from PsN 4.8.0 to x.x.x
 
 - Fix bug causing simulation tables after a tte run being copied to the wrong directory when using the -model_subdir option
 - Fix bug causing lst-file for original model to not be copied to the m1 directory (but instead into the root of the run directory)
+- Fix bug causing NOPREDICTION to be removed from an original $SIMULATION
 
 
    ___frem___
