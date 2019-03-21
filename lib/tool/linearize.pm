@@ -44,8 +44,8 @@ sub modelfit_setup
                         or $option->name eq 'DROP' or $option->name eq 'SKIP'
                         or $option->name eq 'ID' or $option->name eq 'DV' 
                         or $option->name eq 'MDV')) {
-                if ($option->value eq 'TIME') {      # Special case for TIME. Keep it instead of synonym
-                    push @keep, $option->value;
+                if ($option->value eq 'TIME' or $option->name eq 'TIME') {      # Special case for TIME. Keep it instead of synonym
+                    push @keep, 'TIME';
                 } else {
                     push @keep, $option->name;
                 }

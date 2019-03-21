@@ -133,6 +133,16 @@ Some limitations and problems will affect the ability to generate any output, ot
 	\item A fixed omega is not allowed in the model if there are non-fixed omegas both before and after it
 \end{itemize}
 
+\subsection{resmod}
+The resmod tool that is used for assessing the residual error model and the structural model will be run multiple times with different independent variables. The different results will be used for assessment of the structural model given different idvs. Which independent variables that will be used is determined by the following rules:
+\begin{itemize}
+    \item If TIME is in the model (either in \$INPUT or defined in the model) it will be used.
+    \item If TAD is in the model it will be used.
+    \item PRED will always be used.
+    \item If the user has specified an idv different than TIME and TAD it will be used.
+\end{itemize}
+
+
 \section{Results}
 The main result file is the PsN\_qa\_plots.pdf that will collect all tables and plots of interest
 

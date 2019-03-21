@@ -2033,6 +2033,7 @@ sub linearize_setup
                 push(@inputstrings, 'MDV');
             }
         }
+
         #1.10
 
         if ($self->foce()){
@@ -2173,6 +2174,11 @@ sub linearize_setup
                 push @tablestrings, $colname;
                 push @inputstrings, $colname;
             }
+        }
+
+        if (not array::string_in('L2', \@inputstrings) and $derivatives_model->problems->[0]->find_data_column(column_name => 'L2') != -1) {
+            push(@inputstrings, 'L2');
+            push(@tablestrings, 'L2');
         }
 
         push(@tablestrings,'NOPRINT','NOAPPEND','ONEHEADER');
