@@ -43,6 +43,7 @@ has 'vpc_names' => ( is => 'rw', isa => 'ArrayRef', default => sub { [] } );
 has 'mdv' => ( is => 'rw', isa => 'Str', default => '' );
 has 'summarize' => ( is => 'rw', isa => 'Bool', default => 0 );     # This is set if this is a rerun in previous rundir.
 has 'skipped_residuals' => ( is => 'rw', isa => 'Bool', default => 0);  # Will be set to true if residuals were skipped
+has 'separate' => ( is => 'rw', isa => 'Bool', default => 0);   # Should sim and est be separated in two models?
 
 
 our $iofv_file = 'summary_iofv.csv';
@@ -115,6 +116,7 @@ sub modelfit_setup
 	my $model = $self->models->[$model_number-1];
 	my ( @seed, $new_datas, $skip_ids, $skip_keys, $skip_values );
 	my @orig_and_sim_models;
+    my @postsim_models; # Only used with option separate
 	my $orig_model;
 	my $sim_model;
 
@@ -311,7 +313,7 @@ sub modelfit_setup
 		my $etafile = 'sim-'.$sim_no.'.phi';
 		push(@all_eta_files,$self->directory . 'm' . $model_number . '/' . $etafile);
 
-		if( $sim_no == 1 ) {
+		if( 1 or $sim_no == 1 ) {
 			$sim_model = $orig_model->
 				copy( filename    => $self->directory . 'm' . $model_number . '/' . $sim_name,
 					  output_same_directory => 1,
@@ -403,6 +405,41 @@ sub modelfit_setup
 
 		push( @all_table_files, $self->directory . 'm' . $model_number . '/' . $tab_file );
 
+        if ($self->separate) {
+            my $postsim_model = $sim_model->copy(
+                filename => $sim_model->full_name(),
+                output_same_directory => 1,
+				copy_datafile => 0,
+				write_copy => 0,
+				copy_output => 0
+            );
+            $postsim_model->remove_records(type => 'simulation');
+            $postsim_model->problems->[0]->datas->[0]->set_filename(directory => $self->directory . 'm' . $model_number . '/', filename => "simdata_$sim_no.dta");
+            $postsim_model->remove_records(type => 'table');
+			$postsim_model->add_records(type => 'table', record_strings => [$tablestring]);
+		    $postsim_model->problems->[0]->remove_option( record_name  => 'table',
+								option_name  => 'FILE',
+								fuzzy_match => 1,
+								record_number => 1);
+		    $postsim_model->problems->[0]->add_option(record_name  => 'table',
+							record_number  => 1,
+							option_name  => 'FILE',
+							option_value => $tab_file);
+            $postsim_model->_write();
+            $sim_model->remove_records(type => 'estimation');
+		    $sim_model->outputfile($self->directory . 'm' . $model_number . '/pre' . $sim_out);
+            $sim_model->set_outputfile();
+            # Add new $TABLE for all in $INPUT here!
+            my @header = ();
+		    foreach my $option (@{$sim_model->problems->[0]->inputs->[0]->options}) {
+                push(@header, $option->name);
+            }
+            push @header, ('NOPRINT', 'NOAPPEND', 'ONEHEADER', "FILE=simdata_$sim_no.dta");
+            $sim_model->remove_records(type => 'table');
+			$sim_model->add_records(type => 'table', record_strings => [join ' ', @header]);
+		    $sim_model->filename('pre' . $sim_out);
+            push @postsim_models, $postsim_model;
+        }
 		$sim_model -> _write();
 		push( @orig_and_sim_models, $sim_model );
 
@@ -437,6 +474,41 @@ sub modelfit_setup
         ui->print(category => 'simeval', message => 'Summarizing results of previous run');
     }
 	$self->tools([]) unless defined $self->tools;
+    if ($self->separate) {
+        unshift(@postsim_models, (shift @orig_and_sim_models));   # Move original model to post_sim
+	    $run_sim = tool::modelfit -> new( 
+		    %{common_options::restore_options(@common_options::tool_options)},
+		    top_tool         => 0,
+		    models           => \@orig_and_sim_models,
+		    base_directory   => $self->directory,
+		    nmtran_skip_model => 3,
+		    directory        => $self->directory . "presim_dir" . $model_number, 
+		    parent_tool_id   => $self->tool_id,
+		    logfile	         => undef,
+            #raw_results_file     => [$self ->raw_results_file()->[0]], #change??
+            prepared_models       => undef,
+            shrinkage => 0,
+            #_raw_results_callback => $self -> _modelfit_raw_results_callback( model_number => $model_number ),
+            copy_data => 0,
+            abort_on_fail => $self->abort_on_fail);
+        $run_sim->run();
+	    $run_sim = tool::modelfit -> new( 
+		    %{common_options::restore_options(@common_options::tool_options)},
+		    top_tool         => 0,
+		    models           => \@postsim_models,
+		    base_directory   => $self->directory,
+		    nmtran_skip_model => 3,
+		    directory        => $self->directory . $simdirname . $model_number, 
+		    parent_tool_id   => $self->tool_id,
+		    logfile	         => undef,
+		    raw_results_file     => [$self ->raw_results_file()->[0]], #change??
+		    prepared_models       => undef,
+		    shrinkage => 0,
+		    _raw_results_callback => $self -> _modelfit_raw_results_callback( model_number => $model_number ),
+		    copy_data =>0,
+		    abort_on_fail => $self->abort_on_fail
+        );
+    }
     if (!$self->summarize) {
 	    push(@{$self->tools}, $run_sim);
     }

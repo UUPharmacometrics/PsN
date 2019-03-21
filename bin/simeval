@@ -33,7 +33,9 @@ my %optional_options = ( 'samples:i' => undef,
 						 'extra_variables:s' => undef,
 						 'n_simulation_models:i' => undef,
 						 'reminimize!' => undef,
-						 'gls_data_file!' => undef);
+						 'gls_data_file!' => undef,
+                         'separate!' => undef,
+                     );
 
 my $res = GetOptions( \%options,
 		      @common_options::get_opt_strings,
@@ -218,7 +220,8 @@ my $simeval = tool::simeval->new( eval( $common_options::parameters ),
 								  models	     => [ $model ],
 								  idv => $options{'idv'},
 								  extra_variables => $options{'extra_variables'},
-								  samples            => $options{'samples'} );
+								  samples            => $options{'samples'},
+                                  separate => $options{'separate'}, );
 
 $simeval-> print_options (cmd_line => $cmd_line,
 						   toolname => 'simeval',
