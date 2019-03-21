@@ -223,7 +223,7 @@ for(i in 1:length(boxcox_shape_plot)) {
 ```
 
 ```{r draw_add_etas_table,eval=all(skip!="transform"),results='asis',echo=F,warning=F,message=F}
-if(exists("boxcox_lambdas_list") && !boxcox_lambdas_list$param_extra_table_error) {
+if(list_par_var_models$boxcox_mod && !boxcox_lambdas_list$param_extra_table_error) {
   cat("\\pagebreak\n\n")
 }
 cat("##Additional etas\n\n")
