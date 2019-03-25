@@ -148,8 +148,9 @@ sub modelfit_setup
     $self->extra_table_columns(\@table_columns);
 
     my $base_model_name = $self->model->filename;
+    my $eval_model;
     if ($self->nonlinear) {
-        my $eval_model = $self->model->copy(filename => $self->model->filename, directory => $self->directory, write_copy => 0, output_same_directory => 0);
+        $eval_model = $self->model->copy(filename => $self->model->filename, directory => $self->directory, write_copy => 0, output_same_directory => 0);
         my @extra_tablestrings = ( @table_columns, 'NOPRINT', 'NOAPPEND', 'ONEHEADER', 'FILE=extra_table' );
         $eval_model->remove_records(type => 'table');
         $eval_model->add_records(type => 'table', record_strings => \@extra_tablestrings);
@@ -531,7 +532,7 @@ sub modelfit_setup
         if (not $self->nonlinear) {
             $resmod_model = model->new(filename => 'linearize_run/scm_dir1/derivatives.mod');
         } else {
-            $resmod_model = $model_copy;
+            $resmod_model = $eval_model;
         }
 				
 		if($resmod_model->defined_variable(name => 'TIME')) {
