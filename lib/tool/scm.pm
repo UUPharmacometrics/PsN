@@ -2037,11 +2037,7 @@ sub linearize_setup
         #1.10
 
         if ($self->foce()){
-            if (code_parsing::defined_symbol(model => $derivatives_model, symbol => 'IPRED')) {
-                push(@tablestrings,'IPRED=OPRED');
-            } else {
-                push(@tablestrings,'CIPREDI=OPRED');
-            }
+            push(@tablestrings,'CIPREDI=OPRED');
         }else{
             push(@tablestrings,'PREDI=OPRED');
         }
