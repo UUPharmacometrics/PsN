@@ -320,9 +320,13 @@ for (i in 1:length(resmod_table_list$dvid_nr)) {
   if(resmod_table_list$dvid_nr[i] != 'NA') {
     cat(paste0("##",dvid_name,"=",resmod_table_list$dvid_nr[i],"\n\n"))
   }
-  resmod_ruv_models_table <- kable_table(resmod_table_list$resmod_ruv_table_list[[i]],format=type,booktabs=T,longtable=T,align = c("l","r","c","l"),linesep="") %>%
+  if(ncol(resmod_table_list$resmod_ruv_table_list[[i]])==1 && nrow(resmod_table_list$resmod_ruv_table_list[[i]])==1) {
+    cat(paste0(as.character(resmod_table_list$resmod_ruv_table_list[[i]]),"."),"\n\n")
+  } else {
+    resmod_ruv_models_table <- kable_table(resmod_table_list$resmod_ruv_table_list[[i]],format=type,booktabs=T,longtable=T,align = c("l","r","c","l"),linesep="") %>%
     kableExtra::kable_styling(position="c",full_width = F)
-  print(resmod_ruv_models_table)
+    print(resmod_ruv_models_table)
+  }
   cat("Residual error model, resulting expected improvement in OFV, required additional model parameters as well as their estimates.\n\n\n\n")
   if(!nonlinear && exists("xpdb")) {
     res_var_attribution <- resmod_variability_attribution(xpdb,dvid_col_name=dvid_name,dvid_value=resmod_table_list$dvid_nr[i],smooth=TRUE)
