@@ -480,6 +480,10 @@ sub modelfit_setup
     if (not $self->_skipped('cdd')) {
         print "\n*** Running cdd ***\n";
         my $cdd_model = model->new(filename => $self->base_model_path);
+        my $cdd_ignore = 1;
+        if ($self->nonlinear) {
+            $cdd_ignore = 0;
+        }
         eval {
             my $cdd = tool::cdd->new(
                 %{common_options::restore_options(@common_options::tool_options)},
@@ -488,7 +492,7 @@ sub modelfit_setup
                 rplots => 1,
                 etas => 1,
                 top_tool => 1,
-                ignore => 1,   # Always use IGNORE instead of generating new datasets
+                ignore => $cdd_ignore,   # Use IGNORE instead of generating new datasets for regular qa. Fallback to no-ignore for nonlinear (too long paths problems)
             );
             $cdd->run();
         };
