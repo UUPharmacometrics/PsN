@@ -1712,7 +1712,7 @@ sub reorder_etas
         my $phiname = $model->get_phi_file();
         my $phitable = nmtablefile->new(filename => $phiname);
         $phitable->rearrange_etas(order => $order);
-        $phitable->write(filename => $phi_file);
+        $phitable->write(path => $phi_file, phi => 1);
     }
 }
 

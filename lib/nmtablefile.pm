@@ -147,7 +147,7 @@ sub _replace_names_in_header
 sub rename_column_names
 {
     # Function to rename column names of table using a hash of names => replacements
-    # This can be used as a workaround for the NONMEM bug causing synonyms to always show up in table headers
+    # This can be used as a workaround for the NONMEM caveat causing synonyms to always show up in table headers
 	my %parm = validated_hash(\@_,
 		filename => { isa => 'Str' },
         replacements => { isa => 'HashRef' },
@@ -173,35 +173,43 @@ sub rename_column_names
 
 sub write
 {
-    # Write the NONMEM tablefile to disk. Currently only supports phi files
+    # Write the NONMEM tablefile to disk. Supports phi-files and regular tables
     # WARNING: Assuming that columns contain the original strings
     my $self = shift;
 	my %parm = validated_hash(\@_,
-		filename => { isa => 'Str' },
+		path => { isa => 'Str' },
+        phi => { isa => 'Bool', default => 0 },     # Is it a phi-file
+        colsize => { isa => 'Int', default => 13 },     # The size in characters of one column
 	);
-    my $filename = $parm{'filename'};
+    my $path = $parm{'path'};
+    my $phi = $parm{'phi'};
+    my $colsize = $parm{'colsize'};
 
-    open my $fh, '>', $filename or croak "Could not open $filename for writing";
+    open my $fh, '>', $path or croak "Could not open $path for writing";
 
     for my $nmtable (@{$self->tables}) {
-        printf $fh "TABLE NO.%6s: %s: Problem=%d Subproblem=%d Superproblem1=%d Iteration1=%d Superproblem2=%d Iteration2=%d\n",
-            $nmtable->table_number, $nmtable->method, $nmtable->problem, $nmtable->subproblem, $nmtable->superproblem1,
-            $nmtable->iteration1, $nmtable->superproblem2, $nmtable->iteration2;
+        if ($phi) {
+            printf $fh "TABLE NO.%6s: %s: Problem=%d Subproblem=%d Superproblem1=%d Iteration1=%d Superproblem2=%d Iteration2=%d\n",
+                $nmtable->table_number, $nmtable->method, $nmtable->problem, $nmtable->subproblem, $nmtable->superproblem1,
+                $nmtable->iteration1, $nmtable->superproblem2, $nmtable->iteration2;
+        } else {
+            printf $fh "TABLE NO.%3s\n", $nmtable->table_number;
+        }
 
         my @header = @{$nmtable->header_array};
         print $fh ' ';
         for my $colname (@header[0..($#header - 1)]) {
-            printf $fh "%-13s", $colname;
+            printf $fh "%-${colsize}s", $colname;
         }
         print $fh $header[-1], "\n";
 
         for (my $row = 0; $row < scalar(@{$nmtable->columns->[0]}); $row++) {
             for (my $col = 0; $col < scalar(@{$nmtable->columns}); $col++) {
                 my $item = $nmtable->columns->[$col]->[$row];
-                if ($col <= 1) {    # Integer format
-                    printf $fh "%13d", $item;
-                } elsif ($col < scalar(@{$nmtable->columns}) - 1) {
-                    if ($item >= 0) {
+                if ($col <= 1 and $phi) {    # Integer format for phi file
+                    printf $fh "%${colsize}d", $item;
+                } elsif (not $phi or $col < scalar(@{$nmtable->columns}) - 1) {
+                    if ($item > 0 or ($item == 0 and substr($item, 0, 1) ne '-')) {     # Account for negative zero
                         print $fh "  ";
                     } else {
                         print $fh " ";
@@ -259,6 +267,42 @@ sub rearrange_etas
         }
         push @new_columns, $nmtable->columns->[-1];
         $nmtable->columns(\@new_columns);
+    }
+}
+
+sub renumber_l2_column
+{
+    # Renumbers a L2 column to use unique numbers for each level starting from 1 for each ID
+    my $self = shift;
+	my %parm = validated_hash(\@_,
+        column => { isa => 'Int' },        # The index of the L2 column
+        format => { isa => 'Str', default => '%.8E' },
+	);
+    my $column = $parm{'column'};
+    my $format = $parm{'format'};
+
+    for my $nmtable (@{$self->tables}) {
+        my $l2_index = $column;
+        my $l2_column = $nmtable->columns->[$l2_index];
+        my $id_index = $nmtable->header->{'ID'};
+        my $id_column = $nmtable->columns->[$id_index];
+        my @new_column;
+        my $new_l2 = 1;
+        my $current_id = $id_column->[0];
+        my $current_l2 = $l2_column->[0];
+        for (my $i = 0; $i < scalar(@$id_column); $i++) {
+            if ($current_id != $id_column->[$i]) {
+                $current_id = $id_column->[$i];
+                $current_l2 = $l2_column->[$i];
+                $new_l2 = 1;
+            }
+            if ($current_l2 != $l2_column->[$i]) {
+                $current_l2 = $l2_column->[$i];
+                $new_l2++;
+            }
+            push @new_column, sprintf($format, $new_l2);
+        }
+        $nmtable->columns->[$l2_index] = \@new_column;
     }
 }
 
