@@ -734,7 +734,7 @@ sub tdist_etas
 			"	+((5*ETA($i)**4+16*ETA($i)**2+3)/(96*THETA($next_theta)**2))&\n" .
 			"	+((3*ETA($i)**6+19*ETA($i)**4+17*ETA($i)**2-15)/(384*THETA($next_theta)**3)))\n";
         $next_theta++;
-        $model->add_records(type => 'theta', record_strings => [ '$THETA (3,,100)']); 
+        $model->add_records(type => 'theta', record_strings => [ '$THETA (3,80,100)']); 
     }
 
     prepend_code(model => $model, code => \@code);
