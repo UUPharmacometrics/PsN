@@ -2182,7 +2182,7 @@ sub linearize_setup
 
         push(@tablestrings,'NOPRINT','NOAPPEND','ONEHEADER');
         push(@tablestrings,'FILE='.$datafilename);
-        push(@tablestrings, 'FORMAT=s1PE15.8');
+        push(@tablestrings, 'FORMAT=s1PE23.16');
         $derivatives_model->set_records(type => 'table', record_strings => \@tablestrings);
 
         # An extra table was requested
@@ -2742,8 +2742,8 @@ sub linearize_setup
                 }
                 if ($l2_colno != -1) {       # Have L2 must renumber. Risk of mangling it with IGNORE
                     my $tablefile = nmtablefile->new(filename => $self->basename . '.dta');
-                    $tablefile->renumber_l2_column(column => $l2_colno, format => '%.8E');
-                    $tablefile->write(path => $self->basename . '.dta', colsize => 16);
+                    $tablefile->renumber_l2_column(column => $l2_colno, format => '%.16E');
+                    $tablefile->write(path => $self->basename . '.dta', colsize => 23);
                 }
             }else{
                 ui->print (category => 'scm',
