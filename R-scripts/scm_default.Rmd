@@ -7,14 +7,14 @@ geometry: margin=1.5cm
 
 ```{r loading_libraries_and_sourcing_functions,include = FALSE}
 # get libPaths
-source(file.path(rscripts.directory,"common/R_info.R"))
+# source(file.path(rscripts.directory,"common/R_info.R"))
 R_info(directory=working.directory,only_libPaths=T)
-source(paste0(rscripts.directory, "/scm/first.inclusion.step.R"))
-source(paste0(rscripts.directory, "/scm/included.covariates.R"))
-source(paste0(rscripts.directory, "/scm/plot_first.included.step.R"))
-source(paste0(rscripts.directory, "/scm/plot_included.covariates.R"))
+# source(paste0(rscripts.directory, "/scm/first.inclusion.step.R"))
+# source(paste0(rscripts.directory, "/scm/included.covariates.R"))
+# source(paste0(rscripts.directory, "/scm/plot_first.included.step.R"))
+# source(paste0(rscripts.directory, "/scm/plot_included.covariates.R"))
 
-library(ggplot2)
+library(PsNR)
 library(magrittr)
 library(methods)
 #add R_info to the meta file
