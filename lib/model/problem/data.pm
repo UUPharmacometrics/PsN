@@ -139,12 +139,13 @@ sub _is_ignore_accept
     my $value = shift;
     if ($name =~ /^(IGNORE|IGNOR|IGNO|IGN|ACCEPT|ACCEP|ACCE|ACC)(\()?/) {
         my $ret;
+        my $paren = $2;
         if ($name =~ /^I/) {
             $ret = 1;
         } else {
             $ret = 2;
         }
-        if (defined $2) {
+        if (defined $paren) {
             return $ret;
         } else {
             if ($value =~ /^\(/) {
