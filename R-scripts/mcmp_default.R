@@ -1,9 +1,8 @@
-# get libPaths
-source(file.path(rscripts.directory,"common/R_info.R"))
-R_info(directory=working.directory,only_libPaths=T)
-library(ggplot2)
+library(PsNR)
 library(magrittr)
 library(methods)
+# get libPaths
+R_info(directory=working.directory,only_libPaths=T)
 #add R_info to the meta file
 R_info(directory=working.directory)
 

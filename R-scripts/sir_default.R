@@ -1,5 +1,7 @@
+library(PsNR)
+library(magrittr)
+library(methods)
 # get libPaths
-source(file.path(rscripts.directory,"common/R_info.R"))
 R_info(directory=working.directory,only_libPaths=T)
 #############################################################################################################
 ### Diagnostics for SIR
@@ -19,11 +21,8 @@ R_info(directory=working.directory,only_libPaths=T)
 ###     - a plot of the number of resampled values in the bin with the highest proportion as the number of samples increases, iteration by iteration (all parameters together)
 ### COMMENTS ################################################################################################
 
-library(ggplot2)
-library(dplyr)
 library(RColorBrewer)
 library(stats4)
-library(methods)
 
 theme_set(theme_bw(base_size=20))
 
