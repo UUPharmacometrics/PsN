@@ -46,7 +46,7 @@ pdf.cdd <- function(raw.results.file,skipped.id.file,pdf.filename,
     
     # create cutoff tables
     # rotate column names
-    rotate = ttheme_default(colhead=list(fg_params=list(rot=90)))
+    rotate = gridExtra::ttheme_default(colhead=list(fg_params=list(rot=90)))
     #unlist
     
     cook_outliers_data <- list_out$cook_outliers_data
