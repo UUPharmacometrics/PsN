@@ -7,11 +7,10 @@ geometry: margin=1.5cm
 
 ```{r loading_libraries, warning=FALSE, message=FALSE, include = FALSE}
 # get libPaths
+library(PsNR)
 library(magrittr)
-source(file.path(rscripts.directory,"common/R_info.R"))
-R_info(directory=working.directory,only_libPaths=T)
-library(xpose4)
 library(methods)
+R_info(directory=working.directory,only_libPaths=T)
 #add R_info to the meta file
 R_info(directory=working.directory)
 ```
@@ -21,16 +20,16 @@ R_info(directory=working.directory)
 if (is.tte) {
     #data is in the model directory, go there to read input
     setwd(model.directory)
-    xpdb <- xpose.data(xpose.runno)
-    plots <- kaplan.plot(object=xpdb, VPC=T)
+    xpdb <- xpose4::xpose.data(xpose.runno)
+    plots <- xpose4::kaplan.plot(object=xpdb, VPC=T)
     #go back to vpc directory 
     setwd(working.directory)
 } else if (is.categorical) { 
-    plots <- xpose.VPC.categorical(vpc.info=tool.results.file, vpctab=vpctab)
+    plots <- xpose4::xpose.VPC.categorical(vpc.info=tool.results.file, vpctab=vpctab)
 } else if (have.loq.data | have.censored) {
-    plots <- xpose.VPC.both(vpc.info=tool.results.file, vpctab=vpctab)
+    plots <- xpose4::xpose.VPC.both(vpc.info=tool.results.file, vpctab=vpctab)
 } else {
-    plots <- xpose.VPC(vpc.info=tool.results.file, vpctab=vpctab)
+    plots <- xpose4::xpose.VPC(vpc.info=tool.results.file, vpctab=vpctab)
 }
 print(plots) 
 ```
@@ -38,7 +37,6 @@ print(plots)
 ```{r mix_plots, warning=FALSE, message=FALSE, results='asis',echo=FALSE,fig.width=17,fig.height=12,fig.keep="high",fig.align="center"}
 if (exists('mix')) {     # A mixture model is a special case
     if (require("vpc")) {
-        source(paste0(rscripts.directory, "/vpc/vpc_mixtures.R"))
         observations_tablefile <- paste0(working.directory, '/m1/vpc_original.npctab.dta')
         simulations_tablefile <- paste0(working.directory, '/m1/vpc_simulation.1.npctab.dta')
 
