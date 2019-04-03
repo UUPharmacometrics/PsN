@@ -217,7 +217,7 @@ copy_test_files($tempdir, ["mox_no_bov.phi"]);
 chdir($tempdir);
 
 $t = nmtablefile->new(filename => "mox_no_bov.phi");
-$t->write(filename => "out.phi");
+$t->write(path => "out.phi", phi => 1);
 my @contents1 = utils::file::slurp_file("out.phi");
 my @contents2 = utils::file::slurp_file("mox_no_bov.phi");
 is_deeply (\@contents1, \@contents2, "write phi file");
