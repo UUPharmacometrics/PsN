@@ -2743,7 +2743,7 @@ sub linearize_setup
                 if ($l2_colno != -1) {       # Have L2 must renumber. Risk of mangling it with IGNORE
                     my $tablefile = nmtablefile->new(filename => $self->basename . '.dta');
                     $tablefile->renumber_l2_column(column => $l2_colno, format => '%.16E');
-                    $tablefile->write(path => $self->basename . '.dta', colsize => 23);
+                    $tablefile->write(path => $self->basename . '.dta', colsize => 24);
                 }
             }else{
                 ui->print (category => 'scm',
