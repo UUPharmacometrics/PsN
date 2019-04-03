@@ -1686,7 +1686,7 @@ sub linearize_setup
         croak("SIGMA($nsigmas) is defined but ERR($nsigmas) or EPS($nsigmas) is not used in the model code. Linearize cannot handle this for the SIGMA with the highest index.");
     }
 
-    my $l2_colno;
+    my $l2_index;
     my $linearize_only = 0;
     if ((defined $self->max_steps() and $self->max_steps() == 0) and ($self->step_number()==1) and
         scalar(keys %{$self->test_relations()}) == 0) {
@@ -2173,12 +2173,12 @@ sub linearize_setup
             }
         }
 
-        $l2_colno = $derivatives_model->problems->[0]->find_data_column(column_name => 'L2');
+        my $l2_colno = $derivatives_model->problems->[0]->find_data_column(column_name => 'L2');
         if (not array::string_in('L2', \@inputstrings) and $l2_colno != -1) {
             push(@inputstrings, 'L2');
             push(@tablestrings, 'L2');
-            $l2_colno = scalar(@inputstrings) - 1;
         }
+        ($l2_index) = grep { $inputstrings[$_] eq 'L2' } (0 .. @inputstrings-1);
 
         push(@tablestrings,'NOPRINT','NOAPPEND','ONEHEADER');
         push(@tablestrings,'FILE='.$datafilename);
@@ -2740,9 +2740,9 @@ sub linearize_setup
                         nmtablefile::rename_column_names(filename => $self->basename . '.dta', replacements => $synonyms);
                     }
                 }
-                if ($l2_colno != -1) {       # Have L2 must renumber. Risk of mangling it with IGNORE
+                if (defined $l2_index) {       # Have L2 must renumber. Risk of mangling it with IGNORE
                     my $tablefile = nmtablefile->new(filename => $self->basename . '.dta');
-                    $tablefile->renumber_l2_column(column => $l2_colno, format => '%.16E');
+                    $tablefile->renumber_l2_column(column => $l2_index, format => '%.16E');
                     $tablefile->write(path => $self->basename . '.dta', colsize => 24);
                 }
             }else{
