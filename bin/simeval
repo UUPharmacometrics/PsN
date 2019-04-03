@@ -159,6 +159,18 @@ $help_text{-samples} = <<'EOF';
 	Default is 300. The number of simulations and reestimations to perform.
 EOF
 
+$help_text{-separate} = <<'EOF';
+	-separate
+
+    Set to make each NONMEM run separate. Must be used together with 
+    -n_simulation_models equal to the -samples. Each simulation will be a
+    separate run and each evaluation also be separate. This option can be
+    used when simulation and evaluation cannot coexist in the same model, i.e.
+    when using NOPREDICTION. When using this option DROP is not allowed in
+    $INPUT and it will not in general be possible to use .NE. or .EQ. in
+    $DATA (use .NEN. and .EQN. instead).
+EOF
+
 	$help_text{Post_help_message} = <<'EOF';
     Also see 'psn_options -h' for a description of common PsN options.
 EOF

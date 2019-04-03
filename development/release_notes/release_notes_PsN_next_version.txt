@@ -148,7 +148,9 @@ Changes and bug fixes from PsN 4.8.0 to x.x.x
 
 
    ___simeval___
-   
+
+- New option -separate to be able to use simeval for models with NOPREDICTION 
+
 
    ___runrecord___
 

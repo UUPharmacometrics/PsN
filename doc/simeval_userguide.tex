@@ -70,6 +70,9 @@ Default not set. By default, simulated datasets will be run with MAXEVAL=0 (or e
 \optdefault{samples}{N}
 Default is 300. The number of simulations and reestimations/evaluations to run. 
 \nextopt
+\optname{separate}
+    Set to make each NONMEM run separate. Must be used together with \verb|-n_simulation_models| equal to the \verb|-samples|. Each simulation will be a separate run and each evaluation also be separate. This option can be used when simulation and evaluation cannot coexist in the same model, i.e. when using \verb|NOPREDICTION|. When using this option DROP is not allowed in \verb|$INPUT| and it will not in general be possible to use \verb|.NE.| or \verb|.EQ.| in \verb|$INPUT| (use \verb|.NEN.| and \verb|.EQN.| instead).
+\nextopt
 \end{optionlist}
 
 \subsection{Some important common PsN options}
