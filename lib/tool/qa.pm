@@ -752,6 +752,17 @@ sub check_nonsupported_modelfeatures
     if (defined $model->problems->[0]->mixs) {
         die("Error: Mixture models are not supported by qa.\n");
     }
+
+    if ($model->is_option_set(record => 'estimation', name => 'HYBRID', fuzzy_match => 1) or
+            $model->is_option_set(record => 'estimation', name => 'LAPLACIAN', fuzzy_match => 1) or
+            $model->is_option_set(record => 'estimation', name => 'LAPLACE', fuzzy_match => 1)) {
+        die("Error: options HYBRID and LAPLACE to \$ESTIMATION are not supported by qa.\n");
+    }
+
+    my $method = $model->get_option_value(record_name => 'estimation', option_name => 'METHOD', fuzzy_match => 1);
+    if (not defined $method or $method == 0) {
+        die("Error: FO models are not supported by qa.\n");
+    }
 }
 
 sub get_scm_categorical
