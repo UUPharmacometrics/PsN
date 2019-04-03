@@ -407,7 +407,7 @@ if(length(outlier_table_list$outlier_ids)>0) {
 ```
 
 ```{r add_all_outliers_overall_table,eval=all(skip!="simeval"),results='asis',echo=F,warning=F,message=F}
-all_outl_list <- simeval_all_ouliers_table(simeval_directory=file.path(working.directory,"simeval_run"))
+all_outl_list <- simeval_all_outliers_table(simeval_directory=file.path(working.directory,"simeval_run"))
 if(all_outl_list$files_exist) {
   if(ncol(all_outl_list$all_outlier_table)>1 && nrow(all_outl_list$all_outlier_table)>1) {
     simeval_overall_outliers_table <- kable_table(all_outl_list$all_outlier_table,booktabs=T,format=type,longtable=T,align = c("l","c","c","c","c","c"),linesep="") %>%
