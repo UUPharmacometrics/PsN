@@ -1,10 +1,9 @@
 # get libPaths
-source(file.path(rscripts.directory,"common/R_info.R"))
+library(PsNR)
+library(magrittr)
+library(methods)
 R_info(directory=working.directory,only_libPaths=T)
-library(dplyr)
-library(yaml)
 
-source(file.path(rscripts.directory, "/common/find_r_files_in_subdir.R"))
 rscript <- find_r_files_in_subdir(toolname, rscripts.directory)
 for (i in 1:length(rscript)) {
     source(rscript[i])
@@ -47,5 +46,5 @@ decision <- function(tree) {
 
 tree$actions = decision(tree)
 
-yaml <- as.yaml(tree, indent.mapping.sequence=TRUE)
+yaml <- yaml::as.yaml(tree, indent.mapping.sequence=TRUE)
 cat(yaml, file="results.yaml")
