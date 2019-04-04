@@ -1,6 +1,11 @@
 library(PsNR)
 library(magrittr)
 library(methods)
+library(ggplot2)
+library(RColorBrewer)
+library(stats4)
+library(tidyr)
+library(dplyr)
 # get libPaths
 R_info(directory=working.directory,only_libPaths=T)
 #############################################################################################################
@@ -20,9 +25,6 @@ R_info(directory=working.directory,only_libPaths=T)
 ###     - a plot of the number of resampled values in the bin with the highest proportion as the number of samples increases, parameter by parameter and iteration by iteration
 ###     - a plot of the number of resampled values in the bin with the highest proportion as the number of samples increases, iteration by iteration (all parameters together)
 ### COMMENTS ################################################################################################
-
-library(RColorBrewer)
-library(stats4)
 
 theme_set(theme_bw(base_size=20))
 

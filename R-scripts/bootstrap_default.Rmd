@@ -11,6 +11,9 @@ geometry: margin=1.5cm
 library(PsNR)
 library(magrittr)
 library(methods)
+library(xpose4)
+library(dplyr)
+library(PerformanceAnalytics)
 #add R_info to the meta file
 R_info(directory=working.directory)
 ```

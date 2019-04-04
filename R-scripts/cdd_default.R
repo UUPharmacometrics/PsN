@@ -1,5 +1,4 @@
 library(PsNR)
-library(gridExtra)
 library(magrittr)
 library(methods)
 # get libPaths

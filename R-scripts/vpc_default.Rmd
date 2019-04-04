@@ -10,6 +10,8 @@ geometry: margin=1.5cm
 library(PsNR)
 library(magrittr)
 library(methods)
+library(xpose4)
+library(vpc)
 R_info(directory=working.directory,only_libPaths=T)
 #add R_info to the meta file
 R_info(directory=working.directory)

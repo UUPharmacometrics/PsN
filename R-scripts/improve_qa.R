@@ -2,6 +2,8 @@
 library(PsNR)
 library(magrittr)
 library(methods)
+library(yaml)
+library(dplyr)
 R_info(directory=working.directory,only_libPaths=T)
 
 rscript <- find_r_files_in_subdir(toolname, rscripts.directory)
@@ -22,8 +24,8 @@ tree <- list(
         	boxcox=list_par_var_models$dofv_box
 		),
 		resmod=list(
-			power=filter(resmod_table, Model == "power")$dOFV,
-			iiv_on_ruv=filter(resmod_table, Model == "IIV on RUV")$dOFV
+			power=dplyr::filter(resmod_table, Model == "power")$dOFV,
+			iiv_on_ruv=dplyr::filter(resmod_table, Model == "IIV on RUV")$dOFV
 		)
     )
 )
