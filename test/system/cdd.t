@@ -10,11 +10,11 @@ use includes; #file with paths to PsN packages and $path variable definition
 
 our $tempdir = create_test_dir('system_cdd');
 
-copy_test_files($tempdir, ["pheno5.mod", "pheno5_ignore.mod", "pheno5.dta","pheno5.lst", "mox1.mod","mox1.lst", "mox_simulated.csv"]);
+copy_test_files($tempdir, ["pheno15.mod", "pheno.dta", "pheno5.mod", "pheno5_ignore.mod", "pheno5.dta","pheno5.lst", "mox1.mod","mox1.lst", "mox_simulated.csv"]);
 chdir($tempdir);
 
 my @commands = 
-	(get_command('cdd') . " -case_column=ID $tempdir/pheno5.mod -xv  ",
+	(get_command('cdd') . " -case_column=ID $tempdir/pheno15.mod -xv -directory=cdd_rplots -rplots=2 ",
 	 get_command('cdd') . " $tempdir/mox1.mod -case_column=DGRP ",
 	);
 
@@ -24,6 +24,11 @@ foreach my $command (@commands) {
 	$rc = $rc >> 8;
 	ok ($rc == 0, "$command, should run ok");
 }
+
+# Test rplots
+my %pdf_files_pages=('cdd_rplots/PsN_cdd_plots.pdf' => 5);
+
+includes::test_pdf_pages(\%pdf_files_pages);
 
 # Test dofv calculation when one line was ignored
 
