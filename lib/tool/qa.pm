@@ -760,7 +760,7 @@ sub check_nonsupported_modelfeatures
     }
 
     my $method = $model->get_option_value(record_name => 'estimation', option_name => 'METHOD', fuzzy_match => 1);
-    if (not defined $method or $method ~= /^COND/ or $method == 0) {
+    if (not defined $method or $method =~ /^COND/ or $method == 0) {
         die("Error: FO models are not supported by qa.\n");
     }
 }
