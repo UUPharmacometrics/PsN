@@ -43,10 +43,8 @@ cutoff.cov.cook <- function(raw.results.file,skipped.id.file,cutoff_cook,show.wa
   cutoff_cov[1] <- (-3*ncol(cov.par.data)/nrow(cov.data))+1
   cutoff_cov[2] <- (3*ncol(cov.par.data)/nrow(cov.data))+1
   
-  # create tables
-  library(gridExtra)
   # rotate column names
-  rotate = ttheme_default(colhead=list(fg_params=list(rot=90)))
+  rotate = gridExtra::ttheme_default(colhead=list(fg_params=list(rot=90)))
 
 # -------------------------------------------  cutoff_cook -------------------------------------
   # Detect cook score which are bigger than cutoff_cook
