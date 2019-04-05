@@ -3,12 +3,9 @@ pdf.delta.ofv <- function(raw.results.file,skipped.id.file,pdf,outlier_ID) {
   pdf(file=pdf,width=11.69, height=8.27)
   
   # read in input data
-  source("../../../code/cdd/create.data.full.R")
   out_cdd.data.all <- create.data.full(raw.results.file,skipped.id.file)
   cdd.data.all <- out_cdd.data.all$cdd.data.all
-  
-  source("../../../code/cdd/delta.ofv.data.R")
-  source("../../../code/cdd/plot.delta.ofv.R")
+
   if (missing(outlier_ID)) {
     # create needed data form plotting
     list.delta.ofv <- delta.ofv.data(cdd.data.all)
