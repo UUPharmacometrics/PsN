@@ -759,6 +759,10 @@ sub check_nonsupported_modelfeatures
         die("Error: options HYBRID and LAPLACE to \$ESTIMATION are not supported by qa.\n");
     }
 
+    if (scalar(@{$model->problems->[0]->estimations}) != 1) {
+        die("Error: Model must have exactly one \$ESTIMATION record\n");
+    }
+
     my $method = $model->get_option_value(record_name => 'estimation', option_name => 'METHOD', fuzzy_match => 1);
     if (not defined $method or $method =~ /^(COND|IMP|IMPMAP|SAEM|BAYES|NUTS)/ or $method == 0) {
         die("Error: Estimation with FO, IMP, IMPMAP, SAEM, BAYES or NUTS is not supported by qa.\n");
