@@ -92,7 +92,7 @@ R_info(directory=working.directory)
       
       if(!is.null(degrees.of.freedom) ||!is.null(n.individuals)){
         ncp <- ofv.reduced-ofv.full
-        ppe_power <- ppe_subjects(ncp = ncp, df=1, n.subjects = n.individuals, pred.n.subjects = rawres$total_X)
+        ppe_power <- ppe_subjects(ncp=ncp, df=degrees.of.freedom, n.subjects=n.individuals, pred.n.subjects=rawres$total_X)
         ppe_power_curves <- data.frame(subjects=rawres$total_X, power=ppe_power*100, method="PPE")
         p <- PLoT1+
           geom_point(data=transform(rawres, method="MCMP"), 
