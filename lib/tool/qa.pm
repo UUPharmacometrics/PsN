@@ -761,7 +761,8 @@ sub check_nonsupported_modelfeatures
 
     my $methods = $model->get_option_value(record_name => 'estimation', option_name => 'METHOD', record_index => 'all', fuzzy_match => 1);
     my $final_method = pop @$methods;
-    if (not defined $final_method or $final_method =~ /^(COND|IMP|IMPMAP|SAEM|BAYES|NUTS)/ or $final_method == 0) {
+
+    if (not defined $final_method or $final_method =~ /^(IMP|IMPMAP|SAEM|BAYES|NUTS)/ or $final_method eq '0') {
         die("Error: Estimation with FO, IMP, IMPMAP, SAEM, BAYES or NUTS in the final \$EST of the model is not supported by qa.\n");
     }
 }
