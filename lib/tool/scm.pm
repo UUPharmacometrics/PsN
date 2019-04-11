@@ -2737,13 +2737,13 @@ sub linearize_setup
                 if (defined $self->extra_table_columns) {
                     my $synonyms = $derivatives_model->find_input_synonyms(columns => ['DV', 'MDV']);
                     if (scalar(keys %$synonyms) > 0) {
-                        nmtablefile::rename_column_names(filename => $self->basename . '.dta', replacements => $synonyms);
+                        nmtablefile::rename_column_names(filename => $datafilename, replacements => $synonyms);
                     }
                 }
                 if (defined $l2_index) {       # Have L2 must renumber. Risk of mangling it with IGNORE
-                    my $tablefile = nmtablefile->new(filename => $self->basename . '.dta');
+                    my $tablefile = nmtablefile->new(filename => $datafilename);
                     $tablefile->renumber_l2_column(column => $l2_index, format => '%.16E');
-                    $tablefile->write(path => $self->basename . '.dta', colsize => 24);
+                    $tablefile->write(path => $datafilename, colsize => 24);
                 }
             }else{
                 ui->print (category => 'scm',
