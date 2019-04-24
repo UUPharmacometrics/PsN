@@ -954,14 +954,30 @@ sub general_setup
 				    $newmodel -> datafiles( new_names => [$set] );
                 } else {
                     my $verb;
+                    my $op;
+
+                    my $ign_acc = $model->problems->[0]->datas->[0]->have_ignore_accept();  # Do we already have ignore or accept in model?
+
                     if ($i == 0) {
-                        $verb = 'IGNORE';
+                        if ($ign_acc != 2) {
+                            $verb = 'IGNORE';
+                            $op = '.EQN.';
+                        } else {
+                            $verb = 'ACCEPT';
+                            $op = '.NEN.';
+                        }
                     } else {
-                        $verb = 'ACCEPT';
+                        if ($ign_acc != 1) {
+                            $verb = 'ACCEPT';
+                            $op = '.EQN.';
+                        } else {
+                            $verb = 'IGNORE';
+                            $op = '.NEN.';
+                        }
                     }
                     my @expressions;
                     for my $id (@{$skip_ids->[$j - 1]}) {
-                        push @expressions, "ID.EQN." . int($id);    #Assume integer IDs 
+                        push @expressions, "ID$op" . int($id);    #Assume integer IDs 
                     }
                     my $expression_list = join ",", @expressions;
                     my $statement = "($expression_list)";
