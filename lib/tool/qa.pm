@@ -230,7 +230,19 @@ sub modelfit_setup
         $base_model = $model_copy;
         $self->base_dataset_path($self->directory . 'preprocess_data_dir/filtered.dta');
     }
-	
+ 
+    my $data = data->new(
+        filename => $self->base_dataset_path,
+        ignoresign => defined $base_model->ignoresigns ? $base_model->ignoresigns->[0] : undef,
+        idcolumn => $base_model->idcolumns->[0],
+    );
+
+    my $numids = scalar(@{$data->individuals});
+    if ($numids < 2 and not $self->_skipped('cdd')) {   # Skip cdd if only one individual
+        print "Warning: Only one individual in dataset. Will skip cdd\n";
+        push @{$self->skip}, 'cdd';
+    }
+
     #if ($self->fo) {
     #    $base_model->remove_option(record_name => 'estimation', option_name => 'METHOD');
     #    $base_model->_write();
