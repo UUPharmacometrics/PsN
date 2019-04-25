@@ -155,11 +155,12 @@ sub modelfit_setup
         $eval_model->remove_records(type => 'table');
         $eval_model->add_records(type => 'table', record_strings => \@extra_tablestrings);
         $eval_model->_write(filename => $self->directory . $self->model->filename);
-        $eval_model->set_maxeval_zero();
-        $eval_model->outputs->[0]->directory($self->directory);
+        my $eval_model_to_run = $self->model->copy(filename => $eval_model->filename, directory => $eval_model->directory, write_copy => 0, output_same_directory => 0);
+        $eval_model_to_run->set_maxeval_zero();
+        $eval_model_to_run->outputs->[0]->directory($self->directory);
         my $modelfit = tool::modelfit->new(
             %{common_options::restore_options(@common_options::tool_options)},
-            models => [ $eval_model ],
+            models => [ $eval_model_to_run ],
             directory => "eval_run",
             top_tool => 1,
             nm_output => 'ext,phi',
@@ -493,6 +494,7 @@ sub modelfit_setup
     if (not $self->_skipped('cdd')) {
         print "\n*** Running cdd ***\n";
         my $cdd_model = model->new(filename => $self->base_model_path);
+
         my $cdd_ignore = 1;
         if ($self->nonlinear) {
             $cdd_ignore = 0;
