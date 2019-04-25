@@ -498,6 +498,7 @@ sub modelfit_setup
         my $cdd_ignore = 1;
         if ($self->nonlinear) {
             $cdd_ignore = 0;
+            $cdd_model->set_records(type => 'covariance', record_strings => [ "UNCONDITIONAL" ]);
         }
         eval {
             my $cdd = tool::cdd->new(
