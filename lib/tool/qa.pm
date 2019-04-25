@@ -234,7 +234,7 @@ sub modelfit_setup
  
     my $data = data->new(
         filename => $self->base_dataset_path,
-        ignoresign => defined $base_model->ignoresigns ? $base_model->ignoresigns->[0] : undef,
+        ignoresign => '@',
         idcolumn => $base_model->idcolumns->[0],
     );
 
