@@ -111,7 +111,14 @@ Default is the scalar 1, which is the same as no inflation. Either a positive ve
 Default is 0 (off). Every N\textsuperscript{th} (multivariate normal sampling) iteration will be printed with cumulative acceptance and rejection rates.
 \nextopt
 \optdefault{problems\_per\_file}{N}
-Default is 100. The number of \$PROBLEM per model file when running MAXEVAL=0 or similar to get ofv:s for parameter vectors. Setting a higher value decreases the overhead involved in running each control stream, but increases the risk of losing many samples in case a model file crashes. Setting -problems\_per\_file=1 gives maximum robustness to individual crashes, but also maximum overhead cost.
+    Default is 100. The number of \$PROBLEM per model file when running
+	MAXEVAL=0 or similar to get ofv:s for parameter vectors. Setting a higher
+	value decreases the time overhead involved in running each control stream, but
+	increases the risk of losing many samples in case a model file crashes. It
+    can also drastically increase the disk space needed for each NONMEM run as the
+    dataset in most cases becomes duplicated in the FDATA file.
+	Setting -problems\_per\_file=1 gives maximum robustness to individual
+	crashes, but also maximum overhead cost.
 \nextopt
 \optdefault{rawres\_input}{filename}
 If rawres\_input is given, sir will run an intial 0th iteration in which sir will read all parameter vectors from this file, starting on line offset\_rawres+1 and skipping any that does not fulfill the filter rules, if set. These vectors will be Box-Cox transformed and used to create a proposal density for the next iteration. This option is not allowed together with covmat\_input.

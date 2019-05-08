@@ -327,8 +327,10 @@ $help_text{-problems_per_file} = <<'EOF';
 
 	Default is 100. The number of $PROBLEM per model file when running
 	MAXEVAL=0 or similar to get ofv:s for parameter vectors. Setting a higher
-	value decreases the overhead involved in running each control stream, but
-	increases the risk of losing many samples in case a model file crashes.
+	value decreases the time overhead involved in running each control stream, but
+	increases the risk of losing many samples in case a model file crashes. It
+    can also drastically increase the disk space needed for each NONMEM run as the
+    dataset in most cases becomes duplicated in the FDATA file.
 	Setting -problems_per_file=1 gives maximum robustness to individual
 	crashes, but also maximum overhead cost.
 EOF
