@@ -108,6 +108,17 @@ sub modelfit_setup
         output_same_directory => 1
     );
 
+    my $data = data->new(
+        filename => $model_copy->datafiles(absolute_path => 1)->[0],
+        ignoresign => defined $model_copy->ignoresigns ? $model_copy->ignoresigns->[0] : undef,
+        missing_data_token => $self->missing_data_token,
+        idcolumn => $model_copy->idcolumns->[0],
+    );
+
+    if (not $data->have_unique_ids()) {
+        print "Warning: The dataset does not have unique ids\n";
+    }
+
     $model_copy->_write(filename => $self->directory . $self->model->filename);
 
     my @covariates;
@@ -232,13 +243,13 @@ sub modelfit_setup
         $self->base_dataset_path($self->directory . 'preprocess_data_dir/filtered.dta');
     }
  
-    my $data = data->new(
+    my $lin_data = data->new(
         filename => $self->base_dataset_path,
         ignoresign => '@',
         idcolumn => $base_model->idcolumns->[0],
     );
 
-    my $numids = scalar(@{$data->individuals});
+    my $numids = scalar(@{$lin_data->individuals});
     if ($numids < 2 and not $self->_skipped('cdd')) {   # Skip cdd if only one individual
         print "Warning: Only one individual in dataset. Will skip cdd\n";
         push @{$self->skip}, 'cdd';
