@@ -3430,6 +3430,19 @@ sub have_unique_ids
     return 1;
 }
 
+sub renumber_ids
+{
+    # Renumber all IDs in a dataset by starting with 1. This can be used to make the IDs unique in a NONMEM dataset
+    my $self = shift;
+
+    my $i = 1;
+    for my $individual (@{$self->individuals}) {
+        $individual->idnumber($i);
+        $individual->update_idnumber();
+        $i++;
+    }
+}
+
 sub remove_nonobs
 {
     # A crude method to remove individuals that does not have any observations

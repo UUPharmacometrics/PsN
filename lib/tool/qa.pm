@@ -116,7 +116,10 @@ sub modelfit_setup
     );
 
     if (not $data->have_unique_ids()) {
-        print "Warning: The dataset does not have unique ids\n";
+        $data->renumber_ids();
+        $data->_write(filename => 'renumbered.dta');
+        $model_copy->datafiles(new_names => ['renumbered.dta']); 
+        print "Warning: The dataset does not have unique ids. Dataset has been renumbered starting from 1\n";
     }
 
     $model_copy->_write(filename => $self->directory . $self->model->filename);
