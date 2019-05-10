@@ -181,7 +181,7 @@ cat("# Parameter Variability Model\n\n")
 ```
 
 ```{r draw_full_omega_block_table,eval=all(skip!="transform"),results='asis',echo=F,warning=F,message=F}
-cat("##Full OMEGA Block\n\n")
+cat("## Full OMEGA Block\n\n")
 if(list_par_var_models$fullblock_mod) {
   if(full_omega_block_list$full_omega_block_error) {
     cat(paste0(as.character(full_omega_block_list$full_omega_block_table[1,1]),"."),"\n\n")
@@ -198,7 +198,7 @@ if(list_par_var_models$fullblock_mod) {
 ```
 
 ```{r draw_boxcox_tranformation_table,eval=all(skip!="transform"),results='asis',echo=F,warning=F,message=F}
-cat("##Box-Cox Transformation\n\n")
+cat("## Box-Cox Transformation\n\n")
 if(list_par_var_models$boxcox_mod) {
   if(boxcox_lambdas_list$param_extra_table_error) {
     cat(paste0(as.character(boxcox_lambdas_list$param_extra_table[1,1]),"."),"\n\n")
@@ -226,7 +226,7 @@ for(i in 1:length(boxcox_shape_plot)) {
 if(list_par_var_models$boxcox_mod && !boxcox_lambdas_list$param_extra_table_error) {
   cat("\\pagebreak\n\n")
 }
-cat("##Additional etas\n\n")
+cat("## Additional etas\n\n")
 if(list_par_var_models$add_etas_mod) {
   if(add_etas_list$add_etas_error) {
     cat(paste0(as.character(add_etas_list$add_etas_table[1,1]),"."),"\n\n")
@@ -243,7 +243,7 @@ if(list_par_var_models$add_etas_mod) {
 ```
 
 ```{r draw_tdist_table,eval=all(skip!="transform"),results='asis',echo=F,warning=F,message=F}
-cat("##t-distribution\n\n")
+cat("## t-distribution\n\n")
 if(list_par_var_models$tdist_mod) {
   if(tdist_list$param_extra_table_error) {
     cat(paste0(as.character(tdist_list$param_extra_table[1,1]),"."),"\n\n")
@@ -271,7 +271,7 @@ for(i in 1:length(tdist_shape_plot)) {
 if(make_tdist_shape_plot && (list_par_var_models$add_etas_mod || list_par_var_models$iov_mod)) {
   cat("\\pagebreak\n\n")
 }
-cat("##Interoccasion variability\n\n")
+cat("## Interoccasion variability\n\n")
 if(list_par_var_models$iov_mod) {
   if(iov_list$iov_error) {
     cat(paste0(as.character(iov_list$iov_table[1,1]),"."),"\n\n")
@@ -320,7 +320,7 @@ for (i in 1:length(resmod_table_list$dvid_nr)) {
     xpdb <- xpdb_data %>% add_resmod_xpdbs(resmod_folder=file.path(working.directory,paste0("resmod_",idv_name)),  dvid_value=resmod_table_list$dvid_nr[i])
   }
   if(resmod_table_list$dvid_nr[i] != 'NA') {
-    cat(paste0("##",dvid_name,"=",resmod_table_list$dvid_nr[i],"\n\n"))
+    cat(paste0("## ",dvid_name,"=",resmod_table_list$dvid_nr[i],"\n\n"))
   }
   if(ncol(resmod_table_list$resmod_ruv_table_list[[i]])==1 && nrow(resmod_table_list$resmod_ruv_table_list[[i]])==1) {
     cat(paste0(as.character(resmod_table_list$resmod_ruv_table_list[[i]]),"."),"\n\n")
