@@ -4,13 +4,14 @@ use strict;
 use File::Spec;
 use Cwd;
 use Test::More;
+use Test::Deep;
 use File::Path 'rmtree';
 use File::Copy 'cp';
 use Config;
 
 require Exporter;
 our @ISA = qw(Exporter);
-our @EXPORT = qw(get_major_minor_nm_version get_command get_command_without_args get_psn_options cmp_float cmp_float_matrix cmp_float_array create_test_dir remove_test_dir copy_test_files like_file_row unlike_file_row do_course_tests cmp_relative redirect_stderr);
+our @EXPORT = qw(get_major_minor_nm_version fnum get_command get_command_without_args get_psn_options cmp_float cmp_float_matrix cmp_float_array create_test_dir remove_test_dir copy_test_files like_file_row unlike_file_row do_course_tests cmp_relative redirect_stderr);
 
 # Setup an include path to the lib directory
 # First get the path of this module and split out the directory part
@@ -135,6 +136,33 @@ sub get_command
     return $command_line;
 }
 
+# Automatically generate a tolerance for a floating point number. Based on the
+# principle that the string representation of a floating point number is only
+# as precise as the literal source code representation it was derived from.  If
+# a second argument is supplied, it is a floating point number to derive the
+# tolerance from if that tolerance is more lenient that of the first
+# argument.
+sub fnum {
+	my $num = shift;
+	my $tolerance;
+	my $tolnum;
+	my $index = index($num, ".");
+	my $length = length($num) - $index - 1;
+	if ($index >= 0) {
+		$tolerance = ( "0." .  "0" x $length . 5) + 0;
+	} else {
+		$tolerance = 0;
+	}
+	if (@_) {
+		$tolnum = shift;
+		$index = index($tolnum, ".");
+		my $tollength = length($tolnum) - $index - 1;
+		if ($tollength < $length) {
+			$tolerance = ( "0." .  "0" x $tollength . 5) + 0;
+		}
+	}
+	num($num, $tolerance);
+}
 
 sub cmp_float
 {
@@ -198,7 +226,7 @@ sub cmp_float_matrix
         }
     }
 
-    is_deeply($new_A, $new_B, $text);
+    cmp_deeply($new_A, $new_B, $text);
 }
 
 

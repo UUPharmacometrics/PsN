@@ -3,7 +3,7 @@
 use strict;
 use warnings;
 use Test::More;
-#use Test::More;
+use Test::Deep;
 use Test::Exception;
 use FindBin qw($Bin);
 use lib "$Bin/../.."; #location of includes.pm
@@ -208,11 +208,12 @@ my $covar = [[3,0.1,0.2],[0.1,8,0.3],[0.2,0.3,2]];
 my $err=linear_algebra::cholesky_transpose($covar);
 
 my $matlabref =[
-[1.732050807568877e+00,                         0,                         0],
-[     5.773502691896259e-02,     2.827837807701613e+00,                         0],
-[     1.154700538379252e-01,     1.037306073687962e-01,     1.405669458927513e+00]
-	];
-is_deeply($covar,$matlabref,'cholesky T');
+    [fnum(1.732050807568877e+00), 0, 0],
+    [fnum(5.773502691896259e-02), fnum(2.827837807701613e+00), 0],
+    [fnum(1.154700538379252e-01), fnum(1.037306073687962e-01),
+        fnum(1.405669458927513e+00)]
+];
+cmp_deeply($covar,$matlabref,'cholesky T');
 
 
 my $root_determinant = $covar->[0][0];
@@ -224,16 +225,19 @@ my $diff = [1,2,3];
 $err = linear_algebra::upper_triangular_transpose_solve($covar,$diff);
 
 
-is_deeply($diff,[5.773502691896258e-01,6.954665721317015e-01,2.035465838166839e+00],' solve R ');
+cmp_deeply($diff,[
+    fnum(5.773502691896258e-01),
+    fnum(6.954665721317015e-01),
+    fnum(2.035465838166839e+00)],' solve R ');
 
 my $sum = 0;
 for (my $i=0; $i< scalar(@{$diff}); $i++){
 	$sum = $sum + ($diff->[$i])**2;
 }
-cmp_float($sum,4.960128264630185,'vecotr prod ');
+cmp_deeply($sum,fnum(4.960128264630185),'vecotr prod ');
 my $pdf = ((2*pi)**(-3/2))*(1/$root_determinant)*exp(-0.5*$sum);
 
-cmp_float($pdf,7.722424963030007e-04,' chol pdf ');
+cmp_deeply($pdf,fnum(7.722424963030007e-04),' chol pdf ');
 
 $covar = [[3,0.1,0.2],[0.1,8,0.3],[0.2,0.3,2]];
 $mu = [1,2,3];

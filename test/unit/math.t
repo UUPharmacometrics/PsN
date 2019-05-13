@@ -4,6 +4,7 @@ use strict;
 use warnings;
 
 use Test::More;
+use Test::Deep;
 use Test::Exception;
 use FindBin qw($Bin);
 use lib "$Bin/.."; #location of includes.pm
@@ -33,7 +34,7 @@ is (round(-18.999), -19, "round negative down");
 is (round(-199), -199, "round negative integer");
 
 # eps
-is (eps(1), 2.220446049250313e-16, "eps(1)");
+cmp_deeply (eps(1), fnum(2.220446049250313e-16), "eps(1)");
 is (eps(-1), 2.220446049250313e-16, "eps(-1)");
 is (eps(0.00073), 1.084202172485504e-19, "eps(0.00073)");
 is (eps(400000000000000), 0.0625, "eps(400000000000000)");

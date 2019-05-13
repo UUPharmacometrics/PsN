@@ -3,6 +3,7 @@
 use strict;
 use warnings;
 use Test::More;
+use Test::Deep;
 #use Test::More;
 use Test::Exception;
 use FindBin qw($Bin);
@@ -207,8 +208,9 @@ my $realposanswer3 = [[1,-99],[0,-99],[0,-99]]; #censored
 
 #sumwarnigns
 # non_zeros=20
-my $resvalanswer = [[2,66.6666666666667,' ',0,100,1,33.3333333333333,' ',0,100],
-					[2,66.6666666666667,' ',0,100,0,0,' ',0,100],
+my $resvalanswer = [[2,fnum(66.6666666666667),' ',0,100,1,
+                        fnum(33.3333333333333),' ',0,100],
+					[2,fnum(66.6666666666667),' ',0,100,0,0,' ',0,100],
 					[0,0,' ',0,100,0,0,' ',0,100]];
 
 my $resvalanswer2 = [[3,100,' ',0,100,0,0,' ',0,100],
@@ -231,7 +233,7 @@ my ($result_values,$realpos,$stats_warnings);
 
 is($alert,1,'subset_npc_analyze alert');
 is_deeply($realpos,$realposanswer,'subset_npc_analyze real positions');
-is_deeply($result_values,$resvalanswer,'subset_npc_analyze resultvalues');
+cmp_deeply($result_values,$resvalanswer,'subset_npc_analyze resultvalues');
 is_deeply($stats_warnings,$statswarnanswer,'subset_npc_analyze statswarn');
 
 ($result_values,$realpos,$stats_warnings,$alert) = tool::npc::subset_npc_analyze(strata_index => 0,

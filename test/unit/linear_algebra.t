@@ -3,6 +3,7 @@
 use strict;
 use warnings;
 use Test::More;
+use Test::Deep;
 use FindBin qw($Bin);
 use lib "$Bin/.."; #location of includes.pm
 use includes; #file with paths to PsN packages
@@ -14,10 +15,10 @@ my @A = ([1, 2, 3], [2.1, 4, 5], [3.25, 5.17, 19]);
 
 my @B = ([1, 2.1, 3.25], [2, 4, 5.17], [3, 5, 19]);
 my $C = linear_algebra::subtract(\@A, \@B);
-is_deeply($C, [[ 0.  , -0.1 , -0.25], [ 0.1 ,  0.  , -0.17], [ 0.25,  0.17,  0.  ]], "matrix subtraction");
+cmp_deeply($C, [[ 0.  , fnum(-0.1) , -0.25], [ fnum(0.1) ,  0.  , -0.17], [ 0.25,  0.17,  0.  ]], "matrix subtraction");
 is (linear_algebra::max($C), 0.25, "matrix maximum");
 linear_algebra::absolute($C);
-is_deeply($C, [[ 0.  , 0.1 , 0.25], [ 0.1,  0., 0.17], [ 0.25,  0.17,  0. ]], "matrix absolute");
+cmp_deeply($C, [[ 0.  , fnum(0.1) , 0.25], [ fnum(0.1),  0., 0.17], [ 0.25,  0.17,  0. ]], "matrix absolute");
 
 # read_from_file
 my $testdir = create_test_dir("linear_algebra_unit");

@@ -3,6 +3,7 @@
 use strict;
 use warnings;
 use Test::More;
+use Test::Deep;
 #use Test::More;
 use Test::Exception;
 use FindBin qw($Bin);
@@ -20,21 +21,21 @@ my @perc = (0,0.025,0.05,0.1,0.3,0.5,0.7,0.9,0.95,0.975,1);
 my @qua=@{tool::sir::quantile(numbers => \@numbers,probs => \@perc)};
 my @facit = (1,5.5,10.5,20.5,60.5,100.5,140.5,180.5,190.5,195.5,200);
 for (my $i=0; $i< scalar(@perc); $i++){
-	cmp_ok($qua[$i],'==',$facit[$i],"quantile index $i vec 200");
+	cmp_deeply($qua[$i], fnum($facit[$i]),"quantile index $i vec 200");
 }
 
 @numbers = (1..100);
 @qua=@{tool::sir::quantile(numbers => \@numbers,probs => \@perc)};
 @facit = (1,3,5.5,10.5,30.5,50.5,70.5,90.5,95.5,98,100);
 for (my $i=0; $i< scalar(@perc); $i++){
-	cmp_ok($qua[$i],'==',$facit[$i],"quantile index $i vec 100");
+	cmp_deeply($qua[$i], fnum($facit[$i]),"quantile index $i vec 100");
 }
 
 @numbers = (1..10);
 @qua=@{tool::sir::quantile(numbers => \@numbers,probs => \@perc)};
 @facit=(1,1,1,1.5,3.5,5.5,7.5,9.5,10,10,10);
 for (my $i=0; $i< scalar(@perc); $i++){
-	cmp_ok($qua[$i],'==',$facit[$i],"quantile index $i vec 10");
+	cmp_deeply($qua[$i],fnum($facit[$i]),"quantile index $i vec 10");
 }
 
 
@@ -51,13 +52,13 @@ my $output = output->new(filename => $dir . $file);
 
 my $icm = tool::sir::get_nonmem_inverse_covmatrix(output => $output);
 
-cmp_ok($icm->element(1,1),'==',8.46492E+06,'inverse element 1,1');
-cmp_ok($icm->element(3,1),'==',9.12148E+03,'inverse element 3,1');
-cmp_ok($icm->element(1,3),'==',9.12148E+03,'inverse element 1,3');
-cmp_ok($icm->element(1,5),'==',-2.86424E+04,'inverse element 1,5');
-cmp_ok($icm->element(4,2),'==',-1.55874E+02,'inverse element 4,2');
-cmp_ok($icm->element(5,3),'==',-1.03606E+02,'inverse element 5,3');
-cmp_ok($icm->element(5,5),'==',5.96396E+03,'inverse element 5,5');
+cmp_deeply($icm->element(1,1), fnum(8.46492E+06),'inverse element 1,1');
+cmp_deeply($icm->element(3,1), fnum(9.12148E+03),'inverse element 3,1');
+cmp_deeply($icm->element(1,3), fnum(9.12148E+03),'inverse element 1,3');
+cmp_deeply($icm->element(1,5), fnum(-2.86424E+04),'inverse element 1,5');
+cmp_deeply($icm->element(4,2), fnum(-1.55874E+02),'inverse element 4,2');
+cmp_deeply($icm->element(5,3), fnum(-1.03606E+02),'inverse element 5,3');
+cmp_deeply($icm->element(5,5), fnum(5.96396E+03),'inverse element 5,5');
 
 my $hash = output::get_nonmem_parameters(output => $output);
 
@@ -70,11 +71,11 @@ is(scalar(@{$arr}),0,'setup block posdef count 3');
 
 my $thetas = $hash->{'values'};
 
-cmp_ok($hash->{'values'}->[0],'==',5.55363E-03,' theta 1');
-cmp_ok($hash->{'values'}->[1],'==',1.33638E+00,' theta 2');
-cmp_ok($hash->{'values'}->[2],'==',4.97064E-01,' theta 3');
-cmp_ok($hash->{'values'}->[3],'==',3.76272E-01,' theta 4');
-cmp_ok($hash->{'values'}->[4],'==',1.28122E-01,' theta 5');
+cmp_deeply($hash->{'values'}->[0], fnum(5.55363E-03),' theta 1');
+cmp_deeply($hash->{'values'}->[1], fnum(1.33638E+00),' theta 2');
+cmp_deeply($hash->{'values'}->[2], fnum(4.97064E-01),' theta 3');
+cmp_deeply($hash->{'values'}->[3], fnum(3.76272E-01),' theta 4');
+cmp_deeply($hash->{'values'}->[4], fnum(1.28122E-01),' theta 5');
 cmp_ok($hash->{'lower_bounds'}->[0],'==',0,' lower bound theta 1');
 cmp_ok($hash->{'lower_bounds'}->[1],'==',0,' lower bound theta 2');
 cmp_ok($hash->{'lower_bounds'}->[2],'==',0,' lower bound theta 3');
@@ -100,22 +101,22 @@ my $mu = $mat->new_from_rows( [$thetas] );
 #print $mu;
 
 
-cmp_ok($mu->element(1,1),'==',5.55363E-03,'mu 1,1');
-cmp_ok($mu->element(1,2),'==',1.33638E+00,'mu 1,2');
-cmp_ok($mu->element(1,3),'==',4.97064E-01,'mu 1,3');
-cmp_ok($mu->element(1,4),'==',3.76272E-01,'mu 1,4');
-cmp_ok($mu->element(1,5),'==',1.28122E-01,'mu 1,5');
+cmp_deeply($mu->element(1,1), fnum(5.55363E-03),'mu 1,1');
+cmp_deeply($mu->element(1,2), fnum(1.33638E+00),'mu 1,2');
+cmp_deeply($mu->element(1,3), fnum(4.97064E-01),'mu 1,3');
+cmp_deeply($mu->element(1,4), fnum(3.76272E-01),'mu 1,4');
+cmp_deeply($mu->element(1,5), fnum(1.28122E-01),'mu 1,5');
 
 my $nsamples=3;
 
 my $covar = tool::sir::get_nonmem_covmatrix(output => $output);
 
-cmp_ok($covar->[0]->[0],'==',1.55838E-07,'covar element 1,1');
-cmp_ok($covar->[1]->[1],'==',6.38430E-03,'covar element 2,2');
-cmp_ok($covar->[1]->[2],'==',-1.94326E-03,'covar element 2,3');
-cmp_ok($covar->[2]->[1],'==',-1.94326E-03,'covar element 3,2');
-cmp_ok($covar->[3]->[2],'==',-1.32639E-03,'covar element 4,3');
-cmp_ok($covar->[4]->[4],'==',eval(1.75502E-04),'covar element 5,5');
+cmp_deeply($covar->[0]->[0], fnum(1.55838E-07),'covar element 1,1');
+cmp_deeply($covar->[1]->[1], fnum(6.38430E-03),'covar element 2,2');
+cmp_deeply($covar->[1]->[2], fnum(-1.94326E-03),'covar element 2,3');
+cmp_deeply($covar->[2]->[1], fnum(-1.94326E-03),'covar element 3,2');
+cmp_deeply($covar->[3]->[2], fnum(-1.32639E-03),'covar element 4,3');
+cmp_deeply($covar->[4]->[4], fnum(1.75502E-04),'covar element 5,5');
 
 random_set_seed_from_phrase("hej pa dig");
 my ($gotsamples,$dirt) = tool::sir::sample_multivariate_normal(samples=>$nsamples,
@@ -143,11 +144,11 @@ my $sampled_params_arr = tool::sir::create_sampled_params_arr(samples_array => $
 															  labels_hash => $hash,
 															  user_labels => 1);
 
-cmp_float($sampled_params_arr->[0]->{'theta'}->{'CL'}, 0.00579867653819879, 'sampled CL');
-cmp_float($sampled_params_arr->[0]->{'theta'}->{'V'}, 1.20800900217457, 'sampled V');
-cmp_float($sampled_params_arr->[0]->{'theta'}->{'THETA3'}, 0.568698687977855, 'sampled THETA3');
-cmp_float($sampled_params_arr->[0]->{'theta'}->{'THETA4'}, 0.369700885223909, 'sampled THETA4');
-cmp_float($sampled_params_arr->[0]->{'theta'}->{'THETA5'}, 0.118821314516974, 'sampled THETA5');
+cmp_deeply($sampled_params_arr->[0]->{'theta'}->{'CL'}, fnum(0.00579867653819879), 'sampled CL');
+cmp_deeply($sampled_params_arr->[0]->{'theta'}->{'V'}, fnum(1.20800900217457), 'sampled V');
+cmp_deeply($sampled_params_arr->[0]->{'theta'}->{'THETA3'}, fnum(0.568698687977855), 'sampled THETA3');
+cmp_deeply($sampled_params_arr->[0]->{'theta'}->{'THETA4'}, fnum(0.369700885223909), 'sampled THETA4');
+cmp_deeply($sampled_params_arr->[0]->{'theta'}->{'THETA5'}, fnum(0.118821314516974), 'sampled THETA5');
 
 my $statshash = tool::sir::empirical_statistics(sampled_params_arr => $sampled_params_arr,
 												labels_hash=> $hash,
@@ -318,10 +319,10 @@ cmp_ok($icm->element(1,5),'==',-3.17183E+00,'inverse element 1,5');
 cmp_ok($icm->element(4,2),'==',1.38220E+01,'inverse element 4,2');
 cmp_ok($icm->element(5,3),'==',-2.66596E+02,'inverse element 5,3');
 cmp_ok($icm->element(5,5),'==',1.48718E+04,'inverse element 5,5');
-cmp_ok($icm->element(6,2),'==',-7.76844E-01,'inverse element 6,2');
+cmp_deeply($icm->element(6,2),fnum(-7.76844E-01),'inverse element 6,2');
 cmp_ok($icm->element(5,6),'==',-3.88572E+02,'inverse element 5,6');
 cmp_ok($icm->element(6,6),'==',3.04099E+02,'inverse element 6,6');
-cmp_ok($icm->element(1,7),'==',-4.35392E-02,'inverse element 1,7');
+cmp_deeply($icm->element(1,7), fnum(-4.35392E-02),'inverse element 1,7');
 cmp_ok($icm->element(7,3),'==',-6.35795E+01,'inverse element 7,3');
 cmp_ok($icm->element(7,7),'==',2.50300E+01,'inverse element 7,7');
 cmp_ok($icm->element(8,3),'==',3.32151E+02,'inverse element 8,3');
@@ -367,7 +368,7 @@ $mu = $mat->new_from_rows( [$params] );
 
 #print $mu;
 
-cmp_ok($mu->element(1,1),'==',3.28661E+01,'mu 1,1');
+cmp_deeply($mu->element(1,1), fnum(3.28661E+01),'mu 1,1');
 cmp_ok($mu->element(1,8),'==',2.07708E-01,'mu 1,8');
 
 #my $nsamples=3;
@@ -394,10 +395,10 @@ cmp_ok($covar->[1]->[5],'==',1.18743E-02,'covar element 2,6');
 cmp_ok($covar->[2]->[2],'==',3.75907E-04,'covar element 3,3');
 cmp_ok($covar->[3]->[1],'==',-4.02777E-02,'covar element 4,2');
 cmp_ok($covar->[4]->[7],'==',6.19395E-05,'covar element 5,8');
-cmp_ok($covar->[7]->[0],'==',1.53110E-02,'covar element 8,1');
+cmp_deeply($covar->[7]->[0],fnum(1.53110E-02),'covar element 8,1');
 cmp_ok($covar->[6]->[5],'==',7.25938E-03,'covar element 7,6');
-cmp_ok($covar->[7]->[7],'==',1.69362E-03,'covar element 8,8');
-cmp_ok($covar->[6]->[3],'==',2.75131E-03,'covar element 7,4');
+cmp_deeply($covar->[7]->[7],fnum(1.69362E-03),'covar element 8,8');
+cmp_deeply($covar->[6]->[3],fnum(2.75131E-03),'covar element 7,4');
 cmp_ok($covar->[4]->[6],'==',-3.05686E-04,'covar element 5,7');
 
 $inflated = tool::sir::inflate_covmatrix(matrix => $covar,
@@ -408,9 +409,9 @@ cmp_float($inflated->[1]->[5],eval(2*1.18743E-02),'inflated covar element 2,6');
 cmp_float($inflated->[2]->[2],eval(2*3.75907E-04),'inflated covar element 3,3');
 cmp_float($inflated->[3]->[1],eval(2*-4.02777E-02),'inflated covar element 4,2');
 cmp_float($inflated->[4]->[7],eval(2*6.19395E-05),'inflated covar element 5,8');
-cmp_float($inflated->[7]->[0],eval(2*1.53110E-02),'inflated covar element 8,1');
+cmp_deeply($inflated->[7]->[0],fnum(2*1.53110E-02),'inflated covar element 8,1');
 cmp_float($inflated->[6]->[5],eval(2*7.25938E-03),'inflated covar element 7,6');
-cmp_float($inflated->[7]->[7],eval(2*1.69362E-03),'inflated covar element 8,8');
+cmp_deeply($inflated->[7]->[7],fnum(2*1.69362E-03),'inflated covar element 8,8');
 cmp_float($inflated->[6]->[3],eval(2*2.75131E-03),'inflated covar element 7,4');
 cmp_float($inflated->[4]->[6],eval(2*-3.05686E-04),'inflated covar element 5,7');
 
@@ -642,7 +643,11 @@ foreach my $fast_posdef (0,1) {
                                                          cholesky_decomposition => $fast_posdef);
     is($accept,1,'check blocks posdef accept 9'.$str);
     is($adjusted,1,'check blocks posdef adjusted 9'.$str);
-    is_deeply($xvec,[1,1,1,3,9.99999999833334e-09,3.0000000005,2.9999999995,3.0000000005,1,0.1,1],'post xvec 9'.$str);
+    cmp_deeply($xvec,[1,1,1,3
+        ,fnum(9.99999999833334e-09)
+        ,fnum(3.0000000005)
+        ,fnum(2.9999999995)
+        ,fnum(3.0000000005),1,fnum(0.1),1],'post xvec 9'.$str);
 }
 
 
