@@ -45,6 +45,8 @@ The proseval tool creates a number of new data sets for which the EVID columns h
 
 Evaluation runs for all data sets are performed and a result table is gathered (see Result).
 
+The variable NUMOBS will be set at the top of \$PK or \$PRED to the number of active observations in each model. This could be used to implement for example dynamic weights that can depend on the number of observations available.
+
 \section{Result}
 
 The result.csv contains these columns: ID, TIME, EVID, IPRED, WRES, IWRES and OBS where OBS is the number of observations that was used for evaluating that line in the results.

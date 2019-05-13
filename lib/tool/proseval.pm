@@ -10,6 +10,7 @@ use log;
 use filter_data;
 use tool::modelfit;
 use array;
+use model_transformations;
 
 extends 'tool';
 
@@ -87,6 +88,9 @@ sub modelfit_setup
         $modified_model->set_option(record_name => 'table', option_name => 'ONEHEADER');
         my $columns = $first_table->columns();
         $self->columns($columns);
+
+        # Add the number of observation to the model
+        model_transformations::prepend_code(model => $modified_model, code => [ "NUMOBS=$n"]);
 
         $modified_model->_write(filename => $model_filename, relative_data_path => 1);
         push @models_to_run, $modified_model;
