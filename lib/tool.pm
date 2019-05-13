@@ -1971,6 +1971,7 @@ sub create_R_script
 		$rmarkdown = 1; #TRUE
 		if($self->rmarkdown) { # check if option -no-rmarkdown is used, then Rmarkdown file will not be created
 					#check if rmarkdown/pandoc(version 1.12.3 or higher)/latex are installed
+            chdir $self->directory or die "Could not change directory before rmarkdown checking";
 			my $test_file = 'test_file_rmarkdown_installed.Rmd';
 			open ( SCRIPT, ">" . $test_file );
 			print SCRIPT join("\n",'experiment')."\n";
@@ -1989,6 +1990,7 @@ sub create_R_script
 			}
 			unlink('test_file_rmarkdown_installed.Rmd');
 			unlink('test_file_rmarkdown_installed.Rout');
+            chdir ".." or die "Could not change directory after rmarkdown checking";
 		}
 	}
 		
