@@ -132,9 +132,9 @@ sub modelfit_analyze
 		my $mod_eval = tool::modelfit->new( %{common_options::restore_options(@common_options::tool_options)},
 											copy_data  => 0,  #do not copy models to NM_run, use rel path to m1
 											models           => $self -> prediction_models->[$model_number-1]{'own'},
+                                            directory => 'crossval',
 											base_directory   => $self -> directory,
 											nmtran_skip_model => 2,
-											directory_name_prefix => 'crossval', 
 											threads          => $xv_threads,
 											_raw_results_callback => $self -> _modelfit_raw_results_callback( model_number => $model_number,
 																											  cross_validation_set => 1 ),
