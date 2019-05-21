@@ -43,7 +43,7 @@ has 'base_model_path' => ( is => 'rw', isa => 'Str' );
 has 'base_dataset_path' => ( is => 'rw', isa => 'Str' );
 has 'extra_table_columns' => ( is => 'rw', isa => 'ArrayRef[Str]' );
 has 'nm_parallel' => ( is => 'rw', isa => 'Str' );  # Should a special NONMEM version be used for frem and linearize?
-has '_parallel_cores' => ( is => 'rw', isa => 'Maybe[Int]', default => undef );     # The number of -node to use for frem and linearize
+has '_special_tool_options' => ( is => 'rw', isa => 'Maybe[HashRef]', default => undef); # All tool options to override command line
 
 
 sub BUILD
@@ -82,15 +82,31 @@ sub BUILD
     }
 
     if (defined $self->nm_parallel) {
+        $self->_special_tool_options({});
+        my $special_options_section = $PsN::config->{'default_options_' . $self->nm_parallel};
+        if (defined $special_options_section) {
+            $self->_special_tool_options($special_options_section);
+        }
+        if (defined $self->clean) {
+            $self->_special_tool_options->{'clean'} = $self->clean;
+        }
+        if (defined $self->template_directory_rplots) {
+            $self->_special_tool_options->{'template_directory_rplots'} = $self->template_directory_rplots;
+        }
+        if (defined $self->zip) {
+            $self->_special_tool_options->{'zip'} = $self->zip;
+        }
+        if (defined $self->nmfe) {
+            $self->_special_tool_options->{'nmfe'} = $self->nmfe;
+        }
+        if (defined $self->nm_output) {
+            $self->_special_tool_options->{'nm_output'} = $self->nm_output;
+        }
         if (defined $self->threads) {
-            $self->_parallel_cores($self->threads);
+            $self->_special_tool_options->{'nodes'} = $self->threads;
         }
-    } else {
-        if (defined $self->nm_version) {
-            $self->nm_parallel($self->nm_version);
-        } else {
-            $self->nm_parallel('default');
-        }
+        $self->_special_tool_options->{'threads'} = 1;
+        $self->_special_tool_options->{'nm_version'} = $self->nm_parallel;
     }
 }
 
@@ -179,8 +195,6 @@ sub modelfit_setup
             top_tool => 1,
             nm_output => 'ext,phi',
             model_subdir => 0,
-            nm_version => $self->nm_parallel,
-            nodes => $self->_parallel_cores,
         );
         $modelfit->run();
         
@@ -209,8 +223,6 @@ sub modelfit_setup
             nointer => $self->nointer,
             keep_covariance => 1,
             nm_output => 'phi,ext,cov,cor,coi',
-            nm_version => $self->nm_parallel,
-            nodes => $self->_parallel_cores,
         );
 
         $linearize->run();
@@ -416,8 +428,7 @@ sub modelfit_setup
                     rplots => 1,
                     top_tool => 1,
                     clean => 1,
-                    nm_version => $self->nm_parallel,
-                    nodes => $self->_parallel_cores,
+                    tool_options => $self->_special_tool_options,
                 );
                 $frem->run();
                 $frem->print_options(   # To get skip_omegas over to postfrem

@@ -93,6 +93,7 @@ has 'model_3' => ( is => 'rw', isa => 'model' );
 has 'final_numbers' => ( is => 'rw', isa => 'ArrayRef[Int]', default => sub { [] } );
 has 'final_models' => ( is => 'rw', isa => 'ArrayRef[model]', default => sub { [] } );
 has 'cov_summary' => ( is => 'rw', isa => 'Str' );
+has 'tool_options' => ( is => 'rw', isa => 'HashRef' );     # tool options hash to override all tool options from the command line.
 
 my $logger = logging::get_logger("frem");
 
@@ -108,6 +109,10 @@ sub BUILD
         missing_data_token => $self->missing_data_token,
         idcolumn => $model->idcolumns->[0],
     );
+
+    if (not defined $self->tool_options) {
+        $self->tool_options(common_options::restore_options(@common_options::tool_options));
+    }
 
     # Check if any covariate column has all same value
     # In that case warn and remove column
@@ -2308,7 +2313,7 @@ sub do_model1
         #run it
         my $rundir = $self -> directory().'/model1_modelfit_dir1';
         rmtree([ "$rundir" ]) if (-e $rundir);
-        my $run = tool::modelfit ->new( %{common_options::restore_options(@common_options::tool_options)},
+        my $run = tool::modelfit ->new(%{$self->tool_options},
                                         base_directory     => $self -> directory(),
                                         directory         => $rundir,
                                         copy_data     => 1,
@@ -2404,7 +2409,7 @@ sub do_filter_dataset_and_append_binary
         my $rundir = $self -> directory().'/create_fremdata_dir';
         rmtree([ "$rundir" ]) if (-e $rundir);
         my $filter_fit = tool::modelfit -> new
-            ( %{common_options::restore_options(@common_options::tool_options)},
+            ( %{$self->tool_options},
               base_directory => $self->directory,
               directory      => $rundir,
               models         => [$filtered_data_model],
@@ -2557,7 +2562,7 @@ sub do_frem_dataset
 
         my $rundir = $self -> directory().'/datacheck_modelfit_dir1';
         rmtree([ "$rundir" ]) if (-e $rundir);
-        my $run = tool::modelfit ->new( %{common_options::restore_options(@common_options::tool_options)},
+        my $run = tool::modelfit ->new( %{$self->tool_options},
                                         base_directory     => $self -> directory(),
                                         directory         => $rundir,
                                         copy_data     => 0,
@@ -3457,7 +3462,7 @@ sub run_unless_run
                 croak("failed to remove $rundir");
             }
         }
-        my $run = tool::modelfit ->new( %{common_options::restore_options(@common_options::tool_options)},
+        my $run = tool::modelfit ->new(%{$self->tool_options},
                                         base_directory     => $self -> directory(),
                                         directory         => $rundir,
                                         copy_data     => 0,
