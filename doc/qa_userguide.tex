@@ -1,5 +1,5 @@
 \input{inputs/format_header.tex}
-\guidetitle{QA user guide}{2018-03-02}
+\guidetitle{QA user guide}{2018-05-22}
 
 \usepackage{hyperref}
 \begin{document}
@@ -117,8 +117,19 @@ Some limitations and problems will affect the ability to generate any output, ot
 	\item Only parameters associated with an ETA can be used in the \verb|-parameter=| option
     \item All covariates must be available in the dataset and declared in \$INPUT
     \item Missing values for covariates must be coded using -99
-    \item Mixture models are not supported
+    \item Mixture models are not directly supported and need some extra manual work. See section below.
 \end{itemize}
+
+\subsection{Mixture models}
+Mixture models cannot be handled directly by qa, but with some extra steps they can be made to work by preestimating the most likely subpopulation for each individual and use this as a covariate instead of a mixture:
+\begin{enumerate}
+    \item Get the MIXEST for each individual either from the .phm file or in a table
+    \item Add the MIXEST values as a column in your dataset and call it SPOP
+    \item Add SPOP to \$INPUT of the model
+    \item Remove the \$MIX of the model and all \$THETAS now not longer needed
+    \item Replace all the use of MIXNUM in the abbreviated code into SPOP
+\end{enumerate}
+
 
 \subsection{SCM}
 \begin{itemize}
