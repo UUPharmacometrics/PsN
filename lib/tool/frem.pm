@@ -1006,7 +1006,8 @@ sub put_skipped_omegas_first
     return $skip_etas,\@fix_omegas,\@parameter_etanumbers,\@omega_output_order,$etas_file;
 }
 
-sub get_reordered_coordinate_strings{
+sub get_reordered_coordinate_strings
+{
     my %parm = validated_hash(\@_,
                               problem => { isa => 'model::problem', optional => 0 },
                               omega_order => { isa => 'ArrayRef', optional => 0 },
@@ -1035,7 +1036,8 @@ sub get_reordered_coordinate_strings{
     return \@reordered_coordinate_strings;
 }
 
-sub get_eta_mapping{
+sub get_eta_mapping
+{
     my %parm = validated_hash(\@_,
                               problem => { isa => 'model::problem', optional => 0 },
                               omega_order => { isa => 'ArrayRef', optional => 0 },
@@ -1582,7 +1584,7 @@ sub check_covstep
     return (0,$message);
 }
 
-sub    join_covmats
+sub join_covmats
 {
     my %parm = validated_hash(\@_,
                               partial_covmats => { isa => 'ArrayRef', optional => 0 },
@@ -3519,7 +3521,8 @@ sub run_unless_run
     }
 }
 
-sub save_covresults {
+sub save_covresults
+{
     my $self = shift;
     my $resultref = shift;
     my @covnames = @{$self->covariates};
@@ -3591,7 +3594,8 @@ sub save_covresults {
     }
 }
 
-sub read_covresults {
+sub read_covresults
+{
     # read file for covariate stat summary (see save_covresults), needed by post-processing
     # TODO: Merge with read_covdata (ideally, all empirical covstats should be written out by save_covresults)
     my %parm = validated_hash(\@_,
