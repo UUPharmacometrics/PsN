@@ -2430,7 +2430,7 @@ sub do_filter_dataset_and_append_binary
                                   missing_data_token => $self->missing_data_token);
 
     my $indices = get_indices(target => $data_set_headers,
-                              keys => ['EVID','MDV',$fremtype,$self->dv]);
+                              keys => ['EVID', 'MDV', $fremtype, $self->dv, 'L2']);
 
     my @cov_indices = ();
     my @is_log = ();
@@ -2528,7 +2528,8 @@ sub do_frem_dataset
                                                             mdv_index => $indices->{'MDV'},
                                                             dv_index => $indices->{$self->dv},
                                                             type_index => $indices->{$fremtype},
-                                                            cov_indices => $indices->{'cov_indices'});
+                                                            cov_indices => $indices->{'cov_indices'},
+                                                            l2_index => $indices->{'L2'});
 
     if ($do_check){
         my $name_check_model = 'check_data.mod';

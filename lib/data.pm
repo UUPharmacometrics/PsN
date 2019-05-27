@@ -437,6 +437,7 @@ sub frem_compute_covariate_properties
         dv_index => { isa => 'Int', optional => 0 },
         cov_indices => { isa => 'ArrayRef', optional => 0 },
         first_timevar_type => { isa => 'Int', optional => 1 },
+        l2_index => { isa => 'Maybe[Int]', optional => 1 },
     );
     #ref of hash of cov names to column numbers
     my $filtered_data = $parm{'filtered_data'};
@@ -452,6 +453,7 @@ sub frem_compute_covariate_properties
     my $dv_index = $parm{'dv_index'};
     my $cov_indices = $parm{'cov_indices'};
     my $first_timevar_type = $parm{'first_timevar_type'};
+    my $l2_index = $parm{'l2_index'};
 
     my $results={};
 
@@ -508,7 +510,8 @@ sub frem_compute_covariate_properties
         cov_indices => $cov_indices,
         is_log => $is_log,
         N_parameter_blocks => $N_parameter_blocks,
-        first_timevar_type => $first_timevar_type);
+        first_timevar_type => $first_timevar_type,
+        l2_index => $l2_index);
 
     $results->{'invariant_median'}= [];
     $results->{'invariant_mean'}= [];
@@ -577,7 +580,8 @@ sub add_frem_lines
 		dv_index => { isa => 'Int', optional => 0 },
 		cov_indices => { isa =>'ArrayRef', optional => 0 },
 		is_log => { isa =>'ArrayRef', optional => 0 },
-		first_timevar_type => { isa => 'Int', optional => 0 }
+		first_timevar_type => { isa => 'Int', optional => 0 },
+        l2_index => { isa => 'Maybe[Int]', optional => 1},
 	);
 	my $type_index = $parm{'type_index'};
 	my $N_parameter_blocks = $parm{'N_parameter_blocks'};
@@ -588,6 +592,8 @@ sub add_frem_lines
 	my $cov_indices = $parm{'cov_indices'};
 	my $is_log = $parm{'is_log'};
 	my $first_timevar_type = $parm{'first_timevar_type'};
+    my $l2_index = $parm{'l2_index'};
+
 	my @invariant_matrix;
 	my @timevar_matrix;
 
@@ -607,7 +613,8 @@ sub add_frem_lines
 																  type_index => $type_index,
 																  cov_indices => $cov_indices,
 																  is_log => $is_log,
-																  first_timevar_type => $first_timevar_type);
+																  first_timevar_type => $first_timevar_type,
+                                                                  l2_index => $l2_index);
 		for (my $pos=0; $pos < $first_timevar_type; $pos++){
 			next if ($missing_invariants[$pos] > 0);
 			if ($invariants->[$pos] == $self->missing_data_token()){

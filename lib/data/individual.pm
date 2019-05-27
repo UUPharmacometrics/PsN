@@ -155,7 +155,8 @@ sub add_frem_lines
 		 missing_data_token => { isa => 'Str', default => "-99", optional => 1 },
 		 cov_indices => { isa => 'ArrayRef', optional => 0 },
 		 is_log => { isa => 'ArrayRef', optional => 0 },
-		 first_timevar_type => { isa => 'Int', optional => 0 }
+		 first_timevar_type => { isa => 'Int', optional => 0 },
+         l2_index => { isa => 'Maybe[Int]', optional => 1 },        # Index of L2 column if present and undef if not
 	);
 	my $type_index = $parm{'type_index'};
 	my $N_parameter_blocks = $parm{'N_parameter_blocks'};
@@ -167,6 +168,8 @@ sub add_frem_lines
 	my $cov_indices = $parm{'cov_indices'};
 	my $is_log = $parm{'is_log'};
 	my $first_timevar_type = $parm{'first_timevar_type'};
+    my $l2_index = $parm{'l2_index'};
+
 	my @invariant_values;
 	my @timevar_values;
 
@@ -240,6 +243,9 @@ sub add_frem_lines
 						for (my $k= 0; $k<$N_parameter_blocks; $k++){
 							#add one line per parameter block
 							$row[$type_index] = ((100*($pos+1))+$k)  ; #fremtype value
+                            if (defined $l2_index) {
+                                $row[$l2_index] = $row[$type_index];
+                            }
 							if ($format_data){
 								format_array(\@row);
 							}
@@ -262,6 +268,9 @@ sub add_frem_lines
 				my $cov_index = $cov_indices->[$pos];
 				my @row = @data_row; #copy
 				$row[$type_index] = ($pos+1); #fremtype value #FIXME if used
+                if (defined $l2_index) {
+                    $row[$l2_index] = $row[$type_index];
+                }
 				$row[$dv_index] = $row[$cov_index]; #set DV column to whatever cov value is here
 				if ($row[$cov_index] == $missing_data_token){
 					#cov value is missing
