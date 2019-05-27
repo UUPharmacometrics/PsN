@@ -447,7 +447,14 @@ if(file.exists(file.path(working.directory,"meta.yaml"))) {
   R_packages <- kable_table(add_info$R_packages,format=type,booktabs=T,longtable=T,align=c("l","l","l"),linesep="") %>%
     kableExtra::kable_styling(position="c",full_width = F)
   print(R_packages)
+  cat("Captured command line output:\n\n")
 }
+```
+
+```{r command_line_capture, echo=F, comment=NA}
+capture_file <- file.path(working.directory, 'captured_output.txt')
+output <- readChar(capture_file, file.info(capture_file)$size)
+cat(gsub(pattern="\n", replacement="  \n", x=output))
 ```
 
 ```{r yaml_summary,results='asis',echo=F,warning=F,message=F}
