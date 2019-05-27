@@ -444,7 +444,7 @@ sub modelfit_setup
 
 
             $self->_to_qa_dir();
-            if (-d "frem_run") {
+            if (-e 'frem_run/final_models/model_4.lst') {
                 print "\n*** Running POSTFREM ***\n";
                 eval {
                     if ($dev) {
