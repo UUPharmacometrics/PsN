@@ -870,6 +870,16 @@ sub mend_extra_table_names
     rename "${directory}extra_table.temp", "${directory}/extra_table";
 }
 
+sub write_captured_output
+{
+    # Write the string that was captured by bin/qa to a file for later use by the R-plots code
+    my $self = shift;
+    my $capture = shift;
+
+    open my $fh, '>', $self->directory . 'captured_output.txt';
+    print $fh $capture;
+    close $fh;
+}
 
 sub create_R_plots_code
 {

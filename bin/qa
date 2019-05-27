@@ -10,6 +10,7 @@ use PsN;
 use strict;
 use Getopt::Long;
 use File::Basename;
+use ext::Capture::Tiny 'tee_merged';
 use common_options;
 use Cwd;
 use ui;
@@ -247,36 +248,41 @@ my $model = model->new(
     output_directory => $output_directory,
 );
 
-my $qa = tool::qa->new(
-    eval( $common_options::parameters ),
-    models => [$model],
-    dvid => $options{'dvid'},
-    idv => $options{'idv'},
-    dv => $options{'dv'},
-	occ => $options{'occ'},
-    groups => $options{'groups'},
-    continuous => $options{'continuous_covariates'},
-    categorical => $options{'categorical_covariates'},
-    parameters => $options{'parameters'},
-    cmd_line => $cmd_line,
-    fo => $options{'fo'},
-    lst_file => $options{'lst_file'},
-    nointer => $options{'nointer'},
-    nonlinear => $options{'nonlinear'},
-    skip => [split /,/, $options{'skip'}],
-    only => [split /,/, $options{'only'}],
-    add_etas => [split /,/, $options{'add_etas'}],
-    nm_parallel => $options{'nm_parallel'},
-);
+my $qa;
+my $capture = tee_merged {
+    $qa = tool::qa->new(
+        eval( $common_options::parameters ),
+        models => [$model],
+        dvid => $options{'dvid'},
+        idv => $options{'idv'},
+        dv => $options{'dv'},
+        occ => $options{'occ'},
+        groups => $options{'groups'},
+        continuous => $options{'continuous_covariates'},
+        categorical => $options{'categorical_covariates'},
+        parameters => $options{'parameters'},
+        cmd_line => $cmd_line,
+        fo => $options{'fo'},
+        lst_file => $options{'lst_file'},
+        nointer => $options{'nointer'},
+        nonlinear => $options{'nonlinear'},
+        skip => [split /,/, $options{'skip'}],
+        only => [split /,/, $options{'only'}],
+        add_etas => [split /,/, $options{'add_etas'}],
+        nm_parallel => $options{'nm_parallel'},
+    );
 
-$qa->print_options(
-    cmd_line => $cmd_line,
-    toolname => 'qa',
-    local_options => [keys %optional_options],
-    common_options => \@common_options::tool_options
-);
+    $qa->print_options(
+        cmd_line => $cmd_line,
+        toolname => 'qa',
+        local_options => [keys %optional_options],
+        common_options => \@common_options::tool_options
+    );
 
-$qa->run();
+    $qa->run();
+};
+
+$qa->write_captured_output($capture);
 $qa->print_results();
 
 ui->print(category => 'qa', message  => "Quality assurance done.\n");
