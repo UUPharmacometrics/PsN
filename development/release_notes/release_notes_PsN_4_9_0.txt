@@ -1,0 +1,147 @@
+This PsN version has been tested on the following systems:
+
+Windows 10 64-bit with Strawberry Perl 5.22.3 , gfortran 4.9.2 and NONMEM 7.4.3
+Windows 7 64-bit with Strawberry Perl 5.22.3, gfortran 4.9.2 and NONMEM 7.4.3
+Ubuntu Linux 18.10 with Perl 5.26.2, gfortran 8.3.0 and NONMEM 7.4.3
+CentOS 7 with Perl 5.16.3, gfortran 5.1.0 and NONMEM 7.4.3
+
+
+************************
+Installation
+************************
+
+Follow the installation instructions on
+https://uupharmacometrics.github.io/PsN/install.html
+
+************************
+Documentation
+************************
+All documentation is found in the doc subdirectory of the PsN 
+installation directory. During installation it is also possible 
+to have all documentation copied to a user-specified directory.
+
+All documentation can also be downloaded from
+the PsN website https://uupharmacometrics.github.io/PsN/docs.html
+
+************************
+Dependencies 
+************************
+
+- The rplots functionality now depends on the R package PsNR available from github at
+  UUPharmacometrics/PsNR 
+
+************************
+Known issues 
+************************
+
+- Windows users need to be careful to choose 
+  a Perl version where the extra modules needed for PsN are available. 
+  For new Perl installations the PsN team recommends Strawberry Perl
+  See the instructions on https://uupharmacometrics.github.io/PsN/install.html
+
+- Installation problem on some Windows systems where 
+  perl 'system' command does not work. Make sure perl module File::Copy::Recursive
+  is installed *before* (re)running the installation script setup.pl
+
+*********************************************
+Changes and bug fixes from PsN 4.8.0 to 4.9.0
+*********************************************
+
+
+
+
+   ___General___
+
+- Dots in datasets will always be seen by PsN as zero, which is the same way NM-TRAN handles dots. This will
+  change the behaviour of transitions in randtest.
+- Empty items between commas in data set will be interpreted as zero (this is default NM-TRAN interpretation)
+- Code for rplots is behing moved to the new R-package PsNR
+
+
+   ___common_options___
+
+- New clean level 5 to remove entire rundirectory
+- New option -debug_rmd to retain the tex file after rendering rmarkdown with -rplots
+
+
+   ___crossval___
+
+- Add -stratify_on option
+
+
+   ___sumo___
+
+- New option -parameters to only show parameter estimates
+- Fix bug causing RSEs not to be shown if no THETAs were estimated
+- Fix bug causing a display of ERROR when the covariance step was OMITTED
+
+
+   ___mcmp___
+
+- Fix bug causing columns with names ending with DATE to become removed
+
+
+   ___bootstrap___
+
+- Phi files from $ETAS will be used for dOFV calculation runs
+
+
+   ___vpc/npc___
+
+- Fix bug causing simulation tables after a tte run being copied to the wrong directory when using the -model_subdir option
+- Fix bug causing lst-file for original model to not be copied to the m1 directory (but instead into the root of the run directory)
+- Fix bug causing NOPREDICTION to be removed from an original $SIMULATION
+
+
+   ___frem___
+
+- Give useful error message if a covariate has zero variance at baseline.
+- Add OFV for M1-M4 in frem_results
+
+ 
+   ___proseval___
+
+- Added a NUMOBS counter that can be used in the model code
+
+
+   ___scm___
+
+- linearized scm will now initialize etas with phi file of base model for each iteration.
+- The ext file of the final model is also copied to final_models directory to retain the full precision of estimates
+
+
+   ___linearize___
+
+- Many bugfixes
+
+
+   ___sse___ 
+
+- New option -special_table to let the user handle the table generation in the simulation model
+
+
+   ___simeval___
+
+- New option -separate to be able to use simeval for models with NOPREDICTION 
+
+
+   ___sir___
+	
+- Force input cov matrix to be positive definite after giving a warning.
+- Force matrix used for sampling to be positive definite.
+- Phi files from $ETAS will be used for dOFV calculation runs
+
+
+   ___cdd___
+
+- New option 'ignore' that would let cdd use IGNORE statements instead of generating new datasets. This will save alot of disk space.
+
+
+   ___rplots___
+
+- Most rplots code moved into the separate PsNR package.
+
+
+   ___transform___
+
+- New transform derivatives

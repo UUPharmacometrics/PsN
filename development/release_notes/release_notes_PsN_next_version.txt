@@ -32,10 +32,7 @@ the PsN website https://uupharmacometrics.github.io/PsN/docs.html
 Dependencies 
 ************************
 
-- It is recommended to use Xpose version 4.5.3 or later for the -cwres functionality 
-  and the default execute, vpc and bootstrap R plots.
-
-- Each userguide lists the R packages required to obtain the diagnostic R plots.
+- The rplot functionality now depend on the PsNR R package available from github at UUPharmacometrics/PsNR
 
 ************************
 Known issues 
@@ -59,16 +56,10 @@ Changes and bug fixes from PsN 4.8.0 to x.x.x
 
    ___General___
 
-- Dots in datasets will always be seen by PsN as zero, which is the same way NM-TRAN handles dots. This will
-  change the behaviour of transitions in randtest.
-- Empty items between commas in data set will be interpreted as zero (this is default NM-TRAN interpretation)
-- Code for rplots is behing moved to the new R-package PsNR
 
 
    ___common_options___
 
-- New clean level 5 to remove entire rundirectory
-- New option -debug_rmd to retain the tex file after rendering rmarkdown with -rplots
 
 
    ___NONMEM output parsing___
@@ -85,51 +76,29 @@ Changes and bug fixes from PsN 4.8.0 to x.x.x
 
    ___crossval___
 
-- Add -stratify_on option
-
-
 
    ___runrecord___
 
 
    ___sumo___
 
-- New option -parameters to only show parameter estimates
-- Fix bug causing RSEs not to be shown if no THETAs were estimated
-- Fix bug causing a display of ERROR when the covariance step was OMITTED
-
 
    ___mcmp___
-
-- Fix bug causing columns with names ending with DATE to become removed
 
 
    ___bootstrap___
 
-- Phi files from $ETAS will be used for dOFV calculation runs
-
 
    ___vpc/npc___
 
-- Fix bug causing simulation tables after a tte run being copied to the wrong directory when using the -model_subdir option
-- Fix bug causing lst-file for original model to not be copied to the m1 directory (but instead into the root of the run directory)
-- Fix bug causing NOPREDICTION to be removed from an original $SIMULATION
-
 
    ___frem___
-
-- Give useful error message if a covariate has zero variance at baseline.
-- Add OFV for M1-M4 in frem_results
 
  
    ___proseval___
 
 
-
    ___scm___
-
-- linearized scm will now initialize etas with phi file of base model for each iteration.
-- The ext file of the final model is also copied to final_models directory to retain the full precision of estimates
 
 
    ___linearize___
@@ -141,19 +110,13 @@ Changes and bug fixes from PsN 4.8.0 to x.x.x
    ___xv_scm___
 
 
-
    ___sse___ 
-
-- New option -special_table to let the user handle the table generation in the simulation model
 
 
    ___simeval___
 
-- New option -separate to be able to use simeval for models with NOPREDICTION 
-
 
    ___runrecord___
-
 
 
    ___update_inits___
@@ -164,16 +127,10 @@ Changes and bug fixes from PsN 4.8.0 to x.x.x
 
    ___sir___
 	
-- Force input cov matrix to be positive definite after giving a warning.
-- Force matrix used for sampling to be positive definite.
-- Phi files from $ETAS will be used for dOFV calculation runs
-
    ___precond___
 
 
    ___cdd___
-
-- New option 'ignore' that would let cdd use IGNORE statements instead of generating new datasets. This will save alot of disk space.
 
 
    ___rplots___
@@ -183,7 +140,6 @@ Changes and bug fixes from PsN 4.8.0 to x.x.x
 
    ___transform___
 
-- New transform derivatives
 
    ___resmod___ 
 
