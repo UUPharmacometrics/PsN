@@ -216,18 +216,13 @@ including PsN 3-versions) are fixed automatically so that they are callable with
 
 <h2>R plots</h2>
 The automatic rplots functionality in PsN (via the <code>-rplots</code> option) require that <a target="_blank" href="https://cloud.r-project.org"s>R</a> (at least version 3.1.2 is required) 
-is installed and that some specific R packages along with their dependencies are installed in R. <br>
-The R-scripts/install_R_packages.R can be run to install all needed R-packages in the given path. 
-Open a terminal, go to the R-scripts directory, type<br>
-<code>Rscript install_R_packages.R</code><br>
-and the full path to where to install.<br>
-Example: <br>
-<code>Rscript install_R_packages.R C:\R\library</code><br>
+is installed and that the PsNR package and its dependencies are installed in R.<br>
+The PsN installation script can do the installation of the required R-pacakge or it can be done manually. It is available from <a href="github">https://github.com/UUPharmacometrics/PsNR</a>.
+
 To make PsN always use a specific R library path, add the R library path to the <code>psn.conf file</code>.<br>
 Example:<br>
 <code>R_LIB_PATH=C:\R\library</code>
 <br>
-Some of these packages need some external dependencies to be installed before installing in R.
 
 
 
