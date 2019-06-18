@@ -16,7 +16,7 @@ The proxies include a linearized version of the model to be qa:ed as well as add
 
 The suggested use of the resulting report is that first inspect the overview section and there assess whether any change to the model resulted in an improvement of such a size that it would be of interest to learn more about it. If so, there is more information in the subsections. If not, the qa functionality has provided reassurance that the model in a large number of aspects describe the data well. 
 
-The "Structural" section contains information additional information about bias in the population predictions versus different independent variables.  If this bias is low, despite a marked improvement in OFV, an argument can be made about the clinical relevance of the bias. This size and direction of the bias may also suggest a new model structure. Note though that also covariate or stochastic model misspecification can result in bias and may be best to corrected for first. 
+The "Structural" section contains information additional information about bias in the population predictions\cite{Ibrahim3} versus different independent variables.  If this bias is low, despite a marked improvement in OFV, an argument can be made about the clinical relevance of the bias. This size and direction of the bias may also suggest a new model structure. Note though that also covariate or stochastic model misspecification can result in bias and may be best to corrected for first. 
 
 The "Parameter Variability Model" section extensions to the IIV model are tested \cite{Svensson, Petersson}. If any model suggests an improvement, the PsN functionality "transform" can easily make the corresponding change to the original model (learn through \verb|transform -help|).
 

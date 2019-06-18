@@ -298,7 +298,13 @@ sub make_plots
 		ui->print(category=> 'all',message => "\nRunning ".$self->filename."...\n");
         my $executable;
         if ($self->R_markdown && $self->rmarkdown_installed) {
-            $executable = $self->_R_executable . "script";
+            if (substr($self->_R_executable, -1) eq '"') {      # Special case when executable contains spaces and therefore is quoted
+                $executable = $self->_R_executable;
+                chop $executable;
+                $executable .= 'script"';
+            } else {
+                $executable = $self->_R_executable . "script";
+            }
         } else {
             $executable = $self->_R_executable;
         }

@@ -9,7 +9,7 @@
 \newpage
 
 \section{Introduction}
-The resmod (residual modelling) tool performs modelling of the conditional weighted residual output of a model run. Different types of models are run and changes in OFV will be recorded together with some parameters of interest. The resmod tool is not compatible with NONMEM 7.2 or older versions.\\
+The resmod (residual modelling) tool performs modelling of the conditional weighted residual output\cite{Ibrahim} of a model run. Different types of models are run and changes in OFV will be recorded together with some parameters of interest. The resmod tool is not compatible with NONMEM 7.2 or older versions.\\
 Example:
 \begin{verbatim}
 resmod run1.mod
@@ -205,5 +205,7 @@ Name \verb|L2| in results.csv. The L2 model will be tried only if the original m
 IF(DVID.EQ.1) Y = THETA(1) + ETA(1) + ERR(1)
 IF(DVID.EQ.2) Y = THETA(2) + ETA(2) + ERR(2)
 \end{verbatim}
+
+\references
 
 \end{document}
