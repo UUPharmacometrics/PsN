@@ -137,6 +137,7 @@ has 'display_iterations' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'slurm_account' => ( is => 'rw', isa => 'Str' );
 has 'slurm_partition' => ( is => 'rw', isa => 'Str' );
 has 'slurm_prepend_flags' => ( is => 'rw', isa => 'Str' );
+has 'slurm_cluster' => ( is => 'rw', isa => 'Str' );
 has 'sge_resource' => ( is => 'rw', isa => 'Str' );
 has 'sge_queue' => ( is => 'rw', isa => 'Str' );
 has 'torque_prepend_flags' => ( is => 'rw', isa => 'Str' );

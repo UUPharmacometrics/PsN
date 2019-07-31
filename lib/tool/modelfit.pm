@@ -1602,6 +1602,7 @@ sub run_nonmem
 				max_runtime => $self->max_runtime,
 				partition => $self->slurm_partition,
 				account => $self->slurm_account,
+                cluster => $self->slurm_cluster,
 			);
 		} elsif ($self->run_on_torque) {
 			$nonmem_run = nonmemrun::torque->new(

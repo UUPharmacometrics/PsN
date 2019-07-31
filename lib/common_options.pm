@@ -77,6 +77,7 @@ Getopt::Long::config("auto_abbrev");
 		  "slurm_prepend_flags:s",
 		  "slurm_account:s",
 		  "slurm_partition:s",
+		  "slurm_cluster:s",
 		  "template_file_rplots:s",
 		  "template_directory_rplots:s",
 		  "subset_variable_rplots:s",
@@ -1259,6 +1260,13 @@ EOF
     Only valid with -run_on_slurm. Maps to sbatch -A option.
 
 EOF
+
+$help_hash{-slurm_cluster} = <<'EOF';
+    -slurm_cluster='string'
+    Only valid with -run_on_slurm. Maps to sbatch -M option
+    and is also used when monitoring slurm job.
+EOF
+
     $help_hash{-slurm_partition} = <<'EOF';
     -slurm_partition='string'
     Only valid with -run_on_slurm. Maps to sbatch -p option.

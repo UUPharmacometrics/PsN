@@ -59,6 +59,9 @@ Default empty. Only valid with -run\_on\_sge. Maps to qsub option -l
 \optdefault{slurm\_account}{string}
 Default empty. Only valid with -run\_on\_slurm, then optional. Maps to sbatch option -A. This option was called -slurm\_project in PsN 3, but it has been renamed to match the slurm system documentation where the term is 'account'.
 \nextopt
+\optdefault{slurm\_cluster}{string}
+Default empty. Only valid with -run\_on\_slurm, then optional. Maps to sbatch option -M and is also used when monitoring the jobs.
+\nextopt
 \optdefault{slurm\_partition}{string}
 Default empty. Only valid with -run\_on\_slurm, then optional. Maps to sbatch option -p.
 \nextopt

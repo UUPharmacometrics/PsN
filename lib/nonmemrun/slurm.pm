@@ -10,7 +10,9 @@ extends 'nonmemrun';
 
 has 'partition' => ( is => 'rw', isa => 'Maybe[Str]' );
 has 'account' => ( is => 'rw', isa => 'Maybe[Str]' );
+has 'cluster' => ( is => 'rw', isa => 'Maybe[Str]' );       # The SLURM cluster
 has 'check_modfile' => ( is => 'rw', isa => 'Bool', default => 1 );
+
 
 sub submit
 {
@@ -75,6 +77,10 @@ sub submit
 	if (defined $self->prepend_flags) {
 		$flags = ' ' . $self->prepend_flags . $flags;
 	}
+
+    if (defined $self->cluster) {
+        $flags = ' -M ' . $self->cluster . $flags;
+    }
 
 	my $command = $self->create_command;
 	my $modfile = 'psn.mod';
@@ -165,7 +171,12 @@ sub monitor
 	#squeue -j 12345, --jobs
 
 	#list only completed, cancelled... job with right id without header allowing for any width numbers without truncation
-	my $outp = `squeue -h --states CA,CD,F,NF,TO -j $jobId -o" %i " 2>&1`;
+    my $cluster_option = "";
+    if (defined $self->cluster) {
+        $cluster_option = "-M " . $self->cluster . " ";
+    }
+	my $outp = `squeue $cluster_option-h --states CA,CD,F,NF,TO -j $jobId -o" %i " 2>&1`;
+    $outp =~ s/CLUSTER: .*\n//;
 	if (defined $outp) {
 		if ($outp =~ /(i|I)nvalid/) {
 			#this is either because the job finished so long ago (MinJobAge)
@@ -174,7 +185,8 @@ sub monitor
 			#due to too early polling, and then try again. If message persists then assume job
 			#id will never be valid, i.e. finished. That definitely can happen.
 			sleep(3);
-			my $outp2 = `squeue -h --states CA,CD,F,NF,TO -j $jobId -o" %i " 2>&1`;
+			my $outp2 = `squeue $cluster_option-h --states CA,CD,F,NF,TO -j $jobId -o" %i " 2>&1`;
+            $outp2 =~ s/CLUSTER: .*\n//;
 			if (defined $outp2) {
 				if ($outp2 =~ /(i|I)nvalid/) {
 					return $jobId; # Give up. This job is finished since not in queue
