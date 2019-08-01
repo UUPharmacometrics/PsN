@@ -66,7 +66,7 @@ $help_text{Examples} = <<'EOF';
 EOF
 
 $help_text{Options} = <<'EOF';
-	A model file is required as argument, 
+	A model file is required as argument,
 
 	The following options are valid:
 EOF
@@ -77,7 +77,7 @@ $help_text{-h} = <<'EOF';
 	With -h or -? resmod will print a list of options and exit.
 EOF
 
-$help_text{-help} = <<'EOF';      
+$help_text{-help} = <<'EOF';
 	-help
 
 	With -help resmod will print this, longer, help message.

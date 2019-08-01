@@ -62,7 +62,7 @@ $help_text{Description} = <<'EOF';
 	in PsN). When analysing a small dataset this method may produce a covariate
 	model that suffers from selection bias and poor predictive performance. The
 	lasso tool is a method suggested to remedy these problems. It may also be
-	faster than the scm tool and provide a validation of the covariate model. 
+	faster than the scm tool and provide a validation of the covariate model.
 	In the lasso tool all covariates must be standardised to have zero mean and
 	standard deviation one. Subsequently, the model containing all potential
 	covariate-parameter relations is fitted with a restriction: the sum of the
@@ -74,16 +74,16 @@ $help_text{Description} = <<'EOF';
 	required for selection. In the lasso tool the model size instead depends on the
 	value of t which can be estimated using cross-validation.
 
-	Jakob Ribbing, Joakim Nyberg, Ola Caster, E. Niclas Jonsson, The lasso - a novel 
-	method for predictive covariate model building in nonlinear mixed effects models, 
+	Jakob Ribbing, Joakim Nyberg, Ola Caster, E. Niclas Jonsson, The lasso - a novel
+	method for predictive covariate model building in nonlinear mixed effects models,
 	C. J Pharmacokinet Pharmacodyn (2007) 34:485-51
 EOF
 
 $help_text{Examples} = <<'EOF';
-	lasso run2.mod -relations=CL:CLCR-2,WT-3,,V:WT-2 
+	lasso run2.mod -relations=CL:CLCR-2,WT-3,,V:WT-2
 EOF
 
-$help_text{Options} = <<'EOF';      
+$help_text{Options} = <<'EOF';
 
 	A model file is required on the command line. Each parameter, e.g. CL and V,
 	listed with the option -relations (required) must in the model have the typical
@@ -103,7 +103,7 @@ $help_text{-h} = <<'EOF';
 	With -h or -? lasso will print a list of options and exit.
 EOF
 
-$help_text{-help} = <<'EOF';      
+$help_text{-help} = <<'EOF';
 	-help
 
 	With -help lasso will print this, longer, help message.
@@ -139,7 +139,7 @@ EOF
 $help_text{-convergence} = <<'EOF';
 	-convergence=FIRSTMIN | HALT | REACHMAX
 
-	Default is "FIRSTMIN'. The convergence criterion. The alternatives are: 
+	Default is "FIRSTMIN'. The convergence criterion. The alternatives are:
 	'FIRSTMIN': Stop when predicted ofv increases from previous value (or when
 	stop_t is reached). 'HALT': Stop when program crashes or when one model
 	cannot terminate. 'REACHMAX': Stop when program reaches max (stop_t), then
@@ -166,14 +166,14 @@ $help_text{-groups} = <<'EOF';
 	of validation groups in the cross-validation. The larger the number the longer
 	the cross-validation run-time. The value set for the common option -threads
 	will have no effect if set to something larger than the number of groups
-	(cross-validation data sets). 
+	(cross-validation data sets).
 EOF
 
 $help_text{-log_scale} = <<'EOF';
 	-log_scale
 
 	Default not set. If set, covariates will be added to LNTV instead of multiplied
-	with TV. For example, if the input model has LNTVCL=THETA(1) then the lasso 
+	with TV. For example, if the input model has LNTVCL=THETA(1) then the lasso
 	ool will get LNTVCL=THETA(1) LNTVCL=LNTVCL+CLCOV where CLCOV is a sum of
 	covariate effects.
 EOF
@@ -215,11 +215,11 @@ $help_text{-relations} = <<'EOF';
 	1)categorical covariate (treated as nominal scale),
 	2)linear continuous covariate,
 	3)piece-wise linear "hockey-stick" for continuous covariate.
-	The syntax is sensitive and must be followed exactly. Note colons and commas. 
+	The syntax is sensitive and must be followed exactly. Note colons and commas.
 	There must be no spaces in the list of relations. There are double commas
 	before a new parameter. It is optional to input the breakpoint for the piece
 	-wise linear relation (3),the number is then set after a second dash (-) as
-	in WGT-3-45.2. 
+	in WGT-3-45.2.
 
 	Example:
 	-relations=CL:WGT-2,SEX-1,RACE-1,,V:WGT-3-45.2,,KA:WGT-3,APGR-2
@@ -268,7 +268,7 @@ EOF
 $help_text{-stop_t} = <<'EOF';
 	-stop_t=X
 
-	Default is 1. The last t-value. 
+	Default is 1. The last t-value.
 EOF
 
 $help_text{-stratify_on} = <<'EOF';
@@ -285,7 +285,7 @@ $help_text{-threads} = <<'EOF';
 
 		The number of parallel processes to start for the model runs on a parallel
 		computer. Setting this value to something larger than the number of groups
-		(cross-validation data sets) will have no effect. 
+		(cross-validation data sets) will have no effect.
 EOF
 
 $help_text{Post_help_message} = <<'EOF';
@@ -357,7 +357,7 @@ if (defined $options{'normalize'} and not ($options{'normalize'})){
 	$normalize = 0;
 }
 
-my $lasso = 
+my $lasso =
 	tool::lasso->new(eval( $common_options::parameters ),
 					 models	     => [ $model ],
 					 run_final_model    => $options{'run_final_model'},

@@ -146,7 +146,7 @@ $help_text{-prepend_options_to_lst} = <<'EOF';
 	the file version_and_option_info.txt which contains run information, including
     all actual values of optional PsN options. PsN can still parse the  lst-file
 	with the options prepended, so the file can still be used it as input to e.g.
-	sumo, vpc or update_inits. Option can be disabled with -no-prepend_options_to_lst. 
+	sumo, vpc or update_inits. Option can be disabled with -no-prepend_options_to_lst.
 EOF
 
 $help_text{-rawres_input} = <<'EOF';
@@ -244,25 +244,25 @@ if ($options{'model_subdir'}) {
 }
 
 
-foreach my $model_name ( @ARGV ){  
+foreach my $model_name ( @ARGV ){
   my $outputfile = shift @outputfiles;
   my $model;
-  
+
   $model = model -> new ( eval( $eval_string ),
 			  outputfile                  => $outputfile,
 			  filename                    => $model_name,
 			  ignore_missing_output_files => 1,
          output_directory => $output_directory, );
-  
+
   if( $options{'nonparametric_etas'} or
       $options{'nonparametric_marginals'} ) {
     $model -> add_nonparametric_code;
   }
-  
+
   if( $options{'shrinkage'} ) {
     $model -> shrinkage_stats( enabled => 1 );
   }
-  
+
   push( @{$models_array}, $model );
 }
 
@@ -289,7 +289,7 @@ if (defined $options{'rawres_input'}){
 		}
 		if (scalar(@in_filter)<1){
 			die "Error: Option in_filter used, but list of conditions could not be parsed.\n";
-		}	
+		}
 	}
 
 	($sampled_params_arr,$href) = model::get_rawres_params(filename => $options{'rawres_input'},
@@ -352,7 +352,7 @@ if (defined $options{'rawres_input'}){
 											 write_copy => 0,
 											 directory => $main_directory);
 		$retry_mod -> update_inits(from_hash => $sampled_params_arr->[$retry-1],
-								   update_fix => $update_fix); 
+								   update_fix => $update_fix);
 		$retry_mod -> _write();
 		push(@{$mod_array},$retry_mod);
 	}
@@ -412,13 +412,13 @@ foreach my $mod (@{$mod_array}){
 													  minimization_message => $mod->outputs->[0]->minimization_message,
 													  probnum => $probnum,
 													  picky => $modelfit->picky);
-		push(@run_results,{'ofv' => $mod->outputs->[0]->get_single_value(attribute => 'ofv'), 
-						   'pass_picky'=> $pass_picky, 
+		push(@run_results,{'ofv' => $mod->outputs->[0]->get_single_value(attribute => 'ofv'),
+						   'pass_picky'=> $pass_picky,
 						   'name' => $mod->filename,
 						   'minimization_successful' => $mod->outputs->[0]->get_single_value(attribute => 'minimization_successful')});
 	}else{
 		push(@run_results,{'ofv' => undef,
-						   'pass_picky'=> 0, 
+						   'pass_picky'=> 0,
 						   'name' => $mod->filename,
 						   'minimization_successful' => 0});
 	}

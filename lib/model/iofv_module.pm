@@ -2,11 +2,11 @@
 #             		     INTRODUCTION                     #
 ###############################################################
 
-# Individual objective function values can be a useful model 
+# Individual objective function values can be a useful model
 # selection diagnostic. Their use in the selection of covariates
-# for inclusion in a non-linear mixed effects model is descibed 
-# in: Sadray, Jonsson and Karlsson, PharmRes, 16(8) 1999, 
-# pp. 1260-1265 
+# for inclusion in a non-linear mixed effects model is descibed
+# in: Sadray, Jonsson and Karlsson, PharmRes, 16(8) 1999,
+# pp. 1260-1265
 
 # This script calculates the individual difference in objective
 # function value between two models ("basic" and "full").  Optionally
@@ -16,7 +16,7 @@
 # can be obtained free of charge from www.perl.com. Perl, and this
 # script, can be used on both UNIX machines and PCs.
 
-# Questions, comments and bug reports should be sent to 
+# Questions, comments and bug reports should be sent to
 # niclas.jonsson@biof.uu.se.
 
 # (c) Copyright 1999 Niclas Jonsson and Mats Karlsson
@@ -29,18 +29,18 @@
 # To create the CONTR subroutine that is necessary to extract
 # the individual objective function values, do the following:
 
-#  1. On the command line, type: 
+#  1. On the command line, type:
 #     perl ofv1 -p
 
 #     This creates a file called iofvcont.f.
 
-#  2. Open the iofvcont.f file for editing and change the 
+#  2. Open the iofvcont.f file for editing and change the
 #     parameter statement on line two to reflect the number of
-#     observations you have NONMEM compiled for. (The NONMEM 
+#     observations you have NONMEM compiled for. (The NONMEM
 #     default is 50.)
 
 #  3. Open the NM-TRAN model file for which you want to obtain
-#     individual objective function values and add the following line 
+#     individual objective function values and add the following line
 #     before the $SUBROUTINE line:
 #     $CONTR DATA=(ID)
 
@@ -50,7 +50,7 @@
 #  5. When the model is run, a file called fort80 (or something similar)
 #     is created. It containes two columns. The first is the ID numbers
 #     and the second the individual objectives.
-#     There are (no of individuals)*(number of function evaluations) lines 
+#     There are (no of individuals)*(number of function evaluations) lines
 #     the file. Only the last (no of individuals) lines are of interest.
 
 #########################################################################
@@ -79,12 +79,12 @@
 #    the following code can serve as example:
 
 #    nmfe run5.mod run5.lst
-#    mv ftn80 iotab5 
+#    mv ftn80 iotab5
 #    nmfe run6.mod run6.lst
-#    mv ftn80 iotab6 
+#    mv ftn80 iotab6
 
 # 3. When you have run the basic and full model run the perl script by
-#    typing: 
+#    typing:
 #    perl ofv1
 
 #    Thereafter follows instructions. Names of output files will be given.
@@ -104,7 +104,7 @@ sub BUILD
 	my $self  = shift;
 
   my $base_model = $self->base_model;
-  
+
   if( $base_model -> is_option_set( record => 'subroutine', name => 'CONTR' ) ) {
     croak('CONTR in $SUBROUTINE is already set, iofv cannot be computed' );
   }
@@ -131,7 +131,7 @@ sub post_process
   my $base_model = $self->base_model;
 
   # Figure out if we have an sdtab and what number it has
-  my ( $sd_ref, $junk ) = $base_model -> problems -> [0] -> 
+  my ( $sd_ref, $junk ) = $base_model -> problems -> [0] ->
       _option_val_pos( name        => 'FILE',
 		       record_name => 'table',
 		       exact_match => 0 );
@@ -159,12 +159,12 @@ C     parameter (no=50)
       call ncontr (cnt,ier1,ier2,l2r)
 C     individual obj. funct. value for indiv. jj = cnt
       write(80,10) data(1,1),cnt
-   10 FORMAT(1E12.4E2,1E12.4E2) 
+   10 FORMAT(1E12.4E2,1E12.4E2)
       return
       end
 
 EOF
- 
+
     close CONTR;
 }
 
@@ -175,7 +175,7 @@ sub post_run_process
   my $base_model = $self->base_model;
 
   # Figure out if we have an sdtab and what number it has
-  my ( $sd_ref, $junk ) = $base_model -> problems -> [0] -> 
+  my ( $sd_ref, $junk ) = $base_model -> problems -> [0] ->
       _option_val_pos( name => 'FILE',
 		       record_name => 'table',
 		       exact_match => 0 );
@@ -194,7 +194,7 @@ sub post_run_process
   my $data = data->new(filename => $datafilename,
 					   ignoresign => '@',
 					   idcolumn => $base_model->idcolumns->[0]);
-  
+
   my $ids = $data -> column_to_array( column => $data -> idcolumn -1 );
 
   my ($first_id, $last_id) = ($ids -> [0],$ids -> [$#{$ids}]);
@@ -209,7 +209,7 @@ sub post_run_process
 
     for( my $i = 0;$i < scalar @iotab; $i++ ){
       my @line = split( ' ',$iotab[$i] );
-      
+
       push( @values, $line[1] );
 
       if( $previous_id == $last_id and $line[0] == $first_id ){
@@ -238,10 +238,10 @@ sub post_run_process
     if ( defined $base_model -> extra_output() ) {
       @eo = @{$base_model -> extra_output()};
     }
-    
+
     push( @eo, "iotab$sdno" );
     $base_model -> extra_output( \@eo );
-    
+
   } else {
     croak("Unable to open iotab: iotab$sdno ." );
   }

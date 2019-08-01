@@ -82,7 +82,7 @@ sub modelfit_setup
 
 	my $modelfit = tool::modelfit->new(
 		%{common_options::restore_options(@common_options::tool_options)},
-		models => \@modified_models, 
+		models => \@modified_models,
 		base_dir => $self->directory,
 		directory => undef,
 		top_tool => 0,
@@ -102,7 +102,7 @@ sub modelfit_analyze
 
 	open my $output_file, '>', "result.csv";
 
-	print $output_file "Type,Model number,Model name,Run number,", join(',', @{$self->parameters}), ",OFV\n"; 
+	print $output_file "Type,Model number,Model name,Run number,", join(',', @{$self->parameters}), ",OFV\n";
 
 	for my $model_number (0 .. scalar(@{$self->pvar_models} - 1)) {
 		$epv_array = $self->_get_epv($model_number);
@@ -253,7 +253,7 @@ sub get_models_from_scm_directory
 	my $path = _read_next_path($logfile);
 	my $model_name;
 	while (defined $path) {
-		$model_name = _read_next_model($logfile);	
+		$model_name = _read_next_model($logfile);
 		next if not defined $model_name;
 		$model_name = File::Spec->catpath(undef, $path, "$model_name.mod");
 		push @model_files, $model_name;

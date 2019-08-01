@@ -32,7 +32,7 @@ sub remove_list {
   my $topdir =shift;
   my $dir_sep = "/";
   if( $Config{osname} eq 'MSWin32' ){
-    $dir_sep = "\\";  
+    $dir_sep = "\\";
   }
   foreach my $file (@{$ref}){
     my $longfile = "$topdir"."$dir_sep"."$file";
@@ -41,7 +41,7 @@ sub remove_list {
       print "Remove $longfile [y/n]?: ";
       unlink $longfile if ( confirm() );
     }else{
-      unlink $longfile;      
+      unlink $longfile;
     }
   }
 }
@@ -56,7 +56,7 @@ sub remove_files {
   my $messages = shift;
   my $interactive = shift;
   my $topdir =shift;
-  
+
   my @files;
   if ($restart){
     @files = <$dir/psn-*.mod $dir/psn-*.ctl $dir/psn-*.lst>;
@@ -114,7 +114,7 @@ sub remove_files {
 
 my %options;
 
-my %optional_options = ( 
+my %optional_options = (
     'h|?' => undef,
     'help' => undef,
     "level:i" => undef,
@@ -166,12 +166,12 @@ my $modelfit = $options{'modelfit'};
 my %help_text;
 
 $help_text{Pre_help_message} = <<'EOF';
-    Delete files from PsN run directories. 
+    Delete files from PsN run directories.
 EOF
 $help_text{Post_help_message} = <<'EOF';
 EOF
 $help_text{Description} = <<'EOF';
-          Option -expand can be used to make psn_clean perform the cleaning 
+          Option -expand can be used to make psn_clean perform the cleaning
 	  	  in all directories starting with the given name.
 	      Example: bootstrap -expand will match bootstrap_dir1, bootstrap_dir2 and so on.
 	      bootstrap_dir2 -expand will match bootstrap_dir2, bootstrap_dir20 and so on.
@@ -194,13 +194,13 @@ $help_text{-interactive} = <<'EOF';
 EOF
 $help_text{-expand} = <<'EOF';
 -expand
-Add all possible extensions to the input directory name, and do 
+Add all possible extensions to the input directory name, and do
 cleaning in all. Default not set.
 EOF
 $help_text{-level} = <<'EOF';
 -level=N
-Default 2. Level 2-3 roughly corresponds to the -clean option to PsN. 
-Option -level sets a collection of the options below. If both level 
+Default 2. Level 2-3 roughly corresponds to the -clean option to PsN.
+Option -level sets a collection of the options below. If both level
 and additional options are set, the individual setting is added to
 what is implied by -level. Note that level can be set also to 4.
 -level=2: -nm_run -messages -restart -dta -csv set, all other options unset
@@ -260,7 +260,7 @@ EOF
 $help_text{-h} = <<'EOF';
 -h | -?
 
-    With -h or -? the script prints the list of available options 
+    With -h or -? the script prints the list of available options
     and exit.
 EOF
 $help_text{-help} = <<'EOF';
@@ -309,23 +309,23 @@ if ($level == 2){
 
 my @top_directories;
 
-foreach my $stem ( @ARGV ){  
+foreach my $stem ( @ARGV ){
     push (@top_directories,$stem) if (-d $stem);
     if ($expand){
       my @contents = <$stem*>;
       foreach my $thing (@contents){
 	push (@top_directories,$thing) if (-d $thing);
-      } 
+      }
     }
 }
 my @extralist=();
 foreach my $tdir (@top_directories){
-    #find sublevel top_directories here. 
+    #find sublevel top_directories here.
   foreach my $subdir ('forward_scm_dir','backward_scm_dir',''){
     my @contents = <$tdir/$subdir*>;
     foreach my $thing (@contents){
       push (@extralist,$thing) if (-d $thing);
-    } 
+    }
   }
   my $sub1 = $tdir.'/split_';
   my @list = <$sub1*>;
@@ -334,7 +334,7 @@ foreach my $tdir (@top_directories){
     my @contents = <$sub2*>;
     foreach my $thing (@contents){
       push (@extralist,$thing) if (-d $thing);
-    } 
+    }
   }
 }
 push(@top_directories,@extralist);
@@ -345,12 +345,12 @@ unless (scalar(@top_directories) > 0){
 
 my $homedir = getcwd();
 
-foreach my $tdir ( @top_directories ) {  
+foreach my $tdir ( @top_directories ) {
 	die unless chdir($homedir);
 	unless ( -d $tdir){
 		next;
 	}
-	my $topdir = $homedir.'/'.$tdir; 
+	my $topdir = $homedir.'/'.$tdir;
 	chdir($topdir);
 	if ($rdata){
 		remove_list(['.RData'],$interactive,$topdir) if (-e '.RData');
@@ -361,9 +361,9 @@ foreach my $tdir ( @top_directories ) {
 						  'base_dir','frac_dir','wt_dir','reg_dir','alt_dir','mi_dir','modelfit_dir1_add'){
 			my @modelfits = <$stem*>;
 
-			foreach my $modf (@modelfits){ 
+			foreach my $modf (@modelfits){
 				my @sub_nmruns = <$modf/NM_run*>;
-				foreach my $nmdir (@sub_nmruns){ 
+				foreach my $nmdir (@sub_nmruns){
 					my $tmp = $nmdir.'/temp_dir';
 					my @files = <$tmp/*>;
 					remove_list(\@files,$interactive,$topdir);
@@ -384,7 +384,7 @@ foreach my $tdir ( @top_directories ) {
 			}
 		}
 		my @nmruns = <NM_run*>; #only for vpc npc
-		foreach my $nmdir (@nmruns){ 
+		foreach my $nmdir (@nmruns){
 			my $tmp = $nmdir.'/temp_dir';
 			my @files = <$tmp/*>;
 			remove_list(\@files,$interactive,$topdir);
@@ -399,14 +399,14 @@ foreach my $tdir ( @top_directories ) {
 		}
 		if ($all_mx){
 			my @mdir = <m?>;
-			foreach my $dir (@mdir){ 
+			foreach my $dir (@mdir){
 				my @files = <$dir/*>;
 				remove_list(\@files,$interactive,$topdir);
 				rmdir $dir;
 			}
 		}elsif ($mx){
 			my @mdir = <m?>;
-			foreach my $dir (@mdir){ 
+			foreach my $dir (@mdir){
 				remove_files($dir,$restart,$tab,$lst,$csv,$dta,$messages,$interactive,$topdir) if (-d $dir);
 			}
 		}
@@ -424,9 +424,9 @@ foreach my $tdir ( @top_directories ) {
 			chdir ($topdir);
 		}
 
-		
+
 	} #end while
-	
+
 } #end foreach topdir
 
 exit;

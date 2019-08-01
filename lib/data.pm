@@ -519,7 +519,7 @@ sub frem_compute_covariate_properties
     $results->{'timevar_median'} = [];
     $results->{'timevar_mean'} = [];
     $results->{'timevar_covmatrix'} = [];
-    
+
     # Check that no covariate has only one value in the baseline
     my @values;
     my @diff;
@@ -803,7 +803,7 @@ sub _case_deletion
 		selection => { isa => 'Maybe[Str]', default => 'consecutive', optional => 1 },
 		directory => { isa => 'Str', optional => 0 },
         ignore => { isa => 'Bool', default => 0 },
-	
+
     );
 	my $bins = $parm{'bins'};
 	my $case_column = $parm{'case_column'};
@@ -1820,7 +1820,7 @@ sub resample
             my @factorlist = sort { $a <=> $b } keys %strata;
 
             foreach my $factor (@factorlist) {
-                my $key_list = $strata{$factor};	
+                my $key_list = $strata{$factor};
                 my @key_list_copy = @$key_list;
                 my $keys;
                 if ( defined $subjects{$factor} ) {
@@ -1833,7 +1833,7 @@ sub resample
                         "and no default sample size was set" );
                 }
                 for ( my $i = 0; $i < $keys; $i++ ) {
-                    if ($replacement) { 
+                    if ($replacement) {
                         my $list_ref = random_uniform_integer(1, 0, (scalar(@{$key_list}) - 1));
                         push( @bs_inds, $individuals -> [ $key_list->[$list_ref] ]->copy );
                         push( @included_keys, $key_list->[$list_ref] );
@@ -1932,7 +1932,7 @@ sub resample
             for ( my $i = 1; $i <= $size; $i++ ) {
                 random_uniform_integer(1,0,scalar @{$individuals}-1)
             }
-        }	
+        }
     }
 
     return \@incl_individuals, \@included_keys;
@@ -2796,7 +2796,7 @@ sub _read_individuals
 		s/\,[ ]+/\,/g;  # remove spaces after original and new commas (TABs absorb spaces coming after, but not before)
 		s/[ ]+/\,/g;    # replace sequence of spaces with commas
         s/,(?=,)/,0/g;       # Put a zero within consecutive commas
-        s/^,/0,/;       # Insert zero before comma at start of a line 
+        s/^,/0,/;       # Insert zero before comma at start of a line
         s/,$/,0/;       # Insert zero after comma at end of line
 
 		my @new_row	= split(/\,/);

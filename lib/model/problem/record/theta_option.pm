@@ -130,7 +130,7 @@ sub _read_option
 	  $self->init($inits[1]);
 	  $self->upbnd($inits[2]);
 	}
-	
+
 	if ( defined $self->lobnd and $self->lobnd =~ /INF/ ) {
 	  $self->lobnd($PsN::config -> {'low_INF'});
 	}

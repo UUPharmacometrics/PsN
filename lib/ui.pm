@@ -21,7 +21,7 @@ sub category
 	# ui -> category( 'bootstrap' )
 	#
 	# If you give a value to category as a single argument, you will
-	# set the global category of user interface messages. 
+	# set the global category of user interface messages.
 	#
 	# my $current_category = ui -> category
 	#
@@ -44,7 +44,7 @@ sub package
 	# ui -> package( 'output' )
 	#
 	# If you give a value to package as a single argument, you will
-	# set the global package of ui messages. 
+	# set the global package of ui messages.
 	#
 	# my $current_package = ui -> package
 	#
@@ -67,7 +67,7 @@ sub subroutine
 	# ui -> subroutine( 'output' )
 	#
 	# If you give a value to subroutine as a single argument, you will
-	# set the global subroutine of ui messages. 
+	# set the global subroutine of ui messages.
 	#
 	# my $current_subroutine = ui -> subroutine
 	#
@@ -125,7 +125,7 @@ sub print
 	#
 	# ui::print will print out messages corresponding to the category specified as
 	# argument. ui::print will look at the category given and the
-	# global category to see whether anything should be printed. 
+	# global category to see whether anything should be printed.
 	#
 	#
 	# NOTICE the lack of "\n" at the end of the message, ui::print
@@ -143,11 +143,11 @@ sub print
 					$ui::package eq $package ) and
 				( not defined $ui::subroutine or
 					$ui::subroutine eq $subroutine ) ) {
-	  
+
 			my $prefix;
 			my $text;
 
-			my $nl = ($newline) ? "\n" : ''; 
+			my $nl = ($newline) ? "\n" : '';
 
 			if ( $wrap ) {
 				$text = wrap('', '', $message . $nl);

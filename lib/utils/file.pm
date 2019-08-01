@@ -3,7 +3,7 @@ package utils::file;
 # Package for handling files, filenames and paths in a platform independent way
 # Note: Does not handle units on windows paths when path is relative current directory
 #       i.e. C:dir\file
- 
+
 use strict;
 use warnings;
 use MooseX::Params::Validate;
@@ -41,7 +41,7 @@ sub get_file_stem
     # Remove the path and extension from a filename
     my $name = shift;
 
-    (undef, undef, $name) = File::Spec->splitpath($name); 
+    (undef, undef, $name) = File::Spec->splitpath($name);
     $name =~ s/(.*)\..*/$1/;
 
     return $name;

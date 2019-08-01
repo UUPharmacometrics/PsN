@@ -241,17 +241,17 @@ sub _check_various
 						if( ($parm eq '*' or $cov eq '*') ) {
 
 							if( defined $slave and length( $slave ) > 0 ){
-								unless( exists $self -> relations -> {$parameter} and 
-									exists $self -> relations -> {$parameter} -> {$covariate} and 
-									exists $self -> relations -> {$parameter} -> {$covariate} -> {$master} and 
-									exists $self -> relations -> {$parameter} -> {$covariate} -> {$master} -> {$state} and 
+								unless( exists $self -> relations -> {$parameter} and
+									exists $self -> relations -> {$parameter} -> {$covariate} and
+									exists $self -> relations -> {$parameter} -> {$covariate} -> {$master} and
+									exists $self -> relations -> {$parameter} -> {$covariate} -> {$master} -> {$state} and
 									exists $self -> relations -> {$parameter} -> {$covariate} -> {$master} -> {$state} -> {$slave} ){
 									@{$self -> relations -> {$parameter} -> {$covariate} -> {$master} -> {$state} -> {$slave}} = @bounds;
 								}
 							} else {
-								unless( exists $self -> relations -> {$parameter} and 
-									exists $self -> relations -> {$parameter} -> {$covariate} and 
-									exists $self -> relations -> {$parameter} -> {$covariate} -> {$master} and 
+								unless( exists $self -> relations -> {$parameter} and
+									exists $self -> relations -> {$parameter} -> {$covariate} and
+									exists $self -> relations -> {$parameter} -> {$covariate} -> {$master} and
 									exists $self -> relations -> {$parameter} -> {$covariate} -> {$master} -> {$state} ){
 									@{$self -> relations -> {$parameter} -> {$covariate} -> {$master} -> {$state}} = @bounds;
 								}
@@ -301,7 +301,7 @@ sub _check_included_relations
 			delete $self -> included_relations -> {$parameter};
 			%{$self -> included_relations -> {$parameter}} = %{$new_parameter_hash};
 		}
-	}      
+	}
 }
 
 sub write
@@ -312,7 +312,7 @@ sub write
 	);
 	my $filename = $parm{'filename'};
 
-	open( CFG, '>', $filename ) 
+	open( CFG, '>', $filename )
 		or croak("Failed to open file $filename for writing: $!" );
 
 	my $contents = '';
@@ -402,7 +402,7 @@ sub parse_config
 					push(@{$self -> $section -> {$left}},@right_side_list);
 				}
 			}
-		} elsif ( $self -> valid_hash_options->{$section} eq 'SCALAR' ) { 
+		} elsif ( $self -> valid_hash_options->{$section} eq 'SCALAR' ) {
 			$self -> $section({}) unless (defined $self->$section());
 			foreach my $left_side( keys %{$config_tiny -> {$section}} ){
 				my $right_side = $config_tiny -> {$section} -> {$left_side};
@@ -445,7 +445,7 @@ sub parse_config
 					my $value = $config_tiny -> { $section } -> {$option};
 					$value =~ s/\s*//g;
 					my @arr = split( /,/ , $value );
-					$self -> $option(\@arr); 
+					$self -> $option(\@arr);
 				} elsif( $self -> valid_code_options->{$option} ){
 					$self -> $option(eval $config_tiny -> {$section} -> {$option});
 				} else {

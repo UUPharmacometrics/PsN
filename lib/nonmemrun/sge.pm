@@ -28,8 +28,8 @@ sub submit
 	if (defined $self->prepend_flags) {
 		$flags = ' ' . $self->prepend_flags . $flags;
 	}
-	
-	my $submitstring = $flags . 
+
+	my $submitstring = $flags .
 		($self->resource ? ' -l ' . $self->resource . ' ' : ' ') .
 		($self->queue ? '-q ' . $self->queue . ' ' : ' ') . $command;
 

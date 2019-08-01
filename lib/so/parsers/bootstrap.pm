@@ -236,16 +236,16 @@ sub _create_bootstrap
 
     # add rawresults
     (undef, undef, my $bootstrap_results) = File::Spec->splitpath($self->bootstrap_results);
-    $self->_so_block->RawResults->add_datafile(name => $bootstrap_results, description => "PsN Bootstrap results file", oid => 'PsN_bootstrap_results'); 
-    $self->_so_block->RawResults->add_datafile(name => 'included_individuals1.csv', description => "PsN Bootstrap included individuals", oid => 'PsN_bootstrap_included_individuals'); 
+    $self->_so_block->RawResults->add_datafile(name => $bootstrap_results, description => "PsN Bootstrap results file", oid => 'PsN_bootstrap_results');
+    $self->_so_block->RawResults->add_datafile(name => 'included_individuals1.csv', description => "PsN Bootstrap included individuals", oid => 'PsN_bootstrap_included_individuals');
 
     (undef, my $dir) = fileparse($self->bootstrap_results);
     (my $raw_results) = glob("$dir/raw_results_*.csv");
     (undef, undef, $raw_results) = File::Spec->splitpath($raw_results);
 
     if (defined $raw_results) {
-        $self->_so_block->RawResults->add_datafile(name => $raw_results, description => "PsN Bootstrap raw results", oid => 'PsN_bootstrap_raw_results'); 
-    } 
+        $self->_so_block->RawResults->add_datafile(name => $raw_results, description => "PsN Bootstrap raw results", oid => 'PsN_bootstrap_raw_results');
+    }
 }
 
 sub _read_line
@@ -305,7 +305,7 @@ sub filter
 
 sub get_column_types
 {
-    my $self = shift;    
+    my $self = shift;
     my %parm = validated_hash(\@_,
         parameters => { isa => 'ArrayRef' },
     );
@@ -314,7 +314,7 @@ sub get_column_types
     # Create a hash from labels to column_types
     my %hash;
     if (defined $self->labels_hash) {
-        @hash{@{$self->labels_hash->{labels}}} = @{$self->labels_hash->{column_types}}; 
+        @hash{@{$self->labels_hash->{labels}}} = @{$self->labels_hash->{column_types}};
     }
 
     my @column_types;
@@ -328,7 +328,7 @@ sub get_column_types
                 push @column_types, "varParameter covariance";
             } else {
                 push @column_types, $column_type;
-            }   
+            }
         } else {
             push @column_types, "undefined";
         }

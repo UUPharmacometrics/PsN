@@ -8,7 +8,7 @@ use MooseX::Params::Validate;
 extends 'nonmemrun';
 
 has 'directory' => ( is => 'rw', isa => 'Str' );
-has 'run_no' => ( is => 'rw', isa => 'Int' );  
+has 'run_no' => ( is => 'rw', isa => 'Int' );
 
 sub submit
 {
@@ -25,14 +25,14 @@ sub submit
 	} else {
 		$script = $PsN::config -> {'_'} -> {'ud_nonmem'};
 	}
-	
+
 	if (system("$script -s " . $self->model->filename . "> nonmem_sh_stdout")) {
 		my $error = "$!";
 		print "UD submit script failed, check that $script is in your PATH.\nSystem error message: $error";
 		chomp($error);
 		system('echo ' . $error . ' > job_submission_error');
 	}else{
-		if (open(JOBFILE, "JobId")){ 
+		if (open(JOBFILE, "JobId")){
 			$jobId = <JOBFILE>;
 			close(JOBFILE);
 		}else{
@@ -51,7 +51,7 @@ sub monitor
 	my $self = shift;
 	my $jobId = $self->job_id;
 
-	#this cannot possible work, but leave it here if any user wants to use ud. 
+	#this cannot possible work, but leave it here if any user wants to use ud.
 	# will be easy to fix this
   my $script;
   unless (defined $PsN::config->{'_'}->{'ud_nonmem'}) {
@@ -104,7 +104,7 @@ sub retrieve
   if (system("$script -b -c -d " . $tmp_dir . " -r $jobId > nonmem_bat_stdout")) {
     croak("UD submit script failed.\nSystem error message:$!" );
   }
-  
+
   if ($Config{osname} ne 'MSWin32') {
     cp($tmp_dir . '/psn.LST', $tmp_dir . '/psn.lst');
     unlink($tmp_dir . '/psn.LST');

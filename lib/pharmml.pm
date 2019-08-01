@@ -98,7 +98,7 @@ sub create_minimal_pharmml
 
     print $fh <<'END';
 <?xml version="1.0" encoding="UTF-8"?>
-<PharmML xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+<PharmML xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xmlns="http://www.pharmml.org/pharmml/0.8/PharmML"
     xsi:schemaLocation="http://www.pharmml.org/pharmml/0.8/PharmML"
     xmlns:math="http://www.pharmml.org/pharmml/0.8/Maths"
@@ -257,7 +257,7 @@ sub print_correlations
                 my $second = $2;
                 $option->coordinate_string =~ /(\w+)/;
                 my $type = $1;
-                my $first_diag = "$type($first,$first)"; 
+                my $first_diag = "$type($first,$first)";
                 my $second_diag = "$type($second,$second)";
                 my $first_diag_name = $diag{$first_diag};
                 my $second_diag_name = $diag{$second_diag};

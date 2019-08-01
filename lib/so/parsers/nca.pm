@@ -1,6 +1,6 @@
 package so::parsers::nca;
 
-# Package for parsing the results from an nca 
+# Package for parsing the results from an nca
 
 use strict;
 use warnings;

@@ -13,7 +13,7 @@ use so::soblock::estimation::populationestimates::bootstrap;
 has 'version' => ( is => 'rw', isa => 'Num', required => 1 );
 
 has 'MLE' => ( is => 'rw', isa => 'so::table' );
-has 'Bootstrap' => ( is => 'rw', isa => 'so::soblock::estimation::populationestimates::bootstrap' );    # Added in SO 0.2 
+has 'Bootstrap' => ( is => 'rw', isa => 'so::soblock::estimation::populationestimates::bootstrap' );    # Added in SO 0.2
 
 
 sub BUILD
@@ -83,7 +83,7 @@ sub create_MLE
     my $table = so::table->new(name => "MLE");
     $table->columnId(\@labels);
     $table->single_row(values => \@values, types => \@types);
-    $self->MLE($table); 
+    $self->MLE($table);
 }
 
 no Moose;

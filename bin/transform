@@ -57,7 +57,7 @@ $help_text{Pre_help_message} = <<"EOF";
 	$valid_transformations_string
 
 EOF
-    
+
 $help_text{Examples} = <<'EOF';
 	transform boxcox run1.mod
 EOF
@@ -74,7 +74,7 @@ $help_text{-h} = <<'EOF';
 	With -h or -? resmod will print a list of options and exit.
 EOF
 
-$help_text{-help} = <<'EOF';      
+$help_text{-help} = <<'EOF';
 	-help
 
 	With -help resmod will print this, longer, help message.
@@ -120,7 +120,7 @@ $help_text{-occ} = <<'EOF';
 	-occ
 
 	Default is OCC. Specify the name of the occasion column. This option is
-	valid for the add_iov transformation. 
+	valid for the add_iov transformation.
 EOF
 
 $help_text{-out} = <<'EOF';
@@ -325,7 +325,7 @@ if ($transformation eq 'boxcox') {
         model_transformations::iiv_on_ruv(model => $model, epsilons => [ split ',', $options{'epsilons'} ]);
     } else {
         model_transformations::iiv_on_ruv(model => $model);
-    } 
+    }
 } elsif ($transformation eq 'power_on_ruv') {
     if (defined $options{'epsilons'}) {
         model_transformations::power_on_ruv(model => $model, epsilons => [ split ',', $options{'epsilons'} ]);

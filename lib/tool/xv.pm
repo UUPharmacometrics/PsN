@@ -24,7 +24,7 @@ sub BUILD
 
 sub add_xv_step
 {
-	my ($self, %parm) = validated_hash(@_, 
+	my ($self, %parm) = validated_hash(@_,
 		init_data => {isa => 'Any', optional => 0}
 	);
 	$self->xv_steps([]) unless defined $self->xv_steps;
@@ -46,11 +46,11 @@ sub xv_step_pre_fork_setup
 	my %step_args;
 	if (defined $self -> subtool_arguments and defined $self -> subtool_arguments -> {'xv_step'}){
 		%step_args = %{$self -> subtool_arguments -> {'xv_step'}};
-	} 
+	}
 
 	my $dir = 'xv_step_dir'.$self->step_counter;
 	$self->step_counter($self->step_counter+1);
-	my $xv_step = tool::xv_step -> new( models => [$self -> models -> [0]], 
+	my $xv_step = tool::xv_step -> new( models => [$self -> models -> [0]],
 										subtools => $subtools,
 										%step_args,
 										directory => $dir,
@@ -81,13 +81,13 @@ sub xv_step_setup
 		my %step_args;
 		if (defined $self -> subtool_arguments and defined $self -> subtool_arguments -> {'xv_step'}){
 			%step_args = %{$self -> subtool_arguments -> {'xv_step'}};
-		} 
+		}
 
 		my $first_xv_step = $self -> xv_steps -> [0];
 		my $xv_step = tool::xv_step -> new( models => [$self -> models -> [$model_number - 1]],
 			prediction_data => $first_xv_step -> prediction_data,
-			estimation_data => $first_xv_step -> estimation_data, 
-			stratify_on => $first_xv_step -> stratify_on, 
+			estimation_data => $first_xv_step -> estimation_data,
+			stratify_on => $first_xv_step -> stratify_on,
 			subtools => $subtools,
 			%step_args,
 			subtool_arguments => $self -> subtool_arguments);
@@ -95,7 +95,7 @@ sub xv_step_setup
 		trace(tool => 'xv', message => "xv_step_setup model number $model_number", level => 1);
 		$self -> xv_steps([]) unless (defined $self -> xv_steps);
 		push( @{$self -> xv_steps}, $xv_step );
-	} 
+	}
 
 	$self -> tools([$self -> xv_steps -> [$model_number-1]]);
 }
@@ -108,7 +108,7 @@ sub xv_step_post_subtool_analyze
 	);
 	my $model_number = $parm{'model_number'};
 	$model_number=0 unless (defined $model_number); #FIXME! do not call without model number
-	
+
 	trace(tool => "xv", message => "xv_step_post_subtool_analyze\n", level => 1);
 	my $subtools = undef;
 	if( scalar @{$self -> subtools} > 1 ){
@@ -116,8 +116,8 @@ sub xv_step_post_subtool_analyze
 		shift( @subtools );
 		$subtools = \@subtools;
 	}
-	my $newwarn = $self->warnings() + $self -> xv_steps -> [$model_number - 1] ->warnings; 
-	$self->warnings($newwarn); 
+	my $newwarn = $self->warnings() + $self -> xv_steps -> [$model_number - 1] ->warnings;
+	$self->warnings($newwarn);
 	my $first_xv_step = $self -> xv_steps -> [0];
 	if( $self -> xv_steps -> [$model_number - 1] -> cont ){
 		trace(tool => 'xv', message => "create new xv_step, last was ok (cont ==1)", level => 1);
@@ -125,20 +125,20 @@ sub xv_step_post_subtool_analyze
 		my %step_args;
 		if (defined $self -> subtool_arguments and defined $self -> subtool_arguments -> {'xv_step'}){
 			%step_args = %{$self -> subtool_arguments -> {'xv_step'}};
-		} 
+		}
 		my $dir = 'xv_step_dir'.$self->step_counter;
 		$self->step_counter($self->step_counter+1);
-		
-		$self -> xv_steps -> [$model_number -1] = 
+
+		$self -> xv_steps -> [$model_number -1] =
 			tool::xv_step -> new( models => [$self -> models -> [$model_number - 1]],
 								  prediction_data => $first_xv_step -> prediction_data,
-								  estimation_data => $first_xv_step -> estimation_data, 
-								  stratify_on => $first_xv_step -> stratify_on, 
+								  estimation_data => $first_xv_step -> estimation_data,
+								  stratify_on => $first_xv_step -> stratify_on,
 								  subtools => $subtools,
 								  %step_args,
 								  directory => $dir,
 								  subtool_arguments => $self->subtool_arguments );
-		
+
 		$self->tools([]) unless (defined $self->tools);
 		push( @{$self -> tools}, $self -> xv_steps -> [$model_number-1] );
 	}

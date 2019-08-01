@@ -48,9 +48,9 @@ has 'iterations_interrupted' => ( is => 'rw', isa => 'Bool', default => 0 );
 # {{{ synopsis
 
     #   use output;
-    #   
+    #
     #   my $out_obj = output -> new ( filename => 'run1.lst' );
-    #   
+    #
     #   my @thetas = @{$out_obj -> thetas};
     #   my @omegas = @{$out_obj -> omegas};
     #   my @ofvs   = @{$out_obj -> ofvs};
@@ -75,14 +75,14 @@ has 'iterations_interrupted' => ( is => 'rw', isa => 'Bool', default => 0 );
 
 # }}} see_also
 
-		
-		
+
+
 sub BUILD
 {
 	my $self  = shift;
 
 	# Usage:
-	# 
+	#
 	#   $outputObject -> new( filename => 'run1.lst' );
 	#
 	# The basic usage above creates a output object with the data
@@ -108,7 +108,7 @@ sub BUILD
             $self->filename_root($name);
         }
 
-		if ( -e $self->full_name ) { 
+		if ( -e $self->full_name ) {
 			if ($self->parse_output) {
 				$self->_read_problems;
 			}
@@ -124,7 +124,7 @@ sub BUILD
 
 sub add_problem
 {
-	my ($self, %parm) = validated_hash(\@_, 
+	my ($self, %parm) = validated_hash(\@_,
 									   init_data => {isa => 'Any', optional => 0}
 		);
 	$self->problems([]) unless defined $self->problems;
@@ -135,7 +135,7 @@ sub add_problem
 sub load
 {
     #this method returns an empty string if all goes well. Empty string evaluates to
-    #false while non-empty strings are true, so return value from load can always be 
+    #false while non-empty strings are true, so return value from load can always be
     #checked with $error = $output->load; if ($error){"something went wrong $error"}else{'all ok'}
     my $self = shift;
     my $error = '';
@@ -159,7 +159,7 @@ sub nonmem_run_failed
 	my $self = shift;
 	my $failed = 0;
 	my $reason = '';
-	
+
 	while (1){
 		if (not $self->parsed_successfully){
 			$failed = 1;
@@ -202,7 +202,7 @@ sub nonmem_run_failed
 		}
 		last;
 	}
-	
+
 	return ($failed,$reason);
 }
 
@@ -268,8 +268,8 @@ sub get_estimation_evaluation_problem_number
 				}
 			}
 		}
-	} 
-	
+	}
+
 	return $evaluation_probnum;
 }
 
@@ -285,7 +285,7 @@ sub get_problem_count
 		} else {
 			$answer= 0;
 		}
-	} 	
+	}
 	return $answer;
 }
 
@@ -313,7 +313,7 @@ sub access_any
 	# the automatic). e.g check that parameter_numbers is a two-
 	# dimensional array.
 
-	
+
 	my $error = $self->load;
 	if ( $error  ) {
 		print "\n $error \n" ;
@@ -391,7 +391,7 @@ sub high_correlations
 	if (scalar(@problems) == 0){
 		@problems = (1 .. $problem_count) if ($problem_count > 0);
 	}
-	
+
 	my $found_any=0;
 
 	foreach my $probnum (@problems){
@@ -428,8 +428,8 @@ sub high_correlations
 				push(@prob_high_values_array,\@sub_high_values_array);
 			}
 		}
-		push(@high_names_correlations,\@prob_high_names_array); 
-		push(@high_values_correlations,\@prob_high_values_array); 
+		push(@high_names_correlations,\@prob_high_names_array);
+		push(@high_values_correlations,\@prob_high_values_array);
 	}
 
 	if ($found_any){
@@ -503,8 +503,8 @@ sub large_standard_errors
 				push(@prob_high_values_array,\@sub_high_values_array);
 			}
 		}
-		push(@large_standard_errors_names,\@prob_high_names_array); 
-		push(@large_standard_errors_values,\@prob_high_values_array); 
+		push(@large_standard_errors_names,\@prob_high_names_array);
+		push(@large_standard_errors_values,\@prob_high_values_array);
 	}
 
 	if ($found_any){
@@ -515,7 +515,7 @@ sub large_standard_errors
 }
 
 sub perfect_individual_count
-{ 
+{
 	my $self = shift;
 	my %parm = validated_hash(\@_,
 							  problem_index => { isa => 'Int', default => 0 },
@@ -523,7 +523,7 @@ sub perfect_individual_count
 		);
 	my $problem_index = $parm{'problem_index'};
 	my $subproblem_index = $parm{'subproblem_index'};
-	
+
 	my %individual_count = ();
 
 	my $problem_count = $self->get_problem_count(); #will also read output if not already done
@@ -540,11 +540,11 @@ sub perfect_individual_count
 											parameter => 'omega',
 											problem_index => $problem_index,
 											subproblem_index => $subproblem_index);
-	
+
 	my @off_diagonal = @{$self->output_get_estimated_attributes(parameter => 'omega',
 																attribute => 'off_diagonal',
 																problem_index => $problem_index)};
-	
+
 	my @strings = @{$self->output_get_estimated_attributes(parameter => 'omega',
 														   attribute => 'coordinate_strings',
 														   problem_index => $problem_index)};
@@ -553,7 +553,7 @@ sub perfect_individual_count
 		for (my $k=0; $k < scalar(@{$seref}); $k++){
 			if ($off_diagonal[$k] == 0 ){
 				if ((defined $seref->[$k]) and ($seref->[$k] > 0)){
-					#we have se 
+					#we have se
 					if ($strings[$k] =~ /^OMEGA\((\d+),\1\)/){
 						my $etanum = $1;
 						$individual_count{$etanum}=(2*((($estref->[$k])/($seref->[$k]))**2)+1);
@@ -644,7 +644,7 @@ sub near_bounds
 														  parameter => 'all',
 														  problem_index => ($probnum-1),
 														  subproblem_index => ($subprobnum-1));
-					
+
 					if (defined $estref and scalar(@{$estref}>0)){
 						$found_any=1;
 						for (my $k=0; $k<scalar(@labels); $k++){
@@ -731,7 +731,7 @@ sub comegas
     #
     # comegas returns the standard deviation for elements on the
     # diagonal and correlation coefficients for off-diagonal elements.
-    # On the subproblem level it is an array 
+    # On the subproblem level it is an array
     # with one value for each name in sorted list of keys in omegacoordval.
 	return \@comegas;
 }
@@ -858,7 +858,7 @@ sub csigmas
     # See L</comegas> for details on the method arguments.
     #
     # Level:  Sub problem
-    # On the subproblem level it is an array 
+    # On the subproblem level it is an array
     # with one value for each name in sorted list of keys in sigmacoordval.
 	return \@csigmas;
 }
@@ -878,7 +878,7 @@ sub cvsethetas
     # See L</comegas> for details on the method arguments.
     #
     # Level:  Sub problem
-    # On the subproblem level it is an array 
+    # On the subproblem level it is an array
     # with one value for each name in sorted list of keys in thetacoordval.
 	return \@cvsethetas;
 }
@@ -898,7 +898,7 @@ sub cvseomegas
     # See L</comegas> for details on the method arguments.
     #
     # Level:  Sub problem
-    # On the subproblem level it is an array 
+    # On the subproblem level it is an array
     # with one value for each name in sorted list of keys in omegacoordval.
 	return \@cvseomegas;
 }
@@ -918,7 +918,7 @@ sub cvsesigmas
     # See L</comegas> for details on the method arguments.
     #
     # Level:  Sub problem
-    # On the subproblem level it is an array 
+    # On the subproblem level it is an array
     # with one value for each name in sorted list of keys in sigmacoordval.
 	return \@cvsesigmas;
 }
@@ -1144,7 +1144,7 @@ sub estnames
 		if ($probnum > $max_prob){
 			croak("probnum $probnum too high in output->estnames, problem count is $max_prob");
 		}
-		
+
 		my @coordinate_strings = @{$self->output_get_estimated_attributes(parameter => $parameter,
 																		   attribute => 'coordinate_strings',
 																		   problem_index => ($probnum-1))};
@@ -1251,7 +1251,7 @@ sub flush
 	# This method can be useful when many output objects are handled and
 	# the memory is limited.
 
-	# Flushes the object to save memory. 
+	# Flushes the object to save memory.
 
 	$self->problems([]);
 }
@@ -1412,7 +1412,7 @@ sub labels
 					}
 					if ( defined $omeganames[$i] ) {
 						if( defined $omeganames[$i]->[$j] ) {
-							push( @lab, @{$omeganames[$i]->[$j]}); 
+							push( @lab, @{$omeganames[$i]->[$j]});
 						}
 					}
 					if ( defined $sigmanames[$i] ) {
@@ -1650,7 +1650,7 @@ sub get_eta_eps_correlations
 	my @param = @{$self->output_get_estimated_attributes(parameter => 'all',
 														 attribute => 'param',
 														 problem_index=> $problem_index)};
-	
+
 	my @estimates = @{$self->get_filtered_values (problem_index => $problem_index,
 												  subproblem_index => $subproblem_index,
 												  parameter => 'all',
@@ -1688,7 +1688,7 @@ sub get_eta_eps_correlations
 		coordinate_strings => \@coordinate_strings,
 		param_vector => \@param,
 		parameter => $parameter,
-		rescale_sd => $num_to_sd_rescale, 
+		rescale_sd => $num_to_sd_rescale,
 		coords => \@coords,
 		off_diagonal => \@off_diagonal,
 		diagonal_estimates => \%diagonal_estimates,
@@ -1696,7 +1696,7 @@ sub get_eta_eps_correlations
 		estimates => \@estimates);
 
 	return ($correlations,\@out_labels,undef,$error); #FIXME, remove
-	
+
 	my $lower_covar;
 	my $covar;
 	if (not $self-> get_single_value(attribute => 'covariance_step_successful')){
@@ -1712,7 +1712,7 @@ sub get_eta_eps_correlations
 			$covar = output::problem::subproblem::make_square( $lower_covar);
 		}
 	}
-	
+
 	return ($correlations,\@out_labels,undef,$error) if (length($error)>0);
 	#TODO uncert enligt frem_userguide
 	#tests in get_estimated_attributes.t
@@ -1743,7 +1743,7 @@ sub correlations_coefficients_covariances
 	my $diagonal_position=$parm{'diagonal_position'};
 	my $parameter=$parm{'parameter'};
 
-	
+
 	my @correlations = ();
 	my @coefficients = ();
 	my @covariances = ();
@@ -1754,8 +1754,8 @@ sub correlations_coefficients_covariances
 			push (@{$coefficients[$j]},undef);
 			push (@{$covariances[$j]},undef);
 		}
-		$correlations[$j]->[$j]=1; 
-		$coefficients[$j]->[$j]=1; 
+		$correlations[$j]->[$j]=1;
+		$coefficients[$j]->[$j]=1;
 	}
 	foreach my $key (keys %{$diagonal_estimates}){
 		my $pos = $diagonal_position->{$key};
@@ -1843,7 +1843,7 @@ sub output_get_estimated_attributes
 			defined $self->problems->[$problem_index]->subproblems->[0] and
 			defined $self->problems->[$problem_index]->subproblems->[0]->guess_estimated_attributes->{$attribute} ){
 			for (my $i=0; $i<scalar(@{$self->problems->[$problem_index]->subproblems->[0]->guess_estimated_attributes->{$attribute}}); $i++){
-				if (($parameter eq 'all') or 
+				if (($parameter eq 'all') or
 					($parameter eq $self->problems->[$problem_index]->subproblems->[0]->guess_estimated_attributes->{'param'}->[$i])){
 					push(@array,$self->problems->[$problem_index]->subproblems->[0]->guess_estimated_attributes->{$attribute}->[$i]);
 				}
@@ -1968,9 +1968,9 @@ sub get_single_value
 		} else {
 			1;
 		}
-	} elsif ( ($attribute eq 't_matrix') 
+	} elsif ( ($attribute eq 't_matrix')
 			  or
-			  ($attribute eq 'nonparametric_step_run') 
+			  ($attribute eq 'nonparametric_step_run')
 		) {
 		$arr = $self->access_any(attribute => $attribute,
 								 problems => [($problem_index + 1)],
@@ -1983,7 +1983,7 @@ sub get_single_value
 			}
 		}
 	} elsif ( ($attribute eq 'estimation_step_run') or
-			  ($attribute eq 'estimation_step_initiated') 
+			  ($attribute eq 'estimation_step_initiated')
 		) {
 		$arr = $self->access_any(attribute => $attribute,
 								 problems => [($problem_index + 1)],
@@ -2348,7 +2348,7 @@ sub inverse_covariance_matrix
 	my @inverse_covariance_matrix = @{$self->access_any(attribute=>'inverse_covariance_matrix',problems=>\@problems,subproblems=>\@subproblems)};
 
 
-    # inverse_covariance_matrix returns the inverse covariance matrix 
+    # inverse_covariance_matrix returns the inverse covariance matrix
     # See L</comegas> for details of the method arguments.
     #
     # Level:  Sub problem
@@ -2853,7 +2853,7 @@ sub minimization_message
 	my @minimization_message = @{$self->access_any(attribute=>'minimization_message',problems=>\@problems,subproblems=>\@subproblems)};
 
     # minimization_message returns the minimization message, i.e
-    #   MINIMIZATION SUCCESSFUL... 
+    #   MINIMIZATION SUCCESSFUL...
     # See L</comegas> for details of the method arguments.
     #
     # Level:  Sub problem
@@ -3091,7 +3091,7 @@ sub _read_problems
 		my @extra = utils::file::slurp_file($self->directory.'OUTPUT');
 		push(@lstfile,@extra);
 	}
-	
+
 	my $lstfile_pos = -1;
 	$self->parsed_successfully(1);
 
@@ -3114,7 +3114,7 @@ sub _read_problems
 	my $found_nmtran_message = 0;
 	my $control_stream_start_index;
 	my $control_stream_end_index;
-	
+
 	my @prerun_messages=();
 	my $reading_prerun_messages=1;
 
@@ -3130,7 +3130,7 @@ sub _read_problems
 		if (/^\s*(;|\$)/){
 			#found control stream
 			$control_stream_start_index=$lstfile_pos;
-			#rewind one step 
+			#rewind one step
 			$lstfile_pos--;
 			@prerun_messages =();
 			last;
@@ -3142,7 +3142,7 @@ sub _read_problems
 		chomp;
 		push(@prerun_messages, $_) if /\w/;
 	}
-	
+
 	unless (defined $starttime or defined $control_stream_start_index){
 		#something went wrong. Store error messages and finish
 		$self->parsing_error( message => "It seems there was an error before NONMEM started, messages are:\n".join("\n",@prerun_messages)."\n");
@@ -3174,7 +3174,7 @@ sub _read_problems
 			@prerun_messages = ();
 			if ($found_control_stream){
 				$control_stream_end_index= ($lstfile_pos-1);
-				#rewind one step 
+				#rewind one step
 				$lstfile_pos--;
 				last;
 			}
@@ -3206,7 +3206,7 @@ sub _read_problems
 								ignore_missing_data => 1,
 								ignore_missing_files =>1,
 								ignore_missing_output =>1));
-	
+
 
 	#then read NMtran messages and license and nmversion
 	my $found_license=0;
@@ -3245,7 +3245,7 @@ sub _read_problems
 
 			@prerun_messages = ();
 			last;
-		}		
+		}
 		chomp;
 		if (/\w/){
 			push(@prerun_messages, $_) unless (/^\s*#CPUT:/ or /^\s*Stop Time/ or
@@ -3280,7 +3280,7 @@ sub _read_problems
 	}
 
 #	print "runtime is ".$self->runtime."\n";
-	my $ext_file = nmtablefile->new(filename => $self -> directory().$self -> filename_root().'.ext', 
+	my $ext_file = nmtablefile->new(filename => $self -> directory().$self -> filename_root().'.ext',
 									is_ext_file => 1) if (-e $self -> directory().$self -> filename_root().'.ext');
 
 	#then read NONMEM output
@@ -3300,7 +3300,7 @@ sub _read_problems
 				#those numbers will be taken from lst-file instead, good enough since rare case
 				#if nm_major_version<=6 undefined arrays, okay
 
-				if (not (defined $self->lst_model and defined $self->lst_model->problems 
+				if (not (defined $self->lst_model and defined $self->lst_model->problems
 						 and (scalar(@{$self->lst_model->problems}) >$problem_index)
 						 and defined $self->lst_model->problems->[$problem_index])){
 					print "\nCould not find a model file copy (control stream) at top of lst-file for problem number ".
@@ -3312,7 +3312,7 @@ sub _read_problems
 					$self -> parsing_error_message( $mes );
 				}else{
 #					print "adding problem\n";
-					$self -> add_problem ( init_data => 
+					$self -> add_problem ( init_data =>
 										   { lstfile		    => \@problem_lstfile,
 											 ignore_missing_files => $self -> ignore_missing_files(),
 											 nm_major_version     => $lst_version,
@@ -3325,11 +3325,11 @@ sub _read_problems
 											 #											 table_number         => $tbln,
 											 problem_index        => $problem_index,
 											 input_problem        => $self->lst_model->problems->[$problem_index]});
-					
+
 					my $mes = $self->parsing_error_message();
 					$mes .= $self->problems->[$problem_index] -> parsing_error_message();
 					$self -> parsing_error_message( $mes );
-					$self -> parsed_successfully($self -> parsed_successfully() * 
+					$self -> parsed_successfully($self -> parsed_successfully() *
 												 ($self->problems->[$problem_index] -> parsed_successfully()));
 
 					if (not $self->iterations_interrupted and $self->problems->[$problem_index]->iterations_interrupted){
@@ -3341,10 +3341,10 @@ sub _read_problems
 						(defined $self->problems->[$problem_index]->last_method_number);
 					$evaluation_missing_from_ext_file = $self->problems->[$problem_index]->evaluation_missing_from_ext_file;
 					$problem_index++;
-				}		  
+				}
 				@problem_lstfile = undef;
 				$success = 1;
-				
+
 			}  #end if defined problem start
 			$problem_start = $lstfile_pos;
 		}
@@ -3354,7 +3354,7 @@ sub _read_problems
 	unless( $success ) {
 		debugmessage(1,'Could not find a PROBLEM NO statement in "' .
 			 $self -> full_name . '"' . "\n" ) unless $self->ignore_missing_files;
-		$self->parsing_error( message => 'Output file seems interrupted, could not find a PROBLEM NO statement in "' . 
+		$self->parsing_error( message => 'Output file seems interrupted, could not find a PROBLEM NO statement in "' .
 							  $self->full_name . '"' . "\n" );
 		$self->parsed_successfully(0);
 		return 0;

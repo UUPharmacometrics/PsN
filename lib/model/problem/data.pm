@@ -24,16 +24,16 @@ sub BUILD
 	$self->set_filename(filename => $dir.$name);
 	$self->model_directory(undef);
 	#remaining opts
-	#if ignoresign is set, i.e. IGNORE or ACCEPT option 
+	#if ignoresign is set, i.e. IGNORE or ACCEPT option
 	#then remove it from set of options and store in ignoresign attribute
 
 	#closing parenthesis is allowed as ignoresign, but not opening
 	my @keep_opts=();
 	my $optcount = scalar(@{$self->options});
-	
+
 	for (my $j=0; $j<$optcount; $j++ ) {
 		my $option = $self->options->[$j];
-		if ( defined $option){ 
+		if ( defined $option){
 			if ($option->name eq 'IGNORE' or index('IGNORE',$option ->name ) == 0) {
 				my $value = $option->value;
 				chomp( $value );
@@ -82,7 +82,7 @@ sub get_absolute_filename
 
 sub set_filename
 {
-	#setting filename 
+	#setting filename
 	my $self = shift;
 	my %parm = validated_hash(\@_,
         filename => { isa => 'Str', optional => 0 },
@@ -212,7 +212,7 @@ sub _format_record
 
 	my $line = 0;
 	$formatted[$line] = '$DATA'.(' ' x (10 - length('DATA')) ).$filestring;
-	
+
 	#add ignoresign if defined, stored separately from options
 	if (defined $self->ignoresign and length($self->ignoresign)> 0){
 		# Check and add linebreak if necessary.
@@ -226,7 +226,7 @@ sub _format_record
 		$formatted[$line] .= ' '.$foption;
 	}
 
-	my @comments = @{$self->comment};    
+	my @comments = @{$self->comment};
 	my @options = @{$self->options};
 
 	for( my $i = 0; $i < scalar @options; $i++ ){
@@ -240,9 +240,9 @@ sub _format_record
 			push( @formatted, ' ' x 11 );
 		}
 		$formatted[$line] .= ' '.$foption;
-	} 
+	}
 	$formatted[$line] .= "\n";
-	
+
 	#add all comments last
 	push(@formatted,@comments);
 

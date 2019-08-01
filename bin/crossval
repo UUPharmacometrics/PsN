@@ -1,4 +1,4 @@
-#!/usr/bin/perl 
+#!/usr/bin/perl
 
 use FindBin qw($Bin);
 use lib "$Bin/../lib";
@@ -28,7 +28,7 @@ my %optional_options = (
     "stratify_on:s" => undef,
 );
 
-my $res = GetOptions( \%options, 
+my $res = GetOptions( \%options,
 		      @common_options::get_opt_strings,
 		      keys(%required_options),
 		      keys(%optional_options) );
@@ -49,7 +49,7 @@ $help_text{Description} = <<'EOF';
 	corresponding estimation model OFVs.
 EOF
 
-$help_text{Examples} = <<'EOF';    
+$help_text{Examples} = <<'EOF';
 	crossval run1.mod -groups=5
 EOF
 
@@ -80,7 +80,7 @@ EOF
 $help_text{-msf} = <<'EOF';
 	-msf
 
-	Default not set, which means prediction model THETA/OMEGA/SIGMA are updated 
+	Default not set, which means prediction model THETA/OMEGA/SIGMA are updated
 	with final estimates from estimation models. If -msf is set, instead use
 	MSFO - MSFI to transfer parameter values from estimation models to
 	prediction models.
@@ -90,7 +90,7 @@ $help_text{-stratify_on} = <<'EOF';
 	-stratify_on=column
 
 	Used to stratify on a certain column. The proportions of individuals
-    will be kept the same for the cross validation groups as for the 
+    will be kept the same for the cross validation groups as for the
     full dataset.
 EOF
 

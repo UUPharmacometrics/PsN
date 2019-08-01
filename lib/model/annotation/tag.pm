@@ -17,7 +17,7 @@ has 'content' => ( is => 'rw', isa => 'ArrayRef[Str]' );    # First line is allo
 
 has 'based_on' => ( is => 'rw', isa => 'Bool' );        # Special case for Based on
 has 'census_style' => ( is => 'rw', isa => 'Bool' );
-has 'nodOFV' => ( is => 'rw', isa => 'Bool' ); 
+has 'nodOFV' => ( is => 'rw', isa => 'Bool' );
 
 
 my @tags = (

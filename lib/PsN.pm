@@ -18,7 +18,7 @@ my ($volume, $directory, $file) = File::Spec->splitpath(__FILE__);
 $lib_dir = Cwd::abs_path($volume . $directory);
 $Rscripts_dir = get_Rscripts_dir($lib_dir);
 
-	
+
 $config_file = $lib_dir . '/psn.conf';
 
 use ext::Config::Tiny;
@@ -192,7 +192,7 @@ sub get_R_exec
 sub get_R_lib_path
 {
 	import(); #read config if not done already
-	
+
 	my $R_lib_path;
 	#check in PsN config
 	if ( defined $config -> {'_'} -> {'R_LIB_PATH'} ) {
@@ -239,7 +239,7 @@ sub get_new_installation_defaults
 {
 	my $new_version = shift;
 	my $default_installation = shift;
-	
+
 	my $name_safe_version = $new_version;
 	$name_safe_version =~ s/\./_/g;
 
@@ -249,15 +249,15 @@ sub get_new_installation_defaults
 	if (($Config{osname} ne 'MSWin32') and (-d '/usr/local/bin')){
 		$bin_dir = '/usr/local/bin';
 	}
-		
+
 	my %hash=('bin_dir' => $bin_dir);
 
-	if (defined $default_installation->{'bin_dir'} and 
+	if (defined $default_installation->{'bin_dir'} and
 		length($default_installation->{'bin_dir'})>0 and
 		-d $default_installation->{'bin_dir'}){
 		$hash{'bin_dir'} = $default_installation->{'bin_dir'};
 	}
-	if (defined $default_installation->{'base_lib_dir'} and 
+	if (defined $default_installation->{'base_lib_dir'} and
 		length($default_installation->{'base_lib_dir'})>0 and
 		-d $default_installation->{'base_lib_dir'}){
 		$base_lib_dir = $default_installation->{'base_lib_dir'};
@@ -306,7 +306,7 @@ sub find_nmfe_from_system_path
 			if ((length($line)>0) and -e $line){
 				$result = $line;
 				last;
-			} 
+			}
 		}
 	}
 	return $result;

@@ -64,7 +64,7 @@ $help_text{Examples} = <<'EOF';
 EOF
 
 $help_text{Options} = <<'EOF';
-	A model file is required on the command line, 
+	A model file is required on the command line,
 
 	The following options are valid:
 EOF
@@ -74,7 +74,7 @@ $help_text{-h} = <<'EOF';
 	With -h or -? resmod will print a list of options and exit.
 EOF
 
-$help_text{-help} = <<'EOF';      
+$help_text{-help} = <<'EOF';
 	-help
 
 	With -help resmod will print this, longer, help message.
@@ -83,13 +83,13 @@ EOF
 $help_text{-dv} = <<'EOF';
 	-dv
 
-	Default CWRES. Name of the dependent variable. 
+	Default CWRES. Name of the dependent variable.
 EOF
 
 $help_text{-dvid} = <<'EOF';
 	-dvid
 
-	Default DVID. Name of the dvid column. 
+	Default DVID. Name of the dvid column.
 EOF
 
 $help_text{-groups} = <<'EOF';
@@ -131,7 +131,7 @@ EOF
 	$help_text{-occ} = <<'EOF';
       -occ
 
-      Default OCC. Name of the occasion column. 
+      Default OCC. Name of the occasion column.
 EOF
 
 common_options::online_help( 'resmod', \%options, \%help_text, \%required_options, \%optional_options);

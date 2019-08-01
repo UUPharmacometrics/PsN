@@ -49,7 +49,7 @@ sub submit
 
 	my $opt = '';
 	$opt = $self->lsf_options if (defined $self->lsf_options);
-	my $submitstring = 'bsub ' .$opt. ' < lsf_jobscript 2>&1'; 
+	my $submitstring = 'bsub ' .$opt. ' < lsf_jobscript 2>&1';
 
 	#TODO add loop here to handle transient user id errors etc by retrying a few times
   my $lsf_out = readpipe("$submitstring");
@@ -84,8 +84,8 @@ sub monitor
 	my $stdout = `$string`;
 
 	# /m flag in regex:
-	#Treat string as multiple lines. That is, change "^" and "$" from matching 
-	#the start or end of the string to matching the start or end of any line 
+	#Treat string as multiple lines. That is, change "^" and "$" from matching
+	#the start or end of the string to matching the start or end of any line
 	#anywhere within the string. Skip /m when looking for DONE, unless using also
 	#jobID?
 
@@ -97,7 +97,7 @@ sub monitor
 		($stdout =~ /No unfinished job found/)){
 		ui -> print(category => 'all', message  => $stdout, newline => 1);
 		ui -> print(category => 'all', message  => "lsf run error, jobID $jobId not recognized by system:", newline => 1);
-		return $jobId; # Return the jobId so that do not get infinite loop, 
+		return $jobId; # Return the jobId so that do not get infinite loop,
 		#let restart_needed detect and handle error (no psn.lst, no NMtran etc)
 	} else {
 		return 0;

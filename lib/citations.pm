@@ -26,7 +26,7 @@ sub print_citations
     }
 
     my $command = $0;
-    (undef, undef, $command) = File::Spec->splitpath($command);    
+    (undef, undef, $command) = File::Spec->splitpath($command);
 
     my $references = _scan_bib_file(filename => $bibfile, keyword => $command);
 

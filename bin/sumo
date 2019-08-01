@@ -20,7 +20,7 @@ $| = 1; # Make sure autoflush is on
 my %options;
 
 my %required_options = ();
-my %optional_options = ( 
+my %optional_options = (
     'debug:i'                   => undef,
     'csv!'                       => undef,
     'precision:f'               => undef,
@@ -94,7 +94,7 @@ EOF
 $help_text{-c_level} = <<'EOF';
 	-c_level=N
 
-	Default is 95. This option specifies the coverage of the confidence 
+	Default is 95. This option specifies the coverage of the confidence
 	interval computed by the -ci option (see below). Allowed values are 90,
 	95, 99 and 99.5.
 EOF
@@ -102,16 +102,16 @@ EOF
 $help_text{-check_run} = <<'EOF';
 	-check_run
 
-	Default set. When unset with -no-check_run the initial run diagnostic 
+	Default set. When unset with -no-check_run the initial run diagnostic
 	output of sumo will be suppressed.
 EOF
 
 $help_text{-ci} = <<'EOF';
 	-confidence_interval, -ci
 
-	Default not set. This option computes and reports the traditional 
-	confidence intervals for the parameter estimates instead of the relative 
-	standard errors: CI = estimate +/- c_level*SE. 
+	Default not set. This option computes and reports the traditional
+	confidence intervals for the parameter estimates instead of the relative
+	standard errors: CI = estimate +/- c_level*SE.
 
     0MINIMIZATION SUCCESSFUL
     NO. OF FUNCTION EVALUATIONS USED:  172
@@ -129,11 +129,11 @@ $help_text{-ci} = <<'EOF';
 
     Condition number: 1.215e+004
 
-           THETA                                 OMEGA                                 SIGMA                     
-    TH1    1.87     (0.9527 - 2.787)    OM1      1.63          (-1.839 - 5.099)  SI1  0.478  (0.2193 - 0.7367)  
-    TH2  0.0862  (0.07752 - 0.09488)    OM2  0.000112  (-0.0001114 - 0.0003354)                                 
-    TH3  0.0398  (0.03335 - 0.04625)  OM3_2   0.00658     (-0.004357 - 0.01752)                                 
-                                        OM3     0.458         (-0.03396 - 0.95)                                 
+           THETA                                 OMEGA                                 SIGMA
+    TH1    1.87     (0.9527 - 2.787)    OM1      1.63          (-1.839 - 5.099)  SI1  0.478  (0.2193 - 0.7367)
+    TH2  0.0862  (0.07752 - 0.09488)    OM2  0.000112  (-0.0001114 - 0.0003354)
+    TH3  0.0398  (0.03335 - 0.04625)  OM3_2   0.00658     (-0.004357 - 0.01752)
+                                        OM3     0.458         (-0.03396 - 0.95)
 
     With this option the parameter estimates reported in the OMEGA and
     SIGMA columns are the numbers given in the NONMEM output file,
@@ -143,9 +143,9 @@ EOF
 $help_text{-condition_number_limit} = <<'EOF';
 	-condition_number_limit='number'
 
-	Default is 1000. The cut-off for issuing a warning for a high condition 
-	number. The test will only be made if the $COV step has been requested in 
-	the NMtran control stream and NONMEM has been asked to report eigenvalues 
+	Default is 1000. The cut-off for issuing a warning for a high condition
+	number. The test will only be made if the $COV step has been requested in
+	the NMtran control stream and NONMEM has been asked to report eigenvalues
 	($COV PRINT=E).
 EOF
 
@@ -171,13 +171,13 @@ $help_text{-debug} = <<'EOF';
 	-debug=N
 
 	By default N is 0 but you can set it to 1 to enable warnings.. This is
-	mainly for developers who wish to debug PsN. 
+	mainly for developers who wish to debug PsN.
 EOF
 
 $help_text{-max_problem_num} = <<'EOF';
 	-max_problem_num=integer
 
-	Default is 1. By default sumo reports the results for the first $PROBLEM 
+	Default is 1. By default sumo reports the results for the first $PROBLEM
 	only. PsN divides NONMEM output into problems and subproblems.
 EOF
 
@@ -187,7 +187,7 @@ $help_text{-max_subproblem_num} = <<'EOF';
 	Default is 1. By default sumo reports the results only for the first
 	subproblem of the selected problems. Each problem contains at least one
 	subproblem. Should $SIMULATION be used there will be as many subproblems
-	as the value of NSUBS. 
+	as the value of NSUBS.
 EOF
 
 $help_text{-near_bound_sign_digits} = <<'EOF';
@@ -198,7 +198,7 @@ $help_text{-near_bound_sign_digits} = <<'EOF';
 	NONMEM to report if parameter estimates are close to a boundary value but
 	this can be turned off. The boundary test in sumo is independent of the
 	way NONMEM is configured and will report these types of issues in output
-	from NONMEM. 
+	from NONMEM.
 EOF
 
 $help_text{-near_zero_boundary_limit} = <<'EOF';
@@ -211,7 +211,7 @@ EOF
 $help_text{-precision} = <<'EOF';
 	-precision=integer
 
-	Default is 4. Precision in output.  
+	Default is 4. Precision in output.
 EOF
 
 $help_text{-sd_rse} = <<'EOF';
@@ -225,14 +225,14 @@ $help_text{-sd_rse} = <<'EOF';
 EOF
 
 	$help_text{-sign_digits_off_diagonals} = <<'EOF';
-	-sign_digits_off_diagonals=integer 
+	-sign_digits_off_diagonals=integer
 
 	Default is 2. The boundary test for off-diagonal omega elements are
 	performed by first converting the covariances to the corresponding
 	correlations and then check if they are close to +/-1 with this many
 	significant digits.
 EOF
-	
+
 $help_text{-parameters} = <<'EOF';
 	-parameters
 
@@ -259,7 +259,7 @@ my %c_levels = ( '90'   => 1.6449,
 
 $options{'confidence_interval'} = $options{'ci'} if (defined $options{'ci'});
 if( $options{'confidence_interval'} ) {
-    
+
     if( not defined $c_levels{$options{'c_level'}} ) {
 	die "Sorry, confidence intervals for level ".$options{'c_level'}.
 	    " can not be output. Valid levels are: ".join(',', keys %c_levels).
@@ -291,7 +291,7 @@ require model;
 			print $outobj -> parsing_error_message();
 			next OUTFILE;
 		}
-		print "-----------------------------------------------------------------------\n";	
+		print "-----------------------------------------------------------------------\n";
 		my ($failed,$reason) = $outobj ->nonmem_run_failed;
 		if ( $failed){
 			print "\nThe NONMEM run failed: $reason\n";
@@ -314,7 +314,7 @@ require model;
 			$outobj -> near_bounds( zero_limit         => $options{'near_zero_boundary_limit'},
 									significant_digits => $options{'near_bound_sign_digits'},
 									off_diagonal_sign_digits => $options{'sign_digits_off_diagonals'});
-		
+
 
       PROBLEM:
 		for( my $problems = 0; $problems <= $#{$outobj -> problems}; $problems++){
@@ -405,7 +405,7 @@ require model;
 				my $dic    = $outobj -> get_single_value(attribute => 'dic',
 														 problem_index =>$problems,
 														 subproblem_index => $sub_problems);
-				#estimation_step_run is on problem level, don't need subproblem 
+				#estimation_step_run is on problem level, don't need subproblem
 				my $min_run    = $outobj -> get_single_value(attribute => 'estimation_step_run',
 															 problem_index =>$problems);
 				my $min_success = $outobj -> get_single_value(attribute => 'minimization_successful',
@@ -421,7 +421,7 @@ require model;
 				my $covtime = $outobj ->get_single_value(attribute => 'sum_covariance_time',
 														 problem_index =>$problems,
 														 subproblem_index => $sub_problems);
-				
+
 
 				my $minim_mess;
 				my $round_mess;
@@ -435,7 +435,7 @@ require model;
 				my $cond_mess;
 				my $corr_mess;
 				my @large_corrs;
-				
+
 				if($options{'check_run'} and not $options{'parameters'}) {
 					## Start check termination
 
@@ -446,7 +446,7 @@ require model;
 					}else {
 						$minim_mess = acknowledge( 'Estimation step omitted', '-');
 					}
-					
+
 					if ( $outobj -> rounding_errors -> [$problems][$sub_problems] eq '0' ) {
 						unless ($failed){
 							$round_mess = acknowledge( 'No rounding errors', 'OK');
@@ -454,7 +454,7 @@ require model;
 					} else {
 						$round_mess = acknowledge( 'Rounding errors', 'ERROR');
 					}
-					
+
 					if (defined $outobj -> zero_gradients -> [$problems][$sub_problems]){
 						if ( $outobj -> zero_gradients -> [$problems][$sub_problems] eq '0' ) {
 							$zero_mess = acknowledge( 'No zero gradients', 'OK');
@@ -464,7 +464,7 @@ require model;
 					}else{
 						$zero_mess = acknowledge('Zero gradient information not read', '-');
 					}
-					
+
 					if (defined $outobj -> final_zero_gradients -> [$problems][$sub_problems]){
 						if ( $outobj -> final_zero_gradients -> [$problems][$sub_problems] eq '0' ) {
 							$final_zero_mess = acknowledge( 'No final zero gradients', 'OK');
@@ -474,7 +474,7 @@ require model;
 					}else{
 						$final_zero_mess = acknowledge('Final zero gradient information not read', '-');
 					}
-					
+
 					if (defined $outobj -> hessian_reset -> [$problems][$sub_problems]){
 						if ( $outobj -> hessian_reset -> [$problems][$sub_problems] eq '0' ) {
 							$hess_mess = acknowledge( 'Hessian not reset', 'OK');
@@ -497,7 +497,7 @@ require model;
 							push @near_bound_parameters, sprintf( "\t%-20s%10g   %10g", $near_bounds[$i],
 																  $found_estimates[$i], $found_bounds[$i] )
 								if (defined $near_bounds[$i]);
-							
+
 						}
 						if ( $#near_bound_parameters < 0 ) {
 							unless ($failed){
@@ -532,15 +532,15 @@ require model;
 
 						my ( $h_c, $f_c ) = $outobj -> high_correlations( limit => $options{'correlation_limit'} );
 						if ( defined $h_c -> [$problems] and defined $h_c -> [$problems][$sub_problems] ) {
-							
+
 							my @high_correlations  = @{$h_c -> [$problems][$sub_problems]};
 							my @found_correlations = @{$f_c -> [$problems][$sub_problems]};
-							
+
 							if ( $#high_correlations < 0 ) {
 								$corr_mess = acknowledge( 'Correlations', 'OK');
 							} else {
-								$corr_mess = acknowledge( 'Large correlations between parameter estimates found', 'WARNING');	
-								
+								$corr_mess = acknowledge( 'Large correlations between parameter estimates found', 'WARNING');
+
 								for ( my $i = 0; $i <= $#high_correlations; $i++ ) {
 									push @large_corrs,sprintf( "\t%-20s%10g", $high_correlations[$i],
 															   $found_correlations[$i] );
@@ -587,11 +587,11 @@ require model;
 								$cis = "(........)";
 							}
 							push( @row, $nam{$param}[$i],
-								  sprintf( $form, $est{$param}[$i] ), 
+								  sprintf( $form, $est{$param}[$i] ),
 								  $cis );
 							$any_printed=1;
 						} else {
-							push( @row, '','','' ); 
+							push( @row, '','','' );
 						}
 						$param='omega';
 						my $printed=0;
@@ -617,15 +617,15 @@ require model;
 								$cis = "(........)";
 							}
 							push( @row, $nam{$param}[$i_om],
-								  sprintf( $form, $est{$param}[$i_om] ), 
+								  sprintf( $form, $est{$param}[$i_om] ),
 								  $cis );
 							$printed=1;
 							$any_printed=1;
 							$i_om++;
 							last;
-						} 
-						push( @row, '','','' ) unless ($printed); 
-						
+						}
+						push( @row, '','','' ) unless ($printed);
+
 						$param = 'sigma';
 						$printed=0;
 						while (1){
@@ -650,22 +650,22 @@ require model;
 								$cis = "(........)";
 							}
 							push( @row, $nam{$param}[$i_si],
-								  sprintf( $form, $est{$param}[$i_si] ), 
+								  sprintf( $form, $est{$param}[$i_si] ),
 								  $cis );
 							$printed=1;
 							$any_printed=1;
 							$i_si++;
 							last;
-						} 
-						push( @row, '','','' ) unless ($printed); 
+						}
+						push( @row, '','','' ) unless ($printed);
 					} else {
 						#not confidence
 						if ( defined $nam{'theta'}->[$i]) {
-							push( @row, $nam{'theta'}->[$i], defined $est{'theta'}->[$i] ? sprintf( $form, $est{'theta'}->[$i] ) : '........', 
+							push( @row, $nam{'theta'}->[$i], defined $est{'theta'}->[$i] ? sprintf( $form, $est{'theta'}->[$i] ) : '........',
 								  $cvse{'theta'}->[$i] ? sprintf( "($form)", $cvse{'theta'}->[$i] ) : '(........)' );
 							$any_printed=1;
 						} else {
-							push( @row, '','','' ); 
+							push( @row, '','','' );
 						}
 						my $printed=0;
 						while (1){
@@ -681,10 +681,10 @@ require model;
 								next;
 							}
 							if( !$options{'sd_rse'} ) {
-								push( @row, $nam{'omega'}->[$i_om], defined $cest{'omega'}->[$i_om] ? sprintf( $form, $cest{'omega'}->[$i_om] ) : '........' , 
+								push( @row, $nam{'omega'}->[$i_om], defined $cest{'omega'}->[$i_om] ? sprintf( $form, $cest{'omega'}->[$i_om] ) : '........' ,
 									  $cvse{'omega'}->[$i_om] ? sprintf( "($form)", $cvse{'omega'}->[$i_om] ) : '(........)' );
 							} else {
-								push( @row, $nam{'omega'}->[$i_om], defined $cest{'omega'}->[$i_om] ? sprintf( $form, $cest{'omega'}->[$i_om] ) : '........' , 
+								push( @row, $nam{'omega'}->[$i_om], defined $cest{'omega'}->[$i_om] ? sprintf( $form, $cest{'omega'}->[$i_om] ) : '........' ,
 									  $cvse{'omega'}->[$i_om] ? sprintf( "($form)", $cvse{'omega'}->[$i_om]/2 ) : '(........)' );
 							}
 							$i_om++;
@@ -692,7 +692,7 @@ require model;
 							$any_printed=1;
 							last;
 						}
-						push( @row, '','','') unless ($printed); 
+						push( @row, '','','') unless ($printed);
 						$printed=0;
 
 						while (1){
@@ -708,10 +708,10 @@ require model;
 								next;
 							}
 							if( !$options{'sd_rse'} ) {
-								push( @row, $nam{'sigma'}->[$i_si], defined $cest{'sigma'}->[$i_si] ? sprintf( $form, $cest{'sigma'}->[$i_si] ) : '........', 
+								push( @row, $nam{'sigma'}->[$i_si], defined $cest{'sigma'}->[$i_si] ? sprintf( $form, $cest{'sigma'}->[$i_si] ) : '........',
 									  $cvse{'sigma'}->[$i_si] ? sprintf( "($form)", $cvse{'sigma'}->[$i_si] ) : '(........)' );
 							} else {
-								push( @row, $nam{'sigma'}->[$i_si], defined $cest{'sigma'}->[$i_si] ? sprintf( $form, $cest{'sigma'}->[$i_si] ) : '........', 
+								push( @row, $nam{'sigma'}->[$i_si], defined $cest{'sigma'}->[$i_si] ? sprintf( $form, $cest{'sigma'}->[$i_si] ) : '........',
 									  $cvse{'sigma'}->[$i_si] ? sprintf( "($form)", $cvse{'sigma'}->[$i_si]/2 ) : '(........)' );
 							}
 							$i_si++;
@@ -719,7 +719,7 @@ require model;
 							$any_printed=1;
 							last;
 						}
-						push( @row, '','','') unless ($printed); 
+						push( @row, '','','') unless ($printed);
 					}
 
 					if ($any_printed){
@@ -733,7 +733,7 @@ require model;
 					}
 				}
 
-				
+
 				## Print the results for the sub-problem
 				print "\n$outfile\n";
 				print "Problem: ",$problems+1,"\n"         if $options{'max_problem_num'} > 1;
@@ -753,7 +753,7 @@ require model;
 							print "$_\n";
 						}
 					}
-					
+
 					if(defined $cov_mess) {
 						print $cov_mess,"\n";
 						print $large_se_mess,"\n";
@@ -761,7 +761,7 @@ require model;
 						if(defined $condno) {
 							print $cond_mess,"\n";
 						}
-						
+
 						print $corr_mess,"\n";
 						unless(scalar @large_corrs == 0) {
 							for(@large_corrs) {
@@ -771,7 +771,7 @@ require model;
 					} else {
 						print "No covariance step run.\n";
 					}
-					
+
 					print "\n";
 				}
 
@@ -856,7 +856,7 @@ require model;
 					print "\n";
 
 				}
-				
+
 			}
 		}
 
@@ -869,7 +869,7 @@ require model;
 					"standard deviation scale (SE/variance estimate)/2.\n";
 			}
 		}
-		print "-----------------------------------------------------------------------\n";	
+		print "-----------------------------------------------------------------------\n";
 
 }
 

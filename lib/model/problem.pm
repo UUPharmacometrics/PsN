@@ -248,7 +248,7 @@ sub BUILD
 					} #end loop options
 				}
 				if ($i == $#estims){
-					#now we know that if we need to reset something, that option was not 
+					#now we know that if we need to reset something, that option was not
 					#set in last $EST, only in a previous one. Means we can add option
 					$est->_add_option(option_string => 'NOLABEL=0') if ($reset_nolabel);
 					$est->_add_option(option_string => 'NOTITLE=0') if ($reset_notitle);
@@ -286,7 +286,7 @@ sub BUILD
 	}
 
 	if ($self->is_option_set(record => 'data', name => 'NULL')) {
-        warn_once('DATA_NULL', 'WARNING: The option NULL is used in $DATA. ' . 
+        warn_once('DATA_NULL', 'WARNING: The option NULL is used in $DATA. ' .
             'This is not supported my PsN in general and will not give the expected results for PsN tools that use the dataset in any way.');
     }
 }
@@ -355,7 +355,7 @@ sub add_prior_distribution
 		return;
 	}
 
-	#Add diagonal $OMEGA FIX where initial estimates is the leading ntheta block 
+	#Add diagonal $OMEGA FIX where initial estimates is the leading ntheta block
 	#from the variance-covariance matrix in .cov
 	my @record_strings = ();
 	my $index=0;
@@ -378,7 +378,7 @@ sub add_prior_distribution
 	$self -> add_records(type => 'thetapv',
 						 record_strings => \@record_strings);
 
-	#Add $OMEGA FIX where size is neta and initial estimates are final $OMEGA estimate 
+	#Add $OMEGA FIX where size is neta and initial estimates are final $OMEGA estimate
 	#from lst. Form must match original $OMEGA form in lst.
 	$ref = $from_output->get_single_value(attribute=>'omegacoordval',
 		problem_index => ($problem_number-1),
@@ -609,7 +609,7 @@ sub _init_attr
 	} else {
 		@records = ();
 	}
-	
+
 	my @options = ();
 
 	# {{{ Check that the size of parameter_numbers and new_values match
@@ -693,7 +693,7 @@ sub _init_attr
 		}
 		# If $add_if_absent is set, any parameters that were not found above are
 		# added below:
-		
+
 		my @nums = sort {$a<=>$b} keys %found;
 		my $new_record = "model::problem::$parameter_type" -> new();
 		my $do_add_record;
@@ -797,7 +797,7 @@ sub _init_attr
 			}
 			push( @parameter_values, @prev_values );
 		}
-		
+
 		if ( scalar @parameter_numbers > 0 ) {
 			my @part_vals = ();
 			foreach my $num ( @parameter_numbers ) {
@@ -807,7 +807,7 @@ sub _init_attr
 		} else {
 			debugmessage(3,"Model::problem -> _init_attr: parameter_numbers undefined, using all." );
 		}
-		
+
 		# }}} Retrieve values
 	}
 
@@ -823,13 +823,13 @@ sub indexes
 		with_priors => { isa => 'Bool', default => 0, optional => 1 }
 	);
 	my $parameter_type = $parm{'parameter_type'};
-	my $parameter_numbers = $parm{'parameter_numbers'}; 
+	my $parameter_numbers = $parm{'parameter_numbers'};
 	my $with_priors = $parm{'with_priors'};
 	my @indexes;
 
 	# The Indexes method returns the coordinate_string for all init_options
 	# THETA1, THETA2 or OMEGA(1,1) etc or SIGMA(1,1) SIGMA(2,1)etc
-	# indexes are also returned if BLOCK SAME 
+	# indexes are also returned if BLOCK SAME
 
 	my $row = 1;
 	my $accessor = $parameter_type . 's';
@@ -851,7 +851,7 @@ sub indexes
 				my @these=();
 				foreach my $coord ( @previous ) {
 					if ($coord =~ /THETA(\d+)/){
-						push( @these, 'THETA'.($1+$previous_size)); 
+						push( @these, 'THETA'.($1+$previous_size));
 
 					}elsif ($coord =~ /(OMEGA|SIGMA)\((\d+)\,(\d+)\)/ ){
 						push( @these, $1.'('.($2+$previous_size).','.($3+$previous_size).')');
@@ -1054,7 +1054,7 @@ sub _option_val_pos
 			}
 			@values = @part_vals;
 			@positions = @part_pos;
-		} 
+		}
 
 		# }}} Retrieve values
 	}
@@ -1103,7 +1103,7 @@ sub remove_records
 		if ($keep_last){
 			my @recs;
 			my $last_rec = undef;
-			@recs = @{$self -> $accessor} if (defined $self -> $accessor); 
+			@recs = @{$self -> $accessor} if (defined $self -> $accessor);
 			$last_rec = $recs[-1] if (defined $recs[-1]);
 			$self -> $accessor([$last_rec]);
 		}else {
@@ -1335,7 +1335,7 @@ sub nomegas
 			#Kajsa: size also for diagonal matrix! Added type check below.
 
 			if( $with_correlations and $is_block){
-				$nomegas += ($size*($size+1))/2; 
+				$nomegas += ($size*($size+1))/2;
 				$prev = ($size*($size+1))/2;
 			} else {
 				$nomegas += $size;
@@ -1363,11 +1363,11 @@ sub renumber_etas
 	my $eta_from = $parm{'eta_from'};
 	my $eta_to = $parm{'eta_to'};
 
-	croak('from and to lists must have equal length') 
+	croak('from and to lists must have equal length')
 		unless (scalar(@{$eta_from}) == scalar(@{$eta_to}));
 
 	for (my $i=0; $i<scalar(@{$eta_from}); $i++){
-		croak('from and to lists must have equal length') 
+		croak('from and to lists must have equal length')
 			unless (scalar(@{$eta_from->[$i]}) == scalar(@{$eta_to->[$i]}));
 		for (my $j=0; $j<scalar(@{$eta_from->[$i]}); $j++){
 			my $from = $eta_from->[$i]->[$j];
@@ -1403,7 +1403,7 @@ sub substitute_scaled_etas
 }
 
 sub rescale_etas
-{ 
+{
 	#if this is to be used outside frem then need to add support for diagonal omega, and IOV omega.
 	#same principle, but need to either store matrix from previous record (SAME) or
 	#use get vector from diagonal
@@ -1415,7 +1415,7 @@ sub rescale_etas
 	my $problem = $parm{'problem'};
 	my $omega_indices = $parm{'omega_indices'};
 	my $use_pred = $parm{'use_pred'};
-	
+
 	my $indentation = '     ';
 
 	my $etas_per_omega = etas_per_omega(problem => $problem);
@@ -1424,7 +1424,7 @@ sub rescale_etas
 	my @eta_numbers = ();
 	my @theta_code = ();
 	my $ntheta = $problem-> record_count( record_name => 'theta' );
-	
+
 	foreach my $index (@{$omega_indices}){
 		my $covar = $problem->omegas->[$index]->get_matrix; #we will only support block omegas for now
 		my $sdcorr = [];
@@ -1487,19 +1487,19 @@ sub rescale_etas
 	#loop code records, replace ETA(N) with (ETA(N)*ASD_ETA_N) , use @eta_numbers
 	foreach my $coderec ('error','des','pk','pred'){ #never any ETAs in $MIX
 		my $acc = $coderec.'s';
-		if (defined $problem->$acc and 
+		if (defined $problem->$acc and
 			scalar(@{$problem->$acc})>0 ) {
 			my @code = @{$problem->$acc->[0]->code};
 			substitute_scaled_etas(code => \@code,
 								   eta_list => \@eta_numbers,
 								   inverse => 0);
-			$problem-> set_records( type => $coderec,	
+			$problem-> set_records( type => $coderec,
 									record_strings => \@code );
 #			print join(' ',@code);
 		}
 	}
 
-	
+
 	#add record thetas use @thetalabels and @asd
 	#FIXME format init
 	for (my $k=0; $k< scalar(@asd); $k++){
@@ -1508,7 +1508,7 @@ sub rescale_etas
 							   record_strings => [$asd[$k].' FIX ; '.$thetalabels[$k]] );
 	}
 
-	
+
 }
 
 sub etas_per_omega
@@ -1523,7 +1523,7 @@ sub etas_per_omega
 	my $prev = undef;
 	my $nomegas=0;
 	my @etas = ();
-	
+
 	foreach my $omega ( @{$problem->omegas} ) {
 		last if ($omega->prior());
 		my $first = $nomegas +1;
@@ -1608,7 +1608,7 @@ sub eta_shrinkage
 	my $directory = $parm{'directory'};
 
 	my @eta_shrinkage = @{$self->shrinkage_module->eta_shrinkage(
-		model => $model, 
+		model => $model,
 		probnum => $probnum,
 		directory => $directory,
 		eta_filename => $eta_filename) };
@@ -1631,7 +1631,7 @@ sub iwres_shrinkage
 	my $probnum = $parm{'probnum'};
 	my $directory = $parm{'directory'};
 
-	@iwres_shrinkage = @{$self->shrinkage_module -> iwres_shrinkage( model => $model, 
+	@iwres_shrinkage = @{$self->shrinkage_module -> iwres_shrinkage( model => $model,
 		probnum => $probnum,
 		directory => $directory,
 		iwres_filename => $iwres_filename)};
@@ -1677,7 +1677,7 @@ sub add_records
 		}elsif ($type eq 'data') {
 			$record = $rec_class->new(record_arr => \@record_strings, model_directory => $self->directory);
 		}elsif ($type eq 'msfi'){
-			$record = $rec_class->new(record_arr => \@record_strings, 
+			$record = $rec_class->new(record_arr => \@record_strings,
 									  model_directory => $self->directory,
 									  internal_msfo_files => $self->internal_msfo_files);
 		} else {
@@ -1825,17 +1825,17 @@ sub _read_records
 					if( $et_found or $wr_found ) {
 						$self->shrinkage_module -> enable;
 					} else {
-						$self -> add_records( record_strings => \@record_lines, 
+						$self -> add_records( record_strings => \@record_lines,
 							type => $record_type );
 					}
 				} else {
-					$self -> add_records( record_strings => \@record_lines, 
+					$self -> add_records( record_strings => \@record_lines,
 										  type => $record_type );
 				}
 			}
 			$first = 0;
 			$record_index = $i;
-		}  
+		}
 	}
 
     $self->own_print_order(\@local_print_order);
@@ -1880,7 +1880,7 @@ sub check_skip_etas
 		} else {
 			croak("Failed to parse \$OMEGA." );
 		}
-		
+
 	}
 	unless (defined $start_omega_record){
 		if ($netas == $skip_etas){
@@ -1940,7 +1940,7 @@ sub inverse_cholesky_reparameterize
 		push(@errors,"Did not find end tag\n $choleskyendtag \n in PRED/PK") unless ($found_end);
 		return \@errors;
 	}
-	
+
 	#run linear_algebra::get_inverse_parameter_list on cut out code to get ETA, EPS, THETA, RECORD lists
 	my $hashref = linear_algebra::get_inverse_parameter_list(code => \@cut_out_code);
 	unless (defined $hashref->{'THETA'} and scalar(@{$hashref->{'THETA'}})>0 ){
@@ -1995,7 +1995,7 @@ sub inverse_cholesky_reparameterize
 	}
 	#set new PK/PRED code
 	$self -> set_records( type => $code_record,	record_strings => $new_code );
-	
+
 	return \@errors;
 
 }
@@ -2091,12 +2091,12 @@ sub get_SD_COR_values
 		my $value = $self->thetas->[$index]->options->[0]->init;
 		my $is_fix = $self->thetas->[$index]->options->[0]->fix;
 		if ($label =~ /^(logit \(||log )(SD|COR)_([A-Z]+)(\d+)/ ){
-			unless ((length($1)==0) == $bounded_theta){ 
+			unless ((length($1)==0) == $bounded_theta){
 				croak("error inverse cholesky, input bounded_theta is $bounded_theta but label is $label in get_SD_COR_values");
 			}
 			my $type = $2;
 			my $letter = $3;
-			my $place = $4; # 0 padding if dim > 9 
+			my $place = $4; # 0 padding if dim > 9
 			$anyest{$letter} = 1 if (not $is_fix);
 			if ($type eq 'COR'){
 				#				print $label."\n";
@@ -2168,7 +2168,7 @@ sub inverse_cholesky_reparameterize_records
 					my $needed_length = scalar(@{$record->options});
 					if (defined $vectors->{$letter}){
 						my $len = scalar(@{$vectors->{$letter}});
-						if ($len< $needed_length){ 
+						if ($len< $needed_length){
 							push(@errors,"Not enough SD/COR values for record $letter to perform inverse Cholesky. ".
 								 "Have values to compute leading $len entries of record, but need $needed_length");
 							last;
@@ -2201,7 +2201,7 @@ sub inverse_cholesky_reparameterize_records
 			}
 
 		}
-	}	
+	}
 
 	unless ($done == $todo){
 		push(@errors,"Had $todo records to inverse parameterize, but managed with $done.");
@@ -2232,7 +2232,7 @@ sub cholesky_reparameterize
 	my $use_list=0;
 	my $inverse = 0;
 
-	# o4,s1 (regardless, cannot combine with below) Handle errors (SAME) 
+	# o4,s1 (regardless, cannot combine with below) Handle errors (SAME)
 	# omega
 	# diagonal
 	# fix
@@ -2327,7 +2327,7 @@ sub cholesky_reparameterize
 				if (
 					($use_list and (defined $record_list{$record_index} and $record_list{$record_index}==1)) or
 					((not $use_list) and (not $record->fix)) or
-					((not $use_list) and ($record->fix) and $reparameterize_fix )) 
+					((not $use_list) and ($record->fix) and $reparameterize_fix ))
 				{
 					($record_matrix,$init,$code,$warn)=linear_algebra::string_cholesky_block(
 						value_matrix=>$record->get_matrix,
@@ -2710,7 +2710,7 @@ sub get_filled_omega_matrix
         start_row => $start_eta,
         end_row => $end_eta,
     );
-	
+
 	my $new_full_omega = get_posdef_matrix(
         covmatrix => $covmatrix,
         old_matrix => $old_full_omega
@@ -2789,13 +2789,13 @@ sub _format_problem
 		}
 		if (defined $self->shrinkage_module and  $self->shrinkage_module -> enabled and $type eq 'table' ) {
 			push( @formatted, @{$self->shrinkage_module -> format_shrinkage_tables } );
-		}	
+		}
 	}
 
 	if( $self->cwres_modules ){
 	  $self->cwres_modules -> [0] -> post_process;
 	}
-	
+
 	return \@formatted;
 }
 
@@ -2819,7 +2819,7 @@ sub ensure_posdef
 
 	#check here that omega and sigma posdef,
 	#i.e. cholesky decomp works
-	#otherwise decrease magnitude of off-diagonal elements 
+	#otherwise decrease magnitude of off-diagonal elements
 	#or increase diagonal (default)
 
 	my @params;
@@ -2902,7 +2902,7 @@ sub update_prior_information
 	#if records THETAP or THETAPV or OMEGAP or OMEGAPD exists together with NTHETA or NETA then die
 	# if new records exist then do not set prior flag for any records. Otherwise proceed to prior flag setting
 	#if $PRIOR NWPRI then get NTHETA and NETA unless have new records NM7.3
-	#loop through $THETA and $OMEGA and set prior=1 for 
+	#loop through $THETA and $OMEGA and set prior=1 for
 	#all params after the estimated ones
 
 	if ((defined $self->priors()) and scalar(@{$self -> priors()})>0 ){
@@ -2912,7 +2912,7 @@ sub update_prior_information
 				debugmessage(3,"No options for rec \$PRIOR" );
 			}
 			foreach my $option ( @{$rec -> options} ) {
-				if ((defined $option) and 
+				if ((defined $option) and
 						(($option->name eq 'NWPRI') || (index('NWPRI',$option ->name ) == 0))){
 					$nwpri=1;
 				}
@@ -2972,7 +2972,7 @@ sub update_prior_information
 					  join(',',@newrecs));
 			}
 
-			
+
 			#if we have any_new_prior_record it is vital that nwpri_ntheta and nwpri_neta remain undef,
 			#since these attributes are used as an indication that $THETA and $OMEGA contain prior information
 			return if $any_new_prior_record;
@@ -3046,7 +3046,7 @@ sub tbs_transform
 	if ((defined $self->priors()) and scalar(@{$self -> priors()})>0 ){
 		croak("The current version of PsN does not support \$PRIOR and ".
 				"option -tbs or -dtbs in combination");
-	}      
+	}
 
 	my $zeta_line='';
 	my $newthetanum;
@@ -3059,7 +3059,7 @@ sub tbs_transform
 		$self->add_records( type => 'theta',
 				record_strings => ['1 ; tbs_lambda'] );
 	}
-	
+
 	#PRED or ERROR
 	my @code;
 	@code = @{$self -> errors()->[0]->code()} if (defined $self -> errors());
@@ -3105,13 +3105,13 @@ sub tbs_transform
 						$iprtheta = $1;
 					}else{
 						croak ("Could not parse IPRED*THETA part of $line when transforming for tbs\n");
-					} 
+					}
 					#find the additive theta
 					if($line =~ s/\bTHETA\((\d+)\)//){
 						$addtheta = $1;
 					}else{
 						croak ("Could not parse additive THETA part of $line when transforming for tbs\n");
-					} 
+					}
 
 					my $zerofixtheta = $iprtheta; #if tbs
 					$zerofixtheta = $addtheta if ($self->dtbs());
@@ -3163,7 +3163,7 @@ sub tbs_transform
 						$W_line = ' W = (IPRED**ZETA)*'.$line."\n";
 						$zeta_default=0.001; #close to zero but not exactly 0 since NM will not allow it
 					}else{
-						#tbs, leave as is 
+						#tbs, leave as is
 						$W_line = ' W = '.$line."\n";
 					}
 
@@ -3172,7 +3172,7 @@ sub tbs_transform
 				@code =  (@code[0..$i-1],
 						  @code[$i+1..$#code]);
 			}
-		} 
+		}
 	}
 	croak("Failed to find Y definition row in \$PK/\$ERROR") unless ($found);
 	croak("Failed to find W definition row in \$PK/\$ERROR") unless (length($W_line)>0);
@@ -3194,7 +3194,7 @@ sub tbs_transform
 							record_strings => [$zeta_default.' ; tbs_zeta'] );
 	}
 
-	
+
 	#Find last occurrence of IPRED = ... by scanning from the end.
 	#Then keep the IPRED row, and then insert extra stuff directly after
 	#insert modified W as first insertion after IPRED
@@ -3268,7 +3268,7 @@ sub tbs_transform
 		$self -> errors ->[0] ->code (\@code );
 	}
 
-#$SUBS. check NM major version. Option to modelfit so do not need to print copy 
+#$SUBS. check NM major version. Option to modelfit so do not need to print copy
 # everywhere?
 #need to copy ccontr etc also.
 
@@ -3340,7 +3340,7 @@ sub create_print_order
 sub reset_estimated_parameters_hash
 {
     my $self = shift;
-	
+
 	$self->estimated_parameters_hash({});
 
 }
@@ -3350,7 +3350,7 @@ sub set_estimated_parameters_hash
 	#filter out fix and same and prior and off-diagonal zeros, set hash describing what is actually estimated
     my $self = shift;
 
-	unless (defined $self->estimated_parameters_hash and 
+	unless (defined $self->estimated_parameters_hash and
 		defined $self->estimated_parameters_hash->{'coordinate_strings'}
 		and scalar(@{$self->estimated_parameters_hash->{'coordinate_strings'}})>0 ){
 
@@ -3422,7 +3422,7 @@ sub set_estimated_parameters_hash
 							}else{
 								push(@{$hash{'sdcorrform'}},0);
 							}
-						}else{	 
+						}else{
 							if ($option->init() == 0) {
 								#do not check off-diagonal zeros
 								next;
@@ -3507,7 +3507,7 @@ sub find_table
     );
     my $columns = $parm{'columns'};
     my $get_object = $parm{'get_object'};
-    
+
     if (defined $self->tables) {
         foreach my $table (@{$self->tables}) {
             my %search;
@@ -3586,7 +3586,7 @@ sub is_option_set
 	my $fuzzy_match = $parm{'fuzzy_match'};
 
 	# Usage:
-	# 
+	#
 	# if( $prob -> is_option_set( record => 'recordName', name => 'optionName' ) ){
 	#     print "prob has option optionName set in record recordName";
 	# }
@@ -3689,7 +3689,7 @@ sub get_eta_sets
 
 	my $start_omega_record = 1;
 	$start_omega_record = $self->check_skip_etas(skip_etas => $skip_etas);
-	
+
 	my @use_etas=();
 	my @these=();
 	my @prev=();
@@ -3723,7 +3723,7 @@ sub get_eta_sets
 				push(@iiv_omega_numbers,($j+1));
 			}
 			if  ($record->fix()){
-				$all_fix = 1; 
+				$all_fix = 1;
 			}
 			foreach my $option (@{$record -> options()}) {
 				if ($option->on_diagonal()){
@@ -3735,7 +3735,7 @@ sub get_eta_sets
 							$iov_eta_counter++; #1 or larger
 							$val = 1+$iov_eta_counter; #2 or larger
 						}
-						push(@these,$val); 
+						push(@these,$val);
 					}
 				}
 			}
@@ -3777,10 +3777,10 @@ sub get_eta_sets
 				}
 			}
 		}
-	} 
+	}
 
 	return {'iiv' => \@iiv_eta_set,
-			'iiv_omega_numbers' => \@iiv_omega_numbers, 
+			'iiv_omega_numbers' => \@iiv_omega_numbers,
 			'iov' => \@iov_eta_sets,
 			'iov_omega_numbers' => \@iov_omega_numbers};
 }

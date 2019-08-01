@@ -169,7 +169,7 @@ EOF
 $help_text{-auto_rawres} = <<'EOF';
 	-auto_rawres=degree
 
-	Default not set. Not allowed in combination with covmat_input. If 
+	Default not set. Not allowed in combination with covmat_input. If
 	rawres_input is not set, this option will make sir use the tweak_inits
 	functionality to automatically create a rawres_input file with perturbed
 	parameter vectors, and these vectors will then be used as if read from a
@@ -181,7 +181,7 @@ $help_text{-auto_rawres} = <<'EOF';
 	are respected. If option -auto_rawres is used in combination with
 	rawres_input, tweak_inits by 'degree' will be used to augment the given
 	rawres\_input file until the matrix has full rank, see help text for
-	-rawres_input. 
+	-rawres_input.
 EOF
 
 
@@ -230,7 +230,7 @@ $help_text{-covmat_input} = <<'EOF';
 	covariance matrix is used in iteration 1 for sampling parameter vectors
 	and for computing the PDF. The matrix will not be used in any but the
 	first iteration. If the user wants to input an identity matrix, it is
-	not necessary to create the .cov-file. 
+	not necessary to create the .cov-file.
 	Instead set option -covmat_input=identity. Option -covmat_input=identity
 	an be combined with inflation to get any diagonal covariance matrix
 	without creating the .cov-file. If a file is used, the format of the file
@@ -444,10 +444,10 @@ $help_text{-theta_inflation} = <<'EOF';
 
 	Default is the scalar 1, which is the same as no inflation.Either a
 	positive vector with length equal to the number of estimated (not FIX)
-	$THETAs, or a positive scalar which will be interpreted as a vector of 
+	$THETAs, or a positive scalar which will be interpreted as a vector of
 	lenght n($THETA) and all equal values. If given, the variance of each
 	estimated $THETA will in the first iteration be inflated with the factor
-	from the inflation vector before the parameter vectors are sampled from 
+	from the inflation vector before the parameter vectors are sampled from
 	he truncated multivariate normal distribution. The weights will also be
 	computed based the inflated covariance matrix. Inflation is not used in
 	any but the first iteration.

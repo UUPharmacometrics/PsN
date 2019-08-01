@@ -28,7 +28,7 @@ my %optional_options = (
     'ignore:s' => undef,
 );
 
-my $res = GetOptions( \%options, 
+my $res = GetOptions( \%options,
 		      @common_options::get_opt_strings,
 		      keys(%required_options),
 		      keys(%optional_options) );
@@ -39,7 +39,7 @@ exit unless $res;
 
 my %help_text;
 
-$help_text{Pre_help_message} = <<'EOF';  
+$help_text{Pre_help_message} = <<'EOF';
 	Perform a prospective evaluation.
 EOF
 
@@ -112,7 +112,7 @@ unless ( $model -> is_run){
 	#we will only run this model if not done already, path length matters only if we run
 	unless ($model->copy_data_setting_ok(copy_data => $options{'copy_data'})){
 		die("Cannot set -no-copy_data, absolute data file path is too long.");
-	} 
+	}
 	if (defined $options{'copy_data'} and (not $options{'copy_data'})){
 		$model->relative_data_path(0);
 	}

@@ -50,7 +50,7 @@ sub correlation2unbounded
     my ($number) = pos_validated_list(\@_,
 									  { isa => 'Num' },
 		);
-	
+
 	return logit(($number+1)/2); #undef if out of range
 }
 
@@ -87,7 +87,7 @@ sub eps
     # Gives the correct answer for eps(x) <= 1 otherwise returns 1
 
     my $x = shift;
-	$x = abs($x);		# eps is same for negatives 
+	$x = abs($x);		# eps is same for negatives
 
 	my $e = 1;
 
@@ -195,7 +195,7 @@ sub convert_float_string
         }
     }
 
-    # Remove trailing zeroes in decimal part and starting zeroes in the integer part 
+    # Remove trailing zeroes in decimal part and starting zeroes in the integer part
     $decimal =~ s/0+$//;
     $integer =~ s/^0*//;
     if ($integer eq "") {

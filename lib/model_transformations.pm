@@ -65,7 +65,7 @@ sub add_tv
                 $found = 1;
                 last;
             }
-        } 
+        }
         if (not $found) {
             push @newcode, $line;
         }
@@ -91,7 +91,7 @@ sub unique_occs
     my $data = data->new(
         filename => $model->problems->[0]->datas->[0]->get_absolute_filename(),
         ignoresign => $model->problems->[0]->datas->[0]->ignoresign,
-        idcolumn => $model->idcolumn, 
+        idcolumn => $model->idcolumn,
     );
 
     my $occ_column = $data->column_to_array(column => $occ);
@@ -161,9 +161,9 @@ sub add_iov
                     push @pre_code, "IF ($occ.EQ.$unique_occ) IOV_" . $parameters->[$i] . " = ETA($current_eta)";
                 }
                 my $init = $model->initial_values(parameter_type => 'omega', parameter_numbers => [[ $relation{$parameters->[$i]} ]]);
-                $model->add_records(type => 'omega', record_strings => [ '$OMEGA BLOCK(1) ' . $init->[0]->[0] * 0.1]); 
+                $model->add_records(type => 'omega', record_strings => [ '$OMEGA BLOCK(1) ' . $init->[0]->[0] * 0.1]);
                 for (my $i = 0; $i < scalar(@$unique_occs) - 1; $i++) {
-                    $model->add_records(type => 'omega', record_strings => [ "\$OMEGA BLOCK(1) SAME" ]); 
+                    $model->add_records(type => 'omega', record_strings => [ "\$OMEGA BLOCK(1) SAME" ]);
                 }
             }
         }
@@ -195,7 +195,7 @@ sub add_iov
             }
             $model->add_records(type => 'omega', record_strings => $record_clone->_format_record());
             for (my $i = 0; $i < scalar(@$unique_occs) - 1; $i++) {
-                $model->add_records(type => 'omega', record_strings => [ "\$OMEGA BLOCK($size) SAME" ]); 
+                $model->add_records(type => 'omega', record_strings => [ "\$OMEGA BLOCK($size) SAME" ]);
                 $current_eta += $size;  # Pass BLOCK SAME
             }
         }
@@ -209,7 +209,7 @@ sub add_iov
     return 0;
 }
 
-sub marge_two_hashes 
+sub marge_two_hashes
 {
 	#marge two hashes and replace undef values with values from other hash if they are not undef
 	my %parm = validated_hash(\@_,
@@ -218,7 +218,7 @@ sub marge_two_hashes
     );
 	my $hash_1 = $parm{'hash_1'};
 	my $hash_2 = $parm{'hash_2'};
-	
+
 	my %hash_1 = %{$hash_1};
 	my %hash_2 = %{$hash_2};
 	my %new_hash = %hash_1;
@@ -229,7 +229,7 @@ sub marge_two_hashes
 			}
 		} else {
 			$new_hash{$keys_2} = $hash_2{$keys_2};
-		}			
+		}
 	}
 	return(\%new_hash);
 }
@@ -259,7 +259,7 @@ sub add_etas_to_parameters
         croak("Neither PK nor PRED defined in " . $model->filename . "\n");
     }
 	if ($model->has_code(record => 'error')) {
-		
+
         my($model_code,$added_etas2) = add_etas_in_model_record(model => $model, parameters => $parameters, code_record => 'error');
 		$model->set_code(record => 'error', code => $model_code);
 		$added_etas = marge_two_hashes(hash_1 => $added_etas, hash_2 => $added_etas2);
@@ -306,7 +306,7 @@ sub add_etas_in_model_record
             } else {
                 push @model_code, $code_line;
             }
-            $model->add_records(type => 'omega', record_strings => [ '$OMEGA 0.0001']); 
+            $model->add_records(type => 'omega', record_strings => [ '$OMEGA 0.0001']);
             $done{$p} = $next_eta;
             $next_eta++;
         } else {
@@ -348,7 +348,7 @@ sub diagonal_to_block
                 );
                 $i++;
                 push @records, $new_record;
-            }   
+            }
         }
     }
 
@@ -459,7 +459,7 @@ sub _rename_etas
 
     for my $eta (@$etas) {
         for my $record (('pk', 'pred', 'error', 'des', 'aes', 'aesinitial', 'mix', 'infn')) {
-		    if ($model->has_code(record => $record)) {  
+		    if ($model->has_code(record => $record)) {
 			    my $code = $model->get_code(record => $record);
                 for (my $i = 0; $i < scalar(@$code); $i++) {
                     $code->[$i] =~ s/(?<!\w)ETA\($eta\)/$prefix$eta/g;
@@ -482,7 +482,7 @@ sub rename_symbol
     my $to = $parm{'to'};
 
     for my $record (('pk', 'pred', 'error', 'des', 'aes', 'aesinitial', 'mix', 'infn')) {
-        if ($model->has_code(record => $record)) {  
+        if ($model->has_code(record => $record)) {
             my $code = $model->get_code(record => $record);
             for (my $i = 0; $i < scalar(@$code); $i++) {
                 $code->[$i] =~ s/\b$from\b/$to/g;
@@ -546,7 +546,7 @@ sub prepend_code
         $code_record = $record;
     }
 
-	@model_code = (@$code, @model_code); 
+	@model_code = (@$code, @model_code);
 
     $model->set_code(record => $code_record, code => \@model_code);
 }
@@ -581,14 +581,14 @@ sub append_code
         if (defined $record_array and scalar @{$record_array} > 0) {
             @model_code = @{$model->get_code(record => $record)};
         } else {
-            $model->add_records(type => $record, record_strings => []); 
+            $model->add_records(type => $record, record_strings => []);
         }
 
         @model_code = @{$model->get_code(record => $record)};
         $code_record = $record;
     }
 
-	@model_code = (@model_code, @$code); 
+	@model_code = (@model_code, @$code);
 
     $model->set_code(record => $code_record, code => \@model_code);
 }
@@ -606,7 +606,7 @@ sub insert_code
 	my $code = $parm{'code'};
     my $record = $parm{'record'};
     my $line = $parm{'line'};
-    
+
 	my @model_code;
 	my $code_record;
     if (not defined $record) {
@@ -628,7 +628,7 @@ sub insert_code
     for (my $i = 0; $i <= $line; $i++) {
         push @result_code, $model_code[$i];
     }
-	@result_code = (@result_code, @$code); 
+	@result_code = (@result_code, @$code);
     for (my $i = $line + 1; $i < scalar(@model_code); $i++) {
         push @result_code, $model_code[$i];
     }
@@ -660,7 +660,7 @@ sub boxcox_etas
     for my $i (@$etas) {
         push @code, "ETAB$i = (EXP(ETA($i))**THETA($next_theta) - 1) / (THETA($next_theta))";
         $next_theta++;
-        $model->add_records(type => 'theta', record_strings => [ '$THETA (-3, 0.01, 3)']); 
+        $model->add_records(type => 'theta', record_strings => [ '$THETA (-3, 0.01, 3)']);
     }
 
     prepend_code(model => $model, code => \@code);
@@ -700,7 +700,7 @@ sub uniform_etas
         push @code, "ETAU$i = (PHI(ETA($i)) - 0.5) * THETA($next_theta)";
         $next_theta++;
         my $init = $inits[$index] / 0.29;
-        $model->add_records(type => 'theta', record_strings => [ "\$THETA $init"]); 
+        $model->add_records(type => 'theta', record_strings => [ "\$THETA $init"]);
         $index++;
     }
 
@@ -734,7 +734,7 @@ sub tdist_etas
 			"	+((5*ETA($i)**4+16*ETA($i)**2+3)/(96*THETA($next_theta)**2))&\n" .
 			"	+((3*ETA($i)**6+19*ETA($i)**4+17*ETA($i)**2-15)/(384*THETA($next_theta)**3)))\n";
         $next_theta++;
-        $model->add_records(type => 'theta', record_strings => [ '$THETA (3,80,100)']); 
+        $model->add_records(type => 'theta', record_strings => [ '$THETA (3,80,100)']);
     }
 
     prepend_code(model => $model, code => \@code);
@@ -911,7 +911,7 @@ sub find_iov_structure
     my $i = 0;
     for my $record (@$iov_records) {
         if ($record->same) {
-            $i++; 
+            $i++;
         } else {
             $i = 0;
         }
@@ -931,7 +931,7 @@ sub find_zero_fix_omegas
     my $model = $parm{'model'};
 
     my @found;
-    
+
     my $omegas = $model->problems->[0]->omegas;
     for my $record (@$omegas) {
         my $current = $record->n_previous_rows + 1;
@@ -987,7 +987,7 @@ sub remaining_omegas
     }
 
     if ($nomegas > $max) {
-        push @remaining, ($max + 1 .. $nomegas)  
+        push @remaining, ($max + 1 .. $nomegas)
     }
 
     return \@remaining;
@@ -1040,7 +1040,7 @@ sub _remove_omega_records
     );
     my $model = $parm{'model'};
     my $omegas = $parm{'omegas'};
-    
+
     my @records = @{$model->problems->[0]->omegas};
     my @kept_records;
     my $current = 1;
@@ -1114,7 +1114,7 @@ sub _remove_etas
     my $etas = $parm{'etas'};
 
     my $num_etas = _number_of_etas(model => $model);
-    my %replace_hash; 
+    my %replace_hash;
     my $current = 1;
     for (my $i = 1; $i <= $num_etas; $i++) {
         if (grep { $_ == $i } @$etas) {
@@ -1126,7 +1126,7 @@ sub _remove_etas
     }
 
     for my $record (('pk', 'pred', 'error', 'des', 'aes', 'aesinitial', 'mix', 'infn')) {
-        if ($model->has_code(record => $record)) {  
+        if ($model->has_code(record => $record)) {
             my $code = $model->get_code(record => $record);
             for (my $i = 0; $i < scalar(@$code); $i++) {
                 $code->[$i] =~ s/(?<!\w)ETA\((\d+)\)/$replace_hash{$1}/g;
@@ -1143,7 +1143,7 @@ sub _number_of_etas
         model => { isa => 'model' },
     );
     my $model = $parm{'model'};
- 
+
     my @all_omegas = @{$model->problems->[0]->omegas};
 
     my $num_etas = 0;
@@ -1242,7 +1242,7 @@ sub omit_ids
                 $found = 1;
                 if ($ignore) {
                     $model->add_option(record_name => 'data', option_name => 'IGNORE', option_value => "(ID.EQ.$id)");
-                } else { 
+                } else {
                     push @to_remove, $i;
                 }
                 last;
@@ -1321,7 +1321,7 @@ sub _rename_epsilons
     }
 
     for my $eps (@$epsilons) {
-        if ($model->has_code(record => 'error')) {  
+        if ($model->has_code(record => 'error')) {
             my $code = $model->get_code(record => 'error');
             for (my $i = 0; $i < scalar(@$code); $i++) {
                 $code->[$i] =~ s/(?<!\w)(EPS|ERR)\($eps\)/$prefix$eps/g;
@@ -1356,7 +1356,7 @@ sub iiv_on_ruv
     for my $i (@$epsilons) {
         push @code, "EPST$i = EPS($i) * EXP(ETA($next_eta))";
         $next_eta++;
-        $model->add_records(type => 'omega', record_strings => [ '$OMEGA 0.01']); 
+        $model->add_records(type => 'omega', record_strings => [ '$OMEGA 0.01']);
     }
 
     prepend_code(model => $model, code => \@code, record => 'error');
@@ -1401,9 +1401,9 @@ sub power_on_ruv
     for my $i (@$epsilons) {
         push @code, "EPSP$i = EPS($i) * (IPRED ** THETA($next_theta))";
         $next_theta++;
-        $model->add_records(type => 'theta', record_strings => [ '$THETA 0.01']); 
+        $model->add_records(type => 'theta', record_strings => [ '$THETA 0.01']);
     }
-    
+
     my @result_code;
     for my $line (@error_code) {
         push @result_code, $line;
@@ -1432,7 +1432,7 @@ sub set_size
 
 sub rename_symbols_in_code
 {
-    # Rename multiple symbols in all code blocks of a model 
+    # Rename multiple symbols in all code blocks of a model
     my %parm = validated_hash(\@_,
         model => { isa => 'model' },
         renaming => { isa => 'HashRef' },      # Hash from old symbol to new symbol
@@ -1587,7 +1587,7 @@ sub reorder_coordvals_hash
     my %new;
     for my $key (keys %$conversion) {
         if (defined $coordvals->{$key}) {
-            $new{$conversion->{$key}} = $coordvals->{$key};         
+            $new{$conversion->{$key}} = $coordvals->{$key};
         }
     }
 
@@ -1597,11 +1597,11 @@ sub reorder_coordvals_hash
 sub reorder_etas
 {
     # Reorders the omegas records of a model and connected output object
-    # All etas must be in the order hash. Could easily be changed by adding missing etas in this function. 
+    # All etas must be in the order hash. Could easily be changed by adding missing etas in this function.
     my %parm = validated_hash(\@_,
         model => { isa => 'model' },
         order => { isa => 'HashRef' },      # Hash from eta number in base model to eta number in reordered model
-        phi_file => { isa => 'Str', optional => 1 },            # Specify this together with reorder_output to get a new phi file 
+        phi_file => { isa => 'Str', optional => 1 },            # Specify this together with reorder_output to get a new phi file
         reorder_output => { isa => 'Bool', default => 1 },      # Should we reorder the output or not.
     );
     my $model = $parm{'model'};
@@ -1627,7 +1627,7 @@ sub reorder_etas
     my %coords_conversion;
     for (my $new_eta = 1; $new_eta <= $netas; $new_eta++) {
         my $old_eta = $new_to_old{$new_eta};
-        my $new_containing_record = find_omega_record_for_eta(model => $model, eta => $old_eta); 
+        my $new_containing_record = find_omega_record_for_eta(model => $model, eta => $old_eta);
         if (not defined $containing_record) {
             $containing_record = $new_containing_record;
             push @current_etas, $old_eta;
@@ -1642,7 +1642,7 @@ sub reorder_etas
         } else {
             $new_eta--;
         }
-     
+
         # Here are @current_etas all part of the $containing_record
         my $cloned_record = dclone($containing_record);
         my $record_order = hash_slice(\%old_to_new, \@current_etas);
@@ -1651,7 +1651,7 @@ sub reorder_etas
             %coords_conversion = (%coords_conversion, %$record_coords_conversion);
         }
         push @new_records, $cloned_record;
-      
+
         $containing_record = undef;
         @current_etas = ();
     }

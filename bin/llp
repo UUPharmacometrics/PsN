@@ -32,7 +32,7 @@ my %optional_options = ( "max_iterations:i" => '',
 			 "rse_sigmas:s" => 'sigma rel. SE list',
 );
 
-my $res = GetOptions( \%options, 
+my $res = GetOptions( \%options,
 		      @common_options::get_opt_strings,
 		      keys(%required_options),
 		      keys(%optional_options) );
@@ -61,7 +61,7 @@ $help_text{Description} = <<'EOF';
 	in likelihood is chi2 distributed and when that value is 3.84, the parameter
 	value is at the 95% confidence limit. The search for the limit is done on
 	both sides of the original parameter value, and thus the llp tool makes no
-	assumption of symmetry or the parameter value distribution.  
+	assumption of symmetry or the parameter value distribution.
 EOF
 
 $help_text{Examples} = <<'EOF';
@@ -73,7 +73,7 @@ $help_text{Examples} = <<'EOF';
 
 	llp run89.mod -thetas=1,2 -rse_thetas=20,30
 
-	In this example, we explicitly specify the relative SE which is necessary 
+	In this example, we explicitly specify the relative SE which is necessary
 	if we do not have an output file with SE estimates.
 EOF
 
@@ -114,7 +114,7 @@ $help_text{-normq} = <<'EOF';
 	Default value is 1.96. The value is used for calculating the first guess of
 	the confidence interval limits. If the SE exist, the guess will be maximum
 	likelihood estimate ± normq * SE, otherwise it will be
-	MLE ± normq * rse_parameter/100 * MLE, where rse_parameter is rse_thetas, 
+	MLE ± normq * rse_parameter/100 * MLE, where rse_parameter is rse_thetas,
 	rse_omegas or rse_sigmas (optional input parameters). The default value of
 	normq translates to a 95% confidence interval assuming normal distribution
 	of the parameter estimates.
@@ -124,7 +124,7 @@ $help_text{-ofv_increase} = <<'EOF';
 	-ofv_increase=X
 
 	Default value is 3.84.The increase in objective function value associated with
-	the desired confidence interval. 
+	the desired confidence interval.
 EOF
 
 $help_text{-omegas} = <<'EOF';
@@ -141,10 +141,10 @@ $help_text{-outputfile} = <<'EOF';
 	-outputfile=filename
 
 	The name of the NONMEM output file. The default value is the name of the model
-	file with the extension substituted with '.lst'. 
+	file with the extension substituted with '.lst'.
 	  Example: if the modelfile is run89.mod, llp will by default look for the
 	  outputfile run89.lst. If the name of the output file does not follow this
-	  standard, the name must be specifed with this option. 
+	  standard, the name must be specifed with this option.
 EOF
 
 $help_text{-rse_omegas} = <<'EOF';
@@ -269,7 +269,7 @@ if( $options{'nonparametric_etas'} or
     $options{'nonparametric_marginals'} ) {
   $model -> add_nonparametric_code;
 }
-	
+
 if( $options{'shrinkage'} ) {
   $model -> shrinkage_stats( enabled => 1 );
 }
@@ -287,7 +287,7 @@ foreach my $param ('omega','sigma'){
 
 	my $labels = $model -> labels ( parameter_type => $param,
 									generic => 1); #arr over probs
-	for (my $prob=0; $prob < scalar(@{$labels}); $prob++){ 
+	for (my $prob=0; $prob < scalar(@{$labels}); $prob++){
 		my %block_hash;
 		my $coord = $model->problems->[$prob]->get_estimated_attributes(parameter=>$param,
 																		attribute=> 'coordinate_strings');
@@ -306,7 +306,7 @@ foreach my $param ('omega','sigma'){
 	}
 }
 ## Create new Llp object:
-my $llp = tool::llp -> 
+my $llp = tool::llp ->
 	new ( eval( $common_options::parameters ),
 		  max_iterations     => $options{'max_iterations'},
 		  models		   => [ $model ],

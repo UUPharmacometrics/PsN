@@ -70,7 +70,7 @@ sub BUILD
 			push(@new_files, $ldir.$name) ;
 		}
 		$self->$accessor(\@new_files);
-	}	
+	}
 
 	#input_checking.pm ensures that either single $PROB or two $PROB where first is tnpri
 	#so we assume that here
@@ -79,9 +79,9 @@ sub BUILD
 	}
 
 	my $problem_index = (0+$self->have_tnpri());
-	foreach my $coderec ('error','des','pred','pk','mix'){ 
+	foreach my $coderec ('error','des','pred','pk','mix'){
 		my $acc = $coderec.'s';
-		if (defined $self->models->[0]->problems->[$problem_index]->$acc 
+		if (defined $self->models->[0]->problems->[$problem_index]->$acc
 			and scalar(@{$self->models->[0]->problems->[$problem_index]->$acc})>0 ) {
 			my @extra_code = @{$self->models->[0]->problems->[$problem_index]->$acc->[0]->code};
 			foreach my $line (@extra_code){
@@ -128,7 +128,7 @@ sub modelfit_setup
 
 	my $newthetanum=$model->nthetas(problem_number => $self->probnum())+1;
 	my $sim_record;
-	my $simdirname='simulation_dir'; 
+	my $simdirname='simulation_dir';
 	my $shrinkage_value;
 	$self->first_callback(1);
 
@@ -136,7 +136,7 @@ sub modelfit_setup
 								  copy_datafile   => 1,
 								  write_copy => 0,
 								  copy_output => 0);
-	
+
 	#create sim record if not present
 	$sim_record = $orig_model -> record( problem_number => $self->probnum(),
 										 record_name => 'simulation' );
@@ -155,19 +155,19 @@ sub modelfit_setup
 										 option_name => 'TRUE',
 										 fuzzy_match => 1,
 										 problem_numbers => [$self->probnum()]);
-			
+
 		}
 	}else{
 		# set $SIMULATION record
 		my @arr = ('(000)');
 		$sim_record = \@arr;#dummy seed
 	}
-	
+
 	if ($self->have_nwpri() or $self->have_tnpri()){
 		$sim_record->[0] .= ' TRUE=PRIOR';
 	}
 	$orig_model -> remove_records( type => 'simulation' );
-	
+
 	$orig_model -> remove_option( record_name  => 'estimation',
 								  option_name  => 'MSFO',
 								  fuzzy_match => 1,
@@ -178,7 +178,7 @@ sub modelfit_setup
 	my $oprob = $orig_model -> problems -> [$self->probnum()-1];
 	if( defined $oprob -> inputs and defined $oprob -> inputs -> [0] -> options ) {
 		foreach my $option ( @{$oprob -> inputs -> [0] -> options} ) {
-			push( @table_header, $option -> name ) unless 
+			push( @table_header, $option -> name ) unless
 				(($option -> value eq 'DROP' or $option -> value eq 'SKIP'
 				  or $option -> name eq 'DROP' or $option -> name eq 'SKIP'));
 		}
@@ -188,7 +188,7 @@ sub modelfit_setup
 	}
 
 	#logic for use of MDV column as basis for finding which rows are observations
-	#request MDV in $TABLE if no $PRED record or if there is a $PRED record and 
+	#request MDV in $TABLE if no $PRED record or if there is a $PRED record and
 	#MDV is in the input
 	#if there is a $PRED but no MDV in input then all rows will be observations
 
@@ -213,7 +213,7 @@ sub modelfit_setup
 	$tablestring .= ' NOPRINT NOAPPEND ONEHEADER FILE=original_res_table.dta';
 	$oprob -> add_records( type           => 'table',
 						   record_strings => [$tablestring]);
-		
+
 	push( @all_table_files, $self->directory . 'm' . $model_number . '/original_res_table.dta' );
 
 	my $ref = $oprob->get_eta_sets(header_strings => 1);
@@ -237,7 +237,7 @@ sub modelfit_setup
 									  problem_number => $self->probnum());
 		$orig_model -> _write();
 		push( @orig_and_sim_models, $orig_model );
-		$simdirname='orig_and_simulation_dir'; 
+		$simdirname='orig_and_simulation_dir';
 	} elsif (defined $model->outputs() and defined $model->outputs()->[0] and $model->outputs()->[0]->have_output()) {
 		#we do not need to run original before sims, because already have final ests
 		$orig_model_output = $model->outputs()->[0];
@@ -247,17 +247,17 @@ sub modelfit_setup
 									  ignore_missing_parameters => 1);
 		$orig_model -> _write();
 		push( @orig_and_sim_models, $orig_model );
-		$simdirname='orig_and_simulation_dir'; 
+		$simdirname='orig_and_simulation_dir';
 	} elsif ($self->estimate_input()) {
 		$orig_model -> _write();
 		#run original here to get param estimates for sim
 
-		my $run_orig = tool::modelfit -> new( 
+		my $run_orig = tool::modelfit -> new(
 			%{common_options::restore_options(@common_options::tool_options)},
 			top_tool         => 0,
 			models           => [$orig_model],
 			base_directory   => $self->directory,
-			directory        => $self->directory . 'original_dir' . $model_number, 
+			directory        => $self->directory . 'original_dir' . $model_number,
 			parent_tool_id   => $self->tool_id,
 			logfile	         => undef,
 			raw_results_file     => [$self ->raw_results_file()->[0]],
@@ -267,7 +267,7 @@ sub modelfit_setup
 			copy_data => 0,
 			abort_on_fail => $self->abort_on_fail);
 
-		$run_orig->add_to_nmoutput(extensions => ['phi','ext']);		
+		$run_orig->add_to_nmoutput(extensions => ['phi','ext']);
 
 		ui -> print( category => 'simeval',
 					 message  => "Running original model to get final parameter estimates for simulation" );
@@ -281,7 +281,7 @@ sub modelfit_setup
 			croak("Running original model failed. Check output in ".$run_orig->directory());
 		}
 
-		if (defined $orig_model->outputs() and 
+		if (defined $orig_model->outputs() and
 			defined $orig_model->outputs()->[0] and
 			$orig_model->outputs()->[0]-> have_output()){
 			$orig_model_output = $orig_model->outputs()->[0];
@@ -292,7 +292,7 @@ sub modelfit_setup
 		#must in any case run original to get ETAs, IPRED etc, but here we dont update inits
 		$orig_model -> _write();
 		push( @orig_and_sim_models, $orig_model );
-		$simdirname='orig_and_simulation_dir'; 
+		$simdirname='orig_and_simulation_dir';
 	}
 
 	my $samples = $self -> samples();
@@ -301,7 +301,7 @@ sub modelfit_setup
 
 	my $sims_per_file = int($samples/($self->n_simulation_models));
 	my $remainder = $samples % ($self->n_simulation_models);
-	
+
 	for( my $sim_no = 1; $sim_no <= $self->n_simulation_models ; $sim_no++ ) {
 		my $sims_this_file = $sims_per_file;
 		if ($remainder > 0){
@@ -326,7 +326,7 @@ sub modelfit_setup
 
 			#set IGNORE=@ since datafile will
 			#get a header during copying. Keep IGNORE=LIST
-			
+
 			for (my $k=0; $k< scalar(@{$sim_model->problems}); $k++){
 				$sim_model -> problems -> [$k]->datas->[0]->ignoresign('@');
 			}
@@ -357,7 +357,7 @@ sub modelfit_setup
 					  output_same_directory => 1,
 					  write_copy => 0,
 					  copy_output => 0);
-			
+
 		}#end if elsesim_no==1
 
 		$sim_model -> ignore_missing_files( 1 );
@@ -365,7 +365,7 @@ sub modelfit_setup
         $sim_model -> set_outputfile();
 		$sim_model -> ignore_missing_files( 0 );
 		my $prob = $sim_model -> problems -> [$self->probnum()-1];
-		
+
 		my @new_record;
 		foreach my $sline ( @{$sim_record } ){
 			my $new_line;
@@ -378,7 +378,7 @@ sub modelfit_setup
 
 				while( $old_seed =~ /(\D*)(\d+)(.*)/ ){
 					$new_line .= $1;
-					$new_line .= random_uniform_integer( 1, 0, 1000000 ); # Upper limit is from nmhelp 
+					$new_line .= random_uniform_integer( 1, 0, 1000000 ); # Upper limit is from nmhelp
 					$old_seed = $3;
 				}
 
@@ -401,7 +401,7 @@ sub modelfit_setup
 		$prob -> add_option(record_name  => 'table',
 							record_number  => 1,
 							option_name  => 'FILE',
-							option_value => $tab_file );   
+							option_value => $tab_file );
 
 		push( @all_table_files, $self->directory . 'm' . $model_number . '/' . $tab_file );
 
@@ -448,13 +448,13 @@ sub modelfit_setup
 	$self->all_eta_files(\@all_eta_files);
 	$self->all_table_files(\@all_table_files);
 
-	my $run_sim = tool::modelfit -> new( 
+	my $run_sim = tool::modelfit -> new(
 		%{common_options::restore_options(@common_options::tool_options)},
 		top_tool         => 0,
 		models           => \@orig_and_sim_models,
 		base_directory   => $self->directory,
 		nmtran_skip_model => 3,
-		directory        => $self->directory . $simdirname . $model_number, 
+		directory        => $self->directory . $simdirname . $model_number,
 		parent_tool_id   => $self->tool_id,
 		logfile	         => undef,
 		raw_results_file     => [$self ->raw_results_file()->[0]], #change??
@@ -464,7 +464,7 @@ sub modelfit_setup
 		copy_data =>0,
 		abort_on_fail => $self->abort_on_fail);
 
-	$run_sim->add_to_nmoutput(extensions => ['phi','ext']);		
+	$run_sim->add_to_nmoutput(extensions => ['phi','ext']);
 
 	my $typerun = 'evaluations';
 	$typerun = 'reestimations' if $self->reminimize;
@@ -476,13 +476,13 @@ sub modelfit_setup
 	$self->tools([]) unless defined $self->tools;
     if ($self->separate) {
         unshift(@postsim_models, (shift @orig_and_sim_models));   # Move original model to post_sim
-	    $run_sim = tool::modelfit -> new( 
+	    $run_sim = tool::modelfit -> new(
 		    %{common_options::restore_options(@common_options::tool_options)},
 		    top_tool         => 0,
 		    models           => \@orig_and_sim_models,
 		    base_directory   => $self->directory,
 		    nmtran_skip_model => 3,
-		    directory        => $self->directory . "presim_dir" . $model_number, 
+		    directory        => $self->directory . "presim_dir" . $model_number,
 		    parent_tool_id   => $self->tool_id,
 		    logfile	         => undef,
             #raw_results_file     => [$self ->raw_results_file()->[0]], #change??
@@ -492,13 +492,13 @@ sub modelfit_setup
             copy_data => 0,
             abort_on_fail => $self->abort_on_fail);
         $run_sim->run();
-	    $run_sim = tool::modelfit -> new( 
+	    $run_sim = tool::modelfit -> new(
 		    %{common_options::restore_options(@common_options::tool_options)},
 		    top_tool         => 0,
 		    models           => \@postsim_models,
 		    base_directory   => $self->directory,
 		    nmtran_skip_model => 3,
-		    directory        => $self->directory . $simdirname . $model_number, 
+		    directory        => $self->directory . $simdirname . $model_number,
 		    parent_tool_id   => $self->tool_id,
 		    logfile	         => undef,
 		    raw_results_file     => [$self ->raw_results_file()->[0]], #change??
@@ -629,7 +629,7 @@ sub simeval_analyze
 	my $m1dir = $parm{'m1dir'};
 	my $testing = $parm{'testing'};
 	my $write_auto = $parm{'write_auto'}; #only turn on for debugging
-	
+
 	my $errmess;
 	my $ret_subjects;
 	my $ret_successful_samples;
@@ -675,7 +675,7 @@ sub simeval_analyze
 		foreach my $file (@{$simeval_all_table_files}) {
 			push(@found_files,$file) if (-e $file);
 		}
-		
+
 		my $headers_array = [['ID'],['CWRES']];
 		if ($have_mdv){
 			push(@{$headers_array->[0]},'MDV');
@@ -714,7 +714,7 @@ sub simeval_analyze
 
 		for (my $k = 0; $k < scalar(@table_headers); $k++) {
 			#we will never get to IWRES unless have IWRES
-		
+
 			my @extra_headers=('ID');
 			if ($have_mdv){
 				push(@extra_headers,'MDV');
@@ -744,7 +744,7 @@ sub simeval_analyze
 						#ID TIME DV
 						print ORI formatinteger($id_mdv_matrix->[0]->[$i]->[0]).' '.
 							formattime($time_array->[$i]).' '.
-							$est_matrix->[0]->[$i]->[0]."\n"; 
+							$est_matrix->[0]->[$i]->[0]."\n";
 					}
 				}
 				close ORI;
@@ -758,12 +758,12 @@ sub simeval_analyze
 							print SIM formatinteger($id_mdv_matrix->[0]->[$i]->[0]).' '.
 								formattime($time_array->[$i]).' '.
 								$est_matrix->[0]->[$i]->[$j]."\n";
-						} 
+						}
 					}
 				}
 				close SIM;
 			}
-			
+
 			open(ORI, ">$all_file_name") || die("Couldn't open $all_file_name : $!");
 			my @head = ('ID');
 			if ($have_mdv){
@@ -781,11 +781,11 @@ sub simeval_analyze
 				if ($k == 0 and (not defined $have_observations{$id_mdv_matrix->[0]->[$i]->[0]} )){
 					$have_observations{$id_mdv_matrix->[0]->[$i]->[0]} = 0;
 				}
-				
+
 				if ($have_mdv){
 					print ORI ','.$id_mdv_matrix->[1]->[$i]->[0];
 				}
-				
+
 				if ((not $have_mdv) or ($id_mdv_matrix->[1]->[$i]->[0] == 0)){
 					#not missing DV
 					$have_observations{$id_mdv_matrix->[0]->[$i]->[0]} = 1;
@@ -826,7 +826,7 @@ sub simeval_analyze
 					if ($have_mdv){
 						print DAT ','.$id_mdv_matrix->[1]->[$record_index]->[0];
 					}
-				
+
 					if ((not $have_mdv) or ($id_mdv_matrix->[1]->[$record_index]->[0] == 0)){
 						print DAT ','.formatfloat($est_matrix->[0]->[$record_index]->[0]).
 							','.formatnpde($npde->[$record_index]).','.$original_outlier->[$record_index]."\n";
@@ -952,7 +952,7 @@ sub simeval_analyze
 		my $pd = [];
 
 		#number of samples for which have OBJ
-		$ret_successful_samples = scalar(@{$est_matrix->[0]->[0]})-1; # -1 for original 
+		$ret_successful_samples = scalar(@{$est_matrix->[0]->[0]})-1; # -1 for original
 
 		if ($write_auto) {
 			my $origname = 'auto_orig_IOFV.tab';
@@ -973,7 +973,7 @@ sub simeval_analyze
 				for (my $i = 0; $i < scalar(@{$est_matrix->[0]}); $i++) {
 					print SIM formatinteger($id_matrix->[0]->[$i]->[0]).
 						' 1.0 '.$est_matrix->[0]->[$i]->[$j]."\n";
-				} 
+				}
 			}
 			close SIM;
 
@@ -1014,7 +1014,7 @@ sub simeval_analyze
 		close ORI;
 
 		$ret_subjects = scalar(@{$id_matrix->[0]});
-		
+
 		my @all_npde = (); #[ind]->[eta]
 		my @standardized = ();
 		for (my $ti=0; $ti< scalar(@etatypes); $ti++){
@@ -1031,7 +1031,7 @@ sub simeval_analyze
 			my $pd=[];
 
 			print "type $type headers ".join(' ',@eta_headers)."\n" if $testing;
-			
+
 			if ($write_auto and ($ti == 0)){
 				my $origname = 'auto_orig_EBE.tab';
 				my $simname = 'auto_sim_EBE.tab';
@@ -1054,7 +1054,7 @@ sub simeval_analyze
 							print SIM formatinteger($id_matrix->[0]->[$i]->[0]).
 								' '.($k+1).'.0 '.($est_matrix->[$k]->[$i]->[$j])."\n";
 						}
-					} 
+					}
 				}
 				close SIM;
 
@@ -1076,8 +1076,8 @@ sub simeval_analyze
 				print ORI "\n";
 			}
 			close ORI;
-			
-			my $diagnostics = simeval_util::find_zero_etas(filename => $simeval_all_eta_files->[0], 
+
+			my $diagnostics = simeval_util::find_zero_etas(filename => $simeval_all_eta_files->[0],
 													   eta_headers => \@eta_headers);
 			#missing values is $diagnostics->{'is_zero'}
 
@@ -1139,10 +1139,10 @@ sub _modelfit_raw_results_callback
 	my $subroutine;
 
 	# Use the mc's raw_results file.
-	my ($dir,$file) = 
+	my ($dir,$file) =
 		OSspecific::absolute_path( $self->directory,
 								   $self -> raw_results_file->[$model_number-1] );
-	my ($npdir,$npfile) = 
+	my ($npdir,$npfile) =
 		OSspecific::absolute_path( $self->directory,
 								   $self -> raw_nonp_file -> [$model_number-1]);
 
@@ -1157,7 +1157,7 @@ sub _modelfit_raw_results_callback
 		my $totsamples=1;
 		$totsamples = $self -> samples() if (defined $self -> samples());
 
-		# a column with run type, original or sim is prepended. 
+		# a column with run type, original or sim is prepended.
 
 		#if prior tnpri nothing will be in raw_results for first $PROB, can
 		#take first row for model as final estimates as usual, even if
@@ -1170,7 +1170,7 @@ sub _modelfit_raw_results_callback
 			my $n_rows = scalar(@{$modelfit -> raw_results()});
 
 			my $last_model= 0;
-			my $sample = 0; 
+			my $sample = 0;
 
 			if ($self->first_callback){
 				unshift( @{$modelfit->raw_results_header}, 'run_type' );
@@ -1183,7 +1183,7 @@ sub _modelfit_raw_results_callback
 				$type='simulation';
 			}
 			for (my $i=0; $i< $n_rows; $i++){
-				my $this_model = $modelfit -> raw_results()->[$i]->[0]; 
+				my $this_model = $modelfit -> raw_results()->[$i]->[0];
 				my $step= ($this_model-$last_model);
 				if ($last_model > 0 and $step>0){
 					$type='simulation';
@@ -1223,7 +1223,7 @@ sub _modelfit_raw_results_callback
 			my $n_rows = scalar(@{$modelfit -> raw_nonp_results()});
 
 			my $last_model= 0;
-			my $sample = 0; 
+			my $sample = 0;
 			my $type;
 			if ($self->first_callback ){
 				$type='original';
@@ -1234,7 +1234,7 @@ sub _modelfit_raw_results_callback
 			unshift( @{$modelfit->raw_nonp_results_header}, 'run_type' );
 
 			for (my $i=0; $i< $n_rows; $i++){
-				my $this_model = $modelfit -> raw_nonp_results()->[$i]->[0]; 
+				my $this_model = $modelfit -> raw_nonp_results()->[$i]->[0];
 				my $step= ($this_model-$last_model);
 				if ($last_model > 0 and $step>0){
 					$type='simulation';
@@ -1283,8 +1283,8 @@ sub max_and_min
 	my $maximum;
 	my $minimum;
 
-	#input is integers $column_index, $start_row_index, $end_row_index 
-	
+	#input is integers $column_index, $start_row_index, $end_row_index
+
 	unless( $end_row_index ){
 		$self->raw_results([]) unless defined $self->raw_results;
 		$end_row_index = $#{$self->raw_results};
@@ -1297,8 +1297,8 @@ sub max_and_min
 	for (my $i=$start_row_index; $i<=$end_row_index; $i++){
 		if ($use_runs[$i-$start_row_index]) {
 			if (defined $self->raw_results->[$i][$column_index]){
-				$maximum = $self->raw_results->[$i][$column_index] if ($self->raw_results->[$i][$column_index] > $maximum); 
-				$minimum = $self->raw_results->[$i][$column_index] if ($self->raw_results->[$i][$column_index] < $minimum); 
+				$maximum = $self->raw_results->[$i][$column_index] if ($self->raw_results->[$i][$column_index] > $maximum);
+				$minimum = $self->raw_results->[$i][$column_index] if ($self->raw_results->[$i][$column_index] < $minimum);
 			} else {
 			}
 		}
@@ -1311,7 +1311,7 @@ sub cleanup
 {
 	my $self = shift;
 
-	#remove tablefiles in simulation NM_runs, they are 
+	#remove tablefiles in simulation NM_runs, they are
 	#copied to m1 by modelfit and read from there anyway.
 	for (my $samp=1;$samp<=$self->samples(); $samp++){
 		unlink $self->directory . "/simulation_dir1/NM_run" . $samp . "/mc-sim-" . $samp . ".dat";
@@ -1364,11 +1364,11 @@ sub create_R_plots_code
 		push(@vpctabs,rplots::double_backslashes(string => $filename));
 	}
 	my @vpcresults=();
-		
+
 	foreach my $filename (@{$self->vpc_result_files}){
 		push(@vpcresults,rplots::double_backslashes(string => $filename));
 	}
-	
+
 	$rplot->add_preamble(code => [
 							 '#simeval-specific preamble',
 							 'samples   <-'.$self->samples,

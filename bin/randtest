@@ -35,7 +35,7 @@ my %optional_options = (
     "copy_data!"=>''
 );
 
-my $res = GetOptions( \%options, 
+my $res = GetOptions( \%options,
 		      @common_options::get_opt_strings,
 		      keys(%required_options),
 		      keys(%optional_options) );
@@ -45,7 +45,7 @@ exit unless $res;
 
 
 my %help_text;
-$help_text{Pre_help_message} = <<'EOF';  
+$help_text{Pre_help_message} = <<'EOF';
 	Perform a randomization test.
 EOF
 
@@ -74,14 +74,14 @@ $help_text{Options} = <<'EOF';
 	The following options are valid:
 EOF
 
-$help_text{-accepted_ofv_difference} = <<'EOF';      
+$help_text{-accepted_ofv_difference} = <<'EOF';
 	-accepted_ofv_difference=N
 
 	Default is 0.5. A retry will not be initiated if the ofv of the current
 	sample is only 'accepted_ofv_difference' worse than the base model ofv.
 EOF
 
-$help_text{-base_model} = <<'EOF';      
+$help_text{-base_model} = <<'EOF';
 	-base_model
 
 	Run the original data set with this model, to use as reference when
@@ -96,7 +96,7 @@ $help_text{-copy_data} = <<'EOF';
 	set is not copied to NMrun and an absolute path is used in $DATA.
 EOF
 
-$help_text{-full_model_inits} = <<'EOF';      
+$help_text{-full_model_inits} = <<'EOF';
 	-full_model_inits
 
 	Default false. Only relevant when -update_inits is true. If true, use final
@@ -104,21 +104,21 @@ $help_text{-full_model_inits} = <<'EOF';
 	models. If false, final estimates from the base model are used instead.
 EOF
 
-$help_text{-match_transitions} = <<'EOF';      
+$help_text{-match_transitions} = <<'EOF';
 	-match_transitions
 
 	Default not set. Alternative method for copying randomization column values
 	from one individual to another during shuffling.
 EOF
 
-$help_text{-randomization_column} = <<'EOF';      
+$help_text{-randomization_column} = <<'EOF';
 	-randomization_column
 
 The name of the column to randomize. The column name is taken from the model
 file's $INPUT record. Column names in the data file are ignored.
 EOF
 
-$help_text{-retries} = <<'EOF';      
+$help_text{-retries} = <<'EOF';
 	-retries=N
 
 	Default is 0. The number of times to try running each sample with
@@ -127,10 +127,10 @@ $help_text{-retries} = <<'EOF';
 	the ofv of each sample is at least as good as the ofv of the base model,
 	within 'accepted_ofv_difference'. If not then a retry is initiated. The
 	default value of the number of retries is 0, so to enable the retry
-	feature for randtest the option -retries must be set larger than 0. 
+	feature for randtest the option -retries must be set larger than 0.
 EOF
 
-$help_text{-samples} = <<'EOF';      
+$help_text{-samples} = <<'EOF';
 	-samples
 
 	The number of randomized datasets to generate.
@@ -146,7 +146,7 @@ $help_text{-stratify_on} = <<'EOF';
 	restrict the randomization procedure to shuffle within the two groups.
 EOF
 
-$help_text{-update_inits} = <<'EOF';      
+$help_text{-update_inits} = <<'EOF';
 	-update_inits
 
 	Default true. Update the initial estimates of the full model to the final
@@ -214,7 +214,7 @@ unless ( $model -> is_run){
 	#we will only run this model if not done already, path length matters only if we run
 	unless ($model->copy_data_setting_ok(copy_data => $options{'copy_data'})){
 		die("Cannot set -no-copy_data, absolute data file path is too long.");
-	} 
+	}
 	if (defined $options{'copy_data'} and (not $options{'copy_data'})){
 		$model->relative_data_path(0);
 	}
@@ -236,14 +236,14 @@ if (defined $options{'base_model'}){
 	unless ( $base_model -> is_run){
 		unless ($base_model->copy_data_setting_ok(copy_data => $options{'copy_data'})){
 			die("Cannot set -no-copy_data, absolute data file path is too long.");
-		} 
+		}
 		if (defined $options{'copy_data'} and (not $options{'copy_data'})){
 			$base_model->relative_data_path(0);
 		}
 	}
 }
 
-my $rand = 
+my $rand =
 	tool::randtest->new( eval( $common_options::parameters ),
 						 top_tool => 1,
 						 prepend_model_file_name => 1,

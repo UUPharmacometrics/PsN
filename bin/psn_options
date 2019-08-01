@@ -18,7 +18,7 @@ my %options;
 ## Declare the options
 
 my %required_options = ();
-my %optional_options = ( 
+my %optional_options = (
 			 );
 
 my $res = GetOptions( \%options,
@@ -42,7 +42,7 @@ $help_text{-h} = <<'EOF';
 	With -h or -? psn_options will print a list of options and exit.
 EOF
 
-$help_text{-help} = <<'EOF';      
+$help_text{-help} = <<'EOF';
 	-help
 
 	With -help psn_options will print this, more descriptive, list of options and exit.

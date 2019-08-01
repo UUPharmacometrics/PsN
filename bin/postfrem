@@ -883,7 +883,7 @@ if (defined $options{'rawres_input'}) {
                 delta => [],
                 fast_posdef_checks => 1,
                 print_iter_N => $print_iter_N,
-                directory => $main_directory, 
+                directory => $main_directory,
             );
 
             $sampled_params_arr = tool::sir::create_sampled_params_arr(samples_array => $vectorsamples,

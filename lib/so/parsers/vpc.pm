@@ -49,13 +49,13 @@ sub _create_vpc
 
     # add rawresults
     (my $vpc_results, my $vpcdir) = fileparse($self->vpc_results);
-    $self->_so_block->RawResults->add_datafile(name => $vpc_results, description => "PsN vpc results file", oid => "PsN_VPC_results"); 
+    $self->_so_block->RawResults->add_datafile(name => $vpc_results, description => "PsN vpc results file", oid => "PsN_VPC_results");
 
     # find vpctab
     (my $vpctab) = glob($vpcdir . "vpctab*");
     if (defined $vpctab and -e $vpctab) {
         $vpctab = fileparse($vpctab);
-        $self->_so_block->RawResults->add_datafile(name => $vpctab, description => "PsN vpctab", oid => "PsN_VPC_vpctab"); 
+        $self->_so_block->RawResults->add_datafile(name => $vpctab, description => "PsN vpctab", oid => "PsN_VPC_vpctab");
     }
 
     $self->_add_original_table();
@@ -102,7 +102,7 @@ sub _add_simulation_table
             columnType => [ "id", "idv", "dv" ],
             valueType => [ "string", "real", "real" ],
             columns => \@columns,
-        ); 
+        );
 
         push @{$sim_block->SimulatedProfiles}, $simulated_profiles;
         push @{$self->_so_block->Simulation->SimulationBlock}, $sim_block;
@@ -149,7 +149,7 @@ sub _add_original_table
         valueType => [ "string", "real", "real" ],
         columns => \@columns,
     );
-    
+
     $self->_so_block->ModelDiagnostic->DiagnosticStructuralModel->IndivObservationPrediction($table);
 }
 

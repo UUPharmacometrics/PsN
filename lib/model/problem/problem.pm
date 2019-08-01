@@ -28,7 +28,7 @@ sub add_comment
     push(@comments, "\n" . ';' . $new_comment);
     push(@print_order, $numopts);
     $comments[$#comments] .= "\n";
-	
+
     $self->comment(\@comments);
 	$self->print_order(\@print_order);
 }

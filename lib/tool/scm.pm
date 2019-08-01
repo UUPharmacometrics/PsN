@@ -6368,7 +6368,7 @@ sub _inter_in_est
         model => { isa => 'model' },
     );
 	my $model = $parm{'model'};
-    
+
     my $inter = $model->is_option_set(record => 'estimation', name => 'INTERACTION', fuzzy_match => 1);
 
     return $inter;

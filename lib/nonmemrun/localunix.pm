@@ -28,9 +28,9 @@ sub submit
 	}
 	system("echo $command > nmqualcommand") if ($self->nmqual);
 
-	my $pid; 
+	my $pid;
 	my $errmess;
-	my $tries=2; 
+	my $tries=2;
 	for (my $i=0; $i<$tries; $i++){
 		$pid = fork();
 		if (defined $pid){
@@ -45,7 +45,7 @@ sub submit
 		}else{
 			ui->print(category=> 'all', message => 'Perl fork() failed: '.$errmess."\n".
 					  ', considering this model failed');
-			system('echo ' . 'Perl fork\(\) failed: '.$errmess. '  > job_submission_error'); 
+			system('echo ' . 'Perl fork\(\) failed: '.$errmess. '  > job_submission_error');
 			$pid = -1;
 		}
 	}

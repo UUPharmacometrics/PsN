@@ -29,7 +29,7 @@ my %optional_options = ("samples:i"=>'',
 						'keep_tables!' => undef,
                         'keep_covariance!' => undef,
 						"bca"=>'',
-						"dofv!"=>'',	
+						"dofv!"=>'',
 						"run_base_model!"=>'',
 						"update_inits!"=>'',
 						"mceta:i"=>'',
@@ -42,7 +42,7 @@ my %optional_options = ("samples:i"=>'',
 						"copy_data!"=>'',
 			);
 
-my $res = GetOptions( \%options, 
+my $res = GetOptions( \%options,
 		      @common_options::get_opt_strings,
 		      keys(%required_options),
 		      keys(%optional_options) );
@@ -50,7 +50,7 @@ my $res = GetOptions( \%options,
 exit unless $res;
 
 my %help_text;
-$help_text{Pre_help_message} = <<'EOF';  
+$help_text{Pre_help_message} = <<'EOF';
 	Bootstrap using the percentile or BCa method.
 EOF
 
@@ -71,19 +71,19 @@ $help_text{Examples} = <<'EOF';
 	estimates of the standard errors of the parameter estimates. You may get
 	some estimates for the confidence intervals too, but they will generally
 	not be of high quality.
-	
+
 	bootstrap -samples=2000 -bca run89.mod
-	
+
 	This will run a non-parametric bootstrap using the BCa technique (See An
 	introduction to the bootstrap, Efron, 1993). The BCa is intended for
 	caclulation of second-order correct confidence intervals.
 
-	bootstrap -samples=2000 -bca -stratify_on=GRP run89.mod 
+	bootstrap -samples=2000 -bca -stratify_on=GRP run89.mod
 
 	This is the same BCa approach as above but with stratification on the
 	factors of the GRP variable.
 EOF
-    
+
 $help_text{Options} = <<'EOF';
 	A model file is required as argument.
 
@@ -110,7 +110,7 @@ $help_text{-bca} = <<'EOF';
 	Default not set. When used, the bootstrap utility will calculate the confidence
 	intervals through the BCa method. The BCa is intended for calculation of second-
 	order correct confidence intervals. Warning: Using bca is very time-consuming.
-	(see Efron B, An introduction to the Bootstrap, 1993). 
+	(see Efron B, An introduction to the Bootstrap, 1993).
 EOF
 
 $help_text{-copy_data} = <<'EOF';
@@ -122,11 +122,11 @@ $help_text{-copy_data} = <<'EOF';
 	$DATA when the input model is run, and the data file will not be copied. This
 	saves disk space.
 EOF
-$help_text{-dofv} = <<'EOF';      
+$help_text{-dofv} = <<'EOF';
 	-dofv
 
 	Compute delta-ofv by doing a MAXEVAL=0 run on orginal dataset with the
-	bootstrap parameter estimates.	  
+	bootstrap parameter estimates.
 EOF
 
 $help_text{-keep_covariance} = <<'EOF';
@@ -143,7 +143,7 @@ $help_text{-keep_tables} = <<'EOF';
 	space. If option -keep_tables is set, PsN will instead keep $TABLE, which
 	can require much disk space.
 EOF
-$help_text{-mceta} = <<'EOF';      
+$help_text{-mceta} = <<'EOF';
 	-mceta
 
 	Default not set. If option -dofv is set and NONMEM 7.3 or later is used,
@@ -152,7 +152,7 @@ $help_text{-mceta} = <<'EOF';
 	with option MCETA, PsN will not do that.
 EOF
 
-$help_text{-run_base_model} = <<'EOF';      
+$help_text{-run_base_model} = <<'EOF';
 	-run_base_model
 
 By default, the input model will be run unless the lst-file for the input model
@@ -183,7 +183,7 @@ $help_text{-sample_size} = <<'EOF';
 	in the data set, the sum will however always be correct.
 EOF
 
-$help_text{-samples} = <<'EOF';      
+$help_text{-samples} = <<'EOF';
 	-samples
 
 	The number of bootstrapped datasets to generate. Default is 200.
@@ -242,7 +242,7 @@ $help_text{-stratify_on} = <<'EOF';
 	multiple values in the stratification column, and therefore this column
 	cannot be used for stratification of the resampling.
 EOF
-$help_text{-summarize} = <<'EOF';      
+$help_text{-summarize} = <<'EOF';
 	-summarize
 
 	Default not set. Only allowed when -directory is set to an existing
@@ -251,7 +251,7 @@ $help_text{-summarize} = <<'EOF';
 	different set of exclusion criteria.
 EOF
 
-$help_text{-update_inits} = <<'EOF';      
+$help_text{-update_inits} = <<'EOF';
 -update_inits
 
 	Default true. Update the initial estimates of the bootstrap models to the
@@ -312,7 +312,7 @@ unless (defined $options{'copy_data'} and (not $options{'copy_data'})) {
 
 unless ($model->copy_data_setting_ok(copy_data => $options{'copy_data'})){
 	die("Cannot set -no-copy_data, absolute data file path is too long.");
-} 
+}
 if (defined $options{'copy_data'} and (not $options{'copy_data'})){
 	$model->relative_data_path(0);
 }
@@ -332,10 +332,10 @@ if( defined $options{'sample_size'} ) {
   if( $@ ) {
 	  die $@."\nThe sample_size option must be either a single number or of the format 'strata1=>12,strata2=>34, ...' etc" ;
   }
-} 
+}
 
 ## Create new Bootstrap object:
-my $bs = 
+my $bs =
 	tool::bootstrap->new( eval( $common_options::parameters ),
 						  top_tool => 1,
 						  prepend_model_file_name => 1,

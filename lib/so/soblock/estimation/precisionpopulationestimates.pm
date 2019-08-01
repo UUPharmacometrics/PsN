@@ -53,7 +53,7 @@ sub xml
     }
 
     my $est;
-    if (defined $mle or defined $bootstrap) { 
+    if (defined $mle or defined $bootstrap) {
         $est = XML::LibXML::Element->new("PrecisionPopulationEstimates");
         if (defined $mle) {
             $est->appendChild($mle);

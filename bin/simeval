@@ -50,7 +50,7 @@ $help_text{Pre_help_message} = <<'EOF';
 	Simulation evaluation model diagnostics
 EOF
 
-$help_text{Description} = <<'EOF';      
+$help_text{Description} = <<'EOF';
 
 	The simeval program computes normalised prediction distribution errors
 	for the empirical Bayes estimates, similar to the procedure described
@@ -59,15 +59,15 @@ $help_text{Description} = <<'EOF';
 	(2008) 154–166.
 
 EOF
-$help_text{Examples} = <<'EOF';      
+$help_text{Examples} = <<'EOF';
 	simeval run2.mod
 EOF
 
-$help_text{Options} = <<'EOF';      
+$help_text{Options} = <<'EOF';
 	A model file is required on the command line.
-	
-	Note: If any IDs in the data set do not have any observation records, then 
-	those IDs must be IGNOREd in $DATA, otherwise simeval will not produce all 
+
+	Note: If any IDs in the data set do not have any observation records, then
+	those IDs must be IGNOREd in $DATA, otherwise simeval will not produce all
 	output.
 
    The following options are valid:
@@ -79,7 +79,7 @@ $help_text{-h} = <<'EOF';
 	With -h or -? simeval will print a list of options and exit.
 EOF
 
-$help_text{-help} = <<'EOF';      
+$help_text{-help} = <<'EOF';
 	-help
 
 	With -help simeval will print this, longer, help message.
@@ -113,7 +113,7 @@ $help_text{-gls_data_file} = <<'EOF';
 
 	Default gls_data.dta. A file with input data for the gls tool is always
 	generated. This option changes the name of that file. After this file is
-	created, the gls program can be run with option -gls_model and -ind_shrinkage 
+	created, the gls program can be run with option -gls_model and -ind_shrinkage
 	with minimum runtime, see gls_userguide.pdf
 EOF
 
@@ -148,7 +148,7 @@ $help_text{-reminimize} = <<'EOF';
 
 	Default not set. By default, simulated datasets will be run with MAXEVAL=0
 	(or equivalent for non-classical estimation methods). If option -reminimize
-	is set then $EST will be the same as in the input model. We advise the user 
+	is set then $EST will be the same as in the input model. We advise the user
 	to use together with MAXEVAL=0 the MCETA option in order to avoid local
 	 minima at the individual level.
 EOF
@@ -162,7 +162,7 @@ EOF
 $help_text{-separate} = <<'EOF';
 	-separate
 
-    Set to make each NONMEM run separate. Must be used together with 
+    Set to make each NONMEM run separate. Must be used together with
     -n_simulation_models equal to the -samples. Each simulation will be a
     separate run and each evaluation also be separate. This option can be
     used when simulation and evaluation cannot coexist in the same model, i.e.
@@ -240,7 +240,7 @@ $simeval-> print_options (cmd_line => $cmd_line,
 						   local_options => [keys %optional_options],
 						   common_options => \@common_options::tool_options);
 
-   
+
 $simeval -> run;
 require tool::npc;
 

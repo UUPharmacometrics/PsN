@@ -63,7 +63,7 @@ sub modelfit_setup
     }
 
 	my $model = $self->models->[$model_number - 1];
-    
+
     my $stratify_on;
     if (defined $self->stratify_on) {
         $stratify_on = $model->problems->[0]->find_data_column(column_name => $self->stratify_on);

@@ -90,7 +90,7 @@ sub check_and_set_init
 			#replace with 0.000001 or -0.00001, smallest nonzero number
 			if ($new_value > 0){
 				$new_value = "0.000001";
-			}else{ 
+			}else{
 				$new_value = "-0.00001";
 			}
 			debugmessage(3,$original." is too small, setting $new_value instead ");
@@ -102,7 +102,7 @@ sub check_and_set_init
 			my $truncated;
 			my $ok = 0;
 			for (my $dec=6; $dec>= 0; $dec--){
-				$rounded = sprintf("%.".$dec."f",$new_value); 
+				$rounded = sprintf("%.".$dec."f",$new_value);
 				if (length($rounded)<=8){
 					$ok=1;
 					#remove trailing zeros, and decimal point if 0 decimals left
@@ -111,7 +111,7 @@ sub check_and_set_init
 					last;
 				}
 			}
-			
+
 	    }
 	  } else {
 	    #NM7, E notation or regular as needed, use all info from input

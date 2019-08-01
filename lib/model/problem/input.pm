@@ -13,7 +13,7 @@ sub BUILD
 	# Check if there are any reserved words containing lower case. Starting with NONMEM 7.2 this is allowed but PsN does not support it
 	foreach my $option (@{$self->options}) {
 		foreach my $string ($option->name, $option->value) {
-			if ((defined $string) and 
+			if ((defined $string) and
 				($string =~ /ID|L1|L2|DV|MDV|RAW_|MRG_|RPT_|TIME|DATE|DAT1|DAT2|DAT3|DROP|SKIP|EVID|AMT|RATE|SS|II|ADDL|CMT|PCMT|CALL|CONT/i)) {
 				if ($string =~ /[a-z]/) {
 					croak("\$INPUT contains a NONMEM reserved word \"$string\" containing lowercase letters. This is not yet supported by PsN." .
@@ -44,7 +44,7 @@ sub get_nonskipped_columns
 
 	foreach my $option (@{$self->options}) {
 		if ($option->name ne 'DROP' && $option->name ne 'SKIP' && ((not defined $option->value) or ($option->value ne 'SKIP' && $option->value ne 'DROP'))) {
-			push @option_list, $option->name; 
+			push @option_list, $option->name;
 		}
 	}
 
@@ -79,7 +79,7 @@ sub get_filter_table_names
 	my $datx_in_input = 0;
 	my $time_added = 0;
 
-	
+
 	#not including DROP SKIP
 	#my @reserved = qw(ID L1 L2 DV MDV RAW_ MRG_ RPT_ TIME DATE DAT1 DAT2 DAT3 EVID AMT RATE SS II ADDL CMT PCMT CALL CONT);
 
@@ -112,7 +112,7 @@ sub get_filter_table_names
 	foreach my $option (@{$self->options}) {
 		if ($option->name ne 'DROP' and $option->name ne 'SKIP' and
 			((not defined $option->value) or ($option->value ne 'SKIP' && $option->value ne 'DROP'))) {
-			push (@filter_table_names, $option->name); 
+			push (@filter_table_names, $option->name);
 		}else{
 			push (@filter_table_names,$first_undropped);
 		}

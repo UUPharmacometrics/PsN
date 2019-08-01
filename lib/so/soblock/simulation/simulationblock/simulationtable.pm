@@ -28,7 +28,7 @@ sub xml
 
     my $xml = $self->SUPER::xml();
     if (defined $self->attr_name) {
-       $xml->setAttribute("name", $self->attr_name); 
+       $xml->setAttribute("name", $self->attr_name);
     }
 
     return $xml;

@@ -40,7 +40,7 @@ has '_reference_raw_results' => ( is => 'rw', isa => 'ArrayRef' );
 sub BUILD
 {
 	my $self  = shift;
-	
+
     for my $accessor ('logfile','raw_nonp_file'){
 		my @new_files=();
 		my @old_files = @{$self->$accessor};
@@ -52,7 +52,7 @@ sub BUILD
 			push(@new_files,$ldir.$name) ;
 		}
 		$self->$accessor(\@new_files);
-	}	
+	}
 
 	croak("dofv_threshold must not be negative") if ($self->dofv_threshold < 0);
 	croak("parameter_threshold must not be negative") if ($self->parameter_threshold < 0);
@@ -64,7 +64,7 @@ sub BUILD
 
 		push(@{$self->nonmem_paths},nonmemrun::setup_paths(nm_version => $version,nmqual => $self->nmqual));
 	}
-	
+
 	if (defined $self->record_options){
 		$self->record_change_list(parse_record_options(record_options => $self->record_options));
 	}
@@ -268,7 +268,7 @@ sub modify_model
 						   option_name => $option,
 						   option_value => $optionvalue,
 						   add_record => 1);
-		
+
 	}
 
 }
@@ -297,7 +297,7 @@ sub modify_model_theta
 					for (my $i=0; $i< scalar(@{$model->problems->[$prob]->thetas->[$j]->options}); $i++){
 						$count++;
 						if ($num == $count){
-							my ($success,$dirt1,$dirt2)=  
+							my ($success,$dirt1,$dirt2)=
 								$model->problems->[$prob]->thetas->[$j]->options->[$i]->check_and_set_init (new_value => $init);
 							croak("Could not set init $init in theta $theta of ".$model->filename) unless ($success);
 							last;
@@ -312,7 +312,7 @@ sub modify_model_theta
 				for (my $j=0; $j< scalar(@{$model->problems->[$prob]->thetas}); $j++){
 					foreach my $opt (@{$model->problems->[$prob]->thetas->[$j]->options}){
 						if (defined $opt->label and ($opt->label eq $theta)){
-							my ($success,$dirt1,$dirt2)= $opt -> check_and_set_init(new_value=>$init); 
+							my ($success,$dirt1,$dirt2)= $opt -> check_and_set_init(new_value=>$init);
 							croak("Could not set init $init in theta $theta of ".$model->filename) unless ($success);
 							$found =1;
 							last;
@@ -341,7 +341,7 @@ sub create_nonmem_alt_models
 							  alt_nonmem => { isa => 'ArrayRef', optional => 0 },
 							  nm_version => { isa => 'Str', optional => 0 },
 	);
-	my $model_lists = $parm{'model_lists'}; 
+	my $model_lists = $parm{'model_lists'};
 	my $alt_nonmem = $parm{'alt_nonmem'};
 	my $nm_version = $parm{'nm_version'};
 
@@ -403,7 +403,7 @@ sub create_replicate_models
 			my $newname = get_modified_filename(model => $model_lists->[$i]->[$mi],
 												replicate => 1);
 			$model_lists->[$i]->[$mi]->filename($newname);
-			
+
 		}
 
 	}
@@ -431,7 +431,7 @@ sub create_record_variant_models
 			my $optcount = scalar(@{$change_list->[$ci]->{$recordname}}); #ref of array of opts
 			for (my $op=1; $op < $optcount; $op++){
 				#for each option *in addition to* the first required one in the option list, make a copy of the
-				#mcount first models in list mi at the start of this iteration. push copies to 
+				#mcount first models in list mi at the start of this iteration. push copies to
 				#model_list mi, write_copy is false, output_same_directory true
 				for (my $i=0; $i< $mcount; $i++){
 					my $newname = get_modified_filename(model => $model_lists->[$mi]->[$i],
@@ -444,7 +444,7 @@ sub create_record_variant_models
 					modify_model(model => $model_lists->[$mi]->[-1],
 								 record => $recordname,
 								 option => $change_list->[$ci]->{$recordname}->[$op]);
-				}				
+				}
 			}
 			#now we only have the first option in list to set in original models
 			my $op = 0;
@@ -471,7 +471,7 @@ sub create_theta_variant_models
 	);
 	my $model_lists = $parm{'model_lists'};
 	my $theta_list = $parm{'theta_list'};
-	
+
 	#loop over model lists mi
 	for (my $mi=0; $mi< scalar(@{$model_lists}); $mi++){
 		#loop over theta list ci
@@ -484,7 +484,7 @@ sub create_theta_variant_models
 			my $optcount = scalar(@{$theta_list->[$ci]->{$thetaname}}); #ref of array of values
 			for (my $op=1; $op < $optcount; $op++){
 				#for each option *in addition to* the first required one in the option list, make a copy of the
-				#mcount first models in list mi at the start of this iteration. push copies to 
+				#mcount first models in list mi at the start of this iteration. push copies to
 				#model_list mi, write_copy is false, output_same_directory true
 				for (my $i=0; $i< $mcount; $i++){
 					my $newname = get_modified_filename(model => $model_lists->[$mi]->[$i],
@@ -497,7 +497,7 @@ sub create_theta_variant_models
 					modify_model_theta(model => $model_lists->[$mi]->[-1],
 									   theta => $thetaname,
 									   init => $theta_list->[$ci]->{$thetaname}->[$op]);
-				}				
+				}
 			}
 			#now we only have the first option in list to set in original models
 			my $op = 0;
@@ -561,7 +561,7 @@ sub get_modified_filename
 	#continue with record option variant
 
 
-	#remove all risky signs from option: dots, equal, parentheses, space , comma 
+	#remove all risky signs from option: dots, equal, parentheses, space , comma
 	#replace with underscore
 	$option =~ s/\./_/g;
 	$option =~ s/=/_/g;
@@ -569,7 +569,7 @@ sub get_modified_filename
 	$option =~ s/\)/_/g;
 	$option =~ s/\s+/_/g;
 	$option =~ s/,/_/g;
-	
+
 	return $basename.".$option.".$extension;
 
 
@@ -634,7 +634,7 @@ sub modelfit_setup
 
 	if (scalar(@{$self->record_change_list})>0){
 		#model_lists is modified, extended with copies, write_copy false
-		create_record_variant_models(model_lists => $model_lists, 
+		create_record_variant_models(model_lists => $model_lists,
 									 change_list => $self->record_change_list);
 		#TODO make subroutine for this
 		my %rechash;
@@ -652,7 +652,7 @@ sub modelfit_setup
 	}
 	if (scalar(@{$self->theta_change_list})>0){
 		#model_lists is modified, extended with copies, write_copy false
-		create_theta_variant_models(model_lists => $model_lists, 
+		create_theta_variant_models(model_lists => $model_lists,
 									theta_list => $self->theta_change_list);
 		#TODO make subroutine for this
 		for (my $ci=0; $ci < scalar(@{$self->theta_change_list}); $ci++){
@@ -671,7 +671,7 @@ sub modelfit_setup
 		#model list is modified (file names changed) and extended
 		push(@{$self->settings_header},'nm.version');
 		create_nonmem_alt_models(model_lists => $model_lists,
-								 alt_nonmem => $self->alt_nonmem, 
+								 alt_nonmem => $self->alt_nonmem,
 								 nm_version => $self->nm_version);
 	}
 
@@ -694,14 +694,14 @@ sub modelfit_setup
             if (not $self->copy_data) {
                 if (not $model_lists->[$j]->[$i]->copy_data_setting_ok(copy_data => $self->copy_data)){
                     croak("Cannot set -no-copy_data, absolute data file path is too long.");
-                } 
+                }
                 $model_lists->[$j]->[$i]->relative_data_path(0);
             }
 		}
 	}
 
 	$self->tools([]) unless (defined $self->tools());
-	
+
 	my @nonmems = ($self->nm_version);
 	push(@nonmems,@{$self->alt_nonmem});
 	for (my $i=0; $i< scalar(@nonmems); $i++){
@@ -722,15 +722,15 @@ sub modelfit_setup
 			}
 
 			#name modelfit dir after nm-version
-			my $evaluation = 
+			my $evaluation =
 				tool::modelfit ->new( %{common_options::restore_options(@common_options::tool_options)},
 									  nm_version => $nonmems[$i],
 									  models		 => $model_lists->[$offset + $j],
 									  base_directory   => $self->directory,
-									  raw_results_file => [$self->raw_results_file->[$j]], 
+									  raw_results_file => [$self->raw_results_file->[$j]],
 									  raw_results_append => ($i > 0), #when writing rawres file
 									  directory             => $dir,
-									  _raw_results_callback => 
+									  _raw_results_callback =>
 									  $self->_modelfit_raw_results_callback(model_names => \@model_names,
 																			offset => scalar(@model_names) * $i,
 																			settings_header => $self->settings_header,
@@ -757,7 +757,7 @@ sub modelfit_analyze
 	my $model_number = $parm{'model_number'};
 
 	if (defined $self->tools){
-		for (my $i=0; $i< scalar(@{$self->raw_results_file}); $i++){ 
+		for (my $i=0; $i< scalar(@{$self->raw_results_file}); $i++){
 			if (defined $self->tools()->[$i]){
 				push(@{$self->full_rawres_headers},$self->tools()->[$i]->raw_results_header);
 			}
@@ -807,7 +807,7 @@ sub _modelfit_raw_results_callback
 			my $nameline = $row->[0];
 			my @oldrow = @{$row};
 			#insert settings after model name
-			$row = [$oldrow[0], @{$model_names->[$nameline-1]}, @oldrow[1 .. $#oldrow]]; 
+			$row = [$oldrow[0], @{$model_names->[$nameline-1]}, @oldrow[1 .. $#oldrow]];
 			if ($replicates > 1){
 				my $modulo = $nameline % $base; #modulo division
 				push(@{$newarr[$modulo - 1]}, [$oldrow[0], @{$model_names->[$nameline-1]}, @oldrow[1 .. $#oldrow]]);
@@ -827,7 +827,7 @@ sub _modelfit_raw_results_callback
                 for my $row (@{$self->_reference_raw_results}) {
                     my $nameline = $row->[0];
                     my @oldrow = @$row;
-			        my $new_row = [ $model_index, utils::file::get_file_stem($self->reference_lst->[$ref_index - 1]), ("ref$ref_index") x (scalar(@{$model_names->[$nameline - 1]}) - 1), @oldrow[1 .. $#oldrow] ]; 
+			        my $new_row = [ $model_index, utils::file::get_file_stem($self->reference_lst->[$ref_index - 1]), ("ref$ref_index") x (scalar(@{$model_names->[$nameline - 1]}) - 1), @oldrow[1 .. $#oldrow] ];
                     $ref_index++;
                     $model_index--;
                     unshift @{$modelfit->raw_results}, $new_row;
@@ -856,7 +856,7 @@ sub create_R_plots_code{
 	my $subprob_est_index;
 	my $subprob_cov_index;
 	my $ofv_index;
-	for (my $i=0; $i< scalar(@{$self->raw_results_file}); $i++){ 
+	for (my $i=0; $i< scalar(@{$self->raw_results_file}); $i++){
 		my @cols=();
 		my $paramcount = 0;
 		my $labelref = $self->models->[$i]->problems->[0]->get_estimated_attributes(parameter => 'all',

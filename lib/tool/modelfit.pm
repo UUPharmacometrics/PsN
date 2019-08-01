@@ -74,7 +74,7 @@ has 'any_nonparametric_step' => ( is => 'rw', isa => 'Bool', default => 0 );
     #   use lib qw(path to PsN installation/lib);
     #   use tool::modelfit;
     #   use model;
-    #   
+    #
     #   my $model = model -> new( filename => 'run1.mod' );
     #   my $modelfit = tool::modelfit -> new( models => [$model] );
     #   my %results = %{$modelfit -> run};
@@ -105,14 +105,14 @@ has 'any_nonparametric_step' => ( is => 'rw', isa => 'Bool', default => 0 );
     #   # ignore missing data and (especially) output files
     #   my $model = model -> new( filename => $modelfile,
     #                             ignore_missing_files => 1 );
-    #   
-    #   
+    #
+    #
     #   # Create the bootstrap data sets. The default name for each
     #   # new resampled data file will be bs###.dta, where ### is a
     #   # number from 1 to $samples.
     #   my ( $dataref, $incl_ind_ref, $incl_keys_ref ) =
     #       $data -> bootstrap ( samples => $samples );
-    #   
+    #
     #   # Save the resampled ID numbers in a file, one row for each
     #   # bootstrap data set
     #   open ( LOG, ">$boot_sample_file" );
@@ -146,7 +146,7 @@ has 'any_nonparametric_step' => ( is => 'rw', isa => 'Bool', default => 0 );
     #   # We'll save the OFV plus the theta, omega and sigma estimates
     #   # for each run in a file.
     #   open( RESULT, ">$boot_results_file" );
-    # 
+    #
     #   for ( my $i = 1; $i <= $samples; $i++ ) {
     #     my $bs_out = output -> new( filename => 'bs'.$i.'.lst' );
     #     my @ofv    = @{$bs_out -> ofv};
@@ -162,7 +162,7 @@ has 'any_nonparametric_step' => ( is => 'rw', isa => 'Bool', default => 0 );
     #     push( @print_strings, @{$sigmas[0][0]} );
     #     print RESULT join( ';', @print_strings ),"\n";
     #   }
-    #   
+    #
     #   close( RESULT );
     #
     #   # We're done!
@@ -173,9 +173,9 @@ has 'any_nonparametric_step' => ( is => 'rw', isa => 'Bool', default => 0 );
     #   use model;
     #
     #   my $model_obj = model -> new ( filename => 'run1.mod' );
-    #   
+    #
     #   my $modelfit_obj = tool::modelfit -> new ( models => [$model_obj] );
-    #   
+    #
     #   my $output_obj = $modelfit_obj -> run;
 #end synopsis
 
@@ -190,7 +190,7 @@ sub BUILD
 	my $self = shift;
 
 	# Usage:
-	# 
+	#
 	#   $modelfit_object = tool::modelfit -> new( models  => [$model_object],
 	#                                               retries => 5 );
 	#
@@ -374,9 +374,9 @@ sub run
 	}
 
 	my $threads = $self->threads;
-	$threads = $#models + 1 if ($threads > $#models + 1); 
+	$threads = $#models + 1 if ($threads > $#models + 1);
 
-	# print starting messages 
+	# print starting messages
 	my $message;
 	if ($self->resume){
 		my $count_not_done=0;
@@ -393,7 +393,7 @@ sub run
 		$message = 'Starting ' . scalar(@models) . ' NONMEM executions. '. $threads .' in parallel.'."\n";
 	}
 	ui -> print( category => 'all',
-				 message  => $message ) 
+				 message  => $message )
 		unless ($self->parent_threads > 1);
 	my $verbose_header = sprintf("%10s%18s%12s%30s",
 								 'Run number','Model name','OFV','Covariance step successful');
@@ -436,15 +436,15 @@ sub run
 
 	while ((scalar(@queue) > 0) or (scalar keys %queue_map > 0)) {
 		if ((scalar(@queue) > 0) and (scalar keys %queue_map < $threads)) {
-			#we may start a new job here 
+			#we may start a new job here
 			# This is where we initiate a new job:
-			
+
 			my $run = shift(@queue);
 			trace(tool => 'modelfit', message => "Prepare to start the next job in the run queue", level => 2);
-			
+
 			# check for no run conditions. (e.g. job already run)
-			
-			if ($self->models->[$run]->is_run and $self->resume) { 
+
+			if ($self->models->[$run]->is_run and $self->resume) {
 
 				#we have output in m1 or model's home directory. Ignore NM_run
 				my ($raw_results_row, $nonp_row) = $self->create_raw_results_rows(max_hash => $self->max_hash,
@@ -452,7 +452,7 @@ sub run
 																				  model_number => $run + 1,
 																				  raw_line_structure => $self->raw_line_structure
 					);
-				
+
 				$self->raw_results([]) unless defined $self->raw_results;
 				$self->raw_nonp_results([]) unless defined $self->raw_nonp_results;
 
@@ -464,11 +464,11 @@ sub run
 
 			# delay code (to avoid overload of new processes)
 			make_delay(threads => $threads,
-					   run => $run, 
+					   run => $run,
 					   min_fork_delay => $PsN::config -> {'_'} -> {'min_fork_delay'}, #can be undef
 					   max_fork_delay => $PsN::config -> {'_'} -> {'max_fork_delay'});
 
-			# Call to run_nonmem 
+			# Call to run_nonmem
 
 			# This will stop nasty prints from model, output and data
 			# which are set to print for the scm.
@@ -508,12 +508,12 @@ sub run
 						$check_verbatim = 1;
 					}
 				}
-				($queue_info{$run}{'candidate_model'},$queue_info{$run}{'tries'}) = 
-					$self -> copy_model_and_input(model => $models[$run], 
-												  source => '../', 
+				($queue_info{$run}{'candidate_model'},$queue_info{$run}{'tries'}) =
+					$self -> copy_model_and_input(model => $models[$run],
+												  source => '../',
 												  run_nmtran => $run_nmtran,
 												  check_verbatim => $check_verbatim);
-				
+
 				$queue_info{$run}{'model'} = $models[$run];
 				$queue_info{$run}{'have_accepted_run'} = 0;
 				$queue_info{$run}{'crashes'} = 0;
@@ -523,7 +523,7 @@ sub run
 				$queue_info{$run}{'raw_nonp_results'} = [];
 
 
-				
+
 				# printing progress
 
 				# We don't want to print all starting models if they are
@@ -557,7 +557,7 @@ sub run
 				trace(tool => 'modelfit', message => "Did not have to copy model and input, this is a retry.", level => 2);
 			}
 
-			my %options_hash = %{$self->_get_run_options(run_id => $run)}; 
+			my %options_hash = %{$self->_get_run_options(run_id => $run)};
 
 			$self->run_nonmem(run_no => $run,
 								  nm_version      => $options_hash{'nm_version'},
@@ -574,7 +574,7 @@ sub run
 
 			next; #go back to main while loop to check if there is another job that can be started
 		}
-	
+
 
 		# We could not start a new job, so we look for jobs that have been started and
 		# finished. If we find one, we set $pid to that job.
@@ -589,21 +589,21 @@ sub run
 			$firstpid=1;
 			foreach my $check_pid (sort {$queue_map{$a} <=> $queue_map{$b} } keys %queue_map) {
 				if ($check_pid =~ /^rerun_/) {
-					
+
 					# A pid that starts with "rerun" is a rerun and is always
 					# "finished".
-					
+
 					$pid = $check_pid;
 					last;
 				} elsif ($check_pid =~ /^fail_/) {
-					
+
 					# A pid fail_ is a failed grid submit and is always
 					# "finished".
-					
+
 					$pid = $check_pid;
 					last;
 				}
-				
+
 				# Check the job status
 				my $nonmemrun = $queue_info{$queue_map{$check_pid}}{'nonmemrun'};
 				$pid = $nonmemrun->monitor;
@@ -617,17 +617,17 @@ sub run
 
 			if (not $pid) {
 
-				# No process has finished. 
+				# No process has finished.
 				# we cannot start another job
-				# sleep to make polling less demanding					
+				# sleep to make polling less demanding
 				if (defined $PsN::config->{'_'}->{'job_polling_interval'} and $PsN::config->{'_'}->{'job_polling_interval'} > 0) {
 					sleep($PsN::config->{'_'}->{'job_polling_interval'});
 				} else {
 					sleep(1);
 				}
 				next; # Return to polling for finished jobs.
-			
-			} else { 
+
+			} else {
 
 				# Here, a process has finished and we check for restarts.
 
@@ -644,7 +644,7 @@ sub run
 										"Changed to directory $work_dir of this process to check results.", level => 2);
 
 				#here we try to make sure files are synced before we start processing output
-				#if a missing psn.lst is due to NMtran or compilation failure we should see a file 
+				#if a missing psn.lst is due to NMtran or compilation failure we should see a file
 				#$self->general_error_file or $self->nmtran_error_file in the directory. Then do not wait, continue directly with
 				#storing failure messages. On the other hand, if we do not see psn.lst due to
 				#a file sync delay, there will be no $self->general_error_file. Wait for a long time
@@ -694,8 +694,8 @@ sub run
 					delete $options_hash{$key} unless defined $options_hash{$key};
 				}
 
-				#careful here, option maxevals is set on commandline, but model->maxeval() 
-				#without s is 
+				#careful here, option maxevals is set on commandline, but model->maxeval()
+				#without s is
 				#array of values actually set in modelfile
 				my $do_restart = $self -> restart_needed(%options_hash,
 														  queue_info  => $queue_info{$run},
@@ -719,26 +719,26 @@ sub run
 				if ($do_restart) {
 					unshift(@queue, $run);
 					delete($queue_map{$pid});
-					chdir('..');	    
+					chdir('..');
 					trace(tool => 'modelfit', message => "Had to do restart, put job in queue.\nChange directory one level up ", level => 2);
 				} else {
 					trace(tool => 'modelfit', message => "did not have to restart this model", level => 2);
-					$self->select_best_model(run_no => $run, 
+					$self->select_best_model(run_no => $run,
 											 queue_info_ref => $queue_info{$run});
-					
+
 					# Print finishing messages
-					
+
 					if( scalar @queue == 0 ) {
 						if( $all_jobs_started == 0 ) {
 
-							ui -> print( category => 'all', message => "Waiting for all NONMEM runs to finish:", newline => 1 ) 
+							ui -> print( category => 'all', message => "Waiting for all NONMEM runs to finish:", newline => 1 )
 								if ($self->parent_threads <= 1 and $threads > 1 and not $self->verbose);
-							
+
 							$all_jobs_started = 1;
-						} 
-						
+						}
+
 						my $modulus = (($#models+1) <= 10) ? 1 : (($#models+1) / 10)+1;
-						
+
 						if ( $run % $modulus == 0 or $run == 0 or $run == $#models ) {
 							ui -> print( category => 'all',
 										 message  => 'F:'.($run+1).' .. ',
@@ -752,17 +752,17 @@ sub run
 					trace(tool=>'modelfit', message => "changed directory one level up", level => 2);
 
 					# cleaning and done file
-					
+
 					if( $self->clean >= 3 ){
 						unlink( <$work_dir/worker*/*> );
 						my @removedir = <$work_dir/worker*>;
 						foreach my $remdir (@removedir){
 							rmdir ($remdir) if (-d $remdir);
 						}
-						unless ((-e $work_dir.'/'.$self->general_error_file) or (-e $work_dir.'/'.$self->nmtran_error_file)){ 
-							
+						unless ((-e $work_dir.'/'.$self->general_error_file) or (-e $work_dir.'/'.$self->nmtran_error_file)){
+
 							#leave if error message,
-							unlink( <$work_dir/*> )  ; 
+							unlink( <$work_dir/*> )  ;
 							unless( rmdir( $work_dir ) ){ debugmessage(3,"Unable to remove $work_dir directory: $! ." )};
 							trace(tool => 'modelfit', message => "clean level is >=3, removed $work_dir", level => 2);
 						}
@@ -773,7 +773,7 @@ sub run
 
 					$self -> print_finish_message( candidate_model => $candidate_model,
 												   run => $run );
-					
+
 					if( $threads <= 1 ) {
 						$self->prepared_models([]) unless defined $self->prepared_models;
 						push( @{$self->prepared_models->[$run]{'own'}}, $candidate_model );
@@ -786,16 +786,16 @@ sub run
 
 			}
 			#If we get this far then we found a $pid so just continue, this loop will break now
-		} # end while (not $pid). 
+		} # end while (not $pid).
 
 	} #end while loop over jobs left to start or jobs left running
 	#  Print finish message
 
-	ui -> print( category => 'all', message  => " done",newline => 1 ) 
+	ui -> print( category => 'all', message  => " done",newline => 1 )
 		if( $self->parent_threads <= 1 and $threads > 1 and not $self->verbose);
-	
+
 		# local execution
-	
+
 	$self->prepare_raw_results();
 
 	$self->print_raw_results();
@@ -805,7 +805,7 @@ sub run
 	}
 	trace(tool => 'modelfit', message => "changed directory to $cwd", level => 2);
 
-    # clean $self -> directory 
+    # clean $self -> directory
 	if( $self->clean >= 2 ){
 		unlink($self->directory . '/model_NMrun_translation.txt');
 		unlink($self->directory . '/modelfit.log');
@@ -819,7 +819,7 @@ sub run
 		}
 		my $keep_this=0;
 		foreach my $work_dir (<$dir/NM_run*>){
-			if ((-e $work_dir.'/'.$self->general_error_file) or (-e $work_dir.'/'.$self->nmtran_error_file)){ 
+			if ((-e $work_dir.'/'.$self->general_error_file) or (-e $work_dir.'/'.$self->nmtran_error_file)){
 				#leave if error message,
 				$keep_this=1;
 			}else{
@@ -838,7 +838,7 @@ sub run
 	if ($do_abort){
 		croak("abort_on_fail is set and ".$failed_run_message.". Aborting");
 	}
-	
+
 	return \@results;
 }
 
@@ -853,7 +853,7 @@ sub make_delay{
 	my $run = $parm{'run'};
 	my $min_fork_delay = $parm{'min_fork_delay'}; #100000
 	my $max_fork_delay = $parm{'max_fork_delay'}; #1
-	
+
 	if ($threads > 1) {
 		if ($run > 0) {
 			my $start_sleep = Time::HiRes::time();
@@ -872,7 +872,7 @@ sub make_delay{
 				$max_sleep = 0;
 			}
 
-			while ((not(-e 'NM_run' . ($run) . '/psn.lst')) and 
+			while ((not(-e 'NM_run' . ($run) . '/psn.lst')) and
 				   (Time::HiRes::time() - $start_sleep) < $max_sleep) {
 				Time::HiRes::usleep($min_sleep);
 			}
@@ -896,7 +896,7 @@ sub select_best_retry
 		croak("accepted_ofv_difference must not be negative, but is $accepted_ofv_difference");
 	}
 
-	# Rule for selecting best model: 
+	# Rule for selecting best model:
 	# pick global best ofv, except  except accepted_ofv_difference preference for picky if reached OR
 	# otherwise accepted_ofv_difference preference for minimization successful if found
 	# If no ofv value is produced it will be the basic model.
@@ -925,7 +925,7 @@ sub select_best_retry
 					 and $run_results -> [$i] -> {'ofv'} < $best_picky_ofv){
 					$best_picky_ofv = $run_results -> [$i] -> {'ofv'};
 					$best_picky_index = $i;
-				} 
+				}
 			}
 		}
 	}
@@ -964,7 +964,7 @@ sub select_best_model
 
 	# Since we have reruns with pertubation and now also forced (or
 	# automatic) pertubation the final model is not equal to the
-	# original model. 
+	# original model.
 
 
 	my $run_results = $queue_info_ref -> {'run_results'};
@@ -1014,9 +1014,9 @@ sub select_best_model
 				my $filename = 'psn'.$ext;
 				my $use_name = get_retry_name( filename => $filename,
 											   retry => $selected-1);
-				
+
 				# move files to final files in NM_run, to be clear about which one was selected
-				mv( $use_name, $filename ) if (-e $use_name); 
+				mv( $use_name, $filename ) if (-e $use_name);
 			}
 
 			if ( $self->clean >= 1 and $PsN::warnings_enabled == 0 ) {
@@ -1028,10 +1028,10 @@ sub select_best_model
 						sleep(3);
 					}
 				}
-				
+
 				unlink 'nonmem', 'nonmem5','nonmem6','nonmem7',
-				'nonmem5_adaptive','nonmem6_adaptive','nonmem7_adaptive', 
-				'nonmem_mpi.exe','nonmem_mpi','NONMEM_MPI.exe','FDATA', 'FREPORT', 'FSUBS', 'FSUBS.f','FSUBS.f90', 
+				'nonmem5_adaptive','nonmem6_adaptive','nonmem7_adaptive',
+				'nonmem_mpi.exe','nonmem_mpi','NONMEM_MPI.exe','FDATA', 'FREPORT', 'FSUBS', 'FSUBS.f','FSUBS.f90',
 				'FSUBS.for', 'LINK.LNK', 'FSTREAM', 'FCON.orig', 'FLIB', 'FCON',#'PRDERR', save for error check
 				'nmprd4p.mod','nul',
 				'fsubs','fsubs.f','fsubs.for','fsubs.f90','FSUBS2','FSUBS_MU.F90';
@@ -1107,7 +1107,7 @@ sub get_retry_name
 		$crashstring = "-step$crash";
 	}
 	$filename = "$base-$retry".$crashstring.$msftype.$extension;
-	
+
 	return $filename;
 }
 
@@ -1127,7 +1127,7 @@ sub set_msfo_to_msfi
 
 	#this assumes prob index 0, record index 0
 	my $arr = $queue_info->{'model'}->problems->[0]->get_msfo_filenames;
-	
+
 	my $filename = $arr->[0] if (scalar(@{$arr})>0);
 	$filename = $base_msfo_name if (defined $base_msfo_name);
 	unless (defined $filename) {
@@ -1138,7 +1138,7 @@ sub set_msfo_to_msfi
 
 	my $msfo = get_retry_name('filename' => $filename,
 							  'retry' => $retry);
-	
+
 	my $msfi;
 
 	if ($candidate_model->outputs->[0]->msfo_has_terminated) {
@@ -1158,7 +1158,7 @@ sub set_msfo_to_msfi
 	}
 
 	$candidate_model->set_first_problem_msfi(msfiname => $msfi);
-	
+
 	$candidate_model->_write;
 }
 
@@ -1182,7 +1182,7 @@ sub reset_msfo
 			$candidate_model -> problems->[0] -> $param( Storable::dclone( $basic_model -> problems->[0]-> $param ) );
 		}
 		$model_modified = 1;
-	}						 
+	}
 
 	my $filename = $basic_model -> problems->[0]-> get_msfo_filenames->[0];
 	$filename = $base_msfo_name if (defined $base_msfo_name);
@@ -1258,7 +1258,7 @@ sub prepare_raw_results
 	my %param_names;
 	my @params = ( 'theta', 'omega', 'sigma' );
 	foreach my $param ( @params ) {
-		#set header from first model, will be errors if labels different order in other models 
+		#set header from first model, will be errors if labels different order in other models
 		my $labels = $self -> models -> [0] -> labels( parameter_type => $param );
 		#we just assume single $PROBLEM here
 		$param_names{$param} = $labels -> [0] if ( defined $labels );
@@ -1307,7 +1307,7 @@ sub prepare_raw_results
 				}
 				$success = 1;
 				last;
-			} 
+			}
 		}
 		unless( $success ){
 			push( @new_header, $name ) unless ((defined $max_hash{$name}) and $max_hash{$name}== 0); #only print nburn_set if saem/bayes
@@ -1367,12 +1367,12 @@ sub print_raw_results
 
     my $append = $self->raw_results_append ? '>>' : '>';
     open( RRES, $append.$dir.$file );
-    
+
     if( (not $self->raw_results_append) and $PsN::output_header ){
       #To avoid problems if cells contain commas
       print RRES join(",",map {s/\"/\"\"/g; '"'.$_.'"'} @{$self->raw_results_header} ),"\n";
     }
-    
+
     for ( my $i = 0; $i < scalar @{$self->raw_results}; $i++ ) {
       my @result_array = @{$self->raw_results->[$i]};
       map( $_ = defined $_ ? $_ : $PsN::out_miss_data, @result_array );
@@ -1382,7 +1382,7 @@ sub print_raw_results
   }
 
   ## print raw_nonp_results
-  
+
   if( defined $self->raw_nonp_results and $self->any_nonparametric_step) {
     my ($npdir,$npfile) = OSspecific::absolute_path( $self->directory,
 						 $self->raw_nonp_file->[0] );
@@ -1394,7 +1394,7 @@ sub print_raw_results
 			$self->raw_nonp_results_header([]) unless defined $self->raw_nonp_results_header;
       print RRES join(",",map {s/\"/\"\"/g; '"'.$_.'"'} @{$self->raw_nonp_results_header} ),"\n";
     }
-    
+
     for ( my $i = 0; $i < scalar @{$self->raw_nonp_results}; $i++ ) {
       my @result_array;
       if ( defined $self->raw_nonp_results->[$i] ) {
@@ -1408,7 +1408,7 @@ sub print_raw_results
 
   ## raw_line_structure should be printed to disk here for fast
   ## resumes. In the future
-  
+
   $self->raw_line_structure->write( $dir.'raw_results_structure' );
   trace(tool => 'modelfit', message => "Printed file $raw_file", level => 1);
 }
@@ -1435,14 +1435,14 @@ sub _get_run_options
 		'nm_version' => undef );
 
 	foreach my $option ( keys %options_hash ) {
-    
+
     # This loops allows run specific parameters to be
     # specified. We check that the parameter given is an
     # array we take out one element of that array and pass it
     # as a run specific parameter. If the option is specified
     # as being an "ARRAY" type in the has above, but there are
     # no subarrays, we send the entire array as an parameter.
-    
+
 		if ( ref( $self -> {$option} ) eq 'ARRAY' ) {
 			if ( ref( $self -> {$option} -> [$run_id] ) ne 'ARRAY' and $options_hash{$option} eq 'ARRAY' ) {
 				$options_hash{$option} = $self -> {$option};
@@ -1482,14 +1482,14 @@ sub run_nonmem
 	if (-e $self->nmtran_error_file) {
 		#give fake pid and go directly to restart needed. Do not copy or move anything
 		$queue_map->{'rerun_'.$run_no} = $run_no; #Fake pid
-		
+
 		trace(tool => 'modelfit',
             message => "nmtran error file exists, syntax check failed. Give fake pid of ".
             'rerun_'.$run_no.' and do not run anything.', level => 1);
 		return;
 
 	} elsif (-e 'stats-runs.csv') {
-		#possible reasons: 
+		#possible reasons:
 		#a) Restart after -clean > 1. Then we do not know the true restart number of psn.lst
 		#b) Restart after completed run -clean <= 1. Best retry is copied to psn.lst, don't know which.
 
@@ -1500,17 +1500,17 @@ sub run_nonmem
             message => "stats-runs.csv exists, this is a rerun. Give fake pid of ".
             'rerun_'.$run_no.' and do not run anything.', level => 1);
 		return;
-	
+
 	} elsif (-e 'psn.lst') {
-		#possible reason 
-		#Restart after main PsN process killed before sge/slurm NONMEM run finished. 
-		
-		# Then check for ($tries+1).lst. If it exists, then *move* 
+		#possible reason
+		#Restart after main PsN process killed before sge/slurm NONMEM run finished.
+
+		# Then check for ($tries+1).lst. If it exists, then *move*
 		#psn.mod, psn.lst etc to psn-prevrun.lst etc
 		# to save it for later and continue to next if -clause.
 		# If $tries+1 does not exist then do not run anything, want to go directly to restart needed.
 		# Create a fake pid and return, do not copy or move files.
-		
+
 		if( -e 'psn-' . ( $tries + 1 ) . '.lst'){
 			foreach my $filename (@{$candidate_model->output_files}, 'psn.' . $self->modext, $self->base_msfo_name) {
 				next unless (defined $filename);
@@ -1552,12 +1552,12 @@ sub run_nonmem
 			return;
 		}
 	}
-	
+
 	# We do not expect any values of rerun lower than 1 here. (a bug otherwise...)
 	if (not -e 'psn-' . ($tries + 1) . '.lst' ) {
 		#missing psn-1.lst etc
-		
-		# Execution step 
+
+		# Execution step
 		my $nonmem_run;
 
 		if ($self->run_local) {
@@ -1633,12 +1633,12 @@ sub run_nonmem
 
 	} else {
 		#psn-(tries+1).lst exists
-		
+
 		# we want to recheck the
 		# output files for errors. Therefore we put a fake entry in
-		# queue_map to trigger "restart_needed()". 
+		# queue_map to trigger "restart_needed()".
 
-		#Make it look like the retry has just been run, and not yet 
+		#Make it look like the retry has just been run, and not yet
 		#moved to numbered retry files in restart_needed
 
 		# TODO update move_retry_files and use it here?
@@ -1646,12 +1646,12 @@ sub run_nonmem
 		foreach my $filename (@{$candidate_model->output_files}, 'psn.' . $self->modext, $self->base_msfo_name) {
 			next unless (defined $filename);
 
-			my $retry_name = get_retry_name(filename => $filename, 
+			my $retry_name = get_retry_name(filename => $filename,
 											retry => $tries);
 			mv($retry_name, $filename) if (-e $retry_name);
 		}
 
-		my $fname = get_retry_name(filename => 'psn.lst', 
+		my $fname = get_retry_name(filename => 'psn.lst',
 								   retry => $tries);
 		$queue_map->{'rerun_' . $run_no} = $run_no; #Fake pid
 		trace(tool => 'modelfit',
@@ -1695,7 +1695,7 @@ sub diagnose_lst_errors
 			$failure = 'There was an error when running nmfe, NMtran could not be initiated (the NMtran output file FDATA is missing)';
 			$failure_mess = "\nThere was an error when running nmfe, NMtran could not be initiated for model ".($run_no+1).' ';
 			$failure_mess .= ' - check that nmfe-related options are correct, if used (-nmfe_options, -parafile...)';
-			
+
 		} else{
 			$failure = 'NMtran could not be initiated (the NMtran output file FDATA is missing)';
 			$failure_mess = "\nNMtran could not be initiated (the NMtran output file FDATA is missing). There is no output for model ".($run_no+1).'.';
@@ -1731,7 +1731,7 @@ sub diagnose_lst_errors
 		if (($run_no < 2) and (-e 'FMSG' or -e $nmtran_error_file)){
 			#if low run number then add nmtran messages to failure_mess, which will be printed to screen later
 			#do not do this for high run numbers (we do not want 100 prints for e.g. a bootstrap)
-			my $fname = 'FMSG'; 
+			my $fname = 'FMSG';
 			$fname = $nmtran_error_file if (-e $nmtran_error_file);
 			open( FILE, "$fname" ) ||	debugmessage(3," Could not open $fname for reading" );
 			my @lines = <FILE>;
@@ -1830,7 +1830,7 @@ sub passed_picky
 						 /0S MATRIX ALGORITHMICALLY SINGULAR/ ) {
 						$passed_picky = 0;
 						last;
-						
+
 					}
 				}
 			}
@@ -1866,19 +1866,19 @@ sub store_results_old_run
 	my ($raw_results_row, $nonp_row);
 	#problem here if got rid of theta omega sigma as part of handle maxevals.
 	#candidate model has no labels in that case, send label_model along
-	($raw_results_row, $nonp_row) = 
+	($raw_results_row, $nonp_row) =
 		$self -> create_raw_results_rows( max_hash => $self->max_hash,
 										  model => $candidate_model,
 										  label_model => $model,
 										  model_number => $run_no + 1,
 										  raw_line_structure => $self->raw_line_structure);
-	
+
 	if (-e 'psn.lst'){
 		my $output_file = $candidate_model -> outputs -> [0];
-		#is this needed? 
-		$output_file -> _read_problems;    
+		#is this needed?
+		$output_file -> _read_problems;
 		trace(tool => 'modelfit', message => "parsed NONMEM output file ".$output_file->filename(), level => 2);
-		
+
 		my $evaluation_probnum = $output_file->get_estimation_evaluation_problem_number(); #if neg then no est step run
 
 		$queue_info_ref -> {'raw_results'} -> [$tries] = $raw_results_row;
@@ -1907,9 +1907,9 @@ sub store_results_old_run
 
 	} else {
 		trace(tool => 'modelfit', message => "psn.lst does not exist. Previous run must have failed", level => 2);
-		#we do not have any psn.lst. Cannot happen if nmfe 
+		#we do not have any psn.lst. Cannot happen if nmfe
 		#and overtime kill by system, at least model and NMtran mess
-		my $ref = diagnose_lst_errors(missing => 1, 
+		my $ref = diagnose_lst_errors(missing => 1,
 									  run_no => $run_no,
 									  have_stats_runs => 1,
 									  modext  => $self->modext,
@@ -1939,7 +1939,7 @@ sub maxeval_exceeded
 
 	if ($output-> parsed_successfully() and (defined $output-> problems) and
 		($probnum > 0)
-		and (defined $output -> minimization_message()) and 
+		and (defined $output -> minimization_message()) and
 		(defined $output -> minimization_message()->[($probnum-1)]) and
 		(defined $output -> minimization_message()->[($probnum-1)][0])
 		){
@@ -1969,7 +1969,7 @@ sub hessian_error
 
 	if ($output-> parsed_successfully() and (defined $output-> problems) and
 		($probnum > 0 )
-		and (defined $output -> minimization_message()) and 
+		and (defined $output -> minimization_message()) and
 		(defined $output -> minimization_message()->[($probnum-1)]) and
 		(defined $output -> minimization_message()->[($probnum-1)][0])
 		){
@@ -1994,7 +1994,7 @@ sub significant_digits_accepted
 	my $try = $parm{'try'};
 
 	croak("input error try $try in significant_digits_accepted") unless ($try >= 0);
-	croak("input error signficant_digits_accept $significant_digits_accept in significant_digits_accepted") if 
+	croak("input error signficant_digits_accept $significant_digits_accept in significant_digits_accepted") if
 		(defined $significant_digits_accept and ($significant_digits_accept < 0));
 
 	my $accept = 0;
@@ -2094,7 +2094,7 @@ sub move_retry_files
 		}
 		mv( $old_name, $new_name );
 		$stopmess .= "$old_name to $new_name, ";
-		
+
 	}
 	my $old_name = $nmqual;
 	if (defined $crash){
@@ -2103,7 +2103,7 @@ sub move_retry_files
 									retry => $retry);
 	}
 	if (-e $old_name){
-		my $new_name = get_retry_name( filename => $nmqual, 
+		my $new_name = get_retry_name( filename => $nmqual,
 									   retry => $retry);
 		mv( $old_name, $new_name );
 		$stopmess .= "$old_name to $new_name, ";
@@ -2180,7 +2180,7 @@ sub retries_decide_what_to_do
 			last;
 		}
 		if (($try >= $max_retries) and ($try >=  $min_retries)){
-			#not allowed to do more retries 
+			#not allowed to do more retries
 			$reason = 'reached max_retries';
 			last;
 		}
@@ -2189,7 +2189,7 @@ sub retries_decide_what_to_do
 			$reason = 'have accepted run from before and have reached min_retries';
 			last;
 		}
-		if ( ($round_error && $cut_thetas_rounding_errors) or ($hessian_error && $handle_hessian_npd) 
+		if ( ($round_error && $cut_thetas_rounding_errors) or ($hessian_error && $handle_hessian_npd)
 			 or ($maxevals_exceeded && $cut_thetas_maxevals)) {
 			$do_retry = 1;
 			$do_cut_thetas = 1;
@@ -2233,7 +2233,7 @@ sub retries_decide_what_to_do
 		if ($try <  $min_retries){
 			$do_retry = 1;
 			$do_tweak_inits = 1;
-			$reason = 'min_retries not reached'; 
+			$reason = 'min_retries not reached';
 		}
 	}
 
@@ -2301,10 +2301,10 @@ sub restart_needed
 
 
 	# -------------- Notes about automatic pertubation and retries -----------------
-  
+
 	# see documentation in common_options
 
-  
+
   # We need the trail of files to select the most appropriate at the end
   # (see move_model_and_output)
 
@@ -2344,7 +2344,7 @@ sub restart_needed
 	unless (-e 'psn.lst'){
 		trace(tool => 'modelfit',message => "no psn.lst at all, try to diagnose", level => 2);
 
-		my $ref = diagnose_lst_errors(missing => 1, 
+		my $ref = diagnose_lst_errors(missing => 1,
 									  have_stats_runs => 0,
 									  run_no => $run_no,
 									  modext  => $self->modext,
@@ -2363,7 +2363,7 @@ sub restart_needed
 								nm_major_version => $PsN::nm_major_version,
 								nm_minor_version => $PsN::nm_minor_version);
 
-			ui -> print( category => 'all', 
+			ui -> print( category => 'all',
 						 message  => $failure_mess.', doing new submit '.$queue_info_ref -> {'crashes'},
 						 newline => 1 );
 			#here we do not move retry files, since no output generated. reuse same psn.mod. assume no
@@ -2375,9 +2375,9 @@ sub restart_needed
 			$run_results -> [${$tries}] -> {'failed'} = $failure; #different texts for different causes
 			return(0); #must always return 0 unless either modified model or increased crash number
 		}
-	} 
+	}
 
-	#now we know psn.lst exists. 
+	#now we know psn.lst exists.
 	if ( -e 'psn-' . ( ${$tries} + 1 ) . '.lst' ) {
 		#should never enter here.
 		#ui -> print( category => 'all', message  => "\n\nERROR IN RESTART NEEDED\n", newline => 1);
@@ -2399,14 +2399,14 @@ sub restart_needed
 		$iterations_interrupted = $output_file->iterations_interrupted;
 		if (-e 'OUTPUT' and $output_file->could_append_OUTPUT){
 			trace(tool => 'modelfit', message => "will try append OUTPUT", level => 2);
-			my $tmp_output_file = output->new(filename => $output_file->filename, 
+			my $tmp_output_file = output->new(filename => $output_file->filename,
 											  append_nm_OUTPUT => 1);
 			$iterations_interrupted = $tmp_output_file->iterations_interrupted;
 			print "tried append output, $iterations_interrupted\n";
 		}
 	}
 
-	
+
 	($stopmess,$eta_shrinkage_name,$iwres_shrinkage_name) = move_retry_files(filenames => \@outputfilelist,
 																			 retry => ${$tries},
 																			 nm_major_version => $PsN::nm_major_version,
@@ -2420,7 +2420,7 @@ sub restart_needed
 	if ( ($maxevals > 0) and ($queue_info_ref -> {'crashes'} > 0)) {
 		#problem here if got rid of theta omega sigma as part of handle maxevals.
 		#candidate model has no labels
-		($raw_results_row, $nonp_row) = 
+		($raw_results_row, $nonp_row) =
 			$self -> create_raw_results_rows( max_hash => $self->max_hash,
 											  model => $candidate_model,
 											  label_model => $model,
@@ -2430,7 +2430,7 @@ sub restart_needed
 											  iwres_shrinkage_file => $iwres_shrinkage_name);
 
 	}else{
-		($raw_results_row, $nonp_row) = 
+		($raw_results_row, $nonp_row) =
 			$self -> create_raw_results_rows( max_hash => $self->max_hash,
 											  model => $candidate_model,
 											  model_number => $run_no + 1,
@@ -2482,7 +2482,7 @@ sub restart_needed
 	if($model_crashed){
 		#here we do have a lst-file, but perhaps is completely empty
 		#check for signs of NMtran error, compilation error.
-		
+
 		my $ref = diagnose_lst_errors(missing => 0,
 									  have_stats_runs => 0,
 									  parsed_successfully => 0,
@@ -2499,8 +2499,8 @@ sub restart_needed
 	}
 
 	my $do_crash_type_restart = 0;
-	$do_crash_type_restart = 1 if (   
-		($maxevals_exceeded and ( $maxevals > 0 ) and (not $cut_thetas_maxevals) and ($maxevals > $queue_info_ref->{'evals'})) or 
+	$do_crash_type_restart = 1 if (
+		($maxevals_exceeded and ( $maxevals > 0 ) and (not $cut_thetas_maxevals) and ($maxevals > $queue_info_ref->{'evals'})) or
 		($model_crashed and $restart_possible and ($self->handle_crashes and $queue_info_ref->{'crashes'} < $self->crash_restarts))
 		);
 
@@ -2536,7 +2536,7 @@ sub restart_needed
 				  "Total evals so far is ".$queue_info_ref -> {'evals'}."\n".
 				  "$stopmess\n"."so that intermediate run for this try will be ".
 				  "distinguished from later runs for this try.", level => 1);
-			
+
 		}
 		if( $self->handle_msfo or ($maxevals > 0)){
 			set_msfo_to_msfi( candidate_model => $candidate_model,
@@ -2549,12 +2549,12 @@ sub restart_needed
 										   crash => $queue_info_ref -> {'crashes'});
 			cp( $new_name, 'psn.'.$self->modext );
 		}
-		
+
 		$output_file -> flush;
 		return(1); # Return a one (1) to make run() rerun the model.
 
 	} #end if $do_crash_type_restart
-	
+
 	if($model_crashed){
 		ui -> print( category => 'all', message  => $failure_mess."\nNot restarting this model.",newline => 1 );
 
@@ -2568,7 +2568,7 @@ sub restart_needed
 	$queue_info_ref -> {'crashes'} = 0;
 	#reset number of evals
 	$queue_info_ref -> {'evals'}=0;
-	
+
 
 
 
@@ -2604,7 +2604,7 @@ sub restart_needed
 									  have_accepted_run => $queue_info_ref -> {'have_accepted_run'},
 									  try => ${$tries},
 									  probnum => $evaluation_probnum);
-	
+
 	my $do_this = retries_decide_what_to_do( estimation_step_run => ($evaluation_probnum > 0),
 											 minimization_successful => $run_results -> [${$tries}] -> {'minimization_successful'},
 											 local_minimum => $local_minimum,
@@ -2621,7 +2621,7 @@ sub restart_needed
 											 tweak_inits => $tweak_inits,
 											 min_retries => $self->min_retries,
 											 max_retries => $retries,
-											 try => ${$tries}, 
+											 try => ${$tries},
 											 have_accepted_run => $queue_info_ref -> {'have_accepted_run'}
 		);
 
@@ -2701,14 +2701,14 @@ sub update_crash_number {
 	my $nm_minor_version = $parm{'nm_minor_version'};
 
 	#now we could be restarting after the main PsN process has been killed, and
-	#the crashes counter has been reset. Therefore check existence of files from 
+	#the crashes counter has been reset. Therefore check existence of files from
 	#previous crashes
 	my $crash_no = $queue_info -> {'crashes'};
 	while (-e get_retry_name( filename => 'psn.'.$modext,
 							  retry => $retry,
 							  crash => $crash_no)){
 		$crash_no++;
-	}	  
+	}
 	$queue_info -> {'crashes'} = $crash_no;
 }
 
@@ -2726,7 +2726,7 @@ sub compute_iofv
 	croak "queue_info is not defined" unless defined $queue_info_ref;
 
   my $model = $queue_info_ref->{'model'};
-  
+
   if ( defined $model->iofv_modules ) {
     $model->iofv_modules->[0]->post_run_process;
   }
@@ -2844,7 +2844,7 @@ sub compute_cwres
 					open( RSCRIPT, ">compute_cwres.R" );
 					print RSCRIPT "library(xpose4)\ncompute.cwres($sdno $sim)\n";
 					close( RSCRIPT );
-	
+
 					# Execute the script
 					system( $Rexec." CMD BATCH compute_cwres.R" );
 				}
@@ -2885,7 +2885,7 @@ sub copy_model_and_input
 
 	my $tries = 0;
 	if (-e 'stats-runs.csv' and $self->add_retries) {
-		#possible reasons: 
+		#possible reasons:
 		#a) Restart after -clean > 1. Then we do not know the true restart number of psn.lst
 		#b) Restart after completed run -clean <= 1. Best retry is copied to psn.lst, don't know which.
 
@@ -2901,7 +2901,7 @@ sub copy_model_and_input
 
 		if ((-e 'psn-1.'.$self->modext ) or (-e 'psn-2.'.$self->modext)) {
 			trace(tool => 'modelfit', message => "old clean<2", level => 2);
-			
+
 			#clean 1. Data is left. Move psn.mod and psn.lst to selected retry number. #HERE
 			#use last retry as candidate model. move last retry to psn.mod and
 			# .lst, as if had just been run.
@@ -2909,7 +2909,7 @@ sub copy_model_and_input
 				mv('psn'.$ext,'psn-'.$selected_retry.$ext) if (-e 'psn'.$ext);
 			}
 			trace(tool => 'modelfit', message => "moved psn.lst etc to psn-$selected_retry.lst etc", level => 2);
-			
+
 			my $last_retry = 1;
 			while (-e 'psn-'.($last_retry+1).'.'.$self->modext) {
 				$last_retry++;
@@ -2919,7 +2919,7 @@ sub copy_model_and_input
 				mv('psn-'.$last_retry.$ext,'psn'.$ext) if (-e 'psn-'.$last_retry.$ext);
 			}
 			trace(tool => 'modelfit', message => "moved psn-$last_retry.lst to psn.lst etc", level => 2);
-			
+
 			$candidate_model = model->new(
 				outputfile                  => 'psn.lst',
 				filename                    => 'psn.'.$self->modext,
@@ -2928,10 +2928,10 @@ sub copy_model_and_input
 			);
 		} else {
 			trace(tool => 'modelfit', message => "old clean>1", level => 2);
-			#clean 2. 
+			#clean 2.
 			#must copy input again
 			$tries = $selected_retry-1;
-			
+
 			if ($model->tbs or $model->dtbs){
 				$self->write_tbs_files(thetanum => $model->tbs_thetanum());
 			}
@@ -2940,11 +2940,11 @@ sub copy_model_and_input
 				#this does not include data files
 				# $file is a ref to an array with two elements, the first is a
 				# path, the second is a name.
-				
+
 				cp( $file->[0] . $file -> [1], $file -> [1] ); #FIXME symlink if on linux?
-				
+
 			}
-			
+
 			#it is an error if data is missing here, but we ignore it and let
 			#nonmem crash due to missing data, will be handled better that way than having croak in data.pm
 			#TODO mark the model as failed even before NMrun if data is missing, so do not waste nm call
@@ -2953,14 +2953,14 @@ sub copy_model_and_input
 											  filename                    => 'psn.'.$self->modext,
 											  ignore_missing_output_files => 1,
 											  ignore_missing_data => 1);
-			
+
 			unlink 'psn.'.$self->modext;
-			
+
 			$candidate_model -> shrinkage_modules( $model -> shrinkage_modules );
 			$candidate_model->_write;
 
 		}
-		
+
 	}elsif (-e 'stats-runs.csv'){
 		trace(tool => 'modelfit', message => "Did not copy anything to current directory".
 								" because file stats-runs.csv already here. Must be a rerun.", level => 2);
@@ -2969,16 +2969,16 @@ sub copy_model_and_input
 										  filename                    => 'psn.'.$self->modext,
 										  ignore_missing_output_files => 1,
 										  ignore_missing_data => 1);
-		
+
 		#psn.lst may be missing if e.g. nmtran failed
-		
+
 	}else{
-		
+
 		if ($model->tbs() or $model->dtbs()){
 			$self->write_tbs_files(thetanum => $model->tbs_thetanum());
 		}
-		
-		# Set the table names to a short version 
+
+		# Set the table names to a short version
 		my @new_table_names = ();
 		my @table_names = @{$model -> table_names( ignore_missing_files => 1 )};
 		# Loop the problems
@@ -2991,20 +2991,20 @@ sub copy_model_and_input
 			}
 			push( @new_table_names, \@new_arr );
 		}
-		
-		
+
+
 		# Copy input files ( msfo, msfi, subroutines and extra at the
 		# moment)
-		
+
 		foreach my $file( @{$model -> input_files} ){
-			
+
 			# $file is a ref to an array with two elements, the first is a
 			# path, the second is a name.
-			
+
 			cp( $file->[0] . $file -> [1], $file -> [1] ); #FIXME symlink if unix?
-			
+
 		}
-		
+
 
 		# Copy the model object. Set the new (shorter) data file names.
 		# datafiles are copied by model
@@ -3018,23 +3018,23 @@ sub copy_model_and_input
 										   copy_datafile => ($self->copy_data or $self->always_datafile_in_nmrun),
 										   copy_output => 0,
 										   write_copy => 0);
-		
+
 		$candidate_model -> shrinkage_modules( $model -> shrinkage_modules );
-		
+
 		if ( $self->handle_msfo ) {
-			
+
 			# Initialize sequence of msfi/msfo files.
-			
+
 			my $msfo_names = $candidate_model -> msfo_names;
 			my $msfi_names = $candidate_model -> msfi_names(absolute_path => 1);
 			my $msfi_in;
-			
+
 			if( defined $msfo_names and (defined $msfo_names -> [0])){
 				$msfi_in = $msfo_names -> [0];
 			} elsif ( defined $msfi_names and (defined $msfi_names -> [0])){
 				$msfi_in = $msfi_names -> [0];
 			}
-			
+
 			my $basename = 'psn_msfo';
 			if( defined $msfo_names and (defined $msfo_names -> [0])){
 				$basename = $msfo_names -> [0];
@@ -3044,32 +3044,32 @@ sub copy_model_and_input
 				#-s returns true if file is non-empty
 				#assume original model has msfi, assume thetas already removed.
 				cp( $msfi_in, $basename.'-0' ); #move or copy... this is from calling directory
-				#assume only one $MSFI per $PROB. 
+				#assume only one $MSFI per $PROB.
 				if (defined $candidate_model->problems->[0]->msfis){
 					$candidate_model->problems->[0]->msfis->[0]->set_filename(filename =>$basename.'-0');
 				}
 			} else {
-				# 
+				#
 				1;
 			}
-			
+
 			if( defined $candidate_model -> problems->[0]->estimations or
 				defined $candidate_model -> problems->[0]->nonparametrics ){
 				$self->base_msfo_name($basename);
-				
+
 				$candidate_model -> rename_msfo(name => $basename,
 												add_if_absent => 1);
-				
+
 			}
 		}
-		
+
 		$candidate_model -> table_names( new_names            => \@new_table_names,
 										 ignore_missing_files => 1 );
 		$candidate_model -> _write(copy_msfi =>1);
 		$candidate_model -> store_inits;
 		$self->run_nmtran(check_verbatim => $check_verbatim,
 						  model => $candidate_model) if ($run_nmtran);
-		
+
 		trace(tool => 'modelfit', message => "Copied ".$model->filename().
             " to psn.".$self->modext." in current directory. Modified table names.", level => 2)
 	}
@@ -3227,14 +3227,14 @@ sub move_model_and_output
 									   retry => $use_run-1);
 
 		# Copy $use_run files to final files in NM_run, to be clear about which one was selected
-		mv( $use_name, $filename ) if (-e $use_name); 
+		mv( $use_name, $filename ) if (-e $use_name);
 		next if( $filename eq 'psn.'.$self->modext );
 		next if( $filename eq 'nmqual_messages.txt' );
 
 		# Don't prepend the model file name to psn.lst, but use the name
 		# from the $model object.
 		if ($filename eq 'psn.lst') {
-			my $success = cp($filename, $outfilename); 
+			my $success = cp($filename, $outfilename);
             $final_lst = $outfilename;
             (undef, undef, my $lst_name) = File::Spec->splitpath($outfilename);
             if ($success) {
@@ -3287,8 +3287,8 @@ sub move_model_and_output
 
 	if ($self->clean >= 1 and $PsN::warnings_enabled == 0) {
 		unlink 'nonmem', 'nonmem5','nonmem6','nonmem7',
-		'nonmem5_adaptive','nonmem6_adaptive','nonmem7_adaptive', 
-		'nonmem.exe','FDATA', 'FREPORT', 'FSUBS', 'FSUBS.f','FSUBS.f90', 
+		'nonmem5_adaptive','nonmem6_adaptive','nonmem7_adaptive',
+		'nonmem.exe','FDATA', 'FREPORT', 'FSUBS', 'FSUBS.f','FSUBS.f90',
 		'FSUBS.for', 'LINK.LNK', 'FSTREAM', 'FCON.orig', 'FLIB', 'FCON','PRDERR',
 		'nmprd4p.mod','nul',
 		'fsubs','fsubs.f','fsubs.for','fsubs.f90','FSUBS2','FSUBS_MU.F90';
@@ -3344,7 +3344,7 @@ sub move_model_and_output
 						my $next_name = get_retry_name( filename => $filename,
 														retry => $i-1,
 														crash => $crash);
-						unlink( $del_name ) unless (($use_name eq $msfo) and 
+						unlink( $del_name ) unless (($use_name eq $msfo) and
 													(not -e $next_name));
 						$del_name = $next_name;
 					}
@@ -3408,13 +3408,13 @@ sub calculate_raw_results_width
 			for (my $i=0;$i< scalar(@{$model ->problems()}); $i++){
 				#get ref of array of methods
 				my $methref = $model -> get_option_value(record_name => 'estimation', option_name => 'METHOD',
-					problem_index => $i, record_index => 'all'); 
+					problem_index => $i, record_index => 'all');
 				if (defined $methref){
 					my $j= scalar(@{$methref})-1;
 					if (defined $methref->[$j]){
-						$saem = 1 if ($methref->[$j] eq 'SAEM' or 
+						$saem = 1 if ($methref->[$j] eq 'SAEM' or
 							(index('SAEM',$methref->[$j])==0));
-						$bayes = 1 if ($methref->[$j] eq 'BAYES' or 
+						$bayes = 1 if ($methref->[$j] eq 'BAYES' or
 							(index('BAYES',$methref->[$j])==0));
 					}
 				}
@@ -3436,7 +3436,7 @@ sub calculate_raw_results_width
 				}
 				$max_hash{ $category } = $numpar; #$saem and $bayes are never unset, so can never set 1 to 0
 
-			}elsif ( $category eq 'model_run_time' 
+			}elsif ( $category eq 'model_run_time'
 					or $category eq 'subprob_est_time' or $category eq 'subprob_cov_time'){
 				my $numpar=0;
 				if ($PsN::nm_major_version >= 7 ){
@@ -3562,7 +3562,7 @@ sub print_finish_message
 							$ui_text .= sprintf("%12.7g",$ests -> [$j][0]);
 						}
 					} else {
-						
+
 						# Loop the parameter numbers (skip sub problem level)
 						for ( my $num = 0; $num < scalar @{$ests -> [$j][0]}; $num++ ) {
 							$log_text .= $ests -> [$j][0][$num] .',';
@@ -3578,8 +3578,8 @@ sub print_finish_message
 		ui -> print( category => 'all',
 					 message  => $ui_text,
 					 wrap     => 0,
-					 newline => 0); 
-	}	
+					 newline => 0);
+	}
 
 	open( LOG, ">>".$self->logfile->[0] );
 	print LOG $log_text;

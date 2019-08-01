@@ -143,7 +143,7 @@ sub create
 
         my $rse_table = so::table->new(name => 'RelativeStandardError');
         $rse_table->parameter_table(name => 'RSE', labels => \@labels, values => \@relative_standard_errors);
-        $self->RelativeStandardError($rse_table);        
+        $self->RelativeStandardError($rse_table);
 
         my @matrix_labels;
         if (defined $fixed) {

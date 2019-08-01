@@ -85,7 +85,7 @@ $help_text{Description} = <<'EOF';
 	influenced by the computational error. Preconditioning of the model will
 	only help to stabilise the computation so that if the model is fundamentally
 	unidentifiable (or have other issues) then the covariance step of the
-	preconditioned model should not be successful. 
+	preconditioned model should not be successful.
 EOF
 
 $help_text{Examples} = <<'EOF';
@@ -104,7 +104,7 @@ EOF
 $help_text{-always} = <<'EOF';
 	-always
 
-	Default set. Always do preconditioning. 
+	Default set. Always do preconditioning.
 EOF
 
 $help_text{-copy_data} = <<'EOF';
@@ -191,7 +191,7 @@ $help_text{-offset_rawres} = <<'EOF';
 	-offset_rawres=N
 
 	Default 0. The number of result lines to skip in the input raw results file
-	before starting to read final parameter estimates. 
+	before starting to read final parameter estimates.
 EOF
 
 $help_text{-output_model} = <<'EOF';
@@ -203,7 +203,7 @@ $help_text{-output_model} = <<'EOF';
 EOF
 
 $help_text{-perturb} = <<'EOF';
-	-perturb 
+	-perturb
 
 	After the model is preconditioned the initial estimate is perturbed to the
 	direction of the eigenvector that is corresponding negative eigenvalue of
@@ -240,7 +240,7 @@ EOF
 $help_text{-update_model} = <<'EOF';
 	-update_model=filename
 
-	Set a filename to store the original model with updated inital values for the 
+	Set a filename to store the original model with updated inital values for the
 	parameters.
 EOF
 
@@ -364,7 +364,7 @@ if (defined $options{'rawres_input'}) {
         } else {
             ($file3) = glob $options{'pre'} . "/m1/*_base.rmt";
         }
-        if (-e $file) { 
+        if (-e $file) {
         } elsif (-e $file2) {
             $file = $file2;
         } elsif (-e $file3) {
@@ -484,7 +484,7 @@ if (defined $options{'pre'} or defined $options{'rawres_input'}) {
                 my $file = $options{'pre'} . "/precMatrix";
                 my $file2 = $options{'pre'} . "precMatrix";
 
-                if (-e $file) { 
+                if (-e $file) {
                 } elsif(-e $file2) {
                     $file = $file2;
                 }

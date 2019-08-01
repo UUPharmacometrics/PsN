@@ -79,7 +79,7 @@ sub defined_symbol
     my $symbol = $parm{'symbol'};
 
     for my $record (('pk', 'pred', 'error', 'des', 'aes', 'aesinitial', 'mix', 'infn')) {
-        if ($model->has_code(record => $record)) {  
+        if ($model->has_code(record => $record)) {
             my $code = $model->get_code(record => $record);
             for my $line (@$code) {
                 if ($line =~ /^\s*(\w+)\s*=/) {
@@ -109,7 +109,7 @@ sub used_symbol
     }
 
     for my $record (('pk', 'pred', 'error', 'des', 'aes', 'aesinitial', 'mix', 'infn')) {
-        if ($model->has_code(record => $record)) {  
+        if ($model->has_code(record => $record)) {
             my $code = $model->get_code(record => $record);
             for my $line (@$code) {
                 my @a = split /;/, $line;       # Don't match in comments

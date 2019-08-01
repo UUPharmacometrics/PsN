@@ -13,7 +13,7 @@ has 'filename'  => ( isa => 'Str', reader => 'get_filename', writer => '_set_fil
 has 'directory'  => ( isa => 'Str', reader => 'get_directory', writer => '_set_directory' );
 has 'model_directory' => ( is => 'rw', isa => 'Maybe[Str]' );
 #problem numbering starts at 1, problem number 0 means external msfo
-has 'msfo_from_problem_number' => ( isa => 'Int', reader => 'get_msfo_from_problem_number', writer => '_set_msfo_from_problem_number', default => 0 ); 
+has 'msfo_from_problem_number' => ( isa => 'Int', reader => 'get_msfo_from_problem_number', writer => '_set_msfo_from_problem_number', default => 0 );
 has 'internal_msfo_files' => (is => 'rw', isa => 'HashRef', default => sub { {} });
 
 our @msf_additional_files = ('_ETAS','_RMAT','_SMAT');
@@ -121,7 +121,7 @@ sub _format_record
 
 	#overloaded for MSFI
 	# msfi::format_record
-	# 
+	#
 
 	#we make it easy and print all comments at the end, regardless of print order.
 
@@ -134,8 +134,8 @@ sub _format_record
 
 	my $line =0;
 	$formatted[$line] = '$MSFI'.(' ' x (10 - length('MSFI')) ).$filestring;
-	
-	my @comments = @{$self->comment};    
+
+	my @comments = @{$self->comment};
 	my @options = @{$self->options};
 
 	for( my $i = 0; $i < scalar @options; $i++ ){
@@ -149,9 +149,9 @@ sub _format_record
 			push( @formatted, ' ' x 11 );
 		}
 		$formatted[$line] .= ' '.$foption;
-	} 
+	}
 	$formatted[$line] .= "\n";
-	
+
 	#add all comments last
 	push(@formatted,@comments);
 
@@ -164,7 +164,7 @@ sub get_additional_msfo_files
 							  msfname => { isa => 'Str', optional => 0 },
 		);
 	my $msfname = $parm{'msfname'};
-	
+
 	my @array=();
 	my $extension='';
 	if ($msfname =~ s/(\.[^.]+)$//){
@@ -174,7 +174,7 @@ sub get_additional_msfo_files
 	foreach my $extra (@msf_additional_files){
 		push(@array,$msfname.$extra.$extension);
 	}
-	
+
 	return \@array;
 }
 
@@ -184,11 +184,11 @@ sub get_basename_msftype_extension
 							  filename => { isa => 'Str', optional => 0 },
 		);
 	my $filename = $parm{'filename'};
-	
+
 	my $base =$filename;
 	my $type = '';
 	my $extension='';
-	
+
 	if ($base =~ s/(\.[^.]+)$//){
 		$extension = $1;
 	}

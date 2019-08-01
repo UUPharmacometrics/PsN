@@ -979,7 +979,7 @@ sub modelfit_setup
             for my $model (@$modelsarr) {
                 my @extra_files;
                 if (defined $model->extra_files) {
-                    @extra_files = @{$self->extra_files};   
+                    @extra_files = @{$self->extra_files};
                 }
 
                 @extra_files = ( @extra_files, $phi_file );

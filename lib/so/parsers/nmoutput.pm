@@ -36,7 +36,7 @@ has 'extra_output' => ( is => 'rw', isa => 'Maybe[ArrayRef]' );
 has 'include_fixed_params' => ( is => 'rw', isa => 'Bool', default => 0 );  # If set includes all fixed parameters. If unset skips FIX parameters without label
 has 'pharmml' => ( is => 'rw', isa => 'Bool', default => 0 );   # Should a minimal companion PharmML be created?
 has '_idv' => ( is => 'rw', isa => 'Str' );                         # The name of the idv column
-has '_document' => ( is => 'rw', isa => 'Ref' );                    # The XML document 
+has '_document' => ( is => 'rw', isa => 'Ref' );                    # The XML document
 has '_duplicate_blocknames' => ( is => 'rw', isa => 'HashRef' );    # Contains those blocknames which will have duplicates with next number for block
 has '_so_path' => ( is => 'rw', isa => 'Str' );                     # The path of the output SO file
 
@@ -77,7 +77,7 @@ sub _parse_lst_file
     my $file_stem = utils::file::get_file_stem($lst_file);
 
     my $block = $self->_so_block;
- 
+
     my $estimation;
     my $simulation;
 
@@ -98,7 +98,7 @@ sub _parse_lst_file
             $self->_so_block->TaskInformation->add_message(
                 type => "ERROR",
                 toolname => $self->toolname,
-                name => "Parsing error", 
+                name => "Parsing error",
                 content => "Outputfile not parsed successfully, error message: " . $outobj->parsing_error_message,
                 severity => 10,
             );
@@ -106,7 +106,7 @@ sub _parse_lst_file
             if ($self->pharmml) {
                 my $pharmml_name = $self->lst_file;
                 $pharmml_name =~ s/\.lst/.xml/;
-                pharmml::create_minimal_pharmml(model => $outobj->lst_model, filename => $pharmml_name); 
+                pharmml::create_minimal_pharmml(model => $outobj->lst_model, filename => $pharmml_name);
                 $self->so->PharmMLRef($pharmml_name);
             }
 
@@ -275,7 +275,7 @@ sub _parse_lst_file
                 for ($index = 0; $index < scalar(@all_labels); $index++) {
                     if ($all_labels[$index] eq $label) {
                         $found = 1;
-                        last; 
+                        last;
                     }
                 }
                 next if not $found;
@@ -283,7 +283,7 @@ sub _parse_lst_file
                 if ($option->sd or $option->corr) {
                     $est_values[$index] = $sdcorrform{$option->coordinate_string};
                     if (defined $sesdcorrform{$option->coordinate_string}) {
-                        $se_values[$index] = $sesdcorrform{$option->coordinate_string}; 
+                        $se_values[$index] = $sesdcorrform{$option->coordinate_string};
                     }
                 }
                 push @fixed, $option->fix;
@@ -329,7 +329,7 @@ sub _parse_lst_file
                     for (my $i = 0; $i < scalar(@se_values); $i++) {
                         if ($est_values[$i] == 0 or not defined $se_values[$i]) {
                             push @rel_se, undef;
-                        } else { 
+                        } else {
                             push @rel_se, 100 * $se_values[$i] / abs($est_values[$i]);
                         }
                     }
@@ -485,7 +485,7 @@ sub _get_columnType
     );
     my $param = $parm{'param'};
     my $sdcorrform = $parm{'sdcorrform'};
-    my $off_diagonal = $parm{'off_diagonal'}; 
+    my $off_diagonal = $parm{'off_diagonal'};
 
     my $column_type;
 
@@ -643,7 +643,7 @@ sub _create_residuals
         push @ids, "WRES";
         push @value_type, "real";
     }
-    
+
     if (exists $sdtab->column_head_indices->{'IWRES'}) {
         my $iwres = $sdtab->column_to_array(column => "IWRES");
         push @values, $iwres;
@@ -735,7 +735,7 @@ sub _create_eta_table
 
 sub _individual_statistics
 {
-    # Calculate the median of each individual and return in individual order 
+    # Calculate the median of each individual and return in individual order
 
     my %parm = validated_hash(\@_,
         id => { isa => 'ArrayRef' },
@@ -854,7 +854,7 @@ sub _create_individual_estimates
     }
 
     if (scalar(@$eta_names) > 0) {
-        
+
         # Filter out etas that does not exist in the patab
         $eta_names = _get_included_columns(header => $patab->column_head_indices, columns => $eta_names);
         if (scalar(@$eta_names) > 0) {
@@ -867,7 +867,7 @@ sub _create_individual_estimates
                 push @etas, $column;
             }
 
-            my $eta_table = _create_eta_table(id => $id, occ => $occasion_data, etas => \@etas); 
+            my $eta_table = _create_eta_table(id => $id, occ => $occasion_data, etas => \@etas);
 
             my @columnId = ( "ID" );
             if (defined $occasion) {
@@ -935,7 +935,7 @@ sub _get_iov_etas
         }
     }
 
-    return ($occasion, \@names); 
+    return ($occasion, \@names);
 }
 
 sub _create_simulation
@@ -1016,7 +1016,7 @@ sub _create_simulation
                 table_file => $external_table_name,
                 name => "append_columns",
                 dv_columns => $self->extra_output,
-            ); 
+            );
         }
         my $indiv_parameters;
         if (defined $indiv_table_fh) {
@@ -1087,7 +1087,7 @@ sub _create_simulation
         }
         last unless (defined $simulated_profiles or defined $indiv_parameters or defined $random_effects or defined $covariates or defined $population_parameters);
         $replicate_no++;
-        last if (defined $self->max_replicates and $replicate_no >= $self->max_replicates); 
+        last if (defined $self->max_replicates and $replicate_no >= $self->max_replicates);
     }
 
     close $covariates_table_fh if defined $covariates_table_fh;
@@ -1112,7 +1112,7 @@ sub _read_header
         return;
     }
     $header =~ s/^\s+//;
-    my @columns = split /\s+/, $header; 
+    my @columns = split /\s+/, $header;
     my %colnos;
     for (my $i = 0; $i < scalar(@columns); $i++) {
         $colnos{$columns[$i]} = $i;
@@ -1183,7 +1183,7 @@ sub _create_simulated_profiles
             valueType => [ "string", "real", ("real") x scalar(@$dv_columns) ],
             columns => [ \@id, \@time, @extra ],
             table_file => $table_file,
-        ); 
+        );
     } else {
         $simulated_profiles = so::soblock::simulation::simulationblock::simulationtable->new(
             name => "SimulatedProfiles",
@@ -1230,7 +1230,7 @@ sub _create_indiv_parameters
         push @columns_for_removal, @$iov_etas, $occasion;
     }
 
-    my $labels = _get_remaining_columns(header => \%colnos, columns => \@columns_for_removal); 
+    my $labels = _get_remaining_columns(header => \%colnos, columns => \@columns_for_removal);
 
     my $indiv_parameters = $self->_create_occasion_table(
         file => $file,
@@ -1321,7 +1321,7 @@ sub _create_population_parameters
     my $table_file = $parm{'table_file'};
     my $labels = $parm{'labels'};
     my @inits = @{$parm{'inits'}};
- 
+
     my $colnosref = $self->_read_header(file => $file);
     return if not defined $colnosref;
     my %colnos = %{$colnosref};
@@ -1354,7 +1354,7 @@ sub _create_population_parameters
         valueType => [ "real", "real", ("real") x scalar(@inits) ],
         columns => [ [ scalar(array::min(\@time)) ], [ scalar(array::max(\@time)) ],  @columns ],
         table_file => $table_file,
-    ); 
+    );
 
     return $population_parameters;
 }

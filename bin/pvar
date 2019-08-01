@@ -50,19 +50,19 @@ EOF
 
 $help_text{Description} = <<'EOF';
 
-	The pvar (parametric variability) tool calculates how much of parameter 
-	variabilty that a model explains (Hennig). For every parameter listed on 
-	the command line PsN will calculate the total variance, the explained 
-	variance and the unexplained variance. The resulting table can be found 
-	in the result.csv. The input models to pvar must have final parameter 
+	The pvar (parametric variability) tool calculates how much of parameter
+	variabilty that a model explains (Hennig). For every parameter listed on
+	the command line PsN will calculate the total variance, the explained
+	variance and the unexplained variance. The resulting table can be found
+	in the result.csv. The input models to pvar must have final parameter
 	estimates.
 EOF
 
 $help_text{Options} = <<'EOF';
 
-	Required arguments are either an scm log file or a list of model files 
-	and a list of parameters. If an scm log file is to be used the scm run 
-	cannot have been made with -clean=3 otherwise files needed for pvar 
+	Required arguments are either an scm log file or a list of model files
+	and a list of parameters. If an scm log file is to be used the scm run
+	cannot have been made with -clean=3 otherwise files needed for pvar
 	will be deleted.
 
 	The following options are valid:

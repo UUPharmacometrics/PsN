@@ -61,7 +61,7 @@ sub modelfit_setup
             base_dir => $self->directory,
             directory => "base_modelfit",
             top_tool => 0,
-            nm_output => $nm_output, 
+            nm_output => $nm_output,
             clean => 2,
             copy_data => $self->copy_data,
         );
@@ -124,7 +124,7 @@ sub modelfit_setup
 
     my $modelfit = tool::modelfit->new(
 		%{common_options::restore_options(@common_options::tool_options)},
-		models => [ $model ], 
+		models => [ $model ],
 		base_dir => $self->directory,
 		directory => "repara_modelfit",
 		top_tool => 0,
@@ -213,20 +213,20 @@ sub modelfit_analyze
 #######################################
 #######################################
 		my $isEstimable=1;
-		
+
 		my $foldername=(split(/\//, $self->directory))[-1];
 
 
 		if (defined $self->base_model){
 			if($self->base_model->is_run){
 				my $theta_original = $self->base_model->outputs->[0]->get_single_value(attribute => 'thetas');
-				
+
 				my $ofv_original=$self->base_model->outputs->[0]->ofv()->[0][0];
 				my $ofv_precond=$self->_repara_model->outputs->[0]->ofv()->[0][0];
 				my $para_diff=0;
-				
+
 				# compare the parameters found by the original model and preconditioned model and give a worning if it is more than 10% differences
-				
+
 				if (abs($ofv_original-$ofv_precond)<0.1){
 					for (my $i=0; $i<@$new_theta;$i++){
 						if (abs($new_theta->[$i] + $theta_original->[$i])>0){
@@ -236,10 +236,10 @@ sub modelfit_analyze
 							if($para_diff>10&&int($abscheck)!=200){
 							print "\nWarning: THETA(", $i + 1, ") is most likely to be non-estimable from the data.  Precond has found a set of parameters that are ", int($para_diff*100)/100 ,"% different from eachother ($theta_original->[$i] and $new_theta->[$i]) but gives almost identical ofv (dOFV=",int(abs($ofv_original-$ofv_precond)*100)/100,"). \n";
 							$isEstimable=0;
-							}	
+							}
 						}
 					}
-					
+
 				}else{
 					if(($ofv_original-$ofv_precond<0)){
 						print "\nWarning: parameter estimation seems to be unstable (the ofvs of the original model and preconditioned model differ by ", int(($ofv_original-$ofv_precond)*100)/100, " (in theory they should be the same), try 'update_inits ", $self->base_model->filename,"' and re-run preconditioning.  If the model is very instable try with MAXEVAL=0 after update_inits (not recommended as it will make precond ignore the issues on parameter estimation).";
@@ -266,17 +266,17 @@ sub modelfit_analyze
         }
         my $se_pos = $modelfit->raw_line_structure->{1}->{setheta};
 		my $ofv_pos= $modelfit->raw_line_structure->{1}->{ofv};
-		
+
         $se_pos =~ s/(.*),.*/$1/;
 
 		my $covSuccess=0;
-		
+
 		for (my $i=0; $i<@$new_theta;$i++){
 			if ($cov_matrix->[$i]->[$i] !=0){
 				$covSuccess=1;
 			}
 		}
-		
+
 		if ($covSuccess==0){
 			for (my $i = 0; $i < @$new_theta; $i++) {
 				$modelfit->raw_results->[0]->[$se_pos + $i] = "NA";
@@ -285,11 +285,11 @@ sub modelfit_analyze
 			for (my $i = 0; $i < @$new_theta; $i++) {
 				$modelfit->raw_results->[0]->[$se_pos + $i] = sqrt($cov_matrix->[$i]->[$i]);
 			}
-			
-          
-            
+
+
+
 			if (defined $self->base_model){
-                
+
 				  my $filename = $self->base_model->filename;
 				    $filename =~ s/\.mod$/.cov/;
 				    my $cov_filename = 'm1/' . $filename;
@@ -314,7 +314,7 @@ sub modelfit_analyze
 				        my $given_header_warning;
 
 				        for (my $k = 0; $k < scalar(@cov_lines); $k++) {
-				            my $line = $cov_lines[$k]; 
+				            my $line = $cov_lines[$k];
 				            if ($line =~ /^\s*TABLE NO.\s+(\d+):/) {
 				                croak("two tables found where 1 expected") if $found_table;
 				                $found_table = 1;
@@ -353,12 +353,12 @@ sub modelfit_analyze
 				                $rowCount++;
 				            }
 				        }
-				
-            
+
+
 					if ($isEstimable) {
 						my $standardErrorConsistent=1;
 						my $maxchange=0;
-				
+
 						for (my $i = 0; $i < @$new_theta; $i++) {
 
                             if ($originalCov[$i]->[$i]!=0){
@@ -373,20 +373,20 @@ sub modelfit_analyze
                                     $maxchange=$change;
 								}
 							}
-							
-						}	
+
+						}
 						if ($standardErrorConsistent==1){
 							print "\nStandard errors are consistent (maximum difference is ", int($maxchange*100)/100," %) between the original model and preconditioned model, hence the calculated variance-covariance matrix can be trusted."
 						}else{
 							print "\nWarning: Standard errors are not consistent (maximum difference is ", int($maxchange*100)/100," %) between the original model and preconditioned model, hence use calculated variance-covariance matrix with caution."
 						}
-				
+
 					}
 				}
-			
+
             #	print "\n\n  preconditioning successful \n";
 		}
-		
+
 		}
 		if (!$isEstimable){
 					#$modelfit->raw_results->[0]->[$ofv_pos]="NaN";
@@ -405,15 +405,15 @@ sub _reparametrize
 	my $code = shift;
 	my $nthetas = shift;
 	my $model = shift;
-    
+
     for (my $i = 0; $i < scalar(@$code); $i++) {
         my $find = "THE_";
         my $replace = "TTHE_";
         $find = quotemeta $find;
         $code->[$i] =~ s/$find/$replace/g;
-        
+
     }
-	
+
     my $fixed = $model->fixed(parameter_type => 'theta');
 
 	for (my $i = 0; $i < scalar(@$code); $i++) {
@@ -426,7 +426,7 @@ sub _reparametrize
 				}
 			}
 		}
-    
+
 }
 
 sub create_base_model
@@ -467,7 +467,7 @@ sub _set_model_options
         #    croak("Error: Option MATRIX set in \$COVARIANCE will not work with precond. Please remove and run again\n");
     }
     $model->remove_option(record_name => 'covariance', option_name => 'MATRIX');
-    
+
 
     if ($model->is_option_set(record => 'covariance', name => 'MATRIX', fuzzy_match => 1)) {
         croak("Error: Option MATRIX set in \$COVARIANCE will not work with precond. Please remove and run again\n");
@@ -486,7 +486,7 @@ sub _set_model_options
         }
     }
     if (not $found) {
-        $model->add_option(record_name => 'covariance', option_name => 'PRINT', option_value => 'R'); 
+        $model->add_option(record_name => 'covariance', option_name => 'PRINT', option_value => 'R');
     }
 
     if (not $model->is_option_set(record => 'estimation', name => 'FORMAT', fuzzy_match => 1)) {
@@ -535,7 +535,7 @@ sub create_reparametrized_model
 
 	my $tempString;
 	my $tempTempSt;
-	
+
     my $fixed = $model->fixed(parameter_type => 'theta');
 
 	for (my $i = 0; $i < $model->nthetas; $i++) {
@@ -576,7 +576,7 @@ sub create_reparametrized_model
 
 	# Reparametrize other blocks of abbreviated code
 	for my $record (('error', 'des', 'aes', 'aesinitial', 'mix', 'infn')) {
-		if ($model->has_code(record => $record)) {  
+		if ($model->has_code(record => $record)) {
 			my $code = $model->get_code(record => $record);
 			_reparametrize($code, $model->nthetas, $model);
 			$model->set_code(record => $record, code => $code);
@@ -596,7 +596,7 @@ sub create_reparametrized_model
     my @dummie_parameter_initial = @{$model->initial_values(parameter_type => 'theta')->[0]};
 
 	my @parameter_initial_copy;
-	
+
 	for(my $i=0; $i<scalar(@precond_matrix);$i++){
 		$parameter_initial_copy[$i]=$parameter_initial[$i];
 	}
@@ -605,15 +605,15 @@ sub create_reparametrized_model
     my $ref = dclone(\@precond_matrix);
     @precond_matrix = (@$ref);
 
-    
+
     my $offDiag = 0;
     my $diagSum = 0;
     my $offDigTemp = 0;
     my @diagElement;
-    
+
     for (my $k = 0; $k < scalar(@parameter_initial); $k++) {
         $diagElement[$k] = 0;
-        
+
         for (my $i = 0; $i < scalar(@parameter_initial); $i++) {
             $parameter_initial[$i] = 0;
             for (my $j = 0; $j < scalar(@parameter_initial); $j++) {
@@ -640,12 +640,12 @@ sub create_reparametrized_model
     } else { # if precond_matrix is not orthogonal up to scaling
 
         linear_algebra::LU_factorization(\@precond_matrix);
-        
+
         for (my $i = 1; $i < scalar(@precond_matrix); $i++) {
         	for (my $j = 0; $j < $i; $j++) {
                 $parameter_initial_copy[$i] = $parameter_initial_copy[$i] - $parameter_initial_copy[$j] * $precond_matrix[$i][$j];
             }
-        }        
+        }
         for (my $i = scalar(@precond_matrix)-1; $i >= 0; $i--) {
         	for (my $j = scalar(@precond_matrix)-1; $j > $i; $j--) {
                 $parameter_initial_copy[$i] = $parameter_initial_copy[$i] - $parameter_initial_copy[$j] * $precond_matrix[$i][$j];
@@ -662,7 +662,7 @@ sub create_reparametrized_model
             $parameter_initial_copy[$negaEigenIndex[$i]] = $parameter_initial_copy[$negaEigenIndex[$i]] + 1;
         }
     }
-    
+
 	$model->initial_values(parameter_type => 'theta', new_values => [[@parameter_initial_copy]]);
 
     if ($PsN::nm_major_version >= 8 or ($PsN::nm_major_version == 7 and $PsN::nm_minor_version >= 2)) {
@@ -721,7 +721,7 @@ sub create_reparametrized_model
 		print $MYFILE $precMatSLine[$i] . "\n";
 	}
 
-	close $MYFILE; 
+	close $MYFILE;
 
 	return $model;
 }
@@ -763,7 +763,7 @@ sub convert_reparametrized_cov
         my $given_header_warning;
 
         for (my $k = 0; $k < scalar(@cov_lines); $k++) {
-            my $line = $cov_lines[$k]; 
+            my $line = $cov_lines[$k];
             if ($line =~ /^\s*TABLE NO.\s+(\d+):/) {
                 croak("two tables found where 1 expected") if $found_table;
                 $found_table = 1;
@@ -834,13 +834,13 @@ sub convert_reparametrized_cov
 
         my $line;
         for (my $i = 0; $i < $model->nthetas; $i++) {
-            $line = $cov_lines[$i + 2]; 
+            $line = $cov_lines[$i + 2];
             $line =~ s/^\s*//; #get rid of leading spaces
             my @line_values = split /\s+/, $line;
             for (my $j = 0; $j < $model->nthetas; $j++) {
                 $line_values[$j + 1] = $varcovMatrix[$i][$j];
             }
-            $line_values[0] = $line_values[0] . (" " x (12 - length($line_values[0]) ) ); 
+            $line_values[0] = $line_values[0] . (" " x (12 - length($line_values[0]) ) );
             for my $i (1..@line_values - 1) {
                 if ($line_values[$i] < 0) {
                     $line_values[$i] = sprintf(" %.17E", $line_values[$i]);
@@ -857,7 +857,7 @@ sub convert_reparametrized_cov
             print $MYFILE $cov_lines[$i] . "\n";
         }
 
-        close $MYFILE; 
+        close $MYFILE;
 
         return \@varcovMatrix;
 
@@ -883,7 +883,7 @@ sub convert_reparametrized_cov
         my $given_header_warning;
 
         for (my $k = 0; $k < scalar(@cov_lines); $k++) {
-            my $line = $cov_lines[$k]; 
+            my $line = $cov_lines[$k];
             if ($line =~ /^\s*TABLE NO.\s+(\d+):/) {
                 croak("two tables found where 1 expected") if $found_table;
                 $found_table = 1;
@@ -960,7 +960,7 @@ sub convert_reparametrized_cov
 
 #		if ($repara_model->outputs->[0]->problems->[0]->subproblems->[0]->s_matrix_unobtainable) {
 #			print "\nS matrix was unobtainable, precond is intended to stablise covariance step by reducing the R-matrix related computational issues, hence cannot remedy this issues with S matrix.\n";
-	
+
 #		}else
 		if (int(log($maxEigen/$minEigen) / log(10)) < 3 and $negaCounter > 0) {
             print "\nCovariance step of the preconditioned model failed \n\nThe estimated parameter is mostlikely at the saddle of the likelihood surface. \n try -pre=$foldername -perturb option\n\n";
@@ -1027,11 +1027,11 @@ if (defined $self->precond_matrix) {
 	        or die "Cannot find the R-matrix file.\nSpecify the R-matrix or the modelfit directory using -pre option\n";
 
 }
-	
+
 	open(my $fh, '<', $filename)
 		        or die "\nCovariance step of the original model did not run (most likely the parameter estimation had failed).\n\nSee .lst file at ",$self->directory."m1/",utils::file::replace_extension($self->base_model->filename, 'lst')," for the reason.\n\n  Precond cannot help if the parameter estimation of the original model fails in a way that the NONMEM terminates before proceeding to the covariance step.\n\n";
 
-    
+
     my @precond_matrix = _read_matrix($fh);
 
     $self->precond_matrix(\@precond_matrix);

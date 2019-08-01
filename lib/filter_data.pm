@@ -33,16 +33,16 @@ sub filter_dataset
 
         my $filtered_data_model = $model->copy(
             filename => 'filter_data.mod',
-            directory => $preprocessdir, 
+            directory => $preprocessdir,
             copy_datafile => 0,
             copy_output => 0,
             write_copy => 0,
             output_same_directory => 1,
         );
         my @filter_table_header;
-        if (defined $filtered_data_model->problems->[0]->inputs and 
+        if (defined $filtered_data_model->problems->[0]->inputs and
             defined $filtered_data_model->problems->[0]->inputs->[0]->options) {
-            my ($arr, $time_added) = $filtered_data_model->problems->[0]->inputs->[0]->get_filter_table_names(); 
+            my ($arr, $time_added) = $filtered_data_model->problems->[0]->inputs->[0]->get_filter_table_names();
             croak("found no undropped data column in \$INPUT ") unless (defined $arr);
             croak("automatic filtering cannot yet handle \$INPUT with DATX but without TIME") if ($time_added);
             @filter_table_header = @{$arr};
@@ -64,7 +64,7 @@ sub filter_dataset
         $filtered_data_model->add_records(type => 'estimation', record_strings => ['MAXEVALS=0 METHOD=ZERO']);
 
         my $datafile = 'filtered.dta';
-        $filtered_data_model->add_records( 
+        $filtered_data_model->add_records(
             type => 'table',
             record_strings => [ join(' ', @filter_table_header) .  ' NOAPPEND NOPRINT ONEHEADER FILE=' . $datafile ]
         );
@@ -82,15 +82,15 @@ sub filter_dataset
 
         my $adjusted_model = $model->copy(
             filename => 'adjusted_model.mod',
-            directory => '.', 
+            directory => '.',
             copy_datafile => 0,
             copy_output => 0,
             write_copy => 0,
             output_same_directory => 1,
         );
 
-        $adjusted_model->remove_option(record_name => 'data', option_name => 'IGNORE', fuzzy_match => 1); 
-        $adjusted_model->remove_option(record_name => 'data', option_name => 'ACCEPT', fuzzy_match => 1); 
+        $adjusted_model->remove_option(record_name => 'data', option_name => 'IGNORE', fuzzy_match => 1);
+        $adjusted_model->remove_option(record_name => 'data', option_name => 'ACCEPT', fuzzy_match => 1);
         $adjusted_model->problems->[0]->datas->[0]->set_filename(filename => $datafile);
         $adjusted_model->problems->[0]->datas->[0]->ignoresign('@');
 

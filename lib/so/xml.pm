@@ -61,7 +61,7 @@ sub match_symbol_idtype
 {
     # Check if a string is a legal SymbolIdType
     my $symbol = shift;
-    
+
     if ($symbol =~ /^\p{IsStarting_character}\p{IsContinuing_character}*$/) {
         return 1;
     } else {

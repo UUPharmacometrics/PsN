@@ -65,7 +65,7 @@ sub BUILD
 			push(@new_files,$ldir.$name) ;
 	    }
 	    $self->$accessor(\@new_files);
-	}	
+	}
 
 }
 
@@ -79,7 +79,7 @@ sub modelfit_setup
 
 	my $model = $self -> models -> [$model_number-1];
 
-	my $mfit_threads = ref( $self -> threads ) eq 'ARRAY' ? 
+	my $mfit_threads = ref( $self -> threads ) eq 'ARRAY' ?
 		$self -> threads -> [1]:$self -> threads;
 	my $own_threads = ref( $self -> threads ) eq 'ARRAY' ?
 		$self -> threads -> [0]:$self -> threads;
@@ -234,13 +234,13 @@ sub _register_estimates
 	# Antag att man spec. paramnr som gäller ? alla modeller och problem,
 	# dvs att run_param = [2,4,3] tex.
 	my %run;
-	$run{'thetas'} = (ref( $self -> run_thetas -> [0] ) eq 'ARRAY') ? 
+	$run{'thetas'} = (ref( $self -> run_thetas -> [0] ) eq 'ARRAY') ?
 		$self -> run_thetas -> [$model_number-1]:$self -> run_thetas;
-	$run{'omegas'} = (ref( $self -> run_omegas -> [0] ) eq 'ARRAY') ? 
+	$run{'omegas'} = (ref( $self -> run_omegas -> [0] ) eq 'ARRAY') ?
 		$self -> run_omegas -> [$model_number-1]:$self -> run_omegas;
-	$run{'sigmas'} = (ref( $self -> run_sigmas -> [0] ) eq 'ARRAY') ? 
+	$run{'sigmas'} = (ref( $self -> run_sigmas -> [0] ) eq 'ARRAY') ?
 		$self -> run_sigmas -> [$model_number-1]:$self -> run_sigmas;
-	
+
 	my %models;
 	my @mod_variants;
 
@@ -251,7 +251,7 @@ sub _register_estimates
 	# Global activity flag for this model:
 	$active = 0;
 
-	my $orig_model = $self -> models -> [$model_number-1];	
+	my $orig_model = $self -> models -> [$model_number-1];
 
 	my $mode = $first ? '>' : '>>';
 	open( LOG, $mode.$self -> logfile->[$model_number-1] );
@@ -323,7 +323,7 @@ sub _register_estimates
 					my %finished = ( 'lower' => 0, 'upper' => 0 );
 					push( @all_prob_est, [[$orig],[0],\%finished]);
 					# If we end up here, the the llp of this model is still active
-					$active = 1; 
+					$active = 1;
 					$ui_text = $ui_text.sprintf("%10f",$orig).','.sprintf("%10f",0).',';
 					print LOG sprintf("%10f",$orig),',',sprintf("%10f",0),',';
 #					print LOG2 sprintf("%10s",$param.$num),',',sprintf("%10s",'orig'),
@@ -360,7 +360,7 @@ sub _register_estimates
 					$orig_model -> lower_bounds( parameter_type => $param );
 				$bounds{'upper'} =
 					$orig_model -> upper_bounds( parameter_type => $param );
-				
+
 				my $accessor    = $param.'s';
 				my $logfunc   = $param.'_log';
 				my @par_nums    = @{$run{$param.'s'}};
@@ -467,11 +467,11 @@ sub modelfit_analyze
 			# llp recursively. If set, a result file will be written for each
 			# recurrence level which is redundant.
 			my %run;
-			$run{'thetas'} = (ref( $self -> run_thetas -> [0] ) eq 'ARRAY') ? 
+			$run{'thetas'} = (ref( $self -> run_thetas -> [0] ) eq 'ARRAY') ?
 				$self -> run_thetas -> [$model_number-1]:$self -> run_thetas;
-			$run{'omegas'} = (ref( $self -> run_omegas -> [0] ) eq 'ARRAY') ? 
+			$run{'omegas'} = (ref( $self -> run_omegas -> [0] ) eq 'ARRAY') ?
 				$self -> run_omegas -> [$model_number-1]:$self -> run_omegas;
-			$run{'sigmas'} = (ref( $self -> run_sigmas -> [0] ) eq 'ARRAY') ? 
+			$run{'sigmas'} = (ref( $self -> run_sigmas -> [0] ) eq 'ARRAY') ?
 				$self -> run_sigmas -> [$model_number-1]:$self -> run_sigmas;
 			my %subargs = ();
 			if ( defined $self -> subtool_arguments ) {
@@ -554,11 +554,11 @@ sub _create_models
 	# {{{ initiate params
 
 	my %run;
-	$run{'thetas'} = (ref( $self -> run_thetas -> [0] ) eq 'ARRAY') ? 
+	$run{'thetas'} = (ref( $self -> run_thetas -> [0] ) eq 'ARRAY') ?
 		$self -> run_thetas -> [$model_number-1]:$self -> run_thetas;
-	$run{'omegas'} = (ref( $self -> run_omegas -> [0] ) eq 'ARRAY') ? 
+	$run{'omegas'} = (ref( $self -> run_omegas -> [0] ) eq 'ARRAY') ?
 		$self -> run_omegas -> [$model_number-1]:$self -> run_omegas;
-	$run{'sigmas'} = (ref( $self -> run_sigmas -> [0] ) eq 'ARRAY') ? 
+	$run{'sigmas'} = (ref( $self -> run_sigmas -> [0] ) eq 'ARRAY') ?
 		$self -> run_sigmas -> [$model_number-1]:$self -> run_sigmas;
 
 	my $model = $self -> models -> [$model_number-1];
@@ -608,7 +608,7 @@ sub _create_models
 					$new_mod -> outputfile( $output_dir . $outputfilename );
                     $new_mod -> set_outputfile();
 					$new_mod -> ignore_missing_files( 0 );
-					
+
 					$new_mod -> update_inits( from_output => $model -> outputs -> [0] );
 					my $active_flag = 0;
 					# Loop over the problems:
@@ -664,7 +664,7 @@ sub _create_models
 						if ( $self->$logfunc->{$num}->[$j-1]->[2]->{$side} ){
 							debugmessage(3,"This side is finished!" );
 							next;
-						} 
+						}
 						$active_flag = 1;
 					}
 					if ( $active_flag ) {
@@ -677,7 +677,7 @@ sub _create_models
 						push( @new_models, $new_mod );
 						$self->{$param.'_models'}->{$num}->{$side} = $new_mod;
 					}
-					
+
 					# }}} resume
 
 				}
@@ -713,15 +713,15 @@ sub _modelfit_raw_results_callback
 	my %run;
 	my @models = @{$self -> models};
 	my $model_number = $self -> model_number;
-	my ($dir,$file) = 
+	my ($dir,$file) =
 		OSspecific::absolute_path( $self ->directory,
 								   $self -> raw_results_file->[$model_number-1] );
 
-	$run{'thetas'} = (ref( $self -> run_thetas -> [0] ) eq 'ARRAY') ? 
+	$run{'thetas'} = (ref( $self -> run_thetas -> [0] ) eq 'ARRAY') ?
 	    $self -> run_thetas -> [$model_number-1]:$self -> run_thetas;
-	$run{'omegas'} = (ref( $self -> run_omegas -> [0] ) eq 'ARRAY') ? 
+	$run{'omegas'} = (ref( $self -> run_omegas -> [0] ) eq 'ARRAY') ?
 	    $self -> run_omegas -> [$model_number-1]:$self -> run_omegas;
-	$run{'sigmas'} = (ref( $self -> run_sigmas -> [0] ) eq 'ARRAY') ? 
+	$run{'sigmas'} = (ref( $self -> run_sigmas -> [0] ) eq 'ARRAY') ?
 	    $self -> run_sigmas -> [$model_number-1]:$self -> run_sigmas;
 	my %log;
 	foreach my $param ( 'theta', 'omega', 'sigma' ) {
@@ -755,11 +755,11 @@ sub _modelfit_raw_results_callback
 			$orig_mod -> outputs -> [0] -> flush;
 
 			unshift( @{$raw_results_rows -> [0]}, ( 0, undef, undef, undef, undef ));
-			
+
 			unshift( @{$raw_results}, @{$raw_results_rows} );
 
 			# Set the header once.
-			
+
 			unshift( @{$raw_results_header} , ('iteration', 'parameter.type',
 											   'parameter.number', 'side', 'finish.message' ) );
 
@@ -768,7 +768,7 @@ sub _modelfit_raw_results_callback
 				foreach my $category (keys %{$self->raw_line_structure -> {$mod}}){
 					next if ($category eq 'line_numbers');
 					my ($start,$len) = split(',',$self->raw_line_structure -> {$mod}->{$category});
-					$self->raw_line_structure -> {$mod}->{$category} = ($start+5).','.$len; 
+					$self->raw_line_structure -> {$mod}->{$category} = ($start+5).','.$len;
 				}
 				$self->raw_line_structure -> {$mod}->{'iteration'} = '0,1';
 				$self->raw_line_structure -> {$mod}->{'parameter.type'} = '1,1';
@@ -791,7 +791,7 @@ sub _modelfit_raw_results_callback
 		# the row index with $result_row.
 
 		my $result_row = $iteration == 1 ? 1 : 0; # skip the original results row
-		
+
 		foreach my $param ( 'theta', 'omega', 'sigma' ) {
 			foreach my $num ( @{$run{$param.'s'}} ) {
 				foreach my $side ( 'lower', 'upper' ) {
@@ -825,11 +825,11 @@ sub _make_new_guess
 	my $done = $parm{'done'};
 
 	my %run;
-	$run{'thetas'} = (ref( $self -> run_thetas -> [0] ) eq 'ARRAY') ? 
+	$run{'thetas'} = (ref( $self -> run_thetas -> [0] ) eq 'ARRAY') ?
 		$self -> run_thetas -> [$model_number-1]:$self -> run_thetas;
-	$run{'omegas'} = (ref( $self -> run_omegas -> [0] ) eq 'ARRAY') ? 
+	$run{'omegas'} = (ref( $self -> run_omegas -> [0] ) eq 'ARRAY') ?
 		$self -> run_omegas -> [$model_number-1]:$self -> run_omegas;
-	$run{'sigmas'} = (ref( $self -> run_sigmas -> [0] ) eq 'ARRAY') ? 
+	$run{'sigmas'} = (ref( $self -> run_sigmas -> [0] ) eq 'ARRAY') ?
 		$self -> run_sigmas -> [$model_number-1]:$self -> run_sigmas;
 
 	my $orig_output;
@@ -858,7 +858,7 @@ sub _make_new_guess
 				next unless (defined $diagonals->[$j]);
 				foreach my $num ( @par_nums ) {
 					if (defined $diagonals->[$j][$num-1] and $diagonals->[$j][$num-1]== 1){
-						$bounds{'lower'}->[$j][$num-1] = 0 
+						$bounds{'lower'}->[$j][$num-1] = 0
 							unless (defined $bounds{'lower'}->[$j][$num-1]);
 					}
 				}
@@ -1040,14 +1040,14 @@ sub _aag
 	my @x = defined $parm{'xarr'} ? @{$parm{'xarr'}} : ();
 	my @y = defined $parm{'yarr'} ? @{$parm{'yarr'}} : ();
 	my @polynomial;
-	
+
 	my $total = scalar(@x);
 	croak("No data supplied to the polynomial approximation".
 		  " algorithm in the log-likelihood profiling tool" ) if ( $total < 1 );
-	
+
 	my $y=0;    my $y2=0;    my $x1=0;    my $x2=0;
 	my $x3=0;   my $x4=0;    my $x1y=0;   my $x2y=0;
-	
+
 	my $count=0;
 	while ($count<$total){
 	  $y+=$y[$count];
@@ -1100,19 +1100,19 @@ sub _guess
 	my $num = $parm{'num'};
 	my $probnum = $parm{'probnum'};
 	my $ofv_increase = $parm{'ofv_increase'};
-	
+
 	my @x = @{$param_log[0]};
 	my @y = @{$param_log[1]};
-	
+
 	croak('The number of logged parameter values ('.
 		scalar @{$param_log[0]}.
 		') does not match the number of logged ofv-diffs ('.  scalar @{$param_log[1]}.')' )
 	if ( scalar @{$param_log[0]} != scalar @{$param_log[1]} );
 
 	my ( @x1, @y1 );
-	
+
 	my $points = scalar(@x);
-	
+
 	my $zero = 0;
 
 	while ($y[$zero] > 0){
@@ -1122,14 +1122,14 @@ sub _guess
 	if ( $side eq 'lower' ) {
 	  @x1 = @x[0..2];
 	  @y1 = @y[0..2];
-	  
+
 	} else {
 	  @x1 = @x[$points-3..$points-1];
 	  @y1 = @y[$points-3..$points-1];
 	}
 
 	my $goal = $y[$zero]+ $ofv_increase;
-	
+
 	my @pol = @{_aag( xarr => \@x1, yarr => \@y1 ) };
 
 	if( $pol[0] == 0 ) {
@@ -1146,7 +1146,7 @@ sub _guess
 	    $guess = -$pol[1]/2/$pol[0] +
 	      (($pol[1]/2/$pol[0])**2 - ($pol[2]-$goal)/$pol[0])**(0.5);
 	  }
-	  
+
 	} else {
 	  if ($pol[0] > 0){
 	    $guess = -$pol[1]/2/$pol[0] +
@@ -1156,7 +1156,7 @@ sub _guess
 	      (($pol[1]/2/$pol[0])**2 - ($pol[2]-$goal)/$pol[0])**(0.5);
 	  }
 	}
-	
+
 	unless (usable_number($guess)){
 	  if ( ($y[0] - $y[1]) == 0 or ($x[0] - $x[1]) == 0 or
 	       ($y[$points-1] - $y[$points-2]) == 0 or ($x[$points-1] - $x[$points-2]) == 0 ) {
@@ -1218,7 +1218,7 @@ sub prepare_results
 	    #$row->[1] is parameter.type in rawres
 	    #$row->[2] is parameter.number in rawres
 	    #$row->[3] is side in rawres
-	    #$num is index in rawres of this param  
+	    #$num is index in rawres of this param
 	    my $num = $start+($row -> [2]  - 1);
 
 	    $ci{$row -> [1]}{$row -> [2]}{$row -> [3]} = $row -> [$num];
@@ -1236,7 +1236,7 @@ sub prepare_results
 	    my @nums = sort { $a <=> $b } keys %{$ci{$param}};
 	    foreach my $num ( @nums ) {
 	      push( @{$ci_labels[0]}, $labels{$param}[$num-1] );
-	      if ( defined $ci{$param}{$num}{'lower'} and 
+	      if ( defined $ci{$param}{$num}{'lower'} and
 		   defined $ci{$param}{$num}{'upper'} ) {
 		if( abs( $ci{$param}{$num}{'lower'} - $orig_estimates{$param}[$num-1] ) == 0 ){
 		  $interval_ratio{$param}{$num} = 'INF';

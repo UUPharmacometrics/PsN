@@ -12,7 +12,7 @@ use so::table;
 has 'version' => ( is => 'rw', isa => 'Num', required => 1 );
 
 has 'Mean' => ( is => 'rw', isa => 'so::table' );
-has 'Median' => ( is => 'rw', isa => 'so::table' ); 
+has 'Median' => ( is => 'rw', isa => 'so::table' );
 
 sub parse
 {

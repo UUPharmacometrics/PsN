@@ -48,16 +48,16 @@ EOF
 $help_text{Description} = <<'EOF';
 	The nonpb is a resampling-based method for estimating imprecision in
 	nonparametric distribution (NPD) estimates obtained in NONMEM. Imprecision
-	in the NPD can be estimated by means of two different resampling procedures. 
+	in the NPD can be estimated by means of two different resampling procedures.
 	The full method, -nonpb_version=2, relies on bootstrap sampling from the raw
 	data and a re-estimation of both the preceding parametric (FOCE) and the
-	nonparametric step. 
+	nonparametric step.
 	The simplified method, -nonpb_version=1, is the default and relies on
 	bootstrap sampling of individual nonparametric probability distributions.
 	Nonparametric confidence intervals are computed. In addition of providing
 	information about the precision of nonparametric parameter estimates, the
 	nonpb methods can serve as diagnostic tools for the detection of misspecified
-	parameter distributions. The P individuals method is available as a separate 
+	parameter distributions. The P individuals method is available as a separate
 	sN tool, pind.
 	Reference:
 	Two bootstrapping routines for obtaining imprecision estimates for
@@ -82,7 +82,7 @@ $help_text{-h} = <<'EOF';
 	With -h or -? nonpb will print a list of options and exit.
 EOF
 
-$help_text{-help} = <<'EOF';      
+$help_text{-help} = <<'EOF';
 	-help
 
 	With -help nonpb will print this, longer, help message.
@@ -92,14 +92,14 @@ $help_text{-lst_file} = <<'EOF';
 	-lst_file=<filename>
 
 	Default is the same name as the model file but with .mod replaced with .lst.
-	The lst-file from where to read initial parameter estimates. 
+	The lst-file from where to read initial parameter estimates.
 EOF
 
 $help_text{-nonpb_version} = <<'EOF';
 	-nonpb_version=1|2
 
 	Default is 1, the simplified version. Version 2 is the full version. The
-	version of the script to run. 
+	version of the script to run.
 EOF
 
 $help_text{-samples} = <<'EOF';
@@ -213,7 +213,7 @@ if ($nonpb->nonpb_version() == 2) {
     # from bootstrap object
 
     # do the bootstrap in a specific sub-directory of  nonpb_dirY : 'bootstrap'
-    # must carry a whole hash of options here, can lump them together according to Pontus, 
+    # must carry a whole hash of options here, can lump them together according to Pontus,
 
     my $type = defined $options{'bca'} ? 'bca' : undef;
 
@@ -250,7 +250,7 @@ if ($nonpb->nonpb_version() == 2) {
     $nonpb->pind_directories(['pind_dir1/']);
 
     open(TMP, ">", 'ofv.done');
-    print TMP "1"; 
+    print TMP "1";
     close(TMP);
     $pind = undef;
 }

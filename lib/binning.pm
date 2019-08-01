@@ -88,13 +88,13 @@ sub chooseK
 ###########################################################################
 #
 #   ALGORITHM EXPLAINED:
-#   For all the K:s to be examined by the method an index called OlifIndex 
-#   is calculated. The K value that gives the maximum value of the index is 
-#   choosen as the appropriate number of bins. 
+#   For all the K:s to be examined by the method an index called OlifIndex
+#   is calculated. The K value that gives the maximum value of the index is
+#   choosen as the appropriate number of bins.
 #
 #   The index is further defined as the quotient of the CH index and the
 #   optimal objective function value.
-# 
+#
 ###########################################################################
 #
 #   IN Parameters:
@@ -121,7 +121,7 @@ sub chooseK
 	my $Ntot = scalar(@$idv);
 	croak("Too few data points ($Ntot)$stratum_label for $kmin bins given a minimum number of $minPointsInBin points in each bin.\n" .
 		  "Either set option min_points_in_bin to a lower number than $minPointsInBin\n".
-		  "or try a lower Nmin than $kmin in -auto_bin=Nmin,Nmax\n") 
+		  "or try a lower Nmin than $kmin in -auto_bin=Nmin,Nmax\n")
 		if ($Ntot < $kmin * $minPointsInBin);
 
 	my $maxOlifIndex;
@@ -184,7 +184,7 @@ sub chooseK
 		} elsif ($index_selection == 1) {
 			$index = $CH;
 		}
-			
+
 
 		#determine largest index and best K so far
 		if ((not defined($maxOlifIndex)) or ($index > $maxOlifIndex)) {
@@ -233,37 +233,37 @@ sub firstMethod
 #   ALGORITHM EXPLAINED:
 #
 #   The algorithm seeks to place out K bins in a way such that the function
-#   O = - sum(B_k) + sum(Phi) is minimized. The idea is to minimize the 
-#   within bin variability W in the idv direction, which is equal to the 
-#   total variability (T) minus the between cluster variability 
-#   (B = sum(B_k)) in the idv direction. Since the total variance is 
-#   independent of how the binning is performed, we can maximize the 
+#   O = - sum(B_k) + sum(Phi) is minimized. The idea is to minimize the
+#   within bin variability W in the idv direction, which is equal to the
+#   total variability (T) minus the between cluster variability
+#   (B = sum(B_k)) in the idv direction. Since the total variance is
+#   independent of how the binning is performed, we can maximize the
 #   between bin variability instead (minimize -B).
 #
 #   The second term in the function O represents the data density, which
 #   penelizes a placement of a bin edge somewhere where there are a lot of
-#   data points. This term is used to avoid that the algorithm split 
-#   cluster of dats points into several bins. This function is defined for 
-#   every interval between two consecutive unique idv values. The interval 
-#   between the unique values i-1 and i is further on represented as the 
+#   data points. This term is used to avoid that the algorithm split
+#   cluster of dats points into several bins. This function is defined for
+#   every interval between two consecutive unique idv values. The interval
+#   between the unique values i-1 and i is further on represented as the
 #   unique idv value i.
-# 
+#
 ###########################################################################
 #
 #   IN Parameters:
 #   K -                 Number of desired bins
 #   IDV -               Indepent variable of the data set
 #   MINPOINTSINBINS -   Minimum number of data points required in each bin
-#   POT -               Flag controlling whether to use the data density 
+#   POT -               Flag controlling whether to use the data density
 #                       function
 #
 #   OUT Parameters:
-#   BINEDGES -      Vector containing the bin edges idv values for the 
+#   BINEDGES -      Vector containing the bin edges idv values for the
 #                   binning performed
-#   BINCENTERSIDV - The mean idv values of the data points in the bins 
+#   BINCENTERSIDV - The mean idv values of the data points in the bins
 #                   generated
 #   BINN -          The number of data points in each of the bins generated
-#   EDGES -         Vector containing the bin edges represented as indices 
+#   EDGES -         Vector containing the bin edges represented as indices
 #                   in the sorted unique idv value vector
 #   OBJFUNVALUE -   The objective function value obtained after minimization
 #                   of the objective function
@@ -281,7 +281,7 @@ sub firstMethod
 	# Use data density function if not specified
 	$pot = 1 unless defined $pot;
 
-	## Initialization of constants 
+	## Initialization of constants
 	###########################################################################
 
 	# Maximum allowed iterations, used to make sure that the algorithm does not
@@ -316,8 +316,8 @@ sub firstMethod
 	my @uniqueIdvN = @{diff(\@uniqueMapIdv)};
 
 	# Cumulative function of the number of occurences of each unique idv value.
-	# cumSumN(i) is the number of data points with idv values equal to any of 
-	# idv(1),...,idv(i) 
+	# cumSumN(i) is the number of data points with idv values equal to any of
+	# idv(1),...,idv(i)
 	my @cumSumN = @uniqueMapIdv;
 
 	# Cumulative function of the sum of all idv
@@ -328,19 +328,19 @@ sub firstMethod
 
 	#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-	# Check weather the number of unique data points allow for K bins 
+	# Check weather the number of unique data points allow for K bins
 	if ($numberOfUniqueIdv < $K) {
 		return;
 	}
 
-## If the data density term is used in the objective function 
+## If the data density term is used in the objective function
 ###########################################################################
 # First, run the algorithm without the data density term. Thereafter define
 # a mesh to be used for the smoothing of the data density. The smoothing is
-# done bin by bin where the smoothing parameter is given by the standard 
-# deviation of in the idv direction in each bin. The kurtosis measure is 
-# further used to adjust smoothing parameter if the data density isnt 
-# gaussian-like in the bin. Finally the sum is taken of the contributions 
+# done bin by bin where the smoothing parameter is given by the standard
+# deviation of in the idv direction in each bin. The kurtosis measure is
+# further used to adjust smoothing parameter if the data density isnt
+# gaussian-like in the bin. Finally the sum is taken of the contributions
 # to the smoothed data density function from all bins.
 #
 # For every interval between consecutive unique idv values where a bin
@@ -350,9 +350,9 @@ sub firstMethod
 # minimum of the two neighbouring phi values.
 #
 # The final step is to scale the data density function to an appropriate
-# scale. This is done with the maximal value of sum of the within bin 
-# variability from the iteration before and a constant beta which was 
-# empirically determined for best results. max(W) scales phi to be of the 
+# scale. This is done with the maximal value of sum of the within bin
+# variability from the iteration before and a constant beta which was
+# empirically determined for best results. max(W) scales phi to be of the
 # same order of magnitude as the objective function.
 
 	my $Edges;
@@ -417,13 +417,13 @@ sub firstMethod
 
 		}
 
-		# Define the phi function for every unique idv value as the minimum in 
+		# Define the phi function for every unique idv value as the minimum in
 		# the mesh interval between idv(i-1) and idv(i):
 		for (my $i = 1; $i < $numberOfUniqueIdv; $i++) {
 			# Extract the minimum value in the interval:
 			my @indexes = grep { $$idvMesh[$_] >= $uniqueIdv[$i - 1] and $$idvMesh[$_] <= $uniqueIdv[$i] } 0..$#$idvMesh;		# extract a part of the mesh
 			my @extraction = @sumDensity[@indexes];
-			
+
 			# If there is no value in the interval, set phi to infinity and
 			# handle later
 			if (scalar(@extraction) > 0) {
@@ -448,10 +448,10 @@ sub firstMethod
 	}  # end if pot
 
 
-## If the data density term is not used in the objective function 
+## If the data density term is not used in the objective function
 ###########################################################################
-# The binning given by the method equal size is now used as a starting point 
-# for the algorithm, given that it fulfills the requirement on the min 
+# The binning given by the method equal size is now used as a starting point
+# for the algorithm, given that it fulfills the requirement on the min
 # number of data points in every bin. If this requirement cannot be
 # fulfilled, an error is given.
 
@@ -488,20 +488,20 @@ sub firstMethod
 # be moved if it gives a decrease in the objective function, and this is
 # what the variable DFDX will indicate.
 #
-# F -       This is a matrix with three local objective function values for 
-#           every bin edge k. The three values corresponds to the bin edge 
-#           k being moved one step to the left, the current place of the 
-#           bin edge k and thirdly the bin edge k being moved one step to 
-#           the right. The local objective function value consists of the 
-#           between cluster variability contribution of the two bins 
-#           directly to the left and right of the bin edge k together with 
+# F -       This is a matrix with three local objective function values for
+#           every bin edge k. The three values corresponds to the bin edge
+#           k being moved one step to the left, the current place of the
+#           bin edge k and thirdly the bin edge k being moved one step to
+#           the right. The local objective function value consists of the
+#           between cluster variability contribution of the two bins
+#           directly to the left and right of the bin edge k together with
 #           the smoothed data density value of the bin. This are the only
 #           parts of the objective function that changes when moving the
 #           bin edge k in between its to neighbouring bin edges.
-# NEGB -    This is a vector with contributions to the negative between bin 
+# NEGB -    This is a vector with contributions to the negative between bin
 #           variability from the different bin edges.
-# DFDX -    This is vector of the minimum changes that can be optained in 
-#           the objective function by moving the bin edges one step to the 
+# DFDX -    This is vector of the minimum changes that can be optained in
+#           the objective function by moving the bin edges one step to the
 #           left or to the right.
 
 	my @f;
@@ -515,7 +515,7 @@ sub firstMethod
 	my $negBLeft;
 	my $negBRight;
 
-	# Loop through all interior bin edges ei to get the initial values of these 
+	# Loop through all interior bin edges ei to get the initial values of these
 	# variables:
 	for (my $ei = 1; $ei < $K; $ei++) {
 
@@ -542,7 +542,7 @@ sub firstMethod
 
 
 
-## Calculate the initial value of the objective function. 
+## Calculate the initial value of the objective function.
 ###########################################################################
 # If data point density used in the objective Function, add it here.
 
@@ -560,39 +560,39 @@ sub firstMethod
 
 ## Optimization of the binning
 ###########################################################################
-# Continue optimization until the stop criteria is fulfilled. 
+# Continue optimization until the stop criteria is fulfilled.
 # The stop criteria is fulfilled when there is no bin that can be
 #
-# 1. moved in between its two neighbours 
-# 2. taken out and be placed in between any two other bin edges 
+# 1. moved in between its two neighbours
+# 2. taken out and be placed in between any two other bin edges
 #
-# such that the objective function is decreased while the requirement on 
+# such that the objective function is decreased while the requirement on
 # minimum data points in each bin is still valid.
 #
 # PART 1 of optimization
-# Try moving the bin edges one by one within its two neighbours to decrease 
+# Try moving the bin edges one by one within its two neighbours to decrease
 # the objective function.
-#   Step 1: 
+#   Step 1:
 #       Choose the bin edge that gives the biggest decrease
 #       (or smallest increase) when being moved one step to the left or right.
-#       Then move try every possible possition between the two neighbour 
-#       bin edges to get the biggest decrease 
+#       Then move try every possible possition between the two neighbour
+#       bin edges to get the biggest decrease
 #       of the objective function.
-#   Step 2: 
+#   Step 2:
 #       Mark the moved bin edge as updated so that it cannot be moved again
 #       unless any circumstances are changed.
 #   Step 3:
-#       If a bin edge has been moved, update the derivatives of the 
+#       If a bin edge has been moved, update the derivatives of the
 #       neighbouring bins so that they can be moved again.
 #
 #
 # PART 2 of optimization
-# Try taking out the bin edges one by one and placing them in between two 
+# Try taking out the bin edges one by one and placing them in between two
 # other bin edges to decrease the objective function
-#   Step 1: 
-#       Calculate the increase in the objective function for removing any 
-#       of the bin edges (removeIncrease). Also calculate the decrease in the 
-#       objective for adding an extra between bin edge between any two 
+#   Step 1:
+#       Calculate the increase in the objective function for removing any
+#       of the bin edges (removeIncrease). Also calculate the decrease in the
+#       objective for adding an extra between bin edge between any two
 #       consecutive bin edges (addDecrease).
 #   Step 2:
 #       Find the lowest value of removeIncrease and the corresponding edge. Also
@@ -619,18 +619,18 @@ sub firstMethod
 
 		## Part 1:
 		#######################################################################
-    
+
 		# Choose edge with steepest derivative to be moved
 		(undef, my $edi) = min($dfdx);
 
-		# For the edge with steepest derivative find the Part of Objective 
+		# For the edge with steepest derivative find the Part of Objective
 		# Function values for all possible new positions.
 		(undef, my $POF, my $negBLeft, my $negBRight, my $indexArray, my $N1corped, my $N2corped, my $idvMeanLeft, my $idvMeanRight) = calcPOF($edi, undef, $Edges, \@cumSumN, \@cumSumIdv, \@phi, $MINPOINTSINBINS, $totMeanIdv, $pot);
 
 		# Pick out the best positions according to POF:
 		(my $minPOF, my $newPos) = min($POF);
 
-		# Only perform movement if the optimal new position for the bin edge 
+		# Only perform movement if the optimal new position for the bin edge
 		# differ from the current one:
 		if ($$Edges[$edi] != $$indexArray[$newPos]) {
 
@@ -642,12 +642,12 @@ sub firstMethod
 			$$binN[$edi - 1] = $$N1corped[$newPos];
 			$$binN[$edi] = $$N2corped[$newPos];
 
-			# Update the bin centers in the idv direction for the bins to the 
+			# Update the bin centers in the idv direction for the bins to the
 			# left and right of the moved bin edge:
 			$$binCenterIdv[$edi - 1] = $$idvMeanLeft[$newPos];
 			$$binCenterIdv[$edi] = $$idvMeanRight[$newPos];
 
-			# Update the ojective function value. Add the contribution from the 
+			# Update the ojective function value. Add the contribution from the
 			# new bin edge position and remove the contribution from the old:
 			$objFunValue += $minPOF - $f[1][$edi];
 
@@ -656,7 +656,7 @@ sub firstMethod
 			$$negB[$edi - 1] = $$negBLeft[$newPos];
 			$$negB[$edi] = $$negBRight[$newPos];
 
-			# Update f and dfdx for the neighboring bin edges since the move 
+			# Update f and dfdx for the neighboring bin edges since the move
 			# have effected them (They have to be checked again)
 			updateF($edi - 1, $K, \@f, $Edges, $dfdx, \@cumSumN, \@cumSumIdv, \@phi, $MINPOINTSINBINS, $totMeanIdv, $pot);
 			updateF($edi + 1, $K, \@f, $Edges, $dfdx, \@cumSumN, \@cumSumIdv, \@phi, $MINPOINTSINBINS, $totMeanIdv, $pot);
@@ -671,7 +671,7 @@ sub firstMethod
 
 		# Update iteration number:
 		$iteration++;
-    
+
 		# Update stop criteria
 		$stopCriteria = 1;
 		foreach (@$dfdx) {
@@ -699,14 +699,14 @@ sub firstMethod
 			# placed between bin edge K and K+1
 			$addDecrease = [ (-inf()) x $K ];
 
-			# The Part of the Objective Function for the added bin edge: 
+			# The Part of the Objective Function for the added bin edge:
 			my $addPOF = [ (inf) x $K ];
 
-			# The contribution to the between bin variability from the new bin 
+			# The contribution to the between bin variability from the new bin
 			# to the left of the addded bin edge:
 			my $newNegBLeft = [ (inf) x $K ];
 
-			# The contribution to the between bin variability from the new bin 
+			# The contribution to the between bin variability from the new bin
 			# to the right of the addded bin edge:
 			my $newNegBRight = [ (inf) x $K ];
 
@@ -717,14 +717,14 @@ sub firstMethod
 			# removed:
 			my $removeIncrease = [ (inf) x ($K - 1) ];
 
-			# The contribution to the between bin variability from the new bin 
-			# given by merging the bin to the left and to the right of the bin 
+			# The contribution to the between bin variability from the new bin
+			# given by merging the bin to the left and to the right of the bin
 			# edge removed:
 			my $removePOF = [ (inf) x $K ];
 
 			###################################################################
 
-			# Calculate the decrease in the objective function when adding a 
+			# Calculate the decrease in the objective function when adding a
 			# bin edge at different locations:
 			for (my $i = 0; $i < $K; $i++) {
 				($$addDecrease[$i], $$addPOF[$i], $$newNegBLeft[$i], $$newNegBRight[$i], $$addEdgeIndex[$i]) = calcAD($i, $Edges, \@cumSumN, \@cumSumIdv, \@phi, $MINPOINTSINBINS, $totMeanIdv, $pot, $negB);
@@ -740,8 +740,8 @@ sub firstMethod
 					($$removeIncrease[$i], $$removePOF[$i]) = calcRI($i, \@cumSumN, \@cumSumIdv, $Edges, $f[1][$i], $totMeanIdv);
 				}
 
-				# Find the bin egde which gives the minimum increase of the 
-				# objective function when removed 
+				# Find the bin egde which gives the minimum increase of the
+				# objective function when removed
 				(my $minRemoveIncrease, my $minRIIndex) = min($removeIncrease);
 
 				# Find the place where adding a bin edge gives the maximum
@@ -751,18 +751,18 @@ sub firstMethod
 				# The total amount that the objective function would decrease:
 				my $totalDecrease = $maxAddLoss - $minRemoveIncrease;
 
-				# Perform the move of the bin edge as long as the total 
-				# decrease of the objective function is bigger than zero. To 
-				# avoid problems with round off errors we demand that 
-				# totalDecrease is 100 times bigger that the floating points 
+				# Perform the move of the bin edge as long as the total
+				# decrease of the objective function is bigger than zero. To
+				# avoid problems with round off errors we demand that
+				# totalDecrease is 100 times bigger that the floating points
 				# number distance for number of the same magnitude as the
 				# objFuncValue.
 				if ($totalDecrease > 100 * eps($objFunValue)) {
 
-					# Get the indices of the bin edges that have to be updated 
+					# Get the indices of the bin edges that have to be updated
 					# due to the move. The edges that have to be updated
-					# are those that lie to the left and right of the removed 
-					# bin edge (minRIIndex) and those that lie to the left and 
+					# are those that lie to the left and right of the removed
+					# bin edge (minRIIndex) and those that lie to the left and
 					# right of the inserted bin edge (minADIndex). Note that
 					# the move have not been performed yet.
 
@@ -783,8 +783,8 @@ sub firstMethod
 					@$Edges[0..$K - 1] = sort { $a <=> $b } @$Edges[0..$K - 1];		# [Edges(1:K),sortI] = sort(Edges(1:K));
 
 					# To transform edgesThatNeedToBeUpdated to the new bin edge
-					# sorting, we get the reverse sorting mapping 
-					# The AGROW command to the left below is suppressing a 
+					# sorting, we get the reverse sorting mapping
+					# The AGROW command to the left below is suppressing a
 					# warning in the matlab prompt
 					my @reverseSort;
 					@reverseSort[@sortI] = 0..$K - 1;
@@ -792,7 +792,7 @@ sub firstMethod
 					# Do the reverse mapping edgesThatNeedToBeUpdated:
 					@edgesThatNeedToBeUpdated = @reverseSort[@edgesThatNeedToBeUpdated];
 
-					# Find out where the inserted bin edge lie in the newly 
+					# Find out where the inserted bin edge lie in the newly
 					# sorted Edges vector:
 					my $newEdgeIndex;
 
@@ -810,8 +810,8 @@ sub firstMethod
 
 					}
 
-					# Update the the contribution to the between bin 
-					# variability from the bin which the removed bin edge 
+					# Update the the contribution to the between bin
+					# variability from the bin which the removed bin edge
 					# earlier was in
 					$$negB[$minRIIndex - 1] = $$removePOF[$minRIIndex];
 
@@ -868,9 +868,9 @@ sub firstMethod
 	# Get the true objective function value which is missing the total
 	# variability (constant that does not effect the minimization algorithm
 	$objFunValue = $T + $objFunValue;
-	
+
 	# Get the contribution to the between bin variabillity from every bin. This
-	# is returned from the function and used when determining the number of 
+	# is returned from the function and used when determining the number of
 	# appropiate bins
 	my $BK = [map { -$_ } @$negB];
 
@@ -882,8 +882,8 @@ sub firstMethod
 
 
 ## UpdateF
-# Function that updates the bin edge value of f and dfdx 
-# 
+# Function that updates the bin edge value of f and dfdx
+#
 ###########################################################################
 #
 #   IN Parameter:
@@ -922,27 +922,27 @@ sub updateF
 #
 #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 #
-#   The interior bin edges are first represented by the indices in the 
-#   unique idv vector corresponding to the data point directly to the left 
-#   of the bin edges. Every bin edge's idv coordinate is then calculated as 
-#   the idv position exactly in the middle of idv(i-1) and idv(i) where i 
-#   is the index for which the egde originally was defined. 
+#   The interior bin edges are first represented by the indices in the
+#   unique idv vector corresponding to the data point directly to the left
+#   of the bin edges. Every bin edge's idv coordinate is then calculated as
+#   the idv position exactly in the middle of idv(i-1) and idv(i) where i
+#   is the index for which the egde originally was defined.
 #   For the first and last bin edges this approach cannot be used. Instead,
-#   to get a natural placement the first bin edge will be placed so that 
-#   the distance from it to the center of the first bin is the same as 
-#   the distance from the center of the first bin to the second bin edge. 
+#   to get a natural placement the first bin edge will be placed so that
+#   the distance from it to the center of the first bin is the same as
+#   the distance from the center of the first bin to the second bin edge.
 #   The last bin edge is defined in the same way but from the right.
-# 
+#
 #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 #
 #   IN Parameters:
 #   UNIQUEIDV - Vector of unqiue idv values in which the edges origianlly
 #   are represented
-#   EDGEINDICES - The position of the edges as indices in the UNIQUEIDV. An edge 
+#   EDGEINDICES - The position of the edges as indices in the UNIQUEIDV. An edge
 #   with index i lies somewhere between the idv value i-1 and i
-#   LEFTMOSTBINCENTER - The mass center in the idv direction of the data 
+#   LEFTMOSTBINCENTER - The mass center in the idv direction of the data
 #   points in the left most bin. Used to set the first bin edge.
-#   RIGHTMOSTBINCENTER - The mass center in the idv direction of the data 
+#   RIGHTMOSTBINCENTER - The mass center in the idv direction of the data
 #   points in the right most bin. Used to set the last bin edge.
 #
 #   OUT Parameters:
@@ -968,8 +968,8 @@ sub indexToIdv
 	$edges[0] = $edges[1] - 2 * ($edges[1] - $leftMostBinCenter);
 	$edges[-1] = $edges[-2] + 2 * ($rightMostBinCenter - $edges[-2]);
 
-	# If this way of placing the boundary edges leaves some data points outside 
-	# of the bins, then set the bin edges as the leftmost/rightmost idv value 
+	# If this way of placing the boundary edges leaves some data points outside
+	# of the bins, then set the bin edges as the leftmost/rightmost idv value
 	# with a little pertubation so that the data points lies within the bins:
 
 	if ($edges[0] >= min($uniqueIdv)) {
@@ -1013,7 +1013,7 @@ sub gaussFilter
 	}
 
 	# Optimal h for Gauss kernel under some assumptions of the distribution
-	# of the data points. 
+	# of the data points.
 	# See report for more details.
 
 	my $h = $std * ($N ** -0.2);
@@ -1039,7 +1039,7 @@ sub gaussFilter
 				$smoothedDensity[$k] += $$density[$i] * $gauss;
 			}
 			$k++;
-		}	
+		}
 
 		my $k = $mid - 1;
 		my $cont = 1;
@@ -1056,7 +1056,7 @@ sub gaussFilter
 		#Old simpler inner loop
 		#for (my $k = 0; $k < @$mesh; $k++) {
 		#		$smoothedDensity[$k] += $$density[$i] * exp( (($$mesh[$k] - $$idv[$i]) / $h)**2 * (-1/2)) / sqrt(2 * pi);
-		#	}	
+		#	}
 	}
 
 	# Normalize smoothed density so that the integral over it is 1.
@@ -1075,25 +1075,25 @@ sub gaussFilter
 #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 #
 #   ALGORITHM EXPLAINED:
-#   We loop through all unique idv values and add them to the current bin 
-#   as long as any of the following completness conditions are not 
-#   fulfilled: 
-#       1.  The minimum number of data points in the bin (MINPOINTSINBIN) 
+#   We loop through all unique idv values and add them to the current bin
+#   as long as any of the following completness conditions are not
+#   fulfilled:
+#       1.  The minimum number of data points in the bin (MINPOINTSINBIN)
 #           has been fulfilled.
 #       2.  Adding the data points with the next idv value gives a higher
-#           global error than not adding them. The global error is defined 
-#           as the sum of how much the number of data points in every 
-#           completed bin deviates from the ideal number of data points in 
+#           global error than not adding them. The global error is defined
+#           as the sum of how much the number of data points in every
+#           completed bin deviates from the ideal number of data points in
 #           them (N/K). The data points will only be added if there still
 #           are enough unique idv values left to make the remaining bins
 #           filled with atleast one data point each.
-#   Then we step to the next bin edge and continues until all unqiue idv 
-#   values have been walked through or until all bin edges have been placed 
+#   Then we step to the next bin edge and continues until all unqiue idv
+#   values have been walked through or until all bin edges have been placed
 #   out.
 #
 #   Note that it may be so that the last bins does not fulfill the min
 #   points in bin requiredment if the data set does not allow for it
-#    
+#
 #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 #
 #   IN Parameters:
@@ -1104,7 +1104,7 @@ sub gaussFilter
 #   MINPOINTSINBINS - Minimum number of data points required in each bin
 #
 #   OUT Parameters:
-#   EDGEINDICES - The position of the edges as indices in the UNIQUEIDV. An edge 
+#   EDGEINDICES - The position of the edges as indices in the UNIQUEIDV. An edge
 #   with index i lies somewhere between the idv value i-1 and i
 #   BINN - Number of data points in each bin
 #
@@ -1126,13 +1126,13 @@ sub equalSize
 	# Index of the edge currently being placed out:
 	my $edgeIndex = 1;
 
-	# Number of data points in current bin minus ideal number of bins:  
+	# Number of data points in current bin minus ideal number of bins:
 	my $localError = -$idealCount;
 
 	# The total error of all bins:
 	my $globalError = 0;
 
-	# Positionvector of edges as indices in the vector of unique idv values: 
+	# Positionvector of edges as indices in the vector of unique idv values:
 	my @edgeIndices = (0) x $K;
 	push @edgeIndices, $uniqueN;
 
@@ -1154,8 +1154,8 @@ sub equalSize
 
 			$binN[$K - 1] = $N - $binNsum;
 			last;
-		# The current bin does not fulfill the condition for completness yet  
-		# (Min points in bin condition || (Global error condition && Still data 
+		# The current bin does not fulfill the condition for completness yet
+		# (Min points in bin condition || (Global error condition && Still data
 		# points left to fill remaining bins))
 		} elsif ($binN[$edgeIndex - 1] < $MINPOINTSINBIN or abs($globalError + $localError) > abs($globalError + $localError + $$valueCount[$valueIndex]) and ($uniqueN - $valueIndex - 1) > ($K - $edgeIndex)) {
 			# Add the current unique idv value to the current bin and update
@@ -1170,7 +1170,7 @@ sub equalSize
 
 			# Update global error with local error:
 			$globalError += $localError;
-        
+
 			# Move to the next edge:
 			$edgeIndex++;
 
@@ -1188,16 +1188,16 @@ sub equalSize
 ##  calcRI
 #   This function calculates the increase in the objective function when
 #   removing a bin edge
-# 
+#
 #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 #
 #   IN Parameters:
 #   EI -                The idv index for the bin edge to be removed
 #
 #   OUT Parameters:
-#   REMOVEINCREASE -    The decrease in the objective function given when 
+#   REMOVEINCREASE -    The decrease in the objective function given when
 #                       removing the bin edge.
-#   REMOVEPOF -         The contribution to the between bin variability 
+#   REMOVEPOF -         The contribution to the between bin variability
 #                       from the new bin given by merging the bin to the
 #                       left and to the right of the bin edge to be removed
 
@@ -1243,9 +1243,9 @@ sub calcRI
 #   MEANIDV -   Vector with the mean idv values in the bins
 #
 #   OUT Parameters:
-#   NEGB -      The contribution to the between bin variability from the 
-#               bin to the left of the considered bin edge depending this 
-#               bin edge is moved 
+#   NEGB -      The contribution to the between bin variability from the
+#               bin to the left of the considered bin edge depending this
+#               bin edge is moved
 
 sub calcNegB
 {
@@ -1259,15 +1259,15 @@ sub calcNegB
 	return \@negB;
 }
 
-##  CALCPOF 
+##  CALCPOF
 #   calculates the Part of the Objective Function that is effected
 #   when moving the given bin edge.
-# 
+#
 ###########################################################################
 #
 #   IN Parameters:
 #   EDGEINDEX - The idv index of the bin edge to be moved around
-#   LOOPRANGE - The relative positions to the edge index that we want 
+#   LOOPRANGE - The relative positions to the edge index that we want
 #               to move the considered bin edge to. If given as empty
 #               vector then all possible places will be looped through
 #   EDGEARRAY - Vector containing the bin edges indices in the unique idv
@@ -1277,12 +1277,12 @@ sub calcNegB
 #   POF -       The value of the Part of the Objective Function effected by
 #               by moving the considered bin edge. This value depends on
 #               where the considered bin edge is moved
-#   NEGBLEFT -  The contribution to the between bin variability from the 
-#               bin to the left of the considered bin edge depending on 
-#               where this bin edge is moved 
-#   NEGBRIGHT - The contribution to the between bin variability from the 
-#               bin to the right of the considered bin edge depending on 
-#               where this bin edge is moved 
+#   NEGBLEFT -  The contribution to the between bin variability from the
+#               bin to the left of the considered bin edge depending on
+#               where this bin edge is moved
+#   NEGBRIGHT - The contribution to the between bin variability from the
+#               bin to the right of the considered bin edge depending on
+#               where this bin edge is moved
 #   GRID -      Value of the objective function for the given binning
 #
 
@@ -1308,17 +1308,17 @@ sub calcPOF
 	# Cut out the corresponding part of the cumSumN vector
 	my @relevantCumSumN = @$cumSumN[$moveToFirst..$moveToLast];
 
-	# Calculate the numbers of points in the bin to the left (N1) and 
-	# to the right (N2) of the bin edge to be moved as a function of 
-	# where it is placed. 
+	# Calculate the numbers of points in the bin to the left (N1) and
+	# to the right (N2) of the bin edge to be moved as a function of
+	# where it is placed.
 	my @N1 = map { $_ - $relevantCumSumN[0] } @relevantCumSumN;
 	my @N2 = map { $N1[-1] - $_ } @N1;
 
 	# Cut out the corresponding part of the cumSumIdv vector
 	my @relevantCumSumIdv = @$cumSumIdv[$moveToFirst..$moveToLast];
 
-	# Calculate the cumulative sum of the idv values in the bin to the 
-	# left(cumSumIdvLeft) and right(cumSumIdvRight) of where the bin 
+	# Calculate the cumulative sum of the idv values in the bin to the
+	# left(cumSumIdvLeft) and right(cumSumIdvRight) of where the bin
 	# edge is placed
 	my @cumSumIdvLeft = map { $_ - $relevantCumSumIdv[0] } @relevantCumSumIdv;
 	my @cumSumIdvRight = map { $cumSumIdvLeft[-1] - $_ } @cumSumIdvLeft;
@@ -1341,10 +1341,10 @@ sub calcPOF
 		}
 	}
 
-	# In part II of the optimization algorithm it might happen that 
-	# there are not enough data points to add anouther bin edge in 
-	# between two other bin edges. In that case, leftIndex will be 
-	# larger than the rightIndex. If this happens throw an error which 
+	# In part II of the optimization algorithm it might happen that
+	# there are not enough data points to add anouther bin edge in
+	# between two other bin edges. In that case, leftIndex will be
+	# larger than the rightIndex. If this happens throw an error which
 	# can be caught by the optimization algorithm.
 	if ($leftIndex > $rightIndex) {
 		return (1);               # error('VPCBinning:BinCantBePlaced','Error, bin contains to few points');
@@ -1355,28 +1355,28 @@ sub calcPOF
 
 	if ($useLoopRange) {
 
-		# Calculate the considered bin edge place relative to the bin 
+		# Calculate the considered bin edge place relative to the bin
 		# edge directly to the left of it
 		my $oldPlacement = $$edgeArray[$edgeIndex] - $$edgeArray[$edgeIndex - 1];
-            
+
 		# Define the loopRange relative to the bin edge
 		# directly to the left of the considered bin edge
 		$loopRange = [ map { $_ + $oldPlacement } @$loopRange ];
 
-		# Take the boundary indices for the movement a the most 
+		# Take the boundary indices for the movement a the most
 		# restrictive ones of leftIndex/rightIndex and loopRange:
 
 		$leftIndex = max($$loopRange[0], $leftIndex);
 		$rightIndex = min($$loopRange[-1], $rightIndex);
 	}
 
-	# We now only consider the indices that are allowed by the 
-	# MINPOINTSINBINS condition. These indices are relative to the bin 
+	# We now only consider the indices that are allowed by the
+	# MINPOINTSINBINS condition. These indices are relative to the bin
 	# edge at edgeIndex - 1
    # corpedInterval = leftIndex:rightIndex;
-          
+
 	# Redefine N1 and N2 so that they are only defined for the
-	# placements allow by the MINPOINTSINBINS value and the loopRange 
+	# placements allow by the MINPOINTSINBINS value and the loopRange
 	# vector
 
 	my @N1corped = @N1[$leftIndex .. $rightIndex];
@@ -1390,7 +1390,7 @@ sub calcPOF
 	my @idvMeanRight = @cumSumIdvRight[$leftIndex..$rightIndex];
 	@idvMeanRight = map { $idvMeanRight[$_] / $N2corped[$_] } 0..$#idvMeanRight;
 
-	# Calculate the left and right bin contributions to the negative 
+	# Calculate the left and right bin contributions to the negative
 	# between bin depending on where the considered bin edge is moved
 
 	my $POFLeft = calcNegB(\@N1corped, \@idvMeanLeft, $totMeanIdv);
@@ -1454,7 +1454,7 @@ sub calcPOF
 	# Add upp the different contributions to the POF values
 	my @POF = map { $negBleft[$_] + $negBright[$_] + $relevantPhi[$_] } 0..$#negBleft;
 
-	# Grid that translates the local position of the bin edge to its 
+	# Grid that translates the local position of the bin edge to its
 	# global position
 
 	my @moveTo = $moveToFirst .. $moveToLast;
@@ -1466,29 +1466,29 @@ sub calcPOF
 ##  calcAD
 #   This function calculates the decrease in the objective function when
 #   inserting a bin edge between bin edge k and k+1
-# 
+#
 ###########################################################################
 #
 #   IN Parameters:
-#   K -             The idv index for the bin edge to the left of those two 
+#   K -             The idv index for the bin edge to the left of those two
 #                   in between which we want to insert a new bin edge.
 #
 #   OUT Parameters:
 #   ADDDECREASE -   The decrease in the objective function for the optimal
 #                   placing of a new bin edge between bin edge k and k+1.
-#   NEWPOF -        The Part of the Ojective Function contributed by the 
+#   NEWPOF -        The Part of the Ojective Function contributed by the
 #                   new bin edge
-#   NEGBLEFT -      The contribution to the between bin variability from 
-#                   the bin to the left of the inserted bin edge for its 
-#                   optimal placement between bin edge k and k+1 
-#   NEGBRIGHT -     The contribution to the between bin variability from 
-#                   the bin to the right of the inserted bin edge for its 
-#                   optimal placement between bin edge k and k+1 
-#   EDGEINDEX -     The optimal bin edge place when inserting a bin edge 
+#   NEGBLEFT -      The contribution to the between bin variability from
+#                   the bin to the left of the inserted bin edge for its
+#                   optimal placement between bin edge k and k+1
+#   NEGBRIGHT -     The contribution to the between bin variability from
+#                   the bin to the right of the inserted bin edge for its
+#                   optimal placement between bin edge k and k+1
+#   EDGEINDEX -     The optimal bin edge place when inserting a bin edge
 #                   between bin edge k and k+1
 #
 #    function [addDecrease,newPOF,negBLeft,negBRight,edgeIndex] = calcAD(k)
- 
+
 sub calcAD
 {
 	my $k = shift;					# scalar
@@ -1504,8 +1504,8 @@ sub calcAD
 
 	# Try putting an bin edge between bin edge k and k+1:
 
-	# Use the calcPOF function to get the Parts of the Objective 
-	# Function for the different placings between the two bin edge 
+	# Use the calcPOF function to get the Parts of the Objective
+	# Function for the different placings between the two bin edge
 	# k and k+1
 	(my $error, my $localPOF, my $negBLeft, my $negBRight, my $grid) = calcPOF(1, undef, [$$Edges[$k], 0, $$Edges[$k + 1]], $cumSumN, $cumSumIdv, $phi, $MINPOINTSINBINS, $totMeanIdv, $pot);
 
@@ -1546,7 +1546,7 @@ sub calcAD
 		# was due to that the bin edge could not be placed due to
 		# MINPOINTSINBINS restriction
 
-		# We set the following variables to -inf and inf to be able 
+		# We set the following variables to -inf and inf to be able
 		# to recognize that the bin edge could not be placed:
 
 		$addDecrease = -inf();

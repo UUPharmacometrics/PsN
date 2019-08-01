@@ -95,7 +95,7 @@ sub get_intersection
 			}
 		}
 	}
-	return \@intersection; 
+	return \@intersection;
 }
 
 sub get_array_positions
@@ -116,7 +116,7 @@ sub get_array_positions
 	foreach my $key (@{$keys}){
 		push(@remaining_keys,$key);
 	}
-	
+
 	my $start=undef;
 	my $end=undef;
 	my $matched = 0;
@@ -505,7 +505,7 @@ sub sum
 
 	my $theSum = 0;
 
-	my @sorted = sort {abs($a) <=> abs($b)} (@$ref); 
+	my @sorted = sort {abs($a) <=> abs($b)} (@$ref);
 	foreach my $val (@sorted) {
 		$theSum += $val;
 	}
@@ -594,7 +594,7 @@ sub rse
     # Calculate the relative standard error of the expectation of an array.
 	#expectation is the estimate
     my ($array,$expectation) = pos_validated_list(\@_,
-										   { isa => 'ArrayRef'}, 
+										   { isa => 'ArrayRef'},
 										   {isa => 'Num' },
 		);
 	my $result = 0;
@@ -639,7 +639,7 @@ sub stdev
 	foreach my $val (@sorted) {
 		$sum_values += $val;
 	}
-	
+
 	my $mean = $sum_values / $val_count;
 	my @squared_errors;
 	foreach my $val (@sorted) {
@@ -651,7 +651,7 @@ sub stdev
 	foreach my $val (@sorted) {
 		$sum_errors_pow2 += $val;
 	}
-	
+
 	$result= sqrt ($sum_errors_pow2 / ($val_count - 1));
 	return $result;
 }
@@ -703,17 +703,17 @@ sub quantile
         my $cur = 1 / $groups;
         for (my $i = 0; $i < $groups - 1; $i++) {
             push @{$probs}, $cur;
-            $cur += 1 / $groups; 
+            $cur += 1 / $groups;
         }
     }
 
 	my $m = 0; #R quantile type 2 m value
-	
+
 	my @ans = ();
 	foreach my $perc (@{$probs}) {
-		my $j = floor($n * $perc + $m); 
+		my $j = floor($n * $perc + $m);
 
-		my $g = $n * $perc + $m - $j, 
+		my $g = $n * $perc + $m - $j,
 		my $gamma = 1;
 		$gamma = 0.5 if ($g == 0);
 
@@ -734,7 +734,7 @@ sub percentile
 {
 	#sort of the inverse of quantile
 	#return percentiles of input test_values
-	#the empirical cdf used is a step function that makes the step at each new value in sorted_numbers 
+	#the empirical cdf used is a step function that makes the step at each new value in sorted_numbers
 
 	my %parm = validated_hash(\@_,
         test_values => { isa => 'ArrayRef', optional => 0 },
@@ -747,7 +747,7 @@ sub percentile
 	croak("Empty set of sorted_numbers to empirical_distribution") if ($n < 1);
 	croak("Empty set of test_values to sorted_numbers") if (scalar(@{$test_values}) < 1);
 
-	
+
 	my @p_values = ();
 	foreach my $value (@{$test_values}){
 		#index is pos in sorted_numbers that is larger than $value

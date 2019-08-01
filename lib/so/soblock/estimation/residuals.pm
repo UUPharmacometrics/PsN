@@ -16,7 +16,7 @@ sub parse
     my $node = shift;
 
     my $xpc = so::xml::get_xpc();
-   
+
     (my $rt)= $xpc->findnodes($node);
     if (defined $rt) {
         my $table = so::table->new();
@@ -37,7 +37,7 @@ sub xml
     my $est;
     if (defined $res) {
         $est = XML::LibXML::Element->new("Residuals");
-    
+
         if (defined $res) {
             $est->appendChild($res);
         }

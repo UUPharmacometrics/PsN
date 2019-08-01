@@ -80,7 +80,7 @@ sub add_message
         Toolname => $toolname,
         Name => $name,
         Content => $content,
-        Severity => $severity,    
+        Severity => $severity,
     );
 
     push @{$self->Message}, $msg;

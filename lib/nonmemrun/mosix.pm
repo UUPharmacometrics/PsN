@@ -9,7 +9,7 @@ extends 'nonmemrun';
 
 has '_nr_wait' => ( is => 'rw', isa => 'Int', default => 0 );
 has 'nice' => ( is => 'rw', isa => 'Maybe[Int]' );
-has 'display_iterations' => ( is => 'rw', isa => 'Bool', default => 0 ); 
+has 'display_iterations' => ( is => 'rw', isa => 'Bool', default => 0 );
 
 sub submit
 {

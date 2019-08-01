@@ -1,4 +1,4 @@
- 
+
 require 5;
 package ext::File::HomeDir;   #Time-stamp: "2004-12-29 19:46:02 AST"
 use strict;
@@ -19,7 +19,7 @@ sub my_home () {
   # try the obvious
   $HOME = $ENV{'HOME'} || $ENV{'LOGDIR'};
   return $HOME if $HOME;
-    
+
   # Or try other ways...
   if($MacPerl::Version and $MacPerl::Version
     # avoid the "used only once" warning.
@@ -134,7 +134,7 @@ sub home (;$) {
   foreach my $m (qw(STORE EXISTS DELETE CLEAR FIRSTKEY NEXTKEY)) {
     no strict 'refs';
     *{$m} = sub { Carp::croak "You can't try ${m}ing with the %~ hash" }
-  }  
+  }
 
   # For a more generic approach to this sort of thing, see Dominus's
   # class "Interpolation" in CPAN.

@@ -40,7 +40,7 @@ exit unless $res;
 
 my %help_text;
 
-$help_text{Pre_help_message} = <<'EOF';  
+$help_text{Pre_help_message} = <<'EOF';
 	Case Deletion Diagnostics
 EOF
 
@@ -59,7 +59,7 @@ $help_text{Description} = <<'EOF';
 	considered a group as long as no individual contain multiple values in
 	that column. One should take care that the grouping creates sensible
 	individual records. PsN will renumber the ID column so that two individuals
-	with the same ID will not end up next to each other. 
+	with the same ID will not end up next to each other.
 EOF
 
 $help_text{Examples} = <<'EOF';
@@ -67,14 +67,14 @@ $help_text{Examples} = <<'EOF';
 
 	This will perform a Case Deletion Diagnostic on the model specified in
 	run89.mod based on the factors in column ten. If, for example, column ten
-	holds the ids of the seven centers included in the study, this command will 
+	holds the ids of the seven centers included in the study, this command will
 	create seven copies of the dataset, each with individuals included in one
 	specific center deleted. Say that the centers are numbered 1 to 7. Then
 	dataset 1 will have individuals from center 1 excluded, dataset 2
 	individuals from center 2 and so on.
 EOF
 
-$help_text{Options} = <<'EOF';  
+$help_text{Options} = <<'EOF';
 	A NONMEM model file with successful termination is required as argument.
 
 	The following options are valid:
@@ -86,7 +86,7 @@ $help_text{-case_column} = <<'EOF';
 	Default is ID. Through this flag you set the column on which the case-
 	deletion is done. You can either use the name of the column as specified in
 	the $INPUT record in the model file or you can use the column number.
-	Numbering starts with 1. 
+	Numbering starts with 1.
 EOF
 
 $help_text{-h} = <<'EOF';
@@ -95,7 +95,7 @@ $help_text{-h} = <<'EOF';
 	With -h or -? cdd will print a list of options and exit.
 EOF
 
-$help_text{-help} = <<'EOF';      
+$help_text{-help} = <<'EOF';
 	-help
 
 	With -help cdd will print this, longer, help message.
@@ -103,7 +103,7 @@ EOF
 
 $help_text{-bins} = <<'EOF';
 	-bins=number
-	
+
 	Default value = Number of unique values in the case column.
 	Sets the number of databins, or cdd datasets, to use. If the number of
 	unique values, or factors, in the case column is higher than the number of

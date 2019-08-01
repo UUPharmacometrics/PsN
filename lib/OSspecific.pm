@@ -27,7 +27,7 @@ sub unique_path
 	$i++;
       }
     }
-    
+
     if( $i > $max ){
       $max = $i;
     } else {
@@ -44,20 +44,20 @@ sub unique_path
 sub absolute_path
 {
   # path finding strategy:
-  
+
   # 1. If path is not given it is assumed to be the current working
   # directory. If it is not absolute, it is assumed to be relative to
   # the current working directory.
-  
+
   # 2. If filename is absolute, let that overide the directory
 
   # 3. If the filename is relative, assume the path as base.
 
   my $path = shift;
   my $file = shift;
-  
+
   $file = File::Spec -> canonpath($file);
-  
+
   if( defined $path ){
     $path = File::Spec -> canonpath($path);
     unless( File::Spec -> file_name_is_absolute( $path ) ){
@@ -92,14 +92,14 @@ sub absolute_path
 
 
   #Append trailing slash if missing
-  unless(( $path =~ /\/$/ ) || ( $path =~ /\\$/ )){ 
+  unless(( $path =~ /\/$/ ) || ( $path =~ /\\$/ )){
 	  if ( $Config{osname} eq 'MSWin32' ) {
 		  $path .= "\\";
 	  }else{
 		  $path .= '/';
-	  }  
+	  }
   }
-  
+
   return ($path, $file_file);
 }
 

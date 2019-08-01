@@ -189,7 +189,7 @@ EOF
 
 $help_text{-censor} = <<'EOF';
 	-censor=VARIABLE
-	
+
 	Default not set. Name of variable which defines whether the observation
 	of the dependent variable is missing, e.g. due to drop-out. 1 means the
 	observation is censored, 0 means the observation is not censored. The
@@ -247,18 +247,18 @@ $help_text{-flip_comments} = <<'EOF';
 	be uncommented and vice versa) between the tags. Cannot be used together
 	with -sim_model, -keep_estimation or -noprediction.
 	;Sim_start
-	and 
+	and
 	;Sim_end
 	For example, if the required input model has the lines
-	;Sim_start 
+	;Sim_start
 	IGNORE(TYPE.EQ.1)
-	;ACCEPT(TYPE.EQ.1) 
+	;ACCEPT(TYPE.EQ.1)
 	;Sim_end
 	then the MAXEVAL=0 model will be run as such and the simulation model
 	will instead have lines
 
 	;IGNORE(TYPE.EQ.1)
-	ACCEPT(TYPE.EQ.1) 
+	ACCEPT(TYPE.EQ.1)
 
 	The tags may appear multiple times. Note that the tags must look exactly
 	as above or the editing will fail. When creating the simulation model
@@ -272,7 +272,7 @@ $help_text{-idv} = <<'EOF';
 	-idv=VARIABLE
 
 	Default is TIME, the independent variable to bin on. Specific for VPC.
-	(old  option was -bin_on, without default value) 
+	(old  option was -bin_on, without default value)
 EOF
 
 $help_text{-in_filter} = <<'EOF';
@@ -323,21 +323,21 @@ EOF
 
 $help_text{-levels} = <<'EOF';
 	-levels=level1,level2,...
- 
+
 	The boundaries for a categorization. Category 1 $leq$ number1 $<$ category
-	2 $leq$ number2, etc. Specific for VPC. 
+	2 $leq$ number2, etc. Specific for VPC.
 EOF
 
 $help_text{-lloq} = <<'EOF';
 	-lloq=number
 
 	The lower limit of quantification for left censored data. Specific for
-	VPC. 
+	VPC.
 EOF
 
 $help_text{-lnDV} = <<'EOF';
 	-lnDV=0, 1, 2 or 3
-	
+
 	Default 0. Mainly for use with -predcorr. lnDV=0 or 1 or 3 may be used
 	without setting -predcorr, but -lnDV=2 is only allowed together with
 	predcorr. Variable to indicate if the dependent variable is log-transformed
@@ -367,7 +367,7 @@ $help_text{-lst_file} = <<'EOF';
 	the same name as the regular input model, or the simulation model if option
 	-sim_model is used, but with suffix .lst instead of .mod. If such a file
 	is found then option -lst_file=$<$modelfile$>$.lst is set automatically.
-	VPC does not perform estimation. 
+	VPC does not perform estimation.
 EOF
 
 $help_text{-min_points_in_bin} = <<'EOF';
@@ -381,7 +381,7 @@ EOF
 $help_text{-mirrors} = <<'EOF';
 	-mirrors=number
 
-	The number of mirror plot data sets to produce. Specific VPC.	
+	The number of mirror plot data sets to produce. Specific VPC.
 EOF
 
 $help_text{-mix} = <<'EOF';
@@ -405,7 +405,7 @@ $help_text{-n_simulation_models} = <<'EOF';
 	By setting this option to a number N greater than 1, the 'samples'
 	simulations will be split equally between N model files, which can be run
 	in parallel. This option cannot be used together with option
-	\mbox{-sim_table} or, if the NONMEM version $<$ 7, together with -dv=CWRES. 
+	\mbox{-sim_table} or, if the NONMEM version $<$ 7, together with -dv=CWRES.
 	Important: Two runs will give different results if -n_simulation_models
 	are set to different numbers even if the -seed option is the same. This
 	is because the random number generator of NONMEM will change state when
@@ -434,12 +434,12 @@ EOF
 
 $help_text{-noprediction} = <<'EOF';
 	-noprediction
- 
+
 	Default not set. If set, NOPREDICTION will be added to the $SIMULATION
 	record of the simulation model, in addition to ONLYSIMULATION. This
 	option is generally recommended with likelihood models for odd type data
 	(i.e. -2LOGLIKELIHOOD or LIKELIHOOD in $ESTIMATION). It is not allowed
-	to use -noprediction in combination with the option \mbox{-keep_estimation}. 
+	to use -noprediction in combination with the option \mbox{-keep_estimation}.
 EOF
 
 $help_text{-offset_rawres} = <<'EOF';
@@ -569,7 +569,7 @@ $help_text{-stratify_on} = <<'EOF';
 	in $TABLE. -stratify_on may be a comma-separated list of multiple
 	variables, then the first variable will be used for stratification
 	and the rest simply added to $TABLE. Note that is is not possible to
-	stratify on a variable that differs between simulations. 
+	stratify on a variable that differs between simulations.
 EOF
 
 $help_text{-tte} = <<'EOF';
@@ -584,13 +584,13 @@ $help_text{-tte} = <<'EOF';
 	\mbox{$TABLE} of the simulation model (not the original data model). PsN
 	will format the output differently compared to a regular vpc, to
 	specifically suit the kaplan.plot functionality in Xpose (e.g. filtering
-	of simulation output based on tte-variable). 
+	of simulation output based on tte-variable).
 EOF
 
 $help_text{-uloq} = <<'EOF';
 	-uloq=number
 
-	The upper limit of quantification for right censored data. Specific for VPC. 
+	The upper limit of quantification for right censored data. Specific for VPC.
 EOF
 
 $help_text{-varcorr} = <<'EOF';
@@ -649,7 +649,7 @@ my $model;
 
 if ($dummymodel){
 	$model = model->create_dummy_model;
-}else{ 
+}else{
 	$model = model->new(
         eval($eval_string),
         filename => $ARGV[0],
@@ -660,7 +660,7 @@ if ($dummymodel){
 
 	unless ($model->copy_data_setting_ok(copy_data => $options{'copy_data'})){
 		die("Cannot set -no-copy_data, absolute data file path is too long.");
-	} 
+	}
 	if (defined $options{'copy_data'} and (not $options{'copy_data'})){
 		$model->relative_data_path(0);
 	}
@@ -669,7 +669,7 @@ if ($dummymodel){
 
 input_checking::check_options(tool => 'vpc', options => \%options, model => $model);
 
-my $vpc = 
+my $vpc =
 	tool::npc->new( eval( $common_options::parameters ),
 	  models	      	 => [ $model ],
 	  stratify_on        => $options{'stratify_on'},

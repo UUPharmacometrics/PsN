@@ -5655,7 +5655,7 @@ sub defined_variable
 
 sub find_input_synonyms
 {
-    # Find synonyms for listed input column names 
+    # Find synonyms for listed input column names
     # Return a hash from all symbols that has synonyms to the synonyms
     my $self = shift;
     my %parm = validated_hash(\@_,

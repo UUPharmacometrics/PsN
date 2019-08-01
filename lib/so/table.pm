@@ -13,7 +13,7 @@ use so::xml;
 
 has 'columnId' => ( is => 'rw', isa => 'ArrayRef' );
 has 'columnType' => ( is => 'rw', isa => 'ArrayRef' );
-has 'valueType' => ( is => 'rw', isa => 'ArrayRef' ); 
+has 'valueType' => ( is => 'rw', isa => 'ArrayRef' );
 has 'columns' => ( is => 'rw', isa => 'ArrayRef' );
 has 'name' => ( is => 'rw', isa => 'Str' );
 has 'table_file' => ( is => 'rw', isa => 'Maybe[Str]' );
@@ -58,7 +58,7 @@ sub parse
 sub xml
 {
     my $self = shift;
-    
+
     my $table = XML::LibXML::Element->new($self->name);
 
     my $def = XML::LibXML::Element->new("ds:Definition");
@@ -147,7 +147,7 @@ sub single_row
     my $types = $parm{'types'};
 
     if (defined $types) {
-        $self->columnType($types) 
+        $self->columnType($types)
     } else {
         $self->columnType([ ("undefined") x scalar(@values) ]);
     }

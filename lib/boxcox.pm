@@ -82,11 +82,11 @@ sub compute_r
    my $squared_x_term = ($sum_xsquare-($sum_x**2)/$N);
    return (undef, undef) unless ($squared_x_term > 0); #numerical error
    my $root_squared_x_term = sqrt($squared_x_term);
-   my $root_squared_y_term = sqrt($sum_ysquare); 
+   my $root_squared_y_term = sqrt($sum_ysquare);
    my $xy_cross_term = ($sum_xy);
 
    return (undef, undef) unless (($root_squared_x_term*$root_squared_y_term) > 0); #numerical error
-   my $r= $xy_cross_term/($root_squared_x_term*$root_squared_y_term); 
+   my $r= $xy_cross_term/($root_squared_x_term*$root_squared_y_term);
 
    return ($r,undef); #undef is for derivative
 }
@@ -126,7 +126,7 @@ sub evaluate
 											 { isa => 'Num' },
 											 { isa => 'HashRef' },
 		);
-	
+
 	if ($extra_args->{'type'} eq 'r'){
 		 my ($r,$deriv,$numerr) = r_of_lambda($extra_args->{'shifted'},$extra_args->{'yvec'},$l);
 		 return ($r,$deriv,$numerr);
@@ -182,7 +182,7 @@ sub make_splits
 		$newx = $point->[1]-$step;
 		($y,$deriv,$numerr) = evaluate($newx,$extra_args);
 		insert_sort_ascending($matrix->[$index+1],[$y,$newx],$ypos) unless ($numerr);
-		insert_sort_ascending($matrix->[$index+1],$point,$ypos) if (defined $point->[$ypos]); #in first iter can have undef here 
+		insert_sort_ascending($matrix->[$index+1],$point,$ypos) if (defined $point->[$ypos]); #in first iter can have undef here
 	}
 }
 
@@ -208,9 +208,9 @@ sub get_split_indices
 											 { isa => 'ArrayRef' },
 											 { isa => 'Num' },
 		);
-	
+
 	my $max_index= scalar(@{$matrix})-1;
-	
+
 	my ($smallest,$best) = get_smallest_best_index($matrix);
 	my @split=();
 
@@ -236,7 +236,7 @@ sub get_split_indices
 			if ($turn < 0){
 				#drop p2
 				if (scalar(@split)>0){
-					#go back and reevaluate 
+					#go back and reevaluate
 					$index2 = $index1;
 					$index1 = pop(@split);
 				}elsif (scalar(@candidates)>0){
@@ -300,7 +300,7 @@ sub get_smallest_best_index
 			if (defined $best){
 				if ($matrix->[$best]->[-1]->[0] <= $matrix->[$i]->[-1]->[0]){
 					$best = $i;
-				} 
+				}
 			}else{
 				$best = $i;
 			}
@@ -398,7 +398,7 @@ sub grid_search_maximize
 sub secant_method_maximize
 {
 	#this will search for derivative 0 and then pick highest
-	# evaluated f over all evaluated points. 
+	# evaluated f over all evaluated points.
 	#assume input best y is defined
 
 	my ($range,$min_step,$max_iter,$start,$extra_args) = pos_validated_list(\@_,
@@ -408,7 +408,7 @@ sub secant_method_maximize
 																			{ isa => 'ArrayRef' },
 																			{ isa => 'HashRef' },
 		);
-	
+
 	my $verbose=0;
 	my $numerr = 0;
 
@@ -477,7 +477,7 @@ sub secant_method_maximize
 					$done=1;
 				}
 			}
-		}			
+		}
 	}
 
 	return ($best[1],0); #numerr is 0
@@ -511,21 +511,21 @@ sub inverse_box_cox
 											  { isa => 'ArrayRef' },
 											  { isa => 'Num' },
 		);
-	
+
 	unless (scalar(@{$vector})>0){
 		croak("inverse_box_cox vector must have length > 0");
 	}
 	my $minimum = 1E-5;
 	my @transformed = ();
-	
+
 	if (abs($lambda) < $minimum){
 		for (my $i=0; $i<scalar(@{$vector}); $i++){
 			push(@transformed,exp($vector->[$i]));
-		} 
+		}
 	}else{
 		for (my $i=0; $i<scalar(@{$vector}); $i++){
 			push(@transformed,(($vector->[$i])*$lambda+1)**(1/$lambda));
-		} 
+		}
 	}
 
 	return \@transformed;
@@ -550,7 +550,7 @@ sub shift_and_box_cox
 	unless ((scalar(@{$lambda}) == 1)	or (scalar(@{$lambda}) == scalar(@{$vector}))){
 		croak("lambda array and vector must have equal length unless lambda has length 1");
 	}
-	
+
 	#undef lambda means too close to 1, no transformation
 
 	if (scalar(@{$lambda})==1){
@@ -605,11 +605,11 @@ sub box_cox
 											  { isa => 'ArrayRef' },
 											  { isa => 'Num' },
 		);
-	
+
 	unless (scalar(@{$vector})>0){
 		croak("box_cox vector must have length > 0");
 	}
-	
+
    my $minimum = 1E-5;
    my @transformed = ();
 
@@ -617,11 +617,11 @@ sub box_cox
    if (abs($lambda) < $minimum){
 	   for (my $i=0; $i<scalar(@{$vector}); $i++){
 		   push(@transformed,(log($vector->[$i])));
-	   } 
+	   }
    }else{
 	   for (my $i=0; $i<scalar(@{$vector}); $i++){
 		   push(@transformed,((($vector->[$i])**$lambda-1)/$lambda));
-	   } 
+	   }
    }
 
    return \@transformed;
@@ -652,7 +652,7 @@ sub sort_and_shift_to_positive
 	   $delta = -$delta;
 
 	   for (my $i=0; $i<scalar(@sorted); $i++){
-		   $sorted[$i] = $sorted[$i] + $delta; 
+		   $sorted[$i] = $sorted[$i] + $delta;
 	   }
    }else{
 	   $delta=0;
@@ -663,7 +663,7 @@ sub sort_and_shift_to_positive
 
 sub get_quantile_data
 {
-	#we use Statistics::Distributions which has lower precision than Math::CDF but is 
+	#we use Statistics::Distributions which has lower precision than Math::CDF but is
 	#already used by other PsN modules, so no need to install new module
     my ($number) = pos_validated_list(\@_,
         { isa => 'Int' },

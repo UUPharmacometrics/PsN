@@ -47,7 +47,7 @@ has '_special_tool_options' => ( is => 'rw', isa => 'Maybe[HashRef]', default =>
 
 
 sub BUILD
-{	
+{
 	select(STDERR);     # Turn on autoflush to simplify fault-finding
 	$| = 1;
 	select(STDOUT);
@@ -134,7 +134,7 @@ sub modelfit_setup
     if (not $data->have_unique_ids()) {
         $data->renumber_ids();
         $data->_write(filename => 'renumbered.dta');
-        $model_copy->datafiles(new_names => ['renumbered.dta']); 
+        $model_copy->datafiles(new_names => ['renumbered.dta']);
         print "Warning: The dataset does not have unique ids. Dataset has been renumbered starting from 1\n";
     }
 
@@ -160,7 +160,7 @@ sub modelfit_setup
     $model_copy->set_records(type => 'covariance', record_strings => [ "OMITTED" ]);
 
     my @table_columns = ( 'ID', 'CWRES', 'PRED', 'CIPREDI','CPRED' );
-	
+
 	if ($model_copy->defined_variable(name => 'TIME')) {
         push @table_columns, 'TIME';
     }
@@ -169,11 +169,11 @@ sub modelfit_setup
     }
 	if (($self->idv ne 'TIME') and ($self->idv ne 'TAD')) {
         push @table_columns, $self->idv;
-    } 
-	
+    }
+
     if (defined $self->dvid and $model_copy->defined_variable(name => $self->dvid)) {
         push @table_columns, $self->dvid;
-    } 
+    }
 
     $self->extra_table_columns(\@table_columns);
 
@@ -197,7 +197,7 @@ sub modelfit_setup
             model_subdir => 0,
         );
         $modelfit->run();
-        
+
         # Add phi file generated from evaluation run to model
         $eval_model->init_etas();
         $eval_model->_write(filename => $self->directory . $self->model->filename);
@@ -211,7 +211,7 @@ sub modelfit_setup
 
         print "*** Running linearize ***\n";
         ui->category('linearize');
-	
+
         my $old_nm_output = common_options::get_option('nm_output');    # Hack to set clean further down
         common_options::set_option('nm_output', 'phi,ext,cov,cor,coi');
         my $linearize = tool::linearize->new(
@@ -237,7 +237,7 @@ sub modelfit_setup
         $base_model = model->new(
             filename => $base_model_name,
         );
- 
+
         my $outobj = $base_model->outputs->[0];
         my $failed = 0;
         if (not defined $outobj->problems) {
@@ -257,7 +257,7 @@ sub modelfit_setup
         $base_model = $model_copy;
         $self->base_dataset_path($self->directory . 'preprocess_data_dir/filtered.dta');
     }
- 
+
     my $lin_data = data->new(
         filename => $self->base_dataset_path,
         ignoresign => '@',
@@ -574,7 +574,7 @@ sub modelfit_setup
         } else {
             $resmod_model = $eval_model;
         }
-				
+
 		if($resmod_model->defined_variable(name => 'TIME')) {
 			my $resmod_time;
 			eval {
@@ -602,7 +602,7 @@ sub modelfit_setup
 			}
 			$self->_to_qa_dir();
 		}
-		
+
 		if($resmod_model->defined_variable(name => 'TAD')) {
 			my $resmod_tad;
 			eval {
@@ -630,7 +630,7 @@ sub modelfit_setup
 			}
 			$self->_to_qa_dir();
 		}
-        
+
 
         my $resmod_pred;
         eval {
@@ -657,7 +657,7 @@ sub modelfit_setup
             rmdir 'resmod_PRED';
         }
         $self->_to_qa_dir();
-		
+
 		if(($self->idv ne "TIME") and ($self->idv ne "TAD")) {
 			my $resmod_idv;
 			eval {
@@ -848,7 +848,7 @@ sub get_scm_categorical
 sub mend_extra_table_names
 {
     my $self = shift;
-    my $colnames = shift; 
+    my $colnames = shift;
 
     my $directory = $self->directory . 'linearize_run/scm_dir1/';
 
@@ -908,14 +908,14 @@ sub create_R_plots_code
         $extra_table_path = $self->directory . 'extra_table';
     }
     $extra_table_path =~ s/\\/\//g;
-	
+
 	my $orig_max0_model_path = $self->orig_max0_model_path;
 	$orig_max0_model_path =~ s/\\/\//g;
 	my $base_model_path = $self->base_model_path;
 	$base_model_path =~ s/\\/\//g;
 	my $base_dataset_path = $self->base_dataset_path;
 	$base_dataset_path =~ s/\\/\//g;
-	
+
 	my $nonlinear_run;
 	if($self->nonlinear) {
 		$nonlinear_run = "TRUE";
@@ -973,7 +973,7 @@ sub create_R_plots_code
     if (defined $self->iov_structure) {
         my @content;
         for (my $i = 0; $i < scalar(@{$self->iov_structure}); $i++) {
-            my $occ = 'occ' . ($i + 1) . '=' . rplots::create_r_vector(array => $self->iov_structure->[$i], quoted => 0); 
+            my $occ = 'occ' . ($i + 1) . '=' . rplots::create_r_vector(array => $self->iov_structure->[$i], quoted => 0);
             push @content, $occ;
         }
         my $line = 'iov_etas <- list(' . join(', ', @content). ')';

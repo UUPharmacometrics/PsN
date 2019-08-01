@@ -1,4 +1,4 @@
-#!/usr/bin/perl 
+#!/usr/bin/perl
 
 # Only for Development
 use FindBin qw($Bin);
@@ -77,7 +77,7 @@ $help_text{Description} = <<'EOF';
 	parallel. It is an nmfe replacement with advanced extra functionality.
 EOF
 
-$help_text{Examples} = <<'EOF';    
+$help_text{Examples} = <<'EOF';
 	Run one model file and accepts all default values:
 	execute pheno.mod
 
@@ -150,7 +150,7 @@ $help_text{-prepend_options_to_lst} = <<'EOF';
 	which contains run information, including all actual values of optional PsN
 	options. PsN can still parse the lst-file with the options prepended, so the file
 	can still be used it as input to e.g. sumo, vpc or update_inits. Option can be
-	disabled with -no-prepend_options_to_lst if it is set in psn.conf. 
+	disabled with -no-prepend_options_to_lst if it is set in psn.conf.
 EOF
 
 $help_text{-reduced_model_ofv} = <<'EOF';
@@ -176,7 +176,7 @@ $help_text{-tail_output} = <<'EOF';
 	http://tailforwin32.sourceforge.net. It is also necessary to have correct
 	settings of the variables wintail_exe, which is the path to the tail program,
 	and wintail_command, which is the command for the tail program. An example,
-	which works for the Tail for Win32 package, is 
+	which works for the Tail for Win32 package, is
 	wintail_exe = 'C:\Program Files\Tail-4.2.12\Tail.exe'
 	and
 	wintail_command = 'tail OUTPUT'
@@ -217,10 +217,10 @@ require tool::modelfit;
 require model;
 require input_checking;
 
-#bad to request user input if wrapper script was used to start PsN. Just make this easy to invoke 
+#bad to request user input if wrapper script was used to start PsN. Just make this easy to invoke
 #manually after installing
 if ( 0 and $options{'directory'} and (scalar(@ARGV)==1) and (-d $options{'directory'}) and
-    (-d $options{'directory'}.'/NM_run1') and (not -d $options{'directory'}.'/NM_run2') and 
+    (-d $options{'directory'}.'/NM_run1') and (not -d $options{'directory'}.'/NM_run2') and
     (-e $options{'directory'}.'/NM_run1/stats-runs.csv') and
     (not -e $options{'directory'}.'/NM_run1/psn.lst')) {
   #if single input model and NM_run1 exists and stats-runs exists but not psn.lst,
@@ -270,7 +270,7 @@ my $models_array;
 
 my $eval_string = common_options::model_parameters(\%options);
 
-foreach my $model_name (@ARGV) {  
+foreach my $model_name (@ARGV) {
 	my $model;
 	$model = model->new(
         eval($eval_string),
@@ -319,16 +319,16 @@ if ( defined $options{'predict_data'} and defined $options{'predict_model'} ) {
 	}
 	$pred_mod -> table_names( new_names => [\@new_tables] );
 	$pred_mod->_write();
-	$modelfit = tool::modelfit -> 
+	$modelfit = tool::modelfit ->
 		new ( eval( $common_options::parameters ),
 			  prepend_options_to_lst => $options{'prepend_options_to_lst'},
 			  tail_output => $options{'tail_output'},
 			  wintail_exe => $options{'wintail_exe'},
 			  wintail_command => $options{'wintail_command'},
-			  models => [$pred_mod] );  
+			  models => [$pred_mod] );
 } else {
 
-	$modelfit = tool::modelfit -> 
+	$modelfit = tool::modelfit ->
 		new ( eval( $common_options::parameters ),
 			  prepend_options_to_lst => $options{'prepend_options_to_lst'},
 			  reduced_model_ofv => $options{'reduced_model_ofv'},
@@ -336,7 +336,7 @@ if ( defined $options{'predict_data'} and defined $options{'predict_model'} ) {
 			  wintail_exe => $options{'wintail_exe'},
 			  wintail_command => $options{'wintail_command'},
 			  models => $models_array,
-			  copy_data => $options{'copy_data'} );  
+			  copy_data => $options{'copy_data'} );
 }
 
 

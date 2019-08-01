@@ -130,9 +130,9 @@ $help_text{-flip_comments} = <<'EOF';
 
 	Method for handling user-defined simulation code in the model. If this option
 	is set, PsN will create the simulation model by flipping comments (commented
-	lines will be uncommented and vice versa) between the tags 
-	;Sim_start 
-	and 
+	lines will be uncommented and vice versa) between the tags
+	;Sim_start
+	and
 	;Sim_end
 	Note that the tags must look exactly like that or the editing will fail.
 	After creating the simulation model PsN will remove $COV and $TABLE, change
@@ -184,7 +184,7 @@ $help_text{-keep_estimation} = <<'EOF';
 
 	Perform post-hoc evalutaion step for each simulated dataset, i.e. keep the
 	$ESTIMATION record and set MAXEVALS to 0. In this case variables such as
-	IPRED(F) are based on the re-estimated post-hoc parameters.      
+	IPRED(F) are based on the re-estimated post-hoc parameters.
 EOF
 
 $help_text{-lst_file} = <<'EOF';
@@ -325,7 +325,7 @@ if ( defined $options{'no_of_strata'} ){
   unless (defined $options{'stratify_on'}){
     die "Error: The NPC does not allow option no_of_strata unless a ".
 	"stratification column has been specified.\n";
-  }	
+  }
   if (defined $options{'refstrat'}){
     die "Error: The NPC does not allow option no_of_strata together ".
 	"with option refstrat.\n";
@@ -365,7 +365,7 @@ if ( defined $options{'in_filter'} ){
   }
   if (scalar(@in_filter)<1){
     die "Error: Option in_filter used, but list of conditions could not be parsed.\n";
-  }	
+  }
 }
 
 
@@ -427,7 +427,7 @@ my $model;
 
 if ($dummymodel){
 	$model = model->create_dummy_model;
-}else{ 
+}else{
 	$model = model->new(eval($eval_string),
         filename => $ARGV[0],
         ignore_missing_output_files => 1 ,
@@ -437,7 +437,7 @@ if ($dummymodel){
 
 	unless ($model->copy_data_setting_ok(copy_data => $options{'copy_data'})){
 		die("Cannot set -no-copy_data, absolute data file path is too long.");
-	} 
+	}
 	if (defined $options{'copy_data'} and (not $options{'copy_data'})){
 		$model->relative_data_path(0);
 	}
@@ -445,7 +445,7 @@ if ($dummymodel){
 }
 
 
-my $npc = 
+my $npc =
 	tool::npc->new(eval( $common_options::parameters ),
 				   models	     => [ $model ],
 				   stratify_on        => $options{'stratify_on'},

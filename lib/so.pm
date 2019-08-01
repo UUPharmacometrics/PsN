@@ -13,7 +13,7 @@ use so::soblock;
 has 'filename' => ( is => 'rw', isa => 'Maybe[Str]' );
 has 'pretty' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'exclude_elements' => ( is => 'rw', isa => 'Maybe[ArrayRef[Str]]' );
-has 'only_include_elements' => ( is => 'rw', isa => 'Maybe[ArrayRef[Str]]' ); 
+has 'only_include_elements' => ( is => 'rw', isa => 'Maybe[ArrayRef[Str]]' );
 has 'version' => ( is => 'rw', isa => 'Num', default => 0.3 );
 has 'message' => ( is => 'rw', isa => 'Maybe[Str]' );
 has 'error' => ( is => 'rw', isa => 'Maybe[Str]' );
@@ -45,13 +45,13 @@ sub parse
 
 sub create_block
 {
-    # Create a new SOBlock, set the id and add it to this SO 
+    # Create a new SOBlock, set the id and add it to this SO
     my $self = shift;
     my %parm = validated_hash(\@_,
         name => { isa => 'Str' },
     );
     my $name = $parm{'name'};
-    
+
     my $block = so::soblock->new(version => $self->version);
 
     if (not exists $self->_duplicate_blocknames->{$name}) {

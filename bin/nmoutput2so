@@ -18,7 +18,7 @@ $| = 1; # Make sure autoflush is on
 my %options;
 
 my %required_options = ();
-my %optional_options = ( 
+my %optional_options = (
     'h|?'         => undef,
     'help'        => undef,
     'bootstrap_results:s' => undef,
@@ -51,7 +51,7 @@ exit unless $res;
 
 my %defaults;
 
-$defaults{'use_tables'} = 1; 
+$defaults{'use_tables'} = 1;
 $defaults{'toolname'} = 'NONMEM';
 $defaults{'pretty'} = 0;
 $defaults{'so_version'} = 0.3;
@@ -116,7 +116,7 @@ $help_text{Examples} = <<'EOF';
 
 	nmoutput2so -bootstrap_results=bootstrap_results.csv -so_filename=res.SO.xml
 
-	This will add the PsN bootstrap results to a lone SOBlock in the file called 
+	This will add the PsN bootstrap results to a lone SOBlock in the file called
 	res.SO.xml.
 EOF
 
@@ -140,7 +140,7 @@ first SOBlock.
 EOF
 
 $help_text{-exclude_elements} = <<'EOF';
-	-exclude_elements 
+	-exclude_elements
 
 	A comma separated list of simple XPaths for elements to exclude.
 	Example:
@@ -156,7 +156,7 @@ EOF
 $help_text{-extra_output} = <<'EOF';
 	-extra_output
 
-	A comma separated list of tabulated model variables to add a separate 
+	A comma separated list of tabulated model variables to add a separate
 	SimulatedProfiles element.
 EOF
 
@@ -174,21 +174,21 @@ $help_text{-include_fixed_params} = <<'EOF';
 EOF
 
 $help_text{-max_replicates} = <<'EOF';
-	-max_replicates=integer 
+	-max_replicates=integer
 
 	Default is to add all replicates. Set a maximum number of simulation
 	replicates to add.
 EOF
 
 $help_text{-message} = <<'EOF';
-	-message=string 
+	-message=string
 
 	Specify a string to be added as an information message in the TaskInformation
 	of the first SOBlock.
 EOF
 
 $help_text{-only_include_elements} = <<'EOF';
-	-only_include_elements 
+	-only_include_elements
 
 	A comma-separated list of XPaths relative to the SOBlock. These elements will
 	be the only ones used.
@@ -239,9 +239,9 @@ $help_text{-so_version} = <<'EOF';
 EOF
 
 $help_text{-toolname} = <<'EOF';
-	-toolname=string 
+	-toolname=string
 
-	Default is NONMEM. The toolname to use for messages. 
+	Default is NONMEM. The toolname to use for messages.
 EOF
 
 $help_text{-use_tables} = <<'EOF';
@@ -285,7 +285,7 @@ require so::parsers::execute;
 require so::parsers::psn;
 
 if ($options{'psn_connector'}) {
-    (my $files, my $sofilename, my $error, my $append_columns) = so::parsers::psn::_connector_get_files(directory => 'rundir', pharmml => $options{'pharmml'}); 
+    (my $files, my $sofilename, my $error, my $append_columns) = so::parsers::psn::_connector_get_files(directory => 'rundir', pharmml => $options{'pharmml'});
     @ARGV = @$files;
     $options{'so_filename'} = $sofilename;
     $options{'toolname'} = 'PsN';

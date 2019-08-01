@@ -52,7 +52,7 @@ sub xml
     if (defined $self->SimulatedProfiles) {
         foreach my $a (@{$self->SimulatedProfiles}) {
             my $xml = $a->xml();
-            $block->appendChild($xml); 
+            $block->appendChild($xml);
         }
     }
 

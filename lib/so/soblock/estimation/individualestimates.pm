@@ -42,7 +42,7 @@ sub xml
     my $self = shift;
 
     my $ind_est;
-    
+
     my $est = $self->Estimates->xml();
     my $rand = $self->RandomEffects->xml();
 

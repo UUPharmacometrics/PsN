@@ -50,7 +50,7 @@ EOF
 
 $help_text{Description} = <<'EOF';
 
-	The linearize tool allows you to automatically create a linearized version 
+	The linearize tool allows you to automatically create a linearized version
 	of a model and obtain the dataset including individual predictions and
 	derivatives necessary for further estimation of extensions implemented in
 	the linearized model.
@@ -120,7 +120,7 @@ EOF
 $help_text{-foce} = <<'EOF';
 	-foce
 
-	Default set. Expand around conditional ETA estimates instead of around ETA=0.    
+	Default set. Expand around conditional ETA estimates instead of around ETA=0.
 EOF
 
 $help_text{-keep_covariance} = <<'EOF';
@@ -134,13 +134,13 @@ EOF
 $help_text{-nointer} = <<'EOF';
 	-nointer
 
-	Default off. Don't use interaction. 
+	Default off. Don't use interaction.
 EOF
-	
+
 $help_text{-second_order} = <<'EOF';
 	-second_order
 
-	Default off. Use second order (laplace) approximation. 
+	Default off. Use second order (laplace) approximation.
 EOF
 
 $help_text{Post_help_message} = <<'EOF';
@@ -150,7 +150,7 @@ EOF
 common_options::online_help( 'linearize', \%options, \%help_text, \%required_options, \%optional_options);
 
 #calls get_defaults, set_globals etc, initiates random sequence, store tool_options
-common_options::setup( \%options, 'linearize' ); 
+common_options::setup( \%options, 'linearize' );
 
 
 die "linearize only works with NONMEM 7" unless ($PsN::nm_major_version == 7);

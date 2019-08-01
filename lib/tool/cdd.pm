@@ -64,7 +64,7 @@ sub BUILD
 			push(@new_files,$ldir.$name) ;
 		}
 		$self->$accessor(\@new_files);
-	}	
+	}
 }
 
 sub modelfit_setup
@@ -125,7 +125,7 @@ sub modelfit_analyze
 				remove_records( type => 'covariance' );
 			$self -> prediction_models->[$model_number-1]{'own'}[$i] -> _write(overwrite => 1);
 		}
-		my ($dir,$file) = 
+		my ($dir,$file) =
 			OSspecific::absolute_path( $self -> directory,
 									   $self -> raw_results_file->[$model_number-1] );
 		my $xv_threads = ref( $self -> threads ) eq 'ARRAY' ? $self -> threads -> [1]:$self -> threads;
@@ -152,7 +152,7 @@ sub modelfit_analyze
 
 	# ------------  Cook-scores and Covariance-Ratios  ----------
 
-	
+
 
 	my $do_pca = 1;
 	ui -> print( category => 'cdd',
@@ -162,7 +162,7 @@ sub modelfit_analyze
 	my $b = $self->bins;
 	$b=$self->actual_bins unless (defined $b);
 	my ($cook_scores,$cov_ratios,$parameter_cook_scores,$relative_changes,$bias, $relative_bias,
-		$jackknife_cook_scores,$jackknife_parameter_cook_scores,$jackknife_full_cov,$sample_ofvs) = 
+		$jackknife_cook_scores,$jackknife_parameter_cook_scores,$jackknife_full_cov,$sample_ofvs) =
 			cook_scores_and_cov_ratios(original => $self->models->[$model_number-1]->outputs -> [0],
 									   cdd_models => $self -> prepared_models->[$model_number-1]{'own'},
 									   problem_index => $problem_index,
@@ -197,11 +197,11 @@ sub modelfit_analyze
 
 	if(	defined $jackknife_full_cov and scalar(@{$jackknife_full_cov})>0){
 		#FIXME use format covmatrix, reorder lines
-		my $formatted = tool::format_covmatrix(matrix => $jackknife_full_cov, 
-											   header => $labelsref, 
-											   comma => 1, 
+		my $formatted = tool::format_covmatrix(matrix => $jackknife_full_cov,
+											   header => $labelsref,
+											   comma => 1,
 											   print_labels => 1);
-		
+
 		open( COV, ">".$self -> directory.'/jackknife.cov' );
 		foreach my $line (@{$formatted}){
 			print COV $line;
@@ -215,7 +215,7 @@ sub modelfit_analyze
 
 	for (my $i=0; $i< scalar(@{$cov_ratios}); $i++){
 		#replace undef cov ratio with 0, determinant of covmatrix 0 when covstep failed
-		$cov_ratios->[$i]=0 unless (defined $cov_ratios->[$i]); 
+		$cov_ratios->[$i]=0 unless (defined $cov_ratios->[$i]);
 	}
 	my @outside_n_sd;
 
@@ -283,7 +283,7 @@ sub modelfit_analyze
 	$bias_return_section{'name'} = 'Jackknife.bias.estimate';
 	$bias_return_section{'labels'} = [['bias','relative.bias.percent'],[]];
 	push(@{$bias_return_section{'labels'} -> [1]},@{$labelsref}); #only estimates
-	
+
 	$bias_return_section{'values'} = [$bias,$relative_bias];
 
 	$return_section{'values'} = $relative_changes ;
@@ -359,7 +359,7 @@ sub get_delta_ofv
 	my $table_index = $parm{'table_index'};
 	my $skipped_keys = $parm{'skipped_keys'};
 	my $sample_ofv = $parm{'sample_ofv'};
-	
+
 	my $error = 0;
 	my $message = '';
 
@@ -376,7 +376,7 @@ sub get_delta_ofv
 	}
 
 	return([],$message) unless ($error == 0);
-	
+
 	my $nmtablefile = nmtablefile->new(filename => $filename);
 	my @sorted_iofv = ();
 	my $iofv = $nmtablefile->tables->[$table_index]->get_column(name=> 'OBJ');
@@ -435,10 +435,10 @@ sub cook_scores_and_cov_ratios
 		$orig_ofv = $original->get_single_value(attribute => 'ofv',problem_index => $problem_index);
 		if ($original-> get_single_value(attribute => 'covariance_step_run', problem_index => $problem_index) and
 			$original-> get_single_value(attribute => 'covariance_step_successful', problem_index => $problem_index)){
-			
+
 			$original_standard_errors = $original->get_filtered_values(category => 'se', problem_index => $problem_index);
 			if ( defined $original_standard_errors and usable_number($original_standard_errors->[0])){
-				my $invcovmat = $original->get_single_value(attribute => 'inverse_covariance_matrix', 
+				my $invcovmat = $original->get_single_value(attribute => 'inverse_covariance_matrix',
 															problem_index => $problem_index);
 				($err,$original_inverse_cholesky) = linear_algebra::cholesky_of_vector_matrix($invcovmat);
 				if ($err == 0){
@@ -450,16 +450,16 @@ sub cook_scores_and_cov_ratios
 			}
 		}
 	}
-		
+
 	unless (defined $orig_ofv and defined $original_estimates and usable_number($original_estimates->[0])){
 		ui->print(category => 'cdd',
 				  message => "Cannot compute Cook scores and cov-ratios, no estimates or ofv from input model");
 		return ([],[],[],[],[],[],[],[],[],[]);
 	}
 
-	my ($sample_ofvs,$sample_estimates,$sample_ses,$sample_root_det,$successful_estimates) = 
+	my ($sample_ofvs,$sample_estimates,$sample_ses,$sample_root_det,$successful_estimates) =
 		get_ofv_estimates_se(cdd_models => $cdd_models, problem_index => $problem_index);
-	
+
 	my $jackknife_means=undef;
 	my $jackknife_standard_errors=undef;
 	my $jackknife_inverse_cholesky=undef;
@@ -486,10 +486,10 @@ sub cook_scores_and_cov_ratios
 	}
 	my $npar = scalar(@{$original_estimates});
 
-	my @original_cook=(); 
-	my @original_cov_ratios = (); 
+	my @original_cook=();
+	my @original_cov_ratios = ();
 	my @original_parameter_cook = ();
-	my @jackknife_cook=(); 
+	my @jackknife_cook=();
 	my @jackknife_parameter_cook = ();
 	my @all_relative_changes = ();
 
@@ -528,14 +528,14 @@ sub cook_scores_and_cov_ratios
 																	   $original_estimates);
 				}
 				for (my $j=0; $j<$npar; $j++){
-					$relative_changes[$j+1] = 
+					$relative_changes[$j+1] =
 						100*($sample_estimates->[$index]->[$j]-$original_estimates->[$j])/($original_estimates->[$j]);
 				}
 				if (scalar(@{$sample_ses->[$index]})>0){
 					#if covstep successful for sample then
 					if ($have_original_cov){
 						for (my $j=0; $j<$npar; $j++){
-							$relative_changes[$j+1+$npar] = 
+							$relative_changes[$j+1+$npar] =
 								100*($sample_ses->[$index]->[$j] - $original_standard_errors->[$j])/($original_standard_errors->[$j]);
 						}
 						$ratio = $sample_root_det->[$index] * $original_sqrt_inv_determinant if (defined $sample_root_det->[$index]);
@@ -716,7 +716,7 @@ sub general_setup
 
 	# Sub tool threads can be given as scalar or reference to an array?
 	my $subm_threads = $parm{'subm_threads'};
-	my $own_threads = ref( $self -> threads ) eq 'ARRAY' ? 
+	my $own_threads = ref( $self -> threads ) eq 'ARRAY' ?
 	$self -> threads -> [0]:$self -> threads;
 	# case_column names are matched in the model, not the data!
 
@@ -761,11 +761,11 @@ sub general_setup
 		ui -> print( category => 'cdd',
 			message => 'Executing base model.' );
 
-		$orig_fit->add_to_nmoutput(extensions => ['phi','ext','cov','coi']);		
+		$orig_fit->add_to_nmoutput(extensions => ['phi','ext','cov','coi']);
 		$orig_fit -> run;
         $self->metadata->{'copied_files'} = $orig_fit->metadata->{'copied_files'};
 	}
-	
+
 	unless ( $model -> outputs -> [0] -> have_output ) {
 		if ($self->update_inits){
 			ui -> print( category => 'cdd',
@@ -773,7 +773,7 @@ sub general_setup
 		}
 	}
 
-	
+
 	# ------------------------  Print a log-header  -----------------------------
 
 	# {{{ log header
@@ -786,7 +786,7 @@ sub general_setup
 		my $name = $param;
 		if ($param eq 'ofv'){
 			$orig_ests   = $model -> outputs -> [0] -> ofv();
-			$name = 'DIC' 
+			$name = 'DIC'
 			if (defined $model -> outputs -> [0]->get_single_value(attribute => 'dic'));
 		}else{
 			$orig_ests   = $model -> get_values_to_labels(category => $param);
@@ -800,7 +800,7 @@ sub general_setup
 					print LOG sprintf("%12s",$label),',';
 				} else {
 					# Loop the parameter numbers (skip sub problem level)
-					if( defined $orig_ests -> [$j] and 
+					if( defined $orig_ests -> [$j] and
 						defined $orig_ests -> [$j][0] ){
 						for ( my $num = 1; $num <= scalar @{$orig_ests -> [$j][0]}; $num++ ) {
 							my $label = uc($param).$num."_".($j+1);
@@ -839,7 +839,7 @@ sub general_setup
 					print LOG sprintf("%12f",$orig_ests -> [$j][0]),',';
 				} else {
 					# Loop the parameter numbers (skip sub problem level)
-					if( defined $orig_ests -> [$j] and 
+					if( defined $orig_ests -> [$j] and
 						defined $orig_ests -> [$j][0] ){
 						for ( my $num = 0; $num < scalar @{$orig_ests -> [$j][0]}; $num++ ) {
 							$ui_text = $ui_text.sprintf("%12f",$orig_ests -> [$j][0][$num]).',';
@@ -884,11 +884,11 @@ sub general_setup
 
 		# {{{ create new
 		my $output_directory = $self -> directory.'/m'.$model_number;
-		($new_datas, $skip_ids, $skip_keys, $skip_values, $remainders) = 
+		($new_datas, $skip_ids, $skip_keys, $skip_values, $remainders) =
 			data::cdd_create_datasets(
                 input_filename => $datafiles->[0],
                 bins => $self->bins,
-                case_column => $self->case_column, 
+                case_column => $self->case_column,
                 selection_method => $self->selection_method,
                 output_directory => $output_directory,
                 ignoresign => $ignoresign,
@@ -940,7 +940,7 @@ sub general_setup
                                $record = 'data';
                            } elsif ($record eq 'data') {
                                 $record = 'input';
-                           } 
+                           }
                         }
                     }
                 }
@@ -977,11 +977,11 @@ sub general_setup
                     }
                     my @expressions;
                     for my $id (@{$skip_ids->[$j - 1]}) {
-                        push @expressions, "ID$op" . int($id);    #Assume integer IDs 
+                        push @expressions, "ID$op" . int($id);    #Assume integer IDs
                     }
                     my $expression_list = join ",", @expressions;
                     my $statement = "($expression_list)";
-                    $newmodel->add_option(record_name => 'data', option_name => $verb, option_value => $statement); 
+                    $newmodel->add_option(record_name => 'data', option_name => $verb, option_value => $statement);
                 }
 				if ($i == 1) {
 					# set MAXEVAL=0. Again, CDD will only work for one $PROBLEM
@@ -998,7 +998,7 @@ sub general_setup
 				if ($self->nonparametric_etas or $self->nonparametric_marginals) {
 					$newmodel->add_nonparametric_code;
 				}
-				
+
 				$newmodel -> _write;
 				push( @{$new_models[$i]}, $newmodel );
 			}
@@ -1050,7 +1050,7 @@ sub general_setup
 		# {{{ resume
 
 		#need stored_bins and skipped_keys
-		
+
 		ui -> print( category => 'cdd',
 			message  => "Recreating models from a previous run" );
 		open( DONE, $self -> directory."/m$model_number/done" );
@@ -1110,7 +1110,7 @@ sub general_setup
 				push( @{$new_models[$i]}, $new_mod );
 			}
 
-			my $nl = $j == $stored_bins ? "" : "\r"; 
+			my $nl = $j == $stored_bins ? "" : "\r";
 			ui -> print( category => 'cdd',
 				message  => ui -> status_bar( sofar => $j+1,
 					goal  => $stored_bins+1 ).$nl,
@@ -1169,7 +1169,7 @@ sub general_setup
 			%subargs ) );
 
 	# }}} sub tools
-	$self->tools->[-1]->add_to_nmoutput(extensions => ['ext','cov','coi']);		
+	$self->tools->[-1]->add_to_nmoutput(extensions => ['ext','cov','coi']);
 
 }
 
@@ -1197,12 +1197,12 @@ sub _modelfit_raw_results_callback
 	my $jackknife_mode = $parm{'jackknife_mode'};
 	my $subroutine;
 
-	# Use the cdd's raw_results file.  
+	# Use the cdd's raw_results file.
 	# The cdd and the bootstrap's callback methods are identical
 	# in the beginning, then the cdd callback adds cook.scores and
 	# cov.ratios.
 
-	my ($dir,$file) = 
+	my ($dir,$file) =
 	OSspecific::absolute_path( $self -> directory,
 		$self -> raw_results_file->[$model_number-1] );
 	my $orig_mod = $self -> models->[$model_number-1];
@@ -1253,7 +1253,7 @@ sub _modelfit_raw_results_callback
 			$self->raw_line_structure -> {'0'} = $self->raw_line_structure -> {'1'};
 			$self->raw_line_structure -> write( $dir.'raw_results_structure' );
 		}
-	}; 
+	};
 	return $subroutine;
 }
 

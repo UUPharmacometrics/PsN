@@ -56,7 +56,7 @@ $help_text{-h} = <<'EOF';
 	With -h or -? rawresults will print a list of options and exit.
 EOF
 
-$help_text{-help} = <<'EOF';      
+$help_text{-help} = <<'EOF';
 	-help
 
 	With -help rawresults will print this, longer, help message.
@@ -104,7 +104,7 @@ if (defined $options{'outfile'} and -e $options{'outfile'}){
 my $sse = 0;
 if ((-e $path.'/mc-orig-1.mod') or (-e $path.'/mc-alt_1-1.mod')){
 	$sse =1;
-} 
+}
 
 my @counts=();
 my @modnames=();
@@ -117,30 +117,30 @@ print "Processing...\n";
 if (not $sse){
 	my @files = <$path/*.mod>;
 	#print join(' ',@files)."\n";
-	
+
 	foreach my $mod (@files){
 		my $model = model -> new(  filename   => $mod,
 								   ignore_missing_files => 1 );
 		push( @models_array, $model );# if ($model -> is_run);
 	}
-	
+
 } else {
-	
+
 	my @files = <$path/mc-orig-?.mod $path/mc-orig-??.mod $path/mc-orig-???.mod $path/mc-orig-????.mod $path/mc-orig-?????.mod>;
 	#print join(' ',@files)."\n";
-	
+
 	if (scalar(@files)>0){
 		push(@counts,scalar(@files));
 		push(@modnames,'simulation');
 	}
-	
+
 	foreach my $mod (@files){
 		my $model = model -> new(  filename   => $mod,
 								   ignore_missing_files => 1 );
 		push( @models_array, $model );# if ($model -> is_run);
 	}
-	
-	
+
+
 	my $alt=0;
 	my $altsamples=0;
 	while (1){
@@ -155,13 +155,13 @@ if (not $sse){
 									   ignore_missing_files => 1 );
 			push( @models_array, $model );# if ($model -> is_run);
 		}
-		
+
 	}
 }
 
 my $modelfit = tool::modelfit -> new(eval( $common_options::parameters ),
 									 directory_name_prefix => 'rawresults',
-									 models => \@models_array);  
+									 models => \@models_array);
 
 $modelfit->raw_results([]);
 $modelfit->raw_nonp_results([]);
@@ -184,13 +184,13 @@ if ($sse){
 	my @firsts;
 	my @seconds;
 	my $last_model= 0;
-	
-	my $sample = 0; 
+
+	my $sample = 0;
 	my $altname = shift(@modnames) unless (scalar(@modnames)<1);
 	my $thiscount = shift(@counts) unless (scalar(@counts)<1);
-	
+
 	for (my $i=0; $i< $n_rows; $i++){
-		my $this_model = $rows[$i]->[0]; 
+		my $this_model = $rows[$i]->[0];
 		my $step= ($this_model-$last_model);
 		if ($step < 0){
 			print(message  => "Error: It seems the raw_results is not sorted".

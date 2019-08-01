@@ -46,7 +46,7 @@ my %optional_options = (
     "error:s"=> ''
 );
 
-my $res = GetOptions( \%options, 
+my $res = GetOptions( \%options,
 		      @common_options::get_opt_strings,
 		      keys(%required_options),
 		      keys(%optional_options)
@@ -66,7 +66,7 @@ EOF
 
 
 $help_text{Description} = <<'EOF';
-	
+
 	The Cross-validated Stepwise Covariate Model (XV_SCM) building tool of
 	PsN implements cross-validated model size selection for a covariate model.
 	It relies on the SCM tool of PsN.
@@ -87,7 +87,7 @@ $help_text{Examples} = <<'EOF';
 
 	xv_scm -config_file=phenobarbital.scm -retries=5 -seed=12345 phenobarbital.mod
 EOF
-	
+
 $help_text{Options} = <<'EOF';
 	-config_file is mandatory
 
@@ -140,7 +140,7 @@ $help_text{-groups} = <<'EOF';
 	-groups=N
 
 	Default 5. The number of validation groups to make an N-fold cross-
-	validation.  
+	validation.
 EOF
 
 $help_text{-linearize} = <<'EOF';
@@ -198,13 +198,13 @@ $help_text{-splits} = <<'EOF';
 	-splits=N
 
 	Default 1. The number times to perform a complete cross-validation with
-	a new data split. 
+	a new data split.
 EOF
 
 $help_text{-stratify_on} = <<'EOF';
 	-stratify_on=variable
 
-	PsN will try to preserve the relative proportions of individuals with 
+	PsN will try to preserve the relative proportions of individuals with
 	different values of the stratification variable when creating data
 	subsets during cross-validation. The stratification variable must be
 	found in the original dataset, and there must be at least 'groups'
@@ -213,7 +213,7 @@ $help_text{-stratify_on} = <<'EOF';
 	group the values and then stratify on group number instead of the
 	continuous variable.
 EOF
- 
+
 $help_text{Post_help_message} = <<'EOF';
 
 	Also see 'scm -h' for a list of scm options, and 'psn_options -h' for a
@@ -238,7 +238,7 @@ my $config_file;
 if( -e $options{'config_file'} ){
   my $file = file -> new( name => $options{'config_file'}, path => '.' );
   $config_file = 'tool::scm::config_file' -> new ( file => $file );
-  
+
   foreach my $option ( keys %{$config_file -> valid_scalar_options} ){
     if( defined $options{$option} ) {
       $config_file -> $option($options{$option});
@@ -273,7 +273,7 @@ if( -e $options{'config_file'} ){
 }
 
 #calls get_defaults, set_globals etc, initiates random sequence, store tool_options
-common_options::setup( \%options, 'xv_scm' ); 
+common_options::setup( \%options, 'xv_scm' );
 
 if (defined $options{'directory'} and -e $options{'directory'}) {
     die "xv_scm cannot resume a previous run. Please change your -directory.\n";
@@ -292,19 +292,19 @@ if( defined $config_file -> included_relations() ){
 
 
 if ($config_file->linearize){
-  die "Option -second_order is currently broken" 
+  die "Option -second_order is currently broken"
       if $config_file->second_order();
-	die "Cannot set option foce to 0, will crash.\n" 
+	die "Cannot set option foce to 0, will crash.\n"
 		if (defined $config_file->foce() and (not $config_file->foce));
   #two new options, linearize and lst-file
-  
+
   if ($config_file->second_order()){
-    print "Warning: Option -second_order is intended for use together with option -foce\n" 
+    print "Warning: Option -second_order is intended for use together with option -foce\n"
 	unless $config_file->foce();
   }
 
   die "option -linearize only works with NONMEM7" unless ($PsN::nm_major_version == 7);
-  
+
 
   if ($config_file->derivatives_data()){
     my ( $dir, $file ) = OSspecific::absolute_path('',$config_file->derivatives_data());
@@ -316,19 +316,19 @@ if ($config_file->linearize){
   }
 
 }else{
-  die "Option -foce is only allowed together with option -linearize" 
+  die "Option -foce is only allowed together with option -linearize"
       if $config_file->foce();
-  die "Option -second_order is only allowed together with option -linearize" 
+  die "Option -second_order is only allowed together with option -linearize"
       if $config_file->second_order();
-  die "Option -lst_file is only allowed together with option -linearize" 
+  die "Option -lst_file is only allowed together with option -linearize"
       if $config_file->lst_file();
-  die "Option -update_derivatives is only allowed together with option -linearize" 
+  die "Option -update_derivatives is only allowed together with option -linearize"
       if $config_file->update_derivatives();
-  die "Option -error is only allowed together with option -linearize" 
+  die "Option -error is only allowed together with option -linearize"
       if $config_file->error();
-  die "Option -error_code is only allowed together with option -linearize" 
+  die "Option -error_code is only allowed together with option -linearize"
       if $config_file->error_code();
-  die "Option -derivatives_data is only allowed together with option -linearize" 
+  die "Option -derivatives_data is only allowed together with option -linearize"
       if $config_file->derivatives_data();
 }
 
@@ -348,7 +348,7 @@ if( $options{'shrinkage'} ) {
 if (defined $options{'stratify_on'}){
   my $column_number;
   my ( $values_ref, $positions_ref ) = $model ->
-      _get_option_val_pos ( problem_numbers => [1], 
+      _get_option_val_pos ( problem_numbers => [1],
 			    name        => $options{'stratify_on'},
 			    record_name => 'input',
 			    global_position => 1  );
@@ -411,7 +411,7 @@ chdir($main_directory);
 my $global_scm;
 my $temp_scm_dir='full_data_statistics';
 
-$global_scm = 
+$global_scm =
 tool::scm->new ( eval( $common_options::parameters ),
 	  models	=> [$model],
 	  config_file => $config_file,
@@ -434,7 +434,7 @@ for (my $split=1; $split<= $options{'splits'}; $split++){
   #copy lasso creation of xv_data
   #create xv data, use relative path to this directory when running nonmem
 
-  my $data_xv = tool::xv_step -> new( 
+  my $data_xv = tool::xv_step -> new(
     %{common_options::restore_options(@common_options::tool_options)},
     models => [$model],
     nr_validation_groups => $options{'groups'},
@@ -454,14 +454,14 @@ for (my $split=1; $split<= $options{'splits'}; $split++){
 
   for (my $group=1; $group<= $options{'groups'}; $group++){
     #change data in model to training $step
-    my $model_group = 
+    my $model_group =
 	$model -> copy(filename => $run_directory.'/model_group'.$group.'.mod',
 		       copy_datafile => 0,
                output_same_directory => 1,
                copy_output => 0,
                write_copy => 0);
 
-    
+
     $model_group -> datafiles( new_names => [$data_xv->estimation_data() -> [$group-1]] );
 
     ui -> print( category => 'xv_scm',
@@ -478,7 +478,7 @@ for (my $split=1; $split<= $options{'splits'}; $split++){
         $config_file -> included_relations($original_included);
     }
 #change xv_pred_data to filenames
-    $scm = 
+    $scm =
 tool::scm -> new ( eval( $common_options::parameters ),
 	      models	=> [$model_group],
 	      config_file => $config_file,
@@ -487,7 +487,7 @@ tool::scm -> new ( eval( $common_options::parameters ),
 	      global_covariate_statistics => $global_covariate_statistics,
 	      xv_pred_data => $data_xv->prediction_data() -> [$group-1],
 	      seed => $seeds[$split-1]);
-            
+
     $scm -> run;
     ui->category('xv_scm');
     foreach my $lev (sort keys %{$scm -> xv_results()}){
@@ -507,7 +507,7 @@ tool::scm -> new ( eval( $common_options::parameters ),
 	}
       }
     }
-    $maxlev = scalar(keys %{$scm -> xv_results()}) 
+    $maxlev = scalar(keys %{$scm -> xv_results()})
           if (scalar(keys %{$scm -> xv_results()}) > $maxlev);
   }
 }
@@ -541,7 +541,7 @@ for (my $lev=0;$lev< $maxlev; $lev++){
     my $str;
     for (my $group=1; $group<= $options{'groups'}; $group++){
       $str .= ",".$xv_results{'ofv'}{$split}{$group}{$lev};
-      $sum += $xv_results{'ofv'}{$split}{$group}{$lev} 
+      $sum += $xv_results{'ofv'}{$split}{$group}{$lev}
          if (defined $xv_results{'ofv'}{$split}{$group}{$lev});
     }
     $totsum += $sum;

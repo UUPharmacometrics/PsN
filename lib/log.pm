@@ -6,7 +6,7 @@ require Exporter;
 our @ISA = ('Exporter');
 our @EXPORT = qw(trace);
 
-$stop_motion;        # Level for stop-motion. Undef: not used. Number: Pause program if message level is below or equal to stop_motion level 
+$stop_motion;        # Level for stop-motion. Undef: not used. Number: Pause program if message level is below or equal to stop_motion level
 
 sub trace
 {

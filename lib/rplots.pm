@@ -64,7 +64,7 @@ sub setup
 		$self->raw_results_file($rawname);
 	}
 	my ($modeldir, $modelfile) = OSspecific::absolute_path($self->model-> directory,
-												 $self->model-> filename );									 
+												 $self->model-> filename );
 
 	#figure out table suffix and xpose runno
 	my @xpose_names=("sdtab","mutab","patab","catab","cotab","mytab","xptab","cwtab");
@@ -93,15 +93,15 @@ sub setup
 
 
 	#model prefix and suffix
-	my $modSuffix='.mod'; 
-	my $modPrefix='run'; 
+	my $modSuffix='.mod';
+	my $modPrefix='run';
 	if (defined $runno and ($modelfile =~ /$runno/)){
 		($modPrefix,$modSuffix)=split(/$runno/,$modelfile);
 		if ($is_sim){
 			$modSuffix =~ s/^sim//;
 		}
 	}else{
-		my $tmp = $modelfile; 
+		my $tmp = $modelfile;
 		if(	$tmp =~ s/(\.[^.]+)$//){
 			$modSuffix = $1;
 		}
@@ -272,7 +272,7 @@ sub get_preamble
 	push(@arr,
 		 "#START OF AUTO-GENERATED PREAMBLE, WILL BE OVERWRITTEN WHEN THIS FILE IS USED AS A TEMPLATE",
 		 "#Created $theDate at $theTime");
-	
+
 	push(@arr,'');
 	push(@arr,@{$self->standard_preamble}) if (scalar(@{$self->standard_preamble})>0);
 	push(@arr,'');
@@ -281,7 +281,7 @@ sub get_preamble
 		 "\n############################################################################",
 		 "#END OF AUTO-GENERATED PREAMBLE",
 		 "$preambleline\n");
-	
+
 	return \@arr;
 }
 
@@ -324,7 +324,7 @@ sub make_plots
         if ($self->debug_rmd) {
             open my $fh, '<', $self->filename;
             my @arr = <$fh>;
-            close $fh; 
+            close $fh;
             my @new;
             for my $line (@arr) {
                 if ($line =~ /output: pdf_document/) {
@@ -355,13 +355,13 @@ sub make_plots
 sub print_R_script
 {
 	my $self = shift;
-	
+
 	my ($modeldir, $modelfile) = OSspecific::absolute_path($self->model-> directory,
 														$self->model-> filename );
 	my $datafile = $self->model -> model::datafiles->[0];
 
 	my @printcode_first=();
-	my @printcode_second=();	
+	my @printcode_second=();
 	my @printcode=();
 	if($self->R_markdown) {
 		if($self->rmarkdown_installed) {
@@ -385,7 +385,7 @@ sub print_R_script
 				}
 				if ($value == 2) {
 					$value = 0;
-				}			
+				}
 			}
 		} else {
 			# get only R script parts and save it in an array
@@ -465,12 +465,12 @@ sub create_r_vector
     );
     my $array = $parm{'array'};
     my $quoted = $parm{'quoted'};
-  
+
     my $quote = "";
     if ($quoted) {
         $quote = "'";
     }
-     
+
     my $str = "c(";
     if (@$array) {
         $str .= $quote . join("$quote, $quote", @{$array}) . $quote;

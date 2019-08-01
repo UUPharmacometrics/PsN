@@ -33,7 +33,7 @@ sub is_block
 sub get_size
 {
     my $self = shift;
-	
+
 	my $size;
 	if ($self->is_block()){
 		$size = $self->size;
@@ -49,7 +49,7 @@ sub get_estimated_coordinate_strings
 	my %parm = validated_hash(\@_,
 							  only_eta_eps => { isa => 'Bool', default=> 0 },
 		);
-	
+
 	my $only_eta_eps = $parm{'only_eta_eps'};
 	my @array = ();
 	unless ($self->same() or $self->fix() or $self->prior()) {
@@ -74,7 +74,7 @@ sub get_estimated_coordinate_strings
 	return \@array;
 }
 
-			
+
 sub set_1_fix
 {
     my $self = shift;
@@ -138,7 +138,7 @@ sub get_matrix
     my $self = shift;
 	croak("cannot do get_matrix on init_record that is not type BLOCK") unless ($self->is_block);
 	croak("cannot do get_matrix on init_record that is SAME") if ($self->same);
-	
+
 	my @matrix=();
 	for (my $i=0; $i<$self->size; $i++){
 		push(@matrix,[(0)x$self->size]);
@@ -264,7 +264,7 @@ sub set_random_inits
 				next;
 			}
 
-			
+
 			if ($attempt < 5){
 				my $val;
 				my $range = $option->get_range(degree => $degree);
@@ -358,7 +358,7 @@ sub _read_options
 				} elsif (/BLOCK/){
 					$self->type('BLOCK'); #either size or SAME mandatory with block
 					if (/SAME\((\d+)\)/){
-						croak("Model parsing error: PsN does not support SAME(".$1.") in ". 
+						croak("Model parsing error: PsN does not support SAME(".$1.") in ".
 							  '$'.$parameter);
 					}
 					if (s/\s*(BLOCK)\s*\((\d+)\)\s*//){
@@ -380,15 +380,15 @@ sub _read_options
 					( s/COVARIANCE// );
 					( s/VARIANCE// );
 				}
-                
+
                 if (defined $self->type and $self->type eq 'BLOCK' and $any_fixed > 1) {   # Too many FIX for BLOCK
-                    die("Model parsing error: FIX was specified more than once in BLOCK\n"); 
+                    die("Model parsing error: FIX was specified more than once in BLOCK\n");
                 }
 
 				my $print_debug=0;
 				while (/\w/) {
 					if ( /\)(x\d+)/){
-						croak("Model parsing error: PsN does not support ".$1." notation in ". 
+						croak("Model parsing error: PsN does not support ".$1." notation in ".
 							  '$'.$parameter);
 					}
 					( s/^\s+// );
@@ -471,7 +471,7 @@ sub _read_options
 								$any_chol = 1;
 							} else {
 								if ($row[$i] =~ /VALUES/){
-									croak("Model parsing error: PsN does not support VALUES option in ". 
+									croak("Model parsing error: PsN does not support VALUES option in ".
 										  '$'.$parameter);
 								}else{
 									croak("Model parsing error: Unknown option ".$row[$i] )
@@ -609,9 +609,9 @@ sub _add_option
 			croak("Element $coordinate_string is not on diagonal so it cannot be SD");
 		}
 
-	} 
+	}
 
-	my $opt_obj = 
+	my $opt_obj =
 		model::problem::record::init_option ->
 		new ( option_string => $option_string,
 			  on_diagonal   => $on_diagonal,
@@ -621,7 +621,7 @@ sub _add_option
 			  fix           => $fix,
 			  coordinate_string => $coordinate_string);
 	$self->options([]) unless defined $self->options;
-	push( @{$self->options}, $opt_obj ) if( $opt_obj ); 
+	push( @{$self->options}, $opt_obj ) if( $opt_obj );
 }
 
 sub _format_record
@@ -677,7 +677,7 @@ sub _format_record
 			($form,$no_break) = $option -> _format_option(number_format => $number_format,
 														  is_block => $is_block);
 			if (($len+length(' '.$form)) > 150){
-				#must add linebreak if very long lines. Assume NM7 if we get 
+				#must add linebreak if very long lines. Assume NM7 if we get
 				#this problem, allow 150 characters
 				$formatted[0] = $formatted[0]."\n";
 				$len = 0;

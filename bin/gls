@@ -60,13 +60,13 @@ $help_text{Description} = <<'EOF';
 	may be overcome by using a generalised least squares (GLS) type approach
 	where dependent variable predictions are obtained from a previous model fit
 	and then used in the residual error model. The gls program automates this
-	procedure, which is further described in 
+	procedure, which is further described in
 
 	Individual Observation-Shrinkage Scaling of Residuals in a Generalized Least
 	Square Type of Estimation in NONMEM, PAGE 21 (2012) Abstr 2586, V Ivaturi.
 
 	Using the gls program requires that the model is encoded in "the Uppsala way".
-	
+
 	In summary the GLS method amounts to the following: Run the original model.
 	In a second step IPRED is replaced with GLSP in the definition of W where
 	GLSP is computed as
@@ -79,7 +79,7 @@ $help_text{Description} = <<'EOF';
 	gls model is then estimated.
 EOF
 
-$help_text{Options} = <<'EOF';      
+$help_text{Options} = <<'EOF';
 	A model file is required as argument.
 
 	The following options are valid:
@@ -91,7 +91,7 @@ $help_text{-h} = <<'EOF';
 	With -h or -? gls will print a list of options and exit.
 EOF
 
-$help_text{-help} = <<'EOF';      
+$help_text{-help} = <<'EOF';
 	-help
 
 	With -help gls will print this, longer, help message.
@@ -110,9 +110,9 @@ $help_text{-gls_model} = <<'EOF';
 	-gls_model
 
 	Default not set. Only possible together with option -iwres_shrinkage or
-	-ind-shrinkage. This option is to be used when a datafile with all data 
-	needed for the gls model run is already available, i.e. all input for the 
-	original model plus columns with PRED and IPRED from the original model run, 
+	-ind-shrinkage. This option is to be used when a datafile with all data
+	needed for the gls model run is already available, i.e. all input for the
+	original model plus columns with PRED and IPRED from the original model run,
 	and if -ind_shrinkage is set also a ISHR column with per observation shrinkage
 	values. The option indicates that $DATA specifies the file with the gls input
 	data, and that $INPUT lists the parameters in the datafile. In $INPUT the
@@ -128,7 +128,7 @@ EOF
 $help_text{-ind_shrinkage} = <<'EOF';
 	-ind_shrinkage
 
-	Default not set. Compute per-observation iwres-shrinkage based on simulations. 
+	Default not set. Compute per-observation iwres-shrinkage based on simulations.
 EOF
 
 $help_text{-iwres_shrinkage} = <<'EOF';
@@ -173,7 +173,7 @@ $help_text{-set_simest} = <<'EOF';
 	;gls-sim will also be collected, the tag will be removed, and then PsN will
 	check that the lines define either a single $EST or a single $SIM, or one of
 	each. If a $SIM record is defined this will be used in the simulation model
-	instead of any $SIM found in the input model. If a $EST record is defined this 
+	instead of any $SIM found in the input model. If a $EST record is defined this
 	  will be used in the simulation model instead of the $EST found in the input
 	  model.
 EOF
@@ -206,7 +206,7 @@ if( scalar(@ARGV) > 1 ){
   exit;
 }
 
-if (defined $options{'gls_model'} and not 
+if (defined $options{'gls_model'} and not
     (defined $options{'iwres_shrinkage'} or defined $options{'ind_shrinkage'})){
   print "When option gls_model is set option iwres_shrinkage or ind_shrinkage must also be given\n";
   exit;
@@ -269,11 +269,11 @@ my $tnpri=0;
 if ( scalar (@{$model-> problems}) > 2 ){
 	die('Cannot have more than two $PROB in the input model.');
 }elsif  (scalar (@{$model-> problems}) == 2 ){
-	if ((defined $model-> problems->[0]->priors()) and 
+	if ((defined $model-> problems->[0]->priors()) and
 		scalar(@{$model-> problems->[0] -> priors()})>0 ){
 		foreach my $rec (@{$model-> problems->[0] -> priors()}){
 			foreach my $option ( @{$rec -> options} ) {
-				if ((defined $option) and 
+				if ((defined $option) and
 					(($option->name eq 'TNPRI') || (index('TNPRI',$option ->name ) == 0))){
 					$tnpri=1;
 				}
@@ -297,7 +297,7 @@ unless( scalar(@{$est_record}) > 0 ){
   exit;
 }
 
-my $gls = 
+my $gls =
 	tool::gls -> new ( eval( $common_options::parameters ),
 					   iwres_shrinkage => $options{'iwres_shrinkage'},
 					   ind_shrinkage => $options{'ind_shrinkage'},
@@ -315,7 +315,7 @@ $gls-> print_options (cmd_line => $cmd_line,
 		      local_options => [keys %optional_options],
 		      common_options => \@common_options::tool_options);
 
-   
+
 $gls -> run;
 ui -> print( category => 'gls',
 	     message => "gls done\n" );

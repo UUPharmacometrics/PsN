@@ -37,7 +37,7 @@ my %optional_options = (
     "replacement!" => undef,
 );
 
-my $res = GetOptions( \%options, 
+my $res = GetOptions( \%options,
     @common_options::get_opt_strings,
     keys(%required_options),
     keys(%optional_options) );
@@ -47,7 +47,7 @@ exit unless $res;
 
 
 my %help_text;
-$help_text{Pre_help_message} = <<'EOF';  
+$help_text{Pre_help_message} = <<'EOF';
 	Perform multiple randomization over bootstrapped datasets.
 EOF
 
@@ -60,19 +60,19 @@ EOF
 
 $help_text{Options} = <<'EOF';
 	A model file is required as argument, and options -samples and -stratify_on
-	are also required. 
+	are also required.
 
 	The following options are valid:
 EOF
 
-$help_text{-base_model} = <<'EOF'; 
+$help_text{-base_model} = <<'EOF';
 	-base_model
 
 	Run the original data set with this model, to use as reference when computing
 	delta-ofv.
 	This option is required if not using -summarize.
 EOF
-$help_text{-samples} = <<'EOF';      
+$help_text{-samples} = <<'EOF';
 	-samples
 
 	The number of randomized datasets to generate.
@@ -83,21 +83,21 @@ $help_text{-sample_size} = <<'EOF';
 
 	The number of subjects in each bootstrap data set. The default value is set
 	to the number of individuals in the original data set.
-	When the resampling is stratified, the sample_size option can be used to 
+	When the resampling is stratified, the sample_size option can be used to
 	specify the exact number of samples that should be drawn from each strata.
 	Below follows an example of the syntax that should be used in such a case.
-	Stratification is here done based on the study number, STUD, with the 
+	Stratification is here done based on the study number, STUD, with the
 	values 1001, 1002 and 1003.
 	-sample_size='1001=>12,1002=>24,1003=>10'
 	Note the double quotes, single quotes will not work on Windows. This example
 	specifies that the bootstrap should use 12 samples from study 1001, 24 samples
 	from 1002 and 10 from study 1003.
-	If only one sample size is used together with stratified resampling (the 
+	If only one sample size is used together with stratified resampling (the
 	default case; sample_size=number of individuals in the data set), the
 	strata are assigned samples in proportion to their size in the data set.
 	Please note that this usage of the sample_size option does not guarantee
 	that the sum of the samples of the strata is equal to the given sample_size
-	since  PsN needs to round the figures to the closest integer. For a sample 
+	since  PsN needs to round the figures to the closest integer. For a sample
 	size equal to the number of individuals in the data set, the sum will however
 	always be correct.
 EOF
@@ -174,7 +174,7 @@ if (not defined $options{'summarize'}) {
         #we will only run this model if not done already, path length matters only if we run
         unless ($model->copy_data_setting_ok(copy_data => $options{'copy_data'})){
             die("Cannot set -no-copy_data, absolute data file path is too long.");
-        } 
+        }
         if (defined $options{'copy_data'} and (not $options{'copy_data'})){
             $model->relative_data_path(0);
         }
@@ -189,7 +189,7 @@ if (not defined $options{'summarize'}) {
         unless ($base_model -> is_run) {
             unless ($base_model->copy_data_setting_ok(copy_data => $options{'copy_data'})){
                 die("Cannot set -no-copy_data, absolute data file path is too long.");
-            } 
+            }
             if (defined $options{'copy_data'} and (not $options{'copy_data'})){
                 $base_model->relative_data_path(0);
             }
@@ -203,7 +203,7 @@ if (not defined $options{'summarize'}) {
         if ($@) {
             die $@."\nThe sample_size option must be either a single number or of the format 'strata1=>12,strata2=>34, ...' etc" ;
         }
-    } 
+    }
 
     $rand = tool::boot_randtest->new(
         eval( $common_options::parameters ),

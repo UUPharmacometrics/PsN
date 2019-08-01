@@ -94,10 +94,10 @@ sub BUILD
 	$self->_read_msfo_status if ( $self -> parsed_successfully and not $self -> finished_parsing );
 
 	$self -> _scan_to_subproblems() if ( $self -> parsed_successfully() and not $self -> finished_parsing() );
-	
+
 	if ($self->nm_major_version() >= 7 and ($self -> estimation_step_initiated() or $self->covariance_step_run())) {
 		#we have output to read
-		$self->store_NM7_output(max_table_number => $self->table_number()); 
+		$self->store_NM7_output(max_table_number => $self->table_number());
 	}
 
 	$self -> _read_subproblems() if ( $self -> parsed_successfully() and not $self -> finished_parsing() );
@@ -120,7 +120,7 @@ sub BUILD
 
 sub add_subproblem
 {
-	my ($self, %parm) = validated_hash(\@_, 
+	my ($self, %parm) = validated_hash(\@_,
 		init_data => { isa => 'Any', optional => 0 }
 	);
 	$self->subproblems([]) unless defined $self->subproblems;
@@ -213,9 +213,9 @@ sub full_name_NM7_file
 	  croak("illegal input $file_type to full_name_NM7_file");
 	}
 	if ($file_type eq 'raw') {
-	  $full_name = $self -> directory() . $self -> filename_root() . '.ext';	  
+	  $full_name = $self -> directory() . $self -> filename_root() . '.ext';
 	} else {
-	  $full_name = $self -> directory() . $self -> filename_root() . '.' . $file_type;	  
+	  $full_name = $self -> directory() . $self -> filename_root() . '.' . $file_type;
 	}
 
 	return $full_name;
@@ -260,7 +260,7 @@ sub store_NM7_output
 					$string =~ s/\s*$//; #remove trailing spaces
 					if (($type eq 'raw') and (($string =~ /\(Evaluation\)/) or ($string =~ /\(EVALUATION\)/))){
 						$self->ext_file_has_evaluation(1);
-					}			  
+					}
 					if ((defined $max_table_number) and ($number > $max_table_number)) {
 						last; #skip the rest, know we do not need them for this $PROB
 					}
@@ -281,10 +281,10 @@ sub store_NM7_output
 					$prev_string = $string;
 					$prev_num = $number;
 					$line_count = 0;
-					
+
 				} elsif ($line =~  /[0-9A-Za-z]/) {
 					if ($line_count == 0 and ($prev_num > 0)) {
-						#this is the first data/header line of new table 
+						#this is the first data/header line of new table
 						#store string and number that we must have just read in previous loop iteration
 						if (defined $prev_string) {
 							push(@{$self->table_strings_hash->{$type}}, $prev_string);
@@ -440,7 +440,7 @@ sub _read_eststep
 					my $errmess = "Found $_ while searching for the simulation/estimation step indicators\n";
 					debugmessage(3,$errmess . "$!" );
 					$self -> parsing_error( message => $errmess . "$!" );
-					return; 
+					return;
 				}
 			}
 		}
@@ -524,7 +524,7 @@ sub _read_prior
       $self -> parsing_error( message => $errmess."$!" );
       return;
     }
-    
+
     if ( ($start_pos + 1) == scalar @{$self->lstfile} ) {
       #EOF This should not happen, raise error
       my $errmess = "Reached end of file while  searching for the (optional) user defined prior indicator\n";
@@ -532,7 +532,7 @@ sub _read_prior
       $self -> parsing_error( message => $errmess."$!" );
       return;
     }
-    
+
     if(/^ PRIOR SUBROUTINE USER-SUPPLIED/){
       $self->user_defined_prior(1);
       $success = 1;
@@ -564,7 +564,7 @@ sub _read_steps_allowed
     	# This is ok, we should end up here
     	last;
   	}
-  
+
   	if ( /0ESTIMATION STEP NOT ALLOWED/ ) {
     	$est_allowed = 0;
   	}
@@ -612,7 +612,7 @@ sub _read_nonpstep
 	my $success = 0;
 
 	while( $_ = @{$self->lstfile}[ $start_pos++ ] ) {
-		if ( /^0COVARIANCE STEP OMITTED/ or 
+		if ( /^0COVARIANCE STEP OMITTED/ or
        /0TABLES STEP OMITTED/ or
        /1DOUBLE PRECISION PREDPP/ or
        /0SEARCH WITH ESTIMATION STEP WILL NOT PROCEED/ or
@@ -702,13 +702,13 @@ sub _read_msfo_status
 
   my $start_pos = $self->lstfile_pos;
   while( $_ = @{$self->lstfile}[ $start_pos++ ] ) {
-    
+
     if( /^0SEARCH WITH ESTIMATION STEP WILL NOT PROCEED BEYOND PREVIOUS TERMINATION POINT/ ){
       $self -> msfo_has_terminated(1); # Means that $ESTIMATION
                                             # must be removed to enable continuation.
       $self -> finished_parsing(1);
     }
-    
+
     if( /^0MODEL SPECIFICATION FILE IS EMPTY/ ){
       $self -> finished_parsing(1);
     }
@@ -743,7 +743,7 @@ sub _read_subproblems
 		if( /$method_exp/ ) {
 			# NONMEM will sometimes print #METH also when running without estimation, do not count
 			# these occurences, which have ^1 line directly following #METH
-			# and either empty method string or a string matching (Evaluation) (?or (EVALUATION)?) 
+			# and either empty method string or a string matching (Evaluation) (?or (EVALUATION)?)
 			# (MAXEVAL=0 will also have a ^1 line)
 			my $string = $1;
 			$string =~ s/\s*$//; #remove trailing spaces
@@ -766,7 +766,7 @@ sub _read_subproblems
 				if (($last_found_method_string =~ /\(Evaluation\)/) or ($last_found_method_string =~ /\(EVALUATION\)/)){
 					$need_evaluation_in_ext_file = 1; #have seen results sometimes printed to ext, sometimes not
 					#for NM 7.1 which does not have table numbers as TBLN tag
-				} 
+				}
 			}
 			#reset
 			$found_new_meth = 0;
@@ -810,7 +810,7 @@ sub _read_subproblems
 				if ( defined $subproblem_start) {
 					@subproblem_lstfile = @{$self->lstfile}[$subproblem_start .. $self->lstfile_pos - 2];
 					if ( $self->lstfile_pos > $#{$self->lstfile} ) { #we found end of file
-						$subproblem_index = $subproblem_number; 
+						$subproblem_index = $subproblem_number;
 					} else { #we found new problem
 						$subproblem_number = $2;
 						if ($subproblem_number eq '****'){
@@ -830,9 +830,9 @@ sub _read_subproblems
 				if ($self->nm_major_version >= 7) {
 					if ($last_method_number == $self->n_previous_meth()) {
 						$no_meth = 1;
-						debugmessage(3,"No METH: found in subproblem " . ($subproblem_index + 1) . " in lst-file" ) 
+						debugmessage(3,"No METH: found in subproblem " . ($subproblem_index + 1) . " in lst-file" )
 						unless ($self -> {'ignore_missing_files'} or (not $self -> estimation_step_initiated())
-								or ((not $self -> estimation_step_run()) and $self->simulation_step_run()  )); 
+								or ((not $self -> estimation_step_run()) and $self->simulation_step_run()  ));
 					}
 					if ((defined $last_method_string) and $last_method_string =~ /(Stochastic|Importance|Iterative|MCMC|NUTS)/) {
 						$classical_method = 0;
@@ -841,15 +841,15 @@ sub _read_subproblems
 
 				if (defined $self->table_number()){
 					$last_method_number = $self->table_number();
-				}elsif ($need_evaluation_in_ext_file and 
+				}elsif ($need_evaluation_in_ext_file and
 						(not (defined $self->ext_file and $self->ext_file->has_evaluation))){
-					$self->evaluation_missing_from_ext_file(1); 
+					$self->evaluation_missing_from_ext_file(1);
 				}
 
 				my %subprob;
 				my $ext_table;
 				if ((not $self->evaluation_missing_from_ext_file) and
-					(defined $self->ext_file and scalar(@{$self->ext_file->tables})>0) and 
+					(defined $self->ext_file and scalar(@{$self->ext_file->tables})>0) and
 					($no_meth < 1)) { #FIXME
 
 #					print "\n no_meth $no_meth table_numbers ".join(' ',@{$self->table_numbers_hash->{'raw'}})."\n";
@@ -857,12 +857,12 @@ sub _read_subproblems
 
 					$ext_table = $self->ext_file->get_table(number => $last_method_number);
 					if (not defined $ext_table){
-						debugmessage(3,"table $last_method_number not found in raw output" ); 
+						debugmessage(3,"table $last_method_number not found in raw output" );
 					} else {
 						# retrieve table and check that strings match
-						if ((defined $last_method_string) and length($last_method_string)>0){ 
+						if ((defined $last_method_string) and length($last_method_string)>0){
 							my $mstring = $ext_table->method;
-							unless (($last_method_string =~ $mstring ) or 
+							unless (($last_method_string =~ $mstring ) or
 									($last_method_string eq $mstring) or
 									($mstring =~ $last_method_string  ) ) {
 								my $mess = "method strings\n".$mstring . " and\n"."$last_method_string do not match";
@@ -954,7 +954,7 @@ sub _scan_to_subproblems
 			}
 			$self->estimation_step_run(1) unless ($found);
 		} else {
-			$self->estimation_step_run(1); 
+			$self->estimation_step_run(1);
 			#incorrect if MAXEVAL=0 and NM7. if NM7 check for (Evaluation) string on #METH line of last subprob
 			#if (Evaluation) found then estimation_step was not run
 		}
@@ -970,7 +970,7 @@ sub _scan_to_subproblems
 				$onlysim = 1;
 				last;
 			}
-		}   
+		}
 		unless ($onlysim) {
 			$self -> estimation_step_initiated(1);
 			$meth_printed = 0; #what if cov also? cannot be since would have $est and not end up here.
@@ -994,12 +994,12 @@ sub _scan_to_subproblems
 		#if end up here assume second $PROB and only $TABLE, or $MSFI and $TAB or $COV
 		#then NM will still print maxeval etc
 		#which we handle as estimation_step_initiated
-		#NM will complain if neither simulation nor estimation nor correct $PRIOR TNPRI in first $PROB. 
+		#NM will complain if neither simulation nor estimation nor correct $PRIOR TNPRI in first $PROB.
 		#Let nonmem handle it
 
 		$self->estimation_step_initiated(1) unless $tnpri;
 	}
-	
+
 	$self->simulation_step_run(0);
 	if (defined $self->input_problem()->simulations()) {
 		$self->simulation_step_run(1);
@@ -1009,12 +1009,12 @@ sub _scan_to_subproblems
 	if (defined $self->input_problem()->nonparametrics()) {
 		$self -> nonparametric_step_run(1);
 	}
-	
+
 	$self -> covariance_step_run(0);
 	if (defined $self->input_problem()->covariances()) {
 		$self -> covariance_step_run(1);
 	}
-	
+
 	if ((not $self->simulation_step_run()) and ($self->nm_major_version < 7) and (not $self -> estimation_step_initiated())) {
 		#nothing to read in this $PROB (only table info or $PRIOR TNPRI
 		$self -> finished_parsing(1);
@@ -1047,17 +1047,17 @@ sub _scan_to_subproblems
 	}
 
 	#		  /^0ITERATION NO./ or /^0MINIMIZATION/ or
-	#		  /^\s*SIMULATION STEP PERFORMED/ or 
+	#		  /^\s*SIMULATION STEP PERFORMED/ or
 	#		  /MINIMUM VALUE OF OBJECTIVE FUNCTION/ or
 	#		  /MONITORING OF SEARCH/ or
 	#		  /^\s*\#METH:/ or
 	#		  /^\s*\#TBLN:/ or
-	
+
 
 	my $found_endtime = 0;
 	my $is_timestamp = 0;
 	my $endtime;
-	
+
 	while( $_ = @{$self->lstfile}[ $start_pos++ ] ) {
         if (/^0MUST SET COVARIANCE MATRIX TO R MATRIX WHEN USING A PRIOR WITH FO, FOCE, OR LAPLACE/) {
             $self->parsing_error(message => "NONMEM terminated with message:\n" . $_);
@@ -1120,7 +1120,7 @@ sub _scan_to_subproblems
 			#end time stamp, means nmfe finished fine
 			$found_endtime = 1;
 		} elsif (not $found_endtime){
-			($is_timestamp,$endtime)=is_timestamp($self->lstfile,($start_pos-1)); 
+			($is_timestamp,$endtime)=is_timestamp($self->lstfile,($start_pos-1));
 			#end time stamp, means nmfe finished fine
 			$found_endtime = 1 if ($is_timestamp);
 		}
@@ -1157,28 +1157,28 @@ sub is_timestamp
 		$is_time = 1;
 		my %months = ('Jan'=> 0,'Feb' => 1, 'Mar' => 2, 'Apr' => 3, 'May' => 4, 'Jun' => 5,
 					  'Jul' => 6, 'Aug' => 7, 'Sep' => 8, 'Oct' => 9, 'Nov' => 10, 'Dec' => 11);
-		
+
 		$line1 =~ s/\s*$//; #remove trailing spaces
 		($wday, $mon, $mday, $tt, $zone, $year) = split(/\s+/, $line1);
 		$mon = $months{$mon}; #convert to numeric
 		($hour, $min, $sec) = split(':',$tt);
-	}elsif ($line1 =~ /^(\d\d)\/(\d\d)\/(\d\d\d\d)\s*$/)  {    
-		# Alternative date format: dd/mm/yyyy\nhh:mm 
+	}elsif ($line1 =~ /^(\d\d)\/(\d\d)\/(\d\d\d\d)\s*$/)  {
+		# Alternative date format: dd/mm/yyyy\nhh:mm
         $year = $3;
         $mon = $2 - 1;
         $mday = $1;
-		if ((scalar(@{$arrayref}) > ($index+1)) and 
+		if ((scalar(@{$arrayref}) > ($index+1)) and
 			($arrayref->[$index+1] =~ /^(\d\d):(\d\d)\s*$/)) {
 			$hour = $1;
 			$min = $2;
 			$is_time = 1;
 		}
-	}elsif ($line1 =~ /^(\d\d\d\d)-(\d\d)-(\d\d)\s*$/) {    
+	}elsif ($line1 =~ /^(\d\d\d\d)-(\d\d)-(\d\d)\s*$/) {
 		# Alternative date format: yyyy-mm-dd\nhh:mm
         $year = $1;
         $mon = $2 - 1;
         $mday = $3;
-		if ((scalar(@{$arrayref}) > ($index+1)) and 
+		if ((scalar(@{$arrayref}) > ($index+1)) and
 			($arrayref->[$index+1] =~ /^(\d\d):(\d\d)\s*$/)) {
 			$hour = $1;
 			$min = $2;
@@ -1198,19 +1198,19 @@ sub _read_block_structures
 		 prob_arr => { isa => 'ArrayRef[Str]', optional => 1 }
 	);
 	my @prob_arr = defined $parm{'prob_arr'} ? @{$parm{'prob_arr'}} : ();
-	
+
 	#we do not call this routine with new parser
 	#With new parser do not read anything. Block structures are only
 	#used to check if parameters are near bounds. Rewrite that
 	#routine in output_subs.pm
-	  
+
 	my $errmess = "Error in reading the block structures!";
 	my $start_pos = $self->lstfile_pos;
 	my $success = 1;
-	
+
 	my $obarea = 0;
 	my $sbarea = 0;
-	
+
 	my $oblock_set = -1;
 	my $sblock_set = -1;
 	while( $_ = @{$self->lstfile}[ $start_pos++ ] ) {
@@ -1223,7 +1223,7 @@ sub _read_block_structures
 	  if ( /^0INITIAL ESTIMATE/ ){
 	      # We want to find this if we are currently reading omega
 	      # or sigma block structures
-	      $success = 1 if ( $sbarea or $obarea ); 
+	      $success = 1 if ( $sbarea or $obarea );
 	      $start_pos --;
 	      last;
 	  }
@@ -1250,7 +1250,7 @@ sub _read_block_structures
 	    $self -> parsing_error( message => $errmess."$!" );
 	    return;
 	  }
-	  
+
 	  if(/0OMEGA HAS BLOCK FORM:/) {
 	    $self->omega_block_structure_type('BLOCK');
 	    $obarea = 1;

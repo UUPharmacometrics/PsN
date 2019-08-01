@@ -8,7 +8,7 @@ use MooseX::Params::Validate;
 use table;
 use math qw(usable_number);
 
-extends 'table'; 
+extends 'table';
 
 has 'table_number' => ( is => 'rw', isa => 'Int' );
 has 'method' => ( is => 'rw', isa => 'Maybe[Str]' );
@@ -44,7 +44,7 @@ sub read_table_row
         $self->table_number($1);
     }
 
-    $self->_parse_method_string($2); 
+    $self->_parse_method_string($2);
 }
 
 sub _parse_method_string
@@ -195,7 +195,7 @@ sub parse_ext_table
 	$have_sigmas = 1 if (defined $self->header->{'SIGMA(2,2)'});#never more than 1 dummy col
 	$results{'have_omegas'} = $have_omegas;
 	$results{'have_sigmas'} = $have_sigmas;
-	
+
 	return \%results;
 }
 
@@ -220,7 +220,7 @@ sub guess_estimated_attributes
 		}
 	}
 	push(@sorted_header,@sigmaheader);
-	
+
 	my %allcoordval = ();
 	my %secoordval = ();
 	foreach my $param ('theta','omega','sigma'){
@@ -231,7 +231,7 @@ sub guess_estimated_attributes
 			}
 		}
 	}
-	
+
 	my %hash;
 	$hash{'coords'}=[];
 	$hash{'coordinate_strings'}=[];
@@ -260,7 +260,7 @@ sub guess_estimated_attributes
 			next unless (defined $allcoordval{$sorted_header[$i]} and
 						 $allcoordval{$sorted_header[$i]} != 0); #if exactly 0 then must be FIX
 		}
-		
+
 		push(@{$hash{'coordinate_strings'}},$coord);
 		push(@{$hash{'labels'}},$coord);
 		$coord =~ /(\d+,?\d*)/;

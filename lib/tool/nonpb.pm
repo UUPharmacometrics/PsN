@@ -40,7 +40,7 @@ sub BUILD
 
 	#check at least one omega -> eta
 	my $record_ref = $self->models->[0]->record(record_name => 'omega' );
-	unless ( scalar(@{$record_ref}) > 0 ){ 
+	unless ( scalar(@{$record_ref}) > 0 ){
 		croak('The input model must contain at least one $OMEGA record.');
 	}
 	my $model_n_etas = $self->models->[0]->nomegas->[0];
@@ -92,11 +92,11 @@ sub modelfit_setup
 		#since we want to update inits using output object instead of lst-file. When
 		#using pind tool, set options tablename and modelname to get filenames requested in
 		#URS nonp_bootstrap_v2
-		#The modified original model shall only be estimated after 
-		#modification, no P_values matrix created. 
+		#The modified original model shall only be estimated after
+		#modification, no P_values matrix created.
 		#Therefore do modification here, and push to modelfit
 
-		#Updating part of sec 3.1, plus sec 3.8 nonp_bootstrap_v2 for bs models. 
+		#Updating part of sec 3.1, plus sec 3.8 nonp_bootstrap_v2 for bs models.
 		#Then call pind for 3.2-3.7,sec4,sec5 nonp_bootstrap_v2
 		my @directories; #need to keep track of where pind results end up
 
@@ -117,7 +117,7 @@ sub modelfit_setup
 			#is this it????
 			$bs_model -> datafiles( new_names =>$self->models->[0]->datafiles(absolute_path => 1) );
 
-			#Section 3.2-3.7, 4 and 5 in URS nonp_bootstrap_v2 are all supposed to be done by pind 
+			#Section 3.2-3.7, 4 and 5 in URS nonp_bootstrap_v2 are all supposed to be done by pind
 
 			$bs_model -> extra_output(['fort.80']); #needed by pind
 			my $old_category = ui->category();
@@ -133,19 +133,19 @@ sub modelfit_setup
 					  lst_file       => '0',
 					  clean          => 0
 				);
-			
+
 			push (@directories,$pind -> directory());
 			$pind -> run;
 			$self->n_individuals($pind->n_individuals) if ($id == 1);
 
 			#keep only relevant files, delete everything else
-			#copy P_values to directory intermediate files under new name P_values_$id.csv, 
+			#copy P_values to directory intermediate files under new name P_values_$id.csv,
 			#and change filename for read statement later in code
-			my $oldname = $pind ->directory().'P_values.csv'; 
+			my $oldname = $pind ->directory().'P_values.csv';
 			my $newname='intermediate_files/P_values_'.$id.'.csv';
 			mv ($oldname,$newname);
 
-			#copy bs_model_$id.patab to directory intermediate files under new name P_values_$id.csv, 
+			#copy bs_model_$id.patab to directory intermediate files under new name P_values_$id.csv,
 			#and change filename for read statement later in code
 			$oldname = $pind->directory()."m1/bs_model_$id.patab";
 			$newname='intermediate_files/bs_model_'.$id.'.patab';
@@ -163,7 +163,7 @@ sub modelfit_setup
 		#Update copy of original model using separate function and push to modelfit
 		my $new_original = $self-> setup_original_jd_model();
 
-		#section 4 nonp_bootstrap_v2 for original model only 
+		#section 4 nonp_bootstrap_v2 for original model only
 		#(actual run command resides elsewhere)
 		#section 5 nonp_bootstrap_v2shall not be done for original.
 		#fix the options, talk to Pontus
@@ -206,14 +206,14 @@ sub modelfit_analyze
 		my $filename;
 		if ($self->nonpb_version == 2) {
 			#section 6.1 and 6.2 nonp_bootstrap_v2
-			$filename = 'intermediate_files/P_values_'.$id.'.csv'; 
+			$filename = 'intermediate_files/P_values_'.$id.'.csv';
 		} else {
 			#sec 2b nonp_bootstrap_v1
-			$filename = $self->pind_directories->[0].'P_values.csv'; 
+			$filename = $self->pind_directories->[0].'P_values.csv';
 		}
 
-		my ($P_values_bootstrapped, $P_values_rowsums) = 
-		$self->get_P_values_bootstrapped_and_rowsums(id=>$id, 
+		my ($P_values_bootstrapped, $P_values_rowsums) =
+		$self->get_P_values_bootstrapped_and_rowsums(id=>$id,
 			filename => $filename,
 			index_vector => $index_matrix->[$id-1]);
 
@@ -222,9 +222,9 @@ sub modelfit_analyze
 			$filename = "intermediate_files/bs_model_$id.patab";
 		} else {
 			#section 3 URS nonp_bootstrap_v1
-			$filename = $self->pind_directories->[0].'m1/original.patab'; 
+			$filename = $self->pind_directories->[0].'m1/original.patab';
 		}
-		my $bootstrapped_np_probabilities_T = 
+		my $bootstrapped_np_probabilities_T =
 		$self->create_bootstrapped_np_probabilities_T(id => $id,
 			P_values_rowsums => $P_values_rowsums,
 			filename => $filename,
@@ -233,7 +233,7 @@ sub modelfit_analyze
 		#section 4 of nonp_bootstrap_v1 is same as sec 7-9 of nonp_bootstrap_v2
 
 		#section 7 nonp_bootstrap_v2
-		my ($sorted_eta_T,$cbjd_T,$id_T) = 
+		my ($sorted_eta_T,$cbjd_T,$id_T) =
 		$self->create_cbjd(id => $id,
 			bootstrapped_np_probabilities_T => $bootstrapped_np_probabilities_T);
 
@@ -315,7 +315,7 @@ sub sum_vector_entries
 	my $vector = $parm{'vector'};
 	my $sum_entries;
 
-	#input $vector is reference to single-dimension array 
+	#input $vector is reference to single-dimension array
 	#output is scalar $sum_entries
 	#sort in ascending order and add from smallest to avoid numerical issues
 
@@ -407,7 +407,7 @@ sub setup_original_jd_model
 
 	#3.2 set MAXEVALS=0
 	my $record_ref = $new_model -> record(record_name => 'estimation' );
-	if ( scalar(@{$record_ref}) > 0 ){ 
+	if ( scalar(@{$record_ref}) > 0 ){
 		$new_model -> set_option(record_name => 'estimation',
 			option_name => 'MAXEVALS',
 			fuzzy_match => 1,
@@ -419,7 +419,7 @@ sub setup_original_jd_model
 
 	#3.3 add $NONPARAMETIC UNCONDITIONAL
 	$record_ref = $new_model -> record(record_name => 'nonparametric' );
-	if ( scalar(@{$record_ref}) > 0 ){ 
+	if ( scalar(@{$record_ref}) > 0 ){
 		$new_model -> set_option(record_name => 'nonparametric',
 			option_name => 'UNCONDITIONAL',
 			fuzzy_match => 1);
@@ -476,7 +476,7 @@ sub setup_original_jd_model
 
 	#finish
 	$new_model -> extra_output( ["$filestring"] ); #why needed??
-	$new_model -> _write; 
+	$new_model -> _write;
 
 	return $new_model;
 }
@@ -503,7 +503,7 @@ sub get_bootstrap_index_matrix
 		while (my $row = <KEYS>){
 			chomp $row;
 			my @values = split(/,/,$row);
-			my $count = scalar(@values); 
+			my $count = scalar(@values);
 			unless ($count == $self->n_individuals){
 				croak("Error get_bootstrap_index_matrix: ".
 					"number of indices in row $count not equal to number of".
@@ -555,7 +555,7 @@ sub get_sorted_original_eta_matrix
 		$filename= $self->directory . 'original.patab';
 	} else {
 		#version 1
-		$filename = $self->pind_directories->[0].'m1/original.patab'; 
+		$filename = $self->pind_directories->[0].'m1/original.patab';
 	}
 
 	my $table = data->new(filename => $filename, ignoresign => '@', idcolumn => 1); #table created by us, idcol 1
@@ -641,7 +641,7 @@ sub get_P_values_bootstrapped_and_rowsums
 	#input index_vector , ref of vector with indicides of sample $id
 	#return P_values_bootstrapped and P_values_rowsums
 
-	open (PVAL, '<', $filename) || 
+	open (PVAL, '<', $filename) ||
 	croak("Couldn't open $filename for reading: $!");
 
 	my @pval;
@@ -704,7 +704,7 @@ sub create_bootstrapped_np_probabilities_T
 	#input is vector P_values_rowsums
 	#input is index_vector, this is not used anymore
 	#input is filename including path for relevant patab
-	#return matrix bootstrapped_np_probabilities_T T denotes transpose 
+	#return matrix bootstrapped_np_probabilities_T T denotes transpose
 
 	my $number_of_individuals = scalar(@{$P_values_rowsums});
 	unless ($number_of_individuals > 0){
@@ -782,8 +782,8 @@ sub create_cbjd
 
 	#section 7 of URS nonp_bootstrap_v2
 	#input is scalar $id for sample
-	#input is matrix bootstrapped_np_probabilities_T T denotes transpose 
-	#return sorted_eta_matrix_T 
+	#input is matrix bootstrapped_np_probabilities_T T denotes transpose
+	#return sorted_eta_matrix_T
 	#return cbjd_matrix_T
 	#return id_matrix_T
 
@@ -814,7 +814,7 @@ sub create_cbjd
 				"wrong number of $col values found in input matrix.");
 		}
 
-		#compute cumulative probabilities sec 7, write to file 
+		#compute cumulative probabilities sec 7, write to file
 		my %index;
 		for (my $j=0; $j<$number_of_individuals;$j++){
 			$index{$j} = $etavec -> [$j];

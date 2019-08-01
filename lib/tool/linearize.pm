@@ -42,7 +42,7 @@ sub modelfit_setup
         foreach my $option (@{$model->problems->[0]->inputs->[0]->options()}){
             if (not ($option->value eq 'DROP' or $option->value eq 'SKIP'
                         or $option->name eq 'DROP' or $option->name eq 'SKIP'
-                        or $option->name eq 'ID' or $option->name eq 'DV' 
+                        or $option->name eq 'ID' or $option->name eq 'DV'
                         or $option->name eq 'MDV')) {
                 if ($option->value eq 'TIME' or $option->name eq 'TIME') {      # Special case for TIME. Keep it instead of synonym
                     push @keep, 'TIME';

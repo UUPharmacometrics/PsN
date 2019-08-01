@@ -23,7 +23,7 @@ sub BUILD
 
     if (defined $self->filename) {
         $self->read_nmtable(filename => $self->filename);
-    } 
+    }
 }
 
 sub get_table
@@ -40,7 +40,7 @@ sub get_table
 	my $problem = $parm{'problem'};
 	my $subproblem = $parm{'subproblem'};
 
-	if (defined $problem and defined $subproblem and 
+	if (defined $problem and defined $subproblem and
 		defined $self->problem_lookup->{$problem} and
 		defined $self->problem_lookup->{$problem}->{$subproblem}){
 		return $self->tables->[$self->problem_lookup->{$problem}->{$subproblem}];
@@ -83,7 +83,7 @@ sub read_nmtable
     open my $fh, '<', $filename or die("Could not open table $filename\n");
 
     my $table_row = <$fh>;
-	
+
     TABLE: while (defined $table_row) {
         my $table = nmtable->new();
 		if ($self->is_ext_file){
@@ -122,7 +122,7 @@ sub read_nmtable
             $table->add_row(row => $row);
         }
     }
-    
+
     close $fh;
 }
 
@@ -250,7 +250,7 @@ sub rearrange_etas
     for my $nmtable (@{$self->tables}) {
         my $old_columns = $nmtable->columns;
         my @new_columns = ($nmtable->columns->[0], $nmtable->columns->[1]);     # SUBJECT_NO and ID
-        for (my $new_eta = 1; $new_eta <= $netas; $new_eta++) {                 # ETA columns            
+        for (my $new_eta = 1; $new_eta <= $netas; $new_eta++) {                 # ETA columns
             my $old_eta = $new_to_old{$new_eta};
             push @new_columns, $nmtable->columns->[1 + $old_eta];
         }

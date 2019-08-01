@@ -75,7 +75,7 @@ sub write {
 	my $file = shift or return $self->_error( 'No file name provided' );
 
 	# Write it to the file
-	open( CFG, '>', $file ) 
+	open( CFG, '>', $file )
 		or return $self->_error( "Failed to open file '$file' for writing: $!" );
 	print CFG $self->write_string;
 	close CFG;
@@ -94,7 +94,7 @@ sub write_string {
 			$contents .= "$property=$block->{$property}\n";
 		}
 	}
-	
+
 	$contents;
 }
 
@@ -182,7 +182,7 @@ The constructor C<new> creates and returns an empty Config::Tiny object.
 =head2 read $filename
 
 The C<read> constructor reads a config file, and returns a new Config::Tiny
-object containing the properties in the file. 
+object containing the properties in the file.
 
 Returns the object on success, or C<undef> on error.
 
@@ -194,7 +194,7 @@ and returns the Config::Tiny object for it.
 =head2 write
 
 The C<write $filename> generates the file for the properties, and writes it
-to disk. 
+to disk.
 
 Returns true on success or C<undef> on error.
 

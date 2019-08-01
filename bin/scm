@@ -41,11 +41,11 @@ my %optional_options = (
     "only_successful!" => '',
     "parallel_states!" => '',
     "error:s"=> '',
-    "estimate_fo!" => '',                    
+    "estimate_fo!" => '',
     "nointer!" => '',
 );
 
-my $res = GetOptions( \%options, 
+my $res = GetOptions( \%options,
 					  @common_options::get_opt_strings,
 					  keys(%required_options),
 					  keys(%optional_options)
@@ -90,7 +90,7 @@ $help_text{Options} = <<'EOF';
 
 	There are so many options to scm that it is unpractical to specify them
 	all on the command line. The only option required on the command line is
-	the name of a configuration file, where other options are specified. 
+	the name of a configuration file, where other options are specified.
 	Additional options are required, but may be specified either on the command
 	line or in the configuration file. If an option is specified both on the
 	command line and in the configuration file, the choice on the command line
@@ -122,11 +122,11 @@ EOF
 
 $help_text{-config_file} = <<'EOF';
 	-config_file
-	
+
 	Name of an scm configuration file, including search path if the file is
 	not stored in the current directory. The configuration file may contain
 	all scm command line options and some optional PsN common options.
-	If a common option that is not listed here is set in the scm configuration 
+	If a common option that is not listed here is set in the scm configuration
 	file then that option will be ignored.
 
 	The following common options, described in common_options.pdf, can be set
@@ -181,12 +181,12 @@ $help_text{-error} = <<'EOF';
 	Use an approximated linearization of the error model instead of an exact.
 	Alternatives are add (for additive), prop (for proportional),propadd
 	(for proportional plus additive) or user (for user defined). The error
-	model must be defined in a particular way when this option is used.    
-	
+	model must be defined in a particular way when this option is used.
+
 	For additive and proportional error (add and prop) it is required that
-	the original model defines a variable W for weighting of EPS(1), 
+	the original model defines a variable W for weighting of EPS(1),
 	for add
-	
+
 	W=THETA(x)
 	Y=IPRED + W*EPS(1)
 
@@ -196,7 +196,7 @@ $help_text{-error} = <<'EOF';
 	Y=IPRED + W*EPS(1)
 
 	For proportional plus additive error (propadd) it is required that two
-	variables WA and WP are defined so that the following holds 
+	variables WA and WP are defined so that the following holds
 
 	WA=THETA(x)
 	WP=THETA(y)
@@ -216,7 +216,7 @@ $help_text{-epsilon} = <<'EOF';
 
 	Default set. Linearize with respect to epsilons in addition to etas.
 	Disable with epsilon=0 in the configuration file or -no-epsilon on the
-	command line, then no linearization with respect to epsilon is performed. 
+	command line, then no linearization with respect to epsilon is performed.
 EOF
 
 $help_text{-estimate_fo} = <<'EOF';
@@ -230,7 +230,7 @@ $help_text{-foce} = <<'EOF';
 	-foce
 
 	Set by default. Only relevant with linearize method. Expand around
-	conditional ETA estimates instead of around ETA=0.    
+	conditional ETA estimates instead of around ETA=0.
 EOF
 
 $help_text{-global_init} = <<'EOF';
@@ -239,7 +239,7 @@ $help_text{-global_init} = <<'EOF';
 	Default is 0.001. With the global_init option the initial estimates of
 	parameters in covariate function parameterizations are set to global_init.
 	If using inits section in configuration file individual initial values
-	are used instead of one global. 
+	are used instead of one global.
 EOF
 
 $help_text{-gof} = <<'EOF';
@@ -248,7 +248,7 @@ $help_text{-gof} = <<'EOF';
 	Default is 'p_value', other alternative is 'ofv'. Option decides which
 	goodness-of-fit criterium should be used for deciding which model is
 	better when comparing. If -gof=ofv is used then the user will probably
-	want to use [ofv_forward] and/or [ofv_backward] in the configuration file. 
+	want to use [ofv_forward] and/or [ofv_backward] in the configuration file.
 EOF
 
 $help_text{-linearize} = <<'EOF';
@@ -282,7 +282,7 @@ EOF
 $help_text{-model} = <<'EOF';
 	-model=filename
 
-	Default not set. The name of the basic model file. 
+	Default not set. The name of the basic model file.
 EOF
 
 $help_text{-noabort} = <<'EOF';
@@ -303,14 +303,14 @@ $help_text{-only_successful} = <<'EOF';
 
 	Default not set. Only consider runs with MINIMIZATION SUCCESSFUL
 	(or equivalent for non-classical estimation methods) when selecting
-	the covariate to add/remove in each step. 
+	the covariate to add/remove in each step.
 EOF
 
 $help_text{-p_backward} = <<'EOF';
 	-p_backward=N
 
 	Default is 0.05. Using the p\_backward option, you can specify the p-value
-	to use for the backward deletion. 
+	to use for the backward deletion.
 EOF
 
 $help_text{-p_forward} = <<'EOF';
@@ -318,13 +318,13 @@ $help_text{-p_forward} = <<'EOF';
 
 	Default is 0.05. Using the p_forward option, you can specify the p-value
 	to use for the forward selection. Used when an improvement is good enough
-	for including parameters.  
+	for including parameters.
 EOF
 
 $help_text{-p_value} = <<'EOF';
 	-p_value=N
 
-	Use this option to set the p_value for both forward and backward steps. 
+	Use this option to set the p_value for both forward and backward steps.
 EOF
 
 $help_text{-parallel_states} = <<'EOF';
@@ -343,12 +343,12 @@ $help_text{-search_direction} = <<'EOF';
 
 	Default not set. Possible choices are 'forward', 'backward' or 'both'.
 	If backward is chosen, included_relations is required input in the
-	configuration file. 
+	configuration file.
 EOF
 
 #$help_text{-second_order} = <<'EOF';
 #	-second_order
-#	Only relevant with linearize method. Use second order Taylor expansion around ETAs instead of 
+#	Only relevant with linearize method. Use second order Taylor expansion around ETAs instead of
 #	default first order expansion. The user must ensure that CONDITIONAL LAPLACIAN is set in $EST.
 #EOF
 
@@ -393,7 +393,7 @@ $options{'directory'} = $main_directory;
 
 # we need the modified options hash here, e.g. common options set in scm config file
 # here we get default options from psn.conf
-common_options::setup( \%options, 'scm' ); 
+common_options::setup( \%options, 'scm' );
 
 #config_file object might get modified here: change filenames to absolute path
 scm_util::check_options(scriptname => 'scm',
@@ -413,11 +413,11 @@ my $scm = scm_util::setup(config_file => $config_file,
 						  options => \%options,
 						  model => $model,
 						  common_options_hashref => {eval( $common_options::parameters )},
-						  scm_options_hashref => {estimate_fo => $options{'estimate_fo'}, 
+						  scm_options_hashref => {estimate_fo => $options{'estimate_fo'},
 												  nointer => $options{'nointer'}},
 	);
 
-$scm -> print_options(cmd_line => $cmd_line, 
+$scm -> print_options(cmd_line => $cmd_line,
 					  toolname => 'scm',
 					  local_options => [keys %optional_options],
 					  common_options => \@common_options::tool_options);

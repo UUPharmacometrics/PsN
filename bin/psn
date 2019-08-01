@@ -19,7 +19,7 @@ my %options;
 ## Declare the options
 
 my %required_options = ();
-my %optional_options = ( 
+my %optional_options = (
 			 'benchmark' => '',
 			 'boot_scm' => '',
 			 'bootstrap' => '',
@@ -72,7 +72,7 @@ if (scalar(@ARGV)>0){
 	if ($ARGV[0] eq 'installation_info'){
 		#		print '$current_config_file='.$PsN::lib_dir. '/psn.conf'."';\n";
 		#do we want to risk user specific on cluster?
-		print '$current_config_file='."'".$PsN::config_file."';\n"; 
+		print '$current_config_file='."'".$PsN::config_file."';\n";
 		print '$current_lib_dir='."'".$PsN::lib_dir."';\n";
 		my ($volume, $directory, $file) = File::Spec->splitpath(__FILE__);
 		print '$current_bin_dir='."'".File::Spec->catdir($volume.$directory)."';\n";
@@ -122,13 +122,13 @@ EOF
 
 $help_text{-h} = <<'EOF';
       -h | -?
-      
+
       With -h or -? psn will print a list of scripts and exit.
 EOF
-      
-$help_text{-help} = <<'EOF';      
+
+$help_text{-help} = <<'EOF';
       -help
-      
+
       With -help psn will print this, more descriptive, list of scripts and exit.
 EOF
 
@@ -159,7 +159,7 @@ EOF
 
 $help_text{-simeval} = <<'EOF';
     simeval - simulation-evaluation diagnostics of outliers.
-	See simeval_userguide.pdf for details. 
+	See simeval_userguide.pdf for details.
 EOF
 
 $help_text{-execute} = <<'EOF';
@@ -214,10 +214,10 @@ $help_text{-nmoutput2so} = <<'EOF';
 EOF
 
 $help_text{-nm_versions} = <<'EOF';
-    -nm_versions is an option to this program psn, not a standalone script. 
-    The command 
-    psn -nm_versions 
-    will give a list of the available NONMEM versions defined in the 
+    -nm_versions is an option to this program psn, not a standalone script.
+    The command
+    psn -nm_versions
+    will give a list of the available NONMEM versions defined in the
     configuration file psn.conf, i.e. the available alternatives for
     common option -nm_version (see psn_options -h nm_version for details).
 EOF
@@ -237,7 +237,7 @@ npfit - Nonparametric estimation using a range of NPSUPP values.
 See npfit_userguide.pdf for details.
 EOF
 $help_text{-parallel_retries} = <<'EOF';
-    parallel_retries - Running multiple copies of a single model with tweaked 
+    parallel_retries - Running multiple copies of a single model with tweaked
     initial estimates in parallel.
 	See execute_userguide.pdf for details (same document as execute guide).
 EOF
@@ -307,12 +307,12 @@ $help_text{-sumo} = <<'EOF';
 EOF
 
 $help_text{-update_inits} = <<'EOF';
-    update_inits - read final THETA, OMEGA and SIGMA estimates from a 
+    update_inits - read final THETA, OMEGA and SIGMA estimates from a
     NONMEM output file and put into a given model file.
 	See update_inits_userguide.pdf for details.
 EOF
 $help_text{-update} = <<'EOF';
-    update - read final THETA, OMEGA and SIGMA estimates from a 
+    update - read final THETA, OMEGA and SIGMA estimates from a
     NONMEM output file and put into a given model file.
 	See update_inits_userguide.pdf for details.
 EOF
@@ -358,5 +358,5 @@ if ((defined $options{'nm_versions'}) || (defined $options{'nm_version'})) {
   } else {
     print "No default version is defined\n\n";
   }
-  print "The psn.conf in use is ", $PsN::config_file, "\n\n"; 
+  print "The psn.conf in use is ", $PsN::config_file, "\n\n";
 }

@@ -1,7 +1,7 @@
 package model::problem::record_order;
 
 # Class to take care of the record_order for output of modelfiles.
- 
+
 use Moose;
 use MooseX::Params::Validate;
 use List::Util qw(first);

@@ -45,23 +45,23 @@ sub BUILD
 			push(@new_files,$ldir.$name) ;
 		}
 		$self->$accessor(\@new_files);
-	}	
+	}
 
-	croak("No \$PROBLEM in input model") unless 
+	croak("No \$PROBLEM in input model") unless
 	(defined $self ->models()->[0]->problems and scalar(@{$self ->models()->[0]->problems})>0);
 
-	croak("No \$INPUT found") unless 
-	(defined $self ->models()->[0]->problems->[0]->inputs and 
+	croak("No \$INPUT found") unless
+	(defined $self ->models()->[0]->problems->[0]->inputs and
 		scalar(@{$self ->models()->[0]->problems->[0]->inputs})>0);
-	croak("No \$DATA found") unless 
-	(defined $self ->models()->[0]->problems->[0]->datas and 
+	croak("No \$DATA found") unless
+	(defined $self ->models()->[0]->problems->[0]->datas and
 		scalar(@{$self ->models()->[0]->problems->[0]->datas})>0);
 
 	#make sure IGNORE=C is not used
 
 	croak("PsN randtest cannot handle IGNORE=C. Use IGNORE=@ instead\n")
 		if ($self->models->[0]->problems->[0]->datas->[0]->ignoresign eq 'C');
-	
+
 	#Find column index of rand column
 	#Find column index of strat column
 	my $counter = 0;
@@ -88,13 +88,13 @@ sub modelfit_setup
 
 	my $model = $self ->models() -> [$model_number-1];
 
-	# Check which models that hasn't been run and run them 
+	# Check which models that hasn't been run and run them
 
 	# ------------------------  Run original run  -------------------------------
 
 	my $base_mod_ofv;
 	if (defined $self->base_model and $self->base_model->is_run){
-		$base_mod_ofv=$self->base_model->outputs->[0]->get_single_value(attribute=> 'ofv'); 
+		$base_mod_ofv=$self->base_model->outputs->[0]->get_single_value(attribute=> 'ofv');
 	}
 
 	unless ($model->is_run and ((not defined $self->base_model) or $self->base_model->is_run)) {
@@ -145,7 +145,7 @@ sub modelfit_setup
 	}
 
 	if (defined $self->base_model and $self->base_model->is_run) {
-		$base_mod_ofv = $self->base_model->outputs->[0]->get_single_value(attribute=> 'ofv'); 
+		$base_mod_ofv = $self->base_model->outputs->[0]->get_single_value(attribute=> 'ofv');
 	}
 
 	my $template_model = $model->copy(
@@ -213,8 +213,8 @@ sub modelfit_setup
 												   missing_data_token => $self->missing_data_token,
 												   name_stub   => 'rand',
 												   samples     => $self->samples(),
-												   stratify_index => $self->strat_index(), 
-												   rand_index => $self->rand_index(), 
+												   stratify_index => $self->strat_index(),
+												   rand_index => $self->rand_index(),
 												   equal_obs => (not $self->match_transitions())
 			);
 
@@ -348,7 +348,7 @@ sub cleanup
 		last unless (-e $dir);
 		my $sample=1;
 		while (1){
-			my $file = $dir."NM_run".$sample."/rand_".$sample.".dta"; 
+			my $file = $dir."NM_run".$sample."/rand_".$sample.".dta";
 			last unless (-e $file);
 			unlink $file;
 			$sample++;
@@ -367,7 +367,7 @@ sub _modelfit_raw_results_callback
 	my $subroutine;
 
 	# Use the  raw_results file.
-	my ($dir,$file) = 
+	my ($dir,$file) =
 	OSspecific::absolute_path( $self ->directory(),
 							   $self -> raw_results_file()->[$model_number-1] );
 	my ($dir2,$nonp_file) = OSspecific::absolute_path( $self ->directory(),
@@ -428,7 +428,7 @@ sub _modelfit_raw_results_callback
 					$delta_ofv = $row->[$ofvindex] - $base_mod_ofv->[($row->[$probindex]-1)]->[($row->[$subindex]-1)];
 				}
 				my @oldrow =@{$row};
-				$row = [@oldrow[0 .. $ofvindex],$delta_ofv,@oldrow[$ofvindex+1 .. $#oldrow]]; 
+				$row = [@oldrow[0 .. $ofvindex],$delta_ofv,@oldrow[$ofvindex+1 .. $#oldrow]];
 			}
 
 			my @old_header = @{$modelfit -> raw_results_header()};
@@ -450,7 +450,7 @@ sub _modelfit_raw_results_callback
 			}
 		}
 		$self->raw_line_structure() -> {'input'} = $self->raw_line_structure() -> {'1'}; #input model
-		$self->raw_line_structure() -> {'base'} = $self->raw_line_structure() -> {'1'}; 
+		$self->raw_line_structure() -> {'base'} = $self->raw_line_structure() -> {'1'};
 		$self->raw_line_structure() -> write( $dir.'raw_results_structure' );
 
 		$self -> raw_results_header($modelfit -> raw_results_header());
@@ -506,7 +506,7 @@ sub print_dofv_results
     my $dofv = $parm{'dofv'};
     my $filename = $parm{'filename'};
 
-    #preprocess dofv values to find undefs or positives		
+    #preprocess dofv values to find undefs or positives
     my @processed_dofv;
     my $poscount = 0;
     my $undefcount = 0;
@@ -546,7 +546,7 @@ sub print_dofv_results
 
     #p-value , actual dOFV at percentile, theoretical dOFV for chi2 1df, actual percentile at theoretical dOFV for chi2 1df,
     # theoretical dOFV for chi2 2df, actual percentile at theoretical dOFV for chi2 2df , theoretical dOFV for chi2 3df,
-    # actual percentile at theoretical dOFV for chi2 3df 
+    # actual percentile at theoretical dOFV for chi2 3df
     # 0.001 , 0.01 , 0.05 , 0.10 , 0.15 ,
 
 	open(RES, ">" . $filename) or die "could not open " . $filename . " for writing";
@@ -593,7 +593,7 @@ sub create_R_plots_code
             $labelstring = "c('".join("','",@labels)."')";
         }
     }
-    #TODO script only works if $self->base_model is defined 
+    #TODO script only works if $self->base_model is defined
     $rplot->add_preamble(code => [
             'samples   <-'.$self->samples,
             "randomization.column   <-'".$self->randomization_column."'",

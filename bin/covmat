@@ -49,7 +49,7 @@ $help_text{Pre_help_message} = <<'EOF';
 	Create an empirical covariance matrix from a raw_results file
 EOF
 
-$help_text{Examples} = <<'EOF';    
+$help_text{Examples} = <<'EOF';
 	Use parameter labels from the raw_results file:
 	covmat -rawres_input=bootstrap_dir33/raw_results_run33.csv
 
@@ -63,7 +63,7 @@ $help_text{Examples} = <<'EOF';
 
 EOF
 
-$help_text{Options} = <<'EOF';      
+$help_text{Options} = <<'EOF';
 	The -rawres_input option is required.
 
 	covmat needs to read the names and counts of parameters from somewhere.
@@ -80,7 +80,7 @@ $help_text{-h} = <<'EOF';
 	With -h or -? covmat will print a list of options and exit.
 EOF
 
-$help_text{-help} = <<'EOF';      
+$help_text{-help} = <<'EOF';
 	-help
 
 	With -help covmat will print this, longer, help message.
@@ -90,14 +90,14 @@ $help_text{-comma} = <<'EOF';
 	-comma
 
 	Default not set. By default the covariance matrix is printed with space
-	separation and fixed width of the numeric fields. Setting -comma changes 
+	separation and fixed width of the numeric fields. Setting -comma changes
 	he format to comma-separated variable width.
 EOF
 
 $help_text{-header} = <<'EOF';
 	-header
 
-	Default set. By default the covariance matrix is printed with headers. 
+	Default set. By default the covariance matrix is printed with headers.
 	Setting -no-header skips the headers in the output.
 EOF
 
@@ -210,7 +210,7 @@ if ( defined $options{'in_filter'} ){
   }
   if (scalar(@in_filter)<1){
     die "Error: Option in_filter used, but list of conditions could not be parsed.\n";
-  }	
+  }
 }
 
 

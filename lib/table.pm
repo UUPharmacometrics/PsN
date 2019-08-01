@@ -106,7 +106,7 @@ sub get_column
 	if ($my_index >= scalar(@{$self->columns})){
 		croak("no table column with index $my_index");
 	}
-	
+
     return $self->columns->[$my_index];
 }
 

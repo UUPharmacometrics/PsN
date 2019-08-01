@@ -19,7 +19,7 @@ use POSIX;
 extends 'tool';
 
 has 'model' => ( is => 'rw', isa => 'model' );
-has 'groups' => ( is => 'rw', isa => 'Int', default => 4 );       # The number of groups to use for quantiles in the time_varying model 
+has 'groups' => ( is => 'rw', isa => 'Int', default => 4 );       # The number of groups to use for quantiles in the time_varying model
 has 'idv' => ( is => 'rw', isa => 'Str', default => 'TIME' );
 has 'dv' => ( is => 'rw', isa => 'Str', default => 'CWRES' );
 has 'dvid' => ( is => 'rw', isa => 'Str', default => 'DVID' );
@@ -65,7 +65,7 @@ sub BUILD
         }
     }
 
-	my $model = $self->models()->[0]; 
+	my $model = $self->models()->[0];
     $self->model($model);
 
     if ($self->top_level) {
@@ -76,7 +76,7 @@ sub BUILD
         }
         my $cwres_table_name = $self->model->problems->[0]->find_table(columns => \@columns);
         $self->table_file($model->directory . $cwres_table_name);
-        my $table = nmtablefile->new(filename => $self->table_file); 
+        my $table = nmtablefile->new(filename => $self->table_file);
         my @columns_in_table = @{$cwres_table->columns()};
         my $have_dvid = grep { $_ eq $self->dvid } @columns_in_table;
 
@@ -86,7 +86,7 @@ sub BUILD
             die "Error original model has no table containing ID, " .$self->idv ." and " . $self->dv. "\n";
         }
         $self->table($table->tables->[0]);
-        $self->_create_model_templates(table => $table, idv_column => $self->idv); 
+        $self->_create_model_templates(table => $table, idv_column => $self->idv);
 
         if ($have_dvid) {
             my $dvid_column_no = $table->tables->[0]->header->{$self->dvid};
@@ -264,7 +264,7 @@ sub modelfit_setup
 
         push @models_to_run, $cwres_model;
         push @{$self->run_models}, $cwres_model;
-        push @{$self->residual_models}, $model_properties; 
+        push @{$self->residual_models}, $model_properties;
     }
 
     if ($self->numdvid > 1 and $self->current_dvid == 0 and $self->iteration == 0) {     # Only start the L2 model once
@@ -290,7 +290,7 @@ sub modelfit_setup
 
 	my $modelfit = tool::modelfit->new(
 		%{common_options::restore_options(@common_options::tool_options)},
-		models => \@models_to_run, 
+		models => \@models_to_run,
         base_dir => $self->directory . 'm1/',
 		directory => undef,     # To override directory in restore_options
 		top_tool => 0,
@@ -358,7 +358,7 @@ sub modelfit_analyze
                             push @parameter_strings, sprintf("t" . ($i + 1) . "=%.2f ", $self->cutoffs->[$i]);
                         }
                     } else {
-                        push @parameter_strings, sprintf('t0=%.2f', $self->cutoffs->[$parameter->{'cutoff'}]); 
+                        push @parameter_strings, sprintf('t0=%.2f', $self->cutoffs->[$parameter->{'cutoff'}]);
                     }
                     next;
                 }
@@ -417,7 +417,7 @@ sub modelfit_analyze
             }
 
             # Check if the DV column is all zeros
-            my $table = nmtablefile->new(filename => "m1/$model_name.tab"); 
+            my $table = nmtablefile->new(filename => "m1/$model_name.tab");
             my $cwres_column = $table->tables->[0]->header->{$self->dv};
             my $unique_cwres = array::unique($table->tables->[0]->columns->[$cwres_column]);
             if (scalar(@$unique_cwres) == 1 && $unique_cwres->[0] == 0) {
@@ -528,7 +528,7 @@ sub _print_results
                 my $l2_dofv = sprintf("%.2f", $l2_ofv - $self->base_sum->[$iter]);
                 print $fh "$print_iter,sum,L2,$l2_dofv\n";
             }
-        } 
+        }
     }
 
     close $fh;
@@ -574,18 +574,18 @@ sub _calculate_quantiles
     }
     @data = sort { $a <=> $b } @data;
 	my $quantiles = array::quantile(numbers => \@data, groups => $self->groups);
-	
+
 	#if (scalar(@{$quantiles}) < 8) {
 	#	my $data_length = scalar(@data);
 	#	for my $i (0 .. scalar(@{$quantiles}) - 1) {
 	#		my $data_part_length = scalar(grep{$_ < $quantiles[$i]} @data)
 	#		if ($data_part_length/$data_length>0.9) {
-	#			
+	#
 	#		}
 	#	}
 	#}
-	
-	
+
+
     return $quantiles;
 }
 
@@ -612,7 +612,7 @@ sub _create_input
 	my @found_columns;
 
 	for my $col (@{$table->header_array()}) {
-		my $found = 0; 
+		my $found = 0;
 		for (my $i = 0; $i < scalar(@columns); $i++) {
             if ($col eq $columns[$i] and not $found_columns[$i]) {
                 $found_columns[$i] = 1;
@@ -635,7 +635,7 @@ sub _create_input
         last if ((grep { $_ } @found_columns) == scalar(@columns));
         $input_columns .= ' ';
     }
-	
+
 	return $input_columns;
 }
 
@@ -668,7 +668,7 @@ sub _create_new_model
     );
 
     $model->_write();
-    
+
     return $model;
 }
 
@@ -697,7 +697,7 @@ sub _prepare_L2_model
     for my $ind (@{$data->individuals}) {
         for my $row (@{$ind->subject_data}) {
             print $fh join(',', $row) . ',' . $time_col->[$i++] . "\n";
-        } 
+        }
     }
     close $fh;
 
@@ -714,7 +714,7 @@ sub _prepare_L2_model
 
     for (my $i = 0; $i < $num_dvid; $i++) {
         push @prob_arr, '$THETA 0.1';
-    }    
+    }
 
     for (my $i = 0; $i < $num_dvid; $i++) {
         push @prob_arr, '$OMEGA 0.01';
@@ -753,7 +753,7 @@ sub _build_time_varying_template
     my $cutoffs = $parm{'cutoffs'};
 	my $min_idv = $parm{'min_idv'};
 	my $max_idv = $parm{'max_idv'};
-	
+
 	my $start_time = $min_idv;
 	my $end_time = $max_idv;
     my @models;
@@ -780,7 +780,7 @@ sub _build_time_varying_template
         );
 
         $hash{'prob_arr'} = \@prob_arr;
-		
+
         $hash{'parameters'} = [
             { name => "sdeps_".$start_time."-t0", parameter => "SIGMA(1,1)", recalc => sub { sqrt($_[0]) } },
             { name => "sdeps_t0-".$end_time, parameter => "SIGMA(2,2)", recalc => sub { sqrt($_[0]) } },
@@ -788,7 +788,7 @@ sub _build_time_varying_template
         ];
 
         push @models, \%hash;
-    } 
+    }
 
     for my $param ('theta', 'eps', 'both') {
         my %hash;
@@ -903,16 +903,16 @@ sub _create_table
     my $ipred = '';
     if ($have_ipred) {
         $ipred = ' IPRED';
-    } 
+    }
     my $occ = '';
     if ($have_occ) {
-        $occ = ' ' . $self->occ; 
+        $occ = ' ' . $self->occ;
     }
     my $l2 = '';
     if ($have_l2) {
         $l2 = ' L2';
     }
-    
+
     return "\$TABLE ID TIME " . $self->dv . "$ipred$occ$l2 NOPRINT NOAPPEND ONEHEADER FILE=$name.tab";
 }
 
@@ -1066,7 +1066,7 @@ our @residual_models =
 			'$DATA <cwrestablename> IGNORE=@ <ignore> <dvidaccept>',
 			'$ABBREVIATED DECLARE T1(NO)',
 			'$ABBREVIATED DECLARE INTEGER I,DOWHILE J',
-			'$PRED', 
+			'$PRED',
 			'IF(NEWIND.NE.2) THEN',
 			'  I=0',
 			'  L=1',
@@ -1096,7 +1096,7 @@ our @residual_models =
         parameters => [
             { name => "half-life", parameter => "THETA2" },
         ],
-		use_base => 1, 
+		use_base => 1,
     }, {
 		name => 'tdist_base',
 	    prob_arr => [
@@ -1253,7 +1253,7 @@ sub _create_model_templates
 
     my @templates = @residual_models;      # A shallow copy
     $self->model_templates(\@templates);
-	
+
     my $cutoffs = $self->_calculate_quantiles(table => $table->tables->[0], column => $idv_column);
 	$cutoffs = array::unique($cutoffs);
 	my $idv_col_order = $table->tables->[0]->header->{$idv_column};
@@ -1264,7 +1264,7 @@ sub _create_model_templates
 		splice (@{$cutoffs},0,1);
 	}
 	if($max_idv==$cutoffs->[scalar(@{$cutoffs})-1]) {
-		splice (@{$cutoffs},scalar(@{$cutoffs})-1,1); 
+		splice (@{$cutoffs},scalar(@{$cutoffs})-1,1);
 	}
     my $time_var_modeltemplates = $self->_build_time_varying_template(cutoffs => $cutoffs,min_idv => $min_idv, max_idv => $max_idv);
     push @{$self->model_templates}, @$time_var_modeltemplates;

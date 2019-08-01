@@ -37,14 +37,14 @@ sub merge_path_and_name
 	my $merged_path;
 
 	# path finding strategy:
-      
+
 	# 1. If path is not given it is assumed to be the current working
 	# directory. If it is not absolute, it is assumed to be relative to
 	# the current working directory.
-      
+
 	# 2. If filename is absolute and a path is given, compare them and
-	# warn if they differ. 
-      
+	# warn if they differ.
+
 	# 3. If the filename is relative, merge it with the path.
 
 	# Step 1. Make the pathname absolute.
@@ -54,7 +54,7 @@ sub merge_path_and_name
 				$path = getcwd() . '/' . $path;
 			}
 		} else { # Assume os == unix
-			unless( $path =~ /^\// ) { 
+			unless( $path =~ /^\// ) {
 				$path = getcwd() . '/' . $path;
 			}
 		}
@@ -62,15 +62,15 @@ sub merge_path_and_name
 		$path = getcwd();
 		debugmessage(3,"file : No path given, assuming $path");
 	}
-      
+
 	$path = $self -> clean_path( path => $path );
 
 	$name = $self -> clean_path( path => $name );
-      
+
 	unless ( $path =~ /\/$/ ) { # append trailing slash
-		$path .= '/'; 
+		$path .= '/';
 	}
-      
+
 	my $tmp = $name;
 	$tmp =~ s![^\/]*$!!;
 

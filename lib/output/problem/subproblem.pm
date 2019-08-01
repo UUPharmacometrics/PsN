@@ -116,7 +116,7 @@ has 'iterations_interrupted' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'simulation_error_message' => ( is => 'rw', isa => 'Maybe[Str]' );
 has 'guess_estimated_attributes' => ( is => 'rw', isa => 'HashRef', default => sub { {} } );
 
-	
+
 sub BUILD
 {
 	my $self  = shift;
@@ -126,7 +126,7 @@ sub BUILD
 	$self->have_omegas(1) if (defined $self->input_problem()->omegas() and scalar(@{$self->input_problem()->omegas()}) > 0);
 	$self->final_gradients([]);
 
-	
+
 	while (1) {
 		#we will always break out of this loop, use as simple way of finishing parsing early. Cannot return because of dia code
 		$self->simulation_error_message($self -> _read_simulation);
@@ -138,7 +138,7 @@ sub BUILD
 			}
 		} else {
 			#NM7
-			#When NM7 do not know yet if estimation_step_run actually set correctly, only whether we have a $EST. 
+			#When NM7 do not know yet if estimation_step_run actually set correctly, only whether we have a $EST.
 			#Could be a MAXEVAL=0, so must check the right #METH line for (Evaluation)
 			#Regardless, we still need to scan to the right method
 			#have separate method for NM7 find right #METH
@@ -189,11 +189,11 @@ sub BUILD
 		if ($self -> covariance_step_run()) {
 			$self -> parse_NM7_additional() if ((defined $self->nm_output_files->{'cov'} or
 												defined $self->nm_output_files->{'cor'} or
-												defined $self->nm_output_files->{'coi'}) and 
+												defined $self->nm_output_files->{'coi'}) and
 												$self -> NM7_parsed_raw());
 			$self -> _read_covmatrix()          unless (defined $self -> NM7_parsed_additional() and
-														$self -> NM7_parsed_additional()->{'cov'} and 
-														$self -> NM7_parsed_additional()->{'cor'} and 
+														$self -> NM7_parsed_additional()->{'cov'} and
+														$self -> NM7_parsed_additional()->{'cor'} and
 														$self -> NM7_parsed_additional()->{'coi'} );
 			last unless ($self -> parsed_successfully() and not $self -> finished_parsing());
 
@@ -230,7 +230,7 @@ sub _read_covmatrix
 	my $start_pos = $self->lstfile_pos - 1;
 	my $headers;
 	my $dummyheaders;
-	
+
 	# {{{ sub clear dots
 
 	sub clear_dots {
@@ -241,7 +241,7 @@ sub _read_covmatrix
 		foreach ( @matrix ) {
 			if ( $_ eq '.........' ) {
 				print join(' ',@matrix)."\n";
-				ui->print(category=> 'all', 
+				ui->print(category=> 'all',
 						  message =>"found  ...... in matrix, this is a bug, please report this\n ");
 			}else{
 				if ( $_ eq 'NAN' or $_ eq 'NaN') {
@@ -261,7 +261,7 @@ sub _read_covmatrix
 	# }}}
 
 # {{{ sub make square
-	
+
 	sub make_square {
 		my $m_ref = shift;
 		my @matrix = @{$m_ref};
@@ -279,7 +279,7 @@ sub _read_covmatrix
 		}
 		return \@square;
 	}
-	
+
 	# }}}
 
 	my $keep_headers_array = $self->input_problem->get_estimated_attributes(attribute=>'coordinate_strings');
@@ -287,7 +287,7 @@ sub _read_covmatrix
 		$keep_headers_array = $self->guess_estimated_attributes->{'coordinate_strings'};
 	}
 	my $raw_invcovmatrix;
-	
+
 	while ( $_ = @{$self->lstfile}[ $start_pos++ ] ) {
 		no warnings qw(uninitialized);
 		if (/        T MATRIX/) {
@@ -457,7 +457,7 @@ sub _read_eval
 			$self -> parsing_error( message => "Error in reading the number of function evaluations!\nNext problem found" );
 			return;
 		}
-      
+
 		if ( $start_pos >= scalar @{$self->lstfile} ) {
 			$self -> parsing_error( message => "Error in reading number of function evaluations!\nEOF found\n" );
 			return;
@@ -467,7 +467,7 @@ sub _read_eval
 			$self -> parsing_error( message => "Error in reading number of function evaluations!\nOFV found" );
 			return;
 		}
-      
+
 		if ( / NO. OF FUNCTION EVALUATIONS USED:\s*(\d*)/ ) {
 			$self -> feval($1);
 			last;
@@ -496,7 +496,7 @@ sub _read_iteration_path
 	my $burn_in_end;
 	my $read_terminated_by_obj = 1;
 	my $found_iteration = 0;
-	
+
 	my $method_exp = '^ #METH:\s*(.*)';
 	my $term_exp = '^ #TERM:';
 	my $tere_exp = '^ #TERE:';
@@ -514,13 +514,13 @@ sub _read_iteration_path
 			$rec = $self->input_problem()->estimations()->[(scalar(@{$self->input_problem()->estimations()})-1)];
 		}
 		@options = @{$rec-> options()} if (defined $rec and defined $rec->options());
-		
+
 		foreach my $option ( @options ) {
 			if ( defined $option and (($option -> name eq 'PRINT') or ( index( 'PRINT', $option -> name ) == 0 ))) {
 				$estprint = $option->value();
 				last;
 			}
-		}   
+		}
 	}
 
 	if ($self->nm_major_version >= 7) {
@@ -547,7 +547,7 @@ sub _read_iteration_path
 		}
 	    #next to last METH already checked, if necessary.
 	    #scan_only is not relevant.
-	    
+
 	}
 
 	while ( $_ = @{$self->lstfile}[ $start_pos++ ] ) { #Large reading loop
@@ -614,7 +614,7 @@ sub _read_iteration_path
 		} elsif (not $found_iteration and (/^\s*iteration/) ) {
 			$found_iteration=1;
 		}
-	    
+
 		if ( $read_terminated_by_obj and /0PROGRAM TERMINATED BY OBJ/ ) {
 			# This is an error message which terminates NONMEM. We
 			# return after reading the minimization message
@@ -622,7 +622,7 @@ sub _read_iteration_path
 			$self -> finished_parsing(1);
 			$self -> _read_minimization_message();
 			return;
-		}	    
+		}
 
 		if (/^0ITERATION NO/) {
 			unless (/0ITERATION NO\.:\s+(\d+)\s+OBJECTIVE VALUE:\s+(\S+)\s+NO\. OF FUNC\. EVALS\.:\s*(.+)/) {
@@ -641,11 +641,11 @@ sub _read_iteration_path
 
 			my (@parameter_vector, @gradient_vector) = ((), ());
 			my @numsigdig_vector;
-			
+
 			while ( $_ = @{$self->lstfile}[ $start_pos ] ) {
 				if (/^ CUMULATIVE NO\. OF FUNC\. EVALS\.:\s*(\d+)/) {
-					my $eval_path = $1; 
-					
+					my $eval_path = $1;
+
 					if( $ofvpath eq '**' ) {
 						my $ofvpath = $eval_path - $cumulative_evals;
 						$cumulative_evals = $eval_path;
@@ -726,7 +726,7 @@ sub _read_iteration_path
 			last unless(/^0ITERATION NO/);
 		}			#End of if iteration no
 	}			#End of large reading loop
-    
+
 
 	unless ( $self -> finished_parsing() ) {
 		my ($kill_found, $file_end, $kill_message, $search_pos) = (0, 0, "", $start_pos);
@@ -749,7 +749,7 @@ sub _read_iteration_path
 			return;
 		}
 	}
-    
+
 	unless ( $success ) {
 		unless ($self->nm_major_version < 7) {
 			my $mes= "Did not find expected information under METH: ".$self->method_string()." number ".$self->method_number()."\n" ;
@@ -916,7 +916,7 @@ sub _scan_to_meth
 	    }
 
 	}			#End of large reading loop
-    
+
 	$self->lstfile_pos($start_pos);
 }
 
@@ -964,7 +964,7 @@ sub _read_npomegas
 			$npcorrarea = 1;
 		}
 		if ($npofvarea) {
-			if ( /^\s*(#OBJN:|)\s+(-?\d*\.\d*)/) { 
+			if ( /^\s*(#OBJN:|)\s+(-?\d*\.\d*)/) {
 				$self->npofv($2);
 				$npofvarea = 0;
 			}
@@ -1027,11 +1027,11 @@ sub _read_ofv
 	my $start_pos = $self->lstfile_pos;
 	my $found_negative_parameter;
 	my $found_terminated_by_obj=0;
-	
+
 	while ( $_ = @{$self->lstfile}[ $start_pos++ ] ) {
 		if ( / PROBLEM NO\.:\s*\d+\n/ ) {
 			if($found_terminated_by_obj){
-				$self -> finished_parsing(1); 
+				$self -> finished_parsing(1);
 				$self -> _read_minimization_message();
 				return;
 			}else{
@@ -1047,10 +1047,10 @@ sub _read_ofv
 		} elsif ( $start_pos >= scalar @{$self->lstfile} ) {
 			if (defined $found_negative_parameter and length($found_negative_parameter)>0){
 				$self -> finished_parsing(1);
-				push( @{$self->minimization_message}, "Error in reading the OFV!\n$found_negative_parameter\n"); 
+				push( @{$self->minimization_message}, "Error in reading the OFV!\n$found_negative_parameter\n");
 				return;
 			}elsif($found_terminated_by_obj){
-				$self -> finished_parsing(1); 
+				$self -> finished_parsing(1);
 				$self -> _read_minimization_message();
 				return;
 			}else{
@@ -1139,7 +1139,7 @@ sub _read_sethomsi
 			next;
 		}
 
-		if ( ($found_estimates) and 
+		if ( ($found_estimates) and
 			/COVARIANCE MATRIX OF ESTIMATE/ ) {
 			# This is fine, we should end up here after reading the
 			# estimates
@@ -1148,7 +1148,7 @@ sub _read_sethomsi
 		}
 
 		if ( /T MATRIX/ or
-			/R MATRIX/ or 
+			/R MATRIX/ or
 			/S MATRIX/) {
 			# This is also fine, if those matrices were output, we
 			# should end up here before we could start reading the
@@ -1377,11 +1377,11 @@ sub _get_significant_digits
 	my $string = shift;
 	my $num;
 	if ( $string =~ /NO. OF SIG. DIGITS IN FINAL EST.:\s*(.*)/ ){
-		$num = _get_value(val=>$1); 
+		$num = _get_value(val=>$1);
 	}
 	return $num;
 }
-	
+
 sub _read_simulation
 {
 	my $self = shift;
@@ -1401,7 +1401,7 @@ sub _read_simulation
 			last;
 		}
 	}
-      
+
 	if ( $self->simulationstep ) {
 		$self->lstfile_pos($start_pos);
 	}
@@ -1426,7 +1426,7 @@ sub _read_term
 		$self -> minimization_successful($self->next_to_last_step_successful);
 		$no_check_minim = 1;
 	}
-	
+
 
 	while ( $_ = @{$self->lstfile}[ $start_pos++ ] ) {
 		$self->s_matrix_singular(1) if ( /^0S MATRIX ALGORITHMICALLY SINGULAR/ );
@@ -1520,7 +1520,7 @@ sub _read_term
 			next;
 		}
 
-		if ( $pred_exit_code and 
+		if ( $pred_exit_code and
 			 /MESSAGE ISSUED FROM SIMULATION STEP/ ) {
 
 			# These are probably not needed if we match the sim. step string above
@@ -1536,7 +1536,7 @@ sub _read_term
 		}
 
 		if ( /0PROGRAM TERMINATED BY OBJ/ ) {
-			# This is an error message which terminates NONMEM. 
+			# This is an error message which terminates NONMEM.
 			#unless it was from the COVARIANCE step. If $success already true
 			#assume it was covstep
 			#We
@@ -1547,7 +1547,7 @@ sub _read_term
 				$self -> _read_minimization_message();
 				return;
 			}
-		}	    
+		}
 
 		if ( /MINIMUM VALUE OF OBJECTIVE FUNCTION/ ) {
 			debugmessage(3,"Hmmm, reached the OFV area" );
@@ -1580,7 +1580,7 @@ sub _read_minimization_message
 	# we need to rewind to our starting position
 	my $success = 0;
 	my (@mess, @etabar,@pval,@etashrink,@epsshrink);
-    
+
 	my $start_pos = $self->lstfile_pos;
 	while ( $_ = @{$self->lstfile}[ $start_pos++ ] ) {
 	  if ( / PROBLEM NO\.:\s*\d+\n/ ) {
@@ -1588,7 +1588,7 @@ sub _read_minimization_message
 				    "message!\nNext problem found" );
 	    return;
 	  }
-	     
+
 	  if ( $start_pos >= scalar @{$self->lstfile} ) {
 	      if ($self->finished_parsing() == 1){
 		  $success = 1;
@@ -1624,7 +1624,7 @@ sub _read_minimization_message
 	$reading{'pval'} = 0;
 	$reading{'etashrink'} = 0;
 	$reading{'epsshrink'} = 0;
-	
+
 	my %values;
 	$values{'etabar'} = [];
 	$values{'pval'} = [];
@@ -1764,11 +1764,11 @@ sub _read_thomsi
 	    next;
 	  }
 
-	  if ( ($found_estimates) and 
+	  if ( ($found_estimates) and
 	       # For some reason, NONMEM prints a '1' (i.e. /^1$/)
 	       # after the thirteenth omega row. I other words, we
 	       # cannot use /^1$/ as check for omega area ending.
-	       ( 
+	       (
 		 /STANDARD ERROR OF ESTIMATE/ or
 		 /NONPARAMETRIC ESTIMATE/ or
 		 /T MATRIX/ or
@@ -1845,7 +1845,7 @@ sub _read_thomsi
 			  $T[$i] = $tmp;
 		  }
 		  push(@raw_sigma, @T);
-		  
+
 	  } elsif($sdcorrform_sigmarea and /^(\+|\s{2,})/) {
 		  next if /EP/;
 		  next if /^\s*$/;
@@ -1860,7 +1860,7 @@ sub _read_thomsi
 			  $T[$i] = $tmp ;
 		  }
 		  push(@sdcorrform_raw_sigma, @T);
-		  
+
 	  }
 	  if ( $start_pos >= scalar @{$self->lstfile} ) {
 		  # This is a valid match. Sometimes, the list file ends
@@ -2113,7 +2113,7 @@ sub _compute_cvsetheta
 		my @thetas   = @{$self->thetas()};
 		my @sethetas = @{$self->sethetas()};
 		my @cvsethetas;
-    
+
 		if ( scalar @sethetas > 0 ) {
 			foreach my $i (0..$#thetas) {
 				if( defined $sethetas[$i] and ($sethetas[$i] ne 'NA') and defined $thetas[$i] and ($thetas[$i] ne 'NA')) {
@@ -2129,7 +2129,7 @@ sub _compute_cvsetheta
 				}
 			}
 		}
-    
+
 		$self -> cvsethetas(\@cvsethetas);
 	}
 }
@@ -2244,7 +2244,7 @@ sub cmp_coords
 		return substr($a,5) <=> substr($b,5);
 	} else {
 		($a.$b) =~ /\((\d+)\,(\d+)\)[A-Z]*\((\d+)\,(\d+)\)/;
-		return $2+(($1-1)*$1)/2 <=> $4+(($3-1)*$3)/2; 
+		return $2+(($1-1)*$1)/2 <=> $4+(($3-1)*$3)/2;
 	}
 }
 
@@ -2466,11 +2466,11 @@ sub get_NM7_table_numbers
 	my @table_numbers;
 	my $not_found;
 
-	#return all table numbers in line array, optionally filter on 
+	#return all table numbers in line array, optionally filter on
 	#method string match
 	#in: $line_array (mandatory), $method_string optional, default 'T' which always matches TABLE
 	#out: @table_numbers,$not_found (in that order)
-	
+
 	@table_numbers = ();
 	$not_found = 1;
 
@@ -2644,7 +2644,7 @@ sub get_NM7_tables
 	  #assume table numbers are sorted in NM7 lines
 	  my @sorted_numbers = sort {$a <=> $b} @{$table_numbers};
 	  my $table_number = shift (@sorted_numbers);
-	  
+
 	  my $store_line = 0;
 	  foreach my $line (@{$line_array}) {
 	    if ($line =~ /^\s*TABLE NO.\s+(\d+):\s*([^:]+)/ ) {
@@ -2663,7 +2663,7 @@ sub get_NM7_tables
 	      } elsif ($1 < $table_number) {
 					$store_line = 0;
 	      }
-	    } 
+	    }
 	    push (@tableline_array,$line) if ($store_line);
 	  }
 	  while (defined $table_number){
@@ -2716,18 +2716,18 @@ sub not_used_get_NM7_tables_all_types
 
 	my ($raw_ref,$cov_ref,$cor_ref,$coi_ref,$phi_ref);
 
-	($raw_ref,$not_found) = 
+	($raw_ref,$not_found) =
 		$self->get_NM7_tables('line_array' => $raw_array,
 							  'table_numbers' => $table_numbers);
-	for (my $i = 0; $i < $number_count; $i++) { 
+	for (my $i = 0; $i < $number_count; $i++) {
 	    croak("did not find table " . $table_numbers->[$i] . " in raw_file array" )
-			if ($not_found->[$i]); 
+			if ($not_found->[$i]);
 	}
 	if ($number_count == 1) {
-	    ($method_string,$not_found_single) = 
+	    ($method_string,$not_found_single) =
 			$self->get_NM7_table_method('line_array' => $raw_ref, 'table_number' => $table_numbers->[0]);
 	    croak("Could not find table".$table_numbers ->[0]." in raw_file array" )
-			if ($not_found_single); 
+			if ($not_found_single);
 	}
 	@raw_table = @{$raw_ref};
 
@@ -2735,20 +2735,20 @@ sub not_used_get_NM7_tables_all_types
 	$expect_cov = 0 if ($method_string =~ /Stochastic Approximation/ );
 
 	if (defined $cov_array and $expect_cov) {
-	    ($cov_ref,$not_found) = 
+	    ($cov_ref,$not_found) =
 			$self->get_NM7_tables('line_array' => $cov_array,
 								  'table_numbers' => $table_numbers);
-	    for (my $i= 0; $i < $number_count; $i++) { 
+	    for (my $i= 0; $i < $number_count; $i++) {
 			debugmessage(3,"did not find table " . $table_numbers->[$i] . " in cov_file array" )
 				if ($not_found->[$i]);
 	    }
 	    if (($number_count == 1) && ($not_found->[0] == 0)) {
-			($check_string,$not_found_single) = 
+			($check_string,$not_found_single) =
 				$self->get_NM7_table_method('line_array' => $cov_ref,
 											'table_number' => $table_numbers ->[0]);
 			croak("Could not find table".$table_numbers ->[0]." in cov_file array" )
-				if ($not_found_single); 
-			
+				if ($not_found_single);
+
 			unless (($method_string =~ $check_string) || ($method_string eq $check_string)) {
 				croak("strings $method_string from raw and ".
 					  "$check_string from cov do not match" );
@@ -2758,19 +2758,19 @@ sub not_used_get_NM7_tables_all_types
 	}
 
 	if (defined $cor_array and $expect_cov){
-		($cor_ref,$not_found) = 
+		($cor_ref,$not_found) =
 			$self->get_NM7_tables('line_array' => $cor_array, 'table_numbers' => $table_numbers);
-	    for (my $i = 0; $i < $number_count; $i++) { 
+	    for (my $i = 0; $i < $number_count; $i++) {
 			debugmessage(3,"did not find table ".$table_numbers->[$i]." in cor_file array" )
-				if ($not_found->[$i]); 
+				if ($not_found->[$i]);
 	    }
 	    if (($number_count == 1) && (not $not_found->[0])) {
-			($check_string,$not_found_single) = 
+			($check_string,$not_found_single) =
 				$self->get_NM7_table_method('line_array' => $cor_ref,
 											'table_number' => $table_numbers ->[0]);
 			croak("Could not find table".$table_numbers ->[0]." in cor_file array" )
-				if ($not_found_single); 
-			
+				if ($not_found_single);
+
 			unless (($method_string =~ $check_string) || ($method_string eq $check_string)) {
 				croak("strings $method_string from raw and ".
 					  "$check_string from cor do not match" );
@@ -2781,19 +2781,19 @@ sub not_used_get_NM7_tables_all_types
 
 
 	if (defined $coi_array and $expect_cov) {
-	    ($coi_ref,$not_found) = 
+	    ($coi_ref,$not_found) =
 			$self->get_NM7_tables('line_array' => $coi_array,
 								  'table_numbers' => $table_numbers);
-	    for (my $i = 0; $i < $number_count; $i++){ 
+	    for (my $i = 0; $i < $number_count; $i++){
 			debugmessage(3,"did not find table ".$table_numbers->[$i]." in coi_file array" )
-				if ($not_found->[$i]); 
+				if ($not_found->[$i]);
 	    }
 	    if (($number_count == 1) && (not $not_found->[0])) {
-			($check_string,$not_found_single) = 
+			($check_string,$not_found_single) =
 				$self->get_NM7_table_method('line_array' => $coi_ref, 'table_number' => $table_numbers ->[0]);
 			croak("Could not find table".$table_numbers ->[0]." in coi_file array" )
-				if ($not_found_single); 
-			
+				if ($not_found_single);
+
 			unless (($method_string =~ $check_string) || ($method_string eq $check_string)) {
 				croak("strings $method_string from raw and ".
 					  "$check_string from coi do not match" );
@@ -2803,17 +2803,17 @@ sub not_used_get_NM7_tables_all_types
 	}
 
 	if (0 and (defined $phi_array)) {
-		($phi_ref,$not_found) = 
+		($phi_ref,$not_found) =
 			$self->get_NM7_tables('line_array' => $phi_array, 'table_numbers' => $table_numbers);
-		for (my $i = 0; $i < $number_count; $i++) { 
+		for (my $i = 0; $i < $number_count; $i++) {
 			debugmessage(3,"did not find table ".$table_numbers->[$i]." in phi_file array" )
-				if ($not_found->[$i]); 
+				if ($not_found->[$i]);
 		}
 	    if (($number_count == 1) && (not $not_found->[0])) {
-			($check_string,$not_found_single) = 
+			($check_string,$not_found_single) =
 				$self->get_NM7_table_method('line_array' => $phi_ref, 'table_number' => $table_numbers ->[0]);
 			croak("Could not find table".$table_numbers ->[0]." in phi_file array" )
-				if ($not_found_single); 
+				if ($not_found_single);
 
 			unless (($method_string =~ $check_string) || ($method_string eq $check_string)) {
 				croak("strings $method_string from raw and ".
@@ -2847,9 +2847,9 @@ sub parse_NM7_raw
 	my $nmtable = shift;
 	my $hash = $nmtable->parse_ext_table;
 	return unless ($hash->{'any_est'});
-	
+
 	$self->ofv($hash->{'ofv'}) if (defined $hash->{'ofv'});
-	
+
 	if (defined $self->input_problem and not (defined $self->input_problem->msfis and scalar(@{$self->input_problem->msfis})>0)){
 		my %keep_labels_hash = ();
 		foreach my $coord (@{$self->input_problem->get_estimated_attributes(attribute=>'coordinate_strings')}){
@@ -2872,10 +2872,10 @@ sub parse_NM7_raw
 		$self->condition_number($hash->{'condition_number'});
 	}
  	if (defined $hash->{'thetacoordval'}){
-		$self->thetacoordval($hash->{'thetacoordval'}); 
+		$self->thetacoordval($hash->{'thetacoordval'});
 	}
  	if (defined $hash->{'sethetacoordval'}){
-		$self->sethetacoordval($hash->{'sethetacoordval'}); 
+		$self->sethetacoordval($hash->{'sethetacoordval'});
 	}
  	if (defined $hash->{'omegacoordval'}){
 		$self->omegacoordval($hash->{'omegacoordval'});
@@ -2907,15 +2907,15 @@ sub parse_NM7_raw
 	}
 
 	$self->NM7_parsed_raw(1);
-	
+
 	#verify that not have_omegas/sigmas is correct
 	unless ($self->have_sigmas()) {
 		$self->have_sigmas(1) if ($hash->{'have_sigmas'});
 	}
 	unless ($self->have_omegas()) {
 		$self->have_omegas(1) if ($hash->{'have_omegas'});
-	}	
-	
+	}
+
 }
 
 sub parse_additional_table
@@ -2979,7 +2979,7 @@ sub parse_additional_table
 													have_sigmas => $have_sigmas,
 													have_omegas => $have_omegas,
 													keep_labels_hash => $keep_labels_hash)};
-		  
+
 	    } else {
 			unless ((scalar(@header_labels > 2)) or $given_header_warning or $header_ok) {
 				my $mes = "\n\n\***Warning***\n".
@@ -3028,12 +3028,12 @@ sub parse_NM7_additional
 		croak('parse_NM7_additional must be called *after* parse_NM7_raw');
 		#because need keep_labels_hash and have_sigmas and have_omegas and cov_step_run
 	}
-	
+
 	foreach my $type ('cov','coi','cor'){
 		$hash{$type}=0;
 		next unless (defined $self->nm_output_files->{$type});
 
-		($success,$matrix_array_ref,$index_order_ref,$header_labels_ref) = 
+		($success,$matrix_array_ref,$index_order_ref,$header_labels_ref) =
 			parse_additional_table (covariance_step_run => $self->covariance_step_run,
 									have_omegas => $self->have_omegas,
 									have_sigmas => $self->have_sigmas,
@@ -3044,13 +3044,13 @@ sub parse_NM7_additional
 			);
 
 		next unless ($success and defined $matrix_array_ref and scalar(@{$matrix_array_ref}) > 0);
-	
+
 		if ($type eq 'cov') {
 			$self->raw_covmatrix([]);
 			push( @{$self->raw_covmatrix}, @{$matrix_array_ref});
 			$self->covariance_matrix([]);
 			foreach my $element ( @{$self->raw_covmatrix} ) {
-				push( @{$self->covariance_matrix}, eval($element) ) 
+				push( @{$self->covariance_matrix}, eval($element) )
 					unless ( $element eq '.........' );
 			}
 		} elsif ($type eq 'cor') {
@@ -3060,10 +3060,10 @@ sub parse_NM7_additional
 			$self->inverse_covariance_matrix([]);
 #			print join (' ',@{$matrix_array_ref})."\n";
 			foreach my $element ( @{$matrix_array_ref} ) {
-				push( @{$self->inverse_covariance_matrix}, eval($element) ) 
+				push( @{$self->inverse_covariance_matrix}, eval($element) )
 					unless ( $element eq '.........' );
 			}
-		} 
+		}
 		$hash{$type}=1; #success
 	}
 
@@ -3108,7 +3108,7 @@ sub _get_sparse_indices
 	my $keep_headers_array = $parm{'keep_headers_array'};
 
 	my %sparse_indices;
-	
+
 	for (my $k=0; $k<scalar(@{$keep_headers_array}); $k++){
 		my $label=$keep_headers_array->[$k];
 		if ($label =~ /^THETA(\d+)/){
@@ -3146,7 +3146,7 @@ sub _read_sparse_matrixoestimates
 	my $lstfile = $parm{'lstfile'};
 	my $keep_headers_array = $parm{'keep_headers_array'};
 	my $silent = $parm{'silent'};
-	
+
 	my @subprob_matrix;
 	my $success = 0;
 	my @row_headers;
@@ -3234,7 +3234,7 @@ sub _read_matrixoestimates
 	my $lstfile = $parm{'lstfile'};
 	my $keep_headers_array = $parm{'keep_headers_array'};
 	my $silent = $parm{'silent'};
-	
+
 	my @subprob_matrix;
 	my $success = 0;
 	my @row_headers;
@@ -3289,7 +3289,7 @@ sub _read_matrixoestimates
 			$pos--;
 			$pos--;
 			my $sparsemat;
-			($pos ,$sparsemat ,$success ) = 
+			($pos ,$sparsemat ,$success ) =
 				_read_sparse_matrixoestimates(pos=> $pos,
 											  lstfile => $lstfile,
 											  keep_headers_array => $keep_headers_array,
@@ -3310,17 +3310,17 @@ sub _read_matrixoestimates
 		next if ( $#row < 0 );			   # Blank row
 
 #		print join(';',@row)."\n";
-		
+
 		push( @{$matrix[$matrix_row]}, @row );
 	}
 
 	if ($matrix_row < 0){
-		#we did not find any regular row header. 
+		#we did not find any regular row header.
 		return $pos ,[],$success ,[];
 	}
-	
+
 	#now have triangular matrix, one row per item in @matrix. Labels in @row_headers.
-	#Need to sort rows and cols according to right order 
+	#Need to sort rows and cols according to right order
 	#into new triangular matrix, and then store that as one-dim array
 
 	my @old_indices=();

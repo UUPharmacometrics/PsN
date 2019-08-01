@@ -283,7 +283,7 @@ sub BUILD
     } else {
         $self->model_subdir(0);
     }
-    
+
 	if( $PsN::config -> {'default_options'} -> {'lsf_pfizer'}){
 		my $apath  = cwd();
 		my $default_jobname;
@@ -308,7 +308,7 @@ sub BUILD
 		$self->base_directory($uniquePath);
 	}
 
-	# The directory is the folder where the tools stores temporary data and 
+	# The directory is the folder where the tools stores temporary data and
 	# runs subtools (or in the modelfit case, runs NONMEM)
 	if ( defined $parm{'directory'} ) {
 		my $dummy;
@@ -387,7 +387,7 @@ sub format_covmatrix
 	my $header = $parm{'header'};
 	my $print_labels = $parm{'print_labels'};
 	my $comma = $parm{'comma'};
-	
+
 	my @output = ();
 
 	if ($print_labels){
@@ -435,7 +435,7 @@ sub add_to_nmoutput
         extensions => {isa => 'ArrayRef', optional => 0}
 	);
 	my $extensions = $parm{'extensions'};
-	
+
 	if (defined $self->nm_output and length($self->nm_output) > 0) {
 		my $old = $self->nm_output;
 		foreach my $extension (@{$extensions}) {
@@ -451,7 +451,7 @@ sub add_to_nmoutput
 
 sub add_model
 {
-	my ($self, %parm) = validated_hash(@_, 
+	my ($self, %parm) = validated_hash(@_,
 		init_data => {isa => 'Any', optional => 0}
 	);
 	$self->models([]) unless defined $self->models;
@@ -568,7 +568,7 @@ sub print_results
 
 		### get_dim subroutine recurses through arrays of arrays and
 		### returns the number of levels (assumes the same number of
-		### levels in alls subarrays). 
+		### levels in alls subarrays).
 		###
 		### 1st argument is the reference to the toplevel array.
 		### 2nd argument is a starting level.
@@ -620,7 +620,7 @@ sub print_results
 				$_ = $val;
 				my $nodot = /.*\..*/ ? 0 : 1;
 				#protect cells with commas
-				$val =~ s/\"/\"\"/g; 
+				$val =~ s/\"/\"\"/g;
 				$_ =~ s/\.//g;
 				if ( /.*\D+.*/ or $nodot) {
 					return '"'.sprintf("%14s",$val).'",';
@@ -632,11 +632,11 @@ sub print_results
 
 		### The main part of the method will loop through the 'own'
 		### results, each element of the 'own' array is a hash with three
-		### keys: 
+		### keys:
 		###
 		### 'name' of the result, will be used as header (only if
-		### values are defined). 
-		### 
+		### values are defined).
+		###
 		### 'values' either a single value, a list of values or a table of
 		### values.
 		###
@@ -757,7 +757,7 @@ sub print_results
         print $fh $line;
         if ($line =~ /^Run started:/) {
             print $fh $info_line;
-        } 
+        }
     }
     close $fh;
 
@@ -794,7 +794,7 @@ sub compress_m1
     if (-d "${dir}m1") {
         my $zip = Archive::Zip->new();
         $zip->addTree("${dir}m1", "m1");
-        map { $_->desiredCompressionLevel(9) } $zip->members(); 
+        map { $_->desiredCompressionLevel(9) } $zip->members();
         if ($zip->writeToFileNamed("${dir}m1.zip") == 0) {
             if (-e "${dir}m1.zip") {
                 rmtree(["${dir}m1"]);
@@ -857,7 +857,7 @@ sub read_raw_results
 			my @read_file = <RRES>;
 			close( RRES );
 			my @file;
-			
+
 			foreach (@read_file){
 				chomp;
 				if (/\"\,\".*/ ) {
@@ -866,7 +866,7 @@ sub read_raw_results
 					my @tmp = split('\"\,\"',$_);
 					push (@file,\@tmp);
 				} else {
-					#substitute NA with undef, assuming first col not NA 
+					#substitute NA with undef, assuming first col not NA
 					#positive lookahead ,NA followed by either , or eol
 					s/,NA(?=(,|$))/,/g;
 					my @tmp = split(',',$_);
@@ -962,7 +962,7 @@ sub read_raw_results
 #      |           |   |   |    |   |->{values}
 #      |           |   |   |->{subtools}   Another tool level
 #      |           |   |   |      ...
-#      |           |   |   |...       
+#      |           |   |   |...
 #      |           |   |->[#prepared models] Last model of the prepared models sent to the first sub tool
 #      |           |   |   |
 #      |           |   |   |->{own}          The first sub tools results on the last model
@@ -983,7 +983,7 @@ sub read_raw_results
 #      |           |->[1]                    Second sub tool
 #      |           |...
 #      |           |->[#tools]             Last sub tool
-#      |                                 
+#      |
 #      |->[1]                                Second model. All above repeated for this model.
 #      |...
 #      |->[#models]                          Last model. As above.
@@ -1004,26 +1004,26 @@ sub read_raw_results
 #      |   |->{subtools}                   The prepared models of the subtools on the first model. Only one sub tool per prepared model above.
 #      |           |
 #      |           |->[0]                    First model of the models (prepared above) sent to the first sub tool
-#      |           |   |		    
+#      |           |   |
 #      |           |   |->{own}              The first sub tools prepared models on its first model
-#      |           |   |    |		    
+#      |           |   |    |
 #      |           |   |    |->[0]           First prep model
 #      |           |   |    |->[1]           Second prep model
-#      |           |   |    |...	         
+#      |           |   |    |...
 #      |           |   |    |->[#prep_models]Last prep model
 #      |           |   |
-#      |           |   |->{subtools}		 		    
+#      |           |   |->{subtools}
 #      |           |
 #      |           |->[1]                    Second model of the models (prepared above) sent to the first sub tool
-#      |           |   |		    
+#      |           |   |
 #      |           |   |->{own}              The first sub tools prepared models on its second model
-#      |           |   |    |		    
+#      |           |   |    |
 #      |           |   |    |->[0]           First prep model
 #      |           |   |    |->[1]           Second prep model
-#      |           |   |    |...	         
+#      |           |   |    |...
 #      |           |   |    |->[#prep_models]Last prep model
 #      |           |   |
-#      |           |   |->{subtools}		 		    
+#      |           |   |->{subtools}
 #      |           |
 
 # }}}
@@ -1073,11 +1073,11 @@ sub run
 			}
 			$self -> post_subtool_analyze;
 		}
-		
+
 	} else {
 		debugmessage(3,"No tool object to run from tool object." );
 	}
-	
+
 	$self->results->[0]{'subtools'} = \@tool_results;
 	$self->prepared_models->[0]{'subtools'} = \@tool_models;
 
@@ -1280,7 +1280,7 @@ sub create_raw_results_rows
 				push( @{$nonp_return_rows[$row]}, ($model_number,($j+1),($k+1)) );
 			}
 		}
-	}   
+	}
 
 	if( $data_stored ){
 		$raw_line_structure -> {$model_number} -> {'model'} = "0,1";
@@ -1316,27 +1316,27 @@ sub create_raw_results_rows
 
 			}elsif ( $category eq 'eigen' ) {
 				$accessor = $category.'s';
-				$res = $model->outputs->[0]->$accessor;	  
+				$res = $model->outputs->[0]->$accessor;
 			}elsif ( $category eq 'est_methods' ) {
 				#array over $PROB
 				my @arr=();
 				for (my $i=0;$i< scalar(@{$model ->problems()}); $i++){
 					#get ref of array of methods
-					my $methref = $model -> get_option_value(record_name => 'estimation', 
+					my $methref = $model -> get_option_value(record_name => 'estimation',
 						option_name => 'METHOD',
-						problem_index => $i, record_index => 'all'); 
+						problem_index => $i, record_index => 'all');
 
-					my $eonlyref = $model -> get_option_value(record_name => 'estimation', 
+					my $eonlyref = $model -> get_option_value(record_name => 'estimation',
 						option_name => 'EONLY',
-						problem_index => $i, record_index => 'all'); 
+						problem_index => $i, record_index => 'all');
 					my @string_arr;
-					for (my $j=0; $j< scalar(@{$methref}); $j++){ 
+					for (my $j=0; $j< scalar(@{$methref}); $j++){
 						my $methstring;
 						if (defined $methref->[$j]){
-							if ($methref->[$j] eq '1' or $methref->[$j] eq 'COND' or 
+							if ($methref->[$j] eq '1' or $methref->[$j] eq 'COND' or
 								(index('COND', $methref->[$j]) == 0)){
 								if( $model-> is_option_set( record => 'estimation', name => 'LAPLACE',
-										record_number => ($j+1),fuzzy_match =>1) or 
+										record_number => ($j+1),fuzzy_match =>1) or
 									$model-> is_option_set( record => 'estimation', name => 'LAPLACIAN',
 										record_number => ($j+1),
 										fuzzy_match =>1)){
@@ -1344,7 +1344,7 @@ sub create_raw_results_rows
 								}else{
 									$methstring = 'FOCE';
 								}
-							}elsif ($methref->[$j] eq '0' or $methref->[$j] eq 'ZERO' or 
+							}elsif ($methref->[$j] eq '0' or $methref->[$j] eq 'ZERO' or
 								(index('ZERO', $methref->[$j]) == 0)){
 								$methstring ='FO';
 							}elsif (defined $eonlyref->[$j] and $eonlyref->[$j] == 1){
@@ -1355,21 +1355,21 @@ sub create_raw_results_rows
 						}else{
 							$methstring ='FO'; #default
 						}
-						if ($model -> is_option_set(record => 'estimation', 
+						if ($model -> is_option_set(record => 'estimation',
 								name => 'INTERACTION',
-								problem_number => ($i+1), 
+								problem_number => ($i+1),
 								record_number => ($j+1),
 								fuzzy_match => 1)){
 							$methstring .= '_I';
-						}	      
+						}
 						push(@string_arr,$methstring);
 						last unless ($PsN::nm_major_version >= 7);
 					}
 					push(@arr,join('-',@string_arr));
 					if(defined $string_arr[$#string_arr]){
-						$saem = 1 if ( $string_arr[$#string_arr] eq 'SAEM' or 
+						$saem = 1 if ( $string_arr[$#string_arr] eq 'SAEM' or
 									   (index('SAEM',$string_arr[$#string_arr])==0));
-						$bayes = 1 if ($string_arr[$#string_arr] eq 'BAYES' or 
+						$bayes = 1 if ($string_arr[$#string_arr] eq 'BAYES' or
 									   (index('BAYES',$string_arr[$#string_arr])==0));
 					}
 				}
@@ -1378,9 +1378,9 @@ sub create_raw_results_rows
 				if ($saem or $bayes){
 					my @arr=();
 					for (my $i=0;$i< scalar(@{$model ->problems()}); $i++){
-						my $nburnref = $model -> get_option_value(record_name => 'estimation', 
+						my $nburnref = $model -> get_option_value(record_name => 'estimation',
 							option_name => 'NBURN',
-							problem_index => $i, record_index => 'all'); 
+							problem_index => $i, record_index => 'all');
 						if (defined $nburnref){
 							my $j= scalar(@{$nburnref})-1;
 							if (defined $nburnref->[$j]){
@@ -1397,35 +1397,35 @@ sub create_raw_results_rows
 			}elsif ( $category eq 'burn_in_iter' ) {
 				if ($saem or $bayes){
 					$accessor = 'burn_in_iterations';
-					$res = $model->outputs->[0]->$accessor;	  
+					$res = $model->outputs->[0]->$accessor;
 				}else{
 					$res = undef;
 				}
 			}elsif ( $category eq 'burn_in_conv' ) {
 				if ($saem or $bayes){
 					$accessor = 'burn_in_convergence';
-					$res = $model->outputs->[0]->$accessor;	  
+					$res = $model->outputs->[0]->$accessor;
 				}else{
 					$res = undef;
 				}
 			}elsif ( $category eq 'subprob_est_time' ) {
 				if ($PsN::nm_major_version >= 7){
 					$accessor = 'sum_estimation_time';
-					$res = $model->outputs->[0]->$accessor;	  
+					$res = $model->outputs->[0]->$accessor;
 				}else{
 					$res = undef;
 				}
 			}elsif ( $category eq 'model_run_time' ) {
 				if ($PsN::nm_major_version >= 7){
 					#this is a scalar string
-					$res = $model->outputs->[0]->runtime();	  
+					$res = $model->outputs->[0]->runtime();
 				}else{
 					$res = undef;
 				}
 			}elsif ( $category eq 'subprob_cov_time' ) {
 				if ($PsN::nm_major_version >= 7){
 					$accessor = 'sum_covariance_time';
-					$res = $model->outputs->[0]->$accessor;	  
+					$res = $model->outputs->[0]->$accessor;
 				}else{
 					$res = undef;
 				}
@@ -1577,10 +1577,10 @@ sub create_raw_results_rows
 
 			if ( $category eq 'npomega' ) {
 				$accessor = $category.'s';
-				$res = $model->outputs->[0]->$accessor;	  
+				$res = $model->outputs->[0]->$accessor;
 			}elsif ( $category eq 'npeta') {
 				$accessor = $category.'bars';
-				$res = $model->outputs->[0]->$accessor;	  
+				$res = $model->outputs->[0]->$accessor;
 			} else {
 				$accessor = $category; #npofv
 				$res = $model->outputs->[0]->$accessor;
@@ -1659,7 +1659,7 @@ sub create_raw_results_rows
 						push( @{$return_array_ref -> [$row]},
 							(undef) x $max_hash -> {$category}  );
 					}
-				}	  
+				}
 			}
 
 		}
@@ -1674,7 +1674,7 @@ sub create_raw_results_rows
 		push(@{$return_rows[0]}, ($model_number,(1),(1),($mes)) );
 		push(@{$nonp_return_rows[0]}, ($model_number,(1),(1),($mes)) );
 		$raw_line_structure -> {$model_number} -> {'line_numbers'} = scalar @return_rows;
-	}    
+	}
 
 	return \@return_rows ,\@nonp_return_rows;
 }
@@ -1767,14 +1767,14 @@ sub print_options
     $self->metadata->{'NONMEM_version'} = $PsN::nm_major_version . "." . $PsN::nm_minor_version;
 
     $self->metadata->{'tool_options'} = {};
-    # Don't change the string "Actual values optional". It is used to find the toolname by nmoutput2so 
+    # Don't change the string "Actual values optional". It is used to find the toolname by nmoutput2so
 	print CMD "Actual values optional $toolname options (undefined values not listed):\n";
 	foreach my $opt (sort(@{$local_options})){
 		$opt =~ s/[!:|].*//g; #get rid of :s |? :i etcetera
 		if (defined $self->{$opt}){
 			if (not ref($self->{$opt})){
 				print CMD "-$opt=".$self->{$opt}."\n";
-                $self->metadata->{'tool_options'}->{$opt} = $self->{$opt}; 
+                $self->metadata->{'tool_options'}->{$opt} = $self->{$opt};
 			} elsif ( ref($self->{$opt}) eq "ARRAY") {
 				if (not ref($self->{$opt}->[0])){
                     my $opt_string = join(',', @{$self->{$opt}});
@@ -1899,12 +1899,12 @@ sub get_rundir
 			my $timestring = sprintf("-PsN-%s-%02i-%02i-%02i%02i%02i", ($year + 1900), ($mon + 1), $mday, $hour, $min, $sec);
 			#timestamped but not numbered folder
 			my ($path, $dir) = OSspecific::absolute_path($return_dir, $dotless_model_filename . $timestring);
-			
+
 			$rundir = $path . $dir;
 			if (-e $rundir) {
 				#number to avoid returning existing folder name
 				ui -> print(category => 'all',
-							 message  => "$rundir exists, append number"); 
+							 message  => "$rundir exists, append number");
 				$rundir = OSspecific::unique_path($dotless_model_filename . $timestring . '.dir', $return_dir);
 			}
 		} else {
@@ -1994,11 +1994,11 @@ sub create_R_script
             chdir ".." or die "Could not change directory after rmarkdown checking";
 		}
 	}
-		
+
 	if (-e $template_file) {
 		open(FILE, $template_file) ||
 			croak("Could not open $template_file for reading");
-		
+
 		my @code = ();
 		foreach my $line (<FILE>) {
 			chomp($line);
@@ -2006,7 +2006,7 @@ sub create_R_script
 		}
 		close(FILE);
 		my $rplot = rplots->new(
-            toolname => $tool_name, 
+            toolname => $tool_name,
             directory => $self->directory,
             level => $self->rplots,
             raw_results_file => $self->raw_results_file->[0],

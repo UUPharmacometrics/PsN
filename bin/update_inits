@@ -19,7 +19,7 @@ use ui;
 
 sub search_record {
   #input is string $row and array ref $list
-  #$row has no leading spaces nor $ 
+  #$row has no leading spaces nor $
   my $row = shift;
   my $reclist=shift;
   my $found = 0;
@@ -144,7 +144,7 @@ $help_text{-add_prior} = <<'EOF';
 	will automatically read estimates and covariances from output and use
 	them to define the prior. df should be the degrees 	of freedom, a comma-
 	separated list with one integer per omega block. This feature is highly
-	experimental, and you must check $PRIOR in the new model file manually 
+	experimental, and you must check $PRIOR in the new model file manually
 	before using it. It is for example known to not work when one or more
     parameters are fixed. Option -add_prior cannot be used together with
     option -from_model. Also note that the informative record names $THETAP,
@@ -167,7 +167,7 @@ $help_text{-based_on} = <<'EOF';
 	number. If option -based_on is not used, update_inits will by default
 	try to extract a run number from the original model file name and use
 	that instead in the tag. If a number cannot be extracted then nothing
-	will be set. 
+	will be set.
 EOF
 
 $help_text{-bounded_theta} = <<'EOF';
@@ -206,7 +206,7 @@ $help_text{-cholesky} = <<'EOF';
 									and diagonal, only estimated
 	-cholesky=diagonal				Reparameterize only $OMEGA (omitting
 									parameter name implies omega), both
-									BLOCK and diagonal, only estimated 
+									BLOCK and diagonal, only estimated
 
 	Examples using record list input, cannot be combined with category input:
 	-cholesky=o2,o5,s1 				Reparameterize $OMEGA record number 2
@@ -372,7 +372,7 @@ EOF
 $help_text{-seed} = <<'EOF';
 	-seed=some string
 
-	The random seed for perturbation if option -degree is set. 
+	The random seed for perturbation if option -degree is set.
 EOF
 
 $help_text{-sigdig} = <<'EOF';
@@ -443,7 +443,7 @@ if (defined $options{'renumber'}) {
     if (defined $output_run_number) {
         $options{'renumber'} = $output_run_number;
         $auto_renumber = 1;
-    }  
+    }
 }
 
 my $sources = 0;
@@ -521,7 +521,7 @@ if( defined $options{'rawres_input'})  {
 		}
 		if (scalar(@in_filter)<1){
 			die "Error: Option in_filter used, but list of conditions could not be parsed.\n";
-		}	
+		}
 	}
 
 	my $href;
@@ -530,7 +530,7 @@ if( defined $options{'rawres_input'})  {
 														  offset => $offset,
 														  only_first_match => 1,
 														  model => $model_copy);
-	
+
 	unless (defined $rawres_params_arr and scalar(@{$rawres_params_arr} == 1)){
 		my $message = "error reading estimates from rawres file, no lines found";
 		if ($offset > 0){
@@ -617,7 +617,7 @@ if (defined $options{'from_model'}) {
 								ensure_posdef => $check,
 								ignore_missing_parameters => $ignore_missing_parameters,
 								update_fix => $update_fix);
-} else { 
+} else {
 	my $update_inits=0;
 	if( $ARGV[1] ){
 		$output = output -> new( filename => $ARGV[1],
@@ -670,7 +670,7 @@ if ( $options{'cholesky'} ){
 	unless (length($options{'cholesky'}) > 0){
 		die ("Option -cholesky must have a value");
 	}
-	
+
 	if ($options{'cholesky'} eq 'inverse'){
 		ui->print(category => 'all',
 				  message => "Doing inverse Cholesky reparameterization\n");
@@ -755,7 +755,7 @@ if ($options{'add_prior'}) {
 	$model_copy->problems()->[0]->add_prior_distribution(from_output => $output,
 														   problem_number => 1,
 														   df_string => $options{'add_prior'});
-}	
+}
 
 if (defined $options{'renumber'} and $options{'renumber'} != 0) {
 	my @probtab = ();

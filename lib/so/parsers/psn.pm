@@ -76,7 +76,7 @@ sub _connector_get_files
 
     my $logfile = _get_logfile(pharmml => $pharmml);
     my $lstfile = _get_lstfile(pharmml => $pharmml);
-    my $sofilename = _get_sofile(pharmml => $pharmml);	
+    my $sofilename = _get_sofile(pharmml => $pharmml);
 	my $errorstring;
 
     my @files=();
@@ -84,7 +84,7 @@ sub _connector_get_files
 	my $errorfile='errorMessages';
     my $append_columns;
 
-    if ( (not (-d $directory))  or 
+    if ( (not (-d $directory))  or
 		 ( (not defined $tool) and (not -e $lstfile)) or
 		 (defined $tool and ($tool ne 'execute') and ($tool ne 'nca') and (not -e $directory.'/'.$tool.'_results.csv')) or
          ($tool eq 'nca' and (not -e $directory . '/' . 'nca_simulation.1.npctab.dta'))
@@ -108,8 +108,8 @@ sub _connector_get_files
 			cp($directory.'/NM_run1/FMSG',$errorfile);
 			@files = ($errorfile);
 		}else{
-			cp($logfile,$errorfile); 
-			@files = ($logfile); 
+			cp($logfile,$errorfile);
+			@files = ($logfile);
 		}
     }else {
 		#success
@@ -124,13 +124,13 @@ sub _connector_get_files
             @files = ($lstfile);
         }elsif ($tool eq 'vpc'){
             cp($directory.'/m1/vpc_simulation.1.lst','.');
-            cp($directory.'/m1/vpc_simulation.1.npctab.dta','npctab.dta'); 
+            cp($directory.'/m1/vpc_simulation.1.npctab.dta','npctab.dta');
             @files = ('vpc_simulation.1.lst');
             my @tab = <$directory/vpctab*>;
             cp($tab[0],'.');
         } elsif ($tool eq 'nca') {
             cp($directory.'/m1/nca_simulation.1.lst', '.');
-            cp($directory.'/nca_simulation.1.npctab.dta', 'npctab.dta'); 
+            cp($directory.'/nca_simulation.1.npctab.dta', 'npctab.dta');
             @files = ('nca_simulation.1.lst');
             open my $fh, '<', 'npctab.dta';
             <$fh>;
@@ -163,18 +163,18 @@ sub _connector_get_files
             chdir($directory . '/m1');
             if (not $keep_tables) {
                 @files = <*.lst>;
-                my @ssedata =  <mc-sim-*.dat>; 
+                my @ssedata =  <mc-sim-*.dat>;
                 chdir($curdir);
                 foreach my $fl (@files) {
-                    cp ($directory . '/m1/' . $fl, $fl); 
+                    cp ($directory . '/m1/' . $fl, $fl);
                 }
                 foreach my $fl (@ssedata) {
-                    cp ($directory . '/m1/' . $fl, $fl); 
+                    cp ($directory . '/m1/' . $fl, $fl);
                 }
             } else {
                 _merge_simulated_tables(destination => $curdir);
                 chdir($curdir);
-                cp($directory . '/m1/mc-1.lst', '.'); 
+                cp($directory . '/m1/mc-1.lst', '.');
                 @files = ( "mc-1.lst" );
             }
         } else {

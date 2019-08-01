@@ -36,12 +36,12 @@ sub check_options
 		$mceta = 1;
 		$error .= check_frem(options => $options, model => $model);
 	}
-	
+
 	if ($tool eq 'execute'){
 		$copy_data = 1;
 		$error .= check_execute(options => $options, model => $model);
 	}
-	
+
 	if ($tool eq 'npfit'){
 		$error .= check_npfit(options => $options, model => $model);
 	}
@@ -58,13 +58,13 @@ sub check_options
 		$require_est = 1;
 		$error .= check_simeval(options => $options, model => $model);
 	}
-	
+
 	if ($tool eq 'vpc'){
 		$rawres_input = 1;
 		$copy_data = 1;
 		$error .= check_vpc(options => $options, model => $model);
 	}
-	
+
 	if ($rawres_input){
 		$error .= check_rawres_input(options => $options);
 	}
@@ -94,17 +94,17 @@ sub check_single_prob_or_tnpri
 	my $options = $parm{'options'};
 	my $model = $parm{'model'};
 	my $require_est = $parm{'require_est'};
-	
+
 	my $error = '';
 	my $tnpri=0;
 	if ( scalar (@{$model-> problems}) > 2 ){
 		$error .= "Cannot have more than two $PROB in the input model.n";
 	}elsif  (scalar (@{$model-> problems}) == 2 ){
-		if ((defined $model-> problems->[0]->priors()) and 
+		if ((defined $model-> problems->[0]->priors()) and
 			scalar(@{$model-> problems->[0] -> priors()})>0 ){
 			foreach my $rec (@{$model-> problems->[0] -> priors()}){
 				foreach my $option ( @{$rec -> options} ) {
-					if ((defined $option) and 
+					if ((defined $option) and
 						(($option->name eq 'TNPRI') || (index('TNPRI',$option ->name ) == 0))){
 						$tnpri=1;
 					}
@@ -138,16 +138,16 @@ sub check_mceta
 	my $error = '';
 
 	if (defined $options->{'mceta'} and $options->{'mceta'} > 0) {
-		if (($PsN::nm_major_version == 5) or ($PsN::nm_major_version == 6) or 
+		if (($PsN::nm_major_version == 5) or ($PsN::nm_major_version == 6) or
 			($PsN::nm_major_version == 7 and ($PsN::nm_minor_version < 3))) {
 			#			$error .= "Cannot set -mceta for NONMEM version ".$PsN::nm_major_version.'.'.$PsN::nm_minor_version;
 			$options->{'mceta'} = 0;
 		}else{
-			unless (defined $model->problems->[0]->estimations and 
+			unless (defined $model->problems->[0]->estimations and
 					$model->problems->[0]->estimations->[-1]->accepts_mceta){
 				$options->{'mceta'} = 0;
 			}
-		} 
+		}
 	}
 	return $error;
 }
@@ -167,11 +167,11 @@ sub check_copy_data
 	unless (defined $options->{'copy_data'} and (not $options->{'copy_data'})) {
 		$options->{'copy_data'} = 1;
 	}
-	
+
 	unless ($model->is_dummy){
 		unless ($model->copy_data_setting_ok(copy_data => $options->{'copy_data'})){
 			$error .= "Cannot set -no-copy_data, absolute data file path is too long.\n";
-		} 
+		}
 		if (defined $options->{'copy_data'} and (not $options->{'copy_data'})){
 			$model->relative_data_path(0);
 		}
@@ -193,7 +193,7 @@ sub check_rawres_input
 			my ( $dir, $file ) = OSspecific::absolute_path(cwd(), $options->{'rawres_input'});
 			$options->{'rawres_input'} = $dir . $file;
 		}else{
-			$error .=  "The rawres_input file ".$options->{'rawres_input'}." does not exist.\n"; 
+			$error .=  "The rawres_input file ".$options->{'rawres_input'}." does not exist.\n";
 		}
 	}
 	my @in_filter=();
@@ -211,7 +211,7 @@ sub check_rawres_input
 		}
 		if (scalar(@in_filter)<1){
 			$error .=  "Option in_filter used, but list of conditions could not be parsed.\n";
-		}	
+		}
 	}
 	$options->{'in_filter'} = \@in_filter;
 
@@ -228,12 +228,12 @@ sub check_npfit
 	my $model = $parm{'model'};
 
 	my $error = '';
-	
+
 	unless(($PsN::nm_major_version > 7) or (($PsN::nm_major_version ==7) and ($PsN::nm_minor_version > 3))) {
 		$error .= 'To run npfit NONMEM version must be 7.4 or later.'."\n";
 	}
-	
-	# Check npsupp input 	
+
+	# Check npsupp input
 	my @npsupp=();
 	if ( defined $options->{'npsupp'} ){
 		if ($options->{'npsupp'} ne '') {
@@ -250,8 +250,8 @@ sub check_npfit
 		$error .= 'Option -npsupp is required'."\n";
 	}
 	$options->{'npsupp'} = \@npsupp;
-	
-	
+
+
 	my $problems_amount = scalar (@{$model-> problems});
 	# find problem number of the first problem where is an estimation record
 	my $probnum;
@@ -265,8 +265,8 @@ sub check_npfit
 			}
 		}
 	}
-	
-	# Check if estimation method is set								   
+
+	# Check if estimation method is set
 	my $method = $model->problems->[$probnum-1]->estimations->[-1]->get_method;
 	my $is_opt_set;
 	unless (($method eq '1') or ($method =~ /^CON/) or ($method eq 'FOCE')) {
@@ -279,7 +279,7 @@ sub check_npfit
 			$error .= "\$ESTIMATION must specify POSTHOC.\n";
 		}
 	}
-		
+
 	return $error;
 }
 
@@ -293,14 +293,14 @@ sub check_vpc
 	my $model = $parm{'model'};
 
 	my $error = '';
-	
+
 	if (defined $options->{'rawres_input'}) {
 		$options->{'n_simulation_models'} = $options->{'samples'};
 		if (defined $options->{'msfo_file'}) {
 			$error .= "Cannot use options rawres_input and msfo_file together.";
 		}
 	}
-		
+
 	if (defined $options->{'covariance_file'}) {
 		$error .= "Cannot use option covariance_file, removed.";
 	}
@@ -313,7 +313,7 @@ sub check_vpc
 		}
 	$options->{'bin_array'} = $bin_array;
 	}
-	
+
 	# check levels input
 	my $levels = [];
 	if (defined $options->{'levels'}) {
@@ -323,23 +323,23 @@ sub check_vpc
 		}
 	$options->{'levels'} = $levels;
 	}
-	
+
 	if (defined $options->{'no_of_strata'}) {
 		if (not defined $options->{'stratify_on'}) {
 			$error .= "Error: The VPC does not allow option no_of_strata unless a ".
 			"stratification column has been specified.\n";
-		}	
+		}
 		if (defined $options->{'refstrat'}) {
 			$error .= "Error: The VPC does not allow option no_of_strata together ".
 			"with option refstrat.\n";
 		}
 	}
-	
+
 	if (defined $options->{'refstrat'} and (not defined $options->{'stratify_on'})) {
 		$error .= "Error: The VPC does not allow option refstrat unless option stratify_on is ".
 		"also defined.\n";
 	}
-	
+
 	if ((defined $options->{'sim_table'}) && (defined $options->{'orig_table'})) {
 		if ((-e $options->{'sim_table'}) && (-e $options->{'orig_table'})) {
 			#case when only one is defined will be caught in new
@@ -357,23 +357,23 @@ sub check_vpc
 			my ($dir, $fil) = OSspecific::absolute_path('',$options->{'orig_table'});
 			$options->{'orig_table'} = $dir.$fil;
 		} else {
-			$error .=  "The sim_table file ".$options->{'sim_table'}." or the orig_table file ".$options->{'orig_table'}." does not exist.\n"; 
+			$error .=  "The sim_table file ".$options->{'sim_table'}." or the orig_table file ".$options->{'orig_table'}." does not exist.\n";
 		}
 	} elsif ((defined $options->{'sim_table'}) && (not defined $options->{'orig_table'})) {
 		$error .= "Option -sim_table only allowed when -orig_table is also used\n";
 	} elsif ((not defined $options->{'sim_table'}) && (defined $options->{'orig_table'})) {
 		$error .= "Option -orig_table only allowed when -sim_table is also used\n";
 	}
-	
+
 	if (defined $options->{'sim_model'}) {
 		if ((-e $options->{'sim_model'})) {
 			my ($dir, $fil) = OSspecific::absolute_path('',$options->{'sim_model'});
 			$options->{'sim_model'} = $dir.$fil;
 		} else {
-			$error .=  "The sim_model file ".$options->{'sim_model'}." does not exist.\n"; 
+			$error .=  "The sim_model file ".$options->{'sim_model'}." does not exist.\n";
 		}
 	}
-	
+
 	# Autobinning options
 	my @min_no_bins;
 	my @max_no_bins;
@@ -413,11 +413,11 @@ sub check_vpc
 			$options->{'auto_bin_mode'} = 'auto';
 		}
 	}
-	
+
 	if (defined $options->{'min_points_in_bin'} and not defined $options->{'auto_bin_mode'}) {
 		$error .= "The option -min_points_in_bin can only be used in conjunction with the -auto_bin option\n";
 	}
-		
+
 	return $error;
 }
 
@@ -457,7 +457,7 @@ sub check_sir
 			#special
 		}else{
 			unless (-e $options->{'covmat_input'}){
-				$error .=  "The covmat_input file ".$options->{'covmat_input'}." does not exist.\n"; 
+				$error .=  "The covmat_input file ".$options->{'covmat_input'}." does not exist.\n";
 			}
 			my ( $dir, $file ) = OSspecific::absolute_path(cwd(), $options->{'covmat_input'});
 			$options->{'covmat_input'} = $dir . $file;
@@ -616,7 +616,7 @@ sub check_frem
 	if ($model->tbs){
 		$error.= "frem is incompatible with option -tbs.\n";
 	}
-	
+
 	if ( scalar (@{$model-> problems}) > 1 ){
 		$error .= "Cannot have more than one \$PROB in the input model.\n";
 	}
@@ -674,7 +674,7 @@ sub check_frem
 			$error .= 'Option -rse must be less than 100'."\n";
 		}
 	}
-	
+
 	return $error;
 }
 
@@ -686,14 +686,14 @@ sub check_execute
 		);
 	my $options = $parm{'options'};
 	my $model = $parm{'model'};
-	
+
 	my $error = '';
 
 	if( $options->{'nonparametric_etas'} or
 		$options->{'nonparametric_marginals'} ) {
 		$model -> add_nonparametric_code;
 	}
-		
+
 	if( $options->{'shrinkage'} ) {
 		$model -> shrinkage_stats( enabled => 1 );
 	}

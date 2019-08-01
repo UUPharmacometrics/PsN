@@ -61,7 +61,7 @@ $help_text{Description} = <<'EOF';
 	The sse (stochastic simulation and estimation) tool is for model
 	comparison and hypothesis testing.
 	First, using the input model, a number of simulated datasets are
-	generated. 
+	generated.
 	Second, the input model and a set of alternative models are fitted to
 	the simulated data.
 	Finally, a set of statistical measures are computed for the parameter
@@ -104,7 +104,7 @@ $help_text{-alternative_models} = <<'EOF';
 
 	A comma-separated list of one or more alternative models to use for
 	estimation with simulated datasets. If not given, only the input model
-	will be fitted to the simulated data.  
+	will be fitted to the simulated data.
 EOF
 
 $help_text{-append_columns} = <<'EOF';
@@ -132,8 +132,8 @@ $help_text{-estimate_simulation} = <<'EOF';
 	Regardless of how option -no-estimate_simulation is set, the initial
 	estimates in the simulation model will be used as reference when computing
 	bias, rmse and rsebias for theta, omega and sigma. If simulating with
-	uncertainty then the reference values will be different for each simulated 
-	dataset. 
+	uncertainty then the reference values will be different for each simulated
+	dataset.
 EOF
 
 $help_text{-in_filter} = <<'EOF';
@@ -146,11 +146,11 @@ $help_text{-in_filter} = <<'EOF';
 	minimization_successful. Filtering can only be based on columns with
 	numeric values. The allowed relations are .gt. (greater than), .lt. (less
 	than) and .eq. (equal to). Conditions are separated with commas.
-	If the remaining number of lines after filtering is smaller than -samples, 
-	sse will stop with an error message. Then the user must either change the 
-	filtering rules or change -samples. If the user has created a file with 
-	parameter estimates outside of PsN, filtering can be done on any numeric 
-	column in that file. Do not set column headers containing .eq. or .lt. 
+	If the remaining number of lines after filtering is smaller than -samples,
+	sse will stop with an error message. Then the user must either change the
+	filtering rules or change -samples. If the user has created a file with
+	parameter estimates outside of PsN, filtering can be done on any numeric
+	column in that file. Do not set column headers containing .eq. or .lt.
 	or .gt.in the user-generated file as this would interfere with the
 	in_filter option syntax.
 
@@ -201,7 +201,7 @@ $help_text{-parallel_simulations} = <<'EOF';
 
 	Default is the same value as set for option -threads. The number of
 	parallel processes to start for the simulation step (not the estimation
-	step) on a parallel computer. 
+	step) on a parallel computer.
 EOF
 
 $help_text{-random_estimation_inits} = <<'EOF';
@@ -251,7 +251,7 @@ $help_text{-ref_ofv} = <<'EOF';
 	Instead of using the OFV values from the estimation of a model as
 	reference when evaluating the other estimation results, it is possible
 	to set a fixed reference OFV value. If using ref_ofv, it is not allowed
-	to also estimate the simulation model. 
+	to also estimate the simulation model.
 EOF
 
 $help_text{-samples} = <<'EOF';
@@ -274,7 +274,7 @@ $help_text{-update_fix} = <<'EOF';
 
 	Default not set. Option is only relevant in combination with -rawres_input.
 	If update_fix is set, FIXED initial estimates in models will be updated to
-	values from the rawres_input file. If update_fix is not set, the default, 
+	values from the rawres_input file. If update_fix is not set, the default,
 	FIXED initial estimates will not be changed.
 EOF
 
@@ -373,7 +373,7 @@ if ( defined $options{'alternative_models'} ){
   #split string, assume comma separated
   foreach my $altfile (split(/,/,$options{'alternative_models'})){
     if (length($altfile)>0){
-		my $alternative_model = 
+		my $alternative_model =
 			model->new( eval( $eval_string ),
 						filename => $altfile,
 						ignore_missing_output_files => 1,
@@ -383,7 +383,7 @@ if ( defined $options{'alternative_models'} ){
   }
   if (scalar(@alternatives)<1){
     die "Error: Option alternative_models used, but list of filenames could not be parsed.\n";
-  }	
+  }
 }else{
 
   if ( defined $options{'add_models'} ){
@@ -391,9 +391,9 @@ if ( defined $options{'alternative_models'} ){
     exit;
   }
 
-  print "No alternative model given, will only estimate simulation model.\n" 
+  print "No alternative model given, will only estimate simulation model.\n"
       unless (defined $options{'recompute'} or (not $options{'estimate_simulation'}));
-  
+
 }
 
 my @in_filter=();
@@ -412,7 +412,7 @@ if ( defined $options{'in_filter'} ){
   }
   if (scalar(@in_filter)<1){
     die "Error: Option in_filter used, but list of conditions could not be parsed.\n";
-  }	
+  }
 }
 my @out_filter=();
 if ( defined $options{'out_filter'} ){
@@ -429,7 +429,7 @@ if ( defined $options{'out_filter'} ){
 	  last;
 	}
       }
-      die "$col is not included in a standard raw results header and may not be used for output filtering\n" 
+      die "$col is not included in a standard raw results header and may not be used for output filtering\n"
 	  unless ($found);
       push(@out_filter,$filt);
     }else{
@@ -438,7 +438,7 @@ if ( defined $options{'out_filter'} ){
   }
   if (scalar(@out_filter)<1){
     die "Error: Option out_filter used, but list of conditions could not be parsed.\n";
-  }	
+  }
 }
 
 my @append_columns=();
@@ -478,7 +478,7 @@ $sse-> print_options (cmd_line => $cmd_line,
 		      local_options => [keys %optional_options],
 		      common_options => \@common_options::tool_options);
 
-   
+
 $sse -> run unless ($options{'recompute'});
 $sse -> prepare_results;
 $sse -> print_results;

@@ -55,7 +55,7 @@ $help_text{Description} = <<'EOF';
 	www.page-meeting.org/?abstract=1982, PAGE 20 Abstract 1982, 2011.
 EOF
 
-$help_text{Examples} = <<'EOF';    
+$help_text{Examples} = <<'EOF';
 	mimp -base_model=run1.mod -reg_model=run2.mod -mi_model=run3.mod
 EOF
 
@@ -84,7 +84,7 @@ EOF
 
 $help_text{-base_model} = <<'EOF';
 	-base_model=filename
- 
+
 	Base model. This is the model without the code snippet describing the effect
 	of the covariate (that is partly missing) on the parameters. The individual
 	parameter (empirical Bayes) estimates the parameter(s) on which the covariate
@@ -143,7 +143,7 @@ $help_text{-reg_model} = <<'EOF';
 EOF
 
 $help_text{-samples} = <<'EOF';
-	-samples=N	
+	-samples=N
 
 	Number of datasets to simulate. Only relevant together with option -sim_model,
 	required if sim_model is given.
@@ -295,7 +295,7 @@ if (defined $options{'sim_model'}) {
 		#set seed
 		my $prob = $sim_model->problems->[0];
 		my $sim_record = $sim_model->record(problem_number => 1, record_name => 'simulation');
-		
+
 		my @new_record;
 		foreach my $sim_line ( @{$sim_record -> [0]} ){
 			my $new_line;
@@ -304,24 +304,24 @@ if (defined $options{'sim_model'}) {
 				my $old_seed = $2;
 				$sim_line = $3;
 				$new_line .= $head;
-				
+
 				while( $old_seed =~ /(\D*)(\d+)(.*)/ ){
 					$new_line .= $1;
-					$new_line .= random_uniform_integer( 1, 0, 1000000 ); # Upper limit is from nmhelp 
+					$new_line .= random_uniform_integer( 1, 0, 1000000 ); # Upper limit is from nmhelp
 					$old_seed = $3;
 				}
-				
+
 				$new_line .= $old_seed;
-				
+
 			}
-			
+
 			push( @new_record, $new_line.$sim_line );
 		}
-		
+
 		$prob -> set_records( type => 'simulation',
 							  record_strings => \@new_record );
-		
-		
+
+
 		#set $TABLE FILE
 		my $fname='start_'.$sample.'_out.dta';
 		push (@simdatanames,$fname);
@@ -330,30 +330,30 @@ if (defined $options{'sim_model'}) {
 								  record_number => 1,
 								  option_name  => 'FILE',
 								  option_value => $fname);
-		
+
 		$sim_model -> _write();
 		push( @{$simulation_models}, $sim_model );
 	}
 
 
-	my $mod_sim = tool::modelfit -> new( 
+	my $mod_sim = tool::modelfit -> new(
 		%{common_options::restore_options(@common_options::tool_options)},
 		top_tool         => 0,
 		models           => $simulation_models,
 		base_directory   => '..',
-		directory        => '../simulation_dir1', 
+		directory        => '../simulation_dir1',
 		logfile	         => undef,
 		raw_results           => undef,
 		prepared_models       => undef,
 		copy_data  => 0);
-	
+
 	$mod_sim-> print_options (cmd_line => $cmd_line,
 							  directory =>'../',
 							  toolname => 'mimp',
 							  local_options => [keys %optional_options],
 							  common_options => \@common_options::tool_options);
 
-	print "Running ".$options{'samples'}." simulation models\n";    
+	print "Running ".$options{'samples'}." simulation models\n";
 	$mod_sim -> run;
 
 	$simulation_models=undef;
@@ -394,25 +394,25 @@ for(my $sample=1; $sample<= $options{'samples'}; $sample++){
 							   record_number => 1,
 							   option_name  => 'FILE',
 							   option_value => $fname);
-	
+
 	$base_model -> _write();
 	push( @{$base_models}, $base_model );
 }
 
 
 #run
-my $mod_base = tool::modelfit -> new( 
+my $mod_base = tool::modelfit -> new(
 	%{common_options::restore_options(@common_options::tool_options)},
 	top_tool         => 0,
 	models           => $base_models,
 	base_directory   => '..',
-	directory        => '../base_dir1', 
+	directory        => '../base_dir1',
 	logfile	         => undef,
 	raw_results           => undef,
 	prepared_models       => undef,
 	copy_data => 0);
 
-print "Running ".$options{'samples'}." base models\n";    
+print "Running ".$options{'samples'}." base models\n";
 $mod_base -> run;
 $base_models=undef;
 $mod_base = undef;
@@ -434,18 +434,18 @@ foreach my $chain_mod (@chain_models){
 	@this_input_datanames = @next_input_datanames;
 	@next_input_datanames = ();
 	my $chain_model_copies;
-	
+
 	for(my $sample=1; $sample<= $options{'samples'}; $sample++){
 		my $chain_name='chain-'.$chain_number.'_'.$sample.'.mod';
 		my $chain_model = $chain_mod -> copy( filename    => $chain_name,
 											  copy_datafile   => 0,
 											  write_copy => 0,
 											  copy_output => 0);
-		
+
 		#set $DATA
 		my $fname = $this_input_datanames[($sample-1)];
 		$chain_model -> datafiles(new_names => [$fname] );
-		
+
 		#set $TABLE FILE
 		$fname='chain-'.$chain_number.'_'.$sample.'_out.dta';
 		push (@next_input_datanames,$fname);
@@ -454,24 +454,24 @@ foreach my $chain_mod (@chain_models){
 									record_number => 1,
 									option_name  => 'FILE',
 									option_value => $fname);
-		
+
 		$chain_model -> _write();
 		push( @{$chain_model_copies}, $chain_model );
 	}
-	
+
 	#run
-	my $mod_chain = tool::modelfit -> new( 
+	my $mod_chain = tool::modelfit -> new(
 		%{common_options::restore_options(@common_options::tool_options)},
 		top_tool         => 0,
 		models           => $chain_model_copies,
 		base_directory   => '..',
-		directory        => '../chain_dir'.$chain_number, 
+		directory        => '../chain_dir'.$chain_number,
 		logfile	         => undef,
 		raw_results           => undef,
 		prepared_models       => undef,
 		copy_data =>0);
-	
-	print "Running ".$options{'samples'}." chain model number $chain_number\n";    
+
+	print "Running ".$options{'samples'}." chain model number $chain_number\n";
 	$mod_chain -> run;
 	$chain_model_copies=undef;
 	$mod_chain = undef;
@@ -513,18 +513,18 @@ for(my $sample=1; $sample<= $options{'samples'}; $sample++){
 
 
 #run
-my $mod_reg = tool::modelfit -> new( 
+my $mod_reg = tool::modelfit -> new(
 	%{common_options::restore_options(@common_options::tool_options)},
 	top_tool         => 0,
 	models           => $reg_models,
 	base_directory   => '..', ##??
-	directory        => '../reg_dir1', 
+	directory        => '../reg_dir1',
 	logfile	         => undef,
 	raw_results           => undef,
 	prepared_models       => undef,
 	copy_data =>0);
 
-print "Running ".$options{'samples'}." regression models\n";    
+print "Running ".$options{'samples'}." regression models\n";
 $mod_reg -> run;
 $reg_models=undef;
 $mod_reg = undef;
@@ -556,18 +556,18 @@ foreach my $alt (@alternatives){
 	}
 
 	#run
-	my $mod_alt = tool::modelfit -> new( 
+	my $mod_alt = tool::modelfit -> new(
 		%{common_options::restore_options(@common_options::tool_options)},
 		top_tool         => 0,
 		models           => $alt_models,
 		base_directory   => '..', ##??
-		directory        => '../alt_dir'.$altindex, 
+		directory        => '../alt_dir'.$altindex,
 		logfile	         => undef,
 		raw_results           => undef,
 		prepared_models       => undef,
 		copy_data => 0);
-    
-	print "Running ".$options{'samples'}." alt models for alternative $altindex\n";    
+
+	print "Running ".$options{'samples'}." alt models for alternative $altindex\n";
 	$mod_alt -> run;
 	$alt_models=undef;
 	$mod_alt = undef;
@@ -605,7 +605,7 @@ for (my $j=1; $j<=$nimp; $j++){
 			@old_lines =('(12345)'); #no old sim record
 		}
 		my @new_record;
-		
+
 		foreach my $sim_line ( @old_lines){
 			my $new_line;
 			while( $sim_line =~ /([^()]*)(\([^()]+\))(.*)/g ){
@@ -613,38 +613,38 @@ for (my $j=1; $j<=$nimp; $j++){
 				my $old_seed = $2;
 				$sim_line = $3;
 				$new_line .= $head;
-				
+
 				while( $old_seed =~ /(\D*)(\d+)(.*)/ ){
 					$new_line .= $1;
-					$new_line .= random_uniform_integer( 1, 0, 1000000 ); # Upper limit is from nmhelp 
+					$new_line .= random_uniform_integer( 1, 0, 1000000 ); # Upper limit is from nmhelp
 					$old_seed = $3;
 				}
-				
+
 				$new_line .= $old_seed;
-				
+
 			}
 			push( @new_record, $new_line.$sim_line );
 		}
-		
+
 		$prob -> set_records( type => 'simulation',
 							  record_strings => \@new_record );
 		$mi_model -> _write();
 		push( @{$mi_models}, $mi_model );
 	}
-	my $mod_mi = tool::modelfit -> new( 
+	my $mod_mi = tool::modelfit -> new(
 		%{common_options::restore_options(@common_options::tool_options)},
 		top_tool         => 0,
 		models           => $mi_models,
 		base_directory   => '..', ##??
-		directory        => '../mi_dir'.$j, 
+		directory        => '../mi_dir'.$j,
 		logfile	         => undef,
 		raw_results           => undef,
 		prepared_models       => undef,
 		seed       => random_uniform_integer(1,1,99999999),
 		copy_data => 0);
-	
-	print "Running ".$options{'samples'}." mi models copy $j\n";    
-	
+
+	print "Running ".$options{'samples'}." mi models copy $j\n";
+
 	$mod_mi -> run;
 	$mod_mi = undef;
 	$mi_models = undef;

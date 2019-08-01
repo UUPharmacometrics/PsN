@@ -40,9 +40,9 @@ sub submit
 		}
 	}
 	if (defined $self->max_runtime) {
-		#Acceptable time formats include #minutes", 
-		#minutes:seconds", #hours:minutes:seconds", #days-hours", 
-		#days-hours:minutes¡ and ´days-hours:minutes:seconds". 
+		#Acceptable time formats include #minutes",
+		#minutes:seconds", #hours:minutes:seconds", #days-hours",
+		#days-hours:minutes¡ and ´days-hours:minutes:seconds".
 		unless (($self->max_runtime =~ /^[0-9]+$/) or
 				($self->max_runtime =~ /^[0-9]+\:[0-9]+\:[0-9]+$/) or
 				($self->max_runtime =~ /^[0-9]+\-[0-9]+$/)) {
@@ -53,7 +53,7 @@ sub submit
 	if (defined $self->partition) {
 		$flags .= ' -p '.$self->partition;
 	}
-	#at most 3GB RAM 
+	#at most 3GB RAM
 	if ($PsN::config->{'default_options'}->{'uppmax'}) {
 		my $ntasks = 1;
 		if ($self->nodes > 0) {
@@ -101,7 +101,7 @@ sub submit
 			$self->job_id($jobId);
 			return $jobId;
 		}
-	}	
+	}
 	system("echo sbatch $flags $command \"2>&1\" > sbatchcommand");
 
 	for (my $i = 0; $i < 30; $i++) {
@@ -109,11 +109,11 @@ sub submit
 		#also make sure psn.lst is NOT here, i.e. moving of old output is finished
 		my $outp = readpipe("sbatch $flags 2>&1 <<EOF
 #!/bin/bash  -l
-printenv | sed \'/^HOSTNAME=/!d; s///;q\' > hostname 
+printenv | sed \'/^HOSTNAME=/!d; s///;q\' > hostname
 
 for J in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20
 do
-if test -f $lstfile 
+if test -f $lstfile
 then
 echo \"found $lstfile, wait\"
 sleep 0.5
@@ -143,11 +143,11 @@ EOF
 			$jobId = $1;
 			last;
 		} elsif($outp =~ /Socket timed out/) {
-			#try again. jobId is -1 by initiation 
+			#try again. jobId is -1 by initiation
 			sleep(1);
 			next;
 		} elsif($outp =~ /Invalid user id/) {
-			#try again. jobId is -1 by initiation 
+			#try again. jobId is -1 by initiation
 			sleep(1);
 			next;
 		} else {
@@ -155,7 +155,7 @@ EOF
 			system('echo ' . $outp . '  > job_submission_error');
 			$jobId = -1;
 			last;
-		}	
+		}
 	}
 	system('echo '.$jobId.' > jobId');
 
@@ -180,7 +180,7 @@ sub monitor
 	if (defined $outp) {
 		if ($outp =~ /(i|I)nvalid/) {
 			#this is either because the job finished so long ago (MinJobAge)
-			#that is has disappeared, 
+			#that is has disappeared,
 			#or due to some Slurm error. We sleep for 3 sec to make sure there was not an error
 			#due to too early polling, and then try again. If message persists then assume job
 			#id will never be valid, i.e. finished. That definitely can happen.

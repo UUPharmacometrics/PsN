@@ -74,16 +74,16 @@ $help_text{Description} = <<'EOF';
 	(iOFV) and aims to provide a fast and accurate prediction of the power and
 	sample size relationship.
 
-	The principle of the iOFV sampling method is as follows: 
-	(1) a large dataset (e.g. 1000 individuals) is simulated with a full model 
+	The principle of the iOFV sampling method is as follows:
+	(1) a large dataset (e.g. 1000 individuals) is simulated with a full model
 	and subsequently the full and reduced models are re-estimated with this data
-	set, 
+	set,
 	(2) iOFVs are extracted from the NONMEM .phi-files and for each subject the
 	difference in iOFV between the full and reduced models is computed (ΔiOFV),
-	(3) ΔiOFVs are sampled according to the design for which power is to be 
-	calculated and a starting sample size (N), 
-	(4) the ΔiOFVs sum for each sample is calculated (∑ΔiOFVs), 
-	(5) steps 3 and 4 are repeated many times, 
+	(3) ΔiOFVs are sampled according to the design for which power is to be
+	calculated and a starting sample size (N),
+	(4) the ΔiOFVs sum for each sample is calculated (∑ΔiOFVs),
+	(5) steps 3 and 4 are repeated many times,
 	(6) the percentage of ∑ΔiOFVs greater than the significance criterion (e.g.
 	.84 for one degree of freedom and α=0.05) is taken as the power for sample
 	size N,
@@ -95,7 +95,7 @@ $help_text{Examples} = <<'EOF';
 	mcmp -full_model=mod1.mod -stratify_on=DOSE -reduced_model=mod2.mod
 EOF
 
-$help_text{Options} = <<'EOF';      
+$help_text{Options} = <<'EOF';
 	Option -full_model or -table_full is required, plus either -reduced_model or
 	-table_reduced.
 
@@ -117,9 +117,9 @@ EOF
 $help_text{-critical_ofv} = <<'EOF';
 	-critical_ofv=number
 
-	Default not set. If specified, -critical_ofv will override the setting of -df. 
-	PsN will work with positive values internally (delta_ofv=reduced-full, check 
-	if delta_ofv > critical_ofv), but will automatically change the sign if the 
+	Default not set. If specified, -critical_ofv will override the setting of -df.
+	PsN will work with positive values internally (delta_ofv=reduced-full, check
+	if delta_ofv > critical_ofv), but will automatically change the sign if the
 	user gives a negative value.
 EOF
 
@@ -135,8 +135,8 @@ EOF
 $help_text{-df} = <<'EOF';
 	-df=N
 
-	Default is 1. The number of degrees of freedom for the chi-square test. 
-	Allowed values are 1-20. PsN will compute the power for significance levels 
+	Default is 1. The number of degrees of freedom for the chi-square test.
+	Allowed values are 1-20. PsN will compute the power for significance levels
 	20%, 15%, 10%, 5%, 1% and 0.1% for the number of degrees of freedom.
 EOF
 
@@ -167,7 +167,7 @@ EOF
 $help_text{-n_bootstrap} = <<'EOF';
 	-n_bootstrap=N
 
-	Default is 10000. The number of bootstrapped delta-ofv:s to generate for each 
+	Default is 10000. The number of bootstrapped delta-ofv:s to generate for each
 	total sample size.
 EOF
 
@@ -290,7 +290,7 @@ if (defined $options{'table_reduced'}) {
 	}
 	unless ($options{'table_reduced'} =~ /^\//  ){
 		$options{'table_reduced'} = $dir.'/'.$options{'table_reduced'};
-	}  
+	}
 }
 if (defined $options{'table_full'}) {
 	if ($options{'table_full'} =~ /^~/){
@@ -298,7 +298,7 @@ if (defined $options{'table_full'}) {
 	}
 	unless ($options{'table_full'} =~ /^\//  ){
 		$options{'table_full'} = $dir.'/'.$options{'table_full'};
-	}  
+	}
 }
 if (defined $options{'table_strata'}){
 	if ($options{'table_strata'} =~ /^~/){
@@ -306,7 +306,7 @@ if (defined $options{'table_strata'}){
 	}
 	unless ($options{'table_strata'} =~ /^\//){
 		$options{'table_strata'} = $dir.'/'.$options{'table_strata'};
-	}  
+	}
 }
 
 require model;
@@ -341,7 +341,7 @@ if (defined $options{'reduced_model'}){
 									iofv                  => ($PsN::nm_major_version < 7));
 }
 
-if (defined $options{'simulation_model'} or 
+if (defined $options{'simulation_model'} or
     (defined $options{'full_model'} and (not defined $options{'simdata'}))){
     my $use_full=0;
     my $file = $options{'simulation_model'};
@@ -379,7 +379,7 @@ if (defined $options{'simulation_model'} or
 	$simulation_model = model->create_dummy_model;
 }
 
-my $mcmp = 
+my $mcmp =
 	tool::mcmp->new(eval( $common_options::parameters ),
 		  stratify_on        => $options{'stratify_on'},
 		  increment          => $options{'increment'},

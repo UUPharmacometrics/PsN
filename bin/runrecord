@@ -94,7 +94,7 @@ EOF
 $help_text{-from} = <<'EOF';
 	-from=N
 
-	Default is 1. Run number to start processing from. 
+	Default is 1. Run number to start processing from.
 EOF
 
 $help_text{-max_lvl} = <<'EOF';
@@ -138,8 +138,8 @@ EOF
 $help_text{-rse} = <<'EOF';
 	-rse=yes | no
 
-	Default is yes. Whether standard errors should be reported as relative 
-	SEs or not. 
+	Default is yes. Whether standard errors should be reported as relative
+	SEs or not.
 EOF
 
 $help_text{-rsep} = <<'EOF';
@@ -158,7 +158,7 @@ $help_text{-sep} = <<'EOF';
 
 	Default is ; (semicolon) for text format. Separator between fields in
 	runrecord output file. This option may only be set if -res_format is txt,
-	otherwise the -sep option will be ignored and the separator is , (comma). 
+	otherwise the -sep option will be ignored and the separator is , (comma).
 EOF
 
 $help_text{-to} = <<'EOF';
@@ -175,7 +175,7 @@ EOF
 $help_text{-var} = <<'EOF';
 	-var=yes | no
 
-	Default is no. Report omegas and sigmas as variances or sd. 
+	Default is no. Report omegas and sigmas as variances or sd.
 EOF
 
 common_options::online_help('runrecord', \%options, \%help_text, \%required_options, \%optional_options);
@@ -249,7 +249,7 @@ if (($res_format eq 'csvy') or ($res_format eq 'csv')){
 	if( defined $options{'rsep'} and ($options{'rsep'} ne '') ){
 		print "Warning: res_format is $res_format, therefore rsep is empty and -rsep=".$options{'rsep'}." is ignored\n";
 	}
-} 
+}
 
 my $desc_type  = "text";
 if ($res_format eq 'csvy') {
@@ -464,7 +464,7 @@ for( my $run = $from; $run <= $to; $run++ ){
                 my $problem = $problems[0];
                 $info{$run}{'Nobs'} = $problem -> nobs();
                 $info{$run}{'Nind'} = $problem -> nind();
-                
+
                 my @subproblems = defined $problem -> subproblems() ? @{$problem -> subproblems()} : ();
                 if( scalar @subproblems > 0 and defined $subproblems[0] ) {
                     my $subproblem = $subproblems[0];
@@ -641,7 +641,7 @@ sub describe_file
     if ($var eq 'no') {
         $filedef{'omega_sigma_type'} = "standard deviations";
     }
-    
+
     my $ret;
     if ($outtype eq 'yaml') {
         $filedef{'runrecord_options'} =>

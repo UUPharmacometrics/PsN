@@ -78,7 +78,7 @@ sub _read_options
                 #if there is no space between ) and ( then add one
                 s/\)\(/\) \(/g;
 
-                #if there is a comma as separator between two closed parentheses, then 
+                #if there is a comma as separator between two closed parentheses, then
                 #replace that comma with a space
                 s/\),\(/\) \(/g;
 

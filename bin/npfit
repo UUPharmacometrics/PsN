@@ -53,7 +53,7 @@ EOF
 
 $help_text{Options} = <<'EOF';
 
-	A model file is required, as well as a list of npsupp values. NONMEM requires 
+	A model file is required, as well as a list of npsupp values. NONMEM requires
 	that the $ESTIMATION record is present with the conditional method or POSTHOC:
 
 
@@ -117,26 +117,26 @@ $input_model = model->new(
     ignore_missing_output_files => 1,
     output_directory => $output_directory,
 );
-							  
-input_checking::check_options(tool => 'npfit', options => \%options, model => $input_model);							  
 
- 
+input_checking::check_options(tool => 'npfit', options => \%options, model => $input_model);
+
+
 if( $options{'nonparametric_etas'} or
     $options{'nonparametric_marginals'} ) {
   $input_model -> add_nonparametric_code;
 }
-  
+
 if( $options{'shrinkage'} ) {
   $input_model -> shrinkage_stats( enabled => 1 );
 }
-  
-my $npfit = 
+
+my $npfit =
 	tool::nonparametric->new( eval( $common_options::parameters ),
 		directory_name_prefix => 'npfit',
 		top_tool => 1,
 		models => [$input_model],
 		npsupp => $options{'npsupp'});
-      
+
 
 $npfit -> print_options (cmd_line => $cmd_line,
 			   toolname => 'npfit',

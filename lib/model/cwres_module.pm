@@ -38,7 +38,7 @@ sub BUILD
 	if( defined $crno_ref ) {
 		$comresno = $crno_ref -> [0];
 	}
-	
+
 	# Add $ABBREVIATED if necessary
 	if ( defined $comresno ) {
 		$prob -> remove_option( record_name  => 'abbreviated',
@@ -46,7 +46,7 @@ sub BUILD
 		$prob -> add_option( record_name  => 'abbreviated',
 							 option_name  => 'COMRES',
 							 option_value => ($netas+$neps+$comresno) );
-	} else {  
+	} else {
 		$prob -> add_records( type => 'abbreviated',
 							  record_strings => [ "COMRES=".($netas+$neps) ] );
 	}
@@ -118,9 +118,9 @@ sub BUILD
 					 "\"      DATA NTH,NETA,NEPS/$nthetas,$netas,$neps/ ")
 				);
 
-			# Abbrev code 
+			# Abbrev code
 			$code = $prob -> preds -> [0] -> code;
-			
+
 			# fortran code
 			push( @{$code},
 				  ('"      IF (ICALL.EQ.0) THEN',
@@ -156,7 +156,7 @@ sub BUILD
 				   '" 98         FORMAT (2I8)',
 				   '" 97         FORMAT (10E15.7)')
 				);
-			
+
 		}
 #	} elsif ( $PsN::nm_major_version == 6 ) {
 	} else {
@@ -168,22 +168,22 @@ sub BUILD
 				$prob -> add_records( type => 'infn',
 									  record_strings => [] );
 			}
-			
+
 			$code = $prob -> infns -> [0] -> code;
 
 		} else {
 
 			$code = $prob -> preds -> [0] -> code;
-			
+
 		}
-		
-		push( @{$code}, 
+
+		push( @{$code},
 			  'IF (ICALL.EQ.3) THEN',
 			  '  OPEN(51,FILE=\'cwtab'.$self -> sdno().$mirror_name.'.est\')',
 			  '  WRITE (51,*) \'ETAS\'',
 			  '  DO WHILE(DATA)',
 			  '    IF (NEWIND.LE.1) WRITE (51,*) ETA',
-			  '  ENDDO',                                
+			  '  ENDDO',
 			  '  WRITE (51,*) \'THETAS\'',
 			  '  WRITE (51,*) THETA',
 			  '  WRITE (51,*) \'OMEGAS\'',
@@ -198,14 +198,14 @@ sub BUILD
 	if( $have_advan ){
 		# We have and ADVAN option in $SUBROUTINE, get $ERROR code
 		$code_records = $prob -> errors;
-		
+
 		# If we also use version 5, we must include "infn.f" in $SUBROUTINE
 		if( $PsN::nm_major_version == 5 ){
 			$prob -> add_option( record_name => 'subroutine',
 								 option_name => 'INFN',
 								 option_value=> 'infn.f' );
 		}
-		
+
 	} else {
 		# No ADVAN subroutine, we should modify $PRED code
 		$code_records = $prob -> preds;
@@ -228,7 +228,7 @@ sub BUILD
 		push( @table_row, "COM($com)=G$_"."1");
 		$com++;
 	}
-	
+
 	for( 1..$neps ){
 		if( $have_advan ){
 			push( @{$code},"\"  COM($com)=HH($_,1)" );
@@ -272,9 +272,9 @@ sub post_process
 		my $ntheta = $self->problem->record_count( record_name => 'theta' );
 		my $neta = $self->problem->nomegas;
 		my $neps = $self->problem->nsigmas;
-		
+
 		open(INFN, ">infn.f");
-		
+
 print INFN << "EOF";
 		SUBROUTINE INFN(ICALL,THETA,DATREC,INDXS,NEWIND)
 			DIMENSION THETA(*),DATREC(*),INDXS(*)

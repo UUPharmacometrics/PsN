@@ -28,7 +28,7 @@ my $cmd_line = $0 . " " . join( " ", @ARGV );
 my %options;
 
 my %required_options = ();
-my %optional_options = ( 'ids_to_simulate:i' => undef, 
+my %optional_options = ( 'ids_to_simulate:i' => undef,
 			 'id_column:s' => undef,
 			 'dv_column:s' => undef,
 			 'omega_multiplier:f' => undef);
@@ -42,7 +42,7 @@ exit unless $res;
 
 my %help_text;
 
-$help_text{Pre_help_message} = <<'EOF';  
+$help_text{Pre_help_message} = <<'EOF';
 	Non-parametric estimation on the extended grid.
 EOF
 
@@ -147,7 +147,7 @@ my $eval_string = common_options::model_parameters(\%options);
 # {{{ Orig + simulation
 
 my $model;
-  
+
 $model = model->new(
     eval($eval_string),
     filename => $ARGV[0],
@@ -157,7 +157,7 @@ $model = model->new(
 
 my $model_col_num = 1;
 my %model_column_numbers;
-if( defined $model->problems()->[0] -> inputs and 
+if( defined $model->problems()->[0] -> inputs and
     defined $model->problems()->[0] -> inputs -> [0] -> options ) {
     foreach my $option ( @{$model->problems()->[0] -> inputs -> [0] -> options} ) {
 		if (($option->name eq 'DROP' or $option->name eq 'SKIP') and (defined $option->value)){
@@ -178,7 +178,7 @@ unless ($model->is_run){
         $base_dir = dirname($output_directory) . '/';
     }
 
-	$modelfit = 
+	$modelfit =
 		tool::modelfit->new(
             eval($common_options::parameters),
             base_directory => $base_dir,
@@ -187,13 +187,13 @@ unless ($model->is_run){
             directory => File::Spec->catdir($directory, 'orig_modelfit_dir'),
             models => [ $model ],
         );
-	
+
 	$modelfit-> print_options (directory => '.',
 							   cmd_line => $cmd_line,
 							   toolname => 'modelfit',
 							   local_options => [keys %optional_options],
 							   common_options => \@common_options::tool_options);
-	
+
 	print "Running the original model in orig_modelfit_dir\n";
 	$modelfit -> run;
 }
@@ -205,11 +205,11 @@ my $model_copy = $model -> copy( filename => 'simulation.mod',
 $model_copy -> update_inits( from_output => $model -> outputs -> [0] );
 
 if( $options{'omega_multiplier'} ){
-	
+
 	my $omega_ref = $model_copy -> initial_values( parameter_type => 'omega' );
 	my @omegas = @{$omega_ref -> [0]};
 	my @new_omegas;
-	
+
 	foreach my $omega( @omegas ){
 		push( @new_omegas, $omega * $options{'omega_multiplier'} );
 	}
@@ -234,7 +234,7 @@ for( 1..$nr_of_old_etas ){
 }
 
 $model_copy -> set_records( type => 'table',
-							record_strings => [ $options{'id_column'}." ",join( " ",@table_string ), 
+							record_strings => [ $options{'id_column'}." ",join( " ",@table_string ),
 												" NOPRINT NOAPPEND ONEHEADER FIRSTONLY FILE=simdata" ] );
 
 $model_copy -> _write;
@@ -247,7 +247,7 @@ my $nr_of_individuals = scalar @{$data_set -> individuals};
 
 if( defined $options{'ids_to_simulate'} ){
 	$n_id_to_simulate = $options{'ids_to_simulate'};
-	
+
 
 	if( $n_id_to_simulate < $nr_of_individuals ){
 		my $individuals = $data_set -> individuals;
@@ -260,9 +260,9 @@ if( defined $options{'ids_to_simulate'} ){
 
 		for( 1..$nr_of_new_ids ){
 			my $new_individual = $data_set -> individuals -> [0] -> copy;
-			
+
 			push( @{$data_set -> individuals}, $new_individual );
-			
+
 		}
 
 	}
@@ -303,16 +303,16 @@ $extended_model -> remove_option(record_name => 'estimation',
 my $datacopyname = $model -> datafiles(absolute_path => 1)->[0];
 my $data_copy = data->new(filename => $datacopyname,
 						  ignoresign => '@',
-						  idcolumn => $model->idcolumns->[0]); 
+						  idcolumn => $model->idcolumns->[0]);
 $data_copy->filename('extended.dta');
 $extended_model -> update_inits( from_output => $model -> outputs -> [0] );
 
 if( $options{'omega_multiplier'} ){
-  
+
   my $omega_ref = $extended_model -> initial_values( parameter_type => 'omega' );
   my @omegas = @{$omega_ref -> [0]};
   my @new_omegas;
-  
+
   foreach my $omega( @omegas ){
     push( @new_omegas, $omega * $options{'omega_multiplier'} );
   }
@@ -357,7 +357,7 @@ foreach my $id_num ( 1..$n_id_to_simulate ){
 
   #first row in table *for this individual*
   my $eta_from_sim = $simulated_individuals -> [$id_num-1] -> subject_data -> [0];
-  
+
   foreach my $eta_num ( 1..$nr_of_old_etas ){
     my @eta_from_sim = split( /,/ , $eta_from_sim  );
     my @new_row = @row_template;
@@ -395,7 +395,7 @@ my $error_has_if = 0;
 
 my $loop_end = $#{$error -> [0]};
 for( my $row = 0 ; $row <= $loop_end; $row ++ ){
-  $error -> [0] -> [$row] =~ s/ 
+  $error -> [0] -> [$row] =~ s/
                               (.)EPS\((\d+)
 			      (?{$seen_eps{$2}=1;$dummy=$2+$nr_of_old_etas;})\)
 			      /$1ETA($dummy)/gx;
@@ -403,7 +403,7 @@ for( my $row = 0 ; $row <= $loop_end; $row ++ ){
   if( $error -> [0] -> [$row] =~ /IF\s*\(/ ){
     $error_has_if = 1;
   }
-  
+
 }
 
 
@@ -491,7 +491,7 @@ $modelfit = tool::modelfit->new(
     models => [ $extended_model ],
     model_subdir => 0,
     top_tool => 0,
-);  
+);
 
 print "Running the extended model in extended_dir\n";
 
@@ -518,11 +518,11 @@ my $JD_sum = 0;
 my $verification_sum = 0;
 
 for( 0 .. $#{$JD_column} ){
-  
+
   $JD_sum += $JD_column -> [$_];
 
   $JD_column -> [$_] = $JD_column -> [$_] * ( ( $nr_of_individuals + $n_id_to_simulate ) / $nr_of_individuals );
-  
+
   $verification_sum +=  $JD_column -> [$_];
 
 }
@@ -550,7 +550,7 @@ foreach my $eta_index ( 0..($nr_of_old_etas-1) ){
   my @sorted_eta;
 
   foreach my $index ( @order ){
-    
+
     push( @JD_etax, $JD_column -> [$index] );
     push( @sorted_eta, $eta -> [$index] );
   }
@@ -563,9 +563,9 @@ foreach my $eta_index ( 0..($nr_of_old_etas-1) ){
   for( 1 .. $#JD_etax ){
 
     $previous_value = $previous_value + $JD_etax[$_];
-    
+
     push( @JD_etax_cumulative, $previous_value );
-    
+
   }
 
   unshift( @sorted_eta, "sorted_ETA" . ($eta_index+1) );
@@ -600,7 +600,7 @@ my $batch_nr = 0;
 
 unless( -e 'iofvcont.f' ){
   open(IOFVCONT , '>', 'iofvcont.f');
-  
+
   print IOFVCONT <<'EOF';
       subroutine contr (icall,cnt,ier1,ier2)
       parameter (no=1000)
@@ -641,32 +641,32 @@ my @individual_etas;
 my @individual_etas_probabilities;
 
 for( 0..($nomegas-1) ){
-  
+
   my $individual_eta = $table -> column_to_array( column => $_ + 1 ); # plus 1 is for ID column
   my $individual_eta_probabilities = $table -> column_to_array( column => ($nomegas-1) + $_ + 1 + 1 ); # first plus 1 is for ID column. Second is for JD
-  
+
   push( @individual_etas , $individual_eta );
   push( @individual_etas_probabilities , $individual_eta_probabilities );
-  
+
 }
 
 my $number_of_individuals = @{$individual_etas[0]};
 
 foreach my $id( 0..($number_of_individuals-1) ){
-  
+
   my $copy = $extended_model -> copy( filename => 'ofv_model_'.($id+1).'.mod' );
-  
+
   my @new_values;
-  
+
   for my $parm ( 0..$nomegas-1 ){
-    
+
     push( @new_values, $individual_etas[$parm][$id] );
-    
+
   }
 
   $copy -> add_records( type => 'contr',
 			record_strings => ['DATA=(ID)'] );
-  
+
   $copy -> add_option( record_name => 'subroutine',
 		       option_name => 'CONTR',
 		       option_value => 'iofvcont.f' );
@@ -687,23 +687,23 @@ foreach my $id( 0..($number_of_individuals-1) ){
 
   $copy -> fixed( parameter_type => 'sigma',
 		  new_values => [[(1) x $copy -> nsigmas -> [0] ]] );
-  
+
   $copy -> extra_output( ['fort.80'] );
-  
+
   $copy -> remove_records( type => 'table' );
   $copy -> remove_records( type => 'abbreviated' );
   $copy -> remove_records( type => 'nonparametric' );
-  
+
   $copy -> _write;
-  
+
   push( @new_ofv_models, $copy );
 }
 
-my $new_modelfit = 
+my $new_modelfit =
 	tool::modelfit->new( eval( $common_options::parameters ),
 	  prepend_model_file_name => 1,
 	  directory => 'modelfit',
-	  models => \@new_ofv_models );  
+	  models => \@new_ofv_models );
 
 $new_modelfit -> run;
 
@@ -735,7 +735,7 @@ my @etas_and_sums;
 foreach my $parameter( 0..($nomegas - 1) ){
   my @result;
   my @row_sums = (0) x scalar @{$individual_etas[0]};
-  
+
   for( my $ind_ofv=0; $ind_ofv < $number_of_individuals ; $ind_ofv ++) {
     for( my $individual=0;$individual < $number_of_individuals; $individual++) {
       my $ofv = $all_ind_ofv[$ind_ofv] -> [$individual];
@@ -745,9 +745,9 @@ foreach my $parameter( 0..($nomegas - 1) ){
       $row_sums[$individual]+=$LP;
     }
   }
-  
+
   dump_csv( "L_times_P_ETA$parameter.csv", \@result );
-  
+
   for( my $ind_ofv=0; $ind_ofv < $number_of_individuals ; $ind_ofv ++) {
     for( my $individual=0;$individual <= $#{$result[$ind_ofv]}; $individual++ ) {
       $result[$ind_ofv] -> [$individual] = ($result[$ind_ofv] -> [$individual] / $row_sums[$individual]) / $number_of_individuals;
@@ -772,9 +772,9 @@ foreach my $parameter( 0..($nomegas - 1) ){
     }
 
     $big_sum += $sum;
-    
+
     push( @sums, $sum );
-	
+
   }
 
   my @order = 0..scalar(@{$individual_etas[$parameter]})-1 ;
@@ -796,9 +796,9 @@ foreach my $parameter( 0..($nomegas - 1) ){
   if( $big_sum > 1.01 or $big_sum < 0.99 ){
     print "Warning, sum of probabilties is outside of range [0.99..1.01]: $big_sum\n";
   }
- 
+
   dump_csv( "P_values_ETA$parameter.csv", \@result );
-  
+
 }
 
 chdir( '..' );
@@ -817,18 +817,18 @@ sub dump_csv
   foreach my $sub_arr( @{$arr} ){
     print( FILE join( ',', @{$sub_arr} ), "\n" );
   }
-  
+
   close( FILE );
-  
+
 }
 
 sub dump_T_csv
 {
   my $file_name = shift;
   my $arr = shift;
-  
+
   open( FILE, ">", $file_name );
-  
+
   for( my $x = 0;$x < @{$arr->[0]}; $x++ ){
     for( my $y = 0;$y < @{$arr}; $y++ ){
       if( $y > 0 and $y < @{$arr} ){
@@ -838,6 +838,6 @@ sub dump_T_csv
     }
     print( FILE "\n" );
   }
-  
+
   close( FILE );
 }

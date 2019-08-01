@@ -126,7 +126,7 @@ $help_text{-dv} = <<'EOF';
 	Default is DV. Name of dependent variable. Case sensitive, must be exactly
 	the same case and spelling as in modelfile. Maximum of 4 letters because of
 	NONMEM limitation, unless either IPRED or IWRES. If a synonym for DV is set
-	in $INPUT, the synonym must be set as the dependent variable on the command 
+	in $INPUT, the synonym must be set as the dependent variable on the command
 	line, -dv=<synonym>.
 EOF
 
@@ -141,28 +141,28 @@ $help_text{-flip_comments} = <<'EOF';
 	uncommented and vice versa) between the tags
 	;Sim_start
 
-	and 
+	and
 
 	;Sim_end
 
 	For example, if the required input model has lines
 
-	;Sim_start 
+	;Sim_start
 	IGNORE(TYPE.EQ.1)
-	;ACCEPT(TYPE.EQ.1) 
+	;ACCEPT(TYPE.EQ.1)
 	;Sim_end
 
 	then the MAXEVAL=0 model will be run as such and the simulation model will
 	instead have lines
 
 	;IGNORE(TYPE.EQ.1)
-	ACCEPT(TYPE.EQ.1) 
+	ACCEPT(TYPE.EQ.1)
 
 	The tags may appear multiple times. Note that the tags must look exactly as
 	above or the editing will fail. When creating the simulation model PsN will
 	remove $COV and $TABLE, change SEED and NSUBS in $SIM, add a new $TABLE and
 	update initial estimates if option -lst is set or add $MSFI if option -msfo
-	is used, but otherwise no changes will be made to the code.	
+	is used, but otherwise no changes will be made to the code.
 EOF
 
 $help_text{-idv} = <<'EOF';
@@ -185,7 +185,7 @@ $help_text{-keep_estimation} = <<'EOF';
 	for each simulated dataset ($ESTIMATION is kept and MAXEVALS is set to 0). Note
 	that in this case variables such as IPRED(F) are based on the re-estimated
 	post-hoc parameters. Also note that in earlier program versions keep_estimation
-	was set or unset automatically.      
+	was set or unset automatically.
 EOF
 
 $help_text{-lst_file} = <<'EOF';
@@ -219,7 +219,7 @@ $help_text{-offset_rawres} = <<'EOF';
 
 	Default is 1. Only relevant in combination with rawres_input. The number of
 	result lines to skip in the input raw results file  before starting to read
-	final parameter estimates. In a regular bootstrap raw_results file the first 
+	final parameter estimates. In a regular bootstrap raw_results file the first
 	ine of estimates refers to the input model with the full dataset, so therefore
 	the default offset is 1.
 EOF

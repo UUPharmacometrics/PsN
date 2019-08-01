@@ -15,8 +15,8 @@ use model_transformations;
 extends 'tool';
 
 has 'ignore' => ( is => 'rw', isa => 'Str' );
-has 'model' => ( is => 'rw', isa => 'model' ); 
-has 'evid_column' => ( is => 'rw', isa => 'Int' ); 
+has 'model' => ( is => 'rw', isa => 'model' );
+has 'evid_column' => ( is => 'rw', isa => 'Int' );
 has 'numobs_indiv' => ( is => 'rw', isa => 'HashRef', default => sub { {} } );
 has 'sorted_indiv_numobs' => ( is => 'rw', isa => 'ArrayRef', default => sub { [] } );
 has 'columns' => ( is => 'rw', isa => 'ArrayRef' );
@@ -25,8 +25,8 @@ sub BUILD
 {
     my $self = shift;
 
-	my $model = $self->models()->[0]; 
-    my $evid_column = $model->problems->[0]->find_data_column(column_name => 'EVID', ignore_dropped => 0); 
+	my $model = $self->models()->[0];
+    my $evid_column = $model->problems->[0]->find_data_column(column_name => 'EVID', ignore_dropped => 0);
     if ($evid_column == -1) {
         die "Error: There is no EVID column in the dataset\n";
     }
@@ -47,7 +47,7 @@ sub modelfit_setup
     $model->set_option(record_name => 'estimation', option_name => 'MAXEVALS', fuzzy_match => 1, option_value => '0');
     my @models_to_run;
 
-    my $mdv_column = $model->problems->[0]->find_data_column(column_name => 'MDV'); 
+    my $mdv_column = $model->problems->[0]->find_data_column(column_name => 'MDV');
     if ($mdv_column == -1) {
         $mdv_column = undef;
     }
@@ -106,7 +106,7 @@ sub modelfit_setup
 
 	my $modelfit = tool::modelfit->new(
 		%{common_options::restore_options(@common_options::tool_options)},
-		models => \@models_to_run, 
+		models => \@models_to_run,
 		base_dir => $self->directory . 'm1/',
 		directory => undef,
 		top_tool => 0,
@@ -214,7 +214,7 @@ sub ignore_row
     foreach my $expr (@ignore) {
         (my $colname, my $value) = split /==/, $expr;
 
-        my $column = $self->model->problems->[0]->find_data_column(column_name => $colname, ignore_dropped => 0); 
+        my $column = $self->model->problems->[0]->find_data_column(column_name => $colname, ignore_dropped => 0);
         if ($column == -1) {
             die "Error: There is no colum $colname to ignore\n";
         }

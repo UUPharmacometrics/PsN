@@ -81,7 +81,7 @@ sub derivatives_model
 
 sub linearize_error_terms
 {
-    # Create the error terms for a linearized model 
+    # Create the error terms for a linearized model
     my %parm = validated_hash(\@_,
         neta => { isa => 'Int' },
         neps => { isa => 'Int' },
@@ -91,7 +91,7 @@ sub linearize_error_terms
 
     my @code;
     for (my $i = 1; $i <= $neps; $i++) {
-        push @code, "ERR${i}_0 = D_EPS_${i}"; 
+        push @code, "ERR${i}_0 = D_EPS_${i}";
         for (my $j = 1; $j <= $neta; $j++) {
             push @code, "ERR${i}_${j} = D_EPSETA${i}_${j} * (ETA(${j}) - OETA${j})";
         }
@@ -138,7 +138,7 @@ sub linearize_error_sums
 
     my @keys = sort keys %$eta_parameter;
 
-    my @code; 
+    my @code;
     for (my $i = 1; $i <= $neps; $i++) {
         my @addends = ();
         push @addends, "ERR${i}_0";
@@ -277,7 +277,7 @@ sub second_order_approximation_model
         problem_number => 1
     );
 
-    my $ignore = ""; 
+    my $ignore = "";
     if ($have_evid) {
         $ignore = " IGNORE=(EVID.GT.0)";
     }
@@ -285,7 +285,7 @@ sub second_order_approximation_model
     my $problem = model::problem->new(
         ignore_missing_files=> 1,
         prob_arr => [
-            '$PROBLEM Second order approximation', 
+            '$PROBLEM Second order approximation',
             $input,
             '$DATA 2nd_order.dta IGNORE=@' . $ignore,
         ],
@@ -297,7 +297,7 @@ sub second_order_approximation_model
         ignore_missing_files => 1,
         psn_record_order => 1,
     );
-    
+
     $approximation_model->add_records(type => 'estimation', record_strings => [ 'MAXEVAL=9999 METHOD=1 LAPLACE -2LL' ]);
     $approximation_model->problems->[0]->omegas($model->problems->[0]->omegas);
 
@@ -334,13 +334,13 @@ sub second_order_approximation_model
             push @pred, "$term = DELTA_ETA_$i * DELTA_ETA_$j * D2YDETA$i$j\n";
             push @second_order2, $term;
         }
-    } 
+    }
     unshift @second_order2, 'TMP2';
     push @pred, "Y=" . join("+", @second_order2) . "\n";
 
-    push @pred, "ENDIF\n"; 
+    push @pred, "ENDIF\n";
 
-    $approximation_model->add_records(type => 'pred', record_strings => \@pred); 
+    $approximation_model->add_records(type => 'pred', record_strings => \@pred);
 
 
     return $approximation_model;

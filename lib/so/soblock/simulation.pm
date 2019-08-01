@@ -34,9 +34,9 @@ sub xml
     my $sim;
     if (scalar(@{$self->SimulationBlock}) > 0) {
         $sim = XML::LibXML::Element->new("Simulation");
-    
+
         foreach my $block (@{$self->SimulationBlock}) {
-            my $xml = $block->xml(); 
+            my $xml = $block->xml();
             $sim->appendChild($xml);
         }
     }

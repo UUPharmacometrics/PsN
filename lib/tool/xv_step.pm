@@ -62,7 +62,7 @@ sub BUILD
 	$model = $self -> models -> [0];
 	$self->ignoresigns($model -> ignoresigns);
 	$self->model($model);
-	
+
 	unless ( $self -> do_prediction or $self -> do_estimation ){
 		croak("must do either prediction or estimation");
 	}
@@ -91,14 +91,14 @@ sub estimation_setup
 	my @estimation_models =();
 
 	for( my $i = 0; $i < scalar(@{$estimation_data}); $i++  ){
-		my $model_copy_est = $model -> copy(filename => 
+		my $model_copy_est = $model -> copy(filename =>
 											$directory.'m1/est_model'.$tag.$i.'.mod',
 											output_same_directory => 1,
 											write_copy => 0,
-											copy_datafile => 0, 
+											copy_datafile => 0,
 											copy_output => 0,
 			);
-		
+
 		$model_copy_est -> datafiles( new_names => [$estimation_data -> [$i]] );
 		if ($msf){
 			$model_copy_est ->rename_msfo(add_if_absent => 1,
@@ -151,11 +151,11 @@ sub prediction_setup
 		my $model_copy_pred = $model -> copy(
 			filename => $directory.'m1/'.$filename,
 			output_same_directory => 1,
-			copy_datafile => 0, 
+			copy_datafile => 0,
 			write_copy => 0,
 			copy_output => 0,
 			);
-		
+
 		#to handle NM7 methods
 		$model_copy_pred -> set_maxeval_zero(print_warning => 0,
 											 need_ofv => 1,
@@ -166,7 +166,7 @@ sub prediction_setup
 		$model_copy_pred -> datafiles( new_names => [$prediction_data -> [$i]] );
 		if (defined $est_mod){
 			#only true when not lasso
-			if( defined $est_mod -> outputs -> [0] and 
+			if( defined $est_mod -> outputs -> [0] and
 				defined $est_mod -> outputs -> [0] ->get_single_value(attribute=> 'ofv') ){
 
 				if ($msf){
@@ -183,7 +183,7 @@ sub prediction_setup
 							$temp_model = $model_copy_pred -> copy(
 								filename => $directory.'dummy.mod',
 								output_same_directory => 1,
-								copy_datafile => 0, 
+								copy_datafile => 0,
 								write_copy => 0,
 								copy_output => 0,
 								);
@@ -198,7 +198,7 @@ sub prediction_setup
 														 update_thetas => 1);
 							#we never write temp_model to disk, only use as template for update_inits scenario
 						}
-					
+
 						if ($scenario_1){
 							#create second model file for separate parametric evaluation using update_inits
 							my $extra_filename = $filename;
@@ -207,7 +207,7 @@ sub prediction_setup
 							my $model_copy_extra_update = $temp_model -> copy(
 								filename => $directory.'m1/'.$extra_filename,
 								output_same_directory => 1,
-								copy_datafile => 0, 
+								copy_datafile => 0,
 								write_copy => 0,
 								copy_output => 0,
 								);
@@ -228,7 +228,7 @@ sub prediction_setup
 							my $model_copy_extra = $model_copy_pred -> copy(
 								filename => $directory.'m1/'.$extra_filename,
 								output_same_directory => 1,
-								copy_datafile => 0, 
+								copy_datafile => 0,
 								write_copy => 0,
 								copy_output => 0,
 								);
@@ -251,7 +251,7 @@ sub prediction_setup
 							push(@{$model_copy_pred->problems()},get_second_problem_update(model =>$temp_model));
 							push(@{$model_copy_pred->active_problems()},1);
 						}
-						
+
 						#turn off parametric evaluation completely in first $PROB
 						$model_copy_pred -> set_option(problem_numbers => [1],
 													   record_name => 'estimation',
@@ -294,7 +294,7 @@ sub get_second_problem_msfi
 									  output_same_directory => 1,
 									  copy_output => 0,
 									  write_copy =>0);
-	
+
 	#set $DATA REWIND
 	$dummymodel->add_option(problem_numbers => [1],
 							record_name => 'data',
@@ -316,7 +316,7 @@ sub get_second_problem_msfi
 							   fuzzy_match => 1);
 	$dummymodel->add_option(record_name => 'msfi',
 							option_name => 'POPETAS');
-							
+
 
 	my $linesarray = $dummymodel->problems->[0]->_format_problem(relative_data_path => $model->relative_data_path,
 																 write_directory => $model->directory);
@@ -339,8 +339,8 @@ sub get_second_problem_msfi
 										  dtbs                         => 0,
 										  prob_arr                    => \@problem_lines,
 										  shrinkage_module            => $sh_mod );
-	
-	
+
+
 	return $problem;
 
 }
@@ -358,7 +358,7 @@ sub get_second_problem_update
 									  output_same_directory => 1,
 									  copy_output => 0,
 									  write_copy =>0);
-	
+
 	#set $DATA REWIND
 	$dummymodel->add_option(problem_numbers => [1],
 							record_name => 'data',
@@ -394,8 +394,8 @@ sub get_second_problem_update
 										  dtbs                         => 0,
 										  prob_arr                    => \@problem_lines,
 										  shrinkage_module            => $sh_mod );
-	
-	
+
+
 	return $problem;
 
 }
@@ -416,7 +416,7 @@ sub prediction_update
 
 	for( my $i = 0; $i < scalar(@{$prediction_models}); $i++){
 		my $est_mod = $estimation_models->[$i];
-		if( defined $est_mod -> outputs -> [0] and 
+		if( defined $est_mod -> outputs -> [0] and
 			defined $est_mod -> outputs -> [0] ->get_single_value(attribute=> 'ofv') ){
 			$prediction_models->[$i] -> update_inits( from_output => $est_mod->outputs->[0],
 													  update_omegas => 1,
@@ -457,7 +457,7 @@ sub modelfit_setup
 
 	if( $self -> do_estimation ){
 		$self -> estimation_models(estimation_setup( model => $self->model,
-													 directory => $self->directory,	
+													 directory => $self->directory,
 													 msf => $self->msf,
 													 estimation_data => $self->estimation_data));
 		if ($self->is_lasso){
@@ -474,13 +474,13 @@ sub modelfit_setup
 			for (my $j=1; $j < scalar(@{$self->models}); $j++){
 				push(@{$self -> estimation_models},@{estimation_setup( model => $self->models->[$j],
 																	   tag => '_m'.($j+1).'_',
-																	   directory => $self->directory,	
+																	   directory => $self->directory,
 																	   msf => $self->msf,
 																	   estimation_data => $self->estimation_data)});
-				
+
 			}
 		}
-			
+
 	}else{
 		#only prediction
 		$self -> prediction_models(prediction_setup(model => $self->model,
@@ -493,7 +493,7 @@ sub modelfit_setup
 			for (my $j=1; $j < scalar(@{$self->models}); $j++){
 				push(@{$self -> prediction_models},@{prediction_setup( model => $self->models->[$j],
 																	   tag => '_m'.($j+1).'_',
-																	   directory => $self->directory,	
+																	   directory => $self->directory,
 																	   last_est_complete => $self->last_est_complete,
 																	   msf => $self->msf,
 																	   is_nonparametric => $self->is_nonparametric,
@@ -505,7 +505,7 @@ sub modelfit_setup
 	my %modf_args;
 	if (defined $self -> subtool_arguments and defined $self -> subtool_arguments -> {'modelfit'}){
 		%modf_args = %{$self -> subtool_arguments -> {'modelfit'}};
-	} 
+	}
 
 	my $task;
 	if( $self -> do_estimation ){
@@ -528,7 +528,7 @@ sub modelfit_setup
 						  ) ] );
 		$task = 'prediction';
 	}
-	
+
 	trace(tool => 'xv_step_subs', message => "a new modelfit object for $task", level => 1);
 
 	if (defined $self->init) {
@@ -585,7 +585,7 @@ sub summarize_results
 			my $pred_model = $self->prediction_models->[$index];
 			my $ofv=undef;
 			my $npofv=undef;
-			if (defined $est_model and defined $est_model -> outputs and 
+			if (defined $est_model and defined $est_model -> outputs and
 				defined $est_model -> outputs -> [0] and $est_model->outputs->[0]->have_output) {
 				$ofv =  $est_model -> outputs -> [0] -> get_single_value(attribute => 'ofv',problem_index => 0);
 				if ($self->is_nonparametric){
@@ -594,10 +594,10 @@ sub summarize_results
 			}
 			push(@{$estimation_ofv[$j]},$ofv);
 			push(@{$estimation_npofv[$j]},$npofv);
-			
+
 			$ofv=undef;
 			$npofv=undef;
-			if (defined $pred_model and defined $pred_model -> outputs and 
+			if (defined $pred_model and defined $pred_model -> outputs and
 				defined $pred_model -> outputs -> [0] and $pred_model->outputs->[0]->have_output) {
 				if ($self->is_nonparametric){
 					$ofv =  $pred_model -> outputs -> [0] -> get_single_value(attribute => 'ofv',problem_index => 1);
@@ -678,7 +678,7 @@ sub create_data_sets
 	my $self = shift;
 
 	my $model = $self -> model;
-	my $ignoresign = (defined $self->ignoresigns and defined $self->ignoresigns->[0])? $self->ignoresigns->[0]:'@'; 
+	my $ignoresign = (defined $self->ignoresigns and defined $self->ignoresigns->[0])? $self->ignoresigns->[0]:'@';
 	my ( $junk, $idcol ) = $model -> _get_option_val_pos( name            => 'ID',
 														  record_name     => 'input',
 														  problem_numbers => [1]);
@@ -709,7 +709,7 @@ sub create_data_sets
 		# Create subsets of the dataobject.
 		($subsets,$array) = $data_obj->subsets(bins => $self->nr_validation_groups,
 											   stratify_on => $self->stratify_on);
-		
+
 		trace(tool => 'xv_step_subs', message => "create data", level => 1);
 	} else {
 		$have_data = 1;
@@ -741,10 +741,10 @@ sub create_data_sets
 			for (my $j = 0; $j <= $#{$subsets}; $j++){
 				if ($j == 0) {
 					$est_data = data->new(
-						filename => 'est_data' . $i . '.dta', 
+						filename => 'est_data' . $i . '.dta',
 						directory => $self->directory,
 						ignoresign => $subsets -> [$i]->ignoresign,
-						ignore_missing_files => 1, 
+						ignore_missing_files => 1,
 						header => $data_obj->header,
 						idcolumn => $subsets -> [$i]->idcolumn);
 				}

@@ -50,7 +50,7 @@ sub BUILD
 	if ($self->random_estimation_inits and not defined $self->rawres_input) {
 		croak('Need rawres_input when using random_estimation_inits');
 	}
-	
+
 	for my $accessor ('logfile', 'raw_results_file', 'raw_nonp_file'){
 		my @new_files = ();
 		my @old_files = @{$self->$accessor};
@@ -61,12 +61,12 @@ sub BUILD
 			push(@new_files, $ldir . $name) ;
 		}
 		$self->$accessor(\@new_files);
-	}	
+	}
 
 	if ( scalar (@{$self -> models->[0]-> problems}) > 2 ) {
 		croak('Cannot have more than two $PROB in the simulation model.');
 	} elsif (scalar (@{$self -> models->[0]-> problems}) == 2 ) {
-		if ((defined $self -> models->[0]-> problems->[0]->priors()) and 
+		if ((defined $self -> models->[0]-> problems->[0]->priors()) and
 			scalar(@{$self -> models->[0]-> problems->[0] -> priors()})>0 ){
 			my $tnpri=0;
 			foreach my $rec (@{$self -> models->[0]-> problems->[0] -> priors()}){
@@ -74,7 +74,7 @@ sub BUILD
 					debugmessage(3,"No options for rec \$PRIOR");
 				}
 				foreach my $option ( @{$rec -> options} ) {
-					if ((defined $option) and 
+					if ((defined $option) and
 						(($option->name eq 'TNPRI') || (index('TNPRI',$option ->name ) == 0))){
 						$tnpri=1;
 					}
@@ -94,7 +94,7 @@ sub BUILD
 		}
 	}
 	if ((not $self->have_tnpri()) and
-		(defined $self->models->[0]->problems->[0]->priors()) and 
+		(defined $self->models->[0]->problems->[0]->priors()) and
 		scalar(@{$self->models->[0]->problems->[0]->priors()})>0 ) {
 		$self->have_nwpri(1);
 		if (defined $self->rawres_input) {
@@ -131,7 +131,7 @@ sub modelfit_setup
 		);
 	my $model_number = $parm{'model_number'};
 
-{ 
+{
 	return if (defined $self->recompute);
 	my $model = $self -> models -> [$model_number-1];
 	my @alternatives = @{$self -> alternative_models}; #may be empty
@@ -165,12 +165,12 @@ sub modelfit_setup
 			croak("To use the option -add_models, the old sse run must be complete.");
 		}
 		while ((-e $self -> directory.'m'.$model_number.'/mc-alternative_'.
-				($old_alternatives+1).'-1.mod') or 
+				($old_alternatives+1).'-1.mod') or
 			   (-e $self -> directory.'m'.$model_number.'/mc-alt_'.
 				($old_alternatives+1).'-1.mod'))
 		{
 			$old_alternatives++;
-		} 
+		}
 		$self->first_alternative($old_alternatives+1);
 		#change results_file so that old is not overwritten
 		my $fname = $self->results_file();
@@ -180,7 +180,7 @@ sub modelfit_setup
 			$addnum++;
 		}
 
-		my $rawfname; 
+		my $rawfname;
 		$rawfname = $self->raw_results_file->[$model_number-1];
 
 
@@ -198,7 +198,7 @@ sub modelfit_setup
 				}else{
 					1;
 				}
-				
+
 			}else{
 				print "$rawfname does not exist\n";
 			}
@@ -218,7 +218,7 @@ sub modelfit_setup
 	}
 
 	if ( (not $done)  or $self->add_models) {
-		
+
 		# this is code for the either first run , i.e. not a restart.
 		# or a restart with added alternative models
 
@@ -228,9 +228,9 @@ sub modelfit_setup
 		my ( @orig_table_names, @alt_table_names );
 		my @msfo_stems_original = (); #one element for each $EST
 		my $sampled_params_arr;
-		
+
 		for ( my $sim_no = 1; $sim_no <= $self->samples; $sim_no++ ) {
-			
+
 			# Copy the model to new simulation models
 
 			my $est_original;
@@ -246,7 +246,7 @@ sub modelfit_setup
 						option_name  => 'FILE',
 						record_index => 'all',
 						problem_index => ($self->probnum-1));
-					
+
 					if( defined $tbl_nm_ref ) {
 						for (my $k = 0; $k < scalar(@{$tbl_nm_ref}); $k++) {
 							if (defined $tbl_nm_ref->[$k]) {
@@ -277,7 +277,7 @@ sub modelfit_setup
 							last;
 						}
 					}
-					
+
 					#set IGNORE=@ since datafile will
 					#get a header during copying. Keep IGNORE=LIST
 					for (my $in=0; $in< $self->probnum; $in++){
@@ -286,12 +286,12 @@ sub modelfit_setup
 					$self->initial_values(ext::Config::Tiny -> new());
 
 					#get table file names from original model. Keep in simulation
-					my $tbl_nm_ref = 
+					my $tbl_nm_ref =
 						$sim_model -> get_option_value( record_name  => 'table',
 														option_name  => 'FILE',
 														record_index => 'all',
 														problem_index => ($self->probnum()-1));
-					
+
 					if( defined $tbl_nm_ref ) {
 						for (my $k = 0; $k < scalar(@{$tbl_nm_ref}); $k++) {
 							if (defined $tbl_nm_ref->[$k]) {
@@ -343,29 +343,29 @@ sub modelfit_setup
 							my $tmp = $sim_model->nsigmas(problem_numbers => [1],
 														  with_correlations => 1);
 							my $n_initials = $tmp->[0];
-							$tmp = $sim_model->initial_values(problem_numbers => [1],	
+							$tmp = $sim_model->initial_values(problem_numbers => [1],
 															  parameter_type => 'sigma',
 															  get_same => 1);
 							my @sigmavalues=@{$tmp->[0]};
-							croak('Error number of initial sigmas.') 
+							croak('Error number of initial sigmas.')
 								unless (scalar(@sigmavalues) == $n_initials);
 
 							$tmp = $sim_model->nomegas(problem_numbers => [1],
 													   with_correlations => 1);
 							$n_initials = $tmp->[0];
-							$tmp = $sim_model->initial_values(problem_numbers => [1],	
+							$tmp = $sim_model->initial_values(problem_numbers => [1],
 															  parameter_type => 'omega',
 															  get_same => 1);
 							my @omegavalues=@{$tmp->[0]};
-							croak('Error number of initial omegas.') 
+							croak('Error number of initial omegas.')
 								unless (scalar(@omegavalues) == $n_initials);
 							$tmp = $sim_model->nthetas(problem_number => 1);
 
 							$n_initials = $tmp;
-							$tmp = $sim_model->initial_values(problem_numbers => [1],	
+							$tmp = $sim_model->initial_values(problem_numbers => [1],
 															  parameter_type => 'theta');
 							my @thetavalues=@{$tmp->[0]};
-							croak('Error number of initial thetas.') 
+							croak('Error number of initial thetas.')
 								unless (scalar(@thetavalues) == $n_initials);
 
 							$self -> initial_values -> {$model_index} -> {'theta'} = join(',',@thetavalues);
@@ -375,9 +375,9 @@ sub modelfit_setup
 
 						}else{
 							$sim_model -> update_inits(from_hash => $sampled_params_arr->[0],
-													   update_fix => $self->update_fix); 
+													   update_fix => $self->update_fix);
 							my @paramarr = ();
-							
+
 							foreach my $label (@{$thetalabels[0]}){
 								push(@paramarr,$sampled_params_arr->[0]->{'theta'}->{$label});
 							}
@@ -403,7 +403,7 @@ sub modelfit_setup
 						unless (defined $thetalabels[0] and defined $omegalabels[0] and defined $sigmalabels[0]){
 							croak("all labels references are not defined in setup sse");
 						}
-						$sampled_params_arr = 
+						$sampled_params_arr =
 							$sim_model -> get_covariance_params(filename => $self->covariance_file(),
 																samples => $self->samples());
 						if (defined $sampled_params_arr){
@@ -416,9 +416,9 @@ sub modelfit_setup
 						}
 
 						$sim_model -> update_inits(from_hash => $sampled_params_arr->[0],
-												   update_fix => $self->update_fix); 
+												   update_fix => $self->update_fix);
 						my @paramarr = ();
-						
+
 						foreach my $label (@{$thetalabels[0]}){
 							push(@paramarr,$sampled_params_arr->[0]->{'theta'}->{$label});
 						}
@@ -443,18 +443,18 @@ sub modelfit_setup
 						my $tmp = $sim_model->nsigmas(problem_numbers => [$self->probnum],
 													  with_correlations => 1);
 						my $n_initials = $tmp->[0];#still first element here since only asked for 1
-						$tmp = $sim_model->initial_values(problem_numbers => [$self->probnum],	
+						$tmp = $sim_model->initial_values(problem_numbers => [$self->probnum],
 														  parameter_type => 'sigma');
 						my @sigmavalues=@{$tmp->[0]}; #still first element here since only asked for 1
-						croak('Error number of initial sigmas.') 
+						croak('Error number of initial sigmas.')
 							unless (scalar(@sigmavalues) == $n_initials);
 						$self -> initial_values -> {$model_index} -> {'sigma'} = join(',',@sigmavalues);
 
-						$tmp = $sim_model->initial_values(problem_numbers => [$self->probnum],	
+						$tmp = $sim_model->initial_values(problem_numbers => [$self->probnum],
 														  parameter_type => 'omega');
 						my @omegavalues=@{$tmp->[0]};
 
-						$tmp = $sim_model->initial_values(problem_numbers => [$self->probnum],	
+						$tmp = $sim_model->initial_values(problem_numbers => [$self->probnum],
 														  parameter_type => 'theta');
 						my @thetavalues=@{$tmp->[0]};
 						@thetaoriginals=@thetavalues;
@@ -469,29 +469,29 @@ sub modelfit_setup
 						my $tmp = $sim_model->nsigmas(problem_numbers => [1],
 													  with_correlations => 1);
 						my $n_initials = $tmp->[0];
-						$tmp = $sim_model->initial_values(problem_numbers => [1],	
+						$tmp = $sim_model->initial_values(problem_numbers => [1],
 														  parameter_type => 'sigma',
 														  get_same => 1);
 						my @sigmavalues=@{$tmp->[0]};
-						croak('Error number of initial sigmas.') 
+						croak('Error number of initial sigmas.')
 							unless (scalar(@sigmavalues) == $n_initials);
 
 						$tmp = $sim_model->nomegas(problem_numbers => [1],
 												   with_correlations => 1);
 						$n_initials = $tmp->[0];
-						$tmp = $sim_model->initial_values(problem_numbers => [1],	
+						$tmp = $sim_model->initial_values(problem_numbers => [1],
 														  parameter_type => 'omega',
 														  get_same => 1);
 						my @omegavalues=@{$tmp->[0]};
-						croak('Error number of initial omegas.') 
+						croak('Error number of initial omegas.')
 							unless (scalar(@omegavalues) == $n_initials);
 						$tmp = $sim_model->nthetas(problem_number => 1);
 
 						$n_initials = $tmp;
-						$tmp = $sim_model->initial_values(problem_numbers => [1],	
+						$tmp = $sim_model->initial_values(problem_numbers => [1],
 														  parameter_type => 'theta');
 						my @thetavalues=@{$tmp->[0]};
-						croak('Error number of initial thetas.') 
+						croak('Error number of initial thetas.')
 							unless (scalar(@thetavalues) == $n_initials);
 
 						$self -> initial_values -> {$model_index} -> {'theta'} = join(',',@thetavalues);
@@ -502,7 +502,7 @@ sub modelfit_setup
 				} #end if else add_models
 
 				if ( $self->estimate_simulation and (not defined $self->simulation_rawres)) {
-					
+
 					$est_original = $model->copy(
 						filename    => $self -> directory.'m'.$model_number.'/'.$orig_name,
 						copy_datafile   => 0,
@@ -532,7 +532,7 @@ sub modelfit_setup
 
 					#handle msfo numbering. first get msfo option from all estimation records.
 					#save stems, i.e. file name without trailing numbers, if any
-					
+
 					my $msfolist_original = $est_original -> msfo_names(); #array over prob
 					if (defined $msfolist_original){
 						for (my $k=0; $k<scalar(@{$msfolist_original}); $k++){
@@ -575,7 +575,7 @@ sub modelfit_setup
 														option_name => 'TIME');
 						}
 					}
-					
+
 					$est_original -> remove_option( record_name  => 'table',
 													option_name  => 'FILE',
 													fuzzy_match => 1,
@@ -583,10 +583,10 @@ sub modelfit_setup
 					if (defined $sampled_params_arr){
 						$est_original -> update_inits(from_hash => $sampled_params_arr->[0],
 													  problem_number => $self->probnum(),
-													  update_fix => $self->update_fix); 
+													  update_fix => $self->update_fix);
 					}
 				} # end 	if( $self -> estimate_simulation  and not $self->simulation_rawres) {
-				
+
 			} else {
 				#not first sim model
 				unless ($self->add_models) {
@@ -597,7 +597,7 @@ sub modelfit_setup
 						copy_output => 0);
 					if (defined $sampled_params_arr and (not $self->random_estimation_inits)) {
 						$sim_model->update_inits(from_hash => $sampled_params_arr->[($sim_no-1)],
-												 update_fix => $self->update_fix); 
+												 update_fix => $self->update_fix);
 						my @paramarr = ();
 						foreach my $label (@{$thetalabels[0]}) {
 							push(@paramarr,$sampled_params_arr->[($sim_no-1)]{'theta'}{$label});
@@ -614,15 +614,15 @@ sub modelfit_setup
 						}
 						$self -> initial_values -> {($sim_no-1)} -> {'sigma'} = join(',',@paramarr);
 					} elsif($self->have_nwpri) {
-						$self -> initial_values -> {($sim_no-1)} -> {'sigma'} = 
+						$self -> initial_values -> {($sim_no-1)} -> {'sigma'} =
 							$self -> initial_values -> {0} -> {'sigma'};
 					} else {
 						#no simulation with uncertainty, just copy inits from first sample, because they are all the same
-						$self -> initial_values -> {($sim_no-1)} -> {'theta'} = 
+						$self -> initial_values -> {($sim_no-1)} -> {'theta'} =
 							$self -> initial_values -> {0} -> {'theta'};
-						$self -> initial_values -> {($sim_no-1)} -> {'omega'} = 
+						$self -> initial_values -> {($sim_no-1)} -> {'omega'} =
 							$self -> initial_values -> {0} -> {'omega'};
-						$self -> initial_values -> {($sim_no-1)} -> {'sigma'} = 
+						$self -> initial_values -> {($sim_no-1)} -> {'sigma'} =
 							$self -> initial_values -> {0} -> {'sigma'};
 					}
 				}
@@ -633,10 +633,10 @@ sub modelfit_setup
 						write_copy => 0,
 						copy_datafile   => 0,
 						copy_output => 0);
-					
+
 					if (defined $sampled_params_arr){
 						$est_original -> update_inits(from_hash => $sampled_params_arr->[($sim_no-1)],
-													  update_fix => $self->update_fix); 
+													  update_fix => $self->update_fix);
 					}
 				}
 			}
@@ -655,24 +655,24 @@ sub modelfit_setup
 			}
 
 			if( $self -> shrinkage ) {
-				
+
 				if( $self -> estimate_simulation and (not defined $self->simulation_rawres)){
 					$est_original -> shrinkage_stats( enabled => 1 );
 				}
 			}
-			
-			# The simulation model must contain exactly one problem      
+
+			# The simulation model must contain exactly one problem
 
 			unless ($self->add_models()){
 
 				my $prob = $sim_model -> problems -> [$self->probnum()-1];
 				my $codeprob = $sim_model -> problems -> [0];
-				
+
 				# set $SIMULATION record
-				
+
 				my $sim_record = $sim_model -> record( problem_number => $self->probnum(),
 													   record_name => 'simulation' );
-				
+
 				if( scalar(@{$sim_record}) > 0 ){
 					my @new_record;
 					foreach my $sim_line ( @{$sim_record -> [0]} ){
@@ -682,20 +682,20 @@ sub modelfit_setup
 							my $old_seed = $2;
 							$sim_line = $3;
 							$new_line .= $head;
-							
+
 							while( $old_seed =~ /(\D*)(\d+)(.*)/ ){
 								$new_line .= $1;
-								$new_line .= random_uniform_integer( 1, 1, 1000000 ); # Upper limit is from nmhelp 
+								$new_line .= random_uniform_integer( 1, 1, 1000000 ); # Upper limit is from nmhelp
 								$old_seed = $3;
 							}
-							
+
 							$new_line .= $old_seed;
-							
+
 						}
-						
+
 						push( @new_record, $new_line.$sim_line );
 					}
-					
+
 					$prob -> set_records( type => 'simulation',
 										  record_strings => \@new_record );
 					foreach my $altopt ('SUBPROBLEMS','SUBPROBS','NSUBPROBLEMS','NSUBPROBS','NSUBS'){
@@ -704,16 +704,16 @@ sub modelfit_setup
 												option_name  => $altopt,
 												fuzzy_match => 1); #default is remove for all records
 					}
-					
+
 				} else {
-					
+
 					my $seed = random_uniform_integer( 1, 1, 1000000 ); # Upper limit is from nmhelp
 					$prob -> set_records( type           => 'simulation',
 										  record_strings => [ '(' . $seed .
 															  ') ONLYSIMULATION' ] );
 				}
-				
-				if( $sim_no == 1 ) {	  
+
+				if( $sim_no == 1 ) {
 					if ($self->have_nwpri() or $self->have_tnpri()){
 						unless ($sim_model -> is_option_set( problem_number => $self->probnum(),
 															 record => 'simulation',
@@ -725,7 +725,7 @@ sub modelfit_setup
 													 problem_numbers => [($self->probnum())]);
 						}
 
-						my @thetalab = @{$sim_model -> labels( parameter_type => 'theta', 
+						my @thetalab = @{$sim_model -> labels( parameter_type => 'theta',
 															   problem_numbers   => [$self->probnum()],
 															   generic => 0)->[0]};
 						my @thetacoords;
@@ -733,13 +733,13 @@ sub modelfit_setup
 							push(@thetacoords,'THETA('.$i.')');
 						}
 
-						my @omegalab = @{$sim_model -> labels( parameter_type => 'omega', 
+						my @omegalab = @{$sim_model -> labels( parameter_type => 'omega',
 															   problem_numbers   => [($self->probnum())],
 															   generic => 0)->[0]};
-						my @omegacoords = @{$sim_model -> labels( parameter_type => 'omega', 
+						my @omegacoords = @{$sim_model -> labels( parameter_type => 'omega',
 																  problem_numbers   => [($self->probnum())],
 																  generic => 1)->[0]};
-						
+
 						unless (scalar(@omegalab)>0 and (scalar(@omegalab) eq scalar(@omegacoords))){
 							croak("number of labels and coords for omega unequal: ".
 								  scalar(@omegalab)." ".scalar(@omegacoords));
@@ -753,7 +753,7 @@ sub modelfit_setup
 									'  WRITE (51,2) '.join(',',@omegacoords),
 									'  CLOSE (51)',
 									'ENDIF');
-						my @code; 
+						my @code;
 						@code = @{$sim_model->get_code(record => 'pk')};
 						unless ($#code > 0) {
 							@code = @{$sim_model->get_code(record => 'pred')};
@@ -798,12 +798,12 @@ sub modelfit_setup
 													 problem_numbers => [($self->probnum())]);
 						}
 					}
-					
+
 					# remove $EST and $COV
 					$prob -> remove_records(type => 'estimation');
 					$prob -> remove_records(type => 'covariance');
 					$prob -> remove_records(type => 'nonparametric');
-					
+
 					# set $TABLE record
 					#when copying $INPUT to $TABLE: remove DATX
 					#if not TIME present, remove TIME
@@ -813,7 +813,7 @@ sub modelfit_setup
 
 					if( defined $prob -> inputs and defined $prob -> inputs -> [0] -> options ) {
 						foreach my $option ( @{$prob -> inputs -> [0] -> options} ) {
-							push( @table_header, $option -> name ) unless 
+							push( @table_header, $option -> name ) unless
 								(($option -> value eq 'DROP' or $option -> value eq 'SKIP'
 								  or $option -> name eq 'DROP' or $option -> name eq 'SKIP') ||
 								 ($option -> name =~ /DAT(E|1|2|3)/) ||
@@ -839,7 +839,7 @@ sub modelfit_setup
 
 				} #end if sim_no==1
 
-				for (my $k=0; $k<scalar(@orig_table_names); $k++){ 
+				for (my $k=0; $k<scalar(@orig_table_names); $k++){
 					if (defined $orig_table_names[$k]){
 						$prob -> remove_option( record_name  => 'table',
 												option_name  => 'FILE',
@@ -849,7 +849,7 @@ sub modelfit_setup
 						$prob -> add_option(record_name  => 'table',
 											record_number  => ($k+1),
 											option_name  => 'FILE',
-											option_value => $orig_table_names[$k].'-sim-'.$sim_no );   
+											option_value => $orig_table_names[$k].'-sim-'.$sim_no );
 					}
 				}
 
@@ -858,11 +858,11 @@ sub modelfit_setup
 										option_name  => 'FILE',
 										fuzzy_match => 1,
 										record_number => (scalar(@orig_table_names)+1));
-				
+
 				$prob -> add_option(record_name  => 'table',
 									record_number  => (scalar(@orig_table_names)+1),
 									option_name  => 'FILE',
-									option_value => $simulated_file );   
+									option_value => $simulated_file );
 
 
 				push( @all_simulated_files, $self -> directory.'m'.$model_number.'/'.
@@ -891,7 +891,7 @@ sub modelfit_setup
 			if( defined $est_original ){
 				push( @orig_est_models, $est_original );
 			}
-			
+
 		} #end loop over number of simulations
 
 		trace(tool => 'sse', message => "created simulation models in directory ".
@@ -909,14 +909,14 @@ sub modelfit_setup
 																	 problem_index =>$k);
 					}
 				}
-				for (my $k=0; $k<scalar(@orig_table_names); $k++){ 
+				for (my $k=0; $k<scalar(@orig_table_names); $k++){
 					if (defined $orig_table_names[$k]){
-						$orig_est_models[($sim_no-1)] -> 
+						$orig_est_models[($sim_no-1)] ->
 							add_option(record_name  => 'table',
 									   record_number  => ($k+1),
 									   option_name  => 'FILE',
 									   problem_numbers => [($self->probnum())],
-									   option_value => $orig_table_names[$k].'-'.$sim_no );   
+									   option_value => $orig_table_names[$k].'-'.$sim_no );
 					}
 				}
 			}
@@ -938,16 +938,16 @@ sub modelfit_setup
                         $problem->tables([]);
                     }
                 }
-                $model->_write(relative_data_path => 1); 
+                $model->_write(relative_data_path => 1);
             }
 
-			my $mod_sim = 
+			my $mod_sim =
 				tool::modelfit -> new(  %{common_options::restore_options(@common_options::tool_options)},
 										top_tool         => 0,
 										models           => \@sim_models,
 										nmtran_skip_model => 2,
 										base_directory   => $self -> directory,
-										directory        => $self -> directory.'simulation_dir'.$model_number, 
+										directory        => $self -> directory.'simulation_dir'.$model_number,
 										parent_tool_id   => $self -> tool_id,
 										retries          => 1,
 										logfile	         => undef,
@@ -956,7 +956,7 @@ sub modelfit_setup
 										threads          => $threads,
 										copy_data        => 0,
 										abort_on_fail => $self->abort_on_fail);
-			
+
 			$mod_sim -> run;
             if (defined $self->special_table) {     # If we have a manually handled table. Move it and rename it properly
                 for (my $i = 1; $i <= scalar(@sim_models); $i++) {
@@ -977,9 +977,9 @@ sub modelfit_setup
 					$lines[1] =~ s/\s*$//;
 					$lines[3] =~ s/^\s*//;
 					$lines[3] =~ s/\s*$//;
-					my @vals = split(/\s+/,$lines[1]) if (defined $lines[1]); 
+					my @vals = split(/\s+/,$lines[1]) if (defined $lines[1]);
 					$self -> initial_values -> {$i-1} -> {'theta'} = join(',',@vals);
-					@vals = split(/\s+/,$lines[3]) if (defined $lines[3]); 
+					@vals = split(/\s+/,$lines[3]) if (defined $lines[3]);
 					$self -> initial_values -> {$i-1} -> {'omega'} = join(',',@vals);
 				}
 				$self -> initial_values -> write( $self -> directory.'simulation_initial_values' );
@@ -1017,7 +1017,7 @@ sub modelfit_setup
 			$orig_est_models[$j] -> datafiles(new_names => \@new_names);
 			$orig_est_models[$j] -> _write(relative_data_path => 1); #should be default, but just to make sure
 		}
-		
+
 		#could reload originals here, but difficult
 
 		$self -> mc_models(\@orig_est_models ); #can be 0 if no-est
@@ -1050,7 +1050,7 @@ sub modelfit_setup
 					croak("get_rawres_params returned undef");
 				}
 			}
-			
+
 			# {{{ create copies of the alternative models
 			@alt_table_names = ();
 			@alt_est_models =();
@@ -1058,8 +1058,8 @@ sub modelfit_setup
 			my @msfo_stems= (); #one element for each $EST
 			for( my $sim_no = 1; $sim_no <= $self -> samples; $sim_no++ ) {
 				my $alt_name = "$filestem-$sim_no.mod";
-				my $alt_out = "$filestem-$sim_no.lst"; 
-				
+				my $alt_out = "$filestem-$sim_no.lst";
+
 				if( $sim_no == 1 ) {
 					$est_alternative = $alternative ->
 						copy( filename    => $self -> directory.'m'.$model_number.'/'.$alt_name,
@@ -1085,7 +1085,7 @@ sub modelfit_setup
 													 message  => "\nWarning: Removing DROP/SKIP items completely ".
 													 "from \$INPUT of ".$alternative->filename().", assuming that ".
 													 "those columns had DROP/SKIP also in simulation model ".
-													 "and are not present in the simulated data.") 
+													 "and are not present in the simulated data.")
 											unless $found_dropped;
 										$found_dropped =1;
 									}
@@ -1094,7 +1094,7 @@ sub modelfit_setup
 							}
 						}
 					}
-					
+
 
 
 					#handle msfo numbering. first get msfo option from all estimation records.
@@ -1132,8 +1132,8 @@ sub modelfit_setup
 
 					$est_alternative -> remove_records(problem_numbers => [(1)],
 													   type => 'simulation' );
-					
-					#ignore @ since simdata contains header rows. 
+
+					#ignore @ since simdata contains header rows.
 					#keep old ignores. It is up to the user to make sure datasets are comparable
 					for (my $in=0; $in< scalar(@{$est_alternative -> problems}); $in++){
 						$est_alternative -> problems->[$in]->datas->[0]->ignoresign('@');
@@ -1201,7 +1201,7 @@ sub modelfit_setup
 													   fuzzy_match => 1,
 													   problem_numbers => [(1)],
 													   record_number => 0); #0 means all
-					
+
 				} else {
 					#not sim_no==1
 					$est_alternative = $alt_est_models[0] ->
@@ -1239,7 +1239,7 @@ sub modelfit_setup
 				my $last_name=undef;
 				for (my $k=0; $k<scalar(@msfo_stems); $k++){
 					#loop problems
-					
+
 					if (defined $msfo_stems[$k]){
 						$last_name = $msfo_stems[$k].$alternative_counter.'-'.$sim_no;
 						#this updates dependent msfi also
@@ -1247,19 +1247,19 @@ sub modelfit_setup
 																	problem_index =>$k);
 					}
 				}
-				for (my $k=0; $k<scalar(@alt_table_names); $k++){ 
+				for (my $k=0; $k<scalar(@alt_table_names); $k++){
 					if (defined $alt_table_names[$k]){
-						$alt_est_models[($sim_no-1)] -> 
+						$alt_est_models[($sim_no-1)] ->
 							add_option(record_name  => 'table',
 									   record_number  => ($k+1),
 									   option_name  => 'FILE',
 									   problem_numbers => [(1)],
-									   option_value => $alt_table_names[$k].'-'.$alternative_counter.'-'.$sim_no );   
+									   option_value => $alt_table_names[$k].'-'.$alternative_counter.'-'.$sim_no );
 					}
 				}
 
 				if ($second_prob){
-					$alt_est_models[($sim_no-1)] 
+					$alt_est_models[($sim_no-1)]
 						-> set_option( record_name  => 'table',
 									   record_number => 1,
 									   problem_numbers => [(2)],
@@ -1267,7 +1267,7 @@ sub modelfit_setup
 									   option_value => 'simtab'.$alternative_counter.'-'.$sim_no.'.dat');
 				}
 			}
-			
+
 
 			for( my $j = 0; $j <= $#alt_est_models; $j++ ) {
 				my $sim_file = $self -> directory.'m'.$model_number.'/'."mc-sim-".($j+1).".dat";
@@ -1280,9 +1280,9 @@ sub modelfit_setup
 
 			}
 			push (@{$self -> mc_models}, @alt_est_models);
-			
+
 			# }}}
-			
+
 		} #end loop over alternatives
 		trace(tool => 'sse', message => "Created estimation models in ".
 								$self -> directory.'m'.$model_number.
@@ -1300,9 +1300,9 @@ sub modelfit_setup
 			close( DONE );
 		}
 
-		#end if not done 
+		#end if not done
 	} else {
-		
+
 		#$done=true and not add_model
 		# Recreate the datasets and models from a checkpoint
 		ui -> print( category => 'sse',
@@ -1324,7 +1324,7 @@ sub modelfit_setup
 				my ($out_dir, $orig_out) = OSspecific::absolute_path( $self -> directory.'/m'.
 																	  $model_number,
 																	  "mc-orig-$j.lst" );
-				my $est_original = 
+				my $est_original =
 					model->new(%{common_options::restore_options(@common_options::model_options)},
 						directory   => $model_dir,
 						 filename    => $orig_name,
@@ -1335,7 +1335,7 @@ sub modelfit_setup
 						 cwres       => $model -> cwres());
 
 				push( @orig_est_models, $est_original );
-				my $nl = $j == $stored_samples ? "" : "\r"; 
+				my $nl = $j == $stored_samples ? "" : "\r";
 				ui -> print( category => 'sse',
 							 message  => ui -> status_bar( sofar => $j+1,
 														   goal  => $stored_samples+1 ).$nl,
@@ -1344,7 +1344,7 @@ sub modelfit_setup
 			} #end loop over samples
 		}
 		$self -> mc_models(\@orig_est_models);
-		
+
 		#start alternatives section
 		my $alternative_counter=0;
 		foreach $alternative (@alternatives){
@@ -1359,7 +1359,7 @@ sub modelfit_setup
 				my ($out_dir, $alt_out) = OSspecific::absolute_path( $self -> directory.'/m'.
 																	 $model_number,
 																	 "$filestem-$j.lst" );
-				my $est_alternative = 
+				my $est_alternative =
 					model->new( %{common_options::restore_options(@common_options::model_options)},
 						 directory   => $model_dir,
 						 filename    => $alt_name,
@@ -1369,7 +1369,7 @@ sub modelfit_setup
 						 extra_output => $model -> extra_output(),
 						 cwres       => $model -> cwres());
 				push( @alt_est_models, $est_alternative );
-				my $nl = $j == $stored_samples ? "" : "\r"; 
+				my $nl = $j == $stored_samples ? "" : "\r";
 				ui -> print( category => 'sse',
 							 message  => ui -> status_bar( sofar => $j+1,
 														   goal  => $stored_samples+1 ).$nl,
@@ -1377,22 +1377,22 @@ sub modelfit_setup
 							 newline  => 0 );
 			} #end loop over samples
 			push (@{$self -> mc_models}, @alt_est_models );
-			
+
 		} #end loop over alternatives
-		
+
 		ui -> print( category => 'sse', message  => " ... done." );
 		random_set_seed( @seed );
 		ui -> print( category => 'sse',
 					 message  => "Using $stored_samples data sets, previously simulated ".
 					 "from $stored_filename1 through $stored_filename2\n" )
 			unless $self -> parent_threads > 1;
-		
+
 	} #end $done
 
 
-	return if ((scalar(@{$self -> alternative_models}) < 1) && 
+	return if ((scalar(@{$self -> alternative_models}) < 1) &&
 			   (not $self->estimate_simulation));
-	
+
 	my $subdir = 'modelfit';
 	my @subtools = ();
 	@subtools = @{$self -> subtools} if (defined $self->subtools);
@@ -1440,10 +1440,10 @@ sub _modelfit_raw_results_callback
 	my $subroutine;
 
 	# Use the mc's raw_results file.
-	my ($dir,$file) = 
+	my ($dir,$file) =
 		OSspecific::absolute_path( $self -> directory,
 								   $self -> raw_results_file ->[$model_number-1] );
-	my ($npdir,$npfile) = 
+	my ($npdir,$npfile) =
 		OSspecific::absolute_path( $self -> directory,
 								   $self -> raw_nonp_file -> [$model_number-1]);
 
@@ -1454,7 +1454,7 @@ sub _modelfit_raw_results_callback
 		my %max_hash = %{$mh_ref};
 		$modelfit -> raw_results_file( [$dir.$file] ); #file to print to
 		$modelfit -> raw_nonp_file( [$npdir.$npfile] );
-		
+
 		#if prior tnpri nothing will be in raw_results for first $PROB, can
 		#take first row for model as final estimates as usual, even if
 		#it happens to be from second $PROB
@@ -1475,10 +1475,10 @@ sub _modelfit_raw_results_callback
 			my @seconds;
 			my $last_model= 0;
 			my $alternative_counter= $self->first_alternative()-1;
-			
-			my $sample = 0; 
+
+			my $sample = 0;
 			my $altname;
-			
+
 			my @simestrows;
 			if (defined $self->simulation_rawres and -e $self->simulation_rawres){
 				open(RAW, $self->simulation_rawres);
@@ -1499,7 +1499,7 @@ sub _modelfit_raw_results_callback
 			}
 
 			for (my $i=0; $i< $n_rows; $i++){
-				my $this_model = $rows[$i]->[0]; 
+				my $this_model = $rows[$i]->[0];
 				my $step= ($this_model-$last_model);
 				if ($step < 0){
 					ui -> print( category => 'sse',
@@ -1570,7 +1570,7 @@ sub _modelfit_raw_results_callback
 				#first move all old models 'samples' steps down. make sure to start from end
 				#so that do not overwrite, sort descending
 				foreach my $mod (sort({$b <=> $a} keys %{$self->raw_line_structure})){
-					$self->raw_line_structure -> {($mod+$self->samples())} = 
+					$self->raw_line_structure -> {($mod+$self->samples())} =
 						$self->raw_line_structure -> {$mod};
 				}
 				for (my $mod =1;$mod <= $self->samples(); $mod++){
@@ -1587,7 +1587,7 @@ sub _modelfit_raw_results_callback
 			my @seconds;
 			my $last_model= 0;
 			my $alternative_counter= $self->first_alternative()-1;
-			my $sample = 0; 
+			my $sample = 0;
 			my $altname;
 
 			if( $self -> estimate_simulation ){
@@ -1598,7 +1598,7 @@ sub _modelfit_raw_results_callback
 			}
 
 			for (my $i=0; $i< $n_rows; $i++){
-				my $this_model = $rows[$i]->[0];  #bug here, get string simulation instead of integer. 
+				my $this_model = $rows[$i]->[0];  #bug here, get string simulation instead of integer.
 				my $step= ($this_model-$last_model);
 				if ($step < 0){
 					ui -> print( category => 'sse',
@@ -1639,7 +1639,7 @@ sub _modelfit_raw_results_callback
 		$self -> raw_results_header(\@{$modelfit -> raw_results_header});
 		$self -> raw_nonp_results_header(\@{$modelfit -> raw_nonp_results_header});
 		#  New header
-		
+
 	};
 	return $subroutine;
 }
@@ -1653,10 +1653,10 @@ sub modelfit_analyze
 	my $model_number = $parm{'model_number'};
 
 	return if (defined $self->recompute);
-	return if ((scalar(@{$self -> alternative_models}) < 1) && 
+	return if ((scalar(@{$self -> alternative_models}) < 1) &&
 			   (not $self->estimate_simulation));
 
-	$self -> tools->[0] -> print_results if (defined $self->tools); 
+	$self -> tools->[0] -> print_results if (defined $self->tools);
 }
 
 sub prepare_results
@@ -1704,12 +1704,12 @@ sub prepare_results
 	trace(tool => 'sse', message => "Computing statistics based on raw_results ", level => 1);
 
 	my $model = $self -> models -> [0];
-	
+
 	my %orig_results_section;
 	my @alt_results_sections;
-	
+
 	### Retrieve initial parameter estimates from original model.
-	
+
 	my %n_initials;
 
 	my $initials = ext::Config::Tiny -> read($self -> directory.'simulation_initial_values');
@@ -1729,7 +1729,7 @@ sub prepare_results
 	my @filter_column = @{$ref1} if (defined $ref1);
 	my @filter_relation = @{$ref2} if (defined $ref2);
 	my @filter_value = @{$ref3} if (defined $ref3);
-	
+
 
 	## Prepare general run info for output file
 	my %return_section;
@@ -1774,7 +1774,7 @@ sub prepare_results
 									  parameter_type => $measure);
 			my @list=@{$tmp->[0]};
 			croak("Error number of $measure indices. model->indexes returns ".
-				  scalar(@list)." but n_initials from file simulation_initial_values is ".$n_initials{$measure}) 
+				  scalar(@list)." but n_initials from file simulation_initial_values is ".$n_initials{$measure})
 				unless (scalar(@list) == $n_initials{$measure});
 			my @vals = split(/,/,$initials->{0}->{$measure});
 			for (my $i=1; $i<=$n_initials{$measure};$i++){
@@ -1783,32 +1783,32 @@ sub prepare_results
 			}
 		}
 	}
-	
+
 
 	$reference_section{'labels'}=[[],\@reference_headers];
 	$reference_section{'values'}=[\@reference_values];
 	push( @{$self -> results->[0]{'own'}},\%reference_section );
-	
+
 	### Loop over the original model (the zero) and over all alternative
 	### models.
 
 	my $end_index = ( $self -> estimate_simulation)? $n_alternatives: $n_alternatives - 1;
-	
+
 	my %label_indices;
 	my $skipnum;
 	for my $model_index ( 0..$end_index ){
 
 		### Foreach such model, create a %results_section
 		my @runs_kept= (1) x $samples;
-		
+
 		my %results_section;
-		
+
 		### Each results_section contains statistics of ofv and
 		### parameters.
 
 		my @values;
 		my @labels;
-		
+
 		@{$labels[0]} = ('mean','median','sd','max','min','skewness',
 						 'kurtosis','rmse','relative_rmse','bias','relative_bias','relative_absolute_bias','rse');
 		$skipnum=scalar(@{$labels[0]});
@@ -1828,26 +1828,26 @@ sub prepare_results
 		} else {
 			my $alt_index;
 			if( $self -> estimate_simulation ){
-				$alt_index = $model_index + ($self->first_alternative-1); 
+				$alt_index = $model_index + ($self->first_alternative-1);
 			} else {
 				$alt_index = $model_index + 1 +($self->first_alternative-1);
 			}
 			$results_section{'name'} = "\nAlternative model ".$alt_index;
 		}
-		
+
 		$results_section{'labels'} = \@labels;
 		$results_section{'values'} = \@values;
-		
+
 		push( @{$self -> results->[0]{'own'}},\%results_section );
-		
+
 	  MEASURE: foreach my $measure ( 'ofv','theta','omega','sigma' ){
 
 		  # Create a header, we might use max_hash from modelfit for this
 		  # later on.
-		  
+
 		  my $start=0;
 		  my $length=0;
-		  
+
 		  for( my $sample_index=0; $sample_index<$samples; $sample_index++ ){
 			  my $skip = 0;
 			  my ($s, $l);
@@ -1856,7 +1856,7 @@ sub prepare_results
 			  }else{
 				  $skip=1;
 			  }
-				  
+
 			  if( defined $s and $start != 0 and $s != $start ){
 				  croak("Internal structure corrupted at $model_index, ".
 						"$samples, $_, $measure, this is a bug" );
@@ -1866,7 +1866,7 @@ sub prepare_results
 			  } else {
 				  $start = $s;
 			  }
-			  
+
 			  if( defined $l and $l > $length ){
 				  $length = $l;
 			  }
@@ -1876,11 +1876,11 @@ sub prepare_results
 				  for (my $i=0; $i< scalar(@filter_column);$i++){
 					  last if $skip;
 					  #find the index
-					  my ($filter_index, $dirt) = split(/,/, $self->raw_line_structure 
-														-> {1+$model_index*$samples + $sample_index} 
+					  my ($filter_index, $dirt) = split(/,/, $self->raw_line_structure
+														-> {1+$model_index*$samples + $sample_index}
 														-> {$filter_column[$i]});
 					  my $val = undef;
-					  if (defined $self -> raw_results 
+					  if (defined $self -> raw_results
 						  -> [$model_index*$samples + $sample_index][$filter_index]){
 						  $val = $self -> raw_results-> [$model_index*$samples + $sample_index][$filter_index];
 					  }else{
@@ -1913,7 +1913,7 @@ sub prepare_results
 				  }
 			  }
 		  }
-		  
+
 		  if( $measure eq 'ofv' ){
 			  push( @{$labels[1]}, $ofvname );
 			  my $finished=0;
@@ -1939,22 +1939,22 @@ sub prepare_results
 			  }
 		  }
 		  foreach my $col ( $start..($start + $length-1) ){
-			  my ($skew, $kurt, $mean, $stdev,$warn) 
+			  my ($skew, $kurt, $mean, $stdev,$warn)
 				  = $self -> skewness_and_kurtosis( use_runs => \@runs_kept,
 													column_index => $col,
-													start_row_index => $model_index*$samples, 
+													start_row_index => $model_index*$samples,
 													end_row_index => $model_index*$samples+$samples-1 );
 			  if ($warn){
 				  print "Based on the ofv value, sample $warn for ".$results_section{'name'}.
 					  ", is completed, but an undefined value was found for $measure for sample $warn\n";
 			  }
 
-			  my ($maximum,$minimum) 
+			  my ($maximum,$minimum)
 				  = $self -> max_and_min( use_runs => \@runs_kept,
 										  column_index => $col,
-										  start_row_index => $model_index*$samples, 
+										  start_row_index => $model_index*$samples,
 										  end_row_index => $model_index*$samples+$samples-1 );
-			  
+
 			  push( @{$values[0]}, $mean );
 			  push( @{$values[2]}, $stdev );
 			  push( @{$values[3]}, $maximum );
@@ -1964,33 +1964,33 @@ sub prepare_results
 
 			  my $median = $self -> get_median( use_runs => \@runs_kept,
 											column_index => $col,
-											start_row_index => $model_index*$samples, 
+											start_row_index => $model_index*$samples,
 											end_row_index => $model_index*$samples+$samples-1 );
 
 			  push( @{$values[1]}, $median );
 
 			  if( 1){
-				  
+
 				  my $abs_rmse = ' ';
 				  my $relative_rmse_percent = ' ';
 				  my $relative_bias_percent = ' ';
 				  my $absolute_bias = ' ';
 				  my $relative_absolute_bias_percent = ' ';
 				  my $rse = ' ';
-				  
+
 				  if( defined $form_initials -> {$measure} and (defined $form_initials -> {$measure}->[$col-$start])){
 					  #not for ofv, only for params
-					  my $init =  $form_initials -> {$measure}->[$col-$start]; #ref of array	  
+					  my $init =  $form_initials -> {$measure}->[$col-$start]; #ref of array
 					  ($abs_rmse,$relative_rmse_percent) = $self -> compute_rmse( use_runs => \@runs_kept,
 																				  column_index => $col,
-																				  start_row_index => $model_index*$samples, 
+																				  start_row_index => $model_index*$samples,
 																				  end_row_index => $model_index*$samples+$samples-1,
 																				  initial_values => $init );
-					  
-					  ($absolute_bias,$relative_absolute_bias_percent,$relative_bias_percent) = 
+
+					  ($absolute_bias,$relative_absolute_bias_percent,$relative_bias_percent) =
 						  $self -> compute_bias( use_runs => \@runs_kept,
 												 column_index => $col,
-												 start_row_index => $model_index*$samples, 
+												 start_row_index => $model_index*$samples,
 												 end_row_index => $model_index*$samples+$samples-1,
 												 initial_values => $init );
 
@@ -2004,8 +2004,8 @@ sub prepare_results
 					  }
 				  }
 
-				  push( @{$values[$label_indices{'rmse'}]}, $abs_rmse );	  
-				  push( @{$values[$label_indices{'relative_rmse'}]}, $relative_rmse_percent );	  
+				  push( @{$values[$label_indices{'rmse'}]}, $abs_rmse );
+				  push( @{$values[$label_indices{'relative_rmse'}]}, $relative_rmse_percent );
 				  push( @{$values[$label_indices{'bias'}]}, $absolute_bias );
 				  push( @{$values[$label_indices{'relative_bias'}]}, $relative_bias_percent );
 				  push( @{$values[$label_indices{'relative_absolute_bias'}]}, $relative_absolute_bias_percent );
@@ -2024,17 +2024,17 @@ sub prepare_results
 					  }
 					  $label_index++;
 				  }
-				  
+
 			  } else {
 				  #push placeholders so that values will stay in correct column
-				  push( @{$values[$label_indices{'rmse'}]}, ' ' );	  
-				  push( @{$values[$label_indices{'relative_rmse'}]}, ' ' );	  
+				  push( @{$values[$label_indices{'rmse'}]}, ' ' );
+				  push( @{$values[$label_indices{'relative_rmse'}]}, ' ' );
 				  push( @{$values[$label_indices{'bias'}]}, ' ' );
 				  push( @{$values[$label_indices{'relative_bias'}]}, ' ' );
 				  push( @{$values[$label_indices{'relative_absolute_bias'}]}, ' ' );
 				  push( @{$values[$label_indices{'rse'}]}, ' ' );
 
-				  my $label_index=$skipnum+1; 
+				  my $label_index=$skipnum+1;
 				  foreach my $zval (@z_list){
 					  push( @{$values[$label_index]}, ' ' );
 					  $label_index++;
@@ -2042,36 +2042,36 @@ sub prepare_results
 			  }
 		  }
 	  }
-	} #end loop model_index 
-	
+	} #end loop model_index
+
 	## Calculate OFV mean calculations
 	#if at least two estimated models or ref_ofv given
 	if( $end_index > 0 or defined $self -> ref_ofv ){
-		
+
 		my @ofv_limits = (0,3.84,5.99,7.81,9.49);
-		
+
 		my (%results_section_below, %results_section_above);
 		my (@labels_below, @labels_above, @values_below, @values_above);
-		
+
 		@{$labels_above[1]} = ('mean delta_'.$ofvname);
 		@{$labels_below[1]} = ('mean delta_'.$ofvname);
-		
+
 		foreach my $limit( @ofv_limits ){
 			push( @{$labels_above[1]}, "$limit" );
 			push( @{$labels_below[1]}, "$limit" );
 		}
-		
+
 		$results_section_above{'name'} = "\n$ofvname Statistics\nType I error rate\n,,Percent delta_$ofvname > N";
 		$results_section_above{'labels'} = \@labels_above;
 		$results_section_above{'values'} = \@values_above;
-		
+
 		$results_section_below{'name'} = "\n1 - type II error rate (power)\n,,Percent delta_$ofvname < N";
 		$results_section_below{'labels'} = \@labels_below;
 		$results_section_below{'values'} = \@values_below;
-		
+
 		push( @{$self -> results->[0]{'own'}},\%results_section_above );
 		push( @{$self -> results->[0]{'own'}},\%results_section_below );
-		
+
 		my $reference_string;
 		my $alt_index;
 		#if add_models then start at later alt in
@@ -2096,12 +2096,12 @@ sub prepare_results
 		  $alt_index++;
 
 		  my $start=0;
-		  my $delta_sum=0;      
+		  my $delta_sum=0;
 		  my %nr_below;
 		  my %nr_above;
 		  my $nr_terminated=0;
 		  my $org_ofv;
-		  
+
 		  foreach my $sample( 0..($samples-1) ){
               my $ofv =  $self->raw_line_structure -> {1+$model_index*$samples + $sample} -> {'ofv'};
               my $s;
@@ -2118,10 +2118,10 @@ sub prepare_results
 				  $start = $s;
 			  }
 			  if($start eq '' or $start==0 ){
-				  # This model probably did not terminate. 
+				  # This model probably did not terminate.
 				  next; #sample
 			  }
-			  
+
 			  if ( defined $self -> ref_ofv ){
 				  $org_ofv = $self -> ref_ofv;
 			  } else {
@@ -2140,19 +2140,19 @@ sub prepare_results
 			  $nr_terminated++;
 			  my $delta = $org_ofv - $alt_ofv;
 			  $delta_sum += $delta;
-			  
+
 			  foreach my $limit ( @ofv_limits ){
-				  
+
 				  if( $delta < -$limit ){
 					  $nr_below{$limit}++;
 				  }
-				  
+
 				  if( $delta > $limit ) {
 					  $nr_above{$limit}++;
 				  }
-				  
+
 			  }
-			  
+
 		  } #end loop over samples
 
 		  if ($nr_terminated > 0){
@@ -2161,7 +2161,7 @@ sub prepare_results
 			  foreach my $limit( @ofv_limits ){
 				  push( @{$values_below[$model_index-$start_index]}, ($nr_below{$limit} / $nr_terminated)*100 . "%" );
 			  }
-			  
+
 			  push( @{$values_above[$model_index-$start_index]}, ($delta_sum / $nr_terminated) );
 			  foreach my $limit( @ofv_limits ){
 				  push( @{$values_above[$model_index-$start_index]}, ($nr_above{$limit} / $nr_terminated)*100 . "%" );
@@ -2170,7 +2170,7 @@ sub prepare_results
 			  push( @{$values_below[$model_index-$start_index]},"For no sample are both models completed" );
 			  push( @{$values_above[$model_index-$start_index]},"For no sample are both models completed");
 		  }
-	  } #end second loop model_index 
+	  } #end second loop model_index
 	}
 }
 
@@ -2255,7 +2255,7 @@ sub compute_rmse
 				$row_count_abs++;
 				if ($initial_values[$i-$start_row_index] != 0){
 					$row_count_relative++;
-					$sum_squared_relative_errors += 
+					$sum_squared_relative_errors +=
 						(($self->raw_results->[$i][$column_index] - $initial_values[$i-$start_row_index])/$initial_values[$i-$start_row_index])**2;
 				}
 			}
@@ -2308,7 +2308,7 @@ sub compute_bias
 	if ($nrows > scalar(@initial_values)){
 		croak("the number of samples is larger than the number of set of simulation initial values\n");
 	}
-	
+
 	my $row_count_abs = 0;
 	my $row_count_relative = 0;
 	my $sum_errors=0;
@@ -2321,9 +2321,9 @@ sub compute_bias
 				$row_count_abs++;
 				if ($initial_values[$i-$start_row_index] != 0){
 					$row_count_relative++;
-					$sum_relative_errors += 
+					$sum_relative_errors +=
 						($self->raw_results->[$i][$column_index] - $initial_values[$i-$start_row_index])/($initial_values[$i-$start_row_index]);
-					$sum_relative_absolute_errors += 
+					$sum_relative_absolute_errors +=
 						($self->raw_results->[$i][$column_index] - $initial_values[$i-$start_row_index])/abs($initial_values[$i-$start_row_index]);
 					#possibly change to abs in numerator for relative_absolute
 				}
@@ -2362,7 +2362,7 @@ sub get_median
 	my $end_row_index = $parm{'end_row_index'};
 	my $median;
 
-	#input is integers $column_index, $start_row_index, $end_row_index 
+	#input is integers $column_index, $start_row_index, $end_row_index
 
 	croak("Bad row index input") if ($start_row_index > $end_row_index);
 
@@ -2401,8 +2401,8 @@ sub skewness_and_kurtosis
 	my $stdev;
 	my $warn = 0;
 
-	#input is integers $column_index, $start_row_index, $end_row_index 
-	
+	#input is integers $column_index, $start_row_index, $end_row_index
+
 	croak("Bad row index input") if ($start_row_index > $end_row_index);
 
 	my $row_count = 0;
@@ -2450,7 +2450,7 @@ sub skewness_and_kurtosis
 			$skewness = ($sum_errors_pow3*$row_count)/(($row_count-1)*($row_count-2)*($stdev**3));
 		}
 		if ($row_count > 3){
-			$kurtosis = -3*(($row_count-1)**2)/(($row_count-2)*($row_count-3)) + 
+			$kurtosis = -3*(($row_count-1)**2)/(($row_count-2)*($row_count-3)) +
 				($sum_errors_pow4*$row_count*($row_count+1))/(($row_count-1)*($row_count-2)*($row_count-3)*($stdev**4));
 		}
 	}
@@ -2474,8 +2474,8 @@ sub max_and_min
 	my $maximum;
 	my $minimum;
 
-	#input is integers $column_index, $start_row_index, $end_row_index 
-	
+	#input is integers $column_index, $start_row_index, $end_row_index
+
 	croak("Bad row index input") if ($start_row_index > $end_row_index);
 
 	$maximum = -1000000000;
@@ -2484,9 +2484,9 @@ sub max_and_min
 		if ($use_runs[$i-$start_row_index]){
 			if (defined $self->raw_results->[$i][$column_index]){
 				$maximum = $self->raw_results->[$i][$column_index] if
-					($self->raw_results->[$i][$column_index] > $maximum); 
+					($self->raw_results->[$i][$column_index] > $maximum);
 				$minimum = $self->raw_results->[$i][$column_index] if
-					($self->raw_results->[$i][$column_index] < $minimum); 
+					($self->raw_results->[$i][$column_index] < $minimum);
 			}else{
 			}
 		}
@@ -2499,7 +2499,7 @@ sub cleanup
 {
 	my $self = shift;
 
-	#remove tablefiles in simulation NM_runs, they are 
+	#remove tablefiles in simulation NM_runs, they are
 	#copied to m1 by modelfit and read from there anyway.
 	for (my $samp=1;$samp<=$self->samples(); $samp++) {
 		unlink $self -> directory."/simulation_dir1/NM_run".$samp."/mc-sim-".$samp.".dat";
@@ -2528,7 +2528,7 @@ sub create_R_plots_code{
 	if ($self->estimate_simulation and defined $self->models and scalar(@{$self->models})){
 		push(@names,$self->models->[0]->filename);
 		push(@rawnames,'simulation');
-		
+
 		my $ref = $self->models->[0]->problems->[0]->get_estimated_attributes(parameter => 'all',
 																			  attribute => 'coords');
 		my $parcount=0;

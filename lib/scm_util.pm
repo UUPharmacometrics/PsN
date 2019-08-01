@@ -11,7 +11,7 @@ require OSspecific;
 
 sub setup
 {
-	# must be able to call from scmplus.pm using PsN and scm 4.7.0 with  
+	# must be able to call from scmplus.pm using PsN and scm 4.7.0 with
 	#scm_util::setup( common_options_hashref => $common_options_hashref,
 	#							config_file => $config_file,
 	#							options => $options,
@@ -85,7 +85,7 @@ sub copy_config_file{
 
 
 sub setup_model{
-	# must be able to call from scmplus bin script using PsN 4.7.0 with  
+	# must be able to call from scmplus bin script using PsN 4.7.0 with
 	#my $model = scm_util::setup_model(filename => $config_file->model,
 	#								options => \%options,
 	#								model_parameter_hashref => {eval common_options::model_parameters(\%options)});
@@ -113,7 +113,7 @@ sub setup_model{
 }
 
 sub check_options{
-	# must be able to call from scmplus bin script using PsN 4.7.0 with  
+	# must be able to call from scmplus bin script using PsN 4.7.0 with
 	# scm_util::check_options(scriptname => 'scmplus',
 	#								options => \%options,
 	#								config_file => $config_file,
@@ -130,7 +130,7 @@ sub check_options{
 	my $options = $parm{'options'};
 	my $config_file = $parm{'config_file'};
 
-	if (($scriptname eq 'scm') or ($scriptname eq 'scmplus')){ 
+	if (($scriptname eq 'scm') or ($scriptname eq 'scmplus')){
 		if (defined $options->{'directory'} and -e $options->{'directory'}) {
 			die "$scriptname cannot resume a previous run. Please change your -directory.\n";
 		}
@@ -139,7 +139,7 @@ sub check_options{
 	my $direction = $config_file -> search_direction;
 	die "You need to specify a search direction (forward/backward/both)\n" unless (defined $direction );
 
-	if ($scriptname eq 'scmplus'){ 
+	if ($scriptname eq 'scmplus'){
 		unless (($direction eq 'forward') or ($direction eq 'both')){
 			die(" scmplus does not support search_direction $direction ");
 		}
@@ -148,7 +148,7 @@ sub check_options{
 			die "$scriptname does not support option -linearize";
 		}
 	}
-	
+
 
 	if (defined $options->{'model'}) {    # Special case for model if not in config file. Are there others?
 		$config_file->model($options->{'model'});
@@ -159,17 +159,17 @@ sub check_options{
 			die "Error: No model specified in config file\n";
 		}
 	}
-	
+
 	if ($config_file->linearize){
-		die "Option -second_order is currently broken" 
+		die "Option -second_order is currently broken"
 			if $config_file->second_order();
-		die "Cannot set option foce to 0, will crash.\n" 
+		die "Cannot set option foce to 0, will crash.\n"
 			if (defined $config_file->foce() and (not $config_file->foce));
 
 		#two new options, linearize and lst-file
 
 		if ($config_file->second_order()){
-			print "Warning: Option -second_order is intended for use together with option -foce\n" 
+			print "Warning: Option -second_order is intended for use together with option -foce\n"
 				unless $config_file->foce();
 		}
 
@@ -185,25 +185,25 @@ sub check_options{
 		}
 
 	}else{
-		die "Option -foce is only allowed together with option -linearize" 
+		die "Option -foce is only allowed together with option -linearize"
 			if $config_file->foce();
-		die "Option -second_order is only allowed together with option -linearize" 
+		die "Option -second_order is only allowed together with option -linearize"
 			if $config_file->second_order();
-		die "Option -lst_file is only allowed together with option -linearize" 
+		die "Option -lst_file is only allowed together with option -linearize"
 			if $config_file->lst_file();
-		die "Option -update_derivatives is only allowed together with option -linearize" 
+		die "Option -update_derivatives is only allowed together with option -linearize"
 			if $config_file->update_derivatives();
-		die "Option -error is only allowed together with option -linearize" 
+		die "Option -error is only allowed together with option -linearize"
 			if $config_file->error();
-		die "Option -error_code is only allowed together with option -linearize" 
+		die "Option -error_code is only allowed together with option -linearize"
 			if $config_file->error_code();
-		die "Option -derivatives_data is only allowed together with option -linearize" 
+		die "Option -derivatives_data is only allowed together with option -linearize"
 			if $config_file->derivatives_data();
 	}
 
 
 
-	
+
 }
 
 
@@ -234,13 +234,13 @@ sub setup_config_backward
 	if( defined $config_file -> ofv_backward ){
         $config_file -> ofv_change( $config_file -> ofv_backward );
     }
-	
+
     if( defined $config_file -> p_backward ){
         $config_file -> p_value( $config_file -> p_backward );
     }
-	
+
 	$config_file -> search_direction( 'backward' );
-	
+
 }
 
 sub setup_config_forward
@@ -253,7 +253,7 @@ sub setup_config_forward
 	my $options = $parm{'options'};
 
 	$config_file -> search_direction( 'forward' );
-	
+
 	my ($orig_ofv,$orig_p_value);
 	my $ofv_backward = undef;
 	my $p_backward = undef;
@@ -278,20 +278,20 @@ sub setup_config_forward
     if( defined $config_file -> p_backward ){
         $p_backward = $config_file -> p_backward;
     }elsif (defined $orig_p_value){
-        $p_backward = $orig_p_value;     
+        $p_backward = $orig_p_value;
     }
 
 
 	return ($orig_ofv,$orig_p_value,$ofv_backward,$p_backward);
 
-	
+
 }
 
 
-	
+
 sub get_config_object
 {
-	# must be able to call from scmplus bin script using PsN 4.7.0 with  
+	# must be able to call from scmplus bin script using PsN 4.7.0 with
 	#my $config_file = scm_util::get_config_object(options => \%options,common_tool_options =>\@common_options::tool_options);
 
 	my %parm = validated_hash(\@_,
@@ -305,7 +305,7 @@ sub get_config_object
 		print "Please specify a config file \n";
 		die;
 	}
-	
+
 	if ( $options->{'config_file'} eq ''){
 		print "Please specify a config file \n";
 		die;
@@ -346,7 +346,7 @@ sub get_config_object
 		}
 	}
 
-	
+
 	return $config_file;
 }
 

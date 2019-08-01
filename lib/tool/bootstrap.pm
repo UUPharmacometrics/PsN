@@ -70,7 +70,7 @@ sub BUILD
 			push(@new_files, $ldir . $name);
 		}
 		$self->$accessor(\@new_files);
-	}	
+	}
 
 	check_ignore_id(model => $self ->models()->[0], allow_ignore_id => $self->allow_ignore_id);
 
@@ -80,7 +80,7 @@ sub check_ignore_id
 {
 	my %parm = validated_hash(\@_,
 							  model => { isa => 'model', optional => 0 },
-							  allow_ignore_id => {isa => 'Bool',optional => 0},				  
+							  allow_ignore_id => {isa => 'Bool',optional => 0},
 		);
 	my $model = $parm{'model'};
 	my $allow_ignore_id = $parm{'allow_ignore_id'};
@@ -126,7 +126,7 @@ sub check_ignore_id
 	if (defined $options){
 		foreach my $opt (@{$options}){
 			unless (defined $opt->value and length($opt->value)>0 ){
-				if (($opt->name =~ /^(IGN|ACC)[^(]*\(ID\./) or 
+				if (($opt->name =~ /^(IGN|ACC)[^(]*\(ID\./) or
 					($id_synonym and ($opt->name =~ /^(IGN|ACC)[^(]*\($id_synonym\./))){
 					if ($allow_ignore_id){
 						ui->print(category=> 'all',message => "\nWarning:\n".
@@ -142,10 +142,10 @@ sub check_ignore_id
 	}
 	#warn if code records with ID/synonym detected
 	@check_list = ();
-	my $record_ref = $model->record(record_name => 'pk');	
+	my $record_ref = $model->record(record_name => 'pk');
 	push (@check_list, @{$model->get_code(record => 'pk')})
 		if (scalar(@{$record_ref}) > 0);
-	
+
 	$record_ref = $model->record(record_name => 'pred');
 	push (@check_list, @{$model->get_code(record => 'pred')})
 	if (scalar(@{$record_ref}) > 0);
@@ -193,7 +193,7 @@ sub cleanup
 		last unless (-e $dir);
 		my $sample=1;
 		while (1){
-			my $file = $dir."NM_run".$sample."/bs_pr".$prob."_".$sample.".dta"; 
+			my $file = $dir."NM_run".$sample."/bs_pr".$prob."_".$sample.".dta";
 			last unless (-e $file);
 			unlink $file;
 			$sample++;
@@ -229,7 +229,7 @@ sub calculate_diagnostic_means
 		my @parameter_array=();
 		# From 1 to get rid of original model
 		for (my $k = 1; $k < scalar @{$self->bootstrap_diagnostics->[$model_number - 1]}; $k++) {
-			next unless ((defined $self->bootstrap_diagnostics->[$model_number - 1][$k]) and 
+			next unless ((defined $self->bootstrap_diagnostics->[$model_number - 1][$k]) and
 						 (defined $self->bootstrap_diagnostics->[$model_number - 1][$k][$l]) and
 						 ($self->bootstrap_diagnostics->[$model_number - 1][$k][$l] ne ''));
 			push(@parameter_array, $self->bootstrap_diagnostics->[$model_number - 1][$k][$l]);
@@ -284,7 +284,7 @@ sub calculate_means
 		    $bias = $mean - $estimated_value;
         }
 		$self->result_parameters->{'bias'} -> [$model_number-1][0][$l] = $bias;
-		if ( length($self->bootstrap_estimates -> [$model_number-1][0][$l])>0 and 
+		if ( length($self->bootstrap_estimates -> [$model_number-1][0][$l])>0 and
 			 $self->bootstrap_estimates -> [$model_number-1][0][$l] != 0 and
 			 $bias/$self->bootstrap_estimates -> [$model_number-1][0][$l]
 			 > $self -> large_bias_limit() ) {
@@ -488,7 +488,7 @@ sub calculate_jackknife_means
 			$maxcol = scalar(@{$self -> jackknife_estimates->[$model_number-1][$k]});
 		}
 	}
-	
+
 	my @means;
 	for (my $l = 0; $l < $maxcol; $l++) {
 		my @parameter_array=();
@@ -842,9 +842,9 @@ sub general_setup
 							  ". This is an indication of a different data file used for the bootstrap run, or an error in the data file parsing");
 				}
 			}
-			
+
 			for ( my $j = 0; $j < $self->samples(); $j++ ) {
-				my ($model_dir, $filename) = OSspecific::absolute_path( $self ->directory().'/m'.$model_number, 
+				my ($model_dir, $filename) = OSspecific::absolute_path( $self ->directory().'/m'.$model_number,
 					'bs_pr'.$i.'_'.($j+1).'.mod' );
 				my $prob_copy = Storable::dclone($problems[$i-1]); #bug here, is from undropped model
 				$new_mod = model -> new( %{common_options::restore_options(@common_options::model_options)},
@@ -857,7 +857,7 @@ sub general_setup
 										 problems             => [$prob_copy],
 										 extra_files          => $model -> extra_files,
 										 ignore_missing_files => 1 );
-				
+
 				unless ($self->keep_tables){
 					$new_mod -> remove_records( type => 'table' );
 				}
@@ -973,13 +973,13 @@ sub general_setup
 					next;
 				}
 
-				if( $stored_filename_found and $stored_samples_found 
+				if( $stored_filename_found and $stored_samples_found
 						and $stored_subjects_found and $stored_seed_found ){
 					last;
-				}		
+				}
 			}
 			close( DONE );
-			unless( $stored_filename_found and $stored_samples_found 
+			unless( $stored_filename_found and $stored_samples_found
 					and $stored_samples_found and $stored_seed_found ){
 				croak("The bootstrap/m1/done file could not be parsed.");
 			}
@@ -1227,7 +1227,7 @@ sub modelfit_analyze
 																  string_filter => $filter,
 																  require_numeric_ofv => 1,
 																  offset => 1,
-																  model => $model); 
+																  model => $model);
 
 		if (scalar(@{$sampled_params_arr})<1){
 			print "\nNo bootstrap samples gave ofv value, nothing to do for -dofv.\n";
@@ -1258,7 +1258,7 @@ sub modelfit_analyze
             for my $model (@$modelsarr) {
                 my @extra_files;
                 if (defined $model->extra_files) {
-                    @extra_files = @{$self->extra_files};   
+                    @extra_files = @{$self->extra_files};
                 }
 
                 @extra_files = ( @extra_files, $phi_file );
@@ -1271,7 +1271,7 @@ sub modelfit_analyze
 												top_tool         => 0,
 												models           => $modelsarr,
 												base_directory   => $self -> directory,
-												directory        => $self -> directory.'compute_dofv_dir'.$model_number, 
+												directory        => $self -> directory.'compute_dofv_dir'.$model_number,
 												raw_results_file => [$self->directory.$self->raw_results_dofv],
 												nmtran_skip_model => 2,
 												parent_tool_id   => $self -> tool_id,
@@ -1302,7 +1302,7 @@ sub _modelfit_raw_results_callback
 	my $subroutine;
 
 	# Use the bootstrap's raw_results file.
-	my ($dir,$file) = 
+	my ($dir,$file) =
 	OSspecific::absolute_path( $self ->directory(),
 		$self -> raw_results_file()->[$model_number-1] );
 	my ($dir2,$nonp_file) = OSspecific::absolute_path( $self ->directory(),
@@ -1421,7 +1421,7 @@ sub _dofv_raw_results_callback
 					$delta_ofv = $row->[$ofvindex] - $orig_ofv;
 				}
 				my @oldrow =@{$row};
-				$row = [@oldrow[0 .. $problemindex],$dofv_samples[$si],@oldrow[$problemindex+1 .. $ofvindex],$delta_ofv,@oldrow[$ofvindex+1 .. $#oldrow]]; 
+				$row = [@oldrow[0 .. $problemindex],$dofv_samples[$si],@oldrow[$problemindex+1 .. $ofvindex],$delta_ofv,@oldrow[$ofvindex+1 .. $#oldrow]];
 				$si++;
 			}
 
@@ -1451,7 +1451,7 @@ sub _dofv_raw_results_callback
 			}
 		}
 		$modelfit->raw_line_structure() -> {'input'} = $modelfit->raw_line_structure() -> {'1'}; #input model
-		my ($dir,$file) = 
+		my ($dir,$file) =
 		OSspecific::absolute_path( $modelfit ->directory(),
 			$modelfit -> raw_results_file()->[$model_number-1] );
 		$modelfit->raw_line_structure() -> write( $dir.'raw_results_structure' );
@@ -1611,7 +1611,7 @@ sub prepare_results
 		if ( defined $self -> $rawres ) {
 			for ( my $i = 0; $i < scalar @{$self->$rawres}; $i++ ) { # All models
 
-				# {{{ Get the number of columns with estimates 
+				# {{{ Get the number of columns with estimates
 				my $estimate_columns=0;
 
 				my $cols_orig = 0;
@@ -1629,11 +1629,11 @@ sub prepare_results
 				my $numpar = $nomegas -> [0];
 
 				# shrinkage omega + wres shrinkage
-				$cols_orig += $numpar + 1; 
+				$cols_orig += $numpar + 1;
 
 				$cols_orig++; # OFV
 
-				# }}} Get the number of columns with estimates 
+				# }}} Get the number of columns with estimates
 
 				# {{{ Loop, choose and set diagnostics and estimates
 
@@ -1669,7 +1669,7 @@ sub prepare_results
 
                         if (not $use_run){
                             #do not bother with the rest of the filtering
-                        }elsif ( $self -> skip_minimization_terminated and 
+                        }elsif ( $self -> skip_minimization_terminated and
                             ( not $self->$rawres->[$i][$j][$diag_idx{'minimization_successful'}] ) ) {
                             $skip_term++;
                             $use_run = 0;
@@ -1688,7 +1688,7 @@ sub prepare_results
                             [$i][$j][$diag_idx{'estimate_near_boundary'}] ) {
                             $skip_bound++;
                             $use_run = 0;
-                        } 
+                        }
                     }
 					# ------------------------  Estimates  ------------------------------
 
@@ -1700,7 +1700,7 @@ sub prepare_results
 								#if e.g. this has cov step successful but first included did not
 								$self->_number_of_columns($totalcolumns-$startcolumn);
 							}
-							$included++; 
+							$included++;
 						}
 						for (my $m = $startcolumn; $m < $totalcolumns ; $m++) {
 							$self->$estimates->[$i][$included][($m-$startcolumn)] = $self->$rawres->[$i][$j][$m];
@@ -1708,7 +1708,7 @@ sub prepare_results
 					}
 				}
 
-				if ($included < 1){ 
+				if ($included < 1){
 					croak("No runs passed the run exclusion critera. Statistics cannot be calculated by PsN. ".
 						"Run bootstrap again with option -summarize and different exclusion criteria.");
 				}
@@ -1854,13 +1854,13 @@ sub create_R_plots_code
 	my $estim_params = '';
 	my $labelref = $self->models->[0]->problems->[0]->get_estimated_attributes(parameter => 'all',
 																			   attribute => 'labels');
-	
+
 	if (defined $labelref){
-		#we should not filter out off-diagonals like in sse. Verified. 
+		#we should not filter out off-diagonals like in sse. Verified.
 		$estim_params = "'".join("','",@{$labelref})."'";
 	}
 	my $paramstring = 'ESTIMATED.PARAMS <- c('.$estim_params.')';
-	
+
 	my $rawresdofvstring;
 	if ($self->dofv){
 		$rawresdofvstring = "dofv.raw.results.file <- '".$self->raw_results_dofv."'";

@@ -24,7 +24,7 @@ sub BUILD
 
 sub add_option
 {
-    my ($self, %parm) = validated_hash(\@_, 
+    my ($self, %parm) = validated_hash(\@_,
 		init_data => { isa => 'Any', optional => 0 }
 	);
 	push(@{$self->options}, model::problem::record::option->new(%{$parm{'init_data'}}));
@@ -43,7 +43,7 @@ sub remove_option
     my @options = @{$self->options};
     my @new_options = ();
     foreach my $option ( @options ) {
-        next if ( $option -> name eq $name );    
+        next if ( $option -> name eq $name );
 
         next if ( $fuzzy_match and index( $name, $option -> name ) == 0 );
         next if ( $fuzzy_match and index(  $option -> name,$name ) == 0 ); #experimental
@@ -65,7 +65,7 @@ sub _add_option
     # "option=value". TODO catch any error from below.
     my $opt_obj = model::problem::record::option->new(option_string => $option_string);
     if ($opt_obj) {
-        push(@{$self->options}, $opt_obj); 
+        push(@{$self->options}, $opt_obj);
     }
 }
 
@@ -102,7 +102,7 @@ sub _read_options
 	my @class_names = split('::',ref($self));
 	my $fname = uc(pop(@class_names));
 	$input_record = 1 if ($fname eq 'INPUT');
-	$first_filename_record = 1 if (($fname eq 'DATA') or ($fname eq 'MSFI')); 
+	$first_filename_record = 1 if (($fname eq 'DATA') or ($fname eq 'MSFI'));
 
 	# Loop over all given strings.
 	my $num = defined $self->record_arr ? scalar(@{$self->record_arr}) : 0;
@@ -164,17 +164,17 @@ sub _read_options
 			my $optstring='';
 			my $append_next_string=0;
 			for ( @row ) {
-				$optstring .= $_;	      
+				$optstring .= $_;
 				if ($append_next_string){
 					if( /\)\s*$/ ) { #found closing parenthesis
-						$append_next_string=0; #append nothing more, continue through to add_option		
+						$append_next_string=0; #append nothing more, continue through to add_option
 					} else {
-						$optstring .= ' ';	      
-						next; 
+						$optstring .= ' ';
+						next;
 					}
 				}elsif( /=\(/ && /[^,\)]\s*$/) { #opening parenthesis without a closing and not ending w comma
 					$append_next_string=1;
-					$optstring .= ' ';	      
+					$optstring .= ' ';
 					next;
 				}
 				# Create options.
@@ -206,7 +206,7 @@ sub _format_record
 	my @formatted;
 
 	# record::format_record
-	# 
+	#
 
 	# This method might be even more trickier than _read_options,
 	# but don't worry, I'll walk you through it. You should read
@@ -217,8 +217,8 @@ sub _format_record
 	my $fname = uc(pop(@class_names));
 
 	# Get some members from the object.
-	my @print_order = defined $self->print_order ? @{$self->print_order} : ();	
-	my @comments = @{$self->comment};    
+	my @print_order = defined $self->print_order ? @{$self->print_order} : ();
+	my @comments = @{$self->comment};
 	my @options = @{$self->options};
 
 	# Each element of @print_order is a number which says how many
@@ -264,14 +264,14 @@ sub _format_record
 			if( scalar @print_order > 0 ) {
 				$opts_before_comment = shift @print_order;
 			} else {
-				unless( scalar @comments > 0 ){ 
+				unless( scalar @comments > 0 ){
 
 					# If we have more comments, it likely mean that
 					# someone has appended comments manually. TODO This
 					# might become a mess and we should probably add a
 					# feature to add commments before or after the record.
 
-					$opts_before_comment = -1; 
+					$opts_before_comment = -1;
 				}
 			}
 
@@ -307,7 +307,7 @@ sub _format_record
 
 			$formatted[$line] .= ' '.$foption;
 			$last_is_option = 1;
-		} 
+		}
 	}
 
 	# Print a line break if the last item was an option (as oposed
@@ -346,7 +346,7 @@ sub rename_msfo
 		);
 	my $name = $parm{'name'};
 	my $add_if_absent = $parm{'add_if_absent'};
-	
+
 	my @options = defined($self->options) ? @{$self->options} : ();
 	my $found=0;
 	foreach my $opt (@options){

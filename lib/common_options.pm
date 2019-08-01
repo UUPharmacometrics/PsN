@@ -170,7 +170,7 @@ sub setup
   my $command = shift;
 
   get_defaults( $opts, $command );
-  
+
   unless (defined $opts -> {'seed'}){
     $opts -> {'seed'} = random_uniform_integer( 1, 100000, 999999 );
   }
@@ -195,11 +195,11 @@ sub restore_options
   my %stored_opts = eval( options_to_parameters( \@relevant_options ) );
   #options_to_parameters returns a string. eval() evaluates this as perl code
   #In the returned string the variable %options, declared in this function,
-  #is used for substituting variables ($hash{'key'}) to values. 
+  #is used for substituting variables ($hash{'key'}) to values.
 
   return \%stored_opts; #return reference to stored_opts
 }
-  
+
 
 sub set_globals
 {
@@ -211,7 +211,7 @@ sub set_globals
 
   ui -> category( $command );
   ui -> silent(1) if( $options{'silent'} );
-  
+
   my $version = 'default';
   if (defined $options{'nm_version'}){
     $version = $options{'nm_version'};
@@ -294,7 +294,7 @@ sub get_defaults
 	  if (-e $dir.$file.'md'){ # check if .Rmd file exists in in local R template directory
 		  $options->{'template_directory_rplots'} = $try_local_R_template_dir;
 		  $options -> {'template_file_rplots'} = $tool.'_default.Rmd';
-	  }	  
+	  }
   }
   if( exists $options -> {'template_directory_rplots'} ){
 	  #make sure path is absolute if it was not already
@@ -303,20 +303,20 @@ sub get_defaults
   }else{
 	  $options -> {'template_directory_rplots'} = $PsN::Rscripts_dir;
   }
-  
-  #check if there is an .Rmd file 
+
+  #check if there is an .Rmd file
   my ($dir, $file) = OSspecific::absolute_path($options->{'template_directory_rplots'},$options->{'template_file_rplots'});
   if (-e $dir.$file.'md'){
 	  $options -> {'template_file_rplots'} = $tool.'_default.Rmd';
-  }	 
-        
+  }
+
   if ($warn_R_template ){
 	  my ($dir, $file) = OSspecific::absolute_path($options->{'template_directory_rplots'},$options->{'template_file_rplots'});
 	  my $template_file = $dir.$file;
 	  my $template_file_Rmd = $dir.$file.'md';
 	  unless ((-e $template_file) || (-e $template_file_Rmd)){
 		  croak ("template_file_rplots ".$options->{'template_file_rplots'}." does not exist in ".$options->{'template_directory_rplots'})
-	  }  
+	  }
   }
 
 
@@ -335,7 +335,7 @@ sub sanity_checks
 
 	if (defined $options->{'silent'} and $options->{'silent'}){
 		$options->{'display_iterations'}=0;
-	} 
+	}
 
 	unless ($options -> {'nmfe'} or $options -> {'nmqual'}){
 		#assume user wants nmfe if none set
@@ -438,39 +438,39 @@ sub sanity_checks
 	if($options -> {'run_on_lsf'}){
 		#check set options contain characters, no space only commands
 		if (defined $options -> {'lsf_job_name'}){
-			$options -> {'lsf_job_name'} = undef 
+			$options -> {'lsf_job_name'} = undef
 				if ($options -> {'lsf_job_name'} =~ /^\s*$/);
 		}
 		if (defined $options -> {'lsf_options'}){
-			$options -> {'lsf_options'} = undef 
+			$options -> {'lsf_options'} = undef
 				if ($options -> {'lsf_options'} =~ /^\s*$/);
 		}
 		if (defined $options -> {'lsf_pre_exec_command'}){
-			$options -> {'lsf_pre_exec_command'} = undef 
+			$options -> {'lsf_pre_exec_command'} = undef
 				if ($options -> {'lsf_pre_exec_command'} =~ /^\s*$/);
 		}
 		if (defined $options -> {'lsf_post_exec_command'}){
-			$options -> {'lsf_post_exec_command'} = undef 
+			$options -> {'lsf_post_exec_command'} = undef
 				if ($options -> {'lsf_post_exec_command'} =~ /^\s*$/);
 		}
 		if (defined $options -> {'lsf_project_name'}){
-			$options -> {'lsf_project_name'} = undef 
+			$options -> {'lsf_project_name'} = undef
 				if ($options -> {'lsf_project_name'} =~ /^\s*$/);
 		}
 		if (defined $options -> {'lsf_queue'}){
-			$options -> {'lsf_queue'} = undef 
+			$options -> {'lsf_queue'} = undef
 				if ($options -> {'lsf_queue'} =~ /^\s*$/);
 		}
 		if (defined $options -> {'lsf_resources'}){
-			$options -> {'lsf_resources'} = undef 
+			$options -> {'lsf_resources'} = undef
 				if ($options -> {'lsf_resources'} =~ /^\s*$/);
 		}
 		if (defined $options -> {'lsf_sleep'}){
-			$options -> {'lsf_sleep'} = undef 
+			$options -> {'lsf_sleep'} = undef
 				if ($options -> {'lsf_sleep'} =~ /^\s*$/);
 		}
 		if (defined $options -> {'lsf_ttl'}){
-			$options -> {'lsf_ttl'} = undef 
+			$options -> {'lsf_ttl'} = undef
 				if ($options -> {'lsf_ttl'} =~ /^\s*$/);
 		}
 	}
@@ -502,7 +502,7 @@ sub sanity_checks
 			unless ($hash{$out}) {
 				print "\nWarning: NM output file extension $out set in -nm_output is not recognized, it will be ignored.\n";
 			}
-			
+
 		}
 	}
 	if ($options -> {'shrinkage'} && $options -> {'mirror_plots'}>0 ){
@@ -512,7 +512,7 @@ sub sanity_checks
 	}
 
 	if (defined $options -> {'parafile'}){
-		unless ($PsN::nm_major_version == 7 
+		unless ($PsN::nm_major_version == 7
 				and defined $PsN::nm_minor_version and $PsN::nm_minor_version >1){
 			my $ver='default';
 			$ver = $options -> {'nm_version'} if (defined $options -> {'nm_version'});
@@ -527,16 +527,16 @@ sub sanity_checks
 			}else{
 				$options -> {'extra_files'} = $options -> {'parafile'};
 			}
-			
+
 			#   #check that nodes is not greater than number of names defined in parafile.
 			#   #Then reset nodes and print warning
 			#   open( FILE,  $options -> {'parafile'}) ||
-			
+
 		}else{
 			print "Parafile ".$options -> {'parafile'}." does not exist.\n";
 			exit;
 		}
-		
+
 	}
 
 }
@@ -554,7 +554,7 @@ sub print_help
   my $option_help;
 
   $option_help .= "[ -h | -? ] [ --help ]\n" . ' ' x (1+length($command));
-  
+
   my @loop_array;
   if( $command eq 'execute' ){
     @loop_array = sort(@get_opt_strings,keys %{$required}, keys %{$optional});
@@ -621,13 +621,13 @@ sub online_help
   my $required_options = shift;
   my $optional_options = shift;
   my %options = %{$opts};
-  
+
   my %help_hash;
 
     $help_hash{'-?'} = <<'EOF';
     -h | -?
 
-    With -h or -? the script prints the list of available options 
+    With -h or -? the script prints the list of available options
     and exit.
 EOF
 
@@ -645,9 +645,9 @@ EOF
     $help_hash{-check_nmtran} = <<'EOF';
     -check_nmtran
 	Make PsN run NMtran on the model file before submitting the complete nmfe run to a cluster/grid
-	or forking on a local computer. This adds a bit of overhead but on a cluster this still 
-	saves time in the case of syntax errors in the model file, since the user does not 
-	have to wait for a slot on the cluster/grid before the error is detected. 
+	or forking on a local computer. This adds a bit of overhead but on a cluster this still
+	saves time in the case of syntax errors in the model file, since the user does not
+	have to wait for a slot on the cluster/grid before the error is detected.
 	On a local computer the error handling is improved.
 
 	When running multiple copies of a model with different data sets, e.g. in a bootstrap,
@@ -658,17 +658,17 @@ EOF
     case PsN will try to detect undefined variables in abbreviated code for you. If a variable is
     suspected to be undefined PsN will print a warning telling the user to double check that the
     variable is defined. If the variable is defined in verbatim code then the warning will be printed
-    even if all is well, but this information is included in the warning. 
+    even if all is well, but this information is included in the warning.
 
-	The nmtran check requires that it is the installation directory to NONMEM that is set in psn.conf, 
+	The nmtran check requires that it is the installation directory to NONMEM that is set in psn.conf,
 	rather than the full path to an executable script. If the path to a script is given instead
 	of an NM install directory the nmtran check will not be performed.
 EOF
     $help_hash{-niter_eonly} = <<'EOF';
     -niter_eonly
-      
+
       Only applies if NONMEM7 and last $EST is IMP or IMPMAP. Only for scripts
-      vpc (any options), cdd (if option -xv) and execute (if option -mirror_plots). 
+      vpc (any options), cdd (if option -xv) and execute (if option -mirror_plots).
 	  Undefined by default.
       User-chosen value of NITER in IMP or IMPMAP when estimation is turned off
       by setting EONLY=1. See PsN.pdf for details.
@@ -676,12 +676,12 @@ EOF
 
     $help_hash{-last_est_complete} = <<'EOF';
     -last_est_complete
-      
+
       Only applies if NONMEM7 and multiple $ESTIMATION records. Then only for scripts
-      vpc (any options), cdd (if option -xv) and execute (if option -mirror_plots). 
-	  Setting this option tells PsN that all 
-      options needed for the last estimation step, such as LIKELIHOOD 
-      (defaults can be omitted), are set explicitly in the 
+      vpc (any options), cdd (if option -xv) and execute (if option -mirror_plots).
+	  Setting this option tells PsN that all
+      options needed for the last estimation step, such as LIKELIHOOD
+      (defaults can be omitted), are set explicitly in the
       last $ESTIMATION record, i.e. no options need to carry over from previous $EST.
       Then PsN will skip the step where all $ESTIMATION records are searched for
       relevant options before removing all but the last $ESTIMATION and setting
@@ -691,8 +691,8 @@ EOF
     $help_hash{-nmfe} = <<'EOF';
     -nmfe
     Default set.
-    Invoke NONMEM via the nmfe script (or a custom wrapper) from within PsN. 
-    Unless option -nmqual is set, option -nmfe is 
+    Invoke NONMEM via the nmfe script (or a custom wrapper) from within PsN.
+    Unless option -nmqual is set, option -nmfe is
     set automatically. Also, -nmfe is set in the default configuration file.
 EOF
     $help_hash{-stop_motion} = <<'EOF';
@@ -704,22 +704,22 @@ EOF
     $help_hash{-nmfe_options} = <<'EOF';
     -nmfe_options='options for nmfe'
     Only relevant if NONMEM7.2 or later is used.
-    The text set with this option will be copied verbatim to the nmfe script call. 
-    PsN will not check that the options are appropriate. When set on the PsN commandline 
-    the string must be enclosed by quotes if it contains any spaces, but when set in 
-    psn.conf it must never be enclosed by quotes even if it contains spaces. 
+    The text set with this option will be copied verbatim to the nmfe script call.
+    PsN will not check that the options are appropriate. When set on the PsN commandline
+    the string must be enclosed by quotes if it contains any spaces, but when set in
+    psn.conf it must never be enclosed by quotes even if it contains spaces.
 	On unix-type systems, but not on windows, any parentheses must be escaped with backslash.
   Example:
     -nmfe_options="-xmloff -prdefault"
-    or in psn.conf 
+    or in psn.conf
     nmfe_options=-xmloff -prdefault
 EOF
 
     $help_hash{-nmqual} = <<'EOF';
     -nmqual
-    Default not used. Run an NMQual-installed NONMEM via autolog.pl. 
-	Only NMQual8 is supported. 
-    When set, PsN will locate the autolog.pl file and log.xml in the nmqual 
+    Default not used. Run an NMQual-installed NONMEM via autolog.pl.
+	Only NMQual8 is supported.
+    When set, PsN will locate the autolog.pl file and log.xml in the nmqual
 	subdirectory of the NONMEM installation directory, and then run
     perl autolog.pl log.xml run ce workdir psn (extra NM options)
 EOF
@@ -745,25 +745,25 @@ EOF
 	run directory. If R is configured in psn.conf or command 'R' is available and rplots is set > 0 the script will
     also be run and a number of pdf-format plots be created.
 	-rplots<0 means no script is generated
-	-rplots=0 (default) means script is generated but not run 
-	-rplots=1 means basic plots are generated													  
-	-rplots=2 means basic and extended plots are generated													  
+	-rplots=0 (default) means script is generated but not run
+	-rplots=1 means basic plots are generated
+	-rplots=2 means basic and extended plots are generated
 EOF
     $help_hash{-template_directory_rplots} = <<'EOF';
     -template_directory_rplots=path
 	PsN can look for the rplots template file in a number of places. The priority order is the
 	following :
-	1) template_directory_rplots set on command-line 
+	1) template_directory_rplots set on command-line
 	2) calling directory (where PsN is started)
-    3) template_directory_rplots set in psn.conf 
+    3) template_directory_rplots set in psn.conf
     4) R-scripts subdirectory of the PsN installation directory
 EOF
     $help_hash{-template_file_rplots} = <<'EOF';
     -template_file_rplots=file
     When the rplots feature is used, the default template PsN will use is <toolname>_default.R,
 	for example scm_default.R. The user can choose a different template file
-	by setting option -template_file_rplots to a different file. 
-	PsN will first look for the file relative to the current working directory, 
+	by setting option -template_file_rplots to a different file.
+	PsN will first look for the file relative to the current working directory,
 	and after that in the -template_directory_rplots directory.
 EOF
     $help_hash{-subset_variable_rplots} = <<'EOF';
@@ -799,8 +799,8 @@ EOF
     The directory option sets the directory in which PsN will run
     NONMEM. The default directory name is 'modelfit_dirX' for execute,
     where X will be increased by one each time you run the script.
-    For other scripts/tools, the default is 'toolname_dirX', for 
-    example bootstrap_dir1. You do not have to create the directory, 
+    For other scripts/tools, the default is 'toolname_dirX', for
+    example bootstrap_dir1. You do not have to create the directory,
     it will be done for you.
 
     If you abort the run or if your system crashes you can use the
@@ -815,7 +815,7 @@ EOF
     $help_hash{-extra_files} = <<'EOF';
     -extra_files=mysubroutine.f90,run10.phi
     If you need extra files in the directory where NONMEM is run you
-    specify them in the comma separated -extra_files list. It could for 
+    specify them in the comma separated -extra_files list. It could for
     example be fortran subroutines you need compiled with NONMEM,
 	or a phi-file set in record $ETAS with option FILE.
 EOF
@@ -824,8 +824,8 @@ EOF
     -maxevals=100000
     NONMEM only allows 9999 function evaluations. PsN can expand this
     limit by adding an MSFO option to $ESTIMATION. Later when NONMEM
-    hits the max number of function evaluations allowed by NONMEM (9999) 
-    PsN will remove intial estimates from the modelfile and add $MSFI 
+    hits the max number of function evaluations allowed by NONMEM (9999)
+    PsN will remove intial estimates from the modelfile and add $MSFI
     and restart NONMEM. This will be repeated until the number of function
     evaluations specified with option maxevals has been reached.
 EOF
@@ -833,12 +833,12 @@ EOF
     $help_hash{-seed} = <<'EOF';
     -seed='string'
     You can set your own random seed to make PsN runs reproducible.
-	The random seed is a string, and may include spaces if the whole string 
-	is enclosed with single	quotes as in -seed='123 abc'. It is important to 
-    know that, because of the way the Perl pseudo-random number generator works, 
-    for two similar string seeds the random sequences may be identical. 
-    This is the case e.g. with the two different seeds 123 and 122. 
-    Setting the same seed guarantees the same sequence, but setting two slightly different 
+	The random seed is a string, and may include spaces if the whole string
+	is enclosed with single	quotes as in -seed='123 abc'. It is important to
+    know that, because of the way the Perl pseudo-random number generator works,
+    for two similar string seeds the random sequences may be identical.
+    This is the case e.g. with the two different seeds 123 and 122.
+    Setting the same seed guarantees the same sequence, but setting two slightly different
     seeds does not guarantee two different random sequences, that must be verified.
 EOF
 
@@ -852,7 +852,7 @@ EOF
 
     $help_hash{-lsf_job_name} = <<'EOF';
     -lsf_job_name='string'
-    lsf_job_name sets the name of the LSF job name of every NONMEM run, 
+    lsf_job_name sets the name of the LSF job name of every NONMEM run,
     they all get the same name.
 EOF
 
@@ -860,8 +860,8 @@ EOF
     -lsf_options='string'
     LSF jobs are submitted using bsub and all LSF related options are
     translated to corresponding bsub options. For maximum flexibility
-    we allow any string to be passed as options to bsub, so if a specific 
-    bsub feature not available through any ot the other -lsf_ options 
+    we allow any string to be passed as options to bsub, so if a specific
+    bsub feature not available through any ot the other -lsf_ options
     is needed, use lsf_options to pass any option to bsub.
 EOF
 
@@ -879,7 +879,7 @@ EOF
 
     $help_hash{-lsf_ttl} = <<'EOF';
     -lsf_ttl='string'
-    lsf_ttl sets the maximum time a NONMEM run should be allowed to run on 
+    lsf_ttl sets the maximum time a NONMEM run should be allowed to run on
     the LSF grid.
 EOF
     $help_hash{-lsf_sleep} = <<'EOF';
@@ -889,7 +889,7 @@ EOF
 
     $help_hash{-lsf_queue} = <<'EOF';
     -lsf_queue='string'
-    lsf_queue specifies which LSF queue PsN should submit NONMEM runs 
+    lsf_queue specifies which LSF queue PsN should submit NONMEM runs
     to and is used in conjuction with -run_on_lsf
 EOF
 
@@ -897,8 +897,8 @@ EOF
     -min_retries='integer'
     min_retries forces PsN to try
     several initial values for each estimate and selecting the best
-    one. The best model is the one with highest number of significant 
-    digits and an ofv value no more than five units above than the 
+    one. The best model is the one with highest number of significant
+    digits and an ofv value no more than five units above than the
     lowest ofv value among all models. If -picky
     is used, only models which first pass the picky test will be considered.
 EOF
@@ -908,10 +908,10 @@ $help_hash{-clean} = <<'EOF';
 
     Default is 1. The clean option can take six different values
     The -clean clean option can take four different values:
-	0 - Nothing is removed 
-	1 - NONMEM binary and intermediate files except INTER are removed, and files specified with option -extra\_files. 
-	2 - model and output files generated by PsN restarts are removed, and data files in the NM\_run directory, and (if option -nmqual is used) the xml-formatted NONMEM output. 
-	3 - All NM\_run directories are completely removed. If the PsN tool has created modelfit\_dir:s inside the main run directory, these  will also be removed. 
+	0 - Nothing is removed
+	1 - NONMEM binary and intermediate files except INTER are removed, and files specified with option -extra\_files.
+	2 - model and output files generated by PsN restarts are removed, and data files in the NM\_run directory, and (if option -nmqual is used) the xml-formatted NONMEM output.
+	3 - All NM\_run directories are completely removed. If the PsN tool has created modelfit\_dir:s inside the main run directory, these  will also be removed.
 	4 - All NM\_run directories and all m1 directories are completely removed.
     5 - The entire run directory is removed. This is only useful for execute. The lst-file will be copied even if the run failed.
 EOF
@@ -959,7 +959,7 @@ $help_hash{-parafile} = <<'EOF';
     -parafile='filename'
     NONMEM 7.2 (or later) parafile. Appends "-parafile=filename"
     to the nmfe call, and makes PsN copy 'filename' to the NM\_run directory.
-    Only works if option nmfe or nmqual is set. Note that -nmfe is sometimes set 
+    Only works if option nmfe or nmqual is set. Note that -nmfe is sometimes set
     automatically, see help for -nmfe.
     Note that the filename must have a full path to work with some tools (i.e. scm).
 EOF
@@ -967,14 +967,14 @@ EOF
 $help_hash{-nodes} = <<'EOF';
     -nodes='number'
     Only relevant together with option -parafile. Appends "[nodes]=option_value"
-    to the nmfe call. The nodes option is completely independent of the threads 
+    to the nmfe call. The nodes option is completely independent of the threads
     option. It is possible to e.g. set threads to 1 and nodes to 10.
 EOF
 
     $help_hash{-picky} = <<'EOF';
     -picky
-    The -picky option is only valid together with -tweak_inits. 
-    Normally PsN only tries new initial estimates if 
+    The -picky option is only valid together with -tweak_inits.
+    Normally PsN only tries new initial estimates if
     'MINIMZATION SUCCESSFUL' is not found in the NONMEM output
     file. With the -picky option, PsN will regard any of the
     following messages as a signal for rerunning:
@@ -987,14 +987,14 @@ EOF
 
     $help_hash{'-quick_summarize|quick_summary'} = <<'EOF';
     -quick_summarize or -quick_summary
-    If either of quick_summarize and quick_summary is used, PsN will print 
+    If either of quick_summarize and quick_summary is used, PsN will print
     the ofv value and minimization message for each NONMEM run.
 EOF
 
 $help_hash{-run_on_lsf} = <<'EOF';
     -run_on_lsf
-    PsN connects with Platform Load Sharing Facility (LsF). With 
-    -run_on_lsf. PsN will submit to the queue defined in "psn.conf" 
+    PsN connects with Platform Load Sharing Facility (LsF). With
+    -run_on_lsf. PsN will submit to the queue defined in "psn.conf"
     unless specified with -lsf_queue.
 EOF
 
@@ -1022,11 +1022,11 @@ EOF
 EOF
     $help_hash{-significant_digits_accept} = <<'EOF';
     -significant_digits_accept='number'
-    The -significant_digits_accept option is only valid together with -tweak_inits. 
-    Normally PsN tries new initial estimates if 
+    The -significant_digits_accept option is only valid together with -tweak_inits.
+    Normally PsN tries new initial estimates if
     'MINIMZATION SUCCESSFUL' is not found in the NONMEM output
-    file. With the -significant_digits_accept, PsN will only rerun if 
-    the resulting significant digits is lower than the value 
+    file. With the -significant_digits_accept, PsN will only rerun if
+    the resulting significant digits is lower than the value
     specified with this option.
 EOF
 
@@ -1043,8 +1043,8 @@ EOF
     By default, PsN will never do retries on a model when a run is restarted if
     the file stats-runs.csv is found in the NM_run subdirectory, since the
     existence of this file indicates that all retries have finished and the
-    best try has been selected. If option -add_retries is set, PsN will ignore 
-    that stats-runs.csv exists, and check again if retries are needed based on 
+    best try has been selected. If option -add_retries is set, PsN will ignore
+    that stats-runs.csv exists, and check again if retries are needed based on
     the existing tries in the NM_run directory. This makes it possible to restart
     a run using different settings for retries (e.g. -retries, -min_retries, -picky).
 EOF
@@ -1052,15 +1052,15 @@ EOF
     -always_datafile_in_nmrun
 
     Not set by default.
-    By default, PsN will often not copy the datafile to the NM_run 
+    By default, PsN will often not copy the datafile to the NM_run
     subdirectories, but instead include the path to the datafile in $DATA in
     the control stream copy inside NM_run. This is the case in for example
     the bootstrap and randtest programs.
     If -always_datafile_in_nmrun is set, then PsN will always copy
     the datafile to NM_run and set the datafile name without path
-    in $DATA. This behaviour may be useful when running on 
-    a grid where only the contents of NM_run are available to NONMEM at 
-    runtime. Option -always_datafile_in_nmrun will override -no-copy_data, 
+    in $DATA. This behaviour may be useful when running on
+    a grid where only the contents of NM_run are available to NONMEM at
+    runtime. Option -always_datafile_in_nmrun will override -no-copy_data,
     if -no-copy_data is set.
 EOF
 
@@ -1081,7 +1081,7 @@ EOF
 
     $help_hash{-warn_with_trace} = <<'EOF';
     -warn_with_trace
-    If -warn_with_trace is set, PsN will print a stack 
+    If -warn_with_trace is set, PsN will print a stack
     trace for all warning and error messages.
     This is only for developers.
 EOF
@@ -1090,10 +1090,10 @@ EOF
     -sde
     Default not set. In PsN version 3.4.4 and earlier, this option made PsN print the records
 	in a particular order suitable for SDE models.
-	The new default is to keep the record order of the input model file. To use the old 
+	The new default is to keep the record order of the input model file. To use the old
 	SDE print order, set option -sde.
 EOF
- 
+
     $help_hash{-psn_record_order} = <<'EOF';
     -psn_record_order
     If this option is set the build in record order of PsN will be used. Default is
@@ -1103,24 +1103,24 @@ EOF
 
     $help_hash{-omega_before_pk} = <<'EOF';
     -omega_before_pk
-    Default not set. In PsN version 3.4.4 and earlier, $OMEGA was always printed before $PK. 
-	The new default is to keep the record order of the input model file. To use the old print order, 
+    Default not set. In PsN version 3.4.4 and earlier, $OMEGA was always printed before $PK.
+	The new default is to keep the record order of the input model file. To use the old print order,
 	set option -omega_before_pk.
 EOF
 
     $help_hash{-condition_number_limit} = <<'EOF';
     -condition_number_limit='number'
     An error will be raised in the output from sumo
-    if the condition number is greater than this number. 
+    if the condition number is greater than this number.
 EOF
 
     $help_hash{-nm_output} = <<'EOF';
     -nm_output='comma-separated list of file extensions'
 
-    NONMEM generates many output files per run. The lst-file will always be 
-	copied back to the calling directory. The option -nm_output decides which of the 
-	additional files should be copied back to the calling directory. The default is none. 
-    NM output files which are not copied to the calling directory can still be 
+    NONMEM generates many output files per run. The lst-file will always be
+	copied back to the calling directory. The option -nm_output decides which of the
+	additional files should be copied back to the calling directory. The default is none.
+    NM output files which are not copied to the calling directory can still be
     found inside the run directory.
 
   Example: -nm_output=ext,cov
@@ -1133,13 +1133,13 @@ EOF
 
     $help_hash{-accepted_ofv_difference} = <<'EOF';
     -accepted_ofv_difference='number'
-    Default 0.1. This option is used by PsN only when selecting the best retry 
+    Default 0.1. This option is used by PsN only when selecting the best retry
     out of the whole set, provided that -picky was not used or no try fulfilled
-    the picky conditions. The selection will be based on the 'corrected ofv'. 
-    For tries that did not have minimization successful the corrected ofv is 
-    equal to the ofv. For tries that had minimization successful the corrected 
-    ofv is the ofv minus 'accepted_ofv_difference'. This means that this option 
-    decides how much preference should be given to runs that have minimization 
+    the picky conditions. The selection will be based on the 'corrected ofv'.
+    For tries that did not have minimization successful the corrected ofv is
+    equal to the ofv. For tries that had minimization successful the corrected
+    ofv is the ofv minus 'accepted_ofv_difference'. This means that this option
+    decides how much preference should be given to runs that have minimization
     successful.
 EOF
 
@@ -1176,8 +1176,8 @@ EOF
     $help_hash{-max_runtime} = <<'EOF';
     -max_runtime='string'
     A limit on how long a slurm run may go on before being aborted
-    (option -t to sbatch). Format is either minutes, e.g. -max_runtime=10, 
-    or hours:minutes:seconds, e.g. -max_runtime=4:0:0, or days-hours, 
+    (option -t to sbatch). Format is either minutes, e.g. -max_runtime=10,
+    or hours:minutes:seconds, e.g. -max_runtime=4:0:0, or days-hours,
     e.g. -max_runtime=3-0
 EOF
 
@@ -1189,7 +1189,7 @@ EOF
 
     $help_hash{-near_zero_boundary_limit} = <<'EOF';
     -near_zero_boundary_limit='number'
-    When the bound is zero, the check using -near_bound_sign_digits is not valid. 
+    When the bound is zero, the check using -near_bound_sign_digits is not valid.
     Use this limit instead. Valid only with sumo.
 EOF
 
@@ -1223,7 +1223,7 @@ EOF
 
     $help_hash{-torque_prepend_flags} = <<'EOF';
     -torque_prepend_flags='string'
-    Only valid with -run_on_torque. The - signs must be included in the 
+    Only valid with -run_on_torque. The - signs must be included in the
     string. The extra flags will be prepended to standard set in qsub call.
 
 EOF
@@ -1245,13 +1245,13 @@ EOF
 
     $help_hash{-sge_prepend_flags} = <<'EOF';
     -sge_prepend_flags='string'
-    Only valid with -run_on_sge. The - signs must be included in the 
+    Only valid with -run_on_sge. The - signs must be included in the
     string. The extra flags will be prepended to standard set in qsub call.
 
 EOF
     $help_hash{-slurm_prepend_flags} = <<'EOF';
     -slurm_prepend_flags='string'
-    Only valid with -run_on_slurm. The - signs must be included in the 
+    Only valid with -run_on_slurm. The - signs must be included in the
     string. The extra flags will be prepended to standard set in sbatch call.
 
 EOF
@@ -1305,7 +1305,7 @@ EOF
 EOF
     $help_hash{-degree} = <<'EOF';
     -degree=number
-	When tweaking initial estimates in retries/parallel_retries, this number decides the range for the 
+	When tweaking initial estimates in retries/parallel_retries, this number decides the range for the
     new estimates. The new number will be within 'degree'*oldinitial from the old initial estimate,
 	unless restricted by upper or lower boundaries.
     A number larger than 0. Default 0.1
@@ -1321,7 +1321,7 @@ EOF
 
     $help_hash{-cwres} = <<'EOF';
     -cwres
-    Compute the conditional weighted residuals (CWRES) for a model run. 
+    Compute the conditional weighted residuals (CWRES) for a model run.
     Option is only supported for NONMEM5 and NONMEM6. In NONMEM7, CWRES can
     be requested directly from $TABLE.
 EOF
@@ -1340,19 +1340,19 @@ EOF
 
     $help_hash{-tbs_lambda} = <<'EOF';
     -tbs_lambda
-    Default not set. Initial value string, using NM-TRAN syntax, 
-    for parameter in Transform Both Sides 
-    method, e.g. '(-1, 0.5, 1)' or 'O FIX'. The string must be enclosed 
+    Default not set. Initial value string, using NM-TRAN syntax,
+    for parameter in Transform Both Sides
+    method, e.g. '(-1, 0.5, 1)' or 'O FIX'. The string must be enclosed
     in single quotes and not include any comments.
-    If tbs_lambda is set then option -tbs will be set automatically 
+    If tbs_lambda is set then option -tbs will be set automatically
     unless -dtbs or -tbs_delta or -tbs_zeta is set.
     See the userguide common_options_defaults_versions_psn for details.
 EOF
     $help_hash{-tbs_zeta} = <<'EOF';
     -tbs_zeta
-    Default not set. Initial value string, using NM-TRAN syntax, 
-    for parameter zeta in Transform Both Sides 
-    method, e.g. '(-1, 0.5, 1)' or 'O FIX'. The string must be enclosed 
+    Default not set. Initial value string, using NM-TRAN syntax,
+    for parameter zeta in Transform Both Sides
+    method, e.g. '(-1, 0.5, 1)' or 'O FIX'. The string must be enclosed
     in single quotes and not include any comments.
 	Cannot be used in combination with tbs_delta.
     If tbs_zeta is set then option -dtbs will be set automatically.
@@ -1360,9 +1360,9 @@ EOF
 EOF
     $help_hash{-tbs_delta} = <<'EOF';
     -tbs_delta
-    Default not set. Initial value string, using NM-TRAN syntax, 
-    for parameter delta in Transform Both Sides 
-    method, e.g. '(-1, 0.5, 1)' or 'O FIX'. The string must be enclosed 
+    Default not set. Initial value string, using NM-TRAN syntax,
+    for parameter delta in Transform Both Sides
+    method, e.g. '(-1, 0.5, 1)' or 'O FIX'. The string must be enclosed
     in single quotes and not include any comments.
 	Cannot be used in combination with tbs_zeta.
     If tbs_delta is set then option -dtbs will be set automatically.
@@ -1371,8 +1371,8 @@ EOF
 
     $help_hash{-mirror_plots} = <<'EOF';
     -mirror_plots='integer'
-    This command creates a set of simulations from a model file that can then 
-    be read into Xpose 4 for mirror plotting. The command requires an integer 
+    This command creates a set of simulations from a model file that can then
+    be read into Xpose 4 for mirror plotting. The command requires an integer
     value -mirror_plots=XX where XX is an integer representing the number of
     simulations to perform. This command uses the MSFO file created by
     runN.mod to get final estimates used in the simulations. If this file is
@@ -1392,12 +1392,12 @@ EOF
 
     $help_hash{-mirror_from_lst} = <<'EOF';
     -mirror_from_lst
-    Can only be used in combination with -mirror_plots=XX where XX is an 
-    integer representing the number of simulations to perform. These commands 
-    create a set of simulations from a model file and output file that can 
+    Can only be used in combination with -mirror_plots=XX where XX is an
+    integer representing the number of simulations to perform. These commands
+    create a set of simulations from a model file and output file that can
     then be read into Xpose 4 for mirror plotting.  The -mirror_from_lst option
-    reads from the *.lst file of a NONMEM run to get final parameter estimates 
-    for the simulations. 
+    reads from the *.lst file of a NONMEM run to get final parameter estimates
+    for the simulations.
 EOF
 
     $help_hash{-version} = <<'EOF';
@@ -1411,7 +1411,7 @@ EOF
     Create an additional DDMoRe standard output xml file.
     Note that the created file will have SO version 0.3.1
 EOF
-    
+
 $help_hash{-zip} = <<'EOF';
     -zip
     All m1 directories will be zipped to save space.
@@ -1426,7 +1426,7 @@ EOF
 
 $help_hash{-rmarkdown} = <<'EOF';
     -rmarkdown
-    If it is possible the Rmarkdown file instead of 
+    If it is possible the Rmarkdown file instead of
 	R file for R plots will be created.
 EOF
 
@@ -1446,7 +1446,7 @@ EOF
     if( defined $help_text ){
       my %temphash = %{$help_text};
       foreach my $ke (keys %temphash){
-	$help_hash{$ke} = $temphash{$ke}; 
+	$help_hash{$ke} = $temphash{$ke};
       }
     }
   } else {
@@ -1470,7 +1470,7 @@ my $indentation = '    ';
       if( scalar( @ARGV ) > 0 ){
           foreach my $option ( @ARGV ){
 			  $help .= format_help_text(\%help_hash,$indentation,'-'.$option);
-          } 
+          }
 
 #do not remove html-like
 #          $help =~ s/<\?.*\?>//g;
@@ -1505,19 +1505,19 @@ $help .= "\n".$command."\n";
 
           $help .= format_help_text(\%help_hash,$indentation,'Post_help_message');
 
-      } else { 
+      } else {
           $help .= common_options::print_help($command,$required_options, $optional_options);
 		  unless ($command eq 'psn'){
-			  $help .= "\n$indentation"."Options enclosed by [ ] are optional.\n"; 
+			  $help .= "\n$indentation"."Options enclosed by [ ] are optional.\n";
 			  $help .= "$indentation"."Exclamation mark, !, after the option name means option can be disabled\n".
 				  "$indentation"."using '-no-option', for example -no-handle_crashes.\n";
 		  }
-          $help .= "$indentation"."Use '$command -help' for a longer description.\n"; 
+          $help .= "$indentation"."Use '$command -help' for a longer description.\n";
           $help .= format_help_text(\%help_hash,$indentation,'Post_help_message');
-      } 
+      }
 
 # do not clean html
-#      $help =~ s/<\?.*\?>//g; 
+#      $help =~ s/<\?.*\?>//g;
 #      $help =~ s/<[^>]*>//g;
       print $help;
 
@@ -1627,7 +1627,7 @@ sub get_option_matrix
 	if (scalar(@matrix) == 0) {
 		return undef;
     }
-	
+
     return \@matrix;
 }
 

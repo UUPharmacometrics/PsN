@@ -33,12 +33,12 @@ sub BUILD
 
 	if ($self->ind_param eq 'eta') {
 		my $record_ref = $self->models->[0]->record(record_name => 'omega' );
-		unless ( scalar(@{$record_ref}) > 0 ){ 
+		unless ( scalar(@{$record_ref}) > 0 ){
 			croak('The input model must contain at least one $OMEGA record.');
 		}
 	} elsif ($self->ind_param eq 'theta') {
 		my $record_ref = $self->models->[0]->record(record_name => 'theta' );
-		unless ( scalar(@{$record_ref}) > 0 ){ 
+		unless ( scalar(@{$record_ref}) > 0 ){
 			croak('The input model must contain at least one $THETA record.');
 		}
 	} else {
@@ -80,12 +80,12 @@ sub modelfit_setup
 	#this is sec 1 with 1.1-1.8 in URS individual probability script
 	#1.0
 	my $filename = $self->modelname . '.mod';
-	my $copy = $self->models->[0]->copy(filename => $filename, 
+	my $copy = $self->models->[0]->copy(filename => $filename,
 										directory => 'm1',
 										write_copy => 0,
 										copy_output => 0,
 										copy_datafile =>0);
-	
+
   if (defined $self->models->[0]->extra_files()) {
     my @extra_files;
     foreach my $extra (@{$self->models->[0]->extra_files()}) {
@@ -100,13 +100,13 @@ sub modelfit_setup
   unless ($number_of_etas > 0){
     croak("Error modelfilt_setup: must be at least one omega/eta in modelfile");
   }
-  
+
   #1.1 update initial values in model and FIX them. Important to FIX after updating,
   #because PsN does not update fixed values
 
   unless ($self->lst_file eq '0') {
     #possibility to set to 0 can be used when calling pind from nonp_bootstrap
-    #then inits are updated from output object instead of lst-file 
+    #then inits are updated from output object instead of lst-file
     #create output object to check that can be parsed correctly
     my $outputObject = output -> new(filename => $self->lst_file);
     unless ($outputObject->parsed_successfully()){
@@ -124,7 +124,7 @@ sub modelfit_setup
 
   #1.2 set MAXEVALS=0
   my $record_ref = $copy -> record(record_name => 'estimation' );
-  if ( scalar(@{$record_ref}) > 0 ){ 
+  if ( scalar(@{$record_ref}) > 0 ){
     $copy -> set_option(record_name => 'estimation',
 			option_name => 'MAXEVALS',
 			fuzzy_match => 1,
@@ -133,11 +133,11 @@ sub modelfit_setup
     $copy -> add_records(type => 'estimation',
 			 record_strings => ['MAXEVAL=0'] );
   }
-  
+
   #1.3 add $NONPARAMETIC UNCONDITIONAL
 
   $record_ref = $copy -> record(record_name => 'nonparametric' );
-  if ( scalar(@{$record_ref}) > 0 ){ 
+  if ( scalar(@{$record_ref}) > 0 ){
     $copy -> set_option(record_name => 'nonparametric',
 			option_name => 'UNCONDITIONAL',
 			fuzzy_match => 1);
@@ -148,14 +148,14 @@ sub modelfit_setup
 
   my $code_block;
   my $code_record;
-  
+
   $record_ref = $copy -> record(record_name => 'pk');
-  if (scalar(@{$record_ref}) > 0) { 
+  if (scalar(@{$record_ref}) > 0) {
     $code_block = $copy->get_code(record => 'pk');
     $code_record = 'pk';
   } else {
     $record_ref = $copy -> record(record_name => 'pred');
-    if (scalar(@{$record_ref}) > 0) { 
+    if (scalar(@{$record_ref}) > 0) {
       $code_block = $copy->get_code(record => 'pred');
 			$code_record = 'pred';
     } else {
@@ -165,21 +165,21 @@ sub modelfit_setup
   push( @{$code_block},'   JD = DEN_');
 
   my $n_parameters = ($self->ind_param eq 'eta') ? $number_of_etas : $number_of_thetas;
-  
+
   for( 1..$n_parameters ){
     push(@{$code_block},"   DN$_=CDEN_($_)" );
   }
-  
+
 	$copy->set_code(record => $code_record, code => $code_block);
 
   #1.6
   $copy -> remove_records( type => 'covariance' );
-  
+
   #1.7
   $copy -> remove_records( type => 'table' );
 
   #Substitute for 1.5: O
-  #Output ETAs and JD with higher precision. 
+  #Output ETAs and JD with higher precision.
   #Copied from cwres_module_subs.pm and modified
 
   # Figure out wheter we have an 'ADVAN' option. By not using
@@ -208,23 +208,23 @@ sub modelfit_setup
     $eta_header = $eta_header . " ETA$_";
   }
 
-  push( @{$problem}, 
+  push( @{$problem},
 	'IF (ICALL.EQ.3) THEN',
 	'  OPEN(51,FILE=\'jdtab.est\')',
 	'  WRITE (51,*) \'JD\'',
 	'  DO WHILE(DATA)',
 	'    IF (NEWIND.LE.1) WRITE (51,*) JD',
-	'  ENDDO',                                
+	'  ENDDO',
 	'ENDIF' );
-  push( @{$problem}, 
+  push( @{$problem},
 	'IF (ICALL.EQ.3) THEN',
 	'  OPEN(51,FILE=\'etatab.est\')',
 	"  WRITE (51,*) \'$eta_header\'",
 	'  DO WHILE(DATA)',
 	'    IF (NEWIND.LE.1) WRITE (51,*) ETA',
-	'  ENDDO',                                
+	'  ENDDO',
 	'ENDIF' );
-    
+
   #1.5 old version, keep this for now
   my $dn_string = 'DN1';
   for( 2..$n_parameters ){
@@ -238,7 +238,7 @@ sub modelfit_setup
     }
   } else {
     my $theta_labels = $copy -> labels( 'parameter_type' => 'theta' );
-    
+
     foreach ( @{$theta_labels -> [0]} ){
       if( /TH\d+/ ){
 	print "\nWarning: There is a generic theta label($_) in the model. ".
@@ -255,12 +255,12 @@ sub modelfit_setup
 			record_strings=>["ID JD $table_string NOPRINT ONEHEADER NOAPPEND FIRSTONLY $filestring"]);
 
   $copy -> _write;
-      
+
   #1.8
 
   #run starting model explicitly here, then do setup of sequence of runs from where to process stuff.
   #compare sse general_setup
-  
+
   my $temp_clean = ($self->clean > 2) ? 2 : $self->clean;
 
   $self->jd_model($copy);
@@ -268,30 +268,30 @@ sub modelfit_setup
 				      top_tool         => 0,
 				      models           => [$copy],
 				      base_directory   => $self->directory,
-				      directory        => $self->directory . '/jd_dir', 
+				      directory        => $self->directory . '/jd_dir',
 				      parent_tool_id   => $self->tool_id,
 				      retries          => 1,
 				      logfile	         => undef,
 				      raw_results      => undef,
 				      prepared_models  => undef,
 				      clean            => $temp_clean);
-    
+
   $jd_run -> run;
-  
+
   open( TMP, ">", 'jd.done' );
-  print TMP "1"; 
+  print TMP "1";
   close( TMP );
 
-  my ($jd_vector,$eta_matrix) = 
+  my ($jd_vector,$eta_matrix) =
       $self-> get_jd_vector_eta_matrix(number_of_etas => $n_parameters,
 				       table_file => $self->tablename);
   $self->n_individuals(scalar(@{$jd_vector}));
 
 
   unless (-e 'ofv.done'){
-    $self->create_iofvcont(); 
+    $self->create_iofvcont();
 
-    my $new_ofv_models = 
+    my $new_ofv_models =
 	$self -> setup_ind_ofv_models (number_of_individuals => $self->n_individuals,
 				       number_of_etas => $n_parameters,
 				       eta_matrix => $eta_matrix);
@@ -304,7 +304,7 @@ sub modelfit_setup
 												   nmtran_skip_model => 2,
 												   parent_threads        => 1,
 												   base_directory   => $self->directory,
-												   directory        => $self->directory . 'ofv_dir', 
+												   directory        => $self->directory . 'ofv_dir',
 												   raw_results           => undef,
 												   prepared_models       => undef,
 												   top_tool              => 0,
@@ -338,7 +338,7 @@ sub modelfit_analyze
 
   my @jd_vector;
   #read jdtab
-  open( JDFILE, $self->directory . "/jdtab.csv" ) or 
+  open( JDFILE, $self->directory . "/jdtab.csv" ) or
       croak("Could not find jdtab.csv.");
   while (my $val = <JDFILE>){
     chomp $val;
@@ -349,7 +349,7 @@ sub modelfit_analyze
     croak("Wrong number of rows in jdtab.csv");
   }
 
-  $self -> 
+  $self ->
       create_LxP_matrix_sum_LP_vector_P_values_matrix(number_of_individuals => $self->n_individuals,
 						      ind_ofv_matrix => $ind_ofv_matrix,
 						      jd_vector => \@jd_vector);
@@ -370,7 +370,7 @@ sub sum_vector_entries
 	my $vector = $parm{'vector'};
 	my $sum_entries;
 
-  #input $vector is reference to single-dimension array 
+  #input $vector is reference to single-dimension array
   #output is scalar $sum_entries
   #sort in ascending order and add from smallest to avoid numerical issues
 
@@ -423,7 +423,7 @@ sub get_raw_ofv_vector
 	my @ofv_array;
 
   # input number_of_individuals
-  #output ofv_array 
+  #output ofv_array
 
   my $raw_line_struct = $self->tools->[0]->raw_line_structure;
   my ($ofv_pos, $length) = split(/,/, $raw_line_struct -> {1} -> {'ofv'});
@@ -443,10 +443,10 @@ sub get_raw_ofv_vector
   while (my $row = <RAW>){
     chomp $row;
     my @temp = split(/,/,$row);
-    #check ofv is a reasonable number 
+    #check ofv is a reasonable number
     if ($temp[$ofv_pos] eq '0'){
       my $n=1+scalar(@ofv_array);
-      ui -> print (category=>'pind', 
+      ui -> print (category=>'pind',
 		   message=>"Warning: OFV value = 0 from lst-file ofv_model_$n.lst");
     }
     if ($temp[$ofv_pos] =~ /^-?\d*\.?\d*$/){ #is a number
@@ -462,7 +462,7 @@ sub get_raw_ofv_vector
   close(RAW);
   unless (scalar(@ofv_array) == $number_of_individuals){
     my $mess = "Wrong number of ofv values read from $raw_file.";
-    ui -> print (category=>'pind', 
+    ui -> print (category=>'pind',
 		 message=>"Error: $mess");
   }
 
@@ -482,7 +482,7 @@ sub create_iofvcont
 
   unless( -e 'm2/iofvcont.f' ){
     open(IOFVCONT , '>', 'm2/iofvcont.f');
-    
+
     print IOFVCONT <<'EOF';
       subroutine contr (icall,cnt,ier1,ier2)
       parameter (no=1000)
@@ -514,7 +514,7 @@ sub scale_exp_half_neg_vector
 
   #this is used in 2.5.1
   #input $vector is reference to single-dimension array
-  #additional input is scalar $factor 
+  #additional input is scalar $factor
   #output is l_vector
 
   unless (scalar(@{$vector}) > 0){
@@ -537,7 +537,7 @@ sub column_sums
 	my $matrix = $parm{'matrix'};
 	my @column_sum_vector;
 
-  #input $matrix is array of references to row value arrays 
+  #input $matrix is array of references to row value arrays
   #output is reference to vector column_sum_vector
   #sorting is used to avoid numerical problems which are otherwise likely
 
@@ -583,7 +583,7 @@ sub inverse_scale_columns
 	my @scaled_matrix;
 
   #input is vector reference $denominator_vector
-  #input $matrix is ref of array of references to row value arrays 
+  #input $matrix is ref of array of references to row value arrays
   #output is $scaled_matrix
 
   my $n_rows = scalar(@{$matrix});
@@ -597,7 +597,7 @@ sub inverse_scale_columns
   }
   foreach my $val (@{$denominator_vector}){
     croak("Error inverse_scale_columns: 0 entry in denominator vector.")
-	if ($val == 0);    
+	if ($val == 0);
   }
 
   foreach my $row (@{$matrix}){
@@ -630,7 +630,7 @@ sub get_ind_ofv_matrix
   #return ind_ofv_matrix
 
   for (my $id=1; $id<=$number_of_individuals; $id++ ){
-    open (IND, '<', "m2/ofv_model_$id.fort.80") || 
+    open (IND, '<', "m2/ofv_model_$id.fort.80") ||
 	    croak("Couldn't open m2/ofv_model_$id.fort.80 for reading: $!");
 
     my @ind_ofv;
@@ -697,7 +697,7 @@ sub get_jd_vector_eta_matrix
   #what should tolerance be? NONMEM outputs 5 sig digits -> rel error 1 in 5th for each...
   my $rel_error = ($jd_sum-1)/1;
   if ($rel_error > 0.0001){
-    ui -> print (category=>'pind', 
+    ui -> print (category=>'pind',
 		 message=>"\nsum $header which should be 1 is $jd_sum, rel error $rel_error");
   }
   #print jd / njd
@@ -716,7 +716,7 @@ sub get_jd_vector_eta_matrix
     $col= $theta_labels -> [0]->[0];
   }
   my $temp_vec = $table -> column_to_array('column'=>$col);
-  
+
   unless (scalar(@{$temp_vec}) > 0 ){
       croak("Error get_jd_vector_eta_matrix: No $col ".
 		    "values found in tablefile.");
@@ -774,7 +774,7 @@ sub alt_get_jd_vector_eta_matrix
       croak("Error get_jd_vector_eta_matrix: must be at least one eta");
   }
 
-  open( FILE, $self->directory . "/jd_dir/NM_run1/jdtab.est" ) or 
+  open( FILE, $self->directory . "/jd_dir/NM_run1/jdtab.est" ) or
       croak("Could not find jdtab.est.");
   my $dirt = <FILE>; #skip first line, header
   while (my $val = <FILE>){
@@ -793,7 +793,7 @@ sub alt_get_jd_vector_eta_matrix
   #what should tolerance be? NONMEM outputs 5 sig digits -> rel error 1 in 5th for each...
   my $rel_error = ($jd_sum-1)/1;
   if ($rel_error > 0.0001){
-    ui -> print (category=>'pind', 
+    ui -> print (category=>'pind',
 		 message=>"\nsum jd which should be 1 is $jd_sum, rel error $rel_error");
   }
   #print jd
@@ -809,7 +809,7 @@ sub alt_get_jd_vector_eta_matrix
     croak("Alternative not implemented, cannot use theta and alt jd and eta.");
   }
 
-  open( FILE, $self->directory . "/jd_dir/NM_run1/etatab.est" ) or 
+  open( FILE, $self->directory . "/jd_dir/NM_run1/etatab.est" ) or
       croak("Could not find etatab.est.");
   $dirt = <FILE>; #skip first line, header
   while (my $line = <FILE>){
@@ -818,7 +818,7 @@ sub alt_get_jd_vector_eta_matrix
     push (@eta_matrix,\@row);
   }
   close(FILE);
-  
+
   unless (scalar(@eta_matrix) > 0 ){
       croak("Error get_jd_vector_eta_matrix: No ".
 		    "values found in etatab.est.");
@@ -872,13 +872,13 @@ sub setup_ind_ofv_models
 
 	my @eta_list = (1 .. $number_of_etas);
 	foreach my $id( 0..($number_of_individuals-1) ){
-      
+
 		my $copy = $self->jd_model->copy( filename => 'ofv_model_'.($id+1).'.mod',
 										  directory => 'm2',
 										  copy_datafile => 0,
 										  copy_output => 0,
 										  write_copy => 0);
-		
+
 		my $number_of_omegas = $copy -> nomegas -> [0];
 
 		#2.2.1 replace each ETAX with the value for that ETAX from nptab-file
@@ -892,13 +892,13 @@ sub setup_ind_ofv_models
 		if ($self->ind_param eq 'eta') {
 			foreach my $coderec ('error','des','pk','pred'){ #never any ETAs in $MIX
 				my $acc = $coderec.'s';
-				if (defined $copy->problems->[0]->$acc and 
+				if (defined $copy->problems->[0]->$acc and
 					scalar(@{$copy->problems->[0]->$acc})>0 ) {
 					my @code = @{$copy->problems->[0]->$acc->[0]->code};
 					substitute_etas(code => \@code,
 									eta_list => \@eta_list,
 									value_list => $eta_matrix->[$id]);
-					$copy->problems->[0]-> set_records( type => $coderec,	
+					$copy->problems->[0]-> set_records( type => $coderec,
 														record_strings => \@code );
 					#			print join(' ',@code);
 				}
@@ -906,15 +906,15 @@ sub setup_ind_ofv_models
 
 		} else {
 			#fix thetas to new values
-			
+
 			my @theta_inits;
 			for (my $j; $j<$number_of_etas; $j++){
 				push(@theta_inits,$eta_matrix->[$id]->[$j]);
 			}
 			$copy -> initial_values( parameter_type => 'theta',
-									 parameter_numbers => [[1..$number_of_etas]], 
+									 parameter_numbers => [[1..$number_of_etas]],
 									 new_values => [\@theta_inits]) ;
-			
+
 		}
 
 		#Temporary for Paul 2008-09-26
@@ -929,11 +929,11 @@ sub setup_ind_ofv_models
 		#2.2.2 Add DATA=(ID) to $CONTR
 		$copy -> add_records( type => 'contr',
 							  record_strings => ['DATA=(ID)'] );
-		
+
 		#2.2.3 Add custom CONTR routine, that prints individual ofv-values to fort.80, to $SUBROUTINE
 		#first check if have $SUBROUTINE
 		my $record_ref = $copy -> record(record_name => 'subroutine' );
-		if ( scalar(@{$record_ref}) > 0 ){ 
+		if ( scalar(@{$record_ref}) > 0 ){
 			$copy -> add_option( record_name => 'subroutine',
 								 option_name => 'CONTR',
 								 option_value => 'iofvcont.f' );
@@ -941,9 +941,9 @@ sub setup_ind_ofv_models
 			$copy -> add_records( type => 'subroutine',
 								  record_strings => ['CONTR=iofvcont.f'] );
 		}
-		
+
 		$copy -> extra_output( ['fort.80'] );
-		
+
 		#2.2.4 fix omegas to 0
 		#values are already fixed from previous model, but we'll do it again
 		#inc case code above is ever changed
@@ -953,19 +953,19 @@ sub setup_ind_ofv_models
 		$copy -> fixed( parameter_type => 'omega',
 						new_values => [[(1) x $number_of_omegas ]] );
 
-		#2.2.5 remove $TABLE and $NONPARAMETRIC 
+		#2.2.5 remove $TABLE and $NONPARAMETRIC
 		$copy -> remove_records( type => 'table' );
 		$copy -> remove_records( type => 'nonparametric' );
 
 		#2.2.6 set MAXEVALS=0 (might be done already)
 		#can we assume there is an estimation record????
 		$copy -> set_maxeval_zero(need_ofv => 1);
-		
+
 		$copy -> _write;
-		
+
 		push( @new_ofv_models, $copy );
     }
-    
+
 	return \@new_ofv_models;
 }
 
@@ -982,11 +982,11 @@ sub verify_ind_ofv_matrix
   #this is verification described between sec 2.3 and 2.5 in URS for p_individuals
   #input is reference to ind_ofv_matrix and scalar number of individuals
 
-  my $rel_tol = 0.00001; #motivation: 14 sig figs in ind_ofv, but raw_res only 
-  #6, i.e. error is rounding error in raw_res. 
+  my $rel_tol = 0.00001; #motivation: 14 sig figs in ind_ofv, but raw_res only
+  #6, i.e. error is rounding error in raw_res.
 
   my $ofv_array = $self->get_raw_ofv_vector(number_of_individuals => $number_of_individuals);
- 
+
   for (my $id=0; $id<$number_of_individuals; $id++ ){
     my $sum_ofv = $self->sum_vector_entries(vector => $ind_ofv_matrix->[$id]);
     unless (abs(($ofv_array->[$id] - $sum_ofv)/$ofv_array->[$id])< $rel_tol){
@@ -1012,12 +1012,12 @@ sub create_LxP_matrix_sum_LP_vector_P_values_matrix
 
   #this is sec 2.5.1 and 2.5.2 and 2.6 of URS individual probability script
   #input is scalar $number_of_individuals
-  #input reference to matrix $ind_ofv_matrix 
+  #input reference to matrix $ind_ofv_matrix
   #input reference to vector $jd_vector
   #no return values
 
   my @L_times_P_matrix;
-  
+
   my $n_rows = scalar(@{$ind_ofv_matrix});
   unless ( $n_rows >0 ){
     croak("Error get_L_times_P_matrix : Empty matrix (no rows).");
@@ -1027,12 +1027,12 @@ sub create_LxP_matrix_sum_LP_vector_P_values_matrix
 		  "Number of matrix rows $n_rows differs from ".
 		  "number of individuals $number_of_individuals.");
   }
-  
+
   unless (scalar(@{$jd_vector}) == $number_of_individuals){
     croak("Error get_L_times_P_matrix: Length of jd_vector differs from number of ".
 		  "individuals $number_of_individuals.");
   }
-  
+
   ###
   ##this is for error propagation analysis
   my @jd_rel_error;
@@ -1047,7 +1047,7 @@ sub create_LxP_matrix_sum_LP_vector_P_values_matrix
   }
   #end error prop
 
-  
+
   #2.5.1
 
   my @abs_err_L_times_P;
@@ -1078,13 +1078,13 @@ sub create_LxP_matrix_sum_LP_vector_P_values_matrix
     #end error prop
   }
 
-  
+
   open( FILE, ">","L_times_P.csv" );
   foreach my $sub_arr (@L_times_P_matrix ){
     print( FILE join( ',', @{$sub_arr} ), "\n" );
   }
   close( FILE );
-  
+
   #2.5.2
   my $sum_LP_vector = $self->column_sums(matrix => \@L_times_P_matrix);
 
@@ -1098,7 +1098,7 @@ sub create_LxP_matrix_sum_LP_vector_P_values_matrix
 
   open( FILE, ">","sum_LP.csv" );
   print( FILE join( ',', @{$sum_LP_vector} ), "\n" );
-  close( FILE );  
+  close( FILE );
 
   #extra verification, variant of row verification P_values
   my $ofv_array = $self->get_raw_ofv_vector(number_of_individuals => $number_of_individuals);
@@ -1112,7 +1112,7 @@ sub create_LxP_matrix_sum_LP_vector_P_values_matrix
       my $colval = $val/($sum_LP_vector->[$colnum]);
       push (@temp_vec,$colval);
       push (@abs_err_vec, ($colval*($rel_err_sum_LP[$colnum]/(1-$rel_err_sum_LP[$colnum]))));
-      $colnum++;	    
+      $colnum++;
     }
     my $maxofv=-10000000;
     foreach my $val (@{$row}){
@@ -1148,7 +1148,7 @@ sub create_LxP_matrix_sum_LP_vector_P_values_matrix
   my @abs_err_P_rows;
   my @rel_err_P_rows;
   my $i=-1;
-  foreach my $row (@{$P_values_matrix}){ 
+  foreach my $row (@{$P_values_matrix}){
     $i++;
     my @newline;
     for (my $j=0; $j<$number_of_individuals; $j++){
@@ -1157,7 +1157,7 @@ sub create_LxP_matrix_sum_LP_vector_P_values_matrix
 	push(@newline,($re*($row->[$j]))/(1-$re));
       } else {
 	push(@newline,($re*($row->[$j])));
-      }      
+      }
     }
     push(@abs_err_P_values,\@newline);
     push(@abs_err_P_rows,$self->sum_vector_entries(vector => \@newline));
@@ -1165,7 +1165,7 @@ sub create_LxP_matrix_sum_LP_vector_P_values_matrix
 
   for (my $j=0; $j<$number_of_individuals; $j++){
     my $val = $abs_err_P_rows[$j];
-    my $rv = $self->sum_vector_entries(vector => $P_values_matrix->[$j]); 
+    my $rv = $self->sum_vector_entries(vector => $P_values_matrix->[$j]);
     my $abs_err = $jd_vector->[$j] - $rv;
     my $actual_rel = abs($abs_err)/($jd_vector->[$j]);
     my $round_rel = $val/($rv-$val);
@@ -1197,7 +1197,7 @@ sub verify_P_values_matrix
   #this is verification described after sec 2.6 in URS for p_individuals
   #input is reference to P_values_matrix and scalar number of individuals
   #input reference to jd_vector
-  
+
   my $col_tol = 0.000001; #here we just check normalization within script
   # where substeps are never written and reread. Can have high standards!!!
   #what is precision in Perl?????
@@ -1214,14 +1214,14 @@ sub verify_P_values_matrix
     croak("Error verify_P_values_matrix: Number of rows in P_values_matrix differs from ".
 		  "number of individuals $number_of_individuals.");
   }
-  
+
   my $column_sum_vector = $self->column_sums(matrix => $P_values_matrix);
   unless (scalar(@{$column_sum_vector}) == $number_of_individuals){
     croak("Error verify_P_values_matrix: Length of column_sum_vector differs from ".
 		  "number of individuals $number_of_individuals.");
   }
 
-  #each column sum should be equal to 1/$number_of_individuals within tolerance. 
+  #each column sum should be equal to 1/$number_of_individuals within tolerance.
   my $inverse_individuals = 1/$number_of_individuals;
   my $col_counter=1;
   foreach my $sum (@{$column_sum_vector}){
@@ -1233,9 +1233,9 @@ sub verify_P_values_matrix
     }
     $col_counter++;
   }
-  
+
   #the sum of each row should be within row_tol of jd
-  #the error is perhaps rounding error in jdtab-> check relative error instead, 
+  #the error is perhaps rounding error in jdtab-> check relative error instead,
   #jdtab has five digits i.e. (approx/jd < 0.0001first 4 in ratio should be ok?
   my $row_rel_tol = (0.01);
   my $header = "JD,abs error,rel error percent,individual\n";

@@ -101,9 +101,9 @@ sub append_bivariate_columns
 				}
 			}
 		}
-		$self->subject_data->[$i] .= ','.join(',',@newvalues) if (scalar(@newvalues)>0);		
+		$self->subject_data->[$i] .= ','.join(',',@newvalues) if (scalar(@newvalues)>0);
 	}
-	
+
 }
 
 sub append_binary_columns
@@ -136,9 +136,9 @@ sub append_binary_columns
 				}
 			}
 		}
-		$self->subject_data->[$i] .= ','.join(',',@newvalues) if (scalar(@newvalues)>0);		
+		$self->subject_data->[$i] .= ','.join(',',@newvalues) if (scalar(@newvalues)>0);
 	}
-	
+
 }
 
 
@@ -183,11 +183,11 @@ sub add_frem_lines
 		}
 	}
 
-	my $format_data=1; 
+	my $format_data=1;
 
 	#in is ref of array cov_indices where position index is value to set in type column and the value is the column index
 	#           for the covariate in the data set. this array must be longer than 1. first pos(index 0) is not dv anymore, first cov
-	#in occ_index of occasion column, can be undef 
+	#in occ_index of occasion column, can be undef
 	#in mdv_index of mdv column, can be undef
 	#in evid_index of evid column, can be undef
 	#in type_index of type column, cannot be undef
@@ -239,7 +239,7 @@ sub add_frem_lines
 						push(@invariant_values,$row[$dv_index]);
 						$row[$mdv_index]=0 if (defined $mdv_index);
 						$row[$evid_index]=0 if (defined $evid_index) ;
-						
+
 						for (my $k= 0; $k<$N_parameter_blocks; $k++){
 							#add one line per parameter block
 							$row[$type_index] = ((100*($pos+1))+$k)  ; #fremtype value
@@ -283,7 +283,7 @@ sub add_frem_lines
 					$row[$mdv_index]=0 if (defined $mdv_index);
 					$row[$evid_index]=0 if (defined $evid_index) ;
 				}
-				format_array(\@row) if ($format_data); 
+				format_array(\@row) if ($format_data);
 				push(@newlines,join( ',', @row));
 			}
 		}
@@ -380,7 +380,7 @@ sub factor_list
 
 	my @factors=();
 	my %hash;
-	
+
 	my @data = @{$self->subject_data};
 
 	for (my $i = 0; $i <= $#data; $i++) {

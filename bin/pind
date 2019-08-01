@@ -49,20 +49,20 @@ $help_text{Pre_help_message} = <<'EOF';
 	Individual probabilities.
 EOF
 
-$help_text{Description} = <<'EOF';      
+$help_text{Description} = <<'EOF';
 
 	The pind script implements part of the procedure, the individual probabilities,
-	described in "Two bootstrapping routines for obtaining imprecision estimates for 
+	described in "Two bootstrapping routines for obtaining imprecision estimates for
 	nonparametric parameter distributions in nonlinear mixed effects models",Paul
-	G. Baverel, Radojka M. Savic, Mats O. Karlsson, J Pharmacokinet Pharmacodyn, 
+	G. Baverel, Radojka M. Savic, Mats O. Karlsson, J Pharmacokinet Pharmacodyn,
 	2010
 EOF
 
-$help_text{Examples} = <<'EOF';      
+$help_text{Examples} = <<'EOF';
 	pind run12.mod
 EOF
 
-$help_text{Options} = <<'EOF';      
+$help_text{Options} = <<'EOF';
 	A model file is required on the command line.
 
 	The following options are valid:
@@ -74,7 +74,7 @@ $help_text{-h} = <<'EOF';
 	With -h or -? pind will print a list of options and exit.
 EOF
 
-$help_text{-help} = <<'EOF';      
+$help_text{-help} = <<'EOF';
 	-help
 
 	With -help pind will print this, longer, help message.
@@ -99,7 +99,7 @@ EOF
 $help_text{-lst_file} = <<'EOF';
 	-lst_file='filename'
 
-	Default is the same name as the model file but with .mod replaced with .lst. 
+	Default is the same name as the model file but with .mod replaced with .lst.
 	The lst-file from where to read initial parameter estimates.
 EOF
 
@@ -163,7 +163,7 @@ $lst_file = $dir . $file;
 
 
 unless ( defined $options{'clean'} ){
-  # Clean may be changed by default 
+  # Clean may be changed by default
   $options{'clean'} = 1;
 }
 
@@ -174,7 +174,7 @@ my $model = model -> new ( eval( $eval_string ),
 			   filename                    => $ARGV[0],
 			   ignore_missing_output_files => 1 );
 
-my $pind = tool::pind -> 
+my $pind = tool::pind ->
     new ( eval( $common_options::parameters ),
 	  models	     => [$model],
 	  lst_file           => $lst_file,

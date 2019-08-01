@@ -49,7 +49,7 @@ sub setup_paths
 
 	PsN::set_nonmem_info($nm_version);
 	my $nmdir = $PsN::nmdir; #if only name of executable set, and executable is in path, then this is the full path found in PsN.pm
-	
+
 	if ( defined $nmdir and $nmdir ne '' ) {
 		unless (-e $nmdir) {
 			if ($nmqual) {
@@ -73,7 +73,7 @@ sub setup_paths
 
 	my $minor = $PsN::nm_minor_version;
 	my $major = $PsN::nm_major_version;
-	
+
 	unless ((defined $major) and length($major)>0) {
 		croak("No nonmem major version defined, error in psn.conf for -nm_version=$nm_version\n");
 	}
@@ -94,7 +94,7 @@ sub setup_paths
 		if (-d $nmdir) {
 			#look for autolog.pl in nmqual subdir
 			my $file1 = $nmdir . '/autolog.pl';
-			my $file2 = $nmdir . '/nmqual/autolog.pl';		
+			my $file2 = $nmdir . '/nmqual/autolog.pl';
 			if (-e $file1) {
 				$full_path_runscript = $file1;
 				$xmlpath=$nmdir . '/' . $xmlname;
@@ -180,7 +180,7 @@ sub find_nmfe_script
 	my @check_subversions=();
 	push (@check_subversions,$minor) if (defined $minor); #make sure this is checked first, if set
 	push (@check_subversions,('','1','2','3','4','5','6','7','8','9'));
-	
+
 	foreach my $subv (@check_subversions) {
 		last if (defined $found_full_path);
 		foreach my $path (@check_paths) {
@@ -193,7 +193,7 @@ sub find_nmfe_script
 				}
 
 				last;
-			} 
+			}
 		}
 	}
 

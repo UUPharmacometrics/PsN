@@ -87,7 +87,7 @@ sub eta_shrinkage
 	my $eta_filename = $parm{'eta_filename'};
 
 	# We do not handle subproblem eta shrinkage
-    
+
 	unless (defined($eta_filename)) {
 		$eta_filename = $self -> eta_tablename;
 	} else {
@@ -99,7 +99,7 @@ sub eta_shrinkage
 		my $omeganames  = $model -> outputs -> [0] -> omeganames();
 
 		my @omega_indexes;
-		if( defined $omeganames and 
+		if( defined $omeganames and
 				defined $omeganames->[0] and
 				defined $omeganames->[0]->[0] ) {
 			@omega_indexes = @{$omeganames->[0]->[0]};
@@ -122,7 +122,7 @@ sub eta_shrinkage
 					for( my $j = 0; $j < scalar @{$omegas -> [$probnum-1][0]}; $j++ ) {
 	  				# next unless diagonal
 						$omega_indexes[$j] =~  /OMEGA\((\d+),(\d+)\)/ ;
-						croak("unrecognized OMEGA index ".$omega_indexes[$j]) 
+						croak("unrecognized OMEGA index ".$omega_indexes[$j])
 							unless (defined $1 and defined $2);
 						next unless ($1 == $2);
 						my $diag_omega_idx = $1-1; #want index to start at 0
@@ -152,7 +152,7 @@ sub eta_shrinkage
 					$eta_shrinkage[0] = [];
 				}
 			} elsif( scalar @{$omegas -> [$probnum-1]} == 0 ) {
-				my $mes = "\n".$model -> full_name. 
+				my $mes = "\n".$model -> full_name.
 					"\nNo omegas found in output for problem $probnum. PsN cannot compute shrinkage.\n";
 				ui->print(category => 'all', message => $mes);
 			} else {
@@ -211,7 +211,7 @@ sub iwres_shrinkage
 					$iwres_shrinkage[0] = 100*$shrinkage; #report percent
 				} else {
 					$iwres_shrinkage[0] = undef;
-				}			  
+				}
 			} elsif ( @{$ofv -> [$probnum-1]} < 1 ) {
 				debugmessage(0,"There seems to be a problem with the results from ".
 						$model -> filename().". Cannot compute shrinkage." );

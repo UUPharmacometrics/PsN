@@ -54,7 +54,7 @@ sub find_zero_etas
 	$diagnostics{'ETA_none_missing'}=\@headers_none_missing; #set of headers where indices array is empty
 	$diagnostics{'ETA_none_missing_after_filter'}=\@complete_after_filter; # all headers if length of row_index_any_missing is shorter than original column, otherwise empty array
 	$diagnostics{'is_zero'}=\@is_zero;
-		
+
 	return \%diagnostics;
 }
 
@@ -125,7 +125,7 @@ sub get_nmtabledata
 				for (my $i=0;$i<scalar(@{$mean_matrix_array->[$k][$j]});$i++){
 					#loop over individuals, change sums to means
 					$mean_matrix_array->[$k][$j][$i] = $mean_matrix_array->[$k][$j][$i]/$sample_count;
-				} 
+				}
 			}
 		}
 	}
@@ -148,7 +148,7 @@ sub add_columns_ids_samples
 	my $sum_matrix = $parm{'sum_matrix'};
 	my $filter_all_zero = $parm{'filter_all_zero'};
 	my $init = $parm{'init'};
-	
+
 	my $get_sum = 0;
 	$get_sum=1 if (defined $sum_matrix);
 
@@ -201,7 +201,7 @@ sub add_columns_ids_samples
 
 sub decorrelation_and_npde_records_by_id
 {
-	my ($estimate_matrix,$mean_matrix,$id_mdv_matrix,$have_mdv,$npde_vector,$original_outlier) = 
+	my ($estimate_matrix,$mean_matrix,$id_mdv_matrix,$have_mdv,$npde_vector,$original_outlier) =
 		pos_validated_list(\@_,
             { isa => 'ArrayRef' },
             { isa => 'ArrayRef' },
@@ -213,19 +213,19 @@ sub decorrelation_and_npde_records_by_id
 	#this is for things like iwres and cwres, mulitple per ID
 	#$estimate_matrix
 	# reference to array  [over records][over samples/files]
-	# $mean_matrix 
+	# $mean_matrix
 	#reference to mean array  [over records]
 	# $id_mdv_matrix ref.  ID is [0]->[over recrods]->[0]
 	#                ref.  MDV is [1]->[over recrods]->[0]
 	# $have_mdv Bool, false if no mdv recrods
-	
-	# $npde_vector reference to empty array to put npde [over records] 
+
+	# $npde_vector reference to empty array to put npde [over records]
 
 	my $input_error = 2;
     my $numerical_error = 1;
 	my $message = '';
 	my $result = 0;
-	
+
 	my $nresponse = scalar(@{$estimate_matrix});
 	unless ($nresponse>0){
 		$result = $input_error;
@@ -282,7 +282,7 @@ sub decorrelation_and_npde_records_by_id
 			#this record is an observation
 			$local_estimate_matrix->[$nobs]->[0]=$estimate_matrix->[0]->[$i];
 			my @arr = @{$estimate_matrix->[0]->[$i]}[1 .. $samples];
-			my $max = max(\@arr); 
+			my $max = max(\@arr);
 			my $min = min(\@arr);
 			if (($estimate_matrix->[0]->[$i]->[0] > $max) or
 				($estimate_matrix->[0]->[$i]->[0] < $min)){
@@ -337,11 +337,11 @@ sub decorrelation
     );
 	#$estimate_matrix
 	# reference to array  [over columns][over individuals][over samples/files]
-	# $mean_matrix 
+	# $mean_matrix
 	#reference to mean array  [over columns][over individuals]
 
 	# reference to empty array to put decorrelated results [over columns][over individuals][over samples]
-	# $decorrelated_estmatrix 
+	# $decorrelated_estmatrix
 	# $stdev_arr
 
 	#$missing_matrix 1 if missing 0 otherwise
@@ -351,7 +351,7 @@ sub decorrelation
     my $numerical_error = 1;
 	my $message = '';
 	my $result = 0;
-	
+
 	my $nparm = scalar(@{$estimate_matrix});
 	unless ($nparm>0){
 		$result = $input_error;
@@ -372,14 +372,14 @@ sub decorrelation
 
 	my $have_filter = 0;
 	$have_filter = 1 if (scalar(@{$missing_matrix})>0);
-	
+
 	if ($nparm == 1){
 		for (my $i=0;$i<$individuals;$i++){
 			my $mean=$mean_matrix->[0]->[$i];
 			my $sum_errors_pow2=0;
 			my $origval = $estimate_matrix->[0]->[$i]->[0];
 			#loop over simulations, start at 1 since 0 is original
-			for (my $k = 1; $k < scalar(@{$estimate_matrix->[0]->[$i]}); $k++){ 
+			for (my $k = 1; $k < scalar(@{$estimate_matrix->[0]->[$i]}); $k++){
 				$sum_errors_pow2 += (($estimate_matrix->[0]->[$i]->[$k]) - $mean)**2;
 			}
 			my $stdev=0;
@@ -393,21 +393,21 @@ sub decorrelation
 				my $original = ($origval-$mean)/$stdev;
 				$decorrelated_estmatrix->[0]->[$i]=[$original];
 				#loop over simulations, start at 1 since 0 is original
-				for (my $k = 1; $k < scalar(@{$estimate_matrix->[0]->[$i]}); $k++){ 
+				for (my $k = 1; $k < scalar(@{$estimate_matrix->[0]->[$i]}); $k++){
 					my $transf= (($estimate_matrix->[0]->[$i]->[$k]) -$mean)/$stdev;
 					push (@{$decorrelated_estmatrix->[0]->[$i]},$transf);
 				}
 			}else{
 				$decorrelated_estmatrix->[0]->[$i]=[$missing];
 				#loop over simulations, start at 1 since 0 is original
-				for (my $k = 1; $k < scalar(@{$estimate_matrix->[0]->[$i]}); $k++){ 
+				for (my $k = 1; $k < scalar(@{$estimate_matrix->[0]->[$i]}); $k++){
 					push (@{$decorrelated_estmatrix->[0]->[$i]},$missing);
 				}
 			}
 		}
 		#return here when nparm==1???????
 	}else{
-	
+
 		my $sqrt=sqrt($samples-1);
 		for (my $i=0;$i<$individuals;$i++){
 			my @Amat=();
@@ -424,7 +424,7 @@ sub decorrelation
 				next if ($have_filter and ($missing_matrix->[$j]->[$i] == 1));
 				push(@original_filtered,($origval-$mean));
 				$acolumns++;
-				for (my $k = 1; $k < scalar(@{$estimate_matrix->[$j]->[$i]}); $k++){ 
+				for (my $k = 1; $k < scalar(@{$estimate_matrix->[$j]->[$i]}); $k++){
 					push(@{$Amat[($acolumns-1)]},($estimate_matrix->[$j]->[$i]->[$k])-$mean);
 				}
 			}
@@ -444,8 +444,8 @@ sub decorrelation
 					return ($result,$message);
 				}
 			}
-			
-			#want to multiply with inverse 'square root' (in a loose sense) of 
+
+			#want to multiply with inverse 'square root' (in a loose sense) of
 			#empirical variance-covariance matrix of A'A
 			#i.e. we want to multiply with inv(R*diag(1/sqrt(N-1))
 			#i.e. we want to solve orig=(R*diag(1/sqrt(N-1))*transf
@@ -460,7 +460,7 @@ sub decorrelation
 			for (my $j=0;$j<$ncol;$j++){
 				$original_filtered[$j]=$original_filtered[$j]*$sqrt;
 			}
-			
+
 			#solve R'* transf=bvec
 			#Golub p 88
 
@@ -485,15 +485,15 @@ sub decorrelation
 			}
 
 			#transform estmatrix for each simulation of id $i
-			
-			for (my $k = 1; $k < ($samples+1); $k++){ 
+
+			for (my $k = 1; $k < ($samples+1); $k++){
 				my @simvec=();
 				for (my $j=0;$j<$nparm;$j++){
 					next if ($have_filter and ($missing_matrix->[$j]->[$i] == 1));
 					#must subtract mean here also
 					push(@simvec,(($estimate_matrix->[$j]->[$i]->[$k]) - $meanvec[$j]));
 				}
-				
+
 				#solve R'*x=simvec
 
 				if ($acolumns > 0){
@@ -519,7 +519,7 @@ sub decorrelation
 					}
 				}
 			}
-			
+
 		} #end loop over id
 	}
 	return (0,$message);
@@ -531,7 +531,7 @@ sub pde
 	my ($vector) = pos_validated_list(\@_,
         { isa => 'ArrayRef' },
     );
-	
+
 	my $pde;
 	my $original = $vector->[0];
 	my $samples = scalar(@{$vector})-1; #-1 for original
@@ -539,7 +539,7 @@ sub pde
 		$pde = $missing;
 	}else{
 		my $count=0;
-		for (my $k = 1; $k <= $samples; $k++){ 
+		for (my $k = 1; $k <= $samples; $k++){
 			$count++ if (($vector->[$k])< $original);
 		}
 		if ($count == 0){

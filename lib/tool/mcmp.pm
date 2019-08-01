@@ -103,11 +103,11 @@ sub BUILD
 
 	if (defined $self->critical_ofv){
 		if  ($self->df >1){
-			ui -> print (category=>'mcmp', 
+			ui -> print (category=>'mcmp',
 						 message=>"Warning: When option -critical_ofv is used, option -df is ignored");
 		}
 		if  ($self->significance_level != 5){
-			ui -> print (category=>'mcmp', 
+			ui -> print (category=>'mcmp',
 						 message=>"Warning: When option -critical_ofv is used, option -significance_level is ignored");
 		}
 	}else{
@@ -138,7 +138,7 @@ sub BUILD
 		if (defined $self->start_size){
 			croak("option -start_size cannot be larger than -max_size") if
 				($self->start_size > $self->max_size);
-		}elsif ((defined $self->increment) and  $self->increment > $self->max_size){ 
+		}elsif ((defined $self->increment) and  $self->increment > $self->max_size){
 			croak("option -increment cannot be larger than -max_size");
 		}
 	}
@@ -162,7 +162,7 @@ sub get_df_table
 	my @pvalues=();
 	my $prev=100;
 	for (my $i=0; $i< scalar(@{$significance_levels}); $i++){
-		unless (($significance_levels->[$i] < $prev) and 
+		unless (($significance_levels->[$i] < $prev) and
 				($significance_levels->[$i] > 0)){
 			croak("Bad input to get_df_table: signficance_levels must be sorted descending, smaller than 100 and greater than 0");
 		}
@@ -258,7 +258,7 @@ sub modelfit_setup
 													   copy_datafile   => 1,
 													   write_copy => 0,
 													   copy_output => 0);
-		
+
 		if ($sim_model-> is_option_set(record=>'input',name=>'TIME')){
 			#this assumes no synonym, and TIME is always option, not value.
 			$time_in_input=1;
@@ -296,7 +296,7 @@ sub modelfit_setup
 
 					while( $old_seed =~ /(\D*)(\d+)(.*)/ ){
 						$new_line .= $1;
-						$new_line .= random_uniform_integer( 1, 0, 1000000 ); # Upper limit is from nmhelp 
+						$new_line .= random_uniform_integer( 1, 0, 1000000 ); # Upper limit is from nmhelp
 						$old_seed = $3;
 					}
 
@@ -355,7 +355,7 @@ sub modelfit_setup
 		@table_header=();
 		if( defined $prob -> inputs and defined $prob -> inputs -> [0] -> options ) {
 			foreach my $option ( @{$prob -> inputs -> [0] -> options} ) {
-				push( @table_header, $option -> name ) unless 
+				push( @table_header, $option -> name ) unless
 					(($option -> value eq 'DROP' or $option -> value eq 'SKIP'
 					  or $option -> name eq 'DROP' or $option -> name eq 'SKIP') ||
 					 ($option -> name =~ /^DAT(E|1|2|3)/) ||
@@ -381,7 +381,7 @@ sub modelfit_setup
 											 models           => [$sim_model],
 											 base_directory   => $self -> directory,
 											 directory        => $self -> directory.
-											 'simulation_dir'.$model_number, 
+											 'simulation_dir'.$model_number,
 											 retries          => 1,
 											 logfile	         => undef,
 											 raw_results           => undef,
@@ -459,7 +459,7 @@ sub modelfit_setup
 
 	foreach my $mod (@estimate_models){
 		if (defined $simulated_file or defined $self->simdata()){
-			#remove any DATX in $INPUT 
+			#remove any DATX in $INPUT
 			foreach my $col ('DATE','DAT1','DAT2','DAT3'){
 				$mod -> remove_option(record_name => 'input',
 									  problem_numbers => [(1)],
@@ -478,7 +478,7 @@ sub modelfit_setup
 			$mod -> remove_records(problem_numbers => [(1)],
 								   type => 'simulation' );
 
-			#ignore @ since simdata contains header rows. 
+			#ignore @ since simdata contains header rows.
 			#keep old ignores. It is up to the user to make sure datasets are comparable
 			for (my $probi=0; $probi < scalar(@{$mod->problems}); $probi++){
 				$mod->problems->[$probi]->datas->[0]->ignoresign('@');
@@ -581,7 +581,7 @@ sub modelfit_analyze
 		my $newname = "$fname"."-old$addnum".'.csv';
 		mv( $fname.'.csv', $newname);
 
-		ui -> print (category=>'mcmp', 
+		ui -> print (category=>'mcmp',
 					 message=>"Renamed old $fname".
 					 ".csv to $newname to protect old output. New output is $fname".".csv.");
 	}
@@ -603,7 +603,7 @@ sub modelfit_analyze
 	}
 
 	my @indices;
-	my $converged = 0;    
+	my $converged = 0;
 	my @last_N=(0,0);
 	my @last_Y=(0,0);
 	my $step_index=0;
@@ -622,7 +622,7 @@ sub modelfit_analyze
 			#get next total samples by simple stepping
 			$goal_total_samples = ($self->start_size()+$step_index*$self->increment());
 			$step_index++;
-			$converged = 1 if (($self->start_size()+$step_index*$self->increment()) 
+			$converged = 1 if (($self->start_size()+$step_index*$self->increment())
 							   > $self->max_size()); #do not go beyond max_size regardless of results
 		}else{
 			#get next total samples by secant method
@@ -662,7 +662,7 @@ sub modelfit_analyze
 			foreach my $val (@bootstrap_ofv){
 				foreach my $k (0 .. ($n_critical-1)){
 					last if $val <= $self->critical_array->[$k];
-					$n_above_critical[$k]++; 
+					$n_above_critical[$k]++;
 				}
 			}
 		} else {
@@ -694,7 +694,7 @@ sub modelfit_analyze
 
 				foreach my $k (0 .. ($n_critical-1)){
 					last if $delta_ofv <= $self->critical_array->[$k];
-					$n_above_critical[$k]++; 
+					$n_above_critical[$k]++;
 				}
 			}
 		} #end algorithm 2
@@ -749,7 +749,7 @@ sub modelfit_analyze
 			}
 		} #end convergence test no curve
 
-	} #end while not converged 
+	} #end while not converged
 
 	print "See mcmp_results.csv for more detailed results.\n";
 	close(RES);
@@ -773,15 +773,15 @@ sub get_total_samples
 		$self->rounding(1);
 	}elsif ($last_N->[1] == 0){ #step before most recent
 		#this is the second iteration
-		#second (y range 0 to 1) from y2=exp(-a/N2), a=-ln(y1)*N1, 
-		#N2=-a/ln(power_goal)=ln(y1)*N1/ln(power_goal), roudn to multiple of increment 
+		#second (y range 0 to 1) from y2=exp(-a/N2), a=-ln(y1)*N1,
+		#N2=-a/ln(power_goal)=ln(y1)*N1/ln(power_goal), roudn to multiple of increment
 		#If larger than max_size then warn and reduce to 50 rounded up to mult increment
 		die "Y out of range" unless ($last_Y->[0] > 0 and $last_Y->[0]<=1);
 		my $N=log($last_Y->[0])*$last_N->[0]/log($self->target_power()/100);
 		$total_samples = int($N/$self->increment())*$self->increment(); #round down
-		$total_samples = int(50/$self->increment())*$self->increment() 
+		$total_samples = int(50/$self->increment())*$self->increment()
 			if ($total_samples > $self->max_size());
-		$self->rounding(-1*$self->rounding);      
+		$self->rounding(-1*$self->rounding);
 	}else{
 		#standard iteration
 		return -1 unless ($last_Y->[0] > 0 and $last_Y->[0]<=1);
@@ -789,7 +789,7 @@ sub get_total_samples
 		return -1 if ($last_Y->[0] == $last_Y->[1]);
 		my $N=$last_N->[0]+(($self->target_power()/100)-$last_Y->[0])*($last_N->[0]-$last_N->[1])/($last_Y->[0]-$last_Y->[1]);
 		$total_samples = POSIX::ceil($N / $self->increment) * $self->increment;
-		$self->rounding(-1*$self->rounding);      
+		$self->rounding(-1*$self->rounding);
 	}
 	$self->rounding(1) if($total_samples <= $self->increment());
 
@@ -799,7 +799,7 @@ sub get_total_samples
 		$self->rounding(-1) if ($total_samples > $self->max_size());
 	}
 	$self->samples_hash->{$total_samples}=1;
-    
+
 	return $total_samples;
 }
 
@@ -823,7 +823,7 @@ sub read_data
 			$full_file = $self->full_model()->directory().'full.phi';
 		}
 	}
-	
+
 	unless ( -e $full_file ){
 		croak("File $full_file \nwith iofv output for full model does not exist.");
 	}
@@ -832,7 +832,7 @@ sub read_data
 		my $num = $self->full_model->outputs->[0]->get_single_value(attribute => 'ofv');
 		$self->ofv_full($num) if (defined $num);
 	}
-    
+
 	if (defined $self->table_reduced()){
 		$reduced_file = $self->table_reduced();
 	} else {
@@ -858,19 +858,19 @@ sub read_data
 			croak("File " . $self->table_strata . " \nwith stratification data does not exist.");
 		}
 		my $d = data->new(filename => $self->table_strata, ignoresign => '@', idcolumn => 1); #defined format table ID first
-		
+
 		$n_individuals= scalar(@{$d->individuals});
 		@strata = @{$d -> column_to_array('column'=>$self->stratify_on())};
 		$d = undef;
-		%index_to_strata_hash = 
-			%{$self->create_unique_values_hash(sorted_column => [(sort {$a <=> $b} @strata)])}; 
+		%index_to_strata_hash =
+			%{$self->create_unique_values_hash(sorted_column => [(sort {$a <=> $b} @strata)])};
 		$n_strata = scalar(keys %index_to_strata_hash );
 		foreach my $key (keys %index_to_strata_hash){
 			$strata_to_index_hash{$index_to_strata_hash{$key}}=$key;
 		}
 		@delta_ofv = (0) x $n_individuals;
 	}
-	
+
 
 	my $line_i=0;
 	open(FH, $reduced_file ) or croak("Could not open reduced file.");
@@ -894,13 +894,13 @@ sub read_data
 		}
 	}else{
 		$n_individuals = $line_i;
-	}  
+	}
 
 	my %strata_ofv;
 	for (my $i=0;$i< $n_strata; $i++){
 		$strata_ofv{$i}=[()];
 	}
-	
+
 	$line_i=0;
 	open(FH, $full_file ) or croak("Could not open full file.");
 	my @full_iofv=();
@@ -927,7 +927,7 @@ sub read_data
 	if ($line_i != $n_individuals){
 		croak("The number of individuals in $reduced_file and ".
 			  "$full_file are not the same.");
-	}  
+	}
 	unless (defined $self->max_size()){
 		$self->max_size($n_individuals);
 	}

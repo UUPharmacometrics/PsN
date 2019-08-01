@@ -39,10 +39,10 @@ sub submit
   }
 
   my $queue_string = ' ';
-  $queue_string = ' -q ' . $PsN::config->{'_'}->{'torque_queue'} . ' ' 
+  $queue_string = ' -q ' . $PsN::config->{'_'}->{'torque_queue'} . ' '
       if ($PsN::config->{'_'}->{'torque_queue'});
   $queue_string = ' -q ' . $self->torque_queue . ' ' if (defined $self->torque_queue);
-	
+
 	system('echo qsub ' . $prepend . ' -N ' . $jobname .' -d ' . $cwd . $queue_string . ' JobScript > qsubcommand');
   if (system('qsub ' . $prepend . ' -N ' . $jobname .' -d ' . $cwd . $queue_string . ' JobScript > JobId')) {
 	  my $error = "$!";

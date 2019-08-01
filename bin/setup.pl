@@ -46,7 +46,7 @@ setup_globals();
 if (eval('require File::Copy::Recursive')) {
 	eval('import File::Copy::Recursive qw/fcopy rcopy dircopy fmove rmove dirmove/');
 	$have_file_copy = 1;
-	print "\nInformation: Using File::Copy::Recursive for copying\n"; 
+	print "\nInformation: Using File::Copy::Recursive for copying\n";
 }
 
 if (running_on_windows()) {
@@ -128,7 +128,7 @@ my @modules;
 
 sub get_windows_version
 {
-	if (eval('require Win32')) { 
+	if (eval('require Win32')) {
 		my $winver = Win32::GetOSName();
 		$is_win7 = 1 if ($winver eq 'Win7');
 		$is_Vista = 1 if ($winver eq 'WinVista');
@@ -165,7 +165,7 @@ sub confirm
 	}
 }
 
-sub get_default_nm_versions 
+sub get_default_nm_versions
 {
 	my %versionhash;
 	if (running_on_windows()) {
@@ -173,7 +173,7 @@ sub get_default_nm_versions
 		my @dirs = <C:/nmvi* C:/NONMEM/nmvi* $home/nmvi* $home/NONMEM/nmvi*>;
 		foreach my $dir (@dirs){
 			$versionhash{$dir}=6 if ((-d $dir) and (
-										 ((-d $dir.'\run') and (-x $dir.'\run\nmfe6.bat')) or 
+										 ((-d $dir.'\run') and (-x $dir.'\run\nmfe6.bat')) or
 										 ((-d $dir.'\util') and (-x $dir.'\util\nmfe6.bat'))
 									 ));
 		}
@@ -202,7 +202,7 @@ sub get_default_nm_versions
 		my @dirs = </opt/nmvi* /opt/NONMEM/nmvi* $home/nmvi* $home/NONMEM/nmvi*>;
 		foreach my $dir (@dirs){
 			$versionhash{$dir}=6 if ((-d $dir) and (
-										 ((-d $dir.'/run') and (-x $dir.'/run/nmfe6')) or 
+										 ((-d $dir.'/run') and (-x $dir.'/run/nmfe6')) or
 										 ((-d $dir.'/util') and (-x $dir.'/util/nmfe6'))
 									 ));
 		}
@@ -232,7 +232,7 @@ sub get_default_nm_versions
 	return \%versionhash;
 }
 
-sub get_nm_version 
+sub get_nm_version
 {
 	print "Enter the *complete* path of the NM-installation directory: ";
 	my $dir = <STDIN>;
@@ -270,7 +270,7 @@ sub get_nm_version
 	my $version;
 	if (running_on_windows()) {
 		$version=6 if ((-d $dir) and (
-						   ((-d $dir.'\run') and (-x $dir.'\run\nmfe6.bat')) or 
+						   ((-d $dir.'\run') and (-x $dir.'\run\nmfe6.bat')) or
 						   ((-d $dir.'\util') and (-x $dir.'\util\nmfe6.bat'))
 					   ));
 		if ((-d $dir) and ((-d $dir.'\run') or (-d $dir.'\util'))){
@@ -290,7 +290,7 @@ sub get_nm_version
 		}
 	}else{
 		$version=6 if ((-d $dir) and (
-						   ((-d $dir.'/run') and (-x $dir.'/run/nmfe6')) or 
+						   ((-d $dir.'/run') and (-x $dir.'/run/nmfe6')) or
 						   ((-d $dir.'/util') and (-x $dir.'/util/nmfe6'))
 					   ));
 		if ((-d $dir) and ((-d $dir.'/run') or (-d $dir.'/util'))){
@@ -348,7 +348,7 @@ sub copy_and_modify_bin_files
 		}else{
 
 			$includepath = File::Spec->catfile($path,"PsN_$name_safe_version");
-		} 
+		}
 		@includelines=('use FindBin qw($Bin);','use lib "$Bin/".'."'$includepath';");
 	}else{
 		$includepath = File::Spec->catfile($library_dir,"PsN_$name_safe_version");
@@ -359,7 +359,7 @@ sub copy_and_modify_bin_files
 	unless (open(INST, "<", File::Spec->catfile("bin", $file))) {
 		abort("Could not open " . File::Spec->catfile("bin", $file) . " for reading, unable to install $file: $!\n");
 	}
-	unless (open(UTIL, ">", File::Spec->catfile($binary_dir, "$file-$version"))) { 
+	unless (open(UTIL, ">", File::Spec->catfile($binary_dir, "$file-$version"))) {
 		abort("Could not open " . File::Spec->catfile($binary_dir, "$file-$version") . " for writing, unable to install $file: $!\n");
 	}
 	my $replace_line_found = 0;
@@ -440,7 +440,7 @@ sub create_conf
 		}else{
 			print "No NM versions have been found. You need to add at least one.\n";
 		}
-		
+
 		my ($path,$version_label) = get_nm_version();
 		unless ($path eq '0'){
 			$nm_versions{$path}=$version_label;
@@ -457,12 +457,12 @@ sub create_conf
 			my $name = get_psnname($version,$default);
 			$psn_names{$name}=$version;
 		}
-		
+
 		if (scalar(keys %psn_names)==1){
 			my @keys = keys %psn_names;
 			$psn_names{'default'} = $psn_names{$keys[0]};
 		}
-		
+
 		while (not defined $psn_names{'default'}){
 			print "These are the defined psn-names:\n";
 			print (join('  ',(keys %psn_names))."\n");
@@ -479,7 +479,7 @@ sub create_conf
 			my $version_label = $nm_versions{$psn_names{$name}};
 			$config -> {'nm_versions'} -> { $name } = $psn_names{$name}.','.$version_label;
 		}
-		
+
 	} else {
 		print "\nError: No NM versions defined. You must add at least one manually to $newconf, otherwise PsN will not run.";
 	}
@@ -610,14 +610,14 @@ sub copy_documentation
 	}
 	my $newdir = File::Spec->catdir($input,"PsN_documentation");
 	if ($ok) {
-		if( mkpath( $newdir ) ) { 
+		if( mkpath( $newdir ) ) {
 			unless (running_on_windows()) {
 				if (length($use_user_name)>0){
 					my @arr = ($newdir);
 					chown $uid, $gid, @arr;
 				}
 			}
-		} else { 
+		} else {
 			if (-d $newdir) {
 				if (not running_on_windows()) {
 					if (length($use_user_name) > 0) {
@@ -644,11 +644,11 @@ sub copy_documentation
 				fcopy($ff, $dest);
 			}
 		} else {
-			my $full_command = $copy_recursive_cmd . " " . File::Spec->catfile("doc", "*.scm") . " \"" . $newdir. "\""; 
+			my $full_command = $copy_recursive_cmd . " " . File::Spec->catfile("doc", "*.scm") . " \"" . $newdir. "\"";
 			system($full_command);
-			my $full_command = $copy_recursive_cmd . " " . File::Spec->catfile("doc", "*.pdf") . " \"" . $newdir. "\""; 
+			my $full_command = $copy_recursive_cmd . " " . File::Spec->catfile("doc", "*.pdf") . " \"" . $newdir. "\"";
 			system($full_command);
-			my $full_command = $copy_recursive_cmd . " " . File::Spec->catfile("doc", "*.xls") . " \"" . $newdir. "\""; 
+			my $full_command = $copy_recursive_cmd . " " . File::Spec->catfile("doc", "*.xls") . " \"" . $newdir. "\"";
 			system($full_command);
 		}
 	}
@@ -701,7 +701,7 @@ sub test_perl_modules
 		} else {
 			print "Perl module $module is missing, you must install it before running PsN.\n";
 		}
-	} 
+	}
 	print "\nDone testing required modules.\n";
 	print "\nTesting recommended but not required modules...\n";
 	foreach my $module (@recommended_modules){
@@ -712,7 +712,7 @@ sub test_perl_modules
 		} else {
 			print "Perl module $module is missing, you can run PsN without it but some features will be disabled.\n";
 		}
-	} 
+	}
 
 	print "Tests done.\n\n";
 	print "Continue installing PsN (installing is possible even if modules are missing)[y/n]?";
@@ -743,7 +743,7 @@ sub copy_file
 {
 	my $source = shift;
 	my $dest = shift;
-	
+
 	# This sub works currently only on windows
 	if ($have_file_copy) {
 		unless (fcopy($source, $dest)) {
@@ -915,8 +915,8 @@ if ($have_file_copy) {
 } else {
 	#do not have File::Copy
 	system($copy_cmd . " \"" . $newconf . "\" old.conf") if $keep_conf;
-	
-	my $full_command = $copy_recursive_cmd . " " . File::Spec -> catfile( "lib", "*" ) . " \"" . $thelibdir . "\""; 
+
+	my $full_command = $copy_recursive_cmd . " " . File::Spec -> catfile( "lib", "*" ) . " \"" . $thelibdir . "\"";
 	system($full_command);
 
 	unless (-e "$library_dir" . "/PsN_$name_safe_version/model.pm" ) {
@@ -931,7 +931,7 @@ if ($have_file_copy) {
 				"and then try to install PsN again, using the same setup script.\n");
 		}
 	}
-	
+
 	system($copy_cmd . " old.conf \"" . $newconf . "\"") if $keep_conf;
 }
 
@@ -941,7 +941,7 @@ foreach my $file (@utilities) {
 
 	my $copy_the_binaries = 0;
 	if (-e "$binary_dir/$file") {
-		
+
 		if (not running_on_windows()) {
 			my $link = readlink("$binary_dir/execute");
 			if ($old_version eq 'X_X_X' and not($link eq '')) {
@@ -998,11 +998,11 @@ foreach my $file (@utilities) {
 			unlink("$binary_dir/$file");
 			$copy_the_binaries = 1;
 		}
-		
+
 	} else {
 		$copy_the_binaries = 1;
-	}  
-	
+	}
+
 	if ($copy_the_binaries) {
 		if (running_on_windows()) {
 			copy_file("$binary_dir\\$file-$version", "$binary_dir\\$file");
@@ -1013,7 +1013,7 @@ foreach my $file (@utilities) {
 	}
 
 	# Make the versioned script directly executable
-	if (running_on_windows()) {	
+	if (running_on_windows()) {
 		rename("$binary_dir\\$file-$version", "$binary_dir\\$file-$version.pl");
 		create_bat_file("$binary_dir\\$file-$version.bat");
 
@@ -1055,7 +1055,7 @@ if (confirm()) {
 		}
 	} else {
 		mkpath($test_library_dir);
-		my $full_command = $copy_recursive_cmd . " " . File::Spec->catfile("test", "*") . " \"" . $test_library_dir . "\""; 
+		my $full_command = $copy_recursive_cmd . " " . File::Spec->catfile("test", "*") . " \"" . $test_library_dir . "\"";
 		system($full_command);
 
 		unless (-e "$test_library_dir/includes.pm" ) {
@@ -1068,7 +1068,7 @@ if (confirm()) {
 				abort("It is recommended to install File::Copy::Recursive and then try to install PsN again, using the same setup script.\n");
 			}
 		}
-	
+
 		system($copy_cmd . " old.conf \"" . $newconf . "\"") if $keep_conf;
 	}
 
@@ -1101,7 +1101,7 @@ if (confirm()) {
 	truncate($sh,tell($sh))               or die "Truncating: $!";
 	close($sh)                           or die "Closing: $!";
 
-	
+
 	print "PsN test library installed successfully in [$test_library_dir].\n";
 	print "Please read the 'testing' chapter of the developers_guide.pdf for information on how to run the tests\n\n";
 }
@@ -1157,11 +1157,11 @@ warn_about_local_configuration();
 if ($configuration_done) {
 	print "\nInstallation complete.\n";
 } else {
-    my $path = "$library_dir" . "$directory_separator" . "PsN_$name_safe_version"; 
+    my $path = "$library_dir" . "$directory_separator" . "PsN_$name_safe_version";
     cp($path . '/psn.conf_template', $path . '/psn.conf');
 	print "\nInstallation partially complete. You still have to add NONMEM settings to psn.conf before you can run PsN.\n";
 	print "A psn.conf to edit is found in\n";
-	print "$path\n"; 
+	print "$path\n";
 	print "Detailed instructions are found in psn_configuration.pdf";
 }
 
