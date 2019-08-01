@@ -69,6 +69,7 @@ Changes and bug fixes from PsN 4.8.0 to x.x.x
 
    ___Cluster/Grid___
 
+- All NONMEM jobs will automatically be cancelled when the PsN process is interrupted
 
 
    ___Test scripts___

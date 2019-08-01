@@ -423,6 +423,17 @@ sub run
 
     my %queue_info;
 
+    my $old_inthandler = $SIG{'INT'};
+    if ($self->run_on_slurm) {
+        $SIG{'INT'} = sub {
+            for my $key (keys %queue_info) {
+                my $jobid = $queue_info{$key}->{'nonmemrun'}->{'job_id'};
+                system("scancel $jobid");
+            }
+            exit;
+        };
+    }
+
     # @queue is an array of NM_run directory numbers. If "X" is in
     # @queue, then psn.mod in "NM_runX" is scheduled to be run. It
     # initialized to all models in the tool. Note that if X is in
@@ -837,6 +848,10 @@ sub run
 
     if ($do_abort){
         croak("abort_on_fail is set and ".$failed_run_message.". Aborting");
+    }
+
+    if ($self->run_on_slurm) {
+        $SIG{'INT'} = $old_inthandler;
     }
 
     return \@results;
