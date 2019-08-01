@@ -31,6 +31,7 @@ LIBFILES= ui.pm \
 	ext/Math/MatrixReal.pm \
 	ext/Config/Tiny.pm \
 	ext/File/HomeDir.pm \
+	ext/Capture/Tiny.pm \
 	status_bar.pm \
 	nonmemrun.pm \
 	nonmemrun/localunix.pm \
