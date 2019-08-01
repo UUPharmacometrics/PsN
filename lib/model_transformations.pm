@@ -18,7 +18,7 @@ use Scalar::Util qw(refaddr);
 sub add_tv
 {
     # Add TV (typical value) variable if it doesn't already exist for list of parameters
-	my %parm = validated_hash(\@_,
+    my %parm = validated_hash(\@_,
         model => { isa => 'model' },
         parameters => { isa => 'ArrayRef' },
     );
@@ -109,7 +109,7 @@ sub add_iov
     # Add IOV on each listed parameter
     # If no parameters listed add iov on all iiv etas
     # Return 0 if ok and something was added. 1 if no occ column found
-	my %parm = validated_hash(\@_,
+    my %parm = validated_hash(\@_,
         model => { isa => 'model' },
         occ => { isa => 'Str', default => 'OCC' },
         parameters => { isa => 'ArrayRef[Str]', optional => 1 },
@@ -123,8 +123,8 @@ sub add_iov
     my $unique_occs = unique_occs(model => $model, occ => $occ);
     return 1 if (not defined $unique_occs);
 
-  	my @model_code;
-	my $code_record;
+      my @model_code;
+    my $code_record;
     if ($model->has_code(record => 'pk')) {
         @model_code = @{$model->get_code(record => 'pk')};
         $code_record = 'pk';
@@ -211,74 +211,74 @@ sub add_iov
 
 sub marge_two_hashes
 {
-	#marge two hashes and replace undef values with values from other hash if they are not undef
-	my %parm = validated_hash(\@_,
+    #marge two hashes and replace undef values with values from other hash if they are not undef
+    my %parm = validated_hash(\@_,
         hash_1 => { isa => 'HashRef' },
         hash_2 => { isa => 'HashRef' },
     );
-	my $hash_1 = $parm{'hash_1'};
-	my $hash_2 = $parm{'hash_2'};
+    my $hash_1 = $parm{'hash_1'};
+    my $hash_2 = $parm{'hash_2'};
 
-	my %hash_1 = %{$hash_1};
-	my %hash_2 = %{$hash_2};
-	my %new_hash = %hash_1;
-	foreach my $keys_2 ( keys %hash_2) {
-		if(exists $hash_1{$keys_2}) {
-			if (not(defined $hash_1{$keys_2}) && defined $hash_2{$keys_2}) {
-				$new_hash{$keys_2} = $hash_2{$keys_2};
-			}
-		} else {
-			$new_hash{$keys_2} = $hash_2{$keys_2};
-		}
-	}
-	return(\%new_hash);
+    my %hash_1 = %{$hash_1};
+    my %hash_2 = %{$hash_2};
+    my %new_hash = %hash_1;
+    foreach my $keys_2 ( keys %hash_2) {
+        if(exists $hash_1{$keys_2}) {
+            if (not(defined $hash_1{$keys_2}) && defined $hash_2{$keys_2}) {
+                $new_hash{$keys_2} = $hash_2{$keys_2};
+            }
+        } else {
+            $new_hash{$keys_2} = $hash_2{$keys_2};
+        }
+    }
+    return(\%new_hash);
 }
 
 sub add_etas_to_parameters
 {
     # Add etas to the parameters listed
     # Returns a hash of what was added
-	my %parm = validated_hash(\@_,
+    my %parm = validated_hash(\@_,
         model => { isa => 'model' },
         parameters => { isa => 'ArrayRef[Str]' },
     );
     my $model = $parm{'model'};
     my $parameters = $parm{'parameters'};
 
-  	my $model_code;
-	my $added_etas;
-	if ($model->has_code(record => 'pk')) {
+      my $model_code;
+    my $added_etas;
+    if ($model->has_code(record => 'pk')) {
         my($model_code,$added_etas1) = add_etas_in_model_record(model => $model, parameters => $parameters, code_record => 'pk');
-		$model->set_code(record => 'pk', code => $model_code);
-		$added_etas = $added_etas1;
+        $model->set_code(record => 'pk', code => $model_code);
+        $added_etas = $added_etas1;
     } elsif ($model->has_code(record => 'pred')) {
         my($model_code,$added_etas1) = add_etas_in_model_record(model => $model, parameters => $parameters, code_record => 'pred');
-		$model->set_code(record => 'pred', code => $model_code);
-		$added_etas = $added_etas1;
+        $model->set_code(record => 'pred', code => $model_code);
+        $added_etas = $added_etas1;
     } else {
         croak("Neither PK nor PRED defined in " . $model->filename . "\n");
     }
-	if ($model->has_code(record => 'error')) {
+    if ($model->has_code(record => 'error')) {
 
         my($model_code,$added_etas2) = add_etas_in_model_record(model => $model, parameters => $parameters, code_record => 'error');
-		$model->set_code(record => 'error', code => $model_code);
-		$added_etas = marge_two_hashes(hash_1 => $added_etas, hash_2 => $added_etas2);
+        $model->set_code(record => 'error', code => $model_code);
+        $added_etas = marge_two_hashes(hash_1 => $added_etas, hash_2 => $added_etas2);
     }
-	return($added_etas);
+    return($added_etas);
 }
 
 sub add_etas_in_model_record
 {
     # Add etas to the parameters listed in specific record
     # Returns a hash of what was added, and model code
-	my %parm = validated_hash(\@_,
+    my %parm = validated_hash(\@_,
         model => { isa => 'model' },
         parameters => { isa => 'ArrayRef[Str]' },
-		code_record => {isa => 'Str'},
+        code_record => {isa => 'Str'},
     );
     my $model = $parm{'model'};
     my $parameters = $parm{'parameters'};
-	my $code_record = $parm{'code_record'};
+    my $code_record = $parm{'code_record'};
 
     my @model_code = @{$model->get_code(record => $code_record)};
 
@@ -319,7 +319,7 @@ sub add_etas_in_model_record
 sub diagonal_to_block
 {
     # Convert all diagonal omegas into BLOCK(1)
-	my %parm = validated_hash(\@_,
+    my %parm = validated_hash(\@_,
         model => { isa => 'model' },
     );
     my $model = $parm{'model'};
@@ -328,9 +328,9 @@ sub diagonal_to_block
     my @records;
     for my $omega (@$omegas) {
         if ($omega->is_block()) {
-			push @records, $omega;
+            push @records, $omega;
         } else {
-			my $i = 0;
+            my $i = 0;
             for my $option (@{$omega->options}) {
                 my $new_record = model::problem::omega->new(
                     corr => $omega->corr,
@@ -360,7 +360,7 @@ sub full_omega_block
     # Replace all omegas into one big full block
     # FIXed and SAME omegas are assumed to be at the end and will be kept
     # Return 1 if model is already full block else 0
-	my %parm = validated_hash(\@_,
+    my %parm = validated_hash(\@_,
         model => { isa => 'model' },
     );
     my $model = $parm{'model'};
@@ -415,7 +415,7 @@ sub omega_block
 {
     # Transform a number of omegas into block
     # Return the new block without side effects
-	my %parm = validated_hash(\@_,
+    my %parm = validated_hash(\@_,
         model => { isa => 'model' },
         start_eta => { isa => 'Int' },
         end_eta => { isa => 'Int' },
@@ -446,11 +446,11 @@ sub _rename_etas
     my %parm = validated_hash(\@_,
         model => { isa => 'model' },
         etas => { isa => 'ArrayRef', optional => 1 },   # Array of the etas to rename or unspecified for all etas
-		prefix => { isa => 'Str', default => 'ETAT' },	# The name to use for the transformed eta
+        prefix => { isa => 'Str', default => 'ETAT' },    # The name to use for the transformed eta
     );
     my $model = $parm{'model'};
-	my $etas = $parm{'etas'};
-	my $prefix = $parm{'prefix'};
+    my $etas = $parm{'etas'};
+    my $prefix = $parm{'prefix'};
 
     if (not defined $etas) {
         my $netas = $model->nomegas->[0];
@@ -459,15 +459,15 @@ sub _rename_etas
 
     for my $eta (@$etas) {
         for my $record (('pk', 'pred', 'error', 'des', 'aes', 'aesinitial', 'mix', 'infn')) {
-		    if ($model->has_code(record => $record)) {
-			    my $code = $model->get_code(record => $record);
+            if ($model->has_code(record => $record)) {
+                my $code = $model->get_code(record => $record);
                 for (my $i = 0; $i < scalar(@$code); $i++) {
                     $code->[$i] =~ s/(?<!\w)ETA\($eta\)/$prefix$eta/g;
                 }
                 $model->set_code(record => $record, code => $code);
             }
         }
-	}
+    }
 }
 
 sub rename_symbol
@@ -526,11 +526,11 @@ sub prepend_code
         record => { isa => 'Str', optional => 1 },
     );
     my $model = $parm{'model'};
-	my $code = $parm{'code'};
+    my $code = $parm{'code'};
     my $record = $parm{'record'};
 
-	my @model_code;
-	my $code_record;
+    my @model_code;
+    my $code_record;
     if (not defined $record) {
         if ($model->has_code(record => 'pk')) {
             @model_code = @{$model->get_code(record => 'pk')};
@@ -546,7 +546,7 @@ sub prepend_code
         $code_record = $record;
     }
 
-	@model_code = (@$code, @model_code);
+    @model_code = (@$code, @model_code);
 
     $model->set_code(record => $code_record, code => \@model_code);
 }
@@ -560,11 +560,11 @@ sub append_code
         record => { isa => 'Str', optional => 1 },
     );
     my $model = $parm{'model'};
-	my $code = $parm{'code'};
+    my $code = $parm{'code'};
     my $record = $parm{'record'};
 
-	my @model_code;
-	my $code_record;
+    my @model_code;
+    my $code_record;
     if (not defined $record) {
         if ($model->has_code(record => 'pk')) {
             @model_code = @{$model->get_code(record => 'pk')};
@@ -588,7 +588,7 @@ sub append_code
         $code_record = $record;
     }
 
-	@model_code = (@model_code, @$code);
+    @model_code = (@model_code, @$code);
 
     $model->set_code(record => $code_record, code => \@model_code);
 }
@@ -603,12 +603,12 @@ sub insert_code
         line => { isa => 'Int' },
     );
     my $model = $parm{'model'};
-	my $code = $parm{'code'};
+    my $code = $parm{'code'};
     my $record = $parm{'record'};
     my $line = $parm{'line'};
 
-	my @model_code;
-	my $code_record;
+    my @model_code;
+    my $code_record;
     if (not defined $record) {
         if ($model->has_code(record => 'pk')) {
             @model_code = @{$model->get_code(record => 'pk')};
@@ -628,7 +628,7 @@ sub insert_code
     for (my $i = 0; $i <= $line; $i++) {
         push @result_code, $model_code[$i];
     }
-	@result_code = (@result_code, @$code);
+    @result_code = (@result_code, @$code);
     for (my $i = $line + 1; $i < scalar(@model_code); $i++) {
         push @result_code, $model_code[$i];
     }
@@ -640,12 +640,12 @@ sub boxcox_etas
 {
     # Boxcox transform all or some ETAs of model
     # Assume only one $PROBLEM
-	my %parm = validated_hash(\@_,
+    my %parm = validated_hash(\@_,
         model => { isa => 'model' },
         etas => { isa => 'ArrayRef', optional => 1 },       # An array of the etas to transform or unspecified for all etas
     );
     my $model = $parm{'model'};
-	my $etas = $parm{'etas'};
+    my $etas = $parm{'etas'};
 
     if (not defined $etas) {
         my $netas = $model->nomegas->[0];
@@ -670,12 +670,12 @@ sub uniform_etas
 {
     # Change all or some ETAs to a uniform distribution
 
-	my %parm = validated_hash(\@_,
+    my %parm = validated_hash(\@_,
         model => { isa => 'model' },
         etas => { isa => 'ArrayRef', optional => 1 },       # An array of the etas to transform or unspecified for all etas
     );
     my $model = $parm{'model'};
-	my $etas = $parm{'etas'};
+    my $etas = $parm{'etas'};
 
     if (not defined $etas) {
         my $netas = $model->nomegas->[0];
@@ -711,12 +711,12 @@ sub tdist_etas
 {
     # Tdist transform all or some ETAs of model
     # Assume only one $PROBLEM
-	my %parm = validated_hash(\@_,
+    my %parm = validated_hash(\@_,
         model => { isa => 'model' },
         etas => { isa => 'ArrayRef', optional => 1 },       # An array of the etas to transform or unspecified for all etas
     );
     my $model = $parm{'model'};
-	my $etas = $parm{'etas'};
+    my $etas = $parm{'etas'};
 
     my $netas = $model->nomegas->[0];
     if (not defined $etas) {
@@ -730,9 +730,9 @@ sub tdist_etas
     my @code;
     for my $i (@$etas) {
         push @code,
-			"ETAT$i = ETA($i)*(1+((ETA($i)**2+1)/(4*THETA($next_theta)))&\n" .
-			"	+((5*ETA($i)**4+16*ETA($i)**2+3)/(96*THETA($next_theta)**2))&\n" .
-			"	+((3*ETA($i)**6+19*ETA($i)**4+17*ETA($i)**2-15)/(384*THETA($next_theta)**3)))\n";
+            "ETAT$i = ETA($i)*(1+((ETA($i)**2+1)/(4*THETA($next_theta)))&\n" .
+            "    +((5*ETA($i)**4+16*ETA($i)**2+3)/(96*THETA($next_theta)**2))&\n" .
+            "    +((3*ETA($i)**6+19*ETA($i)**4+17*ETA($i)**2-15)/(384*THETA($next_theta)**3)))\n";
         $next_theta++;
         $model->add_records(type => 'theta', record_strings => [ '$THETA (3,80,100)']);
     }
@@ -742,7 +742,7 @@ sub tdist_etas
 
 sub remove_iiv
 {
-	my %parm = validated_hash(\@_,
+    my %parm = validated_hash(\@_,
         model => { isa => 'model' },
         fix => { isa => 'Bool', default => 0 },     # Set to fix removed iiv $OMEGAs else remove them
     );
@@ -763,7 +763,7 @@ sub remove_iiv
 
 sub remove_iov
 {
-	my %parm = validated_hash(\@_,
+    my %parm = validated_hash(\@_,
         model => { isa => 'model' },
         fix => { isa => 'Bool', default => 0 },     # Set to fix removed iiv $OMEGAs else remove them
     );
@@ -784,7 +784,7 @@ sub remove_iov
 
 sub find_omega_records
 {
-	my %parm = validated_hash(\@_,
+    my %parm = validated_hash(\@_,
         model => { isa => 'model' },
         type => { isa => 'Str' },     # Set to either 'iov' or 'iiv'
     );
@@ -816,7 +816,7 @@ sub find_omega_records
 sub add_missing_etas
 {
     # Add dummy ETAs for omegas that does not have ETAs in code
-   	my %parm = validated_hash(\@_,
+       my %parm = validated_hash(\@_,
         model => { isa => 'model' },
     );
     my $model = $parm{'model'};
@@ -837,7 +837,7 @@ sub add_missing_etas
 sub add_dummy_etas
 {
     # Adds dummy variables using listed etas
-   	my %parm = validated_hash(\@_,
+       my %parm = validated_hash(\@_,
         model => { isa => 'model' },
         etas => { isa => 'ArrayRef' },
     );
@@ -856,7 +856,7 @@ sub add_dummy_etas
 sub list_etas_used_in_code
 {
     # Finds all etas used in any code block and puts into a hash
-	my %parm = validated_hash(\@_,
+    my %parm = validated_hash(\@_,
         model => { isa => 'model' },
     );
     my $model = $parm{'model'};
@@ -878,7 +878,7 @@ sub list_etas_used_in_code
 
 sub find_etas
 {
-	my %parm = validated_hash(\@_,
+    my %parm = validated_hash(\@_,
         model => { isa => 'model' },
         type => { isa => 'Str' },     # Set to either 'iov' or 'iiv'
     );
@@ -965,7 +965,7 @@ sub find_zero_fix_omegas
 sub remaining_omegas
 {
     # Given a list of omegas return a list of the remaining omegas in a model
-	my %parm = validated_hash(\@_,
+    my %parm = validated_hash(\@_,
         model => { isa => 'model' },
         omegas => { isa => 'ArrayRef[Int]' },
     );
@@ -995,7 +995,7 @@ sub remaining_omegas
 
 sub _fix_omegas
 {
-	my %parm = validated_hash(\@_,
+    my %parm = validated_hash(\@_,
         model => { isa => 'model' },
         omegas => { isa => 'ArrayRef[model::problem::omega]' },
     );
@@ -1020,7 +1020,7 @@ sub _remove_omegas
     # Remove omegas from model by removing both the
     # omega records, renumbering etas and setting
     # removed etas to constant zero.
-	my %parm = validated_hash(\@_,
+    my %parm = validated_hash(\@_,
         model => { isa => 'model' },
         omegas => { isa => 'ArrayRef[Int]' },
     );
@@ -1106,7 +1106,7 @@ sub _update_omegas
 sub _remove_etas
 {
     # Remove etas by changing the numbering and setting removed etas to constant 0.
-	my %parm = validated_hash(\@_,
+    my %parm = validated_hash(\@_,
         model => { isa => 'model' },
         etas => { isa => 'ArrayRef[Int]' },
     );
@@ -1139,7 +1139,7 @@ sub _remove_etas
 sub _number_of_etas
 {
     # Return the number of etas in the model
-	my %parm = validated_hash(\@_,
+    my %parm = validated_hash(\@_,
         model => { isa => 'model' },
     );
     my $model = $parm{'model'};
@@ -1158,7 +1158,7 @@ sub _number_of_etas
 sub _etas_from_omega_records
 {
     # Return a list of eta numbers from a list of omega records
-	my %parm = validated_hash(\@_,
+    my %parm = validated_hash(\@_,
         model => { isa => 'model' },
         omegas => { isa => 'ArrayRef[model::problem::omega]' },
     );
@@ -1214,14 +1214,14 @@ sub omega_options_from_etas
 sub omit_ids
 {
     # Omit one or more ids from a model or dataset
-	my %parm = validated_hash(\@_,
+    my %parm = validated_hash(\@_,
         model => { isa => 'model' },
         ids => { isa => 'ArrayRef' },       # An array of the ids to omnit from model or dataset
         ignore => { isa => 'Bool', default => 0 },
     );
     my $model = $parm{'model'};
-	my $ids = $parm{'ids'};
-	my $ignore = $parm{'ignore'};
+    my $ids = $parm{'ids'};
+    my $ignore = $parm{'ignore'};
 
     # Check if ids are available
     my $data = $model->problems->[0]->datas->[0];
@@ -1279,7 +1279,7 @@ sub omit_ids
 sub remove_nonobs
 {
     # Remove IDs that don't have any observations and create a new dataset
-	my %parm = validated_hash(\@_,
+    my %parm = validated_hash(\@_,
         model => { isa => 'model' },
         dv => { isa => 'Str' },
     );
@@ -1309,11 +1309,11 @@ sub _rename_epsilons
     my %parm = validated_hash(\@_,
         model => { isa => 'model' },
         epsilons => { isa => 'ArrayRef', optional => 1 },   # Array of the epsilons to rename or unspecified for all epsilons
-		prefix => { isa => 'Str', default => 'EPST' },	# The name to use for the transformed epsilon
+        prefix => { isa => 'Str', default => 'EPST' },    # The name to use for the transformed epsilon
     );
     my $model = $parm{'model'};
-	my $epsilons = $parm{'epsilons'};
-	my $prefix = $parm{'prefix'};
+    my $epsilons = $parm{'epsilons'};
+    my $prefix = $parm{'prefix'};
 
     if (not defined $epsilons) {
         my $neps = $model->nsigmas->[0];
@@ -1328,18 +1328,18 @@ sub _rename_epsilons
             }
             $model->set_code(record => 'error', code => $code);
         }
-	}
+    }
 }
 
 sub iiv_on_ruv
 {
     # Add an eta for each epsilon or only to selected epsilons
-	my %parm = validated_hash(\@_,
+    my %parm = validated_hash(\@_,
         model => { isa => 'model' },
         epsilons => { isa => 'ArrayRef', optional => 1 },       # An array of the epsilons to transform or unspecified for all epsilons
     );
     my $model = $parm{'model'};
-	my $epsilons = $parm{'epsilons'};
+    my $epsilons = $parm{'epsilons'};
 
     if (not defined $epsilons) {
         my $nepsilons = $model->nsigmas->[0];
@@ -1365,12 +1365,12 @@ sub iiv_on_ruv
 sub power_on_ruv
 {
     # Add IPRED**THETA for each epsilon or only to selected epsilons
-	my %parm = validated_hash(\@_,
+    my %parm = validated_hash(\@_,
         model => { isa => 'model' },
         epsilons => { isa => 'ArrayRef', optional => 1 },       # An array of the epsilons to transform or unspecified for all epsilons
     );
     my $model = $parm{'model'};
-	my $epsilons = $parm{'epsilons'};
+    my $epsilons = $parm{'epsilons'};
 
     my @error_code = @{$model->get_code(record => 'error')};
     my $found = 0;
@@ -1418,14 +1418,14 @@ sub set_size
 {
     # Set a $SIZES entry to a specific value
     # We would actually want autodetection for when this is needed.
-	my %parm = validated_hash(\@_,
+    my %parm = validated_hash(\@_,
         model => { isa => 'model' },
         size => { isa => 'Str' },
         value => { isa => 'Int' },
     );
     my $model = $parm{'model'};
-	my $size = $parm{'size'};
-	my $value = $parm{'value'};
+    my $size = $parm{'size'};
+    my $value = $parm{'value'};
 
     $model->add_records(type => 'sizes', record_strings => [ "$size=$value" ]);
 }

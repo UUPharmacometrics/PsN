@@ -9,38 +9,38 @@ has 'value' => ( is => 'rw', isa => 'Maybe[Str]', clearer => 'clear_option_value
 
 sub BUILD
 {
-	my $self  = shift;
+    my $self  = shift;
 
-	if ( defined $self->option_string ) {
-		$self->_read_option;
-		$self->clear_option_string;
-	}
+    if ( defined $self->option_string ) {
+        $self->_read_option;
+        $self->clear_option_string;
+    }
 }
 
 sub _read_option
 {
-	my $self = shift;
+    my $self = shift;
 
-	#this gets strange for $PRIOR which has  NWPRI NTHETA=4,NETA=4,NTHP=4,NETP=4
-	my $line = $self->option_string;
-	chomp( $line );
-	$line =~ s/^\s+//;
-	$line =~ s/\s+$//;
-	my @option = split( "=", $line ); # NTHETA    4,NETA    4,NTHP   4,NETP   4
-	$self->name(shift( @option ));
-	$self->value(join( "=", @option )); #4,NETA=4,NTHP=4,NETP=4
+    #this gets strange for $PRIOR which has  NWPRI NTHETA=4,NETA=4,NTHP=4,NETP=4
+    my $line = $self->option_string;
+    chomp( $line );
+    $line =~ s/^\s+//;
+    $line =~ s/\s+$//;
+    my @option = split( "=", $line ); # NTHETA    4,NETA    4,NTHP   4,NETP   4
+    $self->name(shift( @option ));
+    $self->value(join( "=", @option )); #4,NETA=4,NTHP=4,NETP=4
 }
 
 sub _format_option
 {
-	my $self = shift;
-	my $formatted = $self->name;
+    my $self = shift;
+    my $formatted = $self->name;
 
-	if (defined $self->value and $self->value ne '') {
-		$formatted = $formatted . '=' . $self->value; #NTHETA=4,NETA=4,NTHP=4,NETP=4
-	}
+    if (defined $self->value and $self->value ne '') {
+        $formatted = $formatted . '=' . $self->value; #NTHETA=4,NETA=4,NTHP=4,NETP=4
+    }
 
-	return $formatted;
+    return $formatted;
 }
 
 sub is_drop

@@ -12,7 +12,7 @@ sub unique_path
     my $start = shift;
     $start = defined $start ? $start : '.';
     unless( defined $path ){
-	$path = "autopath";
+    $path = "autopath";
     }
     my $i = 1;
 
@@ -22,9 +22,9 @@ sub unique_path
     my $max = 0;
     foreach my $dir_or_file ( @dir_list ){
       if( $dir_or_file =~ /^$path(\d+)/ ){
-	my $ending = $1;
-	$max = $ending if( $ending > $max );
-	$i++;
+    my $ending = $1;
+    $max = $ending if( $ending > $max );
+    $i++;
       }
     }
 
@@ -35,7 +35,7 @@ sub unique_path
     }
 
     if( -e $start . '/' . $path . $max ) {
-	    die "The directory ${start}${path}${max} is in the way.\n";
+        die "The directory ${start}${path}${max} is in the way.\n";
     }
     my ( $dir , $file ) = absolute_path($start . '/' . $path . $max, '');
     return $dir;
@@ -93,11 +93,11 @@ sub absolute_path
 
   #Append trailing slash if missing
   unless(( $path =~ /\/$/ ) || ( $path =~ /\\$/ )){
-	  if ( $Config{osname} eq 'MSWin32' ) {
-		  $path .= "\\";
-	  }else{
-		  $path .= '/';
-	  }
+      if ( $Config{osname} eq 'MSWin32' ) {
+          $path .= "\\";
+      }else{
+          $path .= '/';
+      }
   }
 
   return ($path, $file_file);

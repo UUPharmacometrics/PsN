@@ -24,7 +24,7 @@ has 'replacement' => ( is => 'rw', isa => 'Bool', default => 0 );
 
 sub BUILD
 {
-	my $self  = shift;
+    my $self  = shift;
 
     my $repl_text = " no";
     if ($self->replacement) {
@@ -32,14 +32,14 @@ sub BUILD
     }
     print "boot_randtest is bootstrapping with$repl_text replacement.\n";
 
-	#Find column index of rand column
-	#Find column index of strat column
+    #Find column index of rand column
+    #Find column index of strat column
     #my $counter = 0;
     #foreach my $opt (@{$self->models->[0]->problems->[0]->inputs->[0]->options()}){
-#		$self->rand_index($counter) if ($opt->name() eq $self->randomization_column());
-#		$self->strat_index($counter) if ((defined $self->stratify_on()) and ($opt->name() eq $self->stratify_on()));
-#		$counter++;
-#	}
+#        $self->rand_index($counter) if ($opt->name() eq $self->randomization_column());
+#        $self->strat_index($counter) if ((defined $self->stratify_on()) and ($opt->name() eq $self->stratify_on()));
+#        $counter++;
+#    }
     #croak("Could not find randomization column " . $self->randomization_column() ." in \$INPUT")
     #unless (defined $self->rand_index);
     #croak("Could not find stratification column " . $self->stratify_on() . " in \$INPUT")
@@ -52,17 +52,17 @@ sub BUILD
 
 sub modelfit_setup
 {
-	my $self = shift;
-	my %parm = validated_hash(\@_,
-		model_number => { isa => 'Int', optional => 1 }
-	);
-	my $model_number = $parm{'model_number'};
+    my $self = shift;
+    my %parm = validated_hash(\@_,
+        model_number => { isa => 'Int', optional => 1 }
+    );
+    my $model_number = $parm{'model_number'};
 
     if ($self->summarize) {
         return;
     }
 
-	my $model = $self->models->[$model_number - 1];
+    my $model = $self->models->[$model_number - 1];
 
     my $stratify_on;
     if (defined $self->stratify_on) {
@@ -149,7 +149,7 @@ sub modelfit_setup
                 top_tool => 0,
                 prepend_model_file_name => 1,
                 models => [ $orig ],
-                samples	=> 1,
+                samples    => 1,
                 base_model => $base,
                 randomization_column => $randomization_column,
                 update_inits => 0,

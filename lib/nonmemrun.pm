@@ -24,273 +24,273 @@ has 'nmqual_xml' => ( is => 'rw', isa => 'Maybe[Str]' );
 
 sub BUILD
 {
-	my $self = shift;
-	unless (defined $self->full_path_runscript){
-		my $ref = setup_paths(nm_version => $self->nm_version,
-							  nmqual => $self->nmqual);
-		$self->full_path_runscript($ref->{'full_path_runscript'});
-		$self->nmqual_xml($ref->{'nmqual_xml'}) if ($self->nmqual);
-	}
+    my $self = shift;
+    unless (defined $self->full_path_runscript){
+        my $ref = setup_paths(nm_version => $self->nm_version,
+                              nmqual => $self->nmqual);
+        $self->full_path_runscript($ref->{'full_path_runscript'});
+        $self->nmqual_xml($ref->{'nmqual_xml'}) if ($self->nmqual);
+    }
 
 }
 
 sub setup_paths
 {
-	my %parm = validated_hash(\@_,
-							  nm_version => { isa => 'Str', optional => 0 },
-							  nmqual => { isa => 'Bool', optional => 0 }
-		);
-	my $nm_version = $parm{'nm_version'};
-	my $nmqual = $parm{'nmqual'};
+    my %parm = validated_hash(\@_,
+                              nm_version => { isa => 'Str', optional => 0 },
+                              nmqual => { isa => 'Bool', optional => 0 }
+        );
+    my $nm_version = $parm{'nm_version'};
+    my $nmqual = $parm{'nmqual'};
 
-	my $nmqual_xml = undef;
-	my $full_path_runscript = undef;
-	my $full_path_nmtran = undef;
+    my $nmqual_xml = undef;
+    my $full_path_runscript = undef;
+    my $full_path_nmtran = undef;
 
-	PsN::set_nonmem_info($nm_version);
-	my $nmdir = $PsN::nmdir; #if only name of executable set, and executable is in path, then this is the full path found in PsN.pm
+    PsN::set_nonmem_info($nm_version);
+    my $nmdir = $PsN::nmdir; #if only name of executable set, and executable is in path, then this is the full path found in PsN.pm
 
-	if ( defined $nmdir and $nmdir ne '' ) {
-		unless (-e $nmdir) {
-			if ($nmqual) {
-				my $mess = "The NMQual installation directory/script $nmdir set for -nm_version=$nm_version does not exist\n";
-				croak($mess);
-			}else{
-				my $mess = "The NONMEM installation directory/NONMEM run script $nmdir set for -nm_version=$nm_version does not exist\n";
-				croak($mess);
-			}
-		}
-	}else{
-		#not configured
-		if ($nmqual) {
-			my $mess = "The NMQual installation is not configured for -nm_version=$nm_version. You must correct this in psn.conf\n";
-			croak($mess);
-		} else {
-			my $mess = "The NONMEM installation directory is not configured for -nm_version=$nm_version. You must correct this in psn.conf\n";
-			croak($mess);
-		}
-	}
+    if ( defined $nmdir and $nmdir ne '' ) {
+        unless (-e $nmdir) {
+            if ($nmqual) {
+                my $mess = "The NMQual installation directory/script $nmdir set for -nm_version=$nm_version does not exist\n";
+                croak($mess);
+            }else{
+                my $mess = "The NONMEM installation directory/NONMEM run script $nmdir set for -nm_version=$nm_version does not exist\n";
+                croak($mess);
+            }
+        }
+    }else{
+        #not configured
+        if ($nmqual) {
+            my $mess = "The NMQual installation is not configured for -nm_version=$nm_version. You must correct this in psn.conf\n";
+            croak($mess);
+        } else {
+            my $mess = "The NONMEM installation directory is not configured for -nm_version=$nm_version. You must correct this in psn.conf\n";
+            croak($mess);
+        }
+    }
 
-	my $minor = $PsN::nm_minor_version;
-	my $major = $PsN::nm_major_version;
+    my $minor = $PsN::nm_minor_version;
+    my $major = $PsN::nm_major_version;
 
-	unless ((defined $major) and length($major)>0) {
-		croak("No nonmem major version defined, error in psn.conf for -nm_version=$nm_version\n");
-	}
+    unless ((defined $major) and length($major)>0) {
+        croak("No nonmem major version defined, error in psn.conf for -nm_version=$nm_version\n");
+    }
 
-	my $found_nonmem = 0;
+    my $found_nonmem = 0;
 
-	my @nmtran_candidates = ("$nmdir/tr/NMTRAN.exe", "$nmdir/tr/nmtran.exe", "$nmdir/../tr/NMTRAN.exe", "$nmdir/../tr/nmtran.exe");
-	for my $i (0 .. $#nmtran_candidates) {
-		if (-x $nmtran_candidates[$i]) {
-			$full_path_nmtran = $nmtran_candidates[$i];
-			last;
-		}
-	}
+    my @nmtran_candidates = ("$nmdir/tr/NMTRAN.exe", "$nmdir/tr/nmtran.exe", "$nmdir/../tr/NMTRAN.exe", "$nmdir/../tr/nmtran.exe");
+    for my $i (0 .. $#nmtran_candidates) {
+        if (-x $nmtran_candidates[$i]) {
+            $full_path_nmtran = $nmtran_candidates[$i];
+            last;
+        }
+    }
 
-	if ($nmqual) {
-		my $xmlpath;
-		my $xmlname = 'log.xml';
-		if (-d $nmdir) {
-			#look for autolog.pl in nmqual subdir
-			my $file1 = $nmdir . '/autolog.pl';
-			my $file2 = $nmdir . '/nmqual/autolog.pl';
-			if (-e $file1) {
-				$full_path_runscript = $file1;
-				$xmlpath=$nmdir . '/' . $xmlname;
-			} elsif (-e $file2) {
-				$full_path_runscript = $file2;
-				$xmlpath = $nmdir.'/nmqual/'.$xmlname;
-			} else {
-				croak("Option nmqual is set and $nmdir is set for -nm_version=$nm_version but PsN cannot find autolog.pl in $nmdir or in $nmdir/nmqual\n");
-			}
-		} else {
-			#nmdir is not a directory
-			#we have already checked that $nmdir exists, so it is a file.
-			#Warn if not called autolog.pl, error if called nmfe something
-			my ($volume, $directory, $file) = File::Spec->splitpath($nmdir);
-			$xmlpath = File::Spec->catpath( $volume, $directory, $xmlname );
-			if ($file =~ /nmfe/){
-				print "\nWarning: $nmdir set for -nm_version=$nm_version looks like a nmfe script, not NMQual's autolog.pl.\n".
-					"When option -nmqual is set autolog.pl should be used.\n";
-			}elsif (not  $file =~ /autolog/ ){
-				print "\nWarning: $nmdir set for -nm_version=$nm_version does not look like NMQual's autolog.pl.\n".
-				"When option -nmqual is set autolog.pl should be used.\n";
-			}
-			$full_path_runscript=$nmdir;
-		}
-		if (-e $xmlpath){
-			$nmqual_xml=$xmlpath;
-		}else{
-			croak("Option nmqual is set and $nmdir is ok for -nm_version=$nm_version but PsN cannot find log.xml at the expected location\n"."$xmlpath\n");
-		}
+    if ($nmqual) {
+        my $xmlpath;
+        my $xmlname = 'log.xml';
+        if (-d $nmdir) {
+            #look for autolog.pl in nmqual subdir
+            my $file1 = $nmdir . '/autolog.pl';
+            my $file2 = $nmdir . '/nmqual/autolog.pl';
+            if (-e $file1) {
+                $full_path_runscript = $file1;
+                $xmlpath=$nmdir . '/' . $xmlname;
+            } elsif (-e $file2) {
+                $full_path_runscript = $file2;
+                $xmlpath = $nmdir.'/nmqual/'.$xmlname;
+            } else {
+                croak("Option nmqual is set and $nmdir is set for -nm_version=$nm_version but PsN cannot find autolog.pl in $nmdir or in $nmdir/nmqual\n");
+            }
+        } else {
+            #nmdir is not a directory
+            #we have already checked that $nmdir exists, so it is a file.
+            #Warn if not called autolog.pl, error if called nmfe something
+            my ($volume, $directory, $file) = File::Spec->splitpath($nmdir);
+            $xmlpath = File::Spec->catpath( $volume, $directory, $xmlname );
+            if ($file =~ /nmfe/){
+                print "\nWarning: $nmdir set for -nm_version=$nm_version looks like a nmfe script, not NMQual's autolog.pl.\n".
+                    "When option -nmqual is set autolog.pl should be used.\n";
+            }elsif (not  $file =~ /autolog/ ){
+                print "\nWarning: $nmdir set for -nm_version=$nm_version does not look like NMQual's autolog.pl.\n".
+                "When option -nmqual is set autolog.pl should be used.\n";
+            }
+            $full_path_runscript=$nmdir;
+        }
+        if (-e $xmlpath){
+            $nmqual_xml=$xmlpath;
+        }else{
+            croak("Option nmqual is set and $nmdir is ok for -nm_version=$nm_version but PsN cannot find log.xml at the expected location\n"."$xmlpath\n");
+        }
 
-	}else{
-		#not nmqual
-		if (-d $nmdir){
-			my $found_full=	find_nmfe_script(nmdir=>$nmdir,major => $major,minor => $minor);
+    }else{
+        #not nmqual
+        if (-d $nmdir){
+            my $found_full=    find_nmfe_script(nmdir=>$nmdir,major => $major,minor => $minor);
 
-			if  (defined $found_full) {
-				$full_path_runscript = $found_full;
-			}else{
-				my $mess = "Unable to find an executable nmfe script ".
-					"in any of the subdirectories\n".
-					" ./ or /run/ or /util/ of the NONMEM installation directory\n".
-					"$nmdir\n that is set for -nm_version=".$nm_version." in psn.conf.";
-				croak($mess);
-			}
-		}else{
-			#not a directory
-			if (-x $nmdir){
-				$full_path_runscript =$nmdir;
-			}else{
-				my $mess = "$nmdir set in psn.conf for -nm_version=$nm_version exists but is not executable.\n".
-					"This is not ok unless you are running with NMQual and option -nmqual is set\n";
-				croak($mess);
-			}
-		}
-	}
-	my %answer;
-	$answer{'full_path_runscript'} = $full_path_runscript;
-	$answer{'full_path_nmtran'} = $full_path_nmtran;
-	$answer{'nmqual_xml'} = $nmqual_xml;
-	return \%answer;
+            if  (defined $found_full) {
+                $full_path_runscript = $found_full;
+            }else{
+                my $mess = "Unable to find an executable nmfe script ".
+                    "in any of the subdirectories\n".
+                    " ./ or /run/ or /util/ of the NONMEM installation directory\n".
+                    "$nmdir\n that is set for -nm_version=".$nm_version." in psn.conf.";
+                croak($mess);
+            }
+        }else{
+            #not a directory
+            if (-x $nmdir){
+                $full_path_runscript =$nmdir;
+            }else{
+                my $mess = "$nmdir set in psn.conf for -nm_version=$nm_version exists but is not executable.\n".
+                    "This is not ok unless you are running with NMQual and option -nmqual is set\n";
+                croak($mess);
+            }
+        }
+    }
+    my %answer;
+    $answer{'full_path_runscript'} = $full_path_runscript;
+    $answer{'full_path_nmtran'} = $full_path_nmtran;
+    $answer{'nmqual_xml'} = $nmqual_xml;
+    return \%answer;
 
 }
 
 sub find_nmfe_script
 {
-	#static no shift
-	my %parm = validated_hash(\@_,
-							  nmdir => { isa => 'Str', optional => 0 },
-							  major => { isa => 'Str', optional => 0 },
-							  minor => { isa => 'Maybe[Str]', optional => 1 },
-		);
-	my $nmdir = $parm{'nmdir'};
-	my $major = $parm{'major'};
-	my $minor = $parm{'minor'};
+    #static no shift
+    my %parm = validated_hash(\@_,
+                              nmdir => { isa => 'Str', optional => 0 },
+                              major => { isa => 'Str', optional => 0 },
+                              minor => { isa => 'Maybe[Str]', optional => 1 },
+        );
+    my $nmdir = $parm{'nmdir'};
+    my $major = $parm{'major'};
+    my $minor = $parm{'minor'};
 
-	my $found_full_path=undef;
+    my $found_full_path=undef;
 
-	my $suffix = '';
-	if ($Config{osname} eq 'MSWin32') {
-		$suffix = '.bat';
-	}
-	my @check_paths = ('/run/', '/util/', '/');
-	my @check_subversions=();
-	push (@check_subversions,$minor) if (defined $minor); #make sure this is checked first, if set
-	push (@check_subversions,('','1','2','3','4','5','6','7','8','9'));
+    my $suffix = '';
+    if ($Config{osname} eq 'MSWin32') {
+        $suffix = '.bat';
+    }
+    my @check_paths = ('/run/', '/util/', '/');
+    my @check_subversions=();
+    push (@check_subversions,$minor) if (defined $minor); #make sure this is checked first, if set
+    push (@check_subversions,('','1','2','3','4','5','6','7','8','9'));
 
-	foreach my $subv (@check_subversions) {
-		last if (defined $found_full_path);
-		foreach my $path (@check_paths) {
-			my $fullp="$nmdir$path"."nmfe$major$subv$suffix";
-			if (-x $fullp) {
-				$found_full_path = $fullp;
-				if (defined $minor and length($minor)>0 and ($minor ne $subv)){
-					#print warning here???
-					1;
-				}
+    foreach my $subv (@check_subversions) {
+        last if (defined $found_full_path);
+        foreach my $path (@check_paths) {
+            my $fullp="$nmdir$path"."nmfe$major$subv$suffix";
+            if (-x $fullp) {
+                $found_full_path = $fullp;
+                if (defined $minor and length($minor)>0 and ($minor ne $subv)){
+                    #print warning here???
+                    1;
+                }
 
-				last;
-			}
-		}
-	}
+                last;
+            }
+        }
+    }
 
-	return $found_full_path;
+    return $found_full_path;
 
 }
 
 sub create_command
 {
-	my $self = shift;
-	my $cmd;
+    my $self = shift;
+    my $cmd;
 
-	if (not $self->nmqual) {
-		$cmd = $self->_create_nmfe_command;
-	} else {
-		$cmd = $self->_create_nmqual_command;
-	}
+    if (not $self->nmqual) {
+        $cmd = $self->_create_nmfe_command;
+    } else {
+        $cmd = $self->_create_nmqual_command;
+    }
 
-	return $cmd;
+    return $cmd;
 }
 
 sub _create_nmfe_options
 {
-	my $self = shift;
+    my $self = shift;
 
-	my $parastring = '';
-	if ($PsN::nm_major_version >= 7) {
-		$parastring .= '-background ';
-	}
-	if (defined $self->parafile) {
-		if ($PsN::nm_major_version > 7 or ($PsN::nm_major_version == 7 and $PsN::nm_minor_version >= 2)) {
-			if ($self->nmqual) {
-				#if nmqual is set then copy file to psn.pnm in cwd instead of putting in options
-				cp( $self->parafile, 'psn.pnm' );
-			}else{
-				$parastring .= '"-parafile=' . $self->parafile . '"';
-			}
-		} else {
-			croak("Cannot use parafile with NM7.1 or earlier");
-		}
-		if ($self->nodes > 0) {
-			$parastring .= ' "[nodes]=' . $self->nodes . '"';
-		}
-	}
-	if (defined $self->nmfe_options) {
-		$parastring .= " " . $self->nmfe_options;
-	}
+    my $parastring = '';
+    if ($PsN::nm_major_version >= 7) {
+        $parastring .= '-background ';
+    }
+    if (defined $self->parafile) {
+        if ($PsN::nm_major_version > 7 or ($PsN::nm_major_version == 7 and $PsN::nm_minor_version >= 2)) {
+            if ($self->nmqual) {
+                #if nmqual is set then copy file to psn.pnm in cwd instead of putting in options
+                cp( $self->parafile, 'psn.pnm' );
+            }else{
+                $parastring .= '"-parafile=' . $self->parafile . '"';
+            }
+        } else {
+            croak("Cannot use parafile with NM7.1 or earlier");
+        }
+        if ($self->nodes > 0) {
+            $parastring .= ' "[nodes]=' . $self->nodes . '"';
+        }
+    }
+    if (defined $self->nmfe_options) {
+        $parastring .= " " . $self->nmfe_options;
+    }
 
-	return $parastring;
+    return $parastring;
 }
 
 sub _create_nmfe_command
 {
-	my $self = shift;
+    my $self = shift;
 
-	my $options = $self->_create_nmfe_options;
-	my $command = $self->full_path_runscript . " psn.mod psn.lst " . $options;
+    my $options = $self->_create_nmfe_options;
+    my $command = $self->full_path_runscript . " psn.mod psn.lst " . $options;
 
-	return $command;
+    return $command;
 }
 
 sub _create_nmqual_command
 {
-	my $self = shift;
+    my $self = shift;
 
-	my $command_string;
+    my $command_string;
 
-	my $options = $self->_create_nmfe_options;
-	my $work_dir = cwd();
-	my $xml_file = $self->nmqual_xml;
-	my $interface = 'run';
-	$interface = 'para' if (defined $self->parafile);
-	unless (defined $xml_file){
-		croak("xml_file undefined in _create_nmqual_command, this is a bug");
-	}
-	$command_string = " $xml_file $interface ce $work_dir psn $options ";
+    my $options = $self->_create_nmfe_options;
+    my $work_dir = cwd();
+    my $xml_file = $self->nmqual_xml;
+    my $interface = 'run';
+    $interface = 'para' if (defined $self->parafile);
+    unless (defined $xml_file){
+        croak("xml_file undefined in _create_nmqual_command, this is a bug");
+    }
+    $command_string = " $xml_file $interface ce $work_dir psn $options ";
 
-	$command_string = "perl ".$self->full_path_runscript." $command_string";
-	#print "\n$command_string\n";
-	return $command_string;
+    $command_string = "perl ".$self->full_path_runscript." $command_string";
+    #print "\n$command_string\n";
+    return $command_string;
 }
 
 sub pre_compile_cleanup
 {
-	# leave cleaning to nmfe if NM7
-	unless ($PsN::nm_major_version == 7 and defined $PsN::nm_minor_version and $PsN::nm_minor_version > 1) {
-		unlink('FMSG', 'FLIB', 'FCON', 'FDATA', 'FREPORT', 'FSUBS', 'FSUBS.f', 'FSUBS.f90', 'FSUBS2', 'nmprd4p.mod');
-		unlink('fsubs', 'fsubs.f90');
-		unlink('LINK.LNK', 'FSTREAM', 'PRDERR', 'nonmem.exe', 'nonmem', 'FSUBS.for');
-		unlink('nonmem5', 'nonmem6', 'nonmem7', 'nonmem5_adaptive', 'nonmem6_adaptive', 'nonmem7_adaptive');
-		unlink('ifort.txt', 'g95.txt', 'gfortran.txt', 'gfcompile.bat', 'g95compile.bat');
-		unlink('psn.lst', 'OUTPUT', 'output');
-	}
-	unlink('psn.nmqual_out') if (-e 'psn.nmqual_out');
-	unlink('nmfe_error') if (-e 'nmfe_error');
-	unlink('job_submission_error') if (-e 'job_submission_error');
-	unlink('lsf_stderr_stdout', 'lsf_jobscript');
+    # leave cleaning to nmfe if NM7
+    unless ($PsN::nm_major_version == 7 and defined $PsN::nm_minor_version and $PsN::nm_minor_version > 1) {
+        unlink('FMSG', 'FLIB', 'FCON', 'FDATA', 'FREPORT', 'FSUBS', 'FSUBS.f', 'FSUBS.f90', 'FSUBS2', 'nmprd4p.mod');
+        unlink('fsubs', 'fsubs.f90');
+        unlink('LINK.LNK', 'FSTREAM', 'PRDERR', 'nonmem.exe', 'nonmem', 'FSUBS.for');
+        unlink('nonmem5', 'nonmem6', 'nonmem7', 'nonmem5_adaptive', 'nonmem6_adaptive', 'nonmem7_adaptive');
+        unlink('ifort.txt', 'g95.txt', 'gfortran.txt', 'gfcompile.bat', 'g95compile.bat');
+        unlink('psn.lst', 'OUTPUT', 'output');
+    }
+    unlink('psn.nmqual_out') if (-e 'psn.nmqual_out');
+    unlink('nmfe_error') if (-e 'nmfe_error');
+    unlink('job_submission_error') if (-e 'job_submission_error');
+    unlink('lsf_stderr_stdout', 'lsf_jobscript');
 }
 
 

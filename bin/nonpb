@@ -27,14 +27,14 @@ my %required_options = ( 'samples:i' => '200');
 
 #option etas is not implemented, bootstrap always done on all etas
 my %optional_options = (
-			"lst_file:s"=>'',
-			'nonpb_version:s' => ''
-			);
+            "lst_file:s"=>'',
+            'nonpb_version:s' => ''
+            );
 
 my $res = GetOptions( \%options,
-		      @common_options::get_opt_strings,
-		      keys(%required_options),
-		      keys(%optional_options) );
+              @common_options::get_opt_strings,
+              keys(%required_options),
+              keys(%optional_options) );
 exit unless $res;
 
 
@@ -42,70 +42,70 @@ exit unless $res;
 my %help_text;
 
 $help_text{Pre_help_message} = <<'EOF';
-	Non-Parametric Bootstrap
+    Non-Parametric Bootstrap
 EOF
 
 $help_text{Description} = <<'EOF';
-	The nonpb is a resampling-based method for estimating imprecision in
-	nonparametric distribution (NPD) estimates obtained in NONMEM. Imprecision
-	in the NPD can be estimated by means of two different resampling procedures.
-	The full method, -nonpb_version=2, relies on bootstrap sampling from the raw
-	data and a re-estimation of both the preceding parametric (FOCE) and the
-	nonparametric step.
-	The simplified method, -nonpb_version=1, is the default and relies on
-	bootstrap sampling of individual nonparametric probability distributions.
-	Nonparametric confidence intervals are computed. In addition of providing
-	information about the precision of nonparametric parameter estimates, the
-	nonpb methods can serve as diagnostic tools for the detection of misspecified
-	parameter distributions. The P individuals method is available as a separate
-	sN tool, pind.
-	Reference:
-	Two bootstrapping routines for obtaining imprecision estimates for
-	nonparametric parameter distributions in nonlinear mixed effects models,
-	Paul G. Baverel, Radojka M. Savic, Mats O. Karlsson, J Pharmacokinet
-	Pharmacodyn, 2010.
+    The nonpb is a resampling-based method for estimating imprecision in
+    nonparametric distribution (NPD) estimates obtained in NONMEM. Imprecision
+    in the NPD can be estimated by means of two different resampling procedures.
+    The full method, -nonpb_version=2, relies on bootstrap sampling from the raw
+    data and a re-estimation of both the preceding parametric (FOCE) and the
+    nonparametric step.
+    The simplified method, -nonpb_version=1, is the default and relies on
+    bootstrap sampling of individual nonparametric probability distributions.
+    Nonparametric confidence intervals are computed. In addition of providing
+    information about the precision of nonparametric parameter estimates, the
+    nonpb methods can serve as diagnostic tools for the detection of misspecified
+    parameter distributions. The P individuals method is available as a separate
+    sN tool, pind.
+    Reference:
+    Two bootstrapping routines for obtaining imprecision estimates for
+    nonparametric parameter distributions in nonlinear mixed effects models,
+    Paul G. Baverel, Radojka M. Savic, Mats O. Karlsson, J Pharmacokinet
+    Pharmacodyn, 2010.
 EOF
 
 $help_text{Examples} = <<'EOF';
-	nonpb run12.mod -samples=500
+    nonpb run12.mod -samples=500
 EOF
 
 $help_text{Options} = <<'EOF';
-	A model file is required on the command line, as well as the option -samples.
+    A model file is required on the command line, as well as the option -samples.
 
-	The following options are valid:
+    The following options are valid:
 EOF
 
 $help_text{-h} = <<'EOF';
-	-h | -?
+    -h | -?
 
-	With -h or -? nonpb will print a list of options and exit.
+    With -h or -? nonpb will print a list of options and exit.
 EOF
 
 $help_text{-help} = <<'EOF';
-	-help
+    -help
 
-	With -help nonpb will print this, longer, help message.
+    With -help nonpb will print this, longer, help message.
 EOF
 
 $help_text{-lst_file} = <<'EOF';
-	-lst_file=<filename>
+    -lst_file=<filename>
 
-	Default is the same name as the model file but with .mod replaced with .lst.
-	The lst-file from where to read initial parameter estimates.
+    Default is the same name as the model file but with .mod replaced with .lst.
+    The lst-file from where to read initial parameter estimates.
 EOF
 
 $help_text{-nonpb_version} = <<'EOF';
-	-nonpb_version=1|2
+    -nonpb_version=1|2
 
-	Default is 1, the simplified version. Version 2 is the full version. The
-	version of the script to run.
+    Default is 1, the simplified version. Version 2 is the full version. The
+    version of the script to run.
 EOF
 
 $help_text{-samples} = <<'EOF';
-	-samples=N
+    -samples=N
 
-	Required option. The number of samples for the bootstrap.
+    Required option. The number of samples for the bootstrap.
 EOF
 
 common_options::online_help( 'nonpb', \%options, \%help_text, \%required_options, \%optional_options);
@@ -164,7 +164,7 @@ if (defined $options{'lst_file'}) {
   $lst_file .= (substr ($ARGV[0],0,-3)) . 'lst'; #keep from beginning, skip last four characters
   if (not -e $lst_file) {
     print "When option -lst_file is omitted, the name of the lst-file is assumed to be the same\n".
-	"as the modelfile except that the last three letters are lst. Cannot find file $lst_file.\n";
+    "as the modelfile except that the last three letters are lst. Cannot find file $lst_file.\n";
     exit;
   }
 }
@@ -221,7 +221,7 @@ if ($nonpb->nonpb_version() == 2) {
         eval($common_options::parameters),
         directory => 'bootstrap',
         subjects=> {},
-        models	=> [ $model ],
+        models    => [ $model ],
         samples => $options{'samples'},
     );
     $bs->run;

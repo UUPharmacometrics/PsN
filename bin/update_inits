@@ -39,43 +39,43 @@ my %required_options =();
 my %optional_options = (
     'h|?'                       => undef,
     'help'                      => undef,
-	"output_model:s" => undef,
-	"from_model:s" => undef,
-	"ignore_missing_parameters" => undef,
-	"update_fix" => undef,
-	"cholesky:s" => undef,
-	"bounded_theta!" => undef,
-	"correlation_cutoff:f" => undef,
-	"comment:s" => undef,
-	"degree:f" => undef,
-	"add_tags" => undef,
-	"flip_comments" => undef,
-	"ensure_posdef" => undef,
-	"add_prior:s" => undef,
-	"seed:s" => undef,
-	"nm_version:s" => undef,
-	"based_on:i" => undef,
-	"renumber:i" => undef,
-	"sigdig:i" => undef,
-	"fix_thetas" => undef,
- 	"unfix_thetas" => undef,
- 	"silent" => undef,
-	'rawres_input:s' => undef,
-	'offset_rawres:i' => undef,
-	'in_filter:s' => undef,
+    "output_model:s" => undef,
+    "from_model:s" => undef,
+    "ignore_missing_parameters" => undef,
+    "update_fix" => undef,
+    "cholesky:s" => undef,
+    "bounded_theta!" => undef,
+    "correlation_cutoff:f" => undef,
+    "comment:s" => undef,
+    "degree:f" => undef,
+    "add_tags" => undef,
+    "flip_comments" => undef,
+    "ensure_posdef" => undef,
+    "add_prior:s" => undef,
+    "seed:s" => undef,
+    "nm_version:s" => undef,
+    "based_on:i" => undef,
+    "renumber:i" => undef,
+    "sigdig:i" => undef,
+    "fix_thetas" => undef,
+     "unfix_thetas" => undef,
+     "silent" => undef,
+    'rawres_input:s' => undef,
+    'offset_rawres:i' => undef,
+    'in_filter:s' => undef,
     'etas!' => undef,
     'model_subdir!' => undef,
-	);
+    );
 
 my $res = GetOptions( \%options,
-					  keys(%optional_options) );
+                      keys(%optional_options) );
 
 exit unless $res;
 
 my %help_text;
 
 $help_text{Pre_help_message} = <<'EOF';
-	Update a model file with final estimates from NONMEM output.
+    Update a model file with final estimates from NONMEM output.
 EOF
 
 $help_text{Post_help_message} = <<'EOF';
@@ -83,43 +83,43 @@ EOF
 
 $help_text{Description} = <<'EOF';
 
-	The update_inits tool is used to update inital estimates in a model file
-	with final estimates from NONMEM output. It can also be used to, for
-	example, update file names in $TABLE, reparameterize the $OMEGAs or to
-	``flip comments''. The later operations can be performed in combination
-	with or without updating initial estimates. If updating initial estimates,
-	the final estimates will either be taken from a lst-file given explicitly
-	as the second command line argument after the model file name, from
-	another model file given with option -from_model, or from the lst-file
-	with the same file stem as the model file. For example, if no lst-file
-	is given as argument and the model file is called run1.mod then the
-	program will try to read output from run1.lst. If run1.ext also exists
-	then final estimates with higher precision will be read from there, but
-	only if run1.lst is also present. If there are multiple $PROBLEM then
-	update_inits will try to update $PROBLEM by $PROBLEM.
+    The update_inits tool is used to update inital estimates in a model file
+    with final estimates from NONMEM output. It can also be used to, for
+    example, update file names in $TABLE, reparameterize the $OMEGAs or to
+    ``flip comments''. The later operations can be performed in combination
+    with or without updating initial estimates. If updating initial estimates,
+    the final estimates will either be taken from a lst-file given explicitly
+    as the second command line argument after the model file name, from
+    another model file given with option -from_model, or from the lst-file
+    with the same file stem as the model file. For example, if no lst-file
+    is given as argument and the model file is called run1.mod then the
+    program will try to read output from run1.lst. If run1.ext also exists
+    then final estimates with higher precision will be read from there, but
+    only if run1.lst is also present. If there are multiple $PROBLEM then
+    update_inits will try to update $PROBLEM by $PROBLEM.
 
-	The command update can be used as a synonym to update_inits.
+    The command update can be used as a synonym to update_inits.
 EOF
 
 $help_text{Examples} = <<'EOF';
 
-	Update a copy of run1.mod with estimates from run1abc.lst.
-	update_inits run1.mod run1abc.lst -output_model=run2.mod
+    Update a copy of run1.mod with estimates from run1abc.lst.
+    update_inits run1.mod run1abc.lst -output_model=run2.mod
 
-	Update a copy of run22.mod and call the new file run23.mod. This requires
-	that run22.lst exists.
-	update_inits run22.mod -out=run23.mod
+    Update a copy of run22.mod and call the new file run23.mod. This requires
+    that run22.lst exists.
+    update_inits run22.mod -out=run23.mod
 
-	Modify file run33.mod and copy original to run33.mod.org. This requires
-	that run33.lst exists.
-	update_inits run33.mod
+    Modify file run33.mod and copy original to run33.mod.org. This requires
+    that run33.lst exists.
+    update_inits run33.mod
 
-	Use parameters estimates from a model file instead of a lst-file:
-	update run3.mod -from_model=run4.mod -out=run6.mod
+    Use parameters estimates from a model file instead of a lst-file:
+    update run3.mod -from_model=run4.mod -out=run6.mod
 EOF
 
 $help_text{-h} = <<'EOF';
-	-h | -?
+    -h | -?
 
     With -h or -? the script prints the list of available options and exit.
 EOF
@@ -131,191 +131,191 @@ $help_text{-help} = <<'EOF';
 EOF
 
 $help_text{Options} = <<'EOF';
-	The name of a model file (a control stream file) is required on the command
-	line.
+    The name of a model file (a control stream file) is required on the command
+    line.
 
-	The following options are valid:
+    The following options are valid:
 EOF
 
 $help_text{-add_prior} = <<'EOF';
-	-add_prior=df1,df2,...
+    -add_prior=df1,df2,...
 
-	Default not set. Add $PRIOR NWPRI based on the NONMEM output. Option
-	will automatically read estimates and covariances from output and use
-	them to define the prior. df should be the degrees 	of freedom, a comma-
-	separated list with one integer per omega block. This feature is highly
-	experimental, and you must check $PRIOR in the new model file manually
-	before using it. It is for example known to not work when one or more
+    Default not set. Add $PRIOR NWPRI based on the NONMEM output. Option
+    will automatically read estimates and covariances from output and use
+    them to define the prior. df should be the degrees     of freedom, a comma-
+    separated list with one integer per omega block. This feature is highly
+    experimental, and you must check $PRIOR in the new model file manually
+    before using it. It is for example known to not work when one or more
     parameters are fixed. Option -add_prior cannot be used together with
     option -from_model. Also note that the informative record names $THETAP,
-	$THETAPV etc are used, so the resulting model can 	only be run with a
-	NONMEM version that supports this.
+    $THETAPV etc are used, so the resulting model can     only be run with a
+    NONMEM version that supports this.
 EOF
 
 $help_text{-add_tags} = <<'EOF';
-	-add_tags
+    -add_tags
 
-	Default not set. Add all runrecord tags, see runrecord user guide.
-	update_inits will not check if any tags are already present.
+    Default not set. Add all runrecord tags, see runrecord user guide.
+    update_inits will not check if any tags are already present.
 EOF
 
 $help_text{-based_on} = <<'EOF';
-	-based_on=number
+    -based_on=number
 
-	If the -based_on option is used, update_inits will set 	the runrecord
-	'Based on' tag (if present, or if option -add_tags is used) to that
-	number. If option -based_on is not used, update_inits will by default
-	try to extract a run number from the original model file name and use
-	that instead in the tag. If a number cannot be extracted then nothing
-	will be set.
+    If the -based_on option is used, update_inits will set     the runrecord
+    'Based on' tag (if present, or if option -add_tags is used) to that
+    number. If option -based_on is not used, update_inits will by default
+    try to extract a run number from the original model file name and use
+    that instead in the tag. If a number cannot be extracted then nothing
+    will be set.
 EOF
 
 $help_text{-bounded_theta} = <<'EOF';
-	-bounded_theta
+    -bounded_theta
 
-	Default set. Ignored unless option -cholesky is set. If the option is
-	set, then the standard deviations and correlations will be equal to
-	bounded untransformed THETAs. If the option is unset with -no-bounded_theta,
-	the THETAs introduced during Cholesky reparameterization will be unbounded
-	(natural logarithm of standard deviation, logit of shifted and scaled
-	correlation),and transformations will be used to restrict standard
-	deviations to positive values and correlations between -1 and 1.
+    Default set. Ignored unless option -cholesky is set. If the option is
+    set, then the standard deviations and correlations will be equal to
+    bounded untransformed THETAs. If the option is unset with -no-bounded_theta,
+    the THETAs introduced during Cholesky reparameterization will be unbounded
+    (natural logarithm of standard deviation, logit of shifted and scaled
+    correlation),and transformations will be used to restrict standard
+    deviations to positive values and correlations between -1 and 1.
 EOF
 
 $help_text{-cholesky} = <<'EOF';
-	-cholesky=records|inverse
+    -cholesky=records|inverse
 
-	Default not set. If set, update_inits will use cholesky reparameterization
-	to replace the requested $SIGMA and $OMEGA with FIXED identity matrices
-	and a set of THETAs for estimation of standard deviations and (for blocks
-	only) correlations, OR, if -cholesky=inverse is set back-transformation
-	of a previously reparameterized model will be performed.
-	Examples using category input:
-	-cholesky=all					Reparameterize both $OMEGA and $SIGMA,
-									both BLOCK and DIAGONAL, both FIX and
-									estimated
-	-cholesky=omega					Reparameterize only $OMEGA, only BLOCK,
-									only estimated
-	-cholesky=omega,fix				Reparameterize only $OMEGA, only BLOCK,
-									both FIX and estimated
-	-cholesky=omega,diagonal		Reparameterize only $OMEGA, both BLOCK
-									and diagonal, only estimated
-	-cholesky=omega,diagonal,fix	Reparameterize only $OMEGA, both BLOCK
-									and diagonal, both FIX and estimated
-	-cholesky=sigma,diagonal		Reparameterize only $SIGMA, both BLOCK
-									and diagonal, only estimated
-	-cholesky=diagonal				Reparameterize only $OMEGA (omitting
-									parameter name implies omega), both
-									BLOCK and diagonal, only estimated
+    Default not set. If set, update_inits will use cholesky reparameterization
+    to replace the requested $SIGMA and $OMEGA with FIXED identity matrices
+    and a set of THETAs for estimation of standard deviations and (for blocks
+    only) correlations, OR, if -cholesky=inverse is set back-transformation
+    of a previously reparameterized model will be performed.
+    Examples using category input:
+    -cholesky=all                    Reparameterize both $OMEGA and $SIGMA,
+                                    both BLOCK and DIAGONAL, both FIX and
+                                    estimated
+    -cholesky=omega                    Reparameterize only $OMEGA, only BLOCK,
+                                    only estimated
+    -cholesky=omega,fix                Reparameterize only $OMEGA, only BLOCK,
+                                    both FIX and estimated
+    -cholesky=omega,diagonal        Reparameterize only $OMEGA, both BLOCK
+                                    and diagonal, only estimated
+    -cholesky=omega,diagonal,fix    Reparameterize only $OMEGA, both BLOCK
+                                    and diagonal, both FIX and estimated
+    -cholesky=sigma,diagonal        Reparameterize only $SIGMA, both BLOCK
+                                    and diagonal, only estimated
+    -cholesky=diagonal                Reparameterize only $OMEGA (omitting
+                                    parameter name implies omega), both
+                                    BLOCK and diagonal, only estimated
 
-	Examples using record list input, cannot be combined with category input:
-	-cholesky=o2,o5,s1 				Reparameterize $OMEGA record number 2
-									and 5, $SIGMA record number 1
-	See also related options -correlation_cutoff and -bounded_theta.
+    Examples using record list input, cannot be combined with category input:
+    -cholesky=o2,o5,s1                 Reparameterize $OMEGA record number 2
+                                    and 5, $SIGMA record number 1
+    See also related options -correlation_cutoff and -bounded_theta.
 
-	Correct handling of priors encoded using $OMEGA/$SIGMA is not implemented,
-	priors must be encoded using special records $OMEGAPD etc.
+    Correct handling of priors encoded using $OMEGA/$SIGMA is not implemented,
+    priors must be encoded using special records $OMEGAPD etc.
 EOF
 
 $help_text{-comment} = <<'EOF';
-	-comment=text
+    -comment=text
 
-	Default not set. If the option is used, a new line with <comment> will
-	be inserted directly following the $PROBLEM row. The comment text must
-	be enclosed with quotes (double quotes on Windows) if it contains spaces.
+    Default not set. If the option is used, a new line with <comment> will
+    be inserted directly following the $PROBLEM row. The comment text must
+    be enclosed with quotes (double quotes on Windows) if it contains spaces.
 EOF
 
 $help_text{-correlation_cutoff} = <<'EOF';
-	-correlation_cutoff=number
+    -correlation_cutoff=number
 
-	Default is 0. Ignored unless option -cholesky is set. Value range 0-1.
-	If, during cholesky reparameterization, the absolute value of a
-	correlation in a block $OMEGA or $SIGMA is lower than or equal to this
-	cutoff, then set the $THETA for estimation of this correlation to 0 FIX.
+    Default is 0. Ignored unless option -cholesky is set. Value range 0-1.
+    If, during cholesky reparameterization, the absolute value of a
+    correlation in a block $OMEGA or $SIGMA is lower than or equal to this
+    cutoff, then set the $THETA for estimation of this correlation to 0 FIX.
 EOF
 
 $help_text{-degree} = <<'EOF';
-	-degree=fraction
+    -degree=fraction
 
-	Default not set. After updating the initial estimates in the output file,
-	randomly perturb them by degree=fraction, i.e. change estimate to a value
-	randomly chosen in the range estimate +/- estimate*fraction while
-	respecting upper and lower boundaries, if set in the model file. Degree
-	is set to 0.1, a 10% perturbation, when option tweak_inits is set in
-	execute.
+    Default not set. After updating the initial estimates in the output file,
+    randomly perturb them by degree=fraction, i.e. change estimate to a value
+    randomly chosen in the range estimate +/- estimate*fraction while
+    respecting upper and lower boundaries, if set in the model file. Degree
+    is set to 0.1, a 10% perturbation, when option tweak_inits is set in
+    execute.
 EOF
 
 $help_text{-ensure_posdef} = <<'EOF';
-	-ensure_posdef
+    -ensure_posdef
 
-	Default not set. NONMEM sometimes prints OMEGA or SIGMA matrices in the
-	lst-file which are not positive definite, and the ensure_posdef option
-	offers a way to fix this. If option is set then PsN will make a cholesky
-	decomposition of each OMEGA and SIGMA block to check positive
-	definiteness, and, if the cholesky fails, inflate the diagonal elements
-	of the block with 5% be3fore updating the model.
+    Default not set. NONMEM sometimes prints OMEGA or SIGMA matrices in the
+    lst-file which are not positive definite, and the ensure_posdef option
+    offers a way to fix this. If option is set then PsN will make a cholesky
+    decomposition of each OMEGA and SIGMA block to check positive
+    definiteness, and, if the cholesky fails, inflate the diagonal elements
+    of the block with 5% be3fore updating the model.
 EOF
 
 $help_text{-etas} = <<'EOF';
-	-etas
+    -etas
 
-	Default not set. Add $ETAS to the model using the phi file of the model.
-	Also add the necessary MCETA=1 to $EST.
+    Default not set. Add $ETAS to the model using the phi file of the model.
+    Also add the necessary MCETA=1 to $EST.
 EOF
 
 $help_text{-fix_thetas} = <<'EOF';
-	-fix_thetas
+    -fix_thetas
 
-	Default not set. If set, update_inits will set all THETAs that are not
-	part of a prior to FIX.
+    Default not set. If set, update_inits will set all THETAs that are not
+    part of a prior to FIX.
 EOF
 
 $help_text{-flip_comments} = <<'EOF';
-	-flip_comments
+    -flip_comments
 
-	Default not set. Between each pair of tag lines
-	;Sim_start
-	and
-	;Sim_end
+    Default not set. Between each pair of tag lines
+    ;Sim_start
+    and
+    ;Sim_end
     remove the first ; on each line that has ; as the first non-blank character,
-	and prepend with ; at each line that does not	have a ; as the first
-	non-blank character. This processing will be done as the very first step,
-	so lines that are commented out by this procedure will not be updated any
-	more.
+    and prepend with ; at each line that does not    have a ; as the first
+    non-blank character. This processing will be done as the very first step,
+    so lines that are commented out by this procedure will not be updated any
+    more.
 EOF
 
 $help_text{-from_model} = <<'EOF';
-	-from_model=filename
+    -from_model=filename
 
-	Default not set. The name of a model file to copy initial estimates from,
-	instead of a lst-file. Cannot be used together with a named lst-file or
-	rawres_input on the command line.
+    Default not set. The name of a model file to copy initial estimates from,
+    instead of a lst-file. Cannot be used together with a named lst-file or
+    rawres_input on the command line.
 EOF
 
 $help_text{-ignore_missing_parameters} = <<'EOF';
-	-ignore_missing_parameters
+    -ignore_missing_parameters
 
-	Default not set. If set, update_inits will not require a 1-to-1 matching
-	of parameter names and indexes between the model to update and the source
-	of new estimates (lst-file or other model file).
+    Default not set. If set, update_inits will not require a 1-to-1 matching
+    of parameter names and indexes between the model to update and the source
+    of new estimates (lst-file or other model file).
 EOF
 
 $help_text{-in_filter} = <<'EOF';
-	-in_filter=comma-separated list of conditions
+    -in_filter=comma-separated list of conditions
 
-	Default not set. Only relevant in combination with rawres_input. The
-	parameter estimates lines in the file can be filtered on values in the
-	different columns. When specifying which column(s) the filtering should
-	be based on, the exact column name must be used, e.g.
-	minimization_successful. Filtering can only be based on columns with
-	numeric values. The allowed relations are .gt. (greater than), .lt. (less
-	than) and .eq. (equal to). Conditions are separated with commas.
-	Example:
-	-in_filter=model.eq.2
+    Default not set. Only relevant in combination with rawres_input. The
+    parameter estimates lines in the file can be filtered on values in the
+    different columns. When specifying which column(s) the filtering should
+    be based on, the exact column name must be used, e.g.
+    minimization_successful. Filtering can only be based on columns with
+    numeric values. The allowed relations are .gt. (greater than), .lt. (less
+    than) and .eq. (equal to). Conditions are separated with commas.
+    Example:
+    -in_filter=model.eq.2
 EOF
 
 $help_text{-model_subdir} = <<'EOF';
-	-model_subdir
+    -model_subdir
 
 Default not set. If set all lst-files will be searched for as if generated
 by tools that were using the -model_subdir option. I.e. in the model
@@ -323,82 +323,82 @@ subdirectory.
 EOF
 
 $help_text{-nm_version} = <<'EOF';
-	-nm_version='string'
+    -nm_version='string'
 
-	Default is 'default'. The formatting of the initial estimates will depend
-	on the major version number of NONMEM (e.g. 6 or 7) set in psn.conf for
-	the NONMEM version chosen.
+    Default is 'default'. The formatting of the initial estimates will depend
+    on the major version number of NONMEM (e.g. 6 or 7) set in psn.conf for
+    the NONMEM version chosen.
 EOF
 
 $help_text{-offset_rawres} = <<'EOF';
-	-offset_rawres=N
+    -offset_rawres=N
 
-	Default is 0. Option is only relevant in combination with rawres_input.
-	The number of result lines to skip in the input raw results file before
-	reading final parameter estimates.
+    Default is 0. Option is only relevant in combination with rawres_input.
+    The number of result lines to skip in the input raw results file before
+    reading final parameter estimates.
 EOF
 
 $help_text{-output_model} = <<'EOF';
-	-output_model=file
+    -output_model=file
 
-	The name of the model file to create. If this options is omitted, a copy
-	of the original model file with extension .org is created, and the
-	original file is modified.
+    The name of the model file to create. If this options is omitted, a copy
+    of the original model file with extension .org is created, and the
+    original file is modified.
 EOF
 
 $help_text{-rawres_input} = <<'EOF';
-	-rawres_input=filename
+    -rawres_input=filename
 
-	The name of a raw results file to read parameter estimates from. The first
-	line in the file after offset_rawres that passes the in_filter criteria
-	will be used when updating initial estimates. Cannot be used together
-	with a named lst-file on the command line or -from_model.
+    The name of a raw results file to read parameter estimates from. The first
+    line in the file after offset_rawres that passes the in_filter criteria
+    will be used when updating initial estimates. Cannot be used together
+    with a named lst-file on the command line or -from_model.
 EOF
 
 $help_text{-renumber} = <<'EOF';
-	-renumber=new number
+    -renumber=new number
 
-	Default extracted from the -output_model file name.
-	If -output_model=runY.mod is set where Y is a number then -renumber=Y
-	will be set automatically. Provided that 'new number' is not 0, the FILE
-	option of all $TABLE will get <any number up to optional dot> replaced
-	with <new number>, the MSFO option of all $ESTIMATION will get <any
-	number up to optional dot> replaced with <new number>, and 	$MSFI filename
-	of second and later $PROB will get <any number up to optional dot> replaced
-	with 	<new number>. Set option -renumber=0 to prevent automatic
-	renumbering in $TABLE and $EST and $MSFI.
+    Default extracted from the -output_model file name.
+    If -output_model=runY.mod is set where Y is a number then -renumber=Y
+    will be set automatically. Provided that 'new number' is not 0, the FILE
+    option of all $TABLE will get <any number up to optional dot> replaced
+    with <new number>, the MSFO option of all $ESTIMATION will get <any
+    number up to optional dot> replaced with <new number>, and     $MSFI filename
+    of second and later $PROB will get <any number up to optional dot> replaced
+    with     <new number>. Set option -renumber=0 to prevent automatic
+    renumbering in $TABLE and $EST and $MSFI.
 EOF
 
 $help_text{-seed} = <<'EOF';
-	-seed=some string
+    -seed=some string
 
-	The random seed for perturbation if option -degree is set.
+    The random seed for perturbation if option -degree is set.
 EOF
 
 $help_text{-sigdig} = <<'EOF';
-	-sigdig=number
+    -sigdig=number
 
-	Default not set. Option has only effect with NONMEM 7 and later and if
-	set to a number <15. Print parameter estimates with this many
-	significant digits in the new model file, with either scientific or
-	decimal notation depending on which is more compact.
+    Default not set. Option has only effect with NONMEM 7 and later and if
+    set to a number <15. Print parameter estimates with this many
+    significant digits in the new model file, with either scientific or
+    decimal notation depending on which is more compact.
 EOF
 
 $help_text{-silent} = <<'EOF';
-	-silent
+    -silent
 
-	Default not set. If set, all log messages from PsN are suppressed.
+    Default not set. If set, all log messages from PsN are suppressed.
 EOF
 
 $help_text{-unfix_thetas} = <<'EOF';
-	-unfix_thetas
+    -unfix_thetas
 
-	Default not set. If set, update_inits will remove FIX, if present, from
-	all THETAs that are not part of a prior.
+    Default not set. If set, update_inits will remove FIX, if present, from
+    all THETAs that are not part of a prior.
 EOF
 
 $help_text{-update_fix} = <<'EOF';
-	-update_fix
+    -update_fix
 
 Default not set. If set, update_inits will update parameters that are FIX
 in the model. The default is to not update parameters that are fixed.
@@ -413,19 +413,19 @@ if (scalar(@ARGV) < 1) {
 
 my $ignore_missing_parameters = 0;
 if (defined $options{'ignore_missing_parameters'}) {
-	$ignore_missing_parameters = 1;
+    $ignore_missing_parameters = 1;
 }
 my $update_fix = 0;
 if (defined $options{'update_fix'}) {
-	$update_fix = $options{'update_fix'};
+    $update_fix = $options{'update_fix'};
 }
 
 
 if (not $ARGV[0]) {
-	die "You must at least enter a model file name\n";
+    die "You must at least enter a model file name\n";
 }
 if (not -e $ARGV[0]) {
-	die "No such file: $ARGV[0]\n";
+    die "No such file: $ARGV[0]\n";
 }
 
 require model;
@@ -456,8 +456,8 @@ if ($sources > 1) {
 }
 
 if( $options{'add_prior'})  {
-	push(@record_list,'PRI');
-	die "Cannot specify both -add_prior and -from_model.\n" if($options{'from_model'});
+    push(@record_list,'PRI');
+    die "Cannot specify both -add_prior and -from_model.\n" if($options{'from_model'});
 }
 
 my $ignore_missing_files = 1;
@@ -480,15 +480,15 @@ my $model = model->new(
 my $model_copy;
 
 if ($options{'flip_comments'}) {
-	ui->print(category => 'all', message => "Flipping comments\n");
-	#flip_comments must be done as very first step, because later processing might
-	#add or modify records so that tags do not do the right thing anymore
-	$model_copy = model::flip_comments(from_model =>$model,
-									   new_file_name => $ARGV[0].'.flipped',
-									   write => 0);
+    ui->print(category => 'all', message => "Flipping comments\n");
+    #flip_comments must be done as very first step, because later processing might
+    #add or modify records so that tags do not do the right thing anymore
+    $model_copy = model::flip_comments(from_model =>$model,
+                                       new_file_name => $ARGV[0].'.flipped',
+                                       write => 0);
 
 } else {
-	$model_copy = model->new(
+    $model_copy = model->new(
         filename => $ARGV[0],
         ignore_missing_output_files => 1,
         ignore_missing_data=>1,
@@ -497,62 +497,62 @@ if ($options{'flip_comments'}) {
 
 my $mismatch = $model_copy->msfo_to_msfi_mismatch;
 if ($mismatch) {
-	ui->print(category => 'all',
-			  message => "Warning: \$MSFI of \$PROBLEM number $mismatch in ".$ARGV[0].
-			  " does not match previous \$EST MSFO. Check results carefully.\n");
+    ui->print(category => 'all',
+              message => "Warning: \$MSFI of \$PROBLEM number $mismatch in ".$ARGV[0].
+              " does not match previous \$EST MSFO. Check results carefully.\n");
 }
 
 my $rawres_params_arr;
 if( defined $options{'rawres_input'})  {
-	die "No such file: ".$options{'rawres_input'}."\n" unless (-e $options{'rawres_input'});
-	my $offset=0;
-	$offset = $options{'offset_rawres'} if (defined $options{'offset_rawres'});
-	my @in_filter=();
-	my $have_filter=0;
-	if ( defined $options{'in_filter'} ){
-		$have_filter=1;
-		#split string, assume comma separated
-		foreach my $filt (split(/,/,$options{'in_filter'})){
-			if ($filt =~ /.\.(gt|lt|eq)\.\d+\.?\d*/){
-				push(@in_filter,$filt);
-			}else{
-				die "Input filter $filt does not fulfill the format rules.\n";
-			}
-		}
-		if (scalar(@in_filter)<1){
-			die "Error: Option in_filter used, but list of conditions could not be parsed.\n";
-		}
-	}
+    die "No such file: ".$options{'rawres_input'}."\n" unless (-e $options{'rawres_input'});
+    my $offset=0;
+    $offset = $options{'offset_rawres'} if (defined $options{'offset_rawres'});
+    my @in_filter=();
+    my $have_filter=0;
+    if ( defined $options{'in_filter'} ){
+        $have_filter=1;
+        #split string, assume comma separated
+        foreach my $filt (split(/,/,$options{'in_filter'})){
+            if ($filt =~ /.\.(gt|lt|eq)\.\d+\.?\d*/){
+                push(@in_filter,$filt);
+            }else{
+                die "Input filter $filt does not fulfill the format rules.\n";
+            }
+        }
+        if (scalar(@in_filter)<1){
+            die "Error: Option in_filter used, but list of conditions could not be parsed.\n";
+        }
+    }
 
-	my $href;
-	($rawres_params_arr,$href) = model::get_rawres_params(filename => $options{'rawres_input'},
-														  filter => \@in_filter,
-														  offset => $offset,
-														  only_first_match => 1,
-														  model => $model_copy);
+    my $href;
+    ($rawres_params_arr,$href) = model::get_rawres_params(filename => $options{'rawres_input'},
+                                                          filter => \@in_filter,
+                                                          offset => $offset,
+                                                          only_first_match => 1,
+                                                          model => $model_copy);
 
-	unless (defined $rawres_params_arr and scalar(@{$rawres_params_arr} == 1)){
-		my $message = "error reading estimates from rawres file, no lines found";
-		if ($offset > 0){
-			$message .= " after offset"
-		}
-		if ($have_filter){
-			$message .= " that match filter"
-		}
-		die $message."\n";
-	}
+    unless (defined $rawres_params_arr and scalar(@{$rawres_params_arr} == 1)){
+        my $message = "error reading estimates from rawres file, no lines found";
+        if ($offset > 0){
+            $message .= " after offset"
+        }
+        if ($have_filter){
+            $message .= " that match filter"
+        }
+        die $message."\n";
+    }
 }
 
 my $outfile;
 my $output;
 
 if ( $options{'output_model'} ){
-	$outfile = $options{'output_model'};
+    $outfile = $options{'output_model'};
 }  else {
-	#original file will be overwritten, copy to .org
-	cp( $ARGV[0], $ARGV[0].'.org' );
-	unlink($ARGV[0]);
-	$outfile = $ARGV[0];
+    #original file will be overwritten, copy to .org
+    cp( $ARGV[0], $ARGV[0].'.org' );
+    unlink($ARGV[0]);
+    $outfile = $ARGV[0];
 }
 
 
@@ -560,103 +560,103 @@ my $check = 0;
 $check = $options{'ensure_posdef'} if (defined $options{'ensure_posdef'});
 
 if (defined $options{'from_model'}) {
-	die "No such file: ".$options{'from_model'}."\n" unless (-e $options{'from_model'});
-	my $params_model = model -> new ( filename => $options{'from_model'},
-									  ignore_missing_files => 1,
-									  ignore_missing_data=>1);
+    die "No such file: ".$options{'from_model'}."\n" unless (-e $options{'from_model'});
+    my $params_model = model -> new ( filename => $options{'from_model'},
+                                      ignore_missing_files => 1,
+                                      ignore_missing_data=>1);
 
-	my $array = $params_model->get_hash_values_to_labels();
-	if (scalar(@{$model_copy->problems}) > scalar(@{$array})){
-		ui->print(category => 'all',
-				  message => "\n".'from_model has fewer $PROBLEM than '.$ARGV[0].
-				  ". Will not update initial estimates in more than ".
-				  scalar(@{$array}).' $PROBLEM:s');
-	}elsif (scalar(@{$model_copy->problems}) < scalar(@{$array})){
-		ui->print(category => 'all',
-				  message => "\n".'from_model has more $PROBLEM than '.$ARGV[0].
-				  ". Will not update initial estimates in more than ".
-				  scalar(@{$model_copy->problems}).' $PROBLEM:s');
-	}
+    my $array = $params_model->get_hash_values_to_labels();
+    if (scalar(@{$model_copy->problems}) > scalar(@{$array})){
+        ui->print(category => 'all',
+                  message => "\n".'from_model has fewer $PROBLEM than '.$ARGV[0].
+                  ". Will not update initial estimates in more than ".
+                  scalar(@{$array}).' $PROBLEM:s');
+    }elsif (scalar(@{$model_copy->problems}) < scalar(@{$array})){
+        ui->print(category => 'all',
+                  message => "\n".'from_model has more $PROBLEM than '.$ARGV[0].
+                  ". Will not update initial estimates in more than ".
+                  scalar(@{$model_copy->problems}).' $PROBLEM:s');
+    }
 
-	ui->print(category => 'all',
-			  message => "Updating initial estimates\n");
+    ui->print(category => 'all',
+              message => "Updating initial estimates\n");
 
-	for (my $i=0; $i< scalar(@{$model_copy->problems}); $i++){
-		if ($i >= scalar(@{$array})){
-			last;
-		}
-		$model_copy -> update_inits( from_hash => $array->[$i],
-									 problem_number => ($i+1),
-									 ensure_posdef => $check,
-									 ignore_missing_parameters => $ignore_missing_parameters,
-									 update_fix => $update_fix);
-	}
+    for (my $i=0; $i< scalar(@{$model_copy->problems}); $i++){
+        if ($i >= scalar(@{$array})){
+            last;
+        }
+        $model_copy -> update_inits( from_hash => $array->[$i],
+                                     problem_number => ($i+1),
+                                     ensure_posdef => $check,
+                                     ignore_missing_parameters => $ignore_missing_parameters,
+                                     update_fix => $update_fix);
+    }
 
 }elsif(defined $rawres_params_arr and scalar(@{$rawres_params_arr} == 1)){
-	my $nprob = scalar(@{$model_copy->problems});
-	my $use_prob=0;
-	if ( $nprob > 1){
-		for (my $i=0; $i< scalar(@{$model_copy->problems}); $i++){
-			if (defined $model_copy->problems->[$i] and
-				defined $model_copy->problems->[$i]->thetas and
-				scalar(@{$model_copy->problems->[$i]->thetas})>0){
-				$use_prob = ($i+1);
-			}
-		}
-		$use_prob=$nprob if ($use_prob ==0);
-		ui->print(category => 'all',
-				  message => "\n".$ARGV[0]." has $nprob PROBLEMs, but will only ".
-				  "update initial estimates in PROBLEM number $use_prob.");
-	}else{
-		$use_prob=1;
-	}
-	ui->print(category => 'all',
-			  message => "Updating initial estimates\n");
-	$model_copy -> update_inits(from_hash => $rawres_params_arr->[0],
-								problem_number => $use_prob,
-								ensure_posdef => $check,
-								ignore_missing_parameters => $ignore_missing_parameters,
-								update_fix => $update_fix);
+    my $nprob = scalar(@{$model_copy->problems});
+    my $use_prob=0;
+    if ( $nprob > 1){
+        for (my $i=0; $i< scalar(@{$model_copy->problems}); $i++){
+            if (defined $model_copy->problems->[$i] and
+                defined $model_copy->problems->[$i]->thetas and
+                scalar(@{$model_copy->problems->[$i]->thetas})>0){
+                $use_prob = ($i+1);
+            }
+        }
+        $use_prob=$nprob if ($use_prob ==0);
+        ui->print(category => 'all',
+                  message => "\n".$ARGV[0]." has $nprob PROBLEMs, but will only ".
+                  "update initial estimates in PROBLEM number $use_prob.");
+    }else{
+        $use_prob=1;
+    }
+    ui->print(category => 'all',
+              message => "Updating initial estimates\n");
+    $model_copy -> update_inits(from_hash => $rawres_params_arr->[0],
+                                problem_number => $use_prob,
+                                ensure_posdef => $check,
+                                ignore_missing_parameters => $ignore_missing_parameters,
+                                update_fix => $update_fix);
 } else {
-	my $update_inits=0;
-	if( $ARGV[1] ){
-		$output = output -> new( filename => $ARGV[1],
-								 ignore_missing_files => 0);
+    my $update_inits=0;
+    if( $ARGV[1] ){
+        $output = output -> new( filename => $ARGV[1],
+                                 ignore_missing_files => 0);
 
-		unless( $output ){
-			die "No such file: $ARGV[1]\n";
-		}
-		unless ($output->parsed_successfully()){
-			die "Failed to parse $ARGV[1]: ".$output -> parsing_error_message();
-		}
-		$update_inits=1;
-	}elsif(defined $model->outputs and -e $model->outputs->[0]->full_name()) {
-		$output = $model->outputs->[0];
-		unless ($output->parsed_successfully()){
-			die "Failed to parse ".$model ->outputs -> [0] -> filename.": ".
-				$output -> parsing_error_message();
-		}
-		$update_inits=1;
-	} else {
-		ui->print(category => 'all',
-				  message => "No file to read parameter values from, not updating initial estimates\n");
-	}
+        unless( $output ){
+            die "No such file: $ARGV[1]\n";
+        }
+        unless ($output->parsed_successfully()){
+            die "Failed to parse $ARGV[1]: ".$output -> parsing_error_message();
+        }
+        $update_inits=1;
+    }elsif(defined $model->outputs and -e $model->outputs->[0]->full_name()) {
+        $output = $model->outputs->[0];
+        unless ($output->parsed_successfully()){
+            die "Failed to parse ".$model ->outputs -> [0] -> filename.": ".
+                $output -> parsing_error_message();
+        }
+        $update_inits=1;
+    } else {
+        ui->print(category => 'all',
+                  message => "No file to read parameter values from, not updating initial estimates\n");
+    }
 
-	if ($update_inits){
-		if (scalar (@{$model_copy->problems})>1){
-			ui->print(category => 'all',
-					  message => $ARGV[0].
-					  ' has more than one $PROBLEM. Will update naively $PROB by $PROB from lst-file');
+    if ($update_inits){
+        if (scalar (@{$model_copy->problems})>1){
+            ui->print(category => 'all',
+                      message => $ARGV[0].
+                      ' has more than one $PROBLEM. Will update naively $PROB by $PROB from lst-file');
 
-		}
-		ui->print(category => 'all',
-				  message => "Updating initial estimates\n");
+        }
+        ui->print(category => 'all',
+                  message => "Updating initial estimates\n");
 
-		$model_copy -> update_inits( from_output => $output,
-									 ensure_posdef => $check,
-									 ignore_missing_parameters => $ignore_missing_parameters,
-									 update_fix => $update_fix );
-	}
+        $model_copy -> update_inits( from_output => $output,
+                                     ensure_posdef => $check,
+                                     ignore_missing_parameters => $ignore_missing_parameters,
+                                     update_fix => $update_fix );
+    }
 }
 
 if ($options{'etas'}) {
@@ -667,127 +667,127 @@ if ($options{'etas'}) {
 $model_copy -> filename( $outfile );
 
 if ( $options{'cholesky'} ){
-	unless (length($options{'cholesky'}) > 0){
-		die ("Option -cholesky must have a value");
-	}
+    unless (length($options{'cholesky'}) > 0){
+        die ("Option -cholesky must have a value");
+    }
 
-	if ($options{'cholesky'} eq 'inverse'){
-		ui->print(category => 'all',
-				  message => "Doing inverse Cholesky reparameterization\n");
-		my @errors=();
-		foreach my $problem (@{$model_copy->problems}){
-			push(@errors,@{$problem->inverse_cholesky_reparameterize()});
-		}
-		if (scalar(@errors)> 0){
-			ui->print(category => 'all',
-					  message => "The following errors occurred during inverse Cholesky reparameterization:\n".
-					  join("\n",@errors));
-		}
-	}else{
-		ui->print(category => 'all',
-				  message => "Doing Cholesky reparameterization\n");
-		$bounded_theta = 1;
-		$bounded_theta = $options{'bounded_theta'} if (defined $options{'bounded_theta'});
-		my $cutoff = 0;
-		if ($options{'correlation_cutoff'}){
-			if ($options{'correlation_cutoff'} < 0){
-				die "option -correlation_cutoff must not be less than 0\n";
-			}
-			if ($options{'correlation_cutoff'} > 1){
-				die "option -correlation_cutoff must not be larger than 1\n";
-			}
-			$cutoff = $options{'correlation_cutoff'};
-		}
-		my $warnings = 0;
-		foreach my $problem (@{$model_copy->problems}){
-			$warnings += $problem->cholesky_reparameterize(what => $options{'cholesky'},
-														   bounded_theta => $bounded_theta,
-														   correlation_cutoff => $cutoff, #if lower then set 0 FIX
-														   correlation_limit => 0.9, #if higher then warn
-				);
-		}
-		$model_copy -> check_and_set_sizes(LTH => 1); #set LTH if too many thetas. TODO make dependent on nm_version
-		if ($warnings > 0){
-			ui->print(category => 'all',
-					  message => "\n"."Warning: Found $warning instance(s) of high correlations " .
-					  "during cholesky reparameterization\n");
-		}
-	}
+    if ($options{'cholesky'} eq 'inverse'){
+        ui->print(category => 'all',
+                  message => "Doing inverse Cholesky reparameterization\n");
+        my @errors=();
+        foreach my $problem (@{$model_copy->problems}){
+            push(@errors,@{$problem->inverse_cholesky_reparameterize()});
+        }
+        if (scalar(@errors)> 0){
+            ui->print(category => 'all',
+                      message => "The following errors occurred during inverse Cholesky reparameterization:\n".
+                      join("\n",@errors));
+        }
+    }else{
+        ui->print(category => 'all',
+                  message => "Doing Cholesky reparameterization\n");
+        $bounded_theta = 1;
+        $bounded_theta = $options{'bounded_theta'} if (defined $options{'bounded_theta'});
+        my $cutoff = 0;
+        if ($options{'correlation_cutoff'}){
+            if ($options{'correlation_cutoff'} < 0){
+                die "option -correlation_cutoff must not be less than 0\n";
+            }
+            if ($options{'correlation_cutoff'} > 1){
+                die "option -correlation_cutoff must not be larger than 1\n";
+            }
+            $cutoff = $options{'correlation_cutoff'};
+        }
+        my $warnings = 0;
+        foreach my $problem (@{$model_copy->problems}){
+            $warnings += $problem->cholesky_reparameterize(what => $options{'cholesky'},
+                                                           bounded_theta => $bounded_theta,
+                                                           correlation_cutoff => $cutoff, #if lower then set 0 FIX
+                                                           correlation_limit => 0.9, #if higher then warn
+                );
+        }
+        $model_copy -> check_and_set_sizes(LTH => 1); #set LTH if too many thetas. TODO make dependent on nm_version
+        if ($warnings > 0){
+            ui->print(category => 'all',
+                      message => "\n"."Warning: Found $warning instance(s) of high correlations " .
+                      "during cholesky reparameterization\n");
+        }
+    }
 }
 
 
 if (defined $options{'degree'}) {
-	ui->print(category => 'all', message => "Tweaking initial estimates\n");
-	foreach my $prob (@{$model_copy->problems}) {
-		$prob->set_random_inits(degree => $options{'degree'});
-	}
+    ui->print(category => 'all', message => "Tweaking initial estimates\n");
+    foreach my $prob (@{$model_copy->problems}) {
+        $prob->set_random_inits(degree => $options{'degree'});
+    }
 }
 
 
 if ($options{'fix_thetas'}){
-	ui->print(category => 'all', message => "Fixing THETAs\n");
-	for (my $j = 0; $j < scalar(@{$model_copy->problems}); $j++) {
-		next unless (defined $model_copy ->problems()->[$j]->thetas());
-		foreach my $rec (@{$model_copy ->problems()->[$j]->thetas()}) {
-			next if $rec->prior();
-			foreach my $opt (@{$rec->options()}) {
-				$opt->fix(1);
-			}
-		}
-	}
+    ui->print(category => 'all', message => "Fixing THETAs\n");
+    for (my $j = 0; $j < scalar(@{$model_copy->problems}); $j++) {
+        next unless (defined $model_copy ->problems()->[$j]->thetas());
+        foreach my $rec (@{$model_copy ->problems()->[$j]->thetas()}) {
+            next if $rec->prior();
+            foreach my $opt (@{$rec->options()}) {
+                $opt->fix(1);
+            }
+        }
+    }
 }
 if ($options{'unfix_thetas'}){
-	ui->print(category => 'all', message => "Unfixing THETAs\n");
-	for (my $j = 0; $j < scalar(@{$model_copy->problems}); $j++) {
-		next unless (defined $model_copy ->problems()->[$j]->thetas());
-		foreach my $rec (@{$model_copy ->problems()->[$j]->thetas()}) {
-			next if $rec->prior();
-			foreach my $opt (@{$rec->options()}){
-				$opt->fix(0);
-			}
-		}
-	}
+    ui->print(category => 'all', message => "Unfixing THETAs\n");
+    for (my $j = 0; $j < scalar(@{$model_copy->problems}); $j++) {
+        next unless (defined $model_copy ->problems()->[$j]->thetas());
+        foreach my $rec (@{$model_copy ->problems()->[$j]->thetas()}) {
+            next if $rec->prior();
+            foreach my $opt (@{$rec->options()}){
+                $opt->fix(0);
+            }
+        }
+    }
 }
 
 
 if ($options{'add_prior'}) {
-	ui->print(category => 'all', message => "Adding prior\n");
-	$model_copy->problems()->[0]->add_prior_distribution(from_output => $output,
-														   problem_number => 1,
-														   df_string => $options{'add_prior'});
+    ui->print(category => 'all', message => "Adding prior\n");
+    $model_copy->problems()->[0]->add_prior_distribution(from_output => $output,
+                                                           problem_number => 1,
+                                                           df_string => $options{'add_prior'});
 }
 
 if (defined $options{'renumber'} and $options{'renumber'} != 0) {
-	my @probtab = ();
-	my ($probmsfo,$probmsfi) = $model_copy->renumber_msfo_msfi(numberstring => $output_run_number);
-	for (my $j = 0; $j < scalar(@{$model_copy->problems}); $j++) {
-		#handle table
-		if (defined $model_copy->problems->[$j]->tables) {
-			push (@probtab, ($j + 1));
-			foreach my $tab (@{$model_copy->problems->[$j]->tables}) {
-				$tab->renumber_file (numberstring => $output_run_number);
-			}
-		}
-	}
-	if (scalar(@probtab) + scalar(@{$probmsfo}) + scalar(@{$probmsfi})) {
-		my $message = 'Renumbering ';
-		if (scalar(@probtab) > 0) {
-			$message .= '$TABLE FILE= in $PROB ' . join(',', @probtab) . "\n";
-		}
-		if (scalar(@probmsfo) > 0){
-			$message .= '$EST/$NONPAR MSFO= in $PROB ' . join(',', @probmsfo) . "\n";
-		}
-		if (scalar(@probmsfi) > 0){
-			$message .= '$MSFI <file> in $PROB ' . join(',', @probmsfi) . "\n";
-		}
-		ui->print(category => 'all', message => $message);
-	}
+    my @probtab = ();
+    my ($probmsfo,$probmsfi) = $model_copy->renumber_msfo_msfi(numberstring => $output_run_number);
+    for (my $j = 0; $j < scalar(@{$model_copy->problems}); $j++) {
+        #handle table
+        if (defined $model_copy->problems->[$j]->tables) {
+            push (@probtab, ($j + 1));
+            foreach my $tab (@{$model_copy->problems->[$j]->tables}) {
+                $tab->renumber_file (numberstring => $output_run_number);
+            }
+        }
+    }
+    if (scalar(@probtab) + scalar(@{$probmsfo}) + scalar(@{$probmsfi})) {
+        my $message = 'Renumbering ';
+        if (scalar(@probtab) > 0) {
+            $message .= '$TABLE FILE= in $PROB ' . join(',', @probtab) . "\n";
+        }
+        if (scalar(@probmsfo) > 0){
+            $message .= '$EST/$NONPAR MSFO= in $PROB ' . join(',', @probmsfo) . "\n";
+        }
+        if (scalar(@probmsfi) > 0){
+            $message .= '$MSFI <file> in $PROB ' . join(',', @probmsfi) . "\n";
+        }
+        ui->print(category => 'all', message => $message);
+    }
 
 }
 
 #handle PROBLEM update_tags add_tags add_comment
 if ($options{'add_tags'}) {
-	ui->print(category => 'all', message => "Adding tags\n");
+    ui->print(category => 'all', message => "Adding tags\n");
     $model_copy->annotation->add_empty_tags();
 }
 
@@ -800,7 +800,7 @@ if (defined $options{'output_model'} and $options{'output_model'} ne $ARGV[0]) {
 }
 
 if (defined $options{'comment'}) {
-	$model_copy->problems->[0]->problems->[0]->add_comment(new_comment => $options{'comment'});
+    $model_copy->problems->[0]->problems->[0]->add_comment(new_comment => $options{'comment'});
 }
 
 $model_copy->_write(number_format => $options{'sigdig'});

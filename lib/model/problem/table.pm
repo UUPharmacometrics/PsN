@@ -6,21 +6,21 @@ use MooseX::Params::Validate;
 extends 'model::problem::record';
 
 sub renumber_file{
-	my $self = shift;
-	my %parm = validated_hash(\@_,
-		numberstring => { isa => 'Str', optional => 0 }
-		);
-	my $numberstring = $parm{'numberstring'};
+    my $self = shift;
+    my %parm = validated_hash(\@_,
+        numberstring => { isa => 'Str', optional => 0 }
+        );
+    my $numberstring = $parm{'numberstring'};
 
-	my @options = defined($self->options) ? @{$self->options} : ();
-	foreach my $opt (@options){
-		if ($opt->name =~ /^\s*FIL/  and (defined $opt->value and $opt->value ne '')){
-			my $line = $opt->value;
-			#everything up to but not including optional dot
-			$line =~ s/[0-9]+[^0-9.]*/$numberstring/ ;
-			$opt->value($line);
-		}
-	}
+    my @options = defined($self->options) ? @{$self->options} : ();
+    foreach my $opt (@options){
+        if ($opt->name =~ /^\s*FIL/  and (defined $opt->value and $opt->value ne '')){
+            my $line = $opt->value;
+            #everything up to but not including optional dot
+            $line =~ s/[0-9]+[^0-9.]*/$numberstring/ ;
+            $opt->value($line);
+        }
+    }
 
 }
 
@@ -30,7 +30,7 @@ sub columns
 
     my @columns;
 
-	my @options = defined($self->options) ? @{$self->options} : ();
+    my @options = defined($self->options) ? @{$self->options} : ();
     foreach my $opt (@options) {
         if ($opt->name !~ /PRINT|NOPRINT|FILE|NOHEADER|ONEHEADER|NOTITLE|NOLABEL|
             FIRSTONLY|NOFORWARD|FORWARD|APPEND|NOAPPEND|FORMAT|LFORMAT|RFORMAT|

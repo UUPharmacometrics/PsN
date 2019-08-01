@@ -51,12 +51,12 @@ sub xml
 
     if (defined $iop or defined $vpc) {
         $dsm = XML::LibXML::Element->new("DiagnosticStructuralModel");
-		if (defined $iop) {
-        	$dsm->appendChild($iop);
-		}
-		if (defined $vpc) {
-			$dsm->appendChild($vpc);
-		}
+        if (defined $iop) {
+            $dsm->appendChild($iop);
+        }
+        if (defined $vpc) {
+            $dsm->appendChild($vpc);
+        }
     }
 
     return $dsm;

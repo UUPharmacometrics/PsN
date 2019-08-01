@@ -29,16 +29,16 @@ my %options;
 
 my %required_options = ();
 my %optional_options = (
-	"path:s" => undef,
-	"outfile:s" => undef,
+    "path:s" => undef,
+    "outfile:s" => undef,
     "help" => undef,
-	"h" => undef,
- 	"silent" => undef,
-	"nm_version:s" => undef,
+    "h" => undef,
+     "silent" => undef,
+    "nm_version:s" => undef,
 );
 
 my $res = GetOptions( \%options,
-					  keys(%required_options),keys(%optional_options) );
+                      keys(%required_options),keys(%optional_options) );
 
 exit unless $res;
 
@@ -46,42 +46,42 @@ exit unless $res;
 my %help_text;
 
 $help_text{Pre_help_message} = <<'EOF';
-	Getting a raw results file from all model files with results in a directory
-	path.
+    Getting a raw results file from all model files with results in a directory
+    path.
 EOF
 
 $help_text{-h} = <<'EOF';
-	-h | -?
+    -h | -?
 
-	With -h or -? rawresults will print a list of options and exit.
+    With -h or -? rawresults will print a list of options and exit.
 EOF
 
 $help_text{-help} = <<'EOF';
-	-help
+    -help
 
-	With -help rawresults will print this, longer, help message.
+    With -help rawresults will print this, longer, help message.
 EOF
 
 $help_text{-path} = <<'EOF';
-	-path='string'
+    -path='string'
 
-	The directory that holds the model files and lst-files. Default current
-	directory.
+    The directory that holds the model files and lst-files. Default current
+    directory.
 EOF
 
 $help_text{-outfile} = <<'EOF';
-	-outfile='string'
+    -outfile='string'
 
-	Name of output file.
+    Name of output file.
 EOF
 
 $help_text{-nm_version} = <<'EOF';
 
-	Name of nm_version. Only needed if no default version defined in psn.conf
+    Name of nm_version. Only needed if no default version defined in psn.conf
 EOF
 
 $help_text{-silent} = <<'EOF';
-	Suppress PsN log messages.
+    Suppress PsN log messages.
 EOF
 
 $help_text{Post_help_message} = <<'EOF';
@@ -94,16 +94,16 @@ my @models_array;
 
 my $path = $options{'path'};
 unless (defined $path){
-	$path = '.';
+    $path = '.';
 }
 if (defined $options{'outfile'} and -e $options{'outfile'}){
-	print "outfile ".$options{'outfile'}." already exists. Please rename, remove, or choose another outfile name\n";
-	exit;
+    print "outfile ".$options{'outfile'}." already exists. Please rename, remove, or choose another outfile name\n";
+    exit;
 }
 
 my $sse = 0;
 if ((-e $path.'/mc-orig-1.mod') or (-e $path.'/mc-alt_1-1.mod')){
-	$sse =1;
+    $sse =1;
 }
 
 my @counts=();
@@ -115,137 +115,137 @@ require model;
 
 print "Processing...\n";
 if (not $sse){
-	my @files = <$path/*.mod>;
-	#print join(' ',@files)."\n";
+    my @files = <$path/*.mod>;
+    #print join(' ',@files)."\n";
 
-	foreach my $mod (@files){
-		my $model = model -> new(  filename   => $mod,
-								   ignore_missing_files => 1 );
-		push( @models_array, $model );# if ($model -> is_run);
-	}
+    foreach my $mod (@files){
+        my $model = model -> new(  filename   => $mod,
+                                   ignore_missing_files => 1 );
+        push( @models_array, $model );# if ($model -> is_run);
+    }
 
 } else {
 
-	my @files = <$path/mc-orig-?.mod $path/mc-orig-??.mod $path/mc-orig-???.mod $path/mc-orig-????.mod $path/mc-orig-?????.mod>;
-	#print join(' ',@files)."\n";
+    my @files = <$path/mc-orig-?.mod $path/mc-orig-??.mod $path/mc-orig-???.mod $path/mc-orig-????.mod $path/mc-orig-?????.mod>;
+    #print join(' ',@files)."\n";
 
-	if (scalar(@files)>0){
-		push(@counts,scalar(@files));
-		push(@modnames,'simulation');
-	}
+    if (scalar(@files)>0){
+        push(@counts,scalar(@files));
+        push(@modnames,'simulation');
+    }
 
-	foreach my $mod (@files){
-		my $model = model -> new(  filename   => $mod,
-								   ignore_missing_files => 1 );
-		push( @models_array, $model );# if ($model -> is_run);
-	}
+    foreach my $mod (@files){
+        my $model = model -> new(  filename   => $mod,
+                                   ignore_missing_files => 1 );
+        push( @models_array, $model );# if ($model -> is_run);
+    }
 
 
-	my $alt=0;
-	my $altsamples=0;
-	while (1){
-		$alt++;
-		my @files = <$path/mc-alt_$alt-?.mod $path/mc-alt_$alt-??.mod $path/mc-alt_$alt-???.mod $path/mc-alt_$alt-????.mod $path/mc-alt_$alt-?????.mod>;
-		last if (scalar(@files)<1);
-		push(@counts,scalar(@files));
-		push(@modnames,'mc-alternative_'.$alt);
-		#print join(' ',@files)."\n";
-		foreach my $mod (@files){
-			my $model = model -> new(  filename   => $mod,
-									   ignore_missing_files => 1 );
-			push( @models_array, $model );# if ($model -> is_run);
-		}
+    my $alt=0;
+    my $altsamples=0;
+    while (1){
+        $alt++;
+        my @files = <$path/mc-alt_$alt-?.mod $path/mc-alt_$alt-??.mod $path/mc-alt_$alt-???.mod $path/mc-alt_$alt-????.mod $path/mc-alt_$alt-?????.mod>;
+        last if (scalar(@files)<1);
+        push(@counts,scalar(@files));
+        push(@modnames,'mc-alternative_'.$alt);
+        #print join(' ',@files)."\n";
+        foreach my $mod (@files){
+            my $model = model -> new(  filename   => $mod,
+                                       ignore_missing_files => 1 );
+            push( @models_array, $model );# if ($model -> is_run);
+        }
 
-	}
+    }
 }
 
 my $modelfit = tool::modelfit -> new(eval( $common_options::parameters ),
-									 directory_name_prefix => 'rawresults',
-									 models => \@models_array);
+                                     directory_name_prefix => 'rawresults',
+                                     models => \@models_array);
 
 $modelfit->raw_results([]);
 $modelfit->raw_nonp_results([]);
 for (my $i=0; $i < scalar(@models_array); $i++){
-	my ($raw_results_row, $nonp_row) = $modelfit->create_raw_results_rows(
-		max_hash => $modelfit->max_hash,
-		model => $modelfit->models->[$i],
-		model_number => $i + 1,
-		raw_line_structure => $modelfit->raw_line_structure );
+    my ($raw_results_row, $nonp_row) = $modelfit->create_raw_results_rows(
+        max_hash => $modelfit->max_hash,
+        model => $modelfit->models->[$i],
+        model_number => $i + 1,
+        raw_line_structure => $modelfit->raw_line_structure );
 
-	push( @{$modelfit->raw_results}, @{$raw_results_row} );
-	push( @{$modelfit->raw_nonp_results}, @{$nonp_row} );
+    push( @{$modelfit->raw_results}, @{$raw_results_row} );
+    push( @{$modelfit->raw_nonp_results}, @{$nonp_row} );
 
 }
 
 if ($sse){
 
-	my @rows = @{$modelfit -> raw_results()};
-	my $n_rows = scalar(@rows);
-	my @firsts;
-	my @seconds;
-	my $last_model= 0;
+    my @rows = @{$modelfit -> raw_results()};
+    my $n_rows = scalar(@rows);
+    my @firsts;
+    my @seconds;
+    my $last_model= 0;
 
-	my $sample = 0;
-	my $altname = shift(@modnames) unless (scalar(@modnames)<1);
-	my $thiscount = shift(@counts) unless (scalar(@counts)<1);
+    my $sample = 0;
+    my $altname = shift(@modnames) unless (scalar(@modnames)<1);
+    my $thiscount = shift(@counts) unless (scalar(@counts)<1);
 
-	for (my $i=0; $i< $n_rows; $i++){
-		my $this_model = $rows[$i]->[0];
-		my $step= ($this_model-$last_model);
-		if ($step < 0){
-			print(message  => "Error: It seems the raw_results is not sorted".
-				  ". Statistics in sse_results will be wrong");
-		}else {
-			#if 0 step and problem column is 1 then error
-			$sample += $step; #normally +1, sometimes 0,sometimes 2 or more
-			if ($step > 1){
-				print( "Warning: It seems the estimation of $altname".
-					   "did not produce any results with dataset ".($sample-1).
-					   ". Statistics in sse_results might be wrong, it is recommended".
-					   "to check manually using raw_results.");
-			}
-			if ($step == 0 and ($rows[$i]->[1] == 1)){
-				print("Warning: There seems to be missing lines in raw_results ".
-					  "(step 0 and PROB is 1, model $this_model), or the lines are not sorted by PROBLEM. ".
-					  "Statistics in sse_results might be wrong, it is recommended".
-					  "to check manually using raw_results.");
-			}
-		}
+    for (my $i=0; $i< $n_rows; $i++){
+        my $this_model = $rows[$i]->[0];
+        my $step= ($this_model-$last_model);
+        if ($step < 0){
+            print(message  => "Error: It seems the raw_results is not sorted".
+                  ". Statistics in sse_results will be wrong");
+        }else {
+            #if 0 step and problem column is 1 then error
+            $sample += $step; #normally +1, sometimes 0,sometimes 2 or more
+            if ($step > 1){
+                print( "Warning: It seems the estimation of $altname".
+                       "did not produce any results with dataset ".($sample-1).
+                       ". Statistics in sse_results might be wrong, it is recommended".
+                       "to check manually using raw_results.");
+            }
+            if ($step == 0 and ($rows[$i]->[1] == 1)){
+                print("Warning: There seems to be missing lines in raw_results ".
+                      "(step 0 and PROB is 1, model $this_model), or the lines are not sorted by PROBLEM. ".
+                      "Statistics in sse_results might be wrong, it is recommended".
+                      "to check manually using raw_results.");
+            }
+        }
 
-		if ($sample > $thiscount){
-			$altname = shift(@modnames) unless (scalar(@modnames)<1);
-			$thiscount = shift(@counts) unless (scalar(@counts)<1);
-			$sample=1;
-		}
-		if ($step > 0){
-			#new model
-			unshift( @{$rows[$i]}, $sample );
-			unshift( @{$rows[$i]}, $altname );
-			push(@firsts,$rows[$i]);
-		}else{
-			#step==0, second problem same model
-			unshift( @{$rows[$i]}, $sample );
-			unshift( @{$rows[$i]}, $altname );
-			push(@seconds,$rows[$i]);
-		}
-		$last_model=$this_model;
-	}
+        if ($sample > $thiscount){
+            $altname = shift(@modnames) unless (scalar(@modnames)<1);
+            $thiscount = shift(@counts) unless (scalar(@counts)<1);
+            $sample=1;
+        }
+        if ($step > 0){
+            #new model
+            unshift( @{$rows[$i]}, $sample );
+            unshift( @{$rows[$i]}, $altname );
+            push(@firsts,$rows[$i]);
+        }else{
+            #step==0, second problem same model
+            unshift( @{$rows[$i]}, $sample );
+            unshift( @{$rows[$i]}, $altname );
+            push(@seconds,$rows[$i]);
+        }
+        $last_model=$this_model;
+    }
 
-	push(@firsts,@seconds); #assume analysis ignores the last rows
-	$modelfit -> raw_results(\@firsts); #replace with set of resorted $PROBS
+    push(@firsts,@seconds); #assume analysis ignores the last rows
+    $modelfit -> raw_results(\@firsts); #replace with set of resorted $PROBS
 
-	unshift( @{$modelfit -> raw_results_header}, 'sample' );
-	unshift( @{$modelfit -> raw_results_header}, 'hypothesis' );
+    unshift( @{$modelfit -> raw_results_header}, 'sample' );
+    unshift( @{$modelfit -> raw_results_header}, 'hypothesis' );
 
-	foreach my $mod (sort({$a <=> $b} keys %{$modelfit->raw_line_structure})){
-		foreach my $category (keys %{$modelfit->raw_line_structure -> {$mod}}){
-			next if ($category eq 'line_numbers');
-			my ($start,$len) = split(',',$modelfit->raw_line_structure -> {$mod}->{$category});
-			$modelfit->raw_line_structure -> {$mod}->{$category} = ($start+2).','.$len; #add 2 for hypothesis, simdatanum
-		}
-		$modelfit->raw_line_structure -> {$mod}->{'hypothesis'} = '0,1';
-		$modelfit->raw_line_structure -> {$mod}->{'sample'} = '1,1';
-	}
+    foreach my $mod (sort({$a <=> $b} keys %{$modelfit->raw_line_structure})){
+        foreach my $category (keys %{$modelfit->raw_line_structure -> {$mod}}){
+            next if ($category eq 'line_numbers');
+            my ($start,$len) = split(',',$modelfit->raw_line_structure -> {$mod}->{$category});
+            $modelfit->raw_line_structure -> {$mod}->{$category} = ($start+2).','.$len; #add 2 for hypothesis, simdatanum
+        }
+        $modelfit->raw_line_structure -> {$mod}->{'hypothesis'} = '0,1';
+        $modelfit->raw_line_structure -> {$mod}->{'sample'} = '1,1';
+    }
 }
 
 
@@ -256,25 +256,25 @@ $modelfit->print_raw_results();
 my $rawfile = $modelfit->directory.$modelfit->raw_results_file->[0];
 my $structfile = $modelfit->directory.'/raw_results_structure';
 if (defined $options{'outfile'}){
-	my ($volume, $directory, $file) = File::Spec->splitpath($options{'outfile'});
-	mv($rawfile,$options{'outfile'});
-	if (-e $volume.$directory.'raw_results_structure'){
-		mv($volume.$directory.'raw_results_structure',$volume.$directory.'raw_results_structure_old');
-	}
-	mv($structfile,$volume.$directory.'raw_results_structure');
-	rmtree($modelfit->directory);
-	$rawfile = $options{'outfile'};
+    my ($volume, $directory, $file) = File::Spec->splitpath($options{'outfile'});
+    mv($rawfile,$options{'outfile'});
+    if (-e $volume.$directory.'raw_results_structure'){
+        mv($volume.$directory.'raw_results_structure',$volume.$directory.'raw_results_structure_old');
+    }
+    mv($structfile,$volume.$directory.'raw_results_structure');
+    rmtree($modelfit->directory);
+    $rawfile = $options{'outfile'};
 }elsif($sse){
-	#one step up from m1
-	my $abspath = Cwd::abs_path($path.'/../raw_results_recover.csv');
-	my ($volume, $directory, $file) = File::Spec->splitpath($abspath);
-	mv($rawfile,$abspath);
-	if (-e $volume.$directory.'raw_results_structure'){
-		mv($volume.$directory.'raw_results_structure',$volume.$directory.'raw_results_structure_old');
-	}
-	mv($structfile,$volume.$directory.'raw_results_structure');
-	rmtree($modelfit->directory);
-	$rawfile = $abspath;
+    #one step up from m1
+    my $abspath = Cwd::abs_path($path.'/../raw_results_recover.csv');
+    my ($volume, $directory, $file) = File::Spec->splitpath($abspath);
+    mv($rawfile,$abspath);
+    if (-e $volume.$directory.'raw_results_structure'){
+        mv($volume.$directory.'raw_results_structure',$volume.$directory.'raw_results_structure_old');
+    }
+    mv($structfile,$volume.$directory.'raw_results_structure');
+    rmtree($modelfit->directory);
+    $rawfile = $abspath;
 }
 
 print "\ndone, raw_results file is $rawfile\n";

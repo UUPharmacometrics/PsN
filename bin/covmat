@@ -25,20 +25,20 @@ my %options;
 my %required_options = ('rawres_input:s' => '');
 
 my %optional_options = (
-	'offset_rawres:i' => '',
-	'in_filter:s' => '',
-	'raw_results_structure:s' => '',
-	'require_numeric_ofv!' => '',
-	'header!' => '',
-	'comma' => '',
+    'offset_rawres:i' => '',
+    'in_filter:s' => '',
+    'raw_results_structure:s' => '',
+    'require_numeric_ofv!' => '',
+    'header!' => '',
+    'comma' => '',
 );
 
 my $min_samples=2;
 
 my $res = GetOptions( \%options,
-					  ('h','help'),
-		      keys(%required_options),
-		      keys(%optional_options) );
+                      ('h','help'),
+              keys(%required_options),
+              keys(%optional_options) );
 exit unless $res;
 
 
@@ -46,117 +46,117 @@ exit unless $res;
 my %help_text;
 
 $help_text{Pre_help_message} = <<'EOF';
-	Create an empirical covariance matrix from a raw_results file
+    Create an empirical covariance matrix from a raw_results file
 EOF
 
 $help_text{Examples} = <<'EOF';
-	Use parameter labels from the raw_results file:
-	covmat -rawres_input=bootstrap_dir33/raw_results_run33.csv
+    Use parameter labels from the raw_results file:
+    covmat -rawres_input=bootstrap_dir33/raw_results_run33.csv
 
-	Use generic labels:
-	covmat -rawres_input=raw_results_run5.csv run5.mod
+    Use generic labels:
+    covmat -rawres_input=raw_results_run5.csv run5.mod
 
-	The covmat script prints output to screen, but the output can be
-	redirected to a file using >.
-	Example
-	covmat -rawres_input=raw_results_run5.csv run5.mod > run5_empirical.cov
+    The covmat script prints output to screen, but the output can be
+    redirected to a file using >.
+    Example
+    covmat -rawres_input=raw_results_run5.csv run5.mod > run5_empirical.cov
 
 EOF
 
 $help_text{Options} = <<'EOF';
-	The -rawres_input option is required.
+    The -rawres_input option is required.
 
-	covmat needs to read the names and counts of parameters from somewhere.
-	By default covmat will look for a raw_results_structure file in the same
-	directory as the rawres_input file. Alternatively the user can give a model
-	file name on the command-line, or set option raw_results_structure.
+    covmat needs to read the names and counts of parameters from somewhere.
+    By default covmat will look for a raw_results_structure file in the same
+    directory as the rawres_input file. Alternatively the user can give a model
+    file name on the command-line, or set option raw_results_structure.
 
-	The following options are valid:
+    The following options are valid:
 EOF
 
 $help_text{-h} = <<'EOF';
-	-h | -?
+    -h | -?
 
-	With -h or -? covmat will print a list of options and exit.
+    With -h or -? covmat will print a list of options and exit.
 EOF
 
 $help_text{-help} = <<'EOF';
-	-help
+    -help
 
-	With -help covmat will print this, longer, help message.
+    With -help covmat will print this, longer, help message.
 EOF
 
 $help_text{-comma} = <<'EOF';
-	-comma
+    -comma
 
-	Default not set. By default the covariance matrix is printed with space
-	separation and fixed width of the numeric fields. Setting -comma changes
-	he format to comma-separated variable width.
+    Default not set. By default the covariance matrix is printed with space
+    separation and fixed width of the numeric fields. Setting -comma changes
+    he format to comma-separated variable width.
 EOF
 
 $help_text{-header} = <<'EOF';
-	-header
+    -header
 
-	Default set. By default the covariance matrix is printed with headers.
-	Setting -no-header skips the headers in the output.
+    Default set. By default the covariance matrix is printed with headers.
+    Setting -no-header skips the headers in the output.
 EOF
 
 $help_text{-in_filter} = <<'EOF';
-	-in_filter=comma-separated list of conditions
+    -in_filter=comma-separated list of conditions
 
-	Default not used. Only relevant in combination with rawres_input. The
-	parameter estimates lines in the file can be filtered on values in the
-	different columns. When specifying which column(s) the filtering should be
-	based on, the exact column name must be used, e.g. minimization_successful.
-	Filtering can only be based on columns with numeric values. The allowed
-	relations are .gt. (greater than), lt. (less than) and .eq. (equal to).
-	Conditions are separated with commas. If the remaining number of lines
-	after filtering is smaller than 2, covmat will stop with an error message.
-	If the user has created a file with parameter estimates outside of PsN,
-	filtering can be done on any numeric column in that file. Do not set column
-	headers containing .eq. or .lt. or .gt.in the user-generated file as this
-	would interfere with the in_filter option syntax.
-	Example: -in_filter=minimization_successful.eq.1,significant_digits.gt.3.5
+    Default not used. Only relevant in combination with rawres_input. The
+    parameter estimates lines in the file can be filtered on values in the
+    different columns. When specifying which column(s) the filtering should be
+    based on, the exact column name must be used, e.g. minimization_successful.
+    Filtering can only be based on columns with numeric values. The allowed
+    relations are .gt. (greater than), lt. (less than) and .eq. (equal to).
+    Conditions are separated with commas. If the remaining number of lines
+    after filtering is smaller than 2, covmat will stop with an error message.
+    If the user has created a file with parameter estimates outside of PsN,
+    filtering can be done on any numeric column in that file. Do not set column
+    headers containing .eq. or .lt. or .gt.in the user-generated file as this
+    would interfere with the in_filter option syntax.
+    Example: -in_filter=minimization_successful.eq.1,significant_digits.gt.3.5
 EOF
 
 $help_text{-offset_rawres} = <<'EOF';
-	-offset_rawres=N
+    -offset_rawres=N
 
-	Default 0.
-	The number of result lines to skip in the input raw results file before
-	starting to read final parameter estimates.
+    Default 0.
+    The number of result lines to skip in the input raw results file before
+    starting to read final parameter estimates.
 EOF
 
 $help_text{-raw_results_structure} = <<'EOF';
-	-raw_results_structure=filename
+    -raw_results_structure=filename
 
-	Instead of giving the model file coupled to the rawres file as input, it is
-	possible to use the raw_results_structure file for finding the parameter
-	columns.
+    Instead of giving the model file coupled to the rawres file as input, it is
+    possible to use the raw_results_structure file for finding the parameter
+    columns.
 EOF
 
 $help_text{-rawres_input} = <<'EOF';
-	-rawres_input=filename
+    -rawres_input=filename
 
-	A raw_results file. After filtering and skipping offset it must contain at
-	least 2 samples. The labels for  THETA/OMEGA/SIGMA in the file must match
-	the labels in the model given as input, if any, and the theta columns must
-	be directly followed by the omega columns which must be directly followed
-	by the sigma columns. Note that is is possible to generate a file with
-	initial parameter estimates outside of PsN, as long as the file follows
-	the format rules.
+    A raw_results file. After filtering and skipping offset it must contain at
+    least 2 samples. The labels for  THETA/OMEGA/SIGMA in the file must match
+    the labels in the model given as input, if any, and the theta columns must
+    be directly followed by the omega columns which must be directly followed
+    by the sigma columns. Note that is is possible to generate a file with
+    initial parameter estimates outside of PsN, as long as the file follows
+    the format rules.
 EOF
 
 $help_text{-require_numeric_ofv} = <<'EOF';
-	-require_numeric_ofv
+    -require_numeric_ofv
 
-	Default set. By default the covmat program assumes there is a column with
-	header ofv in the raw results file, and that all lines that do not have a
-	number in that column should be filtered out (because the run crashed).
-	However, if the input file comes from another source than a PsN run and
-	does not have an ofv column, the user must set -no-require_numeric_ofv,
-	otherwise covmat will crash with an error message saying that the ofv
-	column cannot be found.
+    Default set. By default the covmat program assumes there is a column with
+    header ofv in the raw results file, and that all lines that do not have a
+    number in that column should be filtered out (because the run crashed).
+    However, if the input file comes from another source than a PsN run and
+    does not have an ofv column, the user must set -no-require_numeric_ofv,
+    otherwise covmat will crash with an error message saying that the ofv
+    column cannot be found.
 EOF
 
 $help_text{Post_help_message} = <<'EOF';
@@ -193,9 +193,9 @@ my $eval_string = common_options::model_parameters(\%options);
 
 my $model;
 if( scalar(@ARGV) == 1 ){
-	$model = model -> new ( eval( $eval_string ),
-							filename                    => $ARGV[0],
-							ignore_missing_output_files => 1);
+    $model = model -> new ( eval( $eval_string ),
+                            filename                    => $ARGV[0],
+                            ignore_missing_output_files => 1);
 }
 
 my @in_filter=();
@@ -219,38 +219,38 @@ $numeric = 0 if (defined $options{'require_numeric_ofv'} and (not $options{'requ
 
 
 my ($sampled_params_arr,$labels_hash) = model::get_rawres_params(filename => $options{'rawres_input'},
-																 filter => \@in_filter,
-																 offset => $options{'offset_rawres'},
-																 model => $model,
-																 require_numeric_ofv => $numeric,
-																 rawres_structure_filename => $options{'raw_results_structure'});
+                                                                 filter => \@in_filter,
+                                                                 offset => $options{'offset_rawres'},
+                                                                 model => $model,
+                                                                 require_numeric_ofv => $numeric,
+                                                                 rawres_structure_filename => $options{'raw_results_structure'});
 if (defined $sampled_params_arr) {
-	unless (scalar(@{$sampled_params_arr}) >= $min_samples) {
-		if (scalar(@in_filter)>0) {
-			die "Too few sets (lines) of parameter values in\n".
-				  $options{'rawres_input'}."\nafter filtering. Have ".scalar(@{$sampled_params_arr}).
-				  " but need at least $min_samples.\n";
-		} else {
-			die "Too few sets (lines) of parameter values in\n".
-				  $options{'rawres_input'}.". Have ".scalar(@{$sampled_params_arr}).
-				  " but need at least ".
-				  ($min_samples + $options{'offset_rawres'}).".\n";
-		}
-	}
+    unless (scalar(@{$sampled_params_arr}) >= $min_samples) {
+        if (scalar(@in_filter)>0) {
+            die "Too few sets (lines) of parameter values in\n".
+                  $options{'rawres_input'}."\nafter filtering. Have ".scalar(@{$sampled_params_arr}).
+                  " but need at least $min_samples.\n";
+        } else {
+            die "Too few sets (lines) of parameter values in\n".
+                  $options{'rawres_input'}.". Have ".scalar(@{$sampled_params_arr}).
+                  " but need at least ".
+                  ($min_samples + $options{'offset_rawres'}).".\n";
+        }
+    }
 } else {
     die "get_rawres_params returned undef";
 }
 
 my $len = scalar(@{$sampled_params_arr});
 for (my $i=0; $i< $len; $i++){
-	$sampled_params_arr->[$i]->{'resamples'}=1;
+    $sampled_params_arr->[$i]->{'resamples'}=1;
 }
 
 
 my $resulthash = tool::sir::empirical_statistics( sampled_params_arr => $sampled_params_arr,
-												  do_percentiles => 0,
-												  do_sdcorr => 0,
-												  labels_hash => $labels_hash);
+                                                  do_percentiles => 0,
+                                                  do_sdcorr => 0,
+                                                  labels_hash => $labels_hash);
 
 
 my $print_header = 1;
@@ -265,29 +265,29 @@ $comma = 1 if (defined $options{'comma'} and ($options{'comma'}));
 my @order=();
 my @headers=();
 if (defined $model){
-	my $params = $model->problems->[0]->get_estimated_attributes(parameter => 'all', attribute => 'param');
-	my $coords = $model->problems->[0]->get_estimated_attributes(parameter => 'all', attribute => 'coordinate_strings');
-	foreach my $param (@list_parameters){
-		for (my $i=0; $i<scalar(@{$params}); $i++){
-			if ($params->[$i] eq $param){
-				push(@headers, $coords->[$i]) ;
-				push(@order, $i);
-			}
-		}
-	}
+    my $params = $model->problems->[0]->get_estimated_attributes(parameter => 'all', attribute => 'param');
+    my $coords = $model->problems->[0]->get_estimated_attributes(parameter => 'all', attribute => 'coordinate_strings');
+    foreach my $param (@list_parameters){
+        for (my $i=0; $i<scalar(@{$params}); $i++){
+            if ($params->[$i] eq $param){
+                push(@headers, $coords->[$i]) ;
+                push(@order, $i);
+            }
+        }
+    }
 }else{
-	foreach my $param (@list_parameters){
-		for (my $i=0; $i<scalar(@{$labels_hash->{'labels'}}); $i++){
-			if ($labels_hash->{'param'}->[$i] eq $param){
-				push(@headers, $labels_hash->{'labels'}->[$i]) ;
-				push(@order, $i);
-			}
-		}
-	}
+    foreach my $param (@list_parameters){
+        for (my $i=0; $i<scalar(@{$labels_hash->{'labels'}}); $i++){
+            if ($labels_hash->{'param'}->[$i] eq $param){
+                push(@headers, $labels_hash->{'labels'}->[$i]) ;
+                push(@order, $i);
+            }
+        }
+    }
 }
 my $copy = linear_algebra::copy_and_reorder_square_matrix($resulthash->{'covar'},\@order);
 my $formatted = tool::format_covmatrix(matrix => $copy, header => \@headers, comma => $comma, print_labels => $print_header);
 
 foreach my $line (@{$formatted}){
-	print $line;
+    print $line;
 }

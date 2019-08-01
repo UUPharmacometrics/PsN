@@ -77,42 +77,42 @@ sub _connector_get_files
     my $logfile = _get_logfile(pharmml => $pharmml);
     my $lstfile = _get_lstfile(pharmml => $pharmml);
     my $sofilename = _get_sofile(pharmml => $pharmml);
-	my $errorstring;
+    my $errorstring;
 
     my @files=();
     my $tool= _get_toolname(directory => $directory); #can be undef
-	my $errorfile='errorMessages';
+    my $errorfile='errorMessages';
     my $append_columns;
 
     if ( (not (-d $directory))  or
-		 ( (not defined $tool) and (not -e $lstfile)) or
-		 (defined $tool and ($tool ne 'execute') and ($tool ne 'nca') and (not -e $directory.'/'.$tool.'_results.csv')) or
+         ( (not defined $tool) and (not -e $lstfile)) or
+         (defined $tool and ($tool ne 'execute') and ($tool ne 'nca') and (not -e $directory.'/'.$tool.'_results.csv')) or
          ($tool eq 'nca' and (not -e $directory . '/' . 'nca_simulation.1.npctab.dta'))
-		) {
-		#generic failure
+        ) {
+        #generic failure
         #$errorstring = 'run failure';
         cp($logfile,$errorfile);  #skip copying, change design
         @files = ($logfile); #treat error messages as lstfile
-	}elsif (($tool eq 'execute') and (not -e $lstfile)) {
-		#execute failure
-		if (-e $directory.'/NM_run1/psn.lst') {
-			cp($directory.'/NM_run1/psn.lst',$lstfile);
-			@files = ($lstfile);
-		}elsif(-e $directory.'/NM_run1/psn-1.lst'){
-			cp($directory.'/NM_run1/psn-1.lst',$lstfile);
-			@files = ($lstfile);
-		}elsif(-e $directory.'/NM_run1/nmtran_error.txt'){
-			cp($directory.'/NM_run1/nmtran_error.txt',$errorfile);
-			@files = ($errorfile);
-		}elsif( (-e $directory.'/NM_run1/FMSG') and ( not -e $directory.'/NM_run1/FREPORT')) {
-			cp($directory.'/NM_run1/FMSG',$errorfile);
-			@files = ($errorfile);
-		}else{
-			cp($logfile,$errorfile);
-			@files = ($logfile);
-		}
+    }elsif (($tool eq 'execute') and (not -e $lstfile)) {
+        #execute failure
+        if (-e $directory.'/NM_run1/psn.lst') {
+            cp($directory.'/NM_run1/psn.lst',$lstfile);
+            @files = ($lstfile);
+        }elsif(-e $directory.'/NM_run1/psn-1.lst'){
+            cp($directory.'/NM_run1/psn-1.lst',$lstfile);
+            @files = ($lstfile);
+        }elsif(-e $directory.'/NM_run1/nmtran_error.txt'){
+            cp($directory.'/NM_run1/nmtran_error.txt',$errorfile);
+            @files = ($errorfile);
+        }elsif( (-e $directory.'/NM_run1/FMSG') and ( not -e $directory.'/NM_run1/FREPORT')) {
+            cp($directory.'/NM_run1/FMSG',$errorfile);
+            @files = ($errorfile);
+        }else{
+            cp($logfile,$errorfile);
+            @files = ($logfile);
+        }
     }else {
-		#success
+        #success
         my @copyfiles = <$directory/*.csv>;
         push(@copyfiles,$directory.'/version_and_option_info.txt') if (-e $directory.'/version_and_option_info.txt');
         foreach my $f (@copyfiles){
@@ -199,30 +199,30 @@ sub _get_toolname
 
     my $tool;
 
-	my $command = "";
+    my $command = "";
     if (-e $directory . '/version_and_option_info.txt') {
-		open(COM, $directory . '/version_and_option_info.txt') or return $tool;
-		while (<COM>) {
+        open(COM, $directory . '/version_and_option_info.txt') or return $tool;
+        while (<COM>) {
             if (/^Actual values optional (\w+)/) {
                 $command = lc($1);
-		        close(COM);
+                close(COM);
                 last;
             }
         }
         close(COM);
-	}
+    }
 
-	if ($command =~ /^bootstrap/) {
-		$tool = 'bootstrap';
-	} elsif ($command =~ /^vpc/) {
-		$tool = 'vpc';
+    if ($command =~ /^bootstrap/) {
+        $tool = 'bootstrap';
+    } elsif ($command =~ /^vpc/) {
+        $tool = 'vpc';
     } elsif ($command =~ /^nca/) {
         $tool = 'nca';
-	} elsif ($command =~ /^sse/) {
-		$tool = 'sse';
-	} elsif ($command =~ /^execute/) {
-		$tool = 'execute';
-	}
+    } elsif ($command =~ /^sse/) {
+        $tool = 'sse';
+    } elsif ($command =~ /^execute/) {
+        $tool = 'execute';
+    }
 
     return $tool; #can be undef
 }

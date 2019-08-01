@@ -47,9 +47,9 @@ my %optional_options = (
 );
 
 my $res = GetOptions( \%options,
-		      @common_options::get_opt_strings,
-		      keys(%required_options),
-		      keys(%optional_options)
+              @common_options::get_opt_strings,
+              keys(%required_options),
+              keys(%optional_options)
     );
 exit unless $res;
 
@@ -61,163 +61,163 @@ my %help_text;
 
 $help_text{Pre_help_message} = <<'EOF';
 
-	Stepwise covariate model building from NONMEM models.
+    Stepwise covariate model building from NONMEM models.
 EOF
 
 
 $help_text{Description} = <<'EOF';
 
-	The Cross-validated Stepwise Covariate Model (XV_SCM) building tool of
-	PsN implements cross-validated model size selection for a covariate model.
-	It relies on the SCM tool of PsN.
-	A configuration file must be written for each xv_scm run. The format of
-	the configuration file follows the format of the scm configuration file
-	exactly, except that options search_direction, gof, p_value, p_forward,
-	p_backward and update_derivatives are ignored.
+    The Cross-validated Stepwise Covariate Model (XV_SCM) building tool of
+    PsN implements cross-validated model size selection for a covariate model.
+    It relies on the SCM tool of PsN.
+    A configuration file must be written for each xv_scm run. The format of
+    the configuration file follows the format of the scm configuration file
+    exactly, except that options search_direction, gof, p_value, p_forward,
+    p_backward and update_derivatives are ignored.
 EOF
 
 $help_text{Examples} = <<'EOF';
-	Execute an XV_SCM using parameters set in the config file
-	'phenobarbital.scm'.
+    Execute an XV_SCM using parameters set in the config file
+    'phenobarbital.scm'.
 
-	xv_scm -config_file=phenobarbital.scm
+    xv_scm -config_file=phenobarbital.scm
 
-	Execute an XV_SCM using parameters set in the config file
-	'phenobarbital.scm'. But override the retries and the seed parameter.
+    Execute an XV_SCM using parameters set in the config file
+    'phenobarbital.scm'. But override the retries and the seed parameter.
 
-	xv_scm -config_file=phenobarbital.scm -retries=5 -seed=12345 phenobarbital.mod
+    xv_scm -config_file=phenobarbital.scm -retries=5 -seed=12345 phenobarbital.mod
 EOF
 
 $help_text{Options} = <<'EOF';
-	-config_file is mandatory
+    -config_file is mandatory
 
-	The following options are valid.
+    The following options are valid.
 EOF
 
 $help_text{-config_file} = <<'EOF';
-	-config_file
+    -config_file
 
-	File name of an scm configuration file.
+    File name of an scm configuration file.
 EOF
 
 $help_text{-derivatives_data} = <<'EOF';
-	-derivatives_data
+    -derivatives_data
 
-	Use scm -help derivatives_data for information on this option.
+    Use scm -help derivatives_data for information on this option.
 EOF
 
 $help_text{-do_not_drop} = << 'EOF';
-	-do_not_drop
+    -do_not_drop
 
-	Use scm -help do_not_drop for information on this option.
+    Use scm -help do_not_drop for information on this option.
 EOF
 
 $help_text{-epsilon} = <<'EOF';
-	-epsilon
+    -epsilon
 
-	Use scm -help epsilon for information on this option.
+    Use scm -help epsilon for information on this option.
 EOF
 
 $help_text{-error} = <<'EOF';
-	-error
+    -error
 
-	Use scm -help error for information on this option.
+    Use scm -help error for information on this option.
 EOF
 
 $help_text{-foce} = <<'EOF';
-	-foce
+    -foce
 
-	Use scm -help foce for information on this option.
+    Use scm -help foce for information on this option.
 EOF
 
 $help_text{-global_init} = << 'EOF';
-	-global_init
+    -global_init
 
-	Use scm -help global_init for information on this option.
+    Use scm -help global_init for information on this option.
 EOF
 
 $help_text{-groups} = <<'EOF';
-	-groups=N
+    -groups=N
 
-	Default 5. The number of validation groups to make an N-fold cross-
-	validation.
+    Default 5. The number of validation groups to make an N-fold cross-
+    validation.
 EOF
 
 $help_text{-linearize} = <<'EOF';
-	-linearize
+    -linearize
 
-	Use scm -help linearize for information on this option.
+    Use scm -help linearize for information on this option.
 EOF
 
 $help_text{-logfile} = << 'EOF';
-	-logfile
+    -logfile
 
-	Default scmlog.txt. The name of the logfile.
+    Default scmlog.txt. The name of the logfile.
 EOF
 
 $help_text{-lst_file} = <<'EOF';
-	-lst_file
+    -lst_file
 
-		Use scm -help lst_file for information on this option.
+        Use scm -help lst_file for information on this option.
 EOF
 
 $help_text{-max_steps} = <<'EOF';
-	-max_steps=N
+    -max_steps=N
 
-	Do not take more that max_steps forward steps, even if there are more
-	covariates left to add and a significant inclusion was made in the last
-	step.
+    Do not take more that max_steps forward steps, even if there are more
+    covariates left to add and a significant inclusion was made in the last
+    step.
 EOF
 
 $help_text{-model} = << 'EOF';
-	-model
+    -model
 
-	The name of the basic model file, without any parameter-covariate
-	relations included.
+    The name of the basic model file, without any parameter-covariate
+    relations included.
 EOF
 
 $help_text{-noabort} = <<'EOF';
-	-noabort
+    -noabort
 
-	Use scm -help noabort for information on this option.
+    Use scm -help noabort for information on this option.
 EOF
 
 $help_text{-only_successful} = <<'EOF';
-	-only_successful
+    -only_successful
 
-	Use scm -help only_successful for information on this option.
+    Use scm -help only_successful for information on this option.
 EOF
 
 $help_text{-parallel_states} = <<'EOF';
-	-parallel_states
+    -parallel_states
 
-	Use scm -help parallel_states for information on this option.
+    Use scm -help parallel_states for information on this option.
 EOF
 
 $help_text{-splits} = <<'EOF';
-	-splits=N
+    -splits=N
 
-	Default 1. The number times to perform a complete cross-validation with
-	a new data split.
+    Default 1. The number times to perform a complete cross-validation with
+    a new data split.
 EOF
 
 $help_text{-stratify_on} = <<'EOF';
-	-stratify_on=variable
+    -stratify_on=variable
 
-	PsN will try to preserve the relative proportions of individuals with
-	different values of the stratification variable when creating data
-	subsets during cross-validation. The stratification variable must be
-	found in the original dataset, and there must be at least 'groups'
-	individuals having each unique value of the stratification variable.
-	If the stratification variable is continuous it is recommended to first
-	group the values and then stratify on group number instead of the
-	continuous variable.
+    PsN will try to preserve the relative proportions of individuals with
+    different values of the stratification variable when creating data
+    subsets during cross-validation. The stratification variable must be
+    found in the original dataset, and there must be at least 'groups'
+    individuals having each unique value of the stratification variable.
+    If the stratification variable is continuous it is recommended to first
+    group the values and then stratify on group number instead of the
+    continuous variable.
 EOF
 
 $help_text{Post_help_message} = <<'EOF';
 
-	Also see 'scm -h' for a list of scm options, and 'psn_options -h' for a
-	description of common options.
+    Also see 'scm -h' for a list of scm options, and 'psn_options -h' for a
+    description of common options.
 EOF
 
 common_options::online_help( 'xv_scm', \%options, \%help_text, \%required_options, \%optional_options);
@@ -245,11 +245,11 @@ if( -e $options{'config_file'} ){
     }elsif (defined $config_file -> $option){
       #store tool_options so that can use common_options::restore in scm
       foreach my $opt (@common_options::tool_options){
-	$opt =~ s/[!:|].*//g; #get rid of :s |? :i etcetera
-	if ($opt eq $option){
-	  $options{$option} = $config_file -> $option;
-	  last;
-	}
+    $opt =~ s/[!:|].*//g; #get rid of :s |? :i etcetera
+    if ($opt eq $option){
+      $options{$option} = $config_file -> $option;
+      last;
+    }
       }
     }
   }
@@ -294,13 +294,13 @@ if( defined $config_file -> included_relations() ){
 if ($config_file->linearize){
   die "Option -second_order is currently broken"
       if $config_file->second_order();
-	die "Cannot set option foce to 0, will crash.\n"
-		if (defined $config_file->foce() and (not $config_file->foce));
+    die "Cannot set option foce to 0, will crash.\n"
+        if (defined $config_file->foce() and (not $config_file->foce));
   #two new options, linearize and lst-file
 
   if ($config_file->second_order()){
     print "Warning: Option -second_order is intended for use together with option -foce\n"
-	unless $config_file->foce();
+    unless $config_file->foce();
   }
 
   die "option -linearize only works with NONMEM7" unless ($PsN::nm_major_version == 7);
@@ -335,11 +335,11 @@ if ($config_file->linearize){
 
 my $eval_string = common_options::model_parameters(\%options);
 my $model = model -> new ( eval $eval_string,
-			   filename           => $config_file -> model) ;
+               filename           => $config_file -> model) ;
 $model->set_option( record_name => 'estimation',
-		      option_name => 'FORMAT',
-		      fuzzy_match => 1,
-		      option_value => 's1PE17.10');
+              option_name => 'FORMAT',
+              fuzzy_match => 1,
+              option_value => 's1PE17.10');
 
 if( $options{'shrinkage'} ) {
   $model -> shrinkage_stats( enabled => 1 );
@@ -349,9 +349,9 @@ if (defined $options{'stratify_on'}){
   my $column_number;
   my ( $values_ref, $positions_ref ) = $model ->
       _get_option_val_pos ( problem_numbers => [1],
-			    name        => $options{'stratify_on'},
-			    record_name => 'input',
-			    global_position => 1  );
+                name        => $options{'stratify_on'},
+                record_name => 'input',
+                global_position => 1  );
   $column_number = $positions_ref -> [0];
   die "Cannot find ".$options{'stratify_on'}." in \$INPUT"
       unless ( defined $column_number );
@@ -403,7 +403,7 @@ my $maxlev=0;
 #need to know the covariates here.
 if ($model->need_data_filtering()){
     ui -> print( category => 'xv_scm',
-		     message => "WARNING: IGNORE/ACCEPT found in \$DATA, but statistics and dataset splitting is done on entire data set",
+             message => "WARNING: IGNORE/ACCEPT found in \$DATA, but statistics and dataset splitting is done on entire data set",
              newline =>1);
 
 }
@@ -413,11 +413,11 @@ my $temp_scm_dir='full_data_statistics';
 
 $global_scm =
 tool::scm->new ( eval( $common_options::parameters ),
-	  models	=> [$model],
-	  config_file => $config_file,
-	  directory => $temp_scm_dir,
-	  both_directions => 0,
-	  seed => '1234');
+      models    => [$model],
+      config_file => $config_file,
+      directory => $temp_scm_dir,
+      both_directions => 0,
+      seed => '1234');
 
 my $global_covariate_statistics = $global_scm -> covariate_statistics;
 $global_scm = undef;
@@ -445,9 +445,9 @@ for (my $split=1; $split<= $options{'splits'}; $split++){
 
   if ($split == 1){
     $data_xv->print_options(cmd_line => $cmd_line,
-		      toolname => 'xv_scm',
-		      local_options => [keys %optional_options],
-		      common_options => \@common_options::tool_options,
+              toolname => 'xv_scm',
+              local_options => [keys %optional_options],
+              common_options => \@common_options::tool_options,
                       directory => $main_directory);
   }
   $data_xv -> create_data_sets();
@@ -455,8 +455,8 @@ for (my $split=1; $split<= $options{'splits'}; $split++){
   for (my $group=1; $group<= $options{'groups'}; $group++){
     #change data in model to training $step
     my $model_group =
-	$model -> copy(filename => $run_directory.'/model_group'.$group.'.mod',
-		       copy_datafile => 0,
+    $model -> copy(filename => $run_directory.'/model_group'.$group.'.mod',
+               copy_datafile => 0,
                output_same_directory => 1,
                copy_output => 0,
                write_copy => 0);
@@ -465,8 +465,8 @@ for (my $split=1; $split<= $options{'splits'}; $split++){
     $model_group -> datafiles( new_names => [$data_xv->estimation_data() -> [$group-1]] );
 
     ui -> print( category => 'xv_scm',
-		       message => "Starting scm forward search for xv_scm ".
-		       "split $split group $group",
+               message => "Starting scm forward search for xv_scm ".
+               "split $split group $group",
                        newline =>1);
     ui->category('scm');
     $model_group -> _write;
@@ -480,13 +480,13 @@ for (my $split=1; $split<= $options{'splits'}; $split++){
 #change xv_pred_data to filenames
     $scm =
 tool::scm -> new ( eval( $common_options::parameters ),
-	      models	=> [$model_group],
-	      config_file => $config_file,
-	      directory => 'scm_xv_group'.$group,
-	      both_directions => 0,
-	      global_covariate_statistics => $global_covariate_statistics,
-	      xv_pred_data => $data_xv->prediction_data() -> [$group-1],
-	      seed => $seeds[$split-1]);
+          models    => [$model_group],
+          config_file => $config_file,
+          directory => 'scm_xv_group'.$group,
+          both_directions => 0,
+          global_covariate_statistics => $global_covariate_statistics,
+          xv_pred_data => $data_xv->prediction_data() -> [$group-1],
+          seed => $seeds[$split-1]);
 
     $scm -> run;
     ui->category('xv_scm');
@@ -494,17 +494,17 @@ tool::scm -> new ( eval( $common_options::parameters ),
       $xv_results{'ofv'}{$split}{$group}{$lev}=$scm -> xv_results->{$lev}{'ofv'};
       my $rel = $scm -> xv_results->{$lev}{'relation'};
       unless ($rel eq 'base'){
-	#store both rank and count here, separate
-	$xv_results{$rel}{'rank'}{$split}{$group}=$lev;
-	if (defined $xv_results{$rel}{'count'}){
-	  if (defined $xv_results{$rel}{'count'}{$lev}){
-	    $xv_results{$rel}{'count'}{$lev} = $xv_results{$rel}{'count'}{$lev}+1;
-	  }else{
-	    $xv_results{$rel}{'count'}{$lev} = 1;
-	  }
-	}else{
-	  $xv_results{$rel}{'count'}{$lev} = 1;
-	}
+    #store both rank and count here, separate
+    $xv_results{$rel}{'rank'}{$split}{$group}=$lev;
+    if (defined $xv_results{$rel}{'count'}){
+      if (defined $xv_results{$rel}{'count'}{$lev}){
+        $xv_results{$rel}{'count'}{$lev} = $xv_results{$rel}{'count'}{$lev}+1;
+      }else{
+        $xv_results{$rel}{'count'}{$lev} = 1;
+      }
+    }else{
+      $xv_results{$rel}{'count'}{$lev} = 1;
+    }
       }
     }
     $maxlev = scalar(keys %{$scm -> xv_results()})
@@ -601,5 +601,5 @@ close XV;
 chdir($return_dir);
 
 ui -> print( category => 'xv_scm',
-	     message => "\nxv_scm done",
+         message => "\nxv_scm done",
              newline => 1);

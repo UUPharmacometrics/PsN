@@ -15,80 +15,80 @@ use citations;
 Getopt::Long::config("auto_abbrev");
 
 @tool_options = ( "abort_on_fail!",
-		  "accepted_ofv_difference:f",
-		  "add_retries!",
-		  "always_datafile_in_nmrun!",
-		  "check_nmtran!",
+          "accepted_ofv_difference:f",
+          "add_retries!",
+          "always_datafile_in_nmrun!",
+          "check_nmtran!",
           "citations!",
-		  "clean:i",
-		  "compress!",
-		  "condition_number_limit:f",
-		  "correlation_limit:f",
-		  "crash_restarts:i",
-		  "degree:f",
-		  "directory:s",
-		  "display_iterations!",
-		  "email_address:s",
-		  "handle_msfo",
-		  "handle_crashes!",
-		  "large_theta_cv_limit:f",
-		  "large_omega_cv_limit:f",
-		  "large_sigma_cv_limit:f",
-		  "last_est_complete!",
-		  "lsf_job_name:s",
-		  "lsf_options:s",
-		  "lsf_project_name:s",
-		  "lsf_queue:s",
-		  "lsf_resources:s",
-		  "lsf_sleep:i",
-		  "lsf_ttl:s",
-		  "max_runtime:s",
-		  "min_retries:i",
-		  "missing_data_token:i",
-		  "nice:i",
-		  "niter_eonly:i",
-		  "nm_output:s",
-		  "nm_version:s",
-		  "nmfe!",
-		  "nmfe_options:s",
-		  "nmqual!",
-		  "nodes:i",
-		  "parafile:s",
-		  "picky!",
-		  "prepend_model_file_name!",
-		  "quick_summarize|quick_summary",
-		  "retries:i",
-		  "rmarkdown!",
-		  "rplots:i",
-		  "run_on_lsf!",
-		  "run_on_ud!",
-		  "run_on_sge!",
-		  "run_on_slurm!",
-		  "run_on_torque!",
-		  "run_on_zink!",
-		  "send_email!",
-		  "sge_resource:s",
-		  "sge_queue:s",
-		  "sge_prepend_flags:s",
-		  "seed:s",
-		  "shrinkage",
-		  "significant_digits_accept:f",
-		  "sign_digits_off_diagonals:i",
-		  "slurm_prepend_flags:s",
-		  "slurm_account:s",
-		  "slurm_partition:s",
-		  "slurm_cluster:s",
-		  "template_file_rplots:s",
-		  "template_directory_rplots:s",
-		  "subset_variable_rplots:s",
-		  "threads:i",
-		  "torque_queue:s",
-		  "torque_prepend_flags:s",
-		  "tweak_inits!",
-		  "verbose!",
-		  "near_bound_sign_digits:i",
-		  "near_zero_boundary_limit:f",
-		  "precision:i",
+          "clean:i",
+          "compress!",
+          "condition_number_limit:f",
+          "correlation_limit:f",
+          "crash_restarts:i",
+          "degree:f",
+          "directory:s",
+          "display_iterations!",
+          "email_address:s",
+          "handle_msfo",
+          "handle_crashes!",
+          "large_theta_cv_limit:f",
+          "large_omega_cv_limit:f",
+          "large_sigma_cv_limit:f",
+          "last_est_complete!",
+          "lsf_job_name:s",
+          "lsf_options:s",
+          "lsf_project_name:s",
+          "lsf_queue:s",
+          "lsf_resources:s",
+          "lsf_sleep:i",
+          "lsf_ttl:s",
+          "max_runtime:s",
+          "min_retries:i",
+          "missing_data_token:i",
+          "nice:i",
+          "niter_eonly:i",
+          "nm_output:s",
+          "nm_version:s",
+          "nmfe!",
+          "nmfe_options:s",
+          "nmqual!",
+          "nodes:i",
+          "parafile:s",
+          "picky!",
+          "prepend_model_file_name!",
+          "quick_summarize|quick_summary",
+          "retries:i",
+          "rmarkdown!",
+          "rplots:i",
+          "run_on_lsf!",
+          "run_on_ud!",
+          "run_on_sge!",
+          "run_on_slurm!",
+          "run_on_torque!",
+          "run_on_zink!",
+          "send_email!",
+          "sge_resource:s",
+          "sge_queue:s",
+          "sge_prepend_flags:s",
+          "seed:s",
+          "shrinkage",
+          "significant_digits_accept:f",
+          "sign_digits_off_diagonals:i",
+          "slurm_prepend_flags:s",
+          "slurm_account:s",
+          "slurm_partition:s",
+          "slurm_cluster:s",
+          "template_file_rplots:s",
+          "template_directory_rplots:s",
+          "subset_variable_rplots:s",
+          "threads:i",
+          "torque_queue:s",
+          "torque_prepend_flags:s",
+          "tweak_inits!",
+          "verbose!",
+          "near_bound_sign_digits:i",
+          "near_zero_boundary_limit:f",
+          "precision:i",
           "so!",
           "zip!",
           "model_subdir!",
@@ -97,23 +97,23 @@ Getopt::Long::config("auto_abbrev");
 
 
 @model_options = ("extra_files:s",
-				  "extra_output:s",
-				  "maxevals:i",
-				  "missing_data_token:i",
-				  "tbs!",
-				  "dtbs!",
-				  "tbs_lambda:s",
-				  "tbs_zeta:s",
-				  "tbs_delta:s",
-				  "sde",
-				  "cwres",
-				  "mirror_plots:i",
-				  "iofv",
-				  "mirror_from_lst!",
-				  "omega_before_pk!",
-				  "outputfile:s",
-				  "last_est_complete!",
-				  "niter_eonly:i",
+                  "extra_output:s",
+                  "maxevals:i",
+                  "missing_data_token:i",
+                  "tbs!",
+                  "dtbs!",
+                  "tbs_lambda:s",
+                  "tbs_zeta:s",
+                  "tbs_delta:s",
+                  "sde",
+                  "cwres",
+                  "mirror_plots:i",
+                  "iofv",
+                  "mirror_from_lst!",
+                  "omega_before_pk!",
+                  "outputfile:s",
+                  "last_est_complete!",
+                  "niter_eonly:i",
                   "psn_record_order!",
     );
 
@@ -219,7 +219,7 @@ sub set_globals
   PsN::set_nonmem_info($version);
 
   $PsN::warnings_enabled = $options{'debug'} if (defined $options{'debug'});
-	$Carp::Verbose = $options{'warn_with_trace'};
+    $Carp::Verbose = $options{'warn_with_trace'};
     $log::stop_motion = $options{'stop_motion'};
 }
 
@@ -230,93 +230,93 @@ sub get_defaults
 
   my $nm_string='';
   if (exists $options -> {'nm_version'}){
-	  #if nm_version is set on the command-line, even if set explicitly to 'default'.
-	  # We do nothing if nm_version is set in config file, then this feature is not invoked
-	  $nm_string = $options -> {'nm_version'};
+      #if nm_version is set on the command-line, even if set explicitly to 'default'.
+      # We do nothing if nm_version is set in config file, then this feature is not invoked
+      $nm_string = $options -> {'nm_version'};
   }
 
   my $try_local_R_template_dir;
   my $warn_R_template = 0;
   if (exists $options -> {'template_directory_rplots'}){
-	  $warn_R_template = 1;
+      $warn_R_template = 1;
   }else{
-	  #template directory not set on commandline
-	  $try_local_R_template_dir=getcwd();
-	  if (exists $options -> {'template_file_rplots'}){
-		  $warn_R_template = 1;
-	  }
+      #template directory not set on commandline
+      $try_local_R_template_dir=getcwd();
+      if (exists $options -> {'template_file_rplots'}){
+          $warn_R_template = 1;
+      }
   }
 
   if (length($nm_string)>0){
-	  foreach my $default_option ( keys %{$PsN::config -> {'default_'.$tool.'_options_'.$nm_string}} ){
-		  unless( exists $options -> {$default_option} ){
-			  #unless already set on command line
-			  $options -> {$default_option} = $PsN::config -> {'default_'.$tool.'_options_'.$nm_string} -> {$default_option};
-		  }
-	  }
+      foreach my $default_option ( keys %{$PsN::config -> {'default_'.$tool.'_options_'.$nm_string}} ){
+          unless( exists $options -> {$default_option} ){
+              #unless already set on command line
+              $options -> {$default_option} = $PsN::config -> {'default_'.$tool.'_options_'.$nm_string} -> {$default_option};
+          }
+      }
   }
 
   foreach my $default_option ( keys %{$PsN::config -> {'default_'.$tool.'_options'}} ){
     unless( exists $options -> {$default_option} ){
-		#unless already set on command line or above
-		$options -> {$default_option} = $PsN::config -> {'default_'.$tool.'_options'} -> {$default_option};
+        #unless already set on command line or above
+        $options -> {$default_option} = $PsN::config -> {'default_'.$tool.'_options'} -> {$default_option};
     }
   }
 
   if (length($nm_string)>0){
-	  foreach my $default_option ( keys %{$PsN::config -> {'default_options_'.$nm_string}} ){
-		  unless( exists $options -> {$default_option} ){
-			  #unless already set on command line or above
-			  $options -> {$default_option} = $PsN::config -> {'default_options_'.$nm_string} -> {$default_option};
-		  }
-	  }
+      foreach my $default_option ( keys %{$PsN::config -> {'default_options_'.$nm_string}} ){
+          unless( exists $options -> {$default_option} ){
+              #unless already set on command line or above
+              $options -> {$default_option} = $PsN::config -> {'default_options_'.$nm_string} -> {$default_option};
+          }
+      }
   }
 
   foreach my $default_option ( keys %{$PsN::config -> {'default_options'}} ){
     unless( exists $options -> {$default_option} ){
-		#unless already set on command line OR above
-		$options -> {$default_option} = $PsN::config -> {'default_options'} -> {$default_option};
+        #unless already set on command line OR above
+        $options -> {$default_option} = $PsN::config -> {'default_options'} -> {$default_option};
     }
   }
   $options -> {'top_tool'} = 1;
 
   unless( exists $options -> {'template_file_rplots'} ){
-	  $options -> {'template_file_rplots'} = $tool.'_default.R';
+      $options -> {'template_file_rplots'} = $tool.'_default.R';
   }
   if (defined $try_local_R_template_dir){
-	  #check if template file exists relative local directory when template directory was not set on commandline
-	  #local should be used before anything set in psn.conf
-	  #what happens if global path template file set??? should work
-	  my ($dir,$file) = OSspecific::absolute_path($try_local_R_template_dir,$options->{'template_file_rplots'});
-	  if (-e $dir.$file){
-		  $options->{'template_directory_rplots'} = $try_local_R_template_dir;
-	  }
-	  if (-e $dir.$file.'md'){ # check if .Rmd file exists in in local R template directory
-		  $options->{'template_directory_rplots'} = $try_local_R_template_dir;
-		  $options -> {'template_file_rplots'} = $tool.'_default.Rmd';
-	  }
+      #check if template file exists relative local directory when template directory was not set on commandline
+      #local should be used before anything set in psn.conf
+      #what happens if global path template file set??? should work
+      my ($dir,$file) = OSspecific::absolute_path($try_local_R_template_dir,$options->{'template_file_rplots'});
+      if (-e $dir.$file){
+          $options->{'template_directory_rplots'} = $try_local_R_template_dir;
+      }
+      if (-e $dir.$file.'md'){ # check if .Rmd file exists in in local R template directory
+          $options->{'template_directory_rplots'} = $try_local_R_template_dir;
+          $options -> {'template_file_rplots'} = $tool.'_default.Rmd';
+      }
   }
   if( exists $options -> {'template_directory_rplots'} ){
-	  #make sure path is absolute if it was not already
-	  my ($dir,$file) = OSspecific::absolute_path($options -> {'template_directory_rplots'},'file');
-	  $options -> {'template_directory_rplots'} = $dir;
+      #make sure path is absolute if it was not already
+      my ($dir,$file) = OSspecific::absolute_path($options -> {'template_directory_rplots'},'file');
+      $options -> {'template_directory_rplots'} = $dir;
   }else{
-	  $options -> {'template_directory_rplots'} = $PsN::Rscripts_dir;
+      $options -> {'template_directory_rplots'} = $PsN::Rscripts_dir;
   }
 
   #check if there is an .Rmd file
   my ($dir, $file) = OSspecific::absolute_path($options->{'template_directory_rplots'},$options->{'template_file_rplots'});
   if (-e $dir.$file.'md'){
-	  $options -> {'template_file_rplots'} = $tool.'_default.Rmd';
+      $options -> {'template_file_rplots'} = $tool.'_default.Rmd';
   }
 
   if ($warn_R_template ){
-	  my ($dir, $file) = OSspecific::absolute_path($options->{'template_directory_rplots'},$options->{'template_file_rplots'});
-	  my $template_file = $dir.$file;
-	  my $template_file_Rmd = $dir.$file.'md';
-	  unless ((-e $template_file) || (-e $template_file_Rmd)){
-		  croak ("template_file_rplots ".$options->{'template_file_rplots'}." does not exist in ".$options->{'template_directory_rplots'})
-	  }
+      my ($dir, $file) = OSspecific::absolute_path($options->{'template_directory_rplots'},$options->{'template_file_rplots'});
+      my $template_file = $dir.$file;
+      my $template_file_Rmd = $dir.$file.'md';
+      unless ((-e $template_file) || (-e $template_file_Rmd)){
+          croak ("template_file_rplots ".$options->{'template_file_rplots'}." does not exist in ".$options->{'template_directory_rplots'})
+      }
   }
 
 
@@ -324,220 +324,220 @@ sub get_defaults
 
 sub sanity_checks
 {
-	my $options = shift;
-	my $tool = shift;
+    my $options = shift;
+    my $tool = shift;
 
-	if (defined $options->{'degree'}) {
-		if ($options->{'degree'} <= 0) {
-			croak("option degree must be a positive number.\n");
-		}
-	}
+    if (defined $options->{'degree'}) {
+        if ($options->{'degree'} <= 0) {
+            croak("option degree must be a positive number.\n");
+        }
+    }
 
-	if (defined $options->{'silent'} and $options->{'silent'}){
-		$options->{'display_iterations'}=0;
-	}
+    if (defined $options->{'silent'} and $options->{'silent'}){
+        $options->{'display_iterations'}=0;
+    }
 
-	unless ($options -> {'nmfe'} or $options -> {'nmqual'}){
-		#assume user wants nmfe if none set
-		$options -> {'nmfe'} = 1;
-	}
-	if ($options -> {'nmfe'} and $options -> {'nmqual'}){
-		#assume user wants nmqual if both set
-		$options -> {'nmfe'} = 0;
-	}
+    unless ($options -> {'nmfe'} or $options -> {'nmqual'}){
+        #assume user wants nmfe if none set
+        $options -> {'nmfe'} = 1;
+    }
+    if ($options -> {'nmfe'} and $options -> {'nmqual'}){
+        #assume user wants nmqual if both set
+        $options -> {'nmfe'} = 0;
+    }
 
-	if( $options -> {'max_runtime'} ){
-		die "--max_runtime is only allowed with -run_on_slurm"
-			unless ( $options -> {'run_on_slurm'} );
-	}
-	if( $options -> {'email_address'} and $options -> {'send_email'}){
-		unless ($options -> {'email_address'} =~ /@/){
-			die "ERROR: ".$options -> {'email_address'}." does not look like an email address.\n";
-		}
-	}
-	if( $options -> {'sde'} ){
-		if( $options -> {'omega_before_pk'} ){
-			die "You cannot set both sde and omega_before_pk";
-		}
-		if( $options -> {'psn_record_order'} ){
-			die "You cannot set both sde and psn_record_order";
-		}
-	}
-	if( $options -> {'omega_before_pk'} ){
-		if( $options -> {'psn_record_order'} ){
-			die "You cannot set both omega_before_pk and psn_record_order";
-		}
-	}
-	if(defined $options-> {'tbs_zeta'} or defined $options-> {'tbs_delta'}){
-		if ($options->{'tbs'}){
-			die ("You cannot set -tbs with -tbs_zeta or -tbs_delta, you should use -dtbs");
-		}
-		$options -> {'dtbs'}=1;
-	}
-	if( defined $options-> {'tbs_zeta'} and defined $options-> {'tbs_delta'}){
-		die "You cannot set both tbs_zeta and tbs_delta";
-	}
-	if( defined $options -> {'tbs_lambda'} and (not defined $options-> {'dtbs'} or (not $options->{'dtbs'}))){
-		$options -> {'tbs'}=1;
-	}
+    if( $options -> {'max_runtime'} ){
+        die "--max_runtime is only allowed with -run_on_slurm"
+            unless ( $options -> {'run_on_slurm'} );
+    }
+    if( $options -> {'email_address'} and $options -> {'send_email'}){
+        unless ($options -> {'email_address'} =~ /@/){
+            die "ERROR: ".$options -> {'email_address'}." does not look like an email address.\n";
+        }
+    }
+    if( $options -> {'sde'} ){
+        if( $options -> {'omega_before_pk'} ){
+            die "You cannot set both sde and omega_before_pk";
+        }
+        if( $options -> {'psn_record_order'} ){
+            die "You cannot set both sde and psn_record_order";
+        }
+    }
+    if( $options -> {'omega_before_pk'} ){
+        if( $options -> {'psn_record_order'} ){
+            die "You cannot set both omega_before_pk and psn_record_order";
+        }
+    }
+    if(defined $options-> {'tbs_zeta'} or defined $options-> {'tbs_delta'}){
+        if ($options->{'tbs'}){
+            die ("You cannot set -tbs with -tbs_zeta or -tbs_delta, you should use -dtbs");
+        }
+        $options -> {'dtbs'}=1;
+    }
+    if( defined $options-> {'tbs_zeta'} and defined $options-> {'tbs_delta'}){
+        die "You cannot set both tbs_zeta and tbs_delta";
+    }
+    if( defined $options -> {'tbs_lambda'} and (not defined $options-> {'dtbs'} or (not $options->{'dtbs'}))){
+        $options -> {'tbs'}=1;
+    }
 
-	if( $options -> {'run_on_slurm'} ){
-		if( $options -> {'run_on_sge'} ){
-			die "You cannot set both run_on_sge and -run_on_slurm";
-		}
-		if (defined $options ->{'max_runtime'}){
-			if ($options ->{'max_runtime'} =~ /^[0-9]+$/){
-				print "You have set the maximal runtime to ".$options ->{'max_runtime'}.
-					" minutes.\n\n";
-			}elsif ($options ->{'max_runtime'} =~ /^([0-9]+)\:([0-9]+)\:([0-9]+)$/){
-				print "You have set the maximal runtime to $1 h $2 min $3 sec.\n\n";
-			}elsif ($options ->{'max_runtime'} =~ /^([0-9]+)-([0-9]+)$/){
-				print "You have set the maximal runtime to $1 day(s) and $2 h.\n\n";
-			}else{
-				die "ERROR: max_runtime must have format minutes, ".
-					"hours:minutes:seconds, or days-hours.\n";
-			}
-		}else{
-		}
-	}
-	if( $options -> {'stop_motion'} ){
-		if( $options -> {'run_on_sge'} ){
-			die "-stop_motion is not allowed together with -run_on_sge";
-		}
-		if( $options -> {'run_on_slurm'} ){
-			die "-stop_motion is not allowed together with -run_on_slurm";
-		}
-	}
+    if( $options -> {'run_on_slurm'} ){
+        if( $options -> {'run_on_sge'} ){
+            die "You cannot set both run_on_sge and -run_on_slurm";
+        }
+        if (defined $options ->{'max_runtime'}){
+            if ($options ->{'max_runtime'} =~ /^[0-9]+$/){
+                print "You have set the maximal runtime to ".$options ->{'max_runtime'}.
+                    " minutes.\n\n";
+            }elsif ($options ->{'max_runtime'} =~ /^([0-9]+)\:([0-9]+)\:([0-9]+)$/){
+                print "You have set the maximal runtime to $1 h $2 min $3 sec.\n\n";
+            }elsif ($options ->{'max_runtime'} =~ /^([0-9]+)-([0-9]+)$/){
+                print "You have set the maximal runtime to $1 day(s) and $2 h.\n\n";
+            }else{
+                die "ERROR: max_runtime must have format minutes, ".
+                    "hours:minutes:seconds, or days-hours.\n";
+            }
+        }else{
+        }
+    }
+    if( $options -> {'stop_motion'} ){
+        if( $options -> {'run_on_sge'} ){
+            die "-stop_motion is not allowed together with -run_on_sge";
+        }
+        if( $options -> {'run_on_slurm'} ){
+            die "-stop_motion is not allowed together with -run_on_slurm";
+        }
+    }
 
-	if( $options -> {'accepted_ofv_difference'} &&
-		$options -> {'accepted_ofv_difference'}<0){
-		die "accepted_ofv_difference must not be negative\n";
-	}
+    if( $options -> {'accepted_ofv_difference'} &&
+        $options -> {'accepted_ofv_difference'}<0){
+        die "accepted_ofv_difference must not be negative\n";
+    }
 
-	if( $options -> {'min_retries'} && $options -> {'retries'}){
-		if( $options -> {'min_retries'}> $options -> {'retries'}){
-			die "min_retries must not be larger than retries\n";
-		}
-	}
+    if( $options -> {'min_retries'} && $options -> {'retries'}){
+        if( $options -> {'min_retries'}> $options -> {'retries'}){
+            die "min_retries must not be larger than retries\n";
+        }
+    }
 
 
-	if( $PsN::nm_major_version == '7' ){
-		if ($options -> {'iofv'}){
-			my $mes = "\nWarning:\n"."option -iofv is not supported for NONMEM7,\n".
-				"iotab file will not be produced. Individual ofv values\n".
-				"can, for classical estimation methods, be found the additional output phi-file.\n\n";
-			print $mes;
-			$options -> {'iofv'}=0;
-		}
-	}
-	if(( $PsN::nm_major_version == '5' ) and ($options -> {'nmfe'})){
-		my $mes = "\n\n*****Warning:******\n"."option nmfe is not tested for NONMEM5,\n".
-			"execution is likely to fail.\n\n";
-		print "$mes";
-	}
-	if($options -> {'run_on_lsf'}){
-		#check set options contain characters, no space only commands
-		if (defined $options -> {'lsf_job_name'}){
-			$options -> {'lsf_job_name'} = undef
-				if ($options -> {'lsf_job_name'} =~ /^\s*$/);
-		}
-		if (defined $options -> {'lsf_options'}){
-			$options -> {'lsf_options'} = undef
-				if ($options -> {'lsf_options'} =~ /^\s*$/);
-		}
-		if (defined $options -> {'lsf_pre_exec_command'}){
-			$options -> {'lsf_pre_exec_command'} = undef
-				if ($options -> {'lsf_pre_exec_command'} =~ /^\s*$/);
-		}
-		if (defined $options -> {'lsf_post_exec_command'}){
-			$options -> {'lsf_post_exec_command'} = undef
-				if ($options -> {'lsf_post_exec_command'} =~ /^\s*$/);
-		}
-		if (defined $options -> {'lsf_project_name'}){
-			$options -> {'lsf_project_name'} = undef
-				if ($options -> {'lsf_project_name'} =~ /^\s*$/);
-		}
-		if (defined $options -> {'lsf_queue'}){
-			$options -> {'lsf_queue'} = undef
-				if ($options -> {'lsf_queue'} =~ /^\s*$/);
-		}
-		if (defined $options -> {'lsf_resources'}){
-			$options -> {'lsf_resources'} = undef
-				if ($options -> {'lsf_resources'} =~ /^\s*$/);
-		}
-		if (defined $options -> {'lsf_sleep'}){
-			$options -> {'lsf_sleep'} = undef
-				if ($options -> {'lsf_sleep'} =~ /^\s*$/);
-		}
-		if (defined $options -> {'lsf_ttl'}){
-			$options -> {'lsf_ttl'} = undef
-				if ($options -> {'lsf_ttl'} =~ /^\s*$/);
-		}
-	}
+    if( $PsN::nm_major_version == '7' ){
+        if ($options -> {'iofv'}){
+            my $mes = "\nWarning:\n"."option -iofv is not supported for NONMEM7,\n".
+                "iotab file will not be produced. Individual ofv values\n".
+                "can, for classical estimation methods, be found the additional output phi-file.\n\n";
+            print $mes;
+            $options -> {'iofv'}=0;
+        }
+    }
+    if(( $PsN::nm_major_version == '5' ) and ($options -> {'nmfe'})){
+        my $mes = "\n\n*****Warning:******\n"."option nmfe is not tested for NONMEM5,\n".
+            "execution is likely to fail.\n\n";
+        print "$mes";
+    }
+    if($options -> {'run_on_lsf'}){
+        #check set options contain characters, no space only commands
+        if (defined $options -> {'lsf_job_name'}){
+            $options -> {'lsf_job_name'} = undef
+                if ($options -> {'lsf_job_name'} =~ /^\s*$/);
+        }
+        if (defined $options -> {'lsf_options'}){
+            $options -> {'lsf_options'} = undef
+                if ($options -> {'lsf_options'} =~ /^\s*$/);
+        }
+        if (defined $options -> {'lsf_pre_exec_command'}){
+            $options -> {'lsf_pre_exec_command'} = undef
+                if ($options -> {'lsf_pre_exec_command'} =~ /^\s*$/);
+        }
+        if (defined $options -> {'lsf_post_exec_command'}){
+            $options -> {'lsf_post_exec_command'} = undef
+                if ($options -> {'lsf_post_exec_command'} =~ /^\s*$/);
+        }
+        if (defined $options -> {'lsf_project_name'}){
+            $options -> {'lsf_project_name'} = undef
+                if ($options -> {'lsf_project_name'} =~ /^\s*$/);
+        }
+        if (defined $options -> {'lsf_queue'}){
+            $options -> {'lsf_queue'} = undef
+                if ($options -> {'lsf_queue'} =~ /^\s*$/);
+        }
+        if (defined $options -> {'lsf_resources'}){
+            $options -> {'lsf_resources'} = undef
+                if ($options -> {'lsf_resources'} =~ /^\s*$/);
+        }
+        if (defined $options -> {'lsf_sleep'}){
+            $options -> {'lsf_sleep'} = undef
+                if ($options -> {'lsf_sleep'} =~ /^\s*$/);
+        }
+        if (defined $options -> {'lsf_ttl'}){
+            $options -> {'lsf_ttl'} = undef
+                if ($options -> {'lsf_ttl'} =~ /^\s*$/);
+        }
+    }
 
-	if (defined $options->{'nmfe_options'}) {
-		my @options_list = qw(background prsame prdefault prcompile trskip xmloff maxlim tprdefault locfile);
-		foreach $opt (@options_list) {
-			if ($options->{'nmfe_options'} =~ /\A$opt\Z/) {
-				print "\nWarning: You have set -nmfe_options=".$options->{'nmfe_options'}." on the commandline or in psn.conf\n";
-				print "This does not look a valid option to the nmfe script (the - sign is missing).\n";
-				print "Note that PsN4 will pass this on unchanged to the nmfe script, for help use\nexecute -help nmfe_options\n\n";
-			}
-		}
-	}
+    if (defined $options->{'nmfe_options'}) {
+        my @options_list = qw(background prsame prdefault prcompile trskip xmloff maxlim tprdefault locfile);
+        foreach $opt (@options_list) {
+            if ($options->{'nmfe_options'} =~ /\A$opt\Z/) {
+                print "\nWarning: You have set -nmfe_options=".$options->{'nmfe_options'}." on the commandline or in psn.conf\n";
+                print "This does not look a valid option to the nmfe script (the - sign is missing).\n";
+                print "Note that PsN4 will pass this on unchanged to the nmfe script, for help use\nexecute -help nmfe_options\n\n";
+            }
+        }
+    }
 
-	if(defined $options -> {'nm_output'}) {
-		my @nmout = split( /,/ ,$options -> {'nm_output'});
-		my %hash;
-		foreach my $ext (@PsN::nm7_extensions){
-			my $copy =$ext; #otherwise we modify the original array
-			$copy =~ s/^\.//;
-			$hash{$copy}=1;
-		}
-		foreach my $out (@nmout) {
-			$out =~ s/^\.//;
-			if ($out =~ /^lst$/) {
-				print "\nInformation: The lst-file will always be copied back, no need to set it with option -nm_output.\n";
-			}
-			unless ($hash{$out}) {
-				print "\nWarning: NM output file extension $out set in -nm_output is not recognized, it will be ignored.\n";
-			}
+    if(defined $options -> {'nm_output'}) {
+        my @nmout = split( /,/ ,$options -> {'nm_output'});
+        my %hash;
+        foreach my $ext (@PsN::nm7_extensions){
+            my $copy =$ext; #otherwise we modify the original array
+            $copy =~ s/^\.//;
+            $hash{$copy}=1;
+        }
+        foreach my $out (@nmout) {
+            $out =~ s/^\.//;
+            if ($out =~ /^lst$/) {
+                print "\nInformation: The lst-file will always be copied back, no need to set it with option -nm_output.\n";
+            }
+            unless ($hash{$out}) {
+                print "\nWarning: NM output file extension $out set in -nm_output is not recognized, it will be ignored.\n";
+            }
 
-		}
-	}
-	if ($options -> {'shrinkage'} && $options -> {'mirror_plots'}>0 ){
-		my $mes = "Options -shrinkage and -mirror_plots ".
-			"are incompatible. Please unset one of them.\n";
-		croak($mes);
-	}
+        }
+    }
+    if ($options -> {'shrinkage'} && $options -> {'mirror_plots'}>0 ){
+        my $mes = "Options -shrinkage and -mirror_plots ".
+            "are incompatible. Please unset one of them.\n";
+        croak($mes);
+    }
 
-	if (defined $options -> {'parafile'}){
-		unless ($PsN::nm_major_version == 7
-				and defined $PsN::nm_minor_version and $PsN::nm_minor_version >1){
-			my $ver='default';
-			$ver = $options -> {'nm_version'} if (defined $options -> {'nm_version'});
-			print "Option parafile can only be used with NONMEM version 7.2 or later.\n".
-				"Make sure the version number for NM version '$ver' is correctly\n".
-				"defined in psn.conf if you get this message even if you are using 7.2\n";
-			exit;
-		}
-		if (-e $options -> {'parafile'}){
-			if( defined $options -> {'extra_files'} ){
-				$options -> {'extra_files'} = $options -> {'extra_files'}.','.$options -> {'parafile'};
-			}else{
-				$options -> {'extra_files'} = $options -> {'parafile'};
-			}
+    if (defined $options -> {'parafile'}){
+        unless ($PsN::nm_major_version == 7
+                and defined $PsN::nm_minor_version and $PsN::nm_minor_version >1){
+            my $ver='default';
+            $ver = $options -> {'nm_version'} if (defined $options -> {'nm_version'});
+            print "Option parafile can only be used with NONMEM version 7.2 or later.\n".
+                "Make sure the version number for NM version '$ver' is correctly\n".
+                "defined in psn.conf if you get this message even if you are using 7.2\n";
+            exit;
+        }
+        if (-e $options -> {'parafile'}){
+            if( defined $options -> {'extra_files'} ){
+                $options -> {'extra_files'} = $options -> {'extra_files'}.','.$options -> {'parafile'};
+            }else{
+                $options -> {'extra_files'} = $options -> {'parafile'};
+            }
 
-			#   #check that nodes is not greater than number of names defined in parafile.
-			#   #Then reset nodes and print warning
-			#   open( FILE,  $options -> {'parafile'}) ||
+            #   #check that nodes is not greater than number of names defined in parafile.
+            #   #Then reset nodes and print warning
+            #   open( FILE,  $options -> {'parafile'}) ||
 
-		}else{
-			print "Parafile ".$options -> {'parafile'}." does not exist.\n";
-			exit;
-		}
+        }else{
+            print "Parafile ".$options -> {'parafile'}." does not exist.\n";
+            exit;
+        }
 
-	}
+    }
 
 }
 
@@ -644,14 +644,14 @@ EOF
 EOF
     $help_hash{-check_nmtran} = <<'EOF';
     -check_nmtran
-	Make PsN run NMtran on the model file before submitting the complete nmfe run to a cluster/grid
-	or forking on a local computer. This adds a bit of overhead but on a cluster this still
-	saves time in the case of syntax errors in the model file, since the user does not
-	have to wait for a slot on the cluster/grid before the error is detected.
-	On a local computer the error handling is improved.
+    Make PsN run NMtran on the model file before submitting the complete nmfe run to a cluster/grid
+    or forking on a local computer. This adds a bit of overhead but on a cluster this still
+    saves time in the case of syntax errors in the model file, since the user does not
+    have to wait for a slot on the cluster/grid before the error is detected.
+    On a local computer the error handling is improved.
 
-	When running multiple copies of a model with different data sets, e.g. in a bootstrap,
-	only the first model will be checked.
+    When running multiple copies of a model with different data sets, e.g. in a bootstrap,
+    only the first model will be checked.
 
     If the model contains verbatim Fortran code NMTRAN will not be able to detect undefined variables
     in abbreviated code. This can potentially lead to errors that are very hard to detect. In this
@@ -660,16 +660,16 @@ EOF
     variable is defined. If the variable is defined in verbatim code then the warning will be printed
     even if all is well, but this information is included in the warning.
 
-	The nmtran check requires that it is the installation directory to NONMEM that is set in psn.conf,
-	rather than the full path to an executable script. If the path to a script is given instead
-	of an NM install directory the nmtran check will not be performed.
+    The nmtran check requires that it is the installation directory to NONMEM that is set in psn.conf,
+    rather than the full path to an executable script. If the path to a script is given instead
+    of an NM install directory the nmtran check will not be performed.
 EOF
     $help_hash{-niter_eonly} = <<'EOF';
     -niter_eonly
 
       Only applies if NONMEM7 and last $EST is IMP or IMPMAP. Only for scripts
       vpc (any options), cdd (if option -xv) and execute (if option -mirror_plots).
-	  Undefined by default.
+      Undefined by default.
       User-chosen value of NITER in IMP or IMPMAP when estimation is turned off
       by setting EONLY=1. See PsN.pdf for details.
 EOF
@@ -679,7 +679,7 @@ EOF
 
       Only applies if NONMEM7 and multiple $ESTIMATION records. Then only for scripts
       vpc (any options), cdd (if option -xv) and execute (if option -mirror_plots).
-	  Setting this option tells PsN that all
+      Setting this option tells PsN that all
       options needed for the last estimation step, such as LIKELIHOOD
       (defaults can be omitted), are set explicitly in the
       last $ESTIMATION record, i.e. no options need to carry over from previous $EST.
@@ -699,7 +699,7 @@ EOF
     -stop_motion=integer
     Default not used.
     Make PsN stop at pre-defined breakpoints and print run information.
-	Mainly for debugging.
+    Mainly for debugging.
 EOF
     $help_hash{-nmfe_options} = <<'EOF';
     -nmfe_options='options for nmfe'
@@ -708,7 +708,7 @@ EOF
     PsN will not check that the options are appropriate. When set on the PsN commandline
     the string must be enclosed by quotes if it contains any spaces, but when set in
     psn.conf it must never be enclosed by quotes even if it contains spaces.
-	On unix-type systems, but not on windows, any parentheses must be escaped with backslash.
+    On unix-type systems, but not on windows, any parentheses must be escaped with backslash.
   Example:
     -nmfe_options="-xmloff -prdefault"
     or in psn.conf
@@ -718,9 +718,9 @@ EOF
     $help_hash{-nmqual} = <<'EOF';
     -nmqual
     Default not used. Run an NMQual-installed NONMEM via autolog.pl.
-	Only NMQual8 is supported.
+    Only NMQual8 is supported.
     When set, PsN will locate the autolog.pl file and log.xml in the nmqual
-	subdirectory of the NONMEM installation directory, and then run
+    subdirectory of the NONMEM installation directory, and then run
     perl autolog.pl log.xml run ce workdir psn (extra NM options)
 EOF
 
@@ -739,39 +739,39 @@ EOF
     $help_hash{-rplots} = <<'EOF';
     -rplots='integer'
     Automatically create R plots to visualize results when a template file is available,
-	either provided by the user via option -template_file_rplots or in the default set of template files
+    either provided by the user via option -template_file_rplots or in the default set of template files
     for a subset of the PsN tools.
     When a template file is available, the R script will always be generated and saved in the main
-	run directory. If R is configured in psn.conf or command 'R' is available and rplots is set > 0 the script will
+    run directory. If R is configured in psn.conf or command 'R' is available and rplots is set > 0 the script will
     also be run and a number of pdf-format plots be created.
-	-rplots<0 means no script is generated
-	-rplots=0 (default) means script is generated but not run
-	-rplots=1 means basic plots are generated
-	-rplots=2 means basic and extended plots are generated
+    -rplots<0 means no script is generated
+    -rplots=0 (default) means script is generated but not run
+    -rplots=1 means basic plots are generated
+    -rplots=2 means basic and extended plots are generated
 EOF
     $help_hash{-template_directory_rplots} = <<'EOF';
     -template_directory_rplots=path
-	PsN can look for the rplots template file in a number of places. The priority order is the
-	following :
-	1) template_directory_rplots set on command-line
-	2) calling directory (where PsN is started)
+    PsN can look for the rplots template file in a number of places. The priority order is the
+    following :
+    1) template_directory_rplots set on command-line
+    2) calling directory (where PsN is started)
     3) template_directory_rplots set in psn.conf
     4) R-scripts subdirectory of the PsN installation directory
 EOF
     $help_hash{-template_file_rplots} = <<'EOF';
     -template_file_rplots=file
     When the rplots feature is used, the default template PsN will use is <toolname>_default.R,
-	for example scm_default.R. The user can choose a different template file
-	by setting option -template_file_rplots to a different file.
-	PsN will first look for the file relative to the current working directory,
-	and after that in the -template_directory_rplots directory.
+    for example scm_default.R. The user can choose a different template file
+    by setting option -template_file_rplots to a different file.
+    PsN will first look for the file relative to the current working directory,
+    and after that in the -template_directory_rplots directory.
 EOF
     $help_hash{-subset_variable_rplots} = <<'EOF';
     -subset_variable_rplots=name
     Default not set. The user can specify a subset variable to be used with the rplots feature. This variable
-	will, if set, be used in for example the execute default R template to create separate plots for
-	subsets of the data, via xpose options 'subset' and 'by'. The user must ensure that the variable
-	is printed to one of the xpose tables, for example sdtab.
+    will, if set, be used in for example the execute default R template to create separate plots for
+    subsets of the data, via xpose options 'subset' and 'by'. The user must ensure that the variable
+    is printed to one of the xpose tables, for example sdtab.
 EOF
 
     $help_hash{-nice} = <<'EOF';
@@ -817,7 +817,7 @@ EOF
     If you need extra files in the directory where NONMEM is run you
     specify them in the comma separated -extra_files list. It could for
     example be fortran subroutines you need compiled with NONMEM,
-	or a phi-file set in record $ETAS with option FILE.
+    or a phi-file set in record $ETAS with option FILE.
 EOF
 
     $help_hash{-maxevals} = <<'EOF';
@@ -833,8 +833,8 @@ EOF
     $help_hash{-seed} = <<'EOF';
     -seed='string'
     You can set your own random seed to make PsN runs reproducible.
-	The random seed is a string, and may include spaces if the whole string
-	is enclosed with single	quotes as in -seed='123 abc'. It is important to
+    The random seed is a string, and may include spaces if the whole string
+    is enclosed with single    quotes as in -seed='123 abc'. It is important to
     know that, because of the way the Perl pseudo-random number generator works,
     for two similar string seeds the random sequences may be identical.
     This is the case e.g. with the two different seeds 123 and 122.
@@ -908,11 +908,11 @@ $help_hash{-clean} = <<'EOF';
 
     Default is 1. The clean option can take six different values
     The -clean clean option can take four different values:
-	0 - Nothing is removed
-	1 - NONMEM binary and intermediate files except INTER are removed, and files specified with option -extra\_files.
-	2 - model and output files generated by PsN restarts are removed, and data files in the NM\_run directory, and (if option -nmqual is used) the xml-formatted NONMEM output.
-	3 - All NM\_run directories are completely removed. If the PsN tool has created modelfit\_dir:s inside the main run directory, these  will also be removed.
-	4 - All NM\_run directories and all m1 directories are completely removed.
+    0 - Nothing is removed
+    1 - NONMEM binary and intermediate files except INTER are removed, and files specified with option -extra\_files.
+    2 - model and output files generated by PsN restarts are removed, and data files in the NM\_run directory, and (if option -nmqual is used) the xml-formatted NONMEM output.
+    3 - All NM\_run directories are completely removed. If the PsN tool has created modelfit\_dir:s inside the main run directory, these  will also be removed.
+    4 - All NM\_run directories and all m1 directories are completely removed.
     5 - The entire run directory is removed. This is only useful for execute. The lst-file will be copied even if the run failed.
 EOF
 
@@ -941,7 +941,7 @@ EOF
     init_i = init_0 + rand_uniform(+-degree*init_0)
 
     where init_0 are the initial estimates of the original run and
-	degree is set with option degree. The
+    degree is set with option degree. The
     updating procedure makes sure that boundary conditions on the
     parameters are still valid. For this option to have effect, the
     -retries option must be set to number larger than zero. The
@@ -1076,7 +1076,7 @@ EOF
     The -debug option is mainly intended for developers who wish to
     debug PsN. By default -debug is set to zero but you can set
     it to '1' to enable warning messages. If you run into problems that require support
-		set this to 1 and send the output to the developers.
+        set this to 1 and send the output to the developers.
 EOF
 
     $help_hash{-warn_with_trace} = <<'EOF';
@@ -1089,9 +1089,9 @@ EOF
     $help_hash{-sde} = <<'EOF';
     -sde
     Default not set. In PsN version 3.4.4 and earlier, this option made PsN print the records
-	in a particular order suitable for SDE models.
-	The new default is to keep the record order of the input model file. To use the old
-	SDE print order, set option -sde.
+    in a particular order suitable for SDE models.
+    The new default is to keep the record order of the input model file. To use the old
+    SDE print order, set option -sde.
 EOF
 
     $help_hash{-psn_record_order} = <<'EOF';
@@ -1104,8 +1104,8 @@ EOF
     $help_hash{-omega_before_pk} = <<'EOF';
     -omega_before_pk
     Default not set. In PsN version 3.4.4 and earlier, $OMEGA was always printed before $PK.
-	The new default is to keep the record order of the input model file. To use the old print order,
-	set option -omega_before_pk.
+    The new default is to keep the record order of the input model file. To use the old print order,
+    set option -omega_before_pk.
 EOF
 
     $help_hash{-condition_number_limit} = <<'EOF';
@@ -1118,8 +1118,8 @@ EOF
     -nm_output='comma-separated list of file extensions'
 
     NONMEM generates many output files per run. The lst-file will always be
-	copied back to the calling directory. The option -nm_output decides which of the
-	additional files should be copied back to the calling directory. The default is none.
+    copied back to the calling directory. The option -nm_output decides which of the
+    additional files should be copied back to the calling directory. The default is none.
     NM output files which are not copied to the calling directory can still be
     found inside the run directory.
 
@@ -1305,9 +1305,9 @@ EOF
 EOF
     $help_hash{-degree} = <<'EOF';
     -degree=number
-	When tweaking initial estimates in retries/parallel_retries, this number decides the range for the
+    When tweaking initial estimates in retries/parallel_retries, this number decides the range for the
     new estimates. The new number will be within 'degree'*oldinitial from the old initial estimate,
-	unless restricted by upper or lower boundaries.
+    unless restricted by upper or lower boundaries.
     A number larger than 0. Default 0.1
 EOF
 
@@ -1354,7 +1354,7 @@ EOF
     for parameter zeta in Transform Both Sides
     method, e.g. '(-1, 0.5, 1)' or 'O FIX'. The string must be enclosed
     in single quotes and not include any comments.
-	Cannot be used in combination with tbs_delta.
+    Cannot be used in combination with tbs_delta.
     If tbs_zeta is set then option -dtbs will be set automatically.
     See the userguide common_options_defaults_versions_psn for details.
 EOF
@@ -1364,7 +1364,7 @@ EOF
     for parameter delta in Transform Both Sides
     method, e.g. '(-1, 0.5, 1)' or 'O FIX'. The string must be enclosed
     in single quotes and not include any comments.
-	Cannot be used in combination with tbs_zeta.
+    Cannot be used in combination with tbs_zeta.
     If tbs_delta is set then option -dtbs will be set automatically.
     See the userguide common_options_defaults_versions_psn for details.
 EOF
@@ -1427,13 +1427,13 @@ EOF
 $help_hash{-rmarkdown} = <<'EOF';
     -rmarkdown
     If it is possible the Rmarkdown file instead of
-	R file for R plots will be created.
+    R file for R plots will be created.
 EOF
 
 $help_hash{-model_subdir} = <<'EOF';
     -model_subdir
 
-	Use an alternative directory structure for PsN.
+    Use an alternative directory structure for PsN.
     An extra directory level unique to each model is
     introduced between the calling directory and
     the rundirectory.
@@ -1446,7 +1446,7 @@ EOF
     if( defined $help_text ){
       my %temphash = %{$help_text};
       foreach my $ke (keys %temphash){
-	$help_hash{$ke} = $temphash{$ke};
+    $help_hash{$ke} = $temphash{$ke};
       }
     }
   } else {
@@ -1469,7 +1469,7 @@ my $indentation = '    ';
 
       if( scalar( @ARGV ) > 0 ){
           foreach my $option ( @ARGV ){
-			  $help .= format_help_text(\%help_hash,$indentation,'-'.$option);
+              $help .= format_help_text(\%help_hash,$indentation,'-'.$option);
           }
 
 #do not remove html-like
@@ -1484,9 +1484,9 @@ $help .= "\n".$command."\n";
 
       if( $options{'help'} ){
 
-		  $help .=format_help_text(\%help_hash,$indentation,'Description');
-		  $help .=format_help_text(\%help_hash,$indentation,'Examples');
-		  $help .=format_help_text(\%help_hash,$indentation,'Options');
+          $help .=format_help_text(\%help_hash,$indentation,'Description');
+          $help .=format_help_text(\%help_hash,$indentation,'Examples');
+          $help .=format_help_text(\%help_hash,$indentation,'Options');
 
           my @loop_array;
 
@@ -1500,18 +1500,18 @@ $help .= "\n".$command."\n";
 
           foreach my $option( @loop_array ){
               $option =~ s/[^\w]*$|:.*//;
-			  $help .= format_help_text(\%help_hash,$indentation,'-'.$option);
+              $help .= format_help_text(\%help_hash,$indentation,'-'.$option);
           }
 
           $help .= format_help_text(\%help_hash,$indentation,'Post_help_message');
 
       } else {
           $help .= common_options::print_help($command,$required_options, $optional_options);
-		  unless ($command eq 'psn'){
-			  $help .= "\n$indentation"."Options enclosed by [ ] are optional.\n";
-			  $help .= "$indentation"."Exclamation mark, !, after the option name means option can be disabled\n".
-				  "$indentation"."using '-no-option', for example -no-handle_crashes.\n";
-		  }
+          unless ($command eq 'psn'){
+              $help .= "\n$indentation"."Options enclosed by [ ] are optional.\n";
+              $help .= "$indentation"."Exclamation mark, !, after the option name means option can be disabled\n".
+                  "$indentation"."using '-no-option', for example -no-handle_crashes.\n";
+          }
           $help .= "$indentation"."Use '$command -help' for a longer description.\n";
           $help .= format_help_text(\%help_hash,$indentation,'Post_help_message');
       }
@@ -1527,63 +1527,63 @@ $help .= "\n".$command."\n";
 
 sub format_help_text
 {
-	my $hash = shift;
-	my $indentation = shift;
-	my $key= shift;
+    my $hash = shift;
+    my $indentation = shift;
+    my $key= shift;
 
-	my $newtext = '';
-	return $newtext unless (defined $hash);
+    my $newtext = '';
+    return $newtext unless (defined $hash);
 
-	my $text = $hash->{$key};
-	if (defined $text and length($text)>0){
-		if (($key eq 'Description') or
-			($key eq 'Examples')){
-			$newtext .= $key.":\n\n";
-		}
-		if (($key eq 'Options')){
-			$newtext .= "Input:\n\n";
-		}
+    my $text = $hash->{$key};
+    if (defined $text and length($text)>0){
+        if (($key eq 'Description') or
+            ($key eq 'Examples')){
+            $newtext .= $key.":\n\n";
+        }
+        if (($key eq 'Options')){
+            $newtext .= "Input:\n\n";
+        }
 
-		#split on newline
-		my @lines = split("\n",$text);
+        #split on newline
+        my @lines = split("\n",$text);
 
-		my $isoption=1;
-		$isoption = 0 unless ($key =~ /^-/);
-		my $printcount=0;
-		foreach my $line (@lines){
-			chomp($line);
-			$line =~ s/^\s*//; #leading whitespace
-			$line =~ s/\s*$//; #trailing whitespace
-			if ($isoption and $printcount==0){
-				$newtext .= $line."\n"; #option name
-			}elsif($isoption and $printcount==1 and ($line =~ /^\s*$/ )){
-				#we have only printed option name, and line is empty
-				#skip it
-				next;
-			}else{
-				$newtext .= $indentation.$line."\n";
-			}
-			$printcount++;
-		}
-		#extra linebreak at end
-		$newtext .= "\n";
-	}elsif(exists $hash->{$key}){
-		1;
-	}elsif($key eq 'Description'){
-		1;
-	}elsif($key eq 'Pre_help_message'){
-		1;
-	}elsif($key eq 'Post_help_message'){
-		$newtext .= $indentation."Also see 'psn_options -h' for a description of common options.\n";
-	}elsif($key eq 'Options'){
-		$newtext .= $key.":\n\n".$indentation."The following options are valid:\n\n";
-	}elsif($key eq 'Examples'){
-		1;
-	}elsif (defined $key and ($key =~ /^-/)){
-		my $option = $key;
-		$newtext = "$key\n\n".$indentation."No help available for '$key'\n\n";
-	}
-	return $newtext;
+        my $isoption=1;
+        $isoption = 0 unless ($key =~ /^-/);
+        my $printcount=0;
+        foreach my $line (@lines){
+            chomp($line);
+            $line =~ s/^\s*//; #leading whitespace
+            $line =~ s/\s*$//; #trailing whitespace
+            if ($isoption and $printcount==0){
+                $newtext .= $line."\n"; #option name
+            }elsif($isoption and $printcount==1 and ($line =~ /^\s*$/ )){
+                #we have only printed option name, and line is empty
+                #skip it
+                next;
+            }else{
+                $newtext .= $indentation.$line."\n";
+            }
+            $printcount++;
+        }
+        #extra linebreak at end
+        $newtext .= "\n";
+    }elsif(exists $hash->{$key}){
+        1;
+    }elsif($key eq 'Description'){
+        1;
+    }elsif($key eq 'Pre_help_message'){
+        1;
+    }elsif($key eq 'Post_help_message'){
+        $newtext .= $indentation."Also see 'psn_options -h' for a description of common options.\n";
+    }elsif($key eq 'Options'){
+        $newtext .= $key.":\n\n".$indentation."The following options are valid:\n\n";
+    }elsif($key eq 'Examples'){
+        1;
+    }elsif (defined $key and ($key =~ /^-/)){
+        my $option = $key;
+        $newtext = "$key\n\n".$indentation."No help available for '$key'\n\n";
+    }
+    return $newtext;
 }
 
 
@@ -1624,8 +1624,8 @@ sub get_option_matrix
         }
         push(@matrix, $array);
     }
-	if (scalar(@matrix) == 0) {
-		return undef;
+    if (scalar(@matrix) == 0) {
+        return undef;
     }
 
     return \@matrix;

@@ -26,18 +26,18 @@ my $cmd_line = $0 . " " . join( " ", @ARGV );
 my %options;
 
 my %required_options = (
-	"parameters:s" => undef,
+    "parameters:s" => undef,
 );
 
 my %optional_options = (
-	"samples:i" => undef,
-	"models" => undef,
+    "samples:i" => undef,
+    "models" => undef,
 );
 
 my $res = GetOptions( \%options,
-					  @common_options::get_opt_strings,
-						keys(%required_options),
-					  keys(%optional_options) );
+                      @common_options::get_opt_strings,
+                        keys(%required_options),
+                      keys(%optional_options) );
 
 exit unless $res;
 
@@ -45,86 +45,86 @@ exit unless $res;
 my %help_text;
 
 $help_text{Pre_help_message} = <<'EOF';
-	Parametric variability.
+    Parametric variability.
 EOF
 
 $help_text{Description} = <<'EOF';
 
-	The pvar (parametric variability) tool calculates how much of parameter
-	variabilty that a model explains (Hennig). For every parameter listed on
-	the command line PsN will calculate the total variance, the explained
-	variance and the unexplained variance. The resulting table can be found
-	in the result.csv. The input models to pvar must have final parameter
-	estimates.
+    The pvar (parametric variability) tool calculates how much of parameter
+    variabilty that a model explains (Hennig). For every parameter listed on
+    the command line PsN will calculate the total variance, the explained
+    variance and the unexplained variance. The resulting table can be found
+    in the result.csv. The input models to pvar must have final parameter
+    estimates.
 EOF
 
 $help_text{Options} = <<'EOF';
 
-	Required arguments are either an scm log file or a list of model files
-	and a list of parameters. If an scm log file is to be used the scm run
-	cannot have been made with -clean=3 otherwise files needed for pvar
-	will be deleted.
+    Required arguments are either an scm log file or a list of model files
+    and a list of parameters. If an scm log file is to be used the scm run
+    cannot have been made with -clean=3 otherwise files needed for pvar
+    will be deleted.
 
-	The following options are valid:
+    The following options are valid:
 EOF
 
 $help_text{Examples} = <<'EOF';
-	pvar scmlog1.txt -parameters=CL,V
+    pvar scmlog1.txt -parameters=CL,V
 
-	Check parametric variability of models generated in an scm run.
-	pvar -models run1.mod run2.mod -parameters=CL,V
-	Use specific models.
+    Check parametric variability of models generated in an scm run.
+    pvar -models run1.mod run2.mod -parameters=CL,V
+    Use specific models.
 EOF
 
 $help_text{-models} = <<'EOF';
-	-models
+    -models
 
-	If this option is present on the command line a list of model files can be
-	passed as arguments instead of an scm logfile.
-	Example:
-	pvar -models run1.mod run2.mod -parameters=CL,V
+    If this option is present on the command line a list of model files can be
+    passed as arguments instead of an scm logfile.
+    Example:
+    pvar -models run1.mod run2.mod -parameters=CL,V
 EOF
 
 $help_text{-parameters} = <<'EOF';
-	-parameters
+    -parameters
 
-	A mandatory comma separated list of parameter to investigate.
+    A mandatory comma separated list of parameter to investigate.
 EOF
 
 $help_text{-samples} = <<'EOF';
-	-samples
+    -samples
 
-	Number of simulated datasets to generate.
-	Default 100.
+    Number of simulated datasets to generate.
+    Default 100.
 EOF
 
 common_options::online_help('pvar', \%options, \%help_text, \%required_options, \%optional_options);
 common_options::setup( \%options, 'pvar' ); #calls set_globals etc, initiates random sequence
 
 if (not defined $options{'samples'}) {
-	$options{'samples'} = 100;
+    $options{'samples'} = 100;
 }
 
 if (not defined $options{'parameters'}) {
-	die "Option -parameters is required.";
+    die "Option -parameters is required.";
 }
 
 # Collect and check the mandatory arguments
 my @model_files;
 
 if ($options{'models'}) {
-	foreach my $arg (@ARGV) {
-		push @model_files, $arg;
-	}
-	if (@model_files == 0) {
-		die("Must specify at least one model file when model option is set");
-	}
+    foreach my $arg (@ARGV) {
+        push @model_files, $arg;
+    }
+    if (@model_files == 0) {
+        die("Must specify at least one model file when model option is set");
+    }
 } else {
-	my $scm_logfile = $ARGV[0];
-	if (not defined $scm_logfile or defined $ARGV[1]) {
-		die("Must specify one and only one scm logfile");
-	}
-	@model_files = tool::pvar->get_models_from_scm_directory($scm_logfile);
+    my $scm_logfile = $ARGV[0];
+    if (not defined $scm_logfile or defined $ARGV[1]) {
+        die("Must specify one and only one scm logfile");
+    }
+    @model_files = tool::pvar->get_models_from_scm_directory($scm_logfile);
 }
 
 my @parameters = split(',', $options{'parameters'});
@@ -149,28 +149,28 @@ my @models;
 my $eval_string = common_options::model_parameters(\%options);
 
 foreach my $model_name (@model_files) {
-	push(@models, model->new(eval($eval_string),
-			filename => $model_name,
-			ignore_missing_data => 1,
-		));
+    push(@models, model->new(eval($eval_string),
+            filename => $model_name,
+            ignore_missing_data => 1,
+        ));
 }
 
 if (not $options{'models'}) {
-	tool::pvar->set_data_files(@models);
+    tool::pvar->set_data_files(@models);
 }
 
 my $dummy_model = model->create_dummy_model;
 
 my $pvar = tool::pvar->new(eval($common_options::parameters),
-	samples => $options{'samples'},
-	parameters => \@parameters,
-	models => [ $dummy_model ],
-	pvar_models => \@models);
+    samples => $options{'samples'},
+    parameters => \@parameters,
+    models => [ $dummy_model ],
+    pvar_models => \@models);
 
 $pvar->print_options (cmd_line => $cmd_line,
-		      toolname => 'PVAR',
-		      local_options => [keys %optional_options],
-		      common_options => \@common_options::tool_options);
+              toolname => 'PVAR',
+              local_options => [keys %optional_options],
+              common_options => \@common_options::tool_options);
 
 $pvar->run;
 $pvar->print_results;

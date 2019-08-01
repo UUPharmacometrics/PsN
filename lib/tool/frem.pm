@@ -1935,9 +1935,9 @@ sub prepare_results
     }
 
     # return section (input model name, date and versions)
-	my %return_section;
-	$return_section{'name'} = 'FREM run info';
-	$return_section{'labels'} = [[],['Date','model','PsN version','NONMEM version']];
+    my %return_section;
+    $return_section{'name'} = 'FREM run info';
+    $return_section{'labels'} = [[],['Date','model','PsN version','NONMEM version']];
     my @datearr=localtime;
     my $the_date=($datearr[5]+1900).'-'.($datearr[4]+1).'-'.($datearr[3]);
     $return_section{'values'} = [[$the_date, $input_model->filename(), 'v'.$PsN::version, $self->nm_version]];
@@ -2260,7 +2260,7 @@ sub do_model1
                                   parse_output => 0,
                                   ignore_missing_output_files => 1 );
         if (defined $etas_file) {
-	    (my $phi_filename = $name_model) =~ s/(.*)\..*/$1.phi/;
+        (my $phi_filename = $name_model) =~ s/(.*)\..*/$1.phi/;
             $etas_file = $im_dir.$phi_filename;
         }
     }else{
@@ -2945,8 +2945,8 @@ sub prepare_model2
         $frem_model->_write();
     } else {
         if (defined $etas_file) {
-	    (my $phi_filename = $name_model) =~ s/(.*)\..*/$1.phi/;
-	    $etas_file = $im_dir.$phi_filename;
+        (my $phi_filename = $name_model) =~ s/(.*)\..*/$1.phi/;
+        $etas_file = $im_dir.$phi_filename;
         }
     }
 
@@ -3035,10 +3035,10 @@ sub prepare_model3
         $frem_model->_write();
         $self->model_3($frem_model);
     } else {
-	if (defined $etas_file) {
-	    (my $phi_filename = $name_model) =~ s/(.*)\..*/$1.phi/;
-	    $etas_file = $im_dir.$phi_filename;
-	}
+    if (defined $etas_file) {
+        (my $phi_filename = $name_model) =~ s/(.*)\..*/$1.phi/;
+        $etas_file = $im_dir.$phi_filename;
+    }
     }
 
     return ($est_records,$covrecordref,$etas_file);
@@ -3161,10 +3161,10 @@ sub prepare_model4
                                                  type => 'covariance' );
         $frem_model->_write();
     } else {
-	if (defined $etas_file) {
-	    (my $phi_filename = $name_model) =~ s/(.*)\..*/$1.phi/;
-	    $etas_file = $fin_dir.$phi_filename;
-	}
+    if (defined $etas_file) {
+        (my $phi_filename = $name_model) =~ s/(.*)\..*/$1.phi/;
+        $etas_file = $fin_dir.$phi_filename;
+    }
     }
 
     return ($etas_file);

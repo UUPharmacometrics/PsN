@@ -66,7 +66,7 @@ sub slurp_file
 {
     # Read a file to an array. Remove all extra LFs and CRs but Keep the OS specific end of line
     my $file = shift;
-	no warnings qw(closed); #FIXME try my $fh for filehandle?
+    no warnings qw(closed); #FIXME try my $fh for filehandle?
     my @content = ();
     open(FILE, $file);
     while (<FILE>) {

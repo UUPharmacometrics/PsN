@@ -40,7 +40,7 @@ sub BUILD
 
 sub modelfit_setup
 {
-	my $self = shift;
+    my $self = shift;
 
     my $qa = tool::qa->new(
         eval( $common_options::parameters ),
@@ -63,20 +63,20 @@ sub modelfit_setup
         template_file_rplots => 'improve_qa.R',
         template_directory_rplots => $PsN::Rscripts_dir,
         top_tool => 1,
-		rplots => 1,
+        rplots => 1,
     );
 
     $qa->run();
     $qa->print_results();
 
-	my $results = YAML::XS::LoadFile('qa_dir1/results.yaml');
-	my $actions = $results->{'actions'};
+    my $results = YAML::XS::LoadFile('qa_dir1/results.yaml');
+    my $actions = $results->{'actions'};
 
-	if (any { $_ eq 'boxcox' } @$actions) {
-		model_transformations::boxcox_etas(model => $self->models->[0]);
-	} else {
-		model_transformations::full_omega_block(model => $self->models->[0]);
-	}
+    if (any { $_ eq 'boxcox' } @$actions) {
+        model_transformations::boxcox_etas(model => $self->models->[0]);
+    } else {
+        model_transformations::full_omega_block(model => $self->models->[0]);
+    }
     if (any { $_ eq 'iiv_on_ruv' } @$actions) {
         model_transformations::iiv_on_ruv(model => $self->models->[0]);
     } else {
@@ -104,8 +104,8 @@ sub modelfit_setup
         template_file_rplots => 'qa_default.Rmd',
         template_directory_rplots => $PsN::Rscripts_dir,
         top_tool => 1,
-		rplots => 1,
-		directory => 'final_qa',
+        rplots => 1,
+        directory => 'final_qa',
     );
 
     $final_qa->run();
@@ -119,13 +119,13 @@ sub modelfit_analyze
 
 sub create_R_plots_code
 {
-	my $self = shift;
-	my %parm = validated_hash(\@_,
+    my $self = shift;
+    my %parm = validated_hash(\@_,
         rplot => { isa => 'rplots', optional => 0 }
     );
-	my $rplot = $parm{'rplot'};
+    my $rplot = $parm{'rplot'};
 
-	$rplot->pdf_title('Improve');
+    $rplot->pdf_title('Improve');
 
     $rplot->add_preamble(
         code => [

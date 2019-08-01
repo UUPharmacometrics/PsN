@@ -26,15 +26,15 @@ my %options;
 my %required_options;
 
 my %optional_options = ("lst_file:s"=>'',
-			"njd:s"=>'',
-			"ignore_individuals_above:i"=>'',
-			"ind_param:s"=>''
-			);
+            "njd:s"=>'',
+            "ignore_individuals_above:i"=>'',
+            "ind_param:s"=>''
+            );
 
 my $res = GetOptions( \%options,
-		      @common_options::get_opt_strings,
-		      keys(%required_options),
-		      keys(%optional_options) );
+              @common_options::get_opt_strings,
+              keys(%required_options),
+              keys(%optional_options) );
 exit unless $res;
 
 if (defined $options{'njd'}){
@@ -46,71 +46,71 @@ if (defined $options{'njd'}){
 my %help_text;
 
 $help_text{Pre_help_message} = <<'EOF';
-	Individual probabilities.
+    Individual probabilities.
 EOF
 
 $help_text{Description} = <<'EOF';
 
-	The pind script implements part of the procedure, the individual probabilities,
-	described in "Two bootstrapping routines for obtaining imprecision estimates for
-	nonparametric parameter distributions in nonlinear mixed effects models",Paul
-	G. Baverel, Radojka M. Savic, Mats O. Karlsson, J Pharmacokinet Pharmacodyn,
-	2010
+    The pind script implements part of the procedure, the individual probabilities,
+    described in "Two bootstrapping routines for obtaining imprecision estimates for
+    nonparametric parameter distributions in nonlinear mixed effects models",Paul
+    G. Baverel, Radojka M. Savic, Mats O. Karlsson, J Pharmacokinet Pharmacodyn,
+    2010
 EOF
 
 $help_text{Examples} = <<'EOF';
-	pind run12.mod
+    pind run12.mod
 EOF
 
 $help_text{Options} = <<'EOF';
-	A model file is required on the command line.
+    A model file is required on the command line.
 
-	The following options are valid:
+    The following options are valid:
 EOF
 
 $help_text{-h} = <<'EOF';
 -h | -?
 
-	With -h or -? pind will print a list of options and exit.
+    With -h or -? pind will print a list of options and exit.
 EOF
 
 $help_text{-help} = <<'EOF';
-	-help
+    -help
 
-	With -help pind will print this, longer, help message.
+    With -help pind will print this, longer, help message.
 EOF
 
 $help_text{-ignore_individuals_above} = <<'EOF';
-	-ignore_individuals_above=integer
+    -ignore_individuals_above=integer
 
-	Experimental. Only allowed together with -njd, in that case the default value
-	is 100. Option adds line IGNORE=(ID.GT.X) to DATA record, where X is option
-	value. If the IGNORE statement should not be changed even though option -njd
-	is used, set -ignore_individuals_above=0.
+    Experimental. Only allowed together with -njd, in that case the default value
+    is 100. Option adds line IGNORE=(ID.GT.X) to DATA record, where X is option
+    value. If the IGNORE statement should not be changed even though option -njd
+    is used, set -ignore_individuals_above=0.
 EOF
 
 $help_text{-ind_param} = <<'EOF';
-	-ind_param=eta|theta
+    -ind_param=eta|theta
 
-	Default eta. The parameter to set in individual ofv model files. Possibilities
-	are eta or theta.
+    Default eta. The parameter to set in individual ofv model files. Possibilities
+    are eta or theta.
 EOF
 
 $help_text{-lst_file} = <<'EOF';
-	-lst_file='filename'
+    -lst_file='filename'
 
-	Default is the same name as the model file but with .mod replaced with .lst.
-	The lst-file from where to read initial parameter estimates.
+    Default is the same name as the model file but with .mod replaced with .lst.
+    The lst-file from where to read initial parameter estimates.
 EOF
 
 $help_text{-njd} = <<'EOF';
-	-njd='filename'
+    -njd='filename'
 
-	Default not set. Experimental. Filename for new joint density column.
+    Default not set. Experimental. Filename for new joint density column.
 EOF
 
 $help_text{Post_help_message} = <<'EOF';
-	Also see 'psn_options -h' for a description of common options.
+    Also see 'psn_options -h' for a description of common options.
 EOF
 
 common_options::online_help( 'pind', \%options, \%help_text, \%required_options, \%optional_options);
@@ -154,7 +154,7 @@ if (defined $options{'lst_file'}) {
   $lst_file .= (substr ($ARGV[0],0,-3)) . 'lst'; #keep from beginning, skip last four characters
   if (not -e $lst_file) {
     print "When option -lst_file is omitted, the name of the lst-file is assumed to be the same\n".
-	"as the modelfile except that the last three letters are lst. Cannot find file $lst_file.\n";
+    "as the modelfile except that the last three letters are lst. Cannot find file $lst_file.\n";
     exit;
   }
 }
@@ -170,25 +170,25 @@ unless ( defined $options{'clean'} ){
 my $eval_string = common_options::model_parameters(\%options);
 
 my $model = model -> new ( eval( $eval_string ),
-			   extra_output                => ['fort.80'],
-			   filename                    => $ARGV[0],
-			   ignore_missing_output_files => 1 );
+               extra_output                => ['fort.80'],
+               filename                    => $ARGV[0],
+               ignore_missing_output_files => 1 );
 
 my $pind = tool::pind ->
     new ( eval( $common_options::parameters ),
-	  models	     => [$model],
-	  lst_file           => $lst_file,
-	  njd           => $options{'njd'},
-	  ignore_individuals_above => $options{'ignore_individuals_above'},
-	  ind_param           => $options{'ind_param'}
-	  );
+      models         => [$model],
+      lst_file           => $lst_file,
+      njd           => $options{'njd'},
+      ignore_individuals_above => $options{'ignore_individuals_above'},
+      ind_param           => $options{'ind_param'}
+      );
 
 $pind->print_options (cmd_line => $cmd_line,
-		       toolname => 'pind',
-		       local_options => [keys %optional_options],
-		       common_options => \@common_options::tool_options);
+               toolname => 'pind',
+               local_options => [keys %optional_options],
+               common_options => \@common_options::tool_options);
 
 $pind->run;
 
 ui -> print( category => 'pind',
-	     message => "pind done" );
+         message => "pind done" );

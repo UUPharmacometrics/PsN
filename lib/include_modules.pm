@@ -9,11 +9,11 @@ our $debuglevel=0;
 
 sub debugmessage
 {
-	my $messagelevel=shift;
-	my $message = shift;
-	if ($messagelevel <= $debuglevel){
-		ui->print(category => 'all', message => $message);
-	}
+    my $messagelevel=shift;
+    my $message = shift;
+    if ($messagelevel <= $debuglevel){
+        ui->print(category => 'all', message => $message);
+    }
 }
 
 my %one_time_warnings;

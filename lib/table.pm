@@ -15,22 +15,22 @@ has 'header_array' => ( is => 'rw', isa => 'ArrayRef', default => sub { [] } );
 sub set_header
 {
     # Set the header from a string
-	my $self = shift;
-	my %parm = validated_hash(\@_,
-		header => { isa => 'Str' },
-	);
+    my $self = shift;
+    my %parm = validated_hash(\@_,
+        header => { isa => 'Str' },
+    );
     my $header = $parm{'header'};
 
 
     my @array = $self->_split_row($header);
-	$self->header_array(\@array);
+    $self->header_array(\@array);
     my %hash;
     my $i = 0;
     foreach my $e (@array) {
         if (not exists $hash{$e}) {
             $hash{$e} = $i++;
         }
-		#we allow duplicate names, okay if table directly from nonmem
+        #we allow duplicate names, okay if table directly from nonmem
     }
 
     $self->header(\%hash);
@@ -40,9 +40,9 @@ sub set_header_from_array
 {
     # Set the header from an array
     my $self = shift;
-	my %parm = validated_hash(\@_,
-		header => { isa => 'ArrayRef[Str]' },
-	);
+    my %parm = validated_hash(\@_,
+        header => { isa => 'ArrayRef[Str]' },
+    );
     my $header = $parm{'header'};
 
     my %hash;
@@ -57,19 +57,19 @@ sub set_header_from_array
 
 sub get_header
 {
-	my $self = shift;
-	#	return [sort {$self->header->{$a} <=> $self->header->{$b}} (keys %{$self->header})];
-	return $self->header_array;
+    my $self = shift;
+    #    return [sort {$self->header->{$a} <=> $self->header->{$b}} (keys %{$self->header})];
+    return $self->header_array;
 }
 
 
 sub add_row
 {
     # Add one row to the table from a string
-	my $self = shift;
-	my %parm = validated_hash(\@_,
-		row => { isa => 'Str' },
-	);
+    my $self = shift;
+    my %parm = validated_hash(\@_,
+        row => { isa => 'Str' },
+    );
     my $row = $parm{'row'};
 
     my @array = $self->_split_row($row);
@@ -84,11 +84,11 @@ sub add_row
 sub get_column
 {
     # Get reference to a column array given the column index or name
-	my $self = shift;
-	my %parm = validated_hash(\@_,
-	    name => { isa => 'Str', optional => 1 },
-		index => { isa => 'Str', optional => 1 },
-	);
+    my $self = shift;
+    my %parm = validated_hash(\@_,
+        name => { isa => 'Str', optional => 1 },
+        index => { isa => 'Str', optional => 1 },
+    );
     my $name = $parm{'name'};
     my $index = $parm{'index'};
 
@@ -98,14 +98,14 @@ sub get_column
 
     my $my_index = $index;
     if (defined $name) {
-		unless (defined $self->header->{$name}){
-			croak("header does not contain $name");
-		}
+        unless (defined $self->header->{$name}){
+            croak("header does not contain $name");
+        }
         $my_index = $self->header->{$name};
     }
-	if ($my_index >= scalar(@{$self->columns})){
-		croak("no table column with index $my_index");
-	}
+    if ($my_index >= scalar(@{$self->columns})){
+        croak("no table column with index $my_index");
+    }
 
     return $self->columns->[$my_index];
 }

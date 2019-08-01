@@ -12,7 +12,7 @@ use utils::file;
 sub find_assignments
 {
     # Find all assignments in a pk/pred record and return a hash of symbol over rhs
-	my %parm = validated_hash(\@_,
+    my %parm = validated_hash(\@_,
         model => { isa => 'model' },
     );
     my $model = $parm{'model'};
@@ -33,7 +33,7 @@ sub find_assignments
 sub merge_assignments_and_expression
 {
     # Merge one level of assignments into expression
-   	my %parm = validated_hash(\@_,
+       my %parm = validated_hash(\@_,
         expression => { isa => 'Str' },
         assignments => { isa => 'HashRef' },
     );
@@ -53,7 +53,7 @@ sub check_additive_eta
     # Check if we have an additive relationship between theta and eta in expression
     # The check will check if the expression is on the form EXPR + ETA(n) or ETA(n) + EXPR where EXPR contains at least one THETA
     # Return 0 if not an additive relationship and the number of the involved eta otherwise (which is a true value)
-	my %parm = validated_hash(\@_,
+    my %parm = validated_hash(\@_,
         expression => { isa => 'Str' },
     );
     my $expression = $parm{'expression'};
@@ -71,7 +71,7 @@ sub check_additive_eta
 sub defined_symbol
 {
     # Is this symbol defined in any code record?
-	my %parm = validated_hash(\@_,
+    my %parm = validated_hash(\@_,
         model => { isa => 'model' },
         symbol => { isa => 'Str' },
     );
@@ -96,7 +96,7 @@ sub defined_symbol
 sub used_symbol
 {
     # Check if a symbol is used in any LHS or RHS
-	my %parm = validated_hash(\@_,
+    my %parm = validated_hash(\@_,
         model => { isa => 'model' },
         symbol => { isa => 'Str' },
     );

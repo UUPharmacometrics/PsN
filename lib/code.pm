@@ -11,7 +11,7 @@ use model;
 sub append_verbatim_code
 {
     # Append verbatim code at verbatim section specified (LAST or FIRST)
-	my %parm = validated_hash(\@_,
+    my %parm = validated_hash(\@_,
         model => { isa => 'model' },
         code_record => { isa => 'Str' },
         pos => { isa => 'Str' },
@@ -58,7 +58,7 @@ sub append_verbatim_code
 sub generate_sum
 {
     # Generate a sum of numbers as abbreviated code
-	my %parm = validated_hash(\@_,
+    my %parm = validated_hash(\@_,
         name => { isa => 'Str' },
         terms => { isa => 'ArrayRef' },
     );

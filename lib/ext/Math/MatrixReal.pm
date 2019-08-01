@@ -136,19 +136,19 @@ sub new_tridiag {
     my ($k,$p)=(-1,-1);
 
     croak "Math::MatrixReal::new_tridiag(): Arguments must be arrayrefs" unless
-	ref $diag eq 'ARRAY' && ref $lower eq 'ARRAY' && ref $upper eq 'ARRAY';
+    ref $diag eq 'ARRAY' && ref $lower eq 'ARRAY' && ref $upper eq 'ARRAY';
     croak "Math::MatrixReal::new_tridiag(): new_tridiag(\$lower,\$diag,\$upper) diagonal dimensions incompatible" unless
-	($l == $m && $n == ($l+1));
+    ($l == $m && $n == ($l+1));
 
     $matrix = Math::MatrixReal->new_diag($diag);
     $matrix = $matrix->each(
-		sub {
-		    my ($e,$i,$j) = @_;
-		    if    (($i-$j) == -1) { $k++; return $upper->[$k];}
-		    elsif (    $i  == $j) {       return $e;          }
-		    elsif (($i-$j) ==  1) { $p++; return $lower->[$p];}
-		}
-		);
+        sub {
+            my ($e,$i,$j) = @_;
+            if    (($i-$j) == -1) { $k++; return $upper->[$k];}
+            elsif (    $i  == $j) {       return $e;          }
+            elsif (($i-$j) ==  1) { $p++; return $lower->[$p];}
+        }
+        );
     return $matrix;
 }
 
@@ -200,30 +200,30 @@ sub new_from_string#{{{
     $warn = $rows = $cols = 0;
 
     $values = [ ];
-	while ($string =~ m!^\s* \[ \s+ ( (?: [+-]? \d+ (?: \. \d*)? (?: E [+-]? \d+ )? \s+ )+ ) \] \s*? \n !ix) {
-			$line = $1; $string = $';
-			$values->[$rows] = [ ]; @{$values->[$rows]} = split(' ', $line);
-			$col = @{$values->[$rows]};
-	 		if ($col != $cols) {
-				unless ($cols == 0) { $warn = 1; }
-				if ($col > $cols) { $cols = $col; }
-			}
-			$rows++;
-	}
-	if ($string !~ m/^\s*$/) {
+    while ($string =~ m!^\s* \[ \s+ ( (?: [+-]? \d+ (?: \. \d*)? (?: E [+-]? \d+ )? \s+ )+ ) \] \s*? \n !ix) {
+            $line = $1; $string = $';
+            $values->[$rows] = [ ]; @{$values->[$rows]} = split(' ', $line);
+            $col = @{$values->[$rows]};
+             if ($col != $cols) {
+                unless ($cols == 0) { $warn = 1; }
+                if ($col > $cols) { $cols = $col; }
+            }
+            $rows++;
+    }
+    if ($string !~ m/^\s*$/) {
         chomp $string;
         my $error_msg = "Math::MatrixReal::new_from_string(): syntax error in input string: $string";
         croak $error_msg;
     }
-		if ($rows == 0) { croak "Math::MatrixReal::new_from_string(): empty input string"; }
-		if ($warn) { warn "Math::MatrixReal::new_from_string(): missing elements will be set to zero!\n"; }
-		$this = Math::MatrixReal::new($class,$rows,$cols);
-		for ( $row = 0; $row < $rows; $row++ ) {
-			for ( $col = 0; $col < @{$values->[$row]}; $col++ ) {
-			$this->[0][$row][$col] = $values->[$row][$col];
-			}
-		}
-		return $this;
+        if ($rows == 0) { croak "Math::MatrixReal::new_from_string(): empty input string"; }
+        if ($warn) { warn "Math::MatrixReal::new_from_string(): missing elements will be set to zero!\n"; }
+        $this = Math::MatrixReal::new($class,$rows,$cols);
+        for ( $row = 0; $row < $rows; $row++ ) {
+            for ( $col = 0; $col < @{$values->[$row]}; $col++ ) {
+            $this->[0][$row][$col] = $values->[$row][$col];
+            }
+        }
+        return $this;
 }#}}}#}}}
 
 # from Math::MatrixReal::Ext1 (msouth@fulcrum.org)
@@ -2743,73 +2743,73 @@ sub spectral_radius
 }
 
 sub maximum {
-	my ($matrix) = @_;
-	my ($rows, $columns) = $matrix->dim;
+    my ($matrix) = @_;
+    my ($rows, $columns) = $matrix->dim;
 
-	my $max = [];
-	my $max_p = [];
+    my $max = [];
+    my $max_p = [];
 
-	if ($rows == 1) {
-		($max, $max_p) = _max_column($matrix->row(1)->_transpose, $columns);
-	} elsif ($columns == 1) {
-		($max, $max_p) = _max_column($matrix->column(1), $rows);
-	} else {
-		for my $c (1..$columns) {
-			my ($m, $mp) = _max_column($matrix->column($c), $rows);
-			push @$max, $m;
-			push @$max_p, $mp;
-		}
-	}
-	return wantarray ? ($max, $max_p) : $max
+    if ($rows == 1) {
+        ($max, $max_p) = _max_column($matrix->row(1)->_transpose, $columns);
+    } elsif ($columns == 1) {
+        ($max, $max_p) = _max_column($matrix->column(1), $rows);
+    } else {
+        for my $c (1..$columns) {
+            my ($m, $mp) = _max_column($matrix->column($c), $rows);
+            push @$max, $m;
+            push @$max_p, $mp;
+        }
+    }
+    return wantarray ? ($max, $max_p) : $max
 }
 
 sub _max_column {
-	# passing $rows allows for some extra (minimal) efficiency
-	my ($column, $rows) = @_;
+    # passing $rows allows for some extra (minimal) efficiency
+    my ($column, $rows) = @_;
 
-	my ($m, $mp) = ($column->element(1, 1), 1);
-	for my $l (1..$rows) {
-		if ($column->element($l, 1) > $m) {
-			$m = $column->element($l, 1);
-			$mp = $l;
-		}
-	}
-	return ($m, $mp);
+    my ($m, $mp) = ($column->element(1, 1), 1);
+    for my $l (1..$rows) {
+        if ($column->element($l, 1) > $m) {
+            $m = $column->element($l, 1);
+            $mp = $l;
+        }
+    }
+    return ($m, $mp);
 }
 
 sub minimum {
-	my ($matrix) = @_;
-	my ($rows, $columns) = $matrix->dim;
+    my ($matrix) = @_;
+    my ($rows, $columns) = $matrix->dim;
 
-	my $min = [];
-	my $min_p = [];
+    my $min = [];
+    my $min_p = [];
 
-	if ($rows == 1) {
-		($min, $min_p) = _min_column($matrix->row(1)->_transpose, $columns);
-	} elsif ($columns == 1) {
-		($min, $min_p) = _min_column($matrix->column(1), $rows);
-	} else {
-		for my $c (1..$columns) {
-			my ($m, $mp) = _min_column($matrix->column($c), $rows);
-			push @$min, $m;
-			push @$min_p, $mp;
-		}
-	}
-	return wantarray ? ($min, $min_p) : $min
+    if ($rows == 1) {
+        ($min, $min_p) = _min_column($matrix->row(1)->_transpose, $columns);
+    } elsif ($columns == 1) {
+        ($min, $min_p) = _min_column($matrix->column(1), $rows);
+    } else {
+        for my $c (1..$columns) {
+            my ($m, $mp) = _min_column($matrix->column($c), $rows);
+            push @$min, $m;
+            push @$min_p, $mp;
+        }
+    }
+    return wantarray ? ($min, $min_p) : $min
 }
 
 sub _min_column {
-	# passing $rows allows for some extra (minimal) efficiency
-	my ($column, $rows) = @_;
+    # passing $rows allows for some extra (minimal) efficiency
+    my ($column, $rows) = @_;
 
-	my ($m, $mp) = ($column->element(1, 1), 1);
-	for my $l (1..$rows) {
-		if ($column->element($l, 1) < $m) {
-			$m = $column->element($l, 1);
-			$mp = $l;
-		}
-	}
-	return ($m, $mp);
+    my ($m, $mp) = ($column->element(1, 1), 1);
+    for my $l (1..$rows) {
+        if ($column->element($l, 1) < $m) {
+            $m = $column->element($l, 1);
+            $mp = $l;
+        }
+    }
+    return ($m, $mp);
 }
 
 
@@ -2822,22 +2822,22 @@ sub _min_column {
 sub _concat
 {
     my($object,$argument,$flag) = @_;
-    my($orows,$ocols) 		= ($object->[1],$object->[2]);
-    my($name)			= "concat";
+    my($orows,$ocols)         = ($object->[1],$object->[2]);
+    my($name)            = "concat";
 
 
     if ((defined $argument) && ref($argument) && (ref($argument) !~ /^SCALAR$|^ARRAY$|^HASH$|^CODE$|^REF$/)) {
-    	my($arows,$acols) 		= ($argument->[1],$argument->[2]);
+        my($arows,$acols)         = ($argument->[1],$argument->[2]);
         croak "Math::MatrixReal: Matrices must have same number of rows in concatenation" unless ($orows == $arows);
-     	my $result = $object->new($orows,$ocols+$acols);
+         my $result = $object->new($orows,$ocols+$acols);
         for ( my $i = 0; $i < $arows; $i++ ) {
             for ( my $j = 0; $j < $ocols + $acols; $j++ ) {
-		$result->[0][$i][$j] = ( $j <  $ocols ) ? $object->[0][$i][$j] : $argument->[0][$i][$j - $ocols] ;
+        $result->[0][$i][$j] = ( $j <  $ocols ) ? $object->[0][$i][$j] : $argument->[0][$i][$j - $ocols] ;
             }
         }
         return $result;
     } elsif (defined $argument) {
-	return "$object" . $argument;
+    return "$object" . $argument;
 
     } else {
         croak "Math::MatrixReal $name: wrong argument type";
@@ -2995,55 +2995,55 @@ sub _exponent
 }
 sub _divide
 {
-	my($matrix,$argument,$flag) = @_;
-	# TODO: check dimensions of everything!
-	my($mrows,$mcols) = ($matrix->[1],$matrix->[2]);
-	my($arows,$acols)=(0,0);
-	my($name) = "'/'";
-	my $temp = $matrix->clone();
-	my $arg;
-	my ($inv,$m1);
+    my($matrix,$argument,$flag) = @_;
+    # TODO: check dimensions of everything!
+    my($mrows,$mcols) = ($matrix->[1],$matrix->[2]);
+    my($arows,$acols)=(0,0);
+    my($name) = "'/'";
+    my $temp = $matrix->clone();
+    my $arg;
+    my ($inv,$m1);
 
-	if( ref($argument) =~ /Math::MatrixReal/ ){
-		$arg =  $argument->clone();
-		($arows,$acols)=($arg->[1],$arg->[2]);
-	}
-	#print "DEBUG: flag= $flag\n";
-	#print "DEBUG: arg=$arg\n";
-	if( $flag == 1) {
-		  #print "DEBUG: ref(arg)= " . ref($arg) . "\n";
-		if( ref($argument) =~ /Math::MatrixReal/ ){
-			#print "DEBUG: arg is a matrix \n";
-			# Matrix Division = A/B = A*B^(-1)
-			croak "Math::MatrixReal $name: this operation is defined only for square matrices" unless ($arows == $acols);
-			return $temp->multiply(  $arg->inverse() );
+    if( ref($argument) =~ /Math::MatrixReal/ ){
+        $arg =  $argument->clone();
+        ($arows,$acols)=($arg->[1],$arg->[2]);
+    }
+    #print "DEBUG: flag= $flag\n";
+    #print "DEBUG: arg=$arg\n";
+    if( $flag == 1) {
+          #print "DEBUG: ref(arg)= " . ref($arg) . "\n";
+        if( ref($argument) =~ /Math::MatrixReal/ ){
+            #print "DEBUG: arg is a matrix \n";
+            # Matrix Division = A/B = A*B^(-1)
+            croak "Math::MatrixReal $name: this operation is defined only for square matrices" unless ($arows == $acols);
+            return $temp->multiply(  $arg->inverse() );
 
-		} else {
-			#print "DEBUG: Arg is scalar\n";
-			#print "DEBUG:arows,acols=$arows,$acols\n";
-			#print "DEBGU:mrows,mcols=$mrows,$mcols\n";
-			 croak "Math::MatrixReal $name: this operation is defined only for square matrices" unless ($mrows == $mcols);
-			$temp->multiply_scalar( $temp , $argument);
-			return $temp;
-		}
         } else {
-	#print "DEBUG: temp=\n";
-	#print $temp . "\n";
-	#print "DEBUG: ref(arg)= " . ref($arg) . "\n";
-	#print "DEBUG: arg=\n";
-	#print $arg ."\n";
-	if( ref($arg) =~ /Math::MatrixReal/ ){
-		#print "DEBUG: matrix division\n";
-		if( $arg->is_col_vector() ){
-			print "DEBUG: $arg is a col vector\n";
-		}
-		croak "Math::MatrixReal $name: this operation is defined only for square matrices" unless ($arows == $acols);
-		$inv = $arg->inverse();
-		return $temp->multiply($inv);
-	} else {
-		$temp->multiply_scalar($temp,1/$argument);
-		return $temp;
-	}
+            #print "DEBUG: Arg is scalar\n";
+            #print "DEBUG:arows,acols=$arows,$acols\n";
+            #print "DEBGU:mrows,mcols=$mrows,$mcols\n";
+             croak "Math::MatrixReal $name: this operation is defined only for square matrices" unless ($mrows == $mcols);
+            $temp->multiply_scalar( $temp , $argument);
+            return $temp;
+        }
+        } else {
+    #print "DEBUG: temp=\n";
+    #print $temp . "\n";
+    #print "DEBUG: ref(arg)= " . ref($arg) . "\n";
+    #print "DEBUG: arg=\n";
+    #print $arg ."\n";
+    if( ref($arg) =~ /Math::MatrixReal/ ){
+        #print "DEBUG: matrix division\n";
+        if( $arg->is_col_vector() ){
+            print "DEBUG: $arg is a col vector\n";
+        }
+        croak "Math::MatrixReal $name: this operation is defined only for square matrices" unless ($arows == $acols);
+        $inv = $arg->inverse();
+        return $temp->multiply($inv);
+    } else {
+        $temp->multiply_scalar($temp,1/$argument);
+        return $temp;
+    }
     }
 
 }
@@ -3152,8 +3152,8 @@ sub _not_equal
     if ((defined $argument) && ref($argument) &&
         (ref($argument) !~ /^SCALAR$|^ARRAY$|^HASH$|^CODE$|^REF$/))
     {
-	my ($r,$c) = $argument->dim;
-	return 1 unless ($r == $rows && $c == $cols );
+    my ($r,$c) = $argument->dim;
+    return 1 unless ($r == $rows && $c == $cols );
     my $result = 0;
         NOTEQUAL:
         for ( my $i = 0; $i < $rows; $i++ )
@@ -5203,16 +5203,16 @@ Concatenation
 Returns the two matrices concatenated side by side.
 
 Example:
-	$c = $a . $b;
+    $c = $a . $b;
 
 For example,
 if
 
-	$a=[ 1 2 ]   $b=[ 5 6 ]
-	   [ 3 4 ]      [ 7 8 ]
+    $a=[ 1 2 ]   $b=[ 5 6 ]
+       [ 3 4 ]      [ 7 8 ]
 then
 
-	$c=[ 1 2 5 6 ]
+    $c=[ 1 2 5 6 ]
            [ 3 4 7 8 ]
 
 Note that only matrices with the same number of rows may be concatenated.

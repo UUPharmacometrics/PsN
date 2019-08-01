@@ -24,136 +24,136 @@ my %options;
 
 my %required_options = ();
 my %optional_options = ("samples:i"=>'',
-						"sample_size:s"=>'',
-						"stratify_on:s"=>'',
-						'keep_tables!' => undef,
+                        "sample_size:s"=>'',
+                        "stratify_on:s"=>'',
+                        'keep_tables!' => undef,
                         'keep_covariance!' => undef,
-						"bca"=>'',
-						"dofv!"=>'',
-						"run_base_model!"=>'',
-						"update_inits!"=>'',
-						"mceta:i"=>'',
-						"skip_minimization_terminated!"=>'',
-						"skip_covariance_step_terminated!"=>'',
-						"skip_with_covstep_warnings!"=>'',
-						"skip_estimate_near_boundary!"=>'',
-						"summarize"=>'',
-						"allow_ignore_id!"=>'',
-						"copy_data!"=>'',
-			);
+                        "bca"=>'',
+                        "dofv!"=>'',
+                        "run_base_model!"=>'',
+                        "update_inits!"=>'',
+                        "mceta:i"=>'',
+                        "skip_minimization_terminated!"=>'',
+                        "skip_covariance_step_terminated!"=>'',
+                        "skip_with_covstep_warnings!"=>'',
+                        "skip_estimate_near_boundary!"=>'',
+                        "summarize"=>'',
+                        "allow_ignore_id!"=>'',
+                        "copy_data!"=>'',
+            );
 
 my $res = GetOptions( \%options,
-		      @common_options::get_opt_strings,
-		      keys(%required_options),
-		      keys(%optional_options) );
+              @common_options::get_opt_strings,
+              keys(%required_options),
+              keys(%optional_options) );
 
 exit unless $res;
 
 my %help_text;
 $help_text{Pre_help_message} = <<'EOF';
-	Bootstrap using the percentile or BCa method.
+    Bootstrap using the percentile or BCa method.
 EOF
 
 $help_text{Description} = <<'EOF';
 
-	Bootstrap can be used to calculate bias, standard errors and confidence
-	intervals. It does so by resampling with replacement from the data, see
-	Efron B, An Introduction to the Bootstrap, Chap. & Hall, London UK, 1993.
-	To compute standard errors for all parameters of a model using the non-
-	parametric bootstrap implemented here, roughly 200 model fits are necessary.
-	To assess 95% confidence intervals approximatly 2000 runs will suffice.
+    Bootstrap can be used to calculate bias, standard errors and confidence
+    intervals. It does so by resampling with replacement from the data, see
+    Efron B, An Introduction to the Bootstrap, Chap. & Hall, London UK, 1993.
+    To compute standard errors for all parameters of a model using the non-
+    parametric bootstrap implemented here, roughly 200 model fits are necessary.
+    To assess 95% confidence intervals approximatly 2000 runs will suffice.
 EOF
 
 $help_text{Examples} = <<'EOF';
-	bootstrap -samples=200 run89.mod
+    bootstrap -samples=200 run89.mod
 
-	This will run a non-parametric bootstrap of 200 samples and give you good
-	estimates of the standard errors of the parameter estimates. You may get
-	some estimates for the confidence intervals too, but they will generally
-	not be of high quality.
+    This will run a non-parametric bootstrap of 200 samples and give you good
+    estimates of the standard errors of the parameter estimates. You may get
+    some estimates for the confidence intervals too, but they will generally
+    not be of high quality.
 
-	bootstrap -samples=2000 -bca run89.mod
+    bootstrap -samples=2000 -bca run89.mod
 
-	This will run a non-parametric bootstrap using the BCa technique (See An
-	introduction to the bootstrap, Efron, 1993). The BCa is intended for
-	caclulation of second-order correct confidence intervals.
+    This will run a non-parametric bootstrap using the BCa technique (See An
+    introduction to the bootstrap, Efron, 1993). The BCa is intended for
+    caclulation of second-order correct confidence intervals.
 
-	bootstrap -samples=2000 -bca -stratify_on=GRP run89.mod
+    bootstrap -samples=2000 -bca -stratify_on=GRP run89.mod
 
-	This is the same BCa approach as above but with stratification on the
-	factors of the GRP variable.
+    This is the same BCa approach as above but with stratification on the
+    factors of the GRP variable.
 EOF
 
 $help_text{Options} = <<'EOF';
-	A model file is required as argument.
+    A model file is required as argument.
 
-	The following options are valid:
+    The following options are valid:
 EOF
 
 $help_text{-allow_ignore_id} = <<'EOF';
-	-allow_ignore_id
+    -allow_ignore_id
 
-	Default not set. When not used, bootstrap will print a message and terminate
-	if an IGNORE or ACCEPT statement based on the ID column is found in the
-	$DATA record. This is done because it would interfere with the internal
-	renumbering of individuals that the option does, producing errors since the
-	option renumbers individuals before sampling.
-	If -allow_ignore_id is used (not recommended), a warning is printed but the
-	program continues execution.
-	Note: The IGNORE statement can safely be used in conjunction with any other
-	column than ID.
+    Default not set. When not used, bootstrap will print a message and terminate
+    if an IGNORE or ACCEPT statement based on the ID column is found in the
+    $DATA record. This is done because it would interfere with the internal
+    renumbering of individuals that the option does, producing errors since the
+    option renumbers individuals before sampling.
+    If -allow_ignore_id is used (not recommended), a warning is printed but the
+    program continues execution.
+    Note: The IGNORE statement can safely be used in conjunction with any other
+    column than ID.
 EOF
 
 $help_text{-bca} = <<'EOF';
-	-bca
+    -bca
 
-	Default not set. When used, the bootstrap utility will calculate the confidence
-	intervals through the BCa method. The BCa is intended for calculation of second-
-	order correct confidence intervals. Warning: Using bca is very time-consuming.
-	(see Efron B, An introduction to the Bootstrap, 1993).
+    Default not set. When used, the bootstrap utility will calculate the confidence
+    intervals through the BCa method. The BCa is intended for calculation of second-
+    order correct confidence intervals. Warning: Using bca is very time-consuming.
+    (see Efron B, An introduction to the Bootstrap, 1993).
 EOF
 
 $help_text{-copy_data} = <<'EOF';
-	-copy_data
+    -copy_data
 
-	Default set. If option is set, the original data file will be copied to the
-	run directory if the input model is to be run. If option is unset using
-	-no-copy_data, the absolute path to the original data file will be used in
-	$DATA when the input model is run, and the data file will not be copied. This
-	saves disk space.
+    Default set. If option is set, the original data file will be copied to the
+    run directory if the input model is to be run. If option is unset using
+    -no-copy_data, the absolute path to the original data file will be used in
+    $DATA when the input model is run, and the data file will not be copied. This
+    saves disk space.
 EOF
 $help_text{-dofv} = <<'EOF';
-	-dofv
+    -dofv
 
-	Compute delta-ofv by doing a MAXEVAL=0 run on orginal dataset with the
-	bootstrap parameter estimates.
+    Compute delta-ofv by doing a MAXEVAL=0 run on orginal dataset with the
+    bootstrap parameter estimates.
 EOF
 
 $help_text{-keep_covariance} = <<'EOF';
-	-keep_covariance
+    -keep_covariance
 
-	By default the $COVARIANCE will be deleted from the bootstrap models, to save
-	run time. If option -keep_covariance is set, PsN will instead keep $COVARIANCE.
+    By default the $COVARIANCE will be deleted from the bootstrap models, to save
+    run time. If option -keep_covariance is set, PsN will instead keep $COVARIANCE.
 EOF
 
 $help_text{-keep_tables} = <<'EOF';
-	-keep_tables
+    -keep_tables
 
-	By default, all $TABLE will be deleted from the bootstrap models, to save disk
-	space. If option -keep_tables is set, PsN will instead keep $TABLE, which
-	can require much disk space.
+    By default, all $TABLE will be deleted from the bootstrap models, to save disk
+    space. If option -keep_tables is set, PsN will instead keep $TABLE, which
+    can require much disk space.
 EOF
 $help_text{-mceta} = <<'EOF';
-	-mceta
+    -mceta
 
-	Default not set. If option -dofv is set and NONMEM 7.3 or later is used,
-	setting this option will make PsN set MCETA=N in $ESTIMATION. It is up to
-	the user to check that the estimation method used can in NONMEM be combined
-	with option MCETA, PsN will not do that.
+    Default not set. If option -dofv is set and NONMEM 7.3 or later is used,
+    setting this option will make PsN set MCETA=N in $ESTIMATION. It is up to
+    the user to check that the estimation method used can in NONMEM be combined
+    with option MCETA, PsN will not do that.
 EOF
 
 $help_text{-run_base_model} = <<'EOF';
-	-run_base_model
+    -run_base_model
 
 By default, the input model will be run unless the lst-file for the input model
 is found in the same directory as the input model.
@@ -162,104 +162,104 @@ lst-file is missing.
 EOF
 
 $help_text{-sample_size} = <<'EOF';
-	-sample_size
+    -sample_size
 
-	The number of subjects in each bootstrap data set. The default value is set
-	to the number of individuals in the original data set. When the resampling
-	is stratified, the sample_size option can be used to specify the exact number
-	of samples that should be drawn from each strata. Below follows an example
-	of the syntax that should be used in such a case. Stratification is here
-	done based on the study number, STUD, with the values 1001, 1002 and 1003.
-	-sample_size=''1001$=>$12,1002$=>$24,1003$=>$10''
-	Note the double quotes, single quotes will not work on Windows.
-	This example specifies that the bootstrap should use 12 samples from study
-	1001, 24 samples from 1002 and 10 from study 1003. If only one sample size
-	is used together with stratified resampling (the default case; sample_size
-	=number of individuals in the data set), the strata are assigned samples in
-	proportion to their size in the data set. Please note that this usage of the
-	sample_size option does not guarantee that the sum of the samples of the
-	strata is equal to the given sample_size since PsN needs to round the figures
-	to the closest integer. For a sample size equal to the number of individuals
-	in the data set, the sum will however always be correct.
+    The number of subjects in each bootstrap data set. The default value is set
+    to the number of individuals in the original data set. When the resampling
+    is stratified, the sample_size option can be used to specify the exact number
+    of samples that should be drawn from each strata. Below follows an example
+    of the syntax that should be used in such a case. Stratification is here
+    done based on the study number, STUD, with the values 1001, 1002 and 1003.
+    -sample_size=''1001$=>$12,1002$=>$24,1003$=>$10''
+    Note the double quotes, single quotes will not work on Windows.
+    This example specifies that the bootstrap should use 12 samples from study
+    1001, 24 samples from 1002 and 10 from study 1003. If only one sample size
+    is used together with stratified resampling (the default case; sample_size
+    =number of individuals in the data set), the strata are assigned samples in
+    proportion to their size in the data set. Please note that this usage of the
+    sample_size option does not guarantee that the sum of the samples of the
+    strata is equal to the given sample_size since PsN needs to round the figures
+    to the closest integer. For a sample size equal to the number of individuals
+    in the data set, the sum will however always be correct.
 EOF
 
 $help_text{-samples} = <<'EOF';
-	-samples
+    -samples
 
-	The number of bootstrapped datasets to generate. Default is 200.
+    The number of bootstrapped datasets to generate. Default is 200.
 EOF
 
 $help_text{-skip_covariance_step_terminated} = <<'EOF';
-	-skip_covariance_step_terminated
+    -skip_covariance_step_terminated
 
-	Default not set. With this option enabled, the bootstrap will skip all
-	samples where the NONMEM run terminated the covariance step.
-	Force disabling with -no-skip_covariance_step_terminated.
+    Default not set. With this option enabled, the bootstrap will skip all
+    samples where the NONMEM run terminated the covariance step.
+    Force disabling with -no-skip_covariance_step_terminated.
 EOF
 
 $help_text{-skip_estimate_near_boundary} = <<'EOF';
-	-skip_estimate_near_boundary
+    -skip_estimate_near_boundary
 
-	Default set. With this option enabled, the bootstrap will skip all samples
-	where the NONMEM run signal that some estimates are near its boundary.
+    Default set. With this option enabled, the bootstrap will skip all samples
+    where the NONMEM run signal that some estimates are near its boundary.
     Force disabling with -no-skip_estimate_near_boundary.
 EOF
 
 $help_text{-skip_minimization_terminated} = <<'EOF';
-	-skip_minimization_terminated
+    -skip_minimization_terminated
 
-	Default set. Bootstrap will skip all samples where the NONMEM run terminated
-	the minimization step. Force disabling with -no-skip_minimization_terminated.
+    Default set. Bootstrap will skip all samples where the NONMEM run terminated
+    the minimization step. Force disabling with -no-skip_minimization_terminated.
 EOF
 
 $help_text{-skip_with_covstep_warnings} = <<'EOF';
-	-skip_with_covstep_warnings
+    -skip_with_covstep_warnings
 
-	Default not set. With this option enabled, the bootstrap will skip all
-	samples where the NONMEM run had warnings from the covariance step. Force
-	disabling with -no-skip_with_covstep_warnings.
+    Default not set. With this option enabled, the bootstrap will skip all
+    samples where the NONMEM run had warnings from the covariance step. Force
+    disabling with -no-skip_with_covstep_warnings.
 EOF
 
 $help_text{-stratify_on} = <<'EOF';
-	-stratify_on=integer|string
+    -stratify_on=integer|string
 
-	It may be necessary to use stratification in the resampling procedure. For
-	example, if the original data consists of two groups of patients - say 10
-	patients with full pharmacokinetic profiles and 90 patients with sparse
-	steadystate concentration measurements - it may be wise to restrict the
-	resampling procedure to resample within the two groups, producing bootstrap
-	data sets that all contain 10 rich + 90 sparse data patients but with
-	different compositions. The default is not to use stratification. Set
-	-stratify_on to the column (the name in $INPUT) that defines the two groups.
-	Note that the option sample_size has a different behaviour when stratified
-	resampling is used. Bootstrapping is always done on entire individuals, so
-	for each ID the data records are either all included or all excluded from
-	a particular bootstrapped data set. The algorithm requires that an individual
-	can unambigously be categorized according to the stratification variable.
-	In data file terms, it means that the variable used for stratification
-	must have one and only one value for each individual, otherwise the program
-	will stop with an error message saying that at least one individual has
-	multiple values in the stratification column, and therefore this column
-	cannot be used for stratification of the resampling.
+    It may be necessary to use stratification in the resampling procedure. For
+    example, if the original data consists of two groups of patients - say 10
+    patients with full pharmacokinetic profiles and 90 patients with sparse
+    steadystate concentration measurements - it may be wise to restrict the
+    resampling procedure to resample within the two groups, producing bootstrap
+    data sets that all contain 10 rich + 90 sparse data patients but with
+    different compositions. The default is not to use stratification. Set
+    -stratify_on to the column (the name in $INPUT) that defines the two groups.
+    Note that the option sample_size has a different behaviour when stratified
+    resampling is used. Bootstrapping is always done on entire individuals, so
+    for each ID the data records are either all included or all excluded from
+    a particular bootstrapped data set. The algorithm requires that an individual
+    can unambigously be categorized according to the stratification variable.
+    In data file terms, it means that the variable used for stratification
+    must have one and only one value for each individual, otherwise the program
+    will stop with an error message saying that at least one individual has
+    multiple values in the stratification column, and therefore this column
+    cannot be used for stratification of the resampling.
 EOF
 $help_text{-summarize} = <<'EOF';
-	-summarize
+    -summarize
 
-	Default not set. Only allowed when -directory is set to an existing
-	bootstrap run directory and the raw_results file exist in there. Recompute
-	bootstrap_results based on the existing raw_results, possibly using a
-	different set of exclusion criteria.
+    Default not set. Only allowed when -directory is set to an existing
+    bootstrap run directory and the raw_results file exist in there. Recompute
+    bootstrap_results based on the existing raw_results, possibly using a
+    different set of exclusion criteria.
 EOF
 
 $help_text{-update_inits} = <<'EOF';
 -update_inits
 
-	Default true. Update the initial estimates of the bootstrap models to the
-	final estimates from the estimation (lst-file) of the base model.
+    Default true. Update the initial estimates of the bootstrap models to the
+    final estimates from the estimation (lst-file) of the base model.
 EOF
 
 $help_text{Post_help_message} = <<'EOF';
-	Also see 'psn_options -h' for a description of common options.
+    Also see 'psn_options -h' for a description of common options.
 EOF
 
 common_options::online_help('bootstrap',\%options, \%help_text, \%required_options, \%optional_options);
@@ -303,23 +303,23 @@ if ($options{'model_subdir'}) {
 my $eval_string = common_options::model_parameters(\%options);
 
 my $model = model -> new ( eval( $eval_string ),
-						   filename                    => @ARGV[0],
-						   ignore_missing_output_files => 1,
+                           filename                    => @ARGV[0],
+                           ignore_missing_output_files => 1,
                            output_directory => $output_directory );
 unless (defined $options{'copy_data'} and (not $options{'copy_data'})) {
     $options{'copy_data'} = 1;
 }
 
 unless ($model->copy_data_setting_ok(copy_data => $options{'copy_data'})){
-	die("Cannot set -no-copy_data, absolute data file path is too long.");
+    die("Cannot set -no-copy_data, absolute data file path is too long.");
 }
 if (defined $options{'copy_data'} and (not $options{'copy_data'})){
-	$model->relative_data_path(0);
+    $model->relative_data_path(0);
 }
 
 
 if( $options{'shrinkage'} ) {
-	$model -> shrinkage_stats( enabled => 1 );
+    $model -> shrinkage_stats( enabled => 1 );
 }
 
 
@@ -330,47 +330,47 @@ if( defined $options{'sample_size'} ) {
   $options{'sample_size'} = 'default=>'.$options{'sample_size'} if( $options{'sample_size'} =~ /^\d+$/ );
   %{$subj_hash} = eval($options{'sample_size'});
   if( $@ ) {
-	  die $@."\nThe sample_size option must be either a single number or of the format 'strata1=>12,strata2=>34, ...' etc" ;
+      die $@."\nThe sample_size option must be either a single number or of the format 'strata1=>12,strata2=>34, ...' etc" ;
   }
 }
 
 ## Create new Bootstrap object:
 my $bs =
-	tool::bootstrap->new( eval( $common_options::parameters ),
-						  top_tool => 1,
-						  prepend_model_file_name => 1,
-						  models				     => [ $model ],
-						  samples				     => $options{'samples'},
-						  subjects			     => $subj_hash,
-						  type				     => $type,
-						  keep_tables          	=> $options{'keep_tables'},
+    tool::bootstrap->new( eval( $common_options::parameters ),
+                          top_tool => 1,
+                          prepend_model_file_name => 1,
+                          models                     => [ $model ],
+                          samples                     => $options{'samples'},
+                          subjects                 => $subj_hash,
+                          type                     => $type,
+                          keep_tables              => $options{'keep_tables'},
                           keep_covariance => $options{'keep_covariance'},
-						  run_base_model          	=> $options{'run_base_model'},
-						  update_inits          	=> $options{'update_inits'},
-						  stratify_on                          => $options{'stratify_on'},
-						  dofv                                  => $options{'dofv'},
-						  mceta                                 => $options{'mceta'},
-						  skip_minimization_terminated         => $options{'skip_minimization_terminated'},
-						  skip_covariance_step_terminated      => $options{'skip_covariance_step_terminated'},
-						  skip_with_covstep_warnings           => $options{'skip_with_covstep_warnings'},
-						  skip_estimate_near_boundary          => $options{'skip_estimate_near_boundary'},
-						  allow_ignore_id                      => $options{'allow_ignore_id'},
-						  copy_data                            => $options{'copy_data'}
-	);
+                          run_base_model              => $options{'run_base_model'},
+                          update_inits              => $options{'update_inits'},
+                          stratify_on                          => $options{'stratify_on'},
+                          dofv                                  => $options{'dofv'},
+                          mceta                                 => $options{'mceta'},
+                          skip_minimization_terminated         => $options{'skip_minimization_terminated'},
+                          skip_covariance_step_terminated      => $options{'skip_covariance_step_terminated'},
+                          skip_with_covstep_warnings           => $options{'skip_with_covstep_warnings'},
+                          skip_estimate_near_boundary          => $options{'skip_estimate_near_boundary'},
+                          allow_ignore_id                      => $options{'allow_ignore_id'},
+                          copy_data                            => $options{'copy_data'}
+    );
 
 $bs-> print_options (cmd_line => $cmd_line,
-		     toolname => 'bootstrap',
-		     local_options => [keys %optional_options,'type'],
-		     common_options => \@common_options::tool_options);
+             toolname => 'bootstrap',
+             local_options => [keys %optional_options,'type'],
+             common_options => \@common_options::tool_options);
 
 
 if ( $options{'summarize'} ) {
-	#check that raw_results file exists
-	unless (-e $bs->raw_results_file->[0]){
-		print "Option summarize can only be used when raw_results file exists, cannot find \n".$bs->raw_results_file->[0].
-			"\nTry resuming bootstrap without option -summarize\n";
-		die;
-	}
+    #check that raw_results file exists
+    unless (-e $bs->raw_results_file->[0]){
+        print "Option summarize can only be used when raw_results file exists, cannot find \n".$bs->raw_results_file->[0].
+            "\nTry resuming bootstrap without option -summarize\n";
+        die;
+    }
   $bs -> prepare_results();
   $bs -> print_results();
 } else {
@@ -381,4 +381,4 @@ if ( $options{'summarize'} ) {
 
 
 ui -> print( category => 'bootstrap',
-	     message  => "\nBootstrap done.\n");
+         message  => "\nBootstrap done.\n");

@@ -39,7 +39,7 @@ has 'obs_ignore' => ( is => 'rw', isa => 'Str' );   # Column to use in IGNORE() 
 
 has 'top_level' => ( is => 'rw', isa => 'Bool', default => 1 );     # Is this the top level resmod object
 has 'current_dvid' => ( is => 'rw', isa => 'Int', default => 0 );             # Index of the current DVID. if don't have dvid = 0
-has 'model_templates' => ( is => 'rw', isa => 'ArrayRef' );		# List of model_templates to use
+has 'model_templates' => ( is => 'rw', isa => 'ArrayRef' );        # List of model_templates to use
 # Array of iterations over Hash of dvids over Hash of modelnames over type of result = dOFV or parameters
 has 'resmod_results' => ( is => 'rw', isa => 'ArrayRef', default => sub { [] } );
 has 'iteration' => ( is => 'rw', isa => 'Int', default => 0 );      # Number of the iteration
@@ -65,7 +65,7 @@ sub BUILD
         }
     }
 
-	my $model = $self->models()->[0];
+    my $model = $self->models()->[0];
     $self->model($model);
 
     if ($self->top_level) {
@@ -140,13 +140,13 @@ sub BUILD
 
 sub modelfit_setup
 {
-	my $self = shift;
+    my $self = shift;
 
     if ($self->top_level and $self->numdvid > 1) {
         # Spawn one resmod per DVID
         for (my $i = 0; $i < $self->numdvid; $i++) {
             my $resmod = tool::resmod->new(
-			    %{common_options::restore_options(@common_options::tool_options)},
+                %{common_options::restore_options(@common_options::tool_options)},
                 directory => 'resmod_DVID_' . int($self->unique_dvid->[$i]),
                 models => [ $self->model ],
                 idv => $self->idv,
@@ -167,7 +167,7 @@ sub modelfit_setup
                 table => $self->table,
                 negative_ipred => $self->negative_ipred,
                 obs_column => $self->obs_column,
-				clean => $self->clean,
+                clean => $self->clean,
             );
             $resmod->run();
         }
@@ -185,7 +185,7 @@ sub modelfit_setup
     # Do we have IPRED/CIPREDI, DVID or OCC?
     my $have_ipred = 0;
     my $have_dvid = 0;
-	my $have_occ = 0;
+    my $have_occ = 0;
     my $have_time = 0;
     for my $option (@{$cwres_table->options}) {
         if ($option->name eq $self->ipred_name) {
@@ -194,9 +194,9 @@ sub modelfit_setup
         } elsif ($option->name eq $self->dvid) {
             $have_dvid = 1;
             push @columns, $self->dvid;
-		} elsif ($option->name eq $self->occ) {
-			$have_occ = 1;
-			push @columns, $self->occ;
+        } elsif ($option->name eq $self->occ) {
+            $have_occ = 1;
+            push @columns, $self->occ;
         } elsif ($option->name eq 'TIME') {
             $have_time = 1;
             push @columns, 'TIME';
@@ -213,7 +213,7 @@ sub modelfit_setup
         $cwres_table_name = File::Spec->abs2rel($self->model->directory . $cwres_table_name);
     }
 
-	my @models_to_run;
+    my @models_to_run;
     for my $model_properties (@{$self->model_templates}) {
         my $input_columns = $self->_create_input(
             table => $self->table,
@@ -268,15 +268,15 @@ sub modelfit_setup
     }
 
     if ($self->numdvid > 1 and $self->current_dvid == 0 and $self->iteration == 0) {     # Only start the L2 model once
-    	my $input_columns = $self->_create_input(
-			table => $self->table,
-			columns => \@columns,
-		);
+        my $input_columns = $self->_create_input(
+            table => $self->table,
+            columns => \@columns,
+        );
 
         my $table_string = $self->_create_table(name => 'l2', have_ipred => $have_ipred, have_occ => $have_occ, have_l2 => 1);
 
         my $l2_model = $self->_prepare_L2_model(
-		    input_columns => $input_columns,
+            input_columns => $input_columns,
             table_name => $cwres_table_name,
             num_dvid => $self->numdvid,
             table_string => $table_string,
@@ -288,17 +288,17 @@ sub modelfit_setup
 
     _create_extra_fortran_files();
 
-	my $modelfit = tool::modelfit->new(
-		%{common_options::restore_options(@common_options::tool_options)},
-		models => \@models_to_run,
+    my $modelfit = tool::modelfit->new(
+        %{common_options::restore_options(@common_options::tool_options)},
+        models => \@models_to_run,
         base_dir => $self->directory . 'm1/',
-		directory => undef,     # To override directory in restore_options
-		top_tool => 0,
+        directory => undef,     # To override directory in restore_options
+        top_tool => 0,
         copy_data => 0,
-	);
+    );
 
-	$self->tools([]) unless defined $self->tools;
-	push(@{$self->tools}, $modelfit);
+    $self->tools([]) unless defined $self->tools;
+    push(@{$self->tools}, $modelfit);
 }
 
 sub modelfit_analyze
@@ -449,7 +449,7 @@ sub modelfit_analyze
             ignore_missing_data => 1,
         );
         my $resmod = tool::resmod->new(
-			%{common_options::restore_options(@common_options::tool_options)},
+            %{common_options::restore_options(@common_options::tool_options)},
             models => [ $model ],
             idv => $self->idv,
             dv => $self->dv,
@@ -556,14 +556,14 @@ sub _print_results
 sub _calculate_quantiles
 {
     my $self = shift;
-	my %parm = validated_hash(\@_,
-		table => { isa => 'nmtable' },
-		column => { isa => 'Str' },
-	);
-	my $table = $parm{'table'};
-	my $column = $parm{'column'};
+    my %parm = validated_hash(\@_,
+        table => { isa => 'nmtable' },
+        column => { isa => 'Str' },
+    );
+    my $table = $parm{'table'};
+    my $column = $parm{'column'};
 
-	my $column_no = $table->header->{$column};
+    my $column_no = $table->header->{$column};
     my $dv_col = $table->header->{$self->dv};
     my @data;
     for my $i (0 .. scalar(@{$table->columns->[$column_no]}) - 1) {    # Filter out all dv=0 (CWRES) as non-observations
@@ -573,17 +573,17 @@ sub _calculate_quantiles
         }
     }
     @data = sort { $a <=> $b } @data;
-	my $quantiles = array::quantile(numbers => \@data, groups => $self->groups);
+    my $quantiles = array::quantile(numbers => \@data, groups => $self->groups);
 
-	#if (scalar(@{$quantiles}) < 8) {
-	#	my $data_length = scalar(@data);
-	#	for my $i (0 .. scalar(@{$quantiles}) - 1) {
-	#		my $data_part_length = scalar(grep{$_ < $quantiles[$i]} @data)
-	#		if ($data_part_length/$data_length>0.9) {
-	#
-	#		}
-	#	}
-	#}
+    #if (scalar(@{$quantiles}) < 8) {
+    #    my $data_length = scalar(@data);
+    #    for my $i (0 .. scalar(@{$quantiles}) - 1) {
+    #        my $data_part_length = scalar(grep{$_ < $quantiles[$i]} @data)
+    #        if ($data_part_length/$data_length>0.9) {
+    #
+    #        }
+    #    }
+    #}
 
 
     return $quantiles;
@@ -592,34 +592,34 @@ sub _calculate_quantiles
 sub _create_input
 {
     my $self = shift;
-	# Create $INPUT string from table
-	my %parm = validated_hash(\@_,
-		table => { isa => 'nmtable' },
-		columns => { isa => 'ArrayRef' },
-		ipred => { isa => 'Bool', default => 1 },		# Should ipred be included if in columns?
-		occ => { isa => 'Bool', default => 1 },			# Should occ be included if in columns?
-		occ_name => { isa => 'Str', default => 'OCC' },	# Name of the occ column
+    # Create $INPUT string from table
+    my %parm = validated_hash(\@_,
+        table => { isa => 'nmtable' },
+        columns => { isa => 'ArrayRef' },
+        ipred => { isa => 'Bool', default => 1 },        # Should ipred be included if in columns?
+        occ => { isa => 'Bool', default => 1 },            # Should occ be included if in columns?
+        occ_name => { isa => 'Str', default => 'OCC' },    # Name of the occ column
         time => { isa => 'Bool', default => 0 },        # Should time be included if in columns and idv != TIME?
-	);
-	my $table = $parm{'table'};
-	my @columns = @{$parm{'columns'}};
-	my $ipred = $parm{'ipred'};
-	my $occ = $parm{'occ'};
-	my $occ_name = $parm{'occ_name'};
+    );
+    my $table = $parm{'table'};
+    my @columns = @{$parm{'columns'}};
+    my $ipred = $parm{'ipred'};
+    my $occ = $parm{'occ'};
+    my $occ_name = $parm{'occ_name'};
     my $time = $parm{'time'};
 
-	my $input_columns;
-	my @found_columns;
+    my $input_columns;
+    my @found_columns;
 
-	for my $col (@{$table->header_array()}) {
-		my $found = 0;
-		for (my $i = 0; $i < scalar(@columns); $i++) {
+    for my $col (@{$table->header_array()}) {
+        my $found = 0;
+        for (my $i = 0; $i < scalar(@columns); $i++) {
             if ($col eq $columns[$i] and not $found_columns[$i]) {
                 $found_columns[$i] = 1;
                 my $name = $col;
                 $name = 'DV' if ($name eq $self->dv);
-				$name = 'DROP' if ($name eq $self->ipred_name and not $ipred);
-				$name = 'DROP' if ($name eq $occ_name and not $occ);
+                $name = 'DROP' if ($name eq $self->ipred_name and not $ipred);
+                $name = 'DROP' if ($name eq $occ_name and not $occ);
                 $name = 'DROP' if ($name eq 'TIME' and $self->idv ne 'TIME' and not $time);
                 $name = 'PPRD' if ($name eq 'PRED' and $self->idv eq 'PRED');
                 $name = 'IPRED' if ($name eq 'CIPREDI' and $ipred);
@@ -636,14 +636,14 @@ sub _create_input
         $input_columns .= ' ';
     }
 
-	return $input_columns;
+    return $input_columns;
 }
 
 sub _create_new_model
 {
     my $self = shift;
-	my %parm = validated_hash(\@_,
-		prob_arr => { isa => 'ArrayRef' },
+    my %parm = validated_hash(\@_,
+        prob_arr => { isa => 'ArrayRef' },
         filename => { isa => 'Str' },
     );
     my $prob_arr = $parm{'prob_arr'};
@@ -676,7 +676,7 @@ sub _prepare_L2_model
 {
     my $self = shift;
     my %parm = validated_hash(\@_,
-		input_columns => { isa => 'Str' },
+        input_columns => { isa => 'Str' },
         table_name => { isa => 'Str' },
         num_dvid => { isa => 'Int' },
         table_string => { isa => 'Str' },
@@ -746,16 +746,16 @@ sub _build_time_varying_template
     # Create the templates for the different time_varying models
     my $self = shift;
     my %parm = validated_hash(\@_,
-		cutoffs => { isa => 'ArrayRef' },
-		min_idv => { isa => 'Str' },
-		max_idv => { isa => 'Str' },
+        cutoffs => { isa => 'ArrayRef' },
+        min_idv => { isa => 'Str' },
+        max_idv => { isa => 'Str' },
     );
     my $cutoffs = $parm{'cutoffs'};
-	my $min_idv = $parm{'min_idv'};
-	my $max_idv = $parm{'max_idv'};
+    my $min_idv = $parm{'min_idv'};
+    my $max_idv = $parm{'max_idv'};
 
-	my $start_time = $min_idv;
-	my $end_time = $max_idv;
+    my $start_time = $min_idv;
+    my $end_time = $max_idv;
     my @models;
 
     # Create one model for each interval.
@@ -891,7 +891,7 @@ sub _create_table
     my $self = shift;
     my %parm = validated_hash(\@_,
         name => { isa => 'Str' },
-		have_ipred => { isa => 'Bool' },
+        have_ipred => { isa => 'Bool' },
         have_occ => { isa => 'Bool' },
         have_l2 => { isa => 'Bool' },
     );
@@ -918,19 +918,19 @@ sub _create_table
 
 sub _create_extra_fortran_files
 {
-	# Create the contr.txt and ccontra.txt needed for dtbs
-	open my $fh_contr, '>', "contr.txt";
-	print $fh_contr <<'END';
+    # Create the contr.txt and ccontra.txt needed for dtbs
+    open my $fh_contr, '>', "contr.txt";
+    print $fh_contr <<'END';
       subroutine contr (icall,cnt,ier1,ier2)
       double precision cnt
       call ncontr (cnt,ier1,ier2,l2r)
       return
       end
 END
-	close $fh_contr;
+    close $fh_contr;
 
-	open my $fh_ccontra, '>', "ccontra.txt";
-	print $fh_ccontra <<'END';
+    open my $fh_ccontra, '>', "ccontra.txt";
+    print $fh_ccontra <<'END';
       subroutine ccontr (icall,c1,c2,c3,ier1,ier2)
       USE ROCM_REAL,   ONLY: theta=>THETAC,y=>DV_ITM2
       USE NM_INTERFACE,ONLY: CELS
@@ -955,76 +955,76 @@ END
       return
       end
 END
-	close $fh_ccontra;
+    close $fh_ccontra;
 }
 
 sub _delete_extra_fortran_files
 {
-	unlink('contr.txt', 'ccontra.txt');
+    unlink('contr.txt', 'ccontra.txt');
 }
 
 # This array of hashes represent the different models to be tested.
 our @residual_models =
 (
-	{
-		name => 'base',
-	    prob_arr => [
-			'$PROBLEM base model',
-			'$INPUT <inputcolumns>',
-			'$DATA <cwrestablename> IGNORE=@ <ignore> <dvidaccept>',
-			'$PRED',
+    {
+        name => 'base',
+        prob_arr => [
+            '$PROBLEM base model',
+            '$INPUT <inputcolumns>',
+            '$DATA <cwrestablename> IGNORE=@ <ignore> <dvidaccept>',
+            '$PRED',
             'Y = THETA(1) + ETA(1) + ERR(1)',
-			'$THETA .1',
-			'$OMEGA 0.01',
-			'$SIGMA 1',
-			'$ESTIMATION METHOD=1 INTER MAXEVALS=9990 PRINT=2 POSTHOC',
+            '$THETA .1',
+            '$OMEGA 0.01',
+            '$SIGMA 1',
+            '$ESTIMATION METHOD=1 INTER MAXEVALS=9990 PRINT=2 POSTHOC',
         ],
         base => 1,
-	}, {
-		name => 'IIV_on_RUV',
-	    prob_arr => [
-			'$PROBLEM omega-on-epsilon',
-			'$INPUT <inputcolumns>',
-			'$DATA <cwrestablename> IGNORE=@ <ignore> <dvidaccept>',
-			'$PRED',
+    }, {
+        name => 'IIV_on_RUV',
+        prob_arr => [
+            '$PROBLEM omega-on-epsilon',
+            '$INPUT <inputcolumns>',
+            '$DATA <cwrestablename> IGNORE=@ <ignore> <dvidaccept>',
+            '$PRED',
             'Y = THETA(1) + ETA(1) + ERR(1) * EXP(ETA(2))',
-			'$THETA .1',
-			'$OMEGA 0.01',
+            '$THETA .1',
             '$OMEGA 0.01',
-			'$SIGMA 1',
-			'$ESTIMATION METHOD=1 INTER MAXEVALS=9990 PRINT=2 POSTHOC',
+            '$OMEGA 0.01',
+            '$SIGMA 1',
+            '$ESTIMATION METHOD=1 INTER MAXEVALS=9990 PRINT=2 POSTHOC',
         ],
         parameters => [
             { name => "%CV", parameter => "OMEGA(2,2)", recalc => sub { sqrt($_[0])*100 } },
         ],
         use_base => 1,
     }, {
-		name => 'power',
+        name => 'power',
         need_ipred => 1,
-	    prob_arr => [
-			'$PROBLEM power IPRED',
-			'$INPUT <inputcolumns>',
-			'$DATA <cwrestablename> IGNORE=@ <ignore> <dvidaccept>',
-			'$PRED',
+        prob_arr => [
+            '$PROBLEM power IPRED',
+            '$INPUT <inputcolumns>',
+            '$DATA <cwrestablename> IGNORE=@ <ignore> <dvidaccept>',
+            '$PRED',
             'Y = THETA(1) + ETA(1) + ERR(1)*(IPRED)**THETA(2)',
-			'$THETA .1',
-			'$THETA .1',
-			'$OMEGA 0.01',
-			'$SIGMA 1',
-			'$ESTIMATION METHOD=1 INTER MAXEVALS=9990 PRINT=2 POSTHOC',
+            '$THETA .1',
+            '$THETA .1',
+            '$OMEGA 0.01',
+            '$SIGMA 1',
+            '$ESTIMATION METHOD=1 INTER MAXEVALS=9990 PRINT=2 POSTHOC',
         ],
         parameters => [
             { name => "delta_power", parameter => "THETA2" },
         ],
         use_base => 1,
-	}, {
+    }, {
         name => 'autocorrelation',
         need_time => 1,
         prob_arr => [
-			'$PROBLEM AR1',
-			'$INPUT <inputcolumns>',
-			'$DATA <cwrestablename> IGNORE=@ <ignore> <dvidaccept>',
-			'$PRED',
+            '$PROBLEM AR1',
+            '$INPUT <inputcolumns>',
+            '$DATA <cwrestablename> IGNORE=@ <ignore> <dvidaccept>',
+            '$PRED',
             '"FIRST',
             '" USE SIZES, ONLY: NO',
             '" USE NMPRD_REAL, ONLY: C=>CORRL2',
@@ -1058,73 +1058,73 @@ our @residual_models =
         ],
         use_base => 1,
     }, {
-		name => 'autocorrelation_iov',
-		need_occ => 1,
-		prob_arr => [
-			'$PROBLEM AR1 IOV',
-			'$INPUT <inputcolumns>',
-			'$DATA <cwrestablename> IGNORE=@ <ignore> <dvidaccept>',
-			'$ABBREVIATED DECLARE T1(NO)',
-			'$ABBREVIATED DECLARE INTEGER I,DOWHILE J',
-			'$PRED',
-			'IF(NEWIND.NE.2) THEN',
-			'  I=0',
-			'  L=1',
-			'  OOCC=OCC',
-			'  OID=ID',
-			'END IF',
-			'IF(NEWL2==1) THEN',
-			'  I=I+1',
-			'  T1(I)=TIME',
-			'  IF(OID.EQ.ID.AND.OOCC.NE.OCC)THEN',
-			'    L=I',
-			'    OOCC=OCC',
-			'  END IF',
-			'  J=L',
-			'  DO WHILE (J<=I)',
-			'    CORRL2(J,1) = EXP((-0.6931/THETA(2))*(TIME-T1(J)))',
-			'    J=J+1',
-			'  ENDDO',
-			'ENDIF',
-			'Y = THETA(1) + ETA(1) + EPS(1)',
-			'$THETA -0.0345794',
-			'$THETA (0.001,1)',
-			'$OMEGA 2.41E-006',
-			'$SIGMA 0.864271',
-			'$ESTIMATION METHOD=1 INTER MAXEVALS=9990 PRINT=2 POSTHOC',
-		],
+        name => 'autocorrelation_iov',
+        need_occ => 1,
+        prob_arr => [
+            '$PROBLEM AR1 IOV',
+            '$INPUT <inputcolumns>',
+            '$DATA <cwrestablename> IGNORE=@ <ignore> <dvidaccept>',
+            '$ABBREVIATED DECLARE T1(NO)',
+            '$ABBREVIATED DECLARE INTEGER I,DOWHILE J',
+            '$PRED',
+            'IF(NEWIND.NE.2) THEN',
+            '  I=0',
+            '  L=1',
+            '  OOCC=OCC',
+            '  OID=ID',
+            'END IF',
+            'IF(NEWL2==1) THEN',
+            '  I=I+1',
+            '  T1(I)=TIME',
+            '  IF(OID.EQ.ID.AND.OOCC.NE.OCC)THEN',
+            '    L=I',
+            '    OOCC=OCC',
+            '  END IF',
+            '  J=L',
+            '  DO WHILE (J<=I)',
+            '    CORRL2(J,1) = EXP((-0.6931/THETA(2))*(TIME-T1(J)))',
+            '    J=J+1',
+            '  ENDDO',
+            'ENDIF',
+            'Y = THETA(1) + ETA(1) + EPS(1)',
+            '$THETA -0.0345794',
+            '$THETA (0.001,1)',
+            '$OMEGA 2.41E-006',
+            '$SIGMA 0.864271',
+            '$ESTIMATION METHOD=1 INTER MAXEVALS=9990 PRINT=2 POSTHOC',
+        ],
         parameters => [
             { name => "half-life", parameter => "THETA2" },
         ],
-		use_base => 1,
+        use_base => 1,
     }, {
-		name => 'tdist_base',
-	    prob_arr => [
-			'$PROBLEM t-distribution base mode',
-			'$INPUT <inputcolumns>',
-			'$DATA <cwrestablename> IGNORE=@ <ignore> <dvidaccept>',
-			'$PRED',
-			'IPRED_ = THETA(1) + ETA(1)',
-			'W     = THETA(2)',
-			'IWRES=(DV-IPRED_)/W',
-			'LIM = 10E-14',
-			'IF(IWRES.EQ.0) IWRES = LIM',
-			'LL=-0.5*LOG(2*3.14159265)-LOG(W)-0.5*(IWRES**2)',
-			'L=EXP(LL)',
-			'Y=-2*LOG(L)',
-			'$THETA  .1 ; Mean',
-			'$THETA  (0,1) ; W : SD',
-			'$OMEGA  0.0001',
-			'$ESTIMATION MAXEVAL=99999 -2LL METH=1 LAPLACE PRINT=2 POSTHOC',
-		],
-		base => 2,
+        name => 'tdist_base',
+        prob_arr => [
+            '$PROBLEM t-distribution base mode',
+            '$INPUT <inputcolumns>',
+            '$DATA <cwrestablename> IGNORE=@ <ignore> <dvidaccept>',
+            '$PRED',
+            'IPRED_ = THETA(1) + ETA(1)',
+            'W     = THETA(2)',
+            'IWRES=(DV-IPRED_)/W',
+            'LIM = 10E-14',
+            'IF(IWRES.EQ.0) IWRES = LIM',
+            'LL=-0.5*LOG(2*3.14159265)-LOG(W)-0.5*(IWRES**2)',
+            'L=EXP(LL)',
+            'Y=-2*LOG(L)',
+            '$THETA  .1 ; Mean',
+            '$THETA  (0,1) ; W : SD',
+            '$OMEGA  0.0001',
+            '$ESTIMATION MAXEVAL=99999 -2LL METH=1 LAPLACE PRINT=2 POSTHOC',
+        ],
+        base => 2,
     }, {
         name => 'tdist',
         prob_arr => [
-			'$PROBLEM laplace 2LL DF=est',
-			'$INPUT <inputcolumns>',
-			'$DATA <cwrestablename> IGNORE=@ <ignore> <dvidaccept>',
-			'$PRED',
+            '$PROBLEM laplace 2LL DF=est',
+            '$INPUT <inputcolumns>',
+            '$DATA <cwrestablename> IGNORE=@ <ignore> <dvidaccept>',
+            '$PRED',
             'IPRED_ = THETA(1) + ETA(1)',
             'W = THETA(2)',
             'DF = THETA(3) ; degrees of freedom of Student distribution',
@@ -1141,103 +1141,103 @@ our @residual_models =
             'POW=-(DF+1)/2 ; power of PDF of t-distribution',
             'L=COEFF*BASE**POW ; PDF oft-distribution',
             'Y=-2*LOG(L)',
-			'$THETA .1',
-			'$THETA (0,1)',
-			'$THETA (3,10,300)',
-			'$OMEGA 0.01',
-			'$ESTIMATION METHOD=1 LAPLACE MAXEVALS=9990 PRINT=2 -2LL',
+            '$THETA .1',
+            '$THETA (0,1)',
+            '$THETA (3,10,300)',
+            '$OMEGA 0.01',
+            '$ESTIMATION METHOD=1 LAPLACE MAXEVALS=9990 PRINT=2 -2LL',
         ],
         parameters => [
             { name => "df", parameter => "THETA3" },
         ],
-		use_base => 2,
+        use_base => 2,
     }, {
         name => 'dtbs_base',
         need_ipred => 1,
         prob_arr => [
-			'$PROBLEM dtbs base model',
-			'$INPUT <inputcolumns>',
-			'$DATA <cwrestablename> IGNORE=@ <ignore> <dvidaccept>',
-			'$SUBROUTINE CONTR=contr.txt CCONTR=ccontra.txt',
-			'$PRED',
-			'IPRT   = THETA(1)*EXP(ETA(1))',
-			'WA     = THETA(2)',
-			'LAMBDA = THETA(3)',
-			'ZETA   = THETA(4)',
-			'IF(IPRT.LT.0) IPRT=10E-14',
-			'W = WA*IPRED**ZETA',
-			'IPRTR = IPRT',
-			'IF (LAMBDA .NE. 0 .AND. IPRT .NE.0) THEN',
-			'	IPRTR = (IPRT**LAMBDA-1)/LAMBDA',
-			'ENDIF',
-			'IF (LAMBDA .EQ. 0 .AND. IPRT .NE.0) THEN',
-			'	IPRTR = LOG(IPRT)',
-			'ENDIF',
-			'IF (LAMBDA .NE. 0 .AND. IPRT .EQ.0) THEN',
-			'	IPRTR = -1/LAMBDA',
-			'ENDIF',
-			'IF (LAMBDA .EQ. 0 .AND. IPRT .EQ.0) THEN',
-			'	IPRTR = -1000000000',
-			'ENDIF',
-			'IPRT = IPRTR',
-			'Y = IPRT + ERR(1)*W',
-			'IF(ICALL.EQ.4) Y=EXP(DV)',
-			'$THETA  0.973255 ; IPRED 1',
-			'$THETA  (0,1.37932) ; WA',
-			'$THETA  0 FIX ; lambda',
-			'$THETA  0 FIX ; zeta',
-			'$OMEGA  0.0001',
-			'$SIGMA  1  FIX',
-			'$SIMULATION (1234)',
-			'$ESTIMATION METHOD=1 INTER MAXEVALS=99999 PRINT=2 POSTHOC',
+            '$PROBLEM dtbs base model',
+            '$INPUT <inputcolumns>',
+            '$DATA <cwrestablename> IGNORE=@ <ignore> <dvidaccept>',
+            '$SUBROUTINE CONTR=contr.txt CCONTR=ccontra.txt',
+            '$PRED',
+            'IPRT   = THETA(1)*EXP(ETA(1))',
+            'WA     = THETA(2)',
+            'LAMBDA = THETA(3)',
+            'ZETA   = THETA(4)',
+            'IF(IPRT.LT.0) IPRT=10E-14',
+            'W = WA*IPRED**ZETA',
+            'IPRTR = IPRT',
+            'IF (LAMBDA .NE. 0 .AND. IPRT .NE.0) THEN',
+            '    IPRTR = (IPRT**LAMBDA-1)/LAMBDA',
+            'ENDIF',
+            'IF (LAMBDA .EQ. 0 .AND. IPRT .NE.0) THEN',
+            '    IPRTR = LOG(IPRT)',
+            'ENDIF',
+            'IF (LAMBDA .NE. 0 .AND. IPRT .EQ.0) THEN',
+            '    IPRTR = -1/LAMBDA',
+            'ENDIF',
+            'IF (LAMBDA .EQ. 0 .AND. IPRT .EQ.0) THEN',
+            '    IPRTR = -1000000000',
+            'ENDIF',
+            'IPRT = IPRTR',
+            'Y = IPRT + ERR(1)*W',
+            'IF(ICALL.EQ.4) Y=EXP(DV)',
+            '$THETA  0.973255 ; IPRED 1',
+            '$THETA  (0,1.37932) ; WA',
+            '$THETA  0 FIX ; lambda',
+            '$THETA  0 FIX ; zeta',
+            '$OMEGA  0.0001',
+            '$SIGMA  1  FIX',
+            '$SIMULATION (1234)',
+            '$ESTIMATION METHOD=1 INTER MAXEVALS=99999 PRINT=2 POSTHOC',
         ],
-		base => 3,
+        base => 3,
     }, {
-		name => 'dtbs',
+        name => 'dtbs',
         need_ipred => 1,
-		prob_arr => [
-			'$PROBLEM dtbs model',
-			'$INPUT <inputcolumns>',
-			'$DATA <cwrestablename> IGNORE=@ <ignore> <dvidaccept>',
-			'$SUBROUTINE CONTR=contr.txt CCONTR=ccontra.txt',
-			'$PRED',
-			'IPRT   = THETA(1)*EXP(ETA(1))',
-			'WA     = THETA(2)',
-			'LAMBDA = THETA(3)',
-			'ZETA   = THETA(4)',
-			'IF(IPRT.LT.0) IPRT=10E-14',
-			'W = WA*IPRED**ZETA',
-			'IPRTR = IPRT',
-			'IF (LAMBDA .NE. 0 .AND. IPRT .NE.0) THEN',
-			'	IPRTR = (IPRT**LAMBDA-1)/LAMBDA',
-			'ENDIF',
-			'IF (LAMBDA .EQ. 0 .AND. IPRT .NE.0) THEN',
-			'	IPRTR = LOG(IPRT)',
-			'ENDIF',
-			'IF (LAMBDA .NE. 0 .AND. IPRT .EQ.0) THEN',
-			'	IPRTR = -1/LAMBDA',
-			'ENDIF',
-			'IF (LAMBDA .EQ. 0 .AND. IPRT .EQ.0) THEN',
-			'	IPRTR = -1000000000',
-			'ENDIF',
-			'IPRT = IPRTR',
-			'Y = IPRT + ERR(1)*W',
-			'IF(ICALL.EQ.4) Y=EXP(DV)',
-			'$THETA   0.973255 ; IPRED 1',
-			'$THETA  (0,1.37932) ; WA',
-			'$THETA     0.001    ; lambda',
-			'$THETA     0.001    ; zeta',
-			'$OMEGA  0.0001',
-			'$SIGMA  1  FIX',
-			'$SIMULATION (1234)',
-			'$ESTIMATION METHOD=1 INTER MAXEVALS=99999 PRINT=2 POSTHOC',
-		],
+        prob_arr => [
+            '$PROBLEM dtbs model',
+            '$INPUT <inputcolumns>',
+            '$DATA <cwrestablename> IGNORE=@ <ignore> <dvidaccept>',
+            '$SUBROUTINE CONTR=contr.txt CCONTR=ccontra.txt',
+            '$PRED',
+            'IPRT   = THETA(1)*EXP(ETA(1))',
+            'WA     = THETA(2)',
+            'LAMBDA = THETA(3)',
+            'ZETA   = THETA(4)',
+            'IF(IPRT.LT.0) IPRT=10E-14',
+            'W = WA*IPRED**ZETA',
+            'IPRTR = IPRT',
+            'IF (LAMBDA .NE. 0 .AND. IPRT .NE.0) THEN',
+            '    IPRTR = (IPRT**LAMBDA-1)/LAMBDA',
+            'ENDIF',
+            'IF (LAMBDA .EQ. 0 .AND. IPRT .NE.0) THEN',
+            '    IPRTR = LOG(IPRT)',
+            'ENDIF',
+            'IF (LAMBDA .NE. 0 .AND. IPRT .EQ.0) THEN',
+            '    IPRTR = -1/LAMBDA',
+            'ENDIF',
+            'IF (LAMBDA .EQ. 0 .AND. IPRT .EQ.0) THEN',
+            '    IPRTR = -1000000000',
+            'ENDIF',
+            'IPRT = IPRTR',
+            'Y = IPRT + ERR(1)*W',
+            'IF(ICALL.EQ.4) Y=EXP(DV)',
+            '$THETA   0.973255 ; IPRED 1',
+            '$THETA  (0,1.37932) ; WA',
+            '$THETA     0.001    ; lambda',
+            '$THETA     0.001    ; zeta',
+            '$OMEGA  0.0001',
+            '$SIGMA  1  FIX',
+            '$SIMULATION (1234)',
+            '$ESTIMATION METHOD=1 INTER MAXEVALS=99999 PRINT=2 POSTHOC',
+        ],
         parameters => [
             { name => "lambda", parameter => "THETA3" },
             { name => "zeta", parameter => "THETA4" },
         ],
-		use_base => 3,
-	},
+        use_base => 3,
+    },
 );
 
 sub _create_model_templates
@@ -1245,7 +1245,7 @@ sub _create_model_templates
     # Top level call to resmod will generate all model templates via this method
     my $self = shift;
     my %parm = validated_hash(\@_,
-		table => { isa => 'nmtablefile' },
+        table => { isa => 'nmtablefile' },
         idv_column => { isa => 'Str' },
     );
     my $table = $parm{'table'};
@@ -1255,17 +1255,17 @@ sub _create_model_templates
     $self->model_templates(\@templates);
 
     my $cutoffs = $self->_calculate_quantiles(table => $table->tables->[0], column => $idv_column);
-	$cutoffs = array::unique($cutoffs);
-	my $idv_col_order = $table->tables->[0]->header->{$idv_column};
-	my $min_idv = floor(sprintf("%.10g",array::min(array::remove_NaN($table->tables->[0]->columns->[$idv_col_order])))); # delete NaN values if they exist first
-	my $max_idv = ceil(sprintf("%.10g",array::max(array::remove_NaN($table->tables->[0]->columns->[$idv_col_order]))));
-	#delete first and last elements of cutoffs if they are equal with min_idv and max_idv
-	if($min_idv==$cutoffs->[0]) {
-		splice (@{$cutoffs},0,1);
-	}
-	if($max_idv==$cutoffs->[scalar(@{$cutoffs})-1]) {
-		splice (@{$cutoffs},scalar(@{$cutoffs})-1,1);
-	}
+    $cutoffs = array::unique($cutoffs);
+    my $idv_col_order = $table->tables->[0]->header->{$idv_column};
+    my $min_idv = floor(sprintf("%.10g",array::min(array::remove_NaN($table->tables->[0]->columns->[$idv_col_order])))); # delete NaN values if they exist first
+    my $max_idv = ceil(sprintf("%.10g",array::max(array::remove_NaN($table->tables->[0]->columns->[$idv_col_order]))));
+    #delete first and last elements of cutoffs if they are equal with min_idv and max_idv
+    if($min_idv==$cutoffs->[0]) {
+        splice (@{$cutoffs},0,1);
+    }
+    if($max_idv==$cutoffs->[scalar(@{$cutoffs})-1]) {
+        splice (@{$cutoffs},scalar(@{$cutoffs})-1,1);
+    }
     my $time_var_modeltemplates = $self->_build_time_varying_template(cutoffs => $cutoffs,min_idv => $min_idv, max_idv => $max_idv);
     push @{$self->model_templates}, @$time_var_modeltemplates;
     $self->cutoffs($cutoffs);

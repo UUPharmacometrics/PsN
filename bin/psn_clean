@@ -172,11 +172,11 @@ $help_text{Post_help_message} = <<'EOF';
 EOF
 $help_text{Description} = <<'EOF';
           Option -expand can be used to make psn_clean perform the cleaning
-	  	  in all directories starting with the given name.
-	      Example: bootstrap -expand will match bootstrap_dir1, bootstrap_dir2 and so on.
-	      bootstrap_dir2 -expand will match bootstrap_dir2, bootstrap_dir20 and so on.
-	      bootstrap_dir4 without the option expand will only match bootstrap_dir4.
-	      Multiple directory names may be given as input.
+            in all directories starting with the given name.
+          Example: bootstrap -expand will match bootstrap_dir1, bootstrap_dir2 and so on.
+          bootstrap_dir2 -expand will match bootstrap_dir2, bootstrap_dir20 and so on.
+          bootstrap_dir4 without the option expand will only match bootstrap_dir4.
+          Multiple directory names may be given as input.
 EOF
 $help_text{Options} = <<'EOF';
 Required input: The name of a psn run directory.
@@ -288,7 +288,7 @@ if ($level == 2){
     $restart = 1;
     $csv = 1;
     $dta = 1;
-	$rdata = 1;
+    $rdata = 1;
     $messages = 1;
 }elsif ($level == 3){
   $all_nm = 1;
@@ -314,7 +314,7 @@ foreach my $stem ( @ARGV ){
     if ($expand){
       my @contents = <$stem*>;
       foreach my $thing (@contents){
-	push (@top_directories,$thing) if (-d $thing);
+    push (@top_directories,$thing) if (-d $thing);
       }
     }
 }
@@ -346,86 +346,86 @@ unless (scalar(@top_directories) > 0){
 my $homedir = getcwd();
 
 foreach my $tdir ( @top_directories ) {
-	die unless chdir($homedir);
-	unless ( -d $tdir){
-		next;
-	}
-	my $topdir = $homedir.'/'.$tdir;
-	chdir($topdir);
-	if ($rdata){
-		remove_list(['.RData'],$interactive,$topdir) if (-e '.RData');
-	}
-	while (1){
-		foreach my $stem ('modelfit_dir','orig_modelfit_dir','simulation_dir','base_modelfit_dir',
-						  'derivatives_modelfit_dir','xv_dir/xv_pred_dir','xv_dir/derivatives_xv_pred_dir',
-						  'base_dir','frac_dir','wt_dir','reg_dir','alt_dir','mi_dir','modelfit_dir1_add'){
-			my @modelfits = <$stem*>;
+    die unless chdir($homedir);
+    unless ( -d $tdir){
+        next;
+    }
+    my $topdir = $homedir.'/'.$tdir;
+    chdir($topdir);
+    if ($rdata){
+        remove_list(['.RData'],$interactive,$topdir) if (-e '.RData');
+    }
+    while (1){
+        foreach my $stem ('modelfit_dir','orig_modelfit_dir','simulation_dir','base_modelfit_dir',
+                          'derivatives_modelfit_dir','xv_dir/xv_pred_dir','xv_dir/derivatives_xv_pred_dir',
+                          'base_dir','frac_dir','wt_dir','reg_dir','alt_dir','mi_dir','modelfit_dir1_add'){
+            my @modelfits = <$stem*>;
 
-			foreach my $modf (@modelfits){
-				my @sub_nmruns = <$modf/NM_run*>;
-				foreach my $nmdir (@sub_nmruns){
-					my $tmp = $nmdir.'/temp_dir';
-					my @files = <$tmp/*>;
-					remove_list(\@files,$interactive,$topdir);
-					rmdir $tmp;
-					if ($all_nm or $modelfit){
-						my @files = <$nmdir/*>;
-						remove_list(\@files,$interactive,$topdir);
-						rmdir $nmdir;
-					}elsif ($nm_run){
-						remove_files($nmdir,$restart,$tab,$lst,$csv,$dta,$messages,$interactive,$topdir);
-					}
-				}
-				if ($modelfit){
-					my @files =  <$modf/*>;
-					remove_list(\@files,$interactive,$topdir);
-					rmdir $modf;
-				}
-			}
-		}
-		my @nmruns = <NM_run*>; #only for vpc npc
-		foreach my $nmdir (@nmruns){
-			my $tmp = $nmdir.'/temp_dir';
-			my @files = <$tmp/*>;
-			remove_list(\@files,$interactive,$topdir);
-			rmdir $tmp;
-			if ($all_nm){
-				my @files = <$nmdir/*>;
-				remove_list(\@files,$interactive,$topdir);
-				rmdir $nmdir;
-			}elsif ($nm_run){
-				remove_files($nmdir,$restart,$tab,$lst,$csv,$dta,$messages,$interactive,$topdir);
-			}
-		}
-		if ($all_mx){
-			my @mdir = <m?>;
-			foreach my $dir (@mdir){
-				my @files = <$dir/*>;
-				remove_list(\@files,$interactive,$topdir);
-				rmdir $dir;
-			}
-		}elsif ($mx){
-			my @mdir = <m?>;
-			foreach my $dir (@mdir){
-				remove_files($dir,$restart,$tab,$lst,$csv,$dta,$messages,$interactive,$topdir) if (-d $dir);
-			}
-		}
-		my $recursive=0;
-		foreach my $rd (@recursive_dir){
-			if (-e $rd){
-				$recursive=$rd;
-				last;
-			}
-		}
-		if ($recursive eq '0' or (not -d $recursive)){
-			last;
-		}else {
-			$topdir = $topdir.'/'.$recursive;
-			chdir ($topdir);
-		}
+            foreach my $modf (@modelfits){
+                my @sub_nmruns = <$modf/NM_run*>;
+                foreach my $nmdir (@sub_nmruns){
+                    my $tmp = $nmdir.'/temp_dir';
+                    my @files = <$tmp/*>;
+                    remove_list(\@files,$interactive,$topdir);
+                    rmdir $tmp;
+                    if ($all_nm or $modelfit){
+                        my @files = <$nmdir/*>;
+                        remove_list(\@files,$interactive,$topdir);
+                        rmdir $nmdir;
+                    }elsif ($nm_run){
+                        remove_files($nmdir,$restart,$tab,$lst,$csv,$dta,$messages,$interactive,$topdir);
+                    }
+                }
+                if ($modelfit){
+                    my @files =  <$modf/*>;
+                    remove_list(\@files,$interactive,$topdir);
+                    rmdir $modf;
+                }
+            }
+        }
+        my @nmruns = <NM_run*>; #only for vpc npc
+        foreach my $nmdir (@nmruns){
+            my $tmp = $nmdir.'/temp_dir';
+            my @files = <$tmp/*>;
+            remove_list(\@files,$interactive,$topdir);
+            rmdir $tmp;
+            if ($all_nm){
+                my @files = <$nmdir/*>;
+                remove_list(\@files,$interactive,$topdir);
+                rmdir $nmdir;
+            }elsif ($nm_run){
+                remove_files($nmdir,$restart,$tab,$lst,$csv,$dta,$messages,$interactive,$topdir);
+            }
+        }
+        if ($all_mx){
+            my @mdir = <m?>;
+            foreach my $dir (@mdir){
+                my @files = <$dir/*>;
+                remove_list(\@files,$interactive,$topdir);
+                rmdir $dir;
+            }
+        }elsif ($mx){
+            my @mdir = <m?>;
+            foreach my $dir (@mdir){
+                remove_files($dir,$restart,$tab,$lst,$csv,$dta,$messages,$interactive,$topdir) if (-d $dir);
+            }
+        }
+        my $recursive=0;
+        foreach my $rd (@recursive_dir){
+            if (-e $rd){
+                $recursive=$rd;
+                last;
+            }
+        }
+        if ($recursive eq '0' or (not -d $recursive)){
+            last;
+        }else {
+            $topdir = $topdir.'/'.$recursive;
+            chdir ($topdir);
+        }
 
 
-	} #end while
+    } #end while
 
 } #end foreach topdir
 

@@ -25,7 +25,7 @@ sub BUILD
 {
     my $self = shift;
 
-	my $model = $self->models()->[0];
+    my $model = $self->models()->[0];
     my $evid_column = $model->problems->[0]->find_data_column(column_name => 'EVID', ignore_dropped => 0);
     if ($evid_column == -1) {
         die "Error: There is no EVID column in the dataset\n";
@@ -37,7 +37,7 @@ sub BUILD
 
 sub modelfit_setup
 {
-	my $self = shift;
+    my $self = shift;
 
     my $model = filter_data::filter_dataset(model => $self->model);
 
@@ -104,17 +104,17 @@ sub modelfit_setup
         }
     }
 
-	my $modelfit = tool::modelfit->new(
-		%{common_options::restore_options(@common_options::tool_options)},
-		models => \@models_to_run,
-		base_dir => $self->directory . 'm1/',
-		directory => undef,
-		top_tool => 0,
+    my $modelfit = tool::modelfit->new(
+        %{common_options::restore_options(@common_options::tool_options)},
+        models => \@models_to_run,
+        base_dir => $self->directory . 'm1/',
+        directory => undef,
+        top_tool => 0,
         copy_data => 0,
-	);
+    );
 
-	$self->tools([]) unless defined $self->tools;
-	push(@{$self->tools}, $modelfit);
+    $self->tools([]) unless defined $self->tools;
+    push(@{$self->tools}, $modelfit);
 }
 
 sub modelfit_analyze
@@ -157,16 +157,16 @@ sub set_evid
     # Change the rest of the zeros to twos
     # Report if no zeros were changed
     my $self = shift;
-	my %parm = validated_hash(\@_,
-		dataset => { isa => 'data', optional => 0 },
+    my %parm = validated_hash(\@_,
+        dataset => { isa => 'data', optional => 0 },
         numzeros => { isa => 'Int', optional => 0 },
         evid_column => { isa => 'Int', optional => 0 },
         mdv_column => { isa => 'Maybe[Int]', optional => 1 },
-	);
-	my $dataset = $parm{'dataset'};
-	my $numzeros = $parm{'numzeros'};
-	my $evid_column = $parm{'evid_column'};
-	my $mdv_column = $parm{'mdv_column'};
+    );
+    my $dataset = $parm{'dataset'};
+    my $numzeros = $parm{'numzeros'};
+    my $evid_column = $parm{'evid_column'};
+    my $mdv_column = $parm{'mdv_column'};
 
     my $set_evid_two = 0;       # Did we set any evid to two?
 
@@ -201,10 +201,10 @@ sub ignore_row
 {
     # Decide if row should be ignored or not based on the ignore attribute
     my $self = shift;
-	my %parm = validated_hash(\@_,
-		row => { isa => 'ArrayRef' },
-	);
-	my $row = $parm{'row'};
+    my %parm = validated_hash(\@_,
+        row => { isa => 'ArrayRef' },
+    );
+    my $row = $parm{'row'};
 
     if (not defined $self->ignore) {
         return 0;

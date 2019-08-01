@@ -54,129 +54,129 @@ exit unless $res;
 my %help_text;
 
 $help_text{Pre_help_message} = <<'EOF';
-	Quality assurance
+    Quality assurance
 EOF
 
 $help_text{Description} = <<'EOF';
-	Quality assurance
+    Quality assurance
 EOF
 
 $help_text{Examples} = <<'EOF';
-	improve run1.mod
+    improve run1.mod
 EOF
 
 $help_text{Options} = <<'EOF';
-	A model file is required as argument,
+    A model file is required as argument,
 
-	The following options are valid:
+    The following options are valid:
 EOF
 
 $help_text{-h} = <<'EOF';
-	-h | -?
+    -h | -?
 
-	With -h or -? resmod will print a list of options and exit.
+    With -h or -? resmod will print a list of options and exit.
 EOF
 
 $help_text{-help} = <<'EOF';
-	-help
+    -help
 
-	With -help resmod will print this, longer, help message.
+    With -help resmod will print this, longer, help message.
 EOF
 
 $help_text{-dvid} = <<'EOF';
-	-dvid
+    -dvid
 
-	Name of the dvid column. DVID is default. Will only be used for the structural
-	and residual model analysis.
+    Name of the dvid column. DVID is default. Will only be used for the structural
+    and residual model analysis.
 EOF
 
 $help_text{-occ} = <<'EOF';
-	-occ
+    -occ
 
-	Default is OCC.Name of the occasion column.
+    Default is OCC.Name of the occasion column.
 EOF
 
 $help_text{-idv} = <<'EOF';
-	-idv
+    -idv
 
-	Default is to use TIME,PRED and TAD (if present). Name of the independent
-	variable for the structural and residual model analysis. This option will
-	change the name of TIME.
+    Default is to use TIME,PRED and TAD (if present). Name of the independent
+    variable for the structural and residual model analysis. This option will
+    change the name of TIME.
 EOF
 
 $help_text{-dv} = <<'EOF';
-	-dv
+    -dv
 
-	Default is CWRES. Name of the dependent variable for the structural and residual
-	odel analysis.
+    Default is CWRES. Name of the dependent variable for the structural and residual
+    odel analysis.
 EOF
 
 $help_text{-groups} = <<'EOF';
-	-groups
+    -groups
 
-	Default is 10. Set the number of groups to use for the time varying models.
-	Quantiles using this number will be calculated.
+    Default is 10. Set the number of groups to use for the time varying models.
+    Quantiles using this number will be calculated.
 EOF
 
 $help_text{-covariates} = <<'EOF';
-	-covariates
+    -covariates
 
-	A comma-separated list of continuous covariates.
+    A comma-separated list of continuous covariates.
 EOF
 
 $help_text{-categorical} = <<'EOF';
-	-categorical
+    -categorical
 
-	A comma-separated list of categorical covariates.
+    A comma-separated list of categorical covariates.
 EOF
 
 $help_text{-parameters} = <<'EOF';
-	-parameters
+    -parameters
 
-	A comma-separated list of parameters.
+    A comma-separated list of parameters.
 EOF
 
 $help_text{-fo} = <<'EOF';
-	-fo
+    -fo
 
-	Default is off. Set if the FO method should be used for all estimations
-	of the linearized model.
+    Default is off. Set if the FO method should be used for all estimations
+    of the linearized model.
 EOF
 
 $help_text{-lst_file} = <<'EOF';
-	-lst_file
+    -lst_file
 
-	Default is to use an lst-file with the same name as the model. Set a NONMEM
-	output file to be used for initial estimates.
+    Default is to use an lst-file with the same name as the model. Set a NONMEM
+    output file to be used for initial estimates.
 EOF
 
 $help_text{-nointer} = <<'EOF';
-	-nointer
+    -nointer
 
-	Default is off. Don't use interaction in the linearized model.
+    Default is off. Don't use interaction in the linearized model.
 EOF
 
 $help_text{-nonlinear} = <<'EOF';
-	-nonlinear
+    -nonlinear
 
-	Default is off. Don't linearize the model and use the original non-linear
-	model for all runs.
+    Default is off. Don't linearize the model and use the original non-linear
+    model for all runs.
 EOF
 
 $help_text{-skip} = <<'EOF';
-	-skip
+    -skip
 
-	Skip one or more sections of the improve procedure. Takes a list of section
-	names to skip. The sections are: scm, frem, cdd, simeval,transform and resmod.
-	This option is intended for testing and development.
+    Skip one or more sections of the improve procedure. Takes a list of section
+    names to skip. The sections are: scm, frem, cdd, simeval,transform and resmod.
+    This option is intended for testing and development.
 EOF
 
 $help_text{-only} = <<'EOF';
-	-only
+    -only
 
-	Only run one or more sections of the improve procedure. Takes a list of section
-	names to run. The sections are: scm, frem, cdd, simeval, transform and resmod.
-	This option is intended for testing and development.
+    Only run one or more sections of the improve procedure. Takes a list of section
+    names to run. The sections are: scm, frem, cdd, simeval, transform and resmod.
+    This option is intended for testing and development.
 EOF
 
 common_options::online_help( 'improve', \%options, \%help_text, \%required_options, \%optional_options);
@@ -235,7 +235,7 @@ my $improve = tool::improve->new(
     dvid => $options{'dvid'},
     idv => $options{'idv'},
     dv => $options{'dv'},
-	occ => $options{'occ'},
+    occ => $options{'occ'},
     groups => $options{'groups'},
     covariates => $options{'covariates'},
     categorical => $options{'categorical'},

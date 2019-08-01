@@ -27,11 +27,11 @@ sub modelfit_setup
 {
     my $self = shift;
     my %parm = validated_hash(\@_,
-		model_number => { isa => 'Int', optional => 1 }
-	);
-	my $model_number = $parm{'model_number'};
+        model_number => { isa => 'Int', optional => 1 }
+    );
+    my $model_number = $parm{'model_number'};
 
-	my $model = $self->models->[$model_number - 1];
+    my $model = $self->models->[$model_number - 1];
 
     if (not $self->second_order) {
         if ($model->is_option_set(record => 'abbreviated', name => 'REPLACE')) {

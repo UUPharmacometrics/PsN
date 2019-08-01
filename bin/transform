@@ -51,95 +51,95 @@ my $valid_transformations_string = join("\n", @valid_transformations);
 my %help_text;
 
 $help_text{Pre_help_message} = <<"EOF";
-	Model transformation
+    Model transformation
 
-	The following transformations are supported:
-	$valid_transformations_string
+    The following transformations are supported:
+    $valid_transformations_string
 
 EOF
 
 $help_text{Examples} = <<'EOF';
-	transform boxcox run1.mod
+    transform boxcox run1.mod
 EOF
 
 $help_text{Options} = <<"EOF";
-	A model file and a transformation are required as arguments.
+    A model file and a transformation are required as arguments.
 
-	The following options are valid:
+    The following options are valid:
 EOF
 
 $help_text{-h} = <<'EOF';
-	-h | -?
+    -h | -?
 
-	With -h or -? resmod will print a list of options and exit.
+    With -h or -? resmod will print a list of options and exit.
 EOF
 
 $help_text{-help} = <<'EOF';
-	-help
+    -help
 
-	With -help resmod will print this, longer, help message.
+    With -help resmod will print this, longer, help message.
 EOF
 
 $help_text{-etas} = <<'EOF';
-	-etas
+    -etas
 
-	List the etas to transform. Default is all etas. This option is valid
-	for the boxcox and tdist transformations.
+    List the etas to transform. Default is all etas. This option is valid
+    for the boxcox and tdist transformations.
 EOF
 
 $help_text{-epsilons} = <<'EOF';
-	-epsilons
+    -epsilons
 
-	List the epsilons to transform. Default is all epsilons. This option is
-	valid for the iiv_on_ruv transformations.
+    List the epsilons to transform. Default is all epsilons. This option is
+    valid for the iiv_on_ruv transformations.
 EOF
 
 $help_text{-fix} = <<'EOF';
-	-fix
+    -fix
 
-	Fix the omegas to zero. This option is valid for the remove_iiv and
-	remove_iov transformations.
+    Fix the omegas to zero. This option is valid for the remove_iiv and
+    remove_iov transformations.
 EOF
 
 $help_text{-ids} = <<'EOF';
-	-ids
+    -ids
 
-	Specify a list of ids. This option is mandatory for the omit_ids
-	transformation.
+    Specify a list of ids. This option is mandatory for the omit_ids
+    transformation.
 EOF
 
 $help_text{-ignore} = <<'EOF';
-	-ignore
+    -ignore
 
-	Default the option is not set and changes are done to the dataset. Omit
-	ids by using IGNORE statements in the model. This option is only valid
-	for the omit_ids transformation.
+    Default the option is not set and changes are done to the dataset. Omit
+    ids by using IGNORE statements in the model. This option is only valid
+    for the omit_ids transformation.
 EOF
 
 $help_text{-occ} = <<'EOF';
-	-occ
+    -occ
 
-	Default is OCC. Specify the name of the occasion column. This option is
-	valid for the add_iov transformation.
+    Default is OCC. Specify the name of the occasion column. This option is
+    valid for the add_iov transformation.
 EOF
 
 $help_text{-out} = <<'EOF';
-	-out
+    -out
 
-	Specify a filename for the output model.
+    Specify a filename for the output model.
 EOF
 
 $help_text{-parameters} = <<'EOF';
-	-parameters
+    -parameters
 
-	Specify list of parameters. This option is mandatory for the add_tv
-	transformation.
+    Specify list of parameters. This option is mandatory for the add_tv
+    transformation.
 EOF
 
 $help_text{-dv} = <<'EOF';
-	-dv
+    -dv
 
-	Specify the dependent variable. Default is DV. This option can only be used for the
+    Specify the dependent variable. Default is DV. This option can only be used for the
     remove_nonobs transformation.
 EOF
 

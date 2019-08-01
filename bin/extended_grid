@@ -29,13 +29,13 @@ my %options;
 
 my %required_options = ();
 my %optional_options = ( 'ids_to_simulate:i' => undef,
-			 'id_column:s' => undef,
-			 'dv_column:s' => undef,
-			 'omega_multiplier:f' => undef);
+             'id_column:s' => undef,
+             'dv_column:s' => undef,
+             'omega_multiplier:f' => undef);
 
 my $res = GetOptions( \%options,
-		      @common_options::get_opt_strings,
-		      keys(%optional_options) );
+              @common_options::get_opt_strings,
+              keys(%optional_options) );
 
 exit unless $res;
 
@@ -43,58 +43,58 @@ exit unless $res;
 my %help_text;
 
 $help_text{Pre_help_message} = <<'EOF';
-	Non-parametric estimation on the extended grid.
+    Non-parametric estimation on the extended grid.
 EOF
 
 $help_text{Examples} = <<'EOF';
-	extended_grid pheno.mod
+    extended_grid pheno.mod
 
-	This will create a new directory extended_grid_dirX where X is a number
-	increased every time you run the program. Inside that directory it will
-	create a new model file for each OMEGA in the file. You will be able to
-	retrieve the results from the corresponding table file.
+    This will create a new directory extended_grid_dirX where X is a number
+    increased every time you run the program. Inside that directory it will
+    create a new model file for each OMEGA in the file. You will be able to
+    retrieve the results from the corresponding table file.
 EOF
 
 $help_text{Description} = <<'EOF';
-	The extended_grid program implements the method presented in Evaluation of an
-	extended grid method for estimation using nonparametric distributions,
-	AAPS J. 2009 Sep;11(3):615-27, RM Savic RM, MO Karlsson.
+    The extended_grid program implements the method presented in Evaluation of an
+    extended grid method for estimation using nonparametric distributions,
+    AAPS J. 2009 Sep;11(3):615-27, RM Savic RM, MO Karlsson.
 EOF
 
 $help_text{Options} = <<'EOF';
-	A model file is required as argument.
+    A model file is required as argument.
 
-	The following options are valid:
+    The following options are valid:
 EOF
 
 $help_text{-dv_column} = <<'EOF';
-	-dv_column=column_name
+    -dv_column=column_name
 
-	The dependent variable column. Default DV.
+    The dependent variable column. Default DV.
 EOF
 
 $help_text{-id_column} = <<'EOF';
-	-id_column=column_name
+    -id_column=column_name
 
-	The header of the column marking individuals. Default ID.
+    The header of the column marking individuals. Default ID.
 EOF
 
 $help_text{-ids_to_simulate} = <<'EOF';
-	-ids_to_simulate=N
+    -ids_to_simulate=N
 
-	The number of individuals to simulate. Default is the number of individuals
-	in the original dataset.
+    The number of individuals to simulate. Default is the number of individuals
+    in the original dataset.
 EOF
 
 $help_text{-omega_multiplier} = <<'EOF';
-	-omega_multiplier=number
+    -omega_multiplier=number
 
-	Default 1. The initial omegas in the simulation model and extended model
-	will be multiplied by this number. This gives inflation (or deflation if
-	the multiplier < 1) of the variance.
+    Default 1. The initial omegas in the simulation model and extended model
+    will be multiplied by this number. This gives inflation (or deflation if
+    the multiplier < 1) of the variance.
 EOF
 
-	$help_text{Post_help_message} = <<'EOF';
+    $help_text{Post_help_message} = <<'EOF';
 EOF
 
 
@@ -160,26 +160,26 @@ my %model_column_numbers;
 if( defined $model->problems()->[0] -> inputs and
     defined $model->problems()->[0] -> inputs -> [0] -> options ) {
     foreach my $option ( @{$model->problems()->[0] -> inputs -> [0] -> options} ) {
-		if (($option->name eq 'DROP' or $option->name eq 'SKIP') and (defined $option->value)){
-			$model_column_numbers{$option -> value}= $model_col_num;
-		}else{
-			$model_column_numbers{$option -> name}= $model_col_num;
-		}
-		$model_col_num++;
+        if (($option->name eq 'DROP' or $option->name eq 'SKIP') and (defined $option->value)){
+            $model_column_numbers{$option -> value}= $model_col_num;
+        }else{
+            $model_column_numbers{$option -> name}= $model_col_num;
+        }
+        $model_col_num++;
     }
 }
 
 chdir( $directory );
 
 unless ($model->is_run){
-	my $modelfit;
+    my $modelfit;
     my $base_dir;
     if (defined $output_directory) {
         $base_dir = dirname($output_directory) . '/';
     }
 
-	$modelfit =
-		tool::modelfit->new(
+    $modelfit =
+        tool::modelfit->new(
             eval($common_options::parameters),
             base_directory => $base_dir,
             top_tool => 0,
@@ -188,34 +188,34 @@ unless ($model->is_run){
             models => [ $model ],
         );
 
-	$modelfit-> print_options (directory => '.',
-							   cmd_line => $cmd_line,
-							   toolname => 'modelfit',
-							   local_options => [keys %optional_options],
-							   common_options => \@common_options::tool_options);
+    $modelfit-> print_options (directory => '.',
+                               cmd_line => $cmd_line,
+                               toolname => 'modelfit',
+                               local_options => [keys %optional_options],
+                               common_options => \@common_options::tool_options);
 
-	print "Running the original model in orig_modelfit_dir\n";
-	$modelfit -> run;
+    print "Running the original model in orig_modelfit_dir\n";
+    $modelfit -> run;
 }
 my $model_copy = $model -> copy( filename => 'simulation.mod',
-								 copy_datafile => 0,
-								 write_copy => 0,
-								 output_same_directory => 1);
+                                 copy_datafile => 0,
+                                 write_copy => 0,
+                                 output_same_directory => 1);
 
 $model_copy -> update_inits( from_output => $model -> outputs -> [0] );
 
 if( $options{'omega_multiplier'} ){
 
-	my $omega_ref = $model_copy -> initial_values( parameter_type => 'omega' );
-	my @omegas = @{$omega_ref -> [0]};
-	my @new_omegas;
+    my $omega_ref = $model_copy -> initial_values( parameter_type => 'omega' );
+    my @omegas = @{$omega_ref -> [0]};
+    my @new_omegas;
 
-	foreach my $omega( @omegas ){
-		push( @new_omegas, $omega * $options{'omega_multiplier'} );
-	}
+    foreach my $omega( @omegas ){
+        push( @new_omegas, $omega * $options{'omega_multiplier'} );
+    }
 
-	$model_copy -> initial_values( parameter_type => 'omega',
-								   new_values => [\@new_omegas] );
+    $model_copy -> initial_values( parameter_type => 'omega',
+                                   new_values => [\@new_omegas] );
 
 }
 
@@ -224,55 +224,55 @@ $model_copy -> remove_records( type => 'covariance' );
 $model_copy -> remove_records( type => 'table' );
 
 $model_copy -> set_records( type => 'simulation',
-			    record_strings => ['('.$options{'seed'}.') ONLYSIM']);
+                record_strings => ['('.$options{'seed'}.') ONLYSIM']);
 
 my $nr_of_old_etas = $model -> nomegas -> [0];
 my $nr_of_old_sigmas = $model -> nsigmas -> [0];
 my @table_string;
 for( 1..$nr_of_old_etas ){
-	push( @table_string, "ETA$_" );
+    push( @table_string, "ETA$_" );
 }
 
 $model_copy -> set_records( type => 'table',
-							record_strings => [ $options{'id_column'}." ",join( " ",@table_string ),
-												" NOPRINT NOAPPEND ONEHEADER FIRSTONLY FILE=simdata" ] );
+                            record_strings => [ $options{'id_column'}." ",join( " ",@table_string ),
+                                                " NOPRINT NOAPPEND ONEHEADER FIRSTONLY FILE=simdata" ] );
 
 $model_copy -> _write;
 my $data_set = data ->new (filename => $model_copy -> datafiles(absolute_path => 1) -> [0],
-						   idcolumn => $model_copy ->idcolumn,
-						   ignoresign => $model_copy ->ignoresigns->[0]);
+                           idcolumn => $model_copy ->idcolumn,
+                           ignoresign => $model_copy ->ignoresigns->[0]);
 
 my $n_id_to_simulate;
 my $nr_of_individuals = scalar @{$data_set -> individuals};
 
 if( defined $options{'ids_to_simulate'} ){
-	$n_id_to_simulate = $options{'ids_to_simulate'};
+    $n_id_to_simulate = $options{'ids_to_simulate'};
 
 
-	if( $n_id_to_simulate < $nr_of_individuals ){
-		my $individuals = $data_set -> individuals;
-		my @new_individuals = @{$individuals}[0..($n_id_to_simulate-1)];
+    if( $n_id_to_simulate < $nr_of_individuals ){
+        my $individuals = $data_set -> individuals;
+        my @new_individuals = @{$individuals}[0..($n_id_to_simulate-1)];
 
-		$data_set -> individuals( \@new_individuals );
-	} elsif ($n_id_to_simulate > $nr_of_individuals) {
+        $data_set -> individuals( \@new_individuals );
+    } elsif ($n_id_to_simulate > $nr_of_individuals) {
 
-		my $nr_of_new_ids = $n_id_to_simulate - scalar @{$data_set -> individuals};
+        my $nr_of_new_ids = $n_id_to_simulate - scalar @{$data_set -> individuals};
 
-		for( 1..$nr_of_new_ids ){
-			my $new_individual = $data_set -> individuals -> [0] -> copy;
+        for( 1..$nr_of_new_ids ){
+            my $new_individual = $data_set -> individuals -> [0] -> copy;
 
-			push( @{$data_set -> individuals}, $new_individual );
+            push( @{$data_set -> individuals}, $new_individual );
 
-		}
+        }
 
-	}
+    }
 
-	$data_set -> renumber_ascending;
-	unlink($data_set->full_name);
-	$data_set -> _write;
+    $data_set -> renumber_ascending;
+    unlink($data_set->full_name);
+    $data_set -> _write;
 
 } else {
-	$n_id_to_simulate = scalar @{$data_set -> individuals};
+    $n_id_to_simulate = scalar @{$data_set -> individuals};
 }
 
 my $modelfit = tool::modelfit->new(
@@ -292,18 +292,18 @@ $modelfit->run;
 # {{{ create Dataset
 
 my $extended_model = $model -> copy( filename => 'extended.mod',
-									 copy_datafile => 0,
-									 output_same_directory =>1,
-									 write_copy => 0);
+                                     copy_datafile => 0,
+                                     output_same_directory =>1,
+                                     write_copy => 0);
 
 $extended_model -> remove_option(record_name => 'estimation',
-								 option_name => 'MSFO',
-								 fuzzy_match => 1);
+                                 option_name => 'MSFO',
+                                 fuzzy_match => 1);
 
 my $datacopyname = $model -> datafiles(absolute_path => 1)->[0];
 my $data_copy = data->new(filename => $datacopyname,
-						  ignoresign => '@',
-						  idcolumn => $model->idcolumns->[0]);
+                          ignoresign => '@',
+                          idcolumn => $model->idcolumns->[0]);
 $data_copy->filename('extended.dta');
 $extended_model -> update_inits( from_output => $model -> outputs -> [0] );
 
@@ -318,16 +318,16 @@ if( $options{'omega_multiplier'} ){
   }
 
   $extended_model -> initial_values( parameter_type => 'omega',
-				 new_values => [\@new_omegas] );
+                 new_values => [\@new_omegas] );
 
 }
 
 my $individuals = $data_copy -> individuals;
 
 foreach my $id( @{$individuals} ){
-	foreach my $row( @{$id -> subject_data} ){
-		$row .= ",0";
-	}
+    foreach my $row( @{$id -> subject_data} ){
+        $row .= ",0";
+    }
 }
 
 my $id_template = $individuals->[$#{$individuals}];
@@ -345,10 +345,10 @@ my $table_data = data->new( filename => 'simdata', ignoresign => '@', idcolumn =
 #print "done reading table data\n";
 my $simulated_individuals = $table_data -> individuals();
 unless (scalar(@{$simulated_individuals}) == $n_id_to_simulate){
-	print "Number of simulated ETA sets is ".scalar(@{$simulated_individuals})." but desired number is $n_id_to_simulate.\n".
-		"Check the simulation model and the lst-file in the simulation_dir/NM_run1 subdirectory\n".
-		"to investigate why ETAs are missing in \$TABLE for some individuals.\n";
-	die;
+    print "Number of simulated ETA sets is ".scalar(@{$simulated_individuals})." but desired number is $n_id_to_simulate.\n".
+        "Check the simulation model and the lst-file in the simulation_dir/NM_run1 subdirectory\n".
+        "to investigate why ETAs are missing in \$TABLE for some individuals.\n";
+    die;
 }
 foreach my $id_num ( 1..$n_id_to_simulate ){
   my @new_id_rows;
@@ -368,7 +368,7 @@ foreach my $id_num ( 1..$n_id_to_simulate ){
     push( @new_id_rows, join(',',@new_row ) );
   }
   my $new_id = data::individual -> new( idcolumn => $id_column,
-										subject_data => \@new_id_rows);
+                                        subject_data => \@new_id_rows);
   push( @{$data_copy -> individuals}, $new_id );
 }
 
@@ -397,8 +397,8 @@ my $loop_end = $#{$error -> [0]};
 for( my $row = 0 ; $row <= $loop_end; $row ++ ){
   $error -> [0] -> [$row] =~ s/
                               (.)EPS\((\d+)
-			      (?{$seen_eps{$2}=1;$dummy=$2+$nr_of_old_etas;})\)
-			      /$1ETA($dummy)/gx;
+                  (?{$seen_eps{$2}=1;$dummy=$2+$nr_of_old_etas;})\)
+                  /$1ETA($dummy)/gx;
 
   if( $error -> [0] -> [$row] =~ /IF\s*\(/ ){
     $error_has_if = 1;
@@ -415,7 +415,7 @@ unless( $error_has_if ){
 my $nr_of_added_etas = scalar keys %seen_eps;
 
 $extended_model -> add_option( record_name  => 'input',
-							   option_name  => 'TYPE');
+                               option_name  => 'TYPE');
 
 foreach( 1..$nr_of_old_etas ){
   push(@{$error -> [0]}, '       IF( TYPE.EQ.'.($_).' ) Y = ETA('.($_).')+ERR(2)*W/100000');
@@ -423,33 +423,33 @@ foreach( 1..$nr_of_old_etas ){
 
 
 $extended_model -> set_records( type => 'error',
-				record_strings => $error -> [0] );
+                record_strings => $error -> [0] );
 
 $extended_model -> initial_values( parameter_type => 'sigma',
-				   add_if_absent => 1,
-				   parameter_numbers => [[$nr_of_old_sigmas+1]],
-				   new_values => [[1]] );
+                   add_if_absent => 1,
+                   parameter_numbers => [[$nr_of_old_sigmas+1]],
+                   new_values => [[1]] );
 
 $extended_model -> initial_values( parameter_type => 'omega',
-				   add_if_absent => 1,
-				   parameter_numbers => [[$nr_of_old_etas+1 .. $nr_of_old_etas+$nr_of_added_etas]],
-				   new_values => [[(1) x $nr_of_added_etas]] );
+                   add_if_absent => 1,
+                   parameter_numbers => [[$nr_of_old_etas+1 .. $nr_of_old_etas+$nr_of_added_etas]],
+                   new_values => [[(1) x $nr_of_added_etas]] );
 
 $extended_model -> fixed( parameter_type => 'sigma',
-			  parameter_numbers => [[$nr_of_old_sigmas+1]],
-			  new_values => [[1]] );
+              parameter_numbers => [[$nr_of_old_sigmas+1]],
+              new_values => [[1]] );
 
 $extended_model -> set_option(record_name => 'estimation',
-			      option_name => 'MAXEVALS',
-			      fuzzy_match => 1,
-			      option_value => '0');
+                  option_name => 'MAXEVALS',
+                  fuzzy_match => 1,
+                  option_value => '0');
 
 $extended_model -> set_option(record_name => 'estimation',
-			      option_name => 'POSTHOC',
-			      fuzzy_match => 1);
+                  option_name => 'POSTHOC',
+                  fuzzy_match => 1);
 
 $extended_model -> set_records( type => 'nonparametric',
-				record_strings => ['MARGINALS MSFO=MSF01 UNCONDITIONAL'] );
+                record_strings => ['MARGINALS MSFO=MSF01 UNCONDITIONAL'] );
 
 $extended_model -> remove_records( type => 'covariance' );
 
@@ -458,10 +458,10 @@ my $code_record;
 # Find PK or PRED block
 if ($extended_model->has_code(record => 'pk')) {
   $code_block = $extended_model->get_code(record => 'pk');
-	$code_record = 'pk';
+    $code_record = 'pk';
 } elsif ($extended_model->has_code(record => 'pred')) {
   $code_block = $extended_model->get_code(record => 'pred');
-	$code_record = 'pred';
+    $code_record = 'pred';
 } else {
   die "Error: No \$PK or \$PRED found... \n";
 }
@@ -478,7 +478,7 @@ for( 1..$nr_of_old_etas ){
 $extended_model->set_code(record => $code_record, code => $code_block);
 
 $extended_model -> set_records( type => 'table',
-				record_strings => ['ID '.join( ' ', @table_string, 'JD', @JD_string,'NOPRINT NOAPPEND FIRSTONLY FILE=nptab' ) ] );
+                record_strings => ['ID '.join( ' ', @table_string, 'JD', @JD_string,'NOPRINT NOAPPEND FIRSTONLY FILE=nptab' ) ] );
 
 $extended_model -> extra_output( ['nptab'] );
 
@@ -630,10 +630,10 @@ chdir( "ofv_dir" );
 cp( '../iofvcont.f', './iofvcont.f' ) or print "Warning: unable to copy iofvcont.f\n";
 
 my $table = data->new(
-	filename => "extended.nptab",
-	ignoresign => '@',
-	directory => '../',
-	idcolumn => 1); #defined table ID is 1
+    filename => "extended.nptab",
+    ignoresign => '@',
+    directory => '../',
+    idcolumn => 1); #defined table ID is 1
 
 my $nomegas = $extended_model -> nomegas -> [0];
 
@@ -665,28 +665,28 @@ foreach my $id( 0..($number_of_individuals-1) ){
   }
 
   $copy -> add_records( type => 'contr',
-			record_strings => ['DATA=(ID)'] );
+            record_strings => ['DATA=(ID)'] );
 
   $copy -> add_option( record_name => 'subroutine',
-		       option_name => 'CONTR',
-		       option_value => 'iofvcont.f' );
+               option_name => 'CONTR',
+               option_value => 'iofvcont.f' );
 
   $copy -> lower_bounds( parameter_type => 'omega',
-			 parameter_numbers => [[1..$copy -> nomegas -> [0]]],
-			 new_values => [[(-1) x $copy -> nomegas -> [0]]] );
+             parameter_numbers => [[1..$copy -> nomegas -> [0]]],
+             new_values => [[(-1) x $copy -> nomegas -> [0]]] );
 
   $copy -> initial_values( parameter_type => 'omega',
-			   parameter_numbers => [[1..$copy -> nomegas -> [0]]],
-			   new_values => [[(0) x $copy -> nomegas -> [0]]] );
+               parameter_numbers => [[1..$copy -> nomegas -> [0]]],
+               new_values => [[(0) x $copy -> nomegas -> [0]]] );
 
   $copy -> fixed( parameter_type => 'theta',
-		  new_values => [[(1) x $copy -> nthetas ]] );
+          new_values => [[(1) x $copy -> nthetas ]] );
 
   $copy -> fixed( parameter_type => 'omega',
-		  new_values => [[(1) x $copy -> nomegas -> [0] ]] );
+          new_values => [[(1) x $copy -> nomegas -> [0] ]] );
 
   $copy -> fixed( parameter_type => 'sigma',
-		  new_values => [[(1) x $copy -> nsigmas -> [0] ]] );
+          new_values => [[(1) x $copy -> nsigmas -> [0] ]] );
 
   $copy -> extra_output( ['fort.80'] );
 
@@ -700,10 +700,10 @@ foreach my $id( 0..($number_of_individuals-1) ){
 }
 
 my $new_modelfit =
-	tool::modelfit->new( eval( $common_options::parameters ),
-	  prepend_model_file_name => 1,
-	  directory => 'modelfit',
-	  models => \@new_ofv_models );
+    tool::modelfit->new( eval( $common_options::parameters ),
+      prepend_model_file_name => 1,
+      directory => 'modelfit',
+      models => \@new_ofv_models );
 
 $new_modelfit -> run;
 
@@ -832,7 +832,7 @@ sub dump_T_csv
   for( my $x = 0;$x < @{$arr->[0]}; $x++ ){
     for( my $y = 0;$y < @{$arr}; $y++ ){
       if( $y > 0 and $y < @{$arr} ){
-	print( FILE ',' );
+    print( FILE ',' );
       }
       print( FILE $arr->[$y][$x]  );
     }

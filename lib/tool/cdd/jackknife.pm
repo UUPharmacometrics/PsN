@@ -10,8 +10,8 @@ has 'results_file' => ( is => 'rw', isa => 'Str', default => 'jackknife_results.
 
 sub BUILD
 {
-	my $self = shift;
-	#we do not need to set bins here, default is already number of IDs
+    my $self = shift;
+    #we do not need to set bins here, default is already number of IDs
 
 }
 

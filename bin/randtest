@@ -36,9 +36,9 @@ my %optional_options = (
 );
 
 my $res = GetOptions( \%options,
-		      @common_options::get_opt_strings,
-		      keys(%required_options),
-		      keys(%optional_options) );
+              @common_options::get_opt_strings,
+              keys(%required_options),
+              keys(%optional_options) );
 
 exit unless $res;
 
@@ -46,116 +46,116 @@ exit unless $res;
 
 my %help_text;
 $help_text{Pre_help_message} = <<'EOF';
-	Perform a randomization test.
+    Perform a randomization test.
 EOF
 
 $help_text{Description} = <<'EOF';
-	The randtest (randomization test) tool is used for computing actual
-	significance levels. The method is described in Assessment of Actual
-	Significance levels for Covariate Effects in NONMEM, J PKPD 28(3):231-252,
-	Wählby U., Jonsson EN, Karlsson MO.
-	The tool will shuffle the values in the randomization column ’samples’
-	times and run the input (full) model with each of the new datasets.
-	Provided that a base (reduced) model is given as input, the delta-ofv:s
-	will be computed and the actual signficance levels will be found in output
-	file randtest_results.csv.
+    The randtest (randomization test) tool is used for computing actual
+    significance levels. The method is described in Assessment of Actual
+    Significance levels for Covariate Effects in NONMEM, J PKPD 28(3):231-252,
+    Wählby U., Jonsson EN, Karlsson MO.
+    The tool will shuffle the values in the randomization column ’samples’
+    times and run the input (full) model with each of the new datasets.
+    Provided that a base (reduced) model is given as input, the delta-ofv:s
+    will be computed and the actual signficance levels will be found in output
+    file randtest_results.csv.
 EOF
 
 $help_text{Examples} = <<'EOF';
-	randtest -samples=1000 -randomization_column=DOSE run89.mod -base_model=run0.mod
+    randtest -samples=1000 -randomization_column=DOSE run89.mod -base_model=run0.mod
 EOF
 
 $help_text{Options} = <<'EOF';
 
-	A model file for the full model is required on the command line as well
-	as the number of randomized datasets to generate and the name of the
-	column to randomize.
+    A model file for the full model is required on the command line as well
+    as the number of randomized datasets to generate and the name of the
+    column to randomize.
 
-	The following options are valid:
+    The following options are valid:
 EOF
 
 $help_text{-accepted_ofv_difference} = <<'EOF';
-	-accepted_ofv_difference=N
+    -accepted_ofv_difference=N
 
-	Default is 0.5. A retry will not be initiated if the ofv of the current
-	sample is only 'accepted_ofv_difference' worse than the base model ofv.
+    Default is 0.5. A retry will not be initiated if the ofv of the current
+    sample is only 'accepted_ofv_difference' worse than the base model ofv.
 EOF
 
 $help_text{-base_model} = <<'EOF';
-	-base_model
+    -base_model
 
-	Run the original data set with this model, to use as reference when
-	computing delta-ofv.
+    Run the original data set with this model, to use as reference when
+    computing delta-ofv.
 EOF
 
 $help_text{-copy_data} = <<'EOF';
-	-copy_data
+    -copy_data
 
-	Default set, unset with -no-copy_data. By default, the base model is run
-	with a copy of the dataset in NMrun. If -no-copy_data is used, the data
-	set is not copied to NMrun and an absolute path is used in $DATA.
+    Default set, unset with -no-copy_data. By default, the base model is run
+    with a copy of the dataset in NMrun. If -no-copy_data is used, the data
+    set is not copied to NMrun and an absolute path is used in $DATA.
 EOF
 
 $help_text{-full_model_inits} = <<'EOF';
-	-full_model_inits
+    -full_model_inits
 
-	Default false. Only relevant when -update_inits is true. If true, use final
-	estimates from the full model as initial estimates for the randomized data
-	models. If false, final estimates from the base model are used instead.
+    Default false. Only relevant when -update_inits is true. If true, use final
+    estimates from the full model as initial estimates for the randomized data
+    models. If false, final estimates from the base model are used instead.
 EOF
 
 $help_text{-match_transitions} = <<'EOF';
-	-match_transitions
+    -match_transitions
 
-	Default not set. Alternative method for copying randomization column values
-	from one individual to another during shuffling.
+    Default not set. Alternative method for copying randomization column values
+    from one individual to another during shuffling.
 EOF
 
 $help_text{-randomization_column} = <<'EOF';
-	-randomization_column
+    -randomization_column
 
 The name of the column to randomize. The column name is taken from the model
 file's $INPUT record. Column names in the data file are ignored.
 EOF
 
 $help_text{-retries} = <<'EOF';
-	-retries=N
+    -retries=N
 
-	Default is 0. The number of times to try running each sample with
-	slightly perturbed initial estimates if the first attempt is not
-	successful. The randtest tool will, if -base_model is used, check that
-	the ofv of each sample is at least as good as the ofv of the base model,
-	within 'accepted_ofv_difference'. If not then a retry is initiated. The
-	default value of the number of retries is 0, so to enable the retry
-	feature for randtest the option -retries must be set larger than 0.
+    Default is 0. The number of times to try running each sample with
+    slightly perturbed initial estimates if the first attempt is not
+    successful. The randtest tool will, if -base_model is used, check that
+    the ofv of each sample is at least as good as the ofv of the base model,
+    within 'accepted_ofv_difference'. If not then a retry is initiated. The
+    default value of the number of retries is 0, so to enable the retry
+    feature for randtest the option -retries must be set larger than 0.
 EOF
 
 $help_text{-samples} = <<'EOF';
-	-samples
+    -samples
 
-	The number of randomized datasets to generate.
+    The number of randomized datasets to generate.
 EOF
 
 $help_text{-stratify_on} = <<'EOF';
-	-stratify_on=integer|string
+    -stratify_on=integer|string
 
-	It may be necessary to use stratification in the randomization procedure.
-	For example, if the original data consists of two  groups of patients -
-	say 10 patients with full pharmacokinetic profiles and 90 patients with
-	sparse steady state concentration measurements - it may be wise to
-	restrict the randomization procedure to shuffle within the two groups.
+    It may be necessary to use stratification in the randomization procedure.
+    For example, if the original data consists of two  groups of patients -
+    say 10 patients with full pharmacokinetic profiles and 90 patients with
+    sparse steady state concentration measurements - it may be wise to
+    restrict the randomization procedure to shuffle within the two groups.
 EOF
 
 $help_text{-update_inits} = <<'EOF';
-	-update_inits
+    -update_inits
 
-	Default true. Update the initial estimates of the full model to the final
-	estimates from the estimation (lst-file) of either the base model, or,
-	if option -full_model_inits is set, of the full model. If estimates from
-	the base model are used (option -full_model_inits is not set) only update
-	for those parameters that are estimated (non-fix) in the base model AND
-	are found, based on THETA/OMEGA/SIGMA numbering, both in the base and full
-	model.
+    Default true. Update the initial estimates of the full model to the final
+    estimates from the estimation (lst-file) of either the base model, or,
+    if option -full_model_inits is set, of the full model. If estimates from
+    the base model are used (option -full_model_inits is not set) only update
+    for those parameters that are estimated (non-fix) in the base model AND
+    are found, based on THETA/OMEGA/SIGMA numbering, both in the base and full
+    model.
 EOF
 
 common_options::online_help('randtest',\%options, \%help_text, \%required_options, \%optional_options);
@@ -173,11 +173,11 @@ if (scalar(@ARGV) > 1) {
 }
 
 foreach my $required (keys %required_options){
-	$required =~ s/:[^:]*$//;
-	$required =~ s/!$//;
-	unless (defined $options{$required}){
-		die("Option $required is required");
-	}
+    $required =~ s/:[^:]*$//;
+    $required =~ s/!$//;
+    unless (defined $options{$required}){
+        die("Option $required is required");
+    }
 }
 
 require model;
@@ -211,13 +211,13 @@ unless (defined $options{'copy_data'} and (not $options{'copy_data'})) {
 }
 
 unless ( $model -> is_run){
-	#we will only run this model if not done already, path length matters only if we run
-	unless ($model->copy_data_setting_ok(copy_data => $options{'copy_data'})){
-		die("Cannot set -no-copy_data, absolute data file path is too long.");
-	}
-	if (defined $options{'copy_data'} and (not $options{'copy_data'})){
-		$model->relative_data_path(0);
-	}
+    #we will only run this model if not done already, path length matters only if we run
+    unless ($model->copy_data_setting_ok(copy_data => $options{'copy_data'})){
+        die("Cannot set -no-copy_data, absolute data file path is too long.");
+    }
+    if (defined $options{'copy_data'} and (not $options{'copy_data'})){
+        $model->relative_data_path(0);
+    }
 }
 
 
@@ -233,35 +233,35 @@ if (defined $options{'base_model'}){
         ignore_missing_output_files => 1,
         output_directory => $output_directory,
     );
-	unless ( $base_model -> is_run){
-		unless ($base_model->copy_data_setting_ok(copy_data => $options{'copy_data'})){
-			die("Cannot set -no-copy_data, absolute data file path is too long.");
-		}
-		if (defined $options{'copy_data'} and (not $options{'copy_data'})){
-			$base_model->relative_data_path(0);
-		}
-	}
+    unless ( $base_model -> is_run){
+        unless ($base_model->copy_data_setting_ok(copy_data => $options{'copy_data'})){
+            die("Cannot set -no-copy_data, absolute data file path is too long.");
+        }
+        if (defined $options{'copy_data'} and (not $options{'copy_data'})){
+            $base_model->relative_data_path(0);
+        }
+    }
 }
 
 my $rand =
-	tool::randtest->new( eval( $common_options::parameters ),
-						 top_tool => 1,
-						 prepend_model_file_name => 1,
-						 models				     => [ $model ],
-						 samples				     => $options{'samples'},
-						 base_model			     => $base_model,
-						 match_transitions	             => $options{'match_transitions'},
-						 update_inits          	=> $options{'update_inits'},
-						 full_model_inits          	=> $options{'full_model_inits'},
-						 randomization_column                 => $options{'randomization_column'},
-						 stratify_on                          => $options{'stratify_on'},
-						 copy_data                            => $options{'copy_data'}
-	);
+    tool::randtest->new( eval( $common_options::parameters ),
+                         top_tool => 1,
+                         prepend_model_file_name => 1,
+                         models                     => [ $model ],
+                         samples                     => $options{'samples'},
+                         base_model                 => $base_model,
+                         match_transitions                 => $options{'match_transitions'},
+                         update_inits              => $options{'update_inits'},
+                         full_model_inits              => $options{'full_model_inits'},
+                         randomization_column                 => $options{'randomization_column'},
+                         stratify_on                          => $options{'stratify_on'},
+                         copy_data                            => $options{'copy_data'}
+    );
 
 $rand-> print_options (cmd_line => $cmd_line,
-		     toolname => 'randtest',
-		     local_options => [keys %optional_options],
-		     common_options => \@common_options::tool_options);
+             toolname => 'randtest',
+             local_options => [keys %optional_options],
+             common_options => \@common_options::tool_options);
 
 
 $rand -> run;
@@ -269,4 +269,4 @@ $rand -> prepare_results();
 $rand -> print_results();
 
 ui -> print( category => 'randtest',
-	     message  => "\nrandtest done.\n");
+         message  => "\nrandtest done.\n");

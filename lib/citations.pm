@@ -41,12 +41,12 @@ sub _scan_bib_file
 {
     # scan a .bib file. Return all entries containing the keyword.
     # The returned entries is line by line in an array
-	my %parm = validated_hash(\@_,
+    my %parm = validated_hash(\@_,
         filename => { isa => 'Str' },
         keyword => { isa => 'Str' }
     );
-	my $filename = $parm{'filename'};
-	my $keyword = $parm{'keyword'};
+    my $filename = $parm{'filename'};
+    my $keyword = $parm{'keyword'};
 
     open my $fh, "<", $filename or die("Error: Could not open bibliography database \"PsN.bib\"");
 

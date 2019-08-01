@@ -48,13 +48,13 @@ has '_special_tool_options' => ( is => 'rw', isa => 'Maybe[HashRef]', default =>
 
 sub BUILD
 {
-	select(STDERR);     # Turn on autoflush to simplify fault-finding
-	$| = 1;
-	select(STDOUT);
-	$| = 1;
+    select(STDERR);     # Turn on autoflush to simplify fault-finding
+    $| = 1;
+    select(STDOUT);
+    $| = 1;
     my $self = shift;
 
-	my $model = $self->models()->[0];
+    my $model = $self->models()->[0];
     $self->model($model);
 
     $self->check_nonsupported_modelfeatures();
@@ -112,7 +112,7 @@ sub BUILD
 
 sub modelfit_setup
 {
-	my $self = shift;
+    my $self = shift;
 
     $self->default_update_inits(lst_file => $self->lst_file, model => $self->model);
 
@@ -154,20 +154,20 @@ sub modelfit_setup
 
     $model_copy->phi_file($self->model->get_phi_file());
 
-	my $vers = $PsN::version;
-	my $dev = $PsN::dev;
+    my $vers = $PsN::version;
+    my $dev = $PsN::dev;
 
     $model_copy->set_records(type => 'covariance', record_strings => [ "OMITTED" ]);
 
     my @table_columns = ( 'ID', 'CWRES', 'PRED', 'CIPREDI','CPRED' );
 
-	if ($model_copy->defined_variable(name => 'TIME')) {
+    if ($model_copy->defined_variable(name => 'TIME')) {
         push @table_columns, 'TIME';
     }
-	if ($model_copy->defined_variable(name => 'TAD')) {
+    if ($model_copy->defined_variable(name => 'TAD')) {
         push @table_columns, 'TAD';
     }
-	if (($self->idv ne 'TIME') and ($self->idv ne 'TAD')) {
+    if (($self->idv ne 'TIME') and ($self->idv ne 'TAD')) {
         push @table_columns, $self->idv;
     }
 
@@ -202,8 +202,8 @@ sub modelfit_setup
         $eval_model->init_etas();
         $eval_model->_write(filename => $self->directory . $self->model->filename);
 
-		$self->base_model_path($eval_model->directory . $eval_model->filename);
-		$self->orig_max0_model_path($self->base_model_path);
+        $self->base_model_path($eval_model->directory . $eval_model->filename);
+        $self->orig_max0_model_path($self->base_model_path);
 
         filter_data::filter_dataset(model => $eval_model, force => 1);
     } else {
@@ -243,16 +243,16 @@ sub modelfit_setup
         if (not defined $outobj->problems) {
             $failed = 1;
         } else {
-		    ($failed, undef) = $outobj->nonmem_run_failed;
+            ($failed, undef) = $outobj->nonmem_run_failed;
         }
         if ($failed) {
             print "\nERROR: Linearization failed. Stopping qa.\n";
             exit;
         }
 
-		$self->base_model_path($base_model->directory . $base_model->filename);
-		$self->orig_max0_model_path($base_model->directory . 'linearize_run/scm_dir1/derivatives.mod');
-	    $self->base_dataset_path($base_model->problems->[0]->datas->[0]->get_absolute_filename());
+        $self->base_model_path($base_model->directory . $base_model->filename);
+        $self->orig_max0_model_path($base_model->directory . 'linearize_run/scm_dir1/derivatives.mod');
+        $self->base_dataset_path($base_model->problems->[0]->datas->[0]->get_absolute_filename());
     } else {
         $base_model = $model_copy;
         $self->base_dataset_path($self->directory . 'preprocess_data_dir/filtered.dta');
@@ -339,7 +339,7 @@ sub modelfit_setup
     }
 
     if (defined $self->add_etas and scalar(@{$self->add_etas}) > 0 and not $self->_skipped('transform')) {
-		print "\n*** Running add_etas ***\n";
+        print "\n*** Running add_etas ***\n";
         mkdir "add_etas_run";
         my $add_etas_model = $self->model->copy(
             filename => $self->model->filename,
@@ -350,11 +350,11 @@ sub modelfit_setup
 
         $add_etas_model->set_records(type => 'covariance', record_strings => [ "OMITTED" ]);
 
-		if ($add_etas_model->is_run()) {
-			$add_etas_model->update_inits(from_output => $add_etas_model->outputs->[0]);
+        if ($add_etas_model->is_run()) {
+            $add_etas_model->update_inits(from_output => $add_etas_model->outputs->[0]);
             my $phi_file = $add_etas_model->get_phi_file();
             $add_etas_model->phi_file($phi_file);
-		}
+        }
         if ($self->nonlinear) {
             $add_etas_model->outputs->[0]->filename_root('add_etas');
             $add_etas_model->outputs->[0]->filename('add_etas.lst');
@@ -503,11 +503,11 @@ sub modelfit_setup
             }
 
             eval {
-				if($dev) {
-					system("scm config.scm $scm_options $fo $nointer $nonlinear");       # FIXME: system for now
-				} else {
-					system("scm-".$vers." config.scm $scm_options $fo $nointer $nonlinear");       # FIXME: system for now
-				}
+                if($dev) {
+                    system("scm config.scm $scm_options $fo $nointer $nonlinear");       # FIXME: system for now
+                } else {
+                    system("scm-".$vers." config.scm $scm_options $fo $nointer $nonlinear");       # FIXME: system for now
+                }
             };
             if ($@) {
                 print $@;
@@ -575,61 +575,61 @@ sub modelfit_setup
             $resmod_model = $eval_model;
         }
 
-		if($resmod_model->defined_variable(name => 'TIME')) {
-			my $resmod_time;
-			eval {
-				$resmod_time = tool::resmod->new(
-					%{common_options::restore_options(@common_options::tool_options)},
-					models => [ $resmod_model ],
-					dvid => $self->dvid,
-					idv => 'TIME',
-					dv => $self->dv,
-					occ => $self->occ,
-					groups => $self->groups,
-					iterative => 0,
-					directory => 'resmod_TIME',
-					top_tool => 1,
-					clean => 2,
-				);
-			};
-			if (not $@) {
-				eval {
-					$resmod_time->run();
-				};
-			} else {
-				print $@;
-				rmdir 'resmod_TIME';
-			}
-			$self->_to_qa_dir();
-		}
+        if($resmod_model->defined_variable(name => 'TIME')) {
+            my $resmod_time;
+            eval {
+                $resmod_time = tool::resmod->new(
+                    %{common_options::restore_options(@common_options::tool_options)},
+                    models => [ $resmod_model ],
+                    dvid => $self->dvid,
+                    idv => 'TIME',
+                    dv => $self->dv,
+                    occ => $self->occ,
+                    groups => $self->groups,
+                    iterative => 0,
+                    directory => 'resmod_TIME',
+                    top_tool => 1,
+                    clean => 2,
+                );
+            };
+            if (not $@) {
+                eval {
+                    $resmod_time->run();
+                };
+            } else {
+                print $@;
+                rmdir 'resmod_TIME';
+            }
+            $self->_to_qa_dir();
+        }
 
-		if($resmod_model->defined_variable(name => 'TAD')) {
-			my $resmod_tad;
-			eval {
-				$resmod_tad = tool::resmod->new(
-					%{common_options::restore_options(@common_options::tool_options)},
-					models => [ $resmod_model ],
-					dvid => $self->dvid,
-					idv => 'TAD',
-					dv => $self->dv,
-					occ => $self->occ,
-					groups => $self->groups,
-					iterative => 0,
-					directory => 'resmod_TAD',
-					top_tool => 1,
-					clean => 2,
-				);
-			};
-			if (not $@) {
-				eval {
-					$resmod_tad->run();
-				};
-			} else {
-				print $@;
-				rmdir 'resmod_TAD';
-			}
-			$self->_to_qa_dir();
-		}
+        if($resmod_model->defined_variable(name => 'TAD')) {
+            my $resmod_tad;
+            eval {
+                $resmod_tad = tool::resmod->new(
+                    %{common_options::restore_options(@common_options::tool_options)},
+                    models => [ $resmod_model ],
+                    dvid => $self->dvid,
+                    idv => 'TAD',
+                    dv => $self->dv,
+                    occ => $self->occ,
+                    groups => $self->groups,
+                    iterative => 0,
+                    directory => 'resmod_TAD',
+                    top_tool => 1,
+                    clean => 2,
+                );
+            };
+            if (not $@) {
+                eval {
+                    $resmod_tad->run();
+                };
+            } else {
+                print $@;
+                rmdir 'resmod_TAD';
+            }
+            $self->_to_qa_dir();
+        }
 
 
         my $resmod_pred;
@@ -658,33 +658,33 @@ sub modelfit_setup
         }
         $self->_to_qa_dir();
 
-		if(($self->idv ne "TIME") and ($self->idv ne "TAD")) {
-			my $resmod_idv;
-			eval {
-				$resmod_idv = tool::resmod->new(
-					%{common_options::restore_options(@common_options::tool_options)},
-					models => [ $resmod_model ],
-					dvid => $self->dvid,
-					idv => $self->idv,
-					dv => $self->dv,
-					occ => $self->occ,
-					groups => $self->groups,
-					iterative => 0,
-					directory => 'resmod_'.$self->idv,
-					top_tool => 1,
-					clean => 2,
-				);
-			};
-			if (not $@) {
-				eval {
-					$resmod_idv->run();
-				};
-			} else {
-				print $@;
-				rmdir "resmod_".$self->idv;
-			}
-			$self->_to_qa_dir();
-		}
+        if(($self->idv ne "TIME") and ($self->idv ne "TAD")) {
+            my $resmod_idv;
+            eval {
+                $resmod_idv = tool::resmod->new(
+                    %{common_options::restore_options(@common_options::tool_options)},
+                    models => [ $resmod_model ],
+                    dvid => $self->dvid,
+                    idv => $self->idv,
+                    dv => $self->dv,
+                    occ => $self->occ,
+                    groups => $self->groups,
+                    iterative => 0,
+                    directory => 'resmod_'.$self->idv,
+                    top_tool => 1,
+                    clean => 2,
+                );
+            };
+            if (not $@) {
+                eval {
+                    $resmod_idv->run();
+                };
+            } else {
+                print $@;
+                rmdir "resmod_".$self->idv;
+            }
+            $self->_to_qa_dir();
+        }
     }
 }
 
@@ -715,10 +715,10 @@ sub _all_skipped_for_linearize
 sub _create_scm_config
 {
     my $self = shift;
-	my %parm = validated_hash(\@_,
+    my %parm = validated_hash(\@_,
         model_name => { isa => 'Str' }
     );
-	my $model_name = $parm{'model_name'};
+    my $model_name = $parm{'model_name'};
 
     open my $fh, '>', 'config.scm';
 
@@ -772,7 +772,7 @@ $relations
 continuous = 1,4
 categorical = 1,2
 END
-	print $fh $content;
+    print $fh $content;
     close $fh;
 }
 
@@ -883,13 +883,13 @@ sub write_captured_output
 
 sub create_R_plots_code
 {
-	my $self = shift;
-	my %parm = validated_hash(\@_,
+    my $self = shift;
+    my %parm = validated_hash(\@_,
         rplot => { isa => 'rplots', optional => 0 }
     );
-	my $rplot = $parm{'rplot'};
+    my $rplot = $parm{'rplot'};
 
-	$rplot->pdf_title('Quality assurance');
+    $rplot->pdf_title('Quality assurance');
 
     my @continuous;
     if (defined $self->continuous) {
@@ -903,25 +903,25 @@ sub create_R_plots_code
     if (defined $self->parameters) {
         @parameters = split(/,/, $self->parameters);
     }
-	my $extra_table_path = $self->directory . 'linearize_run/scm_dir1/extra_table';
+    my $extra_table_path = $self->directory . 'linearize_run/scm_dir1/extra_table';
     if ($self->nonlinear) {
         $extra_table_path = $self->directory . 'extra_table';
     }
     $extra_table_path =~ s/\\/\//g;
 
-	my $orig_max0_model_path = $self->orig_max0_model_path;
-	$orig_max0_model_path =~ s/\\/\//g;
-	my $base_model_path = $self->base_model_path;
-	$base_model_path =~ s/\\/\//g;
-	my $base_dataset_path = $self->base_dataset_path;
-	$base_dataset_path =~ s/\\/\//g;
+    my $orig_max0_model_path = $self->orig_max0_model_path;
+    $orig_max0_model_path =~ s/\\/\//g;
+    my $base_model_path = $self->base_model_path;
+    $base_model_path =~ s/\\/\//g;
+    my $base_dataset_path = $self->base_dataset_path;
+    $base_dataset_path =~ s/\\/\//g;
 
-	my $nonlinear_run;
-	if($self->nonlinear) {
-		$nonlinear_run = "TRUE";
-	} else {
-		$nonlinear_run = "FALSE";
-	}
+    my $nonlinear_run;
+    if($self->nonlinear) {
+        $nonlinear_run = "TRUE";
+    } else {
+        $nonlinear_run = "FALSE";
+    }
 
     my $scm_categorical = $self->get_scm_categorical();
     # FIXME: Could for some reason get undef
@@ -934,7 +934,7 @@ sub create_R_plots_code
 
     my $code =  [
             '# qa specific preamble',
-			"groups <- " . $self->groups,
+            "groups <- " . $self->groups,
             "idv_name <- '" . $self->idv . "'",
             "continuous <- " . rplots::create_r_vector(array => \@continuous),
             "categorical <- " . rplots::create_r_vector(array => \@categorical),
@@ -942,20 +942,20 @@ sub create_R_plots_code
             "parameters <- " . rplots::create_r_vector(array => \@parameters),
             "extra_table <- '" . $extra_table_path . "'",
             "extra_table_columns <- " . rplots::create_r_vector(array => \@extra_table_columns),
-			"cdd_dofv_cutoff <- 3.84 ",
-			"cdd_max_rows <- 10",
-			"type <- 'latex' # set to 'html' if want to create a html file ",
+            "cdd_dofv_cutoff <- 3.84 ",
+            "cdd_max_rows <- 10",
+            "type <- 'latex' # set to 'html' if want to create a html file ",
             "skip <- " . rplots::create_r_vector(array => $self->skip),
-			"nonlinear <- " . $nonlinear_run,
-			"original_max0_model <- '" . $orig_max0_model_path . "'",
-			"base_model <- '" . $base_model_path . "'",
-			"base_dataset <- '" . $base_dataset_path . "'",
+            "nonlinear <- " . $nonlinear_run,
+            "original_max0_model <- '" . $orig_max0_model_path . "'",
+            "base_model <- '" . $base_model_path . "'",
+            "base_dataset <- '" . $base_dataset_path . "'",
         ];
-	my $dvid_line = "dvid_name <- ''";
-	if (defined $self->dvid) {
-		$dvid_line = "dvid_name <- '" . $self->dvid . "'";
-	}
-	push @$code, $dvid_line;
+    my $dvid_line = "dvid_name <- ''";
+    if (defined $self->dvid) {
+        $dvid_line = "dvid_name <- '" . $self->dvid . "'";
+    }
+    push @$code, $dvid_line;
 
     if (defined $self->added_etas) {
         my @content;

@@ -1,5 +1,5 @@
 ###############################################################
-#             		     INTRODUCTION                     #
+#                          INTRODUCTION                     #
 ###############################################################
 
 # Individual objective function values can be a useful model
@@ -23,7 +23,7 @@
 
 
 ################################################################
-#       	   TO CREATE THE CONTR SUBROUTINE              #
+#              TO CREATE THE CONTR SUBROUTINE              #
 ################################################################
 
 # To create the CONTR subroutine that is necessary to extract
@@ -101,7 +101,7 @@ has 'base_model' => ( is => 'rw', required => 1, isa => 'model', default => 0 );
 
 sub BUILD
 {
-	my $self  = shift;
+    my $self  = shift;
 
   my $base_model = $self->base_model;
 
@@ -114,7 +114,7 @@ sub BUILD
 
 sub post_process
 {
-	my $self = shift;
+    my $self = shift;
 
   if( $PsN::nm_major_version == '7' ){
     croak("option -iofv is not yet supported for NONMEM7");
@@ -133,15 +133,15 @@ sub post_process
   # Figure out if we have an sdtab and what number it has
   my ( $sd_ref, $junk ) = $base_model -> problems -> [0] ->
       _option_val_pos( name        => 'FILE',
-		       record_name => 'table',
-		       exact_match => 0 );
+               record_name => 'table',
+               exact_match => 0 );
 
   my $sdno = '1';
 
   if( defined $sd_ref ) {
     foreach my $tabname ( @{$sd_ref} ) {
       if( $tabname =~ /[sd,pa]tab(\d+)/ ) {
-	$sdno= $1;
+    $sdno= $1;
       }
     }
   }
@@ -170,30 +170,30 @@ EOF
 
 sub post_run_process
 {
-	my $self = shift;
+    my $self = shift;
 
   my $base_model = $self->base_model;
 
   # Figure out if we have an sdtab and what number it has
   my ( $sd_ref, $junk ) = $base_model -> problems -> [0] ->
       _option_val_pos( name => 'FILE',
-		       record_name => 'table',
-		       exact_match => 0 );
+               record_name => 'table',
+               exact_match => 0 );
 
   my $sdno = '1';
 
   if ( defined $sd_ref ) {
     foreach my $tabname ( @{$sd_ref} ) {
       if ( $tabname =~ /[sd,pa]tab(\d+)/ ) {
-				$sdno = $1;
+                $sdno = $1;
       }
     }
   }
 
-	my $datafilename = $base_model->datafiles(absolute_path => 1, problem_numbers => [1])->[0];
+    my $datafilename = $base_model->datafiles(absolute_path => 1, problem_numbers => [1])->[0];
   my $data = data->new(filename => $datafilename,
-					   ignoresign => '@',
-					   idcolumn => $base_model->idcolumns->[0]);
+                       ignoresign => '@',
+                       idcolumn => $base_model->idcolumns->[0]);
 
   my $ids = $data -> column_to_array( column => $data -> idcolumn -1 );
 
@@ -213,7 +213,7 @@ sub post_run_process
       push( @values, $line[1] );
 
       if( $previous_id == $last_id and $line[0] == $first_id ){
-				push( @starting_points, $i );
+                push( @starting_points, $i );
       }
 
       $previous_id = $line[0];

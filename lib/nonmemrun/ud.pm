@@ -12,47 +12,47 @@ has 'run_no' => ( is => 'rw', isa => 'Int' );
 
 sub submit
 {
-	my $self = shift;
-	my $jobId = -1;
+    my $self = shift;
+    my $jobId = -1;
 
-	my $script;
-	unless(defined $PsN::config->{'_'}->{'ud_nonmem'}) {
-		if( $Config{osname} eq 'MSWin32' ) {
-			$script = 'nonmem.bat';
-		} else {
-			$script = 'nonmem.sh';
-		}
-	} else {
-		$script = $PsN::config -> {'_'} -> {'ud_nonmem'};
-	}
+    my $script;
+    unless(defined $PsN::config->{'_'}->{'ud_nonmem'}) {
+        if( $Config{osname} eq 'MSWin32' ) {
+            $script = 'nonmem.bat';
+        } else {
+            $script = 'nonmem.sh';
+        }
+    } else {
+        $script = $PsN::config -> {'_'} -> {'ud_nonmem'};
+    }
 
-	if (system("$script -s " . $self->model->filename . "> nonmem_sh_stdout")) {
-		my $error = "$!";
-		print "UD submit script failed, check that $script is in your PATH.\nSystem error message: $error";
-		chomp($error);
-		system('echo ' . $error . ' > job_submission_error');
-	}else{
-		if (open(JOBFILE, "JobId")){
-			$jobId = <JOBFILE>;
-			close(JOBFILE);
-		}else{
-			my $error = "$!";
-			print "UD submit script failed, could not open file JobID: $error";
-			chomp($error);
-			system('echo ' . $error . ' > job_submission_error');
-		}
-	}
-	$self->job_id($jobId);
-	return $jobId;
+    if (system("$script -s " . $self->model->filename . "> nonmem_sh_stdout")) {
+        my $error = "$!";
+        print "UD submit script failed, check that $script is in your PATH.\nSystem error message: $error";
+        chomp($error);
+        system('echo ' . $error . ' > job_submission_error');
+    }else{
+        if (open(JOBFILE, "JobId")){
+            $jobId = <JOBFILE>;
+            close(JOBFILE);
+        }else{
+            my $error = "$!";
+            print "UD submit script failed, could not open file JobID: $error";
+            chomp($error);
+            system('echo ' . $error . ' > job_submission_error');
+        }
+    }
+    $self->job_id($jobId);
+    return $jobId;
 }
 
 sub monitor
 {
-	my $self = shift;
-	my $jobId = $self->job_id;
+    my $self = shift;
+    my $jobId = $self->job_id;
 
-	#this cannot possible work, but leave it here if any user wants to use ud.
-	# will be easy to fix this
+    #this cannot possible work, but leave it here if any user wants to use ud.
+    # will be easy to fix this
   my $script;
   unless (defined $PsN::config->{'_'}->{'ud_nonmem'}) {
     if ($Config{osname} eq 'MSWin32') {
@@ -70,9 +70,9 @@ sub monitor
 
   debugmessage(3,"$response");
   if ($response =~ /Job State:\s+Completed/) {  # regexp to find finished jobs.
-		debugmessage(3,"Returning $jobId");
-		$self->retrieve(jobId => $jobId, run_no => $self->run_no);
-		return $jobId; # Return the jobId found.
+        debugmessage(3,"Returning $jobId");
+        $self->retrieve(jobId => $jobId, run_no => $self->run_no);
+        return $jobId; # Return the jobId found.
   }
 
   return 0;
@@ -80,13 +80,13 @@ sub monitor
 
 sub retrieve
 {
-	my $self = shift;
-	my %parm = validated_hash(\@_,
-		 jobId => { isa => 'Int', optional => 1 },
-		 run_no => { isa => 'Int', optional => 1 }
-	);
-	my $jobId = $parm{'jobId'};
-	my $run_no = $parm{'run_no'};
+    my $self = shift;
+    my %parm = validated_hash(\@_,
+         jobId => { isa => 'Int', optional => 1 },
+         run_no => { isa => 'Int', optional => 1 }
+    );
+    my $jobId = $parm{'jobId'};
+    my $run_no = $parm{'run_no'};
 
   my $script;
   unless (defined $PsN::config->{'_'}->{'ud_nonmem'}) {

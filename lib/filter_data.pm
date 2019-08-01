@@ -17,12 +17,12 @@ our @EXPORT_OK = ( @{ $EXPORT_TAGS{'all'} } );
 
 sub filter_dataset
 {
-	my %parm = validated_hash(\@_,
+    my %parm = validated_hash(\@_,
         model => { isa => 'model', optional => 0 },
         force => { isa => 'Bool', default => 0 },
-	);
-	my $model = $parm{'model'};
-	my $force = $parm{'force'};
+    );
+    my $model = $parm{'model'};
+    my $force = $parm{'force'};
 
     if ($force or $model->need_data_filtering()) {
 

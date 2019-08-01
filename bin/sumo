@@ -41,8 +41,8 @@ my %optional_options = (
 
 
 my $res = GetOptions( \%options,
-		      @common_options::get_opt_strings,
-		      keys(%optional_options) );
+              @common_options::get_opt_strings,
+              keys(%optional_options) );
 
 exit unless $res;
 
@@ -73,45 +73,45 @@ foreach my $opt ( keys(%optional_options) ){
 my %help_text;
 
 $help_text{Pre_help_message} = <<'EOF';
-	Perl script for summarizing output data.
+    Perl script for summarizing output data.
 EOF
 
 $help_text{Description} = <<'EOF';
-	The sumo tool is used to summarize output from a NONMEM run and print
-	it to screen. It takes a lst-file as input.
+    The sumo tool is used to summarize output from a NONMEM run and print
+    it to screen. It takes a lst-file as input.
 EOF
 
 $help_text{Examples} = <<'EOF';
-	sumo run1.lst
+    sumo run1.lst
 EOF
 
 $help_text{Options} = <<'EOF';
-	An lst-file is required on the command line.
+    An lst-file is required on the command line.
 
-	The following options are valid:
+    The following options are valid:
 EOF
 
 $help_text{-c_level} = <<'EOF';
-	-c_level=N
+    -c_level=N
 
-	Default is 95. This option specifies the coverage of the confidence
-	interval computed by the -ci option (see below). Allowed values are 90,
-	95, 99 and 99.5.
+    Default is 95. This option specifies the coverage of the confidence
+    interval computed by the -ci option (see below). Allowed values are 90,
+    95, 99 and 99.5.
 EOF
 
 $help_text{-check_run} = <<'EOF';
-	-check_run
+    -check_run
 
-	Default set. When unset with -no-check_run the initial run diagnostic
-	output of sumo will be suppressed.
+    Default set. When unset with -no-check_run the initial run diagnostic
+    output of sumo will be suppressed.
 EOF
 
 $help_text{-ci} = <<'EOF';
-	-confidence_interval, -ci
+    -confidence_interval, -ci
 
-	Default not set. This option computes and reports the traditional
-	confidence intervals for the parameter estimates instead of the relative
-	standard errors: CI = estimate +/- c_level*SE.
+    Default not set. This option computes and reports the traditional
+    confidence intervals for the parameter estimates instead of the relative
+    standard errors: CI = estimate +/- c_level*SE.
 
     0MINIMIZATION SUCCESSFUL
     NO. OF FUNCTION EVALUATIONS USED:  172
@@ -141,100 +141,100 @@ $help_text{-ci} = <<'EOF';
 EOF
 
 $help_text{-condition_number_limit} = <<'EOF';
-	-condition_number_limit='number'
+    -condition_number_limit='number'
 
-	Default is 1000. The cut-off for issuing a warning for a high condition
-	number. The test will only be made if the $COV step has been requested in
-	the NMtran control stream and NONMEM has been asked to report eigenvalues
-	($COV PRINT=E).
+    Default is 1000. The cut-off for issuing a warning for a high condition
+    number. The test will only be made if the $COV step has been requested in
+    the NMtran control stream and NONMEM has been asked to report eigenvalues
+    ($COV PRINT=E).
 EOF
 
 $help_text{-correlation_limit} = <<'EOF';
-	-correlation_limit='number'
+    -correlation_limit='number'
 
-	Default 0.9. The cut-off for issuing a warning for high correlations
-	between the parameter estimates. This test will only be made if the $COV
+    Default 0.9. The cut-off for issuing a warning for high correlations
+    between the parameter estimates. This test will only be made if the $COV
     step has been requested in the NMtran control stream.
 EOF
 
 $help_text{-csv} = <<'EOF';
-	-csv
+    -csv
 
-	Default not set. The option produces output in which the columns of the
-	parameters estimates and standard errors are comma separated. This option
-	can be used if you wish to import the sumo output into a spreadsheet
-	programs, such as MS Excel. (Something like this is probably what you
-	would want to do in that case: sumo -csv run1.lst > sumooutput.csv).
+    Default not set. The option produces output in which the columns of the
+    parameters estimates and standard errors are comma separated. This option
+    can be used if you wish to import the sumo output into a spreadsheet
+    programs, such as MS Excel. (Something like this is probably what you
+    would want to do in that case: sumo -csv run1.lst > sumooutput.csv).
 EOF
 
 $help_text{-debug} = <<'EOF';
-	-debug=N
+    -debug=N
 
-	By default N is 0 but you can set it to 1 to enable warnings.. This is
-	mainly for developers who wish to debug PsN.
+    By default N is 0 but you can set it to 1 to enable warnings.. This is
+    mainly for developers who wish to debug PsN.
 EOF
 
 $help_text{-max_problem_num} = <<'EOF';
-	-max_problem_num=integer
+    -max_problem_num=integer
 
-	Default is 1. By default sumo reports the results for the first $PROBLEM
-	only. PsN divides NONMEM output into problems and subproblems.
+    Default is 1. By default sumo reports the results for the first $PROBLEM
+    only. PsN divides NONMEM output into problems and subproblems.
 EOF
 
 $help_text{-max_subproblem_num} = <<'EOF';
-	-max_subproblem_num=integer
+    -max_subproblem_num=integer
 
-	Default is 1. By default sumo reports the results only for the first
-	subproblem of the selected problems. Each problem contains at least one
-	subproblem. Should $SIMULATION be used there will be as many subproblems
-	as the value of NSUBS.
+    Default is 1. By default sumo reports the results only for the first
+    subproblem of the selected problems. Each problem contains at least one
+    subproblem. Should $SIMULATION be used there will be as many subproblems
+    as the value of NSUBS.
 EOF
 
 $help_text{-near_bound_sign_digits} = <<'EOF';
-	-near_bound_sign_digits=integer
+    -near_bound_sign_digits=integer
 
-	Default is 2. When a parameter estimates is equal to a boundary with these
-	many significant digits, a warning will be issued. The default is for
-	NONMEM to report if parameter estimates are close to a boundary value but
-	this can be turned off. The boundary test in sumo is independent of the
-	way NONMEM is configured and will report these types of issues in output
-	from NONMEM.
+    Default is 2. When a parameter estimates is equal to a boundary with these
+    many significant digits, a warning will be issued. The default is for
+    NONMEM to report if parameter estimates are close to a boundary value but
+    this can be turned off. The boundary test in sumo is independent of the
+    way NONMEM is configured and will report these types of issues in output
+    from NONMEM.
 EOF
 
 $help_text{-near_zero_boundary_limit} = <<'EOF';
-	-near_zero_boundary_limit=N
+    -near_zero_boundary_limit=N
 
-	Default is 0.001. If the bound is 0, the boundary test will issue a
-	warning if the estimate is this close to zero.
+    Default is 0.001. If the bound is 0, the boundary test will issue a
+    warning if the estimate is this close to zero.
 EOF
 
 $help_text{-precision} = <<'EOF';
-	-precision=integer
+    -precision=integer
 
-	Default is 4. Precision in output.
+    Default is 4. Precision in output.
 EOF
 
 $help_text{-sd_rse} = <<'EOF';
--	sd_rse
+-    sd_rse
 
-	Default set. If sd\_rse is set, sumo will report these on the
-	(approximate) standard deviation scale: (SE/variance estimate)/2. If
-	sd\_rse is not set sumo will report the relative standard errors for
-	the random effects parameters (omega and sigma) on the variance scale
-	(SE/variance estimate).
+    Default set. If sd\_rse is set, sumo will report these on the
+    (approximate) standard deviation scale: (SE/variance estimate)/2. If
+    sd\_rse is not set sumo will report the relative standard errors for
+    the random effects parameters (omega and sigma) on the variance scale
+    (SE/variance estimate).
 EOF
 
-	$help_text{-sign_digits_off_diagonals} = <<'EOF';
-	-sign_digits_off_diagonals=integer
+    $help_text{-sign_digits_off_diagonals} = <<'EOF';
+    -sign_digits_off_diagonals=integer
 
-	Default is 2. The boundary test for off-diagonal omega elements are
-	performed by first converting the covariances to the corresponding
-	correlations and then check if they are close to +/-1 with this many
-	significant digits.
+    Default is 2. The boundary test for off-diagonal omega elements are
+    performed by first converting the covariances to the corresponding
+    correlations and then check if they are close to +/-1 with this many
+    significant digits.
 EOF
 
 $help_text{-parameters} = <<'EOF';
-	-parameters
+    -parameters
 
     Default is off. Only show the parameter estimates to more easily
     be able to compare model runs.
@@ -253,17 +253,17 @@ if ( scalar( @ARGV ) < 1 ){
 ## Sort out some general settings that are common to all files, problems and sub-problems.
 
 my %c_levels = ( '90'   => 1.6449,
-		 '95'   => 1.96,
-		 '99'   => 2.5758,
-		 '99.9' => 3.2905 );
+         '95'   => 1.96,
+         '99'   => 2.5758,
+         '99.9' => 3.2905 );
 
 $options{'confidence_interval'} = $options{'ci'} if (defined $options{'ci'});
 if( $options{'confidence_interval'} ) {
 
     if( not defined $c_levels{$options{'c_level'}} ) {
-	die "Sorry, confidence intervals for level ".$options{'c_level'}.
-	    " can not be output. Valid levels are: ".join(',', keys %c_levels).
-	    "\n";
+    die "Sorry, confidence intervals for level ".$options{'c_level'}.
+        " can not be output. Valid levels are: ".join(',', keys %c_levels).
+        "\n";
     }
 }
 
@@ -277,503 +277,503 @@ require model;
  OUTFILE:
     foreach my $outfile ( @ARGV ) {
 
-		## Check that the output file exist before trying to read it. (To
-		## avoid displaying the usual cryptic PsN error message).
-		unless(-e $outfile) {
-			print "The file: $outfile does not exist.\n\n";
-			next OUTFILE;
-		}
+        ## Check that the output file exist before trying to read it. (To
+        ## avoid displaying the usual cryptic PsN error message).
+        unless(-e $outfile) {
+            print "The file: $outfile does not exist.\n\n";
+            next OUTFILE;
+        }
 
-		my $outobj = output -> new ('filename'=> $outfile);
+        my $outobj = output -> new ('filename'=> $outfile);
 
-		unless( $outobj -> parsed_successfully ){
-			print "Unable to read everything from outputfile, parser error message:\n";
-			print $outobj -> parsing_error_message();
-			next OUTFILE;
-		}
-		print "-----------------------------------------------------------------------\n";
-		my ($failed,$reason) = $outobj ->nonmem_run_failed;
-		if ( $failed){
-			print "\nThe NONMEM run failed: $reason\n";
-		}
-
-
-
-		#Use accessors to retrieve data
-		my $model = $outobj->lst_model;
-
-		my $eta_shrinkage = $outobj->shrinkage_eta();
-		my $eps_shrinkage = $outobj->shrinkage_eps();
-		my $observation_records = $outobj->nobs();
-		my $individuals = $outobj->nind();
+        unless( $outobj -> parsed_successfully ){
+            print "Unable to read everything from outputfile, parser error message:\n";
+            print $outobj -> parsing_error_message();
+            next OUTFILE;
+        }
+        print "-----------------------------------------------------------------------\n";
+        my ($failed,$reason) = $outobj ->nonmem_run_failed;
+        if ( $failed){
+            print "\nThe NONMEM run failed: $reason\n";
+        }
 
 
-		my $nmversion = $outobj -> nonmem_version();
 
-		my ( $found_bounds, $found_names, $found_values ) =
-			$outobj -> near_bounds( zero_limit         => $options{'near_zero_boundary_limit'},
-									significant_digits => $options{'near_bound_sign_digits'},
-									off_diagonal_sign_digits => $options{'sign_digits_off_diagonals'});
+        #Use accessors to retrieve data
+        my $model = $outobj->lst_model;
+
+        my $eta_shrinkage = $outobj->shrinkage_eta();
+        my $eps_shrinkage = $outobj->shrinkage_eps();
+        my $observation_records = $outobj->nobs();
+        my $individuals = $outobj->nind();
+
+
+        my $nmversion = $outobj -> nonmem_version();
+
+        my ( $found_bounds, $found_names, $found_values ) =
+            $outobj -> near_bounds( zero_limit         => $options{'near_zero_boundary_limit'},
+                                    significant_digits => $options{'near_bound_sign_digits'},
+                                    off_diagonal_sign_digits => $options{'sign_digits_off_diagonals'});
 
 
       PROBLEM:
-		for( my $problems = 0; $problems <= $#{$outobj -> problems}; $problems++){
-			last PROBLEM if $problems > $options{'max_problem_num'} -1;
-			my $row_counter = 0;
+        for( my $problems = 0; $problems <= $#{$outobj -> problems}; $problems++){
+            last PROBLEM if $problems > $options{'max_problem_num'} -1;
+            my $row_counter = 0;
 
-			next unless (defined $outobj -> problems -> [$problems] -> subproblems());
+            next unless (defined $outobj -> problems -> [$problems] -> subproblems());
 
-			my %nam;
-			foreach my $param ('theta','omega','sigma'){
-				my $namesref = $outobj->output_get_estimated_attributes(parameter => $param,
-																		attribute => 'labels',
-																		problem_index => $problems);
-				my @names=();
-				if (defined $namesref){
-					@names = @{$namesref};
-				}
-				$nam{$param} = \@names;
-			}
+            my %nam;
+            foreach my $param ('theta','omega','sigma'){
+                my $namesref = $outobj->output_get_estimated_attributes(parameter => $param,
+                                                                        attribute => 'labels',
+                                                                        problem_index => $problems);
+                my @names=();
+                if (defined $namesref){
+                    @names = @{$namesref};
+                }
+                $nam{$param} = \@names;
+            }
 
-		  SUBPROBLEM:
-			for( my $sub_problems = 0; $sub_problems <= $#{$outobj -> problems -> [$problems] -> subproblems}; $sub_problems++){
-				last SUBPROBLEM if $sub_problems > $options{'max_subproblem_num'}-1;
+          SUBPROBLEM:
+            for( my $sub_problems = 0; $sub_problems <= $#{$outobj -> problems -> [$problems] -> subproblems}; $sub_problems++){
+                last SUBPROBLEM if $sub_problems > $options{'max_subproblem_num'}-1;
 
-				## Start collecting the information to be printed
+                ## Start collecting the information to be printed
 
-				my ( %est, %cest, %ses, %cvse);
+                my ( %est, %cest, %ses, %cvse);
 
-				foreach my $param ('theta','omega','sigma'){
-					my $ref = $outobj->get_filtered_values(problem_index => $problems,
-														   subproblem_index => $sub_problems,
-														   parameter => $param,
-														   category => 'estimate');
-					my @values=();
-					if (defined $ref){
-						@values = @{$ref};
-					}
-					$est{$param} = \@values;
-				}
-				foreach my $param ('theta','omega','sigma'){
-					my $ref = $outobj->get_filtered_values(problem_index => $problems,
-														   subproblem_index => $sub_problems,
-														   parameter => $param,
-														   category => 'se');
-					my @values=();
-					if (defined $ref){
-						@values = @{$ref};
-					}
-					$ses{$param} = \@values;
-				}
+                foreach my $param ('theta','omega','sigma'){
+                    my $ref = $outobj->get_filtered_values(problem_index => $problems,
+                                                           subproblem_index => $sub_problems,
+                                                           parameter => $param,
+                                                           category => 'estimate');
+                    my @values=();
+                    if (defined $ref){
+                        @values = @{$ref};
+                    }
+                    $est{$param} = \@values;
+                }
+                foreach my $param ('theta','omega','sigma'){
+                    my $ref = $outobj->get_filtered_values(problem_index => $problems,
+                                                           subproblem_index => $sub_problems,
+                                                           parameter => $param,
+                                                           category => 'se');
+                    my @values=();
+                    if (defined $ref){
+                        @values = @{$ref};
+                    }
+                    $ses{$param} = \@values;
+                }
 
-				if (defined $ses{'theta'} and scalar(@{$ses{'theta'}} > 0) or defined $ses{'omega'} and scalar(@{$ses{'omega'}}) > 0 or defined $ses{'sigma'} and scalar(@{$ses{'sigma'}}) > 0) {
-					foreach my $param ('theta','omega','sigma'){
-						my $ref = $outobj->get_filtered_values(problem_index => $problems,
-															   subproblem_index => $sub_problems,
-															   parameter => $param,
-															   category => 'cvse');
-						my @values=();
-						if (defined $ref){
-							@values = @{$ref};
-						}
-						$cvse{$param} = \@values;
-					}
-				}
+                if (defined $ses{'theta'} and scalar(@{$ses{'theta'}} > 0) or defined $ses{'omega'} and scalar(@{$ses{'omega'}}) > 0 or defined $ses{'sigma'} and scalar(@{$ses{'sigma'}}) > 0) {
+                    foreach my $param ('theta','omega','sigma'){
+                        my $ref = $outobj->get_filtered_values(problem_index => $problems,
+                                                               subproblem_index => $sub_problems,
+                                                               parameter => $param,
+                                                               category => 'cvse');
+                        my @values=();
+                        if (defined $ref){
+                            @values = @{$ref};
+                        }
+                        $cvse{$param} = \@values;
+                    }
+                }
 
-				foreach my $param ('omega','sigma'){
-					my $ref = $outobj->get_filtered_values(problem_index => $problems,
-														   subproblem_index => $sub_problems,
-														   parameter => $param,
-														   category => 'c');
-					my @values=();
-					if (defined $ref){
-						@values = @{$ref};
-					}
-					$cest{$param} = \@values;
-				}
-
-
-
-				my @etashrinkage = defined $eta_shrinkage -> [$problems][$sub_problems] ? @{$eta_shrinkage -> [$problems][$sub_problems]} : ();
-				my @epsshrinkage = defined $eps_shrinkage -> [$problems][$sub_problems] ? @{$eps_shrinkage -> [$problems][$sub_problems]} : ();
-
-
-				## Termination
-				my $ofv    = $outobj -> get_single_value(attribute => 'ofv',
-														 problem_index =>$problems,
-														 subproblem_index => $sub_problems);
-				my $dic    = $outobj -> get_single_value(attribute => 'dic',
-														 problem_index =>$problems,
-														 subproblem_index => $sub_problems);
-				#estimation_step_run is on problem level, don't need subproblem
-				my $min_run    = $outobj -> get_single_value(attribute => 'estimation_step_run',
-															 problem_index =>$problems);
-				my $min_success = $outobj -> get_single_value(attribute => 'minimization_successful',
-															  problem_index =>$problems,
-															  subproblem_index => $sub_problems);
-				my $condno    = $outobj -> get_single_value(attribute => 'condition_number',
-															problem_index =>$problems,
-															subproblem_index => $sub_problems);
-				my $runtime = $outobj ->runtime();
-				my $esttime = $outobj ->get_single_value(attribute => 'sum_estimation_time',
-														 problem_index =>$problems,
-														 subproblem_index => $sub_problems);
-				my $covtime = $outobj ->get_single_value(attribute => 'sum_covariance_time',
-														 problem_index =>$problems,
-														 subproblem_index => $sub_problems);
-
-
-				my $minim_mess;
-				my $round_mess;
-				my $zero_mess;
-				my $final_zero_mess;
-				my $hess_mess;
-				my $near_bound_mess;
-				my @near_bound_parameters;
-				my $cov_mess;
-				my $large_se_mess;
-				my $cond_mess;
-				my $corr_mess;
-				my @large_corrs;
-
-				if($options{'check_run'} and not $options{'parameters'}) {
-					## Start check termination
-
-					if ( $min_success eq '1' ) {
-						$minim_mess = acknowledge( 'Successful minimization', 'OK');
-					} elsif ($min_run){
-						$minim_mess = acknowledge( 'Termination problems', 'ERROR');
-					}else {
-						$minim_mess = acknowledge( 'Estimation step omitted', '-');
-					}
-
-					if ( $outobj -> rounding_errors -> [$problems][$sub_problems] eq '0' ) {
-						unless ($failed){
-							$round_mess = acknowledge( 'No rounding errors', 'OK');
-						}
-					} else {
-						$round_mess = acknowledge( 'Rounding errors', 'ERROR');
-					}
-
-					if (defined $outobj -> zero_gradients -> [$problems][$sub_problems]){
-						if ( $outobj -> zero_gradients -> [$problems][$sub_problems] eq '0' ) {
-							$zero_mess = acknowledge( 'No zero gradients', 'OK');
-						} else {
-							$zero_mess = acknowledge( 'Zero gradients found '.$outobj -> zero_gradients -> [$problems][$sub_problems].' times', 'WARNING');
-						}
-					}else{
-						$zero_mess = acknowledge('Zero gradient information not read', '-');
-					}
-
-					if (defined $outobj -> final_zero_gradients -> [$problems][$sub_problems]){
-						if ( $outobj -> final_zero_gradients -> [$problems][$sub_problems] eq '0' ) {
-							$final_zero_mess = acknowledge( 'No final zero gradients', 'OK');
-						} else {
-							$final_zero_mess = acknowledge( 'Final zero gradients', 'ERROR');
-						}
-					}else{
-						$final_zero_mess = acknowledge('Final zero gradient information not read', '-');
-					}
-
-					if (defined $outobj -> hessian_reset -> [$problems][$sub_problems]){
-						if ( $outobj -> hessian_reset -> [$problems][$sub_problems] eq '0' ) {
-							$hess_mess = acknowledge( 'Hessian not reset', 'OK');
-						} else {
-							$hess_mess = acknowledge( 'Hessian reset '.$outobj -> hessian_reset -> [$problems][$sub_problems].' times', 'WARNING');
-						}
-					}else{
-						$hess_mess = acknowledge( 'Hessian information not read', '-');
-					}
+                foreach my $param ('omega','sigma'){
+                    my $ref = $outobj->get_filtered_values(problem_index => $problems,
+                                                           subproblem_index => $sub_problems,
+                                                           parameter => $param,
+                                                           category => 'c');
+                    my @values=();
+                    if (defined $ref){
+                        @values = @{$ref};
+                    }
+                    $cest{$param} = \@values;
+                }
 
 
 
-					if ( defined $found_names -> [$problems] and defined $found_names -> [$problems][$sub_problems] ) {
+                my @etashrinkage = defined $eta_shrinkage -> [$problems][$sub_problems] ? @{$eta_shrinkage -> [$problems][$sub_problems]} : ();
+                my @epsshrinkage = defined $eps_shrinkage -> [$problems][$sub_problems] ? @{$eps_shrinkage -> [$problems][$sub_problems]} : ();
 
-						my @near_bounds     = @{$found_names -> [$problems][$sub_problems]};
-						my @found_bounds    = @{$found_bounds -> [$problems][$sub_problems]};
-						my @found_estimates = @{$found_values -> [$problems][$sub_problems]};
 
-						for ( my $i = 0; $i <= $#near_bounds; $i++ ) {
-							push @near_bound_parameters, sprintf( "\t%-20s%10g   %10g", $near_bounds[$i],
-																  $found_estimates[$i], $found_bounds[$i] )
-								if (defined $near_bounds[$i]);
+                ## Termination
+                my $ofv    = $outobj -> get_single_value(attribute => 'ofv',
+                                                         problem_index =>$problems,
+                                                         subproblem_index => $sub_problems);
+                my $dic    = $outobj -> get_single_value(attribute => 'dic',
+                                                         problem_index =>$problems,
+                                                         subproblem_index => $sub_problems);
+                #estimation_step_run is on problem level, don't need subproblem
+                my $min_run    = $outobj -> get_single_value(attribute => 'estimation_step_run',
+                                                             problem_index =>$problems);
+                my $min_success = $outobj -> get_single_value(attribute => 'minimization_successful',
+                                                              problem_index =>$problems,
+                                                              subproblem_index => $sub_problems);
+                my $condno    = $outobj -> get_single_value(attribute => 'condition_number',
+                                                            problem_index =>$problems,
+                                                            subproblem_index => $sub_problems);
+                my $runtime = $outobj ->runtime();
+                my $esttime = $outobj ->get_single_value(attribute => 'sum_estimation_time',
+                                                         problem_index =>$problems,
+                                                         subproblem_index => $sub_problems);
+                my $covtime = $outobj ->get_single_value(attribute => 'sum_covariance_time',
+                                                         problem_index =>$problems,
+                                                         subproblem_index => $sub_problems);
 
-						}
-						if ( $#near_bound_parameters < 0 ) {
-							unless ($failed){
-								$near_bound_mess = acknowledge( 'No parameter near boundary', 'OK');
-							}
-						} else {
-							$near_bound_mess = acknowledge( 'Parameter(s) / ETA-/EPS-correlation(s) near boundary', 'WARNING');
 
-						}
-					}
+                my $minim_mess;
+                my $round_mess;
+                my $zero_mess;
+                my $final_zero_mess;
+                my $hess_mess;
+                my $near_bound_mess;
+                my @near_bound_parameters;
+                my $cov_mess;
+                my $large_se_mess;
+                my $cond_mess;
+                my $corr_mess;
+                my @large_corrs;
+
+                if($options{'check_run'} and not $options{'parameters'}) {
+                    ## Start check termination
+
+                    if ( $min_success eq '1' ) {
+                        $minim_mess = acknowledge( 'Successful minimization', 'OK');
+                    } elsif ($min_run){
+                        $minim_mess = acknowledge( 'Termination problems', 'ERROR');
+                    }else {
+                        $minim_mess = acknowledge( 'Estimation step omitted', '-');
+                    }
+
+                    if ( $outobj -> rounding_errors -> [$problems][$sub_problems] eq '0' ) {
+                        unless ($failed){
+                            $round_mess = acknowledge( 'No rounding errors', 'OK');
+                        }
+                    } else {
+                        $round_mess = acknowledge( 'Rounding errors', 'ERROR');
+                    }
+
+                    if (defined $outobj -> zero_gradients -> [$problems][$sub_problems]){
+                        if ( $outobj -> zero_gradients -> [$problems][$sub_problems] eq '0' ) {
+                            $zero_mess = acknowledge( 'No zero gradients', 'OK');
+                        } else {
+                            $zero_mess = acknowledge( 'Zero gradients found '.$outobj -> zero_gradients -> [$problems][$sub_problems].' times', 'WARNING');
+                        }
+                    }else{
+                        $zero_mess = acknowledge('Zero gradient information not read', '-');
+                    }
+
+                    if (defined $outobj -> final_zero_gradients -> [$problems][$sub_problems]){
+                        if ( $outobj -> final_zero_gradients -> [$problems][$sub_problems] eq '0' ) {
+                            $final_zero_mess = acknowledge( 'No final zero gradients', 'OK');
+                        } else {
+                            $final_zero_mess = acknowledge( 'Final zero gradients', 'ERROR');
+                        }
+                    }else{
+                        $final_zero_mess = acknowledge('Final zero gradient information not read', '-');
+                    }
+
+                    if (defined $outobj -> hessian_reset -> [$problems][$sub_problems]){
+                        if ( $outobj -> hessian_reset -> [$problems][$sub_problems] eq '0' ) {
+                            $hess_mess = acknowledge( 'Hessian not reset', 'OK');
+                        } else {
+                            $hess_mess = acknowledge( 'Hessian reset '.$outobj -> hessian_reset -> [$problems][$sub_problems].' times', 'WARNING');
+                        }
+                    }else{
+                        $hess_mess = acknowledge( 'Hessian information not read', '-');
+                    }
+
+
+
+                    if ( defined $found_names -> [$problems] and defined $found_names -> [$problems][$sub_problems] ) {
+
+                        my @near_bounds     = @{$found_names -> [$problems][$sub_problems]};
+                        my @found_bounds    = @{$found_bounds -> [$problems][$sub_problems]};
+                        my @found_estimates = @{$found_values -> [$problems][$sub_problems]};
+
+                        for ( my $i = 0; $i <= $#near_bounds; $i++ ) {
+                            push @near_bound_parameters, sprintf( "\t%-20s%10g   %10g", $near_bounds[$i],
+                                                                  $found_estimates[$i], $found_bounds[$i] )
+                                if (defined $near_bounds[$i]);
+
+                        }
+                        if ( $#near_bound_parameters < 0 ) {
+                            unless ($failed){
+                                $near_bound_mess = acknowledge( 'No parameter near boundary', 'OK');
+                            }
+                        } else {
+                            $near_bound_mess = acknowledge( 'Parameter(s) / ETA-/EPS-correlation(s) near boundary', 'WARNING');
+
+                        }
+                    }
 
                     if ($outobj->problems->[$problems]->covariance_step_omitted) {
-					    $cov_mess = acknowledge('Covariance step', 'OMITTED');
+                        $cov_mess = acknowledge('Covariance step', 'OMITTED');
                     } elsif ($outobj->covariance_step_run->[$problems]) {
-						if (  $outobj -> covariance_step_successful -> [$problems][$sub_problems] eq '0' ) {
-							$cov_mess = acknowledge( 'Covariance step', 'ERROR');
-						} else {
-							if ( $outobj -> covariance_step_warnings -> [$problems][$sub_problems] eq '0' ) {
-								$cov_mess = acknowledge( 'Covariance step ', 'OK');
-							}else {
-								$cov_mess = acknowledge( 'Covariance step', 'WARNING');
-							}
-						}
+                        if (  $outobj -> covariance_step_successful -> [$problems][$sub_problems] eq '0' ) {
+                            $cov_mess = acknowledge( 'Covariance step', 'ERROR');
+                        } else {
+                            if ( $outobj -> covariance_step_warnings -> [$problems][$sub_problems] eq '0' ) {
+                                $cov_mess = acknowledge( 'Covariance step ', 'OK');
+                            }else {
+                                $cov_mess = acknowledge( 'Covariance step', 'WARNING');
+                            }
+                        }
 
-						if(defined $condno) {
-							if ( $condno < $options{'condition_number_limit'} ) {
-								$cond_mess = acknowledge( 'Condition number ', 'OK');
-							} else {
-								$cond_mess = acknowledge( 'Large condition number ', 'WARNING');
-							}
-						}
+                        if(defined $condno) {
+                            if ( $condno < $options{'condition_number_limit'} ) {
+                                $cond_mess = acknowledge( 'Condition number ', 'OK');
+                            } else {
+                                $cond_mess = acknowledge( 'Large condition number ', 'WARNING');
+                            }
+                        }
 
-						my ( $h_c, $f_c ) = $outobj -> high_correlations( limit => $options{'correlation_limit'} );
-						if ( defined $h_c -> [$problems] and defined $h_c -> [$problems][$sub_problems] ) {
+                        my ( $h_c, $f_c ) = $outobj -> high_correlations( limit => $options{'correlation_limit'} );
+                        if ( defined $h_c -> [$problems] and defined $h_c -> [$problems][$sub_problems] ) {
 
-							my @high_correlations  = @{$h_c -> [$problems][$sub_problems]};
-							my @found_correlations = @{$f_c -> [$problems][$sub_problems]};
+                            my @high_correlations  = @{$h_c -> [$problems][$sub_problems]};
+                            my @found_correlations = @{$f_c -> [$problems][$sub_problems]};
 
-							if ( $#high_correlations < 0 ) {
-								$corr_mess = acknowledge( 'Correlations', 'OK');
-							} else {
-								$corr_mess = acknowledge( 'Large correlations between parameter estimates found', 'WARNING');
+                            if ( $#high_correlations < 0 ) {
+                                $corr_mess = acknowledge( 'Correlations', 'OK');
+                            } else {
+                                $corr_mess = acknowledge( 'Large correlations between parameter estimates found', 'WARNING');
 
-								for ( my $i = 0; $i <= $#high_correlations; $i++ ) {
-									push @large_corrs,sprintf( "\t%-20s%10g", $high_correlations[$i],
-															   $found_correlations[$i] );
-								}
-							}
-						}
-					}
-				}
+                                for ( my $i = 0; $i <= $#high_correlations; $i++ ) {
+                                    push @large_corrs,sprintf( "\t%-20s%10g", $high_correlations[$i],
+                                                               $found_correlations[$i] );
+                                }
+                            }
+                        }
+                    }
+                }
 
-				## Start populating the output matrix
-				my @output_matrix;
-				my @output_matrix_sizes;
+                ## Start populating the output matrix
+                my @output_matrix;
+                my @output_matrix_sizes;
 
-				push( @{$output_matrix[$row_counter]}, "","THETA","","","OMEGA","","","SIGMA", "" );
-				for( my $i = 0; $i <= $#{$output_matrix[$row_counter]}; $i++ ){
-					if( $output_matrix_sizes[$i] < length( $output_matrix[$row_counter][$i] ) ){
-						$output_matrix_sizes[$i] = length( $output_matrix[$row_counter][$i] );
-					}
-				}
-				$row_counter++;
+                push( @{$output_matrix[$row_counter]}, "","THETA","","","OMEGA","","","SIGMA", "" );
+                for( my $i = 0; $i <= $#{$output_matrix[$row_counter]}; $i++ ){
+                    if( $output_matrix_sizes[$i] < length( $output_matrix[$row_counter][$i] ) ){
+                        $output_matrix_sizes[$i] = length( $output_matrix[$row_counter][$i] );
+                    }
+                }
+                $row_counter++;
 
-				my $max_par = 0;
-				foreach my $par ('theta','omega','sigma'){
-					my $num = scalar(@{$nam{$par}});
-					$max_par = $num if ($num > $max_par);
-				}
+                my $max_par = 0;
+                foreach my $par ('theta','omega','sigma'){
+                    my $num = scalar(@{$nam{$par}});
+                    $max_par = $num if ($num > $max_par);
+                }
 
-				my $i_om=0;
-				my $i_si=0;
+                my $i_om=0;
+                my $i_si=0;
 
-				for ( my $i = 0; $i < $max_par; $i++ ) {
-					my $any_printed=0;
-					my ( @row, %cis );
-					if( $options{'confidence_interval'} ) {
-						my $param = 'theta';
-						if ( defined $est{$param}[$i] ) {
-							my $diff = $c_levels{$options{'c_level'}}*$ses{$param}[$i];
-							my ( $lo, $up, $cis );
-							if( defined $diff and defined $ses{$param}[$i]) {
-								$lo = $est{$param}[$i]-$diff;
-								$up = $est{$param}[$i]+$diff;
-								$cis = sprintf( "($form - $form)", $lo, $up );
-							}else{
-								$cis = "(........)";
-							}
-							push( @row, $nam{$param}[$i],
-								  sprintf( $form, $est{$param}[$i] ),
-								  $cis );
-							$any_printed=1;
-						} else {
-							push( @row, '','','' );
-						}
-						$param='omega';
-						my $printed=0;
-						while (1){
-							last unless ($outobj -> get_single_value(attribute => 'have_omegas',
-																	 problem_index =>$problems,
-																	 subproblem_index => $sub_problems));
-							last unless ( defined $est{$param}[$i_om] );
-							my $do_print=0;
-							my $diff = $c_levels{$options{'c_level'}}*$ses{$param}[$i_om];
-							$do_print = 1 if ( defined $diff and defined $ses{$param}[$i_om]);
-							$do_print = 1 if ($est{$param}[$i_om] != 0);
-							unless ($do_print){
-								$i_om++;
-								next;
-							}
-							my ( $lo, $up, $cis );
-							if( defined $diff and defined $ses{$param}[$i_om]) {
-								$lo = $est{$param}[$i_om]-$diff;
-								$up = $est{$param}[$i_om]+$diff;
-								$cis = sprintf( "($form - $form)", $lo, $up );
-							}else{
-								$cis = "(........)";
-							}
-							push( @row, $nam{$param}[$i_om],
-								  sprintf( $form, $est{$param}[$i_om] ),
-								  $cis );
-							$printed=1;
-							$any_printed=1;
-							$i_om++;
-							last;
-						}
-						push( @row, '','','' ) unless ($printed);
+                for ( my $i = 0; $i < $max_par; $i++ ) {
+                    my $any_printed=0;
+                    my ( @row, %cis );
+                    if( $options{'confidence_interval'} ) {
+                        my $param = 'theta';
+                        if ( defined $est{$param}[$i] ) {
+                            my $diff = $c_levels{$options{'c_level'}}*$ses{$param}[$i];
+                            my ( $lo, $up, $cis );
+                            if( defined $diff and defined $ses{$param}[$i]) {
+                                $lo = $est{$param}[$i]-$diff;
+                                $up = $est{$param}[$i]+$diff;
+                                $cis = sprintf( "($form - $form)", $lo, $up );
+                            }else{
+                                $cis = "(........)";
+                            }
+                            push( @row, $nam{$param}[$i],
+                                  sprintf( $form, $est{$param}[$i] ),
+                                  $cis );
+                            $any_printed=1;
+                        } else {
+                            push( @row, '','','' );
+                        }
+                        $param='omega';
+                        my $printed=0;
+                        while (1){
+                            last unless ($outobj -> get_single_value(attribute => 'have_omegas',
+                                                                     problem_index =>$problems,
+                                                                     subproblem_index => $sub_problems));
+                            last unless ( defined $est{$param}[$i_om] );
+                            my $do_print=0;
+                            my $diff = $c_levels{$options{'c_level'}}*$ses{$param}[$i_om];
+                            $do_print = 1 if ( defined $diff and defined $ses{$param}[$i_om]);
+                            $do_print = 1 if ($est{$param}[$i_om] != 0);
+                            unless ($do_print){
+                                $i_om++;
+                                next;
+                            }
+                            my ( $lo, $up, $cis );
+                            if( defined $diff and defined $ses{$param}[$i_om]) {
+                                $lo = $est{$param}[$i_om]-$diff;
+                                $up = $est{$param}[$i_om]+$diff;
+                                $cis = sprintf( "($form - $form)", $lo, $up );
+                            }else{
+                                $cis = "(........)";
+                            }
+                            push( @row, $nam{$param}[$i_om],
+                                  sprintf( $form, $est{$param}[$i_om] ),
+                                  $cis );
+                            $printed=1;
+                            $any_printed=1;
+                            $i_om++;
+                            last;
+                        }
+                        push( @row, '','','' ) unless ($printed);
 
-						$param = 'sigma';
-						$printed=0;
-						while (1){
-							last unless ($outobj -> get_single_value(attribute => 'have_sigmas',
-																	 problem_index =>$problems,
-																	 subproblem_index => $sub_problems));
-							last unless ( defined $est{$param}[$i_si] );
-							my $do_print=0;
-							my $diff = $c_levels{$options{'c_level'}}*$ses{$param}[$i_si];
-							$do_print = 1 if ( defined $diff and defined $ses{$param}[$i_si]);
-							$do_print = 1 if ($est{$param}[$i_si] != 0);
-							unless ($do_print){
-								$i_si++;
-								next;
-							}
-							my ( $lo, $up, $cis );
-							if( defined $diff and defined $ses{$param}[$i_si]) {
-								$lo = $est{$param}[$i_si]-$diff;
-								$up = $est{$param}[$i_si]+$diff;
-								$cis = sprintf( "($form - $form)", $lo, $up );
-							}else{
-								$cis = "(........)";
-							}
-							push( @row, $nam{$param}[$i_si],
-								  sprintf( $form, $est{$param}[$i_si] ),
-								  $cis );
-							$printed=1;
-							$any_printed=1;
-							$i_si++;
-							last;
-						}
-						push( @row, '','','' ) unless ($printed);
-					} else {
-						#not confidence
-						if ( defined $nam{'theta'}->[$i]) {
-							push( @row, $nam{'theta'}->[$i], defined $est{'theta'}->[$i] ? sprintf( $form, $est{'theta'}->[$i] ) : '........',
-								  $cvse{'theta'}->[$i] ? sprintf( "($form)", $cvse{'theta'}->[$i] ) : '(........)' );
-							$any_printed=1;
-						} else {
-							push( @row, '','','' );
-						}
-						my $printed=0;
-						while (1){
-							last unless ($outobj -> get_single_value(attribute => 'have_omegas',
-																	 problem_index =>$problems,
-																	 subproblem_index => $sub_problems));
-							last unless ( defined $nam{'omega'}->[$i_om] );
-							my $do_print=0;
-							$do_print = 1 if ((defined $cest{'omega'}->[$i_om]) and ($cest{'omega'}->[$i_om] != 0));
-							$do_print = 1 if (($cvse{'omega'}->[$i_om]) and ($cvse{'omega'}->[$i_om] != 0));
-							unless ($do_print){
-								$i_om++;
-								next;
-							}
-							if( !$options{'sd_rse'} ) {
-								push( @row, $nam{'omega'}->[$i_om], defined $cest{'omega'}->[$i_om] ? sprintf( $form, $cest{'omega'}->[$i_om] ) : '........' ,
-									  $cvse{'omega'}->[$i_om] ? sprintf( "($form)", $cvse{'omega'}->[$i_om] ) : '(........)' );
-							} else {
-								push( @row, $nam{'omega'}->[$i_om], defined $cest{'omega'}->[$i_om] ? sprintf( $form, $cest{'omega'}->[$i_om] ) : '........' ,
-									  $cvse{'omega'}->[$i_om] ? sprintf( "($form)", $cvse{'omega'}->[$i_om]/2 ) : '(........)' );
-							}
-							$i_om++;
-							$printed=1;
-							$any_printed=1;
-							last;
-						}
-						push( @row, '','','') unless ($printed);
-						$printed=0;
+                        $param = 'sigma';
+                        $printed=0;
+                        while (1){
+                            last unless ($outobj -> get_single_value(attribute => 'have_sigmas',
+                                                                     problem_index =>$problems,
+                                                                     subproblem_index => $sub_problems));
+                            last unless ( defined $est{$param}[$i_si] );
+                            my $do_print=0;
+                            my $diff = $c_levels{$options{'c_level'}}*$ses{$param}[$i_si];
+                            $do_print = 1 if ( defined $diff and defined $ses{$param}[$i_si]);
+                            $do_print = 1 if ($est{$param}[$i_si] != 0);
+                            unless ($do_print){
+                                $i_si++;
+                                next;
+                            }
+                            my ( $lo, $up, $cis );
+                            if( defined $diff and defined $ses{$param}[$i_si]) {
+                                $lo = $est{$param}[$i_si]-$diff;
+                                $up = $est{$param}[$i_si]+$diff;
+                                $cis = sprintf( "($form - $form)", $lo, $up );
+                            }else{
+                                $cis = "(........)";
+                            }
+                            push( @row, $nam{$param}[$i_si],
+                                  sprintf( $form, $est{$param}[$i_si] ),
+                                  $cis );
+                            $printed=1;
+                            $any_printed=1;
+                            $i_si++;
+                            last;
+                        }
+                        push( @row, '','','' ) unless ($printed);
+                    } else {
+                        #not confidence
+                        if ( defined $nam{'theta'}->[$i]) {
+                            push( @row, $nam{'theta'}->[$i], defined $est{'theta'}->[$i] ? sprintf( $form, $est{'theta'}->[$i] ) : '........',
+                                  $cvse{'theta'}->[$i] ? sprintf( "($form)", $cvse{'theta'}->[$i] ) : '(........)' );
+                            $any_printed=1;
+                        } else {
+                            push( @row, '','','' );
+                        }
+                        my $printed=0;
+                        while (1){
+                            last unless ($outobj -> get_single_value(attribute => 'have_omegas',
+                                                                     problem_index =>$problems,
+                                                                     subproblem_index => $sub_problems));
+                            last unless ( defined $nam{'omega'}->[$i_om] );
+                            my $do_print=0;
+                            $do_print = 1 if ((defined $cest{'omega'}->[$i_om]) and ($cest{'omega'}->[$i_om] != 0));
+                            $do_print = 1 if (($cvse{'omega'}->[$i_om]) and ($cvse{'omega'}->[$i_om] != 0));
+                            unless ($do_print){
+                                $i_om++;
+                                next;
+                            }
+                            if( !$options{'sd_rse'} ) {
+                                push( @row, $nam{'omega'}->[$i_om], defined $cest{'omega'}->[$i_om] ? sprintf( $form, $cest{'omega'}->[$i_om] ) : '........' ,
+                                      $cvse{'omega'}->[$i_om] ? sprintf( "($form)", $cvse{'omega'}->[$i_om] ) : '(........)' );
+                            } else {
+                                push( @row, $nam{'omega'}->[$i_om], defined $cest{'omega'}->[$i_om] ? sprintf( $form, $cest{'omega'}->[$i_om] ) : '........' ,
+                                      $cvse{'omega'}->[$i_om] ? sprintf( "($form)", $cvse{'omega'}->[$i_om]/2 ) : '(........)' );
+                            }
+                            $i_om++;
+                            $printed=1;
+                            $any_printed=1;
+                            last;
+                        }
+                        push( @row, '','','') unless ($printed);
+                        $printed=0;
 
-						while (1){
-							last unless ($outobj -> get_single_value(attribute => 'have_sigmas',
-																	 problem_index =>$problems,
-																	 subproblem_index => $sub_problems));
-							last unless ( defined $nam{'sigma'}->[$i_si] );
-							my $do_print=0;
-							$do_print = 1 if ((defined $cest{'sigma'}->[$i_si]) and ($cest{'sigma'}->[$i_si] != 0));
-							$do_print = 1 if (($cvse{'sigma'}->[$i_si]) and ($cvse{'sigma'}->[$i_si] != 0));
-							unless ($do_print){
-								$i_si++;
-								next;
-							}
-							if( !$options{'sd_rse'} ) {
-								push( @row, $nam{'sigma'}->[$i_si], defined $cest{'sigma'}->[$i_si] ? sprintf( $form, $cest{'sigma'}->[$i_si] ) : '........',
-									  $cvse{'sigma'}->[$i_si] ? sprintf( "($form)", $cvse{'sigma'}->[$i_si] ) : '(........)' );
-							} else {
-								push( @row, $nam{'sigma'}->[$i_si], defined $cest{'sigma'}->[$i_si] ? sprintf( $form, $cest{'sigma'}->[$i_si] ) : '........',
-									  $cvse{'sigma'}->[$i_si] ? sprintf( "($form)", $cvse{'sigma'}->[$i_si]/2 ) : '(........)' );
-							}
-							$i_si++;
-							$printed=1;
-							$any_printed=1;
-							last;
-						}
-						push( @row, '','','') unless ($printed);
-					}
+                        while (1){
+                            last unless ($outobj -> get_single_value(attribute => 'have_sigmas',
+                                                                     problem_index =>$problems,
+                                                                     subproblem_index => $sub_problems));
+                            last unless ( defined $nam{'sigma'}->[$i_si] );
+                            my $do_print=0;
+                            $do_print = 1 if ((defined $cest{'sigma'}->[$i_si]) and ($cest{'sigma'}->[$i_si] != 0));
+                            $do_print = 1 if (($cvse{'sigma'}->[$i_si]) and ($cvse{'sigma'}->[$i_si] != 0));
+                            unless ($do_print){
+                                $i_si++;
+                                next;
+                            }
+                            if( !$options{'sd_rse'} ) {
+                                push( @row, $nam{'sigma'}->[$i_si], defined $cest{'sigma'}->[$i_si] ? sprintf( $form, $cest{'sigma'}->[$i_si] ) : '........',
+                                      $cvse{'sigma'}->[$i_si] ? sprintf( "($form)", $cvse{'sigma'}->[$i_si] ) : '(........)' );
+                            } else {
+                                push( @row, $nam{'sigma'}->[$i_si], defined $cest{'sigma'}->[$i_si] ? sprintf( $form, $cest{'sigma'}->[$i_si] ) : '........',
+                                      $cvse{'sigma'}->[$i_si] ? sprintf( "($form)", $cvse{'sigma'}->[$i_si]/2 ) : '(........)' );
+                            }
+                            $i_si++;
+                            $printed=1;
+                            $any_printed=1;
+                            last;
+                        }
+                        push( @row, '','','') unless ($printed);
+                    }
 
-					if ($any_printed){
-						push(@{$output_matrix[$row_counter]}, @row) ;
-						for( my $i = 0; $i <= $#{$output_matrix[$row_counter]}; $i++ ){
-							if( $output_matrix_sizes[$i] < length( $output_matrix[$row_counter][$i] ) ){
-								$output_matrix_sizes[$i] = length( $output_matrix[$row_counter][$i] );
-							}
-						}
-						$row_counter++;
-					}
-				}
+                    if ($any_printed){
+                        push(@{$output_matrix[$row_counter]}, @row) ;
+                        for( my $i = 0; $i <= $#{$output_matrix[$row_counter]}; $i++ ){
+                            if( $output_matrix_sizes[$i] < length( $output_matrix[$row_counter][$i] ) ){
+                                $output_matrix_sizes[$i] = length( $output_matrix[$row_counter][$i] );
+                            }
+                        }
+                        $row_counter++;
+                    }
+                }
 
 
-				## Print the results for the sub-problem
-				print "\n$outfile\n";
-				print "Problem: ",$problems+1,"\n"         if $options{'max_problem_num'} > 1;
-				print "Sub-problem: ",$sub_problems+1,"\n" if $options{'max_subproblem_num'} > 1;
-				print "\n";
+                ## Print the results for the sub-problem
+                print "\n$outfile\n";
+                print "Problem: ",$problems+1,"\n"         if $options{'max_problem_num'} > 1;
+                print "Sub-problem: ",$sub_problems+1,"\n" if $options{'max_subproblem_num'} > 1;
+                print "\n";
 
-				if ($options{'check_run'} and not $options{'parameters'}) {
-					## Print the check_termination output
-					print $minim_mess,"\n";
-					print $round_mess,"\n";
-					print $zero_mess,"\n";
-					print $final_zero_mess,"\n";
-					print $hess_mess,"\n";
-					print $near_bound_mess,"\n";
-					unless(scalar @near_bound_parameters == 0) {
-						for(@near_bound_parameters) {
-							print "$_\n";
-						}
-					}
+                if ($options{'check_run'} and not $options{'parameters'}) {
+                    ## Print the check_termination output
+                    print $minim_mess,"\n";
+                    print $round_mess,"\n";
+                    print $zero_mess,"\n";
+                    print $final_zero_mess,"\n";
+                    print $hess_mess,"\n";
+                    print $near_bound_mess,"\n";
+                    unless(scalar @near_bound_parameters == 0) {
+                        for(@near_bound_parameters) {
+                            print "$_\n";
+                        }
+                    }
 
-					if(defined $cov_mess) {
-						print $cov_mess,"\n";
-						print $large_se_mess,"\n";
+                    if(defined $cov_mess) {
+                        print $cov_mess,"\n";
+                        print $large_se_mess,"\n";
 
-						if(defined $condno) {
-							print $cond_mess,"\n";
-						}
+                        if(defined $condno) {
+                            print $cond_mess,"\n";
+                        }
 
-						print $corr_mess,"\n";
-						unless(scalar @large_corrs == 0) {
-							for(@large_corrs) {
-								print "$_\n";
-							}
-						}
-					} else {
-						print "No covariance step run.\n";
-					}
+                        print $corr_mess,"\n";
+                        unless(scalar @large_corrs == 0) {
+                            for(@large_corrs) {
+                                print "$_\n";
+                            }
+                        }
+                    } else {
+                        print "No covariance step run.\n";
+                    }
 
-					print "\n";
-				}
+                    print "\n";
+                }
 
                 if (not $options{'parameters'}) {
                     if( $runtime ){
@@ -844,41 +844,41 @@ require model;
                         print "Number of individuals: ".$individuals -> [$problems]."\n\n";
                     }
                 }
-				foreach my $row ( @output_matrix ){
-					for( my $i = 0; $i <= $#{$row}; $i++ ){
-						my $spaces = $output_matrix_sizes[$i] - length($row -> [$i]);
-						if( $options{'csv'} ){
-							print '"', $row -> [$i], '",';
-						} else {
-							print " " x $spaces, $row -> [$i], "  ";
-						}
-					}
-					print "\n";
+                foreach my $row ( @output_matrix ){
+                    for( my $i = 0; $i <= $#{$row}; $i++ ){
+                        my $spaces = $output_matrix_sizes[$i] - length($row -> [$i]);
+                        if( $options{'csv'} ){
+                            print '"', $row -> [$i], '",';
+                        } else {
+                            print " " x $spaces, $row -> [$i], "  ";
+                        }
+                    }
+                    print "\n";
 
-				}
+                }
 
-			}
-		}
+            }
+        }
 
-		if (not ($options{'confidence_interval'} or $options{'csv'}) and not $options{'parameters'}) {
-			if( !$options{'sd_rse'} ) {
-				print "\nThe relative standard errors for omega and sigma are reported on the variance scale\n".
-					"(SE/variance estimate).\n";
-			} else {
-				print "\nThe relative standard errors for omega and sigma are reported on the approximate\n".
-					"standard deviation scale (SE/variance estimate)/2.\n";
-			}
-		}
-		print "-----------------------------------------------------------------------\n";
+        if (not ($options{'confidence_interval'} or $options{'csv'}) and not $options{'parameters'}) {
+            if( !$options{'sd_rse'} ) {
+                print "\nThe relative standard errors for omega and sigma are reported on the variance scale\n".
+                    "(SE/variance estimate).\n";
+            } else {
+                print "\nThe relative standard errors for omega and sigma are reported on the approximate\n".
+                    "standard deviation scale (SE/variance estimate)/2.\n";
+            }
+        }
+        print "-----------------------------------------------------------------------\n";
 
 }
 
 
 sub acknowledge {
-	my $name    = shift;
-	my $outcome = shift;
-	my $l = (7 - length( $outcome ))/2;
-	my $text = sprintf( "%-66s%2s%7s%-5s", $name, '[ ', $outcome. ' ' x $l, ' ]' );
+    my $name    = shift;
+    my $outcome = shift;
+    my $l = (7 - length( $outcome ))/2;
+    my $text = sprintf( "%-66s%2s%7s%-5s", $name, '[ ', $outcome. ' ' x $l, ' ]' );
 
-	return($text);
+    return($text);
 }

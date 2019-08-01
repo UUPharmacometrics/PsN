@@ -26,19 +26,19 @@ my $cmd_line = $0 . " " . join( " ", @ARGV );
 my %options;
 
 my %required_options = (  "reg_model:s" => undef,
-						  "base_model:s"=> undef,
-						  "mi_model:s"=> undef
+                          "base_model:s"=> undef,
+                          "mi_model:s"=> undef
     );
 my %optional_options = ("sim_model:s" => undef,
-						'alt_models:s'=> undef,
-						"imputations:i" => undef,
-						"samples:i" => undef,
-						"chain_models:s" => undef);
+                        'alt_models:s'=> undef,
+                        "imputations:i" => undef,
+                        "samples:i" => undef,
+                        "chain_models:s" => undef);
 
 my $res = GetOptions( \%options,
-					  @common_options::get_opt_strings,
-					  keys(%required_options),
-					  keys(%optional_options) );
+                      @common_options::get_opt_strings,
+                      keys(%required_options),
+                      keys(%optional_options) );
 exit unless $res;
 
 
@@ -46,152 +46,152 @@ exit unless $res;
 my %help_text;
 
 $help_text{Pre_help_message} = <<'EOF';
-	Multiple imputation using PsN.
+    Multiple imputation using PsN.
 EOF
 
 $help_text{Description} = <<'EOF';
-	The mimp tool implements the multiple imputation method: Åsa Johansson,
-	Comparison of methods for handling missing covariate data,
-	www.page-meeting.org/?abstract=1982, PAGE 20 Abstract 1982, 2011.
+    The mimp tool implements the multiple imputation method: Åsa Johansson,
+    Comparison of methods for handling missing covariate data,
+    www.page-meeting.org/?abstract=1982, PAGE 20 Abstract 1982, 2011.
 EOF
 
 $help_text{Examples} = <<'EOF';
-	mimp -base_model=run1.mod -reg_model=run2.mod -mi_model=run3.mod
+    mimp -base_model=run1.mod -reg_model=run2.mod -mi_model=run3.mod
 EOF
 
 $help_text{Options} = <<'EOF';
-	Options -base_model, -reg_model and -mi_model are required.
+    Options -base_model, -reg_model and -mi_model are required.
 
-	The following options are valid:
+    The following options are valid:
 EOF
 
 $help_text{-h} = <<'EOF';
-	-h | -?
-	With -h or -? mimp will print a list of options and exit.
+    -h | -?
+    With -h or -? mimp will print a list of options and exit.
 EOF
 
 $help_text{-help} = <<'EOF';
-	-help
+    -help
 
-	With -help mimp will print this, longer, help message.
+    With -help mimp will print this, longer, help message.
 EOF
 
 $help_text{-alt_models} = <<'EOF';
-	-alt_models=model_1,model_2,...
+    -alt_models=model_1,model_2,...
 
-	A comma-separated list of filenames of alternative models.
+    A comma-separated list of filenames of alternative models.
 EOF
 
 $help_text{-base_model} = <<'EOF';
-	-base_model=filename
+    -base_model=filename
 
-	Base model. This is the model without the code snippet describing the effect
-	of the covariate (that is partly missing) on the parameters. The individual
-	parameter (empirical Bayes) estimates the parameter(s) on which the covariate
-	has an effect, contains information about the individual response. The
-	individual parameter estimates should be printed in $TABLE of the base model.
-	The model must contain a complete $TABLE containing items exactly matching
-	$INPUT of the next model in the sequence. PsN does not check that $TABLE is
-	correctly defined.
+    Base model. This is the model without the code snippet describing the effect
+    of the covariate (that is partly missing) on the parameters. The individual
+    parameter (empirical Bayes) estimates the parameter(s) on which the covariate
+    has an effect, contains information about the individual response. The
+    individual parameter estimates should be printed in $TABLE of the base model.
+    The model must contain a complete $TABLE containing items exactly matching
+    $INPUT of the next model in the sequence. PsN does not check that $TABLE is
+    correctly defined.
 EOF
 
 $help_text{-chain_models} = <<'EOF';
-	-chain_models=model1,model2,...
+    -chain_models=model1,model2,...
 
-	An ordered list of chain models. These models can be used if there is a need
-	for additional estimation models in between the base model and the regression
-	model. The models must be listed in the order in which they are to be
-	estimated. Each model must contain a complete $TABLE containing items exactly
-	matching $INPUT of the next model in the sequence (the next chain model or the
-	regression model if it is the last chain model). PsN does not check that $TABLE
-	is correctly defined.
+    An ordered list of chain models. These models can be used if there is a need
+    for additional estimation models in between the base model and the regression
+    model. The models must be listed in the order in which they are to be
+    estimated. Each model must contain a complete $TABLE containing items exactly
+    matching $INPUT of the next model in the sequence (the next chain model or the
+    regression model if it is the last chain model). PsN does not check that $TABLE
+    is correctly defined.
 EOF
 
 $help_text{-frac_model} = <<'EOF';
-	-frac_model=string
+    -frac_model=string
 
-	Fraction model.
+    Fraction model.
 EOF
 
 $help_text{-imputations} = <<'EOF';
-	-imputations=N
+    -imputations=N
 
-	Default is 6. The number of imputations to perform for each dataset.
+    Default is 6. The number of imputations to perform for each dataset.
 EOF
 
 $help_text{-mi_model} = <<'EOF';
-	-mi_model=filename
+    -mi_model=filename
 
-	Multiple imputation mode. This model must contain one simulation part and
-	one estimation part, followed by both a $SIM and a $EST record. The simulation
-	part should contain the code for imputation of the missing covariate while
-	the estimation part should be the final model including the code for the
-	effect of the covariate on the parameters.
+    Multiple imputation mode. This model must contain one simulation part and
+    one estimation part, followed by both a $SIM and a $EST record. The simulation
+    part should contain the code for imputation of the missing covariate while
+    the estimation part should be the final model including the code for the
+    effect of the covariate on the parameters.
 EOF
 
 $help_text{-reg_model} = <<'EOF';
-	-reg_model=filename
+    -reg_model=filename
 
-	Regression model. The regression model estimates the relationship between the
-	partly missing covariate, the response (individual parameter estimates from
-	the base model) and other (completely observed) covariates that carry
-	information about the missing covariate. The partly missing covariate will be
-	the dependent variable (DV) in this model and the column in the dataset that
-	depicts if the covariate is missing or observed will be the missing dependent
-	variable (MDV). The regression model must contain a complete $TABLE containing
-	items exactly matching $INPUT of the multiple imputation model.
+    Regression model. The regression model estimates the relationship between the
+    partly missing covariate, the response (individual parameter estimates from
+    the base model) and other (completely observed) covariates that carry
+    information about the missing covariate. The partly missing covariate will be
+    the dependent variable (DV) in this model and the column in the dataset that
+    depicts if the covariate is missing or observed will be the missing dependent
+    variable (MDV). The regression model must contain a complete $TABLE containing
+    items exactly matching $INPUT of the multiple imputation model.
 EOF
 
 $help_text{-samples} = <<'EOF';
-	-samples=N
+    -samples=N
 
-	Number of datasets to simulate. Only relevant together with option -sim_model,
-	required if sim_model is given.
+    Number of datasets to simulate. Only relevant together with option -sim_model,
+    required if sim_model is given.
 EOF
 
 $help_text{-sim_model} = <<'EOF';
-	-sim_model='string'
+    -sim_model='string'
 
-	Simulation model. This model must contain a correct $SIM record and a complete
-	$TABLE containing items exactly matching $INPUT of the base model. PsN does
-	not check that $TABLE is correctly defined.
+    Simulation model. This model must contain a correct $SIM record and a complete
+    $TABLE containing items exactly matching $INPUT of the base model. PsN does
+    not check that $TABLE is correctly defined.
 EOF
 
 $help_text{Post_help_message} = <<'EOF';
-	Also see 'psn_options -h' for a description of common options.
+    Also see 'psn_options -h' for a description of common options.
 EOF
 
 common_options::online_help( 'mimp', \%options, \%help_text, \%required_options, \%optional_options);
 common_options::setup( \%options, 'mimp' ); #calls set_globals etc, initiates random sequence
 
 unless ( defined $options{'base_model'} ){
-	print "base_model must be given\n" ;
-	exit;
+    print "base_model must be given\n" ;
+    exit;
 }
 unless ( defined $options{'reg_model'} ){
-	print "reg_model must be given\n" ;
-	exit;
+    print "reg_model must be given\n" ;
+    exit;
 }
 unless ( defined $options{'mi_model'} ){
-	print "mi_model must be given\n" ;
-	exit;
+    print "mi_model must be given\n" ;
+    exit;
 }
 
 my $nimp=6; #default
 if ( defined $options{'imputations'} ){
-	$nimp=$options{'imputations'};
+    $nimp=$options{'imputations'};
 }
 if ( defined $options{'sim_model'}){
-	if (not defined $options{'samples'}){
-		print "samples must be given when sim_model is used\n" ;
-		exit;
-	}
+    if (not defined $options{'samples'}){
+        print "samples must be given when sim_model is used\n" ;
+        exit;
+    }
 }else{
-	if (defined $options{'samples'}){
-		print "samples must not be given when sim_model is not used\n" ;
-		exit;
-	}
-	$options{'samples'}=1;
+    if (defined $options{'samples'}){
+        print "samples must not be given when sim_model is not used\n" ;
+        exit;
+    }
+    $options{'samples'}=1;
 }
 
 require tool::modelfit;
@@ -256,18 +256,18 @@ if (defined $options{'alt_models'}) {
                 ignore_missing_output_files => 1,
                 ignore_missing_data => 1)
         );
-	}
+    }
 }
 my @chain_models;
 if (defined $options{'chain_models'}) {
-	foreach my $chainfile (split(/,/, $options{'chain_models'})) {
-		push(@chain_models, model->new(
+    foreach my $chainfile (split(/,/, $options{'chain_models'})) {
+        push(@chain_models, model->new(
                 eval($eval_string),
                 filename => $chainfile,
                 ignore_missing_output_files => 1,
                 ignore_missing_data => 1)
         );
-	}
+    }
 }
 
 chdir($newdir);
@@ -278,86 +278,86 @@ chdir($newdir);
 
 my @simdatanames;
 if (defined $options{'sim_model'}) {
-	my $simulation_models;
-	my $datafilesref;
-	for (my $sample = 1; $sample <= $options{'samples'}; $sample++) {
-		my $sim_name = 'sim_' . $sample . '.mod';
-		my $sim_model = $sim->copy(filename => $sim_name,
-									  copy_datafile   => ($sample == 1), #if first sample then copy, otherwise not
-									  write_copy => 0,
-									  copy_output => 0);
-		if ($sample == 1) {
-			$datafilesref = $sim_model->datafiles(absolute_path => 1);
-		} else {
-			$sim_model->datafiles(new_names => $datafilesref);
-		}
+    my $simulation_models;
+    my $datafilesref;
+    for (my $sample = 1; $sample <= $options{'samples'}; $sample++) {
+        my $sim_name = 'sim_' . $sample . '.mod';
+        my $sim_model = $sim->copy(filename => $sim_name,
+                                      copy_datafile   => ($sample == 1), #if first sample then copy, otherwise not
+                                      write_copy => 0,
+                                      copy_output => 0);
+        if ($sample == 1) {
+            $datafilesref = $sim_model->datafiles(absolute_path => 1);
+        } else {
+            $sim_model->datafiles(new_names => $datafilesref);
+        }
 
-		#set seed
-		my $prob = $sim_model->problems->[0];
-		my $sim_record = $sim_model->record(problem_number => 1, record_name => 'simulation');
+        #set seed
+        my $prob = $sim_model->problems->[0];
+        my $sim_record = $sim_model->record(problem_number => 1, record_name => 'simulation');
 
-		my @new_record;
-		foreach my $sim_line ( @{$sim_record -> [0]} ){
-			my $new_line;
-			while( $sim_line =~ /([^()]*)(\([^()]+\))(.*)/g ){
-				my $head = $1;
-				my $old_seed = $2;
-				$sim_line = $3;
-				$new_line .= $head;
+        my @new_record;
+        foreach my $sim_line ( @{$sim_record -> [0]} ){
+            my $new_line;
+            while( $sim_line =~ /([^()]*)(\([^()]+\))(.*)/g ){
+                my $head = $1;
+                my $old_seed = $2;
+                $sim_line = $3;
+                $new_line .= $head;
 
-				while( $old_seed =~ /(\D*)(\d+)(.*)/ ){
-					$new_line .= $1;
-					$new_line .= random_uniform_integer( 1, 0, 1000000 ); # Upper limit is from nmhelp
-					$old_seed = $3;
-				}
+                while( $old_seed =~ /(\D*)(\d+)(.*)/ ){
+                    $new_line .= $1;
+                    $new_line .= random_uniform_integer( 1, 0, 1000000 ); # Upper limit is from nmhelp
+                    $old_seed = $3;
+                }
 
-				$new_line .= $old_seed;
+                $new_line .= $old_seed;
 
-			}
+            }
 
-			push( @new_record, $new_line.$sim_line );
-		}
+            push( @new_record, $new_line.$sim_line );
+        }
 
-		$prob -> set_records( type => 'simulation',
-							  record_strings => \@new_record );
-
-
-		#set $TABLE FILE
-		my $fname='start_'.$sample.'_out.dta';
-		push (@simdatanames,$fname);
-		$sim_model -> set_option( record_name  => 'table',
-								  problem_numbers => [(1)],
-								  record_number => 1,
-								  option_name  => 'FILE',
-								  option_value => $fname);
-
-		$sim_model -> _write();
-		push( @{$simulation_models}, $sim_model );
-	}
+        $prob -> set_records( type => 'simulation',
+                              record_strings => \@new_record );
 
 
-	my $mod_sim = tool::modelfit -> new(
-		%{common_options::restore_options(@common_options::tool_options)},
-		top_tool         => 0,
-		models           => $simulation_models,
-		base_directory   => '..',
-		directory        => '../simulation_dir1',
-		logfile	         => undef,
-		raw_results           => undef,
-		prepared_models       => undef,
-		copy_data  => 0);
+        #set $TABLE FILE
+        my $fname='start_'.$sample.'_out.dta';
+        push (@simdatanames,$fname);
+        $sim_model -> set_option( record_name  => 'table',
+                                  problem_numbers => [(1)],
+                                  record_number => 1,
+                                  option_name  => 'FILE',
+                                  option_value => $fname);
 
-	$mod_sim-> print_options (cmd_line => $cmd_line,
-							  directory =>'../',
-							  toolname => 'mimp',
-							  local_options => [keys %optional_options],
-							  common_options => \@common_options::tool_options);
+        $sim_model -> _write();
+        push( @{$simulation_models}, $sim_model );
+    }
 
-	print "Running ".$options{'samples'}." simulation models\n";
-	$mod_sim -> run;
 
-	$simulation_models=undef;
-	$mod_sim = undef;
+    my $mod_sim = tool::modelfit -> new(
+        %{common_options::restore_options(@common_options::tool_options)},
+        top_tool         => 0,
+        models           => $simulation_models,
+        base_directory   => '..',
+        directory        => '../simulation_dir1',
+        logfile             => undef,
+        raw_results           => undef,
+        prepared_models       => undef,
+        copy_data  => 0);
+
+    $mod_sim-> print_options (cmd_line => $cmd_line,
+                              directory =>'../',
+                              toolname => 'mimp',
+                              local_options => [keys %optional_options],
+                              common_options => \@common_options::tool_options);
+
+    print "Running ".$options{'samples'}." simulation models\n";
+    $mod_sim -> run;
+
+    $simulation_models=undef;
+    $mod_sim = undef;
 }
 
 ##########################
@@ -368,49 +368,49 @@ my $base_models;
 my @basedatanames;
 my $datafilesref;
 for(my $sample=1; $sample<= $options{'samples'}; $sample++){
-	my $base_name='base_'.$sample.'.mod';
-	my $base_model = $base -> copy( filename    => $base_name,
-									copy_datafile   => ((not defined $options{'sim_model'}) and ($sample == 1)), #copy if first sample and no sim_model
-									write_copy => 0,
-									copy_output => 0);
+    my $base_name='base_'.$sample.'.mod';
+    my $base_model = $base -> copy( filename    => $base_name,
+                                    copy_datafile   => ((not defined $options{'sim_model'}) and ($sample == 1)), #copy if first sample and no sim_model
+                                    write_copy => 0,
+                                    copy_output => 0);
 
-	my $fname;
-	if (scalar(@simdatanames)>0){
-		#set $DATA
-		$fname = $simdatanames[($sample-1)];
-		$base_model -> datafiles(new_names => [$fname] );
-	}else{
-		if ($sample == 1){
-			$datafilesref = $base_model->datafiles(absolute_path => 1); #this datafile is in mimp dir
-		}else{
-			$base_model->datafiles(new_names => $datafilesref);
-		}
-	}
-	#set $TABLE FILE
-	$fname='base_'.$sample.'_out.dta';
-	push (@basedatanames,$fname);
-	$base_model -> set_option( record_name  => 'table',
-							   problem_numbers => [(1)],
-							   record_number => 1,
-							   option_name  => 'FILE',
-							   option_value => $fname);
+    my $fname;
+    if (scalar(@simdatanames)>0){
+        #set $DATA
+        $fname = $simdatanames[($sample-1)];
+        $base_model -> datafiles(new_names => [$fname] );
+    }else{
+        if ($sample == 1){
+            $datafilesref = $base_model->datafiles(absolute_path => 1); #this datafile is in mimp dir
+        }else{
+            $base_model->datafiles(new_names => $datafilesref);
+        }
+    }
+    #set $TABLE FILE
+    $fname='base_'.$sample.'_out.dta';
+    push (@basedatanames,$fname);
+    $base_model -> set_option( record_name  => 'table',
+                               problem_numbers => [(1)],
+                               record_number => 1,
+                               option_name  => 'FILE',
+                               option_value => $fname);
 
-	$base_model -> _write();
-	push( @{$base_models}, $base_model );
+    $base_model -> _write();
+    push( @{$base_models}, $base_model );
 }
 
 
 #run
 my $mod_base = tool::modelfit -> new(
-	%{common_options::restore_options(@common_options::tool_options)},
-	top_tool         => 0,
-	models           => $base_models,
-	base_directory   => '..',
-	directory        => '../base_dir1',
-	logfile	         => undef,
-	raw_results           => undef,
-	prepared_models       => undef,
-	copy_data => 0);
+    %{common_options::restore_options(@common_options::tool_options)},
+    top_tool         => 0,
+    models           => $base_models,
+    base_directory   => '..',
+    directory        => '../base_dir1',
+    logfile             => undef,
+    raw_results           => undef,
+    prepared_models       => undef,
+    copy_data => 0);
 
 print "Running ".$options{'samples'}." base models\n";
 $mod_base -> run;
@@ -430,51 +430,51 @@ my @next_input_datanames = @basedatanames;
 my @this_input_datanames;
 my $chain_number=0;
 foreach my $chain_mod (@chain_models){
-	$chain_number++;
-	@this_input_datanames = @next_input_datanames;
-	@next_input_datanames = ();
-	my $chain_model_copies;
+    $chain_number++;
+    @this_input_datanames = @next_input_datanames;
+    @next_input_datanames = ();
+    my $chain_model_copies;
 
-	for(my $sample=1; $sample<= $options{'samples'}; $sample++){
-		my $chain_name='chain-'.$chain_number.'_'.$sample.'.mod';
-		my $chain_model = $chain_mod -> copy( filename    => $chain_name,
-											  copy_datafile   => 0,
-											  write_copy => 0,
-											  copy_output => 0);
+    for(my $sample=1; $sample<= $options{'samples'}; $sample++){
+        my $chain_name='chain-'.$chain_number.'_'.$sample.'.mod';
+        my $chain_model = $chain_mod -> copy( filename    => $chain_name,
+                                              copy_datafile   => 0,
+                                              write_copy => 0,
+                                              copy_output => 0);
 
-		#set $DATA
-		my $fname = $this_input_datanames[($sample-1)];
-		$chain_model -> datafiles(new_names => [$fname] );
+        #set $DATA
+        my $fname = $this_input_datanames[($sample-1)];
+        $chain_model -> datafiles(new_names => [$fname] );
 
-		#set $TABLE FILE
-		$fname='chain-'.$chain_number.'_'.$sample.'_out.dta';
-		push (@next_input_datanames,$fname);
-		$chain_model -> set_option( record_name  => 'table',
-									problem_numbers => [(1)],
-									record_number => 1,
-									option_name  => 'FILE',
-									option_value => $fname);
+        #set $TABLE FILE
+        $fname='chain-'.$chain_number.'_'.$sample.'_out.dta';
+        push (@next_input_datanames,$fname);
+        $chain_model -> set_option( record_name  => 'table',
+                                    problem_numbers => [(1)],
+                                    record_number => 1,
+                                    option_name  => 'FILE',
+                                    option_value => $fname);
 
-		$chain_model -> _write();
-		push( @{$chain_model_copies}, $chain_model );
-	}
+        $chain_model -> _write();
+        push( @{$chain_model_copies}, $chain_model );
+    }
 
-	#run
-	my $mod_chain = tool::modelfit -> new(
-		%{common_options::restore_options(@common_options::tool_options)},
-		top_tool         => 0,
-		models           => $chain_model_copies,
-		base_directory   => '..',
-		directory        => '../chain_dir'.$chain_number,
-		logfile	         => undef,
-		raw_results           => undef,
-		prepared_models       => undef,
-		copy_data =>0);
+    #run
+    my $mod_chain = tool::modelfit -> new(
+        %{common_options::restore_options(@common_options::tool_options)},
+        top_tool         => 0,
+        models           => $chain_model_copies,
+        base_directory   => '..',
+        directory        => '../chain_dir'.$chain_number,
+        logfile             => undef,
+        raw_results           => undef,
+        prepared_models       => undef,
+        copy_data =>0);
 
-	print "Running ".$options{'samples'}." chain model number $chain_number\n";
-	$mod_chain -> run;
-	$chain_model_copies=undef;
-	$mod_chain = undef;
+    print "Running ".$options{'samples'}." chain model number $chain_number\n";
+    $mod_chain -> run;
+    $chain_model_copies=undef;
+    $mod_chain = undef;
 }
 
 
@@ -488,41 +488,41 @@ my @regdatanames;
 
 
 for(my $sample=1; $sample<= $options{'samples'}; $sample++){
-	my $reg_name='reg_'.$sample.'.mod';
-	my $reg_model = $reg -> copy( filename    => $reg_name,
-								  copy_datafile   => 0,
-								  write_copy => 0,
-								  copy_output => 0);
+    my $reg_name='reg_'.$sample.'.mod';
+    my $reg_model = $reg -> copy( filename    => $reg_name,
+                                  copy_datafile   => 0,
+                                  write_copy => 0,
+                                  copy_output => 0);
 
-	#set $DATA
-	my $fname = $next_input_datanames[($sample-1)];
-	$reg_model -> datafiles(new_names => [$fname] );
+    #set $DATA
+    my $fname = $next_input_datanames[($sample-1)];
+    $reg_model -> datafiles(new_names => [$fname] );
 
-	#set $TABLE FILE
-	$fname='reg_'.$sample.'_out.dta';
-	push (@regdatanames,$fname);
-	$reg_model -> set_option( record_name  => 'table',
-							  problem_numbers => [(1)],
-							  record_number => 1,
-							  option_name  => 'FILE',
-							  option_value => $fname);
+    #set $TABLE FILE
+    $fname='reg_'.$sample.'_out.dta';
+    push (@regdatanames,$fname);
+    $reg_model -> set_option( record_name  => 'table',
+                              problem_numbers => [(1)],
+                              record_number => 1,
+                              option_name  => 'FILE',
+                              option_value => $fname);
 
-	$reg_model -> _write();
-	push( @{$reg_models}, $reg_model );
+    $reg_model -> _write();
+    push( @{$reg_models}, $reg_model );
 }
 
 
 #run
 my $mod_reg = tool::modelfit -> new(
-	%{common_options::restore_options(@common_options::tool_options)},
-	top_tool         => 0,
-	models           => $reg_models,
-	base_directory   => '..', ##??
-	directory        => '../reg_dir1',
-	logfile	         => undef,
-	raw_results           => undef,
-	prepared_models       => undef,
-	copy_data =>0);
+    %{common_options::restore_options(@common_options::tool_options)},
+    top_tool         => 0,
+    models           => $reg_models,
+    base_directory   => '..', ##??
+    directory        => '../reg_dir1',
+    logfile             => undef,
+    raw_results           => undef,
+    prepared_models       => undef,
+    copy_data =>0);
 
 print "Running ".$options{'samples'}." regression models\n";
 $mod_reg -> run;
@@ -536,41 +536,41 @@ $mod_reg = undef;
 
 my $altindex = 0;
 foreach my $alt (@alternatives){
-	$altindex++;
+    $altindex++;
 
-	my $alt_models;
+    my $alt_models;
 
-	for(my $sample=1; $sample<= $options{'samples'}; $sample++){
-		my $alt_name='alt-'.$altindex.'_'.$sample.'.mod';
-		my $alt_model = $alt -> copy( filename    => $alt_name,
-									  copy_datafile   => 0,
-									  write_copy => 0,
-									  copy_output => 0);
+    for(my $sample=1; $sample<= $options{'samples'}; $sample++){
+        my $alt_name='alt-'.$altindex.'_'.$sample.'.mod';
+        my $alt_model = $alt -> copy( filename    => $alt_name,
+                                      copy_datafile   => 0,
+                                      write_copy => 0,
+                                      copy_output => 0);
 
-		#set $DATA
-		my $fname = $regdatanames[($sample-1)];
-		$alt_model -> datafiles(new_names => [$fname] );
+        #set $DATA
+        my $fname = $regdatanames[($sample-1)];
+        $alt_model -> datafiles(new_names => [$fname] );
 
-		$alt_model -> _write();
-		push( @{$alt_models}, $alt_model );
-	}
+        $alt_model -> _write();
+        push( @{$alt_models}, $alt_model );
+    }
 
-	#run
-	my $mod_alt = tool::modelfit -> new(
-		%{common_options::restore_options(@common_options::tool_options)},
-		top_tool         => 0,
-		models           => $alt_models,
-		base_directory   => '..', ##??
-		directory        => '../alt_dir'.$altindex,
-		logfile	         => undef,
-		raw_results           => undef,
-		prepared_models       => undef,
-		copy_data => 0);
+    #run
+    my $mod_alt = tool::modelfit -> new(
+        %{common_options::restore_options(@common_options::tool_options)},
+        top_tool         => 0,
+        models           => $alt_models,
+        base_directory   => '..', ##??
+        directory        => '../alt_dir'.$altindex,
+        logfile             => undef,
+        raw_results           => undef,
+        prepared_models       => undef,
+        copy_data => 0);
 
-	print "Running ".$options{'samples'}." alt models for alternative $altindex\n";
-	$mod_alt -> run;
-	$alt_models=undef;
-	$mod_alt = undef;
+    print "Running ".$options{'samples'}." alt models for alternative $altindex\n";
+    $mod_alt -> run;
+    $alt_models=undef;
+    $mod_alt = undef;
 }
 
 
@@ -580,74 +580,74 @@ foreach my $alt (@alternatives){
 
 
 for (my $j=1; $j<=$nimp; $j++){
-	my $mi_models;
-	for(my $sample=1; $sample<= $options{'samples'}; $sample++){
-		my $mi_name='mi-'.$j.'_'.$sample.'.mod';
-		my $mi_model = $mi -> copy( filename    => $mi_name,
-									copy_datafile   => 1,
-									write_copy => 0,
-									copy_output => 0);
+    my $mi_models;
+    for(my $sample=1; $sample<= $options{'samples'}; $sample++){
+        my $mi_name='mi-'.$j.'_'.$sample.'.mod';
+        my $mi_model = $mi -> copy( filename    => $mi_name,
+                                    copy_datafile   => 1,
+                                    write_copy => 0,
+                                    copy_output => 0);
 
-		#set $DATA
-		my $fname = $regdatanames[($sample-1)];
-		$mi_model -> datafiles(new_names => [$fname] );
-		#PROB 1!!!
+        #set $DATA
+        my $fname = $regdatanames[($sample-1)];
+        $mi_model -> datafiles(new_names => [$fname] );
+        #PROB 1!!!
 
-		#set seed i first PROB
-		#set seed
-		my $prob = $mi_model -> problems -> [0];
-		my $sim_record = $mi_model -> record( problem_number => 1,
-											  record_name => 'simulation' );
-		my @old_lines;
-		if (defined $sim_record -> [0] and scalar(@{$sim_record -> [0]})>0){
-			@old_lines = @{$sim_record -> [0]};
-		}else{
-			@old_lines =('(12345)'); #no old sim record
-		}
-		my @new_record;
+        #set seed i first PROB
+        #set seed
+        my $prob = $mi_model -> problems -> [0];
+        my $sim_record = $mi_model -> record( problem_number => 1,
+                                              record_name => 'simulation' );
+        my @old_lines;
+        if (defined $sim_record -> [0] and scalar(@{$sim_record -> [0]})>0){
+            @old_lines = @{$sim_record -> [0]};
+        }else{
+            @old_lines =('(12345)'); #no old sim record
+        }
+        my @new_record;
 
-		foreach my $sim_line ( @old_lines){
-			my $new_line;
-			while( $sim_line =~ /([^()]*)(\([^()]+\))(.*)/g ){
-				my $head = $1;
-				my $old_seed = $2;
-				$sim_line = $3;
-				$new_line .= $head;
+        foreach my $sim_line ( @old_lines){
+            my $new_line;
+            while( $sim_line =~ /([^()]*)(\([^()]+\))(.*)/g ){
+                my $head = $1;
+                my $old_seed = $2;
+                $sim_line = $3;
+                $new_line .= $head;
 
-				while( $old_seed =~ /(\D*)(\d+)(.*)/ ){
-					$new_line .= $1;
-					$new_line .= random_uniform_integer( 1, 0, 1000000 ); # Upper limit is from nmhelp
-					$old_seed = $3;
-				}
+                while( $old_seed =~ /(\D*)(\d+)(.*)/ ){
+                    $new_line .= $1;
+                    $new_line .= random_uniform_integer( 1, 0, 1000000 ); # Upper limit is from nmhelp
+                    $old_seed = $3;
+                }
 
-				$new_line .= $old_seed;
+                $new_line .= $old_seed;
 
-			}
-			push( @new_record, $new_line.$sim_line );
-		}
+            }
+            push( @new_record, $new_line.$sim_line );
+        }
 
-		$prob -> set_records( type => 'simulation',
-							  record_strings => \@new_record );
-		$mi_model -> _write();
-		push( @{$mi_models}, $mi_model );
-	}
-	my $mod_mi = tool::modelfit -> new(
-		%{common_options::restore_options(@common_options::tool_options)},
-		top_tool         => 0,
-		models           => $mi_models,
-		base_directory   => '..', ##??
-		directory        => '../mi_dir'.$j,
-		logfile	         => undef,
-		raw_results           => undef,
-		prepared_models       => undef,
-		seed       => random_uniform_integer(1,1,99999999),
-		copy_data => 0);
+        $prob -> set_records( type => 'simulation',
+                              record_strings => \@new_record );
+        $mi_model -> _write();
+        push( @{$mi_models}, $mi_model );
+    }
+    my $mod_mi = tool::modelfit -> new(
+        %{common_options::restore_options(@common_options::tool_options)},
+        top_tool         => 0,
+        models           => $mi_models,
+        base_directory   => '..', ##??
+        directory        => '../mi_dir'.$j,
+        logfile             => undef,
+        raw_results           => undef,
+        prepared_models       => undef,
+        seed       => random_uniform_integer(1,1,99999999),
+        copy_data => 0);
 
-	print "Running ".$options{'samples'}." mi models copy $j\n";
+    print "Running ".$options{'samples'}." mi models copy $j\n";
 
-	$mod_mi -> run;
-	$mod_mi = undef;
-	$mi_models = undef;
+    $mod_mi -> run;
+    $mod_mi = undef;
+    $mi_models = undef;
 
 }
 #run

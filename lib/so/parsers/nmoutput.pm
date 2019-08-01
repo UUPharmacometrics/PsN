@@ -312,7 +312,7 @@ sub _parse_lst_file
                         );
                     }
                 }
-				#repeat same procedure for filtered_labels, duplication, do not add message again
+                #repeat same procedure for filtered_labels, duplication, do not add message again
                 foreach my $label (@filtered_labels) {
                     if (not so::xml::match_symbol_idtype($label)) {
                         my $old_label = $label;
@@ -919,11 +919,11 @@ sub _get_iov_etas
     my $model = $parm{'model'};
 
     my @code;
-	if ($model->has_code(record => 'pk')) {
-		@code = @{$model->get_code(record => 'pk')};
-	} else {
-		@code = @{$model->get_code(record => 'pred')};
-	}
+    if ($model->has_code(record => 'pk')) {
+        @code = @{$model->get_code(record => 'pk')};
+    } else {
+        @code = @{$model->get_code(record => 'pred')};
+    }
 
     my @names;
     my $occasion;

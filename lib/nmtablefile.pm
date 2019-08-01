@@ -28,54 +28,54 @@ sub BUILD
 
 sub get_table
 {
-	my $self = shift;
-	my %parm = validated_hash(\@_,
-		index => { isa => 'Int', optional => 1 },
-		number => { isa => 'Int', optional => 1 },
-		problem => { isa => 'Int', optional => 1 },
-		subproblem => { isa => 'Int', optional => 1 },
-	);
+    my $self = shift;
+    my %parm = validated_hash(\@_,
+        index => { isa => 'Int', optional => 1 },
+        number => { isa => 'Int', optional => 1 },
+        problem => { isa => 'Int', optional => 1 },
+        subproblem => { isa => 'Int', optional => 1 },
+    );
     my $index = $parm{'index'};
-	my $number = $parm{'number'};
-	my $problem = $parm{'problem'};
-	my $subproblem = $parm{'subproblem'};
+    my $number = $parm{'number'};
+    my $problem = $parm{'problem'};
+    my $subproblem = $parm{'subproblem'};
 
-	if (defined $problem and defined $subproblem and
-		defined $self->problem_lookup->{$problem} and
-		defined $self->problem_lookup->{$problem}->{$subproblem}){
-		return $self->tables->[$self->problem_lookup->{$problem}->{$subproblem}];
-	}
-	if (defined $number and defined $self->table_lookup->{$number}){
-		return $self->tables->[$self->table_lookup->{$number}];
-	}
-	if (defined $index and $index < scalar(@{$self->tables})){
-		#works for -1 (last table) also
-		return $self->tables->[$index];
-	}
-	return undef;
+    if (defined $problem and defined $subproblem and
+        defined $self->problem_lookup->{$problem} and
+        defined $self->problem_lookup->{$problem}->{$subproblem}){
+        return $self->tables->[$self->problem_lookup->{$problem}->{$subproblem}];
+    }
+    if (defined $number and defined $self->table_lookup->{$number}){
+        return $self->tables->[$self->table_lookup->{$number}];
+    }
+    if (defined $index and $index < scalar(@{$self->tables})){
+        #works for -1 (last table) also
+        return $self->tables->[$index];
+    }
+    return undef;
 }
 
 sub add_table
 {
-	my $self = shift;
-	my $table = shift;
+    my $self = shift;
+    my $table = shift;
 
-	push @{$self->tables}, $table;
-	if (defined $table->table_number){
-		$self->table_lookup->{$table->table_number} = (scalar(@{$self->tables})-1);
-	}
-	if (defined $table->problem and defined $table->subproblem){
-		#if multiple $EST they will have same subproblem number, we will store the last one only
-		$self->problem_lookup->{$table->problem}->{$table->subproblem} = (scalar(@{$self->tables})-1);
-	}
+    push @{$self->tables}, $table;
+    if (defined $table->table_number){
+        $self->table_lookup->{$table->table_number} = (scalar(@{$self->tables})-1);
+    }
+    if (defined $table->problem and defined $table->subproblem){
+        #if multiple $EST they will have same subproblem number, we will store the last one only
+        $self->problem_lookup->{$table->problem}->{$table->subproblem} = (scalar(@{$self->tables})-1);
+    }
 }
 
 sub read_nmtable
 {
-	my $self = shift;
-	my %parm = validated_hash(\@_,
-		filename => { isa => 'Str' },
-	);
+    my $self = shift;
+    my %parm = validated_hash(\@_,
+        filename => { isa => 'Str' },
+    );
     my $filename = $parm{'filename'};
 
     $self->filename($filename);
@@ -86,21 +86,21 @@ sub read_nmtable
 
     TABLE: while (defined $table_row) {
         my $table = nmtable->new();
-		if ($self->is_ext_file){
-			if (($table_row =~ /\(Evaluation\)/) or ($table_row =~ /\(EVALUATION\)/)){
-				$self->has_evaluation(1);
-			}
-		}
+        if ($self->is_ext_file){
+            if (($table_row =~ /\(Evaluation\)/) or ($table_row =~ /\(EVALUATION\)/)){
+                $self->has_evaluation(1);
+            }
+        }
         $table->read_table_row(row => $table_row);
         my $header_row = <$fh>;
-		if (not defined $header_row){ #table row without header row following
-			$self->add_table($table);
-			last TABLE;
-		}elsif ($header_row =~ /^TABLE NO./) {   #Header row is actually new table row
+        if (not defined $header_row){ #table row without header row following
+            $self->add_table($table);
+            last TABLE;
+        }elsif ($header_row =~ /^TABLE NO./) {   #Header row is actually new table row
             $table_row = $header_row;
             $self->add_table($table); #previously read table
             next TABLE;
-		}
+        }
         $table->set_header(header => $header_row);
 
         my $row;
@@ -108,17 +108,17 @@ sub read_nmtable
         ROW: while (1) {
             $row = <$fh>;
             if (not defined $row) {
-				$self->add_table($table);
+                $self->add_table($table);
                 last TABLE;
             }
             if ($row =~ /^TABLE NO./) {
                 $table_row = $row;
-				$self->add_table($table);
+                $self->add_table($table);
                 last ROW;
             }
-			if ($self->is_ext_file){
-				next unless ($row =~ /\s*-100000000[0-6]/);
-			}
+            if ($self->is_ext_file){
+                next unless ($row =~ /\s*-100000000[0-6]/);
+            }
             $table->add_row(row => $row);
         }
     }
@@ -129,10 +129,10 @@ sub read_nmtable
 sub _replace_names_in_header
 {
     # Replace all names in a replacement hash in a table header string
-	my %parm = validated_hash(\@_,
-		header => { isa => 'Str' },
+    my %parm = validated_hash(\@_,
+        header => { isa => 'Str' },
         replacements => { isa => 'HashRef' },
-	);
+    );
     my $header = $parm{'header'};
     my $replacements = $parm{'replacements'};
 
@@ -148,10 +148,10 @@ sub rename_column_names
 {
     # Function to rename column names of table using a hash of names => replacements
     # This can be used as a workaround for the NONMEM caveat causing synonyms to always show up in table headers
-	my %parm = validated_hash(\@_,
-		filename => { isa => 'Str' },
+    my %parm = validated_hash(\@_,
+        filename => { isa => 'Str' },
         replacements => { isa => 'HashRef' },
-	);
+    );
     my $filename = $parm{'filename'};
     my $replacements = $parm{'replacements'};
 
@@ -176,11 +176,11 @@ sub write
     # Write the NONMEM tablefile to disk. Supports phi-files and regular tables
     # WARNING: Assuming that columns contain the original strings
     my $self = shift;
-	my %parm = validated_hash(\@_,
-		path => { isa => 'Str' },
+    my %parm = validated_hash(\@_,
+        path => { isa => 'Str' },
         phi => { isa => 'Bool', default => 0 },     # Is it a phi-file
         colsize => { isa => 'Int', default => 13 },     # The size in characters of one column
-	);
+    );
     my $path = $parm{'path'};
     my $phi = $parm{'phi'};
     my $colsize = $parm{'colsize'};
@@ -239,9 +239,9 @@ sub rearrange_etas
     # Reordering hash must be complete, i.e. cover all etas
     # This is specific to phi files and could be put in a subclass in the future
     my $self = shift;
-	my %parm = validated_hash(\@_,
+    my %parm = validated_hash(\@_,
         order => { isa => 'HashRef' },
-	);
+    );
     my $order = $parm{'order'};
 
     my %new_to_old = reverse %$order;
@@ -274,10 +274,10 @@ sub renumber_l2_column
 {
     # Renumbers a L2 column to use unique numbers for each level starting from 1 for each ID
     my $self = shift;
-	my %parm = validated_hash(\@_,
+    my %parm = validated_hash(\@_,
         column => { isa => 'Int' },        # The index of the L2 column
         format => { isa => 'Str', default => '%.8E' },
-	);
+    );
     my $column = $parm{'column'};
     my $format = $parm{'format'};
 

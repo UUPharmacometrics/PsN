@@ -30,20 +30,20 @@ my %options;
 
 my %required_options = ();
 my %optional_options = ("prepend_options_to_lst!"=> undef,
-						"model_dir_name!" => undef,
-						"timestamp!" => undef,
-						"keep_table_files!" => undef,
-						"keep_nm_output!" => undef,
-						"update_fix!" => undef,
-						'rawres_input:s' => undef,
-						'offset_rawres:i' => undef,
-						'samples:i' => undef,
-						'in_filter:s' => undef
-	);
+                        "model_dir_name!" => undef,
+                        "timestamp!" => undef,
+                        "keep_table_files!" => undef,
+                        "keep_nm_output!" => undef,
+                        "update_fix!" => undef,
+                        'rawres_input:s' => undef,
+                        'offset_rawres:i' => undef,
+                        'samples:i' => undef,
+                        'in_filter:s' => undef
+    );
 
 my $res = GetOptions( \%options,
-		      @common_options::get_opt_strings,
-		      keys(%optional_options) );
+              @common_options::get_opt_strings,
+              keys(%optional_options) );
 
 exit unless $res;
 
@@ -53,153 +53,153 @@ exit unless $res;
 my %help_text;
 
 $help_text{Pre_help_message} = <<'EOF';
-	Run multiple copies of a single model with tweaked initial estimates in
-	parallel.
+    Run multiple copies of a single model with tweaked initial estimates in
+    parallel.
 EOF
 
 $help_text{Description} = <<'EOF';
 
-	The parallel_retries tool allows you to run multiple copies of a single model
-	with tweaked initial estimates in parallel. In PsN terminology it is called
-	a retry to (re)run a model with tweaked initial estimates. The retries are
-	always done serially in execute and other PsN tools. The parallel_retries
-	tool is a help script that takes a single model as input, creates 'min_retries'
-	extra copies of this model with tweaked initial estimates, and then runs the
-	original plus the extra models in parallel in separate NM_run subdirectories.
-	Results are summarized in raw_results.csv and parallel_retries_results.csv
-	in the run directory. The tool will select the best retry using the same
-	criteria as execute, and copy back output files (NONMEM files, table files)
-	from the selected retry to the input model's directory. The parallel_retries
-	tool accepts all options in common_options.pdf.
+    The parallel_retries tool allows you to run multiple copies of a single model
+    with tweaked initial estimates in parallel. In PsN terminology it is called
+    a retry to (re)run a model with tweaked initial estimates. The retries are
+    always done serially in execute and other PsN tools. The parallel_retries
+    tool is a help script that takes a single model as input, creates 'min_retries'
+    extra copies of this model with tweaked initial estimates, and then runs the
+    original plus the extra models in parallel in separate NM_run subdirectories.
+    Results are summarized in raw_results.csv and parallel_retries_results.csv
+    in the run directory. The tool will select the best retry using the same
+    criteria as execute, and copy back output files (NONMEM files, table files)
+    from the selected retry to the input model's directory. The parallel_retries
+    tool accepts all options in common_options.pdf.
 EOF
 $help_text{Options} = <<'EOF';
 
-	A model file is required on the command line. In addition, either -min_retries
-	or -rawres_input is required. The tool takes the same input as execute,
-	see execute -h.
+    A model file is required on the command line. In addition, either -min_retries
+    or -rawres_input is required. The tool takes the same input as execute,
+    see execute -h.
 
-	The following options are valid:
+    The following options are valid:
 EOF
 
 $help_text{Examples} = <<'EOF';
-	parallel_retries run33.mod -min_retries=4 -threads=5 -seed=12345
+    parallel_retries run33.mod -min_retries=4 -threads=5 -seed=12345
 EOF
 
 $help_text{-in_filter} = <<'EOF';
 -in_filter=comma-separated list of conditions
 
-	Default not set. Only relevant in combination with rawres_input. The parameter
-	estimates lines in the file can be filtered on values in the different columns.
-	When specifying which column(s) the filtering should be based on, the exact
-	column name must be used, e.g. minimization_successful. Filtering can only be
-	based on columns with numeric values. The allowed relations are .gt. (greater
-	than), .lt. (less than) and .eq. (equal to). Conditions are separated with
-	commas. If the remaining number of lines after filtering is smaller than
-	-samples, parallel_retries will stop with an error message. Then the user must
-	either change the filtering rules or change -samples. If the user has created
-	a file with parameter estimates outside of PsN, filtering can be done on any
-	numeric column in that file. Do not set column headers containing .eq. or
-	.lt. or .gt.in the user-generated file as this would interfere with the
-	in_filter option syntax.
-	Example: -in_filter=minimization_successful.eq.1,significant_digits.gt.3.5
+    Default not set. Only relevant in combination with rawres_input. The parameter
+    estimates lines in the file can be filtered on values in the different columns.
+    When specifying which column(s) the filtering should be based on, the exact
+    column name must be used, e.g. minimization_successful. Filtering can only be
+    based on columns with numeric values. The allowed relations are .gt. (greater
+    than), .lt. (less than) and .eq. (equal to). Conditions are separated with
+    commas. If the remaining number of lines after filtering is smaller than
+    -samples, parallel_retries will stop with an error message. Then the user must
+    either change the filtering rules or change -samples. If the user has created
+    a file with parameter estimates outside of PsN, filtering can be done on any
+    numeric column in that file. Do not set column headers containing .eq. or
+    .lt. or .gt.in the user-generated file as this would interfere with the
+    in_filter option syntax.
+    Example: -in_filter=minimization_successful.eq.1,significant_digits.gt.3.5
 
 EOF
 
 $help_text{-keep_nm_output} = <<'EOF';
-	-keep_nm_output
+    -keep_nm_output
 
-	Default not set. If set then do not clean nm_output files for the not-chosen
-	retry models from the main run directory.
+    Default not set. If set then do not clean nm_output files for the not-chosen
+    retry models from the main run directory.
 EOF
 
 $help_text{-keep_table_files} = <<'EOF';
-	-keep_table_files
-	Default not set. If set then do not clean table files for the non-chosen
-	retry models from the main run directory.
+    -keep_table_files
+    Default not set. If set then do not clean table files for the non-chosen
+    retry models from the main run directory.
 EOF
 
 $help_text{-model_dir_name} = <<'EOF';
-	-model_dir_name
+    -model_dir_name
 
-	Default not set. This option changes the basename of the run directory from
-	parallel_retries_dir to modelfile.dir. where modelfile is the name of the
-	(first) input model file without the extension. The     directories will be
-	numbered starting from 1, increasing the number each time parallel_retries
-	is run with a model file with the same name. If the option directory is used
-	it will override -model_dir_name.
+    Default not set. This option changes the basename of the run directory from
+    parallel_retries_dir to modelfile.dir. where modelfile is the name of the
+    (first) input model file without the extension. The     directories will be
+    numbered starting from 1, increasing the number each time parallel_retries
+    is run with a model file with the same name. If the option directory is used
+    it will override -model_dir_name.
 EOF
 
 $help_text{-offset_rawres} = <<'EOF';
-	-offset_rawres=N
+    -offset_rawres=N
 
-	Default is 1. Only relevant in combination with rawres_input. The number of
-	result lines to skip in the input raw results file before starting to read
-	  final parameter estimates. In a regular bootstrap raw_results file the
-	  first line of estimates refers to the input model with the full dataset,
-	  so therefore the default offset is 1.
+    Default is 1. Only relevant in combination with rawres_input. The number of
+    result lines to skip in the input raw results file before starting to read
+      final parameter estimates. In a regular bootstrap raw_results file the
+      first line of estimates refers to the input model with the full dataset,
+      so therefore the default offset is 1.
 EOF
 $help_text{-prepend_options_to_lst} = <<'EOF';
-	-prepend_options_to_lst
+    -prepend_options_to_lst
 
-	Default not set. This option makes PsN prepend the final lst-file (which is
-	copied back to the directory from which parallel_retries was called) with
-	the file version_and_option_info.txt which contains run information, including
+    Default not set. This option makes PsN prepend the final lst-file (which is
+    copied back to the directory from which parallel_retries was called) with
+    the file version_and_option_info.txt which contains run information, including
     all actual values of optional PsN options. PsN can still parse the  lst-file
-	with the options prepended, so the file can still be used it as input to e.g.
-	sumo, vpc or update_inits. Option can be disabled with -no-prepend_options_to_lst.
+    with the options prepended, so the file can still be used it as input to e.g.
+    sumo, vpc or update_inits. Option can be disabled with -no-prepend_options_to_lst.
 EOF
 
 $help_text{-rawres_input} = <<'EOF';
 -rawres_input=filename
 
-	Default not set. An alternative way to estimate with different initial estimates.
-	Instead of using initial estimates from a random perturbation, take parameter
-	initial values from a raw_results-like file. The raw results file must contain
-	at least as many samples as the input -samples to parallel_retries, the labels
-	for THETA/OMEGA/SIGMA in the file must match the labels in the simulation model
-	given as input to parallel_retries, the theta columns must be directly followed
-	by the omega columns which must be directly followed by the sigma columns, and
-	the first column must have header model just as a bootstrap raw_results file.
-	Note that is is possible to generate a file with initial parameter estimates
-	outside of PsN, as long as the file follows the format rules.
+    Default not set. An alternative way to estimate with different initial estimates.
+    Instead of using initial estimates from a random perturbation, take parameter
+    initial values from a raw_results-like file. The raw results file must contain
+    at least as many samples as the input -samples to parallel_retries, the labels
+    for THETA/OMEGA/SIGMA in the file must match the labels in the simulation model
+    given as input to parallel_retries, the theta columns must be directly followed
+    by the omega columns which must be directly followed by the sigma columns, and
+    the first column must have header model just as a bootstrap raw_results file.
+    Note that is is possible to generate a file with initial parameter estimates
+    outside of PsN, as long as the file follows the format rules.
 EOF
 
 $help_text{-samples} = <<'EOF';
-	-samples=N
+    -samples=N
 
-	Default is to use all sets after skipping the first 'offset_rawres' sets.
-	Only relevant in combination with rawres_input. The number of parameter sets
-	to use from the the input raw results file.
+    Default is to use all sets after skipping the first 'offset_rawres' sets.
+    Only relevant in combination with rawres_input. The number of parameter sets
+    to use from the the input raw results file.
 EOF
 
 $help_text{-timestamp} = <<'EOF';
 -timestamp
 
-	Default not set. Automatically set the run directory name with a time stamp
-	and the stem of the model name. Example: parallel_retries run1.mod -timestamp
-	gives run directory name run1-PsN-2014-06-12-152502 for a run that was started
-	at 15:25:02 June 12th in year 2014. If he option directory is used it will
-	override -timstamp.
+    Default not set. Automatically set the run directory name with a time stamp
+    and the stem of the model name. Example: parallel_retries run1.mod -timestamp
+    gives run directory name run1-PsN-2014-06-12-152502 for a run that was started
+    at 15:25:02 June 12th in year 2014. If he option directory is used it will
+    override -timstamp.
 EOF
 
 $help_text{-update_fix} = <<'EOF';
-	-update_fix
+    -update_fix
 
-	Default not set. Only relevant in combination with rawres_input. By default
-	FIX values in the input model are not updated based on the rawres_input
-	file, but if -update_fix is set then also FIX values will be updated.
+    Default not set. Only relevant in combination with rawres_input. By default
+    FIX values in the input model are not updated based on the rawres_input
+    file, but if -update_fix is set then also FIX values will be updated.
 EOF
 
 common_options::online_help('parallel_retries', \%options,\%help_text, \%required_options, \%optional_options);
 common_options::setup( \%options, 'parallel_retries' ); #calls set_globals etc, initiates random sequence
 
 unless (defined $options{'degree'}){
-	my %hash = %{common_options::restore_options(@common_options::tool_options)};
-	if (defined $hash{'degree'}){
-		$options{'degree'} = $hash{'degree'};
-	}else{
-		$options{'degree'} = 0.1;
-	}
+    my %hash = %{common_options::restore_options(@common_options::tool_options)};
+    if (defined $hash{'degree'}){
+        $options{'degree'} = $hash{'degree'};
+    }else{
+        $options{'degree'} = 0.1;
+    }
 }
 
 require tool::modelfit;
@@ -249,9 +249,9 @@ foreach my $model_name ( @ARGV ){
   my $model;
 
   $model = model -> new ( eval( $eval_string ),
-			  outputfile                  => $outputfile,
-			  filename                    => $model_name,
-			  ignore_missing_output_files => 1,
+              outputfile                  => $outputfile,
+              filename                    => $model_name,
+              ignore_missing_output_files => 1,
          output_directory => $output_directory, );
 
   if( $options{'nonparametric_etas'} or
@@ -275,54 +275,54 @@ my $sampled_params_arr;
 my $href;
 my $samples;
 if (defined $options{'rawres_input'}){
-	my $offset=1;
-	$offset= $options{'offset_rawres'} if (defined $options{'offset_rawres'});
-	my @in_filter=();
-	if ( defined $options{'in_filter'} ){
-		#split string, assume comma separated
-		foreach my $filt (split(/,/,$options{'in_filter'})){
-			if ($filt =~ /.\.(gt|lt|eq)\.\d+\.?\d*/){
-				push(@in_filter,$filt);
-			}else{
-				die "Input filter $filt does not fulfill the format rules.\n";
-			}
-		}
-		if (scalar(@in_filter)<1){
-			die "Error: Option in_filter used, but list of conditions could not be parsed.\n";
-		}
-	}
+    my $offset=1;
+    $offset= $options{'offset_rawres'} if (defined $options{'offset_rawres'});
+    my @in_filter=();
+    if ( defined $options{'in_filter'} ){
+        #split string, assume comma separated
+        foreach my $filt (split(/,/,$options{'in_filter'})){
+            if ($filt =~ /.\.(gt|lt|eq)\.\d+\.?\d*/){
+                push(@in_filter,$filt);
+            }else{
+                die "Input filter $filt does not fulfill the format rules.\n";
+            }
+        }
+        if (scalar(@in_filter)<1){
+            die "Error: Option in_filter used, but list of conditions could not be parsed.\n";
+        }
+    }
 
-	($sampled_params_arr,$href) = model::get_rawres_params(filename => $options{'rawres_input'},
-														   filter => \@in_filter,
-														   offset => $offset,
-														   model => $models_array -> [0]);
+    ($sampled_params_arr,$href) = model::get_rawres_params(filename => $options{'rawres_input'},
+                                                           filter => \@in_filter,
+                                                           offset => $offset,
+                                                           model => $models_array -> [0]);
 
-	if (defined $sampled_params_arr) {
-		if (defined $options{'samples'}){
-			$samples=$options{'samples'};
-			croak("Cannot have zero samples") if ($samples==0);
-			unless (scalar(@{$sampled_params_arr}) >= ($samples)) {
-				if (defined $options{'in_filter'}) {
-					croak("Too few sets (lines) of parameter values in\n".
-						  "rawres file after filtering. Have ".scalar(@{$sampled_params_arr}).
-						  " but need at least $samples\n");
-				} else {
-					croak("Too few sets (lines) of parameter values in\n".
-						  "rawres file. Have ".scalar(@{$sampled_params_arr}).
-						  " but need at least ".
-						  ($samples + $options{'offset_rawres'}).".\n");
-				}
-			}
+    if (defined $sampled_params_arr) {
+        if (defined $options{'samples'}){
+            $samples=$options{'samples'};
+            croak("Cannot have zero samples") if ($samples==0);
+            unless (scalar(@{$sampled_params_arr}) >= ($samples)) {
+                if (defined $options{'in_filter'}) {
+                    croak("Too few sets (lines) of parameter values in\n".
+                          "rawres file after filtering. Have ".scalar(@{$sampled_params_arr}).
+                          " but need at least $samples\n");
+                } else {
+                    croak("Too few sets (lines) of parameter values in\n".
+                          "rawres file. Have ".scalar(@{$sampled_params_arr}).
+                          " but need at least ".
+                          ($samples + $options{'offset_rawres'}).".\n");
+                }
+            }
 
-		}else{
-			$samples = scalar(@{$sampled_params_arr});
-			if ($samples < 1){
-				croak("No lines left in rawres (after filtering)");
-			}
-		}
-	} else {
-		croak("get_rawres_params returned undef");
-	}
+        }else{
+            $samples = scalar(@{$sampled_params_arr});
+            if ($samples < 1){
+                croak("No lines left in rawres (after filtering)");
+            }
+        }
+    } else {
+        croak("get_rawres_params returned undef");
+    }
 
 
 }
@@ -333,45 +333,45 @@ my $filestem = $models_array -> [0]->filename();
 $filestem =~ s/\.[^.]+$//; #last dot and extension
 
 my $main_model = $models_array -> [0] -> copy( filename    => $filestem.'_origin.mod',
-											   copy_datafile   => 1,
-											   copy_output => 0,
-											   directory => $main_directory);
+                                               copy_datafile   => 1,
+                                               copy_output => 0,
+                                               directory => $main_directory);
 
 my $mod_array;
 push(@{$mod_array},$main_model);
 if (defined $options{'rawres_input'}){
-	my $update_fix = 0;
-	if (defined $options{'update_fix'}){
-		$update_fix = $options{'update_fix'};
-	}
-	foreach (my $retry=1;$retry<=$samples;$retry++){
+    my $update_fix = 0;
+    if (defined $options{'update_fix'}){
+        $update_fix = $options{'update_fix'};
+    }
+    foreach (my $retry=1;$retry<=$samples;$retry++){
 
-		my $retry_mod = $main_model -> copy( filename    => $filestem.'_init'.$retry.'.mod',
-											 copy_datafile   => 0,
-											 copy_output => 0,
-											 write_copy => 0,
-											 directory => $main_directory);
-		$retry_mod -> update_inits(from_hash => $sampled_params_arr->[$retry-1],
-								   update_fix => $update_fix);
-		$retry_mod -> _write();
-		push(@{$mod_array},$retry_mod);
-	}
+        my $retry_mod = $main_model -> copy( filename    => $filestem.'_init'.$retry.'.mod',
+                                             copy_datafile   => 0,
+                                             copy_output => 0,
+                                             write_copy => 0,
+                                             directory => $main_directory);
+        $retry_mod -> update_inits(from_hash => $sampled_params_arr->[$retry-1],
+                                   update_fix => $update_fix);
+        $retry_mod -> _write();
+        push(@{$mod_array},$retry_mod);
+    }
 
 }else{
-	foreach (my $retry=1;$retry<=$options{'min_retries'};$retry++){
-		my $retry_mod = $main_model -> copy( filename    => $filestem.'_retry'.$retry.'.mod',
-											 copy_datafile   => 0,
-											 copy_output => 0,
-											 write_copy => 0,
-											 directory => $main_directory);
-		my @problems = @{$retry_mod -> problems};
-		foreach my $prob ( @problems ) {
-			$prob -> set_random_inits ( degree => $options{'degree'} );
-		}
-		$retry_mod -> datafiles(new_names => $main_model->datafiles(absolute_path => 1)); #use local data file
-		$retry_mod -> _write();
-		push(@{$mod_array},$retry_mod);
-	}
+    foreach (my $retry=1;$retry<=$options{'min_retries'};$retry++){
+        my $retry_mod = $main_model -> copy( filename    => $filestem.'_retry'.$retry.'.mod',
+                                             copy_datafile   => 0,
+                                             copy_output => 0,
+                                             write_copy => 0,
+                                             directory => $main_directory);
+        my @problems = @{$retry_mod -> problems};
+        foreach my $prob ( @problems ) {
+            $prob -> set_random_inits ( degree => $options{'degree'} );
+        }
+        $retry_mod -> datafiles(new_names => $main_model->datafiles(absolute_path => 1)); #use local data file
+        $retry_mod -> _write();
+        push(@{$mod_array},$retry_mod);
+    }
 }
 #basedirect $main_directory
 $modelfit = tool::modelfit->new(
@@ -387,59 +387,59 @@ $modelfit = tool::modelfit->new(
 );
 
 $modelfit-> print_options (cmd_line => $cmd_line,
-			   directory => $main_directory,
-			   toolname => 'parallel_retries',
-			   local_options => [keys %optional_options],
-			   common_options => \@common_options::tool_options);
+               directory => $main_directory,
+               toolname => 'parallel_retries',
+               local_options => [keys %optional_options],
+               common_options => \@common_options::tool_options);
 
 
 $modelfit -> run;
 
 my $dir = $modelfit->directory;
 foreach my $file (<$dir/raw_results_*>){
-	mv($file,$main_directory.'/.');
+    mv($file,$main_directory.'/.');
 }
 if ($modelfit->clean > 2){
-	rmtree($dir);
+    rmtree($dir);
 }
 
 my @run_results=();
 #probnum is negative if not running estimation
 my $probnum = $mod_array->[0]->get_estimation_evaluation_problem_number(); #important to use model that is run to read from output
 foreach my $mod (@{$mod_array}){
-	if ($mod->is_run){
-		my $pass_picky = tool::modelfit::passed_picky(minimization_successful => $mod->outputs->[0]->minimization_successful,
-													  minimization_message => $mod->outputs->[0]->minimization_message,
-													  probnum => $probnum,
-													  picky => $modelfit->picky);
-		push(@run_results,{'ofv' => $mod->outputs->[0]->get_single_value(attribute => 'ofv'),
-						   'pass_picky'=> $pass_picky,
-						   'name' => $mod->filename,
-						   'minimization_successful' => $mod->outputs->[0]->get_single_value(attribute => 'minimization_successful')});
-	}else{
-		push(@run_results,{'ofv' => undef,
-						   'pass_picky'=> 0,
-						   'name' => $mod->filename,
-						   'minimization_successful' => 0});
-	}
+    if ($mod->is_run){
+        my $pass_picky = tool::modelfit::passed_picky(minimization_successful => $mod->outputs->[0]->minimization_successful,
+                                                      minimization_message => $mod->outputs->[0]->minimization_message,
+                                                      probnum => $probnum,
+                                                      picky => $modelfit->picky);
+        push(@run_results,{'ofv' => $mod->outputs->[0]->get_single_value(attribute => 'ofv'),
+                           'pass_picky'=> $pass_picky,
+                           'name' => $mod->filename,
+                           'minimization_successful' => $mod->outputs->[0]->get_single_value(attribute => 'minimization_successful')});
+    }else{
+        push(@run_results,{'ofv' => undef,
+                           'pass_picky'=> 0,
+                           'name' => $mod->filename,
+                           'minimization_successful' => 0});
+    }
 }
 
 my $selected = tool::modelfit::select_best_retry(run_results => \@run_results,
-												 accepted_ofv_difference => $modelfit->accepted_ofv_difference);
+                                                 accepted_ofv_difference => $modelfit->accepted_ofv_difference);
 my $results_file = 'parallel_retries_results.csv';
 open( RES, ">".$results_file) or die "could not open ".$results_file;
 print RES "model,ofv,minimization.successful,pass.picky,selected\n";
 for (my $i=0; $i<scalar(@run_results); $i++){
-	my $sel=0;
-	$sel = 1 if ($i == ($selected-1)); #seletec numbering starts at 1
-	my @line = ($run_results[$i]->{'name'},$run_results[$i]->{'ofv'},
-				$run_results[$i]->{'minimization_successful'},$run_results[$i]->{'pass_picky'},$sel);
-	print RES join(',',@line)."\n";
+    my $sel=0;
+    $sel = 1 if ($i == ($selected-1)); #seletec numbering starts at 1
+    my @line = ($run_results[$i]->{'name'},$run_results[$i]->{'ofv'},
+                $run_results[$i]->{'minimization_successful'},$run_results[$i]->{'pass_picky'},$sel);
+    print RES join(',',@line)."\n";
 }
 close(RES);
 
 ui -> print( category => 'parallel_retries',
-			 message => "\nSelected ".$run_results[($selected-1)]->{'name'}."\n" );
+             message => "\nSelected ".$run_results[($selected-1)]->{'name'}."\n" );
 
 #copy back output
 #copy actual from directory $main_directory files $mod_array->output_files
@@ -447,23 +447,23 @@ my $selected_filestem = $mod_array->[$selected-1]->filename;
 $selected_filestem =~ s/\.[^.]+$//; #last dot and extension
 my @copied;
 for (my $i=0; $i< scalar(@{$mod_array->[$selected-1]->output_files}); $i++){
-	my $from = $mod_array->[$selected-1]->directory.$mod_array->[$selected-1]->output_files->[$i];
-	my $tabfrom = $mod_array->[$selected-1]->directory.$selected_filestem.'.'.$mod_array->[$selected-1]->output_files->[$i];
-	my $to = $models_array->[0]->outputs->[0]->directory . $models_array->[0]->output_files->[$i];
-	if( $options{'prepend_model_file_name'}){
-		$to = $models_array->[0]->directory.$filestem.'.'.$models_array->[0]->output_files->[$i];
-	}
-	if (-e $from){
-		cp($from,$to);
+    my $from = $mod_array->[$selected-1]->directory.$mod_array->[$selected-1]->output_files->[$i];
+    my $tabfrom = $mod_array->[$selected-1]->directory.$selected_filestem.'.'.$mod_array->[$selected-1]->output_files->[$i];
+    my $to = $models_array->[0]->outputs->[0]->directory . $models_array->[0]->output_files->[$i];
+    if( $options{'prepend_model_file_name'}){
+        $to = $models_array->[0]->directory.$filestem.'.'.$models_array->[0]->output_files->[$i];
+    }
+    if (-e $from){
+        cp($from,$to);
         push @copied, basename($to);
-		ui -> print( category => 'parallel_retries',
-					 message => "copying $from to $to\n" );
-	}elsif(-e $tabfrom){
-		cp($tabfrom,$to);
+        ui -> print( category => 'parallel_retries',
+                     message => "copying $from to $to\n" );
+    }elsif(-e $tabfrom){
+        cp($tabfrom,$to);
         push @copied, basename($to);
-		ui -> print( category => 'parallel_retries',
-					 message => "copying $tabfrom to $to\n" );
-	}
+        ui -> print( category => 'parallel_retries',
+                     message => "copying $tabfrom to $to\n" );
+    }
 }
 
 $modelfit->metadata->{'copied_files'} = \@copied;
@@ -472,24 +472,24 @@ $modelfit->update_meta();
 
 #cleanup?
 if ($modelfit->clean > 1){
-	#datafile
-	my $file = $mod_array->[0]->datafiles(absolute_path=>1)->[0];
-	unlink($file);
+    #datafile
+    my $file = $mod_array->[0]->datafiles(absolute_path=>1)->[0];
+    unlink($file);
 }
 if ($modelfit->clean > 2){
-	foreach my $mod (@{$mod_array}){
-		my $filestem = $mod->filename;
-		$filestem =~ s/\.[^.]+$//; #last dot and extension
-		for (my $i=0; $i< scalar(@{$mod->output_files}); $i++){
-			my $from = $mod->directory.$mod->output_files->[$i];
-			my $tabfrom = $mod->directory.$filestem.'.'.$mod->output_files->[$i];
-			if (-e $from){
-				unlink($from) unless ($options{'keep_nm_output'});
-			}elsif(-e $tabfrom){
-				unlink($tabfrom) unless ($options{'keep_table_files'});
-			}
-		}
-	}
+    foreach my $mod (@{$mod_array}){
+        my $filestem = $mod->filename;
+        $filestem =~ s/\.[^.]+$//; #last dot and extension
+        for (my $i=0; $i< scalar(@{$mod->output_files}); $i++){
+            my $from = $mod->directory.$mod->output_files->[$i];
+            my $tabfrom = $mod->directory.$filestem.'.'.$mod->output_files->[$i];
+            if (-e $from){
+                unlink($from) unless ($options{'keep_nm_output'});
+            }elsif(-e $tabfrom){
+                unlink($tabfrom) unless ($options{'keep_table_files'});
+            }
+        }
+    }
 }
 
 ui->print(category => 'parallel_retries', message => "\nparallel_retries done\n");

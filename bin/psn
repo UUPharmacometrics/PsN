@@ -20,65 +20,65 @@ my %options;
 
 my %required_options = ();
 my %optional_options = (
-			 'benchmark' => '',
-			 'boot_scm' => '',
-			 'bootstrap' => '',
-			 'cdd' => '',
-			 'covmat' => '',
-			 'crossval' => '',
-			 'execute' =>'',
-			 'extended_grid' => '',
-			 'frem' => '',
-			 'gls' => '',
-			 'lasso' => '',
-			 'linearize' => '',
-			 'llp' => '',
-			 'mcmp' => '',
-			 'mimp' => '',
-			 'nca' => '',
+             'benchmark' => '',
+             'boot_scm' => '',
+             'bootstrap' => '',
+             'cdd' => '',
+             'covmat' => '',
+             'crossval' => '',
+             'execute' =>'',
+             'extended_grid' => '',
+             'frem' => '',
+             'gls' => '',
+             'lasso' => '',
+             'linearize' => '',
+             'llp' => '',
+             'mcmp' => '',
+             'mimp' => '',
+             'nca' => '',
              'nmoutput2so' => '',
-			 'nonpb' => '',
-			 'nm_versions' => '',
-			 'npc' => '',
-			 'npfit' => '',
-			 'parallel_retries' => '',
-			 'pind' => '',
-			 'precond' => '',
-			 'psn_clean' => '',
-			 'psn_options' => '',
-			 'pvar' => '',
+             'nonpb' => '',
+             'nm_versions' => '',
+             'npc' => '',
+             'npfit' => '',
+             'parallel_retries' => '',
+             'pind' => '',
+             'precond' => '',
+             'psn_clean' => '',
+             'psn_options' => '',
+             'pvar' => '',
              'qa' => '',
-			 'randtest' => '',
-			 'rawresults' => '',
-			 'runrecord' => '',
-			 'scm' => '',
-			 'simeval' => '',
-			 'sir' => '',
-			 'sse' => '',
-			 'sumo' => '',
-			 'update' => '',
-			 'update_inits' => '',
-			 'vpc' => '',
-			 'xv_scm' => '',
-			 );
+             'randtest' => '',
+             'rawresults' => '',
+             'runrecord' => '',
+             'scm' => '',
+             'simeval' => '',
+             'sir' => '',
+             'sse' => '',
+             'sumo' => '',
+             'update' => '',
+             'update_inits' => '',
+             'vpc' => '',
+             'xv_scm' => '',
+             );
 
 my $res = GetOptions(\%options,
-		      @common_options::get_opt_strings,
-		      keys(%required_options),
-		      keys(%optional_options));
+              @common_options::get_opt_strings,
+              keys(%required_options),
+              keys(%optional_options));
 exit unless $res;
 
 if (scalar(@ARGV)>0){
-	if ($ARGV[0] eq 'installation_info'){
-		#		print '$current_config_file='.$PsN::lib_dir. '/psn.conf'."';\n";
-		#do we want to risk user specific on cluster?
-		print '$current_config_file='."'".$PsN::config_file."';\n";
-		print '$current_lib_dir='."'".$PsN::lib_dir."';\n";
-		my ($volume, $directory, $file) = File::Spec->splitpath(__FILE__);
-		print '$current_bin_dir='."'".File::Spec->catdir($volume.$directory)."';\n";
-		print '$current_version='."'".$PsN::version."';\n";
-		exit;
-	}
+    if ($ARGV[0] eq 'installation_info'){
+        #        print '$current_config_file='.$PsN::lib_dir. '/psn.conf'."';\n";
+        #do we want to risk user specific on cluster?
+        print '$current_config_file='."'".$PsN::config_file."';\n";
+        print '$current_lib_dir='."'".$PsN::lib_dir."';\n";
+        my ($volume, $directory, $file) = File::Spec->splitpath(__FILE__);
+        print '$current_bin_dir='."'".File::Spec->catdir($volume.$directory)."';\n";
+        print '$current_version='."'".$PsN::version."';\n";
+        exit;
+    }
     if ($ARGV[0] eq 'rerun') {
         my $rundir = $ARGV[1];
         my $command_line;
@@ -134,83 +134,83 @@ EOF
 
 $help_text{-benchmark} = <<'EOF';
     benchmark - Combinatoric benchmarking of NONMEM control stream settings
-	See benchmark_userguide.pdf for details.
+    See benchmark_userguide.pdf for details.
 EOF
 
 $help_text{-bootstrap} = <<'EOF';
     bootstrap - Bootstrap using the percentile or BCa method.
-	See bootstrap_userguide.pdf for details.
+    See bootstrap_userguide.pdf for details.
 EOF
 
 $help_text{-cdd} = <<'EOF';
     cdd - Case Deletion Diagnostics
-	See cdd_userguide.pdf for details.
+    See cdd_userguide.pdf for details.
 EOF
 
 $help_text{-covmat} = <<'EOF';
     covmat - Create an empirical variance-covariance matrix based on a raw_results file.
-	Run 'covmat -help' for details.
+    Run 'covmat -help' for details.
 EOF
 
 $help_text{-crossval} = <<'EOF';
     crossval - Cross-validation
-	See crossval_userguide.pdf for details.
+    See crossval_userguide.pdf for details.
 EOF
 
 $help_text{-simeval} = <<'EOF';
     simeval - simulation-evaluation diagnostics of outliers.
-	See simeval_userguide.pdf for details.
+    See simeval_userguide.pdf for details.
 EOF
 
 $help_text{-execute} = <<'EOF';
     execute - NONMEM runs are started using one or multiple model files.
-	See execute_userguide.pdf for details.
+    See execute_userguide.pdf for details.
 EOF
 
 $help_text{-extended_grid} = <<'EOF';
     extended_grid - non-parametric estimation on the extended grid.
-	See extended_grid_userguide.pdf for details.
+    See extended_grid_userguide.pdf for details.
 EOF
 
 $help_text{-frem} = <<'EOF';
     frem - Full random effects modeling.
-	See frem_userguide.pdf for details.
+    See frem_userguide.pdf for details.
 EOF
 
 $help_text{-mimp} = <<'EOF';
     mimp - Multiple imputation of missing covariates.
-	See mimp_userguide.pdf for details.
+    See mimp_userguide.pdf for details.
 EOF
 
 $help_text{-lasso} = <<'EOF';
     lasso - Covariate model building using the LASSO method.
-	See lasso_userguide.pdf for details.
+    See lasso_userguide.pdf for details.
 EOF
 
 $help_text{-linearize} = <<'EOF';
     linearize - Linearize a model.
-	See linearize_userguide.pdf for details.
+    See linearize_userguide.pdf for details.
 EOF
 
 $help_text{-llp} = <<'EOF';
     llp - Log-Likelihood Profiling around maximum-likelihood parameter estimates.
-	See llp_userguide.pdf for details.
+    See llp_userguide.pdf for details.
 EOF
 
 $help_text{-mcmp} = <<'EOF';
     mcmp - Monte-Carlo mapped power. A fast method for power computations.
-	See mcmp_userguide.pdf for details.
+    See mcmp_userguide.pdf for details.
 EOF
 
 $help_text{-nca} = <<'EOF';
     nca - Non-compartmental analysis.
-	See nca_userguide.pdf for details.
+    See nca_userguide.pdf for details.
 EOF
 
 $help_text{-nmoutput2so} = <<'EOF';
     nmoutput2so - Convert the output from a NONMEM run to the standardised
     output format (so) specified by DDMoRe.
-	See nmoutput2so_userguide.pdf for details.
+    See nmoutput2so_userguide.pdf for details.
 EOF
 
 $help_text{-nm_versions} = <<'EOF';
@@ -224,12 +224,12 @@ EOF
 
 $help_text{-nonpb} = <<'EOF';
     nonpb - Non-Parametric Bootstrap
-	See nonpb_userguide.pdf for details.
+    See nonpb_userguide.pdf for details.
 EOF
 
 $help_text{-npc} = <<'EOF';
     npc - Numerical Predictive Check
-	See vpc_npc_userguide.pdf for details.
+    See vpc_npc_userguide.pdf for details.
 EOF
 
 $help_text{-npfit} = <<'EOF';
@@ -239,22 +239,22 @@ EOF
 $help_text{-parallel_retries} = <<'EOF';
     parallel_retries - Running multiple copies of a single model with tweaked
     initial estimates in parallel.
-	See execute_userguide.pdf for details (same document as execute guide).
+    See execute_userguide.pdf for details (same document as execute guide).
 EOF
 
 $help_text{-pind} = <<'EOF';
     pind - Individual Probabilities
-	See nonpb_userguide.pdf for details (same document as nonpb guide).
+    See nonpb_userguide.pdf for details (same document as nonpb guide).
 EOF
 
 $help_text{-precond} = <<'EOF';
     precond - Preconditioning
-	See precond_userguide.pdf for details.
+    See precond_userguide.pdf for details.
 EOF
 
 $help_text{-psn_clean} = <<'EOF';
     psn_clean - Automatic cleaning of PsN run directories.
-	Run 'psn_clean -help' for details.
+    Run 'psn_clean -help' for details.
 EOF
 
 $help_text{-psn_options} = <<'EOF';
@@ -263,78 +263,78 @@ EOF
 
 $help_text{-pvar} = <<'EOF';
     pvar - Parametric variability. Calculation of total, explained and unexplained variability for different parameters.
-	See pvar_userguide.pdf for details.
+    See pvar_userguide.pdf for details.
 EOF
 
 $help_text{-qa} = <<'EOF';
     qa - Quality assurance
-	See qa_userguide.pdf for details.
+    See qa_userguide.pdf for details.
 EOF
 
 $help_text{-runrecord} = <<'EOF';
     runrecord - Create records of NONMEM runs
-	See runrecord_userguide.pdf for details.
+    See runrecord_userguide.pdf for details.
 EOF
 
 $help_text{-randtest} = <<'EOF';
     randtest - Randomization testing
-	See randtest_userguide.pdf for details.
+    See randtest_userguide.pdf for details.
 EOF
 
 $help_text{-rawresults} = <<'EOF';
     rawresults - Create a rawresults file from a set of lst-files
-	Run 'rawresults -help' for details.
+    Run 'rawresults -help' for details.
 EOF
 
 $help_text{-scm} = <<'EOF';
     scm - Stepwise Covariate Model-building
-	See scm_userguide.pdf for details.
+    See scm_userguide.pdf for details.
 EOF
 
 $help_text{-sir} = <<'EOF';
     sir - Sampling importance resampling
-	See sir_userguide.pdf for details.
+    See sir_userguide.pdf for details.
 EOF
 
 $help_text{-sse} = <<'EOF';
     sse - Stochastic Simulation and Estimation
-	See sse_userguide.pdf for details.
+    See sse_userguide.pdf for details.
 EOF
 
 $help_text{-sumo} = <<'EOF';
     sumo - Summary of Output from NONMEM
-	See sumo_userguide.pdf for details.
+    See sumo_userguide.pdf for details.
 EOF
 
 $help_text{-update_inits} = <<'EOF';
     update_inits - read final THETA, OMEGA and SIGMA estimates from a
     NONMEM output file and put into a given model file.
-	See update_inits_userguide.pdf for details.
+    See update_inits_userguide.pdf for details.
 EOF
 $help_text{-update} = <<'EOF';
     update - read final THETA, OMEGA and SIGMA estimates from a
     NONMEM output file and put into a given model file.
-	See update_inits_userguide.pdf for details.
+    See update_inits_userguide.pdf for details.
 EOF
 
 $help_text{-vpc} = <<'EOF';
     vpc - Visual Predictive Check
-	See vpc_npc_userguide.pdf for details.
+    See vpc_npc_userguide.pdf for details.
 EOF
 
 $help_text{-gls} = <<'EOF';
     gls - Generalized Least Squares approximations of the residual error.
-	See gls_userguide.pdf for details.
+    See gls_userguide.pdf for details.
 EOF
 
 $help_text{-xv_scm} = <<'EOF';
     xv_scm - Cross-validated stepwise covariate model building.
-	See xv_scm_userguide.pdf for details.
+    See xv_scm_userguide.pdf for details.
 EOF
 
 $help_text{-boot_scm} = <<'EOF';
     boot_scm - Boot-strapped stepwise covariate model building.
-	See boot_scm_userguide.pdf for details.
+    See boot_scm_userguide.pdf for details.
 EOF
 
 $help_text{Post_help_message} = <<'EOF';

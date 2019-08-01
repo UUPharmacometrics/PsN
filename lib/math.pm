@@ -27,39 +27,39 @@ sub fortran_number_to_string
 sub logit
 {
     my ($number) = pos_validated_list(\@_,
-									  { isa => 'Num' },
+                                      { isa => 'Num' },
     );
-	if (($number >0) and ($number < 1)){
-		return log($number/(1-$number));
-	}else{
-		return undef;
-	}
+    if (($number >0) and ($number < 1)){
+        return log($number/(1-$number));
+    }else{
+        return undef;
+    }
 }
 
 sub inverse_logit
 {
     my ($number) = pos_validated_list(\@_,
-									  { isa => 'Num' },
-		);
-	return (exp($number)/(exp($number)+1));
+                                      { isa => 'Num' },
+        );
+    return (exp($number)/(exp($number)+1));
 
 }
 
 sub correlation2unbounded
 {
     my ($number) = pos_validated_list(\@_,
-									  { isa => 'Num' },
-		);
+                                      { isa => 'Num' },
+        );
 
-	return logit(($number+1)/2); #undef if out of range
+    return logit(($number+1)/2); #undef if out of range
 }
 
 sub unbounded2correlation
 {
     my ($number) = pos_validated_list(\@_,
-									  { isa => 'Num' },
-		);
-	return 2*(inverse_logit($number))-1;
+                                      { isa => 'Num' },
+        );
+    return 2*(inverse_logit($number))-1;
 }
 
 sub round
@@ -87,24 +87,24 @@ sub eps
     # Gives the correct answer for eps(x) <= 1 otherwise returns 1
 
     my $x = shift;
-	$x = abs($x);		# eps is same for negatives
+    $x = abs($x);        # eps is same for negatives
 
-	my $e = 1;
+    my $e = 1;
 
-	while ($e + $x > $x)
-	{
-		$e /= 2;
-	}
+    while ($e + $x > $x)
+    {
+        $e /= 2;
+    }
 
-	$e *= 2;
+    $e *= 2;
 
-	return $e;
+    return $e;
 }
 
 sub inf
 {
     # A portable infinity.
-	return 9**9**9;
+    return 9**9**9;
 }
 
 sub usable_number
@@ -113,15 +113,15 @@ sub usable_number
         { isa => 'Any' },
     );
 
-	my $ok = 0;
-	if ((defined $number) and $number =~ /^\s*([+-]?)(?=\d|\.\d)\d*(\.\d*)?([Ee]([+-]?\d+))?\s*$/) {
-		$ok = 1;
-		#special check for Windows where types of NaN can string evaluate to 0
-		if ($number =~ /^\s*0\s*$/){
-			$ok = 0 unless (($number+1) == 1);
-		}
-	}
-	return $ok;
+    my $ok = 0;
+    if ((defined $number) and $number =~ /^\s*([+-]?)(?=\d|\.\d)\d*(\.\d*)?([Ee]([+-]?\d+))?\s*$/) {
+        $ok = 1;
+        #special check for Windows where types of NaN can string evaluate to 0
+        if ($number =~ /^\s*0\s*$/){
+            $ok = 0 unless (($number+1) == 1);
+        }
+    }
+    return $ok;
 }
 
 sub to_precision
