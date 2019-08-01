@@ -60,6 +60,7 @@ Changes and bug fixes from PsN 4.8.0 to x.x.x
 
    ___common_options___
 
+- New option -slurm_cluster to select a cluster when more than one is available
 
 
    ___NONMEM output parsing___
