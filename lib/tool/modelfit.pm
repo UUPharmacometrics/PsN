@@ -544,7 +544,7 @@ sub run
                 my $modulus = (($#models + 1) <= 10) ? 1 : (($#models + 1) / 10);
 
                 if ($self->send_email) {
-                    my $mail_modulus = (($#models + 1) <= 3) ? 1 : (($#models + 1) / 5);
+                    my $mail_modulus = (($#models + 1) <= 4) ? 1 : (($#models + 1) / 5);
                     if ($run == 0) {
                         $queue_info{$run}{'send_email'} = 'ALL';
                     } elsif ($run % $mail_modulus == 0 or $run == $#models) {
