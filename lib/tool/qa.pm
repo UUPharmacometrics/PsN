@@ -6,6 +6,7 @@ use MooseX::Params::Validate;
 use File::Copy 'cp';
 use include_modules;
 use log;
+use array;
 use model_transformations;
 use filter_data;
 use utils::file;
@@ -33,8 +34,10 @@ has 'lst_file' => ( is => 'rw', isa => 'Str' );
 has 'cmd_line' => ( is => 'rw', isa => 'Str' );         # Used as a work around for calling scm via system
 has 'nointer' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'nonlinear' => ( is => 'rw', isa => 'Bool', default => 0 );
-has 'skip' => ( is => 'rw', isa => 'ArrayRef[Str]', default => sub { [] } );
-has 'only' => ( is => 'rw', isa => 'ArrayRef[Str]', default => sub { [] } );    # Will be transformed into skip in BUILD
+has 'skip' => ( is => 'rw', isa => 'ArrayRef[Str]', default => sub { [] } );    # Will be transformed into _tools_to run in BUILD
+has 'only' => ( is => 'rw', isa => 'ArrayRef[Str]', default => sub { [] } );
+has '_tools_to_run' => ( is => 'rw', isa => 'HashRef', default => sub { {} } );
+has '_tools_to_skip' => ( is => 'rw', isa => 'ArrayRef[Str]', default => sub { [] } );
 has 'add_etas' => ( is => 'rw', isa => 'ArrayRef[Str]' );
 has 'added_etas' => ( is => 'rw', isa => 'HashRef' );   # What parameters did get added etas and to what etas?
 has 'iov_structure' => ( is => 'rw', isa => 'ArrayRef' );   # The occ/iov structure for the r code
@@ -63,23 +66,45 @@ sub BUILD
         die("Cannot have both skip and only\n");
     }
 
-    if (scalar(@{$self->only}) > 0) {
-        my %skip_hash = ( 'scm' => 1, 'frem' => 1, 'cdd' => 1, 'simeval' => 1, 'transform' => 1, 'resmod' => 1 );
-        for my $section (@{$self->only}) {
-            if (exists $skip_hash{$section}) {
-                delete $skip_hash{$section};
-            } else {
-                die("only: Unknown section $section. Allowed are transform, scm, frem, cdd, simeval and resmod\n");
-            }
+    my %all_tools = ( 'scm' => 1, 'frem' => 1, 'cdd' => 1, 'simeval' => 1, 'transform' => 1, 'resmod' => 1 );
+    for my $skipped (@{$self->skip}) {
+        if (not array::string_in($skipped, [keys %all_tools])) {
+            die("skip: Unknown section $skipped. Allowed are transform, scm, frem, cdd, simeval and resmod\n");
         }
-        $self->skip([keys %skip_hash]);
+    }
+    for my $only (@{$self->skip}) {
+        if (not array::string_in($only, [keys %all_tools])) {
+            die("only: Unknown section $only. Allowed are transform, scm, frem, cdd, simeval and resmod\n");
+        }
     }
 
-    for my $skip (@{$self->skip}) {
-        if ($skip !~ /^(transform|scm|frem|cdd|simeval|resmod)$/) {
-            die("skip: Unknown section $skip. Allowed are transform, scm, frem, cdd, simeval and resmod\n");
+    my %steps_to_run = %all_tools;
+    for my $tool (keys %all_tools) {
+        if (scalar(@{$self->skip}) > 0) {
+            if (array::string_in($tool, $self->skip)) {
+                $steps_to_run{$tool} = 0;
+            }
+        } elsif (scalar(@{$self->only})) {
+            if (not array::string_in($tool, $self->only)) {
+                $steps_to_run{$tool} = 0;
+            }
         }
     }
+
+    # If frem is requested we also would need transform to get the full block OFV
+    if ($steps_to_run{'frem'} and not $steps_to_run{'transform'}) {
+        print "As frem was requested transform is added to be able to calculate the frem OFV.\n";
+        $steps_to_run{'transform'} = 1;
+    }
+
+    $self->_tools_to_run(\%steps_to_run);
+    my @tools_to_skip;      # Rplots needs to know the skipped tools
+    for my $tool (keys %all_tools) {
+        if (not $steps_to_run{$tool}) {
+            push @tools_to_skip, $tool;
+        }
+    }
+    $self->_tools_to_skip(\@tools_to_skip);
 
     if (defined $self->nm_parallel) {
         $self->_special_tool_options({});
@@ -265,9 +290,9 @@ sub modelfit_setup
     );
 
     my $numids = scalar(@{$lin_data->individuals});
-    if ($numids < 2 and not $self->_skipped('cdd')) {   # Skip cdd if only one individual
+    if ($numids < 2 and $self->_tools_to_run->{'cdd'}) {   # Skip cdd if only one individual
         print "Warning: Only one individual in dataset. Will skip cdd\n";
-        push @{$self->skip}, 'cdd';
+        $self->_tools_to_run->{'cdd'} = 0;
     }
 
     #if ($self->fo) {
@@ -276,7 +301,7 @@ sub modelfit_setup
     #}
 
 
-    if (not $self->_skipped('transform')) {
+    if ($self->_tools_to_run->{'transform'}) {
         print "*** Running full omega block, boxcox and tdist models ***\n";
         eval {
             mkdir "modelfit_run";
@@ -338,7 +363,7 @@ sub modelfit_setup
         $self->_to_qa_dir();
     }
 
-    if (defined $self->add_etas and scalar(@{$self->add_etas}) > 0 and not $self->_skipped('transform')) {
+    if (defined $self->add_etas and scalar(@{$self->add_etas}) > 0 and $self->_tools_to_run->{'transform'}) {
         print "\n*** Running add_etas ***\n";
         mkdir "add_etas_run";
         my $add_etas_model = $self->model->copy(
@@ -410,7 +435,7 @@ sub modelfit_setup
     $self->_to_qa_dir();
 
     if (defined $self->continuous or defined $self->categorical) {
-        if (not $self->_skipped('frem')) {
+        if ($self->_tools_to_run->{'frem'}) {
             print "\n*** Running FREM ***\n";
             my $frem_model = model->new(filename => $base_model_name);
 
@@ -460,7 +485,7 @@ sub modelfit_setup
             $self->_to_qa_dir();
         }
 
-        if (not $self->_skipped('scm') and defined $self->parameters) {
+        if ($self->_tools_to_run->{'scm'} and defined $self->parameters) {
             print "\n*** Running scm ***\n";
             my $scm_model = $self->model->copy(filename => "m1/scm.mod");
             if ($self->model->is_run()) {
@@ -516,7 +541,7 @@ sub modelfit_setup
         }
     }
 
-    if (not $self->_skipped('cdd')) {
+    if ($self->_tools_to_run->{'cdd'}) {
         print "\n*** Running cdd ***\n";
         my $cdd_model = model->new(filename => $self->base_model_path);
 
@@ -543,7 +568,7 @@ sub modelfit_setup
         $self->_to_qa_dir();
     }
 
-    if (not $self->_skipped('simeval')) {
+    if ($self->_tools_to_run->{'simeval'}) {
         print "\n*** Running simeval ***\n";
         my $simeval_model = $base_model->copy(filename => "m1/simeval.mod");
         $simeval_model->remove_records(type => 'etas');
@@ -566,7 +591,7 @@ sub modelfit_setup
         $self->_to_qa_dir();
     }
 
-    if (not $self->_skipped('resmod')) {
+    if ($self->_tools_to_run->{'resmod'}) {
         print "*** Running resmod ***\n";
         my $resmod_model;
         if (not $self->nonlinear) {
@@ -691,25 +716,6 @@ sub modelfit_setup
 sub modelfit_analyze
 {
     my $self = shift;
-}
-
-sub _skipped
-{
-    my $self = shift;
-    my $skip = shift;
-
-    for my $a (@{$self->skip}) {
-        if ($skip eq $a) {
-            return 1;
-        }
-    }
-    return 0;
-}
-
-sub _all_skipped_for_linearize
-{
-    my $self = shift;
-    return $self->_skipped('scm') && $self->_skipped('frem') && $self->_skipped('cdd') && $self->_skipped('simeval') && $self->_skipped('transform');
 }
 
 sub _create_scm_config
@@ -932,7 +938,7 @@ sub create_R_plots_code
     my @extra_table_columns = (@{$self->extra_table_columns}, 'MDV');
     $self->mend_extra_table_names(\@extra_table_columns);
 
-    my $code =  [
+    my $code = [
             '# qa specific preamble',
             "groups <- " . $self->groups,
             "idv_name <- '" . $self->idv . "'",
@@ -945,7 +951,7 @@ sub create_R_plots_code
             "cdd_dofv_cutoff <- 3.84 ",
             "cdd_max_rows <- 10",
             "type <- 'latex' # set to 'html' if want to create a html file ",
-            "skip <- " . rplots::create_r_vector(array => $self->skip),
+            "skip <- " . rplots::create_r_vector(array => $self->_tools_to_skip ),
             "nonlinear <- " . $nonlinear_run,
             "original_max0_model <- '" . $orig_max0_model_path . "'",
             "base_model <- '" . $base_model_path . "'",
