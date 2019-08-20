@@ -112,9 +112,7 @@ sub BUILD
         if (defined $special_options_section) {
             $self->_special_tool_options($special_options_section);
         }
-        if (defined $self->clean) {
-            $self->_special_tool_options->{'clean'} = $self->clean;
-        }
+        $self->_special_tool_options->{'clean'} = 1;
         if (defined $self->template_directory_rplots) {
             $self->_special_tool_options->{'template_directory_rplots'} = $self->template_directory_rplots;
         }
