@@ -3254,7 +3254,7 @@ sub do_predcorr_and_varcorr
                 #can be numerical problems here, cancellation, if median_pred and bound very close.
                 #ignore for now, get worse problems if multiply denominator with median+bound which could be 0
             }else {
-                my $message="Found PRED value (".$pred_array->[$i].") lower than the lower bound (".$bound_array->[$i]."). ".
+                my $message="Found PRED value (".$pred_array->[$i].") less than or equal to the lower bound (".$bound_array->[$i]."). ".
                     "Solve this by setting option -lower_bound and rerunning in the same directory, ".
                     "reusing the already formatted $DV data.";
                 croak($message);
