@@ -4,6 +4,7 @@ use strict;
 use Moose;
 use MooseX::Params::Validate;
 use File::Copy 'cp';
+use File::Spec;
 use include_modules;
 use log;
 use array;
@@ -907,17 +908,17 @@ sub create_R_plots_code
     if (defined $self->parameters) {
         @parameters = split(/,/, $self->parameters);
     }
-    my $extra_table_path = $self->directory . 'linearize_run/scm_dir1/extra_table';
+    my $extra_table_path = 'linearize_run/scm_dir1/extra_table';
     if ($self->nonlinear) {
-        $extra_table_path = $self->directory . 'extra_table';
+        $extra_table_path = 'extra_table';
     }
     $extra_table_path =~ s/\\/\//g;
 
-    my $orig_max0_model_path = $self->orig_max0_model_path;
+    my $orig_max0_model_path = File::Spec->abs2rel($self->orig_max0_model_path, $self->directory);
     $orig_max0_model_path =~ s/\\/\//g;
-    my $base_model_path = $self->base_model_path;
+    my $base_model_path = File::Spec->abs2rel($self->base_model_path, $self->directory);
     $base_model_path =~ s/\\/\//g;
-    my $base_dataset_path = $self->base_dataset_path;
+    my $base_dataset_path = File::Spec->abs2rel($self->base_dataset_path, $self->directory);
     $base_dataset_path =~ s/\\/\//g;
 
     my $nonlinear_run;

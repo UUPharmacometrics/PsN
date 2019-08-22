@@ -136,6 +136,9 @@ sub setup
     } else {
         $results_dir = $modeldir;
     }
+    $results_dir = File::Spec->abs2rel($results_dir, $workingdirectory);
+    $modeldir = File::Spec->abs2rel($modeldir, $workingdirectory);
+
     my $rscripts_path = $PsN::Rscripts_dir;
     #Replace single backslash with double, assume windows, but do not change if already double
     $workingdirectory = double_backslashes(string => $workingdirectory);
@@ -156,8 +159,8 @@ sub setup
          "subset.variable<-".$subsetstring,
          "mod.suffix <- '".$modSuffix."'",
          "mod.prefix <- '".$modPrefix."'",
-         "tab.suffix <- '".$tabSuffix."'",
-         "rscripts.directory <- '".$rscripts_path."'",
+         "tab.suffix <- '".$tabSuffix."' ",
+         "rscripts.directory <- '" . $rscripts_path . "' # This is not used",
         );
     if (defined $self->tool_results_file and (-e $self->directory.$self->tool_results_file)){
         push(@arr,
