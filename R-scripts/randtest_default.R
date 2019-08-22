@@ -8,9 +8,9 @@ library(scales)
 library(MASS)
 library(plyr)
 library(tidyr)
-# get libPaths
-# source(file.path(rscripts.directory,"common/R_info.R"))
+
 R_info(directory=working.directory,only_libPaths=T)
+
 # randtest plot
 pvalue <- 0.05 #for randtest.hist
 
