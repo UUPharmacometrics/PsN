@@ -5366,7 +5366,10 @@ sub get_covariate_theta_bounds_inits
                 if ($global_init > $lower_bound and $global_init < $upper_bound) {
                     $tmp = $global_init;
                 } else {
-                    $tmp = ($upper_bound - $lower_bound) / 2;
+                    $tmp = ($upper_bound + $lower_bound) / 2;
+                    if ($tmp == 0) {
+                        $tmp = $upper_bound / 5;        # Ad hoc
+                    }
                 }
             } elsif ((abs($bounds->{'upper'}[$i]) >= 100000 or not defined $bounds->{'upper'}[$i]) and
                     (abs($bounds->{'lower'}[$i]) >= 100000 or not defined $bounds->{'lower'}[$i])) {
