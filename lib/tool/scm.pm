@@ -539,36 +539,30 @@ sub BUILD
                                                                       missing_data_token => $self->missing_data_token);
             $self->covariate_statistics($statsref) if (defined $statsref);
             $data_obj = undef;
-            if (defined $self -> global_covariate_statistics and scalar(keys %{$self ->global_covariate_statistics })>0){
+            if (defined $self->global_covariate_statistics and scalar(keys %{$self->global_covariate_statistics}) > 0) {
                 #this is necessary for xv_scm
                 if (defined $self->continuous_covariates) {
                     foreach my $cov (@{$self -> continuous_covariates()}){
-                        $self -> covariate_statistics->{$cov}{'have_missing_data'} =
-                            $self -> global_covariate_statistics->{$cov}{'have_missing_data'};
-                        $self -> covariate_statistics->{$cov}{'min'} =
-                            $self -> global_covariate_statistics->{$cov}{'min'};
-                        $self -> covariate_statistics->{$cov}{'max'} =
-                            $self -> global_covariate_statistics->{$cov}{'max'};
+                        $self->covariate_statistics->{$cov}{'have_missing_data'} = $self->global_covariate_statistics->{$cov}{'have_missing_data'};
+                        $self->covariate_statistics->{$cov}{'min'} = $self->global_covariate_statistics->{$cov}{'min'};
+                        $self->covariate_statistics->{$cov}{'max'} = $self->global_covariate_statistics->{$cov}{'max'};
                     }
                 }
                 if ( defined $self -> categorical_covariates()) {
                     foreach my $cov (@{$self -> categorical_covariates()}){
                         #this is necessary for xv_scm
-                        $self -> covariate_statistics->{$cov}{'have_missing_data'} =
-                            $self -> global_covariate_statistics->{$cov}{'have_missing_data'};
-                        $self -> covariate_statistics->{$cov}{'min'} =
-                            $self -> global_covariate_statistics->{$cov}{'min'};
-                        $self -> covariate_statistics->{$cov}{'max'} =
-                            $self -> global_covariate_statistics->{$cov}{'max'};
+                        $self->covariate_statistics->{$cov}{'have_missing_data'} = $self->global_covariate_statistics->{$cov}{'have_missing_data'};
+                        $self->covariate_statistics->{$cov}{'min'} = $self->global_covariate_statistics->{$cov}{'min'};
+                        $self->covariate_statistics->{$cov}{'max'} = $self->global_covariate_statistics->{$cov}{'max'};
                     }
                 }
             }
         }
-        open( STAT, '>'.$self -> covariate_statistics_file );
+        open(STAT, '>' . $self->covariate_statistics_file);
         $Data::Dumper::Purity = 1;
-        print STAT Dumper $self -> covariate_statistics;
+        print STAT Dumper $self->covariate_statistics;
         $Data::Dumper::Purity = 0;
-        close( STAT );
+        close(STAT);
     }
 
     # Default ofv drops at desired p-values (assuming chi-squared
