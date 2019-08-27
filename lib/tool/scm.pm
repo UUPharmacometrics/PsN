@@ -201,11 +201,18 @@ sub BUILD
     unless ($self->p_value >= 0 and $self->p_value <=1);
 
     # Add derived covariates to dataset (to first model)
+    my @covlist;
+    if (defined $self->categorical_covariates) {
+        @covlist = @{$self->categorical_covariates};
+    }
+    if (defined $self->continuous_covariates) {
+        push @covlist, @{$self->continuous_covariates};
+    }
     if (not $self->from_linearize) {
         $self->models->[0] = filter_data::add_derived_columns(
             model => $self->models->[0],
             directory => $self->directory,
-            columns => [ @{$self->categorical_covariates}, @{$self->continuous_covariates} ],
+            columns => \@covlist,
         );
     }
 
