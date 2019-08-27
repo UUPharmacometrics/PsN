@@ -492,6 +492,31 @@ sub rename_symbol
     }
 }
 
+sub remove_symbol_definition
+{
+    # Remove all definitions of symbols in all code records
+    my %parm = validated_hash(\@_,
+        model => { isa => 'model' },
+        symbols => { isa => 'ArrayRef[Str]' },
+    );
+    my $model = $parm{'model'};
+    my $symbols = $parm{'symbols'};
+
+    for my $symbol (@$symbols) {
+        for my $record (('pk', 'pred', 'error', 'des', 'aes', 'aesinitial', 'mix', 'infn')) {
+            if ($model->has_code(record => $record)) {
+                my $code = $model->get_code(record => $record);
+                for (my $i = 0; $i < scalar(@$code); $i++) {
+                    if ($code->[$i] =~ /$symbol\s*=(?!=)/) {
+                        $code->[$i] = "\n";
+                    }
+                }
+                $model->set_code(record => $record, code => $code);
+            }
+        }
+    }
+}
+
 sub rename_column
 {
     # Rename a column in $INPUT (for first problem)

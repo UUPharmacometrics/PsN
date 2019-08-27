@@ -82,7 +82,7 @@ sub defined_symbol
         if ($model->has_code(record => $record)) {
             my $code = $model->get_code(record => $record);
             for my $line (@$code) {
-                if ($line =~ /^\s*(\w+)\s*=/) {
+                if ($line =~ /(\w+)\s*=(?!=)/) {
                     if ($1 eq $symbol) {
                         return 1;
                     }

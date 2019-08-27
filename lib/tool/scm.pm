@@ -18,6 +18,7 @@ use nmtablefile;
 use code_parsing;
 use PsN;
 use model_transformations;
+use filter_data;
 
 
 extends 'tool';
@@ -199,6 +200,14 @@ sub BUILD
     croak("Option p_value (p_forward/p_backward) must be in the range 0-1")
     unless ($self->p_value >= 0 and $self->p_value <=1);
 
+    # Add derived covariates to dataset (to first model)
+    if (not $self->from_linearize) {
+        $self->models->[0] = filter_data::add_derived_columns(
+            model => $self->models->[0],
+            directory => $self->directory,
+            columns => [ @{$self->categorical_covariates}, @{$self->continuous_covariates} ],
+        );
+    }
 
     # Pre-process non-bivariate categoricals for linearized scm
     if (not $self->from_linearize and not $self->from_bootscm and $self->linearize and $self->step_number == 1 and defined $self->categorical_covariates) {

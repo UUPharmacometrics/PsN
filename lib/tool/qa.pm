@@ -488,7 +488,10 @@ sub modelfit_setup
             print "\n*** Running scm ***\n";
             my $scm_model = $self->model->copy(filename => "m1/scm.mod");
             if ($self->model->is_run()) {
-                cp($self->model->outputs->[0]->full_name(), 'm1/scm.lst');
+                my $lst_path = $self->model->outputs->[0]->full_name(); 
+                cp($lst_path, 'm1/scm.lst');
+                my $ext_path = utils::file::replace_extension($lst_path, 'ext');
+                cp($ext_path, 'm1/scm.ext');
                 my $phi_file = $self->model->get_phi_file;
                 if (defined $phi_file and -e $phi_file) {
                     cp($phi_file, 'm1/scm.phi');
