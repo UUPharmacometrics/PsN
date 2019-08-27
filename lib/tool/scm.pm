@@ -565,6 +565,12 @@ sub BUILD
         close(STAT);
     }
 
+    for my $cov (keys %{$self->covariate_statistics}) {
+        if (scalar(keys %{$self->covariate_statistics->{$cov}{'factors'}} < 2)) {
+            print "Warning: The covariate $cov has only one value for all individuals\n";
+        }
+    }
+
     # Default ofv drops at desired p-values (assuming chi-squared
     # distribution of hirerchical models)
     my %p_values;
