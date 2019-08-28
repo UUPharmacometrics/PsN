@@ -6,6 +6,11 @@ library(RColorBrewer)
 library(stats4)
 library(tidyr)
 library(dplyr)
+library(MCMCpack)
+library(grDevices)
+library(tidyr)
+library(stats)
+
 # get libPaths
 R_info(directory=working.directory,only_libPaths=T)
 #############################################################################################################
@@ -362,7 +367,7 @@ if(rplots.level>1) {
 
     simdat          <- matrix(NA,nrow=nrow(mdat)) # Simulate data from inverse Wishart from estimated df and s
     for (i in seq(nrow(mdat))) {
-      if(is.na(mdat$df[i])==FALSE) simdat[i,] <- riwish(v=mdat$df[i],S=as.matrix(mdat$s[i]))
+      if(is.na(mdat$df[i])==FALSE) simdat[i,] <- MCMCPack::riwish(v=mdat$df[i],S=as.matrix(mdat$s[i]))
     }
     mdat$simdat      <- as.numeric(simdat)
     mdat$LEGEND_NORM <- paste(mdat$variable,round(mdat$df_norm,0),sep=":")    # for plotting
@@ -382,7 +387,7 @@ if(rplots.level>1) {
 
 gg_color_hue <- function(n) {
   hues = seq(15, 375, length=n+1)
-  hcl(h=hues, l=65, c=100)[1:n]
+  grDevices::hcl(h=hues, l=65, c=100)[1:n]
 }
 
 colDIST <- gg_color_hue(length(levels(dOFV_all$DISTRIBUTION)))  # default ggplot colors
