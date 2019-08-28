@@ -276,18 +276,26 @@ sub is_windows
 
 sub test_pdf_pages
 {
+    my $no_r = not defined PsN::get_R_exec();
+
 	my $pdf_files_pages = shift;
 	my $no_pdf_files_list = shift;
 	foreach my $file (sort { lc($a) cmp lc($b) } keys %{$pdf_files_pages}){
-		ok (-e $file,"pdf $file exists, check that page count is ".$pdf_files_pages->{$file});
-	  SKIP: {
-		  skip "Cannot check pdf page count automatically",1 if (is_windows);
-		  is(pdf_page_count($file),$pdf_files_pages->{$file},"auto-check page count is ".$pdf_files_pages->{$file});
+        SKIP: {
+            skip "R not installed",1 if ($no_r);
+		    ok (-e $file,"pdf $file exists, check that page count is ".$pdf_files_pages->{$file});
+        }
+	    SKIP: {
+		    skip "Cannot check pdf page count automatically",1 if (is_windows or $no_r);
+		    is(pdf_page_count($file),$pdf_files_pages->{$file},"auto-check page count is ".$pdf_files_pages->{$file});
 		}
 	}
 	if (defined $no_pdf_files_list){
 		foreach my $file (@{$no_pdf_files_list}){
-			ok ((not -e $file),"No $file created");
+            SKIP: {
+                skip "R not installed",1 if ($no_r);
+			    ok ((not -e $file),"No $file created");
+            }
 		}
 	}
 }

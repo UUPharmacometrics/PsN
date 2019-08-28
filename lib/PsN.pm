@@ -179,9 +179,8 @@ sub get_R_exec
         if ($Config{osname} eq 'MSWin32'){
             $null = 'NUL';
         }
-        my $rc = system('R --version >'.$null.' 2>&1');
-        $rc = $rc >> 8;
-        if ($rc == 0){
+        my $output = readpipe('R --version');
+        if ($output =~ /^R version /) {
             $rexec = 'R';
         }
     }
