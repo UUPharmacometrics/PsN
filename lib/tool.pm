@@ -1963,11 +1963,11 @@ sub create_R_script
     my ($dir, $file) = OSspecific::absolute_path($self->template_directory_rplots,$self->template_file_rplots);
     my $template_file = $dir.$file;
 
-    # check if tool default R file is a Rmarkdown file
+    # check if tool default R file is an Rmarkdown file
     my $rmarkdown = 0; # FALSE
     my $Rmarkdown_installed = 0;
     my $file_type = 'R';
-    if($template_file =~ /\.Rmd$/) {
+    if ($template_file =~ /\.Rmd$/ and defined PsN::get_R_exec()) {
         $file_type = 'Rmd';
         $rmarkdown = 1; #TRUE
         if($self->rmarkdown) { # check if option -no-rmarkdown is used, then Rmarkdown file will not be created
