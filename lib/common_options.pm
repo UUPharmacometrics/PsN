@@ -838,6 +838,8 @@ EOF
     know that, because of the way the Perl pseudo-random number generator works,
     for two similar string seeds the random sequences may be identical.
     This is the case e.g. with the two different seeds 123 and 122.
+    From limited tests it seems as if the final character is ignored and a work around
+    to be sure to set different seeds would be to add a dummy final character. 
     Setting the same seed guarantees the same sequence, but setting two slightly different
     seeds does not guarantee two different random sequences, that must be verified.
 EOF
