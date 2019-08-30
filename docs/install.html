@@ -32,44 +32,43 @@ a:hover { text-decoration: underline; text-decoration-style: dashed; }
 
 <h3>Required Software</h3>
 
-Before you install PsN, you should make sure that the following programs and the required modules are installed on your computer. 
-<hr COLOR="darkred">
+Before you install PsN, you should make sure that the required programs and modules are installed on your computer.
+<ul>
+    <li>Perl version 5.10.1 or later</li>
+    <li>Perl packages</li>
+</ul>
+To be able to use the automatic rplotting functionality (via the <code>-rplots</code> option)  and/or the <code>qa</code> tool the following needs to be installed:
+<ul>
+    <li><a target="_blank" href="https://cloud.r-project.org"s>R</a> version 3.1.2 or later</li>
+    <li>The R package PsNR</li>
+    <li>LaTeX</li>
+    <li>LaTeX packages</li>
+</ul>
+Instructions on how to install these programs and packages for different operating systems can be found below.
 
-<h3>NONMEM</h3>
-
+<h4>NONMEM</h4>
 PsN 4 supports standard and NMQual 8 installations of <a target="_blank" href="https://nonmem.iconplc.com/">NONMEM</a>. <br>
 Verify that all NONMEM installations you intend to use can be run directly via the nmfe/autolog scripts and that they produce complete output files.<br>
 If running NONMEM with nmfe/autolog.pl does not work then PsN will not work either.<br>
 If you plan to use the parallelization features of NONMEM you must also 
-verify that you can run NONMEM in parallel directly with the nmfe script, for example nmfe73.<br>
+verify that you can run NONMEM in parallel directly with the nmfe script.<br>
 </li>
 
 <hr COLOR="darkred">
-<h3>Perl 5, version 5.10.1 or higher</h3>
-The Perl version can be checked with the command<br>
-<code>perl --version</code><p>
 
 
-<h4>Perl Modules</h4>
-The only Perl modules required to be able to run PsN are:<br> <code>Maths::Random<br> Moose<br>MooseX::Params:Validate</code><br>but without the recommended modules (listed below for each OS), 
-some scm and vpc features, nmoutput2so and a scm bugfix are not available.<p>
-
-The following paragraphs describe the setup procedure for different operating systems. You need internet access for the installation procedure to work because
-the packages are downloaded from the web. Pay attention to any warning message about internet connection problmes, as such problems must be solved before completing the installations.<br>
 
 
-<h4>Perl for Windows users</h4><p>
+<h3>Windows</h3>
+
+<h4>Installing Perl</h4>
 We recommend <a target="_blank" href="http://strawberryperl.com/">Strawberry Perl</a> for Windows users who are installing 
 Perl for the first time, because of the easier installation and the wider selection of Perl modules.<p>
-<b>Warning:</b> the gfortran coming bundled with the two latest versions of strawberry perl (5.28.2.1 and 5.26.2.1) cannot be used to run NONMEM. For unknown reasons NONMEM crashes when testing the installation.
+<b>Warning:</b> the gfortran coming bundled with the latest versions of strawberry perl (starting from 5.26.2.1) cannot be used to run NONMEM on Windows 10. For unknown reasons NONMEM crashes when testing the installation.
 <br><br>
-<a target="_blank" href="http://www.activestate.com/activeperl/downloads/">ActivePerl</a> also works fine even though some Perl 
-modules might be more difficult to install. If ActivePerl is selected it is important to select a version which supports the 
-extra Perl modules needed for PsN.
 </li>
 
-
-<h4>Installing Strawberry Perl Modules on Windows</h4>
+<h4>Installing Perl Modules</h4>
 
 <ol>
 <li>Open a DOS command window<br> (Start&#8594;Run, type <code>cmd</code> &#8629; <br>or <br> <i>In Windows 10</i>: Start&#8594;All apps&#8594;Windows System&#8594; Command Prompt).</li><p>
@@ -82,40 +81,49 @@ cpan XML::LibXML</code><br>
 </li>
 </ol>
 
-
-<h4>Installing ActivePerl Modules on Windows</h4>
-<b>&#9755; Note</b>: ActivePerl (unlike Strawberry Perl) does <b>not</b> come with libxml2, which is a dependency of the XML-LibXML package, bundled. If you intend to run nmoutput2so you will need to install 
-the appropriate dll:s manually. The <a target="_blank" href="http://xmlsoft.org">libxml2 webpage</a> has information on how to do this.
+<h4>Installing PsN</h4>
 <ol>
-<li>Open a DOS command window <br>(Start&#8594;Run, type <code>cmd</code> &#8629; <br>or <br><i>In Windows 10</i>: Start&#8594;All apps&#8594;Windows System&#8594; Command Prompt).</li><p>
-<li>Run the following commands (hit &#8629; after each command):<br>
-<code>ppm install math-random<br>
-ppm install moosex-params-validate<br>
-ppm install statistics-distributions<br>
-ppm install archive-zip<br>
-ppm install file-copy-recursive<br>
-ppm install YAML-XS<br>
-ppm install XML-LibXML</code>
+<li>
+<p>Unpack the file you downloaded from the <a target="_blank" href="https://uupharmacometrics.github.io/PsN/download.html">PsN Download Page</a>.
+It will create a directory called <code>PsN-Source.</code></p>
+</li>
+<li>
+<div style="text-align: justify;">
+
+<p>Open a DOS command window <br>(Start&#8594;Run, type <code>cmd</code> &#8629;<br> or <br><i>In Windows 10</i>: Start&#8594;All apps&#8594;Windows System&#8594; Command Prompt)<br>
+</i>and go to the <code>PsN-Source </code>directory and type: <code>perl setup.pl</code> and &#8629;.</p></p>
 </li>
 </ol>
 
 
-<h4>Perl for Mac OS users</h4><p>
-The version of Perl needs to be 5.10.1 or above. For older versions of Mac OS, Perl needs to be upgraded. This can be done by 
-installing ActivePerl (and installing the needed packages with ppm install).</li>
-</li>
-<p>For updated information on which modules are available for which Perl version in ActivePerl see package information pages for<br><code>
-<a target="_blank" href="http://code.activestate.com/ppm/Math-Random/">Math::Random</a><br>
-<a target="_blank" href="http://code.activestate.com/ppm/MooseX-Params-Validate">MooseX::Params::Validate</a><br>
-<a target="_blank" href="http://code.activestate.com/ppm/File-Copy-Recursive/">File::Copy::Recursive</a><br> 
-<a target="_blank" href="http://code.activestate.com/ppm/Archive-Zip/">Archive::Zip</a><br>
- <a target="_blank" href="http://code.activestate.com/ppm/Statistics-Distributions/">Statistics::Distributions</a><br>
-</code>and <br> <code>
-<a target="_blank" href="https://code.activestate.com/ppm/XML-LibXML/">XML::LibXML.</a> </br> </p>
-</li></code></p>
+<h4>Installing the PsNR package</h4>
+
+Open rstudio and install the devtools package. Install PsNR using
+<code>devtools::install_github("UUPharmacometrics/PsNR")</code>
 
 
-<h4>Installing Perl modules on Linux/Unix/Mac OS</h4>
+<h4>rmarkdown</h4>
+
+The recommended option is to install RStudio and MiKTeX.<br>
+Download and install the latest version of RStudio from <a target="_blank"href="https://www.rstudio.com/products/rstudio/download/"s>Rstudio.</a><br>
+Download the Basic MiKTeX Installer from <a target="_blank" href="https://miktex.org/download">MiKTeX.</a><br>
+Download and install pandoc from <a  target="_blank"href="pandoc.org">pandoc.</a><br>
+Before you actually can work with R Markdown, you need to install a few packages. 
+RStudio automatically detects which packages are needed if you create a new R Markdown file. 
+<br>To create a new R Markdown file you need to <br>
+open RStudio <br>
+click <i>File</i> in the menu <br>
+then <i>New File</i> <br>
+and finally <i>R Markdown.</i><br>
+RStudio detects that you miss some packages and asks if you want to install them. 
+Click Yes. RStudio then installs the required packages.
+
+
+<hr COLOR="darkred">
+
+<h3>Linux</h3>
+
+<h4>Installing Perl modules</h4>
 You might need to answer some questions interactively when using the cpan command.
 <ol>
 <li>Open a terminal.</li><p>
@@ -130,47 +138,109 @@ cpan YAML::XS<br>
 cpan Storable<br></code>
 </li>
 </ol> 
-<hr COLOR="darkred">
 
-<h2>PsN Installation</h2> 
+<h4>Installing PsN</h4>
 <ol type="A">
 <li>
-<p>Unpack the file you downloaded from the <a target="_blank" href="https://uupharmacometrics.github.io/PsN/download.html">PsN Download Page</a>.  
+<p>Unpack the file you downloaded from the <a target="_blank" href="https://uupharmacometrics.github.io/PsN/download.html">PsN Download Page</a>.
 It will create a directory called <code>PsN-Source.</code></p>
 </li>
 <li>
 <div style="text-align: justify;">
+Open a terminal, cd to the <code>PsN-Source</code> directory and type: <code>sudo perl setup.pl</code> and &#8629;.</p>
+<p>sudo can be skipped if you already have write permissions in the installation directories you intend to use. <br>
+</li>
+<li>
+Read all messages carefully and answer the questions on screen. 
 
-<p align="justify">Run the installation script from within <code>PsN-Source</code>.
+The default settings are probably the best for most users. It is <b>highly</b> recommended to let the installation script create <code>psn.conf.</code> automatically unless 
+you are experienced in installing and configuring PsN.<br>
+For convenience you should also check that the directory where the utilities are installed is in your $PATH. (Right-click on My Computer&#8594; Choose Advanced system settings &#8594; Environment variables &#8594; Mark path and click Edit and make the changes needed).
+</li>
+</ol>
+
+<h4>Installing the PsNR package</h4>
+The dependencies of the PsNR package require some system packages to be installed. These are installed differently depending on the Linux distribution.
+
+<h5>Ubuntu/Debian</h5>
+<code>
+apt install libpq-dev<br>
+apt install libcairo2-dev<br>
+apt install libssl-dev<br>
+apt install libcurl4-openssl-dev<br>
+apt install libmariadb-client-lgpl-dev<br>
+apt install libgmp-dev<br>
+apt install libmpfr-dev<br>
+apt install libxml2-dev<br>
+apt install libudunits2-dev<br>
+apt install libblas-dev<br>
+apt install liblapack-dev<br>
+apt install libmagick++-dev<br>
+</code>
+ 
+<h5>CentOS/Fedora</h5>
+<code>
+yum install openssl-devel<br>
+yum install libcurl-devel<br>
+yum install cairo-devel<br>
+yum install mariadb-devel<br>
+yum install libxml2-devel<br>
+yum install ImageMagick-c++-devel<br>
+</code>
+<br>
+Open R or rstudio and install the devtools package. Install PsNR using
+<code>devtools::install_github("UUPharmacometrics/PsNR")</code>
 
 
-<h3>Windows</h3>
-<p>User of <b>Strawberry Perl</b>, open a DOS command window <br>(Start&#8594;Run, type <code>cmd</code> &#8629;<br> or <br><i>In Windows 10</i>: Start&#8594;All apps&#8594;Windows System&#8594; Command Prompt)<br>
-</i>and go to the <code>PsN-Source </code>directory and type: <code>perl setup.pl</code> and &#8629;.</p></p> 
-<p>If you have <b>ActivePerl</b> installed you should be able to double-click <code>setup.pl</code> for the installation to start. Otherwise, open a command prompt, go to the <code>PsN-Source 
-</code>directory and type: <code>perl setup.pl</code> and &#8629;.</p></p>
-</div>
+<h4>rmarkdown</h4>
 
-    
-<h3>Linux/Unix/Mac OS</h3> 
+For Ubuntu and Debian Linux, apart from installing the R Markdown package, the following commands are needed to install the dependencies:
+<br><code>
+apt install pandoc<br>
+apt install texlive<br>
+apt install texlive-latex-extra<br>
+</code>
+
+
+<hr COLOR="darkred">
+
+
+<h3>macOS</h3>
+
+<h4>Installing Perl modules</h4>
+You might need to answer some questions interactively when using the cpan command.
+<ol>
+<li>Open a terminal.</li><p>
+<li>Run the following commands (hit &#8629; after each command), prepend sudo if necessary:<br>
+<code>cpan Math::Random<br>
+cpan Moose<br>
+cpan MooseX::Params::Validate<br>
+cpan Statistics::Distributions<br>
+cpan Archive::Zip<br>
+cpan File::Copy::Recursive<br>
+cpan YAML::XS<br>
+cpan Storable<br></code>
+</li>
+</ol> 
+
+<h4>Installing PsN</h4>
+<ol type="A">
+<li>
+<p>Unpack the file you downloaded from the <a target="_blank" href="https://uupharmacometrics.github.io/PsN/download.html">PsN Download Page</a>.
+It will create a directory called <code>PsN-Source.</code></p>
+</li>
+<li>
+<div style="text-align: justify;">
 Open a terminal, cd to the <code>PsN-Source</code> directory and type: <code>sudo perl setup.pl</code> and &#8629;.</p>
 <p>sudo can be skipped if you already have write permissions in the installation directories you intend to use. <br><br>
 </li>
 <li>
 Read all messages carefully and answer the questions on screen. 
+</ol>
 
-	
-<h3> Windows </h3>
-The default settings are probably the best for most users. It is <b>highly</b> recommended to let the installation script create <code>psn.conf.</code> automatically unless 
-you are experienced in installing and configuring PsN.<br>
-For convenience you should also check that the directory where the utilities are installed is in your $PATH. (Right-click on My Computer&#8594; Choose Advanced system settings &#8594; Environment variables &#8594; Mark path and click Edit and make the changes needed).
-</li>
-
-
-<h3>Mac OS</h3>
 Mac users with the latest version(s) of Mac Os <b>cannot</b> accept the default installation folder for PsN utilities, even when installing as root.<sup>1</sup>
 <br>Do the following:<br>
-Run <code>setup.pl</code> as root. <p>
+Run <code>setup.pl</code> as root.<p>
 When setup.pl prompts for the PsN Utilities directory like this:<br>
 <code>PsN Utilities installation directory [/usr/bin]:</code><br>
 type <code>/usr/local/bin</code> and &#8629;.<br><p>
@@ -178,13 +248,36 @@ The other default settings can be accepted.<br>
 If there is a message about PsN already being installed this message is misleading,
 what it should say is that PsN is already *partially* installed. This is not an error,
 just say yes to continue.</p>
+
+<h4>Installing the PsNR package</h4>
+The dependencies of PsNR need some system packages to be installed. One option is to install them via via brew:<br>
+<code>openssl@1.1<br>
+cairo<br></code>
+<code>and<br>
+mariadb-connector-c.</code>
+<br><br>
+
+Open rstudio and install the devtools package. Install PsNR using
+<code>devtools::install_github("UUPharmacometrics/PsNR")</code>
+
+<h4>rmarkdown</h4>
+When using Rstudio, the installation will be taken care of behind the scenes.
+
+
+<hr COLOR="darkred">
+
+<h2>Configuring PsN</h2>
 <li> If you did not let the installation script create the configuration file <code>psn.conf</code> for you, or if you are running NONMEM via NMQual or 
 on a cluster, you need to edit <code>psn.conf</code> in the PsN installation directory. <br>
 The document <a target="_blank" href="https://github.com/UUPharmacometrics/PsN/releases/download/4.7.0/psn_configuration.pdf">PsN Configuration.pdf</a> describes how to make the correct settings in the psn.conf file. 
 </li><br>
-<li>When the installation is done you can safely remove the <tt>PsN-Source</tt> directory.  </li></ol><p>
-<sup>1</sup><small> The default installation folder cannot be used with the latest versions of Mac OS as not even root has write permissions in /usr/bin and 
-therefore setup.pl cannot install anything there. What we want to do is use a directory which is already in $PATH *and* where root has write permission.</small> 
+
+<h3>R plots</h3>
+To make PsN always use a specific R library path, add the R library path to the <code>psn.conf file</code>.<br>
+Example:<br>
+<code>R_LIB_PATH=C:\R\library</code>
+<br>
+
 
 <hr COLOR="darkred">
  
@@ -210,96 +303,6 @@ A specific version may be called with its version number, for example<br>
 <code>execute-3.7.6  -help</code><br>
 <b>&#9755; Note</b>: When installing PsN 4 on Windows all previously installed versions (installed with the same bin directory,
 including PsN 3-versions) are fixed automatically so that they are callable with a specific version as explained above. This is a new feature of PsN 4 when installing on Windows.
-
-
-<hr COLOR="darkred">
-
-<h2>R plots</h2>
-The automatic rplots functionality in PsN (via the <code>-rplots</code> option) require that <a target="_blank" href="https://cloud.r-project.org"s>R</a> (at least version 3.1.2 is required) 
-is installed and that the PsNR package and its dependencies are installed in R.<br>
-The PsN installation script can do the installation of the required R-pacakge or it can be done manually. It is available from <a href="github">https://github.com/UUPharmacometrics/PsNR</a>.
-
-To make PsN always use a specific R library path, add the R library path to the <code>psn.conf file</code>.<br>
-Example:<br>
-<code>R_LIB_PATH=C:\R\library</code>
-<br>
-
-
-
-<h3>Ubuntu/Debian</h3>
-<code>
-apt install libpq-dev<br>
-apt install libcairo2-dev<br>
-apt install libssl-dev<br>
-apt install libcurl4-openssl-dev<br>
-apt install libmariadb-client-lgpl-dev<br>
-apt install libgmp-dev<br>
-apt install libmpfr-dev<br>
-apt install libxml2-dev<br>
-apt install libudunits2-dev<br>
-apt install libblas-dev<br>
-apt install liblapack-dev<br>
-apt install libmagick++-dev<br>
-</code>
- 
-
- 
-<h3>CentOS/Fedora</h3>
-<code>
-yum install openssl-devel<br>
-yum install libcurl-devel<br>
-yum install cairo-devel<br>
-yum install mariadb-devel<br>
-yum install libxml2-devel<br>
-yum install ImageMagick-c++-devel<br>
-</code>
-
-
-
-<h3>Mac Os</h3>
-For Mac OS one option is to install the following packages via brew:<br>
-<code>openssl@1.1<br>
-cairo<br></code>
-<code>and<br>
-mariadb-connector-c.</code>
-<br>
-
-
-<hr COLOR="darkred">
-
-<h2>R Markdown</h2>
-
-Some of the PsN tools support using R Markdown to plot. Then you need to install R&nbsp;Markdown in R together with its dependencies. 
-When using Rstudio, the installation will be taken care of behind the scenes.
-
-
-
-<h4>Ubuntu/Debian</h4>
-
-For Ubuntu and Debian Linux, apart from installing the R Markdown package, the following commands are needed to install the dependencies:
-<br><code>
-apt install pandoc<br>
-apt install texlive<br>
-apt install texlive-latex-extra<br>
-</code>
-
-
-
-<h4>Windows</h4>
-
-The recommended option is to install RStudio and MiKTeX.<br>
-Download and install the latest version of RStudio from <a target="_blank"href="https://www.rstudio.com/products/rstudio/download/"s>Rstudio.</a><br>
-Download the Basic MiKTeX Installer from <a target="_blank" href="https://miktex.org/download">MiKTeX.</a><br>
-Download and install pandoc from <a  target="_blank"href="pandoc.org">pandoc.</a><br>
-Before you actually can work with R Markdown, you need to install a few packages. 
-RStudio automatically detects which packages are needed if you create a new R Markdown file. 
-<br>To create a new R Markdown file you need to <br>
-open RStudio <br>
-click <i>File</i> in the menu <br>
-then <i>New File</i> <br>
-and finally <i>R Markdown.</i><br>
-RStudio detects that you miss some packages and asks if you want to install them. 
-Click Yes. RStudio then installs the required packages.
 
 </div>
 <div id="footer" style="padding-top:2px;padding-right:2px;padding-left:2px;"></div>
