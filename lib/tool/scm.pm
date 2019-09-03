@@ -1751,7 +1751,6 @@ sub linearize_setup
         my @error_code = @{$original_model->get_code(record => 'error')};
         push @code, @error_code;
 
-        my $assignments = code_parsing::find_assignments(model => $original_model);
         my $iov_etas = model_transformations::find_etas(model => $original_model, type => 'iov');
         my $n_param = 0;
         open(LOG, ">>" . $self->logfile->[0]); #model_number -1
@@ -1759,14 +1758,16 @@ sub linearize_setup
             $n_param++;
             my $etanum = 0;
             my $relation = '';
-
+            my @passed_code;        # Used for expression parsing
             for (@code) {
+                my $current_line = $_;
                 if (/^\s*(\w+)\s*=\s*/ and $1 eq $parameter) {
                     s/^\s*(\w+)\s*=\s*//;
                     my ($code_line, $comment) = split(';', $_, 2);
                     if ($code_line =~ /[^A-Z0-9_]*EXP\s*\(\s*MU\_([0-9]+)\s*\+\s*ETA\(([0-9]+)\)/) {    # Check this here before we loose MU_ information
                         $relation = 'exponential';
                     }
+                    my $assignments = code_parsing::find_assignments(\@passed_code);
                     my $line = code_parsing::merge_assignments_and_expression(expression => $code_line, assignments => $assignments);
                     $_ = $line;
                     chomp;
@@ -1817,6 +1818,7 @@ sub linearize_setup
                         }
                     }
                 }
+                push @passed_code, $current_line;
             }
             if ($etanum) {
                 $parameter_eta{$parameter} = $etanum;

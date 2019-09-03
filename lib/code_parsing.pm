@@ -11,38 +11,48 @@ use utils::file;
 
 sub find_assignments
 {
-    # Find all assignments in a pk/pred record and return a hash of symbol over rhs
-    my %parm = validated_hash(\@_,
-        model => { isa => 'model' },
-    );
-    my $model = $parm{'model'};
+    # returns an array of hash from symbol to an array of the expression and true if nested (in if) or false otherwise.
+    my $code = shift;
 
-    my %assignments;
+    my @assignments;
 
-    (undef, my $code) = $model->get_pk_or_pred_code();
+    my $nesting_level = 0;
 
     for my $line (@$code) {
-        if ($line =~ /^\s*(\w+)\s*=\s*(.*)/) {
-            $assignments{$1} = $2;
+        $line =~ s/\n//;
+        if ($line =~ /^\s*(\w+)\s*=\s*([^;]*)/) {
+            push @assignments, { $1 => [ $2, $nesting_level ] };
+        } elsif ($line =~ /^\s*IF\s*\([^)]*\)\s+(\w+)\s*=\s*([^;]*)/) {
+            push @assignments, { $1 => [ $2, $nesting_level + 1 ] };
+        } elsif ($line =~ /^\s*\bIF\b.*THEN/) {
+            $nesting_level++;
+        } elsif ($line =~ /^\s*END IF/) {
+            $nesting_level--;
         }
     }
 
-    return \%assignments;
+    return \@assignments;
 }
 
 sub merge_assignments_and_expression
 {
     # Merge one level of assignments into expression
-       my %parm = validated_hash(\@_,
+    my %parm = validated_hash(\@_,
         expression => { isa => 'Str' },
-        assignments => { isa => 'HashRef' },
+        assignments => { isa => 'ArrayRef' },
     );
     my $expression = $parm{'expression'};
     my $assignments = $parm{'assignments'};
 
-    for my $symbol (keys %$assignments) {
-        my $replacement = $assignments->{$symbol};
-        $expression =~ s/\b$symbol\b/$replacement/;
+    for my $symbol_hash (reverse @$assignments) {
+        my $symbol = (keys %$symbol_hash)[0];
+        my $replacement = $symbol_hash->{$symbol}[0];
+        my $nested = $symbol_hash->{$symbol}[1];
+
+        if ($expression =~ /\b$symbol\b/) {
+            next if $nested;
+            $expression =~ s/\b$symbol\b/$replacement/;
+        }
     }
 
     return $expression;
