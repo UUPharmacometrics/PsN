@@ -64,12 +64,8 @@ needed, see psn_configuration.pdf
 Documentation
 ************************
 
-All documentation is found in the doc subdirectory of the PsN 
-installation directory. During installation it is also possible 
-to have all documentation copied to a user-specified directory.
-
-All documentation can also be downloaded from
-the PsN website https://uupharmacometrics.github.io/PsN
+All documentation can be found at the PsN website:
+https://uupharmacometrics.github.io/PsN
 
 ************************
 Testing 

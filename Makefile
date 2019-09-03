@@ -218,39 +218,7 @@ release: main completion rel_dir $(RELFILES) $(PDFFILES)
 	@ cp -ar R-scripts PsN-Source/lib
 	@ cp test/includes.pm PsN-Source/test
 	@ cp test/runsystem PsN-Source/test
-	@ mkdir -p PsN-Source/doc
-	@ cp doc/*.pdf PsN-Source/doc
-	@ cp doc/*.scm PsN-Source/doc
-	@ cp doc/*.xls PsN-Source/doc
 	@ cp doc/PsN.bib PsN-Source/lib
-	@ cd PsN-Source/doc/; zip -q PsN_pdf_documentation *.pdf *.xls *.scm
-	@ cd PsN-Source/doc/; tar -czf PsN_pdf_documentation.tar.gz *.pdf *.xls *.scm
-	@ chmod -R a+r PsN-Source/test/test_files
-	@ sed -i 's/dev\s*=\s*1;/dev = 0;/' PsN-Source/lib/PsN.pm
-	@ zip -rq $(ZIPFILE) PsN-Source/
-	@ tar czf $(TARFILE) PsN-Source/
-
-release_old_doc: main completion rel_dir $(RELFILES)
-	@ rm -f $(ZIPFILE)
-	@ rm -f $(TARFILE)
-	@ mkdir -p PsN-Source/development
-	@ mkdir -p PsN-Source/development/completion_files
-	@ cp development/completion_files/* PsN-Source/development/completion_files
-	@ mkdir -p PsN-Source/test
-	@ cp -ar test/unit PsN-Source/test
-	@ cp -ar test/system PsN-Source/test
-	@ cp -ar test/rplots PsN-Source/test
-	@ cp -ar test/test_files PsN-Source/test
-	@ cp -ar R-scripts PsN-Source/lib
-	@ cp test/includes.pm PsN-Source/test
-	@ cp test/runsystem PsN-Source/test
-	@ mkdir -p PsN-Source/doc
-	@ cp doc/*.pdf PsN-Source/doc
-	@ cp doc/*.scm PsN-Source/doc
-	@ cp doc/*.xls PsN-Source/doc
-	@ cp doc/PsN.bib PsN-Source/lib
-	@ cd PsN-Source/doc/; zip -q PsN_pdf_documentation *.pdf *.xls *.scm
-	@ cd PsN-Source/doc/; tar -czf PsN_pdf_documentation.tar.gz *.pdf *.xls *.scm
 	@ chmod -R a+r PsN-Source/test/test_files
 	@ sed -i 's/dev\s*=\s*1;/dev = 0;/' PsN-Source/lib/PsN.pm
 	@ zip -rq $(ZIPFILE) PsN-Source/
@@ -270,10 +238,6 @@ nmoutput2so: version
 	@ rm -r nmoutput2so/lib/nonmemrun
 	@ mv nmoutput2so/lib/psn.conf_template nmoutput2so/lib/psn.conf
 	@ zip -r ${NMOUTPUT2SOFILE} nmoutput2so/
-
-documentation: doc/*.pdf $(PDFFILES)
-	@ cd PsN-Source/doc/; zip -q PsN_pdf_documentation *.pdf *.xls *.scm
-	@ cd PsN-Source/doc/; tar -czf PsN_pdf_documentation.tar.gz *.pdf *.xls *.scm 
 
 testpackage:
 	@ zip -rq psn_test_package test
