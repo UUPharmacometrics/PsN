@@ -20,9 +20,9 @@ for line in output.splitlines():
     date = dateutil.parser.parse(date_str).replace(tzinfo=None)
     if date >= datetime.datetime(2019, 1, 1):
         subprocess.run(['git', 'checkout', commit], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-        bin_count = get_line_count('bin/*')
-        lib_count = get_line_count('lib/**/*(.)')
+        bin_count = get_line_count('../../bin/*')
+        lib_count = get_line_count('../../lib/**/*(.)')
         perl_count = bin_count + lib_count
-        r_count = get_line_count('R-scripts/**/*(.)')
+        r_count = get_line_count('../../R-scripts/**/*(.)')
         print(date, perl_count, r_count)
         subprocess.run(['git', 'checkout', 'master'], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
