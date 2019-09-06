@@ -155,7 +155,7 @@ The derivatives needed for computing the new medians and means will be taken fro
 \input{inputs/uppsala_way.tex}
 	
 If a truly time-varying continuous covariate is not listed with option -time\_varying, scm uses the following procedure;\\
-The median for each individual is computed, skipping missing\_data\_token, and then the median of these medians is used. The mean is computed using the same principle. For categorical time-varying covariates, the following procedure is used;
+The median for each individual is computed, skipping missing\_data\_token, and then the median of these medians is used. The mean is computed using the same principle. This procedure will also be used as a fallback incase the calculated mean or median falls outside of the range of the original covariate values. This can happen for example when having IOV and ETAs are alternating a zero derivative. For categorical time-varying covariates, the following procedure is used;
 For each category, the number of individuals with at least one data record of this category is counted. Additional data records with the same category in the same individual makes no difference. The 'median', i.e. the most common category, is the category for which the most indivduals have at least one occurrence. If missing\_data\_token is most common, the second most common category is used instead.
 \nextopt
 \end{optionlist}

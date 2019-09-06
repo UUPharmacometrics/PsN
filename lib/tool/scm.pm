@@ -657,7 +657,7 @@ sub BUILD
     # create the basic parameter-covariate relation data structure
     # including the information about states (1=not included,
     # 2=linear relation, 3=hockey-stick relation).
-
+    my $timevar_minmax_warning = 0;
     for ( my $i = 0; $i < scalar @{$self -> models}; $i++ ) {
         my $first = 1;
         #no existing relations files
@@ -734,30 +734,32 @@ sub BUILD
                     }
 
                     my %local_statistics = %{$self -> covariate_statistics->{$cov}};
-                    if (defined $self->medians->{$par.'_'.$cov}){
-                        $local_statistics{'median'} = $self->medians->{$par.'_'.$cov};
-                        if ($local_statistics{'median'}< $local_statistics{'min'}){
-                            croak("computed median ".$local_statistics{'median'}.
-                                " of time-varying $cov on $par is smaller than min $cov ".
-                                $local_statistics{'min'});
-                        }
-                        if ($local_statistics{'median'}> $local_statistics{'max'}){
-                            croak("computed median ".$local_statistics{'median'}.
-                                " of time-varying $cov on $par is larger than max $cov ".
-                                $local_statistics{'max'});
+                    if (defined $self->medians->{$par . '_' . $cov}) {
+                        my $tv_median = $self->medians->{$par . '_' . $cov};
+                        if ($tv_median > $local_statistics{'min'} and $tv_median < $local_statistics{'max'}) {
+                            $local_statistics{'median'} = $tv_median;
+                        } else {
+                            if (not $timevar_minmax_warning) {
+                                print "Warning: Computed median $tv_median of time-varying $cov on $par is smaller" .
+                                    " than min $cov $local_statistics{'min'} or larger than max $cov $local_statistics{'max'}." .
+                                    " Falling back to using the median of the individual median. This can happen when the model has IOV.".
+                                    " More warnings of this type will be suppressed.\n";
+                                $timevar_minmax_warning = 1;
+                            }
                         }
                     }
-                    if (defined $self->means->{$par.'_'.$cov}){
-                        $local_statistics{'mean'} = $self->means->{$par.'_'.$cov};
-                        if ($local_statistics{'mean'}< $local_statistics{'min'}){
-                            croak("computed mean ".$local_statistics{'mean'}.
-                                " of time-varying $cov on $par is smaller than min $cov ".
-                                $local_statistics{'min'});
-                        }
-                        if ($local_statistics{'mean'}> $local_statistics{'max'}){
-                            croak("computed mean ".$local_statistics{'mean'}.
-                                " of time-varying $cov on $par is larger than max $cov ".
-                                $local_statistics{'max'});
+                    if (defined $self->means->{$par . '_' . $cov}) {
+                        my $tv_mean = $self->means->{$par . '_' . $cov};
+                        if ($tv_mean > $local_statistics{'min'} and $tv_mean < $local_statistics{'max'}) {
+                            $local_statistics{'mean'} = $tv_mean;
+                        } else {
+                            if (not $timevar_minmax_warning) {
+                                print "Warning: Computed mean $tv_mean of time-varying $cov on $par is smaller" .
+                                    " than min $cov $local_statistics{'min'} or larger than max $cov $local_statistics{'max'}." .
+                                    " Falling back to using the mean of the individual mean. This can happen when the model has IOV.".
+                                    " More warnings of this type will be suppressed.\n";
+                                $timevar_minmax_warning = 1;
+                            }
                         }
                     }
                     ( $self -> relations->{$par}{$cov}{'code'}{$state},
