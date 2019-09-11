@@ -156,6 +156,8 @@ has 'model_subdir_name' => ( is => 'rw', isa => 'Str' );
 has 'metadata' => ( is => 'rw', isa => 'HashRef', default => sub {{}} );     # Complex data structure for metadata of run to be stored as meta.yaml
 has 'copy_up' => ( is => 'rw', isa => 'Bool' );     # Set for non top-tools to still copy up results files
 has 'debug_rmd' => ( is => 'rw', isa => 'Bool', default => 0 );
+has 'html' => ( is => 'rw', isa => 'Bool', default => 0 );
+
 
 sub BUILDARGS
 {
@@ -1972,26 +1974,30 @@ sub create_R_script
         $rmarkdown = 1; #TRUE
         if($self->rmarkdown) { # check if option -no-rmarkdown is used, then Rmarkdown file will not be created
                     #check if rmarkdown/pandoc(version 1.12.3 or higher)/latex are installed
-            chdir $self->directory or die "Could not change directory before rmarkdown checking";
-            my $test_file = 'test_file_rmarkdown_installed.Rmd';
-            open ( SCRIPT, ">" . $test_file );
-            print SCRIPT join("\n",'experiment')."\n";
-            close SCRIPT;
+            if (not $self->html) {
+                chdir $self->directory or die "Could not change directory before rmarkdown checking";
+                my $test_file = 'test_file_rmarkdown_installed.Rmd';
+                open ( SCRIPT, ">" . $test_file );
+                print SCRIPT join("\n",'experiment')."\n";
+                close SCRIPT;
 
-            my $rlib = "";
-            my $R_lib_path = PsN::get_R_lib_path();
-            if (length($R_lib_path) > 0) {
-                $rlib = ".libPaths('" . $R_lib_path . "');";
+                my $rlib = "";
+                my $R_lib_path = PsN::get_R_lib_path();
+                if (length($R_lib_path) > 0) {
+                    $rlib = ".libPaths('" . $R_lib_path . "');";
+                }
+                my $rscript = PsN::get_R_exec() . 'script';
+                system("$rscript -e \"$rlib rmarkdown::render(input='".$test_file."',output_format='pdf_document',output_file='test_file_rmarkdown_installed.pdf')\" > test_file_rmarkdown_installed.Rout 2>&1");
+                if (-e 'test_file_rmarkdown_installed.pdf') {
+                    $Rmarkdown_installed = 1;
+                    unlink('test_file_rmarkdown_installed.pdf'); # delete test files
+                }
+                unlink('test_file_rmarkdown_installed.Rmd');
+                unlink('test_file_rmarkdown_installed.Rout');
+                chdir ".." or die "Could not change directory after rmarkdown checking";
+            } else {
+                $Rmarkdown_installed = 1;    # For now don't check if html rendering
             }
-            my $rscript = PsN::get_R_exec() . 'script';
-            system("$rscript -e \"$rlib rmarkdown::render(input='".$test_file."',output_format='pdf_document',output_file='test_file_rmarkdown_installed.pdf')\" > test_file_rmarkdown_installed.Rout 2>&1");
-            if (-e 'test_file_rmarkdown_installed.pdf') {
-                $Rmarkdown_installed = 1;
-                unlink('test_file_rmarkdown_installed.pdf'); # delete test files
-            }
-            unlink('test_file_rmarkdown_installed.Rmd');
-            unlink('test_file_rmarkdown_installed.Rout');
-            chdir ".." or die "Could not change directory after rmarkdown checking";
         }
     }
 
@@ -2019,6 +2025,7 @@ sub create_R_script
             model_subdir => $self->model_subdir,
             file_type => $file_type,
             debug_rmd => $self->debug_rmd,
+            html => $self->html,
         );
 
         $self->create_R_plots_code(rplot => $rplot) if ($self->can("create_R_plots_code"));

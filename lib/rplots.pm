@@ -32,6 +32,7 @@ has 'model_subdir' => (is => 'rw', isa => 'Bool', default => 0 );
 has 'R_lib_path' => (is => 'rw', isa => 'Str' );
 has 'file_type' => (is => 'rw', isa => 'Str' );
 has 'debug_rmd' => (is => 'rw', isa => 'Bool', default => 0 );
+has 'html' => (is => 'rw', isa => 'Bool', default => 0 );
 
 our $preambleline = '#WHEN THIS FILE IS USED AS A TEMPLATE THIS LINE MUST LOOK EXACTLY LIKE THIS';
 
@@ -325,28 +326,35 @@ sub make_plots
 
         my $debug_option = "";
         if ($self->debug_rmd) {
-            open my $fh, '<', $self->filename;
-            my @arr = <$fh>;
-            close $fh;
-            my @new;
-            for my $line (@arr) {
-                if ($line =~ /output: pdf_document/) {
-                    push @new, ( "output:\n", "    pdf_document:\n", "        keep_tex: true\n" );
-                } else {
-                    push @new, $line;
-                }
-            }
-            unlink $self->filename;
-            open $fh, '>', $self->filename;
-            for my $line (@new) {
-                print $fh $line;
-            }
-            close $fh;
             $debug_option = ", clean=FALSE";
+            if (not $self->html) {
+                open my $fh, '<', $self->filename;
+                my @arr = <$fh>;
+                close $fh;
+                my @new;
+                for my $line (@arr) {
+                    if ($line =~ /^[^#]*output: pdf_document/) {
+                        push @new, ( "output:\n", "    pdf_document:\n", "        keep_tex: true\n" );
+                    } else {
+                        push @new, $line;
+                    }
+                }
+                unlink $self->filename;
+                open $fh, '>', $self->filename;
+                for my $line (@new) {
+                    print $fh $line;
+                }
+                close $fh;
+            }
+        }
+
+        my $output_format = "";
+        if ($self->html) {
+            $output_format = ", output_format='html_document'";
         }
 
         if($self->R_markdown && $self->rmarkdown_installed) {
-            system($executable . " -e \"$rlib rmarkdown::render(input='" . $self->filename . "'$debug_option)\" > PsN_".$self->toolname()."_plots.Rout 2>&1");
+            system($executable . " -e \"$rlib rmarkdown::render(input='" . $self->filename . "'$debug_option$output_format)\" > PsN_".$self->toolname()."_plots.Rout 2>&1");
         } else {
             system($executable . " CMD BATCH ".$self->filename);
         }

@@ -93,6 +93,7 @@ Getopt::Long::config("auto_abbrev");
           "zip!",
           "model_subdir!",
           "debug_rmd!",
+          "html!",
     );
 
 
@@ -786,6 +787,11 @@ EOF
     $help_hash{-debug_rmd} = <<'EOF';
     -debug_rmd
     Turn on to have rplots retain the .tex file for debugging.
+EOF
+
+    $help_hash{-html} = <<'EOF';
+    -html
+    Render to html instead of pdf. This option makes rplots not dependent on LaTeX being available.
 EOF
 
     $help_hash{-display_iterations} = <<'EOF';
