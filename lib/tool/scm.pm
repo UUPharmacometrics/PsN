@@ -6192,90 +6192,90 @@ sub preprocess_data
     $filter_fit -> run;
 
 
-    if (defined $time_varying and scalar(@{$time_varying}>0)){
-        foreach my $par ( keys %parmcovhash ){
+    if (defined $time_varying and scalar(@{$time_varying} > 0)) {
+        foreach my $par (keys %parmcovhash) {
             my $ncov = scalar(@{$parmcovhash{$par}});
-            open( FILE, "$directory$par$timevarfile" ) ||
-            croak("Could not open $directory$par$timevarfile"." for reading" );
+            open(FILE, "$directory$par$timevarfile") ||
+                croak("Could not open $directory$par$timevarfile for reading");
             my @lines = <FILE>;
-            close( FILE );
-            my @sum_arr=(0) x $ncov;
+            close(FILE);
+            my @sum_arr = (0) x $ncov;
             my @ave_arr;
 
-            for (my $i=0; $i<$ncov;$i++){
-                $ave_arr[$i]=[];
+            for (my $i = 0; $i < $ncov;$i++) {
+                $ave_arr[$i] = [];
             }
             my $prev_id;
-            my $ratsum=0;
-            foreach (@lines){
+            my $ratsum = 0;
+            foreach (@lines) {
                 chomp;
-                if ($use_mdv){
+                if ($use_mdv) {
                     next unless (/^\s*0/); #only use lines with mdv=0
-                }else{
+                } else {
                     next if (/^\s*(ID|TAB)/);
                 }
-                my @vals=split;
+                my @vals = split;
                 #items in @vals are
                 # MDV ID $parRATIO (array over) $par$covNUM
 
-                unless ((not defined $prev_id) or ($vals[1] == $prev_id)){
+                unless ((not defined $prev_id) or ($vals[1] == $prev_id)) {
                     #found new id, process it
 
-                    for (my $i=0; $i<$ncov;$i++){
+                    for (my $i=0; $i < $ncov; $i++) {
                         #do not die: if $ratsum is zero it must be that the whole expression is 0
-                        if ($ratsum == 0){
-                            push(@{$ave_arr[$i]},0);
-                        }else{
-                            push(@{$ave_arr[$i]},$sum_arr[$i]/$ratsum);
+                        if ($ratsum == 0) {
+                            push(@{$ave_arr[$i]}, 0);
+                        } else {
+                            push(@{$ave_arr[$i]}, $sum_arr[$i] / $ratsum);
                         }
                     }
                     #reset
-                    @sum_arr=(0) x $ncov;
-                    $ratsum=0;
+                    @sum_arr = (0) x $ncov;
+                    $ratsum = 0;
                 }
                 #store new
                 $ratsum += $vals[2];
-                for (my $i=0; $i<$ncov;$i++){
-                    $sum_arr[$i] += $vals[$i+3];
+                for (my $i = 0; $i < $ncov; $i++) {
+                    $sum_arr[$i] += $vals[$i + 3];
                 }
                 $prev_id = $vals[1];
             }
             #process the last one
             #new id, process
-            for (my $i=0; $i<$ncov;$i++){
+            for (my $i = 0; $i < $ncov; $i++) {
                 #do not die: if $ratsum is zero it must be that the whole expression is 0
-                if ($ratsum == 0){
-                    push(@{$ave_arr[$i]},0);
+                if ($ratsum == 0) {
+                    push(@{$ave_arr[$i]}, 0);
                 }else{
-                    push(@{$ave_arr[$i]},$sum_arr[$i]/$ratsum);
+                    push(@{$ave_arr[$i]}, $sum_arr[$i] / $ratsum);
                 }
             }
 
-            open( LOG, ">>".$self -> logfile -> [0] ); #model_number -1
-            for (my $i=0; $i<$ncov;$i++){
+            open(LOG, ">>" . $self->logfile->[0]); #model_number -1
+            for (my $i = 0; $i < $ncov; $i++) {
                 my $cov = $parmcovhash{$par}->[$i];
-                my @sorted_array =  (sort {$a <=> $b} @{$ave_arr[$i]}); #sort ascending
-                my $len= scalar( @sorted_array );
+                my @sorted_array = (sort {$a <=> $b} @{$ave_arr[$i]}); #sort ascending
+                my $len = scalar(@sorted_array);
                 my $median;
-                if( $len  % 2 ){
-                    $median = $sorted_array[($len-1)/2];
+                if ($len % 2) {
+                    $median = $sorted_array[($len - 1) / 2];
                 } else {
-                    $median = ($sorted_array[$len/2]+$sorted_array[($len-2)/2])/ 2;
+                    $median = ($sorted_array[$len / 2]+$sorted_array[($len - 2) / 2]) / 2;
                 }
-                $self->medians->{$par.'_'.$cov}=$median;
+                $self->medians->{$par . '_' . $cov} = $median;
 
-                my $sum=0;
-                foreach my $val (@sorted_array){
+                my $sum = 0;
+                foreach my $val (@sorted_array) {
                     $sum += $val;
                 }
-                $self->means->{$par.'_'.$cov}=$sum/$len if ($len>0);
-                $median = sprintf("%6.2f", $median );
-                my $mean = sprintf("%6.2f", $sum/$len ) if ($len>0);
+                $self->means->{$par . '_' . $cov} = $sum / $len if ($len > 0);
+                $median = sprintf("%6.2f", $median);
+                my $mean = sprintf("%6.2f", $sum / $len) if ($len > 0);
                 unless (math::usable_number($median) and math::usable_number($mean)) {
                     croak("Error in calculation of median: $median and mean $mean not usable numbers");
                 }
-                print LOG "Time-varying $cov on $par (ETA".$parmetahash{$par}.
-                ") has median $median and mean $mean\n";
+                print LOG "Time-varying $cov on $par (ETA" . $parmetahash{$par} .
+                    ") has median $median and mean $mean\n";
             }
             close LOG;
         }
