@@ -222,6 +222,19 @@ cpan YAML::XS<br>
 cpan Storable<br></code>
 </li>
 </ol> 
+NOTE: macOS 10.14 "Mojave" has problems with installing Moose using its default version of Perl. This has been reported to CPAN and discussed <a href="https://rt.cpan.org/Public/Bug/Display.html?id=127028">here</a>. One workaround that has been tested is to install a newer version of Perl via brew:
+<ol>
+    <li>Install <a href="https://brew.sh">homebrew</a></li>
+    <li>Install Perl via homebrew: <code>brew install perl</code></li>
+    <li>Tell the system which perl to use (the following could be put into your <code>~/.bash_profile</code>:
+        <ol>
+            <li><code>alias perl=/usr/local/Cellar/perl/5.30.0/bin/perl</code></li>
+            <li><code>alias cpan=/usr/local/Cellar/perl/5.30.0/bin/cpan</code></li>
+        </ol>
+    </li>
+    <li>Now install the Perl packages</li>
+    <li>When installing PsN remember to set the path to the brew version of Perl as the perl binary to use. (use <code>which perl</code>)</li>
+</ol>
 
 <h4>Installing PsN</h4>
 <ol type="A">
