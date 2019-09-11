@@ -6097,6 +6097,7 @@ sub preprocess_data
                 croak("Could not find assignment to W in \$" . uc($code_record) . " needed for time_varying");
             }
         }
+        $filtered_data_model->set_maxeval_zero();
 
     } else {
         #only $filter is true
