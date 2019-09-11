@@ -6064,45 +6064,25 @@ sub preprocess_data
         $mdvstring='MDV ' if ($use_mdv);
         foreach my $par ( keys %parmcovhash ){
             my @tablestrings =();
-            push( @{$coderef},"\"  COM($com)=".'ABS(G('.$parmetahash{$par}.',1))/W' );
+            push( @{$coderef},"\"  COM($com)=".'ABS(G('.$parmetahash{$par}.',1))' );
             push( @tablestrings, "COM($com)=$par".'RATIO');
             $com++;
 
             foreach my $cov (@{$parmcovhash{$par}}){
-                push( @{$coderef},"\"  COM($com)=$cov".'*ABS(G('.$parmetahash{$par}.',1))/W' );
+                push( @{$coderef},"\"  COM($com)=$cov".'*ABS(G('.$parmetahash{$par}.',1))' );
                 push( @tablestrings, "COM($com)=$par$cov".'NUM');
                 $com++;
             }
             $filtered_data_model ->
             add_records( type           => 'table',
                 record_strings => [ $mdvstring.'ID '.join( ' ', @tablestrings ).
-                    ' NOAPPEND NOPRINT ONEHEADER FILE='.$par.$timevarfile]);
+                    ' DV CIPREDI CIWRESI NOAPPEND NOPRINT ONEHEADER FILE='.$par.$timevarfile]);
         }
 
-        my $code_record;
-        if ($have_advan) {
-            $code_record = 'error';
-        } else {
-            $code_record = 'pred';
-        }
-
-        if ($filtered_data_model->has_code(record => $code_record)) {
-            my $found_W = 0;
-            for my $row (@{$filtered_data_model->get_code(record => $code_record)}) {
-                if ($row =~ /^\s*W\s*=/) {
-                    $found_W = 1;
-                }
-            }
-            if (not $found_W) {
-                croak("Could not find assignment to W in \$" . uc($code_record) . " needed for time_varying");
-            }
-        }
         $filtered_data_model->set_maxeval_zero();
 
     } else {
-        #only $filter is true
         $only_filter = 1;
-
     }
 
     #may still have to fix PD for number of $INPUT items
@@ -6221,7 +6201,7 @@ sub preprocess_data
                 unless ((not defined $prev_id) or ($vals[1] == $prev_id)) {
                     #found new id, process it
 
-                    for (my $i=0; $i < $ncov; $i++) {
+                    for (my $i = 0; $i < $ncov; $i++) {
                         #do not die: if $ratsum is zero it must be that the whole expression is 0
                         if ($ratsum == 0) {
                             push(@{$ave_arr[$i]}, 0);
@@ -6234,12 +6214,17 @@ sub preprocess_data
                     $ratsum = 0;
                 }
                 #store new
-                $ratsum += $vals[2];
+                my $DV = $vals[$ncov + 3];
+                my $CIPREDI = $vals[$ncov + 4];
+                my $CIWRESI = $vals[$ncov + 5];
+                my $W = ($DV - $CIPREDI) / $CIWRESI;
+                $ratsum += $vals[2] / $W;
                 for (my $i = 0; $i < $ncov; $i++) {
-                    $sum_arr[$i] += $vals[$i + 3];
+                    $sum_arr[$i] += $vals[$i + 3] / $W;
                 }
                 $prev_id = $vals[1];
             }
+
             #process the last one
             #new id, process
             for (my $i = 0; $i < $ncov; $i++) {

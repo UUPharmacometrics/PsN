@@ -130,13 +130,11 @@ The information content of an observation is directly proportional to the deriva
 
 For each individual and parameter we compute a weighted average of the covariate observations, where the weight is the derivative of IPRED with respect to the ETA on the parameter divided by the residual error magnitude at that observation.
 	
-Option -time\_varying requires that the residual error is encoded the "Uppsala way", using a parameter W for residual error magnitude in \$ERROR/\$PRED, see below.
-	
 Assume an ID has the following observations: a,b,c,d
 	
 Corresponding covariate values: A,B,C,D
 	
-Corresponding residual error magnitudes (W): Wa,Wb,Wc,Wd
+Corresponding residual error magnitudes (W): Wa,Wb,Wc,Wd (calculated as W = (DV - CIPREDI) / CIWRESI )
 	
 Corresponding absolute partial derivatives of IPRED with respect to the ETA on parameter PAR evaluated at EBE for ETA: Ga, Gb, Gc, Gd
 	
@@ -150,9 +148,7 @@ The median/mean for this covariate with respect to parameter PAR is the median/m
 If all partial derivatives (Ga etc.) are zero, the information content is zero and then the median/mean will be also be 0.
 In this case scm will stop with an error message "computed median 0 of time-varying...", and the user will have to restart scm without that particular parameter-covariate relation.
 	
-The derivatives needed for computing the new medians and means will be taken from an estimation of the input model without any included relations, even if included\_relations is defined in the configuration file. This is because the medians are needed to add the included relations to the model.\\
-	
-\input{inputs/uppsala_way.tex}
+The derivatives needed for computing the new medians and means will be taken from an evaluation of the input model without any included relations, even if included\_relations is defined in the configuration file. This is because the medians are needed to add the included relations to the model.\\
 	
 If a truly time-varying continuous covariate is not listed with option -time\_varying, scm uses the following procedure;\\
 The median for each individual is computed, skipping missing\_data\_token, and then the median of these medians is used. The mean is computed using the same principle. This procedure will also be used as a fallback incase the calculated mean or median falls outside of the range of the original covariate values. This can happen for example when having IOV and ETAs are alternating a zero derivative. For categorical time-varying covariates, the following procedure is used;
