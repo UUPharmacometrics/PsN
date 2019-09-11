@@ -1310,37 +1310,31 @@ sub max
     # Either column or column_head must be specified. Column_head must be a string that
     # identifies a column in the (optional ) data file header.
 
-    # The if-statement below used to be a cache of allready calculated
-    # means. But since individuals can be accessed in so many ways, we
-    # don't know when this cache should be updated. Its easier to
-    # recalculate the max. Maybe we can include this optimization in the
-    # future, if it turns out to be a bottleneck
+    my $first_id = $self->individuals()->[0];
+    croak("data->max: No individuals defined in data object based on " .
+        $self->full_name ) unless defined $first_id;
 
-      my $first_id = $self->individuals()->[0];
-      croak("data->max: No individuals defined in data object based on " .
-            $self->full_name ) unless defined $first_id;
+    my @data_row = split( /,/ , $first_id->subject_data ->[0] );
 
-      my @data_row = split( /,/ , $first_id->subject_data ->[0] );
-
-      unless ( defined $column  && defined( $data_row[$column-1] ) ) {
+    unless ( defined $column  && defined( $data_row[$column-1] ) ) {
         no warnings qw(uninitialized);
         unless (defined($column_head) && defined($self->column_head_indices->{$column_head})) {
-          die "Error in data->max: unknown column: \"$column_head\" or invalid column number: \"$column\"\n";
+            die "Error in data->max: unknown column: \"$column_head\" or invalid column number: \"$column\"\n";
         } else {
-          $column = $self->column_head_indices->{$column_head};
+            $column = $self->column_head_indices->{$column_head};
         }
-      }
-      foreach my $individual ( @{$self->individuals()} ) {
+    }
+    foreach my $individual ( @{$self->individuals()} ) {
         my $ifactors = $individual->factors( 'column' => $column );
         foreach ( keys %{$ifactors} ) {
-          next if (($_ eq '.') or ( $_ == $self->missing_data_token) );
-          if ( defined ($return_value) ) {
-                    $return_value = $_ > $return_value ? $_ : $return_value;
-          } else {
-                    $return_value = $_;
-          }
+            next if (($_ eq '.') or ( $_ == $self->missing_data_token) );
+            if ( defined ($return_value) ) {
+                $return_value = $_ > $return_value ? $_ : $return_value;
+            } else {
+                $return_value = $_;
+            }
         }
-      }
+    }
 
     return $return_value;
 }
