@@ -3373,31 +3373,26 @@ sub scm_calculate_continuous_statistics
     my @time_varying = (defined $parm{'time_varying'})? @{$parm{'time_varying'}}: ();;
     my $return_after_derivatives_done = $parm{'return_after_derivatives_done'};
 
-    my $median;
-    my $min;
-    my $max;
-    my $mean;
-
     my %strata = %{$self-> factors( column => $column_number,
     return_occurences =>1,
     unique_in_individual => 1,
     ignore_missing => 1)};
 
-    if (  _have_non_unique_values(\%strata)) {
-        my $found=0;
-        foreach my $tv (@time_varying){
-            $found =1 if ($tv eq $covariate);
+    if (_have_non_unique_values(\%strata)) {
+        my $found = 0;
+        foreach my $tv (@time_varying) {
+            $found = 1 if ($tv eq $covariate);
         }
-        unless ($found){
-            if ($linearize){
-                ui -> print( category => 'all',
+        unless ($found) {
+            if ($linearize) {
+                ui->print(category => 'all',
                     message => "\nWarning: Individuals were found to have multiple ".
                     "values in the $covariate column, this renders the linearization ".
                     "inappropriate for this covariate. Consider terminating this run and ".
                     "setting covariate $covariate as time-varying in the configuration ".
                     "file.\n" ) unless $return_after_derivatives_done;
-            }else{
-                ui -> print( category => 'all',
+            } else {
+                ui->print( category => 'all',
                     message => "\nWarning: Individuals were found to have multiple values ".
                     "in the $covariate column, but $covariate was not set as time_varying in the ".
                     "configuration file. Mean and median may not be computed correctly for $covariate. ") unless $return_after_derivatives_done;
@@ -3405,17 +3400,15 @@ sub scm_calculate_continuous_statistics
         }
     }
 
-    $median = $self-> median( column => $column_number);
+    my $median = $self->median(column => $column_number);
+    my $max = $self->max(column => $column_number);
+    my $min = $self->min(column => $column_number);
+    my $mean = $self->mean(column => $column_number);
 
-    $max = $self -> max(column => $column_number );
-    $min = $self -> min(column => $column_number );
-    $mean = $self -> mean(column => $column_number );
+    $median = sprintf("%.2f", $median);
+    $mean = sprintf("%.2f", $mean);
 
-
-    $median = sprintf("%.2f", $median );
-    $mean = sprintf("%.2f", $mean );
-
-    return $median ,$min ,$max ,$mean;
+    return $median, $min, $max, $mean;
 }
 
 sub have_unique_ids
