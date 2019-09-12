@@ -331,10 +331,13 @@ for (i in 1:length(resmod_table_list$dvid_nr)) {
   }
   cat("Residual error model, resulting expected improvement in OFV, required additional model parameters as well as their estimates.\n\n\n\n")
   if(!nonlinear && exists("xpdb")) {
-    res_var_attribution <- resmod_variability_attribution(xpdb,dvid_col_name=dvid_name,dvid_value=resmod_table_list$dvid_nr[i],smooth=TRUE)
-    print(res_var_attribution)
+    res_var_attribution <- try(resmod_variability_attribution(xpdb,dvid_col_name=dvid_name,dvid_value=resmod_table_list$dvid_nr[i],smooth=TRUE))
+    if(!inherits(res_var_attribution, "try-error")){
+          print(res_var_attribution)
     cat("\n\n Attribution of variability to between-subject random effects and residual unexplained variability (RUV) versus independent variable under different residual error models.")
-    cat("\\pagebreak\n\n")
+    cat("\\pagebreak\n\n")      
+    }
+
   #   res_shrinkage <- resmod_shrinkage(xpdb,dvid_col_name=dvid_name,dvid_value=resmod_table_list$dvid_nr[i])
   #   align <- paste(c("l",rep("r",ncol(res_shrinkage)-1)),collapse = '')
   #   res_shrinkage <- kable_table(res_shrinkage,format=type,booktabs=T,longtable=T,linesep="",align = align) %>%
