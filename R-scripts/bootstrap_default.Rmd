@@ -22,13 +22,6 @@ R_info(directory=working.directory)
 est.param.names <- fix_column_names(col_names=ESTIMATED.PARAMS)
 ```
 
-
-```{r check_xpose4_version,results='hide',echo=FALSE}
-if(packageVersion("xpose4")<"4.5.0"){
-		warning("xpose4 version must be 4.5.0 or later for bootstrap plot")	
-}							 
-```
-
 ```{r histograms_of_all_parameters,results='hide',warning=FALSE,echo=FALSE,fig.width=10,fig.height=7,fig.keep="high",fig.align="center"}
 bootplots <- xpose4::boot.hist(results.file=raw.results.file,incl.ids.file=included.ids.file,
                        min.failed=skip.minimization.terminated,
@@ -99,4 +92,3 @@ if(file.exists("raw_results_dofv.csv")) {
   }
 }
 ```
-
