@@ -13,13 +13,10 @@ library(stats)
 
 # get libPaths
 R_info(directory=working.directory,only_libPaths=T)
-#############################################################################################################
 ### Diagnostics for SIR
 ### Author: AG Dosne
 ### Date: August 2015
-#############################################################################################################
 
-### COMMENTS ################################################################################################
 ### OUTPUT : This code will give you:
 ### - a PDF file with base plots:
 ###     - a plot of comparative dOFV distributions: SIR, reference chi-square and proposal for each iteration
@@ -29,7 +26,6 @@ R_info(directory=working.directory,only_libPaths=T)
 ###     - a plot of the proportion of resampled values in each bin of the parameter space, parameter by parameter and iteration by iteration
 ###     - a plot of the number of resampled values in the bin with the highest proportion as the number of samples increases, parameter by parameter and iteration by iteration
 ###     - a plot of the number of resampled values in the bin with the highest proportion as the number of samples increases, iteration by iteration (all parameters together)
-### COMMENTS ################################################################################################
 
 theme_set(theme_bw(base_size=20))
 
@@ -37,11 +33,8 @@ theme_set(theme_bw(base_size=20))
 R_info(directory=working.directory)
 
 ### The rest of the code should be left as is (but can be changed if you want to improve the graphical output of course)
-#############################################################################################################
 
-#############################################################################################################
 ### Read in and format data
-#############################################################################################################
 
 ### Read in SIR raw results
 
@@ -310,7 +303,6 @@ if(rplots.level>1) {
     as.data.frame()       # more accurate since use resmaples "p"=mean(prop)
 
   max_bin2$se            <- sqrt(max_bin2$p*(1-max_bin2$p)/(max_bin2$NSAMP/(N1*N2)))
-  # max_bin2$se2         <- sqrt(max_bin2$p2*(1-max_bin2$p2)/(max_bin2$NRESAMP/N))
   max_bin2               <- dplyr::left_join(max_bin2,max_bin[,c("ITERATION","Parameter","MAXBIN")])
   resamp_prop_max        <- dplyr::left_join(resamp_prop,max_bin2)
   resamp_prop_max$IDBIN  <- ifelse(resamp_prop_max$BIN==resamp_prop_max$MAXBIN,1,0)
@@ -351,9 +343,8 @@ if(rplots.level>1) {
         db   <- data.frame(nrow(x),fit@details$par[1],fit@details$par[2],
                            sqrt(diag(fit@vcov))[1],sqrt(diag(fit@vcov))[2],
                            fit@min,fit@details$convergence)}
-      # names(db) <- c("nobs","df","s","se_df","se_s","nLL","convergence")
       return(db)
-    } # end of full.df.est function
+    }
 
 
     fit     <- matrix(0,ncol=7,nrow=length(levels(mdat$variable)),dimnames=list(levels(mdat$variable),c("nobs","df","s","se_df","se_s","nLL","convergence") ))
@@ -374,16 +365,12 @@ if(rplots.level>1) {
     mdat$LEGEND_NORM <- factor(mdat$LEGEND_NORM,levels=unique(mdat$LEGEND_NORM))
     mdat$LEGEND_WISH <- paste(mdat$variable,round(mdat$df,0),sep=":")
     mdat$LEGEND_WISH <- factor(mdat$LEGEND_WISH,levels=unique(mdat$LEGEND_WISH))
-  } # end of estimated.omega >= 1
-} # end of rplots.level >1
+  }
+}
 
-#############################################################################################################
 ### Do plots
-#############################################################################################################
 
-#############################################################################################################
 ### dOFV distributions
-#############################################################################################################
 
 gg_color_hue <- function(n) {
   hues = seq(15, 375, length=n+1)
@@ -417,9 +404,7 @@ qdOFV_all <- ggplot2::ggplot(dOFV_all,aes(x=QUANT,color=ITERATION)) +
 # qdOFV_all
 
 
-#############################################################################################################
 ### Comparative CI
-#############################################################################################################
 
 ci <- ggplot2::ggplot(paramCI_all,aes(x=interaction(TYPE,ITERATION),y=PMED,color=ITERATION)) +
   geom_point() +
@@ -436,16 +421,12 @@ ci <- ggplot2::ggplot(paramCI_all,aes(x=interaction(TYPE,ITERATION),y=PMED,color
 ci_sir <- ci %+% dplyr::filter(paramCI_all, TYPE=="SIR" | (TYPE=="PROPOSAL" & ITERATION=="1"))  +  labs(title="CI of SIR densities over iterations") + theme(legend.position="none")
 # ci_sir
 
-#############################################################################################################
 ### Covmat visualization
-#############################################################################################################
 
 cor.prop  <- plot.cor(cov.proposal,asym.proposal,final_est,title="Proposal")
 cor.final <- plot.cor(cov.final,asym.final,final_est,title="SIR")
 
-#############################################################################################################
 ### Parameter bin plots by iteration
-#############################################################################################################
 
 if(rplots.level>1) {
 
@@ -489,9 +470,7 @@ if(rplots.level>1) {
 
   }
 
-  #############################################################################################################
   ### Inverse Wishart fit for OMEGAs
-  #############################################################################################################
 
   if (N.ESTIMATED.OMEGAS >= 1) {
     invWish <- ggplot2::ggplot(mdat,aes(x=value)) +
@@ -503,12 +482,10 @@ if(rplots.level>1) {
       scale_color_discrete(drop=F) +
       theme(legend.position="bottom") +
       guides(color=guide_legend(title="Estimated N based on inverse Wishart distribution"),linetype=guide_legend(title="Calculated N based on normal distribution (not plotted)"))
-  } # end of estimated.omegas >=1
-} # end of r.plots.level>1
+  }
+}
 
-#############################################################################################################
 ### Output plots
-#############################################################################################################
 
 if(rplots.level>=1) {
   pdf(file=paste(working.directory,"PsN_plots_base.pdf",sep=""),title=pdf.title,width=20,height=10)
@@ -527,6 +504,3 @@ if(rplots.level>1) {
   if (N.ESTIMATED.OMEGAS >= 1) { print(invWish) }
   dev.off()
 }
-
-### END
-#############################################################################################################
