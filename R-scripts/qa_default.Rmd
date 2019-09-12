@@ -10,6 +10,7 @@ classoption: a4paper
 
 ```{r loading_libraries_and_sourcing_functions,include=F,warning=F,message=F}
 library(PsNR)
+library(methods)
 options(knitr.table.format=type)
 ```
 
