@@ -3159,6 +3159,7 @@ sub prepare_model4
         $frem_model->problems->[0]->estimations($est_records);
         $frem_model->problems->[0]->add_records( record_strings => $new_cov_records,
                                                  type => 'covariance' );
+        model_approximations::derivatives_model(model => $frem_model, frem => 1);   # Output the derivatives to be able to make VA-plot
         $frem_model->_write();
     } else {
         if (defined $etas_file) {

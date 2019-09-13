@@ -12,10 +12,22 @@ sub derivatives_model
     # Create a model that can generate the first order derivatives
     my %parm = validated_hash(\@_,
         model => { isa => 'model' },
+        frem => { isa => 'Bool', default => 0 },    # To add the FREMTYPE column
     );
     my $model = $parm{'model'};
+    my $frem = $parm{'frem'};
 
     my $derivatives_model = $model;#->copy(filename => 'derivatives.mod', write_copy => 0);
+
+    # Check if D_EPSETA in input. If so we need to rename the table output columns by appending an underscore
+    my $column_names = $derivatives_model->problems->[0]->columns_list();
+    my $depseta_suffix = '';
+    for my $col (@$column_names) {
+        if ($col =~ /^D_EPSETA/) {
+           $depseta_suffix = '_';
+           last;
+       }
+    }
 
     #can look for ADVAN<any number> this way
     my ($advan, $junk) = $derivatives_model->problems->[0]->_option_val_pos(
@@ -62,15 +74,18 @@ sub derivatives_model
     my @verbatim_code;
     for (my $i = 1; $i <= $nEPS; $i++) {
         for (my $j = 1; $j <= $nETA; $j++) {
-            push @abbreviated_code, "D_EPSETA${i}_$j = 0";
-            push(@verbatim_code, "D_EPSETA${i}_$j=$H($i," . ($j + 1) . ")");
-            push(@tablestrings, "D_EPSETA${i}_$j");
+            push @abbreviated_code, "D_EPSETA${i}_$j$depseta_suffix = 0";
+            push(@verbatim_code, "D_EPSETA${i}_$j$depseta_suffix=$H($i," . ($j + 1) . ")");
+            push(@tablestrings, "D_EPSETA${i}_$j$depseta_suffix");
         }
     }
 
     model_transformations::append_code(model => $derivatives_model, code => \@abbreviated_code, record => $code_record_name);
     code::append_verbatim_code(model => $derivatives_model, code_record => $code_record_name, pos => 'LAST', code => \@verbatim_code);
 
+    if ($frem) {
+        push(@tablestrings, 'FREMTYPE');
+    }
     push(@tablestrings, 'NOPRINT','NOAPPEND','ONEHEADER');
     push(@tablestrings, 'FILE=derivatives.tab');
     push(@tablestrings, 'FORMAT=s1PE15.8');
