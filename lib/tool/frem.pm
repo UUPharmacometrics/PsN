@@ -3161,10 +3161,10 @@ sub prepare_model4
                                                  type => 'covariance' );
         $frem_model->_write();
     } else {
-    if (defined $etas_file) {
-        (my $phi_filename = $name_model) =~ s/(.*)\..*/$1.phi/;
-        $etas_file = $fin_dir.$phi_filename;
-    }
+        if (defined $etas_file) {
+            (my $phi_filename = $name_model) =~ s/(.*)\..*/$1.phi/;
+            $etas_file = $fin_dir.$phi_filename;
+        }
     }
 
     return ($etas_file);
