@@ -84,7 +84,7 @@ sub derivatives_model
     code::append_verbatim_code(model => $derivatives_model, code_record => $code_record_name, pos => 'LAST', code => \@verbatim_code);
 
     if ($frem) {
-        push(@tablestrings, 'FREMTYPE');
+        push(@tablestrings, ('ID', 'FREMTYPE'));
     }
     push(@tablestrings, 'NOPRINT','NOAPPEND','ONEHEADER');
     push(@tablestrings, 'FILE=derivatives.tab');
