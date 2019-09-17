@@ -12,10 +12,8 @@ sub derivatives_model
     # Create a model that can generate the first order derivatives
     my %parm = validated_hash(\@_,
         model => { isa => 'model' },
-        frem => { isa => 'Bool', default => 0 },    # To add the FREMTYPE column
     );
     my $model = $parm{'model'};
-    my $frem = $parm{'frem'};
 
     my $derivatives_model = $model;#->copy(filename => 'derivatives.mod', write_copy => 0);
 
@@ -83,9 +81,6 @@ sub derivatives_model
     model_transformations::append_code(model => $derivatives_model, code => \@abbreviated_code, record => $code_record_name);
     code::append_verbatim_code(model => $derivatives_model, code_record => $code_record_name, pos => 'LAST', code => \@verbatim_code);
 
-    if ($frem) {
-        push(@tablestrings, ('ID', 'FREMTYPE'));
-    }
     push(@tablestrings, 'NOPRINT','NOAPPEND','ONEHEADER');
     push(@tablestrings, 'FILE=derivatives.tab');
     push(@tablestrings, 'FORMAT=s1PE15.8');
