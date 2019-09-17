@@ -156,40 +156,39 @@ sub BUILD
         }
     }
 
-    if ( scalar (@{$self -> models->[0]-> problems}) > 1 ){
+    if (scalar (@{$self->models->[0]->problems}) > 1) {
         croak('Cannot have more than one $PROB in the input model.');
     }
 
-    unless (scalar(@{$self->covariates})>0){
+    if (scalar(@{$self->covariates}) == 0) {
         croak("Must have at least one covariate");
     }
 
-    if (scalar(@{$self->log})> 0){
+    if (scalar(@{$self->log}) > 0) {
         my $indices = array::get_array_positions(target => $self->covariates,
                                                  keys=> $self->log,
                                                  R_indexing => 0);
-        unless (scalar(@{$indices}) == scalar(@{$self->log})){
-            croak("-log list:".join(',',@{$self->log})." is not a subset of ".
-                " -covariates:".join(',',@{$self->covariates}));
+        if (scalar(@{$indices}) != scalar(@{$self->log})) {
+            croak("-log list:" . join(',', @{$self->log}) . " is not a subset of " .
+                " -covariates:" . join(',', @{$self->covariates}));
         }
-
     }
-    if (scalar(@{$self->categorical})> 0){
+    if (scalar(@{$self->categorical}) > 0) {
         my $indices = array::get_array_positions(target => $self->covariates,
                                                  keys=> $self->categorical,
                                                  R_indexing => 0);
         unless (scalar(@{$indices}) == scalar(@{$self->categorical})){
-            croak("-categorical list:".join(',',@{$self->categorical})." is not a subset of ".
-                  " -covariates:".join(',',@{$self->covariates}));
+            croak("-categorical list:" . join(',', @{$self->categorical}) . " is not a subset of " .
+                  " -covariates:" . join(',', @{$self->covariates}));
         }
     }
-    if (scalar(@{$self->log})> 0){
+    if (scalar(@{$self->log}) > 0){
         my $indices = array::get_array_positions(target => $self->categorical,
                                                  keys=> $self->log,
                                                  R_indexing => 0);
-        if (scalar(@{$indices})>0){
-            croak("-log list:".join(',',@{$self->log})." must have no elements in common with ".
-                  " -categorical:".join(',',@{$self->categorical}));
+        if (scalar(@{$indices}) > 0) {
+            croak("-log list:" . join(',', @{$self->log}) . " must have no elements in common with " .
+                  " -categorical:" . join(',', @{$self->categorical}));
         }
 
     }
@@ -199,55 +198,50 @@ sub BUILD
                                          log => $self->log);
     $self->regular($regular);
 
-    my $dv_ok=0;
+    my $dv_ok = 0;
 
-    my $prob = $self -> models->[0]-> problems -> [0];
-    if (defined $prob->priors()){
+    my $prob = $self->models->[0]->problems->[0];
+    if (defined $prob->priors()) {
         croak("frem does not support \$PRIOR");
     }
 
-    if( defined $prob -> inputs and defined $prob -> inputs -> [0] -> options ) {
-        foreach my $option ( @{$prob -> inputs -> [0] -> options} ) {
-            unless (($option -> value eq 'DROP' or $option -> value eq 'SKIP'
-                        or $option -> name eq 'DROP' or $option -> name eq 'SKIP')){
-                $dv_ok = 1 if ($option -> name() eq $self->dv());
+    if (defined $prob->inputs and defined $prob->inputs->[0]->options) {
+        foreach my $option (@{$prob->inputs->[0]->options}) {
+            unless (($option->value eq 'DROP' or $option->value eq 'SKIP'
+                        or $option->name eq 'DROP' or $option->name eq 'SKIP')) {
+                $dv_ok = 1 if ($option->name() eq $self->dv());
             }
         }
-        croak("dependent column ".$self->dv()." not found in \$INPUT" ) unless $dv_ok;
+        croak("dependent column " . $self->dv() . " not found in \$INPUT") if not $dv_ok;
     } else {
-        croak("Trying to check parameters in input model".
-            " but no headers were found in \$INPUT" );
+        croak('Trying to check parameters in input model but no headers were found in $INPUT');
     }
 
-    my @code = @{$self -> models->[0]->get_code(record => 'pk')};
+    my @code = @{$self->models->[0]->get_code(record => 'pk')};
     my $use_pred = 0;
     unless ($#code > 0) {
-        @code = @{$self -> models->[0]->get_code(record => 'pred')};
+        @code = @{$self->models->[0]->get_code(record => 'pred')};
         $use_pred = 1;
     }
-    if ( $#code <= 0 ) {
+    if ($#code <= 0) {
         croak("Neither PK or PRED defined in model");
     }
     $self->use_pred($use_pred);
 
-    unless ( defined $self->models->[0]-> problems->[0]-> estimations
-             and scalar (@{$self->models->[0]-> problems->[0]->estimations}) > 0 ){
+    unless (defined $self->models->[0]->problems->[0]->estimations
+             and scalar (@{$self->models->[0]->problems->[0]->estimations}) > 0 ) {
         croak("No \$EST in model");
     }
-    $self->input_model_fix_thetas(get_or_set_fix(model => $self->models->[0],
-                                                 type => 'thetas'));
-    $self->input_model_fix_omegas(get_or_set_fix(model => $self->models->[0],
-                                                 type => 'omegas'));
-    $self->input_model_fix_sigmas(get_or_set_fix(model => $self->models->[0],
-                                                 type => 'sigmas'));
-
+    $self->input_model_fix_thetas(get_or_set_fix(model => $self->models->[0], type => 'thetas'));
+    $self->input_model_fix_omegas(get_or_set_fix(model => $self->models->[0], type => 'omegas'));
+    $self->input_model_fix_sigmas(get_or_set_fix(model => $self->models->[0], type => 'sigmas'));
 
     # auto-skip fixed OMEGAs
     my %skip_omegas = map { $_ => 1 } @{$self->skip_omegas};
     my @new_skip_omegas;
     my $om_num = 1;
-    for (my $i=0; $i<scalar(@{$self->input_model_fix_omegas}); $i++) { # loop over omegas
-        for (my $j=0; $j<scalar(@{$self->input_model_fix_omegas->[$i]}); $j++) {
+    for (my $i = 0; $i < scalar(@{$self->input_model_fix_omegas}); $i++) { # loop over omegas
+        for (my $j = 0; $j < scalar(@{$self->input_model_fix_omegas->[$i]}); $j++) {
             my $fixed = $self->input_model_fix_omegas->[$i]->[$j];
             if ($fixed && !exists($skip_omegas{$om_num})) {
                 push @{$self->skip_omegas}, $om_num;
@@ -257,24 +251,24 @@ sub BUILD
         }
     }
     if (scalar(@new_skip_omegas) > 0) {
-        print "Skipping fixed OMEGA record(s) which were not already skipped (required): ", join( ", ", @new_skip_omegas ), "\n";
+        print "Skipping fixed OMEGA record(s) which were not already skipped (required): ", join(", ", @new_skip_omegas), "\n";
         %skip_omegas = map { $_ => 1 } @{$self->skip_omegas};
     }
 
     # check that skipped OMEGAs are all first or last
     if (keys %skip_omegas > 0) {
-        my $nom = $om_num-1;
+        my $nom = $om_num - 1;
         my $first_skip = exists($skip_omegas{1}) ? 1 : 0;
         my $last_skip = exists($skip_omegas{$nom}) ? 1 : 0;
         unless ($first_skip || $last_skip) {
             print "Skipped OMEGA record(s) must all be positioned first or last (neither first nor last OMEGA record is skipped)";
-            croak "Can't continue due to non-supported skipping pattern";
+            croak("Can't continue due to non-supported skipping pattern");
         }
-        for (my $i=2; $i<=(keys %skip_omegas); $i++) {
-            $om_num = $first_skip ? $i : $nom-$i+1; # count forward or backward
-            unless (exists($skip_omegas{$om_num})) {
+        for (my $i = 2; $i <= (keys %skip_omegas); $i++) {
+            $om_num = $first_skip ? $i : $nom-$i + 1; # count forward or backward
+            if (not exists($skip_omegas{$om_num})) {
                 print "Skipped OMEGA records must all be positioned first or last (expected OMEGA record $om_num skipped)";
-            croak "Can't continue due to non-supported skipping pattern";
+                croak("Can't continue due to non-supported skipping pattern");
             }
         }
     }
@@ -283,7 +277,7 @@ sub BUILD
 sub get_phi_coltypes
 {
     my %parm = validated_hash(\@_,
-                              model => { isa => 'model', optional => 0 },
+        model => { isa => 'model', optional => 0 },
     );
     my $model = $parm{'model'};
 
@@ -292,53 +286,53 @@ sub get_phi_coltypes
     my $diagonal;
     my $offdiagonal;
 
-    if ($is_classical){
+    if ($is_classical) {
         $diagonal = 'ETA';
         $offdiagonal = 'ETC';
-    }else{
+    } else {
         $diagonal = 'PHI';
         $offdiagonal = 'PHC';
     }
-    return ($diagonal,$offdiagonal);
+    return ($diagonal, $offdiagonal);
 
 }
 
 sub read_covdata
 {
     my %parm = validated_hash(\@_,
-                              covnames => { isa => 'ArrayRef', optional => 0 },
-                              filename => { isa => 'Str', optional => 0 },
-                              dv => { isa => 'Str', default => 'DV' },
+        covnames => { isa => 'ArrayRef', optional => 0 },
+        filename => { isa => 'Str', optional => 0 },
+        dv => { isa => 'Str', default => 'DV' },
     );
     my $covnames = $parm{'covnames'};
     my $filename = $parm{'filename'};
     my $dv = $parm{'dv'};
 
-    my %fremtype_to_cov=();
-    my %cov_arrays=();
-    my %id_arrays=();
+    my %fremtype_to_cov = ();
+    my %cov_arrays = ();
+    my %id_arrays = ();
 
 
-    for (my $i=0; $i< scalar(@{$covnames}); $i++){
-        my $fremtype = ($i+1)*100;
-        $fremtype_to_cov{$fremtype}=$covnames->[$i];
+    for (my $i = 0; $i < scalar(@{$covnames}); $i++) {
+        my $fremtype = ($i + 1) * 100;
+        $fremtype_to_cov{$fremtype} = $covnames->[$i];
         $cov_arrays{$covnames->[$i]} = [];
     }
 
     open my $fh, '<', $filename;
-    my $frem_index=-1;
-    my $dv_index=-1;
-    my $id_index=-1;
+    my $frem_index = -1;
+    my $dv_index = -1;
+    my $id_index = -1;
     my $header_row = <$fh>;
     chomp($header_row);
     $header_row =~ s/\r//; # remove CR
-    my @fields = split(',',$header_row);
-    for (my $i=0; $i< scalar(@fields); $i++){
-        if($fields[$i] eq $dv){
+    my @fields = split(',', $header_row);
+    for (my $i = 0; $i < scalar(@fields); $i++) {
+        if($fields[$i] eq $dv) {
             $dv_index = $i;
-        }elsif($fields[$i] eq 'FREMTYPE'){
+        }elsif($fields[$i] eq 'FREMTYPE') {
             $frem_index = $i;
-        }elsif($fields[$i] eq 'ID'){
+        }elsif($fields[$i] eq 'ID') {
             $id_index = $i;
         }
         last if (($frem_index >= 0) and ($dv_index >=0) and ($id_index >=0));
@@ -351,27 +345,27 @@ sub read_covdata
         $row = <$fh>;
         last unless (defined $row);
         chomp ($row);
-        @fields = split(',',$row);
-        if ($fields[$frem_index] > 0){
+        @fields = split(',', $row);
+        if ($fields[$frem_index] > 0) {
             my $cov = $fremtype_to_cov{$fields[$frem_index]};
             push(@{$cov_arrays{$cov}},$fields[$dv_index]);
             my $id = $fields[$id_index];
-            unless (exists $id_arrays{$id}){
-                $id_arrays{$id}={};
+            if (not exists $id_arrays{$id}){
+                $id_arrays{$id} = {};
                 $idx++;
             }
-            if (exists $id_arrays{$id}->{$cov}){
+            if (exists $id_arrays{$id}->{$cov}) {
                 croak("redefinition of $cov for id $id");
             }else{
                 $id_arrays{$id}->{$cov} = $fields[$dv_index];
                 # map id to index (in cov arrays)
-                $id_idx{$id} = ($idx-1);
+                $id_idx{$id} = ($idx - 1);
             }
         }
     }
     close $fh;
-    for (my $i=0; $i< scalar(@{$covnames}); $i++){
-        unless (scalar(@{$cov_arrays{$covnames->[$i]}}) > 0){
+    for (my $i = 0; $i < scalar(@{$covnames}); $i++) {
+        unless (scalar(@{$cov_arrays{$covnames->[$i]}}) > 0) {
             croak("legth $i not larger than 0");
         }
     }
