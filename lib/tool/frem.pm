@@ -768,12 +768,6 @@ sub get_parcov_blocks
     my $covariate_etanumbers = $parm{'covariate_etanumbers'};
     my $parameter_etanumbers = $parm{'parameter_etanumbers'};
 
-    #my $num = scalar(@{$covariate_etanumbers});
-    #unless ($num == scalar(@{$parameter_etanumbers})){
-    #    croak("num is $num but parameter num is ".scalar(@{$parameter_etanumbers}));
-    #}
-    #etas from evaluation do not have priority over inits
-
     my @omega_records = ();
     my $n_previous_rows = $skip_etas;
 
@@ -954,20 +948,19 @@ sub put_skipped_omegas_first
     my @omega_output_order = (); # permutation vector for mapping (original) estimates to reordered model
     my $n_previous_rows = 0;
     for (my $k=0; $k<scalar(@{$new_omega_order}); $k++){
-        if ($k==($start_omega_record-1)){ #    $start_omega_record = scalar(@{$skip_omegas})+1;
+        if ($k==($start_omega_record-1)){
             $skip_etas = $n_previous_rows;
         }
         my $i = $new_omega_order->[$k]-1; #old index
         my $size = scalar(@{$etas_per_omega->[$i]});
 
         if ( $model->problems->[0]->omegas->[$i]->is_block or
-            ($k < ($start_omega_record-1))){ #    $start_omega_record = scalar(@{$skip_omegas})+1;
+            ($k < ($start_omega_record-1))){
             my $formatted = $model->problems->[0]->omegas->[$i]->_format_record();
             my @lines =();
             for (my $j=0; $j < scalar(@{$formatted}); $j++){
                 push(@lines,split("\n",$formatted->[$j]));
             }
-            #print "count ".scalar(@lines)."\n";
             push(@new_records,
                  model::problem::omega->new(record_arr => \@lines,
                                             n_previous_rows => $n_previous_rows));
@@ -1138,7 +1131,6 @@ sub get_filled_omega_block
     #omega block. Do not assume all that are nonzero are estimated
     #get inits from model. local coords
 
-    #print "\n sizes ".join(' ',@sizes)."\n";
     my $old_size=0;
     for (my $k=0; $k <scalar(@{$start_etas}); $k++){
         my $init_matrix = $model->problems->[$problem_index]->get_matrix(type => 'omega',
@@ -1152,9 +1144,6 @@ sub get_filled_omega_block
         }
         $old_size += $sizes[$k];
     }
-    #foreach my $line (@mergematrix){
-    #    print join("\t",@{$line})."\n";
-    #}
 
     #now we have sd and valuematrix that are inits/estimates or 0.
     #for each value in mergematrix that is still 0, compute covar using correlation and sd,
@@ -1169,9 +1158,6 @@ sub get_filled_omega_block
             next unless ($mergematrix[$i]->[$j] == 0);
 
             unless (($j >= $sizes[0]) and ($j < $top_size)){
-            #if (($j >= $sizes[0]) and ($j < $top_size)){
-            #    $mergematrix[$i]->[$j] = $smallnum; #FIXME correlation 1%?
-            #}else{
                 #compute new
                 if ((not $have_corrmatrix) or $corrmatrix->[$i][$j] == 0){
                     $mergematrix[$i]->[$j] = ($small_correlation)*($sd[$i])*($sd[$j]);
@@ -1181,10 +1167,7 @@ sub get_filled_omega_block
             }
         }
     }
-    #print "\n";
-    #foreach my $line (@mergematrix){
-    #    print join("\t",@{$line})."\n";
-    #}
+
     my $newmatrix = replace_0_correlation(old_matrix => \@mergematrix,
                                           is_covariance => 1,
                                           low_correlation => $small_correlation);
@@ -2296,10 +2279,7 @@ sub do_model1
         ) {
         #no need to run again
         $output = $frem_model->outputs->[0];
-    }elsif ($model -> is_run() and (defined $model->outputs->[0] )
-            #and
-            #(-e $model->outputs->[0]->problems->[0]->full_name_NM7_file(file_type => 'phi'))
-        ) {
+    }elsif ($model -> is_run() and (defined $model->outputs->[0] )) {
         #no need to run anything
         $output = $model->outputs->[0];
     }else{
@@ -2849,7 +2829,6 @@ sub prepare_model2
                                       option_name => $item);
             #we do not have to add for example binary-ized categoricals, they enter in DV col for special fremtype
         }
-
 
         #SIGMA changes
         if (defined $frem_model->problems->[0]->sigmas) {
@@ -3788,7 +3767,6 @@ sub modelfit_setup
         #this modifies $self->covariates,self->extra_input_items($extra_input_items),$self->log(\@new_log)
         #        $self->categorical($new_categorical);
         ($filtered_data,$indices) = $self->do_filter_dataset_and_append_binary(model => $frem_model1);
-        #                                                                              rescale_data => $self->rescale_data);
 
         $covresultref = $self->do_frem_dataset(model => $model, #must be input model here, not updated with final ests
                                                N_parameter_blocks => 1,
@@ -3921,7 +3899,6 @@ sub modelfit_setup
                                                                    est_records => $est_records,
                                                                    etas_file => $etas_file);
 
-
     if ($self->fork_runs){
         $self->submit_child;
     }
@@ -3980,8 +3957,6 @@ sub modelfit_setup
                                          update_existing_model_files => $update_existing_model_files,
                                          etas_file => $etas_file,
         );
-
-    #fixme subtool instead?
 
     push(@{$self->final_numbers},4) if $self->estimate_regular_final_model;
 
@@ -4093,13 +4068,10 @@ sub modelfit_setup
                   message => "printed $proposal_filename for sir -covmat_input option");
         }
         if ($error and $self->run_sir) {
-            #                chdir($self->directory);
             ui->print(category => 'frem',
                       message => 'starting sir');
             ui->category('sir');
             my %options;
-            #                $options{'samples'}=2000;
-            #                $options{'resamples'}=1000;
             $options{'problems_per_file'}=25;
             $options{'covmat_input'} = $self->directory.$proposal_filename;
             input_checking::check_options(tool => 'sir', options => \%options, model => $sir_model);
@@ -4298,14 +4270,11 @@ sub create_data2_model
     $filtered_data_model -> add_records(type => 'estimation',
                                         record_strings => ['MAXEVALS=0 METHOD=ZERO']);
 
-    # set $TABLE record
-
     $filtered_data_model -> add_records( type           => 'table',
         record_strings => [ join( ' ', @filter_table_header ).
             ' NOAPPEND NOPRINT ONEHEADER FORMAT=sG15.9 FILE='.$filtered_datafile]);
 
     return ($filtered_data_model,\@filter_table_header,$extra_input_items,$message);
-
 }
 
 sub add_pred_error_code
