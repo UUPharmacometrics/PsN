@@ -692,10 +692,10 @@ sub get_post_processing_data
 sub get_or_set_fix
 {
     my %parm = validated_hash(\@_,
-                              model => { isa => 'model', optional => 0 },
-                              type  => { isa => 'Str', optional => 0 },
-                              set_array  => { isa => 'ArrayRef', optional => 1 },
-                              stop_record => { isa => 'Int', optional => 1 },
+        model => { isa => 'model', optional => 0 },
+        type  => { isa => 'Str', optional => 0 },
+        set_array  => { isa => 'ArrayRef', optional => 1 },
+        stop_record => { isa => 'Int', optional => 1 },
     );
     my $model = $parm{'model'};
     my $type = $parm{'type'};
@@ -756,11 +756,11 @@ sub get_or_set_fix
 sub get_parcov_blocks
 {
     my %parm = validated_hash(\@_,
-                              model => { isa => 'model', optional => 0 },
-                              skip_etas  => { isa => 'Int', optional => 0 },
-                              start_omega_record  => { isa => 'Int', optional => 0 },
-                              covariate_etanumbers  => { isa => 'ArrayRef', optional => 0 },
-                              parameter_etanumbers => { isa => 'ArrayRef', optional => 0 },
+        model => { isa => 'model', optional => 0 },
+        skip_etas  => { isa => 'Int', optional => 0 },
+        start_omega_record  => { isa => 'Int', optional => 0 },
+        covariate_etanumbers  => { isa => 'ArrayRef', optional => 0 },
+        parameter_etanumbers => { isa => 'ArrayRef', optional => 0 },
     );
     my $model = $parm{'model'};
     my $skip_etas = $parm{'skip_etas'};
@@ -812,9 +812,9 @@ sub get_parcov_blocks
 sub get_new_omega_order
 {
     my %parm = validated_hash(\@_,
-                              model => { isa => 'model', optional => 0 },
-                              problem_index  => { isa => 'Int', default => 0 },
-                              skip_omegas  => { isa => 'ArrayRef', optional => 0 },
+        model => { isa => 'model', optional => 0 },
+        problem_index  => { isa => 'Int', default => 0 },
+        skip_omegas  => { isa => 'ArrayRef', optional => 0 },
     );
     my $model = $parm{'model'};
     my $problem_index = $parm{'problem_index'};
@@ -856,13 +856,13 @@ sub put_skipped_omegas_first
 {
 
     my %parm = validated_hash(\@_,
-                              model => { isa => 'model', optional => 0 },
-                              problem_index  => { isa => 'Int', default => 0 },
-                              start_omega_record  => { isa => 'Int', optional => 0 },
-                              need_to_move  => { isa => 'Bool', optional => 0 },
-                              new_omega_order  => { isa => 'ArrayRef', optional => 0 },
-                              input_model_fix_omegas => { isa => 'ArrayRef', optional => 0 },
-                              etas_file => { isa => 'Maybe[Str]', optional => 1 }
+        model => { isa => 'model', optional => 0 },
+        problem_index  => { isa => 'Int', default => 0 },
+        start_omega_record  => { isa => 'Int', optional => 0 },
+        need_to_move  => { isa => 'Bool', optional => 0 },
+        new_omega_order  => { isa => 'ArrayRef', optional => 0 },
+        input_model_fix_omegas => { isa => 'ArrayRef', optional => 0 },
+        etas_file => { isa => 'Maybe[Str]', optional => 1 }
     );
     my $model = $parm{'model'};
     my $problem_index = $parm{'problem_index'};
@@ -993,9 +993,9 @@ sub put_skipped_omegas_first
 sub get_reordered_coordinate_strings
 {
     my %parm = validated_hash(\@_,
-                              problem => { isa => 'model::problem', optional => 0 },
-                              omega_order => { isa => 'ArrayRef', optional => 0 },
-        );
+        problem => { isa => 'model::problem', optional => 0 },
+        omega_order => { isa => 'ArrayRef', optional => 0 },
+    );
     my $problem = $parm{'problem'};
     my $omega_order = $parm{'omega_order'};
 
@@ -1023,9 +1023,9 @@ sub get_reordered_coordinate_strings
 sub get_eta_mapping
 {
     my %parm = validated_hash(\@_,
-                              problem => { isa => 'model::problem', optional => 0 },
-                              omega_order => { isa => 'ArrayRef', optional => 0 },
-        );
+        problem => { isa => 'model::problem', optional => 0 },
+        omega_order => { isa => 'ArrayRef', optional => 0 },
+    );
     my $problem = $parm{'problem'};
     my $omega_order = $parm{'omega_order'};
 
@@ -1054,11 +1054,11 @@ sub get_filled_omega_block
 {
     #must have already done update inits on model so that get_matrix is estimated values, where available
     my %parm = validated_hash(\@_,
-                              model => { isa => 'model', optional => 0 },
-                              problem_index  => { isa => 'Int', default => 0 },
-                              table_index  => { isa => 'Int', default => -1 },
-                              start_etas => { isa => 'ArrayRef', optional => 0 },
-                              end_etas => { isa => 'ArrayRef', optional => 0 },
+        model => { isa => 'model', optional => 0 },
+        problem_index  => { isa => 'Int', default => 0 },
+        table_index  => { isa => 'Int', default => -1 },
+        start_etas => { isa => 'ArrayRef', optional => 0 },
+        end_etas => { isa => 'ArrayRef', optional => 0 },
     );
     my $model = $parm{'model'};
     my $problem_index = $parm{'problem_index'};
@@ -1181,13 +1181,13 @@ sub get_filled_omega_block
 sub get_correlation_matrix_from_phi
 {
     my %parm = validated_hash(\@_,
-                              model => { isa => 'model', optional => 0 },
-                              problem_index  => { isa => 'Int', default => 0 },
-                              table_index  => { isa => 'Int', default => -1 },
-                              start_eta_1 => { isa => 'Int', optional => 0 },
-                              end_eta_1 => { isa => 'Int', optional => 0 },
-                              start_eta_2 => { isa => 'Maybe[Int]', optional => 1 },
-                              end_eta_2 => { isa => 'Maybe[Int]', optional => 1 },
+        model => { isa => 'model', optional => 0 },
+        problem_index  => { isa => 'Int', default => 0 },
+        table_index  => { isa => 'Int', default => -1 },
+        start_eta_1 => { isa => 'Int', optional => 0 },
+        end_eta_1 => { isa => 'Int', optional => 0 },
+        start_eta_2 => { isa => 'Maybe[Int]', optional => 1 },
+        end_eta_2 => { isa => 'Maybe[Int]', optional => 1 },
     );
     my $model = $parm{'model'};
     my $problem_index = $parm{'problem_index'};
@@ -1274,10 +1274,10 @@ sub get_correlation_matrix_from_phi
 sub replace_0_correlation
 {
     my %parm = validated_hash(\@_,
-                              old_matrix => { isa => 'ArrayRef', optional => 0 },
-                              low_correlation => { isa => 'Num', optional => 0 },
-                              is_covariance => { isa => 'Bool', optional => 0 },
-        );
+        old_matrix => { isa => 'ArrayRef', optional => 0 },
+        low_correlation => { isa => 'Num', optional => 0 },
+        is_covariance => { isa => 'Bool', optional => 0 },
+    );
     my $old_matrix = $parm{'old_matrix'};
     my $low_correlation = $parm{'low_correlation'};
     my $is_covariance = $parm{'is_covariance'};
@@ -1311,8 +1311,8 @@ sub replace_0_correlation
 sub round_off_omega
 {
     my %parm = validated_hash(\@_,
-                              omega => { isa => 'ArrayRef', optional => 0 },
-        );
+        omega => { isa => 'ArrayRef', optional => 0 },
+    );
     my $omega = $parm{'omega'};
     my $size = scalar(@{$omega});
     return [] if ($size < 1);
@@ -1332,9 +1332,9 @@ sub round_off_omega
 sub get_omega_lines
 {
     my %parm = validated_hash(\@_,
-                              new_omega => { isa => 'ArrayRef', optional => 0 },
-                              labels => { isa => 'ArrayRef', optional => 0 },
-        );
+        new_omega => { isa => 'ArrayRef', optional => 0 },
+        labels => { isa => 'ArrayRef', optional => 0 },
+    );
     my $new_omega = $parm{'new_omega'};
     my $labels = $parm{'labels'};
 
@@ -1434,8 +1434,8 @@ sub set_model2_omega_blocks
 sub get_covmatrix
 {
     my %parm = validated_hash(\@_,
-                              output => { isa => 'output', optional => 0 },
-                              omega_order => { isa => 'ArrayRef', optional => 0 },
+        output => { isa => 'output', optional => 0 },
+        omega_order => { isa => 'ArrayRef', optional => 0 },
     );
 
     my $output = $parm{'output'};
@@ -1475,9 +1475,9 @@ sub get_covmatrix
 sub reorder_covmatrix
 {
     my %parm = validated_hash(\@_,
-                              original_strings => { isa => 'ArrayRef', optional => 0 },
-                              reordered_strings => { isa => 'ArrayRef', optional => 0 },
-                              matrix => { isa => 'ArrayRef', optional => 0 },
+        original_strings => { isa => 'ArrayRef', optional => 0 },
+        reordered_strings => { isa => 'ArrayRef', optional => 0 },
+        matrix => { isa => 'ArrayRef', optional => 0 },
     );
 
     my $original_strings = $parm{'original_strings'};
@@ -1525,7 +1525,7 @@ sub reorder_covmatrix
 sub check_covstep
 {
     my %parm = validated_hash(\@_,
-                              output => { isa => 'output', optional => 0 },
+        output => { isa => 'output', optional => 0 },
     );
 
     my $output = $parm{'output'};
@@ -1561,12 +1561,12 @@ sub check_covstep
 sub join_covmats
 {
     my %parm = validated_hash(\@_,
-                              partial_covmats => { isa => 'ArrayRef', optional => 0 },
-                              partial_strings => { isa => 'ArrayRef', optional => 0 },
-                              full_strings => { isa => 'ArrayRef', optional => 0 },
-                              variance_guess_hash => { isa => 'HashRef', optional => 0 },
-                              rse_guess_hash => { isa => 'HashRef', optional => 0 },
-        );
+        partial_covmats => { isa => 'ArrayRef', optional => 0 },
+        partial_strings => { isa => 'ArrayRef', optional => 0 },
+        full_strings => { isa => 'ArrayRef', optional => 0 },
+        variance_guess_hash => { isa => 'HashRef', optional => 0 },
+        rse_guess_hash => { isa => 'HashRef', optional => 0 },
+    );
 
     my $partial_covmats = $parm{'partial_covmats'};
     my $partial_strings = $parm{'partial_strings'};
@@ -1621,14 +1621,14 @@ sub join_covmats
 sub print_proposal_density
 {
     my %parm = validated_hash(\@_,
-                              partial_outputs => { isa => 'ArrayRef', optional => 0 },
-                              omega_orders => { isa => 'ArrayRef', optional => 0 },
-                              full_model => { isa => 'model', optional => 0 },
-                              reordered_model1 => { isa => 'model', optional => 0 },
-                              directory => { isa => 'Str', optional => 0 },
-                              filename => { isa => 'Str', optional => 0 },
-                              rse => { isa => 'Num', optional => 0 },
-        );
+        partial_outputs => { isa => 'ArrayRef', optional => 0 },
+        omega_orders => { isa => 'ArrayRef', optional => 0 },
+        full_model => { isa => 'model', optional => 0 },
+        reordered_model1 => { isa => 'model', optional => 0 },
+        directory => { isa => 'Str', optional => 0 },
+        filename => { isa => 'Str', optional => 0 },
+        rse => { isa => 'Num', optional => 0 },
+    );
 
     my $partial_outputs = $parm{'partial_outputs'};
     my $omega_orders = $parm{'omega_orders'};
@@ -1702,8 +1702,8 @@ sub print_proposal_density
 sub get_rse_guesses
 {
     my %parm = validated_hash(\@_,
-                              output => { isa => 'output', optional => 0 },
-                              rse => { isa => 'Num', optional => 0 },
+        output => { isa => 'output', optional => 0 },
+        rse => { isa => 'Num', optional => 0 },
     );
 
     my $output = $parm{'output'};
@@ -1739,10 +1739,10 @@ sub get_rse_guesses
 sub get_variance_guesses
 {
     my %parm = validated_hash(\@_,
-                              values => { isa => 'ArrayRef', optional => 0 },
-                              strings => { isa => 'ArrayRef', optional => 0 },
-                              is_omega => { isa => 'Bool', optional => 0 },
-                              perfect_individuals => { isa => 'HashRef', optional => 0 },
+        values => { isa => 'ArrayRef', optional => 0 },
+        strings => { isa => 'ArrayRef', optional => 0 },
+        is_omega => { isa => 'Bool', optional => 0 },
+        perfect_individuals => { isa => 'HashRef', optional => 0 },
     );
 
     my $values = $parm{'values'};
@@ -1791,9 +1791,9 @@ sub get_variance_guesses
 sub perfect_individuals
 {
     my %parm = validated_hash(\@_,
-                              output1 => { isa => 'output', optional => 0 },
-                              omega_order1 => { isa => 'ArrayRef', optional => 0 },
-                              output2 => { isa => 'output', optional => 0 },
+        output1 => { isa => 'output', optional => 0 },
+        omega_order1 => { isa => 'ArrayRef', optional => 0 },
+        output2 => { isa => 'output', optional => 0 },
     );
 
     my $output1 = $parm{'output1'};
@@ -2174,9 +2174,9 @@ sub neat_num
 {
     # format number with 4 significant digits and sci notation outside [0.001,10000)
     my %parm = validated_hash(\@_,
-          num => {isa => 'Num', optional => 0},
-          sig => {isa => 'Int', optional => 1, default => 4},
-          plus => {isa => 'Bool', optional => 1, default => 0}, # always show + sign
+        num => {isa => 'Num', optional => 0},
+        sig => {isa => 'Int', optional => 1, default => 4},
+        plus => {isa => 'Bool', optional => 1, default => 0}, # always show + sign
     );
     my $num = $parm{'num'};
     my $sig = $parm{'sig'};
@@ -2314,10 +2314,10 @@ sub do_model1
 sub get_regular_covariates
 {
     my %parm = validated_hash(\@_,
-                              categorical => { isa => 'ArrayRef', optional => 0 },
-                              log => { isa => 'ArrayRef', optional => 0 },
-                              covariates => { isa => 'ArrayRef', optional => 0 },
-        );
+        categorical => { isa => 'ArrayRef', optional => 0 },
+        log => { isa => 'ArrayRef', optional => 0 },
+        covariates => { isa => 'ArrayRef', optional => 0 },
+    );
     my $categorical = $parm{'categorical'};
     my $log = $parm{'log'};
     my $covariates = $parm{'covariates'};
@@ -2342,9 +2342,9 @@ sub get_regular_covariates
 sub get_indices
 {
     my %parm = validated_hash(\@_,
-                              target => { isa => 'ArrayRef', optional => 0 },
-                              keys => { isa => 'ArrayRef', optional => 0 },
-        );
+        target => { isa => 'ArrayRef', optional => 0 },
+        keys => { isa => 'ArrayRef', optional => 0 },
+    );
     my $target = $parm{'target'};
     my $keys = $parm{'keys'};
 
@@ -2361,8 +2361,8 @@ sub do_filter_dataset_and_append_binary
 {
     my $self = shift;
     my %parm = validated_hash(\@_,
-                              model => { isa => 'Ref', optional => 0 },
-        );
+        model => { isa => 'Ref', optional => 0 },
+    );
     my $model = $parm{'model'};
 
     my $filtered_datafile = 'filtered_plus_type0.dta';
@@ -2467,12 +2467,12 @@ sub do_frem_dataset
 {
     my $self = shift;
     my %parm = validated_hash(\@_,
-                              model => { isa => 'Ref', optional => 0 },
-                              filtered_data => { isa => 'data', optional => 0 },
-                              indices => { isa => 'HashRef', optional => 0 },
-                              mod1_ofv => { isa => 'Num', optional => 0 },
-                              N_parameter_blocks => {isa => 'Int', optional => 0},
-                              fremdataname => { isa => 'Str', optional => 0 },
+        model => { isa => 'Ref', optional => 0 },
+        filtered_data => { isa => 'data', optional => 0 },
+        indices => { isa => 'HashRef', optional => 0 },
+        mod1_ofv => { isa => 'Num', optional => 0 },
+        N_parameter_blocks => {isa => 'Int', optional => 0},
+        fremdataname => { isa => 'Str', optional => 0 },
     );
     my $model = $parm{'model'};
     my $mod1_ofv = $parm{'mod1_ofv'};
@@ -2560,8 +2560,8 @@ sub do_frem_dataset
 sub get_covrecord
 {
     my %parm = validated_hash(\@_,
-                              model => { isa => 'model', optional => 0 },
-        );
+        model => { isa => 'model', optional => 0 },
+    );
     my $model = $parm{'model'};
 
     my $covrecordref=[];
@@ -2580,19 +2580,19 @@ sub get_covrecord
 sub get_pred_error_pk_code
 {
     my %parm = validated_hash(\@_,
-                              covariates => { isa => 'ArrayRef', optional => 0 },
-                              maxeta => {isa => 'Int', optional => 0},
-                              rescale => { isa => 'Bool', optional => 0 },
-                              mu => { isa => 'Bool', optional => 0 },
-                              use_pred => { isa => 'Bool', optional => 0 },
-                              invariant_covmatrix => { isa => 'ArrayRef', optional => 0 },
-                              invariant_mean => { isa => 'ArrayRef', optional => 0 },
-                              estimate_mean => { isa => 'ArrayRef', optional => 0 },
-                              ntheta => {isa => 'Int', optional => 0},
-                              N_parameter_blocks => {isa => 'Int', optional => 0},
-                              epsnum => {isa => 'Int', optional => 0},
-                              indent => {isa => 'Str', optional => 0},
-        );
+        covariates => { isa => 'ArrayRef', optional => 0 },
+        maxeta => {isa => 'Int', optional => 0},
+        rescale => { isa => 'Bool', optional => 0 },
+        mu => { isa => 'Bool', optional => 0 },
+        use_pred => { isa => 'Bool', optional => 0 },
+        invariant_covmatrix => { isa => 'ArrayRef', optional => 0 },
+        invariant_mean => { isa => 'ArrayRef', optional => 0 },
+        estimate_mean => { isa => 'ArrayRef', optional => 0 },
+        ntheta => {isa => 'Int', optional => 0},
+        N_parameter_blocks => {isa => 'Int', optional => 0},
+        epsnum => {isa => 'Int', optional => 0},
+        indent => {isa => 'Str', optional => 0},
+    );
     my $covariates = $parm{'covariates'};
     my $maxeta = $parm{'maxeta'};
     my $rescale = $parm{'rescale'};
@@ -2708,14 +2708,14 @@ sub prepare_model2
 {
     my $self = shift;
     my %parm = validated_hash(\@_,
-                              model => { isa => 'model', optional => 0 },
-                              skip_etas => {isa => 'Int', optional => 0},
-                              fremdataname => { isa => 'Str', optional => 0 },
-                              start_omega_record => { isa => 'Int', optional => 0 },
-                              invariant_mean => { isa => 'ArrayRef', optional => 0 },
-                              invariant_covmatrix => { isa => 'ArrayRef', optional => 0 },
-                              update_existing_model_files => { isa => 'Bool', optional => 0 },
-                              etas_file => { isa => 'Maybe[Str]', optional => 0 }
+        model => { isa => 'model', optional => 0 },
+        skip_etas => {isa => 'Int', optional => 0},
+        fremdataname => { isa => 'Str', optional => 0 },
+        start_omega_record => { isa => 'Int', optional => 0 },
+        invariant_mean => { isa => 'ArrayRef', optional => 0 },
+        invariant_covmatrix => { isa => 'ArrayRef', optional => 0 },
+        update_existing_model_files => { isa => 'Bool', optional => 0 },
+        etas_file => { isa => 'Maybe[Str]', optional => 0 }
     );
     my $model = $parm{'model'};
     my $fremdataname = $parm{'fremdataname'};
@@ -2927,12 +2927,13 @@ sub prepare_model3
 {
     my $self = shift;
     my %parm = validated_hash(\@_,
-                                  model => { isa => 'model', optional => 0 },
-                                  start_omega_record => { isa => 'Int', optional => 0 },
-                                  parcov_blocks => { isa => 'ArrayRef', optional => 0 },
-                                  update_existing_model_files => { isa => 'Bool', optional => 0 },
-                                  est_records => { isa => 'ArrayRef', optional => 0 },
-                                  etas_file => { isa => 'Maybe[Str]', optional => 0 });
+        model => { isa => 'model', optional => 0 },
+        start_omega_record => { isa => 'Int', optional => 0 },
+        parcov_blocks => { isa => 'ArrayRef', optional => 0 },
+        update_existing_model_files => { isa => 'Bool', optional => 0 },
+        est_records => { isa => 'ArrayRef', optional => 0 },
+        etas_file => { isa => 'Maybe[Str]', optional => 0 }
+    );
     my $model = $parm{'model'};
     my $start_omega_record = $parm{'start_omega_record'};
     my $parcov_blocks = $parm{'parcov_blocks'};
@@ -3019,14 +3020,14 @@ sub prepare_model4
 {
     my $self = shift;
     my %parm = validated_hash(\@_,
-                              model => { isa => 'model', optional => 0 },
-                              imp_covariance_eval => { isa => 'Bool', optional => 0 },
-                              start_omega_record => { isa => 'Int', optional => 0 },
-                              parcov_blocks => { isa => 'ArrayRef', optional => 0},
-                              est_records => { isa => 'ArrayRef', optional => 0},
-                              cov_records => { isa => 'ArrayRef', optional => 0},
-                              update_existing_model_files => { isa => 'Bool', optional => 0 },
-                              etas_file => { isa => 'Maybe[Str]', optional => 0 },
+        model => { isa => 'model', optional => 0 },
+        imp_covariance_eval => { isa => 'Bool', optional => 0 },
+        start_omega_record => { isa => 'Int', optional => 0 },
+        parcov_blocks => { isa => 'ArrayRef', optional => 0},
+        est_records => { isa => 'ArrayRef', optional => 0},
+        cov_records => { isa => 'ArrayRef', optional => 0},
+        update_existing_model_files => { isa => 'Bool', optional => 0 },
+        etas_file => { isa => 'Maybe[Str]', optional => 0 },
     );
     my $model = $parm{'model'};
     my $imp_covariance_eval = $parm{'imp_covariance_eval'};
@@ -3145,10 +3146,10 @@ sub prepare_model5
 {
     my $self = shift;
     my %parm = validated_hash(\@_,
-                              start_omega_record => { isa => 'Int', optional => 0 },
-                              first_cholesky_theta => { isa => 'Int', optional => 0 },
-                              parameter_etanumbers => { isa => 'ArrayRef', optional => 0 },
-                              update_existing_model_files => { isa => 'Bool', optional => 0 },
+        start_omega_record => { isa => 'Int', optional => 0 },
+        first_cholesky_theta => { isa => 'Int', optional => 0 },
+        parameter_etanumbers => { isa => 'ArrayRef', optional => 0 },
+        update_existing_model_files => { isa => 'Bool', optional => 0 },
     );
     my $start_omega_record = $parm{'start_omega_record'};
     my $first_cholesky_theta = $parm{'first_cholesky_theta'};
@@ -3268,12 +3269,12 @@ sub prepare_model6
 {
     my $self = shift;
     my %parm = validated_hash(\@_,
-                              model => { isa => 'model', optional => 0 },
-                              start_omega_record => { isa => 'Int', optional => 0 },
-                              first_cholesky_theta => { isa => 'Int', optional => 0 },
-                              parameter_etanumbers => { isa => 'ArrayRef', optional => 0 },
-                              update_existing_model_files => { isa => 'Bool', optional => 0 },
-        );
+        model => { isa => 'model', optional => 0 },
+        start_omega_record => { isa => 'Int', optional => 0 },
+        first_cholesky_theta => { isa => 'Int', optional => 0 },
+        parameter_etanumbers => { isa => 'ArrayRef', optional => 0 },
+        update_existing_model_files => { isa => 'Bool', optional => 0 },
+    );
     my $model = $parm{'model'};
     my $start_omega_record = $parm{'start_omega_record'};
     my $first_cholesky_theta = $parm{'first_cholesky_theta'};
@@ -3338,8 +3339,8 @@ sub prepare_model7
 {
     my $self = shift;
     my %parm = validated_hash(\@_,
-                              model => { isa => 'model', optional => 0 },
-                              update_existing_model_files => { isa => 'Bool', optional => 0 },
+        model => { isa => 'model', optional => 0 },
+        update_existing_model_files => { isa => 'Bool', optional => 0 },
     );
     my $model = $parm{'model'};
     my $update_existing_model_files = $parm{'update_existing_model_files'};
@@ -3364,20 +3365,16 @@ sub prepare_model7
                                         niter_eonly => $self->niter_eonly,
                                         need_ofv => 1);
 
-        $frem_model->problems->[0] -> remove_records(type => 'covariance' );
-
+        $frem_model->problems->[0]->remove_records(type => 'covariance');
         $frem_model->_write();
-
     }
-
-
 }
 
 sub cleanup_outdated_model
 {
     my %parm = validated_hash(\@_,
-                              modelname => { isa => 'Str', optional => 0 },
-                              need_update => { isa => 'Bool', optional => 0 },
+        modelname => { isa => 'Str', optional => 0 },
+        need_update => { isa => 'Bool', optional => 0 },
     );
     my $modelname = $parm{'modelname'};
     my $need_update = $parm{'need_update'};
@@ -3401,9 +3398,9 @@ sub run_unless_run
 {
     my $self = shift;
     my %parm = validated_hash(\@_,
-                              numbers => { isa => 'ArrayRef', optional => 0 },
-                              final => { isa => 'Bool', default => 0 },
-                              subdirectory => {isa => 'Str', default => 'intermediate_models'}
+        numbers => { isa => 'ArrayRef', optional => 0 },
+        final => { isa => 'Bool', default => 0 },
+        subdirectory => {isa => 'Str', default => 'intermediate_models'}
     );
     my $numbers = $parm{'numbers'};
     my $final = $parm{'final'};
@@ -3661,9 +3658,9 @@ sub get_recovery_string
 sub restore_fork
 {
     my %parm = validated_hash(\@_,
-                              outputname => { isa => 'Str', optional => 1 },
-                              modelname => { isa => 'Str', optional => 0 },
-        );
+        outputname => { isa => 'Str', optional => 1 },
+        modelname => { isa => 'Str', optional => 0 },
+    );
     my $outputname = $parm{'outputname'};
     my $modelname = $parm{'modelname'};
 
@@ -4113,16 +4110,16 @@ sub modelfit_analyze
 sub create_data2_model
 {
     my %parm = validated_hash(\@_,
-                              model => { isa => 'Ref', optional => 0 },
-                              filename => { isa => 'Str', optional => 0 },
-                              use_pred => { isa => 'Bool', optional => 0 },
-                              filtered_datafile => { isa => 'Str', optional => 0 },
-                              bov_parameters => { isa => 'Int', default => 0 },
-                              dv  => { isa => 'Str', optional => 0 },
-                              time_varying  => { isa => 'ArrayRef', default => [] },
-                              covariates  => { isa => 'ArrayRef', optional => 0 },
-                              occasion  => { isa => 'Str', default => '' },
-        );
+        model => { isa => 'Ref', optional => 0 },
+        filename => { isa => 'Str', optional => 0 },
+        use_pred => { isa => 'Bool', optional => 0 },
+        filtered_datafile => { isa => 'Str', optional => 0 },
+        bov_parameters => { isa => 'Int', default => 0 },
+        dv  => { isa => 'Str', optional => 0 },
+        time_varying  => { isa => 'ArrayRef', default => [] },
+        covariates  => { isa => 'ArrayRef', optional => 0 },
+        occasion  => { isa => 'Str', default => '' },
+    );
 
     my $model = $parm{'model'};
     my $filename = $parm{'filename'};
@@ -4280,12 +4277,12 @@ sub create_data2_model
 sub add_pred_error_code
 {
     my %parm = validated_hash(\@_,
-                              model => { isa => 'model', optional => 0 },
-                              pred_error_code => { isa => 'ArrayRef', optional => 0 },
-                              pk_code => { isa => 'ArrayRef', optional => 0 },
-                              use_pred => { isa => 'Bool', optional => 0 },
-                              mu => { isa => 'Bool', optional => 0 },
-        );
+        model => { isa => 'model', optional => 0 },
+        pred_error_code => { isa => 'ArrayRef', optional => 0 },
+        pk_code => { isa => 'ArrayRef', optional => 0 },
+        use_pred => { isa => 'Bool', optional => 0 },
+        mu => { isa => 'Bool', optional => 0 },
+    );
     my $model = $parm{'model'};
     my $pred_error_code = $parm{'pred_error_code'};
     my $pk_code = $parm{'pk_code'};
@@ -4329,12 +4326,12 @@ sub cleanup
           arg1 => { isa => 'Int', optional => 1 }
     );
 
-  #remove tablefiles in simulation NM_runs, they are
-  #copied to m1 by modelfit and read from there anyway.
-  for (my $samp=1;$samp<=$self->samples(); $samp++){
-    unlink $self -> directory."/simulation_dir1/NM_run".$samp."/mc-sim-".$samp.".dat";
-    unlink $self -> directory."/simulation_dir1/NM_run".$samp."/mc-sim-".$samp."-1.dat"; #retry
-  }
+    #remove tablefiles in simulation NM_runs, they are
+    #copied to m1 by modelfit and read from there anyway.
+    for (my $samp = 1; $samp <= $self->samples(); $samp++) {
+        unlink $self->directory . "/simulation_dir1/NM_run$samp/mc-sim-$samp.dat";
+        unlink $self->directory . "/simulation_dir1/NM_run$samp/mc-sim-$samp-1.dat"; #retry
+    }
 }
 
 sub submit_child
