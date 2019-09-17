@@ -27,10 +27,6 @@ extends 'tool';
 #FIXME dv synonym automatic handling
 
 my $fremtype = 'FREMTYPE';
-my $smallcorrelation = 0.01; #FIXME
-my $bov_variance_init = 0.1; #FIXME
-my $indentation = '     ';
-my $smallnum = 0.0000001;
 my $small_correlation = 0.01;
 my $name_model_1 = 'model_1.mod';
 my $name_model_1_updated = 'model_1_updated.mod';
@@ -2781,7 +2777,7 @@ sub prepare_model2
                                                                                       ntheta => $ntheta,
                                                                                       N_parameter_blocks => 1,
                                                                                       epsnum => $epsnum,
-                                                                                      indent => $indentation);
+                                                                                      indent => '     ');
 
     cleanup_outdated_model(modelname => $self -> directory().'intermediate_models/'.$name_model,
                            need_update => $update_existing_model_files);
@@ -2870,7 +2866,7 @@ sub prepare_model2
 
         $frem_model->add_records(type => 'sigma',
                                  problem_numbers => [1],
-                                 record_strings => [$smallnum.' FIX ; EPSCOV']);
+                                 record_strings => ['0.0000001 FIX ; EPSCOV']);
 
         set_model2_omega_blocks(model => $frem_model,
                                 start_omega_record => $start_omega_record,
