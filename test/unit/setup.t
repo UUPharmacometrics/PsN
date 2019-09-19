@@ -17,7 +17,7 @@ if ($Config{osname} eq 'MSWin32'){
 	$is_windows=1;
 }
 
-my $default_installation = PsN::get_default_psn_installation_info();
+my $default_installation = PsN::get_default_psn_installation_info(get_command('psn'));
 
 SKIP: {
 	skip("Shortpath in Windows not tested", 1) if ($is_windows);

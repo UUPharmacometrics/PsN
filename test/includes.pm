@@ -71,7 +71,6 @@ sub redirect_stderr
 	return $redirectstderr;
 }
 
-
 sub get_command_without_args
 {
 	my $command_name = shift;
@@ -116,7 +115,6 @@ sub get_template_directory_rplots
 	return $PsN::Rscripts_dir;
 }
 
-	
 sub get_command
 {
 	my $command_name = shift;
@@ -134,7 +132,6 @@ sub get_command
 
     return $command_line;
 }
-
 
 sub cmp_float
 {
@@ -201,10 +198,9 @@ sub cmp_float_matrix
     is_deeply($new_A, $new_B, $text);
 }
 
-
-# Test if a regular expression can match any line in a file
 sub like_file_row
 {
+    # Test if a regular expression can match any line in a file
 	my $filename = shift;
 	my $re = shift;
 	my $text = shift;
@@ -225,9 +221,9 @@ sub like_file_row
 	}
 }
 
-# Test if a regular expression cannot match any line in a file
 sub unlike_file_row
 {
+    # Test if a regular expression cannot match any line in a file
 	my $filename = shift;
 	my $re = shift;
 	my $text = shift;

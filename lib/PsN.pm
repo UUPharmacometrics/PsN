@@ -204,10 +204,15 @@ sub get_R_lib_path
 
 sub get_default_psn_installation_info
 {
-    my $command = 'psn installation_info 2>/dev/null'; #unix, keep stdout and redirect stderr to /dev/null
+    my $psn_tool = shift;   # Currently only set when testing
+    if (not defined $psn_tool) {
+        $psn_tool = 'psn';
+    }
+
+    my $command = "$psn_tool installation_info 2>/dev/null"; #unix, keep stdout and redirect stderr to /dev/null
     if ($Config{osname} eq 'MSWin32'){
         # keep stdout but redirect stderr to nul
-        $command = 'psn installation_info 2>nul';
+        $command = "$psn_tool installation_info 2>nul";
     }
     my @outp = readpipe($command);
     my $current_config_file;
