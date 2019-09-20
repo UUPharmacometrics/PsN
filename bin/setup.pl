@@ -522,7 +522,7 @@ sub get_input
 
 sub install_psnr
 {
-    system("Rscript -e \"devtools::install_github('UUPharmacometrics/PsNR')\"")
+    system("Rscript -e \"devtools::install_github('UUPharmacometrics/PsNR\@PsN$PsN::version')\"")
 }
 
 sub create_directory
