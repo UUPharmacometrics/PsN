@@ -88,7 +88,7 @@ if(file.exists("raw_results_dofv.csv")) {
     df <- df %>% 
       dplyr::select(!!needed_column) %>%
       dplyr::slice(-1)
-    PerformanceAnalytics::chart.Correlation(df, histogram = TRUE, method = c("spearman"))
+    suppressWarnings(PerformanceAnalytics::chart.Correlation(df, histogram = TRUE, method = c("spearman")))
   }
 }
 ```
