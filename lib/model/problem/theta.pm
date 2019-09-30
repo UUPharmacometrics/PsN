@@ -40,6 +40,7 @@ sub set_random_inits
         my $val;
         for (my $k=0; $k<1000; $k++){
             $val = random_uniform(1, $range->[0], $range->[1] );
+            $val = random_uniform(1, $range->[0], $range->[1]);     # Take two numbers. Sometimes the RNG get "stuck" close to previous values
             last unless ($val == 0);
         }
         $self->options->[$j]->check_and_set_init(new_value=>$val);
