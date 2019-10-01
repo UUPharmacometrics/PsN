@@ -318,7 +318,6 @@ my $frem = tool::frem->new(
     check => $options{'check'},
     mceta => $options{'mceta'},
     rescale => $options{'rescale'},
-    vpc => $options{'vpc'},
     run_sir => $options{'run_sir'},
     imp_covariance => $options{'imp_covariance'},
 );
@@ -331,7 +330,7 @@ $frem->print_options(
 );
 
 $frem->run;
-if ($frem->estimate_regular_final_model and !$frem->cholesky) {
+if (!$frem->cholesky) {
     my $err = $frem->prepare_results();
     if ($err) {
         print("Result generation err (no file could be generated):\n");
@@ -339,10 +338,6 @@ if ($frem->estimate_regular_final_model and !$frem->cholesky) {
     } else {
         $frem->print_results();
     }
-}
-
-if ($frem->vpc and -e $frem->directory . 'frem_vpc.mod') {
-    ui->print(category => 'frem', message => "The prepared frem vpc model is " . $frem->directory . "frem_vpc.mod\n");
 }
 
 ui->print(category => 'frem', message => "frem done\n");

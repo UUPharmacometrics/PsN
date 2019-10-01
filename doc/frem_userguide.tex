@@ -23,7 +23,6 @@ Example:
 \begin{verbatim}
 frem run1.mod -covariates=SEX,DGRP,WGT
 \end{verbatim}
-%frem run1.mod -invariant=SEX,DGRP
 
 \section{Output}
 The final\_models subdirectory of the main run directory will contain the final frem models and their output.
@@ -53,16 +52,11 @@ Default not set. If set the tool will create and run Model 5 and Model 6.
 \nextopt
 \optdefault{covariates}{list}
 A comma-separated list of covariates, required. Must be the names used in \$INPUT, the data file headers are ignored.
-%Optional if -time\_varying is given, not allowed if restarting an old run, otherwise required.
 \nextopt
 \optdefault{deriv2\_nocommon\_maxeta}{number}
 Default 60. If the number of ETAs in model 2 is larger than this number then\\
 \$ABBREVIATED DERIV2=NOCOMMON will be set in the control stream.
 \nextopt
-%\optdefault{dv}{name}
-%Default is DV. The name of the dependent variable. This must be the name used in \$INPUT,
-%the data file header is ignored.
-%\nextopt
 \optname{estimate\_covariates}
 Default not set. By default frem will not estimate the variances and covariances of the covariates until the final frem model estimation,
 but instead evaluate the EBEs (in Model 2) assuming the same variances and covariances as in covariate data.
@@ -77,23 +71,10 @@ If no covariate observations are missing in the frem dataset then the mean will 
 even if option -estimate\_means is set. If -no-estimate\_means is set, frem will not estimate
 any means even if there are missing observations.
 \nextopt
-%\optdefault{estimate}{number}
-%Default 3. The number (0, 1, 2 or 3) of the last model to estimate in the frem sequence. All models with a higher number
-%will still be created, but not estimated. When restarting in an existing frem run directory, estimation of models that have an existing
-%lst-file will be skipped even if the -estimate option is set to a higher number.
-%\nextopt
-%\optname{estimate\_regular\_final\_model}
-%Default set.
-%If set then script will estimate
-%the final regular parameterization frem model, otherwise the model will be
-%created but not estimated.
-%\nextopt
 \optname{fork\_runs}
 Default not set. Fork out separate processes for all output parsing. Will only work on unix-like systems.
 Only relevant if output objects are very, very large.
 \nextopt
-%\optdefault{invariant}{list}
-%\nextopt
 \optdefault{log}{list}
 Default empty. A comma-separated list of covariates	that should have the natural logarithm of the input data
 set value as the observed value in the DV column of the frem dataset. The -log list must be a subset of the
@@ -110,24 +91,10 @@ mu-modelling is not compatible with reordering of skipped omegas, because frem w
 but not MU variables, so if mu-modelling is used, the user must ensure that omegas are already ordered
 so that any skipped omegas come first.
 \nextopt
-%\optdefault{occasion}{name}
-%Default OCC. The name of the column that defines occasions. Name used in \$INPUT.
-%Needed if -time\_varying is set, otherwise ignored.
-%\nextopt
-%\optdefault{ordered}{?}
-%{\Large \texttt{TODO special case for ordered categorical}}
-%\nextopt
-%\optdefault{parameters\_bov}{list}
-%A comma-separated list of model parameters that should have between-occasion variability.
-%Required if -time\_varying is set, otherwise not allowed.
-%\nextopt
 \optname{rescale}
 Default set. Rescale covariate ETAs in Model 2 to SD close to 1. Unset with -no-rescale.
 % in order to facilitate estimation.
 \nextopt
-%\optdefault{rplots}{level}
-%{\Large \texttt{Later}}
-%\nextopt
 \optdefault{rse}{number}
 Default is 30\%.
 If the covariance step of both Model 4 and either/both of Model 1 and Model 2 fails, then this is the guess of the
@@ -141,29 +108,12 @@ step before covariance step to attain uncertainty (if Model 4 covariance step fa
 Default not set. If set and covariance step of Model 4 fails, run sir to obtain standard errors of parameters.
 If covariance step of Model 4 is successful, sir will not be run even if option -run\_sir is set.
 \nextopt
-%\optdefault{skip\_etas}{non-negative integer}
-%The number of leading input model ETAs to \emph{not} include when estimating covariances
-%between parameter and covariate ETAs. The default is 0, which means all
-%input model ETAs will be correlated to covariates.
-%The non-included ETAs, if any, must be the first 1 to 'skip\_etas' ETAs in the model.
-%If the input model has BOV, the BOV ETAs must be skipped using this option, so if the model has BOV the ETAs must
-%be the the first 1 to 'skip\_etas' ETAs. This option is not allowed in combination with skip\_omegas.
-%\nextopt
-\optdefault{skip\_omegas}{comma-separated list of record numbers}
-A comma-separated list of the \$OMEGA records that should be excluded when covariances
-between original model ETAs and new covariate ETAs are estimated. Numbering starts at 1.
-Numbering goes strictly by the text \$OMEGA in the control stream, without concern
-about the type or size of the record. OMEGAs for BOV ETAs will be automatically skipped,
+\optdefault{skip\_omegas}{comma-separated list of omega numbers}
+A comma-separated list of the \$OMEGA numbers that should be excluded when covariances
+between original model ETAs and new covariate ETAs are estimated.
+OMEGAs for BOV ETAs and FIXed OMEGAs will be automatically skipped,
 even if option -skip\_omegas was not set.
 \nextopt
-%\optdefault{time\_varying}{list}
-%A comma-separated list of time-varying covariates.
-%Names used in \$INPUT. Optional if -invariant is given, not allowed if restarting an old run, otherwise required.
-%\nextopt
-%\optname{vpc}
-%{\Large \texttt{Later}}
-%Default not set. If set then script will create a frem model that can be run with the vpc script (in a separate call to the vpc pscript).
-%\nextopt
 \end{optionlist}
 
 \subsection{PsN common options}
@@ -171,7 +121,6 @@ For a complete list see common\_options.pdf or type psn\_options -h on the comma
 
 \subsection{Restrictions on the input model}
 \begin{itemize}
-%	\item Time-varying covariates must only vary between occasions, not within occasions.
 	\item There must be no parameter called FREMTYPE in \$INPUT/\$PK/\$PRED/\$ERROR.
 	\item Categorical covariates must be bivariate, unless listed with option -categorical.
     \item All input model ETAs that are not to have covariance with covariate ETAs estimated must
@@ -181,55 +130,16 @@ For a complete list see common\_options.pdf or type psn\_options -h on the comma
     \item There may be more than one \$ESTIMATION, but frem will only handle output from the last estimation step.
     \item The input model code must not include covariates that are listed with
     -covariates.
-%    \item Only if option -vpc is set: All model parameters (for example CL, V, KA) with ETA number > skip\_etas must be defined using \\
- %   TV$<$par$>$= expression possibly based on THETA, and\\
-  %  $<$par$>$= expression using TV$<$par$>$ and BSV ETA
-%    \item Parameters listed with option -parameters\_bov must be defined in the mode following pattern:
-%    \begin{itemize}
-%    \item  {\bf BOV ETAs already in input model:}
-%    The BOV ETAs must have ETA numbers that are all greater than the last BSV ETA.
-%    The corresponding parameter must be defined using \\
-%    $<$par$>$= expression using TV$<$par$>$ and BOV ETA
-%    \item {\bf BOV not already input model:}
-%    For each parameter listed with option -parameters\_bov,
-%    the line defining $<$par$>$
-%    must include a BSV-expression. Even if there is no
-%    BSV for a parameter listed with option -parameters\_bov,
-%    i.e. the value is equal to the typical value, the user must still
-%    include an expression with 0 in the place of the BSV eta, using the desired form
-%    (additive, proportional, exponential,..).
-%    This is necessary to enable PsN to automatically add the BOV code. The 0 must be enclosed in parentheses,
-%    otherwise the frem program will not recognize it. Example with placeholder for additive inclusion of BOV:\\
-%    $<$par$>$=TV$<$par$>$ + (0) \\
-%    Example with placeholder for exponential inclusion of BOV:\\
-%    $<$par$>$=TV$<$par$>$*EXP(0)
-%    \end{itemize}
-%	\item TODO: If -vpc is set: Form of TV$<$par$>$ or THETA directly
 \end{itemize}
 
 \section{Workflow}
 \begin{enumerate}
 \item Input checks, for example that DV is found in \$INPUT.
-%Skip ETAs with number <= skip\_etas. For all remaining BOV ETAs, if any,
-%check which parameter they are on by searching for expressions of the form\\
-%$<$par$>$= expression using TV$<$par$>$ and BOV ETA.
-%If the parameter found is not listed with option -parameters\_bov there will be an error message.
-%\item Check that there are no non-BOV ETAs after the first non-skipped BOV ETA, otherwise give error message.
 
-%\item Check that the first (non-skipped) parameter ETA is the first in a new \$OMEGA record, otherwise give error message.
 \item Unless input model is already run,
 run a copy of the input model (Model 1) to get estimates.
-%\item Count the number of parameter \$OMEGA blocks, N\_parameter\_blocks,
-%that are needed in the frem model:
-%Initiate N\_parameter\_blocks = 0. Skip all \$OMEGA for ETA <= skip\_etas.
-%Then add 1 for each block \$OMEGA and add N for each diagonal \$OMEGA of size N.
-%\item Create frem dataset according to section frem dataset below, include covariate observations 'N\_parameter\_blocks' time(s).
-%\emph{Alternative:}
 \item Create frem dataset according to section frem dataset below, include covariate observations 1 time.
 
-%\item Create Model 1, model without covariates, with full \$OMEGA block for parameter BSV ETAs but without
-%and parameter BOV ETAs (pre-existing BOV ETAs removed), according to section below. Original data set.
-%\item Run Model 1.
 \item Create Model 2, model with covariates but without
 estimation of covariances between parameter and covariate ETAs,
 according to section below. frem dataset.
@@ -237,8 +147,6 @@ THETA and OMEGA and SIGMA for PK parameters are FIXED in this model.
 %Include \$COV.
 \item Evaluate Model 2 (estimate if option -estimate\_covariates set).
 \item Create Model 3.
-%where there are N\_parameter\_blocks full \$OMEGA blocks with all covariances between parameter and covariate ETAs,
-%according to section below.
 Model 3 is a copy of Model 2, but all non-skipped Model 1 omega plus covariate omega are combined
 into single large block. For covariances between parameter omegas that did
 not have covariance in Model 1, set %very very small init $10^{-7}$.
@@ -278,9 +186,6 @@ Estimate Model 6, include \$COV step.
 \item %Only if option -estimate\_regular\_final\_model is set:
 Estimate Model 4 (frem regular model), include \$COV step.
 Estimation is done in parallel with Model 6, if estimation of Model 6 was requested.
-%\item If option -vpc is set, the script will also
-%run the vpc1 model using estimates from frem model as initial estimates,
-%and finally process output to generate a frem vpc model.
 \item Only if estimation of Model 4 failed to produce an ofv:
 \begin{enumerate}
 \item Create Model 7, which is a copy of Model 4 but with MAXEVAL=0.
@@ -369,23 +274,6 @@ and FREMTYPE to a unique type-value for this covariate. % and parameter block.
 If MDV column present then MDV=0, else if EVID present then EVID=0.% if non-missing covariate value, otherwise EVID=2.
 Store non-missing covariate values in array, one array per covariate, to be able to compute means and %medians and
 variance-covariance matrix later to be used as initial estimates in \$THETA and \$OMEGA.
-%	\item Loop over each occasion (if OCC defined).
-%Copy first line observation line for this occasion.
-%Inner loop over each time-varying covariate:
-%\begin{enumerate}
-%	\item Add new line as first data set line for this occasion.
-%    \item Set DV value to covariate value for this occasion.
-%    \item Set FREMTYPE to type-value for this covariate.
-%    \item If MDV present then MDV=0 if have covariate value, otherwise MDV=1.
-%    If EVID present then EVID=0 if have covariate value, otherwise EVID=2.
-%    \item Store non-missing time-varying covariate values (to compute median over occasions for this individual,
-%    median is one scalar per covariate.)
-%    \item[] (end inner loop over time-varying cov)
-%\end{enumerate}
-%\item[] (end loop over occasions)
-%\item Compute median of time-varying cov over occasions for this individual, median is one scalar per covariate.
-%\item Then store non-missing medians in array, one array per time-varying covariate, (to compute
-%median of medians later for \$THETA, and variance-covariance matrix  to be used in \$OMEGA).
 \item[] (end loop over individuals)
 \end{enumerate}
 
@@ -468,7 +356,6 @@ Loop over all covariates, j=1...N\_covariates. %with inner loop over k=1...N\_pa
 If option -estimate\_means was set (the default)
 and any frem dataset observations of covariate j are missing add lines\\
 \$THETA init\_j ; TVcov\_j\\
-%\$THETA init\_j ; TVcov\_j\_k\\
 or else , if either no covariate j observation is missing or
 -no-estimate\_means was set, add \\
 \$THETA init\_j FIX ; TVcov\_j\\
@@ -528,53 +415,8 @@ END IF
 \end{verbatim}
 where $rescaling$ is the sd of baseline covariate if option -rescale is set (the default), otherwise $rescaling$ is 1.
 
-%\emph{Alternative:} Do not loop over N \_parameter\_blocks, insert code only once for each covariate
-
 (do not define a case for FREMTYPE=0, original obs. Leave original code as it is for that)
 
-
-%\noindent BSV\_$<$cov\_j$>$\_k = ETA(orig\_etas+(j-1)*N\_parameter\_blocks +k)\\
-%\noindent TV\_$<$cov\_j$>$\_k = THETA(orig\_thetas+(j-1)*N\_parameter\_blocks +k)
-%\noindent TV\_$<$cov\_j$>$ = THETA(orig\_thetas+j)\\
-%\noindent if option -rescale is \emph{not} set:\\
-%\noindent BSV\_$<$cov\_j$>$ = ETA(orig\_etas+j)\\
-%\noindent or if option -rescale \emph{is} set:\\
-%\noindent BSV\_$<$cov\_j$>$ = ETA(orig\_etas+j)*\emph{sd of baseline covariate}
-
-%\noindent Loop over parameters\_bov, initialize BOV PK (provided there are any time-varying cov)
-%\noindent BOV$<$parameter$>$=0
-%\noindent Loop over occasions k=1...N\_occ , one IF block per occasion
-%\noindent IF (OCC .EQ. k) THEN\\
-%(inner loop over parameters j=1$\ldots$bov\_parameters)\\
-%BOV$<$parameter$>$ = ETA(offset+N\_invariant+(k-1)*bov\_parameters+j)\\
-%END IF
-%\noindent Loop over time-varying covariates, initialize BOV tcov
-%BOV$<$covariate$>$=0
-%\noindent Loop over occasions k=1...N\_occ , one IF block per occasion
-%IF (OCC .EQ. k) THEN
-%\noindent (inner loop over time-varying covariates j=1...N\_time-var)
-%\noindent BOV<covariate> = ETA(offset+N\_invariant+N\_occ*Nparams+(k-1)*N\_time-var+j)\\
-%END IF
-%\subsection{PK or PRED changes at beginning, B}
-%In \$PK or \$PRED (continuing):
-%Loop over parameters\_bov (provided there are any time-varying cov)
-%Locate line with
-%$<$par$>$ = TV$<$par$>$ (expression containing ETA or (0) as BOV placeholder)
-%Add BOV$<$parameter$>$ at appropriate place in $<$par$>$=TV$<$par$>$... expression.
-
-
-
-%Loop over time-varying covariates, j=(N\_invariant+1)...(N\_invariant+N\_time-var), use THETA-covname mapping, add lines
-%\begin{verbatim}
-%Y<j> = THETA(cov) + BOV<cov>
-%\end{verbatim}
-%Loop over covariates j=1...N\_covariates %, parameter blocks k=1...N\_parameter\_blocks
-%\begin{verbatim}
-%IF (FREMTYPE .EQ.((j-1)*N_parameter_blocks +k)) THEN
-%Y=Y_<cov_j>_k+EPS(epsnum)
-%IPRED=Y_<cov_j>_k
-%END IF
-%\end{verbatim}
 
 \subsection{\$ESTIMATION changes}
 Only evaluate model (MAXEVALS=0 for classical methods) unless option -estimate\_covariates has been
@@ -592,10 +434,6 @@ $COVARIANCE PRINT=R UNCONDITIONAL
 
 Described above in workflow
 
-%This models is a copy of Model 2, but each pair of input model BSV and covariate blocks is combined
-%into one large full block. Initial values for the new covariances are computed from
-%phi-file from estimation of Model 2.
-%Set MAXEVAL=0.
 \section{Workflow in the case of missing data}
 
 \begin{enumerate}
@@ -691,17 +529,6 @@ step of NONMEM does not terminate appropriately (or the S matrix is used in plac
 \texttt{-force\_posdef\_covmatrix} can then be supplied to force eigenvalues to become positive (the impact of this is
 unclear and a positive-definite covariance matrix from NONMEM is recommended).
 
-%The standard deviation of $x=TV_{par}\cdot e^{\eta}$, where $TV_{par}$ is constant and $\eta$ is normally distributed
-%with mean $\mu$ and variance $\sigma^2$, is
-%\[
-%sd[x] = TV_{par}\cdot e^{\mu+0.5\sigma^2}\cdot \sqrt{e^{\sigma^2}-1}
-%\]
-%, and the $CV$ in \% is
-%\[
-%CV_{x}=\frac{sd[x]}{TV_{par}}= e^{\mu+0.5\sigma^2}\cdot\sqrt{e^{\sigma^2}-1}\cdot 100\%
-%\]
-
-%We have $\mu=0$.
 
 \subsection*{Conditional multi-variate normal}
 
@@ -772,20 +599,11 @@ and $n_{cov}=1$.
 
 
 \section{Known issues}
-\$OMEGA records that are set to 0 FIX must be listed in -skip\_omegas. If 0 FIX \$OMEGA are not skipped then
-frem will fail.
-
 Setting option -cholesky will often fail with NONMEM versions older than NM7.3, since the Fortran 95 code line continuation
 \& is not recognized by nmtran.
 
 The frem program does not support \$MSFI in the input model, since that is incompatible
 with changing/adding \$OMEGA and \$THETA records.
-
-%It can happen that final estimate OMEGA blocks in Model 3 are not positive definite due to rounding errors. Then the scripts
-%will halt with an error messages. In that case the user should remove all vpc\_model\_1 output files from
-%the m1 directory, open model\_3.ext and carefully add a small value to the diagonal elements of the problematic omega block,
-%save the edited model\_3.ext in m1, and restart frem. The program will then read the omega block from model\_3.ext
-%without running model 3 and then use that block instead.
 
 
 \references
@@ -882,9 +700,6 @@ Create frem\_vpc1.mod
 	\item In \$PK or \$PRED, whichever is present:
 Figure out which parameters that have BSV %and/or BOV eta(s)
 on them.
-%BOV ETAs may not have been present in Model 0, but added in Model 2.
-%Parameters may have BOV ETA without BSV eta, and vice versa.
-%First take all parameters listed with option -parameters\_bov, since they have had BOV ETAs added. Then find additional
 Find parameters
 that have BSV ETA %already
 in model 1.
@@ -901,14 +716,10 @@ Create frem\_vpc2.mod
 \begin{enumerate}
 	\item Base this model on Model 1. %1.
     \item Make the same SIGMA changes as in Model 2.
-%    \item Make similar OMEGA changes as in Model 2, but no not add any BSV\_cov block or BOV\_cov\_occN blocks.
     \item Do not add any THETAs.
     \item Copy THETA, SIGMA estimates and 1-skip\_etas leading OMEGA estimates from vpc1.
 	\item DATA is frem\_vpc.dta
 	\item Set IGNORE=@
- %   \item Make the ``PK or PRED changes at beginning, A'' as in Model 2 except skip all lines involving BSV<cov> or
- %   BOV<cov>, and renumber remaining ETAs accordingly.
- %   \item Make the same ``PK or PRED changes at beginning, B'' as in Model 2.
 	\item Set \$INPUT to sequence of headers from step 1 (contents of table file frem\_vpc.dta but prepend CTV for params)
 	\item Use parameter list from Step 1 to set TV$<$par$>$ = CTV$<$par$>$ for
 parameters that have BSV ETA %and/or BOV ETA
@@ -916,8 +727,6 @@ on them.
 	\item Read final estimated BSV\_all omega blocks from lst-file and compute conditional omega blocks,
     see Appendix “Compute conditional omega block” below. In \$OMEGA replace BSV\_par blocks with
     conditional omega blocks from computation.
-%	\item Read final estimated BOV\_full\_occ1 omega block from lst-file from Step 1 compute conditional omega block
-%    in the same way as for BSV. In \$OMEGA replace BOV\_par\_occ1 with conditional block.
     \item Remove any \$COV
 \end{enumerate}
 
@@ -1072,10 +881,6 @@ to get successful estimation.
 2) Get successful cov step for full frem model after estimating full frem model.
 Is Jonas formula for this issue, i.e. getting covariances without running covstep, assuming we have
 successful cov step for base frem model, but only estimates for full ferm model?
-
-%variance (\hat Cov(X,Y)) = q(n)/n * (Cov(X,Y)^2 + Var(X) Var(Y))
-%Jonas  q(n) = 1 if ML-estiamtes for \hat Cov(X,Y), and converge to 1 when n-> 1 for other estimators.
-% N=2\frac{var^2}{SE^2}+1  where var is variance est from NONMEM, SE is SE of variance from NONMEM
 
 Coefficient is computed as
 \[

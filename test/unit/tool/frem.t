@@ -269,31 +269,10 @@ $model = model->new(filename => "$modeldir/mox_no_bov.mod",
                        ignore_missing_data => 1);
 
 
-is_deeply(tool::frem::get_reordered_coordinate_strings(problem => $model->problems->[0],
-                                                       omega_order => [1,2]),
-          $model->problems->[0]->get_estimated_attributes(),
-          'get reordered coordinate strings 1');
-
-my $ans = ['THETA1','THETA2','THETA3','THETA4','THETA5',
-           'OMEGA(3,3)','OMEGA(1,1)','OMEGA(2,1)','OMEGA(2,2)'];
-is_deeply(tool::frem::get_reordered_coordinate_strings(problem => $model->problems->[0],
-                                                       omega_order => [2,1]),
-          $ans,
-          'get reordered coordinate strings 2');
-
-is_deeply(tool::frem::get_eta_mapping(problem => $model->problems->[0],
-                                      omega_order => [2,1]),
-          {1 => 2,2=> 3,3=>1},
-          'get_eta_mapping 1');
-is_deeply(tool::frem::get_eta_mapping(problem => $model->problems->[0],
-                                      omega_order => [1,2]),
-          {1 => 1,2=> 2,3=>3},
-          'get_eta_mapping 2');
-
 my ($corr,$message) = tool::frem::get_correlation_matrix_from_phi(start_eta_1 => 1,
                                                                   end_eta_1 => 3,
                                                                   model => $model);
-$ans=[[0.6389949068,0.9566914852,0.1573687298],
+my $ans=[[0.6389949068,0.9566914852,0.1573687298],
          [0.9566914852, 0.996786336,0.0799357319 ],
          [0.1573687298, 0.0799357319, 0.4438842175]];
 
@@ -336,51 +315,40 @@ is (length($message),0,'no error get_correlation_matrix 3');
                                                                   model => $model);
 is ($message," Input error end_eta_1, start 2, end eta 2: 3,2, 3",'input error get_correlation_matrix');
 
-$model = model->new(filename => "$modeldir/mox1.mod",
-                       ignore_missing_data => 1);
-my ($arr,$need) = tool::frem::get_new_omega_order(model=> $model,skip_omegas=>[3,4,5,6]);
-is($need,1,'get new omega order 1');
-is_deeply($arr,[3,4,5,6,1,2],'get new omega order 2');
-($arr,$need) = tool::frem::get_new_omega_order(model=> $model,skip_omegas=>[1,3,4,5,6]);
-is($need,1,'get new omega order 3');
-is_deeply($arr,[1,3,4,5,6,2],'get new omega order 4');
-
 $model = model->new(filename => "$modeldir/mox_sir.mod",
                     ignore_missing_data => 1);
 
 
 $model->update_inits(from_output => $model->outputs->[0]);
+use Data::Dumper; print Dumper($model->problems->[0]->omegas);
+
 my $block;
+#($block,$message) = tool::frem::get_filled_omega_block(model => $model,
+#    start_etas => [1],
+#    end_etas => [3],
+#                                                       start_cov_eta => 0);
+
+#$ans=[[4.08636E-01,5.26963784e-01,1.24823305e-02],
+#      [5.26963784e-01,1.10186E+00,-2.37832958e-03],
+#      [1.24823305e-02,-2.37832958e-03, 2.07708E-01]];
+
+#cmp_float_matrix($block,$ans,'get_filled_omega_block 1');
+
 ($block,$message) = tool::frem::get_filled_omega_block(model => $model,
-                                                          start_etas => [1,3],
-                                                          end_etas => [2,3]);
-
-$ans=[[4.08636E-01,5.26963784e-01,1.24823305e-02],
-      [5.26963784e-01,1.10186E+00,-2.37832958e-03],
-      [1.24823305e-02,-2.37832958e-03, 2.07708E-01]];
-
-cmp_float_matrix($block,$ans,'get_filled_omega_block 1');
-
-($block,$message) = tool::frem::get_filled_omega_block(model => $model,
-                                                          start_etas => [1,2,3],
-                                                          end_etas => [1,2,3]);
-
-$ans=[[4.08636E-01,6.71013907e-03,1.24823305e-02],
-      [6.71013907e-03,1.10186E+00, -2.37832958e-03],
-      [1.24823305e-02,-2.37832958e-03, 2.07708E-01]];
+     start_etas => [1],
+                                                       end_etas => [3],
+                                                       start_cov_eta => 9);
+$ans = [
+			[ '0.408636', '0.00671013906682', '0.00291336517258' ],
+          	[ '0.00671013906682', '1.10186', '0.00478398512623' ],
+			[ '0.00291336517258', '0.00478398512623', '0.207708' ]
+	];
 
 cmp_float_matrix($block,$ans,'get_filled_omega_block 2');
 
 
 $model = model->new(filename => "$modeldir/mox_no_bov.mod",
                     ignore_missing_data => 1);
-
-($arr,$need) = tool::frem::get_new_omega_order(model=> $model,skip_omegas=>[]);
-is($need,0,'get new omega order 5');
-is_deeply($arr,[1,2],'get new omega order 6');
-($arr,$need) = tool::frem::get_new_omega_order(model=> $model,skip_omegas=>[1]);
-is($need,0,'get new omega order 7');
-is_deeply($arr,[1,2],'get new omega order 8');
 
 my $bov_parameters = ['PHI','LAG','CL','V','KA'];
 $bov_parameters = ['PHI','KA'];
@@ -445,64 +413,19 @@ is ($code[19],'   KA    = THETA(3)*EXP(ETA(3)+KPKA)'."\n",'pk before renumbering
 my $input_model_fix_omegas = tool::frem::get_or_set_fix(model => $model,
                                                         type => 'omegas');
 
-my ($new_omega_order,$need_to_move_omegas)=tool::frem::get_new_omega_order(model =>$model,
-                                                                           skip_omegas => [3,4,5,6]);
-is($need_to_move_omegas,1,'need to move 1');
-is_deeply($new_omega_order,[3,4,5,6,1,2],'new order 1');
-my ($skip_etas,$fix_omegas,$parameter_etanumbers) =
-    tool::frem::put_skipped_omegas_first(model => $model,
-                                         new_omega_order => $new_omega_order,
-                                         need_to_move => $need_to_move_omegas,
-                                         start_omega_record => 5,
-                                         input_model_fix_omegas => $input_model_fix_omegas);
-
-is($skip_etas,4,'put skipped first skip_etas');
-is_deeply($parameter_etanumbers,[[5,6],[7]],'put skipped first parameter_etanumbers');
-is($model->problems->[0]->omegas->[0]->same,0,'reordered model record 1 not same');
-is($model->problems->[0]->omegas->[1]->same,1,'reordered model record 2 same');
-is($model->problems->[0]->omegas->[2]->same,0,'reordered model record 3 not same');
-is($model->problems->[0]->omegas->[3]->same,1,'reordered model record 4 same');
-
-@code = @{$model->problems->[0]->pks->[0]->code};
-is ($code[9],'   KPCL  = VIS3*ETA(1)+VIS8*ETA(2)'."\n",' pk renumbered line 9');
-is ($code[10],'   KPKA  = VIS3*ETA(3)+VIS8*ETA(4)'."\n",' pk renumbered line 10');
-is ($code[17],'   CL    = TVCL*EXP(ETA(5)+KPCL)'."\n",' pk renumbered line 17');
-is ($code[18],'   V     = TVV*EXP(ETA(6))'."\n",' pk renumbered line 18');
-is ($code[19],'   KA    = THETA(3)*EXP(ETA(7)+KPKA)'."\n",'pk renumbered line 19');
-
 $model = model->new(filename => "$modeldir/pheno.mod",
                     ignore_missing_data => 1);
 
 
 $input_model_fix_omegas = tool::frem::get_or_set_fix(model => $model,
                                                         type => 'omegas');
-($new_omega_order,$need_to_move_omegas)=tool::frem::get_new_omega_order(model =>$model,
-                                                                           skip_omegas => []);
-is($need_to_move_omegas,0,'need to move 0');
-is_deeply($new_omega_order,[1],'new order 0');
-
-($skip_etas,$fix_omegas,$parameter_etanumbers) =
-    tool::frem::put_skipped_omegas_first(model => $model,
-                                         new_omega_order => $new_omega_order,
-                                         need_to_move => $need_to_move_omegas,
-                                         start_omega_record => 1,
-                                         input_model_fix_omegas => $input_model_fix_omegas);
-
-is_deeply($fix_omegas,[],' put skipped first fix omegas');
-is($skip_etas,0,'put skipped first skip_etas 2');
-is_deeply($parameter_etanumbers,[[1],[2]],'put skipped first parameter_etanumbers');
-is($model->problems->[0]->omegas->[0]->size,1,'reordered model record 1 size 1');
-is($model->problems->[0]->omegas->[1]->size,1,'reordered model record 2 size 1');
-is($model->problems->[0]->omegas->[0]->type,'BLOCK','reordered model record 1 size 1');
-is($model->problems->[0]->omegas->[1]->type,'BLOCK','reordered model record 2 size 1');
-
 sub countN{
     my $est = shift;
     my $se =shift;
     return (1+2*(($est/$se)**2));
 }
 
-my $output = output -> new ('filename'=> $modeldir.'/frem/model_4.lst');
+my $output = output->new('filename' => $modeldir.'/frem/model_4.lst');
 my $model1 = model->new(filename => "$modeldir/frem/model_1.mod",
                        ignore_missing_data => 1);
 my $model2 = model->new(filename => "$modeldir/frem/model_2.mod",
@@ -525,25 +448,18 @@ is($ans->{5},$true->{5},'perfect individual count 5');
 
 $ans = tool::frem::perfect_individuals(output1=>$model1->outputs->[0],
                                        output2=> $model2->outputs->[0],
-                                       omega_order1 => [1,2]);
+                                       );
 my $true2 = {1=>countN(8.15324E-02,1.27723E-02),
              2=>countN(2.79894E+00,8.12892E-01),
              3=>countN(5.22103E-02,1.33110E-02),
              4=>countN(2.46465E+02,4.12278E+01),
              5=>countN(1.61606E-01,2.77883E-02)};
 
-is($ans->{1},$true2->{1},'perfect individual  1');
-is($ans->{2},$true2->{2},'perfect individual  2');
-is($ans->{3},$true2->{3},'perfect individual  3');
-is($ans->{4},$true2->{4},'perfect individual  4');
-is($ans->{5},$true2->{5},'perfect individual  5');
-
-$ans = tool::frem::perfect_individuals(output1=>$model1->outputs->[0],output2=> $model2->outputs->[0], omega_order1 => [2,1]);
-is($ans->{1},$true2->{3},'perfect individual  6');
-is($ans->{2},$true2->{1},'perfect individual  7');
-is($ans->{3},$true2->{2},'perfect individual  8');
-is($ans->{4},$true2->{4},'perfect individual  9');
-is($ans->{5},$true2->{5},'perfect individual  10');
+is($ans->{1}, $true2->{1}, 'perfect individual  1');
+is($ans->{2}, $true2->{2}, 'perfect individual  2');
+is($ans->{3}, $true2->{3}, 'perfect individual  3');
+is($ans->{4}, $true2->{4}, 'perfect individual  4');
+is($ans->{5}, $true2->{5}, 'perfect individual  5');
 
 
 my $matrix = [[1,2,3,4,5],

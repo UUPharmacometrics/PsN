@@ -63,24 +63,6 @@ dies_ok { input_checking::check_options(tool => 'frem',
 										model => $model) } "frem croak skip_omegas too high";
 
 $model = model->new(filename => $includes::testfiledir."/mox1.mod", ignore_missing_data => 1);
-%options=();
-$options{'covariates'}='WT';
-input_checking::check_options(tool => 'frem', options => \%options, model => $model); 
-is_deeply($options{'skip_omegas'},[3,4,5,6],'frem auto-skip bov omegas 1');
-
-%options=();
-$options{'covariates'}='WT';
-$options{'skip_omegas'}='5,1,3';
-input_checking::check_options(tool => 'frem', options => \%options, model => $model); 
-is_deeply($options{'skip_omegas'},[1,3,4,5,6],'frem auto-skip bov omegas 2');
-%options=();
-$options{'covariates'}='WT';
-$options{'skip_omegas'}='1,2';
-dies_ok { input_checking::check_options(tool => 'frem', 
-										options => \%options, 
-										model => $model) } "frem croak skipping all omegas";
-
-
 
 %options=();
 $model = model->new(filename => "$modeldir/pheno_cond.mod", ignore_missing_data => 1);

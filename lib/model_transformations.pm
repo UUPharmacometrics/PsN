@@ -481,11 +481,13 @@ sub rename_symbol
     my $from = $parm{'from'};
     my $to = $parm{'to'};
 
+    my $qfrom = quotemeta($from);
+
     for my $record (('pk', 'pred', 'error', 'des', 'aes', 'aesinitial', 'mix', 'infn')) {
         if ($model->has_code(record => $record)) {
             my $code = $model->get_code(record => $record);
             for (my $i = 0; $i < scalar(@$code); $i++) {
-                $code->[$i] =~ s/\b$from\b/$to/g;
+                $code->[$i] =~ s/\b$qfrom(\b|(?<=\)))/$to/g;
             }
             $model->set_code(record => $record, code => $code);
         }
@@ -1463,10 +1465,22 @@ sub rename_symbols_in_code
         renaming => { isa => 'HashRef' },      # Hash from old symbol to new symbol
     );
     my $model = $parm{'model'};
-    my $renaming = $parm{'order'};
+    my $renaming = $parm{'renaming'};
 
+    my %step1;         # Needs to be done in two steps to cater for from being the to of another entry
+    my %step2;
     for my $from (keys %$renaming) {
-        rename_symbol(model => $model, from => $from, to => $renaming->{$from});
+        my $temp_name = '_' . $renaming->{$from} . '_';
+        $step1{$from} = $temp_name;
+        $step2{$temp_name} = $renaming->{$from};
+    }
+
+    for my $from (keys %step1) {
+        rename_symbol(model => $model, from => $from, to => $step1{$from});
+    }
+
+    for my $from (keys %step2) {
+        rename_symbol(model => $model, from => $from, to => $step2{$from});
     }
 }
 
@@ -1519,10 +1533,10 @@ sub reorder_omega_record
     my $record = $parm{'record'};
     my $order = $parm{'order'};
 
-    my $n_previous_rows = (sort values %$order)[0] - 1;     # Value for the reordered record
+    my $n_previous_rows = (sort {$a <=> $b} values %$order)[0] - 1;     # Value for the reordered record
 
     my %new_to_old = reverse %$order;
-    my @new_etas = sort keys %new_to_old;
+    my @new_etas = sort {$a <=> $b} keys %new_to_old;
 
     if ($record->same) {
         $record->n_previous_rows($n_previous_rows);
@@ -1619,6 +1633,37 @@ sub reorder_coordvals_hash
     return \%new;
 }
 
+sub reorder_cov_matrix
+{
+    my %parm = validated_hash(\@_,
+        matrix => { isa => 'ArrayRef' },
+        ntheta => { isa => 'Int' },
+        order => { isa => 'HashRef' },
+    );
+    my $matrix = $parm{'matrix'};
+    my $ntheta = $parm{'ntheta'};
+    my $order = $parm{'order'};
+
+    my $covar = output::problem::subproblem::make_square($matrix);
+
+    for my $old (keys %$order) {
+        my $old_index = $old + $ntheta - 1;
+        my $new_index = $order->{$old} + $ntheta - 1;
+        if ($old_index != $new_index) {
+            my $temp = $covar->[$old_index];
+            $covar->[$old_index] = $covar->[$new_index];
+            $covar->[$new_index] = $temp;
+            for my $row (@$covar) {
+                my $temp = $row->[$old_index];
+                $row->[$old_index] = $row->[$new_index];
+                $row->[$new_index] = $temp;
+            }
+        }
+    }
+
+    return linear_algebra::flatten_symmetric($covar);
+}
+
 sub reorder_etas
 {
     # Reorders the omegas records of a model and connected output object
@@ -1637,7 +1682,7 @@ sub reorder_etas
     my %symbol_rename;
     for my $key (keys %$order) {
         $symbol_rename{"ETA($key)"} = "ETA(" . $order->{$key} . ")";
-        $symbol_rename{"MU_$key"} = "MU_" . $order->{$key} . ")";
+        $symbol_rename{"MU_$key"} = "MU_" . $order->{$key};
     }
     rename_symbols_in_code(model => $model, renaming => \%symbol_rename);
 
@@ -1702,12 +1747,21 @@ sub reorder_etas
                         my $reordered_sdcorrform_omegacoordval = reorder_coordvals_hash(coordvals => $subprob->sdcorrform_omegacoordval, conversion => \%coords_conversion);
                         $subprob->sdcorrform_omegacoordval($reordered_sdcorrform_omegacoordval);
 
+                        my $ntheta = $model->nthetas(problem_number => 1);
+                        if (defined $subprob->correlation_matrix) {
+                            my $reordered_cor_matrix = reorder_cov_matrix(matrix => $subprob->correlation_matrix, ntheta => $ntheta, order => $order);
+                            $subprob->correlation_matrix($reordered_cor_matrix);
+                        }
+                        if (defined $subprob->covariance_matrix) {
+                            my $reordered_cov_matrix = reorder_cov_matrix(matrix => $subprob->covariance_matrix, ntheta => $ntheta, order => $order);
+                            $subprob->covariance_matrix($reordered_cov_matrix);
+                        }
+
                         # Non supported stuff
                         $subprob->raw_covmatrix([]);
                         $subprob->finalparam([]);
                         $subprob->ext_table(undef);
                         $subprob->inverse_covariance_matrix([]);
-                        $subprob->correlation_matrix([]);
                         $subprob->eigens([]);
                         $subprob->final_gradients([]);
                         $subprob->parameter_path([]);
@@ -1716,7 +1770,6 @@ sub reorder_etas
                         $subprob->raw_tmatrix([]);
                         $subprob->comegas([]);
                         $subprob->initgrad([]);
-                        $subprob->covariance_matrix([]);
                         $subprob->cvseomegas([]);
                         $subprob->estimated_omegas([]);
                         $subprob->t_matrix([]);
@@ -1739,6 +1792,49 @@ sub reorder_etas
         $phitable->rearrange_etas(order => $order);
         $phitable->write(path => $phi_file, phi => 1);
     }
+}
+
+sub split_omegas
+{
+    # Will split an omega block if needed. Gives a warning if correlation has to be thrown away
+    my %parm = validated_hash(\@_,
+        model => { isa => 'model' },
+        split_after => { isa => 'Int' },      # The number of the final omega to keep before the split
+    );
+    my $model = $parm{'model'};
+    my $split_after = $parm{'split_after'};
+
+    my @omega_records;
+    for my $record (@{$model->problems->[0]->omegas}) {
+        my $last_omega = $record->n_previous_rows + $record->size;
+        if ($split_after > $record->n_previous_rows and $split_after < $last_omega) {       # Is the split inside this record?
+            if ($record->is_block) {
+                croak("A skipped omega is in a block of non-skipped omegas.");
+            } else {
+                my @first;
+                my @second;
+                for (my $i = 0; $i < scalar(@{$record->options}); $i++) {
+                    my $option = $record->options->[$i];
+                    if ($record->n_previous_rows + $i + 1 <= $split_after) {
+                        push @first, $option;
+                    } else {
+                        push @second, $option;
+                    }
+                }
+                my $record2 = dclone($record);
+                $record->options(\@first);
+                $record->size(sprintf("%s", scalar(@first)));
+                $record2->options(\@second);
+                $record2->n_previous_rows($record->n_previous_rows + scalar(@first));
+                $record2->size(sprintf("%s", scalar(@second)));
+                push @omega_records, ($record, $record2);
+            }
+        } else {
+            push @omega_records, $record;
+        }
+    }
+
+    $model->problems->[0]->omegas(\@omega_records);
 }
 
 

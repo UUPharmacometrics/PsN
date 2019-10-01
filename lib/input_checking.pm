@@ -152,7 +152,6 @@ sub check_mceta
     return $error;
 }
 
-
 sub check_copy_data
 {
     my %parm = validated_hash(\@_,
@@ -580,7 +579,6 @@ sub check_simeval
     return $error;
 }
 
-
 sub check_frem
 {
     my %parm = validated_hash(\@_,
@@ -627,50 +625,32 @@ sub check_frem
         $error .=  "The input model must have a \$EST record.\n";
     }
 
-    my @skip = ();
-    if (defined $options->{'skip_omegas'}){
-        @skip = split(/,/,$options->{'skip_omegas'});
-        if (scalar(@skip) > 0){
-            if (max(\@skip) > scalar(@{$model->problems->[0]->omegas})){
-                $error .=  "skip_omegas has number that is larger than number of omega records ".
-                    scalar(@{$model->problems->[0]->omegas})." in model.\n";
+    my @skip;
+    if (defined $options->{'skip_omegas'}) {
+        @skip = split(/,/, $options->{'skip_omegas'});
+        if (scalar(@skip) > 0) {
+            if (max(\@skip) > $model->nomegas->[0]) {
+                $error .=  "skip_omegas has number that is larger than the largest omega index " .
+                    $model->nomegas->[0] . " in model.\n";
             }
-            if (min(\@skip) < 1){
-                $error .=  "skip_omegas has number smaller than 1, but numbering starts at 1 "."\n";
+            if (min(\@skip) < 1) {
+                $error .=  "skip_omegas has number smaller than 1, but numbering starts at 1\n";
             }
         }
     }
-    my $ref = $model->problems->[0]->get_eta_sets(header_strings => 0);
-    foreach my $bovomega (@{$ref->{'iov_omega_numbers'}}){
-        my $found = 0;
-        foreach my $num (@skip){
-            if ($num == $bovomega){
-                $found = 1;
-                last;
-            }
-        }
-        unless ($found){
-            push(@skip,$bovomega);
-        }
-    }
-    #we do not handle duplicated numbers in user list
-    if (scalar(@{$model->problems->[0]->omegas}) <= scalar(@skip) ){
-        $error .=  "no omegas left after skipping user list plus bov omegas"."\n";
-    }
-    foreach my $omega ( @{$model->problems->[0]->omegas} ) {
-        if ($omega->prior()){
+    foreach my $omega (@{$model->problems->[0]->omegas}) {
+        if ($omega->prior()) {
             $error .=  "frem does not support models with priors encoded using regular omega record. Use prior-specific NM7.3-records instead."."\n";
         }
     }
-
-
+    # Could check for uniqueness here.
     my @skip_omegas = sort { $a <=> $b } @skip; #sort ascending
     $options->{'skip_omegas'} = \@skip_omegas;
 
-    if (defined $options->{'rse'}){
-        if ($options->{'rse'} <= 0){
+    if (defined $options->{'rse'}) {
+        if ($options->{'rse'} <= 0) {
             $error .= 'Option -rse must be positive'."\n";
-        }elsif ($options->{'rse'} >= 100){
+        } elsif ($options->{'rse'} >= 100) {
             $error .= 'Option -rse must be less than 100'."\n";
         }
     }

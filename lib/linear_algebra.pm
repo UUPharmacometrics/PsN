@@ -159,6 +159,24 @@ sub triangular_symmetric_to_full
     return $A;
 }
 
+sub flatten_symmetric
+{
+    # Flatten a symmetric into its lower triangular part
+    # Assume row major
+    my $A = shift;
+    my @flat;
+
+    my $take = 1;
+    for my $row (@$A) {
+        for (my $i = 0; $i < $take; $i++) {
+            push @flat, $row->[$i];
+        }
+        $take++;
+    }
+
+    return \@flat;
+}
+
 sub mvnpdf_cholesky
 {
     my $covar=shift;

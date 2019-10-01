@@ -171,11 +171,11 @@ if (defined $options{'final_model'}) {
 }
 
 # find base model (FREM only copies base model results into dir if base model was not pre-executed)
-$options{'base_model'}=$options{'frem_directory'}.'/intermediate_models/model_1.mod';
+$options{'base_model'}=$options{'frem_directory'}.'/m1/model_1.mod';
 $options{'base_model'} // croak "Could not find base model $options{'base_model'}";
-$options{'base_model_lst'}=$options{'frem_directory'}.'/intermediate_models/model_1.lst';
+$options{'base_model_lst'}=$options{'frem_directory'}.'/m1/model_1.lst';
 $options{'base_model_lst'} // croak "Could not find base model results $options{'base_model_lst'}";
-$options{'base_model_cov'}=$options{'frem_directory'}.'/intermediate_models/model_1.cov';
+$options{'base_model_cov'}=$options{'frem_directory'}.'/m1/model_1.cov';
 $options{'frem_dataset'} = $options{'frem_directory'}.'/frem_dataset.dta';
 
 if( defined $options{'sir_directory'} and (-d $options{'sir_directory'}))  {
