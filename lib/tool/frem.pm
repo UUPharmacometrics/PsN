@@ -75,6 +75,7 @@ has 'final_numbers' => ( is => 'rw', isa => 'ArrayRef[Int]', default => sub { []
 has 'final_models' => ( is => 'rw', isa => 'ArrayRef[model]', default => sub { [] } );
 has 'cov_summary' => ( is => 'rw', isa => 'Str' );
 has 'tool_options' => ( is => 'rw', isa => 'HashRef' );     # tool options hash to override all tool options from the command line.
+has 'imp_covariance' => ( is => 'rw', isa => 'Bool', default => 1 );        # Should we run model 4b to get covariance matrix if model4 covsetp failed
 
 has '_intermediate_models_path' => ( is => 'rw', isa => 'Str' );
 has 'etas_reorder_mapping' => ( is => 'rw', isa => 'HashRef' );
@@ -3454,7 +3455,7 @@ sub modelfit_setup
             }
             $self->final_models->[0]->update_inits(from_output => $self->final_models->[0]->outputs->[0]);
             ($etas_file) = $self->prepare_model4(model => $self->final_models->[0],
-                imp_covariance_eval => 1,
+                imp_covariance_eval => $self->imp_covariance,
                 parcov_blocks => $mod4_parcov_block,
                 est_records => $est_records,
                 cov_records => $cov_records,

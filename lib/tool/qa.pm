@@ -453,6 +453,7 @@ sub modelfit_setup
                     top_tool => 1,
                     clean => 1,
                     tool_options => $self->_special_tool_options,
+                    imp_covariance => 0,
                 );
                 $frem->run();
                 $frem->print_options(   # To get skip_omegas over to postfrem
