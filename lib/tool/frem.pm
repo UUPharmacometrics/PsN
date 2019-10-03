@@ -2706,10 +2706,9 @@ sub prepare_model4
 
         if ($imp_covariance_eval) {
             # model must come from M4, so we set M4b up (importance sampling, expectation only, to get covariance step)
-            my $last_est = $est_records->[-1];
-            push @{$est_records}, model::problem::estimation->new(
+            $est_records = [ model::problem::estimation->new(
                 record_arr => ['METHOD=IMPMAP MAPITER=0 ISAMPLE=3000 NITER=5 EONLY=1 PRINT=1']
-            );
+            ) ];
         } else {
             # model must come from M3, so we set M4 up
             get_or_set_fix(model => $frem_model,
@@ -2752,9 +2751,13 @@ sub prepare_model4
             $logger->info("Added UNCONDITIONAL option to \$COV in $name_model");
         }
         $frem_model->problems->[0]->estimations($est_records);
-        $frem_model->problems->[0]->add_records(record_strings => $new_cov_records,
-                                                 type => 'covariance');
-        model_approximations::derivatives_model(model => $frem_model);   # Output the derivatives to be able to make VA-plot
+        if (not $imp_covariance_eval) {
+            $frem_model->problems->[0]->add_records(
+                record_strings => $new_cov_records,
+                type => 'covariance'
+            );
+            model_approximations::derivatives_model(model => $frem_model);   # Output the derivatives to be able to make VA-plot
+        }
         $frem_model->_write();
     } else {
         if (defined $etas_file) {
