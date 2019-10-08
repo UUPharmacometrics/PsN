@@ -199,6 +199,7 @@ sub get_R_lib_path
     }else{
         $R_lib_path = '';
     }
+    $R_lib_path =~ s/\\/\\\\/g;
     return $R_lib_path;
 }
 

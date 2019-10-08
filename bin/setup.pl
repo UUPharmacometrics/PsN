@@ -165,6 +165,21 @@ sub confirm
     }
 }
 
+sub numeric_input
+{
+    my $max = shift;
+
+    while (1) {
+        my $input = <STDIN>;
+        if ($input =~ /^\s*(\d+)\s*$/) {
+            if (1 <= $1 and $1 <= $max) {
+                return $1;
+            }
+        }
+        print "Please answer a number from 1 to $max: ";
+    }
+}
+
 sub get_default_nm_versions
 {
     my %versionhash;
@@ -520,9 +535,29 @@ sub get_input
     }
 }
 
+sub run_r
+{
+    my $line = shift;
+    system("Rscript -e \"$line\"");
+}
+
 sub install_psnr
 {
-    system("Rscript -e \"devtools::install_github('UUPharmacometrics/PsNR\@PsN$PsN::version')\"")
+    my $libpath = shift;
+    my $repos = shift;
+
+    my $repos_str = "";
+    if (defined $repos) {
+        $repos_str = ", repos='$repos'";
+    }
+
+    my $libpath_str = "";
+    if (defined $libpath) {
+        $libpath =~ s/\\/\\\\/g;
+        $libpath_str = ".libPaths('$libpath'); ";
+    }
+
+    run_r("${libpath_str}remotes::install_github('UUPharmacometrics/PsNR\@PsN$PsN::version'$repos_str)");
 }
 
 sub create_directory
@@ -698,7 +733,7 @@ my $runperl_binary = File::Spec->catpath( $volume, $directory, $runperl_name);
 print "PsN Core and Toolkit installation directory [$default_sitelib]:";
 $library_dir = get_input($default_sitelib);
 create_directory($library_dir);
-
+my $psn_lib_path = File::Spec->catfile($library_dir, "PsN_$name_safe_version");
 
 if (running_on_windows()) {
     $copy_cmd = "copy /Y";
@@ -882,9 +917,35 @@ if (running_on_windows()) {
     $library_dir = Win32::GetShortPathName($library_dir);
 }
 
-print "\nThis step requires that you have R and devtools installed. If not you can always select 'n' and do the installation manually.\nWould you like to install the PsNR R package that is needed for the rplots functionality? PsNR will be installed in your default R library. [y/n] ";
+my $rlib_path = File::Spec->catfile($psn_lib_path, "Rlib");
+print "\nWould you like to install the PsNR R package that is needed for the rplots functionality and the qa tool (you will get further options if you answer 'yes')?  [y/n] ";
 if (confirm()) {
-    install_psnr();
+    print "Select one of the options:\n";
+    print "Install PsNR and its dependencies\n";
+    print "    1. in your default R library\n";
+    print "    2. in a new PsN-specific R library using latest versions of packages from CRAN\n";
+    print "    3. in a new PsN-specific R library using tested versions of the R packages via an MRAN snapshot\n"; 
+    my $answer = numeric_input(3);
+    if ($answer == 1) {
+        install_psnr();
+    } else {
+        if (not -e $rlib_path) {
+       	    if (not mkpath($rlib_path)) {
+                print "Failed to create $rlib_path: $!\n";
+                abort();
+            }
+        }
+	    my $repos;
+        if ($answer == 3) {
+            $repos = 'https://cran.microsoft.com/snapshot/2019-10-08/';
+        } else {
+            $repos = 'https://cloud.r-project.org';
+	    }
+        my $rsafe_path = $rlib_path;
+	    $rsafe_path =~ s/\\/\\\\/g;
+        run_r("install.packages('remotes', lib='$rsafe_path', repos='$repos')");
+        install_psnr($rlib_path, $repos);
+    }
 }
 
 my $default_test = $library_dir;
@@ -1009,6 +1070,22 @@ if ($configuration_done) {
     print "A psn.conf to edit is found in\n";
     print "$path\n";
     print "Detailed instructions are found in psn_configuration.pdf";
+}
+
+# Set R_LIB_PATH if created
+if (-e $rlib_path) {
+    my $tempconf = File::Spec->catfile($psn_lib_path, 'tempconf');
+    my $confpath = File::Spec->catfile($psn_lib_path, 'psn.conf');
+    open my $sh, '<', $confpath;
+    open my $dh, '>', $tempconf;
+    print $dh "R_LIB_PATH=$rlib_path\n";
+    while (<$sh>) {
+        print $dh $_;
+    }
+    close $dh;
+    close $sh;
+    cp $tempconf, $confpath;
+    unlink $tempconf;
 }
 
 print "\n\nPress ENTER to exit the installation program.\n";
