@@ -14,6 +14,16 @@ library(methods)
 options(knitr.table.format=type)
 ```
 
+```{r retrieve_qa_results, include = FALSE}
+psn_options <- list(
+  parameters = parameters,
+  continuous = continuous,
+  categorical = categorical
+)
+qa_results <- PsNR::retrieve_qa_results(working.directory, model.filename, psn_options)
+```
+
+
 ```{r add_info_to_meta_yaml_file, include=F}
 #add R_info to the meta file
 R_info(directory=working.directory)
@@ -151,9 +161,7 @@ if(length(command_runtime$command)>0 && length(command_runtime$run_start)>0 && l
 ```
 
 ```{r draw_ofv_table,results='asis',echo=F,warning=F,message=F,eval=!nonlinear}
-ofv_table_print <- kable_table(ofv_table,format=type,booktabs=T,longtable=T,align=c("l","l"),linesep="") %>%
-  kableExtra::kable_styling(position="c",full_width = F)
-print(ofv_table_print)
+PsNR::render_ofv_table(qa_results)
 ```
 
 ```{r draw_overview_table,results='asis',echo=F,warning=F,message=F}
@@ -289,15 +297,10 @@ if(list_par_var_models$iov_mod) {
 }
 ```
 
-```{r draw_covariates_table,eval=(all(skip!="frem")||all(skip!="scm")),results='asis',echo=F,warning=F,message=F}
+```{r draw_covariates_table,results='asis',echo=F,warning=F,message=F}
 cat("\\pagebreak\n\n")
 cat("# Covariates\n\n")
-align <- paste(c("l",rep("r",ncol(covariates_table_list$covariates_extra_table)-1)),collapse = '')
-covariates_extra_table <- kable_table(covariates_table_list$covariates_extra_table,format=type,booktabs=T,longtable=T,linesep="",align = align) %>%
-  kableExtra::kable_styling(position="c",full_width = F) %>%
-  kableExtra::row_spec((nrow(covariates_table_list$covariates_extra_table)-1):nrow(covariates_table_list$covariates_extra_table),bold=T)
-print(covariates_extra_table)
-cat("Model parameter covariate relationship, resulting improvement in OFV and estimated covariate coefficient. Furthermore, the sum of all univariate improvements in OFV ignoring between covariate correlations (sum(SCMu)), as well as joint improvement in OFV when taking correlations into account (FREM).")
+PsNR::render_covariates_table(qa_results)
 ```
 
 ```{r draw_frem_plots,eval=(all(skip!="frem")||all(skip!="scm")),results='asis',echo=F,warning=F,message=F,fig.width=11,fig.height=14.5,fig.keep="high",fig.align="center"}
