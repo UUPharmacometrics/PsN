@@ -1079,13 +1079,19 @@ if (-e $rlib_path) {
     open my $sh, '<', $confpath;
     open my $dh, '>', $tempconf;
     print $dh "R_LIB_PATH=$rlib_path\n";
+    my $have_rlib_path = 0;
     while (<$sh>) {
+        if (/^R_LIB_PATH=/) {
+            $have_rlib_path = 1;
+        }
         print $dh $_;
     }
     close $dh;
     close $sh;
-    cp $tempconf, $confpath;
-    unlink $tempconf;
+    if (not $have_rlib_path) {
+        cp $tempconf, $confpath;
+        unlink $tempconf;
+    }
 }
 
 print "\n\nPress ENTER to exit the installation program.\n";
