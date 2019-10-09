@@ -258,7 +258,7 @@ sub set_R_library_path
     my $self = shift;
     #check in PsN config
     my $R_lib_path = PsN::get_R_lib_path();
-    $self->R_lib_path($R_lib_path);
+    $self->R_lib_path(double_backslashes(string => $R_lib_path));
 }
 
 sub get_preamble
