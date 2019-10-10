@@ -18,7 +18,8 @@ options(knitr.table.format=type)
 psn_options <- list(
   parameters = parameters,
   continuous = continuous,
-  categorical = categorical
+  categorical = categorical,
+  skip = skip
 )
 qa_results <- PsNR::retrieve_qa_results(working.directory, model.filename, psn_options)
 ```
