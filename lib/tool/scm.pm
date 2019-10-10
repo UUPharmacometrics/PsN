@@ -2567,6 +2567,7 @@ sub linearize_setup
                 croak("Unknown error form ".$self->error);
             }
         }
+        unshift @pred_block, "\n";
         $original_model -> set_records( type => 'pred',
             record_strings => \@pred_block );
 
