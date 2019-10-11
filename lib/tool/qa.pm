@@ -941,6 +941,10 @@ sub create_R_plots_code
     my @extra_table_columns = (@{$self->extra_table_columns}, 'MDV');
     $self->mend_extra_table_names(\@extra_table_columns);
 
+    my $type = 'latex';
+    if ($self->html) {
+        $type = 'html';
+    }
     my $code = [
             '# qa specific preamble',
             "groups <- " . $self->groups,
@@ -953,7 +957,7 @@ sub create_R_plots_code
             "extra_table_columns <- " . rplots::create_r_vector(array => \@extra_table_columns),
             "cdd_dofv_cutoff <- 3.84 ",
             "cdd_max_rows <- 10",
-            "type <- 'latex' # set to 'html' if want to create a html file ",
+            "type <- '$type'",
             "skip <- " . rplots::create_r_vector(array => $self->_tools_to_skip ),
             "nonlinear <- " . $nonlinear_run,
             "original_max0_model <- '" . $orig_max0_model_path . "'",
