@@ -90,8 +90,9 @@ $help_text{Description} = <<'EOF';
 EOF
 
 $help_text{Examples} = <<'EOF';
-    qa run1.mod -continuous_covariates=WGT,AGE -categorical_covariates=SEX,RACE
-        -add_etas=KA
+    qa run1.mod -continuous_covariates=WGT,AGE -categorical_covariates=SEX,RACE -add_etas=KA
+    qa run262.mod -continuous=HT,WT,AGE -categorical=SEX -add_etas=V
+    qa run112d.mod -cont=AGE,CRCL,WT -cat=SEX -dvid=CMT -add_etas=VMAX,KM,CLM,V6 -only=scm,frem
 EOF
 
 $help_text{Options} = <<'EOF';

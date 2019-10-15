@@ -31,9 +31,11 @@ The "Covariates" section explores covariate relations in addition to those alrea
 The qa tool avoids a full estimation of the input model and generates the proxies at final estimates of the input model. For an optimal performance of qa, the lst, ext and phi files need to be present.
 \newpage
 
-Example:
+Examples:
 \begin{verbatim}
-qa pheno.mod -continuous=WGT,APGR
+qa run1.mod -continuous_covariates=WGT,AGE -categorical_covariates=SEX,RACE -add_etas=KA
+qa run262.mod -continuous=HT,WT,AGE -categorical=SEX -add_etas=V
+qa run112d.mod -cont=AGE,CRCL,WT -cat=SEX -dvid=CMT -add_etas=VMAX,KM,CLM,V6 -only=scm,frem
 \end{verbatim}
 
 \section{Input and options}
