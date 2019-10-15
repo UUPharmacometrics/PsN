@@ -1,5 +1,5 @@
 \input{inputs/format_header.tex}
-\guidetitle{QA user guide}{2019-05-22}
+\guidetitle{QA user guide}{2019-10-15}
 
 \usepackage{hyperref}
 \begin{document}
@@ -111,7 +111,6 @@ Some limitations and problems will affect the ability to generate any output, ot
 	\item With linearization and eta-epsilon interaction (INTER) individual estimates of empirical Bayes estimates (EBE) of parameters may end up in local minima. The most prominent sign of this is that differences in OFV between two models have a sign, different from that expected, i.e. a smaller model may have a lower OFV than a full model. One experimental remedy is to rerun the qa script with the option \verb|-nointer|, which will omit an update of the interaction terms in the linearization calculations.
 	\item Multiple variables, through the option \verb|-dvid|, is not yet implemented in the report although the relevant models are being estimated.
 	\item Automatic addition of interoccasion variability, implemented via \verb|-iov| is not yet functional.
-    \item All covariates must be available in the dataset and declared in \$INPUT
     \item Missing values for covariates must be coded using -99
     \item Mixture models are not directly supported and need some extra manual work. See section below.
 \end{itemize}
@@ -131,7 +130,6 @@ Mixture models cannot be handled directly by qa, but with some extra steps they 
 \begin{itemize}
 	\item For time-varying covariates, only the baseline value will be used.
 	\item For multiple categorical covariates, missing combinations may make the model unstable. Such aan example would be the bivariate covariates SEX and GENOTYPE, with the category female-PM missing.
-	\item A fixed omega is not allowed in the model if there are non-fixed omegas both before and after it
 \end{itemize}
 
 \subsection{resmod}

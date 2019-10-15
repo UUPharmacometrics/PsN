@@ -176,12 +176,6 @@ $help_text{-occ} = <<'EOF';
 Name of the occasion column.
 EOF
 
-$help_text{-parameters} = <<'EOF';
-    -parameters
-
-    This option is deprecated. Do not use
-EOF
-
 $help_text{-only} = <<'EOF';
     -only
 
