@@ -142,7 +142,8 @@ $help_text{-groups} = <<'EOF';
     -groups
 
     The default is 10. Set the number of groups to use for the time varying models.
-    Quantiles using this number will be calculated.
+    Quantiles using this number will be calculated. See the resmod user guide
+    for a detailed explanation.
 EOF
 
 $help_text{-idv} = <<'EOF';
