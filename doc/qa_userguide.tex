@@ -33,7 +33,7 @@ The qa tool avoids a full estimation of the input model and generates the proxie
 
 Example:
 \begin{verbatim}
-qa pheno.mod -parameters=CL,V -covariates=WGT,APGR
+qa pheno.mod -continuous=WGT,APGR
 \end{verbatim}
 
 \section{Input and options}
@@ -77,9 +77,6 @@ Default is to use an lst-file with the same name as the model. Set a NONMEM outp
 \optname{occ}
 Name of the occasion column. The IOV functionality is not yet implemented.
 \nextopt
-\optname{parameters}
-A comma-separated list of parameters.
-\nextopt
 \optname{nm\_parallel}
 	Select a special NONMEM version to be used for the steps
     that run one NONMEM run at a time. Currently linearize
@@ -114,7 +111,6 @@ Some limitations and problems will affect the ability to generate any output, ot
 	\item With linearization and eta-epsilon interaction (INTER) individual estimates of empirical Bayes estimates (EBE) of parameters may end up in local minima. The most prominent sign of this is that differences in OFV between two models have a sign, different from that expected, i.e. a smaller model may have a lower OFV than a full model. One experimental remedy is to rerun the qa script with the option \verb|-nointer|, which will omit an update of the interaction terms in the linearization calculations.
 	\item Multiple variables, through the option \verb|-dvid|, is not yet implemented in the report although the relevant models are being estimated.
 	\item Automatic addition of interoccasion variability, implemented via \verb|-iov| is not yet functional.
-	\item Only parameters associated with an ETA can be used in the \verb|-parameter=| option
     \item All covariates must be available in the dataset and declared in \$INPUT
     \item Missing values for covariates must be coded using -99
     \item Mixture models are not directly supported and need some extra manual work. See section below.
@@ -130,13 +126,6 @@ Mixture models cannot be handled directly by qa, but with some extra steps they 
     \item Replace all the use of MIXNUM in the abbreviated code into SPOP
 \end{enumerate}
 
-
-\subsection{SCM}
-\begin{itemize}
-	\item The SCM requires parameters defined in \verb|-parameter=P| to be associated with the corresponding ETA in the format P=f(ETA(x)), i.e. where the ETA is on the left-hand side of the equation defining the parameter. Parameters need to be defined in \$PK or \$PRED, not \$ERROR.
-
-	\item There is no support in the QA version of SCM to handle multi-category covariates. A work-around is to define them as either continuous or as multiple bivariate covariates. The latter would require changes to the dataset. Naturally the QA investigation could be made more focused by not including these covariates in the evaluation by omitting them in the \verb|-categorical_covariates| option.
-\end{itemize}
 
 \subsection{FREM}
 \begin{itemize}

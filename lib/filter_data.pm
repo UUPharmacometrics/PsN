@@ -109,6 +109,30 @@ sub filter_dataset
     }
 }
 
+sub derived_covariates_columns
+{
+    my %parm = validated_hash(\@_,
+        model => { isa => 'model' },
+        columns => { isa => 'ArrayRef' }, 
+    );
+    my $model = $parm{'model'};
+    my $columns = $parm{'columns'};
+
+    my @needed_columns;
+
+    for my $colname (@$columns) {
+        if ($model->problems->[0]->find_data_column(column_name => $colname) == -1) {        # Is column in $INPUT?
+            if (code_parsing::defined_symbol(model => $model, symbol => $colname)) {
+                push @needed_columns, $colname;
+            } else {
+                croak("The symbol $colname requested, but not available in model.");
+            }
+        }
+    }
+
+    return \@needed_columns;
+}
+
 sub add_derived_columns
 {
     # Look for provided columns in model. If column is missing, but can be calculated by model
@@ -123,17 +147,8 @@ sub add_derived_columns
     my $directory = $parm{'directory'};
     my $columns = $parm{'columns'};
 
-    my @needed_columns;
-
-    for my $colname (@$columns) {
-        if ($model->problems->[0]->find_data_column(column_name => $colname) == -1) {        # Is column in $INPUT?
-            if (code_parsing::defined_symbol(model => $model, symbol => $colname)) {
-                push @needed_columns, $colname;
-            } else {
-                croak("The symbol $colname requested, but not available in model.");
-            }
-        }
-    }
+    my $needed_columns_ref = derived_covariates_columns(model => $model, columns => $columns);
+    my @needed_columns = @$needed_columns_ref;
 
     if (scalar(@needed_columns) == 0) {        # All columns could be found in $INPUT
         return $model;

@@ -43,6 +43,8 @@ my %optional_options = (
     "error:s"=> '',
     "estimate_fo!" => '',
     "nointer!" => '',
+    "categorical_mean_offset!" => '',
+    "force_binarize!" => '',
 );
 
 my $res = GetOptions( \%options,
@@ -298,6 +300,12 @@ $help_text{-nointer} = <<'EOF';
     Default is off. Set to not use interaction in linearization.
 EOF
 
+$help_text{-categorical_mean_offset} = <<'EOF';
+    -categorical_mean_offset
+
+    Default is off. Set to use the mean as offset for categorical covariates.
+EOF
+
 $help_text{-only_successful} = <<'EOF';
     -only_successful
 
@@ -360,6 +368,9 @@ $help_text{-update_derivatives} = <<'EOF';
     iteration, instead of reusing derivatives from model without covariates.
 EOF
 
+$help_text{-force_binarize} = <<'EOF';
+EOF
+
 common_options::online_help('scm', \%options, \%help_text, \%required_options, \%optional_options);
 
 require model;
@@ -409,13 +420,18 @@ my $model = scm_util::setup_model(options => \%options,
 
 #scm_options_hashref passes scm options that are not handled via config_file
 
-my $scm = scm_util::setup(config_file => $config_file,
-                          options => \%options,
-                          model => $model,
-                          common_options_hashref => {eval( $common_options::parameters )},
-                          scm_options_hashref => {estimate_fo => $options{'estimate_fo'},
-                                                  nointer => $options{'nointer'}},
-    );
+my $scm = scm_util::setup(
+    config_file => $config_file,
+    options => \%options,
+    model => $model,
+    common_options_hashref => {eval( $common_options::parameters )},
+    scm_options_hashref => {
+        estimate_fo => $options{'estimate_fo'},
+        nointer => $options{'nointer'},
+        categorical_mean_offset => $options{'categorical_mean_offset'},
+        force_binarize => $options{'force_binarize'},
+    },
+);
 
 $scm -> print_options(cmd_line => $cmd_line,
                       toolname => 'scm',

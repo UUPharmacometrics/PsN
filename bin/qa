@@ -179,7 +179,7 @@ EOF
 $help_text{-parameters} = <<'EOF';
     -parameters
 
-    A comma-separated list of parameters
+    This option is deprecated. Do not use
 EOF
 
 $help_text{-only} = <<'EOF';
@@ -260,7 +260,6 @@ my $capture = tee_merged {
         groups => $options{'groups'},
         continuous => $options{'continuous_covariates'},
         categorical => $options{'categorical_covariates'},
-        parameters => $options{'parameters'},
         cmd_line => $cmd_line,
         fo => $options{'fo'},
         lst_file => $options{'lst_file'},

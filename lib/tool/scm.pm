@@ -104,6 +104,9 @@ has 'extra_table_columns' => ( is => 'rw', isa => 'ArrayRef[Str]' ); # Set to ar
 has 'nointer' => ( is => 'rw', isa => 'Bool', default => 0 );   # Set to not use interaction columns in linearization (set D_EPSETA to 0)
 has 'use_data_format' => ( is => 'rw', isa => 'Bool', default => 0 );   # Should we use the workaround for big datasets
 has 'from_bootscm' => ( is => 'rw', isa => 'Bool', default => 0 );  # Are we called from a bootscm. This is a hack to fix a specific bug with non-binary catcovs under linearization
+has 'categorical_mean_offset' => ( is => 'rw', isa => 'Bool', default => 0 );   # Use mean instead of mode as offset
+has 'extra_data_columns' => ( is => 'rw', isa => 'ArrayRef[Str]', default => sub { [] } );  # Columns to add to linbase.dta and $INPUT for linbase.mod
+has 'force_binarize' => ( is => 'rw', isa => 'Bool', default => 0 );   # Force binarization of categorical covariates
 
 
 sub BUILD
@@ -217,7 +220,7 @@ sub BUILD
     }
 
     # Pre-process non-bivariate categoricals for linearized scm
-    if (not $self->from_linearize and not $self->from_bootscm and $self->linearize and $self->step_number == 1 and defined $self->categorical_covariates) {
+    if ((not $self->from_linearize and not $self->from_bootscm and ($self->linearize or $self->force_binarize) and $self->step_number == 1 and defined $self->categorical_covariates)) {
         my $model = $self->models->[0];
         my $columns = $model->problems->[0]->columns_list();
         my $positions = array::get_positions(target => $columns, keys => $self->categorical_covariates);
@@ -2168,6 +2171,8 @@ sub linearize_setup
         #1.12
         push(@tablestrings, @covariates);
         push(@inputstrings, @covariates);
+        push(@tablestrings, @{$self->extra_data_columns});
+        push(@inputstrings, @{$self->extra_data_columns});
 
         #GZs and GKs are added to code further down, add_code_gfunc
         foreach my $parameter ( keys %{$self -> test_relations()} ){
@@ -4368,7 +4373,8 @@ sub create_code
                                                    parameter => $parameter,
                                                    covariate => $covariate,
                                                    code => \@code,
-                                                   theta_number =>$start_theta);
+                                                   theta_number =>$start_theta,
+                                               categorical_mean_offset => $self->categorical_mean_offset);
 
     my ($max,$min,$median,$mean) = format_max_min_median_mean(statistics => \%statistics);
 
@@ -5041,6 +5047,7 @@ sub get_covariate_code
         parameter => { isa => 'Str', optional => 0 },
         covariate => { isa => 'Str', optional => 0 },
         theta_number => { isa => 'Int', optional => 0 },
+        categorical_mean_offset => { isa => 'Bool', default => 0 },
     );
     my $statistics = $parm{'statistics'};
     my $type = $parm{'type'};
@@ -5051,6 +5058,7 @@ sub get_covariate_code
     my $covariate = $parm{'covariate'};
     my $theta_number = $parm{'theta_number'};
     my $code = $parm{'code'};
+    my $categorical_mean_offset = $parm{'categorical_mean_offset'};
 
     my $offset = '1';
     $offset = '0' if ($sum_covariates);
@@ -5117,7 +5125,7 @@ sub get_covariate_code
         my $numlvs = scalar @sorted;
         $numlvs = $numlvs -1 if $have_missing_data;
         my $sum_values=0;
-        if ($linearize){
+        if ($linearize or $categorical_mean_offset) {
             if ($numlvs > 2){
                 croak("linearize option does not yet work with categorical covariates with more than two categories");
             }else{
@@ -5126,6 +5134,7 @@ sub get_covariate_code
                 }
             }
         }
+
         my $first_non_missing = 1;
         my $missing_line;
         #initiate COMMON parameter if linearize and have missing data
@@ -5142,7 +5151,7 @@ sub get_covariate_code
                 }
             } else {
                 if ( $first_non_missing ) {
-                    if ($linearize){
+                    if ($linearize or $categorical_mean_offset) {
                         $fraction=$factors{$sorted[$i]}/$sum_values;
                         $fraction = sprintf("%.6G",$fraction);
                         push @{$code}, $comment."; Frequency of most common case is ".$factors{$sorted[$i]}.
@@ -5155,7 +5164,7 @@ sub get_covariate_code
                     }
                     $first_non_missing = 0;
                 } else {
-                    if ($linearize){
+                    if ($linearize or $categorical_mean_offset) {
                         push @{$code}, $comment."IF($covariate.EQ.$sorted[$i]) $parameter$covariate".
                             "_COMMON=0";
                         push @{$code}, $comment."$parameter$covariate = ($offset + THETA(".$theta_number++.
@@ -6130,9 +6139,15 @@ sub preprocess_data
         foreach my $remove_rec ('abbreviated','msfi','contr','subroutine','prior','model','tol','infn','omega','pk','aesinitial','aes','des','error','pred','mix','theta','sigma','estimation','nonparametric'){
             $filtered_data_model -> remove_records(type => $remove_rec);
         }
+        my @predcode = ('Y=THETA(1)+ETA(1)+EPS(1)');
+        if ($filtered_data_model->problems->[0]->find_data_column(column_name => 'L2') != -1) {     # Do we have L2?
+            my $dummy_name = 'DMY6142';
+            model_transformations::rename_column(model => $filtered_data_model, from => 'L2', to => $dummy_name);
+            push @predcode, "L2=$dummy_name";
+        }
 
         $filtered_data_model -> add_records(type => 'pred',
-            record_strings => ['Y=THETA(1)+ETA(1)+EPS(1)']);
+            record_strings => \@predcode);
 
         $filtered_data_model -> add_records(type => 'theta',
             record_strings => ['1']);

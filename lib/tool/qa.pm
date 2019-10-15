@@ -29,7 +29,7 @@ has 'dvid' => ( is => 'rw', isa => 'Str' );
 has 'occ' => ( is => 'rw', isa => 'Str' );
 has 'continuous' => ( is => 'rw', isa => 'Str' );       # A comma separated list of continuous covariate symbols
 has 'categorical' => ( is => 'rw', isa => 'Str' );       # A comma separated list of categorical covariate symbols
-has 'parameters' => ( is => 'rw', isa => 'Str' );       # A comma separated list of parameter symbols
+has 'parameters' => ( is => 'rw', isa => 'Str' );       # A comma separated list of parameter symbols. Currently private
 has 'fo' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'lst_file' => ( is => 'rw', isa => 'Str' );
 has 'cmd_line' => ( is => 'rw', isa => 'Str' );         # Used as a work around for calling scm via system
@@ -203,6 +203,9 @@ sub modelfit_setup
 
     my $base_model_name = $self->model->filename;
     my $eval_model;
+
+    my $derived_covariates = filter_data::derived_covariates_columns(model => $model_copy, columns => $all_covariates);
+
     if ($self->nonlinear) {
         $eval_model = $self->model->copy(filename => $self->model->filename, directory => $self->directory, write_copy => 0, output_same_directory => 0);
         my @extra_tablestrings = ( @table_columns, 'NOPRINT', 'NOAPPEND', 'ONEHEADER', 'FILE=extra_table' );
@@ -247,6 +250,7 @@ sub modelfit_setup
             nointer => $self->nointer,
             keep_covariance => 1,
             nm_output => 'phi,ext,cov,cor,coi',
+            extra_data_columns => $derived_covariates,
         );
 
         $linearize->run();
@@ -485,23 +489,56 @@ sub modelfit_setup
             $self->_to_qa_dir();
         }
 
-        if ($self->_tools_to_run->{'scm'} and defined $self->parameters) {
+        if ($self->_tools_to_run->{'scm'} and defined $self->continuous or defined $self->categorical) {
             print "\n*** Running scm ***\n";
-            my $scm_model = $self->model->copy(filename => "m1/scm.mod");
-            if ($self->model->is_run()) {
-                my $lst_path = $self->model->outputs->[0]->full_name(); 
+            my $scm_model = $base_model->copy(directory => "m1", filename => "scm.mod", write_copy => 0);
+            if ($base_model->is_run()) {
+                my $lst_path = $base_model->outputs->[0]->full_name();
                 cp($lst_path, 'm1/scm.lst');
                 my $ext_path = utils::file::replace_extension($lst_path, 'ext');
                 cp($ext_path, 'm1/scm.ext');
-                my $phi_file = $self->model->get_phi_file;
+                my $phi_file = $base_model->get_phi_file;
                 if (defined $phi_file and -e $phi_file) {
                     cp($phi_file, 'm1/scm.phi');
                 }
             }
-            model_transformations::add_tv(model => $scm_model, parameters => [split /,/, $self->parameters]);
             $scm_model->set_records(type => 'covariance', record_strings => [ "OMITTED" ]);
+            my $fixed_omegas = model_transformations::find_fix_omegas(model => $scm_model);
+            my $iov_omegas = model_transformations::find_etas(model => $scm_model, type => 'iov');
+            my @skip_etas = (@$fixed_omegas, @$iov_omegas);
+            my %keep_etas;
+            my $nomegas = $scm_model->problems->[0]->nomegas;
+            for (my $i = 1; $i <= $nomegas; $i++) {
+                $keep_etas{$i} = 1;
+            }
+            for my $eta (@skip_etas) {
+                if ($eta <= $scm_model->problems->[0]->nomegas) {
+                    delete $keep_etas{$eta};
+                }
+            }
+
+            model_transformations::rename_etas(model => $scm_model, etas => [keys %keep_etas], prefix => 'ET');
+            my @scm_parameters;
+            my @scm_code;
+            for my $i (keys %keep_etas) {
+                push @scm_code, "ET$i = ETA($i)";
+                push @scm_parameters, "ET$i";
+            }
+            $self->parameters(join ',', @scm_parameters);
+            model_transformations::prepend_code(model => $scm_model, code => \@scm_code);
+            model_transformations::add_tv(model => $scm_model, parameters => \@scm_parameters, type => 'additive');
+            $scm_model->remove_option(
+                record_name => 'estimation',
+                option_name => 'MCETA',
+            );
+            $scm_model->add_option(             # Seems to safeguard against (some) local minima
+                record_name => 'estimation',
+                option_name => 'MCETA',
+                option_value => 100,
+            );
+
             $scm_model->_write();
-            $self->_create_scm_config(model_name => "m1/scm.mod");
+            $self->_create_scm_config(model_name => "m1/scm.mod", parameters => \@scm_parameters);
             my %tool_options = %{common_options::restore_options(@common_options::tool_options)};
             my $scm_options = "";
             for my $cmd (split /\s+/, $self->cmd_line) {
@@ -532,9 +569,9 @@ sub modelfit_setup
 
             eval {
                 if($dev) {
-                    system("scm config.scm $scm_options $fo $nointer $nonlinear");       # FIXME: system for now
+                    system("scm config.scm -force_binarize -categorical_mean_offset $scm_options $fo $nointer $nonlinear");       # FIXME: system for now
                 } else {
-                    system("scm-".$vers." config.scm $scm_options $fo $nointer $nonlinear");       # FIXME: system for now
+                    system("scm-".$vers." -force_binarize -categorical_mean_offset config.scm $scm_options $fo $nointer $nonlinear");       # FIXME: system for now
                 }
             };
             if ($@) {
@@ -725,9 +762,11 @@ sub _create_scm_config
 {
     my $self = shift;
     my %parm = validated_hash(\@_,
-        model_name => { isa => 'Str' }
+        model_name => { isa => 'Str' },
+        parameters => { isa => 'ArrayRef' },
     );
     my $model_name = $parm{'model_name'};
+    my $parameters = $parm{'parameters'};
 
     open my $fh, '>', 'config.scm';
 
@@ -751,9 +790,10 @@ sub _create_scm_config
     }
 
     my $relations;
-    for my $param (split(',', $self->parameters)) {
+    for my $param (@$parameters) {
         $relations .= "$param=" . $all . "\n";
     }
+    my $logit = $self->parameters;
 
 my $content = <<"END";
 model=$model_name
@@ -761,24 +801,21 @@ model=$model_name
 directory=scm_run
 
 search_direction=forward
-linearize=1
-foce=1
 
 p_forward=0.05
 max_steps=1
-;p_backward=0.01
 
 $covariates
 $categorical
+logit=$logit
 
 do_not_drop=$all
-
 
 [test_relations]
 $relations
 
 [valid_states]
-continuous = 1,4
+continuous = 1,2
 categorical = 1,2
 END
     print $fh $content;

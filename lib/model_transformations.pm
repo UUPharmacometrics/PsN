@@ -21,9 +21,11 @@ sub add_tv
     my %parm = validated_hash(\@_,
         model => { isa => 'model' },
         parameters => { isa => 'ArrayRef' },
+        type => { isa => 'Str', default => 'multiplicative' },  # Could also be additive
     );
     my $model = $parm{'model'};
     my $parameters = $parm{'parameters'};
+    my $type = $parm{'type'};
 
     (my $code_record, my $code) = $model->get_pk_or_pred_code();
 
@@ -40,6 +42,12 @@ sub add_tv
         }
     }
 
+    my $operation = '*';
+    my $unit = '1';
+    if ($type eq 'additive') {
+        $operation = '+';
+        $unit = '0';
+    }
     my @newcode;
     my @deferred_lines;
     my $if_nesting = 0;
@@ -52,9 +60,9 @@ sub add_tv
         my $found = 0;
         for my $param (@add_params) {
             if ($line =~ /^(\s*)$param\s*=/) {
-                push @newcode, "$1TV$param = 1";
+                push @newcode, "$1TV$param = $unit";
                 push @newcode, $line;
-                my $new_line = "$1$param = $param * TV$param";
+                my $new_line = "$1$param = $param $operation TV$param";
                 if ($if_nesting == 0) {     # Else must put reassignment after IF block
                     push @newcode, $new_line;
                 } else {
@@ -173,7 +181,7 @@ sub add_iov
         diagonal_to_block(model => $model);
         my $records = find_omega_records(model => $model, type => 'iiv');
         my $etas = find_etas(model => $model, type => 'iiv');
-        _rename_etas(model => $model, etas => $etas, prefix => 'ETAI');
+        rename_etas(model => $model, etas => $etas, prefix => 'ETAI');
         my @pre_code;
         my $current_eta = $netas + 1;
         my $current_iov = 1;
@@ -440,7 +448,7 @@ sub omega_block
     return $new_omega_block;
 }
 
-sub _rename_etas
+sub rename_etas
 {
     # Rename all or some ETAs of model
     my %parm = validated_hash(\@_,
@@ -680,7 +688,7 @@ sub boxcox_etas
     }
     my $nthetas = $model->nthetas;
 
-    _rename_etas(model => $model, etas => $etas, prefix => 'ETAB');
+    rename_etas(model => $model, etas => $etas, prefix => 'ETAB');
 
     my $next_theta = $nthetas + 1;
     my @code;
@@ -710,7 +718,7 @@ sub uniform_etas
     }
     my $nthetas = $model->nthetas;
 
-    _rename_etas(model => $model, etas => $etas, prefix => 'ETAU');
+    rename_etas(model => $model, etas => $etas, prefix => 'ETAU');
 
     my $omega_options = omega_options_from_etas(model => $model, etas => $etas);
     my @inits;
@@ -751,7 +759,7 @@ sub tdist_etas
     }
     my $nthetas = $model->nthetas;
 
-    _rename_etas(model => $model, etas => $etas, prefix => 'ETAT');
+    rename_etas(model => $model, etas => $etas, prefix => 'ETAT');
 
     my $next_theta = $nthetas + 1;
     my @code;
@@ -947,6 +955,35 @@ sub find_iov_structure
     }
 
     return \@structure;
+}
+
+sub find_fix_omegas
+{
+    # Find all FIX OMEGAS
+    my %parm = validated_hash(\@_,
+        model => { isa => 'model' },
+    );
+    my $model = $parm{'model'};
+
+    my %skipped_set;
+
+    for my $record (@{$model->problems->[0]->omegas}) {
+        if ($record->fix) {
+            for (my $i = $record->n_previous_rows + 1; $i <= $record->n_previous_rows + $record->size; $i++) {
+                $skipped_set{$i} = 1;
+            }
+        } elsif (not $record->is_block) {
+            my $n = $record->n_previous_rows + 1;
+            for my $option (@{$record->options}) {
+                if ($option->fix) {
+                    $skipped_set{$n} = 1;
+                }
+                $n++;
+            }
+        }
+    }
+
+    return [keys %skipped_set];
 }
 
 sub find_zero_fix_omegas
