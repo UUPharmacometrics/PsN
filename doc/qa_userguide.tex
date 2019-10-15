@@ -55,18 +55,21 @@ A model file is required on the command line.
 \subsubsection{Add IIV}
     Inter-individual variability for parameters that does not have it can be
     assessed by listing the interesting parameters with the \verb|-add_etas| option.
+    IIV will be added as an exponential and without any covariances.
 
 \subsubsection{Add IOV}
     Inter-occasion variability can be assessed by setting which occasion
-    column to use via the \verb|-iov| option.
+    column to use via the \verb|-iov| option. IOV will be added to all parameters
+    that have IIV using the same block structure.
 
 \subsubsection{Multiple DVs}
     To assess different DVs separately in the residual and structural models
     use the \verb|-dvid| option.
 
 \subsubsection{Extra independent variable}
-    To add the assessment of residual and structural models for an independent
-    variable other than TIME, TAD and PRED the -\verb|idv| option should be used.
+    To add the assessment of residual and structural models for one
+    extra independent variable other than \verb|TIME|, \verb|TAD| and \verb|PRED| the
+    \verb|-idv| option should be used.
 
 
 
