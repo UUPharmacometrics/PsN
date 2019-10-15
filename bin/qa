@@ -186,7 +186,6 @@ $help_text{-only} = <<'EOF';
 
     Only run one or more sections of the qa procedure. Takes a list of section
     names to run. The sections are: scm, frem, cdd, simeval, transform and resmod.
-    This option is intended for testing and development.
 EOF
 
 $help_text{-skip} = <<'EOF';
@@ -194,7 +193,7 @@ $help_text{-skip} = <<'EOF';
 
     Skip one or more sections of the qa procedure. Takes a list of section
     names to skip. The sections are: scm, frem, cdd, simeval, transform and
-    resmod. This option is intended for testing and development.
+    resmod.
 EOF
 
 common_options::online_help( 'qa', \%options, \%help_text, \%required_options, \%optional_options);
