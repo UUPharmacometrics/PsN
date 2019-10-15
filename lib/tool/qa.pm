@@ -815,6 +815,10 @@ sub check_nonsupported_modelfeatures
         die("Error: Models with F_FLAG are not supported by qa as LAPLACE is not supported.\n");
     }
 
+    if ($model->defined_variable(name => 'FREMTYPE')) {
+        die("Error: FREM models are currently not supported by qa.\n";
+    }
+
     if (defined $model->problems->[0]->mixs) {
         die("Error: Mixture models are not directly supported by qa. Please see the user guide for an idea on how to run them.\n");
     }
