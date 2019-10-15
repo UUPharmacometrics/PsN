@@ -491,15 +491,13 @@ sub modelfit_setup
                 }
             }
             $scm_model->set_records(type => 'covariance', record_strings => [ "OMITTED" ]);
-            my $fixed_omegas = model_transformations::find_fix_omegas(model => $scm_model);
             my $iov_omegas = model_transformations::find_etas(model => $scm_model, type => 'iov');
-            my @skip_etas = (@$fixed_omegas, @$iov_omegas);
             my %keep_etas;
             my $nomegas = $scm_model->problems->[0]->nomegas;
             for (my $i = 1; $i <= $nomegas; $i++) {
                 $keep_etas{$i} = 1;
             }
-            for my $eta (@skip_etas) {
+            for my $eta (@$iov_omegas) {
                 if ($eta <= $scm_model->problems->[0]->nomegas) {
                     delete $keep_etas{$eta};
                 }
