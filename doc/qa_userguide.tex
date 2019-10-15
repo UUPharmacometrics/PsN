@@ -41,6 +41,35 @@ qa pheno.mod -continuous=WGT,APGR
 \subsection{Required input}
 A model file is required on the command line.
 
+    The qa tool will perform multiple assessments of the input model covering
+    different parts of the model.
+
+    Many of the assessments does not need anything but the model from the user,
+    but some need specific input to trigger the analysis.
+
+\subsubsection{Covariates}
+    To perform investigation of covariate effects the user needs to supply lists
+    of the covariates via the \verb|-categorical_covariates| and/or the
+    \verb|-continuous_covariates| options.
+
+\subsubsection{Add IIV}
+    Inter-individual variability for parameters that does not have it can be
+    assessed by listing the interesting parameters with the \verb|-add_etas| option.
+
+\subsubsection{Add IOV}
+    Inter-occasion variability can be assessed by setting which occasion
+    column to use via the \verb|-iov| option.
+
+\subsubsection{Multiple DVs}
+    To assess different DVs separately in the residual and structural models
+    use the \verb|-dvid| option.
+
+\subsubsection{Extra independent variable}
+    To add the assessment of residual and structural models for an independent
+    variable other than TIME, TAD and PRED the -\verb|idv| option should be used.
+
+
+
 \subsection{Optional input}
 
 \begin{optionlist}
