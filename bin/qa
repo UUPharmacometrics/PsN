@@ -187,7 +187,7 @@ $help_text{-nonlinear} = <<'EOF';
     -nonlinear
 
     Default is off. Don't linearize the model and use the original non-linear
-    model for all runs.
+    model for all runs. This option is experimental.
 EOF
 
 $help_text{-occ} = <<'EOF';
