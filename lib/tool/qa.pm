@@ -816,7 +816,7 @@ sub check_nonsupported_modelfeatures
     }
 
     if ($model->defined_variable(name => 'FREMTYPE')) {
-        die("Error: FREM models are currently not supported by qa.\n";
+        die("Error: FREM models are currently not supported by qa.\n");
     }
 
     if (defined $model->problems->[0]->mixs) {
