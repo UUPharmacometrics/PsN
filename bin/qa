@@ -29,7 +29,6 @@ my %required_options = ();
 #option etas is not implemented, bootstrap always done on all etas
 my %optional_options = (
     'dvid:s' => undef,
-    'dv:s' => undef,
     'idv:s' => undef,
     'occ:s' => undef,
     'groups:i' => undef,
@@ -129,13 +128,6 @@ $help_text{-continuous_covariates} = <<'EOF';
     -continuous_covariates
 
       A comma-separated list of continuous covariates
-EOF
-
-$help_text{-dv} = <<'EOF';
--dv
-
-    Name of the dependent variable for the structural and residual model analysis.
-    CWRES is default.
 EOF
 
 $help_text{-dvid} = <<'EOF';
@@ -262,7 +254,6 @@ my $capture = tee_merged {
         models => [$model],
         dvid => $options{'dvid'},
         idv => $options{'idv'},
-        dv => $options{'dv'},
         occ => $options{'occ'},
         groups => $options{'groups'},
         continuous => $options{'continuous_covariates'},

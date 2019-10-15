@@ -24,7 +24,6 @@ extends 'tool';
 has 'model' => ( is => 'rw', isa => 'model' );
 has 'groups' => ( is => 'rw', isa => 'Int', default => 10 );       # The number of groups to use for quantiles in the time_varying model
 has 'idv' => ( is => 'rw', isa => 'Str', default => 'TIME' );
-has 'dv' => ( is => 'rw', isa => 'Str', default => 'CWRES' );
 has 'dvid' => ( is => 'rw', isa => 'Str' );
 has 'occ' => ( is => 'rw', isa => 'Str' );
 has 'continuous' => ( is => 'rw', isa => 'Str' );       # A comma separated list of continuous covariate symbols
@@ -629,7 +628,6 @@ sub modelfit_setup
                     models => [ $resmod_model ],
                     dvid => $self->dvid,
                     idv => 'TIME',
-                    dv => $self->dv,
                     occ => $self->occ,
                     groups => $self->groups,
                     iterative => 0,
@@ -657,7 +655,6 @@ sub modelfit_setup
                     models => [ $resmod_model ],
                     dvid => $self->dvid,
                     idv => 'TAD',
-                    dv => $self->dv,
                     occ => $self->occ,
                     groups => $self->groups,
                     iterative => 0,
@@ -685,7 +682,6 @@ sub modelfit_setup
                 models => [ $resmod_model ],
                 dvid => $self->dvid,
                 idv => 'PRED',
-                dv => $self->dv,
                 occ => $self->occ,
                 groups => $self->groups,
                 iterative => 0,
@@ -712,7 +708,6 @@ sub modelfit_setup
                     models => [ $resmod_model ],
                     dvid => $self->dvid,
                     idv => $self->idv,
-                    dv => $self->dv,
                     occ => $self->occ,
                     groups => $self->groups,
                     iterative => 0,
