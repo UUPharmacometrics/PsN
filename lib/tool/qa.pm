@@ -812,7 +812,7 @@ sub check_nonsupported_modelfeatures
     my $model = $self->model;
 
     if (defined $model->problems->[0]->mixs) {
-        die("Error: Mixture models are not supported by qa.\n");
+        die("Error: Mixture models are not directly supported by qa. Please see the user guide for an idea on how to run them.\n");
     }
 
     if ($model->is_option_set(record => 'estimation', name => 'HYBRID', record_number => -1, fuzzy_match => 1) or
