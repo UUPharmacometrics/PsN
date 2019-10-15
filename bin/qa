@@ -37,7 +37,6 @@ my %optional_options = (
     'categorical_covariates:s' => undef,
     'parameters:s' => undef,
     'lst_file:s' => undef,
-    'nointer!' => undef,
     'nonlinear!' => undef,
     'skip:s' => undef,
     'only:s' => undef,
@@ -177,12 +176,6 @@ $help_text{-nm_parallel} = <<'EOF';
     to one.
 EOF
 
-$help_text{-nointer} = <<'EOF';
-    -nointer
-
-    Default is off. Don't use interaction in the linearized model.
-EOF
-
 $help_text{-nonlinear} = <<'EOF';
     -nonlinear
 
@@ -276,7 +269,6 @@ my $capture = tee_merged {
         categorical => $options{'categorical_covariates'},
         cmd_line => $cmd_line,
         lst_file => $options{'lst_file'},
-        nointer => $options{'nointer'},
         nonlinear => $options{'nonlinear'},
         skip => [split /,/, $options{'skip'}],
         only => [split /,/, $options{'only'}],

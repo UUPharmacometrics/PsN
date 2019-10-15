@@ -26,7 +26,6 @@ has 'parameters' => ( is => 'rw', isa => 'Str' );       # A comma separated list
 has 'fo' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'lst_file' => ( is => 'rw', isa => 'Str' );
 has 'cmd_line' => ( is => 'rw', isa => 'Str' );         # Used as a work around for calling scm via system
-has 'nointer' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'nonlinear' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'skip' => ( is => 'rw', isa => 'ArrayRef[Str]', default => sub { [] } );
 has 'only' => ( is => 'rw', isa => 'ArrayRef[Str]', default => sub { [] } );    # Will be transformed into skip in BUILD
@@ -56,7 +55,6 @@ sub modelfit_setup
         cmd_line => $self->cmd_line,
         fo => $self->fo,
         lst_file => $self->lst_file,
-        nointer => $self->nointer,
         nonlinear => $self->nonlinear,
         skip => $self->skip,
         only => $self->only,
@@ -97,7 +95,6 @@ sub modelfit_setup
         cmd_line => $self->cmd_line,
         fo => $self->fo,
         lst_file => $self->lst_file,
-        nointer => $self->nointer,
         nonlinear => $self->nonlinear,
         skip => $self->skip,
         only => $self->only,

@@ -32,7 +32,6 @@ has 'categorical' => ( is => 'rw', isa => 'Str' );       # A comma separated lis
 has 'parameters' => ( is => 'rw', isa => 'Str' );       # A comma separated list of parameter symbols. Currently private
 has 'lst_file' => ( is => 'rw', isa => 'Str' );
 has 'cmd_line' => ( is => 'rw', isa => 'Str' );         # Used as a work around for calling scm via system
-has 'nointer' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'nonlinear' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'skip' => ( is => 'rw', isa => 'ArrayRef[Str]', default => sub { [] } );    # Will be transformed into _tools_to run in BUILD
 has 'only' => ( is => 'rw', isa => 'ArrayRef[Str]', default => sub { [] } );
@@ -245,7 +244,6 @@ sub modelfit_setup
             models => [ $model_copy ],
             directory => 'linearize_run',
             extra_table_columns => \@table_columns,
-            nointer => $self->nointer,
             keep_covariance => 1,
             nm_output => 'phi,ext,cov,cor,coi',
             extra_data_columns => $derived_covariates,
@@ -413,7 +411,6 @@ sub modelfit_setup
                     %{common_options::restore_options(@common_options::tool_options)},
                     models => [ $add_etas_model ],
                     directory => 'linearize_run',
-                    nointer => $self->nointer,
                     nm_output => 'ext,phi',
                 );
                 $linearize->run();
@@ -546,10 +543,6 @@ sub modelfit_setup
                 }
             }
 
-            my $nointer = "";
-            if ($self->nointer) {
-                $nointer = "-nointer";
-            }
             my $nonlinear = "";
             if ($self->nonlinear) {
                 $nonlinear = "-no-linearize -no-foce";
@@ -557,9 +550,9 @@ sub modelfit_setup
 
             eval {
                 if($dev) {
-                    system("scm config.scm -force_binarize -categorical_mean_offset $scm_options $nointer $nonlinear");       # FIXME: system for now
+                    system("scm config.scm -force_binarize -categorical_mean_offset $scm_options $nonlinear");       # FIXME: system for now
                 } else {
-                    system("scm-".$vers." -force_binarize -categorical_mean_offset config.scm $scm_options $nointer $nonlinear");       # FIXME: system for now
+                    system("scm-".$vers." -force_binarize -categorical_mean_offset config.scm $scm_options $nonlinear");       # FIXME: system for now
                 }
             };
             if ($@) {

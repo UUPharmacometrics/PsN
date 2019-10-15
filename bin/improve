@@ -37,7 +37,6 @@ my %optional_options = (
     'parameters:s' => undef,
     'fo!' => undef,
     'lst_file:s' => undef,
-    'nointer!' => undef,
     'nonlinear!' => undef,
     'skip:s' => undef,
     'only:s' => undef,
@@ -150,12 +149,6 @@ $help_text{-lst_file} = <<'EOF';
     output file to be used for initial estimates.
 EOF
 
-$help_text{-nointer} = <<'EOF';
-    -nointer
-
-    Default is off. Don't use interaction in the linearized model.
-EOF
-
 $help_text{-nonlinear} = <<'EOF';
     -nonlinear
 
@@ -243,7 +236,6 @@ my $improve = tool::improve->new(
     cmd_line => $cmd_line,
     fo => $options{'fo'},
     lst_file => $options{'lst_file'},
-    nointer => $options{'nointer'},
     nonlinear => $options{'nonlinear'},
     skip => [split /,/, $options{'skip'}],
     only => [split /,/, $options{'only'}],
