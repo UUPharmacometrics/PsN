@@ -1,5 +1,5 @@
 \input{inputs/format_header.tex}
-\guidetitle{SCM user guide}{2018-03-02}
+\guidetitle{SCM user guide}{2019-10-15}
 \usepackage{hyperref}
 \begin{document}
 
@@ -219,9 +219,6 @@ If -error=user then the option -error\_code must be defined in the configuration
 \nextopt
 \optconfig{error\_code}{NONMEM code}
 Only if error=user. Can only be set in the configuration file. Define Y, possibly on several lines, with NONMEM code using IPRED, EPS(x), and any parameters listed in do\_not\_drop. IPRED must be used for Y and F must not be used. When the NONMEM code spans several lines, each line must end with a \textbackslash{} (backslash) except the last one. It is important not to have any \textbackslash{}  at the end of the last line. There must be no empty lines and no comments in the error\_code. THETA(x) cannot be used. It will not work to have etas on the epsilons. 
-\nextopt
-\optconfig{estimate\_fo}{0}
-Default not set. If this option is set, use first order method to estimate the linearized model.
 \nextopt
 %\optconfig{foce}{0}
 %Linearize around empirical Bayes estimates. Default set. If unset (foce=0 is set in the configuration file) 
