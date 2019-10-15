@@ -36,7 +36,6 @@ my %optional_options = (
     'continuous_covariates:s' => undef,
     'categorical_covariates:s' => undef,
     'parameters:s' => undef,
-    'fo!' => undef,
     'lst_file:s' => undef,
     'nointer!' => undef,
     'nonlinear!' => undef,
@@ -145,13 +144,6 @@ $help_text{-dvid} = <<'EOF';
 
     Name of the dvid column. Will only be used for the structural and residual
     model analysis.
-EOF
-
-$help_text{-fo} = <<'EOF';
--fo
-
-    Default is off.Set if the FO method should be used for all estimations of
-    the linearized model.
 EOF
 
 $help_text{-groups} = <<'EOF';
@@ -283,7 +275,6 @@ my $capture = tee_merged {
         continuous => $options{'continuous_covariates'},
         categorical => $options{'categorical_covariates'},
         cmd_line => $cmd_line,
-        fo => $options{'fo'},
         lst_file => $options{'lst_file'},
         nointer => $options{'nointer'},
         nonlinear => $options{'nonlinear'},

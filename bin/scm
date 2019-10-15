@@ -41,7 +41,6 @@ my %optional_options = (
     "only_successful!" => '',
     "parallel_states!" => '',
     "error:s"=> '',
-    "estimate_fo!" => '',
     "nointer!" => '',
     "categorical_mean_offset!" => '',
     "force_binarize!" => '',
@@ -219,13 +218,6 @@ $help_text{-epsilon} = <<'EOF';
     Default set. Linearize with respect to epsilons in addition to etas.
     Disable with epsilon=0 in the configuration file or -no-epsilon on the
     command line, then no linearization with respect to epsilon is performed.
-EOF
-
-$help_text{-estimate_fo} = <<'EOF';
-    -estimate_fo=0
-
-    Default not set. If this option is set, use first order method to estimate
-    the linearized model.
 EOF
 
 $help_text{-foce} = <<'EOF';
@@ -426,7 +418,6 @@ my $scm = scm_util::setup(
     model => $model,
     common_options_hashref => {eval( $common_options::parameters )},
     scm_options_hashref => {
-        estimate_fo => $options{'estimate_fo'},
         nointer => $options{'nointer'},
         categorical_mean_offset => $options{'categorical_mean_offset'},
         force_binarize => $options{'force_binarize'},

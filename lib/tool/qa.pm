@@ -30,7 +30,6 @@ has 'occ' => ( is => 'rw', isa => 'Str' );
 has 'continuous' => ( is => 'rw', isa => 'Str' );       # A comma separated list of continuous covariate symbols
 has 'categorical' => ( is => 'rw', isa => 'Str' );       # A comma separated list of categorical covariate symbols
 has 'parameters' => ( is => 'rw', isa => 'Str' );       # A comma separated list of parameter symbols. Currently private
-has 'fo' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'lst_file' => ( is => 'rw', isa => 'Str' );
 has 'cmd_line' => ( is => 'rw', isa => 'Str' );         # Used as a work around for calling scm via system
 has 'nointer' => ( is => 'rw', isa => 'Bool', default => 0 );
@@ -245,7 +244,6 @@ sub modelfit_setup
             %{common_options::restore_options(@common_options::tool_options)},
             models => [ $model_copy ],
             directory => 'linearize_run',
-            estimate_fo => $self->fo,
             extra_table_columns => \@table_columns,
             nointer => $self->nointer,
             keep_covariance => 1,
@@ -297,11 +295,6 @@ sub modelfit_setup
         print "Warning: Only one individual in dataset. Will skip cdd\n";
         $self->_tools_to_run->{'cdd'} = 0;
     }
-
-    #if ($self->fo) {
-    #    $base_model->remove_option(record_name => 'estimation', option_name => 'METHOD');
-    #    $base_model->_write();
-    #}
 
 
     if ($self->_tools_to_run->{'transform'}) {
@@ -420,7 +413,6 @@ sub modelfit_setup
                     %{common_options::restore_options(@common_options::tool_options)},
                     models => [ $add_etas_model ],
                     directory => 'linearize_run',
-                    estimate_fo => $self->fo,
                     nointer => $self->nointer,
                     nm_output => 'ext,phi',
                 );
@@ -554,10 +546,6 @@ sub modelfit_setup
                 }
             }
 
-            my $fo = "";
-            if ($self->fo) {
-                $fo = "-estimate_fo";
-            }
             my $nointer = "";
             if ($self->nointer) {
                 $nointer = "-nointer";
@@ -569,9 +557,9 @@ sub modelfit_setup
 
             eval {
                 if($dev) {
-                    system("scm config.scm -force_binarize -categorical_mean_offset $scm_options $fo $nointer $nonlinear");       # FIXME: system for now
+                    system("scm config.scm -force_binarize -categorical_mean_offset $scm_options $nointer $nonlinear");       # FIXME: system for now
                 } else {
-                    system("scm-".$vers." -force_binarize -categorical_mean_offset config.scm $scm_options $fo $nointer $nonlinear");       # FIXME: system for now
+                    system("scm-".$vers." -force_binarize -categorical_mean_offset config.scm $scm_options $nointer $nonlinear");       # FIXME: system for now
                 }
             };
             if ($@) {

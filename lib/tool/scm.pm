@@ -99,7 +99,6 @@ has 'short_logfile' => ( is => 'rw', isa => 'ArrayRef[Str]', default => sub { ['
 has 'from_linearize' => ( is => 'rw', isa => 'Bool', default => 0 );    # Was the scm-object created by linearize?
 has 'original_nonlinear_model' => ( is => 'rw', isa => 'model' );       # If linearizing this will be the real original model
 has 'keep_covariance' => ( is => 'rw', isa => 'Bool', default => 0 );
-has 'estimate_fo' => ( is => 'rw', isa => 'Bool', default => 0 );   # If linearizing use FO to estimate the linearized model
 has 'extra_table_columns' => ( is => 'rw', isa => 'ArrayRef[Str]' ); # Set to array of colnames to add to an extra data table output by derivatives.mod
 has 'nointer' => ( is => 'rw', isa => 'Bool', default => 0 );   # Set to not use interaction columns in linearization (set D_EPSETA to 0)
 has 'use_data_format' => ( is => 'rw', isa => 'Bool', default => 0 );   # Should we use the workaround for big datasets
@@ -2324,8 +2323,8 @@ sub linearize_setup
             push(@eststrings, 'MCETA=' . $mceta);
         }
 
-        if (not $self->estimate_fo and ($self->epsilon() or $self->error eq 'propadd' or $self->error eq 'prop'
-                or $self->error eq 'exp' or $self->error eq 'user')) {
+        if ($self->epsilon() or $self->error eq 'propadd' or $self->error eq 'prop'
+                or $self->error eq 'exp' or $self->error eq 'user') {
             push(@eststrings, 'METHOD=COND', 'INTERACTION');
         } else {
             push(@eststrings, 'METHOD=ZERO');

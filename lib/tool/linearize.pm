@@ -13,7 +13,6 @@ has 'epsilon' => ( is => 'rw', isa => 'Bool', default => 1 );
 has 'foce' => ( is => 'rw', isa => 'Bool', default => 1 );
 has 'error' => ( is => 'rw', isa => 'Maybe[Str]' );
 has 'keep_covariance' => ( is => 'rw', isa => 'Bool', default => 0 );
-has 'estimate_fo' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'extra_table_columns' => ( is => 'rw', isa => 'ArrayRef[Str]' );    # Set to array of colnames to add to an extra data table output by derivatives.mod
 has 'lst_file' => ( is => 'rw', isa => 'Str' );
 has 'nointer' => ( is => 'rw', isa => 'Bool', default => 0 );
@@ -73,7 +72,6 @@ sub modelfit_setup
             logfile => ['linlog.txt'],
             from_linearize => 1,
             keep_covariance => $self->keep_covariance,
-            estimate_fo => $self->estimate_fo,
             directory => 'scm_dir1',
             extra_table_columns => $self->extra_table_columns,
             nointer => $self->nointer,
