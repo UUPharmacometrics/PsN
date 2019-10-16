@@ -71,7 +71,7 @@ A model file is required on the command line.
 \subsubsection{Extra independent variable}
     To add the assessment of residual and structural models for one
     extra independent variable other than \verb|TIME|, \verb|TAD| and \verb|PRED| the
-    \verb|-idv| option should be used.
+    \verb|-resmod_idv| option should be used.
 
 
 
@@ -88,12 +88,12 @@ A comma-separated list of continuous covariates.
 Name of the dvid column.
 Will only be used for the structural and residual model analysis.
 \nextopt
-\optname{groups}{10}
+\optname{resmod\_groups}{10}
 Default is 10. Set the number of groups to use for the time varying models.
 Quantiles using this number will be calculated. See the resmod user guide
 for a detailed explanation.
 \nextopt
-\optdefault{idv}{TIME}
+\optdefault{resmod\_idv}{TIME}
 Default is to use TIME,PRED and TAD (if present). Name of the independent variable for the structural and residual model analysis.
 This option will change the name of TIME.
 \nextopt

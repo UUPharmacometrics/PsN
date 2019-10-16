@@ -29,9 +29,9 @@ my %required_options = ();
 #option etas is not implemented, bootstrap always done on all etas
 my %optional_options = (
     'dvid:s' => undef,
-    'idv:s' => undef,
+    'resmod_idv:s' => undef,
     'occ:s' => undef,
-    'groups:i' => undef,
+    'resmod_groups:i' => undef,
     'continuous_covariates:s' => undef,
     'categorical_covariates:s' => undef,
     'lst_file:s' => undef,
@@ -85,7 +85,7 @@ $help_text{Description} = <<'EOF';
     Extra independent variable:
     To add the assessment of residual and structural models for one
     extra independent variable other than TIME, TAD and PRED the
-    -idv option should be used.
+    -resmod_idv option should be used.
 EOF
 
 $help_text{Examples} = <<'EOF';
@@ -137,16 +137,16 @@ $help_text{-dvid} = <<'EOF';
     model analysis.
 EOF
 
-$help_text{-groups} = <<'EOF';
-    -groups
+$help_text{-resmod_groups} = <<'EOF';
+    -resmod_groups
 
     The default is 10. Set the number of groups to use for the time varying models.
     Quantiles using this number will be calculated. See the resmod user guide
     for a detailed explanation.
 EOF
 
-$help_text{-idv} = <<'EOF';
-    -idv
+$help_text{-resmod_idv} = <<'EOF';
+    -resmod_idv
 
     Default is to use TIME,PRED and TAD (if present). Name of the independent
     variable for the structural and residual model analysis.
@@ -253,9 +253,9 @@ my $capture = tee_merged {
         eval( $common_options::parameters ),
         models => [$model],
         dvid => $options{'dvid'},
-        idv => $options{'idv'},
+        idv => $options{'resmod_idv'},
         occ => $options{'occ'},
-        groups => $options{'groups'},
+        groups => $options{'resmod_groups'},
         continuous => $options{'continuous_covariates'},
         categorical => $options{'categorical_covariates'},
         cmd_line => $cmd_line,
