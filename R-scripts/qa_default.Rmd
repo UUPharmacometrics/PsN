@@ -4,6 +4,7 @@ output: pdf_document # delete if html file needed and set type <- 'html'
 header-includes: #needed to create a pdf file
     - \usepackage{colortbl}
     - \usepackage{longtable}
+    - \usepackage{float}
 geometry: margin=1.5cm
 classoption: a4paper
 ---
@@ -12,6 +13,7 @@ classoption: a4paper
 library(PsNR)
 library(methods)
 options(knitr.table.format=type)
+knitr::opts_chunk$set(fig.pos = 'H')
 ```
 
 ```{r retrieve_qa_results, include = FALSE}
@@ -302,7 +304,15 @@ if(list_par_var_models$iov_mod) {
 cat("\\pagebreak\n\n")
 cat("# Covariates\n\n")
 PsNR::render_covariates_table(qa_results)
+
 ```
+
+```{r plot_va_plot, fig.align="center", eval=(!"frem" %in% skip), echo=FALSE}
+PsNR::prepare_va_cov_plot(qa_results) %>% 
+  PsNR::plot_result()
+cat("Variability attribution plot before and after inclusion of covariates.")
+```
+
 
 ```{r draw_frem_plots,eval=(all(skip!="frem")||all(skip!="scm")),results='asis',echo=F,warning=F,message=F,fig.width=11,fig.height=14.5,fig.keep="high",fig.align="center"}
 cat(try(
