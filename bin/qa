@@ -34,7 +34,6 @@ my %optional_options = (
     'groups:i' => undef,
     'continuous_covariates:s' => undef,
     'categorical_covariates:s' => undef,
-    'parameters:s' => undef,
     'lst_file:s' => undef,
     'nonlinear!' => undef,
     'skip:s' => undef,
