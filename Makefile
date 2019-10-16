@@ -166,7 +166,6 @@ LIBFILES= ui.pm \
 	tool/resmod.pm \
 	tool/linearize.pm \
 	tool/qa.pm \
-	tool/improve.pm \
 	tool/boot_randtest.pm \
 	utils/file.pm \
 	utils/phitable.pm
