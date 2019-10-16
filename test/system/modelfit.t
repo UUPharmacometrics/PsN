@@ -92,13 +92,13 @@ foreach my $i (0..$#command_line) {
 		ok ((-e $dir.'/NM_run1/psn-1.'.$modext)," retry files exist for retry maxeval exceeded");
 		ok(check_diff($dir.'/NM_run1/psn-1.'.$modext,$dir.'/NM_run1/psn.'.$modext,1),'retry file is tweaked 1');
 	}elsif($i == 3){
-		ok ((-e $dir.'/NM_run1/psn-2.'.$modext)," retry files exist for retry local min");
-		ok(check_diff($dir.'/NM_run1/psn-2.'.$modext,$dir.'/NM_run1/psn.'.$modext,1),'retry file is tweaked 2');
+		ok ((-e $dir.'/NM_run1/psn-1.'.$modext)," retry files exist for retry local min");
+		ok(check_diff($dir.'/NM_run1/psn-1.'.$modext,$dir.'/NM_run1/psn.'.$modext,1),'retry file is tweaked 2');
 	}elsif($i == 4){
 		ok (not (-e $dir.'/NM_run1/psn-1.'.$modext)," not retry files exist for no minimization step run");
 	}elsif($i == 5){
-		ok ((-e $dir.'/NM_run1/psn-1.'.$modext)," retry files exist for no minimization step run but min_retries");
-		ok(check_diff($dir.'/NM_run1/psn-1.'.$modext,$dir.'/NM_run1/psn.'.$modext,1),'retry file is tweaked 3');
+		ok ((-e $dir.'/NM_run1/psn-2.'.$modext)," retry files exist for no minimization step run but min_retries");
+		ok(check_diff($dir.'/NM_run1/psn-2.'.$modext,$dir.'/NM_run1/psn.'.$modext,1),'retry file is tweaked 3');
 	}elsif($i == 6){
 		ok ((-e 'msf_tnpri')," msf file");
 	}elsif($i == 7){
