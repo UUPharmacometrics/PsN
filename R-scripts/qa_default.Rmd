@@ -21,7 +21,8 @@ psn_options <- list(
   parameters = parameters,
   continuous = continuous,
   categorical = categorical,
-  skip = skip
+  skip = skip,
+  dvid_name = dvid_name
 )
 qa_results <- PsNR::retrieve_qa_results(working.directory, model.filename, psn_options)
 ```
@@ -310,7 +311,7 @@ PsNR::render_covariates_table(qa_results)
 ```{r plot_va_plot, fig.align="center", eval=(!"frem" %in% skip), echo=FALSE}
 PsNR::prepare_va_cov_plot(qa_results) %>% 
   PsNR::plot_result()
-cat("Variability attribution plot before and after inclusion of covariates.")
+knitr::asis_output("Variability attribution plot before and after inclusion of covariates.")
 ```
 
 
