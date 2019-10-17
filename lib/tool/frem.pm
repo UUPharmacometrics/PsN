@@ -2482,10 +2482,6 @@ sub prepare_model2
                                 covariate_covmatrix => $invariant_covmatrix,
                                 covariate_labels => $etalabels);
 
-        $frem_model->add_records(type => 'theta',
-                                 problem_numbers => [1],
-                                 record_strings => $theta_strings);
-
         #THETA changes
         #FIX all existing
         if (defined $frem_model->problems->[0]->thetas) {
@@ -2495,6 +2491,11 @@ sub prepare_model2
                 }
             }
         }
+
+        $frem_model->add_records(type => 'theta',
+                                 problem_numbers => [1],
+                                 record_strings => $theta_strings);
+
 
         add_pred_error_code(model=>$frem_model,
                             pred_error_code => $pred_error_code,
