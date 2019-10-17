@@ -309,9 +309,9 @@ PsNR::render_covariates_table(qa_results)
 ```
 
 ```{r plot_va_plot, fig.align="center", eval=(!"frem" %in% skip), echo=FALSE}
-PsNR::prepare_va_cov_plot(qa_results) %>% 
+p <- PsNR::prepare_va_cov_plot(qa_results) %>% 
   PsNR::plot_result()
-knitr::asis_output("Variability attribution plot before and after inclusion of covariates.")
+if(!PsNR::is_error(p)) knitr::asis_output("Variability attribution plot before and after inclusion of covariates.")
 ```
 
 
