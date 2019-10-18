@@ -943,6 +943,7 @@ if (confirm()) {
 	    }
         my $rsafe_path = $rlib_path;
 	    $rsafe_path =~ s/\\/\\\\/g;
+        $ENV{'R_LIBS_SITE'} = $rlib_path;
         run_r("install.packages('remotes', lib='$rsafe_path', repos='$repos')");
         install_psnr($rlib_path, $repos);
     }
