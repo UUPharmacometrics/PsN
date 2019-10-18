@@ -937,7 +937,7 @@ if (confirm()) {
         }
 	    my $repos;
         if ($answer == 3) {
-            $repos = 'https://cran.microsoft.com/snapshot/2019-10-08/';
+            $repos = 'https://cran.microsoft.com/snapshot/2019-10-17/';
         } else {
             $repos = 'https://cloud.r-project.org';
 	    }
