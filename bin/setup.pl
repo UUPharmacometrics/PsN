@@ -918,6 +918,7 @@ if (running_on_windows()) {
 }
 
 my $rlib_path = File::Spec->catfile($psn_lib_path, "Rlib");
+my $set_rlib_path = 0;
 print "\nWould you like to install the PsNR R package that is needed for the rplots functionality and the qa tool (you will get further options if you answer 'yes')?  [y/n] ";
 if (confirm()) {
     print "Select one of the options:\n";
@@ -946,6 +947,7 @@ if (confirm()) {
         $ENV{'R_LIBS_SITE'} = $rlib_path;
         run_r("install.packages('remotes', lib='$rsafe_path', repos='$repos')");
         install_psnr($rlib_path, $repos);
+        $set_rlib_path = 1;
     }
 }
 
@@ -1074,25 +1076,21 @@ if ($configuration_done) {
 }
 
 # Set R_LIB_PATH if created
-if (-e $rlib_path) {
+if ($set_rlib_path and -e $rlib_path) {
     my $tempconf = File::Spec->catfile($psn_lib_path, 'tempconf');
     my $confpath = File::Spec->catfile($psn_lib_path, 'psn.conf');
     open my $sh, '<', $confpath;
     open my $dh, '>', $tempconf;
     print $dh "R_LIB_PATH=$rlib_path\n";
-    my $have_rlib_path = 0;
     while (<$sh>) {
-        if (/^R_LIB_PATH=/) {
-            $have_rlib_path = 1;
+        if (not /^R_LIB_PATH=/) {
+            print $dh $_;
         }
-        print $dh $_;
     }
     close $dh;
     close $sh;
-    if (not $have_rlib_path) {
-        cp $tempconf, $confpath;
-        unlink $tempconf;
-    }
+    cp $tempconf, $confpath;
+    unlink $tempconf;
 }
 
 print "\n\nPress ENTER to exit the installation program.\n";
