@@ -11,6 +11,8 @@ use MooseX::Params::Validate;
 use PsN;
 use model;
 use OSspecific;
+use utils::file;
+
 
 has 'directory' => (is => 'rw', isa => 'Str', required => 1 );
 has 'level' => ( is => 'rw', isa => 'Int', required => 1 );
@@ -359,6 +361,20 @@ sub make_plots
             system($executable . " CMD BATCH ".$self->filename);
         }
         unlink('.RData');
+    }
+    my $stem = utils::file::get_file_stem($self->filename);
+    my $output_file;
+    if ($self->html) {
+        $output_file = "$stem.html";
+    } else {
+        $output_file = "$stem.pdf";
+    }
+    if (-e $output_file) {
+        my $output_path = File::Spec->rel2abs($output_file);
+        print "Successfully generated $output_path\n";
+    } else {
+        my $rout_path = File::Spec->rel2abs("$stem.Rout");
+        print "Error: could not generate report/plots. See $rout_path for R error messages\n";
     }
     chdir($basedir);
 }
