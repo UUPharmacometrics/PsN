@@ -373,8 +373,10 @@ sub make_plots
         my $output_path = File::Spec->rel2abs($output_file);
         print "Successfully generated $output_path\n";
     } else {
-        my $rout_path = File::Spec->rel2abs("$stem.Rout");
-        print "Error: could not generate report/plots. See $rout_path for R error messages\n";
+        if ($self->level > 0) {
+            my $rout_path = File::Spec->rel2abs("$stem.Rout");
+            print "Error: could not generate report/plots. See $rout_path for R error messages\n";
+        }
     }
     chdir($basedir);
 }
