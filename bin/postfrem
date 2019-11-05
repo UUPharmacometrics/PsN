@@ -611,7 +611,7 @@ my ($cov_5th,$cov_95th,$id_covariate_vectors,$categorical,$categoryinfo) =
     tool::frem::read_covdata(covnames => \@covnames,
                              filename => $options{'frem_dataset'});
 
-my @tvpar);
+my @tvpar;
 my @cov_reference;
 my @cov_units;
 
