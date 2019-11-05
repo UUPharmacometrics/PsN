@@ -2211,7 +2211,11 @@ sub linearize_setup
 
         # An extra table was requested
         if (defined $self->extra_table_columns) {
-            my @extra_tablestrings = ( @{$self->extra_table_columns}, 'MDV', 'NOPRINT', 'NOAPPEND', 'ONEHEADER', 'FILE=extra_table' );
+            my @extra_tablestrings = @{$self->extra_table_columns};
+            if (should_add_mdv(model => $derivatives_model)) {
+                push @extra_tablestrings, 'MDV';
+            }
+            push @extra_tablestrings, ( 'NOPRINT', 'NOAPPEND', 'ONEHEADER', 'FILE=extra_table' );
             $derivatives_model->add_records(type => 'table', record_strings => \@extra_tablestrings);
         }
 
