@@ -2859,9 +2859,10 @@ sub linearize_setup
         }
     }
 
+    # Remove no longer needed IGN or ACC in $DATA. Might crash future runs, i.e. with .EQ. or .NE.
+    $original_model->problems->[0]->datas->[0]->remove_ignore_accept();
+
     if ($self->use_data_format and defined $datafilename) {       # To account for bug in NONMEM for 1000+ charcolumn data sets
-        # Remove IGN or ACC in $DATA. Might crash future runs
-        $original_model->problems->[0]->datas->[0]->remove_ignore_accept();
 
         my $data = data->new(
             filename => $datafilename,
