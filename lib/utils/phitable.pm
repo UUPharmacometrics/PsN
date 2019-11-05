@@ -1,13 +1,13 @@
 package phitable;
 
-# A class representing a phi file to modify it (used by FREM for filling zeroes and reorganizing)
+# A class representing a phi file to modify it (used by FREM for filling zeroes)
+# Should be merged into a table subclass
 
 use include_modules;
 use nmtablefile;
 use Moose;
 use MooseX::Params::Validate;
 
-use Digest::file qw(digest_file_hex);
 
 has 'path' => ( is => 'rw', isa => 'Str' );
 has 'filename' => ( is => 'rw', isa => 'Maybe[Str]', default => undef );
@@ -19,16 +19,13 @@ has 'num_etas' => ( is => 'rw', isa => 'Int', default => 0 );
 # contains ("ETA","ETC") or ("PHI","PHC") after validate_phi:
 has 'types' => ( is => 'rw', isa => 'ArrayRef[Str]', default => sub { [] } );
 
-# TODO: extends nmtable;
 
 sub BUILD
 {
     my $self = shift;
 
     my $valid = $self->validate_phi(path => $self->path);
-    $self->valid( $valid );
-    my $num_etas = $self->num_etas;
-    my $num_rows = $self->num_rows;
+    $self->valid($valid);
 }
 
 sub validate_phi
@@ -126,84 +123,6 @@ sub validate_phi
     $self->num_etas( $eta_count-1 );
     $self->types( \@types );
     return 1;
-}
-
-sub swap_etas
-{
-    # swap two ETA/PHI columns (1-indexed as in header), renumber and shift + renumber ETC/PHC columns
-    my $self = shift;
-    my %parm = validated_hash(\@_,
-        eta_num_a => { isa => 'Int', optional => 0 },
-        eta_num_b => { isa => 'Int', optional => 0 },
-    );
-    my $eta_num_a = $parm{'eta_num_a'};
-    my $eta_num_b = $parm{'eta_num_b'};
-    my $netas = $self->num_etas;
-    my @types = @{ $self->types };
-    croak "eta_num_a out of bounds ($netas $types[0] cols)" if ($eta_num_a <= 0 || $eta_num_a > $netas);
-    croak "eta_num_b out of bounds ($netas $types[0] cols)" if ($eta_num_b <= 0 || $eta_num_b > $netas);
-    croak "can't modify non-valid phi" unless ($self->valid);
-
-    # get old columns, header array and hash (before reordering)
-    my @columns = @{$self->table->columns};
-    my @header_array = @{$self->table->header_array};
-    my %header_hash = %{$self->table->header};
-
-    # reorder array: store new index for each old index position (before reordering)
-    my @reorder;
-    for (my $i=0; $i<(scalar @header_array); $i++) {
-        # keep old index as default
-        $reorder[$i] = $i;
-
-        my $name = $header_array[$i];
-        if ($name =~ /^$types[0]\(\d+\)$/) {
-            my ($old_eta) = $name =~ /(\d+)/;
-            my $swap_eta;
-            $swap_eta = $eta_num_a if ($eta_num_b == $old_eta);
-            $swap_eta = $eta_num_b if ($eta_num_a == $old_eta);
-            if (defined $swap_eta) {
-                # eta index match index to swap: new index becomes old index of ETA/PHI to swap with
-                my $swap_name = "$types[0]($swap_eta)";
-                $reorder[$i] = $header_hash{$swap_name};
-                print "MOVED $header_array[$i] [$i] => $swap_name [$reorder[$i]]\n";
-            }
-        } elsif ($name =~ /^$types[1]\(\d+,\d+\)$/) {
-            my @old_etas = $name =~ /(\d+)/g;
-            my ($swap_eta_1, $swap_eta_2);
-            $swap_eta_1 = $eta_num_a if ($old_etas[0] == $eta_num_b);
-            $swap_eta_1 = $eta_num_b if ($old_etas[0] == $eta_num_a);
-            $swap_eta_2 = $eta_num_a if ($old_etas[1] == $eta_num_b);
-            $swap_eta_2 = $eta_num_b if ($old_etas[1] == $eta_num_a);
-            if (defined $swap_eta_1 or defined $swap_eta_2) {
-                # at least one of the indices match one of the indices to swap, if any is non-defined
-                # (e.g. 2 of ETC/PHC(2,1) where ETA/PHI 1 and 3 to swap) assign old index
-                $swap_eta_1 //= $old_etas[0];
-                $swap_eta_2 //= $old_etas[1];
-
-                # now we can generate the new name: new index becomes old index of ETC to swap with
-                my $swap_name;
-                if ($swap_eta_1 >= $swap_eta_2) {
-                    $swap_name = "$types[1]($swap_eta_1,$swap_eta_2)";
-                } else {
-                    $swap_name = "$types[1]($swap_eta_2,$swap_eta_1)";
-                }
-                $reorder[$i] = $header_hash{$swap_name};
-                print "MOVED $header_array[$i] [$i] => $swap_name [$reorder[$i]]\n";
-            }
-        }
-    }
-
-    # create the new column array (note: header and header hash do NOT change; ETA/PHIs get "renumbered")
-    my $new_columns = [];
-    for (my $i=0; $i<(scalar @reorder); $i++) {
-        # get new index and column and push
-        my $new_index = $reorder[$i];
-        my $new_col = $columns[$new_index];
-        push @{$new_columns}, $new_col;
-    }
-
-    # update object
-    $self->table->columns( $new_columns );
 }
 
 sub add_zero_etas
