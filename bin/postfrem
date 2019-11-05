@@ -51,7 +51,6 @@ my %required_options = ();
 my %optional_options = (
     'offset_rawres:i' => undef,
     'in_filter:s' => undef,
-    'output_format:s' => undef,
     'final_model:s' => undef,
     'frem_directory:s' => undef,
     'sir_directory:s' => undef,
@@ -90,13 +89,6 @@ $help_text{-offset_rawres} = <<'EOF';
     -offset_rawres=N
 
     Default is 1, i.e. first line is minimum. Do not set to 0.
-EOF
-
-$help_text{-output_format} = <<'EOF';
-    -output_format=format
-
-    Default is pdf. Supported formats are pdf, png, svg and jpg.svg requires
-    library(svglite).
 EOF
 
 $help_text{-in_filter} = <<'EOF';
@@ -187,13 +179,6 @@ if( defined $options{'sir_directory'} and (-d $options{'sir_directory'}))  {
     if (defined $options{'force_m1_propagation'}) {
         warn "option -force_m1_propagation not applicable to sir directory uncertainty";
     }
-}
-if (defined $options{'output_format'}){
-    unless ($options{'output_format'} =~ /^(pdf|png|svg|jpg)$/){
-        die "Unsupported output format ".$options{'output_format'}."\n";
-    }
-}else{
-    $options{'output_format'}="pdf";
 }
 
 my $print_iter_N = $options{'print_iter'} // 0;
@@ -1300,7 +1285,6 @@ my $rplot = rplots->new(toolname => 'frem',
 
 $rplot->pdf_title('frem plots');
 $rplot->add_preamble(code => [
-                         "output.format <-'".$options{'output_format'}."'",
                          "covdatafile <- '".$covdatafile."'",
                          "pardatafile <- '".$pardatafile."'",
                          "idfile <- '".$idratiosfile."'",

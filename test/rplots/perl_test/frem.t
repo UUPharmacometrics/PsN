@@ -20,7 +20,7 @@ unless (File::Copy::Recursive::dircopy($input_dir, $tempdir)) {
 
 chdir($tempdir);
 
-my $command = get_command('postfrem') . " -frem_directory=frem_dir -directory=rundir -output_format=pdf ";
+my $command = get_command('postfrem') . " -frem_directory=frem_dir -directory=rundir ";
 
 my $rc = system($command);
 $rc = $rc >> 8;
