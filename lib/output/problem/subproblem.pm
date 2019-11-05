@@ -221,6 +221,24 @@ sub parsing_error
     $self->parsing_error_message($message);
 }
 
+sub make_square {
+    my $m_ref = shift;
+    my @matrix = @{$m_ref};
+    # Make the matrix square:
+    my $elements = scalar @matrix; # = M*(M+1)/2
+    my $M = -0.5 + sqrt( 0.25 + 2 * $elements );
+    my @square;
+    for ( my $m = 1; $m <= $M; $m++ ) {
+        for ( my $n = 1; $n <= $m; $n++ ) {
+            push( @{$square[$m-1]}, $matrix[($m-1)*$m/2 + $n - 1] );
+            unless ( $m == $n ) {
+                push( @{$square[$n-1]}, $matrix[($m-1)*$m/2 + $n - 1] );
+            }
+        }
+    }
+    return \@square;
+}
+
 sub _read_covmatrix
 {
     my $self = shift;
@@ -230,57 +248,6 @@ sub _read_covmatrix
     my $start_pos = $self->lstfile_pos - 1;
     my $headers;
     my $dummyheaders;
-
-    # {{{ sub clear dots
-
-    sub clear_dots {
-        my $m_ref = shift;
-        my @matrix = @{$m_ref};
-        # get rid of '........'
-        my @clear;
-        foreach ( @matrix ) {
-            if ( $_ eq '.........' ) {
-                print join(' ',@matrix)."\n";
-                ui->print(category=> 'all',
-                          message =>"found  ...... in matrix, this is a bug, please report this\n ");
-            }else{
-                if ( $_ eq 'NAN' or $_ eq 'NaN') {
-                    push( @clear, 0 );
-                } elsif ( $_ eq 'INF' ) {
-                    push( @clear, 99999999999999 );
-                } elsif ( $_ eq '-INF' ) {
-                    push( @clear, -99999999999999 );
-                } else {
-                    push( @clear, $_ );
-                }
-            }
-        }
-        return \@clear;
-    }
-
-    # }}}
-
-# {{{ sub make square
-
-    sub make_square {
-        my $m_ref = shift;
-        my @matrix = @{$m_ref};
-        # Make the matrix square:
-        my $elements = scalar @matrix; # = M*(M+1)/2
-        my $M = -0.5 + sqrt( 0.25 + 2 * $elements );
-        my @square;
-        for ( my $m = 1; $m <= $M; $m++ ) {
-            for ( my $n = 1; $n <= $m; $n++ ) {
-                push( @{$square[$m-1]}, $matrix[($m-1)*$m/2 + $n - 1] );
-                unless ( $m == $n ) {
-                    push( @{$square[$n-1]}, $matrix[($m-1)*$m/2 + $n - 1] );
-                }
-            }
-        }
-        return \@square;
-    }
-
-    # }}}
 
     my $keep_headers_array = $self->input_problem->get_estimated_attributes(attribute=>'coordinate_strings');
     if (scalar(@{$keep_headers_array})==0 and (defined $self->guess_estimated_attributes->{'coordinate_strings'})){
