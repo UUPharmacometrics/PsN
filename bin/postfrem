@@ -37,7 +37,7 @@ use Carp;
 
 my $minimum = 100;
 
-my %categorytext=();
+my %categorytext;
 $categorytext{'SEX'}={1=>'male',2=>'female'}; #hamren
 my %units = ('AGE'=> 'years','WGT'=>'kg','WT'=>'kg','LBW'=>'kg','CRCO'=> 'ml/min','CLCR'=> 'ml/min','NEUY'=> 'mg'); #hamren
 
@@ -47,7 +47,7 @@ my $cmd_line = $0 . " " . join( " ", @ARGV );
 
 my %options;
 
-my %required_options = ();
+my %required_options;
 my %optional_options = (
     'offset_rawres:i' => undef,
     'in_filter:s' => undef,
@@ -611,9 +611,9 @@ my ($cov_5th,$cov_95th,$id_covariate_vectors,$categorical,$categoryinfo) =
     tool::frem::read_covdata(covnames => \@covnames,
                              filename => $options{'frem_dataset'});
 
-my @tvpar = ();
-my @cov_reference = ();
-my @cov_units=();
+my @tvpar);
+my @cov_reference;
+my @cov_units;
 
 for (my $i=0; $i<$ncov; $i++){
     my $cn = $covnames[$i];
@@ -888,7 +888,7 @@ if ($have_uncertainty) {
         my $samples;
         my $offset=1;
         $offset= $options{'offset_rawres'} if (defined $options{'offset_rawres'});
-        my @in_filter=();
+        my @in_filter;
         if ( defined $options{'in_filter'} ){
             #split string, assume comma separated
             foreach my $filt (split(/,/,$options{'in_filter'})){
@@ -948,9 +948,9 @@ if (defined $propagated_covmatrix) {
     print "Constructed (base model uncertainty propagated) model_4 covariance matrix: $options{'directory'}$filename\n";
 }
 
-my %coeff_arrays=();
-my %variance_arrays=();
-my %id_ratio_arrays=();
+my %coeff_arrays;
+my %variance_arrays;
+my %id_ratio_arrays;
 foreach my $par (@parnames){
     $id_ratio_arrays{$par}={};
     $coeff_arrays{$par}={};
