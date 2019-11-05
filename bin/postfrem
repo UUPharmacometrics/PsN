@@ -546,7 +546,7 @@ sub remove_params_in_covmatrix
 }
 
 ## Set the automatic renaming of modelfit directory
-chdir($options{'frem_directory'});
+chdir($options{'frem_directory'}) or die "Could not chdir into the frem directory";
 my $main_directory = tool::get_rundir(
     create => 1,
     basename => 'postfrem',
