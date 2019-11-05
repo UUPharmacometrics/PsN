@@ -1183,17 +1183,6 @@ for (my $l=0; $l<$id_count; $l++){
 close($parfh);
 
 
-#wikipedia: SD(x) lognormal with mu 0 and sigma :
-#exp(0.5*sigma^2)*sqrt(exp(sigma^2)-1)
-#estimate is $tvpar[$i]
-
-sub get_cv{
-    my $var=shift;
-    my $est = shift;
-    return 100*(exp(0.5*$var)*sqrt(exp($var)-1)); #SD
-}
-
-
 @probs = (0.05,0.95);
 $header = 'par.conditionedOn,observed.sd,sd.5th,sd.95th';
 foreach my $cov (@covnames){
