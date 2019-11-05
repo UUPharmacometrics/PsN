@@ -1807,7 +1807,6 @@ sub prepare_results
         # get final covariance matrix (if available)
         my ($full_has_covmat, $msg) = check_covstep(output => $full_model_cov->outputs->[0]);
         my $full_covmat = get_covmatrix(output => $full_model_cov->outputs->[0]) if (not $full_has_covmat);
-        my $posdef_err = tool::sir::check_matrix_posdef(matrix => $full_covmat);
     }
 
     my %ofv_section;

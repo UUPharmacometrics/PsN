@@ -701,8 +701,8 @@ if (defined $options{'rawres_input'}) {
                 my $base_covmatrix;
                 if ($base_model->outputs->[0]->get_single_value(attribute => 'covariance_step_successful') && -f $options{'base_model_cov'}) {
                     $base_covmatrix = tool::sir::get_nonmem_covmatrix(output => $base_model->outputs->[0]);
-                    my $posdef_err = tool::sir::check_matrix_posdef(matrix => $base_covmatrix);
-                    if ($posdef_err == 1) {
+                    my $is_posdef = linear_algebra::is_matrix_posdef(matrix => $base_covmatrix);
+                    if (not $is_posdef) {
                         print "Covariance matrix is numerically not positive definite (check that model_1 covariance step is OK)\n".
                               "(as checked with Cholesky decomposition without pivoting)\n";
                     } else {
@@ -768,8 +768,8 @@ if (defined $options{'rawres_input'}) {
         }
     }
     if (defined $covmatrix)    {
-        my $posdef_err = tool::sir::check_matrix_posdef(matrix => $covmatrix);
-        if ($posdef_err == 1){
+        my $is_posdef = linear_algebra::is_matrix_posdef(matrix => $covmatrix);
+        if (not $is_posdef) {
             if (defined $propagated_covmatrix) {
                 print "Propagated model_1 uncertainty resulted in not numerically positive definite matrix\n".
                       "(this is to be expected; not all elements can be constructed)\n";
@@ -830,13 +830,13 @@ if (defined $options{'rawres_input'}) {
                 $logger->warning("Condition number changed from $cnum_orig to $cnum_adj $cnum_change");
 
                 $covmatrix = $covmatrix_posdef;
-                $posdef_err=0;
+                $is_posdef = 1;
             } else {
                 # covariance matrix not positive definite and not forcing: no uncertainty
-                $have_uncertainty=0;
+                $have_uncertainty = 0;
             }
         }
-        if ($posdef_err != 1) {
+        if ($is_posdef) {
             # use valid covariance matrix for uncertainty
             my $parameter_hash = output::get_nonmem_parameters(output => $model->outputs->[0]);
             print "Sampling from the truncated multivariate normal distribution\n";

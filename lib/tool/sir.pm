@@ -728,8 +728,8 @@ sub modelfit_setup
     }
 
     if (defined $covmatrix) {
-        my $err = check_matrix_posdef(matrix => $covmatrix);
-        if ($err == 1) {
+        my $is_posdef = linear_algebra::is_matrix_posdef(matrix => $covmatrix);
+        if (not $is_posdef) {
             ($covmatrix, my $count) = linear_algebra::get_symmetric_posdef(
                 matrix => $covmatrix,
                 minEigen => 1E-10,
@@ -813,8 +813,6 @@ sub modelfit_setup
             croak("iteration ".($iteration-1)."iteration_resulthash not defined")
                 unless (defined $previous_iteration_resulthash and
                         defined $previous_iteration_resulthash->{'covar'});
-#                            defined $previous_iteration_resulthash->{'lambda'} and
-#                            defined $previous_iteration_resulthash->{'delta'} and
 
             if ($previous_iteration_resulthash->{'rank_deficient'}){
                 croak("The number of parameter vectors obtained in iteration ".($iteration-1)." is smaller than ".
@@ -822,8 +820,7 @@ sub modelfit_setup
                       "sampling cannot proceed in iteration $iteration.\n");
             }
             $covmatrix = $previous_iteration_resulthash->{'covar'};
-            my $err = check_matrix_posdef(matrix => $covmatrix);
-            if ($err == 1){
+            if (not linear_algebra::is_matrix_posdef(matrix => $covmatrix)) {
                 if ($self->boxcox){
                     croak("\nERROR: Empirical covariance matrix obtained after Box-Cox transformation is numerically ".
                           "not positive definite\n(as checked with Cholesky decomposition without pivoting). Cannot proceed with sir.\n");
@@ -909,8 +906,7 @@ sub modelfit_setup
         my $sampled_params_arr;
 
         # Forcing the covariance matrix to be positive definite
-        my $err = check_matrix_posdef(matrix => $covmatrix);
-        if ($err == 1) {
+        if (not linear_algebra::is_matrix_posdef(matrix => $covmatrix)) {
             ui->print(category => "sir", message => "Forcing covariance matrix used by sampler to be positive definite");
             ($covmatrix, my $count) = linear_algebra::get_symmetric_posdef(
                 matrix => $covmatrix,
@@ -1436,19 +1432,6 @@ sub mvnpdf
     }
 
     return \@pdf_array;
-}
-
-sub check_matrix_posdef
-{
-    my %parm = validated_hash(\@_,
-                              matrix => { isa => 'ArrayRef', optional => 0 },
-        );
-    my $matrix = $parm{'matrix'};
-
-    #copy and check it
-    my @copy = map { [@$_] } @{$matrix};
-    return linear_algebra::cholesky(\@copy);
-
 }
 
 sub compute_weights
@@ -2499,18 +2482,18 @@ sub check_blocks_posdef
                 $col=0;
             }
         }
-        my $cholesky_err = 0;
+        my $is_matrix_posdef = 1;
         if ($cholesky_decomposition) {
             # fast pre-check via cholesky decomposition
             # (if fine we don't need to decompose into eigenvalues, saving valuable time)
-            $cholesky_err = check_matrix_posdef(matrix => $mat);
-            if ($cholesky_err and !$adjust_blocks) {
+            $is_matrix_posdef = linear_algebra::is_matrix_posdef(matrix => $mat);
+            if (not $is_matrix_posdef and !$adjust_blocks) {
                 # if not adjusting we can already reject the blocks (otherwise it might get adjusted below)
                 $accept = 0;
                 last;
             }
         }
-        if (!$cholesky_decomposition or ($cholesky_err && $adjust_blocks)) {
+        if (!$cholesky_decomposition or (not $is_matrix_posdef && $adjust_blocks)) {
             (my $eigenvalues, my $Q) = linear_algebra::eigenvalue_decomposition($mat);
 
             if (linear_algebra::min($eigenvalues) < $minEigen){
@@ -2540,8 +2523,8 @@ sub check_blocks_posdef
                     if ($band_matrix){
                         if ($cholesky_decomposition) {
                             # save time via fast posdef check here also
-                            $cholesky_err = check_matrix_posdef(matrix => $newmat);
-                            if ($cholesky_err) {
+                            $is_matrix_posdef = linear_algebra::is_matrix_posdef(matrix => $newmat);
+                            if (not $is_matrix_posdef) {
                                 $accept = 0;
                             }
                         } else {

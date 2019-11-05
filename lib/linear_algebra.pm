@@ -1119,6 +1119,18 @@ sub cholesky
     return 0;
 }
 
+sub is_matrix_posdef
+{
+    my %parm = validated_hash(\@_,
+        matrix => { isa => 'ArrayRef', optional => 0 },
+    );
+    my $matrix = $parm{'matrix'};
+
+    #copy and try cholesky decomposition
+    my @copy = map { [@$_] } @{$matrix};
+    return !linear_algebra::cholesky(\@copy);
+}
+
 sub LU_factorization
 {
     my $A_matrix = shift;

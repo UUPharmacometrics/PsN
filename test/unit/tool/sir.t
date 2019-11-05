@@ -671,7 +671,7 @@ $ref = tool::sir::setup_variancevec_from_rse(rse_theta => $rsetheta,
 	parameter_hash => $parameter_hash);
 
 my $covmatrix = tool::sir::setup_covmatrix_from_variancevec(variance => $ref);
-is (tool::sir::check_matrix_posdef(matrix => $covmatrix),0,'rse covmatrix from neg covariance is posdef');
+ok(linear_algebra::is_matrix_posdef(matrix => $covmatrix), 'rse covmatrix from neg covariance is posdef');
 
 my $arr = tool::sir::setup_auto_cholesky_block_posdef_check(
 	param=>['theta','theta','theta','theta','theta','theta','theta',
