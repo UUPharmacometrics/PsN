@@ -157,6 +157,7 @@ has 'metadata' => ( is => 'rw', isa => 'HashRef', default => sub {{}} );     # C
 has 'copy_up' => ( is => 'rw', isa => 'Bool' );     # Set for non top-tools to still copy up results files
 has 'debug_rmd' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'html' => ( is => 'rw', isa => 'Bool', default => 0 );
+has 'pdf' => ( is => 'rw', isa => 'Bool', default => 0 );   # If both html and pdf are zero set pdf to 1
 
 
 sub BUILDARGS
@@ -374,6 +375,11 @@ sub BUILD
                 $output -> directory( $directory );
             }
         }
+    }
+
+    # Use pdf as default.
+    if (not $self->html and not $self->pdf) {
+        $self->pdf(1);
     }
 }
 
@@ -1974,7 +1980,7 @@ sub create_R_script
         $rmarkdown = 1; #TRUE
         if($self->rmarkdown) { # check if option -no-rmarkdown is used, then Rmarkdown file will not be created
                     #check if rmarkdown/pandoc(version 1.12.3 or higher)/latex are installed
-            if (not $self->html) {
+            if ($self->pdf) {
                 chdir $self->directory or die "Could not change directory before rmarkdown checking";
                 my $test_file = 'test_file_rmarkdown_installed.Rmd';
                 open ( SCRIPT, ">" . $test_file );
@@ -2026,6 +2032,7 @@ sub create_R_script
             file_type => $file_type,
             debug_rmd => $self->debug_rmd,
             html => $self->html,
+            pdf => $self->pdf,
         );
 
         $self->create_R_plots_code(rplot => $rplot) if ($self->can("create_R_plots_code"));

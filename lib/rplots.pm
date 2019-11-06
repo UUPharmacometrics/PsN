@@ -35,6 +35,7 @@ has 'R_lib_path' => (is => 'rw', isa => 'Str' );
 has 'file_type' => (is => 'rw', isa => 'Str' );
 has 'debug_rmd' => (is => 'rw', isa => 'Bool', default => 0 );
 has 'html' => (is => 'rw', isa => 'Bool', default => 0 );
+has 'pdf' => ( is => 'rw', isa => 'Bool', default => 1 );
 
 our $preambleline = '#WHEN THIS FILE IS USED AS A TEMPLATE THIS LINE MUST LOOK EXACTLY LIKE THIS';
 
@@ -350,32 +351,40 @@ sub make_plots
             }
         }
 
-        my $output_format = "";
+        my @output_formats;
         if ($self->html) {
-            $output_format = ", output_format='html_document'";
+            push @output_formats, 'html_document';
         }
-
+        if ($self->pdf) {
+            push @output_formats, 'pdf_document';
+        }
+       
         if($self->R_markdown && $self->rmarkdown_installed) {
-            system($executable . " -e \"$rlib rmarkdown::render(input='" . $self->filename . "'$debug_option$output_format)\" > PsN_".$self->toolname()."_plots.Rout 2>&1");
+
+            for my $format (@output_formats) {
+                system($executable . " -e \"$rlib rmarkdown::render(input='" . $self->filename . "'$debug_option, output_format='$format')\" > PsN_".$self->toolname()."_plots.Rout 2>&1");
+            }
         } else {
-            system($executable . " CMD BATCH ".$self->filename);
+            system($executable . " CMD BATCH " . $self->filename);
         }
         unlink('.RData');
-    }
-    my $stem = utils::file::get_file_stem($self->filename);
-    my $output_file;
-    if ($self->html) {
-        $output_file = "$stem.html";
-    } else {
-        $output_file = "$stem.pdf";
-    }
-    if (-e $output_file) {
-        my $output_path = File::Spec->rel2abs($output_file);
-        print "Successfully generated $output_path\n";
-    } else {
-        if ($self->level > 0) {
-            my $rout_path = File::Spec->rel2abs("$stem.Rout");
-            print "Error: could not generate report/plots. See $rout_path for R error messages\n";
+        my $stem = utils::file::get_file_stem($self->filename);
+        for my $format (@output_formats) {
+            my $output_file;
+            if ($format eq 'html_document') {
+                $output_file = "$stem.html";
+            } else {
+                $output_file = "$stem.pdf";
+            }
+            if (-e $output_file) {
+                my $output_path = File::Spec->rel2abs($output_file);
+                print "Successfully generated $output_path\n";
+            } else {
+                if ($self->level > 0) {
+                    my $rout_path = File::Spec->rel2abs("$stem.Rout");
+                    print "Error: could not generate report/plots. See $rout_path for R error messages\n";
+                }
+            }
         }
     }
     chdir($basedir);

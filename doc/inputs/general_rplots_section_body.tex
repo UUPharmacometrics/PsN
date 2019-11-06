@@ -13,7 +13,11 @@ If R is configured in psn.conf or command 'R' is available and option -rplots is
 Turn on to have rplots retain the .tex file for debugging.
 \nextopt
     \optname{html}
-        Render to html instead of pdf. This option makes rplots not dependent on \LaTeX\ being available.
+        Render to html. This option makes rplots not dependent on LaTeX being available.
+        Can be combined with -pdf
+    \nextopt
+    \optname{pdf}
+        Render to pdf. This is the default. Can be combined with -html
     \nextopt
 \optdefault{rplots}{level}
 -rplots<0 means R-script is not generated\\ 

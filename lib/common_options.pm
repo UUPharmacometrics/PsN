@@ -94,6 +94,7 @@ Getopt::Long::config("auto_abbrev");
           "model_subdir!",
           "debug_rmd!",
           "html!",
+          "pdf!",
     );
 
 
@@ -791,7 +792,13 @@ EOF
 
     $help_hash{-html} = <<'EOF';
     -html
-    Render to html instead of pdf. This option makes rplots not dependent on LaTeX being available.
+    Render to html. This option makes rplots not dependent on LaTeX being available.
+    Can be combined with -pdf
+EOF
+
+    $help_hash{-pdf} = <<'EOF';
+    -pdf
+    Render to pdf. This is the default. Can be combined with -html
 EOF
 
     $help_hash{-display_iterations} = <<'EOF';
