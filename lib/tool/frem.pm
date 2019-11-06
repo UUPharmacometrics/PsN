@@ -1488,7 +1488,6 @@ sub prepare_results
 
     $logger->info("Preparing and printing results");
     my $directory = $self->directory;
-    my $input_model = $self->models->[0];
     my $base_model = $self->model_1;
     my $model_2 = $self->model_2;
     my @final_models = @{$self->final_models};
@@ -1564,15 +1563,6 @@ sub prepare_results
         $logger->critical("No output model 4 (prepare_results), can't continue");
         die;
     }
-
-    # return section (input model name, date and versions)
-    my %return_section;
-    $return_section{'name'} = 'FREM run info';
-    $return_section{'labels'} = [[], ['Date', 'model', 'PsN version', 'NONMEM version']];
-    my @datearr = localtime;
-    my $the_date = ($datearr[5] + 1900) . '-' . ($datearr[4] + 1) . '-' . ($datearr[3]);
-    $return_section{'values'} = [[$the_date, $input_model->filename(), 'v' . $PsN::version, $self->nm_version]];
-    push(@{$self->results->[0]{'own'}}, \%return_section);
 
     # space section (2 empty lines)
     my %space_section;
