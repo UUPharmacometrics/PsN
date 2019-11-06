@@ -1874,5 +1874,22 @@ sub split_omegas
     $model->problems->[0]->omegas(\@omega_records);
 }
 
+sub label_all_omegas
+{
+    # Label all unlabled omegas.
+    my %parm = validated_hash(\@_,
+        model => { isa => 'model' },
+    );
+    my $model = $parm{'model'};
+
+    my $omega_options = omega_options_from_etas(model => $model, etas => [ 1 .. $model->nomegas->[0] ]);
+
+    for my $option (@$omega_options) {
+        if (not defined $option->label) {
+            $option->label($option->coordinate_string);
+        }
+    }
+}
+
 
 1;
