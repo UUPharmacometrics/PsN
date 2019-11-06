@@ -1877,6 +1877,7 @@ sub split_omegas
 sub label_all_omegas
 {
     # Label all unlabled omegas.
+    # Putting ETA(n) for the diagonal elements and OMEGA(n,m) for the off-diagonals
     my %parm = validated_hash(\@_,
         model => { isa => 'model' },
     );
@@ -1886,7 +1887,13 @@ sub label_all_omegas
 
     for my $option (@$omega_options) {
         if (not defined $option->label) {
-            $option->label($option->coordinate_string);
+            my $coord = $option->coordinate_string;
+            $coord =~ /OMEGA\((\d+),(\d+)\)/;
+            if ($1 == $2) {
+                $option->label("ETA($1)");
+            } else {
+                $option->label($coord);
+            }
         }
     }
 }
