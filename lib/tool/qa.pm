@@ -441,7 +441,7 @@ sub modelfit_setup
                     directory => 'frem_run',
                     rescale => 1,
                     run_sir => 0,
-                    rplots => 1,
+                    rplots => 0,
                     top_tool => 1,
                     clean => 1,
                     tool_options => $self->_special_tool_options,
