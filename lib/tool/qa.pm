@@ -453,6 +453,13 @@ sub modelfit_setup
                     local_options => [ 'skip_omegas' ],
                     common_options => \@common_options::tool_options
                 );
+                my $err = $frem->prepare_results();
+                if ($err) {
+                    print("Frem result generation err (no file could be generated):\n");
+                    print("$err\n");
+                } else {
+                    $frem->print_results();
+                }
             };
             if ($@) {
                 print $@;
