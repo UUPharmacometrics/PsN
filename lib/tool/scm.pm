@@ -2204,9 +2204,26 @@ sub linearize_setup
         }
         ($l2_index) = grep { $inputstrings[$_] eq 'L2' } (0 .. @inputstrings-1);
 
+        my $format = '23.16';
+        if ($PsN::nm_major_version == 7 and $PsN::nm_minor_version == 4 and (not defined $PsN::nm_patch_version or $PsN::nm_patch_version == 0 or $PsN::nm_patch_version == 1)) {
+            # Try to reduce precision in table output if buggy versions of NONMEM used with maximum 1000 characers wide datasets
+            my $column_width = 24;
+            while (1) {
+                my $table_width = scalar(@tablestrings) * $column_width;
+                if ($table_width < 1000) {
+                    $format = ($column_width - 1) . '.' . ($column_width - 7);
+                    last;
+                } elsif ($column_width <= 11) {
+                    # Problem unsolvable
+                    last;
+                }
+                $column_width--;
+            }
+        }
+
         push(@tablestrings,'NOPRINT','NOAPPEND','ONEHEADER');
         push(@tablestrings,'FILE='.$datafilename);
-        push(@tablestrings, 'FORMAT=s1PE23.16');
+        push(@tablestrings, "FORMAT=s1PE$format");
         $derivatives_model->set_records(type => 'table', record_strings => \@tablestrings);
 
         # An extra table was requested
