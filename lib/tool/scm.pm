@@ -2212,10 +2212,10 @@ sub linearize_setup
                 my $table_width = scalar(@tablestrings) * $column_width;
                 if ($table_width < 1000) {
                     $format = ($column_width - 1) . '.' . ($column_width - 7);
+                    print("Warning: PsN had to reduce the precision of the linearised dataset beacuse the used NONMEM version cannot handle dataset files wider than 1000 characters. Concider using NONMEM 7.4.3 or newer.\n");
                     last;
                 } elsif ($column_width <= 11) {
-                    # Problem unsolvable
-                    last;
+                    croak("Your version of NONMEM cannot handle dataset files wider than 1000 characters. PsN has tried to reduce the precision of the linearised dattaset, but was unable to reduce it enough. Concider using NONMEM 7.4.3 or newer.");
                 }
                 $column_width--;
             }
