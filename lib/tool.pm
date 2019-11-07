@@ -2065,6 +2065,8 @@ sub default_update_inits
     } elsif ($model->is_run()) {
         print "Updating initial estimates from: ", $model->outputs->[0]->full_name(), "\n";
         $model->update_inits(from_output => $model->outputs->[0], problem_number => $problem);
+    } else {
+        print "Warning: no lst-file could be found. Will use the parameter estimates in the model file.\n";
     }
 }
 
