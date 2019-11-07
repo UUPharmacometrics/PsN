@@ -1930,6 +1930,16 @@ sub do_model1
     $frem_model->filename('model_1b.mod');
     $frem_model->_write();
 
+    my $reordering = 0;
+    while (my ($key, $value) = each %$reorder_mapping) {
+        if ($key != $value) {
+            $reordering = 1;
+        }
+    }
+    if ($reordering) {
+        print("Warning: Frem did automatical reordering of some ETAs and OMEGAs.\n    The reordered model is in m1/model_1b.mod.\n    Although PsN presents its results using the original ordering, all NONMEM output will be in reordered form.\n")
+    }
+
     return ($frem_model, $output, $new_phi_path);
 }
 
