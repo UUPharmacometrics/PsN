@@ -330,24 +330,8 @@ sub make_plots
         my $debug_option = "";
         if ($self->debug_rmd) {
             $debug_option = ", clean=FALSE";
-            if (not $self->html) {
-                open my $fh, '<', $self->filename;
-                my @arr = <$fh>;
-                close $fh;
-                my @new;
-                for my $line (@arr) {
-                    if ($line =~ /^[^#]*output: pdf_document/) {
-                        push @new, ( "output:\n", "    pdf_document:\n", "        keep_tex: true\n" );
-                    } else {
-                        push @new, $line;
-                    }
-                }
-                unlink $self->filename;
-                open $fh, '>', $self->filename;
-                for my $line (@new) {
-                    print $fh $line;
-                }
-                close $fh;
+            if ($self->pdf) {
+                $debug_option .= ", output_options=list(keep_tex=TRUE)";
             }
         }
 
