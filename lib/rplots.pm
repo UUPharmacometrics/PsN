@@ -151,7 +151,6 @@ sub setup
          "pdf.title <- '".$self->pdf_title."'",
          "working.directory<-'".$workingdirectory."'",
          "results.directory <- '" . $results_dir . "'",
-         "model.filename<-'".$modelfile."'",
          "subset.variable<-".$subsetstring,
          "mod.suffix <- '".$modSuffix."'",
          "mod.prefix <- '".$modPrefix."'",

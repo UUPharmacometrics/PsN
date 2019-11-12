@@ -39,7 +39,7 @@ meta <- PsNR::metadata(working.directory)
     leg.txt <- c("pOFV","median pOFVsim","2.5th and 97.5th pOFVsim")
     legend("topright", col=c('red', 'green', 'green','green'), leg.txt, lty=c(1,4,3,3),box.lwd = 0,box.col = "white",bg = "white", lwd=2, cex=1)
   }
-  histogram_p_ofv_ppc(p_ofv_ppc_data,model.filename)
+  histogram_p_ofv_ppc(p_ofv_ppc_data, basename(PsNR::model_path(meta)))
 ```
 \pagebreak
 
@@ -119,7 +119,7 @@ To test wether the distribution is significantly different from a normal distrib
         }
       }
     }
-    histograms_i_ofv_ppc(list_i_ofv_ppc,model.filename)
+    histograms_i_ofv_ppc(list_i_ofv_ppc,basename(PsNR::model_path(meta)))
   }
 ```
 \pagebreak
@@ -144,7 +144,7 @@ To test wether the distribution is significantly different from a normal distrib
       legend("topright", col=c('red', 'green', 'green','green'), leg.txt, lty=c(1,4,3,3),
              box.lwd = 0,box.col = "white",bg = "white", lwd=2, cex=1)
     }
-    histogram_kld_i_ofv(list_kld_i_ofv,model.filename)# histogram
+    histogram_kld_i_ofv(list_kld_i_ofv, basename(PsnR::model_path(meta)))
   }
 ```
 \pagebreak
@@ -269,7 +269,7 @@ Correlation graph for EBE NPDE IOV
     # ChiSq Q-Q plot (save flag and noutlier values from function)
     list_plot_1 <- plot_1(ebenpde_tmp,theor_distance,emp_distance_sort,index_emp_distance,
                           out_distance,n.subjects,outlying_criteria,do_outlier_plot,
-                          model.filename)
+                          basename(PsNR::model_path(meta)))
     flag <- list_plot_1$flag
     noutlier <- list_plot_1$noutlier
     outlier_id_row <-list_plot_1$outlier_id_row
@@ -279,7 +279,7 @@ Correlation graph for EBE NPDE IOV
     # vector with values of theor_distance to print on the plot
     list_plot_2 <- plot_2(ebenpde_tmp,emp_distance_sort,theor_distance,index_emp_distance,
                           noutlier,flag,n.subjects,eta.names,outlying_criteria,outlier_id_row,
-                          do_outlier_plot,model.filename)
+                          do_outlier_plot, basename(PsNR::model_path(meta)))
     vector_theor_dist <- list_plot_2$vector_theor_dist
     noutlier <- list_plot_2$noutlier
     outlier_id_row <- list_plot_2$outlier_id_row

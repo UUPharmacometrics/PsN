@@ -74,7 +74,7 @@ param_boot_ppe <- function(ncp, nmc_samples, df=1, n.boot=1000, value="ncp",
 }
 
 # the script performs type I error assessment if the simulation model has the suffix _base/_reduced/_red/_r
-type_1 <- grepl("_(base|r|red|reduced)",model.filename)
+type_1 <- grepl("_(base|r|red|reduced)", basename(PsNR::model_path(meta)))
 
 # default for matching during a power assessment is to take the first estimated model as the full and all 
 # other models as alternatives for a reduced model

@@ -30,7 +30,7 @@ psn_options <- list(
   skip = skip,
   dvid_name = dvid_name
 )
-qa_results <- PsNR::retrieve_qa_results(working.directory, model.filename, psn_options)
+qa_results <- PsNR::retrieve_qa_results(working.directory, basename(PsNR::model_path(meta)), psn_options)
 ```
 
 
@@ -47,7 +47,7 @@ idv_all <- which_resmod_folders(directory=working.directory,idv_name)
 ```
 
 ```{r summary_about_ofv_values,results='asis',echo=F,warning=F,message=F,eval=!nonlinear}
-ofv_table <- ofv_summary_table(directory=file.path(working.directory,"linearize_run/scm_dir1/"),model.filename)
+ofv_table <- ofv_summary_table(directory=file.path(working.directory,"linearize_run/scm_dir1/"),basename(PsNR::model_path(meta)))
 ```
 
 ```{r structural_model_calculations,results='hide',echo=F,warning=F,message=F}
@@ -138,7 +138,7 @@ resmod_table_list <- get_resmod_ruv_table(directory=working.directory,idv_name,d
 ```{r influential_individuals_calculations,results='hide',echo=F,warning=F,message=F}
 # 5.Influential individuals (CDD)
 ii_list <- get_ii_table(cdd_directory=file.path(working.directory,"cdd_run"),
-                        model.filename=model.filename,
+                        model.filename=basename(PsNR::model_path(meta)),
                         cutoff=cdd_dofv_cutoff,
                         max_rows=cdd_max_rows,
                         skip,
@@ -447,7 +447,7 @@ if(all_outl_list$files_exist) {
 ```
 
 ```{r plot_iofv_vs_iofv,eval=(PsNR::rplots_level(meta) > 1),results='asis',echo=F,warning=F,message=F,fig.width=11,fig.height=6,fig.keep="high",fig.align="center"}
-phi1 <- file.path(working.directory,"linearize_run/scm_dir1",paste0(sub('.([^.]*)$','',model.filename),"_linbase.phi"))
+phi1 <- file.path(working.directory,"linearize_run/scm_dir1",paste0(sub('.([^.]*)$','',basename(PsNR::model_path(meta))),"_linbase.phi"))
 phi2 <- file.path(working.directory,"linearize_run/scm_dir1/derivatives.phi")
 make_iofv_plot <- iofv_vs_iofv(phi1,phi2)$make_plot
 if(make_iofv_plot) {
@@ -482,7 +482,7 @@ cat(gsub(pattern="\n", replacement="  \n", x=output))
 ```
 
 ```{r yaml_summary,results='asis',echo=F,warning=F,message=F}
-yaml_summary(model.filename,
+yaml_summary(basename(PsNR::model_path(meta)),
              ofv_table,
              resmod_structural_details,
              full_omega_block_list,
