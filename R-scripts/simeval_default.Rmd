@@ -15,6 +15,7 @@ library(PerformanceAnalytics)
 library(xpose4)
 R_info(directory=working.directory,only_libPaths=T)
 R_info(directory=working.directory)
+meta <- PsNR::metadata(working.directory)
 ```
 
 
@@ -44,7 +45,7 @@ R_info(directory=working.directory)
 
 ```{r histogram_iOFV_NPDE,results='hide',echo=FALSE,fig.width=9,fig.height=7,fig.keep="high",fig.align="center"}
 #2. draw a histogram of (iOFV NPDE)
-  if (rplots.level > 1) {
+  if (PsNR::rplots_level(meta) > 1) {
     i_ofv_npde_data <- i_ofv_npde(iofv.file)# calculation
     
     histogram_i_ofv_npde <- function(i_ofv_npde_data) {
@@ -91,7 +92,7 @@ To test wether the distribution is significantly different from a normal distrib
 \pagebreak
 
 ```{r histograms_iOFV_PPC,results='hide',echo=FALSE,fig.width=9,fig.height=7,fig.keep="high",fig.align="center"}  
-  if (rplots.level > 1) {
+  if (PsNR::rplots_level(meta) > 1) {
     #5. iOFV PPC
     outlier_ID <- list_i_ofv_res$outlier_ID
     list_i_ofv_ppc <- i_ofv_ppc(all.iofv.file,samples,outlier_ID)# calculation
@@ -124,7 +125,7 @@ To test wether the distribution is significantly different from a normal distrib
 \pagebreak
 
 ```{r histogram_iOFV_KLD,results='hide',echo=FALSE,fig.width=9,fig.height=7,fig.keep="high",fig.align="center"}  
-  if (rplots.level > 1) {
+  if (PsNR::rplots_level(meta) > 1) {
     #6. KLD iOFV
     list_kld_i_ofv <- kld_i_ofv(all.iofv.file,n.subjects,samples)# calculation
     
@@ -151,7 +152,7 @@ To test wether the distribution is significantly different from a normal distrib
 ```{r iiv_iov_eta_names_ebe_npde_summary_table,results='hide',echo=FALSE,warning=FALSE,fig.width=10,fig.height=5.5,fig.keep="high",fig.align="center"}
 
   # default for the do_outlier_plot
-  if(rplots.level > 1) {
+  if(PsNR::rplots_level(meta) > 1) {
     do_outlier_plot <- TRUE
   } else {
     do_outlier_plot <- FALSE

@@ -22,7 +22,7 @@ R_info(directory=working.directory,only_libPaths=T)
 ###     - a plot of comparative dOFV distributions: SIR, reference chi-square and proposal for each iteration
 ###     - a plot of CI95% obtained with SIR and compared to the proposal, parameter by parameter and for each iteration
 ###     - a plot of CI95% obtained with SIR only, parameter by parameter and for each iteration
-### - an additional PDF file if rplots.levels=2 with extended plots:
+### - an additional PDF file if rplots_levels=2 with extended plots:
 ###     - a plot of the proportion of resampled values in each bin of the parameter space, parameter by parameter and iteration by iteration
 ###     - a plot of the number of resampled values in the bin with the highest proportion as the number of samples increases, parameter by parameter and iteration by iteration
 ###     - a plot of the number of resampled values in the bin with the highest proportion as the number of samples increases, iteration by iteration (all parameters together)
@@ -31,6 +31,7 @@ theme_set(theme_bw(base_size=20))
 
 #add R_info to the meta file
 R_info(directory=working.directory)
+meta <- PsNR::metadata(working.directory)
 
 ### The rest of the code should be left as is (but can be changed if you want to improve the graphical output of course)
 
@@ -235,7 +236,7 @@ plot.cor <- function (cov,asym,final_est,title) {
 
 ### Number of resamples per bin
 
-if(rplots.level>1) {
+if (PsNR::rplots_level(meta) > 1) {
   N1                  <- 10                                     # number of bins for simulated parameters
   N2                  <- 5                                      # number of bins for resampled parameters
   resamp          <- rawres %>%
@@ -428,7 +429,7 @@ cor.final <- plot.cor(cov.final,asym.final,final_est,title="SIR")
 
 ### Parameter bin plots by iteration
 
-if(rplots.level>1) {
+if (PsNR::rplots_level(meta) > 1) {
 
   mM_ratio   <-  vector('list', LASTIT)
   m2_maxbin  <-  vector('list', LASTIT)
@@ -487,7 +488,7 @@ if(rplots.level>1) {
 
 ### Output plots
 
-if(rplots.level>=1) {
+if (PsNR::rplots_level(meta) >= 1) {
   pdf(file=paste(working.directory,"PsN_plots_base.pdf",sep=""),title=pdf.title,width=20,height=10)
   print(qdOFV_all)
   print(ci_sir)
@@ -496,7 +497,7 @@ if(rplots.level>=1) {
   dev.off()
 }
 
-if(rplots.level>1) {
+if (PsNR::rplots_level(meta) > 1) {
   pdf(file=paste(working.directory,"PsN_plots_extended.pdf",sep=""),title=pdf.title,width=15,height=15)
   print(mM_ratio)
   print(m2_maxbin)

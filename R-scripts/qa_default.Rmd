@@ -3,6 +3,8 @@ title: "Quality assurance"
 output:
     pdf_document: default
     html_document: default
+    #    includes:
+    #        in_header: header.html
 header-includes: #needed to create a pdf file
     - \usepackage{colortbl}
     - \usepackage{longtable}
@@ -20,6 +22,7 @@ knitr::opts_chunk$set(fig.pos = 'H')
 ```
 
 ```{r retrieve_qa_results, include = FALSE}
+meta <- PsNR::metadata(working.directory)
 psn_options <- list(
   parameters = parameters,
   continuous = continuous,
@@ -165,6 +168,23 @@ if(length(command_runtime$command)>0 && length(command_runtime$run_start)>0 && l
   cat(command_runtime$run_start,"\n\n")
   cat(command_runtime$run_finish,"\n\n")
 }
+```
+
+```{r test_chunk,echo=F}
+#popover_dt <- data.frame(
+#  position = c("top", "bottom", "right", "left"),
+#  stringsAsFactors = FALSE
+#)
+#popover_dt$`Hover over these items` <- kableExtra::cell_spec(
+#  paste("Message on", popover_dt$position), # Cell texts
+#  popover = kableExtra::spec_popover(
+#    content = c("Some content potentially long displayed above", "below", "right", "left"),
+#    title = "Even a title here!",                           # title will add a Title Panel on top
+#    position = popover_dt$position,
+#    trigger = c("click", "hover", "focus", "manual")
+#  ))
+#kableExtra::kable(popover_dt, escape = FALSE) %>%
+#  kableExtra::kable_styling("striped", full_width = FALSE)
 ```
 
 ```{r draw_ofv_table,results='asis',echo=F,warning=F,message=F,eval=!nonlinear}
@@ -426,7 +446,7 @@ if(all_outl_list$files_exist) {
 }
 ```
 
-```{r plot_iofv_vs_iofv,eval=(rplots.level > 1),results='asis',echo=F,warning=F,message=F,fig.width=11,fig.height=6,fig.keep="high",fig.align="center"}
+```{r plot_iofv_vs_iofv,eval=(PsNR::rplots_level(meta) > 1),results='asis',echo=F,warning=F,message=F,fig.width=11,fig.height=6,fig.keep="high",fig.align="center"}
 phi1 <- file.path(working.directory,"linearize_run/scm_dir1",paste0(sub('.([^.]*)$','',model.filename),"_linbase.phi"))
 phi2 <- file.path(working.directory,"linearize_run/scm_dir1/derivatives.phi")
 make_iofv_plot <- iofv_vs_iofv(phi1,phi2)$make_plot

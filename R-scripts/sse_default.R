@@ -8,12 +8,13 @@ library(plyr)
 R_info(directory=working.directory,only_libPaths=T)
 #add R_info to the meta file
 R_info(directory=working.directory)
+meta <- PsNR::metadata(working.directory)
 
 theme_set(theme_bw(12))						# set standard theme
 remove_na_dofvs <- TRUE 					# should dofvs with NA be removed? 
 max_power <- 0.99 								# until which value should the power curve be drawn
 alpha <- 0.05											# type-I error rate 
-diagnostics <- rplots.level>1 		# should diagnostics be created
+diagnostics <- PsNR::rplots_level(meta) > 1 		# should diagnostics be created
 # end of user options
 options(stringsAsFactors = FALSE)
 

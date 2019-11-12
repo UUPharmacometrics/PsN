@@ -10,6 +10,7 @@ library(plyr)
 library(tidyr)
 
 R_info(directory=working.directory, only_libPaths=T)
+meta <- PsNR::metadata(working.directory)
 
 # randtest plot
 pvalue <- 0.05 #for randtest.hist
@@ -20,7 +21,7 @@ if (have.base.model) {
 
     print(randtest.hist(raw.results.file, df=length(extra.thetas), p.val=pvalue)) 
 
-    if (rplots.level > 1) {
+    if (PsNR::rplots_level(meta) > 1) {
         # Check if runs with unsuccessful minimization will be ignored
         ignore.usm <- F
 

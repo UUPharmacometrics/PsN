@@ -128,10 +128,6 @@ sub setup
 
     my $subsetstring = 'NULL';
     $subsetstring = "'".$self->subset_variable."'" if (defined $self->subset_variable and length($self->subset_variable)>0);
-    my $levelstring=1;
-    if ($self->level() > 1){
-        $levelstring = $self->level();
-    }
 
     my $workingdirectory = $self->directory;
     my $results_dir;
@@ -151,7 +147,6 @@ sub setup
     $results_dir = double_backslashes(string => $results_dir);
 
     my @arr =(
-         'rplots.level <- '.$levelstring,
          "xpose.runno <- '".$runno."'",
          "toolname <- '".$self->toolname()."'",
          "pdf.filename <- paste0('PsN_',toolname,'_plots.pdf')",

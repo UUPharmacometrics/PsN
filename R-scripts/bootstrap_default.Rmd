@@ -16,6 +16,8 @@ library(dplyr)
 library(PerformanceAnalytics)
 #add R_info to the meta file
 R_info(directory=working.directory)
+
+meta <- PsNR::metadata(working.directory)
 ```
 
 ```{r fix_column._ames,include = FALSE}
@@ -55,7 +57,7 @@ if (dofv.is.run){
 
 ```{r Histogram_of_objective_function,results='hide',echo=FALSE,fig.width=10,fig.height=7,fig.keep="high",fig.align="center"}
 
-if (rplots.level > 1){
+if (PsNR::rplots_level(meta) > 1){
     print(bootplots[2:4]) #SEs ofv eigenvalues
 }
 ```
@@ -72,7 +74,7 @@ estimation_failures <- list_cook.cov$estimation_failures
 samples <- list_cook.cov$samples
 
 #plot cook scores and cov ratios to find influential individuals
-if (rplots.level > 1) {
+if (PsNR::rplots_level(meta) > 1) {
     gt <- plot_cook_cov(data_plots,failed_cov_ID,samples,estimation_failures)
     #plot
     grid::grid.draw(gt)

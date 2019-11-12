@@ -15,6 +15,7 @@ library(xpose4)
 R_info(directory=working.directory,only_libPaths=T)
 #add R_info to the meta file
 R_info(directory=working.directory)
+meta <- PsNR::metadata(working.directory)
 ```
 
 ```{r Summary_plot,results='hide',echo=FALSE,fig.width=9,fig.height=6.5,fig.keep="high",fig.align="center"}
@@ -109,7 +110,7 @@ if (is.null(subset.variable)){
 
 ```{r Individual_plots,results='hide',echo=FALSE,fig.width=9,fig.height=7,fig.keep="high",fig.align="center"}
 rplots.gr.1 <- FALSE
-if (rplots.level > 1){
+if (PsNR::rplots_level(meta) > 1){
   rplots.gr.1 <- TRUE
   #individual plots of ten random IDs
   #find idcolumn
@@ -132,7 +133,7 @@ if (rplots.level > 1){
 ```
 
 ```{r Plot_obj_obsi,results='hide',echo=FALSE,fig.width=9,fig.height=7,fig.keep="high",fig.align="center"}
-if (rplots.level > 1){
+if (PsNR::rplots_level(meta) > 1){
   #check if files exist
   if (res.table != '') {
     file_1_exists <- file_existence_in_directory(directory=results.directory, file_name=paste0(mod.prefix, xpose.runno, ".phi"))

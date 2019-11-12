@@ -6,6 +6,7 @@ library(ggplot2)
 R_info(directory=working.directory,only_libPaths=T)
 #add R_info to the meta file
 R_info(directory=working.directory)
+meta <- PsNR::metadata(working.director)
 
     pdf(file=pdf.filename,width=10,height=7,title=pdf.title)
 
@@ -63,7 +64,7 @@ R_info(directory=working.directory)
       print(default_plot)
     }
     
-    if (rplots.level > 1){
+    if (PsNR::rplots_level(meta) > 1){
       
       # for rplots>1 a PPE based curve will be included in the output
       
