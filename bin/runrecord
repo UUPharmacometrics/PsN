@@ -275,14 +275,24 @@ $parameter_names{'cvsesigmas'} = [];
 require model;
 
 for( my $run = $from; $run <= $to; $run++ ){
-    my $model_name = $root . $run . '.' . $mod_ext;
-
+    my @candidates = glob("$root*$run.$mod_ext");
+    my @matches;  # All candidates run1.mod, run01.mod etc
+    for my $filename (@candidates) {
+        if ($filename =~ /${root}0*$run\.$mod_ext/) {
+            push @matches, $filename;
+        }
+    }
+    next if (scalar(@matches) == 0);
+    if (scalar(@matches) > 1) {
+        die "Error: Multiple files with run number $run: ", join(', ', @matches), "\n";
+    }
+    my $model_name = $matches[0];
     my $output_directory;
     if ($options{'model_subdir'}) {
-        $output_directory = $root . $run;
+        $model_name =~ /^(${root}0*$run)/;
+        $output_directory = $1;
     }
 
-    next unless( -e $model_name and -e $model_name);
     $info{$run}{'Run'} = $run;
     my $model;
     my $output;
@@ -481,6 +491,7 @@ for( my $run = $from; $run <= $to; $run++ ){
             }
         }
     }
+    print "$model_name\n";
 }
 
 # Calulate the delta OFV, set relations to children, gather parameter names
