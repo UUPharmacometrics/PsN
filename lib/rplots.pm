@@ -137,12 +137,10 @@ sub setup
         $results_dir = $modeldir;
     }
     $results_dir = File::Spec->abs2rel($results_dir, $workingdirectory);
-    $modeldir = File::Spec->abs2rel($modeldir, $workingdirectory);
 
     my $rscripts_path = $PsN::Rscripts_dir;
     #Replace single backslash with double, assume windows, but do not change if already double
     $workingdirectory = double_backslashes(string => $workingdirectory);
-    $modeldir = double_backslashes(string => $modeldir);
     $rscripts_path = double_backslashes(string =>$rscripts_path);
     $results_dir = double_backslashes(string => $results_dir);
 
@@ -152,7 +150,6 @@ sub setup
          "pdf.filename <- paste0('PsN_',toolname,'_plots.pdf')",
          "pdf.title <- '".$self->pdf_title."'",
          "working.directory<-'".$workingdirectory."'",
-         "model.directory<-'".$modeldir."'",
          "results.directory <- '" . $results_dir . "'",
          "model.filename<-'".$modelfile."'",
          "subset.variable<-".$subsetstring,

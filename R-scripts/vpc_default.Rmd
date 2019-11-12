@@ -15,13 +15,14 @@ library(vpc)
 R_info(directory=working.directory,only_libPaths=T)
 #add R_info to the meta file
 R_info(directory=working.directory)
+meta <- PsNR::metadata(working.directory)
 ```
 
 ```{r vpc_plots, warning=FALSE, message=FALSE, results='asis',echo=FALSE,fig.width=9,fig.height=6.5,fig.keep="high",fig.align="center"}
 
 if (is.tte) {
     #data is in the model directory, go there to read input
-    setwd(model.directory)
+    setwd(dirname(PsNR::model_path(meta)))
     xpdb <- xpose4::xpose.data(xpose.runno)
     plots <- xpose4::kaplan.plot(object=xpdb, VPC=T)
     #go back to vpc directory 

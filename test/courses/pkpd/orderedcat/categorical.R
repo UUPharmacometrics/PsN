@@ -1,6 +1,8 @@
-
+library(PsNR)
 #this template requires simulation tables from xpose.runno
-setwd(model.directory)
+meta <- PsNR::metadata(working.directory)
+
+setwd(dirname(PsNR::model_path(meta)))
 
 library(xpose4)
 xpdb<-xpose.data(xpose.runno)
