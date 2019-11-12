@@ -446,6 +446,7 @@ sub modelfit_setup
                     clean => 1,
                     tool_options => $self->_special_tool_options,
                     imp_covariance => 1,
+                    derivatives => 1,
                 );
                 $frem->run();
                 $frem->print_options(   # To get skip_omegas over to postfrem

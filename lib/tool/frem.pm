@@ -79,6 +79,7 @@ has 'imp_covariance' => ( is => 'rw', isa => 'Bool', default => 1 );        # Sh
 
 has '_intermediate_models_path' => ( is => 'rw', isa => 'Str' );
 has 'etas_reorder_mapping' => ( is => 'rw', isa => 'HashRef' );
+has 'derivatives' => ( is => 'rw', isa => 'Bool', default => 0 );
 
 
 my $logger = logging::get_logger("frem");
@@ -2757,7 +2758,9 @@ sub prepare_model4
                 record_strings => $new_cov_records,
                 type => 'covariance'
             );
-            model_approximations::derivatives_model(model => $frem_model);   # Output the derivatives to be able to make VA-plot
+            if ($self->derivatives) {
+                model_approximations::derivatives_model(model => $frem_model);   # Output the derivatives to be able to make VA-plot
+            }
         }
         $frem_model->_write();
     } else {
