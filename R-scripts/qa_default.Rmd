@@ -2,9 +2,9 @@
 title: "Quality assurance"
 output:
     pdf_document: default
-    html_document: default
-    #    includes:
-    #        in_header: header.html
+    html_document:
+        includes:
+            in_header: !expr system.file("reporting", "header.html", package = "PsNR")
 header-includes: #needed to create a pdf file
     - \usepackage{colortbl}
     - \usepackage{longtable}
