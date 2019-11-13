@@ -713,14 +713,14 @@ sub BUILD
             if( scalar(@{$input_record}) > 0 ) { #always true
                 foreach my $line ( @{$input_record -> [0]} ) {
                     next if ( $line =~ /^\s*;/); #skip comments
-                    if ( $line =~ /([\w]+)=(MDV|ID)[^\w]/ ) {
+                    if ( $line =~ /^[^;]*([\w]+)=(MDV|ID)[^\w]/ ) {
                         if (($variable eq $2) && !($1 =~ /(SKIP|DROP)/ )) {
                             croak("It is forbidden to use a synonym ".
                                   "for $variable in the \$INPUT record.");
                         }
                         last;
                     }
-                    if ( $line =~ /(MDV|ID)=([\w]+)[^\w]/ ) {
+                    if ( $line =~ /^[^;]*\b(MDV|ID)=([\w]+)[^\w]/ ) {
                         if (($variable eq $1) && !($2 =~ /(SKIP|DROP)/ )) {
                             croak("It is forbidden to use a synonym ".
                                   "for $variable in the \$INPUT record.");
