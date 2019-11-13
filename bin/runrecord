@@ -215,7 +215,7 @@ if( not defined $options{'to'} ){
     my @fileset = glob "${root}*.${mod_ext}";
     $to = $from;
     my $maybe = $from+1;
-    while (grep( /^${root}${maybe}\.$mod_ext$/, @fileset)) {
+    while (grep( /^${root}0*${maybe}\.$mod_ext$/, @fileset)) {
         $maybe = $maybe + 1;
     }
     $to = $maybe-1;
