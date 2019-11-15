@@ -1162,7 +1162,6 @@ sub factors
               join(', ', keys(%{$self->column_head_indices})));
       } else {
         $column = $self->column_head_indices->{$column_head};
-        debugmessage(3,"$column_head is in column number $column");
       }
     }
 
@@ -2644,8 +2643,7 @@ sub _fisher_yates_shuffle
     my @array = defined $parm{'array'} ? @{$parm{'array'}} : ();
 
     my $arr_ref = $parm{'array'};
-    debugmessage(3,"Array of zero length received" )
-    if ( scalar @{$arr_ref} < 1 );
+
     my $i;
     for ($i = @$arr_ref; --$i;) {
         my $j = random_uniform_integer(1, 0, $i);
@@ -2705,7 +2703,7 @@ sub _read_header
 
     $hdrstring = pop(@data); #last value of array
     chomp($hdrstring) if (defined $hdrstring);
-    #    print "headerstring $hdrstring\n";
+
     @header = ();
     @header = split(/\,\s*|\s+/, $hdrstring) if (defined $hdrstring);
     if ($self->parse_header or not defined $self->idcolumn) {
@@ -2717,9 +2715,9 @@ sub _read_header
         for (my $i = 1; $i <= scalar @header; $i++) {
             if ($header[$i - 1] eq 'CONT') {
                 if (defined $self->cont_column and not $i == $self->cont_column) {
-                    debugmessage(3,"The supplied columns for the CONT data item (".
-                        $self->cont_column . ") does not match the column where the CONT ".
-                        "header was found ($i), using $i");
+                    warn "The supplied columns for the CONT data item (" .
+                        $self->cont_column . ") does not match the column where the CONT " .
+                        "header was found ($i), using $i";
                 }
                 $self->cont_column($i);
             } else {
@@ -2730,9 +2728,9 @@ sub _read_header
         for (my $i = 1; $i <= scalar @header; $i++) {
             if ($header[$i - 1] eq 'ID') {
                 if (defined $self->idcolumn and not $i == $self->idcolumn) {
-                    debugmessage(3,"The supplied columns for the ID data item (" .
-                        $self->idcolumn . ") does not match the column where the ID ".
-                        "header was found ($i), using $i");
+                    warn "The supplied columns for the ID data item (" .
+                        $self->idcolumn . ") does not match the column where the ID " .
+                        "header was found ($i), using $i";
                 }
                 $self->idcolumn($i);
             }

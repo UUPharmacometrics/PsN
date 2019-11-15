@@ -213,13 +213,13 @@ sub iwres_shrinkage
                     $iwres_shrinkage[0] = undef;
                 }
             } elsif ( @{$ofv -> [$probnum-1]} < 1 ) {
-                debugmessage(0,"There seems to be a problem with the results from ".
-                        $model -> filename().". Cannot compute shrinkage." );
+                warn "There seems to be a problem with the results from ".
+                        $model -> filename().". Cannot compute shrinkage.";
             } else {
                 my $mes =  "\n". $model -> full_name ."\nCall to output->ofv indicates that results ".
                     "exists in multiple subproblems.PsN can not yet compute iwres_shrinkage".
                     " on the subproblem level" ;
-                debugmessage(0,$mes);
+                warn $mes;
             }
         }
     }

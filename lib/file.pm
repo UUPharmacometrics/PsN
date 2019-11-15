@@ -60,7 +60,6 @@ sub merge_path_and_name
         }
     } else {
         $path = getcwd();
-        debugmessage(3,"file : No path given, assuming $path");
     }
 
     $path = $self -> clean_path( path => $path );
@@ -76,9 +75,6 @@ sub merge_path_and_name
 
     # Step 1
     if ( $self -> is_absolute( name => $name ) ) {
-        unless( $path eq $tmp ) {
-            debugmessage(3,"file : Path($path) differs from filename($name), using: $tmp");
-        }
         $path = $name;
     } else {
         $path .= $name;

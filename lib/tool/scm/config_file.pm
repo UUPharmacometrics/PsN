@@ -108,8 +108,6 @@ sub BUILD
                     $valid_hash_options{$key} = 'ARRAY';
                 }elsif( $list[0] eq 'SCALAR' ){
                     $valid_hash_options{$key} = 'SCALAR';
-                } else {
-                    debugmessage(1,"Type specification of $key is weird\n" );
                 }
             } else {
                 $valid_hash_options{$key} = 'SCALAR';

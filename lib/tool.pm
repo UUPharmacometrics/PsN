@@ -735,9 +735,6 @@ sub print_results
             }
         }
         close( RES );
-    } else {
-        debugmessage(3,"No subtools defined".
-            ", using default printing routine" );
     }
 
     $self->create_R_script() if ($self->top_tool);
@@ -1076,14 +1073,10 @@ sub run
             push ( @tool_results, $returns );
             if ( defined $prep_models ) {
                 push ( @tool_models, $prep_models );
-            } else {
-                debugmessage(3,"inside " . ref($self) . " but no prep_models defined from $tool 1");
             }
             $self -> post_subtool_analyze;
         }
 
-    } else {
-        debugmessage(3,"No tool object to run from tool object." );
     }
 
     $self->results->[0]{'subtools'} = \@tool_results;
@@ -1178,10 +1171,7 @@ sub harvest_output
             "\t search_output: $search_output");
     }
 
-    if ( $search_subtools ) {
-        debugmessage(3,"\n\nSearching subtools, which is a very untested functionality!!\n\n" );
-
-    } else {
+    if (not $search_subtools) {
 
         sub models_traverse2 {
             my %parameters = @_;
@@ -1230,7 +1220,6 @@ sub harvest_output
     } elsif ( defined $self->prepared_models ) {
         @models = @{$self->prepared_models};
     } else {
-        debugmessage(3,"Trying @accessors, but no prepared models available" );
         return {};
     }
 
@@ -1697,7 +1686,6 @@ sub _prepare_model
 
     my ($newdir, $newfile) = OSspecific::absolute_path( $self->directory .  '/m'.$model_number, '' );
     unless (-e $newdir){
-        debugmessage(3,"Making directory\t\t" . $newdir );
         unless(mkdir( $newdir )){
             croak("_prepare_model failed to create $newdir : $!");
         }

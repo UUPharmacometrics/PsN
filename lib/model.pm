@@ -1502,8 +1502,6 @@ sub get_coordslabels
             }
             $hash{$coord} = $label; #if not label defined then this will be coord-coord
           }
-        } else {
-          debugmessage(3,"no options defined in record ".ref($record) );
         }
           }
         }
@@ -1541,16 +1539,13 @@ sub get_rawres_parameter_indices
         $full_name = $directory.'/raw_results_structure';
     }elsif (defined $rawres_filename){
         my ($volume,$dir,$file) = File::Spec->splitpath($rawres_filename );
-#        print "vol $volume dir $dir file $file\n";
         $full_name = File::Spec->catpath($volume,$dir,'raw_results_structure');
     }else{
         croak ("neither filename, rawres_filename or directory defined as input to model::get_rawres_structure");
     }
     unless (-e $full_name){
-        debugmessage(3,"$full_name in get_rawres_structure does not exist");
         return undef;
     }
-#    print "full name is $full_name\n";
     my $structure = ext::Config::Tiny -> read($full_name);
     my %indices;
     foreach my $param ('theta','omega','sigma'){
@@ -2876,20 +2871,16 @@ sub get_option_value
     if ( defined $self->problems ) {
         @problems = @{$self->problems};
     } else {
-        debugmessage(3,"No problems defined in model" );
+        warn "No problems defined in model";
         return $fail;
     }
     unless( defined $problems[$problem_index] ){
-        debugmessage(3,"model -> get_option_value: No problem with ".
-                 "index $problem_index defined in model" );
         return $fail;
     }
 
     if ( defined $problems[$problem_index] -> $accessor ) {
         @records = @{$problems[$problem_index] -> $accessor};
     } else {
-        debugmessage(3,"model -> get_option_value: No record $record_name defined" .
-                 " in problem with index $problem_index." );
         return $fail;
     }
 
@@ -2900,8 +2891,6 @@ sub get_option_value
       if ((lc($record_index) eq 'all') || $record_index==$ri){
           my @val_arr = ();
           unless ((defined $records[$ri]) &&( defined $records[$ri] -> options )){
-          debugmessage(3,"model -> get_option_value: No options for record index ".
-                   "$record_index defined in problem." );
           if (lc($record_index) eq 'all'){
               if (lc($option_index) eq 'all'){
               push(@rec_arr,[]); #Case 4
@@ -3168,7 +3157,6 @@ sub flip_comments
     #return model object for copy
 
     if (-e $new_file_name and $write){
-        debugmessage(3,"overwriting existing flip_file\n");
         unlink($new_file_name);
     }
     #need to read fresh from disk, make sure no PsN rearrangements
@@ -3341,7 +3329,6 @@ sub update_inits
     }
     my %allparams;
     if ( defined $from_output ) {
-        debugmessage(3,"using output object specified as argument\n");
         $from_output->load;
     } elsif ( defined $from_hash ) {
         $from_output = undef;
@@ -3529,7 +3516,6 @@ sub update_inits
                                     ($option->init() == 0 and (defined $option->on_diagonal) and (not $option->on_diagonal()))
                                 ){
                                 my $mes = "update_inits: No match for $param $name found in $from_string";
-                                debugmessage(3,$mes);
                                 ui -> print( category => 'all',
                                              message  => $mes."\n");
                             }
@@ -3648,10 +3634,6 @@ sub _write
         }
     }
 
-    if (-e $filename and not $overwrite) {
-        debugmessage(3,"Trying to overwrite existing file $filename\n");
-    }
-
     my @formatted;
 
     # Insert annotation first
@@ -3739,7 +3721,7 @@ sub is_option_set
         croak("No problems defined in model" );
     }
     unless( defined $problems[$problem_number - 1] ){
-        debugmessage(3,"model -> is_option_set: No problem number $problem_number defined in model" );
+        warn "model -> is_option_set: No problem number $problem_number defined in model";
         return 0; # No option can be set if no problem exists.
     }
 
@@ -4299,8 +4281,6 @@ sub is_estimation
         # Anything else?
 
         # If none of the above is true, we are estimating.
-    } else {
-        debugmessage(3,"Problem nr. $problem_number not defined. Assuming estimation" );
     }
 
     return $is_est;

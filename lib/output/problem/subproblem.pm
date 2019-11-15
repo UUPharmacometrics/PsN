@@ -391,7 +391,6 @@ sub _read_eigen
         if ( /EIGENVALUES OF COR MATRIX OF ESTIMATE/ ) {
             $eig_area = 1;
             $start_pos = $start_pos + 4 ; # Jump forward to the index numbers
-            debugmessage(3,"Found the eigenvalue area" );
           INNER: while ( $_ = @{$self->lstfile}[ $start_pos++ ] ) { # Get rid of indexes
               last INNER if ( not /^\s+\d/ );
           }
@@ -616,7 +615,6 @@ sub _read_iteration_path
                     if( $ofvpath eq '**' ) {
                         my $ofvpath = $eval_path - $cumulative_evals;
                         $cumulative_evals = $eval_path;
-                        debugmessage(3,"Calculated eval_path = $ofvpath" );
                         $self->ofvpath([]) unless defined $self->ofvpath;
                         push(@{$self->ofvpath}, $ofvpath );
                     }
@@ -724,7 +722,6 @@ sub _read_iteration_path
             $self -> parsing_error( message =>$mes  );
             return;
         }
-        debugmessage(3,"rewinding to first position..." );
     } else {
         $self->lstfile_pos($start_pos);
         if ($self->classical_method() and $estprint) {
@@ -859,7 +856,6 @@ sub _scan_to_meth
                     if ( $start_pos > $#{$self->lstfile} ) { #we found end of file
                         #EOF This should not happen, raise error
                         my $errmess = "Reached end of file while scanning for termination message of next to last #METH\n";
-                        debugmessage(3,$errmess."$!" );
                         $self -> parsing_error( message => $errmess."$!" );
                         return; #not enough to break inner loop, must return
                     }
@@ -877,7 +873,6 @@ sub _scan_to_meth
         if( $start_pos > $#{$self->lstfile} ) { #we found end of file
             #EOF This should not happen, raise error
             my $errmess = "Reached end of file while scanning for #METH\n";
-            debugmessage(3,$errmess."$!" );
             $self -> parsing_error( message => $errmess."$!" );
             last;
         }
@@ -980,9 +975,7 @@ sub _read_npomegas
     $self->npetabars([@npetabar]);
     $self->npomegas([@npomega]);
     $self->npcorr([@npcorr]);
-    unless ( $success ) {
-        debugmessage(3,"rewinding to first position..." );
-    } else {
+    if ($success) {
         $self->lstfile_pos($start_pos);
     }
 }
@@ -1297,9 +1290,7 @@ sub _read_sethomsi
         $self->covariance_step_successful(1);
     }
 
-    unless ( $success ) {
-        debugmessage(3,"No standard errors for thetas, sigmas or omegas." );
-    } else {
+    if ($success) {
         $self->lstfile_pos($start_pos);
     }
 }
@@ -1517,7 +1508,6 @@ sub _read_term
         }
 
         if ( /MINIMUM VALUE OF OBJECTIVE FUNCTION/ ) {
-            debugmessage(3,"Hmmm, reached the OFV area" );
             last;
         }
         if ( /$obj_exp/ ) {
@@ -1525,12 +1515,10 @@ sub _read_term
         }
     }
     if ($success) {
-        debugmessage(3,"Found a minimization statement" );
         $self -> _read_minimization_message();
         $self -> _read_eval()                 if ($self -> parsed_successfully() and $self->classical_method());
         $self -> _read_significant_digits()   if ($self -> parsed_successfully() and $self->classical_method());
     } else {
-        debugmessage(3,"No minimization/termination statement found" ); #Back to starting line
         $self -> parsing_error( message => "Error in reading minim/term statement!\n" );
         return;
     }
@@ -1570,7 +1558,6 @@ sub _read_minimization_message
       if ( /^1/ or /MINIMUM VALUE OF OBJECTIVE FUNCTION/ or /^\s*\#OBJT:/ ) {
         # This is ok. We would expect to end up here probably
         # catching the '1' above
-        debugmessage(3,"Found minimization area and reached ".$_ );
         $success = 1;
         last;
       }
@@ -1661,10 +1648,6 @@ sub _read_minimization_message
     }
 
     push( @{$self->minimization_message}, @storemess );        # minimization_message is default set to empty array.
-
-    unless ( $success ) {
-      debugmessage(3,"No minimization message found" );
-    }
 }
 
 sub _read_thomsi
@@ -1911,9 +1894,7 @@ sub _read_thomsi
     $self->sdcorrform_omegacoordval(\%sdcorrform_omegacoordval);
     $self->sdcorrform_sigmacoordval(\%sdcorrform_sigmacoordval);
 
-    unless ( $success ) {
-      debugmessage(3,"No thetas, omegas or sigmas found" );
-    } else {
+    if ($success) {
       $self->lstfile_pos($start_pos - 1);
     }
 }
@@ -2441,9 +2422,7 @@ sub get_NM7_table_numbers
     @table_numbers = ();
     $not_found = 1;
 
-    if (scalar(@{$line_array}) < 1 ) {
-      debugmessage(3,"empty line_array input to get_NM7_table_numbers");
-    } else {
+    if (scalar(@{$line_array}) >= 1 ) {
       foreach my $line (@{$line_array}) {
         if ($line =~ /^\s*TABLE NO.\s+(\d+):/) {
           my $number = $1;
@@ -2563,9 +2542,7 @@ sub get_NM7_table_method
 
     $not_found = 1;
     $method_string = '';
-    if (scalar(@{$line_array}) < 1 ) {
-      debugmessage(3,"empty line_array input to get_NM7_table_method");
-    } else {
+    if (scalar(@{$line_array}) >= 1 ) {
       foreach my $line (@{$line_array}){
         if ($line =~ /^\s*TABLE NO.\s+(\d+):\s*([^:]+)/ ) {
           if ($1 == $table_number) {
@@ -2600,10 +2577,8 @@ sub get_NM7_tables
     @not_found_array = ();
     @tableline_array = ();
     if (scalar(@{$table_numbers}) < 1 ) {
-      debugmessage(3,"empty table number input to get_NM7_tables");
       unshift(@not_found_array, 1);
     } elsif (scalar(@{$line_array}) < 1 ) {
-      debugmessage(3,"empty line_array input to get_NM7_tables " );
       @not_found_array = 1 x scalar(@{$table_numbers});
     } else {
       @tableline_array = ();
@@ -2705,10 +2680,6 @@ sub not_used_get_NM7_tables_all_types
         ($cov_ref,$not_found) =
             $self->get_NM7_tables('line_array' => $cov_array,
                                   'table_numbers' => $table_numbers);
-        for (my $i= 0; $i < $number_count; $i++) {
-            debugmessage(3,"did not find table " . $table_numbers->[$i] . " in cov_file array" )
-                if ($not_found->[$i]);
-        }
         if (($number_count == 1) && ($not_found->[0] == 0)) {
             ($check_string,$not_found_single) =
                 $self->get_NM7_table_method('line_array' => $cov_ref,
@@ -2727,10 +2698,6 @@ sub not_used_get_NM7_tables_all_types
     if (defined $cor_array and $expect_cov){
         ($cor_ref,$not_found) =
             $self->get_NM7_tables('line_array' => $cor_array, 'table_numbers' => $table_numbers);
-        for (my $i = 0; $i < $number_count; $i++) {
-            debugmessage(3,"did not find table ".$table_numbers->[$i]." in cor_file array" )
-                if ($not_found->[$i]);
-        }
         if (($number_count == 1) && (not $not_found->[0])) {
             ($check_string,$not_found_single) =
                 $self->get_NM7_table_method('line_array' => $cor_ref,
@@ -2751,10 +2718,6 @@ sub not_used_get_NM7_tables_all_types
         ($coi_ref,$not_found) =
             $self->get_NM7_tables('line_array' => $coi_array,
                                   'table_numbers' => $table_numbers);
-        for (my $i = 0; $i < $number_count; $i++){
-            debugmessage(3,"did not find table ".$table_numbers->[$i]." in coi_file array" )
-                if ($not_found->[$i]);
-        }
         if (($number_count == 1) && (not $not_found->[0])) {
             ($check_string,$not_found_single) =
                 $self->get_NM7_table_method('line_array' => $coi_ref, 'table_number' => $table_numbers ->[0]);
@@ -2772,10 +2735,6 @@ sub not_used_get_NM7_tables_all_types
     if (0 and (defined $phi_array)) {
         ($phi_ref,$not_found) =
             $self->get_NM7_tables('line_array' => $phi_array, 'table_numbers' => $table_numbers);
-        for (my $i = 0; $i < $number_count; $i++) {
-            debugmessage(3,"did not find table ".$table_numbers->[$i]." in phi_file array" )
-                if ($not_found->[$i]);
-        }
         if (($number_count == 1) && (not $not_found->[0])) {
             ($check_string,$not_found_single) =
                 $self->get_NM7_table_method('line_array' => $phi_ref, 'table_number' => $table_numbers ->[0]);

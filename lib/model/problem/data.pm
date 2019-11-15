@@ -125,10 +125,6 @@ sub format_filename
         $string = '"'.$string.'"';
     }
 
-    if (length($string)> 80){
-        debugmessage(3,"datafile string too long, more than 80,\n $string");
-    }
-
     return $string;
 }
 
@@ -202,13 +198,6 @@ sub _format_record
 
     my $filestring = $self->format_filename(write_directory => $write_directory,
                                             relative_data_path => $relative_data_path);
-
-    if (length($filestring)> 80){
-        #we should not end up here, should have been picked up by model
-        #that should copy data if too long
-        #TODO fix not implemented yet
-        debugmessage(1,"datafile string too long, more than 80,\n $filestring");
-    }
 
     my $line = 0;
     $formatted[$line] = '$DATA'.(' ' x (10 - length('DATA')) ).$filestring;

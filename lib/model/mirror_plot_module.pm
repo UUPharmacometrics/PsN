@@ -37,7 +37,7 @@ sub BUILD
     }
 
     if( $self->cwres and not $self->mirror_from_lst ) {
-        debugmessage(3,'MSFO computation method cannot be used with cwres. mirror_from_lst enabled' );
+        warn 'MSFO computation method cannot be used with cwres. mirror_from_lst enabled';
         $self->mirror_from_lst(1);
     }
 

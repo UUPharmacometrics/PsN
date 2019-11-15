@@ -774,7 +774,7 @@ sub run
 
                             #leave if error message,
                             unlink( <$work_dir/*> )  ;
-                            unless( rmdir( $work_dir ) ){ debugmessage(3,"Unable to remove $work_dir directory: $! ." )};
+                            unless( rmdir( $work_dir ) ){ warn "Unable to remove $work_dir directory: $! ."};
                             trace(tool => 'modelfit', message => "clean level is >=3, removed $work_dir", level => 2);
                         }
                     } else {
@@ -1748,7 +1748,7 @@ sub diagnose_lst_errors
             #do not do this for high run numbers (we do not want 100 prints for e.g. a bootstrap)
             my $fname = 'FMSG';
             $fname = $nmtran_error_file if (-e $nmtran_error_file);
-            open( FILE, "$fname" ) ||    debugmessage(3," Could not open $fname for reading" );
+            open( FILE, "$fname" ) ||    warn "Could not open $fname for reading";
             my @lines = <FILE>;
             close( FILE );
             $failure_mess .= ". Contents of FMSG:\n";
@@ -2525,7 +2525,6 @@ sub restart_needed
 
         if($model_crashed){
             #not if handle maxevals exceeded
-            debugmessage(1,"Restarting crashed run " . $output_file->full_name . "\n" . $output_file->parsing_error_message);
             update_crash_number(modext => $self->modext,
                                 queue_info => $queue_info_ref,
                                 retry => ${$tries},

@@ -246,9 +246,6 @@ sub BUILD
                     scalar(@{$self->models->[0]->problems->[0]->priors()}) > 0 ) {
                     my $tnpri = 0;
                     foreach my $rec (@{$self->models->[0]->problems->[0]->priors()}) {
-                        unless ((defined $rec) &&( defined $rec->options )) {
-                            debugmessage(3,"No options for rec \$PRIOR" );
-                        }
                         foreach my $option ( @{$rec->options} ) {
                             if ((defined $option) and
                                 (($option->name eq 'TNPRI') || (index('TNPRI', $option->name ) == 0))) {
@@ -691,9 +688,6 @@ sub BUILD
     unless (defined $self->orig_table) {
         my $np_record = $self->models->[0]->record(record_name => 'nonparametric');
 
-        if ( scalar (@{$self->models->[0]->record(record_name => 'table')}) > 0 ) {
-            debugmessage(3,'Tool will delete existing $TABLE records in the modelfile.');
-        }
         if (defined $self->msfo_file) {
             if (defined $self->lst_file) {
                 croak('Tool does not allow using both -lst_file '.
@@ -937,9 +931,6 @@ sub modelfit_setup
                 scalar(@{$model_simulation->problems->[0]->priors()})>0 ){
                 my $tnpri = 0;
                 foreach my $rec (@{$model_simulation->problems->[0]->priors()}){
-                    unless ((defined $rec) &&( defined $rec -> options )) {
-                        debugmessage(3,"No options for rec \$PRIOR" );
-                    }
                     foreach my $option ( @{$rec -> options} ) {
                         if ((defined $option) and
                             (($option->name eq 'TNPRI') || (index('TNPRI',$option ->name ) == 0))){

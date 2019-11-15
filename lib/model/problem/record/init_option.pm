@@ -93,7 +93,6 @@ sub check_and_set_init
             }else{
                 $new_value = "-0.00001";
             }
-            debugmessage(3,$original." is too small, setting $new_value instead ");
             $error_code[1] = 1;
         } else {
             #still NM6, but absolute value large enough

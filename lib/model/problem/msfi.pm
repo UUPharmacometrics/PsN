@@ -101,7 +101,7 @@ sub format_filename
     }
 
     if (length($string)> 71){
-        debugmessage(3,"msfi file string too long, more than 71,\n $string");
+        warn "msfi file string too long, more than 71,\n $string";
     }
 
     return $string;
@@ -129,7 +129,7 @@ sub _format_record
                                             relative_msfi_path => $relative_msfi_path);
 
     if (length($filestring)> 71){
-        debugmessage(1,"msfi file string too long, more than 71,\n $filestring");
+        warn "msfi file string too long, more than 71,\n $filestring";
     }
 
     my $line =0;
@@ -238,7 +238,6 @@ sub copy_msfi_file
                 }
             }else{
                 croak("msfi file $old does not exist in copy_msfi_file to $new") unless $ignore_missing_file;
-                debugmessage(3,"msfi file $old does not exist in _copy_msfi_file");
             }
             $self->set_filename(filename => $new);
         }

@@ -767,8 +767,6 @@ sub _init_attr
 
         # }}} Update values
     } else {
-        # {{{ Retrieve values
-
         my @prev_values = ();
         my $done=0;
         foreach my $record ( @records ) {
@@ -785,8 +783,8 @@ sub _init_attr
                         push( @prev_values, $option -> $attribute );
                     }
                 } else {
-                    debugmessage(3,"Trying to get attribute $attribute, ".
-                         "but no options defined in record ".ref($record) );
+                    warn "Trying to get attribute $attribute, " .
+                         "but no options defined in record " . ref($record);
                 }
                 $prev_size = $record -> size unless ( $record -> same );
             }
@@ -804,11 +802,7 @@ sub _init_attr
                 push( @part_vals, $parameter_values[$num -1] );
             }
             @parameter_values = @part_vals;
-        } else {
-            debugmessage(3,"Model::problem -> _init_attr: parameter_numbers undefined, using all." );
         }
-
-        # }}} Retrieve values
     }
 
     return \@parameter_values;
@@ -892,8 +886,6 @@ sub indexes
             push( @part_indexes, $indexes[$num -1] );
         }
         @indexes = @part_indexes;
-    } else {
-        debugmessage(3,"Model::problem -> indexes: parameter_numbers undefined, using all." );
     }
 
     return \@indexes;
@@ -984,7 +976,6 @@ sub _option_val_pos
     if( defined $self->$accessor ) {
         @records = @{$self->$accessor} ;
     } else {
-        debugmessage(3,"No records of type $accessor" );
         @records = ();
     }
     my @options = ();
@@ -1127,7 +1118,6 @@ sub _read_table_files
     if ( defined $table_name_ref and scalar @{$table_name_ref} >= 0 ) {
         $self->table_files([]);
         foreach my $table_name ( @{$table_name_ref} ) {
-            debugmessage(3,"Creating new table_file object from $table_name" );
             my $new_table = data -> new( directory            => $self->directory,
                                          filename             => $table_name,
                                          ignoresign => '@',
@@ -1196,8 +1186,6 @@ sub remove_option
             $records[$recnum-1] -> remove_option( name => $option_name,
                 fuzzy_match => $fuzzy_match );
         }
-    } else {
-        debugmessage(3,"No records of type $accessor" );
     }
 }
 
@@ -1243,8 +1231,6 @@ sub add_option
         if( $add_record ) {
             $self -> add_records( type => $record_name,
                     record_strings => ["$option_name=$option_value"] );
-        } else {
-            debugmessage(3,"No records of type $accessor and add_option set not to add one" );
         }
     }
 }
@@ -1294,9 +1280,6 @@ sub add_marginals_code
         push( @{$last_code}, @last_params );
         $record_ref -> [0] -> verbatim_last( $last_code );
         last; # Only insert the code in the first record found (of the ones specified above)
-    } else {
-        debugmessage(3,"No \$ERROR record was found. Can't add verbatim code".
-                " to access nonparametric marginals" );
     }
 }
 
@@ -2908,9 +2891,6 @@ sub update_prior_information
     if ((defined $self->priors()) and scalar(@{$self -> priors()})>0 ){
         my $nwpri=0;
         foreach my $rec (@{$self -> priors()}){
-            unless ((defined $rec) &&( defined $rec -> options )){
-                debugmessage(3,"No options for rec \$PRIOR" );
-            }
             foreach my $option ( @{$rec -> options} ) {
                 if ((defined $option) and
                         (($option->name eq 'NWPRI') || (index('NWPRI',$option ->name ) == 0))){
@@ -3601,7 +3581,6 @@ sub is_option_set
     if ( defined $self -> $accessor ) {
         @records = @{$self -> $accessor};
     } else {
-        debugmessage(3,"problem -> is_option_set: No record $record defined");
         return 0;
     }
 
@@ -3619,13 +3598,11 @@ sub is_option_set
 
     foreach my $inst (@record_numbers){
         unless(defined $records[$inst - 1] ){
-            debugmessage(3,"problem -> is_option_set: No record number $inst defined in problem." );
             next;
         }
         if ( defined $records[$inst - 1] -> options ) {
             @options = @{$records[$inst - 1] -> options};
         } else {
-            debugmessage(3,"No option defined in record: $record in problem." );
             next;
         }
         foreach my $option ( @options ) {

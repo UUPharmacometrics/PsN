@@ -125,7 +125,6 @@ sub modelfit_setup
              defined $self -> omega_log or
              defined $self -> sigma_log ) {
         # First step, register the estimates from the original runs
-        debugmessage(3,"First llp step, register estimates from original run" );
         $self -> _register_estimates( first        => 1,
                                       model_number => $model_number);
         $first = 1;
@@ -398,7 +397,6 @@ sub _register_estimates
                         print LOG2 sprintf("\"%10s\"",$label),',',sprintf("%10s",$side),',',
                         sprintf("%10f",$est),',',sprintf("%10f",$diff),"\n";
                         my $bound = $bounds{$side}->[$j][$num-1];
-                        debugmessage(3,"Registering diff $diff" );
                         if ( $side eq 'lower' ) {
                             unshift( @{$self->$logfunc->{$num}->[$j]->[1]}, $diff );
                             $est = $self->$logfunc->{$num}->[$j]->[0]->[0];
@@ -411,17 +409,12 @@ sub _register_estimates
                                                               goal   => $self -> ofv_increase,
                                                               sigdig => $self -> significant_digits );
                         my $print_diff = &FormatSigFigs($diff, $self -> significant_digits );
-                        debugmessage(3,"New OFV diff: $print_diff" );
-                        debugmessage(3," equals goal ".$self->ofv_increase.
-                             ". This side is finished" ) if $finished;
                         if ( $finished ) {
                             $self->$logfunc->{$num}->[$j]->[2]->{$side} = 1;
                         } elsif ( defined $bound and
                                   $self -> _test_sigdig( number => $est,
                                                          goal   => $bound,
                                                          sigdig => 2 ) ) {
-                            debugmessage(3,"Estimate $est too close to $side boundary $bound".
-                                 " terminating search" );
                             $self->$logfunc->{$num}->[$j]->[2]->{$side} = 2;
                         } else {
                             $active = 1;
@@ -521,13 +514,8 @@ sub modelfit_analyze
             ( $returns, $prep_models ) = $internal_llp -> run;
 
             if ( defined $prep_models ) {
-                debugmessage(3,"Inside " . ref($self) . " have called internal llp " . scalar(@{$prep_models}));
-                #FIXME for Moose
                 push (@{$self->prepared_models->[$model_number - 1]{'subtools'}}, $prep_models);
-            } else {
-                debugmessage(3,"Inside analyze" . ref($self). " but no prep_models defined from internal llp");
             }
-
         } else {
             $self->raw_results->[$model_number - 1] = $self->tools->[0]->raw_results;
             $self->update_raw_results(model_number => $model_number);
@@ -615,7 +603,6 @@ sub _create_models
                     for ( my $j = 1; $j <= scalar @{$par_log{$num}}; $j++ ) {
                         # Is this side of the problem finished?
                         if ( $self->$logfunc->{$num}->[$j-1]->[2]->{$side} ){
-                            debugmessage(3,"This side is finished!" );
                             next;
                         }
                         my $sofar = scalar @{$par_log{$num}->[$j-1]->[0]};
@@ -635,8 +622,6 @@ sub _create_models
                         } else {
                             $par_log{$num}->[$j-1]->[0]->[$sofar-1] = $diagnostics[0][2];
                         }
-                        debugmessage(3,"Registering used value ".
-                             $diagnostics[0][2]." for the $side side" );
                         $new_mod -> fixed( parameter_type    => $param,
                                            parameter_numbers => [[$num]],
                                            problem_numbers   => [$j],
@@ -662,7 +647,6 @@ sub _create_models
                     for ( my $j = 1; $j <= scalar @{$par_log{$num}}; $j++ ) {
                         # Is this side of the problem finished?
                         if ( $self->$logfunc->{$num}->[$j-1]->[2]->{$side} ){
-                            debugmessage(3,"This side is finished!" );
                             next;
                         }
                         $active_flag = 1;
@@ -909,7 +893,6 @@ sub _make_new_guess
                         # Is this side of the problem finished?
                         next if $self->$logfunc->{$num}->[$j]->[2]->{$side};
                         # Collect the model outputs
-                        debugmessage(3,"Making new guess for $param number $num on the $side side" );
                         my $bound = $bounds{$side}->[$j][$num-1];
                         my $guess = _guess( param_log => $self->$logfunc->{$num}->[$j],
                                             side => $side,
@@ -1017,11 +1000,9 @@ sub _try_bounds
         my @s_log = sort { $a <=> $b } @param_log;
         if ( $side eq 'lower' and $guess < $bound ) {
             $guess = ( $bound - $s_log[0])*0.9+$s_log[0];
-            debugmessage(3,"Corrected lower guess to $guess" );
         }
         if ( $side eq 'upper' and $guess > $bound ) {
             $guess = ( $bound - $s_log[$#s_log])*0.9+$s_log[$#s_log];
-            debugmessage(3,"Corrected upper guess to $guess" );
         }
     }
 

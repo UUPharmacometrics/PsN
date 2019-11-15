@@ -89,8 +89,6 @@ sub BUILD
     # in file.out parsed into memory.
     #
 
-    debugmessage(3,"Initiating new\tNM::output object from file " . $self->filename );
-
     if ( defined $self->filename and $self->filename ne '' ) {
         my $name;
         my $directory;
@@ -323,7 +321,6 @@ sub access_any
     my @own_problems;
     if( defined $self->problems ) {
         unless( scalar(@problems) > 0 ){
-            debugmessage(3,"Problems undefined, using all" );
             @problems = (1 .. scalar @{$self->problems});
         }
         @own_problems = @{$self->problems};
@@ -334,7 +331,6 @@ sub access_any
     foreach my $i ( @problems ) {
         if ( defined $own_problems[$i - 1] ) {
             if (( defined( $own_problems[$i - 1] -> can( $attribute ) ) ) and (not $attribute eq 'estimation_step_run')) {
-                debugmessage(3,"method $attribute defined on the problem level" );
                 my $meth_ret = $own_problems[$i - 1] -> $attribute;
                 if ( ref($meth_ret) eq "HASH" ) {
                     push( @return_value, $meth_ret ) if defined $meth_ret;
@@ -356,7 +352,6 @@ sub access_any
                     push( @return_value, $meth_ret ) if defined $meth_ret;
                 }
             } else {
-                debugmessage(3,"method $attribute defined on the subproblem level" );
                 my $problem_ret = $own_problems[$i - 1] -> access_any(
                     attribute         => $attribute,
                     subproblems       => \@subproblems,
@@ -3069,7 +3064,6 @@ sub _read_problems
     # This is a private method, and should not be used outside
     # this file.
 
-    debugmessage(2,"Parsing output: " . $self->full_name );
     my @lstfile = utils::file::slurp_file($self->full_name);
 
     # Get rid of SIR results. When needed send to separate parser
@@ -3352,8 +3346,6 @@ sub _read_problems
     }
 
     unless( $success ) {
-        debugmessage(1,'Could not find a PROBLEM NO statement in "' .
-             $self -> full_name . '"' . "\n" ) unless $self->ignore_missing_files;
         $self->parsing_error( message => 'Output file seems interrupted, could not find a PROBLEM NO statement in "' .
                               $self->full_name . '"' . "\n" );
         $self->parsed_successfully(0);

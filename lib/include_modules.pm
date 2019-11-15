@@ -3,18 +3,7 @@ use Carp;
 use ui;
 require Exporter;
 our @ISA = qw(Exporter);
-our @EXPORT = qw(cluck longmess shortmess carp croak debugmessage warn_once);
-
-our $debuglevel=0;
-
-sub debugmessage
-{
-    my $messagelevel=shift;
-    my $message = shift;
-    if ($messagelevel <= $debuglevel){
-        ui->print(category => 'all', message => $message);
-    }
-}
+our @EXPORT = qw(cluck longmess shortmess carp croak warn_once);
 
 my %one_time_warnings;
 

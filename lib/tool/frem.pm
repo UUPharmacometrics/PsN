@@ -3274,21 +3274,6 @@ sub read_covresults
     return \%res;
 }
 
-sub get_recovery_string
-{
-    my $filename = shift;
-    if (-e $filename){
-        debugmessage(1,"Main process reading child results from $filename");
-    }else{
-        croak(' recovery file does not exist: '.$filename);
-    }
-    my $fh;
-    open($fh, $filename) or croak("could not read recovery file $filename");
-    my $string = join(' ',<$fh>);
-    close($fh);
-    return $string;
-}
-
 sub modelfit_setup
 {
     my $self = shift;

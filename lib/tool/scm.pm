@@ -3316,20 +3316,6 @@ sub modelfit_analyze
             $self -> base_criteria_values( $new_base_crit_val_ref);
         }
 
-        if ( defined $prep_models ) {
-            debugmessage(3," have called internal scm " .scalar @{$prep_models} );
-
-            # Enclose $prep_models in array ref to reflect the
-            # per-tool level, even though a modelfit does not
-            # prepare any models itself
-            #push ( @{$self -> prepared_models->[$model_number-1]{'subtools'}}, $prep_models -> [0]);
-
-            # Push the results of the internal scm on the results attribute:
-            #push( @{$self -> results->[$model_number-1]{'subtools'}}, $returns );
-        } else {
-            debugmessage(3," no prep_models defined from internal scm " );
-        }
-
         # set final model to this steps' best model if the internal scm returned 'basic_model'.
         foreach my $return ( @{$returns ->[0]{'own'}} ) {
             $final_model = $return -> {'values'}[0][0] if ( $return -> {'name'} eq 'final.model' );
@@ -3406,8 +3392,6 @@ sub modelfit_analyze
     $return_section4{'values'}[0][0] = $final_model;
     $return_section4{'labels'} = undef;
     push( @{$self -> results->[$model_number-1]{'own'}},\%return_section4 );
-
-    debugmessage(3,"Finished in modelfit_analyze!" );
 }
 
 sub should_add_mdv
@@ -4159,7 +4143,6 @@ sub _create_models
     } else {
         ui -> print( category => 'scm',
             message  => "Recreating models from previously run step" );
-        debugmessage(3,"Creating applicant model from file on disk" );
         if ( not -e $self -> directory."/m$model_number/done.log" ) {
             croak("No file ".$self -> directory.
                 "/m$model_number/done.log seem to exist although the existance".
@@ -4502,7 +4485,6 @@ sub add_code
         }
         if ($relationarea) {
             $found_REL = $i;
-            debugmessage(3, $parameter . "COV has already been added to the code");
             if (/$parameter$covariate/) {
                 $found_correct_REL = 1;
                 last ;
@@ -4691,7 +4673,6 @@ sub add_code_linearize
         }
         if ($relationarea) {
             $found_REL = $i;
-            debugmessage(3, "GZ_".$parameter . " has already been added to the code");
             if (/$parameter$covariate/) {
                 $found_correct_REL = 1;
                 last;
@@ -5533,7 +5514,6 @@ sub drop_undrop_covariates
             $used = 1 if ( $cov eq $used_cov );
         }
         if ( $used ) {
-            debugmessage(3,"undropping $cov" );
             $applicant_model -> _option_val_pos ( problem_numbers  => [1],
                 instance_numbers => [[1]],
                 name             => $cov,
@@ -5541,7 +5521,6 @@ sub drop_undrop_covariates
                 new_values       => [['']],
                 exact_match      => 1 );
         } else {
-            debugmessage(3,"dropping $cov" );
             $applicant_model -> _option_val_pos ( problem_numbers  => [1],
                 instance_numbers => [[1]],
                 name             => $cov,
@@ -5856,16 +5835,16 @@ sub read_config_file
             $self -> logfile([$config_file -> logfile]);
         } elsif( $config_option eq 'valid_states' and defined $config_file -> valid_states ){
             if( not defined $config_file -> valid_states -> {'continuous'} ) {
-                debugmessage(3,"The valid_states section is defined in the configuration file but ".
+                warn "The valid_states section is defined in the configuration file but ".
                     "no states were defined for continuous covariates. Assuming the default valid states: ".
-                    join( ', ',@{$self -> valid_states -> {'continuous'}}) );
+                    join( ', ',@{$self -> valid_states -> {'continuous'}});
             } else {
                 $self -> valid_states -> {'continuous'} = $config_file -> valid_states -> {'continuous'};
             }
             if( not defined $config_file -> valid_states -> {'categorical'} ) {
-                debugmessage(3,"The valid_states section is defined in the configuration file but ".
+                warn "The valid_states section is defined in the configuration file but ".
                     "no states were defined for categorical covariates. Assuming the default valid states: ".
-                    join( ', ',@{$self -> valid_states -> {'categorical'}}) );
+                    join( ', ',@{$self -> valid_states -> {'categorical'}});
             } else {
                 $self -> valid_states -> {'categorical'} = $config_file -> valid_states -> {'categorical'};
             }

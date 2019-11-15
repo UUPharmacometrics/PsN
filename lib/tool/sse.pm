@@ -70,9 +70,6 @@ sub BUILD
             scalar(@{$self -> models->[0]-> problems->[0] -> priors()})>0 ){
             my $tnpri=0;
             foreach my $rec (@{$self -> models->[0]-> problems->[0] -> priors()}){
-                unless ((defined $rec) &&( defined $rec -> options )){
-                    debugmessage(3,"No options for rec \$PRIOR");
-                }
                 foreach my $option ( @{$rec -> options} ) {
                     if ((defined $option) and
                         (($option->name eq 'TNPRI') || (index('TNPRI',$option ->name ) == 0))){
