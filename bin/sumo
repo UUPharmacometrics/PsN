@@ -21,7 +21,6 @@ my %options;
 
 my %required_options = ();
 my %optional_options = (
-    'debug:i'                   => undef,
     'csv!'                       => undef,
     'precision:f'               => undef,
     'confidence_interval'    => undef,
@@ -174,13 +173,6 @@ $help_text{-csv} = <<'EOF';
     can be used if you wish to import the sumo output into a spreadsheet
     programs, such as MS Excel. (Something like this is probably what you
     would want to do in that case: sumo -csv run1.lst > sumooutput.csv).
-EOF
-
-$help_text{-debug} = <<'EOF';
-    -debug=N
-
-    By default N is 0 but you can set it to 1 to enable warnings.. This is
-    mainly for developers who wish to debug PsN.
 EOF
 
 $help_text{-max_problem_num} = <<'EOF';
