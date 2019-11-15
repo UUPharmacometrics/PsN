@@ -2640,14 +2640,12 @@ sub _fisher_yates_shuffle
     my %parm = validated_hash(\@_,
         array => { isa => 'ArrayRef[Str]', optional => 1 }
     );
-    my @array = defined $parm{'array'} ? @{$parm{'array'}} : ();
-
-    my $arr_ref = $parm{'array'};
+    my $array = $parm{'array'};
 
     my $i;
-    for ($i = @$arr_ref; --$i;) {
+    for ($i = @$array; --$i;) {
         my $j = random_uniform_integer(1, 0, $i);
-        @$arr_ref[$i, $j] = @$arr_ref[$j, $i];
+        @$array[$i, $j] = @$array[$j, $i];
     }
 }
 
