@@ -15,7 +15,6 @@ has 'code' => ( is => 'rw', isa => 'HashRef', default => sub { { 'ARRAY' => unde
 has 'compress' => ( is => 'rw', isa => 'Bool|Ref', default => sub { \'1,0' } );
 has 'continuous_covariates' => ( is => 'rw', isa => 'ArrayRef[Str]', default => sub { [] } );
 has 'cpu_time' => ( is => 'rw', isa => 'Str|Ref', default => sub { \'' } );
-has 'debug' => ( is => 'rw', isa => 'Int|Ref', default => sub { \'1,2,3' } );
 has 'directory' => ( is => 'rw', isa => 'Str|Ref', default => sub { \'' } );
 has 'do_not_drop' => ( is => 'rw', isa => 'ArrayRef', default => sub { [] } );
 has 'extra_files' => ( is => 'rw', isa => 'ArrayRef', default => sub { [] } );

@@ -2498,7 +2498,6 @@ sub is_tridiagonal ($) {
 
     for(;$i < $rows; $i++ ){
         for(;$j < $cols; $j++ ){
-            #print "debug: testing $i,$j = " . $M->[0][$i][$j] . "\n";
             # skip diag and diag+-1
             next if ($i == $j);
             next if ($i+1 == $j);

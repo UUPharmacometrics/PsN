@@ -119,7 +119,6 @@ foreach my $type ('split','merged'){
 															   occasions => 0,
 															   m1dir => $indir,
 															   testing => 1,
-#															   write_auto => 1,
 		);
 
 	is($succ_samp,20,'successful samples '.$type);

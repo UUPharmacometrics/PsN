@@ -614,7 +614,6 @@ sub simeval_analyze
         occasions => { isa => 'Int', optional => 0 },
         m1dir => { isa => 'Str', optional => 0},
         testing => { isa => 'Bool', optional => 1, default => 0 },
-        write_auto => { isa => 'Bool', optional => 1, default => 0 },
     );
     my $have_mdv = $parm{'have_mdv'};
     my $have_iwres = $parm{'have_iwres'};
@@ -628,7 +627,6 @@ sub simeval_analyze
     my $occasions = $parm{'occasions'};
     my $m1dir = $parm{'m1dir'};
     my $testing = $parm{'testing'};
-    my $write_auto = $parm{'write_auto'}; #only turn on for debugging
 
     my $errmess;
     my $ret_subjects;
@@ -641,11 +639,6 @@ sub simeval_analyze
     }
 
     my $time_array = [];
-    if ($write_auto and (-e $simeval_all_table_files->[0])) {
-        my $tablef = nmtablefile->new(filename => $simeval_all_table_files->[0]);
-        my $index = $tablef->tables->[0]->header->{'TIME'};
-        $time_array = $tablef->tables->[0]->columns->[$index];
-    }
     for (my $loop=0; $loop<1; $loop++){
         my $original_nmtable;
         my @iwres_outlier_array=();
@@ -732,37 +725,6 @@ sub simeval_analyze
             my $pde = [];
             my $npd = [];
             my $pd = [];
-
-            if ($write_auto){
-                my $origname = 'auto_orig_'.$table_headers[$k].'.tab';
-                my $simname = 'auto_sim_'.$table_headers[$k].'.tab';
-                open(ORI, ">$origname") || die("Couldn't open $origname : $!");
-                print ORI "ID TIME ".$table_headers[$k]."\n";
-                for (my $i=0; $i<scalar(@{$est_matrix->[0]});$i++){
-                    if ((not $have_mdv) or ($id_mdv_matrix->[1]->[$i]->[0] == 0)){
-                        #not missing DV
-                        #ID TIME DV
-                        print ORI formatinteger($id_mdv_matrix->[0]->[$i]->[0]).' '.
-                            formattime($time_array->[$i]).' '.
-                            $est_matrix->[0]->[$i]->[0]."\n";
-                    }
-                }
-                close ORI;
-                open(SIM, ">$simname") || die("Couldn't open $simname : $!");
-                print SIM "ID TIME ".$table_headers[$k]."\n";
-                for (my $j=1; $j<scalar(@{$est_matrix->[0]->[0]});$j++){ #loop sim
-                    for (my $i=0; $i<scalar(@{$est_matrix->[0]});$i++){ #loop records
-                        if ((not $have_mdv) or ($id_mdv_matrix->[1]->[$i]->[0] == 0)){
-                            #not missing DV
-                            #ID TIME DV
-                            print SIM formatinteger($id_mdv_matrix->[0]->[$i]->[0]).' '.
-                                formattime($time_array->[$i]).' '.
-                                $est_matrix->[0]->[$i]->[$j]."\n";
-                        }
-                    }
-                }
-                close SIM;
-            }
 
             open(ORI, ">$all_file_name") || die("Couldn't open $all_file_name : $!");
             my @head = ('ID');
@@ -954,30 +916,6 @@ sub simeval_analyze
         #number of samples for which have OBJ
         $ret_successful_samples = scalar(@{$est_matrix->[0]->[0]})-1; # -1 for original
 
-        if ($write_auto) {
-            my $origname = 'auto_orig_IOFV.tab';
-            my $simname = 'auto_sim_IOFV.tab';
-
-            open(ORI, ">$origname") || die("Couldn't open $origname : $!");
-            print ORI "ID TIME IOFV\n";
-            for (my $i = 0; $i < scalar(@{$est_matrix->[0]}); $i++) {
-                print ORI formatinteger($id_matrix->[0]->[$i]->[0]).
-                    ' 1.0 '.$est_matrix->[0]->[$i]->[0]."\n";
-            }
-            close ORI;
-
-            open(SIM, ">$simname") || die("Couldn't open $simname : $!");
-            print SIM "ID TIME IOFV\n";
-
-            for (my $j = 1; $j < scalar(@{$est_matrix->[0]->[0]}); $j++) {
-                for (my $i = 0; $i < scalar(@{$est_matrix->[0]}); $i++) {
-                    print SIM formatinteger($id_matrix->[0]->[$i]->[0]).
-                        ' 1.0 '.$est_matrix->[0]->[$i]->[$j]."\n";
-                }
-            }
-            close SIM;
-
-        }
         open(ORI, ">$all_iofv_file") || die("Couldn't open $all_iofv_file : $!");
         my @head = ('ID','ORIGINAL');
         for (my $j=1; $j<scalar(@{$est_matrix->[0]->[0]});$j++){
@@ -1031,34 +969,6 @@ sub simeval_analyze
             my $pd=[];
 
             print "type $type headers ".join(' ',@eta_headers)."\n" if $testing;
-
-            if ($write_auto and ($ti == 0)){
-                my $origname = 'auto_orig_EBE.tab';
-                my $simname = 'auto_sim_EBE.tab';
-                my $maxebe = scalar(@{$est_matrix});
-                open(ORI, ">$origname") || die("Couldn't open $origname : $!");
-                print ORI "ID TIME EBE\n";
-                for (my $i=0; $i<scalar(@{$est_matrix->[0]});$i++){
-                    for (my $k=0; $k<$maxebe; $k++){
-                        print ORI formatinteger($id_matrix->[0]->[$i]->[0]).
-                            ' '.($k+1).'.0 '.($est_matrix->[$k]->[$i]->[0])."\n";
-                    }
-                }
-                close ORI;
-                open(SIM, ">$simname") || die("Couldn't open $simname : $!");
-                print SIM "ID TIME EBE\n";
-
-                for (my $j=1; $j<scalar(@{$est_matrix->[0]->[0]});$j++){
-                    for (my $i=0; $i<scalar(@{$est_matrix->[0]});$i++){
-                        for (my $k=0; $k<$maxebe; $k++){
-                            print SIM formatinteger($id_matrix->[0]->[$i]->[0]).
-                                ' '.($k+1).'.0 '.($est_matrix->[$k]->[$i]->[$j])."\n";
-                        }
-                    }
-                }
-                close SIM;
-
-            }
 
             print 'filename:'."raw_original_$type"."_ebe.csv\n" if $testing;
 

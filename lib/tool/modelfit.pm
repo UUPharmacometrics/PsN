@@ -1034,7 +1034,7 @@ sub select_best_model
                 mv( $use_name, $filename ) if (-e $use_name);
             }
 
-            if ( $self->clean >= 1 and $PsN::warnings_enabled == 0 ) {
+            if ($self->clean >= 1) {
                 if (-e 'nonmem.exe'){
                     #we have observed on Windows 10 that removal of nonmem.exe sometimes fails due to file permissions
                     #hypothesis that removal will succeed after a while, so we try a few times
@@ -3299,7 +3299,7 @@ sub move_model_and_output
           "Copied psn.lst and other output to this models 'home directory' $dir ".
           "using filestems for $model_filename", level => 1);
 
-    if ($self->clean >= 1 and $PsN::warnings_enabled == 0) {
+    if ($self->clean >= 1) {
         unlink 'nonmem', 'nonmem5','nonmem6','nonmem7',
         'nonmem5_adaptive','nonmem6_adaptive','nonmem7_adaptive',
         'nonmem.exe','FDATA', 'FREPORT', 'FSUBS', 'FSUBS.f','FSUBS.f90',

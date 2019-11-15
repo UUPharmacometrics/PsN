@@ -59,6 +59,7 @@ Changes and bug fixes from PsN 4.8.0 to x.x.x
 
 - New option -slurm_cluster to select a cluster when more than one is available
 - New option -html that will render rmarkdown to html instead of pdf
+- Remove unused common option -debug
 
 
    ___NONMEM output parsing___

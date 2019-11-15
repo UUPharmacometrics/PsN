@@ -260,9 +260,6 @@ sub BUILD
     #
     # I<logfile> specifies the name of the logfile.
     #
-    # If I<debug> is set to 1(true), (many!) debug messages will be
-    # printed.
-    #
     # I<extra_files> is an array of strings where each string is a
     # file needed for NONMEM execution. Those file will be moved
     # to the I<NM_run[X]> directory.

@@ -120,7 +120,6 @@ Getopt::Long::config("auto_abbrev");
     );
 
 my @script_options = (
-    "debug:i",
     "h|?",
     "help",
     "silent",
@@ -220,7 +219,6 @@ sub set_globals
   }
   PsN::set_nonmem_info($version);
 
-  $PsN::warnings_enabled = $options{'debug'} if (defined $options{'debug'});
     $Carp::Verbose = $options{'warn_with_trace'};
     $log::stop_motion = $options{'stop_motion'};
 }
@@ -1084,14 +1082,6 @@ EOF
     The silent option turns off all output from PsN. Results and log
     files are still written to disk, but nothing is printed to the
     screen.
-EOF
-
-    $help_hash{-debug} = <<'EOF';
-    -debug='integer'
-    The -debug option is mainly intended for developers who wish to
-    debug PsN. By default -debug is set to zero but you can set
-    it to '1' to enable warning messages. If you run into problems that require support
-        set this to 1 and send the output to the developers.
 EOF
 
     $help_hash{-warn_with_trace} = <<'EOF';

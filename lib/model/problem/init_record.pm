@@ -385,7 +385,6 @@ sub _read_options
                     die("Model parsing error: FIX was specified more than once in BLOCK\n");
                 }
 
-                my $print_debug=0;
                 while (/\w/) {
                     if ( /\)(x\d+)/){
                         croak("Model parsing error: PsN does not support ".$1." notation in ".
@@ -399,7 +398,6 @@ sub _read_options
                         my @opt = split( " ",$match );
                         my ( $digit, $comment, $fixed, $sd, $corr, $chol ) = ( undef, undef, 0, 0, 0, 0 );
                         for ( my $i = 0; $i <= $#opt; $i++ ) {
-                            print $opt[$i]."," if ($print_debug);
                             if ( $opt[$i] =~ /\d+/ ) {
                                 $digit = $opt[$i];
                             } elsif ( index('FIXED',$opt[$i])==0 ) {
