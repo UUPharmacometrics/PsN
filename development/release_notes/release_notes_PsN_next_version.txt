@@ -84,6 +84,8 @@ Changes and bug fixes from PsN 4.8.0 to x.x.x
 
    ___sumo___
 
+- New option -covariance to present off-diagonal omegas and sigmas as covariances
+
 
    ___mcmp___
 

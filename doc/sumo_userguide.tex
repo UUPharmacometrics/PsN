@@ -66,6 +66,10 @@ Default is 1000. The cut-off for issuing a warning for a high condition number. 
 Default is 0.9. The cut-off for issuing a warning for high correlations between the parameter estimates. This test will only be made if the \$COV step has been requested in the NMtran control stream. \\
 The default is set in psn.conf. 
 \nextopt
+\optname{covariance}
+    Default off. Set to present off-diagonal omegas or sigmas as covariances
+    instead of correlations.
+\nextopt
 \optname{csv}
 Default not set. The option produces output in which the columns of the parameters estimates and standard errors are comma separated. This option can be used if you wish to import the sumo output into a spreadsheet programs, such as MS Excel. (Something like this is probably what you would want to do in that case: sumo -csv run1.lst > sumooutput.csv). 
 \nextopt
