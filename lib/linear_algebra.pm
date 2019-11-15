@@ -1795,7 +1795,6 @@ sub covar2sdcorr
 {
     my $varcov=shift;
     my $sdcorr = shift;
-    my $debug=0;
     my $input_error = 2;
     my $numerical_error = 1;
 
@@ -1837,7 +1836,6 @@ sub jackknife_inv_cholesky_mean_det
 
     my $input_error = 2;
     my $numerical_error = 1;
-    my $debug=0;
     my $temprow= scalar(@{$Aref});
     return ($input_error,undef) if ($temprow < 2);
     my $ncol = scalar(@{$Aref->[0]});
@@ -1868,10 +1866,6 @@ sub jackknife_inv_cholesky_mean_det
     }
 
     my $normfactor = sqrt(($nrow-1)/$nrow); #jackknife
-    if ($debug){
-        #regular
-        $normfactor = 1/sqrt(($nrow-1)); #varcov
-    }
 
     for (my $col=0; $col< $ncol; $col++){
         push(@centered,[]); #column format
@@ -1910,10 +1904,6 @@ sub jackknife_inv_cholesky_mean_det
     $err = upper_triangular_identity_solve($Rmat,$refRInv);
     return ($err,undef) unless($err == 0);
 
-    #refRInv is lower triang in row format. we want form for linear_algebra::cook_score_all(
-#    for (my $i=0; $i< $ncol; $i++){
-#        for (my $j=$i; $j<$ncol; $j++){
-#            $scalar_product += ($diff[$j] * $cholesky->[$j]->[$i]); #lower triang
     for (my $row=0; $row< $ncol; $row++){
         my @line =(0) x $ncol;
         push(@{$inv_cholesky},\@line);
@@ -1935,7 +1925,6 @@ sub row_cov
 
     my $Aref=shift;
     my $varcov = shift;
-    my $debug=0;
     my $input_error = 2;
     my $numerical_error = 1;
     my $nrow= scalar(@{$Aref});
@@ -1958,7 +1947,6 @@ sub row_cov
             $sum[$col] = $sum[$col] + $Aref->[$row][$col];
         }
         $mean[$col]=$sum[$col]/$nrow;
-        print "mean $col is ".$mean[$col]."\n" if $debug;
         #variance
         my $sum_errors_pow2=0;
         for (my $row=0; $row< $nrow; $row++){
@@ -1967,7 +1955,6 @@ sub row_cov
         unless ( $sum_errors_pow2 == 0 ){
             #if sum is 0 then assume all estimates 0, just ignore
             $varcov->[$col][$col]= $sum_errors_pow2/($nrow-1);
-            print "variance $col is ".$varcov->[$col][$col]."\n" if $debug;
         }
 
         #covariance
@@ -2009,7 +1996,6 @@ sub row_cov_median_mean
     my $median = shift;
     my $mean = shift;
     my $missing_data_token = shift;
-    my $debug=0;
     my $input_error = 2;
     my $numerical_error = 1;
     my $nrow= scalar(@{$Aref});
@@ -2040,7 +2026,6 @@ sub row_cov_median_mean
         }
         return $input_error if ($N_array[$col]<2);
         $mean->[$col]=$sum[$col]/$N_array[$col];
-        print "mean $col is ".$mean->[$col]."\n" if $debug;
         $median->[$col]=median(\@values);
         #variance
         my $sum_errors_pow2=0;
@@ -2052,7 +2037,6 @@ sub row_cov_median_mean
         unless ( $sum_errors_pow2 == 0 ){
             #if sum is 0 then assume all estimates 0, just ignore
             $varcov->[$col][$col]= $sum_errors_pow2/($N_array[$col]-1);
-            print "variance $col is ".$varcov->[$col][$col]."\n" if $debug;
         }
 
         #covariance
