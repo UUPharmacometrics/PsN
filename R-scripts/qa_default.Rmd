@@ -123,6 +123,9 @@ if(exists("tdist_table_orig") && !tdist_list$param_extra_table_error) {
   # 3.1.All (FREM)
 frem_table_list <- get_all_covariates(frem_directory=file.path(working.directory,"frem_run"),nr_cov=(length(continuous)+length(categorical)),
                                       nr_param=n.eta, list_par_var_models$dofv_block, skip)
+if (all(omega.fixed)) {
+    frem_table_list$frem_table$dOFV = 'NA'
+}
  # 3.2.Covariate (SCM)
 scm_table_list <- get_scm_table(scm_directory=file.path(working.directory,"scm_run"),nr_cov=(length(continuous)+length(scm_categorical)),
                                 nr_param=length(parameters),skip)
