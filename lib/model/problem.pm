@@ -780,7 +780,11 @@ sub _init_attr
                             $done=1;
                             last;
                         }
-                        push( @prev_values, $option -> $attribute );
+                        if ($attribute eq 'fix' and $record->fix) {
+                            push @prev_values, 1;
+                        } else {
+                            push( @prev_values, $option -> $attribute );
+                        }
                     }
                 } else {
                     warn "Trying to get attribute $attribute, " .
