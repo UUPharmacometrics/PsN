@@ -2698,6 +2698,15 @@ sub get_filled_omega_matrix
         end_row => $end_eta,
     );
 
+    # Make symmetric
+    for (my $i = 0; $i < scalar(@$old_full_omega); $i++) {
+        for (my $j = 0; $j < scalar(@$old_full_omega); $j++) {
+            if ($i != $j) {
+                $old_full_omega->[$i]->[$j] = $old_full_omega->[$j]->[$i];
+            }
+        }
+    }
+
     my $new_full_omega = get_posdef_matrix(
         covmatrix => $covmatrix,
         old_matrix => $old_full_omega
