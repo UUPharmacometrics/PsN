@@ -8,7 +8,6 @@ use Math::Random;
 use Moose;
 use MooseX::Params::Validate;
 use array;
-use log;
 use data;
 use OSspecific;
 use tool::llp;
@@ -824,8 +823,6 @@ sub general_setup
                                                    missing_data_token => $self->missing_data_token
                                                        );
             $self->subjects($new_subjects);
-            trace(tool => 'bootstrap', message => "Created bootstrapped datasets in ".
-                $self ->directory().'m'.$model_number, level => 1);
 
             if (defined $output and (defined $output->nind) and (defined $output->nind->[($i-1)])){
                 if ($output->nind->[($i-1)] > $orig_count_ind){
@@ -883,8 +880,6 @@ sub general_setup
 
                 push( @new_models, $new_mod );
             }
-            trace(tool => 'bootstrap', message => "Created one modelfile per dataset in ".
-                $self ->directory().'m'.$model_number, level => 1);
 
             # Create a checkpoint. Log the samples and individuals.
             open( DONE, ">".$self ->directory()."/m$model_number/done.$i" ) ;
@@ -1066,9 +1061,6 @@ sub general_setup
             top_tool              => 0,
             %subargs,
             model_subdir => 0) );
-
-    trace(tool => 'bootstrap', message => "Created a modelfit object to run all the models in ".
-        $self ->directory().'m'.$model_number, level => 1);
 }
 
 sub modelfit_analyze
@@ -1560,7 +1552,6 @@ sub prepare_results
         $self -> bca_read_raw_results();
     } else {
         $self -> read_raw_results();
-        trace(tool => 'bootstrap', message => "Read raw results from file", level => 1);
         $self -> bootstrap_raw_results ($self -> raw_results());
     }
     unless (defined $self->raw_line_structure){
@@ -1795,7 +1786,6 @@ sub prepare_results
     }
 
     # }}} Result calculations
-    trace(tool => 'bootstrap', message => "Computed bootstrap results based on raw_results data in memory", level => 1);
 }
 
 sub create_R_scripts

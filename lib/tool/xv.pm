@@ -2,7 +2,6 @@ package tool::xv;
 
 use include_modules;
 use tool::xv_step;
-use log;
 use Moose;
 use MooseX::Params::Validate;
 
@@ -35,7 +34,6 @@ sub xv_step_pre_fork_setup
 {
     my $self = shift;
 
-    trace(tool => 'xv', message => "xv_step_pre_fork_setup\n", level => 1);
     my $subtools = undef;
     if( scalar @{$self -> subtools} > 1 ){
         my @subtools = @{$self -> subtools};
@@ -69,7 +67,6 @@ sub xv_step_setup
     );
     my $model_number = $parm{'model_number'};
 
-    trace(tool => 'xv', message => "xv_step_setup\n", level => 1);
     unless( $model_number == 1 ){
         my $subtools = undef;
         if( scalar @{$self -> subtools} > 1 ){
@@ -92,7 +89,6 @@ sub xv_step_setup
             %step_args,
             subtool_arguments => $self -> subtool_arguments);
 
-        trace(tool => 'xv', message => "xv_step_setup model number $model_number", level => 1);
         $self -> xv_steps([]) unless (defined $self -> xv_steps);
         push( @{$self -> xv_steps}, $xv_step );
     }
@@ -109,7 +105,6 @@ sub xv_step_post_subtool_analyze
     my $model_number = $parm{'model_number'};
     $model_number=0 unless (defined $model_number); #FIXME! do not call without model number
 
-    trace(tool => "xv", message => "xv_step_post_subtool_analyze\n", level => 1);
     my $subtools = undef;
     if( scalar @{$self -> subtools} > 1 ){
         my @subtools = @{$self -> subtools};
@@ -120,7 +115,6 @@ sub xv_step_post_subtool_analyze
     $self->warnings($newwarn);
     my $first_xv_step = $self -> xv_steps -> [0];
     if( $self -> xv_steps -> [$model_number - 1] -> cont ){
-        trace(tool => 'xv', message => "create new xv_step, last was ok (cont ==1)", level => 1);
 
         my %step_args;
         if (defined $self -> subtool_arguments and defined $self -> subtool_arguments -> {'xv_step'}){

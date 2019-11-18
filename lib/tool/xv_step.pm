@@ -5,27 +5,22 @@ use tool::modelfit;
 use Moose;
 use MooseX::Params::Validate;
 use data;
-use log;
 
 extends 'tool';
 
-#start description
-    # When we started discussions on implementing crossvalidation we
-    # stumbled on the question on what a crossvalidation really is. We
-    # agreed on that it can be two things, a simpler verstion that is
-    # part of the other, the more complex version. We descided two
-    # implement both as separate classes. This class, the
-    # xv_step(short for cross validation step)m is the simpler form of
-    # crossvalidation is where you create two datasets, one for
-    # training (in NONMEM its called estimation) and one for
-    # validation(prediction in NONMEM), and perform both training and
-    # validation. Then just return the resulting output.
-#end description
+# When we started discussions on implementing crossvalidation we
+# stumbled on the question on what a crossvalidation really is. We
+# agreed on that it can be two things, a simpler verstion that is
+# part of the other, the more complex version. We descided two
+# implement both as separate classes. This class, the
+# xv_step(short for cross validation step)m is the simpler form of
+# crossvalidation is where you create two datasets, one for
+# training (in NONMEM its called estimation) and one for
+# validation(prediction in NONMEM), and perform both training and
+# validation. Then just return the resulting output.
 
-#start synopsis
-    # The return value is a reference to the data objects containing
-    # the prediction and the estimation datasets.
-#end synopsis
+# The return value is a reference to the data objects containing
+# the prediction and the estimation datasets.
 
 has 'nr_validation_groups' => ( is => 'rw', isa => 'Int', default => 5 );
 has 'stratify_on' => ( is => 'rw', isa => 'Str' );
@@ -425,8 +420,6 @@ sub prediction_update
             my $nth = $prediction_models->[$i]->nthetas();
             my $init_val = $prediction_models->[$i]-> initial_values( parameter_type    => 'theta',
                                                                       parameter_numbers => [[1..$nth]])->[0];
-            trace(tool => 'xv_step_subs',message => "cut thetas in xv_step_subs ".
-                  "modelfit_post_subtool_analyze", level => 1);
             for(my $j = $n_model_thetas; $j<scalar(@{$init_val}); $j++){ #leave original model thetas intact
                 my $value = $init_val -> [$j];
                 if ((defined $cutoff) and (abs($value) <= $cutoff)){
@@ -446,8 +439,6 @@ sub prediction_update
 sub modelfit_setup
 {
     my $self = shift;
-
-    trace(tool => "xv_step", message => "modelfit_setup\n", level => 1);
 
     $self -> create_data_sets;
 
@@ -529,8 +520,6 @@ sub modelfit_setup
         $task = 'prediction';
     }
 
-    trace(tool => 'xv_step_subs', message => "a new modelfit object for $task", level => 1);
-
     if (defined $self->init) {
         &{$self -> init}($self);
     }
@@ -540,7 +529,6 @@ sub modelfit_analyze
 {
     my $self = shift;
 
-    trace(tool => 'xv_step', message => "modelfit_analyze\n", level => 1);
     if( defined $self -> post_analyze ){
         my $temp = &{$self -> post_analyze}($self);
         $self -> cont($temp); #is this really a boolean???
@@ -709,8 +697,6 @@ sub create_data_sets
         # Create subsets of the dataobject.
         ($subsets,$array) = $data_obj->subsets(bins => $self->nr_validation_groups,
                                                stratify_on => $self->stratify_on);
-
-        trace(tool => 'xv_step_subs', message => "create data", level => 1);
     } else {
         $have_data = 1;
         if( scalar( @{$self -> estimation_data} ) != $self -> nr_validation_groups ){
@@ -762,7 +748,6 @@ sub create_data_sets
             push( @{$self -> estimation_data}, $est_data->full_name );
         }
     }
-    trace(tool => 'xv_step_subs', message => "written data in ".$self->directory, level => 1);
 }
 
 sub modelfit_post_subtool_analyze
@@ -773,7 +758,6 @@ sub modelfit_post_subtool_analyze
     );
     my $model_number = $parm{'model_number'};
 
-    trace(tool => "xv_step", message => "modelfit_post_subtool_analyze\n", level => 1);
     if( $self -> prediction_is_run or not ($self -> do_estimation and $self -> do_prediction)){
         return;
     } else {
@@ -811,8 +795,6 @@ sub modelfit_post_subtool_analyze
     $modelfit_arg{'cut_thetas_rounding_errors'} = 0;
     $modelfit_arg{'cut_thetas_maxevals'} = 0;
     $modelfit_arg{'handle_hessian_npd'} = 0;
-    trace(tool => 'xv_step_subs',message => "set no cut_thetas_rounding errors in xv_step_subs ".
-        "modelfit_post_subtool_analyze, push modelfit object with pred models only", level => 1);
 
     if( scalar(@{$self->prediction_models}) > 0 ){
         $self -> tools([]) unless (defined $self->tools);

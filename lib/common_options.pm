@@ -7,7 +7,6 @@ use Math::Random;
 use Cwd;
 use OSspecific;
 use PsN;
-use log;
 use ui;
 use citations;
 
@@ -125,7 +124,6 @@ my @script_options = (
     "silent",
     "version",
     "warn_with_trace!",
-    "stop_motion:i",
 );
 
 @get_opt_strings = (sort(@tool_options), sort(@model_options), sort(@script_options));
@@ -220,7 +218,6 @@ sub set_globals
   PsN::set_nonmem_info($version);
 
     $Carp::Verbose = $options{'warn_with_trace'};
-    $log::stop_motion = $options{'stop_motion'};
 }
 
 sub get_defaults
@@ -398,14 +395,6 @@ sub sanity_checks
                     "hours:minutes:seconds, or days-hours.\n";
             }
         }else{
-        }
-    }
-    if( $options -> {'stop_motion'} ){
-        if( $options -> {'run_on_sge'} ){
-            die "-stop_motion is not allowed together with -run_on_sge";
-        }
-        if( $options -> {'run_on_slurm'} ){
-            die "-stop_motion is not allowed together with -run_on_slurm";
         }
     }
 
@@ -694,12 +683,6 @@ EOF
     Invoke NONMEM via the nmfe script (or a custom wrapper) from within PsN.
     Unless option -nmqual is set, option -nmfe is
     set automatically. Also, -nmfe is set in the default configuration file.
-EOF
-    $help_hash{-stop_motion} = <<'EOF';
-    -stop_motion=integer
-    Default not used.
-    Make PsN stop at pre-defined breakpoints and print run information.
-    Mainly for debugging.
 EOF
     $help_hash{-nmfe_options} = <<'EOF';
     -nmfe_options='options for nmfe'

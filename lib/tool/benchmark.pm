@@ -5,7 +5,6 @@ use strict;
 use File::Copy 'cp';
 use data;
 use nonmemrun;
-use log;
 use OSspecific;
 use tool::modelfit;
 use Moose;

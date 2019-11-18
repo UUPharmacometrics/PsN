@@ -6,7 +6,6 @@ use MooseX::Params::Validate;
 use File::Copy 'cp';
 use File::Spec;
 use include_modules;
-use log;
 use array;
 use model_transformations;
 use filter_data;

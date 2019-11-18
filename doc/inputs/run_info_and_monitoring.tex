@@ -8,9 +8,6 @@ The template psn.conf distributed with the PsN installation package has this opt
 \optname{silent}
 Default not set. The silent option redirects all messages that PsN normally prints to screen to the file run\_messages.txt. Note that messages from NONMEM, such as iterations, will not be printed to run\_messages.txt. Those messages will be in nmfe\_output.txt in the NM\_run subdirectories. Other results and log files are written to disk as usual. Nothing is printed to screen. 
 \nextopt
-\optname{stop\_motion}
-Default not set. Used for debugging. Will cause PsN to pause its execution at certain predefined breakpoints, and only continue after the user hits enter.
-\nextopt
 \optname{verbose}
 Default not set. With verbose set, PsN will print more details to screen about NONMEM runs. More precisely PsN will print the minimization message for each successful run and a R:X for each retry PsN makes of a failed run, where X is the run number. 
 \nextopt

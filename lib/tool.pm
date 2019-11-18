@@ -15,7 +15,6 @@ use ui;
 use Config;
 use YAML::XS;
 our $AUTOLOAD;
-use log;
 
 use Moose;
 use MooseX::Params::Validate;
@@ -491,7 +490,6 @@ sub _make_dir
         unless (mkpath($self->directory)) {
             croak "Unable to create directory ".$self->directory.". Aborting\n";
         }
-        trace(tool => 'tool',message => "created ".$self->directory, level => 2);
     }
 }
 
@@ -660,8 +658,6 @@ sub print_results
         #the unless is here to prevent empty file from being produced, especially for mcmp
         unless  ($skip_print ){
             open ( RES, ">" . $self->directory . $self->results_file );
-            trace(tool => 'tool', message => "prepare to print ".
-                $self->directory . $self->results_file, level => 1);
         }
 
 
@@ -1044,7 +1040,6 @@ sub run
     unless (chdir( $self->directory )){
         croak("tool->run failed to chdir to self->directory ".$self->directory);
     }
-    trace(tool=> 'tool', message => "Changed directory to " . $self->directory, level => 1);
 
     #even if there is never any forking over tools, there is code in pre_fork_setup that we keep.
     $self->pre_fork_setup;
@@ -1090,7 +1085,6 @@ sub run
     unless(chdir($return_dir)){
         croak("tool failed chdir to return_dir $return_dir");
     }
-    trace(tool => 'tool',message => "Changed directory to ".$return_dir, level => 1);
 
     # Remove all NM_run and m folders for non-top_tools
     if( $self->clean >= 3 and not $self->top_tool ) {
@@ -1285,7 +1279,6 @@ sub create_raw_results_rows
 
 
         # ---------------------  Loop all result categories  ----------------------
-        trace(tool => 'tool', message => "prepare to collect raw results from output object ", level => 2);
 
         my $saem = 0;
         my $bayes = 0;
@@ -1686,7 +1679,6 @@ sub _prepare_model
         unless(mkdir( $newdir )){
             croak("_prepare_model failed to create $newdir : $!");
         }
-        trace(tool => 'tool',message => "Created directory $newdir ", level => 1);
     }
 }
 

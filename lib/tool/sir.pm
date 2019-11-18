@@ -4,7 +4,6 @@ use include_modules;
 use strict;
 use File::Copy 'cp';
 use data;
-use log;
 use OSspecific;
 use tool::modelfit;
 use Math::Random;
@@ -1070,8 +1069,6 @@ sub modelfit_setup
             $self -> prepared_models -> [$model_number-1]{'own'} = $modelsarr;
             $self->tools([]) unless (defined $self->tools());
             push( @{$self -> tools()},$iteration_evaluation);
-            trace(tool => 'sir', message => "Created a modelfit object to run all the models in ".
-                  $self ->directory().'m'.$model_number, level => 1);
         }
     }#end iteration loop
 

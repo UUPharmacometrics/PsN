@@ -2,7 +2,6 @@ package tool::simeval;
 
 use include_modules;
 use tool::modelfit;
-use log;
 use Math::Random;
 use Config;
 use linear_algebra;
@@ -1074,9 +1073,6 @@ sub _modelfit_raw_results_callback
         #it happens to be from second $PROB
 
         if ( defined $modelfit -> raw_results() ) {
-            trace(tool => 'simeval', message => "Preparing to rearrange raw_results in memory, adding ".
-                                    "model name information", level => 1);
-
             my $n_rows = scalar(@{$modelfit -> raw_results()});
 
             my $last_model= 0;

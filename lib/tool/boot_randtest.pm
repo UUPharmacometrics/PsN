@@ -4,7 +4,6 @@ use strict;
 use include_modules;
 use Moose;
 use MooseX::Params::Validate;
-use log;
 use OSspecific;
 use tool::modelfit;
 use data;

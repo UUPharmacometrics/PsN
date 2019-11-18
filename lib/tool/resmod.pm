@@ -5,7 +5,6 @@ use Moose;
 use MooseX::Params::Validate;
 use List::Util qw(max);
 use include_modules;
-use log;
 use array;
 use model;
 use data;

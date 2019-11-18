@@ -3,7 +3,6 @@ package tool::lasso;
 use include_modules;
 use tool::xv;
 use tool::modelfit;
-use log;
 use Math::Random;
 use Data::Dumper;
 use Cwd;
@@ -1158,7 +1157,6 @@ sub xv_step_init
 {
     my $self = shift;
     #self here will be xv_step object, shift gets single parameter given in xv_step_subs
-    trace(tool => 'lasso', message => "starting xv_step_init", level => 1);
     sub print_log {
         my $filename = shift;
         my $message  = shift;
@@ -1196,9 +1194,6 @@ sub xv_step_init
 
         $model->_write(overwrite => 1);
     }
-    trace(tool => 'lasso', message => "written ".scalar(@estimation_models).
-        " new estimation models and ".scalar(@prediction_models).
-        " new prediction models", level => 1);
 
     print_log ($own_parameters->{'logfile'}->[0],  "Last OFV sum: " . $own_parameters->{'last_ofv_sum'} ."\n");
     $own_parameters -> {'last_t_value'}+=$own_parameters->{'steplength'};
@@ -1209,15 +1204,7 @@ sub xv_step_analyze
     my $self = shift;
     my $retur;
 
-    trace(tool => "lasso", message => "xv_step_analyze\n", level => 1);
     #self here will be xv_step object
-#    sub print_log {
-#        my $filename = shift;
-#        my $message  = shift;
-#        open(LOG, ">>$filename") or die "Can not create logfile: $filename\n$!";
-#        print LOG $message;
-#        close LOG;
-#    }
 
     $retur = 1;
 
@@ -1250,8 +1237,6 @@ sub xv_step_analyze
             die "No defined output from the pred model!\n";
         }
     }
-    trace(tool => 'lasso', message => "computed sum ofv from ".scalar(@prediction_models).
-        " prediction models", level => 1);
     printf $fh1 "%-12.4f %-6.3f %-5s %-10d\n", $sum_ofv, $own_parameters -> {'last_t_value'}, "All", $own_parameters->{'seed'};
 
     close($fh1);
@@ -1297,11 +1282,9 @@ sub xv_step_analyze
                 $i++;
 
             }else {
-                trace(tool => 'lasso', message => "estimation model did not have defined ofv, return 0", level => 1);
                 $retur = 0;
             }
         } else {
-            trace(tool => 'lasso', message => "estimation model did not have defined output, return 0", level => 1);
             $retur = 0;
         }
     }
@@ -1903,9 +1886,6 @@ sub modelfit_setup
         my $return_val = $basic_step->run();
         my @basic_pred_models = @{$basic_step->prediction_models()};
         my @basic_est_models = @{$basic_step->estimation_models()};
-        trace(tool => 'lasso', message => "have run ".scalar(@basic_est_models).
-            " basic est models and ".scalar(@basic_pred_models).
-            " basic pred models", level => 1);
 
         my $sum_ofv = 0;
         my $j=1;

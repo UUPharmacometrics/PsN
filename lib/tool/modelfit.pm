@@ -27,7 +27,6 @@ use Time::HiRes;
 use Moose;
 use MooseX::Params::Validate;
 use PsN;
-use log;
 
 extends 'tool';
 
@@ -350,7 +349,6 @@ sub run
     unless (chdir($self->directory)){
         croak("Failed chdir to self->directory: ".$self->directory."\n system error $!");
     }
-    trace(tool => 'modelfit', message => "Changed directory to " . $self->directory, level => 1);
 
     # sanity checks
 
@@ -451,7 +449,6 @@ sub run
             # This is where we initiate a new job:
 
             my $run = shift(@queue);
-            trace(tool => 'modelfit', message => "Prepare to start the next job in the run queue", level => 2);
 
             # check for no run conditions. (e.g. job already run)
 
@@ -490,7 +487,6 @@ sub run
             unless(chdir( 'NM_run'.($run+1) )){
                 croak("Failed chdir to ".'NM_run'.($run+1)."\n system error $!");
             }
-            trace(tool => 'modelfit',message => " Moved to NM_run".($run+1).".", level => 2);
 
             ## Start tail of output if requested. Only works for Win32.
             if( $Config{osname} eq 'MSWin32' and $self->tail_output ) {
@@ -564,8 +560,6 @@ sub run
                 }
                 $started_all_models = 1 if ($run == $#models);
 
-            } else {
-                trace(tool => 'modelfit', message => "Did not have to copy model and input, this is a retry.", level => 2);
             }
 
             my %options_hash = %{$self->_get_run_options(run_id => $run)};
@@ -579,7 +573,6 @@ sub run
                 if ($started_all_models and $self->parent_threads <= 1  and not $self->verbose and not $started_all_models_print);
             $started_all_models_print = 1;
             chdir('..');
-            trace(tool => 'modelfit', message => "change directory one level up", level => 2);
 
             ui -> category($old_category);
 
@@ -650,9 +643,6 @@ sub run
                 unless(chdir($work_dir)){
                     croak("Failed chdir to work_dir $work_dir"."\n system error $!");
                 }
-                trace(tool => 'modelfit', message => "A NONMEM run has finished (system process with id $pid ".
-                                        "has disappeared).\n".
-                                        "Changed to directory $work_dir of this process to check results.", level => 2);
 
                 #here we try to make sure files are synced before we start processing output
                 #if a missing psn.lst is due to NMtran or compilation failure we should see a file
@@ -731,9 +721,7 @@ sub run
                     unshift(@queue, $run);
                     delete($queue_map{$pid});
                     chdir('..');
-                    trace(tool => 'modelfit', message => "Had to do restart, put job in queue.\nChange directory one level up ", level => 2);
                 } else {
-                    trace(tool => 'modelfit', message => "did not have to restart this model", level => 2);
                     $self->select_best_model(run_no => $run,
                                              queue_info_ref => $queue_info{$run});
 
@@ -760,7 +748,6 @@ sub run
                     }
 
                     chdir( '..' );
-                    trace(tool=>'modelfit', message => "changed directory one level up", level => 2);
 
                     # cleaning and done file
 
@@ -775,7 +762,6 @@ sub run
                             #leave if error message,
                             unlink( <$work_dir/*> )  ;
                             unless( rmdir( $work_dir ) ){ warn "Unable to remove $work_dir directory: $! ."};
-                            trace(tool => 'modelfit', message => "clean level is >=3, removed $work_dir", level => 2);
                         }
                     } else {
                         1;
@@ -814,7 +800,6 @@ sub run
     unless(chdir($cwd)){
         croak("Failed chdir to cwd: $cwd"."\n system error $!");
     }
-    trace(tool => 'modelfit', message => "changed directory to $cwd", level => 2);
 
     # clean $self -> directory
     if( $self->clean >= 2 ){
@@ -842,7 +827,6 @@ sub run
         unless ($keep_this){
             unlink( <$dir/*> );
             rmdir( $dir );
-            trace(tool => 'modelfit', message => "clean level is >=3, removing $dir completely", level => 2);
         }
     }
 
@@ -986,7 +970,6 @@ sub select_best_model
     my $model = $queue_info_ref -> {'model'};
     my $candidate_model = $queue_info_ref -> {'candidate_model'};
     if (-e 'stats-runs.csv'){
-        trace(tool => 'modelfit', message => "Have previously copied best model to psn.".$self->modext, level => 2);
         if ( defined $run_results -> [0] -> {'failed'} ){
             my @raw_row = [($run_no+1,'1','1','run failed: '.($run_results -> [0] -> {'failed'}))];
             $self->raw_results([]) unless defined $self->raw_results;
@@ -1005,9 +988,6 @@ sub select_best_model
         }
 
     } else {
-        trace(tool => 'modelfit', message => "check which run was the best ", level => 2);
-
-
         my $selected = select_best_retry(run_results => $run_results,
                                          accepted_ofv_difference => $self->accepted_ofv_difference);
 
@@ -1425,7 +1405,6 @@ sub print_raw_results
   ## resumes. In the future
 
   $self->raw_line_structure->write( $dir.'raw_results_structure' );
-  trace(tool => 'modelfit', message => "Printed file $raw_file", level => 1);
 }
 
 sub _get_run_options
@@ -1497,12 +1476,7 @@ sub run_nonmem
     if (-e $self->nmtran_error_file) {
         #give fake pid and go directly to restart needed. Do not copy or move anything
         $queue_map->{'rerun_'.$run_no} = $run_no; #Fake pid
-
-        trace(tool => 'modelfit',
-            message => "nmtran error file exists, syntax check failed. Give fake pid of ".
-            'rerun_'.$run_no.' and do not run anything.', level => 1);
         return;
-
     } elsif (-e 'stats-runs.csv') {
         #possible reasons:
         #a) Restart after -clean > 1. Then we do not know the true restart number of psn.lst
@@ -1510,12 +1484,7 @@ sub run_nonmem
 
         #give fake pid and go directly to restart needed. Do not copy or move anything
         $queue_map->{'rerun_'.$run_no} = $run_no; #Fake pid
-
-        trace(tool => 'modelfit',
-            message => "stats-runs.csv exists, this is a rerun. Give fake pid of ".
-            'rerun_'.$run_no.' and do not run anything.', level => 1);
         return;
-
     } elsif (-e 'psn.lst') {
         #possible reason
         #Restart after main PsN process killed before sge/slurm NONMEM run finished.
@@ -1537,10 +1506,6 @@ sub run_nonmem
             }
         } else {
             $queue_map->{'rerun_'.$run_no} = $run_no; #Fake pid
-            trace(tool => 'modelfit',
-                                    message => "psn.lst exists and not retry. Give fake pid of ".'rerun_'.$run_no.
-                                    ' to make it look like psn.'.$self->modext.' is run, '.
-                                    'so that output will be checked the usual way.', level => 1);
             return;
         }
     }elsif(-e 'psn-prevrun.lst'){
@@ -1559,11 +1524,6 @@ sub run_nonmem
                 mv($new_name,$filename);
             }
             $queue_map->{'rerun_'.$run_no} = $run_no; #Fake pid
-            trace(tool => 'modelfit',
-                                    message => "psn-prevrun.lst exists and not retry or psn.lst. ".
-                                    "Move to psn.lst and give fake pid of ".'rerun_'.$run_no.
-                                    ' to make it look like psn.'.$self->modext.' is run, '.
-                                    'so that output will be checked the usual way.', level => 1);
             return;
         }
     }
@@ -1669,10 +1629,6 @@ sub run_nonmem
         my $fname = get_retry_name(filename => 'psn.lst',
                                    retry => $tries);
         $queue_map->{'rerun_' . $run_no} = $run_no; #Fake pid
-        trace(tool => 'modelfit',
-                                message => "Moved $fname to psn.lst in run_nonmem and ".
-                                "give fake pid of ".'rerun_'.$run_no. 'to make it look like psn.'.$self->modext.' is run '.
-                                'so that output will be checked the usual way.', level => 1);
     } # end of "not -e psn-$tries.lst or rerun"
 }
 
@@ -1892,7 +1848,6 @@ sub store_results_old_run
         my $output_file = $candidate_model -> outputs -> [0];
         #is this needed?
         $output_file -> _read_problems;
-        trace(tool => 'modelfit', message => "parsed NONMEM output file ".$output_file->filename(), level => 2);
 
         my $evaluation_probnum = $output_file->get_estimation_evaluation_problem_number(); #if neg then no est step run
 
@@ -1921,7 +1876,6 @@ sub store_results_old_run
         $output_file -> flush;
 
     } else {
-        trace(tool => 'modelfit', message => "psn.lst does not exist. Previous run must have failed", level => 2);
         #we do not have any psn.lst. Cannot happen if nmfe
         #and overtime kill by system, at least model and NMtran mess
         my $ref = diagnose_lst_errors(missing => 1,
@@ -2348,8 +2302,6 @@ sub restart_needed
     if (-e 'stats-runs.csv') {
         #this is a rerun, we should not do anything here, no copying or anything except
         #reading raw results to memory
-        trace(tool => 'modelfit',
-              message => "Found stats-runs.csv, will read output psn.lst if it exists to put in raw_results.", level => 2);
         $self->store_results_old_run( retries => $retries,picky => $picky,
                                       run_no => $run_no,
                                       tries => ${$tries},
@@ -2357,8 +2309,6 @@ sub restart_needed
         return(0); #no restart needed when stats-runs exist
     }
     unless (-e 'psn.lst'){
-        trace(tool => 'modelfit',message => "no psn.lst at all, try to diagnose", level => 2);
-
         my $ref = diagnose_lst_errors(missing => 1,
                                       have_stats_runs => 0,
                                       run_no => $run_no,
@@ -2404,7 +2354,6 @@ sub restart_needed
     $output_file -> _read_problems;
     my $evaluation_probnum = $output_file->get_estimation_evaluation_problem_number(); #if neg then no est step run
 
-    trace(tool => 'modelfit', message => "parsed NONMEM output file ".$output_file->filename(), level => 2);
     my $model_crashed = 0;
     my $iterations_interrupted = 0;
     if (( $output_file -> parsed_successfully() and
@@ -2413,7 +2362,6 @@ sub restart_needed
         $model_crashed = 1;
         $iterations_interrupted = $output_file->iterations_interrupted;
         if (-e 'OUTPUT' and $output_file->could_append_OUTPUT){
-            trace(tool => 'modelfit', message => "will try append OUTPUT", level => 2);
             my $tmp_output_file = output->new(filename => $output_file->filename,
                                               append_nm_OUTPUT => 1);
             $iterations_interrupted = $tmp_output_file->iterations_interrupted;
@@ -2426,8 +2374,6 @@ sub restart_needed
                                                                              retry => ${$tries},
                                                                              nm_major_version => $PsN::nm_major_version,
                                                                              nm_minor_version => $PsN::nm_minor_version );
-
-    trace(tool => 'modelfit', message => $stopmess. "so that new retry with psn.".$self->modext." will not overwrite this runs results.", level => 2);
 
     # Create intermediate raw results
 
@@ -2543,15 +2489,6 @@ sub restart_needed
                                                                                  nm_minor_version => $PsN::nm_minor_version );
 
 
-        unless ($model_crashed){
-            trace(tool => 'modelfit',
-                  message => "max no evaluations exceeded and option maxevals set, ".
-                  "must rerun this model with msfo set to msfi.\n".
-                  "Total evals so far is ".$queue_info_ref -> {'evals'}."\n".
-                  "$stopmess\n"."so that intermediate run for this try will be ".
-                  "distinguished from later runs for this try.", level => 1);
-
-        }
         if( $self->handle_msfo or ($maxevals > 0)){
             set_msfo_to_msfi( candidate_model => $candidate_model,
                               retry => ${$tries},
@@ -2642,7 +2579,6 @@ sub restart_needed
 
 
 
-    trace(tool => 'modelfit', message => $do_this->{'message'}, level => 2);
     $queue_info_ref->{'have_accepted_run'}= 1 if ($do_this->{'run_is_accepted'}); #do not overwrite old if this run not accepted
 
     if ($do_this->{'reset_msfo'}){
@@ -2654,7 +2590,6 @@ sub restart_needed
         $self -> cut_thetas( candidate_model => $candidate_model,
                              cutoff_thetas => \@cutoff_thetas,
                              output_file => $output_file );
-        trace(tool => 'modelfit', message => "done cut_thetas", level => 1);
     }
     if ($do_this->{'tweak_inits'}){
         my $did_tweak = 0;
@@ -2664,7 +2599,6 @@ sub restart_needed
                                                                                       basic_model => $model,
                                                                                       problem_index => $index);
             if ($did_tweak){
-                trace(tool => 'modelfit', message => "done tweak_inits", level => 2);
                 last;
             }
         }
@@ -2911,10 +2845,8 @@ sub copy_model_and_input
         #Then pick highest retry file in directory as
         #candidate model, otherwise psn.mod
         #If do not have any retry file must copy input again, was removed during clean=2
-        trace(tool => 'modelfit', message => "have stats-runs but doing add_retries", level => 2);
 
         if ((-e 'psn-1.'.$self->modext ) or (-e 'psn-2.'.$self->modext)) {
-            trace(tool => 'modelfit', message => "old clean<2", level => 2);
 
             #clean 1. Data is left. Move psn.mod and psn.lst to selected retry number. #HERE
             #use last retry as candidate model. move last retry to psn.mod and
@@ -2922,7 +2854,6 @@ sub copy_model_and_input
             foreach my $ext (@PsN::nm7_extensions,'.'.$self->modext,'.lst'){
                 mv('psn'.$ext,'psn-'.$selected_retry.$ext) if (-e 'psn'.$ext);
             }
-            trace(tool => 'modelfit', message => "moved psn.lst etc to psn-$selected_retry.lst etc", level => 2);
 
             my $last_retry = 1;
             while (-e 'psn-'.($last_retry+1).'.'.$self->modext) {
@@ -2932,7 +2863,6 @@ sub copy_model_and_input
             foreach my $ext (@PsN::nm7_extensions,'.'.$self->modext,'.lst'){
                 mv('psn-'.$last_retry.$ext,'psn'.$ext) if (-e 'psn-'.$last_retry.$ext);
             }
-            trace(tool => 'modelfit', message => "moved psn-$last_retry.lst to psn.lst etc", level => 2);
 
             $candidate_model = model->new(
                 outputfile                  => 'psn.lst',
@@ -2941,7 +2871,6 @@ sub copy_model_and_input
                 ignore_missing_data                    => 0
             );
         } else {
-            trace(tool => 'modelfit', message => "old clean>1", level => 2);
             #clean 2.
             #must copy input again
             $tries = $selected_retry-1;
@@ -2976,9 +2905,6 @@ sub copy_model_and_input
         }
 
     }elsif (-e 'stats-runs.csv'){
-        trace(tool => 'modelfit', message => "Did not copy anything to current directory".
-                                " because file stats-runs.csv already here. Must be a rerun.", level => 2);
-
         $candidate_model =  model -> new (outputfile                  => 'psn.lst',
                                           filename                    => 'psn.'.$self->modext,
                                           ignore_missing_output_files => 1,
@@ -3084,8 +3010,6 @@ sub copy_model_and_input
         $self->run_nmtran(check_verbatim => $check_verbatim,
                           model => $candidate_model) if ($run_nmtran);
 
-        trace(tool => 'modelfit', message => "Copied ".$model->filename().
-            " to psn.".$self->modext." in current directory. Modified table names.", level => 2)
     }
 
     return ($candidate_model,$tries);
@@ -3294,11 +3218,6 @@ sub move_model_and_output
         push @{$self->metadata->{'copied_files'}}, $filename;
     }
 
-    trace(tool => 'modelfit', message => "Best retry is $use_run.\nMoved psn-".
-          $use_run.".".$self->modext." to psn.".$self->modext.", psn-$use_run".".lst to psn.lst etc.\n".
-          "Copied psn.lst and other output to this models 'home directory' $dir ".
-          "using filestems for $model_filename", level => 1);
-
     if ($self->clean >= 1) {
         unlink 'nonmem', 'nonmem5','nonmem6','nonmem7',
         'nonmem5_adaptive','nonmem6_adaptive','nonmem7_adaptive',
@@ -3328,9 +3247,6 @@ sub move_model_and_output
                 unlink( $filename );
             }
         }
-        trace(tool => 'modelfit', message => "Clean level is >=1. Removed NONMEM intermediate files ".
-              "like FDATA and such", level => 2);
-
         if( $self->clean >= 2 ){
             unlink( <temp_dir/*> );
             rmdir( 'temp_dir' );
@@ -3366,7 +3282,6 @@ sub move_model_and_output
             }
             unlink( @{$model -> datafiles} );
             unlink 'psn.nmqual_out';
-            trace(tool => 'modelfit', message => "Clean level is >=2. Removed all numbered retry files", level => 2);
         }
     }
 
