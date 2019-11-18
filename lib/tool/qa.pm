@@ -336,18 +336,20 @@ sub modelfit_setup
             for my $model (@models) {       # Set output directory so that .lst file gets saved in the rundir
                 $model->outputs->[0]->directory('.');
             }
-            chdir "modelfit_run";
-            my $modelfit = tool::modelfit->new(
-                %{common_options::restore_options(@common_options::tool_options)},
-                models => \@models,
-                directory => "modelfit_dir1",
-                top_tool => 1,
-                so => 1,
-                nm_output => 'ext,phi',
-                model_subdir => 0,
-            );
-            $modelfit->run();
-            chdir "..";
+            if (scalar(@models) > 0) {
+                chdir "modelfit_run";
+                my $modelfit = tool::modelfit->new(
+                    %{common_options::restore_options(@common_options::tool_options)},
+                    models => \@models,
+                    directory => "modelfit_dir1",
+                    top_tool => 1,
+                    so => 1,
+                    nm_output => 'ext,phi',
+                    model_subdir => 0,
+                );
+                $modelfit->run();
+                chdir "..";
+            }
         };
         if ($@) {
             print $@;
