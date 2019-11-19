@@ -486,7 +486,7 @@ sub modelfit_setup
             $self->_to_qa_dir();
         }
 
-        if ($self->_tools_to_run->{'scm'} and defined $self->continuous or defined $self->categorical) {
+        if ($self->_tools_to_run->{'scm'} and (defined $self->continuous or defined $self->categorical)) {
             print "\n*** Running scm ***\n";
             my $scm_model = $base_model->copy(directory => "m1", filename => "scm.mod", write_copy => 0);
             if ($base_model->is_run()) {
