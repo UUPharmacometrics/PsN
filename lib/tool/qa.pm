@@ -597,14 +597,10 @@ sub modelfit_setup
 
     if ($self->_tools_to_run->{'simeval'}) {
         print "\n*** Running simeval ***\n";
-        my $simeval_model = $base_model->copy(filename => "m1/simeval.mod");
-        $simeval_model->remove_records(type => 'etas');
-        $simeval_model->remove_option(record_name => 'estimation', option_name => 'MCETA');
-        $simeval_model->_write();
         eval {
             my $simeval = tool::simeval->new(
                 %{common_options::restore_options(@common_options::tool_options)},
-                models => [ $simeval_model ],
+                models => [ $base_model ],
                 rplots => 1,
                 n_simulation_models => 5,
                 directory => "simeval_run",
