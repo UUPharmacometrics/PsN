@@ -321,6 +321,7 @@ sub modelfit_setup
                       copy_output => 0);
             $sim_model -> remove_records( type => 'table' );
             $sim_model -> remove_records( type => 'covariance' );
+            $sim_model->remove_records(type => 'etas');
             $sim_model -> shrinkage_stats( enabled => 0 );
 
             #set IGNORE=@ since datafile will
