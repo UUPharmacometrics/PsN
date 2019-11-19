@@ -290,6 +290,7 @@ sub modelfit_setup
     if ($numids < 2 and $self->_tools_to_run->{'cdd'}) {   # Skip cdd if only one individual
         print "Warning: Only one individual in dataset. Will skip cdd\n";
         $self->_tools_to_run->{'cdd'} = 0;
+        push @{$self->_tools_to_skip}, 'cdd';
     }
 
 
