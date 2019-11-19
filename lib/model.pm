@@ -5623,7 +5623,7 @@ sub defined_variable
         my $code = $self->get_code(record => $record);
         if (defined $code) {
             for my $line (@$code) {
-                if ($line =~ /\s*$name\s*=/) {
+                if ($line =~ /^[^;]*\b$name\s*=/) {
                     return 1;
                 }
             }
