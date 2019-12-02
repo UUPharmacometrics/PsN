@@ -168,7 +168,7 @@ sub get_R_exec
         if ($Config{osname} eq 'MSWin32'){
             $null = 'NUL';
         }
-        my $output = readpipe('R --version');
+        my $output = readpipe('R --version 2>&1');
         if ($output =~ /^R version /) {
             $rexec = 'R';
         }
