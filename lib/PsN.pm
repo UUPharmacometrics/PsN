@@ -161,13 +161,9 @@ sub get_R_exec
 
     my $rexec;
     #check in PsN config, or try R --version
-    if ( defined $config -> {'_'} -> {'R'} ) {
-        $rexec = $config -> {'_'} -> {'R'};
-    }else{
-        my $null = '/dev/null';
-        if ($Config{osname} eq 'MSWin32'){
-            $null = 'NUL';
-        }
+    if (defined $config->{'_'}->{'R'}) {
+        $rexec = $config->{'_'}->{'R'};
+    } else {
         my $output = readpipe('R --version 2>&1');
         if ($output =~ /^R version /) {
             $rexec = 'R';
