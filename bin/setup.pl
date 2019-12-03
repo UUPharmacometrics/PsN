@@ -121,7 +121,7 @@ my @utilities = (
     );
 
 my @win_modules = ('Moose', 'MooseX::Params::Validate', 'Math::Random', 'YAML::XS');
-my @nix_modules = ('Moose', 'MooseX::Params::Validate', 'Math::Random', 'Storable', 'YAML::XS');
+my @nix_modules = ('Moose', 'MooseX::Params::Validate', 'Math::Random', 'YAML::XS');
 my @recommended_modules = ('Archive::Zip','Statistics::Distributions');
 
 my @modules;

@@ -24,7 +24,6 @@ perl packages which are required for PsN4:
 Math::Random
 Moose
 MooseX::Params::Validate
-Storable::Store (Unix only)
 YAML::XS
 
 - Recommended perl packages, not absolutely required when running PsN 
