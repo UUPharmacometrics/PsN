@@ -1315,8 +1315,7 @@ sub modelfit_setup
     } elsif (defined $self->msfo_file) {
         #add msfi record, and remove $THETA, $OMEGA, $SIGMA
         #must make sure there is no path here first
-        my ($dirt, $fname) =
-            OSspecific::absolute_path('', $self->msfo_file );
+        my $fname = File::Spec->rel2abs($self->msfo_file, $self->models->[0]->directory);
         unless (defined $self->sim_model()) {
             $model_orig -> set_records(type => 'msfi',
                                        record_strings => [$fname],
