@@ -1612,8 +1612,9 @@ sub create_raw_results_rows
                                 if( defined $res -> [$j][$k] ) {
                                     if ( ref $res -> [$j][$k] eq 'ARRAY' ) {
                                         push( @{$return_array_ref -> [$row]}, @{$res -> [$j][$k]} );
+                                        my $n = $max_hash->{$category} - scalar(@{$res->[$j][$k]});
                                         push( @{$return_array_ref -> [$row]},
-                                            (undef) x ($max_hash -> {$category} - scalar @{$res -> [$j][$k]})  );
+                                            (undef) x ($max_hash -> {$category} - scalar @{$res -> [$j][$k]})  ) if ($n > 0);
                                     } else {
                                         push( @{$return_array_ref -> [$row]}, $res -> [$j][$k] );
                                     }
