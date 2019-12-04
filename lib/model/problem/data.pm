@@ -172,9 +172,18 @@ sub remove_ignore_accept
     my $self = shift;
 
     my @options;
+    my $in_parens;
     for my $option (@{$self->options}) {
-        if ($option->name !~ /^(IGNORE|IGNOR|IGNO|IGN|ACCEPT|ACCEP|ACCE|ACC)/) {
+        if ($in_parens) {
+            if ($option->name =~ /\)$/) {
+                $in_parens = 0;
+            }
+        } elsif ($option->name !~ /^(IGNORE|IGNOR|IGNO|IGN|ACCEPT|ACCEP|ACCE|ACC)/) {
             push @options, $option;
+        } else {
+            if ($option->value =~ /^\(/) {
+                $in_parens = 1;
+            }
         }
     }
     $self->options(\@options);
