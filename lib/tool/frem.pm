@@ -2644,35 +2644,32 @@ sub prepare_model3
     return ($est_records, $covrecordref, $etas_file);
 }
 
-sub prepare_model4
+sub prepare_model3b
 {
+    # This is the full frem model with evaluation
     my $self = shift;
     my %parm = validated_hash(\@_,
         model => { isa => 'model', optional => 0 },
         parcov_blocks => { isa => 'ArrayRef', optional => 0},
-        est_records => { isa => 'ArrayRef', optional => 0},
-        cov_records => { isa => 'ArrayRef', optional => 0},
         update_existing_model_files => { isa => 'Bool', optional => 0 },
         etas_file => { isa => 'Maybe[Str]', optional => 0 },
     );
     my $model = $parm{'model'};
     my $parcov_blocks = $parm{'parcov_blocks'};
-    my $est_records = $parm{'est_records'};
-    my $cov_records = $parm{'cov_records'};
     my $update_existing_model_files = $parm{'update_existing_model_files'};
     my $etas_file = $parm{'etas_file'};
 
-    my $name_model = 'model_4.mod';
+    my $name_model = 'model_3b.mod';
+    my $model_path = File::Spec->catfile($self->_intermediate_models_path, $name_model);
 
     my $frem_model;
 
-    my $fin_dir = $self->directory . 'final_models/';
-    cleanup_outdated_model(modelname => $fin_dir . $name_model,
+    cleanup_outdated_model(modelname => $model_path,
                            need_update => $update_existing_model_files);
 
-    if (not -e $fin_dir . $name_model) {
+    if (not -e $model_path) {
         # input model  inits have already been updated
-        $frem_model = $model->copy(filename => $fin_dir . $name_model,
+        $frem_model = $model->copy(filename => $model_path,
                                    output_same_directory => 1,
                                    write_copy => 0,
                                    copy_datafile => 0,
@@ -2682,20 +2679,20 @@ sub prepare_model4
         if ($etas_file) {
             # TODO: breakout into function since M2, M3 and M4 does pretty much the same things
             if (not -f $etas_file) {
-                croak "\$ETAS file $etas_file could not be read for model 4, this is a bug";
+                croak "\$ETAS file $etas_file could not be read for model 3b, this is a bug";
             }
 
             # copy M3/M4 output to M4 input phi file
             (my $etas_filename = $name_model) =~ s/(.*)\..*/$1_input.phi/;
-            cp($etas_file, $fin_dir . $etas_filename);
-            (undef, $etas_filename) = OSspecific::absolute_path($fin_dir, $etas_filename);
+            cp($etas_file, File::Spec->catfile($self->_intermediate_models_path, $etas_filename));
+            (undef, $etas_filename) = OSspecific::absolute_path($self->_intermediate_models_path, $etas_filename);
 
             # update FILE in model to new path (just filename since same directory)
             $frem_model->get_or_set_etas_file(problem_number => 1, new_file => $etas_filename);
 
             # update etas file to model 4 output (no further downstream usage)
             (my $phi_filename = $name_model) =~ s/(.*)\..*/$1.phi/;
-            $etas_file = $fin_dir . $phi_filename;
+            $etas_file = File::Spec->catfile($self->_intermediate_models_path, $phi_filename);
         }
 
         # model must come from M3, so we set M4 up
@@ -2724,36 +2721,121 @@ sub prepare_model4
 
         my $new_cov_records = [];
         # if OMITTED was on $COV line, remove it for M4 covariance step (and add UNCONDITIONAL)
-        my $uncond;
-        foreach my $opt (@{$cov_records}) {
-            if ($opt =~ /^OMIT/) {
-                $logger->info("Removed OMIT option from \$COV in $name_model\n");
-            } else {
-                push @{$new_cov_records}, $opt;
-            }
-            $uncond = 1 if ($opt =~ /^UNC/);
-        }
-        if (not $uncond) {
-            push @{$new_cov_records}, "UNCONDITIONAL";
-            $logger->info("Added UNCONDITIONAL option to \$COV in $name_model");
-        }
-        $frem_model->problems->[0]->estimations($est_records);
-        $frem_model->problems->[0]->add_records(
-            record_strings => $new_cov_records,
-            type => 'covariance'
-        );
-        if ($self->derivatives) {
-            model_approximations::derivatives_model(model => $frem_model);   # Output the derivatives to be able to make VA-plot
-        }
         $frem_model->_write();
     } else {
         if (defined $etas_file) {
             (my $phi_filename = $name_model) =~ s/(.*)\..*/$1.phi/;
-            $etas_file = $fin_dir . $phi_filename;
+            $etas_file = File::Spec->catfile($self->_intermediate_models_path, $phi_filename);
         }
     }
 
+    $frem_model->set_maxeval_zero(
+        print_warning => 1,
+        last_est_complete => $self->last_est_complete,
+        niter_eonly => $self->niter_eonly,
+        need_ofv => 0
+    );
+
     return ($etas_file);
+}
+
+sub prepare_model4
+{
+    # Prepare the final frem model
+    # Using model3b as a starting point.
+    # * Taking initial estimates and phi from one of model2, model3 and model3b depending on which one had the best fit
+    # * Change to full estimation
+    # * Add $COV
+    my $self = shift;
+    my %parm = validated_hash(\@_,
+        model2 => { isa => 'model', optional => 0 },
+        model3 => { isa => 'model', optional => 0 },
+        model3b => { isa => 'model', optional => 0 },
+        est_records => { isa => 'ArrayRef', optional => 0},
+        cov_records => { isa => 'ArrayRef', optional => 0},
+        update_existing_model_files => { isa => 'Bool', optional => 0 },
+    );
+    my $model2 = $parm{'model2'};
+    my $model3 = $parm{'model3'};
+    my $model3b = $parm{'model3b'};
+    my $est_records = $parm{'est_records'};
+    my $cov_records = $parm{'cov_records'};
+    my $update_existing_model_files = $parm{'update_existing_model_files'};
+
+    my $name_model = 'model_4.mod';
+    my $frem_model;
+
+    my $fin_dir = $self->directory . 'final_models/';
+    cleanup_outdated_model(modelname => $fin_dir . $name_model,
+                           need_update => $update_existing_model_files);
+
+    return if (-e $fin_dir . $name_model);
+
+    $frem_model = $model3b->copy(
+        filename => $fin_dir . $name_model,
+        output_same_directory => 1,
+        write_copy => 0,
+        copy_datafile => 0,
+        copy_output => 0
+    );
+
+    my $output2 = $model2->outputs->[0];
+    my $mod2_ofv = $output2->get_single_value(attribute => 'ofv');
+    my $output3 = $model3->outputs->[0];
+    my $mod3_ofv = $output3->get_single_value(attribute => 'ofv');
+    my $output3b = $model3b->outputs->[0];
+    my $mod3b_ofv = $output3b->get_single_value(attribute => 'ofv');
+
+    my @ofvs = ($mod2_ofv, $mod3_ofv, $mod3b_ofv);
+    @ofvs = grep defined, @ofvs;
+    @ofvs = sort { $a <=> $b } @ofvs;
+    my $best_ofv = $ofvs[0];
+
+    if ($best_ofv == $mod2_ofv) {
+        print "Starting model4 from model2\n";
+        $frem_model->update_inits(from_output => $output2);
+        my $block = $frem_model->problems->[0]->omegas->[-1];
+        for my $option (@{$block->options}) {
+            if (not $option->on_diagonal and $option->init == 0) {
+                $option->init(0.000001);
+            }
+        }
+        cp(File::Spec->catfile($self->_intermediate_models_path, 'model_2.phi'), File::Spec->catfile($self->_final_models_path, 'model_4_input.phi'));
+    } elsif ($best_ofv == $mod3_ofv) {
+        print "Starting model4 from model3\n";
+        $frem_model->update_inits(from_output => $output3);
+        cp(File::Spec->catfile($self->_intermediate_models_path, 'model_3.phi'), File::Spec->catfile($self->_final_models_path, 'model_4_input.phi'));
+    } else {
+        print "Starting model4 from model3b\n";
+        $frem_model->update_inits(from_output => $output3b);
+        cp(File::Spec->catfile($self->_intermediate_models_path, 'model_3b.phi'), File::Spec->catfile($self->_final_models_path, 'model_4_input.phi'));
+    }
+
+    $frem_model->get_or_set_etas_file(problem_number => 1, new_file => 'model_4_input.phi');
+
+    my $new_cov_records;
+    my $uncond;
+    foreach my $opt (@{$cov_records}) {
+        if ($opt =~ /^OMIT/) {
+            $logger->info("Removed OMIT option from \$COV in $name_model\n");
+        } else {
+            push @{$new_cov_records}, $opt;
+        }
+        $uncond = 1 if ($opt =~ /^UNC/);
+    }
+    if (not $uncond) {
+        push @{$new_cov_records}, "UNCONDITIONAL";
+        $logger->info("Added UNCONDITIONAL option to \$COV in $name_model");
+    }
+    $frem_model->problems->[0]->add_records(
+        record_strings => $new_cov_records,
+        type => 'covariance'
+    );
+    $frem_model->problems->[0]->estimations($est_records);
+    if ($self->derivatives) {
+        model_approximations::derivatives_model(model => $frem_model);   # Output the derivatives to be able to make VA-plot
+    }
+    $frem_model->_write();
 }
 
 sub prepare_model4b
@@ -3388,13 +3470,21 @@ sub modelfit_setup
 
     mkdir($finaldir) unless (-d $finaldir);
 
-    ($etas_file) = $self->prepare_model4(
+    ($etas_file) = $self->prepare_model3b(
         model => $frem_model3,
         parcov_blocks => $mod4_parcov_block,
-        est_records => $est_records,
-        cov_records => $cov_records,
         update_existing_model_files => $update_existing_model_files,
         etas_file => $etas_file,
+    );
+    (my $frem_model3b, $message, $need_update) = $self->run_unless_run(numbers => ['3b']);
+
+    $self->prepare_model4(
+        model2 => $frem_model2,
+        model3 => $frem_model3,
+        model3b => $frem_model3b,
+        est_records => $est_records,
+        cov_records => $cov_records,
+        update_existing_model_files => $need_update,
     );
 
     push(@{$self->final_numbers}, 4);
