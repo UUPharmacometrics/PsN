@@ -78,6 +78,7 @@ has 'imp_covariance' => ( is => 'rw', isa => 'Bool', default => 1 );        # Sh
 has '_intermediate_models_path' => ( is => 'rw', isa => 'Str' );
 has 'etas_reorder_mapping' => ( is => 'rw', isa => 'HashRef' );
 has 'derivatives' => ( is => 'rw', isa => 'Bool', default => 0 );
+has '_final_models_path' => ( is => 'rw', isa => 'Str' );
 
 
 my $logger = logging::get_logger("frem");
@@ -2648,7 +2649,6 @@ sub prepare_model4
     my $self = shift;
     my %parm = validated_hash(\@_,
         model => { isa => 'model', optional => 0 },
-        imp_covariance_eval => { isa => 'Bool', optional => 0 },
         parcov_blocks => { isa => 'ArrayRef', optional => 0},
         est_records => { isa => 'ArrayRef', optional => 0},
         cov_records => { isa => 'ArrayRef', optional => 0},
@@ -2656,19 +2656,13 @@ sub prepare_model4
         etas_file => { isa => 'Maybe[Str]', optional => 0 },
     );
     my $model = $parm{'model'};
-    my $imp_covariance_eval = $parm{'imp_covariance_eval'};
     my $parcov_blocks = $parm{'parcov_blocks'};
     my $est_records = $parm{'est_records'};
     my $cov_records = $parm{'cov_records'};
     my $update_existing_model_files = $parm{'update_existing_model_files'};
     my $etas_file = $parm{'etas_file'};
 
-    my $modnum = 4;
     my $name_model = 'model_4.mod';
-    if ($imp_covariance_eval) {
-        $modnum = "4b";
-        $name_model = 'model_4b.mod';
-    }
 
     my $frem_model;
 
@@ -2688,10 +2682,10 @@ sub prepare_model4
         if ($etas_file) {
             # TODO: breakout into function since M2, M3 and M4 does pretty much the same things
             if (not -f $etas_file) {
-                croak "\$ETAS file $etas_file could not be read for model $modnum, this is a bug";
+                croak "\$ETAS file $etas_file could not be read for model 4, this is a bug";
             }
 
-            # copy M3/M4 output to M4/M4b input phi file
+            # copy M3/M4 output to M4 input phi file
             (my $etas_filename = $name_model) =~ s/(.*)\..*/$1_input.phi/;
             cp($etas_file, $fin_dir . $etas_filename);
             (undef, $etas_filename) = OSspecific::absolute_path($fin_dir, $etas_filename);
@@ -2699,41 +2693,34 @@ sub prepare_model4
             # update FILE in model to new path (just filename since same directory)
             $frem_model->get_or_set_etas_file(problem_number => 1, new_file => $etas_filename);
 
-            # update etas file to model 4/4b output (no further downstream usage)
+            # update etas file to model 4 output (no further downstream usage)
             (my $phi_filename = $name_model) =~ s/(.*)\..*/$1.phi/;
             $etas_file = $fin_dir . $phi_filename;
         }
 
-        if ($imp_covariance_eval) {
-            # model must come from M4, so we set M4b up (importance sampling, expectation only, to get covariance step)
-            $est_records = [ model::problem::estimation->new(
-                record_arr => ['METHOD=IMPMAP MAPITER=0 ISAMPLE=3000 NITER=5 EONLY=1 PRINT=1']
-            ) ];
-        } else {
-            # model must come from M3, so we set M4 up
-            get_or_set_fix(model => $frem_model,
-                           type => 'thetas',
-                           set_array => $self->input_model_fix_thetas);
-            get_or_set_fix(model => $frem_model,
-                           type => 'sigmas',
-                           set_array => $self->input_model_fix_sigmas);
-            get_or_set_fix(model => $frem_model,
-                           type => 'omegas',
-                           set_array => $self->input_model_fix_omegas);
+        # model must come from M3, so we set M4 up
+        get_or_set_fix(model => $frem_model,
+            type => 'thetas',
+            set_array => $self->input_model_fix_thetas);
+        get_or_set_fix(model => $frem_model,
+            type => 'sigmas',
+            set_array => $self->input_model_fix_sigmas);
+        get_or_set_fix(model => $frem_model,
+            type => 'omegas',
+            set_array => $self->input_model_fix_omegas);
 
-            my @omega_records;
-            for my $record (@{$frem_model->problems->[0]->omegas}) {
-                if ($record->n_previous_rows + 1 <= scalar(@{$self->skip_omegas})) {
-                    push @omega_records, $record;
-                }
+        my @omega_records;
+        for my $record (@{$frem_model->problems->[0]->omegas}) {
+            if ($record->n_previous_rows + 1 <= scalar(@{$self->skip_omegas})) {
+                push @omega_records, $record;
             }
-
-            for (my $i = 0; $i < scalar(@{$parcov_blocks}); $i++) {
-                push(@omega_records, $parcov_blocks->[$i]);
-            }
-
-            $frem_model->problems->[0]->omegas(\@omega_records);
         }
+
+        for (my $i = 0; $i < scalar(@{$parcov_blocks}); $i++) {
+            push(@omega_records, $parcov_blocks->[$i]);
+        }
+
+        $frem_model->problems->[0]->omegas(\@omega_records);
 
         my $new_cov_records = [];
         # if OMITTED was on $COV line, remove it for M4 covariance step (and add UNCONDITIONAL)
@@ -2751,14 +2738,12 @@ sub prepare_model4
             $logger->info("Added UNCONDITIONAL option to \$COV in $name_model");
         }
         $frem_model->problems->[0]->estimations($est_records);
-        if (not $imp_covariance_eval) {
-            $frem_model->problems->[0]->add_records(
-                record_strings => $new_cov_records,
-                type => 'covariance'
-            );
-            if ($self->derivatives) {
-                model_approximations::derivatives_model(model => $frem_model);   # Output the derivatives to be able to make VA-plot
-            }
+        $frem_model->problems->[0]->add_records(
+            record_strings => $new_cov_records,
+            type => 'covariance'
+        );
+        if ($self->derivatives) {
+            model_approximations::derivatives_model(model => $frem_model);   # Output the derivatives to be able to make VA-plot
         }
         $frem_model->_write();
     } else {
@@ -2769,6 +2754,38 @@ sub prepare_model4
     }
 
     return ($etas_file);
+}
+
+sub prepare_model4b
+{
+    # Model 4b is used to get the parameter uncertainty in case model 4 failed the covariance step
+    # * Initial parameter estimates are updated from the estimation of model4
+    # * Final etas from model4 are used as initial etas
+    # * An IMPMAP evaluation of the model will replace the estimation record
+    my $self = shift;
+    my %parm = validated_hash(\@_,
+        model => { isa => 'model', optional => 0 },
+    );
+    my $model = $parm{'model'};
+
+    my $model4b = $model->copy(
+        filename => File::Spec->catfile($self->_final_models_path, 'model_4b.mod'),
+        output_same_directory => 1,
+        write_copy => 0,
+        copy_datafile => 0,
+        copy_output => 0
+    );
+
+    $model4b->update_inits(from_output => $self->final_models->[0]->outputs->[0]);
+
+    $model4b->get_or_set_etas_file(problem_number => 1, new_file => 'model_4.phi');
+
+    my $est_records = [ model::problem::estimation->new(
+        record_arr => ['METHOD=IMPMAP MAPITER=0 ISAMPLE=3000 NITER=5 EONLY=1 PRINT=1']
+    ) ];
+    $model4b->problems->[0]->estimations($est_records);
+
+    $model4b->_write();
 }
 
 sub prepare_model5
@@ -3294,6 +3311,9 @@ sub modelfit_setup
     my $inter = File::Spec->catfile($self->directory, 'm1');
     $self->_intermediate_models_path($inter);
 
+    my $final_path = File::Spec->catfile($self->directory, 'final_models');
+    $self->_final_models_path($final_path);
+
     #this runs input model, if necessary, and updates inits
     (my $frem_model1, my $output_model1, $etas_file) = $self->do_model1(model => $model);
 
@@ -3370,7 +3390,6 @@ sub modelfit_setup
 
     ($etas_file) = $self->prepare_model4(
         model => $frem_model3,
-        imp_covariance_eval => 0,
         parcov_blocks => $mod4_parcov_block,
         est_records => $est_records,
         cov_records => $cov_records,
@@ -3443,15 +3462,7 @@ sub modelfit_setup
             if (not $self->mu) {
                 $logger->warning('MU referencing (not used) can speed up model 4b sampling');
             }
-            $self->final_models->[0]->update_inits(from_output => $self->final_models->[0]->outputs->[0]);
-            ($etas_file) = $self->prepare_model4(model => $self->final_models->[0],
-                imp_covariance_eval => $self->imp_covariance,
-                parcov_blocks => $mod4_parcov_block,
-                est_records => $est_records,
-                cov_records => $cov_records,
-                update_existing_model_files => $update_existing_model_files,
-                etas_file => $etas_file,
-            );
+            $self->prepare_model4b(model => $self->final_models->[0]);
             push(@{$self->final_numbers}, '4b');
             (my $model_4b, $mes) = $self->run_unless_run(numbers => ['4b'],
                 subdirectory => 'final_models',
