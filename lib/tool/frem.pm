@@ -16,7 +16,6 @@ use array;
 use tool::sir;
 use model_approximations;
 use input_checking;
-use POSIX ":sys_wait_h"; #for forking FIXME remove!
 use POSIX qw/floor/;
 
 use Moose;
@@ -65,7 +64,6 @@ has 'estimate_means' => ( is => 'rw', isa => 'Bool', default => 1 );
 has 'estimate_covariates' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'has_missingness' => ( is => 'rw', isa => 'ArrayRef', default => sub { [] } );
 has 'cholesky' => ( is => 'rw', isa => 'Bool', default => 0 );
-has 'imp_covariance' => ( is => 'rw', isa => 'Bool', default => 1 );
 
 has 'results_file' => ( is => 'rw', isa => 'Str', default => 'frem_results.csv' );
 has 'model_1' => ( is => 'rw', isa => 'model' );
