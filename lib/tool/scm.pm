@@ -8,6 +8,7 @@ use OSspecific;
 use Data::Dumper;
 use File::Copy 'cp';
 use File::Spec;
+use List::Util qw(max);
 use status_bar;
 use Moose;
 use MooseX::Params::Validate;
@@ -959,14 +960,22 @@ sub _raw_results_callback
         my @new_header = ('step.number','action','relation' );
         $modelfit -> raw_results_file( [$dir.$file] );
         $modelfit -> raw_results_append( 1 ) if ( $step_number > 1 );
-
         my $raw_results_header = $modelfit -> raw_results_header;
         my $raw_results = $modelfit -> raw_results;
         my $cols = scalar @{$modelfit -> raw_results -> [0]}; # first non-header row
         #callback is only used when running candidate models.
         #only change raw_line_structure first iteration.
         #use rawline structure for model no 1, edit, overwrite for other models
-        #if not first iteration then read from file?
+        #if model 1 does not have ofv (crashed?) select another row
+        my $rawline_index = '1';
+        if (not defined $modelfit->raw_line_structure->{'1'}->{'ofv'}) {
+            for my $n (keys %{$modelfit->raw_line_structure}) {
+                if (defined $modelfit->raw_line_structure->{$n}->{'ofv'}) {
+                    $rawline_index = $n;
+                    last;
+                }
+            }
+        }
 
         my @diagnostic_params = @{$self -> diagnostic_parameters};
         my @diagnostic_indices;
@@ -974,7 +983,7 @@ sub _raw_results_callback
         push(@diagnostic_params,'ofv');
         foreach my $param (@diagnostic_params){
             no warnings qw(uninitialized);
-            my ($start,$len) = split(',',$modelfit->raw_line_structure->{'1'}->{$param});
+            my ($start,$len) = split(',',$modelfit->raw_line_structure->{$rawline_index}->{$param});
             push(@diagnostic_indices,$start) unless ($len == 0);
         }
         my $len;
@@ -992,27 +1001,27 @@ sub _raw_results_callback
         my $len_shrinkage_eta=0;
         my $len_shrinkage_iwres=0;
 
-        ($theta_start,$len) = split(',',$modelfit->raw_line_structure->{'1'}->{'theta'})
-        if (defined $modelfit->raw_line_structure->{'1'}->{'theta'});
-        ($omega_start,$len) = split(',',$modelfit->raw_line_structure->{'1'}->{'omega'})
-        if (defined $modelfit->raw_line_structure->{'1'}->{'omega'});
-        ($sigma_start,$len) = split(',',$modelfit->raw_line_structure->{'1'}->{'sigma'})
-        if (defined $modelfit->raw_line_structure->{'1'}->{'sigma'});
+        ($theta_start,$len) = split(',',$modelfit->raw_line_structure->{$rawline_index}->{'theta'})
+        if (defined $modelfit->raw_line_structure->{$rawline_index}->{'theta'});
+        ($omega_start,$len) = split(',',$modelfit->raw_line_structure->{$rawline_index}->{'omega'})
+        if (defined $modelfit->raw_line_structure->{$rawline_index}->{'omega'});
+        ($sigma_start,$len) = split(',',$modelfit->raw_line_structure->{$rawline_index}->{'sigma'})
+        if (defined $modelfit->raw_line_structure->{$rawline_index}->{'sigma'});
         ($setheta_start,$len_setheta) =
-        split(',',$modelfit->raw_line_structure->{'1'}->{'setheta'})
-        if (defined $modelfit->raw_line_structure->{'1'}->{'setheta'});
+        split(',',$modelfit->raw_line_structure->{$rawline_index}->{'setheta'})
+        if (defined $modelfit->raw_line_structure->{$rawline_index}->{'setheta'});
         ($seomega_start,$len_seomega) =
-        split(',',$modelfit->raw_line_structure->{'1'}->{'seomega'})
-        if (defined $modelfit->raw_line_structure->{'1'}->{'seomega'});
+        split(',',$modelfit->raw_line_structure->{$rawline_index}->{'seomega'})
+        if (defined $modelfit->raw_line_structure->{$rawline_index}->{'seomega'});
         ($sesigma_start,$len_sesigma) =
-        split(',',$modelfit->raw_line_structure->{'1'}->{'sesigma'})
-        if (defined $modelfit->raw_line_structure->{'1'}->{'sesigma'});
+        split(',',$modelfit->raw_line_structure->{$rawline_index}->{'sesigma'})
+        if (defined $modelfit->raw_line_structure->{$rawline_index}->{'sesigma'});
         ($shrinkage_eta_start,$len_shrinkage_eta) =
-        split(',',$modelfit->raw_line_structure->{'1'}->{'shrinkage_eta'})
-        if (defined $modelfit->raw_line_structure->{'1'}->{'shrinkage_eta'});
+        split(',',$modelfit->raw_line_structure->{$rawline_index}->{'shrinkage_eta'})
+        if (defined $modelfit->raw_line_structure->{$rawline_index}->{'shrinkage_eta'});
         ($shrinkage_iwres_start,$len_shrinkage_iwres) =
-        split(',',$modelfit->raw_line_structure->{'1'}->{'shrinkage_iwres'})
-        if (defined $modelfit->raw_line_structure->{'1'}->{'shrinkage_iwres'});
+        split(',',$modelfit->raw_line_structure->{$rawline_index}->{'shrinkage_iwres'})
+        if (defined $modelfit->raw_line_structure->{$rawline_index}->{'shrinkage_iwres'});
 
         for ( my $i = 0; $i < scalar @{$modelfit -> raw_results}; $i++ ) {
             my @new_raw_results = ( $step_number,$action,$step_rel_names[$i] );
@@ -1127,7 +1136,6 @@ sub _raw_results_callback
 
             push( @new_raw_results, ( @diagnostics, @thetas, @omsi,
                     @sethetas, @seomsi,@shrinkage_eta,$shrinkage_iwres ) );
-
             $modelfit -> raw_results() -> [$i] = \@new_raw_results;
         }
         if ( $step_number == 1 ) {
@@ -1422,7 +1430,6 @@ sub _raw_results_callback
             $self->raw_line_structure -> write( $dir.'raw_results_structure' );
 
         }
-
     };
     return $subroutine;
 }
