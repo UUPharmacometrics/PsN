@@ -269,7 +269,7 @@ sub _create_nmqual_command
     unless (defined $xml_file){
         croak("xml_file undefined in _create_nmqual_command, this is a bug");
     }
-    $command_string = " $xml_file $interface ce $work_dir psn $options ";
+    $command_string = " $xml_file $interface ce \"$work_dir\" psn $options ";
 
     $command_string = "perl ".$self->full_path_runscript." $command_string";
     #print "\n$command_string\n";
