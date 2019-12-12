@@ -3825,7 +3825,8 @@ sub undrop_columns
                         $option->value('');
                         push @undropped_columns, $col;
                     } elsif ($option->value eq $col) {
-                        $option->name('');
+                        $option->name($col);
+                        $option->value('');
                         push @undropped_columns, $col;
                     }
                 }
