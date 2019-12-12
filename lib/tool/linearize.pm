@@ -46,6 +46,9 @@ sub modelfit_setup
                         or $option->name eq 'MDV')) {
                 if ($option->value eq 'TIME' or $option->name eq 'TIME') {      # Special case for TIME. Keep it instead of synonym
                     push @keep, 'TIME';
+                } elsif ($option->value eq 'DATE' or $option->name eq 'DATE' or $option->value eq 'DAT1' or $option->name eq 'DAT1' or
+                         $option->value eq 'DAT2' or $option->name eq 'DAT2' or $option->value eq 'DAT3' or $option->name eq 'DAT3') {
+                    ;       # Don't add since NM-TRAN will aggregate DATE into TIME
                 } else {
                     push @keep, $option->name;
                 }
