@@ -9,8 +9,7 @@ geometry: margin=1.5cm
 library(PsNR)
 library(magrittr)
 library(methods)
-# get libPaths
-R_info(directory=working.directory,only_libPaths=T)
+
 #add R_info to the meta file
 R_info(directory=working.directory)
 ```
@@ -51,5 +50,3 @@ name <- list_first_incl_step$name
 p <- plot_first_included_step(data,base,sign,n1,name)
 print(p)
 ```
-
-

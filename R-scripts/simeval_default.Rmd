@@ -13,7 +13,6 @@ library(magrittr)
 library(methods)
 library(PerformanceAnalytics)
 library(xpose4)
-R_info(directory=working.directory,only_libPaths=T)
 R_info(directory=working.directory)
 meta <- PsNR::metadata(working.directory)
 ```

@@ -3,8 +3,7 @@ library(magrittr)
 library(methods)
 library(ggplot2)
 library(dplyr)
-# get libPaths
-R_info(directory=working.directory,only_libPaths=T)
+
 #add R_info to the meta file
 R_info(directory=working.directory)
 

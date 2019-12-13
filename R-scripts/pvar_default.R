@@ -1,8 +1,7 @@
 library(PsNR)
 library(magrittr)
 library(methods)
-# get libPaths
-R_info(directory=working.directory,only_libPaths=T)
+
 # input
 csv_file <- file.path(working.directory, 'result.csv', fsep = .Platform$file.sep)
 #add R_info to the meta file

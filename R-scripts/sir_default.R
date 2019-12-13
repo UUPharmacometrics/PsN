@@ -11,8 +11,6 @@ library(grDevices)
 library(tidyr)
 library(stats)
 
-# get libPaths
-R_info(directory=working.directory,only_libPaths=T)
 ### Diagnostics for SIR
 ### Author: AG Dosne
 ### Date: August 2015

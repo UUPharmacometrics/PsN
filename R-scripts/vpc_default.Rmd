@@ -12,8 +12,9 @@ library(magrittr)
 library(methods)
 library(xpose4)
 library(vpc)
-R_info(directory=working.directory,only_libPaths=T)
+
 #add R_info to the meta file
+R_info(directory=working.directory)
 meta <- PsNR::metadata(working.directory)
 ```
 
@@ -70,6 +71,4 @@ if (exists('mix')) {     # A mixture model is a special case
         gridExtra::marrangeGrob(plots, nrow=2, ncol=2, top=NULL, padding=0)
     }
 }
-#add R_info to the meta file
-R_info(directory=working.directory)
 ```

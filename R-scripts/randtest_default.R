@@ -9,7 +9,8 @@ library(MASS)
 library(plyr)
 library(tidyr)
 
-R_info(directory=working.directory, only_libPaths=T)
+#add R_info to the meta file
+R_info(directory=working.directory)
 meta <- PsNR::metadata(working.directory)
 
 # randtest plot
@@ -300,8 +301,3 @@ if (have.base.model) {
     } #end if level>1
     dev.off()
 }
-
-#add R_info to the meta file
-R_info(directory=working.directory)
-
-
