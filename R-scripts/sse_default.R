@@ -1,7 +1,6 @@
 library(PsNR)
 library(magrittr)
 library(methods)
-library(plyr)
 library(ggplot2)
 library(plyr)
 # get libPaths
