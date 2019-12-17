@@ -386,15 +386,20 @@ sub full_omega_block
         if (not $last and $omegas->[$i + 1]->same) {    # The next omega record is SAME
             $keep_rest = 1;
         }
-        my $anyfix = 0;
-        for my $option (@{$omegas->[$i]->options}) {
-            if ($option->fix) {
-                $anyfix = 1;
-                last;
-            }
-        }
-        if ($anyfix or $omegas->[$i]->fix) {        # Is record FIX or any option FIX
+        if ($omegas->[$i]->fix) {        # Is record FIX
             $keep_rest = 1;
+        }
+        if (not $keep_rest) {   # Check for fix option where splitting might be needed 
+            for (my $j = 0; $j < scalar(@{$omegas->[$i]->options}); $j++) {
+                if ($omegas->[$i]->options->[$j]->fix) {
+                    if ($j != 0) {
+                        split_omegas(model => $model, split_after => $numetas + $j);
+                        $omegas = $model->problems->[0]->omegas;
+                    } else {
+                        $keep_rest = 1;     # FIX is the first option: we are done
+                    }
+                }
+            }
         }
 
         if ($keep_rest) {
