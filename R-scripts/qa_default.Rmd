@@ -55,7 +55,7 @@ ofv_table <- ofv_summary_table(directory=file.path(working.directory,"linearize_
 structural_overview <- get_structural_overview_table(directory=working.directory,idv=idv_all,dvid_name,skip)
 if(all(skip!="resmod")) {
   # get resmod structural details tables
-  resmod_structural_details <- resmod_structural_details_tables(working.directory,base_dataset,original_max0_model=original_max0_model,extra_table,extra_table_columns,idv_all,dvid_name,nonlinear)
+  resmod_structural_details <- resmod_structural_details_tables(working.directory,base_dataset,original_max0_model=original_max0_model,extra_table,idv_all,dvid_name,nonlinear)
 }
 ```
 

@@ -879,31 +879,6 @@ sub get_scm_categorical
     return \@categorical;
 }
 
-sub mend_extra_table_names
-{
-    my $self = shift;
-    my $colnames = shift;
-
-    my $directory = $self->directory . 'linearize_run/scm_dir1/';
-
-    open my $fh, '<', $directory . 'extra_table' or return;
-    open my $dh, '>', $directory . 'extra_table.temp' or return;
-
-    my $table_line = <$fh>;
-    print $dh $table_line;
-    <$fh>;
-    print $dh ' ' . join('      ', @$colnames) . "\n";
-    while (my $line = <$fh>) {
-        print $dh $line;
-    }
-
-    close $dh;
-    close $fh;
-
-    unlink "${directory}extra_table";
-    rename "${directory}extra_table.temp", "${directory}/extra_table";
-}
-
 sub write_captured_output
 {
     # Write the string that was captured by bin/qa to a file for later use by the R-plots code
@@ -941,7 +916,10 @@ sub create_R_plots_code
     if ($self->nonlinear) {
         $extra_table_path = 'extra_table';
     }
+    # Synonym in _linbase $TABLE carries over to extra_tables and need to be replaced.
+    nmtablefile::rename_column_names(filename => $self->directory . $extra_table_path, replacements => {'CIPREDI' => 'OPRED'});
     $extra_table_path =~ s/\\/\//g;
+
 
     my $orig_max0_model_path = File::Spec->abs2rel($self->orig_max0_model_path, $self->directory);
     $orig_max0_model_path =~ s/\\/\//g;
@@ -963,9 +941,6 @@ sub create_R_plots_code
         $scm_categorical = [];
     }
 
-    my @extra_table_columns = (@{$self->extra_table_columns}, 'MDV');
-    $self->mend_extra_table_names(\@extra_table_columns);
-
     my $code = [
             '# qa specific preamble',
             "groups <- " . $self->groups,
@@ -975,7 +950,6 @@ sub create_R_plots_code
             "scm_categorical <- " . rplots::create_r_vector(array => $scm_categorical),
             "parameters <- " . rplots::create_r_vector(array => \@parameters),
             "extra_table <- '" . $extra_table_path . "'",
-            "extra_table_columns <- " . rplots::create_r_vector(array => \@extra_table_columns),
             "cdd_dofv_cutoff <- 3.84 ",
             "cdd_max_rows <- 10",
             "skip <- " . rplots::create_r_vector(array => $self->_tools_to_skip ),
