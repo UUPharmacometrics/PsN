@@ -2544,7 +2544,7 @@ sub prepare_model2
     } else {
         if (defined $etas_file) {
             (my $phi_filename = $name_model) =~ s/(.*)\..*/$1.phi/;
-            $etas_file = File::Spec($im_dir, $phi_filename);
+            $etas_file = File::Spec->catfile($im_dir, $phi_filename);
         }
     }
 
