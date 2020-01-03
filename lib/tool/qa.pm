@@ -301,12 +301,14 @@ sub modelfit_setup
             mkdir "modelfit_run";
             my @models;
             my $full_block_model = $base_model->copy(directory => "modelfit_run", filename => "fullblock.mod", write_copy => 0);
+            set_mceta($full_block_model, 10);
             my $was_full_block = model_transformations::full_omega_block(model => $full_block_model);
             if (not $was_full_block) {
                 $full_block_model->_write();
                 push @models, $full_block_model;
             }
             my $boxcox_model = $base_model->copy(directory => "modelfit_run", filename => "boxcox.mod", write_copy => 0);
+            set_mceta($boxcox_model, 10);
             my $zero_fix_omegas = model_transformations::find_zero_fix_omegas(model => $boxcox_model);
             my $etas_to_boxcox_tdist = model_transformations::remaining_omegas(model => $boxcox_model, omegas => $zero_fix_omegas);
             if (scalar(@$etas_to_boxcox_tdist) > 0) {
@@ -316,6 +318,7 @@ sub modelfit_setup
                 push @models, $boxcox_model;
             }
             my $tdist_model = $base_model->copy(directory => "modelfit_run", filename => "tdist.mod", write_copy => 0);
+            set_mceta($tdist_model, 10);
             if (scalar(@$etas_to_boxcox_tdist) > 0) {
                 model_transformations::tdist_etas(model => $tdist_model, etas => $etas_to_boxcox_tdist);
                 model_transformations::set_size(model => $tdist_model, size => 'DIMNEW', value => -10000);
@@ -326,6 +329,7 @@ sub modelfit_setup
                 my $iov_etas = model_transformations::find_etas(model => $base_model, type => 'iov');
                 if (scalar(@$iov_etas) == 0) {      # We don't have iov previously
                     my $add_iov_model = $base_model->copy(directory => "modelfit_run", filename => "iov.mod", write_copy => 0);
+                    set_mceta($add_iov_model, 10);
                     my $error = model_transformations::add_iov(model => $add_iov_model, occ => $self->occ);
                     if (not $error) {
                         $add_iov_model->_write();
@@ -524,15 +528,7 @@ sub modelfit_setup
             $self->parameters(join ',', @scm_parameters);
             model_transformations::prepend_code(model => $scm_model, code => \@scm_code);
             model_transformations::add_tv(model => $scm_model, parameters => \@scm_parameters, type => 'additive');
-            $scm_model->remove_option(
-                record_name => 'estimation',
-                option_name => 'MCETA',
-            );
-            $scm_model->add_option(             # Seems to safeguard against (some) local minima
-                record_name => 'estimation',
-                option_name => 'MCETA',
-                option_value => 100,
-            );
+            set_mceta($scm_model, 100);
 
             $scm_model->_write();
             $self->_create_scm_config(model_name => "m1/scm.mod", parameters => \@scm_parameters);
@@ -990,6 +986,22 @@ sub create_R_plots_code
 
 
     $rplot->add_preamble(code => $code);
+}
+
+sub set_mceta
+{
+    my $model = shift;
+    my $mceta = shift;
+    
+    $model->remove_option(
+        record_name => 'estimation',
+        option_name => 'MCETA',
+    );
+    $model->add_option(
+        record_name => 'estimation',
+        option_name => 'MCETA',
+        option_value => $mceta,
+    );
 }
 
 
