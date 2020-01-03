@@ -275,6 +275,7 @@ sub modelfit_setup
         $self->base_model_path($base_model->directory . $base_model->filename);
         $self->orig_max0_model_path($base_model->directory . 'linearize_run/scm_dir1/derivatives.mod');
         $self->base_dataset_path($base_model->problems->[0]->datas->[0]->get_absolute_filename());
+        $base_model->init_etas(full_path => 1);
     } else {
         $base_model = $model_copy;
         $self->base_dataset_path($self->directory . 'preprocess_data_dir/filtered.dta');
