@@ -2228,6 +2228,14 @@ sub linearize_setup
             }
         }
 
+        if (defined $self->extra_table_columns) {
+            # Add TAD to linbase dataset if TAD available. Used for linearized VA plots in FREM via qa.
+            if (not array::string_in('TAD', \@tablestrings) and array::string_in('TAD', $self->extra_table_columns)) {
+                push @tablestrings, 'TAD';
+                push @inputstrings, 'TAD';
+            }
+        }
+
         push(@tablestrings,'NOPRINT','NOAPPEND','ONEHEADER');
         push(@tablestrings,'FILE='.$datafilename);
         push(@tablestrings, "FORMAT=s1PE$format");
