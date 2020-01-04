@@ -59,6 +59,12 @@ sub BUILD
 
     $self->check_nonsupported_modelfeatures();
 
+    for my $param (@{$self->add_etas}) {
+        if (not code_parsing::defined_symbol(model => $model, symbol => $param)) {
+            die("Parameter $param in add_etas not defined in model code\n");
+        }
+    }
+
     if (scalar(@{$self->skip}) > 0 and scalar(@{$self->only}) > 0) {
         die("Cannot have both skip and only\n");
     }
