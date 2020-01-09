@@ -293,6 +293,17 @@ sub modelfit_setup
         idcolumn => $base_model->idcolumns->[0],
     );
 
+    my @categoricals_to_check = @categorical;
+    push @categoricals_to_check, $self->occ if defined $self->occ;
+    push @categoricals_to_check, $self->dvid if defined $self->dvid;
+    for my $cat (@categoricals_to_check) {
+        my $factors = $lin_data->factors(column_head => $cat);
+        my $n = scalar(keys %$factors);
+        if ($n > 10) {
+            die "Error: Too many different values ($n) of categorical variable $cat. Exiting\n"
+        }
+    }
+
     my $numids = scalar(@{$lin_data->individuals});
     if ($numids < 2 and $self->_tools_to_run->{'cdd'}) {   # Skip cdd if only one individual
         print "Warning: Only one individual in dataset. Will skip cdd\n";
@@ -300,6 +311,7 @@ sub modelfit_setup
         push @{$self->_tools_to_skip}, 'cdd';
     }
 
+    # Find time_varying covariates (assuming a filtered dataset)
     my @time_varying;
     COV_LOOP: for my $cov (@covariates) {
         my $index = $lin_data->column_head_indices->{$cov} - 1;
