@@ -300,6 +300,23 @@ sub modelfit_setup
         push @{$self->_tools_to_skip}, 'cdd';
     }
 
+    my @time_varying;
+    COV_LOOP: for my $cov (@covariates) {
+        my $index = $lin_data->column_head_indices->{$cov} - 1;
+        for my $ind (@{$lin_data->individuals}) {
+            my @cov_values;
+            for my $row (@{$ind->subject_data}) {
+                my @a = split ',', $row;
+                my $e = $a[$index];
+                push @cov_values, $e;
+            }
+            my $unique = array::unique(\@cov_values);
+            if (scalar(@$unique) > 1) {
+                push @time_varying, $cov;
+                next COV_LOOP;
+            }
+        }
+    }
 
     if ($self->_tools_to_run->{'transform'}) {
         print "*** Running full omega block, boxcox and tdist models ***\n";
@@ -500,6 +517,9 @@ sub modelfit_setup
 
         if ($self->_tools_to_run->{'scm'} and (defined $self->continuous or defined $self->categorical)) {
             print "\n*** Running scm ***\n";
+            if (scalar(@time_varying) > 0) {
+                print "Found time varying continuous covariates: " . join(", ", @time_varying) . "\n";
+            }
             my $scm_model = $base_model->copy(directory => "m1", filename => "scm.mod", write_copy => 0);
             if ($base_model->is_run()) {
                 my $lst_path = $base_model->outputs->[0]->full_name();
@@ -537,7 +557,7 @@ sub modelfit_setup
             set_mceta($scm_model, 100);
 
             $scm_model->_write();
-            $self->_create_scm_config(model_name => "m1/scm.mod", parameters => \@scm_parameters);
+            $self->_create_scm_config(model_name => "m1/scm.mod", parameters => \@scm_parameters, time_varying => \@time_varying);
             my %tool_options = %{common_options::restore_options(@common_options::tool_options)};
             my $scm_options = "";
             for my $cmd (split /\s+/, $self->cmd_line) {
@@ -747,9 +767,11 @@ sub _create_scm_config
     my %parm = validated_hash(\@_,
         model_name => { isa => 'Str' },
         parameters => { isa => 'ArrayRef' },
+        time_varying => { isa => 'ArrayRef' },
     );
     my $model_name = $parm{'model_name'};
     my $parameters = $parm{'parameters'};
+    my $time_varying = $parm{'time_varying'};
 
     open my $fh, '>', 'config.scm';
 
@@ -761,6 +783,11 @@ sub _create_scm_config
     my $categorical = "";
     if (defined $self->categorical) {
         $categorical = "categorical_covariates=" . $self->categorical;
+    }
+
+    my $time_varying_covariates = "";
+    if (scalar(@$time_varying) > 0) {
+        $time_varying_covariates = "time_varying=" . join(",", @$time_varying);
     }
 
     my $all = "";
@@ -790,6 +817,7 @@ max_steps=1
 
 $covariates
 $categorical
+$time_varying_covariates
 logit=$logit
 
 do_not_drop=$all

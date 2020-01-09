@@ -6035,13 +6035,13 @@ sub preprocess_data
                     $row =~ s/^\s*(\w+)\s*=\s*//;
                     my ($line,$comment) = split( ';', $row, 2 );
                     chomp $line;
-                    if ($line =~ s/[^A-Z0-9_]ETA\(([0-9]+)\)//){
+                    if ($line =~ s/\bETA\(([0-9]+)\)//){
                         $etanum = $1;
                     }else{
                         last;
                     }
 
-                    if ($line =~ s/[^A-Z0-9_]ETA\(([0-9]+)\)//){
+                    if ($line =~ s/\bETA\(([0-9]+)\)//){
                         croak("Could not determine the ETA ".
                             "coupled to $parameter,\n".
                             " two ETA(<number>) found ".
