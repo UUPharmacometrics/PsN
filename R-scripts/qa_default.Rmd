@@ -3,7 +3,10 @@ title: "Quality assurance"
 output:
     pdf_document: default
     html_document:
+        number_sections: yes
+        css: !expr system.file("reporting", "style.css", package = "PsNR")
         includes:
+            before_body: !expr system.file("reporting", "navbar.html", package = "PsNR")
             in_header: !expr system.file("reporting", "header.html", package = "PsNR")
 header-includes: #needed to create a pdf file
     - \usepackage{colortbl}
@@ -18,7 +21,7 @@ library(PsNR)
 library(methods)
 type <- knitr::opts_knit$get("rmarkdown.pandoc.to") # either 'html' or 'latex'
 options(knitr.table.format=type)
-knitr::opts_chunk$set(fig.pos = 'H')
+knitr::opts_chunk$set(fig.pos = 'H', echo = FALSE)
 ```
 
 ```{r retrieve_qa_results, include = FALSE}
@@ -173,22 +176,10 @@ if(length(command_runtime$command)>0 && length(command_runtime$run_start)>0 && l
 }
 ```
 
-```{r test_chunk,echo=F}
-#popover_dt <- data.frame(
-#  position = c("top", "bottom", "right", "left"),
-#  stringsAsFactors = FALSE
-#)
-#popover_dt$`Hover over these items` <- kableExtra::cell_spec(
-#  paste("Message on", popover_dt$position), # Cell texts
-#  popover = kableExtra::spec_popover(
-#    content = c("Some content potentially long displayed above", "below", "right", "left"),
-#    title = "Even a title here!",                           # title will add a Title Panel on top
-#    position = popover_dt$position,
-#    trigger = c("click", "hover", "focus", "manual")
-#  ))
-#kableExtra::kable(popover_dt, escape = FALSE) %>%
-#  kableExtra::kable_styling("striped", full_width = FALSE)
+```{r}
+PsNR::qa_report_content_intro()
 ```
+
 
 ```{r draw_ofv_table,results='asis',echo=F,warning=F,message=F,eval=!nonlinear}
 PsNR::render_ofv_table(qa_results)
@@ -196,6 +187,7 @@ PsNR::render_ofv_table(qa_results)
 
 ```{r draw_overview_table,results='asis',echo=F,warning=F,message=F}
 cat("# Overview\n\n")
+PsNR::qa_report_content_overview()
 overview_table <- kable_table(overview_table_list$overview_table,format=type,booktabs=T,longtable=T,align=c("l","r","c"),linesep="") %>%
   kableExtra::kable_styling(position="c",full_width = F)
 for(i in 1:nrow(overview_table_list$row_groups)) {
@@ -208,13 +200,15 @@ cat("Overview of possible modifications to different model aspects, expected imp
 ```{r draw_structural_details_tables,eval=all(skip!="resmod"),results='asis',echo=F,warning=F,message=F,fig.width=11,fig.height=6.5,fig.keep="high",fig.align="center"}
 cat("\\pagebreak\n\n")
 cat("# Structural\n\n")
+PsNR::qa_report_content_structural()
 all_structural_extra_plots(simeval_directory=file.path(working.directory,"simeval_run"),base_dataset,resmod_structural_details,
                            extra_table,idv_all,idv_name,dvid_name,type,nonlinear)
 ```
 
 ```{r Add_text_for_parameter_section_if_exist_mod_files,eval=all(skip!="transform"),results='asis',echo=F,warning=F,message=F}
 cat("\\pagebreak\n\n")
-cat("# Parameter Variability Model\n\n")
+cat("# Parameter Variability Model {#parvar} \n\n")
+PsNR::qa_report_content_parvar()
 ```
 
 ```{r draw_full_omega_block_table,eval=all(skip!="transform"),results='asis',echo=F,warning=F,message=F}
@@ -330,6 +324,7 @@ if(list_par_var_models$iov_mod) {
 ```{r draw_covariates_table,results='asis',echo=F,warning=F,message=F}
 cat("\\pagebreak\n\n")
 cat("# Covariates\n\n")
+PsNR::qa_report_content_covariates()
 PsNR::render_covariates_table(qa_results)
 
 ```
