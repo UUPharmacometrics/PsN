@@ -201,6 +201,7 @@ cat("Overview of possible modifications to different model aspects, expected imp
 cat("\\pagebreak\n\n")
 cat("# Structural\n\n")
 PsNR::qa_report_content_structural()
+cat("\n\n")
 all_structural_extra_plots(simeval_directory=file.path(working.directory,"simeval_run"),base_dataset,resmod_structural_details,
                            extra_table,idv_all,idv_name,dvid_name,type,nonlinear)
 ```
