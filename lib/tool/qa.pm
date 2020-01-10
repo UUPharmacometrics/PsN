@@ -532,7 +532,13 @@ sub modelfit_setup
         if ($self->_tools_to_run->{'scm'} and (defined $self->continuous or defined $self->categorical)) {
             print "\n*** Running scm ***\n";
             if (scalar(@time_varying) > 0) {
-                print "Found time varying continuous covariates: " . join(", ", @time_varying) . "\n";
+                if ($self->model->nomegas->[0] > 9) {
+                    print "Warning: found time varying covariates, but cannot use them as time varying\n";
+                    print "         because model has more than 9 etas\n";
+                    @time_varying = ();
+                } else {
+                    print "Found time varying continuous covariates: " . join(", ", @time_varying) . "\n";
+                }
             }
             my $scm_model = $base_model->copy(directory => "m1", filename => "scm.mod", write_copy => 0);
             if ($base_model->is_run()) {
