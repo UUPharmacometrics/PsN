@@ -3786,7 +3786,7 @@ sub find_data_synonym
     # Return synonym if available. Else return undef
     for my $record (@{$self->inputs}) {
         for my $option (@{$record->options}) {
-            if (defined $option->value) {
+            if (defined $option->value and not $option->value eq "") {
                 my $synonym;
                 if ($option->name eq $name) {
                     $synonym = $option->value;
@@ -3798,12 +3798,12 @@ sub find_data_synonym
                 if ($synonym ne 'DROP' and $synonym ne 'SKIP') {
                     return $synonym;
                 } else {
-                    return;
+                    return undef;
                 }
             }
         }
     }
-    return;
+    return undef;
 }
 
 sub find_data_column
