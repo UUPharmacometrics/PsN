@@ -40,6 +40,7 @@ has 'added_etas' => ( is => 'rw', isa => 'HashRef' );   # What parameters did ge
 has 'iov_structure' => ( is => 'rw', isa => 'ArrayRef' );   # The occ/iov structure for the r code
 has 'orig_max0_model_path' => ( is => 'rw', isa => 'Str' );
 has 'base_model_path' => ( is => 'rw', isa => 'Str' );
+has 'base_model' => ( is => 'rw', isa => 'model' );
 has 'base_dataset_path' => ( is => 'rw', isa => 'Str' );
 has 'extra_table_columns' => ( is => 'rw', isa => 'ArrayRef[Str]' );
 has 'nm_parallel' => ( is => 'rw', isa => 'Str' );  # Should a special NONMEM version be used for frem and linearize?
@@ -286,6 +287,7 @@ sub modelfit_setup
         $base_model = $model_copy;
         $self->base_dataset_path($self->directory . 'preprocess_data_dir/filtered.dta');
     }
+    $self->base_model($base_model);
 
     my $lin_data = data->new(
         filename => $self->base_dataset_path,
@@ -959,8 +961,14 @@ sub create_R_plots_code
     if ($self->nonlinear) {
         $extra_table_path = 'extra_table';
     }
+
     # Synonym in _linbase $TABLE carries over to extra_tables and need to be replaced.
-    nmtablefile::rename_column_names(filename => $self->directory . $extra_table_path, replacements => {'CIPREDI' => 'OPRED'});
+    my %synonyms = ( 'CIPREDI' => 'OPRED' );
+    my $time_synonym = $self->model->problems->[0]->find_data_synonym(name => 'TIME');
+    if (defined $time_synonym) {
+        $synonyms{'TIME'} = $time_synonym;
+    }
+    nmtablefile::rename_column_names(filename => $self->directory . $extra_table_path, replacements => \%synonyms);
     $extra_table_path =~ s/\\/\//g;
 
 
