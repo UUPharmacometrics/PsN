@@ -6101,7 +6101,7 @@ sub preprocess_data
             $filtered_data_model ->
             add_records( type           => 'table',
                 record_strings => [ $mdvstring.'ID '.join( ' ', @tablestrings ).
-                    ' DV CIPREDI CIWRESI NOAPPEND NOPRINT ONEHEADER FILE='.$par.$timevarfile]);
+                    ' DV CIPREDI CIWRESI NOAPPEND NOPRINT ONEHEADER FORMAT=s1PE23.16 FILE='.$par.$timevarfile]);
         }
 
         $filtered_data_model->set_maxeval_zero();
