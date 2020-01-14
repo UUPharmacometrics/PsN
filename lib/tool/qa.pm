@@ -659,7 +659,7 @@ sub modelfit_setup
     }
 
     if ($self->_tools_to_run->{'resmod'}) {
-        print "*** Running resmod ***\n";
+        print "\n*** Running resmod ***\n";
         my $resmod_model;
         if (not $self->nonlinear) {
             $resmod_model = model->new(filename => 'linearize_run/scm_dir1/derivatives.mod');
