@@ -20,6 +20,9 @@ classoption: a4paper
 library(PsNR)
 library(methods)
 type <- knitr::opts_knit$get("rmarkdown.pandoc.to") # either 'html' or 'latex'
+if (is.null(type)) {
+    type <- 'html'
+}
 options(knitr.table.format=type)
 knitr::opts_chunk$set(fig.pos = 'H', echo = FALSE)
 ```
