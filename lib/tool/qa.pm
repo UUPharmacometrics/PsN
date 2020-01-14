@@ -44,6 +44,7 @@ has 'base_model' => ( is => 'rw', isa => 'model' );
 has 'base_dataset_path' => ( is => 'rw', isa => 'Str' );
 has 'extra_table_columns' => ( is => 'rw', isa => 'ArrayRef[Str]' );
 has 'nm_parallel' => ( is => 'rw', isa => 'Str' );  # Should a special NONMEM version be used for frem and linearize?
+has 'estimation_options' => ( is => 'rw', isa => 'Str' );
 has '_special_tool_options' => ( is => 'rw', isa => 'Maybe[HashRef]', default => undef); # All tool options to override command line
 
 
@@ -252,6 +253,7 @@ sub modelfit_setup
             keep_covariance => 1,
             nm_output => 'phi,ext,cov,cor,coi',
             extra_data_columns => $derived_covariates,
+            estimation_options => $self->estimation_options,
         );
 
         $linearize->run();

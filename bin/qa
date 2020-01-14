@@ -40,6 +40,7 @@ my %optional_options = (
     'only:s' => undef,
     'add_etas:s' => undef,
     'nm_parallel:s' => undef,
+    'estimation_options:s' => undef,
 );
 
 my $res = GetOptions( \%options,
@@ -197,6 +198,12 @@ $help_text{-skip} = <<'EOF';
     resmod.
 EOF
 
+$help_text{-estimation_options} = <<'EOF';
+    -estimation_options
+
+    Additional options to use when estimating the linearized models. Not used by default
+EOF
+
 common_options::online_help( 'qa', \%options, \%help_text, \%required_options, \%optional_options);
 common_options::setup( \%options, 'qa' ); #calls set_globals etc, initiates random sequence
 
@@ -265,6 +272,7 @@ my $capture = tee_merged {
         only => [split /,/, $options{'only'}],
         add_etas => [split /,/, $options{'add_etas'}],
         nm_parallel => $options{'nm_parallel'},
+        estimation_options => $options{'estimation_options'},
     );
 
     $qa->print_options(

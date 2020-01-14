@@ -107,6 +107,7 @@ has 'from_bootscm' => ( is => 'rw', isa => 'Bool', default => 0 );  # Are we cal
 has 'categorical_mean_offset' => ( is => 'rw', isa => 'Bool', default => 0 );   # Use mean instead of mode as offset
 has 'extra_data_columns' => ( is => 'rw', isa => 'ArrayRef[Str]', default => sub { [] } );  # Columns to add to linbase.dta and $INPUT for linbase.mod
 has 'force_binarize' => ( is => 'rw', isa => 'Bool', default => 0 );   # Force binarization of categorical covariates
+has 'estimation_options' => ( is => 'rw', isa => 'Str' );
 
 
 sub BUILD
@@ -2369,8 +2370,9 @@ sub linearize_setup
         if ($self->noabort()){
             push(@eststrings,'NOABORT');
         }
-        #TESTING HERE:
-        #push @eststrings, 'ETADER=3';
+        if (defined $self->estimation_options) {
+            push @eststrings, $self->estimation_options;
+        }
 
         $original_model -> set_records(type => 'estimation',
             record_strings => \@eststrings);
