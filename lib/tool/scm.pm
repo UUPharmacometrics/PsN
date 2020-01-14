@@ -2370,6 +2370,9 @@ sub linearize_setup
         if ($self->noabort()){
             push(@eststrings,'NOABORT');
         }
+        #TESTING HERE:
+        #push @eststrings, 'ETADER=3';
+
         $original_model -> set_records(type => 'estimation',
             record_strings => \@eststrings);
         #3.7
