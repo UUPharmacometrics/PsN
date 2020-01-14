@@ -6,6 +6,7 @@ use Cwd;
 use File::Copy 'cp';
 use File::Path qw(mkpath rmtree);
 use File::Spec;
+use Scalar::Util qw(blessed);
 use OSspecific;
 use Math::Random;
 use Archive::Zip;
@@ -375,7 +376,11 @@ sub BUILD
 
     # Use pdf as default.
     if (not $self->html and not $self->pdf) {
-        $self->pdf(1);
+        if (blessed($self) eq 'tool::qa') {
+            $self->html(1);
+        } else {
+            $self->pdf(1);
+        }
     }
 }
 
