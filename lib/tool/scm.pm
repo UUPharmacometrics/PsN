@@ -1997,7 +1997,6 @@ sub linearize_setup
             if (defined $etas_file) {
                 if (!defined $mceta or $mceta < 1) {
                     $mceta = '1';
-                    print "> Setting MCETA=$mceta\n";
                     $derivatives_model->add_option(
                         record_name => 'estimation',
                         option_name => 'MCETA',
