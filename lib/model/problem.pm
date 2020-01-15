@@ -3775,6 +3775,37 @@ sub get_eta_sets
             'iov_omega_numbers' => \@iov_omega_numbers};
 }
 
+sub find_data_synonym
+{
+    my $self = shift;
+    my %parm = validated_hash(\@_,
+        name => { isa => 'Str', optional => 0 },
+    );
+    my $name = $parm{'name'};
+
+    # Return synonym if available. Else return undef
+    for my $record (@{$self->inputs}) {
+        for my $option (@{$record->options}) {
+            if (defined $option->value and not $option->value eq "") {
+                my $synonym;
+                if ($option->name eq $name) {
+                    $synonym = $option->value;
+                } elsif ($option->value eq $name) {
+                    $synonym = $option->name;
+                } else {
+                    next;
+                }
+                if ($synonym ne 'DROP' and $synonym ne 'SKIP') {
+                    return $synonym;
+                } else {
+                    return undef;
+                }
+            }
+        }
+    }
+    return undef;
+}
+
 sub find_data_column
 {
     # Find the number of a column in the dataset by searching $INPUT

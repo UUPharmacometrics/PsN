@@ -26,6 +26,7 @@ pdf(file=pdf.filename,title=pdf.title)
     llp.res            <- llp.res[,-ncol(llp.res)]
     names(llp.res)     <- c("Parameter","lower","ML.estimate","upper","interval.ratio","near.bound","max.iterations")
     
+    llp.res$Parameter <- gsub(" ", "", llp.res$Parameter, fixed=TRUE)
     llp.res$Parameter <- factor(llp.res$Parameter, levels=levels(llp.data$Parameter))
     llp.all            <- dplyr::full_join(llp.data,llp.res[,c("Parameter","lower","upper","ML.estimate","interval.ratio")]) # Combine both results files
     llp.all$strip.text <- factor(paste(llp.all$Parameter," (IR=",round(llp.all$interval.ratio,1),")",sep=""),levels=paste(levels(llp.all$Parameter)," (IR=",round(unique(llp.all$interval.ratio),1),")",sep="")) 

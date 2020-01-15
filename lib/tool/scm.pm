@@ -107,6 +107,7 @@ has 'from_bootscm' => ( is => 'rw', isa => 'Bool', default => 0 );  # Are we cal
 has 'categorical_mean_offset' => ( is => 'rw', isa => 'Bool', default => 0 );   # Use mean instead of mode as offset
 has 'extra_data_columns' => ( is => 'rw', isa => 'ArrayRef[Str]', default => sub { [] } );  # Columns to add to linbase.dta and $INPUT for linbase.mod
 has 'force_binarize' => ( is => 'rw', isa => 'Bool', default => 0 );   # Force binarization of categorical covariates
+has 'estimation_options' => ( is => 'rw', isa => 'Str' );
 
 
 sub BUILD
@@ -1997,7 +1998,6 @@ sub linearize_setup
             if (defined $etas_file) {
                 if (!defined $mceta or $mceta < 1) {
                     $mceta = '1';
-                    print "> Setting MCETA=$mceta\n";
                     $derivatives_model->add_option(
                         record_name => 'estimation',
                         option_name => 'MCETA',
@@ -2370,6 +2370,10 @@ sub linearize_setup
         if ($self->noabort()){
             push(@eststrings,'NOABORT');
         }
+        if (defined $self->estimation_options) {
+            push @eststrings, $self->estimation_options;
+        }
+
         $original_model -> set_records(type => 'estimation',
             record_strings => \@eststrings);
         #3.7
@@ -6101,7 +6105,7 @@ sub preprocess_data
             $filtered_data_model ->
             add_records( type           => 'table',
                 record_strings => [ $mdvstring.'ID '.join( ' ', @tablestrings ).
-                    ' DV CIPREDI CIWRESI NOAPPEND NOPRINT ONEHEADER FILE='.$par.$timevarfile]);
+                    ' DV CIPREDI CIWRESI NOAPPEND NOPRINT ONEHEADER FORMAT=s1PE23.16 FILE='.$par.$timevarfile]);
         }
 
         $filtered_data_model->set_maxeval_zero();

@@ -18,6 +18,7 @@ has 'lst_file' => ( is => 'rw', isa => 'Str' );
 has 'nointer' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'second_order' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'extra_data_columns' => ( is => 'rw', isa => 'ArrayRef[Str]', default => sub { [] } );  # Columns to add to linbase.dta and $INPUT for linbase.mod
+has 'estimation_options' => ( is => 'rw', isa => 'Str' );
 
 has 'dataname' => ( is => 'rw', isa => 'Str' );
 
@@ -81,6 +82,7 @@ sub modelfit_setup
             nm_output => $self->nm_output,
             use_data_format => 0,
             extra_data_columns => $self->extra_data_columns,
+            estimation_options => $self->estimation_options,
         );
 
         $scm->run;

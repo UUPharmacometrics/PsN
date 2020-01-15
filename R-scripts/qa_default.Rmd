@@ -20,6 +20,9 @@ classoption: a4paper
 library(PsNR)
 library(methods)
 type <- knitr::opts_knit$get("rmarkdown.pandoc.to") # either 'html' or 'latex'
+if (is.null(type)) {
+    type <- 'html'
+}
 options(knitr.table.format=type)
 knitr::opts_chunk$set(fig.pos = 'H', echo = FALSE)
 ```
@@ -462,7 +465,7 @@ caption = "Subjects marked as outliers and the metrics used to identify them: (1
 }
 ```
 
-```{r plot_iofv_vs_iofv,eval=(PsNR::rplots_level(meta) > 1),results='asis',echo=F,warning=F,message=F,fig.width=11,fig.height=6,fig.keep="high",fig.align="center"}
+```{r plot_iofv_vs_iofv,results='asis',echo=F,warning=F,message=F,fig.width=11,fig.height=6,fig.keep="high",fig.align="center"}
 phi1 <- file.path(working.directory,"linearize_run/scm_dir1",paste0(sub('.([^.]*)$','',basename(PsNR::model_path(meta))),"_linbase.phi"))
 phi2 <- file.path(working.directory,"linearize_run/scm_dir1/derivatives.phi")
 make_iofv_plot <- iofv_vs_iofv(phi1,phi2)$make_plot

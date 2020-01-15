@@ -397,6 +397,7 @@ sub full_omega_block
                         $omegas = $model->problems->[0]->omegas;
                     } else {
                         $keep_rest = 1;     # FIX is the first option: we are done
+                        last;
                     }
                 }
             }

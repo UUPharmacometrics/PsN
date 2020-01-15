@@ -2771,7 +2771,13 @@ sub parse_NM7_raw
 {
     my $self = shift;
     my $nmtable = shift;
-    my $hash = $nmtable->parse_ext_table;
+    my $hash;
+    eval { $hash = $nmtable->parse_ext_table };
+    if ($@) {
+        warn "Warning: While parsing the ext file the following error was encoundered: $@";
+        return if $@;
+  }
+
     return unless ($hash->{'any_est'});
 
     $self->ofv($hash->{'ofv'}) if (defined $hash->{'ofv'});
