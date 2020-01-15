@@ -1,5 +1,5 @@
 ---
-title: "Quality assurance"
+title: "PsN QA Report"
 output:
     pdf_document: default
     html_document:
@@ -167,18 +167,26 @@ overview_table_list <- get_overview_table(structural_overview=structural_overvie
 ```
 
 <!-- #######################   Write Rmarkdown document here   ################################ -->
-```{r command_text_from_command_line,results='asis',echo=F,warning=F,message=F}
-command_runtime <- command_start.finish.time(yaml_file=file.path(working.directory,"meta.yaml"))
-if(length(command_runtime$command)>0 && length(command_runtime$run_start)>0 && length(command_runtime$run_finish)>0) {
-  cat(break_text(command_runtime$command,max_symb=95),"\n\n")
-  cat(command_runtime$run_start,"\n\n")
-  cat(command_runtime$run_finish,"\n\n")
-}
-```
-
 ```{r}
 PsNR::qa_report_content_intro()
 ```
+
+**Command:**
+
+```{r command_text_from_command_line,echo=F,warning=F,message=F,comment=NA}
+command_runtime <- command_start.finish.time(yaml_file=file.path(working.directory,"meta.yaml"))
+if(length(command_runtime$command)>0 && length(command_runtime$run_start)>0 && length(command_runtime$run_finish)>0) {
+  if(knitr::is_html_output()) {
+    PsNR::qa_ui_console(command_runtime$command)
+  }else{
+    cat(break_text(command_runtime$command,max_symb=95),"\n\n")
+  }
+#  cat(break_text(command_runtime$command,max_symb=95),"\n\n")
+#  cat(command_runtime$run_start,"\n\n")
+#  cat(command_runtime$run_finish,"\n\n")
+}
+```
+
 
 
 ```{r draw_ofv_table,results='asis',echo=F,warning=F,message=F,eval=!nonlinear}
@@ -188,13 +196,12 @@ PsNR::render_ofv_table(qa_results)
 ```{r draw_overview_table,results='asis',echo=F,warning=F,message=F}
 cat("# Overview\n\n")
 PsNR::qa_report_content_overview()
-overview_table <- kable_table(overview_table_list$overview_table,format=type,booktabs=T,longtable=T,align=c("l","r","c"),linesep="") %>%
+overview_table <- kable_table(overview_table_list$overview_table,format=type,booktabs=T,longtable=T,align=c("l","r","c"),linesep="", caption = "Overview of possible modifications to different model aspects, expected improvement in OFV as well as number of additional parameters used.") %>%
   kableExtra::kable_styling(position="c",full_width = F)
 for(i in 1:nrow(overview_table_list$row_groups)) {
   overview_table <- overview_table %>% kableExtra::group_rows(overview_table_list$row_groups[i,1],overview_table_list$row_groups[i,2],overview_table_list$row_groups[i,3])
 }
 print(overview_table)
-cat("Overview of possible modifications to different model aspects, expected improvement in OFV as well as number of additional parameters used.")
 ```
 
 ```{r draw_structural_details_tables,eval=all(skip!="resmod"),results='asis',echo=F,warning=F,message=F,fig.width=11,fig.height=6.5,fig.keep="high",fig.align="center"}
@@ -214,16 +221,17 @@ PsNR::qa_report_content_parvar()
 
 ```{r draw_full_omega_block_table,eval=all(skip!="transform"),results='asis',echo=F,warning=F,message=F}
 cat("## Full OMEGA Block\n\n")
+PsNR::qa_report_content_full_block()
 if(list_par_var_models$fullblock_mod) {
   if(full_omega_block_list$full_omega_block_error) {
     cat(paste0(as.character(full_omega_block_list$full_omega_block_table[1,1]),"."),"\n\n")
   } else {
-    full_omega_block_table <- kable_table(full_omega_block_list$full_omega_block_table,format=type,booktabs=T,longtable=T,align = c("l","r","r"),linesep="") %>%
+    full_omega_block_table <- kable_table(full_omega_block_list$full_omega_block_table,format=type,booktabs=T,longtable=T,align = c("l","r","r"),linesep="", 
+caption = "Estimated standard deviation (sd), correlation (corr), and expected improvement in OFV after inclusion of a full block correlation structure.") %>%
       kableExtra::kable_styling(position="c",full_width = F) %>%
       kableExtra::row_spec(nrow(full_omega_block_list$full_omega_block_table),bold=T)
     print(full_omega_block_table)
   }
-  cat("Estimated standard deviation (sd) and correlation (corr) as well as expected improvement in OFV when allowing for a full block correlation structure between subject-level random effects.")
 } else {
   cat("All omegas up to the first FIX or IOV OMEGA already constitute a full block.")
 }
@@ -231,16 +239,17 @@ if(list_par_var_models$fullblock_mod) {
 
 ```{r draw_boxcox_tranformation_table,eval=all(skip!="transform"),results='asis',echo=F,warning=F,message=F}
 cat("## Box-Cox Transformation\n\n")
+PsNR::qa_report_content_box_cox()
 if(list_par_var_models$boxcox_mod) {
   if(boxcox_lambdas_list$param_extra_table_error) {
     cat(paste0(as.character(boxcox_lambdas_list$param_extra_table[1,1]),"."),"\n\n")
   } else {
-    boxcox_lambdas_table <- kable_table(boxcox_lambdas_list$param_extra_table,format=type,booktabs=T,longtable=T,align = c("l","r","r","r"),linesep="") %>%
+    boxcox_lambdas_table <- kable_table(boxcox_lambdas_list$param_extra_table,format=type,booktabs=T,longtable=T,align = c("l","r","r","r"),linesep="",
+caption = "Estimated shape parameters (Lambda) and expected improvement in OFV for a Box-Cox transformation of the random effects.") %>%
       kableExtra::kable_styling(position="c",full_width = F) %>%
       kableExtra::row_spec(nrow(boxcox_lambdas_list$param_extra_table),bold=T)
     print(boxcox_lambdas_table)
   }
-  cat("Estimated shape parameters (Lambda) as well as expected improvement in OFV when estimating a Box-Cox transformation for each subject-level random effect.")
 } else {
   cat("Box-cox model run error.")
 }
@@ -254,38 +263,20 @@ for(i in 1:length(boxcox_shape_plot)) {
 }
 ```
 
-```{r draw_add_etas_table,eval=all(skip!="transform"),results='asis',echo=F,warning=F,message=F}
-if(list_par_var_models$boxcox_mod && !boxcox_lambdas_list$param_extra_table_error) {
-  cat("\\pagebreak\n\n")
-}
-cat("## Additional etas\n\n")
-if(list_par_var_models$add_etas_mod) {
-  if(add_etas_list$add_etas_error) {
-    cat(paste0(as.character(add_etas_list$add_etas_table[1,1]),"."),"\n\n")
-  } else {
-    add_etas_table <- kable_table(add_etas_list$add_etas_table,format=type,booktabs=T,longtable=T,align = c("l","r","r","r"),linesep="") %>%
-      kableExtra::kable_styling(position="c",full_width = F) %>%
-      kableExtra::row_spec(nrow(add_etas_list$add_etas_table),bold=T)
-    print(add_etas_table)
-  }
-  cat("Consequences of including additional subject-level random effects on selected parameters in terms of estimated standard deviation (SD) of new and existing random effect parameters as well as expected improvement in OFV.")
-} else {
-  cat("No additional etas were added.")
-}
-```
 
 ```{r draw_tdist_table,eval=all(skip!="transform"),results='asis',echo=F,warning=F,message=F}
 cat("## t-distribution\n\n")
+PsNR::qa_report_content_tdist()
 if(list_par_var_models$tdist_mod) {
   if(tdist_list$param_extra_table_error) {
     cat(paste0(as.character(tdist_list$param_extra_table[1,1]),"."),"\n\n")
   } else {
-    tdist_table <- kable_table(tdist_list$param_extra_table,format=type,booktabs=T,longtable=T,align = c("l","r","r","r"),linesep="") %>%
+    tdist_table <- kable_table(tdist_list$param_extra_table,format=type,booktabs=T,longtable=T,align = c("l","r","r","r"),linesep="",
+caption = "Estimated degrees of freedom and expected improvement in OFV for a t-distribution transformation of the random effects.") %>%
       kableExtra::kable_styling(position="c",full_width = F) %>%
       kableExtra::row_spec(nrow(tdist_list$param_extra_table),bold=T)
     print(tdist_table)
   }
-  cat("Estimated degrees of freedom as well as expected improvement in OFV when estimating a t-distribution transformation for each subject-level random effect.")
 } else {
   cat("t-distribution model run error.")
 }
@@ -304,11 +295,13 @@ if(make_tdist_shape_plot && (list_par_var_models$add_etas_mod || list_par_var_mo
   cat("\\pagebreak\n\n")
 }
 cat("## Interoccasion variability\n\n")
+PsNR::qa_report_content_iov()
 if(list_par_var_models$iov_mod) {
   if(iov_list$iov_error) {
     cat(paste0(as.character(iov_list$iov_table[1,1]),"."),"\n\n")
   } else {
-    iov_table <- kable_table(iov_list$iov_table,format=type,booktabs=T,longtable=T,align = c("l","r","r","r"),linesep="") %>%
+    iov_table <- kable_table(iov_list$iov_table,format=type,booktabs=T,longtable=T,align = c("l","r","r","r"),linesep="", 
+caption = "Estimated standard deviation (SD) for inter-individual (IIV), inter-occasion variability (IOV) and expected improvement in OFV.") %>%
       kableExtra::kable_styling(position="c",full_width = F) %>%
       kableExtra::row_spec(nrow(iov_list$iov_table),bold=T)
     if(!iov_list$iov_error) {
@@ -316,9 +309,26 @@ if(list_par_var_models$iov_mod) {
     }
     print(iov_table)
   }
-  cat("Consequences of including inter-occasion variability in terms of estimated standard deviation (SD) for inter-individual (IIV) and inter-occasion variability (IOV) as well as expected improvement in OFV.")
 } else {
   cat("No interoccasion variability was added.")
+}
+```
+
+```{r draw_add_etas_table,eval=all(skip!="transform"),results='asis',echo=F,warning=F,message=F}
+cat("## Additional etas\n\n")
+PsNR::qa_report_content_add_eta()
+if(list_par_var_models$add_etas_mod) {
+  if(add_etas_list$add_etas_error) {
+    cat(paste0(as.character(add_etas_list$add_etas_table[1,1]),"."),"\n\n")
+  } else {
+    add_etas_table <- kable_table(add_etas_list$add_etas_table,format=type,booktabs=T,longtable=T,align = c("l","r","r","r"),linesep="") %>%
+      kableExtra::kable_styling(position="c",full_width = F) %>%
+      kableExtra::row_spec(nrow(add_etas_list$add_etas_table),bold=T)
+    print(add_etas_table)
+  }
+  cat("Consequences of including additional subject-level random effects on selected parameters in terms of estimated standard deviation (SD) of new and existing random effect parameters as well as expected improvement in OFV.")
+} else {
+  cat("No additional etas were added.")
 }
 ```
 
@@ -331,6 +341,7 @@ PsNR::render_covariates_table(qa_results)
 ```
 
 ```{r plot_va_plot, fig.align="center", eval=(!"frem" %in% skip), echo=FALSE}
+PsNR::qa_report_content_vaplot()
 p <- PsNR::prepare_va_cov_plot(qa_results) %>% 
   PsNR::plot_result()
 if(!PsNR::is_error(p)) knitr::asis_output("Variability attribution plot before and after inclusion of covariates.")
@@ -338,6 +349,7 @@ if(!PsNR::is_error(p)) knitr::asis_output("Variability attribution plot before a
 
 
 ```{r draw_frem_plots,eval=(all(skip!="frem")||all(skip!="scm")),results='asis',echo=F,warning=F,message=F,fig.width=11,fig.height=14.5,fig.keep="high",fig.align="center"}
+PsNR::qa_report_content_frem_plots()
 cat(try(
 all_frem_plots(file.path(working.directory, 'frem_run', 'postfrem_run'))
 ))
@@ -346,6 +358,7 @@ all_frem_plots(file.path(working.directory, 'frem_run', 'postfrem_run'))
 ```{r draw_resiual_error_model_table,eval=all(skip!="resmod"),results='asis',echo=F,warning=F,message=F,fig.width=8,fig.height=6,fig.keep="high",fig.align="center"}
 cat("\\pagebreak\n\n")
 cat("# Residual Error Model\n\n")
+PsNR::qa_report_content_residual()
 if(!nonlinear && file.exists(sub("(\\.[^.]+)$",".lst",original_max0_model)) &&
    file.exists(file.path(working.directory,paste0("resmod_",idv_name),"results.csv"))) {
   xpdb_data <- xpose::xpose_data(file = sub("(\\.[^.]+)$",".lst",original_max0_model)) %>%
@@ -361,25 +374,27 @@ for (i in 1:length(resmod_table_list$dvid_nr)) {
   if(ncol(resmod_table_list$resmod_ruv_table_list[[i]])==1 && nrow(resmod_table_list$resmod_ruv_table_list[[i]])==1) {
     cat(paste0(as.character(resmod_table_list$resmod_ruv_table_list[[i]]),"."),"\n\n")
   } else {
-    resmod_ruv_models_table <- kable_table(resmod_table_list$resmod_ruv_table_list[[i]],format=type,booktabs=T,longtable=T,align = c("l","r","c","l"),linesep="") %>%
+    resmod_ruv_models_table <- kable_table(resmod_table_list$resmod_ruv_table_list[[i]],format=type,booktabs=T,longtable=T,align = c("l","r","c","l"),linesep="", caption = "Residual error model, resulting expected improvement in OFV, required additional model parameters as well as their estimates.") %>%
     kableExtra::kable_styling(position="c",full_width = F)
     print(resmod_ruv_models_table)
   }
-  cat("Residual error model, resulting expected improvement in OFV, required additional model parameters as well as their estimates.\n\n\n\n")
+
 }
 ```
 
 ```{r draw_influential_individuals_table,eval=all(skip!="cdd"),results='asis',echo=F,warning=F,message=F}
 cat("\\pagebreak\n\n")
 cat("# Influential Individuals\n\n")
+PsNR::qa_report_content_influential()
 if(ncol(ii_list$ii_table)==1 && nrow(ii_list$ii_table)==1) {
   cat(paste0(as.character(ii_list$ii_table[1,1]),"."),"\n\n")
 } else {
-  ii_table <- kable_table(ii_list$ii_table,booktabs=T,longtable=T,align = c("l","r"),linesep="",format=type) %>%
+
+  ii_table <- kable_table(ii_list$ii_table,booktabs=T,longtable=T,align = c("l","r"),linesep="",format=type,
+caption = "Subject identified as influential and improvement in OFV for other subjects when excluding them during the fit") %>%
   kableExtra::kable_styling(position="c",full_width = F)
 print(ii_table)
 }
-cat("Subjects identified as significantly influencing the model fit for all other subjects and their influence in terms of improvement in OFV for other subjects when excluding them during the fit.")
 ```
 
 ```{r histogram_of_cdd_dofv,eval=all(skip!="cdd"),results='asis',echo=F,warning=F,message=F,fig.width=11,fig.height=6}
@@ -401,14 +416,16 @@ if(length(ii_list$infl_id)>0) {
 ```{r draw_outliers_table,eval=all(skip!="simeval"),results='asis',echo=F,warning=F,message=F}
 cat("\\pagebreak\n\n")
 cat("# Outliers\n\n")
+PsNR::qa_report_content_outliers()
 if(ncol(outlier_table_list$outliers_table)==1 && nrow(outlier_table_list$outliers_table)==1) {
   cat(paste0(as.character(outlier_table_list$outliers_table[1,1]),"."),"\n\n")
 } else {
-  outliers_table <- kable_table(outlier_table_list$outliers_table,format=type,booktabs=T,longtable=T,align = c("l","r"),linesep="") %>%
+
+  outliers_table <- kable_table(outlier_table_list$outliers_table,format=type,booktabs=T,longtable=T,align = c("l","r"),linesep="",
+caption = "Subjects identified as outliers and the corresponding improvement in OFV when excluding them during the fit.") %>%
   kableExtra::kable_styling(position="c",full_width = F)
 print(outliers_table)
 }
-cat("Subjects identified as outliers based on a worse than expected model fit and the corresponding improvement in OFV when excluding them during the fit.")
 ```
 
 ```{r plot_outliers,eval=all(skip!="simeval"),results='asis',echo=F,warning=F,message=F,fig.width=11,fig.height=6}
@@ -433,14 +450,14 @@ if(length(outlier_table_list$outlier_ids)>0) {
 all_outl_list <- simeval_all_outliers_table(simeval_directory=file.path(working.directory,"simeval_run"))
 if(all_outl_list$files_exist) {
   if(ncol(all_outl_list$all_outlier_table)>1 && nrow(all_outl_list$all_outlier_table)>1) {
-    simeval_overall_outliers_table <- kable_table(all_outl_list$all_outlier_table,booktabs=T,format=type,longtable=T,align = c("l","c","c","c","c","c"),linesep="") %>%
+    simeval_overall_outliers_table <- kable_table(all_outl_list$all_outlier_table,booktabs=T,format=type,longtable=T,align = c("l","c","c","c","c","c"),linesep="",
+caption = "Subjects marked as outliers and the metrics used to identify them: (1) OFV outliers have a worse than expected fit, (2) EBE NPDE outliers show significant deviation in their empirical Bayes estimates and (3) CWRES outliers have observations with worse than expected residuals.") %>%
       kableExtra::kable_styling(position="c",full_width = F)
     if(!(is.null(all_outl_list$add_header_above))) {
       simeval_overall_outliers_table <- simeval_overall_outliers_table %>% kableExtra::add_header_above(all_outl_list$add_header_above,bold=T)
     }
     cat("\\pagebreak\n\n")
     print(simeval_overall_outliers_table)
-    cat("Subjects marked as outliers and the metrics used to identify them: (1) OFV outliers have a worse than expected fit, (2) EBE NPDE outliers show significant deviation in their empirical Bayes estimates and (3) CWRES outliers have observations with worse than expected residuals.")
   }
 }
 ```
@@ -461,20 +478,25 @@ if(make_iofv_plot) {
 ```{r additional_info,results='asis',echo=F,warning=F,message=F}
 if(file.exists(file.path(working.directory,"meta.yaml"))) {
   cat("\\pagebreak\n\n")
-  cat("# Additional information\n\n")
+  cat("# System information\n\n")
+  cat("This section contains a detailed record of the software versions used to create it. This information is valuable for reproducibility and development of QA.\n\n")
   add_info <- additional_info(yaml_file=file.path(working.directory,"meta.yaml"))
-  cat("PsN_version:",add_info$PsN_version,"\n\n")
-  cat("NONMEM_version:",add_info$NONMEM_version,"\n\n")
-  cat("R_version:",add_info$R_version,"\n\n")
-  cat("Loaded_R_packages:\n\n")
+  cat("**PsN_version:**",add_info$PsN_version,"\n\n")
+  cat("**NONMEM_version:**",add_info$NONMEM_version,"\n\n")
+  cat("**R_version:**",add_info$R_version,"\n\n")
+  cat("**Loaded_R_packages:**\n\n")
   R_packages <- kable_table(add_info$R_packages,format=type,booktabs=T,longtable=T,align=c("l","l","l"),linesep="") %>%
-    kableExtra::kable_styling(position="c",full_width = F)
+    kableExtra::kable_styling(position="c",full_width = F) 
+  if(knitr::is_html_output()) {
+    R_packages <- R_packages %>% 
+      kableExtra::scroll_box(height = "340px")
+  }
   print(R_packages)
-  cat("Captured command line output:\n\n")
+  cat("**Captured command line output:**\n\n")
 }
 ```
 
-```{r command_line_capture, echo=F, comment=NA}
+```{r command_line_capture, echo=F, comment=NA, class.output = "pre-scrollable"}
 capture_file <- file.path(working.directory, 'captured_output.txt')
 output <- readChar(capture_file, file.info(capture_file)$size)
 cat(gsub(pattern="\n", replacement="  \n", x=output))
