@@ -2215,16 +2215,21 @@ sub linearize_setup
         if ($PsN::nm_major_version == 7 and $PsN::nm_minor_version == 4 and (not defined $PsN::nm_patch_version or $PsN::nm_patch_version == 0 or $PsN::nm_patch_version == 1)) {
             # Try to reduce precision in table output if buggy versions of NONMEM used with maximum 1000 characers wide datasets
             my $column_width = 25;
-            while (1) {
-                my $table_width = scalar(@tablestrings) * $column_width;
-                if ($table_width < 1000) {
-                    $format = ($column_width - 1) . '.' . ($column_width - 7);
-                    print("Warning: PsN had to reduce the precision of the linearised dataset beacuse the used NONMEM version cannot handle dataset files wider than 1000 characters. Concider using NONMEM 7.4.3 or newer.\n");
-                    last;
-                } elsif ($column_width <= 11) {
-                    croak("Your version of NONMEM cannot handle dataset files wider than 1000 characters. PsN has tried to reduce the precision of the linearised dattaset, but was unable to reduce it enough. Concider using NONMEM 7.4.3 or newer.");
+            my $table_width = scalar(@tablestrings) * $column_width;
+            if ($table_width >= 1000) {
+                while (1) {
+                    $column_width--;
+                    $table_width = scalar(@tablestrings) * $column_width;
+                    if ($table_width < 1000) {
+                        $format = ($column_width - 1) . '.' . ($column_width - 9);
+                        print("Warning: PsN had to reduce the precision of the linearised dataset beacuse the used NONMEM version cannot handle " . 
+                              "dataset files wider than 1000 characters. Concider using NONMEM 7.4.3 or newer.\n");
+                        last;
+                    } elsif ($column_width <= 16) {
+                        croak("Your version of NONMEM cannot handle dataset files wider than 1000 characters. PsN has tried to reduce the precision " .
+                              "of the linearised dattaset, but was unable to reduce it enough. Concider using NONMEM 7.4.3 or newer.");
+                    }
                 }
-                $column_width--;
             }
         }
 
