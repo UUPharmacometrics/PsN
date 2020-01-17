@@ -6,7 +6,7 @@ use include_modules;
 use Moose;
 use MooseX::Params::Validate;
 use table;
-use math qw(usable_number);
+use math qw(usable_number inf);
 
 extends 'table';
 
@@ -281,8 +281,12 @@ sub _get_value
     my $val = shift;
     my $no_value = 10000000000;
     my $answer= eval($val);
+
     if((not defined $answer) or ($answer == $no_value) or (not math::usable_number($val))){
         $answer = undef;
+    }
+    if ($val eq 'Infinity') {
+        $answer = math::inf();
     }
     return $answer;
 }
