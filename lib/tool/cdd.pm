@@ -444,6 +444,8 @@ sub cook_scores_and_cov_ratios
                 if ($err == 0){
                     $original_sqrt_inv_determinant= linear_algebra::diagonal_product($original_inverse_cholesky);
                     $have_original_cov=1;
+                } else {
+                    print "Warning: the inverse of the covariance matrix of the original model is not positive definite. Cook scores cannot be calculated\n";
                 }
             }else{
                 $original_standard_errors = undef;
