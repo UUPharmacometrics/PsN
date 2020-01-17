@@ -11,5 +11,6 @@ system "make";
 system "make release";
 system "ssh $user\@$host 'rm PsN-Source -rf'";
 system "scp -r PsN-Source $user\@$host:.";
-system "ssh -t $user\@$host 'cd PsN-Source;perl setup.pl'";
-system "ssh $user\@$host './postinstall $version -dev'";
+system "ssh -t $user\@$host './install_psn $version'";
+#system "ssh -t $user\@$host 'cd PsN-Source;perl setup.pl'";
+#system "ssh $user\@$host './postinstall $version -dev'";
