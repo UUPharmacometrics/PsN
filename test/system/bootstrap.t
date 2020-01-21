@@ -34,15 +34,13 @@ $rc = $rc >> 8;
 ok ($rc == 0, "bootstrap 1a that should run ok");
 ok (-e 'boot1a/PsN_bootstrap_plots.R','Creates R default file, not Rmd');
 
-$command = get_command('bootstrap') . " pheno5.mod -samples=10 -seed=12345 -dir=boot1 -dofv -rplots=2 ";
+$command = get_command('bootstrap') . " pheno5.mod -samples=10 -seed=12345 -dir=boot1 -dofv -rplots=2 -html ";
 
 $rc = system($command);
 $rc = $rc >> 8;
 
-my %pdf_files_pages=($tempdir . 'boot1/PsN_bootstrap_plots.pdf' => 5);
-includes::test_pdf_pages(\%pdf_files_pages);
-
 ok ($rc == 0, "bootstrap 1b that should run ok");
+ok (-e 'boot1/PsN_bootstrap_plots.html', 'html generation for plots');
 
 $command = get_command('bootstrap') . " mox1.mod -samples=10 -stratify_on=DGRP -dir=boot2 -no-skip_minim -no-skip_est -clean=3";
 

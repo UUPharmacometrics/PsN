@@ -25,11 +25,6 @@ foreach my $command (@commands) {
 	ok ($rc == 0, "$command, should run ok");
 }
 
-# Test rplots
-my %pdf_files_pages=('cdd_rplots/PsN_cdd_plots.pdf' => 5);
-
-includes::test_pdf_pages(\%pdf_files_pages);
-
 # Test dofv calculation when one line was ignored
 
 my $rc = system(get_command('cdd') . " $tempdir/pheno5_ignore.mod -dir=cdd_ignore -clean=0");
