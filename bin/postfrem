@@ -1226,7 +1226,7 @@ for (my $i=0;$i<$npar; $i++){
 }
 close($parfh);
 
-
+exit if (defined $options{'rplots'} and $options{'rplots'} == 0);
 
 my @templatecode = (
     "library(PsNR)",
