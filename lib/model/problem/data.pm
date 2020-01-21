@@ -181,7 +181,7 @@ sub remove_ignore_accept
         } elsif ($option->name !~ /^(IGNORE|IGNOR|IGNO|IGN|ACCEPT|ACCEP|ACCE|ACC)/) {
             push @options, $option;
         } else {
-            if ($option->value =~ /^\(/) {
+            if (defined $option->value and $option->value =~ /^\(/) {
                 $in_parens = 1;
             }
         }

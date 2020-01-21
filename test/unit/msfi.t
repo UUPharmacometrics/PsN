@@ -74,6 +74,10 @@ is($msfirec->format_filename(write_directory=>$tempdir.'subdir/subdir2',
 is($msfirec->format_filename(write_directory=>$tempdir.'subdir3',
 							 relative_msfi_path=>1),File::Spec->catfile('..','subdir','file.csv'),'format_filname relative up then down');
 
+{
+    local $SIG{__WARN__} = sub {
+        # disallow warnings to ignore the potential "too long path" warnings
+    };
 is($msfirec->format_filename(write_directory=>$tempdir.'subdir',
 							 relative_msfi_path=>0),File::Spec->catfile($tempdir.'subdir','file.csv'),'format_filname abs local');
 is($msfirec->format_filename(write_directory=>$tempdir,
@@ -82,7 +86,7 @@ is($msfirec->format_filename(write_directory=>$tempdir.'subdir/subdir2',
 							 relative_msfi_path=>0),File::Spec->catfile($tempdir.'subdir','file.csv'),'format_filname abs down');
 is($msfirec->format_filename(write_directory=>$tempdir.'subdir3',
 							 relative_msfi_path=>0),File::Spec->catfile($tempdir.'subdir','file.csv'),'format_filname abs up-down');
-
+}
 
 my ($homedir,$dirt) = OSspecific::absolute_path(getcwd(),'file');
 $msfirec->set_filename(filename=> 'new.csv');

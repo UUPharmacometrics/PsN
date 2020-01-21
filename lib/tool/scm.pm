@@ -2958,7 +2958,7 @@ sub linearize_setup
     }
 
     # Account for an estimation bug in NONMEM 7.4.0 and 7.4.1
-    if ($PsN::nm_major_version == 7 and $PsN::nm_minor_version == 4 and ($PsN::nm_patch_version == 0 or $PsN::nm_patch_version == 1)) {
+    if ($PsN::nm_major_version == 7 and $PsN::nm_minor_version == 4 and defined $PsN::nm_patch_version and ($PsN::nm_patch_version == 0 or $PsN::nm_patch_version == 1)) {
         $original_model->add_option(record_name => 'estimation', option_name => 'SLOW');
     }
 
