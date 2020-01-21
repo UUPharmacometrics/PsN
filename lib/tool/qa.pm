@@ -519,9 +519,9 @@ sub modelfit_setup
                 print "\n*** Running POSTFREM ***\n";
                 eval {
                     if ($dev) {
-                        system("postfrem -frem_directory=frem_run -directory=postfrem_run -force_posdef_covmatrix");
+                        system("postfrem -frem_directory=frem_run -directory=postfrem_run -force_posdef_covmatrix -rplots=0");
                     } else {
-                        system("postfrem-".$vers." -force_posdef_covmatrix -frem_directory=frem_run -directory=postfrem_run");
+                        system("postfrem-".$vers." -force_posdef_covmatrix -frem_directory=frem_run -directory=postfrem_run -rplots=0");
                     }
                 };
                 if ($@) {
