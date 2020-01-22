@@ -15,11 +15,6 @@ sub BUILD
     my $self = shift;
     my $mirror_name = $self->mirror_plots ? 'sim' : '';
 
-#  if( $PsN::nm_major_version == '7' ){
-#    croak("option -cwres is not supported for NONMEM7, ".
-#            "since CWRES can be requested directly in \$TABLE with this NONMEM version." );
-#  }
-
     # Problem is the modelfile problem we are modifing to compute CWRES.
 
     my $prob = $self->problem;
@@ -51,11 +46,10 @@ sub BUILD
                               record_strings => [ "COMRES=".($netas+$neps) ] );
     }
 
-
     # Figure out if we have an sdtab and what number it has
-    my ( $sd_ref ) = $prob ->        _option_val_pos( name        => 'FILE',
-                                                     record_name => 'table',
-                                                     exact_match => 0 );
+    my ( $sd_ref ) = $prob -> _option_val_pos(name        => 'FILE',
+                                              record_name => 'table',
+                                              exact_match => 0);
 
     if( defined $sd_ref ) {
         foreach my $tabname ( @{$sd_ref} ) {
@@ -83,7 +77,6 @@ sub BUILD
         }
     }
     $self -> cwtab_names( \@cwtab_names);
-
 
     # Figure out wheter we have and 'ADVAN' option. By not using
     # "exact_match" we can search for a prefix of the different ADVAN
@@ -158,9 +151,7 @@ sub BUILD
                 );
 
         }
-#    } elsif ( $PsN::nm_major_version == 6 ) {
     } else {
-
         my $code;
 
         if( $have_advan ){
@@ -168,13 +159,9 @@ sub BUILD
                 $prob -> add_records( type => 'infn',
                                       record_strings => [] );
             }
-
             $code = $prob -> infns -> [0] -> code;
-
         } else {
-
             $code = $prob -> preds -> [0] -> code;
-
         }
 
         push( @{$code},
@@ -192,7 +179,6 @@ sub BUILD
               '  WRITE (51,*) SIGMA(BLOCK)',
               'ENDIF' );
     }
-
 
     my $code_records;
     if( $have_advan ){
