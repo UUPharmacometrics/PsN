@@ -88,24 +88,26 @@ if (exists('mix')) {     # A mixture model is a special case
                     dplyr::summarise(per5=quantile(PMIX, probs=c(0.05)), 
                                      per95=quantile(PMIX, probs=c(0.95))) # Get percentiles among simulations
 
-            plots[[i]] <- ggplot( ) +  
+            plots[[i]] <- ggplot() + 
                           geom_ribbon(data=temp_sim, aes(rank, ymin=per5, ymax=per95), alpha=0.2) +
-                          geom_text(data=temp_obs, aes(rank, PMIX, label=SUBJECT_NO), size=10) +
+                          geom_text(data=temp_obs, aes(rank, PMIX, label=SUBJECT_NO), size=8) +
                           geom_hline(yintercept=0.5, linetype="dashed", size=2) +
                           theme_classic() +
-                          coord_flip() + # required because geom_ribbon cannot use xmin/xmax
-                          theme(axis.text.x=element_text(size=30), 
-                                axis.title.x=element_text(size=30),
-                                axis.ticks.x=element_line(size=3),
-                                axis.ticks.y=element_blank(),
-                                axis.ticks.length=unit(6, "pt"),
+                          theme(axis.text.y=element_text(size=20),
                                 axis.title.y=element_blank(),
-                                axis.text.y=element_blank()) +
-						  ylab(paste0("IPmix (SUBPOP=", i, ")"))		# ylab since flipped coords
+                                axis.ticks.y=element_line(size=3),
+                                axis.ticks.length=unit(6, "pt"),
+                                axis.ticks.x=element_blank(),
+                                axis.title.x=element_text(size=25),
+                                axis.text.x=element_blank()) +
+                          xlab(paste0("SUBPOP=", i))
+            if (i > 1) {
+                plots[[i]] <- plots[[i]] + theme(axis.text.y=element_blank(), axis.ticks.y=element_blank())
+            }
         }
         
-        left_axis = grid::textGrob("Sorted ID", gp=grid::gpar(font=2,fontsize=30), rot=90)
-        title = grid::textGrob("ID sorted by IPmix and 5-95th percentile per subpopulation", gp=grid::gpar(font=2,fontsize=30))
+        left_axis = grid::textGrob("IPmix", gp=grid::gpar(font=2,fontsize=25), rot=90)
+        title = grid::textGrob("IPmix with uncertainty 5-95% CI", gp=grid::gpar(font=2,fontsize=25))
         gridExtra::marrangeGrob(plots, nrow=1, ncol=2, top=title, left=left_axis)
     }
 }
