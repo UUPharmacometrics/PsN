@@ -67,7 +67,7 @@ The number of simulated datasets to generate is required. 20 is the minimum acce
 \subsection{Optional input}
 \begin{optionlist}
 \optname{-auto\_bin}
-Default is auto. Automatic binning. The parameter gives how to search for the number of bins. Forbidden to use more than one of these combinations.\\
+Default is auto=2,10. Automatic binning constrained to a minimum of 2 bins and a maximum of 10. The parameter gives how to search for the number of bins. Forbidden to use more than one of these combinations.\\
 * "auto" means to try to estimate the number of bins needed automatically.\\
 * min,max means to search for the number of bins between min and max, e.g. -auto\_bin=5,15\\
 If stratification is used it is possible to use different min and max values for the different stratas by specifying an array here, e.g. 
