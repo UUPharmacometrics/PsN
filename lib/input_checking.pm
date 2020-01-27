@@ -409,7 +409,9 @@ sub check_vpc
         }
     } else {
         unless (defined $options->{'bin_by_count'} or defined $options->{'no_of_bins'} or defined $options->{'bin_array'} or defined $options->{'single_bin_size'} or defined $options->{'overlap'}) {
-            $options->{'auto_bin_mode'} = 'auto';
+            $options->{'auto_bin_mode'} = 'minmax';
+            $options->{'min_no_bins'} = [ 2 ];
+            $options->{'max_no_bins'} = [ 10 ];
         }
     }
 

@@ -97,6 +97,8 @@ Changes and bug fixes from PsN 4.8.0 to x.x.x
 
    ___vpc/npc___
 
+- Contrain default automatic binning two have between 2 and 10 bins
+
 
    ___frem___
 
