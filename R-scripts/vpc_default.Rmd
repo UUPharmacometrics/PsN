@@ -12,6 +12,7 @@ library(magrittr)
 library(methods)
 library(xpose4)
 library(vpc)
+library(ggplot2)
 
 #add R_info to the meta file
 R_info(directory=working.directory)
@@ -72,7 +73,40 @@ if (exists('mix')) {     # A mixture model is a special case
                 plots[[2*i]] <- randomized
             }
         }
-        gridExtra::marrangeGrob(plots, nrow=2, ncol=2, top=NULL, padding=0)
+        print(gridExtra::marrangeGrob(plots, nrow=2, ncol=2, top=NULL, padding=0))
+
+        plots <- list()
+        for (i in unique(obs_phm$SUBPOP)) { # Allowing cases with more than 2 mixtures
+            temp_obs <- obs_phm %>% dplyr::filter(SUBPOP == i) %>% 
+                        dplyr::arrange(PMIX) %>% 
+                        dplyr::mutate(rank=1:dplyr::n()) # Get rank for the plot
+            temp_sim <- sim_phm %>% dplyr::filter(SUBPOP == i) %>% 
+                    dplyr::group_by(replicate) %>% # Assuming replicate is the simulation number
+                    dplyr::arrange(PMIX) %>% 
+                    dplyr::mutate(rank = 1:dplyr::n()) %>%  # Get rank for the plot by simulation
+                    dplyr::group_by(rank) %>% 
+                    dplyr::summarise(per5=quantile(PMIX, probs=c(0.05)), 
+                                     per95=quantile(PMIX, probs=c(0.95))) # Get percentiles among simulations
+
+            plots[[i]] <- ggplot( ) +  
+                          geom_ribbon(data=temp_sim, aes(rank, ymin=per5, ymax=per95), alpha=0.2) +
+                          geom_text(data=temp_obs, aes(rank, PMIX, label=SUBJECT_NO), size=10) +
+                          geom_hline(yintercept=0.5, linetype="dashed", size=2) +
+                          theme_classic() +
+                          coord_flip() + # required because geom_ribbon cannot use xmin/xmax
+                          theme(axis.text.x=element_text(size=30), 
+                                axis.title.x=element_text(size=30),
+                                axis.ticks.x=element_line(size=3),
+                                axis.ticks.y=element_blank(),
+                                axis.ticks.length=unit(6, "pt"),
+                                axis.title.y=element_blank(),
+                                axis.text.y=element_blank()) +
+						  ylab(paste0("IPmix (SUBPOP=", i, ")"))		# ylab since flipped coords
+        }
+        
+        left_axis = grid::textGrob("Sorted ID", gp=grid::gpar(font=2,fontsize=30), rot=90)
+        title = grid::textGrob("ID sorted by IPmix and 5-95th percentile per subpopulation", gp=grid::gpar(font=2,fontsize=30))
+        gridExtra::marrangeGrob(plots, nrow=1, ncol=2, top=title, left=left_axis)
     }
 }
 ```
