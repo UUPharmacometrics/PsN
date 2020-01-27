@@ -50,11 +50,15 @@ if (exists('mix')) {     # A mixture model is a special case
         if (!exists('stratify_on')) {
             stratify_on <- NULL
         }
-        
-        vpc <- vpc::vpc(obs=obs, sim=sim, obs_cols=list(dv=dv), sim_cols=list(dv=dv), stratify=stratify_on, bins=bin_boundaries)
+
+        # Read name of IDV from vpc_results.csv
+        vpc_res <- read.csv(paste0(working.directory, '/vpc_results.csv'), skip=1, nrows=1, stringsAsFactors=FALSE)
+        idv <- trimws(vpc_res$Independent.variable)
+
+        vpc <- vpc::vpc(obs=obs, sim=sim, obs_cols=list(dv=dv, idv=idv), sim_cols=list(dv=dv, idv=idv), stratify=stratify_on, bins=bin_boundaries)
         print(vpc)
-        plots_mixest <- mixture_vpc(obs, sim, obs_phm, sim_phm, dv=dv, bins=bin_boundaries, stratify_on=stratify_on)
-        plots_randomized <- mixture_vpc(obs, sim, obs_phm, sim_phm, dv=dv, bins=bin_boundaries, stratify_on=stratify_on, randomize=TRUE)
+        plots_mixest <- mixture_vpc(obs, sim, obs_phm, sim_phm, dv=dv, idv=idv, bins=bin_boundaries, stratify_on=stratify_on)
+        plots_randomized <- mixture_vpc(obs, sim, obs_phm, sim_phm, dv=dv, idv=idv, bins=bin_boundaries, stratify_on=stratify_on, randomize=TRUE)
         plots <- list()
         for (i in 1:length(plots_mixest)) {
             mixest <- plots_mixest[[i]]
