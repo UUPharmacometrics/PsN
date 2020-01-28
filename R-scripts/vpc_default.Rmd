@@ -41,6 +41,7 @@ print(plots)
 ```{r mix_plots, warning=FALSE, message=FALSE, results='asis',echo=FALSE,fig.width=17,fig.height=12,fig.keep="high",fig.align="center"}
 if (exists('mix')) {     # A mixture model is a special case
     if (require("vpc")) {
+        cat("<BR>")
         observations_tablefile <- paste0(working.directory, '/m1/vpc_original.npctab.dta')
         simulations_tablefile <- paste0(working.directory, '/m1/vpc_simulation.1.npctab.dta')
 
@@ -74,7 +75,7 @@ if (exists('mix')) {     # A mixture model is a special case
             }
         }
         print(gridExtra::marrangeGrob(plots, nrow=2, ncol=2, top=NULL, padding=0))
-
+        cat('<BR>')
         plots <- list()
         for (i in unique(obs_phm$SUBPOP)) { # Allowing cases with more than 2 mixtures
             temp_obs <- obs_phm %>% dplyr::filter(SUBPOP == i) %>% 
@@ -105,10 +106,11 @@ if (exists('mix')) {     # A mixture model is a special case
                 plots[[i]] <- plots[[i]] + theme(axis.text.y=element_blank(), axis.ticks.y=element_blank())
             }
         }
-        
+
         left_axis = grid::textGrob("IPmix", gp=grid::gpar(font=2,fontsize=25), rot=90)
-        title = grid::textGrob("IPmix with uncertainty 5-95% CI", gp=grid::gpar(font=2,fontsize=25))
-        gridExtra::marrangeGrob(plots, nrow=1, ncol=2, top=title, left=left_axis)
+        bottom_axis = grid::textGrob("Sorted ID", gp=grid::gpar(font=2,fontsize=25))
+        title = grid::textGrob("IPmix with uncertainty 5-95% CI", gp=grid::gpar(font=2,fontsize=35))
+        gridExtra::marrangeGrob(plots, nrow=1, ncol=2, top=title, left=left_axis, bottom=bottom_axis)
     }
 }
 ```
