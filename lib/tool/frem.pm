@@ -79,6 +79,9 @@ has '_intermediate_models_path' => ( is => 'rw', isa => 'Str' );
 has 'etas_reorder_mapping' => ( is => 'rw', isa => 'HashRef' );
 has 'derivatives' => ( is => 'rw', isa => 'Bool', default => 0 );
 has '_final_models_path' => ( is => 'rw', isa => 'Str' );
+has '_likelihood' => ( is => 'rw', isa => 'Bool', default => 0 );
+has '_loglikelihood' => ( is => 'rw', isa => 'Bool', default => 0 );
+has '_have_fflag' => ( is => 'rw', isa => 'Bool', default => 0 );
 
 
 my $logger = logging::get_logger("frem");
@@ -1912,6 +1915,20 @@ sub do_model1
         );
     }
 
+    if ($frem_model->is_option_set(record => 'estimation', name => 'LIKELIHOOD', record_number => -1, fuzzy_match => 1)) {
+        $self->_likelihood(1);
+        $frem_model->remove_option(record_name => 'estimation', option_name => 'LIKELIHOOD', fuzzy_match => 1);
+    } elsif ($frem_model->is_option_set(record => 'estimation', name => '-2LOGLIKELIHOOD', record_number => -1, fuzzy_match => 1) or
+             $frem_model->is_option_set(record => 'estimation', name => '-2LLIKELIHOOD', record_number => -1, fuzzy_match => 1)) {
+        $self->_loglikelihood(1);
+        $frem_model->remove_option(record_name => 'estimation', option_name => '-2LOGLIKELIHOOD', fuzzy_match => 1);
+        $frem_model->remove_option(record_name => 'estimation', option_name => '-2LLIKELIHOOD', fuzzy_match => 1);
+    }
+
+    if ($model->defined_variable(name => "F_FLAG")) {
+        $self->_have_fflag(1);
+    }
+
     my $output = $frem_model->outputs->[0];
 
     if (not defined $output) {
@@ -2229,6 +2246,9 @@ sub get_pred_error_pk_code
         N_parameter_blocks => {isa => 'Int', optional => 0},
         epsnum => {isa => 'Int', optional => 0},
         indent => {isa => 'Str', optional => 0},
+        likelihood => { isa => 'Bool', optional => 0},
+        loglikelihood => { isa => 'Bool', optional => 0},
+        have_fflag  => { isa => 'Bool', optional => 0},
     );
     my $covariates = $parm{'covariates'};
     my $maxeta = $parm{'maxeta'};
@@ -2242,9 +2262,25 @@ sub get_pred_error_pk_code
     my $N_parameter_blocks = $parm{'N_parameter_blocks'};
     my $epsnum = $parm{'epsnum'};
     my $indent = $parm{'indent'};
+    my $likelihood = $parm{'likelihood'};
+    my $loglikelihood = $parm{'loglikelihood'};
+    my $have_fflag = $parm{'have_fflag'};
 
     my @pkcode;
     my @pred_error_code = (';;;FREM CODE BEGIN COMPACT',';;;DO NOT MODIFY');
+    if ($likelihood or $loglikelihood) {
+        push @pred_error_code, 'IF (FREMTYPE.NE.0) THEN';
+        push @pred_error_code, '    F_FLAG=0';
+        if (not $have_fflag) {
+            push @pred_error_code, 'ELSE';
+            if ($likelihood) {
+                push @pred_error_code, '    F_FLAG=1';
+            } else {
+                push @pred_error_code, '    F_FLAG=2';
+            }
+        }
+        push @pred_error_code, "END IF";
+    }
 
     my @eta_labels;
     my @eta_strings;
@@ -2391,6 +2427,9 @@ sub prepare_model2
         N_parameter_blocks => 1,
         epsnum => $epsnum,
         indent => '    ',
+        likelihood => $self->_likelihood,
+        loglikelihood => $self->_loglikelihood,
+        have_fflag => $self->_have_fflag,
     );
 
     cleanup_outdated_model(modelname => File::Spec->catfile($self->_intermediate_models_path, $name_model),
