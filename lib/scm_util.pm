@@ -9,6 +9,7 @@ use File::Copy qw(move mv cp);
 use warnings;
 require OSspecific;
 
+
 sub setup
 {
     # must be able to call from scmplus.pm using PsN and scm 4.7.0 with
@@ -66,7 +67,6 @@ sub setup
     return $scm;
 }
 
-
 sub copy_config_file{
     #call from scmplus bin script with PsN 4.7.0 and
     #scm_util::copy_config_file(options => \%options, directory => $asr->directory);
@@ -81,8 +81,6 @@ sub copy_config_file{
     my ( $dir, $file ) = OSspecific::absolute_path('',$options->{'config_file'});
     cp($dir.$file,$directory.$file);
 }
-
-
 
 sub setup_model{
     # must be able to call from scmplus bin script using PsN 4.7.0 with
@@ -206,8 +204,6 @@ sub check_options{
 
 }
 
-
-
 sub get_base_criteria_values
 {
     my %parm = validated_hash(\@_,
@@ -286,8 +282,6 @@ sub setup_config_forward
 
 
 }
-
-
 
 sub get_config_object
 {
