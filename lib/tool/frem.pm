@@ -2246,9 +2246,9 @@ sub get_pred_error_pk_code
         N_parameter_blocks => {isa => 'Int', optional => 0},
         epsnum => {isa => 'Int', optional => 0},
         indent => {isa => 'Str', optional => 0},
-        likelihood => { isa => 'Bool', optional => 0},
-        loglikelihood => { isa => 'Bool', optional => 0},
-        have_fflag  => { isa => 'Bool', optional => 0},
+        likelihood => { isa => 'Bool', default => 0},
+        loglikelihood => { isa => 'Bool', default => 0},
+        have_fflag  => { isa => 'Bool', default => 0},
     );
     my $covariates = $parm{'covariates'};
     my $maxeta = $parm{'maxeta'};

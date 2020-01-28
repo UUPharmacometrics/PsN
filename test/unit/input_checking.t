@@ -152,7 +152,7 @@ dies_ok { input_checking::check_options(tool => 'vpc', options => \%options, mod
 
 %options=();
 input_checking::check_options(tool => 'vpc', options => \%options, model => $model);
-is_deeply($options{'auto_bin_mode'}, 'auto', "check vpc, if not defined auto bin, auto_bin_mode = 'auto'");
+is_deeply($options{'auto_bin_mode'}, 'minmax', "check vpc, if not defined auto bin, auto_bin_mode = 'minmax'");
 
 %options=();
 $options{'bin_by_count'} = 1;
