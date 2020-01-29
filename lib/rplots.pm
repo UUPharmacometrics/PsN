@@ -340,6 +340,7 @@ sub make_plots
                 system($executable . " -e \"$rlib rmarkdown::render(input='" . $self->filename . "'$debug_option, output_format='$format')\" > PsN_".$self->toolname()."_plots.Rout 2>&1");
             }
         } else {
+            @output_formats = ('pdf_document');
             system($executable . " CMD BATCH " . $self->filename);
         }
         unlink('.RData');
