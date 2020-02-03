@@ -25,7 +25,7 @@ xpdb <- xpose4::xpose.data(xpose.runno, directory=results.directory, tab.suffix=
 #xpdb@Prefs@Xvardef$idv="TAD"
 xpose4::runsum(xpdb, dir=results.directory,
          modfile=PsNR::model_path(meta),
-         listfile=paste(results.directory, sub(mod.suffix, ".lst", basename(PsNR::model_path(meta))), sep=""))
+         listfile=file.path(results.directory, sub(mod.suffix, ".lst", basename(PsNR::model_path(meta)))))
 ```
 \pagebreak
 
