@@ -200,9 +200,6 @@ sub setup
              'n.eps <- '.$neps
             );
     }
-    if (length($self->R_lib_path) > 0) {
-        push(@arr, ".libPaths('".$self->R_lib_path."')");
-    }
 
     $self->standard_preamble(\@arr);
 }
@@ -313,11 +310,6 @@ sub make_plots
             return;
         }
 
-        my $rlib = "";      # Set the libpath in the Rscript call to have it before rmarkdown etc are loaded
-        if (length($self->R_lib_path) > 0) {
-            $rlib = ".libPaths('" . $self->R_lib_path . "');";
-        }
-
         my $debug_option = "";
         if ($self->debug_rmd) {
             $debug_option = ", clean=FALSE";
@@ -337,7 +329,7 @@ sub make_plots
         if($self->R_markdown && $self->rmarkdown_installed) {
 
             for my $format (@output_formats) {
-                system($executable . " -e \"$rlib rmarkdown::render(input='" . $self->filename . "'$debug_option, output_format='$format')\" > PsN_".$self->toolname()."_plots.Rout 2>&1");
+                system($executable . " -e \"rmarkdown::render(input='" . $self->filename . "'$debug_option, output_format='$format')\" > PsN_".$self->toolname()."_plots.Rout 2>&1");
             }
         } else {
             @output_formats = ('pdf_document');

@@ -541,24 +541,6 @@ sub run_r
     system("Rscript -e \"$line\"");
 }
 
-sub install_psnr
-{
-    my $libpath = shift;
-    my $repos = shift;
-
-    my $repos_str = "";
-    if (defined $repos) {
-        $repos_str = ", repos='$repos'";
-    }
-
-    my $libpath_str = "";
-    if (defined $libpath) {
-        $libpath =~ s/\\/\\\\/g;
-        $libpath_str = ".libPaths('$libpath'); ";
-    }
-
-    run_r("${libpath_str}remotes::install_github('UUPharmacometrics/PsNR\@PsN$PsN::version'$repos_str)");
-}
 
 sub create_directory
 {
@@ -919,37 +901,32 @@ if (running_on_windows()) {
 
 my $rlib_path = File::Spec->catfile($psn_lib_path, "Rlib");
 my $set_rlib_path = 0;
-print "\nWould you like to install the PsNR R package that is needed for the rplots functionality and the qa tool (you will get further options if you answer 'yes')?  [y/n] ";
+print "\n";
+print "The R package PsNR and its dependencies are needed for the rplots functionality and the qa tool in PsN.\n";
+print "The PsN installer can automatically install these using renv to make sure that all versions\n";
+print "of R packages have been tested together. A separate R library will be created inside the PsN\n";
+print "installation directory. You need to have R installed for this installation. On Windows Rtools\n";
+print "might also be needed\n";
+print "\n";
+print "\nWould you like to install the PsNR R package? [y/n] ";
+
 if (confirm()) {
-    print "Select one of the options:\n";
-    print "Install PsNR and its dependencies\n";
-    print "    1. in your default R library\n";
-    print "    2. in a new PsN-specific R library using latest versions of packages from CRAN\n";
-    print "    3. in a new PsN-specific R library using tested versions of the R packages via an MRAN snapshot\n"; 
-    my $answer = numeric_input(3);
-    if ($answer == 1) {
-        install_psnr();
-    } else {
-        if (not -e $rlib_path) {
-       	    if (not mkpath($rlib_path)) {
-                print "Failed to create $rlib_path: $!\n";
-                abort();
-            }
+    if (not -e $rlib_path) {
+        if (not mkpath($rlib_path)) {
+            print "Failed to create $rlib_path: $!\n";
+            abort();
         }
-	    my $repos;
-        if ($answer == 3) {
-            $repos = 'https://cran.microsoft.com/snapshot/2020-01-16/';
-        } else {
-            $repos = 'https://cloud.r-project.org';
-	    }
-        my $rsafe_path = $rlib_path;
-	    $rsafe_path =~ s/\\/\\\\/g;
-        $ENV{'R_LIBS_SITE'} = $rlib_path;
-        run_r("install.packages('remotes', lib='$rsafe_path', repos='$repos')");
-        install_psnr($rlib_path, $repos);
-        $set_rlib_path = 1;
     }
+
+    my $repos = 'https://cloud.r-project.org';
+    my $rsafe_path = $rlib_path;
+    $rsafe_path =~ s/\\/\\\\/g;
+    $ENV{'R_LIBS_SITE'} = $rlib_path;
+    run_r("install.packages('renv', lib='$rsafe_path', repos='$repos')");
+    run_r("options(renv.consent=TRUE); renv::restore(library='$rsafe_path', lockfile='renv.lock')");
+    $set_rlib_path = 1;
 }
+
 
 my $default_test = $library_dir;
 my $test_library_dir;
