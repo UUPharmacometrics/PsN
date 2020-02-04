@@ -143,7 +143,7 @@ To test wether the distribution is significantly different from a normal distrib
       legend("topright", col=c('red', 'green', 'green','green'), leg.txt, lty=c(1,4,3,3),
              box.lwd = 0,box.col = "white",bg = "white", lwd=2, cex=1)
     }
-    histogram_kld_i_ofv(list_kld_i_ofv, basename(PsnR::model_path(meta)))
+    histogram_kld_i_ofv(list_kld_i_ofv, basename(PsNR::model_path(meta)))
   }
 ```
 \pagebreak
