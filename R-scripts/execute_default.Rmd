@@ -20,7 +20,8 @@ model_path <- PsNR::model_path(meta)
 
 ```{r Summary_plot,results='hide',echo=FALSE,fig.width=9,fig.height=6.5,fig.keep="high",fig.align="center"}
 model_suffix <- paste0('.', tools::file_ext(model_path))
-xpdb <- xpose4::xpose.data(xpose.runno, directory=results.directory, tab.suffix=tab.suffix, mod.prefix=mod.prefix, mod.suffix=model_suffix)
+model_prefix <- tools::file_path_sans_ext(basename(model_path))
+xpdb <- xpose4::xpose.data(xpose.runno, directory=results.directory, tab.suffix=tab.suffix, mod.prefix=model_prefix, mod.suffix=model_suffix)
 
 #uncomment below to change the idv from TIME to something else such as TAD.
 #Other xpose preferences could also be changed
@@ -137,12 +138,12 @@ if (PsNR::rplots_level(meta) > 1){
 if (PsNR::rplots_level(meta) > 1){
   #check if files exist
   if (res.table != '') {
-    file_1_exists <- file_existence_in_directory(directory=results.directory, file_name=paste0(mod.prefix, xpose.runno, ".phi"))
+    file_1_exists <- file_existence_in_directory(directory=results.directory, file_name=paste0(model_prefix, xpose.runno, ".phi"))
     file_2_exists <- file_existence_in_directory(directory=results.directory, file_name=res.table)
     
     if ((file_1_exists) && (file_2_exists)) {
       # calculate data
-      list_out <- data.obj.obsi(obj.data.dir=paste0(results.directory, mod.prefix, xpose.runno, ".phi"),
+      list_out <- data.obj.obsi(obj.data.dir=paste0(results.directory, model_prefix, xpose.runno, ".phi"),
                                 obsi.data.dir=paste0(results.directory, res.table))
       have_needed_columns <- list_out$have_needed_columns
       if(have_needed_columns) {

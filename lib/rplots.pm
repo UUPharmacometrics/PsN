@@ -92,15 +92,9 @@ sub setup
         last if (defined $runno);
     }
 
-
-    #model prefix
-    my $modPrefix='run';
-    if (defined $runno and ($modelfile =~ /$runno/)){
-        ($modPrefix, undef) = split(/$runno/, $modelfile);
-    } else {
+    if (not (defined $runno and ($modelfile =~ /$runno/))) {
         my $tmp = $modelfile;
         if ($tmp =~ s/^([^0-9]+)//){
-            $modPrefix = $1;
             $runno = $tmp unless (defined $runno);
         }
     }
@@ -142,7 +136,6 @@ sub setup
          "working.directory<-'".$workingdirectory."'",
          "results.directory <- '" . $results_dir . "'",
          "subset.variable<-".$subsetstring,
-         "mod.prefix <- '".$modPrefix."'",
          "tab.suffix <- '".$tabSuffix."' ",
          "rscripts.directory <- '" . $rscripts_path . "' # This is not used",
         );

@@ -3552,8 +3552,6 @@ sub create_R_plots_code
     #only to be used from execute, single model
     #TODO update inits add xpose tables, partially interactive
 
-    #$rplot->add_preamble(code => [ "pdf.filename <- paste0(mod.prefix,xpose.runno,'_plots.pdf')", ]);
-
     # Find a table with residuals. Needed for the OFV_i vs #OBS_i plot
     my $res_table_file = '';
     my $tables = $self->models->[0]->problems->[0]->tables;

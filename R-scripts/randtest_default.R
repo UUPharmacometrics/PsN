@@ -11,7 +11,10 @@ library(tidyr)
 
 #add R_info to the meta file
 R_info(directory=working.directory)
+
 meta <- PsNR::metadata(working.directory)
+model_path <- PsNR::model_path(meta)
+model_prefix <- tools::file_path_sans_ext(basename(model_path))
 
 # randtest plot
 pvalue <- 0.05 #for randtest.hist
@@ -234,7 +237,7 @@ if (have.base.model) {
 
         sel <- c("model","ofv","deltaofv",modcol)
         pnm <- c("model","OFV","deltaOFV",modnm)
-        mod <- paste0(mod.prefix,xpose.runno)
+        mod <- paste0(model_prefix, xpose.runno)
         tabout <- data.frame()
 
         # Read randtest raw result file
