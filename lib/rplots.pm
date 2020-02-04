@@ -74,7 +74,6 @@ sub setup
     my @xpose_names=("sdtab","mutab","patab","catab","cotab","mytab","xptab","cwtab");
     my @tables = @{$self->model->table_names}; #array of arrays without path
     my $runno;
-    my $is_sim=0;
     my $tabSuffix='';
     for (my $i=0; $i<scalar(@tables); $i++){
         if (defined $tables[$i]){
@@ -83,8 +82,6 @@ sub setup
                 if (defined $tmp->[0]){
                     #have runno
                     $runno = $tmp->[0];
-                    #remove trailing sim if there
-                    $is_sim=1 if ($runno =~ /sim$/);
                     $runno =~ s/sim$//;
 
                     $tabSuffix = $tmp->[1];
@@ -96,19 +93,12 @@ sub setup
     }
 
 
-    #model prefix and suffix
-    my $modSuffix='.mod';
+    #model prefix
     my $modPrefix='run';
     if (defined $runno and ($modelfile =~ /$runno/)){
-        ($modPrefix,$modSuffix)=split(/$runno/,$modelfile);
-        if ($is_sim){
-            $modSuffix =~ s/^sim//;
-        }
-    }else{
+        ($modPrefix, undef) = split(/$runno/, $modelfile);
+    } else {
         my $tmp = $modelfile;
-        if(    $tmp =~ s/(\.[^.]+)$//){
-            $modSuffix = $1;
-        }
         if ($tmp =~ s/^([^0-9]+)//){
             $modPrefix = $1;
             $runno = $tmp unless (defined $runno);
@@ -152,7 +142,6 @@ sub setup
          "working.directory<-'".$workingdirectory."'",
          "results.directory <- '" . $results_dir . "'",
          "subset.variable<-".$subsetstring,
-         "mod.suffix <- '".$modSuffix."'",
          "mod.prefix <- '".$modPrefix."'",
          "tab.suffix <- '".$tabSuffix."' ",
          "rscripts.directory <- '" . $rscripts_path . "' # This is not used",
