@@ -3,7 +3,7 @@
 use strict;
 use warnings;
 use File::Path 'rmtree';
-use Test::More tests=>1;
+use Test::More;
 use File::Copy 'cp';
 use FindBin qw($Bin);
 use lib "$Bin/.."; #location of includes.pm
@@ -15,7 +15,7 @@ my $model_dir = $includes::testfiledir;
 chdir($tempdir);
 my @commands = 
 	(
-	 get_command('simeval') . " -samples=20 $model_dir/pheno_cond.mod "
+	 get_command('simeval') . " -samples=20 $model_dir/pheno_cond.mod -rplots=2 -html "
   );
 
 foreach my $command (@commands){
@@ -24,6 +24,8 @@ foreach my $command (@commands){
 	$rc = $rc >> 8;
 	ok ($rc == 0, "$command, should run ok");
 }
+
+ok(-e ($tempdir . '/simeval_dir1/PsN_simeval_plots.html'), 'generate simeval plots');
 
 remove_test_dir($tempdir);
 
