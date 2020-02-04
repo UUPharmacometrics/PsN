@@ -65,7 +65,7 @@ pdf_outl.infl.indiv <- function(all.iofv.file,n.subjects,samples,raw.results.fil
     
     # draw the table 
     if((nrow(outl_infl_table) == 1) && (ncol(outl_infl_table)==1)) {
-      plot.table(outl_infl_table)
+      plot_table(outl_infl_table)
     } else {
       total_rows_per_page <- 18
       start_row <- 1

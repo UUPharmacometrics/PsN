@@ -15,7 +15,7 @@ if (nrow(raw_nonparametric) == 0) {
   pdf(file=pdf.filename,width=11.69, height=8.27)
   
   #make a npsupp/nofv plot 
-  plot.npsupp.nofv(raw_nonparametric,n.indiv,n.eta)
+  PsNR::plot_npsupp_nofv(raw_nonparametric,n.indiv,n.eta)
   
   #close pdf
   dev.off()

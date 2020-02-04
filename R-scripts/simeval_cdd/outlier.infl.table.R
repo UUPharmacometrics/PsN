@@ -77,10 +77,10 @@ outlier_infl_table <- function(all.iofv.file,n.subjects,samples,ebe.npde.file,et
   #outlier table
   #if (file.exists(residual.files[1]) && file.exists(residual.files[2]) && file.exists(residual.outliers.file)) {
   if (file.exists(residual.outliers.file)) {
-    all_outlier_table <- all.outlier.report.table(ofv_outliers,ebe.npde_outliers=ebe.npde_outliers,cwres.iwres_outliers,
+    all_outlier_table <- PsNR::all_outlier_report_table(ofv_outliers,ebe.npde_outliers=ebe.npde_outliers,cwres.iwres_outliers,
                                                   ID_deleted_ebe,ID_deleted_ofv)
   } else {
-    all_outlier_table <- all.outlier.report.table(ofv_outliers,ebe.npde_outliers=ebe.npde_outliers,
+    all_outlier_table <- PsNR::all_outlier_report_table(ofv_outliers,ebe.npde_outliers=ebe.npde_outliers,
                                                   ID_deleted_ebe=ID_deleted_ebe,ID_deleted_ofv=ID_deleted_ofv)
   }
   
@@ -114,7 +114,7 @@ outlier_infl_table <- function(all.iofv.file,n.subjects,samples,ebe.npde.file,et
   infl_ofv <- list.delta.ofv$infl_ofv
   fail_ID <- list.delta.ofv$fail_ID
 
-  all_infl_indiv_table <- all.infl.indiv.table(infl_ofv,infl_cook_data,infl_cov_data,fail_ID)
+  all_infl_indiv_table <- all_infl_indiv_table(infl_ofv,infl_cook_data,infl_cov_data,fail_ID)
   
   ##########################################################   summary table   ##################################################################
   #create a influential_outlier table

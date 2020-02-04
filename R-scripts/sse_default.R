@@ -190,7 +190,7 @@ output_table <- plyr::ddply(est_results, .(), function(df)
 output_table$`.id` <- NULL
 
 pdf(pdf.filename)
-plot.table(output_table)
+plot_table(output_table)
 
 
 if(nrow(power_curves)){

@@ -66,10 +66,10 @@ meta <- PsNR::metadata(working.directory)
 
 ```{r summary_table_iOFV_NPDE,results='hide',warning=FALSE,echo=FALSE,fig.width=9,fig.height=2,fig.keep="high",fig.align="center"}
 #3. iOFV NPDE summary table
-  iofv_summary_table <- summary.table.ofv(iofv.file)
+  iofv_summary_table <- summary_table_ofv(iofv.file)
   
   # plot summary table
-  plot.table(iofv_summary_table)
+  plot_table(iofv_summary_table)
 ```
 To test wether the mean is significantly different from 0, a Wilcoxon signed rank test is used.\newline
 To test wether the variance is significantly different from 1, a Kolmogorov-Smirnov test is used.\newline
@@ -179,9 +179,9 @@ To test wether the distribution is significantly different from a normal distrib
   ID_deleted_ebe <- input_data$ID_deleted
   
   # create EBE npde summary statistics table
-  mydataframe <- summary.table.ebe.npde(ebenpde_obs,eta.names_text)
+  mydataframe <- summary_table_ebe_npde(ebenpde_obs,eta.names_text)
   # draw a table
-  plot.table(mydataframe,total_rows_per_page=18)
+  plot_table(mydataframe,total_rows_per_page=18)
 ```
 To test wether the mean is significantly different from 0, a Wilcoxon signed rank test is used.\newline
 To test wether the variance is significantly different from 1, a Kolmogorov-Smirnov test is used.\newline
@@ -292,9 +292,9 @@ Correlation graph for EBE NPDE IOV
     #CREATE FINAL TABLE (use function outlier_table to create a table fortable1)
     fortable1 <- outlier.table.ebe.npde(ebenpde_tmp,eta.names,outlier_id_row)
     
-    #............................................(8)plot.table......................................................  
+    #............................................(8)plot_table......................................................  
     #draw the table
-    plot.table(fortable1,total_rows_per_page=18)
+    plot_table(fortable1,total_rows_per_page=18)
     
     
     #for ebe.npde.outliers
@@ -333,10 +333,10 @@ Correlation graph for EBE NPDE IOV
   if (show_residual_plots) {  
     #------------------------------------------(2)summary_table plot----------------------------------
     # Summary table
-    mydataframe <- summary.table(residual.files,residual.names)
+    mydataframe <- summary_table(residual.files,residual.names)
 
     # plot summary table "mydataframe" on the new page
-   plot.table(mydataframe,total_rows_per_page=18)
+   plot_table(mydataframe,total_rows_per_page=18)
   }
 ```
 
@@ -365,7 +365,7 @@ residual_names <- list$residual_names
 
 ```{r residual_outlier_table,echo=FALSE,fig.width=9,fig.height=6,fig.keep="high",fig.align="center"} 
   if (show_residual_plots) {
-    plot.table(resudual_outlier_table,total_rows_per_page=18)
+    plot_table(resudual_outlier_table,total_rows_per_page=18)
   }
 ```
 
@@ -375,13 +375,13 @@ All outlier report table
 \end{center}
 
 ```{r all_outlier_table,results='hide',echo=FALSE,warning=FALSE,fig.width=9,fig.height=5.8,fig.keep="high",fig.align="center"}
-all_outlier_table <- all.outlier.report.table(ofv_outliers,ebe.npde_outliers=ebe.npde_outliers,cwres.iwres_outliers,
+all_outlier_table <- PsNR::all_outlier_report_table(ofv_outliers,ebe.npde_outliers=ebe.npde_outliers,cwres.iwres_outliers,
                                               residual_names,ID_deleted_ebe=ID_deleted_ebe,ID_deleted_ofv=ID_deleted_ofv)
 # draw the table 
 if(ncol(all_outlier_table)>3) {
-  plot.all.outlier.table(all_outlier_table,total_rows_per_page=18)
+  plot_all_outlier_table(all_outlier_table,total_rows_per_page=18)
 } else {
-  plot.table(all_outlier_table,total_rows_per_page=18)
+  plot_table(all_outlier_table,total_rows_per_page=18)
 }
 ```
 

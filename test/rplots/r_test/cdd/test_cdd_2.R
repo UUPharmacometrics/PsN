@@ -404,12 +404,12 @@ test_that("messages shows up",{
 })
 
 
-#.................................  (4) Test plot.cov.cook  ...............................
-cdd.data <- plot.cov.cook(cdd.data.all)
+#.................................  (4) Test plot_cov_cook  ...............................
+cdd.data <- plot_cov_cook(cdd.data.all)
 
 # Compare expected data with real data
-context("CDD, function plot.cov.cook")
-test_that("If function plot.cov.cook works as expected",{
+context("CDD, function plot_cov_cook")
+test_that("If function plot_cov_cook works as expected",{
   expect_equal(data.frame(ID=as.integer(c(11,13,16,19)),
                           method=factor(c(rep("cdd",4)),levels=c("cdd","other")),
                           model=as.integer(c(1,2,3,4)),
@@ -426,25 +426,25 @@ test_that("If function plot.cov.cook works as expected",{
                           jack.cook.par.THETA1=c(0.12,0.41,0.16,0.12)),cdd.data)
 })
 
-#.................................  (5) Test plot.cov.cook.par  ...............................
-nr.parameters <- plot.cov.cook.par(cook.par.data,cov.par.data,parameters)
+#.................................  (5) Test plot_cov_cook_par  ...............................
+nr.parameters <- plot_cov_cook_par(cook.par.data,cov.par.data,parameters)
 
 # Compare expected data with real data
-context("CDD, function plot.cov.cook.par")
-test_that("If function plot.cov.cook.par works as expected",{
+context("CDD, function plot_cov_cook_par")
+test_that("If function plot_cov_cook_par works as expected",{
   expect_equal(3,nr.parameters)
 })
 
-#.................................  (6) Test plot.ofv  ...............................
-out_ofv.data <- plot.ofv(cdd.data.all_3)
+#.................................  (6) Test plot_ofv  ...............................
+out_ofv.data <- plot_ofv(cdd.data.all_3)
 
 # unlist
 ofv.orig <- out_ofv.data$ofv.orig
 ofv.est <- out_ofv.data$ofv.est
 
 # Compare expected data with real data
-context("CDD, function plot.ofv")
-test_that("If function plot.ofv works as expected",{
+context("CDD, function plot_ofv")
+test_that("If function plot_ofv works as expected",{
   expect_equal(c(-108.66,-94.1,-101.5,-86.7),ofv.orig)
   expect_equal(c(-109.2,-94.7,-102,-89),ofv.est)
 })
@@ -617,7 +617,7 @@ test_that("If function delta.ofv.data works as expected",{
   expect_equal(exp_infl_ofv_6,infl_ofv_6)
 })
 
-#.................................  (8) Test all.infl.indiv.table.R  ...............................
+#.................................  (8) Test all_infl_indiv_table.R  ...............................
 #input
 # ofv
 infl_ofv_1 <- data.frame("ID"=c(3,19,7),"cdd.delta.ofv"=c(4,6.3,4.1))
@@ -638,17 +638,17 @@ names(infl_cov_data_3) <- NULL
 
 
 #use function
-all_infl_indiv_table_1 <- all.infl.indiv.table(infl_ofv_1,infl_cook_data_1,infl_cov_data_1,fail_ID=c(),ID_failed_cov=c())
-all_infl_indiv_table_2 <- all.infl.indiv.table(infl_ofv_1,infl_cook_data_2,infl_cov_data_2,fail_ID=c(12,11),ID_failed_cov=c())
-all_infl_indiv_table_3 <- all.infl.indiv.table(infl_ofv_1,infl_cook_data_3,infl_cov_data_1,fail_ID=c(),ID_failed_cov=c())
-all_infl_indiv_table_4 <- all.infl.indiv.table(infl_ofv_2,infl_cook_data_3,infl_cov_data_2,fail_ID=c(),ID_failed_cov=c())
-all_infl_indiv_table_5 <- all.infl.indiv.table(infl_ofv_2,infl_cook_data_3,infl_cov_data_3,fail_ID=c(),ID_failed_cov=c())
-all_infl_indiv_table_6 <- all.infl.indiv.table(infl_ofv,infl_cook_data,infl_cov_data,fail_ID=c(),ID_failed_cov=c())
-all_infl_indiv_table_7 <- all.infl.indiv.table(infl_ofv_1,infl_cook_data_1,infl_cov_data_2,fail_ID=c(),ID_failed_cov=c(19,1,3))
+all_infl_indiv_table_1 <- all_infl_indiv_table(infl_ofv_1,infl_cook_data_1,infl_cov_data_1,fail_ID=c(),ID_failed_cov=c())
+all_infl_indiv_table_2 <- all_infl_indiv_table(infl_ofv_1,infl_cook_data_2,infl_cov_data_2,fail_ID=c(12,11),ID_failed_cov=c())
+all_infl_indiv_table_3 <- all_infl_indiv_table(infl_ofv_1,infl_cook_data_3,infl_cov_data_1,fail_ID=c(),ID_failed_cov=c())
+all_infl_indiv_table_4 <- all_infl_indiv_table(infl_ofv_2,infl_cook_data_3,infl_cov_data_2,fail_ID=c(),ID_failed_cov=c())
+all_infl_indiv_table_5 <- all_infl_indiv_table(infl_ofv_2,infl_cook_data_3,infl_cov_data_3,fail_ID=c(),ID_failed_cov=c())
+all_infl_indiv_table_6 <- all_infl_indiv_table(infl_ofv,infl_cook_data,infl_cov_data,fail_ID=c(),ID_failed_cov=c())
+all_infl_indiv_table_7 <- all_infl_indiv_table(infl_ofv_1,infl_cook_data_1,infl_cov_data_2,fail_ID=c(),ID_failed_cov=c(19,1,3))
 
 # Compare expected data with real data
-context("CDD, function all.infl.indiv.table")
-test_that("If function all.infl.indiv.table works as expected",{
+context("CDD, function all_infl_indiv_table")
+test_that("If function all_infl_indiv_table works as expected",{
   expect_equal(data.frame("ID"=as.character(c(3,7,11,13,19)),
                           "Delta OFV influentials"=as.character(c(4,4.1,"","",6.3)),
                           "Cook score influentials"=as.character(c("","",1,"",6.23)),

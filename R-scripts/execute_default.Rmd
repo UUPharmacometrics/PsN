@@ -149,7 +149,7 @@ if (PsNR::rplots_level(meta) > 1){
         OBJ_vector <- list_out$OBJ_vecto
       
         # plot data
-        plot.obj.obsi(OBJ_data,OBSi_vector,OBJ_vector)
+        PsNR::plot_obj_obsi(OBJ_data,OBSi_vector,OBJ_vector)
       }
     }
   }
