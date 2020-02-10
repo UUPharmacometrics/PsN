@@ -6160,7 +6160,7 @@ sub preprocess_data
     }
 
     if ($only_filter){
-        foreach my $remove_rec ('abbreviated','msfi','contr','subroutine','prior','model','tol','infn','omega','pk','aesinitial','aes','des','error','pred','mix','theta','sigma','estimation','nonparametric'){
+        foreach my $remove_rec ('abbreviated','msfi','contr','subroutine','prior','model','tol','infn','omega','pk','aesinitial','aes','des','error','pred','mix','theta','sigma','estimation','nonparametric','levels'){
             $filtered_data_model -> remove_records(type => $remove_rec);
         }
         my @predcode = ('Y=THETA(1)+ETA(1)+EPS(1)');
