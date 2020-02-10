@@ -1271,7 +1271,6 @@ my $rplot = rplots->new(toolname => 'frem',
                         plotcode => \@templatecode,
                         model => $model);
 
-$rplot->pdf_title('frem plots');
 $rplot->add_preamble(code => [
                          "covdatafile <- '".$covdatafile."'",
                          "pardatafile <- '".$pardatafile."'",

@@ -1458,12 +1458,10 @@ sub create_R_plots_code
     my $rplot = $parm{'rplot'};
 
     my $case_column_name = $self->models->[0]->problems->[0]->inputs->[0]->options->[($self->case_column)-1]->name;
-    $rplot->pdf_title('Case-deletion diagnostics');
     $rplot->add_preamble(code => [
                              "case.column.name   <-'".$case_column_name."'",
                              "skipped.id.file <-'".$self->skipped_individuals_filename."'"
                          ]);
-
 }
 
 no Moose;

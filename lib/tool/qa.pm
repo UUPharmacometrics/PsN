@@ -951,8 +951,6 @@ sub create_R_plots_code
     );
     my $rplot = $parm{'rplot'};
 
-    $rplot->pdf_title('Quality assurance');
-
     my @continuous;
     if (defined $self->continuous) {
         @continuous = split(/,/, $self->continuous);

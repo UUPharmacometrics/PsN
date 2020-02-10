@@ -1157,8 +1157,6 @@ sub _guess
     return $guess;
 }
 
-
-
 sub prepare_results
 {
     my $self = shift;
@@ -1289,13 +1287,10 @@ sub create_R_plots_code{
         );
     my $rplot = $parm{'rplot'};
 
-    $rplot->pdf_title('Log-likelihood profiling');
-
     $rplot->add_preamble(code => [
                              'refofv   <-'.$self->ofv_increase.'   #option -ofv_increase',
                              'NORMQ    <- '.$self->normq.'   #option -normq'
                          ]);
-
 }
 
 

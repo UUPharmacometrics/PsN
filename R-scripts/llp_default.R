@@ -9,11 +9,10 @@ R_info(directory=working.directory)
 
 meta <- PsNR::metadata(working.directory)
 model_path <- PsNR::model_path(meta)
-model_prefix <- tools::file_path_sans_ext(basename(model_path))
 
-pdf(file=pdf.filename,title=pdf.title)
+pdf(file=pdf.filename, title="Log-likelihood profiling")
 
-    RUN <- paste0(model_prefix, xpose.runno)
+    RUN <- paste0(PsNR::model_prefix(meta), xpose.runno)
     theme_set(theme_bw(base_size = 18))
     
     CL <- round(pchisq(3.84,df=1),2)                                # confidence level corresponding to chosen ofv_increase

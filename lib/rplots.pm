@@ -21,7 +21,6 @@ has 'raw_results_file' => (is => 'rw', isa => 'Str');
 has 'tool_results_file' => (is => 'rw', isa => 'Str');
 has 'filename' => (is => 'rw', isa => 'Str');
 has '_R_executable' => (is => 'rw', isa => 'Str' );
-has 'pdf_title' => (is => 'rw', isa => 'Str' );
 has 'indent' => (is => 'rw', isa => 'Str', default => "    " ); #4spaces
 has 'standard_preamble' => ( is => 'rw', isa => 'ArrayRef[Str]',default => sub{ [] } );
 has 'extra_preamble' => ( is => 'rw', isa => 'ArrayRef[Str]',default => sub{ [] } );
@@ -70,7 +69,7 @@ sub setup
     my ($modeldir, $modelfile) = OSspecific::absolute_path($self->model-> directory,
                                                  $self->model-> filename );
 
-    #figure out table suffix and xpose runno
+    #figure out table suffix
     my @xpose_names=("sdtab","mutab","patab","catab","cotab","mytab","xptab","cwtab");
     my @tables = @{$self->model->table_names}; #array of arrays without path
     my $runno;
@@ -100,15 +99,6 @@ sub setup
     }
 
     $runno = '' unless (defined $runno and length($runno)>0);
-    unless (defined $self->pdf_title){
-        my $runstr = '';
-        if (defined $runno and length($runno)>0){
-            $runstr = " run $runno";
-        }else{
-            $runstr = " $modelfile";
-        }
-        $self->pdf_title($self->toolname().' diagnostic plots'.$runstr);
-    }
 
     my $subsetstring = 'NULL';
     $subsetstring = "'".$self->subset_variable."'" if (defined $self->subset_variable and length($self->subset_variable)>0);
@@ -132,7 +122,6 @@ sub setup
          "xpose.runno <- '".$runno."'",
          "toolname <- '".$self->toolname()."'",
          "pdf.filename <- paste0('PsN_',toolname,'_plots.pdf')",
-         "pdf.title <- '".$self->pdf_title."'",
          "working.directory<-'".$workingdirectory."'",
          "results.directory <- '" . $results_dir . "'",
          "subset.variable<-".$subsetstring,
