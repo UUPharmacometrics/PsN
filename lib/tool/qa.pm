@@ -59,7 +59,9 @@ sub BUILD
     my $model = $self->models()->[0];
     $self->model($model);
 
-    $self->check_nonsupported_modelfeatures();
+    if (not $self->nonlinear) {     # Allow more features for nonlinear exploration
+        $self->check_nonsupported_modelfeatures();
+    }
 
     for my $param (@{$self->add_etas}) {
         if (not code_parsing::defined_symbol(model => $model, symbol => $param)) {
