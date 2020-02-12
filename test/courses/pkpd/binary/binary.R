@@ -7,7 +7,7 @@ meta <- PsNR::metadata(working.directory)
 
 #this template requires both tables from runx.mod and runxsim.mod 
 setwd(dirname(PsNR::model_path(meta)))
-pdf(file=paste0(working.directory,pdf.filename),width=10,height=7,title=pdf.title) ## set output for plots
+pdf(file=paste0(working.directory,pdf.filename),width=10,height=7,title="binary plots") ## set output for plots
 on.exit(dev.off(),add=T)
 ##################
 

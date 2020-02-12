@@ -7,7 +7,7 @@ library(ggplot2)
 R_info(directory=working.directory)
 meta <- PsNR::metadata(working.director)
 
-    pdf(file=pdf.filename, width=10, height=7, title=pdf.title)
+    pdf(file=pdf.filename, width=10, height=7, title="sir plots")
 
     
     rawres <- read.csv(tool.results.file, as.is=T)

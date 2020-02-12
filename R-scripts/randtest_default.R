@@ -20,7 +20,7 @@ pvalue <- 0.05 #for randtest.hist
 
 if (have.base.model) {
 
-    pdf(file=pdf.filename, title=pdf.title)
+    pdf(file=pdf.filename, title="randtest plots")
 
     print(randtest.hist(raw.results.file, df=length(extra.thetas), p.val=pvalue)) 
 

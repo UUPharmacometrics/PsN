@@ -7,7 +7,7 @@ setwd(dirname(PsNR::model_path(meta)))
 library(xpose4)
 xpdb<-xpose.data(xpose.runno)
 
-pdf(file=paste0(working.directory,pdf.filename),width=10,height=7,title=pdf.title)
+pdf(file=paste0(working.directory,pdf.filename),width=10,height=7,title="categorical plots")
 
 ## make some stacked bar plots
 print(cat.dv.vs.idv.sb(xpdb,idv=NULL,stack=F))
