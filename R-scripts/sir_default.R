@@ -357,7 +357,7 @@ if (PsNR::rplots_level(meta) > 1) {
 
     simdat          <- matrix(NA,nrow=nrow(mdat)) # Simulate data from inverse Wishart from estimated df and s
     for (i in seq(nrow(mdat))) {
-      if(is.na(mdat$df[i])==FALSE) simdat[i,] <- MCMCPack::riwish(v=mdat$df[i],S=as.matrix(mdat$s[i]))
+      if(is.na(mdat$df[i])==FALSE) simdat[i,] <- MCMCpack::riwish(v=mdat$df[i],S=as.matrix(mdat$s[i]))
     }
     mdat$simdat      <- as.numeric(simdat)
     mdat$LEGEND_NORM <- paste(mdat$variable,round(mdat$df_norm,0),sep=":")    # for plotting
