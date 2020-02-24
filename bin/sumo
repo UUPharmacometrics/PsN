@@ -394,7 +394,6 @@ require model;
                 }
 
 
-
                 my @etashrinkage = defined $eta_shrinkage -> [$problems][$sub_problems] ? @{$eta_shrinkage -> [$problems][$sub_problems]} : ();
                 my @epsshrinkage = defined $eps_shrinkage -> [$problems][$sub_problems] ? @{$eps_shrinkage -> [$problems][$sub_problems]} : ();
 
@@ -716,9 +715,9 @@ require model;
                             }
                             my $value;
                             if ($options{'covariance'}) {
-                                $value = $est{'sigma'}->[$i_om];
+                                $value = $est{'sigma'}->[$i_si];
                             } else {
-                                $value = $cest{'sigma'}->[$i_om];
+                                $value = $cest{'sigma'}->[$i_si];
                             }
                             if( !$options{'sd_rse'} ) {
                                 push( @row, $nam{'sigma'}->[$i_si], defined $value ? sprintf($form, $value) : '........',
