@@ -5,7 +5,7 @@ library(ggplot2)
 
 #add R_info to the meta file
 R_info(directory=working.directory)
-meta <- PsNR::metadata(working.director)
+meta <- PsNR::metadata(working.directory)
 
     pdf(file=pdf.filename, width=10, height=7, title="sir plots")
 
