@@ -400,5 +400,3 @@ for(j in 1:n.vpc){
 #add R_info to the meta file
 R_info(directory=working.directory)
 ```
-
-

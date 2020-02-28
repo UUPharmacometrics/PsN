@@ -223,7 +223,6 @@ if (have.base.model) {
                 geom_vline(xintercept=chsqn, color="skyblue", size=1, lty=2) +
                 geom_vline(xintercept=dofvqn, color="red", size=1, lty=2) + guides(col = guide_legend(nrow = 2))
 
-
             myGrob <- textGrob(bquote(atop(,"df"[chi^2]~"="~.(df)~", D"[KS]~"="~.(ksDist)~", D"[critical]~"="~.(ksCrit)~", pvalue="~.(pval))),
                                gp=gpar(cex=0.7,fontface="bold"))
 
@@ -287,17 +286,12 @@ if (have.base.model) {
             grid.arrange(ksrecord$gcdf,ksrecord$modgcdf,ksrecord$gpdf,ksrecord$modgpdf,ncol=2,
                          main=ksrecord$myGrob)
 
-
-
-
-
             tabout <- rbind(tabout, data.frame(Model=mod,KSresult=ksrecord$KSresult,ndata=ksrecord$ndata,
                                                KSscore=ksrecord$KSscore,KScritical=ksrecord$KScritical,dKSscore=ksrecord$dKSscore,df=ksrecord$df,
                                                EMPcritical=ksrecord$EMPcritical,CHIcritical=ksrecord$CHIcritical,nposdofv=ksrecord$nposdofv,
                                                modKSresult=ksrecord$modKSresult,nmoddata=ksrecord$nmoddata,modKSscore=ksrecord$modKSscore,
                                                modKScritical=ksrecord$modKScritical,moddKSscore=ksrecord$moddKSscore,moddf=ksrecord$moddf,
                                                modEMPcritical=ksrecord$modEMPcritical,modCHIcritical=ksrecord$modCHIcritical,cutoff=ksrecord$cutoff))
-
 
             write.table(tabout, file="randtestTable.tsv", sep="\t", row.names=F, col.names=T, quote=F)
     } #end if level>1

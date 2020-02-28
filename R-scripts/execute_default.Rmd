@@ -158,5 +158,3 @@ if (PsNR::rplots_level(meta) > 1){
   }
 }
 ```
-
-

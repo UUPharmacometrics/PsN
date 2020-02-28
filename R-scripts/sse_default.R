@@ -107,7 +107,6 @@ if(nrow(model_pairs)==0) stop("No valid model pair provided!")
 
 raw_results <- read.csv(raw.results.file)
 
-
 dofvs_df <- ddply(model_pairs, names(model_pairs), function(model_pair){
   ofv_full <- subset(raw_results, hypothesis==model_pair[1,"full"], select=c(sample, ofv))
   ofv_reduced <- subset(raw_results, hypothesis==model_pair[1,"red"], select=c(sample, ofv))
@@ -120,7 +119,6 @@ dofvs_df <- ddply(model_pairs, names(model_pairs), function(model_pair){
              name=sprintf("%s vs. %s (%i DF)", model_pair[1,"full_mod"], model_pair[1,"red_mod"],model_pair[1,"df"]),
              type_1 = type_1)
 })
-
 
 est_results <- plyr::ddply(dofvs_df, .(name), function(dofv_df){
   n_negative <- sum(dofv_df$dofv<0) 
@@ -206,8 +204,7 @@ if(nrow(power_curves)){
   print(p)
 }
 
-
-if(diagnostics){
+if(diagnostics) {
   
   diag_curves <- ddply(est_results, .(name), function(dofv_df){
     grid <- seq(0, dofv_df$max_dofv[1], length=100)
@@ -220,7 +217,6 @@ if(diagnostics){
   
   d_ply(diag_curves,.(name),function(diag_df){
     dofvs_df <- subset(dofvs_df, name==diag_df$name[1])
-    #if(diag_df$parameter[1]=="df") dofvs_df <- transform(dofvs_df, dofv=-dofv)
     p <- ggplot()+
       geom_ribbon(data=diag_df, mapping=aes(x=quantile,  ymin=prob_low, ymax=prob_high),fill="lightgray")+
       geom_line(data=diag_df, mapping=aes(x=quantile,  y=prob),linetype="dashed", size=1)+
@@ -231,8 +227,6 @@ if(diagnostics){
     
     print(p)
   })
-  
-  
 }
 
 dev.off()

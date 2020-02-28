@@ -7,12 +7,10 @@ library(ggplot2)
 R_info(directory=working.directory)
 meta <- PsNR::metadata(working.directory)
 
-    pdf(file=pdf.filename, width=10, height=7, title="sir plots")
+pdf(file=pdf.filename, width=10, height=7, title="sir plots")
 
-    
     rawres <- read.csv(tool.results.file, as.is=T)
-    
-    
+
     # Appearance for default plot + extended plot1
     PLoT1 = ggplot()+
       geom_hline(yintercept=80, linetype=2, colour='red', size=0.7)+
@@ -46,8 +44,6 @@ meta <- PsNR::metadata(working.directory)
             panel.background=element_rect(color="black",fill="gray100"),
             panel.grid.minor=element_line(color="gray95"),
             panel.grid.major=element_line(color="gray95"))
-    
-         
 
     if(sig.level %in% c(0.1,1,5,10,15,20)){
       column_name <- sprintf("power.at.%i.", sig.level)
@@ -63,7 +59,7 @@ meta <- PsNR::metadata(working.directory)
       print(default_plot)
     }
     
-    if (PsNR::rplots_level(meta) > 1){
+    if (PsNR::rplots_level(meta) > 1) {
       
       # for rplots>1 a PPE based curve will be included in the output
       
@@ -88,8 +84,7 @@ meta <- PsNR::metadata(working.directory)
         power <- pchisq(qchisq(1-alpha,df=df,ncp=0),df=df,ncp=ncps,lower.tail=F)
         return(power)
       }
-      
-      
+
       if(!is.null(degrees.of.freedom) ||!is.null(n.individuals)){
         ncp <- ofv.reduced-ofv.full
         ppe_power <- ppe_subjects(ncp=ncp, df=degrees.of.freedom, n.subjects=n.individuals, pred.n.subjects=rawres$total_X)
@@ -107,8 +102,7 @@ meta <- PsNR::metadata(working.directory)
                 legend.text=element_text(size=12))
         print(p) 
       }
-      
-      
+
       # Rearrange the rawres file
       Power       = c(rawres$power.at.20.,rawres$power.at.15.,rawres$power.at.10.,rawres$power.at.5., rawres$power.at.1., rawres$power.at.0.1.)
       Sample_size = rep(rawres$total_X,6) #3
@@ -142,7 +136,4 @@ meta <- PsNR::metadata(working.directory)
       
     }
     
-
     dev.off()
-
-

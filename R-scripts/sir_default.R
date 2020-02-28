@@ -314,8 +314,6 @@ if (PsNR::rplots_level(meta) > 1) {
     parnames <- names(dat)[omega.col]                                                                         # names of the variances
     var      <- dplyr::filter(final_est,Parameter %in% parnames)                                                     # MLE estimates
     mdat    <- tidyr::gather(dat[,omega.col,drop=FALSE],key="variable",factor_key=TRUE)
-    #ul<- unique(mdat$variable)
-    #levels(mdat$variable) <- ul
     se       <- mdat %>%
       dplyr::select(variable,value) %>%
       dplyr::group_by(variable) %>%
@@ -393,7 +391,6 @@ qdOFV_all <- ggplot2::ggplot(dOFV_all,aes(x=QUANT,color=ITERATION)) +
   scale_linetype_manual(name="Iteration step",drop=FALSE,values=c(2,1)) +
   scale_color_manual(name="Iteration number",drop=FALSE,values=colITER) +
   scale_fill_manual(name="Iteration number",drop=FALSE,values=colITER) +
-  #   geom_text(data=df_est, aes(x = perc,y=1.1*perc_value,label=df),show.legend=FALSE) +
   geom_text(data=df_est, aes(x = 0.7,y=order*stats::qchisq(0.95,df=N.ESTIMATED.PARAMS)/(2*nrow(df_est)),label=paste(df," (",TYPE2,ITERATION,")",sep="")),show.legend=FALSE,hjust=0,size=5) +
   annotate("text",x = 0.7,y=(nrow(df_est)+1)*stats::qchisq(0.95,df=N.ESTIMATED.PARAMS)/(2*nrow(df_est)),label="Estimated df",hjust=0,fontface="italic",size=5) +
   annotate("text",x = 0,y=2*stats::qchisq(0.95,df=N.ESTIMATED.PARAMS),label=warn,hjust=0,fontface="italic",size=4,color="red") +
