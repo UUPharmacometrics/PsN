@@ -50,7 +50,6 @@ pdf(file=pdf.filename, title="Log-likelihood profiling")
     llp.pred4 <- c()
       
     for (i in levels(llp.all$Parameter)) {
-      
       dat       <- llp.all[llp.all$Parameter==i,]                                         # dataset for one parameter
       range     <- seq(min(dat$Value),max(dat$Value),length=1000)                         # select 1000 equally sized points between min and max value of parameter
       
@@ -63,8 +62,6 @@ pdf(file=pdf.filename, title="Log-likelihood profiling")
       llp.pred4 <- rbind(llp.pred4,data.frame("Parameter"=i,"Value"=range,"OFV.diff"=pred_poly4))
     }
       
-    ## Plot 
-    
     p <- ggplot(llp.all,aes(x=Value,y=OFV.diff)) +
       geom_point(size=3) +                                                                # all points tried by LLP
       geom_line() +                                                                       # connect points with line
@@ -78,15 +75,9 @@ pdf(file=pdf.filename, title="Log-likelihood profiling")
       geom_text(aes(x=ML.estimate,y=1,label=signif(ML.estimate,3))) +                      # paste value of ML estimate
       geom_errorbarh(aes(xmin=lower,xmax=upper,y=0),color="red") +                        # parameter CI projected on x-axis
       geom_errorbarh(aes(xmin=Value.lower,xmax=Value.upper,y=-0.5),color="blue") +        # initial guess at parameter CI projected on x-axis
-      #   geom_line(data=llp.pred3) +                                                       # lm predictions with 3rd order polynomial
-      #   geom_line(data=llp.pred4) +                                                       # lm predictions with 4rth order polynomial
-      #   geom_smooth(se=FALSE) +                                                           # smooth
       scale_y_continuous(limits=c(-1,round(refofv*2,0))) +
       facet_wrap(~strip.text,scales="free",ncol=2) +
       labs(x="Parameter value",y="dOFV",title=paste("Log-Likelihood Profiling\n(",RUN,")",sep=""))
     print(p)
-    
-    
-    
-dev.off()
 
+dev.off()
