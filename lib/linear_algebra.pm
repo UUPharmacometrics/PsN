@@ -1176,18 +1176,18 @@ sub get_symmetric_posdef
 
     (my $eigenvalues, my $Q) = eigenvalue_decomposition($A);
 
-    my $count = count_lower(array => $eigenvalues,limit=>$minEigen);
+    my $count = count_lower(array => $eigenvalues, limit => $minEigen);
 
-    if ($count >0){
-        my ($posdef,$diff) = spdarise(
+    if ($count > 0) {
+        my ($posdef, $diff) = spdarise(
             matrix => $A,
             eigenvalues => $eigenvalues,
             Q => $Q,
             minEigen => $minEigen,
         ); #new A,frob norm diff
-        return ($posdef,$count);
-    }else{
-        return($A,0);
+        return ($posdef, $count);
+    } else {
+        return($A, 0);
     }
 }
 
@@ -1197,20 +1197,20 @@ sub spdarise
     #matrix with the specified minimum eigen value (probably the closest to the
     #original matrix in Frobenius norm sense).
     my %parm = validated_hash(\@_,
-                              matrix => { isa => 'ArrayRef', optional => 0 },
-                              eigenvalues => { isa => 'ArrayRef', optional => 1 },
-                              Q => { isa => 'ArrayRef', optional => 1 },
-                              minEigen => { isa => 'Num', default => 0.0000000001 },
+        matrix => { isa => 'ArrayRef', optional => 0 },
+        eigenvalues => { isa => 'ArrayRef', optional => 1 },
+        Q => { isa => 'ArrayRef', optional => 1 },
+        minEigen => { isa => 'Num', default => 0.0000000001 },
     );
     my $matrix = $parm{'matrix'};
     my $eigenvalues = $parm{'eigenvalues'};
     my $Q = $parm{'Q'};
     my $minEigen = $parm{'minEigen'};
 
-    unless (defined $Q and defined $eigenvalues){
+    unless (defined $Q and defined $eigenvalues) {
         ($eigenvalues, $Q) = eigenvalue_decomposition($matrix);
     }
-    unless ($minEigen > 0){
+    unless ($minEigen > 0) {
         croak("minEigen $minEigen is not > 0");
     }
 
@@ -1218,8 +1218,8 @@ sub spdarise
     my @tempA = map { [@$_] } @$matrix;
 
     for (my $index = 0; $index < scalar(@$eigenvalues); $index++) {
-        if ($eigenvalues->[$index]<$minEigen){
-            $eigenvalues->[$index]=$minEigen;
+        if ($eigenvalues->[$index] < $minEigen) {
+            $eigenvalues->[$index] = $minEigen;
         }
     }
 
@@ -1228,23 +1228,24 @@ sub spdarise
             $tempA[$index1]->[$index2] = $Q->[$index1]->[$index2] * $eigenvalues->[$index2];
         }
     }
-    my $fNormDiff=0;
+    my $fNormDiff = 0;
     # TODO: replace by call to frobenius_norm below
     for (my $index1 = 0; $index1 < scalar(@{$matrix}); $index1++) {
         for (my $index2 = 0; $index2 < scalar(@{$matrix}); $index2++) {
-            $posdefmatrix[$index1]->[$index2] =0;
+            $posdefmatrix[$index1]->[$index2] = 0;
             for (my $index3 = 0; $index3 < scalar(@{$matrix}); $index3++) {
                 $posdefmatrix[$index1]->[$index2] =
-                    $posdefmatrix[$index1]->[$index2] +  $tempA[$index1]->[$index3]*$Q->[$index2]->[$index3] ;
+                    $posdefmatrix[$index1]->[$index2] +  $tempA[$index1]->[$index3]*$Q->[$index2]->[$index3];
             }
-            $fNormDiff=$fNormDiff+($posdefmatrix[$index1]->[$index2]-$matrix->[$index1]->[$index2])*($posdefmatrix[$index1]->[$index2]-$matrix->[$index1]->[$index2]) ;
+            $fNormDiff = $fNormDiff + ($posdefmatrix[$index1]->[$index2]-$matrix->[$index1]->[$index2]) * ($posdefmatrix[$index1]->[$index2]-$matrix->[$index1]->[$index2]) ;
         }
     }
 
-    return(\@posdefmatrix,$fNormDiff);
+    return(\@posdefmatrix, $fNormDiff);
 }
 
-sub frobenius_norm {
+sub frobenius_norm
+{
     # calculate the frobenius norm of a matrix (or frobenius norm of element-wise difference)
     # TODO: use MatrixReal class instead
     my %parm = validated_hash(\@_,
@@ -1531,8 +1532,6 @@ sub lower_triangular_identity_solve
 
     }
     return 0;
-
-
 }
 
 sub upper_triangular_solve
@@ -1561,7 +1560,6 @@ sub upper_triangular_solve
       $solution->[$i]=($solution->[$i]-$sum)/($Umat->[$i][$i]);
     }
     return 0;
-
 }
 
 sub upper_triangular_transpose_solve
@@ -2283,8 +2281,8 @@ sub conditional_covariance_coefficients
 sub frem_conditional_variance
 {
     my %parm = validated_hash(\@_,
-                              matrix => { isa => 'ArrayRef', optional => 0 },
-                              npar => { isa => 'Int', optional => 0 },
+        matrix => { isa => 'ArrayRef', optional => 0 },
+        npar => { isa => 'Int', optional => 0 },
     );
     my $matrix = $parm{'matrix'};
     my $npar = $parm{'npar'};
@@ -2301,24 +2299,24 @@ sub frem_conditional_variance
         push(@{$orig_matrix}, $new_line);
     }
 
-    my $err=cholesky($matrix);
-    if ($err > 0){
+    my $err = cholesky($matrix);
+    if ($err > 0) {
         # try to save calculation by forcing positive-definiteness (likely small numerical problems due to lack of cov-step of NONMEM)
         print "cholesky error $err in frem_conditional_variance, likely positive semidefinite or numerically close, forcing positive-definite matrix\n";
         my $count;
-        ($matrix,$count) = get_symmetric_posdef(matrix => $orig_matrix);
+        ($matrix, $count) = get_symmetric_posdef(matrix => $orig_matrix);
         print "$count small eigenvalue(s) adjusted\n";
         $err = cholesky($matrix);
         if ($err > 0) {
-            return ($err,[]);
+            return ($err, []);
         }
     }
     my $refInv = [];
     $err = lower_triangular_identity_solve($matrix,$npar,$refInv);
 
-    if ($err > 0){
+    if ($err > 0) {
         print "lower triang error $err in frem\n";
-        return ($err,[]) ;
+        return ($err, []);
     }
 
     #refInv is lower triangular matrix
@@ -2327,69 +2325,68 @@ sub frem_conditional_variance
     #in *row format*, R->[row][col]
 
     #QR takes input as [col][row]
-    my $Rmat=[];
-    $err = QR_factorize($refInv,$Rmat);
-    if ($err > 0){
+    my $Rmat = [];
+    $err = QR_factorize($refInv, $Rmat);
+    if ($err > 0) {
         print "QR error in frem\n";
-        return ($err,[]) ;
+        return ($err, []);
     }
 
     my $refRInv = [];
-    $err = upper_triangular_identity_solve($Rmat,$refRInv);
-    if ($err > 0){
+    $err = upper_triangular_identity_solve($Rmat, $refRInv);
+    if ($err > 0) {
         print "upper triang error in frem\n";
-        return ($err,[]) ;
+        return ($err, []);
     }
 
-    $err = upper_triangular_UUT_multiply($refRInv,$result);
-    if ($err > 0){
+    $err = upper_triangular_UUT_multiply($refRInv, $result);
+    if ($err > 0) {
         print "multiply error in frem\n";
-        return ($err,[]) ;
+        return ($err, []);
     }
 
     #fill in full matrix to avoid sorrows outside this function
     my $dim = scalar(@{$result});
-    for (my $row=0; $row<$dim; $row++){
-        for (my $col=0; $col<$dim; $col++){
-            $result->[$col][$row]=$result->[$row][$col];
+    for (my $row = 0; $row < $dim; $row++) {
+        for (my $col = 0; $col < $dim; $col++) {
+            $result->[$col][$row] = $result->[$row][$col];
         }
     }
 
-    return (0,$result);
-
+    return (0, $result);
 }
 
 sub frem_conditional_coefficients
 {
     my %parm = validated_hash(\@_,
-                              matrix => { isa => 'ArrayRef', optional => 0 },
-                              vectors => { isa => 'ArrayRef', optional => 0 },
-                              scaling => { isa => 'ArrayRef', optional => 0 },
+        matrix => { isa => 'ArrayRef', optional => 0 },
+        vectors => { isa => 'ArrayRef', optional => 0 },
+        scaling => { isa => 'ArrayRef', optional => 0 },
     );
     my $matrix = $parm{'matrix'};
     my $vectors = $parm{'vectors'};
     my $scaling = $parm{'scaling'};
 
-    my @coefficients = ();
+    my @coefficients;
 
     my $size = scalar(@{$matrix});
     my $size2 = scalar(@{$vectors->[0]});
     my $error = 0;
-    if (($size2 != $size) or (scalar(@{$matrix->[0]}) != $size)){
+    if (($size2 != $size) or (scalar(@{$matrix->[0]}) != $size)) {
         print "matrix size $size not square or vector size $size2 not equal\n";
-        for (my $k=0; $k< scalar(@{$vectors}); $k++){
-            print join(' ',@{$vectors->[$k]})."\n";
+        for (my $k = 0; $k < scalar(@{$vectors}); $k++) {
+            print join(' ', @{$vectors->[$k]}) . "\n";
         }
 
-        $error =1;
-        return ($error,[]);
+        $error = 1;
+        return ($error, []);
     }
     my $dim_scaling = scalar(@{$scaling});
-    if ($dim_scaling>0){
-        unless ($dim_scaling == ($size +scalar(@{$vectors}))){
-            print "scaling dim $dim_scaling but size $size and vectors ".scalar(@{$vectors})."\n";
-            $error =1;
-            return ($error,[]);
+    if ($dim_scaling > 0) {
+        unless ($dim_scaling == ($size + scalar(@{$vectors}))) {
+            print "scaling dim $dim_scaling but size $size and vectors " . scalar(@{$vectors}) . "\n";
+            $error = 1;
+            return ($error, []);
         }
     }
 
@@ -2404,38 +2401,36 @@ sub frem_conditional_coefficients
     }
 
     my $refInv = [];
-    $error=invert_symmetric($matrix,$refInv);
-    if ($error > 0){
+    $error = invert_symmetric($matrix, $refInv);
+    if ($error > 0) {
         # try to save calculation by forcing positive-definiteness (likely small numerical problems due to lack of cov-step of NONMEM)
         print "invert_symmetric error $error in frem_conditional_coefficients, likely positive semidefinite or numerically close, forcing positive-definite matrix\n";
         my $count;
-        ($matrix,$count) = get_symmetric_posdef(matrix => $orig_matrix);
+        ($matrix, $count) = get_symmetric_posdef(matrix => $orig_matrix);
         print "$count small eigenvalue(s) adjusted\n";
         $error = invert_symmetric($matrix, $refInv);
         if ($error > 0) {
-            return ($error,[]);
+            return ($error, []);
         }
     }
     #now multiply all vectors with refInv
     my $veccount = scalar(@{$vectors});
-    for (my $k=0; $k< $veccount; $k++){
-        push(@coefficients,[]);
-        for (my $i=0; $i< $size; $i++){
+    for (my $k = 0; $k < $veccount; $k++) {
+        push(@coefficients, []);
+        for (my $i = 0; $i < $size; $i++) {
             my $num = 0;
-            for (my $j=0; $j< $size; $j++){
+            for (my $j = 0; $j < $size; $j++) {
                 my $thescale = 1;
-                if ($dim_scaling>0){
-                    #                    $left *= $scaling[$k]*scaling[$veccount+$j];
-                    #                    $right *= 1/($scaling[$veccount+$i]*scaling[$veccount+$j]);
+                if ($dim_scaling > 0) {
                     #scaling j cancels out
-                    $thescale = $scaling->[$k]/($scaling->[$veccount+$i]);
+                    $thescale = $scaling->[$k] / ($scaling->[$veccount+$i]);
                 }
-                $num += ($vectors->[$k]->[$j])*($refInv->[$i]->[$j])*$thescale;
+                $num += ($vectors->[$k]->[$j]) * ($refInv->[$i]->[$j]) * $thescale;
             }
-            push(@{$coefficients[-1]},$num);
+            push(@{$coefficients[-1]}, $num);
         }
     }
-    return (0,\@coefficients);
+    return (0, \@coefficients);
 }
 
 1;
