@@ -2158,13 +2158,13 @@ sub conditional_covariance_coefficients
 {
     #has unit tests
     my %parm = validated_hash(\@_,
-                              varcov => { isa => 'ArrayRef', optional => 0 },
-                              cov_index_first => { isa => 'Int', optional => 1 },
-                              cov_index_last => { isa => 'Int', optional => 1 },
-                              cov_index_array => { isa => 'ArrayRef', optional => 1 },
-                              par_index_first => { isa => 'Int', optional => 0 },
-                              par_index_last => { isa => 'Int', optional => 1 },
-                              rescaling => { isa => 'ArrayRef', optional => 1, default => [] },
+        varcov => { isa => 'ArrayRef', optional => 0 },
+        cov_index_first => { isa => 'Int', optional => 1 },
+        cov_index_last => { isa => 'Int', optional => 1 },
+        cov_index_array => { isa => 'ArrayRef', optional => 1 },
+        par_index_first => { isa => 'Int', optional => 0 },
+        par_index_last => { isa => 'Int', optional => 1 },
+        rescaling => { isa => 'ArrayRef', optional => 1, default => [] },
     );
     my $varcov = $parm{'varcov'};
     my $cov_index_first = $parm{'cov_index_first'};
@@ -2176,114 +2176,108 @@ sub conditional_covariance_coefficients
 
     my $error = 0;
 
-    if (defined $cov_index_array){
-        if (defined $cov_index_first or defined $cov_index_last){
+    if (defined $cov_index_array) {
+        if (defined $cov_index_first or defined $cov_index_last) {
             croak('cannot set cov_index_first/last when have cov_index_array ');
         }
-        $cov_index_first=$cov_index_array->[0];
-        $cov_index_last=$cov_index_array->[-1];
-        for (my $i=1; $i<scalar(@{$cov_index_array}); $i++){
-            unless ($cov_index_array->[$i] > $cov_index_array->[$i-1]){
+        $cov_index_first = $cov_index_array->[0];
+        $cov_index_last = $cov_index_array->[-1];
+        for (my $i = 1; $i < scalar(@{$cov_index_array}); $i++) {
+            unless ($cov_index_array->[$i] > $cov_index_array->[$i-1]) {
                 print "cov index array not sorted\n";
-                $error=1;
+                $error = 1;
             }
         }
-    }else{
-        unless (defined $cov_index_first and defined $cov_index_last){
+    } else {
+        unless (defined $cov_index_first and defined $cov_index_last) {
             print "must set cov_index_first/last when not have cov_index_array\n";
-            $error=1;
+            $error = 1;
         }
-        unless (defined $cov_index_first <= $cov_index_last){
+        unless (defined $cov_index_first <= $cov_index_last) {
             print "cov_index_first must not be greater than last\n";
-            $error=1;
+            $error = 1;
         }
         $cov_index_array = [$cov_index_first .. $cov_index_last]
     }
-    return ($error,[],[]) if ($error > 0);
+    return ($error, [], []) if ($error > 0);
 
-    unless (defined $par_index_last){
+    unless (defined $par_index_last) {
         $par_index_last = $par_index_first;
     }
 
     my $size = scalar(@{$varcov});
-    if (($par_index_first >= $size) or ($par_index_last >= $size) or ($cov_index_first >= $size) or ($cov_index_last >= $size)){
-        print "par_index_first $par_index_first or par_index_last $par_index_last or cov_index_first $cov_index_first or ".
+    if (($par_index_first >= $size) or ($par_index_last >= $size) or ($cov_index_first >= $size) or ($cov_index_last >= $size)) {
+        print "par_index_first $par_index_first or par_index_last $par_index_last or cov_index_first $cov_index_first or " .
             "cov_index_last $cov_index_last outside size $size\n";
-        $error =1;
+        $error = 1;
     }
-    if (($par_index_first >= $cov_index_first) or ($cov_index_first > $cov_index_last) or ($par_index_first >= $cov_index_last)){
-        print "par_index_first $par_index_first or cov_index_first $cov_index_first or ".
+    if (($par_index_first >= $cov_index_first) or ($cov_index_first > $cov_index_last) or ($par_index_first >= $cov_index_last)) {
+        print "par_index_first $par_index_first or cov_index_first $cov_index_first or " .
             "cov_index_last $cov_index_last in wrong order\n";
-        $error =1;
+        $error = 1;
     }
-    if (($par_index_last >= $cov_index_first) or ($par_index_last < $par_index_first)){
-        print "par_index_first $par_index_first or cov_index_first $cov_index_first or ".
+    if (($par_index_last >= $cov_index_first) or ($par_index_last < $par_index_first)) {
+        print "par_index_first $par_index_first or cov_index_first $cov_index_first or " .
             "par_index_last $par_index_last in wrong order\n";
-        $error =1;
+        $error = 1;
     }
     my $dim_rescale = scalar(@{$rescaling});
     if ($dim_rescale > 0) {
-        if ($dim_rescale != $size){
+        if ($dim_rescale != $size) {
             print "dim rescale $dim_rescale not equal to size $size\n";
             $error = 1;
-        }else{
-            for (my $i=0; $i<= $par_index_last; $i++){
-                unless ($rescaling->[$i] == 1){
-                    print "rescaling not 1 for parameter index $i: ".$rescaling->[$i]."\n";
-                    $error=1;
+        } else {
+            for (my $i = 0; $i <= $par_index_last; $i++) {
+                unless ($rescaling->[$i] == 1) {
+                    print "rescaling not 1 for parameter index $i: " . $rescaling->[$i] . "\n";
+                    $error = 1;
                     last;
                 }
             }
         }
     }
-    return ($error,[],[]) if ($error > 0);
+    return ($error, [], []) if ($error > 0);
 
-    my @indices = (($par_index_first .. $par_index_last),@{$cov_index_array},);
+    my @indices = (($par_index_first .. $par_index_last), @{$cov_index_array},);
 
-    my @varcov_copy=();
-    my @parcov_vectors=();
-    my @cov_copy=();
-    my @local_rescale = ();
-#    for (my $i=0; $i<$size; $i++){
-    foreach my $i (@indices){
-#        if ((($i >= $par_index_first) and ($i <= $par_index_last))  or (($i >= $cov_index_first) and ($i <= $cov_index_last))){
-            push(@varcov_copy,[]);
-            push(@local_rescale,$rescaling->[$i]) if ($dim_rescale > 0);
-            if (($i >= $cov_index_first) and ($i <= $cov_index_last)){
-                # i is covariate
-                push(@cov_copy,[]);
-            }else{
-                # i is parameter
-                push(@parcov_vectors,[]);
+    my @varcov_copy;
+    my @parcov_vectors;
+    my @cov_copy;
+    my @local_rescale;
+
+    foreach my $i (@indices) {
+        push(@varcov_copy, []);
+        push(@local_rescale,$rescaling->[$i]) if ($dim_rescale > 0);
+        if (($i >= $cov_index_first) and ($i <= $cov_index_last)) {
+            # i is covariate
+            push(@cov_copy,[]);
+        } else {
+            # i is parameter
+            push(@parcov_vectors, []);
+        }
+        foreach my $j (@indices) {
+            push(@{$varcov_copy[-1]}, $varcov->[$i]->[$j]);
+            if ($j > $par_index_last) {
+                # j is covariate
+                if ($i >= $cov_index_first) {
+                    # i is covariate
+                    push(@{$cov_copy[-1]}, $varcov->[$i]->[$j]);
+                } else {
+                    #i is parameter
+                    push(@{$parcov_vectors[-1]},$varcov->[$i]->[$j]);
+                }
             }
-#            for (my $j=0; $j<$size; $j++){
-            foreach my $j (@indices){
-#                if ((($j >= $par_index_first) and ($j <= $par_index_last)) or (($j >= $cov_index_first) and ($j <= $cov_index_last))){
-                    push(@{$varcov_copy[-1]},$varcov->[$i]->[$j]);
-                    if ($j> $par_index_last){
-                        # j is covariate
-                        if ($i >= $cov_index_first){
-                            # i is covariate
-                            push(@{$cov_copy[-1]},$varcov->[$i]->[$j]);
-                        }else{
-                            #i is parameter
-                            push(@{$parcov_vectors[-1]},$varcov->[$i]->[$j]);
-                        }
-                    }
-#                }
-            }
-#        }
+        }
     }
 
     my $newcovar;
-    ($error,$newcovar) = frem_conditional_variance(matrix => \@varcov_copy,npar =>($par_index_last-$par_index_first)+1);
-    return ($error,[],[]) if ($error > 0);
-    my ($error2,$coefficients) = frem_conditional_coefficients(matrix =>\@cov_copy,
-                                                               vectors => \@parcov_vectors,
-                                                               scaling => \@local_rescale);
+    ($error, $newcovar) = frem_conditional_variance(matrix => \@varcov_copy, npar => ($par_index_last - $par_index_first) + 1);
+    return ($error, [], []) if ($error > 0);
+    my ($error2, $coefficients) = frem_conditional_coefficients(matrix =>\@cov_copy,
+                                                                vectors => \@parcov_vectors,
+                                                                scaling => \@local_rescale);
 
-    return ($error2,$newcovar,$coefficients);
-
+    return ($error2, $newcovar, $coefficients);
 }
 
 sub frem_conditional_variance
