@@ -1391,12 +1391,18 @@ sub _rename_epsilons
     }
 
     for my $eps (@$epsilons) {
+        my $record;
         if ($model->has_code(record => 'error')) {
-            my $code = $model->get_code(record => 'error');
+            $record = 'error';
+        } elsif ($model->has_code(record => 'pred')) {
+            $record = 'pred';
+        }
+        if (defined $record) {
+            my $code = $model->get_code(record => $record);
             for (my $i = 0; $i < scalar(@$code); $i++) {
                 $code->[$i] =~ s/(?<!\w)(EPS|ERR)\($eps\)/$prefix$eps/g;
             }
-            $model->set_code(record => 'error', code => $code);
+            $model->set_code(record => $record, code => $code);
         }
     }
 }
@@ -1429,7 +1435,11 @@ sub iiv_on_ruv
         $model->add_records(type => 'omega', record_strings => [ '$OMEGA 0.01']);
     }
 
-    prepend_code(model => $model, code => \@code, record => 'error');
+    if ($model->has_code(record => 'error')) {
+        prepend_code(model => $model, code => \@code, record => 'error');
+    } else {
+        prepend_code(model => $model, code => \@code);
+    }
 }
 
 sub power_on_ruv
