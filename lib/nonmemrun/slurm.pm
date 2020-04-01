@@ -104,7 +104,7 @@ sub submit
     }
     system("echo sbatch $flags $command \"2>&1\" > sbatchcommand");
 
-    for (my $i = 0; $i < 30; $i++) {
+    for (my $i = 0; $i < 4; $i++) {
         #make sure input file psn.mod is visible, i.e. files are synced, before calling nmfe
         #also make sure psn.lst is NOT here, i.e. moving of old output is finished
         my $outp = readpipe("sbatch $flags 2>&1 <<EOF
@@ -138,17 +138,23 @@ $command
 EOF
 ");
         chomp($outp);
+        my $sleep_time;
+        if ($i == 3) {
+            $sleep_time = 20;
+        } else {
+            $sleep_time = 1;
+        }
 
         if ($outp =~ /Submitted batch job (\d+)/) {
             $jobId = $1;
             last;
         } elsif($outp =~ /Socket timed out/) {
             #try again. jobId is -1 by initiation
-            sleep(1);
+            sleep($sleep_time);
             next;
         } elsif($outp =~ /Invalid user id/) {
             #try again. jobId is -1 by initiation
-            sleep(1);
+            sleep($sleep_time);
             next;
         } else {
             print "Slurm submit failed.\nSystem error message: $outp\nConsidering this model failed.\n";
