@@ -103,7 +103,7 @@ Changes and bug fixes from PsN 4.8.0 to x.x.x
    ___frem___
 
 - Automatic reordering of OMEGAs and ETAs when needed.
-
+- Remove -fork_runs option
  
    ___proseval___
 
