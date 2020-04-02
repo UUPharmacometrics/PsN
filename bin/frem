@@ -27,7 +27,6 @@ my %required_options = ('covariates:s');
 my %optional_options = (
     'check!' => undef,
     'rescale!' => undef,
-    'fork_runs!' => undef,
     'estimate_means!' => undef,
     'estimate_covariates!' => undef,
     'categorical:s' => undef,
@@ -170,14 +169,6 @@ $help_text{-estimate_means} = <<'EOF';
     estimate any means even if there are missing observations.
 EOF
 
-$help_text{-fork_runs} = <<'EOF';
-    -fork_runs
-
-    Default not set. Fork out separate processes for all output parsing. Will
-    only work on unix-like systems. Only relevant if output objects are very,
-    very large.
-EOF
-
 $help_text{-log} = <<'EOF';
     -log=list
 
@@ -312,7 +303,6 @@ my $frem = tool::frem->new(
     log => $options{'log'},
     rse => $options{'rse'},
     mu => $options{'mu'},
-    fork_runs => $options{'fork_runs'},
     always_proposal_density => $options{'always_proposal_density'},
     skip_omegas => $options{'skip_omegas'},
     check => $options{'check'},
