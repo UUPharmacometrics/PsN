@@ -126,6 +126,8 @@ Changes and bug fixes from PsN 4.8.0 to x.x.x
 
    ___sse___ 
 
+- New option -initial_etas to use etas from simulation models
+
 
    ___simeval___
 

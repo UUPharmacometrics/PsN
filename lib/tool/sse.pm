@@ -40,6 +40,7 @@ has 'probnum' => ( is => 'rw', isa => 'Int', default => 1 );
 has 'logfile' => ( is => 'rw', isa => 'ArrayRef[Str]', default => sub { ['sse.log'] } );
 has 'results_file' => ( is => 'rw', isa => 'Str', default => 'sse_results.csv' );
 has 'special_table' => ( is => 'rw', isa => 'Str' );
+has 'initial_etas' => ( is => 'rw', isa => 'Bool', default => 0 );
 
 
 sub BUILD
@@ -704,9 +705,13 @@ sub modelfit_setup
                 } else {
 
                     my $seed = random_uniform_integer( 1, 1, 1000000 ); # Upper limit is from nmhelp
-                    $prob -> set_records( type           => 'simulation',
-                                          record_strings => [ '(' . $seed .
-                                                              ') ONLYSIMULATION' ] );
+                    my $onlysim;
+                    if ($self->initial_etas) {
+                        $onlysim = '';
+                    } else {
+                        $onlysim = ' ONLYSIMULATION';
+                    }
+                    $prob->set_records(type => 'simulation', record_strings => [ "($seed)$onlysim" ] );
                 }
 
                 if( $sim_no == 1 ) {
@@ -945,7 +950,9 @@ sub modelfit_setup
                                         prepared_models       => undef,
                                         threads          => $threads,
                                         copy_data        => 0,
-                                        abort_on_fail => $self->abort_on_fail);
+                                        abort_on_fail => $self->abort_on_fail,
+                                        nm_output => 'lst,ext,phi'
+                                    );
 
             $mod_sim -> run;
             if (defined $self->special_table) {     # If we have a manually handled table. Move it and rename it properly
@@ -1005,6 +1012,9 @@ sub modelfit_setup
             $orig_est_models[$j] -> ignore_missing_files(1);
             my @new_names = ($sim_file) x scalar(@{$orig_est_models[$j] ->problems});
             $orig_est_models[$j] -> datafiles(new_names => \@new_names);
+            if ($self->initial_etas) {
+                $orig_est_models[$j]->problems->[0]->set_records(type => 'etas', record_strings => [ "FILE=mc-" . ($j + 1) . ".phi" ] );
+            }
             $orig_est_models[$j] -> _write(relative_data_path => 1); #should be default, but just to make sure
         }
 

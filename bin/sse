@@ -40,6 +40,7 @@ my %optional_options = (
     'append_columns:s' => undef,
     'random_estimation_inits' => undef,
     'special_table:s' => undef,
+    'initial_etas!' => undef,
 );
 
 my $res = GetOptions( \%options,
@@ -156,6 +157,13 @@ $help_text{-in_filter} = <<'EOF';
 
     Example:
     -in_filter=minimization_successful.eq.1,significant_digits.gt.3.5
+EOF
+
+$help_text{-initial_etas} = <<'EOF';
+    -initial_etas
+
+    Default not set. Used to let etas from evaluation of
+    simulation models be used as initials in the estimation models.
 EOF
 
 $help_text{-keep_tables} = <<'EOF';
@@ -470,6 +478,7 @@ my $sse = tool::sse->new(
     samples                    => $options{'samples'},
     random_estimation_inits => $options{'random_estimation_inits'},
     special_table => $options{'special_table'},
+    initial_etas => $options{'initial_etas'},
 );
 
 
