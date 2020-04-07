@@ -33,15 +33,6 @@ pharmacokinetic and/or a pharmacodynamic model, initial estimates of
 model parameters, boundaries for model parameters as well as details
 about the data location and format.
 
-=head1 Synopsis
-
-C<< use model; >>
-
-C<< my $model_object = model -> new ( filename => 'pheno.mod' ); >>
-
-$model_object -> initial_values ( parameter_type    => 'theta',
-                                  parameter_numbers => [[1,3]],
-                                  new_values        => [[1.2,34]] );
 =cut
 
 has 'problems' => ( is => 'rw', isa => 'ArrayRef[model::problem]' );

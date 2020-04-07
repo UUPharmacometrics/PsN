@@ -117,15 +117,14 @@ sub BUILD
             croak("Must set -samples to at least 1.");
         }
     }
-
 }
 
 sub modelfit_setup
 {
     my $self = shift;
     my %parm = validated_hash(\@_,
-                              model_number => { isa => 'Int', optional => 1 }
-        );
+        model_number => { isa => 'Int', optional => 1 }
+    );
     my $model_number = $parm{'model_number'};
 
 {
@@ -142,10 +141,10 @@ sub modelfit_setup
     my ( @orig_est_models, @alt_est_models );
     my ( $sim_model, $est_alternative );
     my $alternative;
-    my $old_alternatives=0;
-    my $time_in_input=0;
-    my $datx_in_input=0;
-    my $addstring='';
+    my $old_alternatives = 0;
+    my $time_in_input = 0;
+    my $datx_in_input = 0;
+    my $addstring = '';
     my $done = ( -e $self -> directory."/m$model_number/done" ) ? 1 : 0;
     $self->first_alternative(1);
     my @thetalabels;
@@ -522,8 +521,6 @@ sub modelfit_setup
                             }
                         }
                     }
-
-
 
                     $est_original -> remove_records( type => 'simulation' );
 
@@ -999,7 +996,6 @@ sub modelfit_setup
                 close (INITS);
                 $self->clear_initial_values;
             }
-
         }
 
 
@@ -1094,8 +1090,6 @@ sub modelfit_setup
                             }
                         }
                     }
-
-
 
                     #handle msfo numbering. first get msfo option from all estimation records.
                     #save stems, i.e. file name without trailing numbers, if any
@@ -1385,7 +1379,6 @@ sub modelfit_setup
 
     } #end $done
 
-
     return if ((scalar(@{$self -> alternative_models}) < 1) &&
                (not $self->estimate_simulation));
 
@@ -1398,8 +1391,7 @@ sub modelfit_setup
         %subargs = %{$self -> subtool_arguments};
     }
 
-
-    my $rerun=1;
+    my $rerun = 1;
     $self->tools([]) unless (defined $self->tools());
     push( @{$self -> tools},
           tool::modelfit -> new(
@@ -1422,7 +1414,6 @@ sub modelfit_setup
               copy_data       => 0,
               %subargs ) );
 }
-
 }
 
 sub _modelfit_raw_results_callback
@@ -1454,7 +1445,7 @@ sub _modelfit_raw_results_callback
         #take first row for model as final estimates as usual, even if
         #it happens to be from second $PROB
 
-        # {{{ New leading text on each row
+        # New leading text on each row
         #we will rearrange rows so that all first $PROBS come before all second $PROBS. Then second
         #$PROBS will be ignored in analysis
         #exception if estimate_simulation and tnpri, then in the first model it is the second $PROB
@@ -1640,15 +1631,15 @@ sub modelfit_analyze
 {
     my $self = shift;
     my %parm = validated_hash(\@_,
-                              model_number => { isa => 'Int', optional => 1 }
-        );
+        model_number => { isa => 'Int', optional => 1 }
+    );
     my $model_number = $parm{'model_number'};
 
     return if (defined $self->recompute);
     return if ((scalar(@{$self -> alternative_models}) < 1) &&
                (not $self->estimate_simulation));
 
-    $self -> tools->[0] -> print_results if (defined $self->tools);
+    $self->tools->[0]->print_results if (defined $self->tools);
 }
 
 sub prepare_results
@@ -1775,7 +1766,6 @@ sub prepare_results
         }
     }
 
-
     $reference_section{'labels'}=[[],\@reference_headers];
     $reference_section{'values'}=[\@reference_values];
     push( @{$self -> results->[0]{'own'}},\%reference_section );
@@ -1852,7 +1842,6 @@ sub prepare_results
                   croak("Internal structure corrupted at $model_index, ".
                         "$samples, $_, $measure, this is a bug" );
               } elsif (not defined $s){
-#                  print "error undefined $measure pos in raw_line_structure\n";
                   $skip=1;
               } else {
                   $start = $s;
@@ -2169,9 +2158,9 @@ sub format_initials
 {
     my $self = shift;
     my %parm = validated_hash(\@_,
-                              initials_object => { isa => 'Ref', optional => 1 },
-                              initial_value => { isa => 'Num', optional => 1 }
-        );
+        initials_object => { isa => 'Ref', optional => 1 },
+        initial_value => { isa => 'Num', optional => 1 }
+    );
     my $initials_object = $parm{'initials_object'};
     my $initial_value = $parm{'initial_value'};
     my %initials_hash;
@@ -2210,12 +2199,12 @@ sub compute_rmse
 {
     my $self = shift;
     my %parm = validated_hash(\@_,
-                              use_runs => { isa => 'ArrayRef[Bool]', optional => 0 },
-                              column_index => { isa => 'Int', optional => 0 },
-                              start_row_index => { isa => 'Int', default => 0, optional => 1 },
-                              end_row_index => { isa => 'Int', optional => 0 },
-                              initial_values => { isa => 'ArrayRef', optional => 0 }
-        );
+        use_runs => { isa => 'ArrayRef[Bool]', optional => 0 },
+        column_index => { isa => 'Int', optional => 0 },
+        start_row_index => { isa => 'Int', default => 0, optional => 1 },
+        end_row_index => { isa => 'Int', optional => 0 },
+        initial_values => { isa => 'ArrayRef', optional => 0 }
+    );
     my @use_runs = defined $parm{'use_runs'} ? @{$parm{'use_runs'}} : ();
     my $column_index = $parm{'column_index'};
     my $start_row_index = $parm{'start_row_index'};
@@ -2273,12 +2262,12 @@ sub compute_bias
 {
     my $self = shift;
     my %parm = validated_hash(\@_,
-                              use_runs => { isa => 'ArrayRef[Bool]', optional => 0 },
-                              column_index => { isa => 'Int', optional => 0 },
-                              start_row_index => { isa => 'Int', default => 0, optional => 1 },
-                              end_row_index => { isa => 'Int', optional => 0 },
-                              initial_values => { isa => 'ArrayRef', optional => 0 }
-        );
+        use_runs => { isa => 'ArrayRef[Bool]', optional => 0 },
+        column_index => { isa => 'Int', optional => 0 },
+        start_row_index => { isa => 'Int', default => 0, optional => 1 },
+        end_row_index => { isa => 'Int', optional => 0 },
+        initial_values => { isa => 'ArrayRef', optional => 0 }
+    );
     my @use_runs = defined $parm{'use_runs'} ? @{$parm{'use_runs'}} : ();
     my $column_index = $parm{'column_index'};
     my $start_row_index = $parm{'start_row_index'};
@@ -2342,11 +2331,11 @@ sub get_median
 {
     my $self = shift;
     my %parm = validated_hash(\@_,
-                              use_runs => { isa => 'ArrayRef[Bool]', optional => 0 },
-                              column_index => { isa => 'Int', optional => 0 },
-                              start_row_index => { isa => 'Int', default => 0, optional => 1 },
-                              end_row_index => { isa => 'Int', optional => 0 }
-        );
+        use_runs => { isa => 'ArrayRef[Bool]', optional => 0 },
+        column_index => { isa => 'Int', optional => 0 },
+        start_row_index => { isa => 'Int', default => 0, optional => 1 },
+        end_row_index => { isa => 'Int', optional => 0 }
+    );
     my @use_runs = defined $parm{'use_runs'} ? @{$parm{'use_runs'}} : ();
     my $column_index = $parm{'column_index'};
     my $start_row_index = $parm{'start_row_index'};
@@ -2367,7 +2356,7 @@ sub get_median
         }
     }
 
-    if (scalar(@temp)>0){
+    if (scalar(@temp) > 0) {
         $median = median(\@temp);
     }
     return $median;
@@ -2377,11 +2366,11 @@ sub skewness_and_kurtosis
 {
     my $self = shift;
     my %parm = validated_hash(\@_,
-                              use_runs => { isa => 'ArrayRef[Bool]', optional => 0 },
-                              column_index => { isa => 'Int', optional => 0 },
-                              start_row_index => { isa => 'Int', default => 0, optional => 1 },
-                              end_row_index => { isa => 'Int', optional => 0 }
-        );
+        use_runs => { isa => 'ArrayRef[Bool]', optional => 0 },
+        column_index => { isa => 'Int', optional => 0 },
+        start_row_index => { isa => 'Int', default => 0, optional => 1 },
+        end_row_index => { isa => 'Int', optional => 0 }
+    );
     my @use_runs = defined $parm{'use_runs'} ? @{$parm{'use_runs'}} : ();
     my $column_index = $parm{'column_index'};
     my $start_row_index = $parm{'start_row_index'};
@@ -2453,11 +2442,11 @@ sub max_and_min
 {
     my $self = shift;
     my %parm = validated_hash(\@_,
-                              use_runs => { isa => 'ArrayRef[Bool]', optional => 0 },
-                              column_index => { isa => 'Int', optional => 0 },
-                              start_row_index => { isa => 'Int', default => 0, optional => 1 },
-                              end_row_index => { isa => 'Int', optional => 0 }
-        );
+        use_runs => { isa => 'ArrayRef[Bool]', optional => 0 },
+        column_index => { isa => 'Int', optional => 0 },
+        start_row_index => { isa => 'Int', default => 0, optional => 1 },
+        end_row_index => { isa => 'Int', optional => 0 }
+    );
     my @use_runs = defined $parm{'use_runs'} ? @{$parm{'use_runs'}} : ();
     my $column_index = $parm{'column_index'};
     my $start_row_index = $parm{'start_row_index'};
@@ -2498,18 +2487,18 @@ sub cleanup
     }
 }
 
-
-sub create_R_plots_code{
+sub create_R_plots_code
+{
     my $self = shift;
     my %parm = validated_hash(\@_,
-                              rplot => { isa => 'rplots', optional => 0 }
-        );
+      rplot => { isa => 'rplots', optional => 0 }
+    );
     my $rplot = $parm{'rplot'};
 
-    my @names=();
-    my @subjects=();
-    my @rawnames=();
-    my @paramcounts =();
+    my @names;
+    my @subjects;
+    my @rawnames;
+    my @paramcounts;
     my $count = $self->first_alternative();
     my $namestring = 'model.file.names <- c()';
     my $rawstring = 'model.rawres.names <- c()';
@@ -2588,15 +2577,15 @@ sub create_R_plots_code{
         $paramstring = 'model.estimated.params <- c('.join(',',@paramcounts).')';
     }
     $rplot->add_preamble(code => [
-                             '#sse-specific preamble',
-                             'samples   <-'.$self->samples,
-                             $namestring,
-                             $rawstring,
-                             $subjectstring,
-                             $paramstring,
-                         ]);
-
+            '#sse-specific preamble',
+            'samples   <-'.$self->samples,
+            $namestring,
+            $rawstring,
+            $subjectstring,
+            $paramstring,
+        ]);
 }
+
 
 no Moose;
 __PACKAGE__->meta->make_immutable;
