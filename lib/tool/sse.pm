@@ -1262,7 +1262,6 @@ sub modelfit_setup
                 }
             }
 
-
             for( my $j = 0; $j <= $#alt_est_models; $j++ ) {
                 my $sim_file = $self -> directory.'m'.$model_number.'/'."mc-sim-".($j+1).".dat";
                 #it is an error if the data file does not exist here, but we ignore that for now
@@ -1270,12 +1269,12 @@ sub modelfit_setup
                 $alt_est_models[$j] -> ignore_missing_files(1);
                 my @new_names = ($sim_file) x scalar(@{$alt_est_models[$j] ->problems});
                 $alt_est_models[$j] -> datafiles(new_names => \@new_names);
+                if ($self->initial_etas) {
+                    $alt_est_models[$j]->problems->[0]->set_records(type => 'etas', record_strings => [ "FILE=mc-" . ($j + 1) . ".phi" ] );
+                }
                 $alt_est_models[$j] -> _write;
-
             }
             push (@{$self -> mc_models}, @alt_est_models);
-
-            # }}}
 
         } #end loop over alternatives
 
