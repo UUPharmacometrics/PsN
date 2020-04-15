@@ -849,11 +849,14 @@ sub get_filled_omega_block
     #for each value in mergematrix that is still 0, compute covar using correlation and sd,
     #or set very small
 
+    # Make symmetric
     for (my $i = 0; $i < $total_size; $i++) {
         for (my $j = 0; $j < $i; $j++) {
-            #copy to make symmetric
-            $mergematrix[$i]->[$j] = $mergematrix[$j]->[$i];
+            $mergematrix[$j]->[$i] = $mergematrix[$i]->[$j];
         }
+    }
+
+    for (my $i = 0; $i < $total_size; $i++) {
         for (my $j = $i + 1; $j < $total_size; $j++) {
             next if ($mergematrix[$i]->[$j] != 0);
 
@@ -862,12 +865,14 @@ sub get_filled_omega_block
             } else {
                 $mergematrix[$i]->[$j] = $corrmatrix->[$i][$j] * $sd[$i] * $sd[$j];
             }
+            $mergematrix[$j]->[$i] = $mergematrix[$i]->[$j];
         }
     }
 
     my $newmatrix = replace_0_correlation(old_matrix => \@mergematrix,
                                           is_covariance => 1,
                                           low_correlation => $small_correlation);
+
     my $rounded = round_off_omega(omega => $newmatrix);
     #get posdef is necessary, pheno will crash without it
     my ($posdefmatrix, $count) = linear_algebra::get_symmetric_posdef(matrix => $rounded);
