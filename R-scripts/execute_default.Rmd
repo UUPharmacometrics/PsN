@@ -138,13 +138,14 @@ if (PsNR::rplots_level(meta) > 1){
 if (PsNR::rplots_level(meta) > 1){
   #check if files exist
   if (res.table != '') {
+      model_prefix <- PsNR::model_prefix(meta)
     file_1_exists <- file_existence_in_directory(directory=results.directory, file_name=paste0(model_prefix, xpose_runno, ".phi"))
     file_2_exists <- file_existence_in_directory(directory=results.directory, file_name=res.table)
     
     if ((file_1_exists) && (file_2_exists)) {
       # calculate data
-      list_out <- data.obj.obsi(obj.data.dir=paste0(results.directory, model_prefix, xpose_runno, ".phi"),
-                                obsi.data.dir=paste0(results.directory, res.table))
+      list_out <- data.obj.obsi(obj.data.dir=file.path(results.directory, paste0(model_prefix, xpose_runno, ".phi")),
+                                obsi.data.dir=file.path(results.directory, res.table))
       have_needed_columns <- list_out$have_needed_columns
       if(have_needed_columns) {
         OBJ_data <- list_out$OBJ_data
