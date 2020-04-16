@@ -772,25 +772,8 @@ sub get_filled_omega_block
     if (scalar(@{$start_etas}) != scalar(@{$end_etas})){
         croak("start_etas array must equal length to end_etas");
     }
-    my $total_size = 0;
-    my @sizes;
-    for (my $i = 0; $i < scalar(@{$start_etas}); $i++) {
-        if (not defined $start_etas->[$i]) {
-            croak("start_etas $i is undef");
-        }
-        if (not defined $end_etas->[$i]) {
-            croak("end_etas $i is undef");
-        }
-        if ($i > 0) {
-            unless ($start_etas->[$i] > $end_etas->[($i-1)]) {
-                croak("start_eta $i must be larger than end_eta " . ($i - 1));
-            }
-        }
-        croak("start_eta $i cannot be larger than end_eta $i ") if ($start_etas->[$i] > $end_etas->[$i]);
-        my $si = ($end_etas->[$i] - $start_etas->[$i] + 1);
-        $total_size += $si;
-        push(@sizes, $si);
-    }
+    my $si = ($end_etas->[0] - $start_etas->[0] + 1);
+    my $total_size = $si;
 
     my $start_eta_1 = $start_etas->[0];
     my $end_eta_1 = $end_etas->[0];
@@ -830,19 +813,16 @@ sub get_filled_omega_block
     #omega block. Do not assume all that are nonzero are estimated
     #get inits from model. local coords
 
-    my $old_size = 0;
-    for (my $k = 0; $k < scalar(@{$start_etas}); $k++) {
-        my $init_matrix = $model->problems->[$problem_index]->get_matrix(type => 'omega',
-                                                                         start_row => $start_etas->[$k],
-                                                                         end_row => $end_etas->[$k]);
-        for (my $i = 0; $i < $sizes[$k]; $i++) {
-            for (my $j = 0; $j < $sizes[$k]; $j++) {
-                $mergematrix[$old_size+$i]->[$old_size+$j] = $init_matrix->[$i][$j];
-            }
-            $sd[$old_size+$i] = sqrt($init_matrix->[$i][$i]) if ($init_matrix->[$i][$i] > 0);
+    my $init_matrix = $model->problems->[$problem_index]->get_matrix(type => 'omega',
+                                                                     start_row => $start_etas->[0],
+                                                                     end_row => $end_etas->[0]);
+    for (my $i = 0; $i < $si; $i++) {
+        for (my $j = 0; $j < $si; $j++) {
+            $mergematrix[$i]->[$j] = $init_matrix->[$i][$j];
         }
-        $old_size += $sizes[$k];
+        $sd[$i] = sqrt($init_matrix->[$i][$i]) if ($init_matrix->[$i][$i] > 0);
     }
+
     # Now mergematrix contains the PAR and the COV blocks except for possible offdiagonals in the PAR block.
 
     #now we have sd and valuematrix that are inits/estimates or 0.
@@ -856,8 +836,15 @@ sub get_filled_omega_block
         }
     }
 
+    # Set PARCOV block to 0 so that it gets updated
+    for (my $i = $start_cov_eta - $start_etas->[0] + 1; $i < $total_size; $i++) {
+        for (my $j = 0; $j <= $start_cov_eta - $start_etas->[0]; $j++) {
+            $mergematrix[$i]->[$j] = 0;
+        }
+    }
+
     for (my $i = 0; $i < $total_size; $i++) {
-        for (my $j = $i + 1; $j < $total_size; $j++) {
+        for (my $j = 0; $j < $total_size; $j++) {
             next if ($mergematrix[$i]->[$j] != 0);
 
             if ((not $have_corrmatrix) or $corrmatrix->[$i][$j] == 0 or ($j < $start_cov_eta and $i < $start_cov_eta)) {
