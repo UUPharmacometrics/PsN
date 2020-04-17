@@ -2856,8 +2856,8 @@ sub prepare_model4
     }
     if (not $uncond) {
         push @{$new_cov_records}, "UNCONDITIONAL";
-        $logger->info("Added UNCONDITIONAL option to \$COV in $name_model");
     }
+    push @{$new_cov_records}, "PRECOND=1";
     $frem_model->problems->[0]->add_records(
         record_strings => $new_cov_records,
         type => 'covariance'
