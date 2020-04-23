@@ -162,7 +162,7 @@ EOF
 $help_text{-initial_etas} = <<'EOF';
     -initial_etas
 
-    Default not set. Used to let etas from evaluation of
+    Default not set. Used to let etas from the 
     simulation models be used as initials in the estimation models.
 EOF
 

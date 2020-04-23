@@ -4,6 +4,7 @@ use include_modules;
 use model;
 use tool::cdd;
 use tool::modelfit;
+use model_transformations;
 use Math::Random;
 use Config;
 use Moose;
@@ -698,18 +699,11 @@ sub modelfit_setup
                                                 option_name  => $altopt,
                                                 fuzzy_match => 1); #default is remove for all records
                     }
-
                 } else {
-
                     my $seed = random_uniform_integer( 1, 1, 1000000 ); # Upper limit is from nmhelp
-                    my $onlysim;
-                    if ($self->initial_etas) {
-                        $onlysim = '';
-                    } else {
-                        $onlysim = ' ONLYSIMULATION';
-                    }
-                    $prob->set_records(type => 'simulation', record_strings => [ "($seed)$onlysim" ] );
+                    $prob->set_records(type => 'simulation', record_strings => [ "($seed) ONLYSIM" ] );
                 }
+
 
                 if( $sim_no == 1 ) {
                     if ($self->have_nwpri() or $self->have_tnpri()){
@@ -834,8 +828,16 @@ sub modelfit_setup
                                           record_strings => [ join( ' ', @table_header ).
                                                               ' NOPRINT NOAPPEND ONEHEADER FILE=dummy']);
 
-
-                } #end if sim_no==1
+                    if ($self->initial_etas) {
+                        my $netas = $model->nomegas->[0];
+                        my @eta_names;
+                        for (my $i = 1; $i <= $netas; $i++) {
+                            push @eta_names, "ETA$i";
+                        }
+                        model_transformations::append_code(model => $sim_model, code => [ "SUBJECT_NO = NIREC" ]);
+                        $prob->add_records(type => 'table', record_strings => [ "SUBJECT_NO", "ID", @eta_names, "NOAPPEND", "FIRSTONLY", "FILE=dummy" ] );
+                    }
+                }
 
                 for (my $k=0; $k<scalar(@orig_table_names); $k++){
                     if (defined $orig_table_names[$k]){
@@ -862,6 +864,17 @@ sub modelfit_setup
                                     option_name  => 'FILE',
                                     option_value => $simulated_file );
 
+                if ($self->initial_etas) {
+                    $prob -> remove_option( record_name  => 'table',
+                                            option_name  => 'FILE',
+                                            fuzzy_match => 1,
+                                            record_number => (scalar(@orig_table_names) + 2));
+
+                    $prob -> add_option(record_name  => 'table',
+                                        record_number => (scalar(@orig_table_names) + 2),
+                                        option_name  => 'FILE',
+                                        option_value => "mc-$sim_no.simphi");
+                }
 
                 push( @all_simulated_files, $self -> directory.'m'.$model_number.'/'.
                       $simulated_file );
@@ -1009,7 +1022,7 @@ sub modelfit_setup
             my @new_names = ($sim_file) x scalar(@{$orig_est_models[$j] ->problems});
             $orig_est_models[$j] -> datafiles(new_names => \@new_names);
             if ($self->initial_etas) {
-                $orig_est_models[$j]->problems->[0]->set_records(type => 'etas', record_strings => [ "FILE=mc-" . ($j + 1) . ".phi" ] );
+                $orig_est_models[$j]->problems->[0]->set_records(type => 'etas', record_strings => [ "FILE=mc-" . ($j + 1) . ".simphi" ] );
             }
             $orig_est_models[$j] -> _write(relative_data_path => 1); #should be default, but just to make sure
         }
@@ -1270,7 +1283,7 @@ sub modelfit_setup
                 my @new_names = ($sim_file) x scalar(@{$alt_est_models[$j] ->problems});
                 $alt_est_models[$j] -> datafiles(new_names => \@new_names);
                 if ($self->initial_etas) {
-                    $alt_est_models[$j]->problems->[0]->set_records(type => 'etas', record_strings => [ "FILE=mc-" . ($j + 1) . ".phi" ] );
+                    $alt_est_models[$j]->problems->[0]->set_records(type => 'etas', record_strings => [ "FILE=mc-" . ($j + 1) . ".simphi" ] );
                 }
                 $alt_est_models[$j] -> _write;
             }
