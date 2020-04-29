@@ -44,6 +44,7 @@ my %optional_options = (
              'parallel_retries' => '',
              'pind' => '',
              'precond' => '',
+             'proseval' => '',
              'psn_clean' => '',
              'psn_options' => '',
              'pvar' => '',
@@ -56,6 +57,7 @@ my %optional_options = (
              'sir' => '',
              'sse' => '',
              'sumo' => '',
+             'transform' => '',
              'update' => '',
              'update_inits' => '',
              'vpc' => '',
@@ -252,6 +254,11 @@ $help_text{-precond} = <<'EOF';
     See precond_userguide.pdf for details.
 EOF
 
+$help_text{-proseval} = <<'EOF';
+    proseval - Prospective evaluation
+    See proseval_userguide.pdf for details.
+EOF
+
 $help_text{-psn_clean} = <<'EOF';
     psn_clean - Automatic cleaning of PsN run directories.
     Run 'psn_clean -help' for details.
@@ -304,6 +311,11 @@ EOF
 $help_text{-sumo} = <<'EOF';
     sumo - Summary of Output from NONMEM
     See sumo_userguide.pdf for details.
+EOF
+
+$help_text{-transform} = <<'EOF';
+    transform - Transformations of models
+    See transform_userguide.pdf for details.
 EOF
 
 $help_text{-update_inits} = <<'EOF';
