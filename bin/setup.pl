@@ -927,6 +927,42 @@ if (confirm()) {
     $set_rlib_path = 1;
 }
 
+my $python_lib_path = File::Spec->catfile($psn_lib_path, "pyvenv");
+my $set_python_lib_path = 0;
+print "\n";
+print "The Python package 'pharmpy' is needed by PsN and you would need to have python installed on your system\n";
+print "If you let the installer install pharmpy it will be installed in a virtual environment together with its dependencies inside the PsN installation\n";
+print "You would need to have python installed for this installation\n";
+print "\n";
+print "\nWould you like to install the pharmpy python package? [y/n] ";
+
+if (confirm()) {
+    my $py_response = readpipe("python -c 'import sys;print(sys.version_info[0])");
+    my $python;
+    chomp($py_response);
+    if ($py_response eq "3") {
+        $python = 'python';
+    } else {
+        my $py3_response = readpipe("python3 -c 'import sys;print(sys.version_info[0])");
+        chomp($py3_response);
+        if ($py3_response eq "3") {
+            $python = 'python3';
+        } else {
+            die "No python interpreter in PATH\n";
+        }
+    }
+    system("$python -m venv $python_lib_path");
+    my $venv_python;
+    if (running_on_windows()) {
+        $venv_python = "$python_lib_path\\Scripts\\python";
+    } else {
+        $venv_python = "$python_lib_path/bin/python";
+    }
+    my $pharmpy_file = (glob("pharmpy*.zip"))[0];
+    system("$venv_python -m pip install -r requirements.txt");
+    system("$venv_python -m pip install $pharmpy_file");
+    $set_python_lib_path = 1;
+}
 
 my $default_test = $library_dir;
 my $test_library_dir;
@@ -1036,7 +1072,6 @@ if (not $keep_conf) {
             $configuration_done = $conf_ok;
         }
     }
-
 }
 
 warn_about_local_configuration();
@@ -1053,14 +1088,27 @@ if ($configuration_done) {
 }
 
 # Set R_LIB_PATH if created
-if ($set_rlib_path and -e $rlib_path) {
+my $set_python = ($set_python_lib_path and -e $python_lib_path);
+my $set_r = ($set_rlib_path and -e $rlib_path);
+if ($set_r or $set_python) {
     my $tempconf = File::Spec->catfile($psn_lib_path, 'tempconf');
     my $confpath = File::Spec->catfile($psn_lib_path, 'psn.conf');
     open my $sh, '<', $confpath;
     open my $dh, '>', $tempconf;
-    print $dh "R_LIB_PATH=$rlib_path\n";
+    if ($set_r) {
+        if ($relative_lib_path) {
+            $rlib_path = File::Spec->abs2rel($rlib_path, $library_dir);
+        }
+        print $dh "R_LIB_PATH=$rlib_path\n";
+    }
+    if ($set_python) {
+        if ($relative_lib_path) {
+            $python_lib_path = File::Spec->abs2rel($python_lib_path, $library_dir);
+        }
+        print $dh "PYTHON_LIB_PATH=$python_lib_path\n"; 
+    }
     while (<$sh>) {
-        if (not /^R_LIB_PATH=/) {
+        if (not /^R_LIB_PATH=/ and not /^PYTHON_LIB_PATH=/) {
             print $dh $_;
         }
     }

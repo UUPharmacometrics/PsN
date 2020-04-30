@@ -221,6 +221,7 @@ release: main completion rel_dir $(RELFILES) $(PDFFILES)
 	@ sed -i 's/dev\s*=\s*1;/dev = 0;/' PsN-Source/lib/PsN.pm
 	@ python3 ./development/scripts/renv_lock.py
 	@ cp ../devel/pharmpy/.tox/dist/*.zip PsN-Source/
+	@ cp ../devel/pharmpy/requirements.txt PsN-Source/
 	@ zip -rq $(ZIPFILE) PsN-Source/
 	@ tar czf $(TARFILE) PsN-Source/
 
