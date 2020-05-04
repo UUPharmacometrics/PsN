@@ -1,5 +1,6 @@
 package tool::frem;
 
+use PsN;
 use include_modules;
 use tool::modelfit;
 use Math::Random;
@@ -2681,7 +2682,6 @@ sub prepare_model3b
     my $self = shift;
     my %parm = validated_hash(\@_,
         model => { isa => 'model', optional => 0 },
-        parcov_blocks => { isa => 'ArrayRef', optional => 0},
         update_existing_model_files => { isa => 'Bool', optional => 0 },
         etas_file => { isa => 'Maybe[Str]', optional => 0 },
     );
@@ -2736,19 +2736,6 @@ sub prepare_model3b
         get_or_set_fix(model => $frem_model,
             type => 'omegas',
             set_array => $self->input_model_fix_omegas);
-
-        my @omega_records;
-        for my $record (@{$frem_model->problems->[0]->omegas}) {
-            if ($record->n_previous_rows + 1 <= scalar(@{$self->skip_omegas})) {
-                push @omega_records, $record;
-            }
-        }
-
-        for (my $i = 0; $i < scalar(@{$parcov_blocks}); $i++) {
-            push(@omega_records, $parcov_blocks->[$i]);
-        }
-
-        $frem_model->problems->[0]->omegas(\@omega_records);
 
         my $new_cov_records = [];
         # if OMITTED was on $COV line, remove it for M4 covariance step (and add UNCONDITIONAL)
@@ -2838,7 +2825,6 @@ sub prepare_model4
         cp(File::Spec->catfile($self->_intermediate_models_path, 'model_3.phi'), File::Spec->catfile($self->_final_models_path, 'model_4_input.phi'));
     } else {
         print "Starting model4 from model3b\n";
-        $frem_model->update_inits(from_output => $output3b);
         cp(File::Spec->catfile($self->_intermediate_models_path, 'model_3b.phi'), File::Spec->catfile($self->_final_models_path, 'model_4_input.phi'));
     }
 
@@ -3493,20 +3479,17 @@ sub modelfit_setup
         die;
     }
     $update_existing_model_files = 1 if ($need_update);
-    my $mod4_parcov_block = get_parcov_blocks(
-        model => $frem_model3,
-        skip_etas => scalar(@{$self->skip_omegas}),
-        start_cov_eta => $model->nomegas->[0] - scalar(@{$self->skip_omegas}),
-    );
 
     mkdir($finaldir) unless (-d $finaldir);
 
     ($etas_file) = $self->prepare_model3b(
         model => $frem_model3,
-        parcov_blocks => $mod4_parcov_block,
         update_existing_model_files => $update_existing_model_files,
         etas_file => $etas_file,
     );
+    my $frem_dir = $self->directory;
+    my $ncov = scalar(@{$self->covariates});
+    PsN::call_pharmpy("private frem $frem_dir $ncov");      # Update parcov block currently
     (my $frem_model3b, $message, $need_update) = $self->run_unless_run(numbers => ['3b']);
 
     $self->prepare_model4(

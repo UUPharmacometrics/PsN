@@ -215,8 +215,8 @@ sub call_pharmpy
     } else {
         $pharmpy_path = "$pypath/bin/pharmpy";
     }
-
-    system("$pharmpy_path $arguments")
+    my $command = "$pharmpy_path $arguments";
+    system($command);
 }
 
 sub get_default_psn_installation_info
