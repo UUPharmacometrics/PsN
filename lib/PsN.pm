@@ -204,6 +204,21 @@ sub get_python_lib_path
     return $path;
 }
 
+sub call_pharmpy
+{
+    my $arguments = shift;
+
+    my $pypath = get_python_lib_path();
+    my $pharmpy_path;
+    if ($Config{osname} eq 'MSWin32') {
+        $pharmpy_path = "$pypath\\Scripts\\pharmpy";
+    } else {
+        $pharmpy_path = "$pypath/bin/pharmpy";
+    }
+
+    system("$pharmpy_path $arguments")
+}
+
 sub get_default_psn_installation_info
 {
     my $psn_tool = shift;   # Currently only set when testing
