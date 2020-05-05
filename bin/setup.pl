@@ -1103,7 +1103,7 @@ if ($set_r or $set_python) {
     }
     if ($set_python) {
         if ($relative_lib_path) {
-            $python_lib_path = File::Spec->abs2rel($python_lib_path, $library_dir);
+            $python_lib_path = "pyvenv";
         }
         print $dh "PYTHON_LIB_PATH=$python_lib_path\n"; 
     }
