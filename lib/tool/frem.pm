@@ -3850,21 +3850,6 @@ sub add_pred_error_code
 
 }
 
-sub cleanup
-{
-    my $self = shift;
-    my %parm = validated_hash(\@_,
-          arg1 => { isa => 'Int', optional => 1 }
-    );
-
-    #remove tablefiles in simulation NM_runs, they are
-    #copied to m1 by modelfit and read from there anyway.
-    for (my $samp = 1; $samp <= $self->samples(); $samp++) {
-        unlink $self->directory . "/simulation_dir1/NM_run$samp/mc-sim-$samp.dat";
-        unlink $self->directory . "/simulation_dir1/NM_run$samp/mc-sim-$samp-1.dat"; #retry
-    }
-}
-
 sub check_model_features
 {
     # Check and bail out if supplied models have features not supported by FREM
