@@ -782,7 +782,6 @@ if (defined $options{'rawres_input'}) {
                     minEigen => 1E-10,
                 );
                 print "$count eigenvalue(s) adjusted\n";
-
                 # copy and test that this modification is good enough for cholesky decomp
                 my $covmatrix_copy = [];
                 for (my $i=0; $i < scalar(@{$covmatrix_posdef}); $i++) {
@@ -795,39 +794,41 @@ if (defined $options{'rawres_input'}) {
                 }
                 my $err = linear_algebra::cholesky($covmatrix_copy);
                 if ($err > 0) {
-                    die "cholesky error $err after get_symmetric_posdef\n";
-                }
-
-                # output metrics of adjustment bias
-                my $norm_of_diff = tool::frem::neat_num( num=>linear_algebra::frobenius_norm(matrix => $covmatrix, matrix2 => $covmatrix_posdef) );
-                my $direct_diff = tool::frem::neat_num( num=>linear_algebra::matrix_rmse(matrix1 => $covmatrix, matrix2 => $covmatrix_posdef, method => 1) );
-                my $id_diff = tool::frem::neat_num( num=>linear_algebra::matrix_rmse(matrix1 => $covmatrix, matrix2 => $covmatrix_posdef, method => 2) );
-                my $cnum_orig = linear_algebra::condition_number($covmatrix);
-                my $cnum_adj = linear_algebra::condition_number($covmatrix_posdef);
-                my $cnum_change = "";
-                if (defined $cnum_orig) {
-                    $cnum_change = ($cnum_adj/$cnum_orig);
-                    if ($cnum_change > 1) {
-                        my $fac = tool::frem::neat_num(num=>$cnum_adj/$cnum_orig);
-                        $cnum_change = "($fac times larger)";
-                    } else {
-                        my $fac = tool::frem::neat_num(num=>$cnum_orig/$cnum_adj);
-                        $cnum_change = "($fac times smaller)";
-                    }
-                    $cnum_orig = tool::frem::neat_num(num=>$cnum_orig);
+                    $have_uncertainty = 0;
+                    print "cholesky error $err after get_symmetric_posdef\n";
                 } else {
-                    $cnum_orig = "[NA]";
-                }
-                $cnum_adj = tool::frem::neat_num(num=>$cnum_adj);
-                # $logger->info("Absolute difference of frobenius norms: $diff_of_norms");
-                $logger->info("Frobenius norm of difference matrix (prop. to RMSE): $norm_of_diff");
-                $logger->warning("RMSE of adjustments: $direct_diff");
-                $logger->warning("RMSE of inverse product to identity matrix: $id_diff");
-                $logger->warning("(large values indicate matrix might be severely affected by adjustments)");
-                $logger->warning("Condition number changed from $cnum_orig to $cnum_adj $cnum_change");
 
-                $covmatrix = $covmatrix_posdef;
-                $is_posdef = 1;
+                    # output metrics of adjustment bias
+                    my $norm_of_diff = tool::frem::neat_num( num=>linear_algebra::frobenius_norm(matrix => $covmatrix, matrix2 => $covmatrix_posdef) );
+                    my $direct_diff = tool::frem::neat_num( num=>linear_algebra::matrix_rmse(matrix1 => $covmatrix, matrix2 => $covmatrix_posdef, method => 1) );
+                    my $id_diff = tool::frem::neat_num( num=>linear_algebra::matrix_rmse(matrix1 => $covmatrix, matrix2 => $covmatrix_posdef, method => 2) );
+                    my $cnum_orig = linear_algebra::condition_number($covmatrix);
+                    my $cnum_adj = linear_algebra::condition_number($covmatrix_posdef);
+                    my $cnum_change = "";
+                    if (defined $cnum_orig) {
+                        $cnum_change = ($cnum_adj/$cnum_orig);
+                        if ($cnum_change > 1) {
+                            my $fac = tool::frem::neat_num(num=>$cnum_adj/$cnum_orig);
+                            $cnum_change = "($fac times larger)";
+                        } else {
+                            my $fac = tool::frem::neat_num(num=>$cnum_orig/$cnum_adj);
+                            $cnum_change = "($fac times smaller)";
+                        }
+                        $cnum_orig = tool::frem::neat_num(num=>$cnum_orig);
+                    } else {
+                        $cnum_orig = "[NA]";
+                    }
+                    $cnum_adj = tool::frem::neat_num(num=>$cnum_adj);
+                    # $logger->info("Absolute difference of frobenius norms: $diff_of_norms");
+                    $logger->info("Frobenius norm of difference matrix (prop. to RMSE): $norm_of_diff");
+                    $logger->warning("RMSE of adjustments: $direct_diff");
+                    $logger->warning("RMSE of inverse product to identity matrix: $id_diff");
+                    $logger->warning("(large values indicate matrix might be severely affected by adjustments)");
+                    $logger->warning("Condition number changed from $cnum_orig to $cnum_adj $cnum_change");
+
+                    $covmatrix = $covmatrix_posdef;
+                    $is_posdef = 1;
+                }
             } else {
                 # covariance matrix not positive definite and not forcing: no uncertainty
                 $have_uncertainty = 0;
@@ -964,7 +965,6 @@ foreach my $par (@parnames){
         $id_ratio_arrays{$par}->{$id_covariate_vectors->[$l]->[0]}=[];
     }
 }
-
 
 my $idcovdata = 'id_covdata.csv';
 my $pardatafile = 'pardata.csv';
