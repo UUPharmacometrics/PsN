@@ -184,8 +184,8 @@ sub get_R_lib_path
     }else{
         $R_lib_path = '';
     }
-    $R_lib_path =~ s/\\/\\\\/g;
     $R_lib_path = File::Spec->rel2abs($R_lib_path, $lib_dir);
+    $R_lib_path =~ s/\\/\\\\/g;
     return $R_lib_path;
 }
 
@@ -199,7 +199,6 @@ sub get_python_lib_path
     } else {
         $path = '';
     }
-    $path =~ s/\\/\\\\/g;
     $path = File::Spec->rel2abs($path, $lib_dir);
     return $path;
 }
