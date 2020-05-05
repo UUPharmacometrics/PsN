@@ -937,13 +937,13 @@ print "\n";
 print "\nWould you like to install the pharmpy python package? [y/n] ";
 
 if (confirm()) {
-    my $py_response = readpipe("python -c 'import sys;print(sys.version_info[0])");
+    my $py_response = readpipe('python -c "import sys;print(sys.version_info[0])"');
     my $python;
     chomp($py_response);
     if ($py_response eq "3") {
         $python = 'python';
     } else {
-        my $py3_response = readpipe("python3 -c 'import sys;print(sys.version_info[0])");
+        my $py3_response = readpipe('python3 -c "import sys;print(sys.version_info[0])"');
         chomp($py3_response);
         if ($py3_response eq "3") {
             $python = 'python3';
