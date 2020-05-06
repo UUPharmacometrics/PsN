@@ -2736,8 +2736,6 @@ sub prepare_model3b
             type => 'omegas',
             set_array => $self->input_model_fix_omegas);
 
-        my $new_cov_records = [];
-        # if OMITTED was on $COV line, remove it for M4 covariance step (and add UNCONDITIONAL)
         $frem_model->_write();
     } else {
         if (defined $etas_file) {
