@@ -2686,7 +2686,6 @@ sub prepare_model3b
         etas_file => { isa => 'Maybe[Str]', optional => 0 },
     );
     my $model = $parm{'model'};
-    my $parcov_blocks = $parm{'parcov_blocks'};
     my $update_existing_model_files = $parm{'update_existing_model_files'};
     my $etas_file = $parm{'etas_file'};
 
