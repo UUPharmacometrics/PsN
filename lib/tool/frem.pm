@@ -2676,84 +2676,6 @@ sub prepare_model3
     return ($est_records, $covrecordref, $etas_file);
 }
 
-sub prepare_model3b
-{
-    # This is the full frem model with evaluation
-    my $self = shift;
-    my %parm = validated_hash(\@_,
-        model => { isa => 'model', optional => 0 },
-        update_existing_model_files => { isa => 'Bool', optional => 0 },
-        etas_file => { isa => 'Maybe[Str]', optional => 0 },
-    );
-    my $model = $parm{'model'};
-    my $update_existing_model_files = $parm{'update_existing_model_files'};
-    my $etas_file = $parm{'etas_file'};
-
-    my $name_model = 'model_3b.mod';
-    my $model_path = File::Spec->catfile($self->_intermediate_models_path, $name_model);
-
-    my $frem_model;
-
-    cleanup_outdated_model(modelname => $model_path,
-                           need_update => $update_existing_model_files);
-
-    if (not -e $model_path) {
-        # input model  inits have already been updated
-        $frem_model = $model->copy(filename => $model_path,
-                                   output_same_directory => 1,
-                                   write_copy => 0,
-                                   copy_datafile => 0,
-                                   copy_output => 0);
-
-        # if $ETAS FILE= used, M4 needs M3 phi output
-        if ($etas_file) {
-            # TODO: breakout into function since M2, M3 and M4 does pretty much the same things
-            if (not -f $etas_file) {
-                croak "\$ETAS file $etas_file could not be read for model 3b, this is a bug";
-            }
-
-            # copy M3/M4 output to M4 input phi file
-            (my $etas_filename = $name_model) =~ s/(.*)\..*/$1_input.phi/;
-            cp($etas_file, File::Spec->catfile($self->_intermediate_models_path, $etas_filename));
-            (undef, $etas_filename) = OSspecific::absolute_path($self->_intermediate_models_path, $etas_filename);
-
-            # update FILE in model to new path (just filename since same directory)
-            $frem_model->get_or_set_etas_file(problem_number => 1, new_file => $etas_filename);
-
-            # update etas file to model 4 output (no further downstream usage)
-            (my $phi_filename = $name_model) =~ s/(.*)\..*/$1.phi/;
-            $etas_file = File::Spec->catfile($self->_intermediate_models_path, $phi_filename);
-        }
-
-        # model must come from M3, so we set M4 up
-        get_or_set_fix(model => $frem_model,
-            type => 'thetas',
-            set_array => $self->input_model_fix_thetas);
-        get_or_set_fix(model => $frem_model,
-            type => 'sigmas',
-            set_array => $self->input_model_fix_sigmas);
-        get_or_set_fix(model => $frem_model,
-            type => 'omegas',
-            set_array => $self->input_model_fix_omegas);
-
-        $frem_model->_write();
-    } else {
-        if (defined $etas_file) {
-            (my $phi_filename = $name_model) =~ s/(.*)\..*/$1.phi/;
-            $etas_file = File::Spec->catfile($self->_intermediate_models_path, $phi_filename);
-        }
-    }
-
-    $frem_model->set_maxeval_zero(
-        print_warning => 1,
-        last_est_complete => $self->last_est_complete,
-        niter_eonly => $self->niter_eonly,
-        need_ofv => 0
-    );
-
-    return ($etas_file);
-}
-
 sub prepare_model4
 {
     # Prepare the final frem model
@@ -3479,11 +3401,6 @@ sub modelfit_setup
 
     mkdir($finaldir) unless (-d $finaldir);
 
-    ($etas_file) = $self->prepare_model3b(
-        model => $frem_model3,
-        update_existing_model_files => $update_existing_model_files,
-        etas_file => $etas_file,
-    );
     my $frem_dir = $self->directory;
     my $ncov = scalar(@{$self->covariates});
     PsN::call_pharmpy("private frem $frem_dir $ncov");      # Update parcov block currently
