@@ -960,7 +960,7 @@ if (confirm()) {
     }
     my $pharmpy_file = (glob("pharmpy*.zip"))[0];
     system("$venv_python -m pip install -r requirements.txt");
-    system("$venv_python -m pip install $pharmpy_file");
+    system("$venv_python -m pip install $pharmpy_file --upgrade --no-deps --force-reinstall");
     $set_python_lib_path = 1;
 }
 
