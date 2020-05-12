@@ -208,9 +208,11 @@ sub call_pharmpy
     my $arguments = shift;
 
     my $pypath = get_python_lib_path();
+
+    $ENV{'PYTHONPATH'} = "$pypath\\Lib\\site-packages";
     my $pharmpy_path;
     if ($Config{osname} eq 'MSWin32') {
-        $pharmpy_path = "$pypath\\Scripts\\pharmpy";
+        $pharmpy_path = "python -m pharmpy";
     } else {
         $pharmpy_path = "$pypath/bin/pharmpy";
     }
