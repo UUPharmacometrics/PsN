@@ -1805,6 +1805,7 @@ sub prepare_results
     $ofv_section{'values'} = [ [ $m1_ofv, $m2_ofv, $m3_ofv, $m4_ofv ] ];
     push(@{$self->results->[0]{'own'}}, \%ofv_section);
 
+    PsN::call_pharmpy("results frem $directory");      # Generate results.json and results.csv
     return $err;
 }
 
@@ -3403,7 +3404,7 @@ sub modelfit_setup
 
     my $frem_dir = $self->directory;
     my $ncov = scalar(@{$self->covariates});
-    PsN::call_pharmpy("private frem $frem_dir $ncov");      # Update parcov block currently
+    PsN::call_pharmpy("private frem $frem_dir $ncov");
     (my $frem_model3b, $message, $need_update) = $self->run_unless_run(numbers => ['3b']);
 
     $self->prepare_model4(
