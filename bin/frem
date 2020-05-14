@@ -25,7 +25,10 @@ my %options;
 
 my %required_options = ('covariates:s');
 my %optional_options = (
+    'bipp!' => undef,
     'check!' => undef,
+    'force_posdef_covmatrix!' => undef,
+    'force_posdef_samples:i' => undef,
     'rescale!' => undef,
     'estimate_means!' => undef,
     'estimate_covariates!' => undef,
@@ -105,6 +108,13 @@ $help_text{-always_proposal_density} = <<'EOF';
     Unset with -no-always_proposal_density.
 EOF
 
+$help_text{-bipp} = <<'EOF';
+    -bipp
+
+    Will always use the bipp method for uncertainties of covariate effects. Default only used
+    if covariance step failed for final FREM model.
+EOF
+
 $help_text{-categorical} = <<'EOF';
     -categorical=list
 
@@ -167,6 +177,20 @@ $help_text{-estimate_means} = <<'EOF';
     missing in the frem dataset then the mean will not be estimated, even if
     option -estimate_means is set. If -no-estimate_means is set, frem will not
     estimate any means even if there are missing observations.
+EOF
+
+$help_text{-force_posdef_covmatrix} = <<'EOF';
+    -force_posdef_covmatrix
+
+    Force covariance matrix of final FREM model to be positive definite.
+    Default is to fail if covariance matrix is not positive definite.
+EOF
+
+$help_text{-force_posdef_samples} = <<'EOF';
+    -force_posdef_samples=500
+
+    The number of sampling tries before forcing parameter samples of frem matrix to be positive definite.
+    Default is 500
 EOF
 
 $help_text{-log} = <<'EOF';
@@ -310,6 +334,9 @@ my $frem = tool::frem->new(
     rescale => $options{'rescale'},
     run_sir => $options{'run_sir'},
     imp_covariance => $options{'imp_covariance'},
+    bipp => $options{'bipp'},
+    force_posdef_covmatrix => $options{'force_posdef_covmatrix'},
+    force_posdef_samples => $options{'force_posdef_samples'},
 );
 
 $frem->print_options(

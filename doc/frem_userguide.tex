@@ -57,6 +57,10 @@ A comma-separated list of covariates, required. Must be the names used in \$INPU
 Default 60. If the number of ETAs in model 2 is larger than this number then\\
 \$ABBREVIATED DERIV2=NOCOMMON will be set in the control stream.
 \nextopt
+\optname{bipp}
+    Will always use the bipp method for uncertainties of covariate effects. Default only used
+    if covariance step failed for final FREM model.
+\nextopt
 \optname{estimate\_covariates}
 Default not set. By default frem will not estimate the variances and covariances of the covariates until the final frem model estimation,
 but instead evaluate the EBEs (in Model 2) assuming the same variances and covariances as in covariate data.
@@ -70,6 +74,14 @@ observations only from the first original data observation record for each indiv
 If no covariate observations are missing in the frem dataset then the mean will not be estimated,
 even if option -estimate\_means is set. If -no-estimate\_means is set, frem will not estimate
 any means even if there are missing observations.
+\nextopt
+\optname{force\_posdef\_covmatrix}
+    Force covariance matrix of final FREM model to be positive definite.
+    Default is to fail if covariance matrix is not positive definite.
+\nextopt
+\optdefault{force\_posdef\_samples}{500}
+    The number of sampling tries before forcing parameter samples of frem matrix to be positive definite.
+    Default is 500
 \nextopt
 \optdefault{log}{list}
 Default empty. A comma-separated list of covariates	that should have the natural logarithm of the input data

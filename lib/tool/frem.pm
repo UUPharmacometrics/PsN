@@ -75,6 +75,10 @@ has 'final_models' => ( is => 'rw', isa => 'ArrayRef[model]', default => sub { [
 has 'cov_summary' => ( is => 'rw', isa => 'Str' );
 has 'tool_options' => ( is => 'rw', isa => 'HashRef' );     # tool options hash to override all tool options from the command line.
 has 'imp_covariance' => ( is => 'rw', isa => 'Bool', default => 1 );        # Should we run model 4b to get covariance matrix if model4 covsetp failed
+has 'bipp' => ( is => 'rw', isa => 'Bool', default => 0 );
+has 'force_posdef_covmatrix' => ( is => 'rw', isa => 'Bool', default => 0 );
+has 'force_posdef_samples' => ( is => 'rw', isa => 'Int', default => 500 );
+
 
 has '_intermediate_models_path' => ( is => 'rw', isa => 'Str' );
 has 'etas_reorder_mapping' => ( is => 'rw', isa => 'HashRef' );
@@ -214,6 +218,7 @@ sub BUILD
     if ($all_fix) {
         croak("All omegas of input model are fixed. Cannot continue.\n")
     }
+    $self->rprofile(0);
 }
 
 sub get_phi_coltypes
@@ -1805,7 +1810,19 @@ sub prepare_results
     $ofv_section{'values'} = [ [ $m1_ofv, $m2_ofv, $m3_ofv, $m4_ofv ] ];
     push(@{$self->results->[0]{'own'}}, \%ofv_section);
 
-    PsN::call_pharmpy("results frem $directory");      # Generate results.json and results.csv
+    my $pdcov = '';
+    if ($self->force_posdef_covmatrix) {
+        $pdcov = ' --force_posdef_covmatrix';
+    }
+    my $pdsamp = ' --force_posdef_samples=' . $self->force_posdef_samples;
+    my $meth = '';
+    if ($self->bipp) {
+        $meth = ' --method=bipp'
+    }
+    PsN::call_pharmpy("results frem $directory$pdcov$pdsamp$meth");      # Generate results.json and results.csv
+    if ($self->rplots > 0) {
+        PsN::call_pharmpy("results report $directory"); # Generate results.html
+    }
     return $err;
 }
 
@@ -2750,24 +2767,27 @@ sub prepare_model4
 
     $frem_model->get_or_set_etas_file(problem_number => 1, new_file => 'model_4_input.phi');
 
-    my $new_cov_records;
-    my $uncond;
-    foreach my $opt (@{$cov_records}) {
-        if ($opt =~ /^OMIT/) {
-            $logger->info("Removed OMIT option from \$COV in $name_model\n");
-        } else {
-            push @{$new_cov_records}, $opt;
+    if (not $self->bipp) {
+        my $new_cov_records;
+        my $uncond;
+        foreach my $opt (@{$cov_records}) {
+            if ($opt =~ /^OMIT/) {
+                $logger->info("Removed OMIT option from \$COV in $name_model\n");
+            } else {
+                push @{$new_cov_records}, $opt;
+            }
+            $uncond = 1 if ($opt =~ /^UNC/);
         }
-        $uncond = 1 if ($opt =~ /^UNC/);
+        if (not $uncond) {
+            push @{$new_cov_records}, "UNCONDITIONAL";
+        }
+        push @{$new_cov_records}, "PRECOND=1";
+        $frem_model->problems->[0]->add_records(
+            record_strings => $new_cov_records,
+            type => 'covariance'
+        );
     }
-    if (not $uncond) {
-        push @{$new_cov_records}, "UNCONDITIONAL";
-    }
-    push @{$new_cov_records}, "PRECOND=1";
-    $frem_model->problems->[0]->add_records(
-        record_strings => $new_cov_records,
-        type => 'covariance'
-    );
+
     $frem_model->problems->[0]->estimations($est_records);
     if ($self->derivatives) {
         model_approximations::derivatives_model(model => $frem_model);   # Output the derivatives to be able to make VA-plot
@@ -3473,7 +3493,7 @@ sub modelfit_setup
     (my $error, $message) = check_covstep(output => $self->final_models->[0]->outputs->[0]);
 
     my $do_print_proposal = 0;
-    if ($error) {
+    if ($error and not $self->bipp) {
         $logger->warning('Covariance step of model 4 NOT successful');
         $do_print_proposal = 1;
         if ($self->imp_covariance and defined $mod4ofv) {
@@ -3493,7 +3513,7 @@ sub modelfit_setup
             $logger->warning('Model 4 failed to give OFV value, IMP sampling not applicable');
         }
     }
-    if (not $error) {
+    if (not $error and not $self->bipp) {
         $logger->info('Covariance step was successful!');
         if ($self->always_proposal_density) {
             $do_print_proposal = 1;
