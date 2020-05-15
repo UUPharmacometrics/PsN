@@ -495,13 +495,15 @@ sub modelfit_setup
                     tool_options => $self->_special_tool_options,
                     imp_covariance => 1,
                     derivatives => 1,
+                    bipp => 1,
+                    force_posdef_covmatrix => 1,
                 );
                 $frem->run();
-                $frem->print_options(   # To get skip_omegas over to postfrem
-                    toolname => 'frem',
-                    local_options => [ 'skip_omegas' ],
-                    common_options => \@common_options::tool_options
-                );
+                #$frem->print_options(   # To get skip_omegas over to postfrem
+                #    toolname => 'frem',
+                #    local_options => [ 'skip_omegas' ],
+                #    common_options => \@common_options::tool_options
+                #);
                 my $err = $frem->prepare_results();
                 if ($err) {
                     print("Frem result generation err (no file could be generated):\n");
@@ -515,21 +517,6 @@ sub modelfit_setup
             }
             common_options::set_option('clean', $old_clean);
 
-
-            $self->_to_qa_dir();
-            if (-e 'frem_run/final_models/model_4.lst') {
-                print "\n*** Running POSTFREM ***\n";
-                eval {
-                    if ($dev) {
-                        system("postfrem -frem_directory=frem_run -directory=postfrem_run -force_posdef_covmatrix -rplots=0");
-                    } else {
-                        system("postfrem-".$vers." -force_posdef_covmatrix -frem_directory=frem_run -directory=postfrem_run -rplots=0");
-                    }
-                };
-                if ($@) {
-                    print $@;
-                }
-            }
             $self->_to_qa_dir();
         }
 

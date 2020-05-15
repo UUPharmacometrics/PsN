@@ -351,11 +351,32 @@ if(!PsNR::is_error(p)) knitr::asis_output("Variability attribution plot before a
 ```
 
 
-```{r draw_frem_plots,eval=(all(skip!="frem")||all(skip!="scm")),results='asis',echo=F,warning=F,message=F,fig.width=11,fig.height=14.5,fig.keep="high",fig.align="center"}
+```{r draw_frem_plots1,eval=(all(skip!="frem")||all(skip!="scm")),results='asis',echo=F,warning=F,message=F,fig.width=11,fig.height=14.5,fig.keep="high",fig.align="center"}
 PsNR::qa_report_content_frem_plots()
-cat(try(
-all_frem_plots(file.path(working.directory, 'frem_run', 'postfrem_run'))
-))
+library(vegawidget)
+fremdir <- file.path(working.directory, 'frem_run')
+try(json <- rjson::fromJSON(file=file.path(fremdir, 'results.json')))
+try(vegawidget::as_vegaspec(json$covariate_effects_plot))
+```
+
+```{r frem_plots1_caption,eval=(all(skip!="frem")||all(skip!="scm")),results='asis',echo=F,warning=F,message=F,fig.width=11,fig.height=14.5,fig.keep="high",fig.align="center"}
+cat("5th and 95th percentile of each covariate and the size of the effect on parameter (assuming log-normal). The bands show 90% confidence interval around the point estimate. Categorical covariates are compared to the other category.")
+```
+
+```{r draw_frem_plots2,eval=(all(skip!="frem")||all(skip!="scm")),results='asis',echo=F,warning=F,message=F,fig.width=11,fig.height=14.5,fig.keep="high",fig.align="center"}
+try(vegawidget::as_vegaspec(json$individual_effects_plot))
+```
+
+```{r frem_plots2_caption,eval=(all(skip!="frem")||all(skip!="scm")),results='asis',echo=F,warning=F,message=F,fig.width=11,fig.height=14.5,fig.keep="high",fig.align="center"}
+cat("Most extreme individuals (in both directions) in terms of expected effect size of their covariate sets, on parameter (assuming log-normal). The bands show 90% confidence interval around the point estimate.")
+```
+
+```{r draw_frem_plots3,eval=(all(skip!="frem")||all(skip!="scm")),results='asis',echo=F,warning=F,message=F,fig.width=11,fig.height=14.5,fig.keep="high",fig.align="center"}
+try(vegawidget::as_vegaspec(json$unexplained_variability_plot))
+```
+
+```{r frem_plots3_caption,eval=(all(skip!="frem")||all(skip!="scm")),results='asis',echo=F,warning=F,message=F,fig.width=11,fig.height=14.5,fig.keep="high",fig.align="center"}
+cat("Amount of unexplained variability (on standard deviation scale) remaining in the parameters after knowledge of no covariates, each covariate separately and all covariates simultaneously.")
 ```
 
 ```{r draw_resiual_error_model_table,eval=all(skip!="resmod"),results='asis',echo=F,warning=F,message=F,fig.width=8,fig.height=6,fig.keep="high",fig.align="center"}
