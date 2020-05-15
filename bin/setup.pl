@@ -922,6 +922,7 @@ if (confirm()) {
     my $rsafe_path = $rlib_path;
     $rsafe_path =~ s/\\/\\\\/g;
     $ENV{'R_LIBS_SITE'} = $rlib_path;
+    $ENV{'R_LIBS_USER'} = $rlib_path;
     run_r("install.packages('renv', lib='$rsafe_path', repos='$repos')");
     run_r("options(renv.consent=TRUE); renv::restore(library='$rsafe_path', lockfile='renv.lock')");
     $set_rlib_path = 1;
