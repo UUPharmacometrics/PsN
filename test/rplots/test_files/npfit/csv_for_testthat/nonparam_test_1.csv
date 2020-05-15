@@ -1,4 +1,0 @@
-model,problem,subproblem,minimization_successful,ofv,npofv,npsupp,EXP(ETA1),"OMEGA(1,1)"
-1,1,1,1,-57.06,-60.46,100,0.056,0.98
-2,1,1,run failed: NONMEM run failed,NA,NA,200,NA,NA
-3,1,1,1,-57.06,100.2,300,0.034,0.97

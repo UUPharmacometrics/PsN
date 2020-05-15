@@ -1,7 +1,0 @@
-method,model,minimization_successful,covariance_step_successful,covariance_step_warnings,estimate_near_boundary,EI1,cook.scores,cov.ratios,outside.n.sd
-cdd,0,1,1,0,1,NA,0,0,0
-cdd,1,1,1,0,0,NA,1.69474,1.06352,1
-cdd,2,1,1,1,0,NA,0.65269,0,0
-cdd,3,1,0,0,0,NA,1.34665,0,0
-cdd,4,1,1,0,1,NA,2.21297,1.43112,0
-other,5,1,1,0,0,NA,1.66382,2.32917,0

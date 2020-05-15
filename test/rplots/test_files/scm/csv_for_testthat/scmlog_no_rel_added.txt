@@ -1,9 +1,0 @@
-Model directory C:\Users\svefr809\develope\scm\alternative_parameterizations\m1
-
-MODEL            TEST     BASE OFV  NEW OFV         TEST OFV (DROP)   GOAL     dDF    SIGNIFICANT PVAL
-CLAPGR-3         PVAL    584.2      584.2              0.03     >     3.8      1              0.8
-CLWGT-3          PVAL    584.2      583.4              0.7      >     3.8      1              0.3
-VAPGR-3          PVAL    584.2      582.7              1.4      >     3.8      1              0.2
-
---------------------
-

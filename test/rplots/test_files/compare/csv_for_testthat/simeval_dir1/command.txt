@@ -1,1 +1,0 @@
-C:\Users\svefr809\PsN\bin/simeval -rplots=1 -dir=first_tool run1.mod

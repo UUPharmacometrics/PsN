@@ -1,5 +1,0 @@
-confidence.intervals
-"","         lower","maximum.likelihood.estimate","         upper","interval.ratio","    near.bound","max.iterations",
-"            CL",    0.00557566,    0.00618958,    0.00681981,      1.026567,             0,             0,
-"             V",       1.22711,        1.3538,       1.49645,      1.125977,             0,             0,
-"         CLWGT",      0.897334,       1.13452,       1.39955,      1.117393,             1,             0,

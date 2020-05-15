@@ -1,1 +1,0 @@
-/home/kajsa/kod-psn/PsN4/bin/simeval run1.mod -samples=100 -rplots=0
