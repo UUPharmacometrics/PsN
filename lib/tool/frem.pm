@@ -74,7 +74,6 @@ has 'final_numbers' => ( is => 'rw', isa => 'ArrayRef[Int]', default => sub { []
 has 'final_models' => ( is => 'rw', isa => 'ArrayRef[model]', default => sub { [] } );
 has 'cov_summary' => ( is => 'rw', isa => 'Str' );
 has 'tool_options' => ( is => 'rw', isa => 'HashRef' );     # tool options hash to override all tool options from the command line.
-has 'imp_covariance' => ( is => 'rw', isa => 'Bool', default => 1 );        # Should we run model 4b to get covariance matrix if model4 covsetp failed
 has 'bipp' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'force_posdef_covmatrix' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'force_posdef_samples' => ( is => 'rw', isa => 'Int', default => 500 );
@@ -2100,6 +2099,11 @@ sub do_filter_dataset_and_append_binary
                                                   baseline_only => 1,
                                                   mdv_evid_indices => \@mdv_evid_indices,
                                                   start_header => $data_set_headers);
+        for my $col (@$new_categorical) {
+            if (not array::string_in($col, $self->categorical)) {
+                push @{$self->extra_input_items}, $col;
+            }
+        }
         if (scalar(@{$warn_multiple}) > 0) {
             ui->print(category => 'all',
                       message => "\nWarning: Individuals were found to have multiple values in the " . join(' ', @{$warn_multiple}) .
@@ -2482,7 +2486,6 @@ sub prepare_model2
             my (undef, $etas_filename) = OSspecific::absolute_path($im_dir, $etas_file);
 
             # update FILE in model to new path (just filename since same directory) and write file to disk
-            #$frem_model->get_or_set_etas_file(problem_number => 1, new_file => $etas_filename);
             my $phi_path = File::Spec->catfile($im_dir, $etas_filename);
             $phi->write(path => $phi_path);
             $frem_model->init_etas(phi_name => $phi_path);
@@ -2505,9 +2508,8 @@ sub prepare_model2
         }
 
         foreach my $item (@{$self->extra_input_items}) {
-            #mdv and fremtype
+            #mdv, fremtype and binarized covariates
             $frem_model->add_option(problem_numbers => [1], record_name => 'input', option_name => $item);
-            #we do not have to add for example binary-ized categoricals, they enter in DV col for special fremtype
         }
 
         #SIGMA changes
@@ -2793,38 +2795,6 @@ sub prepare_model4
         model_approximations::derivatives_model(model => $frem_model);   # Output the derivatives to be able to make VA-plot
     }
     $frem_model->_write();
-}
-
-sub prepare_model4b
-{
-    # Model 4b is used to get the parameter uncertainty in case model 4 failed the covariance step
-    # * Initial parameter estimates are updated from the estimation of model4
-    # * Final etas from model4 are used as initial etas
-    # * An IMPMAP evaluation of the model will replace the estimation record
-    my $self = shift;
-    my %parm = validated_hash(\@_,
-        model => { isa => 'model', optional => 0 },
-    );
-    my $model = $parm{'model'};
-
-    my $model4b = $model->copy(
-        filename => File::Spec->catfile($self->_final_models_path, 'model_4b.mod'),
-        output_same_directory => 1,
-        write_copy => 0,
-        copy_datafile => 0,
-        copy_output => 0
-    );
-
-    $model4b->update_inits(from_output => $self->final_models->[0]->outputs->[0]);
-
-    $model4b->get_or_set_etas_file(problem_number => 1, new_file => 'model_4.phi');
-
-    my $est_records = [ model::problem::estimation->new(
-        record_arr => ['METHOD=IMPMAP MAPITER=0 ISAMPLE=3000 NITER=5 EONLY=1 PRINT=1']
-    ) ];
-    $model4b->problems->[0]->estimations($est_records);
-
-    $model4b->_write();
 }
 
 sub prepare_model5
@@ -3494,24 +3464,9 @@ sub modelfit_setup
 
     my $do_print_proposal = 0;
     if ($error and not $self->bipp) {
-        $logger->warning('Covariance step of model 4 NOT successful');
+        $logger->warning('Covariance step of model 4 NOT successful. Falling back to using the BIPP method.');
         $do_print_proposal = 1;
-        if ($self->imp_covariance and defined $mod4ofv) {
-            $logger->info('Will use IMP sampling to get covariance step (model 4b)');
-            if (not $self->mu) {
-                $logger->warning('MU referencing (not used) can speed up model 4b sampling');
-            }
-            $self->prepare_model4b(model => $self->final_models->[0]);
-            push(@{$self->final_numbers}, '4b');
-            (my $model_4b, $mes) = $self->run_unless_run(numbers => ['4b'],
-                subdirectory => 'final_models',
-                final => 1);
-            push(@{$self->final_models}, @{$model_4b});
-            ($error,$message) = check_covstep(output => $model_4b->[0]->outputs->[0]);
-            $logger->warning('Covariance step of model 4b NOT successful') if ($error);
-        } elsif ($self->imp_covariance) {
-            $logger->warning('Model 4 failed to give OFV value, IMP sampling not applicable');
-        }
+        $self->bipp(1);
     }
     if (not $error and not $self->bipp) {
         $logger->info('Covariance step was successful!');

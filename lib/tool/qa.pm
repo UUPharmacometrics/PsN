@@ -493,17 +493,11 @@ sub modelfit_setup
                     top_tool => 1,
                     clean => 1,
                     tool_options => $self->_special_tool_options,
-                    imp_covariance => 1,
                     derivatives => 1,
                     bipp => 1,
                     force_posdef_covmatrix => 1,
                 );
                 $frem->run();
-                #$frem->print_options(   # To get skip_omegas over to postfrem
-                #    toolname => 'frem',
-                #    local_options => [ 'skip_omegas' ],
-                #    common_options => \@common_options::tool_options
-                #);
                 my $err = $frem->prepare_results();
                 if ($err) {
                     print("Frem result generation err (no file could be generated):\n");

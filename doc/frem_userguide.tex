@@ -109,9 +109,6 @@ If the covariance step of both Model 4 and either/both of Model 1 and Model 2 fa
 relative standard error that will be used for parameters for which there is no other information that can be used
 to guess the variance needed for a proposal density for a sir run with Model 4.
 \nextopt
-\optname{imp\_covariance}
-Default set. If set run Model 4b with updated inits and additional importance sampling, expectation only,
-step before covariance step to attain uncertainty (if Model 4 covariance step fails).
 \optname{run\_sir}
 Default not set. If set and covariance step of Model 4 fails, run sir to obtain standard errors of parameters.
 If covariance step of Model 4 is successful, sir will not be run even if option -run\_sir is set.

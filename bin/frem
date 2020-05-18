@@ -38,7 +38,6 @@ my %optional_options = (
     'log:s' => undef,
     'rse:f' => undef,
     'run_sir!' => undef,
-    'imp_covariance!' => undef,
     'mu' => undef,
     'cholesky!' => undef,
     'always_proposal_density!' => undef,
@@ -239,14 +238,6 @@ $help_text{-rse} = <<'EOF';
     the variance needed for a proposal density for a sir run with Model 4.
 EOF
 
-$help_text{-imp_covariance} = <<'EOF';
-    -imp_covariance
-
-    Default set. If set run Model 4b with updated inits and additional importance
-    sampling, expectation only, step before covariance step to attain uncertainty
-    (if Model 4 covariance step fails).
-EOF
-
 $help_text{-run_sir} = <<'EOF';
     -run_sir
 
@@ -333,7 +324,6 @@ my $frem = tool::frem->new(
     mceta => $options{'mceta'},
     rescale => $options{'rescale'},
     run_sir => $options{'run_sir'},
-    imp_covariance => $options{'imp_covariance'},
     bipp => $options{'bipp'},
     force_posdef_covmatrix => $options{'force_posdef_covmatrix'},
     force_posdef_samples => $options{'force_posdef_samples'},
