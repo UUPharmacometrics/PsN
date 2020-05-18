@@ -317,12 +317,12 @@ sub BUILD
                 if ( scalar(@{$input_record}) > 0 ) { #always true
                     foreach my $line ( @{$input_record->[0]} ) {
                         next if ( $line =~ /^\s*;/); #skip comments
-                        if ( $line =~ /[\s]+$col=(SKIP|DROP)[\s]+/ ) {
+                        if ( $line =~ /^[^;]*\b$col=(SKIP|DROP)[\s]+/ ) {
                             $found = 1;
                             croak("Cannot SKIP/DROP the $var_text variable ".
                                   "in the \$INPUT record.");
                             last;
-                        } elsif ( $line =~ /[\s]+(SKIP|DROP)=$col[\s]+/ ) {
+                        } elsif ( $line =~ /^[^;]+\b(SKIP|DROP)=$col[\s]+/ ) {
                             $found = 1;
                             croak("Cannot SKIP/DROP the $var_text variable ".
                                   "in the \$INPUT record.");
