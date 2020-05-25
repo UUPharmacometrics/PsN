@@ -484,7 +484,7 @@ if (PsNR::rplots_level(meta) > 1) {
 ### Output plots
 
 if (PsNR::rplots_level(meta) >= 1) {
-  pdf(file=paste(working.directory,"PsN_plots_base.pdf",sep=""),title="sir plots",width=20,height=10)
+  pdf(file=paste(working.directory, pdf.filename, sep=""), title="sir plots", width=20, height=10)
   print(qdOFV_all)
   print(ci_sir)
   print(cor.prop)
@@ -493,7 +493,7 @@ if (PsNR::rplots_level(meta) >= 1) {
 }
 
 if (PsNR::rplots_level(meta) > 1) {
-  pdf(file=paste(working.directory,"PsN_plots_extended.pdf",sep=""),title="sir plots",width=15,height=15)
+  pdf(file=paste(working.directory,"PsN_plots_extended.pdf", sep=""), title="sir plots", width=15, height=15)
   print(mM_ratio)
   print(m2_maxbin)
   print(all_maxbin)
