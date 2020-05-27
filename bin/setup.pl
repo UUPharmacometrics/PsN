@@ -1109,7 +1109,7 @@ if ($set_r or $set_python) {
         print $dh "PYTHON_LIB_PATH=$python_lib_path\n"; 
     }
     while (<$sh>) {
-        if (not /^R_LIB_PATH=/ and not /^PYTHON_LIB_PATH=/) {
+        if (not (/^R_LIB_PATH=/ and $set_r) and not (/^PYTHON_LIB_PATH=/ and $set_python)) {
             print $dh $_;
         }
     }
