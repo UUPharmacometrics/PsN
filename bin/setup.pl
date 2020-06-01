@@ -541,7 +541,6 @@ sub run_r
     system("Rscript -e \"$line\"");
 }
 
-
 sub create_directory
 {
     my $directory_name = shift;
@@ -937,6 +936,8 @@ print "You would need to have python installed for this installation\n";
 print "\n";
 print "\nWould you like to install the pharmpy python package? [y/n] ";
 
+my $venv_python;
+
 if (confirm()) {
     my $py_response = readpipe('python -c "import sys;print(sys.version_info[0])"');
     my $python;
@@ -953,7 +954,6 @@ if (confirm()) {
         }
     }
     system("$python -m venv $python_lib_path");
-    my $venv_python;
     if (running_on_windows()) {
         $venv_python = "$python_lib_path\\Scripts\\python";
     } else {
@@ -1122,6 +1122,7 @@ if ($set_r or $set_python) {
 # Install bundled Inline::Python
 print "Installing bundled Inline::Python perl model\n";
 chdir "Inline-Python-0.56" or die;
+$ENV{'INLINE_PYTHON_EXECUTABLE'} = $venv_python;
 system "perl Makefile.PL";
 system "make";
 mkpath(File::Spec->catfile($psn_lib_path, 'Inline'));

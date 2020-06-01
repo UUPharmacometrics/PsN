@@ -204,12 +204,38 @@ sub get_python_lib_path
     return $path;
 }
 
-sub set_pythonpath
+sub pys
 {
+    # Convert perl string to utf8. Need before passing to python
+    my $s = shift;
+    utf8::upgrade($s);
+    return $s;
+}
+
+sub enter_python
+{
+    my $inline_path = shift;
+
+    my $paths = call_python('-c "import sys; print(sys.path)"');
+    py_eval("import sys; sys.path = $paths");
+
+    $ENV{'PERL_INLINE_DIRECTORY'} = $inline_path;
+}
+
+sub call_python
+{
+    my $arguments = shift;
+
     my $pypath = get_python_lib_path();
-    $ENV{'PYTHONPATH'} = "/home/rikard/devel/pharmpy/.tox/run/lib/python3.7/site-packages";
-    py_eval("import sys; sys.path.append('/home/rikard/devel/pharmpy/.tox/run/lib/python3.7/site-packages')");
-    # FIXME: How to make this dynamic and work for development. Now want to reach module directory also on Linux
+
+    my $python_path;
+    if ($Config{osname} eq 'MSWin32') {
+        $python_path = "$pypath\\Scripts\\python";
+    } else {
+        $python_path = "$pypath/bin/python";
+    }
+    my $command = "$python_path $arguments";
+    return readpipe($command);
 }
 
 sub call_pharmpy
@@ -218,15 +244,15 @@ sub call_pharmpy
 
     my $pypath = get_python_lib_path();
 
-    $ENV{'PYTHONPATH'} = "$pypath\\Lib\\site-packages";
     my $pharmpy_path;
     if ($Config{osname} eq 'MSWin32') {
-        $pharmpy_path = "python -m pharmpy";
+        #$ENV{'PYTHONPATH'} = "$pypath\\Lib\\site-packages";
+        $pharmpy_path = "$pypath\\Scripts\\python -m pharmpy";
     } else {
         $pharmpy_path = "$pypath/bin/pharmpy";
     }
     my $command = "$pharmpy_path $arguments";
-    system($command);
+    return readpipe($command);
 }
 
 sub get_default_psn_installation_info

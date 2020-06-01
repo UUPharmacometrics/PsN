@@ -1142,56 +1142,6 @@ sub get_covmatrix
     return $covar;
 }
 
-sub reorder_covmatrix
-{
-    my %parm = validated_hash(\@_,
-        original_strings => { isa => 'ArrayRef', optional => 0 },
-        reordered_strings => { isa => 'ArrayRef', optional => 0 },
-        matrix => { isa => 'ArrayRef', optional => 0 },
-    );
-
-    my $original_strings = $parm{'original_strings'};
-    my $reordered_strings = $parm{'reordered_strings'};
-    my $matrix = $parm{'matrix'};
-
-    my $dimension = scalar(@{$matrix});
-    unless ($dimension > 0){
-        croak("matrix has size 0");
-    }
-    unless (scalar(@{$matrix->[0]}) == $dimension){
-        croak("matrix is not square, dim $dimension but first row ".scalar(@{$matrix->[0]}));
-    }
-    unless (scalar(@{$original_strings}) == $dimension){
-        croak("matrix has dimension $dimension but original strings is ".scalar(@{$original_strings}));
-    }
-    unless (scalar(@{$reordered_strings}) == $dimension){
-        croak("matrix has dimension $dimension but reordered strings is ".scalar(@{$original_strings}));
-    }
-
-    my @mapping = ();
-    for (my $i=0; $i< $dimension; $i++){
-        for (my $j=0; $j< $dimension; $j++){
-            if ($original_strings->[$j] eq $reordered_strings->[$i]){
-                push(@mapping,$j);
-                last;
-            }
-        }
-    }
-    unless (scalar(@mapping) == $dimension){
-        croak("matrix has dimension $dimension but mappnig is ".scalar(@mapping));
-    }
-
-    my @newmatrix = ();
-    for (my $i=0; $i< $dimension; $i++){
-        push(@newmatrix,[(0) x $dimension]);
-        for (my $j=0; $j< $dimension; $j++){
-            $newmatrix[$i]->[$j] = $matrix->[($mapping[$i])]->[($mapping[$j])];
-        }
-    }
-
-    return \@newmatrix;
-}
-
 sub check_covstep
 {
     my %parm = validated_hash(\@_,
@@ -3396,17 +3346,10 @@ sub modelfit_setup
 
     my $frem_dir = $self->directory;
     my $ncov = scalar(@{$self->covariates});
-sub pys {
-    my $s = shift;
-    utf8::upgrade($s);
-    return $s;
-}
-    PsN::set_pythonpath();
-    py_eval('import sys; print(sys.path)');
+    PsN::enter_python($self->directory);
     py_eval('import pharmpy.methods.frem.method');
-    py_call_function("pharmpy.methods.frem.method", "update_model3b_for_psn", pys($frem_dir), $ncov);
+    py_call_function("pharmpy.methods.frem.method", "update_model3b_for_psn", PsN::pys($frem_dir), $ncov);
 
-    #PsN::call_pharmpy("private frem $frem_dir $ncov");
     (my $frem_model3b, $message, $need_update) = $self->run_unless_run(numbers => ['3b']);
 
     $self->prepare_model4(

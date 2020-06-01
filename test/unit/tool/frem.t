@@ -461,32 +461,6 @@ is($ans->{3}, $true2->{3}, 'perfect individual  3');
 is($ans->{4}, $true2->{4}, 'perfect individual  4');
 is($ans->{5}, $true2->{5}, 'perfect individual  5');
 
-
-my $matrix = [[1,2,3,4,5],
-              [2,6,7,8,9],
-              [3,7,10,11,12],
-              [4,8,11,13,14],
-              [5,9,12,14,15]];
-
-$ans = tool::frem::reorder_covmatrix(matrix => $matrix,
-                                        original_strings => ['A','B','C','D','E'],
-                                        reordered_strings => ['A','C','D','B','E']);
-
-my $reor = [
-    [1,3,4,2,5],
-    [3,10,11,7,12],
-    [4,11,13,8,14],
-    [2,7,8,6,9],
-    [5,12,14,9,15]
-];
-is_deeply($ans,$reor,'reorder covmatrix 1');
-
-$ans = tool::frem::reorder_covmatrix(matrix => $matrix,
-                                        original_strings => ['A','B','C','D','E'],
-                                        reordered_strings => ['A','B','C','D','E']);
-is_deeply($ans,$matrix,'reorder covmatrix 2');
-
-
 my $str1= ['TH1','TH2','OM11','OM22'];
 my $str2= ['TH3','TH4','OM33','OM43','OM44'];
 my $fullstr = ['TH1','TH2','TH3','TH4','OM11','OM21','OM22','OM31','OM32','OM33','OM41','OM42','OM43','OM44'];
