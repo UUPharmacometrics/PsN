@@ -923,7 +923,7 @@ if (confirm()) {
     $ENV{'R_LIBS_SITE'} = $rlib_path;
     $ENV{'R_LIBS_USER'} = $rlib_path;
     run_r("install.packages('renv', lib='$rsafe_path', repos='$repos')");
-    run_r("options(renv.consent=TRUE); renv::restore(library='$rsafe_path', lockfile='renv.lock')");
+    run_r("options(renv.consent=TRUE); renv::settings" . '\$' . "use.cache(FALSE); renv::restore(library='$rsafe_path', lockfile='renv.lock')");
     $set_rlib_path = 1;
 }
 
@@ -960,6 +960,7 @@ if (confirm()) {
         $venv_python = "$python_lib_path/bin/python";
     }
     my $pharmpy_file = (glob("pharmpy*.zip"))[0];
+    system("$venv_python -m pip install wheel");
     system("$venv_python -m pip install -r requirements.txt");
     system("$venv_python -m pip install $pharmpy_file --upgrade --no-deps --force-reinstall");
     $set_python_lib_path = 1;

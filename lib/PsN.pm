@@ -206,9 +206,18 @@ sub get_python_lib_path
 
 sub pys
 {
-    # Convert perl string to utf8. Need before passing to python
+    # Convert perl string or array of strings to utf8. Need before passing to python
     my $s = shift;
-    utf8::upgrade($s);
+    if (ref $s eq 'ARRAY') {
+        my @new_array;
+        for my $elt (@$s) {
+            utf8::upgrade($elt);
+            push @new_array, $elt;
+        }
+        $s = \@new_array;
+    } else {
+        utf8::upgrade($s);
+    }
     return $s;
 }
 
