@@ -110,23 +110,19 @@ sub BUILD
         $self->tool_options(common_options::restore_options(@common_options::tool_options));
     }
 
+    PsN::enter_python($self->directory);
+    py_eval('import pharmpy.methods.frem.method');
+
     # Check if any covariate column has all same value
     # In that case warn and remove column
-    my @filtered_covariates;
+    my $filtered_covariates = py_call_function("pharmpy.methods.frem.method", "setup", PsN::pys($model->full_name), PsN::pys($self->covariates));
     my @filtered_categorical;
-    for my $column (@{$self->covariates}) {
-        my $colno = $problem->find_data_column(column_name => $column, ignore_dropped => 0);
-        my $column_data = $data->column_to_array(column => $colno);
-        if (scalar @{array::unique($column_data)} == 1) {
-            $logger->warning("Covariate $column excluded because it has only one value for all rows in the dataset.");
-        } else {
-            push @filtered_covariates, $column;
-            if (grep { $_ eq $column } @{$self->categorical}) {
-                push @filtered_categorical, $column;
-            }
+    for my $cov (@$filtered_covariates) {
+        if (grep { $_ eq $cov } @{$self->categorical}) {
+            push @filtered_categorical, $cov;
         }
     }
-    $self->covariates(\@filtered_covariates);
+    $self->covariates($filtered_covariates);
     $self->categorical(\@filtered_categorical);
 
     for my $accessor ('logfile', 'raw_results_file', 'raw_nonp_file') {
@@ -3346,8 +3342,6 @@ sub modelfit_setup
 
     my $frem_dir = $self->directory;
     my $ncov = scalar(@{$self->covariates});
-    PsN::enter_python($self->directory);
-    py_eval('import pharmpy.methods.frem.method');
     py_call_function("pharmpy.methods.frem.method", "update_model3b_for_psn", PsN::pys($frem_dir), $ncov);
 
     (my $frem_model3b, $message, $need_update) = $self->run_unless_run(numbers => ['3b']);

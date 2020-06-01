@@ -32,29 +32,12 @@ has 'space_separated' => ( is => 'rw', isa => 'Bool', default => 0 );
 has '_median' => ( is => 'rw', isa => 'ArrayRef[numbers]', default => sub { [] } );
 has '_range' => ( is => 'rw', isa => 'ArrayRef[numbers]', default => sub { [] } );
 
-# {{{ description
 
-    # The structure of the data class is subject-centric, recognising that
-    # the subjects included in a study often can be regarded as
-    # independent. A class for the subject level exists within PsN and is
-    # called the individual class. A data object consists of at least one
-    # but probably many individual objects plus optional comments.
-
-# }}} description
-
-# {{{ synopsis
-
-    #   use data;
-    #
-    #   my $data_obj = data -> new ( filename => 'test040314.dta' );
-    #
-    #   $data_obj -> renumber_ascending;
-    #
-    #   my $subsets_ref = $data_obj->case_deletion( bins => 10 );
-    #
-    #   my @subsets = @{$subsets_ref};
-
-# }}} synopsis
+# The structure of the data class is subject-centric, recognising that
+# the subjects included in a study often can be regarded as
+# independent. A class for the subject level exists within PsN and is
+# called the individual class. A data object consists of at least one
+# but probably many individual objects plus optional comments.
 
 sub BUILD
 {
@@ -464,21 +447,6 @@ sub frem_compute_covariate_properties
         $first_timevar_type = scalar(@{$cov_indices});
     }
 
-    for (my $i=0; $i<scalar(@{$invariant_covariates}); $i++){
-        my $covariate = $invariant_covariates->[$i]; #cov name
-        my $column = ($cov_indices->[$i])+1;
-        my %strata = %{$filtered_data->factors(column => $column, #column number in data set
-        return_occurences => 1,
-        verbose => 0,
-        unique_in_individual => 1,
-        ignore_missing => 1)};
-        if ( _have_non_unique_values(\%strata)) {
-            ui -> print( category => 'all',
-                message => "\nWarning: Individuals were found to have multiple values in the $covariate column,".
-                " but the frem script will only use the value in the individual's first observation record.\n");
-        }
-    }
-
     if (defined $occ_index){
         my $factors = $filtered_data -> factors( column => ($occ_index+1),
             ignore_missing =>1,
@@ -534,11 +502,6 @@ sub frem_compute_covariate_properties
                     $diff[$i] = 1;
                 }
             }
-        }
-    }
-    for (my $i = 0; $i < scalar(@diff); $i++) {
-        if (not $diff[$i]) {
-            croak("The covariate " . $invariant_covariates->[$i] . " has the same value at baseline for all individuals. Please remove this covariate and run again.");
         }
     }
 
