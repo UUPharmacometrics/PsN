@@ -3,6 +3,7 @@ use Carp;
 use File::Spec;
 use Cwd;
 use Config;
+use Inline::Python qw(py_eval);
 use strict;
 
 our ($dev,$version,$lib_dir,$config_file,$config,$Rscripts_dir);
@@ -201,6 +202,14 @@ sub get_python_lib_path
     }
     $path = File::Spec->rel2abs($path, $lib_dir);
     return $path;
+}
+
+sub set_pythonpath
+{
+    my $pypath = get_python_lib_path();
+    $ENV{'PYTHONPATH'} = "/home/rikard/devel/pharmpy/.tox/run/lib/python3.7/site-packages";
+    py_eval("import sys; sys.path.append('/home/rikard/devel/pharmpy/.tox/run/lib/python3.7/site-packages')");
+    # FIXME: How to make this dynamic and work for development. Now want to reach module directory also on Linux
 }
 
 sub call_pharmpy

@@ -6,6 +6,7 @@ use tool::modelfit;
 use Math::Random;
 use Config;
 use linear_algebra;
+
 use ui;
 use logging;
 use File::Copy qw/cp mv/;
@@ -21,6 +22,7 @@ use POSIX qw/floor/;
 
 use Moose;
 use MooseX::Params::Validate;
+use Inline::Python qw(py_call_function py_eval);
 
 extends 'tool';
 
@@ -3394,7 +3396,17 @@ sub modelfit_setup
 
     my $frem_dir = $self->directory;
     my $ncov = scalar(@{$self->covariates});
-    PsN::call_pharmpy("private frem $frem_dir $ncov");
+sub pys {
+    my $s = shift;
+    utf8::upgrade($s);
+    return $s;
+}
+    PsN::set_pythonpath();
+    py_eval('import sys; print(sys.path)');
+    py_eval('import pharmpy.methods.frem.method');
+    py_call_function("pharmpy.methods.frem.method", "update_model3b_for_psn", pys($frem_dir), $ncov);
+
+    #PsN::call_pharmpy("private frem $frem_dir $ncov");
     (my $frem_model3b, $message, $need_update) = $self->run_unless_run(numbers => ['3b']);
 
     $self->prepare_model4(

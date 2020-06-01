@@ -1119,5 +1119,18 @@ if ($set_r or $set_python) {
     unlink $tempconf;
 }
 
+# Install bundled Inline::Python
+print "Installing bundled Inline::Python perl model\n";
+chdir "Inline-Python-0.56" or die;
+system "perl Makefile.PL";
+system "make";
+mkpath(File::Spec->catfile($psn_lib_path, 'Inline'));
+cp('Python.pm', File::Spec->catfile($psn_lib_path, 'Inline'));
+my $auto_path = File::Spec->catfile($psn_lib_path, 'auto/Inline/Python');
+mkpath($auto_path);
+my $libfile = (glob('blib/arch/auto/Inline/Python/Python.*'))[0];
+cp($libfile, $auto_path);
+chdir "..";
+
 print "\n\nPress ENTER to exit the installation program.\n";
 my $dirt = <STDIN>;
