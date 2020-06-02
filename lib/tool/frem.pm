@@ -2183,7 +2183,7 @@ sub get_covrecord
 
     my $covrecordref=[];
     if (defined $model->problems->[0]->covariances and scalar(@{$model->problems->[0]->covariances})>0){
-        $covrecordref = $model->problems->[0]->covariances->[0] -> _format_record() ;
+        $covrecordref = $model->problems->[0]->covariances->[0]->_format_record();
         for (my $i=0; $i<scalar(@{$covrecordref}); $i++){
             $covrecordref->[$i] =~ s/^\s*\$CO[A-Z]*\s*//; #get rid of $COVARIANCE
             $covrecordref->[$i] =~ s/\s*$//; #get rid of newlines
