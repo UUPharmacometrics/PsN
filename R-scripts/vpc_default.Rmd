@@ -1,5 +1,4 @@
 ---
-title: "VPC"
 output: pdf_document
 classoption: landscape
 geometry: margin=1.5cm
@@ -24,7 +23,7 @@ meta <- PsNR::metadata(working.directory)
 if (is.tte) {
     #data is in the model directory, go there to read input
     setwd(dirname(PsNR::model_path(meta)))
-    xpdb <- xpose4::xpose.data(PsNR::model_runno(meta))
+    capture.output(xpdb <- xpose4::xpose.data(PsNR::model_runno(meta)))
     plots <- xpose4::kaplan.plot(object=xpdb, VPC=T)
     #go back to vpc directory 
     setwd(working.directory)
