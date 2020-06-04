@@ -1,6 +1,11 @@
 package tool::frem;
 
 use PsN;
+
+BEGIN {
+    PsN::init_python();
+};
+
 use include_modules;
 use tool::modelfit;
 use Math::Random;

@@ -1,9 +1,9 @@
 package PsN;
+
 use Carp;
 use File::Spec;
 use Cwd;
 use Config;
-use Inline::Python qw(py_eval);
 use strict;
 
 our ($dev,$version,$lib_dir,$config_file,$config,$Rscripts_dir);
@@ -164,6 +164,7 @@ sub get_R_exec
     #check in PsN config, or try R --version
     if (defined $config->{'_'}->{'R'}) {
         $rexec = $config->{'_'}->{'R'};
+        $rexec = File::Spec->rel2abs($rexec, $lib_dir);
     } else {
         my $output = readpipe('R --version 2>&1');
         if ($output =~ /^R version /) {
@@ -195,8 +196,8 @@ sub get_python_lib_path
     import();
 
     my $path;
-    if (defined $config->{'_'}->{'PYTHON_LIB_PATH'}) {
-        $path = $config->{'_'}->{'PYTHON_LIB_PATH'};
+    if (defined $config->{'_'}->{'PYTHON_PATH'}) {
+        $path = $config->{'_'}->{'PYTHON_PATH'};
     } else {
         $path = '';
     }
@@ -221,9 +222,21 @@ sub pys
     return $s;
 }
 
+sub init_python
+{
+    my $path = get_python_lib_path();
+    if ($Config{osname} eq 'MSWin32') {
+        # Needed for Inline::Python in windows. Must be run in a begin block.
+        $ENV{'PYTHONPATH'} = "$path\\Lib";
+    }
+}
+
 sub enter_python
 {
     my $inline_path = shift;
+
+    require Inline::Python;
+    Inline::Python->import(qw(py_eval));
 
     my $paths = call_python('-c "import sys; print(sys.path)"');
     py_eval("import sys; sys.path = $paths");
@@ -239,7 +252,7 @@ sub call_python
 
     my $python_path;
     if ($Config{osname} eq 'MSWin32') {
-        $python_path = "$pypath\\Scripts\\python";
+        $python_path = "$pypath\\python";
     } else {
         $python_path = "$pypath/bin/python";
     }
@@ -255,8 +268,7 @@ sub call_pharmpy
 
     my $pharmpy_path;
     if ($Config{osname} eq 'MSWin32') {
-        #$ENV{'PYTHONPATH'} = "$pypath\\Lib\\site-packages";
-        $pharmpy_path = "$pypath\\Scripts\\python -m pharmpy";
+        $pharmpy_path = "$pypath\\python -m pharmpy";
     } else {
         $pharmpy_path = "$pypath/bin/pharmpy";
     }

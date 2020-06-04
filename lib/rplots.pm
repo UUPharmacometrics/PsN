@@ -43,6 +43,10 @@ sub BUILD
     my $self = shift;
     $self->set_R_executable();
     $self->set_R_library_path();
+    if ($Config{osname} eq 'MSWin32') {
+        my $path = PsN::get_R_lib_path();
+        $ENV{'RSTUDIO_PANDOC'} = $path . '\..\pandoc';
+    }
     $self->setup();
 }
 

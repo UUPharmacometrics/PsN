@@ -1107,10 +1107,10 @@ if ($set_r or $set_python) {
         if ($relative_lib_path) {
             $python_lib_path = "pyvenv";
         }
-        print $dh "PYTHON_LIB_PATH=$python_lib_path\n"; 
+        print $dh "PYTHON_PATH=$python_lib_path\n"; 
     }
     while (<$sh>) {
-        if (not (/^R_LIB_PATH=/ and $set_r) and not (/^PYTHON_LIB_PATH=/ and $set_python)) {
+        if (not (/^R_LIB_PATH=/ and $set_r) and not (/^PYTHON_PATH=/ and $set_python)) {
             print $dh $_;
         }
     }
@@ -1125,7 +1125,12 @@ print "Installing bundled Inline::Python perl model\n";
 chdir "Inline-Python-0.56" or die;
 $ENV{'INLINE_PYTHON_EXECUTABLE'} = $venv_python;
 system "perl Makefile.PL";
-system "make";
+
+if (running_on_windows()) {
+    system "dmake";
+} else {
+    system "make";
+}
 mkpath(File::Spec->catfile($psn_lib_path, 'Inline'));
 cp('Python.pm', File::Spec->catfile($psn_lib_path, 'Inline'));
 my $auto_path = File::Spec->catfile($psn_lib_path, 'auto/Inline/Python');
