@@ -228,6 +228,7 @@ sub init_python
     if ($Config{osname} eq 'MSWin32') {
         # Needed for Inline::Python in windows. Must be run in a begin block.
         $ENV{'PYTHONPATH'} = "$path\\Lib";
+        $ENV{'PATH'} = "$path;" . $ENV{'PATH'};
     }
 }
 
