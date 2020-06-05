@@ -898,72 +898,77 @@ if (running_on_windows()) {
     $library_dir = Win32::GetShortPathName($library_dir);
 }
 
-my $rlib_path = File::Spec->catfile($psn_lib_path, "Rlib");
-my $set_rlib_path = 0;
-print "\n";
-print "The R package PsNR and its dependencies are needed for the rplots functionality and the qa tool in PsN.\n";
-print "The PsN installer can automatically install these using renv to make sure that all versions\n";
-print "of R packages have been tested together. A separate R library will be created inside the PsN\n";
-print "installation directory. You need to have R installed for this installation. On Windows Rtools\n";
-print "might also be needed\n";
-print "\n";
-print "\nWould you like to install the PsNR R package? [y/n] ";
-
-if (confirm()) {
-    if (not -e $rlib_path) {
-        if (not mkpath($rlib_path)) {
-            print "Failed to create $rlib_path: $!\n";
-            abort();
-        }
-    }
-
-    my $repos = 'https://cloud.r-project.org';
-    my $rsafe_path = $rlib_path;
-    $rsafe_path =~ s/\\/\\\\/g;
-    $ENV{'R_LIBS_SITE'} = $rlib_path;
-    $ENV{'R_LIBS_USER'} = $rlib_path;
-    run_r("install.packages('renv', lib='$rsafe_path', repos='$repos')");
-    run_r("options(renv.consent=TRUE); renv::settings" . '\$' . "use.cache(FALSE); renv::restore(library='$rsafe_path', lockfile='renv.lock')");
-    $set_rlib_path = 1;
-}
-
-my $python_lib_path = File::Spec->catfile($psn_lib_path, "pyvenv");
 my $set_python_lib_path = 0;
-print "\n";
-print "The Python package 'pharmpy' is needed by PsN and you would need to have python installed on your system\n";
-print "If you let the installer install pharmpy it will be installed in a virtual environment together with its dependencies inside the PsN installation\n";
-print "You would need to have python installed for this installation\n";
-print "\n";
-print "\nWould you like to install the pharmpy python package? [y/n] ";
-
+my $python_lib_path;
+my $set_rlib_path = 0;
+my $rlib_path;
 my $venv_python;
 
-if (confirm()) {
-    my $py_response = readpipe('python -c "import sys;print(sys.version_info[0])"');
-    my $python;
-    chomp($py_response);
-    if ($py_response eq "3") {
-        $python = 'python';
-    } else {
-        my $py3_response = readpipe('python3 -c "import sys;print(sys.version_info[0])"');
-        chomp($py3_response);
-        if ($py3_response eq "3") {
-            $python = 'python3';
-        } else {
-            die "No python interpreter in PATH\n";
+if (not running_on_windows()) {
+    $rlib_path = File::Spec->catfile($psn_lib_path, "Rlib");
+    print "\n";
+    print "The R package PsNR and its dependencies are needed for the rplots functionality and the qa tool in PsN.\n";
+    print "The PsN installer can automatically install these using renv to make sure that all versions\n";
+    print "of R packages have been tested together. A separate R library will be created inside the PsN\n";
+    print "installation directory. You need to have R installed for this installation. On Windows Rtools\n";
+    print "might also be needed\n";
+    print "\n";
+    print "\nWould you like to install the PsNR R package? [y/n] ";
+
+    if (confirm()) {
+        if (not -e $rlib_path) {
+            if (not mkpath($rlib_path)) {
+                print "Failed to create $rlib_path: $!\n";
+                abort();
+            }
         }
+
+        my $repos = 'https://cloud.r-project.org';
+        my $rsafe_path = $rlib_path;
+        $rsafe_path =~ s/\\/\\\\/g;
+        $ENV{'R_LIBS_SITE'} = $rlib_path;
+        $ENV{'R_LIBS_USER'} = $rlib_path;
+        run_r("install.packages('renv', lib='$rsafe_path', repos='$repos')");
+        run_r("options(renv.consent=TRUE); renv::settings" . '\$' . "use.cache(FALSE); renv::restore(library='$rsafe_path', lockfile='renv.lock')");
+        $set_rlib_path = 1;
     }
-    system("$python -m venv $python_lib_path");
-    if (running_on_windows()) {
-        $venv_python = "$python_lib_path\\Scripts\\python";
-    } else {
-        $venv_python = "$python_lib_path/bin/python";
+
+    $python_lib_path = File::Spec->catfile($psn_lib_path, "pyvenv");
+    $set_python_lib_path = 0;
+    print "\n";
+    print "The Python package 'pharmpy' is needed by PsN and you would need to have python installed on your system\n";
+    print "If you let the installer install pharmpy it will be installed in a virtual environment together with its dependencies inside the PsN installation\n";
+    print "You would need to have python installed for this installation\n";
+    print "\n";
+    print "\nWould you like to install the pharmpy python package? [y/n] ";
+
+    if (confirm()) {
+        my $py_response = readpipe('python -c "import sys;print(sys.version_info[0])"');
+        my $python;
+        chomp($py_response);
+        if ($py_response eq "3") {
+            $python = 'python';
+        } else {
+            my $py3_response = readpipe('python3 -c "import sys;print(sys.version_info[0])"');
+            chomp($py3_response);
+            if ($py3_response eq "3") {
+                $python = 'python3';
+            } else {
+                die "No python interpreter in PATH\n";
+            }
+        }
+        system("$python -m venv $python_lib_path");
+        if (running_on_windows()) {
+            $venv_python = "$python_lib_path\\Scripts\\python";
+        } else {
+            $venv_python = "$python_lib_path/bin/python";
+        }
+        my $pharmpy_file = (glob("pharmpy*.zip"))[0];
+        system("$venv_python -m pip install wheel");
+        system("$venv_python -m pip install -r requirements.txt");
+        system("$venv_python -m pip install $pharmpy_file --upgrade --no-deps --force-reinstall");
+        $set_python_lib_path = 1;
     }
-    my $pharmpy_file = (glob("pharmpy*.zip"))[0];
-    system("$venv_python -m pip install wheel");
-    system("$venv_python -m pip install -r requirements.txt");
-    system("$venv_python -m pip install $pharmpy_file --upgrade --no-deps --force-reinstall");
-    $set_python_lib_path = 1;
 }
 
 my $default_test = $library_dir;
@@ -1089,55 +1094,57 @@ if ($configuration_done) {
     print "Detailed instructions are found in psn_configuration.pdf";
 }
 
-# Set R_LIB_PATH if created
-my $set_python = ($set_python_lib_path and -e $python_lib_path);
-my $set_r = ($set_rlib_path and -e $rlib_path);
-if ($set_r or $set_python) {
-    my $tempconf = File::Spec->catfile($psn_lib_path, 'tempconf');
-    my $confpath = File::Spec->catfile($psn_lib_path, 'psn.conf');
-    open my $sh, '<', $confpath;
-    open my $dh, '>', $tempconf;
-    if ($set_r) {
-        if ($relative_lib_path) {
-            $rlib_path = File::Spec->abs2rel($rlib_path, $library_dir);
+if (not running_on_windows()) {
+    # Set R_LIB_PATH if created
+    my $set_python = ($set_python_lib_path and -e $python_lib_path);
+    my $set_r = ($set_rlib_path and -e $rlib_path);
+    if ($set_r or $set_python) {
+        my $tempconf = File::Spec->catfile($psn_lib_path, 'tempconf');
+        my $confpath = File::Spec->catfile($psn_lib_path, 'psn.conf');
+        open my $sh, '<', $confpath;
+        open my $dh, '>', $tempconf;
+        if ($set_r) {
+            if ($relative_lib_path) {
+                $rlib_path = File::Spec->abs2rel($rlib_path, $library_dir);
+            }
+            print $dh "R_LIB_PATH=$rlib_path\n";
         }
-        print $dh "R_LIB_PATH=$rlib_path\n";
-    }
-    if ($set_python) {
-        if ($relative_lib_path) {
-            $python_lib_path = "pyvenv";
+        if ($set_python) {
+            if ($relative_lib_path) {
+                $python_lib_path = "pyvenv";
+            }
+            print $dh "PYTHON_PATH=$python_lib_path\n"; 
         }
-        print $dh "PYTHON_PATH=$python_lib_path\n"; 
-    }
-    while (<$sh>) {
-        if (not (/^R_LIB_PATH=/ and $set_r) and not (/^PYTHON_PATH=/ and $set_python)) {
-            print $dh $_;
+        while (<$sh>) {
+            if (not (/^R_LIB_PATH=/ and $set_r) and not (/^PYTHON_PATH=/ and $set_python)) {
+                print $dh $_;
+            }
         }
+        close $dh;
+        close $sh;
+        cp $tempconf, $confpath;
+        unlink $tempconf;
     }
-    close $dh;
-    close $sh;
-    cp $tempconf, $confpath;
-    unlink $tempconf;
-}
 
-# Install bundled Inline::Python
-print "Installing bundled Inline::Python perl model\n";
-chdir "Inline-Python-0.56" or die;
-$ENV{'INLINE_PYTHON_EXECUTABLE'} = $venv_python;
-system "perl Makefile.PL";
+    # Install bundled Inline::Python
+    print "Installing bundled Inline::Python perl model\n";
+    chdir "Inline-Python-0.56" or die;
+    $ENV{'INLINE_PYTHON_EXECUTABLE'} = $venv_python;
+    system "perl Makefile.PL";
 
-if (running_on_windows()) {
-    system "dmake";
-} else {
-    system "make";
+    if (running_on_windows()) {
+        system "dmake";
+    } else {
+        system "make";
+    }
+    mkpath(File::Spec->catfile($psn_lib_path, 'Inline'));
+    cp('Python.pm', File::Spec->catfile($psn_lib_path, 'Inline'));
+    my $auto_path = File::Spec->catfile($psn_lib_path, 'auto/Inline/Python');
+    mkpath($auto_path);
+    my $libfile = (glob('blib/arch/auto/Inline/Python/Python.*'))[0];
+    cp($libfile, $auto_path);
+    chdir "..";
 }
-mkpath(File::Spec->catfile($psn_lib_path, 'Inline'));
-cp('Python.pm', File::Spec->catfile($psn_lib_path, 'Inline'));
-my $auto_path = File::Spec->catfile($psn_lib_path, 'auto/Inline/Python');
-mkpath($auto_path);
-my $libfile = (glob('blib/arch/auto/Inline/Python/Python.*'))[0];
-cp($libfile, $auto_path);
-chdir "..";
 
 print "\n\nPress ENTER to exit the installation program.\n";
 my $dirt = <STDIN>;
