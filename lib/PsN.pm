@@ -234,15 +234,11 @@ sub init_python
 
 sub enter_python
 {
-    my $inline_path = shift;
-
     require Inline::Python;
     Inline::Python->import(qw(py_eval));
 
     my $paths = call_python('-c "import sys; print(sys.path)"');
     py_eval("import sys; sys.path = $paths");
-
-    $ENV{'PERL_INLINE_DIRECTORY'} = $inline_path;
 }
 
 sub call_python

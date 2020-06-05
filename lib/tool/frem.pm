@@ -115,7 +115,7 @@ sub BUILD
         $self->tool_options(common_options::restore_options(@common_options::tool_options));
     }
 
-    PsN::enter_python($self->directory);
+    PsN::enter_python();
     py_eval('import pharmpy.methods.frem.method');
 
     # Check if any covariate column has all same value
