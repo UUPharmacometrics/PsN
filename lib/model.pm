@@ -500,10 +500,12 @@ sub shrinkage_modules
         foreach my $prob ( @{$self->problems} ) {
             $probnum++;
             my $new_module = shift( @{$parm} );
-            $new_module -> nomegas( $self -> nomegas() -> [$probnum-1] );
-            $new_module -> directory( $self -> directory() );
-            $new_module -> problem_number( $probnum );
-            $prob -> shrinkage_module( $new_module );
+            if (defined $new_module) {
+                $new_module -> nomegas( $self -> nomegas() -> [$probnum-1] );
+                $new_module -> directory( $self -> directory() );
+                $new_module -> problem_number( $probnum );
+                $prob -> shrinkage_module( $new_module );
+            }
         }
 
     } else {
@@ -631,8 +633,10 @@ sub copy
     # update the shrinkage modules
 
     my @problems = @{$new_model -> problems};
-    for( my $i = 1; $i <= scalar @problems; $i++ ) {
-      $problems[ $i-1 ] -> shrinkage_module -> nomegas( $new_model -> nomegas()->[$i-1] );
+    for (my $i = 1; $i <= scalar @problems; $i++) {
+        if (defined $problems[$i - 1]->shrinkage_module) {
+            $problems[$i - 1]->shrinkage_module->nomegas($new_model->nomegas()->[$i - 1]);
+        }
     }
 
     # Copy the output object if so is requested (only one output
@@ -3978,7 +3982,7 @@ sub output_files
 
     my @problems = @{$self -> problems};
     for( my $i = 0; $i < scalar(@problems); $i++ ) {
-        if( $problems[$i] -> shrinkage_module -> enabled ) {
+        if (defined $problems[$i]->shrinkage_module and $problems[$i]->shrinkage_module->enabled) {
             my $dir;
             my $eta_filename;
             ( $dir, $eta_filename ) = OSspecific::absolute_path( undef,

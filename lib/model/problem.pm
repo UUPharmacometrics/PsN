@@ -1534,8 +1534,6 @@ sub etas_per_omega
     return \@etas;
 }
 
-
-
 sub nsigmas
 {
     my $self = shift;
@@ -1594,13 +1592,16 @@ sub eta_shrinkage
     my $eta_filename = $parm{'eta_filename'};
     my $directory = $parm{'directory'};
 
-    my @eta_shrinkage = @{$self->shrinkage_module->eta_shrinkage(
-        model => $model,
-        probnum => $probnum,
-        directory => $directory,
-        eta_filename => $eta_filename) };
-
-    return \@eta_shrinkage;
+    if (defined $self->shrinkage_module) {
+        my @eta_shrinkage = @{$self->shrinkage_module->eta_shrinkage(
+            model => $model,
+            probnum => $probnum,
+            directory => $directory,
+            eta_filename => $eta_filename) };
+        return \@eta_shrinkage;
+    } else {
+        return [];
+    }
 }
 
 sub iwres_shrinkage
@@ -1618,12 +1619,16 @@ sub iwres_shrinkage
     my $probnum = $parm{'probnum'};
     my $directory = $parm{'directory'};
 
-    @iwres_shrinkage = @{$self->shrinkage_module -> iwres_shrinkage( model => $model,
-        probnum => $probnum,
-        directory => $directory,
-        iwres_filename => $iwres_filename)};
+    if (defined $self->shrinkage_module) {
+        @iwres_shrinkage = @{$self->shrinkage_module -> iwres_shrinkage( model => $model,
+            probnum => $probnum,
+            directory => $directory,
+            iwres_filename => $iwres_filename)};
+        return \@iwres_shrinkage;
+    } else {
+        return [];
+    }
 
-    return \@iwres_shrinkage;
 }
 
 sub add_records
