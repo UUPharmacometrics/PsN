@@ -516,6 +516,7 @@ sub modelfit_setup
                     print("Frem result generation err (no file could be generated):\n");
                     print("$err\n");
                 } else {
+                    $frem->top_tool(0); # To avoid creating Rmd
                     $frem->print_results();
                 }
             };
