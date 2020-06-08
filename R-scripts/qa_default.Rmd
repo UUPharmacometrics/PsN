@@ -356,7 +356,6 @@ library(vegawidget)
 fremdir <- file.path(working.directory, 'frem_run')
 results_path <- file.path(fremdir, 'results.json')
 have_frem_results <- file.exists(results_path)
-have_frem_results <- T
 if (have_frem_results) {
     PsNR::qa_report_content_frem_plots()
     try(json <- rjson::fromJSON(file=results_path))
