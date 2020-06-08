@@ -24,7 +24,11 @@ use Cwd;
 
 $PsN::config->{'_'}->{'R'} = "/path/to/R";
 my $Rexec = PsN::get_R_exec();
-is($Rexec,"/path/to/R",'get_R_exec config');
+if ($Config{osname} eq 'MSWin32') {
+    is($Rexec, "C:\\path\\to\\R", 'get_R_exec config');
+} else {
+    is($Rexec, "/path/to/R", 'get_R_exec config');
+}
 
 # get_nmversion_info
 $PsN::config->{'nm_versions'}->{nm73} = "/opt/NONMEM/nm73,7.3";
