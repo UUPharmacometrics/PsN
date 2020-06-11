@@ -910,8 +910,7 @@ if (not running_on_windows()) {
     print "The R package PsNR and its dependencies are needed for the rplots functionality and the qa tool in PsN.\n";
     print "The PsN installer can automatically install these using renv to make sure that all versions\n";
     print "of R packages have been tested together. A separate R library will be created inside the PsN\n";
-    print "installation directory. You need to have R installed for this installation. On Windows Rtools\n";
-    print "might also be needed\n";
+    print "installation directory. You need to have R installed for this installation.\n";
     print "\n";
     print "\nWould you like to install the PsNR R package? [y/n] ";
 
