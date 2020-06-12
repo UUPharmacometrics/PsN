@@ -1,11 +1,8 @@
 #!/etc/bin/perl
 
-# Blackbox testing of frem, not crash
-
 use strict;
 use warnings;
 use File::Path 'rmtree';
-#use Test::More tests=>1;
 use Test::More;
 use FindBin qw($Bin);
 use lib "$Bin/.."; #location of includes.pm
@@ -29,15 +26,22 @@ my @commands = (
 	get_command('frem') . " -covar=AGE,SEX -categorical=SEX -no-check $model_dir/mox1.mod -no-run_sir",
 	);
 
-plan tests => scalar(@commands);
-
 foreach my $command (@commands) {
 	my  $rc = system($command);
-	$rc = $rc >> 8;
+    $rc = $rc >> 8;
 
 	ok ($rc == 0, "$command");
 	
 }
+
+
+my $plot_command = get_command('frem') . " -cov=APGR,WGT $model_dir/pheno_real.mod -rplots=1 -dir=plot_dir";
+my  $rc = system($plot_command);
+$rc = $rc >> 8;
+ok($rc == 0, "$plot_command");
+ok(-e 'plot_dir/results.json', "results.json");
+ok(-e 'plot_dir/results.csv', "results.csv");
+ok(-e 'plot_dir/results.html', "results.html");
 
 remove_test_dir($tempdir);
 
