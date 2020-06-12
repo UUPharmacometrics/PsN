@@ -342,14 +342,12 @@ sub modelfit_setup
         eval {
             mkdir "modelfit_run";
             my @models;
+            my @simulation_models;
             my $full_block_model = $base_model->copy(directory => "modelfit_run", filename => "fullblock.mod", write_copy => 0);
             my $was_full_block = model_transformations::full_omega_block(model => $full_block_model);
             if (not $was_full_block) {
                 set_mceta($full_block_model, 10);
-                add_simulation($full_block_model);
-                $full_block_model->set_records(type => 'theta',        # Workaround for bug in NONMEM
-                        problem_numbers => [1],
-                        record_strings => ["0 FIX"] );
+                push @simulation_models, simulation_model($full_block_model);
                 $full_block_model->_write();
                 push @models, $full_block_model;
             }
@@ -360,7 +358,7 @@ sub modelfit_setup
             if (scalar(@$etas_to_boxcox_tdist) > 0) {
                 model_transformations::boxcox_etas(model => $boxcox_model, etas => $etas_to_boxcox_tdist);
                 model_transformations::set_size(model => $boxcox_model, size => 'DIMNEW', value => -10000);
-                add_simulation($boxcox_model);
+                push @simulation_models, simulation_model($boxcox_model);
                 $boxcox_model->_write();
                 push @models, $boxcox_model;
             }
@@ -369,7 +367,7 @@ sub modelfit_setup
             if (scalar(@$etas_to_boxcox_tdist) > 0) {
                 model_transformations::tdist_etas(model => $tdist_model, etas => $etas_to_boxcox_tdist);
                 model_transformations::set_size(model => $tdist_model, size => 'DIMNEW', value => -10000);
-                add_simulation($tdist_model);
+                push @simulation_models, simulation_model($tdist_model);
                 $tdist_model->_write();
                 push @models, $tdist_model;
             }
@@ -380,7 +378,7 @@ sub modelfit_setup
                     set_mceta($add_iov_model, 10);
                     my $error = model_transformations::add_iov(model => $add_iov_model, occ => $self->occ);
                     if (not $error) {
-                        add_simulation($add_iov_model);
+                        push @simulation_models, simulation_model($add_iov_model);
                         $add_iov_model->_write();
                         push @models, $add_iov_model;
                         my $iov_structure = model_transformations::find_iov_structure(model => $add_iov_model);
@@ -398,11 +396,19 @@ sub modelfit_setup
                     models => \@models,
                     directory => "modelfit_dir1",
                     top_tool => 1,
-                    so => 1,
                     nm_output => 'ext,phi',
                     model_subdir => 0,
                 );
                 $modelfit->run();
+                my $simrun = tool::modelfit->new(
+                    %{common_options::restore_options(@common_options::tool_options)},
+                    models => \@simulation_models,
+                    directory => "simulations_dir1",
+                    top_tool => 1,
+                    nm_output => 'ext,phi',
+                    model_subdir => 0,
+                );
+                $simrun->run();
                 chdir "..";
             }
         };
@@ -1061,38 +1067,25 @@ sub set_mceta
     );
 }
 
-sub add_simulation
+sub simulation_model
 {
+    # Create a new simulation model from an estimation model.
+    # A separate $PROBLEM was tried, but gave errors for the simulation
+
     my $model = shift;
 
-    my $simprob = model::problem->new(ignore_missing_files=> 1, prob_arr => ['$PROBLEM simulation']);
-    $simprob->inputs($model->problems->[0]->inputs);
-    $simprob->datas(Storable::dclone($model->problems->[0]->datas));
-    push @{$model->problems}, $simprob;
-    push @{$model->active_problems}, 1;
+    my $name = utils::file::get_file_stem($model->filename);
+    my $sim = $model->copy(directory => "modelfit_run", filename => "${name}_sim.mod", write_copy => 0);
 
-    $model->set_option(record_name => 'estimation',
-                       option_name => 'MSFO',
-                       option_value => 'msfo',
-                       problem_numbers => [1]);
-
-	$model->set_option(record_name => 'data',
-                       option_name => 'REWIND',
-                       problem_numbers => [2]);
-
-    $model->problems->[1]->msfis([model::problem::msfi->new(record_arr => ['msfo'],
-                                                            internal_msfo_files => {'msfo' => 1})]);
+    $sim->remove_records(type => 'estimation');
+    $sim->remove_records(type => 'covariance');
 
     my $seed = random_uniform_integer(1,1,99999999);
 
-    $model->set_records(type => 'simulation',
-                        problem_numbers => [2],
-                        record_strings => ["($seed) NSUB=300 ONLYSIM TRUE=FINAL"] );
-
-    my $name = utils::file::get_file_stem($model->filename);
-	$model->set_records(type => 'table',
-						problem_numbers => [2],
-						record_strings => ["ID DV MDV TIME NOPRINT NOAPPEND ONEHEADER FILE=$name.sim"]);
+    $sim->set_records(type => 'simulation', record_strings => ["($seed) NSUB=300 ONLYSIM"] );
+	$sim->set_records(type => 'table', record_strings => ["ID DV MDV TIME NOPRINT NOAPPEND ONEHEADER FILE=$name.sim"]);
+    $sim->_write();
+    return $sim;
 }
 
 
