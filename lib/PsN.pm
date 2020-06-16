@@ -171,6 +171,9 @@ sub get_R_exec
             $rexec = 'R';
         }
     }
+    if ($Config{osname} eq 'MSWin32') {
+        $ENV{'R_ARCH'} = '';
+    }
     $rexec =~ s/\.exe$//;
     return $rexec;
 }
