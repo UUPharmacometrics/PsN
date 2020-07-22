@@ -10,7 +10,7 @@ use Config;
 
 require Exporter;
 our @ISA = qw(Exporter);
-our @EXPORT = qw(get_major_minor_nm_version get_command get_command_without_args get_psn_options cmp_float cmp_float_matrix cmp_float_array create_test_dir remove_test_dir copy_test_files like_file_row unlike_file_row do_course_tests cmp_relative redirect_stderr);
+our @EXPORT = qw(get_major_minor_nm_version get_command get_command_without_args get_psn_options cmp_float cmp_float_matrix cmp_float_array create_test_dir remove_test_dir copy_test_files like_file_row unlike_file_row do_course_tests cmp_relative redirect_stderr have_pharmpy);
 
 # Setup an include path to the lib directory
 # First get the path of this module and split out the directory part
@@ -378,4 +378,13 @@ sub do_course_tests
 	done_testing();
 }
 
+sub have_pharmpy
+{
+    my $pharmpy_version = PsN::call_pharmpy('--version');
+    if ($pharmpy_version =~ /^\d+\.\d+\.\d+/) {
+        return 1;
+    } else {
+        return 0;
+    }
+}
 1;
