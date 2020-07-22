@@ -848,7 +848,7 @@ foreach my $file (@utilities) {
         }
         if ($old_version eq $version) {
             if (not $confirmed) {
-                print("\nThis version ($version) looks like an older installed\n",
+                print("\nThis version ($version) looks like the same or an older installed\n",
                        "version ($old_version) of PsN. Would you like to make\n",
                        "this version ($version) the default? [y/n]");
                 $confirmed = 1;
