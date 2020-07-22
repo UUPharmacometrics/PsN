@@ -1,0 +1,3 @@
+[submodule "inline-python-pm"]
+	path = inline-python-pm
+	url = https://github.com/niner/inline-python-pm.git

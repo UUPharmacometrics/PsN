@@ -221,9 +221,9 @@ release: main completion rel_dir $(RELFILES) $(PDFFILES)
 	@ python3 ./development/scripts/renv_lock.py
 	@ cp ../devel/pharmpy/.tox/dist/*.zip PsN-Source/
 	@ cp ../devel/pharmpy/requirements.txt PsN-Source/
-	@ cp -ar ../devel/Inline-Python-0.56 PsN-Source/
-	@ rm -rf PsN-Source/Inline-Python-0.56/.git
-	@ rm -rf PsN-Source/Inline-Python-0.56/.gitignore
+	@ cp -ar inline-python-pm PsN-Source/
+	@ rm -rf PsN-Source/inline-python-pm/.git
+	@ rm -rf PsN-Source/inline-python-pm/.gitignore
 	@ zip -rq $(ZIPFILE) PsN-Source/
 	@ tar czf $(TARFILE) PsN-Source/
 
