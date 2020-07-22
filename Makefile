@@ -219,8 +219,9 @@ release: main completion rel_dir $(RELFILES) $(PDFFILES)
 	@ chmod -R a+r PsN-Source/test/test_files
 	@ sed -i 's/dev\s*=\s*1;/dev = 0;/' PsN-Source/lib/PsN.pm
 	@ python3 ./development/scripts/renv_lock.py
-	@ cp ../devel/pharmpy/.tox/dist/*.zip PsN-Source/
-	@ cp ../devel/pharmpy/requirements.txt PsN-Source/
+	@ cd pharmpy; tox -e run -- pharmpy --version
+	@ cp pharmpy/.tox/dist/*.zip PsN-Source/
+	@ cp pharmpy/requirements.txt PsN-Source/
 	@ cp -ar inline-python-pm PsN-Source/
 	@ rm -rf PsN-Source/inline-python-pm/.git
 	@ rm -rf PsN-Source/inline-python-pm/.gitignore
