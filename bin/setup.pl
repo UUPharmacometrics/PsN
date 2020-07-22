@@ -120,8 +120,8 @@ my @utilities = (
     'precond', 'covmat', 'nmoutput2so', 'benchmark', 'npfit', 'resmod', 'cddsimeval', 'qa', 'transform', 'boot_randtest'
     );
 
-my @win_modules = ('Moose', 'MooseX::Params::Validate', 'Math::Random', 'YAML::XS');
-my @nix_modules = ('Moose', 'MooseX::Params::Validate', 'Math::Random', 'YAML::XS');
+my @win_modules = ('Moose', 'MooseX::Params::Validate', 'Math::Random', 'YAML::XS', 'Inline');
+my @nix_modules = ('Moose', 'MooseX::Params::Validate', 'Math::Random', 'YAML::XS', 'Inline');
 my @recommended_modules = ('Archive::Zip','Statistics::Distributions');
 
 my @modules;
@@ -967,6 +967,21 @@ if (not running_on_windows()) {
         system("$venv_python -m pip install -r requirements.txt");
         system("$venv_python -m pip install $pharmpy_file --upgrade --no-deps --force-reinstall");
         $set_python_lib_path = 1;
+
+        # Install bundled Inline::Python
+        print "Installing bundled Inline::Python perl model\n";
+        chdir "inline-python-pm" or die;
+        $ENV{'INLINE_PYTHON_EXECUTABLE'} = $venv_python;
+        system "perl Makefile.PL";
+        system "make";
+
+        mkpath(File::Spec->catfile($psn_lib_path, 'Inline'));
+        cp('Python.pm', File::Spec->catfile($psn_lib_path, 'Inline'));
+        my $auto_path = File::Spec->catfile($psn_lib_path, 'auto/Inline/Python');
+        mkpath($auto_path);
+        my $libfile = (glob('blib/arch/auto/Inline/Python/Python.*'))[0];
+        cp($libfile, $auto_path);
+        chdir "..";
     }
 }
 
@@ -1124,25 +1139,6 @@ if (not running_on_windows()) {
         cp $tempconf, $confpath;
         unlink $tempconf;
     }
-
-    # Install bundled Inline::Python
-    print "Installing bundled Inline::Python perl model\n";
-    chdir "Inline-Python-0.56" or die;
-    $ENV{'INLINE_PYTHON_EXECUTABLE'} = $venv_python;
-    system "perl Makefile.PL";
-
-    if (running_on_windows()) {
-        system "dmake";
-    } else {
-        system "make";
-    }
-    mkpath(File::Spec->catfile($psn_lib_path, 'Inline'));
-    cp('Python.pm', File::Spec->catfile($psn_lib_path, 'Inline'));
-    my $auto_path = File::Spec->catfile($psn_lib_path, 'auto/Inline/Python');
-    mkpath($auto_path);
-    my $libfile = (glob('blib/arch/auto/Inline/Python/Python.*'))[0];
-    cp($libfile, $auto_path);
-    chdir "..";
 }
 
 print "\n\nPress ENTER to exit the installation program.\n";
