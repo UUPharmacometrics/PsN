@@ -117,6 +117,9 @@ sub setup
     $results_dir = File::Spec->abs2rel($results_dir, $workingdirectory);
 
     my $rscripts_path = $PsN::Rscripts_dir;
+    if (not defined $rscripts_path) {
+        croak "The PsN R-scripts directory could not be found. Check your PsN installation\n";
+    }
     #Replace single backslash with double, assume windows, but do not change if already double
     $workingdirectory = double_backslashes(string => $workingdirectory);
     $rscripts_path = double_backslashes(string =>$rscripts_path);
