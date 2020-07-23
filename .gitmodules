@@ -4,3 +4,6 @@
 [submodule "pharmpy"]
 	path = pharmpy
 	url = https://github.com/pharmpy/pharmpy.git
+[submodule "PsNR"]
+	path = PsNR
+	url = https://github.com/UUPharmacometrics/PsNR.git
