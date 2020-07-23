@@ -929,7 +929,7 @@ if (not running_on_windows()) {
         $ENV{'R_LIBS_USER'} = $rlib_path;
         run_r("install.packages('renv', lib='$rsafe_path', repos='$repos')");
         run_r("options(renv.consent=TRUE); renv::settings" . '\$' . "use.cache(FALSE); renv::restore(library='$rsafe_path', lockfile='PsNR/renv.lock')");
-        run_r("install.packages('PsNR', lib='$rsafe_path', repos=NULL, type='source')");
+        run_r("remotes::install_local('PsNR', lib='$rsafe_path', repos=NULL, dependencies=F)");
         $set_rlib_path = 1;
     }
 
