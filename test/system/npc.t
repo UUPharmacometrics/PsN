@@ -17,7 +17,7 @@ chdir($tempdir);
 my @commands = 
 	(
 	 get_command('npc') . " -samples=20 $model_dir/mox2.mod ",
-	 get_command('npc') . " -samples=20 $model_dir/pheno5.mod -no-copy_data",
+	 get_command('npc') . " -samples=20 $model_dir/pheno5.mod -copy_data",
 	 );
 
 foreach my $command (@commands){
