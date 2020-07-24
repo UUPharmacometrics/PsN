@@ -419,6 +419,9 @@ ci_sir <- ci %+% dplyr::filter(paramCI_all, TYPE=="SIR" | (TYPE=="PROPOSAL" & IT
 
 ### Covmat visualization
 
+asym.proposal$Parameter <- ordered(asym.proposal$Parameter)
+asym.final$Parameter <- ordered(asym.proposal$Parameter)
+
 cor.prop  <- plot.cor(cov.proposal,asym.proposal,final_est,title="Proposal")
 cor.final <- plot.cor(cov.final,asym.final,final_est,title="SIR")
 
