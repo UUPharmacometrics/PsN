@@ -22,7 +22,7 @@ my $id = $1;
 
 chdir "../.." or die "Could not change directory";
 
-my @files = ("PsN-$tag.zip", "PsN-$tag.tar.gz", "nmoutput2so-$tag.zip");
+my @files = ("PsN-$tag.tar.gz", "nmoutput2so-$tag.zip");
 
 for my $filename (@files) {
     my $upload_cmd = <<"EOF";
