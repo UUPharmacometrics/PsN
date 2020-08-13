@@ -22,7 +22,7 @@ Changes and bug fixes from PsN 4.9.0 to 5.0.0
 
    ___runrecord___
 
-- Support zero padded run numbers, like run001.mod
+- Support zero-padded run numbers, like run001.mod
 
 
    ___sumo___
@@ -33,7 +33,7 @@ Changes and bug fixes from PsN 4.9.0 to 5.0.0
 
    ___vpc/npc___
 
-- Contrain default automatic binning two have between 2 and 10 bins
+- Constrain default automatic binning to have between 2 and 10 bins
 
 
    ___frem___
@@ -48,7 +48,7 @@ Changes and bug fixes from PsN 4.9.0 to 5.0.0
 
 - Support for covariates not in the dataset, but derived in the model code
 - Fallback to regular mean and median calculations if the new weighted
-  mean/median of a time varying covariate is outside of the original range
+  mean/median of a time-varying covariate is outside of the original range
   of the covariate.
 
 
