@@ -32,22 +32,8 @@ a:hover { text-decoration: underline; text-decoration-style: dashed; }
 
 <h3>Required Software</h3>
 
-Before you install PsN, you should make sure that the required programs and modules are installed on your computer.
-<ul>
-    <li>Perl version 5.10.1 or later</li>
-    <li>Perl packages</li>
-</ul>
-To be able to use the automatic rplotting functionality (via the <code>-rplots</code> option)  and/or the <code>qa</code> tool the following needs to be installed:
-<ul>
-    <li><a target="_blank" href="https://cloud.r-project.org"s>R</a> version 3.1.2 or later</li>
-    <li>The R package PsNR</li>
-    <li>LaTeX</li>
-    <li>LaTeX packages</li>
-</ul>
-Instructions on how to install these programs and packages for different operating systems can be found below.
-
 <h4>NONMEM</h4>
-PsN 4 supports standard and NMQual 8 installations of <a target="_blank" href="https://nonmem.iconplc.com/">NONMEM</a>. <br>
+PsN supports standard and NMQual 8 installations of <a target="_blank" href="https://nonmem.iconplc.com/">NONMEM</a>. <br>
 Verify that all NONMEM installations you intend to use can be run directly via the nmfe/autolog scripts and that they produce complete output files.<br>
 If running NONMEM with nmfe/autolog.pl does not work then PsN will not work either.<br>
 If you plan to use the parallelization features of NONMEM you must also 
@@ -61,70 +47,68 @@ verify that you can run NONMEM in parallel directly with the nmfe script.<br>
 
 <h3>Windows</h3>
 
-<h4>Installing Perl</h4>
-We recommend <a target="_blank" href="http://strawberryperl.com/">Strawberry Perl</a> for Windows users who are installing 
-Perl for the first time, because of the easier installation and the wider selection of Perl modules.<p>
-<b>Warning:</b> the gfortran coming bundled with the latest versions of strawberry perl (starting from 5.26.2.1) cannot be used to run NONMEM on Windows 10. For unknown reasons NONMEM crashes when testing the installation.
-<br><br>
-</li>
-
-<h4>Installing Perl Modules</h4>
+PsN comes bundled with all its dependencies to make it easier to install. Included is PsN itself, perl, R, python, perl packages, R packages, python packages and pharmpy. Everything is tested together and nothing should interfere with any other installations of the same software that you might have on your computer.
 
 <ol>
-<li>Open a DOS command window<br> (Start&#8594;Run, type <code>cmd</code> &#8629; <br>or <br> <i>In Windows 10</i>: Start&#8594;All apps&#8594;Windows System&#8594; Command Prompt).</li><p>
-<li>Run the following commands (hit &#8629; after each command):<br>
-<code>cpan Math::Random<br>
-cpan MooseX::Params::Validate<br>
-cpan Statistics::Distributions<br>
-cpan YAML::XS<br>
-cpan XML::LibXML</code><br>
-</li>
+<li>Unpack the file you downloaded from the <a target="_blank" href="https://uupharmacometrics.github.io/PsN/download.html">PsN Download Page</a>. The unpacked directory can be put at any location on your computer.</li>
+<li>Update your PATH environment variable to include the path to PsN-5.0.0\strawberry\perl\bin</li>
+<li>Add your NONMEM version by editing the PsN configuration file at PsN-5.0.0\strawberry\perl\site\lib\PsN_5_0_0\psn.conf. Under [nm_versions] add for example default=C:\nm744,7.4.4 if your NONMEM version is 7.4.4 and can be found under C:\nm744</li>
 </ol>
-
-<h4>Installing PsN</h4>
-<ol>
-<li>
-<p>Unpack the file you downloaded from the <a target="_blank" href="https://uupharmacometrics.github.io/PsN/download.html">PsN Download Page</a>.
-It will create a directory called <code>PsN-Source.</code></p>
-</li>
-<li>
-<div style="text-align: justify;">
-
-<p>Open a DOS command window <br>(Start&#8594;Run, type <code>cmd</code> &#8629;<br> or <br><i>In Windows 10</i>: Start&#8594;All apps&#8594;Windows System&#8594; Command Prompt)<br>
-</i>and go to the <code>PsN-Source </code>directory and type: <code>perl setup.pl</code> and &#8629;.</p></p>
-</li>
-<li>
-For convenience you should also check that the directory where the utilities are installed is in your $PATH. (Right-click on My Computer&#8594; Choose Advanced system settings &#8594; Environment variables &#8594; Mark path and click Edit and make the changes needed).
-</li>
-</ol>
-
-
-<h4>Installing the PsNR package</h4>
-
-Open rstudio and install the devtools package. Install PsNR using
-<code>devtools::install_github("UUPharmacometrics/PsNR@PsN4.9.0")</code>
-
-
-<h4>rmarkdown</h4>
-
-The recommended option is to install RStudio and MiKTeX.<br>
-Download and install the latest version of RStudio from <a target="_blank"href="https://www.rstudio.com/products/rstudio/download/"s>Rstudio.</a><br>
-Download the Basic MiKTeX Installer from <a target="_blank" href="https://miktex.org/download">MiKTeX.</a><br>
-Download and install pandoc from <a  target="_blank"href="pandoc.org">pandoc.</a><br>
-Before you actually can work with R Markdown, you need to install a few packages. 
-RStudio automatically detects which packages are needed if you create a new R Markdown file. 
-<br>To create a new R Markdown file you need to <br>
-open RStudio <br>
-click <i>File</i> in the menu <br>
-then <i>New File</i> <br>
-and finally <i>R Markdown.</i><br>
-RStudio detects that you miss some packages and asks if you want to install them. 
-Click Yes. RStudio then installs the required packages.
 
 
 <hr COLOR="darkred">
 
+
 <h3>Linux</h3>
+
+Before installing PsN on Linux, you should make sure that the required programs are installed on your computer.
+
+<ul>
+    <li>Perl version 5.10.1 or later</li>
+    <li>Python 3.6 or later</li>
+</ul>
+    
+<h4>Installing system dependencies for plotting and reporting</h4>
+
+To be able to use the automatic rplotting functionality (via the <code>-rplots</code> option)  and/or the <code>qa</code> tool the following needs to be installed:
+<ul>
+    <li><a target="_blank" href="https://cloud.r-project.org"s>R</a> version 3.5 or later</li>
+    <li>pandoc</li>
+    <li>System dependencies for R packages</li>
+</ul>
+
+<h5>Ubuntu/Debian</h5>
+<code>
+apt install r-base
+apt install pandoc
+apt install libpq-dev<br>
+apt install libcairo2-dev<br>
+apt install libssl-dev<br>
+apt install libcurl4-openssl-dev<br>
+apt install libmariadb-client-lgpl-dev<br>
+apt install libgmp-dev<br>
+apt install libmpfr-dev<br>
+apt install libxml2-dev<br>
+apt install libudunits2-dev<br>
+apt install libblas-dev<br>
+apt install liblapack-dev<br>
+apt install libmagick++-dev<br>
+</code>
+ 
+<h5>CentOS/Fedora</h5>
+<code>
+yum install R
+yum install pandoc
+yum install openssl-devel<br>
+yum install libcurl-devel<br>
+yum install cairo-devel<br>
+yum install mariadb-devel<br>
+yum install libxml2-devel<br>
+yum install ImageMagick-c++-devel<br>
+</code>
+<br>
+
+
 
 <h4>Installing Perl modules</h4>
 You might need to answer some questions interactively when using the cpan command.
@@ -138,6 +122,7 @@ cpan Statistics::Distributions<br>
 cpan Archive::Zip<br>
 cpan File::Copy::Recursive<br>
 cpan YAML::XS<br>
+cpan Inline<br>
 </code>
 </li>
 </ol> 
@@ -156,58 +141,44 @@ Open a terminal, cd to the <code>PsN-Source</code> directory and type: <code>sud
 <li>
 Read all messages carefully and answer the questions on screen. 
 
-The default settings are probably the best for most users. It is <b>highly</b> recommended to let the installation script create <code>psn.conf.</code> automatically unless 
-you are experienced in installing and configuring PsN.<br>
+The default settings are probably the best for most users. It is <b>highly</b> recommended to let the installation script create <code>psn.conf.</code> automatically unless you are experienced in installing and configuring PsN.<br>
 </li>
 </ol>
 
-<h4>Installing the PsNR package</h4>
-The dependencies of the PsNR package require some system packages to be installed. These are installed differently depending on the Linux distribution.
-
-<h5>Ubuntu/Debian</h5>
-<code>
-apt install libpq-dev<br>
-apt install libcairo2-dev<br>
-apt install libssl-dev<br>
-apt install libcurl4-openssl-dev<br>
-apt install libmariadb-client-lgpl-dev<br>
-apt install libgmp-dev<br>
-apt install libmpfr-dev<br>
-apt install libxml2-dev<br>
-apt install libudunits2-dev<br>
-apt install libblas-dev<br>
-apt install liblapack-dev<br>
-apt install libmagick++-dev<br>
-</code>
- 
-<h5>CentOS/Fedora</h5>
-<code>
-yum install openssl-devel<br>
-yum install libcurl-devel<br>
-yum install cairo-devel<br>
-yum install mariadb-devel<br>
-yum install libxml2-devel<br>
-yum install ImageMagick-c++-devel<br>
-</code>
-<br>
-Open R or rstudio and install the devtools package. Install PsNR using
-<code>devtools::install_github("UUPharmacometrics/PsNR@PsN4.9.0")</code>
-
-
-<h4>rmarkdown</h4>
-
-For Ubuntu and Debian Linux, apart from installing the R Markdown package, the following commands are needed to install the dependencies:
-<br><code>
-apt install pandoc<br>
-apt install texlive<br>
-apt install texlive-latex-extra<br>
-</code>
 
 
 <hr COLOR="darkred">
 
 
+
+
+
+
+
+
+
 <h3>macOS</h3>
+
+<h4>Required software on macOS</h4>
+
+Before you install PsN on Linux or MacOS, you should make sure that the required programs and modules are installed on your computer.
+<ul>
+    <li>Perl version 5.10.1 or later</li>
+    <li>Python 3</li>
+</ul>
+To be able to use the automatic rplotting functionality (via the <code>-rplots</code> option)  and/or the <code>qa</code> tool the following needs to be installed:
+<ul>
+    <li><a target="_blank" href="https://cloud.r-project.org"s>R</a> version 3.5 or later</li>
+    <li>pandoc</li>
+</ul>
+
+<h4>Installing system dependencies for plotting and reporting</h4>
+The dependencies of PsNR need some system packages to be installed. One option is to install them via via brew:<br>
+<code>openssl@1.1<br>
+cairo<br></code>
+<code>and<br>
+mariadb-connector-c.</code>
+<br><br>
 
 <h4>Installing Perl modules</h4>
 You might need to answer some questions interactively when using the cpan command.
@@ -221,10 +192,11 @@ cpan Statistics::Distributions<br>
 cpan Archive::Zip<br>
 cpan File::Copy::Recursive<br>
 cpan YAML::XS<br>
+cpan Inline<br>
 </code>
 </li>
 </ol> 
-NOTE: macOS 10.14 "Mojave" has problems with installing Moose using its default version of Perl. This has been reported to CPAN and discussed <a href="https://rt.cpan.org/Public/Bug/Display.html?id=127028">here</a>. One workaround that has been tested is to install a newer version of Perl via brew:
+NOTE: macOS 10.14 "Mojave" and later has problems with installing Moose using its default version of Perl. This has been reported to CPAN and discussed <a href="https://rt.cpan.org/Public/Bug/Display.html?id=127028">here</a>. One workaround that has been tested is to install a newer version of Perl via brew:
 <ol>
     <li>Install <a href="https://brew.sh">homebrew</a></li>
     <li>Install Perl via homebrew: <code>brew install perl</code></li>
@@ -264,19 +236,7 @@ If there is a message about PsN already being installed this message is misleadi
 what it should say is that PsN is already *partially* installed. This is not an error,
 just say yes to continue.</p>
 
-<h4>Installing the PsNR package</h4>
-The dependencies of PsNR need some system packages to be installed. One option is to install them via via brew:<br>
-<code>openssl@1.1<br>
-cairo<br></code>
-<code>and<br>
-mariadb-connector-c.</code>
-<br><br>
 
-Open rstudio and install the devtools package. Install PsNR using
-<code>devtools::install_github("UUPharmacometrics/PsNR@PsN4.9.0")</code>
-
-<h4>rmarkdown</h4>
-When using Rstudio, the installation will be taken care of behind the scenes.
 
 
 <hr COLOR="darkred">
@@ -284,14 +244,8 @@ When using Rstudio, the installation will be taken care of behind the scenes.
 <h2>Configuring PsN</h2>
 <li> If you did not let the installation script create the configuration file <code>psn.conf</code> for you, or if you are running NONMEM via NMQual or 
 on a cluster, you need to edit <code>psn.conf</code> in the PsN installation directory. <br>
-The document <a target="_blank" href="https://github.com/UUPharmacometrics/PsN/releases/download/4.7.0/psn_configuration.pdf">PsN Configuration.pdf</a> describes how to make the correct settings in the psn.conf file. 
+The document <a target="_blank" href="https://github.com/UUPharmacometrics/PsN/releases/download/5.0.0/psn_configuration.pdf">PsN Configuration.pdf</a> describes how to make the correct settings in the psn.conf file. 
 </li><br>
-
-<h3>R plots</h3>
-To make PsN always use a specific R library path, add the R library path to the <code>psn.conf file</code>.<br>
-Example:<br>
-<code>R_LIB_PATH=C:\R\library</code>
-<br>
 
 
 <hr COLOR="darkred">
@@ -303,7 +257,7 @@ If this argument is given, the bin scripts (PsN Utilities) will use a relative p
 This makes the PsN installation directory movable, as long as the relative position between the bin scripts and lib modules remains the same.<br>
 In addition the <code>[nm_versions]</code> section in psn.conf can list the name of the nmfe executables instead of the full path to the NONMEM installation directories 
 <b>if at runtime</b> the nmfe executable, chosen by default or with option -nm_version, is in the user $PATH, see documentation in 
-<a target="_blank" href="https://github.com/UUPharmacometrics/PsN/releases/download/4.7.0/psn_configuration.pdf">PsN Configuration.pdf</a>.
+<a target="_blank" href="https://github.com/UUPharmacometrics/PsN/releases/download/5.0.0/psn_configuration.pdf">PsN Configuration.pdf</a>.
 <br>The test package, if installed, will not be portable even if setup.pl is run with argument relative. If the test package is moved, the file 
 <code>test/includes.pm</code> must be edited manually before any tests are run.
 
@@ -311,13 +265,16 @@ In addition the <code>[nm_versions]</code> section in psn.conf can list the name
 <hr COLOR="darkred">
 
 <h2>Multiple PsN installations</h2> 
+
+<h3>On Windows</h3>
+Since each version of PsN comes in its own bundle, multiple versions can be installed at the same time, but only one can be active in PATH at a time.
+
+<h3>On Linux and macOS</h3>
 It is possible to have several installations of PsN and use them in parallel. The default version of PsN may be changed every time a new installation is made.
 To check which PsN version is the default use the command<br>
 <code>psn -version</code><br>
 A specific version may be called with its version number, for example<br>
-<code>execute-3.7.6  -help</code><br>
-<b>&#9755; Note</b>: When installing PsN 4 on Windows all previously installed versions (installed with the same bin directory,
-including PsN 3-versions) are fixed automatically so that they are callable with a specific version as explained above. This is a new feature of PsN 4 when installing on Windows.
+<code>execute-5.0.0  -help</code><br>
 
 </div>
 <div id="footer" style="padding-top:2px;padding-right:2px;padding-left:2px;"></div>
