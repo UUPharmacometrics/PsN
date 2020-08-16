@@ -580,13 +580,6 @@ sub llp_analyze
     push( @{$self -> results -> {'own'}}, \%proc_results );
 }
 
-sub modelfit_post_fork_analyze
-{
-    my $self = shift;
-
-    my @modelfit_results = @{$self->results};
-}
-
 sub modelfit_results
 {
     my $self = shift;
