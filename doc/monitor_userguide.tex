@@ -1,0 +1,158 @@
+\input{inputs/format_header.tex}
+\guidetitle{Monitor user guide}{2020-09-15}
+
+\begin{document}
+
+\maketitle
+\newcommand{\guidetoolname}{monitor}
+\tableofcontents
+\newpage
+
+\section{Introduction and example usage}
+The monitor script is used for monitoring an active scm or scmplus run.
+Below are three snapshots from continuous monitoring of an scm run.
+\begin{verbatim}
+monitor phenobarbital.1 -interval=1
+\end{verbatim}
+{\tiny
+\begin{verbatim}
+Model              Forward_3      ofvdrop exceed_eval  N_test    N_ok N_localmin N_failed StepSelected
+CLCV1-5                   ok         4.68           0       2       2          0        0       -
+VCVD1-2              started         1.51                   2       2          0        0       -
+VCV2-5                    ok         0.96           0       2       2          0        0       -
+CLCV2-5                   ok         0.08           0       2       2          0        0       -
+CLAPGR-2             started         0.02                   2       2          0        0       -
+CLWGT-5                                 -                   2       2          0        0       2
+VCVD2-2           notStarted            -                   2       2          0        0       -
+VWGT-5                                  -                   1       1          0        0       1
+
+Model              Forward_3      ofvdrop exceed_eval  N_test    N_ok N_localmin N_failed StepSelected
+CLAPGR-2             started         9.99                   2       2          0        0       -
+CLCV1-5                   ok         4.68           0       2       2          0        0       -
+VCVD1-2                   ok         1.51           0       2       2          0        0       -
+VCV2-5                    ok         0.96           0       2       2          0        0       -
+CLCV2-5                   ok         0.08           0       2       2          0        0       -
+VCVD2-2              started         0.01                   2       2          0        0       -
+CLWGT-5                                 -                   2       2          0        0       2
+VWGT-5                                  -                   1       1          0        0       1
+
+Model             Backward_1      ofvdrop exceed_eval  N_test    N_ok N_localmin N_failed StepSelected BackstepRemoved
+CLWGT-5              started      -134.49                   2       2          0        0       2               -
+VWGT-5               started      -134.53                   1       1          0        0       1               -
+CLAPGR-2                                -                   3       3          0        0       -               -
+CLCV1-5                                 -                   3       3          0        0       -               -
+CLCV2-5                                 -                   3       3          0        0       -               -
+VCV2-5                                  -                   3       3          0        0       -               -
+VCVD1-2                                 -                   3       3          0        0       -               -
+VCVD2-2                                 -                   3       3          0        0       -               -
+
+\end{verbatim}
+}
+
+\section{Output columns}
+{\bfseries Model}\\
+The name of the model in the scm log file, which is composed of the parameter, covariate and state number.
+
+\subsection{Columns summarizing the current iteration}
+These columns only appear in the output from monitor when there is a current iteration. 
+When the last iteration has finished, these columns are not present.
+
+{\bfseries Forward/Backward\_N} \\
+The column header is a unique identifier of the current iteration, composed of the search direction and the step number N in that direction. The column contents is the state in the current iteration 
+for each model, for example notStarted, started or ok. 
+The column is empty for models that are not run in the current iteration, for example models
+representing already selected parameter-covariate relations.
+
+{\bfseries ofvdrop}\\
+The drop in ofv for each model. For a started but not finished model the current ofv is read from 
+the psn.ext in the NM\_run subdirectory, and the drop relative the base model for the current iteration
+is computed. For continuous monitoring this value will be updated several
+times before the model is finished, as NONMEM writes new lines to psn.ext. 
+Often ofvdrop can be negative at the start of a run, i.e. the current ofv is 
+worse than the ofv of the base model. 
+The column contains a - for models that are not run in the current iteration.
+
+{\bfseries exceed\_eval}\\
+This column will indicate whether a finished model had a NONMEM message about maximum number
+of evaluations exceeded in the termination message. 0 means no, 1 means yes, and empty means
+model either not finished or not run.
+
+\subsection{Columns summarizing all iterations except the current}
+These columns summarize the contents of the scm log file. 
+They are not present until at least one iteration has been finished and written by PsN
+to the scm log file.
+NONMEM files are not parsed.
+
+{\bfseries N\_test}\\
+The number of times, i.e. in how many iterations, 
+the parameter-covariate relation has been tested.
+%fixme backward counted?
+
+{\bfseries N\_ok}\\
+How many times, out of N\_test, does the scm log file list an ofv that such that extended model
+has lower ofv than the base model?
+%fixme
+
+{\bfseries N\_localmin}\\
+How many times, out of N\_test, did the run end in a local minimum, i.e. the log file lists a
+higher ofv for the extended model than for the base model?
+
+{\bfseries N\_failed}\\
+How many times, out of N\_test, did the scm log file state that the model failed?
+
+{\bfseries StepSelected} \\
+In which forward step, if any, was the parameter-covariate relation selected?
+
+{\bfseries StepStashed} \\
+Only for scmplus: In which forward step, if any, was the parameter-covariate relation stashed, i.e. removed from the set of relations tested again?
+
+{\bfseries StepReadded} \\
+Only for scmplus: In which forward step, if any, was a previously stashed
+parameter-covariate relation retested?
+
+{\bfseries BackstepRemoved}\\ 
+Both for scm and scmplus: 
+In which backward step, if any, was a previously selected parameter-covariate relation removed?
+
+\section{Input and options}
+
+\subsection{Required input}
+The name of an scm or scmplus run directory is a required argument.
+
+\subsection{Optional input}
+
+\begin{optionlist}
+\optdefault{interval}{N}
+Invoke continuous monitoring by specifying the number of seconds
+between each summary of the run status.
+Without option -interval, continuous monitoring is turned off.
+\nextopt
+\optname{help}
+Print help text and exit.
+\nextopt
+\optname{version}
+Print version information and exit.
+\nextopt
+\end{optionlist}
+
+\end{document}
+
+
+{\tiny
+\begin{verbatim}
+MODEL            TEST     BASE OFV     NEW OFV         TEST OFV (DROP)    GOAL     dDF    SIGNIFICANT PVAL
+CLAPGR-2         PVAL    742.05105   721.58702             20.46402  >  18.30700   10        YES!  0.025157 
+CLWGT-2          PVAL    742.05105    FAILED                 FAILED  >   3.84150    1                    999
+VAPGR-2          PVAL    742.05105   726.38092             15.67013  >  18.30700   10              0.109470 
+VWGT-2           PVAL    742.05105    FAILED                 FAILED  >   3.84150    1                    999
+
+Parameter-covariate relation chosen in this forward step: CL-APGR-2
+CRITERION              PVAL < 0.05
+BASE_MODEL_OFV         742.05105
+CHOSEN_MODEL_OFV       721.58702
+Relations included after this step:
+CL      APGR-2  
+V       
+--------------------
+\end{verbatim}
+}

@@ -1,0 +1,93 @@
+#!/usr/bin/perl
+
+use FindBin qw($Bin);
+use lib "$Bin/../lib";
+
+# Don't edit the line below, it must look exactly like this.
+# Everything above this line will be replaced #
+
+use PsN;
+use monitor;
+use strict;
+use warnings;
+use Getopt::Long;
+
+sub usage
+{
+    my $name = 'monitor';
+	print("$name: Continuous monitoring of an active scm or scmplus run\n");
+    print("\nUsage:\n$name pathToPsNrunDirectory\n");
+	print("Options:\n");
+    print("-h or -help         Print this information and exit.\n");
+    print("-version            Print version information and exit.\n");
+    print("-interval=N         Invoke continuous monitoring by specifying the number of seconds\n");
+	print("                    between each summary of the run status.\n");
+    print("                    Without option -interval, continuous monitoring is turned off.\n");
+    print("\n");
+    exit;
+}
+
+my $directory = '.';
+my $help = '';
+my $h = '';
+my $version = undef;
+my $interval = undef;
+
+my $res = GetOptions('h' => \$h, 
+					 'help' => \$help,
+					 'version' => \$version,
+					 'interval:i' => \$interval,
+	);
+exit unless $res;
+
+if ($help or $h) {
+	usage();
+}
+
+if (defined $version) {
+    print "PsN version: " . $PsN::version . "\n";
+    exit
+}
+
+if(scalar(@ARGV) > 1){
+	die("monitor takes only the directory name as argument. Did you forget the option name, or to prepend the option name with a '-' sign?\n");
+}
+if (scalar(@ARGV) == 1){
+	$directory = $ARGV[0];
+}
+
+my $scriptname = monitor::get_scriptname($directory);
+my $tries = 2;
+
+if (not defined $scriptname){
+	print "Could not find a valid version_and_option_info.txt in directory $directory";
+	exit 1;
+}elsif(($scriptname eq 'scm') or ($scriptname eq 'scmplus')){
+
+	my $is_asrscm = 0;
+	$is_asrscm = 1 if ($scriptname eq 'scmplus');
+	my %options = ('logfile' => undef, 'search_direction' => undef,'run_on_slurm'=> undef);
+	my $found_count = monitor::get_options(directory => $directory,
+										   options => \%options);
+	unless ($found_count == 3){
+		print "Could not parse version_and_option_info.txt in directory $directory";
+		exit 1;
+	}
+
+	my $scmbase = $directory;
+	if ($is_asrscm){
+		$scmbase = $directory.'/rundir';
+	}
+	
+	monitor::monitor_scm(logfilename => $options{'logfile'},
+						 search_direction => $options{'search_direction'},
+						 run_on_slurm => $options{'run_on_slurm'},
+						 is_asrscm => $is_asrscm,
+						 directory => $scmbase,
+						 interval => $interval);
+
+}else{
+	print "monitor currently does not support $scriptname\n";
+}
+
+exit 0;

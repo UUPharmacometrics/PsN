@@ -32,6 +32,11 @@ LIBFILES= ui.pm \
 	ext/File/HomeDir.pm \
 	ext/Capture/Tiny.pm \
 	status_bar.pm \
+	model_plus.pm \
+	monitor.pm \
+	scmlogfile.pm \
+	scmlogstep.pm \
+	scmplus.pm \
 	nonmemrun.pm \
 	nonmemrun/localunix.pm \
 	nonmemrun/localwindows.pm \

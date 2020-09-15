@@ -5243,7 +5243,7 @@ sub need_data_filtering
     my $self = shift;
 
     my $ret = $self->problems->[0]->datas->[0]->have_ignore_accept();
-    return $ret > 0;    # Because moose doesn't accept 2 as true
+    return $ret > 0 ? 1 : 0;    # Because moose doesn't accept 2 as true
 }
 
 sub update_internal_msfi

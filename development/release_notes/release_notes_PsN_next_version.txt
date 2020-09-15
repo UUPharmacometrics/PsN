@@ -5,6 +5,8 @@ Changes and bug fixes from PsN 5.0.0 to x.x.x
 
    ___General___
 
+- PsN merged into PsN. New commands scmplus, scmreport and monitor added.
+
 
    ___common_options___
 
@@ -31,6 +33,7 @@ Changes and bug fixes from PsN 5.0.0 to x.x.x
  
 
    ___scm___
+
 
 
    ___sse___ 

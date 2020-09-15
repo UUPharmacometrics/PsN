@@ -139,11 +139,9 @@ For a complete list see common\_options.pdf or type psn\_options -h on the comma
 \section{Workflow}
 \begin{enumerate}
 \item Input checks, for example that DV is found in \$INPUT.
-
 \item Unless input model is already run,
 run a copy of the input model (Model 1) to get estimates.
 \item Create frem dataset according to section frem dataset below, include covariate observations 1 time.
-
 \item Create Model 2, model with covariates but without
 estimation of covariances between parameter and covariate ETAs,
 according to section below. frem dataset.
@@ -190,6 +188,7 @@ Estimate Model 6, include \$COV step.
 Estimate Model 4 (frem regular model), include \$COV step.
 Estimation is done in parallel with Model 6, if estimation of Model 6 was requested.
 \item Only if estimation of Model 4 failed to produce an ofv:
+
 \begin{enumerate}
 \item Create Model 7, which is a copy of Model 4 but with MAXEVAL=0.
 \item Run (Evaluate) Model 7.
@@ -452,8 +451,8 @@ the covariance step of model\_4 was successful.
 
 \noindent Post-processing is performed using Pharmpy and the output is generated in the results.json and results.csv. Created plots will be available in results.html.
 
-\begin{enumerate}
 The post-processing does the following:
+\begin{enumerate}
 \item Reads covariate names, rescaling factors and typical values from final\_models/model\_4.mod,
 and parameter labels from the last omega block of the model file.
 \item Using the formulas in section ``Conditional multi-variate normal'' below,

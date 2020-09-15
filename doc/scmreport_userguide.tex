@@ -1,0 +1,184 @@
+\input{inputs/format_header.tex}
+\guidetitle{scmreport user guide}{2019-09-15}
+
+\begin{document}
+
+\maketitle
+\newcommand{\guidetoolname}{scmreport}
+\tableofcontents
+\newpage
+
+
+\section{Summary}
+The scmreport script is used for summarizing the results of an scm or scmplus run.
+The examples below show output for an scmplus run.
+The output of scmreport is a summary of the contents of the scm log file. 
+NONMEM output files are not parsed. 
+
+\section{Output with default settings}
+\begin{verbatim}
+scmreport run11.scm
+\end{verbatim}
+{\tiny
+\begin{verbatim}
+Model            N_test    N_ok N_localmin N_failed StepSelected StepStashed StepReadded BackstepRemoved
+CLAPGR-2              4       2          2        0       -           1           3               -
+CLCV1-2               2       2          0        0       3           1           3               2
+CLWGT-2               2       2          0        0       2           -           -               3
+VCV2-2                3       3          0        0       4           1           3               1
+VCVD1-2               4       3          1        0       -           1           3               -
+VWGT-2                1       1          0        0       1           -           -               -
+\end{verbatim}
+}
+
+
+{\bfseries Model}\\
+The name of the model in the scm log file, which is composed of the parameter, covariate and state number.
+
+{\bfseries N\_test}\\
+The number of times, i.e. in how many iterations, 
+the parameter-covariate relation has been tested.
+%fixme backward counted?
+
+{\bfseries N\_ok}\\
+How many times, out of N\_test, does the scm log file list an ofv that such that extended model
+has lower ofv than the base model?
+%fixme
+
+{\bfseries N\_localmin}\\
+How many times, out of N\_test, did the run end in a local minimum, i.e. the log file lists a
+higher ofv for the extended model than for the base model?
+
+{\bfseries N\_failed}\\
+How many times, out of N\_test, did the scm log file state that the model failed?
+
+{\bfseries StepSelected} \\
+In which forward step, if any, was the parameter-covariate relation selected?
+
+{\bfseries StepStashed} \\
+Only for scmplus: In which forward step, if any, was the parameter-covariate relation stashed, i.e. removed from the set of relations tested again?
+
+{\bfseries StepReadded} \\
+Only for scmplus: In which forward step, if any, was a previously stashed
+parameter-covariate relation retested?
+
+{\bfseries BackstepRemoved}\\ 
+Both for scm and scmplus: 
+In which backward step, if any, was a previously selected parameter-covariate relation removed?
+
+\newpage
+
+\section{Output with option -ofv\_table}
+\begin{verbatim}
+scmreport run11.scm -ofv
+\end{verbatim}
+{\tiny
+\begin{verbatim}
+Step             covariate  parameter  state         BASEOFV          NEWOFV         OFVDROP   dDF    PVALrun  pvalue
+Forward 1              WGT          V      2       725.60200       685.37770        40.22430     1   2.26e-10    0.05
+Forward 2              WGT         CL      2       685.37770       663.09532        22.28238     1   0.000002    0.05
+Forward 3              CV1         CL      2       663.09532       653.70237         9.39295     1   0.002178    0.05
+Forward 4              CV2          V      2       653.70237       647.68823         6.01414     1   0.014192    0.05
+Forward 5                                                  -               -               -                -        
+Backward 1             CV2          V      1       647.68823       648.16473        -0.47650    -1   0.490010    0.01
+Backward 2             CV1         CL      1       648.16473       643.42136         4.74337    -1       9999    0.01
+Backward 3             WGT         CL      1       643.42136       648.26975        -4.84839    -1   0.027672    0.01
+Backward 4                                                 -               -               -                -        
+Final included         WGT          V      2       648.26975       749.50873      -101.23898    -1   8.15e-24        
+\end{verbatim}
+}
+
+
+
+{\bfseries Step}\\
+The search direction and the step number in that direction. The last rows list the included relations
+at the end of the scm or scmplus run.
+
+{\bfseries covariate}\\
+The name of the covariate.
+
+{\bfseries parameter}\\
+The name of the parameter.
+
+{\bfseries state}\\
+The scm state number.
+
+{\bfseries BASEOFV}\\
+Base ofv as read from the scm log file for the step.
+
+{\bfseries NEWOFV}\\
+New ofv for the selected model as read from the scm log file for the step.
+
+{\bfseries OFVDROP}\\
+Drop between BASEOFV and NEWOFV as read from the scm log file.
+
+{\bfseries dDF}\\
+The change in degrees of freedom when going from base model to new model.
+
+{\bfseries PVALrun}\\
+The actual p-value, computed based on change in ofv, for choosing the extended model.
+In a forward step the new model is the extended model and in a backward step the base model is the extended model.
+
+{\bfseries pvalue}\\
+The p-value cutoff for selecting/excluding a relation as read from the scm log file.
+
+\newpage
+
+\section{Input and options}
+
+\subsection{Required input}
+The name of an scm or scmplus run directory is a required argument.
+
+\subsection{Optional input}
+
+\begin{optionlist}
+\optname{ofv\_table}
+Show ofv etc for selected relations, instead of the default which is
+a summary of all tested relations.
+\nextopt
+\optdefault{decimals}{N}
+Only used in combination with option -ofv\_table.
+Number of decimals to display for OFV columns. Default is 5.
+\nextopt
+\optname{toR}
+Print results as data frame code. Default not set.
+\nextopt
+\optname{logfile}
+Name of scm logfile in the directory. 
+Default is the name of the logfile in
+version\_and\_option\_info.txt, 
+so normally this option is only needed if version\_and\_option\_info.txt is not present,
+or if the entire folder has been moved so that version\_and\_option\_info.txt cannot be used.
+\nextopt
+\optname{help}
+Print help text and exit.
+\nextopt
+\optname{version}
+Print version information and exit.
+\nextopt
+\end{optionlist}
+
+
+
+
+\end{document}
+
+
+{\tiny
+\begin{verbatim}
+MODEL            TEST     BASE OFV     NEW OFV         TEST OFV (DROP)    GOAL     dDF    SIGNIFICANT PVAL
+CLAPGR-2         PVAL    742.05105   721.58702             20.46402  >  18.30700   10        YES!  0.025157 
+CLWGT-2          PVAL    742.05105    FAILED                 FAILED  >   3.84150    1                    999
+VAPGR-2          PVAL    742.05105   726.38092             15.67013  >  18.30700   10              0.109470 
+VWGT-2           PVAL    742.05105    FAILED                 FAILED  >   3.84150    1                    999
+
+Parameter-covariate relation chosen in this forward step: CL-APGR-2
+CRITERION              PVAL < 0.05
+BASE_MODEL_OFV         742.05105
+CHOSEN_MODEL_OFV       721.58702
+Relations included after this step:
+CL      APGR-2  
+V       
+--------------------
+\end{verbatim}
+}

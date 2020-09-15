@@ -35,6 +35,7 @@ my %optional_options = (
              'llp' => '',
              'mcmp' => '',
              'mimp' => '',
+             'monitor' => '',
              'nca' => '',
              'nmoutput2so' => '',
              'nonpb' => '',
@@ -53,6 +54,8 @@ my %optional_options = (
              'rawresults' => '',
              'runrecord' => '',
              'scm' => '',
+             'scmplus' => '',
+             'scmreport' => '',
              'simeval' => '',
              'sir' => '',
              'sse' => '',
@@ -204,6 +207,11 @@ $help_text{-mcmp} = <<'EOF';
     See mcmp_userguide.pdf for details.
 EOF
 
+$help_text{-monitor} = <<'EOF';
+    monitor - Monitoring scm runs.
+    See monitor_userguide.pdf for details.
+EOF
+
 $help_text{-nca} = <<'EOF';
     nca - Non-compartmental analysis.
     See nca_userguide.pdf for details.
@@ -238,6 +246,7 @@ $help_text{-npfit} = <<'EOF';
 npfit - Nonparametric estimation using a range of NPSUPP values.
 See npfit_userguide.pdf for details.
 EOF
+
 $help_text{-parallel_retries} = <<'EOF';
     parallel_retries - Running multiple copies of a single model with tweaked
     initial estimates in parallel.
@@ -298,6 +307,16 @@ $help_text{-scm} = <<'EOF';
     See scm_userguide.pdf for details.
 EOF
 
+$help_text{-scmplus} = <<'EOF';
+    scmplus - An adaptive workflow for scm
+    See scmplus_userguide.pdf for details.
+EOF
+
+$help_text{-scmreport} = <<'EOF';
+    scmreport - Reporting for scm
+    See scmreport_userguide.pdf for details.
+EOF
+
 $help_text{-sir} = <<'EOF';
     sir - Sampling importance resampling
     See sir_userguide.pdf for details.
@@ -323,6 +342,7 @@ $help_text{-update_inits} = <<'EOF';
     NONMEM output file and put into a given model file.
     See update_inits_userguide.pdf for details.
 EOF
+
 $help_text{-update} = <<'EOF';
     update - read final THETA, OMEGA and SIGMA estimates from a
     NONMEM output file and put into a given model file.

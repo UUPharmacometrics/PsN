@@ -117,7 +117,8 @@ my @utilities = (
     'pind','nonpb','extended_grid','psn','psn_options','psn_clean',
     'runrecord','mcmp','lasso','mimp','xv_scm','parallel_retries',
     'boot_scm', 'gls', 'simeval', 'frem', 'randtest', 'linearize', 'crossval', 'pvar', 'nca', 'proseval', 'sir', 'rawresults',
-    'precond', 'covmat', 'nmoutput2so', 'benchmark', 'npfit', 'resmod', 'cddsimeval', 'qa', 'transform', 'boot_randtest'
+    'precond', 'covmat', 'nmoutput2so', 'benchmark', 'npfit', 'resmod', 'cddsimeval', 'qa', 'transform', 'boot_randtest',
+    'monitor', 'scmplus', 'scmreport'
     );
 
 my @win_modules = ('Moose', 'MooseX::Params::Validate', 'Math::Random', 'YAML::XS', 'Inline');

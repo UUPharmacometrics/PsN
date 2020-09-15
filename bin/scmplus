@@ -1,0 +1,271 @@
+#!/usr/bin/perl
+
+use FindBin qw($Bin);
+use lib "$Bin/../lib";
+
+# Don't edit the line below, it must look exactly like this.
+# Everything above this line will be replaced #
+
+use strict;
+use Getopt::Long;
+use Cwd;
+use common_options;
+use ui;
+# More PsN dependencies included with require further down
+
+my $scriptname='scmplus';
+
+my $cmd_line = $Bin.'/'.$scriptname . " " . join( " ", @ARGV );
+
+my %options;
+
+my %required_options = ();
+
+my %optional_options = ("p_cutoff:f"=> '',
+						"base_ofv:f"=> '',
+						"scope_reduction_steps:s" => '',
+						"keep_local_min!" => "",
+						"keep_failed!" => "",
+						"keep_covariance!" => "",
+						"keep_tables!" => "",
+						"setup_only" => "",
+						"retest_stashed_relations!" => "",
+						"maxevals:s" => "",
+						"fast!" => "",
+						"etas!" => "",
+						"ctype4!" => "",
+						"ignore_no_sigl!" => ""
+	);
+
+my $res = GetOptions( \%options, 
+		      @common_options::get_opt_strings,
+		      keys(%required_options),
+		      keys(%optional_options)
+    );
+exit unless $res;
+
+#cannot run setup here, must read config file first
+
+my %help_text;
+$help_text{Pre_help_message} = <<'EOF';
+    Adaptive Scope Reduction SCM
+EOF
+
+	$help_text{Description} = <<'EOF';
+    Adaptive Scope Reduction SCM
+EOF
+	$help_text{Examples} = <<'EOF';    
+    scmplus config_run1.scm 
+EOF
+
+    $help_text{Options} = <<'EOF';
+    A configuration file must be given as argument. The format of the configuration 
+    file follows the format of the scm configuration file exactly.
+
+    The model file must be specified in the configuration file, 
+	it cannot be given on the command-line.
+
+    The following options are valid:
+EOF
+
+    $help_text{-h} = <<'EOF';
+    -h | -?
+
+    With -h or -? scmplus will print a list of options and exit.
+EOF
+
+    $help_text{-help} = <<'EOF';
+    -help
+
+    With -help scmplus will print this, longer, help message.
+EOF
+    $help_text{-p_cutoff} = <<'EOF';
+      -p_cutoff=number
+
+      Cutoff p-value in scope reduction. Default equal to p_forward set for scm,
+      which in turn has default 0.05 if not set in the scm config file.
+EOF
+
+$help_text{-retest_stashed_relations} = <<'EOF';
+     -retest_stashed_relations
+
+     Default set. Unset with -no-retest_stashed_relations.
+     If option -fast is set, the default changes to not set.
+     If set then parameter-covariate relations that were stashed
+     in scope reduction will be retested at the end of the forward search.
+EOF
+
+    $help_text{-scope_reduction_steps} = <<'EOF';
+      -scope_reduction_steps=1,2,...
+
+      Comma-separated list of steps after which to perform scope reduction. 
+      Default 1 (after first step only). 
+      If option -fast is set, the default changes to -scope_reduction_steps=all
+      Set -scope_reduction_steps=all 
+      to perform scope reduction after all forward steps.
+      To never perform scope reduction set -scope_reduction_steps=none 
+EOF
+$help_text{-keep_local_min} = <<'EOF';
+      -keep_local_min
+
+      Default set. Unset with -no-keep_local_min. If set then keep candidate models that 
+      terminated with local minimum in scope reduction.
+EOF
+$help_text{-keep_failed} = <<'EOF';
+      -keep_failed
+
+      Default not set.
+      By default candidate models that failed to give any ofv at all will be stashed
+      in scope reduction. If -keep_failed is set then keep candidate models that 
+      failed to give any ofv.
+EOF
+
+$help_text{-base_ofv} = <<'EOF';
+-base_ofv=x
+
+    Use this value as the ofv of the base model with included relations,
+        i.e. do not run the base model with included relations but use
+        this value instead.
+EOF
+$help_text{-keep_covariance} = <<'EOF';
+      -keep_covariance
+
+    By default the $COVARIANCE record will be deleted from the models, to save 
+    run time. If option -keep_covariance is set, $COVARIANCE will be kept. 
+EOF
+$help_text{-keep_tables} = <<'EOF';
+      -keep_tables
+
+    By default, all $TABLE will be deleted from the models, to save disk space.
+    If option -keep_tables is set, $TABLE will be kept.
+EOF
+$help_text{-ctype4} = <<'EOF';
+      -ctype4
+
+    Default set. Unset with -no-ctype4.
+    If ctype4 is set, and a classical estimation method is used, 
+    scmplus will ensure CTYPE=4 is set in $EST
+EOF
+$help_text{-etas} = <<'EOF';
+      -etas
+
+    Default not set. 
+    If -etas is set, and a classical estimation method is used, scmplus will 
+    ensure record $ETAS is used in the model, that FILE is set to the phi-file 
+    of the base model of the current iteration,
+    and that MCETA in $EST is set to at least 1.
+EOF
+$help_text{-fast} = <<'EOF';
+      -fast
+
+    Default not set. 
+    If -fast is set, the scmplus defaults for options -ctype4, -retest_stashed_relations,
+    -scope_reduction_steps and -maxevals will change to -ctype4 set, 
+    -retest_stashed_relations unset, -scope_reduction_steps=all and -maxevals=3.1 
+    If any of those options are set individually, the individual setting will override the
+    -fast defaults.
+EOF
+$help_text{-setup_only} = <<'EOF';
+      -setup_only
+
+    Default not set. 
+    If -setup_only is set, scmplus will setup everything but not start the scm run.
+EOF
+$help_text{-ignore_no_sigl} = <<'EOF';
+      -ignore_no_sigl
+
+    Default not set. 
+    If not set, scmplus will stop with an error message if 
+    SIGL is not set in $EST and ADVAN 6,8,9 or 13 is used
+    If set, and SIGL is not set, a warning will be printed but scmplus will run.
+EOF
+
+
+$help_text{-maxevals} = <<'EOF';
+    -maxevals=3.1
+
+    Default 3.1
+    If set to a decimal number, $EST MAXEVALS will be set to that number times 
+    the actual number of function evaluations in the base model,
+    rounded down to the nearest integer and capped at 9999. 
+    If set to an integer smaller than 10000 will be interpreted as the new value
+    of $EST MAXEVALS. A warning will be printed if the new integer value is 
+    less than or equal to 10. 
+    If set to an integer equal to or larger than 9999 then this option
+    will be ignored by scmplus and passed on to common_options maxevals
+    (see documentation for common options).
+EOF
+    $help_text{Post_help_message} = <<'EOF';
+    Also see 'scm -h' for a list of scm options,
+    and 'psn_options -h' for a description of common options.
+EOF
+
+
+common_options::online_help($scriptname, \%options, \%help_text, \%required_options, \%optional_options);
+
+
+require scmplus;
+require model;
+require tool::scm;
+require tool::scm::config_file;
+require scm_util;
+require model_plus;
+
+if (scalar(@ARGV)>0){
+	$options{'config_file'} = $ARGV[0];
+}
+
+#options hash might get modified here, e.g. threads set in scm config file
+my $config_file = scm_util::get_config_object(options => \%options,
+											  common_tool_options =>\@common_options::tool_options);
+
+#if scmplus-specific maxevals is set that common option will be removed from %options
+my $modelplus_maxevals = model_plus::set_specific_and_common_maxevals(options => \%options);
+
+#we modify some common defaults that we want into restore common options
+scmplus::set_common_defaults(options => \%options);
+
+# we need the modified options hash here, e.g. common options set in scm config file
+# here we get default options from psn.conf
+# and store common options for restore options later, e.g. maxevals and handle crashes set in psn.conf or commandline
+common_options::setup( \%options, $scriptname ); 
+
+
+#config_file object might get modified here: filenames changed to absolute path
+scm_util::check_options(scriptname => 'scmplus',
+						options => \%options,
+						config_file => $config_file,
+						require_model => 1);
+
+
+my $model = scm_util::setup_model(options => \%options,
+								  filename => $config_file->model,
+								  model_parameter_hashref => {eval common_options::model_parameters(\%options)});
+
+ui -> category('scm');
+
+my $asr = scmplus->new(%{scmplus::p_cutoff_default($config_file)},
+					   %{scmplus::fast_defaults($options{'fast'})},
+					   models => [$model],
+					   %options,
+					   maxevals => $modelplus_maxevals,
+					   %{scmplus::parsed_scope_reduction_steps($options{'scope_reduction_steps'})});
+
+$asr ->setup(config_file => $config_file,
+			 options => \%options,
+			 common_options_hashref => {eval( $common_options::parameters )},
+	);
+
+$asr->print_options(cmd_line => $cmd_line, 
+	   			    scmplus_options => [keys(%required_options), keys(%optional_options),'directory'],
+					tool_options => \@common_options::tool_options);
+
+scm_util::copy_config_file(options => \%options, directory => $asr->directory);
+
+ui->print(category => 'scm',
+	      message => "Starting $scriptname forward search");
+
+$asr->run();
+
+ui->print(category => 'scm',
+	      message => "$scriptname done\n");

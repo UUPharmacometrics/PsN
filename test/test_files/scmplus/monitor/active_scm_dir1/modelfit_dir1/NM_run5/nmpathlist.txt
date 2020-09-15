@@ -1,0 +1,3 @@
+The pathlist /usr/bin obtained from file /opt/nm73/nmloc is placed at the head of PATH
+The gfortran compiler at one of those locations will be used if it exists.
+If this is not what you want, then modify the file /opt/nm73/nmloc accordingly.

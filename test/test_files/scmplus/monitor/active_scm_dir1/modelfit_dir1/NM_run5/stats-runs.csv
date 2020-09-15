@@ -1,0 +1,12 @@
+$VAR1 = [
+          {
+            'minimization_successful' => 1,
+            'significant_digits' => '6.1',
+            'pass_picky' => 0,
+            'covariance_step_successful' => 1,
+            'estimate_near_boundary' => 0,
+            'covariance_step_warnings' => 0,
+            'ofv' => '625.89604505154568'
+          }
+        ];
+Selected 1
