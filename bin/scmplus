@@ -6,6 +6,8 @@ use lib "$Bin/../lib";
 # Don't edit the line below, it must look exactly like this.
 # Everything above this line will be replaced #
 
+use FindBin qw($Bin);
+
 use strict;
 use Getopt::Long;
 use Cwd;
@@ -15,7 +17,7 @@ use ui;
 
 my $scriptname='scmplus';
 
-my $cmd_line = $Bin.'/'.$scriptname . " " . join( " ", @ARGV );
+my $cmd_line = $Bin . '/' . $scriptname . " " . join(" ", @ARGV);
 
 my %options;
 
