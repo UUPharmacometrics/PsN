@@ -981,8 +981,10 @@ if (not running_on_windows()) {
         cp('Python.pm', File::Spec->catfile($psn_lib_path, 'Inline'));
         my $auto_path = File::Spec->catfile($psn_lib_path, 'auto/Inline/Python');
         mkpath($auto_path);
-        my $libfile = (glob('blib/arch/auto/Inline/Python/Python.*'))[0];
-        cp($libfile, $auto_path);
+        my @libfiles = glob('blib/arch/auto/Inline/Python/Python.*');
+        for my $libfile (@libfiles) {
+            cp($libfile, $auto_path);
+        }
         chdir "..";
     }
 }
