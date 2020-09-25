@@ -346,12 +346,6 @@ $help_text{-search_direction} = <<'EOF';
     configuration file.
 EOF
 
-#$help_text{-second_order} = <<'EOF';
-#    -second_order
-#    Only relevant with linearize method. Use second order Taylor expansion around ETAs instead of
-#    default first order expansion. The user must ensure that CONDITIONAL LAPLACIAN is set in $EST.
-#EOF
-
 $help_text{-update_derivatives} = <<'EOF';
     -update_derivatives
 
