@@ -113,8 +113,6 @@ sub modelfit_analyze
 
         # ---  Evaluate the models on the remainder data sets  ----
 
-        # {{{ eval models
-
         for ( my $i = 0;
             $i < scalar @{$self -> prediction_models->[$model_number-1]{'own'}};
             $i++ ) {
@@ -146,13 +144,9 @@ sub modelfit_analyze
         print "Running xv runs\n";
         $mod_eval -> run;
 
-        # }}} eval models
-
     }
 
     # ------------  Cook-scores and Covariance-Ratios  ----------
-
-
 
     my $do_pca = 1;
     ui -> print( category => 'cdd',
@@ -211,8 +205,6 @@ sub modelfit_analyze
 
     # -  Perform a PCA on the cook-score:covariance-ratio data --
 
-    # {{{ PCA
-
     for (my $i=0; $i< scalar(@{$cov_ratios}); $i++){
         #replace undef cov ratio with 0, determinant of covmatrix 0 when covstep failed
         $cov_ratios->[$i]=0 unless (defined $cov_ratios->[$i]);
@@ -227,11 +219,7 @@ sub modelfit_analyze
         my @projections = @{$proj_ref};
         my @standard_deviation = @{$std_ref};
 
-        # }}}
-
         # ----  Mark the runs with CS-CR outside N standard deviations of the PCA ----
-
-        # {{{ mark runs
 
         for( my $i = 0; $i <= $#projections; $i++ ) {
             my $vector_length = 0;
@@ -249,8 +237,6 @@ sub modelfit_analyze
     }
 
     $self -> outside_n_sd(\@outside_n_sd);
-
-    # }}} mark runs
 
     my %run_info_return_section;
     my @run_info_labels=('Date','PsN version','NONMEM version');
@@ -272,7 +258,6 @@ sub modelfit_analyze
     $covariance_return_section{'values'} = \@res_array;
 
     push( @{$self -> results->[$model_number-1]{'own'}},\%covariance_return_section );
-
 
     my %return_section;
     $return_section{'name'} = 'relative.changes.percent';
@@ -299,8 +284,8 @@ sub modelfit_analyze
 sub get_ofv_estimates_se
 {
     my %parm = validated_hash(\@_,
-                              cdd_models => { isa => 'ArrayRef', optional => 0 },
-                              problem_index => { isa => 'Int', optional => 1, default => 0 },
+        cdd_models => { isa => 'ArrayRef', optional => 0 },
+        problem_index => { isa => 'Int', optional => 1, default => 0 },
     );
     my $cdd_models = $parm{'cdd_models'};
     my $problem_index = $parm{'problem_index'};
@@ -348,11 +333,11 @@ sub get_ofv_estimates_se
 sub get_delta_ofv
 {
     my %parm = validated_hash(\@_,
-                              output => { isa => 'output', optional => 0 },
-                              problem_index  => { isa => 'Int', default => 0 },
-                              table_index  => { isa => 'Int', default => -1 },
-                              skipped_keys => { isa => 'ArrayRef', optional => 0 },
-                              sample_ofv => { isa => 'ArrayRef', optional => 0 },
+        output => { isa => 'output', optional => 0 },
+        problem_index  => { isa => 'Int', default => 0 },
+        table_index  => { isa => 'Int', default => -1 },
+        skipped_keys => { isa => 'ArrayRef', optional => 0 },
+        sample_ofv => { isa => 'ArrayRef', optional => 0 },
     );
     my $output = $parm{'output'};
     my $problem_index = $parm{'problem_index'};
@@ -768,10 +753,7 @@ sub general_setup
         }
     }
 
-
     # ------------------------  Print a log-header  -----------------------------
-
-    # {{{ log header
 
     open( LOG, ">>".$self -> logfile->[$model_number-1] );
     my $ui_text = sprintf("%-5s",'RUN').','.sprintf("%20s",'FILENAME  ').',';
@@ -810,11 +792,7 @@ sub general_setup
 
     print LOG "\n";
 
-    # }}} log header
-
     # ------------------------  Log original run  -------------------------------
-
-    # {{{ log orig
 
     open( LOG, ">>".$self -> logfile->[$model_number-1] );
     $ui_text = sprintf("%5s",'0').','.sprintf("%20s",$model -> filename).',';
@@ -848,11 +826,7 @@ sub general_setup
 
     print LOG "\n";
 
-    # }}} log orig
-
     # ---------------------  Initiate some variables ----------------------------
-
-    # {{{ inits
 
     # Case-deletion Diagnostics will only work for models with one problem.
     my $datafiles = $model->datafiles(absolute_path => 1);
@@ -872,12 +846,9 @@ sub general_setup
 
     my ( @seed, $new_datas, $skip_ids, $skip_keys, $skip_values, $remainders, $pr_bins );
 
-    # }}} inits
-
     if ( not $done ) {
         # --------------  Create new case-deleted data sets  ----------------------
 
-        # {{{ create new
         my $output_directory = $self -> directory.'/m'.$model_number;
         ($new_datas, $skip_ids, $skip_keys, $skip_values, $remainders) =
             data::cdd_create_datasets(
@@ -904,7 +875,6 @@ sub general_setup
         if ($model->outputs->[0]->have_output and $self->update_inits){
             $templatemodel -> update_inits( from_output => $model->outputs->[0] );
         }
-        #$templatemodel->problems->[0]->own_print_order
 
         for ( my $j = 1; $j <= $ndatas; $j++ ) {
             my @datasets = ( $new_datas -> [$j-1], $remainders -> [$j-1] );
@@ -1042,8 +1012,6 @@ sub general_setup
 
         # ---------  Recreate the datasets and models from a checkpoint  ----------
 
-        # {{{ resume
-
         #need stored_bins and skipped_keys
 
         ui -> print( category => 'cdd',
@@ -1118,9 +1086,6 @@ sub general_setup
             message  => "Using $stored_bins previously sampled case-deletion sets ".
             "from $stored_filename" )
         unless $self -> parent_threads > 1;
-
-        # }}} resume
-
     }
 
     # Use only the first half (the case-deleted) of the data sets.
@@ -1131,8 +1096,6 @@ sub general_setup
     $self -> prediction_models->[$model_number-1]{'own'} = $new_models[1];
 
     # ---------------------  Create the sub tools  ------------------------------
-
-    # {{{ sub tools
 
     #this is just a modelfit
     my $subdir = $class;
@@ -1163,9 +1126,7 @@ sub general_setup
             directory => "modelfit_dir1",
             %subargs ) );
 
-    # }}} sub tools
     $self->tools->[-1]->add_to_nmoutput(extensions => ['ext','cov','coi']);
-
 }
 
 sub llp_pre_fork_setup
@@ -1259,7 +1220,6 @@ sub update_raw_results
         model_number => { isa => 'Int', optional => 1 }
     );
     my $model_number = $parm{'model_number'};
-
 
     my ($dir,$file) =
     OSspecific::absolute_path( $self -> directory,$self -> raw_results_file->[$model_number-1] );
@@ -1419,15 +1379,15 @@ sub create_R_plots_code
 {
     my $self = shift;
     my %parm = validated_hash(\@_,
-                              rplot => { isa => 'rplots', optional => 0 }
-        );
+        rplot => { isa => 'rplots', optional => 0 }
+    );
     my $rplot = $parm{'rplot'};
 
     my $case_column_name = $self->models->[0]->problems->[0]->inputs->[0]->options->[($self->case_column)-1]->name;
     $rplot->add_preamble(code => [
-                             "case.column.name   <-'".$case_column_name."'",
-                             "skipped.id.file <-'".$self->skipped_individuals_filename."'"
-                         ]);
+            "case.column.name   <-'".$case_column_name."'",
+            "skipped.id.file <-'".$self->skipped_individuals_filename."'"
+        ]);
 }
 
 no Moose;
