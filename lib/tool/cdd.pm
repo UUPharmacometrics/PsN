@@ -580,13 +580,6 @@ sub llp_analyze
     push( @{$self -> results -> {'own'}}, \%proc_results );
 }
 
-sub modelfit_post_fork_analyze
-{
-    my $self = shift;
-
-    my @modelfit_results = @{$self->results};
-}
-
 sub modelfit_results
 {
     my $self = shift;
@@ -1335,33 +1328,6 @@ sub update_raw_results
         print RRES $row_str;
     }
     close( RRES );
-}
-
-sub read_cdd_log
-{
-    my $self = shift;
-    my $found_log = 0;
-    my $found_cdd_id = 0;
-
-    if( -e $self -> directory.'object.txt' ) {
-        $found_log = 1;
-        open( OLOG, '<'.$self -> directory.'object.txt' );
-        my @olog = <OLOG>;
-        my $str = "(";
-        for ( my $i = 1; $i < $#olog; $i++ ) {
-            $str = $str.$olog[$i];
-        }
-        $str = $str.")";
-        my %tmp = eval( $str );
-
-        if( exists $tmp{'cdd_id'} ) {
-            $self -> cdd_id($tmp{'cdd_id'});
-            $found_cdd_id = 1;
-        }
-        close( OLOG );
-    }
-
-    return $found_log ,$found_cdd_id;
 }
 
 sub pca

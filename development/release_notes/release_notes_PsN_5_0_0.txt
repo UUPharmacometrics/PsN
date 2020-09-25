@@ -1,0 +1,67 @@
+*********************************************
+Changes and bug fixes from PsN 4.9.0 to 5.0.0
+*********************************************
+
+
+   ___General___
+
+- The PsN documentation no longer comes bundled with the PsN installation package
+
+
+   ___common_options___
+
+- New option -slurm_cluster to select a cluster when more than one is available
+- New option -html that will render rmarkdown to html instead of pdf
+- Remove unused common option -debug
+
+
+   ___Cluster/Grid___
+
+- All NONMEM jobs will automatically be cancelled when the PsN process is interrupted
+
+
+   ___runrecord___
+
+- Support zero-padded run numbers, like run001.mod
+
+
+   ___sumo___
+
+- New option -covariance to present off-diagonal omegas and sigmas as covariances
+- Removed -debug option. Didn't do anything
+
+
+   ___vpc/npc___
+
+- Constrain default automatic binning to have between 2 and 10 bins
+
+
+   ___frem___
+
+- Automatic reordering of OMEGAs and ETAs when needed.
+- Remove -fork_runs option
+- Postfrem replaced with postprocessing in Pharmpy
+- New method for parameter uncertainty: BIPP
+ 
+
+   ___scm___
+
+- Support for covariates not in the dataset, but derived in the model code
+- Fallback to regular mean and median calculations if the new weighted
+  mean/median of a time-varying covariate is outside of the original range
+  of the covariate.
+
+
+   ___sse___ 
+
+- New option -initial_etas to use etas from simulation models
+
+
+   ___transform___
+
+- Fix bug causing full block initial estimates to be off and sometimes non-positive-definite.
+
+   
+  ___qa___
+
+- Extensive updates

@@ -6,7 +6,7 @@ job_polling_interval=1
 [default_options]
 threads=5
 nmfe=1
-nm_output=ext,cov,cor,coi,phi
+nm_output=ext,cov,cor,coi,phi,phm,cnv,smt,rmt,npd,npe,npi,npl,ets
 
 [default_execute_options]
 display_iterations=1

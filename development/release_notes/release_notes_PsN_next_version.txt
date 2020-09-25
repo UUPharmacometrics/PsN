@@ -1,163 +1,48 @@
-This PsN version has been tested on the following systems:
-
-Windows 10 64-bit with Strawberry Perl 5.24.0 , gfortran 4.9.2 and NONMEM 7.1.0, 7.1.2, 7.2.0 and 7.3.0
-Windows 7 64-bit with Strawberry Perl 5.18.2, gfortran 4.7.3 and NONMEM 7.2.0 and 7.3.0
-Windows 7 64-bit with Strawberry Perl 5.24.1, gfortran 4.9.2 and NONMEM 7.4.0
-Windows 7 64-bit with ActivePerl 5.16.3 (32-bit), gfortran 4.6.0 and NONMEM 7.3.0
-MacOS X 10.6.6 with ActiveState Perl 5.16.3, ifort 12.0.0 and NONMEM 7.2.0, 7.3.0 and 7.4.0
-Ubuntu Linux 16.10 with Perl 5.22, gfortran 6.2 and NONMEM 7.2.0, 7.3.0 and 7.4.0
-Scientific Linux 6.3 with Perl 5.10.1, gfortran 4.4.7 and NONMEM 7.2.0
-Scientific Linux 6.3 with Perl 5.10.1, gfortran 5.1.1 and NONMEM 7.3.0 and 7.4.0
-CentOS 7 with Perl 5.16.3, gfortran 4.8.5 and NONMEM 7.3.0 and 7.4.0
-
-
-************************
-Installation
-************************
-
-Follow the installation instructions on
-https://uupharmacometrics.github.io/PsN/install.html
-
-************************
-Documentation
-************************
-All documentation can be found at the PsN website:
-https://uupharmacometrics.github.io/PsN/docs.html
-
-************************
-Dependencies 
-************************
-
-- The rplot functionality now depend on the PsNR R package available from github at UUPharmacometrics/PsNR
-
-************************
-Known issues 
-************************
-
-- Windows users need to be careful to choose 
-  a Perl version where the extra modules needed for PsN are available. 
-  For new Perl installations the PsN team recommends Strawberry Perl
-  See the instructions on https://uupharmacometrics.github.io/PsN/install.html
-
-- Installation problem on some Windows systems where 
-  perl 'system' command does not work. Make sure perl module File::Copy::Recursive
-  is installed *before* (re)running the installation script setup.pl
-
 *********************************************
-Changes and bug fixes from PsN 4.8.0 to x.x.x
+Changes and bug fixes from PsN 5.0.0 to x.x.x
 *********************************************
-
-
 
 
    ___General___
 
-- The PsN documentation no longer comes bundled with the PsN installation package
+- PsN merged into PsN. New commands scmplus, scmreport and monitor added.
 
 
    ___common_options___
-
-- New option -slurm_cluster to select a cluster when more than one is available
-- New option -html that will render rmarkdown to html instead of pdf
-- Remove unused common option -debug
-
-
-   ___NONMEM output parsing___
 
 
 
    ___Cluster/Grid___
 
-- All NONMEM jobs will automatically be cancelled when the PsN process is interrupted
-
-
-   ___Test scripts___
-
-
-
-   ___crossval___
 
 
    ___runrecord___
 
-- Support zero padded run numbers, like run001.mod
 
 
    ___sumo___
 
-- New option -covariance to present off-diagonal omegas and sigmas as covariances
-- Removed -debug option. Didn't do anything
-
-
-   ___mcmp___
-
-
-   ___bootstrap___
 
 
    ___vpc/npc___
 
-- Contrain default automatic binning two have between 2 and 10 bins
 
 
    ___frem___
 
-- Automatic reordering of OMEGAs and ETAs when needed.
-- Remove -fork_runs option
  
-   ___proseval___
-
 
    ___scm___
 
-- Support for covariates not in the dataset, but derived in the model code
-- Fallback to regular mean and median calculations if the new weighted
-  mean/median of a time varying covariate is outside of the original range
-  of the covariate.
-
-   ___linearize___
-
-
-   ___nca___
-
-
-   ___xv_scm___
 
 
    ___sse___ 
 
-- New option -initial_etas to use etas from simulation models
-
-
-   ___simeval___
-
-
-   ___runrecord___
-
-
-   ___update_inits___
-
-
-   ___parallel_retries___
-
-
-   ___sir___
-	
-   ___precond___
-
-
-   ___cdd___
-
-
-   ___rplots___
-
-   ___nmoutput2so___
 
 
    ___transform___
 
-- Fix bug causing full block initial estimates to be off and sometimes non-positive-definite.
 
-
-   ___resmod___ 
+   
+  ___qa___
 

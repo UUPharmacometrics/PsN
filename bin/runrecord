@@ -48,6 +48,7 @@ my $res = GetOptions( \%options,
     keys(%optional_options) );
 exit unless $res;
 
+delete $options{'parafile'};
 
 my $eval_string = common_options::model_parameters(\%options);
 

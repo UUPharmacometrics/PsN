@@ -117,11 +117,12 @@ my @utilities = (
     'pind','nonpb','extended_grid','psn','psn_options','psn_clean',
     'runrecord','mcmp','lasso','mimp','xv_scm','parallel_retries',
     'boot_scm', 'gls', 'simeval', 'frem', 'randtest', 'linearize', 'crossval', 'pvar', 'nca', 'proseval', 'sir', 'rawresults',
-    'precond', 'covmat', 'nmoutput2so', 'benchmark', 'npfit', 'resmod', 'cddsimeval', 'qa', 'transform', 'boot_randtest'
+    'precond', 'covmat', 'nmoutput2so', 'benchmark', 'npfit', 'resmod', 'cddsimeval', 'qa', 'transform', 'boot_randtest',
+    'monitor', 'scmplus', 'scmreport'
     );
 
-my @win_modules = ('Moose', 'MooseX::Params::Validate', 'Math::Random', 'YAML::XS');
-my @nix_modules = ('Moose', 'MooseX::Params::Validate', 'Math::Random', 'YAML::XS');
+my @win_modules = ('Moose', 'MooseX::Params::Validate', 'Math::Random', 'YAML::XS', 'Inline');
+my @nix_modules = ('Moose', 'MooseX::Params::Validate', 'Math::Random', 'YAML::XS', 'Inline');
 my @recommended_modules = ('Archive::Zip','Statistics::Distributions');
 
 my @modules;
@@ -848,7 +849,7 @@ foreach my $file (@utilities) {
         }
         if ($old_version eq $version) {
             if (not $confirmed) {
-                print("\nThis version ($version) looks like an older installed\n",
+                print("\nThis version ($version) looks like the same or an older installed\n",
                        "version ($old_version) of PsN. Would you like to make\n",
                        "this version ($version) the default? [y/n]");
                 $confirmed = 1;
@@ -928,7 +929,8 @@ if (not running_on_windows()) {
         $ENV{'R_LIBS_SITE'} = $rlib_path;
         $ENV{'R_LIBS_USER'} = $rlib_path;
         run_r("install.packages('renv', lib='$rsafe_path', repos='$repos')");
-        run_r("options(renv.consent=TRUE); renv::settings" . '\$' . "use.cache(FALSE); renv::restore(library='$rsafe_path', lockfile='renv.lock')");
+        run_r("options(renv.consent=TRUE); renv::settings" . '\$' . "use.cache(FALSE); renv::restore(library='$rsafe_path', lockfile='PsNR/renv.lock')");
+        run_r("remotes::install_local('PsNR', lib='$rsafe_path', repos=NULL, dependencies=F)");
         $set_rlib_path = 1;
     }
 
@@ -962,11 +964,28 @@ if (not running_on_windows()) {
         } else {
             $venv_python = "$python_lib_path/bin/python";
         }
-        my $pharmpy_file = (glob("pharmpy*.zip"))[0];
+        my $pharmpy_file = (glob("pharmpy-core*.zip"))[0];
         system("$venv_python -m pip install wheel");
         system("$venv_python -m pip install -r requirements.txt");
         system("$venv_python -m pip install $pharmpy_file --upgrade --no-deps --force-reinstall");
         $set_python_lib_path = 1;
+
+        # Install bundled Inline::Python
+        print "Installing bundled Inline::Python perl model\n";
+        chdir "inline-python-pm" or die;
+        $ENV{'INLINE_PYTHON_EXECUTABLE'} = $venv_python;
+        system "perl Makefile.PL";
+        system "make";
+
+        mkpath(File::Spec->catfile($psn_lib_path, 'Inline'));
+        cp('Python.pm', File::Spec->catfile($psn_lib_path, 'Inline'));
+        my $auto_path = File::Spec->catfile($psn_lib_path, 'auto/Inline/Python');
+        mkpath($auto_path);
+        my @libfiles = glob('blib/arch/auto/Inline/Python/Python.*');
+        for my $libfile (@libfiles) {
+            cp($libfile, $auto_path);
+        }
+        chdir "..";
     }
 }
 
@@ -1124,25 +1143,6 @@ if (not running_on_windows()) {
         cp $tempconf, $confpath;
         unlink $tempconf;
     }
-
-    # Install bundled Inline::Python
-    print "Installing bundled Inline::Python perl model\n";
-    chdir "Inline-Python-0.56" or die;
-    $ENV{'INLINE_PYTHON_EXECUTABLE'} = $venv_python;
-    system "perl Makefile.PL";
-
-    if (running_on_windows()) {
-        system "dmake";
-    } else {
-        system "make";
-    }
-    mkpath(File::Spec->catfile($psn_lib_path, 'Inline'));
-    cp('Python.pm', File::Spec->catfile($psn_lib_path, 'Inline'));
-    my $auto_path = File::Spec->catfile($psn_lib_path, 'auto/Inline/Python');
-    mkpath($auto_path);
-    my $libfile = (glob('blib/arch/auto/Inline/Python/Python.*'))[0];
-    cp($libfile, $auto_path);
-    chdir "..";
 }
 
 print "\n\nPress ENTER to exit the installation program.\n";

@@ -1,0 +1,91 @@
+#!/usr/bin/perl
+
+use FindBin qw($Bin);
+use lib "$Bin/../lib";
+
+# Don't edit the line below, it must look exactly like this.
+# Everything above this line will be replaced #
+
+use PsN;
+use scmlogfile;
+use scmlogstep;
+use monitor;
+use strict;
+use warnings;
+use Getopt::Long;
+
+sub usage
+{
+    my $name = 'scmreport';
+	print("$name: Summary of scm logfile\n");
+    print("\nUsage:\n$name pathToScmRunDirectory\n");
+	print("Options:\n");
+    print("-ofv_table          Show ofv etc for selected relations instead of counts of tested \n");
+    print("                    relations, default not set\n");
+    print("-decimals           Number of decimals to display for ofv and delta ofv. Default is 5\n");
+    print("-toR                Print results as data frame code. Default not set.\n");
+    print("-logfile            Name of scm logfile in the directory. Default is the name of the logfile in\n");
+    print("                    version_and_option_info.txt, so normally this option should not be set.\n");
+    print("-h or -help         Print this information and exit.\n");
+    print("-version            Print version information and exit.\n");
+    print("\n");
+    exit;
+}
+
+my $ofv_table = 0;
+my $toR = 0;
+my $logfile = undef;
+my $decimals = 5;
+my $help = '';
+my $h = '';
+my $version = undef;
+
+my $res = GetOptions('h' => \$h, 
+					 'help' => \$help,
+					 'ofv_table!' => \$ofv_table,
+					 'toR!' => \$toR,
+					 'version' => \$version,
+					 'decimals:i' => \$decimals,
+					 'logfile:s' => \$logfile,);
+exit unless $res;
+
+if ($help or $h) {
+	usage();
+}
+
+if (defined $version) {
+    print "PsN version: " . $PsN::version . "\n";
+    exit
+}
+
+my $directory;
+
+if (scalar(@ARGV) == 1) {
+	$directory = $ARGV[0];
+	unless (-d $directory){
+		die("Cannot find directory $directory\n");
+	}
+} else {
+	die("scmreport needs exactly one argument, the scm run directory name, see scmreport -help.\n");
+}
+
+unless (defined $logfile){
+	my %options = ('logfile' => undef);
+	my $found_count = monitor::get_options(directory => $directory,
+										   options => \%options);
+	unless ($found_count == 1){
+		print "Could not find logfile name in version_and_option_info.txt in directory $directory\n";
+		exit 1;
+	}
+	$logfile = $options{'logfile'}; #this is with full path
+	$directory = '';
+}else{
+	unless (-e $directory.'/'.$logfile){
+		die("Cannot find logfile $logfile in directory $directory\n");
+	}
+}
+
+my $log = scmlogfile->new(filename => $logfile,
+						  directory => $directory);
+
+print $log->get_report_string(decimals => $decimals, as_R => $toR, ofv_table => $ofv_table);

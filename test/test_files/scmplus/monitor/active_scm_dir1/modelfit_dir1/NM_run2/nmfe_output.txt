@@ -1,0 +1,32 @@
+Starting NMTRAN
+  
+ WARNINGS AND ERRORS (IF ANY) FOR PROBLEM    1
+             
+ (WARNING  2) NM-TRAN INFERS THAT THE DATA ARE POPULATION.
+Pathlist information for compiler and MPI systems are located in nmpathlist.txt
+
+Building NONMEM Executable
+Starting nonmem execution ...
+License Registered to: Pharmetheus AB
+Expiration Date:    14 DEC 2017
+Current Date:       10 NOV 2017
+Days until program expires :  34
+
+
+ First Order Conditional Estimation
+ MONITORING OF SEARCH:
+
+
+0ITERATION NO.:    0    OBJECTIVE VALUE:   629.241670963753        NO. OF FUNC. EVALS.:   7
+ CUMULATIVE NO. OF FUNC. EVALS.:        7
+ NPARAMETR:  6.0375E-03  1.3207E+00  2.8764E+00  7.7080E-01 -1.9000E-05  1.7791E-01  2.6725E-02
+ PARAMETER:  1.0000E-01  1.0000E-01  1.0000E-01  1.0000E-01  1.0000E-01  1.0000E-01  1.0000E-01
+ GRADIENT:   9.9244E-03  8.8731E-02  2.3936E-02  1.9437E-03  1.6604E+01  3.5730E-02  4.0468E-03
+
+0ITERATION NO.:   15    OBJECTIVE VALUE:   625.347285903486        NO. OF FUNC. EVALS.:  10
+ CUMULATIVE NO. OF FUNC. EVALS.:      149
+ NPARAMETR:  6.0892E-03  1.3204E+00  2.8498E+00  7.7478E-01 -4.5780E-03  1.6113E-01  2.7299E-02
+ PARAMETER:  1.0852E-01  9.9765E-02  9.0720E-02  1.0935E-01 -3.5538E-01  5.0454E-02  1.1062E-01
+ GRADIENT:  -8.7163E-06 -7.2760E-06 -2.1686E-06  7.3295E-07  4.0708E-07 -2.8258E-06  6.5800E-08
+ Elapsed estimation time in seconds:     1.88
+ Elapsed covariance time in seconds:     1.75

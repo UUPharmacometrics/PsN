@@ -1,0 +1,279 @@
+\input{inputs/format_header.tex}
+\guidetitle{scmplus user guide}{2020-09-15}
+
+\begin{document}
+
+\maketitle
+\newcommand{\guidetoolname}{scmplus}
+\tableofcontents
+\newpage
+
+
+\section{Overview}
+The scmplus program is a wrapper around the scm script that reduces the number of times
+that insignificant parameter-covariate relations are retested. The insignificant runs are often
+the most unstable and difficult to estimate, and they take a considerable amount of computing time.
+The method used is called Adaptive Scope Reduction.
+
+\subsection{Overview of basic scm algorithm}
+
+The basic scm algorithm proceeds in a Forward inclusion phase and a
+Backward elimination phase. In the forward phase each parameter-covariate (par-cov) combination 
+in the scope are tested one
+at a time. The par-cov that yields the largest drop in OFV, provided it is
+significant, is retained in the model. The remaining par-cov are then
+tested again in the updated model and the one with the largest drop in
+OFV (assuming significance) is retained. This stepwise inclusion
+proceeds until no more significant par-cov can be identified. The
+Backward elimination removes par-cov from the Forward model in a
+stepwise fashion at a stricter significance level. Once all remaining par-cov 
+are significant, the final model has been established.
+
+
+\subsection{Summary of improvements in scmplus}
+The scmplus algorithm increases the efficiency of the legacy scm
+algorithm through the following changes:
+\subsubsection{Adaptive scope reduction} 
+Parameter-covariate relations that have
+not shown promise in early steps are not tested in later steps. However,
+before proceeding to the backward elimination phase, the 
+parameter-covariate relations are re-tested. 
+
+Specifically, after each step
+set with scmplus option -scope\_reduction\_steps, scmplus will stash all relations that are insignificant
+according to option -p\_cutoff. Option -keep\_local\_min can be used to further control which relations
+are stashed.
+When the reduced scope forward search is finished, either because all relations have been included or
+because no more relations are significant, scmplus will retest the stashed relations provided that option
+-retest\_stashed\_relations is set. If any of the retested relations is found to be significant,
+the forward inclusion phase will proceed as with the regular scm.
+
+\subsubsection{Limit the number of function evaluations}
+To avoid excessive
+iterations without improvement in OFV, the max no of function
+evaluations are limited (default to 3.1 times the function evaluations
+used in the base model). This feature is invoked with option -maxevals.
+\subsubsection{Only run NONMEM estimation step}
+By default, scmplus will drop \$COVARIANCE and \$TABLE from the model.
+Options -keep\_covariance and -keep\_tables can be used to turn off this feature.
+\subsubsection{Alternative termination criteria}
+Since the scm is only concerned with
+changes in OFV, the CTYPE=4 criteria is used instead of the default.
+This feature is invoked with option -ctype4.
+\subsubsection{Appropriate numerical settings}
+With ADVAN 6, 8, 9 and 13, scmplus requires SIGL to be set.
+This feature can be turned off with option -ignore\_no\_sigl.
+
+
+\section{Input and options}
+
+The scmplus program depends on the scm tool of PsN, and all scm options apply also to scmplus,
+with the exception of -linearize.
+Please refer to scm\_userguide.pdf for help on scm options.
+
+Example:
+\begin{verbatim}
+scmplus run101.scm -scope_reduction_steps=1,2,3 -p_cutoff=0.05
+\end{verbatim}
+
+\subsection{Required input}
+An scm configuration file is required on the command-line. The format of the configuration file follows the format of 
+the scm configuration file exactly. 
+The input model must be set in the configuration file, it cannot be given on the scmplus commandline. 
+
+No other option is required.
+
+\subsection{Optional input}
+These options are specific to scmplus, and they can only be given on the command-line, not in the
+scm configuration file.
+
+\begin{optionlist}
+\optdefault{scope\_reduction\_steps}{comma-separated list of integers}
+Comma-separated list of steps after which to perform scope reduction. Default 1 (after first step only).
+To perform scope reduction after every forward step set -scope\_reduction\_steps=all 
+To never perform scope reduction set -scope\_reduction\_steps=none 
+\nextopt
+\optname{retest\_stashed\_relations}
+Default set. Unset with -no-retest\_stashed\_relations.
+If set then parameter-covariate relations that were stashed
+in scope reduction will be retested at the end of the forward search.
+\nextopt
+\optdefault{p\_cutoff}{number}
+Cutoff p-value in scope reduction. Default is equal to p\_forward,
+which in turn has default value 0.05 if not set in the scm config file.
+\nextopt
+\optname{keep\_local\_min}
+Default set. Unset with -no-keep\_local\_min. If set then candidate models that
+terminated with local minimum are kept in scope reduction.
+\optname{keep\_covariance}
+By default the \$COVARIANCE record will be deleted from the models, to save run time.
+If option -keep\_covariance is set, the \$COVARIANCE record will be kept.
+\nextopt
+\optname{keep\_tables}
+By default all \$TABLE will be deleted from the models.
+If option -keep\_tables is set, all \$TABLE will be kept.
+\nextopt
+\optdefault{maxevals}{number}
+Default maxevals in scmplus. 
+If set to a decimal number, and the estimation method is classical,
+\$EST MAXEVALS will be set to that number times 
+the actual number of function evaluations in the base model,
+rounded down to the nearest integer and capped at 9999. 
+If set to an integer smaller than 10000 will be interpreted as the new value
+of \$EST MAXEVALS. A warning will be printed if the new integer value is 
+less than or equal to 10. 
+If set to an integer equal to or larger than 9999 then this option
+will be ignored by scmplus and passed on to common\_options maxevals
+(see documentation for common options).
+\optname{ctype4}
+Default set, unset with -no-ctype4.
+If -ctype4 is set, and a classical estimation method is used,
+scmplus will ensure CTYPE=4 is set in \$EST
+\nextopt
+\optname{ignore\_no\_sigl}
+Default not set.
+If not set, scmplus will stop with an error message if
+SIGL is not set in \$EST and ADVAN 6,8,9 or 13 is used.
+If set, and SIGL is not set, a warning will be printed but scmplus will run.
+\nextopt
+\optname{fast}
+Default not set. 
+If -fast is set, the scmplus defaults for options -ctype4, -retest\_stashed\_relations,
+-scope\_reduction\_steps and -maxevals will change to -ctype4 set, 
+-retest\_stashed\_relations unset, -scope\_reduction\_steps=all and -maxevals=3.1\\ 
+If any of those options are set individually, the individual setting will override the
+-fast defaults.
+\nextopt
+\optname{etas}
+Default not set. 
+If -etas is set, and a classical estimation method is used, scmplus will ensure record \$ETAS is used
+in the model, that FILE is set to the phi-file of the base model of the current iteration,
+and that MCETA in \$EST is set to at least 1.
+\nextopt
+\optdefault{base\_ofv}{number}
+Only applicable when included\_relations is set in the scm config file.
+Use this value as the ofv of the base model with included relations,
+i.e. do not run the base model with included relations but use
+this value instead.
+\nextopt
+\optname{setup\_only}
+Default not set. 
+If -setup\_only is set, scmplus will setup everything but not start the scm run.
+\nextopt
+\end{optionlist}
+
+
+\end{document}
+
+\section{Setup steps}
+
+\subsection{Filter data}
+No estimation or maxeval, only \$TABLE step. Ensure no ACCEPT or IGNORE needed.
+
+\subsection{Update model}
+\begin{itemize}
+\item Update \$DATA to filtered file and remove ACCEPT, IGNORE
+\item Drop \$COV.
+%\item Remove poorly supported ETAs
+\item Warn if OMEGA blocks.
+\item Warn if IOV.
+\item Warn if eta on epsilon, AR1, L2, etc
+\item Set MAXEVAL=1000 (or lower). After that number of evaluations the OFV will be very close to the minima.
+\item Set CTYPE=4. It will detect when the OFV hasn’t changed for many iterations. OFV are what we are basing our decisions on.
+%\item Make sure boundaries are as tight as possible.
+\item Warn if option retries is on
+\end{itemize}
+
+\section{config file}
+
+\subsection{start of script}
+\begin{itemize}
+\item Parse using standard code
+\item run extra input checks
+\end{itemize}
+
+\subsection{after each sub-run}
+parse log-file. Get set of included relations after final step in run. get path to model+lst in m1 or final models
+
+pass file reference, scan using set of functions? fields can be empty (significant YES! or empty).
+split on '>' first
+split on whitespace. check header
+grep FAILED what does it mean? save for later
+
+check example backward search
+
+{\tiny
+\begin{verbatim}
+MODEL            TEST     BASE OFV     NEW OFV         TEST OFV (DROP)    GOAL     dDF    SIGNIFICANT PVAL
+CLAPGR-2         PVAL    742.05105   721.58702             20.46402  >  18.30700   10        YES!  0.025157 
+CLWGT-2          PVAL    742.05105    FAILED                 FAILED  >   3.84150    1                    999
+VAPGR-2          PVAL    742.05105   726.38092             15.67013  >  18.30700   10              0.109470 
+VWGT-2           PVAL    742.05105    FAILED                 FAILED  >   3.84150    1                    999
+
+Parameter-covariate relation chosen in this forward step: CL-APGR-2
+CRITERION              PVAL < 0.05
+BASE_MODEL_OFV         742.05105
+CHOSEN_MODEL_OFV       721.58702
+Relations included after this step:
+CL      APGR-2  
+V       
+--------------------
+\end{verbatim}
+}
+
+\subsection{Before each sub-run}
+If any included relations then look up included-relations-base-model.lst. If not exist check option base\_ofv
+If exist then parse lst. Get ofv, final estimates, upper lower bounds, number of iterations
+Update/add new entry in config file object for inits, lowerbounds, upperbounds for each included relation.
+
+Beware of wildcards. Wildcards are replaced by all valid alternatives by config\_file.pm.
+Probably ok to first set wildcard and then on following line set exception, but
+not in opposite order. If working with object then just set new value.
+
+Test: hockey-stick (two-theta relation) inits and bounds.
+override wildcard inits and bounds.
+Use data-dumper for config file?
+
+labeling of relation thetas in code is \verb|$parameter.$covariate.$i| where i is 1 to number
+of thetas in that parcov relation.
+do update\_inits first to get final estimates, then
+Always the last thetas, so loop from beginning and make hash name->upper,lower,init.
+In model->new we have ensure\_unique\_labels when parsing new file. If so then drop underscore in hash
+
+in logfile the model column is parameter.covariate-state
+filename is parameter.covariate.state.'.mod'
+number of thetas is a field in relations hash, just like inits and bounds
+\begin{verbatim}
+$self -> relations->{$par}{$cov}{'nthetas'}{$state},
+$self -> relations->{$par}{$cov}{'inits'}{$state},
+$self -> relations->{$par}{$cov}{'bounds'}{$state} 
+\end{verbatim}
+
+change in logfile format since 4.7.0? diff
+
+\section{Types of scm sub-runs}
+
+
+\subsection{Single iteration scm sub-run}
+
+\paragraph{-max\_steps=1}
+Only run one iteration even if additional relations left to test after
+first iteration.
+
+\paragraph{-base\_ofv=X}
+Set base ofv of base model so that included relations model not rerun.
+
+\paragraph{-parallel\_states}
+If multiple states on par-cov combo then test all in parallel.
+
+
+
+\subsection{Full iteration scm sub-run}
+
+
+
+\section{Reduce scope}\label{}
+
+\subsection{Q: Is next step a scope reduction step}
+
+\end{document}

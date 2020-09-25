@@ -5240,27 +5240,10 @@ sub get_xpose_runno_and_suffix
 
 sub need_data_filtering
 {
-
     my $self = shift;
-    #my $do_filtering=0;
-    #my @check_list;
-    return $self->problems->[0]->datas->[0]->have_ignore_accept();
 
-    #my $ignorelist = $self -> get_option_value(record_name=>'data',
-#                                          option_name=>'IGNORE',
-#                                          option_index => 'all');
-#    push (@check_list,@{$ignorelist}) if (defined $ignorelist);
-#    my $accept_list = $self -> get_option_value(record_name=>'data',
-#                                                option_name=>'ACCEPT',
-#                                                option_index => 'all');
-#    push (@check_list,@{$accept_list}) if (defined $accept_list);
-#    foreach my $val (@check_list){
-#        unless (length($val)==1){
-#            $do_filtering=1;
-#            last;
-#        }
-#    }
-#    return $do_filtering;
+    my $ret = $self->problems->[0]->datas->[0]->have_ignore_accept();
+    return $ret > 0 ? 1 : 0;    # Because moose doesn't accept 2 as true
 }
 
 sub update_internal_msfi

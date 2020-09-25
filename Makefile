@@ -32,6 +32,11 @@ LIBFILES= ui.pm \
 	ext/File/HomeDir.pm \
 	ext/Capture/Tiny.pm \
 	status_bar.pm \
+	model_plus.pm \
+	monitor.pm \
+	scmlogfile.pm \
+	scmlogstep.pm \
+	scmplus.pm \
 	nonmemrun.pm \
 	nonmemrun/localunix.pm \
 	nonmemrun/localwindows.pm \
@@ -182,7 +187,6 @@ RELFILES=$(addprefix PsN-Source/lib/,$(LIBFILES)) \
 TEXFILES=$(wildcard doc/*.tex)
 PDFFILES=$(TEXFILES:.tex=.pdf)
 VERSION=`sed -n 's/.*\$version\s*=\s*.\([0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*\).;/\1/p' lib/PsN.pm`
-ZIPFILE="PsN-${VERSION}.zip"
 TARFILE="PsN-${VERSION}.tar.gz"
 NMOUTPUT2SOFILE="nmoutput2so-${VERSION}.zip"
 
@@ -192,7 +196,7 @@ main:
 .PHONY : clean
 
 clean:
-	@-rm -rf $(DOCUMENTS) nmoutput2so nmoutput2so-*.zip PsN-Source psn_test_package.zip development/completion_files doc/*.bbl doc/*.bcf doc/*.blg doc/*-blx.bib doc/*.xml doc/*.aux doc/*.log doc/*.pdf doc/inputs/*eps-converted-to.pdf doc/inputs/version.tex PsN-*.tar.gz PsN-*.zip
+	@-rm -rf $(DOCUMENTS) nmoutput2so nmoutput2so-*.zip PsN-Source development/completion_files doc/*.bbl doc/*.bcf doc/*.blg doc/*-blx.bib doc/*.xml doc/*.aux doc/*.log doc/*.pdf doc/inputs/*eps-converted-to.pdf doc/inputs/version.tex PsN-*.tar.gz
 
 version:
 	@cd doc; sed -n 's/.*\$version\s*=\s*.\([0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*\).;/\\newcommand\{\\psnversion\}\{\1\}/p' ../lib/PsN.pm >inputs/version.tex
@@ -203,7 +207,6 @@ doc/%.pdf: version doc/%.tex
 doc: $(PDFFILES) 
 
 release: main completion rel_dir $(RELFILES) $(PDFFILES)
-	@ rm -f $(ZIPFILE)
 	@ rm -f $(TARFILE)
 	@ mkdir -p PsN-Source/development
 	@ mkdir -p PsN-Source/development/completion_files
@@ -218,13 +221,13 @@ release: main completion rel_dir $(RELFILES) $(PDFFILES)
 	@ cp doc/PsN.bib PsN-Source/lib
 	@ chmod -R a+r PsN-Source/test/test_files
 	@ sed -i 's/dev\s*=\s*1;/dev = 0;/' PsN-Source/lib/PsN.pm
-	@ python3 ./development/scripts/renv_lock.py
-	@ cp ../devel/pharmpy/.tox/dist/*.zip PsN-Source/
-	@ cp ../devel/pharmpy/requirements.txt PsN-Source/
-	@ cp -ar ../devel/Inline-Python-0.56 PsN-Source/
-	@ rm -rf PsN-Source/Inline-Python-0.56/.git
-	@ rm -rf PsN-Source/Inline-Python-0.56/.gitignore
-	@ zip -rq $(ZIPFILE) PsN-Source/
+	@ cp -ar PsNR PsN-Source
+	@ cd pharmpy; tox -e run -- pharmpy --version
+	@ cp pharmpy/.tox/dist/*.zip PsN-Source/
+	@ cp pharmpy/requirements.txt PsN-Source/
+	@ cp -ar inline-python-pm PsN-Source/
+	@ rm -rf PsN-Source/inline-python-pm/.git
+	@ rm -rf PsN-Source/inline-python-pm/.gitignore
 	@ tar czf $(TARFILE) PsN-Source/
 
 # Release the nmoutput2so separately
@@ -242,8 +245,6 @@ nmoutput2so: version
 	@ mv nmoutput2so/lib/psn.conf_template nmoutput2so/lib/psn.conf
 	@ zip -r ${NMOUTPUT2SOFILE} nmoutput2so/
 
-testpackage:
-	@ zip -rq psn_test_package test
 
 COMPFILES=boot_scm \
 	bootstrap \

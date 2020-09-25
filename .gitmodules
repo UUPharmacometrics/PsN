@@ -1,0 +1,9 @@
+[submodule "inline-python-pm"]
+	path = inline-python-pm
+	url = https://github.com/niner/inline-python-pm.git
+[submodule "pharmpy"]
+	path = pharmpy
+	url = https://github.com/pharmpy/pharmpy.git
+[submodule "PsNR"]
+	path = PsNR
+	url = https://github.com/UUPharmacometrics/PsNR.git

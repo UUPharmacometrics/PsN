@@ -1,0 +1,39 @@
+Starting NMTRAN
+  
+ WARNINGS AND ERRORS (IF ANY) FOR PROBLEM    1
+             
+ (WARNING  2) NM-TRAN INFERS THAT THE DATA ARE POPULATION.
+Pathlist information for compiler and MPI systems are located in nmpathlist.txt
+
+Building NONMEM Executable
+Starting nonmem execution ...
+License Registered to: Pharmetheus AB
+Expiration Date:    14 DEC 2017
+Current Date:       10 NOV 2017
+Days until program expires :  34
+
+
+ First Order Conditional Estimation
+ MONITORING OF SEARCH:
+
+
+0ITERATION NO.:    0    OBJECTIVE VALUE:   629.288157287597        NO. OF FUNC. EVALS.:  15
+ CUMULATIVE NO. OF FUNC. EVALS.:       15
+ NPARAMETR:  6.0375E-03  1.3207E+00  2.8764E+00  7.7080E-01 -1.0000E-03 -1.0000E-03 -1.0000E-03 -1.0000E-03 -1.0000E-03 -1.0000E-03
+            -1.0000E-03 -1.0000E-03 -1.0000E-03  1.7791E-01  2.6725E-02
+ PARAMETER:  1.0000E-01  1.0000E-01  1.0000E-01  1.0000E-01  1.0000E-01  1.0000E-01  1.0000E-01  1.0000E-01  1.0000E-01  1.0000E-01
+             1.0000E-01  1.0000E-01  1.0000E-01  1.0000E-01  1.0000E-01
+ GRADIENT:  -2.6128E-01 -1.7757E-01 -2.3435E-02  1.5747E-03 -8.3709E+00  1.7201E+00  8.5891E+00  3.0606E+00  4.3065E+00 -3.3895E+00
+            -6.5838E+00 -8.8364E+00 -4.0193E+00 -9.4504E-03 -1.7794E-02
+
+0ITERATION NO.:   32    OBJECTIVE VALUE:   610.694688719034        NO. OF FUNC. EVALS.:  34
+ CUMULATIVE NO. OF FUNC. EVALS.:      709
+ NPARAMETR:  4.8482E-03  1.3182E+00  2.8635E+00  7.8785E-01  3.6501E-01  7.0387E-03  4.2761E-02  2.3155E-01 -8.6628E-02  8.4662E-01
+             2.7058E+00  1.3566E+00  9.7451E-01  7.8669E-02  3.0710E-02
+ PARAMETER: -1.1938E-01  9.8076E-02  9.5525E-02  1.4029E-01  4.8816E-01  1.0962E-01  1.5168E-01  3.5689E-01 -6.5897E-03  9.0007E-01
+             2.1901E+00  1.2749E+00  9.9831E-01 -3.0803E-01  1.6949E-01
+ GRADIENT:   1.9522E-03  2.2996E-03  1.2992E-03  1.8696E-04 -1.0186E-04  4.3431E-04  3.3975E-04  2.8488E-05 -5.3660E-05 -9.3847E-06
+             4.5773E-06 -1.9709E-04 -2.8442E-05  2.6643E-04  2.3202E-03
+ NUMSIGDIG:         4.8         5.1         5.0         5.6         5.6         4.7         3.8         5.8         5.1         6.0
+                    6.1         5.0         5.5         5.1         4.3
+ Elapsed estimation time in seconds:     4.64

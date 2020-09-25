@@ -1,0 +1,41 @@
+Model directory /home/kajsa/sandbox/asrscm/asrscm_dir13/m1
+
+MODEL            TEST     BASE OFV     NEW OFV         TEST OFV (DROP)    GOAL     dDF    SIGNIFICANT PVAL
+CLAPGR-2         PVAL    740.27803   724.29604             15.98199  >  16.91900    9              0.067259 
+CLWGT-2          PVAL    740.27803   687.76393             52.51410  >   3.84150    1        YES!  4.27e-13 
+VWGT-2           PVAL    740.27803   618.00249            122.27553  >   3.84150    1        YES!  2.01e-28 
+
+Parameter-covariate relation chosen in this forward step: V-WGT-2
+CRITERION              PVAL < 0.05
+BASE_MODEL_OFV         740.27803
+CHOSEN_MODEL_OFV       618.00249
+Relations included after this step:
+CL      
+V       WGT-2   
+--------------------
+
+Model directory /home/kajsa/sandbox/asrscm/asrscm_dir13/reduced_scm_dir1/m1
+
+MODEL            TEST     BASE OFV     NEW OFV         TEST OFV (DROP)    GOAL     dDF    SIGNIFICANT PVAL
+CLAPGR-2         PVAL    618.00249   601.48398             16.51852  >  16.91900    9              0.056812 
+CLWGT-2          PVAL    618.00249   582.62460             35.37789  >   3.84150    1        YES!  2.72e-09 
+VWGT-3           PVAL    618.00249   617.02229              0.98020  >   3.84150    1              0.322150 
+
+Parameter-covariate relation chosen in this forward step: CL-WGT-2
+CRITERION              PVAL < 0.05
+BASE_MODEL_OFV         618.00249
+CHOSEN_MODEL_OFV       582.62460
+Relations included after this step:
+CL      WGT-2   
+V       WGT-2   
+--------------------
+
+Model directory /home/kajsa/sandbox/asrscm/asrscm_dir13/reduced_scm_dir1/scm_dir1/m1
+
+MODEL            TEST     BASE OFV     NEW OFV         TEST OFV (DROP)    GOAL     dDF    SIGNIFICANT PVAL
+CLAPGR-2         PVAL    582.62460   571.64659             10.97801  >  16.91900    9              0.277220 
+CLWGT-3          PVAL    582.62460   582.62460              0.00000  >   3.84150    1              0.998580 
+VWGT-3           PVAL    582.62460   581.83791              0.78669  >   3.84150    1              0.375100 
+
+--------------------
+

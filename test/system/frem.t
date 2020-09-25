@@ -7,6 +7,11 @@ use Test::More;
 use FindBin qw($Bin);
 use lib "$Bin/.."; #location of includes.pm
 use includes; #file with paths to PsN packages and $path variable definition
+use PsN;
+
+if (not have_pharmpy()) {
+    plan skip_all => 'Cannot test frem without python and pharmpy';
+}
 
 my $interactive=0;
 our $tempdir = create_test_dir('system_frem');

@@ -1,0 +1,99 @@
+PsN version: 4.7.0
+Run started: 2017-11-10 at 09:17:03
+version_and_option_info.txt is overwitten if the run is restarted later using option -directory.
+The original file from the first call is saved as original_version_and_option_info.txt.
+
+Command:
+/home/PMX/Projects/Pharmetheus/PMX-SCM-PMX-1/perl/bin/scmplus configboth.scm
+
+NONMEM:
+/opt/nm73
+
+Actual values optional scm options (undefined values not listed):
+-epsilon=1
+-foce=1
+-global_init=0.001
+-gof=p_value
+-linearize=0
+-logfile=/home/kajsa/sandbox/demoPsNplus/scmplus_dir9/scmlog.txt
+-noabort=0
+-only_successful=0
+-p_backward=0.001
+-p_value=0.005
+-parallel_states=0
+-search_direction=forward
+-update_derivatives=0
+
+Actual values optional PsN (common) options (undefined values not listed):
+-abort_on_fail=0
+-accepted_ofv_difference=0.5
+-add_retries=0
+-always_datafile_in_nmrun=0
+-check_nmtran=0
+-clean=2
+-compress=0
+-condition_number_limit=1000
+-correlation_limit=0.85
+-crash_restarts=4
+-degree=0.1
+-directory=/home/kajsa/sandbox/demoPsNplus/scmplus_dir9/rundir/
+-display_iterations=0
+-handle_crashes=1
+-handle_msfo=0
+-large_omega_cv_limit=0.8
+-large_sigma_cv_limit=0.8
+-large_theta_cv_limit=0.5
+-last_est_complete=0
+-lsf_sleep=3
+-min_retries=0
+-missing_data_token=-99
+-near_bound_sign_digits=2
+-near_zero_boundary_limit=0.01
+-nice=19
+-nm_output=ext,cov,cor,coi,phi
+-nm_version=default
+-nmfe=1
+-nmfe_options=-tprdefault -xmloff
+-nmqual=0
+-nodes=0
+-parafile=none
+-picky=0
+-prepend_model_file_name=0
+-quick_summarize=0
+-retries=0
+-rmarkdown=1
+-rplots=0
+-run_on_lsf=0
+-run_on_sge=0
+-run_on_slurm=0
+-run_on_torque=0
+-run_on_ud=0
+-run_on_zink=0
+-seed=270756
+-send_email=0
+-shrinkage=0
+-sign_digits_off_diagonals=2
+-significant_digits_accept=0
+-so=0
+-template_directory_rplots=/opt/psn/psn-4.7.0/PsN_4_7_0/R-scripts
+-template_file_rplots=scmplus_default.R
+-threads=5
+-tweak_inits=1
+-verbose=0
+-zip=0
+
+PsNplus version: 0.9.3
+
+Actual values optional scmplus options (undefined values not listed):
+-ctype4=1
+-directory=/home/kajsa/sandbox/demoPsNplus/scmplus_dir9/
+-ignore_no_sigl=0
+-keep_covariance=0
+-keep_local_min=1
+-keep_tables=0
+-maxevals=1.2
+-p_cutoff=0.005
+-retest_stashed_relations=1
+-scope_reduction_steps=1
+-tune_model=1
+
