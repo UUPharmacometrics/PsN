@@ -1786,6 +1786,12 @@ sub prepare_results
     }
 
     # }}} Result calculations
+
+    my $directory = $self->directory;
+    PsN::call_pharmpy("results bootstrap $directory");
+    if ($self->rplots > 0) {
+        PsN::call_pharmpy("results report $directory");
+    }
 }
 
 sub create_R_scripts
