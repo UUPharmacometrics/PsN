@@ -150,8 +150,6 @@ sub modelfit_setup
 
     # ---------------------  Create the modelfit  -------------------------------
 
-    # {{{ modelfit
-
     if( defined $self -> prepared_models and scalar @{$self -> prepared_models} > 0 ) {
         # Create a modelfit tool for all the models of this step.
         # This is the last setup part before running the step.
@@ -179,8 +177,6 @@ sub modelfit_setup
                                     top_tool                             => 0,
                                     %subargs ) );
     }
-
-    # }}} modelfit
 }
 
 sub confidence_limits
@@ -539,8 +535,6 @@ sub _create_models
 
     # --------------------  Initiate the run parameters -------------------------
 
-    # {{{ initiate params
-
     my %run;
     $run{'thetas'} = (ref( $self -> run_thetas -> [0] ) eq 'ARRAY') ?
         $self -> run_thetas -> [$model_number-1]:$self -> run_thetas;
@@ -551,11 +545,7 @@ sub _create_models
 
     my $model = $self -> models -> [$model_number-1];
 
-    # }}} initiate params
-
     # ------------------  Create the fixed parameter models ---------------------
-
-    # {{{ create models
 
     # Loop over the parameters
     foreach my $param ( 'theta', 'omega', 'sigma' ) {
@@ -583,8 +573,6 @@ sub _create_models
                 if ( not $done ) {
 
                     # ----------------------  Create model  -----------------------------
-
-                    # {{{ create
 
                     my $new_mod = $model -> copy( filename    => $filename,
                                                   directory   => $model_dir,
@@ -633,14 +621,9 @@ sub _create_models
                         push( @new_models, $new_mod );
                         $self->{$param.'_models'}->{$num}->{$side} = $new_mod;
                     }
-
-                    # }}} create
-
                 } else {
 
                     # -------------------------  Resume  --------------------------------
-
-                    # {{{ resume
 
                     my $active_flag = 0;
                     # Loop over the problems:
@@ -661,15 +644,10 @@ sub _create_models
                         push( @new_models, $new_mod );
                         $self->{$param.'_models'}->{$num}->{$side} = $new_mod;
                     }
-
-                    # }}} resume
-
                 }
             }
         }
     }
-
-    # }}} create models
 
     return \@new_models;
 }
@@ -766,8 +744,6 @@ sub _modelfit_raw_results_callback
 
         }
 
-        # {{{ New header
-
         # First prepend llp specific stuff.
 
         # It is implicitly true that the inner loop will execute once
@@ -789,9 +765,6 @@ sub _modelfit_raw_results_callback
                 }
             }
         }
-
-        # }}} New header
-
     };
     return $callback;
 }

@@ -1020,26 +1020,20 @@ sub _raw_results_callback
 
             my ( @diagnostics, @thetas, @omsi, @sethetas, @seomsi, @shrinkage_eta,$shrinkage_iwres );
 
-            # {{{ Get diagnostic results:
+            # Get diagnostic results:
             #every column up to first theta.
 
             for ( my $j = 0; $j < scalar(@diagnostic_indices); $j++ ) {
                 push( @diagnostics, $modelfit -> raw_results -> [$i][$diagnostic_indices[$j]] );
             }
 
-            # }}}
-
-            # {{{ Get the thetas that were present in the original model
-
+            # Get the thetas that were present in the original model
             for ( my $j = $theta_start;
                 $j < ($theta_start+$npar_orig{'theta'}); $j++ ) {
                 push( @thetas, $modelfit -> raw_results -> [$i][$j] );
             }
 
-            # }}}
-
-            # {{{ Get the results for all par-cov-relation
-
+            # Get the results for all par-cov-relation
             # Initiate $j as starting position for the relation thetas
             my %res;
 
@@ -1096,9 +1090,7 @@ sub _raw_results_callback
                 }
             }
 
-            # }}}
-
-            # {{{ Get all the omegas and sigmas
+            # Get all the omegas and sigmas
 
             for ( my $j = $omega_start; $j < ( $omega_start +$npar_orig{'omega'}); $j++ ) {
                 push( @omsi, $modelfit -> raw_results() -> [$i][$j] );
@@ -1107,9 +1099,7 @@ sub _raw_results_callback
                 push( @omsi, $modelfit -> raw_results() -> [$i][$j] );
             }
 
-            # }}}
-
-            # {{{ Get all the standard errors of the omegas and sigmas
+            # Get all the standard errors of the omegas and sigmas
             for ( my $j = $seomega_start; $j < ( $seomega_start +$len_seomega); $j++ ) {
                 push( @omsi, $modelfit -> raw_results() -> [$i][$j] );
             }

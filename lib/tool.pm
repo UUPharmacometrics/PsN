@@ -895,8 +895,6 @@ sub read_raw_results
     }
 }
 
-# {{{ documentation
-
 # results structure:
 
 # {results}
@@ -1029,8 +1027,6 @@ sub read_raw_results
 #      |           |   |
 #      |           |   |->{subtools}
 #      |           |
-
-# }}}
 
 sub run
 {
@@ -1293,7 +1289,7 @@ sub create_raw_results_rows
             next if( $category eq 'model' or $category eq 'problem' or $category eq 'subproblem' or $category eq 'method' );
             my ( $accessor, $res );
 
-            # {{{ Get the values for the category
+            # Get the values for the category
 
             if ( $category eq 'theta' or $category eq 'omega' or $category eq 'sigma' or
                 $category eq 'setheta' or $category eq 'seomega' or $category eq 'sesigma' ) {
@@ -1436,7 +1432,7 @@ sub create_raw_results_rows
                 $res = $model->outputs->[0]->$accessor;
             }
 
-            # {{{ Create entry in raw_line_structure
+            # Create entry in raw_line_structure
             my $added_entry=0;
             if( defined $res){
                 if ( ref $res eq 'ARRAY' ){
@@ -1486,9 +1482,7 @@ sub create_raw_results_rows
                 $raw_line_structure -> {$model_number} -> { $category } = $tmp;
             }
 
-            # }}}
-
-            # }}} Get the values for the category
+            # Get the values for the category
             my $return_array_ref = \@return_rows;
 
             my $model_row = 0; # Need to mask previous definition of model_row
@@ -1527,23 +1521,17 @@ sub create_raw_results_rows
                             }
                         } else {
 
-                            # {{{ Push undefs for missing subprobs
-
+                            # Push undefs for missing subprobs
                             for( my $k = 0; $k < $ns; $k++ ) {
                                 my $row = $model_row++;
                                 push( @{$return_array_ref -> [$row]},
                                     (undef) x $max_hash -> {$category}  );
                             }
-
-                            # }}} Push undefs for missing subprobs
-
                         }
                     }
                 }
             } else {
-
-                # {{{ Push undefs for missing probs/subprobs
-
+                # Push undefs for missing probs/subprobs
                 for( my $j = 0; $j < $np; $j++ ) {
                     my $ns = $probs[$j]; # #subprobs
                     for( my $k = 0; $k < $ns; $k++ ) {
@@ -1552,9 +1540,6 @@ sub create_raw_results_rows
                             (undef) x $max_hash -> {$category}  );
                     }
                 }
-
-                # }}} Push undefs for missing probs/subprobs
-
             }
 
         } #end foreach category

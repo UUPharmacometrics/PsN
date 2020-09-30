@@ -1060,7 +1060,7 @@ sub modelfit_setup
                 }
             }
 
-            # {{{ create copies of the alternative models
+            # create copies of the alternative models
             @alt_table_names = ();
             @alt_est_models =();
             my $filestem = 'mc-alt_' . $alternative_counter;

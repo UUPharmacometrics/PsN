@@ -719,8 +719,6 @@ sub general_setup
 
     # ------------------------  Run original run  -------------------------------
 
-    # {{{ orig run
-
     unless ( $model -> is_run or (not $self->run_base_model)) {
         my %subargs = ();
         if ( defined $self -> subtool_arguments() ) {
@@ -1080,8 +1078,6 @@ sub modelfit_analyze
         #TODO support resume here for modelfit, do not rerun if lst-file exists for individual jackknife models
         # --------------------------  BCa method  ---------------------------------
 
-        # {{{ BCa
-
         @calculation_order = @{$self -> bca_calculation_order()};
         @print_order = @{$self -> bca_print_order()};
         my $jk_threads = $self ->threads();
@@ -1124,8 +1120,6 @@ sub modelfit_analyze
 
 
         } else {
-
-            # {{{ Recreate Jackknife
 
             open( DONE, $self ->directory()."/jackknife_done.$model_number" );
             my @rows = <DONE>;
@@ -1593,8 +1587,6 @@ sub prepare_results
     # The number of runs that are selected for calculation of the results is
     # saved.
 
-    # {{{ Get the data from the runs
-
     foreach my $tool ( 'bootstrap', 'jackknife' ) {
         my $rawres = $tool.'_raw_results';
         my $diagnostics = $tool.'_diagnostics';
@@ -1602,7 +1594,6 @@ sub prepare_results
         if ( defined $self -> $rawres ) {
             for ( my $i = 0; $i < scalar @{$self->$rawres}; $i++ ) { # All models
 
-                # {{{ Get the number of columns with estimates
                 my $estimate_columns=0;
 
                 my $cols_orig = 0;
@@ -1623,10 +1614,6 @@ sub prepare_results
                 $cols_orig += $numpar + 1;
 
                 $cols_orig++; # OFV
-
-                # }}} Get the number of columns with estimates
-
-                # {{{ Loop, choose and set diagnostics and estimates
 
                 my %return_section;
                 $return_section{'name'} = 'Warnings';
@@ -1703,9 +1690,7 @@ sub prepare_results
                     croak("No runs passed the run exclusion critera. Statistics cannot be calculated by PsN. ".
                         "Run bootstrap again with option -summarize and different exclusion criteria.");
                 }
-                # }}} Loop, choose and set diagnostics and estimates
 
-                # {{{ push #runs to results
                 my %run_info_return_section;
                 my @run_info_labels=('Date','PsN version','NONMEM version');
                 my @datearr=localtime;
@@ -1743,11 +1728,7 @@ sub prepare_results
         }
     }
 
-    # }}} Get the data from the runs
-
     # ----------------------  Calculate the results  ----------------------------
-
-    # {{{ Result calculations
 
     unless (defined $self -> bootstrap_raw_results()){
         croak("No bootstrap_raw_results array");
@@ -1784,8 +1765,6 @@ sub prepare_results
             push( @{$self -> results->[$i]{'own'}},\%return_section );
         }
     }
-
-    # }}} Result calculations
 
     my $directory = $self->directory;
     PsN::call_pharmpy("results bootstrap $directory");
