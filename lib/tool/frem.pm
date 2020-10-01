@@ -1,11 +1,6 @@
 package tool::frem;
 
 use PsN;
-
-BEGIN {
-    PsN::init_python();
-};
-
 use include_modules;
 use tool::modelfit;
 use Math::Random;
@@ -27,7 +22,6 @@ use POSIX qw/floor/;
 
 use Moose;
 use MooseX::Params::Validate;
-use Inline::Python qw(py_call_function py_eval);
 
 extends 'tool';
 
@@ -115,12 +109,11 @@ sub BUILD
         $self->tool_options(common_options::restore_options(@common_options::tool_options));
     }
 
-    PsN::enter_python();
-    py_eval('import pharmpy.methods.frem.method');
-
     # Check if any covariate column has all same value
     # In that case warn and remove column
-    my $filtered_covariates = py_call_function("pharmpy.methods.frem.method", "setup", PsN::pys($model->full_name), PsN::pys($self->covariates));
+    my $code = "from pharmpy.methods.frem.method import setup; print(setup(\"" . $model->full_name . '",' . PsN::python_array($self->covariates) . "))";
+    my $filtered_covariates = PsN::call_pharmpy_wrapper($code);
+    $filtered_covariates = PsN::from_python_array($filtered_covariates);
     my @filtered_categorical;
     for my $cov (@$filtered_covariates) {
         if (grep { $_ eq $cov } @{$self->categorical}) {
@@ -3347,7 +3340,8 @@ sub modelfit_setup
 
     my $frem_dir = $self->directory;
     my $ncov = scalar(@{$self->covariates});
-    py_call_function("pharmpy.methods.frem.method", "update_model3b_for_psn", PsN::pys($frem_dir), $ncov);
+    my $code = "from pharmpy.methods.frem.method import update_model3b_for_psn; update_model3b_for_psn(\"$frem_dir\", $ncov)";
+    PsN::call_pharmpy_wrapper($code);
 
     (my $frem_model3b, $message, $need_update) = $self->run_unless_run(numbers => ['3b']);
 

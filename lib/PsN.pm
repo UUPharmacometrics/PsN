@@ -10,7 +10,7 @@ our ($dev,$version,$lib_dir,$config_file,$config,$Rscripts_dir);
 #the version line is extracted in Makefile using regular expression
 # /\$version\s*=\s*.[0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*.;/
 # so be careful when you edit!!!
-$version = '5.1.0';
+$version = '5.2.0';
 
 # The following line will be changed by make
 $dev = 1;
@@ -208,58 +208,6 @@ sub get_python_lib_path
     return $path;
 }
 
-sub pys
-{
-    # Convert perl string or array of strings to utf8. Need before passing to python
-    my $s = shift;
-    if (ref $s eq 'ARRAY') {
-        my @new_array;
-        for my $elt (@$s) {
-            utf8::upgrade($elt);
-            push @new_array, $elt;
-        }
-        $s = \@new_array;
-    } else {
-        utf8::upgrade($s);
-    }
-    return $s;
-}
-
-sub init_python
-{
-    my $path = get_python_lib_path();
-    if ($Config{osname} eq 'MSWin32') {
-        # Needed for Inline::Python in windows. Must be run in a begin block.
-        $ENV{'PYTHONPATH'} = "$path\\Lib";
-        $ENV{'PATH'} = "$path;" . $ENV{'PATH'};
-    }
-}
-
-sub enter_python
-{
-    require Inline::Python;
-    Inline::Python->import(qw(py_eval));
-
-    my $paths = call_python('-c "import sys; print(sys.path)"');
-    py_eval("import sys; sys.path = $paths");
-}
-
-sub call_python
-{
-    my $arguments = shift;
-
-    my $pypath = get_python_lib_path();
-
-    my $python_path;
-    if ($Config{osname} eq 'MSWin32') {
-        $python_path = "$pypath\\python";
-    } else {
-        $python_path = "$pypath/bin/python";
-    }
-    my $command = "$python_path $arguments";
-    return readpipe($command);
-}
-
 sub call_pharmpy
 {
     my $arguments = shift;
@@ -274,6 +222,40 @@ sub call_pharmpy
     }
     my $command = "$pharmpy_path $arguments";
     return readpipe($command);
+}
+
+sub call_pharmpy_wrapper
+{
+    my $arguments = shift;
+
+    my $pypath = get_python_lib_path();
+
+    my $pharmpy_path;
+    if ($Config{osname} eq 'MSWin32') {
+        $pharmpy_path = "$pypath\\python -m psn-pharmpy-wrapper";
+    } else {
+        $pharmpy_path = "$pypath/bin/psn-pharmpy-wrapper";
+    }
+    my $command = "$pharmpy_path '$arguments'";
+    return readpipe($command);
+}
+
+sub python_array
+{
+    my $a = shift;
+    for my $e (@$a) {
+        $e = "\"$e\"";
+    }
+    return '[' . join(',', @$a) . ']';
+}
+
+sub from_python_array
+{
+    my $s = shift;
+    chomp($s);
+    $s =~ s/[\[\] ']//g;
+    my @a = split /,/, $s;
+    return \@a;
 }
 
 sub get_default_psn_installation_info

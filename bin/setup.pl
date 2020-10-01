@@ -121,8 +121,8 @@ my @utilities = (
     'monitor', 'scmplus', 'scmreport'
     );
 
-my @win_modules = ('Moose', 'MooseX::Params::Validate', 'Math::Random', 'YAML::XS', 'Inline');
-my @nix_modules = ('Moose', 'MooseX::Params::Validate', 'Math::Random', 'YAML::XS', 'Inline');
+my @win_modules = ('Moose', 'MooseX::Params::Validate', 'Math::Random', 'YAML::XS');
+my @nix_modules = ('Moose', 'MooseX::Params::Validate', 'Math::Random', 'YAML::XS');
 my @recommended_modules = ('Archive::Zip','Statistics::Distributions');
 
 my @modules;
@@ -969,23 +969,6 @@ if (not running_on_windows()) {
         system("$venv_python -m pip install -r requirements.txt");
         system("$venv_python -m pip install $pharmpy_file --upgrade --no-deps --force-reinstall");
         $set_python_lib_path = 1;
-
-        # Install bundled Inline::Python
-        print "Installing bundled Inline::Python perl model\n";
-        chdir "inline-python-pm" or die;
-        $ENV{'INLINE_PYTHON_EXECUTABLE'} = $venv_python;
-        system "perl Makefile.PL";
-        system "make";
-
-        mkpath(File::Spec->catfile($psn_lib_path, 'Inline'));
-        cp('Python.pm', File::Spec->catfile($psn_lib_path, 'Inline'));
-        my $auto_path = File::Spec->catfile($psn_lib_path, 'auto/Inline/Python');
-        mkpath($auto_path);
-        my @libfiles = glob('blib/arch/auto/Inline/Python/Python.*');
-        for my $libfile (@libfiles) {
-            cp($libfile, $auto_path);
-        }
-        chdir "..";
     }
 }
 
