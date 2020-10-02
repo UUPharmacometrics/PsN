@@ -225,9 +225,6 @@ release: main completion rel_dir $(RELFILES) $(PDFFILES)
 	@ cd pharmpy; tox -e run -- pharmpy --version
 	@ cp pharmpy/.tox/dist/*.zip PsN-Source/
 	@ cp pharmpy/requirements.txt PsN-Source/
-	@ cp -ar inline-python-pm PsN-Source/
-	@ rm -rf PsN-Source/inline-python-pm/.git
-	@ rm -rf PsN-Source/inline-python-pm/.gitignore
 	@ tar czf $(TARFILE) PsN-Source/
 
 # Release the nmoutput2so separately
