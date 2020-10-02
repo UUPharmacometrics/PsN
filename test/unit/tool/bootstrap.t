@@ -12,6 +12,11 @@ use includes; #file with paths to PsN packages
 use tool::bootstrap;
 use model;
 
+# Mute stderr. Pharmpy couldn't create results and will give errors since meta.yaml is missing.
+use File::Spec;
+open STDERR, '>', File::Spec->devnull() or die "could not open STDERR: $!\n";
+
+
 our $test_files = $includes::testfiledir;
 our $tempdir = create_test_dir("unit_bootstrap");
 
