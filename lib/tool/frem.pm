@@ -111,7 +111,7 @@ sub BUILD
 
     # Check if any covariate column has all same value
     # In that case warn and remove column
-    my $code = "from pharmpy.methods.frem.method import setup; print(setup(\"" . $model->full_name . '",' . PsN::python_array($self->covariates) . "))";
+    my $code = "from pharmpy.methods.frem.method import setup; print(setup(" . PsN::path_literal($model->full_name) . ',' . PsN::python_array($self->covariates) . "))";
     my $filtered_covariates = PsN::call_pharmpy_wrapper($code);
     $filtered_covariates = PsN::from_python_array($filtered_covariates);
     my @filtered_categorical;
@@ -3340,7 +3340,7 @@ sub modelfit_setup
 
     my $frem_dir = $self->directory;
     my $ncov = scalar(@{$self->covariates});
-    my $code = "from pharmpy.methods.frem.method import update_model3b_for_psn; update_model3b_for_psn(\"$frem_dir\", $ncov)";
+    my $code = "from pharmpy.methods.frem.method import update_model3b_for_psn; update_model3b_for_psn(" . PsN::path_literal($frem_dir) . ", $ncov)";
     PsN::call_pharmpy_wrapper($code);
 
     (my $frem_model3b, $message, $need_update) = $self->run_unless_run(numbers => ['3b']);

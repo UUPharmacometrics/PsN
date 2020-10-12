@@ -229,15 +229,26 @@ sub call_pharmpy_wrapper
     my $arguments = shift;
 
     my $pypath = get_python_lib_path();
-
-    my $pharmpy_path;
+    my $command;
     if ($Config{osname} eq 'MSWin32') {
-        $pharmpy_path = "$pypath\\python -m psn-pharmpy-wrapper";
+        $arguments =~ tr/"/'/;
+        $command = "$pypath\\psn-pharmpy-wrapper \"$arguments\"";
     } else {
-        $pharmpy_path = "$pypath/bin/psn-pharmpy-wrapper";
+        $command = "$pypath/bin/psn-pharmpy-wrapper '$arguments'";
     }
-    my $command = "$pharmpy_path '$arguments'";
     return readpipe($command);
+}
+
+sub path_literal
+{
+    my $s = shift;
+
+    my $final_slash = "";
+    if (substr($s, -1) eq "\\") {
+        chop $s;
+        $final_slash = "+chr(92)";
+    }
+    return "r\"$s\"$final_slash";
 }
 
 sub python_array
