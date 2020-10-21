@@ -636,8 +636,14 @@ sub modelfit_setup
                 top_tool => 1,
                 ignore => $cdd_ignore,   # Use IGNORE instead of generating new datasets for regular qa. Fallback to no-ignore for nonlinear (too long paths problems)
             );
+            $cdd->print_options(
+                toolname => 'CDD',
+                local_options => [],
+                common_options => \@common_options::tool_options
+            );
             $cdd->run();
-        };
+            $cdd->prepare_results();
+       };
         if ($@) {
             print $@;
         }
