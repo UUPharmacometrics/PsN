@@ -208,6 +208,19 @@ sub get_python_lib_path
     return $path;
 }
 
+sub set_pharmpy_config
+{
+    my $old = $ENV{'PHARMPYCONFIGPATH'};
+    $ENV{'PHARMPYCONFIGPATH'} = $lib_dir;
+    return $old;
+}
+
+sub reset_pharmpy_config
+{
+    my $old = shift;
+    $ENV{'PHARMPYCONFIGPATH'} = $old;
+}
+
 sub call_pharmpy
 {
     my $arguments = shift;
@@ -221,7 +234,10 @@ sub call_pharmpy
         $pharmpy_path = "$pypath/bin/pharmpy";
     }
     my $command = "$pharmpy_path $arguments";
-    return readpipe($command);
+    my $old = set_pharmpy_config();
+    my $res = readpipe($command);
+    reset_pharmpy_config($old);
+    return $res;
 }
 
 sub call_pharmpy_wrapper
@@ -236,7 +252,10 @@ sub call_pharmpy_wrapper
     } else {
         $command = "$pypath/bin/psn-pharmpy-wrapper '$arguments'";
     }
-    return readpipe($command);
+    my $old = set_pharmpy_config();
+    my $res = readpipe($command);
+    reset_pharmpy_config($old);
+    return $res;
 }
 
 sub path_literal

@@ -172,7 +172,8 @@ LIBFILES= ui.pm \
 	tool/qa.pm \
 	tool/boot_randtest.pm \
 	utils/file.pm \
-	utils/phitable.pm
+	utils/phitable.pm \
+	pharmpy.conf
 
 BINFILES=$(wildcard bin/*)
 
