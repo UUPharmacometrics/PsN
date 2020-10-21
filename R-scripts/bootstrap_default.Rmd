@@ -20,10 +20,6 @@ R_info(directory=working.directory)
 meta <- PsNR::metadata(working.directory)
 ```
 
-```{r fix_column._ames,include = FALSE}
-est.param.names <- fix_column_names(col_names=ESTIMATED.PARAMS)
-```
-
 ```{r histograms_of_all_parameters,results='hide',warning=FALSE,echo=FALSE,fig.width=10,fig.height=7,fig.keep="high",fig.align="center"}
 bootplots <- xpose4::boot.hist(results.file=raw.results.file,incl.ids.file=included.ids.file,
                        min.failed=skip.minimization.terminated,
@@ -32,31 +28,10 @@ bootplots <- xpose4::boot.hist(results.file=raw.results.file,incl.ids.file=inclu
                        boundary=skip.estimate.near.boundary)
 print(bootplots[1]) #parameters
 ```
+
 \pagebreak
-
-```{r dOFV_distribution_plot,results='hide',warning=FALSE,message=FALSE,echo=FALSE,fig.width=10,fig.height=7,fig.keep="high",fig.align="center"}
-
-add_dOFV_plots <- FALSE
-if (dofv.is.run){
-  add_dOFV_plots <- TRUE
-  
-  # Read in and format data
-  list_dofv <- format_dofv_data(dofv.raw.results.file,raw.results.file,est.param.names)
-  all <- list_dofv$all
-  df_est <- list_dofv$df_est
-
-  # Plot dOFV distributions
-  qdOFV_all <- plot_dofv(all,df_est,est.param.names)
-  print(qdOFV_all)
-}
-```
-
-```{asis Add_pagebreak_on_condition, echo=add_dOFV_plots}
-\pagebreak
-```
 
 ```{r Histogram_of_objective_function,results='hide',echo=FALSE,fig.width=10,fig.height=7,fig.keep="high",fig.align="center"}
-
 if (PsNR::rplots_level(meta) > 1){
     print(bootplots[2:4]) #SEs ofv eigenvalues
 }

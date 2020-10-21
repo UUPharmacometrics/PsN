@@ -1836,23 +1836,15 @@ sub create_R_plots_code
     }
     my $paramstring = 'ESTIMATED.PARAMS <- c('.$estim_params.')';
 
-    my $rawresdofvstring;
-    if ($self->dofv){
-        $rawresdofvstring = "dofv.raw.results.file <- '".$self->raw_results_dofv."'";
-    }
-
     $rplot->add_preamble(code => [
                              '#bootstrap-specific preamble',
                              $paramstring,
-                             'dofv.is.run <- '.$self->dofv,
-                             $rawresdofvstring,
                              "included.ids.file <- '".$inclIdFile."'",
                              "skip.minimization.terminated=$minFailed",
                              "skip.covariance.step.terminated=$covFailed",
                              "skip.with.covstep.warnings=$covWarnings",
                              "skip.estimate.near.boundary=$boundary",
                          ]);
-
 }
 
 sub _adjust_rawres_structure
