@@ -260,6 +260,7 @@ sub modelfit_setup
         );
 
         $linearize->run();
+        $linearize->prepare_results();
         $linearize->print_results();
         ui->category('qa');
 

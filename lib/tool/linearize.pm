@@ -151,11 +151,11 @@ sub modelfit_setup
     }
 }
 
-sub modelfit_analyze
+sub prepare_results
 {
     my $self = shift;
+    PsN::call_pharmpy("results linearize " . $self->directory);      # Generate results.json and results.csv
 }
-
 
 no Moose;
 __PACKAGE__->meta->make_immutable;
