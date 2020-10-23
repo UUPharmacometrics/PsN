@@ -184,9 +184,6 @@ if(length(command_runtime$command)>0 && length(command_runtime$run_start)>0 && l
   }else{
     cat(break_text(command_runtime$command,max_symb=95),"\n\n")
   }
-#  cat(break_text(command_runtime$command,max_symb=95),"\n\n")
-#  cat(command_runtime$run_start,"\n\n")
-#  cat(command_runtime$run_finish,"\n\n")
 }
 ```
 
