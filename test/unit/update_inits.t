@@ -124,30 +124,30 @@ my $model = model->new(filename => "$modeldir/mox1.mod");
 $ref = $model-> get_hash_values_to_labels;
 
 #arr over problems, hash omega sigma theta
-is ($ref->[0]->{'theta'}->{'TVCL'},26.1,'TVCL');
-is ($ref->[0]->{'theta'}->{'TVV'},100,'TVV');
-is ($ref->[0]->{'theta'}->{'TVKA'},4.5,'TVKA');
-is ($ref->[0]->{'theta'}->{'LAG'},0.2149,'LAG');
+is ($ref->[0]->{'theta'}->{'POP_TVCL'},26.1,'TVCL');
+is ($ref->[0]->{'theta'}->{'POP_TVV'},100,'TVV');
+is ($ref->[0]->{'theta'}->{'POP_TVKA'},4.5,'TVKA');
+is ($ref->[0]->{'theta'}->{'POP_LAG'},0.2149,'LAG');
 is ($ref->[0]->{'sigma'}->{'SIGMA(1,1)'},0.109,'SIGMA(1,1)');
 is (eval($ref->[0]->{'omega'}->{'OMEGA(1,1)'}),eval(0.0750),'OMEGA(1,1)');
 is ($ref->[0]->{'omega'}->{'OMEGA(2,1)'},0.0467,'OMEGA(2,1)');
-is ($ref->[0]->{'omega'}->{'IIV (CL-V)'},0.0564,'OMEGA(2,2)');
-is ($ref->[0]->{'omega'}->{'IIV KA'},2.82,'OMEGA(3,3)');
-is ($ref->[0]->{'omega'}->{'IOV CL'},0.0147,'OMEGA(4,4)');
-is ($ref->[0]->{'omega'}->{'IOV KA'},0.506,'OMEGA(6,6)');
+is ($ref->[0]->{'omega'}->{'IIV_CL_V'},0.0564,'OMEGA(2,2)');
+is ($ref->[0]->{'omega'}->{'IIV_KA'},2.82,'OMEGA(3,3)');
+is ($ref->[0]->{'omega'}->{'IOV_CL'},0.0147,'OMEGA(4,4)');
+is ($ref->[0]->{'omega'}->{'IOV_KA'},0.506,'OMEGA(6,6)');
 
 #modify hash, then use in update_inits and check that got what is expected
-$ref->[0]->{'theta'}->{'TVCL'} = 20;
-$ref->[0]->{'theta'}->{'TVV'} = 90;
-$ref->[0]->{'theta'}->{'TVKA'} = 5;
-$ref->[0]->{'theta'}->{'LAG'} = 0.4;
+$ref->[0]->{'theta'}->{'POP_TVCL'} = 20;
+$ref->[0]->{'theta'}->{'POP_TVV'} = 90;
+$ref->[0]->{'theta'}->{'POP_TVKA'} = 5;
+$ref->[0]->{'theta'}->{'POP_LAG'} = 0.4;
 $ref->[0]->{'sigma'}->{'SIGMA(1,1)'}= 0.2;
 $ref->[0]->{'omega'}->{'OMEGA(1,1)'} = 0.4;
 $ref->[0]->{'omega'}->{'OMEGA(2,1)'}= 0.01;
-$ref->[0]->{'omega'}->{'IIV (CL-V)'} = 0.05;
-$ref->[0]->{'omega'}->{'IIV KA'}= 3;
-$ref->[0]->{'omega'}->{'IOV CL'}= 0.01;
-$ref->[0]->{'omega'}->{'IOV KA'}= 0.5;
+$ref->[0]->{'omega'}->{'IIV_CL_V'} = 0.05;
+$ref->[0]->{'omega'}->{'IIV_KA'}= 3;
+$ref->[0]->{'omega'}->{'IOV_CL'}= 0.01;
+$ref->[0]->{'omega'}->{'IOV_KA'}= 0.5;
 
 
 $model -> update_inits( from_hash => $ref->[0],
@@ -157,17 +157,17 @@ $model -> update_inits( from_hash => $ref->[0],
 
 my $updated = $model-> get_hash_values_to_labels;
 
-is(eval($updated->[0]->{'theta'}->{'TVCL'}),eval(20),'updated hash TVCL');
-is(eval($updated->[0]->{'theta'}->{'TVV'}),eval(90),'updated hash TVV');
-is(eval($updated->[0]->{'theta'}->{'TVKA'}),eval(5),'updated hash TVKA');
-is(eval($updated->[0]->{'theta'}->{'LAG'}),eval(0.4),'updated hash LAG');
+is(eval($updated->[0]->{'theta'}->{'POP_TVCL'}),eval(20),'updated hash TVCL');
+is(eval($updated->[0]->{'theta'}->{'POP_TVV'}),eval(90),'updated hash TVV');
+is(eval($updated->[0]->{'theta'}->{'POP_TVKA'}),eval(5),'updated hash TVKA');
+is(eval($updated->[0]->{'theta'}->{'POP_LAG'}),eval(0.4),'updated hash LAG');
 is(eval($updated->[0]->{'sigma'}->{'SIGMA(1,1)'}),eval(0.2),'updated hash SIGMA');
 is(eval($updated->[0]->{'omega'}->{'OMEGA(1,1)'}),eval(0.4),'updated hash OM 1,1');
 is(eval($updated->[0]->{'omega'}->{'OMEGA(2,1)'}),eval(0.01),'updated hash Om 2,1');
-is(eval($updated->[0]->{'omega'}->{'IIV (CL-V)'}),eval(0.05),'updated hash IIV CL-V');
-is(eval($updated->[0]->{'omega'}->{'IIV KA'}),eval(3),'updated hash IIV KA');
-is(eval($updated->[0]->{'omega'}->{'IOV CL'}),eval(0.01),'updated hash IOV CL');
-is(eval($updated->[0]->{'omega'}->{'IOV KA'}),eval(0.5),'updated hash IOV KA');
+is(eval($updated->[0]->{'omega'}->{'IIV_CL_V'}),eval(0.05),'updated hash IIV CL-V');
+is(eval($updated->[0]->{'omega'}->{'IIV_KA'}),eval(3),'updated hash IIV KA');
+is(eval($updated->[0]->{'omega'}->{'IOV_CL'}),eval(0.01),'updated hash IOV CL');
+is(eval($updated->[0]->{'omega'}->{'IOV_KA'}),eval(0.5),'updated hash IOV KA');
 
 copy_test_files($tempdir,["pheno.mod", "pheno.lst",'mox1.lst','mox1.mod']);
 
@@ -188,10 +188,10 @@ $model -> update_inits( from_hash => \%hash,
 
 $updated = $model-> get_hash_values_to_labels;
 
-is(eval($updated->[0]->{'theta'}->{'TVCL'}),eval(1),'updated hash 2 TVCL');
-is(eval($updated->[0]->{'theta'}->{'TVV'}),eval(2),'updated hash 2 TVV');
-is(eval($updated->[0]->{'theta'}->{'TVKA'}),eval(3),'updated hash 2 TVKA');
-is(eval($updated->[0]->{'theta'}->{'LAG'}),eval(4),'updated hash 2 LAG');
+is(eval($updated->[0]->{'theta'}->{'POP_TVCL'}),eval(1),'updated hash 2 TVCL');
+is(eval($updated->[0]->{'theta'}->{'POP_TVV'}),eval(2),'updated hash 2 TVV');
+is(eval($updated->[0]->{'theta'}->{'POP_TVKA'}),eval(3),'updated hash 2 TVKA');
+is(eval($updated->[0]->{'theta'}->{'POP_LAG'}),eval(4),'updated hash 2 LAG');
 
 
 chdir($tempdir);
@@ -226,9 +226,9 @@ my $hash = $cholmodel-> get_hash_values_to_labels;
 
 is(eval($hash->[0]->{'omega'}->{'OMEGA(1,1)'}),eval(1),'om 1,1');
 is(eval($hash->[0]->{'omega'}->{'OMEGA(2,1)'}),eval(0),'om 2,1');
-is(eval($hash->[0]->{'omega'}->{'IIV KA'}),eval(1),'om 3,3');
-is(eval($hash->[0]->{'omega'}->{'IOV CL'}),eval(1),'om 4,4');
-is(eval($hash->[0]->{'omega'}->{'IOV KA'}),eval(1),'om 6,6');
+is(eval($hash->[0]->{'omega'}->{'IIV_KA'}),eval(1),'om 3,3');
+is(eval($hash->[0]->{'omega'}->{'IOV_CL'}),eval(1),'om 4,4');
+is(eval($hash->[0]->{'omega'}->{'IOV_KA'}),eval(1),'om 6,6');
 
 #check that start was not simple identity matrices
 my $startmodel = model->new(filename => "run3.mod",
@@ -237,7 +237,7 @@ my $startmodel = model->new(filename => "run3.mod",
 $hash = $startmodel-> get_hash_values_to_labels;
 cmp_relative(eval($hash->[0]->{'omega'}->{'OMEGA(1,1)'}),0.416,3,'om start 1,1');
 cmp_relative(eval($hash->[0]->{'omega'}->{'OMEGA(2,1)'}),0.390,3,'om start 2,1');
-cmp_relative(eval($hash->[0]->{'omega'}->{'IIV KA'}),0.258,3,'om start 3,3');
+cmp_relative(eval($hash->[0]->{'omega'}->{'IIV_KA'}),0.258,3,'om start 3,3');
 
 
 
@@ -249,9 +249,9 @@ my $hashend = $endmodel-> get_hash_values_to_labels;
 
 is(eval($hash->[0]->{'omega'}->{'OMEGA(1,1)'}),eval($hashend->[0]->{'omega'}->{'OMEGA(1,1)'}),'inverse om 1,1');
 is(eval($hash->[0]->{'omega'}->{'OMEGA(2,1)'}),eval($hashend->[0]->{'omega'}->{'OMEGA(2,1)'}),'inverse om 2,1');
-is(eval($hash->[0]->{'omega'}->{'IIV KA'}),eval($hashend->[0]->{'omega'}->{'IIV KA'}),'inverse om 3,3');
-is(eval($hash->[0]->{'omega'}->{'IOV CL'}),eval($hashend->[0]->{'omega'}->{'IOV CL'}),'inverse om 4,4');
-is(eval($hash->[0]->{'omega'}->{'IOV KA'}),eval($hashend->[0]->{'omega'}->{'IOV KA'}),'inverse om 6,6');
+is(eval($hash->[0]->{'omega'}->{'IIV_KA'}),eval($hashend->[0]->{'omega'}->{'IIV_KA'}),'inverse om 3,3');
+is(eval($hash->[0]->{'omega'}->{'IOV_CL'}),eval($hashend->[0]->{'omega'}->{'IOV_CL'}),'inverse om 4,4');
+is(eval($hash->[0]->{'omega'}->{'IOV_KA'}),eval($hashend->[0]->{'omega'}->{'IOV_KA'}),'inverse om 6,6');
 
 
 chdir('..');

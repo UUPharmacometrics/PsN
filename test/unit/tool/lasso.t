@@ -311,10 +311,10 @@ cmp_float_array($sdref,[7.81198,3.80400,0.40476,0.48468,7.81198,0.47477,15.50568
 
 my %finalhash;
 $finalhash{'theta'}={
-'TVCL' => 3.29E+01,
-'TVV' =>1.16E+02,
-'TVKA' =>1.46E+00,
-'LAG' => 8.28E-02,
+'POP_TVCL' => 3.29E+01,
+'POP_TVV' =>1.16E+02,
+'POP_TVKA' =>1.46E+00,
+'POP_LAG' => 8.28E-02,
 'TH5 CLAGE' => 0.01,
 'TH6 CLHAGE' => 0.01,
 'TH7 CLSEX2' => 1.44E-02,
@@ -326,10 +326,10 @@ $finalhash{'theta'}={
 $finalhash{'omega'}={
 'OMEGA(1,1)' => 6.43E-01,
 'OMEGA(2,1)' => 8.01E-01  ,
-'IIV (CL-V)' => 7.53E-01,
-'IIV KA' => 5.14E-01,
-'IOV CL' => 1.21E-03,
-'IOV KA' =>  7.00E-03};
+'IIV_CL_V' => 7.53E-01,
+'IIV_KA' => 5.14E-01,
+'IOV_CL' => 1.21E-03,
+'IOV_KA' =>  7.00E-03};
 $finalhash{'sigma'}={'SIGMA(1,1)'=> 3.35E-01};
 $lassomodel->update_inits(update_fix => 1,
 						  from_hash => \%finalhash);
@@ -360,10 +360,10 @@ my $refm =tool::lasso::setup_optimal_model(finalvalues => $lassomodel->get_hash_
 										   cutoff_thetas => $cutoffref,
 										   lasso_coefficients => $lassocoefficients);
 
-is($refm->problems->[0]->thetas->[0]->options->[0]->init,$finalhash{'theta'}->{'TVCL'},'setup_optimal_model init 1');
-is($refm->problems->[0]->thetas->[1]->options->[0]->init,$finalhash{'theta'}->{'TVV'},'setup_optimal_model init 2');
-is($refm->problems->[0]->thetas->[2]->options->[0]->init,$finalhash{'theta'}->{'TVKA'},'setup_optimal_model init 3');
-is($refm->problems->[0]->thetas->[3]->options->[0]->init,$finalhash{'theta'}->{'LAG'},'setup_optimal_model init 4');
+is($refm->problems->[0]->thetas->[0]->options->[0]->init,$finalhash{'theta'}->{'POP_TVCL'},'setup_optimal_model init 1');
+is($refm->problems->[0]->thetas->[1]->options->[0]->init,$finalhash{'theta'}->{'POP_TVV'},'setup_optimal_model init 2');
+is($refm->problems->[0]->thetas->[2]->options->[0]->init,$finalhash{'theta'}->{'POP_TVKA'},'setup_optimal_model init 3');
+is($refm->problems->[0]->thetas->[3]->options->[0]->init,$finalhash{'theta'}->{'POP_LAG'},'setup_optimal_model init 4');
 
 $sd =sprintf("%.5f",$statistics->{'AGE'}{3}{'sd'});
 my $init = exp(1-($abssum/0.1))*$finalhash{'theta'}->{'TH5 CLAGE'}/($sd);
