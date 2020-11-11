@@ -293,4 +293,5 @@ PsN-Source/%: %
 	@ cp -ar $* $@
 
 rel_dir:
+	@ rm -rf PsN-Source
 	@mkdir -p $(sort $(dir $(RELFILES)))
