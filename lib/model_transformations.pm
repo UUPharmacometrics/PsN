@@ -1890,29 +1890,4 @@ sub split_omegas
     $model->problems->[0]->omegas(\@omega_records);
 }
 
-sub label_all_omegas
-{
-    # Label all unlabled omegas.
-    # Putting ETA(n) for the diagonal elements and OMEGA(n,m) for the off-diagonals
-    my %parm = validated_hash(\@_,
-        model => { isa => 'model' },
-    );
-    my $model = $parm{'model'};
-
-    my $omega_options = omega_options_from_etas(model => $model, etas => [ 1 .. $model->nomegas->[0] ]);
-
-    for my $option (@$omega_options) {
-        if (not defined $option->label) {
-            my $coord = $option->coordinate_string;
-            $coord =~ /OMEGA\((\d+),(\d+)\)/;
-            if ($1 == $2) {
-                $option->label("ETA($1)");
-            } else {
-                $option->label($coord);
-            }
-        }
-    }
-}
-
-
 1;

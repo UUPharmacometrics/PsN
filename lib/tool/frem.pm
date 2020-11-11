@@ -1897,7 +1897,6 @@ sub do_model1
     my $reorder_mapping = $self->reorder_etas_mapping($frem_model);
     $self->etas_reorder_mapping($reorder_mapping);
     my $new_phi_path = File::Spec->catfile($self->_intermediate_models_path, 'model_1b.phi');
-    model_transformations::label_all_omegas(model => $frem_model);
     model_transformations::reorder_etas(model => $frem_model, order => $reorder_mapping, phi_file => $new_phi_path, reorder_output => 1); 
     model_transformations::split_omegas(model => $frem_model, split_after => scalar(@{$self->skip_omegas}));
     $frem_model->filename('model_1b.mod');
