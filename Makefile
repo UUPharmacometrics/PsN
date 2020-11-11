@@ -197,7 +197,7 @@ main:
 .PHONY : clean
 
 clean:
-	@-rm -rf $(DOCUMENTS) nmoutput2so nmoutput2so-*.zip PsN-Source development/completion_files doc/*.bbl doc/*.bcf doc/*.blg doc/*-blx.bib doc/*.xml doc/*.aux doc/*.log doc/*.pdf doc/inputs/*eps-converted-to.pdf doc/inputs/version.tex PsN-*.tar.gz
+	@-rm -rf $(DOCUMENTS) nmoutput2so nmoutput2so-*.zip PsN-Source doc/*.bbl doc/*.bcf doc/*.blg doc/*-blx.bib doc/*.xml doc/*.aux doc/*.log doc/*.pdf doc/inputs/*eps-converted-to.pdf doc/inputs/version.tex PsN-*.tar.gz
 
 version:
 	@cd doc; sed -n 's/.*\$version\s*=\s*.\([0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*\).;/\\newcommand\{\\psnversion\}\{\1\}/p' ../lib/PsN.pm >inputs/version.tex
@@ -207,11 +207,9 @@ doc/%.pdf: version doc/%.tex
 
 doc: $(PDFFILES) 
 
-release: main completion rel_dir $(RELFILES) $(PDFFILES)
+release: main rel_dir $(RELFILES) $(PDFFILES)
 	@ rm -f $(TARFILE)
 	@ mkdir -p PsN-Source/development
-	@ mkdir -p PsN-Source/development/completion_files
-	@ cp development/completion_files/* PsN-Source/development/completion_files
 	@ mkdir -p PsN-Source/test
 	@ cp -ar test/unit PsN-Source/test
 	@ cp -ar test/system PsN-Source/test
@@ -277,14 +275,6 @@ COMPFILES=boot_scm \
 	update_inits \
 	vpc \
 	xv_scm \
-
-development/completion_files:
-	@ mkdir -p development/completion_files
-
-.PHONY: completion
-completion: development/completion_files
-	cd bin; \
-	$(foreach file, $(COMPFILES), perl ../development/genauto $(file) >../development/completion_files/$(file);)
 
 PsN-Source/setup.pl: bin/setup.pl
 	@ cp bin/setup.pl $@

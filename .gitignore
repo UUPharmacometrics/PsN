@@ -37,7 +37,6 @@ doc/inputs/version.tex
 doc/inputs/date.tex
 doc/developers_guide.out
 test/unit/testcase.txt
-development/completion_files
 development/scripts/doc/*.aux
 development/scripts/doc/*.log
 development/scripts/doc/*.pdf
