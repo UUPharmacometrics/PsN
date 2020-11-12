@@ -1773,43 +1773,6 @@ sub prepare_results
     }
 }
 
-sub create_R_scripts
-{
-    my $self = shift;
-
-    unless( -e $PsN::Rscripts_dir . '/bootstrap.R' ){
-        ui -> print( message => 'Bootstrap R-script are not installed, no R-script will be generated.' ,
-            newline =>1);
-        return;
-    }
-
-    my ($dir,$file) =
-    OSspecific::absolute_path( $self ->directory(),
-        $self -> raw_results_file()->[0] );
-
-    open( FILE, $PsN::Rscripts_dir . '/bootstrap.R');
-    my @script = <FILE>;
-    close( FILE );
-    foreach (@script){
-        if (/^bootstrap.data/){
-            s/raw_results1.csv/$file/;
-            last;
-        }
-    }
-    open( OUT, ">", $self ->directory() . "/bootstrap.R" );
-    foreach (@script){
-        print OUT;
-    }
-    close (OUT);
-
-    # Execute the script
-
-    if( defined $PsN::config -> {'_'} -> {'R'} ) {
-        chdir($self->directory);
-        system( $PsN::config -> {'_'} -> {'R'}." CMD BATCH bootstrap.R" );
-    }
-}
-
 sub create_R_plots_code
 {
     my $self = shift;
