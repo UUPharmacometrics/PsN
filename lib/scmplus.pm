@@ -69,7 +69,9 @@ sub set_common_defaults
 		$options->{'crash_restarts'} = 1;
 		$options->{'handle_crashes'} = 0;
 	}
-	
+    if (not defined $options->{'clean'} or $options->{'clean'} > 2) {
+        $options->{'clean'} = 2;
+    }
 }
 
 sub set_next_reduction_step
