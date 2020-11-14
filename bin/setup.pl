@@ -928,7 +928,7 @@ if (not running_on_windows()) {
         $rsafe_path =~ s/\\/\\\\/g;
         $ENV{'R_LIBS_SITE'} = $rlib_path;
         $ENV{'R_LIBS_USER'} = $rlib_path;
-        run_r("install.packages('renv', lib='$rsafe_path', repos='$repos')");
+        run_r("install.packages(c('renv', 'remotes'), lib='$rsafe_path', repos='$repos')");
         run_r("options(renv.consent=TRUE); renv::settings" . '\$' . "use.cache(FALSE); renv::restore(library='$rsafe_path', lockfile='PsNR/renv.lock')");
         run_r("remotes::install_local('PsNR', lib='$rsafe_path', repos=NULL, dependencies=F)");
         $set_rlib_path = 1;
@@ -1114,7 +1114,7 @@ if (not running_on_windows()) {
             if ($relative_lib_path) {
                 $python_lib_path = "pyvenv";
             }
-            print $dh "PYTHON_PATH=$python_lib_path\n"; 
+            print $dh "PYTHON_PATH=$python_lib_path\n";
         }
         while (<$sh>) {
             if (not (/^R_LIB_PATH=/ and $set_r) and not (/^PYTHON_PATH=/ and $set_python)) {
