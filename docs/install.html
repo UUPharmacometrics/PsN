@@ -10,15 +10,15 @@ a:hover { text-decoration: underline; text-decoration-style: dashed; }
 </style>
     <link rel="stylesheet" type="text/css" href="style/style.css">
     <script type="text/javascript" src="javascript/jquery.js"></script>
-    <script> 
+    <script>
         // @license magnet:?xt=urn:btih:e95b018ef3580986a04669f1b5879592219e2a7a&dn=public-domain.txt
         $(function() {
             $("#nav").load("menu.html");
             $("#footer").load("footer.html");
         });
         // @license-end
-    </script> 
-	
+    </script>
+
 </head>
 <body>
     <div id="wrap">
@@ -36,7 +36,7 @@ a:hover { text-decoration: underline; text-decoration-style: dashed; }
 PsN supports standard and NMQual 8 installations of <a target="_blank" href="https://nonmem.iconplc.com/">NONMEM</a>. <br>
 Verify that all NONMEM installations you intend to use can be run directly via the nmfe/autolog scripts and that they produce complete output files.<br>
 If running NONMEM with nmfe/autolog.pl does not work then PsN will not work either.<br>
-If you plan to use the parallelization features of NONMEM you must also 
+If you plan to use the parallelization features of NONMEM you must also
 verify that you can run NONMEM in parallel directly with the nmfe script.<br>
 </li>
 
@@ -66,8 +66,15 @@ Before installing PsN on Linux, you should make sure that the required programs 
 <ul>
     <li>Perl version 5.10.1 or later</li>
     <li>Python 3.6 or later</li>
+    <li>make</li>
 </ul>
-    
+
+<h5>Ubuntu/Debian</h5>
+<code>
+apt install python3 python3-venv python3-dev<br>
+apt install make<br>
+</code>
+
 <h4>Installing system dependencies for plotting and reporting</h4>
 
 To be able to use the automatic rplotting functionality (via the <code>-rplots</code> option)  and/or the <code>qa</code> tool the following needs to be installed:
@@ -79,13 +86,13 @@ To be able to use the automatic rplotting functionality (via the <code>-rplots</
 
 <h5>Ubuntu/Debian</h5>
 <code>
-apt install r-base
-apt install pandoc
+apt install r-base<br>
+apt install pandoc<br>
 apt install libpq-dev<br>
 apt install libcairo2-dev<br>
 apt install libssl-dev<br>
 apt install libcurl4-openssl-dev<br>
-apt install libmariadb-client-lgpl-dev<br>
+apt install libmariadb-dev<br>
 apt install libgmp-dev<br>
 apt install libmpfr-dev<br>
 apt install libxml2-dev<br>
@@ -94,11 +101,11 @@ apt install libblas-dev<br>
 apt install liblapack-dev<br>
 apt install libmagick++-dev<br>
 </code>
- 
+
 <h5>CentOS/Fedora</h5>
 <code>
-yum install R
-yum install pandoc
+yum install R<br>
+yum install pandoc<br>
 yum install openssl-devel<br>
 yum install libcurl-devel<br>
 yum install cairo-devel<br>
@@ -125,7 +132,7 @@ cpan YAML::XS<br>
 cpan Inline<br>
 </code>
 </li>
-</ol> 
+</ol>
 
 <h4>Installing PsN</h4>
 <ol type="A">
@@ -139,7 +146,7 @@ Open a terminal, cd to the <code>PsN-Source</code> directory and type: <code>sud
 <p>sudo can be skipped if you already have write permissions in the installation directories you intend to use. <br>
 </li>
 <li>
-Read all messages carefully and answer the questions on screen. 
+Read all messages carefully and answer the questions on screen.
 
 The default settings are probably the best for most users. It is <b>highly</b> recommended to let the installation script create <code>psn.conf.</code> automatically unless you are experienced in installing and configuring PsN.<br>
 </li>
@@ -195,7 +202,7 @@ cpan YAML::XS<br>
 cpan Inline<br>
 </code>
 </li>
-</ol> 
+</ol>
 NOTE: macOS 10.14 "Mojave" and later has problems with installing Moose using its default version of Perl. This has been reported to CPAN and discussed <a href="https://rt.cpan.org/Public/Bug/Display.html?id=127028">here</a>. One workaround that has been tested is to install a newer version of Perl via brew:
 <ol>
     <li>Install <a href="https://brew.sh">homebrew</a></li>
@@ -222,7 +229,7 @@ Open a terminal, cd to the <code>PsN-Source</code> directory and type: <code>sud
 <p>sudo can be skipped if you already have write permissions in the installation directories you intend to use. <br><br>
 </li>
 <li>
-Read all messages carefully and answer the questions on screen. 
+Read all messages carefully and answer the questions on screen.
 </ol>
 
 Mac users with the latest version(s) of Mac Os <b>cannot</b> accept the default installation folder for PsN utilities, even when installing as root.<sup>1</sup>
@@ -231,7 +238,7 @@ Run <code>setup.pl</code> as root.<p>
 When setup.pl prompts for the PsN Utilities directory like this:<br>
 <code>PsN Utilities installation directory [/usr/bin]:</code><br>
 type <code>/usr/local/bin</code> and &#8629;.<br><p>
-The other default settings can be accepted.<br> 
+The other default settings can be accepted.<br>
 If there is a message about PsN already being installed this message is misleading,
 what it should say is that PsN is already *partially* installed. This is not an error,
 just say yes to continue.</p>
@@ -242,29 +249,29 @@ just say yes to continue.</p>
 <hr COLOR="darkred">
 
 <h2>Configuring PsN</h2>
-<li> If you did not let the installation script create the configuration file <code>psn.conf</code> for you, or if you are running NONMEM via NMQual or 
+<li> If you did not let the installation script create the configuration file <code>psn.conf</code> for you, or if you are running NONMEM via NMQual or
 on a cluster, you need to edit <code>psn.conf</code> in the PsN installation directory. <br>
-The document <a target="_blank" href="https://github.com/UUPharmacometrics/PsN/releases/download/5.0.0/psn_configuration.pdf">PsN Configuration.pdf</a> describes how to make the correct settings in the psn.conf file. 
+The document <a target="_blank" href="https://github.com/UUPharmacometrics/PsN/releases/download/5.0.0/psn_configuration.pdf">PsN Configuration.pdf</a> describes how to make the correct settings in the psn.conf file.
 </li><br>
 
 
 <hr COLOR="darkred">
- 
+
 <h2>Portable PsN installations</h2>
 This functionality is intended for advanced users only. The setup.pl script takes an optional argument 'relative': <br>
 <code>setup.pl relative </code><br>
-If this argument is given, the bin scripts (PsN Utilities) will use a relative path when including the lib modules (PsN Core and Toolkit). 
+If this argument is given, the bin scripts (PsN Utilities) will use a relative path when including the lib modules (PsN Core and Toolkit).
 This makes the PsN installation directory movable, as long as the relative position between the bin scripts and lib modules remains the same.<br>
-In addition the <code>[nm_versions]</code> section in psn.conf can list the name of the nmfe executables instead of the full path to the NONMEM installation directories 
-<b>if at runtime</b> the nmfe executable, chosen by default or with option -nm_version, is in the user $PATH, see documentation in 
+In addition the <code>[nm_versions]</code> section in psn.conf can list the name of the nmfe executables instead of the full path to the NONMEM installation directories
+<b>if at runtime</b> the nmfe executable, chosen by default or with option -nm_version, is in the user $PATH, see documentation in
 <a target="_blank" href="https://github.com/UUPharmacometrics/PsN/releases/download/5.0.0/psn_configuration.pdf">PsN Configuration.pdf</a>.
-<br>The test package, if installed, will not be portable even if setup.pl is run with argument relative. If the test package is moved, the file 
+<br>The test package, if installed, will not be portable even if setup.pl is run with argument relative. If the test package is moved, the file
 <code>test/includes.pm</code> must be edited manually before any tests are run.
 
 
 <hr COLOR="darkred">
 
-<h2>Multiple PsN installations</h2> 
+<h2>Multiple PsN installations</h2>
 
 <h3>On Windows</h3>
 Since each version of PsN comes in its own bundle, multiple versions can be installed at the same time, but only one can be active in PATH at a time.
