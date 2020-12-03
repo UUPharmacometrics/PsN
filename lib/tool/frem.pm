@@ -1765,9 +1765,6 @@ sub prepare_results
         $meth = ' --method=bipp'
     }
     PsN::call_pharmpy("results frem $directory$pdcov$pdsamp$meth");      # Generate results.json and results.csv
-    if ($self->rplots > 0) {
-        PsN::call_pharmpy("results report $directory"); # Generate results.html
-    }
     return $err;
 }
 
