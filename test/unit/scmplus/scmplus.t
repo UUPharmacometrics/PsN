@@ -28,7 +28,7 @@ my %options = ('some' => 'value');
 
 scmplus::set_common_defaults(options => \%options);
 
-is_deeply(\%options,{'some' => 'value', handle_crashes => 0,crash_restarts => 1},'handle crashes 1');
+is_deeply(\%options, {'some' => 'value', handle_crashes => 0, crash_restarts => 1, clean => 2}, 'handle crashes 1');
 
 %options = ('some' => 'value','crash_restarts' =>2);
 is_deeply(\%options,{'some' => 'value',crash_restarts => 2},'handle crashes 2');
