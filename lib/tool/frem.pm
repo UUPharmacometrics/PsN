@@ -1592,11 +1592,9 @@ sub prepare_results
     }
 
     # (cond) coefficients and covar section
-    my (%coeff_section, %covar_section);
+    my %coeff_section;
     $coeff_section{'name'} = 'FREM parameter-covariate coefficients';
-    $covar_section{'name'} = 'FREM parameter (unexplained) variability';
     $coeff_section{'labels'} = [ [], ["cond on cov", "", @cov_names] ];
-    $covar_section{'labels'} = [ [], ["cond on cov", "", @par_names] ];
     my $varcov;
     if ($full_has_estimates) {
         my ($error, $covar, $coeff);
@@ -1618,9 +1616,7 @@ sub prepare_results
                 # fill multiconditional coefficients and variance for each par
                 my $par_name = $par_names->[$par];
                 push(@{$coeff_section{'labels'}->[0]}, "");
-                push(@{$covar_section{'labels'}->[0]}, "");
                 push(@{$coeff_section{'values'}}, ["all", '"' . $par_name . '"', @{$coeff->[$par]}]);
-                push(@{$covar_section{'values'}}, ["all", '"' . $par_name . '"', @{$covar->[$par]}]);
             }
             foreach my $par_name (@par_names) {
                 # prepare uniconditional coefficient fill by initializing $npar rows
@@ -1645,14 +1641,11 @@ sub prepare_results
                         # fill uniconditional coefficients and variance for each par (note: only one coeff per cov)
                         my $par_name = $par_names->[$par];
                         push(@{$coeff_section{'values'}->[$par+$npar]}, $coeff->[$par]->[0]);
-                        push(@{$covar_section{'labels'}->[0]}, "");
-                        push(@{$covar_section{'values'}}, [$cov_name, '"' . $par_name . '"'  , @{$covar->[$par]}]);
                     }
                 }
             }
         }
         push(@{$self->results->[0]{'own'}}, \%coeff_section);
-        push(@{$self->results->[0]{'own'}}, \%covar_section);
 
         # get final covariance matrix (if available)
         my ($full_has_covmat, $msg) = check_covstep(output => $full_model_cov->outputs->[0]);
