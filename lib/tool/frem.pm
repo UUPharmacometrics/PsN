@@ -1591,18 +1591,6 @@ sub prepare_results
         }
     }
 
-    # covariates section
-    my %cov_section;
-    $cov_section{'name'} = 'Covariates';
-    my @cov_header = ("source", @cov_names);
-    $cov_section{'labels'} = [ [ "mean", "mean", "stdev", "stdev" ], \@cov_header ];
-    $cov_section{'values'} = [
-        [ "data", @cov_means ], [ "estimate", @estcov_means ],
-        [ "data", @cov_sd ], [ "estimate", @estcov_sd ],
-    ];
-    push(@{$self->results->[0]{'own'}}, \%cov_section);
-    push(@{$self->results->[0]{'own'}}, \%space_section);
-
     # (cond) coefficients and covar section
     my (%coeff_section, %covar_section);
     $coeff_section{'name'} = 'FREM parameter-covariate coefficients';
