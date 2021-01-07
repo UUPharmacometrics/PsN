@@ -1671,16 +1671,6 @@ sub prepare_results
         my $full_covmat = get_covmatrix(output => $full_model_cov->outputs->[0]) if (not $full_has_covmat);
     }
 
-    my %ofv_section;
-    $ofv_section{'name'} = 'OFV';
-    my $m1_ofv = $base_model->outputs->[0]->get_single_value(attribute => 'ofv');
-    my $m2_ofv = $model_2->outputs->[0]->get_single_value(attribute => 'ofv');
-    my $m3_ofv = $self->model_3->outputs->[0]->get_single_value(attribute => 'ofv');
-    my $m4_ofv = $full_model->outputs->[0]->get_single_value(attribute => 'ofv');
-    $ofv_section{'labels'} = [ [], [ 'M1', 'M2', 'M3', 'M4' ] ];
-    $ofv_section{'values'} = [ [ $m1_ofv, $m2_ofv, $m3_ofv, $m4_ofv ] ];
-    push(@{$self->results->[0]{'own'}}, \%ofv_section);
-
     my $pdcov = '';
     if ($self->force_posdef_covmatrix) {
         $pdcov = ' --force_posdef_covmatrix';
