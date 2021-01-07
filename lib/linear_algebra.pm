@@ -1229,7 +1229,6 @@ sub spdarise
         }
     }
     my $fNormDiff = 0;
-    # TODO: replace by call to frobenius_norm below
     for (my $index1 = 0; $index1 < scalar(@{$matrix}); $index1++) {
         for (my $index2 = 0; $index2 < scalar(@{$matrix}); $index2++) {
             $posdefmatrix[$index1]->[$index2] = 0;
@@ -1242,34 +1241,6 @@ sub spdarise
     }
 
     return(\@posdefmatrix, $fNormDiff);
-}
-
-sub frobenius_norm
-{
-    # calculate the frobenius norm of a matrix (or frobenius norm of element-wise difference)
-    # TODO: use MatrixReal class instead
-    my %parm = validated_hash(\@_,
-        # in *col format*, A->[col][row]
-        matrix => { isa => 'ArrayRef', optional => 0 },
-        matrix2 => { isa => 'ArrayRef', optional => 1 },
-    );
-    my $matrix = $parm{'matrix'};
-    my $matrix2 = $parm{'matrix2'};
-
-    # sum of all elements squared (of matrix or element-wise difference to matrix2)
-    my $sum = 0;
-    for (my $i=0; $i < scalar(@{$matrix}); $i++) {
-        my $row = $matrix->[$i];
-        my $row2;
-        if (defined $matrix2) { $row2 = $matrix2->[$i]; }
-        for (my $j=0; $j < scalar(@{$row}); $j++) {
-            my $val = $row->[$j];
-            if (defined $row2) { $val = $val - $row2->[$j]; }
-            $sum += abs( $val**2 );
-        }
-    }
-
-    return sqrt($sum);
 }
 
 sub get_matrix_size {

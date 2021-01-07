@@ -870,23 +870,6 @@ is_deeply($indices,[2,0],'indices maxcorr 2');
 is_deeply($cap_indices->[0],[2,1,2/3],'cap indices maxcorr 2');
 is(scalar(@{$cap_indices}),1,'capped indices count');
 
-# frobenius norm tests
-is(linear_algebra::frobenius_norm(matrix => [[10]]), 10, 'frobenius_norm [[10]]');
-my $mat1 = [
-    [28.4344, 35.8203, -124.5168],
-    [10.2272, -130.4963, -90.6012],
-    [-93.2571, -80.8955, -131.5728],
-];
-my $mat2 = [
-    [2.0902, -86.4408, 41.8317],
-    [112.0796, -1.6414, 19.8897],
-    [-31.9668, 125.5487, 62.482],
-];
-cmp_float(linear_algebra::frobenius_norm(matrix => $mat1), 274.75601935747, 'frobenius_norm mat1');
-cmp_float(linear_algebra::frobenius_norm(matrix => $mat2), 207.06220263416, 'frobenius_norm mat2');
-is(linear_algebra::frobenius_norm(matrix => $mat1, matrix2 => $mat1), 0, 'frobenius_norm distance mat1 to mat1');
-cmp_float(linear_algebra::frobenius_norm(matrix => $mat1, matrix2 => $mat2), 408.08372488063, 'frobenius_norm distance mat1 to mat2');
-
 # matrix size getter
 my ($nrow, $ncol);
 ($nrow, $ncol, $err) = linear_algebra::get_matrix_size(matrix => []);
@@ -905,14 +888,14 @@ is_deeply( [$nrow, $ncol, $err], [3,3,undef], "matrix dimension 3x3" );
 is_deeply( [$nrow, $ncol, $err], [2,3,"col idx 1 has 3 elements"], "matrix dimension illegal (2,3,2 el)" );
 
 # inverse identity RMSE and condition numbers (reference: R script and base::kappa)
-$mat1 = [
+my $mat1 = [
     [63.4, -47, -4.33],
     [-47, 39.3, -1.23],
     [-4.33, -1.23, 8.24],
 ]; # random with eigenvalues set as 1,10,100, rounded
 my $cnum_evd = 1.003153723616E+02; # my $cnum_svd = 1.157012038524E+02;
 cmp_float( linear_algebra::condition_number($mat1), $cnum_evd, "condition number 1" );
-$mat2 = $mat1; # testing identity
+my $mat2 = $mat1; # testing identity
 my $rmse = 1.30277206904372e-15; # according to R (lower precision than PsN)
 ok( linear_algebra::matrix_rmse(matrix1 => $mat1, matrix2 => $mat2, method => 2) < $rmse, "inverse identity rmse 1" );
 $mat1 = [
