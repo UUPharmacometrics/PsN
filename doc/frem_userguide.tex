@@ -1,6 +1,6 @@
 \input{inputs/format_header.tex}
 \usepackage{amsmath}
-\guidetitle{FREM userguide}{2020-06-17}
+\guidetitle{FREM userguide}{2021-01-08}
 \usepackage{hyperref}
 \begin{document}
 \newcommand{\guidetoolname}{frem}
@@ -450,121 +450,7 @@ the covariance step of model\_4 was successful.
 \section{Post-processing}
 
 \noindent Post-processing is performed using Pharmpy and the output is generated in the results.json and results.csv. Created plots will be available in results.html.
-
-The post-processing does the following:
-\begin{enumerate}
-\item Reads covariate names, rescaling factors and typical values from final\_models/model\_4.mod,
-and parameter labels from the last omega block of the model file.
-\item Using the formulas in section ``Conditional multi-variate normal'' below,
-compute the parameter-eta variances conditional on knowing
-each covariate separately and conditional on knowing all covariates together.
-Use parameter vector sampling given the covariance matrix uncertainty to compute the 5\% and 95\% quantiles of the respective distributions.
-Also output the parameter-eta variances conditional on no covariates.
-In addition, compute the coefficients for adjusting parameter-eta means
-conditional on knowing the covariates in each situation, and the full expressions to be used in NONMEM code
-including the covariate reference values (means) and covariate names.
-
-\item For each parameter do the following:\\
-For each covariate in turn, define a reference individual with the value of this single covariate equal to
-the reference value. For continous covariates the reference value is the observed mean, and for categorical covariates
-it is the most common value.
-If the covariate is continuous, determine the 5\% and 95\% quantile of the observed covariate range
-and compute the ratios of the parameter value, conditional on a known covariate value equal to the 5\% and 95\% quantile,
-to the parameter value conditional on a known value equal to the observed mean.
-For categorical covariates, compute the ratio of the parameter value, conditional on a known value equal to the least
-common category, to the parameter value conditional on a known value equal to the most common value.
-
-The above computations are repeated for each sampled parameter vector, to obtain the 90\% confidence interval around the observed
-ratios.
-
-Currently exponentiated parameter etas (log-normally distributed parameters) are assumed.
-\item For each parameter,
-a reference individual with known values of all covariates is defined, with continuous covariates equal
-to their observed mean, and categorical covariates equal to the most common category.
-For each individual, compute the ratio of the parameter value, conditional on all covariate values equal to the individual's
-values, to the parameter value conditional on all the reference values.
-
-The above computations are repeated for each sampled parameter vector, to obtain the 90\% confidence interval around the observed
-ratios.
-
-Currently exponentiated parameter etas (log-normally distributed parameters) are assumed.
-\end{enumerate}
-
-\noindent If no uncertainty information could be read the bipp method will be used as a fall back.
-
-If covariance matrix could be read but is not positive-definite, frem can't proceed. This can happen when the cov
-step of NONMEM does not terminate appropriately (or the S matrix is used in place of the R matrix).
-\texttt{-force\_posdef\_covmatrix} can then be supplied to force eigenvalues to become positive (the impact of this is
-unclear and a positive-definite covariance matrix from NONMEM is recommended).
-
-
-\subsection*{Conditional multi-variate normal}
-
-We have a multivariate normally distributed vector
-\[
-\vec{\eta} = \left(
-\begin{array}{c}
-\vec{\eta}_{par} \\
-\vec{\eta}_{cov}\\
-\end{array}
-\right)
-\]
-with sizes
-\[
-\left(
-\begin{array}{c}
-n_{par} \times 1 \\
-n_{cov} \times 1\\
-\end{array}
-\right)
-\]
-where $n_{par}$ is the number of parameters and $n_{cov}$ is the number of covariates related to those parameters.
-
-The partitioned mean vector is
-\[
-\vec{\mu} = \left(
-\begin{array}{c}
-\vec{\mu}_{par} \\
-\vec{\mu}_{cov}\\
-\end{array}
-\right)
-\]
-and the partitioned covariance matrix is
-\[
-\Sigma=\left(
-\begin{array}{cc}
-\Sigma_{par,par} & \Sigma_{par,cov}\\
-\Sigma_{cov,par} & \Sigma_{cov,cov}\\
-\end{array}
-\right)
-\]
-with sizes
-\[
-\left(
-\begin{array}{cc}
-n_{par} \times n_{par} & n_{par} \times n_{cov}\\
-n_{cov} \times n_{par} & n_{cov} \times n_{cov}\\
-\end{array}
-\right)
-\]
-
-In frem $\vec{\eta}_{cov}$ are the deviations of observed values of the covariates from the observed means.
-
-The distribution of $\vec{\eta}_{par}$ conditional on $\vec{\eta}_{cov}= \vec{a}_{cov}$,
-where $\vec{a}_{cov}$ is known,
-is
-multivariate normal with mean
-\[
-\tilde{\mu}_{par}=\vec{\mu}_{par}+\Sigma_{par,cov}\Sigma_{cov,cov}^{-1}\left(\vec{a}_{cov}-\vec{\mu}_{cov}\right)
-\]
-and covariance matrix
-\[
-\tilde{\Sigma}_{par,par}=\Sigma_{par,par}-\Sigma_{par,cov}\Sigma_{cov,cov}^{-1}\Sigma_{cov,par}
-\]
-
-If conditioning on a single know covariate value, then the same formulas are used, but with $\vec{\eta}_{cov}$ a scalar
-and $n_{cov}=1$.
-
+See \url{https://pharmpy.github.io/latest/frem.html} for documentation on post-processing, results and plots.
 
 \section{Known issues}
 Setting option -cholesky will often fail with NONMEM versions older than NM7.3, since the Fortran 95 code line continuation
