@@ -25,39 +25,6 @@ sub subtract
     return $C;
 }
 
-sub read_from_file
-{
-    # Read a matrix from file given either a filename or a filehandle.
-    my %parm = validated_hash(\@_,
-        filename => { isa => 'Str', optional => 1 },
-        filehandle => { isa => 'Ref', optional => 1 },
-        separator => { isa => 'Str', default => ',' },
-    );
-    my $filename = $parm{'filename'};
-    my $filehandle = $parm{'filehandle'};
-    my $separator = $parm{'separator'};
-
-    if (defined $filename) {
-        open $filehandle, "<", $filename;
-    }
-
-    my @A;
-    while (my $line = <$filehandle>) {
-        chomp $line;
-        my @fields = split($separator, $line);
-        foreach my $e (@fields) {       # Convert into number. simplifies faultfinding and unittesting
-            $e += 0;
-        }
-        push @A, \@fields;
-    }
-
-    if (defined $filename) {
-        close $filehandle;
-    }
-
-    return \@A;
-}
-
 sub max
 {
     #Return the maximum element of a matrix
@@ -299,22 +266,6 @@ sub copy_and_reorder_square_matrix
         }
     }
     return \@copy;
-}
-
-sub is_symmetric
-{
-    # Check if matrix is symmetric (A^T = A)
-    my $A = shift;
-
-    for (my $row = 0; $row < @$A; $row++) {
-        for (my $col = 0; $col < $row; $col++) {
-            if ($A->[$row]->[$col] != $A->[$col]->[$row]) {
-                return 0;
-            }
-        }
-    }
-
-    return 1;
 }
 
 sub house
@@ -1243,102 +1194,6 @@ sub spdarise
     return(\@posdefmatrix, $fNormDiff);
 }
 
-sub get_matrix_size {
-    # get matrix (array ref of column array refs) dimensions NxM, return (N,M,errmsg)
-    my %parm = validated_hash(\@_,
-        # in *col format*, A->[col][row]
-        matrix => { isa => 'ArrayRef', optional => 0 },
-    );
-    my $mat = $parm{'matrix'};
-
-    # empty matrix?
-    my $ncol = scalar @{$mat};
-    if ($ncol == 0) {
-        return (0,0,"empty matrix");
-    }
-
-    # matrix is column vector?
-    my $first_nrow = scalar @{$mat->[0]};
-    if ($ncol == 1) {
-        return ($first_nrow, 1, undef);
-    }
-
-    # matrix has column vector not of first vector length?
-    for (my $col=1; $col<$ncol; $col++) {
-        my $nrow = scalar @{$mat->[$col]};
-        if ($first_nrow != $nrow) {
-            return ($first_nrow, $ncol, "col idx $col has $nrow elements");
-        }
-    }
-
-    # matrix is NxM
-    return ($first_nrow, $ncol, undef);
-}
-
-sub matrix_rmse {
-    # calculate the difference of two sq matrices by RMSE, two methods:
-    # 1 RMSE of direct difference (relative to first matrix)
-    # 2 RMSE of identity matrix (product of first matrix with second matrix inverse)
-    my %parm = validated_hash(\@_,
-        # in *col format*, A->[col][row]
-        matrix1 => { isa => 'ArrayRef', optional => 0 }, # need not be invertible but square
-        matrix2 => { isa => 'ArrayRef', optional => 0 }, # need to be same size (and invertible for method 2)
-        method => { isa => 'Int', optional => 1, default => 1 } # method above
-    );
-    my $matrix1 = $parm{'matrix1'};
-    my $matrix2 = $parm{'matrix2'};
-    my $method = $parm{'method'};
-
-    # validate dimensions
-    (my $ncol1, my $nrow1, my $err1) = get_matrix_size(matrix => $matrix1);
-    (my $ncol2, my $nrow2, my $err2) = get_matrix_size(matrix => $matrix2);
-    if (defined $err1) {
-        croak "matrix1 illegal ($err1)";
-    } elsif (defined $err2) {
-        croak "matrix2 illegal ($err2)";
-    }
-    if ($ncol1 != $nrow1 || $ncol1 != $ncol2) {
-        croak "matrices not square/same size (sizes ${nrow1}x${ncol1} and ${nrow2}x${ncol2})";
-    }
-    my $dim = $ncol1;
-
-    # create matrices and check invertibility
-    my $mat1 = Math::MatrixReal->new_from_cols( $matrix1 );
-    my $mat2 = Math::MatrixReal->new_from_cols( $matrix2 );
-    my $mat2_inv;
-    if ($method == 2) {
-        $mat2_inv = $mat2->inverse();
-        unless (defined $mat2_inv) {
-            croak "matrix2 is not invertible";
-        }
-    }
-
-    my $mean = 0;
-    if ($method == 1) {
-        # calculate the RMSE (of relative, to sq(mat1), squared difference)
-        #   EQ: RMSE = SQRT(SUM( ([mat1]_ij-[mat2]_ij)^2 ) / SUM( [mat1]_ij^2 ))
-        my $diffmat = $mat1 - $mat2;
-        my $sq_diffmat = $diffmat->each( sub { (shift)**2 } );
-        my $sq_mat1 = $mat1->each( sub { (shift)**2 } );
-        my $norm_sum_diff = $sq_diffmat->norm_sum();
-        my $norm_sum_mat1 = $sq_mat1->norm_sum();
-        $mean = ($norm_sum_mat1 == 0) ? 0 : $norm_sum_diff / $norm_sum_mat1;
-    } elsif ($method == 2) {
-        # calculate the RMSE (of matrix1*inv(matrix2) and identity matrix)
-        #   EQ: RMSE = SQRT(SUM( ([I]_ij-[mat1*inv(mat2)]_ij)^2 ))
-        my $idmat = Math::MatrixReal->new_diag( [(1) x $dim] );
-        my $prodmat = $mat1 * $mat2_inv;
-        my $diffmat = $idmat - $prodmat;
-        my $sq_diffmat = $diffmat->each( sub { (shift)**2 } ); # square it elementwise
-        my $norm_sum = $sq_diffmat->norm_sum(); # sum of (abs of) all elements
-        $mean = $norm_sum/($dim**2);
-    } else {
-        croak "method ".$method." is unknown";
-    }
-
-    return (sqrt $mean);
-}
-
 sub eigenvalue_decomposition
 {
     # Perfor an eigenvalue decomposition of a symmetric matrix
@@ -1432,53 +1287,6 @@ sub eigenvalue_decomposition
     transpose(\@G);
 
     return (\@eigenValues, \@G);
-}
-
-sub condition_number
-{
-    # get the 2-norm condition number from the eigenvalue decomposition
-    # (return undef if singular matrix)
-    my $mat = shift;
-
-    (my $values, my $Q) = eigenvalue_decomposition($mat);
-    (my $min, my $max) = ($values->[0], $values->[0]);
-    foreach my $val (@{$values}[1..$#$values]) {
-        $min = $val if (abs($val) < $min);
-        $max = $val if (abs($val) > $max);
-    }
-    if ($min != 0) {
-        return abs($max/$min);
-    } else {
-        return undef;
-    }
-}
-
-sub upper_triangular_solve
-{
-    #input is upper triangular matrix
-    #in *column format*, Umat->[col][row]
-    #and reference to right hand vector which will be overwritten with solution
-    #solve Umat*x=b
-    #algorithm Golub p 89, alg 3.1.2
-    #verified with matlab
-
-    my $Umat=shift;
-    my $solution = shift;
-    my $input_error = 2;
-    my $numerical_error = 1;
-    my $ncol= scalar(@{$Umat});
-
-    return $numerical_error if ($Umat->[$ncol-1][$ncol-1] == 0);
-    $solution->[$ncol-1]=$solution->[$ncol-1]/$Umat->[$ncol-1][$ncol-1];
-    for (my $i=($ncol-2);$i>=0;$i--){
-      my $sum=0;
-      for (my $j=($i+1);$j<$ncol;$j++){
-    $sum += ($Umat->[$j][$i])*$solution->[$j];
-      }
-      return $numerical_error if ($Umat->[$i][$i] == 0);
-      $solution->[$i]=($solution->[$i]-$sum)/($Umat->[$i][$i]);
-    }
-    return 0;
 }
 
 sub upper_triangular_transpose_solve

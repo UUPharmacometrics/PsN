@@ -19,28 +19,6 @@ is (linear_algebra::max($C), 0.25, "matrix maximum");
 linear_algebra::absolute($C);
 is_deeply($C, [[ 0.  , 0.1 , 0.25], [ 0.1,  0., 0.17], [ 0.25,  0.17,  0. ]], "matrix absolute");
 
-# read_from_file
-my $testdir = create_test_dir("linear_algebra_unit");
-chdir $testdir;
-open my $fh, ">", "testfile";
-print $fh "1 ,2, 3,4,5\n";
-print $fh "2,3,1,4,  99\n";
-close $fh;
-my $A = linear_algebra::read_from_file(filename => "testfile");
-is_deeply($A, [[1, 2, 3, 4, 5], [2, 3, 1, 4, 99]], "read_from_file comma separated");
-
-open  $fh, ">", "testfile_space";
-print $fh "1.23 2e14    5\n";
-print $fh "1 2  1.56789\n";
-print $fh "1   1 1";
-close $fh;
-open  $fh, "<", "testfile_space";
-$A = linear_algebra::read_from_file(filehandle => $fh, separator => '\s+');
-is_deeply($A, [[1.23, 2e14, 5], [1, 2, 1.56789], [1, 1, 1]], "read_from_file space separated");
-close $fh;
-
-remove_test_dir($testdir);
-
 #pad_matrix
 @A = ([1, 2, 4], [3, 5 ,7], [8, 4, 1]);
 linear_algebra::pad_matrix(\@A, 5);
@@ -91,14 +69,8 @@ is_deeply($A[0], [1, 4, 7], "transpose row 1");
 is_deeply($A[1], [2, 5, 8], "transpose row 2");
 is_deeply($A[2], [3, 6, 9], "transpose row 3");
 
-# is_symmetric
-@A = ([1, 2], [2, 3]);
-ok(linear_algebra::is_symmetric(\@A), "is_symmetric matrix 1");
-@A = ([1, 2], [3, 2]);
-ok(!linear_algebra::is_symmetric(\@A), "is_symmetric matrix 2");
-
 #LU_factorization
-$A = [[2, 3], [1, 2]];
+my $A = [[2, 3], [1, 2]];
 linear_algebra::LU_factorization($A);
 is_deeply($A, [[2, 3], [0.5, 0.5]], "lu matrix A");
 
@@ -672,108 +644,5 @@ is($modified,1,'modified after cap 2');
 is_deeply($indices,[2,0],'indices maxcorr 2');
 is_deeply($cap_indices->[0],[2,1,2/3],'cap indices maxcorr 2');
 is(scalar(@{$cap_indices}),1,'capped indices count');
-
-# matrix size getter
-my ($nrow, $ncol);
-($nrow, $ncol, $err) = linear_algebra::get_matrix_size(matrix => []);
-is_deeply( [$nrow, $ncol, $err], [0,0,"empty matrix"], "matrix dimension 0x0" );
-($nrow, $ncol, $err) = linear_algebra::get_matrix_size(matrix => [[0]]);
-is_deeply( [$nrow, $ncol, $err], [1,1,undef], "matrix dimension 1x1" );
-($nrow, $ncol, $err) = linear_algebra::get_matrix_size(matrix => [[1],[2],[3]]);
-is_deeply( [$nrow, $ncol, $err], [1,3,undef], "matrix dimension 1x3" );
-($nrow, $ncol, $err) = linear_algebra::get_matrix_size(matrix => [[1,2,3]]);
-is_deeply( [$nrow, $ncol, $err], [3,1,undef], "matrix dimension 3x1" );
-($nrow, $ncol, $err) = linear_algebra::get_matrix_size(matrix => [[1,2,3],[4,5,6]]);
-is_deeply( [$nrow, $ncol, $err], [3,2,undef], "matrix dimension 3x2" );
-($nrow, $ncol, $err) = linear_algebra::get_matrix_size(matrix => [[1,2,3],[4,5,6],[7,8,9]]);
-is_deeply( [$nrow, $ncol, $err], [3,3,undef], "matrix dimension 3x3" );
-($nrow, $ncol, $err) = linear_algebra::get_matrix_size(matrix => [[1,2],[3,4,5],[5,6]]);
-is_deeply( [$nrow, $ncol, $err], [2,3,"col idx 1 has 3 elements"], "matrix dimension illegal (2,3,2 el)" );
-
-# inverse identity RMSE and condition numbers (reference: R script and base::kappa)
-my $mat1 = [
-    [63.4, -47, -4.33],
-    [-47, 39.3, -1.23],
-    [-4.33, -1.23, 8.24],
-]; # random with eigenvalues set as 1,10,100, rounded
-my $cnum_evd = 1.003153723616E+02; # my $cnum_svd = 1.157012038524E+02;
-cmp_float( linear_algebra::condition_number($mat1), $cnum_evd, "condition number 1" );
-my $mat2 = $mat1; # testing identity
-my $rmse = 1.30277206904372e-15; # according to R (lower precision than PsN)
-ok( linear_algebra::matrix_rmse(matrix1 => $mat1, matrix2 => $mat2, method => 2) < $rmse, "inverse identity rmse 1" );
-$mat1 = [
-    [1.59, 0.885, -0.199],
-    [0.885, 2.35, -0.17],
-    [-0.199, -0.17, 2.06],
-]; # random with eigenvalues set as 1,2,3, rounded
-$cnum_evd = 2.995384624764E+00; # $cnum_svd = 3.327451372892E+00;
-cmp_float( linear_algebra::condition_number($mat1), $cnum_evd, "condition number 2" );
-$mat2 = [
-    [1.75, 0.974, -0.219],
-    [0.974, 2.58, -0.187],
-    [-0.219, -0.187, 2.27],
-]; # mat1 with eigenvalues increased 5%, rounded
-$cnum_evd = 2.996697229202E+00; # $cnum_svd = 3.326499870422E+00;
-cmp_float( linear_algebra::condition_number($mat2), $cnum_evd, "condition number 3" );
-$rmse = 0.0524589214612061;
-cmp_float( linear_algebra::matrix_rmse(matrix1 => $mat1, matrix2 => $mat2, method => 2), $rmse, "inverse identity rmse 2" );
-$mat1 = [
-    [4.818E-29, -1.38708E-25, -2.01914E-25, -7.8682E-25, 9.7616E-23, -8.11468E-21],
-    [-1.38708E-25, 1.92069E-20, 2.797E-20, 1.23158E-19, 3.48504E-20, 4.53091E-18],
-    [-2.01914E-25, 2.797E-20, 4.07313E-20, 1.79368E-19, 5.08345E-20, 6.59238E-18],
-    [-7.8682E-25, 1.23158E-19, 1.79368E-19, 7.55425E-18, -3.2083E-18, 7.19718E-16],
-    [9.7616E-23, 3.48504E-20, 5.08345E-20, -3.2083E-18, 5.1937E-16, -4.31156E-14],
-    [-8.11468E-21, 4.53091E-18, 6.59238E-18, 7.19718E-16, -4.31156E-14, 3.60653E-12],
-]; # real submatrix (CL,V,Ka) in FREM
-# condition number does not match between R and PsN because eigenvalues do not match (probably algo limitation):
-# (my $eigenvals, undef) = linear_algebra::eigenvalue_decomposition($mat1);
-# use Data::Dumper; print Dumper($eigenvals);
-# $cnum_evd = 1.261870726080E+17; # $cnum_svd = 9.294102768063E+16;
-# cmp_float( linear_algebra::condition_number($mat1), $cnum_evd, "condition number 4" );
-$mat2 = [
-    [1e-10, 2.57935095474379e-29, -1.88356445089885e-29, 6.16297582203915e-33, -6.16297582203915e-33, -9.62964972193618e-35],
-    [5.50353289518266e-31, 1e-10, 1.85493596329502e-26, 1.21484579404036e-28, -5.52202633654708e-29, 9.4909827659403e-31],
-    [-6.20404966352694e-30, 5.62312282896684e-27, 1e-10, -1.33711923434962e-28, -2.67818277322534e-28, 1.39899551160289e-30],
-    [0, 2.84778786784785e-28, 5.85729222126601e-28, 1e-10, -6.46234853557053e-27, 0],
-    [-1.84889274661175e-32, -6.7842037849007e-29, 3.09233474846637e-28, 1.93870456067116e-26, 1e-10, -2.01948391736579e-28],
-    [9.62964972193618e-35, -1.22026921276375e-30, -2.57612389361237e-30, -1.0097419586829e-28, 1.0097419586829e-28, 1e-10],
-]; # adjusted 6 eigenvalues (-1.64E-22,2.86E-29,1.82E-26,5.36E-20,1.13E-17,3.61E-12) to 1.0E-10
-$cnum_evd = 1.000000000000E+00; # $cnum_svd = 1.000000000000E+00; # (all eigenvalues were adjusted)
-cmp_float( linear_algebra::condition_number($mat2), $cnum_evd, "condition number 5" );
-$rmse = 0.4058311067051139;
-cmp_float( linear_algebra::matrix_rmse(matrix1 => $mat1, matrix2 => $mat2, method => 2), $rmse, "inverse identity rmse 3" );
-
-# simple difference RMSE (reference: R script)
-cmp_float( linear_algebra::matrix_rmse(matrix1 => [[0]], matrix2 => [[0]], method => 1), 0, "simple difference rmse 0" );
-$mat1 = [
-    [-7, 0, -83, -1],
-    [0, 3, 100, -146],
-    [-83, 100, -35, -239],
-    [-1, -146, -239, 15],
-];
-$mat2 = [
-    [96, 17, -247, 54],
-    [17, -137, -87, 93],
-    [-247, -87, -67, 40],
-    [54, 93, 40, 19],
-];
-$rmse = 1.49855347382753;
-cmp_float( linear_algebra::matrix_rmse(matrix1 => $mat1, matrix2 => $mat2, method => 1), $rmse, "simple difference rmse 1" );
-$mat1 = [
-    [7, 28, 16, -10],
-    [28, -7, -17, -4],
-    [16, -17, -13, -3],
-    [-10, -4, -3, 6],
-];
-$mat2 = [
-    [2142532, 1242735, -114632, 892625],
-    [1242735, 212820, -152941, 475296],
-    [-114632, -152941, -137320, 520768],
-    [892625, 475296, 520768, -349730],
-];
-$rmse = 57255.8331992804;
-cmp_float( linear_algebra::matrix_rmse(matrix1 => $mat1, matrix2 => $mat2, method => 1), $rmse, "simple difference rmse 2" );
-$rmse = 0.999994343923935;
-cmp_float( linear_algebra::matrix_rmse(matrix1 => $mat2, matrix2 => $mat1, method => 1), $rmse, "simple difference rmse 2 rev" );
 
 done_testing();
