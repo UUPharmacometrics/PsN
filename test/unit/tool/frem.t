@@ -235,39 +235,8 @@ $model = model->new(filename => "$modeldir/frem/model_4.mod",
 is($diag,'ETA','phi diag coltype classic');
 is($offdiag,'ETC','phi offdiag coltype classic');
 
-my ($covnames,$rescaling,$omegaindex,$parnames,$size,$cov_means,$cov_var)=tool::frem::get_post_processing_data(model => $model);
-is_deeply($covnames,['WT','SEX'],'frem post covnames 1');
-is_deeply($rescaling,[1,1],'frem post rescale 1');
-is($omegaindex,0,'frem post omegaindex 1');
-is_deeply($parnames,['CL','V','KA'],'frem post parnames 1');
-is($size,5,'frem post size 1');
-is_deeply($cov_means,[78.5141,1.20268],'frem post covmeans 1');
-
-$model = model->new(filename => "$modeldir/frem/hamren_4.mod",
-                       ignore_missing_data => 1);
-($covnames,$rescaling,$omegaindex,$parnames,$size,$cov_means,$cov_var)=tool::frem::get_post_processing_data(model => $model);
-is_deeply($covnames,['AGE','WGT','LBW','CRCO','SEX'],'frem post covnames 2');
-is_deeply($rescaling,[10.2318688078,17.738664519,11.2023916302,20.6542819724,0.492904320263],'frem post rescale 2');
-is($omegaindex,3,'frem post omegaindex 2');
-is_deeply($parnames,['GAM','KINH','HB50','FPG_BASELINE','EC50_FPG','PBO_FPG'],'frem post parnames 2');
-is($size,11,'frem post size 2');
-is_deeply($cov_means,[57.1553398058,88.9502427184,58.4322815534,69.5191747573,1.41262135922],'frem post covmeans 2');
-
-my $compact_model = model->new(filename => "$modeldir/frem/compact.mod",
-                               ignore_missing_data => 1);
-
-($covnames,$rescaling,$omegaindex,$parnames,$size,$cov_means,$cov_var)=tool::frem::get_post_processing_data(model => $compact_model);
-is_deeply($covnames,['AGE','SEX'],'frem post covnames 3');
-is_deeply($rescaling,[7.82226906804,0.404756978659],'frem post rescale 3');
-is($omegaindex,0,'frem post omegaindex 3');
-is_deeply($parnames,['CL','V','KA'],'frem post parnames 3');
-is($size,5,'frem post size 3');
-is_deeply($cov_means,[65.1756756757,1.2027027027],'frem post covmeans 3');
-
-
 $model = model->new(filename => "$modeldir/mox_no_bov.mod",
                        ignore_missing_data => 1);
-
 
 my ($corr,$message) = tool::frem::get_correlation_matrix_from_phi(start_eta_1 => 1,
                                                                   end_eta_1 => 3,
