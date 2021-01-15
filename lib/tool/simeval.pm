@@ -1176,46 +1176,6 @@ sub prepare_results
     $self->cleanup;
 }
 
-sub max_and_min
-{
-    my $self = shift;
-    my %parm = validated_hash(\@_,
-                              use_runs => { isa => 'ArrayRef[Bool]', optional => 0 },
-                              column_index => { isa => 'Int', optional => 0 },
-                              start_row_index => { isa => 'Int', default => 0, optional => 1 },
-                              end_row_index => { isa => 'Int', optional => 1 }
-        );
-    my @use_runs = defined $parm{'use_runs'} ? @{$parm{'use_runs'}} : ();
-    my $column_index = $parm{'column_index'};
-    my $start_row_index = $parm{'start_row_index'};
-    my $end_row_index = $parm{'end_row_index'};
-    my $maximum;
-    my $minimum;
-
-    #input is integers $column_index, $start_row_index, $end_row_index
-
-    unless( $end_row_index ){
-        $self->raw_results([]) unless defined $self->raw_results;
-        $end_row_index = $#{$self->raw_results};
-    }
-
-    croak("Bad row index input") if ($start_row_index >= $end_row_index);
-
-    $maximum = -1000000000;
-    $minimum =  1000000000;
-    for (my $i=$start_row_index; $i<=$end_row_index; $i++){
-        if ($use_runs[$i-$start_row_index]) {
-            if (defined $self->raw_results->[$i][$column_index]){
-                $maximum = $self->raw_results->[$i][$column_index] if ($self->raw_results->[$i][$column_index] > $maximum);
-                $minimum = $self->raw_results->[$i][$column_index] if ($self->raw_results->[$i][$column_index] < $minimum);
-            } else {
-            }
-        }
-    }
-
-    return $maximum, $minimum;
-}
-
 sub cleanup
 {
     my $self = shift;
