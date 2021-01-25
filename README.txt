@@ -29,7 +29,6 @@ YAML::XS
 - Recommended perl packages, not absolutely required when running PsN 
 but necessary for some features:
 
-Statistics::Distributions
 Archive::Zip
 File::Copy::Recursive
 

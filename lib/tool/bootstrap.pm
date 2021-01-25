@@ -3,7 +3,7 @@ package tool::bootstrap;
 use include_modules;
 use strict;
 use File::Copy 'cp';
-use Statistics::Distributions 'udistr', 'uprob';
+use ext::Statistics::Distributions 'udistr', 'uprob';
 use Math::Random;
 use Moose;
 use MooseX::Params::Validate;

@@ -4,7 +4,7 @@ use strict;
 use warnings;
 use MooseX::Params::Validate;
 use include_modules;
-use Statistics::Distributions qw(udistr);
+use ext::Statistics::Distributions qw(udistr);
 use array qw(sum);
 
 sub r_of_lambda
