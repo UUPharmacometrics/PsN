@@ -1,4 +1,4 @@
-name: linux-test
+name: ci
 on: [push]
 jobs:
   build:
@@ -31,3 +31,27 @@ jobs:
       - run: sudo cpan File::Copy::Recursive
       - run: sudo cpan YAML::XS
       - run: sudo cpan Test::Exception
+
+  test-macos:
+    needs: build
+    runs-on: macos-latest
+    steps:
+      - uses: actions/download-artifact@v2
+        with:
+          name: targz 
+      - run: tar -zxvf PsN-*.tar.gz
+      - run: sudo cpan Math::Random
+      - run: sudo cpan Moose
+      - run: sudo cpan MooseX::Params::Validate
+      - run: sudo cpan Archive::Zip
+      - run: sudo cpan File::Copy::Recursive
+      - run: sudo cpan YAML::XS
+      - run: sudo cpan Test::Exception
+
+  build-windows:
+      needs: build
+      runs-on: windows-latest
+      steps:
+        - uses: actions/download-artifact@v2
+          with:
+            name: targz 
