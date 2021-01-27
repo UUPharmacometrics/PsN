@@ -6,7 +6,22 @@ jobs:
     steps:
       - uses: actions/checkout@v2
         with:
-            submodules: recursive
+          submodules: recursive
+      - name: Install build dependencies
+        run: sudo apt install latexmk texlive-extra-utils texlive-latex-extra texlive-generic-extra biber texlive-bibtex-extra texlive-science texlive-font-utils and texlive-pictures tox 
+      - run: make
+      - run: make release
+      - uses: actions/upload-artifact@v2
+        with:
+          name: targz
+          path: PsN-*.tar.gz
+  test-ubuntu:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v2
+        with:
+          name: targz 
+      - run: tar -zxvf PsN-*.tar.gz
       - run: sudo cpan Math::Random
       - run: sudo cpan Moose
       - run: sudo cpan MooseX::Params::Validate
@@ -14,7 +29,3 @@ jobs:
       - run: sudo cpan File::Copy::Recursive
       - run: sudo cpan YAML::XS
       - run: sudo cpan Test::Exception
-      - run: prove test/unit -r -j8
-      - run: sudo apt install latexmk texlive-extra-utils texlive-latex-extra texlive-generic-extra biber texlive-bibtex-extra texlive-science texlive-font-utils and texlive-pictures tox 
-      - run: make
-      - run: make release
