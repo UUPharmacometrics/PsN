@@ -556,7 +556,7 @@ sub create_directory
 
     unless (-e $directory_name) {
         print "Directory $directory_name does not exist. Would you like to create it?[y/n]\n";
-        if (confirm()) {
+        if ($auto or confirm()) {
             if (not mkpath($directory_name)) {
                 abort("Unable to create $directory_name.\n");
             }

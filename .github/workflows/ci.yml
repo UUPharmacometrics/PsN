@@ -27,8 +27,10 @@ jobs:
       - run: sudo cpan Math::Random
       - run: sudo cpan YAML::XS
       - run: sudo apt update
-      - run: sudo apt install -y libtest-exception-perl libmoose-perl libmoosex-params-validate-perl libarchive-zip-perl libfile-copy-recursive-perl r-base pandoc libpq-dev libcairo2-dev libssl-dev libcurl4-openssl-dev libmariadb-dev libgmp-dev libmpfr-dev libxml2-dev libudunits2-dev libblas-dev liblapack-dev libmagick++-dev
-      - run: cd PsN-Source; sudo perl setup.pl -auto
+      - name: Install Perl and R dependencies
+        run: sudo apt install -y libtest-exception-perl libmoose-perl libmoosex-params-validate-perl libarchive-zip-perl libfile-copy-recursive-perl r-base pandoc libpq-dev libcairo2-dev libssl-dev libcurl4-openssl-dev libmariadb-dev libgmp-dev libmpfr-dev libxml2-dev libudunits2-dev libblas-dev liblapack-dev libmagick++-dev
+      - name: Install PsN 
+        run: cd PsN-Source; sudo perl setup.pl -auto
 
   test-macos:
     needs: build
@@ -53,3 +55,6 @@ jobs:
         - uses: actions/download-artifact@v2
           with:
             name: targz 
+        - name: Download Strawberry Perl
+          shell: bash
+          run: wget http://strawberryperl.com/download/5.22.3.1/strawberry-perl-5.22.3.1-64bit-portable.zip
