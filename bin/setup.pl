@@ -31,6 +31,8 @@ my $old_default_psn_config_file;
 my $copy_cmd;
 my $copy_recursive_cmd;
 my $relative_lib_path=0;
+my $auto = 0;
+
 
 if (scalar(@ARGV)>0){
     if ($ARGV[0] eq 'relative'){
@@ -38,6 +40,11 @@ if (scalar(@ARGV)>0){
         print "\nUsing relative library path, suitable for portable installations\n";
     }else{
         die("unknown input ".$ARGV[0]."\n");
+    }
+    for my $arg (@ARGV) {
+        if ($arg eq '-auto') {
+            $auto = 1;
+        }
     }
 }
 
@@ -523,6 +530,9 @@ sub abort
 sub get_input
 {
     my $default = shift;
+    if ($auto) {
+        return $default;
+    }
     my $input = <STDIN>;
     chomp($input);
     if ($input =~ /^\s*$/) {
@@ -734,7 +744,7 @@ before PsN can be run.
 
 Would you like this script to check Perl modules [y/n]?";
 
-if (confirm()) {
+if (not $auto and confirm()) {
     test_perl_modules();
 }
 
@@ -915,7 +925,7 @@ if (not running_on_windows()) {
     print "\n";
     print "\nWould you like to install the PsNR R package? [y/n] ";
 
-    if (confirm()) {
+    if ($auto or confirm()) {
         if (not -e $rlib_path) {
             if (not mkpath($rlib_path)) {
                 print "Failed to create $rlib_path: $!\n";
@@ -943,7 +953,7 @@ if (not running_on_windows()) {
     print "\n";
     print "\nWould you like to install the pharmpy python package? [y/n] ";
 
-    if (confirm()) {
+    if ($auto or confirm()) {
         my $py_response = readpipe('python -c "import sys;print(sys.version_info[0])"');
         my $python;
         chomp($py_response);
@@ -975,7 +985,7 @@ if (not running_on_windows()) {
 my $default_test = $library_dir;
 my $test_library_dir;
 print "\nWould you like to install the PsN test library? [y/n] ";
-if (confirm()) {
+if ($auto or confirm()) {
     print "PsN test library installation directory [$default_test]:";
     $test_library_dir = get_input($default_test);
     $test_library_dir .= "/PsN_test_$name_safe_version";
@@ -1075,7 +1085,7 @@ if (not $keep_conf) {
             "to set personalized defaults and/or will run PsN with NMQual,\n".
             "you can manually add the relevant options to the file afterwards.\n".
             "Would you like help to create a configuration file? [y/n] ";
-        if (confirm()) {
+        if (not $auto or confirm()) {
             $conf_ok = create_conf ("$library_dir"."$directory_separator"."PsN_$name_safe_version"."$directory_separator",$perl_binary);
             $configuration_done = $conf_ok;
         }

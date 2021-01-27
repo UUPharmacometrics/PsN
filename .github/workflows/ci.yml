@@ -31,6 +31,8 @@ jobs:
       - run: sudo cpan File::Copy::Recursive
       - run: sudo cpan YAML::XS
       - run: sudo cpan Test::Exception
+      - run: sudo apt install r-base pandoc libpq-dev libcairo2-dev libssl-dev libcurl4-openssl-dev libmariadb-dev libgmp-dev libmpfr-dev libxml2-dev libudunits2-dev libblas-dev liblapack-dev libmagick++-dev
+      - run: cd PsN-Source; sudo perl setup.pl
 
   test-macos:
     needs: build
