@@ -25,13 +25,9 @@ jobs:
           name: targz 
       - run: tar -zxvf PsN-*.tar.gz
       - run: sudo cpan Math::Random
-      - run: sudo cpan Moose
-      - run: sudo cpan MooseX::Params::Validate
-      - run: sudo cpan Archive::Zip
-      - run: sudo cpan File::Copy::Recursive
       - run: sudo cpan YAML::XS
-      - run: sudo cpan Test::Exception
-      - run: sudo apt install r-base pandoc libpq-dev libcairo2-dev libssl-dev libcurl4-openssl-dev libmariadb-dev libgmp-dev libmpfr-dev libxml2-dev libudunits2-dev libblas-dev liblapack-dev libmagick++-dev
+      - run: sudo apt update
+      - run: sudo apt install -y libtest-exception-perl libmoose-perl libmoosex-params-validate-perl libarchive-zip-perl libfile-copy-recursive-perl r-base pandoc libpq-dev libcairo2-dev libssl-dev libcurl4-openssl-dev libmariadb-dev libgmp-dev libmpfr-dev libxml2-dev libudunits2-dev libblas-dev liblapack-dev libmagick++-dev
       - run: cd PsN-Source; sudo perl setup.pl -auto
 
   test-macos:
