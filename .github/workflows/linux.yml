@@ -7,12 +7,12 @@ jobs:
       - uses: actions/checkout@v2
         with:
             submodules: recursive
-      - run: cpan Math::Random
-      - run: cpan Moose
-      - run: cpan MooseX::Params::Validate
-      - run: cpan Archive::Zip
-      - run: cpan File::Copy::Recursive
-      - run: cpan YAML::XS
+      - run: sudo cpan Math::Random
+      - run: sudo cpan Moose
+      - run: sudo cpan MooseX::Params::Validate
+      - run: sudo cpan Archive::Zip
+      - run: sudo cpan File::Copy::Recursive
+      - run: sudo cpan YAML::XS
       - run: prove test/unit -r -j8
       - run: sudo apt install latexmk texlive-extra-utils texlive-latex-extra texlive-generic-extra biber texlive-bibtex-extra texlive-science texlive-font-utils and texlive-pictures tox 
       - run: make
