@@ -209,23 +209,23 @@ doc/%.pdf: version doc/%.tex
 doc: $(PDFFILES) 
 
 release: main rel_dir $(RELFILES) $(PDFFILES)
-	@ rm -f $(TARFILE)
-	@ mkdir -p PsN-Source/development
-	@ mkdir -p PsN-Source/test
-	@ cp -ar test/unit PsN-Source/test
-	@ cp -ar test/system PsN-Source/test
-	@ cp -ar test/test_files PsN-Source/test
-	@ cp -ar R-scripts PsN-Source/lib
-	@ cp test/includes.pm PsN-Source/test
-	@ cp test/runsystem PsN-Source/test
-	@ cp doc/PsN.bib PsN-Source/lib
-	@ chmod -R a+r PsN-Source/test/test_files
-	@ sed -i 's/dev\s*=\s*1;/dev = 0;/' PsN-Source/lib/PsN.pm
-	@ cp -ar PsNR PsN-Source
-	@ cd pharmpy; tox -e run -- pharmpy --version
-	@ cp pharmpy/.tox/dist/*.zip PsN-Source/
-	@ cp pharmpy/requirements.txt PsN-Source/
-	@ tar czf $(TARFILE) PsN-Source/
+	rm -f $(TARFILE)
+	mkdir -p PsN-Source/development
+	mkdir -p PsN-Source/test
+	cp -ar test/unit PsN-Source/test
+	cp -ar test/system PsN-Source/test
+	cp -ar test/test_files PsN-Source/test
+	cp -ar R-scripts PsN-Source/lib
+	cp test/includes.pm PsN-Source/test
+	cp test/runsystem PsN-Source/test
+	cp doc/PsN.bib PsN-Source/lib
+	chmod -R a+r PsN-Source/test/test_files
+	sed -i 's/dev\s*=\s*1;/dev = 0;/' PsN-Source/lib/PsN.pm
+	cp -ar PsNR PsN-Source
+	cd pharmpy; tox -e run -- pharmpy --version
+	cp pharmpy/.tox/dist/*.zip PsN-Source/
+	cp pharmpy/requirements.txt PsN-Source/
+	tar czf $(TARFILE) PsN-Source/
 
 # Release the nmoutput2so separately
 nmoutput2so: version
