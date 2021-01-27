@@ -1,0 +1,9 @@
+name: linux-test
+on: [push]
+jobs:
+  check-bats-version:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - run: make
+	  - run: make release
