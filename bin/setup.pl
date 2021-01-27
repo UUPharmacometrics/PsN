@@ -38,8 +38,6 @@ if (scalar(@ARGV)>0){
     if ($ARGV[0] eq 'relative'){
         $relative_lib_path=1;
         print "\nUsing relative library path, suitable for portable installations\n";
-    }else{
-        die("unknown input ".$ARGV[0]."\n");
     }
     for my $arg (@ARGV) {
         if ($arg eq '-auto') {
