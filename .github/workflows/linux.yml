@@ -13,6 +13,7 @@ jobs:
       - run: sudo cpan Archive::Zip
       - run: sudo cpan File::Copy::Recursive
       - run: sudo cpan YAML::XS
+      - run: sudo cpan Test::Exception
       - run: prove test/unit -r -j8
       - run: sudo apt install latexmk texlive-extra-utils texlive-latex-extra texlive-generic-extra biber texlive-bibtex-extra texlive-science texlive-font-utils and texlive-pictures tox 
       - run: make
