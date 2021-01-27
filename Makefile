@@ -31,6 +31,7 @@ LIBFILES= ui.pm \
 	ext/Config/Tiny.pm \
 	ext/File/HomeDir.pm \
 	ext/Capture/Tiny.pm \
+	ext/Statistics/Distributions.pm \
 	status_bar.pm \
 	model_plus.pm \
 	monitor.pm \
