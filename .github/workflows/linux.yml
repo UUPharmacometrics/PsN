@@ -15,7 +15,9 @@ jobs:
         with:
           name: targz
           path: PsN-*.tar.gz
+
   test-ubuntu:
+    needs: build
     runs-on: ubuntu-latest
     steps:
       - uses: actions/download-artifact@v2
