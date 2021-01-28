@@ -4,13 +4,16 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - name: Download source repo 
+        uses: actions/checkout@v2
         with:
           submodules: recursive
       - name: Install build dependencies
         run: sudo apt install latexmk texlive-extra-utils texlive-latex-extra texlive-generic-extra biber texlive-bibtex-extra texlive-science texlive-font-utils and texlive-pictures tox 
-      - run: make
-      - run: make release
+      - name: make
+        run: make
+      - name: make release 
+        run: make release
       - name: Upload installation artifact
         uses: actions/upload-artifact@v2
         with:
@@ -30,8 +33,8 @@ jobs:
         with:
           name: targz 
       - run: tar -zxvf PsN-*.tar.gz
-      - run: sudo cpan Math::Random
-      - run: sudo cpan YAML::XS
+      - run: sudo cpan -T Math::Random
+      - run: sudo cpan -T YAML::XS
       - run: sudo apt update
       - name: Install Perl and R dependencies
         run: sudo apt install -y libtest-exception-perl libmoose-perl libmoosex-params-validate-perl libarchive-zip-perl libfile-copy-recursive-perl r-base pandoc libpq-dev libcairo2-dev libssl-dev libcurl4-openssl-dev libmariadb-dev libgmp-dev libmpfr-dev libxml2-dev libudunits2-dev libblas-dev liblapack-dev libmagick++-dev
@@ -42,18 +45,32 @@ jobs:
     needs: build
     runs-on: macos-latest
     steps:
-      - uses: actions/download-artifact@v2
+      - name: Download installation tarball
+        uses: actions/download-artifact@v2
         with:
           name: targz 
-      - run: tar -zxvf PsN-*.tar.gz
-      - run: brew install gcc r pandoc cairo mariadb-connector-c openssl@1.1
-      - run: sudo cpan Math::Random
-      - run: sudo cpan Moose
-      - run: sudo cpan MooseX::Params::Validate
-      - run: sudo cpan Archive::Zip
-      - run: sudo cpan File::Copy::Recursive
-      - run: sudo cpan YAML::XS
-      - run: sudo cpan Test::Exception
+      - name: Unpack installation tarball 
+        run: tar -zxvf PsN-*.tar.gz
+      - name: Install system dependencies
+        run: brew install r pandoc cairo mariadb-connector-c openssl@1.1
+      - name: Install Math::Random
+        run: sudo cpan -T Math::Random
+      - name: Install Moose
+        run: sudo cpan -T Moose
+      - name: Install MooseX::Params::Validate 
+        run: sudo cpan -T MooseX::Params::Validate
+      - name: Install Archive::Zip 
+        run: sudo cpan -T Archive::Zip
+      - name: Install File::Copy::Recursie 
+        run: sudo cpan -T File::Copy::Recursive
+      - name: Install YAML::XS 
+        run: sudo cpan -T YAML::XS
+      - name: Install Test::Exception 
+        run: sudo cpan -T Test::Exception
+      - name: Set fortran compiler
+        run: | 
+          mkdir .R
+          echo "FC=gfortran-9" >.R/Makevars
       - name: Install PsN
         run: cd PsN-Source; perl setup.pl -auto
 
@@ -62,7 +79,8 @@ jobs:
       needs: build
       runs-on: windows-latest
       steps:
-        - uses: actions/download-artifact@v2
+        - name: Download installation tarball
+          uses: actions/download-artifact@v2
           with:
             name: targz 
         - name: Download Strawberry Perl
@@ -73,7 +91,7 @@ jobs:
         - name: Download R
           uses: suisei-cn/actions-download-file@v1
           with:
-            url: https://cran.r-project.org/bin/windows/base/R-4.0.0-win.exe
+            url: https://cran.r-project.org/bin/windows/base/R-4.0.3-win.exe
             target: downloads/
         - name: Download Python
           uses: suisei-cn/actions-download-file@v1
