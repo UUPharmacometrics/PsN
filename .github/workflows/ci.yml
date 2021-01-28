@@ -46,7 +46,7 @@ jobs:
         with:
           name: targz 
       - run: tar -zxvf PsN-*.tar.gz
-      - run: brew install r pandoc cairo mariadb-connector-c openssl@1.1
+      - run: brew install gcc r pandoc cairo mariadb-connector-c openssl@1.1
       - run: sudo cpan Math::Random
       - run: sudo cpan Moose
       - run: sudo cpan MooseX::Params::Validate
@@ -89,5 +89,9 @@ jobs:
           run: md -Name installer
         - name: Extract Strawberry Perl
           run: tar -xf downloads/strawberry-perl-5.22.3.1-64bit-portable.zip
+        - name: Show downloads
+          run: dir downloads
+          shell: cmd
         - name: Install R
           run: downloads\R-4.0.0-win.exe /VERYSILENT /DIR="installer\R"
+          shell: cmd
