@@ -11,10 +11,16 @@ jobs:
         run: sudo apt install latexmk texlive-extra-utils texlive-latex-extra texlive-generic-extra biber texlive-bibtex-extra texlive-science texlive-font-utils and texlive-pictures tox 
       - run: make
       - run: make release
-      - uses: actions/upload-artifact@v2
+      - name: Upload installation artifact
+        uses: actions/upload-artifact@v2
         with:
           name: targz
           path: PsN-*.tar.gz
+      - name: Upload documentation artifact 
+        uses: actions/upload-artifact@v2
+        with:
+            name: docs 
+            path: doc/*.pdf
 
   test-ubuntu:
     needs: build
@@ -48,6 +54,9 @@ jobs:
       - run: sudo cpan File::Copy::Recursive
       - run: sudo cpan YAML::XS
       - run: sudo cpan Test::Exception
+      - name: Install PsN
+        run: cd PsN-Source; perl setup.pl -auto
+
 
   build-windows:
       needs: build
@@ -76,5 +85,9 @@ jobs:
           with:
             url: https://github.com/jgm/pandoc/releases/download/2.5/pandoc-2.5-windows-i386.zip
             target: downloads/
+        - name: Create installation directory
+          run: md -Name installer
         - name: Extract Strawberry Perl
           run: tar -xf downloads/strawberry-perl-5.22.3.1-64bit-portable.zip
+        - name: Install R
+          run: downloads\R-4.0.0-win.exe /VERYSILENT /DIR="installer\R"
