@@ -1083,7 +1083,7 @@ if (not $keep_conf) {
             "to set personalized defaults and/or will run PsN with NMQual,\n".
             "you can manually add the relevant options to the file afterwards.\n".
             "Would you like help to create a configuration file? [y/n] ";
-        if (not $auto or confirm()) {
+        if (not $auto and confirm()) {
             $conf_ok = create_conf ("$library_dir"."$directory_separator"."PsN_$name_safe_version"."$directory_separator",$perl_binary);
             $configuration_done = $conf_ok;
         }
@@ -1136,5 +1136,7 @@ if (not running_on_windows()) {
     }
 }
 
-print "\n\nPress ENTER to exit the installation program.\n";
-my $dirt = <STDIN>;
+if (not $auto) {
+    print "\n\nPress ENTER to exit the installation program.\n";
+    my $dirt = <STDIN>;
+}

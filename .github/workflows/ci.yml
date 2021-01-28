@@ -56,5 +56,7 @@ jobs:
           with:
             name: targz 
         - name: Download Strawberry Perl
-          shell: bash
-          run: wget http://strawberryperl.com/download/5.22.3.1/strawberry-perl-5.22.3.1-64bit-portable.zip
+          uses: suisei-cn/actions-download-file@v1
+          with:
+            url: http://strawberryperl.com/download/5.22.3.1/strawberry-perl-5.22.3.1-64bit-portable.zip
+            target: downloads/
