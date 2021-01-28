@@ -131,7 +131,7 @@ jobs:
               cd PsN-Source
               perl setup.pl relative --auto
           shell: cmd
-       - name: Extract pandoc
+        - name: Extract pandoc
           run: tar -xf downloads/pandoc-2.5-windows-i386.zip -C installer
         - name: Install R
           run: downloads\R-4.0.3-win.exe /VERYSILENT /DIR="installer\R"
