@@ -70,7 +70,7 @@ jobs:
       - name: Set fortran compiler
         run: |
           echo '#!/bin/bash' >/usr/local/bin/gfortran
-          echo 'fortran-9 "$@"' >>/usr/local/bin/gfortran
+          echo 'gfortran-9 "$@"' >>/usr/local/bin/gfortran
           chmod u+x /usr/local/bin/gfortran
       - name: Install PsN
         run: cd PsN-Source; perl setup.pl -auto
@@ -108,14 +108,37 @@ jobs:
           run: dir downloads
           shell: cmd
         - name: Create installation directory
-          run: md -Name installer
+          run: |
+             md -Name installer
+             md -Name installer\strawberry
         - name: Extract Strawberry Perl
-          run: tar -xf downloads/strawberry-perl-5.22.3.1-64bit-portable.zip -C installer
+          run: tar -xf downloads/strawberry-perl-5.22.3.1-64bit-portable.zip -C installer\strawberry
+        - name: Install perl modules
+          run: |
+            cd installer\strawberry
+            portableshell.bat
+            cpanm Params::Validate --notest 
+            cpanm MooseX::Params::Validate --notest 
+            cpanm Math::Random --notest 
+          shell: cmd
+        - name: Install PsN
+          run: |
+              cd installer\strawberry
+              portableshell.bat
+              cd ..\..
+              cd PsN-Source
+              perl setup.pl relative --auto
+          shell: cmd
+        - name: Install renv
+          run: |
+            md installer\Rlib
+            R\bin\i386\Rscript.exe -e "install.packages('renv', lib='installer\Rlib', repos='http://cran.us.r-project.org')"
+          shell: cmd
         - name: Extract pandoc
           run: tar -xf downloads/pandoc-2.5-windows-i386.zip -C installer
         - name: Install R
           run: downloads\R-4.0.3-win.exe /VERYSILENT /DIR="installer\R"
           shell: cmd
         - name: Show installer directory
-          run: dir /S installer
+          run: dir installer
           shell: cmd
