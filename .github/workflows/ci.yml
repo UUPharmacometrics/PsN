@@ -40,7 +40,7 @@ jobs:
         run: sudo apt install -y libtest-exception-perl libmoose-perl libmoosex-params-validate-perl libarchive-zip-perl libfile-copy-recursive-perl r-base pandoc libpq-dev libcairo2-dev libssl-dev libcurl4-openssl-dev libmariadb-dev libgmp-dev libmpfr-dev libxml2-dev libudunits2-dev libblas-dev liblapack-dev libmagick++-dev
       - name: Install PsN 
         run: cd PsN-Source; sudo perl setup.pl -auto
-
+ 
   test-macos:
     needs: build
     runs-on: macos-latest
@@ -53,8 +53,11 @@ jobs:
         run: tar -zxvf PsN-*.tar.gz
       - name: Install system dependencies
         run: brew install r pandoc cairo mariadb-connector-c openssl@1.1
-      - name: Install gfortran
-        run: brew reinstall gcc
+      - name: Setup gfortran
+        run: |
+          sudo ln -s /usr/local/bin/gfortran-9 /usr/local/bin/gfortran 
+          sudo mkdir /usr/local/gfortran
+          sudo ln -s /usr/local/Cellar/gcc@9/9.3.0_1/lib/gcc/9 /usr/local/gfortran/lib
       - name: Install Math::Random
         run: sudo cpan -T Math::Random
       - name: Install Moose
@@ -76,7 +79,6 @@ jobs:
 #          chmod u+x /usr/local/bin/gfortran
       - name: Install PsN
         run: cd PsN-Source; perl setup.pl -auto
-
 
   build-windows:
       needs: build
@@ -139,7 +141,7 @@ jobs:
         - name: Install renv
           run: |
             md installer\Rlib
-            installer\R\bin\i386\Rscript.exe -e "install.packages('renv', lib='installer\Rlib', repos='http://cran.us.r-project.org')"
+            installer\R\bin\i386\Rscript.exe -e "install.packages('renv', lib='installer/Rlib', repos='http://cran.us.r-project.org')"
           shell: cmd
         - name: Show installer directory
           run: dir installer\R
