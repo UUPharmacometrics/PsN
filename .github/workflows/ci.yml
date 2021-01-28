@@ -40,6 +40,7 @@ jobs:
         with:
           name: targz 
       - run: tar -zxvf PsN-*.tar.gz
+      - run: brew install r pandoc cairo mariadb-connector-c openssl@1.1
       - run: sudo cpan Math::Random
       - run: sudo cpan Moose
       - run: sudo cpan MooseX::Params::Validate
@@ -60,3 +61,20 @@ jobs:
           with:
             url: http://strawberryperl.com/download/5.22.3.1/strawberry-perl-5.22.3.1-64bit-portable.zip
             target: downloads/
+        - name: Download R
+          uses: suisei-cn/actions-download-file@v1
+          with:
+            url: https://cran.r-project.org/bin/windows/base/R-4.0.0-win.exe
+            target: downloads/
+        - name: Download Python
+          uses: suisei-cn/actions-download-file@v1
+          with:
+            url: https://github.com/winpython/winpython/releases/download/2.3.20200530/Winpython64-3.7.7.1dot.exe
+            target: downloads/
+        - name: Download Pandoc
+          uses: suisei-cn/actions-download-file@v1
+          with:
+            url: https://github.com/jgm/pandoc/releases/download/2.5/pandoc-2.5-windows-i386.zip
+            target: downloads/
+        - name: Extract Strawberry Perl
+          run: tar -xf downloads/strawberry-perl-5.22.3.1-64bit-portable.zip
