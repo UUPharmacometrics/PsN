@@ -68,9 +68,7 @@ jobs:
       - name: Install Test::Exception 
         run: sudo cpan -T Test::Exception
       - name: Set fortran compiler
-        run: | 
-          mkdir .R
-          echo "FC=gfortran-9" >.R/Makevars
+        run: echo 'gfortran-9 "$@"' >/usr/local/bin/gfortran
       - name: Install PsN
         run: cd PsN-Source; perl setup.pl -auto
 
@@ -111,5 +109,5 @@ jobs:
           run: dir downloads
           shell: cmd
         - name: Install R
-          run: downloads\R-4.0.0-win.exe /VERYSILENT /DIR="installer\R"
+          run: downloads\R-4.0.3-win.exe /VERYSILENT /DIR="installer\R"
           shell: cmd
