@@ -53,6 +53,8 @@ jobs:
         run: tar -zxvf PsN-*.tar.gz
       - name: Install system dependencies
         run: brew install r pandoc cairo mariadb-connector-c openssl@1.1
+      - name: Install gfortran
+        run: brew reinstall gcc
       - name: Install Math::Random
         run: sudo cpan -T Math::Random
       - name: Install Moose
@@ -67,11 +69,11 @@ jobs:
         run: sudo cpan -T YAML::XS
       - name: Install Test::Exception 
         run: sudo cpan -T Test::Exception
-      - name: Set fortran compiler
-        run: |
-          echo '#!/bin/bash' >/usr/local/bin/gfortran
-          echo 'gfortran-9 "$@"' >>/usr/local/bin/gfortran
-          chmod u+x /usr/local/bin/gfortran
+#      - name: Set fortran compiler
+#        run: |
+#          echo '#!/bin/bash' >/usr/local/bin/gfortran
+#          echo 'gfortran-9 "$@"' >>/usr/local/bin/gfortran
+#          chmod u+x /usr/local/bin/gfortran
       - name: Install PsN
         run: cd PsN-Source; perl setup.pl -auto
 
@@ -129,16 +131,16 @@ jobs:
               cd PsN-Source
               perl setup.pl relative --auto
           shell: cmd
-        - name: Install renv
-          run: |
-            md installer\Rlib
-            R\bin\i386\Rscript.exe -e "install.packages('renv', lib='installer\Rlib', repos='http://cran.us.r-project.org')"
-          shell: cmd
-        - name: Extract pandoc
+       - name: Extract pandoc
           run: tar -xf downloads/pandoc-2.5-windows-i386.zip -C installer
         - name: Install R
           run: downloads\R-4.0.3-win.exe /VERYSILENT /DIR="installer\R"
           shell: cmd
+        - name: Install renv
+          run: |
+            md installer\Rlib
+            installer\R\bin\i386\Rscript.exe -e "install.packages('renv', lib='installer\Rlib', repos='http://cran.us.r-project.org')"
+          shell: cmd
         - name: Show installer directory
-          run: dir installer
+          run: dir installer\R
           shell: cmd
