@@ -34,7 +34,7 @@ jobs:
           name: targz 
       - name: Cache NONMEM
         id: cache-nonmem
-        uses: actions/cahce@2
+        uses: actions/cache@2
         with:
             path: nm744.zip
             key: ubuntu-nonmem
