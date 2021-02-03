@@ -141,7 +141,7 @@ jobs:
           export LIBPATH=$(find /usr/local/share/perl/ -type d -name '5.*')
           export PSNPATH=$(find $LIBPATH -type d -name 'PsN_[0-9]*')
           export NMPATH=$(realpath nm744)
-          sed -i "/\\[nm_versions\\]/a default=$NMPATH,7.4.4" $PSNPATH/psn.conf
+          sudo sed -i "/\\[nm_versions\\]/a default=$NMPATH,7.4.4" $PSNPATH/psn.conf
       - name: Run unit tests
         run: |
           export TESTPATH=$(find $LIBPATH -type d -name 'PsN_test_[0-9]*')
