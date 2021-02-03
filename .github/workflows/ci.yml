@@ -36,11 +36,80 @@ jobs:
         id: cache-nonmem
         uses: actions/cache@v2
         with:
-            path: nm744.zip
+            path: 744.zip
             key: ubuntu-nonmem
       - name: Download NONMEM
         if: steps.cache-nonmem.outputs.cache-hit != 'true'
-        run: "curl 'https://nonmem.iconplc.com/nonmem744/NONMEM7.4.4.zip?token=7A0925E6-6249-11eb-A338-005056911489&html' -H 'User-Agent: Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:84.0) Gecko/20100101 Firefox/84.0' -H 'Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8' -H 'Accept-Language: en-US,en;q=0.5' --compressed -H 'Connection: keep-alive' -H 'Referer: https://nonmem.iconplc.com/nonmem744/?token=7A0925E6-6249-11eb-A338-005056911489&html' -H 'Cookie: savedpath=/nonmem744/,https; _ga=GA1.2.1804363154.1588227732; websessionid=B2B5C490000C1644098A76A1061C5675B2CE22D69A7B5DC9490B1F3B33CAC033; token=7A0925E6-6249-11eb-A338-005056911489; citrix_ns_id_.iconplc.com_%2F_wat=AAAAAAUwh3Q9hQeLCEWe6G-R8vOzj_qDbGve_MvXcY3WAv9XjEeRr3icQ88UR9bfr9GevCnBZHQmmVfO1T5NGoV7qbH_lWYNptHk64koaAXzjl8ADA==&AAAAAAXnu8PcaH3K6Wt5-smcN1haKDhZMLwe-VThzKDt0k29I0VvMnFWZK8pYeJEUO5oiiNuoMGA5vZA2-lrHFz93jWWJBqGzZW-aH8fNvlaRLzy0MbbFfStx0FA7WREE-aoSro=&AAAAAAUrn-0SjopE1olefC6cOwYrNT7rrNyOK9rKIKJV_EiTavuPFMpHzy_DBi3Qz1QKiEDjz6jD9W7MoKvHFACTkZsb7bel8upNHCRU4DfJCkk1wp8vteqmcuPCvZlfnhtCe4g=&AAAAAAXrl-okt0_NYo0JaxXnm1s9jKaa-DsJ2LyOmRIfcXdQUBZAwzKG4dSIqR1Ymln0p2oRnm21kJRlIfU3h4_c6NlV0TKWy7mSQX62wMYCp7a9eGZMmePMegblRVpF-VTU5a4=&AAAAAAXWNcR7YdRlw-p_6yToHDcPAH6o_q71HOEtlUVxNm1vN-VJAlb0KurE0-KiZ1GuxkSNB874Nao8LCmvVGmtsMNF&AAAAAAWKRgVu2QOUV61Jv51l-oNSltOFjv1Ymls1RjNmXYPATSb5tw8vG15KV1E3k5R5a2HVMxKqLW2c1QsKtglGXuLr&AAAAAAUEwxmBPCf37d1RCfAVpt8_ySXr6PLav4cXF8sh-qJDOlAug8jDd7CjMDwOr-3L94nClnyyBccT3M7lKgOLevaN&AAAAAAWIxppZSSnKqBjYWj4EfrU6nw_GkyvIYIlHwqAixCdw2dg065d2y2X-HpI85G6el6f7mNEwAYbpSqRBBT7CVpvIOc7IEs4aeQ1EXfzg4kLm5RqemSxg0jxB8j-j4Nr1quk=&' -H 'Upgrade-Insecure-Requests: 1' -o nm744.zip"
+        run: |
+          sudo apt install lynx
+		  echo 'key /' >>lynxcmds
+		  echo 'key 7' >>lynxcmds
+          echo 'key 4' >>lynxcmds
+          echo 'key 4' >>lynxcmds
+          echo 'key ^J' >>lynxcmds
+          echo 'key ^J' >>lynxcmds
+          echo 'key /' >>lynxcmds
+          echo 'key z' >>lynxcmds
+          echo 'key i' >>lynxcmds
+          echo 'key p' >>lynxcmds
+          echo 'key ^J' >>lynxcmds
+          echo 'key d' >>lynxcmds
+          echo 'key ^J' >>lynxcmds
+          echo 'key <delete>' >>lynxcmds
+          echo 'key <delete>' >>lynxcmds
+          echo 'key <delete>' >>lynxcmds
+          echo 'key <delete>' >>lynxcmds
+          echo 'key <delete>' >>lynxcmds
+          echo 'key <delete>' >>lynxcmds
+          echo 'key <delete>' >>lynxcmds
+          echo 'key <delete>' >>lynxcmds
+          echo 'key <delete>' >>lynxcmds
+          echo 'key <delete>' >>lynxcmds
+          echo 'key <delete>' >>lynxcmds
+          echo 'key <delete>' >>lynxcmds
+          echo 'key <delete>' >>lynxcmds
+          echo 'key <delete>' >>lynxcmds
+          echo 'key <delete>' >>lynxcmds
+          echo 'key <delete>' >>lynxcmds
+          echo 'key <delete>' >>lynxcmds
+          echo 'key <delete>' >>lynxcmds
+          echo 'key <delete>' >>lynxcmds
+          echo 'key <delete>' >>lynxcmds
+          echo 'key <delete>' >>lynxcmds
+          echo 'key <delete>' >>lynxcmds
+          echo 'key <delete>' >>lynxcmds
+          echo 'key <delete>' >>lynxcmds
+          echo 'key <delete>' >>lynxcmds
+          echo 'key <delete>' >>lynxcmds
+          echo 'key <delete>' >>lynxcmds
+          echo 'key <delete>' >>lynxcmds
+          echo 'key <delete>' >>lynxcmds
+          echo 'key <delete>' >>lynxcmds
+          echo 'key <delete>' >>lynxcmds
+          echo 'key <delete>' >>lynxcmds
+          echo 'key <delete>' >>lynxcmds
+          echo 'key <delete>' >>lynxcmds
+          echo 'key <delete>' >>lynxcmds
+          echo 'key 7' >>lynxcmds
+          echo 'key 4' >>lynxcmds
+          echo 'key 4' >>lynxcmds
+          echo 'key .' >>lynxcmds
+          echo 'key z' >>lynxcmds
+          echo 'key i' >>lynxcmds
+          echo 'key p' >>lynxcmds
+          echo 'key ^J' >>lynxcmds
+          echo 'key Q' >>lynxcmds
+          lynx -accept-all-cookies nonmem.iconplc.com -cmd_script=lynxcmds
+      - name: Unzip NONMEM
+          unzip -P $ZIP_KEY 744.zip
+        env:
+            ZIP_KEY: ${{secrets.ZIP_KEY}}
+      - name: Install gfortran
+        run: sudo apt install gfortran
+      - name: Install NONMEM
+        run: |
+            cd nm744CD
+            /bin/bash SETUP74 $(realpath .) $(realpath ../nm744) gfortran y ar same rec q
       - run: tar -zxvf PsN-*.tar.gz
       - run: sudo cpan -T Math::Random
       - run: sudo cpan -T YAML::XS
@@ -75,7 +144,7 @@ jobs:
         run: sudo cpan -T MooseX::Params::Validate
       - name: Install Archive::Zip 
         run: sudo cpan -T Archive::Zip
-      - name: Install File::Copy::Recursie 
+      - name: Install File::Copy::Recursive
         run: sudo cpan -T File::Copy::Recursive
       - name: Install YAML::XS 
         run: sudo cpan -T YAML::XS
