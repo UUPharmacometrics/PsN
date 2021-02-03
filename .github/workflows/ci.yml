@@ -42,8 +42,8 @@ jobs:
         if: steps.cache-nonmem.outputs.cache-hit != 'true'
         run: |
           sudo apt install lynx
-		  echo 'key /' >>lynxcmds
-		  echo 'key 7' >>lynxcmds
+          echo 'key /' >>lynxcmds
+          echo 'key 7' >>lynxcmds
           echo 'key 4' >>lynxcmds
           echo 'key 4' >>lynxcmds
           echo 'key ^J' >>lynxcmds
