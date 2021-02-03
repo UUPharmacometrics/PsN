@@ -4,40 +4,36 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Download source repo 
+      - name: Download source repo
         uses: actions/checkout@v2
         with:
           submodules: recursive
       - name: Install build dependencies
-        run: sudo apt install latexmk texlive-extra-utils texlive-latex-extra texlive-generic-extra biber texlive-bibtex-extra texlive-science texlive-font-utils and texlive-pictures tox 
+        run: sudo apt install latexmk texlive-extra-utils texlive-latex-extra texlive-generic-extra biber texlive-bibtex-extra texlive-science texlive-font-utils and texlive-pictures tox
       - name: make
         run: make
-      - name: make release 
+      - name: make release
         run: make release
       - name: Upload installation artifact
         uses: actions/upload-artifact@v2
         with:
           name: targz
           path: PsN-*.tar.gz
-      - name: Upload documentation artifact 
+      - name: Upload documentation artifact
         uses: actions/upload-artifact@v2
         with:
-            name: docs 
+            name: docs
             path: doc/*.pdf
 
-  test-ubuntu:
-    needs: build
+  get-nonmem:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/download-artifact@v2
-        with:
-          name: targz 
       - name: Cache NONMEM
         id: cache-nonmem
         uses: actions/cache@v2
         with:
             path: 744.zip
-            key: ubuntu-nonmem
+            key: nonmem-744
       - name: Download NONMEM
         if: steps.cache-nonmem.outputs.cache-hit != 'true'
         run: |
@@ -100,25 +96,63 @@ jobs:
           echo 'key ^J' >>lynxcmds
           echo 'key Q' >>lynxcmds
           lynx -accept-all-cookies nonmem.iconplc.com -cmd_script=lynxcmds
+
+  test-ubuntu:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v2
+        with:
+          name: targz
+      - name: Cache NONMEM
+        id: cache-nonmem
+        uses: actions/cache@v2
+        with:
+            path: 744.zip
+            key: nonmem-744
       - name: Unzip NONMEM
         run: unzip -P $ZIP_KEY 744.zip
         env:
-            ZIP_KEY: ${{secrets.ZIP_KEY}}
+          ZIP_KEY: ${{secrets.ZIP_KEY}}
       - name: Install gfortran
         run: sudo apt install gfortran
       - name: Install NONMEM
         run: |
-            cd nm744CD
-            /bin/bash SETUP74 $(realpath .) $(realpath ../nm744) gfortran y ar same rec q
-      - run: tar -zxvf PsN-*.tar.gz
-      - run: sudo cpan -T Math::Random
-      - run: sudo cpan -T YAML::XS
-      - run: sudo apt update
+          cd nm744CD
+          /bin/bash SETUP74 $(realpath .) $(realpath ../nm744) gfortran y ar same rec q
+      - name: NONMEM license
+        run: echo $LICENSE_KEY >nm744/license/nonmem.lic
+        env:
+          LICENSE_KEY: ${{secrets.LICENSE_KEY}}
+      - name: Extract PsN
+        run: tar -zxvf PsN-*.tar.gz
+      - name: Install Math::Random
+        run: sudo cpan -T Math::Random
+      - name: Install YAML::XS
+        run: sudo cpan -T YAML::XS
       - name: Install Perl and R dependencies
-        run: sudo apt install -y libtest-exception-perl libmoose-perl libmoosex-params-validate-perl libarchive-zip-perl libfile-copy-recursive-perl r-base pandoc libpq-dev libcairo2-dev libssl-dev libcurl4-openssl-dev libmariadb-dev libgmp-dev libmpfr-dev libxml2-dev libudunits2-dev libblas-dev liblapack-dev libmagick++-dev
-      - name: Install PsN 
+        run: |
+          sudo apt update
+          sudo apt install -y libtest-exception-perl libmoose-perl libmoosex-params-validate-perl libarchive-zip-perl libfile-copy-recursive-perl r-base pandoc libpq-dev libcairo2-dev libssl-dev libcurl4-openssl-dev libmariadb-dev libgmp-dev libmpfr-dev libxml2-dev libudunits2-dev libblas-dev liblapack-dev libmagick++-dev
+      - name: Install PsN
         run: cd PsN-Source; sudo perl setup.pl -auto
- 
+      - name: Update psn.conf
+        run: |
+          export LIBPATH=$(find /usr/local/share/perl/ -type d -name '5.*')
+          export PSNPATH=$(find $LIBPATH -type d -name 'PsN_[0-9]*')
+          export NMPATH=$(realpath nm744)
+          sed -i "/\\[nm_versions\\]/a default=$NMPATH,7.4.4" $PSNPATH/psn.conf
+      - name: Run unit tests
+        run: |
+          export TESTPATH=$(find $LIBPATH -type d -name 'PsN_test_[0-9]*')
+          cd $TESTPATH
+          prove -r -j8 unit
+      - name: Run system tests
+        run: |
+          export TESTPATH=$(find $LIBPATH -type d -name 'PsN_test_[0-9]*')
+          cd $TESTPATH
+          prove -r -j8 system
+
   test-macos:
     needs: build
     runs-on: macos-latest
@@ -126,29 +160,29 @@ jobs:
       - name: Download installation tarball
         uses: actions/download-artifact@v2
         with:
-          name: targz 
-      - name: Unpack installation tarball 
+          name: targz
+      - name: Unpack installation tarball
         run: tar -zxvf PsN-*.tar.gz
       - name: Install system dependencies
         run: brew install r pandoc cairo mariadb-connector-c openssl@1.1
       - name: Setup gfortran
         run: |
-          sudo ln -s /usr/local/bin/gfortran-9 /usr/local/bin/gfortran 
+          sudo ln -s /usr/local/bin/gfortran-9 /usr/local/bin/gfortran
           sudo mkdir /usr/local/gfortran
           sudo ln -s /usr/local/Cellar/gcc@9/9.3.0_1/lib/gcc/9 /usr/local/gfortran/lib
       - name: Install Math::Random
         run: sudo cpan -T Math::Random
       - name: Install Moose
         run: sudo cpan -T Moose
-      - name: Install MooseX::Params::Validate 
+      - name: Install MooseX::Params::Validate
         run: sudo cpan -T MooseX::Params::Validate
-      - name: Install Archive::Zip 
+      - name: Install Archive::Zip
         run: sudo cpan -T Archive::Zip
       - name: Install File::Copy::Recursive
         run: sudo cpan -T File::Copy::Recursive
-      - name: Install YAML::XS 
+      - name: Install YAML::XS
         run: sudo cpan -T YAML::XS
-      - name: Install Test::Exception 
+      - name: Install Test::Exception
         run: sudo cpan -T Test::Exception
       - name: Install PsN
         run: cd PsN-Source; perl setup.pl -auto
@@ -160,7 +194,7 @@ jobs:
         - name: Download installation tarball
           uses: actions/download-artifact@v2
           with:
-            name: targz 
+            name: targz
         - name: Download Strawberry Perl
           uses: suisei-cn/actions-download-file@v1
           with:
@@ -194,9 +228,9 @@ jobs:
           run: |
             cd installer\strawberry
             portableshell.bat
-            cpanm Params::Validate --notest 
-            cpanm MooseX::Params::Validate --notest 
-            cpanm Math::Random --notest 
+            cpanm Params::Validate --notest
+            cpanm MooseX::Params::Validate --notest
+            cpanm Math::Random --notest
           shell: cmd
         - name: Install PsN
           run: |
