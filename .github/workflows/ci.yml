@@ -101,7 +101,7 @@ jobs:
           echo 'key Q' >>lynxcmds
           lynx -accept-all-cookies nonmem.iconplc.com -cmd_script=lynxcmds
       - name: Unzip NONMEM
-          unzip -P $ZIP_KEY 744.zip
+        run: unzip -P $ZIP_KEY 744.zip
         env:
             ZIP_KEY: ${{secrets.ZIP_KEY}}
       - name: Install gfortran
