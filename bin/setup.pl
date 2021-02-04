@@ -757,7 +757,7 @@ my $keep_conf = 0;
 if (-d "$library_dir/PsN_$name_safe_version"){
     print "Directory $library_dir/PsN_$name_safe_version already exists.\n";
     print "PsN $version is already (partially) installed. Would you like to continue anyway [y/n] ?";
-    abort() unless (confirm());
+    abort() unless ($auto or confirm());
 }else{
     unless (mkpath("$library_dir/PsN_$name_safe_version")) {
         print "Failed to create $library_dir/PsN_$name_safe_version: $!\n";
@@ -769,7 +769,11 @@ if (-d "$library_dir/PsN_$name_safe_version"){
 if (-e "$library_dir/PsN_$name_safe_version/psn.conf") {
     print "An older version of psn.conf exists in $library_dir/PsN_$name_safe_version.\n";
     print "Keep the old version [y/n] ?";
-    $keep_conf = confirm();
+    if (not $auto) {
+        $keep_conf = confirm();
+    } else {
+        $keep_conf = 1;
+    }
 }
 
 my $newconf = File::Spec->catfile( $library_dir, "PsN_$name_safe_version", "psn.conf" );
@@ -861,14 +865,22 @@ foreach my $file (@utilities) {
                        "version ($old_version) of PsN. Would you like to make\n",
                        "this version ($version) the default? [y/n]");
                 $confirmed = 1;
-                $overwrite = confirm();
+                if (not $auto) {
+                    $overwrite = confirm();
+                } else {
+                    $overwrite = 1;
+                }
             }
         }
         if (not $confirmed) {
             print("\nAn older version($old_version) of PsN is installed. Would you like to\n",
                    "make this version ($version) the default? [y/n]");
             $confirmed = 1;
-            $overwrite = confirm();
+            if (not $auto) {
+                $overwrite = confirm();
+            } else {
+                $overwrite = 1;
+            }
         }
         if ($overwrite) {
             unlink("$binary_dir/$file");
@@ -1060,7 +1072,7 @@ if (not $keep_conf) {
             "to this new installation? [y/n] ";
         my $newf = File::Spec->catfile($library_dir, "PsN_$name_safe_version", "psn.conf");
 
-        if (confirm()) {
+        if (not $auto and confirm()) {
             if ($have_file_copy) {
                 fcopy($old_psn_config_file, $newf);
             } else {
