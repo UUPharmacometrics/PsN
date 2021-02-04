@@ -1146,7 +1146,26 @@ sub do_model1
         }
     }
     if ($reordering) {
-        print("Warning: Frem did automatical reordering of some ETAs and OMEGAs.\n    The reordered model is in m1/model_1b.mod.\n    Although PsN presents its results using the original ordering, all NONMEM output will be in reordered form.\n")
+        print("Warning: Frem did automatical reordering of some ETAs and OMEGAs.\n    The reordered model is in m1/model_1b.mod.\n    Although PsN presents its results using the original ordering, all NONMEM output will be in reordered form.\n");
+        # Print initial estimates of original model reordered for Pharmpy to read
+        open my $fh, '>', 'm1/model_1.inits';
+        my $dummy = $model->copy(filename => $model_path,
+                                 output_same_directory => 1,
+                                 write_copy => 0,
+                                 copy_datafile => 0,
+                                 copy_output => 0);
+
+        model_transformations::reorder_etas(model => $dummy, order => $reorder_mapping); 
+        model_transformations::split_omegas(model => $dummy, split_after => scalar(@{$self->skip_omegas}));
+        my @omegacoords = @{$dummy->indexes(parameter_type => 'omega', problem_numbers => [1])};
+        my @omegainits = @{$dummy->initial_values(parameter_type => 'omega', problem_numbers  => [1])};
+        my %coordsinits;
+        for (my $i=0;$i<scalar(@{$omegainits[0]});$i++){
+            $coordsinits{$omegacoords[0]->[$i]} = $omegainits[0]->[$i];
+        }
+        use Data::Dumper;
+        print $fh Dumper(\%coordsinits);
+        close $fh;
     }
 
     return ($frem_model, $output, $new_phi_path);
