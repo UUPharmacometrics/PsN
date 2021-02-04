@@ -297,9 +297,9 @@ jobs:
         - name: Show installer directory
           run: dir installer
           shell: cmd
-      - name: Upload Windows package
-        uses: actions/upload-artifact@v2
-        with:
+        - name: Upload Windows package
+          uses: actions/upload-artifact@v2
+          with:
             name: win-installer
             path: installer/
 
