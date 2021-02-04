@@ -166,7 +166,7 @@ jobs:
       - name: Unpack installation tarball
         run: tar -zxvf PsN-*.tar.gz
       - name: Install system dependencies
-        run: brew install r pandoc cairo mariadb-connector-c openssl@1.1
+        run: brew install r pandoc cairo mariadb-connector-c openssl@1.1 coreutils
       - name: Setup gfortran
         run: |
           sudo ln -s /usr/local/bin/gfortran-9 /usr/local/bin/gfortran
@@ -259,6 +259,9 @@ jobs:
              md -Name installer\strawberry
         - name: Extract winpython
           run: downloads\Winpython64-3.7.7.1dot.exe -o installer\python -y
+          shell: cmd
+        - name: Check Python installation
+          run: dir /s installer\python
           shell: cmd
         - name: Install Pharmpy dependencies
           run: installer\python\python-3.7.7.amd64\python.exe -m pip install -r PsN-Source\requirements.txt
