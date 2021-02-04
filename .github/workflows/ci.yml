@@ -144,11 +144,13 @@ jobs:
           sudo sed -i "/\\[nm_versions\\]/a default=$NMPATH,7.4.4" $PSNPATH/psn.conf
       - name: Run unit tests
         run: |
+          export LIBPATH=$(find /usr/local/share/perl/ -type d -name '5.*')
           export TESTPATH=$(find $LIBPATH -type d -name 'PsN_test_[0-9]*')
           cd $TESTPATH
           prove -r -j8 unit
       - name: Run system tests
         run: |
+          export LIBPATH=$(find /usr/local/share/perl/ -type d -name '5.*')
           export TESTPATH=$(find $LIBPATH -type d -name 'PsN_test_[0-9]*')
           cd $TESTPATH
           prove -r -j8 system
@@ -170,6 +172,24 @@ jobs:
           sudo ln -s /usr/local/bin/gfortran-9 /usr/local/bin/gfortran
           sudo mkdir /usr/local/gfortran
           sudo ln -s /usr/local/Cellar/gcc@9/9.3.0_1/lib/gcc/9 /usr/local/gfortran/lib
+      - name: Get NONMEM
+        id: cache-nonmem
+        uses: actions/cache@v2
+        with:
+            path: 744.zip
+            key: nonmem-744
+      - name: Unzip NONMEM
+        run: unzip -P $ZIP_KEY 744.zip
+        env:
+          ZIP_KEY: ${{secrets.ZIP_KEY}}
+      - name: Install NONMEM
+        run: |
+          cd nm744CD
+          /bin/bash SETUP74 $(realpath .) $(realpath ../nm744) gfortran y ar same rec q
+      - name: NONMEM license
+        run: echo $LICENSE_KEY >nm744/license/nonmem.lic
+        env:
+          LICENSE_KEY: ${{secrets.LICENSE_KEY}}
       - name: Install Math::Random
         run: sudo cpan -T Math::Random
       - name: Install Moose
@@ -186,6 +206,21 @@ jobs:
         run: sudo cpan -T Test::Exception
       - name: Install PsN
         run: cd PsN-Source; perl setup.pl -auto
+      - name: Update psn.conf
+        run: |
+          export PSNPATH=$(find /usr/local/Cellar/perl/5.32.1/lib/perl5/site_perl/5.32.1/ -type d -name 'PsN_[0-9]*')
+          export NMPATH=$(realpath nm744)
+          sudo sed -i "/\\[nm_versions\\]/a default=$NMPATH,7.4.4" $PSNPATH/psn.conf
+      - name: Run unit tests
+        run: |
+          export TESTPATH=$(find /usr/local/Cellar/perl/5.32.1/lib/perl5/site_perl/5.32.1/ -type d -name 'PsN_test_[0-9]*')
+          cd $TESTPATH
+          prove -r -j8 unit
+      - name: Run system tests
+        run: |
+          export TESTPATH=$(find /usr/local/Cellar/perl/5.32.1/lib/perl5/site_perl/5.32.1/ -type d -name 'PsN_test_[0-9]*')
+          cd $TESTPATH
+          prove -r -j8 system
 
   build-windows:
       needs: build
@@ -222,21 +257,27 @@ jobs:
           run: |
              md -Name installer
              md -Name installer\strawberry
+        - name: Extract winpython
+          run: downloads\Winpython64-3.7.7.1dot.exe -o installer\python -y
+          shell: cmd
+        - name: Install Pharmpy dependencies
+          run: installer\python\python-3.7.7.amd64\python.exe -m pip install -r PsN-Source\requirements.txt
+          shell: cmd
+        - name: Install Pharmpy
+          run: installer\python\python-3.7.7.amd64\python.exe -m pip install --user --find-links=PsN-Source pharmpy-core
+          shell: cmd
         - name: Extract Strawberry Perl
           run: tar -xf downloads/strawberry-perl-5.22.3.1-64bit-portable.zip -C installer\strawberry
         - name: Install perl modules
           run: |
-            cd installer\strawberry
-            portableshell.bat
+            set PATH=%~dp0installer\strawberry\perl\site\bin;%~dp0installer\strawberry\perl\bin;%~dp0installer\strawberry\c\bin;%PATH%
             cpanm Params::Validate --notest
             cpanm MooseX::Params::Validate --notest
             cpanm Math::Random --notest
           shell: cmd
         - name: Install PsN
           run: |
-              cd installer\strawberry
-              portableshell.bat
-              cd ..\..
+              set PATH=%~dp0installer\strawberry\perl\site\bin;%~dp0installer\strawberry\perl\bin;%~dp0installer\strawberry\c\bin;%PATH%
               cd PsN-Source
               perl setup.pl relative --auto
           shell: cmd
@@ -250,6 +291,45 @@ jobs:
             md installer\Rlib
             installer\R\bin\i386\Rscript.exe -e "install.packages('renv', lib='installer/Rlib', repos='http://cran.us.r-project.org')"
           shell: cmd
-        - name: Show installer directory
-          run: dir installer\R
+        - name: Install R dependencies
+          run: installer\R\bin\i386\Rscript.exe -e ".libPaths('installer/Rlib'); options(renv.config.copy.method='R'); options(renv.consent=TRUE); renv::restore(library='installer/Rlib', lockfile='PsN-Source/PsNR/renv.lock'); Sys.setenv(LC_TIME='C', LC_MONETRY='C'); remotes::install_github('UUPharmacometrics/PsNR', dependencies=FALSE)"
           shell: cmd
+        - name: Show installer directory
+          run: dir installer
+          shell: cmd
+      - name: Upload Windows package
+        uses: actions/upload-artifact@v2
+        with:
+            name: win-installer
+            path: installer/
+
+  test-windows:
+    needs: build-windows
+    runs-on: windows-latest
+    steps:
+      - name: Download installation tarball
+        uses: actions/download-artifact@v2
+        with:
+            name: win-installer
+      - name: Get NONMEM
+        id: cache-nonmem
+        uses: actions/cache@v2
+        with:
+          path: 744.zip
+          key: nonmem-744
+      - name: Unzip NONMEM
+        run: unzip -P $ZIP_KEY 744.zip
+        env:
+          ZIP_KEY: ${{secrets.ZIP_KEY}}
+        shell: bash
+      - name: Install NONMEM
+        run: |
+          set PATH=installer\strawberry\c\bin\;%PATH%
+          cd nm744CD
+          SETUP74.bat $(realpath .) $(realpath ../nm744) gfortran y ar same rec q
+        shell: cmd
+      - name: NONMEM license
+        run: echo $LICENSE_KEY >nm744/license/nonmem.lic
+        env:
+          LICENSE_KEY: ${{secrets.LICENSE_KEY}}
+        shell: bash
