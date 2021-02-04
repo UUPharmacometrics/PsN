@@ -258,7 +258,12 @@ jobs:
              md -Name installer
              md -Name installer\strawberry
         - name: Extract winpython
-          run: downloads\Winpython64-3.7.7.1dot.exe -o installer\python -y
+          run: |
+            copy downloads\Winpython64-3.7.7.1dot.exe installer
+            cd installer
+            Winpython64-3.7.7.1dot.exe -y
+            del Winpython64-3.7.7.1dot.exe
+            rename WPy64-3771 python
           shell: cmd
         - name: Check Python installation
           run: dir /s installer\python
