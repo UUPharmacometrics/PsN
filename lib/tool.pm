@@ -817,8 +817,8 @@ sub uncompress_m1
     my $self = shift;
     my $dir = $self->directory;
 
-    my $zip_name = "${dir}m1.zip";
-    my $m1_name = "${dir}m1";
+    my $zip_name = File::Spec->catfile($dir, 'm1.zip');
+    my $m1_name = File::Spec->catfile($dir, 'm1');
     if (-e $zip_name) {
         if (-z $zip_name) {
             unlink($zip_name);
