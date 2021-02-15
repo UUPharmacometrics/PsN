@@ -156,6 +156,7 @@ jobs:
           prove -r -j8 system
       - name: Upload failed system test directories artifact
         uses: actions/upload-artifact@v2
+        if: ${{ failure() }}
         with:
             name: system-tests-ubuntu
             path: /tmp/PsN-test_system*
@@ -171,7 +172,7 @@ jobs:
       - name: Unpack installation tarball
         run: tar -zxvf PsN-*.tar.gz
       - name: Install system dependencies
-        run: brew install r pandoc cairo mariadb-connector-c openssl@1.1 coreutils
+        run: brew install r pandoc cairo mariadb-connector-c openssl@1.1 coreutils gnu-sed
       - name: Setup gfortran
         run: |
           sudo ln -s /usr/local/bin/gfortran-9 /usr/local/bin/gfortran
@@ -215,7 +216,7 @@ jobs:
         run: |
           export PSNPATH=$(find /usr/local/Cellar/perl/5.32.1/lib/perl5/site_perl/5.32.1/ -type d -name 'PsN_[0-9]*')
           export NMPATH=$(realpath nm744)
-          sudo sed -i '' "/\\[nm_versions\\]/a default=$NMPATH,7.4.4" $PSNPATH/psn.conf
+          sudo gsed -i "/\\[nm_versions\\]/a default=$NMPATH,7.4.4" $PSNPATH/psn.conf
       - name: Run unit tests
         run: |
           export TESTPATH=$(find /usr/local/Cellar/perl/5.32.1/lib/perl5/site_perl/5.32.1/ -type d -name 'PsN_test_[0-9]*')
@@ -293,7 +294,7 @@ jobs:
           run: |
               set PATH=%~dp0installer\strawberry\perl\site\bin;%~dp0installer\strawberry\perl\bin;%~dp0installer\strawberry\c\bin;%PATH%
               cd PsN-Source
-              perl setup.pl relative --auto
+              perl setup.pl relative -auto
           shell: cmd
         - name: Extract pandoc
           run: tar -xf downloads/pandoc-2.5-windows-i386.zip -C installer
