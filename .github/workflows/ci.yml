@@ -227,6 +227,12 @@ jobs:
           export TESTPATH=$(find /usr/local/Cellar/perl/5.32.1/lib/perl5/site_perl/5.32.1/ -type d -name 'PsN_test_[0-9]*')
           cd $TESTPATH
           prove -r -j8 system
+      - name: Upload failed system test directories artifact
+        uses: actions/upload-artifact@v2
+        if: ${{ failure() }}
+        with:
+            name: system-tests-macos
+            path: ${{ env.TEMPDIR }}/PsN-test_system*
 
   build-windows:
       needs: build
@@ -307,7 +313,7 @@ jobs:
             installer\R\bin\i386\Rscript.exe -e "install.packages('renv', lib='installer/Rlib', repos='http://cran.us.r-project.org')"
           shell: cmd
         - name: Install R dependencies
-          run: installer\R\bin\i386\Rscript.exe -e ".libPaths('installer/Rlib'); options(renv.config.copy.method='R'); options(renv.consent=TRUE); renv::restore(library='installer/Rlib', lockfile='PsN-Source/PsNR/renv.lock'); Sys.setenv(LC_TIME='C', LC_MONETRY='C'); remotes::install_github('UUPharmacometrics/PsNR', dependencies=FALSE)"
+          run: installer\R\bin\i386\Rscript.exe -e ".libPaths('installer/Rlib'); options(renv.config.copy.method='R'); options(renv.consent=TRUE); renv::restore(library='installer/Rlib', lockfile='PsN-Source/PsNR/renv.lock'); Sys.setenv(TZ='Europe/Berlin', LC_TIME='C', LC_MONETARY='C'); remotes::install_github('UUPharmacometrics/PsNR', dependencies=FALSE)"
           shell: cmd
         - name: Show installer directory
           run: dir installer
