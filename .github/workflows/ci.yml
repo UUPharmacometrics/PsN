@@ -315,6 +315,59 @@ jobs:
         - name: Install R dependencies
           run: installer\R\bin\i386\Rscript.exe -e ".libPaths('installer/Rlib'); options(renv.config.copy.method='R'); options(renv.consent=TRUE); renv::restore(library='installer/Rlib', lockfile='PsN-Source/PsNR/renv.lock'); Sys.setenv(TZ='Europe/Berlin', LC_TIME='C', LC_MONETARY='C'); remotes::install_github('UUPharmacometrics/PsNR', dependencies=FALSE)"
           shell: cmd
+        - name: Move dlls
+          run: |
+            mv installer/strawberry/c/bin/libxml2-2__.dll strawberry/perl/bin/
+            mv installer/strawberry/c/bin/liblzma-5__.dll strawberry/perl/bin/
+            mv installer/strawberry/c/bin/libiconv-2__.dll strawberry/perl/bin/
+            mv installer/strawberry/c/bin/zlib1__.dll strawberry/perl/bin/
+          shell: bash
+        - name: Update psn.conf
+          run: |
+            export PSNPATH=$(find installer/strawberry/perl/site/lib/ -type d -name 'PsN_[0-9]*')
+            echo PYTHON_PATH=../../../../../python/python-3.7.7.amd64 >tempfile
+            echo R=../../../../../R/bin/R.exe >>tempfile
+            echo R_LIB_PATH=../../../../../Rlib >>tempfile
+            cat ${PSNPATH}/psn.conf >>tempfile
+            mv tempfile ${PSNPATH}/psn.conf
+          shell: bash
+        - name: Clean R packages
+          run: |
+              echo 'import pathlib' >clean.py
+              echo 'import shutil' >>clean.py
+              echo 'rlib_path = pathlib.Path("installer") / "Rlib"' >>clean.py
+              echo 'for package in rlib_path.iterdir():' >>clean.py
+              echo '    subdirs = ["html", "help", "doc"]' >>clean.py
+              echo '    for subdir in subdirs:' >>clean.py
+              echo '        path = package / subdir' >>clean.py
+              echo '        if path.exists():' >>clean.py
+              echo '            shutil.rmtree(str(path))' >>clean.py
+              installer\python\python-3.7.7.amd64\python.exe clean.py
+          shell: bash
+        - name: Remove unnecessary files
+          run: |
+              cd installer
+              del pandoc\pandoc-citeproc.exe
+              del "pandoc\Pandoc User's Guide.html"
+              del R\unins000.dat
+              del R\unins000.exe
+              rmdir R\tests /s /q
+              rmdir R\doc /s /q
+              del strawberry\README.txt
+              del strawberry\DISTRIBUTIONS.txt
+              rmdir strawberry\win32 /s /q
+              rmdir strawberry\data /s /q
+              rmdir strawberry\cpan /s /q
+              rmdir python\notebooks /s /q
+              rmdir python\scripts /s /q
+              rmdir python\python-3.7.7.amd64\tcl /s /q
+              rmdir python\python-3.7.7.amd64\share /s /q
+              rmdir python\python-3.7.7.amd64\Tools /s /q
+              rmdir python\python-3.7.7.amd64\Doc /s /q
+              del python\python-3.7.7.amd64\NEWS.txt
+              rmdir python\python-3.7.7.amd64\libs /s /q
+              rmdir python\python-3.7.7.amd64\include /s /q
+          shell: cmd
         - name: Show installer directory
           run: dir installer
           shell: cmd
