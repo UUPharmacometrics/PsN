@@ -815,7 +815,7 @@ sub compress_m1
 sub uncompress_m1
 {
     my $self = shift;
-    my $dir = $self->directory;
+    my $dir = Cwd::abs_path($self->directory);
 
     my $zip_name = File::Spec->catfile($dir, 'm1.zip');
     my $m1_name = File::Spec->catfile($dir, 'm1');
