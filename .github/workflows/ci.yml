@@ -154,6 +154,11 @@ jobs:
           export TESTPATH=$(find $LIBPATH -type d -name 'PsN_test_[0-9]*')
           cd $TESTPATH
           prove -r -j8 system
+      - name: Upload failed system test directories artifact
+        uses: actions/upload-artifact@v2
+        with:
+            name: system-tests-ubuntu
+            path: /tmp/PsN-test_system*
 
   test-macos:
     needs: build
@@ -210,7 +215,7 @@ jobs:
         run: |
           export PSNPATH=$(find /usr/local/Cellar/perl/5.32.1/lib/perl5/site_perl/5.32.1/ -type d -name 'PsN_[0-9]*')
           export NMPATH=$(realpath nm744)
-          sudo sed -i "/\\[nm_versions\\]/a default=$NMPATH,7.4.4" $PSNPATH/psn.conf
+          sudo sed -i '' "/\\[nm_versions\\]/a default=$NMPATH,7.4.4" $PSNPATH/psn.conf
       - name: Run unit tests
         run: |
           export TESTPATH=$(find /usr/local/Cellar/perl/5.32.1/lib/perl5/site_perl/5.32.1/ -type d -name 'PsN_test_[0-9]*')
@@ -269,7 +274,8 @@ jobs:
             rename WPy64-3771 python
           shell: cmd
         - name: Install Pharmpy dependencies
-          run: installer\python\python-3.7.7.amd64\python.exe -m pip install -r PsN-Source\requirements.txt
+          run:
+              installer\python\python-3.7.7.amd64\python.exe -m pip install -r PsN-Source\requirements.txt
           shell: cmd
         - name: Install Pharmpy
           run: installer\python\python-3.7.7.amd64\python.exe -m pip install --user --find-links=PsN-Source pharmpy-core
