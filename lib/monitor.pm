@@ -483,16 +483,20 @@ sub get_jobid
 }
 
 sub get_current_feval_ofv
-{#FIXME support mac
+{
 	my $extfile = shift;
 	my $feval=undef;
 	my $ofv =undef;
 	if (-e $extfile){
-		my $lines = `sed -n 's/^\\s*\\([0-9][0-9]*\\)\\s\\s*.*\\s\\(\\S*\\)\\s*\$/\\1 \\2/p' $extfile  2> /dev/null`;
-		if ($lines =~ /(\S+) (\S+)$/){
-			$feval = $1;
-			$ofv = $2;
-		}
+        open(my $fh, '<', $extfile); 
+        while (my $line = <$fh>) {
+            my @a = split ' ', $line; 
+            if ($a[0] =~ /^\s*[0-9]/) {
+                $feval = int($a[0]);
+                $ofv = $a[-1]; 
+            }
+        }
+		close $fh;
 	}
 	return $feval,$ofv;
 }
