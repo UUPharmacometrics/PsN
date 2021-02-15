@@ -140,7 +140,6 @@ sub check_mceta
     if (defined $options->{'mceta'} and $options->{'mceta'} > 0) {
         if (($PsN::nm_major_version == 5) or ($PsN::nm_major_version == 6) or
             ($PsN::nm_major_version == 7 and ($PsN::nm_minor_version < 3))) {
-            #            $error .= "Cannot set -mceta for NONMEM version ".$PsN::nm_major_version.'.'.$PsN::nm_minor_version;
             $options->{'mceta'} = 0;
         }else{
             unless (defined $model->problems->[0]->estimations and
