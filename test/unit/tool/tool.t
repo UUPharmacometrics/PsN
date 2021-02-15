@@ -68,10 +68,9 @@ $dir = tool::get_rundir(create => 0,
 						modelname => 'run123.mod');
 
 #test will fail if done exactly across midnight
-is (abs_path(substr($dir1, 0, length($tempdir . 'run123' . $timestring))), abs_path($tempdir . 'run123' . $timestring), 'tool get_rundir timestamp');
+my $correct = abs_path($tempdir . 'run123' . $timestring);
+is (substr(abs_path($dir1), 0, length($correct)), $correct, 'tool get_rundir timestamp');
 #test will fail if change second between $dir1 and $dir above
-#is (substr($dir,0,-1) =~ /dir1$/,1,'tool get_rundir timestamp numbered');
-#print $dir1."\n$dir\n";
 
 $dir = tool::get_rundir(create => 0,
 						basename => 'parallel_retries_dir',
