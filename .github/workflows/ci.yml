@@ -232,7 +232,7 @@ jobs:
         if: ${{ failure() }}
         with:
             name: system-tests-macos
-            path: ${{ env.TEMPDIR }}/PsN-test_system*
+            path: ${{ env.TMPDIR }}/PsN-test_system*
 
   build-windows:
       needs: build
