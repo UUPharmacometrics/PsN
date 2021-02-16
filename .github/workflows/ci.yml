@@ -222,6 +222,8 @@ jobs:
           export TESTPATH=$(find /usr/local/Cellar/perl/5.32.1/lib/perl5/site_perl/5.32.1/ -type d -name 'PsN_test_[0-9]*')
           cd $TESTPATH
           prove -r -j8 unit
+      - name: Save TMPDIR
+        run: echo "TEMPDIR=$TMPDIR" >> $GITHUB_ENV
       - name: Run system tests
         run: |
           export TESTPATH=$(find /usr/local/Cellar/perl/5.32.1/lib/perl5/site_perl/5.32.1/ -type d -name 'PsN_test_[0-9]*')
@@ -232,7 +234,7 @@ jobs:
         if: ${{ failure() }}
         with:
             name: system-tests-macos
-            path: ${{ env.TMPDIR }}/PsN-test_system*
+            path: ${{ env.TEMPDIR }}/PsN-test_system*
 
   build-windows:
       needs: build
@@ -371,11 +373,19 @@ jobs:
         - name: Show installer directory
           run: dir installer
           shell: cmd
+        - name: Create installation package name
+          run: |
+            export filename=`ls PsN-*.tar.gz -1`
+            export packagename="${filename%.tar.gz}-windows-64bit"
+            mv installer $packagename
+            7z a zip $packagename
+            echo "packagename=${packagename}.zip" >> $GITHUB_ENV
+          shell: bash
         - name: Upload Windows package
           uses: actions/upload-artifact@v2
           with:
             name: win-installer
-            path: installer/
+            path: ${{ env.packagename }}
 
   test-windows:
     needs: build-windows
