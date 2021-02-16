@@ -15,7 +15,7 @@ my $model_dir = $includes::testfiledir;
 chdir($tempdir);
 
 # gls runtest with (ONLY OBSERVATIONS) which should work now that code_record.pm is aware of pseudo-assignments
-my $command = get_command('gls') . " $model_dir/glstags-pseudoassign.mod -samples=5 -set_simest -ind_shrink -dir=glsdir-pseudoassign";
+my $command = get_command('gls') . " $model_dir/glstags-pseudoassign.mod -seed=12345 -samples=5 -set_simest -ind_shrink -dir=glsdir-pseudoassign";
 my $rc = system($command);
 $rc = $rc >> 8;
 ok ($rc == 0, "gls with pseudo-assignment that should run ok");
