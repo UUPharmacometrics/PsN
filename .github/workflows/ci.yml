@@ -317,10 +317,10 @@ jobs:
           shell: cmd
         - name: Move dlls
           run: |
-            mv installer/strawberry/c/bin/libxml2-2__.dll strawberry/perl/bin/
-            mv installer/strawberry/c/bin/liblzma-5__.dll strawberry/perl/bin/
-            mv installer/strawberry/c/bin/libiconv-2__.dll strawberry/perl/bin/
-            mv installer/strawberry/c/bin/zlib1__.dll strawberry/perl/bin/
+            mv installer/strawberry/c/bin/libxml2-2__.dll installer/strawberry/perl/bin/
+            mv installer/strawberry/c/bin/liblzma-5__.dll installer/strawberry/perl/bin/
+            mv installer/strawberry/c/bin/libiconv-2__.dll installer/strawberry/perl/bin/
+            mv installer/strawberry/c/bin/zlib1__.dll installer/strawberry/perl/bin/
           shell: bash
         - name: Update psn.conf
           run: |
