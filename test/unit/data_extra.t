@@ -137,7 +137,6 @@ $datarec = model::problem::data->new(record_arr => ['$DATA "'.$tempdir.'subdir s
 ($dir,$file)=OSspecific::absolute_path($tempdir.'subdir space','file');
 is($datarec ->get_directory,$dir,'data record dir double quotes space up down');
 is($datarec ->get_filename,'file.csv','data record filename double quotes space');
-
 is($datarec->format_filename(write_directory=>$tempdir.'other space',
 							 relative_data_path=>1),'"..'.$dirsep.'subdir space'.$dirsep.'file.csv"','format_filname space relative up then down');
 is($datarec->format_filename(write_directory=>$tempdir,

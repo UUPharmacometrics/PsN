@@ -108,7 +108,12 @@ sub format_filename
     my $string;
 
     if ($relative_data_path) {
-        my $path = File::Spec->abs2rel($self->get_directory,$write_directory);
+        my $cleaned_path = Cwd::abs_path($self->get_directory);     # Remove symlinks that makes abs2rel generate very long paths
+        if (not defined $cleaned_path) {
+            $cleaned_path = $self->get_directory;                   # Fallback
+        }
+
+        my $path = File::Spec->abs2rel($cleaned_path, $write_directory);
         if ($path eq '.') {
             $string = $self->get_filename();
         } else {
