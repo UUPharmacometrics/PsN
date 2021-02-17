@@ -300,10 +300,10 @@ jobs:
           shell: cmd
         - name: Install PsN
           run: |
-              set PATH=%~dp0installer\strawberry\perl\site\bin;%~dp0installer\strawberry\perl\bin;%~dp0installer\strawberry\c\bin;%PATH%
+              set PATH=$(realpath installer\strawberry\perl\site\bin):$(realpath installer\strawberry\perl\bin):$(realpath installer\strawberry\c\bin):$PATH
               cd PsN-Source
               perl setup.pl relative -auto
-          shell: cmd
+          shell: bash
         - name: Extract pandoc
           run: tar -xf downloads/pandoc-2.5-windows-i386.zip -C installer
         - name: Install R
