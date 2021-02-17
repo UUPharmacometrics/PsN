@@ -25,10 +25,10 @@ if ($major < 7 or ($major == 7 and $minor < 3)){
 }
 my @commands = (
 	get_command('frem') . " -covar=WT,DGRP,SEX -skip_omegas=3  -log=WT -categorical=DGRP -check $model_dir/mox_frem.mod -no-run_sir -force_posdef_covmatrix",
-	get_command('frem') . " -covar=WT,DGRP -categorical=DGRP -no-check $model_dir/mox_frem.mod -no-run_sir -mceta=50",
-	get_command('frem') . " -covar=DIG,WT -no-check $model_dir/mox_frem.mod -no-run_sir -estimate_means",
-	get_command('frem') . " -covar=SEX,DGRP -skip_om=2 -categorical=SEX,DGRP $cholesky -no-run_sir -no-check $model_dir/mox1.mod ",
-	get_command('frem') . " -covar=AGE,SEX -categorical=SEX -no-check $model_dir/mox1.mod -no-run_sir",
+	get_command('frem') . " -covar=WT,DGRP -categorical=DGRP -no-check $model_dir/mox_frem.mod -no-run_sir -mceta=50 -force_posdef_covmatrix",
+	get_command('frem') . " -covar=DIG,WT -no-check $model_dir/mox_frem.mod -no-run_sir -estimate_means -force_posdef_covmatrix",
+	get_command('frem') . " -covar=SEX,DGRP -skip_om=2 -categorical=SEX,DGRP $cholesky -no-run_sir -no-check $model_dir/mox1.mod -force_posdef_covmatrix",
+	get_command('frem') . " -covar=AGE,SEX -categorical=SEX -no-check $model_dir/mox1.mod -no-run_sir -force_posdef_covmatrix",
 	);
 
 foreach my $command (@commands) {
@@ -40,7 +40,7 @@ foreach my $command (@commands) {
 }
 
 
-my $plot_command = get_command('frem') . " -cov=APGR,WGT $model_dir/pheno_real.mod -rplots=1 -dir=plot_dir";
+my $plot_command = get_command('frem') . " -cov=APGR,WGT $model_dir/pheno_real.mod -rplots=1 -dir=plot_dir -force_posdef_covmatrix";
 my  $rc = system($plot_command);
 $rc = $rc >> 8;
 ok($rc == 0, "$plot_command");
