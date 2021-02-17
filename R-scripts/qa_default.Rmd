@@ -442,10 +442,23 @@ if(length(ii_list$all_dofv)>0) {
 ```
 
 ```{r add_infl_indiv_individual_plots,eval=all(skip!="cdd"),results='asis',echo=F,warning=F,message=F,fig.width=11,fig.height=ii_list$fig_height_infl}
-if(length(ii_list$infl_id)>0) {
-  infl.ind_individual_plots <- individual_plots_extra(file_name=original_max0_model,ID_nr=ii_list$infl_id[1:10],dvid_name=dvid_name)
-  print(infl.ind_individual_plots)
-  cat("Observations (DV), individual predictions (IPRED) and population predictions (PRED) versus time for subjects identified as influential.")
+library(vegawidget)
+cdddir <- file.path(working.directory, 'cdd_run')
+results_path <- file.path(cdddir, 'results.json')
+have_cdd_results <- file.exists(results_path)
+have_cdd_plot <- FALSE
+if (have_cdd_results) {
+    try(json <- rjson::fromJSON(file=results_path))
+    if (!is.null(json$individual_predictions_plot)) {
+        have_cdd_plot <- TRUE
+        try(vegawidget::as_vegaspec(json$individual_predictions_plot))
+    }
+}
+```
+
+```{r add_infl_indiv_individual_plots_text,eval=all(skip!="cdd"),results='asis',echo=F,warning=F,message=F,fig.width=11,fig.height=ii_list$fig_height_infl}
+if (have_cdd_plot) {
+    cat("Observations (DV), individual predictions (IPRED) and population predictions (PRED) versus time for subjects identified as influential.")
 }
 ```
 
@@ -475,10 +488,23 @@ if(file.exists(file.path(working.directory,"simeval_run/raw_all_iofv.csv"))) {
 ```
 
 ```{r add_outliers_individual_plots,eval=all(skip!="simeval"),results='asis',echo=F,warning=F,message=F,fig.width=11,fig.height=outlier_table_list$fig_height_outl}
-if(length(outlier_table_list$outlier_ids)>0) {
-  outlier_individual_plots <- individual_plots_extra(file_name=original_max0_model,ID_nr=outlier_table_list$outlier_ids,dvid_name=dvid_name)
-  print(outlier_individual_plots)
-  cat("Observations (DV), individual predictions (IPRED) and population predictions (PRED) versus time for subjects identified as outliers.")
+library(vegawidget)
+simevaldir <- file.path(working.directory, 'simeval_run')
+results_path <- file.path(simevaldir, 'results.json')
+have_simeval_results <- file.exists(results_path)
+have_simeval_plot <- FALSE
+if (have_simeval_results) {
+    try(json <- rjson::fromJSON(file=results_path))
+    if (!is.null(json$individual_predictions_plot)) {
+        have_simeval_plot <- TRUE
+        try(vegawidget::as_vegaspec(json$individual_predictions_plot))
+    }
+}
+```
+
+```{r add_outliers_individual_plots_text,eval=all(skip!="simeval"),results='asis',echo=F,warning=F,message=F,fig.width=11,fig.height=outlier_table_list$fig_height_outl}
+if (have_simeval_plot) {
+    cat("Observations (DV), individual predictions (IPRED) and population predictions (PRED) versus time for subjects identified as outliers.")
 }
 ```
 
