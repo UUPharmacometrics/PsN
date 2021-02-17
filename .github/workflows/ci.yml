@@ -324,6 +324,9 @@ jobs:
             mv installer/strawberry/c/bin/libiconv-2__.dll installer/strawberry/perl/bin/
             mv installer/strawberry/c/bin/zlib1__.dll installer/strawberry/perl/bin/
           shell: bash
+        - name: Dir PsN
+          run: dir installer\strawberry\perl\site\lib
+          shell: cmd
         - name: Update psn.conf
           run: |
             export PSNPATH=$(find installer/strawberry/perl/site/lib/ -type d -name 'PsN_[0-9]*')
