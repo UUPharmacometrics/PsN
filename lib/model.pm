@@ -3199,7 +3199,6 @@ sub flip_comments
     $newmodel->directory($newdir);
 
     if ($write){
-#        open(SIM, ">$new_file_name") || die("Couldn't open $new_file_name : $!");
         $newmodel-> _write;
     }
 
@@ -3595,7 +3594,6 @@ sub upper_bounds
 
 sub _write
 {
-    # $model->_write(filename => 'model.mod');
     #Writes the content of the modelobject to disk. Either to the
     #filename given, or to the string returned by model::full_name.
 

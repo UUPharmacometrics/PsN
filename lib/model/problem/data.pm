@@ -107,22 +107,21 @@ sub format_filename
     my $relative_data_path = $parm{'relative_data_path'};
     my $string;
 
-
-    if ($relative_data_path){
+    if ($relative_data_path) {
         my $path = File::Spec->abs2rel($self->get_directory,$write_directory);
-        if ($path eq '.'){
+        if ($path eq '.') {
             $string = $self->get_filename();
-        }else{
+        } else {
             #abs2 rel does not give / or \, catfile adds it
-            $string = File::Spec->catfile($path,$self->get_filename);
+            $string = File::Spec->catfile($path, $self->get_filename);
         }
-    }else{
-        $string = File::Spec->catfile($self->get_directory,$self->get_filename);
+    } else {
+        $string = File::Spec->catfile($self->get_directory, $self->get_filename);
     }
 
     #check if contains spaces, then add quotes
-    if ($string =~ /\s/){
-        $string = '"'.$string.'"';
+    if ($string =~ /\s/) {
+        $string = '"' . $string . '"';
     }
 
     return $string;

@@ -2725,20 +2725,18 @@ sub _format_problem
 {
     my $self = shift;
     my %parm = validated_hash(\@_,
-                              filename => { isa => 'Str', optional => 1 },
-                              problem_number => { isa => 'Int', optional => 1 },
-                              relative_data_path => { isa => 'Bool', optional => 0 },
-                              write_directory => { isa => 'Str', optional => 0 },
-                              number_format => { isa => 'Maybe[Int]', optional => 1 }
-        );
+        filename => { isa => 'Str', optional => 1 },
+        problem_number => { isa => 'Int', optional => 1 },
+        relative_data_path => { isa => 'Bool', optional => 0 },
+        write_directory => { isa => 'Str', optional => 0 },
+        number_format => { isa => 'Maybe[Int]', optional => 1 }
+    );
     my $filename = $parm{'filename'};
     my $problem_number = $parm{'problem_number'};
     my $number_format = $parm{'number_format'};
     my $write_directory = $parm{'write_directory'};
     my $relative_data_path = $parm{'relative_data_path'};
     my @formatted;
-
-    # problem::_format_problem()
 
     # format_problem will return an array of strings of the
     # problem in NONMEM modelfile format.
@@ -2763,7 +2761,6 @@ sub _format_problem
         $record_order = $self->record_order->order;
     }
 
-
     foreach my $type (@${record_order}) {
         # Create an accessor string for the record being formatted
         my $accessor = $type . 's';
@@ -2775,26 +2772,25 @@ sub _format_problem
             # to format itself.
 
             foreach my $record (@{$self->$accessor}) {
-
                 my $arr;
-                if ($type eq 'data'){
-                    $arr = $record -> _format_record(write_directory => $write_directory,
-                                                     relative_data_path => $relative_data_path);
-                }elsif ($type eq 'msfi'){
-                    $arr = $record -> _format_record(write_directory => $write_directory);
-                }else{
-                    $arr = $record ->  _format_record( number_format => $number_format) ;
+                if ($type eq 'data') {
+                    $arr = $record->_format_record(write_directory => $write_directory,
+                                                   relative_data_path => $relative_data_path);
+                } elsif ($type eq 'msfi') {
+                    $arr = $record->_format_record(write_directory => $write_directory);
+                } else {
+                    $arr = $record->_format_record(number_format => $number_format) ;
                 }
-                push( @formatted,  @{$arr} );
+                push(@formatted, @{$arr});
             }
         }
-        if (defined $self->shrinkage_module and  $self->shrinkage_module -> enabled and $type eq 'table' ) {
-            push( @formatted, @{$self->shrinkage_module -> format_shrinkage_tables } );
+        if (defined $self->shrinkage_module and  $self->shrinkage_module->enabled and $type eq 'table') {
+            push(@formatted, @{$self->shrinkage_module->format_shrinkage_tables});
         }
     }
 
-    if( $self->cwres_modules ){
-      $self->cwres_modules -> [0] -> post_process;
+    if($self->cwres_modules) {
+        $self->cwres_modules->[0]->post_process;
     }
 
     return \@formatted;
