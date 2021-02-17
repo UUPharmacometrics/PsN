@@ -28,17 +28,22 @@ copy_test_files($tempdir,["pheno.mod", "pheno.dta","notable.mod","tbs1.mod", "tb
 #TODO make sure path to pheno.dta not so long that execute will die because of path too long, 
 #then test will fail although PsN does what it should
 chdir($tempdir);
-my $spacedir = 'a b';
-mkdir($spacedir);
-cp('pheno.mod',$spacedir);
-cp('pheno.dta',$spacedir);
-chdir($spacedir);
-my $command = get_command('execute') . " pheno.mod -no-copy_data";
-print "Running $command\n";
-my $rc = system($command);
-$rc = $rc >> 8;
-ok ($rc == 0, "$command, spaces in data path");
-chdir($tempdir);
+
+SKIP: {
+    skip "", 1 if $Config{'osname'} eq 'darwin';      # Temp file paths are too long on MacOS
+
+    my $spacedir = 'a b';
+    mkdir($spacedir);
+    cp('pheno.mod',$spacedir);
+    cp('pheno.dta',$spacedir);
+    chdir($spacedir);
+    my $command = get_command('execute') . " pheno.mod -no-copy_data";
+    print "Running $command\n";
+    my $rc = system($command);
+    $rc = $rc >> 8;
+    ok ($rc == 0, "$command, spaces in data path");
+    chdir($tempdir);
+}
 
 my @a;
 
