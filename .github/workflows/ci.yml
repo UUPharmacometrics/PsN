@@ -347,7 +347,7 @@ jobs:
               echo '        path = package / subdir' >>clean.py
               echo '        if path.exists():' >>clean.py
               echo '            shutil.rmtree(str(path))' >>clean.py
-              installer\python\python-3.7.7.amd64\python.exe clean.py
+              installer/python/python-3.7.7.amd64/python.exe clean.py
           shell: bash
         - name: Remove unnecessary files
           run: |
