@@ -376,13 +376,13 @@ jobs:
         - name: Show installer directory
           run: dir installer
           shell: cmd
-        - name: Create installation package name
+        - name: Create installation package
           run: |
             export filename=`ls PsN-*.tar.gz -1`
             export dirname="${filename%.tar.gz}"
             export packagename="${filename%.tar.gz}-windows-64bit.zip"
             mv installer $dirname
-            7z a zip $packagename $dirname
+            7z a $packagename $dirname
             echo "packagename=${packagename}" >> $GITHUB_ENV
           shell: bash
         - name: Upload Windows package
