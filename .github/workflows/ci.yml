@@ -302,6 +302,7 @@ jobs:
             cpanm Params::Validate --notest
             cpanm MooseX::Params::Validate --notest
             cpanm Math::Random --notest
+            cpanm Test::Exception --notest
           shell: cmd
         - name: Install PsN
           run: |
@@ -447,16 +448,18 @@ jobs:
         shell: cmd
       - name: Run system tests
         run: |
-          for /f "delims=" %%A in ('dir /S PsN-* /s/b') do set "PSNPATH=%%A"
-          set PATH=%CD%\%PSNPATH%\strawberry\perl\bin;%PATH%
-          for /f "delims=" %%A in ('dir /S %PSNPATH%\strawberry\perl\site\lib\PsN_test_* /s/b') do set "TESTPATH=%%A"
+          for /f "delims=" %%A in ('dir /S PsN-* /s/b /ad') do set "PSNPATH=%%A"
+          set PATH=%PSNPATH%\strawberry\perl\bin;%PSNPATH%\strawberry\c\bin;%PATH%
+          for /f "delims=" %%A in ('dir /S %PSNPATH%\strawberry\perl\site\lib\PsN_test_* /s/b /ad') do set "TESTPATH=%%A"
           cd %TESTPATH%
           prove -r -j8 system
         shell: cmd
       - name: Run system tests
         run: |
-          export TESTPATH=$(find /usr/local/Cellar/perl/5.32.1/lib/perl5/site_perl/5.32.1/ -type d -name 'PsN_test_[0-9]*')
-          cd $TESTPATH
+          for /f "delims=" %%A in ('dir /S PsN-* /s/b /ad') do set "PSNPATH=%%A"
+          set PATH=%PSNPATH%\strawberry\perl\bin;%PSNPATH%\strawberry\c\bin;%PATH%
+          for /f "delims=" %%A in ('dir /S %PSNPATH%\strawberry\perl\site\lib\PsN_test_* /s/b /ad') do set "TESTPATH=%%A"
+          cd %TESTPATH%
           prove -r -j8 system
       - name: Upload failed system test directories artifact
         uses: actions/upload-artifact@v2
