@@ -96,6 +96,11 @@ jobs:
           echo 'key ^J' >>lynxcmds
           echo 'key Q' >>lynxcmds
           lynx -accept-all-cookies nonmem.iconplc.com -cmd_script=lynxcmds
+      - name: Upload cache workaround
+        uses: actions/upload-artifact@v2
+        with:
+          name: cache-workaround
+          path: 744.zip
 
   test-ubuntu:
     needs: [build, get-nonmem]
@@ -403,27 +408,26 @@ jobs:
         run: 7z x *.zip
         shell: cmd
       - name: Get NONMEM
-        id: cache-nonmem
-        uses: actions/cache@v2
+        uses: actions/download-artifact@v2
         with:
-          path: 744.zip
-          key: nonmem-744
+          name: cache-workaround
       - name: Unzip NONMEM
         run: 7z x 744.zip -p%ZIP_KEY%
         env:
           ZIP_KEY: ${{secrets.ZIP_KEY}}
         shell: cmd
-      - name: Install NONMEM
-        run: |
-          set PATH=installer\strawberry\c\bin\;%PATH%
-          cd nm744CD
-          SETUP74.bat $(realpath .) $(realpath ../nm744) gfortran y ar same rec q
-        shell: cmd
       - name: NONMEM license
-        run: echo $LICENSE_KEY >nm744/license/nonmem.lic
+        run: echo $LICENSE_KEY >nm744CD/nonmem.lic
         env:
           LICENSE_KEY: ${{secrets.LICENSE_KEY}}
         shell: bash
+      - name: Install NONMEM
+        run: |
+          set PATH=installer\strawberry\c\bin\;%PATH%
+          set INSTALLDIR=%CD%\nm744
+          cd nm744CD
+          SETUP74.bat %CD% %INSTALLDIR% gfortran y ar same rec q
+        shell: cmd
       - name: Update psn.conf
         run: |
           export PSNPATH=$(find . -type d -name 'PsN_[0-9]*')
