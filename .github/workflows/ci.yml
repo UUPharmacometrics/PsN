@@ -437,7 +437,7 @@ jobs:
         shell: bash
       - name: Run unit tests
         run: |
-          for /f "delims=" %%A in ('dir /S PsN-* /s/b') do set "PSNPATH=%%A"
+          for /f "delims=" %%A in ('dir /S PsN-* /s/b /ad') do set "PSNPATH=%%A"
           set PATH=%PSNPATH%\strawberry\perl\bin;%PSNPATH%\strawberry\c\bin%PATH%
           for /f "delims=" %%A in ('dir /S %PSNPATH%\strawberry\perl\site\lib\PsN_test_* /s/b /ad') do set "TESTPATH=%%A"
           cd %TESTPATH%
