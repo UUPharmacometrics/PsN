@@ -446,6 +446,8 @@ jobs:
         shell: bash
       - name: Run unit tests
         run: |
+          echo %PSNPATH%
+          echo %TESTPATH%
           set PATH=%PSNPATH%\strawberry\perl\bin;%PSNPATH%\strawberry\c\bin;%PATH%
           where prove
           cd %TESTPATH%
