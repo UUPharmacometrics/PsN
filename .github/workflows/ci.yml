@@ -435,11 +435,16 @@ jobs:
           export NMPATH=$(realpath nm744)
           sed -i "/\\[nm_versions\\]/a default=$NMPATH,7.4.4" $PSNPATH/psn.conf
         shell: bash
+      - name: Find tests
+        run: |
+          export PSNPATH=$(find . -maxdepth 1 -type d -name 'PsN-*')
+          export TESTPATH=$(find $PSNPATH -type d -name 'PsN_test_[0-9]*')
+          echo "PSNPATH=$PSNPATH" >> $GITHUB_ENV
+          echo "TESTPATH=$TESTPATH" >> $GITHUB_ENV
+        shell: bash
       - name: Run unit tests
         run: |
-          for /f "delims=" %%A in ('dir /S PsN-* /s/b /ad') do set "PSNPATH=%%A"
-          set PATH=%PSNPATH%\strawberry\perl\bin;%PSNPATH%\strawberry\c\bin%PATH%
-          for /f "delims=" %%A in ('dir /S %PSNPATH%\strawberry\perl\site\lib\PsN_test_* /s/b /ad') do set "TESTPATH=%%A"
+          set PATH=%PSNPATH%\strawberry\perl\bin;%PSNPATH%\strawberry\c\bin;%PATH%
           cd %TESTPATH%
           prove -r -j8 unit
         shell: cmd
@@ -448,9 +453,7 @@ jobs:
         shell: cmd
       - name: Run system tests
         run: |
-          for /f "delims=" %%A in ('dir /S PsN-* /s/b /ad') do set "PSNPATH=%%A"
           set PATH=%PSNPATH%\strawberry\perl\bin;%PSNPATH%\strawberry\c\bin;%PATH%
-          for /f "delims=" %%A in ('dir /S %PSNPATH%\strawberry\perl\site\lib\PsN_test_* /s/b /ad') do set "TESTPATH=%%A"
           cd %TESTPATH%
           prove -r -j8 system
         shell: cmd
