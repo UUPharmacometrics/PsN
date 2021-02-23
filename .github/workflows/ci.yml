@@ -260,7 +260,7 @@ jobs:
         - name: Download R
           uses: suisei-cn/actions-download-file@v1
           with:
-            url: https://cran.r-project.org/bin/windows/base/R-4.0.3-win.exe
+            url: https://cran.r-project.org/bin/windows/base/old/4.0.3/R-4.0.3-win.exe
             target: downloads/
         - name: Download Python
           uses: suisei-cn/actions-download-file@v1
