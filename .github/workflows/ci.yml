@@ -439,12 +439,15 @@ jobs:
         run: |
           export PSNPATH=$(find . -maxdepth 1 -type d -name 'PsN-*')
           export TESTPATH=$(find $PSNPATH -type d -name 'PsN_test_[0-9]*')
+          echo $PSNPATH
+          echo $TESTPATH
           echo "PSNPATH=$PSNPATH" >> $GITHUB_ENV
           echo "TESTPATH=$TESTPATH" >> $GITHUB_ENV
         shell: bash
       - name: Run unit tests
         run: |
           set PATH=%PSNPATH%\strawberry\perl\bin;%PSNPATH%\strawberry\c\bin;%PATH%
+          where prove
           cd %TESTPATH%
           prove -r -j8 unit
         shell: cmd
