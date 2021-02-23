@@ -148,6 +148,15 @@ sub BUILD
         $self -> directory($dir);
     }
 
+    my $unique = array::unique($self->valid_states->{'continuous'});
+    if (scalar(@$unique) != scalar(@{$self->valid_states->{'continuous'}})) {
+        croak("Duplicate states in the continuous valid_states");
+    }
+    $unique = array::unique($self->valid_states->{'categorical'});
+    if (scalar(@$unique) != scalar(@{$self->valid_states->{'categorical'}})) {
+        croak("Duplicate states in the categorical valid_states");
+    }
+
     if ($self->epsilon == 1) {
         croak("The option -error cannot be used when option -epsilon is set. ")  if
         (defined $self->error);
