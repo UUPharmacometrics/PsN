@@ -437,7 +437,7 @@ jobs:
         shell: bash
       - name: Find tests
         run: |
-          export PSNPATH=$(find . -maxdepth 1 -type d -name 'PsN-*')
+          export PSNPATH=$(find $PWD -maxdepth 1 -type d -name 'PsN-*')
           export TESTPATH=$(find $PSNPATH -type d -name 'PsN_test_[0-9]*')
           export LIBPATH=$(find $PSNPATH -type d -name 'PsN_[0-9]*')
           echo PSNPATH=$PSNPATH
@@ -458,17 +458,18 @@ jobs:
           echo '            stripped = line.strip()' >>edit.py
           echo '            if not found_libpath and stripped.startswith("my $libpath"):' >>edit.py
           echo "                path = '$LIBPATH/'" >>edit.py
-          echo "                dh.write(f\"my \$libpath = '{path}';\\\n\")" >>edit.py 
+          echo "                print(f\"my \$libpath = '{path}';\", file=dh)" >>edit.py 
           echo '                found_libpath = True' >>edit.py
           echo '            elif not found_path and stripped.startswith("our $path"):' >>edit.py
           echo "                path = \"$PSNPATH/strawberry/perl/bin/\"" >>edit.py
-          echo "                dh.write(f\"our \$path = '{path}';\\\n\")" >>edit.py 
+          echo "                print(f\"our \$path = '{path}';\", file=dh)" >>edit.py 
           echo '                found_path = True' >>edit.py
           echo '            else:' >>edit.py
           echo '                dh.write(line)' >>edit.py
           ../../../../../python/python-3.7.7.amd64/python.exe edit.py
           rm includes.pm
           mv tempy includes.pm
+          cat edit.py
           cat includes.pm
         shell: bash
       - name: Run unit tests
