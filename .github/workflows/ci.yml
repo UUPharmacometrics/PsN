@@ -439,14 +439,11 @@ jobs:
       - name: Find tests
         run: |
           export PSNPATH=$(find $PWD -maxdepth 1 -type d -name 'PsN-*')
-          export PSNPATH=${PSNPATH:2}
-          export PSNPATH=D:${PSNPATH//\//\\}
+          export PSNPATH=D:${PSNPATH:2}
           export TESTPATH=$(find $PSNPATH -type d -name 'PsN_test_[0-9]*')
-          export TESTPATH=${TESTPATH:2}
-          export TESTPATH=D:${TESTPATH//\//\\}
+          export TESTPATH=D:${TESTPATH:2}
           export LIBPATH=$(find $PSNPATH -type d -name 'PsN_[0-9]*')
-          export LIBPATH=${LIBPATH:2}
-          export LIBPATH=D:${LIBPATH//\//\\}
+          export LIBPATH=D:${LIBPATH:2}
           echo PSNPATH=$PSNPATH
           echo TESTPATH=$TESTPATH
           echo LIBPATH=$LIBPATH
