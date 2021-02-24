@@ -440,6 +440,9 @@ jobs:
           export PSNPATH=$(find $PWD -maxdepth 1 -type d -name 'PsN-*')
           export TESTPATH=$(find $PSNPATH -type d -name 'PsN_test_[0-9]*')
           export LIBPATH=$(find $PSNPATH -type d -name 'PsN_[0-9]*')
+          export PSNPATH=$(wslpath -w $PSNPATH)
+          export TESTPATH=$(wslpath -w $TESTPATH)
+          export LIBPATH=$(wslpath -w $LIBPATH)
           echo PSNPATH=$PSNPATH
           echo TESTPATH=$TESTPATH
           echo LIBPATH=$LIBPATH
