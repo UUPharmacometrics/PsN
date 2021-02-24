@@ -466,7 +466,7 @@ jobs:
           echo '                found_path = True' >>edit.py
           echo '            else:' >>edit.py
           echo '                dh.write(line)' >>edit.py
-          $PSNPATH/python/python-3.7.7.amd64/python.exe edit.py
+          ../../../../../python/python-3.7.7.amd64/python.exe edit.py
           rm includes.pm
           mv tempy includes.pm
         shell: bash
