@@ -469,6 +469,7 @@ jobs:
           ../../../../../python/python-3.7.7.amd64/python.exe edit.py
           rm includes.pm
           mv tempy includes.pm
+          cat includes.pm
         shell: bash
       - name: Run unit tests
         run: |
