@@ -434,15 +434,19 @@ jobs:
           export PSNPATH=$(find . -type d -name 'PsN_[0-9]*')
           export NMPATH=$(realpath nm744)
           sed -i "/\\[nm_versions\\]/a default=$NMPATH,7.4.4" $PSNPATH/psn.conf
+          cat $PSNPATH/psn.conf
         shell: bash
       - name: Find tests
         run: |
           export PSNPATH=$(find $PWD -maxdepth 1 -type d -name 'PsN-*')
+          export PSNPATH=${PSNPATH:2}
+          export PSNPATH=D:${PSNPATH//\//\\}
           export TESTPATH=$(find $PSNPATH -type d -name 'PsN_test_[0-9]*')
+          export TESTPATH=${TESTPATH:2}
+          export TESTPATH=D:${TESTPATH//\//\\}
           export LIBPATH=$(find $PSNPATH -type d -name 'PsN_[0-9]*')
-          export PSNPATH=$(wslpath -w $PSNPATH)
-          export TESTPATH=$(wslpath -w $TESTPATH)
-          export LIBPATH=$(wslpath -w $LIBPATH)
+          export LIBPATH=${LIBPATH:2}
+          export LIBPATH=D:${LIBPATH//\//\\}
           echo PSNPATH=$PSNPATH
           echo TESTPATH=$TESTPATH
           echo LIBPATH=$LIBPATH
