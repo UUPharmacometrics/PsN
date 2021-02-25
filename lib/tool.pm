@@ -1914,6 +1914,9 @@ sub get_rundir
         }
     }
 
+    if ($Config{'osname'} eq 'MSWin32') {
+        $rundir =~ s|/|\\|g;
+    }
     return $rundir;
 }
 
