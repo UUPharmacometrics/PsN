@@ -25,7 +25,8 @@ use Cwd;
 $PsN::config->{'_'}->{'R'} = "/path/to/R";
 my $Rexec = PsN::get_R_exec();
 if ($Config{osname} eq 'MSWin32') {
-    is($Rexec, "C:\\path\\to\\R", 'get_R_exec config');
+    # Remove drive letter since it is different in CI
+    is(substr($Rexec, 1), ":\\path\\to\\R", 'get_R_exec config');
 } else {
     is($Rexec, "/path/to/R", 'get_R_exec config');
 }
