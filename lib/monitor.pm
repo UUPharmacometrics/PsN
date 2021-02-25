@@ -472,11 +472,17 @@ sub get_active_scmdir
 sub get_jobid
 {
 	my $dir = shift;
-	my $id=undef;
+	my $id = undef;
 
-	my $fname=$dir.'/jobId';
-	if (-e $fname){
-		$id = `cat $fname 2> /dev/null`;
+	my $filename = $dir . '/jobId';
+	if (-e $filename) {
+		my $id;
+		open(my $fh, '<', $filename) or die "cannot open file $filename";
+		{
+			local $/;
+			$id = <$fh>;
+		}
+		close($fh);
 		chomp $id;
 	}
 	return $id;
@@ -501,12 +507,28 @@ sub get_current_feval_ofv
 	return $feval,$ofv;
 }
 
+sub get_line
+{
+    my $re = shift;
+    my $path = shift;
+
+	open(my $fh, '<', $path) or die "cannot open file $path";
+    while (my $line = <$fh>) {
+        if ($line =~ /$re/) {
+            close($fh);
+            return $line;
+        }
+    }
+    close($fh);
+    return "";
+}
+
 sub get_final_ofv
 {
 	my $extfile = shift;
 	my $ofv =undef;
-	if (-e $extfile){
-		my $line = `grep \'^  -1000000000 \' $extfile`;
+	if (-e $extfile) {
+		my $line = get_line('^  -1000000000', $extfile);
 		if ($line =~ / (\S+)\s*$/){
 			$ofv = $1;
 		}
@@ -518,24 +540,22 @@ sub rounding_errors
 {
 	my $lstfile = shift;
 	my $rounding = 0;
-	if (-e $lstfile){
-		my $line = `grep \'^ DUE TO ROUNDING ERRORS \' $lstfile`;
+	if (-e $lstfile) {
+		my $line = get_line('^ DUE TO ROUNDING ERRORS', $lstfile);
 		$rounding = 1 if ($line =~ /^ DUE/);
 	}
 	return $rounding;
-
 }
 
 sub maxevals_exceeded
 {
 	my $lstfile = shift;
 	my $exceeded = 0;
-	if (-e $lstfile){
-		my $line = `grep \'^ DUE TO MAX\\. NO\\. OF FUNCTION EVALUATIONS EXCEEDED\' $lstfile`;
+	if (-e $lstfile) {
+		my $line = get_line('^ DUE TO MAX\. NO\. OF FUNCTION EVALUATIONS EXCEEDED', $lstfile);
 		$exceeded = 1 if ($line =~ /^ DUE/);
 	}
 	return $exceeded;
-
 }
 
 sub get_candidate_models
