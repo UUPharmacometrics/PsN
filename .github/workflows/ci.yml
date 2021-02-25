@@ -311,11 +311,6 @@ jobs:
             set PATH=%CD%\installer\strawberry\perl\site\bin;%CD%\installer\strawberry\perl\bin;%CD%\installer\strawberry\c\bin;%PATH%
             cpanm Math::Random --notest
           shell: cmd
-        - name: Install Test::Exception
-          run: |
-            set PATH=%CD%\installer\strawberry\perl\site\bin;%CD%\installer\strawberry\perl\bin;%CD%\installer\strawberry\c\bin;%PATH%
-            cpanm Test::Exception --notest
-          shell: cmd
         - name: Install PsN
           run: |
               set PATH=%CD%\installer\strawberry\perl\site\bin;%CD%\installer\strawberry\perl\bin;%CD%\installer\strawberry\c\bin;%PATH%
