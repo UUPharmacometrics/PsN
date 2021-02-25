@@ -292,7 +292,7 @@ jobs:
               installer\python\python-3.7.7.amd64\python.exe -m pip install -r PsN-Source\requirements.txt
           shell: cmd
         - name: Install Pharmpy
-          run: installer\python\python-3.7.7.amd64\python.exe -m pip install --user --find-links=PsN-Source pharmpy-core
+          run: installer\python\python-3.7.7.amd64\python.exe -m pip install --find-links=PsN-Source pharmpy-core
           shell: cmd
         - name: Extract Strawberry Perl
           run: tar -xf downloads/strawberry-perl-5.22.3.1-64bit-portable.zip -C installer\strawberry
