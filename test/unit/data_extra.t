@@ -17,6 +17,7 @@ use model::problem;
 use model;
 use File::Copy 'cp';
 use Cwd;
+use Config;
 use OSspecific;
 use File::Spec qw(catfile);
 
@@ -127,10 +128,9 @@ my $datarec = model::problem::data->new(record_arr => ['$DATA "'.$tempdir.'subdi
 is($datarec ->get_directory,$dir,'data record dir double quotes space');
 is($datarec ->get_filename,'file.csv','data record filename double quotes space');
 
-my $dirsep='/';
-if( $dir =~ /\\$/ ){
-	#windows
-	$dirsep="\\";
+my $dirsep = '/';
+if($Config{'osname'} eq 'MSWin32') {
+	$dirsep = "\\";
 }
 
 $datarec = model::problem::data->new(record_arr => ['$DATA "'.$tempdir.'subdir space'.$dirsep.'sub space'.$dirsep.'..'.$dirsep.'file.csv" ']);
