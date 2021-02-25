@@ -1693,13 +1693,6 @@ sub print_options
     my $local_options = $parm{'local_options'};
     my $common_options = $parm{'common_options'};
 
-    #input string directory
-    #input string cmd_line
-    #input string toolname
-    #input ref to array of option names local_options
-    #input ref to array of option names common_options
-    #no return param
-
     my $dir = (defined $directory)? $directory : $self -> directory;
     my $option_file = $dir . "/version_and_option_info.txt";
 
@@ -1723,8 +1716,6 @@ sub print_options
         my @a = split /-/, $tool_name;
         $self->metadata->{'tool_name'} = $a[0];
     }
-
-
 
     open(CMD, "> ", $option_file);
     my @datearr=localtime;
@@ -1914,9 +1905,6 @@ sub get_rundir
         }
     }
 
-    if ($Config{'osname'} eq 'MSWin32') {
-        $rundir =~ s|/|\\|g;
-    }
     return $rundir;
 }
 

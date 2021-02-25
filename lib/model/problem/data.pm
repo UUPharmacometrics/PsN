@@ -5,6 +5,7 @@ use MooseX::Params::Validate;
 use include_modules;
 use OSspecific;
 use File::Spec qw(abs2rel catfile);
+use Config;
 
 extends 'model::problem::record';
 
@@ -108,7 +109,10 @@ sub format_filename
     my $string;
 
     if ($relative_data_path) {
-        my $cleaned_path = Cwd::abs_path($self->get_directory);     # Remove symlinks that makes abs2rel generate very long paths
+        my $cleaned_path;
+        if ($Config{'osname'} ne 'MSWin32') {
+            $cleaned_path = Cwd::abs_path($self->get_directory);     # Remove symlinks that makes abs2rel generate very long paths
+        }
         if (not defined $cleaned_path) {
             $cleaned_path = $self->get_directory;                   # Fallback
         }

@@ -12,6 +12,18 @@ use lib "$Bin/../.."; #location of includes.pm
 use includes; #file with paths to PsN packages and $path variable definition
 use tool;
 use model;
+use Config;
+
+sub abspath
+{
+    my $path = shift;
+    if ($Config{'osname'} ne 'MSWin32') {
+        $path = abs_path($path);
+    } else {
+        $path =~ s|/|\\|g;
+    }
+    return $path;
+}
 
 ui -> silent(1);
 #black box testing of data class and progs that are not covered by other test files
@@ -27,7 +39,7 @@ my $dir = tool::get_rundir(create => 1,
 						   directory_option => '');
 
 #use substr to shave off last path slash
-is(abs_path(substr($dir, 0, -1)), File::Spec->catfile(abs_path($tempdir), 'parallel_retries_dir1'), 'tool get_rundir 1');
+is(abspath(substr($dir, 0, -1)), File::Spec->catfile(abspath($tempdir), 'parallel_retries_dir1'), 'tool get_rundir 1');
 
 $dir = tool::get_rundir(create => 0,
 						basename => 'parallel_retries_dir',
@@ -35,7 +47,7 @@ $dir = tool::get_rundir(create => 0,
 						modelname => '',
 						directory_option => undef);
 
-is(abs_path(substr($dir, 0, -1)), File::Spec->catfile(abs_path($tempdir), 'parallel_retries_dir2'), 'tool get_rundir 2');
+is(abspath(substr($dir, 0, -1)), File::Spec->catfile(abspath($tempdir), 'parallel_retries_dir2'), 'tool get_rundir 2');
 
 $dir = tool::get_rundir(create => 0,
 						basename => 'parallel_retries_dir',
@@ -43,7 +55,7 @@ $dir = tool::get_rundir(create => 0,
 						modelname => '',
 						directory_option => 'newdir');
 
-is(abs_path(substr($dir, 0, -1)), File::Spec->catfile(abs_path($tempdir), 'newdir'), 'tool get_rundir 3');
+is(abspath(substr($dir, 0, -1)), File::Spec->catfile(abspath($tempdir), 'newdir'), 'tool get_rundir 3');
 
 $dir = tool::get_rundir(create => 0,
 						basename => 'parallel_retries_dir',
@@ -51,7 +63,7 @@ $dir = tool::get_rundir(create => 0,
 						modelname => 'run123.mod',
 						directory_option => '');
 
-is(abs_path(substr($dir, 0, -1)), File::Spec->catfile(abs_path($tempdir), 'run123.dir1'), 'tool get_rundir 4');
+is(abspath(substr($dir, 0, -1)), File::Spec->catfile(abspath($tempdir), 'run123.dir1'), 'tool get_rundir 4');
 
 my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) =localtime(time);
 my $timestring = sprintf("-PsN-%s-%02i-%02i",($year+1900),($mon+1),$mday);
@@ -68,8 +80,8 @@ $dir = tool::get_rundir(create => 0,
 						modelname => 'run123.mod');
 
 #test will fail if done exactly across midnight
-my $correct = abs_path($tempdir . 'run123' . $timestring);
-is (substr(abs_path($dir1), 0, length($correct)), $correct, 'tool get_rundir timestamp');
+my $correct = abspath($tempdir . 'run123' . $timestring);
+is (substr(abspath($dir1), 0, length($correct)), $correct, 'tool get_rundir timestamp');
 #test will fail if change second between $dir1 and $dir above
 
 $dir = tool::get_rundir(create => 0,
@@ -78,7 +90,7 @@ $dir = tool::get_rundir(create => 0,
 						modelname => 'path/run123.mod',
 						directory_option => '');
 
-is(abs_path(substr($dir, 0, -1)), File::Spec->catfile(abs_path($tempdir), 'run123.dir1'), 'tool get_rundir 5');
+is(abspath(substr($dir, 0, -1)), File::Spec->catfile(abspath($tempdir), 'run123.dir1'), 'tool get_rundir 5');
 
 my $newdir=$tempdir.'parallel_retries_dir1'; #created above
 chdir($tempdir.'parallel_retries_dir1');
@@ -89,7 +101,7 @@ $dir = tool::get_rundir(create => 0,
 						modelname => 'run123.mod',
 						directory_option => '../updir');
 
-is(abs_path(substr($dir, 0, -1)), File::Spec->catfile(abs_path($tempdir), 'updir'), 'tool get_rundir 6');
+is(abspath(substr($dir, 0, -1)), File::Spec->catfile(abspath($tempdir), 'updir'), 'tool get_rundir 6');
 
 
 # compress_m1
