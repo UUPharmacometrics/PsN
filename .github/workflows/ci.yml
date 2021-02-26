@@ -326,7 +326,7 @@ jobs:
           run: tar -xf downloads/pandoc-2.5-windows-i386.zip -C installer
         - name: Move pandoc
           run: mv installer/pandoc-2.5-windows-i386/pandoc.exe installer/strawberry/perl/bin
-          cmd: bash
+          shell: bash
         - name: Install R
           run: downloads\R-4.0.3-win.exe /VERYSILENT /DIR="installer\R"
           shell: cmd
