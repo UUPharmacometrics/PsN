@@ -294,8 +294,10 @@ jobs:
         - name: Install Pharmpy
           run: installer\python\python-3.7.7.amd64\python.exe -m pip install --find-links=PsN-Source pharmpy-core
           shell: cmd
-        - name: Move psn-pharmpy-wrapper
-          run: mv installer/python/python-3.7.7.amd64/Scripts/psn-pharmpy-wrapper.exe installer/python/python-3.7.7.amd64/
+        - name: Move phampy executables
+          run: |
+            mv installer/python/python-3.7.7.amd64/Scripts/psn-pharmpy-wrapper.exe installer/python/python-3.7.7.amd64/
+            mv installer/python/python-3.7.7.amd64/Scripts/pharmpy.exe installer/python/python-3.7.7.amd64/
           shell: bash
         - name: Extract Strawberry Perl
           run: tar -xf downloads/strawberry-perl-5.22.3.1-64bit-portable.zip -C installer\strawberry
@@ -359,9 +361,11 @@ jobs:
           run: |
               echo 'import pathlib' >clean.py
               echo 'import shutil' >>clean.py
+              echo 'import itertools' >>clean.py
               echo 'rlib_path = pathlib.Path("installer") / "Rlib"' >>clean.py
-              echo 'for package in rlib_path.iterdir():' >>clean.py
-              echo '    subdirs = ["html", "help", "doc"]' >>clean.py
+              echo 'rlibrary_path = pathlib.Path("installer") / "R" / "library"' >>clean.py
+              echo 'for package in itertools.chain(rlib_path.iterdir(), rlibrary_path.iterdir()):' >>clean.py
+              echo '    subdirs = ["html", "help", "doc", "libs/i386"]' >>clean.py
               echo '    for subdir in subdirs:' >>clean.py
               echo '        path = package / subdir' >>clean.py
               echo '        if path.exists():' >>clean.py
@@ -377,17 +381,30 @@ jobs:
               del R\unins000.exe
               rmdir R\tests /s /q
               rmdir R\doc /s /q
+              rmdir R\Tcl /s /q
+              rmdir R\modules\i386 /s /q
+              rmdir R\etc\i386 /s /q
+              rmdir R\bin\i386 /s /q
+              del R\bin\config.sh
               del strawberry\README.txt
               del strawberry\DISTRIBUTIONS.txt
               rmdir strawberry\win32 /s /q
               rmdir strawberry\data /s /q
               rmdir strawberry\cpan /s /q
+              del strawberry\c\bin\c++.exe
+              del strawberry\c\bin\c++filt.exe
+              del strawberry\c\bin\cpp.exe
+              del strawberry\c\bin\g++.exe
+              del strawberry\c\bin\x86_64-w64-mingw32-c++.exe
+              del strawberry\c\bin\x86_64-w64-mingw32-g++.exe
+              del python\*.exe
               rmdir python\notebooks /s /q
               rmdir python\scripts /s /q
               rmdir python\python-3.7.7.amd64\tcl /s /q
               rmdir python\python-3.7.7.amd64\share /s /q
               rmdir python\python-3.7.7.amd64\Tools /s /q
               rmdir python\python-3.7.7.amd64\Doc /s /q
+              rmdir python\python-3.7.7.amd64\Scripts /s /q
               del python\python-3.7.7.amd64\NEWS.txt
               rmdir python\python-3.7.7.amd64\libs /s /q
               rmdir python\python-3.7.7.amd64\include /s /q
@@ -500,7 +517,7 @@ jobs:
           prove -r -j8 unit
         shell: cmd
       - name: Save TEMP
-        run: echo "TEMPDIR=%TEMP%" >> $GITHUB_ENV
+        run: echo TEMPDIR=%TEMP% >> $GITHUB_ENV
         shell: cmd
       - name: Run system tests
         run: |
