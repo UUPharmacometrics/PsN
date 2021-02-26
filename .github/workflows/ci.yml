@@ -517,7 +517,10 @@ jobs:
           prove -r -j8 unit
         shell: cmd
       - name: Save TEMP
-        run: echo TEMPDIR=%TEMP% >> $GITHUB_ENV
+        run: |
+            setlocal DisableDelayedExpansion
+            echo TEMPDIR=%TEMP% >> %GITHUB_ENV%
+            endlocal
         shell: cmd
       - name: Run system tests
         run: |
