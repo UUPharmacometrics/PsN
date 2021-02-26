@@ -24,7 +24,7 @@ if ($major < 7 or ($major == 7 and $minor < 3)){
 	$cholesky = ''; #NM7.1 cannot handle & as line continuation
 }
 my @commands = (
-	get_command('frem') . " -covar=WT,DGRP,SEX -skip_omegas=3  -log=WT -categorical=DGRP -check $model_dir/mox_frem.mod -no-run_sir -force_posdef_covmatrix",
+	get_command('frem') . " -covar=WT,DGRP,SEX -skip_omegas=3  -log=WT -categorical=DGRP -check $model_dir/mox_frem.mod -no-run_sir -force_posdef_covmatrix -force_posdef_samples=0",
 	get_command('frem') . " -covar=WT,DGRP -categorical=DGRP -no-check $model_dir/mox_frem.mod -no-run_sir -mceta=50 -force_posdef_covmatrix",
 	get_command('frem') . " -covar=DIG,WT -no-check $model_dir/mox_frem.mod -no-run_sir -estimate_means -force_posdef_covmatrix",
 	get_command('frem') . " -covar=SEX,DGRP -skip_om=2 -categorical=SEX,DGRP $cholesky -no-run_sir -no-check $model_dir/mox1.mod -force_posdef_covmatrix",
