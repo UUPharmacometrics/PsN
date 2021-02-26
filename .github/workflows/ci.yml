@@ -294,6 +294,9 @@ jobs:
         - name: Install Pharmpy
           run: installer\python\python-3.7.7.amd64\python.exe -m pip install --find-links=PsN-Source pharmpy-core
           shell: cmd
+        - name: Move psn-pharmpy-wrapper
+          run: mv installer/python/python-3.7.7.amd64/Scripts/psn-pharmpy-wrapper.exe installer/python/python-3.7.7.amd64/
+          shell: bash
         - name: Extract Strawberry Perl
           run: tar -xf downloads/strawberry-perl-5.22.3.1-64bit-portable.zip -C installer\strawberry
         - name: Install Params::Validate
