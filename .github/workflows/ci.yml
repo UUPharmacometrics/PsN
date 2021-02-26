@@ -158,7 +158,7 @@ jobs:
           export LIBPATH=$(find /usr/local/share/perl/ -type d -name '5.*')
           export TESTPATH=$(find $LIBPATH -type d -name 'PsN_test_[0-9]*')
           cd $TESTPATH
-          prove -r -j8 system
+          prove -r -j3 system
       - name: Upload failed system test directories artifact
         uses: actions/upload-artifact@v2
         if: ${{ failure() }}
@@ -233,7 +233,7 @@ jobs:
         run: |
           export TESTPATH=$(find /usr/local/Cellar/perl/5.32.1/lib/perl5/site_perl/5.32.1/ -type d -name 'PsN_test_[0-9]*')
           cd $TESTPATH
-          prove -r -j8 system
+          prove -r -j4 system
       - name: Upload failed system test directories artifact
         uses: actions/upload-artifact@v2
         if: ${{ failure() }}
@@ -500,7 +500,7 @@ jobs:
         run: |
           set PATH=%PSNPATH%\strawberry\perl\bin;%PSNPATH%\strawberry\c\bin;%PATH%
           cd %TESTPATH%
-          prove -r -j8 system
+          prove -r -j3 system
         shell: cmd
       - name: Upload failed system test directories artifact
         uses: actions/upload-artifact@v2
