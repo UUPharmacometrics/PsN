@@ -519,7 +519,7 @@ jobs:
       - name: Save TEMP
         run: |
             setlocal DisableDelayedExpansion
-            echo TEMPDIR=%TEMP% >> %GITHUB_ENV%
+            echo TEMPDIR=%TEMP%>> %GITHUB_ENV%
             endlocal
         shell: cmd
       - name: Run system tests
@@ -533,4 +533,4 @@ jobs:
         if: ${{ failure() }}
         with:
             name: system-tests-windows
-            path: ${{ env.TEMPDIR }}/PsN-test_system*
+            path: ${{ env.TEMPDIR }}\PsN-test_system*
