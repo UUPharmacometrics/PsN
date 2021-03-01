@@ -507,6 +507,8 @@ jobs:
           cat edit.py
           cat includes.pm
         shell: bash
+      - name: Setup debug session
+        uses: mxschmitt/action-tmate@v3
       - name: Run unit tests
         run: |
           echo %PSNPATH%
