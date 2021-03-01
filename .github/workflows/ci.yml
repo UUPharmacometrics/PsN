@@ -249,6 +249,8 @@ jobs:
           uses: actions/download-artifact@v2
           with:
             name: targz
+        - name: Try Debug Session
+          uses: csexton/debugger-action@master 
         - name: Unpack installation tarball
           run: tar -zxvf PsN-*.tar.gz
           shell: bash
@@ -507,8 +509,6 @@ jobs:
           cat edit.py
           cat includes.pm
         shell: bash
-      - name: Setup debug session
-        uses: mxschmitt/action-tmate@v3
       - name: Run unit tests
         run: |
           echo %PSNPATH%
