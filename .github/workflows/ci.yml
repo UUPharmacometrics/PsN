@@ -249,8 +249,8 @@ jobs:
           uses: actions/download-artifact@v2
           with:
             name: targz
-        - name: Try Debug Session
-          uses: csexton/debugger-action@master 
+        - name: Setup tmate session
+          uses: mxschmitt/action-tmate@v3
         - name: Unpack installation tarball
           run: tar -zxvf PsN-*.tar.gz
           shell: bash
