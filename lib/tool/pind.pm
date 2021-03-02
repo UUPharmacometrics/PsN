@@ -210,7 +210,7 @@ sub modelfit_setup
 
   push( @{$problem},
     'IF (ICALL.EQ.3) THEN',
-    '  OPEN(51,FILE=\'jdtab.est\')',
+    '"  OPEN(51,FILE=\'jdtab.est\')',
     '  WRITE (51,*) \'JD\'',
     '  DO WHILE(DATA)',
     '    IF (NEWIND.LE.1) WRITE (51,*) JD',
@@ -218,7 +218,7 @@ sub modelfit_setup
     'ENDIF' );
   push( @{$problem},
     'IF (ICALL.EQ.3) THEN',
-    '  OPEN(51,FILE=\'etatab.est\')',
+    '"  OPEN(51,FILE=\'etatab.est\')',
     "  WRITE (51,*) \'$eta_header\'",
     '  DO WHILE(DATA)',
     '    IF (NEWIND.LE.1) WRITE (51,*) ETA',

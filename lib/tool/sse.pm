@@ -738,7 +738,7 @@ sub modelfit_setup
                         }
 
                         @initscode=('IF (ICALL.EQ.4.AND.NEWIND.EQ.0) THEN',
-                                    "  OPEN(51,FILE='../../m1/mc-1.inits')",
+                                    "\"  OPEN(51,FILE='../../m1/mc-1.inits')",
                                     "  WRITE (51,*) '".join(' ',@thetalab)."'",
                                     '  WRITE (51,2) '.join(',',@thetacoords),
                                     "  WRITE (51,*) '".join(' ',@omegalab)."'",
@@ -890,7 +890,7 @@ sub modelfit_setup
                     }
                     my $string = 'mc-'.$sim_no.'.inits';
                     foreach my $line (@{$coderef}){
-                        if (($line =~ /^  OPEN\(51,FILE=/) and ($line =~ /mc-1.inits/)){
+                        if (($line =~ /^["]  OPEN\(51,FILE=/) and ($line =~ /mc-1.inits/)){
                             $line =~ s/mc-1.inits/$string/;
                             last;
                         }

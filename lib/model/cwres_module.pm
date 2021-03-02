@@ -166,7 +166,7 @@ sub BUILD
 
         push( @{$code},
               'IF (ICALL.EQ.3) THEN',
-              '  OPEN(51,FILE=\'cwtab'.$self -> sdno().$mirror_name.'.est\')',
+              '"  OPEN(51,FILE=\'cwtab'.$self -> sdno().$mirror_name.'.est\')',
               '  WRITE (51,*) \'ETAS\'',
               '  DO WHILE(DATA)',
               '    IF (NEWIND.LE.1) WRITE (51,*) ETA',
@@ -282,7 +282,7 @@ EOF
             print INFN "      DATA NTH,NETA,NEPS/$ntheta,$neta,$neps/\n";
 
         print INFN "      IF (ICALL.EQ.0) THEN\nC     open files here, if necessary\n";
-        print INFN "      OPEN(51,FILE='cwtab".$self -> sdno().$mirror_name.".est')\n";
+        print INFN "\"      OPEN(51,FILE='cwtab" . $self->sdno() . $mirror_name . ".est')\n";
 
 print INFN << "EOF";
         ENDIF
