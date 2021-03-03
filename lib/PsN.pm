@@ -402,4 +402,13 @@ sub find_nmfe_from_system_path
     return $result;
 }
 
+sub deprecation_warn
+{
+    my $what = shift;
+    my $new_action = shift;
+
+    warn("Warning: $what will be deprecated in the next version of PsN.\n         Please start to use '$new_action' instead.\n         See https://pharmpy.github.io for information on Pharmpy\n");
+}
+
+
 1;
