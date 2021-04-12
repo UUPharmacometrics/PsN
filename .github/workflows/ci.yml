@@ -2,7 +2,7 @@ name: ci
 on: [push]
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-18.04
     steps:
       - name: Download source repo
         uses: actions/checkout@v2
