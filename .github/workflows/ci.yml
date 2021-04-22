@@ -177,12 +177,18 @@ jobs:
       - name: Unpack installation tarball
         run: tar -zxvf PsN-*.tar.gz
       - name: Install system dependencies
-        run: brew install r pandoc cairo mariadb-connector-c openssl@1.1 coreutils gnu-sed
+        run: brew install cairo mariadb-connector-c openssl@1.1 coreutils gnu-sed
       - name: Setup gfortran
         run: |
           sudo ln -s /usr/local/bin/gfortran-9 /usr/local/bin/gfortran
           sudo mkdir /usr/local/gfortran
           sudo ln -s /usr/local/Cellar/gcc@9/9.3.0_1/lib/gcc/9 /usr/local/gfortran/lib
+      - name: Setup R 
+        uses: r-lib/actions/setup-r@v1
+        with:
+          r-version: ${{ matrix.config.r }}
+      - Setup pandoc 
+        uses: r-lib/actions/setup-pandoc@v1
       - name: Get NONMEM
         id: cache-nonmem
         uses: actions/cache@v2
