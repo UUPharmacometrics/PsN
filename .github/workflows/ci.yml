@@ -534,3 +534,30 @@ jobs:
         with:
             name: system-tests-windows
             path: ${{ env.TEMPDIR }}\PsN-test_system*
+
+  release:
+    needs: [test-windows, test-macos, test-ubuntu]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get PsN installer
+        uses: actions/download-artifact@v2
+        with:
+          name: targz
+      - name: Get docs
+        uses: actions/download-artifact@v2
+        with:
+          name: docs
+      - name: Get Windows installer
+        uses: actions/download-artifact@v2
+        with:
+          name: win-installer
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+            files: |
+                PsN*.tar.gz
+                PsN*.zip
+                *.pdf
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
