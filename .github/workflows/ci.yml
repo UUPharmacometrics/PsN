@@ -302,7 +302,7 @@ jobs:
               installer\python\python-3.7.7.amd64\python.exe -m pip install -r PsN-Source\requirements.txt
           shell: cmd
         - name: Install Pharmpy
-          run: installer\python\python-3.7.7.amd64\python.exe -m pip install --find-links=PsN-Source pharmpy-core
+          run: installer\python\python-3.7.7.amd64\python.exe -m pip install --no-index --find-links=PsN-Source pharmpy-core
           shell: cmd
         - name: Move phampy executables
           run: |
