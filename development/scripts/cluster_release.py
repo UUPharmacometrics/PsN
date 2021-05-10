@@ -20,11 +20,11 @@ class cd:
         os.chdir(self.savedPath)
 
 
-with cd('../../pharmpy'):
-    os.system('git pull')
+# with cd('../../pharmpy'):
+#    os.system('git pull')
 
-with cd('../../PsNR'):
-    os.system('git pull')
+# with cd('../../PsNR'):
+#    os.system('git pull')
 
 
 user = 'rikno764';
