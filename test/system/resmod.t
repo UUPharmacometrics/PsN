@@ -33,7 +33,7 @@ SKIP: {
 
     chdir("run");
 
-    ok (-e "results.csv", "Created results.csv");
+    ok (-e "resmod_results.csv", "Created resmod_results.csv");
 
     remove_test_dir($tempdir);
 }

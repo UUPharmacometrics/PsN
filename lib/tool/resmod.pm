@@ -483,7 +483,7 @@ sub _print_results
 {
     my $self = shift;
 
-    open my $fh, '>', 'results.csv';
+    open my $fh, '>', 'resmod_results.csv';
     print $fh "Iteration,DVID,Model,dOFV,Parameters\n";
 
     for (my $iter = 0; $iter < scalar(@{$self->resmod_results}); $iter++) {

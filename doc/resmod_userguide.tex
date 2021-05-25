@@ -1,5 +1,5 @@
 \input{inputs/format_header.tex}
-\guidetitle{RESMOD user guide}{2018-03-02}
+\guidetitle{RESMOD user guide}{2021-05-25}
 \usepackage{hyperref}
 \begin{document}
 
@@ -55,7 +55,7 @@ will be used to rerun all the models once more etc. The iteration will stop when
 reached or when all models have been selected. The iteration will be done for each DVID separately.
 
 \section{Output}
-The delta OFVs of all models are summarized in the results.csv file together with the interesting parameter estimates.
+The delta OFVs of all models are summarized in the resmod\_results.csv file together with the interesting parameter estimates.
 
 \section{Residual models}
 
@@ -67,14 +67,14 @@ Y = THETA(1) + ETA(1) + ERR(1)
 \end{verbatim}
 
 \subsection{IIV on RUV}
-This model is compared to Base model 1 and is named \verb|IIV_on_RUV| in results.csv. The \%CV for the omega for ETA(2) is presented.
+This model is compared to Base model 1 and is named \verb|IIV_on_RUV| in resmod\_results.csv. The \%CV for the omega for ETA(2) is presented.
 
 \begin{verbatim}
 Y = THETA(1) + ETA(1) + ERR(1) * EXP(ETA(2))
 \end{verbatim}
 
 \subsection{Power}
-This model is compared to Base model 1 and is named \verb|power| in results.csv. The power (THETA(2)) is presented.
+This model is compared to Base model 1 and is named \verb|power| in resmod\_results.csv. The power (THETA(2)) is presented.
 If IPRED is not available in the original model the CIPREDI will be used instead.
 
 \begin{verbatim}
@@ -82,7 +82,7 @@ Y = THETA(1) + ETA(1) + ERR(1)*(IPRED)**THETA(2)
 \end{verbatim}
 
 \subsection{Time varying RUV}
-This model is compared to Base model 1 and is named \verb|time_varying_RUV| in results.csv. The <idv> below will be replaced with the name of the independent variable. The <q1>, <q2> and <q3> below will be replaced with the quartiles of the independent variable for all observations combined. I.e. from the data set remove all records for which CWRES = 0 then calculate the quartiles of the idv column. The standard deviations of the epsilons and the time cutoff values are presented in the results.csv.
+This model is compared to Base model 1 and is named \verb|time_varying_RUV| in resmod\_results.csv. The <idv> below will be replaced with the name of the independent variable. The <q1>, <q2> and <q3> below will be replaced with the quartiles of the independent variable for all observations combined. I.e. from the data set remove all records for which CWRES = 0 then calculate the quartiles of the idv column. The standard deviations of the epsilons and the time cutoff values are presented in the resmod\_results.csv.
 \begin{verbatim}
 Y = THETA(1) + ETA(1) + ERR(4)
 IF (<idv>.LT.<q1>) THEN
@@ -97,7 +97,7 @@ END IF
 \end{verbatim}
 
 \subsection{Autocorrelation}
-This model is compared to Base model 1 and is named \verb|autocorrelation| in results.csv. The autocorrelation (THETA(2)) will be presented. TIME will always be used as idv even if the option -idv is specified.
+This model is compared to Base model 1 and is named \verb|autocorrelation| in resmod\_results.csv. The autocorrelation (THETA(2)) will be presented. TIME will always be used as idv even if the option -idv is specified.
 \begin{verbatim}
 "FIRST
 " USE SIZES, ONLY: NO
@@ -141,7 +141,7 @@ This model is used as base model for the t-distribution model.
 Using the Laplace estimation method.
 
 \subsection{T-distribution 2LL}
-Named \verb|tdist_2ll_dfest| in results.csv. The degree of freedom is estimated and presented in results.csv.
+Named \verb|tdist_2ll_dfest| in resmod\_results.csv. The degree of freedom is estimated and presented in resmod\_results.csv.
 
 \begin{verbatim}
 IPRED = THETA(1) + ETA(1)
@@ -197,10 +197,10 @@ This model is used as base model for the DTBS model. If IPRED is not available i
 Lambda and zeta will be fixed to 0.
 
 \subsection{DTBS}
-Named \verb|dtbs| in results.csv. The lambda and zeta parameters (THETA(3) and THETA(4)) will be presented. If IPRED is not available in the original model the CIPREDI will be used instead. This model is same as the base model except that all parameters will be estimated.
+Named \verb|dtbs| in resmod\_results.csv. The lambda and zeta parameters (THETA(3) and THETA(4)) will be presented. If IPRED is not available in the original model the CIPREDI will be used instead. This model is same as the base model except that all parameters will be estimated.
 
 \subsection{L2}
-Name \verb|L2| in results.csv. The L2 model will be tried only if the original model has multiple DVs. The L2 data column will be taken to be a copy of the TIME column. Resulting delta ofv will be the difference between the sum of the OFVs of the base models for all DVIDs and the OFV of the L2 model.
+Name \verb|L2| in resmod\_results.csv. The L2 model will be tried only if the original model has multiple DVs. The L2 data column will be taken to be a copy of the TIME column. Resulting delta ofv will be the difference between the sum of the OFVs of the base models for all DVIDs and the OFV of the L2 model.
 \begin{verbatim}
 IF(DVID.EQ.1) Y = THETA(1) + ETA(1) + ERR(1)
 IF(DVID.EQ.2) Y = THETA(2) + ETA(2) + ERR(2)
