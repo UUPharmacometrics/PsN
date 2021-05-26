@@ -698,6 +698,7 @@ sub modelfit_setup
             if (not $@) {
                 eval {
                     $resmod_time->run();
+                    $resmod_time->prepare_results();
                 };
             } else {
                 print $@;
@@ -725,6 +726,7 @@ sub modelfit_setup
             if (not $@) {
                 eval {
                     $resmod_tad->run();
+                    $resmod_tad->prepare_results();
                 };
             } else {
                 print $@;
@@ -752,6 +754,7 @@ sub modelfit_setup
         if (not $@) {
             eval {
                 $resmod_pred->run();
+                $resmod_pred->prepare_results();
             };
         } else {
             print $@;
@@ -778,6 +781,7 @@ sub modelfit_setup
             if (not $@) {
                 eval {
                     $resmod_idv->run();
+                    $resmod_idv->prepare_results();
                 };
             } else {
                 print $@;
