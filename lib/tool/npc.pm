@@ -374,9 +374,10 @@ sub BUILD
                      );
             if (defined $self->lloq || defined $self->uloq) {
                 ui->print(category => 'vpc',
-                    message => "The transformation is applied after censoring. Therefore it could happen" .
-                    "that some values which are originally within the boundaries of ".
-                    "-lloq and -ulow appear to be outside these boundaries after the correction."
+                    message => "The transformation is applied before censoring. Therefore it could happen" .
+                    "that some values which are originally within the boundaries of " .
+                    "-lloq and -uloq be outside these boundaries after the correction. Also -lloq" .
+                    "and -uloq data after correction will be fully censored, i.e. in the same way as if -censor was used."
                 );
             }
         }
