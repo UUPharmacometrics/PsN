@@ -454,7 +454,7 @@ if (PsNR::rplots_level(meta) > 1) {
       geom_ribbon(aes(ymin=(p-qnorm(0.975)*se)*(M/N2),ymax=(p+qnorm(0.975)*se)*(M/N2)),alpha=0.2) +
       facet_wrap(ITERATION~Parameter+BIN,scales="free_y",drop=TRUE) +
       scale_x_continuous(breaks=seq(1,N2,by=1)) +
-      coord_cartesian(xlim=c(1,N2),ylim=c(0,c(0,unique(dplyr::filter(resamp_prop_max,IDBIN==1 & ITERATION==LASTIT)$NSAMP)/(N1*N2)))) +
+      coord_cartesian(xlim=c(1, N2), ylim=c(0, unique(dplyr::filter(resamp_prop_max,IDBIN==1 & ITERATION==LASTIT)$NSAMP)/(N1*N2))) +
       labs(x="Percentile bin of resamples",y="Number of parameters resampled",title=paste("Exhaustion of samples \n Iteration",i))
     m2_maxbin[[i]] <- m2_maxbin.cur
 
