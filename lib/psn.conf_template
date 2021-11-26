@@ -4,6 +4,8 @@ job_polling_interval=1
 [nm_versions]
 
 [default_options]
+clean=3
+zip=1
 threads=5
 nmfe=1
 nm_output=ext,cov,cor,coi,phi,phm,cnv,smt,rmt,npd,npe,npi,npl,ets
