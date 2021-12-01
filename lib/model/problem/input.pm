@@ -14,7 +14,7 @@ sub BUILD
     foreach my $option (@{$self->options}) {
         foreach my $string ($option->name, $option->value) {
             if ((defined $string) and
-                ($string =~ /ID|L1|L2|DV|MDV|RAW_|MRG_|RPT_|TIME|DATE|DAT1|DAT2|DAT3|DROP|SKIP|EVID|AMT|RATE|SS|II|ADDL|CMT|PCMT|CALL|CONT/i)) {
+                ($string =~ /^(ID|L1|L2|DV|MDV|RAW_\w+|MRG_\w+|RPT_\w+|TIME|DATE|DAT1|DAT2|DAT3|DROP|SKIP|EVID|AMT|RATE|SS|II|ADDL|CMT|PCMT|CALL|CONT)$/i)) {
                 if ($string =~ /[a-z]/) {
                     croak("\$INPUT contains a NONMEM reserved word \"$string\" containing lowercase letters. This is not yet supported by PsN." .
                         " Please use all uppercase letters.");
