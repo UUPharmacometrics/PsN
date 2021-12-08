@@ -1,0 +1,332 @@
+#!/usr/bin/perl
+
+use FindBin qw($RealBin);
+use lib "$RealBin/../lib";
+
+# Don't edit the line below, it must look exactly like this.
+# Everything above this line will be replaced #
+
+use strict;
+use warnings;
+use Cwd;
+use File::Basename;
+use Time::localtime;
+use Getopt::Long;
+
+sub usage
+{
+    my $name = basename($0);
+    print("Usage: $name <zip|remove|ask|list> <dirs>\n\n");
+    print("zip    - All m1 directories below <dirs> will be found and listed.\n");
+    print("         The user will have the option to zip all.\n");
+    print("remove - All m1/NM_run directories and m1.zip files below <dirs> will be found and listed.\n");
+    print("         The user will have the option to remove all.\n");
+    print("ask    - All m1/NM_run directories and m1.zip files below <dirs> will be found\n"); 
+    print("         and presented one by one.\n"); 
+    print("         The user has the option to remove, skip or, for m1 directories, zip each item separately\n");
+    print("list   - All m1/NM_run directories and m1.zip files below <dirs> will be found and listed.\n");
+    print("         No zipping or removing will take place.\n");
+    print("\n");
+    print("All removed files will be logged in the file removed_by_m1find in your home directory.\n");
+    print("\n");
+    print("<dirs> can be a single directory or a space-separated list. Unix wildcards can be used.\n");
+    print("\n");
+#    print("Please note that the script will search for files and directories named m1/ and m1.zip\n");
+#    print("assuming that all having these names were created by PsN.\n"); 
+#    print("\n");
+    print("With zip and remove it is possible to set -no-interactive, to skip the confirmation\n"); 
+    print("question before zipping/removing.\n"); 
+    print("\n");
+    exit;
+}
+
+sub get_summary
+{
+    my $num_m1dirs = shift;
+    my $num_zipfiles = shift;
+	my $num_nmrun = shift;
+	my $num_xvdata = shift;
+	
+    my $summary_text = '';
+
+    if ($num_m1dirs > 0) {
+        $summary_text = $num_m1dirs . " m1 director";
+        if ($num_m1dirs == 1) {
+            $summary_text .= "y";
+        } else {
+            $summary_text .= "ies";
+        }
+        if ($num_zipfiles > 0) {
+            $summary_text .= " and ";
+        }
+    }
+    if ($num_zipfiles > 0) {
+        $summary_text .= $num_zipfiles . " m1.zip file";
+        if ($num_zipfiles > 1) {
+            $summary_text .= "s";
+        }
+    }
+
+	if ($num_nmrun > 0) {
+        $summary_text .= " and " if (length($summary_text)>0); 
+        $summary_text .= $num_nmrun . " NM_run";
+    }
+
+	if ($num_xvdata > 0) {
+        $summary_text .= " and " if (length($summary_text)>0); 
+        $summary_text .= $num_xvdata . " xv_data";
+    }
+
+    return "Found $summary_text.";
+}
+
+my $help = '';
+my $h = '';
+my $interactive = 1;
+my $nm_run = 1;
+my $findm1 = 1;
+my $skip_lasso = 0;
+my $xvdata = undef;
+my $logdir = $ENV{'HOME'};
+
+my $res = GetOptions('h' => \$h, 
+					 'help' => \$help,
+					 'interactive!' => \$interactive,
+					 'nm_run!' => \$nm_run,
+					 'm1!' => \$findm1,
+					 'xv_data!' => \$xvdata,
+					 'skip_lasso_m1!' => \$skip_lasso,
+					 'logdir=s' => \$logdir);
+exit unless $res;
+
+if ($help or $h) {
+	usage();
+}
+
+if (scalar(@ARGV) < 2) {
+    print "Too few arguments\n\n";
+    usage();
+}
+
+unless (defined $xvdata){
+	if ($skip_lasso){
+		$xvdata = 1;
+	}else{
+		$xvdata = 0;
+	}
+}
+
+my $command = shift(@ARGV);
+$command = "" if not defined $command;
+if ($command ne "zip" and $command ne "remove" and $command ne "ask" and $command ne "list") {
+    print "Unkown argument: $command\n\n";
+    usage();
+}
+
+if ((not -e $logdir) or (not -d $logdir) ) {
+	die "Directory $logdir does not exist\n";
+}
+my $logfile = $logdir. '/removed_by_m1find';
+
+my @m1_directories=();
+my @m1_zipfiles = ();
+my @nmrun_directories = ();
+my @xvdata_directories = ();
+my $basedir = getcwd();
+
+foreach my $dir (@ARGV){
+	$dir = readpipe("readlink -f '$dir'");
+	chomp $dir;
+
+	if (not (-e $dir)) {
+		print "Skipping $dir, it does not exist\n";
+		next;
+	}
+
+	if (not (-d $dir)) {
+		print "Skipping $dir, it is not a directory\n";
+		next;
+	}
+
+	my $find_output_m1 = "";
+	my $find_output_m1zip = "";
+	my $find_output_nmrun = "";
+	my $find_output_xvdata = "";
+
+	if ($findm1){
+		$find_output_m1 = readpipe("find $dir -name 'm1' -type d -prune 2>/dev/null");
+		if (($command ne "zip") and (not $skip_lasso)) {
+			$find_output_m1zip = readpipe("find $dir -name 'm1.zip' -type f 2>/dev/null");
+		}
+	}
+	if ($command ne "zip") {
+		if ($nm_run){
+			$find_output_nmrun = readpipe("find $dir -name 'NM_run*' -type d -prune | sed '/NM_run[1-9][0-9]*\$/!d' 2>/dev/null");
+		}
+		if ($xvdata){
+			$find_output_xvdata = readpipe("find $dir -name 'xv_data' -type d -prune 2>/dev/null");
+		}
+	}
+
+	push(@m1_directories,(split /\n/, $find_output_m1));
+	push(@m1_zipfiles,(split /\n/, $find_output_m1zip));
+	push(@nmrun_directories,(split /\n/, $find_output_nmrun));
+	push(@xvdata_directories,(split /\n/, $find_output_xvdata));
+}
+
+if ($skip_lasso){
+	my @filtered_m1=();
+	foreach my $line (@m1_directories) {
+		if (-e "$line/lasso_optimal_1.mod"){
+#			print "skipping lasso: $line\n";
+        }else{
+			push(@filtered_m1,$line);
+		}
+	}
+	@m1_directories = @filtered_m1;
+}
+
+
+my $num_m1dirs = scalar(@m1_directories);
+my $num_zipfiles = scalar(@m1_zipfiles);
+my $num_nmrun = scalar(@nmrun_directories);
+my $num_xvdata = scalar(@xvdata_directories);
+my @lines = (@m1_directories, @m1_zipfiles, @nmrun_directories, @xvdata_directories);
+
+if (scalar(@lines) == 0) {
+	if ($interactive){
+		die "Did not find any directories or files matching search criteria. Exiting\n";
+	}else{
+		print "$logdir: Found 0.\n";
+		exit;
+	}
+}
+
+if ($command eq "list") {
+	if ($interactive){
+		print "$_\n" for @lines;
+		print get_summary($num_m1dirs, $num_zipfiles,$num_nmrun,$num_xvdata), "\n";
+		die "Did not zip or remove anything. Exiting\n";
+	}else{
+		print "$logdir: ".get_summary($num_m1dirs, $num_zipfiles,$num_nmrun,$num_xvdata), "\n";
+		exit;
+	}
+}
+
+if (($command eq "zip") or ($command eq "remove")) {
+	#not ask
+	if ($interactive){
+		my $read_line;
+		my $summary_text;
+		print "$_\n" for @lines ;
+		if ($command eq "zip") {
+			$summary_text = "Found " . $num_m1dirs . " m1 directories";
+		} else {
+			$summary_text = get_summary($num_m1dirs, $num_zipfiles, $num_nmrun, $num_xvdata);
+		}
+
+		while (1) {
+			print $summary_text, " Do you want to ", $command, " them all? [y|n]: ";
+			$read_line = <STDIN>;
+			chomp $read_line;
+			last if ($read_line =~ /^[yn]$/);
+		}
+		if ($read_line eq "n") {
+			die "Did not zip or remove anything. Exiting\n";
+		}
+		#else yes or not interactive
+	}
+} else {
+	#$command eq 'ask'
+    print get_summary($num_m1dirs, $num_zipfiles, $num_nmrun,$num_xvdata), "\n";
+}
+
+my $logfh;
+if ($command eq "remove" or $command eq "ask") {
+    open $logfh, ">>", "$logfile" or die "Error: Could not open log file for removed files\n";;
+    my $time = localtime;
+    my $date = sprintf("#Removed files %04d-%02d-%02d %02d:%02d:%02d:\n", $time->year + 1900, $time->mon + 1, $time->mday, $time->hour, $time->min, $time->sec);
+    print $logfh $date;
+}
+
+
+foreach my $line (@lines) {
+    my $do_remove;
+    my $do_zip;
+    $do_remove = 1 if ($command eq "remove");
+    $do_zip = 1 if ($command eq "zip");
+    if ($command eq "ask") {
+        my $read_line;
+        my $has_subdir = "";
+        if ($line =~ /m1$/) {
+            my @files = <$line/*>;
+            foreach my $file (@files) {
+                if (-d $file) {
+                    $has_subdir = " (Warning: This m1 directory contains subdirectories)";
+                    last;
+                }
+            }
+        }
+        my $question = "[r(emove)|";
+		my $zip_allowed = 0;
+        if (($line !~ /zip$/) and ($line !~ /NM_run\d+$/) and ($line !~ /xv_data$/)) {
+			#we do not zip m1.zip or NM_run
+            $question .= "z(ip)|";
+			$zip_allowed = 1;
+        }
+        $question .= "s(kip)|q(uit)]";
+        while (1) {
+            print "$line$has_subdir $question: ";
+            $read_line = <STDIN>;
+            chomp $read_line;
+            last if (($read_line =~ /^[qrs]$/) or ($zip_allowed and $read_line eq 'z'));
+        }
+        if ($read_line eq "r") {
+            $do_remove = 1;
+        } elsif ($read_line eq "z") {
+            $do_zip = 1;
+        } elsif ($read_line eq "q") {
+            die "Exiting\n";
+        } else {
+            next;
+        }
+    }
+
+    if ($do_remove) {
+        print("Removing $line\n") if ($interactive);
+        system("rm -rf '$line'");
+        print $logfh "$line\n";
+
+    } elsif ($do_zip) {
+
+        my $zip = "$line.zip";
+
+        if (not (-e $zip)) {
+            print "Starting to zip $line\n";
+            chdir($line) or die "Error: Could not change directory to $line";
+            chdir("..") or die "Error: Could not change directory to $line/..";
+            system("zip -r m1.zip m1 >/dev/null && rm -rf m1");
+            if (-e "m1.zip") {
+                if (not (-e "m1")) {
+                    print "\tZipping m1 successful\n";
+                } else {
+                    print "\tDirectory still present after zipping. Something went wrong.\n";
+                }
+            } else {
+                print "\tZipping failed\n";
+            }
+            chdir($basedir) or die "Error: Could not change directory to $basedir";
+        } else {
+            if (-d $line) {
+                print "Both $line and $line.zip exists. Please check this. Something might have gone wrong in a previous run.\n";
+            }
+        }
+    }
+}
+
+if ($command eq "remove" or $command eq "ask") {
+    close $logfh;
+}
+if ($command eq "remove" and (not $interactive)) {
+	print "Removed files have been logged in $logfile\n";
+}

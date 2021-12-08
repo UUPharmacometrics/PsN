@@ -1,0 +1,55 @@
+#!/usr/bin/perl
+
+use FindBin qw($RealBin);
+use lib "$RealBin/../lib";
+
+# Don't edit the line below, it must look exactly like this.
+# Everything above this line will be replaced #
+
+use strict;
+
+sub usage{
+  print "Usage:\npack directory_name\n";
+
+}
+
+my $dir;
+my $name;
+my $tarname;
+if ( $ARGV[0] ){
+  $dir = $ARGV[0];
+  $name = $dir;
+  $name =~ s/\s//g;
+  $name =~ s/\///g;
+  $tarname = $name.'.tar.bz2';
+  if (-e $tarname){
+    print "A file with name $tarname already exists. Please move that file before running pack\n";
+    exit;
+  }
+  unless (-d $dir){
+    unless (($dir eq '-h') or ($dir eq '-help') or ($dir eq 'help')){
+      print "No directory with name $dir exists\n";
+    }
+    usage();
+    exit;
+  }
+}else{
+  print "You must give the name of a directory as input.\n";
+  usage();
+  exit;
+}
+
+my $command = 'tar -cjf '.$tarname.' '.$dir.' && rm -rf '.$dir;
+print "Packing $dir with command\n"."$command\n"."This can take a while if $dir is large...\n";
+system($command);
+
+if (-e $tarname){
+  if (not -e $dir){
+    print "Done packing $dir. The compressed file is $tarname\n";
+  }else{
+    print "The compressed file is $tarname but the directory $dir is still present. Talk to Kajsa\n.";
+  }
+}else{
+  print "Packing failed.\n";
+}
+exit;
