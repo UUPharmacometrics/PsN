@@ -41,6 +41,10 @@ sub _get_uc_short_type
             #must be aes
             $uc_short_type = $uc_short_type.' ' ;
         }
+    }elsif($uc_short_type eq 'DES'){
+        if (lc($record_name) eq 'design') {
+            $uc_short_type = 'DESIGN';
+        }
     }elsif( $uc_short_type eq 'THE'){
         if (lc($record_name) eq 'thetai'){
             $uc_short_type = 'THI';
@@ -3307,7 +3311,6 @@ sub _normalize_record_name
         croak("\nPsN does not yet support record \$".$record_name." in the control stream, but adding support is on the todo-list.\n");
     }
     my $uc_short_type = _get_uc_short_type($record_name);
-
     $normalized_name = $abbreviations{$uc_short_type};
 
     unless ((defined $normalized_name) and length($normalized_name)>0){
