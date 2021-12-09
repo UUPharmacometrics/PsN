@@ -65,6 +65,7 @@ LIBFILES= ui.pm \
 	model/problem/covariance.pm \
 	model/problem/data.pm \
 	model/problem/des.pm \
+	model/problem/design.pm \
 	model/problem/error.pm \
 	model/problem/estimation.pm \
 	model/problem/infn.pm \
