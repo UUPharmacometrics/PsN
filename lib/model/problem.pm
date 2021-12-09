@@ -4,9 +4,9 @@ use include_modules;
 use linear_algebra;
 use math qw(unbounded2correlation);
 
-my @print_order_omega_before_pk = ('sizes','problem','input','bind','data','abbreviated','msfi','contr','subroutine','prior','thetap','thetapv','omegap','omegapd','sigmap','sigmapd','model','tol','infn','omega','anneal','pk','level','aesinitial','aes','des','error','pred','mix','theta','thetai','thetar','sigma','etas','phis','simulation','estimation','covariance','nonparametric','table','scatter');
-my @print_order_psn_record_order = ('sizes','problem','input','bind','data','abbreviated','msfi','contr','subroutine','prior','thetap','thetapv','omegap','omegapd','sigmap','sigmapd','model','tol','infn','pk','level','aesinitial','aes','des','error','pred','mix','theta','thetai','thetar','omega','anneal','sigma','etas','phis','simulation','estimation','covariance','nonparametric','table','scatter');
-my @print_order_sde = ('sizes','problem','input','bind','data','abbreviated','msfi','contr','subroutine','prior','thetap','thetapv','omegap','omegapd','sigmap','sigmapd','model','tol','infn','theta','thetai','thetar','omega','anneal','sigma','etas','phis','pk','level','aesinitial','aes','des','error','pred','mix','simulation','estimation','covariance','nonparametric','table','scatter');
+my @print_order_omega_before_pk = ('sizes','problem','input','bind','data','abbreviated','msfi','contr','subroutine','prior','thetap','thetapv','omegap','omegapd','sigmap','sigmapd','model','tol','infn','omega','anneal','pk','level','aesinitial','aes','des','error','pred','mix','theta','thetai','thetar','sigma','etas','phis','simulation','estimation','design','covariance','nonparametric','table','scatter');
+my @print_order_psn_record_order = ('sizes','problem','input','bind','data','abbreviated','msfi','contr','subroutine','prior','thetap','thetapv','omegap','omegapd','sigmap','sigmapd','model','tol','infn','pk','level','aesinitial','aes','des','error','pred','mix','theta','thetai','thetar','omega','anneal','sigma','etas','phis','simulation','estimation','design','covariance','nonparametric','table','scatter');
+my @print_order_sde = ('sizes','problem','input','bind','data','abbreviated','msfi','contr','subroutine','prior','thetap','thetapv','omegap','omegapd','sigmap','sigmapd','model','tol','infn','theta','thetai','thetar','omega','anneal','sigma','etas','phis','pk','level','aesinitial','aes','des','error','pred','mix','simulation','estimation','design','covariance','nonparametric','table','scatter');
 my %abbreviations;
 my %unsupported_records;
 
@@ -90,6 +90,7 @@ use model::problem::omegap;
 use model::problem::omegapd;
 use model::problem::tol;
 use model::problem::estimation;
+use model::problem::design;
 use model::problem::pred;
 use model::problem::mix;
 use model::problem::aesinitial;
@@ -148,6 +149,7 @@ has 'aesinitials' => ( is => 'rw', isa => 'Maybe[ArrayRef[model::problem::aesini
 has 'mixs' => ( is => 'rw', isa => 'Maybe[ArrayRef[model::problem::mix]]' );
 has 'preds' => ( is => 'rw', isa => 'Maybe[ArrayRef[model::problem::pred]]' );
 has 'estimations' => ( is => 'rw', isa => 'Maybe[ArrayRef[model::problem::estimation]]' );
+has 'designs' => ( is => 'rw', isa => 'Maybe[ArrayRef[model::problem::design]]' );
 has 'tols' => ( is => 'rw', isa => 'Maybe[ArrayRef[model::problem::tol]]' );
 has 'omegas' => ( is => 'rw', isa => 'Maybe[ArrayRef[model::problem::omega]]' );
 has 'omegaps' => ( is => 'rw', isa => 'Maybe[ArrayRef[model::problem::omegap]]' );
