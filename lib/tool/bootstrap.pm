@@ -5,8 +5,8 @@ use strict;
 use File::Copy 'cp';
 use ext::Statistics::Distributions 'udistr', 'uprob';
 use Math::Random;
-use Moose;
-use MooseX::Params::Validate;
+use Mouse;
+use MouseX::Params::Validate;
 use array;
 use data;
 use OSspecific;
@@ -1850,7 +1850,4 @@ sub _adjust_rawres_structure
     }
 }
 
-
-no Moose;
-__PACKAGE__->meta->make_immutable;
 1;

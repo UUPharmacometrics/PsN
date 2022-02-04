@@ -20,8 +20,8 @@ use model_approximations;
 use input_checking;
 use POSIX qw/floor/;
 
-use Moose;
-use MooseX::Params::Validate;
+use Mouse;
+use MouseX::Params::Validate;
 
 extends 'tool';
 
@@ -2923,7 +2923,4 @@ sub reorder_etas_mapping
     return \%reorder;
 }
 
-
-no Moose;
-__PACKAGE__->meta->make_immutable;
 1;

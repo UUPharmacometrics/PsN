@@ -3,8 +3,8 @@ package tool::pvar;
 use include_modules;
 use Math::Random;
 use File::Spec;
-use Moose;
-use MooseX::Params::Validate;
+use Mouse;
+use MouseX::Params::Validate;
 
 use array qw(:all);
 use tool::modelfit;
@@ -282,5 +282,4 @@ sub set_data_files
     }
 }
 
-no Moose;
-__PACKAGE__->meta->make_immutable;
+1;

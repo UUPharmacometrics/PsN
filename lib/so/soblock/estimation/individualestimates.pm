@@ -2,8 +2,8 @@ package so::soblock::estimation::individualestimates;
 
 use strict;
 use warnings;
-use Moose;
-use MooseX::Params::Validate;
+use Mouse;
+use MouseX::Params::Validate;
 use include_modules;
 use XML::LibXML;
 use so::soblock::estimation::individualestimates::estimates;
@@ -59,6 +59,4 @@ sub xml
     return $ind_est;
 }
 
-no Moose;
-__PACKAGE__->meta->make_immutable;
 1;

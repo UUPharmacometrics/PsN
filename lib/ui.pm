@@ -2,7 +2,7 @@ package ui;
 
 use strict;
 use Text::Wrap;
-use MooseX::Params::Validate;
+use MouseX::Params::Validate;
 
 # Class attributes
 our $category;

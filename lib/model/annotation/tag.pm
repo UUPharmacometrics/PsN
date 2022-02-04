@@ -3,8 +3,8 @@ package model::annotation::tag;
 # Class for each information tag in the model annotation (i.e. runrecord)
 
 use include_modules;
-use Moose;
-use MooseX::Params::Validate;
+use Mouse;
+use MouseX::Params::Validate;
 
 # A tag has the format
 # ;; <number>. <name>: <content line 1>
@@ -181,6 +181,4 @@ sub get_defined_tags
     return \@tags;
 }
 
-no Moose;
-__PACKAGE__->meta->make_immutable;
 1;

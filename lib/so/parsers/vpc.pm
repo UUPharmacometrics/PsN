@@ -4,8 +4,8 @@ package so::parsers::vpc;
 
 use strict;
 use warnings;
-use Moose;
-use MooseX::Params::Validate;
+use Mouse;
+use MouseX::Params::Validate;
 use File::Basename;
 use include_modules;
 use nmtablefile;
@@ -153,7 +153,4 @@ sub _add_original_table
     $self->_so_block->ModelDiagnostic->DiagnosticStructuralModel->IndivObservationPrediction($table);
 }
 
-
-no Moose;
-__PACKAGE__->meta->make_immutable;
 1;

@@ -4,14 +4,14 @@ require tool;
 require tool::scm;
 require tool::scm::config_file;
 require model_plus;
-use MooseX::Params::Validate;
+use MouseX::Params::Validate;
 require ui;
 use PsN;
 use model;
 use scmlogfile;
 use scm_util;
 use warnings;
-use Moose;
+use Mouse;
 use File::Copy qw(move mv cp);
 use OSspecific;
 
@@ -1000,7 +1000,4 @@ sub ensure_final_model_written
 
 }
 
-
-no Moose;
-__PACKAGE__->meta->make_immutable;
 1;

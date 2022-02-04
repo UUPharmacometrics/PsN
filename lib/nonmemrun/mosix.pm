@@ -2,8 +2,8 @@ package nonmemrun::mosix;
 
 use include_modules;
 use POSIX ":sys_wait_h";
-use Moose;
-use MooseX::Params::Validate;
+use Mouse;
+use MouseX::Params::Validate;
 
 extends 'nonmemrun';
 
@@ -48,7 +48,6 @@ sub submit
     return $pid;
 }
 
-
 sub monitor
 {
     my $self = shift;
@@ -78,6 +77,4 @@ sub monitor
     return $pid;
 }
 
-no Moose;
-__PACKAGE__->meta->make_immutable;
 1;

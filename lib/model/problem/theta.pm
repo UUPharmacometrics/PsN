@@ -3,8 +3,8 @@ package model::problem::theta;
 use include_modules;
 use model::problem::record::theta_option;
 use Math::Random;
-use Moose;
-use MooseX::Params::Validate;
+use Mouse;
+use MouseX::Params::Validate;
 
 extends 'model::problem::init_record';
 
@@ -130,6 +130,4 @@ sub _read_options
     }
 }
 
-no Moose;
-__PACKAGE__->meta->make_immutable;
 1;

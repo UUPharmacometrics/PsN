@@ -2,8 +2,8 @@ package tool::scm::config_file;
 
 use include_modules;
 use ext::Config::Tiny;
-use Moose;
-use MooseX::Params::Validate;
+use Mouse;
+use MouseX::Params::Validate;
 use file;
 
 has 'file' => ( is => 'rw', isa => 'file' );
@@ -472,6 +472,4 @@ sub parse_config
     $self -> _check_various( header => 'inits', master => 'inits' );
 }
 
-no Moose;
-__PACKAGE__->meta->make_immutable;
 1;

@@ -1,8 +1,8 @@
 package nonmemrun::slurm;
 
 use include_modules;
-use Moose;
-use MooseX::Params::Validate;
+use Mouse;
+use MouseX::Params::Validate;
 use OSspecific;
 use Cwd;
 
@@ -218,6 +218,4 @@ sub monitor
     }
 }
 
-no Moose;
-__PACKAGE__->meta->make_immutable;
 1;

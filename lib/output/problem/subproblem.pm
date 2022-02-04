@@ -4,8 +4,8 @@ use include_modules;
 use Config;
 use ui;
 use array;
-use Moose;
-use MooseX::Params::Validate;
+use Mouse;
+use MouseX::Params::Validate;
 use math;
 use nmtable;
 
@@ -3299,6 +3299,4 @@ sub _read_matrixoestimates
     return $pos ,\@subprob_matrix ,$success ,\@row_headers;
 }
 
-no Moose;
-__PACKAGE__->meta->make_immutable;
 1;

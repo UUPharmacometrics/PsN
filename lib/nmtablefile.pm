@@ -3,8 +3,8 @@ package nmtablefile;
 # A class representing a nonmem table file
 
 use include_modules;
-use Moose;
-use MooseX::Params::Validate;
+use Mouse;
+use MouseX::Params::Validate;
 use nmtable;
 use math qw(trinum);
 
@@ -306,7 +306,4 @@ sub renumber_l2_column
     }
 }
 
-
-no Moose;
-__PACKAGE__->meta->make_immutable;
 1;

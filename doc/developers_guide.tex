@@ -243,16 +243,16 @@ git push origin --tags
 \end{verbatim}
 
 \section{Coding style guide}
-PsN is written in Perl using the Moose object system \cite{Moose}. For a gentle introduction to Perl and Moose see for example Modern Perl \cite{modern}. This chapter will give some pointers on how to make best use of Perl and Moose in PsN.
+PsN is written in Perl using the Mouse object system based on Moose \cite{Moose}. For a gentle introduction to Perl and Mouse see for example Modern Perl \cite{modern}. This chapter will give some pointers on how to make best use of Perl and Mouse in PsN.
 
 \subsection{Object construction}
 
-Remember the construction order in Moose. If we have a superclass called parent and a subclass called child and call \verb|child->new| the constructors will be executed in the following order:
+Remember the construction order in Mouse. If we have a superclass called parent and a subclass called child and call \verb|child->new| the constructors will be executed in the following order:
 
 \begin{enumerate}
 	\item child->BUILDARGS
 	\item parent->BUILDARGS
-	\item Moose internal construction
+	\item Mouse internal construction
 	\item parent->BUILD
 	\item child->BUILD
 \end{enumerate}
@@ -261,10 +261,10 @@ Remember the construction order in Moose. If we have a superclass called parent 
 \subsection{Methods}
 
 \subsubsection{Parameter validation}
-All methods should validate their parameters with validated\_hash in\\ \mbox{MooseX::Params::Validate}
+All methods should validate their parameters with validated\_hash in\\ \mbox{MouseX::Params::Validate}
 
 \begin{verbatim}
-use MooseX::Params::Validate;
+use MouseX::Params::Validate;
 
 sub my_method
 {
@@ -277,7 +277,7 @@ sub my_method
 }
 \end{verbatim}
 
-See the MooseX::Params::Validate documentation \cite{params} and Moose::Types documentation \cite{types} for more information.
+See the MouseX::Params::Validate documentation \cite{params} and Moose::Types documentation \cite{types} for more information.
 
 Remember to turn off the parameter caching if you give default values that can vary between calls.
 
@@ -289,8 +289,8 @@ my ($self, %parm) = validated_hash(@_,
 );
 \end{verbatim}
 
-There are cases when MooseX::Params::Validate have caused Perl to crash (see bug \#91211 at \url{https://rt.cpan.org/Public/Bug/Display.html?id=91211})
-These cases have been when isa was set to 'ArrayRef[Str]' or 'ArrayRef[Int]' and the crashes stopped when the bracketed type was removed. When crashing on windows the error was either "Perl interpreter has stopped" or "Bizarre copy of ... in list assignment in MooseX/Params/Validate.pm line 63". For error messages under Linux see the bug report.
+There are cases when MouseX::Params::Validate have caused Perl to crash (see bug \#91211 at \url{https://rt.cpan.org/Public/Bug/Display.html?id=91211})
+These cases have been when isa was set to 'ArrayRef[Str]' or 'ArrayRef[Int]' and the crashes stopped when the bracketed type was removed. When crashing on windows the error was either "Perl interpreter has stopped" or "Bizarre copy of ... in list assignment in MouseX/Params/Validate.pm line 63". For error messages under Linux see the bug report.
 
 
 \subsubsection{Private methods}

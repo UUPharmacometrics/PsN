@@ -6,7 +6,7 @@ package utils::file;
 
 use strict;
 use warnings;
-use MooseX::Params::Validate;
+use MouseX::Params::Validate;
 use File::Spec;
 use include_modules;
 

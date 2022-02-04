@@ -10,8 +10,8 @@ use File::Copy 'cp';
 use File::Spec;
 use List::Util qw(max);
 use status_bar;
-use Moose;
-use MooseX::Params::Validate;
+use Mouse;
+use MouseX::Params::Validate;
 use math;
 use utils::file;
 use array qw(get_positions any_nonzero);
@@ -6402,7 +6402,4 @@ sub _inter_in_est
     return $inter;
 }
 
-
-no Moose;
-__PACKAGE__->meta->make_immutable;
 1;

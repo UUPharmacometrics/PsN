@@ -1,7 +1,7 @@
 package model::problem::record::theta_option;
 
-use Moose;
-use MooseX::Params::Validate;
+use Mouse;
+use MouseX::Params::Validate;
 use include_modules;
 
 extends 'model::problem::record::init_option';
@@ -140,6 +140,4 @@ sub _read_option
     }
 }
 
-no Moose;
-__PACKAGE__->meta->make_immutable;
 1;

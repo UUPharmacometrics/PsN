@@ -10,8 +10,8 @@ use File::Path;
 use POSIX;
 use model;
 use ui;
-use Moose;
-use MooseX::Params::Validate;
+use Mouse;
+use MouseX::Params::Validate;
 
 extends 'tool';
 
@@ -849,6 +849,4 @@ sub create_cbjd
     return \@sorted_eta_matrix_T ,\@cbjd_matrix_T ,\@id_matrix_T;
 }
 
-no Moose;
-__PACKAGE__->meta->make_immutable;
 1;

@@ -2,8 +2,8 @@ package data::individual;
 
 use include_modules;
 use ui;
-use Moose;
-use MooseX::Params::Validate;
+use Mouse;
+use MouseX::Params::Validate;
 use math;
 use array;
 
@@ -422,6 +422,4 @@ sub factors
     return \%factors;
 }
 
-no Moose;
-__PACKAGE__->meta->make_immutable;
 1;

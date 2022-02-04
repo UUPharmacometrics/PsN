@@ -1,7 +1,7 @@
 package scm_util;
 
 use strict;
-use MooseX::Params::Validate;
+use MouseX::Params::Validate;
 require tool::scm;
 require tool::scm::config_file;
 require model;
@@ -343,6 +343,5 @@ sub get_config_object
 
     return $config_file;
 }
-
 
 1;

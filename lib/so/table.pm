@@ -4,8 +4,8 @@ package so::table;
 
 use strict;
 use warnings;
-use Moose;
-use MooseX::Params::Validate;
+use Mouse;
+use MouseX::Params::Validate;
 use include_modules;
 use XML::LibXML;
 use math;
@@ -179,6 +179,4 @@ sub parameter_table
     $self->columns([ $labels, $values ]);
 }
 
-no Moose;
-__PACKAGE__->meta->make_immutable;
 1;

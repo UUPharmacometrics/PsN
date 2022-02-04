@@ -7,8 +7,8 @@ use data;
 use OSspecific;
 use tool::modelfit;
 use Math::Random;
-use Moose;
-use MooseX::Params::Validate;
+use Mouse;
+use MouseX::Params::Validate;
 use ext::Math::MatrixReal;# qw(all);
 use Math::Trig;    # For pi
 use Math::Random;
@@ -3501,7 +3501,4 @@ sub create_R_plots_code
 
 }
 
-
-no Moose;
-__PACKAGE__->meta->make_immutable;
 1;

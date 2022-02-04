@@ -6,7 +6,7 @@ use include_modules;
 use Cwd;
 use model;
 use PsN;
-use MooseX::Params::Validate;
+use MouseX::Params::Validate;
 use utils::file;
 use array qw(numerical_in max unique);
 use data;

@@ -199,7 +199,6 @@ sub restore_options
   return \%stored_opts; #return reference to stored_opts
 }
 
-
 sub set_globals
 {
   my $opts = shift;
@@ -1573,7 +1572,6 @@ sub format_help_text
     }
     return $newtext;
 }
-
 
 sub get_option_array
 {

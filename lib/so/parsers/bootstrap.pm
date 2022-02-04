@@ -4,8 +4,8 @@ package so::parsers::bootstrap;
 
 use strict;
 use warnings;
-use Moose;
-use MooseX::Params::Validate;
+use Mouse;
+use MouseX::Params::Validate;
 use File::Spec;
 use File::Basename;
 use include_modules;
@@ -337,6 +337,4 @@ sub get_column_types
     return \@column_types;
 }
 
-no Moose;
-__PACKAGE__->meta->make_immutable;
 1;

@@ -1,7 +1,7 @@
 package model::problem::input;
 
-use Moose;
-use MooseX::Params::Validate;
+use Mouse;
+use MouseX::Params::Validate;
 use Carp;
 
 extends 'model::problem::record';
@@ -127,6 +127,4 @@ sub get_filter_table_names
     return (\@filter_table_names,$time_added);
 }
 
-no Moose;
-__PACKAGE__->meta->make_immutable;
 1;

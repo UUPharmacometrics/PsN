@@ -1,8 +1,8 @@
 package model::shrinkage_module;
 
 use include_modules;
-use Moose;
-use MooseX::Params::Validate;
+use Mouse;
+use MouseX::Params::Validate;
 
 has 'enabled' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'nomegas' => ( is => 'rw', isa => 'Maybe[Num]', default => 0 );
@@ -227,6 +227,4 @@ sub iwres_shrinkage
     return \@iwres_shrinkage;
 }
 
-no Moose;
-__PACKAGE__->meta->make_immutable;
 1;

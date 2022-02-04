@@ -2,8 +2,8 @@ package tool::xv;
 
 use include_modules;
 use tool::xv_step;
-use Moose;
-use MooseX::Params::Validate;
+use Mouse;
+use MouseX::Params::Validate;
 
 extends 'tool';
 
@@ -138,6 +138,4 @@ sub xv_step_post_subtool_analyze
     }
 }
 
-no Moose;
-__PACKAGE__->meta->make_immutable;
 1;

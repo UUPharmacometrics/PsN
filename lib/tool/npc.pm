@@ -12,8 +12,8 @@ use File::Copy qw/cp mv/;
 use File::Spec;
 use Cwd;
 use binning;
-use Moose;
-use MooseX::Params::Validate;
+use Mouse;
+use MouseX::Params::Validate;
 use math qw(round);
 use array qw(mean stdev median median_and_ci);
 
@@ -5575,7 +5575,4 @@ sub create_R_plots_code
     $rplot->add_preamble(code => \@code);
 }
 
-
-no Moose;
-__PACKAGE__->meta->make_immutable;
 1;

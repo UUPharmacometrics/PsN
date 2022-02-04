@@ -5,8 +5,8 @@ package phitable;
 
 use include_modules;
 use nmtablefile;
-use Moose;
-use MooseX::Params::Validate;
+use Mouse;
+use MouseX::Params::Validate;
 
 
 has 'path' => ( is => 'rw', isa => 'Str' );
@@ -236,6 +236,4 @@ sub write
     close $fh;
 }
 
-no Moose;
-__PACKAGE__->meta->make_immutable;
 1;

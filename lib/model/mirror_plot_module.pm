@@ -12,8 +12,8 @@ package model::mirror_plot_module;
 
 use include_modules;
 use Math::Random;
-use Moose;
-use MooseX::Params::Validate;
+use Mouse;
+use MouseX::Params::Validate;
 
 has 'enabled' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'cwres' => ( is => 'rw', isa => 'Bool', default => 0 );
@@ -250,7 +250,4 @@ sub BUILD
                                              last_est_complete => $self->last_est_complete);
 }
 
-
-no Moose;
-__PACKAGE__->meta->make_immutable;
 1;

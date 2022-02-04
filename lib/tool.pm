@@ -17,8 +17,8 @@ use Config;
 use YAML::XS;
 our $AUTOLOAD;
 
-use Moose;
-use MooseX::Params::Validate;
+use Mouse;
+use MouseX::Params::Validate;
 
 use model;
 use rplots;
@@ -2038,7 +2038,4 @@ sub default_update_inits
     }
 }
 
-
-no Moose;
-__PACKAGE__->meta->make_immutable;
 1;

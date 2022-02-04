@@ -2,8 +2,8 @@ package tool::xv_step;
 
 use include_modules;
 use tool::modelfit;
-use Moose;
-use MooseX::Params::Validate;
+use Mouse;
+use MouseX::Params::Validate;
 use data;
 
 extends 'tool';
@@ -808,6 +808,4 @@ sub modelfit_post_subtool_analyze
     }
 }
 
-no Moose;
-__PACKAGE__->meta->make_immutable;
 1;

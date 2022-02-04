@@ -3,8 +3,8 @@ package nmtable;
 # A class representing a table output from NONMEM
 
 use include_modules;
-use Moose;
-use MooseX::Params::Validate;
+use Mouse;
+use MouseX::Params::Validate;
 use table;
 use math qw(usable_number inf);
 
@@ -291,7 +291,4 @@ sub _get_value
     return $answer;
 }
 
-
-no Moose;
-__PACKAGE__->meta->make_immutable;
 1;

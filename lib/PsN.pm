@@ -410,5 +410,4 @@ sub deprecation_warn
     warn("Warning: $what will be deprecated in the next version of PsN.\n         Please start to use '$new_action' instead.\n         See https://pharmpy.github.io for information on Pharmpy\n");
 }
 
-
 1;

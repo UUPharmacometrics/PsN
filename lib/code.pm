@@ -5,7 +5,7 @@ package code;
 use strict;
 use warnings;
 use include_modules;
-use MooseX::Params::Validate;
+use MouseX::Params::Validate;
 use model;
 
 sub append_verbatim_code
@@ -53,7 +53,6 @@ sub append_verbatim_code
         $record->verbatim_last($verbatim_code);
     }
 }
-
 
 sub generate_sum
 {

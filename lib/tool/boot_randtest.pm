@@ -2,8 +2,8 @@ package tool::boot_randtest;
 
 use strict;
 use include_modules;
-use Moose;
-use MooseX::Params::Validate;
+use Mouse;
+use MouseX::Params::Validate;
 use OSspecific;
 use tool::modelfit;
 use data;
@@ -199,6 +199,4 @@ sub modelfit_analyze
     tool::randtest::print_dofv_results(dofv => \@dofv, filename => 'boot_randtest_results.csv');
 }
 
-no Moose;
-__PACKAGE__->meta->make_immutable;
 1;

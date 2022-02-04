@@ -1,7 +1,7 @@
 package model::problem::table;
 
-use Moose;
-use MooseX::Params::Validate;
+use Mouse;
+use MouseX::Params::Validate;
 
 extends 'model::problem::record';
 
@@ -42,6 +42,4 @@ sub columns
     return \@columns;
 }
 
-no Moose;
-__PACKAGE__->meta->make_immutable;
 1;

@@ -1,8 +1,8 @@
 package tool::nonparametric;
 
 use strict;
-use Moose;
-use MooseX::Params::Validate;
+use Mouse;
+use MouseX::Params::Validate;
 use File::Copy 'cp';
 use include_modules;
 use data;
@@ -219,6 +219,4 @@ sub create_R_plots_code{
                          ]);
 }
 
-no Moose;
-__PACKAGE__->meta->make_immutable;
 1;

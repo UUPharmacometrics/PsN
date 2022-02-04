@@ -4,7 +4,7 @@ package logging;
 # It aims to have a similar interface as the python logging module
 # The actual logger class is logging::logger
 
-use MooseX::Params::Validate;
+use MouseX::Params::Validate;
 use logging::logger;
 
 require Exporter;

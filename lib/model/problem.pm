@@ -76,8 +76,8 @@ sub _get_uc_short_type
 }
 
 
-use Moose;
-use MooseX::Params::Validate;
+use Mouse;
+use MouseX::Params::Validate;
 use model::mirror_plot_module;
 use model::cwres_module;
 use model::problem::nonparametric;
@@ -3937,6 +3937,4 @@ sub ignored_or_accepted_columns
     return \@array;
 }
 
-no Moose;
-__PACKAGE__->meta->make_immutable;
 1;

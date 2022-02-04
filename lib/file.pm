@@ -3,8 +3,8 @@ package file;
 use include_modules;
 use Config;
 use Cwd;
-use Moose;
-use MooseX::Params::Validate;
+use Mouse;
+use MouseX::Params::Validate;
 
 has 'path' => ( is => 'rw', isa => 'Str' );
 has 'name' => ( is => 'rw', isa => 'Str' );
@@ -154,6 +154,4 @@ sub clean_path
     return $clean_path;
 }
 
-no Moose;
-__PACKAGE__->meta->make_immutable;
 1;

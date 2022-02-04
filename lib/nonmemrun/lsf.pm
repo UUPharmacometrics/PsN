@@ -1,8 +1,8 @@
 package nonmemrun::lsf;
 
 use include_modules;
-use Moose;
-use MooseX::Params::Validate;
+use Mouse;
+use MouseX::Params::Validate;
 
 extends 'nonmemrun';
 
@@ -74,7 +74,6 @@ sub submit
     return $jobId;
 }
 
-
 sub monitor
 {
     my $self = shift;
@@ -104,6 +103,4 @@ sub monitor
     }
 }
 
-no Moose;
-__PACKAGE__->meta->make_immutable;
 1;

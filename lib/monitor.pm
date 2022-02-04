@@ -1,7 +1,7 @@
 package monitor;
 
 use strict;
-use MooseX::Params::Validate;
+use MouseX::Params::Validate;
 use scmlogfile;
 
 sub get_options
@@ -616,6 +616,5 @@ sub lst_file
 	$filename =~ s/(mod|ctl)$/lst/;
 	return $filename;
 }
-
 
 1;

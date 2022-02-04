@@ -1,6 +1,6 @@
 package linear_algebra;
 
-use MooseX::Params::Validate;
+use MouseX::Params::Validate;
 
 use strict;
 use array qw(:all);

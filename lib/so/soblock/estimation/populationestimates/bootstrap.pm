@@ -2,8 +2,8 @@ package so::soblock::estimation::populationestimates::bootstrap;
 
 use strict;
 use warnings;
-use Moose;
-use MooseX::Params::Validate;
+use Mouse;
+use MouseX::Params::Validate;
 use include_modules;
 use XML::LibXML;
 
@@ -67,6 +67,4 @@ sub xml
     return $bootstrap;
 }
 
-no Moose;
-__PACKAGE__->meta->make_immutable;
 1;

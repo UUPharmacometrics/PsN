@@ -3,8 +3,8 @@ package model::annotation;
 # Class to parse and store model annotations (i.e. runrecord)
 
 use include_modules;
-use Moose;
-use MooseX::Params::Validate;
+use Mouse;
+use MouseX::Params::Validate;
 use model::annotation::tag;
 
 has 'tags' => ( is => 'rw', isa => 'ArrayRef[model::annotation::tag]' );
@@ -247,6 +247,4 @@ sub add_empty_tags
     }
 }
 
-no Moose;
-__PACKAGE__->meta->make_immutable;
 1;

@@ -2,8 +2,8 @@ package scmlogfile;
 
 # A class representing a scm log file
 
-use Moose;
-use MooseX::Params::Validate;
+use Mouse;
+use MouseX::Params::Validate;
 use scmlogstep;
 
 has 'filename' => ( is => 'rw', isa => 'Str' );
@@ -969,7 +969,4 @@ sub read_scmlogfile
 	close $fh;
 }
 
-
-no Moose;
-__PACKAGE__->meta->make_immutable;
 1;

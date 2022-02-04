@@ -3,8 +3,8 @@ package table;
 # A class representing a generic table
 
 use include_modules;
-use Moose;
-use MooseX::Params::Validate;
+use Mouse;
+use MouseX::Params::Validate;
 
 has 'columns' => ( is => 'rw', isa => 'ArrayRef[ArrayRef]', default => sub { [] } );
 has 'header' => ( is => 'rw', isa => 'HashRef[Str]' , default => sub { {} });
@@ -61,7 +61,6 @@ sub get_header
     #    return [sort {$self->header->{$a} <=> $self->header->{$b}} (keys %{$self->header})];
     return $self->header_array;
 }
-
 
 sub add_row
 {
@@ -126,6 +125,4 @@ sub _split_row
     return @array;
 }
 
-no Moose;
-__PACKAGE__->meta->make_immutable;
 1;

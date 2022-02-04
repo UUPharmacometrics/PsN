@@ -1,7 +1,7 @@
 package model::problem::simulation;
 
-use Moose;
-use MooseX::Params::Validate;
+use Mouse;
+use MouseX::Params::Validate;
 
 use model::problem::record::option;
 
@@ -78,6 +78,4 @@ around 'seed2' => sub
     $self->get_or_set_seed(2, $seed);
 };
 
-no Moose;
-__PACKAGE__->meta->make_immutable;
 1;

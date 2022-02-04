@@ -2,8 +2,8 @@ package model::problem::record_order;
 
 # Class to take care of the record_order for output of modelfiles.
 
-use Moose;
-use MooseX::Params::Validate;
+use Mouse;
+use MouseX::Params::Validate;
 use List::Util qw(first);
 
 has 'order' => ( is => 'rw', isa => 'ArrayRef[Str]' );
@@ -143,6 +143,4 @@ sub _get_pos
     return $pos;
 }
 
-no Moose;
-__PACKAGE__->meta->make_immutable;
 1;

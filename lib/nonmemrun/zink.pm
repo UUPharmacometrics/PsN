@@ -1,8 +1,8 @@
 package nonmemrun::zink;
 
 use include_modules;
-use Moose;
-use MooseX::Params::Validate;
+use Mouse;
+use MouseX::Params::Validate;
 use File::Spec;
 
 extends 'nonmemrun';
@@ -67,6 +67,4 @@ sub monitor
     }
 }
 
-no Moose;
-__PACKAGE__->meta->make_immutable;
 1;

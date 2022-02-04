@@ -1,8 +1,8 @@
 package scmlogstep;
 
 # A class representing a single step
-use Moose;
-use MooseX::Params::Validate;
+use Mouse;
+use MouseX::Params::Validate;
 
 has 'candidates' => ( is => 'rw', isa => 'ArrayRef', default => sub { [] } );
 has 'directory' => ( is => 'rw', isa => 'Str');  
@@ -375,7 +375,4 @@ sub _parse_candidate
 
 }
 
-
-no Moose;
-__PACKAGE__->meta->make_immutable;
 1;

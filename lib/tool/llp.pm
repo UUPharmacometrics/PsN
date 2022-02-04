@@ -4,8 +4,8 @@ use include_modules;
 use File::Copy 'cp';
 use ext::Math::SigFigs;
 use tool::modelfit;
-use Moose;
-use MooseX::Params::Validate;
+use Mouse;
+use MouseX::Params::Validate;
 use math qw(usable_number);
 
 extends 'tool';
@@ -1266,7 +1266,4 @@ sub create_R_plots_code{
                          ]);
 }
 
-
-no Moose;
-__PACKAGE__->meta->make_immutable;
 1;

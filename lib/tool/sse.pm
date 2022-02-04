@@ -7,8 +7,8 @@ use tool::modelfit;
 use model_transformations;
 use Math::Random;
 use Config;
-use Moose;
-use MooseX::Params::Validate;
+use Mouse;
+use MouseX::Params::Validate;
 use File::Copy qw(copy);
 use math qw(usable_number);
 use array qw(median);
@@ -2598,7 +2598,4 @@ sub create_R_plots_code
         ]);
 }
 
-
-no Moose;
-__PACKAGE__->meta->make_immutable;
 1;

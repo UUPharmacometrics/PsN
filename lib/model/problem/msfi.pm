@@ -1,7 +1,7 @@
 package model::problem::msfi;
 
-use Moose;
-use MooseX::Params::Validate;
+use Mouse;
+use MouseX::Params::Validate;
 use include_modules;
 use OSspecific;
 use File::Spec qw(abs2rel catfile);
@@ -203,7 +203,6 @@ sub get_basename_msftype_extension
 
 }
 
-
 sub copy_msfi_file
 {
     my $self = shift;
@@ -244,7 +243,4 @@ sub copy_msfi_file
     }
 }
 
-
-no Moose;
-__PACKAGE__->meta->make_immutable;
 1;

@@ -1,0 +1,63 @@
+
+=head1 NAME
+
+Mouse::XS - A Mouse guts in XS
+
+=head1 VERSION
+
+This document describes Mouse version 2.0.0
+
+=head1 DESCRIPTION
+
+Mouse has an optional XS implementation, which is automatically built
+and used if available. According to benchmarks, this is about 2 times
+faster than Mouse::PurePerl.
+
+=head2 INSTALL
+
+The XS implementation are selected by default, but you can force it by
+passing the C<--xs> option to F<Makefile.PL>.
+
+    perl Makefile.PL --xs
+
+If you do not want to build the XS implementation, you can pass the C<--pp>
+option to F<Makefile.PL>.
+
+    perl Makefile.PL --pp
+
+Or if you use C<cpanm> (>= 1.7), you can give C<--pp> option to C<cpanm>.
+
+    cpanm --pp Mouse
+
+=head2 The MOUSE_PUREPERL (or PERL_ONLY) environment variable
+
+It can be used to enable the use of Mouse::PurePerl in order to test
+and debug programs that use Mouse.
+
+=head1 CAVEAT
+
+There are some Mouse::XS specific features.
+
+=over
+
+=item Mutating references to the return values of getters
+
+When you take a reference from Mouse getters, like C<< $ref = \$obj->foo >>,
+the C<$ref> refers C<< \$obj->{foo} >>. That is, mutating C<$$ref> also
+alters C<< $obj->{foo} >>. The behavior may confuse you so you'd better avoid to take a reference directly from getters.
+
+See L<https://rt.cpan.org/Ticket/Display.html?id=82945> for details.
+
+=back
+
+=head1 DEPENDENCIES
+
+The XS implementation requires Perl 5.8.1 or later, and a C compiler.
+
+=head1 SEE ALSO
+
+L<Mouse>
+
+L<Mouse::PurePerl>
+
+=cut

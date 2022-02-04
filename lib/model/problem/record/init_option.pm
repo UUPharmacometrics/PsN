@@ -2,8 +2,8 @@ package model::problem::record::init_option;
 
 use include_modules;
 use Math::Random;
-use Moose;
-use MooseX::Params::Validate;
+use Mouse;
+use MouseX::Params::Validate;
 extends 'model::problem::record::option';
 
 has 'init' => ( is => 'rw', isa => 'Str' );
@@ -252,6 +252,4 @@ sub _format_option
     return $formatted, $no_break;
 }
 
-no Moose;
-__PACKAGE__->meta->make_immutable;
 1;

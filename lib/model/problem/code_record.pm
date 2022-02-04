@@ -1,7 +1,7 @@
 package model::problem::code_record;
 
-use Moose;
-use MooseX::Params::Validate;
+use Mouse;
+use MouseX::Params::Validate;
 
 extends 'model::problem::record';
 
@@ -137,6 +137,4 @@ sub _read_options
     }
 }
 
-no Moose;
-__PACKAGE__->meta->make_immutable;
 1;

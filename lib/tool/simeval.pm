@@ -6,8 +6,8 @@ use Math::Random;
 use Config;
 use linear_algebra;
 use simeval_util;
-use Moose;
-use MooseX::Params::Validate;
+use Mouse;
+use MouseX::Params::Validate;
 use utils::file;
 
 extends 'tool';
@@ -1260,7 +1260,4 @@ sub create_R_plots_code
                          ]);
 }
 
-
-no Moose;
-__PACKAGE__->meta->make_immutable;
 1;

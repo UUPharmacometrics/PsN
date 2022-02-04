@@ -7,8 +7,8 @@ use Math::Random;
 use Data::Dumper;
 use Cwd;
 use OSspecific;
-use Moose;
-use MooseX::Params::Validate;
+use Mouse;
+use MouseX::Params::Validate;
 
 extends 'tool';
 
@@ -2209,7 +2209,6 @@ sub _optimal_lasso_raw_results_callback
     return $subroutine;
 }
 
-
 sub run_lasso_iteration{
     my $self = shift;
     my %parm = validated_hash(\@_,
@@ -2351,7 +2350,6 @@ sub run_lasso_iteration{
     return ($lasso_optimal,$t_optimal);
 }
 
-
 sub write_coefficients{
     my %parm = validated_hash(\@_,
                               labels => { isa => 'ArrayRef', optional => 0 },
@@ -2379,7 +2377,6 @@ sub write_coefficients{
     close LOG;
 
 }
-
 
 sub setup_optimal_model
 {
@@ -2615,8 +2612,6 @@ sub setup_optimal_model
     return $model_optimal;
 }
 
-
-
 sub _modelfit_raw_results_callback
 {
     my $self = shift;
@@ -2679,6 +2674,4 @@ sub cleanup
     }
 }
 
-no Moose;
-__PACKAGE__->meta->make_immutable;
 1;

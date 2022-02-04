@@ -4,8 +4,8 @@ use include_modules;
 use model::problem::record::init_option;
 use linear_algebra;
 use Math::Random;
-use Moose;
-use MooseX::Params::Validate;
+use Mouse;
+use MouseX::Params::Validate;
 
 extends 'model::problem::record';
 
@@ -73,7 +73,6 @@ sub get_estimated_coordinate_strings
     }
     return \@array;
 }
-
 
 sub set_1_fix
 {
@@ -698,6 +697,4 @@ sub _format_record
     return \@formatted;
 }
 
-no Moose;
-__PACKAGE__->meta->make_immutable;
 1;

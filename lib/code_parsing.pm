@@ -6,7 +6,7 @@ use include_modules;
 use Cwd;
 use model;
 use PsN;
-use MooseX::Params::Validate;
+use MouseX::Params::Validate;
 use utils::file;
 
 sub find_assignments

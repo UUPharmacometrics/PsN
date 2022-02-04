@@ -4,8 +4,8 @@ use include_modules;
 use tool::modelfit;
 use Math::Random;
 use Config;
-use Moose;
-use MooseX::Params::Validate;
+use Mouse;
+use MouseX::Params::Validate;
 use utils::file;
 
 extends 'tool';
@@ -938,6 +938,4 @@ sub cleanup
     }
 }
 
-no Moose;
-__PACKAGE__->meta->make_immutable;
 1;

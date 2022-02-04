@@ -4,8 +4,8 @@ use include_modules;
 use Math::Random;
 use Math::Trig;
 use File::Spec;
-use Moose;
-use MooseX::Params::Validate;
+use Mouse;
+use MouseX::Params::Validate;
 use File::Copy qw(copy);
 
 use array qw(:all);
@@ -1101,5 +1101,4 @@ sub eigenvalue_decomposition
     }
 }
 
-no Moose;
-__PACKAGE__->meta->make_immutable;
+1;

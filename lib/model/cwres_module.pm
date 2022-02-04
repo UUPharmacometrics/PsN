@@ -1,8 +1,8 @@
 package model::cwres_module;
 
 use include_modules;
-use Moose;
-use MooseX::Params::Validate;
+use Mouse;
+use MouseX::Params::Validate;
 
 has 'enabled' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'cwtab_names' => ( is => 'rw', isa => 'ArrayRef[Str]', default => sub { ['cwtab.est', 'cwtab'] } );
@@ -319,6 +319,4 @@ EOF
     }
 }
 
-no Moose;
-__PACKAGE__->meta->make_immutable;
 1;

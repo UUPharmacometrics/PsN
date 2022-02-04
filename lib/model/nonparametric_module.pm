@@ -1,7 +1,7 @@
 package model::nonparametric_module;
 
-use Moose;
-use MooseX::Params::Validate;
+use Mouse;
+use MouseX::Params::Validate;
 
 has 'enabled' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'model' => ( is => 'rw', isa => 'model' );
@@ -188,6 +188,4 @@ sub format_etas_msfi
     return \@formatted;
 }
 
-no Moose;
-__PACKAGE__->meta->make_immutable;
 1;

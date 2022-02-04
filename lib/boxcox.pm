@@ -2,7 +2,7 @@ package boxcox;
 
 use strict;
 use warnings;
-use MooseX::Params::Validate;
+use MouseX::Params::Validate;
 use include_modules;
 use ext::Statistics::Distributions qw(udistr);
 use array qw(sum);

@@ -1,10 +1,8 @@
 package model::problem::error;
 
-use Moose;
-use MooseX::Params::Validate;
+use Mouse;
+use MouseX::Params::Validate;
 
 extends 'model::problem::code_record';
 
-no Moose;
-__PACKAGE__->meta->make_immutable;
 1;

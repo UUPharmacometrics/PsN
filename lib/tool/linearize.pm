@@ -1,7 +1,7 @@
 package tool::linearize;
 
-use Moose;
-use MooseX::Params::Validate;
+use Mouse;
+use MouseX::Params::Validate;
 use File::Path;
 use File::Copy 'cp';
 use tool;
@@ -157,6 +157,4 @@ sub prepare_results
     PsN::call_pharmpy("results linearize " . $self->directory);      # Generate results.json and results.csv
 }
 
-no Moose;
-__PACKAGE__->meta->make_immutable;
 1;

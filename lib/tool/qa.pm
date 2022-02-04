@@ -2,8 +2,8 @@ package tool::qa;
 
 use strict;
 use Math::Random;
-use Moose;
-use MooseX::Params::Validate;
+use Mouse;
+use MouseX::Params::Validate;
 use File::Copy 'cp';
 use File::Spec;
 use include_modules;
@@ -1099,7 +1099,4 @@ sub simulation_model
     return $sim;
 }
 
-
-no Moose;
-__PACKAGE__->meta->make_immutable;
 1;

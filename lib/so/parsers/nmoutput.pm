@@ -4,8 +4,8 @@ package so::parsers::nmoutput;
 
 use strict;
 use warnings;
-use Moose;
-use MooseX::Params::Validate;
+use Mouse;
+use MouseX::Params::Validate;
 use include_modules;
 use XML::LibXML;
 use File::Basename;
@@ -1709,7 +1709,4 @@ sub _add_indiv_ofv
     $self->_so_block->RawResults->add_datafile(name => $phi_file, description => "NONMEM phi file");
 }
 
-
-no Moose;
-__PACKAGE__->meta->make_immutable;
 1;

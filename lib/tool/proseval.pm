@@ -1,8 +1,8 @@
 package tool::proseval;
 
 use strict;
-use Moose;
-use MooseX::Params::Validate;
+use Mouse;
+use MouseX::Params::Validate;
 use File::Copy 'cp';
 use include_modules;
 use data;
@@ -226,7 +226,4 @@ sub ignore_row
     return 0;
 }
 
-
-no Moose;
-__PACKAGE__->meta->make_immutable;
 1;

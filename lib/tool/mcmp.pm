@@ -10,8 +10,8 @@ use Config;
 use File::Copy qw/cp mv/;
 use POSIX;
 use OSspecific;
-use Moose;
-use MooseX::Params::Validate;
+use Mouse;
+use MouseX::Params::Validate;
 use math qw(round);
 use array qw(sum);
 extends 'tool';
@@ -183,7 +183,6 @@ sub get_df_table
     }
     return \%df_table;
 }
-
 
 sub modelfit_setup
 {
@@ -1001,6 +1000,4 @@ sub create_R_plots_code{
 
 }
 
-no Moose;
-__PACKAGE__->meta->make_immutable;
 1;

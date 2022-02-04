@@ -93,8 +93,8 @@ package model::iofv_module;
 
 use include_modules;
 use Config;
-use Moose;
-use MooseX::Params::Validate;
+use Mouse;
+use MouseX::Params::Validate;
 
 has 'enabled' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'base_model' => ( is => 'rw', required => 1, isa => 'model', default => 0 );
@@ -247,6 +247,4 @@ sub post_run_process
   }
 }
 
-no Moose;
-__PACKAGE__->meta->make_immutable;
 1;

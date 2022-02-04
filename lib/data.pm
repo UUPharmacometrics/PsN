@@ -9,8 +9,8 @@ use Storable;
 use ui;
 use status_bar;
 use array;
-use Moose;
-use MooseX::Params::Validate;
+use Mouse;
+use MouseX::Params::Validate;
 use data::individual;
 use linear_algebra;
 
@@ -2346,7 +2346,7 @@ sub reconcile_column
     #if different then set new_values at this pos to next value in value_sequence.
     #If no more values in unique_values then last observation carry forward
 
-    # FIXME: Undef is in Moose an allowed boolean.
+    # FIXME: Undef is in Mouse an allowed boolean.
     if (!defined($equal_obs)) {
         croak("Equal_obs must be defined\n");
     }
@@ -3425,7 +3425,4 @@ sub remove_nonobs
     $self->individuals(\@newinds);
 }
 
-
-no Moose;
-__PACKAGE__->meta->make_immutable;
 1;

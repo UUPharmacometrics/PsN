@@ -6,8 +6,8 @@ use strict;
 use tool::modelfit;
 use model;
 use ui;
-use Moose;
-use MooseX::Params::Validate;
+use Mouse;
+use MouseX::Params::Validate;
 
 extends 'tool';
 
@@ -1255,6 +1255,4 @@ sub verify_P_values_matrix
   }
 }
 
-no Moose;
-__PACKAGE__->meta->make_immutable;
 1;

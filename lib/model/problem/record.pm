@@ -1,8 +1,8 @@
 package model::problem::record;
 
 use include_modules;
-use Moose;
-use MooseX::Params::Validate;
+use Mouse;
+use MouseX::Params::Validate;
 
 use model::problem::record::option;
 
@@ -360,6 +360,4 @@ sub rename_msfo
     }
 }
 
-no Moose;
-__PACKAGE__->meta->make_immutable;
 1;

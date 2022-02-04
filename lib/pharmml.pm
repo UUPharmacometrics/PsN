@@ -5,7 +5,7 @@ use warnings;
 use File::Spec::Functions qw(devnull);
 use PsN;
 use nonmemrun;
-use MooseX::Params::Validate;
+use MouseX::Params::Validate;
 
 sub is_pharmml
 {

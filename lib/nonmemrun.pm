@@ -4,8 +4,8 @@ use Config;
 use include_modules;
 use Cwd;
 use File::Copy 'cp';
-use Moose;
-use MooseX::Params::Validate;
+use Mouse;
+use MouseX::Params::Validate;
 
 has 'job_id' => (is => 'rw', isa => 'Int' );
 has 'full_path_runscript' => ( is => 'rw', isa => 'Maybe[Str]' );
@@ -293,9 +293,4 @@ sub pre_compile_cleanup
     unlink('lsf_stderr_stdout', 'lsf_jobscript');
 }
 
-
-
-
-no Moose;
-__PACKAGE__->meta->make_immutable;
 1;

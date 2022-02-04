@@ -2,8 +2,8 @@ package nonmemrun::localunix;
 
 use include_modules;
 use POSIX ":sys_wait_h";
-use Moose;
-use MooseX::Params::Validate;
+use Mouse;
+use MouseX::Params::Validate;
 
 extends 'nonmemrun';
 
@@ -86,6 +86,4 @@ sub monitor
     return $pid;
 }
 
-no Moose;
-__PACKAGE__->meta->make_immutable;
 1;

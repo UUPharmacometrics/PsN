@@ -1,7 +1,7 @@
 package model::problem::record::option;
 
-use Moose;
-use MooseX::Params::Validate;
+use Mouse;
+use MouseX::Params::Validate;
 
 has 'option_string' => ( is => 'rw', isa => 'Maybe[Str]', clearer => 'clear_option_string' );
 has 'name' => ( is => 'rw', isa => 'Str' );
@@ -56,6 +56,4 @@ sub is_drop
     return 0;
 }
 
-no Moose;
-__PACKAGE__->meta->make_immutable;
 1;

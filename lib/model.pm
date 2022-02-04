@@ -15,8 +15,8 @@ use model::nonparametric_module;
 use model::annotation;
 use output;
 use model::problem;
-use Moose;
-use MooseX::Params::Validate;
+use Mouse;
+use MouseX::Params::Validate;
 use PsN;
 use pharmml;
 
@@ -199,7 +199,7 @@ sub BUILD
                                                                    mirror_from_lst => $self->mirror_from_lst,
                                                                    niter_eonly => $self->niter_eonly,
                                                                    last_est_complete => $self->last_est_complete);
-        push( @{$self -> {'mirror_plot_modules'}}, $mirror_plot_module );    #FIXME: Should have had an accessor. Fix with Moose
+        push( @{$self -> {'mirror_plot_modules'}}, $mirror_plot_module );    #FIXME: Should have had an accessor. Fix with Mouse
     }
 
     if (defined $self->iofv and ($self->iofv > 0)) {
@@ -5650,6 +5650,4 @@ sub have_output
     return (defined $self->outputs and defined $self->outputs->[0] and $self->outputs->[0]->have_output());
 }
 
-no Moose;
-__PACKAGE__->meta->make_immutable;
 1;

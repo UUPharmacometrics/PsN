@@ -1,9 +1,10 @@
 package model::problem::mix;
 
-use Moose;
-use MooseX::Params::Validate;
+use Mouse;
+use MouseX::Params::Validate;
 
 extends 'model::problem::code_record';
+
 sub nspop
 {
     my $self = shift;
@@ -17,6 +18,5 @@ sub nspop
     }
     return $nspop;
 }
-no Moose;
-__PACKAGE__->meta->make_immutable;
+
 1;

@@ -7,8 +7,8 @@ use tool::llp;
 use tool::modelfit;
 use Math::Random;
 use ext::Math::MatrixReal;
-use Moose;
-use MooseX::Params::Validate;
+use Mouse;
+use MouseX::Params::Validate;
 use linear_algebra;
 use math qw(usable_number);
 use array qw(not_empty);
@@ -1391,6 +1391,4 @@ sub create_R_plots_code
         ]);
 }
 
-no Moose;
-__PACKAGE__->meta->make_immutable;
 1;

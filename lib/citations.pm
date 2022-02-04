@@ -2,8 +2,8 @@ package citations;
 
 use strict;
 use warnings;
-use Moose;
-use MooseX::Params::Validate;
+use Mouse;
+use MouseX::Params::Validate;
 use include_modules;
 use File::Spec;
 
@@ -83,6 +83,4 @@ sub _scan_bib_file
     return \@ref;
 }
 
-no Moose;
-__PACKAGE__->meta->make_immutable;
 1;

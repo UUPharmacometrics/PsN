@@ -213,10 +213,6 @@ jobs:
           LICENSE_KEY: ${{secrets.LICENSE_KEY}}
       - name: Install Math::Random
         run: sudo cpan -T Math::Random
-      - name: Install Moose
-        run: sudo cpan -T Moose
-      - name: Install MooseX::Params::Validate
-        run: sudo cpan -T MooseX::Params::Validate
       - name: Install Archive::Zip
         run: sudo cpan -T Archive::Zip
       - name: Install File::Copy::Recursive
@@ -315,11 +311,6 @@ jobs:
           run: |
             set PATH=%CD%\installer\strawberry\perl\site\bin;%CD%\installer\strawberry\perl\bin;%CD%\installer\strawberry\c\bin;%PATH%
             cpanm Params::Validate --notest
-          shell: cmd
-        - name: Install MooseX::Params::Validate
-          run: |
-            set PATH=%CD%\installer\strawberry\perl\site\bin;%CD%\installer\strawberry\perl\bin;%CD%\installer\strawberry\c\bin;%PATH%
-            cpanm MooseX::Params::Validate --notest
           shell: cmd
         - name: Install Math::Random
           run: |

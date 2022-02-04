@@ -1,8 +1,8 @@
 package tool::resmod;
 
 use strict;
-use Moose;
-use MooseX::Params::Validate;
+use Mouse;
+use MouseX::Params::Validate;
 use List::Util qw(max);
 use include_modules;
 use array;
@@ -1279,7 +1279,4 @@ sub _create_model_templates
     $self->cutoffs($cutoffs);
 }
 
-
-no Moose;
-__PACKAGE__->meta->make_immutable;
 1;

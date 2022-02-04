@@ -4,8 +4,8 @@ package so::parsers::psn;
 
 use strict;
 use warnings;
-use Moose;
-use MooseX::Params::Validate;
+use Mouse;
+use MouseX::Params::Validate;
 use include_modules;
 use File::Copy qw/cp mv/;
 use Cwd;
@@ -274,6 +274,4 @@ sub _merge_simulated_tables
     close $dest_cotab;
 }
 
-no Moose;
-__PACKAGE__->meta->make_immutable;
 1;

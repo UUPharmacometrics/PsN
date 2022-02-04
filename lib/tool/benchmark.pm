@@ -7,8 +7,8 @@ use data;
 use nonmemrun;
 use OSspecific;
 use tool::modelfit;
-use Moose;
-use MooseX::Params::Validate;
+use Mouse;
+use MouseX::Params::Validate;
 use output;
 use utils::file;
 use array qw(get_array_positions);
@@ -892,6 +892,4 @@ sub create_R_plots_code{
 
 }
 
-no Moose;
-__PACKAGE__->meta->make_immutable;
 1;

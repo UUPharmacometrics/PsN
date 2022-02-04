@@ -8,8 +8,8 @@ use Config;
 use ext::Math::SigFigs;
 use model;
 use array qw(:all);
-use Moose;
-use MooseX::Params::Validate;
+use Mouse;
+use MouseX::Params::Validate;
 use output::problem;
 use utils::file;
 use nmtablefile;
@@ -3399,7 +3399,4 @@ sub set_runtime
     }
 }
 
-
-no Moose;
-__PACKAGE__->meta->make_immutable;
 1;

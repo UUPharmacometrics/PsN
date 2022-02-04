@@ -1,7 +1,7 @@
 package model::problem::data;
 
-use Moose;
-use MooseX::Params::Validate;
+use Mouse;
+use MouseX::Params::Validate;
 use include_modules;
 use OSspecific;
 use File::Spec qw(abs2rel catfile);
@@ -255,6 +255,4 @@ sub _format_record
     return \@formatted;
 }
 
-no Moose;
-__PACKAGE__->meta->make_immutable;
 1;

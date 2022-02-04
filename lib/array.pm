@@ -5,9 +5,8 @@
 package array;
 
 use strict;
-#use warnings;
 
-use MooseX::Params::Validate;
+use MouseX::Params::Validate;
 use include_modules;
 use POSIX 'floor';
 use math qw(round);

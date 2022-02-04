@@ -283,7 +283,7 @@ $config_file->gof('p_value');
 $config_file->p_value(1);
 $config_file->search_direction('forward');
 $config_file->update_derivatives(0);
-$config_file->{'ofv_change'} = undef if defined ($config_file -> ofv_change()); #FIXME for Moose
+$config_file->{'ofv_change'} = undef if defined ($config_file -> ofv_change()); #FIXME for Mouse
 
 my $original_included=undef;
 if( defined $config_file -> included_relations() ){

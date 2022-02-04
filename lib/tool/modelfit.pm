@@ -24,8 +24,8 @@ use output;
 use OSspecific;
 use ui;
 use Time::HiRes;
-use Moose;
-use MooseX::Params::Validate;
+use Mouse;
+use MouseX::Params::Validate;
 use PsN;
 
 extends 'tool';
@@ -3579,6 +3579,4 @@ sub create_R_plots_code
     $rplot->add_preamble(code => [ "res.table <- '$res_table_file'" ] );
 }
 
-no Moose;
-__PACKAGE__->meta->make_immutable;
 1;

@@ -6,7 +6,7 @@ use OSspecific;
 use PsN;
 use ui;
 use model;
-use MooseX::Params::Validate;
+use MouseX::Params::Validate;
 use array qw(max min);
 use Config;
 use common_options;
@@ -718,6 +718,5 @@ sub check_execute
 
     return $error;
 }
-
 
 1;

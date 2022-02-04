@@ -1,8 +1,8 @@
 package model::problem::estimation;
 
 use include_modules;
-use Moose;
-use MooseX::Params::Validate;
+use Mouse;
+use MouseX::Params::Validate;
 
 extends 'model::problem::record';
 
@@ -117,7 +117,4 @@ sub is_eval_only
     return 0;
 }
 
-
-no Moose;
-__PACKAGE__->meta->make_immutable;
 1;

@@ -4,8 +4,8 @@ package so;
 
 use strict;
 use warnings;
-use Moose;
-use MooseX::Params::Validate;
+use Mouse;
+use MouseX::Params::Validate;
 use include_modules;
 use XML::LibXML;
 use so::soblock;
@@ -193,6 +193,4 @@ sub _exclude_elements
 
 }
 
-no Moose;
-__PACKAGE__->meta->make_immutable;
 1;

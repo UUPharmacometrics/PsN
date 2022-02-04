@@ -2,7 +2,7 @@ package simeval_util;
 
 use strict;
 use include_modules;
-use MooseX::Params::Validate;
+use MouseX::Params::Validate;
 use nmtablefile;
 use array qw(any_nonzero max min find_zeros unique get_positions get_intersection is_zero);
 

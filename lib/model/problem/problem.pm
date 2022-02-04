@@ -1,7 +1,7 @@
 package model::problem::problem;
 
-use Moose;
-use MooseX::Params::Validate;
+use Mouse;
+use MouseX::Params::Validate;
 
 extends 'model::problem::record';
 
@@ -33,6 +33,4 @@ sub add_comment
     $self->print_order(\@print_order);
 }
 
-no Moose;
-__PACKAGE__->meta->make_immutable;
 1;

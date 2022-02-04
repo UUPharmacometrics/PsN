@@ -6,8 +6,8 @@ use Cwd;
 use File::Copy 'cp';
 use File::Spec;
 use File::Basename;
-use Moose;
-use MooseX::Params::Validate;
+use Mouse;
+use MouseX::Params::Validate;
 use PsN;
 use model;
 use OSspecific;
@@ -464,6 +464,4 @@ sub create_r_vector
     return $str;
 }
 
-no Moose;
-__PACKAGE__->meta->make_immutable;
 1;

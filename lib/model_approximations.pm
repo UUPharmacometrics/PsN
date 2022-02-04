@@ -3,7 +3,7 @@ package model_approximations;
 use strict;
 use warnings;
 use include_modules;
-use MooseX::Params::Validate;
+use MouseX::Params::Validate;
 use model_transformations;
 use code;
 

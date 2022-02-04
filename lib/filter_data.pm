@@ -5,7 +5,7 @@ package filter_data;
 use strict;
 use warnings;
 use File::Copy qw(cp);
-use MooseX::Params::Validate;
+use MouseX::Params::Validate;
 use data;
 use model;
 use tool::modelfit;
@@ -266,6 +266,5 @@ sub add_derived_columns
     cp utils::file::replace_extension($model_name, 'lst'), "$workdir/result.lst";
     return $result_model;
 }
-
 
 1;

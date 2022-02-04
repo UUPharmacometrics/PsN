@@ -1,7 +1,7 @@
 package model_plus;
 
 use strict;
-use MooseX::Params::Validate;
+use MouseX::Params::Validate;
 use File::Spec qw(splitpath);
 require model;
 require model::problem;

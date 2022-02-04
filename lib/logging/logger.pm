@@ -1,8 +1,8 @@
 package logging::logger;
 
 use Carp;
-use Moose;
-use MooseX::Params::Validate;
+use Mouse;
+use MouseX::Params::Validate;
 
 has 'name' => ( is => 'rw', isa => 'Str' );
 has 'level' => ( is => 'rw', isa => 'Int', default => 30 );

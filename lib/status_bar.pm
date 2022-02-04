@@ -1,7 +1,7 @@
 package status_bar;
 
-use Moose;
-use MooseX::Params::Validate;
+use Mouse;
+use MouseX::Params::Validate;
 
 has 'width' => ( is => 'rw', isa => 'Int', default => 40 );
 has 'sofar' => ( is => 'rw', isa => 'Int', default => 0 );
@@ -52,6 +52,4 @@ sub tick
     return $return;
 }
 
-no Moose;
-__PACKAGE__->meta->make_immutable;
 1;
