@@ -14,7 +14,7 @@ use utils::file;
 use PsN;
 use ui;
 use Config;
-use YAML::XS;
+use YAML;
 our $AUTOLOAD;
 
 use Mouse;
@@ -779,7 +779,7 @@ sub update_meta
 
     my $yaml_filename = $self->directory . 'meta.yaml';
     if (-e $yaml_filename) {
-        my $meta_file = YAML::XS::LoadFile($yaml_filename);
+        my $meta_file = YAML::LoadFile($yaml_filename);
         for my $key (keys %{$meta_file}) {      # Merge $self->metadata with file prefering $self->metadata
             if (not exists $self->metadata->{$key}) {
                 $self->metadata->{$key} = $meta_file->{$key};
@@ -1814,7 +1814,7 @@ sub write_meta
     );
     my $directory = $parm{'directory'};
 
-    YAML::XS::DumpFile("$directory/meta.yaml", $self->metadata);
+    YAML::DumpFile("$directory/meta.yaml", $self->metadata);
 }
 
 sub get_rundir

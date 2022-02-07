@@ -14,7 +14,7 @@ use charnames ':full';
 use Encode qw(encode decode);
 use Time::Local;
 use POSIX;
-use YAML::XS;
+use YAML;
 # More PsN dependencies included with require further down
 
 my $cmd_line = $0 . " " . join( " ", @ARGV );
@@ -670,7 +670,7 @@ sub describe_file
                                               'parameter_type' => $fieldtype});
             }
         }
-        $ret = YAML::XS::Dump(\%filedef) . "---\n";
+        $ret = YAML::Dump(\%filedef) . "---\n";
     } else {
         $ret = "The run record information was generated: $now\n".
             "Omegas and sigmas are reported as ".$filedef{'omega_sigma_type'}.

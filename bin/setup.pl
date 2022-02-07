@@ -127,8 +127,8 @@ my @utilities = (
     'm1find', 'pack'
     );
 
-my @win_modules = ('Math::Random', 'MouseX::Params::Validate', 'YAML::XS');
-my @nix_modules = ('Math::Random', 'MouseX::Params::Validate', 'YAML::XS');
+my @win_modules = ('Math::Random', 'MouseX::Params::Validate');
+my @nix_modules = ('Math::Random', 'MouseX::Params::Validate');
 my @recommended_modules = ('Archive::Zip');
 
 my @modules;

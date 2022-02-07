@@ -55,6 +55,18 @@ LIBFILES= ui.pm \
 	Mouse/Meta/Role/Method.pm \
 	Mouse/Util/MetaRole.pm \
 	Mouse/Util/TypeConstraints.pm \
+	YAML.pm \
+	YAML/Any.pm \
+	YAML/Dumper.pm \
+	YAML/Error.pm \
+	YAML/Loader.pm \
+	YAML/Marshall.pm \
+	YAML/Mo.pm \
+	YAML/Node.pm \
+	YAML/Tag.pm \
+	YAML/Types.pm \
+	YAML/Dumper/Base.pm \
+	YAML/Loader/Base.pm \
 	status_bar.pm \
 	model_plus.pm \
 	monitor.pm \
