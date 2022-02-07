@@ -55,7 +55,6 @@ LIBFILES= ui.pm \
 	Mouse/Meta/Role/Method.pm \
 	Mouse/Util/MetaRole.pm \
 	Mouse/Util/TypeConstraints.pm \
-	MouseX/Params/Validate.pm \
 	status_bar.pm \
 	model_plus.pm \
 	monitor.pm \

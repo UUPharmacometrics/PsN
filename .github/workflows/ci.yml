@@ -137,6 +137,8 @@ jobs:
         run: tar -zxvf PsN-*.tar.gz
       - name: Install Math::Random
         run: sudo cpan -T Math::Random
+      - name: Install MouseX::Params::Validate
+        run: sudo cpan -T MouseX::Params::Validate
       - name: Install YAML::XS
         run: sudo cpan -T YAML::XS
       - name: Install Perl and R dependencies
@@ -213,6 +215,8 @@ jobs:
           LICENSE_KEY: ${{secrets.LICENSE_KEY}}
       - name: Install Math::Random
         run: sudo cpan -T Math::Random
+      - name: Install MouseX::Params::Validate
+        run: sudo cpan -T MouseX::Params::Validate
       - name: Install Archive::Zip
         run: sudo cpan -T Archive::Zip
       - name: Install File::Copy::Recursive
@@ -316,6 +320,16 @@ jobs:
           run: |
             set PATH=%CD%\installer\strawberry\perl\site\bin;%CD%\installer\strawberry\perl\bin;%CD%\installer\strawberry\c\bin;%PATH%
             cpanm Math::Random --notest
+          shell: cmd
+        - name: Install MouseX::Params::Validate
+          run: |
+            set PATH=%CD%\installer\strawberry\perl\site\bin;%CD%\installer\strawberry\perl\bin;%CD%\installer\strawberry\c\bin;%PATH%
+            cpanm MouseX::Params::Validate --notest
+          shell: cmd
+        - name: Install YAML::XS
+          run: |
+            set PATH=%CD%\installer\strawberry\perl\site\bin;%CD%\installer\strawberry\perl\bin;%CD%\installer\strawberry\c\bin;%PATH%
+            cpanm YAML::XS --notest
           shell: cmd
         - name: Install PsN
           run: |

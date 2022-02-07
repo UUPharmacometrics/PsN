@@ -23,6 +23,7 @@ perl packages which are required for PsN4:
 
 Math::Random
 YAML::XS
+MouseX::Params::Validate
 
 - Recommended perl packages, not absolutely required when running PsN 
 but necessary for some features:
