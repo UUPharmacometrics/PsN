@@ -14,8 +14,6 @@ outlier_infl_table <- function(all.iofv.file,n.subjects,samples,ebe.npde.file,et
     do_outlier_plot <- FALSE
     model.filename <- '' # because we are not plotting that
     # create outlier grafs and tables
-    if (require("PEIP") == TRUE){
-      
       list_emp_distance <- empirical.distance(ebenpde_obs,n.subjects)
       emp_distance <- list_emp_distance$emp_distance
       #...........................................(4)out_tables......................................................   
@@ -60,9 +58,6 @@ outlier_infl_table <- function(all.iofv.file,n.subjects,samples,ebe.npde.file,et
       }
       
       #.................................................................................................    
-    } else {
-      print("library PEIP not installed, cannot create outlier results for ebe npde")
-    }
   
   # ofv part
   list_i_ofv_res <- i_ofv_res(all.iofv.file,n.subjects,samples,show.warning)# calculation
