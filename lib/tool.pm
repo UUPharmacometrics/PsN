@@ -779,7 +779,27 @@ sub update_meta
 
     my $yaml_filename = $self->directory . 'meta.yaml';
     if (-e $yaml_filename) {
-        my $meta_file = YAML::LoadFile($yaml_filename);
+        # Procedure to handle differences in legal yaml between Perl and R libs
+        open(my $fh, '<', $yaml_filename);
+        my $in_cmd = 0;
+        my $concat;
+        while (my $line = <$fh>) {
+            if ($line =~ /^(command_line: .*)\n$/) {
+                $concat = $1;
+                $in_cmd = 1;
+            } elsif ($in_cmd and $line =~ /^  /) {
+                $concat .= substr($line, 2, -1);
+            } elsif ($in_cmd) {
+                $in_cmd = 0;
+                $concat .= "\n" . $line;
+            } else {
+                $concat .= $line;
+            }
+        }
+        if ($concat !~ /^---/) {
+            $concat = "---\n" . $concat;
+        }
+        my $meta_file = YAML::Load($concat);
         for my $key (keys %{$meta_file}) {      # Merge $self->metadata with file prefering $self->metadata
             if (not exists $self->metadata->{$key}) {
                 $self->metadata->{$key} = $meta_file->{$key};
