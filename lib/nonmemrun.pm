@@ -31,7 +31,6 @@ sub BUILD
         $self->full_path_runscript($ref->{'full_path_runscript'});
         $self->nmqual_xml($ref->{'nmqual_xml'}) if ($self->nmqual);
     }
-
 }
 
 sub setup_paths
