@@ -55,6 +55,7 @@ LIBFILES= ui.pm \
 	Mouse/Meta/Role/Method.pm \
 	Mouse/Util/MetaRole.pm \
 	Mouse/Util/TypeConstraints.pm \
+	File/Copy/Recursive.pm \
 	YAML.pm \
 	YAML/Any.pm \
 	YAML/Dumper.pm \
