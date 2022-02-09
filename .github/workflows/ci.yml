@@ -217,8 +217,6 @@ jobs:
         run: sudo cpan -T MouseX::Params::Validate
       - name: Install Archive::Zip
         run: sudo cpan -T Archive::Zip
-      - name: Install File::Copy::Recursive
-        run: sudo cpan -T File::Copy::Recursive
       - name: Install Test::Exception
         run: sudo cpan -T Test::Exception
       - name: Install PsN

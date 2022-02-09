@@ -86,23 +86,3 @@ Authors
 ************************
 
 Please see the file called AUTHORS
-
-************************
-Dependencies 
-************************
-
-- Xpose must, if used, be version 4.2.1 or later to handle PsN-3.5.3 or later 
-  output format. It is recommended to use the latest Xpose release
-  from http://xpose.sf.net
-
-************************
-Known issues 
-************************
-
-- Windows users need to be careful to choose 
-  a Perl version where the extra modules needed for PsN are available. See the 
-  instructions on https://uupharmacometrics.github.io/PsN/install.html
-
-- Installation problem on some Windows systems where 
-perl 'system' command does not work. Make sure perl module File::Copy::Recursive
-is installed *before* (re)running the installation script setup.pl

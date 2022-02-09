@@ -19,7 +19,6 @@ my $use_user_name;
 my $is_root = 0;
 my $uid;
 my $gid;
-my $have_file_copy = 0;
 my $directory_separator;
 my $is_win7 = 0;
 my $is_Vista = 0;
@@ -50,8 +49,6 @@ setup_globals();
 
 if (eval('require File::Copy::Recursive')) {
     eval('import File::Copy::Recursive qw/fcopy rcopy dircopy fmove rmove dirmove/');
-    $have_file_copy = 1;
-    print "\nInformation: Using File::Copy::Recursive for copying\n";
 }
 
 if (running_on_windows()) {
@@ -621,13 +618,8 @@ sub copy_file
     my $source = shift;
     my $dest = shift;
 
-    # This sub works currently only on windows
-    if ($have_file_copy) {
-        unless (fcopy($source, $dest)) {
-            abort("Could not copy $source to $dest : $!\n");
-        }
-    } else {
-        system("copy /Y \"$source\" \"$dest\"");
+    unless (fcopy($source, $dest)) {
+        abort("Could not copy $source to $dest : $!\n");
     }
 }
 
@@ -779,41 +771,19 @@ if (-e "$library_dir/PsN_$name_safe_version/psn.conf") {
 
 my $newconf = File::Spec->catfile( $library_dir, "PsN_$name_safe_version", "psn.conf" );
 my $thelibdir = File::Spec->catdir($library_dir,"PsN_$name_safe_version");
-if ($have_file_copy) {
-    if ($keep_conf) {
-        unless (fcopy($newconf, "old.conf")) {
-            abort("Could not copy $newconf to old.conf : $!\n");
-        }
-    }
-    unless (dircopy("lib", $thelibdir)) {
-        abort(" Could not copy contents of lib directory to $thelibdir : $!\n");
-    }
-    if ($keep_conf){
-        unless (fcopy("old.conf",$newconf)) {
-            abort("Could not copy old.conf to $newconf : $!\n");
-        }
-    }
-} else {
-    #do not have File::Copy
-    system($copy_cmd . " \"" . $newconf . "\" old.conf") if $keep_conf;
 
-    my $full_command = $copy_recursive_cmd . " " . File::Spec -> catfile( "lib", "*" ) . " \"" . $thelibdir . "\"";
-    system($full_command);
-
-    unless (-e "$library_dir" . "/PsN_$name_safe_version/model.pm" ) {
-        print "Copying of files to $library_dir" . "/PsN_$name_safe_version/".
-            " failed, the following command did not work\n$full_command\n";
-        if (running_on_windows()) {
-            abort("It is recommended to run the command\n".
-                "cpan install File::Copy::Recursive (Strawberry Perl) or ppm install file-copy-recursive (ActiveState Perl)\n".
-                "in a command window, and then try to install PsN again, using the same setup script.\n");
-        } else {
-            abort("It is recommended to install File::Copy::Recursive".
-                "and then try to install PsN again, using the same setup script.\n");
-        }
+if ($keep_conf) {
+    unless (fcopy($newconf, "old.conf")) {
+        abort("Could not copy $newconf to old.conf : $!\n");
     }
-
-    system($copy_cmd . " old.conf \"" . $newconf . "\"") if $keep_conf;
+}
+unless (dircopy("lib", $thelibdir)) {
+    abort(" Could not copy contents of lib directory to $thelibdir : $!\n");
+}
+if ($keep_conf){
+    unless (fcopy("old.conf",$newconf)) {
+        abort("Could not copy old.conf to $newconf : $!\n");
+    }
 }
 
 my $confirmed = 0;
@@ -1001,27 +971,8 @@ if ($auto or confirm()) {
     $test_library_dir = get_input($default_test);
     $test_library_dir .= "/PsN_test_$name_safe_version";
 
-    if ($have_file_copy) {
-        unless (dircopy("test", $test_library_dir)) {
-            abort("Could not copy contents of test directory to $test_library_dir : $!\n");
-        }
-    } else {
-        mkpath($test_library_dir);
-        my $full_command = $copy_recursive_cmd . " " . File::Spec->catfile("test", "*") . " \"" . $test_library_dir . "\"";
-        system($full_command);
-
-        unless (-e "$test_library_dir/includes.pm" ) {
-            print "Copying of files to $test_library_dir/ failed, the following command did not work\n$full_command\n";
-            if (running_on_windows()) {
-                abort("It is recommended to run the command\n".
-                    "cpan install File::Copy::Recursive (Strawberry Perl) or ppm install file-copy-recursive (ActiveState Perl)\n".
-                    "in a command window, and then try to install PsN again, using the same setup script.\n");
-            } else {
-                abort("It is recommended to install File::Copy::Recursive and then try to install PsN again, using the same setup script.\n");
-            }
-        }
-
-        system($copy_cmd . " old.conf \"" . $newconf . "\"") if $keep_conf;
+    unless (dircopy("test", $test_library_dir)) {
+        abort("Could not copy contents of test directory to $test_library_dir : $!\n");
     }
 
     # Put library and bin paths into includes.pm
@@ -1074,11 +1025,7 @@ if (not $keep_conf) {
         my $newf = File::Spec->catfile($library_dir, "PsN_$name_safe_version", "psn.conf");
 
         if (not $auto and confirm()) {
-            if ($have_file_copy) {
-                fcopy($old_psn_config_file, $newf);
-            } else {
-                system($copy_cmd . " \"" . $old_psn_config_file . "\" \"" . $newf . "\"") ;
-            }
+            fcopy($old_psn_config_file, $newf);
             if (-e $newf) {
                 $offer_help = 0;
                 $conf_ok = 1;
