@@ -8,6 +8,8 @@ use lib 'lib';
 use ext::Config::Tiny;
 use ext::File::HomeDir;
 use PsN (); #pass empty list so that import, which reads config file, is not called
+use File::Copy::Recursive qw(fcopy rcopy dircopy fmove rmove dirmove);
+
 
 my $version = $PsN::version;
 
@@ -46,10 +48,6 @@ if (scalar(@ARGV)>0){
 }
 
 setup_globals();
-
-if (eval('require File::Copy::Recursive')) {
-    eval('import File::Copy::Recursive qw/fcopy rcopy dircopy fmove rmove dirmove/');
-}
 
 if (running_on_windows()) {
     get_windows_version();
