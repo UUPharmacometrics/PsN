@@ -188,8 +188,7 @@ my $ref = tool::modelfit::diagnose_lst_errors(missing => 1,
 							  have_stats_runs => 0,
 							  modext  => 'mod',
 							  run_local => 1,
-							  nmtran_error_file => 'nmtran_error.txt',
-							  nmqual => 0);
+							  nmtran_error_file => 'nmtran_error.txt');
 cmp_ok($ref->[0],'eq','NMtran could not be initiated (the NMtran output file FDATA is missing) - check that the nmfe script can be run independent of PsN',
 	   'failure nmtran init ');
 cmp_ok($ref->[2],'==',0,'restart possible nmtran init local');
@@ -200,8 +199,7 @@ $ref = tool::modelfit::diagnose_lst_errors(missing => 1,
 							  have_stats_runs => 0,
 							  modext  => 'mod',
 							  run_local => 0,
-							  nmtran_error_file => 'nmtran_error.txt',
-							  nmqual => 0);
+							  nmtran_error_file => 'nmtran_error.txt');
 cmp_ok($ref->[0],'eq','NMtran could not be initiated (the NMtran output file FDATA is missing) - this could be a cluster file sync error',
 	   'failure nmtran init ');
 cmp_ok($ref->[2],'==',1,'restart possible nmtran init not local');
@@ -214,8 +212,7 @@ $ref = tool::modelfit::diagnose_lst_errors(missing => 0,
 							  have_stats_runs => 0,
 							  modext  => 'mod',
 							  run_local => 1,
-							  nmtran_error_file => 'nmtran_error.txt',
-							  nmqual => 0);
+							  nmtran_error_file => 'nmtran_error.txt');
 cmp_ok($ref->[0],'eq','There was an error when running nmfe, NMtran could not be initiated (the NMtran output file FDATA is missing)',
 'failure nmtran init ');
 cmp_ok($ref->[2],'==',0,'restart possible nmtran init ');
@@ -228,8 +225,7 @@ $ref = tool::modelfit::diagnose_lst_errors(missing => 0,
 							  have_stats_runs => 0,
 							  modext  => 'mod',
 							  run_local => 1,
-							  nmtran_error_file => 'nmtran_error.txt',
-							  nmqual => 0);
+							  nmtran_error_file => 'nmtran_error.txt');
 cmp_ok($ref->[0],'eq','NMtran failed','failure nmtran failed ');
 cmp_ok($ref->[2],'==',0,'restart possible nmtran fail ');
 cmp_ok($ref->[3],'==',1,'store error nmtran fail ');
@@ -241,8 +237,7 @@ $ref = tool::modelfit::diagnose_lst_errors(missing => 0,
 							  have_stats_runs => 0,
 							  modext  => 'mod',
 							  run_local => 1,
-							  nmtran_error_file => 'nmtran_error.txt',
-							  nmqual => 0);
+							  nmtran_error_file => 'nmtran_error.txt');
 cmp_ok($ref->[0],'eq','It seems like the compilation failed','failure compilation failed ');
 cmp_ok($ref->[2],'==',0,'restart possible compilation fail ');
 cmp_ok($ref->[3],'==',1,'store error compilation fail ');
@@ -255,8 +250,7 @@ $ref = tool::modelfit::diagnose_lst_errors(missing => 0,
 										   have_stats_runs => 0,
 										   modext  => 'mod',
 										   run_local => 1,
-										   nmtran_error_file => 'nmtran_error.txt',
-										   nmqual => 0);
+										   nmtran_error_file => 'nmtran_error.txt');
 cmp_ok($ref->[0],'eq','NONMEM run failed','failure NONMEM failed ');
 cmp_ok($ref->[2],'==',0,'restart possible NONMEM fail ');
 cmp_ok($ref->[3],'==',1,'store error NONMEM fail ');
@@ -267,8 +261,7 @@ $ref = tool::modelfit::diagnose_lst_errors(missing => 0,
 										   have_stats_runs => 0,
 										   modext  => 'mod',
 										   run_local => 1,
-										   nmtran_error_file => 'nmtran_error.txt',
-										   nmqual => 0);
+										   nmtran_error_file => 'nmtran_error.txt');
 
 cmp_ok($ref->[0],'eq','NONMEM iterations interrupted','failure iterations interrupted ');
 cmp_ok($ref->[2],'==',1,'restart possible iterations interrupted ');
@@ -279,8 +272,7 @@ $ref = tool::modelfit::diagnose_lst_errors(missing => 1,
 										   have_stats_runs => 0,
 										   modext  => 'mod',
 										   run_local => 1,
-										   nmtran_error_file => 'nmtran_error.txt',
-										   nmqual => 0);
+										   nmtran_error_file => 'nmtran_error.txt');
 cmp_ok($ref->[0],'eq','the lst-file does not exist in NM_run1','failure lst missing ');
 cmp_ok($ref->[2],'==',0,'restart possible NONMEM fail ');
 cmp_ok($ref->[3],'==',1,'store error NONMEM fail ');

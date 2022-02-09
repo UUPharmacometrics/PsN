@@ -121,7 +121,6 @@ has 'raw_nonp_results' => ( is => 'rw', isa => 'ArrayRef' );
 has 'raw_nonp_file' => ( is => 'rw', isa => 'ArrayRef[Str]', default => sub { ['raw_nonparametric.csv'] } );
 has 'sge_prepend_flags' => ( is => 'rw', isa => 'Str' );
 has 'nmfe' => ( is => 'rw', isa => 'Bool', default => 1 );
-has 'nmqual' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'top_tool' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'ud_native_retrieve' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'ud_sleep' => ( is => 'rw', isa => 'Int', default => 30 );

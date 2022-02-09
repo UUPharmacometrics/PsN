@@ -48,14 +48,10 @@ copy_test_files($tempdir,["phenomaxeval10.mod","phenomaxeval0.mod", "pheno.dta",
 
 chdir($tempdir);
 
-#figure out if we are running nmqual or nmfe, which decides control stream extension
 my %options = %{get_psn_options()};
 common_options::setup( \%options, 'execute' ); #
 our $modext = 'mod';
 our $lstext = 'lst'; 
-if (defined $options{'nmqual'} and $options{'nmqual'}==1){
-	$modext = 'ctl';
-}
 my @command_line = (
 	get_command('execute') . " -seed=1 phenomaxeval10.mod -no-disp -clean=1 -no-tweak_inits -min_retries=0 -retries=0 -maxevals=9999 -handle_msfo -directory=dir0",
 	get_command('execute') . " -seed=1  phenomaxeval10.mod -no-disp -clean=1 -tweak_inits  -min_retries=0 -retries=0 -maxevals=0 -directory=dir1",

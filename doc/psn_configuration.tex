@@ -17,10 +17,6 @@ You can copy psn.conf from a previous working PsN installation to the new instal
 
 If the old psn.conf was from PsN 3 you need to edit the default settings of nmfe\_options, if set in the old psn.conf, because the syntax of this option has changed between PsN 3 and PsN 4.
 
-If you have a NMQual 8 installation of NONMEM and always want to run NONMEM via the autolog script, you need to replace nmfe=1 with nmqual=1 in the \verb|[default_options]| section in psn.conf. You should also consider adding log.xml to the
-nm\_output list of file extensions.\\
-\\If you have other configuration needs, you need to read the rest of this document.
-
 \section{psn.conf overview}
 The configuration file psn.conf is required to make PsN run correctly. In the configuration file the NONMEM installation directory is specified, together with essential version information. 
 
@@ -134,20 +130,6 @@ This command will also show the (if any) optional description text after the ver
 If the user wants to invoke nmfe using a wrapper, or use a modifed nmfe script with a different name, the name of the alternative script including the full path can be set under [nm\_versions] instead of in the installation directory. PsN will check that the file exists and is executable. 
 Using a wrapper is useful e.g. when environment variable changes are needed prior to nmfe execution.
 
-For NMQual 8 installations where the user wants to invoke NONMEM using autolog.pl (instead of using nmfeX) the NONMEM installation directory should be set to exactly the same path as the 'target' alias set in the xml file used for installation. 
-For example, if the xml file used at installation defines   
-\begin{verbatim}
-<alias id='target'>C:/nm73</alias>
-\end{verbatim}
-then psn.conf should read
-\begin{verbatim}
-[nm_versions]
-73=C:/nm73,7.3
-\end{verbatim}
-The PsN installation script can handle the setting(s) [nm\_versions] automatically.
-
-Note that -nmqual must be set on the command line or in psn.conf for PsN to run NONMEM using the autolog script.
-
 \subsection{NONMEM information for portable PsN}
 This functionality is intended for advanced users only. The
 \verb|[nm_versions]|
@@ -166,28 +148,8 @@ The above form of \verb|[nm_versions]| must be manually created in psn.conf. It 
 
 \section{Running nmfe from within PsN}
 
-PsN will only run NONMEM via the nmfe script, an alternative script set by the user, or a NMQual autolog.pl script. 
+PsN will only run NONMEM via the nmfe script or an alternative script set by the user. 
 The default setting is nmfe, where PsN will look for nmfeX, where X stands for the NONMEM version number specified in the nm\_versions section (X is 72 if NONMEM 7.2 is used), in first the /run then the /util and last the /. subdirectory of the installation directory specified in psn.conf, and call the first instance found. Note that it is possible to use nmfeX scripts located in any directory specified in the [nm\_versions] section, not just a standard NONMEM installation directory, and that a wrapper can also be used, see section Essential NONMEM information.
-
-\section{PsN and MNQual 8}
-
-PsN 4 supports NMQual 8 (but no older versions of NMQual). The user must set option -nmqual, either in psn.conf or on the command line, and the NONMEM installation directory must be properly defined in psn.conf (see section Essential NONMEM information above). PsN will look for autolog.pl in the nmqual subdirectory of the NONMEM installation directory, and return an error if it is not found.
-PsN will use the log.xml file in the nmqual subdirectory of the NONMEM installation directory as input to autolog.pl, so it is important that nmqual/log.xml exists and that the containing NONMEM installation information has not been changed after the original NONMEM installation via NMQual.
-
-\noindent The full command used by PsN is\\
-\verb|perl /path/autolog.pl /path/log.xml run ce /full/path/workdir psn| (extra NONMEM options)
-\noindent or, if option -parafile is set, PsN will copy the parafile to psn.pnm in the NM\_run directory and use the command\\
-\verb|perl /path/autolog.pl /path/log.xml para ce /full/path/workdir psn| (extra NONMEM options).
-
-The user is not required to modify log.xml in any way when running with PsN 4. When running PsN 3 with NMQual the user need to modify the 'run' section of log.xml, but with PsN 4 log.xml should be left as is.
-
-\textbf{NOTE}: The extra NONMEM options mentined above are options set with e.g. -nmfe\_options or -nodes, but unless the do-on-run block of the log.xml file uses these extra options, \emph{they will be ignored}. 
-PsN will append them to the autolog.pl call but it is up to log.xml to decide what to do with them.
-
-To facilitate debugging, the command used to invoke autolog.pl will be printed to the file nmqualcommand in the NM\_runX subdirectory when PsN is run locally on UNIX or Windows. When -run\_on\_sge or -run\_on\_slurm is used, the command
-will be printed to qsubcommand/sbatchcommand (also when -nmfe is used). 
-
-If the user does not set option -nmqual, but sets -nm\_version to an NMQual installation of NONMEM, then PsN will look for an nmfe script in the installation directory as described in section Running nmfe from within PsN.
 
 \section{Compiler configuration}
 

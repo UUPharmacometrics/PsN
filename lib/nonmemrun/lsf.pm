@@ -21,8 +21,6 @@ sub submit
 
     $self->pre_compile_cleanup;
 
-  #only support nmfe here, not nmqual or PsN compile
-
   my $jobname = $self->model->filename;
   $jobname = 'psn_' . $jobname if ($jobname =~ /^[0-9]/);
   $jobname = $self->lsf_job_name if (defined $self->lsf_job_name);

@@ -21,8 +21,6 @@ sub submit
 
     $self->pre_compile_cleanup;
 
-    #only support nmfe here, not nmqual
-
     my $jobname = $self->model->filename;
     $jobname = 'psn_' . $jobname if ($jobname =~ /^[0-9]/);
 
@@ -84,9 +82,6 @@ sub submit
 
     my $command = $self->create_command;
     my $modfile = 'psn.mod';
-    if ($self->nmqual){
-        $modfile = 'psn.ctl';
-    }
     my $lstfile = 'psn.lst';
 
     if ($self->check_modfile){

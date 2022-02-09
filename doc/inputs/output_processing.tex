@@ -17,7 +17,7 @@ Default is 0. This command creates a set of simulations from a model file that c
 \optdefault{nm\_output}{comma-separated list of file extensions}
 Default not set. NONMEM generates many output files per run. PsN will always copy the lst-file back to the calling directory. The option -nm\_output decides which of the more than 10 additional files should also be copied back. The default in the auto-generated psn.conf is ext,cov,cor,coi,phi. 
 
-Note that NM output files which are not copied to the calling directory can still be found inside the run directory unless -clean is set larger than 2. If the user runs NMQual8 (option -nmqual is set) and wants the log.xml file copied back then the log.xml extension should be included in the -nm\_output list, i.e. nm\_output=ext,cov,cor,coi,phi,log.xml or similar.
+Note that NM output files which are not copied to the calling directory can still be found inside the run directory unless -clean is set larger than 2.
 \nextopt
 %this must be tested before advertised
 %\optdefault{outputfile}{string}

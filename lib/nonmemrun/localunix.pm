@@ -26,7 +26,6 @@ sub submit
     if (not $self->display_iterations) {
         $command .= ' >' . $self->nmfe_output_file;
     }
-    system("echo $command > nmqualcommand") if ($self->nmqual);
 
     my $pid;
     my $errmess;

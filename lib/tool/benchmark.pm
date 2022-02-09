@@ -59,9 +59,9 @@ sub BUILD
 
     foreach my $version (@{$self->alt_nonmem}){
         #this will croak in nonmemrun if version is not valid
-        #each item is hashref with keys 'full_path_runscript','full_path_nmtran','nmqual_xml'
+        #each item is hashref with keys 'full_path_runscript','full_path_nmtran'
 
-        push(@{$self->nonmem_paths},nonmemrun::setup_paths(nm_version => $version,nmqual => $self->nmqual));
+        push(@{$self->nonmem_paths},nonmemrun::setup_paths(nm_version => $version));
     }
 
     if (defined $self->record_options){

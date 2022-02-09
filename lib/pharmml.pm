@@ -60,7 +60,7 @@ sub check_converted_model
 
     # Run nmtran to test converted file before using it with PsN
 
-    my $ref = nonmemrun::setup_paths(nm_version => $PsN::nm_version, nmqual => 0);
+    my $ref = nonmemrun::setup_paths(nm_version => $PsN::nm_version);
     my $command = $ref->{'full_path_nmtran'} . "<$filename";
 
     system($command);

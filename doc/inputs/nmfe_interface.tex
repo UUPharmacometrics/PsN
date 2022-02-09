@@ -6,7 +6,7 @@ Default not set. By default, PsN will often not copy the datafile to the NM\_run
 Default not used. If you need extra files in the directory where NONMEM is run you specify them in the comma separated -extra\_files list. It could for example be fortran subroutines you need compiled with NONMEM, or a file with initial estimates for the NONMEM 7 CHAIN command, a defaults.pnm file (NONMEM 7.2 or later), or a file set in \$ETAS with option FILE. 
 \nextopt
 \optname{nmfe}
-Default set. Invoke NONMEM via the nmfe script (or a custom wrapper) from within PsN.  Unless option -nmqual is set, option -nmfe is 
+Default set. Invoke NONMEM via the nmfe script (or a custom wrapper) from within PsN. Option -nmfe is 
 set automatically. Also, -nmfe is set in the default configuration file.
 \nextopt
 \optdefault{nmfe\_options}{string}
@@ -16,16 +16,6 @@ PsN will not check that the options are allowed. When set on the PsN commandline
 On UNIX type systems, but not on Windows, any parentheses in the nmfe options, for example as in -maxlim=(1,2,3), must be
 escaped with backslashes like this: \verb|-maxlim=\(1,2,3\) |
 \nextopt
-\optname{nmqual}
-Default not set. Run an NMQual-installed NONMEM via autolog.pl. Only NMQual 8 is supported. When set, PsN will locate the autolog.pl file and log.xml in the nmqual subdirectory of the NONMEM installation directory, and then run \\
-\verb|perl /path/autolog.pl /path/log.xml run ce|\\
-\verb| /full/path/workdir psn| (extra NM options)
-
-Important note: The extra NM options are options set with e.g. -nmfe\_options or -nodes, but unless the do-on-run block of the log.xml file is edited to use these extra options, \emph{they will be ignored}. PsN will append them to the autolog.pl call but it is up to log.xml to decide what to do with them.
-
-If the user wants by default to run PsN with the autolog script it is recommended to set nmqual=1 in the 
-\verb|[default_options]| section in psn.conf and remove nmfe=1 from the same section. The user should also consider to add log.xml to the -nm\_output list in psn.conf (see help text for -nm\_output).
-\nextopt
 \optdefault{nodes}{integer}
 Only relevant together with option -parafile. 
 
@@ -34,8 +24,6 @@ Appends “[nodes]=option\_value” to the nmfe call. This option acts independe
 \optdefault{parafile}{filename}
     NONMEM 7.2 (or later) parafile. Appends "-parafile=filename"
     to the nmfe call, and makes PsN copy 'filename' to the NM\_run directory.
-    Only works if option nmfe or nmqual is set. Note that -nmfe is sometimes set 
-    automatically, see help for -nmfe.
     Note that the filename must have a full path to work with some tools (i.e. scm).
 \nextopt
 \end{optionlist}

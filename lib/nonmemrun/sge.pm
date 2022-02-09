@@ -17,8 +17,6 @@ sub submit
 
     $self->pre_compile_cleanup;
 
-    #only support nmfe here, not nmqual
-
     my $command = $self->create_command;
 
     my $jobname = $self->model->filename;

@@ -41,7 +41,6 @@ has 'base_msfo_name' => ( is => 'rw', isa => 'Str' );
 has 'max_hash' => ( is => 'rw', isa => 'HashRef', default => sub { {} } );
 has 'full_path_runscript' => ( is => 'rw', isa => 'Str' );
 has 'modext' => ( is => 'rw', isa => 'Str', default => 'mod' );
-has 'nmqual_xml' => ( is => 'rw', isa => 'Str' );
 has 'wintail_exe' => ( is => 'rw', isa => 'Maybe[Str]' );
 has 'wintail_command' => ( is => 'rw', isa => 'Maybe[Str]' );
 has 'reduced_model_ofv' => ( is => 'rw', isa => 'Num' );
@@ -304,16 +303,10 @@ sub BUILD
         $self->logfile([join('', OSspecific::absolute_path( $self->directory, $self->logfile->[0]) ) ]);
     }
 
-    my $ref = nonmemrun::setup_paths(nm_version => $self->nm_version,
-                                     nmqual => $self->nmqual);
+    my $ref = nonmemrun::setup_paths(nm_version => $self->nm_version);
 
     $self->full_path_runscript($ref->{'full_path_runscript'});
     $self->full_path_nmtran($ref->{'full_path_nmtran'}) if (defined $ref->{'full_path_nmtran'});
-
-    if ($self->nmqual) {
-        $self->modext('ctl');
-        $self->nmqual_xml($ref->{'nmqual_xml'});
-    }
 
     if ($self->run_on_lsf or $self->run_on_ud or $self->run_on_zink or
         $self->run_on_torque or $self->run_on_slurm or
@@ -1595,8 +1588,6 @@ sub run_nonmem
         $nonmem_run->nodes($self->nodes);
         $nonmem_run->parafile($self->parafile);
         $nonmem_run->nmfe_options($self->nmfe_options);
-        $nonmem_run->nmqual($self->nmqual);
-        $nonmem_run->nmqual_xml($self->nmqual_xml);
 
         $queue_info->{'nonmemrun'} = $nonmem_run;
         my $jobId = $nonmem_run->submit;
@@ -1644,7 +1635,6 @@ sub diagnose_lst_errors
                               modext  => { isa => 'Str', optional => 0 },
                               run_local => { isa => 'Bool', optional => 0 },
                               nmtran_error_file => { isa => 'Str', optional => 0 },
-                              nmqual => { isa => 'Bool', optional => 0 },
         );
     my $missing = $parm{'missing'};
     my $have_stats_runs = $parm{'have_stats_runs'};
@@ -1654,7 +1644,6 @@ sub diagnose_lst_errors
     my $modext  = $parm{'modext'};
     my $run_local  = $parm{'run_local'};
     my $nmtran_error_file  = $parm{'nmtran_error_file'};
-    my $nmqual  = $parm{'nmqual'};
 
     my $failure;
     my $failure_mess;
@@ -1719,10 +1708,7 @@ sub diagnose_lst_errors
         $failure_mess="It seems like the compilation failed." ;
 
         unless ($have_stats_runs){
-            if ($nmqual){
-                $failure_mess = "It seems like Fortran compilation by NMQual failed. Cannot start NONMEM.\n".
-                    "Go to the NM_run".($run_no+1)." subdirectory and run psn.".$modext." with NMQual to diagnose the problem.";
-            }elsif(defined $PsN::config -> {'_'} -> {'transient_compilation_errors'} and
+            if (defined $PsN::config -> {'_'} -> {'transient_compilation_errors'} and
                    $PsN::config -> {'_'} -> {'transient_compilation_errors'} > 0){
                 $restart_possible = 1; #will only restart if handle_crashes and crash_restarts > 0
                 $failure .= ' - could be transient';
@@ -1883,8 +1869,7 @@ sub store_results_old_run
                                       have_stats_runs => 1,
                                       modext  => $self->modext,
                                       run_local => $self->run_local,
-                                      nmtran_error_file => $self->nmtran_error_file,
-                                      nmqual => $self->nmqual);
+                                      nmtran_error_file => $self->nmtran_error_file);
 
         $failure = $ref->[0];
         $failure_mess = $ref->[1];
@@ -2038,7 +2023,6 @@ sub move_retry_files
 
     croak("empty array into move_retry_files") unless (scalar(@{$filenames})>0);
 
-    my $nmqual = 'nmqual_messages.txt';
     my $eta_shrinkage_name;
     my $iwres_shrinkage_name;
 
@@ -2064,18 +2048,6 @@ sub move_retry_files
         mv( $old_name, $new_name );
         $stopmess .= "$old_name to $new_name, ";
 
-    }
-    my $old_name = $nmqual;
-    if (defined $crash){
-        #name without crash
-        $old_name = get_retry_name( filename => $nmqual,
-                                    retry => $retry);
-    }
-    if (-e $old_name){
-        my $new_name = get_retry_name( filename => $nmqual,
-                                       retry => $retry);
-        mv( $old_name, $new_name );
-        $stopmess .= "$old_name to $new_name, ";
     }
     return ($stopmess,$eta_shrinkage_name,$iwres_shrinkage_name);
 }
@@ -2286,7 +2258,6 @@ sub restart_needed
     my $tries = \$queue_info_ref->{'tries'};
     my $model = $queue_info_ref->{'model'};
     my $candidate_model = $queue_info_ref->{'candidate_model'};
-    my $nmqual = 'nmqual_messages.txt';
 
     my @outputfilelist = (@{$candidate_model->output_files}, 'psn.' . $self->modext, $self->base_msfo_name);
 
@@ -2314,8 +2285,7 @@ sub restart_needed
                                       run_no => $run_no,
                                       modext  => $self->modext,
                                       run_local => $self->run_local,
-                                      nmtran_error_file => $self->nmtran_error_file,
-                                      nmqual => $self->nmqual);
+                                      nmtran_error_file => $self->nmtran_error_file);
 
         $failure = $ref->[0];
         $failure_mess = $ref->[1];
@@ -2451,8 +2421,7 @@ sub restart_needed
                                       run_no => $run_no,
                                       modext  => $self->modext,
                                       run_local => $self->run_local,
-                                      nmtran_error_file => $self->nmtran_error_file,
-                                      nmqual => $self->nmqual);
+                                      nmtran_error_file => $self->nmtran_error_file);
         $failure = $ref->[0];
         $failure_mess = $ref->[1];
         $restart_possible = $ref->[2];
@@ -3159,7 +3128,7 @@ sub move_model_and_output
 
     $self->metadata->{'copied_files'} = [];
 
-    foreach my $filename (@output_files, 'psn.' . $self->modext, 'nmqual_messages.txt') {
+    foreach my $filename (@output_files, 'psn.' . $self->modext) {
 
         my $use_name = get_retry_name( filename => $filename,
                                        retry => $use_run-1);
@@ -3167,7 +3136,6 @@ sub move_model_and_output
         # Copy $use_run files to final files in NM_run, to be clear about which one was selected
         mv( $use_name, $filename ) if (-e $use_name);
         next if( $filename eq 'psn.'.$self->modext );
-        next if( $filename eq 'nmqual_messages.txt' );
 
         # Don't prepend the model file name to psn.lst, but use the name
         # from the $model object.
@@ -3259,7 +3227,7 @@ sub move_model_and_output
             $max_retry = $self->min_retries if ($self->min_retries > $max_retry);
             $max_retry++; #first run with number 1 is not a retry
             for ( my $i = 1; $i <= $max_retry; $i++ ) {
-                foreach my $filename (@output_files, 'psn.' . $self->modext, 'nmqual_messages.txt') {
+                foreach my $filename (@output_files, 'psn.' . $self->modext) {
 
                     my $use_name = get_retry_name( filename => $filename,
                                                    retry => $i-1);
@@ -3281,7 +3249,6 @@ sub move_model_and_output
                 }
             }
             unlink( @{$model -> datafiles} );
-            unlink 'psn.nmqual_out';
         }
     }
 
