@@ -14,6 +14,7 @@ use warnings;
 use Mouse;
 use File::Copy qw(move mv cp);
 use OSspecific;
+use File::Copy::Recursive;
 
 extends 'tool';
 
@@ -991,13 +992,10 @@ sub ensure_final_model_written
 						 message  =>  "failed to create final directory : $!");
 		}
 	}
-	require File::Copy::Recursive;
 	unless (File::Copy::Recursive::dircopy($self->scm()->final_model_directory(),$self->final_directory)) {
 		ui -> print( category => 'scm',
 					 message  =>  "failed to copy final directory : $!");
-
 	}
-
 }
 
 1;
