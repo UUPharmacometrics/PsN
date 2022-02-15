@@ -207,7 +207,7 @@ sub BUILD
     # Auto add TVxx
     if ($self->auto_tv) {
         my @scm_parameters = keys %{$self->test_relations};
-        model_transformations::add_tv(model => $self->models->[0], parameters => \@scm_parameters, type => 'additive');
+        model_transformations::add_tv(model => $self->models->[0], parameters => \@scm_parameters, type => 'multiplicative');
     }
 
     # Add derived covariates to dataset (to first model)
