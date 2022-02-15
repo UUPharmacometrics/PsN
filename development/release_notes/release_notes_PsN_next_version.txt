@@ -34,6 +34,7 @@ Changes and bug fixes from PsN 5.2.6 to x.x.x
    ___scm___
 
 
+* Add -auto_tv option
 
    ___sse___ 
 

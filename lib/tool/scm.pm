@@ -107,6 +107,7 @@ has 'categorical_mean_offset' => ( is => 'rw', isa => 'Bool', default => 0 );   
 has 'extra_data_columns' => ( is => 'rw', isa => 'ArrayRef[Str]', default => sub { [] } );  # Columns to add to linbase.dta and $INPUT for linbase.mod
 has 'force_binarize' => ( is => 'rw', isa => 'Bool', default => 0 );   # Force binarization of categorical covariates
 has 'estimation_options' => ( is => 'rw', isa => 'Str' );
+has 'auto_tv' => ( is => 'rw', isa => 'Bool', default => 0 );
 
 
 sub BUILD
@@ -202,6 +203,12 @@ sub BUILD
 
     croak("Option p_value (p_forward/p_backward) must be in the range 0-1")
     unless ($self->p_value >= 0 and $self->p_value <=1);
+
+    # Auto add TVxx
+    if ($self->auto_tv) {
+        my @scm_parameters = keys %{$self->test_relations};
+        model_transformations::add_tv(model => $self->models->[0], parameters => \@scm_parameters, type => 'additive');
+    }
 
     # Add derived covariates to dataset (to first model)
     my @covlist;
