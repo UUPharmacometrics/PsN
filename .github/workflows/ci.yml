@@ -269,7 +269,7 @@ jobs:
         - name: Download Python
           uses: suisei-cn/actions-download-file@v1
           with:
-            url: https://github.com/winpython/winpython/releases/download/2.3.20200530/Winpython64-3.7.7.1dot.exe
+            url: https://github.com/winpython/winpython/releases/download/4.6.20220116/Winpython64-3.9.10.0dot.exe
             target: downloads/
         - name: Download Pandoc
           uses: suisei-cn/actions-download-file@v1
@@ -285,23 +285,23 @@ jobs:
              md -Name installer\strawberry
         - name: Extract winpython
           run: |
-            copy downloads\Winpython64-3.7.7.1dot.exe installer
+            copy downloads\Winpython64-3.9.10.0dot.exe installer
             cd installer
-            Winpython64-3.7.7.1dot.exe -y
-            del Winpython64-3.7.7.1dot.exe
-            rename WPy64-3771 python
+            Winpython64-3.9.10.0dot.exe -y
+            del Winpython64-3.9.10.0dot.exe
+            rename WPy64-39100 python
           shell: cmd
         - name: Install Pharmpy dependencies
           run:
-              installer\python\python-3.7.7.amd64\python.exe -m pip install -r PsN-Source\requirements.txt
+              installer\python\python-3.9.10.amd64\python.exe -m pip install -r PsN-Source\requirements.txt
           shell: cmd
         - name: Install Pharmpy
-          run: installer\python\python-3.7.7.amd64\python.exe -m pip install --no-index --find-links=PsN-Source pharmpy-core
+          run: installer\python\python-3.9.10.amd64\python.exe -m pip install --no-index --find-links=PsN-Source pharmpy-core
           shell: cmd
         - name: Move phampy executables
           run: |
-            mv installer/python/python-3.7.7.amd64/Scripts/psn-pharmpy-wrapper.exe installer/python/python-3.7.7.amd64/
-            mv installer/python/python-3.7.7.amd64/Scripts/pharmpy.exe installer/python/python-3.7.7.amd64/
+            mv installer/python/python-3.9.10.amd64/Scripts/psn-pharmpy-wrapper.exe installer/python/python-3.9.10.amd64/
+            mv installer/python/python-3.9.10.amd64/Scripts/pharmpy.exe installer/python/python-3.9.10.amd64/
           shell: bash
         - name: Extract Strawberry Perl
           run: tar -xf downloads/strawberry-perl-5.22.3.1-64bit-portable.zip -C installer\strawberry
@@ -355,7 +355,7 @@ jobs:
         - name: Update psn.conf
           run: |
             export PSNPATH=$(find installer/strawberry/perl/site/lib/ -type d -name 'PsN_[0-9]*')
-            echo PYTHON_PATH=../../../../../python/python-3.7.7.amd64 >tempfile
+            echo PYTHON_PATH=../../../../../python/python-3.9.10.amd64 >tempfile
             echo R=../../../../../R/bin/R.exe >>tempfile
             echo R_LIB_PATH=../../../../../Rlib >>tempfile
             cat ${PSNPATH}/psn.conf >>tempfile
@@ -374,7 +374,7 @@ jobs:
               echo '        path = package / subdir' >>clean.py
               echo '        if path.exists():' >>clean.py
               echo '            shutil.rmtree(str(path))' >>clean.py
-              installer/python/python-3.7.7.amd64/python.exe clean.py
+              installer/python/python-3.9.10.amd64/python.exe clean.py
           shell: bash
         - name: Remove unnecessary files
           run: |
@@ -404,14 +404,14 @@ jobs:
               del python\*.exe
               rmdir python\notebooks /s /q
               rmdir python\scripts /s /q
-              rmdir python\python-3.7.7.amd64\tcl /s /q
-              rmdir python\python-3.7.7.amd64\share /s /q
-              rmdir python\python-3.7.7.amd64\Tools /s /q
-              rmdir python\python-3.7.7.amd64\Doc /s /q
-              rmdir python\python-3.7.7.amd64\Scripts /s /q
-              del python\python-3.7.7.amd64\NEWS.txt
-              rmdir python\python-3.7.7.amd64\libs /s /q
-              rmdir python\python-3.7.7.amd64\include /s /q
+              rmdir python\python-3.9.10.amd64\tcl /s /q
+              rmdir python\python-3.9.10.amd64\share /s /q
+              rmdir python\python-3.9.10.amd64\Tools /s /q
+              rmdir python\python-3.9.10.amd64\Doc /s /q
+              rmdir python\python-3.9.10.amd64\Scripts /s /q
+              del python\python-3.9.10.amd64\NEWS.txt
+              rmdir python\python-3.9.10.amd64\libs /s /q
+              rmdir python\python-3.9.10.amd64\include /s /q
           shell: cmd
         - name: Show installer directory
           run: dir installer
@@ -505,7 +505,7 @@ jobs:
           echo '                found_path = True' >>edit.py
           echo '            else:' >>edit.py
           echo '                dh.write(line)' >>edit.py
-          ../../../../../python/python-3.7.7.amd64/python.exe edit.py
+          ../../../../../python/python-3.9.10.amd64/python.exe edit.py
           rm includes.pm
           mv tempy includes.pm
           cat edit.py
