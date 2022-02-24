@@ -1,0 +1,30 @@
+*********************************************
+Changes and bug fixes from PsN 5.2.6 to 5.3.0
+*********************************************
+
+
+   ___General___
+
+* Remove support for nmqual
+* Add support for $DESIGN
+* Set -zip and -clean=3 as default options
+* Include m1find and pack scripts
+* Remove external perl package dependencies File::Copy::Recursive, Moose and YAML::XS
+* Remove several R dependencies (MCMCPack and PEIP and their dependencies)
+* Now using Mouse instead of Moose for the object oriented system
+
+   ___resmod___
+
+* Rename results.csv to resmod_results.csv
+
+   ___scm___
+
+* Add -auto_tv option
+
+   ___sir___
+
+* Fix crashing m2_maxbin extended plot
+   
+  ___qa___
+
+* Updates to machine readable results (results.json)

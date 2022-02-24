@@ -33,9 +33,9 @@ a:hover { text-decoration: underline; text-decoration-style: dashed; }
 <h3>Required Software</h3>
 
 <h4>NONMEM</h4>
-PsN supports standard and NMQual 8 installations of <a target="_blank" href="https://nonmem.iconplc.com/">NONMEM</a>. <br>
-Verify that all NONMEM installations you intend to use can be run directly via the nmfe/autolog scripts and that they produce complete output files.<br>
-If running NONMEM with nmfe/autolog.pl does not work then PsN will not work either.<br>
+PsN supports standard installations of <a target="_blank" href="https://nonmem.iconplc.com/">NONMEM</a>. <br>
+Verify that all NONMEM installations you intend to use can be run directly via the nmfe script and that they produce complete output files.<br>
+If running NONMEM with nmfe does not work then PsN will not work either.<br>
 If you plan to use the parallelization features of NONMEM you must also
 verify that you can run NONMEM in parallel directly with the nmfe script.<br>
 </li>
@@ -47,12 +47,12 @@ verify that you can run NONMEM in parallel directly with the nmfe script.<br>
 
 <h3>Windows</h3>
 
-PsN comes bundled with all its dependencies to make it easier to install. Included is PsN itself, perl, R, python, perl packages, R packages, python packages and pharmpy. Everything is tested together and nothing should interfere with any other installations of the same software that you might have on your computer.
+PsN comes bundled with all its dependencies to make it easier to install. Included is PsN itself, perl, R, python, perl packages, R packages, python packages and Pharmpy. Everything is tested together and nothing should interfere with any other installations of the same software that you might have on your computer.
 
 <ol>
 <li>Unpack the file you downloaded from the <a target="_blank" href="https://uupharmacometrics.github.io/PsN/download.html">PsN Download Page</a>. The unpacked directory can be put at any location on your computer.</li>
-<li>Update your PATH environment variable to include the path to PsN-5.2.6\strawberry\perl\bin</li>
-<li>Add your NONMEM version by editing the PsN configuration file at PsN-5.2.6\strawberry\perl\site\lib\PsN_5_2_6\psn.conf. Under [nm_versions] add for example default=C:\nm744,7.4.4 if your NONMEM version is 7.4.4 and can be found under C:\nm744</li>
+<li>Update your PATH environment variable to include the path to PsN-5.3.0\strawberry\perl\bin</li>
+<li>Add your NONMEM version by editing the PsN configuration file at PsN-5.3.0\strawberry\perl\site\lib\PsN_5_3_0\psn.conf. Under [nm_versions] add for example default=C:\nm750,7.5.0 if your NONMEM version is 7.5.0 and can be found under C:\nm750</li>
 </ol>
 
 
@@ -65,7 +65,7 @@ Before installing PsN on Linux, you should make sure that the required programs 
 
 <ul>
     <li>Perl version 5.10.1 or later</li>
-    <li>Python 3.7 or later</li>
+    <li>Python 3.8 or later</li>
     <li>make</li>
 </ul>
 
@@ -79,7 +79,7 @@ apt install make<br>
 
 To be able to use the automatic rplotting functionality (via the <code>-rplots</code> option)  and/or the <code>qa</code> tool the following needs to be installed:
 <ul>
-    <li><a target="_blank" href="https://cloud.r-project.org"s>R</a> version 3.5 or later</li>
+    <li><a target="_blank" href="https://cloud.r-project.org"s>R</a> version 4.0 or later</li>
     <li>pandoc</li>
     <li>System dependencies for R packages</li>
 </ul>
@@ -123,11 +123,8 @@ You might need to answer some questions interactively when using the cpan comman
 <li>Open a terminal.</li><p>
 <li>Run the following commands (hit &#8629; after each command), prepend sudo if necessary:<br>
 <code>cpan Math::Random<br>
-cpan Moose<br>
-cpan MooseX::Params::Validate<br>
+cpan MouseX::Params::Validate<br>
 cpan Archive::Zip<br>
-cpan File::Copy::Recursive<br>
-cpan YAML::XS<br>
 </code>
 </li>
 </ol>
@@ -157,11 +154,6 @@ The default settings are probably the best for most users. It is <b>highly</b> r
 
 
 
-
-
-
-
-
 <h3>macOS</h3>
 
 <h4>Required software on macOS</h4>
@@ -169,11 +161,11 @@ The default settings are probably the best for most users. It is <b>highly</b> r
 Before you install PsN on Linux or MacOS, you should make sure that the required programs and modules are installed on your computer.
 <ul>
     <li>Perl version 5.10.1 or later</li>
-    <li>Python 3</li>
+    <li>Python 3.8 or later</li>
 </ul>
 To be able to use the automatic rplotting functionality (via the <code>-rplots</code> option)  and/or the <code>qa</code> tool the following needs to be installed:
 <ul>
-    <li><a target="_blank" href="https://cloud.r-project.org"s>R</a> version 3.5 or later</li>
+    <li><a target="_blank" href="https://cloud.r-project.org"s>R</a> version 4.0 or later</li>
     <li>pandoc</li>
 </ul>
 
@@ -191,15 +183,12 @@ You might need to answer some questions interactively when using the cpan comman
 <li>Open a terminal.</li><p>
 <li>Run the following commands (hit &#8629; after each command), prepend sudo if necessary:<br>
 <code>cpan Math::Random<br>
-cpan Moose<br>
-cpan MooseX::Params::Validate<br>
+cpan MouseX::Params::Validate<br>
 cpan Archive::Zip<br>
-cpan File::Copy::Recursive<br>
-cpan YAML::XS<br>
 </code>
 </li>
 </ol>
-NOTE: macOS 10.14 "Mojave" and later has problems with installing Moose using its default version of Perl. This has been reported to CPAN and discussed <a href="https://rt.cpan.org/Public/Bug/Display.html?id=127028">here</a>. One workaround that has been tested is to install a newer version of Perl via brew:
+In some cases it might be necessary to install a newer version of Perl via brew:
 <ol>
     <li>Install <a href="https://brew.sh">homebrew</a></li>
     <li>Install Perl via homebrew: <code>brew install perl</code></li>
@@ -247,7 +236,7 @@ just say yes to continue.</p>
 <h2>Configuring PsN</h2>
 <li> If you did not let the installation script create the configuration file <code>psn.conf</code> for you, or if you are running NONMEM via NMQual or
 on a cluster, you need to edit <code>psn.conf</code> in the PsN installation directory. <br>
-The document <a target="_blank" href="https://github.com/UUPharmacometrics/PsN/releases/download/5.2.6/psn_configuration.pdf">PsN Configuration.pdf</a> describes how to make the correct settings in the psn.conf file.
+The document <a target="_blank" href="https://github.com/UUPharmacometrics/PsN/releases/download/5.3.0/psn_configuration.pdf">PsN Configuration.pdf</a> describes how to make the correct settings in the psn.conf file.
 </li><br>
 
 
@@ -260,7 +249,7 @@ If this argument is given, the bin scripts (PsN Utilities) will use a relative p
 This makes the PsN installation directory movable, as long as the relative position between the bin scripts and lib modules remains the same.<br>
 In addition the <code>[nm_versions]</code> section in psn.conf can list the name of the nmfe executables instead of the full path to the NONMEM installation directories
 <b>if at runtime</b> the nmfe executable, chosen by default or with option -nm_version, is in the user $PATH, see documentation in
-<a target="_blank" href="https://github.com/UUPharmacometrics/PsN/releases/download/5.2.6/psn_configuration.pdf">PsN Configuration.pdf</a>.
+<a target="_blank" href="https://github.com/UUPharmacometrics/PsN/releases/download/5.3.0/psn_configuration.pdf">PsN Configuration.pdf</a>.
 <br>The test package, if installed, will not be portable even if setup.pl is run with argument relative. If the test package is moved, the file
 <code>test/includes.pm</code> must be edited manually before any tests are run.
 
@@ -277,7 +266,7 @@ It is possible to have several installations of PsN and use them in parallel. Th
 To check which PsN version is the default use the command<br>
 <code>psn -version</code><br>
 A specific version may be called with its version number, for example<br>
-<code>execute-5.2.6  -help</code><br>
+<code>execute-5.3.0  -help</code><br>
 
 </div>
 <div id="footer" style="padding-top:2px;padding-right:2px;padding-left:2px;"></div>
