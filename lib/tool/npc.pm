@@ -1171,7 +1171,11 @@ sub modelfit_setup
     }
     @rec_strings = @rec_strings2;
 
-    my @trailing = ('ONEHEADER','NOPRINT','NOAPPEND','FILE=npctab.dta');
+    my @trailing = ('ONEHEADER', 'NOPRINT', 'NOAPPEND');
+    if (($PsN::nm_major_version == 7 and $PsN::nm_minor_version >= 5) or $PsN::nm_major_version > 7) {
+        push @trailing, 'IDFORMAT=I';
+    }
+    push @trailing, 'FILE=npctab.dta';
     push (@rec_strings,@trailing);
     push (@sim_strings,@trailing);
 
