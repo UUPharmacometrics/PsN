@@ -252,6 +252,12 @@ sub modelfit_setup
     my $time_in_input=0;
     my $datx_in_input=0;
     my @table_header=();
+
+    my $idformat = "";
+    if (($PsN::nm_major_version == 7 and $PsN::nm_minor_version >= 5) or $PsN::nm_major_version > 7) {
+        $idformat = " IDFORMAT=I ";
+    }
+
     unless ($self -> models -> [0]->is_dummy){
         my $sim_model = $self -> models -> [0] ->copy( filename    => $self -> directory.'m1/simulation.mod',
                                                        copy_datafile   => 1,
@@ -371,8 +377,7 @@ sub modelfit_setup
         $simulated_file = "mcmp-sim.dat";
         $prob -> set_records( type           => 'table',
                               record_strings => [ join( ' ', @table_header ).
-                                                  ' NOPRINT NOAPPEND ONEHEADER FILE='.
-                                                  $simulated_file ] );
+                                                  " NOPRINT NOAPPEND ONEHEADER $idformat FILE=$simulated_file"]);
         $sim_model -> _write();
 
         my $mod_sim = tool::modelfit -> new( %{common_options::restore_options(@common_options::tool_options)},
@@ -403,7 +408,7 @@ sub modelfit_setup
     if (defined $self->stratify_on() and (not defined $self->table_strata())){
         $self->table_strata('strata.tab');
         @table_strings = ('ID',$self->stratify_on(),'FIRSTONLY','NOAPPEND',
-                          'ONEHEADER','NOPRINT',
+                          'ONEHEADER', 'NOPRINT', $idformat,
                           'FILE='.$self->table_strata());
     }
     #reduced model
