@@ -4078,8 +4078,8 @@ sub _create_models
                             update_sigmas => 1,
                             ignore_missing_parameters => 1 )
                         unless (not $self->run_linearized_base());
-                        $applicant_model->remove_records(type => 'etas');
-                        #if ($self->step_number == 1) {
+                        if ($self->linearize) {
+                            $applicant_model->remove_records(type => 'etas');
                             my $phi_file = $initial_estimates_model->get_phi_file();
 
                             my $mceta = $initial_estimates_model->get_option_value(record_name => 'estimation',
@@ -4101,7 +4101,7 @@ sub _create_models
                                 }
                                 push @{$applicant_model->extra_files}, $phi_file;
                             }
-                            #}
+                        }
                     } else {
                         $applicant_model -> update_inits( from_model    => $orig_model,
                             update_thetas => 1,
