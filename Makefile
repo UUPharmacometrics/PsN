@@ -259,6 +259,7 @@ release: main rel_dir $(RELFILES) $(PDFFILES)
 	chmod -R a+r PsN-Source/test/test_files
 	sed -i 's/dev\s*=\s*1;/dev = 0;/' PsN-Source/lib/PsN.pm
 	cp -ar PsNR PsN-Source
+	ls pharmpy
 	cd pharmpy; tox -e run -- pharmpy --version
 	cp pharmpy/.tox/dist/*.zip PsN-Source/
 	cp pharmpy/requirements.txt PsN-Source/
