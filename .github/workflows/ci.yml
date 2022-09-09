@@ -298,8 +298,8 @@ jobs:
               installer\python\python-3.9.10.amd64\python.exe -m pip install -r PsN-Source\requirements.txt
           shell: cmd
         - name: Install Pharmpy
-          run: installer\python\python-3.9.10.amd64\python.exe -m pip install --no-index --find-links=PsN-Source pharmpy-core
-          shell: cmd
+          run: installer\python\python-3.9.10.amd64\python.exe -m pip install PsN-Source\pharmpy-core*.zip
+          shell: bash
         - name: Move phampy executables
           run: |
             mv installer/python/python-3.9.10.amd64/Scripts/psn-pharmpy-wrapper.exe installer/python/python-3.9.10.amd64/
