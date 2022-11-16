@@ -199,7 +199,9 @@ sub get_python_lib_path
     import();
 
     my $path;
-    if (defined $config->{'_'}->{'PYTHON_PATH'}) {
+    if (defined $ENV{'PSN_PYTHON_PATH'}) {
+        $path = $ENV{'PSN_PYTHON_PATH'};
+    } elsif (defined $config->{'_'}->{'PYTHON_PATH'}) {
         $path = $config->{'_'}->{'PYTHON_PATH'};
     } else {
         $path = '';
