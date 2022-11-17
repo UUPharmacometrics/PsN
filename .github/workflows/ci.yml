@@ -439,7 +439,7 @@ jobs:
 
   test-windows:
     needs: [build-windows, get-nonmem]
-    runs-on: windows-latest
+    runs-on: windows-2019
     steps:
       - name: Download installation tarball
         uses: actions/download-artifact@v2
@@ -547,7 +547,7 @@ jobs:
 
   release:
     needs: [test-windows, test-macos, test-ubuntu]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     steps:
       - name: Get PsN installer
         uses: actions/download-artifact@v2
