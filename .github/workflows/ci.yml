@@ -2,7 +2,7 @@ name: ci
 on: [push]
 jobs:
   build:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
     steps:
       - name: Download source repo
         uses: actions/checkout@v2
@@ -32,7 +32,7 @@ jobs:
             path: doc/*.pdf
 
   get-nonmem:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     steps:
       - name: Cache NONMEM
         id: cache-nonmem
@@ -110,7 +110,7 @@ jobs:
 
   test-ubuntu:
     needs: [build, get-nonmem]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     steps:
       - uses: actions/download-artifact@v2
         with:
@@ -174,7 +174,7 @@ jobs:
 
   test-macos:
     needs: [build, get-nonmem]
-    runs-on: macos-latest
+    runs-on: macos-11
     steps:
       - name: Download installation tarball
         uses: actions/download-artifact@v2
@@ -249,7 +249,7 @@ jobs:
 
   build-windows:
       needs: build
-      runs-on: windows-latest
+      runs-on: windows-2019
       steps:
         - name: Download installation tarball
           uses: actions/download-artifact@v2
