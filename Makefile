@@ -261,7 +261,6 @@ release: main rel_dir $(RELFILES) $(PDFFILES)
 	cp -ar PsNR PsN-Source
 	ls pharmpy
 	cd pharmpy; tox -e plain -- pharmpy --version
-	ls pharmpy/.tox/dist -l
 	cp pharmpy/.tox/dist/*.zip PsN-Source/
 	cp pharmpy/requirements.txt PsN-Source/
 	tar czf $(TARFILE) PsN-Source/
