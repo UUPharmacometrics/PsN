@@ -15,46 +15,7 @@ Please find more information on the webpage: https://uupharmacometrics.github.io
 Installation
 ************************
 
-- PsN4 requires at least Perl version 5.10.1 (please note that users of
-the free version of ActiveState Perl probably need an even higher version)
-
-- Depending on your Perl distribution you may have to install the following
-perl packages which are required for PsN4:
-
-Math::Random
-MouseX::Params::Validate
-
-- Recommended perl packages, not absolutely required when running PsN 
-but necessary for some features:
-
-Archive::Zip
-File::Copy::Recursive
-
-All available from CPAN ( www.cpan.org )
-
-- Before installing PsN, verify that all NONMEM installations you intend to
-use can be run directly via the nmfe (or NMQual) scripts and that they 
-produce complete output files. If running NONMEM with nmfe (or NMQual) does 
-not work then PsN will not work.
-
-If you plan to use the parallelization features of NONMEM7.2 you must first
-verify that you can run NONMEM in parallel directly with nmfe72.
-
-This version of PsN supports NMQual8. Please read psn_configuration.pdf
-regarding how to configure PsN to run with NMQual8.
-
-- Unpack the installation package downloaded from psn.sf.net. It will 
-create a directory called PsN-Source. Run the installation script 
-setup.pl from within PsN-Source.
-
-- More detailed installation instructions are found 
-on the PsN website https://uupharmacometrics.github.io/PsN under
-Installation. 
-
-- The installation script can automatically generate a minimal configuration 
-file psn.conf, both on Windows and Unix-type systems. If PsN is to be run on 
-a cluster and/or with NMQual then some manual editing of psn.conf is still 
-needed, see psn_configuration.pdf
+See https://uupharmacometrics.github.io/PsN/install.html for instructions on how to install PsN on different platforms.
 
 ************************
 Documentation
