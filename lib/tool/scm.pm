@@ -3908,7 +3908,9 @@ sub _create_models
             my $fullpath = $orig_model->datafiles(absolute_path => 1)->[0];
             my $filename = $orig_model->datafiles(absolute_path => 0)->[0];
             my $string = File::Spec->catfile($self -> directory,$filename);
-            cp($fullpath,$string);
+            if ($fullpath ne $string) { # For the same path do not copy to avoid warning
+                cp($fullpath, $string);
+            }
             $self->main_data_file($string);
         }else{
             unless (defined $self->main_data_file and length($self->main_data_file)>0){
