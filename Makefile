@@ -102,6 +102,8 @@ LIBFILES= ui.pm \
 	model/problem/data.pm \
 	model/problem/des.pm \
 	model/problem/design.pm \
+	model/problem/chain.pm \
+	model/problem/rcov.pm \
 	model/problem/error.pm \
 	model/problem/estimation.pm \
 	model/problem/infn.pm \
