@@ -184,7 +184,7 @@ jobs:
         run: tar -zxvf PsN-*.tar.gz
       - name: Install system dependencies
         run: brew install cairo mariadb-connector-c openssl@1.1 coreutils gnu-sed r
-	  - name: Setup GNU Fortran
+      - name: Setup GNU Fortran
         uses: modflowpy/install-gfortran-action@v1
       - name: Setup pandoc 
         uses: r-lib/actions/setup-pandoc@v1
