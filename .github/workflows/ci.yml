@@ -38,16 +38,16 @@ jobs:
         id: cache-nonmem
         uses: actions/cache@v2
         with:
-            path: 744.zip
-            key: nonmem-744
+            path: 751.zip
+            key: nonmem-751
       - name: Download NONMEM
         if: steps.cache-nonmem.outputs.cache-hit != 'true'
         run: |
           sudo apt install lynx
           echo 'key /' >>lynxcmds
           echo 'key 7' >>lynxcmds
-          echo 'key 4' >>lynxcmds
-          echo 'key 4' >>lynxcmds
+          echo 'key 5' >>lynxcmds
+          echo 'key 1' >>lynxcmds
           echo 'key ^J' >>lynxcmds
           echo 'key ^J' >>lynxcmds
           echo 'key /' >>lynxcmds
@@ -93,8 +93,8 @@ jobs:
           echo 'key <delete>' >>lynxcmds
           echo 'key <delete>' >>lynxcmds
           echo 'key 7' >>lynxcmds
-          echo 'key 4' >>lynxcmds
-          echo 'key 4' >>lynxcmds
+          echo 'key 5' >>lynxcmds
+          echo 'key 1' >>lynxcmds
           echo 'key .' >>lynxcmds
           echo 'key z' >>lynxcmds
           echo 'key i' >>lynxcmds
@@ -106,7 +106,7 @@ jobs:
         uses: actions/upload-artifact@v2
         with:
           name: cache-workaround
-          path: 744.zip
+          path: 751.zip
 
   test-ubuntu:
     needs: [build, get-nonmem]
@@ -119,20 +119,20 @@ jobs:
         id: cache-nonmem
         uses: actions/cache@v2
         with:
-            path: 744.zip
-            key: nonmem-744
+            path: 751.zip
+            key: nonmem-751
       - name: Unzip NONMEM
-        run: unzip -P $ZIP_KEY 744.zip
+        run: unzip -P $ZIP_KEY 751.zip
         env:
           ZIP_KEY: ${{secrets.ZIP_KEY}}
       - name: Install gfortran
         run: sudo apt install gfortran
       - name: Install NONMEM
         run: |
-          cd nm744CD
-          /bin/bash SETUP74 $(realpath .) $(realpath ../nm744) gfortran y ar same rec q
+          cd nm751CD
+          /bin/bash SETUP75 $(realpath .) $(realpath ../nm751) gfortran y ar same rec q
       - name: NONMEM license
-        run: echo $LICENSE_KEY >nm744/license/nonmem.lic
+        run: echo $LICENSE_KEY >nm751/license/nonmem.lic
         env:
           LICENSE_KEY: ${{secrets.LICENSE_KEY}}
       - name: Extract PsN
@@ -151,8 +151,8 @@ jobs:
         run: |
           export LIBPATH=$(find /usr/local/share/perl/ -type d -name '5.*')
           export PSNPATH=$(find $LIBPATH -type d -name 'PsN_[0-9]*')
-          export NMPATH=$(realpath nm744)
-          sudo sed -i "/\\[nm_versions\\]/a default=$NMPATH,7.4.4" $PSNPATH/psn.conf
+          export NMPATH=$(realpath nm751)
+          sudo sed -i "/\\[nm_versions\\]/a default=$NMPATH,7.5.1" $PSNPATH/psn.conf
       - name: Run unit tests
         run: |
           export LIBPATH=$(find /usr/local/share/perl/ -type d -name '5.*')
@@ -195,18 +195,18 @@ jobs:
         id: cache-nonmem
         uses: actions/cache@v2
         with:
-            path: 744.zip
-            key: nonmem-744
+            path: 751.zip
+            key: nonmem-751
       - name: Unzip NONMEM
-        run: unzip -P $ZIP_KEY 744.zip
+        run: unzip -P $ZIP_KEY 751.zip
         env:
           ZIP_KEY: ${{secrets.ZIP_KEY}}
       - name: Install NONMEM
         run: |
-          cd nm744CD
-          /bin/bash SETUP74 $(realpath .) $(realpath ../nm744) gfortran y ar same rec q
+          cd nm751CD
+          /bin/bash SETUP75 $(realpath .) $(realpath ../nm751) gfortran y ar same rec q
       - name: NONMEM license
-        run: echo $LICENSE_KEY >nm744/license/nonmem.lic
+        run: echo $LICENSE_KEY >nm751/license/nonmem.lic
         env:
           LICENSE_KEY: ${{secrets.LICENSE_KEY}}
       - name: Install Math::Random
@@ -222,8 +222,8 @@ jobs:
       - name: Update psn.conf
         run: |
           export PSNPATH=$(find /usr/local/Cellar/perl/ -type d -name 'PsN_[0-9]*')
-          export NMPATH=$(realpath nm744)
-          sudo gsed -i "/\\[nm_versions\\]/a default=$NMPATH,7.4.4" $PSNPATH/psn.conf
+          export NMPATH=$(realpath nm751)
+          sudo gsed -i "/\\[nm_versions\\]/a default=$NMPATH,7.5.1" $PSNPATH/psn.conf
       - name: Run unit tests
         run: |
           export TESTPATH=$(find /usr/local/Cellar/perl/ -type d -name 'PsN_test_[0-9]*')
@@ -449,28 +449,28 @@ jobs:
         with:
           name: cache-workaround
       - name: Unzip NONMEM
-        run: 7z x 744.zip -p%ZIP_KEY%
+        run: 7z x 751.zip -p%ZIP_KEY%
         env:
           ZIP_KEY: ${{secrets.ZIP_KEY}}
         shell: cmd
       - name: NONMEM license
-        run: echo $LICENSE_KEY >nm744CD/nonmem.lic
+        run: echo $LICENSE_KEY >nm751CD/nonmem.lic
         env:
           LICENSE_KEY: ${{secrets.LICENSE_KEY}}
         shell: bash
       - name: Install NONMEM
         run: |
           set PATH=installer\strawberry\c\bin\;%PATH%
-          set INSTALLDIR=%CD%\nm744
-          cd nm744CD
-          SETUP74.bat %CD% %INSTALLDIR% gfortran y ar same rec q
+          set INSTALLDIR=%CD%\nm751
+          cd nm751CD
+          SETUP75.bat %CD% %INSTALLDIR% gfortran y ar same rec q
         shell: cmd
       - name: Update psn.conf
         run: |
           export PSNPATH=$(find . -type d -name 'PsN_[0-9]*')
-          export NMPATH=$(realpath nm744)
+          export NMPATH=$(realpath nm751)
           export NMPATH=D:${NMPATH:2}
-          sed -i "/\\[nm_versions\\]/a default=$NMPATH,7.4.4" $PSNPATH/psn.conf
+          sed -i "/\\[nm_versions\\]/a default=$NMPATH,7.5.1" $PSNPATH/psn.conf
           cat $PSNPATH/psn.conf
         shell: bash
       - name: Find tests
