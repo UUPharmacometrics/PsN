@@ -174,7 +174,7 @@ jobs:
 
   test-macos:
     needs: [build, get-nonmem]
-    runs-on: macos-12
+    runs-on: macos-11
     steps:
       - name: Download installation tarball
         uses: actions/download-artifact@v2
