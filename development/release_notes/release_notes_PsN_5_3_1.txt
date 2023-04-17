@@ -1,0 +1,50 @@
+*********************************************
+Changes and bug fixes from PsN 5.3.0 to 5.3.1
+*********************************************
+
+
+   ___General___
+
+- Add support for $RCOV and $CHAIN
+- Allow setting PYTHON_PATH via environment variable PSN_PYTHON_PATH
+
+
+   ___common_options___
+
+
+   ___Cluster/Grid___
+
+
+   ___runrecord___
+
+
+   ___sumo___
+
+
+   ___vpc/npc___
+
+
+   ___frem___
+
+- Fix regression in creation of model3b
+
+   ___scm___
+
+- Fix crash when having spaces in run path
+- Fix crash in results generation when using binarized covariates
+- Fix issue with sometimes adding $ETAS to non-linearized models
+
+   ___vpc___ 
+
+- Support a large number of individuals in dataset
+
+
+   ___mcmp___
+
+- Support a large number of individuals in dataset
+
+
+  ___qa___
+
+- Fix warning from vaplot in report 
+- Various bug fixes
