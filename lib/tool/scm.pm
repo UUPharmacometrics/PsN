@@ -3305,6 +3305,9 @@ sub modelfit_analyze
             $internal_scm -> run;
             $returns = $internal_scm -> results;
             $prep_models = $internal_scm -> prepared_models;
+            if (defined $internal_scm->resulting_model) {
+                $self->resulting_model($internal_scm->resulting_model);
+            }
             ui -> print( category => 'scm',
                 message  => $self -> search_direction . " search done." )
             unless ($self -> parent_threads > 1 or $self->step_number()>1);
