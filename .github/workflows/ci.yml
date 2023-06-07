@@ -198,9 +198,9 @@ jobs:
         run: brew install cairo mariadb-connector-c openssl@1.1 coreutils gnu-sed r
       - name: Setup gfortran
         run: |
-          sudo ln -s /usr/local/bin/gfortran-11 /usr/local/bin/gfortran
+          sudo ln -sf /usr/local/bin/gfortran-11 /usr/local/bin/gfortran
           sudo mkdir /usr/local/gfortran
-          sudo ln -s /usr/local/Cellar/gcc@11/11.3.0_1/lib/gcc/11 /usr/local/gfortran/lib
+          sudo ln -sf /usr/local/Cellar/gcc@11/11.3.0_1/lib/gcc/11 /usr/local/gfortran/lib
       - name: Setup pandoc 
         uses: r-lib/actions/setup-pandoc@v1
       - name: Get NONMEM
