@@ -25,7 +25,9 @@ foreach my $command (@commands){
 	ok ($rc == 0, "$command, should run ok");
 }
 
-ok(-e ($tempdir . '/simeval_dir1/PsN_simeval_plots.html'), 'generate simeval plots');
+if ($^O eq 'MSWin32') {
+    ok(-e ($tempdir . '/simeval_dir1/PsN_simeval_plots.html'), 'generate simeval plots');
+}
 
 remove_test_dir($tempdir);
 

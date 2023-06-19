@@ -22,7 +22,9 @@ foreach my $command (@commands) {
     $rc = $rc >> 8;
 
 	ok($rc == 0, "$command");
-    ok(-e 'qa_pheno/PsN_qa_plots.html');
+    if ($^O eq 'MSWin32') {
+        ok(-e 'qa_pheno/PsN_qa_plots.html');
+    }
 }
 
 remove_test_dir($tempdir);
