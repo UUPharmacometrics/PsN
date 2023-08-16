@@ -351,8 +351,6 @@ sub QR_factorize
 
     for (my $j=0;$j<$ncol;$j++){
         my @xvec = @{$Amatrix[$j]}[$j..$endrow];
-        #print join(' ',@xvec)."\n";
-        #die;
         my $href = house(\@xvec);
         my $beta = $$href{'beta'}; #double $ ?
         my $vvec = $$href{'vvec'};
@@ -716,12 +714,6 @@ sub string_cholesky_block
                     $stringmatrix->[$j][$i] = $newvar;
                 }
             } else {
-                #do nothing, this is just division by 1
-#                $stringmatrix->[0][0]='SQRT('.$stringmatrix->[0][0].')'; #we know this is 1
-
-#                for (my $i=1; $i< $dimension; $i++){
-#                    $stringmatrix->[0][$i]='('.$stringmatrix->[0][$i].')/('.$stringmatrix->[0][0].')';
-#                }
                 unless ($testing){
                     push(@code,';Comments below show CH variables for 1st column, too simple to need new variables');
                     for (my $i=$j; $i<$dimension; $i++){
@@ -732,7 +724,6 @@ sub string_cholesky_block
             }
         }
     }
-
 
     if (1){
         for(my $i=0;$i<$dimension;$i++){
@@ -1317,7 +1308,6 @@ sub upper_triangular_transpose_solve
     }
 
     return 0;
-
 }
 
 sub upper_triangular_identity_solve
@@ -1337,7 +1327,6 @@ sub upper_triangular_identity_solve
 
     for (my $j=0;$j< $ncol;$j++){
         my $nrow = scalar(@{$Aref->[$j]});
-        #    print "nrow $nrow ncol $ncol\n";
         return $input_error unless ($nrow > $j);
     }
 
