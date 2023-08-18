@@ -388,6 +388,7 @@ sub get_internal_scm
 							     both_directions => $both_directions,
 								 valid_states           => $oldscm -> valid_states,
 								 covariate_statistics_file => $oldscm -> covariate_statistics_file,
+								 relations_file         => $oldscm -> relations_file,
 								 short_logfile          => [$oldscm -> short_logfile->[$model_number-1]],
 								 bounds                 => $oldscm -> bounds,
 								 cpu_time             => undef,

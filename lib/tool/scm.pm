@@ -95,6 +95,7 @@ has 'test_relations' => ( is => 'rw', isa => 'HashRef' );
 has 'valid_states' => ( is => 'rw', isa => 'HashRef[ArrayRef]', default => sub { {'continuous' => [1,2,3], 'categorical' => [1,2]}  } );
 has 'work_queue' => ( is => 'rw', isa => 'ArrayRef' );
 has 'covariate_statistics_file' => ( is => 'rw', isa => 'Str', default => 'covariate_statistics.txt' );
+has 'relations_file' => ( is => 'rw', isa => 'Str', default => 'relations.txt' );
 has 'short_logfile' => ( is => 'rw', isa => 'ArrayRef[Str]', default => sub { ['short_scmlog.txt'] } );
 has 'from_linearize' => ( is => 'rw', isa => 'Bool', default => 0 );    # Was the scm-object created by linearize?
 has 'original_nonlinear_model' => ( is => 'rw', isa => 'model' );       # If linearizing this will be the real original model
@@ -357,9 +358,11 @@ sub BUILD
         }
         $self->$accessor(\@new_files);
     }
-
-    my ($ldir, $name) = OSspecific::absolute_path($self->directory(), $self->covariate_statistics_file);
-    $self->covariate_statistics_file($ldir . $name);
+    for my $accessor ( 'covariate_statistics_file','relations_file'){
+        #will this move files that already have global path???
+        my ( $ldir, $name )= OSspecific::absolute_path( $self ->directory(), $self->$accessor);
+        $self->$accessor($ldir.$name);
+    }
 
     unless ( defined $self -> test_relations ) {
         croak("You need to specify \'test_relations'\ either as argument or in the config file." );
@@ -834,6 +837,12 @@ sub BUILD
                 unless ($found);
             }
         }
+        open( RELATIONS, '>'.$self -> relations_file );
+        $Data::Dumper::Purity = 1;
+        print RELATIONS Dumper $self -> relations;
+        $Data::Dumper::Purity = 0;
+        close( RELATIONS );
+
     }
 }
 
@@ -3259,6 +3268,7 @@ sub modelfit_analyze
                 search_direction       => $self -> search_direction,
                 valid_states           => $self -> valid_states,
                 covariate_statistics_file => $self -> covariate_statistics_file,
+                relations_file         => $self -> relations_file,
                 short_logfile          => [$self -> short_logfile->[$model_number-1]],
                 bounds                 => $self -> bounds,
                 cpu_time             => $cpu_time,
@@ -5764,6 +5774,7 @@ sub modelfit_post_fork_analyze
             both_directions        => 1,
             valid_states           => $self -> valid_states,
             covariate_statistics_file => $self -> covariate_statistics_file,
+            relations_file         => $self -> relations_file,
             short_logfile          => [$self -> short_logfile ->[0]],
             bounds                 => $self -> bounds,
             cpu_time             => $cpu_time,
