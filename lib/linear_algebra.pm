@@ -5,7 +5,6 @@ use MouseX::Params::Validate;
 use strict;
 use array qw(:all);
 use Math::Trig;
-use ext::Math::MatrixReal;
 use math;
 use include_modules;
 
