@@ -9,7 +9,7 @@ use tool::modelfit;
 use Math::Random;
 use Mouse;
 use MouseX::Params::Validate;
-use ext::Math::MatrixReal;# qw(all);
+use Math::MatrixReal;
 use Math::Trig;    # For pi
 use Math::Random;
 use File::Spec;

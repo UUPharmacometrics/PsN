@@ -6,7 +6,7 @@ use File::Copy 'cp';
 use tool::llp;
 use tool::modelfit;
 use Math::Random;
-use ext::Math::MatrixReal;
+use Math::MatrixReal;
 use Mouse;
 use MouseX::Params::Validate;
 use linear_algebra;

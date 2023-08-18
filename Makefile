@@ -27,7 +27,6 @@ LIBFILES= ui.pm \
 	include_modules.pm \
 	scm_util.pm \
 	ext/Math/SigFigs.pm \
-	ext/Math/MatrixReal.pm \
 	ext/Config/Tiny.pm \
 	ext/File/HomeDir.pm \
 	ext/Capture/Tiny.pm \

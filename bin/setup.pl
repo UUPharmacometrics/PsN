@@ -122,8 +122,8 @@ my @utilities = (
     'm1find', 'pack'
     );
 
-my @win_modules = ('Math::Random', 'MouseX::Params::Validate');
-my @nix_modules = ('Math::Random', 'MouseX::Params::Validate');
+my @win_modules = ('Math::Random', 'Math::MatrixReal', 'MouseX::Params::Validate');
+my @nix_modules = ('Math::Random', 'Math::MatrixReal', 'MouseX::Params::Validate');
 my @recommended_modules = ('Archive::Zip');
 
 my @modules;

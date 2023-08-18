@@ -8,7 +8,7 @@ use Test::Exception;
 use FindBin qw($Bin);
 use lib "$Bin/.."; #location of includes.pm
 use includes; #file with paths to PsN packages
-use ext::Math::MatrixReal qw(all); 
+use Math::MatrixReal qw(all); 
 use Math::Trig;	# For pi
 use Math::Random;
 use output;
