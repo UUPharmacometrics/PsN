@@ -14,6 +14,7 @@ jobs:
           python-version: 3.9
       - name: Install build dependencies
         run: |
+          sudo apt update
           sudo apt install latexmk texlive-extra-utils texlive-latex-extra texlive-plain-generic biber texlive-bibtex-extra texlive-science texlive-font-utils texlive-pictures
           pip3 install tox==3.25.1
       - name: make
