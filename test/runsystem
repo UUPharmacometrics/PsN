@@ -8,7 +8,7 @@
 use strict;
 use Config;
 use includes;
-use ext::File::HomeDir;
+use File::HomeDir;
 
 
 my @prove_args;

@@ -23,7 +23,7 @@ $Rscripts_dir = get_Rscripts_dir($lib_dir);
 $config_file = $lib_dir . '/psn.conf';
 
 use Config::Tiny;
-use ext::File::HomeDir;
+use File::HomeDir;
 
 our $nm_version;
 our $nmdir;

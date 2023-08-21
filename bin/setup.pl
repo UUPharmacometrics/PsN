@@ -6,7 +6,7 @@ use File::Path qw(mkpath);
 use File::Glob;
 use lib 'lib';
 use Config::Tiny;
-use ext::File::HomeDir;
+use File::HomeDir;
 use PsN (); #pass empty list so that import, which reads config file, is not called
 use File::Copy::Recursive qw(fcopy rcopy dircopy fmove rmove dirmove);
 
