@@ -309,14 +309,34 @@ jobs:
           shell: bash
         - name: Extract Strawberry Perl
           run: tar -xf downloads/strawberry-perl-5.22.3.1-64bit-portable.zip -C installer\strawberry
-        - name: Install Perl dependencies
+        - name: Install Math::Random
           run: |
             set PATH=%CD%\installer\strawberry\perl\site\bin;%CD%\installer\strawberry\perl\bin;%CD%\installer\strawberry\c\bin;%PATH%
             cpanm Math::Random --notest
+          shell: cmd
+        - name: Install Math::MatrixReal
+          run: |
+            set PATH=%CD%\installer\strawberry\perl\site\bin;%CD%\installer\strawberry\perl\bin;%CD%\installer\strawberry\c\bin;%PATH%
             cpanm Math::MatrixReal --notest
+          shell: cmd
+        - name: Install MouseX::Params::Validate
+          run: |
+            set PATH=%CD%\installer\strawberry\perl\site\bin;%CD%\installer\strawberry\perl\bin;%CD%\installer\strawberry\c\bin;%PATH%
             cpanm MouseX::Params::Validate --notest
+          shell: cmd
+        - name: Install Params::Validate
+          run: |
+            set PATH=%CD%\installer\strawberry\perl\site\bin;%CD%\installer\strawberry\perl\bin;%CD%\installer\strawberry\c\bin;%PATH%
             cpanm Params::Validate --notest
+          shell: cmd
+        - name: Install YAML
+          run: |
+            set PATH=%CD%\installer\strawberry\perl\site\bin;%CD%\installer\strawberry\perl\bin;%CD%\installer\strawberry\c\bin;%PATH%
             cpanm YAML --notest
+          shell: cmd
+        - name: Install Mouse
+          run: |
+            set PATH=%CD%\installer\strawberry\perl\site\bin;%CD%\installer\strawberry\perl\bin;%CD%\installer\strawberry\c\bin;%PATH%
             cpanm Mouse --notest
           shell: cmd
         - name: Install PsN
