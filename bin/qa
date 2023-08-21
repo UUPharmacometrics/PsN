@@ -10,7 +10,7 @@ use PsN;
 use strict;
 use Getopt::Long;
 use File::Basename;
-use ext::Capture::Tiny 'tee_merged';
+use Capture::Tiny 'tee_merged';
 use common_options;
 use Cwd;
 use ui;

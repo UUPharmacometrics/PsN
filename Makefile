@@ -29,7 +29,6 @@ LIBFILES= ui.pm \
 	ext/Math/SigFigs.pm \
 	ext/Config/Tiny.pm \
 	ext/File/HomeDir.pm \
-	ext/Capture/Tiny.pm \
 	ext/Statistics/Distributions.pm \
 	File/Copy/Recursive.pm \
 	status_bar.pm \
