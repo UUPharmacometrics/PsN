@@ -227,6 +227,7 @@ jobs:
           sudo cpan -T Capture::Tiny
           sudo cpan -T File::Copy::Recursive
           sudo cpan -T File::HomeDir
+          sudo cpan -T Config::Tiny
           sudo cpan -T Math::SigFigs
           sudo cpan -T Statistics::Distributions
       - name: Install PsN
