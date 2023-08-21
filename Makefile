@@ -30,7 +30,6 @@ LIBFILES= ui.pm \
 	ext/Config/Tiny.pm \
 	ext/File/HomeDir.pm \
 	ext/Statistics/Distributions.pm \
-	File/Copy/Recursive.pm \
 	status_bar.pm \
 	model_plus.pm \
 	monitor.pm \

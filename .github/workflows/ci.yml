@@ -145,7 +145,7 @@ jobs:
       - name: Install Perl and R dependencies
         run: |
           sudo apt update
-          sudo apt install -y libyaml-perl libcapture-tiny-perl libmath-matrixreal-perl libtest-exception-perl libmouse-perl libarchive-zip-perl libfile-copy-recursive-perl r-base pandoc libpq-dev libcairo2-dev libssl-dev libcurl4-openssl-dev libmariadb-dev libgmp-dev libmpfr-dev libxml2-dev libudunits2-dev libblas-dev liblapack-dev libmagick++-dev
+          sudo apt install -y libfile-copy-recursive-perl libyaml-perl libcapture-tiny-perl libmath-matrixreal-perl libtest-exception-perl libmouse-perl libarchive-zip-perl libfile-copy-recursive-perl r-base pandoc libpq-dev libcairo2-dev libssl-dev libcurl4-openssl-dev libmariadb-dev libgmp-dev libmpfr-dev libxml2-dev libudunits2-dev libblas-dev liblapack-dev libmagick++-dev
       - name: Set up Python 3.11
         uses: actions/setup-python@v2
         with:
@@ -224,6 +224,7 @@ jobs:
           sudo cpan -T Mouse
           sudo cpan -T YAML
           sudo cpan -T Capture::Tiny
+          sudo cpan -T File::Copy::Recursive
       - name: Install PsN
         run: cd PsN-Source; perl setup.pl -auto
       - name: Update psn.conf
@@ -344,6 +345,11 @@ jobs:
           run: |
             set PATH=%CD%\installer\strawberry\perl\site\bin;%CD%\installer\strawberry\perl\bin;%CD%\installer\strawberry\c\bin;%PATH%
             cpanm Capture::Tiny --notest
+          shell: cmd
+        - name: Install File::Copy::Recursive
+          run: |
+            set PATH=%CD%\installer\strawberry\perl\site\bin;%CD%\installer\strawberry\perl\bin;%CD%\installer\strawberry\c\bin;%PATH%
+            cpanm File::Copy::Recursive --notest
           shell: cmd
         - name: Install PsN
           run: |
