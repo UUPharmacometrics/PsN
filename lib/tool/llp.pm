@@ -2,7 +2,7 @@ package tool::llp;
 
 use include_modules;
 use File::Copy 'cp';
-use ext::Math::SigFigs;
+use Math::SigFigs;
 use tool::modelfit;
 use Mouse;
 use MouseX::Params::Validate;

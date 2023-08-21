@@ -5,7 +5,7 @@ use include_modules;
 use OSspecific;
 use Storable;
 use Config;
-use ext::Math::SigFigs;
+use Math::SigFigs;
 use model;
 use array qw(:all);
 use Mouse;

@@ -26,7 +26,6 @@ LIBFILES= ui.pm \
 	boxcox.pm \
 	include_modules.pm \
 	scm_util.pm \
-	ext/Math/SigFigs.pm \
 	ext/Statistics/Distributions.pm \
 	status_bar.pm \
 	model_plus.pm \
