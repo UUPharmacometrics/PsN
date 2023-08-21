@@ -566,7 +566,7 @@ sub npde_comp
     #decorrelated matrix, empty matrix, empty matrix
 
     my $have_CDF=0;
-    $have_CDF=1 if eval('require ext::Statistics::Distributions'); #enough, now loaded
+    $have_CDF=1 if eval('require Statistics::Distributions'); #enough, now loaded
 
     #TODO input untransformed and compute normalized pd in addition to normalized pde
     my $input_error = 2;
@@ -585,7 +585,7 @@ sub npde_comp
             print "i $i j $j \n" if (not defined $decorrelated->[$j]->[$i]);
             $pde_matrix->[$j]->[$i] = pde($decorrelated->[$j]->[$i]);
             if ($have_CDF and ($pde_matrix->[$j]->[$i] != $missing)){
-                $npde_matrix->[$j]->[$i] = -(ext::Statistics::Distributions::udistr($pde_matrix->[$j]->[$i]));
+                $npde_matrix->[$j]->[$i] = -(Statistics::Distributions::udistr($pde_matrix->[$j]->[$i]));
             }else{
                 $npde_matrix->[$j]->[$i] =$missing;
             }

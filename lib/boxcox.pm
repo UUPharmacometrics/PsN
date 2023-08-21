@@ -4,7 +4,7 @@ use strict;
 use warnings;
 use MouseX::Params::Validate;
 use include_modules;
-use ext::Statistics::Distributions qw(udistr);
+use Statistics::Distributions qw(udistr);
 use array qw(sum);
 
 sub r_of_lambda

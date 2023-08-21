@@ -122,8 +122,8 @@ my @utilities = (
     'm1find', 'pack'
     );
 
-my @win_modules = ('File::Copy::Recursive', 'File::HomeDir', 'Math::SigFigs', 'Capture::Tiny', 'Config::Tiny', 'Math::Random', 'Math::MatrixReal', 'Mouse', 'MouseX::Params::Validate', 'YAML');
-my @nix_modules = ('File::Copy::Recursive', 'File::HomeDir', 'Math::SigFigs', 'Capture::Tiny', 'Config::Tiny', 'Math::Random', 'Math::MatrixReal', 'Mouse', 'MouseX::Params::Validate', 'YAML');
+my @win_modules = ('Statistics::Distributions', 'File::Copy::Recursive', 'File::HomeDir', 'Math::SigFigs', 'Capture::Tiny', 'Config::Tiny', 'Math::Random', 'Math::MatrixReal', 'Mouse', 'MouseX::Params::Validate', 'YAML');
+my @nix_modules = ('Statistics::Distributions', 'File::Copy::Recursive', 'File::HomeDir', 'Math::SigFigs', 'Capture::Tiny', 'Config::Tiny', 'Math::Random', 'Math::MatrixReal', 'Mouse', 'MouseX::Params::Validate', 'YAML');
 my @recommended_modules = ('Archive::Zip');
 
 my @modules;

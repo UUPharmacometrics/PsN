@@ -191,7 +191,7 @@ sub BUILD
             "will be incorrect.",newline => 1);
     }
 
-    $self->have_Math_CDF(1) if eval('require ext::Statistics::Distributions'); #enough, now loaded
+    $self->have_Math_CDF(1) if eval('require Statistics::Distributions'); #enough, now loaded
 
     if (not defined $self->p_value() or $self->p_value() eq '') {
         $self->p_value(0.05);
@@ -658,7 +658,7 @@ sub BUILD
             }elsif ($self -> p_value() >= 1){
                 $phash{$i} = 0;
             }else{
-                $phash{$i} = ext::Statistics::Distributions::chisqrdistr($i,($self -> p_value()));
+                $phash{$i} = Statistics::Distributions::chisqrdistr($i,($self -> p_value()));
             }
         }
         $p_values{$self -> p_value()}=\%phash;
@@ -3679,7 +3679,7 @@ sub gof_pval
         }elsif (($n_param_diff == 0) or ($pval >=1)){
             $change = 0;
         }else{
-            $change = $df_sign * ext::Statistics::Distributions::chisqrdistr($df_sign * $n_param_diff, $pval);
+            $change = $df_sign * Statistics::Distributions::chisqrdistr($df_sign * $n_param_diff, $pval);
         }
         my $test_val;
         my $ofv;
@@ -3730,7 +3730,7 @@ sub gof_pval
                     push ( @p_values, 9999); #no p-value high enough
                 }
             }else{
-                push (@p_values, (ext::Statistics::Distributions::chisqrprob($df_sign * $n_param_diff, $df_sign * $test_val)));
+                push (@p_values, (Statistics::Distributions::chisqrprob($df_sign * $n_param_diff, $df_sign * $test_val)));
             }
             $test_val = sprintf("%21.5f",$test_val);
             $ofv = sprintf("%12.5f",$ofvs[$i])

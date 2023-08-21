@@ -171,14 +171,14 @@ sub get_df_table
     }
 
     my $have_cdf=0;
-    $have_cdf = 1 if eval('require ext::Statistics::Distributions'); #enough, now loaded
+    $have_cdf = 1 if eval('require Statistics::Distributions'); #enough, now loaded
     return unless ($have_cdf);
 
     my %df_table;
     for (my $df= 1; $df<= $max_df; $df++){
         $df_table{$df} = [];
         foreach my $pval (@pvalues){
-            push(@{$df_table{$df}}, ext::Statistics::Distributions::chisqrdistr($df, $pval));
+            push(@{$df_table{$df}}, Statistics::Distributions::chisqrdistr($df, $pval));
         }
     }
     return \%df_table;

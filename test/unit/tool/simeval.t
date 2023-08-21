@@ -15,7 +15,7 @@ use ui;
 
 ui->silent(0);
 
-my $have_cdf = 1 if eval('require ext::Statistics::Distributions'); #enough, now loaded
+my $have_cdf = 1 if eval('require Statistics::Distributions'); #enough, now loaded
 
 #SKIP FIXME unless have_cdf
 #SKIP: {
@@ -44,8 +44,8 @@ my @facit_outlier_cwres=(0) x 70;
 $facit_outlier_cwres[13]=1;
 $facit_outlier_cwres[43]=1;
 
-my $bound1= -(ext::Statistics::Distributions::udistr(1/20));
-my $bound2= -(ext::Statistics::Distributions::udistr(19/20));
+my $bound1= -(Statistics::Distributions::udistr(1/20));
+my $bound2= -(Statistics::Distributions::udistr(19/20));
 
 #ignore ties that are handled special way in R npde
 foreach my $val (@{$facit_npde_iwres}){

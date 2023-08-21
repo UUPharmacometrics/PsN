@@ -3,7 +3,7 @@ package tool::bootstrap;
 use include_modules;
 use strict;
 use File::Copy 'cp';
-use ext::Statistics::Distributions 'udistr', 'uprob';
+use Statistics::Distributions 'udistr', 'uprob';
 use Math::Random;
 use Mouse;
 use MouseX::Params::Validate;

@@ -57,7 +57,7 @@ sub BUILD
 {
     my $self = shift;
 
-    $self->have_CDF(1) if eval('require ext::Statistics::Distributions'); #enough, now loaded
+    $self->have_CDF(1) if eval('require Statistics::Distributions'); #enough, now loaded
 
     for my $accessor ('logfile','raw_results_file','raw_nonp_file') {
         my @new_files = ();
