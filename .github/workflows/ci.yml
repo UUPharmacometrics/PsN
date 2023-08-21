@@ -146,7 +146,7 @@ jobs:
       - name: Install Perl and R dependencies
         run: |
           sudo apt update
-          sudo apt install -y libstatistics-distributions-perl libfile-homedir-perl libfile-copy-recursive-perl libyaml-perl libcapture-tiny-perl libmath-matrixreal-perl libtest-exception-perl libmouse-perl libarchive-zip-perl libfile-copy-recursive-perl r-base pandoc libpq-dev libcairo2-dev libssl-dev libcurl4-openssl-dev libmariadb-dev libgmp-dev libmpfr-dev libxml2-dev libudunits2-dev libblas-dev liblapack-dev libmagick++-dev
+          sudo apt install -y libconfig-tiny-perl libstatistics-distributions-perl libfile-homedir-perl libfile-copy-recursive-perl libyaml-perl libcapture-tiny-perl libmath-matrixreal-perl libtest-exception-perl libmouse-perl libarchive-zip-perl libfile-copy-recursive-perl r-base pandoc libpq-dev libcairo2-dev libssl-dev libcurl4-openssl-dev libmariadb-dev libgmp-dev libmpfr-dev libxml2-dev libudunits2-dev libblas-dev liblapack-dev libmagick++-dev
       - name: Set up Python 3.11
         uses: actions/setup-python@v2
         with:
