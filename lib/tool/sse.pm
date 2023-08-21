@@ -280,7 +280,7 @@ sub modelfit_setup
                     for (my $in=0; $in< $self->probnum; $in++){
                         $sim_model -> problems->[$in]->datas->[0]->ignoresign('@');
                     }
-                    $self->initial_values(ext::Config::Tiny -> new());
+                    $self->initial_values(Config::Tiny -> new());
 
                     #get table file names from original model. Keep in simulation
                     my $tbl_nm_ref =
@@ -1561,7 +1561,7 @@ sub _modelfit_raw_results_callback
             }elsif (defined $self->simulation_rawres and -e $self->simulation_rawres
                     and -e $dir.'raw_results_structure_simest'){
                 #read and prepend to raw_line_structure
-                my $structure = ext::Config::Tiny -> read($dir.'raw_results_structure_simest');
+                my $structure = Config::Tiny -> read($dir.'raw_results_structure_simest');
                 #first move all old models 'samples' steps down. make sure to start from end
                 #so that do not overwrite, sort descending
                 foreach my $mod (sort({$b <=> $a} keys %{$self->raw_line_structure})){
@@ -1689,7 +1689,7 @@ sub prepare_results
             }
         }
         $samples = $samp;
-        $self->raw_line_structure(ext::Config::Tiny -> read($self -> directory.'raw_results_structure'));
+        $self->raw_line_structure(Config::Tiny -> read($self -> directory.'raw_results_structure'));
 
         $self->first_alternative($firstalt);
     }else{
@@ -1706,7 +1706,7 @@ sub prepare_results
 
     my %n_initials;
 
-    my $initials = ext::Config::Tiny -> read($self -> directory.'simulation_initial_values');
+    my $initials = Config::Tiny -> read($self -> directory.'simulation_initial_values');
     my $form_initials = $self->format_initials(initials_object =>$initials);
 
     foreach my $measure ('theta','omega','sigma'){

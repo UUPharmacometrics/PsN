@@ -22,7 +22,7 @@ $Rscripts_dir = get_Rscripts_dir($lib_dir);
 
 $config_file = $lib_dir . '/psn.conf';
 
-use ext::Config::Tiny;
+use Config::Tiny;
 use ext::File::HomeDir;
 
 our $nm_version;
@@ -59,10 +59,10 @@ sub get_Rscripts_dir{
 sub import
 {
     unless ($config){
-        $config = ext::Config::Tiny -> read( $config_file );
+        $config = Config::Tiny -> read( $config_file );
 
         unless( $config ){
-            croak("In PsN configuration file[" . $config_file . "]:" . $ext::Config::Tiny::errstr );
+            croak("In PsN configuration file[" . $config_file . "]:" . $Config::Tiny::errstr );
         }
 
         unless( exists $config -> {'low_INF'} ){

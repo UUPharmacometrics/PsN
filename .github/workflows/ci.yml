@@ -351,6 +351,11 @@ jobs:
             set PATH=%CD%\installer\strawberry\perl\site\bin;%CD%\installer\strawberry\perl\bin;%CD%\installer\strawberry\c\bin;%PATH%
             cpanm File::Copy::Recursive --notest
           shell: cmd
+        - name: Install Config::Tiny
+          run: |
+            set PATH=%CD%\installer\strawberry\perl\site\bin;%CD%\installer\strawberry\perl\bin;%CD%\installer\strawberry\c\bin;%PATH%
+            cpanm Config::Tiny --notest
+          shell: cmd
         - name: Install PsN
           run: |
               set PATH=%CD%\installer\strawberry\perl\site\bin;%CD%\installer\strawberry\perl\bin;%CD%\installer\strawberry\c\bin;%PATH%

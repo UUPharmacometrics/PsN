@@ -5,7 +5,7 @@ use File::Copy qw(cp);
 use File::Path qw(mkpath);
 use File::Glob;
 use lib 'lib';
-use ext::Config::Tiny;
+use Config::Tiny;
 use ext::File::HomeDir;
 use PsN (); #pass empty list so that import, which reads config file, is not called
 use File::Copy::Recursive qw(fcopy rcopy dircopy fmove rmove dirmove);
@@ -122,8 +122,8 @@ my @utilities = (
     'm1find', 'pack'
     );
 
-my @win_modules = ('File::Copy::Recursive', 'Capture::Tiny', 'Math::Random', 'Math::MatrixReal', 'Mouse', 'MouseX::Params::Validate', 'YAML');
-my @nix_modules = ('File::Copy::Recursive', 'Capture::Tiny', 'Math::Random', 'Math::MatrixReal', 'Mouse', 'MouseX::Params::Validate', 'YAML');
+my @win_modules = ('File::Copy::Recursive', 'Capture::Tiny', 'Config::Tiny', 'Math::Random', 'Math::MatrixReal', 'Mouse', 'MouseX::Params::Validate', 'YAML');
+my @nix_modules = ('File::Copy::Recursive', 'Capture::Tiny', 'Config::Tiny', 'Math::Random', 'Math::MatrixReal', 'Mouse', 'MouseX::Params::Validate', 'YAML');
 my @recommended_modules = ('Archive::Zip');
 
 my @modules;
@@ -407,7 +407,7 @@ sub create_conf
         print "Error: Could not find $template.\n"."No config file created\n";
         return 0;
     }
-    my $config = ext::Config::Tiny -> read( $template );
+    my $config = Config::Tiny -> read( $template );
     ## this is not used anywhere $config -> {'_'} -> {'perl'} = $perlbin;
 
 

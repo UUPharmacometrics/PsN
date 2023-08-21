@@ -326,7 +326,7 @@ sub BUILD
 
     $self->calculate_raw_results_width();
 
-    $self->raw_line_structure(ext::Config::Tiny->new());
+    $self->raw_line_structure(Config::Tiny->new());
 }
 
 sub run

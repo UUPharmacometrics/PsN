@@ -1541,7 +1541,7 @@ sub get_rawres_parameter_indices
     unless (-e $full_name){
         return undef;
     }
-    my $structure = ext::Config::Tiny -> read($full_name);
+    my $structure = Config::Tiny -> read($full_name);
     my %indices;
     foreach my $param ('theta','omega','sigma'){
         my ($start,$len) = split(/,/,$structure -> {$model_number}->{$param});

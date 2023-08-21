@@ -27,7 +27,6 @@ LIBFILES= ui.pm \
 	include_modules.pm \
 	scm_util.pm \
 	ext/Math/SigFigs.pm \
-	ext/Config/Tiny.pm \
 	ext/File/HomeDir.pm \
 	ext/Statistics/Distributions.pm \
 	status_bar.pm \
