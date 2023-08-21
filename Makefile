@@ -31,29 +31,6 @@ LIBFILES= ui.pm \
 	ext/File/HomeDir.pm \
 	ext/Capture/Tiny.pm \
 	ext/Statistics/Distributions.pm \
-	Mouse.pm \
-    Mouse/Exporter.pm \
-	Mouse/Object.pm \
-	Mouse/PurePerl.pm \
-	Mouse/Role.pm \
-	Mouse/Spec.pm \
-	Mouse/TypeRegistry.pm \
-	Mouse/Util.pm \
-	Mouse/Meta/Attribute.pm \
-	Mouse/Meta/Class.pm \
-	Mouse/Meta/Method.pm \
-	Mouse/Meta/Module.pm \
-	Mouse/Meta/Role.pm \
-	Mouse/Meta/TypeConstraint.pm \
-	Mouse/Meta/Method/Accessor.pm \
-	Mouse/Meta/Method/Constructor.pm \
-	Mouse/Meta/Method/Delegation.pm \
-	Mouse/Meta/Method/Destructor.pm \
-	Mouse/Meta/Role/Application.pm \
-	Mouse/Meta/Role/Composite.pm \
-	Mouse/Meta/Role/Method.pm \
-	Mouse/Util/MetaRole.pm \
-	Mouse/Util/TypeConstraints.pm \
 	File/Copy/Recursive.pm \
 	YAML.pm \
 	YAML/Any.pm \
