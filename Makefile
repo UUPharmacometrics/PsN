@@ -32,18 +32,6 @@ LIBFILES= ui.pm \
 	ext/Capture/Tiny.pm \
 	ext/Statistics/Distributions.pm \
 	File/Copy/Recursive.pm \
-	YAML.pm \
-	YAML/Any.pm \
-	YAML/Dumper.pm \
-	YAML/Error.pm \
-	YAML/Loader.pm \
-	YAML/Marshall.pm \
-	YAML/Mo.pm \
-	YAML/Node.pm \
-	YAML/Tag.pm \
-	YAML/Types.pm \
-	YAML/Dumper/Base.pm \
-	YAML/Loader/Base.pm \
 	status_bar.pm \
 	model_plus.pm \
 	monitor.pm \

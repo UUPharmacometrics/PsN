@@ -122,8 +122,8 @@ my @utilities = (
     'm1find', 'pack'
     );
 
-my @win_modules = ('Math::Random', 'Math::MatrixReal', 'Mouse', 'MouseX::Params::Validate');
-my @nix_modules = ('Math::Random', 'Math::MatrixReal', 'Mouse', 'MouseX::Params::Validate');
+my @win_modules = ('Math::Random', 'Math::MatrixReal', 'Mouse', 'MouseX::Params::Validate', 'YAML');
+my @nix_modules = ('Math::Random', 'Math::MatrixReal', 'Mouse', 'MouseX::Params::Validate', 'YAML');
 my @recommended_modules = ('Archive::Zip');
 
 my @modules;

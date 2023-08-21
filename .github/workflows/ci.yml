@@ -141,12 +141,11 @@ jobs:
       - name: Install Perl dependencies
         run: |
           sudo cpan -T Math::Random
-          sudo cpan -T Math::MatrixReal
           sudo cpan -T MouseX::Params::Validate
       - name: Install Perl and R dependencies
         run: |
           sudo apt update
-          sudo apt install -y libtest-exception-perl libmoose-perl libmoosex-params-validate-perl libarchive-zip-perl libfile-copy-recursive-perl r-base pandoc libpq-dev libcairo2-dev libssl-dev libcurl4-openssl-dev libmariadb-dev libgmp-dev libmpfr-dev libxml2-dev libudunits2-dev libblas-dev liblapack-dev libmagick++-dev
+          sudo apt install -y libyaml-perl libmath-matrixreal-perl libtest-exception-perl libmouse-perl libarchive-zip-perl libfile-copy-recursive-perl r-base pandoc libpq-dev libcairo2-dev libssl-dev libcurl4-openssl-dev libmariadb-dev libgmp-dev libmpfr-dev libxml2-dev libudunits2-dev libblas-dev liblapack-dev libmagick++-dev
       - name: Set up Python 3.11
         uses: actions/setup-python@v2
         with:
@@ -222,6 +221,8 @@ jobs:
            sudo cpan -T MouseX::Params::Validate
            sudo cpan -T Archive::Zip
            sudo cpan -T Test::Exception
+           sudo cpan -T Mouse
+           sudo cpan -T YAML
       - name: Install PsN
         run: cd PsN-Source; perl setup.pl -auto
       - name: Update psn.conf
@@ -315,6 +316,8 @@ jobs:
             cpanm Math::MatrixReal --notest
             cpanm MouseX::Params::Validate --notest
             cpanm Params::Validate --notest
+            cpanm YAML --notest
+            cpanm Mouse --notest
           shell: cmd
         - name: Install PsN
           run: |
