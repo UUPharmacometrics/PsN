@@ -460,7 +460,7 @@ sub prepare_results
     #do nothing if do not have dOFV column
 
     unless (defined $self->raw_line_structure) {
-        $self->raw_line_structure(Config::Tiny->read($self->directory.'raw_results_structure'));
+        $self->raw_line_structure(ext::Config::Tiny->read($self->directory.'raw_results_structure'));
     }
 
     #make sure that we have valid raw_line_structure and not from crashed run here

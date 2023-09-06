@@ -1142,7 +1142,7 @@ sub prepare_results
 
     unless( defined $self->raw_line_structure){
       print "reading raw line structure in ".$self->directory().'raw_results_structure'."\n";
-      $self->raw_line_structure( Config::Tiny -> read( $self->directory().'raw_results_structure'));
+      $self->raw_line_structure( ext::Config::Tiny -> read( $self->directory().'raw_results_structure'));
     }
     for ( my $i = 0; $i < scalar @{$self->raw_results}; $i++ ) { # All models
       my $orig_mod = $self -> models->[$i];

@@ -1,7 +1,7 @@
 package tool::scm::config_file;
 
 use include_modules;
-use Config::Tiny;
+use ext::Config::Tiny;
 use Mouse;
 use MouseX::Params::Validate;
 use file;
@@ -132,10 +132,10 @@ sub BUILD
     }
     close( FILE );
 
-    my $config_tiny = Config::Tiny -> read_string( $string );
+    my $config_tiny = ext::Config::Tiny -> read_string( $string );
 
     unless( defined $config_tiny ){
-        croak("In configuration file [ " . $self -> file -> name . " ]: " . $Config::Tiny::errstr );
+        croak("In configuration file [ " . $self -> file -> name . " ]: " . $ext::Config::Tiny::errstr );
     }
 
     # Force config_tiny to lowercase
@@ -372,7 +372,7 @@ sub parse_config
 {
     my $self = shift;
     my %parm = validated_hash(\@_,
-        config_tiny => { isa => 'Config::Tiny', optional => 1 }
+        config_tiny => { isa => 'ext::Config::Tiny', optional => 1 }
     );
     my $config_tiny = $parm{'config_tiny'};
     no warnings qw(uninitialized);

@@ -26,6 +26,7 @@ LIBFILES= ui.pm \
 	boxcox.pm \
 	include_modules.pm \
 	scm_util.pm \
+	ext/Config/Tiny.pm \
 	status_bar.pm \
 	model_plus.pm \
 	monitor.pm \
