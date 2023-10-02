@@ -106,6 +106,7 @@ has 'logfile' => ( is => 'rw', isa => 'ArrayRef[Str]', default => sub { ['npc.lo
 has 'results_file' => ( is => 'rw', isa => 'Str', default => 'npc_results.csv' );
 has 'nca' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'mix' => ( is => 'rw', isa => 'Bool', default => 0 );
+has 'refcorr' => ( is => 'rw', isa => 'HashRef' );
 
 sub BUILD
 {

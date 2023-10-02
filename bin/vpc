@@ -68,6 +68,7 @@ my %optional_options = ( 'idv:s' => undef,
     'min_points_in_bin:i' => undef,
     'so!' => undef,
     'mix!' => undef,
+    'refcorr:s' => undef,
 );
 
 my $res = GetOptions( \%options,
@@ -501,6 +502,15 @@ $help_text{-rawres_input} = <<'EOF';
     outside of PsN, as long as the file follows the format rules.
 EOF
 
+$help_text{-refcorr} = <<'EOF';
+    -refcorr
+
+    Perform reference correction on dependent variable values before computing
+    vpc results. The option takes a comma separated list of equals separated pairs
+    of column names and reference values.
+    Cannot be used together with -predcorr or -varcorr.
+EOF
+
 $help_text{-refstrat} = <<'EOF';
     -refstrat=number
 
@@ -668,6 +678,15 @@ if ($dummymodel){
 
 }
 
+my %refcorr;
+if (defined $options{'refcorr'}) {
+    my @a = split ',', $options{'refcorr'};
+    for my $e (@a) {
+        my @pair = split '=', $e;
+        $refcorr{$pair[0]} = $pair[1];
+    }
+}
+
 input_checking::check_options(tool => 'vpc', options => \%options, model => $model);
 
 my $vpc =
@@ -720,6 +739,7 @@ my $vpc =
       min_points_in_bin     => $options{'min_points_in_bin'},
       directory_name_prefix => 'vpc',
       mix                  => $options{'mix'},
+      refcorr => \%refcorr,
       );
 
 $vpc-> print_options (cmd_line => $cmd_line,
