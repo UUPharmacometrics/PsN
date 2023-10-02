@@ -1370,6 +1370,7 @@ sub modelfit_setup
     my $rem = $self -> samples % $self -> n_simulation_models();
     my $base = ($self -> samples - $rem)/$self -> n_simulation_models();
     my @model_sims = ();
+    my @refcorr_models;
     my $ignore_char=undef;
     my $nopred_is_set=0;
     unless (defined $model_simulation){
@@ -1592,6 +1593,20 @@ sub modelfit_setup
                                        record_strings => \@simrec_strings,
                                        problem_numbers => [$self->simprobnum()]);
         $model_sims[$i] -> _write(relative_data_path => $self->copy_data);
+
+        my %refcorr = %{$self->refcorr};
+        if (%refcorr) {
+            my $num = $i + 1;
+            my $path = "m1/" . $model_sims[$i]->filename;
+            my $destpath = "m1/${type}_simulation_refcorr.$num.mod";
+            my $refstr = "";
+            for my $k (keys %refcorr) {
+                $refstr .= "$k=" . $refcorr{$k};
+            }
+            PsN::call_pharmpy("data reference $path -o $destpath $refstr");
+            my $refmodel = model->new(filename => $destpath);
+            push @refcorr_models, $refmodel;
+        }
     }
     $model_orig -> remove_records(type => 'simulation');
 
@@ -1614,6 +1629,7 @@ sub modelfit_setup
     my @runmodels = ();
     push (@runmodels, $model_orig) if ($self->run_the_original);
     push (@runmodels, @model_sims) if ($self->run_the_sim);
+    push (@runmodels, @refcorr_models);
 
     if ($self->run_the_sim or $self->run_the_original) {
         my $modfit = tool::modelfit->new(%{common_options::restore_options(@common_options::tool_options)},
