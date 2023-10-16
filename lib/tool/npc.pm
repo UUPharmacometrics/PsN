@@ -1594,18 +1594,20 @@ sub modelfit_setup
                                        problem_numbers => [$self->simprobnum()]);
         $model_sims[$i] -> _write(relative_data_path => $self->copy_data);
 
-        my %refcorr = %{$self->refcorr};
-        if (%refcorr) {
-            my $num = $i + 1;
-            my $path = "m1/" . $model_sims[$i]->filename;
-            my $destpath = "m1/${type}_simulation_refcorr.$num.mod";
-            my $refstr = "";
-            for my $k (keys %refcorr) {
-                $refstr .= "$k=" . $refcorr{$k};
+        if (defined $self->refcorr) { 
+            my %refcorr = %{$self->refcorr};
+            if (%refcorr) {
+                my $num = $i + 1;
+                my $path = "m1/" . $model_sims[$i]->filename;
+                my $destpath = "m1/${type}_simulation_refcorr.$num.mod";
+                my $refstr = "";
+                for my $k (keys %refcorr) {
+                    $refstr .= "$k=" . $refcorr{$k};
+                }
+                PsN::call_pharmpy("data reference $path -o $destpath $refstr");
+                my $refmodel = model->new(filename => $destpath);
+                push @refcorr_models, $refmodel;
             }
-            PsN::call_pharmpy("data reference $path -o $destpath $refstr");
-            my $refmodel = model->new(filename => $destpath);
-            push @refcorr_models, $refmodel;
         }
     }
     $model_orig -> remove_records(type => 'simulation');
