@@ -325,7 +325,7 @@ jobs:
         - name: Install Math::Random::Free
           run: |
             set PATH=%CD%\installer\strawberry\perl\site\bin;%CD%\installer\strawberry\perl\bin;%CD%\installer\strawberry\c\bin;%PATH%
-          cpanm Math::Random::Free --notest
+            cpanm Math::Random::Free --notest
           shell: cmd
         - name: Install Math::MatrixReal
           run: |
