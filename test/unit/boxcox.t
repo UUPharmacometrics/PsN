@@ -102,15 +102,6 @@ my @CL=(0.00477584,0.00509069,0.00455956,0.00772444,0.00401326,0.00487732,
 0.00477584,0.00410182,0.00520604,0.00590278,0.00420474,0.00518431);
 
 
-
-#my $N=scalar(@CL);
-
-#my ($parvec,$delt)= boxcox::sort_and_shift_to_positive(\@CL);
-#my $yvec =boxcox::get_quantile_data($N);
-
-
-
-
 my @V=(1.55158,1.3027,1.61882,1.13856,1.37955,1.59477,1.62951,1.59514,1.09566,
 1.62653,1.54518,1.48253,1.4596,1.01375,1.61882,1.5507,1.37955,1.32609,1.26224,
 1.68434,1.37955,1.59315,1.5507,1.46354,1.62306,1.55158,1.62951,1.54972,1.75891,
@@ -122,18 +113,6 @@ my @V=(1.55158,1.3027,1.61882,1.13856,1.37955,1.59477,1.62951,1.59514,1.09566,
 1.5507,0.993295,1.33709,0.993295,1.54585,1.46755,1.54972,1.50989,1.35865,1.22086,
 1.46755,1.32609,1.22086,1.4176,1.15058,1.50535,1.58179,1.25677,	1.46755);
 
-#my $N=scalar(@V);
-
-#my ($parvec,$delt)= boxcox::sort_and_shift_to_positive(\@V);
-#my $yvec =boxcox::get_quantile_data($N);
-
-#	my ($r,$deriv) = boxcox::r_of_lambda($parvec,$yvec,$lambda);
-
-
-#my ($lambda,$delta)=boxcox::get_lambda_delta(\@CL,3);
-#($lambda,$delta)=boxcox::get_lambda_delta(\@V,3);
-
-
 my @flat=(0.9,0.9,0.9,0.9,0.9,0.9,0.9,0.9,0.9,0.9,0.9,0.9,0.9,0.9,0.9,0.9,0.9,0.9);
 
 my $lambda;
@@ -141,26 +120,22 @@ my $numerr;
 ($lambda,$delta,$numerr)=boxcox::get_lambda_delta(\@flat,3,1);
 is($numerr,0,"numerical error get_lambda_delta");
 
-#print "lam $lambda del $delta \n";
 random_set_seed_from_phrase('12345');
 
 $N=100;
 my @normal=random_normal($N,0,0.2); #n mean sd
 
 foreach my $lambda (-2,-0.5,-0.2,-0.1,0,0.2,1.5){
-#	print "Trying lambda $lambda\n";
 	my $vector = boxcox::inverse_box_cox(\@normal,$lambda);
 
 	my ($parvec,$delt)= boxcox::sort_and_shift_to_positive($vector,10);
 	my $yvec =boxcox::get_quantile_data($N);
 	my ($lambda_r,$dirt,$numerr1) = boxcox::r_of_lambda($parvec,$yvec,$lambda);
 
-	#print "values ".join(' ',@{$vector})."\n";
 	my ($found,$delta,$numerr2)=boxcox::get_lambda_delta($vector,3,1);
 	my ($own_r,$numerr3);
 	($own_r,$dirt,$numerr3) = boxcox::r_of_lambda($parvec,$yvec,$found);
 
-#	print "found $own_r nominal $lambda_r\n";
 	cmp_ok($own_r,'>=',$lambda_r,"get lambda $lambda");
 	cmp_ok($numerr1,'==',$numerr2,"numerr $lambda");
 	cmp_ok($numerr3,'==',$numerr2,"numerr2 $lambda");
@@ -261,7 +236,6 @@ $extra{'a'}=-7;
 $extra{'b'}=-8;
 $extra{'c'}=10;
 
-#
 my $opt = boxcox::direct_search_maximize(1.5,6,30,\%extra);
 cmp_relative($opt->[0],10+16/7,6,"direct 2nd y");
 cmp_relative($opt->[1],-4/7,1,"direct 2nd x");
@@ -272,7 +246,6 @@ $extra{'a'}=-1;
 $extra{'b'}=2;
 $extra{'c'}=5;
 
-#
 $opt = boxcox::direct_search_maximize(4.5,6,20,\%extra);
 cmp_float($opt->[0],6,"direct 2nd y");
 cmp_float($opt->[1],1,"direct 2nd x");
@@ -282,16 +255,13 @@ open( RRES, $includes::testfiledir . '/boxcoxtestvectors.csv') or die "could not
 my @read_file = <RRES>;
 close( RRES );
 
-#print "delete  \n";
 my $index=0;
 foreach my $line (@read_file){
 	$index++;
 	chomp $line;
 	my @vals=split(',',$line);
 	my $est = shift(@vals);
-#	print "\n"."A$index=[";
 	my ($lam,$del,$numerr) = boxcox::get_lambda_delta(\@vals,3,$est);
-
 }
 
 done_testing();
