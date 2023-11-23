@@ -1,7 +1,7 @@
 package tool::pvar;
 
 use include_modules;
-use Math::Random;
+use random;
 use File::Spec;
 use Mouse;
 use MouseX::Params::Validate;

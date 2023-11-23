@@ -1,7 +1,7 @@
 package tool::nonpb;
 
 use include_modules;
-use Math::Random;
+use random;
 use strict;
 use tool::modelfit;
 use tool::pind;

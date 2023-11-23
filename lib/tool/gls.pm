@@ -2,7 +2,7 @@ package tool::gls;
 
 use include_modules;
 use tool::modelfit;
-use Math::Random;
+use random;
 use Config;
 use Mouse;
 use MouseX::Params::Validate;

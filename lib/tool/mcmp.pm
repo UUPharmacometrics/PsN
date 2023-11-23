@@ -1,7 +1,7 @@
 package tool::mcmp;
 
 use include_modules;
-use Math::Random;
+use random;
 use strict;
 use tool::modelfit;
 use model;

@@ -1,7 +1,7 @@
 package tool::qa;
 
 use strict;
-use Math::Random;
+use random;
 use Mouse;
 use MouseX::Params::Validate;
 use File::Copy 'cp';

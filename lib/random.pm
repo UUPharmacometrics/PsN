@@ -4,7 +4,7 @@ use strict;
 use Exporter qw(import);
 use PsN;
 
-our @EXPORT = qw(random_set_seed_from_phrase random_uniform_integer);
+our @EXPORT = qw(random_set_seed_from_phrase random_uniform_integer random_permuted_index);
 
 our $old;
 
@@ -33,6 +33,16 @@ sub random_uniform_integer
         return Math::Random::random_uniform_integer(@_); 
     } else {
         return Math::Random::Free::random_uniform_integer(@_);
+    }
+}
+
+
+sub random_permuted_index
+{
+    if ($old) {
+        return Math::Random::random_permuted_index(@_); 
+    } else {
+        return Math::Random::Free::random_permuted_index(@_);
     }
 }
 
