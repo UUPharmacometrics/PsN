@@ -13,6 +13,7 @@ LIBFILES= ui.pm \
 	common_options.pm \
 	input_checking.pm \
 	linear_algebra.pm \
+	random.pm \
 	simeval_util.pm \
 	psn.conf_template \
 	OSspecific.pm \
