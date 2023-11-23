@@ -2,7 +2,7 @@ package tool::simeval;
 
 use include_modules;
 use tool::modelfit;
-use Math::Random;
+use random;
 use Config;
 use linear_algebra;
 use simeval_util;
