@@ -6,7 +6,7 @@ use File::Copy 'cp';
 use data;
 use OSspecific;
 use tool::modelfit;
-use Math::Random;
+use Math::Random qw(random_get_seed random_set_seed random_uniform random_multivariate_normal);
 use Mouse;
 use MouseX::Params::Validate;
 use Math::MatrixReal;
@@ -1507,7 +1507,7 @@ sub weighted_sample
     my $len = scalar(@{$cdf});
     croak("empty cdf into weighted_sample") unless ($len>0);
     my $max = $cdf->[$len-1];
-    my $val = Math::Random::random_uniform(1,0,$max); # n low high
+    my $val = random_uniform(1,0,$max); # n low high
 
     for (my $i=0; $i< $len; $i++){
         return $i if ($val <= $cdf->[$i]);
@@ -2257,7 +2257,7 @@ sub sample_multivariate_normal
     for (my $j=0; $j<$max_iter; $j++){
         #we will probably discard some samples, generate twice needed amount to start with
         my @candidate_samples;
-        @candidate_samples = Math::Random::random_multivariate_normal((2*$samples), @muvec, @{$use_covmatrix});
+        @candidate_samples = random_multivariate_normal((2*$samples), @muvec, @{$use_covmatrix});
 
         for (my $cand=0; $cand < scalar(@candidate_samples); $cand++){
             my $xvec;
