@@ -7,7 +7,6 @@ use lib "$Bin/../lib";
 # Everything above this line will be replaced #
 
 use PsN;
-use Math::Random;
 use strict;
 use Getopt::Long;
 use Cwd;
