@@ -146,7 +146,7 @@ jobs:
       - name: Install Perl and R dependencies
         run: |
           sudo apt update
-          sudo apt install -y libconfig-tiny-perl libstatistics-distributions-perl libfile-homedir-perl libfile-copy-recursive-perl libyaml-perl libcapture-tiny-perl libmath-matrixreal-perl libtest-exception-perl libmouse-perl libarchive-zip-perl libfile-copy-recursive-perl r-base pandoc libpq-dev libcairo2-dev libssl-dev libcurl4-openssl-dev libmariadb-dev libgmp-dev libmpfr-dev libxml2-dev libudunits2-dev libblas-dev liblapack-dev libmagick++-dev
+          sudo apt install -y libmath-random-free-perl libconfig-tiny-perl libstatistics-distributions-perl libfile-homedir-perl libfile-copy-recursive-perl libyaml-perl libcapture-tiny-perl libmath-matrixreal-perl libtest-exception-perl libmouse-perl libarchive-zip-perl libfile-copy-recursive-perl r-base pandoc libpq-dev libcairo2-dev libssl-dev libcurl4-openssl-dev libmariadb-dev libgmp-dev libmpfr-dev libxml2-dev libudunits2-dev libblas-dev liblapack-dev libmagick++-dev
       - name: Set up Python 3.11
         uses: actions/setup-python@v2
         with:
@@ -218,6 +218,7 @@ jobs:
       - name: Install Perl dependencies
         run: |
           sudo cpan -T Math::Random
+          sudo cpan -T Math::Random::Free
           sudo cpan -T Math::MatrixReal
           sudo cpan -T MouseX::Params::Validate
           sudo cpan -T Archive::Zip
@@ -320,6 +321,11 @@ jobs:
           run: |
             set PATH=%CD%\installer\strawberry\perl\site\bin;%CD%\installer\strawberry\perl\bin;%CD%\installer\strawberry\c\bin;%PATH%
             cpanm Math::Random --notest
+          shell: cmd
+        - name: Install Math::Random::Free
+          run: |
+            set PATH=%CD%\installer\strawberry\perl\site\bin;%CD%\installer\strawberry\perl\bin;%CD%\installer\strawberry\c\bin;%PATH%
+          cpanm Math::Random::Free --notest
           shell: cmd
         - name: Install Math::MatrixReal
           run: |
