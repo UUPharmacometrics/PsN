@@ -11,8 +11,6 @@ use lib "$Bin/../lib";
 use Config;
 use strict;
 use Getopt::Long;
-# External modules #
-use Math::Random;
 # PsN includes #
 use PsN;
 use common_options;

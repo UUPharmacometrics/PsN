@@ -12,7 +12,6 @@ use Getopt::Long;
 use File::Basename;
 use common_options;
 use ui;
-use Math::Random;
 use Cwd;
 # More PsN dependencies included with require further down
 

@@ -13,7 +13,6 @@ use File::Copy qw/cp mv/;
 use File::Basename;
 use File::Spec;
 use common_options;
-use Math::Random;
 use ui;
 # More PsN dependencies included with require further down
 
