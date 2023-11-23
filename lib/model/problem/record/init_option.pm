@@ -1,7 +1,6 @@
 package model::problem::record::init_option;
 
 use include_modules;
-use Math::Random;
 use Mouse;
 use MouseX::Params::Validate;
 extends 'model::problem::record::option';
