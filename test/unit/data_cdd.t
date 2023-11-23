@@ -7,7 +7,6 @@ use strict;
 use warnings;
 use Test::More tests=>28;
 use Test::Exception;
-use Math::Random;
 use FindBin qw($Bin);
 use lib "$Bin/.."; #location of includes.pm
 use includes; #file with paths to PsN packages

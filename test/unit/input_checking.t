@@ -7,7 +7,6 @@ use Test::Exception;
 use FindBin qw($Bin);
 use lib "$Bin/.."; #location of includes.pm
 use includes; #file with paths to PsN packages
-use Math::Random;
 use input_checking;
 use Config;
 use Env qw(PATH);

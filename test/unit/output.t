@@ -6,7 +6,6 @@ use strict;
 use warnings;
 use Test::More;# tests=>1716;
 use Test::Exception;
-use Math::Random;
 use File::Spec;
 use File::Basename;
 use FindBin qw($Bin);

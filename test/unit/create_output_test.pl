@@ -3,7 +3,6 @@
 # Unit tests for output.pm
 
 #use strict;
-use Math::Random;
 use FindBin qw($Bin);
 use lib "$Bin/../../lib"; 	# PsN packages
 use output;
