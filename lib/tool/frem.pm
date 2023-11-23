@@ -3,7 +3,6 @@ package tool::frem;
 use PsN;
 use include_modules;
 use tool::modelfit;
-use Math::Random;
 use Config;
 use linear_algebra;
 

@@ -1,7 +1,6 @@
 package tool::precond;
 
 use include_modules;
-use Math::Random;
 use Math::Trig;
 use File::Spec;
 use Mouse;

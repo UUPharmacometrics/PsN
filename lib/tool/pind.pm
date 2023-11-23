@@ -1,7 +1,6 @@
 package tool::pind;
 
 use include_modules;
-use Math::Random;
 use strict;
 use tool::modelfit;
 use model;

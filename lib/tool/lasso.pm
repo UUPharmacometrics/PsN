@@ -3,7 +3,6 @@ package tool::lasso;
 use include_modules;
 use tool::xv;
 use tool::modelfit;
-use Math::Random;
 use Data::Dumper;
 use Cwd;
 use OSspecific;

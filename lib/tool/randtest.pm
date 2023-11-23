@@ -6,7 +6,6 @@ use File::Copy 'cp';
 use data;
 use OSspecific;
 use tool::modelfit;
-use Math::Random;
 use Mouse;
 use MouseX::Params::Validate;
 use array qw(quantile percentile);

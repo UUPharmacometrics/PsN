@@ -11,7 +11,6 @@ use Mouse;
 use MouseX::Params::Validate;
 use Math::MatrixReal;
 use Math::Trig;    # For pi
-use Math::Random;
 use File::Spec;
 use output;
 use array qw(:all);
