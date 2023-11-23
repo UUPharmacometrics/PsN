@@ -412,4 +412,13 @@ sub deprecation_warn
     warn("Warning: $what will be deprecated in the next version of PsN.\n         Please start to use '$new_action' instead.\n         See https://pharmpy.github.io for information on Pharmpy\n");
 }
 
+sub use_old_math_random
+{
+    if (defined $config->{'_'}->{'old_math_random'}) {
+        return $config->{'_'}->{'old_math_random'};
+    }
+    return 0;
+}
+
+
 1;
