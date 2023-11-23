@@ -12,8 +12,6 @@ use Config;
 use strict;
 use Getopt::Long;
 use File::Basename;
-# External modules #
-use Math::Random;
 
 # PsN includes #
 use PsN;
