@@ -3,7 +3,7 @@ package common_options;
 use include_modules;
 use Getopt::Long;
 use Text::Wrap;
-use Math::Random;
+use random;
 use Cwd;
 use OSspecific;
 use PsN;
