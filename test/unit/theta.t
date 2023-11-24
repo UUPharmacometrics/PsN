@@ -6,7 +6,7 @@ use Test::More;
 use FindBin qw($Bin);
 use lib "$Bin/.."; #location of includes.pm
 use includes; #file with paths to PsN packages
-use Math::Random;
+use random;
 use model::problem::theta;
 
 # Test new and read option
@@ -101,10 +101,10 @@ $PsN::nm_major_version = 6; #affects formatting in init_option.pm
 random_set_seed_from_phrase('12345');
 $record->set_random_inits(degree => 0.1);
 is ($record->options->[0]->init, 10, "option->init");
-cmp_float($record->options->[1]->init, 2.153749, "option->init");
-cmp_float($record->options->[2]->init, 92.2889, "option->init");
+cmp_float($record->options->[1]->init, 2.152759, "option->init");
+cmp_float($record->options->[2]->init, 90.10181, "option->init");
 $record->set_random_inits(degree => 2);
-cmp_float($record->options->[1]->init, 3.020271, "option->init");
-cmp_float($record->options->[2]->init, 181.4222, "option->init");
+cmp_float($record->options->[1]->init, 3.285657, "option->init");
+cmp_float($record->options->[2]->init, 21.45399, "option->init");
 
 done_testing();

@@ -3,7 +3,7 @@ package model::problem::init_record;
 use include_modules;
 use model::problem::record::init_option;
 use linear_algebra;
-use Math::Random;
+use random;
 use Mouse;
 use MouseX::Params::Validate;
 

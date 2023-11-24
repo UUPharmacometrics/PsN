@@ -2,7 +2,7 @@ package model::problem::theta;
 
 use include_modules;
 use model::problem::record::theta_option;
-use Math::Random;
+use random;
 use Mouse;
 use MouseX::Params::Validate;
 

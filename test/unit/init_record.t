@@ -6,7 +6,7 @@ use Test::More;
 use FindBin qw($Bin);
 use lib "$Bin/.."; #location of includes.pm
 use includes; #file with paths to PsN packages
-use Math::Random;
+use random;
 use model::problem::init_record;
 use model::problem::omega;
 use model::problem::sigma;
@@ -75,8 +75,8 @@ is ($record->fix,0,'record 2 fix');
 is ($record->type,'DIAGONAL','record 2 type');
 is ($record->size,2,'record 2 size');
 $record->set_random_inits(degree => 0.1);
-cmp_float($record->options->[0]->init,0.020982,'record 2 init 0');
-cmp_float ($record->options->[1]->init,0.010769,'record 2 init 1');
+cmp_float($record->options->[0]->init,0.01953,'record 2 init 0');
+cmp_float ($record->options->[1]->init,0.010764,'record 2 init 1');
 my $ok = $record->set_vector(vector =>[5,4]);
 is ($ok,1,'set_vector diag ok');
 is ($record->options->[0]->init,5,'set_vector diag init 0');
@@ -103,12 +103,12 @@ is ($record->fix,0,'record 3 fix');
 is ($record->type,'BLOCK','record 3 type');
 is ($record->size,3,'record 3 size');
 $record->set_random_inits(degree => 0.1);
-cmp_float ($record->options->[0]->init,0.018387,'record 3 init 0');
-cmp_float ($record->options->[1]->init,-0.00215,'record 3 init 1');
-cmp_float ($record->options->[2]->init,0.531022,'record 3 init 2');
-cmp_float ($record->options->[3]->init,0.002922,'record 3 init 3');
-cmp_float ($record->options->[4]->init,-0.00476,'record 3 init 4');
-cmp_float ($record->options->[5]->init,1.048290,'record 3 init 5');
+cmp_float ($record->options->[0]->init,0.018014,'record 3 init 0');
+cmp_float ($record->options->[1]->init,-0.0022,'record 3 init 1');
+cmp_float ($record->options->[2]->init,0.544906,'record 3 init 2');
+cmp_float ($record->options->[3]->init,0.002951,'record 3 init 3');
+cmp_float ($record->options->[4]->init,-0.00502,'record 3 init 4');
+cmp_float ($record->options->[5]->init,0.961905,'record 3 init 5');
 
 #make band
 $record = model::problem::omega->new(record_arr => ['BLOCK(3) 0.02','-0.002 0.5','0 -0.005 1']);
@@ -119,35 +119,35 @@ is ($record->options->[3]->init,0,'record 3.5 init 3');
 is ($record->options->[4]->init,-0.005,'record 3.5 init 4');
 is ($record->options->[5]->init,1,'record 3.5 init 5');
 $record->set_random_inits(degree => 0.1);
-cmp_float ($record->options->[0]->init,0.020215,'record 3.5 init 0');
-cmp_float ($record->options->[1]->init,-0.0021,'record 3.5 init 1');
-cmp_float ($record->options->[2]->init,0.526578,'record 3.5 init 2');
+cmp_float ($record->options->[0]->init,0.020012,'record 3.5 init 0');
+cmp_float ($record->options->[1]->init,-0.00208,'record 3.5 init 1');
+cmp_float ($record->options->[2]->init,0.456577,'record 3.5 init 2');
 is ($record->options->[3]->init,0,'record 3.5 init 3');
-cmp_float ($record->options->[4]->init,-0.00489,'record 3.5 init 4');
-cmp_float ($record->options->[5]->init,0.922923,'record 3.5 init 5');
+cmp_float ($record->options->[4]->init,-0.0051,'record 3.5 init 4');
+cmp_float ($record->options->[5]->init,1.090233,'record 3.5 init 5');
 
 #nonposdef, to make cholesky fail couple of times and need deflation off-diag
 $PsN::nm_major_version = 7; #affects formatting in init_option.pm
 $record = model::problem::sigma->new(record_arr => ['BLOCK(3) 2','2 2','2 2 2']);
 $record->set_random_inits(degree => 0.1);
-cmp_float ($record->options->[0]->init,2.2419228741762,'record 3.6 init 0');
-cmp_float ($record->options->[1]->init,1.2739668420972,'record 3.6 init 1');
-cmp_float ($record->options->[2]->init,1.654834337814,'record 3.6 init 2');
-cmp_float ($record->options->[3]->init,1.4124551858254,'record 3.6 init 2');
-cmp_float ($record->options->[4]->init,1.6485966774141,'record 3.6 init 4');
-cmp_float ($record->options->[5]->init,1.9604655709679,'record 3.6 init 5');
+cmp_float ($record->options->[0]->init,1.68769122459,'record 3.6 init 0');
+cmp_float ($record->options->[1]->init,0.763776429425,'record 3.6 init 1');
+cmp_float ($record->options->[2]->init,2.73001132765,'record 3.6 init 2');
+cmp_float ($record->options->[3]->init,1.45924992008,'record 3.6 init 2');
+cmp_float ($record->options->[4]->init,1.15412538192,'record 3.6 init 4');
+cmp_float ($record->options->[5]->init,1.41236980162,'record 3.6 init 5');
 
 
 #very high degree, to get cholesky fail a couple of times
 $PsN::nm_major_version = 6; #affects formatting in init_option.pm
 $record = model::problem::omega->new(record_arr => ['BLOCK(3) 2','2 2','0 2 2']);
 $record->set_random_inits(degree => 0.9);
-cmp_float ($record->options->[0]->init,4.859981,'record 3.7 init 0');
-cmp_float ($record->options->[1]->init,2.316453,'record 3.7 init 1');
-cmp_float ($record->options->[2]->init,1.628881,'record 3.7 init 2');
+cmp_float ($record->options->[0]->init,0.967023,'record 3.7 init 0');
+cmp_float ($record->options->[1]->init,0.652371,'record 3.7 init 1');
+cmp_float ($record->options->[2]->init,1.834813,'record 3.7 init 2');
 is($record->options->[3]->init,0,'record 3.7 init 2');
-cmp_float ($record->options->[4]->init,0.268287,'record 3.7 init 4');
-cmp_float ($record->options->[5]->init,0.434489,'record 3.7 init 5');
+cmp_float ($record->options->[4]->init,0.462744,'record 3.7 init 4');
+cmp_float ($record->options->[5]->init,1.17502,'record 3.7 init 5');
 
 $ok = $record->set_vector(vector => [4,0.1,3,0.2,0.3,5]);
 is ($ok,1,'set_vector block ok');
@@ -399,9 +399,9 @@ is ($record->options->[0]->init, 2, "case 19 init");
 # set_random_inits for degree > 1
 $record = model::problem::init_record->new(record_arr => ['BLOCK(2) 0.02','0 0.01']);
 $record->set_random_inits(degree => 2);
-is($record->options->[0]->init, 0.035443, 'record 1 init 0 degee=2');
+is($record->options->[0]->init, 0.049875, 'record 1 init 0 degee=2');
 is($record->options->[1]->init, 0, 'record 1 init 1 degree=2');
-is($record->options->[2]->init, 0.02127, 'record 1 init 2 degree=2');
+is($record->options->[2]->init, 0.005443, 'record 1 init 2 degree=2');
 
 # Multiple FIX in BLOCK
 dies_ok { model::problem::init_record->new(record_arr => ['BLOCK(2) 28 FIX', '19 FIX']) } "Multiple FIX in BLOCK dies";
