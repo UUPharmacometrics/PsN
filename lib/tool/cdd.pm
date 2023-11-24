@@ -5,7 +5,7 @@ use Cwd;
 use File::Copy 'cp';
 use tool::llp;
 use tool::modelfit;
-use Math::Random;
+use random;
 use Math::MatrixReal;
 use Mouse;
 use MouseX::Params::Validate;
