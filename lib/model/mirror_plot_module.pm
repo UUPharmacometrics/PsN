@@ -11,7 +11,7 @@ package model::mirror_plot_module;
 
 
 use include_modules;
-use Math::Random;
+use random;
 use Mouse;
 use MouseX::Params::Validate;
 
