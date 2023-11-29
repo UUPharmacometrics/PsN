@@ -10,7 +10,7 @@ use lib "$Bin/.."; #location of includes.pm
 use includes; #file with paths to PsN packages
 use Math::MatrixReal;
 use Math::Trig;	# For pi
-use Math::Random;
+use random;
 use output;
 use tool::sir;
 
@@ -136,18 +136,15 @@ my ($gotsamples,$dirt) = tool::sir::sample_multivariate_normal(samples=>$nsample
 															   adjust_blocks => 0,
 	);
 
-#print "\nxvec [".join(' ',@{$gotsamples->[2]})."]\n";
-#print "\labels ".join(' ',@{$hash->{'labels'}})."\n";
-
 my $sampled_params_arr = tool::sir::create_sampled_params_arr(samples_array => $gotsamples,
 															  labels_hash => $hash,
 															  user_labels => 1);
 
-cmp_float($sampled_params_arr->[0]->{'theta'}->{'CL'}, 0.00579867653819879, 'sampled CL');
-cmp_float($sampled_params_arr->[0]->{'theta'}->{'V'}, 1.20800900217457, 'sampled V');
-cmp_float($sampled_params_arr->[0]->{'theta'}->{'THETA3'}, 0.568698687977855, 'sampled THETA3');
-cmp_float($sampled_params_arr->[0]->{'theta'}->{'THETA4'}, 0.369700885223909, 'sampled THETA4');
-cmp_float($sampled_params_arr->[0]->{'theta'}->{'THETA5'}, 0.118821314516974, 'sampled THETA5');
+cmp_float($sampled_params_arr->[0]->{'theta'}->{'CL'}, 0.00570686382414, 'sampled CL');
+cmp_float($sampled_params_arr->[0]->{'theta'}->{'V'}, 1.35461001949, 'sampled V');
+cmp_float($sampled_params_arr->[0]->{'theta'}->{'THETA3'}, 0.53121339177, 'sampled THETA3');
+cmp_float($sampled_params_arr->[0]->{'theta'}->{'THETA4'}, 0.453816890565, 'sampled THETA4');
+cmp_float($sampled_params_arr->[0]->{'theta'}->{'THETA5'}, 0.140440579742, 'sampled THETA5');
 
 my $statshash = tool::sir::empirical_statistics(sampled_params_arr => $sampled_params_arr,
 												labels_hash=> $hash,
@@ -163,36 +160,34 @@ my $pdf=tool::sir::mvnpdf(inverse_covmatrix => $icm,
 
 #TODO relax numerical constraints here, very illconditioned test problem
 
-cmp_relative($pdf->[0],1.035247587409e-01,11,'pdf compare matlab 1'); #multnorm.m tag1
-cmp_relative($pdf->[1],2.982414449872e-01,11,'pdf compare matlab 2'); #multnorm.m tag2
-cmp_relative($pdf->[2],5.974361835534e-01,11,'pdf compare matlab 3'); #multnorm.m tag3
-#print "\npdf ".$pdf->[0]."\n";
-
+cmp_relative($pdf->[0],0.117343848102,11,'pdf 1');
+cmp_relative($pdf->[1],0.0740607897206,11,'pdf 2');
+cmp_relative($pdf->[2],0.0328779268548,11,'pdf 3');
 
 my $wghash = tool::sir::compute_weights(pdf_array => $pdf,
 										dofv_array => [1,10,5]);
 
 #tag3 multnorm.m
-cmp_relative($wghash->{'weights'}->[0],5.858798099018610,11,'weight 1');
-cmp_relative($wghash->{'weights'}->[1],2.259225574558877e-02,11,'weight 2');
-cmp_relative($wghash->{'weights'}->[2], 1.373954254589559e-01,11,'weight 3');
+cmp_relative($wghash->{'weights'}->[0],5.16883219294,11,'weight 1');
+cmp_relative($wghash->{'weights'}->[1],0.0909786004782,11,'weight 2');
+cmp_relative($wghash->{'weights'}->[2],2.49665981029,11,'weight 3');
 
-cmp_relative($wghash->{'cdf'}->[0],5.858798099018610e+00,11,'cdf 1');
-cmp_relative($wghash->{'cdf'}->[1],5.881390354764199e+00    ,11 ,'cdf 2');
-cmp_relative($wghash->{'cdf'}->[2],6.018785780223155e+00,11,'cdf 3');
+cmp_relative($wghash->{'cdf'}->[0], 5.16883219294,11,'cdf 1');
+cmp_relative($wghash->{'cdf'}->[1], 5.25981079342, 11, 'cdf 2');
+cmp_relative($wghash->{'cdf'}->[2], 7.75647060371, 11, 'cdf 3');
 
 
 tool::sir::recompute_weights(weight_hash => $wghash,
 							 reset_index => 1);
 
-cmp_relative($wghash->{'weights'}->[0],5.858798099018610,11,'weight 1 recompute');
+cmp_relative($wghash->{'weights'}->[0],5.16883219294,11,'weight 1 recompute');
 cmp_ok($wghash->{'weights'}->[1],'==',0,'weight 2 recompute');
-cmp_relative($wghash->{'weights'}->[2],1.373954254589559e-01,11,'weight 3 recompute');
+cmp_relative($wghash->{'weights'}->[2],2.49665981029,11,'weight 3 recompute');
 
-cmp_relative($wghash->{'cdf'}->[0],5.858798099018610e+00,11,'cdf 1 recompute');
-cmp_relative($wghash->{'cdf'}->[1],5.858798099018610e+00,11,'cdf 2 recompute');
-cmp_relative($wghash->{'cdf'}->[2],5.996193524477566,11,'cdf 3 recompute');
-cmp_relative($wghash->{'sum_weights'},5.996193524477566,11,'sum weights recompute');
+cmp_relative($wghash->{'cdf'}->[0],5.16883219294,11,'cdf 1 recompute');
+cmp_relative($wghash->{'cdf'}->[1],5.16883219294,11,'cdf 2 recompute');
+cmp_relative($wghash->{'cdf'}->[2],7.66549200323,11,'cdf 3 recompute');
+cmp_relative($wghash->{'sum_weights'},7.66549200323,11,'sum weights recompute');
 
 
 tool::sir::recompute_weights(weight_hash => $wghash,
@@ -200,12 +195,12 @@ tool::sir::recompute_weights(weight_hash => $wghash,
 
 cmp_ok($wghash->{'weights'}->[0],'==',0,'weight 1 recompute');
 cmp_ok($wghash->{'weights'}->[1],'==',0,'weight 2 recompute');
-cmp_relative($wghash->{'weights'}->[2],1.373954254589559e-01,11,'weight 3 recompute');
+cmp_relative($wghash->{'weights'}->[2],2.49665981029,11,'weight 3 recompute');
 
 cmp_ok($wghash->{'cdf'}->[0],'==',0,'cdf 1 recompute');
 cmp_ok($wghash->{'cdf'}->[1],'==',0,'cdf 2 recompute');
-cmp_relative($wghash->{'cdf'}->[2],1.373954254589559e-01,11,'cdf 3 recompute');
-cmp_relative($wghash->{'sum_weights'},1.373954254589559e-01,11,'sum weights 3 recompute');
+cmp_relative($wghash->{'cdf'}->[2],2.49665981029,11,'cdf 3 recompute');
+cmp_relative($wghash->{'sum_weights'},2.49665981029,11,'sum weights 3 recompute');
 
 
 #start over
@@ -216,18 +211,16 @@ my @times_sampled = (0) x $nsamples;
 
 my $sample_index = tool::sir::weighted_sample(cdf => $wghash->{'cdf'});
 $times_sampled[$sample_index]++;
-#print "times sampled ".join(' ',@times_sampled)."\n";
-tool::sir::recompute_weights(weight_hash => $wghash,
-							 reset_index => $sample_index);
-$sample_index = tool::sir::weighted_sample(cdf => $wghash->{'cdf'});
-$times_sampled[$sample_index]++;
-#print "times sampled ".join(' ',@times_sampled)."\n";
 
 tool::sir::recompute_weights(weight_hash => $wghash,
 							 reset_index => $sample_index);
 $sample_index = tool::sir::weighted_sample(cdf => $wghash->{'cdf'});
 $times_sampled[$sample_index]++;
-#print "times sampled ".join(' ',@times_sampled)."\n";
+
+tool::sir::recompute_weights(weight_hash => $wghash,
+							 reset_index => $sample_index);
+$sample_index = tool::sir::weighted_sample(cdf => $wghash->{'cdf'});
+$times_sampled[$sample_index]++;
 
 
 #start over
@@ -240,19 +233,16 @@ for (my $k=0; $k< 100; $k++){
 	my $sample_index = tool::sir::weighted_sample(cdf => $wghash->{'cdf'});
 	$times_sampled[$sample_index]++;
 }
-#print "times sampled ".join(' ',@times_sampled)."\n";
-cmp_ok($times_sampled[0],'==',39,'times sampled 0');
-cmp_ok($times_sampled[1],'==',46,'times sampled 1');
-cmp_ok($times_sampled[2],'==',15,'times sampled 2');
+cmp_ok($times_sampled[0],'==',11,'times sampled 0');
+cmp_ok($times_sampled[1],'==',44,'times sampled 1');
+cmp_ok($times_sampled[2],'==',45,'times sampled 2');
 
 
 
 my $xvec = $icm->new_from_rows( [$gotsamples->[0]] );
-#print $xvec;
-#exit;
+
 my $diff=$mu->shadow(); #zeros matrix same size as $mu
 $diff->subtract($xvec,$mu); #now $diff is $xvec - $mu
-#print $diff;
 
 my $matlab_invdeterminant =1.952310799901186e+17;
 my $invdeterminant = $icm->det();
@@ -268,18 +258,15 @@ my $product_left = $diff->multiply($icm);
 my $product=$product_left->multiply(~$diff); #~ is transpose
 my $exponent=-0.5 * $product->element(1,1);
 
-my $matlab_exponent= -2.267944479995964;
-cmp_ok(abs($exponent-$matlab_exponent),'<',0.000000000001,'exponent diff to matlab');
+my $correct_exponent= -2.14264678156271;
+cmp_ok(abs($exponent-$correct_exponent),'<',0.000000000001,'exponent diff to correct');
 
-#print "\nexponent $exponent\n";
 my $base=tool::sir::get_determinant_factor(inverse_covmatrix => $icm,
 										   k => $k,
 										   inflation => 1);
 
-#print "\nbase $base\n";
 my $matlab_base = 4.465034382516543e+06;
 cmp_ok(abs($base-$matlab_base),'<',0.00000001,'base diff to matlab');
-
 
 
 $arr = tool::sir::setup_block_posdef_check(block_number => [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,0],

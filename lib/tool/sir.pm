@@ -6,7 +6,7 @@ use File::Copy 'cp';
 use data;
 use OSspecific;
 use tool::modelfit;
-use Math::Random qw(random_get_seed random_set_seed random_uniform random_multivariate_normal);
+use random qw(random_get_seed random_set_seed random_uniform random_multivariate_normal);
 use Mouse;
 use MouseX::Params::Validate;
 use Math::MatrixReal;
@@ -1426,7 +1426,6 @@ sub mvnpdf
             push(@pdf_array,$det_factor*exp(-0.5 * $product->element(1,1))); #matlab absolute mvnpdf possibly change back
         }
     }
-
     return \@pdf_array;
 }
 

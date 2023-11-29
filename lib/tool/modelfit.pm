@@ -9,7 +9,7 @@ use File::Path;
 use File::Glob;
 use File::Spec;
 use Storable;
-use Math::Random;
+use random;
 use nonmemrun;
 use nonmemrun::localunix;
 use nonmemrun::localwindows;

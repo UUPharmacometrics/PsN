@@ -7,11 +7,11 @@ use strict;
 use warnings;
 use Test::More;
 use Test::Exception;
-use Math::Random;
 use FindBin qw($Bin);
 use lib "$Bin/.."; #location of includes.pm
 use includes; #file with paths to PsN packages
 use data;
+use random;
 
 #TODO check data copy with write_copy => 0, check that individuals and header are copied, and idcolumn attributes
 
@@ -137,15 +137,15 @@ my $newdata = data->new(
    ignore_missing_files => 0
 );
 
-is_deeply ($newdata->individuals()->[3]->subject_data(), ['4,30,0,110.44,0,84,1,1,1',
-							'4,30,1,96.554,0,84,1,1,1',
-							'4,30,2,104.34,0,84,1,1,1',
-							'4,30,3,123.64,0,84,1,1,1'], "randomized data indiv 3");
+is_deeply ($newdata->individuals()->[3]->subject_data(), ['4,10,0,110.44,0,84,1,1,1',
+							'4,10,1,96.554,0,84,1,1,1',
+							'4,10,2,104.34,0,84,1,1,1',
+							'4,10,3,123.64,0,84,1,1,1'], "randomized data indiv 3");
 
-is_deeply ($newdata->individuals()->[7]->subject_data(),['8,60,0,64.938,5,66,1,1,2',
-							'8,60,1,91.229,5,66,1,1,2',
-							'8,60,2,100.24,5,66,1,1,2',
-							'8,60,3,87.51,5,66,1,1,2'],"randomized data indiv 7");
+is_deeply ($newdata->individuals()->[7]->subject_data(),['8,50,0,64.938,5,66,1,1,2',
+							'8,50,1,91.229,5,66,1,1,2',
+							'8,50,2,100.24,5,66,1,1,2',
+							'8,50,3,87.51,5,66,1,1,2'],"randomized data indiv 7");
 
 unlink("$tempdir/$filename");
 

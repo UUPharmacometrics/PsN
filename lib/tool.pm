@@ -8,7 +8,7 @@ use File::Path qw(mkpath rmtree);
 use File::Spec;
 use Scalar::Util qw(blessed);
 use OSspecific;
-use Math::Random;
+use random;
 use Archive::Zip;
 use utils::file;
 use PsN;

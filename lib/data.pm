@@ -4,7 +4,7 @@ use include_modules;
 use OSspecific;
 use File::Copy "cp";
 use Config;
-use Math::Random;
+use random;
 use Storable;
 use ui;
 use status_bar;

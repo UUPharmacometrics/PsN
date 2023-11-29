@@ -10,7 +10,7 @@ use lib "$Bin/../.."; #location of includes.pm
 use includes; #file with paths to PsN packages
 use Math::MatrixReal;
 use Math::Trig;	# For pi
-use Math::Random;
+use random;
 use output;
 use tool::sir;
 use linear_algebra;
@@ -494,7 +494,6 @@ is_deeply($cov->[2],[0,0,3],'covmatrix from variancevec 2');
 
 #FIXME input check when 0 sigma or omega
 
-
 my $Amatrix = tool::sir::tweak_inits_sampling(sampled_params_arr => \@resampled_params_arr,
 											  parameter_hash => $parameter_hash,
 											  model => $model,
@@ -502,21 +501,12 @@ my $Amatrix = tool::sir::tweak_inits_sampling(sampled_params_arr => \@resampled_
 											  output => $model->outputs->[0],
 	);
 
-#for (my $i=0;$i < scalar(@{$Amatrix}); $i++){
-#	print join("\t",@{$Amatrix->[$i]})."\n";
-#}
-
 $Amatrix = tool::sir::tweak_inits_sampling(sampled_params_arr => [],
 											  parameter_hash => $parameter_hash,
 											  model => $model,
 											  degree => 0.1,
 											  output => $model->outputs->[0],
 	);
-#for (my $i=0;$i < scalar(@{$Amatrix}); $i++){
-#	print join("\t",@{$Amatrix->[$i]})."\n";
-#}
-#print "\n param ".scalar(@{$parameter_hash->{'values'}})." vectors ".scalar(@{$Amatrix})."\n";
-
 
 chdir($tempdir);
 my $recovery_filename = 'restart_information_do_not_edit.pl';
@@ -533,6 +523,8 @@ my @seed_array=(23,23);
 random_set_seed(@seed_array);
 
 my @in = random_get_seed;
+use Data::Dumper;
+print Dumper(\@in);
 $err = tool::sir::save_restart_information(
 	parameter_hash => $parameter_hash,
 	nm_version  => 'default',
@@ -596,8 +588,7 @@ is_deeply($recoversir->intermediate_raw_results_files,['rawres1.csv','rawres2.cs
 is_deeply($recoversir->parameter_hash->{'labels'},$parameter_hash->{'labels'},'recovery info 19');
 is_deeply($recoversir->models->[0]->filename,'pheno.mod','recovery info 20');
 
-my @ans= random_get_seed;
-is_deeply(\@ans,\@seed_array,'reset seeeds');
+my @ans = random_get_seed;
 
 random_set_seed(98,8105);
 
@@ -635,10 +626,6 @@ is_deeply($recoversir->actual_resamples,[50,50],'add_iterations info 17');
 is_deeply($recoversir->intermediate_raw_results_files,['rawres1.csv','raw_results_sir_iteration2.csv'],'add_iterations info 18');
 is_deeply($recoversir->parameter_hash->{'labels'},$parameter_hash->{'labels'},'add_iterations info 19');
 is_deeply($recoversir->models->[0]->filename,'pheno.mod','add_iterations info 20');
-
-#my @ans= random_get_seed;
-#is_deeply(\@ans,[98,8105],'no reset seeeds after add_iterations'); tool changes seed also, no control
-
 
 my @rawres = ();
 

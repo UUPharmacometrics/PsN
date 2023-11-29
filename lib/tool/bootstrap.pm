@@ -4,7 +4,7 @@ use include_modules;
 use strict;
 use File::Copy 'cp';
 use Statistics::Distributions 'udistr', 'uprob';
-use Math::Random;
+use random;
 use Mouse;
 use MouseX::Params::Validate;
 use array;

@@ -5,7 +5,7 @@ use model;
 use tool::cdd;
 use tool::modelfit;
 use model_transformations;
-use Math::Random;
+use random;
 use Config;
 use Mouse;
 use MouseX::Params::Validate;
