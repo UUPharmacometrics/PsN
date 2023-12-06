@@ -2,7 +2,7 @@ package tool::bootstrap;
 
 use include_modules;
 use strict;
-use File::Copy 'cp';
+use File::Copy 'copy';
 use Statistics::Distributions 'udistr', 'uprob';
 use random;
 use Mouse;

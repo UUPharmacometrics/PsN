@@ -5,7 +5,7 @@ use MouseX::Params::Validate;
 use include_modules;
 use OSspecific;
 use File::Spec qw(abs2rel catfile);
-use File::Copy 'cp';
+use File::Copy 'copy';
 
 extends 'model::problem::record';
 
@@ -226,12 +226,12 @@ sub copy_msfi_file
                 if (-e $new and (not $overwrite)){
                     croak("msfi file $new already exists when copying from $old, and not allowed to overwrite in copy_msfi_file");
                 }else{
-                    cp($old,$new);
+                    copy($old,$new);
                     my $old_extra = get_additional_msfo_files(msfname => $old);
                     my $new_extra = get_additional_msfo_files(msfname => $new);
                     for (my $j=0; $j<scalar(@{$old_extra}); $j++){
                         if (-e $old_extra->[$j]){
-                            cp($old_extra->[$j],$new_extra->[$j]);
+                            copy($old_extra->[$j],$new_extra->[$j]);
                         }
                     }
                 }

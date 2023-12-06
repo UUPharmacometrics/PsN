@@ -14,7 +14,7 @@ use common_options;
 use ui;
 use OSspecific;
 use File::Path 'rmtree';
-use File::Copy qw/cp mv/;
+use File::Copy qw/copy mv/;
 use include_modules;
 # More PsN dependencies included with require further down
 

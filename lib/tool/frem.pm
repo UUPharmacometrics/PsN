@@ -8,7 +8,7 @@ use linear_algebra;
 
 use ui;
 use logging;
-use File::Copy qw/cp mv/;
+use File::Copy qw/copy mv/;
 use File::Path 'rmtree';
 use File::Spec;
 use nmtablefile;
@@ -1090,7 +1090,7 @@ sub do_model1
             my $extra_file_copy = utils::file::replace_extension($model1_name, $ext);
             my $extra_file_orig_path = File::Spec->catfile($model_dir, $extra_file_orig);
             if (-f $extra_file_orig_path) {
-                cp($extra_file_orig_path, File::Spec->catfile($self->_intermediate_models_path, $extra_file_copy));
+                copy($extra_file_orig_path, File::Spec->catfile($self->_intermediate_models_path, $extra_file_copy));
             }
         }
 
@@ -1832,7 +1832,7 @@ sub prepare_model3
 
             # copy M2 output to M3 input phi file
             (my $etas_filename = $name_model) =~ s/(.*)\..*/$1_input.phi/;
-            cp($etas_file, File::Spec->catfile($im_dir, $etas_filename));
+            copy($etas_file, File::Spec->catfile($im_dir, $etas_filename));
             (undef, $etas_filename) = OSspecific::absolute_path($im_dir, $etas_filename);
 
             # update FILE in model to new path (just filename since same directory)
@@ -1937,14 +1937,14 @@ sub prepare_model4
                 $option->init(0.000001);
             }
         }
-        cp(File::Spec->catfile($self->_intermediate_models_path, 'model_2.phi'), File::Spec->catfile($self->_final_models_path, 'model_4_input.phi'));
+        copy(File::Spec->catfile($self->_intermediate_models_path, 'model_2.phi'), File::Spec->catfile($self->_final_models_path, 'model_4_input.phi'));
     } elsif ($best_ofv == $mod3_ofv) {
         print "Starting model4 from model3\n";
         $frem_model->update_inits(from_output => $output3);
-        cp(File::Spec->catfile($self->_intermediate_models_path, 'model_3.phi'), File::Spec->catfile($self->_final_models_path, 'model_4_input.phi'));
+        copy(File::Spec->catfile($self->_intermediate_models_path, 'model_3.phi'), File::Spec->catfile($self->_final_models_path, 'model_4_input.phi'));
     } else {
         print "Starting model4 from model3b\n";
-        cp(File::Spec->catfile($self->_intermediate_models_path, 'model_3b.phi'), File::Spec->catfile($self->_final_models_path, 'model_4_input.phi'));
+        copy(File::Spec->catfile($self->_intermediate_models_path, 'model_3b.phi'), File::Spec->catfile($self->_final_models_path, 'model_4_input.phi'));
     }
 
     $frem_model->get_or_set_etas_file(problem_number => 1, new_file => 'model_4_input.phi');

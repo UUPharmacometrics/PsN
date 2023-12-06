@@ -2,7 +2,7 @@ package tool::randtest;
 
 use include_modules;
 use strict;
-use File::Copy 'cp';
+use File::Copy 'copy';
 use data;
 use OSspecific;
 use tool::modelfit;

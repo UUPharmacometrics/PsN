@@ -8,7 +8,7 @@ use model;
 use ui;
 use Config;
 use OSspecific;
-use File::Copy qw/cp mv/;
+use File::Copy qw/copy mv/;
 use File::Spec;
 use Cwd;
 use binning;
@@ -2753,7 +2753,7 @@ sub get_tte_data
             ui -> print (category=>'vpc', message=>"\nRenamed original mytab$tabno, new name ".
                          "mytab$tabno"."_original. New mytab$tabno can be used for kaplan.plot in Xpose.");
         }
-        cp('mytab'.$tabno, $self->models->[0]->directory().'mytab'.$tabno);
+        copy('mytab'.$tabno, $self->models->[0]->directory().'mytab'.$tabno);
     }else{
         mv ($orig_file,'mytab1');
     }

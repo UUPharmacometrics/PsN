@@ -2,7 +2,7 @@ package model;
 
 use include_modules;
 use Cwd;
-use File::Copy 'cp';
+use File::Copy 'copy';
 use File::Basename;
 use File::Spec qw(splitpath catfile);
 use Config;
@@ -387,7 +387,7 @@ sub create_maxeval_zero_models_array
     my @problem_lines = ();
     while ($samples_done < scalar(@{$sampled_params_arr})) {
         #copy the model
-        $run_model = $model ->  copy( filename    => $subdirectory.$purpose.'_'.$run_num.'.mod',
+        $run_model = $model ->  modelcopy( filename    => $subdirectory.$purpose.'_'.$run_num.'.mod',
                                       output_same_directory => 1,
                                       copy_datafile =>0,
                                       copy_output => 0,
@@ -411,7 +411,7 @@ sub create_maxeval_zero_models_array
 
         if (scalar(@problem_lines)<1){
             #first iteration
-            $dummymodel = $run_model ->  copy( filename    => $subdirectory.$dummyname,
+            $dummymodel = $run_model ->  modelcopy( filename    => $subdirectory.$dummyname,
                                                output_same_directory => 1,
                                                copy_output => 0,
                                                write_copy =>0);
@@ -578,7 +578,7 @@ sub add_records
     }
 }
 
-sub copy
+sub modelcopy
 {
     my $self = shift;
     my %parm = validated_hash(\@_,
@@ -668,7 +668,7 @@ sub copy
             my ($datadir,$datafile) = OSspecific::absolute_path(undef,$datafiles->[$i]);
             unless (-e $writedir.$datafile){
                 if (-e $datadir.$datafile){
-                    cp($datadir.$datafile,$writedir.$datafile);
+                    copy($datadir.$datafile,$writedir.$datafile);
                 }else{
                     croak("data file $datadir$datafile does not exist in writing of ".$self->full_name.
                           " to file $filename") unless $new_model->ignore_missing_data;
@@ -683,7 +683,7 @@ sub copy
     if ($copy_etas) {
         my $phi_file = $self->get_or_set_etas_file();
         if (defined $phi_file) {
-            cp($phi_file, $directory);
+            copy($phi_file, $directory);
             $new_model->get_or_set_etas_file(new_file => basename($phi_file));
         }
     }

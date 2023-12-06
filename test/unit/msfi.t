@@ -14,7 +14,7 @@ use data;
 use model::problem::msfi;
 use model::problem;
 use model;
-use File::Copy 'cp';
+use File::Copy 'copy';
 use Cwd;
 use OSspecific;
 use File::Spec qw(catfile);

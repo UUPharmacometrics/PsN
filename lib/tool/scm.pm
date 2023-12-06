@@ -6,7 +6,7 @@ use Cwd;
 use tool::modelfit;
 use OSspecific;
 use Data::Dumper;
-use File::Copy 'cp';
+use File::Copy 'copy';
 use File::Spec;
 use List::Util qw(max);
 use status_bar;
@@ -2677,9 +2677,9 @@ sub linearize_setup
                 #copy deepest derivatives_covariates.dta from forward_scm_dir and put it locally with correct name
                 # $datafilename
                 if (-e $dir.'derivatives_covariates'.$stepname.'.dta' ){
-                    cp( $dir.'derivatives_covariates'.$stepname.'.dta', "$datafilename" );
-                    cp( $old_derivatives.'mod', 'copy_last_forward_derivatives.mod');
-                    cp( $old_derivatives.'lst', 'copy_last_forward_derivatives.lst');
+                    copy( $dir.'derivatives_covariates'.$stepname.'.dta', "$datafilename" );
+                    copy( $old_derivatives.'mod', 'copy_last_forward_derivatives.mod');
+                    copy( $old_derivatives.'lst', 'copy_last_forward_derivatives.lst');
                 }else{
                     ui -> print( category => 'scm',
                         message  => "cannot find old derivatives data, rerunning",
@@ -2756,7 +2756,7 @@ sub linearize_setup
 
         if ($self->step_number()==1 and $self->derivatives_data()){
             #do not run derivatives model, instead copy file to right name
-            cp( $self->derivatives_data(), $datafilename );
+            copy( $self->derivatives_data(), $datafilename );
         } elsif ($rerun_derivatives_new_direction){
             #run derivatives_model
             my $derivatives_fit = tool::modelfit -> new
@@ -3922,7 +3922,7 @@ sub _create_models
             my $filename = $orig_model->datafiles(absolute_path => 0)->[0];
             my $string = File::Spec->catfile($self -> directory,$filename);
             if ($fullpath ne $string) { # For the same path do not copy to avoid warning
-                cp($fullpath, $string);
+                copy($fullpath, $string);
             }
             $self->main_data_file($string);
         }else{
@@ -4935,7 +4935,7 @@ sub run_xv_pred_step
         my $datafilename = 'derivatives_covariates.dta';
         my $newfilename = 'derivatives_covariates_pred.dta';
 
-        cp($datafilename,$newfilename);
+        copy($datafilename,$newfilename);
         unlink($datafilename);
         my ( $dir, $file ) = OSspecific::absolute_path('',$newfilename);
 
@@ -5584,8 +5584,8 @@ sub write_final_models
     $final_model->directory( $fdir);
     $fname =~ s/\.mod/\.lst/;
     return unless (-e $final_model->outputfile); #unless lst-file exists (could have crashed)
-    cp($final_model->outputfile, "$fdir$fname");
-    cp(utils::file::replace_extension($final_model->outputfile, 'ext'), utils::file::replace_extension("$fdir$fname", "ext"));     # Also copy the ext file to get better precision on inits
+    copy($final_model->outputfile, "$fdir$fname");
+    copy(utils::file::replace_extension($final_model->outputfile, 'ext'), utils::file::replace_extension("$fdir$fname", "ext"));     # Also copy the ext file to get better precision on inits
     my $prob_num = undef;
     $final_model->update_inits(
         from_output => $final_model->outputs->[0],

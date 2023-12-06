@@ -3,7 +3,7 @@ package nonmemrun;
 use Config;
 use include_modules;
 use Cwd;
-use File::Copy 'cp';
+use File::Copy 'copy';
 use Mouse;
 use MouseX::Params::Validate;
 

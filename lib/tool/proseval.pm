@@ -3,7 +3,7 @@ package tool::proseval;
 use strict;
 use Mouse;
 use MouseX::Params::Validate;
-use File::Copy 'cp';
+use File::Copy 'copy';
 use include_modules;
 use data;
 use filter_data;
