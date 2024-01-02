@@ -616,10 +616,6 @@ sub check_frem
         $error.= "frem is incompatible with option -tbs.\n";
     }
 
-    if ( scalar (@{$model-> problems}) > 1 ){
-        $error .= "Cannot have more than one \$PROB in the input model.\n";
-    }
-
     my $est_record = $model -> record( problem_number => 1,
                                        record_name => 'estimation' );
     unless( scalar(@{$est_record}) > 0 ){

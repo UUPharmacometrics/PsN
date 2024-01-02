@@ -1638,6 +1638,10 @@ sub prepare_model2
         copy_datafile => 0,
         copy_output => 0
     );
+
+    # Keep only first $PROBLEM
+    $frem_model->problems([$frem_model->problems->[0]]);
+
     if ($frem_model->problems->[0]->estimations->[-1]->is_classical) {
             if ((($PsN::nm_major_version == 7) and ($PsN::nm_minor_version > 2)) or ($PsN::nm_major_version > 7)){
                     $frem_model->problems->[0]->estimations->[-1]->remove_option(name => 'NONINFETA', fuzzy_match => 1);
@@ -2669,9 +2673,10 @@ sub create_data2_model
                                                write_copy => 0,
                                                copy_datafile          => 0,
                                                copy_output        => 0);
+    # Remove all $PROBLEM except first
+    $filtered_data_model->problems([$filtered_data_model->problems->[0]]);
 
     die "no problems" unless defined $filtered_data_model->problems();
-    die "more than one problem" unless (scalar(@{$filtered_data_model->problems()})==1);
 
     my @filter_table_header;
 
@@ -2851,10 +2856,6 @@ sub check_model_features
     my $self = shift;
 
     my $model = $self->models->[0];
-
-    if (scalar(@{$model->problems}) > 1) {
-        croak('Cannot have more than one $PROB in the input model.');
-    }
 
     my $problem = $model->problems->[0];
 
