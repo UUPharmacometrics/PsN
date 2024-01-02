@@ -42,10 +42,7 @@ sub validate_phi
     # load table
     my $tables = nmtablefile->new(filename => $path);
     my $num_tables = scalar @{$tables->tables};
-    if ($num_tables != 1) {
-        croak "phi file must contain exactly 1 table ($filename has $num_tables)";
-    }
-    my $table = $tables->get_table(index => 0);
+    my $table = $tables->get_table(index => $num_tables - 1);
     $self->table( $table );
 
     # load as matrix and header
