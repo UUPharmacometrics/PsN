@@ -1639,8 +1639,12 @@ sub prepare_model2
         copy_output => 0
     );
 
-    # Keep only first $PROBLEM
-    $frem_model->problems([$frem_model->problems->[0]]);
+    # Save problem 2 and keep only first $PROBLEM
+    my $prob2;
+    if (scalar(@{$frem_model->problems}) > 1) {
+        $prob2 = $frem_model->problems->[1];
+        $frem_model->problems([$frem_model->problems->[0]]);
+    }
 
     if ($frem_model->problems->[0]->estimations->[-1]->is_classical) {
             if ((($PsN::nm_major_version == 7) and ($PsN::nm_minor_version > 2)) or ($PsN::nm_major_version > 7)){
@@ -1784,7 +1788,14 @@ sub prepare_model2
         }
     }
 
-    return ($est_records, $ntheta, $epsnum, $etas_file);
+    if (defined $prob2) {
+        my $prob1 = $frem_model->problems->[0];
+        $prob2->inputs($prob1->inputs);
+        $prob2->datas($prob1->datas);
+        $prob2->datas->[0]->add_option(init_data => { name  => "REWIND"});
+    }
+
+    return ($est_records, $ntheta, $epsnum, $etas_file, $prob2);
 }
 
 sub prepare_model3
@@ -1895,6 +1906,7 @@ sub prepare_model4
         est_records => { isa => 'ArrayRef', optional => 0},
         cov_records => { isa => 'ArrayRef', optional => 0},
         update_existing_model_files => { isa => 'Bool', optional => 0 },
+        prob2 => { isa => 'model::problem', optional => 0 },
     );
     my $model2 = $parm{'model2'};
     my $model3 = $parm{'model3'};
@@ -1902,6 +1914,7 @@ sub prepare_model4
     my $est_records = $parm{'est_records'};
     my $cov_records = $parm{'cov_records'};
     my $update_existing_model_files = $parm{'update_existing_model_files'};
+    my $prob2 = $parm{'prob2'};
 
     my $name_model = 'model_4.mod';
     my $frem_model;
@@ -1977,6 +1990,10 @@ sub prepare_model4
     $frem_model->problems->[0]->estimations($est_records);
     if ($self->derivatives) {
         model_approximations::derivatives_model(model => $frem_model);   # Output the derivatives to be able to make VA-plot
+    }
+    if (defined $prob2) {
+        $frem_model->problems([$frem_model->problems->[0], $prob2]);
+        $frem_model->active_problems([1, 1]);
     }
     $frem_model->_write();
 }
@@ -2454,7 +2471,7 @@ sub modelfit_setup
 
     $self->save_covresults($covresultref);
 
-    ($est_records, $ntheta, $epsnum, $etas_file) = $self->prepare_model2(
+    ($est_records, $ntheta, $epsnum, $etas_file, my $prob2) = $self->prepare_model2(
         model => $frem_model1,
         fremdataname => $frem_datasetname,
         skip_etas => $self->skip_etas,
@@ -2513,6 +2530,7 @@ sub modelfit_setup
         est_records => $est_records,
         cov_records => $cov_records,
         update_existing_model_files => $need_update,
+        prob2 => $prob2,
     );
 
     push(@{$self->final_numbers}, 4);
