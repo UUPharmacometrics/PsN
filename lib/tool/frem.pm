@@ -1906,7 +1906,7 @@ sub prepare_model4
         est_records => { isa => 'ArrayRef', optional => 0},
         cov_records => { isa => 'ArrayRef', optional => 0},
         update_existing_model_files => { isa => 'Bool', optional => 0 },
-        prob2 => { isa => 'model::problem', optional => 0 },
+        prob2 => { isa => 'Maybe[model::problem]', optional => 1 },
     );
     my $model2 = $parm{'model2'};
     my $model3 = $parm{'model3'};
