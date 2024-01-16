@@ -1660,6 +1660,7 @@ sub prepare_model2
     my $est_records = $frem_model->problems->[0]->estimations;
 
     my $im_dir = $self->_intermediate_models_path;
+    my $covrecordref = [];
     if (not -e File::Spec->catfile($self->_intermediate_models_path, $name_model)) {
         # if $ETAS FILE= used, M2 needs modified file with new omegas (initialized to 0)
         if ($etas_file) {
@@ -1743,12 +1744,6 @@ sub prepare_model2
                             mu => $self->mu,
                             use_pred => $self->use_pred);
 
-        unless (defined $frem_model->problems->[0]->covariances and
-                scalar(@{$frem_model->problems->[0]->covariances})>0) {
-            $frem_model->problems->[0]->add_records(record_strings => ['PRINT=R UNCONDITIONAL'],
-                                                    type => 'covariance');
-        }
-
         my $totaletas = $frem_model->problems->[0]->nomegas(with_correlations => 0, with_same => 1);
         if ($totaletas > $self->deriv2_nocommon_maxeta) {
             if (defined $frem_model->problems->[0]->abbreviateds and scalar(@{$frem_model->problems()->[0]->abbreviateds})>0) {
@@ -1780,6 +1775,17 @@ sub prepare_model2
                                           need_ofv => 0);
         }
 
+
+        if (defined $model->problems->[0]->covariances and scalar(@{$model->problems->[0]->covariances}) > 0) {
+            $covrecordref = $model->problems->[0]->covariances->[0]->_format_record();
+            for (my $i = 0; $i < scalar(@{$covrecordref}); $i++) {
+                $covrecordref->[$i] =~ s/^\s*\$CO[A-Z]*\s*//; #get rid of $COVARIANCE
+                $covrecordref->[$i] =~ s/\s*$//; #get rid of newlines
+            }
+        }
+
+        $frem_model->problems->[0]->remove_records(type => 'covariance');
+
         $frem_model->_write();
     } else {
         if (defined $etas_file) {
@@ -1795,7 +1801,7 @@ sub prepare_model2
         $prob2->datas->[0]->add_option(init_data => { name  => "REWIND"});
     }
 
-    return ($est_records, $ntheta, $epsnum, $etas_file, $prob2);
+    return ($est_records, $ntheta, $epsnum, $etas_file, $prob2, $covrecordref);
 }
 
 sub prepare_model3
@@ -1816,14 +1822,6 @@ sub prepare_model3
 
     my $name_model = 'model_3.mod';
     my $frem_model;
-    my $covrecordref = [];
-    if (defined $model->problems->[0]->covariances and scalar(@{$model->problems->[0]->covariances}) > 0) {
-        $covrecordref = $model->problems->[0]->covariances->[0]->_format_record();
-        for (my $i = 0; $i < scalar(@{$covrecordref}); $i++) {
-            $covrecordref->[$i] =~ s/^\s*\$CO[A-Z]*\s*//; #get rid of $COVARIANCE
-            $covrecordref->[$i] =~ s/\s*$//; #get rid of newlines
-        }
-    }
 
     cleanup_outdated_model(modelname => File::Spec->catfile($self->_intermediate_models_path, $name_model),
                            need_update => $update_existing_model_files);
@@ -1888,7 +1886,7 @@ sub prepare_model3
         }
     }
 
-    return ($est_records, $covrecordref, $etas_file);
+    return ($est_records, $etas_file);
 }
 
 sub prepare_model4
@@ -1969,18 +1967,19 @@ sub prepare_model4
     if (not $self->bipp) {
         my $new_cov_records;
         my $uncond;
-        foreach my $opt (@{$cov_records}) {
-            if ($opt =~ /^OMIT/) {
-                $logger->info("Removed OMIT option from \$COV in $name_model\n");
-            } else {
-                push @{$new_cov_records}, $opt;
+        foreach my $rec (@{$cov_records}) {
+            foreach my $opt (split /\s+/, $rec) {
+                if ($opt !~ /^OMIT/) {
+                    $logger->info("Removed OMIT option from \$COV in $name_model\n");
+                } else {
+                    push @{$new_cov_records}, $opt;
+                }
+                $uncond = 1 if ($opt =~ /^UNC/);
             }
-            $uncond = 1 if ($opt =~ /^UNC/);
         }
         if (not $uncond) {
             push @{$new_cov_records}, "UNCONDITIONAL";
         }
-        push @{$new_cov_records}, "PRECOND=1";
         $frem_model->problems->[0]->add_records(
             record_strings => $new_cov_records,
             type => 'covariance'
@@ -2471,7 +2470,7 @@ sub modelfit_setup
 
     $self->save_covresults($covresultref);
 
-    ($est_records, $ntheta, $epsnum, $etas_file, my $prob2) = $self->prepare_model2(
+    ($est_records, $ntheta, $epsnum, $etas_file, my $prob2, $cov_records) = $self->prepare_model2(
         model => $frem_model1,
         fremdataname => $frem_datasetname,
         skip_etas => $self->skip_etas,
@@ -2497,7 +2496,7 @@ sub modelfit_setup
 
     $self->model_2($frem_model2); # used by prepare_results
 
-    ($est_records, $cov_records, $etas_file) = $self->prepare_model3(
+    ($est_records, $etas_file) = $self->prepare_model3(
         model => $frem_model2,
         parcov_blocks => $mod3_parcov_block,
         update_existing_model_files => $update_existing_model_files,
