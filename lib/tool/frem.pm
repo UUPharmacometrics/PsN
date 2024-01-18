@@ -1962,14 +1962,16 @@ sub prepare_model4
         cp(File::Spec->catfile($self->_intermediate_models_path, 'model_3b.phi'), File::Spec->catfile($self->_final_models_path, 'model_4_input.phi'));
     }
 
-    $frem_model->get_or_set_etas_file(problem_number => 1, new_file => 'model_4_input.phi');
+    if (defined $model3b->problems->[-1]->etass and scalar(@{$model3b->problems->[-1]->etass}) > 0) {
+        $frem_model->get_or_set_etas_file(problem_number => 1, new_file => 'model_4_input.phi');
+    }
 
     if (not $self->bipp) {
         my $new_cov_records;
         my $uncond;
         foreach my $rec (@{$cov_records}) {
             foreach my $opt (split /\s+/, $rec) {
-                if ($opt !~ /^OMIT/) {
+                if ($opt =~ /^OMIT/) {
                     $logger->info("Removed OMIT option from \$COV in $name_model\n");
                 } else {
                     push @{$new_cov_records}, $opt;
@@ -2470,6 +2472,9 @@ sub modelfit_setup
 
     $self->save_covresults($covresultref);
 
+    unless (defined $model->problems->[0]->etass and scalar(@{$model->problems->[0]->etass}) > 0) {
+        $etas_file = undef;
+    }
     ($est_records, $ntheta, $epsnum, $etas_file, my $prob2, $cov_records) = $self->prepare_model2(
         model => $frem_model1,
         fremdataname => $frem_datasetname,
