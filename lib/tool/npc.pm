@@ -56,6 +56,8 @@ has 'strata_variable_vector' => ( is => 'rw', isa => 'Maybe[ArrayRef]', default 
 has 'stratified_data' => ( is => 'rw', isa => 'ArrayRef', default => sub { [] } );
 has 'idv_array' => ( is => 'rw', isa => 'ArrayRef', default => sub { [] }, clearer => 'clear_idv_array' );
 has 'pred_array' => ( is => 'rw', isa => 'ArrayRef', default => sub { [] } );
+has 'predref_array' => ( is => 'rw', isa => 'ArrayRef', default => sub { [] } );
+has 'sdref_array' => ( is => 'rw', isa => 'ArrayRef', default => sub { [] } );
 has 'bound_array' => ( is => 'rw', isa => 'ArrayRef', default => sub { [] } );
 has 'id_array' => ( is => 'rw', isa => 'ArrayRef', default => sub { [] }, clearer => 'clear_id_array' );
 has 'binned_data' => ( is => 'rw', isa => 'ArrayRef', default => sub { [] } );
@@ -106,12 +108,15 @@ has 'logfile' => ( is => 'rw', isa => 'ArrayRef[Str]', default => sub { ['npc.lo
 has 'results_file' => ( is => 'rw', isa => 'Str', default => 'npc_results.csv' );
 has 'nca' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'mix' => ( is => 'rw', isa => 'Bool', default => 0 );
-has 'refcorr' => ( is => 'rw', isa => 'HashRef' );
+has 'refcorr' => ( is => 'rw', isa => 'Maybe[HashRef]' );
 
 sub BUILD
 {
     my $self  = shift;
 
+    if (defined $self->refcorr and not keys %{$self->refcorr}) {
+        $self->refcorr(undef);
+    }
     if (defined $self->auto_bin_mode) {
         unless ($self->auto_bin_mode eq 'auto' or $self->auto_bin_mode eq 'minmax' or $self->auto_bin_mode eq 'auto_equal_count') {
             croak("There are only three possible auto_bin modes: auto, minmax and auto_equal_count\n");
@@ -1142,7 +1147,7 @@ sub modelfit_setup
     }else {
         push (@rec_strings, $self->dv) unless ($self->dv =~ /^CWRES$/ );# before would not add RES or WRES
     }
-    push (@rec_strings,'PRED') if ($self->predcorr || $self->varcorr);
+    push (@rec_strings,'PRED') if ($self->predcorr || $self->varcorr || defined $self->refcorr);
 
 
     my @sim_strings;
@@ -2936,14 +2941,18 @@ sub create_binned_data
     for (my $strat_ind = 0; $strat_ind < $no_of_strata; $strat_ind++) {
         my @bin_array;
         my @pred_array;
+        my @predref_array;
+        my @sdref_array;
         my @bound_array;
         my @id_array;
         my @strt_array;
         foreach my $index (@{$self->strata_matrix->[$strat_ind]}) {
             push (@bin_array, $self->idv_array->[$index]);
-            push (@pred_array, $self->pred_array->[$index]) if ($self->predcorr || $self->varcorr);
+            push (@pred_array, $self->pred_array->[$index]) if ($self->predcorr || $self->varcorr || defined $self->refcorr);
+            push (@predref_array, $self->predref_array->[$index]) if (defined $self->refcorr);
+            push (@sdref_array, $self->sdref_array->[$index]) if (defined $self->refcorr);
             push (@bound_array, $self->bound_array->[$index]) if ($self->predcorr and
-                                                                  (defined $self->bound_variable) );
+                                                                  (defined $self->bound_variable) or defined $self->refcorr );
             push (@id_array,$self->id_array->[$index]);
             push (@strt_array,$self->strata_variable_vector->[$index]) if (defined $self->stratify_on);
         }
@@ -3069,6 +3078,8 @@ sub create_binned_data
             my @bin_data;
             my @bin_data_censor;
             my @pred_values;
+            my @predref_values;
+            my @sdref_values;
             my @bound_values;
             my @id_values;
             my @idv_values;
@@ -3098,7 +3109,7 @@ sub create_binned_data
                     my $censorstring = $self->censor_stratified_data->[$strat_ind]->[$index];
                     push (@bin_data_censor,$censorstring);
                 }
-                if ($self->predcorr || $self->varcorr){
+                if ($self->predcorr || $self->varcorr || defined $self->refcorr) {
                     my $val = $pred_array[$index];
                     if ($self->lnDV == 3){
                         croak("cannot log non-positive PRED value ".$val) unless ($val>0);
@@ -3108,6 +3119,21 @@ sub create_binned_data
                         $val = ($val*$lambda+1)**(1/$lambda);
                     }
                     push (@pred_values,$val);
+
+                    if (defined $self->refcorr) {
+                        $val = $predref_array[$index];
+                        if ($self->lnDV == 3){
+                            croak("cannot log non-positive PRED value " . $val) unless ($val > 0);
+                            $val = log($val);
+                        }elsif ($lambda > 0) {
+                            #transform from Box-Cox to normal scale
+                            $val = ($val * $lambda + 1)**(1 / $lambda);
+                        }
+                        push (@predref_values, $val);
+                        # Box-Cox or log here?
+                        push @sdref_values, $sdref_array[$index];
+                    }
+
                     if (defined $self->bound_variable){
                         push (@bound_values,$bound_array[$index]) ;
                     }elsif (defined $self->lower_bound){
@@ -3121,13 +3147,16 @@ sub create_binned_data
                 push (@strt_values,$strt_array[$index]) if (defined $self->stratify_on);
             }
 
-            if ($self->predcorr and (scalar(@pred_values) > 0)){
+            if (($self->predcorr and (scalar(@pred_values) > 0)) or defined $self->refcorr) {
                 my $new_data = do_predcorr_and_varcorr(pred_array=>\@pred_values,
+                                                       predref_array => \@predref_values,
+                                                       sdref_array => \@sdref_values,
                                                        data_array => \@bin_data,
                                                        bound_array=>\@bound_values,
                                                        lnDV => $self->lnDV,
                                                        DV => $self->dv,
-                                                       varcorr => $self->varcorr) ;
+                                                       varcorr => $self->varcorr,
+                                                       refcorr => defined $self->refcorr);
                 @bin_data = @{$new_data};
             }
 
@@ -3207,18 +3236,24 @@ sub do_predcorr_and_varcorr
     #static no shift
     my %parm = validated_hash(\@_,
                               pred_array => { isa => 'Ref', optional => 0 },
+                              predref_array => { isa => 'Ref', optional => 0 },
+                              sdref_array => { isa => 'Ref', optional => 0 },
                               bound_array => { isa => 'Ref', optional => 0 },
                               data_array => { isa => 'Ref', optional => 0 },
                               lnDV => { isa => 'Int', optional => 0},
                               DV => { isa => 'Str', optional => 0 },
                               varcorr => { isa => 'Bool', optional => 0 },
+                              refcorr => { isa => 'Bool', optional => 0 },
         );
     my $pred_array = $parm{'pred_array'};
+    my $predref_array = $parm{'predref_array'};
+    my $sdref_array = $parm{'sdref_array'};
     my $bound_array = $parm{'bound_array'};
     my $data_array = $parm{'data_array'};
     my $lnDV = $parm{'lnDV'};
     my $DV = $parm{'DV'};
     my $varcorr = $parm{'varcorr'};
+    my $refcorr = $parm{'refcorr'};
 
     my @corrected_data_array;
 
@@ -3241,28 +3276,38 @@ sub do_predcorr_and_varcorr
     #After discussion with Martin: use all pred even if some observations
     #have all datasets censored
 
-    my $median_pred = median($pred_array); # PREDnm
+    my $median_pred;
+    if (not $refcorr) {
+        $median_pred = median($pred_array); # PREDnm
+    }
     for (my $i=0; $i< $n_pred; $i++){
         my $pcorr;
         my @newrow;
 
         if (($lnDV == 2) or ($lnDV == 1) or ($lnDV == 3)){
             #log-transformed data
-            $pcorr=$median_pred-($pred_array->[$i]);
+            if ($refcorr) {
+                $pcorr = $predref_array->[$i] - $pred_array->[$i];
+            } else {
+                $pcorr = $median_pred - $pred_array->[$i];
+            }
             my $row = $data_array->[$i];
             chomp $row;
-            my @tmp = split(/,/,$row);
-            foreach my $val (@tmp){ #first $val is real observation, the rest are simulated
-                push(@newrow,($val+$pcorr));
+            my @tmp = split(/,/, $row);
+            foreach my $val (@tmp) { #first $val is real observation, the rest are simulated
+                push(@newrow, ($val + $pcorr));
             }
-        }else {
-
+        } else {
             my $diff = $pred_array->[$i] - $bound_array->[$i]; #PREDi-LBi
-            if ($diff > 0){
-                $pcorr=($median_pred-$bound_array->[$i])/$diff; #(PREDbin-LBi)/PREDi-LBi
+            if ($diff > 0) {
+                if ($refcorr) {
+                    $pcorr = ($predref_array->[$i] - $bound_array->[$i]) / $diff;
+                } else {
+                    $pcorr = ($median_pred - $bound_array->[$i]) / $diff; #(PREDbin-LBi)/PREDi-LBi
+                }
                 #can be numerical problems here, cancellation, if median_pred and bound very close.
                 #ignore for now, get worse problems if multiply denominator with median+bound which could be 0
-            }else {
+            } else {
                 my $message="Found PRED value (".$pred_array->[$i].") less than or equal to the lower bound (".$bound_array->[$i]."). ".
                     "Solve this by setting option -lower_bound and rerunning in the same directory, ".
                     "reusing the already formatted $DV data.";
@@ -3272,14 +3317,14 @@ sub do_predcorr_and_varcorr
             chomp $row;
             my @tmp = split(/,/,$row);
             foreach my $val (@tmp){
-                push(@newrow,($bound_array->[$i]*(1-$pcorr)+$val*$pcorr));
+                push(@newrow, ($bound_array->[$i]*(1-$pcorr)+$val*$pcorr));
             }
         }
-        push (@pc_data_array,\@newrow);
+        push (@pc_data_array, \@newrow);
     }
 
-    if ($varcorr){
-        my $warn=0;
+    if ($varcorr or $refcorr) {
+        my $warn = 0;
         my @stdevs;
         my $obs_index = 0;
         foreach my $row (@pc_data_array){ #for each observation=row in pc_data_array
@@ -3288,22 +3333,32 @@ sub do_predcorr_and_varcorr
             push(@stdevs, (array::stdev(\@values))); #store stdev from simulated values only
             #stdev handles zero lenght array
         }
-        my $median_stdev = median(\@stdevs);
+        my $median_stdev;
+        if (not $refcorr) {
+            $median_stdev = median(\@stdevs);
+        }
 
-        for (my $i=0; $i < $n_pred; $i++){ #for each observation
+        for (my $i = 0; $i < $n_pred; $i++) { #for each observation
             my $vcorr;
-            if ($stdevs[$i] != 0){
-                $vcorr=$median_stdev/$stdevs[$i];
-            }else {
-                $warn =1;
-                $vcorr =100000;
+            if ($stdevs[$i] != 0) {
+                if ($refcorr) {
+                    $vcorr = $sdref_array->[$i] / $stdevs[$i];
+                } else {
+                    $vcorr = $median_stdev / $stdevs[$i];
+                }
+            } else {
+                $warn = 1;
+                $vcorr = 100000;
             }
             my @newrow;
-            foreach my $val (@{$pc_data_array[$i]}){ #for each value (real and sim) for observation i
-                push(@newrow,($vcorr*$val+$median_pred*(1-$vcorr)));
-
+            foreach my $val (@{$pc_data_array[$i]}) { #for each value (real and sim) for observation i
+                if ($refcorr) {
+                    push @newrow, $vcorr*$val + $predref_array->[$i]*(1 - $vcorr);
+                } else {
+                    push @newrow, $vcorr*$val + $median_pred*(1 - $vcorr);
+                }
             }
-            push (@corrected_data_array,(join ',',@newrow));
+            push (@corrected_data_array, (join ',', @newrow));
         }
 
         if ($warn == 1){
@@ -3313,7 +3368,7 @@ sub do_predcorr_and_varcorr
                          "to 100000 for those observations.\n\n");
         }
 
-    }else {
+    } else {
         #no varcorr, just arrange pc data in correct output form
         foreach my $arr (@pc_data_array){
             push (@corrected_data_array,(join ',',@{$arr}));
@@ -3389,7 +3444,7 @@ sub create_mirror_and_plot_data
     }
     $self->id_array($id_array);
 
-    if ($self->predcorr || $self->varcorr){
+    if ($self->predcorr || $self->varcorr || defined $self->refcorr) {
         my $pred_array = $d -> column_to_array('column'=>'PRED','filter'=>$filter);
         unless (scalar @{$pred_array} > 0){
             croak("Could not find PRED column in original data file.");
@@ -3412,6 +3467,29 @@ sub create_mirror_and_plot_data
             }
             $self->bound_array($bound_array);
         }
+    }
+
+    if (defined $self->refcorr) {
+        # Read in reference predictions from the first sample of the refcorr simulation data
+        my $reftab_path = $self->original_model->directory() . 'vpc_simulation_refcorr.1.' .
+            $self->original_model->get_option_value(record_name => 'table',
+                                                    option_name => 'FILE',
+                                                    problem_index => ($self->origprobnum()-1));
+        my $reftab = data->new(filename => $reftab_path, ignoresign => '@', idcolumn => 1);
+        my $pred_ref = $reftab->column_to_array('column'=>'PRED', 'filter'=>$filter);
+        my $npreds = scalar(@$pred_ref);
+        my @sd_array;
+        for (my $i = 0; $i < $npreds; $i++) {
+            # strided stdev calculation accross reference simulations
+            my @temp_array;
+            for (my $j = 0; $j < $self->samples; $j++) {
+                push @temp_array, $pred_ref->[$npreds * $j + $i];
+            }
+            push @sd_array, array::stdev(\@temp_array);
+        }
+        $self->sdref_array(\@sd_array);
+        splice @$pred_ref, $npreds;
+        $self->predref_array($pred_ref);
     }
 
     #add translated stratacol
