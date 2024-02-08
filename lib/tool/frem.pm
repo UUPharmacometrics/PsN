@@ -1445,7 +1445,7 @@ sub get_pred_error_pk_code
         likelihood => { isa => 'Bool', default => 0},
         loglikelihood => { isa => 'Bool', default => 0},
         have_fflag  => { isa => 'Bool', default => 0},
-        ntrt => { isa => 'Maybe[Str]' },
+        ntrt => { isa => 'Maybe[Str]', optional => 1 },
     );
     my $covariates = $parm{'covariates'};
     my $maxeta = $parm{'maxeta'};
