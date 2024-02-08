@@ -77,6 +77,7 @@ has 'tool_options' => ( is => 'rw', isa => 'HashRef' );     # tool options hash 
 has 'bipp' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'force_posdef_covmatrix' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'force_posdef_samples' => ( is => 'rw', isa => 'Int', default => 500 );
+has 'ntrt' => ( is => 'rw', isa => 'Str' );
 
 
 has '_intermediate_models_path' => ( is => 'rw', isa => 'Str' );
@@ -1444,6 +1445,7 @@ sub get_pred_error_pk_code
         likelihood => { isa => 'Bool', default => 0},
         loglikelihood => { isa => 'Bool', default => 0},
         have_fflag  => { isa => 'Bool', default => 0},
+        ntrt => { isa => 'Maybe[Str]' },
     );
     my $covariates = $parm{'covariates'};
     my $maxeta = $parm{'maxeta'};
@@ -1460,6 +1462,7 @@ sub get_pred_error_pk_code
     my $likelihood = $parm{'likelihood'};
     my $loglikelihood = $parm{'loglikelihood'};
     my $have_fflag = $parm{'have_fflag'};
+    my $ntrt = $parm{'ntrt'};
 
     my @pkcode;
     my @pred_error_code = (';;;FREM CODE BEGIN COMPACT',';;;DO NOT MODIFY');
@@ -1481,6 +1484,12 @@ sub get_pred_error_pk_code
     my @eta_strings;
     my @rescale_strings;
     my @rescale_factors;
+
+    if (defined $ntrt) {
+        $ntrt = '/SQRT(' . $ntrt . ')';
+    } else {
+        $ntrt = '';
+    }
 
     for (my $j = 0; $j < scalar(@{$covariates}); $j++) {
         my $label = 'BSV_' . $covariates->[$j];
@@ -1529,11 +1538,11 @@ sub get_pred_error_pk_code
         for (my $j = 0; $j < scalar(@{$covariates}); $j++) {
             my $etanum = ($maxeta + 1 + $j);
             if ($rescale) {
-                push(@mucode, $indent.'MU_'.$etanum.' = '.$theta_strings[$j].'/SDC'.$etanum);
-                push(@mucode, $indent.'COV'.$etanum.' = (MU_'.$etanum.' + '.$eta_strings[$j]->[0].')*SDC'.$etanum);
+                push(@mucode, $indent . 'MU_' . $etanum . ' = ' . $theta_strings[$j] . '/SDC' . $etanum);
+                push(@mucode, $indent . 'COV' . $etanum . ' = (MU_' . $etanum . ' + ' . $eta_strings[$j]->[0] . $ntrt . ')*SDC' . $etanum);
             } else {
-                push(@mucode,$indent.'MU_'.$etanum.' = '.$theta_strings[$j]);
-                push(@mucode,$indent.'COV'.$etanum.' = MU_'.$etanum.' + '.$eta_strings[$j]->[0]);
+                push(@mucode, $indent . 'MU_' . $etanum . ' = ' . $theta_strings[$j]);
+                push(@mucode, $indent . 'COV' . $etanum . ' = MU_' . $etanum . ' + ' . $eta_strings[$j]->[0] . $ntrt);
             }
         }
         push(@code,@mucode);
@@ -1552,7 +1561,7 @@ sub get_pred_error_pk_code
                 $ipred = 'COV'.($maxeta+1+$i);
             }else{
                 my $rescale_expr = $rescale ? '*'.$rescale_strings[$i] : '';
-                $ipred = $theta_strings[$i].' + '.$eta_strings[$i]->[$j].$rescale_expr;
+                $ipred = $theta_strings[$i] . ' + ' . $eta_strings[$i]->[$j] . $rescale_expr . $ntrt;
             }
             if ($N_parameter_blocks > 1){
                 $comment .= ' occasion '.($j+1);
@@ -1625,6 +1634,7 @@ sub prepare_model2
         likelihood => $self->_likelihood,
         loglikelihood => $self->_loglikelihood,
         have_fflag => $self->_have_fflag,
+        ntrt => $self->ntrt,
     );
 
     cleanup_outdated_model(modelname => File::Spec->catfile($self->_intermediate_models_path, $name_model),

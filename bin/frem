@@ -35,6 +35,7 @@ my %optional_options = (
     'categorical:s' => undef,
     'deriv2_nocommon_maxeta:i' => undef,
     "mceta:i"=>'',
+    'ntrt:s' => undef,
     'log:s' => undef,
     'rse:f' => undef,
     'run_sir!' => undef,
@@ -221,6 +222,13 @@ $help_text{-mu} = <<'EOF';
     so that any skipped omegas come first.
 EOF
 
+$help_text{-ntrt} = <<'EOF';
+    -ntrt
+
+    Column name for number of individuals in aggregate data. Default not used.
+EOF
+
+
 $help_text{-rescale} = <<'EOF';
     -rescale
 
@@ -327,6 +335,7 @@ my $frem = tool::frem->new(
     bipp => $options{'bipp'},
     force_posdef_covmatrix => $options{'force_posdef_covmatrix'},
     force_posdef_samples => $options{'force_posdef_samples'},
+    ntrt => $options{'ntrt'},
 );
 
 $frem->print_options(
