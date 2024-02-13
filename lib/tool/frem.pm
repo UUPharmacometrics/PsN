@@ -2806,7 +2806,7 @@ sub create_data2_model
 
         $message = "Running evaluation to filter data and add ".$fremtype." for FREM data set";
     }else{
-        foreach my $remove_rec ('abbreviated','msfi','contr','subroutine','prior','model','tol','infn','omega','pk','aesinitial','aes','des','error','pred','mix','theta','sigma','simulation','estimation','covariance','nonparametric','table','scatter'){
+        foreach my $remove_rec ('abbreviated','msfi','contr','subroutine','prior','model','tol','infn','omega','pk','aesinitial','aes','des','error','pred','mix','theta','sigma','simulation','estimation','covariance','nonparametric','table','scatter','level'){
             $filtered_data_model -> remove_records(type => $remove_rec);
         }
 
