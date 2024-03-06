@@ -3228,6 +3228,7 @@ sub create_binned_data
 
     $self->reprint_mirror_and_plot_data() if ($self->varcorr
                                               or $self->predcorr
+                                              or defined $self->refcorr
                                               or $self->lnDV == 1
                                               or $self->lnDV == 3);
 }
