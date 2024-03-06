@@ -1605,10 +1605,11 @@ sub modelfit_setup
                 my $num = $i + 1;
                 my $path = "m1/" . $model_sims[$i]->filename;
                 my $destpath = "m1/${type}_simulation_refcorr.$num.mod";
-                my $refstr = "";
+                my @refstrs;
                 for my $k (keys %refcorr) {
-                    $refstr .= "$k=" . $refcorr{$k};
+                    push @refstrs, "$k=" . $refcorr{$k};
                 }
+                my $refstr = join(" ", @refstrs);
                 PsN::call_pharmpy("data reference $path -o $destpath $refstr");
                 my $refmodel = model->new(filename => $destpath);
                 push @refcorr_models, $refmodel;
