@@ -109,6 +109,7 @@ has 'results_file' => ( is => 'rw', isa => 'Str', default => 'npc_results.csv' )
 has 'nca' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'mix' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'refcorr' => ( is => 'rw', isa => 'Maybe[HashRef]' );
+has 'refcorr_table' => ( is => 'rw', isa => 'Maybe[Str]' );
 
 sub BUILD
 {
@@ -116,6 +117,9 @@ sub BUILD
 
     if (defined $self->refcorr and not keys %{$self->refcorr}) {
         $self->refcorr(undef);
+    }
+    if (defined $self->refcorr_table) {
+        $self->refcorr({});
     }
     if (defined $self->auto_bin_mode) {
         unless ($self->auto_bin_mode eq 'auto' or $self->auto_bin_mode eq 'minmax' or $self->auto_bin_mode eq 'auto_equal_count') {
@@ -1599,7 +1603,7 @@ sub modelfit_setup
                                        problem_numbers => [$self->simprobnum()]);
         $model_sims[$i] -> _write(relative_data_path => $self->copy_data);
 
-        if (defined $self->refcorr) { 
+        if (defined $self->refcorr and not defined $self->refcorr_table) { 
             my %refcorr = %{$self->refcorr};
             if (%refcorr) {
                 my $num = $i + 1;
@@ -3473,10 +3477,15 @@ sub create_mirror_and_plot_data
 
     if (defined $self->refcorr) {
         # Read in reference predictions from the first sample of the refcorr simulation data
-        my $reftab_path = $self->original_model->directory() . 'vpc_simulation_refcorr.1.' .
-            $self->original_model->get_option_value(record_name => 'table',
-                                                    option_name => 'FILE',
-                                                    problem_index => ($self->origprobnum()-1));
+        my $reftab_path;
+        if (not defined $self->refcorr_table) {
+            $reftab_path = $self->original_model->directory() . 'vpc_simulation_refcorr.1.' .
+                $self->original_model->get_option_value(record_name => 'table',
+                                                        option_name => 'FILE',
+                                                        problem_index => ($self->origprobnum()-1));
+        } else {
+            $reftab_path = $self->directory . '../' . $self->refcorr_table; 
+        }
         my $reftab = data->new(filename => $reftab_path, ignoresign => '@', idcolumn => 1);
         my $pred_ref = $reftab->column_to_array('column'=>'PRED', 'filter'=>$filter);
         my $npreds = scalar(@$pred_ref);

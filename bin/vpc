@@ -69,6 +69,7 @@ my %optional_options = ( 'idv:s' => undef,
     'so!' => undef,
     'mix!' => undef,
     'refcorr:s' => undef,
+    'refcorr_table:s' => undef,
 );
 
 my $res = GetOptions( \%options,
@@ -511,6 +512,13 @@ $help_text{-refcorr} = <<'EOF';
     Cannot be used together with -predcorr or -varcorr.
 EOF
 
+$help_text{-refcorr_table} = <<'EOF';
+    -refcorr_table=filename
+
+    Perform reference correction on dependent variable. Same as the refcorr option, but instead
+    of letting PsN create the reference simulations the user will provide them in a separate file. 
+EOF
+
 $help_text{-refstrat} = <<'EOF';
     -refstrat=number
 
@@ -740,6 +748,7 @@ my $vpc =
       directory_name_prefix => 'vpc',
       mix                  => $options{'mix'},
       refcorr => \%refcorr,
+      refcorr_table => $options{'refcorr_table'},
       );
 
 $vpc-> print_options (cmd_line => $cmd_line,
