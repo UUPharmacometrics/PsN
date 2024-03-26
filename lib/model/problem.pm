@@ -4,9 +4,9 @@ use include_modules;
 use linear_algebra;
 use math qw(unbounded2correlation);
 
-my @print_order_omega_before_pk = ('sizes','problem','input','bind','data','abbreviated','msfi','contr','subroutine','prior','thetap','thetapv','omegap','omegapd','sigmap','sigmapd','model','tol','infn','omega','anneal','pk','level','aesinitial','aes','des','error','pred','mix','theta','thetai','thetar','sigma','etas','phis','simulation','rcov','chain','estimation','design','covariance','nonparametric','table','scatter');
-my @print_order_psn_record_order = ('sizes','problem','input','bind','data','abbreviated','msfi','contr','subroutine','prior','thetap','thetapv','omegap','omegapd','sigmap','sigmapd','model','tol','infn','pk','level','aesinitial','aes','des','error','pred','mix','theta','thetai','thetar','omega','anneal','sigma','etas','phis','simulation','rcov','chain','estimation','design','covariance','nonparametric','table','scatter');
-my @print_order_sde = ('sizes','problem','input','bind','data','abbreviated','msfi','contr','subroutine','prior','thetap','thetapv','omegap','omegapd','sigmap','sigmapd','model','tol','infn','theta','thetai','thetar','omega','anneal','sigma','etas','phis','pk','level','aesinitial','aes','des','error','pred','mix','simulation','rcov','chain','estimation','design','covariance','nonparametric','table','scatter');
+my @print_order_omega_before_pk = ('sizes','problem','warnings','input','bind','data','abbreviated','msfi','contr','subroutine','prior','thetap','thetapv','omegap','omegapd','sigmap','sigmapd','model','tol','infn','omega','anneal','pk','level','aesinitial','aes','des','error','pred','mix','theta','thetai','thetar','sigma','etas','phis','simulation','rcov','chain','estimation','design','covariance','nonparametric','table','scatter');
+my @print_order_psn_record_order = ('sizes','problem','warnings','input','bind','data','abbreviated','msfi','contr','subroutine','prior','thetap','thetapv','omegap','omegapd','sigmap','sigmapd','model','tol','infn','pk','level','aesinitial','aes','des','error','pred','mix','theta','thetai','thetar','omega','anneal','sigma','etas','phis','simulation','rcov','chain','estimation','design','covariance','nonparametric','table','scatter');
+my @print_order_sde = ('sizes','problem','warnings','input','bind','data','abbreviated','msfi','contr','subroutine','prior','thetap','thetapv','omegap','omegapd','sigmap','sigmapd','model','tol','infn','theta','thetai','thetar','omega','anneal','sigma','etas','phis','pk','level','aesinitial','aes','des','error','pred','mix','simulation','rcov','chain','estimation','design','covariance','nonparametric','table','scatter');
 my %abbreviations;
 my %unsupported_records;
 
@@ -124,6 +124,7 @@ use model::problem::subroutine;
 use model::problem::data;
 use model::problem::input;
 use model::problem::problem;
+use model::problem::warnings;
 use data;
 use model::problem::record_order;
 
@@ -143,6 +144,7 @@ has 'models' => ( is => 'rw', isa => 'Maybe[ArrayRef[model::problem::model]]' );
 has 'msfis' => ( is => 'rw', isa => 'Maybe[ArrayRef[model::problem::msfi]]' );
 has 'sizess' => ( is => 'rw', isa => 'Maybe[ArrayRef[model::problem::sizes]]' );
 has 'scatters' => ( is => 'rw', isa => 'Maybe[ArrayRef[model::problem::scatter]]' );
+has 'warningss' => ( is => 'rw', isa => 'Maybe[ArrayRef[model::problem::warnings]]' );
 has 'anneals' => ( is => 'rw', isa => 'Maybe[ArrayRef[model::problem::anneal]]' );
 has 'phiss' => ( is => 'rw', isa => 'Maybe[ArrayRef[model::problem::phis]]' );
 has 'levels' => ( is => 'rw', isa => 'Maybe[ArrayRef[model::problem::level]]' );
@@ -1807,10 +1809,7 @@ sub _read_records
 
                 # let add_records create the object if appropriate
 
-                if( $record_type eq 'warnings' ) {
-                    ui -> print( category => 'all',
-                                 message  => "\nWarning: Record \$WARNINGS is deleted by PsN.\n");
-                }elsif( $record_type eq 'finedata' ) {
+                if ($record_type eq 'finedata') {
                     ui -> print( category => 'all',
                                  message  => "\nWarning: Record \$FINEDATA is deleted by PsN.\n");
                 } elsif( $record_type eq 'table' ) {
