@@ -5,7 +5,7 @@ use MouseX::Params::Validate;
 require tool::scm;
 require tool::scm::config_file;
 require model;
-use File::Copy qw(move mv cp);
+use File::Copy qw(move mv copy);
 use warnings;
 require OSspecific;
 
@@ -79,7 +79,7 @@ sub copy_config_file{
     my $directory = $parm{'directory'};
 
     my ( $dir, $file ) = OSspecific::absolute_path('',$options->{'config_file'});
-    cp($dir.$file,$directory.$file);
+    copy($dir.$file,$directory.$file);
 }
 
 sub setup_model{

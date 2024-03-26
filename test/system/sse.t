@@ -10,7 +10,7 @@ use FindBin qw($Bin);
 use lib "$Bin/.."; #location of includes.pm
 use includes; #file with paths to PsN packages and $path variable definition
 
-use File::Copy 'cp';
+use File::Copy 'copy';
 
 #in psn.conf must set output_style = SPLUS, otherwise tests will fail. fix by setting here.
 
@@ -24,7 +24,7 @@ my $tndir = "$tempdir/tndir";
 mkdir($tndir);
 my $mod = 'tnpri.mod';
 foreach my $file ("$model_dir/tnpri.mod","$model_dir/data_tnpri.csv","$model_dir/create_tnpri_msf.mod"){
-	cp($file, "$tndir/.");
+	copy($file, "$tndir/.");
 }
 chdir($tndir);
 

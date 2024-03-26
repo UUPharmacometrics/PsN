@@ -1,7 +1,7 @@
 use strict;
 use Config;
 use File::Spec;
-use File::Copy qw(cp);
+use File::Copy qw(copy);
 use File::Path qw(mkpath);
 use File::Glob;
 use lib 'lib';
@@ -1054,7 +1054,7 @@ if ($configuration_done) {
     print "\nInstallation complete.\n";
 } else {
     my $path = "$library_dir" . "$directory_separator" . "PsN_$name_safe_version";
-    cp($path . '/psn.conf_template', $path . '/psn.conf');
+    copy($path . '/psn.conf_template', $path . '/psn.conf');
     print "\nInstallation partially complete. You still have to add NONMEM settings to psn.conf before you can run PsN.\n";
     print "A psn.conf to edit is found in\n";
     print "$path\n";

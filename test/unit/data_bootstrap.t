@@ -14,12 +14,12 @@ use data;
 use model::problem::data;
 use model::problem;
 use model;
-use File::Copy 'cp';
+use File::Copy 'copy';
 
 #test for data class subroutine for bootstrap
 my $tempdir = create_test_dir('unit_data_bootstrap');
 
-cp($includes::testfiledir.'/pheno.dta',$tempdir);
+copy($includes::testfiledir.'/pheno.dta',$tempdir);
 my ( $new_datas, $incl_ids, $incl_keys, $new_subjects, $orig_count_ind )
 	= data::bootstrap_create_datasets( output_directory   => $tempdir,
 									   name_stub   => 'bs_pr1',
@@ -50,7 +50,7 @@ $data = data->new(
 is($data->count_ind,59,'count boot data 1');
 
 
-cp($includes::testfiledir.'/data/with_dates_and_times.csv',$tempdir);
+copy($includes::testfiledir.'/data/with_dates_and_times.csv',$tempdir);
 ($new_datas, $incl_ids, $incl_keys, $new_subjects, $orig_count_ind )
 	= data::bootstrap_create_datasets( output_directory   => $tempdir,
 	name_stub   => 'bsa_',

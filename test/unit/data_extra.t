@@ -14,7 +14,7 @@ use data;
 use model::problem::data;
 use model::problem;
 use model;
-use File::Copy 'cp';
+use File::Copy 'copy';
 use Cwd;
 use Config;
 use OSspecific;
@@ -26,8 +26,8 @@ use File::Spec qw(catfile);
 ui->silent(1);
 my $tempdir = create_test_dir('unit_data_extra');
 
-cp($includes::testfiledir.'/frem_filtered_data.dta',$tempdir);
-cp($includes::testfiledir.'/frem_filtered_nomdv.dta',$tempdir);
+copy($includes::testfiledir.'/frem_filtered_data.dta',$tempdir);
+copy($includes::testfiledir.'/frem_filtered_nomdv.dta',$tempdir);
 
 
 my $filtered_data_nomdv = data->new(filename => $tempdir.'frem_filtered_nomdv.dta',

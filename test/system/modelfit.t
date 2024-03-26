@@ -14,7 +14,7 @@ use Config;
 use FindBin qw($Bin);
 use lib "$Bin/.."; #location of includes.pm
 use includes; #file with paths to PsN packages and $path variable definition
-use File::Copy 'cp';
+use File::Copy 'copy';
 use tool::modelfit;
 use common_options;
 sub check_diff

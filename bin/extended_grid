@@ -16,7 +16,7 @@ use File::Basename;
 use PsN;
 use common_options;
 use ui;
-use File::Copy 'cp';
+use File::Copy 'copy';
 # More PsN dependencies included with require further down
 
 my $cmd_line = $0 . " " . join( " ", @ARGV );
@@ -615,7 +615,7 @@ unless ( -e "ofv_dir" ){
   mkdir( "ofv_dir" );
 }
 chdir( "ofv_dir" );
-cp( '../iofvcont.f', './iofvcont.f' ) or print "Warning: unable to copy iofvcont.f\n";
+copy( '../iofvcont.f', './iofvcont.f' ) or print "Warning: unable to copy iofvcont.f\n";
 
 my $table = data->new(
     filename => "extended.nptab",

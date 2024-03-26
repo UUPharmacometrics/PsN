@@ -4,7 +4,7 @@ package filter_data;
 
 use strict;
 use warnings;
-use File::Copy qw(cp);
+use File::Copy qw(copy);
 use MouseX::Params::Validate;
 use data;
 use model;

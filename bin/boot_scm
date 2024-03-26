@@ -13,7 +13,7 @@ use Cwd;
 use common_options;
 use ui;
 use OSspecific;
-use File::Copy qw/cp mv/;
+use File::Copy qw/copy mv/;
 # More PsN dependencies included with require further down
 
 my $cmd_line = $0 . " " . join( " ", @ARGV );
@@ -320,7 +320,7 @@ my $main_directory = tool::get_rundir(create => 1,
 
 #copy config file to rundir
 my ( $dir, $file ) = OSspecific::absolute_path('',$options{'config_file'});
-cp($dir.$file,$main_directory.$file);
+copy($dir.$file,$main_directory.$file);
 
 
 #need a dummy tool object to print options
@@ -639,7 +639,7 @@ if (defined $options{'dummy_covariates'}){
         $pathfinaldata = '../../'.$finalname; #local path from $finaldir
     }else{
         #copy original data to main_directory without path
-        cp($fullname,$finaldir.'/'.$finalname);
+        copy($fullname,$finaldir.'/'.$finalname);
         $pathfinaldata = $finalname;
     }
 }

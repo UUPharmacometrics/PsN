@@ -3,7 +3,7 @@ package tool;
 use include_modules;
 use strict;
 use Cwd;
-use File::Copy 'cp';
+use File::Copy 'copy';
 use File::Path qw(mkpath rmtree);
 use File::Spec;
 use Scalar::Util qw(blessed);
@@ -1717,9 +1717,9 @@ sub print_options
 
     if (( -e $dir."/command.txt" ) and not ( -e $dir."/original_command.txt" )){
         #first restart
-        cp($dir . "/command.txt",$dir."/original_command.txt");
+        copy($dir . "/command.txt",$dir."/original_command.txt");
         if (-e $option_file ){
-            cp($option_file,$dir."/original_version_and_option_info.txt");
+            copy($option_file,$dir."/original_version_and_option_info.txt");
         }
     }
 
@@ -1806,9 +1806,9 @@ sub print_options
     if ((lc($toolname) eq 'vpc') or (lc($toolname) eq 'npc')){
         unless ( -e $dir."/original_command.txt" ){
             #first run
-            cp($dir . "/command.txt",$dir."/original_command.txt");
+            copy($dir . "/command.txt",$dir."/original_command.txt");
             if (-e $option_file ){
-                cp($option_file,$dir."/original_version_and_option_info.txt");
+                copy($option_file,$dir."/original_version_and_option_info.txt");
             }
         }
     }

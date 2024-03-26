@@ -14,12 +14,12 @@ use data;
 use model::problem::data;
 use model::problem;
 use model;
-use File::Copy 'cp';
+use File::Copy 'copy';
 
 #test for data class subroutine for cdd 
 my $tempdir = create_test_dir('unit_data_cdd');
 
-cp($includes::testfiledir.'/pheno5.dta',$tempdir);
+copy($includes::testfiledir.'/pheno5.dta',$tempdir);
 my ($new_datas, $skip_ids, $skip_keys, $skip_values, $remainders, $pr_bins) = 
 	data::cdd_create_datasets(input_filename => $tempdir.'pheno5.dta',
 							  bins => undef,

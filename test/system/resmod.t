@@ -4,7 +4,7 @@ use strict;
 use warnings;
 use File::Path 'rmtree';
 use Test::More;
-use File::Copy 'cp';
+use File::Copy 'copy';
 use FindBin qw($Bin);
 use lib "$Bin/.."; #location of includes.pm
 use includes; #file with paths to PsN packages and $path variable definition
@@ -16,8 +16,8 @@ SKIP: {
     our $tempdir = create_test_dir('system_resmod');
     chdir($tempdir);
     my $model_dir = $includes::testfiledir;
-    cp("$model_dir/resmod/sdtab", $tempdir);
-    cp("$model_dir/resmod/pheno.mod", $tempdir);
+    copy("$model_dir/resmod/sdtab", $tempdir);
+    copy("$model_dir/resmod/pheno.mod", $tempdir);
 
 
     my @commands = ( 

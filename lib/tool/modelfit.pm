@@ -4,7 +4,7 @@ use include_modules;
 use Config;
 use Cwd;
 use Data::Dumper;
-use File::Copy qw/cp mv/;
+use File::Copy qw/copy mv/;
 use File::Path;
 use File::Glob;
 use File::Spec;
@@ -1049,7 +1049,7 @@ sub select_best_model
                 } else {
                     $outfilename = $self->base_directory . $self->model_subdir_name . $model->outputs->[0]->filename;
                 }
-                cp("psn.lst", $outfilename);
+                copy("psn.lst", $outfilename);
             }
         } else {
             my @raw_results_rows = @{$queue_info_ref -> {'raw_results'} -> [$selected-1]};
@@ -2467,7 +2467,7 @@ sub restart_needed
             my $new_name = get_retry_name( filename => 'psn.'.$self->modext,
                                            retry => ${$tries},
                                            crash => $queue_info_ref -> {'crashes'});
-            cp( $new_name, 'psn.'.$self->modext );
+            copy( $new_name, 'psn.'.$self->modext );
         }
 
         $output_file -> flush;
@@ -2853,7 +2853,7 @@ sub copy_model_and_input
                 # $file is a ref to an array with two elements, the first is a
                 # path, the second is a name.
 
-                cp( $file->[0] . $file -> [1], $file -> [1] ); #FIXME symlink if on linux?
+                copy( $file->[0] . $file -> [1], $file -> [1] ); #FIXME symlink if on linux?
 
             }
 
@@ -2910,7 +2910,7 @@ sub copy_model_and_input
             # $file is a ref to an array with two elements, the first is a
             # path, the second is a name.
 
-            cp( $file->[0] . $file -> [1], $file -> [1] ); #FIXME symlink if unix?
+            copy( $file->[0] . $file -> [1], $file -> [1] ); #FIXME symlink if unix?
 
         }
 
@@ -2952,7 +2952,7 @@ sub copy_model_and_input
             if( defined $msfi_in and (-s $msfi_in) ){
                 #-s returns true if file is non-empty
                 #assume original model has msfi, assume thetas already removed.
-                cp( $msfi_in, $basename.'-0' ); #move or copy... this is from calling directory
+                copy( $msfi_in, $basename.'-0' ); #move or copy... this is from calling directory
                 #assume only one $MSFI per $PROB.
                 if (defined $candidate_model->problems->[0]->msfis){
                     $candidate_model->problems->[0]->msfis->[0]->set_filename(filename =>$basename.'-0');
@@ -3140,7 +3140,7 @@ sub move_model_and_output
         # Don't prepend the model file name to psn.lst, but use the name
         # from the $model object.
         if ($filename eq 'psn.lst') {
-            my $success = cp($filename, $outfilename);
+            my $success = copy($filename, $outfilename);
             $final_lst = $outfilename;
             (undef, undef, my $lst_name) = File::Spec->splitpath($outfilename);
             if ($success) {
@@ -3157,9 +3157,9 @@ sub move_model_and_output
                     if ('.'.$out eq $ext){
                         my $success;
                         if ($self->model_subdir) {
-                            $success = cp($filename, $self->base_directory . $self->model_subdir_name . $dotless_model_filename . $ext);
+                            $success = copy($filename, $self->base_directory . $self->model_subdir_name . $dotless_model_filename . $ext);
                         } else {
-                            $success = cp($filename, $dir . $dotless_model_filename . $ext);
+                            $success = copy($filename, $dir . $dotless_model_filename . $ext);
                         }
                         if ($success) {
                             push @{$self->metadata->{'copied_files'}}, $dotless_model_filename . $ext;
@@ -3182,7 +3182,7 @@ sub move_model_and_output
             $destination .= "$dotless_model_filename.";
         }
         $destination .= $filename;
-        cp($filename, $destination);
+        copy($filename, $destination);
         push @{$self->metadata->{'copied_files'}}, $filename;
     }
 
@@ -3270,7 +3270,7 @@ sub move_model_and_output
             my $so = so->new();
             my $nm_parser = so::parsers::nmoutput->new(so => $so, lst_file => $final_lst);
             $so->write();
-            cp($so->filename, $model->directory);
+            copy($so->filename, $model->directory);
             unlink($so->filename);
         }
     }

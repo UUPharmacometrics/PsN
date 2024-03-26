@@ -9,7 +9,7 @@ use lib "$Bin/../lib";
 
 use PsN;
 use Getopt::Long;
-use File::Copy qw/cp mv/;
+use File::Copy qw/copy mv/;
 use File::Basename;
 use File::Spec;
 use common_options;
@@ -549,7 +549,7 @@ if ( $options{'output_model'} ){
     $outfile = $options{'output_model'};
 }  else {
     #original file will be overwritten, copy to .org
-    cp( $ARGV[0], $ARGV[0].'.org' );
+    copy( $ARGV[0], $ARGV[0].'.org' );
     unlink($ARGV[0]);
     $outfile = $ARGV[0];
 }

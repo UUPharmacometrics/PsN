@@ -4,7 +4,7 @@ use strict;
 use warnings;
 use Test::More;
 use Test::Exception;
-use File::Copy qw(cp);
+use File::Copy qw(copy);
 use FindBin qw($Bin);
 use lib "$Bin/../.."; #location of includes.pm
 use includes; #file with paths to PsN packages
@@ -70,8 +70,8 @@ $model = model->new(
 );
 
 my $bootstrap = tool::bootstrap->new(directory => $tempdir, skip_estimate_near_boundary => 1, models => [ $model ]);
-cp("$test_files/bootstrap/raw_results_pheno.csv", "$tempdir/raw_results.csv");
-cp("$test_files/bootstrap/raw_results_structure", $tempdir);
+copy("$test_files/bootstrap/raw_results_pheno.csv", "$tempdir/raw_results.csv");
+copy("$test_files/bootstrap/raw_results_structure", $tempdir);
 
 $bootstrap->prepare_results();
 
@@ -452,8 +452,8 @@ remove_test_dir($tempdir);
 $tempdir = create_test_dir("unit_bootstrap");
 
 $bootstrap = tool::bootstrap->new(directory => $tempdir, skip_estimate_near_boundary => 1, models => [ $model ]);
-cp("$test_files/bootstrap/missing_original_model/raw_results_pheno.csv", "$tempdir/raw_results.csv");
-cp("$test_files/bootstrap/missing_original_model/raw_results_structure", $tempdir);
+copy("$test_files/bootstrap/missing_original_model/raw_results_pheno.csv", "$tempdir/raw_results.csv");
+copy("$test_files/bootstrap/missing_original_model/raw_results_structure", $tempdir);
 
 $bootstrap->prepare_results();
 
@@ -487,8 +487,8 @@ remove_test_dir($tempdir);
 $tempdir = create_test_dir("unit_bootstrap");
 
 $bootstrap = tool::bootstrap->new(directory => $tempdir, skip_estimate_near_boundary => 1, models => [ $model ]);
-cp("$test_files/bootstrap/skipped_original_model/raw_results_pheno.csv", "$tempdir/raw_results.csv");
-cp("$test_files/bootstrap/skipped_original_model/raw_results_structure", $tempdir);
+copy("$test_files/bootstrap/skipped_original_model/raw_results_pheno.csv", "$tempdir/raw_results.csv");
+copy("$test_files/bootstrap/skipped_original_model/raw_results_structure", $tempdir);
 
 $bootstrap->prepare_results();
 
@@ -544,8 +544,8 @@ remove_test_dir($tempdir);
 $tempdir = create_test_dir("unit_bootstrap");
 
 $bootstrap = tool::bootstrap->new(directory => $tempdir, skip_minimization_terminated => 0, models => [ $model ]);
-cp("$test_files/bootstrap/somecrash/raw_results_pheno.csv", "$tempdir/raw_results.csv");
-cp("$test_files/bootstrap/somecrash/raw_results_structure", $tempdir);
+copy("$test_files/bootstrap/somecrash/raw_results_pheno.csv", "$tempdir/raw_results.csv");
+copy("$test_files/bootstrap/somecrash/raw_results_structure", $tempdir);
 
 $bootstrap->prepare_results();
 
@@ -570,8 +570,8 @@ $bootstrap = tool::bootstrap->new(directory => $tempdir,
 	skip_with_covstep_warnings => 0,
 	skip_estimate_near_boundary => 1,
 	models => [ $model ]);
-cp("$test_files/bootstrap/with_dofv/raw_results_mox_sir_block2.csv", "$tempdir/raw_results.csv");
-cp("$test_files/bootstrap/with_dofv/raw_results_structure", $tempdir);
+copy("$test_files/bootstrap/with_dofv/raw_results_mox_sir_block2.csv", "$tempdir/raw_results.csv");
+copy("$test_files/bootstrap/with_dofv/raw_results_structure", $tempdir);
 
 $bootstrap->prepare_results();
 
@@ -617,8 +617,8 @@ $bootstrap = tool::bootstrap->new(directory => $tempdir,
 	skip_with_covstep_warnings => 0,
 	skip_estimate_near_boundary => 0,
 	models => [ $model ]);
-cp("$test_files/bootstrap/some_covstep_fail/raw_results_mox_sir_block2.csv", "$tempdir/raw_results.csv");
-cp("$test_files/bootstrap/some_covstep_fail/raw_results_structure", $tempdir);
+copy("$test_files/bootstrap/some_covstep_fail/raw_results_mox_sir_block2.csv", "$tempdir/raw_results.csv");
+copy("$test_files/bootstrap/some_covstep_fail/raw_results_structure", $tempdir);
 
 $bootstrap->prepare_results();
 

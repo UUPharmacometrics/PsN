@@ -3,7 +3,7 @@
 use strict;
 use warnings;
 use File::Path 'rmtree';
-use File::Copy 'cp';
+use File::Copy 'copy';
 use Test::More;
 use Test::Exception;
 use Cwd 'abs_path';
@@ -124,7 +124,7 @@ ok (-e "$dir/command.txt", "compress_m1 command.txt still exists");
 # uncompress_m1
 
 mkdir("$tempdir/bak");
-cp("$dir/m1.zip", "$tempdir/bak");
+copy("$dir/m1.zip", "$tempdir/bak");
 
 # m1.zip exists and is non-empty, m1 does not exist
 $tool->uncompress_m1();
@@ -160,7 +160,7 @@ rmtree([$dir]);
 mkdir($dir);
 mkdir($m1_dir);
 copy_test_files($dir, ["bootstrap/bootstrap_dir1/command.txt"]);
-cp("$tempdir/bak/m1.zip", $dir);
+copy("$tempdir/bak/m1.zip", $dir);
 $tool->uncompress_m1();
 ok (-e $m1_dir, "uncompress_m1 (empty, exists) m1 created");
 ok (-e "$dir/command.txt", "uncompress_m1 (empty, exists) command.txt still exists");
@@ -199,7 +199,7 @@ mkdir($dir);
 mkdir($m1_dir);
 copy_test_files($dir, ["bootstrap/bootstrap_dir1/command.txt"]);
 copy_test_files("$dir/m1", ["bootstrap/bootstrap_dir1/m1/bs_pr1_1.cor"]);
-cp("$tempdir/bak/m1.zip", $dir);
+copy("$tempdir/bak/m1.zip", $dir);
 dies_ok { $tool->uncompress_m1() } "uncompress_m1 (non-empty, non-empty) dies";
 
 #m1=non-existing, m1.zip=empty

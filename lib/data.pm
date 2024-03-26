@@ -2,7 +2,7 @@ package data;
 
 use include_modules;
 use OSspecific;
-use File::Copy "cp";
+use File::Copy "copy";
 use Config;
 use random;
 use Storable;

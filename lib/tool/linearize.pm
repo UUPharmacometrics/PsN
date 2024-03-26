@@ -3,7 +3,7 @@ package tool::linearize;
 use Mouse;
 use MouseX::Params::Validate;
 use File::Path;
-use File::Copy 'cp';
+use File::Copy 'copy';
 use tool;
 use tool::modelfit;
 use tool::scm;
@@ -97,16 +97,16 @@ sub modelfit_setup
         unlink($scm->directory . 'base_model.mod');
         my @files = glob($scm->directory . $scm->basename . '*');
         for my $file (@files) {
-            cp($file, '.');
+            copy($file, '.');
         }
 
-        cp($scm->basename . '.dta', '../' . $scm->basename . '.dta');
-        cp($scm->basename . '.mod', '../' . $scm->basename . '.mod');
-        cp($scm->basename . '.lst', '../' . $scm->basename . '.lst');
-        cp($scm->basename . '.phi', '../' . $scm->basename . '.phi');
-        cp($scm->basename . '.ext', '../' . $scm->basename . '.ext');
-        cp($scm->basename . '.cov', '../' . $scm->basename . '.cov');
-        cp($scm->basename . '.coi', '../' . $scm->basename . '.coi');
+        copy($scm->basename . '.dta', '../' . $scm->basename . '.dta');
+        copy($scm->basename . '.mod', '../' . $scm->basename . '.mod');
+        copy($scm->basename . '.lst', '../' . $scm->basename . '.lst');
+        copy($scm->basename . '.phi', '../' . $scm->basename . '.phi');
+        copy($scm->basename . '.ext', '../' . $scm->basename . '.ext');
+        copy($scm->basename . '.cov', '../' . $scm->basename . '.cov');
+        copy($scm->basename . '.coi', '../' . $scm->basename . '.coi');
     } else {
         my $derivatives_model = model_approximations::second_order_derivatives_model(model => $model);
         if ($model->is_run()) {

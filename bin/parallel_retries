@@ -17,7 +17,7 @@ use PsN;
 use common_options;
 use ui;
 use Cwd;
-use File::Copy qw/cp mv/;
+use File::Copy qw/copy mv/;
 use File::Glob;
 use File::Path 'rmtree';
 # More PsN dependencies included with require further down
@@ -452,12 +452,12 @@ for (my $i=0; $i< scalar(@{$mod_array->[$selected-1]->output_files}); $i++){
         $to = $models_array->[0]->directory.$filestem.'.'.$models_array->[0]->output_files->[$i];
     }
     if (-e $from){
-        cp($from,$to);
+        copy($from,$to);
         push @copied, basename($to);
         ui -> print( category => 'parallel_retries',
                      message => "copying $from to $to\n" );
     }elsif(-e $tabfrom){
-        cp($tabfrom,$to);
+        copy($tabfrom,$to);
         push @copied, basename($to);
         ui -> print( category => 'parallel_retries',
                      message => "copying $tabfrom to $to\n" );

@@ -4,7 +4,7 @@ use strict;
 use warnings;
 use File::Path 'rmtree';
 use Test::More tests=>1;
-use File::Copy 'cp';
+use File::Copy 'copy';
 use FindBin qw($Bin);
 use lib "$Bin/.."; #location of includes.pm
 use includes; #file with paths to PsN packages and $path variable definition
@@ -21,7 +21,7 @@ my $bootdir = "$tempdir/boot_xv_scm_test";
 
 mkdir($bootdir);
 foreach my $file (@needed){
-	cp($file,"$bootdir/.");
+	copy($file,"$bootdir/.");
 }
 chdir($bootdir);
 my @scmcommands = 

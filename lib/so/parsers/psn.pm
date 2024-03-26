@@ -7,7 +7,7 @@ use warnings;
 use Mouse;
 use MouseX::Params::Validate;
 use include_modules;
-use File::Copy qw/cp mv/;
+use File::Copy qw/copy mv/;
 use Cwd;
 use OSspecific;
 
@@ -91,24 +91,24 @@ sub _connector_get_files
         ) {
         #generic failure
         #$errorstring = 'run failure';
-        cp($logfile,$errorfile);  #skip copying, change design
+        copy($logfile,$errorfile);  #skip copying, change design
         @files = ($logfile); #treat error messages as lstfile
     }elsif (($tool eq 'execute') and (not -e $lstfile)) {
         #execute failure
         if (-e $directory.'/NM_run1/psn.lst') {
-            cp($directory.'/NM_run1/psn.lst',$lstfile);
+            copy($directory.'/NM_run1/psn.lst',$lstfile);
             @files = ($lstfile);
         }elsif(-e $directory.'/NM_run1/psn-1.lst'){
-            cp($directory.'/NM_run1/psn-1.lst',$lstfile);
+            copy($directory.'/NM_run1/psn-1.lst',$lstfile);
             @files = ($lstfile);
         }elsif(-e $directory.'/NM_run1/nmtran_error.txt'){
-            cp($directory.'/NM_run1/nmtran_error.txt',$errorfile);
+            copy($directory.'/NM_run1/nmtran_error.txt',$errorfile);
             @files = ($errorfile);
         }elsif( (-e $directory.'/NM_run1/FMSG') and ( not -e $directory.'/NM_run1/FREPORT')) {
-            cp($directory.'/NM_run1/FMSG',$errorfile);
+            copy($directory.'/NM_run1/FMSG',$errorfile);
             @files = ($errorfile);
         }else{
-            cp($logfile,$errorfile);
+            copy($logfile,$errorfile);
             @files = ($logfile);
         }
     }else {
@@ -123,14 +123,14 @@ sub _connector_get_files
         if ($tool eq 'bootstrap'){
             @files = ($lstfile);
         }elsif ($tool eq 'vpc'){
-            cp($directory.'/m1/vpc_simulation.1.lst','.');
-            cp($directory.'/m1/vpc_simulation.1.npctab.dta','npctab.dta');
+            copy($directory.'/m1/vpc_simulation.1.lst','.');
+            copy($directory.'/m1/vpc_simulation.1.npctab.dta','npctab.dta');
             @files = ('vpc_simulation.1.lst');
             my @tab = <$directory/vpctab*>;
-            cp($tab[0],'.');
+            copy($tab[0],'.');
         } elsif ($tool eq 'nca') {
-            cp($directory.'/m1/nca_simulation.1.lst', '.');
-            cp($directory.'/nca_simulation.1.npctab.dta', 'npctab.dta');
+            copy($directory.'/m1/nca_simulation.1.lst', '.');
+            copy($directory.'/nca_simulation.1.npctab.dta', 'npctab.dta');
             @files = ('nca_simulation.1.lst');
             open my $fh, '<', 'npctab.dta';
             <$fh>;
@@ -174,7 +174,7 @@ sub _connector_get_files
             } else {
                 _merge_simulated_tables(destination => $curdir);
                 chdir($curdir);
-                cp($directory . '/m1/mc-1.lst', '.');
+                copy($directory . '/m1/mc-1.lst', '.');
                 @files = ( "mc-1.lst" );
             }
         } else {
