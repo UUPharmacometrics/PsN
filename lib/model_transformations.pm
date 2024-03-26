@@ -1839,8 +1839,8 @@ sub reorder_etas
     }
 
     # Reorder the phi file and save as a new file
-    if ($reorder_output and defined $phi_file) {
-        my $phiname = $model->get_phi_file();
+    my $phiname = $model->get_phi_file();
+    if ($reorder_output and defined $phi_file and defined $phiname) {
         my $phitable = nmtablefile->new(filename => $phiname);
         $phitable->rearrange_etas(order => $order);
         $phitable->write(path => $phi_file, phi => 1);
