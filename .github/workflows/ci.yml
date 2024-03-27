@@ -399,7 +399,7 @@ jobs:
             if(Test-path c:\\rtools40){
               echo "rtools40 is preinstalled"
             } else {
-              choco install --confirm --no-progress --allow-downgrade rtools --version ${{inputs.version}}
+              choco install --confirm --no-progress --allow-downgrade rtools --version 4.0.0.20220206
             }
             echo "c:\\rtools40\\usr\\bin" >> $GITHUB_PATH
         - name: Install R
