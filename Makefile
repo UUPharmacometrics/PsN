@@ -98,6 +98,7 @@ LIBFILES= ui.pm \
 	model/problem/thetap.pm \
 	model/problem/thetapv.pm \
 	model/problem/tol.pm \
+	model/problem/warnings.pm \
 	model/cwres_module.pm \
 	model/mirror_plot_module.pm \
 	model/iofv_module.pm \
