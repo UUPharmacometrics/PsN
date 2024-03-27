@@ -393,6 +393,15 @@ jobs:
         - name: Move pandoc
           run: mv installer/pandoc-2.5-windows-i386/pandoc.exe installer/strawberry/perl/bin
           shell: bash
+        - name: Install Rtools40
+          shell: pwsh
+          run: |
+            if(Test-path c:\\rtools40){
+              echo "rtools40 is preinstalled"
+            } else {
+              choco install --confirm --no-progress --allow-downgrade rtools --version ${{inputs.version}}
+            }
+            echo "c:\\rtools40\\usr\\bin" >> $GITHUB_PATH
         - name: Install R
           run: downloads\R-4.0.3-win.exe /VERYSILENT /DIR="installer\R"
           shell: cmd
