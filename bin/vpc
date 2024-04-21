@@ -69,6 +69,7 @@ my %optional_options = ( 'idv:s' => undef,
     'so!' => undef,
     'mix!' => undef,
     'refcorr:s' => undef,
+    'refcorr_data:s' => undef,
     'refcorr_table:s' => undef,
 );
 
@@ -512,6 +513,15 @@ $help_text{-refcorr} = <<'EOF';
     Cannot be used together with -predcorr or -varcorr.
 EOF
 
+$help_text{-refcorr_data} = <<'EOF';
+    -refcorr_data
+
+    Option to specify a custom reference dataset to be used for reference simulations
+    when doing reference correction. The dataset needs to have a REF column containing the 
+    row number (starting with 1) of the original dataset. Can only be used together with the -refcorr
+    options.
+EOF
+
 $help_text{-refcorr_table} = <<'EOF';
     -refcorr_table=filename
 
@@ -686,13 +696,15 @@ if ($dummymodel){
 
 }
 
-my %refcorr;
+my $refcorr;
 if (defined $options{'refcorr'}) {
+    my %refcorr;
     my @a = split ',', $options{'refcorr'};
     for my $e (@a) {
         my @pair = split '=', $e;
         $refcorr{$pair[0]} = $pair[1];
     }
+    $refcorr = \%refcorr;
 }
 
 input_checking::check_options(tool => 'vpc', options => \%options, model => $model);
@@ -747,7 +759,8 @@ my $vpc =
       min_points_in_bin     => $options{'min_points_in_bin'},
       directory_name_prefix => 'vpc',
       mix                  => $options{'mix'},
-      refcorr => \%refcorr,
+      refcorr => $refcorr,
+      refcorr_data => $options{'refcorr_data'},
       refcorr_table => $options{'refcorr_table'},
       );
 

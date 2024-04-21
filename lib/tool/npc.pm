@@ -3,6 +3,7 @@ package tool::npc;
 use include_modules;
 use random;
 use strict;
+use PsN;
 use tool::modelfit;
 use model;
 use ui;
@@ -109,15 +110,13 @@ has 'results_file' => ( is => 'rw', isa => 'Str', default => 'npc_results.csv' )
 has 'nca' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'mix' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'refcorr' => ( is => 'rw', isa => 'Maybe[HashRef]' );
+has 'refcorr_data' => ( is => 'rw', isa => 'Maybe[Str]' );
 has 'refcorr_table' => ( is => 'rw', isa => 'Maybe[Str]' );
 
 sub BUILD
 {
     my $self  = shift;
 
-    if (defined $self->refcorr and not keys %{$self->refcorr}) {
-        $self->refcorr(undef);
-    }
     if (defined $self->refcorr_table) {
         $self->refcorr({});
     }
@@ -1181,6 +1180,12 @@ sub modelfit_setup
     }
     @rec_strings = @rec_strings2;
 
+    my @ref_strings;
+    if (defined $self->refcorr) {
+        @ref_strings = @sim_strings;
+        push @ref_strings, "REF";
+    }
+
     my @trailing = ('ONEHEADER', 'NOPRINT', 'NOAPPEND');
     if (($PsN::nm_major_version == 7 and $PsN::nm_minor_version >= 5) or $PsN::nm_major_version > 7) {
         push @trailing, 'IDFORMAT=I';
@@ -1188,6 +1193,9 @@ sub modelfit_setup
     push @trailing, 'FILE=npctab.dta';
     push (@rec_strings,@trailing);
     push (@sim_strings,@trailing);
+    if (defined $self->refcorr) {
+        push @ref_strings, @trailing;
+    }
 
     $model_orig -> set_records(type => 'table',
                                record_strings => \@rec_strings,
@@ -1605,10 +1613,11 @@ sub modelfit_setup
 
         if (defined $self->refcorr and not defined $self->refcorr_table) { 
             my %refcorr = %{$self->refcorr};
+            my $num = $i + 1;
+            my $path = "m1/" . $model_sims[$i]->filename;
+            my $destname = "${type}_simulation_refcorr.$num.mod";
+            my $destpath = "m1/$destname";
             if (%refcorr) {
-                my $num = $i + 1;
-                my $path = "m1/" . $model_sims[$i]->filename;
-                my $destpath = "m1/${type}_simulation_refcorr.$num.mod";
                 my @refstrs;
                 for my $k (keys %refcorr) {
                     push @refstrs, "$k=" . $refcorr{$k};
@@ -1616,6 +1625,21 @@ sub modelfit_setup
                 my $refstr = join(" ", @refstrs);
                 PsN::call_pharmpy("data reference $path -o $destpath $refstr");
                 my $refmodel = model->new(filename => $destpath);
+                push @refcorr_models, $refmodel;
+            } elsif (defined $self->refcorr_data) {
+                my $refmodel = $model_sims[$i]->copy(
+                    filename => $destname,
+                    directory => 'm1',
+                    copy_datafile => 0,
+                    write_copy => 0,
+                    output_same_directory => 1,
+                    copy_output => 0);
+                $refmodel->datafiles(new_names => [$self->refcorr_data]);
+                $refmodel->remove_records(type => 'table');
+                $refmodel->set_records(type => 'table',
+                    record_strings => \@ref_strings,
+                    problem_numbers => [($self->origprobnum())]);
+                $refmodel->_write();
                 push @refcorr_models, $refmodel;
             }
         }
@@ -2392,7 +2416,17 @@ sub get_data_matrix
         croak("File $orig_file \nwith table output for original data does not exist. ".
               "It is recommended to check lst-file $file_to_check for NONMEM error messages.");
     }
-    my $d = data -> new(filename => $orig_file, ignoresign => '@', idcolumn => 1); #we made this table file, ID is 1
+
+    my $origfile_name;
+    if (defined $self->refcorr and defined $self->refcorr_data) {
+		my $code = "from pharmpy.tools.vpc.psn_vpc import reference_correction_from_psn_vpc; reference_correction_from_psn_vpc(" . PsN::path_literal($self->directory) . ")";
+		PsN::call_pharmpy_wrapper($code);
+
+        $origfile_name = $orig_file . ".refcorr";
+    } else {
+        $origfile_name = $orig_file;
+    }
+    my $d = data->new(filename => $origfile_name, ignoresign => '@', idcolumn => 1); #we made this table file, ID is 1
 
     unless (defined $d->individuals()){
         croak("File $orig_file \nexists but PsN failed to read any individuals from it.");
@@ -2478,7 +2512,13 @@ sub get_data_matrix
                   "It is recommended to check lst-file\n$file_to_check \nfor NONMEM error messages.");
         }
 
-        open (FILE, "$sim_file") or croak("Could not open $sim_file for reading");
+        my $simfile_name; 
+        if (defined $self->refcorr and defined $self->refcorr_data) {
+            $simfile_name = "$sim_file" . ".refcorr";
+        } else {
+            $simfile_name = "$sim_file";
+        }
+        open (FILE, $simfile_name) or croak("Could not open $sim_file for reading");
         my $prev_irep;
         while (1){
             my $line = readline(FILE);
@@ -2943,6 +2983,8 @@ sub create_binned_data
         }
     }
 
+    my $do_refcorr = (defined($self->refcorr) and not defined($self->refcorr_data));
+
     for (my $strat_ind = 0; $strat_ind < $no_of_strata; $strat_ind++) {
         my @bin_array;
         my @pred_array;
@@ -2953,11 +2995,11 @@ sub create_binned_data
         my @strt_array;
         foreach my $index (@{$self->strata_matrix->[$strat_ind]}) {
             push (@bin_array, $self->idv_array->[$index]);
-            push (@pred_array, $self->pred_array->[$index]) if ($self->predcorr || $self->varcorr || defined $self->refcorr);
-            push (@predref_array, $self->predref_array->[$index]) if (defined $self->refcorr);
-            push (@sdref_array, $self->sdref_array->[$index]) if (defined $self->refcorr);
+            push (@pred_array, $self->pred_array->[$index]) if ($self->predcorr || $self->varcorr || $do_refcorr);
+            push (@predref_array, $self->predref_array->[$index]) if (defined $do_refcorr);
+            push (@sdref_array, $self->sdref_array->[$index]) if (defined $do_refcorr);
             push (@bound_array, $self->bound_array->[$index]) if ($self->predcorr and
-                                                                  (defined $self->bound_variable) or defined $self->refcorr );
+                                                                  (defined $self->bound_variable) or defined $do_refcorr);
             push (@id_array,$self->id_array->[$index]);
             push (@strt_array,$self->strata_variable_vector->[$index]) if (defined $self->stratify_on);
         }
@@ -3114,7 +3156,7 @@ sub create_binned_data
                     my $censorstring = $self->censor_stratified_data->[$strat_ind]->[$index];
                     push (@bin_data_censor,$censorstring);
                 }
-                if ($self->predcorr || $self->varcorr || defined $self->refcorr) {
+                if ($self->predcorr || $self->varcorr || $do_refcorr) {
                     my $val = $pred_array[$index];
                     if ($self->lnDV == 3){
                         croak("cannot log non-positive PRED value ".$val) unless ($val>0);
@@ -3152,7 +3194,7 @@ sub create_binned_data
                 push (@strt_values,$strt_array[$index]) if (defined $self->stratify_on);
             }
 
-            if (($self->predcorr and (scalar(@pred_values) > 0)) or defined $self->refcorr) {
+            if (($self->predcorr and (scalar(@pred_values) > 0)) or $do_refcorr) {
                 my $new_data = do_predcorr_and_varcorr(pred_array=>\@pred_values,
                                                        predref_array => \@predref_values,
                                                        sdref_array => \@sdref_values,
@@ -3475,7 +3517,7 @@ sub create_mirror_and_plot_data
         }
     }
 
-    if (defined $self->refcorr) {
+    if (defined $self->refcorr and not defined $self->refcorr_data) {
         # Read in reference predictions from the first sample of the refcorr simulation data
         my $reftab_path;
         if (not defined $self->refcorr_table) {
