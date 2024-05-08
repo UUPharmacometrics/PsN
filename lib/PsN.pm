@@ -20,8 +20,6 @@ $lib_dir = Cwd::abs_path($volume . $directory);
 $Rscripts_dir = get_Rscripts_dir($lib_dir);
 
 
-$config_file = $lib_dir . '/psn.conf';
-
 use File::HomeDir;
 use ext::Config::Tiny;
 
@@ -39,8 +37,16 @@ our @nm7_extensions = ('.ext','.cov','.cor','.coi','.phi','.phm', '.shk','.grd',
                        '.imp','.npd','.npe','.npi','.fgh','.log.xml','.cpu','.shm','.agh',
                        '.vpd','.clt','.npl', '.ets'); #nm74
 
-if( -e home() . "/psn.conf" ){
-    $config_file = home() . "/psn.conf";
+my $envconfig = $ENV{PSNCONFPATH};
+
+if (defined $envconfig and -e "$envconfig/psn.conf") {
+    $config_file = "$envconfig/psn.conf";
+} elsif (-e File::HomeDir::my_home . "/psn.conf") {
+    $config_file = File::HomeDir::my_home . "/psn.conf";
+} elsif (-e File::HomeDir::my_desktop . "/psn.conf") {
+    $config_file = File::HomeDir::my_desktop . "/psn.conf";
+} else {
+    $config_file = $lib_dir . '/psn.conf';
 }
 
 sub get_Rscripts_dir{

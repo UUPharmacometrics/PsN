@@ -23,7 +23,7 @@ The configuration file psn.conf is required to make PsN run correctly. In the co
 In psn.conf it is also possible to specify personal default values, see more information below. Comment lines in psn.conf start with a semicolon (;). Throughout the default psn.conf distributed with PsN there are examples of settings for UNIX and Windows. The user can review the settings, add and remove semicolons, and change selected paths.
 
 \subsection{Location of psn.conf}
-PsN will look for psn.conf at two different places. Primarily (depending on operative system) in the user's home directory (UNIX) or on the user's desktop (Windows) and then in the PsN installation directory. If psn.conf is found in the home directory (UNIX) or on the user's desktop (Windows) the settings in this psn.conf will override the settings in the system-wide (PsN installation directory) present psn.conf, which is important to remember when trying to sort out a psn.conf-related problem.
+PsN will look for psn.conf at two different places. Primarily (depending on operative system) in the user's home directory (UNIX) or on the user's desktop (Windows) and then in the PsN installation directory. If psn.conf is found in the home directory (UNIX) or on the user's desktop (Windows) the settings in this psn.conf will override the settings in the system-wide (PsN installation directory) present psn.conf, which is important to remember when trying to sort out a psn.conf-related problem. It is also possible to set the path to psn.conf by using the \verb|PSNCONFPATH| environment variable.
 
 \subsection{Sections in psn.conf}
 The organizing of settings in psn.conf is important. They must be set in the correct section.\\
