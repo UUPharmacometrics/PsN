@@ -4,7 +4,7 @@ use strict;
 use random;
 use Mouse;
 use MouseX::Params::Validate;
-use File::Copy 'cp';
+use File::Copy 'copy';
 use File::Spec;
 use include_modules;
 use array;
@@ -549,12 +549,12 @@ sub modelfit_setup
             my $scm_model = $base_model->copy(directory => "m1", filename => "scm.mod", write_copy => 0);
             if ($base_model->is_run()) {
                 my $lst_path = $base_model->outputs->[0]->full_name();
-                cp($lst_path, 'm1/scm.lst');
+                copy($lst_path, 'm1/scm.lst');
                 my $ext_path = utils::file::replace_extension($lst_path, 'ext');
-                cp($ext_path, 'm1/scm.ext');
+                copy($ext_path, 'm1/scm.ext');
                 my $phi_file = $base_model->get_phi_file;
                 if (defined $phi_file and -e $phi_file) {
-                    cp($phi_file, 'm1/scm.phi');
+                    copy($phi_file, 'm1/scm.phi');
                 }
             }
             $scm_model->set_records(type => 'covariance', record_strings => [ "OMITTED" ]);

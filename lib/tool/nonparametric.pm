@@ -3,7 +3,6 @@ package tool::nonparametric;
 use strict;
 use Mouse;
 use MouseX::Params::Validate;
-use File::Copy 'cp';
 use include_modules;
 use data;
 use filter_data;

@@ -5,7 +5,6 @@ use warnings;
 use File::Path qw(make_path);
 use File::Spec;
 use Test::More;
-use File::Copy 'cp';
 use FindBin qw($Bin);
 use lib "$Bin/.."; #location of includes.pm
 use includes; #file with paths to PsN packages and $path variable definition

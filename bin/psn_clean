@@ -9,7 +9,6 @@ use lib "$Bin/../lib";
 
 use PsN;
 use Getopt::Long;
-use File::Copy qw/cp mv/;
 use File::Path 'rmtree';
 use File::Glob;
 use strict;

@@ -11,7 +11,6 @@ use FindBin qw($Bin);
 use lib "$Bin/../.."; #location of includes.pm
 use includes; #file with paths to PsN packages and $path variable definition
 
-use File::Copy 'cp';
 use File::Spec;
 
 #in psn.conf must set output_style = SPLUS, otherwise tests will fail. fix by setting here.

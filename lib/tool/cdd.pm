@@ -2,7 +2,6 @@ package tool::cdd;
 
 use include_modules;
 use Cwd;
-use File::Copy 'cp';
 use tool::llp;
 use tool::modelfit;
 use random;

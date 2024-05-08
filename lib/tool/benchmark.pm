@@ -2,7 +2,6 @@ package tool::benchmark;
 
 use include_modules;
 use strict;
-use File::Copy 'cp';
 use data;
 use nonmemrun;
 use OSspecific;

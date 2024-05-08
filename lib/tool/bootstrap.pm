@@ -2,7 +2,7 @@ package tool::bootstrap;
 
 use include_modules;
 use strict;
-use File::Copy 'cp';
+use File::Copy 'copy';
 use Statistics::Distributions 'udistr', 'uprob';
 use random;
 use Mouse;
@@ -1273,7 +1273,7 @@ sub modelfit_analyze
         #if clean >=3 this file has been deleted, but the raw_results is ok thanks to explicit setting
         #of filename above.
         if (-e $modelfit->directory.'raw_results_structure'){
-            cp ($modelfit->directory.'raw_results_structure',$modelfit->base_directory.'raw_results_structure_dofv');
+            copy ($modelfit->directory.'raw_results_structure',$modelfit->base_directory.'raw_results_structure_dofv');
         }
     }
 }

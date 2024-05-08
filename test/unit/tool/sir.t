@@ -14,7 +14,7 @@ use random;
 use output;
 use tool::sir;
 use linear_algebra;
-use File::Copy 'cp';
+use File::Copy 'copy';
 
 
 
@@ -514,8 +514,8 @@ my $recovery_filename = 'restart_information_do_not_edit.pl';
 my $sirdir='sir_dir1';
 mkdir($sirdir);
 chdir($sirdir);
-cp("$modeldir/pheno.mod",'pheno.mod');
-cp("$modeldir/pheno.dta",'pheno.dta');
+copy("$modeldir/pheno.mod",'pheno.mod');
+copy("$modeldir/pheno.dta",'pheno.dta');
 
 my @center_rawresults_vector=(1,2,3,4,5);
 

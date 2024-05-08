@@ -14,7 +14,7 @@ use Cwd;
 use common_options;
 use ui;
 use OSspecific;
-use File::Copy qw/cp mv/;
+use File::Copy qw/copy mv/;
 use File::Spec;
 # More PsN dependencies included with require further down
 
@@ -381,7 +381,7 @@ $options{'directory'} = $main_directory;
 
 #copy config file to rundir
 my ( $dir, $file ) = OSspecific::absolute_path('',$options{'config_file'});
-cp($dir . $file, File::Spec->catpath(undef, $main_directory, $file));
+copy($dir . $file, File::Spec->catpath(undef, $main_directory, $file));
 
 $options{'splits'}=1 unless (defined $options{'splits'});
 $options{'groups'}=5 unless (defined $options{'groups'});

@@ -2,7 +2,9 @@ package model;
 
 use include_modules;
 use Cwd;
-use File::Copy 'cp';
+BEGIN {
+    require File::Copy;
+}
 use File::Basename;
 use File::Spec qw(splitpath catfile);
 use Config;
@@ -668,7 +670,7 @@ sub copy
             my ($datadir,$datafile) = OSspecific::absolute_path(undef,$datafiles->[$i]);
             unless (-e $writedir.$datafile){
                 if (-e $datadir.$datafile){
-                    cp($datadir.$datafile,$writedir.$datafile);
+                    File::Copy::copy($datadir.$datafile,$writedir.$datafile);
                 }else{
                     croak("data file $datadir$datafile does not exist in writing of ".$self->full_name.
                           " to file $filename") unless $new_model->ignore_missing_data;
@@ -683,7 +685,7 @@ sub copy
     if ($copy_etas) {
         my $phi_file = $self->get_or_set_etas_file();
         if (defined $phi_file) {
-            cp($phi_file, $directory);
+            File::Copy::copy($phi_file, $directory);
             $new_model->get_or_set_etas_file(new_file => basename($phi_file));
         }
     }

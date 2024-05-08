@@ -12,7 +12,7 @@ use scmlogfile;
 use scm_util;
 use warnings;
 use Mouse;
-use File::Copy qw(move mv cp);
+use File::Copy qw(move mv copy);
 use OSspecific;
 use File::Copy::Recursive;
 
@@ -283,7 +283,7 @@ sub setup
 	$self->models->[0] -> _write(filename => $self->directory.'/m1/base_model.mod');
 	if (defined $self->models->[0] ->extra_files()){
 		foreach my $file (@{$self->models->[0] ->extra_files()}){
-			cp($file,$self->directory.'/m1/');
+			copy($file,$self->directory.'/m1/');
 		}
 	}
 	

@@ -5,7 +5,7 @@ use File::Spec;
 use Cwd;
 use Test::More;
 use File::Path 'rmtree';
-use File::Copy 'cp';
+use File::Copy 'copy';
 use Config;
 
 require Exporter;
@@ -314,7 +314,7 @@ sub copy_test_files
 	my $testdir = shift;
 	my $array = shift;
 	foreach $file (@{$array}) {
-		cp("$testfiledir/$file", $testdir) or die "copy_test_files failed: $!";
+		copy("$testfiledir/$file", $testdir) or die "copy_test_files failed: $!";
 	}
 }
 
@@ -357,7 +357,7 @@ sub do_course_tests
 	my $model_dir = "$dir/$course_name";
 	my @needed = <$model_dir/*>;
 	foreach my $file (@needed) {
-		cp($file, $tempdir . '/.');
+		copy($file, $tempdir . '/.');
 	}
 	chdir($tempdir);
 

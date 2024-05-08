@@ -7,7 +7,7 @@ use tool::modelfit;
 use model;
 use ui;
 use Config;
-use File::Copy qw/cp mv/;
+use File::Copy qw/copy mv/;
 use POSIX;
 use OSspecific;
 use Mouse;
@@ -496,7 +496,7 @@ sub modelfit_setup
                 my $dirt;
                 ($dirt, $simulated_file) =
                     OSspecific::absolute_path('', $self -> simdata() );
-                cp($self -> simdata(),$self -> directory.'m1/'.$simulated_file);
+                copy($self -> simdata(),$self -> directory.'m1/'.$simulated_file);
             }
             $sim_file= $self -> directory.'m1/'.$simulated_file;
             my @new_names = ($sim_file) x scalar(@{$mod ->problems});

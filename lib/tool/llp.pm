@@ -1,7 +1,6 @@
 package tool::llp;
 
 use include_modules;
-use File::Copy 'cp';
 use Math::SigFigs;
 use tool::modelfit;
 use Mouse;

@@ -2,7 +2,7 @@ package tool::sir;
 
 use include_modules;
 use strict;
-use File::Copy 'cp';
+use File::Copy 'copy';
 use data;
 use OSspecific;
 use tool::modelfit;
@@ -1189,7 +1189,7 @@ sub load_restart_information
             #and change last item in intermediate_raw_results_files
             #in order to get this as intermediate rawres in add_iterations run
             my $newname = 'raw_results_sir_iteration'.$iteration.'.csv';
-            cp($self->directory.$intermediate_raw_results_files[-1],$self->directory.$newname);
+            copy($self->directory.$intermediate_raw_results_files[-1],$self->directory.$newname);
             $intermediate_raw_results_files[-1] = $newname;
         }
         $self->intermediate_raw_results_files(\@intermediate_raw_results_files);

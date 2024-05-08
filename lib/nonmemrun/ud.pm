@@ -2,6 +2,7 @@ package nonmemrun::ud;
 
 use include_modules;
 use Config;
+use File::Copy qw(copy);
 use Mouse;
 use MouseX::Params::Validate;
 
@@ -104,7 +105,7 @@ sub retrieve
   }
 
   if ($Config{osname} ne 'MSWin32') {
-    cp($tmp_dir . '/psn.LST', $tmp_dir . '/psn.lst');
+    copy($tmp_dir . '/psn.LST', $tmp_dir . '/psn.lst');
     unlink($tmp_dir . '/psn.LST');
   }
 }

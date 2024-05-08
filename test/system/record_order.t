@@ -10,7 +10,6 @@ use Config;
 use FindBin qw($Bin);
 use lib "$Bin/.."; #location of includes.pm
 use includes; #file with paths to PsN packages and $path variable definition
-use File::Copy 'cp';
 use ui;
 
 our $tempdir = create_test_dir('system_record_order');

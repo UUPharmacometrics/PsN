@@ -17,7 +17,6 @@ use PsN;
 use common_options;
 use ui;
 use Cwd;
-use File::Copy qw/cp mv/;
 use File::Glob;
 use File::Path 'rmtree';
 # More PsN dependencies included with require further down

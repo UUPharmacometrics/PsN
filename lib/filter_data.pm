@@ -4,7 +4,7 @@ package filter_data;
 
 use strict;
 use warnings;
-use File::Copy qw(cp);
+use File::Copy qw(copy);
 use MouseX::Params::Validate;
 use data;
 use model;
@@ -261,9 +261,9 @@ sub add_derived_columns
     $result_model->_write();
 
     my $model_name = $model->full_name();
-    cp utils::file::replace_extension($model_name, 'ext'), "$workdir/result.ext";
-    cp utils::file::replace_extension($model_name, 'phi'), "$workdir/result.phi";
-    cp utils::file::replace_extension($model_name, 'lst'), "$workdir/result.lst";
+    copy utils::file::replace_extension($model_name, 'ext'), "$workdir/result.ext";
+    copy utils::file::replace_extension($model_name, 'phi'), "$workdir/result.phi";
+    copy utils::file::replace_extension($model_name, 'lst'), "$workdir/result.lst";
     return $result_model;
 }
 

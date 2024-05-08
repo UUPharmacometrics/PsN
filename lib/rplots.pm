@@ -3,7 +3,6 @@ package rplots;
 use Config;
 use include_modules;
 use Cwd;
-use File::Copy 'cp';
 use File::Spec;
 use File::Basename;
 use Mouse;

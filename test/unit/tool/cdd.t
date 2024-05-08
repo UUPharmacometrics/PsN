@@ -13,7 +13,6 @@ use includes; #file with paths to PsN packages and $path variable definition
 use tool::cdd;
 use output;
 use model;
-use File::Copy 'cp';
 use File::Spec;
 
 
