@@ -709,6 +709,11 @@ if (defined $options{'refcorr'}) {
 
 input_checking::check_options(tool => 'vpc', options => \%options, model => $model);
 
+my $refcorr_data = $options{'refcorr_data'};
+if (defined $refcorr_data) {
+    $refcorr_data = File::Spec->rel2abs($options{'refcorr_data'});
+}
+
 my $vpc =
     tool::npc->new( eval( $common_options::parameters ),
       models               => [ $model ],
@@ -760,7 +765,7 @@ my $vpc =
       directory_name_prefix => 'vpc',
       mix                  => $options{'mix'},
       refcorr => $refcorr,
-      refcorr_data => $options{'refcorr_data'},
+      refcorr_data => $refcorr_data,
       refcorr_table => $options{'refcorr_table'},
       );
 
