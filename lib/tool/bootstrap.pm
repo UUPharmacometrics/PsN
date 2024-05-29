@@ -1767,9 +1767,9 @@ sub prepare_results
     }
 
     my $directory = $self->directory;
-    PsN::call_pharmpy("results bootstrap $directory");
+    PsN::call_pharmpy("psn bootstrap $directory");
     if ($self->rplots > 0) {
-        PsN::call_pharmpy("results report $directory");
+        PsN::call_pharmpy("psn report $directory");
     }
 }
 

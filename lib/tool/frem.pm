@@ -1046,7 +1046,7 @@ sub prepare_results
     if ($self->bipp) {
         $meth = ' --method=bipp'
     }
-    PsN::call_pharmpy("results frem $directory$pdcov$pdsamp$meth");      # Generate results.json and results.csv
+    PsN::call_pharmpy("psn frem $directory$pdcov$pdsamp$meth");      # Generate results.json and results.csv
     return '';
 }
 

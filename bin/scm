@@ -441,7 +441,7 @@ $scm -> run;
 $scm -> print_results(skip_print => 1);
 
 # Needs scm.conf, meta.yaml and scmlog.txt
-PsN::call_pharmpy('results scm "' . $scm->directory . '"');      # Generate results.json and results.csv
+PsN::call_pharmpy('psn scm "' . $scm->directory . '"');      # Generate results.json and results.csv
 
 ui -> print( category => 'scm',
              message => "scm done\n" );

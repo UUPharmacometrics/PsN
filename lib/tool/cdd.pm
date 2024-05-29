@@ -1372,7 +1372,7 @@ sub prepare_results
     if (not defined $self->raw_results) {
         $self->read_raw_results;
     }
-    PsN::call_pharmpy("results cdd " . $self->directory);      # Generate results.json and results.csv
+    PsN::call_pharmpy("psn cdd " . $self->directory);      # Generate results.json and results.csv
 }
 
 sub create_R_plots_code
