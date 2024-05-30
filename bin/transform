@@ -264,14 +264,12 @@ my $model = model->new(
 $model->filename($output_filename);
 
 if ($transformation eq 'boxcox') {
-    PsN::deprecation_warn("transform boxcox", "pharmpy model boxcox run1.mod");
     if (defined $options{'etas'}) {
         model_transformations::boxcox_etas(model => $model, etas => [split ',', $options{'etas'}]);
     } else {
         model_transformations::boxcox_etas(model => $model);
     }
 } elsif ($transformation eq 'tdist') {
-    PsN::deprecation_warn("transform tdist", "pharmpy model tdist run1.mod");
     if (defined $options{'etas'}) {
         model_transformations::tdist_etas(model => $model, etas => [split ',', $options{'etas'}]);
     } else {
@@ -284,7 +282,6 @@ if ($transformation eq 'boxcox') {
         model_transformations::uniform_etas(model => $model);
     }
 } elsif ($transformation eq 'full_block') {
-    PsN::deprecation_warn("transform full_block", "pharmpy model create_rv_block run1.mod");
     model_transformations::full_omega_block(model => $model);
 } elsif ($transformation eq 'add_tv') {
     model_transformations::add_tv(model => $model, parameters => [ split ',', $options{'parameters'}]);
@@ -301,17 +298,14 @@ if ($transformation eq 'boxcox') {
         model_transformations::add_iov(model => $model, occ => $occ);
     }
 } elsif ($transformation eq 'add_etas') {
-    PsN::deprecation_warn("transform add_etas", "pharmpy model add_iiv run1.mod");
     model_transformations::add_etas_to_parameters(model => $model, parameters => [split ',', $options{'parameters'}]);
 } elsif ($transformation eq 'remove_iiv') {
-    PsN::deprecation_warn("transform remove_iiv", "pharmpy model remove_iiv run1.mod");
     if (defined $options{'fix'}) {
         model_transformations::remove_iiv(model => $model, fix => $options{'fix'});
     } else {
         model_transformations::remove_iiv(model => $model);
     }
 } elsif ($transformation eq 'remove_iov') {
-    PsN::deprecation_warn("transform remove_iov", "pharmpy model remove_iov run1.mod");
     if (defined $options{'fix'}) {
         model_transformations::remove_iov(model => $model, fix => $options{'fix'});
     } else {
@@ -327,14 +321,12 @@ if ($transformation eq 'boxcox') {
     }
     model_transformations::omit_ids(model => $model, ids => [ split ',', $options{'ids'}], ignore => $ignore);
 } elsif ($transformation eq 'iiv_on_ruv') {
-    PsN::deprecation_warn("transform iiv_on_ruv", "pharmpy model iiv_on_ruv run1.mod");
     if (defined $options{'epsilons'}) {
         model_transformations::iiv_on_ruv(model => $model, epsilons => [ split ',', $options{'epsilons'} ]);
     } else {
         model_transformations::iiv_on_ruv(model => $model);
     }
 } elsif ($transformation eq 'power_on_ruv') {
-    PsN::deprecation_warn("transform power_on_ruv", "pharmpy model power_on_ruv run1.mod");
     if (defined $options{'epsilons'}) {
         model_transformations::power_on_ruv(model => $model, epsilons => [ split ',', $options{'epsilons'} ]);
     } else {
