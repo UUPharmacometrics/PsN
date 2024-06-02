@@ -276,7 +276,7 @@ jobs:
         - name: Download R
           uses: suisei-cn/actions-download-file@v1
           with:
-            url: https://cran.r-project.org/bin/windows/base/old/4.0.3/R-4.0.3-win.exe
+            url: https://cran.r-project.org/bin/windows/base/old/4.4.0/R-4.4.0-win.exe
             target: downloads/
         - name: Download Python
           uses: suisei-cn/actions-download-file@v1
@@ -396,14 +396,14 @@ jobs:
         - name: Install Rtools40
           shell: pwsh
           run: |
-            if(Test-path c:\\rtools40){
-              echo "rtools40 is preinstalled"
+            if(Test-path c:\\rtools42){
+              echo "rtools42 is preinstalled"
             } else {
-              choco install --confirm --no-progress --allow-downgrade rtools --version 4.0.0.20220206
+              choco install --confirm --no-progress --allow-downgrade rtools --version 4.4.6104
             }
-            echo "c:\\rtools40\\usr\\bin" >> $GITHUB_PATH
+            echo "c:\\rtools42\\usr\\bin" >> $GITHUB_PATH
         - name: Install R
-          run: downloads\R-4.0.3-win.exe /VERYSILENT /DIR="installer\R"
+          run: downloads\R-4.4.0-win.exe /VERYSILENT /DIR="installer\R"
           shell: cmd
         - name: Install renv
           run: |
