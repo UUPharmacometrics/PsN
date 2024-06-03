@@ -408,7 +408,7 @@ jobs:
         - name: Install renv
           run: |
             md installer\Rlib
-            installer\R\bin\x64\Rscript.exe -e "install.packages('renv', lib='installer/Rlib')"
+            installer\R\bin\x64\Rscript.exe -e "install.packages('renv', lib='installer/Rlib', repos='http://cran.us.r-project.org')"
           shell: cmd
         - name: Install R dependencies
           run: installer\R\bin\x64\Rscript.exe -e ".libPaths('installer/Rlib'); options(renv.config.copy.method='R'); options(renv.consent=TRUE); renv::settings$use.cache(FALSE); renv::restore(library='installer/Rlib', lockfile='PsN-Source/PsNR/renv.lock'); Sys.setenv(TZ='Europe/Berlin', LC_TIME='C', LC_MONETARY='C'); remotes::install_local('PsN-Source/PsNR', lib='installer/Rlib', repos=NULL, dependencies=F, INSTALL_opts=c('--no-multiarch'))"
