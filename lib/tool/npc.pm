@@ -1617,6 +1617,7 @@ sub modelfit_setup
             my $path = "m1/" . $model_sims[$i]->filename;
             my $destname = "${type}_simulation_refcorr.$num.mod";
             my $destpath = "m1/$destname";
+            my $refmodel;
             if (%refcorr) {
                 my @refstrs;
                 for my $k (keys %refcorr) {
@@ -1624,10 +1625,10 @@ sub modelfit_setup
                 }
                 my $refstr = join(" ", @refstrs);
                 PsN::call_pharmpy("data reference $path -o $destpath $refstr");
-                my $refmodel = model->new(filename => $destpath);
+                $refmodel = model->new(filename => $destpath);
                 push @refcorr_models, $refmodel;
             } elsif (defined $self->refcorr_data) {
-                my $refmodel = $model_sims[$i]->copy(
+                $refmodel = $model_sims[$i]->copy(
                     filename => $destname,
                     directory => 'm1',
                     copy_datafile => 0,
@@ -1641,6 +1642,51 @@ sub modelfit_setup
                     problem_numbers => [($self->origprobnum())]);
                 $refmodel->_write();
                 push @refcorr_models, $refmodel;
+            }
+            if (is_var_defined_in_code($refmodel, $self->dv)) {
+                sub prepare_pred_model {
+                    my $self = shift;
+                    my $base_model = shift;
+                    my $name = shift;
+                    my $refpredmodel = $base_model->copy(
+                        filename => $name,
+                        directory => 'm1',
+                        copy_datafile => 0,
+                        write_copy => 0,
+                        output_same_directory => 1,
+                        copy_output => 0);
+                    my $neta = $refpredmodel->nomegas->[0]; 
+                    my $neps = $refpredmodel->nsigmas->[0];
+                    $refpredmodel->remove_records(type => 'omega');
+                    $refpredmodel->remove_records(type => 'sigma');
+                    $refpredmodel->remove_records(type => 'estimation');
+                    $refpredmodel->remove_records(type => 'simulation');
+                    $refpredmodel->remove_records(type => 'table');
+                    for (my $i = 0; $i < $neta; $i++) {
+                        $refpredmodel->add_records(type => 'omega',
+                            record_strings => ['0 FIX'],
+                            problem_numbers => [($self->origprobnum())]);
+                    }
+                    for (my $i = 0; $i < $neps; $i++) {
+                        $refpredmodel->add_records(type => 'sigma',
+                            record_strings => ['0 FIX'],
+                            problem_numbers => [($self->origprobnum())]);
+                    }
+                    $refpredmodel->set_records(type => 'simulation',
+                        record_strings => ['(999) ONLYSIMULATION SUBPROBLEMS=1'],
+                        problem_numbers => [($self->origprobnum())]);
+                    $refpredmodel->set_records(type => 'table',
+                        record_strings => [$self->dv, 'MDV', 'NOAPPEND', 'FILE=npctab.dta'],
+                        problem_numbers => [($self->origprobnum())]);
+                    $refpredmodel->_write();
+                    return $refpredmodel;
+                }
+                my $refpredmodel_name = "${type}_pred_refcorr.$num.mod";
+                my $refpredmodel = prepare_pred_model($self, $refmodel, $refpredmodel_name);
+                push @refcorr_models, $refpredmodel;
+                my $predmodel_name = "${type}_pred.$num.mod";
+                my $predmodel = prepare_pred_model($self, $model_orig, $predmodel_name);
+                push @refcorr_models, $predmodel;
             }
         }
     }
@@ -1687,6 +1733,30 @@ sub modelfit_setup
         $self->tools([]) unless defined $self->tools;
         push(@{$self->tools}, $modfit);
     }
+}
+
+
+sub is_var_defined_in_code
+{
+    my $model = shift;
+    my $var = shift; 
+
+    my @line_array;
+    push (@line_array, @{$model->problems->[0]->errors->[0]->code})
+        if (defined ($model->problems->[0]->errors));
+    push (@line_array, @{$model->problems->[0]->preds->[0]->code})
+        if (defined $model->problems->[0]->preds);
+    push (@line_array, @{$model->problems->[0]->pks->[0]->code})
+        if (defined $model->problems->[0]->pks);
+
+    for my $line (@line_array) {
+        if ($line =~ /^\s*(\w+)\s*=/) {
+            if ($1 eq $var) {
+                return 1;
+            }
+        }
+    }
+    return 0;
 }
 
 sub _modelfit_raw_results_callback
