@@ -402,8 +402,8 @@ sub BUILD
     if ($self->is_vpc) {
 
         if (defined $self->lower_bound) {
-            croak("Option -lower_bound is only allowed together with -predcorr.")
-                unless ($self->predcorr);
+            croak("Option -lower_bound is only allowed together with -predcorr or -refcorr.")
+                unless ($self->predcorr or defined $self->refcorr);
         }
 
         if (defined $self->lnDV and ($self->lnDV > 0)) {
