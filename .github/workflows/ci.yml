@@ -141,6 +141,7 @@ jobs:
       - name: Install Perl dependencies
         run: |
           sudo cpan -T Math::Random
+          sudo cpan -T Math::Random::Free
           sudo cpan -T MouseX::Params::Validate
           sudo cpan -T Math::SigFigs
       - name: Install Perl and R dependencies
