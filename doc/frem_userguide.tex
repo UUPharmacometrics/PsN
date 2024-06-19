@@ -1,6 +1,6 @@
 \input{inputs/format_header.tex}
 \usepackage{amsmath}
-\guidetitle{FREM userguide}{2021-01-08}
+\guidetitle{FREM userguide}{2024-06-19}
 \usepackage{hyperref}
 \begin{document}
 \newcommand{\guidetoolname}{frem}
@@ -98,6 +98,9 @@ Default not set. If set then use mu-modelling for frem-added covariate THETAs an
 mu-modelling is not compatible with reordering of skipped omegas, because frem will then renumber ETAs
 but not MU variables, so if mu-modelling is used, the user must ensure that omegas are already ordered
 so that any skipped omegas come first.
+\nextopt
+\optdefault{ntrt}{colname}
+Column name for number of individuals in aggregate data. Default not used.
 \nextopt
 \optname{rescale}
 Default set. Rescale covariate ETAs in Model 2 to SD close to 1. Unset with -no-rescale.
