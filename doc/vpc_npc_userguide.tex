@@ -1,5 +1,5 @@
 \input{inputs/format_header.tex}
-\guidetitle{VPC and NPC user guide}{2019-01-27}
+\guidetitle{VPC and NPC user guide}{2024-06-19}
 \usepackage{hyperref}
 \begin{document}
 
@@ -237,6 +237,23 @@ Perform prediction correction of dependent variable values. Specific for vpc. If
 \nextopt
 \optdefault{rawres\_input}{filename}
 A simple way to simulate with uncertainty. Instead of using identical parameter estimates for simulation of each new dataset, take parameter estimates from a raw\_results.csv file, e.g. from a bootstrap run or the intial\_estimates.csv file from a previous sse run with \$PRIOR in the simulation model. The raw results file must be comma-separated and contain at least as many samples as the input -samples to sse, the labels for  THETA/OMEGA/SIGMA in the file must match the labels in the simulation model given as input to sse, the theta columns must be directly followed by the omega columns which must be directly followed by the sigma columns, and the column header must be model either in the first column just as in a bootstrap raw\_results file or in the second or third column as in a sse raw\_results file. If a column header contains a comma, e.g. OMEGA(2,2), then that header must be enclosed in double quotes. This is done automatically in PsN raw results files. Note that is is possible to generate a file with initial parameter estimates outside of PsN, as long as the file follows the format rules. 
+\nextopt
+\optdefault{refcorr}
+Perform reference correction on dependent variable values before computing
+vpc results. The option takes a comma separated list of equals separated pairs
+of column names and reference values. If used together with -refcorr\_data no
+pairs should be specified.
+Cannot be used together with -predcorr or -varcorr.
+\nextopt
+\optdefault{refcorr\_data}{path}
+Option to specify a custom reference dataset to be used for reference simulations
+when doing reference correction. The dataset needs to have a REF column containing the
+row number (starting with 1) of the original dataset. Can only be used together with the -refcorr
+option.
+\nextopt
+\optdefault{refcorr\_table}{path}
+Perform reference correction on dependent variable. Same as the refcorr option, but instead
+of letting PsN create the reference simulations the user will provide them in a separate file.
 \nextopt
 \optdefault{refstrat}{value}
 Only allowed together with -stratify\_on. Not allowed together with -no\_of\_strata.
@@ -648,7 +665,7 @@ successful.
 \section{Log-transformation of data}
 If option -lnDV is set to 3,  PRED is substituted with ln(PRED) and DV with ln(DV) in all subsequent steps. 
 
-\section{vpc options predcorr and varcorr }
+\section{vpc options predcorr, varcorr and refcorr}
 Prediction correction and variability correction of the dependent variable values can be requested using options -predcorr and -varcorr. Variability correction can only be requested in combination with prediction correction. If both are requested then prediction correction is performed before variability correction. Correction is performed after stratification and binning. Correction will be performed on uncensored data, which means that simulated values which will be censored based on -censor/-lloq/-uloq in later analysis steps will still influence the variability correction, and PRED values for missing observations will influence the prediction correction.
 
 \subsection{Prediction correction}
@@ -678,6 +695,9 @@ Scale the deviation of PCDVik from PREDnm with VCORRi, i.e. replace PCDVik with 
 I.e. 	PVCDVik = PREDnm + (PCDVik – PREDnm) * (STDEVnm / STDEVi)
 
 The variability and prediction corrected values (PVCDV) replace the observed and simulated DV values in all subsequent vpc procedures.
+
+\subsection{Variability correction}
+A method similar to the combination of prediction correction and variability correction, but using a reference dataset. See https://www.page-meeting.org/default.asp?abstract=11053 for details.
 
 \section{Exponentiation of data}
 If option -lnDV is set to 1,  PRED is substituted with EXP(PRED) and DV with EXP(DV) in all subsequent steps. 
