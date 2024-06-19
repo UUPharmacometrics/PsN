@@ -7,29 +7,28 @@ Changes and bug fixes from PsN 5.3.1 to 5.4.0
 
 * Using File::Copy::copy instead of File::Copy::cp everywhere. This will use the default file permissions for the destination file.
 * The environment variable PSNCONFPATH can be used to set a preferred path where to find psn.conf
+* Debundle most perl dependencies so that they can be installed (and maintained) independently of PsN
+* Depend on Math::Random::Free instead of Math::Random, because Math::Random is not open source. Math::Random can still be used for reproducibility
+  with the "old_math_random" configuration item.
+* Support $WARNINGS
+* Use the default file permissions when copying files
+* The environment variable PSNCONFPATH can be used to set a specific path to where the psn.conf can be found
 
-   ___common_options___
+   ___vpc___
 
-
-   ___Cluster/Grid___
-
-
-   ___runrecord___
-
-
-   ___sumo___
-
-
-   ___vpc/npc___
-
+* Add reference correction to vpc
 
    ___frem___
 
+* Allow multiple $PROBLEMs
+* Update omega estimates correctly when using SAEM
+* Fix issues with mu-referenced models
+* Do not use $COV in model 2
+* Keep $COV of input model for model 4
+* Do not set $ETAS if not requested
+* Add ntrt option
+* Handle $LEVEL
+
    ___scm___
 
-   ___vpc___ 
-
-
-   ___mcmp___
-
-  ___qa___
+* Revert the removal of relations.txt
