@@ -199,5 +199,8 @@ and
 \end{itemize}
 The header row will not be added for MATLAB but for EXCEL and SPLUS.
 
-\end{document}
+\subsection{Using legacy Math::Random}
 
+PsN has starting with version 5.4.0 switched to use Math::Random::Free instead of Math::Random for generation of random numbers. The reason is that Math::Random isn't under an open source license. For reproducibility reasons PsN can still run using Math::Random if setting the configuration \verb|old_math_random| to $1$ in psn.conf
+
+\end{document}
