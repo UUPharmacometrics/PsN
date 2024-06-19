@@ -1,5 +1,5 @@
 \input{inputs/format_header.tex}
-\guidetitle{SIR user guide}{2019-05-08}
+\guidetitle{SIR user guide}{2024-06-19}
 \usepackage{amsmath}
 \usepackage{hyperref}
 \begin{document}
@@ -223,7 +223,7 @@ Unless option -rawres\_input and/or -auto\_rawres is used, read the covariance m
 (NB: If -rawres\_input and/or -auto\_rawres is used there first an iteration 0 that starts at \underline{Step 5})
 \begin{itemize}
 \item[\underline{Step 1}]
-Simulate 'samples item $i$' parameter vectors from the covariance matrix, using Perl function Math::Random::random\_multivariate\_normal.
+Simulate 'samples item $i$' parameter vectors from the covariance matrix, using PsN function random\_multivariate\_normal.
 
 \noindent If there was a previous iteration, i.e $i>1$ or option -rawres\_input or -auto\_rawres was used, the covariance matrix used in this step is the empirical covariance matrix of (optionally Box-Cox transformed) resampled parameter vectors from Step 6 in the previous iteration.
 If the vectors were Box-Cox transformed then sampling is done on Box-Cox scale, and then the samples are back-transformed for boundary checks and evaluation.
@@ -424,8 +424,8 @@ lst-file and which estimates are needed for the sir procedure.
 \item[\underline{Step 1}] Simulate 'samples\_1' parameter vectors from the
 (possibly inflated)
 covariance matrix, i.e. the .cov-file given by NONMEM
-or the matrix given via option -covmat\_input. PsN uses the Perl function\\
-Math::Random::random\_multivariate\_normal
+or the matrix given via option -covmat\_input. PsN uses the function\\
+random\_multivariate\_normal
 for sampling. If a vector does no fulfill the constraints from \$THETA boundaries
 and positive definiteness of \$OMEGA and
 \$SIGMA blocks (as judged by a PsN-implemented Cholesky decomposition)
