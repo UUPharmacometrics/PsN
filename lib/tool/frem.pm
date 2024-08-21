@@ -111,7 +111,7 @@ sub BUILD
 
     # Check if any covariate column has all same value
     # In that case warn and remove column
-    my $code = "from pharmpy.tools.frem.tool import setup; print(setup(" . PsN::path_literal($model->full_name) . ',' . PsN::python_array($self->covariates) . "))";
+    my $code = "from pharmpy.tools.frem.tool import setup; print(setup(" . PsN::path_literal($model->full_name) . ',' . PsN::python_array($self->covariates) . ',"' . $self->missing_data_token . '"' . "))";
     my $filtered_covariates = PsN::call_pharmpy_wrapper($code);
     $filtered_covariates = PsN::from_python_array($filtered_covariates);
     my @filtered_categorical;
