@@ -189,7 +189,7 @@ bias = \frac{1}{N} \sum_i(est_i - true_i)
 relative\verb|_|bias = 100\% \frac{1}{N} \sum_i \frac{est_i - true_i}{true_i}
 \]
 \[
-relative\verb|_|absolute\verb|_|bias = 100\% \frac{1}{N} \sum_i \frac{est_i - true_i}{|true_i|}
+relative\verb|_|absolute\verb|_|bias = 100\% \frac{1}{N} \sum_i \left|\frac{est_i - true_i}{true_i}\right|
 \]
 \[
 Rse_{bias} = relativestandarderror = 100\% \frac{sd}{True \sqrt{N}}

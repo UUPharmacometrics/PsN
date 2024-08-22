@@ -2316,8 +2316,7 @@ sub compute_bias
                     $sum_relative_errors +=
                         ($self->raw_results->[$i][$column_index] - $initial_values[$i-$start_row_index])/($initial_values[$i-$start_row_index]);
                     $sum_relative_absolute_errors +=
-                        ($self->raw_results->[$i][$column_index] - $initial_values[$i-$start_row_index])/abs($initial_values[$i-$start_row_index]);
-                    #possibly change to abs in numerator for relative_absolute
+                        abs(($self->raw_results->[$i][$column_index] - $initial_values[$i-$start_row_index]) / $initial_values[$i-$start_row_index]);
                 }
             }
         }

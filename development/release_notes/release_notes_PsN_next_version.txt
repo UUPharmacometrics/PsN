@@ -14,3 +14,9 @@ Changes and bug fixes from PsN 5.4.0 to x.x.x
 * Handle missing_data_token properly when it is not -99
 
    ___scm___
+
+
+   ___sse___
+
+* Calculation of relative absolute bias was wrong. Now it does abs((est-true)/true)
+  before it did (est-true)/abs(true)
